@@ -63,6 +63,8 @@ export interface Unit {
   tag?: number;
   /** How much bigger than its kind it is drawn (a boss); absent is x1. */
   size?: number;
+  /** A hero's grade above the first (2 or 3); absent is 1. Only the look reads it. */
+  grade?: number;
 }
 
 interface Pending {
@@ -125,6 +127,8 @@ export interface Boost {
   hp?: number;
   atk?: number;
   size?: number;
+  /** A hero's grade (1 to 3), for how it is drawn. */
+  grade?: number;
 }
 /** Boosts for a fight's foes: all of them by `foes`, and the first one more by `boss` (a boss stage). */
 export interface Stage {
@@ -191,6 +195,7 @@ export function addUnit(b: Battle, defId: string, u: number, v: number, boost: B
   const unit: Unit = { id: b.nextId++, def: defId, side: def.side, u, v, hp, maxHp: hp, facing: def.side === 'hero' ? 3 : 1, alive: true, busyUntil: 0, charge: 0 };
   if (boost.atk && boost.atk !== 1) unit.power = boost.atk;
   if (boost.size && boost.size !== 1) unit.size = boost.size;
+  if (boost.grade && boost.grade > 1) unit.grade = boost.grade;
   if (tag !== undefined) unit.tag = tag;
   b.units.push(unit);
   return unit;
