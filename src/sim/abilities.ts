@@ -717,7 +717,7 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
   const dodge = (kit?.passive.dodge ?? 0) + (team?.dodge ?? 0);
   if (blow && dodge && roll(b) < dodge) {
     out.push({ kind: 'dodge', to: to.id });
-    gain(to, kitOf(to)!.skill.taken * 0.5);
+    gain(to, (kit?.skill.taken ?? 0) * 0.5);
     return null;
   }
   if (blow && kit?.passive.block && (wayTo(by, to) + 2) % 4 === to.facing) {

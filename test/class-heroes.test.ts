@@ -303,3 +303,11 @@ test('a team of class heroes fights a whole battle to its end, the same way twic
   assert.deepEqual(play(), play());
   assert.ok(defOf(startBattle(1).units[0]));
 });
+
+test('a kitless summon can slip a blow from a team dodge bonus without a crash', () => {
+  const b = arena();
+  b.traits = { dodge: 1 };
+  const t = spawn(b, 'treant', 3, 5);
+  const s = spawn(b, 'skeleton', 3, 4);
+  assert.equal(onStrike(b, s, t, 50, 'blow', false, []), null);
+});
