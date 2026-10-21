@@ -20,6 +20,7 @@ the raw files), copied one sprite at a time from the private assets repository (
 - **Effects** (`src/art/fx/impact.png`, `hit_fire.png`, `blast.png`): the hit sparks, fire hit and blast from the
   **Super Pixel Effects Gigapack (Free Version)** by unTied Games, as Chronos Settlement cut them
   (`src/renderer/art/effects/`).
+- **Item icons** (`src/art/items/`): single 16x16 tiles cut from the **DawnLike** tileset by DragonDePlatino (Items: Armor, Amulet, Boot, Hat, LongWep, Ring, Shield), for relics and gear.
 
 Code borrowed from Chronos Settlement (`hpatter9/little-town`): the seeded random numbers (`src/sim/rng.ts`), the
 board's relief, step and sight rules (`src/sim/board.ts`), the blow and reach rules (`src/sim/battle.ts`), the

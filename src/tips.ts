@@ -126,6 +126,9 @@ class Tips {
       const box = boxOf(this.shown.anchor);
       // (the thing it points at has gone: the bubble goes, unseen, and the tip is offered again when it is back)
       if (!box) return this.dismiss(false);
+      // (a deploy tip still up when the fight starts goes too, unseen)
+      const during = TIPS[this.shown.id].during;
+      if (during && document.body.dataset.phase !== during) return this.dismiss(false);
       return this.position(box);
     }
     for (let i = 0; i < this.queue.length; i++) {
