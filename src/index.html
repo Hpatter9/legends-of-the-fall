@@ -161,6 +161,30 @@
   #stars .star.on > span { color: var(--gold); text-shadow: 0 0 10px rgba(255, 200, 80, 0.6); }
   @keyframes starIn { from { transform: scale(0.4); opacity: 0; } to { transform: none; opacity: 1; } }
   #result .row { display: flex; gap: 10px; margin-top: 6px; }
+  /* the fight's numbers: a row a hero, with a small bar for each number (the bars are scaled to the best hero) */
+  #fightStats { display: flex; flex-direction: column; gap: 2px; width: min(330px, 92vw); padding: 6px 8px; background: var(--wood); border: 2px solid var(--edge); border-radius: 8px; font-size: 12px; color: var(--ink); }
+  #fightStats[hidden] { display: none; }
+  #fightStats .srow { display: grid; grid-template-columns: 96px repeat(4, 1fr); align-items: center; gap: 8px; padding: 2px 0; }
+  #fightStats .srow.head { font-size: 10px; color: var(--dim); }
+  #fightStats .srow b { font-weight: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #fightStats .srow b em { font-style: normal; color: var(--gold); }
+  #fightStats .cell { display: grid; grid-template-columns: 1fr; gap: 2px; text-align: right; }
+  #fightStats .srow.head span { text-align: right; }
+  #fightStats .cell em { font-style: normal; font-size: 11px; }
+  #fightStats .cell i { display: block; height: 4px; background: rgba(255, 255, 255, 0.15); border-radius: 2px; overflow: hidden; }
+  #fightStats .cell i span { display: block; height: 100%; background: var(--gold); }
+  /* the boss's title card: it glides in over the board and a tap skips it */
+  #bossCard { position: fixed; left: 0; right: 0; top: 34%; z-index: 3; padding: 16px; text-align: center; cursor: pointer; background: linear-gradient(transparent, rgba(12, 6, 4, 0.85) 25%, rgba(12, 6, 4, 0.85) 75%, transparent); animation: fade 0.3s ease-out; transition: opacity 0.4s; }
+  #bossCard[hidden] { display: none; }
+  #bossCard.out { opacity: 0; }
+  #bossCard b { display: block; font: bold clamp(22px, 7vw, 34px)/1.1 Georgia, serif; letter-spacing: 3px; color: var(--gold); text-shadow: 0 3px 0 #000, 0 0 24px rgba(0, 0, 0, 0.8); animation: punch 0.5s cubic-bezier(0.2, 1.6, 0.4, 1); }
+  #bossCard span { display: block; margin-top: 6px; color: var(--dim); font-style: italic; text-shadow: 0 1px 0 #000; }
+  /* the boss's health, across the top under the title bar, with its name */
+  #bossBar { position: fixed; left: 12px; right: 12px; z-index: 2; pointer-events: none; text-shadow: 0 1px 0 #000; }
+  #bossBar[hidden] { display: none; }
+  #bossBar b { display: block; font: bold 13px Georgia, serif; letter-spacing: 0.5px; color: var(--gold); }
+  #bossBar i { display: block; height: 10px; margin-top: 2px; background: rgba(0, 0, 0, 0.5); border: 2px solid var(--edge); border-radius: 6px; overflow: hidden; }
+  #bossBar i span { display: block; height: 100%; background: var(--red); transition: width 0.3s; }
   @keyframes fade { from { opacity: 0; } }
   @keyframes punch { from { transform: scale(1.8); opacity: 0; } }
 
@@ -247,6 +271,8 @@
 <div id="sky"><div></div><div></div><div></div><div></div><div></div></div>
 <div id="stage"></div>
 <div id="top"><h1>Legends of the Fall</h1><span id="status"></span><span id="gold"></span><span id="clock"></span><button id="mute"></button><button id="speed">×1</button></div>
+<div id="bossBar" hidden><b></b><i><span></span></i></div>
+<div id="bossCard" hidden><b></b><span></span></div>
 <div id="panel">
   <div id="spells"><div id="mana"><i><span></span></i><b></b></div><div id="spellCards"></div><div id="spellHint"></div></div>
   <div id="traits"></div><div id="traitHint"></div>
@@ -257,6 +283,7 @@
   <div id="banner"></div>
   <div id="summary"></div>
   <div id="stars" hidden></div>
+  <div id="fightStats" hidden></div>
   <div class="row"><button id="next" class="primary">Next stage</button></div>
 </div>
 <div id="gacha" hidden>

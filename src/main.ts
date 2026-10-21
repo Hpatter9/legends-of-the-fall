@@ -4,7 +4,8 @@
 
 import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { D, standable, tileAt } from './sim/board';
-import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle } from './sim/battle';
+import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type Unit } from './sim/battle';
+import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
 import { finish, gradeBoost, heroOf, isBossStage, loadRun, newRun, saveRun, setSquad, SQUAD, startStage, summon, summonCost, type Run } from './sim/run';
 import { formOf, UNITS } from './sim/units';
 import { earn, loadMeta, rankOf, recordStars, saveMeta, type Meta } from './sim/meta';
@@ -25,6 +26,10 @@ TextureSource.defaultOptions.scaleMode = 'nearest';
 
 /** How much bigger the fighters show upright than when the whole board fits the width. */
 const ZOOM = 1.6;
+/** A boss's title card: how long it stays (ms), and how much the camera zooms in on the boss. */
+const INTRO_MS = 2000;
+const INTRO_ZOOM = 0.25;
+const STAT_LABELS: Record<(typeof STAT_KEYS)[number], string> = { dealt: 'Dealt', taken: 'Taken', healed: 'Healed', kills: 'Kills' };
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -67,6 +72,12 @@ class Game {
   private sky: HTMLElement[] = [];
   /** The spell card chosen, waiting for a tile. */
   private spell: SpellId | null = null;
+  /** The fight's numbers for each hero, tallied as the ticks come in. */
+  private stats: FightStats = [];
+  /** A boss's title card: how long it has been on, and the boss it is about. */
+  private intro: { t: number; boss: Unit } | null = null;
+  /** The stages whose boss has had its card this session (a stage's card plays once). */
+  private introduced = new Set<string>();
 
   async start(): Promise<void> {
     await this.app.init({ resizeTo: window, backgroundAlpha: 0, antialias: false, roundPixels: true, autoDensity: true, resolution: Math.min(3, devicePixelRatio || 1) });
@@ -139,6 +150,91 @@ class Game {
     this.syncSprites(true);
     this.layout();
     this.refresh();
+    this.startIntro();
+  }
+
+  /** A boss stage's first time: its title card, the camera gliding to the boss and zooming a little, and a rumble. Once per stage. */
+  private startIntro(): void {
+    const key = `${this.run.seed}:${this.run.stage}`;
+    const boss = this.b.units.find((u) => u.side === 'foe' && (u.size ?? 1) > 1);
+    if (!boss || this.introduced.has(key)) return;
+    this.introduced.add(key);
+    this.intro = { t: 0, boss };
+    const card = $('bossCard');
+    card.querySelector('b')!.textContent = `THE ${UNITS[boss.def].name.toUpperCase()}`;
+    card.querySelector('span')!.textContent = UNITS[boss.def].role;
+    card.classList.remove('out');
+    card.hidden = false;
+    play('boom');
+  }
+
+  /** Each frame of the intro: the rumble, the camera on the boss with the zoom swelling and falling back, and the card fading out. */
+  private stepIntro(dt: number): void {
+    const it = this.intro!;
+    it.t += dt;
+    if (it.t >= INTRO_MS) return this.endIntro();
+    if (it.t < INTRO_MS * 0.7) this.fx.rumble(0.7);
+    this.fx.step(dt);
+    if (it.t > INTRO_MS - 400) $('bossCard').classList.add('out');
+    const { u, v } = it.boss;
+    const [x, y] = at(u, v, tileAt(this.b.board, u, v)?.h ?? 0);
+    this.tx = x;
+    this.ty = y;
+    this.zoom = 1 + INTRO_ZOOM * Math.min(1, it.t / 500, (INTRO_MS - it.t) / 500);
+  }
+
+  /** The card goes (a tap, or its time is up) and the camera returns to where the phase has it. */
+  private endIntro(): void {
+    if (!this.intro) return;
+    this.intro = null;
+    this.zoom = 1;
+    const card = $('bossCard');
+    card.hidden = true;
+    card.classList.remove('out');
+    this.focus();
+  }
+
+  /** The boss's name and health across the top, during the fight (none once it has fallen). */
+  private refreshBossBar(): void {
+    const bar = $('bossBar');
+    const boss = this.b.units.find((u) => u.side === 'foe' && (u.size ?? 1) > 1);
+    const show = this.b.phase === 'fight' && !!boss?.alive;
+    bar.hidden = !show;
+    if (!boss || !show) return;
+    bar.querySelector('b')!.textContent = UNITS[boss.def].name;
+    (bar.querySelector('span') as HTMLElement).style.width = `${(boss.hp / boss.maxHp) * 100}%`;
+  }
+
+  /** The fight's numbers: a row a hero, with a bar for each number (scaled to the best hero) and the MVP's crown. */
+  private showStats(): void {
+    const list = $('fightStats');
+    list.replaceChildren();
+    list.hidden = !this.stats.length;
+    if (list.hidden) return;
+    const mvp = mvpOf(this.stats);
+    const head = document.createElement('div');
+    head.className = 'srow head';
+    head.append(document.createElement('span'), ...STAT_KEYS.map((k) => Object.assign(document.createElement('span'), { textContent: STAT_LABELS[k] })));
+    list.append(head);
+    for (const s of this.stats) {
+      const row = document.createElement('div');
+      row.className = 'srow';
+      const name = document.createElement('b');
+      name.textContent = UNITS[s.kind].name;
+      if (s === mvp) name.append(' ', Object.assign(document.createElement('em'), { textContent: '♛', title: 'MVP' }));
+      row.append(name);
+      for (const k of STAT_KEYS) {
+        const top = Math.max(1, ...this.stats.map((x) => x[k]));
+        const cell = document.createElement('span');
+        cell.className = 'cell';
+        cell.append(
+          Object.assign(document.createElement('em'), { textContent: String(Math.round(s[k])) }),
+          Object.assign(document.createElement('i'), { innerHTML: `<span style="width: ${((s[k] / top) * 100).toFixed(1)}%"></span>` }),
+        );
+        row.append(cell);
+      }
+      list.append(row);
+    }
   }
 
   /** The first free standable tile on the heroes' rows, front row first. */
@@ -150,10 +246,13 @@ class Game {
 
   private begin(): void {
     if (!fight(this.b)) return;
+    this.endIntro();
+    this.stats = startStats(this.b.units);
     startFight(isBossStage(this.run.stage));
     keepAwake(true);
     this.chosen = null;
     this.boardView.clearMarks();
+    this.refreshBossBar();
     this.layout();
     this.refresh();
   }
@@ -165,6 +264,7 @@ class Game {
       while (this.acc >= TICK_MS && b.phase === 'fight') {
         this.acc -= TICK_MS;
         const events = stepBattle(b);
+        tally(this.stats, events);
         this.fx.show(b, events);
         playEvents(events);
         if (events.some((e) => e.kind === 'hit')) this.refreshBench();
@@ -178,6 +278,8 @@ class Game {
       this.acc += dt;
       this.fx.step(dt);
     }
+    if (this.intro) this.stepIntro(dt);
+    this.refreshBossBar();
     const t = b.phase === 'deploy' ? performance.now() : b.phase === 'fight' ? b.t - TICK_MS + this.acc : b.t + this.acc;
     for (const s of this.sprites.values()) s.update(b.board, t, b.phase !== 'deploy');
     // (the camera eases to where it is sent, unless a finger is holding the board)
@@ -223,6 +325,8 @@ class Game {
   private tx = 0;
   private ty = 0;
   private area = { x: 0, y: 0, w: 1, h: 1 };
+  /** The camera's zoom on the boss during its card (1 otherwise). */
+  private zoom = 1;
   private bbox = { x0: 0, x1: 0, y0: 0, y1: 0 };
 
   /** Fit the board into the room the bench and the top bar leave: upright it is zoomed in and panned, sideways it fits. */
@@ -230,7 +334,11 @@ class Game {
     const top = $('top').getBoundingClientRect();
     const panel = $('panel').getBoundingClientRect();
     const sideways = innerWidth > innerHeight;
-    const area = sideways ? { x: 0, y: top.bottom, w: panel.left, h: innerHeight - top.bottom } : { x: 0, y: top.bottom, w: innerWidth, h: panel.top - top.bottom };
+    const bar = $('bossBar');
+    bar.style.top = `${top.bottom + 4}px`;
+    bar.style.right = sideways ? `${innerWidth - panel.left + 12}px` : '12px';
+    const head = bar.hidden ? top.bottom : bar.getBoundingClientRect().bottom + 4;
+    const area = sideways ? { x: 0, y: head, w: panel.left, h: innerHeight - head } : { x: 0, y: head, w: innerWidth, h: panel.top - head };
     const b = this.b.board;
     let x0 = Infinity;
     let x1 = -Infinity;
@@ -300,7 +408,8 @@ class Game {
 
   /** Put the world where the camera says, and slide the backdrop's layers a little the other way. */
   private place(): void {
-    const k = this.scale;
+    const k = this.scale * this.zoom;
+    this.world.scale.set(k);
     this.baseX = Math.round(this.area.x + this.area.w / 2 - this.cx * k);
     this.baseY = Math.round(this.area.y + this.area.h / 2 - this.cy * k);
     this.world.position.set(this.baseX + this.fx.shakeX, this.baseY + this.fx.shakeY);
@@ -313,8 +422,8 @@ class Game {
   /** The tile under a point on the screen (the nearest column's top or side). */
   private tileAtScreen(sx: number, sy: number): [number, number] | null {
     const b = this.b.board;
-    const wx = (sx - this.world.x) / this.scale;
-    const wy = (sy - this.world.y) / this.scale;
+    const wx = (sx - this.world.x) / this.world.scale.x;
+    const wy = (sy - this.world.y) / this.world.scale.y;
     // (front to back: a column in front hides the tops behind it)
     for (let d = b.w + b.d - 2; d >= 0; d--)
       for (let u = 0; u < b.w; u++) {
@@ -333,8 +442,8 @@ class Game {
 
   /** The placed hero under a point on the screen. */
   private heroAtScreen(sx: number, sy: number): string | null {
-    const wx = (sx - this.world.x) / this.scale;
-    const wy = (sy - this.world.y) / this.scale;
+    const wx = (sx - this.world.x) / this.world.scale.x;
+    const wy = (sy - this.world.y) / this.world.scale.y;
     const heroes = this.b.units.filter((x) => x.side === 'hero').sort((a, c) => c.u + c.v - (a.u + a.v));
     for (const h of heroes) {
       const s = this.sprites.get(h.id);
@@ -379,6 +488,7 @@ class Game {
       saveRun(this.run);
       this.newBattle();
     });
+    $('bossCard').addEventListener('click', () => this.endIntro());
     $('speed').addEventListener('click', () => {
       this.speed = this.speed === 1 ? 2 : 1;
       $('speed').textContent = `×${this.speed}`;
@@ -432,8 +542,8 @@ class Game {
     if (d.pan) {
       if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 8) return;
       d.moved = true;
-      this.cx = d.pan.cx - (e.clientX - d.x) / this.scale;
-      this.cy = d.pan.cy - (e.clientY - d.y) / this.scale;
+      this.cx = d.pan.cx - (e.clientX - d.x) / this.world.scale.x;
+      this.cy = d.pan.cy - (e.clientY - d.y) / this.world.scale.y;
       this.tx = this.cx;
       this.ty = this.cy;
       this.clampCam();
@@ -621,6 +731,7 @@ class Game {
       this.crownGain = earn(this.meta, stage, won, rating.stars);
       if (won) recordStars(this.meta, stage, rating.stars);
       this.showStars(won ? rating : null);
+      this.showStats();
       saveMeta(this.meta);
       saveRun(run);
     }

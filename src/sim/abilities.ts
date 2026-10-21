@@ -227,11 +227,11 @@ const STUN_MS = 1500;
 const sorted = (fs: Unit[]) => fs.sort((x, y) => x.hp - y.hp || x.id - y.id);
 
 /** Heal an ally (never past full), with the event for the renderer. */
-function mendUnit(u: Unit, amount: number, out: BattleEvent[]): void {
+function mendUnit(u: Unit, amount: number, out: BattleEvent[], by: number): void {
   const n = Math.min(Math.round(amount), u.maxHp - u.hp);
   if (n <= 0 || !u.alive) return;
   u.hp += n;
-  out.push({ kind: 'heal', to: u.id, amount: n });
+  out.push({ kind: 'heal', to: u.id, amount: n, by });
 }
 
 /** Ninja Monk: three quick strikes on the weakest foe in reach, and it is stunned. */
@@ -281,7 +281,7 @@ function sanctuary(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!hurtAllies.length) return false;
   for (const a of b.units)
     if (a.alive && a.side === me.side) {
-      mendUnit(a, atkOf(me) * 3, out);
+      mendUnit(a, atkOf(me) * 3, out, me.id);
       a.guardUntil = b.t + SANCTUARY_MS;
     }
   return true;
@@ -515,7 +515,7 @@ export const pierceOf = (by: Unit): number => kitOf(by)?.passive.pierce ?? 0;
 
 export function afterBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg = 0, out: BattleEvent[] = []): void {
   const p = kitOf(by)?.passive;
-  if (p?.leech && by.alive) mendUnit(by, dmg * p.leech, out);
+  if (p?.leech && by.alive) mendUnit(by, dmg * p.leech, out, by.id);
   if (p?.arc && dmg > 0 && roll(b) < p.arc) {
     const second = foesOf(b, by).filter((f) => f !== to && apart(f, to) <= 2).sort((x, y) => apart(x, to) - apart(y, to) || x.id - y.id)[0];
     if (second) {
@@ -545,13 +545,13 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
     const k = kitOf(u);
     if (k) gain(u, ((k.skill.perSec * 100) / 1000) * (u.side === 'hero' ? b.traits?.charge ?? 1 : 1));
     const p = k?.passive;
-    if (p?.regen && b.t % 1000 === 0) mendUnit(u, u.maxHp * p.regen, out);
+    if (p?.regen && b.t % 1000 === 0) mendUnit(u, u.maxHp * p.regen, out, u.id);
     if (p?.mend) {
       u.mendAt ??= b.t + p.mend.every;
       if (b.t >= u.mendAt) {
         u.mendAt = b.t + p.mend.every;
         const weakest = b.units.filter((a) => a.alive && a.side === u.side && a.hp < a.maxHp).sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp || x.id - y.id)[0];
-        if (weakest) mendUnit(weakest, atkOf(u) * p.mend.share, out);
+        if (weakest) mendUnit(weakest, atkOf(u) * p.mend.share, out, u.id);
       }
     }
     const d = u.dot;
