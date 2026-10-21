@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#3a2218" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="icon-192.png" />
+<title>Legends of the Fall</title>
+<style>
+  :root {
+    --ink: #f6ead6;
+    --dim: #c8b394;
+    --wood: rgba(38, 22, 14, 0.86);
+    --edge: #8c5a32;
+    --gold: #f0b44a;
+    --red: #d9573f;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body {
+    background: #1c1410 url(backdrop.png) center / cover no-repeat;
+    image-rendering: pixelated;
+    color: var(--ink);
+    font: 14px/1.25 'Trebuchet MS', Verdana, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+  body::before { content: ''; position: fixed; inset: 0; background: linear-gradient(rgba(20, 10, 6, 0.25), rgba(20, 10, 6, 0.55)); }
+  #stage { position: fixed; inset: 0; }
+  #stage canvas { display: block; }
+  button {
+    font: inherit; font-weight: bold; color: var(--ink); background: #5a3520; border: 2px solid var(--edge);
+    border-radius: 8px; padding: 10px 14px; cursor: pointer; text-shadow: 0 1px 0 #000;
+  }
+  button:active { transform: translateY(1px); }
+  button.primary { background: linear-gradient(#c9762e, #8e4618); border-color: var(--gold); font-size: 17px; }
+  button:disabled { opacity: 0.4; }
+
+  #top {
+    position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 10px;
+    padding: calc(env(safe-area-inset-top) + 6px) 12px 6px; background: linear-gradient(var(--wood), rgba(38, 22, 14, 0));
+  }
+  #top h1 { margin: 0; font-size: 16px; color: var(--gold); letter-spacing: 0.5px; white-space: nowrap; }
+  #status { flex: 1; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #clock { font-variant-numeric: tabular-nums; color: var(--ink); }
+  #speed { padding: 4px 10px; display: none; }
+  body[data-phase='fight'] #speed { display: block; }
+
+  #panel {
+    position: fixed; left: 0; right: 0; bottom: 0; padding: 8px 8px calc(env(safe-area-inset-bottom) + 8px);
+    background: var(--wood); border-top: 2px solid var(--edge); display: flex; flex-direction: column; gap: 8px;
+  }
+  #bench { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .card {
+    position: relative; background: rgba(0, 0, 0, 0.35); border: 2px solid #5a3a22; border-radius: 8px; padding: 2px 2px 4px;
+    text-align: center; touch-action: none;
+  }
+  .card canvas { width: 100%; max-width: 64px; aspect-ratio: 1; display: block; margin: 0 auto; image-rendering: pixelated; }
+  .card b { display: block; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card i { display: block; height: 4px; margin: 3px 4px 0; background: #2a1a10; border-radius: 2px; overflow: hidden; }
+  .card i span { display: block; height: 100%; background: #5fd35f; }
+  .card.placed { border-color: #4a9cff; }
+  .card.placed::after { content: '✓'; position: absolute; top: 2px; right: 5px; color: #7cc0ff; font-weight: bold; }
+  .card.chosen { border-color: var(--gold); box-shadow: 0 0 10px var(--gold); }
+  .card.fallen { opacity: 0.4; filter: grayscale(1); }
+  body:not([data-phase='deploy']) .card:not(.placed) { opacity: 0.3; }
+  body:not([data-phase='deploy']) .card.placed::after { content: none; }
+  #buttons { display: flex; gap: 8px; }
+  #buttons #fight { flex: 1; }
+  body:not([data-phase='deploy']) #buttons { display: none; }
+
+  /* sideways: the bench down the right */
+  @media (orientation: landscape) {
+    #panel { left: auto; top: 0; width: 230px; border-top: 0; border-left: 2px solid var(--edge); padding: calc(env(safe-area-inset-top) + 8px) calc(env(safe-area-inset-right) + 8px) 8px 8px; justify-content: center; }
+    #bench { grid-template-columns: repeat(3, 1fr); }
+    #top { right: 230px; }
+  }
+
+  #result {
+    position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+    background: rgba(12, 6, 4, 0.55); animation: fade 0.4s ease-out;
+  }
+  #result[hidden] { display: none; }
+  #banner { font: bold 46px/1 Georgia, serif; letter-spacing: 2px; text-shadow: 0 3px 0 #000, 0 0 24px rgba(0, 0, 0, 0.8); animation: punch 0.5s cubic-bezier(0.2, 1.6, 0.4, 1); }
+  #banner.won { color: var(--gold); }
+  #banner.lost { color: var(--red); }
+  #summary { color: var(--dim); text-shadow: 0 1px 0 #000; }
+  #result .row { display: flex; gap: 10px; margin-top: 6px; }
+  @keyframes fade { from { opacity: 0; } }
+  @keyframes punch { from { transform: scale(1.8); opacity: 0; } }
+
+  #loading { position: fixed; inset: 0; display: grid; place-items: center; font-size: 18px; color: var(--gold); }
+  #version { position: fixed; right: 6px; bottom: 2px; font-size: 9px; color: rgba(255, 255, 255, 0.25); pointer-events: none; display: none; }
+  body[data-phase='deploy'] #version { display: block; }
+  @media (orientation: portrait) { #version { bottom: auto; top: calc(env(safe-area-inset-top) + 34px); } }
+</style>
+</head>
+<body data-phase="deploy">
+<div id="stage"></div>
+<div id="top"><h1>Legends of the Fall</h1><span id="status"></span><span id="clock"></span><button id="speed">×1</button></div>
+<div id="panel">
+  <div id="bench"></div>
+  <div id="buttons"><button id="newBoard">New board</button><button id="fight" class="primary" disabled>Fight!</button></div>
+</div>
+<div id="result" hidden>
+  <div id="banner"></div>
+  <div id="summary"></div>
+  <div class="row"><button id="again">Restart</button><button id="next" class="primary">New board</button></div>
+</div>
+<div id="loading">Loading…</div>
+<div id="version">Version __VERSION__</div>
+<script src="game.js"></script>
+</body>
+</html>

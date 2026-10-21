@@ -1,0 +1,182 @@
+{
+ "knight_1": {
+  "w": 180,
+  "h": 76,
+  "perRow": 8,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 8,
+   "attack": 5,
+   "idle": 4,
+   "hurt": 2,
+   "dead": 6,
+   "attack2": 4,
+   "defend": 5
+  },
+  "figure": 64,
+  "facesRight": true
+ },
+ "samurai": {
+  "w": 192,
+  "h": 105,
+  "perRow": 9,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 9,
+   "attack": 4,
+   "idle": 6,
+   "hurt": 3,
+   "dead": 6,
+   "attack2": 5,
+   "defend": 2
+  },
+  "figure": 69,
+  "facesRight": true
+ },
+ "kunoichi": {
+  "w": 136,
+  "h": 89,
+  "perRow": 9,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "walk": 8,
+   "attack": 6,
+   "idle": 9,
+   "hurt": 2,
+   "dead": 5,
+   "attack2": 8
+  },
+  "figure": 64,
+  "facesRight": true
+ },
+ "samurai_archer": {
+  "w": 132,
+  "h": 116,
+  "perRow": 14,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "walk": 8,
+   "attack": 14,
+   "idle": 9,
+   "hurt": 3,
+   "dead": 5,
+   "attack2": 5
+  },
+  "figure": 103,
+  "facesRight": true
+ },
+ "fire_wizard": {
+  "w": 94,
+  "h": 71,
+  "perRow": 8,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 6,
+   "attack": 8,
+   "idle": 7,
+   "hurt": 3,
+   "dead": 6
+  },
+  "figure": 66,
+  "facesRight": true
+ },
+ "skeleton_warrior": {
+  "w": 108,
+  "h": 78,
+  "perRow": 7,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 7,
+   "attack": 5,
+   "idle": 7,
+   "hurt": 2,
+   "dead": 4
+  },
+  "figure": 58,
+  "facesRight": true
+ },
+ "skeleton_spearman": {
+  "w": 126,
+  "h": 94,
+  "perRow": 7,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 7,
+   "attack": 4,
+   "idle": 7,
+   "hurt": 3,
+   "dead": 5
+  },
+  "figure": 82,
+  "facesRight": true
+ },
+ "skeleton_archer": {
+  "w": 90,
+  "h": 75,
+  "perRow": 15,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 8,
+   "attack": 15,
+   "idle": 7,
+   "hurt": 2,
+   "dead": 5
+  },
+  "figure": 64,
+  "facesRight": true
+ }
+}

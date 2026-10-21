@@ -1,0 +1,79 @@
+// The fighters' sprite sheets (cut by Chronos's tools/compose-sheets.cjs from the Craftpix packs): one row per
+// animation, frames `w` x `h`, the figure centred with its feet on the frame's bottom, facing right.
+
+import { Rectangle, Texture } from 'pixi.js';
+import { loadImage } from './loadImage';
+import layout from '../art/units/sheets.json';
+import knight from '../art/units/knight_1.png';
+import samurai from '../art/units/samurai.png';
+import kunoichi from '../art/units/kunoichi.png';
+import archer from '../art/units/samurai_archer.png';
+import wizard from '../art/units/fire_wizard.png';
+import skeleton from '../art/units/skeleton_warrior.png';
+import spearman from '../art/units/skeleton_spearman.png';
+import boneArcher from '../art/units/skeleton_archer.png';
+
+export type Anim = 'idle' | 'walk' | 'attack' | 'hurt' | 'dead';
+
+interface Layout {
+  w: number;
+  h: number;
+  perRow: number;
+  rows: string[];
+  counts: Record<string, number>;
+  figure: number;
+}
+
+const URLS: Record<string, string> = {
+  knight_1: knight,
+  samurai,
+  kunoichi,
+  samurai_archer: archer,
+  fire_wizard: wizard,
+  skeleton_warrior: skeleton,
+  skeleton_spearman: spearman,
+  skeleton_archer: boneArcher,
+};
+
+const LAYOUT = layout as Record<string, Layout>;
+const frames = new Map<string, Texture[]>();
+const images = new Map<string, HTMLImageElement>();
+
+/** Load every sheet and cut its frames. */
+export async function loadSheets(): Promise<void> {
+  await Promise.all(
+    Object.entries(URLS).map(async ([id, url]) => {
+      const img = await loadImage(url);
+      images.set(id, img);
+      const base = Texture.from(img);
+      const l = LAYOUT[id];
+      l.rows.forEach((row, r) => {
+        const list: Texture[] = [];
+        for (let i = 0; i < l.counts[row]; i++) list.push(new Texture({ source: base.source, frame: new Rectangle(i * l.w, r * l.h, l.w, l.h) }));
+        frames.set(`${id}:${row}`, list);
+      });
+    }),
+  );
+}
+
+/** An animation's frames (idle when the sheet has no such row). */
+export const framesOf = (sheet: string, anim: Anim): Texture[] => frames.get(`${sheet}:${anim}`) ?? frames.get(`${sheet}:idle`)!;
+/** How tall the figure stands in the frame, in the sheet's pixels. */
+export const figureOf = (sheet: string) => LAYOUT[sheet].figure;
+
+/** A small portrait of a fighter for the bench: its first idle frame, cropped to the figure, on a canvas. */
+export function portrait(sheet: string, size: number): HTMLCanvasElement {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const img = images.get(sheet);
+  const l = LAYOUT[sheet];
+  if (!img) return c;
+  const g = c.getContext('2d')!;
+  g.imageSmoothingEnabled = false;
+  const idle = l.rows.indexOf('idle');
+  // (the top of the figure down to its feet, a square around the middle)
+  const side = Math.min(l.figure + 6, l.h);
+  const sx = Math.max(0, l.w / 2 - side / 2);
+  g.drawImage(img, sx, idle * l.h + l.h - side, side, side, 0, 0, size, size);
+  return c;
+}
