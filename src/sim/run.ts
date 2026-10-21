@@ -40,16 +40,21 @@ export interface Run {
   over: boolean;
   /** The stage reached when it ended. */
   best: number;
+  /** The hero kinds summons draw from (the unlocked ones); the starting five when unset. */
+  pool?: string[];
 }
 
-export function newRun(seed: number): Run {
-  const run: Run = { seed, gold: START_GOLD, stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1 };
+export function newRun(seed: number, pool: readonly string[] = HEROES): Run {
+  const run: Run = { seed, gold: START_GOLD, stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...pool] };
   // two grade-1 heroes, drawn from the same stream as every summon but free
   for (let i = 0; i < 2; i++) run.squad.push(add(run, draw(run)).id);
   return run;
 }
 
-const draw = (run: Run): string => HEROES[new Rng(mixSeed(run.seed, 0x5033, run.nextId)).int(0, HEROES.length - 1)];
+const draw = (run: Run): string => {
+  const pool = run.pool?.length ? run.pool : HEROES;
+  return pool[new Rng(mixSeed(run.seed, 0x5033, run.nextId)).int(0, pool.length - 1)];
+};
 export const summonCost = (run: Run) => SUMMON_BASE + SUMMON_STEP * run.summons;
 
 /** Buy a random grade-1 hero. Returns it (or what it merged into), or null when too poor or the run is over. */
@@ -83,7 +88,7 @@ export const heroOf = (run: Run, id: number) => run.roster.find((h) => h.id === 
 export const benched = (run: Run) => run.roster.filter((h) => !run.squad.includes(h.id));
 
 /** Hp and attack multipliers of a grade. */
-export const gradeBoost = (grade: number): Boost => ({ hp: GRADE_MULT ** (grade - 1), atk: GRADE_MULT ** (grade - 1) });
+export const gradeBoost = (grade: number): Boost => ({ hp: GRADE_MULT ** (grade - 1), atk: GRADE_MULT ** (grade - 1), grade });
 
 export const isBossStage = (stage: number) => stage % BOSS_EVERY === 0;
 /** The band stage n meets, in turn. */
