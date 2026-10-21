@@ -71,12 +71,22 @@ export class Fx {
         if (to) this.label('Miss', to.x, to.y - to.tall - 10, 0xcfe8ff, 12);
       } else if (e.kind === 'dash' || e.kind === 'blink') this.streak(b, e);
       else if (e.kind === 'area') this.area(b, e);
-      else if (e.kind === 'zone') this.zone(b, e.u, e.v, e.ms);
+      else if (e.kind === 'spell') this.spell(b, e);
+      else if (e.kind === 'heal') {
+        const to = this.sprites.get(e.to);
+        if (to && e.amount > 0) this.label(`+${e.amount}`, to.x, to.y - to.tall - 10, 0x7dff8a, 13);
+      } else if (e.kind === 'zone') this.zone(b, e.u, e.v, e.ms);
       else if (e.kind === 'hit') {
         const to = this.sprites.get(e.to);
         const by = b.units.find((x) => x.id === e.by);
         const target = b.units.find((x) => x.id === e.to);
-        if (!to || !by || !target) continue;
+        if (!to || !target) continue;
+        // (no `by` is the king's meteor)
+        if (!by) {
+          this.anim(blast, to.x, to.y - to.tall * 0.45, 0.8, 45);
+          this.number(e.dmg, to.x, to.y - to.tall - 10, e.heavy, false);
+          continue;
+        }
         if (e.src === 'dot') {
           const burn = target.dot?.kind !== 'bleed';
           this.anim(burn ? fire : impact, to.x, to.y - to.tall * 0.45, burn ? 0.7 : 0.6, 60);
@@ -106,7 +116,7 @@ export class Fx {
     this.shakeY = s ? (Math.random() * 2 - 1) * s : 0;
   }
 
-  private anim(s: Strip, x: number, y: number, scale: number, frameMs: number): void {
+  private anim(s: Strip, x: number, y: number, scale: number, frameMs: number): Sprite {
     const sp = new Sprite(s.frames[0]);
     sp.anchor.set(0.5);
     sp.scale.set(scale);
@@ -124,6 +134,7 @@ export class Fx {
         return true;
       },
     });
+    return sp;
   }
 
   /** A line of text that rises and fades. */
@@ -256,6 +267,37 @@ export class Fx {
         return t < e.ms;
       },
     });
+  }
+
+  /** A heal or haste goes off: the 3x3 lit for a moment and a burst of light on each hero in it. */
+  private spell(b: Battle, e: Extract<BattleEvent, { kind: 'spell' }>): void {
+    if (e.id === 'meteor') return;
+    const color = e.id === 'heal' ? 0x7dff8a : 0xffe27a;
+    const g = new Graphics();
+    this.root.addChild(g);
+    let t = 0;
+    this.items.push({
+      view: g,
+      step: (dt) => {
+        t += dt;
+        g.clear();
+        for (let du = -1; du <= 1; du++)
+          for (let dv = -1; dv <= 1; dv++) {
+            if (!tileAt(b.board, e.u + du, e.v + dv)) continue;
+            const [x, y] = this.tilePos(b, e.u + du, e.v + dv);
+            g.poly([x, y - TH / 2, x + TW / 2, y, x, y + TH / 2, x - TW / 2, y]).fill({ color, alpha: 0.35 * (1 - t / 600) });
+          }
+        return t < 600;
+      },
+    });
+    for (const x of b.units) {
+      const s = this.sprites.get(x.id);
+      if (x.alive && x.side === 'hero' && Math.abs(x.u - e.u) <= 1 && Math.abs(x.v - e.v) <= 1 && s) {
+        const sp = this.anim(impact, s.x, s.y - s.tall * 0.45, 1.5, 50);
+        sp.tint = color;
+        if (e.id === 'haste') this.label('Haste', s.x, s.y - s.tall - 20, color, 12, 900);
+      }
+    }
   }
 
   /** Burning ground: flames over a 3x3 of tiles for `ms`. */
