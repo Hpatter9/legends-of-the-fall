@@ -38,4 +38,7 @@ skills charge 15% faster), **Frontier** (Ranger, Gunslinger: +6% crit), all orig
 
 ## Balance
 
-See the table below (`npm run balance`, hero table at stage 5).
+`npm run balance` (4000 fights, hero table at stage 5, 20 heroes; average win rate 65.6%). "vs avg" in points:
+Paladin +7.2, Cleric +1.5, Druid -7.2, Barbarian +3.6, Ranger -4.2, Warlock -0.7, Illusionist -0.3, Gunslinger -0.1. Stats were
+tuned from a first run (Paladin +9.8, Barbarian +9.5, Ranger -10.1, Warlock -8.6). The older heroes' outliers (Knight, Samurai,
+Archer, Fire Wizard, Lightning Mage, Yamabushi) are untouched. The Druid's treant is not tallied in her damage.
