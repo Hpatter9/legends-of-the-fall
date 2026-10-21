@@ -5,7 +5,8 @@ the raw files), copied one sprite at a time from the private assets repository (
 
 - **The heroes and the skeletons** (`src/art/units/`): the Free Knight, Samurai, Ninja, Wizard and Skeleton Sprite
   Sheets, as cut into one small sheet each by Chronos Settlement's `tools/compose-sheets.cjs`: Knight 1, Samurai,
-  Kunoichi, Samurai Archer, Fire Wizard, Skeleton Warrior, Skeleton Spearman, Skeleton Archer. The arrows
+  Kunoichi, Samurai Archer, Fire Wizard, Skeleton Warrior, Skeleton Spearman, Skeleton Archer; and from the Free
+  Werewolf, Gorgon, Minotaur and Satyr Sprite Sheets, all three of each (not yet in play). The arrows
   (`src/art/fx/arrow.png`, `bone_arrow.png`) are the Samurai Archer's and the Skeleton Archer's own.
 - **The ground** (`src/art/ground/`): the Free Fields Tileset for tower defence (the grass and cobble tiles, tufts,
   flowers, pebbles, boulders and bushes).

@@ -178,5 +178,257 @@
   },
   "figure": 64,
   "facesRight": true
+ },
+ "werewolf_black": {
+  "w": 114,
+  "h": 90,
+  "perRow": 11,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 11,
+   "attack": 6,
+   "idle": 8,
+   "hurt": 2,
+   "dead": 2
+  },
+  "figure": 57,
+  "facesRight": true
+ },
+ "werewolf_red": {
+  "w": 114,
+  "h": 90,
+  "perRow": 11,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 11,
+   "attack": 6,
+   "idle": 8,
+   "hurt": 2,
+   "dead": 2
+  },
+  "figure": 57,
+  "facesRight": true
+ },
+ "werewolf_white": {
+  "w": 114,
+  "h": 90,
+  "perRow": 11,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 11,
+   "attack": 6,
+   "idle": 8,
+   "hurt": 2,
+   "dead": 2
+  },
+  "figure": 57,
+  "facesRight": true
+ },
+ "gorgon_1": {
+  "w": 142,
+  "h": 94,
+  "perRow": 16,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 13,
+   "attack": 16,
+   "idle": 7,
+   "hurt": 3,
+   "dead": 3
+  },
+  "figure": 77,
+  "facesRight": true
+ },
+ "gorgon_2": {
+  "w": 140,
+  "h": 94,
+  "perRow": 16,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 13,
+   "attack": 16,
+   "idle": 7,
+   "hurt": 3,
+   "dead": 3
+  },
+  "figure": 77,
+  "facesRight": true
+ },
+ "gorgon_3": {
+  "w": 124,
+  "h": 94,
+  "perRow": 16,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 13,
+   "attack": 16,
+   "idle": 7,
+   "hurt": 3,
+   "dead": 3
+  },
+  "figure": 77,
+  "facesRight": true
+ },
+ "minotaur_1": {
+  "w": 144,
+  "h": 95,
+  "perRow": 12,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 12,
+   "attack": 5,
+   "idle": 10,
+   "hurt": 3,
+   "dead": 5
+  },
+  "figure": 92,
+  "facesRight": true
+ },
+ "minotaur_2": {
+  "w": 138,
+  "h": 96,
+  "perRow": 12,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 12,
+   "attack": 5,
+   "idle": 10,
+   "hurt": 3,
+   "dead": 5
+  },
+  "figure": 85,
+  "facesRight": true
+ },
+ "minotaur_3": {
+  "w": 124,
+  "h": 95,
+  "perRow": 12,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 12,
+   "attack": 4,
+   "idle": 10,
+   "hurt": 3,
+   "dead": 5
+  },
+  "figure": 93,
+  "facesRight": true
+ },
+ "satyr_1": {
+  "w": 130,
+  "h": 78,
+  "perRow": 12,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 12,
+   "attack": 4,
+   "idle": 7,
+   "hurt": 4,
+   "dead": 4
+  },
+  "figure": 74,
+  "facesRight": true
+ },
+ "satyr_2": {
+  "w": 136,
+  "h": 92,
+  "perRow": 12,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 12,
+   "attack": 8,
+   "idle": 7,
+   "hurt": 4,
+   "dead": 4
+  },
+  "figure": 88,
+  "facesRight": true
+ },
+ "satyr_3": {
+  "w": 106,
+  "h": 79,
+  "perRow": 12,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 12,
+   "attack": 9,
+   "idle": 6,
+   "hurt": 4,
+   "dead": 4
+  },
+  "figure": 75,
+  "facesRight": true
  }
 }
