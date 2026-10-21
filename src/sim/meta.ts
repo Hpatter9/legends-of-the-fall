@@ -21,6 +21,8 @@ export const DUPLICATE_SHARDS = 1;
 /** Shards each rank needs in all: rank 1 at 1, rank 2 at 3, rank 3 at 6, rank 4 at 10. */
 export const RANK_SHARDS: readonly number[] = [1, 3, 6, 10];
 export const MAX_RANK = RANK_SHARDS.length;
+/** Heroes in a party: the deck the summons draw from, and the run's starting heroes (fewer while fewer are unlocked). */
+export const PARTY_SIZE = 5;
 /** Hp and attack grow by this for each rank a hero kind has. */
 export const RANK_MULT = 1.05;
 const SALT = 0x6ac4a;
@@ -30,6 +32,8 @@ export interface Meta {
   crowns: number;
   /** Hero kinds unlocked for summoning. */
   unlocked: string[];
+  /** The party: the hero kinds a run's summons draw from (`partySlots` of them, all unlocked). */
+  party: string[];
   /** Pulls so far (the draw follows it). */
   pulls: number;
   /** Pulls since the last epic. */
@@ -70,7 +74,7 @@ export interface Pull {
   shards: number;
 }
 
-export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [...HEROES], pulls: 0, dry: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], achievements: [] });
+export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [...HEROES], party: [...HEROES], pulls: 0, dry: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], achievements: [] });
 
 export const rarityOf = (kind: string): 1 | 2 | 3 => UNITS[kind]?.rarity ?? 1;
 /** The rank a hero kind has from its shards (0 to MAX_RANK). */
@@ -81,6 +85,22 @@ export const rankMult = (rank: number): number => RANK_MULT ** rank;
 export const stageCrowns = (stage: number) => 10 + 2 * stage;
 /** Crowns a run's end pays: more the further it got. */
 export const runCrowns = (best: number) => 10 * (best - 1) + best * best;
+
+/** How many heroes a party takes: five, or fewer while fewer are unlocked. */
+export const partySlots = (m: Meta): number => Math.min(PARTY_SIZE, m.unlocked.length);
+
+/** Set the party to these hero kinds: exactly `partySlots` different unlocked kinds. Returns false (and changes nothing) otherwise. */
+export function setParty(m: Meta, kinds: readonly string[]): boolean {
+  const ok = kinds.length === partySlots(m) && new Set(kinds).size === kinds.length && kinds.every((k) => m.unlocked.includes(k));
+  if (ok) m.party = [...kinds];
+  return ok;
+}
+
+/** Saved party that is sane: unlocked kinds, no repeats, at most five. Missing or empty means the first five unlocked. */
+function readParty(raw: unknown, unlocked: readonly string[]): string[] {
+  const kept = Array.isArray(raw) ? [...new Set(raw)].filter((k): k is string => typeof k === 'string' && unlocked.includes(k)).slice(0, PARTY_SIZE) : [];
+  return kept.length ? kept : unlocked.slice(0, PARTY_SIZE);
+}
 
 /** Saved XP that is sane: a hero kind in the game and a number of XP. Anything else is dropped. */
 function readXp(raw: unknown): Record<string, number> {
@@ -174,6 +194,8 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
     const m = JSON.parse(store.getItem(KEY) ?? 'null') as Meta | null;
     if (m && typeof m.crowns === 'number' && Array.isArray(m.unlocked) && typeof m.seed === 'number') {
       m.unlocked = [...new Set([...HEROES, ...m.unlocked.filter((k) => ALL_HEROES.includes(k))])];
+      // (saves from before parties have the first five unlocked)
+      m.party = readParty(m.party, m.unlocked);
       m.pulls = m.pulls | 0;
       m.dry = m.dry | 0;
       m.castle = readCastle(m.castle);

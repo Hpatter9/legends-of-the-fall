@@ -14,6 +14,7 @@ import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
 import { Gacha } from './gacha';
 import { Events } from './events';
 import { Home } from './home';
+import { Party } from './party';
 import { dailyInProgress, modeNote, settleRun, startDaily, towerRun } from './sim/modes';
 import { toastAchievements } from './achievementsView';
 import { clockSeed, todayKey } from './modes';
@@ -70,6 +71,7 @@ class Game {
   private gacha!: Gacha;
   private events = new Events();
   private home!: Home;
+  private party!: Party;
   /** Crowns the last settled fight paid. */
   private crownGain = 0;
   /** Whether the fight's end has been settled into the run. */
@@ -108,7 +110,7 @@ class Game {
     const seed = Number(query.get('seed'));
     this.meta = loadMeta((Date.now() % 100000) + 1);
     saveMeta(this.meta);
-    this.run = (!seed && loadRun()) || newRun(seed || (Date.now() % 100000) + 1, this.meta.unlocked, this.meta.castle);
+    this.run = (!seed && loadRun()) || newRun(seed || (Date.now() % 100000) + 1, this.meta.party, this.meta.castle);
     this.syncPool();
     this.gacha = new Gacha(this.meta, () => {
       this.syncPool();
@@ -129,7 +131,15 @@ class Game {
         return r && !r.over ? { stage: r.stage, gold: r.gold } : null;
       },
       onContinue: () => this.resume(),
-      onNew: () => this.newRunNow(),
+      // (a new run starts once its party is picked)
+      onNew: () => this.party.open('start', () => this.newRunNow()),
+      onParty: () =>
+        this.party.open('edit', () => {
+          // (a run going on draws from the new party from now on)
+          this.syncPool();
+          if (loadRun()) saveRun(this.run);
+          this.home.open();
+        }),
       onRecruit: () => this.gacha.open(),
       onDaily: () => {
         if (dailyInProgress(loadRun(), todayKey())) return this.resume();
@@ -137,6 +147,7 @@ class Game {
       },
       onTower: () => this.startRun(towerRun(clockSeed(), this.meta)),
     });
+    this.party = new Party(this.meta, () => this.home.open());
     bindSpellbook(this.meta, () => {
       saveMeta(this.meta);
       this.home.refresh();
@@ -574,7 +585,7 @@ class Game {
 
   /** Begin a new run (with the castle as it stands) and its first fight. */
   private newRunNow(): void {
-    this.startRun(newRun(clockSeed(), this.meta.unlocked, this.meta.castle));
+    this.startRun(newRun(clockSeed(), this.meta.party, this.meta.castle));
   }
 
   /** Begin a run (any mode's) and its first fight. */
@@ -597,9 +608,9 @@ class Game {
     if (this.run.event) this.events.openEvent(this.run, () => saveRun(this.run));
   }
 
-  /** The draw pool follows the unlocks, except a daily challenge, which keeps its starting five. */
+  /** The draw pool is the party, except a daily challenge, which keeps its starting five. */
   private syncPool(): void {
-    if (this.run.mode?.kind !== 'daily') this.run.pool = [...this.meta.unlocked];
+    if (this.run.mode?.kind !== 'daily') this.run.pool = [...this.meta.party];
   }
 
   /** The result screen's stars: each pops in (CSS) with its reason and what it pays, and a chime; none for a loss. */

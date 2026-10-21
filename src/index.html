@@ -458,6 +458,40 @@
   #loading { position: fixed; inset: 0; display: grid; place-items: center; font-size: 18px; color: var(--gold); }
   #version { position: fixed; right: 6px; bottom: 2px; font-size: 10px; color: rgba(255, 255, 255, 0.5); text-shadow: 0 1px 0 #000; pointer-events: none; }
   @media (orientation: portrait) { #version { bottom: auto; top: calc(env(safe-area-inset-top) + 34px); } }
+  /* The party screen (src/party.ts): five slots, the traits they wake, the heroes to pick from, and the button to start */
+  #party { position: fixed; inset: 0; z-index: 6; display: flex; flex-direction: column; gap: 8px; padding: calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 12px); background: rgba(24, 12, 8, 0.97); animation: fade 0.2s ease-out; }
+  #party[hidden], #ptSheet[hidden] { display: none; }
+  #party > header { display: flex; align-items: center; gap: 10px; }
+  #party h2 { margin: 0; flex: 1; font-size: 20px; color: var(--gold); }
+  #ptSlots { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .ptSlot { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0; min-height: 82px; padding: 4px 2px; background: rgba(0, 0, 0, 0.35); border: 2px dashed #6b4128; border-radius: 10px; font-weight: normal; }
+  .ptSlot.empty { color: #6b4128; font-size: 26px; }
+  .ptSlot canvas { width: 48px; height: 48px; image-rendering: pixelated; }
+  .ptSlot small { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
+  .ptSlot.r2 { border: 2px solid #4a9cff; }
+  .ptSlot.r3 { border: 2px solid var(--gold); }
+  #ptHint { margin: 0; font-size: 12px; color: var(--dim); text-align: center; }
+  #ptHint.full { color: #ffb08a; }
+  #ptTraits { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--dim); }
+  #ptTraits:empty { display: none; }
+  .ptTrait.on { color: #ffe9a8; }
+  .ptTrait b { margin-right: 6px; font-weight: bold; }
+  #ptGrid { flex: 1; min-height: 0; overflow-y: auto; touch-action: pan-y; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; align-content: start; }
+  .ptCard { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  .ptCard.picked { outline: 3px solid #ffe48a; outline-offset: -3px; }
+  .ptCard.locked { filter: grayscale(1) brightness(0.4); opacity: 0.6; }
+  .ptCard .ptTags { font-size: 9px; color: var(--dim); }
+  .ptInfo { position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; line-height: 18px; border-radius: 50%; font: bold italic 12px/18px Georgia, serif; text-align: center; color: var(--gold); background: rgba(0, 0, 0, 0.55); }
+  #ptGo { width: 100%; padding: 12px; font-size: 18px; }
+  #ptSheet { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; padding: 12px; background: rgba(12, 6, 4, 0.75); animation: fade 0.2s ease-out; }
+  /* sideways (a short screen): the traits run across, the grid has more columns, the slots are shorter */
+  @media (max-height: 500px) {
+    #ptSlots .ptSlot { min-height: 60px; }
+    #ptSlots .ptSlot canvas { width: 36px; height: 36px; }
+    #ptTraits { flex-direction: row; flex-wrap: wrap; gap: 0 14px; }
+    #ptGrid { grid-template-columns: repeat(6, 1fr); }
+    #ptGo { padding: 8px; font-size: 16px; }
+  }
 </style>
 </head>
 <body data-phase="deploy">
@@ -505,6 +539,15 @@
     <div id="hmSubBody"></div>
   </div>
   <div id="hmSheet" hidden><div id="hmSheetBox"></div></div>
+</div>
+<div id="party" hidden>
+  <header><button id="ptBack">Back</button><h2>Party</h2></header>
+  <div id="ptSlots"></div>
+  <p id="ptHint"></p>
+  <div id="ptTraits"></div>
+  <div id="ptGrid"></div>
+  <button id="ptGo" class="primary">Start run</button>
+  <div id="ptSheet" hidden><div id="ptSheetBox"></div></div>
 </div>
 <div id="settings" hidden>
   <header><h2>Settings</h2><button id="settingsClose">Close</button></header>
