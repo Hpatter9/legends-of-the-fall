@@ -189,6 +189,13 @@ export const facesRightOf = (sheet: string) => LAYOUT[sheet].facesRight !== fals
 /** How tall the figure stands in the frame, in the sheet's pixels. */
 export const figureOf = (sheet: string) => LAYOUT[sheet].figure;
 
+/** A sheet's picture and layout, for the menus that draw frames straight onto a canvas (null until the sheets are loaded). */
+export function sheetInfo(sheet: string): { img: HTMLImageElement; w: number; h: number; rows: string[]; counts: Record<string, number>; figure: number; facesRight: boolean } | null {
+  const img = images.get(sheet);
+  const l = LAYOUT[sheet];
+  return img && l ? { img, w: l.w, h: l.h, rows: l.rows, counts: l.counts, figure: l.figure, facesRight: l.facesRight !== false } : null;
+}
+
 /** A small portrait of a fighter for the bench: its first idle frame, cropped to the figure, on a canvas. */
 export function portrait(sheet: string, size: number, grade = 1): HTMLCanvasElement {
   const c = document.createElement('canvas');
