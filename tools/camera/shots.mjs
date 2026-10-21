@@ -52,8 +52,7 @@ for (const [tag, w, h] of [['upright', 393, 852], ['sideways', 852, 393]]) {
     await page.evaluate(() => {
       const fx = window.__game.fx;
       const id = [...fx.sprites.keys()].find((k) => fx.sprites.get(k).unit.side === 'hero');
-      for (const n of ['Whirlwind', 'Shield Bash', 'Iaido']) fx.skillName(id, n, 400);
-      window.__game.speed = 0.01;
+      for (const n of ['Whirlwind', 'Shield Bash', 'Iaido', 'Volley']) fx.skillName(id, n, 400);
       setTimeout(() => fx.skillName(id, 'Meteor', 400), 300);
     });
     await page.waitForTimeout(150);

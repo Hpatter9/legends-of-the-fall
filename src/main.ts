@@ -216,7 +216,9 @@ class Game {
     // (the portrait is cropped from the sheet and scaled up by a whole number, so its pixels stay square)
     const info = sheetInfo(def.sheet);
     const side = info ? Math.min(info.figure + 6, info.h) : 64;
-    const n = Math.max(1, Math.floor(Math.min(innerWidth * 0.7, innerHeight * 0.34) / side));
+    // (about 48% of the width upright, up to 55% of the height sideways; at least once over, at most 90% of the width)
+    const want = innerWidth > innerHeight ? innerHeight * 0.55 : innerWidth * 0.48;
+    const n = Math.max(1, Math.min(Math.round(want / side), Math.floor((innerWidth * 0.9) / side)));
     const old = card.querySelector('canvas')!;
     const face = portrait(def.sheet, side * n);
     // (the sheets face right; a boss that faces left looks the other way)
@@ -519,6 +521,9 @@ class Game {
     const fx = x1 > x0 ? (this.cx - (x0 + x1) / 2) / (x1 - x0) : 0;
     const fy = y1 > y0 ? (this.cy - (y0 + y1) / 2) / (y1 - y0) : 0;
     panBackdrop(fx, fy);
+    // (the labels may use the board's room on the screen, in world px)
+    const w = this.world;
+    this.fx.view = { x0: (0 - w.x) / k + 4, x1: (innerWidth - w.x) / k - 4, y0: (this.area.y - w.y) / k + 4, y1: (this.area.y + this.area.h - w.y) / k };
   }
 
   /** The tile under a point on the screen (the nearest column's top or side). */

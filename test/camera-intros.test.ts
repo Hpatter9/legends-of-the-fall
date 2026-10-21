@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { DEAD_MOVE, easeTo, framing, settle, viewFor } from '../src/render/cameraRules';
-import { liftClear } from '../src/render/labelRules';
+import { liftClear, placeLabel } from '../src/render/labelRules';
 import { BOSS_TITLES, titleOf } from '../src/render/bossTitles';
 import { BOSS_BANDS, BOSS_IDS, FOE_BANDS } from '../src/sim/foes';
 
@@ -69,5 +69,20 @@ describe('boss intros', () => {
     for (const id of BOSS_IDS) assert.ok(BOSS_TITLES[id], id);
     for (const band of BOSS_BANDS) assert.ok(BOSS_TITLES[FOE_BANDS[band][0]], band);
     assert.ok(titleOf('nobody').length > 0);
+  });
+});
+
+describe('placing labels in the board room', () => {
+  const lab = (x: number, y: number) => ({ x, y, w: 60, h: 16 });
+  const view = { x0: 0, x1: 300, y0: 0, y1: 300 };
+  it('pulls a label in from the screen edge', () => {
+    assert.equal(placeLabel([], lab(5, 100), view).x, 30);
+    assert.equal(placeLabel([], lab(299, 100), view).x, 270);
+  });
+  it('stacks downward when there is no room above', () => {
+    const shown = [lab(100, 20)];
+    const p = placeLabel(shown, lab(100, 20), view);
+    assert.ok(p.y > 20);
+    assert.equal(liftClear(shown, { ...lab(100, p.y) }), 0);
   });
 });

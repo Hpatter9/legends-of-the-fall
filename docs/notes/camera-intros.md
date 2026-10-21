@@ -14,7 +14,9 @@ screen shake on) and booms. A tap skips it. It plays once per stage and seed (`i
 (for instance after changing the pack) does not replay it. Reduced motion: a plain fade. The sim is untouched.
 
 **Skill-name labels** (`label()` in `fx.ts`, `labelRules.ts`). Every floating label is lifted above any label still on screen,
-fading ones included (`liftClear`), replacing the old count-based stacking.
+fading ones included (`liftClear`), replacing the old count-based stacking. Labels stay inside the board's room below the top bar (`placeLabel`, the page sets `fx.view` each frame): they stack downward if there is no room above, and are pulled in from the screen's sides. At most three skill names show; a fourth fades the oldest out early (200 ms).
+
+The boss portrait is about 48% of the width upright (up to 55% of the height sideways), a whole-number scale, and the ribbon name is larger and heavier.
 
 Tests: `test/camera-intros.test.ts`. Samples: `docs/samples/camera-intros-*.png` (`tools/camera/shots.mjs`, before and after
 the camera change, the intro sequence, a label case).
