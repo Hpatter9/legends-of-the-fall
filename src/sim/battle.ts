@@ -10,6 +10,7 @@ import { boardOk, D, DEPLOY_ROWS, GROUND_COST, LAVA_BURN, makeBoard, sightClear,
 import { firstStep, walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
 import { FOE_BANDS } from './foes';
+import { killXp } from './levels';
 import { afterBlow, landArea, pierceOf, preyOf, onStrike, rollCrit, tickStatus, tryCast, type Dot, type Zone } from './abilities';
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellState } from './spells';
 import { kindsOf, traitEffects, type TraitEffects } from './traits';
@@ -73,10 +74,11 @@ export interface Unit {
   size?: number;
   /** A hero's grade above the first (2 or 3); absent is 1. Only the look reads it. */
   grade?: number;
-  /** What this fighter did, for its XP (`levels.ts`): damage dealt, healing done, kills made. */
+  /** What this fighter did, for its XP (`levels.ts`): damage dealt, healing done, kills made, and the XP its kills are worth. */
   dealt?: number;
   healed?: number;
   kills?: number;
+  slain?: number;
 }
 
 interface Pending {
@@ -371,6 +373,7 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   }
   if (killed) {
     by.kills = (by.kills ?? 0) + 1;
+    by.slain = (by.slain ?? 0) + killXp(to);
     to.alive = false;
     to.diedAt = b.t;
     to.step = undefined;
