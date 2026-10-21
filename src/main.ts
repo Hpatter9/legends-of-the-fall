@@ -521,6 +521,7 @@ class Game {
       if (got) {
         saveRun(this.run);
         play(got.grade > 1 ? 'merge' : 'summon');
+        this.clearMerged(got);
       }
       // (a hero of a higher grade that wasn't there before is a merge's: it flashes)
       this.evolved = new Set(this.run.roster.filter((h) => h.grade > 1 && !before.has(h.id)).map((h) => h.id));
@@ -733,6 +734,23 @@ class Game {
     setSquad(this.run, h.id, true);
     this.placed.set(id, tile);
     saveRun(this.run);
+    this.syncSprites();
+  }
+
+  /** After a summon: heroes merged away leave the board, and the merged hero takes the place of one of them (if it's in
+   *  the squad and isn't placed yet). */
+  private clearMerged(got: { id: number; kind: string }): void {
+    let freed: [number, number] | undefined;
+    for (const u of this.b.units.filter((x) => x.side === 'hero' && x.tag !== undefined && !heroOf(this.run, x.tag))) {
+      freed ??= [u.u, u.v];
+      unplace(this.b, u.def, u.tag);
+      this.placed.delete(String(u.tag));
+    }
+    if (freed && this.run.squad.includes(got.id) && !this.b.units.some((x) => x.tag === got.id)) {
+      // (the squad slot it holds is already the merged-away hero's: put it on that one's tile)
+      setSquad(this.run, got.id, false);
+      this.put(String(got.id), freed);
+    }
     this.syncSprites();
   }
 
