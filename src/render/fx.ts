@@ -2,10 +2,12 @@
 // screen's shake (the rules for these are Chronos's battle/juiceRules.ts). Everything runs on the fight's own clock,
 // so a faster fight is faster here too.
 
-import { Container, Rectangle, Sprite, Text, Texture } from 'pixi.js';
+import { Container, Graphics, Rectangle, Sprite, Text, Texture } from 'pixi.js';
+import { tileAt } from '../sim/board';
 import { defOf, type Battle, type BattleEvent } from '../sim/battle';
 import type { Shot } from '../sim/units';
 import { loadImage } from './loadImage';
+import { at, TH, TW } from './iso';
 import { fadeTrauma, popScale, shakeOf, traumaFor } from './juiceRules';
 import type { UnitSprite } from './unitView';
 import impactUrl from '../art/fx/impact.png';
@@ -54,7 +56,7 @@ export class Fx {
   }
 
   clear(): void {
-    for (const it of this.items) it.view.destroy();
+    for (const it of this.items) it.view.destroy({ children: true });
     this.items = [];
     this.trauma = 0;
   }
@@ -63,11 +65,24 @@ export class Fx {
   show(b: Battle, events: BattleEvent[]): void {
     for (const e of events) {
       if (e.kind === 'shot') this.shot(e.by, e.to, e.shot, e.ms);
+      else if (e.kind === 'skill') this.skillName(e.by, e.name);
+      else if (e.kind === 'dodge') {
+        const to = this.sprites.get(e.to);
+        if (to) this.label('Miss', to.x, to.y - to.tall - 10, 0xcfe8ff, 12);
+      } else if (e.kind === 'dash' || e.kind === 'blink') this.streak(b, e);
+      else if (e.kind === 'area') this.area(b, e);
+      else if (e.kind === 'zone') this.zone(b, e.u, e.v, e.ms);
       else if (e.kind === 'hit') {
         const to = this.sprites.get(e.to);
         const by = b.units.find((x) => x.id === e.by);
         const target = b.units.find((x) => x.id === e.to);
         if (!to || !by || !target) continue;
+        if (e.src === 'dot') {
+          const burn = target.dot?.kind !== 'bleed';
+          this.anim(burn ? fire : impact, to.x, to.y - to.tall * 0.45, burn ? 0.7 : 0.6, 60);
+          this.number(e.dmg, to.x, to.y - to.tall - 10, false, target.side === 'hero');
+          continue;
+        }
         const fiery = defOf(by).shot === 'fire';
         this.anim(fiery ? (e.splash ? fire : blast) : impact, to.x, to.y - to.tall * 0.45, fiery && !e.splash ? 0.8 : 0.9, 45);
         this.number(e.dmg, to.x, to.y - to.tall - 10, e.heavy, target.side === 'hero');
@@ -78,11 +93,13 @@ export class Fx {
 
   /** Advance the effects by `dt` ms of the fight. */
   step(dt: number): void {
-    this.items = this.items.filter((it) => {
-      if (it.step(dt)) return true;
-      it.view.destroy();
-      return false;
-    });
+    // (an item may add more while it steps, so they go to a fresh list)
+    const was = this.items;
+    this.items = [];
+    for (const it of was) {
+      if (it.step(dt)) this.items.push(it);
+      else it.view.destroy({ children: true });
+    }
     this.trauma = fadeTrauma(this.trauma, dt / 1000);
     const s = shakeOf(this.trauma);
     this.shakeX = s ? (Math.random() * 2 - 1) * s : 0;
@@ -105,6 +122,167 @@ export class Fx {
         if (f >= s.frames.length) return false;
         sp.texture = s.frames[f];
         return true;
+      },
+    });
+  }
+
+  /** A line of text that rises and fades. */
+  private label(text: string, x: number, y: number, fill: number, size: number, life = 900): void {
+    const txt = new Text({ text, style: { fontFamily: 'Trebuchet MS, Verdana, sans-serif', fontWeight: 'bold', fontSize: size, fill, stroke: { color: 0x1a1008, width: 3 } }, resolution: 3 });
+    txt.anchor.set(0.5, 1);
+    txt.position.set(x, y);
+    this.root.addChild(txt);
+    let t = 0;
+    this.items.push({
+      view: txt,
+      step: (dt) => {
+        t += dt;
+        txt.y -= dt * 0.02;
+        txt.alpha = t > life * 0.6 ? 1 - (t - life * 0.6) / (life * 0.4) : 1;
+        return t < life;
+      },
+    });
+  }
+
+  /** A skill goes off: its name over the caster and a ring of sparks at its feet. */
+  private skillName(byId: number, name: string): void {
+    const by = this.sprites.get(byId);
+    if (!by) return;
+    this.label(name, by.x, by.y - by.tall - 20, 0xffe27a, 13, 1200);
+    this.anim(impact, by.x, by.y - 4, 1.6, 40);
+  }
+
+  /** The world position of a tile's top. */
+  private tilePos(b: Battle, u: number, v: number): [number, number] {
+    return at(u, v, tileAt(b.board, u, v)?.h ?? 0);
+  }
+
+  /** A dash leaves a streak between the tiles; a blink a puff of smoke at each end. */
+  private streak(b: Battle, e: Extract<BattleEvent, { kind: 'dash' | 'blink' }>): void {
+    const by = this.sprites.get(e.by);
+    const lift = (by?.tall ?? 40) * 0.45;
+    const [x0, y0] = this.tilePos(b, e.from.u, e.from.v);
+    const [x1, y1] = this.tilePos(b, e.to.u, e.to.v);
+    if (e.kind === 'blink') {
+      for (const [x, y] of [[x0, y0], [x1, y1]]) {
+        const sp = new Sprite(impact.frames[0]);
+        sp.anchor.set(0.5);
+        sp.scale.set(1.4);
+        sp.tint = 0x6a4a8a;
+        sp.position.set(x, y - lift);
+        this.root.addChild(sp);
+        let t = 0;
+        this.items.push({
+          view: sp,
+          step: (dt) => {
+            t += dt;
+            const f = Math.floor(t / 45);
+            if (f >= impact.frames.length) return false;
+            sp.texture = impact.frames[f];
+            return true;
+          },
+        });
+      }
+      return;
+    }
+    const g = new Graphics();
+    g.moveTo(x0, y0 - lift).lineTo(x1, y1 - lift).stroke({ color: 0xffffff, width: 5, alpha: 0.9, cap: 'round' });
+    g.blendMode = 'add';
+    this.root.addChild(g);
+    let t = 0;
+    this.items.push({
+      view: g,
+      step: (dt) => {
+        t += dt;
+        g.alpha = 1 - t / 350;
+        return t < 350;
+      },
+    });
+  }
+
+  /** A 3x3 of tiles marked as a volley or meteor comes down on it after `ms`. */
+  private area(b: Battle, e: Extract<BattleEvent, { kind: 'area' }>): void {
+    const meteor = e.id === 'meteor';
+    const color = meteor ? 0xff5a2a : 0xffe27a;
+    const view = new Container();
+    const g = new Graphics();
+    view.addChild(g);
+    this.root.addChild(view);
+    const tiles: [number, number][] = [];
+    for (let du = -1; du <= 1; du++) for (let dv = -1; dv <= 1; dv++) if (tileAt(b.board, e.u + du, e.v + dv)) tiles.push(this.tilePos(b, e.u + du, e.v + dv));
+    const [cx, cy] = this.tilePos(b, e.u, e.v);
+    // volley: a dozen arrows, each falling in its own moment; meteor: one fireball from the sky
+    const arrows = meteor
+      ? []
+      : Array.from({ length: 12 }, (_, i) => {
+          const [tx, ty] = tiles[i % tiles.length];
+          const sp = new Sprite(arrow);
+          sp.anchor.set(0.5);
+          sp.scale.set(0.55);
+          sp.rotation = Math.PI / 2;
+          sp.visible = false;
+          view.addChild(sp);
+          return { sp, x: tx + (Math.random() * 30 - 15), y: ty + (Math.random() * 12 - 6), at: Math.random() * Math.max(1, e.ms - 260) };
+        });
+    const ball = new Sprite(fire.frames[0]);
+    ball.anchor.set(0.5);
+    ball.scale.set(2.4);
+    ball.blendMode = 'add';
+    ball.visible = false;
+    view.addChild(ball);
+    let t = 0;
+    this.items.push({
+      view,
+      step: (dt) => {
+        t += dt;
+        g.clear();
+        const pulse = 0.16 + 0.1 * Math.sin(t / 90);
+        for (const [x, y] of tiles) g.poly([x, y - TH / 2, x + TW / 2, y, x, y + TH / 2, x - TW / 2, y]).fill({ color, alpha: pulse }).stroke({ color, width: 1.5, alpha: 0.7 });
+        for (const a of arrows) {
+          const f = (t - a.at) / 260;
+          a.sp.visible = f >= 0 && f < 1;
+          if (a.sp.visible) a.sp.position.set(a.x, a.y - 170 * (1 - f));
+        }
+        if (meteor) {
+          const f = Math.min(1, t / e.ms);
+          ball.visible = f < 1;
+          ball.position.set(cx + 150 * (1 - f), cy - 360 * (1 - f));
+          ball.texture = fire.frames[Math.floor(t / 60) % fire.frames.length];
+          if (f >= 1) {
+            this.anim(blast, cx, cy - 12, 2.4, 45);
+            this.trauma = Math.min(1, this.trauma + 0.5);
+          }
+        }
+        return t < e.ms;
+      },
+    });
+  }
+
+  /** Burning ground: flames over a 3x3 of tiles for `ms`. */
+  private zone(b: Battle, u: number, v: number, ms: number): void {
+    const view = new Container();
+    this.root.addChild(view);
+    const flames: Sprite[] = [];
+    for (let du = -1; du <= 1; du++)
+      for (let dv = -1; dv <= 1; dv++) {
+        if (!tileAt(b.board, u + du, v + dv)) continue;
+        const [x, y] = this.tilePos(b, u + du, v + dv);
+        const sp = new Sprite(fire.frames[0]);
+        sp.anchor.set(0.5, 0.8);
+        sp.scale.set(1.1);
+        sp.blendMode = 'add';
+        sp.position.set(x, y);
+        view.addChild(sp);
+        flames.push(sp);
+      }
+    let t = 0;
+    this.items.push({
+      view,
+      step: (dt) => {
+        t += dt;
+        flames.forEach((sp, i) => (sp.texture = fire.frames[(Math.floor(t / 90) + i) % fire.frames.length]));
+        view.alpha = t > ms - 600 ? Math.max(0, (ms - t) / 600) : 1;
+        return t < ms;
       },
     });
   }

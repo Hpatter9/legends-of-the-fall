@@ -9,6 +9,7 @@
 import { boardOk, D, DEPLOY_ROWS, makeBoard, sightClear, standable, tileAt, type At, type Board } from './board';
 import { firstStep, walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
+import { afterBlow, landArea, onStrike, rollCrit, tickStatus, tryCast, type Dot, type Zone } from './abilities';
 import { FOE_BAND, SPLASH_SHARE, UNITS, type Shot, type Side, type UnitDef } from './units';
 
 export const TICK_MS = 100;
@@ -37,22 +38,46 @@ export interface Unit {
   /** The blow being swung, from when and for how long. */
   swing?: { at: number; ms: number; to: number };
   hurtAt?: number;
+  /** Skill charge, 0 to `CHARGE_MAX` (heroes only). */
+  charge: number;
+  /** The skill being cast, from when and for how long. */
+  cast?: { at: number; ms: number; anim: 'attack' | 'attack2' | 'defend' };
+  /** Takes half damage until then (Shield Wall). */
+  guardUntil?: number;
+  /** Must go for this fighter until then (Shield Wall's draw). */
+  taunt?: { to: number; until: number };
+  /** Bleeding or burning. */
+  dot?: Dot & { by: number; next: number; until: number };
   diedAt?: number;
 }
 
 interface Pending {
   at: number;
-  kind: 'release' | 'land';
+  kind: 'release' | 'land' | 'rain' | 'meteor';
   by: number;
   to: number;
   dmg: number;
   heavy: boolean;
+  /** A blow that crit. */
+  crit?: boolean;
+  /** Where a volley or meteor falls. */
+  u?: number;
+  v?: number;
 }
+
+/** What hurt: a blow, a skill's strike, or burning or bleeding. */
+export type HitSrc = 'blow' | 'skill' | 'dot';
 
 export type BattleEvent =
   | { kind: 'swing'; by: number; to: number }
   | { kind: 'shot'; by: number; to: number; shot: Shot; ms: number }
-  | { kind: 'hit'; by: number; to: number; dmg: number; heavy: boolean; splash: boolean; killed: boolean }
+  | { kind: 'hit'; by: number; to: number; dmg: number; heavy: boolean; splash: boolean; killed: boolean; src: HitSrc }
+  | { kind: 'skill'; by: number; name: string; ms: number }
+  | { kind: 'dash'; by: number; from: At; to: At }
+  | { kind: 'blink'; by: number; from: At; to: At }
+  | { kind: 'area'; by: number; id: 'volley' | 'meteor'; u: number; v: number; ms: number }
+  | { kind: 'zone'; u: number; v: number; ms: number }
+  | { kind: 'dodge'; to: number }
   | { kind: 'end'; won: boolean };
 
 export interface Battle {
@@ -65,12 +90,16 @@ export interface Battle {
   /** The fight's own random stream (its state). */
   rng: number;
   pending: Pending[];
+  /** The skills' own random stream (its state). */
+  skillRng: number;
+  /** Burning ground. */
+  zones: Zone[];
   nextId: number;
 }
 
 export const defOf = (u: Unit): UnitDef => UNITS[u.def];
-const apart = (a: At, b: At) => Math.abs(a.u - b.u) + Math.abs(a.v - b.v);
-const tileOf = (b: Battle, a: At) => tileAt(b.board, a.u, a.v)!;
+export const apart = (a: At, b: At) => Math.abs(a.u - b.u) + Math.abs(a.v - b.v);
+export const tileOf = (b: Battle, a: At) => tileAt(b.board, a.u, a.v)!;
 export const unitAt = (b: Battle, u: number, v: number): Unit | undefined => b.units.find((x) => x.alive && x.u === u && x.v === v);
 /** Whether a tile is on the heroes' rows. */
 export const isDeployTile = (v: number) => v >= D - DEPLOY_ROWS;
@@ -90,7 +119,7 @@ export function blowMult(hFrom: number, hTo: number, way: number, toFacing: numb
 }
 
 /** How far a shooter reaches: its range, and more from high ground. */
-export const shotReach = (range: number, hFrom: number, hTo: number) => range + Math.floor(Math.max(0, hFrom - hTo) * 0.7);
+export const shotReach = (range: number, hFrom: number, hTo: number, perStep = 0.7) => range + Math.floor(Math.max(0, hFrom - hTo) * perStep);
 
 /** Whether a fighter of kind `def` standing at `from` can strike a foe at `to`. */
 export function canStrike(board: Board, def: UnitDef, from: At, to: At): boolean {
@@ -98,14 +127,14 @@ export function canStrike(board: Board, def: UnitDef, from: At, to: At): boolean
   if (d < 1) return false;
   const hf = tileAt(board, from.u, from.v)!.h;
   const ht = tileAt(board, to.u, to.v)!.h;
-  if (def.shot) return d <= shotReach(def.range, hf, ht) && sightClear(board, from, to);
+  if (def.shot) return d <= shotReach(def.range, hf, ht, def.heightReach) && sightClear(board, from, to);
   return d <= def.range && Math.abs(hf - ht) <= def.jump;
 }
 
 /** A fresh fight on the seed's board: the foes in their rows, no heroes placed yet. */
 export function startBattle(seed: number): Battle {
   const board = makeBoard(seed);
-  const b: Battle = { seed, board, units: [], phase: 'deploy', t: 0, rng: mixSeed(seed, 0xf167), pending: [], nextId: 1 };
+  const b: Battle = { seed, board, units: [], phase: 'deploy', t: 0, rng: mixSeed(seed, 0xf167), pending: [], skillRng: mixSeed(seed, 0x5c111), zones: [], nextId: 1 };
   // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed
   const rng = new Rng(mixSeed(seed, 0xf0e5));
   for (const id of FOE_BAND) {
@@ -122,9 +151,9 @@ export function startBattle(seed: number): Battle {
   return b;
 }
 
-function addUnit(b: Battle, defId: string, u: number, v: number): Unit {
+export function addUnit(b: Battle, defId: string, u: number, v: number): Unit {
   const def = UNITS[defId];
-  const unit: Unit = { id: b.nextId++, def: defId, side: def.side, u, v, hp: def.hp, maxHp: def.hp, facing: def.side === 'hero' ? 3 : 1, alive: true, busyUntil: 0 };
+  const unit: Unit = { id: b.nextId++, def: defId, side: def.side, u, v, hp: def.hp, maxHp: def.hp, facing: def.side === 'hero' ? 3 : 1, alive: true, busyUntil: 0, charge: 0 };
   b.units.push(unit);
   return unit;
 }
@@ -175,6 +204,7 @@ export function stepBattle(b: Battle): BattleEvent[] {
   // blows and shots that land now
   b.pending.sort((x, y) => x.at - y.at);
   while (b.pending.length && b.pending[0].at <= b.t) settle(b, b.pending.shift()!, out);
+  tickStatus(b, out);
   for (const me of b.units) if (me.alive && me.busyUntil <= b.t) decide(b, me, rng, out);
   b.rng = rng.state;
   const heroes = b.units.some((x) => x.alive && x.side === 'hero');
@@ -191,6 +221,7 @@ function settle(b: Battle, p: Pending, out: BattleEvent[]): void {
   const by = b.units.find((x) => x.id === p.by)!;
   const to = b.units.find((x) => x.id === p.to)!;
   const def = defOf(by);
+  if (p.kind === 'rain' || p.kind === 'meteor') return landArea(b, p.kind, by, p.u!, p.v!, p.dmg, out);
   if (p.kind === 'release') {
     // the shot leaves the bow (or the hand); it lands a moment later wherever the target is
     if (!by.alive) return;
@@ -202,13 +233,17 @@ function settle(b: Battle, p: Pending, out: BattleEvent[]): void {
   // (a sword falls with its wielder; a shot already flying still lands)
   if (!def.shot && !by.alive) return;
   hurt(b, by, to, p.dmg, p.heavy, false, out);
+  afterBlow(b, by, to, !!p.crit);
   if (def.splash)
     for (const n of b.units)
       if (n.alive && n.side === to.side && n !== to && apart(n, to) === 1) hurt(b, by, n, Math.max(1, Math.round(p.dmg * SPLASH_SHARE)), false, true, out);
 }
 
-function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean, splash: boolean, out: BattleEvent[]): void {
+export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean, splash: boolean, out: BattleEvent[], src: HitSrc = 'blow'): void {
   if (!to.alive) return;
+  const left = onStrike(b, by, to, dmg, src, splash, out);
+  if (left === null) return;
+  dmg = left;
   to.hp = Math.max(0, to.hp - dmg);
   to.hurtAt = b.t;
   const killed = to.hp <= 0;
@@ -218,14 +253,22 @@ function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean, splash
     to.step = undefined;
     to.swing = undefined;
   }
-  out.push({ kind: 'hit', by: by.id, to: to.id, dmg, heavy, splash, killed });
+  out.push({ kind: 'hit', by: by.id, to: to.id, dmg, heavy, splash, killed, src });
 }
 
 function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   const def = defOf(me);
   me.step = undefined;
-  const foes = b.units.filter((x) => x.alive && x.side !== me.side);
+  let foes = b.units.filter((x) => x.alive && x.side !== me.side);
   if (!foes.length) return;
+  // a taunted fighter goes for whoever drew it
+  if (me.taunt) {
+    const drawn = me.taunt.until > b.t ? foes.find((x) => x.id === me.taunt!.to) : undefined;
+    if (drawn) foes = [drawn];
+    else me.taunt = undefined;
+  }
+  me.cast = undefined;
+  if (tryCast(b, me, out)) return;
   // strike the weakest foe in reach
   const inReach = foes.filter((f) => canStrike(b.board, def, me, f)).sort((x, y) => x.hp - y.hp || apart(me, x) - apart(me, y) || x.id - y.id);
   if (inReach.length) return swing(b, me, inReach[0], rng, out);
@@ -263,11 +306,12 @@ function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[]): voi
   const way = wayTo(me, to);
   me.facing = way;
   const mult = blowMult(tileOf(b, me).h, tileOf(b, to).h, way, to.facing);
-  const dmg = Math.max(1, Math.round(Math.max(1, def.atk - defOf(to).def) * mult * rng.range(0.9, 1.1)));
+  const crit = rollCrit(b, me);
+  const dmg = Math.max(1, Math.round(Math.max(1, def.atk - defOf(to).def) * mult * crit * rng.range(0.9, 1.1)));
   const windup = Math.min(def.shot ? 500 : 400, Math.round(def.atkMs * 0.4));
   me.swing = { at: b.t, ms: windup + 250, to: to.id };
   me.busyUntil = b.t + def.atkMs;
-  b.pending.push({ at: b.t + windup, kind: def.shot ? 'release' : 'land', by: me.id, to: to.id, dmg, heavy: mult >= 1.4 });
+  b.pending.push({ at: b.t + windup, kind: def.shot ? 'release' : 'land', by: me.id, to: to.id, dmg, heavy: mult * crit >= 1.4, crit: crit > 1 });
   out.push({ kind: 'swing', by: me.id, to: to.id });
 }
 
