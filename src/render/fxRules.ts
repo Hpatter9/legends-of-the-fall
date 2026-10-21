@@ -253,3 +253,13 @@ export const SPELL_TOUCH: Record<Exclude<SpellId, 'meteor'>, { key: PackKey; siz
   resurrect: { key: 'light-pillar', size: 2.5, at: 0.2 },
   poison: undefined,
 };
+
+/* ------------------------------------------------------------------ keeping big effects readable */
+
+/** A screen flash is a blink: at most this bright (alpha) and this long (ms). Only ultimates and big crits use one. */
+export const FLASH_MAX = 0.35;
+export const FLASH_MS = 120;
+
+/** The colour an ultimate's layers are drawn in, where the pack's own strip would clip to white (wind and lightning are
+ *  near-white; a pale blue and cyan keeps them a storm). Fire, blood and the rest keep their own colours. */
+export const ULT_TINT: Partial<Record<Element, number>> = { wind: 0x8fe0ff, lightning: 0x9fd8ff, light: 0xffe9a0 };

@@ -19,7 +19,7 @@ import { Particles } from './particles';
 import { loadVfxArt, VFX } from './vfxArt';
 import { loadPackArt, PACK } from './fxSheets';
 import { bossEntrance, deathBurst, impactBurst, play, setBoneArt, windUp } from './combatFx';
-import { arcStyle, bits, deathKind, hitStopMs, impactElement, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, SPELL_TOUCH, type Missile } from './fxRules';
+import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, impactElement, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, SPELL_TOUCH, type Missile } from './fxRules';
 import { particleBudget, slashOf } from './vfxRules';
 import impactUrl from '../art/fx/impact.png';
 import fireUrl from '../art/fx/hit_fire.png';
@@ -122,6 +122,9 @@ export class Fx {
   private flashLeft = 0;
   private flashMs = 1;
   private flashPeak = 0;
+  /** The fight's own clock in ms (for staggering labels), and the skill names still showing. */
+  private clock = 0;
+  private skillLabels: { x: number; t: number }[] = [];
   /** The small puffs, sparks and trails (pooled, capped). */
   readonly particles = new Particles();
   /** The world dimmed behind the effects for an ultimate (a layer under `root`, sized by `dim`'s peak and time). */
@@ -209,6 +212,9 @@ export class Fx {
   /** A white flash that fades over `ms` (not when screen shake is off in the settings). */
   private flash(peak: number, ms: number): void {
     if (this.calm()) return;
+    // (a flash is a blink: never more than a third of the screen's brightness, never longer than a tenth of a second)
+    peak = Math.min(FLASH_MAX, peak);
+    ms = Math.min(FLASH_MS, ms);
     this.flashPeak = Math.max(peak, this.flashLeft > 0 ? this.flashPeak : 0);
     this.flashMs = ms;
     this.flashLeft = ms;
@@ -326,10 +332,10 @@ export class Fx {
         this.stopLeft = Math.max(this.stopLeft, hitStopMs(e.heavy, share, e.killed, this.calm()));
         if (e.killed) this.death(target, to.x, to.y - to.tall * 0.3);
         if (e.heavy && e.src === 'blow') {
-          // (a crit, or a blow from height: a gold burst and a flash)
+          // (a crit, or a blow from height: a gold burst; a big one, a third of the target's health or more, also blinks the screen)
           this.anim(magic.goldBurst, to.x, to.y - to.tall * 0.45, 1.3, 60);
           play(this.particles, 'light-cross', to.x, to.y - to.tall * 0.45, { scale: 1.6, frameMs: 50 });
-          this.flash(0.35, 180);
+          if (share >= 0.3) this.flash(0.3, 100);
           this.trauma = Math.min(1, this.trauma + 0.25);
         }
         if (e.killed && target.side === 'foe' && target.maxHp >= BIG_FOE_HP) {
@@ -338,7 +344,7 @@ export class Fx {
           this.anim(magic.fireExplosion, to.x, to.y - to.tall * 0.45, 3.2, 70);
           for (let i = 0; i < 3; i++) this.particles.spawn({ frames: VFX.smokeDark, x: to.x + jitter(18), y: to.y - to.tall * 0.4 + jitter(10), scale: 1.6, life: 900, vy: -0.03, grow: 0.0006, alpha: 0.8 });
           this.slowLeft = 700;
-          this.flash(0.5, 260);
+          this.flash(0.35, 120);
           this.trauma = Math.min(1, this.trauma + 0.4);
         }
       }
@@ -544,6 +550,7 @@ export class Fx {
       if (it.step(dt)) this.items.push(it);
       else it.view.destroy({ children: true });
     }
+    this.clock += dt;
     this.trauma = fadeTrauma(this.trauma, dt / 1000);
     const s = this.calm() ? 0 : shakeOf(this.trauma);
     this.shakeX = s ? (Math.random() * 2 - 1) * s : 0;
@@ -617,27 +624,43 @@ export class Fx {
     const ultimate = kitOf(by.unit)?.ultimate?.name === name;
     const boss = by.unit.side === 'foe' && isBoss(by.unit.def);
     const el = skillElement(name);
-    this.label(name, by.x, by.y - by.tall - 20, ultimate ? 0xfff2a0 : boss ? 0xff9a8a : 0xffe27a, ultimate || boss ? 15 : 13, 1200);
+    // (names of skills that go off close together stack upward instead of overprinting)
+    this.skillLabels = this.skillLabels.filter((l) => this.clock - l.t < 1200);
+    const stacked = this.skillLabels.filter((l) => Math.abs(l.x - by.x) < 110).length;
+    this.skillLabels.push({ x: by.x, t: this.clock });
+    this.label(name, by.x, by.y - by.tall - 20 - stacked * 17, ultimate ? 0xfff2a0 : boss ? 0xff9a8a : 0xffe27a, ultimate || boss ? 15 : 13, 1200);
     windUp(this.particles, el, by.x, by.y, ms, by.tall, ultimate || boss);
     const cast = SKILL_FX[name]?.cast;
     if (ultimate) {
       this.trauma = Math.max(this.trauma, 0.5);
-      this.flash(0.35, 380);
+      this.flash(0.3, 100);
       this.dim(0.45, ms + 900);
       // (the wind-up ends in a nova and a ring of the element, with a second flash and a hard shake)
       const [x, y] = [by.x, by.y];
       this.later(ms, () => {
-        play(this.particles, packKey(el, 'nova'), x, y - by.tall * 0.4, { scale: 3.5, frameMs: 80 });
-        play(this.particles, packKey(el, 'wave'), x, y, { scale: 4.5, frameMs: 90 });
-        this.flash(0.5, 300);
+        // (thin layers in the element's colour, so the nova reads as a nova and does not saturate)
+        const tint = ULT_TINT[el];
+        play(this.particles, packKey(el, 'nova'), x, y - by.tall * 0.4, { scale: 3, frameMs: 80, alpha: 0.6, tint });
+        play(this.particles, packKey(el, 'wave'), x, y, { scale: 4, frameMs: 90, add: false, alpha: 0.7, tint });
+        // (a storm of wind has lightning in it: bolts crack down round the caster)
+        if (el === 'wind')
+          for (let i = 0; i < bits(5, this.particles.density); i++)
+            play(this.particles, 'lightning-strike', x + jitter(46), y - 4 + jitter(16), { scale: 1.6, frameMs: 55, delay: i * 90, tint: 0xa8e4ff, alpha: 0.85 });
+        this.flash(0.35, 110);
         this.trauma = Math.min(1, this.trauma + 0.45);
       });
     } else if (boss) {
       this.trauma = Math.max(this.trauma, 0.4);
       this.later(ms, () => play(this.particles, packKey(el, 'wave'), by.x, by.y, { scale: 3, frameMs: 90 }));
     }
-    if (cast) this.effect(cast, by.x, by.y - 4);
-    else this.anim(impact, by.x, by.y - 4, 1.6, 40);
+    if (cast) {
+      const sp = this.effect(cast, by.x, by.y - 4);
+      // (an ultimate's cast sheet is drawn big: kept in its element's colour and thinned)
+      if (ultimate) {
+        sp.alpha = 0.6;
+        if (ULT_TINT[el] !== undefined) sp.tint = ULT_TINT[el]!;
+      }
+    } else this.anim(impact, by.x, by.y - 4, 1.6, 40);
   }
 
   /** The world position of a tile's top. */
@@ -769,9 +792,9 @@ export class Fx {
   /** The meteor lands: a big explosion with a flash, a ring of fire, rubble and smoke, a crater that stays and cools, and a hard shake. */
   private meteorLanding(cx: number, cy: number): void {
     const p = this.particles;
-    this.anim(magic.fireExplosion, cx, cy - 12, 4.5, 70);
-    play(p, 'fire-nova', cx, cy - 14, { scale: 4.5, frameMs: 70 });
-    play(p, 'fire-wave', cx, cy, { scale: 5, frameMs: 80 });
+    // (layers kept apart and thinned so the blast stays orange instead of clipping to white)
+    this.anim(magic.fireExplosion, cx, cy - 12, 3.5, 70).alpha = 0.85;
+    play(p, 'fire-wave', cx, cy, { scale: 4.5, frameMs: 80, add: false, alpha: 0.7 });
     for (let i = 0; i < bits(8, p.density); i++)
       p.spawn({ frames: PACK['earth-puff'], x: cx + jitter(14), y: cy - 6, scale: 0.6, life: 800, vx: jitter(0.12), vy: -0.16 - Math.random() * 0.1, gravity: 0.0006, spin: jitter(0.014), prio: true });
     for (let i = 0; i < bits(4, p.density); i++)
@@ -790,7 +813,6 @@ export class Fx {
         return t < 2200;
       },
     });
-    this.flash(0.45, 260);
     this.trauma = Math.min(1, this.trauma + 0.6);
   }
 
@@ -810,10 +832,7 @@ export class Fx {
             const [tx, ty] = this.tilePos(b, e.u + du, e.v + dv);
             play(this.particles, 'ice-spikes', tx, ty, { scale: 1.2, frameMs: 80, add: false, delay: (Math.abs(du) + Math.abs(dv)) * 60 });
           }
-    if (e.id === 'smite' || e.id === 'chain') {
-      this.flash(0.3, 200);
-      this.trauma = Math.max(this.trauma, 0.45);
-    }
+    if (e.id === 'smite' || e.id === 'chain') this.trauma = Math.max(this.trauma, 0.45);
     const { color, ms } = SPELL_GLOW[e.id];
     const g = new Graphics();
     this.root.addChild(g);

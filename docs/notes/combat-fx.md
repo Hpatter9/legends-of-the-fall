@@ -171,3 +171,15 @@ no GPU, so far slower than a phone's). Average frame time over 2.5 to 3 s: plain
 (worst 67), meteor 37 ms (worst 50), chain 33 ms (worst 50), poison 38 ms (worst 67). That is a CPU-rasterised lower bound
 on speed; the numbers are for comparing changes, not a phone's frame rate. Live particles stay under the 200 cap (130% for
 big bursts).
+
+## Readability pass (director's review)
+
+- **No white clipping in big effects.** An ultimate's wind-up layers (circle, gather, rune, pillar) and its closing nova and
+  ring are thinned (alpha 0.3 to 0.7), the pillar and ring are drawn normally rather than additively, and wind, lightning
+  and light ultimates are tinted (`ULT_TINT`: pale blue, cyan, warm gold) because their pack strips are near-white. Tempest
+  also cracks lightning bolts down round the caster. The meteor's landing lost its duplicate fire nova and thins the rest.
+- **Flashes are blinks.** `Fx.flash` clamps every flash to 0.35 alpha and 120 ms (`FLASH_MAX`, `FLASH_MS`). Only ultimates
+  (start and end), a boss's death and a crit that takes a third of the target's health or more use one; the meteor's
+  landing, smite and chain lightning no longer flash (they shake).
+- **Skill names stack.** Names within 110 px of each other that appear within 1.2 s are offset 17 px upward each, so
+  Shield Wall, Meteor and Tempest no longer overprint.

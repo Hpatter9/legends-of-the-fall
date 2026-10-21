@@ -7,7 +7,7 @@ import type { Texture } from 'pixi.js';
 import type { Burst, Particles } from './particles';
 import { PACK } from './fxSheets';
 import { VFX } from './vfxArt';
-import { bits, GLOW, packKey, type DeathKind, type Element, type Family, type PackKey } from './fxRules';
+import { bits, GLOW, packKey, ULT_TINT, type DeathKind, type Element, type Family, type PackKey } from './fxRules';
 
 const jit = (n: number) => (Math.random() * 2 - 1) * n;
 
@@ -128,15 +128,18 @@ export function deathBurst(p: Particles, kind: DeathKind, x: number, y: number, 
 /** A caster winds up: a circle under its feet and motes gathering on it for `ms` (an ultimate's is a big rune, a wave
  *  and a pillar as well). */
 export function windUp(p: Particles, el: Element, x: number, y: number, ms: number, tall: number, ultimate: boolean): void {
-  play(p, fam(el, 'circle'), x, y - 2, { scale: ultimate ? 2.5 : 1.4, loop: true, life: ms + 250, frameMs: 90, alpha: 0.95 });
-  play(p, fam(el, 'gather'), x, y - tall * 0.5, { scale: ultimate ? 2.5 : 1.3, loop: true, life: ms, frameMs: 90 });
+  // (an ultimate's layers are big, so each is thinned and tinted in the element's colour: stacked at full strength the
+  // additive strips add up to flat white)
+  const tint = ultimate ? ULT_TINT[el] : undefined;
+  play(p, fam(el, 'circle'), x, y - 2, { scale: ultimate ? 2.2 : 1.4, loop: true, life: ms + 250, frameMs: 90, alpha: ultimate ? 0.6 : 0.85, tint });
+  play(p, fam(el, 'gather'), x, y - tall * 0.5, { scale: ultimate ? 2 : 1.3, loop: true, life: ms, frameMs: 90, alpha: ultimate ? 0.6 : 0.9, tint });
   if (ultimate) {
-    play(p, fam(el, 'rune'), x, y - 2, { scale: 2.5, loop: true, life: ms + 400, frameMs: 100, alpha: 0.9 });
-    play(p, fam(el, 'pillar'), x, y - 20, { scale: 2, life: ms + 300, frameMs: Math.max(60, ms / 6), alpha: 0.7, delay: ms * 0.3 });
+    play(p, fam(el, 'rune'), x, y - 2, { scale: 2.2, loop: true, life: ms + 400, frameMs: 100, alpha: 0.5, tint });
+    play(p, fam(el, 'pillar'), x, y - 20, { scale: 1.5, life: ms + 300, frameMs: Math.max(60, ms / 6), alpha: 0.3, add: false, delay: ms * 0.3, tint });
   }
   const n = bits(Math.round(ms / 160), p.density);
   for (let i = 0; i < n; i++)
-    p.spawn({ frames: PACK[fam(el, 'sparkle')], x: x + jit(14), y: y - 2 + jit(3), scale: 0.6, life: 600, delay: (i * ms) / n, vy: -0.06, add: true });
+    p.spawn({ frames: PACK[fam(el, 'sparkle')], x: x + jit(14), y: y - 2 + jit(3), scale: 0.6, life: 600, delay: (i * ms) / n, vy: -0.06, add: true, tint });
 }
 
 /** A boss steps onto the board: a dark rune, a shock ring and a pillar, smoke and embers round it. */

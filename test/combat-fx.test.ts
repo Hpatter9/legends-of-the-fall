@@ -7,7 +7,7 @@ import { fight, stepBattle } from '../src/sim/battle';
 import { readyBattle } from './helpers';
 import { ALL_HEROES, UNITS } from '../src/sim/units';
 import { FOES } from '../src/sim/foes';
-import { arcStyle, bits, deathKind, ELEMENTS, hitStopMs, impactElement, maxStatuses, missileOf, nudgeOf, packKey, SKILL_ELEMENT, SPELL_CAST, SPELL_ELEMENT, SPELL_TOUCH, STATUS_LOOKS, statusesOf, type PackKey, type StatusSource } from '../src/render/fxRules';
+import { FLASH_MAX, FLASH_MS, ULT_TINT, arcStyle, bits, deathKind, ELEMENTS, hitStopMs, impactElement, maxStatuses, missileOf, nudgeOf, packKey, SKILL_ELEMENT, SPELL_CAST, SPELL_ELEMENT, SPELL_TOUCH, STATUS_LOOKS, statusesOf, type PackKey, type StatusSource } from '../src/render/fxRules';
 
 const atlas = JSON.parse(readFileSync('src/art/fx/pack/atlas.json', 'utf8')) as Record<string, [number, number, number]>;
 
@@ -153,5 +153,15 @@ describe('the stun record the effects read', () => {
     };
     // (the same cast on the same seed plays out the same twice)
     assert.deepEqual(run(true), run(true));
+  });
+});
+
+describe('readable big effects', () => {
+  it('keeps a screen flash to a short, dim blink', () => {
+    assert.ok(FLASH_MAX <= 0.35);
+    assert.ok(FLASH_MS <= 120);
+  });
+  it('tints the near-white elements of an ultimate', () => {
+    assert.ok(ULT_TINT.wind !== undefined && ULT_TINT.lightning !== undefined);
   });
 });
