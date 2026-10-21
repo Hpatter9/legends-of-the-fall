@@ -317,6 +317,9 @@ export class Fx {
       }
       if (u.hasteUntil !== undefined && u.hasteUntil > b.t && this.particles.rate(0.5))
         this.particles.spawn({ frames: VFX.dustGold, x: s.x + jitter(8), y: s.y - 2, scale: 0.6, life: 380, vy: -0.02, alpha: 0.8 });
+      // a slowed fighter gives off ice crystals while it lasts
+      if (u.slowUntil !== undefined && u.slowUntil > b.t && this.particles.rate(0.3))
+        this.particles.spawn({ frames: VFX.puffIce, x: s.x + jitter(12), y: s.y - s.tall * 0.5, scale: 0.5, life: 520, vy: -0.015, alpha: 0.9 });
       if (defOf(u).flies && b.t - (this.gusts.get(u.id) ?? -1e9) > 900) {
         this.gusts.set(u.id, b.t);
         this.gust(s);

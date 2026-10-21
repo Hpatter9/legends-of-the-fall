@@ -28,6 +28,7 @@ import { countTraits, kindsOf, traitsOf, TRAITS } from './sim/traits';
 import { UnitSprite } from './render/unitView';
 import { flyUp, summonBurst } from './render/uiFx';
 import { Fx, loadFx } from './render/fx';
+import pillarLightUrl from './art/fx/vfx/pillar_light.png';
 import { framesOf, loadSheets, portrait } from './render/sheets';
 import { at, FOOT, HH, TH, TW } from './render/iso';
 import { bindMute, play, playEvents, setup, startFight } from './render/sound';
@@ -661,6 +662,12 @@ class Game {
         row.classList.add('up');
         fill.style.transition = 'none';
         fill.style.width = `${share(after)}%`;
+        // (the level-up's light pillar: on this row, and over the heroes of this kind on the board, if it's showing)
+        const pillar = document.createElement('span');
+        pillar.className = 'pillar';
+        pillar.style.backgroundImage = `url(${pillarLightUrl})`;
+        row.append(pillar);
+        for (const u of this.b.units) if (u.side === 'hero' && u.def === kind) this.sprites.get(u.id)?.evolve();
         play('levelUp');
       }, at + 900);
     });
