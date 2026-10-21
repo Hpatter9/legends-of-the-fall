@@ -191,7 +191,8 @@ export class Tavern {
   private fit(): void {
     const h = this.root.clientHeight;
     if (!h || !art) return;
-    const s = Math.max(2, Math.min(4, Math.floor(h / ROOM_H)));
+    // (upright the room is drawn a size bigger so the floor and the heroes fill the page, and it pans both ways)
+    const s = this.root.clientWidth < h ? 3 : Math.max(2, Math.min(4, Math.floor(h / ROOM_H)));
     if (s === this.scale && this.still && this.canvas.width === ROOM_W * s) return;
     this.scale = s;
     this.canvas.width = ROOM_W * s;

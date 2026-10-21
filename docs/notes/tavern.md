@@ -2,8 +2,8 @@
 
 ## The tavern
 - The Heroes tab is a side-view pixel tavern (`src/tavern.ts`): wall with hearth and shelves, floor, rug, a bar with stools, two
-  round tables and a long table, barrels and crates. One canvas, 384x296 room pixels, drawn at a whole-number scale (2 on a
-  phone, up to 4 on a big screen) with nearest neighbour. It is bigger than a phone is wide, so it pans by native scroll
+  round tables and a long table, barrels and crates. One canvas, 384x296 room pixels, drawn at a whole-number scale (3 upright, so the floor and heroes
+  fill the page and it pans both ways; 2 sideways; up to 4 on a big landscape screen) with nearest neighbour. It is bigger than a phone is wide, so it pans by native scroll
   (drag); it opens centred, and scrolled to the floor.
 - **Spots** (`src/render/tavernSpots.ts`, pure data, tested in `test/tavern.test.ts`): every hero in `ALL_HEROES` has one fixed
   `{x, y, depth, facing, seat}`. The starting five sit together at the middle of the bar, so five heroes already look lived-in.
