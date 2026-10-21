@@ -79,7 +79,7 @@
     position: fixed; left: 0; right: 0; bottom: 0; padding: 8px 8px calc(env(safe-area-inset-bottom) + 8px);
     background: var(--wood); border-top: 2px solid var(--edge); display: flex; flex-direction: column; gap: 8px;
   }
-  #bench { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; max-height: 172px; overflow-y: auto; }
+  #bench { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; max-height: 172px; overflow-y: auto; }
   .card {
     position: relative; background: rgba(0, 0, 0, 0.35); border: 2px solid #5a3a22; border-radius: 8px; padding: 2px 2px 4px;
     text-align: center; touch-action: none;
@@ -117,7 +117,7 @@
   #mana { display: flex; align-items: center; gap: 8px; font-size: 12px; font-variant-numeric: tabular-nums; }
   #mana i { flex: 1; height: 10px; background: #2a1a10; border: 1px solid #5a3a22; border-radius: 5px; overflow: hidden; }
   #mana i span { display: block; height: 100%; width: 0; background: linear-gradient(#7cc0ff, #3a78d6); }
-  #spellCards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  #spellCards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
   .spell {
     position: relative; overflow: hidden; padding: 5px 2px 4px; text-align: center; font-size: 12px; line-height: 1.2;
     background: rgba(0, 0, 0, 0.35); border: 2px solid #5a3a22; border-radius: 8px; color: var(--ink);
@@ -144,7 +144,7 @@
   /* sideways: the bench down the right */
   @media (orientation: landscape) {
     #panel { left: auto; top: 0; width: 230px; border-top: 0; border-left: 2px solid var(--edge); padding: calc(env(safe-area-inset-top) + 8px) calc(env(safe-area-inset-right) + 8px) 8px 8px; justify-content: center; }
-    #bench { grid-template-columns: repeat(3, 1fr); max-height: 150px; }
+    #bench { grid-template-columns: repeat(3, minmax(0, 1fr)); max-height: 150px; }
     #buttons { flex-wrap: wrap; }
     #buttons button { flex: 1 1 40%; }
     #top { right: 230px; }
@@ -188,7 +188,7 @@
   /* the fight's numbers: a row a hero, with a small bar for each number (the bars are scaled to the best hero) */
   #fightStats { display: flex; flex-direction: column; gap: 2px; width: min(330px, 92vw); padding: 6px 8px; background: var(--wood); border: 2px solid var(--edge); border-radius: 8px; font-size: 12px; color: var(--ink); }
   #fightStats[hidden] { display: none; }
-  #fightStats .srow { display: grid; grid-template-columns: 96px repeat(4, 1fr); align-items: center; gap: 8px; padding: 2px 0; }
+  #fightStats .srow { display: grid; grid-template-columns: 96px repeat(4, minmax(0, 1fr)); align-items: center; gap: 8px; padding: 2px 0; }
   #fightStats .srow.head { font-size: 10px; color: var(--dim); }
   #fightStats .srow b { font-weight: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #fightStats .srow b em { font-style: normal; color: var(--gold); }
@@ -222,7 +222,7 @@
   #gacha .pulls { display: flex; gap: 8px; }
   #gacha .pulls button { flex: 1; }
   #rates, #pity { font-size: 11px; color: var(--dim); text-align: center; }
-  #reveal { flex: none; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; min-height: 96px; }
+  #reveal { flex: none; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; min-height: 96px; }
   .flip { position: relative; aspect-ratio: 3 / 4; perspective: 600px; }
   .flip .back, .flip .face { position: absolute; inset: 0; border-radius: 8px; border: 2px solid var(--edge); backface-visibility: hidden; transition: transform 0.5s; }
   .flip .back { background: repeating-linear-gradient(45deg, #5a3520, #5a3520 6px, #7a4a28 6px, #7a4a28 12px); }
@@ -232,7 +232,7 @@
   .flip.up .back { transform: rotateY(-180deg); }
   .flip.up .face { transform: rotateY(0); }
   .flip.new .face em { color: #7cf07c; }
-  #collection { flex: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  #collection { flex: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
   #collection .hero { text-align: center; font-size: 10px; background: rgba(0, 0, 0, 0.35); border: 2px solid #5a3a22; border-radius: 8px; padding: 2px; }
   #collection .hero canvas { width: 100%; max-width: 56px; image-rendering: pixelated; }
   #collection .hero b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -240,7 +240,7 @@
   #collection .rank { display: block; color: var(--gold); }
   #collection .bar { display: block; height: 4px; margin: 2px 4px 4px; background: rgba(255, 255, 255, 0.15); border-radius: 2px; overflow: hidden; }
   #collection .bar i { display: block; height: 100%; background: var(--gold); }
-  @media (orientation: landscape) { #reveal { grid-template-columns: repeat(10, 1fr); } #collection { grid-template-columns: repeat(8, 1fr); } }
+  @media (orientation: landscape) { #reveal { grid-template-columns: repeat(10, minmax(0, 1fr)); } #collection { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
 
   /* the home screen: top bar, five sliding pages, a bottom tab bar (a left rail sideways) */
   #home { position: fixed; inset: 0; z-index: 4; display: grid; grid-template-rows: auto 1fr auto; grid-template-areas: 'top' 'pages' 'tabs'; background: #1c1410; image-rendering: pixelated; overflow: hidden; }
@@ -316,7 +316,7 @@
   #hmSubBody { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; touch-action: pan-y; }
   #hmSubBody .hint { margin: 0; font-size: 11px; color: var(--dim); text-align: center; }
   #hmSheet { align-items: center; justify-content: center; padding: 12px; background: rgba(12, 6, 4, 0.75); animation: fade 0.2s ease-out; }
-  .hgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .hgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .hcard { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 4px; min-width: 0; background: linear-gradient(#4a2c1c, #2a170e); border: 3px solid #6b4128; border-radius: 10px; font-weight: normal; }
   .hcard canvas { width: 64px; height: 64px; image-rendering: pixelated; background: rgba(0, 0, 0, 0.3); border-radius: 6px; }
   .hcard b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
@@ -333,7 +333,7 @@
   .hhead em, .hhead .lv { font-size: 11px; font-style: normal; color: var(--dim); }
   .hpic { flex: none; position: relative; width: 104px; height: 104px; background: radial-gradient(#6b4a2c, #1c1008); border-radius: 10px; border: 2px solid #1a0d07; overflow: hidden; }
   .hpic canvas { position: absolute; left: 50%; bottom: 0; }
-  .hstats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; }
+  .hstats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; text-align: center; }
   .hstats div { padding: 4px 2px; background: rgba(0, 0, 0, 0.35); border-radius: 6px; }
   .hstats b { display: block; font-size: 16px; color: var(--gold); }
   .hstats small { font-size: 10px; color: var(--dim); }
@@ -387,7 +387,7 @@
     .hmBattle { font-size: 28px; padding: 9px 10px 8px; width: 100%; }
     .hmHeroes { bottom: 8px; left: auto; width: 50%; right: 0; }
     .hmPage { padding-top: 8px; }
-    .hgrid { grid-template-columns: repeat(5, 1fr); }
+    .hgrid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
     .hsheet { flex-direction: column; }
   }
 
@@ -467,7 +467,7 @@
   #party[hidden], #ptSheet[hidden] { display: none; }
   #party > header { display: flex; align-items: center; gap: 10px; }
   #party h2 { margin: 0; flex: 1; font-size: 20px; color: var(--gold); }
-  #ptSlots { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  #ptSlots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
   .ptSlot { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0; min-height: 82px; padding: 4px 2px; background: rgba(0, 0, 0, 0.35); border: 2px dashed #6b4128; border-radius: 10px; font-weight: normal; }
   .ptSlot.empty { color: #6b4128; font-size: 26px; }
   .ptSlot canvas { width: 48px; height: 48px; image-rendering: pixelated; }
@@ -478,7 +478,7 @@
   #ptTraits:empty { display: none; }
   .ptTrait.on { color: #ffe9a8; }
   .ptTrait b { margin-right: 6px; font-weight: bold; }
-  #ptGrid { flex: 1; min-height: 0; overflow-y: auto; touch-action: pan-y; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; align-content: start; }
+  #ptGrid { flex: 1; min-height: 0; overflow-y: auto; touch-action: pan-y; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; align-content: start; }
   .ptCard { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
   .ptCard.picked { outline: 3px solid #ffe48a; outline-offset: -3px; }
   .ptCard.locked { filter: grayscale(1) brightness(0.4); opacity: 0.6; }
@@ -491,7 +491,7 @@
     #ptSlots .ptSlot { min-height: 60px; }
     #ptSlots .ptSlot canvas { width: 36px; height: 36px; }
     #ptTraits { flex-direction: row; flex-wrap: wrap; gap: 0 14px; }
-    #ptGrid { grid-template-columns: repeat(6, 1fr); }
+    #ptGrid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
     #ptGo { padding: 8px; font-size: 16px; }
   }
 
@@ -611,10 +611,11 @@
   .hcard.r4, .card.r4, .hsheet.r4, .ptSlot.r4, .hmShow canvas.r4 { box-shadow: 0 0 10px rgba(240, 180, 74, 0.6), inset 0 0 8px rgba(255, 210, 90, 0.25); }
   .hcard.r4, .card.r4 { background: linear-gradient(#5a3c1c, #2a170e); animation: gleam 2.8s ease-in-out infinite; }
   .flip.r4 .face { box-shadow: 0 0 18px 4px var(--r4); }
+  .card, .hcard, .hrow, .ptSlot { min-width: 0; box-sizing: border-box; } .hrow > :not(canvas) { min-width: 0; }
   .rtag { font-style: normal; font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--rc); }
   /* a Mythic's frame is a slow crimson-and-gold shimmer */
   .card.r5, .hcard.r5, .hsheet.r5, .hrow.r5, .ptSlot.r5, #collection .hero.r5, .flip.r5 .face, .hmShow canvas.r5 {
-    border: 3px solid transparent; background: linear-gradient(#3a1018, #1c0a0e) padding-box, linear-gradient(120deg, #ff2a4a, #ffd24a, #ff2a4a, #ffd24a) border-box; background-size: 100% 100%, 300% 300%;
+    border: 2px solid transparent; background: linear-gradient(#3a1018, #1c0a0e) padding-box, linear-gradient(120deg, #ff2a4a, #ffd24a, #ff2a4a, #ffd24a) border-box; background-size: 100% 100%, 300% 300%;
     animation: shimmer 3s linear infinite; box-shadow: 0 0 14px rgba(255, 58, 74, 0.7), 0 0 6px rgba(255, 210, 74, 0.6); }
   .card.r5 em, .hcard.r5 .lv { color: #ffd24a; }
   @keyframes shimmer { to { background-position: 0 0, 300% 300%; } }
