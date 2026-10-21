@@ -8,6 +8,7 @@ import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS
 import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
 import { boostOf, finish, heroOf, isBossStage, loadRun, newRun, saveRun, setSquad, SQUAD, startStage, summon, summonCost, type Run } from './sim/run';
 import { formOf, UNITS } from './sim/units';
+import { isBoss } from './sim/foes';
 import { earn, loadMeta, rankOf, rarityOf, recordStars, saveMeta, type Meta } from './sim/meta';
 import { fightXp, gainXp, levelGain, levelOfKind, progressOf, xpOf, type LevelUp } from './sim/levels';
 import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
@@ -30,7 +31,9 @@ import { UnitSprite } from './render/unitView';
 import { flyUp, summonBurst } from './render/uiFx';
 import { Fx, loadFx } from './render/fx';
 import pillarLightUrl from './art/fx/vfx/pillar_light.png';
-import { framesOf, loadSheets, portrait } from './render/sheets';
+import { framesOf, loadSheets, portrait, sheetInfo } from './render/sheets';
+import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, framing, PAUSE_MS, settle, viewFor, type View } from './render/cameraRules';
+import { titleOf } from './render/bossTitles';
 import { at, FOOT, HH, TH, TW } from './render/iso';
 import { bindMute, play, playEvents, setup, startFight } from './render/sound';
 import { onSettings, openSettings, settings } from './settings';
@@ -40,7 +43,11 @@ TextureSource.defaultOptions.scaleMode = 'nearest';
 /** How much bigger the fighters show upright than when the whole board fits the width. */
 const ZOOM = 1.6;
 /** A boss's title card: how long it stays (ms), and how much the camera zooms in on the boss. */
-const INTRO_MS = 2000;
+const INTRO_MS = 2400;
+/** When the ribbon slams down inside the intro (ms): the rumble and the boom. */
+const SLAM_MS = 850;
+/** How far the follow camera may zoom in, in multiples of the layout's scale (out is to the whole board's width). */
+const FOLLOW_IN = 1.7;
 const INTRO_ZOOM = 0.25;
 const STAT_LABELS: Record<(typeof STAT_KEYS)[number], string> = { dealt: 'Dealt', taken: 'Taken', healed: 'Healed', kills: 'Kills' };
 
@@ -92,7 +99,7 @@ class Game {
   /** The fight's numbers for each hero, tallied as the ticks come in. */
   private stats: FightStats = [];
   /** A boss's title card: how long it has been on, and the boss it is about. */
-  private intro: { t: number; boss: Unit } | null = null;
+  private intro: { t: number; boss: Unit; slammed: boolean } | null = null;
   /** The stages whose boss has had its card this session (a stage's card plays once). */
   private introduced = new Set<string>();
 
@@ -195,27 +202,41 @@ class Game {
     this.startIntro();
   }
 
-  /** A boss stage's first time: its title card, the camera gliding to the boss and zooming a little, and a rumble. Once per stage. */
+  /** A boss stage's first time: the screen dims, the boss's portrait slides in, its name on a ribbon slams down with its title, and the camera glides to it. Once per stage (a restart of the same fight does not replay it). */
   private startIntro(): void {
     const key = `${this.run.seed}:${this.run.stage}`;
-    const boss = this.b.units.find((u) => u.side === 'foe' && (u.size ?? 1) > 1);
+    const boss = this.b.units.find((u) => u.side === 'foe' && isBoss(u.def));
     if (!boss || this.introduced.has(key)) return;
     this.introduced.add(key);
-    this.intro = { t: 0, boss };
+    this.intro = { t: 0, boss, slammed: false };
     const card = $('bossCard');
-    card.querySelector('b')!.textContent = `THE ${UNITS[boss.def].name.toUpperCase()}`;
-    card.querySelector('span')!.textContent = UNITS[boss.def].role;
+    const def = UNITS[boss.def];
+    card.querySelector('b')!.textContent = def.name.toUpperCase();
+    card.querySelector('span')!.textContent = titleOf(boss.def);
+    // (the portrait is cropped from the sheet and scaled up by a whole number, so its pixels stay square)
+    const info = sheetInfo(def.sheet);
+    const side = info ? Math.min(info.figure + 6, info.h) : 64;
+    const n = Math.max(1, Math.floor(Math.min(innerWidth * 0.7, innerHeight * 0.34) / side));
+    const old = card.querySelector('canvas')!;
+    const face = portrait(def.sheet, side * n);
+    // (the sheets face right; a boss that faces left looks the other way)
+    face.style.width = face.style.height = `${side * n}px`;
+    if (info && !info.facesRight) face.style.transform = 'scaleX(-1)';
+    old.replaceWith(face);
     card.classList.remove('out');
     card.hidden = false;
-    play('boom');
   }
 
-  /** Each frame of the intro: the rumble, the camera on the boss with the zoom swelling and falling back, and the card fading out. */
+  /** Each frame of the intro: the slam (a rumble and a boom, the rumble only if shaking is on), the camera on the boss with the zoom swelling and falling back, and the card fading out. */
   private stepIntro(dt: number): void {
     const it = this.intro!;
     it.t += dt;
     if (it.t >= INTRO_MS) return this.endIntro();
-    if (it.t < INTRO_MS * 0.7) this.fx.rumble(0.7);
+    if (!it.slammed && it.t >= SLAM_MS) {
+      it.slammed = true;
+      this.fx.rumble(0.8);
+      play('boom');
+    }
     this.fx.step(dt);
     if (it.t > INTRO_MS - 400) $('bossCard').classList.add('out');
     const { u, v } = it.boss;
@@ -223,13 +244,14 @@ class Game {
     this.tx = x;
     this.ty = y;
     this.zoom = 1 + INTRO_ZOOM * Math.min(1, it.t / 500, (INTRO_MS - it.t) / 500);
+    this.tzoom = this.zoom;
   }
 
   /** The card goes (a tap, or its time is up) and the camera returns to where the phase has it. */
   private endIntro(): void {
     if (!this.intro) return;
     this.intro = null;
-    this.zoom = 1;
+    this.zoom = this.tzoom = 1;
     const card = $('bossCard');
     card.hidden = true;
     card.classList.remove('out');
@@ -329,9 +351,12 @@ class Game {
     const t = b.phase === 'deploy' ? performance.now() : b.phase === 'fight' ? b.t - TICK_MS + this.acc : b.t + this.acc;
     for (const s of this.sprites.values()) s.update(b.board, t, b.phase !== 'deploy');
     // (the camera eases to where it is sent, unless a finger is holding the board)
+    if (b.phase === 'fight' && !this.intro) this.follow();
     if (!this.drag?.pan) {
-      this.cx += (this.tx - this.cx) * Math.min(1, dt / 220);
-      this.cy += (this.ty - this.cy) * Math.min(1, dt / 220);
+      const f = b.phase === 'fight' && !this.intro;
+      this.cx = f ? easeTo(this.cx, this.tx, dt, EASE_MOVE_MS) : this.cx + (this.tx - this.cx) * Math.min(1, dt / 220);
+      this.cy = f ? easeTo(this.cy, this.ty, dt, EASE_MOVE_MS) : this.cy + (this.ty - this.cy) * Math.min(1, dt / 220);
+      if (f) this.zoom = easeTo(this.zoom, this.tzoom, dt, EASE_ZOOM_MS);
       this.clampCam();
     }
     this.place();
@@ -376,7 +401,32 @@ class Game {
   private area = { x: 0, y: 0, w: 1, h: 1 };
   /** The camera's zoom on the boss during its card (1 otherwise). */
   private zoom = 1;
+  /** Where the zoom is heading, the view the follow camera is holding (its dead zone), and when it may follow again after a manual move. */
+  private tzoom = 1;
+  private held: View | null = null;
+  private pausedUntil = 0;
   private bbox = { x0: 0, x1: 0, y0: 0, y1: 0 };
+
+  /** The fight camera: frame the living fighters, zoomed in as far as fits, holding still for small moves. A manual pan pauses it for a few seconds. */
+  private follow(): void {
+    if (performance.now() < this.pausedUntil) return;
+    const spots = this.b.units.filter((u) => u.alive).flatMap((u) => this.sprites.get(u.id) ?? []);
+    const box = framing(spots);
+    if (!box) return;
+    // (never wider than the board's own width, never closer than a little over the layout's scale, so pixels stay a sensible size)
+    const lo = this.minZoom();
+    const want = viewFor(box, this.area.w, this.area.h, this.scale, lo, Math.max(lo, Math.min(FOLLOW_IN, 3 / this.scale)));
+    this.held = this.held ? settle(this.held, want) : want;
+    this.tx = this.held.cx;
+    this.ty = this.held.cy;
+    this.tzoom = this.held.zoom;
+  }
+
+  /** The least zoom of the fight camera: the whole board across the room (the layout's scale upright is zoomed in past that). */
+  private minZoom(): number {
+    const { x0, x1 } = this.bbox;
+    return Math.min(1, (this.area.w - 20) / (x1 - x0) / this.scale);
+  }
 
   /** Fit the board into the room the bench and the top bar leave: upright it is zoomed in and panned, sideways it fits. */
   private layout(): void {
@@ -436,6 +486,8 @@ class Game {
       this.tx = (x0 + x1) / 2;
       this.ty = (y0 + y1) / 2;
     }
+    this.held = null;
+    this.tzoom = this.zoom = 1;
     if (snap) {
       this.cx = this.tx;
       this.cy = this.ty;
@@ -447,8 +499,8 @@ class Game {
   /** Keep the camera over the board: no scrolling past its edge, and a board that fits stays centred. */
   private clampCam(): void {
     const { x0, x1, y0, y1 } = this.bbox;
-    const hw = this.area.w / 2 / this.scale;
-    const hh = this.area.h / 2 / this.scale;
+    const hw = this.area.w / 2 / (this.scale * this.zoom);
+    const hh = this.area.h / 2 / (this.scale * this.zoom);
     const lim = (c: number, lo: number, hi: number, half: number) => (hi - lo <= half * 2 ? (lo + hi) / 2 : Math.min(hi - half, Math.max(lo + half, c)));
     this.cx = lim(this.cx, x0, x1, hw);
     this.cy = lim(this.cy, y0, y1, hh);
@@ -704,6 +756,9 @@ class Game {
     if (d.pan) {
       if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 8) return;
       d.moved = true;
+      // (a manual pan pauses the fight camera's follow for a few seconds)
+      this.pausedUntil = performance.now() + PAUSE_MS;
+      this.held = null;
       this.cx = d.pan.cx - (e.clientX - d.x) / this.world.scale.x;
       this.cy = d.pan.cy - (e.clientY - d.y) / this.world.scale.y;
       this.tx = this.cx;

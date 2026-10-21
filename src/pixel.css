@@ -197,7 +197,9 @@ body .sbSlot { min-height: 44px; }
 #stars .star > span { text-shadow: none; animation: none; }
 #xp .xprow.up { animation: none; }
 #xp .xprow .pillar { image-rendering: pixelated; }
-#bossCard b { text-shadow: var(--outline); animation: none; }
+#bossCard b { text-shadow: 0 3px 0 #2a0a06; }
+#bossCard .rib { display: flex; align-items: center; min-height: 64px; padding: 0 8px; border-style: solid; border-width: 0 48px; border-image: url(ui/ribbon.png) 0 12 fill / 0 48px stretch; image-rendering: pixelated; }
+#bossCard b { color: var(--gold-hi); }
 #bossBar b { text-shadow: var(--outline); }
 
 /* ---- the home screen ---- */

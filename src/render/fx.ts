@@ -21,6 +21,7 @@ import { loadPackArt, PACK } from './fxSheets';
 import { bossEntrance, deathBurst, impactBurst, play, setBoneArt, windUp } from './combatFx';
 import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, impactElement, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, SPELL_TOUCH, type Missile } from './fxRules';
 import { particleBudget, slashOf } from './vfxRules';
+import { liftClear } from './labelRules';
 import impactUrl from '../art/fx/impact.png';
 import fireUrl from '../art/fx/hit_fire.png';
 import arrowUrl from '../art/fx/arrow.png';
@@ -122,9 +123,9 @@ export class Fx {
   private flashLeft = 0;
   private flashMs = 1;
   private flashPeak = 0;
-  /** The fight's own clock in ms (for staggering labels), and the skill names still showing. */
+  /** The fight's own clock in ms, and the text labels still on the screen (fading ones too), so a new one never lands on them. */
   private clock = 0;
-  private skillLabels: { x: number; t: number }[] = [];
+  private shownLabels: Text[] = [];
   /** The small puffs, sparks and trails (pooled, capped). */
   readonly particles = new Particles();
   /** The world dimmed behind the effects for an ultimate (a layer under `root`, sized by `dim`'s peak and time). */
@@ -160,6 +161,7 @@ export class Fx {
   clear(): void {
     for (const it of this.items) it.view.destroy({ children: true });
     this.items = [];
+    this.shownLabels = [];
     this.trauma = 0;
     this.flashLeft = 0;
     this.slowLeft = 0;
@@ -602,8 +604,12 @@ export class Fx {
   private label(text: string, x: number, y: number, fill: number, size: number, life = 900): void {
     const txt = new Text({ text, style: { fontFamily: "'Alegreya Sans', 'Trebuchet MS', sans-serif", fontWeight: 'bold', fontSize: size + 2, fill, stroke: { color: 0x1a1008, width: 3 } }, resolution: 3 });
     txt.anchor.set(0.5, 1);
-    txt.position.set(x, y);
+    // (lifted above every label still showing, the fading ones too, so two never overprint)
+    this.shownLabels = this.shownLabels.filter((o) => !o.destroyed);
+    const lift = liftClear(this.shownLabels.map((o) => ({ x: o.x, y: o.y, w: o.width, h: o.height })), { x, y, w: txt.width, h: txt.height });
+    txt.position.set(x, y - lift);
     this.root.addChild(txt);
+    this.shownLabels.push(txt);
     let t = 0;
     this.items.push({
       view: txt,
@@ -624,11 +630,7 @@ export class Fx {
     const ultimate = kitOf(by.unit)?.ultimate?.name === name;
     const boss = by.unit.side === 'foe' && isBoss(by.unit.def);
     const el = skillElement(name);
-    // (names of skills that go off close together stack upward instead of overprinting)
-    this.skillLabels = this.skillLabels.filter((l) => this.clock - l.t < 1200);
-    const stacked = this.skillLabels.filter((l) => Math.abs(l.x - by.x) < 110).length;
-    this.skillLabels.push({ x: by.x, t: this.clock });
-    this.label(name, by.x, by.y - by.tall - 20 - stacked * 17, ultimate ? 0xfff2a0 : boss ? 0xff9a8a : 0xffe27a, ultimate || boss ? 15 : 13, 1200);
+    this.label(name, by.x, by.y - by.tall - 20, ultimate ? 0xfff2a0 : boss ? 0xff9a8a : 0xffe27a, ultimate || boss ? 15 : 13, 1200);
     windUp(this.particles, el, by.x, by.y, ms, by.tall, ultimate || boss);
     const cast = SKILL_FX[name]?.cast;
     if (ultimate) {
