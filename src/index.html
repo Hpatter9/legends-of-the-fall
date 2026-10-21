@@ -132,6 +132,38 @@
   @keyframes fade { from { opacity: 0; } }
   @keyframes punch { from { transform: scale(1.8); opacity: 0; } }
 
+
+  /* recruiting */
+  #gacha { position: fixed; inset: 0; z-index: 5; display: flex; flex-direction: column; gap: 10px; padding: calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 10px); background: rgba(24, 12, 8, 0.96); overflow-y: auto; touch-action: pan-y; }
+  #gacha[hidden] { display: none; }
+  #gacha header { display: flex; align-items: center; gap: 10px; }
+  #gacha h2 { margin: 0; flex: 1; font-size: 20px; color: var(--gold); }
+  #crowns { color: var(--gold); font-weight: bold; }
+  #gacha .pulls { display: flex; gap: 8px; }
+  #gacha .pulls button { flex: 1; }
+  #rates, #pity { font-size: 11px; color: var(--dim); text-align: center; }
+  #reveal { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; min-height: 96px; }
+  .flip { position: relative; aspect-ratio: 3 / 4; perspective: 600px; }
+  .flip .back, .flip .face { position: absolute; inset: 0; border-radius: 8px; border: 2px solid var(--edge); backface-visibility: hidden; transition: transform 0.5s; }
+  .flip .back { background: repeating-linear-gradient(45deg, #5a3520, #5a3520 6px, #7a4a28 6px, #7a4a28 12px); }
+  .flip .face { background: #2a1a10; transform: rotateY(180deg); display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 2px; text-align: center; font-size: 10px; }
+  .flip .face canvas { width: 100%; image-rendering: pixelated; }
+  .flip .face em { font-style: normal; color: var(--gold); font-weight: bold; }
+  .flip.up .back { transform: rotateY(-180deg); }
+  .flip.up .face { transform: rotateY(0); }
+  .flip.r1 .face { border-color: #9a9a9a; }
+  .flip.r2 .face { border-color: #4a9cff; box-shadow: 0 0 10px #4a9cff; }
+  .flip.r3 .face { border-color: var(--gold); box-shadow: 0 0 16px 3px var(--gold); }
+  .flip.new .face em { color: #7cf07c; }
+  #collection { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  #collection .hero { text-align: center; font-size: 10px; background: rgba(0, 0, 0, 0.35); border: 2px solid #5a3a22; border-radius: 8px; padding: 2px; }
+  #collection .hero canvas { width: 100%; max-width: 56px; image-rendering: pixelated; }
+  #collection .hero b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #collection .hero.r2 { border-color: #4a9cff; }
+  #collection .hero.r3 { border-color: var(--gold); }
+  #collection .hero.locked { filter: brightness(0.15) grayscale(1); }
+  @media (orientation: landscape) { #reveal { grid-template-columns: repeat(10, 1fr); } #collection { grid-template-columns: repeat(8, 1fr); } }
+
   #loading { position: fixed; inset: 0; display: grid; place-items: center; font-size: 18px; color: var(--gold); }
   #version { position: fixed; right: 6px; bottom: 2px; font-size: 10px; color: rgba(255, 255, 255, 0.5); text-shadow: 0 1px 0 #000; pointer-events: none; }
   @media (orientation: portrait) { #version { bottom: auto; top: calc(env(safe-area-inset-top) + 34px); } }
@@ -144,12 +176,20 @@
 <div id="panel">
   <div id="spells"><div id="mana"><i><span></span></i><b></b></div><div id="spellCards"></div><div id="spellHint"></div></div>
   <div id="bench"></div>
-  <div id="buttons"><button id="summon">Summon</button><button id="fight" class="primary" disabled>Fight!</button></div>
+  <div id="buttons"><button id="summon">Summon</button><button id="recruit">Recruit</button><button id="fight" class="primary" disabled>Fight!</button></div>
 </div>
 <div id="result" hidden>
   <div id="banner"></div>
   <div id="summary"></div>
   <div class="row"><button id="next" class="primary">Next stage</button></div>
+</div>
+<div id="gacha" hidden>
+  <header><h2>Recruit</h2><span id="crowns"></span><button id="gachaClose">Close</button></header>
+  <div class="pulls"><button id="pull1"></button><button id="pull10" class="primary"></button></div>
+  <div id="pity"></div>
+  <div id="rates"></div>
+  <div id="reveal"></div>
+  <div id="collection"></div>
 </div>
 <div id="loading">Loading…</div>
 <div id="version">Version __VERSION__</div>
