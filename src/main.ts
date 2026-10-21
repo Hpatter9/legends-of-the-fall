@@ -15,6 +15,7 @@ import { UnitSprite } from './render/unitView';
 import { Fx, loadFx } from './render/fx';
 import { framesOf, loadSheets, portrait } from './render/sheets';
 import { at, FOOT, HH, TH, TW } from './render/iso';
+import { bindMute, play, playEvents, setup, startFight } from './render/sound';
 
 TextureSource.defaultOptions.scaleMode = 'nearest';
 
@@ -126,6 +127,7 @@ class Game {
 
   private begin(): void {
     if (!fight(this.b)) return;
+    startFight(isBossStage(this.run.stage));
     this.chosen = null;
     this.boardView.clearMarks();
     this.layout();
@@ -140,6 +142,7 @@ class Game {
         this.acc -= TICK_MS;
         const events = stepBattle(b);
         this.fx.show(b, events);
+        playEvents(events);
         if (events.some((e) => e.kind === 'hit')) this.refreshBench();
         if (b.phase !== 'fight') this.refresh();
       }
@@ -330,11 +333,17 @@ class Game {
     window.addEventListener('pointermove', (e) => this.dragMove(e));
     window.addEventListener('pointerup', (e) => this.dragEnd(e));
     window.addEventListener('pointercancel', () => this.endDrag());
+    setup();
+    bindMute($('mute'));
     $('fight').addEventListener('click', () => this.begin());
     $('recruit').addEventListener('click', () => this.gacha.open());
     $('summon').addEventListener('click', () => {
       const before = new Set(this.run.roster.map((h) => h.id));
-      if (summon(this.run)) saveRun(this.run);
+      const got = summon(this.run);
+      if (got) {
+        saveRun(this.run);
+        play(got.grade > 1 ? 'merge' : 'summon');
+      }
       // (a hero of a higher grade that wasn't there before is a merge's: it flashes)
       this.evolved = new Set(this.run.roster.filter((h) => h.grade > 1 && !before.has(h.id)).map((h) => h.id));
       this.refresh();
