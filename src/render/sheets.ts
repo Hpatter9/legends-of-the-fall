@@ -34,6 +34,21 @@ import wandererMage from '../art/units/wanderer_mage.png';
 import kitsune from '../art/units/kitsune.png';
 import karasuTengu from '../art/units/karasu_tengu.png';
 import yamabushiTengu from '../art/units/yamabushi_tengu.png';
+import orcGrunt from '../art/units/hk_orc_grunt.png';
+import orcArcher from '../art/units/hk_orc_archer.png';
+import orcBrute from '../art/units/hk_orc_brute.png';
+import orcWarlord from '../art/units/hk_orc_warlord.png';
+import demon from '../art/units/hk_demon.png';
+import demonLord from '../art/units/hk_demon_lord.png';
+import imp from '../art/units/hk_imp.png';
+import ogre from '../art/units/hk_ogre.png';
+import hornedOgre from '../art/units/hk_ogre_horned.png';
+import forestBoss1 from '../art/units/forest_boss_1.png';
+import forestBoss2 from '../art/units/forest_boss_2.png';
+import forestBoss3 from '../art/units/forest_boss_3.png';
+import boarKing from '../art/units/boar_king.png';
+import devilLeader from '../art/units/devil_leader.png';
+import shamanKing from '../art/units/shaman_king.png';
 
 export type Anim = 'idle' | 'walk' | 'attack' | 'hurt' | 'dead';
 
@@ -77,6 +92,21 @@ const URLS: Record<string, string> = {
   kitsune: kitsune,
   karasu_tengu: karasuTengu,
   yamabushi_tengu: yamabushiTengu,
+  hk_orc_grunt: orcGrunt,
+  hk_orc_archer: orcArcher,
+  hk_orc_brute: orcBrute,
+  hk_orc_warlord: orcWarlord,
+  hk_demon: demon,
+  hk_demon_lord: demonLord,
+  hk_imp: imp,
+  hk_ogre: ogre,
+  hk_ogre_horned: hornedOgre,
+  forest_boss_1: forestBoss1,
+  forest_boss_2: forestBoss2,
+  forest_boss_3: forestBoss3,
+  boar_king: boarKing,
+  devil_leader: devilLeader,
+  shaman_king: shamanKing,
 };
 
 const LAYOUT = layout as Record<string, Layout>;
