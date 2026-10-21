@@ -59,6 +59,8 @@ interface Layout {
   rows: string[];
   counts: Record<string, number>;
   figure: number;
+  /** Drawn facing right unless the sheet says otherwise (the forest and boss sheets face left). */
+  facesRight?: boolean;
 }
 
 const URLS: Record<string, string> = {
@@ -132,6 +134,8 @@ export async function loadSheets(): Promise<void> {
 
 /** An animation's frames (idle when the sheet has no such row). */
 export const framesOf = (sheet: string, anim: Anim): Texture[] => frames.get(`${sheet}:${anim}`) ?? frames.get(`${sheet}:idle`)!;
+/** Whether a sheet's figures face right as drawn (so a mirror is needed to face left). */
+export const facesRightOf = (sheet: string) => LAYOUT[sheet].facesRight !== false;
 /** How tall the figure stands in the frame, in the sheet's pixels. */
 export const figureOf = (sheet: string) => LAYOUT[sheet].figure;
 
