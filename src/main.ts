@@ -9,6 +9,7 @@ import { finish, gradeBoost, heroOf, isBossStage, loadRun, newRun, saveRun, setS
 import { formOf, UNITS } from './sim/units';
 import { earn, loadMeta, saveMeta, type Meta } from './sim/meta';
 import { Gacha } from './gacha';
+import { keepAwake } from './render/awake';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, SPELL_IDS, type SpellId } from './sim/spells';
 import { BoardView, loadBoardArt } from './render/boardView';
 import { UnitSprite } from './render/unitView';
@@ -128,6 +129,7 @@ class Game {
   private begin(): void {
     if (!fight(this.b)) return;
     startFight(isBossStage(this.run.stage));
+    keepAwake(true);
     this.chosen = null;
     this.boardView.clearMarks();
     this.layout();
@@ -542,6 +544,7 @@ class Game {
     const n = heroesPlaced(b);
     if ((b.phase === 'won' || b.phase === 'lost') && !this.settled) {
       this.settled = true;
+      keepAwake(false);
       const before = run.gold;
       finish(run, b.phase === 'won');
       this.gain = run.gold - before;
