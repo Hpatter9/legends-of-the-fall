@@ -3,6 +3,7 @@
 //
 //   npm run balance                  the default number of fights (4000 for the heroes; a quarter of that per cell)
 //   npm run balance -- --games 800   fewer fights, quicker and noisier
+//   npm run balance -- --hero-stage 1  play the hero table at another stage (default 5)
 //
 // Three tables: each hero's value (its win rate in random five-hero teams with it, against the same teams without it),
 // each foe band at four stage strengths, and the stage curve from 1 to 15 with grade-1, grade-2 and grade-3 teams. Every fight
@@ -23,7 +24,7 @@ const GAMES = arg('--games', 4000);
 const CELL_GAMES = Math.max(200, Math.round(GAMES / 4));
 const TEAM = 5;
 /** The stage the hero table is played at. */
-const HERO_STAGE = 5;
+const HERO_STAGE = arg('--hero-stage', 5);
 const BANDS = FIELD_BANDS;
 
 /** A random team of `TEAM` different hero kinds (from every hero there is). */
