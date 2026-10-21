@@ -47,22 +47,16 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
 
 ## More foes and bosses (copied in for the boss stages and new bands)
 
-- The orc warband (grunt, archer, brute, warlord), demons, demon lord, imp and ogres (`src/art/units/hk_*.png`, as cut by
-  Chronos Settlement's `tools/compose-sheets.cjs`) are from the **Himeko Sutori sprite share**, free to use with
-  attribution: Half-Kaizer sprite template created by Showkaizer; additional Half-Kaizer poses by Aleesa Tana; armour,
-  weapon, demon, ogre and other sprites from Himeko Sutori and Septaroad Voyager by Rockwell Studios, LLC.
+- The orc warband (grunt, archer, brute, warlord), demons, demon lord, imp and ogres (`src/art/units/hk_*.png`) are
+  **generated with PixelLab** (see below), drawn to match the Craftpix fighters; the Himeko Sutori sheets they replace are gone.
 - The three forest bosses are from Craftpix's **Free Forest Bosses**; the Boar King, Devil Leader and Shaman King from
   Craftpix's **Free Fantasy RPG Top-Down Boss Creatures**.
 
 ## The class heroes (`src/art/units/cls_*.png`)
 
 - The Paladin, Cleric, Druid, Barbarian, Ranger, Warlock, Illusionist and Gunslinger (three looks each, one per grade) are
-  layered from the **Himeko Sutori sprite share** (a body template, an outfit, a helm and a weapon laid on one another and
-  cut to the right-facing poses by `tools/compose-class-heroes.cjs`, adapted from Chronos Settlement's
-  `tools/compose-sheets.cjs`), free to use with attribution:
-  - Half-Kaizer sprite template created by Showkaizer.
-  - Additional Half-Kaizer poses by Aleesa Tana.
-  - Armor, weapon, shield, helmet, hair and other sprites are from Himeko Sutori and Septaroad Voyager by Rockwell Studios, LLC.
+  **generated with PixelLab** (see below). The Himeko Sutori layered sheets they replace are gone, so
+  `tools/compose-class-heroes.cjs` no longer makes the `cls_*` hero sheets.
 - The Druid's treant (`cls_treant.png`) is one picture from the **Golems and elementals** pack by batareya (the pack folder has no licence file: check the author's terms before any public release).
 
 - **The home screen** (`src/art/home/castle.png`): the Fantasy 2D Battlegrounds pixel pack (Craftpix), Battleground 2
@@ -98,3 +92,10 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   generated with PixelLab (`tools/ui/genicons.py`), used as they came.
 - **Pixelify Sans** (Stefie Justprince; SIL Open Font Licence 1.1), from the `@fontsource/pixelify-sans` npm package: the
   text font for the whole interface (`out/web/fonts/`). Press Start 2P stays for the counters.
+
+## Art generated with PixelLab
+
+- The class heroes (`cls_*_1/2/3.png`) and the orc, imp, demon and ogre foes (`hk_*.png`) are pixel art generated with
+  **PixelLab** (pixellab.ai): a base figure from a text description with Craftpix fighters as style references
+  (`/generate-with-style-v2`), animated with `/animate-with-text-v3`. The frames were only cropped and padded into the
+  sheets (no resizing; alpha made hard, lone stray pixels dropped). The prompts are in `tools/pixellab/spec.py`.
