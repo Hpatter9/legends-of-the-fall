@@ -6,7 +6,7 @@
 // Randomness comes from the battle's own side stream (`b.skillRng`), so the fight's main stream is left alone.
 
 import { standable, tileAt, type At } from './board';
-import { blowMult, canStrike, defOf, hurt, tileOf, unitAt, wayTo, type Battle, type BattleEvent, type Unit } from './battle';
+import { atkOf, blowMult, canStrike, defOf, hurt, tileOf, unitAt, wayTo, type Battle, type BattleEvent, type Unit } from './battle';
 import { Rng } from './rng';
 
 /** A skill fires at this much charge. */
@@ -139,7 +139,7 @@ function iaido(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const h0 = tileOf(b, me).h;
   me.facing = best.way;
   for (const f of best.hit) {
-    const power = def.atk * 1.6 * blowMult(h0, tileOf(b, f).h, best.way, f.facing);
+    const power = atkOf(me) * 1.6 * blowMult(h0, tileOf(b, f).h, best.way, f.facing);
     hurt(b, me, f, net(power, f), true, false, out, 'skill');
   }
   const ms = 260;
@@ -175,7 +175,7 @@ function shadowStep(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     me.step = undefined;
     me.facing = wayTo(me, f);
     out.push({ kind: 'blink', by: me.id, from, to });
-    const power = def.atk * 1.8 * blowMult(tileOf(b, me).h, hf, me.facing, f.facing);
+    const power = atkOf(me) * 1.8 * blowMult(tileOf(b, me).h, hf, me.facing, f.facing);
     hurt(b, me, f, net(power, f), true, false, out, 'skill');
     return true;
   }
@@ -188,7 +188,7 @@ function volley(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const def = defOf(me);
   const aim = crowd(b, me, (f) => canStrike(b.board, def, me, f));
   if (!aim) return false;
-  b.pending.push({ at: b.t + VOLLEY_MS, kind: 'rain', by: me.id, to: aim.id, dmg: def.atk * 1.0, heavy: false, u: aim.u, v: aim.v });
+  b.pending.push({ at: b.t + VOLLEY_MS, kind: 'rain', by: me.id, to: aim.id, dmg: atkOf(me) * 1.0, heavy: false, u: aim.u, v: aim.v });
   out.push({ kind: 'area', by: me.id, id: 'volley', u: aim.u, v: aim.v, ms: VOLLEY_MS });
   return true;
 }
@@ -199,10 +199,9 @@ const METEOR_REACH = 6;
 const BURN_MS = 4000;
 const BURN_EVERY = 500;
 function meteor(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const def = defOf(me);
   const aim = crowd(b, me, (f) => apart(me, f) <= METEOR_REACH);
   if (!aim) return false;
-  b.pending.push({ at: b.t + METEOR_MS, kind: 'meteor', by: me.id, to: aim.id, dmg: def.atk * 2.2, heavy: true, u: aim.u, v: aim.v });
+  b.pending.push({ at: b.t + METEOR_MS, kind: 'meteor', by: me.id, to: aim.id, dmg: atkOf(me) * 2.2, heavy: true, u: aim.u, v: aim.v });
   out.push({ kind: 'area', by: me.id, id: 'meteor', u: aim.u, v: aim.v, ms: METEOR_MS });
   return true;
 }

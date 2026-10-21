@@ -4,10 +4,10 @@
 
 import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { D, standable, tileAt } from './sim/board';
-import { canPlace, fight, heroesPlaced, isDeployTile, place, startBattle, stepBattle, TICK_MS, unitAt, unplace, type Battle } from './sim/battle';
+import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle } from './sim/battle';
+import { finish, gradeBoost, heroOf, isBossStage, loadRun, newRun, saveRun, setSquad, SQUAD, startStage, summon, summonCost, type Run } from './sim/run';
+import { UNITS } from './sim/units';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, SPELL_IDS, type SpellId } from './sim/spells';
-import { FOE_BANDS } from './sim/foes';
-import { HEROES, UNITS } from './sim/units';
 import { BoardView, loadBoardArt } from './render/boardView';
 import { UnitSprite } from './render/unitView';
 import { Fx, loadFx } from './render/fx';
@@ -39,11 +39,12 @@ class Game {
   private fx = new Fx(this.sprites);
   private ghost = new Sprite();
   private b!: Battle;
-  private seed = 1;
-  /** The foe band. A `?band=` names one for the visit; else each New board takes the next. */
-  private band = 'skeletons';
-  private bandPinned = false;
-  /** Where each hero was placed, so a restart puts them back. */
+  private run!: Run;
+  /** Whether the fight's end has been settled into the run. */
+  private settled = false;
+  /** Gold the last win paid (for the result screen). */
+  private gain = 0;
+  /** Where each hero (by roster id) was placed, so the next stage puts them back. */
   private placed = new Map<string, [number, number]>();
   private chosen: string | null = null;
   private drag: Drag | null = null;
@@ -67,17 +68,12 @@ class Game {
     this.ghost.visible = false;
     this.app.stage.addChild(this.world, this.ghost);
     const query = new URLSearchParams(location.search);
-    this.seed = Number(query.get('seed')) || (Date.now() % 100000) + 1;
-    const band = query.get('band');
-    if (band && band in FOE_BANDS) {
-      this.band = band;
-      this.bandPinned = true;
-    }
+    const seed = Number(query.get('seed'));
+    this.run = (!seed && loadRun()) || newRun(seed || (Date.now() % 100000) + 1);
     this.sky = [...document.querySelectorAll<HTMLElement>('#sky div')];
-    this.buildBench();
     this.buildSpells();
     this.wire();
-    this.newBattle(true);
+    this.newBattle();
     this.app.ticker.add((tk) => this.frame(tk.deltaMS));
     window.addEventListener('resize', () => this.layout());
     $('loading').remove();
@@ -86,18 +82,17 @@ class Game {
 
   /* -------------------------------------------------------------- the fight */
 
-  /** A fresh fight: on the same board (a restart, heroes back where they were) or a new one. */
-  private newBattle(sameBoard: boolean): void {
-    if (!sameBoard) {
-      this.seed = (this.seed % 99991) + 1 + Math.floor(Math.random() * 97);
-      this.placed.clear();
-      if (!this.bandPinned) {
-        const names = Object.keys(FOE_BANDS);
-        this.band = names[(names.indexOf(this.band) + 1) % names.length];
-      }
+  /** A fresh fight for the run's stage, with the squad back where it stood (or on the first free tiles). */
+  private newBattle(): void {
+    this.b = startStage(this.run);
+    this.settled = false;
+    for (const id of [...this.run.squad]) {
+      const h = heroOf(this.run, id);
+      if (!h) continue;
+      const at = this.placed.get(String(id)) ?? this.freeTile();
+      if (at && place(this.b, h.kind, at[0], at[1], id, gradeBoost(h.grade))) this.placed.set(String(id), at);
+      else setSquad(this.run, id, false);
     }
-    this.b = startBattle(this.seed, this.band);
-    for (const [id, [u, v]] of this.placed) place(this.b, id, u, v);
     this.acc = 0;
     this.chosen = null;
     this.spell = null;
@@ -106,6 +101,13 @@ class Game {
     this.syncSprites(true);
     this.layout();
     this.refresh();
+  }
+
+  /** The first free standable tile on the heroes' rows, front row first. */
+  private freeTile(): [number, number] | null {
+    for (let v = 0; v < D; v++)
+      for (let u = 0; u < this.b.board.w; u++) if (isDeployTile(v) && standable(tileAt(this.b.board, u, v)) && !unitAt(this.b, u, v)) return [u, v];
+    return null;
   }
 
   private begin(): void {
@@ -291,7 +293,7 @@ class Game {
     const heroes = this.b.units.filter((x) => x.side === 'hero').sort((a, c) => c.u + c.v - (a.u + a.v));
     for (const h of heroes) {
       const s = this.sprites.get(h.id);
-      if (s && Math.abs(wx - s.x) < 16 && wy < s.y + 6 && wy > s.y - s.tall) return h.def;
+      if (s && Math.abs(wx - s.x) < 16 && wy < s.y + 6 && wy > s.y - s.tall) return String(h.tag);
     }
     return null;
   }
@@ -311,9 +313,18 @@ class Game {
     window.addEventListener('pointerup', (e) => this.dragEnd(e));
     window.addEventListener('pointercancel', () => this.endDrag());
     $('fight').addEventListener('click', () => this.begin());
-    $('newBoard').addEventListener('click', () => this.newBattle(false));
-    $('again').addEventListener('click', () => this.newBattle(true));
-    $('next').addEventListener('click', () => this.newBattle(false));
+    $('summon').addEventListener('click', () => {
+      if (summon(this.run)) saveRun(this.run);
+      this.refresh();
+    });
+    $('next').addEventListener('click', () => {
+      if (this.run.over) {
+        this.run = newRun((Date.now() % 100000) + 1);
+        this.placed.clear();
+      }
+      saveRun(this.run);
+      this.newBattle();
+    });
     $('speed').addEventListener('click', () => {
       this.speed = this.speed === 1 ? 2 : 1;
       $('speed').textContent = `×${this.speed}`;
@@ -341,8 +352,8 @@ class Game {
     d.moved = true;
     this.chosen = d.id;
     // (the hero is held a little over the finger, so it can be seen)
-    this.ghost.texture = framesOf(UNITS[d.id].sheet, 'idle')[0];
-    this.ghost.scale.set(this.scale * UNITS[d.id].scale);
+    this.ghost.texture = framesOf(this.defOf(d.id).sheet, 'idle')[0];
+    this.ghost.scale.set(this.scale * this.defOf(d.id).scale);
     this.ghost.position.set(e.clientX, e.clientY - 24);
     this.ghost.visible = true;
     this.hover = this.tileAtScreen(e.clientX, e.clientY - 24);
@@ -362,7 +373,7 @@ class Game {
     if (d.moved && d.id) {
       // dropped: on a tile of the heroes' rows, or back on the bench
       const tile = this.tileAtScreen(e.clientX, e.clientY - 24);
-      if (tile && canPlace(this.b, d.id, ...tile)) this.put(d.id, tile);
+      if (tile && this.canPut(d.id, tile)) this.put(d.id, tile);
       else if (overBench(e.clientX, e.clientY)) this.takeBack(d.id);
       this.chosen = null;
     } else if (d.fromBoard && (e.target as HTMLElement) === this.app.canvas) {
@@ -371,7 +382,7 @@ class Game {
       if (d.id && d.id === this.chosen) {
         this.takeBack(d.id);
         this.chosen = null;
-      } else if (this.chosen && tile && canPlace(this.b, this.chosen, ...tile)) {
+      } else if (this.chosen && tile && this.canPut(this.chosen, tile)) {
         this.put(this.chosen, tile);
         this.chosen = null;
       } else this.chosen = d.id || null;
@@ -386,34 +397,57 @@ class Game {
     this.refresh();
   }
 
-  private put(id: string, [u, v]: [number, number]): void {
-    if (!place(this.b, id, u, v)) return;
-    this.placed.set(id, [u, v]);
+  private defOf(id: string) {
+    return UNITS[heroOf(this.run, Number(id))!.kind];
+  }
+
+  /** Whether a hero may go on a tile: free ground on the heroes' rows, and room in the squad if it isn't in it. */
+  private canPut(id: string, [u, v]: [number, number]): boolean {
+    const h = heroOf(this.run, Number(id));
+    if (!h || !canPlace(this.b, h.kind, u, v, h.id)) return false;
+    return this.run.squad.includes(h.id) || this.run.squad.length < SQUAD;
+  }
+
+  private put(id: string, tile: [number, number]): void {
+    const h = heroOf(this.run, Number(id))!;
+    if (!this.canPut(id, tile) || !place(this.b, h.kind, tile[0], tile[1], h.id, gradeBoost(h.grade))) return;
+    setSquad(this.run, h.id, true);
+    this.placed.set(id, tile);
+    saveRun(this.run);
     this.syncSprites();
   }
 
   private takeBack(id: string): void {
-    unplace(this.b, id);
+    const h = heroOf(this.run, Number(id))!;
+    unplace(this.b, h.kind, h.id);
+    setSquad(this.run, h.id, false);
     this.placed.delete(id);
+    saveRun(this.run);
     this.syncSprites();
   }
 
   /* -------------------------------------------------------------- the page */
 
+  /** The bench: a card for every hero owned, rebuilt when the roster changes. */
   private buildBench(): void {
     const bench = $('bench');
-    for (const id of HEROES) {
-      const def = UNITS[id];
+    const key = this.run.roster.map((h) => `${h.id}:${h.grade}`).join();
+    if (bench.dataset.key === key) return;
+    bench.dataset.key = key;
+    bench.replaceChildren();
+    for (const h of this.run.roster) {
+      const def = UNITS[h.kind];
+      const id = String(h.id);
       const card = document.createElement('div');
       card.className = 'card';
       card.dataset.id = id;
-      const pic = portrait(def.sheet, 96);
-      card.append(pic);
+      const stars = document.createElement('em');
+      stars.textContent = '★'.repeat(h.grade);
       const name = document.createElement('b');
       name.textContent = def.name;
       const bar = document.createElement('i');
       bar.append(document.createElement('span'));
-      card.append(name, bar);
+      card.append(portrait(def.sheet, 96), stars, name, bar);
       card.title = def.role;
       card.addEventListener('pointerdown', (e) => {
         if (this.b.phase !== 'deploy') return;
@@ -473,10 +507,23 @@ class Game {
   /** The page and the board's lit tiles, after anything changes. */
   private refresh(): void {
     const b = this.b;
+    const run = this.run;
     const n = heroesPlaced(b);
+    if ((b.phase === 'won' || b.phase === 'lost') && !this.settled) {
+      this.settled = true;
+      const before = run.gold;
+      finish(run, b.phase === 'won');
+      this.gain = run.gold - before;
+      saveRun(run);
+    }
     document.body.dataset.phase = b.phase;
+    const stage = `Stage ${run.stage}${isBossStage(run.stage) ? ' · Boss' : ''}`;
     $('status').textContent =
-      b.phase === 'deploy' ? (this.chosen ? `Place the ${UNITS[this.chosen].name}` : n ? `${n} of 5 heroes placed` : 'Drag your heroes onto the blue tiles') : b.phase === 'fight' ? 'Fight!' : b.phase === 'won' ? 'Victory' : 'Defeat';
+      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : n ? `${stage} · ${n} of ${SQUAD} placed` : `${stage} · drag heroes onto the blue tiles`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
+    $('gold').textContent = `${run.gold} gold`;
+    const buy = $('summon') as HTMLButtonElement;
+    buy.textContent = `Summon · ${summonCost(run)}`;
+    buy.disabled = run.gold < summonCost(run);
     ($('fight') as HTMLButtonElement).disabled = b.phase !== 'deploy' || n === 0;
     $('clock').textContent = b.phase === 'deploy' ? '' : clock(b.t);
     const result = $('result');
@@ -485,8 +532,13 @@ class Game {
       const left = b.units.filter((x) => x.alive && x.side === 'hero').length;
       $('banner').textContent = b.phase === 'won' ? 'Victory!' : 'Defeat';
       $('banner').className = b.phase;
-      $('summary').textContent = b.phase === 'won' ? `${left} of ${heroesPlaced(b)} heroes still standing · ${clock(b.t)}` : b.units.some((x) => x.alive && x.side === 'hero') ? 'The foes held the field' : 'Every hero has fallen';
+      $('summary').textContent =
+        b.phase === 'won'
+          ? `${left} of ${heroesPlaced(b)} heroes standing · +${this.gain} gold · ${clock(b.t)}`
+          : `The run ends at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} summons`;
+      $('next').textContent = b.phase === 'won' ? `Next stage (${run.stage})` : 'New run';
     }
+    this.buildBench();
     this.markTiles();
     this.refreshBench();
   }
@@ -494,7 +546,7 @@ class Game {
   private refreshBench(): void {
     for (const card of $('bench').children as HTMLCollectionOf<HTMLElement>) {
       const id = card.dataset.id!;
-      const u = this.b.units.find((x) => x.def === id);
+      const u = this.b.units.find((x) => x.side === 'hero' && String(x.tag) === id);
       card.classList.toggle('placed', !!u);
       card.classList.toggle('chosen', this.chosen === id);
       card.classList.toggle('fallen', !!u && !u.alive);
@@ -517,9 +569,9 @@ class Game {
       for (let u = 0; u < b.board.w; u++) {
         if (!isDeployTile(v) || !standable(tileAt(b.board, u, v))) continue;
         const here = unitAt(b, u, v);
-        const ok = who ? canPlace(b, who, u, v) : !here;
+        const ok = who ? this.canPut(who, [u, v]) : !here;
         if (this.hover && this.hover[0] === u && this.hover[1] === v) this.boardView.mark(u, v, who && ok ? 'hover' : 'bad');
-        else if (here && here.def === who) this.boardView.mark(u, v, 'chosen');
+        else if (here && who && String(here.tag) === who) this.boardView.mark(u, v, 'chosen');
         else if (ok) this.boardView.mark(u, v, 'deploy');
       }
     if (this.hover && !isDeployTile(this.hover[1])) this.boardView.mark(this.hover[0], this.hover[1], 'bad');
