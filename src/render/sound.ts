@@ -100,7 +100,10 @@ function applyLevels(): void {
 /** The mute button: shows the speaker, toggles the sound and remembers the choice. */
 export function bindMute(button: HTMLElement): void {
   const show = () => {
-    button.textContent = muted ? '🔇' : '🔊';
+    // (the face is a pixel icon, chosen by the page's CSS from this attribute)
+    button.textContent = '';
+    if (muted) button.dataset.off = '1';
+    else delete button.dataset.off;
     button.title = muted ? 'Sound off' : 'Sound on';
   };
   show();

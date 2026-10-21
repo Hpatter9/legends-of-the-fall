@@ -1,0 +1,240 @@
+/* ===== Pixel UI. Inlined at the end of the page's <style> by build.mjs, so it wins over the older smooth look above it.
+   Frames are 9-slices from ui/*.png (drawn natively at their final size by tools/ui/frames.py, icons from PixelLab), shown by
+   CSS border-image at whole-number scales only (2x for most, 3x for the big gold button) with pixelated rendering. ===== */
+@font-face { font-family: 'Pixelify Sans'; font-weight: 400; font-display: swap; src: url(fonts/pixelify-sans-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Pixelify Sans'; font-weight: 700; font-display: swap; src: url(fonts/pixelify-sans-latin-700-normal.woff2) format('woff2'); }
+:root { --display: 'Pixelify Sans', 'Press Start 2P', monospace; --body: 'Pixelify Sans', 'Press Start 2P', monospace; }
+button, .card, .chip, .hmCard, .hmNote, .hmLink, #panel, #hmTabs, #hmTop, .hmBanner, .trait, .spell, .round, .hmPanel, .hsheet, .evcard, #tip, .hcard, .hrow, .brow,
+.setting, .toast, .flip .face, .flip .back, #collection .hero, #banner, #hmSub h2, #settings h2, #gacha h2, body #spellbook h2 { image-rendering: pixelated; }
+/* a hard four-way outline for text that sits straight on the board or the sky */
+:root { --outline: 0 1px 0 #000, 0 -1px 0 #000, 1px 0 0 #000, -1px 0 0 #000, 0 2px 0 #000; }
+
+/* ---- buttons: a carved bevel with corner rivets (2x), pressed, disabled; the gold one glints and pulses ---- */
+button {
+  border-style: solid; border-width: 10px 10px 12px; border-radius: 0; background: none; padding: 0 6px; box-shadow: none; text-shadow: 0 2px 0 #000; min-height: 44px;
+  border-image: url(ui/btn.png) 5 5 6 fill / 10px 10px 12px stretch; transition: none;
+}
+button:active:not(:disabled) { transform: none; filter: none; border-image-source: url(ui/btn-down.png); padding-top: 2px; padding-bottom: 0; }
+button:disabled { opacity: 1; border-image-source: url(ui/btn-off.png); color: #8a7c6c; }
+button.primary, .hmBig, .setting .toggle.on, .setting .pair button.on {
+  background: none; border-style: solid; border-width: 10px 10px 12px; border-image: url(ui/btn-gold.png) 5 5 6 fill / 10px 10px 12px stretch; overflow: hidden; color: #4a1a06;
+  text-shadow: 0 2px 0 rgba(255, 228, 138, 0.7); font-size: 17px; box-shadow: none;
+}
+button.primary:active:not(:disabled), .hmBig:active { border-image-source: url(ui/btn-gold-down.png); }
+button.primary:disabled { border-image-source: url(ui/btn-off.png); }
+/* the glint: a pixel-wide stripe sliding over the button in steps, and a slow two-step glow */
+button.primary::after, .hmBattle::after {
+  content: ''; position: absolute; top: 0; bottom: 0; left: -24px; width: 12px; transform: none; pointer-events: none; display: block;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0 25%, rgba(255, 255, 255, 0.75) 25% 50%, rgba(255, 255, 255, 0.4) 50% 75%, rgba(255, 255, 255, 0) 75%);
+  animation: pxGlint 3.4s steps(24) infinite;
+}
+button.primary:disabled::after { display: none; }
+button.primary:not(:disabled), .hmBattle { animation: pxPulse 2.4s steps(1) infinite; }
+@keyframes pxGlint { 0%, 55% { left: -24px; } 100% { left: calc(100% + 12px); } }
+@keyframes pxPulse { 50% { filter: brightness(1.12); } }
+/* the small button, for crowded rows: 6px sides, 8px lower lip */
+.small, #mute, #gear, #speed, .round, #buttons button:not(#fight) {
+  border-width: 6px 6px 8px; border-image: url(ui/btn-s.png) 3 3 4 fill / 6px 6px 8px stretch; min-height: 40px; padding: 0 2px;
+}
+.small:active:not(:disabled), #mute:active, #gear:active, #speed:active, .round:active, #buttons button:not(#fight):active:not(:disabled) { border-image-source: url(ui/btn-s-down.png); padding-top: 2px; padding-bottom: 0; }
+.small:disabled, #buttons button:not(#fight):disabled { border-image-source: url(ui/btn-s-off.png); }
+#buttons { flex-wrap: wrap; gap: 4px 6px; }
+#buttons #fight { order: -1; flex: 1 1 100%; min-height: 40px; }
+#buttons button:not(#fight) { flex: 1 1 0; min-width: 0; font-size: 11px; white-space: nowrap; }
+/* icons that were emoji: the pictures are the buttons' faces */
+#mute, #gear, #hmTrophy, #hmGear { font-size: 0; }
+#mute::before, #gear::before, #hmTrophy::before, #hmGear::before { content: ''; display: block; width: 32px; height: 32px; background: center / 32px 32px no-repeat; image-rendering: pixelated; }
+#mute::before { background-image: url(ui/ic-sound.png); }
+#mute[data-off]::before { background-image: url(ui/ic-mute.png); }
+#gear::before, #hmGear::before { background-image: url(ui/ic-gear.png); }
+#hmTrophy::before { background-image: url(ui/ic-trophy.png); }
+.round { position: relative; width: 52px; height: 48px; display: grid; place-items: center; font-size: 0; }
+.gearIcon { display: block; width: 32px; height: 32px; margin: 0 auto; background: url(ui/ic-gear.png) center / 32px 32px no-repeat; font-size: 0; }
+.hmCard .gearIcon { margin-bottom: 0; }
+
+/* ---- bars: wood with a gold line along the edge ---- */
+#top { background: none; }
+#top h1, #gold, #clock { text-shadow: var(--outline); }
+#status { color: var(--ink); text-shadow: var(--outline); }
+#panel, #hmTabs, #hmTop { background: url(ui/wood.png) 0 0 / 32px 32px; box-shadow: none; }
+#panel { border-top: 8px solid; border-image: url(ui/trim-t.png) 4 0 0 0 / 8px 0 0 0 repeat; gap: 3px; padding: 2px 8px calc(env(safe-area-inset-bottom) + 3px); }
+#hmTop { border-bottom: 8px solid; border-image: url(ui/trim-b.png) 0 0 4 0 / 0 0 8px 0 repeat; }
+#hmTabs { border-top: 8px solid; border-image: url(ui/trim-t.png) 4 0 0 0 / 8px 0 0 0 repeat; }
+@media (orientation: landscape) {
+  #panel { border-top: 0; border-left: 8px solid; border-image: url(ui/trim-l.png) 0 0 0 4 / 0 0 0 8px repeat; padding: calc(env(safe-area-inset-top) + 4px) calc(env(safe-area-inset-right) + 6px) 4px 6px; }
+  #buttons button:not(#fight) { flex: 1 1 40%; }
+  #hmTabs { border-top: 0; border-right: 8px solid; border-image: url(ui/trim-r.png) 0 4 0 0 / 0 8px 0 0 repeat; }
+}
+/* the version line: clear of the round buttons upright (the first row is taller now) and at the bottom right sideways */
+@media (orientation: portrait) {
+  #version { top: calc(env(safe-area-inset-top) + 56px); }
+  #home:not([hidden]) ~ #version { top: calc(env(safe-area-inset-top) + 64px); }
+}
+@media (orientation: landscape) { #version { right: 8px; bottom: 4px; text-shadow: var(--outline); } #home:not([hidden]) ~ #version { bottom: 4px; } }
+
+/* ---- the bench: a slim card frame in the hero's rarity colour ---- */
+.card, .spell { border-style: solid; border-width: 4px; border-radius: 0; box-shadow: none; padding: 0 0 2px; background: none; border-image: url(ui/cardb.png) 2 fill / 4px stretch; }
+.card.r1 { border-image-source: url(ui/cardb-r1.png); } .card.r2 { border-image-source: url(ui/cardb-r2.png); } .card.r3 { border-image-source: url(ui/cardb-r3.png); }
+.card.r4 { border-image-source: url(ui/cardb-r4.png); } .card.r5 { border-image-source: url(ui/cardb-r5.png); }
+.card.chosen, .spell.armed { border-image-source: url(ui/cardb-chosen.png); box-shadow: none; animation: none; }
+.card.g2 { box-shadow: 0 0 0 2px #b8c8e0; background: none; } .card.g3 { box-shadow: 0 0 0 2px #f0c040; background: none; }
+.card.chosen.g2, .card.chosen.g3 { box-shadow: 0 0 0 2px var(--gold-hi); }
+.card.placed canvas { filter: none; }
+.card b { font-size: 12px; }
+.card i { height: 8px; margin: 2px 2px 0; background: #12090a; border: 1px solid var(--deep); border-radius: 0; }
+.card i span { background: linear-gradient(#9af09a 50%, #3fa83f 50%); }
+.card small span { border-radius: 0; background: rgba(255, 255, 255, 0.16); }
+.card em { top: -2px; left: 0; }
+.card.evolve { animation: none; }
+/* the war banner on a placed card: a pixel flag, swaying in whole pixels */
+.card.placed::after {
+  content: ''; top: -5px; right: 0; width: 16px; height: 22px; padding: 0; background: url(ui/flag.png) 0 0 / 16px 22px no-repeat; border: 0; clip-path: none; filter: none;
+  text-shadow: none; animation: pxSway 2.4s steps(1) infinite; image-rendering: pixelated;
+}
+@keyframes pxSway { 0%, 100% { transform: translateX(0); } 33% { transform: translateX(-2px); } 66% { transform: translateX(2px); } }
+#bench { gap: 4px; }
+#spells { gap: 3px; } #spellCards { gap: 4px; }
+/* the trait strip and its hint, slimmer */
+#traits { min-height: 0; gap: 4px; }
+#traitHint, #spellHint { min-height: 0; font-size: 11px; line-height: 12px; }
+.trait { flex: none; border-style: solid; border-width: 4px; border-radius: 0; padding: 0 4px; font-size: 12px; line-height: 14px; background: none; border-image: url(ui/chip.png) 2 fill / 4px stretch; }
+.trait.on { border-image-source: url(ui/chip-on.png); color: #3a1c06; box-shadow: none; }
+.trait.picked { outline: 2px solid #7cc0ff; outline-offset: 0; }
+.spell.dim { filter: grayscale(0.8); }
+
+/* ---- progress bars: a dark well with a hard two-band fill ---- */
+#mana i, .sbMeter i, #bossBar i, #xp .xprow i, #fightStats .cell i, #collection .bar, .xpbar, body .sbMeter i {
+  border: 2px solid var(--deep); border-radius: 0; background: #12090a; box-shadow: none; overflow: hidden;
+}
+#mana i { height: 12px; } #bossBar i { height: 12px; } .xpbar { height: 8px; margin-top: 3px; } #xp .xprow i { height: 8px; } #fightStats .cell i { height: 6px; } #collection .bar { height: 6px; }
+#mana i span, .sbMeter i span { background: linear-gradient(#9fd4ff 50%, #3a78d6 50%); box-shadow: none; }
+.xpbar span, #xp .xprow i span { background: linear-gradient(#bfe2ff 50%, #4a9cff 50%); }
+#bossBar i span { background: linear-gradient(#ff9a7a 50%, #c4232b 50%); box-shadow: none; }
+#fightStats .cell i span, #collection .bar i { background: linear-gradient(var(--gold-hi) 50%, var(--gold-lo) 50%); }
+body .sbMeter i span { background: linear-gradient(#ffd27a 50%, #d6903a 50%); } body .sbMeter.full i span { background: linear-gradient(#ff9a7a 50%, #d6523a 50%); }
+#mana b { text-shadow: var(--outline); }
+
+/* ---- panels: the framed wood with rivets (12px) ---- */
+.hmPanel, .hsheet, .evcard, #tip {
+  border-style: solid; border-width: 12px; border-radius: 0; box-shadow: none; outline: 0; background: none; margin-top: 2px; margin-bottom: 2px;
+  border-image: url(ui/panel.png) 6 fill / 12px stretch;
+}
+.hmPanel { padding: 4px; }
+.hsheet, .evcard { padding: 4px; }
+.hsheet.r2, .hsheet.r3, .hsheet.r4, .hsheet.r5 { outline: 2px solid var(--rc); outline-offset: -2px; box-shadow: none; }
+#tip { padding: 0; }
+#tip button { min-height: 40px; font-size: 14px; }
+#tip #tipSkip { background: none; border: 0; border-image: none; min-height: 40px; padding: 0 4px; }
+#tip i { width: 16px; height: 16px; border: 0; background: var(--gold-hi); clip-path: polygon(0 0, 100% 0, 100% 12.5%, 87.5% 12.5%, 87.5% 25%, 75% 25%, 75% 37.5%, 62.5% 37.5%, 62.5% 50%, 37.5% 50%, 37.5% 37.5%, 25% 37.5%, 25% 25%, 12.5% 25%, 12.5% 12.5%, 0 12.5%); }
+#tip[data-side='above'] i { bottom: -16px; left: calc(var(--ax) - 8px); transform: none; }
+#tip[data-side='below'] i { top: -16px; left: calc(var(--ax) - 8px); transform: rotate(180deg); }
+#tip[data-side='left'] i { right: -16px; top: calc(var(--ay) - 8px); transform: rotate(-90deg); }
+#tip[data-side='right'] i { left: -16px; top: calc(var(--ay) - 8px); transform: rotate(90deg); }
+#tip[data-side] i { border: 0; }
+.tipLit { outline: 2px solid var(--gold-hi); outline-offset: 2px; box-shadow: none; animation: pxBlink 1s steps(1) infinite; }
+@media (prefers-reduced-motion: reduce) { .tipLit { animation: none; } }
+
+/* ---- rows and cards (6px) ---- */
+.hcard, .hrow, .brow, .setting, .hmBuild, .hmNote, .hmCard, .chip, .ptSlot, #stars .star, #xp .xprow, #fightStats, .toast, #collection .hero, #relics .relic, .evcard .row, .evcard .opt, .evcard .slot,
+.evcard .pick, body .sbCard, body .sbSlot, .ptCard {
+  border-style: solid; border-width: 6px; border-radius: 0; box-shadow: none; background: none; border-image: url(ui/card.png) 3 fill / 6px stretch;
+}
+.hmCard { border-image-source: url(ui/card-r4.png); }
+.hmCard.lockedCard, .hmCard:disabled { border-image-source: url(ui/card-r1.png); }
+.hmCard:active { transform: none; }
+.hcard, .ptCard { min-height: auto; }
+.hcard:active, .ptCard:active { transform: none; }
+.hcard.r2, .hcard.r3, .hcard.r4, .hcard.r5, .hrow.r2, .hrow.r3, .hrow.r4, .hrow.r5, .ptSlot.r2, .ptSlot.r3, .ptSlot.r4, .ptSlot.r5, #collection .hero.r2, #collection .hero.r3, #collection .hero.r4, #collection .hero.r5,
+.card.r3, .card.r4, .card.r5, .hmShow canvas.r4 { box-shadow: none; }
+.hcard.r1, .hrow.r1, .ptSlot.r1, #collection .hero.r1, .hmShow canvas.r1 { border-image-source: url(ui/card-r1.png); }
+.hcard.r2, .hrow.r2, .ptSlot.r2, #collection .hero.r2, .hmShow canvas.r2 { border-image-source: url(ui/card-r2.png); }
+.hcard.r3, .hrow.r3, .ptSlot.r3, #collection .hero.r3, .hmShow canvas.r3 { border-image-source: url(ui/card-r3.png); }
+.hcard.r4, .hrow.r4, .ptSlot.r4, #collection .hero.r4, .hmShow canvas.r4 { border-image-source: url(ui/card-r4.png); }
+.hcard.r5, .hrow.r5, .ptSlot.r5, #collection .hero.r5, .hmShow canvas.r5 { border-image-source: url(ui/card-r5.png); }
+.hmShow canvas { border-style: solid; border-width: 6px; border-radius: 0; background: none; border-image: url(ui/card.png) 3 fill / 6px stretch; animation: none; }
+.hcard canvas, .hpic, .hrow canvas { border-radius: 0; }
+.hpic { border: 2px solid var(--deep); }
+.hstats div { border-radius: 0; }
+.ach.done, body .sbCard.on, body .sbSlot.on, .evcard .pick.on, #relics .relic.picked, .evcard .opt.curse { border-image-source: url(ui/card-r4.png); box-shadow: none; }
+.evcard .opt.curse { border-image-source: url(ui/card-r5.png); }
+.ptCard.picked { outline: 2px solid var(--gold-hi); outline-offset: -2px; }
+.ptSlot.empty { border-image-source: url(ui/card.png); }
+.ptInfo { border-radius: 0; background: var(--deep); clip-path: polygon(2px 0, calc(100% - 2px) 0, 100% 2px, 100% calc(100% - 2px), calc(100% - 2px) 100%, 2px 100%, 0 calc(100% - 2px), 0 2px); font-family: var(--pixel); font-style: normal; font-size: 9px; }
+.chip { padding: 1px 6px 1px 2px; }
+.toast { max-width: calc(100vw - 28px); transition: none; }
+.flip .face, .flip .back { border-style: solid; border-width: 6px; border-radius: 0; box-shadow: none; }
+.flip .face { border-image: url(ui/card.png) 3 fill / 6px stretch; }
+.flip .back { border-image: url(ui/card.png) 3 / 6px stretch; background: url(ui/cardback.png) 0 0 / 16px 16px; }
+.flip.r1 .face { border-image-source: url(ui/card-r1.png); } .flip.r2 .face { border-image-source: url(ui/card-r2.png); } .flip.r3 .face { border-image-source: url(ui/card-r3.png); }
+.flip.r4 .face { border-image-source: url(ui/card-r4.png); } .flip.r5 .face { border-image-source: url(ui/card-r5.png); }
+.flip.r2 .face, .flip.r3 .face, .flip.r4 .face, .flip.r5 .face { box-shadow: none; }
+body .sbCard, body .sbSlot { padding: 2px 4px; }
+body .sbSlot { min-height: 44px; }
+
+/* ---- screens: wood floor, a trim under the header, a ribbon for the title ---- */
+#hmSub, #settings, #gacha, body #spellbook, #party { background: url(ui/wood.png) 0 0 / 32px 32px, #1c1008; }
+#hmSub header, #settings header, #gacha header, body #spellbook header, #party > header { padding-bottom: 8px; border-bottom: 8px solid; border-image: url(ui/trim-b.png) 0 0 4 0 / 0 0 8px 0 repeat; box-shadow: none; }
+.hmBanner, #hmSub h2, #settings h2, #gacha h2, body #spellbook h2, #party h2 {
+  height: 32px; display: flex; align-items: center; flex: 0 1 auto; margin: 0 auto 0 0; padding: 0 4px; border-style: solid; border-width: 0 24px; border-radius: 0; background: none; box-shadow: none;
+  border-image: url(ui/ribbon.png) 0 12 fill / 0 24px stretch; clip-path: none; filter: none; animation: none; font-size: 16px; line-height: 32px; white-space: nowrap; color: var(--gold-hi); text-shadow: 0 2px 0 #2a0a06;
+}
+.hmBanner { margin: 0; padding: 0 4px; }
+#party h2 { flex: 0 1 auto; }
+.hmPanel h2, .evcard h2 { text-shadow: 0 2px 0 #000; }
+#hmSub, #settings, #gacha, body #spellbook, #party { animation: none; }
+.hsheet, .evcard { animation: none; }
+#crowns { text-shadow: var(--outline); }
+
+/* ---- the result: a bigger ribbon (4x across, 4x tall), stars, xp and the fight's numbers ---- */
+#banner {
+  height: 64px; display: flex; align-items: center; padding: 0 8px; border-style: solid; border-width: 0 48px; border-radius: 0; background: none; clip-path: none; filter: none; line-height: 64px;
+  border-image: url(ui/ribbon.png) 0 12 fill / 0 48px stretch; font-size: clamp(24px, 8vw, 34px); animation: none;
+}
+#banner.lost { background: none; border-image-source: url(ui/ribbon-grey.png); color: #f0b0a0; text-shadow: 0 3px 0 #1a1a1a; }
+#banner.won { text-shadow: 0 3px 0 #2a0a06; }
+#stars .star { animation: none; opacity: 1; }
+#stars .star > span { text-shadow: none; animation: none; }
+#xp .xprow.up { animation: none; }
+#xp .xprow .pillar { image-rendering: pixelated; }
+#bossCard b { text-shadow: var(--outline); animation: none; }
+#bossBar b { text-shadow: var(--outline); }
+
+/* ---- the home screen ---- */
+.chip { text-shadow: 0 2px 0 #000; }
+.round.new::after, i.badge {
+  width: 14px; height: 14px; border-radius: 0; border: 2px solid #fff; animation: pxBlink 1.4s steps(1) infinite;
+  clip-path: polygon(2px 0, calc(100% - 2px) 0, 100% 2px, 100% calc(100% - 2px), calc(100% - 2px) 100%, 2px 100%, 0 calc(100% - 2px), 0 2px);
+}
+@keyframes pxBlink { 50% { opacity: 0.55; } }
+.hmTab { min-height: 66px; padding: 2px 2px 0; border: 6px solid transparent; border-radius: 0; font-size: 12px; background: none; box-shadow: none; text-shadow: 0 2px 0 #000; transition: none; }
+.hmTab img { width: 32px; height: 32px; filter: brightness(0.62) saturate(0.7); transition: none; }
+.hmTab.on { color: var(--gold-hi); background: none; box-shadow: none; border-image: url(ui/card-r4.png) 3 fill / 6px stretch; }
+.hmTab.on img { filter: none; transform: translateY(-2px); }
+.hmTab:active { transform: none; }
+.hmTab.hero, .hmTab.hero.on {
+  margin-top: -16px; min-height: 82px; padding: 2px 2px 0; border-style: solid; border-width: 10px 10px 12px; border-radius: 0; background: none; box-shadow: none; overflow: hidden;
+  border-image: url(ui/btn-gold.png) 5 5 6 fill / 10px 10px 12px stretch; color: #4a1a06; text-shadow: 0 2px 0 rgba(255, 228, 138, 0.7); font-size: 13px; animation: pxPulse 2.4s steps(1) infinite;
+}
+.hmTab.hero::after { content: ''; position: absolute; top: 0; bottom: 0; left: -24px; width: 12px; pointer-events: none; background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0 25%, rgba(255, 255, 255, 0.75) 25% 50%, rgba(255, 255, 255, 0.4) 50% 75%, rgba(255, 255, 255, 0) 75%); animation: pxGlint 3.4s steps(24) 1.2s infinite; }
+.hmTab.hero:not(.on) { filter: brightness(0.82) saturate(0.8); }
+.hmTab.hero img, .hmTab.hero.on img { width: 32px; height: 32px; filter: none; transform: none; }
+.hmTab.hero:active { border-image-source: url(ui/btn-gold-down.png); }
+@media (orientation: landscape) {
+  .hmTab { min-height: 0; padding: 0 2px; border-radius: 0; }
+  .hmTab img { width: 32px; height: 32px; }
+  .hmTab.on { background: none; box-shadow: none; }
+  .hmTab.hero, .hmTab.hero.on { margin: 0; min-height: 0; padding: 0 2px; border-radius: 0; background: none; flex: 1.2; }
+}
+.hmBattle, .hmBattle:active {
+  border-style: solid; border-width: 15px 15px 18px; border-radius: 0; background: none; box-shadow: none; padding: 4px 4px 2px; overflow: hidden;
+  border-image: url(ui/btn-gold.png) 5 5 6 fill / 15px 15px 18px stretch; color: #4a1a06; text-shadow: 0 3px 0 rgba(255, 228, 138, 0.7); font-size: 36px;
+}
+.hmBattle::after { width: 20px; }
+.hmBattle:active { border-image-source: url(ui/btn-gold-down.png); transform: none; padding-top: 7px; padding-bottom: 0; }
+.hmLink { padding: 0 4px; border-width: 6px 8px; border-image: url(ui/chip.png) 2 fill / 4px 4px stretch; background: none; min-height: 32px; }
+.hmBuild img { image-rendering: pixelated; }
+@media (prefers-reduced-motion: reduce) {
+  .card.placed::after, .hmTab.hero::after, button.primary::after, .hmBattle::after, .round.new::after, i.badge { animation: none; }
+  button.primary:not(:disabled), .hmBattle, .hmTab.hero, .hmTab.hero.on { animation: none; }
+  button.primary::after, .hmBattle::after, .hmTab.hero::after { display: none; }
+}
