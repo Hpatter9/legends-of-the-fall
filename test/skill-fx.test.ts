@@ -12,7 +12,7 @@ test('every hero and foe skill has an effect of its own', () => {
 });
 
 test('no effect names a skill that is not in the kits', () => {
-  const names = new Set(Object.values(KITS).map((k) => k.skill.name));
+  const names = new Set(Object.values(KITS).flatMap((k) => [k.skill.name, ...(k.ultimate ? [k.ultimate.name] : [])]));
   for (const name of Object.keys(SKILL_FX)) assert.ok(names.has(name), `${name} is not a skill`);
 });
 
