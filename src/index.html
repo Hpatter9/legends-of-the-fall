@@ -63,12 +63,13 @@
     position: fixed; left: 0; right: 0; bottom: 0; padding: 8px 8px calc(env(safe-area-inset-bottom) + 8px);
     background: var(--wood); border-top: 2px solid var(--edge); display: flex; flex-direction: column; gap: 8px;
   }
-  #bench { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  #bench { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; max-height: 172px; overflow-y: auto; }
   .card {
     position: relative; background: rgba(0, 0, 0, 0.35); border: 2px solid #5a3a22; border-radius: 8px; padding: 2px 2px 4px;
     text-align: center; touch-action: none;
   }
   .card canvas { width: 100%; max-width: 64px; aspect-ratio: 1; display: block; margin: 0 auto; image-rendering: pixelated; }
+  .card em { position: absolute; top: 1px; left: 3px; font-style: normal; font-size: 10px; color: var(--gold); text-shadow: 0 1px 0 #000; }
   .card b { display: block; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .card i { display: block; height: 4px; margin: 3px 4px 0; background: #2a1a10; border-radius: 2px; overflow: hidden; }
   .card i span { display: block; height: 100%; background: #5fd35f; }
@@ -80,6 +81,7 @@
   body:not([data-phase='deploy']) .card.placed::after { content: none; }
   #buttons { display: flex; gap: 8px; }
   #buttons #fight { flex: 1; }
+  #gold { color: var(--gold); font-weight: bold; white-space: nowrap; }
   body:not([data-phase='deploy']) #buttons { display: none; }
 
   /* sideways: the bench down the right */
@@ -110,15 +112,15 @@
 <body data-phase="deploy">
 <div id="sky"><div></div><div></div><div></div><div></div><div></div></div>
 <div id="stage"></div>
-<div id="top"><h1>Legends of the Fall</h1><span id="status"></span><span id="clock"></span><button id="speed">×1</button></div>
+<div id="top"><h1>Legends of the Fall</h1><span id="status"></span><span id="gold"></span><span id="clock"></span><button id="speed">×1</button></div>
 <div id="panel">
   <div id="bench"></div>
-  <div id="buttons"><button id="newBoard">New board</button><button id="fight" class="primary" disabled>Fight!</button></div>
+  <div id="buttons"><button id="summon">Summon</button><button id="fight" class="primary" disabled>Fight!</button></div>
 </div>
 <div id="result" hidden>
   <div id="banner"></div>
   <div id="summary"></div>
-  <div class="row"><button id="again">Restart</button><button id="next" class="primary">New board</button></div>
+  <div class="row"><button id="next" class="primary">Next stage</button></div>
 </div>
 <div id="loading">Loading…</div>
 <div id="version">Version __VERSION__</div>

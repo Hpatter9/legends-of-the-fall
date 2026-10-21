@@ -50,6 +50,12 @@ export interface Unit {
   /** Bleeding or burning. */
   dot?: Dot & { by: number; next: number; until: number };
   diedAt?: number;
+  /** Multiplies the kind's attack (grade, stage); absent is x1. */
+  power?: number;
+  /** Which of the player's roster this hero is, so two of a kind can fight side by side. */
+  tag?: number;
+  /** How much bigger than its kind it is drawn (a boss); absent is x1. */
+  size?: number;
 }
 
 interface Pending {
@@ -99,6 +105,19 @@ export interface Battle {
 }
 
 export const defOf = (u: Unit): UnitDef => UNITS[u.def];
+/** A fighter's attack: its kind's, times its own multiplier. */
+export const atkOf = (u: Unit): number => UNITS[u.def].atk * (u.power ?? 1);
+/** Per-fighter stat multipliers: hp and attack, and how much bigger it is drawn. */
+export interface Boost {
+  hp?: number;
+  atk?: number;
+  size?: number;
+}
+/** Boosts for a fight's foes: all of them by `foes`, and the first one more by `boss` (a boss stage). */
+export interface Stage {
+  foes?: Boost;
+  boss?: Boost;
+}
 export const apart = (a: At, b: At) => Math.abs(a.u - b.u) + Math.abs(a.v - b.v);
 export const tileOf = (b: Battle, a: At) => tileAt(b.board, a.u, a.v)!;
 export const unitAt = (b: Battle, u: number, v: number): Unit | undefined => b.units.find((x) => x.alive && x.u === u && x.v === v);
@@ -133,55 +152,60 @@ export function canStrike(board: Board, def: UnitDef, from: At, to: At): boolean
 }
 
 /** A fresh fight on the seed's board: the foes of `band` in their rows, no heroes placed yet. */
-export function startBattle(seed: number, band = 'skeletons'): Battle {
+export function startBattle(seed: number, band = 'skeletons', stage: Stage = {}): Battle {
   const board = makeBoard(seed);
   const b: Battle = { seed, board, units: [], phase: 'deploy', t: 0, rng: mixSeed(seed, 0xf167), pending: [], skillRng: mixSeed(seed, 0x5c111), zones: [], nextId: 1 };
   // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed
   const rng = new Rng(mixSeed(seed, 0xf0e5));
-  for (const id of FOE_BANDS[band]) {
+  FOE_BANDS[band].forEach((id, n) => {
     const def = UNITS[id];
     const rows = def.shot ? [0, 1, 2] : [DEPLOY_ROWS - 1, DEPLOY_ROWS - 2, 0];
     for (const v of rows) {
       const free: number[] = [];
       for (let u = 0; u < board.w; u++) if (standable(tileAt(board, u, v)) && !unitAt(b, u, v)) free.push(u);
       if (!free.length) continue;
-      addUnit(b, id, rng.pick(free), v);
+      const boss = n === 0 ? stage.boss : undefined;
+      addUnit(b, id, rng.pick(free), v, { hp: (stage.foes?.hp ?? 1) * (boss?.hp ?? 1), atk: (stage.foes?.atk ?? 1) * (boss?.atk ?? 1), size: boss?.size });
       break;
     }
-  }
+  });
   return b;
 }
 
-export function addUnit(b: Battle, defId: string, u: number, v: number): Unit {
+export function addUnit(b: Battle, defId: string, u: number, v: number, boost: Boost = {}, tag?: number): Unit {
   const def = UNITS[defId];
-  const unit: Unit = { id: b.nextId++, def: defId, side: def.side, u, v, hp: def.hp, maxHp: def.hp, facing: def.side === 'hero' ? 3 : 1, alive: true, busyUntil: 0, charge: 0 };
+  const hp = Math.round(def.hp * (boost.hp ?? 1));
+  const unit: Unit = { id: b.nextId++, def: defId, side: def.side, u, v, hp, maxHp: hp, facing: def.side === 'hero' ? 3 : 1, alive: true, busyUntil: 0, charge: 0 };
+  if (boost.atk && boost.atk !== 1) unit.power = boost.atk;
+  if (boost.size && boost.size !== 1) unit.size = boost.size;
+  if (tag !== undefined) unit.tag = tag;
   b.units.push(unit);
   return unit;
 }
 
 /** Whether a hero may be put on a tile: the fight hasn't begun, it's on the heroes' rows, and it's free ground. */
-export function canPlace(b: Battle, defId: string, u: number, v: number): boolean {
+export function canPlace(b: Battle, defId: string, u: number, v: number, tag?: number): boolean {
   if (b.phase !== 'deploy' || UNITS[defId]?.side !== 'hero') return false;
   if (!isDeployTile(v) || !standable(tileAt(b.board, u, v))) return false;
   const there = unitAt(b, u, v);
-  return !there || there.def === defId;
+  return !there || (tag === undefined ? there.def === defId : there.tag === tag);
 }
 
-/** Put a hero on a tile (or move it there, if it's already placed). */
-export function place(b: Battle, defId: string, u: number, v: number): boolean {
-  if (!canPlace(b, defId, u, v)) return false;
-  const placed = b.units.find((x) => x.def === defId);
+/** Put a hero on a tile (or move it there, if it's already placed). A run's hero has a `tag` and a `boost` (its grade). */
+export function place(b: Battle, defId: string, u: number, v: number, tag?: number, boost?: Boost): boolean {
+  if (!canPlace(b, defId, u, v, tag)) return false;
+  const placed = b.units.find((x) => x.side === 'hero' && (tag === undefined ? x.def === defId : x.tag === tag));
   if (placed) {
     placed.u = u;
     placed.v = v;
-  } else addUnit(b, defId, u, v);
+  } else addUnit(b, defId, u, v, boost, tag);
   return true;
 }
 
 /** Take a placed hero back to the bench. */
-export function unplace(b: Battle, defId: string): boolean {
+export function unplace(b: Battle, defId: string, tag?: number): boolean {
   if (b.phase !== 'deploy') return false;
-  const i = b.units.findIndex((x) => x.def === defId && x.side === 'hero');
+  const i = b.units.findIndex((x) => x.side === 'hero' && (tag === undefined ? x.def === defId : x.tag === tag));
   if (i < 0) return false;
   b.units.splice(i, 1);
   return true;
@@ -308,7 +332,7 @@ function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[]): voi
   me.facing = way;
   const mult = blowMult(tileOf(b, me).h, tileOf(b, to).h, way, to.facing);
   const crit = rollCrit(b, me);
-  const dmg = Math.max(1, Math.round(Math.max(1, def.atk - defOf(to).def) * mult * crit * rng.range(0.9, 1.1)));
+  const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - defOf(to).def) * mult * crit * rng.range(0.9, 1.1)));
   const windup = Math.min(def.shot ? 500 : 400, Math.round(def.atkMs * 0.4));
   me.swing = { at: b.t, ms: windup + 250, to: to.id };
   me.busyUntil = b.t + def.atkMs;

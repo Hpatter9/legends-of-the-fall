@@ -36,7 +36,8 @@ export class UnitSprite {
 
   constructor(readonly unit: Unit) {
     const def = defOf(unit);
-    this.tall = figureOf(def.sheet) * def.scale;
+    this.tall = figureOf(def.sheet) * def.scale * (unit.size ?? 1);
+    this.root.scale.set(unit.size ?? 1);
     this.shadow.ellipse(0, 0, 13, 5).fill({ color: 0x000000, alpha: 0.32 });
     this.body.anchor.set(0.5, 1);
     this.aura.ellipse(0, -this.tall * 0.4, 17, this.tall * 0.62).stroke({ color: 0x8fc4ff, width: 2, alpha: 0.9 });
