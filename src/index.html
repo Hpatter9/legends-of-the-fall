@@ -84,6 +84,24 @@
   #gold { color: var(--gold); font-weight: bold; white-space: nowrap; }
   body:not([data-phase='deploy']) #buttons { display: none; }
 
+  /* the king's spells: shown only during the fight */
+  #spells { display: none; flex-direction: column; gap: 6px; }
+  body[data-phase='fight'] #spells { display: flex; }
+  #mana { display: flex; align-items: center; gap: 8px; font-size: 12px; font-variant-numeric: tabular-nums; }
+  #mana i { flex: 1; height: 10px; background: #2a1a10; border: 1px solid #5a3a22; border-radius: 5px; overflow: hidden; }
+  #mana i span { display: block; height: 100%; width: 0; background: linear-gradient(#7cc0ff, #3a78d6); }
+  #spellCards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .spell {
+    position: relative; overflow: hidden; padding: 5px 2px 4px; text-align: center; font-size: 12px; line-height: 1.2;
+    background: rgba(0, 0, 0, 0.35); border: 2px solid #5a3a22; border-radius: 8px; color: var(--ink);
+  }
+  .spell b { display: block; }
+  .spell em { font-style: normal; color: #7cc0ff; }
+  .spell .cool { position: absolute; left: 0; right: 0; bottom: 0; height: 0; background: rgba(0, 0, 0, 0.55); pointer-events: none; }
+  .spell.dim { opacity: 0.45; filter: grayscale(0.8); }
+  .spell.armed { border-color: var(--gold); box-shadow: 0 0 10px var(--gold); opacity: 1; filter: none; }
+  #spellHint { min-height: 14px; font-size: 11px; color: var(--dim); text-align: center; }
+
   /* sideways: the bench down the right */
   @media (orientation: landscape) {
     #panel { left: auto; top: 0; width: 230px; border-top: 0; border-left: 2px solid var(--edge); padding: calc(env(safe-area-inset-top) + 8px) calc(env(safe-area-inset-right) + 8px) 8px 8px; justify-content: center; }
@@ -114,6 +132,7 @@
 <div id="stage"></div>
 <div id="top"><h1>Legends of the Fall</h1><span id="status"></span><span id="gold"></span><span id="clock"></span><button id="speed">×1</button></div>
 <div id="panel">
+  <div id="spells"><div id="mana"><i><span></span></i><b></b></div><div id="spellCards"></div><div id="spellHint"></div></div>
   <div id="bench"></div>
   <div id="buttons"><button id="summon">Summon</button><button id="fight" class="primary" disabled>Fight!</button></div>
 </div>

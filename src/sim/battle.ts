@@ -11,6 +11,7 @@ import { firstStep, walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
 import { FOE_BANDS } from './foes';
 import { afterBlow, landArea, onStrike, rollCrit, tickStatus, tryCast, type Dot, type Zone } from './abilities';
+import { fillMana, freshSpells, settleFalls, speedOf, type SpellState } from './spells';
 import { SPLASH_SHARE, UNITS, type Shot, type Side, type UnitDef } from './units';
 
 export const TICK_MS = 100;
@@ -49,6 +50,8 @@ export interface Unit {
   taunt?: { to: number; until: number };
   /** Bleeding or burning. */
   dot?: Dot & { by: number; next: number; until: number };
+  /** Hasted (the king's spell) until then. */
+  hasteUntil?: number;
   diedAt?: number;
   /** Multiplies the kind's attack (grade, stage); absent is x1. */
   power?: number;
@@ -85,6 +88,9 @@ export type BattleEvent =
   | { kind: 'area'; by: number; id: 'volley' | 'meteor'; u: number; v: number; ms: number }
   | { kind: 'zone'; u: number; v: number; ms: number }
   | { kind: 'dodge'; to: number }
+  | { kind: 'spell'; id: 'heal' | 'meteor' | 'haste'; u: number; v: number }
+  | { kind: 'heal'; to: number; amount: number }
+  | { kind: 'haste'; to: number; ms: number }
   | { kind: 'end'; won: boolean };
 
 export interface Battle {
@@ -102,6 +108,8 @@ export interface Battle {
   /** Burning ground. */
   zones: Zone[];
   nextId: number;
+  /** The king's mana, spell cooldowns and meteors falling. */
+  spells: SpellState;
 }
 
 export const defOf = (u: Unit): UnitDef => UNITS[u.def];
@@ -154,7 +162,7 @@ export function canStrike(board: Board, def: UnitDef, from: At, to: At): boolean
 /** A fresh fight on the seed's board: the foes of `band` in their rows, no heroes placed yet. */
 export function startBattle(seed: number, band = 'skeletons', stage: Stage = {}): Battle {
   const board = makeBoard(seed);
-  const b: Battle = { seed, board, units: [], phase: 'deploy', t: 0, rng: mixSeed(seed, 0xf167), pending: [], skillRng: mixSeed(seed, 0x5c111), zones: [], nextId: 1 };
+  const b: Battle = { seed, board, units: [], phase: 'deploy', t: 0, rng: mixSeed(seed, 0xf167), pending: [], skillRng: mixSeed(seed, 0x5c111), zones: [], nextId: 1, spells: freshSpells() };
   // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed
   const rng = new Rng(mixSeed(seed, 0xf0e5));
   FOE_BANDS[band].forEach((id, n) => {
@@ -226,6 +234,9 @@ export function stepBattle(b: Battle): BattleEvent[] {
   if (b.phase !== 'fight') return out;
   b.t += TICK_MS;
   const rng = new Rng(b.rng);
+  out.push(...b.spells.events.splice(0));
+  fillMana(b);
+  settleFalls(b, out);
   // blows and shots that land now
   b.pending.sort((x, y) => x.at - y.at);
   while (b.pending.length && b.pending[0].at <= b.t) settle(b, b.pending.shift()!, out);
@@ -333,9 +344,11 @@ function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[]): voi
   const mult = blowMult(tileOf(b, me).h, tileOf(b, to).h, way, to.facing);
   const crit = rollCrit(b, me);
   const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - defOf(to).def) * mult * crit * rng.range(0.9, 1.1)));
-  const windup = Math.min(def.shot ? 500 : 400, Math.round(def.atkMs * 0.4));
+  const quick = speedOf(b, me);
+  const atkMs = Math.round(def.atkMs / quick);
+  const windup = Math.min(def.shot ? 500 : 400, Math.round(atkMs * 0.4));
   me.swing = { at: b.t, ms: windup + 250, to: to.id };
-  me.busyUntil = b.t + def.atkMs;
+  me.busyUntil = b.t + atkMs;
   b.pending.push({ at: b.t + windup, kind: def.shot ? 'release' : 'land', by: me.id, to: to.id, dmg, heavy: mult * crit >= 1.4, crit: crit > 1 });
   out.push({ kind: 'swing', by: me.id, to: to.id });
 }
@@ -346,7 +359,7 @@ function stepTo(b: Battle, me: Unit, i: number, _out: BattleEvent[]): void {
   const from = tileOf(b, me);
   const to = tileOf(b, next);
   const cost = 1 + Math.max(0, to.h - from.h);
-  const ms = def.moveMs * cost;
+  const ms = Math.round((def.moveMs * cost) / speedOf(b, me));
   me.step = { u: me.u, v: me.v, h: from.h, at: b.t, ms };
   me.facing = wayTo(me, next);
   me.u = next.u;

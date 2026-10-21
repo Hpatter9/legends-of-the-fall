@@ -6,6 +6,7 @@ import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { D, standable, tileAt } from './sim/board';
 import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle } from './sim/battle';
 import { finish, gradeBoost, heroOf, isBossStage, loadRun, newRun, saveRun, setSquad, SQUAD, startStage, summon, summonCost, type Run } from './sim/run';
+import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, SPELL_IDS, type SpellId } from './sim/spells';
 import { UNITS } from './sim/units';
 import { BoardView, loadBoardArt } from './render/boardView';
 import { UnitSprite } from './render/unitView';
@@ -52,6 +53,8 @@ class Game {
   private acc = 0;
   private scale = 1;
   private sky: HTMLElement[] = [];
+  /** The spell card chosen, waiting for a tile. */
+  private spell: SpellId | null = null;
 
   async start(): Promise<void> {
     await this.app.init({ resizeTo: window, backgroundAlpha: 0, antialias: false, roundPixels: true, autoDensity: true, resolution: Math.min(3, devicePixelRatio || 1) });
@@ -68,6 +71,7 @@ class Game {
     const seed = Number(query.get('seed'));
     this.run = (!seed && loadRun()) || newRun(seed || (Date.now() % 100000) + 1);
     this.sky = [...document.querySelectorAll<HTMLElement>('#sky div')];
+    this.buildSpells();
     this.wire();
     this.newBattle();
     this.app.ticker.add((tk) => this.frame(tk.deltaMS));
@@ -91,6 +95,7 @@ class Game {
     }
     this.acc = 0;
     this.chosen = null;
+    this.spell = null;
     this.fx.clear();
     this.boardView.build(this.b.board);
     this.syncSprites(true);
@@ -109,7 +114,7 @@ class Game {
     if (!fight(this.b)) return;
     this.chosen = null;
     this.boardView.clearMarks();
-    this.focus();
+    this.layout();
     this.refresh();
   }
 
@@ -126,6 +131,7 @@ class Game {
       }
       this.fx.step(Math.min(dt, 250) * this.speed);
       $('clock').textContent = clock(b.t);
+      this.refreshSpells();
     } else if (b.phase !== 'deploy') {
       // (the fallen finish falling after the end)
       this.acc += dt;
@@ -301,6 +307,7 @@ class Game {
       // (a drag that begins on a placed hero moves the hero; anywhere else it pans the board)
       const id = this.b.phase === 'deploy' ? this.heroAtScreen(e.clientX, e.clientY) : null;
       this.drag = { id: id ?? '', x: e.clientX, y: e.clientY, moved: false, fromBoard: true, pan: id ? undefined : { cx: this.cx, cy: this.cy } };
+      this.aim(e);
     });
     window.addEventListener('pointermove', (e) => this.dragMove(e));
     window.addEventListener('pointerup', (e) => this.dragEnd(e));
@@ -327,6 +334,8 @@ class Game {
   private dragMove(e: PointerEvent): void {
     const d = this.drag;
     if (!d) return;
+    if (d.pan && d.moved) this.hover = null;
+    else this.aim(e);
     if (d.pan) {
       if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 8) return;
       d.moved = true;
@@ -354,6 +363,12 @@ class Game {
   private dragEnd(e: PointerEvent): void {
     const d = this.drag;
     if (!d) return;
+    // (a tap on the board with a spell chosen casts it there)
+    if (this.b.phase === 'fight' && this.spell && !d.moved && (e.target as HTMLElement) === this.app.canvas) {
+      const tile = this.tileAtScreen(e.clientX, e.clientY);
+      if (tile && castSpell(this.b, this.spell, ...tile)) this.spell = null;
+      return this.endDrag();
+    }
     if (this.b.phase !== 'deploy' || (d.pan && d.moved)) return this.endDrag();
     if (d.moved && d.id) {
       // dropped: on a tile of the heroes' rows, or back on the bench
@@ -443,6 +458,52 @@ class Game {
     }
   }
 
+  /* -------------------------------------------------------------- the king's spells */
+
+  private buildSpells(): void {
+    const cards = $('spellCards');
+    for (const id of SPELL_IDS) {
+      const sp = SPELLS[id];
+      const card = document.createElement('button');
+      card.className = 'spell';
+      card.dataset.id = id;
+      card.title = sp.text;
+      card.innerHTML = `<b>${sp.name}</b><em>${sp.cost} mana</em><span class="cool"></span>`;
+      card.addEventListener('click', () => {
+        if (this.b.phase !== 'fight') return;
+        this.spell = this.spell === id ? null : canAfford(this.b, id) ? id : this.spell;
+        this.hover = null;
+        this.refreshSpells();
+        this.markTiles();
+      });
+      cards.append(card);
+    }
+  }
+
+  /** While a spell is chosen, the finger or pointer shows the 3x3 it would hit. */
+  private aim(e: PointerEvent): void {
+    if (this.b.phase !== 'fight' || !this.spell) return;
+    this.hover = this.tileAtScreen(e.clientX, e.clientY);
+    this.markTiles();
+  }
+
+  private refreshSpells(): void {
+    const b = this.b;
+    // (a chosen spell that has become unaffordable, or a fight that has ended, is dropped)
+    const dropped = this.spell && !canAfford(b, this.spell);
+    if (dropped) this.spell = null;
+    ($('mana').querySelector('i span') as HTMLElement).style.width = `${(b.spells.mana / MANA_MAX) * 100}%`;
+    $('mana').querySelector('b')!.textContent = `${Math.floor(b.spells.mana)}/${MANA_MAX}`;
+    for (const card of $('spellCards').children as HTMLCollectionOf<HTMLElement>) {
+      const id = card.dataset.id as SpellId;
+      card.classList.toggle('dim', !canAfford(b, id));
+      card.classList.toggle('armed', this.spell === id);
+      (card.querySelector('.cool') as HTMLElement).style.height = `${(cooldownLeft(b, id) / SPELLS[id].cooldownMs) * 100}%`;
+    }
+    $('spellHint').textContent = this.spell ? `${SPELLS[this.spell].text}: tap a tile (tap the card again to cancel)` : '';
+    if (dropped) this.markTiles();
+  }
+
   /** The page and the board's lit tiles, after anything changes. */
   private refresh(): void {
     const b = this.b;
@@ -497,6 +558,11 @@ class Game {
   private markTiles(): void {
     const b = this.b;
     this.boardView.clearMarks();
+    if (b.phase === 'fight' && this.spell && this.hover) {
+      // the spell's 3x3 around the tile under the finger
+      for (let du = -1; du <= 1; du++)
+        for (let dv = -1; dv <= 1; dv++) if (tileAt(b.board, this.hover[0] + du, this.hover[1] + dv)) this.boardView.mark(this.hover[0] + du, this.hover[1] + dv, this.spell === 'meteor' ? 'bad' : 'chosen');
+    }
     if (b.phase !== 'deploy') return;
     const who = this.chosen;
     for (let v = 0; v < D; v++)
