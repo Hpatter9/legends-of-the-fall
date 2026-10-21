@@ -2,15 +2,12 @@
 // the lands' display names.
 
 import coin from './art/items/lucky_coin.png';
-import weapon from './art/items/weapon2.png';
 import sword from './art/items/weapon1.png';
 import charm from './art/items/charm1.png';
 import armour1 from './art/items/armour1.png';
 import phoenix from './art/items/phoenix.png';
-import banner from './art/items/banner.png';
 import whetstone from './art/items/whetstone.png';
 import hourglass from './art/items/hourglass.png';
-import shield from './art/items/iron_shield.png';
 import spyglass from './art/items/spyglass.png';
 import tabRecruit from './art/ui/tab-recruit.png';
 import tabHeroes from './art/ui/tab-heroes.png';
