@@ -53,6 +53,10 @@ export const TRAITS: Record<string, Trait> = {
   ] },
   mystic: { id: 'mystic', name: 'Mystic', kind: 'origin', short: 'My', tiers: [{ need: 2, effects: { mana: 1.3 }, text: "The king's mana fills 30% faster" }] },
   yokai: { id: 'yokai', name: 'Yokai', kind: 'origin', short: 'Yo', tiers: [{ need: 2, effects: { dodge: 0.06 }, text: 'Slip 6% of blows' }] },
+  beast: { id: 'beast', name: 'Beast', kind: 'origin', short: 'Be', tiers: [
+    { need: 2, effects: { atk: 1.03 }, text: '+3% attack' },
+    { need: 4, effects: { atk: 1.08 }, text: '+8% attack' },
+  ] },
   knightly: { id: 'knightly', name: 'Knightly', kind: 'origin', short: 'Kn', tiers: [{ need: 2, effects: { hp: 1.05 }, text: '+5% health' }] },
   guardian: { id: 'guardian', name: 'Guardian', kind: 'class', short: 'Gu', tiers: [{ need: 2, effects: { guard: 0.05 }, text: 'All heroes take 5% less damage' }] },
   blade: { id: 'blade', name: 'Blade', kind: 'class', short: 'Bl', tiers: [{ need: 2, effects: { crit: 0.1 }, text: '+10% crit chance for all' }] },
@@ -75,6 +79,11 @@ export const HERO_TRAITS: Record<string, readonly [string, string]> = {
   kitsune: ['yokai', 'trickster'],
   karasu: ['yokai', 'trickster'],
   yamabushi: ['yokai', 'guardian'],
+  werewolf: ['beast', 'blade'],
+  minotaur: ['beast', 'guardian'],
+  satyr: ['beast', 'caster'],
+  gorgon: ['beast', 'marksman'],
+  samuraiCommander: ['knightly', 'blade'],
 };
 
 export const traitsOf = (kind: string): readonly string[] => HERO_TRAITS[kind] ?? [];

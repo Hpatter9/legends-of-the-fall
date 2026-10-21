@@ -10,7 +10,7 @@ import { boardOk, D, DEPLOY_ROWS, GROUND_COST, LAVA_BURN, makeBoard, sightClear,
 import { firstStep, walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
 import { FOE_BANDS } from './foes';
-import { afterBlow, landArea, pierceOf, preyOf, onStrike, rollCrit, tickStatus, tryCast, type Dot, type Zone } from './abilities';
+import { afterBlow, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rollCrit, sureFooted, tickStatus, tryCast, type Dot, type Zone } from './abilities';
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellState } from './spells';
 import { kindsOf, traitEffects, type TraitEffects } from './traits';
 import { mergeEffects } from './relics';
@@ -62,6 +62,10 @@ export interface Unit {
   rallyUntil?: number;
   /** Charmed (Kitsune) until then: fights its own side. */
   charmUntil?: number;
+  /** Quickened by its kills (Werewolf): how many stack, and until when. */
+  frenzy?: { n: number; until: number };
+  /** Its attack raised by a war banner (Samurai Commander) until then. */
+  banner?: { until: number };
   /** The next time a healer's passive mends an ally. */
   mendAt?: number;
   diedAt?: number;
@@ -111,6 +115,14 @@ export type BattleEvent =
   /** A spell touches this fighter (the renderer plays the spell's sheet on it). */
   | { kind: 'spellfx'; id: SpellId; to: number }
   | { kind: 'heal'; to: number; amount: number; by?: number }
+  /** A kill quickens the fighter's blows (Werewolf); `n` stacks now. */
+  | { kind: 'frenzy'; by: number; n: number }
+  /** A stare stiffens a foe (Gorgon). */
+  | { kind: 'gaze'; by: number; to: number }
+  /** A song hastens the allies near the singer (Satyr), for `ms`. */
+  | { kind: 'song'; by: number; ms: number }
+  /** A war banner goes up (Samurai Commander), for `ms`. */
+  | { kind: 'banner'; by: number; ms: number }
   | { kind: 'haste'; to: number; ms: number }
   | { kind: 'end'; won: boolean };
 
@@ -377,6 +389,7 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
     to.swing = undefined;
   }
   out.push({ kind: 'hit', by: by.id, to: to.id, dmg, heavy, splash, killed, src });
+  if (killed) onKill(b, by, out);
 }
 
 function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
@@ -435,8 +448,8 @@ function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[]): voi
   me.facing = way;
   const mult = blowMult(tileOf(b, me).h, tileOf(b, to).h, way, to.facing);
   const crit = rollCrit(b, me);
-  const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - Math.max(0, defOf(to).def - pierceOf(me))) * mult * crit * preyOf(me, to) * rng.range(0.9, 1.1)));
-  const quick = speedOf(b, me);
+  const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - Math.max(0, defOf(to).def - pierceOf(me))) * mult * crit * preyOf(me, to) * finishOf(me, to) * rng.range(0.9, 1.1)));
+  const quick = speedOf(b, me) * frenzyOf(b, me);
   const atkMs = Math.round(def.atkMs / quick);
   const windup = Math.min(def.shot ? 500 : 400, Math.round(atkMs * 0.4));
   me.swing = { at: b.t, ms: windup + 250, to: to.id };
@@ -450,7 +463,8 @@ function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void {
   const next = { u: i % b.board.w, v: Math.floor(i / b.board.w) };
   const from = tileOf(b, me);
   const to = tileOf(b, next);
-  const cost = def.flies ? 1 : 1 + Math.max(0, to.h - from.h) + (to.ground ? GROUND_COST[to.ground] : 0);
+  // (a sure-footed fighter climbs at no extra cost)
+  const cost = def.flies ? 1 : 1 + (sureFooted(me) ? 0 : Math.max(0, to.h - from.h)) + (to.ground ? GROUND_COST[to.ground] : 0);
   const ms = Math.round((def.moveMs * cost) / speedOf(b, me));
   me.step = { u: me.u, v: me.v, h: from.h, at: b.t, ms };
   me.facing = wayTo(me, next);

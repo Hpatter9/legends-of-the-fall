@@ -8,7 +8,8 @@ the raw files), copied one sprite at a time from the private assets repository (
   Kunoichi, Samurai Archer, Fire Wizard, Skeleton Warrior, Skeleton Spearman, Skeleton Archer; and from the Free
   Werewolf, Gorgon, Minotaur and Satyr Sprite Sheets, all three of each. Knight 2 and 3, Samurai Commander, Ninja Monk, Ninja Peasant, Lightning Mage,
   Wanderer Magician (Free Wizard Sprite Sheets) and Kitsune, Karasu Tengu, Yamabushi Tengu (Free Yokai Character Sprites)
-  are copied in for more heroes and their evolved looks. The arrows
+  are copied in for more heroes and their evolved looks. The Werewolf, Minotaur, Satyr and Gorgon heroes use the same
+  sheets (the other colours at grades 2 and 3), and the Samurai Commander is the one copied in above. The arrows
   (`src/art/fx/arrow.png`, `bone_arrow.png`) are the Samurai Archer's and the Skeleton Archer's own.
 - **The ground** (`src/art/ground/`): the grass tops (`grass1.png`, `grass2.png`) are cut from the Fantasy 2D
   Battlegrounds pixel pack (Battleground 1, Bright, `stones&grass.png`) and the stone tops (`stone.png`) from its

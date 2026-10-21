@@ -61,6 +61,11 @@ export const UNITS: Record<string, UnitDef> = {
   kitsune: { id: 'kitsune', name: 'Kitsune', side: 'hero', sheet: 'kitsune', scale: 0.59, hp: 200, atk: 22, def: 5, range: 1, moveMs: 480, atkMs: 800, jump: 3, rarity: 3, role: 'Charms a foe to fight for her' },
   karasu: { id: 'karasu', name: 'Karasu Tengu', side: 'hero', sheet: 'karasu_tengu', scale: 0.53, hp: 200, atk: 30, def: 4, range: 1, moveMs: 420, atkMs: 900, jump: 9, flies: true, rarity: 3, role: 'Flies; dives on shooters' },
   yamabushi: { id: 'yamabushi', name: 'Yamabushi Tengu', side: 'hero', sheet: 'yamabushi_tengu', scale: 0.48, hp: 300, atk: 20, def: 9, range: 1, moveMs: 760, atkMs: 1200, jump: 2, rarity: 3, role: 'Wind that shoves foes off ledges' },
+  werewolf: { id: 'werewolf', name: 'Werewolf', side: 'hero', sheet: 'werewolf_white', scale: 0.81, hp: 200, atk: 23, def: 5, range: 1, moveMs: 340, atkMs: 800, jump: 3, rarity: 3, role: 'Quicker with each kill; bites back the blood', forms: ['werewolf_white', 'werewolf_white', 'werewolf_black'] },
+  minotaur: { id: 'minotaur', name: 'Minotaur', side: 'hero', sheet: 'minotaur_3', scale: 0.5, hp: 310, atk: 24, def: 9, range: 1, moveMs: 800, atkMs: 1300, jump: 2, rarity: 3, role: 'Charges a foe, knocks it back and stuns it', forms: ['minotaur_3', 'minotaur_3', 'minotaur_2'] },
+  satyr: { id: 'satyr', name: 'Satyr', side: 'hero', sheet: 'satyr_2', scale: 0.52, hp: 240, atk: 21, def: 5, range: 1, moveMs: 560, atkMs: 1000, jump: 3, rarity: 2, role: 'Pipes that hasten the allies near him', forms: ['satyr_2', 'satyr_2', 'satyr_3'] },
+  gorgon: { id: 'gorgon', name: 'Gorgon', side: 'hero', sheet: 'gorgon_3', scale: 0.6, hp: 200, atk: 26, def: 4, range: 4, moveMs: 700, atkMs: 1500, jump: 2, shot: 'bolt', rarity: 3, role: 'Petrifying gaze that stuns from afar', forms: ['gorgon_3', 'gorgon_3', 'gorgon_2'] },
+  samuraiCommander: { id: 'samuraiCommander', name: 'Samurai Commander', side: 'hero', sheet: 'samurai_commander', scale: 0.72, hp: 260, atk: 26, def: 8, range: 1, moveMs: 640, atkMs: 1050, jump: 2, rarity: 2, role: 'War banner lifts the blows of those near' },
 
   skeleton: { id: 'skeleton', name: 'Skeleton', side: 'foe', sheet: 'skeleton_warrior', scale: 0.79, hp: 320, atk: 26, def: 7, range: 1, moveMs: 650, atkMs: 1100, jump: 2, role: 'Sword and shield' },
   spearman: { id: 'spearman', name: 'Skeleton Spearman', side: 'foe', sheet: 'skeleton_spearman', scale: 0.67, hp: 270, atk: 28, def: 5, range: 2, moveMs: 650, atkMs: 1250, jump: 2, role: 'Reaches two tiles' },
@@ -70,4 +75,4 @@ export const UNITS: Record<string, UnitDef> = {
 /** The heroes on the bench, in order. */
 export const HEROES = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard'] as const;
 /** Every hero there is (the starting five first; more are unlocked by recruiting). */
-export const ALL_HEROES: readonly string[] = [...HEROES, 'peasant', 'ninjaMonk', 'wanderer', 'lightningMage', 'kitsune', 'karasu', 'yamabushi'];
+export const ALL_HEROES: readonly string[] = [...HEROES, 'peasant', 'ninjaMonk', 'wanderer', 'lightningMage', 'kitsune', 'karasu', 'yamabushi', 'werewolf', 'minotaur', 'satyr', 'gorgon', 'samuraiCommander'];

@@ -56,6 +56,16 @@ export interface Passive {
   prey?: number;
   /** Takes this much less from each ally on the tiles beside it (up to three). */
   huddle?: number;
+  /** Each kill quickens its blows by `per` (a share) for `ms`; the kills stack up to `max`. */
+  frenzy?: { per: number; ms: number; max: number };
+  /** Its blows deal `mult` more to a foe under `under` of its health. */
+  finish?: { under: number; mult: number };
+  /** Climbs at no extra cost. */
+  sure?: boolean;
+  /** Takes this much less from shots (a blow from a shooter). */
+  scales?: number;
+  /** Cannot be knocked back. */
+  steady?: boolean;
 }
 
 export interface Skill {
@@ -338,6 +348,7 @@ function windGust(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     const way = wayTo(me, f);
     hurt(b, me, f, net(atkOf(me) * 0.9, f), false, false, out, 'skill');
     if (!f.alive) continue;
+    if (kitOf(f)?.passive.steady) continue;
     const to = { u: f.u + DIR[way][0], v: f.v + DIR[way][1] };
     const t = tileAt(b.board, to.u, to.v);
     f.busyUntil = Math.max(f.busyUntil, b.t + 500);
@@ -348,6 +359,123 @@ function windGust(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     f.v = to.v;
     if (from.h - t.h >= 2) hurt(b, me, f, (from.h - t.h) * FALL_DMG, true, false, out, 'dot');
   }
+  return true;
+}
+
+/** Werewolf: bites the weakest foe in reach for double, and heals for half of the damage it dealt. */
+const LEECH_SHARE = 0.5;
+function ravage(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const def = strikeDef(b, me);
+  const f = sorted(foesOf(b, me).filter((x) => canStrike(b.board, def, me, x)))[0];
+  if (!f) return false;
+  me.facing = wayTo(me, f);
+  const mult = blowMult(tileOf(b, me).h, tileOf(b, f).h, me.facing, f.facing);
+  const before = me.dealt ?? 0;
+  hurt(b, me, f, net(atkOf(me) * 2 * mult, f), false, false, out, 'skill');
+  mendUnit(me, ((me.dealt ?? 0) - before) * LEECH_SHARE, out);
+  return true;
+}
+
+/** Werewolf's frenzy: a kill quickens its blows, and the kills stack up to the passive's limit for a while. */
+export function onKill(b: Battle, by: Unit, out: BattleEvent[]): void {
+  const f = kitOf(by)?.passive.frenzy;
+  if (!f || !by.alive) return;
+  const n = by.frenzy && by.frenzy.until > b.t ? by.frenzy.n : 0;
+  by.frenzy = { n: Math.min(f.max, n + 1), until: b.t + f.ms };
+  out.push({ kind: 'frenzy', by: by.id, n: by.frenzy.n });
+}
+/** How much faster a fighter's blows come, from its frenzy (1 when none). */
+export const frenzyOf = (b: Battle, u: Unit): number => {
+  const f = kitOf(u)?.passive.frenzy;
+  return f && u.frenzy && u.frenzy.until > b.t ? 1 + f.per * u.frenzy.n : 1;
+};
+
+/** Minotaur: charges up a line of up to four tiles at the weakest foe it meets, hits it for double, knocks it back and stuns it. */
+const CHARGE_TILES = 4;
+function goreCharge(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const def = defOf(me);
+  let best: { way: number; land: At; f: Unit } | undefined;
+  for (let way = 0; way < 4; way++) {
+    const [du, dv] = DIR[way];
+    let h = tileOf(b, me).h;
+    let land: At = { u: me.u, v: me.v };
+    for (let i = 1; i <= CHARGE_TILES; i++) {
+      const n = { u: me.u + du * i, v: me.v + dv * i };
+      const t = tileAt(b.board, n.u, n.v);
+      if (!t || !standable(t) || Math.abs(t.h - h) > def.jump) break;
+      const there = unitAt(b, n.u, n.v);
+      if (there) {
+        if (there.side !== me.side && (!best || there.hp < best.f.hp || (there.hp === best.f.hp && there.id < best.f.id))) best = { way, land, f: there };
+        break;
+      }
+      land = n;
+      h = t.h;
+    }
+  }
+  if (!best) return false;
+  const { way, land, f } = best;
+  const from = { u: me.u, v: me.v };
+  const h0 = tileOf(b, me).h;
+  const power = atkOf(me) * 2 * blowMult(h0, tileOf(b, f).h, way, f.facing);
+  me.facing = way;
+  if (land.u !== from.u || land.v !== from.v) {
+    me.step = { u: from.u, v: from.v, h: h0, at: b.t, ms: 260 };
+    me.u = land.u;
+    me.v = land.v;
+    out.push({ kind: 'dash', by: me.id, from, to: land });
+  }
+  hurt(b, me, f, net(power, f), true, false, out, 'skill');
+  if (!f.alive) return true;
+  f.busyUntil = Math.max(f.busyUntil, b.t + STUN_MS);
+  const to = { u: f.u + DIR[way][0], v: f.v + DIR[way][1] };
+  const t = tileAt(b.board, to.u, to.v);
+  if (kitOf(f)?.passive.steady || !t || !standable(t) || unitAt(b, to.u, to.v)) return true;
+  f.step = { u: f.u, v: f.v, h: tileOf(b, f).h, at: b.t, ms: 250 };
+  f.u = to.u;
+  f.v = to.v;
+  return true;
+}
+
+/** Satyr: its pipes hasten the allies within three tiles (itself too) for a while. It needs an ally to play to. */
+const SONG_REACH = 3;
+const SONG_MS = 4000;
+function pipes(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const near = b.units.filter((a) => a.alive && a.side === me.side && apart(me, a) <= SONG_REACH);
+  if (!near.some((a) => a !== me)) return false;
+  for (const a of near) a.hasteUntil = b.t + SONG_MS;
+  out.push({ kind: 'song', by: me.id, ms: SONG_MS });
+  return true;
+}
+/** Sure-footed fighters (Satyr) climb for nothing. */
+export const sureFooted = (u: Unit): boolean => !!kitOf(u)?.passive.sure;
+
+/** Gorgon: its stare stiffens the strongest foe it can see within five tiles: that foe takes a blow and is stunned for 3s. */
+const GAZE_REACH = 5;
+const PETRIFY_MS = 3000;
+function gaze(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const f = foesOf(b, me)
+    .filter((x) => apart(me, x) <= GAZE_REACH && sightClear(b.board, me, x))
+    .sort((x, y) => atkOf(y) - atkOf(x) || x.id - y.id)[0];
+  if (!f) return false;
+  me.facing = wayTo(me, f);
+  hurt(b, me, f, net(atkOf(me), f), false, false, out, 'skill');
+  if (f.alive) f.busyUntil = Math.max(f.busyUntil, b.t + PETRIFY_MS);
+  out.push({ kind: 'gaze', by: me.id, to: f.id });
+  return true;
+}
+
+/** Samurai Commander: a war banner raises the attack of the allies within three tiles (itself too) for a while. */
+export const BANNER_MULT = 1.25;
+const BANNER_MS = 6000;
+function banner(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const near = b.units.filter((a) => a.alive && a.side === me.side && apart(me, a) <= 3);
+  if (!near.some((a) => a !== me)) return false;
+  for (const a of near) {
+    // (a second banner only lengthens the first: the attack is raised once)
+    if (a.banner === undefined) a.power = (a.power ?? 1) * BANNER_MULT;
+    a.banner = { until: b.t + BANNER_MS };
+  }
+  out.push({ kind: 'banner', by: me.id, ms: BANNER_MS });
   return true;
 }
 
@@ -451,6 +579,26 @@ export const KITS: Record<string, Kit> = {
     skill: { name: 'Spirit Ward', text: 'Its foes near it take half damage for 3s', need: CHARGE_MAX, dealt: 4, taken: 4, perSec: 3, castMs: 500, anim: 'attack', cast: holdTheLine },
     passive: { name: 'Spirit Mend', text: 'Every 2.5s heals the most hurt ally of its own', mend: { every: 2500, share: 1.2 } },
   },
+  werewolf: {
+    skill: { name: 'Ravage', text: 'Bites the weakest foe in reach for double, healing him half of what it deals', need: CHARGE_MAX, dealt: 6, taken: 4, perSec: 2, castMs: 450, anim: 'attack', cast: ravage },
+    passive: { name: 'Frenzy', text: 'Each kill quickens its blows by a fifth for 4s (up to three)', frenzy: { per: 0.2, ms: 4000, max: 3 } },
+  },
+  minotaur: {
+    skill: { name: 'Gore Charge', text: 'Charges up to 4 tiles in a line at a foe, hits it for double, knocks it back and stuns it for 1.5s', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 550, anim: 'attack', cast: goreCharge },
+    passive: { name: 'Trample', text: 'Blows deal a quarter more to a foe under half health', finish: { under: 0.5, mult: 1.25 } },
+  },
+  satyr: {
+    skill: { name: 'Pipes of Pan', text: 'Hastens the allies within 3 tiles, and him, for 4s', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 500, anim: 'attack', cast: pipes },
+    passive: { name: 'Sure Hooves', text: 'Climbs ledges at no extra cost', sure: true },
+  },
+  gorgon: {
+    skill: { name: 'Petrifying Gaze', text: 'Stiffens the strongest foe it sees within 5 tiles: it takes a blow and is stunned for 3s', need: CHARGE_MAX, dealt: 6, taken: 4, perSec: 2, castMs: 600, anim: 'attack', cast: gaze },
+    passive: { name: 'Scaled Hide', text: 'Takes a fifth less from shots', scales: 0.2 },
+  },
+  samuraiCommander: {
+    skill: { name: 'War Banner', text: 'Raises the attack of the allies within 3 tiles by a quarter for 6s', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 2, castMs: 600, anim: 'attack2', cast: banner },
+    passive: { name: 'Stand Firm', text: 'Cannot be knocked back', steady: true },
+  },
   boarKing: {
     skill: { name: 'Tusk Flurry', text: 'Three quick strikes on one hero, who is stunned for 1.5s', need: CHARGE_MAX, dealt: 4, taken: 4, perSec: 3, castMs: 700, anim: 'attack2', cast: flurry },
     passive: { name: 'Tough Hide', text: 'Blows from the front lose a fifth', block: 0.2 },
@@ -488,6 +636,7 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
     return null;
   }
   if (blow && kit?.passive.block && (wayTo(by, to) + 2) % 4 === to.facing) dmg *= 1 - kit.passive.block;
+  if (blow && kit?.passive.scales && defOf(by).shot) dmg *= 1 - kit.passive.scales;
   if (kit?.passive.huddle && src !== 'dot') {
     const n = b.units.filter((a) => a.alive && a !== to && a.side === to.side && apart(a, to) === 1).length;
     dmg *= 1 - kit.passive.huddle * Math.min(3, n);
@@ -511,6 +660,11 @@ export function rollCrit(b: Battle, me: Unit): number {
 /** After a blow has landed: a crit makes the foe bleed, and a flame blow sets it alight. */
 /** How much more a blow deals to this target (Karasu Tengu's prey), as a multiplier. */
 export const preyOf = (by: Unit, to: Unit): number => (kitOf(by)?.passive.prey && defOf(to).shot ? kitOf(by)!.passive.prey! : 1);
+/** How much more a blow deals to a foe under the attacker's finishing mark (Minotaur's trample), as a multiplier. */
+export const finishOf = (by: Unit, to: Unit): number => {
+  const f = kitOf(by)?.passive.finish;
+  return f && to.hp < to.maxHp * f.under ? f.mult : 1;
+};
 /** How much of the target's defence a blow ignores. */
 export const pierceOf = (by: Unit): number => kitOf(by)?.passive.pierce ?? 0;
 
@@ -545,6 +699,10 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
     if (!u.alive) continue;
     const k = kitOf(u);
     if (k) gain(u, ((k.skill.perSec * 100) / 1000) * (u.side === 'hero' ? b.traits?.charge ?? 1 : 1));
+    if (u.banner && b.t >= u.banner.until) {
+      u.power = (u.power ?? 1) / BANNER_MULT;
+      u.banner = undefined;
+    }
     const p = k?.passive;
     if (p?.regen && b.t % 1000 === 0) mendUnit(u, u.maxHp * p.regen, out);
     if (p?.mend) {

@@ -190,7 +190,29 @@ export class Fx {
           this.sparkles(to.x, to.y - to.tall * 0.4, 0x7dff8a);
         }
       } else if (e.kind === 'arc') this.arc(e.from, e.to);
-      else if (e.kind === 'zone') this.zone(b, e.u, e.v, e.ms);
+      else if (e.kind === 'frenzy') {
+        const by = this.sprites.get(e.by);
+        if (by) this.label(`Frenzy x${e.n}`, by.x, by.y - by.tall - 20, 0xff6b4a, 12, 700);
+      } else if (e.kind === 'gaze') {
+        const to = this.sprites.get(e.to);
+        if (to) {
+          // (a stare: a dark ring on the foe, and the word as it stiffens)
+          this.anim(magic.darkCircle, to.x, to.y - to.tall * 0.45, 1.2, 60);
+          this.label('Petrified', to.x, to.y - to.tall - 10, 0xc8f0a0, 12, 1000);
+        }
+      } else if (e.kind === 'song') {
+        const by = this.sprites.get(e.by);
+        if (by) {
+          this.label('Song', by.x, by.y - by.tall - 20, 0xffd27a, 13, 1000);
+          this.sparkles(by.x, by.y - by.tall * 0.4, 0xffd27a);
+        }
+      } else if (e.kind === 'banner') {
+        const by = this.sprites.get(e.by);
+        if (by) {
+          this.label('War Banner', by.x, by.y - by.tall - 20, 0xffe27a, 13, 1200);
+          this.anim(magic.goldBurst, by.x, by.y - by.tall * 0.45, 1.2, 60);
+        }
+      } else if (e.kind === 'zone') this.zone(b, e.u, e.v, e.ms);
       else if (e.kind === 'hit') {
         const to = this.sprites.get(e.to);
         const by = b.units.find((x) => x.id === e.by);
