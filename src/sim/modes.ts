@@ -65,9 +65,9 @@ export const dailyInProgress = (run: Run | null, date: number): Run | null => (r
 /** A daily run's score: the stages cleared x 100 plus the stars x 10. */
 export const dailyScore = (run: Run): number => (run.stage - 1) * SCORE_STAGE + (run.stars ?? 0) * SCORE_STAR;
 
-/** A tower run from a seed: the unlocked heroes at their lasting levels, the castle as it stands, and no events. */
+/** A tower run from a seed: the party at its lasting levels, the castle as it stands, and no events. */
 export function towerRun(seed: number, m: Meta): Run {
-  const run = newRun(seed, m.unlocked, m.castle);
+  const run = newRun(seed, m.party, m.castle);
   run.mode = { kind: 'tower' };
   return run;
 }
