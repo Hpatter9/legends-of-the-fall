@@ -226,11 +226,12 @@ const STUN_MS = 1500;
 
 const sorted = (fs: Unit[]) => fs.sort((x, y) => x.hp - y.hp || x.id - y.id);
 
-/** Heal an ally (never past full), with the event for the renderer. */
-function mendUnit(u: Unit, amount: number, out: BattleEvent[]): void {
+/** Heal an ally (never past full), with the event for the renderer; the healing counts for `by` (its healer, or itself). */
+function mendUnit(u: Unit, amount: number, out: BattleEvent[], by = u): void {
   const n = Math.min(Math.round(amount), u.maxHp - u.hp);
   if (n <= 0 || !u.alive) return;
   u.hp += n;
+  by.healed = (by.healed ?? 0) + n;
   out.push({ kind: 'heal', to: u.id, amount: n });
 }
 
@@ -281,7 +282,7 @@ function sanctuary(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!hurtAllies.length) return false;
   for (const a of b.units)
     if (a.alive && a.side === me.side) {
-      mendUnit(a, atkOf(me) * 3, out);
+      mendUnit(a, atkOf(me) * 3, out, me);
       a.guardUntil = b.t + SANCTUARY_MS;
     }
   return true;
@@ -551,7 +552,7 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
       if (b.t >= u.mendAt) {
         u.mendAt = b.t + p.mend.every;
         const weakest = b.units.filter((a) => a.alive && a.side === u.side && a.hp < a.maxHp).sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp || x.id - y.id)[0];
-        if (weakest) mendUnit(weakest, atkOf(u) * p.mend.share, out);
+        if (weakest) mendUnit(weakest, atkOf(u) * p.mend.share, out, u);
       }
     }
     const d = u.dot;

@@ -8,6 +8,7 @@ import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS
 import { finish, gradeBoost, heroOf, isBossStage, loadRun, newRun, saveRun, setSquad, SQUAD, startStage, summon, summonCost, type Run } from './sim/run';
 import { formOf, UNITS } from './sim/units';
 import { earn, loadMeta, rankOf, recordStars, saveMeta, type Meta } from './sim/meta';
+import { fightXp, gainXp, levelGain, levelOfKind, progressOf, xpOf, type LevelUp } from './sim/levels';
 import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
 import { Gacha } from './gacha';
 import { Home } from './home';
@@ -128,7 +129,7 @@ class Game {
       const h = heroOf(this.run, id);
       if (!h) continue;
       const at = this.placed.get(String(id)) ?? this.freeTile();
-      if (at && place(this.b, h.kind, at[0], at[1], id, gradeBoost(h.grade, rankOf(this.meta, h.kind)))) this.placed.set(String(id), at);
+      if (at && place(this.b, h.kind, at[0], at[1], id, gradeBoost(h.grade, rankOf(this.meta, h.kind), levelOfKind(this.meta, h.kind)))) this.placed.set(String(id), at);
       else setSquad(this.run, id, false);
     }
     this.acc = 0;
@@ -417,6 +418,42 @@ class Game {
     });
   }
 
+  /** The result screen's XP: a row per hero kind that fought, its bar filling with the XP it earned. A level up fills the bar, then flashes the new level and its stat gains, with a chime, and the bar starts again from the new level. */
+  private showXp(gains: Record<string, number>, from: Record<string, number>, ups: LevelUp[]): void {
+    const list = $('xp');
+    list.replaceChildren();
+    list.hidden = !Object.keys(gains).length;
+    const share = (p: { into: number; need: number }) => (p.need ? (p.into / p.need) * 100 : 100);
+    Object.entries(gains).forEach(([kind, xp], i) => {
+      const row = document.createElement('div');
+      row.className = 'xprow';
+      const name = document.createElement('b');
+      name.textContent = UNITS[kind].name;
+      const gain = document.createElement('em');
+      gain.textContent = `+${xp} XP`;
+      const bar = document.createElement('i');
+      const fill = document.createElement('span');
+      bar.append(fill);
+      const note = document.createElement('p');
+      row.append(name, gain, bar, note);
+      list.append(row);
+      const after = progressOf(from[kind] + xp);
+      const up = ups.find((u) => u.kind === kind);
+      fill.style.width = `${share(progressOf(from[kind]))}%`;
+      const at = 400 + i * 700;
+      setTimeout(() => (fill.style.width = `${up ? 100 : share(after)}%`), at);
+      if (!up) return;
+      setTimeout(() => {
+        const gained = levelGain(up.from, up.to);
+        note.textContent = `${UNITS[kind].name} reached level ${up.to}! +${gained.hp}% HP · +${gained.atk}% Atk`;
+        row.classList.add('up');
+        fill.style.transition = 'none';
+        fill.style.width = `${share(after)}%`;
+        play('levelUp');
+      }, at + 900);
+    });
+  }
+
   /** A run has ended: back to the castle, showing what it earned. */
   private goHome(): void {
     const r = this.run;
@@ -503,7 +540,7 @@ class Game {
 
   private put(id: string, tile: [number, number]): void {
     const h = heroOf(this.run, Number(id))!;
-    if (!this.canPut(id, tile) || !place(this.b, h.kind, tile[0], tile[1], h.id, gradeBoost(h.grade, rankOf(this.meta, h.kind)))) return;
+    if (!this.canPut(id, tile) || !place(this.b, h.kind, tile[0], tile[1], h.id, gradeBoost(h.grade, rankOf(this.meta, h.kind), levelOfKind(this.meta, h.kind)))) return;
     setSquad(this.run, h.id, true);
     this.placed.set(id, tile);
     saveRun(this.run);
@@ -524,7 +561,7 @@ class Game {
   /** The bench: a card for every hero owned, rebuilt when the roster changes. */
   private buildBench(): void {
     const bench = $('bench');
-    const key = this.run.roster.map((h) => `${h.id}:${h.grade}`).join();
+    const key = this.run.roster.map((h) => `${h.id}:${h.grade}:${levelOfKind(this.meta, h.kind)}`).join();
     if (bench.dataset.key === key) return;
     bench.dataset.key = key;
     bench.replaceChildren();
@@ -547,7 +584,10 @@ class Game {
         m.dataset.trait = t;
         marks.append(m);
       }
-      card.append(portrait(formOf(def, h.grade), 96, h.grade), stars, name, marks, bar);
+      const lv = document.createElement('span');
+      lv.className = 'lv';
+      lv.textContent = `Lv ${levelOfKind(this.meta, h.kind)}`;
+      card.append(portrait(formOf(def, h.grade), 96, h.grade), stars, name, lv, marks, bar);
       card.title = def.role;
       card.addEventListener('pointerdown', (e) => {
         if (this.b.phase !== 'deploy') return;
@@ -621,6 +661,9 @@ class Game {
       this.crownGain = earn(this.meta, stage, won, rating.stars);
       if (won) recordStars(this.meta, stage, rating.stars);
       this.showStars(won ? rating : null);
+      const gains = fightXp(b);
+      const from = Object.fromEntries(Object.keys(gains).map((k) => [k, xpOf(this.meta, k)]));
+      this.showXp(gains, from, gainXp(this.meta, gains));
       saveMeta(this.meta);
       saveRun(run);
     }

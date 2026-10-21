@@ -130,6 +130,7 @@
   .trait.class { border-style: dashed; }
   .trait.on { color: #1a1008; background: var(--gold); border-color: var(--gold); font-weight: bold; }
   .trait.picked { outline: 2px solid #7cc0ff; }
+  .card .lv { display: block; font-size: 9px; line-height: 1; color: #cfc3b0; }
   .card small { display: flex; justify-content: center; gap: 2px; margin-top: 1px; }
   .card small span { font-size: 9px; line-height: 1; padding: 1px 3px; border-radius: 3px; background: rgba(255, 255, 255, 0.12); color: #cfc3b0; }
 
@@ -159,6 +160,15 @@
   #stars .star em { grid-column: 2; font-size: 11px; font-style: normal; color: var(--gold); }
   #stars .star.on { color: var(--ink); }
   #stars .star.on > span { color: var(--gold); text-shadow: 0 0 10px rgba(255, 200, 80, 0.6); }
+  #xp { display: flex; flex-direction: column; gap: 6px; width: min(300px, 86vw); }
+  #xp[hidden] { display: none; }
+  #xp .xprow { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 8px; padding: 6px 10px; background: var(--wood); border: 2px solid var(--edge); border-radius: 8px; color: var(--ink); }
+  #xp .xprow em { font-style: normal; color: var(--gold); font-size: 12px; }
+  #xp .xprow i { grid-column: span 2; display: block; height: 6px; background: #2a1a10; border-radius: 3px; overflow: hidden; }
+  #xp .xprow i span { display: block; height: 100%; width: 0; background: #7cc0ff; transition: width 0.8s ease-out; }
+  #xp .xprow p { grid-column: span 2; margin: 0; font-size: 12px; color: var(--gold); min-height: 0; }
+  #xp .xprow p:empty { display: none; }
+  #xp .xprow.up { animation: evolve 0.9s ease-out; }
   @keyframes starIn { from { transform: scale(0.4); opacity: 0; } to { transform: none; opacity: 1; } }
   #result .row { display: flex; gap: 10px; margin-top: 6px; }
   @keyframes fade { from { opacity: 0; } }
@@ -227,6 +237,8 @@
   .hrow em, .brow em { display: block; font-style: normal; font-size: 11px; color: var(--dim); }
   .hrow span { display: block; font-size: 11px; color: var(--gold); }
   .hrow p { margin: 2px 0 0; font-size: 11px; line-height: 1.25; }
+  .xpbar { height: 5px; margin-top: 3px; background: #2a1a10; border-radius: 3px; overflow: hidden; }
+  .xpbar span { display: block; height: 100%; background: #7cc0ff; }
   .hrow p i { font-style: normal; color: #7cc0ff; }
   .brow > div { flex: 1; }
   .brow .pips { color: var(--gold); letter-spacing: 2px; }
@@ -257,6 +269,7 @@
   <div id="banner"></div>
   <div id="summary"></div>
   <div id="stars" hidden></div>
+  <div id="xp" hidden></div>
   <div class="row"><button id="next" class="primary">Next stage</button></div>
 </div>
 <div id="gacha" hidden>

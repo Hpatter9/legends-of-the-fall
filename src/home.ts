@@ -8,6 +8,7 @@ import { KITS } from './sim/abilities';
 import { BUILDING_IDS, BUILDINGS, maxLevel, nextCost, upgrade, type BuildingId } from './sim/castle';
 import { traitsOf, TRAITS } from './sim/traits';
 import { rarityOf, saveMeta, starSummary, type Meta } from './sim/meta';
+import { progressOf, xpOf } from './sim/levels';
 import { portrait } from './render/sheets';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -106,6 +107,15 @@ export class Home {
         const stats = document.createElement('span');
         stats.textContent = `HP ${def.hp} · Atk ${def.atk} · Def ${def.def} · Range ${def.range}`;
         text.append(stats);
+        const p = progressOf(xpOf(this.meta, kind));
+        const level = document.createElement('span');
+        level.textContent = p.need ? `Level ${p.level} · ${p.into} of ${p.need} XP to level ${p.level + 1}` : `Level ${p.level} · max`;
+        const bar = document.createElement('div');
+        bar.className = 'xpbar';
+        const fill = document.createElement('span');
+        fill.style.width = `${p.need ? (p.into / p.need) * 100 : 100}%`;
+        bar.append(fill);
+        text.append(level, bar);
         if (kit) {
           const skill = document.createElement('p');
           skill.innerHTML = '';
