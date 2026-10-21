@@ -7,6 +7,7 @@ import { ALL_HEROES, UNITS } from './sim/units';
 import { KITS } from './sim/abilities';
 import { BUILDING_IDS, BUILDINGS, maxLevel, nextCost, upgrade, type BuildingId } from './sim/castle';
 import { rarityOf, saveMeta, type Meta } from './sim/meta';
+import { traitsOf, TRAITS } from './sim/traits';
 import { portrait } from './render/sheets';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -96,6 +97,9 @@ export class Home {
       tag.textContent = open ? `${RARITY[rarityOf(kind)]} · ${def.role}` : `${RARITY[rarityOf(kind)]} · not yet recruited`;
       text.append(name, tag);
       if (open) {
+        const marks = document.createElement('em');
+        marks.textContent = traitsOf(kind).map((t) => TRAITS[t].name).join(' · ');
+        text.append(marks);
         const stats = document.createElement('span');
         stats.textContent = `HP ${def.hp} · Atk ${def.atk} · Def ${def.def} · Range ${def.range}`;
         text.append(stats);

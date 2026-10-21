@@ -13,6 +13,7 @@ import { Home } from './home';
 import { keepAwake } from './render/awake';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, SPELL_IDS, type SpellId } from './sim/spells';
 import { BoardView, loadBoardArt } from './render/boardView';
+import { countTraits, kindsOf, traitsOf, TRAITS } from './sim/traits';
 import { UnitSprite } from './render/unitView';
 import { Fx, loadFx } from './render/fx';
 import { framesOf, loadSheets, portrait } from './render/sheets';
@@ -514,7 +515,14 @@ class Game {
       name.textContent = def.name;
       const bar = document.createElement('i');
       bar.append(document.createElement('span'));
-      card.append(portrait(formOf(def, h.grade), 96, h.grade), stars, name, bar);
+      const marks = document.createElement('small');
+      for (const t of traitsOf(h.kind)) {
+        const m = document.createElement('span');
+        m.textContent = TRAITS[t].short;
+        m.dataset.trait = t;
+        marks.append(m);
+      }
+      card.append(portrait(formOf(def, h.grade), 96, h.grade), stars, name, marks, bar);
       card.title = def.role;
       card.addEventListener('pointerdown', (e) => {
         if (this.b.phase !== 'deploy') return;
@@ -611,6 +619,31 @@ class Game {
     this.buildBench();
     this.markTiles();
     this.refreshBench();
+    this.refreshTraits();
+  }
+
+  /** The trait strip: the traits of the heroes placed, lit when their bonus is on; a tap says what one does. */
+  private traitPick?: string;
+  private refreshTraits(): void {
+    const strip = $('traits');
+    const hint = $('traitHint');
+    const counts = countTraits(kindsOf(this.b.units));
+    const key = counts.map((c) => `${c.trait.id}${c.count}`).join() + this.traitPick;
+    if (strip.dataset.key === key) return;
+    strip.dataset.key = key;
+    strip.replaceChildren();
+    for (const c of counts) {
+      const pill = document.createElement('button');
+      pill.className = `trait ${c.trait.kind}${c.active ? ' on' : ''}${this.traitPick === c.trait.id ? ' picked' : ''}`;
+      pill.textContent = `${c.trait.name} ${c.count}/${c.goal}`;
+      pill.addEventListener('click', () => {
+        this.traitPick = this.traitPick === c.trait.id ? undefined : c.trait.id;
+        this.refreshTraits();
+      });
+      strip.append(pill);
+    }
+    const picked = counts.find((c) => c.trait.id === this.traitPick);
+    hint.textContent = picked ? `${picked.trait.name}: ${picked.trait.tiers.map((t) => `${t.need} heroes, ${t.text}`).join('; ')}` : counts.length ? 'Different heroes of a trait give a team bonus' : '';
   }
 
   private refreshBench(): void {

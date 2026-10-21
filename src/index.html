@@ -122,10 +122,23 @@
   .spell.armed { border-color: var(--gold); box-shadow: 0 0 10px var(--gold); opacity: 1; filter: none; }
   #spellHint { min-height: 14px; font-size: 11px; color: var(--dim); text-align: center; }
 
+  /* the trait strip, in the deploy phase only */
+  #traits { display: flex; gap: 5px; overflow-x: auto; min-height: 24px; }
+  #traitHint { min-height: 13px; font-size: 11px; color: var(--dim); text-align: center; }
+  body:not([data-phase='deploy']) #traits, body:not([data-phase='deploy']) #traitHint { display: none; }
+  .trait { flex: none; padding: 3px 8px; font-size: 12px; border-radius: 12px; border: 1px solid #5a3a22; background: rgba(0, 0, 0, 0.35); color: var(--dim); }
+  .trait.class { border-style: dashed; }
+  .trait.on { color: #1a1008; background: var(--gold); border-color: var(--gold); font-weight: bold; }
+  .trait.picked { outline: 2px solid #7cc0ff; }
+  .card small { display: flex; justify-content: center; gap: 2px; margin-top: 1px; }
+  .card small span { font-size: 9px; line-height: 1; padding: 1px 3px; border-radius: 3px; background: rgba(255, 255, 255, 0.12); color: #cfc3b0; }
+
   /* sideways: the bench down the right */
   @media (orientation: landscape) {
     #panel { left: auto; top: 0; width: 230px; border-top: 0; border-left: 2px solid var(--edge); padding: calc(env(safe-area-inset-top) + 8px) calc(env(safe-area-inset-right) + 8px) 8px 8px; justify-content: center; }
-    #bench { grid-template-columns: repeat(3, 1fr); }
+    #bench { grid-template-columns: repeat(3, 1fr); max-height: 150px; }
+    #buttons { flex-wrap: wrap; }
+    #buttons button { flex: 1 1 40%; }
     #top { right: 230px; }
   }
 
@@ -225,6 +238,7 @@
 <div id="top"><h1>Legends of the Fall</h1><span id="status"></span><span id="gold"></span><span id="clock"></span><button id="mute"></button><button id="speed">×1</button></div>
 <div id="panel">
   <div id="spells"><div id="mana"><i><span></span></i><b></b></div><div id="spellCards"></div><div id="spellHint"></div></div>
+  <div id="traits"></div><div id="traitHint"></div>
   <div id="bench"></div>
   <div id="buttons"><button id="summon">Summon</button><button id="recruit">Recruit</button><button id="homeBtn">Home</button><button id="fight" class="primary" disabled>Fight!</button></div>
 </div>

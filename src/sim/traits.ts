@@ -48,7 +48,7 @@ export interface Trait {
 
 export const TRAITS: Record<string, Trait> = {
   samurai: { id: 'samurai', name: 'Samurai', kind: 'origin', short: 'Sa', tiers: [
-    { need: 2, effects: { atk: 1.02 }, text: '+2% attack' },
+    { need: 2, effects: { atk: 1.01 }, text: '+1% attack' },
     { need: 4, effects: { atk: 1.1 }, text: '+10% attack' },
   ] },
   mystic: { id: 'mystic', name: 'Mystic', kind: 'origin', short: 'My', tiers: [{ need: 2, effects: { mana: 1.3 }, text: "The king's mana fills 30% faster" }] },

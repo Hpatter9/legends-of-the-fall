@@ -1,4 +1,4 @@
-// The heroes' kits, King God Castle style: a skill that fires on its own when its charge fills (blows dealt and blows
+// The heroes' kits (and the bosses'), King God Castle style: a skill that fires on its own when its charge fills (blows dealt and blows
 // taken charge it, and so does time), and a passive that is always on. A kit is data (`KITS`) plus one `cast` function
 // for the skill; the rules that read it are generic. The fight (`battle.ts`) calls `tryCast` when a hero is free,
 // `onStrike` when a blow or a skill is about to hurt, `afterBlow` once a blow has landed and `tickStatus` every tick.
@@ -6,7 +6,7 @@
 // Randomness comes from the battle's own side stream (`b.skillRng`), so the fight's main stream is left alone.
 
 import { sightClear, standable, tileAt, type At } from './board';
-import { atkOf, blowMult, canStrike, defOf, hurt, strikeDef, tileOf, unitAt, wayTo, type Battle, type BattleEvent, type Unit } from './battle';
+import { addUnit, atkOf, blowMult, canStrike, defOf, hurt, strikeDef, tileOf, unitAt, wayTo, type Battle, type BattleEvent, type Unit } from './battle';
 import { Rng } from './rng';
 
 /** A skill fires at this much charge. */
@@ -350,6 +350,36 @@ function windGust(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   return true;
 }
 
+/** Orc Warlord: a slam lands on a 3x3 of tiles a moment after the call, on whichever heroes are standing there. */
+const SLAM_MS = 800;
+const SLAM_REACH = 3;
+function groundSlam(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const aim = crowd(b, me, (f) => apart(me, f) <= SLAM_REACH);
+  if (!aim) return false;
+  b.pending.push({ at: b.t + SLAM_MS, kind: 'rain', by: me.id, to: aim.id, dmg: atkOf(me) * 1.1, heavy: false, u: aim.u, v: aim.v });
+  out.push({ kind: 'area', by: me.id, id: 'volley', u: aim.u, v: aim.v, ms: SLAM_MS });
+  return true;
+}
+
+/** Demon Lord: when it has no imps left, two come up out of the ground beside it (on the nearest free tiles it can climb to). */
+const SUMMONED = 2;
+function summonImps(b: Battle, me: Unit): boolean {
+  if (b.units.some((x) => x.alive && x.side === me.side && x.def === 'imp')) return false;
+  const jump = defOf(me).jump;
+  const h = tileOf(b, me).h;
+  const spots: At[] = [];
+  for (let dv = -2; dv <= 2; dv++)
+    for (let du = -2; du <= 2; du++) {
+      const at = { u: me.u + du, v: me.v + dv };
+      const t = tileAt(b.board, at.u, at.v);
+      if (apart(me, at) >= 1 && t && standable(t) && !unitAt(b, at.u, at.v) && Math.abs(t.h - h) <= jump) spots.push(at);
+    }
+  if (!spots.length) return false;
+  spots.sort((x, y) => apart(me, x) - apart(me, y) || x.v - y.v || x.u - y.u);
+  for (const at of spots.slice(0, SUMMONED)) addUnit(b, 'imp', at.u, at.v, { atk: me.power ?? 1 });
+  return true;
+}
+
 export const KITS: Record<string, Kit> = {
   knight: {
     skill: { name: 'Shield Wall', text: 'Foes near him turn on him, and he takes half damage for 4s', need: CHARGE_MAX, dealt: 4, taken: 7, perSec: 2, castMs: 600, anim: 'defend', cast: shieldWall },
@@ -398,6 +428,31 @@ export const KITS: Record<string, Kit> = {
   yamabushi: {
     skill: { name: 'Wind Gust', text: 'Foes within 2 tiles are hurt and shoved back a tile, and fall damage if it drops them 2 or more', need: CHARGE_MAX, dealt: 6, taken: 6, perSec: 2, castMs: 600, anim: 'attack', cast: windGust },
     passive: { name: 'Mountain Breath', text: 'Heals 2% of his health each second', regen: 0.02 },
+  },
+  // the bosses' skills (their escorts and forest bosses have none); a boss charges as the heroes do, a little faster
+  orcWarlord: {
+    skill: { name: 'Ground Slam', text: 'Slams a 3x3 of tiles, hurting the heroes on it', need: CHARGE_MAX, dealt: 4, taken: 4, perSec: 3, castMs: 700, anim: 'attack', cast: groundSlam },
+    passive: { name: 'Brutal', text: '15% of blows crit for x1.6 and make the hero bleed', crit: { chance: 0.15, mult: 1.6, bleed: { kind: 'bleed', dmg: 4, every: 500, ms: 3000 } } },
+  },
+  hornedOgre: {
+    skill: { name: 'Horned Shove', text: 'Heroes within 2 tiles are hurt and shoved back a tile, and fall damage if it drops them 2 or more', need: CHARGE_MAX, dealt: 4, taken: 4, perSec: 3, castMs: 600, anim: 'attack', cast: windGust },
+    passive: { name: 'Thick Hide', text: 'Blows from the front lose a quarter', block: 0.25 },
+  },
+  demonLord: {
+    skill: { name: 'Summon Imps', text: 'Calls two imps up beside it once it has none left', need: CHARGE_MAX, dealt: 4, taken: 4, perSec: 3, castMs: 800, anim: 'attack', cast: summonImps },
+    passive: { name: 'Dark Regrowth', text: 'Heals 1% of its health each second', regen: 0.01 },
+  },
+  devilLeader: {
+    skill: { name: 'Hellfire', text: 'A meteor blasts a 3x3 of heroes and leaves it burning', need: CHARGE_MAX, dealt: 4, taken: 4, perSec: 3, castMs: 800, anim: 'attack', cast: meteor },
+    passive: { name: 'Hellborn', text: 'Its blows set the hero alight', ignite: { kind: 'burn', dmg: 3, every: 500, ms: 2000 } },
+  },
+  shamanKing: {
+    skill: { name: 'Spirit Ward', text: 'Its foes near it take half damage for 3s', need: CHARGE_MAX, dealt: 4, taken: 4, perSec: 3, castMs: 500, anim: 'attack', cast: holdTheLine },
+    passive: { name: 'Spirit Mend', text: 'Every 2.5s heals the most hurt ally of its own', mend: { every: 2500, share: 1.2 } },
+  },
+  boarKing: {
+    skill: { name: 'Tusk Flurry', text: 'Three quick strikes on one hero, who is stunned for 1.5s', need: CHARGE_MAX, dealt: 4, taken: 4, perSec: 3, castMs: 700, anim: 'attack2', cast: flurry },
+    passive: { name: 'Tough Hide', text: 'Blows from the front lose a fifth', block: 0.2 },
   },
 };
 
