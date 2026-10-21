@@ -9,6 +9,7 @@ import { BUILDING_IDS, BUILDINGS, maxLevel, nextCost, upgrade, type BuildingId }
 import { traitsOf, TRAITS } from './sim/traits';
 import { rarityOf, saveMeta, starSummary, type Meta } from './sim/meta';
 import { portrait } from './render/sheets';
+import { resetTipsButton, tips } from './tips';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -44,6 +45,9 @@ export class Home {
     this.note = note;
     $('home').hidden = false;
     this.show('menu');
+    tips.offer('home', $('homeNew'));
+    // (a run has just ended: the crowns are there to spend)
+    if (note) tips.offer('crowns', $('homeMenu'));
   }
 
   get isOpen(): boolean {
@@ -130,6 +134,7 @@ export class Home {
     hint.textContent = 'Upgrades last for every run you start from now on.';
     body.append(hint);
     for (const id of BUILDING_IDS) body.append(this.buildingRow(id));
+    body.append(resetTipsButton());
   }
 
   private buildingRow(id: BuildingId): HTMLElement {
