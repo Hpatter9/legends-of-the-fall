@@ -7,7 +7,7 @@ import { D, standable, tileAt } from './sim/board';
 import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle } from './sim/battle';
 import { finish, gradeBoost, heroOf, isBossStage, loadRun, newRun, saveRun, setSquad, SQUAD, startStage, summon, summonCost, type Run } from './sim/run';
 import { formOf, UNITS } from './sim/units';
-import { earn, loadMeta, saveMeta, type Meta } from './sim/meta';
+import { earn, loadMeta, rankOf, saveMeta, type Meta } from './sim/meta';
 import { Gacha } from './gacha';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, SPELL_IDS, type SpellId } from './sim/spells';
 import { BoardView, loadBoardArt } from './render/boardView';
@@ -105,7 +105,7 @@ class Game {
       const h = heroOf(this.run, id);
       if (!h) continue;
       const at = this.placed.get(String(id)) ?? this.freeTile();
-      if (at && place(this.b, h.kind, at[0], at[1], id, gradeBoost(h.grade))) this.placed.set(String(id), at);
+      if (at && place(this.b, h.kind, at[0], at[1], id, gradeBoost(h.grade, rankOf(this.meta, h.kind)))) this.placed.set(String(id), at);
       else setSquad(this.run, id, false);
     }
     this.acc = 0;
@@ -441,7 +441,7 @@ class Game {
 
   private put(id: string, tile: [number, number]): void {
     const h = heroOf(this.run, Number(id))!;
-    if (!this.canPut(id, tile) || !place(this.b, h.kind, tile[0], tile[1], h.id, gradeBoost(h.grade))) return;
+    if (!this.canPut(id, tile) || !place(this.b, h.kind, tile[0], tile[1], h.id, gradeBoost(h.grade, rankOf(this.meta, h.kind)))) return;
     setSquad(this.run, h.id, true);
     this.placed.set(id, tile);
     saveRun(this.run);

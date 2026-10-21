@@ -1,6 +1,7 @@
 // Lasting progress across runs, and the recruiting draw (the usual gacha). Crowns are earned for each stage won and at
-// a run's end; they buy pulls that unlock hero kinds. A repeat of a kind pays some crowns back. Pure rules: no Pixi,
-// no DOM; every pull draws from a side stream of the meta seed and the pull counter, so it replays exactly.
+// a run's end; they buy pulls that unlock hero kinds. A repeat of a kind gives a shard of it; shards raise the kind's
+// rank, and each rank makes its heroes a little stronger in every fight. Pure rules: no Pixi, no DOM; every pull draws
+// from a side stream of the meta seed and the pull counter, so it replays exactly.
 
 import { Rng } from './rng';
 import { ALL_HEROES, HEROES, UNITS } from './units';
@@ -11,8 +12,13 @@ export const PULL10_COST = 900;
 export const RATES: Readonly<Record<1 | 2 | 3, number>> = { 1: 70, 2: 25, 3: 5 };
 /** An epic is guaranteed by this pull without one. */
 export const PITY = 30;
-/** Crowns paid back for a duplicate, by rarity. */
-export const DUPLICATE_REFUND: Readonly<Record<1 | 2 | 3, number>> = { 1: 15, 2: 40, 3: 120 };
+/** Shards a repeat pull gives. */
+export const DUPLICATE_SHARDS = 1;
+/** Shards each rank needs in all: rank 1 at 1, rank 2 at 3, rank 3 at 6, rank 4 at 10. */
+export const RANK_SHARDS: readonly number[] = [1, 3, 6, 10];
+export const MAX_RANK = RANK_SHARDS.length;
+/** Hp and attack grow by this for each rank a hero kind has. */
+export const RANK_MULT = 1.05;
 const SALT = 0x6ac4a;
 
 export interface Meta {
@@ -24,6 +30,8 @@ export interface Meta {
   pulls: number;
   /** Pulls since the last epic. */
   dry: number;
+  /** Shards per hero kind (missing is none). */
+  shards: Record<string, number>;
 }
 
 export interface Pull {
@@ -31,13 +39,17 @@ export interface Pull {
   rarity: 1 | 2 | 3;
   /** The kind was not unlocked before this pull. */
   isNew: boolean;
-  /** Crowns paid back for a duplicate. */
-  refund: number;
+  /** Shards a duplicate gives (0 for a new kind). */
+  shards: number;
 }
 
-export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [...HEROES], pulls: 0, dry: 0 });
+export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [...HEROES], pulls: 0, dry: 0, shards: {} });
 
 export const rarityOf = (kind: string): 1 | 2 | 3 => UNITS[kind]?.rarity ?? 1;
+/** The rank a hero kind has from its shards (0 to MAX_RANK). */
+export const rankOf = (m: Meta, kind: string): number => RANK_SHARDS.filter((need) => (m.shards[kind] ?? 0) >= need).length;
+/** Hp and attack multiplier a rank gives. */
+export const rankMult = (rank: number): number => RANK_MULT ** rank;
 /** Crowns a won stage pays. */
 export const stageCrowns = (stage: number) => 10 + 2 * stage;
 /** Crowns a run's end pays: more the further it got. */
@@ -73,10 +85,10 @@ export function pullOnce(m: Meta): Pull {
   m.pulls++;
   m.dry = rarity === 3 ? 0 : m.dry + 1;
   const isNew = !m.unlocked.includes(kind);
-  let refund = 0;
+  let shards = 0;
   if (isNew) m.unlocked.push(kind);
-  else m.crowns += refund = DUPLICATE_REFUND[rarity];
-  return { kind, rarity, isNew, refund };
+  else m.shards[kind] = (m.shards[kind] ?? 0) + (shards = DUPLICATE_SHARDS);
+  return { kind, rarity, isNew, shards };
 }
 
 /** Pay for and make 1 or 10 pulls. Null when too poor. */
@@ -97,6 +109,10 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.unlocked = [...new Set([...HEROES, ...m.unlocked.filter((k) => ALL_HEROES.includes(k))])];
       m.pulls = m.pulls | 0;
       m.dry = m.dry | 0;
+      // (saves from before shards have none)
+      const shards: Record<string, number> = {};
+      if (m.shards && typeof m.shards === 'object') for (const [k, n] of Object.entries(m.shards)) if (ALL_HEROES.includes(k) && typeof n === 'number') shards[k] = n | 0;
+      m.shards = shards;
       return m;
     }
   } catch {

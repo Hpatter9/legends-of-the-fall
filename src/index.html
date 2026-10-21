@@ -163,6 +163,9 @@
   #collection .hero.r2 { border-color: #4a9cff; }
   #collection .hero.r3 { border-color: var(--gold); }
   #collection .hero.locked { filter: brightness(0.15) grayscale(1); }
+  #collection .rank { display: block; color: var(--gold); }
+  #collection .bar { display: block; height: 4px; margin: 2px 4px 4px; background: rgba(255, 255, 255, 0.15); border-radius: 2px; overflow: hidden; }
+  #collection .bar i { display: block; height: 100%; background: var(--gold); }
   @media (orientation: landscape) { #reveal { grid-template-columns: repeat(10, 1fr); } #collection { grid-template-columns: repeat(8, 1fr); } }
 
   #loading { position: fixed; inset: 0; display: grid; place-items: center; font-size: 18px; color: var(--gold); }

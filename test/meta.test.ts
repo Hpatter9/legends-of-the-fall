@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { earn, loadMeta, newMeta, pullCost, pullOnce, PITY, PULL10_COST, PULL_COST, rarityOf, recruit, runCrowns, saveMeta, stageCrowns } from '../src/sim/meta';
+import { DUPLICATE_SHARDS, earn, loadMeta, newMeta, pullCost, pullOnce, PITY, PULL10_COST, PULL_COST, rarityOf, recruit, runCrowns, saveMeta, stageCrowns } from '../src/sim/meta';
 import { newRun, summon } from '../src/sim/run';
 import { ALL_HEROES, HEROES } from '../src/sim/units';
 
@@ -27,7 +27,8 @@ test('pull costs: ten is cheaper than ten singles, and a poor player gets nothin
   const got = recruit(m, 10)!;
   assert.equal(got.length, 10);
   assert.equal(m.pulls, 10);
-  assert.equal(m.crowns, 5 + got.reduce((n, p) => n + p.refund, 0));
+  assert.equal(m.crowns, 5);
+  assert.equal(got.reduce((n, p) => n + p.shards, 0), Object.values(m.shards).reduce((n, s) => n + s, 0));
 });
 
 test('pulls are deterministic', () => {
@@ -66,7 +67,7 @@ test('pity forces an epic by the 30th pull when one exists', () => {
   assert.equal(m.dry, 0);
 });
 
-test('a new kind unlocks; a duplicate pays crowns back', () => {
+test('a new kind unlocks; a duplicate gives a shard of it', () => {
   const m = newMeta(4);
   const first = pullOnce(m);
   assert.equal(first.isNew, !(HEROES as readonly string[]).includes(first.kind));
@@ -78,8 +79,9 @@ test('a new kind unlocks; a duplicate pays crowns back', () => {
     if (!p.isNew) dup = { p, c };
   }
   assert.ok(dup);
-  assert.ok(dup.p.refund > 0);
-  assert.equal(m.crowns, dup.c + dup.p.refund);
+  assert.equal(dup.p.shards, DUPLICATE_SHARDS);
+  assert.equal(m.crowns, dup.c);
+  assert.ok(m.shards[dup.p.kind] >= DUPLICATE_SHARDS);
   assert.equal(new Set(m.unlocked).size, m.unlocked.length);
 });
 
