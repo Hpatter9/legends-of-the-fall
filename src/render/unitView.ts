@@ -180,7 +180,9 @@ export class UnitSprite {
     }
     // a blink of white when struck
     if (u.hurtAt !== undefined && t - u.hurtAt < 90 && u.alive) this.flash = 1;
-    this.body.tint = this.flash > 0 ? 0xffb0b0 : u.alive && u.dot ? (u.dot.kind === 'burn' ? 0xffc890 : 0xff9a9a) : 0xffffff;
+    // (a slowed fighter is tinted frosty blue; a flash or a dot's tint wins over it)
+    const frosty = u.alive && u.slowUntil !== undefined && t < u.slowUntil;
+    this.body.tint = this.flash > 0 ? 0xffb0b0 : u.alive && u.dot ? (u.dot.kind === 'burn' ? 0xffc890 : 0xff9a9a) : frosty ? 0xb8e4ff : 0xffffff;
     this.flash = Math.max(0, this.flash - 0.2);
     this.root.position.set(x, y);
     this.root.zIndex = z;
@@ -195,17 +197,18 @@ export class UnitSprite {
     this.drawPillar(u.alive);
   }
 
-  /** The status icon: burning, then bleeding, charmed, hasted (one at a time, the first that holds). */
+  /** The status icon: burning, then bleeding, charmed, hasted, slowed (one at a time, the first that holds). */
   private drawBadge(u: Unit, t: number): void {
     const key =
       !u.alive ? null
       : u.dot && t < u.dot.until ? (u.dot.kind === 'burn' ? 'burn' : 'bleed')
       : u.charmUntil !== undefined && t < u.charmUntil ? 'charm'
       : u.hasteUntil !== undefined && t < u.hasteUntil ? 'haste'
+      : u.slowUntil !== undefined && t < u.slowUntil ? 'slow'
       : null;
     this.badge.visible = key !== null;
     if (!key) return;
-    const frames = { burn: VFX.statusFire, bleed: VFX.statusBlood, charm: VFX.pinkHeart, haste: VFX.statusWind }[key];
+    const frames = { burn: VFX.statusFire, bleed: VFX.statusBlood, charm: VFX.pinkHeart, haste: VFX.statusWind, slow: VFX.statusIce }[key];
     this.badge.texture = frames[Math.floor(t / 90) % frames.length];
     this.badge.scale.set(0.5);
     this.badge.position.set(-BAR_W / 2 - 8, -this.tall - 6);

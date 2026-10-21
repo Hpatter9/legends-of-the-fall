@@ -320,6 +320,9 @@ export class Fx {
       }
       if (u.hasteUntil !== undefined && u.hasteUntil > b.t && this.particles.rate(0.5))
         this.particles.spawn({ frames: VFX.dustGold, x: s.x + jitter(8), y: s.y - 2, scale: 0.6, life: 380, vy: -0.02, alpha: 0.8 });
+      // a slowed fighter gives off ice crystals while it lasts
+      if (u.slowUntil !== undefined && u.slowUntil > b.t && this.particles.rate(0.3))
+        this.particles.spawn({ frames: VFX.puffIce, x: s.x + jitter(12), y: s.y - s.tall * 0.5, scale: 0.5, life: 520, vy: -0.015, alpha: 0.9 });
       if (defOf(u).flies && b.t - (this.gusts.get(u.id) ?? -1e9) > 900) {
         this.gusts.set(u.id, b.t);
         this.gust(s);
@@ -442,7 +445,7 @@ export class Fx {
 
   /** A line of text that rises and fades. */
   private label(text: string, x: number, y: number, fill: number, size: number, life = 900): void {
-    const txt = new Text({ text, style: { fontFamily: 'Trebuchet MS, Verdana, sans-serif', fontWeight: 'bold', fontSize: size, fill, stroke: { color: 0x1a1008, width: 3 } }, resolution: 3 });
+    const txt = new Text({ text, style: { fontFamily: "'Alegreya Sans', 'Trebuchet MS', sans-serif", fontWeight: 'bold', fontSize: size + 2, fill, stroke: { color: 0x1a1008, width: 3 } }, resolution: 3 });
     txt.anchor.set(0.5, 1);
     txt.position.set(x, y);
     this.root.addChild(txt);
@@ -667,7 +670,7 @@ export class Fx {
     if (!settings().numbers) return;
     const txt = new Text({
       text: String(n),
-      style: { fontFamily: 'Trebuchet MS, Verdana, sans-serif', fontWeight: 'bold', fontSize: heavy ? 17 : 13, fill: onHero ? 0xff7a6a : heavy ? 0xffd34a : 0xffffff, stroke: { color: 0x1a1008, width: 3 } },
+      style: { fontFamily: "'Press Start 2P', monospace", fontWeight: 'normal', fontSize: heavy ? 12 : 9, fill: onHero ? 0xff7a6a : heavy ? 0xffd34a : 0xffffff, stroke: { color: 0x1a1008, width: 3 } },
       resolution: 3,
     });
     txt.anchor.set(0.5, 1);

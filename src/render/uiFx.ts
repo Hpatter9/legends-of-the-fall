@@ -34,7 +34,7 @@ export function flyUp(text: string, from: Element, to?: Element): void {
     position: 'fixed',
     left: `${r.left + r.width / 2}px`,
     top: `${r.top}px`,
-    font: 'bold 14px "Trebuchet MS", Verdana, sans-serif',
+    font: 'bold 16px "Alegreya Sans", "Trebuchet MS", sans-serif',
     color: '#ffe27a',
     textShadow: '0 1px 0 #1a1008, 0 0 8px rgba(255, 200, 80, 0.6)',
     whiteSpace: 'nowrap',

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addUnit, hurt, startBattle, stepBattle, TICK_MS, type Battle, type BattleEvent } from '../src/sim/battle';
-import { castSpell, HASTE_MS, HEAL_SHARE, isHasted, MANA_MAX, MANA_PER_SEC, MANA_START, METEOR_MS, SPELLS, SPELL_IDS, RALLY_MULT, RALLY_MS, SHIELD_SHARE, SHIELD_MS, SMITE_POWER, CHAIN_POWER, FREEZE_MS, SLOW_MS, POISON_DMG, QUAKE_POWER, RESURRECT_SHARE, speedOf } from '../src/sim/spells';
+import { castSpell, HASTE_MS, HEAL_SHARE, isHasted, MANA_MAX, MANA_PER_SEC, MANA_START, METEOR_MS, SPELLS, SPELL_IDS, RALLY_MULT, RALLY_MS, SHIELD_SHARE, SHIELD_MS, SMITE_POWER, CHAIN_POWER, FREEZE_MS, SLOW_MS, POISON_DMG, QUAKE_POWER, RESURRECT_SHARE, isSlowed, speedOf } from '../src/sim/spells';
 import { defOf } from '../src/sim/battle';
 import { tileAt } from '../src/sim/board';
 import { readyBattle } from './helpers';
@@ -235,6 +235,34 @@ test('frost nova freezes foes in the area, then slows them, and spares the rest'
   assert.equal(speedOf(b, far), 1);
   run(b, SLOW_MS + TICK_MS);
   assert.equal(speedOf(b, a), 1);
+});
+
+test('a slowed fighter swings and walks at half speed, and is back to normal once it wears off', () => {
+  // the first swing's wait (busyUntil from the swing) for a knight beside a skeleton, slowed or not
+  const swingGap = (slowed: boolean): number => {
+    const b = arena();
+    const k = addUnit(b, 'knight', 3, 7);
+    addUnit(b, 'skeleton', 3, 6).hp = 1e9;
+    if (slowed) k.slowUntil = b.t + SLOW_MS;
+    for (let i = 0; i < 200; i++) {
+      if (stepBattle(b).some((e) => e.kind === 'swing' && e.by === k.id)) return k.busyUntil - b.t;
+    }
+    assert.fail('the knight never swung');
+  };
+  const fast = swingGap(false);
+  const slow = swingGap(true);
+  assert.ok(slow >= fast * 1.9 && slow <= fast * 2.1, `slow ${slow} vs fast ${fast}`);
+
+  const b = arena();
+  const k = addUnit(b, 'knight', 3, 7);
+  addUnit(b, 'skeleton', 3, 0).hp = 1e9;
+  assert.equal(speedOf(b, k), 1);
+  k.slowUntil = b.t + SLOW_MS;
+  assert.equal(isSlowed(b, k), true);
+  assert.ok(speedOf(b, k) < 1);
+  run(b, SLOW_MS + TICK_MS);
+  assert.equal(isSlowed(b, k), false);
+  assert.equal(speedOf(b, k), 1);
 });
 
 test('rally raises every hero\'s attack once, then it wears off', () => {

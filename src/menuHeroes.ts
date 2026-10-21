@@ -15,7 +15,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   if (text) e.textContent = text;
   return e;
 };
-const stars = (rank: number) => '★'.repeat(rank) + '☆'.repeat(MAX_RANK - rank);
+export const stars = (rank: number) => '★'.repeat(rank) + '☆'.repeat(MAX_RANK - rank);
 
 function xpBar(meta: Meta, kind: string): { level: number; bar: HTMLElement; text: string } {
   const p = progressOf(xpOf(meta, kind));
