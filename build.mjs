@@ -78,9 +78,17 @@ writeFileSync(
 const FILES = ['.', 'index.html', 'game.js', 'bg1.png', 'bg2.png', 'bg3.png', 'bg4.png', 'bg5.png', ${AREA_BGS.map((f) => `'${f}'`).join(', ')}, 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', ${AUDIO.map((f) => `'${f}'`).join(', ')}];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k))))); self.clients.claim(); });
+// (network first, but a connection that hangs, like a plane's, gives up after a few seconds and the saved copy is used;
+// a page asked for with ?seed= or ?band= is the same page)
+const fromCache = (req) => caches.match(req, { ignoreSearch: true });
 self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET') return;
-  e.respondWith(fetch(e.request).then((r) => { const copy = r.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)); return r; }).catch(() => caches.match(e.request)));
+  if (e.request.method !== 'GET' || !e.request.url.startsWith(self.location.origin)) return;
+  const net = fetch(e.request).then((r) => {
+    if (r.ok) { const copy = r.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)); }
+    return r;
+  });
+  const slow = new Promise((ok) => setTimeout(ok, 4000)).then(fromCache);
+  e.respondWith(Promise.race([net.catch(() => fromCache(e.request)), slow.then((r) => r || net)]).then((r) => r || fromCache(e.request)));
 });
 `,
 );

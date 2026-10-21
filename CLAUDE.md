@@ -31,6 +31,9 @@ Chronos later, so keep its conventions.
   `hpatter9/chronos-assets` (clone it next to this one). Copy only the sprites used into `src/art/`, credit them in
   `CREDITS.md`, and never change the assets repo. Chronos's cut sheets (`src/renderer/art/creatures/packs/` and
   `packs.json` there) can be copied as they are.
+- **It must play offline** (the owner plays on planes). The service worker (`build.mjs` writes `out/web/sw.js`) caches
+  every file the game needs on the first visit. A new file the page loads by URL (backdrops, music, anything not
+  bundled into game.js as a data URL) must be added to its `FILES` list, or the game breaks offline.
 - **When unsure what the owner wants, ask.**
 
 ## Layout
