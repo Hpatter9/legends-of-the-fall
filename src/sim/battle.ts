@@ -6,7 +6,7 @@
 //
 // Pure rules: no Pixi, no DOM. The renderer reads the battle and the events each tick returns.
 
-import { boardOk, D, DEPLOY_ROWS, makeBoard, sightClear, standable, tileAt, type At, type Board } from './board';
+import { boardOk, D, DEPLOY_ROWS, GROUND_COST, LAVA_BURN, makeBoard, sightClear, standable, tileAt, type Area, type At, type Board } from './board';
 import { firstStep, walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
 import { FOE_BANDS } from './foes';
@@ -142,6 +142,8 @@ export interface Stage {
   /** Every hero's boost (the castle's), multiplied into the hero's own; and how fast the king's mana fills. */
   heroes?: Boost;
   mana?: number;
+  /** The land the fight is on (`areaFor` in run.ts); the highlands when unset. */
+  area?: Area;
 }
 export const apart = (a: At, b: At) => Math.abs(a.u - b.u) + Math.abs(a.v - b.v);
 export const tileOf = (b: Battle, a: At) => tileAt(b.board, a.u, a.v)!;
@@ -178,7 +180,7 @@ export function canStrike(board: Board, def: UnitDef, from: At, to: At): boolean
 
 /** A fresh fight on the seed's board: the foes of `band` in their rows, no heroes placed yet. */
 export function startBattle(seed: number, band = 'skeletons', stage: Stage = {}): Battle {
-  const board = makeBoard(seed);
+  const board = makeBoard(seed, stage.area);
   const b: Battle = { seed, board, units: [], phase: 'deploy', t: 0, rng: mixSeed(seed, 0xf167), pending: [], skillRng: mixSeed(seed, 0x5c111), zones: [], nextId: 1, spells: freshSpells(stage.mana) };
   if (stage.heroes) b.heroBoost = stage.heroes;
   // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed
@@ -402,18 +404,20 @@ function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[]): voi
   out.push({ kind: 'swing', by: me.id, to: to.id });
 }
 
-function stepTo(b: Battle, me: Unit, i: number, _out: BattleEvent[]): void {
+function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void {
   const def = defOf(me);
   const next = { u: i % b.board.w, v: Math.floor(i / b.board.w) };
   const from = tileOf(b, me);
   const to = tileOf(b, next);
-  const cost = def.flies ? 1 : 1 + Math.max(0, to.h - from.h);
+  const cost = def.flies ? 1 : 1 + Math.max(0, to.h - from.h) + (to.ground ? GROUND_COST[to.ground] : 0);
   const ms = Math.round((def.moveMs * cost) / speedOf(b, me));
   me.step = { u: me.u, v: me.v, h: from.h, at: b.t, ms };
   me.facing = wayTo(me, next);
   me.u = next.u;
   me.v = next.v;
   me.busyUntil = b.t + ms;
+  // lava burns whoever ends a step on it (fliers pass over)
+  if (to.ground === 'lava' && !def.flies) hurt(b, me, me, Math.max(1, Math.round(me.maxHp * LAVA_BURN)), false, false, out, 'dot');
 }
 
 /** Play a fight to its end (for tests and quick checks). */

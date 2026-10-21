@@ -19,6 +19,29 @@ export const CLIMB_COST = 1;
 /** The highest the rolling land stands. */
 export const TOP = 4;
 
+/** The lands a run passes through, in turn (`areaFor` in run.ts picks by stage). */
+export const AREAS = ['highlands', 'forest', 'snow', 'desert', 'volcano', 'dungeon'] as const;
+export type Area = (typeof AREAS)[number];
+
+/** What can cover a tile: shallows slow a walker, ice speeds one, lava slows and burns one, tall growth hides a tile from shots. */
+export type Ground = 'water' | 'ice' | 'lava' | 'tall';
+/** What stepping onto each costs besides the tile itself (ice is a faster step). */
+export const GROUND_COST: Record<Ground, number> = { water: 1, ice: -0.5, lava: 2, tall: 0 };
+/** The share of its hp a fighter loses each time a step ends on lava. */
+export const LAVA_BURN = 0.08;
+/** How high tall growth stands for a shot's line (a shooter's eye is at 1.6 above its tile). */
+export const TALL_TOP = 1.7;
+
+/** How many patches of each ground an area lays (min, max), each patch of one to three tiles. */
+const TERRAIN: Record<Area, Partial<Record<Ground, [number, number]>>> = {
+  highlands: { water: [0, 1], tall: [1, 2] },
+  forest: { water: [0, 1], tall: [2, 3] },
+  snow: { ice: [1, 2], water: [0, 1] },
+  desert: { water: [1, 1], tall: [0, 1] },
+  volcano: { lava: [1, 2], tall: [0, 1] },
+  dungeon: { water: [1, 2], tall: [1, 2] },
+};
+
 export interface Tile {
   /** Height in whole steps. */
   h: number;
@@ -26,12 +49,15 @@ export interface Tile {
   rock?: boolean;
   /** A bush grows here (only for looks). */
   bush?: boolean;
+  /** Shallows, ice, lava or tall growth covers the tile. */
+  ground?: Ground;
   /** A small number for picking the tile's tufts and flowers. */
   deco: number;
 }
 
 export interface Board {
   seed: number;
+  area: Area;
   w: number;
   d: number;
   tiles: Tile[];
@@ -100,7 +126,7 @@ export function canStep(from: Tile, to: Tile, jump: number): number | null {
   // (a flier, with a jump of FLY_JUMP, goes over any height at the cost of a level step)
   if (jump >= FLY_JUMP) return 1;
   if (Math.abs(rise) > Math.min(jump, CLIMB_MAX)) return null;
-  return 1 + (rise > 0 ? rise * CLIMB_COST : 0);
+  return 1 + (rise > 0 ? rise * CLIMB_COST : 0) + (to.ground ? GROUND_COST[to.ground] : 0);
 }
 
 /** Whether a shot flies from one tile to the other: no tile between stands over the line from the shooter's eye to
@@ -117,7 +143,7 @@ export function sightClear(b: Board, a: At, z: At): boolean {
     const f = i / n;
     const t = tileAt(b, Math.round(a.u + (z.u - a.u) * f), Math.round(a.v + (z.v - a.v) * f));
     if (!t) continue;
-    const top = t.h + (t.rock ? 1.6 : 0);
+    const top = t.h + (t.rock ? 1.6 : t.ground === 'tall' ? TALL_TOP : 0);
     if (top > eye + (mark - eye) * f + 1e-6) return false;
   }
   return true;
@@ -146,8 +172,33 @@ export function boardOk(b: Board): boolean {
   return b.tiles.every((t, i) => !standable(t) || seen.has(i));
 }
 
-/** The board for a seed: rolling land, a few boulders in the middle ground, bushes for looks. */
-export function makeBoard(seed: number): Board {
+/** Lay the area's patches of ground on the board by a side stream of the seed (so the land and boulders are the same
+ *  whatever the area). Lava stays out of the deploy rows; nothing lies under a boulder. */
+function layGround(b: Board, area: Area): void {
+  const rng = new Rng(mixSeed(b.seed, 0xa7ea, AREAS.indexOf(area)));
+  for (const kind of ['water', 'ice', 'lava', 'tall'] as const) {
+    const range = TERRAIN[area][kind];
+    if (!range) continue;
+    const patches = rng.int(range[0], range[1]);
+    const rows = kind === 'lava' ? [DEPLOY_ROWS, D - 1 - DEPLOY_ROWS] : [0, D - 1];
+    for (let i = 0; i < patches; i++) {
+      let at = { u: rng.int(0, W - 1), v: rng.int(rows[0], rows[1]) };
+      for (let n = rng.int(1, 3); n > 0; n--) {
+        const t = tileAt(b, at.u, at.v);
+        if (t && !t.rock && !t.ground) {
+          t.ground = kind;
+          delete t.bush;
+        }
+        const [du, dv] = rng.pick(DIRS as [number, number][]);
+        const next = { u: at.u + du, v: at.v + dv };
+        if (next.v >= rows[0] && next.v <= rows[1]) at = next;
+      }
+    }
+  }
+}
+
+/** The board for a seed: rolling land, a few boulders in the middle ground, bushes for looks, and the area's ground. */
+export function makeBoard(seed: number, area: Area = 'highlands'): Board {
   const rng = new Rng(mixSeed(seed, 0xb0a7d));
   const tiles: Tile[] = [];
   for (let v = 0; v < D; v++)
@@ -156,7 +207,7 @@ export function makeBoard(seed: number): Board {
       const n = relief(seed, u + 11, v + 7);
       tiles.push({ h: Math.max(0, Math.min(TOP, Math.round(n * (TOP + 1.4) - 0.6))), deco: rng.int(0, 999) });
     }
-  const b: Board = { seed, w: W, d: D, tiles };
+  const b: Board = { seed, area, w: W, d: D, tiles };
   easeRelief(b);
   // boulders in the middle ground, kept only if everyone can still get round them
   const rocks = rng.int(1, 3);
@@ -167,5 +218,6 @@ export function makeBoard(seed: number): Board {
     if (!boardOk(b)) t.rock = false;
   }
   for (const t of b.tiles) if (!t.rock && rng.chance(0.08)) t.bush = true;
+  layGround(b, area);
   return b;
 }

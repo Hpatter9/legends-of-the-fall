@@ -29,16 +29,10 @@
     -webkit-user-select: none;
     touch-action: none;
   }
-  /* the backdrop: five parallax layers (sky, clouds, peak, far hills, near hills), shifted a little by the pan */
-  #sky { position: fixed; inset: 0; overflow: hidden; }
+  /* the backdrop: parallax layers (render/backdrop.ts fills them in for the area), shifted a little by the pan */
+  #sky { position: fixed; inset: 0; overflow: hidden; background: #1c1410; }
   #sky div { position: absolute; left: -12%; right: -12%; top: 0; bottom: 0; background: center bottom / auto 100% repeat-x; will-change: transform; }
-  #sky div:nth-child(1) { background-size: 100% 100%; }
-  #sky div:nth-child(2) { background-image: url(bg2.png); }
-  #sky div:nth-child(3) { background-image: url(bg3.png); }
-  #sky div:nth-child(4) { background-image: url(bg4.png); }
-  #sky div:nth-child(5) { background-image: url(bg5.png); }
-  #sky div:nth-child(1) { background-image: url(bg1.png); }
-  #sky::after { content: ''; position: absolute; inset: 0; background: linear-gradient(rgba(20, 10, 6, 0.1), rgba(20, 10, 6, 0.35)); }
+  #sky::after { content: ''; position: absolute; inset: 0; background: var(--tint, linear-gradient(rgba(20, 10, 6, 0.1), rgba(20, 10, 6, 0.35))); }
   #stage { position: fixed; inset: 0; }
   #stage canvas { display: block; }
   button {
@@ -244,7 +238,7 @@
 </style>
 </head>
 <body data-phase="deploy">
-<div id="sky"><div></div><div></div><div></div><div></div><div></div></div>
+<div id="sky"></div>
 <div id="stage"></div>
 <div id="top"><h1>Legends of the Fall</h1><span id="status"></span><span id="gold"></span><span id="clock"></span><button id="mute"></button><button id="speed">×1</button></div>
 <div id="panel">

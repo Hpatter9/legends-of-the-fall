@@ -4,7 +4,7 @@
 //   npm run web     build once
 //   npm run dev     build, then serve out/web and rebuild on every change (http://localhost:8000)
 import * as esbuild from 'esbuild';
-import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 
 const serve = process.argv.includes('--serve');
@@ -38,6 +38,15 @@ const options = {
 copyFileSync('src/art/icon-192.png', `${out}/icon-192.png`);
 copyFileSync('src/art/icon-512.png', `${out}/icon-512.png`);
 for (let k = 1; k <= 5; k++) copyFileSync(`src/art/backdrop/m1_${k}.png`, `${out}/bg${k}.png`);
+// (the other areas' backdrops, as files too: areas/<area>/bgN.png)
+const AREA_BGS = [];
+for (const area of readdirSync('src/art/areas', { withFileTypes: true }).filter((d) => d.isDirectory())) {
+  mkdirSync(`${out}/areas/${area.name}`, { recursive: true });
+  for (const f of readdirSync(`src/art/areas/${area.name}`).filter((f) => /^bg\d\.png$/.test(f))) {
+    copyFileSync(`src/art/areas/${area.name}/${f}`, `${out}/areas/${area.name}/${f}`);
+    AREA_BGS.push(`areas/${area.name}/${f}`);
+  }
+}
 // (the music: played as files, so the service worker keeps them for offline too)
 const AUDIO = ['town.ogg', 'battle.ogg', 'boss.ogg'];
 for (const f of AUDIO) copyFileSync(`src/audio/${f}`, `${out}/${f}`);
@@ -66,7 +75,7 @@ writeFileSync(
 writeFileSync(
   `${out}/sw.js`,
   `const CACHE = 'legends-${version}';
-const FILES = ['.', 'index.html', 'game.js', 'bg1.png', 'bg2.png', 'bg3.png', 'bg4.png', 'bg5.png', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', ${AUDIO.map((f) => `'${f}'`).join(', ')}];
+const FILES = ['.', 'index.html', 'game.js', 'bg1.png', 'bg2.png', 'bg3.png', 'bg4.png', 'bg5.png', ${AREA_BGS.map((f) => `'${f}'`).join(', ')}, 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', ${AUDIO.map((f) => `'${f}'`).join(', ')}];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k))))); self.clients.claim(); });
 self.addEventListener('fetch', (e) => {

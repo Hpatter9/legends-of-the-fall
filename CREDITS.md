@@ -31,6 +31,18 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   allows use and redistribution in personal and commercial projects, with credit appreciated but not required.
 - **The sound effects** are synthesised in `src/render/sound.ts` with the Web Audio API; no files were copied for them.
 
+## Areas (`src/art/areas/`, cut by `tools/areas-prep.py`)
+
+- **Backdrops** (`<area>/bgN.png`, as parallax layers): Forest from the Forest and Trees pixel backgrounds (set 1);
+  Snowfields from the Free Winter Backgrounds (set 8); Desert from the Desert Oasis pixel background pack (background
+  3); Volcano from the same Winter Backgrounds (set 6) with its sky and hills recoloured; Dungeon from the Crystal Cave
+  pixel backgrounds (background 3). All Craftpix.
+- **Ground** (`top1/2.png`, `high.png`, `side.png`, `common/water.png`, `ice.png`, `lava.png`): the highlands grass and
+  stone tops and the Undead Tileset's rock face (as above), recoloured for each area.
+- **Rocks** (`boulder1/2.png`): the Free Rocks pixel art pack (middle lane rocks, snowy rocks, desert rocks, stalagmites,
+  cave rocks). **Tall growth** (`tall1/2.png`): the Fields Tileset's grass tufts, recoloured; the dungeon's are two
+  mushrooms of the Free Top-Down Cave Objects pack.
+
 ## More foes and bosses (copied in for the boss stages and new bands)
 
 - The orc warband (grunt, archer, brute, warlord), demons, demon lord, imp and ogres (`src/art/units/hk_*.png`, as cut by

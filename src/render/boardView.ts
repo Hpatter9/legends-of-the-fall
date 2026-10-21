@@ -4,17 +4,10 @@
 // `column`).
 
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
-import { tileAt, type Board, type Tile } from '../sim/board';
+import { tileAt, type Area, type Board, type Tile } from '../sim/board';
 import { loadImage } from './loadImage';
 import { at, depth, FOOT, HH, TH, TW } from './iso';
-import grass1Url from '../art/ground/grass1.png';
-import grass2Url from '../art/ground/grass2.png';
-import stoneUrl from '../art/ground/stone.png';
-import rockUrl from '../art/ground/rock.png';
-import boulder1 from '../art/ground/boulder1.png';
-import boulder2 from '../art/ground/boulder2.png';
-import bush1 from '../art/ground/bush1.png';
-import bush2 from '../art/ground/bush2.png';
+import { AREA_URLS, BUSH_URLS, GROUND_URLS } from './areaArt';
 
 /** From this height up, a tile's top is stony. */
 const STONY = 3;
@@ -27,22 +20,51 @@ const MARK_COLOUR: Record<Exclude<Mark, null>, [number, number]> = {
   chosen: [0x6dff8a, 0.45],
 };
 
+/** The colour of the lip at the edge of a tile's top: grass-like, then stony. */
+const LIP: Record<Area, [string, string]> = {
+  highlands: ['#7e9a48', '#a39e94'],
+  forest: ['#3f7a40', '#8a9484'],
+  snow: ['#dfe9f6', '#c4d6ee'],
+  desert: ['#d9b878', '#e2c690'],
+  volcano: ['#4a3430', '#6a5450'],
+  dungeon: ['#585874', '#7c7c98'],
+};
+
+/** The rim drawn round each kind of ground. */
+const RIM = { water: 'rgba(120,190,255,0.9)', ice: 'rgba(210,245,255,0.95)', lava: 'rgba(255,150,40,0.95)', tall: 'rgba(30,70,20,0.6)' };
+
 /** The ground textures' side (they are laid onto the diamond whole). */
 const SRC = 64;
 
-interface Art {
-  grass: HTMLImageElement[];
-  stone: HTMLImageElement;
-  rock: HTMLImageElement;
+interface AreaArt {
+  tops: HTMLImageElement[];
+  high: HTMLImageElement;
+  side: HTMLImageElement;
   boulders: Texture[];
+  tall: Texture[];
+}
+interface Art {
+  areas: Record<Area, AreaArt>;
+  water: HTMLImageElement;
+  ice: HTMLImageElement;
+  lava: HTMLImageElement;
   bushes: Texture[];
 }
 let art: Art | null = null;
 
 export async function loadBoardArt(): Promise<void> {
   const all = (urls: string[]) => Promise.all(urls.map(loadImage));
-  const [grass, stone, rock, boulders, bushes] = await Promise.all([all([grass1Url, grass2Url]), loadImage(stoneUrl), loadImage(rockUrl), all([boulder1, boulder2]), all([bush1, bush2])]);
-  art = { grass, stone, rock, boulders: boulders.map((i) => Texture.from(i)), bushes: bushes.map((i) => Texture.from(i)) };
+  const areas = {} as Record<Area, AreaArt>;
+  await Promise.all(
+    (Object.keys(AREA_URLS) as Area[]).map(async (a) => {
+      const u = AREA_URLS[a];
+      const [tops, high, side, boulders, tall] = await Promise.all([all(u.tops), loadImage(u.high), loadImage(u.side), all(u.boulders), all(u.tall)]);
+      areas[a] = { tops, high, side, boulders: boulders.map((i) => Texture.from(i)), tall: tall.map((i) => Texture.from(i)) };
+    }),
+  );
+  const [water, ice, lava] = await Promise.all([loadImage(GROUND_URLS.water), loadImage(GROUND_URLS.ice), loadImage(GROUND_URLS.lava)]);
+  const bushes = (await all(BUSH_URLS)).map((i) => Texture.from(i));
+  art = { areas, water, ice, lava, bushes };
 }
 
 export class BoardView {
@@ -65,22 +87,35 @@ export class BoardView {
         const [x, y] = at(u, v, t.h);
         const tile = new Container();
         tile.zIndex = depth(u, v);
-        const col = new Sprite(this.column(t, u, v));
+        const col = new Sprite(this.column(t, u, v, b.area));
         col.position.set(x - TW / 2, y - TH / 2);
         tile.addChild(col);
         const mark = new Graphics();
         mark.position.set(x, y);
         tile.addChild(mark);
         this.marks.push(mark);
-        if (t.rock && art) {
-          const r = new Sprite(art.boulders[t.deco % art.boulders.length]);
+        const set = art?.areas[b.area];
+        if (t.rock && set) {
+          const tex = set.boulders[t.deco % set.boulders.length];
+          const r = new Sprite(tex);
           r.anchor.set(0.5, 0.8);
-          r.scale.set(1.6);
+          r.scale.set(Math.min(56 / tex.width, 66 / tex.height));
           r.position.set(x, y);
           tile.addChild(r);
-        } else if (t.bush && art) {
+        } else if (t.ground === 'tall' && set) {
+          // (tall growth: a clump of tufts that stands in front of the tile's top, hiding it from shots)
+          const urls = AREA_URLS[b.area];
+          for (let k = 0; k < urls.tallCount; k++) {
+            const s = new Sprite(set.tall[(t.deco + k) % set.tall.length]);
+            s.anchor.set(0.5, 1);
+            s.scale.set(urls.tallScale);
+            const a = ((t.deco >> 2) + k * 2.1) % (Math.PI * 2);
+            s.position.set(x + Math.cos(a) * (urls.tallCount > 2 ? 17 : 10), y + 6 + Math.sin(a) * 6);
+            tile.addChild(s);
+          }
+        } else if (t.bush && b.area === 'highlands' && set) {
           // (a bush grows at the tile's back corner, behind whoever stands there)
-          const s = new Sprite(art.bushes[t.deco % art.bushes.length]);
+          const s = new Sprite(art!.bushes[t.deco % art!.bushes.length]);
           s.anchor.set(0.5, 0.9);
           s.position.set(x + ((t.deco >> 3) % 2 ? 12 : -12), y - 5);
           tile.addChild(s);
@@ -107,7 +142,8 @@ export class BoardView {
   }
 
   /** One tile's column: its top laid on the diamond, its two sides down to the foot. */
-  private column(t: Tile, u: number, v: number): Texture {
+  private column(t: Tile, u: number, v: number, area: Area): Texture {
+    const set = art?.areas[area];
     const deep = t.h * HH + FOOT;
     const c = document.createElement('canvas');
     c.width = TW;
@@ -115,7 +151,7 @@ export class BoardView {
     const g = c.getContext('2d')!;
     g.imageSmoothingEnabled = false;
     const stony = t.h >= STONY;
-    const lip = stony ? '#a39e94' : '#7e9a48';
+    const lip = LIP[area][stony ? 1 : 0];
     const face = (pts: [number, number][], fill: string | CanvasPattern) => {
       g.fillStyle = fill;
       g.beginPath();
@@ -125,7 +161,7 @@ export class BoardView {
       g.fill();
     };
     // the sides: the rock face tiled down them, the left lit and the right in shade
-    const rock = art?.rock;
+    const rock = set?.side;
     const side = (x0: number, x1: number, y0: number, y1: number, shade: string) => {
       g.save();
       g.beginPath();
@@ -169,12 +205,13 @@ export class BoardView {
     g.lineTo(0, TH / 2);
     g.closePath();
     g.clip();
-    if (art) {
+    if (art && set) {
       const a = TW / (2 * SRC);
       const b = TH / (2 * SRC);
       g.imageSmoothingEnabled = true;
       g.setTransform(a, b, -a, b, TW / 2, 0);
-      g.drawImage(stony ? art.stone : art.grass[(t.deco + u + v) % art.grass.length], 0, 0, SRC, SRC);
+      const lie = t.ground && t.ground !== 'tall' ? art[t.ground] : null;
+      g.drawImage(lie ?? (stony ? set.high : set.tops[(t.deco + u + v) % set.tops.length]), 0, 0, SRC, SRC);
       g.setTransform(1, 0, 0, 1, 0, 0);
     } else {
       g.fillStyle = lip;
@@ -183,8 +220,39 @@ export class BoardView {
     // (high ground a shade lighter, so the heights read at a glance)
     g.fillStyle = `rgba(255,248,220,${0.03 + t.h * 0.035})`;
     g.fillRect(0, 0, TW, TH);
+    // (the ground that matters is marked so it reads at a glance: ripples on shallows, glints on ice, a glow on lava)
+    g.lineWidth = 1;
+    if (t.ground === 'water') {
+      g.strokeStyle = 'rgba(220,240,255,0.7)';
+      for (const [x, y] of [[TW * 0.34, TH * 0.5], [TW * 0.6, TH * 0.36], [TW * 0.56, TH * 0.68]]) {
+        g.beginPath();
+        g.moveTo(x - 5, y);
+        g.quadraticCurveTo(x, y - 2.5, x + 5, y);
+        g.stroke();
+      }
+    } else if (t.ground === 'ice') {
+      g.strokeStyle = 'rgba(255,255,255,0.85)';
+      for (const [x, y] of [[TW * 0.38, TH * 0.42], [TW * 0.64, TH * 0.6]]) {
+        g.beginPath();
+        g.moveTo(x - 4, y + 3);
+        g.lineTo(x + 4, y - 3);
+        g.moveTo(x - 2, y - 3);
+        g.lineTo(x + 2, y + 3);
+        g.stroke();
+      }
+    } else if (t.ground === 'lava') {
+      const glow = g.createRadialGradient(TW / 2, TH / 2, 2, TW / 2, TH / 2, TW / 2.4);
+      glow.addColorStop(0, 'rgba(255,230,120,0.5)');
+      glow.addColorStop(1, 'rgba(255,90,20,0)');
+      g.fillStyle = glow;
+      g.fillRect(0, 0, TW, TH);
+    } else if (t.ground === 'tall') {
+      g.fillStyle = 'rgba(0,20,0,0.16)';
+      g.fillRect(0, 0, TW, TH);
+    }
     g.restore();
-    g.strokeStyle = 'rgba(20,14,8,0.35)';
+    g.strokeStyle = t.ground ? RIM[t.ground] : 'rgba(20,14,8,0.35)';
+    g.lineWidth = t.ground && t.ground !== 'tall' ? 2 : 1;
     g.beginPath();
     g.moveTo(TW / 2, 0.5);
     g.lineTo(TW - 0.5, TH / 2);

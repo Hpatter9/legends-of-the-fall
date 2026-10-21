@@ -4,6 +4,7 @@
 // fight ends the run. Pure rules: no Pixi, no DOM; the summon draws from a side stream of the run's seed.
 
 import { startBattle, type Battle, type Boost, type Stage } from './battle';
+import { AREAS, type Area } from './board';
 import { BOSS_BANDS, FIELD_BANDS } from './foes';
 import { bonusGold, heroBoost, manaRate, newCastle, type Castle } from './castle';
 import { rankMult } from './meta';
@@ -106,6 +107,9 @@ export const bandFor = (stage: number) => {
   const fieldsBefore = stage - 1 - Math.floor((stage - 1) / BOSS_EVERY);
   return FIELD_BANDS[fieldsBefore % FIELD_BANDS.length];
 };
+/** The land stage n is fought in: each area for `AREA_STAGES` stages in turn, then round again. */
+export const AREA_STAGES = 5;
+export const areaFor = (stage: number): Area => AREAS[Math.floor((stage - 1) / AREA_STAGES) % AREAS.length];
 /** How the foes of stage n are boosted. */
 export function stageBoost(stage: number): Stage {
   const k = 1 + STAGE_GROWTH * (stage - 1);
@@ -115,7 +119,7 @@ export function stageBoost(stage: number): Stage {
 export const reward = (stage: number) => 20 + 6 * stage + (isBossStage(stage) ? 30 : 0);
 
 /** A fresh fight for the run's current stage (a different board each stage). */
-export const startStage = (run: Run): Battle => startBattle(mixSeed(run.seed, 0x57a6e, run.stage), bandFor(run.stage), { ...stageBoost(run.stage), heroes: heroBoost(run.castle), mana: manaRate(run.castle) });
+export const startStage = (run: Run): Battle => startBattle(mixSeed(run.seed, 0x57a6e, run.stage), bandFor(run.stage), { ...stageBoost(run.stage), area: areaFor(run.stage), heroes: heroBoost(run.castle), mana: manaRate(run.castle) });
 
 /** Settle a finished fight: a win pays (and its stars pay gold) and moves on to the next stage; a loss ends the run. */
 export function finish(run: Run, won: boolean, stars = 0): void {
