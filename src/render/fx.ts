@@ -489,6 +489,11 @@ export class Fx {
     if (!by) return;
     this.label(name, by.x, by.y - by.tall - 20, 0xffe27a, 13, 1200);
     const cast = SKILL_FX[name]?.cast;
+    // (a Mythic's ultimate shakes the screen and flashes it)
+    if (kitOf(by.unit)?.ultimate?.name === name) {
+      this.trauma = Math.max(this.trauma, 0.5);
+      this.flash(0.35, 380);
+    }
     if (cast) this.effect(cast, by.x, by.y - 4);
     else this.anim(impact, by.x, by.y - 4, 1.6, 40);
   }

@@ -11,6 +11,8 @@ import { Rng } from './rng';
 
 /** A skill fires at this much charge. */
 export const CHARGE_MAX = 100;
+/** A Mythic's ultimate gathers charge at this share of its first skill's rate. */
+export const ULT_RATE = 0.45;
 
 /** Damage over time: `dmg` every `every` ms for `ms`. */
 export interface Dot {
@@ -116,6 +118,8 @@ export interface Skill {
 
 export interface Kit {
   skill: Skill;
+  /** A Mythic's second, bigger skill: it charges on its own meter, `ULT_RATE` as fast as the first (its own charge rates are unused). */
+  ultimate?: Skill;
   passive: Passive;
 }
 
@@ -372,17 +376,19 @@ function dive(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 /** Yamabushi Tengu: a gust hurts the foes within two tiles and shoves each a tile away; a drop of two or more hurts more. */
 const GUST_REACH = 2;
 const FALL_DMG = 10;
-function windGust(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const near = foesOf(b, me).filter((f) => apart(me, f) <= GUST_REACH);
+const windGust = (b: Battle, me: Unit, out: BattleEvent[]) => gust(b, me, out, GUST_REACH, 0.9, 0);
+function gust(b: Battle, me: Unit, out: BattleEvent[], reach: number, mult: number, stunMs: number): boolean {
+  const near = foesOf(b, me).filter((f) => apart(me, f) <= reach);
   if (!near.length) return false;
   for (const f of near) {
     const way = wayTo(me, f);
-    hurt(b, me, f, net(atkOf(me) * 0.9, f), false, false, out, 'skill');
+    hurt(b, me, f, net(atkOf(me) * mult, f), false, false, out, 'skill');
     if (!f.alive) continue;
+    if (stunMs) f.busyUntil = Math.max(f.busyUntil, b.t + stunMs);
     if (kitOf(f)?.passive.steady) continue;
     const to = { u: f.u + DIR[way][0], v: f.v + DIR[way][1] };
     const t = tileAt(b.board, to.u, to.v);
-    f.busyUntil = Math.max(f.busyUntil, b.t + 500);
+    f.busyUntil = Math.max(f.busyUntil, b.t + Math.max(500, stunMs));
     if (!t || !standable(t) || unitAt(b, to.u, to.v)) continue;
     const from = tileOf(b, f);
     f.step = { u: f.u, v: f.v, h: from.h, at: b.t, ms: 250 };
@@ -392,6 +398,9 @@ function windGust(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   }
   return true;
 }
+
+/** Yamabushi Tengu's ultimate, Tempest: a great gale over four tiles that hurts hard, shoves and stuns every foe in it. */
+const tempest = (b: Battle, me: Unit, out: BattleEvent[]) => gust(b, me, out, 4, 1.8, 1500);
 
 /** Werewolf: bites the weakest foe in reach for double, and heals for half of the damage it dealt. */
 const LEECH_SHARE = 0.5;
@@ -492,6 +501,64 @@ function gaze(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   hurt(b, me, f, net(atkOf(me), f), false, false, out, 'skill');
   if (f.alive) f.busyUntil = Math.max(f.busyUntil, b.t + PETRIFY_MS);
   out.push({ kind: 'gaze', by: me.id, to: f.id });
+  return true;
+}
+
+/** Kitsune's ultimate, Nine-Tailed Dream: the three strongest foes in sight fight their own side for a while. */
+const DREAM_MS = 4000;
+function nineTails(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const foes = foesOf(b, me);
+  const prey = foes
+    .filter((x) => apart(me, x) <= 7 && !(x.charmUntil !== undefined && x.charmUntil > b.t))
+    .sort((x, y) => atkOf(y) - atkOf(x) || x.id - y.id)
+    .slice(0, Math.min(3, foes.length - 1));
+  if (!prey.length) return false;
+  for (const f of prey) {
+    f.charmUntil = b.t + DREAM_MS;
+    f.taunt = undefined;
+    f.busyUntil = Math.min(f.busyUntil, b.t + 300);
+    out.push({ kind: 'arc', from: me.id, to: f.id });
+  }
+  return true;
+}
+
+/** Karasu Tengu's ultimate, Feather Storm: a storm of blades on the thickest knot of foes, for more than double. */
+const STORM_MS = 800;
+function featherStorm(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const aim = crowd(b, me, (f) => apart(me, f) <= 7);
+  if (!aim) return false;
+  b.pending.push({ at: b.t + STORM_MS, kind: 'rain', by: me.id, to: aim.id, dmg: atkOf(me) * 2.6, heavy: false, u: aim.u, v: aim.v });
+  out.push({ kind: 'area', by: me.id, id: 'volley', u: aim.u, v: aim.v, ms: STORM_MS });
+  return true;
+}
+
+/** Gorgon's ultimate, Stone Curse: every foe she can see within six tiles is hurt and turned to stone for a while. */
+const CURSE_REACH = 6;
+const STONE_MS = 2500;
+function stoneCurse(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const seen = foesOf(b, me).filter((x) => apart(me, x) <= CURSE_REACH && sightClear(b.board, me, x));
+  if (!seen.length) return false;
+  me.facing = wayTo(me, seen.sort((x, y) => atkOf(y) - atkOf(x) || x.id - y.id)[0]);
+  for (const f of seen) {
+    hurt(b, me, f, net(atkOf(me) * 1.2, f), false, false, out, 'skill');
+    if (f.alive) f.busyUntil = Math.max(f.busyUntil, b.t + STONE_MS);
+    out.push({ kind: 'gaze', by: me.id, to: f.id });
+  }
+  return true;
+}
+
+/** Samurai Commander's ultimate, Rally Cry: the war banner flies over every ally at once, and they are heartened. */
+const RALLY_MS = 9000;
+const RALLY_HEAL = 0.25;
+function rallyCry(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const all = b.units.filter((a) => a.alive && a.side === me.side);
+  if (!all.some((a) => a !== me)) return false;
+  for (const a of all) {
+    if (a.banner === undefined) a.power = (a.power ?? 1) * BANNER_MULT;
+    a.banner = { until: b.t + RALLY_MS };
+    mendUnit(a, a.maxHp * RALLY_HEAL, out, me);
+  }
+  out.push({ kind: 'banner', by: me.id, ms: RALLY_MS });
   return true;
 }
 
@@ -749,14 +816,17 @@ export const KITS: Record<string, Kit> = {
   },
   kitsune: {
     skill: { name: 'Fox Charm', text: 'The strongest foe nearby fights its own side for 3.5s', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 600, anim: 'attack', cast: charm },
+    ultimate: { name: 'Nine-Tailed Dream', text: 'The three strongest foes in sight fight their own side for 4s', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 800, anim: 'attack', cast: nineTails },
     passive: { name: 'Spirit Drain', text: 'Heals for a quarter of the damage her blows deal', leech: 0.25 },
   },
   karasu: {
     skill: { name: 'Dive', text: 'Drops beside a shooter (else the weakest foe) and strikes it for double', need: CHARGE_MAX, dealt: 7, taken: 3, perSec: 2, castMs: 450, anim: 'attack', cast: dive },
+    ultimate: { name: 'Feather Storm', text: 'A storm of blades falls on the thickest knot of foes for more than double', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 700, anim: 'attack', cast: featherStorm },
     passive: { name: 'Hunter\'s Eye', text: 'Blows deal 50% more to shooters', prey: 1.5 },
   },
   yamabushi: {
     skill: { name: 'Wind Gust', text: 'Foes within 2 tiles are hurt and shoved back a tile, and fall damage if it drops them 2 or more', need: CHARGE_MAX, dealt: 6, taken: 6, perSec: 2, castMs: 600, anim: 'attack', cast: windGust },
+    ultimate: { name: 'Tempest', text: 'A great gale: every foe within 4 tiles is hurt hard, shoved back and stunned for 1.5s', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 800, anim: 'attack', cast: tempest },
     passive: { name: 'Mountain Breath', text: 'Heals 2% of his health each second', regen: 0.02 },
   },
   paladin: {
@@ -826,10 +896,12 @@ export const KITS: Record<string, Kit> = {
   },
   gorgon: {
     skill: { name: 'Petrifying Gaze', text: 'Stiffens the strongest foe it sees within 5 tiles: it takes a blow and is stunned for 3s', need: CHARGE_MAX, dealt: 6, taken: 4, perSec: 2, castMs: 600, anim: 'attack', cast: gaze },
+    ultimate: { name: 'Stone Curse', text: 'Every foe in sight within 6 tiles is hurt and turned to stone for 2.5s', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 800, anim: 'attack', cast: stoneCurse },
     passive: { name: 'Scaled Hide', text: 'Takes a fifth less from shots', scales: 0.2 },
   },
   samuraiCommander: {
     skill: { name: 'War Banner', text: 'Raises the attack of the allies within 3 tiles by a quarter for 6s', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 2, castMs: 600, anim: 'attack2', cast: banner },
+    ultimate: { name: 'Rally Cry', text: 'The war banner flies over every ally: attack up a quarter for 9s and a quarter of their health back', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 700, anim: 'attack2', cast: rallyCry },
     passive: { name: 'Stand Firm', text: 'Cannot be knocked back', steady: true },
   },
   boarKing: {
@@ -843,18 +915,33 @@ export const kitOf = (u: Unit): Kit | undefined => KITS[u.def];
 /** A free hero whose charge is full lets its skill go, if there is something to use it on. */
 export function tryCast(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const k = kitOf(me);
-  if (!k || me.charge < k.skill.need) return false;
-  if (!k.skill.cast(b, me, out)) return false;
+  if (!k) return false;
+  // (a full ultimate goes first; if it has nothing to hit, the ordinary skill may still go)
+  if (k.ultimate && (me.charge2 ?? 0) >= k.ultimate.need && k.ultimate.cast(b, me, out)) {
+    me.charge2! -= k.ultimate.need;
+    return began(b, me, k.ultimate, out);
+  }
+  if (me.charge < k.skill.need || !k.skill.cast(b, me, out)) return false;
   me.charge -= k.skill.need;
-  me.cast = { at: b.t, ms: k.skill.castMs, anim: k.skill.anim };
+  return began(b, me, k.skill, out);
+}
+
+function began(b: Battle, me: Unit, s: Skill, out: BattleEvent[]): boolean {
+  me.cast = { at: b.t, ms: s.castMs, anim: s.anim };
   me.swing = undefined;
-  me.busyUntil = b.t + k.skill.castMs;
-  out.push({ kind: 'skill', by: me.id, name: k.skill.name, ms: k.skill.castMs });
+  me.busyUntil = b.t + s.castMs;
+  out.push({ kind: 'skill', by: me.id, name: s.name, ms: s.castMs });
   return true;
 }
 
+/** Whether a hero's ultimate is full. */
+export const ultimateReady = (u: Unit): boolean => !!kitOf(u)?.ultimate && (u.charge2 ?? 0) >= kitOf(u)!.ultimate!.need;
+
 const gain = (u: Unit, n: number) => {
-  if (u.alive && kitOf(u)) u.charge = Math.min(CHARGE_MAX, u.charge + n);
+  const k = u.alive ? kitOf(u) : undefined;
+  if (!k) return;
+  u.charge = Math.min(CHARGE_MAX, u.charge + n);
+  if (k.ultimate) u.charge2 = Math.min(CHARGE_MAX, (u.charge2 ?? 0) + n * ULT_RATE);
 };
 
 /** What a blow or skill does to its target after guards, blocks and dodges (null when slipped), charging both sides. */

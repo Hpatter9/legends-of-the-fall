@@ -2,8 +2,9 @@
 // every hero with the locked ones shaded. It only reads and changes the Meta through the sim's own functions.
 
 import { ALL_HEROES, UNITS } from './sim/units';
-import { MAX_RANK, PITY, pullCost, RANK_MULT, RANK_SHARDS, rankOf, RATES, recruit, rarityOf, saveMeta, type Meta, type Pull } from './sim/meta';
+import { MAX_RANK, MYTHIC_PITY, PITY, pullCost, RANK_MULT, RANK_SHARDS, rankOf, RARITY_NAMES, RATES, recruit, rarityOf, saveMeta, type Meta, type Pull } from './sim/meta';
 import { portrait } from './render/sheets';
+import { rarityFlash } from './render/uiFx';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -17,7 +18,7 @@ export class Gacha {
     $('pull1').addEventListener('click', () => this.pull(1));
     $('pull10').addEventListener('click', () => this.pull(10));
     $('gachaClose').addEventListener('click', () => this.close());
-    $('rates').textContent = `Common ${RATES[1]}% · Rare ${RATES[2]}% · Epic ${RATES[3]}% · an epic is sure by pull ${PITY}. A repeat gives a shard; shards raise a hero's rank (+${Math.round((RANK_MULT - 1) * 100)}% hp and attack a rank, up to ${MAX_RANK}).`;
+    $('rates').textContent = `${([1, 2, 3, 4, 5] as const).map((r) => `${RARITY_NAMES[r]} ${RATES[r]}%`).join(' · ')} · a Legendary or better is sure by pull ${PITY}, a Mythic by pull ${MYTHIC_PITY}. A repeat gives a shard; shards raise a hero's rank (+${Math.round((RANK_MULT - 1) * 100)}% hp and attack a rank, up to ${MAX_RANK}).`;
   }
 
   open(): void {
@@ -39,7 +40,7 @@ export class Gacha {
       b.textContent = `Pull ${n} · ${pullCost(n)}`;
       b.disabled = this.busy || m.crowns < pullCost(n);
     }
-    $('pity').textContent = `Epic in at most ${PITY - m.dry} pulls`;
+    $('pity').textContent = `Legendary in at most ${PITY - m.dry} pulls · Mythic in at most ${MYTHIC_PITY - m.dryMythic}`;
     const list = $('collection');
     list.replaceChildren();
     for (const kind of ALL_HEROES) {
@@ -48,7 +49,10 @@ export class Gacha {
       cell.className = `hero r${rarityOf(kind)}${m.unlocked.includes(kind) ? '' : ' locked'}`;
       const name = document.createElement('b');
       name.textContent = m.unlocked.includes(kind) ? def.name : '???';
-      cell.append(portrait(def.sheet, 72), name);
+      const tag = document.createElement('em');
+      tag.className = 'rtag';
+      tag.textContent = RARITY_NAMES[rarityOf(kind)];
+      cell.append(portrait(def.sheet, 72), name, tag);
       if (m.unlocked.includes(kind)) cell.append(this.rankLine(kind));
       list.append(cell);
     }
@@ -84,11 +88,12 @@ export class Gacha {
     this.reveal(got);
   }
 
-  /** The pulls as face-down cards that flip over one after another. */
+  /** The pulls as face-down cards that flip over one after another; a Legendary waits a beat and flashes, a Mythic trembles first, then flips slowly under crimson beams and a flash over the screen. */
   private reveal(got: Pull[]): void {
     const box = $('reveal');
     box.replaceChildren();
-    got.forEach((p, i) => {
+    let at = 350;
+    got.forEach((p) => {
       const def = UNITS[p.kind];
       const card = document.createElement('div');
       card.className = `flip r${p.rarity}`;
@@ -98,18 +103,36 @@ export class Gacha {
       name.textContent = def.name;
       const tag = document.createElement('em');
       tag.textContent = p.isNew ? 'NEW' : `+${p.shards} shard`;
-      face.append(portrait(def.sheet, 72), name, tag);
+      const tier = document.createElement('small');
+      tier.className = 'rtag';
+      tier.textContent = RARITY_NAMES[p.rarity];
+      face.append(portrait(def.sheet, 72), name, tier, tag);
       if (p.isNew) card.classList.add('new');
       const back = document.createElement('div');
       back.className = 'back';
       card.append(back, face);
-      card.addEventListener('click', () => card.classList.add('up'));
+      if (p.rarity >= 4) {
+        const beams = document.createElement('div');
+        beams.className = 'beams';
+        card.prepend(beams);
+      }
+      const flip = () => {
+        card.classList.remove('shake');
+        card.classList.add('up');
+        rarityFlash(p.rarity);
+      };
+      card.addEventListener('click', flip);
       box.append(card);
-      setTimeout(() => card.classList.add('up'), 350 + i * 260);
+      const mythic = p.rarity === 5;
+      // (the Mythic's card shakes for a moment before it turns)
+      if (mythic) setTimeout(() => card.classList.add('shake'), at);
+      at += mythic ? 900 : 0;
+      setTimeout(flip, at);
+      at += p.rarity === 4 ? 600 : mythic ? 1500 : 260;
     });
     setTimeout(() => {
       this.busy = false;
       this.refresh();
-    }, 350 + got.length * 260);
+    }, at);
   }
 }

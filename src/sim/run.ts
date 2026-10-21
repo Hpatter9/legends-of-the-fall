@@ -7,7 +7,7 @@ import { startBattle, type Battle, type Boost, type Stage } from './battle';
 import { AREAS, type Area } from './board';
 import { BOSS_BANDS, FIELD_BANDS } from './foes';
 import { bonusGold, heroBoost, manaRate, newCastle, type Castle } from './castle';
-import { rankMult } from './meta';
+import { MYTHIC_SIZE, rankMult, rarityOf, tierMult } from './meta';
 import { levelBoost } from './levels';
 import { starGold } from './stars';
 import { mixSeed, Rng } from './rng';
@@ -136,15 +136,15 @@ function add(run: Run, kind: string): Owned {
 export const heroOf = (run: Run, id: number) => run.roster.find((h) => h.id === id);
 export const benched = (run: Run) => run.roster.filter((h) => !run.squad.includes(h.id));
 
-/** Hp and attack multipliers of a grade, times the hero kind's rank (from its shards) and its level (from its XP). */
-export const gradeBoost = (grade: number, rank = 0, level = 1): Boost => {
-  const k = GRADE_MULT ** (grade - 1) * rankMult(rank);
+/** Hp and attack multipliers of a grade, times the hero kind's rank (from its shards), its level (from its XP) and its tier (`kind`; Common when unset); a Mythic is also drawn bigger. */
+export const gradeBoost = (grade: number, rank = 0, level = 1, kind?: string): Boost => {
+  const k = GRADE_MULT ** (grade - 1) * rankMult(rank) * (kind ? tierMult(kind) : 1);
   const lv = levelBoost(level);
-  return { hp: k * lv.hp, atk: k * lv.atk, grade };
+  return { hp: k * lv.hp, atk: k * lv.atk, grade, ...(kind && rarityOf(kind) === 5 ? { size: MYTHIC_SIZE } : {}) };
 };
 /** A roster hero's whole boost: grade and rank, its gear, its training bumps. */
 export function boostOf(h: Owned, rank = 0, level = 1): Boost {
-  const base = gradeBoost(h.grade, rank, level);
+  const base = gradeBoost(h.grade, rank, level, h.kind);
   const g = gearBoost(h.gear);
   return { ...base, hp: base.hp! * g.hp! + (h.bump?.hp ?? 0), atk: base.atk! * g.atk! + (h.bump?.atk ?? 0) };
 }

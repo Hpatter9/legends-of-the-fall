@@ -8,7 +8,7 @@ import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS
 import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
 import { boostOf, finish, heroOf, isBossStage, loadRun, newRun, saveRun, setSquad, SQUAD, startStage, summon, summonCost, type Run } from './sim/run';
 import { formOf, UNITS } from './sim/units';
-import { earn, loadMeta, rankOf, recordStars, saveMeta, type Meta } from './sim/meta';
+import { earn, loadMeta, rankOf, rarityOf, recordStars, saveMeta, type Meta } from './sim/meta';
 import { fightXp, gainXp, levelGain, levelOfKind, progressOf, xpOf, type LevelUp } from './sim/levels';
 import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
 import { Gacha } from './gacha';
@@ -557,7 +557,7 @@ class Game {
       this.evolved = new Set(this.run.roster.filter((h) => h.grade > 1 && !before.has(h.id)).map((h) => h.id));
       this.refresh();
       const card = got ? $('bench').querySelector<HTMLElement>(`[data-id="${got.id}"]`) : null;
-      if (card) summonBurst(card);
+      if (card) summonBurst(card, got ? rarityOf(got.kind) : 1);
     });
     $('homeBtn').addEventListener('click', () => this.home.open());
     $('next').addEventListener('click', () => {
@@ -818,7 +818,7 @@ class Game {
       const def = UNITS[h.kind];
       const id = String(h.id);
       const card = document.createElement('div');
-      card.className = `card g${h.grade}${this.evolved.has(h.id) ? ' evolve' : ''}`;
+      card.className = `card g${h.grade} r${rarityOf(h.kind)}${this.evolved.has(h.id) ? ' evolve' : ''}`;
       card.dataset.id = id;
       const stars = document.createElement('em');
       stars.textContent = '★'.repeat(h.grade);

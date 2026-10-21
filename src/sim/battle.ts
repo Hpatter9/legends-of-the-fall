@@ -45,6 +45,8 @@ export interface Unit {
   hurtAt?: number;
   /** Skill charge, 0 to `CHARGE_MAX` (heroes only). */
   charge: number;
+  /** A Mythic's ultimate charge, 0 to `CHARGE_MAX` (none for the rest). */
+  charge2?: number;
   /** The skill being cast, from when and for how long. */
   cast?: { at: number; ms: number; anim: 'attack' | 'attack2' | 'defend' };
   /** Takes half damage until then (Shield Wall). */

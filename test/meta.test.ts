@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DUPLICATE_SHARDS, earn, loadMeta, newMeta, pullCost, pullOnce, PITY, PULL10_COST, PULL_COST, rarityOf, recruit, runCrowns, saveMeta, stageCrowns } from '../src/sim/meta';
+import { DUPLICATE_SHARDS, earn, loadMeta, newMeta, pullCost, pullOnce, PITY, PULL10_COST, PULL_COST, RATES, recruit, runCrowns, saveMeta, stageCrowns } from '../src/sim/meta';
 import { newRun, summon } from '../src/sim/run';
-import { ALL_HEROES, HEROES } from '../src/sim/units';
+import { HEROES } from '../src/sim/units';
 
 test('the starting five are unlocked, and crowns are earned', () => {
   const m = newMeta(1);
@@ -39,31 +39,26 @@ test('pulls are deterministic', () => {
   assert.deepEqual(ka, kb);
 });
 
-test('rates over many pulls follow the table, and the pity counter caps the dry spell', () => {
+test('rates over many pulls follow the table, and the pity counters cap the dry spells', () => {
   const m = newMeta(5);
-  const seen = { 1: 0, 2: 0, 3: 0 };
+  const seen = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
   let dry = 0;
   let longest = 0;
   const N = 20000;
   for (let i = 0; i < N; i++) {
     const p = pullOnce(m);
     seen[p.rarity]++;
-    dry = p.rarity === 3 ? 0 : dry + 1;
+    dry = p.rarity >= 4 ? 0 : dry + 1;
     longest = Math.max(longest, dry);
   }
-  if (new Set(ALL_HEROES.map(rarityOf)).size === 3) {
-    assert.ok(longest < PITY, `longest dry spell ${longest}`);
-    assert.ok(Math.abs(seen[1] / N - 0.7) < 0.05);
-    assert.ok(Math.abs(seen[2] / N - 0.25) < 0.05);
-    assert.ok(seen[3] / N > 0.04 && seen[3] / N < 0.09);
-  } else assert.equal(seen[1] + seen[2] + seen[3], N);
+  assert.ok(longest < PITY, `longest dry spell ${longest}`);
+  for (const r of [1, 2, 3, 4, 5] as const) assert.ok(Math.abs(seen[r] / N - RATES[r] / 100) < 0.05, `tier ${r}`);
 });
 
-test('pity forces an epic by the 30th pull when one exists', () => {
-  if (!ALL_HEROES.some((k) => rarityOf(k) === 3)) return;
+test('pity forces a legendary or better by the 30th pull', () => {
   const m = newMeta(3);
   m.dry = PITY - 1;
-  assert.equal(pullOnce(m).rarity, 3);
+  assert.ok(pullOnce(m).rarity >= 4);
   assert.equal(m.dry, 0);
 });
 

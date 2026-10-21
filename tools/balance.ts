@@ -14,11 +14,11 @@
 // numbers come out again on the same code.
 
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
-import { fight, place, playOut, startBattle, stepBattle, type Battle, type Boost, type Stage } from '../src/sim/battle';
+import { fight, place, playOut, startBattle, stepBattle, type Battle, type Stage } from '../src/sim/battle';
 import { FIELD_BANDS } from '../src/sim/foes';
 import { chooseOption, leaveEvent } from '../src/sim/events';
 import { fightXp, gainXp, levelOfKind } from '../src/sim/levels';
-import { newMeta, rankOf, type Meta } from '../src/sim/meta';
+import { newMeta, rankOf, rarityOf, RARITY_NAMES, type Meta } from '../src/sim/meta';
 import { boostOf, bandFor, finish, gradeBoost, isBossStage, newRun, type Owned, type Run, SQUAD, stageBoost, startStage, summon } from '../src/sim/run';
 import { ratingOf } from '../src/sim/stars';
 import { mixSeed, Rng } from '../src/sim/rng';
@@ -73,8 +73,8 @@ interface Played {
 function play(seed: number, band: string, foes: Stage, team: string[], grade = 1): Played {
   const b = startBattle(seed, band, foes);
   const spots = deploySpots(b, new Rng(mixSeed(seed, 0xba1a)));
-  const boost: Boost | undefined = grade > 1 ? gradeBoost(grade) : undefined;
-  team.forEach((id, i) => place(b, id, spots[i][0], spots[i][1], undefined, boost));
+  // (each hero carries its tier's multiplier, so the hero values spread by tier on purpose)
+  team.forEach((id, i) => place(b, id, spots[i][0], spots[i][1], undefined, gradeBoost(grade, 0, 1, id)));
   const out: Played = { won: false, dealt: new Map(), taken: new Map() };
   // (the events name fighters by id; a fighter can be added mid-fight, so look each one up as it comes)
   const unitOf = (id: number) => b.units.find((x) => x.id === id)!;
@@ -154,6 +154,11 @@ function heroValue(): void {
     );
   });
   console.log(`  average win rate with a hero: ${average.toFixed(1)}%  (value: with minus without; dealt and taken: hp per fight)`);
+  console.log('  by tier (mean win % with a hero of it):');
+  for (const r of [1, 2, 3, 4, 5] as const) {
+    const at = ALL_HEROES.map((h, i) => [h, withRates[i]] as const).filter(([h]) => rarityOf(h) === r);
+    if (at.length) console.log(`    ${pad(RARITY_NAMES[r], 10)} ${f1(at.reduce((n, [, w]) => n + w, 0) / at.length)}  (${at.length} heroes)`);
+  }
 }
 
 // ---- 2. Foe bands ----------------------------------------------------------------------------------------------------

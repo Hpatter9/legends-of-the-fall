@@ -6,7 +6,7 @@
 
 import { ALL_HEROES, UNITS } from './sim/units';
 import { BUILDING_IDS, BUILDINGS, maxLevel, nextCost, upgrade, type BuildingId } from './sim/castle';
-import { PITY, PULL_COST, PULL10_COST, rarityOf, saveMeta, starSummary, type Meta } from './sim/meta';
+import { MYTHIC_PITY, PITY, PULL_COST, PULL10_COST, rarityOf, saveMeta, starSummary, type Meta } from './sim/meta';
 import { dailyLine, towerLine, towerOpen } from './sim/modes';
 import { ACHIEVEMENTS } from './sim/achievements';
 import { AREAS } from './sim/board';
@@ -218,13 +218,13 @@ export class Home {
     const locked = ALL_HEROES.filter((k) => !m.unlocked.includes(k));
     const show = el('div', 'hmShow');
     for (const k of (locked.length ? locked : ALL_HEROES).slice(0, 4)) {
-      const c = portrait(UNITS[k].sheet, 72, rarityOf(k));
+      const c = portrait(UNITS[k].sheet, 72);
       c.className = `r${rarityOf(k)}`;
       if (locked.length) c.style.filter = 'brightness(0.25)';
       show.append(c);
     }
     panel.append(show);
-    panel.append(el('p', 'hint', `${m.unlocked.length} of ${ALL_HEROES.length} heroes recruited · an epic is guaranteed within ${PITY} pulls (${Math.max(0, PITY - m.dry)} to go)`));
+    panel.append(el('p', 'hint', `${m.unlocked.length} of ${ALL_HEROES.length} heroes recruited · a Legendary is guaranteed within ${PITY} pulls (${Math.max(0, PITY - m.dry)} to go), a Mythic within ${MYTHIC_PITY} (${Math.max(0, MYTHIC_PITY - m.dryMythic)})`));
     const sum = el('button', 'hmBig', 'Summon');
     sum.append(el('small', '', `1 pull ${PULL_COST} · 10 pulls ${PULL10_COST} crowns`));
     sum.addEventListener('click', () => this.hooks.onRecruit());

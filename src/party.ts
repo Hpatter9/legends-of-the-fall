@@ -118,7 +118,7 @@ export class Party {
         continue;
       }
       const b = el('button', `ptSlot r${rarityOf(kind)}`);
-      b.append(portrait(UNITS[kind].sheet, 48, rarityOf(kind)), el('small', '', UNITS[kind].name));
+      b.append(portrait(UNITS[kind].sheet, 48), el('small', '', UNITS[kind].name));
       b.addEventListener('click', () => (this.held ? (this.held = false) : this.toggle(kind)));
       this.holdTo(b, kind);
       row.append(b);
@@ -148,7 +148,7 @@ export class Party {
       const open = m.unlocked.includes(kind);
       const on = this.picked.includes(kind);
       const card = el('button', `hcard ptCard r${rarityOf(kind)}${open ? '' : ' locked'}${on ? ' picked' : ''}`);
-      card.append(portrait(def.sheet, 56, rarityOf(kind)));
+      card.append(portrait(def.sheet, 56));
       card.append(el('b', '', open ? def.name : '???'));
       if (open) {
         const p = progressOf(xpOf(m, kind));

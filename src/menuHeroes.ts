@@ -4,11 +4,10 @@
 import { ALL_HEROES, UNITS } from './sim/units';
 import { KITS } from './sim/abilities';
 import { traitsOf, TRAITS } from './sim/traits';
-import { MAX_RANK, RANK_SHARDS, rankMult, rankOf, rarityOf, type Meta } from './sim/meta';
+import { MAX_RANK, RANK_SHARDS, RARITY_NAMES as RARITY, rankMult, rankOf, rarityOf, tierMult, type Meta } from './sim/meta';
 import { levelBoost, progressOf, xpOf } from './sim/levels';
 import { portrait, sprite } from './render/sheets';
 
-const RARITY = ['', 'Common', 'Rare', 'Epic'];
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
@@ -41,12 +40,12 @@ export function drawHeroGrid(body: HTMLElement, meta: Meta, onPick: (kind: strin
     const def = UNITS[kind];
     const open = meta.unlocked.includes(kind);
     const card = el('button', `hcard r${rarityOf(kind)}${open ? '' : ' locked'}`);
-    card.append(portrait(def.sheet, 64, rarityOf(kind)));
+    card.append(portrait(def.sheet, 64));
     card.append(el('b', '', open ? def.name : '???'));
     if (open) {
       const x = xpBar(meta, kind);
       card.append(el('span', 'stars', stars(rankOf(meta, kind))), el('span', 'lv', `Lv ${x.level}`), x.bar);
-    } else card.append(el('span', 'lv', RARITY[rarityOf(kind)]));
+    } else card.append(el('span', 'rtag', RARITY[rarityOf(kind)]));
     card.addEventListener('click', () => onPick(kind));
     grid.append(card);
   }
@@ -74,6 +73,8 @@ export function drawHeroSheet(box: HTMLElement, meta: Meta, kind: string, close:
     const shards = meta.shards[kind] ?? 0;
     const next = rank < MAX_RANK ? `${shards} / ${RANK_SHARDS[rank]} shards to rank ${rank + 1}` : 'max rank';
     title.append(el('span', 'stars', stars(rank)), el('span', 'lv', `Level ${x.level} · ${x.text}`), x.bar, el('span', 'lv', next));
+    const tier = tierMult(kind);
+    if (tier > 1) title.append(el('em', 'rtag', `${RARITY[rarityOf(kind)]} tier: +${Math.round((tier - 1) * 100)}% hp and attack`));
     const marks = traitsOf(kind).map((t) => TRAITS[t].name).join(' · ');
     if (marks) title.append(el('em', '', marks));
   }
@@ -81,7 +82,7 @@ export function drawHeroSheet(box: HTMLElement, meta: Meta, kind: string, close:
   box.append(head);
   if (open) {
     const b = levelBoost(x.level);
-    const m = rankMult(rank);
+    const m = rankMult(rank) * tierMult(kind);
     const stat = el('div', 'hstats');
     for (const [name, v] of [['HP', Math.round(def.hp * b.hp * m)], ['Attack', Math.round(def.atk * b.atk * m)], ['Defence', def.def], ['Range', def.range]] as const) {
       const cell = el('div');
@@ -90,7 +91,7 @@ export function drawHeroSheet(box: HTMLElement, meta: Meta, kind: string, close:
     }
     box.append(stat);
     if (kit)
-      for (const [label, a] of [['Skill', kit.skill], ['Passive', kit.passive]] as const) {
+      for (const [label, a] of [['Skill', kit.skill], ...(kit.ultimate ? [['Ultimate', kit.ultimate] as const] : []), ['Passive', kit.passive]] as const) {
         const p = el('p');
         p.append(el('i', '', `${label} · ${a.name}: `), a.text);
         box.append(p);

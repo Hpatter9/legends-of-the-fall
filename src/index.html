@@ -222,7 +222,7 @@
   #gacha .pulls { display: flex; gap: 8px; }
   #gacha .pulls button { flex: 1; }
   #rates, #pity { font-size: 11px; color: var(--dim); text-align: center; }
-  #reveal { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; min-height: 96px; }
+  #reveal { flex: none; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; min-height: 96px; }
   .flip { position: relative; aspect-ratio: 3 / 4; perspective: 600px; }
   .flip .back, .flip .face { position: absolute; inset: 0; border-radius: 8px; border: 2px solid var(--edge); backface-visibility: hidden; transition: transform 0.5s; }
   .flip .back { background: repeating-linear-gradient(45deg, #5a3520, #5a3520 6px, #7a4a28 6px, #7a4a28 12px); }
@@ -231,16 +231,11 @@
   .flip .face em { font-style: normal; color: var(--gold); font-weight: bold; }
   .flip.up .back { transform: rotateY(-180deg); }
   .flip.up .face { transform: rotateY(0); }
-  .flip.r1 .face { border-color: #9a9a9a; }
-  .flip.r2 .face { border-color: #4a9cff; box-shadow: 0 0 10px #4a9cff; }
-  .flip.r3 .face { border-color: var(--gold); box-shadow: 0 0 16px 3px var(--gold); }
   .flip.new .face em { color: #7cf07c; }
-  #collection { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  #collection { flex: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
   #collection .hero { text-align: center; font-size: 10px; background: rgba(0, 0, 0, 0.35); border: 2px solid #5a3a22; border-radius: 8px; padding: 2px; }
   #collection .hero canvas { width: 100%; max-width: 56px; image-rendering: pixelated; }
   #collection .hero b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  #collection .hero.r2 { border-color: #4a9cff; }
-  #collection .hero.r3 { border-color: var(--gold); }
   #collection .hero.locked { filter: brightness(0.15) grayscale(1); }
   #collection .rank { display: block; color: var(--gold); }
   #collection .bar { display: block; height: 4px; margin: 2px 4px 4px; background: rgba(255, 255, 255, 0.15); border-radius: 2px; overflow: hidden; }
@@ -273,8 +268,6 @@
   .hmShow { display: flex; justify-content: center; gap: 8px; padding: 10px 0; background: radial-gradient(#6b4a8c, #1a0d2a); border-radius: 10px; }
   .hmShow canvas { width: 64px; height: 64px; border: 2px solid #5a3a22; border-radius: 8px; background: rgba(0, 0, 0, 0.35); animation: bob 2.6s ease-in-out infinite; }
   .hmShow canvas:nth-child(2n) { animation-delay: -1.2s; }
-  .hmShow canvas.r2 { border-color: #4a9cff; }
-  .hmShow canvas.r3 { border-color: var(--gold); }
   .hmBig { padding: 14px; font-size: 22px; letter-spacing: 1px; color: #3a1c06; background: linear-gradient(#ffd878, #e0912a); border: 3px solid #fff2c0; border-radius: 12px; text-shadow: 0 1px 0 #fff4; box-shadow: 0 4px 0 #8a4f12, 0 0 14px rgba(240, 180, 74, 0.5); }
   .hmBig small { display: block; font-size: 11px; font-weight: normal; letter-spacing: 0; }
   .hmBig:active, .hmBattle:active { transform: translateY(3px) scale(0.98); box-shadow: 0 1px 0 #8a4f12; }
@@ -330,14 +323,10 @@
   .hcard .stars, .hsheet .stars { color: var(--gold); font-size: 11px; letter-spacing: 1px; }
   .hcard .lv { font-size: 11px; color: #9fd0ff; }
   .hcard .xpbar { width: 100%; }
-  .hcard.r2 { border-color: #4a9cff; box-shadow: 0 0 8px rgba(74, 156, 255, 0.35); }
-  .hcard.r3 { border-color: var(--gold); box-shadow: 0 0 10px rgba(240, 180, 74, 0.5); background: linear-gradient(#5a3c1c, #2a170e); }
   .hcard.locked canvas { filter: brightness(0.15) grayscale(1); }
   .hcard.locked { opacity: 0.8; }
   .hcard:active { transform: scale(0.95); }
   .hsheet { width: min(400px, 100%); max-height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 14px; background: linear-gradient(#3a2418, #2a170e); border: 4px solid #6b4128; border-radius: 14px; box-shadow: 0 8px 28px rgba(0, 0, 0, 0.7); animation: pop 0.25s ease-out; }
-  .hsheet.r2 { border-color: #4a9cff; }
-  .hsheet.r3 { border-color: var(--gold); }
   .hhead { display: flex; gap: 12px; align-items: center; }
   .hhead > div:last-child { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   .hhead h3 { margin: 0; font: bold 20px var(--display); color: var(--gold); }
@@ -366,8 +355,6 @@
   #home:not([hidden]) ~ #version { z-index: 6; }
   @media (orientation: portrait) { #home:not([hidden]) ~ #version { top: calc(env(safe-area-inset-top) + 46px); } }
   .hrow, .brow { display: flex; gap: 8px; align-items: center; padding: 6px; background: rgba(0, 0, 0, 0.35); border: 2px solid #5a3a22; border-radius: 8px; }
-  .hrow.r2 { border-color: #4a9cff; }
-  .hrow.r3 { border-color: var(--gold); }
   .hrow canvas { width: 64px; height: 64px; flex: none; image-rendering: pixelated; }
   .hrow.locked canvas { filter: brightness(0.15) grayscale(1); }
   .hrow b, .brow b { display: block; }
@@ -485,8 +472,6 @@
   .ptSlot.empty { color: #6b4128; font-size: 26px; }
   .ptSlot canvas { width: 48px; height: 48px; image-rendering: pixelated; }
   .ptSlot small { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
-  .ptSlot.r2 { border: 2px solid #4a9cff; }
-  .ptSlot.r3 { border: 2px solid var(--gold); }
   #ptHint { margin: 0; font-size: 12px; color: var(--dim); text-align: center; }
   #ptHint.full { color: #ffb08a; }
   #ptTraits { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--dim); }
@@ -558,7 +543,6 @@
   /* cards: bench, spells, heroes, traits */
   .card, .spell, .hcard, .hrow, .brow, .setting, .sbCard, .sbSlot { background: linear-gradient(rgba(255, 190, 110, 0.06), rgba(0, 0, 0, 0.25)), #2a1a10; border: 2px solid #6b4128;
     box-shadow: inset 0 1px 0 rgba(255, 210, 140, 0.14), 0 2px 4px rgba(0, 0, 0, 0.4); }
-  .hcard.r2, .hrow.r2, .hsheet.r2 { border-color: #5aa8ff; } .hcard.r3, .hrow.r3, .hsheet.r3 { border-color: var(--gold); }
   .card.g2 { background: linear-gradient(#2a3040, rgba(0, 0, 0, 0.35)); } .card.g3 { background: linear-gradient(#4a3810, rgba(0, 0, 0, 0.35)); }
   .card.chosen { box-shadow: 0 0 0 1px var(--gold-hi), 0 0 14px var(--ember); }
   .card b, .spell b, .hcard b, .hrow b, .brow b, .setting b, .evcard .opt b { font-family: var(--body); font-weight: 700; }
@@ -615,6 +599,39 @@
   #home[hidden] #leaves { display: none; }
   @media (orientation: landscape) { .hmTab.hero.on { background: radial-gradient(#ffe48a, #e8962a 70%); } }
   @media (prefers-reduced-motion: reduce) { #leaves { display: none; } button.primary::after, .hmBattle::after { animation: none; } }
+
+  /* rarity: 1 Common grey, 2 Rare blue, 3 Epic purple, 4 Legendary gold, 5 Mythic crimson-to-gold. --rc is the tier's colour. */
+  :root { --r1: #9a9a9a; --r2: #4a9cff; --r3: #b06aff; --r4: #f0b44a; --r5: #ff3a4a; }
+  .r1 { --rc: var(--r1); } .r2 { --rc: var(--r2); } .r3 { --rc: var(--r3); } .r4 { --rc: var(--r4); } .r5 { --rc: var(--r5); }
+  .card.r2, .card.r3, .card.r4, .card.r5, .hcard.r2, .hcard.r3, .hcard.r4, .hcard.r5, .hsheet.r2, .hsheet.r3, .hsheet.r4, .hsheet.r5, .hrow.r2, .hrow.r3, .hrow.r4, .hrow.r5,
+  .ptSlot.r2, .ptSlot.r3, .ptSlot.r4, .ptSlot.r5, #collection .hero.r2, #collection .hero.r3, #collection .hero.r4, #collection .hero.r5, .hmShow canvas.r2, .hmShow canvas.r3, .hmShow canvas.r4, .hmShow canvas.r5 { border-style: solid; border-color: var(--rc); }
+  .flip.r1 .face { border-color: var(--r1); }
+  .flip.r2 .face, .flip.r3 .face, .flip.r4 .face, .flip.r5 .face { border-color: var(--rc); box-shadow: 0 0 10px var(--rc); }
+  .hcard.r3, .card.r3 { box-shadow: 0 0 8px rgba(176, 106, 255, 0.45); }
+  .hcard.r4, .card.r4, .hsheet.r4, .ptSlot.r4, .hmShow canvas.r4 { box-shadow: 0 0 10px rgba(240, 180, 74, 0.6), inset 0 0 8px rgba(255, 210, 90, 0.25); }
+  .hcard.r4, .card.r4 { background: linear-gradient(#5a3c1c, #2a170e); animation: gleam 2.8s ease-in-out infinite; }
+  .flip.r4 .face { box-shadow: 0 0 18px 4px var(--r4); }
+  .rtag { font-style: normal; font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--rc); }
+  /* a Mythic's frame is a slow crimson-and-gold shimmer */
+  .card.r5, .hcard.r5, .hsheet.r5, .hrow.r5, .ptSlot.r5, #collection .hero.r5, .flip.r5 .face, .hmShow canvas.r5 {
+    border: 3px solid transparent; background: linear-gradient(#3a1018, #1c0a0e) padding-box, linear-gradient(120deg, #ff2a4a, #ffd24a, #ff2a4a, #ffd24a) border-box; background-size: 100% 100%, 300% 300%;
+    animation: shimmer 3s linear infinite; box-shadow: 0 0 14px rgba(255, 58, 74, 0.7), 0 0 6px rgba(255, 210, 74, 0.6); }
+  .card.r5 em, .hcard.r5 .lv { color: #ffd24a; }
+  @keyframes shimmer { to { background-position: 0 0, 300% 300%; } }
+  @keyframes gleam { 50% { box-shadow: 0 0 16px rgba(255, 210, 90, 0.9), inset 0 0 10px rgba(255, 210, 90, 0.4); } }
+  /* the recruit reveal: a legendary or mythic pull gets beams behind the card, a longer flip and a flash over the screen */
+  .flip.r4, .flip.r5 { z-index: 1; }
+  .flip.r4.up, .flip.r5.up { transform: scale(1.12); transition: transform 0.4s; }
+  .flip .beams { position: absolute; left: 50%; top: 50%; width: 320%; aspect-ratio: 1; margin: -160% 0 0 -160%; z-index: -1; pointer-events: none; opacity: 0; border-radius: 50%;
+    background: repeating-conic-gradient(from 0deg, var(--rc) 0 8deg, transparent 8deg 24deg); -webkit-mask: radial-gradient(circle, #000 5%, transparent 68%); mask: radial-gradient(circle, #000 5%, transparent 68%); }
+  .flip.r4.up .beams, .flip.r5.up .beams { opacity: 0.75; animation: spin 6s linear infinite, beamIn 0.6s ease-out; }
+  .flip.r5.up .beams { background: repeating-conic-gradient(from 0deg, #ff3a4a 0 6deg, #ffd24a 6deg 12deg, transparent 12deg 24deg); animation: spin 4s linear infinite, beamIn 0.6s ease-out; }
+  .flip.r5 .back, .flip.r5 .face { transition-duration: 1.2s; }
+  .flip.r5.shake .back { animation: tremble 0.12s linear infinite; box-shadow: 0 0 18px var(--r5); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes beamIn { from { opacity: 0; transform: scale(0.2); } }
+  @keyframes tremble { 25% { transform: translate(-2px, 1px) rotate(-2deg); } 75% { transform: translate(2px, -1px) rotate(2deg); } }
+  @media (prefers-reduced-motion: reduce) { .card.r4, .hcard.r4, .card.r5, .hcard.r5, .hsheet.r5, .hrow.r5, .ptSlot.r5, #collection .hero.r5, .flip .beams, .flip.r5.shake .back, .hmShow canvas.r5 { animation: none !important; } }
 </style>
 </head>
 <body data-phase="deploy">

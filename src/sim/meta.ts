@@ -6,16 +6,24 @@
 import { newCastle, readCastle, spellBudget, type Castle } from './castle';
 import { newLoadout, readLoadout, type Loadout } from './spells';
 import { Rng } from './rng';
-import { ALL_HEROES, HEROES, UNITS } from './units';
+import { ALL_HEROES, HEROES, UNITS, type Rarity } from './units';
 import { MAX_STARS, starCrowns } from './stars';
 import { BOSS_BANDS } from './foes';
 
 export const PULL_COST = 100;
 export const PULL10_COST = 900;
-/** Chance of each rarity (1 common, 2 rare, 3 epic), in percent. */
-export const RATES: Readonly<Record<1 | 2 | 3, number>> = { 1: 70, 2: 25, 3: 5 };
-/** An epic is guaranteed by this pull without one. */
+/** The tiers' names, by rarity (index 0 is unused). */
+export const RARITY_NAMES: readonly string[] = ['', 'Common', 'Rare', 'Epic', 'Legendary', 'Mythic'];
+/** Chance of each rarity (1 Common to 5 Mythic), in percent. */
+export const RATES: Readonly<Record<Rarity, number>> = { 1: 50, 2: 28, 3: 14, 4: 6, 5: 2 };
+/** A Legendary or better is guaranteed by this pull without one. */
 export const PITY = 30;
+/** A Mythic is guaranteed by this pull without one. */
+export const MYTHIC_PITY = 90;
+/** Hp and attack a hero of each tier has over a Common one (index 0 is unused). */
+export const TIER_MULT: readonly number[] = [1, 1, 1.08, 1.16, 1.26, 1.4];
+/** A Mythic is drawn this much bigger on the board. */
+export const MYTHIC_SIZE = 1.12;
 /** Shards a repeat pull gives. */
 export const DUPLICATE_SHARDS = 1;
 /** Shards each rank needs in all: rank 1 at 1, rank 2 at 3, rank 3 at 6, rank 4 at 10. */
@@ -36,8 +44,10 @@ export interface Meta {
   party: string[];
   /** Pulls so far (the draw follows it). */
   pulls: number;
-  /** Pulls since the last epic. */
+  /** Pulls since the last Legendary or better. */
   dry: number;
+  /** Pulls since the last Mythic (saves from before the Mythics start at none). */
+  dryMythic: number;
   /** The castle's upgrades (see `castle.ts`). */
   castle: Castle;
   /** Shards per hero kind (missing is none). */
@@ -67,16 +77,18 @@ export interface DailyEntry {
 
 export interface Pull {
   kind: string;
-  rarity: 1 | 2 | 3;
+  rarity: Rarity;
   /** The kind was not unlocked before this pull. */
   isNew: boolean;
   /** Shards a duplicate gives (0 for a new kind). */
   shards: number;
 }
 
-export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [...HEROES], party: [...HEROES], pulls: 0, dry: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], achievements: [] });
+export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [...HEROES], party: [...HEROES], pulls: 0, dry: 0, dryMythic: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], achievements: [] });
 
-export const rarityOf = (kind: string): 1 | 2 | 3 => UNITS[kind]?.rarity ?? 1;
+export const rarityOf = (kind: string): Rarity => UNITS[kind]?.rarity ?? 1;
+/** Hp and attack multiplier of a hero kind's tier. */
+export const tierMult = (kind: string): number => TIER_MULT[rarityOf(kind)];
 /** The rank a hero kind has from its shards (0 to MAX_RANK). */
 export const rankOf = (m: Meta, kind: string): number => RANK_SHARDS.filter((need) => (m.shards[kind] ?? 0) >= need).length;
 /** Hp and attack multiplier a rank gives. */
@@ -152,8 +164,9 @@ function readStars(raw: unknown): Record<string, number> {
 export const pullCost = (count: 1 | 10) => (count === 10 ? PULL10_COST : PULL_COST);
 
 /** The hero kinds of a rarity; when none exist, the nearest rarity below, then above. */
-function kindsOf(rarity: 1 | 2 | 3): readonly string[] {
-  const order = ([3, 2, 1] as const).filter((x) => x <= rarity).concat(([1, 2, 3] as const).filter((x) => x > rarity));
+function kindsOf(rarity: Rarity): readonly string[] {
+  const all: Rarity[] = [1, 2, 3, 4, 5];
+  const order = all.filter((x) => x <= rarity).reverse().concat(all.filter((x) => x > rarity));
   for (const r of order) {
     const list = ALL_HEROES.filter((k) => rarityOf(k) === r);
     if (list.length) return list;
@@ -161,16 +174,25 @@ function kindsOf(rarity: 1 | 2 | 3): readonly string[] {
   return ALL_HEROES;
 }
 
-/** One pull (no payment): rolls the rarity (an epic when the pity is reached), then a kind of it, and unlocks it. */
+/** One pull (no payment): rolls the rarity (a Legendary or better when the pity is reached, a Mythic at the Mythic pity), then a kind of it, and unlocks it. */
 export function pullOnce(m: Meta): Pull {
   const rng = Rng.from(m.seed, SALT, m.pulls);
   const roll = rng.next() * 100;
-  let rarity: 1 | 2 | 3 = roll < RATES[3] ? 3 : roll < RATES[3] + RATES[2] ? 2 : 1;
-  if (m.dry + 1 >= PITY) rarity = 3;
+  let rarity: Rarity = 1;
+  for (let r = 5, edge = 0; r >= 1; r--) {
+    edge += RATES[r as Rarity];
+    if (roll < edge) {
+      rarity = r as Rarity;
+      break;
+    }
+  }
+  if (m.dryMythic + 1 >= MYTHIC_PITY) rarity = 5;
+  else if (m.dry + 1 >= PITY && rarity < 4) rarity = 4;
   const kind = rng.pick(kindsOf(rarity));
   rarity = rarityOf(kind);
   m.pulls++;
-  m.dry = rarity === 3 ? 0 : m.dry + 1;
+  m.dry = rarity >= 4 ? 0 : m.dry + 1;
+  m.dryMythic = rarity === 5 ? 0 : m.dryMythic + 1;
   const isNew = !m.unlocked.includes(kind);
   let shards = 0;
   if (isNew) m.unlocked.push(kind);
@@ -198,6 +220,8 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.party = readParty(m.party, m.unlocked);
       m.pulls = m.pulls | 0;
       m.dry = m.dry | 0;
+      // (saves from before the Mythics count their dry spell from the start)
+      m.dryMythic = Math.max(0, m.dryMythic | 0);
       m.castle = readCastle(m.castle);
       m.spellbook = readLoadout(m.spellbook, spellBudget(m.castle));
       // (saves from before shards have none)

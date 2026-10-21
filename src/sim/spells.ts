@@ -245,6 +245,7 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
       x.diedAt = undefined;
       x.busyUntil = b.t + 500;
       x.charge = 0;
+      x.charge2 = undefined;
       x.dot = undefined;
       ev.push({ kind: 'heal', to: x.id, amount: x.hp });
       fx(x);

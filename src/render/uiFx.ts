@@ -1,8 +1,29 @@
 // The page's own little effects, outside the board: a summoned card's burst of light, and the gold and crowns a result
 // pays out rising off the result screen. Plain DOM and the Web Animations API, so they cost nothing while idle.
 
-/** A card just summoned: it springs in, and a ring of light opens under it. */
-export function summonBurst(card: HTMLElement): void {
+/** The colour of each tier's light (index 0 unused). */
+export const RARITY_LIGHT = ['', '#c8c8c8', '#4a9cff', '#b06aff', '#f0b44a', '#ff3a4a'];
+
+/** A flash over the whole page in a tier's colour: a Legendary pull or summon is brief, a Mythic fills the screen with crimson and gold. */
+export function rarityFlash(rarity: number): void {
+  if (rarity < 4) return;
+  const mythic = rarity === 5;
+  const veil = document.createElement('div');
+  Object.assign(veil.style, {
+    position: 'fixed',
+    inset: '0',
+    pointerEvents: 'none',
+    zIndex: '30',
+    background: mythic ? 'radial-gradient(circle, #fff 0%, #ffd24a 25%, #ff3a4a 60%, rgba(60, 0, 10, 0.9) 100%)' : 'radial-gradient(circle, #fff 0%, #f0b44a 45%, rgba(90, 50, 0, 0.6) 100%)',
+  });
+  document.body.append(veil);
+  veil.animate([{ opacity: 0 }, { opacity: mythic ? 0.95 : 0.7, offset: 0.18 }, { opacity: 0 }], { duration: mythic ? 1300 : 700, easing: 'ease-out' }).onfinish = () => veil.remove();
+}
+
+/** A card just summoned: it springs in, and a ring of light opens under it (in the tier's colour; a Legendary or Mythic also flashes the page). */
+export function summonBurst(card: HTMLElement, rarity = 1): void {
+  const light = rarity > 2 ? RARITY_LIGHT[rarity] : '#ffe27a';
+  rarityFlash(rarity);
   card.animate(
     [{ transform: 'scale(0.3)', opacity: 0, filter: 'brightness(3)' }, { transform: 'scale(1.12)', opacity: 1, filter: 'none', offset: 0.6 }, { transform: 'scale(1)' }],
     { duration: 520, easing: 'ease-out' },
@@ -16,13 +37,13 @@ export function summonBurst(card: HTMLElement): void {
     width: '40px',
     height: '40px',
     borderRadius: '50%',
-    border: '3px solid #ffe27a',
-    boxShadow: '0 0 14px #ffe27a',
+    border: `3px solid ${light}`,
+    boxShadow: `0 0 ${rarity > 3 ? 28 : 14}px ${light}`,
     pointerEvents: 'none',
     zIndex: '5',
   });
   document.body.append(ring);
-  ring.animate([{ transform: 'scale(0.5)', opacity: 1 }, { transform: 'scale(3)', opacity: 0 }], { duration: 600, easing: 'ease-out' }).onfinish = () => ring.remove();
+  ring.animate([{ transform: 'scale(0.5)', opacity: 1 }, { transform: `scale(${rarity > 3 ? 7 : 3})`, opacity: 0 }], { duration: rarity === 5 ? 1100 : 600, easing: 'ease-out' }).onfinish = () => ring.remove();
 }
 
 /** A label that rises off `from` and fades; with `to`, it flies on to that element (the gold, to the top bar). */
