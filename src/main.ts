@@ -103,7 +103,8 @@ class Game {
     const fonts = Promise.all(['900 16px "Cinzel Decorative"', '700 16px "Alegreya Sans"', '16px "Press Start 2P"'].map((f) => document.fonts.load(f))).catch(() => {});
     await Promise.all([loadSheets(), loadBoardArt(), loadFx(), Promise.race([fonts, new Promise((ok) => setTimeout(ok, 2500))])]);
     this.world.sortableChildren = true;
-    this.boardView.root.addChild(this.fx.root);
+    this.boardView.keep.push(this.fx.dimLayer, this.fx.root);
+    this.boardView.root.addChild(...this.boardView.keep);
     this.world.addChild(this.boardView.root);
     this.ghost.anchor.set(0.5, 1);
     this.ghost.alpha = 0.85;

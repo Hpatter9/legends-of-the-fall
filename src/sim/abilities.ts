@@ -288,7 +288,10 @@ function flurry(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   me.facing = wayTo(me, f);
   const mult = blowMult(tileOf(b, me).h, tileOf(b, f).h, me.facing, f.facing);
   for (let i = 0; i < 3; i++) hurt(b, me, f, net(atkOf(me) * 0.8 * mult, f), i === 2, false, out, 'skill');
-  if (f.alive) f.busyUntil = Math.max(f.busyUntil, b.t + STUN_MS);
+  if (f.alive) {
+    f.busyUntil = Math.max(f.busyUntil, b.t + STUN_MS);
+    f.stunUntil = b.t + STUN_MS;
+  }
   return true;
 }
 
@@ -384,7 +387,10 @@ function gust(b: Battle, me: Unit, out: BattleEvent[], reach: number, mult: numb
     const way = wayTo(me, f);
     hurt(b, me, f, net(atkOf(me) * mult, f), false, false, out, 'skill');
     if (!f.alive) continue;
-    if (stunMs) f.busyUntil = Math.max(f.busyUntil, b.t + stunMs);
+    if (stunMs) {
+      f.busyUntil = Math.max(f.busyUntil, b.t + stunMs);
+      f.stunUntil = b.t + stunMs;
+    }
     if (kitOf(f)?.passive.steady) continue;
     const to = { u: f.u + DIR[way][0], v: f.v + DIR[way][1] };
     const t = tileAt(b.board, to.u, to.v);
@@ -467,6 +473,7 @@ function goreCharge(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   hurt(b, me, f, net(power, f), true, false, out, 'skill');
   if (!f.alive) return true;
   f.busyUntil = Math.max(f.busyUntil, b.t + STUN_MS);
+  f.stunUntil = b.t + STUN_MS;
   const to = { u: f.u + DIR[way][0], v: f.v + DIR[way][1] };
   const t = tileAt(b.board, to.u, to.v);
   if (kitOf(f)?.passive.steady || !t || !standable(t) || unitAt(b, to.u, to.v)) return true;
@@ -499,7 +506,10 @@ function gaze(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!f) return false;
   me.facing = wayTo(me, f);
   hurt(b, me, f, net(atkOf(me), f), false, false, out, 'skill');
-  if (f.alive) f.busyUntil = Math.max(f.busyUntil, b.t + PETRIFY_MS);
+  if (f.alive) {
+    f.busyUntil = Math.max(f.busyUntil, b.t + PETRIFY_MS);
+    f.stunUntil = b.t + PETRIFY_MS;
+  }
   out.push({ kind: 'gaze', by: me.id, to: f.id });
   return true;
 }
@@ -541,7 +551,10 @@ function stoneCurse(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   me.facing = wayTo(me, seen.sort((x, y) => atkOf(y) - atkOf(x) || x.id - y.id)[0]);
   for (const f of seen) {
     hurt(b, me, f, net(atkOf(me) * 1.2, f), false, false, out, 'skill');
-    if (f.alive) f.busyUntil = Math.max(f.busyUntil, b.t + STONE_MS);
+    if (f.alive) {
+      f.busyUntil = Math.max(f.busyUntil, b.t + STONE_MS);
+      f.stunUntil = b.t + STONE_MS;
+    }
     out.push({ kind: 'gaze', by: me.id, to: f.id });
   }
   return true;
@@ -1090,7 +1103,10 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
       if (!f) continue;
       tr.until = 0;
       hurt(b, b.units.find((x) => x.id === tr.by)!, f, net(tr.dmg, f), true, false, out, 'skill');
-      if (f.alive) f.busyUntil = Math.max(f.busyUntil, b.t + ROOT_MS);
+      if (f.alive) {
+        f.busyUntil = Math.max(f.busyUntil, b.t + ROOT_MS);
+        f.stunUntil = b.t + ROOT_MS;
+      }
     }
     b.traps = b.traps.filter((tr) => tr.until > b.t);
   }

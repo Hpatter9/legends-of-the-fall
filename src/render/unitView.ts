@@ -10,6 +10,9 @@ import { facesRightOf, framesOf, figureOf, type Anim } from './sheets';
 import { CHARGE_MAX, kitOf } from '../sim/abilities';
 import { at, depth, HH } from './iso';
 import { VFX } from './vfxArt';
+import { PACK } from './fxSheets';
+import { deathKind, maxStatuses, statusesOf, STATUS_LOOKS } from './fxRules';
+import { settings } from '../settings';
 
 /** The sheet rows beyond `Anim`: the skills' casts (a sheet without one plays its plain attack). */
 type Row = Anim | 'attack2' | 'defend';
@@ -58,6 +61,12 @@ function flatFilter(color: number): ColorMatrixFilter {
   return f;
 }
 
+/** A colour between two (k from 0 to 1). */
+function mixTint(a: number, b: number, k: number): number {
+  const ch = (shift: number) => Math.round(((a >> shift) & 255) * (1 - k) + ((b >> shift) & 255) * k);
+  return (ch(16) << 16) | (ch(8) << 8) | ch(0);
+}
+
 export class UnitSprite {
   readonly root = new Container();
   private body = new Sprite();
@@ -67,6 +76,12 @@ export class UnitSprite {
   private shield = new Sprite();
   private badge = new Sprite();
   private pillar = new Sprite();
+  /** The loops of the statuses on it (up to three, made as needed), and the stars that circle a stunned head. */
+  private overlays: Sprite[] = [];
+  private stars = new Graphics();
+  /** A knock from a blow, in px (it eases back to nothing). */
+  private kx = 0;
+  private ky = 0;
   private flash = 0;
   private glow = new Graphics();
   /** Four flat-coloured copies of the body, a pixel out each way: a rim behind the sprite. */
@@ -117,7 +132,7 @@ export class UnitSprite {
     this.pillar.anchor.set(0.5, 1);
     this.pillar.visible = false;
     this.pillar.blendMode = 'add';
-    this.root.addChild(this.shadow, this.glow, this.pillar, this.shield, this.rim, this.body, this.sparks, this.bar, this.badge);
+    this.root.addChild(this.shadow, this.glow, this.pillar, this.shield, this.rim, this.body, this.sparks, this.stars, this.bar, this.badge);
   }
 
   /** Draw it at the time `t` of the fight (ms), on the board. */
@@ -194,8 +209,19 @@ export class UnitSprite {
     // (a slowed fighter is tinted frosty blue; a flash or a dot's tint wins over it)
     const frosty = u.alive && u.slowUntil !== undefined && t < u.slowUntil;
     this.body.tint = this.flash > 0 ? 0xffb0b0 : u.alive && u.dot ? (u.dot.kind === 'burn' ? 0xffc890 : 0xff9a9a) : frosty ? 0xb8e4ff : 0xffffff;
+    // (the fallen go dark as they burn away, or grey as they turn to stone)
+    if (!u.alive) {
+      const kind = deathKind(def.name, u.side);
+      const k = Math.min(1, (t - (u.diedAt ?? 0)) / 700);
+      if (kind === 'burn') this.body.tint = mixTint(0xffffff, 0x2a1008, k);
+      else if (kind === 'stone') this.body.tint = mixTint(0xffffff, 0x8e9488, k);
+    }
     this.flash = Math.max(0, this.flash - 0.2);
-    this.root.position.set(x, y);
+    this.drawStatuses(u, t);
+    this.kx *= 0.8;
+    this.ky *= 0.8;
+    if (Math.abs(this.kx) + Math.abs(this.ky) < 0.1) this.kx = this.ky = 0;
+    this.root.position.set(x + this.kx, y + this.ky);
     this.root.zIndex = z;
     this.x = x;
     this.y = y;
@@ -206,6 +232,46 @@ export class UnitSprite {
     this.drawBar(u.alive, t);
     this.drawSparks(u.alive);
     this.drawPillar(u.alive);
+  }
+
+  /** A blow pushes it a little way along (dx, dy), and it eases back. */
+  nudge(dx: number, dy: number): void {
+    this.kx = dx;
+    this.ky = dy;
+  }
+
+  /** The loops that stay on it while a status lasts (frost bubbles, flames, a shield's bubble, wind, auras), and the stars of a stun. */
+  private drawStatuses(u: Unit, t: number): void {
+    const list = statusesOf(u, t);
+    const loops = list.filter((k): k is Exclude<typeof k, 'stun'> => k !== 'stun').slice(0, maxStatuses(settings().saver));
+    for (let i = 0; i < Math.max(loops.length, this.overlays.length); i++) {
+      if (i >= this.overlays.length) {
+        const sp = new Sprite();
+        sp.anchor.set(0.5);
+        sp.blendMode = 'add';
+        this.root.addChildAt(sp, this.root.getChildIndex(this.stars));
+        this.overlays.push(sp);
+      }
+      const sp = this.overlays[i];
+      const look = loops[i] ? STATUS_LOOKS[loops[i]] : undefined;
+      const frames = look ? PACK[look.sheet] : undefined;
+      sp.visible = !!frames?.length;
+      if (!look || !frames?.length) continue;
+      sp.texture = frames[Math.floor(t / look.frameMs) % frames.length];
+      sp.scale.set((this.tall * look.size) / 32);
+      sp.position.set(0, -this.tall * look.at);
+      sp.alpha = look.alpha;
+      sp.tint = look.tint ?? 0xffffff;
+    }
+    const g = this.stars;
+    g.clear();
+    g.visible = list[0] === 'stun';
+    if (!g.visible) return;
+    // (three little stars circling over the head)
+    for (let i = 0; i < 3; i++) {
+      const a = t / 260 + (i * Math.PI * 2) / 3;
+      g.star(Math.cos(a) * 9, -this.tall - 2 + Math.sin(a) * 3, 4, 3, 1.2).fill({ color: 0xffe27a, alpha: 0.9 });
+    }
   }
 
   /** The status icon: burning, then bleeding, charmed, hasted, slowed (one at a time, the first that holds). */
