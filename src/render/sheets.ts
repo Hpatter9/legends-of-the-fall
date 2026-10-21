@@ -47,6 +47,31 @@ import forestBoss1 from '../art/units/forest_boss_1.png';
 import forestBoss2 from '../art/units/forest_boss_2.png';
 import forestBoss3 from '../art/units/forest_boss_3.png';
 import boarKing from '../art/units/boar_king.png';
+import clsPaladin1 from '../art/units/cls_paladin_1.png';
+import clsPaladin2 from '../art/units/cls_paladin_2.png';
+import clsPaladin3 from '../art/units/cls_paladin_3.png';
+import clsCleric1 from '../art/units/cls_cleric_1.png';
+import clsCleric2 from '../art/units/cls_cleric_2.png';
+import clsCleric3 from '../art/units/cls_cleric_3.png';
+import clsDruid1 from '../art/units/cls_druid_1.png';
+import clsDruid2 from '../art/units/cls_druid_2.png';
+import clsDruid3 from '../art/units/cls_druid_3.png';
+import clsBarbarian1 from '../art/units/cls_barbarian_1.png';
+import clsBarbarian2 from '../art/units/cls_barbarian_2.png';
+import clsBarbarian3 from '../art/units/cls_barbarian_3.png';
+import clsRanger1 from '../art/units/cls_ranger_1.png';
+import clsRanger2 from '../art/units/cls_ranger_2.png';
+import clsRanger3 from '../art/units/cls_ranger_3.png';
+import clsWarlock1 from '../art/units/cls_warlock_1.png';
+import clsWarlock2 from '../art/units/cls_warlock_2.png';
+import clsWarlock3 from '../art/units/cls_warlock_3.png';
+import clsIllusionist1 from '../art/units/cls_illusionist_1.png';
+import clsIllusionist2 from '../art/units/cls_illusionist_2.png';
+import clsIllusionist3 from '../art/units/cls_illusionist_3.png';
+import clsGunslinger1 from '../art/units/cls_gunslinger_1.png';
+import clsGunslinger2 from '../art/units/cls_gunslinger_2.png';
+import clsGunslinger3 from '../art/units/cls_gunslinger_3.png';
+import clsTreant from '../art/units/cls_treant.png';
 import devilLeader from '../art/units/devil_leader.png';
 import shamanKing from '../art/units/shaman_king.png';
 
@@ -109,6 +134,31 @@ const URLS: Record<string, string> = {
   boar_king: boarKing,
   devil_leader: devilLeader,
   shaman_king: shamanKing,
+  cls_paladin_1: clsPaladin1,
+  cls_paladin_2: clsPaladin2,
+  cls_paladin_3: clsPaladin3,
+  cls_cleric_1: clsCleric1,
+  cls_cleric_2: clsCleric2,
+  cls_cleric_3: clsCleric3,
+  cls_druid_1: clsDruid1,
+  cls_druid_2: clsDruid2,
+  cls_druid_3: clsDruid3,
+  cls_barbarian_1: clsBarbarian1,
+  cls_barbarian_2: clsBarbarian2,
+  cls_barbarian_3: clsBarbarian3,
+  cls_ranger_1: clsRanger1,
+  cls_ranger_2: clsRanger2,
+  cls_ranger_3: clsRanger3,
+  cls_warlock_1: clsWarlock1,
+  cls_warlock_2: clsWarlock2,
+  cls_warlock_3: clsWarlock3,
+  cls_illusionist_1: clsIllusionist1,
+  cls_illusionist_2: clsIllusionist2,
+  cls_illusionist_3: clsIllusionist3,
+  cls_gunslinger_1: clsGunslinger1,
+  cls_gunslinger_2: clsGunslinger2,
+  cls_gunslinger_3: clsGunslinger3,
+  cls_treant: clsTreant,
 };
 
 const LAYOUT = layout as Record<string, Layout>;

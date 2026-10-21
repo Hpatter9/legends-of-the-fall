@@ -3,6 +3,7 @@
 // best stars for each stage are kept in the meta. Pure rules: no Pixi, no DOM; a rating reads only the finished fight.
 
 import type { Battle } from './battle';
+import { UNITS } from './units';
 
 export const MAX_STARS = 3;
 export const STAR_TIME_MS = 30_000;
@@ -29,7 +30,7 @@ export function ratingOf(b: Battle, boss: boolean): Rating {
   const limit = boss ? BOSS_STAR_TIME_MS : STAR_TIME_MS;
   const rules: StarRule[] = [
     { text: 'Victory', earned: won },
-    { text: 'No one fell', earned: won && b.units.every((u) => u.side !== 'hero' || u.alive) },
+    { text: 'No one fell', earned: won && b.units.every((u) => u.side !== 'hero' || u.alive || UNITS[u.def].summon) },
     { text: `Under ${limit / 1000} s`, earned: won && b.t < limit },
   ];
   return { stars: rules.filter((r) => r.earned).length, rules };
