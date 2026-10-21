@@ -1,5 +1,5 @@
 // Builds the lab, serves out/web and takes mid-fight screenshot sequences of the combat effects at two phone sizes:
-//   node tools/fxlab/shots.mjs [scenario,scenario | all | perf]      (DEBUG=1 prints the events seen)
+//   node tools/fxlab/shots.mjs [scenario,scenario | all | perf]      (DEBUG=1 prints the events seen; SIZES=upright|sideways; PORT)
 // Contact sheets go to docs/samples/combat-fx-<scenario>-<upright|sideways>.png (nine frames, three across; sheet.py).
 // The fight is stepped by hand (the lab's `advance`), so frames land on the moment asked for, not on the wall clock.
 import * as esbuild from 'esbuild';
@@ -17,7 +17,7 @@ const srv = createServer((q, r) => {
   if (!existsSync(p)) { r.writeHead(404); return r.end(); }
   r.writeHead(200, { 'content-type': types[p.split('.').pop()] ?? 'application/octet-stream' });
   r.end(readFileSync(p));
-}).listen(8126);
+}).listen(Number(process.env.PORT ?? 8126));
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const wait = (page, ms) => page.waitForTimeout(ms);
 
@@ -72,14 +72,15 @@ async function open(w, h) {
   const page = await ctx.newPage();
   page.on('pageerror', (e) => console.log('PAGE ERROR', e.message.split('\n')[0]));
   page.on('console', (m) => { if (m.type() === 'error') console.log('CONSOLE', m.text().slice(0, 200)); });
-  await page.goto('http://localhost:8126/?seed=7');
+  await page.goto('http://localhost:' + (process.env.PORT ?? 8126) + '/?seed=7');
   await page.waitForFunction(() => window.__game, null, { timeout: 30000 });
   await page.addScriptTag({ path: 'out/lab.js' });
   await wait(page, 800);
   return { ctx, page };
 }
 
-for (const [tag, w, h] of arg === 'perf' ? [] : [['upright', 393, 852], ['sideways', 852, 393]]) {
+const SIZES = { upright: ['upright', 393, 852], sideways: ['sideways', 852, 393] };
+for (const [tag, w, h] of arg === 'perf' ? [] : (process.env.SIZES ?? 'upright,sideways').split(',').map((k) => SIZES[k])) {
   for (const name of only) {
     const sc = SCENARIOS[name];
     if (!sc) { console.log('no scenario', name); continue; }
@@ -98,6 +99,7 @@ for (const [tag, w, h] of arg === 'perf' ? [] : [['upright', 393, 852], ['sidewa
         for (let k = 0; k < 600 && !found; k++) found = (await adv(100)).some((e) => e[1] === kind && (!detail || e[2] === detail));
         if (!found) console.log('  event never came:', name, sc.until);
       }
+      await page.evaluate(() => window.__lab.pin());
       const shots = [];
       for (let i = 0; i < 9; i++) {
         if (i < casts.length) await page.evaluate((id) => { const [u, v] = window.__lab.foeTile(); window.__lab.cast(id, u, v); }, casts[i]);

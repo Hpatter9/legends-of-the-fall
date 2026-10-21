@@ -310,6 +310,8 @@ class Game {
         const events = stepBattle(b);
         tally(this.stats, events);
         this.fx.show(b, events);
+        // (a fighter a skill called up mid-fight has no sprite yet: make it, with its entrance)
+        if (b.units.length !== this.sprites.size) this.syncSprites();
         playEvents(events);
         if (events.some((e) => e.kind === 'hit')) this.refreshBench();
         if (b.phase !== 'fight') this.refresh();
@@ -358,6 +360,7 @@ class Game {
         this.boardView.root.addChild(s.root);
         // (a hero set down on a tile puffs its dust)
         if (u.side === 'hero' && this.b.phase === 'deploy') this.fx.landing(this.b, u.u, u.v);
+        else if (this.b.phase === 'fight') this.fx.summoned(this.b, u);
       }
   }
 

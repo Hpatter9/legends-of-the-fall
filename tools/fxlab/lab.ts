@@ -11,6 +11,8 @@ import { standable, tileAt } from '../../src/sim/board';
 const game = () => (window as any).__game;
 /** Where the latest event the lab cares about happened (world px), so the camera can look at it. */
 let focus: { x: number; y: number } | null = null;
+/** Once pinned, the camera stays where the first event of interest put it. */
+let pinned = false;
 
 interface Setup {
   heroes: string[];
@@ -45,6 +47,7 @@ const lab = {
           u.charge2 = CHARGE_MAX;
         }
     focus = null;
+    pinned = false;
     g.b = b;
     g.intro = null;
     g.fx.clear();
@@ -97,12 +100,17 @@ const lab = {
         seen.push([g.b.t, e.kind, (e as any).name ?? (e as any).shot ?? (e as any).id ?? '']);
         const a = g.sprites.get((e as any).by ?? (e as any).from);
         const c = g.sprites.get((e as any).to);
+        if (pinned) continue;
         if (a && c && ['shot', 'swing', 'arc'].includes(e.kind)) focus = { x: (a.x + c.x) / 2, y: (a.y + c.y) / 2 - 20 };
         else if (a && e.kind === 'skill') focus = { x: a.x, y: a.y - 20 };
       }
       for (let i = 0; i < 4; i++) g.fx.step(TICK_MS / 4);
     }
     return seen;
+  },
+  /** Keep the camera on the latest event's place from now on. */
+  pin(): void {
+    pinned = true;
   },
   speed(x: number): void {
     game().speed = x;

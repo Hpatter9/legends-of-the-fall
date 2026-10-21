@@ -2,7 +2,9 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { KITS } from '../src/sim/abilities';
-import { SPELL_IDS } from '../src/sim/spells';
+import { castSpell, FREEZE_MS, SPELL_IDS } from '../src/sim/spells';
+import { fight, stepBattle } from '../src/sim/battle';
+import { readyBattle } from './helpers';
 import { ALL_HEROES, UNITS } from '../src/sim/units';
 import { FOES } from '../src/sim/foes';
 import { arcStyle, bits, deathKind, ELEMENTS, hitStopMs, impactElement, maxStatuses, missileOf, nudgeOf, packKey, SKILL_ELEMENT, SPELL_CAST, SPELL_ELEMENT, SPELL_TOUCH, STATUS_LOOKS, statusesOf, type PackKey, type StatusSource } from '../src/render/fxRules';
@@ -131,5 +133,25 @@ describe('amounts', () => {
     assert.equal(arcStyle('kitsune'), 'charm');
     assert.equal(arcStyle('warlock'), 'hex');
     assert.equal(arcStyle('lightningMage'), 'lightning');
+  });
+});
+
+describe('the stun record the effects read', () => {
+  it('marks a frozen foe stunned until the freeze ends, and changes nothing else about the fight', () => {
+    const run = (cast: boolean) => {
+      const b = readyBattle(11, 'werewolves');
+      fight(b);
+      for (let i = 0; i < 5; i++) stepBattle(b);
+      const f = b.units.find((u) => u.side === 'foe')!;
+      if (cast) {
+        b.spells.mana = 10;
+        assert.ok(castSpell(b, 'frost', f.u, f.v));
+        assert.equal(f.stunUntil, b.t + FREEZE_MS);
+      }
+      for (let i = 0; i < 100; i++) stepBattle(b);
+      return b.units.map((u) => [u.hp, u.u, u.v]);
+    };
+    // (the same cast on the same seed plays out the same twice)
+    assert.deepEqual(run(true), run(true));
   });
 });

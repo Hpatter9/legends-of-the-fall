@@ -79,6 +79,16 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   fire sparkle and flame; white dash; light hit; dark smoke; light pillar; gold level-up; light sparkle; white sparkle;
   gold star; and the burning, bleeding, hasted and shielded-icon status strips. Used by `src/render/vfxArt.ts`.
 
+## Combat effects (`src/art/fx/pack/`)
+
+- **The projectile, impact, wind-up, status and death effects**: 225 32px strips (up to eight frames each) of the **5000
+  Pixel Effects** pack by blueberry (https://blueberry-assets.itch.io), packed side by side into one picture
+  (`atlas.png`, with `atlas.json` naming each strip's place) by `tools/fx-atlas.py` from the private assets repository's
+  `pixel-effects/sprites/<effect>/sheet-32.png`; the frames are unchanged. Fire, ice, lightning, light, dark, forest,
+  poison, earth, wind and blood each have orb, hit, explosion, slash, circle, rune, shield, status, gather, nova, cross,
+  puff, smoke, sparkle, aura, vortex, pillar, strike, spikes, wave and flame strips; star, water and moon have orb, hit,
+  explosion, slash and sparkle. Used by `src/render/fxSheets.ts`.
+
 - **Fonts** (`out/web/fonts/`, copied by `build.mjs` from the `@fontsource` npm packages, all under the SIL Open Font
   Licence 1.1): **Cinzel Decorative** (Natanael Gama; titles, banners and big buttons), **Alegreya Sans** (Juan Pablo
   del Peral, Huerta Tipográfica; body text) and **Press Start 2P** (CodeMan38; counters and damage numbers).

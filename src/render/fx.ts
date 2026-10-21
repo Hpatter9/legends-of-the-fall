@@ -377,6 +377,16 @@ export class Fx {
     this.particles.spawn({ frames, x, y, scale, life: 380, vy: -0.02, grow: 0.0008, alpha: 0.9 });
   }
 
+  /** A fighter is called up mid-fight (a treant, imps, a decoy): a circle and a pillar of its element under it, a nova and motes. */
+  summoned(b: Battle, u: Unit): void {
+    const [x, y] = this.tilePos(b, u.u, u.v);
+    const el = u.def === 'treant' ? 'forest' : u.def === 'decoy' ? 'dark' : 'fire';
+    play(this.particles, packKey(el, 'circle'), x, y - 2, { scale: 1.8, frameMs: 70 });
+    play(this.particles, packKey(el, 'pillar'), x, y - 14, { scale: 1.5, frameMs: 70 });
+    play(this.particles, packKey(el, 'nova'), x, y - 12, { scale: 1.6, frameMs: 60 });
+    this.puffAt(x, y, 'white', 1.1);
+  }
+
   /** A hero is set down on a tile: its puff of dust. */
   landing(b: Battle, u: number, v: number): void {
     const [x, y] = this.tilePos(b, u, v);
