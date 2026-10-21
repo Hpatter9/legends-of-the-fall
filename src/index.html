@@ -241,6 +241,8 @@
   #homeNote[hidden] { display: none; }
   #homeMenu { display: grid; gap: 8px; padding: 12px; background: var(--wood); border: 2px solid var(--edge); border-radius: 10px; }
   #homeMenu button { font-size: 17px; padding: 13px 14px; }
+  #homeMenu button.wide { font-size: 14px; padding: 10px 14px; }
+  #homeMenu button:disabled { opacity: 0.55; }
   #homeMenu button[hidden], #homeMenu[hidden], #homePage[hidden] { display: none; }
   #homePage { display: flex; flex-direction: column; gap: 8px; max-height: calc(100vh - 110px); padding: 10px; background: var(--wood); border: 2px solid var(--edge); border-radius: 10px; }
   #homePage header { display: flex; align-items: center; gap: 10px; }
@@ -262,6 +264,9 @@
   .brow > div { flex: 1; }
   .brow .pips { color: var(--gold); letter-spacing: 2px; }
   .brow button { flex: none; min-width: 92px; }
+  .ach.done { border-color: var(--gold); }
+  .toast { position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 12px); z-index: 9; transform: translate(-50%, -140%); transition: transform 0.35s ease; max-width: calc(100vw - 28px); padding: 9px 14px; background: var(--wood); border: 2px solid var(--gold); border-radius: 8px; color: var(--gold); font-size: 14px; font-weight: bold; text-align: center; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6); pointer-events: none; }
+  .toast.show { transform: translate(-50%, 0); }
   @media (orientation: landscape) {
     #home { justify-content: flex-start; }
     #home h1 { font-size: 24px; }
@@ -365,9 +370,12 @@
   <div id="homeMenu">
     <button id="homeContinue" class="primary">Continue run</button>
     <button id="homeNew" class="primary">New run</button>
+    <button id="homeDaily" class="wide">Daily challenge</button>
+    <button id="homeTower" class="wide">Endless tower</button>
     <button id="homeRecruit">Recruit</button>
     <button id="homeHeroes">Heroes</button>
     <button id="homeCastle">Castle</button>
+    <button id="homeAchievements">Achievements</button>
   </div>
   <div id="homePage" hidden>
     <header><h2 id="homeTitle"></h2><button id="homeBack">Back</button></header>

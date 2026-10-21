@@ -14,6 +14,9 @@ import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
 import { Gacha } from './gacha';
 import { Events } from './events';
 import { Home } from './home';
+import { dailyInProgress, modeNote, settleRun, startDaily, towerRun } from './sim/modes';
+import { toastAchievements } from './achievementsView';
+import { clockSeed, todayKey } from './modes';
 import { tips, type Box } from './tips';
 import { CHARGE_MAX, kitOf } from './sim/abilities';
 import { keepAwake } from './render/awake';
@@ -100,9 +103,12 @@ class Game {
     this.meta = loadMeta((Date.now() % 100000) + 1);
     saveMeta(this.meta);
     this.run = (!seed && loadRun()) || newRun(seed || (Date.now() % 100000) + 1, this.meta.unlocked, this.meta.castle);
-    this.run.pool = [...this.meta.unlocked];
+    this.syncPool();
     this.gacha = new Gacha(this.meta, () => {
-      this.run.pool = [...this.meta.unlocked];
+      this.syncPool();
+      // (a pull can earn an achievement too)
+      toastAchievements(settleRun(this.meta, this.run, { won: false, stage: this.run.stage, stars: 0 }));
+      saveMeta(this.meta);
       saveRun(this.run);
       this.refresh();
       this.home.refresh();
@@ -112,17 +118,14 @@ class Game {
         const r = loadRun();
         return !!r && !r.over;
       },
-      onContinue: () => {
-        const r = loadRun();
-        if (r && !r.over) this.run = r;
-        this.run.pool = [...this.meta.unlocked];
-        this.placed.clear();
-        this.newBattle();
-        // (a run saved between an event's card and the next fight picks it up again)
-        if (this.run.event) this.events.openEvent(this.run, () => saveRun(this.run));
-      },
+      onContinue: () => this.resume(),
       onNew: () => this.newRunNow(),
       onRecruit: () => this.gacha.open(),
+      onDaily: () => {
+        if (dailyInProgress(loadRun(), todayKey())) return this.resume();
+        this.startRun(startDaily(this.meta, todayKey()));
+      },
+      onTower: () => this.startRun(towerRun(clockSeed(), this.meta)),
     });
     this.buildSpells();
     this.wire();
@@ -543,10 +546,32 @@ class Game {
 
   /** Begin a new run (with the castle as it stands) and its first fight. */
   private newRunNow(): void {
-    this.run = newRun((Date.now() % 100000) + 1, this.meta.unlocked, this.meta.castle);
+    this.startRun(newRun(clockSeed(), this.meta.unlocked, this.meta.castle));
+  }
+
+  /** Begin a run (any mode's) and its first fight. */
+  private startRun(run: Run): void {
+    this.run = run;
+    this.syncPool();
     this.placed.clear();
-    saveRun(this.run);
+    saveMeta(this.meta);
+    saveRun(run);
     this.newBattle();
+  }
+
+  /** Carry on with the saved run (a run saved between an event's card and the next fight picks its card up again). */
+  private resume(): void {
+    const r = loadRun();
+    if (r && !r.over) this.run = r;
+    this.syncPool();
+    this.placed.clear();
+    this.newBattle();
+    if (this.run.event) this.events.openEvent(this.run, () => saveRun(this.run));
+  }
+
+  /** The draw pool follows the unlocks, except a daily challenge, which keeps its starting five. */
+  private syncPool(): void {
+    if (this.run.mode?.kind !== 'daily') this.run.pool = [...this.meta.unlocked];
   }
 
   /** The result screen's stars: each pops in (CSS) with its reason and what it pays, and a chime; none for a loss. */
@@ -818,6 +843,7 @@ class Game {
       this.gain = run.gold - before;
       this.crownGain = earn(this.meta, stage, won, rating.stars);
       if (won) recordStars(this.meta, stage, rating.stars);
+      const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b });
       this.showStars(won ? rating : null);
       this.showStats();
       const gains = fightXp(b);
@@ -825,6 +851,7 @@ class Game {
       this.showXp(gains, from, gainXp(this.meta, gains));
       saveMeta(this.meta);
       saveRun(run);
+      toastAchievements(earned);
     }
     document.body.dataset.phase = b.phase;
     const stage = `Stage ${run.stage}${isBossStage(run.stage) ? ' · Boss' : ''}`;
@@ -845,7 +872,7 @@ class Game {
       $('summary').textContent =
         b.phase === 'won'
           ? `${left} of ${heroesPlaced(b)} heroes standing · +${this.gain} gold · +${this.crownGain} crowns · ${clock(b.t)}${run.found?.length ? ` · found: ${run.found.join(', ')}` : ''}`
-          : `The run ends at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} summons · +${this.crownGain} crowns`;
+          : `The run ends at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} summons · +${this.crownGain} crowns${modeNote(run)}`;
       $('next').textContent = b.phase === 'won' ? `Next stage (${run.stage})` : 'Home';
     }
     if (b.phase === 'deploy') tips.atDeploy(n, run.stage, () => this.deployBox());

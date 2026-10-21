@@ -8,6 +8,9 @@ import { KITS } from './sim/abilities';
 import { BUILDING_IDS, BUILDINGS, maxLevel, nextCost, upgrade, type BuildingId } from './sim/castle';
 import { traitsOf, TRAITS } from './sim/traits';
 import { rarityOf, saveMeta, starSummary, type Meta } from './sim/meta';
+import { dailyLine, towerLine, towerOpen } from './sim/modes';
+import { drawAchievements } from './achievementsView';
+import { todayKey } from './modes';
 import { progressOf, xpOf } from './sim/levels';
 import { portrait } from './render/sheets';
 import { resetTipsButton, tips } from './tips';
@@ -22,10 +25,12 @@ export interface HomeHooks {
   onContinue(): void;
   onNew(): void;
   onRecruit(): void;
+  onDaily(): void;
+  onTower(): void;
 }
 
 export class Home {
-  private view: 'menu' | 'heroes' | 'castle' = 'menu';
+  private view: 'menu' | 'heroes' | 'castle' | 'achievements' = 'menu';
   private note = '';
 
   constructor(
@@ -38,6 +43,9 @@ export class Home {
     $('homeRecruit').addEventListener('click', () => this.hooks.onRecruit());
     $('homeHeroes').addEventListener('click', () => this.show('heroes'));
     $('homeCastle').addEventListener('click', () => this.show('castle'));
+    $('homeDaily').addEventListener('click', () => this.go(this.hooks.onDaily));
+    $('homeTower').addEventListener('click', () => this.go(this.hooks.onTower));
+    $('homeAchievements').addEventListener('click', () => this.show('achievements'));
     $('homeBack').addEventListener('click', () => this.show('menu'));
   }
 
@@ -61,7 +69,7 @@ export class Home {
     then();
   }
 
-  private show(view: 'menu' | 'heroes' | 'castle'): void {
+  private show(view: 'menu' | 'heroes' | 'castle' | 'achievements'): void {
     this.view = view;
     this.refresh();
   }
@@ -78,12 +86,16 @@ export class Home {
     $('homeNote').textContent = menu ? this.note : '';
     $('homeNote').hidden = !menu || !this.note;
     ($('homeContinue') as HTMLButtonElement).hidden = !this.hooks.hasRun();
+    $('homeDaily').textContent = dailyLine(this.meta, todayKey());
+    ($('homeTower') as HTMLButtonElement).disabled = !towerOpen(this.meta);
+    $('homeTower').textContent = towerLine(this.meta);
     if (menu) return;
-    $('homeTitle').textContent = this.view === 'heroes' ? 'Heroes' : 'Castle';
+    $('homeTitle').textContent = this.view === 'heroes' ? 'Heroes' : this.view === 'castle' ? 'Castle' : 'Achievements';
     const body = $('homeBody');
     body.replaceChildren();
     if (this.view === 'heroes') this.drawHeroes(body);
-    else this.drawCastle(body);
+    else if (this.view === 'castle') this.drawCastle(body);
+    else drawAchievements(body, this.meta);
   }
 
   private drawHeroes(body: HTMLElement): void {

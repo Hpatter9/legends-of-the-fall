@@ -7,6 +7,7 @@ import { newCastle, readCastle, type Castle } from './castle';
 import { Rng } from './rng';
 import { ALL_HEROES, HEROES, UNITS } from './units';
 import { MAX_STARS, starCrowns } from './stars';
+import { BOSS_BANDS } from './foes';
 
 export const PULL_COST = 100;
 export const PULL10_COST = 900;
@@ -40,6 +41,21 @@ export interface Meta {
   stars: Record<string, number>;
   /** Lasting XP per hero kind (missing is none); its level is read from it (`levels.ts`). */
   xp: Record<string, number>;
+  /** The furthest stage fought in any run (the endless tower opens at 10). */
+  bestStage: number;
+  /** The most floors cleared in the endless tower. */
+  tower: number;
+  /** The daily challenge per date (yyyymmdd): the best score counted and the plays (the first counts). */
+  daily: Record<string, DailyEntry>;
+  /** The boss bands beaten (`foes.ts`, by band name). */
+  bosses: string[];
+  /** The achievements unlocked (`achievements.ts`, by id). */
+  achievements: string[];
+}
+
+export interface DailyEntry {
+  best: number;
+  plays: number;
 }
 
 export interface Pull {
@@ -51,7 +67,7 @@ export interface Pull {
   shards: number;
 }
 
-export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [...HEROES], pulls: 0, dry: 0, shards: {}, stars: {}, xp: {}, castle: newCastle() });
+export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [...HEROES], pulls: 0, dry: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), bestStage: 1, tower: 0, daily: {}, bosses: [], achievements: [] });
 
 export const rarityOf = (kind: string): 1 | 2 | 3 => UNITS[kind]?.rarity ?? 1;
 /** The rank a hero kind has from its shards (0 to MAX_RANK). */
@@ -90,6 +106,17 @@ export function starSummary(m: Meta): { stage: number; total: number } | null {
   const stages = Object.keys(m.stars).map(Number);
   if (!stages.length) return null;
   return { stage: Math.max(...stages), total: Object.values(m.stars).reduce((n, s) => n + s, 0) };
+}
+
+/** Saved daily records that are sane: a date (yyyymmdd) with a best score and a play count. Anything else is dropped. */
+function readDaily(raw: unknown): Record<string, DailyEntry> {
+  const out: Record<string, DailyEntry> = {};
+  if (raw && typeof raw === 'object')
+    for (const [k, e] of Object.entries(raw)) {
+      const d = e as Partial<DailyEntry> | null;
+      if (/^\d{8}$/.test(k) && d && typeof d.best === 'number' && typeof d.plays === 'number') out[k] = { best: Math.max(0, d.best | 0), plays: Math.max(0, d.plays | 0) };
+    }
+  return out;
 }
 
 /** Saved stars that are sane: a stage number and 1 to MAX_STARS. Anything else is dropped. */
@@ -155,6 +182,12 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.stars = readStars(m.stars);
       // (saves from before XP have none)
       m.xp = readXp(m.xp);
+      // (saves from before the modes and achievements have none)
+      m.bestStage = Math.max(1, m.bestStage | 0);
+      m.tower = Math.max(0, m.tower | 0);
+      m.daily = readDaily(m.daily);
+      m.bosses = Array.isArray(m.bosses) ? m.bosses.filter((b) => BOSS_BANDS.includes(b)) : [];
+      m.achievements = Array.isArray(m.achievements) ? m.achievements.filter((a) => typeof a === 'string') : [];
       return m;
     }
   } catch {

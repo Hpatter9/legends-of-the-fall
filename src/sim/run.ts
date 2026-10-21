@@ -78,7 +78,16 @@ export interface Run {
   buff?: Buff;
   /** Lines about what the last win dropped, for the result screen. */
   found?: string[];
+  /** Which mode the run is (`modes.ts`); an ordinary run has none. */
+  mode?: RunMode;
+  /** The land every stage is fought in (a daily challenge keeps one); by stage when unset. */
+  area?: Area;
+  /** Stars won across the run (the daily challenge's score counts them). */
+  stars?: number;
 }
+
+/** A run that is not an ordinary one: today's daily challenge (`practice` for a replay that does not count), or the endless tower. */
+export type RunMode = { kind: 'daily'; date: number; practice: boolean } | { kind: 'tower' };
 
 export function newRun(seed: number, pool: readonly string[] = HEROES, castle: Castle = newCastle()): Run {
   const run: Run = { seed, gold: START_GOLD + bonusGold(castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...pool], castle: { ...castle } };
@@ -186,7 +195,7 @@ export function startStage(run: Run): Battle {
   const { atk, hp, mana, first, revive, gold: _gold, ...team } = rl;
   return startBattle(mixSeed(run.seed, 0x57a6e, run.stage), bandFor(run.stage), {
     ...base,
-    area: areaFor(run.stage),
+    area: run.area ?? areaFor(run.stage),
     foes: { hp: base.foes!.hp! * foes, atk: base.foes!.atk! * foes },
     heroes: { hp: castle.hp! * (hp ?? 1) * (run.buff?.hp ?? 1), atk: castle.atk! * (atk ?? 1) * (run.buff?.atk ?? 1) },
     mana: manaRate(run.castle) * (mana ?? 1),
@@ -198,6 +207,7 @@ export function startStage(run: Run): Battle {
 export function finish(run: Run, won: boolean, stars = 0): void {
   run.best = Math.max(run.best, run.stage);
   run.found = [];
+  run.stars = (run.stars ?? 0) + stars;
   if (won) {
     const boss = isBossStage(run.stage);
     const bonus = (relicEffects(run.relics).gold ?? 0) + (run.buff?.gold ?? 0);
@@ -211,7 +221,8 @@ export function finish(run: Run, won: boolean, stars = 0): void {
     }
     if (run.buff?.gold) run.found.push(`${run.buff.gold} gold from the cursed path`);
     run.stage++;
-    run.event = eventAfter(run.stage - 1, boss) ? drawEvent(run, run.stage - 1) : undefined;
+    // (the endless tower has no events)
+    run.event = run.mode?.kind !== 'tower' && eventAfter(run.stage - 1, boss) ? drawEvent(run, run.stage - 1) : undefined;
   } else run.over = true;
   run.buff = undefined;
 }
