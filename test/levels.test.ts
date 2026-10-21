@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addUnit, hurt, place, playOut, fight, startBattle } from '../src/sim/battle';
-import { fightXp, gainXp, killXp, levelBoost, levelGain, levelOf, levelOfKind, MAX_LEVEL, progressOf, XP_TAKE_PART, xpFor, xpOf } from '../src/sim/levels';
+import { DIM_SHARE, fightXp, gainXp, killXp, levelBoost, levelGain, levelOf, levelOfKind, MAX_LEVEL, progressOf, XP_TAKE_PART, xpFor, xpOf } from '../src/sim/levels';
 import { loadMeta, newMeta } from '../src/sim/meta';
 import { gradeBoost } from '../src/sim/run';
 import { HEROES, UNITS } from '../src/sim/units';
@@ -97,8 +97,11 @@ test('level ups add to the kind\'s stats, and the gains are reported', () => {
   assert.equal(levelOfKind(m, 'knight'), 4);
   assert.deepEqual(levelGain(1, 4), { hp: 66, atk: 54 });
   assert.deepEqual(levelBoost(1), { hp: 1, atk: 1 });
-  assert.ok(Math.abs(levelBoost(MAX_LEVEL).hp - 5.18) < 1e-9);
-  assert.ok(Math.abs(levelBoost(MAX_LEVEL).atk - 4.42) < 1e-9);
+  // (levels past 12 count a quarter: level 20 is 11 full steps and 8 quarter steps, 13 in all)
+  assert.ok(Math.abs(levelBoost(MAX_LEVEL).hp - (1 + 0.22 * 13)) < 1e-9);
+  assert.ok(Math.abs(levelBoost(MAX_LEVEL).atk - (1 + 0.18 * 13)) < 1e-9);
+  assert.ok(Math.abs(levelBoost(12).hp - (1 + 0.22 * 11)) < 1e-9, 'level 12 is still a full step');
+  assert.ok(Math.abs(levelBoost(13).hp - levelBoost(12).hp - 0.22 * DIM_SHARE) < 1e-9, 'level 13 adds a quarter');
 });
 
 test('a level stacks with the grade and rank in the hero boost, and reaches the fight', () => {

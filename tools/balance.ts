@@ -200,14 +200,14 @@ function stageCurve(): void {
 }
 
 // ---- 4. Whole runs -------------------------------------------------------------------------------------------------
-// A greedy player on a fresh save plays five runs in a row, carrying the hero levels (and XP) from each to the next, as
-// the game does. Each stage: the first option of an event (leaving when it can't be taken), a summon whenever one is
+// A greedy player on a fresh save plays runs in a row, carrying the hero levels (and XP) from each to the next, as the
+// game does. Each stage: the first option of an event (leaving when it can't be taken), a summon whenever one is
 // affordable, the five strongest heroes fielded on the deploy rows, then the fight (the run's own stage, boost, castle and
-// event buffs, as `startStage` makes it). It buys no castle upgrades and recruits nothing, so a run's pool is the five
-// starting heroes. A run ends on a lost fight; `run.best` is the furthest stage fought.
+// event buffs, as `startStage` makes it). It buys no castle upgrades, recruits nothing (so a run's pool is the five starting
+// heroes) and equips no gear. A run ends on a lost fight; `run.best` is the furthest stage fought.
 
-const RUNS = 5;
-const MAX_STAGE = 30;
+const RUNS = arg('--runs', 12);
+const MAX_STAGE = 60;
 
 /** How strong a hero is for the squad: its base hp times attack, times its boosts (grade, rank, level, gear, bumps). */
 function strengthOf(meta: Meta, h: Owned): number {
@@ -237,6 +237,9 @@ function playRun(meta: Meta, seed: number): number {
   return run.best;
 }
 
+/** The bosses the table reports on: each boss stage's furthest-stage threshold (a save that won the boss fought beyond it). */
+const BOSS_STAGES = [5, 10, 15, 20, 25, 30];
+
 function wholeRuns(): void {
   // per run number: the furthest stage of each save, and the sum of each kind's level after it
   const best: number[][] = Array.from({ length: RUNS }, () => []);
@@ -249,29 +252,19 @@ function wholeRuns(): void {
     }
   }
   console.log(`\n4. WHOLE RUNS  (a greedy player on ${SAVES} fresh saves, ${RUNS} runs in a row, levels carried between them)\n`);
-  console.log(
-    [pad('run', 5), rpad('1-4 %', 8), rpad('lost 5 %', 10), rpad('6-9 %', 8), rpad('10+ %', 8), rpad('won 5 %', 9), rpad('mean', 7), ...HEROES.map((k) => rpad(UNITS[k].name.split(' ').pop()!, 10))].join(''),
-  );
+  console.log([pad('run', 5), rpad('median', 8), rpad('mean', 8), ...BOSS_STAGES.map((b) => rpad(`beat ${b}`, 9))].join('') + '   (% of runs that fought past the stage)');
   for (let r = 0; r < RUNS; r++) {
     const n = best[r].length;
-    const share = (test: (s: number) => boolean) => pct(best[r].filter(test).length, n);
+    const sorted = [...best[r]].sort((a, b) => a - b);
+    const median = sorted[Math.floor(n / 2)];
     const mean = best[r].reduce((a, b) => a + b, 0) / n;
-    const lv = HEROES.map((k) => rpad((levelSum[r][k] / n).toFixed(1), 10));
     console.log(
-      [
-        pad(`${r + 1}`, 5),
-        rpad(f1(share((s) => s <= 4)), 8),
-        rpad(f1(share((s) => s === 5)), 10),
-        rpad(f1(share((s) => s >= 6 && s <= 9)), 8),
-        rpad(f1(share((s) => s >= 10)), 8),
-        rpad(f1(share((s) => s >= 6)), 9),
-        rpad(mean.toFixed(2), 7),
-        ...lv,
-      ].join(''),
+      [pad(`${r + 1}`, 5), rpad(String(median), 8), rpad(mean.toFixed(1), 8), ...BOSS_STAGES.map((b) => rpad(f1(pct(best[r].filter((s) => s > b).length, n)), 9))].join(''),
     );
   }
-  console.log('  stage columns: the share of saves whose run fought that far (lost 5 = lost to the first boss); won 5 = 6-9 + 10+');
-  console.log('  the last columns: each starting hero kind\'s mean level after the run (all saves; a kind not summoned stays at its level)');
+  console.log(`\n  mean level of each starting kind after each run (all saves; a kind not summoned stays at its level)\n`);
+  console.log([pad('run', 5), ...HEROES.map((k) => rpad(UNITS[k].name.split(' ').pop()!, 10))].join(''));
+  for (let r = 0; r < RUNS; r++) console.log([pad(`${r + 1}`, 5), ...HEROES.map((k) => rpad((levelSum[r][k] / best[r].length).toFixed(1), 10))].join(''));
 }
 
 if (!RUNS_ONLY) {
