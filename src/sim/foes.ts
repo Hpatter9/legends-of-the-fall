@@ -13,7 +13,7 @@ const SATYR = { side: 'foe', hp: 320, atk: 25, def: 6, range: 1, moveMs: 600, at
 
 const ORC = { side: 'foe', hp: 280, atk: 26, def: 5, range: 1, moveMs: 600, atkMs: 1000, jump: 2, role: 'Cheap and in numbers' } as const;
 const IMP = { side: 'foe', hp: 200, atk: 22, def: 2, range: 1, moveMs: 380, atkMs: 700, jump: 3, role: 'Small and quick' } as const;
-const DEMON = { side: 'foe', hp: 380, atk: 32, def: 6, range: 1, moveMs: 650, atkMs: 1100, jump: 2, flies: true, role: 'Flies, hits hard' } as const;
+const DEMON = { side: 'foe', hp: 410, atk: 32, def: 6, range: 1, moveMs: 650, atkMs: 1100, jump: 2, flies: true, role: 'Flies, hits hard' } as const;
 const OGRE = { side: 'foe', hp: 480, atk: 30, def: 8, range: 1, moveMs: 1000, atkMs: 1500, jump: 2, role: 'Huge club, slow' } as const;
 
 // The bosses: much more hp, and each one's own look and skill (its kit, in `abilities.ts`). A forest boss has none.
@@ -83,7 +83,7 @@ export const FOE_BANDS: Record<string, string[]> = {
   forestBoss2: ['forestBoss2', 'wolfBlack', 'wolfRed', 'wolfWhite', 'wolfBlack'],
   forestBoss3: ['forestBoss3', 'gorgon1', 'gorgon2', 'gorgon3', 'gorgon1'],
   boarKing: ['boarKing', 'minotaur1', 'minotaur2', 'minotaur3', 'minotaur1'],
-  devilLeader: ['devilLeader', 'imp', 'demon', 'imp', 'demon'],
+  devilLeader: ['devilLeader', 'imp', 'demon', 'imp', 'imp'],
   shamanKing: ['shamanKing', 'skeleton', 'spearman', 'spearman', 'boneArcher'],
 };
 
