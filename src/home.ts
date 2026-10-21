@@ -13,6 +13,7 @@ import { drawAchievements } from './achievementsView';
 import { todayKey } from './modes';
 import { progressOf, xpOf } from './sim/levels';
 import { portrait } from './render/sheets';
+import { openSettings } from './settings';
 import { resetTipsButton, tips } from './tips';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -46,6 +47,7 @@ export class Home {
     $('homeDaily').addEventListener('click', () => this.go(this.hooks.onDaily));
     $('homeTower').addEventListener('click', () => this.go(this.hooks.onTower));
     $('homeAchievements').addEventListener('click', () => this.show('achievements'));
+    $('homeSettings').addEventListener('click', () => openSettings());
     $('homeBack').addEventListener('click', () => this.show('menu'));
   }
 

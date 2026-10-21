@@ -29,6 +29,7 @@ import { Fx, loadFx } from './render/fx';
 import { framesOf, loadSheets, portrait } from './render/sheets';
 import { at, FOOT, HH, TH, TW } from './render/iso';
 import { bindMute, play, playEvents, setup, startFight } from './render/sound';
+import { onSettings, openSettings, settings } from './settings';
 
 TextureSource.defaultOptions.scaleMode = 'nearest';
 
@@ -97,7 +98,7 @@ class Game {
     this.ghost.anchor.set(0.5, 1);
     this.ghost.alpha = 0.85;
     this.ghost.visible = false;
-    this.app.stage.addChild(this.world, this.ghost);
+    this.app.stage.addChild(this.world, this.ghost, this.fx.flashLayer);
     const query = new URLSearchParams(location.search);
     const seed = Number(query.get('seed'));
     this.meta = loadMeta((Date.now() % 100000) + 1);
@@ -133,6 +134,8 @@ class Game {
     // (the game opens on the castle, unless a seed is given in the address)
     if (!seed) this.home.open();
     this.app.ticker.add((tk) => this.frame(tk.deltaMS));
+    // (battery saver caps the frame rate at 30)
+    onSettings((s) => (this.app.ticker.maxFPS = s.saver ? 30 : 0));
     window.addEventListener('resize', () => this.layout());
     $('loading').remove();
     (window as unknown as { __game: Game }).__game = this;
@@ -154,6 +157,7 @@ class Game {
     this.acc = 0;
     this.chosen = null;
     this.spell = null;
+    this.setSpeed(settings().speed);
     this.fx.clear();
     this.boardView.build(this.b.board);
     setBackdrop(this.b.board.area);
@@ -342,6 +346,7 @@ class Game {
 
   /** Fit the board into the room the bench and the top bar leave: upright it is zoomed in and panned, sideways it fits. */
   private layout(): void {
+    this.fx.fitScreen(innerWidth, innerHeight);
     const top = $('top').getBoundingClientRect();
     const panel = $('panel').getBoundingClientRect();
     const sideways = innerWidth > innerHeight;
@@ -538,10 +543,14 @@ class Game {
       }),
     );
     $('bossCard').addEventListener('click', () => this.endIntro());
-    $('speed').addEventListener('click', () => {
-      this.speed = this.speed === 1 ? 2 : 1;
-      $('speed').textContent = `×${this.speed}`;
-    });
+    $('speed').addEventListener('click', () => this.setSpeed(this.speed === 1 ? 2 : 1));
+    $('gear').addEventListener('click', () => openSettings());
+  }
+
+  /** The fight's speed (×1 or ×2), shown on the top bar's button. */
+  private setSpeed(n: 1 | 2): void {
+    this.speed = n;
+    $('speed').textContent = `×${n}`;
   }
 
   /** Begin a new run (with the castle as it stands) and its first fight. */

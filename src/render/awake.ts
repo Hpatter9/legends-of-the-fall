@@ -1,5 +1,8 @@
 // Keeps the phone's screen on during a fight, using the Screen Wake Lock API where the browser has it. Browsers without
-// it (and any refusal) are quietly ignored: the fight plays on either way. Nothing here touches the battle.
+// it (and any refusal) are quietly ignored: the fight plays on either way. Nothing here touches the battle. The settings
+// page can turn it off (then a fight leaves the screen to the phone's own timeout).
+
+import { settings } from '../settings';
 
 /** The bit of the wake lock API this module uses (typed here so older TypeScript lib files don't matter). */
 interface WakeSentinel {
@@ -20,8 +23,8 @@ let asking = false;
 
 /** Turn the screen-on lock on (a fight starts) or off (the fight ends). */
 export function keepAwake(on: boolean): void {
-  wanted = on;
-  if (on) void request();
+  wanted = on && settings().awake;
+  if (wanted) void request();
   else void release();
 }
 
