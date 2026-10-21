@@ -9,6 +9,7 @@ import type { Texture } from 'pixi.js';
 import { facesRightOf, framesOf, figureOf, type Anim } from './sheets';
 import { CHARGE_MAX, kitOf } from '../sim/abilities';
 import { at, depth, HH } from './iso';
+import { VFX } from './vfxArt';
 
 /** The sheet rows beyond `Anim`: the skills' casts (a sheet without one plays its plain attack). */
 type Row = Anim | 'attack2' | 'defend';
@@ -57,7 +58,10 @@ export class UnitSprite {
   private body = new Sprite();
   private shadow = new Graphics();
   private bar = new Graphics();
-  private aura = new Graphics();
+  /** The shield's ring round a raised guard, the status icon over the head, and the light pillar of an evolve. */
+  private shield = new Sprite();
+  private badge = new Sprite();
+  private pillar = new Sprite();
   private flash = 0;
   private glow = new Graphics();
   /** Four flat-coloured copies of the body, a pixel out each way: a rim behind the sprite. */
@@ -95,9 +99,14 @@ export class UnitSprite {
     }
     this.shadow.ellipse(0, 0, 13, 5).fill({ color: 0x000000, alpha: 0.32 });
     this.body.anchor.set(0.5, 1);
-    this.aura.ellipse(0, -this.tall * 0.4, 17, this.tall * 0.62).stroke({ color: 0x8fc4ff, width: 2, alpha: 0.9 });
-    this.aura.visible = false;
-    this.root.addChild(this.shadow, this.glow, this.aura, this.rim, this.body, this.sparks, this.bar);
+    this.shield.anchor.set(0.5);
+    this.shield.visible = false;
+    this.badge.anchor.set(0.5);
+    this.badge.visible = false;
+    this.pillar.anchor.set(0.5, 1);
+    this.pillar.visible = false;
+    this.pillar.blendMode = 'add';
+    this.root.addChild(this.shadow, this.glow, this.pillar, this.shield, this.rim, this.body, this.sparks, this.bar, this.badge);
   }
 
   /** Draw it at the time `t` of the fight (ms), on the board. */
@@ -147,11 +156,24 @@ export class UnitSprite {
     }
     const list = rowFrames(this.sheet, row ?? anim);
     this.body.texture = row || anim === 'dead' || anim === 'attack' || anim === 'hurt' ? list[Math.min(list.length - 1, Math.max(0, frame))] : list[frame % list.length];
-    this.aura.visible = guarded;
-    this.aura.alpha = 0.6 + 0.4 * Math.sin(t / 120);
+    // a raised guard is wrapped in the earth shield's ring; a status shows as a small icon over the left shoulder
+    this.shield.visible = guarded;
+    if (guarded) {
+      const ring = VFX.earthShield;
+      this.shield.texture = ring[Math.floor(t / 90) % ring.length];
+      this.shield.scale.set(this.tall / 26);
+      this.shield.position.set(0, -this.tall * 0.45);
+    }
+    this.drawBadge(u, t);
     // (most sheets face right, the forest and boss ones left; the board's +u runs down to the right, +v down to the left)
     const dx = [1, -1, -1, 1][u.facing] * (facesRightOf(this.sheet) ? 1 : -1);
     this.body.scale.set(def.scale * dx, def.scale);
+    // a flyer hovers: its body bobs above a smaller shadow on the ground
+    const bob = def.flies && u.alive ? Math.sin(t / 260) * 2 - 12 : 0;
+    this.body.y = bob;
+    this.rim.y = bob;
+    this.shadow.scale.set(def.flies ? 0.6 : 1);
+    this.shadow.alpha = def.flies ? 0.5 : 1;
     for (const r of this.rim.children as Sprite[]) {
       r.texture = this.body.texture;
       r.scale.copyFrom(this.body.scale);
@@ -170,6 +192,34 @@ export class UnitSprite {
     this.root.visible = this.root.alpha > 0;
     this.drawBar(u.alive, t);
     this.drawSparks(u.alive);
+    this.drawPillar(u.alive);
+  }
+
+  /** The status icon: burning, then bleeding, charmed, hasted (one at a time, the first that holds). */
+  private drawBadge(u: Unit, t: number): void {
+    const key =
+      !u.alive ? null
+      : u.dot && t < u.dot.until ? (u.dot.kind === 'burn' ? 'burn' : 'bleed')
+      : u.charmUntil !== undefined && t < u.charmUntil ? 'charm'
+      : u.hasteUntil !== undefined && t < u.hasteUntil ? 'haste'
+      : null;
+    this.badge.visible = key !== null;
+    if (!key) return;
+    const frames = { burn: VFX.statusFire, bleed: VFX.statusBlood, charm: VFX.pinkHeart, haste: VFX.statusWind }[key];
+    this.badge.texture = frames[Math.floor(t / 90) % frames.length];
+    this.badge.scale.set(0.5);
+    this.badge.position.set(-BAR_W / 2 - 8, -this.tall - 6);
+  }
+
+  /** The evolve's light pillar: it rises over the fighter on the burst, then thins out. */
+  private drawPillar(alive: boolean): void {
+    const burst = this.burstAt >= 0 ? (Date.now() - this.burstAt) / BURST_MS : 2;
+    this.pillar.visible = alive && burst <= 1;
+    if (!this.pillar.visible) return;
+    const frames = VFX.pillarLight;
+    this.pillar.texture = frames[Math.min(frames.length - 1, Math.floor(burst * frames.length))];
+    this.pillar.scale.set(this.tall / 26, (this.tall / 26) * 2.4);
+    this.pillar.alpha = 1 - burst * 0.6;
   }
 
   /** The evolve flash and burst (called when a merge makes this hero). */

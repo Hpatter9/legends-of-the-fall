@@ -3,8 +3,8 @@
 // so a faster fight is faster here too.
 
 import { Container, Graphics, Rectangle, Sprite, Text, Texture } from 'pixi.js';
-import { tileAt } from '../sim/board';
-import { defOf, type Battle, type BattleEvent } from '../sim/battle';
+import { tileAt, type Board } from '../sim/board';
+import { defOf, type Battle, type BattleEvent, type Unit } from '../sim/battle';
 import { kitOf } from '../sim/abilities';
 import type { Shot } from '../sim/units';
 import { settings } from '../settings';
@@ -13,6 +13,9 @@ import { at, TH, TW } from './iso';
 import { fadeTrauma, popScale, shakeOf, traumaFor } from './juiceRules';
 import { BIG_FOE_HP, SKILL_FX, SPELL_FX, type Effect, type MagicKey } from './skillFx';
 import type { UnitSprite } from './unitView';
+import { Particles } from './particles';
+import { loadVfxArt, VFX } from './vfxArt';
+import { particleBudget, slashOf } from './vfxRules';
 import impactUrl from '../art/fx/impact.png';
 import fireUrl from '../art/fx/hit_fire.png';
 import blastUrl from '../art/fx/blast.png';
@@ -91,7 +94,11 @@ export async function loadFx(): Promise<void> {
   const keys = Object.keys(MAGIC) as MagicKey[];
   const strips = await Promise.all(keys.map((k) => strip(MAGIC[k], 32)));
   magic = Object.fromEntries(keys.map((k, i) => [k, strips[i]])) as Record<MagicKey, Strip>;
+  await loadVfxArt();
 }
+
+/** A small random offset (the renderer's own, not the sim's). */
+const jitter = (n: number) => (Math.random() * 2 - 1) * n;
 
 interface Item {
   /** Advance by `dt` ms; false when done. */
@@ -110,10 +117,21 @@ export class Fx {
   private flashLeft = 0;
   private flashMs = 1;
   private flashPeak = 0;
+  /** The small puffs, sparks and trails (pooled, capped). */
+  readonly particles = new Particles();
+  /** Ms of a slow-motion beat left (a boss falls); `timeScale` slows the fight while it lasts. */
+  private slowLeft = 0;
+  /** The steps already shown (each step is a new object), when each flyer last gusted, and the board's lava and water. */
+  private seenSteps = new WeakSet<object>();
+  private gusts = new Map<number, number>();
+  private lastBoard: Board | null = null;
+  private lava: [number, number][] = [];
+  private water: [number, number][] = [];
 
   constructor(private sprites: Map<number, UnitSprite>) {
     this.root.zIndex = 1e7;
     this.flashLayer.visible = false;
+    this.root.addChild(this.particles.root);
   }
 
   clear(): void {
@@ -121,6 +139,14 @@ export class Fx {
     this.items = [];
     this.trauma = 0;
     this.flashLeft = 0;
+    this.slowLeft = 0;
+    this.gusts.clear();
+    this.particles.clear();
+  }
+
+  /** How fast the fight runs right now: 1, or a slow-motion beat's share of it. */
+  timeScale(): number {
+    return this.slowLeft > 0 ? 0.35 : 1;
   }
 
   /** The flash covers a screen of this size (set when the page lays out). */
@@ -138,18 +164,29 @@ export class Fx {
 
   /** Show what a tick of the fight did. */
   show(b: Battle, events: BattleEvent[]): void {
+    const budget = particleBudget(settings().saver);
+    this.particles.density = budget.density;
+    this.particles.cap = budget.cap;
     for (const e of events) {
       if (e.kind === 'shot') this.shot(e.by, e.to, e.shot, e.ms);
       else if (e.kind === 'skill') this.skillName(e.by, e.name);
+      else if (e.kind === 'swing') this.slash(b, e.by, e.to);
       else if (e.kind === 'dodge') {
         const to = this.sprites.get(e.to);
-        if (to) this.label('Miss', to.x, to.y - to.tall - 10, 0xcfe8ff, 12);
+        if (to) {
+          this.label('Miss', to.x, to.y - to.tall - 10, 0xcfe8ff, 12);
+          // (a whoosh of wind across the one that dodged)
+          this.particles.spawn({ frames: VFX.dashWhite, x: to.x, y: to.y - to.tall * 0.5, scale: 1.1, frameMs: 40, alpha: 0.8, add: true });
+        }
       } else if (e.kind === 'dash' || e.kind === 'blink') this.streak(b, e);
       else if (e.kind === 'area') this.area(b, e);
       else if (e.kind === 'spell') this.spell(b, e);
       else if (e.kind === 'heal') {
         const to = this.sprites.get(e.to);
-        if (to && e.amount > 0) this.label(`+${e.amount}`, to.x, to.y - to.tall - 10, 0x7dff8a, 13);
+        if (to && e.amount > 0) {
+          this.label(`+${e.amount}`, to.x, to.y - to.tall - 10, 0x7dff8a, 13);
+          this.sparkles(to.x, to.y - to.tall * 0.4, 0x7dff8a);
+        }
       } else if (e.kind === 'arc') this.arc(e.from, e.to);
       else if (e.kind === 'zone') this.zone(b, e.u, e.v, e.ms);
       else if (e.kind === 'hit') {
@@ -171,13 +208,22 @@ export class Fx {
         }
         // (a skill's blow has its own sheet; a crit or a big kill adds a burst, a white flash and a harder shake)
         const skillFx = e.src === 'skill' ? SKILL_FX[kitOf(by)?.skill.name ?? '']?.hit : undefined;
+        // (the spark grows with the blow: a scratch is small, a half-health blow fills the struck)
+        const spark = Math.min(2, 0.6 + (e.dmg / target.maxHp) * 3);
+        // (a raised guard turns the blow aside: a bright block, and the word)
+        if (e.src === 'blow' && target.guardUntil !== undefined && target.guardUntil > b.t) {
+          this.label('Block', to.x, to.y - to.tall - 10, 0xbfe3ff, 12);
+          this.anim({ frames: VFX.hitLight }, to.x, to.y - to.tall * 0.5, 1.2, 50);
+        }
         if (skillFx) this.effect(skillFx, to.x, to.y - to.tall * 0.45);
         else {
           const fiery = defOf(by).shot === 'fire' || defOf(by).shot === 'bolt';
-          this.anim(fiery ? (e.splash ? fire : blast) : impact, to.x, to.y - to.tall * 0.45, fiery && !e.splash ? 0.8 : 0.9, 45);
+          this.anim(fiery ? (e.splash ? fire : blast) : impact, to.x, to.y - to.tall * 0.45, (fiery && !e.splash ? 0.8 : 0.9) * spark, 45);
         }
+        if (this.particles.rate(0.7)) this.puffAt(to.x, to.y - to.tall * 0.3, target.side === 'hero' ? 'white' : 'blood', 0.8 + spark * 0.2);
         this.number(e.dmg, to.x, to.y - to.tall - 10, e.heavy, target.side === 'hero');
         this.trauma = Math.min(1, this.trauma + traumaFor(e.dmg / target.maxHp, e.killed) * 0.5);
+        if (e.killed) this.death(target, to.x, to.y - to.tall * 0.3);
         if (e.heavy && e.src === 'blow') {
           // (a crit, or a blow from height: a gold burst and a flash)
           this.anim(magic.goldBurst, to.x, to.y - to.tall * 0.45, 1.3, 60);
@@ -186,10 +232,153 @@ export class Fx {
         }
         if (e.killed && target.side === 'foe' && target.maxHp >= BIG_FOE_HP) {
           this.anim(magic.bloodExplosion, to.x, to.y - to.tall * 0.45, 2.2, 60);
+          // (the boss's own beat: a fire burst on it, smoke, and a slow moment for the fall)
+          this.anim(magic.fireExplosion, to.x, to.y - to.tall * 0.45, 3.2, 70);
+          for (let i = 0; i < 3; i++) this.particles.spawn({ frames: VFX.smokeDark, x: to.x + jitter(18), y: to.y - to.tall * 0.4 + jitter(10), scale: 1.6, life: 900, vy: -0.03, grow: 0.0006, alpha: 0.8 });
+          this.slowLeft = 700;
           this.flash(0.5, 260);
           this.trauma = Math.min(1, this.trauma + 0.4);
         }
       }
+    }
+    this.scan(b);
+  }
+
+  /** A blow is swung: a slash of the attacker's weapon across the one it aims at. */
+  private slash(b: Battle, byId: number, toId: number): void {
+    const by = this.sprites.get(byId);
+    const to = this.sprites.get(toId);
+    const attacker = b.units.find((x) => x.id === byId);
+    if (!by || !to || !attacker) return;
+    this.particles.spawn({
+      frames: VFX[slashOf(defOf(attacker).name)],
+      x: to.x,
+      y: to.y - to.tall * 0.5,
+      scale: 1.3,
+      frameMs: 45,
+      rotation: Math.atan2(to.y - by.y, to.x - by.x),
+      add: true,
+    });
+  }
+
+  /** Green sparkles rising off a healed fighter (a few, a moment apart). */
+  private sparkles(x: number, y: number, tint: number): void {
+    for (let i = 0; i < 4; i++)
+      this.particles.spawn({ frames: VFX.sparkleLight, x: x + jitter(12), y: y + jitter(6), scale: 0.7, delay: i * 90, life: 650, vy: -0.05, tint, add: true });
+  }
+
+  /** A puff of dust, blood, fire, sand or ice at a point (a hit's, a landing's, a shot's). */
+  puffAt(x: number, y: number, kind: 'white' | 'blood' | 'fire' | 'sand' | 'ice', scale = 1): void {
+    const frames = { white: VFX.puffWhite, blood: VFX.puffBlood, fire: VFX.puffFire, sand: VFX.puffSand, ice: VFX.puffIce }[kind];
+    this.particles.spawn({ frames, x, y, scale, life: 380, vy: -0.02, grow: 0.0008, alpha: 0.9 });
+  }
+
+  /** A hero is set down on a tile: its puff of dust. */
+  landing(b: Battle, u: number, v: number): void {
+    const [x, y] = this.tilePos(b, u, v);
+    this.puffAt(x, y, 'white', 1.1);
+  }
+
+  /** A fighter falls: skeletons scatter bones, demons puff out smoke, the rest bleed a puff (the fallen then fade). */
+  private death(target: Unit, x: number, y: number): void {
+    const name = defOf(target).name;
+    if (/skeleton/i.test(name)) {
+      for (let i = 0; i < 5; i++)
+        this.particles.spawn({ frames: [bone], x: x + jitter(10), y: y + jitter(4), scale: 0.5, life: 900, vx: jitter(0.05), vy: -0.12, gravity: 0.0005, spin: jitter(0.012), tint: 0xf4ecd8 });
+      this.puffAt(x, y, 'white', 1);
+    } else if (/^(imp|demon)/i.test(name)) {
+      for (let i = 0; i < 3; i++) this.particles.spawn({ frames: VFX.smokeDark, x: x + jitter(12), y: y + jitter(8), scale: 1.2, life: 800, vy: -0.035, grow: 0.0006, alpha: 0.85 });
+    } else {
+      this.puffAt(x, y, 'blood', 1.2);
+    }
+  }
+
+  /** Walks, flyers' gusts, hasted fighters' trail and the terrain's bits; looked at once per tick. */
+  private scan(b: Battle): void {
+    if (b.board !== this.lastBoard) {
+      this.lastBoard = b.board;
+      this.lava = [];
+      this.water = [];
+      for (let u = 0; u < b.board.w; u++)
+        for (let v = 0; v < b.board.d; v++) {
+          const g = tileAt(b.board, u, v)?.ground;
+          if (g === 'lava') this.lava.push([u, v]);
+          else if (g === 'water') this.water.push([u, v]);
+        }
+    }
+    for (const u of b.units) {
+      const s = this.sprites.get(u.id);
+      if (!s || !u.alive) continue;
+      if (u.step && !this.seenSteps.has(u.step)) {
+        this.seenSteps.add(u.step);
+        this.walk(b, u, u.step);
+      }
+      if (u.hasteUntil !== undefined && u.hasteUntil > b.t && this.particles.rate(0.5))
+        this.particles.spawn({ frames: VFX.dustGold, x: s.x + jitter(8), y: s.y - 2, scale: 0.6, life: 380, vy: -0.02, alpha: 0.8 });
+      if (defOf(u).flies && b.t - (this.gusts.get(u.id) ?? -1e9) > 900) {
+        this.gusts.set(u.id, b.t);
+        this.gust(s);
+      }
+    }
+    this.terrain(b);
+  }
+
+  /** A step begins: dust at the foot, the ground it lands on has its own bit, and a drop of two steps lands with a puff. */
+  private walk(b: Battle, u: Unit, st: NonNullable<Unit['step']>): void {
+    const [x, y] = this.tilePos(b, u.u, u.v);
+    const tile = tileAt(b.board, u.u, u.v);
+    if (!tile) return;
+    if (!defOf(u).flies) {
+      if (this.particles.rate(0.8)) this.particles.spawn({ frames: VFX.dustWhite, x, y, scale: 0.55, life: 420, vy: -0.02, grow: 0.0008, alpha: 0.7 });
+      const ground = tile.ground;
+      if (ground === 'water') {
+        this.particles.spawn({ frames: VFX.rippleWater, x, y, scale: 0.9, life: 600, grow: 0.0006, alpha: 0.9 });
+        this.particles.spawn({ frames: VFX.splashWater, x, y, scale: 0.8, life: 400, vy: -0.03 });
+      } else if (ground === 'lava') {
+        this.puffAt(x, y, 'fire', 0.9);
+      } else if (ground === 'ice') {
+        this.puffAt(x, y, 'ice', 0.7);
+      } else if (b.board.area === 'snow' && this.particles.rate(0.5)) {
+        this.puffAt(x, y, 'ice', 0.6);
+      } else if (b.board.area === 'desert' && this.particles.rate(0.5)) {
+        this.puffAt(x, y, 'sand', 0.6);
+      }
+    }
+    if (st.h - tile.h >= 2) this.particles.spawn({ frames: VFX.puffWhite, x, y, scale: 1.1, delay: st.ms, life: 380, vy: -0.02, alpha: 0.9 });
+  }
+
+  /** A flyer's wings beat: a gust off each side of its body. */
+  private gust(s: UnitSprite): void {
+    for (const dx of [-9, 9])
+      this.particles.spawn({ frames: VFX.puffWind, x: s.x + dx, y: s.y - s.tall * 0.5, scale: 0.8, life: 420, vx: dx * 0.01, alpha: 0.7 });
+  }
+
+  /** The terrain's own bits, a few at a time: ripples on the shallows, embers and glow over the lava, dust drifting on the snow and sand. */
+  private terrain(b: Battle): void {
+    const p = this.particles;
+    const pick = (list: [number, number][]) => list[Math.floor(Math.random() * list.length)];
+    if (this.water.length && p.rate(0.2)) {
+      const [u, v] = pick(this.water);
+      const [x, y] = this.tilePos(b, u, v);
+      p.spawn({ frames: VFX.rippleWater, x, y, scale: 0.8, life: 650, grow: 0.0005, alpha: 0.7 });
+    }
+    if (this.lava.length && p.rate(0.5)) {
+      const [u, v] = pick(this.lava);
+      const [x, y] = this.tilePos(b, u, v);
+      p.spawn({ frames: VFX.sparkleFire, x: x + jitter(10), y: y + jitter(4), scale: 0.6, life: 700, vy: -0.035, add: true });
+    }
+    if (this.lava.length && p.rate(0.15)) {
+      const [u, v] = pick(this.lava);
+      const [x, y] = this.tilePos(b, u, v);
+      p.spawn({ frames: VFX.puffFire, x, y, scale: 1.1, life: 500, alpha: 0.4, add: true });
+    }
+    if ((b.board.area === 'snow' || b.board.area === 'desert') && p.rate(0.12)) {
+      const u = Math.floor(Math.random() * b.board.w);
+      const v = Math.floor(Math.random() * b.board.d);
+      if (!tileAt(b.board, u, v)) return;
+      const [x, y] = this.tilePos(b, u, v);
+      if (b.board.area === 'snow') p.spawn({ frames: VFX.dustWhite, x, y: y - 30, scale: 0.6, life: 1200, vx: 0.01, vy: 0.02, alpha: 0.7 });
+      else p.spawn({ frames: VFX.dustGold, x, y: y - 14, scale: 0.7, life: 900, vx: 0.025, alpha: 0.5 });
     }
   }
 
@@ -211,6 +400,8 @@ export class Fx {
     const s = settings().shake ? shakeOf(this.trauma) : 0;
     this.shakeX = s ? (Math.random() * 2 - 1) * s : 0;
     this.shakeY = s ? (Math.random() * 2 - 1) * s : 0;
+    this.particles.step(dt);
+    this.slowLeft = Math.max(0, this.slowLeft - dt);
     this.flashLeft = Math.max(0, this.flashLeft - dt);
     this.flashLayer.visible = this.flashLeft > 0;
     this.flashLayer.alpha = (this.flashPeak * this.flashLeft) / this.flashMs;
@@ -503,6 +694,8 @@ export class Fx {
       const arc = kind === 'fire' || kind === 'bolt' ? 8 : 18 + Math.hypot(x1 - x0, y1 - y0) * 0.15;
       return [x0 + (x1 - x0) * f, y0 + (y1 - y0) * f - Math.sin(Math.PI * f) * arc] as const;
     };
+    const fiery = kind === 'fire' || kind === 'bolt';
+    let trailAt = 0;
     this.items.push({
       view: sp,
       step: (dt) => {
@@ -511,9 +704,22 @@ export class Fx {
         const [x, y] = place(f);
         const [nx, ny] = place(Math.min(1, f + 0.05));
         sp.position.set(x, y);
-        if (kind === 'fire' || kind === 'bolt') sp.texture = fire.frames[Math.floor(t / 60) % fire.frames.length];
+        if (fiery) sp.texture = fire.frames[Math.floor(t / 60) % fire.frames.length];
         else sp.rotation = Math.atan2(ny - y, nx - x);
-        return f < 1;
+        // a trail: flame puffs behind fire and bolts, a faint glint behind an arrow
+        if (t - trailAt >= 45 && this.particles.rate(1)) {
+          trailAt = t;
+          this.particles.spawn(
+            fiery
+              ? { frames: VFX.puffFire, x: x + jitter(3), y: y + jitter(3), scale: 0.45, life: 260, vy: -0.02, alpha: 0.8, add: true, tint: kind === 'bolt' ? 0x66ccff : undefined }
+              : { frames: VFX.sparkleWhite, x, y, scale: 0.3, life: 200, alpha: 0.6, add: true },
+          );
+        }
+        if (f >= 1) {
+          this.puffAt(to.x, to.y - to.tall * 0.45, fiery ? 'fire' : 'white', fiery ? 0.9 : 0.6);
+          return false;
+        }
+        return true;
       },
     });
   }

@@ -25,6 +25,7 @@ import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
 import { countTraits, kindsOf, traitsOf, TRAITS } from './sim/traits';
 import { UnitSprite } from './render/unitView';
+import { flyUp, summonBurst } from './render/uiFx';
 import { Fx, loadFx } from './render/fx';
 import { framesOf, loadSheets, portrait } from './render/sheets';
 import { at, FOOT, HH, TH, TW } from './render/iso';
@@ -275,7 +276,8 @@ class Game {
     const b = this.b;
     tips.update();
     if (b.phase === 'fight') {
-      this.acc += Math.min(dt, 250) * this.speed;
+      // (a boss's fall slows the fight for a beat: `timeScale`)
+      this.acc += Math.min(dt, 250) * this.speed * this.fx.timeScale();
       while (this.acc >= TICK_MS && b.phase === 'fight') {
         this.acc -= TICK_MS;
         const events = stepBattle(b);
@@ -327,6 +329,8 @@ class Game {
         this.sprites.set(u.id, s);
         if (u.tag !== undefined && this.evolved.has(u.tag)) s.evolve();
         this.boardView.root.addChild(s.root);
+        // (a hero set down on a tile puffs its dust)
+        if (u.side === 'hero' && this.b.phase === 'deploy') this.fx.landing(this.b, u.u, u.v);
       }
   }
 
@@ -526,6 +530,8 @@ class Game {
       // (a hero of a higher grade that wasn't there before is a merge's: it flashes)
       this.evolved = new Set(this.run.roster.filter((h) => h.grade > 1 && !before.has(h.id)).map((h) => h.id));
       this.refresh();
+      const card = got ? $('bench').querySelector<HTMLElement>(`[data-id="${got.id}"]`) : null;
+      if (card) summonBurst(card);
     });
     $('homeBtn').addEventListener('click', () => this.home.open());
     $('next').addEventListener('click', () => {
@@ -602,7 +608,11 @@ class Game {
         const pay = document.createElement('em');
         pay.textContent = `+${STAR_CROWNS} crowns · +${STAR_GOLD} gold`;
         row.append(pay);
-        setTimeout(() => play('star'), 600 + i * 450);
+        setTimeout(() => {
+          play('star');
+          flyUp(`+${STAR_GOLD} gold`, pay, $('gold'));
+          flyUp(`+${STAR_CROWNS} crowns`, pay);
+        }, 600 + i * 450);
       }
       list.append(row);
     });
