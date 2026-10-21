@@ -94,8 +94,7 @@
   @keyframes punch { from { transform: scale(1.8); opacity: 0; } }
 
   #loading { position: fixed; inset: 0; display: grid; place-items: center; font-size: 18px; color: var(--gold); }
-  #version { position: fixed; right: 6px; bottom: 2px; font-size: 9px; color: rgba(255, 255, 255, 0.25); pointer-events: none; display: none; }
-  body[data-phase='deploy'] #version { display: block; }
+  #version { position: fixed; right: 6px; bottom: 2px; font-size: 10px; color: rgba(255, 255, 255, 0.5); text-shadow: 0 1px 0 #000; pointer-events: none; }
   @media (orientation: portrait) { #version { bottom: auto; top: calc(env(safe-area-inset-top) + 34px); } }
 </style>
 </head>

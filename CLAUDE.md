@@ -15,6 +15,9 @@ Chronos later, so keep its conventions.
 4. Add a test in `test/` for any new rule in the simulation.
 5. Write a short note of what you built in `docs/notes/<topic>.md`.
 6. Never put a model name or ID in code, comments or docs.
+7. **The version (the owner's ask):** the page shows "Version <package.json version> · <commit>" (top right upright,
+   bottom right sideways). Every merge into the working branch bumps the minor version in `package.json`
+   (0.2.0, 0.3.0, ...), done by whoever merges (the director); workers never change it.
 
 ## Rules that are easy to break
 
