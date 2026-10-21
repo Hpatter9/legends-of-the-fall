@@ -12,6 +12,7 @@ import { mixSeed, Rng } from './rng';
 import { FOE_BANDS } from './foes';
 import { afterBlow, landArea, pierceOf, preyOf, onStrike, rollCrit, tickStatus, tryCast, type Dot, type Zone } from './abilities';
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellState } from './spells';
+import { kindsOf, traitEffects, type TraitEffects } from './traits';
 import { SPLASH_SHARE, UNITS, type Shot, type Side, type UnitDef } from './units';
 
 export const TICK_MS = 100;
@@ -119,6 +120,8 @@ export interface Battle {
   spells: SpellState;
   /** The castle's boost for every hero placed. */
   heroBoost?: Boost;
+  /** The team bonus of the placed heroes' traits, fixed when the fight starts. */
+  traits?: TraitEffects;
 }
 
 export const defOf = (u: Unit): UnitDef => UNITS[u.def];
@@ -243,7 +246,30 @@ export const heroesPlaced = (b: Battle) => b.units.filter((x) => x.side === 'her
 export function fight(b: Battle): boolean {
   if (b.phase !== 'deploy' || !heroesPlaced(b) || !boardOk(b.board)) return false;
   b.phase = 'fight';
+  applyTraits(b);
   return true;
+}
+
+/** Fix the placed heroes' trait bonuses: attack and health now, the rest read by the hooks as the fight goes. */
+function applyTraits(b: Battle): void {
+  const fx = traitEffects(kindsOf(b.units));
+  b.traits = fx;
+  if (fx.mana) b.spells.rate *= fx.mana;
+  for (const x of b.units) {
+    if (x.side !== 'hero') continue;
+    if (fx.atk) x.power = (x.power ?? 1) * fx.atk;
+    if (fx.hp) {
+      x.maxHp = Math.round(x.maxHp * fx.hp);
+      x.hp = x.maxHp;
+    }
+  }
+}
+
+/** The kind's stats as this fighter uses them: a team's reach bonus lengthens its shots from height. */
+export function strikeDef(b: Battle, me: Unit): UnitDef {
+  const def = defOf(me);
+  const reach = me.side === 'hero' ? b.traits?.reach : undefined;
+  return reach && def.shot ? { ...def, heightReach: (def.heightReach ?? 0.7) + reach } : def;
 }
 
 /** One tick of the fight. Returns what happened, for the renderer to show. */
@@ -311,7 +337,7 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
 }
 
 function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
-  const def = defOf(me);
+  const def = strikeDef(b, me);
   me.step = undefined;
   let foes = b.units.filter((x) => x.alive && x.side !== me.side);
   // a charmed fighter turns on its own side (if it has anyone left to turn on)

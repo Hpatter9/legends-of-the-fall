@@ -6,7 +6,7 @@
 // Randomness comes from the battle's own side stream (`b.skillRng`), so the fight's main stream is left alone.
 
 import { sightClear, standable, tileAt, type At } from './board';
-import { atkOf, blowMult, canStrike, defOf, hurt, tileOf, unitAt, wayTo, type Battle, type BattleEvent, type Unit } from './battle';
+import { atkOf, blowMult, canStrike, defOf, hurt, strikeDef, tileOf, unitAt, wayTo, type Battle, type BattleEvent, type Unit } from './battle';
 import { Rng } from './rng';
 
 /** A skill fires at this much charge. */
@@ -199,7 +199,7 @@ function shadowStep(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 /** Archer: arrows rain on a 3x3 of tiles a moment after the call, on whoever is standing there. */
 const VOLLEY_MS = 700;
 function volley(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const def = defOf(me);
+  const def = strikeDef(b, me);
   const aim = crowd(b, me, (f) => canStrike(b.board, def, me, f));
   if (!aim) return false;
   b.pending.push({ at: b.t + VOLLEY_MS, kind: 'rain', by: me.id, to: aim.id, dmg: atkOf(me) * 1.0, heavy: false, u: aim.u, v: aim.v });
@@ -236,7 +236,7 @@ function mendUnit(u: Unit, amount: number, out: BattleEvent[]): void {
 
 /** Ninja Monk: three quick strikes on the weakest foe in reach, and it is stunned. */
 function flurry(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const def = defOf(me);
+  const def = strikeDef(b, me);
   const f = sorted(foesOf(b, me).filter((x) => canStrike(b.board, def, me, x)))[0];
   if (!f) return false;
   me.facing = wayTo(me, f);
@@ -424,7 +424,9 @@ const gain = (u: Unit, n: number) => {
 export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow' | 'skill' | 'dot', splash: boolean, out: BattleEvent[]): number | null {
   const blow = src === 'blow';
   const kit = kitOf(to);
-  if (blow && kit?.passive.dodge && roll(b) < kit.passive.dodge) {
+  const team = to.side === 'hero' ? b.traits : undefined;
+  const dodge = (kit?.passive.dodge ?? 0) + (team?.dodge ?? 0);
+  if (blow && dodge && roll(b) < dodge) {
     out.push({ kind: 'dodge', to: to.id });
     gain(to, kitOf(to)!.skill.taken * 0.5);
     return null;
@@ -435,6 +437,7 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
     dmg *= 1 - kit.passive.huddle * Math.min(3, n);
   }
   if (to.guardUntil !== undefined && to.guardUntil > b.t) dmg *= GUARD_SHARE;
+  if (team?.guard) dmg *= 1 - team.guard;
   if (src !== 'dot') {
     if (blow && !splash) gain(by, kitOf(by)?.skill.dealt ?? 0);
     gain(to, kit?.skill.taken ?? 0);
@@ -445,7 +448,8 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
 /** A blow's own odds at swing time: a crit, with its extra damage. */
 export function rollCrit(b: Battle, me: Unit): number {
   const c = kitOf(me)?.passive.crit;
-  return c && roll(b) < c.chance ? c.mult : 1;
+  const chance = (c?.chance ?? 0) + (me.side === 'hero' ? b.traits?.crit ?? 0 : 0);
+  return chance && roll(b) < chance ? c?.mult ?? 1.5 : 1;
 }
 
 /** After a blow has landed: a crit makes the foe bleed, and a flame blow sets it alight. */
@@ -484,7 +488,7 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
   for (const u of b.units) {
     if (!u.alive) continue;
     const k = kitOf(u);
-    if (k) gain(u, (k.skill.perSec * 100) / 1000);
+    if (k) gain(u, ((k.skill.perSec * 100) / 1000) * (u.side === 'hero' ? b.traits?.charge ?? 1 : 1));
     const p = k?.passive;
     if (p?.regen && b.t % 1000 === 0) mendUnit(u, u.maxHp * p.regen, out);
     if (p?.mend) {
