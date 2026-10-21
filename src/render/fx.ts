@@ -75,7 +75,8 @@ export class Fx {
       else if (e.kind === 'heal') {
         const to = this.sprites.get(e.to);
         if (to && e.amount > 0) this.label(`+${e.amount}`, to.x, to.y - to.tall - 10, 0x7dff8a, 13);
-      } else if (e.kind === 'zone') this.zone(b, e.u, e.v, e.ms);
+      } else if (e.kind === 'arc') this.arc(e.from, e.to);
+      else if (e.kind === 'zone') this.zone(b, e.u, e.v, e.ms);
       else if (e.kind === 'hit') {
         const to = this.sprites.get(e.to);
         const by = b.units.find((x) => x.id === e.by);
@@ -93,7 +94,7 @@ export class Fx {
           this.number(e.dmg, to.x, to.y - to.tall - 10, false, target.side === 'hero');
           continue;
         }
-        const fiery = defOf(by).shot === 'fire';
+        const fiery = defOf(by).shot === 'fire' || defOf(by).shot === 'bolt';
         this.anim(fiery ? (e.splash ? fire : blast) : impact, to.x, to.y - to.tall * 0.45, fiery && !e.splash ? 0.8 : 0.9, 45);
         this.number(e.dmg, to.x, to.y - to.tall - 10, e.heavy, target.side === 'hero');
         this.trauma = Math.min(1, this.trauma + traumaFor(e.dmg / target.maxHp, e.killed) * 0.5);
@@ -352,14 +353,38 @@ export class Fx {
     });
   }
 
+  /** Chain lightning: a jagged line between two fighters that fades. */
+  private arc(fromId: number, toId: number): void {
+    const a = this.sprites.get(fromId);
+    const c = this.sprites.get(toId);
+    if (!a || !c) return;
+    const [x0, y0, x1, y1] = [a.x, a.y - a.tall * 0.5, c.x, c.y - c.tall * 0.5];
+    const g = new Graphics();
+    g.moveTo(x0, y0);
+    for (let i = 1; i < 5; i++) g.lineTo(x0 + ((x1 - x0) * i) / 5 + (i % 2 ? 7 : -7), y0 + ((y1 - y0) * i) / 5 + (i % 2 ? -4 : 4));
+    g.lineTo(x1, y1).stroke({ color: 0x9fe0ff, width: 3, alpha: 0.95, cap: 'round' });
+    g.blendMode = 'add';
+    this.root.addChild(g);
+    let t = 0;
+    this.items.push({
+      view: g,
+      step: (dt) => {
+        t += dt;
+        g.alpha = 1 - t / 300;
+        return t < 300;
+      },
+    });
+  }
+
   private shot(byId: number, toId: number, kind: Shot, ms: number): void {
     const by = this.sprites.get(byId);
     const to = this.sprites.get(toId);
     if (!by || !to) return;
     const sp = new Sprite(kind === 'arrow' ? arrow : kind === 'bone' ? bone : fire.frames[0]);
     sp.anchor.set(0.5);
-    sp.scale.set(kind === 'fire' ? 0.9 : 0.55);
-    if (kind === 'fire') sp.blendMode = 'add';
+    sp.scale.set(kind === 'fire' || kind === 'bolt' ? 0.9 : 0.55);
+    if (kind === 'fire' || kind === 'bolt') sp.blendMode = 'add';
+    if (kind === 'bolt') sp.tint = 0x66ccff;
     this.root.addChild(sp);
     const x0 = by.x;
     const y0 = by.y - by.tall * 0.55;
@@ -367,7 +392,7 @@ export class Fx {
     const place = (f: number) => {
       const x1 = to.x;
       const y1 = to.y - to.tall * 0.45;
-      const arc = kind === 'fire' ? 8 : 18 + Math.hypot(x1 - x0, y1 - y0) * 0.15;
+      const arc = kind === 'fire' || kind === 'bolt' ? 8 : 18 + Math.hypot(x1 - x0, y1 - y0) * 0.15;
       return [x0 + (x1 - x0) * f, y0 + (y1 - y0) * f - Math.sin(Math.PI * f) * arc] as const;
     };
     this.items.push({
@@ -378,7 +403,7 @@ export class Fx {
         const [x, y] = place(f);
         const [nx, ny] = place(Math.min(1, f + 0.05));
         sp.position.set(x, y);
-        if (kind === 'fire') sp.texture = fire.frames[Math.floor(t / 60) % fire.frames.length];
+        if (kind === 'fire' || kind === 'bolt') sp.texture = fire.frames[Math.floor(t / 60) % fire.frames.length];
         else sp.rotation = Math.atan2(ny - y, nx - x);
         return f < 1;
       },

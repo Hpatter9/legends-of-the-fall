@@ -24,6 +24,13 @@ import gorgon3 from '../art/units/gorgon_3.png';
 import satyr1 from '../art/units/satyr_1.png';
 import satyr2 from '../art/units/satyr_2.png';
 import satyr3 from '../art/units/satyr_3.png';
+import ninjaMonk from '../art/units/ninja_monk.png';
+import ninjaPeasant from '../art/units/ninja_peasant.png';
+import lightningMage from '../art/units/lightning_mage.png';
+import wandererMage from '../art/units/wanderer_mage.png';
+import kitsune from '../art/units/kitsune.png';
+import karasuTengu from '../art/units/karasu_tengu.png';
+import yamabushiTengu from '../art/units/yamabushi_tengu.png';
 
 export type Anim = 'idle' | 'walk' | 'attack' | 'hurt' | 'dead';
 
@@ -57,6 +64,13 @@ const URLS: Record<string, string> = {
   satyr_1: satyr1,
   satyr_2: satyr2,
   satyr_3: satyr3,
+  ninja_monk: ninjaMonk,
+  ninja_peasant: ninjaPeasant,
+  lightning_mage: lightningMage,
+  wanderer_mage: wandererMage,
+  kitsune: kitsune,
+  karasu_tengu: karasuTengu,
+  yamabushi_tengu: yamabushiTengu,
 };
 
 const LAYOUT = layout as Record<string, Layout>;
