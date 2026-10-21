@@ -58,6 +58,15 @@
   #clock { font-variant-numeric: tabular-nums; color: var(--ink); }
   #speed { padding: 4px 10px; display: none; }
   #mute { padding: 4px 8px; font-size: 14px; line-height: 1; }
+  /* upright (a phone is narrow): the title, gold and buttons share the first row and the stage and status the second,
+     which keeps clear of the version line at the top right; in a fight the title makes way for the clock */
+  @media (orientation: portrait) {
+    #top { flex-wrap: wrap; row-gap: 2px; }
+    #top h1 { font-size: 14px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    body[data-phase="fight"] #top h1 { display: none; }
+    #gold { margin-right: auto; }
+    #status { order: 1; flex: 1 1 100%; padding-right: 140px; font-size: 13px; }
+  }
   body[data-phase='fight'] #speed { display: block; }
 
   #panel {
