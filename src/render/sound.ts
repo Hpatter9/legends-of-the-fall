@@ -18,7 +18,7 @@ const TRACKS = { town: 'town.ogg', battle: 'battle.ogg', boss: 'boss.ogg' } as c
 type Track = keyof typeof TRACKS;
 
 /** The short effects. */
-export type Sfx = 'swordHit' | 'heavyHit' | 'death' | 'arrow' | 'whoosh' | 'skill' | 'spell' | 'summon' | 'merge' | 'victory' | 'defeat' | 'star' | 'tap';
+export type Sfx = 'swordHit' | 'heavyHit' | 'death' | 'arrow' | 'whoosh' | 'skill' | 'spell' | 'summon' | 'merge' | 'victory' | 'defeat' | 'star' | 'tap' | 'boom';
 
 /** The least time (ms) between two of the same effect, so a crowd of hits at once is not loud. */
 const GAP: Record<Sfx, number> = {
@@ -35,6 +35,7 @@ const GAP: Record<Sfx, number> = {
   defeat: 0,
   star: 120,
   tap: 60,
+  boom: 0,
 };
 
 let ctx: AudioContext | null = null;
@@ -254,4 +255,9 @@ const SOUNDS: Record<Sfx, (t: number) => void> = {
     note(t + 0.07, 1319, 0.2, 0.14, 'triangle');
   },
   tap: (t) => note(t, 1400, 0.03, 0.07, 'sine'),
+  // a low boom: a boss walking in
+  boom: (t) => {
+    note(t, 70, 0.9, 0.45, 'sine', 30);
+    hiss(t, 0.5, 200, 'lowpass', 0.3);
+  },
 };

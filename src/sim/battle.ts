@@ -98,7 +98,7 @@ export type BattleEvent =
   | { kind: 'zone'; u: number; v: number; ms: number }
   | { kind: 'dodge'; to: number }
   | { kind: 'spell'; id: 'heal' | 'meteor' | 'haste'; u: number; v: number }
-  | { kind: 'heal'; to: number; amount: number }
+  | { kind: 'heal'; to: number; amount: number; by?: number }
   | { kind: 'haste'; to: number; ms: number }
   | { kind: 'end'; won: boolean };
 
