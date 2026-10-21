@@ -37,6 +37,9 @@ const HERO_STAGE = arg('--hero-stage', 5);
 const RUNS_ONLY = process.argv.includes('--runs-only');
 const BANDS = FIELD_BANDS;
 
+/** The boost of a field band at stage s: a field band has no boss, even on a boss stage. */
+const fieldBoost = (s: number): Stage => ({ ...stageBoost(s), boss: undefined });
+
 /** A random team of `TEAM` different hero kinds (from every hero there is). */
 function pickTeam(rng: Rng): string[] {
   const pool = [...ALL_HEROES];
@@ -112,7 +115,7 @@ function heroValue(): void {
   for (let g = 0; g < GAMES; g++) {
     const seed = g + 1;
     const team = pickTeam(new Rng(mixSeed(seed, 0x7ea4)));
-    const r = play(seed, BANDS[g % BANDS.length], stageBoost(HERO_STAGE), team);
+    const r = play(seed, BANDS[g % BANDS.length], fieldBoost(HERO_STAGE), team);
     for (const h of ALL_HEROES) {
       const t = tally.get(h)!;
       if (team.includes(h)) {
@@ -167,7 +170,7 @@ function foeBands(): void {
       for (let g = 0; g < CELL_GAMES; g++) {
         const seed = g + 1;
         const team = pickTeam(new Rng(mixSeed(seed, 0x7ea4)));
-        if (play(mixSeed(seed, 0x57a6e, s), band, stageBoost(s), team).won) w++;
+        if (play(mixSeed(seed, 0x57a6e, s), band, fieldBoost(s), team).won) w++;
       }
       return rpad(f1(pct(w, CELL_GAMES)), 10);
     });

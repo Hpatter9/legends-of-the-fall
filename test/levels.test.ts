@@ -52,13 +52,13 @@ test('damage, healing and kills each add to a hero\'s XP', () => {
   h.dealt = 200;
   assert.equal(fightXp(b)[h.def] - base, 5);
   h.healed = 120;
-  h.slain = killXp({ def: 'skeleton', maxHp: 320 }) + killXp({ def: 'orcWarlord', maxHp: 380 });
-  assert.equal(fightXp(b)[h.def], base + 5 + 3 + 32 + 114);
+  h.slain = killXp({ def: 'skeleton', maxHp: 320 }) + killXp({ def: 'demonLord', maxHp: 350 });
+  assert.equal(fightXp(b)[h.def], base + 5 + 3 + 32 + 105);
 });
 
 test('a kill is worth a tenth of the foe\'s max hp, and a boss kill three times that', () => {
   assert.equal(Math.round(killXp({ def: 'skeleton', maxHp: 320 })), 32);
-  assert.equal(Math.round(killXp({ def: 'orcWarlord', maxHp: 380 })), 114);
+  assert.equal(Math.round(killXp({ def: 'demonLord', maxHp: 350 })), 105);
   assert.equal(Math.round(killXp({ def: 'orcWarlord', maxHp: 2280 })), 684);
 });
 

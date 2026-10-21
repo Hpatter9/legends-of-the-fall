@@ -33,6 +33,6 @@ test('a fresh first-run team at level 1 loses the stage 5 boss on most seeds', (
 
 test('the same team at the levels it reaches after run 3 usually wins the boss', () => {
   // the mean level of each starting kind after run 3 in the balance tool's whole-run table (`npm run balance`)
-  const won = wins([5, 8, 5, 7, 6]);
-  assert.ok(won >= 20, `${won} of 40 won`);
+  const won = wins([7, 11, 6, 8, 7]);
+  assert.ok(won >= 30, `${won} of 40 won`);
 });

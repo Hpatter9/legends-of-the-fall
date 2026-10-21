@@ -28,8 +28,8 @@ export const FOE_START = 0.55;
 /** Foes' hp and attack grow by this share for each stage after the first. */
 export const STAGE_GROWTH = 0.2;
 export const BOSS_EVERY = 5;
-/** A boss is drawn half as big again, with six times its kind's hp and three times its attack (on top of the stage's boost); its kind (`foes.ts`) carries its own stats and skill. Its kill is worth more XP (`levels.ts`). */
-export const BOSS: Boost = { size: 1.5, hp: 6, atk: 3.0 };
+/** A boss is drawn half as big again; its kind (`foes.ts`) carries its own stats and skill. */
+export const BOSS: Boost = { size: 1.5 };
 
 export interface Owned {
   /** Never reused, so a placed hero stays itself when others merge away. */
