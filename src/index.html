@@ -57,6 +57,7 @@
   #status { flex: 1; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #clock { font-variant-numeric: tabular-nums; color: var(--ink); }
   #speed { padding: 4px 10px; display: none; }
+  #mute { padding: 4px 8px; font-size: 14px; line-height: 1; }
   body[data-phase='fight'] #speed { display: block; }
 
   #panel {
@@ -130,7 +131,7 @@
 <body data-phase="deploy">
 <div id="sky"><div></div><div></div><div></div><div></div><div></div></div>
 <div id="stage"></div>
-<div id="top"><h1>Legends of the Fall</h1><span id="status"></span><span id="gold"></span><span id="clock"></span><button id="speed">×1</button></div>
+<div id="top"><h1>Legends of the Fall</h1><span id="status"></span><span id="gold"></span><span id="clock"></span><button id="mute"></button><button id="speed">×1</button></div>
 <div id="panel">
   <div id="spells"><div id="mana"><i><span></span></i><b></b></div><div id="spellCards"></div><div id="spellHint"></div></div>
   <div id="bench"></div>
