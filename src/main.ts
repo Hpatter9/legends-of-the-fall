@@ -312,7 +312,7 @@ class Game {
         this.fx.show(b, events);
         // (a fighter a skill called up mid-fight has no sprite yet: make it, with its entrance)
         if (b.units.length !== this.sprites.size) this.syncSprites();
-        playEvents(events);
+        playEvents(b, events, this.speed);
         if (events.some((e) => e.kind === 'hit')) this.refreshBench();
         if (b.phase !== 'fight') this.refresh();
       }
