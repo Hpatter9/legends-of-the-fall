@@ -6,7 +6,7 @@ import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { D, standable, tileAt } from './sim/board';
 import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle } from './sim/battle';
 import { finish, gradeBoost, heroOf, isBossStage, loadRun, newRun, saveRun, setSquad, SQUAD, startStage, summon, summonCost, type Run } from './sim/run';
-import { UNITS } from './sim/units';
+import { formOf, UNITS } from './sim/units';
 import { earn, loadMeta, saveMeta, type Meta } from './sim/meta';
 import { Gacha } from './gacha';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, SPELL_IDS, type SpellId } from './sim/spells';
@@ -162,6 +162,9 @@ class Game {
     this.place();
   }
 
+  /** The roster ids a merge has just made (they flash on the bench and, if placed, on the board). */
+  private evolved = new Set<number>();
+
   /** One sprite per fighter on the board. */
   private syncSprites(all = false): void {
     if (all) {
@@ -178,6 +181,7 @@ class Game {
       if (!this.sprites.has(u.id)) {
         const s = new UnitSprite(u);
         this.sprites.set(u.id, s);
+        if (u.tag !== undefined && this.evolved.has(u.tag)) s.evolve();
         this.boardView.root.addChild(s.root);
       }
   }
@@ -329,7 +333,10 @@ class Game {
     $('fight').addEventListener('click', () => this.begin());
     $('recruit').addEventListener('click', () => this.gacha.open());
     $('summon').addEventListener('click', () => {
+      const before = new Set(this.run.roster.map((h) => h.id));
       if (summon(this.run)) saveRun(this.run);
+      // (a hero of a higher grade that wasn't there before is a merge's: it flashes)
+      this.evolved = new Set(this.run.roster.filter((h) => h.grade > 1 && !before.has(h.id)).map((h) => h.id));
       this.refresh();
     });
     $('next').addEventListener('click', () => {
@@ -454,7 +461,7 @@ class Game {
       const def = UNITS[h.kind];
       const id = String(h.id);
       const card = document.createElement('div');
-      card.className = 'card';
+      card.className = `card g${h.grade}${this.evolved.has(h.id) ? ' evolve' : ''}`;
       card.dataset.id = id;
       const stars = document.createElement('em');
       stars.textContent = '★'.repeat(h.grade);
@@ -462,7 +469,7 @@ class Game {
       name.textContent = def.name;
       const bar = document.createElement('i');
       bar.append(document.createElement('span'));
-      card.append(portrait(def.sheet, 96), stars, name, bar);
+      card.append(portrait(formOf(def, h.grade), 96, h.grade), stars, name, bar);
       card.title = def.role;
       card.addEventListener('pointerdown', (e) => {
         if (this.b.phase !== 'deploy') return;

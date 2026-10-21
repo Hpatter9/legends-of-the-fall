@@ -38,13 +38,16 @@ export interface UnitDef {
   forms?: readonly string[];
 }
 
+/** The sheet a hero is drawn from at a grade (1 to 3). */
+export const formOf = (def: UnitDef, grade = 1): string => def.forms?.[grade - 1] ?? def.sheet;
+
 /** The share of a splash blow that lands on each tile beside the target. */
 export const SPLASH_SHARE = 0.5;
 
 export const UNITS: Record<string, UnitDef> = {
   ...FOES,
-  knight: { id: 'knight', name: 'Knight', side: 'hero', sheet: 'knight_1', scale: 0.74, hp: 380, atk: 19, def: 11, range: 1, moveMs: 760, atkMs: 1100, jump: 2, role: 'Holds the line' },
-  samurai: { id: 'samurai', name: 'Samurai', side: 'hero', sheet: 'samurai', scale: 0.72, hp: 225, atk: 34, def: 6, range: 1, moveMs: 600, atkMs: 1000, jump: 2, role: 'Heavy blade' },
+  knight: { id: 'knight', name: 'Knight', side: 'hero', sheet: 'knight_1', scale: 0.74, hp: 380, atk: 19, def: 11, range: 1, moveMs: 760, atkMs: 1100, jump: 2, role: 'Holds the line', forms: ['knight_1', 'knight_2', 'knight_3'] },
+  samurai: { id: 'samurai', name: 'Samurai', side: 'hero', sheet: 'samurai', scale: 0.72, hp: 225, atk: 34, def: 6, range: 1, moveMs: 600, atkMs: 1000, jump: 2, role: 'Heavy blade', forms: ['samurai', 'samurai', 'samurai_commander'] },
   kunoichi: { id: 'kunoichi', name: 'Kunoichi', side: 'hero', sheet: 'kunoichi', scale: 0.74, hp: 165, atk: 17, def: 4, range: 1, moveMs: 420, atkMs: 550, jump: 3, role: 'Quick, climbs well' },
   archer: { id: 'archer', name: 'Archer', side: 'hero', sheet: 'samurai_archer', scale: 0.6, hp: 142, atk: 24, def: 3, range: 4, moveMs: 650, atkMs: 1300, jump: 2, shot: 'arrow', heightReach: 1.4, role: 'Long shots, twice as far from high' },
   wizard: { id: 'wizard', name: 'Fire Wizard', side: 'hero', sheet: 'fire_wizard', scale: 0.79, hp: 135, atk: 26, def: 2, range: 3, moveMs: 700, atkMs: 1700, jump: 2, shot: 'fire', splash: true, role: 'Fire that spreads' },

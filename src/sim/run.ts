@@ -88,7 +88,7 @@ export const heroOf = (run: Run, id: number) => run.roster.find((h) => h.id === 
 export const benched = (run: Run) => run.roster.filter((h) => !run.squad.includes(h.id));
 
 /** Hp and attack multipliers of a grade. */
-export const gradeBoost = (grade: number): Boost => ({ hp: GRADE_MULT ** (grade - 1), atk: GRADE_MULT ** (grade - 1) });
+export const gradeBoost = (grade: number): Boost => ({ hp: GRADE_MULT ** (grade - 1), atk: GRADE_MULT ** (grade - 1), grade });
 
 export const isBossStage = (stage: number) => stage % BOSS_EVERY === 0;
 /** The band stage n meets, in turn. */

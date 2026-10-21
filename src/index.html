@@ -73,6 +73,16 @@
   .card b { display: block; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .card i { display: block; height: 4px; margin: 3px 4px 0; background: #2a1a10; border-radius: 2px; overflow: hidden; }
   .card i span { display: block; height: 100%; background: #5fd35f; }
+  .card.g2 { border-color: #b8c8e0; box-shadow: 0 0 6px rgba(200, 220, 255, 0.45); background: linear-gradient(#2a3040, rgba(0, 0, 0, 0.35)); }
+  .card.g3 { border-color: #f0c040; box-shadow: 0 0 9px rgba(255, 200, 70, 0.7), inset 0 0 8px rgba(255, 210, 90, 0.35); background: linear-gradient(#4a3810, rgba(0, 0, 0, 0.35)); }
+  .card.g3 em { color: #ffe27a; }
+  .card.evolve { animation: evolve 0.9s ease-out; }
+  .card.evolve::before {
+    content: ''; position: absolute; inset: -4px; border-radius: 10px; pointer-events: none;
+    background: radial-gradient(circle, #fff 0%, rgba(255, 226, 122, 0.8) 35%, transparent 70%); animation: evolveFlash 0.9s ease-out forwards;
+  }
+  @keyframes evolve { 0% { transform: scale(0.8); } 35% { transform: scale(1.18); } 100% { transform: scale(1); } }
+  @keyframes evolveFlash { 0% { opacity: 1; transform: scale(0.6); } 100% { opacity: 0; transform: scale(1.7); } }
   .card.placed { border-color: #4a9cff; }
   .card.placed::after { content: '✓'; position: absolute; top: 2px; right: 5px; color: #7cc0ff; font-weight: bold; }
   .card.chosen { border-color: var(--gold); box-shadow: 0 0 10px var(--gold); }

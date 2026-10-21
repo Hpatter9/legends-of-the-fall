@@ -21,6 +21,9 @@ import minotaur3 from '../art/units/minotaur_3.png';
 import gorgon1 from '../art/units/gorgon_1.png';
 import gorgon2 from '../art/units/gorgon_2.png';
 import gorgon3 from '../art/units/gorgon_3.png';
+import knight2 from '../art/units/knight_2.png';
+import knight3 from '../art/units/knight_3.png';
+import commander from '../art/units/samurai_commander.png';
 import satyr1 from '../art/units/satyr_1.png';
 import satyr2 from '../art/units/satyr_2.png';
 import satyr3 from '../art/units/satyr_3.png';
@@ -38,6 +41,9 @@ interface Layout {
 
 const URLS: Record<string, string> = {
   knight_1: knight,
+  knight_2: knight2,
+  knight_3: knight3,
+  samurai_commander: commander,
   samurai,
   kunoichi,
   samurai_archer: archer,
@@ -86,7 +92,7 @@ export const framesOf = (sheet: string, anim: Anim): Texture[] => frames.get(`${
 export const figureOf = (sheet: string) => LAYOUT[sheet].figure;
 
 /** A small portrait of a fighter for the bench: its first idle frame, cropped to the figure, on a canvas. */
-export function portrait(sheet: string, size: number): HTMLCanvasElement {
+export function portrait(sheet: string, size: number, grade = 1): HTMLCanvasElement {
   const c = document.createElement('canvas');
   c.width = c.height = size;
   const img = images.get(sheet);
@@ -98,6 +104,14 @@ export function portrait(sheet: string, size: number): HTMLCanvasElement {
   // (the top of the figure down to its feet, a square around the middle)
   const side = Math.min(l.figure + 6, l.h);
   const sx = Math.max(0, l.w / 2 - side / 2);
+  // (a higher grade is richer in colour, and tinted gold at the top)
+  if (grade > 1 && 'filter' in g) g.filter = grade > 2 ? 'saturate(1.5) contrast(1.08) sepia(0.25)' : 'saturate(1.3) contrast(1.04)';
   g.drawImage(img, sx, idle * l.h + l.h - side, side, side, 0, 0, size, size);
+  g.filter = 'none';
+  if (grade > 1) {
+    g.globalCompositeOperation = 'source-atop';
+    g.fillStyle = grade > 2 ? 'rgba(255, 200, 70, 0.16)' : 'rgba(210, 225, 255, 0.1)';
+    g.fillRect(0, 0, size, size);
+  }
   return c;
 }
