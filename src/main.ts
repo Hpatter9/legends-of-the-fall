@@ -15,6 +15,9 @@ import { at, FOOT, HH, TH, TW } from './render/iso';
 
 TextureSource.defaultOptions.scaleMode = 'nearest';
 
+/** How much bigger the fighters show upright than when the whole board fits the width. */
+const ZOOM = 1.6;
+
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
 interface Drag {
@@ -23,6 +26,8 @@ interface Drag {
   y: number;
   moved: boolean;
   fromBoard: boolean;
+  /** Dragging the board itself (it began on no hero), from this camera centre. */
+  pan?: { cx: number; cy: number };
 }
 
 class Game {
@@ -45,6 +50,7 @@ class Game {
   private speed = 1;
   private acc = 0;
   private scale = 1;
+  private sky: HTMLElement[] = [];
 
   async start(): Promise<void> {
     await this.app.init({ resizeTo: window, backgroundAlpha: 0, antialias: false, roundPixels: true, autoDensity: true, resolution: Math.min(3, devicePixelRatio || 1) });
@@ -64,6 +70,7 @@ class Game {
       this.band = band;
       this.bandPinned = true;
     }
+    this.sky = [...document.querySelectorAll<HTMLElement>('#sky div')];
     this.buildBench();
     this.wire();
     this.newBattle(true);
@@ -100,6 +107,7 @@ class Game {
     if (!fight(this.b)) return;
     this.chosen = null;
     this.boardView.clearMarks();
+    this.focus();
     this.refresh();
   }
 
@@ -123,7 +131,13 @@ class Game {
     }
     const t = b.phase === 'deploy' ? performance.now() : b.phase === 'fight' ? b.t - TICK_MS + this.acc : b.t + this.acc;
     for (const s of this.sprites.values()) s.update(b.board, t, b.phase !== 'deploy');
-    this.world.position.set(this.baseX + this.fx.shakeX, this.baseY + this.fx.shakeY);
+    // (the camera eases to where it is sent, unless a finger is holding the board)
+    if (!this.drag?.pan) {
+      this.cx += (this.tx - this.cx) * Math.min(1, dt / 220);
+      this.cy += (this.ty - this.cy) * Math.min(1, dt / 220);
+      this.clampCam();
+    }
+    this.place();
   }
 
   /** One sprite per fighter on the board. */
@@ -150,8 +164,15 @@ class Game {
 
   private baseX = 0;
   private baseY = 0;
+  /** The world point at the middle of the board's room, and where it is heading. */
+  private cx = 0;
+  private cy = 0;
+  private tx = 0;
+  private ty = 0;
+  private area = { x: 0, y: 0, w: 1, h: 1 };
+  private bbox = { x0: 0, x1: 0, y0: 0, y1: 0 };
 
-  /** Fit the board into the room the bench and the top bar leave. */
+  /** Fit the board into the room the bench and the top bar leave: upright it is zoomed in and panned, sideways it fits. */
   private layout(): void {
     const top = $('top').getBoundingClientRect();
     const panel = $('panel').getBoundingClientRect();
@@ -173,12 +194,67 @@ class Game {
         y1 = Math.max(y1, y + TH / 2 + h * HH + FOOT);
       }
     const pad = 10;
-    const k = Math.min(3, (area.w - pad * 2) / (x1 - x0), (area.h - pad * 2) / (y1 - y0));
+    const fit = Math.min(3, (area.w - pad * 2) / (x1 - x0), (area.h - pad * 2) / (y1 - y0));
+    const k = sideways ? fit : Math.min(3, fit * ZOOM);
     this.scale = k;
     this.world.scale.set(k);
-    this.baseX = Math.round(area.x + area.w / 2 - ((x0 + x1) / 2) * k);
-    this.baseY = Math.round(area.y + area.h / 2 - ((y0 + y1) / 2) * k);
     this.ghost.scale.set(k);
+    this.area = area;
+    this.bbox = { x0, x1, y0, y1 };
+    this.focus(true);
+  }
+
+  /** Send the camera to the heroes' rows (deploying) or the middle of the board (fighting). */
+  private focus(snap = false): void {
+    const { x0, x1, y0, y1 } = this.bbox;
+    const b = this.b.board;
+    if (this.b.phase === 'deploy') {
+      let sx = 0;
+      let sy = 0;
+      let n = 0;
+      for (let v = 0; v < b.d; v++)
+        if (isDeployTile(v)) {
+          const [x, y] = at(Math.floor(b.w / 2), v, tileAt(b, Math.floor(b.w / 2), v)?.h ?? 0);
+          sx += x;
+          sy += y;
+          n++;
+        }
+      this.tx = sx / n;
+      this.ty = sy / n;
+    } else {
+      this.tx = (x0 + x1) / 2;
+      this.ty = (y0 + y1) / 2;
+    }
+    if (snap) {
+      this.cx = this.tx;
+      this.cy = this.ty;
+    }
+    this.clampCam();
+    this.place();
+  }
+
+  /** Keep the camera over the board: no scrolling past its edge, and a board that fits stays centred. */
+  private clampCam(): void {
+    const { x0, x1, y0, y1 } = this.bbox;
+    const hw = this.area.w / 2 / this.scale;
+    const hh = this.area.h / 2 / this.scale;
+    const lim = (c: number, lo: number, hi: number, half: number) => (hi - lo <= half * 2 ? (lo + hi) / 2 : Math.min(hi - half, Math.max(lo + half, c)));
+    this.cx = lim(this.cx, x0, x1, hw);
+    this.cy = lim(this.cy, y0, y1, hh);
+    this.tx = lim(this.tx, x0, x1, hw);
+    this.ty = lim(this.ty, y0, y1, hh);
+  }
+
+  /** Put the world where the camera says, and slide the backdrop's layers a little the other way. */
+  private place(): void {
+    const k = this.scale;
+    this.baseX = Math.round(this.area.x + this.area.w / 2 - this.cx * k);
+    this.baseY = Math.round(this.area.y + this.area.h / 2 - this.cy * k);
+    this.world.position.set(this.baseX + this.fx.shakeX, this.baseY + this.fx.shakeY);
+    const { x0, x1, y0, y1 } = this.bbox;
+    const fx = x1 > x0 ? (this.cx - (x0 + x1) / 2) / (x1 - x0) : 0;
+    const fy = y1 > y0 ? (this.cy - (y0 + y1) / 2) / (y1 - y0) : 0;
+    this.sky.forEach((el, i) => (el.style.transform = `translate(${(-fx * (i + 1) * 14).toFixed(1)}px, ${(-fy * i * 10).toFixed(1)}px)`));
   }
 
   /** The tile under a point on the screen (the nearest column's top or side). */
@@ -219,9 +295,10 @@ class Game {
   private wire(): void {
     const canvas = this.app.canvas;
     canvas.addEventListener('pointerdown', (e) => {
-      if (this.b.phase !== 'deploy') return;
-      const id = this.heroAtScreen(e.clientX, e.clientY);
-      this.drag = { id: id ?? '', x: e.clientX, y: e.clientY, moved: false, fromBoard: true };
+      if (this.drag) return;
+      // (a drag that begins on a placed hero moves the hero; anywhere else it pans the board)
+      const id = this.b.phase === 'deploy' ? this.heroAtScreen(e.clientX, e.clientY) : null;
+      this.drag = { id: id ?? '', x: e.clientX, y: e.clientY, moved: false, fromBoard: true, pan: id ? undefined : { cx: this.cx, cy: this.cy } };
     });
     window.addEventListener('pointermove', (e) => this.dragMove(e));
     window.addEventListener('pointerup', (e) => this.dragEnd(e));
@@ -238,7 +315,19 @@ class Game {
 
   private dragMove(e: PointerEvent): void {
     const d = this.drag;
-    if (!d || !d.id) return;
+    if (!d) return;
+    if (d.pan) {
+      if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 8) return;
+      d.moved = true;
+      this.cx = d.pan.cx - (e.clientX - d.x) / this.scale;
+      this.cy = d.pan.cy - (e.clientY - d.y) / this.scale;
+      this.tx = this.cx;
+      this.ty = this.cy;
+      this.clampCam();
+      this.place();
+      return;
+    }
+    if (!d.id) return;
     if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 8) return;
     d.moved = true;
     this.chosen = d.id;
@@ -254,7 +343,7 @@ class Game {
   private dragEnd(e: PointerEvent): void {
     const d = this.drag;
     if (!d) return;
-    if (this.b.phase !== 'deploy') return this.endDrag();
+    if (this.b.phase !== 'deploy' || (d.pan && d.moved)) return this.endDrag();
     if (d.moved && d.id) {
       // dropped: on a tile of the heroes' rows, or back on the bench
       const tile = this.tileAtScreen(e.clientX, e.clientY - 24);

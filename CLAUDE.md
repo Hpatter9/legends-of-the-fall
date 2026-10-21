@@ -36,7 +36,7 @@ Chronos later, so keep its conventions.
 ## Layout
 
 - `src/sim/board.ts`: the grid (7 across, 9 deep), heights, `canStep`, `sightClear`, `makeBoard(seed)`.
-- `src/sim/units.ts`: `UNITS` (the five heroes and the skeletons), `HEROES`, `FOE_BAND`.
+- `src/sim/units.ts`: `UNITS` (the five heroes; the foes come from `foes.ts`), `HEROES`. `src/sim/foes.ts`: `FOES`, `FOE_BANDS`.
 - `src/sim/battle.ts`: deploying (`canPlace`, `place`, `unplace`), `fight`, `stepBattle` (100 ms ticks), the AI,
   `blowMult`, `shotReach`, `canStrike`.
 - `src/sim/path.ts`: `walkFrom` (cheapest walks round the others), `firstStep`.
