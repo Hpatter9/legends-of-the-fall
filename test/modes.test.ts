@@ -4,7 +4,7 @@ import { isBoss } from '../src/sim/foes';
 import { bandFor, finish, isBossStage, loadRun, newRun, saveRun, startStage, START_GOLD, stageBoost } from '../src/sim/run';
 import { AREAS } from '../src/sim/board';
 import { dailyArea, dailyInProgress, dailyLine, dailyRun, dailyScore, dailySeed, dateKey, modeNote, settleRun, startDaily, towerLine, towerOpen, towerRun, TOWER_UNLOCK } from '../src/sim/modes';
-import { loadMeta, newMeta, saveMeta } from '../src/sim/meta';
+import { loadMeta, newMeta, saveMeta, setParty } from '../src/sim/meta';
 import { HEROES } from '../src/sim/units';
 import { levelOfKind, xpFor } from '../src/sim/levels';
 
@@ -125,7 +125,7 @@ test('the tower has no events, pays gold as a run does, and keeps its best floor
   m.bestStage = 12;
   const run = towerRun(7, m);
   assert.deepEqual(run.mode, { kind: 'tower' });
-  assert.deepEqual(run.pool, m.unlocked);
+  assert.deepEqual(run.pool, m.party);
   const before = run.gold;
   run.stage = 2;
   finish(run, true, 3);
@@ -145,12 +145,15 @@ test('the tower has no events, pays gold as a run does, and keeps its best floor
   assert.match(towerLine(m), /best floor 7/);
 });
 
-test('a tower fight uses the unlocked heroes at their lasting levels', () => {
+test('a tower fight draws from the party at the heroes\' lasting levels', () => {
   const m = newMeta(1);
   m.unlocked.push('kitsune');
+  assert.equal(setParty(m, ['knight', 'samurai', 'kunoichi', 'archer', 'kitsune']), true);
   m.xp.knight = xpFor(10);
   const run = towerRun(11, m);
+  assert.deepEqual(run.pool, m.party);
   assert.ok(run.pool!.includes('kitsune'));
+  assert.ok(!run.pool!.includes('wizard'));
   assert.equal(levelOfKind(m, 'knight'), 10);
 });
 

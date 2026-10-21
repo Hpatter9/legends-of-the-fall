@@ -39,7 +39,8 @@ test('a fight against each band ends', () => {
 });
 
 test('the heroes win 20 to 80% of their fights against each band', () => {
-  for (const band of Object.keys(FOE_BANDS)) {
+  // (the first boss, orcWarlord, is the gate of a run: a fresh team loses it, see `progression.test.ts`)
+  for (const band of Object.keys(FOE_BANDS).filter((k) => k !== 'orcWarlord')) {
     let wins = 0;
     for (let seed = 1; seed <= 40; seed++) {
       const b = readyBattle(seed, band);

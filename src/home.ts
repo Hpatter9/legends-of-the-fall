@@ -36,6 +36,8 @@ export interface HomeHooks {
   runInfo?(): { stage: number; gold: number } | null;
   onContinue(): void;
   onNew(): void;
+  /** Opens the party screen to change the party (the Battle page's Party button). */
+  onParty(): void;
   onRecruit(): void;
   onDaily(): void;
   onTower(): void;
@@ -194,6 +196,10 @@ export class Home {
     battle.append(el('span', '', 'Battle!'), el('small', '', has ? `Continue run · stage ${info?.stage ?? ''}`.replace(/ · stage $/, '') : 'New run'));
     battle.addEventListener('click', () => this.go(has ? this.hooks.onContinue : this.hooks.onNew));
     go.append(battle);
+    const party = el('button', 'hmLink', 'Party');
+    party.id = 'hmParty';
+    party.addEventListener('click', () => this.go(this.hooks.onParty));
+    go.append(party);
     if (has) {
       const fresh = el('button', 'hmLink', 'Start a new run');
       fresh.addEventListener('click', () => this.go(this.hooks.onNew));

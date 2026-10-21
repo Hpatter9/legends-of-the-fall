@@ -64,7 +64,7 @@ export interface Run {
   over: boolean;
   /** The stage reached when it ended. */
   best: number;
-  /** The hero kinds summons draw from (the unlocked ones); the starting five when unset. */
+  /** The hero kinds summons draw from (the party); the starting five when unset. */
   pool?: string[];
   /** The castle's levels when the run began (the fights keep them); none when unset. */
   castle?: Castle;
@@ -91,8 +91,9 @@ export interface Run {
 /** A run that is not an ordinary one: today's daily challenge (`practice` for a replay that does not count), or the endless tower. */
 export type RunMode = { kind: 'daily'; date: number; practice: boolean } | { kind: 'tower' };
 
-export function newRun(seed: number, pool: readonly string[] = HEROES, castle: Castle = newCastle()): Run {
-  const run: Run = { seed, gold: START_GOLD + bonusGold(castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...pool], castle: { ...castle } };
+/** A new run drawing from `party` (the hero kinds its summons and starting heroes come from). */
+export function newRun(seed: number, party: readonly string[] = HEROES, castle: Castle = newCastle()): Run {
+  const run: Run = { seed, gold: START_GOLD + bonusGold(castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...party], castle: { ...castle } };
   // two grade-1 heroes, drawn from the same stream as every summon but free
   for (let i = 0; i < 2; i++) run.squad.push(add(run, draw(run)).id);
   return run;

@@ -14,6 +14,7 @@ import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
 import { Gacha } from './gacha';
 import { Events } from './events';
 import { Home } from './home';
+import { Party } from './party';
 import { dailyInProgress, modeNote, settleRun, startDaily, towerRun } from './sim/modes';
 import { toastAchievements } from './achievementsView';
 import { clockSeed, todayKey } from './modes';
@@ -28,6 +29,7 @@ import { countTraits, kindsOf, traitsOf, TRAITS } from './sim/traits';
 import { UnitSprite } from './render/unitView';
 import { flyUp, summonBurst } from './render/uiFx';
 import { Fx, loadFx } from './render/fx';
+import pillarLightUrl from './art/fx/vfx/pillar_light.png';
 import { framesOf, loadSheets, portrait } from './render/sheets';
 import { at, FOOT, HH, TH, TW } from './render/iso';
 import { bindMute, play, playEvents, setup, startFight } from './render/sound';
@@ -70,6 +72,7 @@ class Game {
   private gacha!: Gacha;
   private events = new Events();
   private home!: Home;
+  private party!: Party;
   /** Crowns the last settled fight paid. */
   private crownGain = 0;
   /** Whether the fight's end has been settled into the run. */
@@ -96,7 +99,9 @@ class Game {
   async start(): Promise<void> {
     await this.app.init({ resizeTo: window, backgroundAlpha: 0, antialias: false, roundPixels: true, autoDensity: true, resolution: Math.min(3, devicePixelRatio || 1) });
     $('stage').appendChild(this.app.canvas);
-    await Promise.all([loadSheets(), loadBoardArt(), loadFx()]);
+    // (the fonts first, so the first damage number is not drawn in a fallback face; a slow load gives up after a moment)
+    const fonts = Promise.all(['900 16px "Cinzel Decorative"', '700 16px "Alegreya Sans"', '16px "Press Start 2P"'].map((f) => document.fonts.load(f))).catch(() => {});
+    await Promise.all([loadSheets(), loadBoardArt(), loadFx(), Promise.race([fonts, new Promise((ok) => setTimeout(ok, 2500))])]);
     this.world.sortableChildren = true;
     this.boardView.root.addChild(this.fx.root);
     this.world.addChild(this.boardView.root);
@@ -108,7 +113,7 @@ class Game {
     const seed = Number(query.get('seed'));
     this.meta = loadMeta((Date.now() % 100000) + 1);
     saveMeta(this.meta);
-    this.run = (!seed && loadRun()) || newRun(seed || (Date.now() % 100000) + 1, this.meta.unlocked, this.meta.castle);
+    this.run = (!seed && loadRun()) || newRun(seed || (Date.now() % 100000) + 1, this.meta.party, this.meta.castle);
     this.syncPool();
     this.gacha = new Gacha(this.meta, () => {
       this.syncPool();
@@ -129,7 +134,15 @@ class Game {
         return r && !r.over ? { stage: r.stage, gold: r.gold } : null;
       },
       onContinue: () => this.resume(),
-      onNew: () => this.newRunNow(),
+      // (a new run starts once its party is picked)
+      onNew: () => this.party.open('start', () => this.newRunNow()),
+      onParty: () =>
+        this.party.open('edit', () => {
+          // (a run going on draws from the new party from now on)
+          this.syncPool();
+          if (loadRun()) saveRun(this.run);
+          this.home.open();
+        }),
       onRecruit: () => this.gacha.open(),
       onDaily: () => {
         if (dailyInProgress(loadRun(), todayKey())) return this.resume();
@@ -137,6 +150,7 @@ class Game {
       },
       onTower: () => this.startRun(towerRun(clockSeed(), this.meta)),
     });
+    this.party = new Party(this.meta, () => this.home.open());
     bindSpellbook(this.meta, () => {
       saveMeta(this.meta);
       this.home.refresh();
@@ -574,7 +588,7 @@ class Game {
 
   /** Begin a new run (with the castle as it stands) and its first fight. */
   private newRunNow(): void {
-    this.startRun(newRun(clockSeed(), this.meta.unlocked, this.meta.castle));
+    this.startRun(newRun(clockSeed(), this.meta.party, this.meta.castle));
   }
 
   /** Begin a run (any mode's) and its first fight. */
@@ -597,9 +611,9 @@ class Game {
     if (this.run.event) this.events.openEvent(this.run, () => saveRun(this.run));
   }
 
-  /** The draw pool follows the unlocks, except a daily challenge, which keeps its starting five. */
+  /** The draw pool is the party, except a daily challenge, which keeps its starting five. */
   private syncPool(): void {
-    if (this.run.mode?.kind !== 'daily') this.run.pool = [...this.meta.unlocked];
+    if (this.run.mode?.kind !== 'daily') this.run.pool = [...this.meta.party];
   }
 
   /** The result screen's stars: each pops in (CSS) with its reason and what it pays, and a chime; none for a loss. */
@@ -661,6 +675,12 @@ class Game {
         row.classList.add('up');
         fill.style.transition = 'none';
         fill.style.width = `${share(after)}%`;
+        // (the level-up's light pillar: on this row, and over the heroes of this kind on the board, if it's showing)
+        const pillar = document.createElement('span');
+        pillar.className = 'pillar';
+        pillar.style.backgroundImage = `url(${pillarLightUrl})`;
+        row.append(pillar);
+        for (const u of this.b.units) if (u.side === 'hero' && u.def === kind) this.sprites.get(u.id)?.evolve();
         play('levelUp');
       }, at + 900);
     });

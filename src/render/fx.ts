@@ -76,6 +76,7 @@ interface Strip {
 }
 
 let impact: Strip;
+const SHOT_TINT: Partial<Record<Shot, number>> = { bolt: 0x66ccff, holy: 0xffe27a, leaf: 0x7aff6a, curse: 0xb06aff };
 let fire: Strip;
 let blast: Strip;
 let arrow: Texture;
@@ -213,6 +214,7 @@ export class Fx {
           this.anim(magic.goldBurst, by.x, by.y - by.tall * 0.45, 1.2, 60);
         }
       } else if (e.kind === 'zone') this.zone(b, e.u, e.v, e.ms);
+      else if (e.kind === 'trap') this.trap(b, e.u, e.v, e.ms);
       else if (e.kind === 'hit') {
         const to = this.sprites.get(e.to);
         const by = b.units.find((x) => x.id === e.by);
@@ -225,8 +227,9 @@ export class Fx {
           continue;
         }
         if (e.src === 'dot') {
-          const burn = target.dot?.kind !== 'bleed';
-          this.anim(burn ? fire : impact, to.x, to.y - to.tall * 0.45, burn ? 0.7 : 0.6, 60);
+          const burn = target.dot?.kind === 'burn' || target.dot === undefined;
+          if (target.dot?.kind === 'curse') this.particles.spawn({ frames: VFX.puffFire, x: to.x, y: to.y - to.tall * 0.45, scale: 0.8, life: 260, alpha: 0.8, add: true, tint: 0xb06aff });
+          else this.anim(burn ? fire : impact, to.x, to.y - to.tall * 0.45, burn ? 0.7 : 0.6, 60);
           this.number(e.dmg, to.x, to.y - to.tall - 10, false, target.side === 'hero');
           continue;
         }
@@ -241,7 +244,7 @@ export class Fx {
         }
         if (skillFx) this.effect(skillFx, to.x, to.y - to.tall * 0.45);
         else {
-          const fiery = defOf(by).shot === 'fire' || defOf(by).shot === 'bolt';
+          const fiery = defOf(by).shot === 'fire' || defOf(by).shot === 'bolt' || defOf(by).shot === 'holy' || defOf(by).shot === 'leaf' || defOf(by).shot === 'curse';
           this.anim(fiery ? (e.splash ? fire : blast) : impact, to.x, to.y - to.tall * 0.45, (fiery && !e.splash ? 0.8 : 0.9) * spark, 45);
         }
         if (this.particles.rate(0.7)) this.puffAt(to.x, to.y - to.tall * 0.3, target.side === 'hero' ? 'white' : 'blood', 0.8 + spark * 0.2);
@@ -339,6 +342,9 @@ export class Fx {
       }
       if (u.hasteUntil !== undefined && u.hasteUntil > b.t && this.particles.rate(0.5))
         this.particles.spawn({ frames: VFX.dustGold, x: s.x + jitter(8), y: s.y - 2, scale: 0.6, life: 380, vy: -0.02, alpha: 0.8 });
+      // a slowed fighter gives off ice crystals while it lasts
+      if (u.slowUntil !== undefined && u.slowUntil > b.t && this.particles.rate(0.3))
+        this.particles.spawn({ frames: VFX.puffIce, x: s.x + jitter(12), y: s.y - s.tall * 0.5, scale: 0.5, life: 520, vy: -0.015, alpha: 0.9 });
       if (defOf(u).flies && b.t - (this.gusts.get(u.id) ?? -1e9) > 900) {
         this.gusts.set(u.id, b.t);
         this.gust(s);
@@ -461,7 +467,7 @@ export class Fx {
 
   /** A line of text that rises and fades. */
   private label(text: string, x: number, y: number, fill: number, size: number, life = 900): void {
-    const txt = new Text({ text, style: { fontFamily: 'Trebuchet MS, Verdana, sans-serif', fontWeight: 'bold', fontSize: size, fill, stroke: { color: 0x1a1008, width: 3 } }, resolution: 3 });
+    const txt = new Text({ text, style: { fontFamily: "'Alegreya Sans', 'Trebuchet MS', sans-serif", fontWeight: 'bold', fontSize: size + 2, fill, stroke: { color: 0x1a1008, width: 3 } }, resolution: 3 });
     txt.anchor.set(0.5, 1);
     txt.position.set(x, y);
     this.root.addChild(txt);
@@ -660,11 +666,33 @@ export class Fx {
     });
   }
 
+  /** A snare on a tile: a dark ring that waits there (and goes out when it is sprung or runs down). */
+  private trap(b: Battle, u: number, v: number, ms: number): void {
+    const view = new Graphics();
+    const [x, y] = this.tilePos(b, u, v);
+    view.ellipse(0, 0, TW * 0.22, TH * 0.22).stroke({ width: 2, color: 0xe8c860 });
+    view.ellipse(0, 0, TW * 0.12, TH * 0.12).fill({ color: 0x3a2a14, alpha: 0.8 });
+    view.position.set(x, y);
+    this.root.addChild(view);
+    this.anim(magic.earthBurst, x, y - 6, 0.9, 60);
+    let t = 0;
+    this.items.push({
+      view,
+      step: (dt) => {
+        t += dt;
+        const live = b.traps?.some((tr) => tr.u === u && tr.v === v);
+        view.alpha = 0.6 + 0.3 * Math.sin(t / 250);
+        if (!live && t > 200) this.anim(magic.earthBurst, x, y - 6, 1.3, 50);
+        return live === true || t <= 200 ? t < ms : false;
+      },
+    });
+  }
+
   private number(n: number, x: number, y: number, heavy: boolean, onHero: boolean): void {
     if (!settings().numbers) return;
     const txt = new Text({
       text: String(n),
-      style: { fontFamily: 'Trebuchet MS, Verdana, sans-serif', fontWeight: 'bold', fontSize: heavy ? 17 : 13, fill: onHero ? 0xff7a6a : heavy ? 0xffd34a : 0xffffff, stroke: { color: 0x1a1008, width: 3 } },
+      style: { fontFamily: "'Press Start 2P', monospace", fontWeight: 'normal', fontSize: heavy ? 12 : 9, fill: onHero ? 0xff7a6a : heavy ? 0xffd34a : 0xffffff, stroke: { color: 0x1a1008, width: 3 } },
       resolution: 3,
     });
     txt.anchor.set(0.5, 1);
@@ -711,11 +739,12 @@ export class Fx {
     const by = this.sprites.get(byId);
     const to = this.sprites.get(toId);
     if (!by || !to) return;
-    const sp = new Sprite(kind === 'arrow' ? arrow : kind === 'bone' ? bone : fire.frames[0]);
+    const fiery = kind === 'fire' || kind in SHOT_TINT;
+    const sp = new Sprite(kind === 'arrow' || kind === 'bullet' ? arrow : kind === 'bone' ? bone : fire.frames[0]);
     sp.anchor.set(0.5);
-    sp.scale.set(kind === 'fire' || kind === 'bolt' ? 0.9 : 0.55);
-    if (kind === 'fire' || kind === 'bolt') sp.blendMode = 'add';
-    if (kind === 'bolt') sp.tint = 0x66ccff;
+    sp.scale.set(fiery ? 0.9 : kind === 'bullet' ? 0.4 : 0.55);
+    if (fiery) sp.blendMode = 'add';
+    if (SHOT_TINT[kind]) sp.tint = SHOT_TINT[kind]!;
     this.root.addChild(sp);
     const x0 = by.x;
     const y0 = by.y - by.tall * 0.55;
@@ -723,10 +752,9 @@ export class Fx {
     const place = (f: number) => {
       const x1 = to.x;
       const y1 = to.y - to.tall * 0.45;
-      const arc = kind === 'fire' || kind === 'bolt' ? 8 : 18 + Math.hypot(x1 - x0, y1 - y0) * 0.15;
+      const arc = fiery ? 8 : kind === 'bullet' ? 2 : 18 + Math.hypot(x1 - x0, y1 - y0) * 0.15;
       return [x0 + (x1 - x0) * f, y0 + (y1 - y0) * f - Math.sin(Math.PI * f) * arc] as const;
     };
-    const fiery = kind === 'fire' || kind === 'bolt';
     let trailAt = 0;
     this.items.push({
       view: sp,
@@ -743,7 +771,7 @@ export class Fx {
           trailAt = t;
           this.particles.spawn(
             fiery
-              ? { frames: VFX.puffFire, x: x + jitter(3), y: y + jitter(3), scale: 0.45, life: 260, vy: -0.02, alpha: 0.8, add: true, tint: kind === 'bolt' ? 0x66ccff : undefined }
+              ? { frames: VFX.puffFire, x: x + jitter(3), y: y + jitter(3), scale: 0.45, life: 260, vy: -0.02, alpha: 0.8, add: true, tint: SHOT_TINT[kind] }
               : { frames: VFX.sparkleWhite, x, y, scale: 0.3, life: 200, alpha: 0.6, add: true },
           );
         }

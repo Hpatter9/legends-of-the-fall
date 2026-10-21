@@ -128,8 +128,10 @@ const inArea = (x: { u: number; v: number }, u: number, v: number) => Math.abs(x
 
 /** Whether a hero is hasted now. */
 export const isHasted = (b: Battle, x: Unit) => x.hasteUntil !== undefined && x.hasteUntil > b.t;
-/** How much faster a fighter acts now (1 when not hasted). */
-export const speedOf = (b: Battle, x: Unit) => (isHasted(b, x) ? HASTE_MULT : 1) * (x.slowUntil !== undefined && x.slowUntil > b.t ? SLOW_MULT : 1) * (x.side === 'hero' ? b.traits?.speed ?? 1 : 1);
+/** Whether a fighter is slowed (Frost Nova) now. */
+export const isSlowed = (b: Battle, x: Unit) => x.slowUntil !== undefined && x.slowUntil > b.t;
+/** How much faster a fighter acts now (1 when neither hasted nor slowed): it moves and swings at this speed. */
+export const speedOf = (b: Battle, x: Unit) => (isHasted(b, x) ? HASTE_MULT : 1) * (isSlowed(b, x) ? SLOW_MULT : 1) * (x.side === 'hero' ? b.traits?.speed ?? 1 : 1);
 
 /** Mana gain for one tick. */
 export function fillMana(b: Battle): void {
@@ -147,7 +149,7 @@ const foesIn = (b: Battle, u: number, v: number) => b.units.filter((x) => x.aliv
 /** The fallen hero a Resurrect on this tile would lift: the nearest in the 3x3 whose tile is free. */
 const fallenIn = (b: Battle, u: number, v: number) =>
   b.units
-    .filter((x) => !x.alive && x.side === 'hero' && inArea(x, u, v) && !b.units.some((o) => o.alive && o.u === x.u && o.v === x.v))
+    .filter((x) => !x.alive && x.side === 'hero' && !defOf(x).summon && inArea(x, u, v) && !b.units.some((o) => o.alive && o.u === x.u && o.v === x.v))
     .sort((x, y) => apart(x, { u, v }) - apart(y, { u, v }) || x.id - y.id)[0];
 
 /** A raw blow from the king: the foe's defence comes off. */

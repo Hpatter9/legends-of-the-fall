@@ -10,7 +10,8 @@ import { boardOk, D, DEPLOY_ROWS, GROUND_COST, LAVA_BURN, makeBoard, sightClear,
 import { firstStep, walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
 import { FOE_BANDS } from './foes';
-import { afterBlow, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rollCrit, sureFooted, tickStatus, tryCast, type Dot, type Zone } from './abilities';
+import { killXp } from './levels';
+import { afterBlow, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, rollCrit, sureFooted, tickStatus, tryCast, type Dot, type Hot, type Trap, type Zone } from './abilities';
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellState } from './spells';
 import { kindsOf, traitEffects, type TraitEffects } from './traits';
 import { mergeEffects } from './relics';
@@ -66,6 +67,8 @@ export interface Unit {
   frenzy?: { n: number; until: number };
   /** Its attack raised by a war banner (Samurai Commander) until then. */
   banner?: { until: number };
+  /** Healing over time (the Cleric's blessing). */
+  hot?: Hot;
   /** The next time a healer's passive mends an ally. */
   mendAt?: number;
   diedAt?: number;
@@ -77,10 +80,11 @@ export interface Unit {
   size?: number;
   /** A hero's grade above the first (2 or 3); absent is 1. Only the look reads it. */
   grade?: number;
-  /** What this fighter did, for its XP (`levels.ts`): damage dealt, healing done, kills made. */
+  /** What this fighter did, for its XP (`levels.ts`): damage dealt, healing done, kills made, and the XP its kills are worth. */
   dealt?: number;
   healed?: number;
   kills?: number;
+  slain?: number;
 }
 
 interface Pending {
@@ -110,6 +114,7 @@ export type BattleEvent =
   | { kind: 'area'; by: number; id: 'volley' | 'meteor'; u: number; v: number; ms: number }
   | { kind: 'arc'; from: number; to: number }
   | { kind: 'zone'; u: number; v: number; ms: number }
+  | { kind: 'trap'; u: number; v: number; ms: number }
   | { kind: 'dodge'; to: number }
   | { kind: 'spell'; id: SpellId; u: number; v: number }
   /** A spell touches this fighter (the renderer plays the spell's sheet on it). */
@@ -140,6 +145,8 @@ export interface Battle {
   skillRng: number;
   /** Burning ground. */
   zones: Zone[];
+  /** Snares laid by rangers (none until one is laid). */
+  traps?: Trap[];
   nextId: number;
   /** The king's mana, spell cooldowns and meteors falling. */
   spells: SpellState;
@@ -155,7 +162,7 @@ export interface Battle {
 
 export const defOf = (u: Unit): UnitDef => UNITS[u.def];
 /** A fighter's attack: its kind's, times its own multiplier. */
-export const atkOf = (u: Unit): number => UNITS[u.def].atk * (u.power ?? 1);
+export const atkOf = (u: Unit): number => UNITS[u.def].atk * (u.power ?? 1) * rageOf(u);
 /** Per-fighter stat multipliers: hp and attack, and how much bigger it is drawn. */
 export interface Boost {
   hp?: number;
@@ -323,7 +330,7 @@ export function stepBattle(b: Battle): BattleEvent[] {
   tickStatus(b, out);
   for (const me of b.units) if (me.alive && me.busyUntil <= b.t) decide(b, me, rng, out);
   b.rng = rng.state;
-  const heroes = b.units.some((x) => x.alive && x.side === 'hero');
+  const heroes = b.units.some((x) => x.alive && x.side === 'hero' && !defOf(x).summon);
   const foes = b.units.some((x) => x.alive && x.side === 'foe');
   if (!heroes || !foes || b.t >= TIME_LIMIT_MS) {
     b.phase = heroes && !foes ? 'won' : 'lost';
@@ -383,6 +390,7 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   }
   if (killed) {
     by.kills = (by.kills ?? 0) + 1;
+    by.slain = (by.slain ?? 0) + killXp(to);
     to.alive = false;
     to.diedAt = b.t;
     to.step = undefined;
@@ -448,7 +456,7 @@ function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[]): voi
   me.facing = way;
   const mult = blowMult(tileOf(b, me).h, tileOf(b, to).h, way, to.facing);
   const crit = rollCrit(b, me);
-  const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - Math.max(0, defOf(to).def - pierceOf(me))) * mult * crit * preyOf(me, to) * finishOf(me, to) * rng.range(0.9, 1.1)));
+  const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - Math.max(0, defOf(to).def - pierceOf(me))) * mult * crit * preyOf(me, to) * farOf(me, to) * finishOf(me, to) * rng.range(0.9, 1.1)));
   const quick = speedOf(b, me) * frenzyOf(b, me);
   const atkMs = Math.round(def.atkMs / quick);
   const windup = Math.min(def.shot ? 500 : 400, Math.round(atkMs * 0.4));

@@ -53,16 +53,21 @@ export const TRAITS: Record<string, Trait> = {
   ] },
   mystic: { id: 'mystic', name: 'Mystic', kind: 'origin', short: 'My', tiers: [{ need: 2, effects: { mana: 1.3 }, text: "The king's mana fills 30% faster" }] },
   yokai: { id: 'yokai', name: 'Yokai', kind: 'origin', short: 'Yo', tiers: [{ need: 2, effects: { dodge: 0.06 }, text: 'Slip 6% of blows' }] },
-  beast: { id: 'beast', name: 'Beast', kind: 'origin', short: 'Be', tiers: [
-    { need: 2, effects: { atk: 1.03 }, text: '+3% attack' },
-    { need: 4, effects: { atk: 1.08 }, text: '+8% attack' },
-  ] },
   knightly: { id: 'knightly', name: 'Knightly', kind: 'origin', short: 'Kn', tiers: [{ need: 2, effects: { hp: 1.05 }, text: '+5% health' }] },
   guardian: { id: 'guardian', name: 'Guardian', kind: 'class', short: 'Gu', tiers: [{ need: 2, effects: { guard: 0.05 }, text: 'All heroes take 5% less damage' }] },
   blade: { id: 'blade', name: 'Blade', kind: 'class', short: 'Bl', tiers: [{ need: 2, effects: { crit: 0.1 }, text: '+10% crit chance for all' }] },
   marksman: { id: 'marksman', name: 'Marksman', kind: 'class', short: 'Mk', tiers: [{ need: 2, effects: { reach: 0.5 }, text: 'Shooters reach much further from high ground' }] },
   caster: { id: 'caster', name: 'Caster', kind: 'class', short: 'Ca', tiers: [{ need: 2, effects: { charge: 1.3 }, text: 'Skills charge 30% faster over time' }] },
+  holy: { id: 'holy', name: 'Holy', kind: 'origin', short: 'Ho', tiers: [{ need: 2, effects: { hp: 1.08 }, text: '+8% health' }] },
+  wild: { id: 'wild', name: 'Wild', kind: 'origin', short: 'Wi', tiers: [{ need: 2, effects: { atk: 1.05 }, text: '+5% attack' }] },
+  arcane: { id: 'arcane', name: 'Arcane', kind: 'origin', short: 'Ar', tiers: [{ need: 2, effects: { charge: 1.15 }, text: 'Skills charge 15% faster over time' }] },
+  frontier: { id: 'frontier', name: 'Frontier', kind: 'origin', short: 'Fr', tiers: [{ need: 2, effects: { crit: 0.06 }, text: '+6% crit chance for all' }] },
+  warden: { id: 'warden', name: 'Warden', kind: 'class', short: 'Wa', tiers: [{ need: 2, effects: { guard: 0.04 }, text: 'All heroes take 4% less damage' }] },
   trickster: { id: 'trickster', name: 'Trickster', kind: 'class', short: 'Tr', tiers: [{ need: 2, effects: { speed: 1.05 }, text: 'All heroes act and walk 5% faster' }] },
+  beast: { id: 'beast', name: 'Beast', kind: 'class', short: 'Be', tiers: [
+    { need: 2, effects: { atk: 1.03 }, text: '+3% attack' },
+    { need: 4, effects: { atk: 1.08 }, text: '+8% attack' },
+  ] },
 };
 
 /** Each hero's origin and class. Every trait has two to four heroes. */
@@ -79,11 +84,19 @@ export const HERO_TRAITS: Record<string, readonly [string, string]> = {
   kitsune: ['yokai', 'trickster'],
   karasu: ['yokai', 'trickster'],
   yamabushi: ['yokai', 'guardian'],
-  werewolf: ['beast', 'blade'],
-  minotaur: ['beast', 'guardian'],
-  satyr: ['beast', 'caster'],
-  gorgon: ['beast', 'marksman'],
+  paladin: ['holy', 'guardian'],
+  werewolf: ['wild', 'beast'],
+  minotaur: ['knightly', 'beast'],
+  satyr: ['arcane', 'beast'],
+  gorgon: ['yokai', 'beast'],
   samuraiCommander: ['knightly', 'blade'],
+  cleric: ['holy', 'warden'],
+  druid: ['wild', 'warden'],
+  barbarian: ['wild', 'blade'],
+  ranger: ['frontier', 'marksman'],
+  gunslinger: ['frontier', 'marksman'],
+  warlock: ['arcane', 'caster'],
+  illusionist: ['arcane', 'trickster'],
 };
 
 export const traitsOf = (kind: string): readonly string[] => HERO_TRAITS[kind] ?? [];
