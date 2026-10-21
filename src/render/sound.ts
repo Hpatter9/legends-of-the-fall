@@ -18,7 +18,7 @@ const TRACKS = { town: 'town.ogg', battle: 'battle.ogg', boss: 'boss.ogg' } as c
 type Track = keyof typeof TRACKS;
 
 /** The short effects. */
-export type Sfx = 'swordHit' | 'heavyHit' | 'death' | 'arrow' | 'whoosh' | 'skill' | 'spell' | 'summon' | 'merge' | 'victory' | 'defeat' | 'tap';
+export type Sfx = 'swordHit' | 'heavyHit' | 'death' | 'arrow' | 'whoosh' | 'skill' | 'spell' | 'summon' | 'merge' | 'victory' | 'defeat' | 'star' | 'tap';
 
 /** The least time (ms) between two of the same effect, so a crowd of hits at once is not loud. */
 const GAP: Record<Sfx, number> = {
@@ -33,6 +33,7 @@ const GAP: Record<Sfx, number> = {
   merge: 60,
   victory: 0,
   defeat: 0,
+  star: 120,
   tap: 60,
 };
 
@@ -247,6 +248,10 @@ const SOUNDS: Record<Sfx, (t: number) => void> = {
   defeat: (t) => {
     [392, 349, 330].forEach((f, i) => note(t + i * 0.3, f, 0.3, 0.16));
     note(t + 0.9, 262, 1.2, 0.16);
+  },
+  star: (t) => {
+    note(t, 988, 0.12, 0.14, 'triangle');
+    note(t + 0.07, 1319, 0.2, 0.14, 'triangle');
   },
   tap: (t) => note(t, 1400, 0.03, 0.07, 'sine'),
 };

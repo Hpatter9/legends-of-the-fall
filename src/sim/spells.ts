@@ -70,7 +70,7 @@ const inArea = (x: { u: number; v: number }, u: number, v: number) => Math.abs(x
 /** Whether a hero is hasted now. */
 export const isHasted = (b: Battle, x: Unit) => x.hasteUntil !== undefined && x.hasteUntil > b.t;
 /** How much faster a fighter acts now (1 when not hasted). */
-export const speedOf = (b: Battle, x: Unit) => (isHasted(b, x) ? HASTE_MULT : 1);
+export const speedOf = (b: Battle, x: Unit) => (isHasted(b, x) ? HASTE_MULT : 1) * (x.side === 'hero' ? b.traits?.speed ?? 1 : 1);
 
 /** Mana gain for one tick. */
 export function fillMana(b: Battle): void {

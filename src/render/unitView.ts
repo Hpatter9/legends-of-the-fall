@@ -6,7 +6,7 @@ import { tileAt, type Board } from '../sim/board';
 import { defOf, type Unit } from '../sim/battle';
 import { formOf } from '../sim/units';
 import type { Texture } from 'pixi.js';
-import { framesOf, figureOf, type Anim } from './sheets';
+import { facesRightOf, framesOf, figureOf, type Anim } from './sheets';
 import { CHARGE_MAX, kitOf } from '../sim/abilities';
 import { at, depth, HH } from './iso';
 
@@ -149,8 +149,8 @@ export class UnitSprite {
     this.body.texture = row || anim === 'dead' || anim === 'attack' || anim === 'hurt' ? list[Math.min(list.length - 1, Math.max(0, frame))] : list[frame % list.length];
     this.aura.visible = guarded;
     this.aura.alpha = 0.6 + 0.4 * Math.sin(t / 120);
-    // (the sheets face right; the board's +u runs down to the right, +v down to the left)
-    const dx = [1, -1, -1, 1][u.facing];
+    // (most sheets face right, the forest and boss ones left; the board's +u runs down to the right, +v down to the left)
+    const dx = [1, -1, -1, 1][u.facing] * (facesRightOf(this.sheet) ? 1 : -1);
     this.body.scale.set(def.scale * dx, def.scale);
     for (const r of this.rim.children as Sprite[]) {
       r.texture = this.body.texture;
