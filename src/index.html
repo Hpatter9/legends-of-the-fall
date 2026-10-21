@@ -468,7 +468,7 @@
   #tip[data-side='right'] i { left: -18px; top: calc(var(--ay) - 9px); border-right-color: var(--gold); }
   .tipLit { outline: 2px solid var(--gold); outline-offset: 3px; box-shadow: 0 0 14px var(--gold); }
 
-  #loading { position: fixed; inset: 0; display: grid; place-items: center; font-size: 18px; color: var(--gold); }
+  #loading { position: fixed; inset: 0; z-index: 30; background: radial-gradient(#4a2c1c, #1c1410); display: grid; place-items: center; font-size: 18px; color: var(--gold); }
   #version { position: fixed; right: 6px; bottom: 2px; font-size: 10px; color: rgba(255, 255, 255, 0.5); text-shadow: 0 1px 0 #000; pointer-events: none; }
   @media (orientation: portrait) { #version { bottom: auto; top: calc(env(safe-area-inset-top) + 34px); } }
   /* The party screen (src/party.ts): five slots, the traits they wake, the heroes to pick from, and the button to start */
