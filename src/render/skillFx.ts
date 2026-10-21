@@ -2,6 +2,8 @@
 // plays on each foe it strikes (`hit`). The sheets are the Pixel Effects pack's 32px strips (`src/art/fx/magic`), named
 // here by key; `fx.ts` loads them. Pure data: no Pixi, no DOM, so the tests can check that every skill has an entry.
 
+import type { SpellId } from '../sim/spells';
+
 /** The effect sheets in `src/art/fx/magic`. */
 export type MagicKey =
   | 'bloodExplosion'
@@ -64,10 +66,32 @@ export const SKILL_FX: Record<string, SkillFx> = {
   'Tusk Flurry': { hit: { sheet: 'bloodExplosion', scale: 0.6, frameMs: 50 } },
 };
 
-/** The king's spells: a sheet on each hero the spell touches (the meteor's is its landing). */
-export const SPELL_FX: Record<'heal' | 'haste', Effect> = {
+/** The king's spells: a sheet on each fighter the spell touches (the meteor's is its landing). */
+export const SPELL_FX: Record<Exclude<SpellId, 'meteor'>, Effect> = {
   heal: { sheet: 'lightGather', scale: 1.6 },
   haste: { sheet: 'windVortex', scale: 1.5, tint: 0xffe27a },
+  shield: { sheet: 'earthShield', scale: 1.5 },
+  smite: { sheet: 'lightNova', scale: 1.8 },
+  chain: { sheet: 'lightningBurst', scale: 1.4 },
+  frost: { sheet: 'iceShield', scale: 1.5 },
+  rally: { sheet: 'goldBurst', scale: 1.6 },
+  quake: { sheet: 'earthExplosion', scale: 1.2 },
+  resurrect: { sheet: 'lightGather', scale: 2.2, tint: 0xfff2a0 },
+  poison: { sheet: 'darkCircle', scale: 1.6, tint: 0x8aff5a },
+};
+
+/** The tint of the tiles a spell lights, and how long (ms) they glow. */
+export const SPELL_GLOW: Record<Exclude<SpellId, 'meteor'>, { color: number; ms: number }> = {
+  heal: { color: 0x7dff8a, ms: 600 },
+  haste: { color: 0xffe27a, ms: 600 },
+  shield: { color: 0x9ad0ff, ms: 600 },
+  smite: { color: 0xfff2a0, ms: 500 },
+  chain: { color: 0xbfe6ff, ms: 500 },
+  frost: { color: 0x8ae8ff, ms: 900 },
+  rally: { color: 0xffb04a, ms: 600 },
+  quake: { color: 0xb88a5a, ms: 700 },
+  resurrect: { color: 0xffffff, ms: 800 },
+  poison: { color: 0x8aff5a, ms: 6000 },
 };
 
 /** A foe this big (its full health) that dies is a big kill: a burst, a white flash, a hard shake. */

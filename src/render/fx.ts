@@ -6,12 +6,13 @@ import { Container, Graphics, Rectangle, Sprite, Text, Texture } from 'pixi.js';
 import { tileAt } from '../sim/board';
 import { defOf, type Battle, type BattleEvent } from '../sim/battle';
 import { kitOf } from '../sim/abilities';
+import { SPELLS } from '../sim/spells';
 import type { Shot } from '../sim/units';
 import { settings } from '../settings';
 import { loadImage } from './loadImage';
 import { at, TH, TW } from './iso';
 import { fadeTrauma, popScale, shakeOf, traumaFor } from './juiceRules';
-import { BIG_FOE_HP, SKILL_FX, SPELL_FX, type Effect, type MagicKey } from './skillFx';
+import { BIG_FOE_HP, SKILL_FX, SPELL_FX, SPELL_GLOW, type Effect, type MagicKey } from './skillFx';
 import type { UnitSprite } from './unitView';
 import impactUrl from '../art/fx/impact.png';
 import fireUrl from '../art/fx/hit_fire.png';
@@ -147,6 +148,7 @@ export class Fx {
       } else if (e.kind === 'dash' || e.kind === 'blink') this.streak(b, e);
       else if (e.kind === 'area') this.area(b, e);
       else if (e.kind === 'spell') this.spell(b, e);
+      else if (e.kind === 'spellfx') this.spellFx(e);
       else if (e.kind === 'heal') {
         const to = this.sprites.get(e.to);
         if (to && e.amount > 0) this.label(`+${e.amount}`, to.x, to.y - to.tall - 10, 0x7dff8a, 13);
@@ -378,10 +380,10 @@ export class Fx {
     });
   }
 
-  /** A heal or haste goes off: the 3x3 lit for a moment and a burst of light on each hero in it. */
+  /** A spell goes off: the 3x3 lit for a moment (a poison cloud's for as long as it lingers), and, for the ones that go everywhere, nothing here (the `spellfx` events light each fighter). */
   private spell(b: Battle, e: Extract<BattleEvent, { kind: 'spell' }>): void {
-    if (e.id === 'meteor') return;
-    const color = e.id === 'heal' ? 0x7dff8a : 0xffe27a;
+    if (e.id === 'meteor' || SPELLS[e.id].target === 'all') return;
+    const { color, ms } = SPELL_GLOW[e.id];
     const g = new Graphics();
     this.root.addChild(g);
     let t = 0;
@@ -390,22 +392,30 @@ export class Fx {
       step: (dt) => {
         t += dt;
         g.clear();
+        const alpha = e.id === 'poison' ? 0.22 + 0.1 * Math.sin(t / 250) : 0.35 * (1 - t / ms);
         for (let du = -1; du <= 1; du++)
           for (let dv = -1; dv <= 1; dv++) {
             if (!tileAt(b.board, e.u + du, e.v + dv)) continue;
             const [x, y] = this.tilePos(b, e.u + du, e.v + dv);
-            g.poly([x, y - TH / 2, x + TW / 2, y, x, y + TH / 2, x - TW / 2, y]).fill({ color, alpha: 0.35 * (1 - t / 600) });
+            g.poly([x, y - TH / 2, x + TW / 2, y, x, y + TH / 2, x - TW / 2, y]).fill({ color, alpha });
           }
-        return t < 600;
+        return t < ms;
       },
     });
-    for (const x of b.units) {
-      const s = this.sprites.get(x.id);
-      if (x.alive && x.side === 'hero' && Math.abs(x.u - e.u) <= 1 && Math.abs(x.v - e.v) <= 1 && s) {
-        this.effect(SPELL_FX[e.id], s.x, s.y - s.tall * 0.45);
-        if (e.id === 'haste') this.label('Haste', s.x, s.y - s.tall - 20, color, 12, 900);
-      }
+    if (e.id === 'poison') {
+      const [x, y] = this.tilePos(b, e.u, e.v);
+      this.effect(SPELL_FX.poison, x, y - 10);
     }
+  }
+
+  /** A spell touches a fighter: its sheet plays on them (and Haste says so). */
+  private spellFx(e: Extract<BattleEvent, { kind: 'spellfx' }>): void {
+    const s = this.sprites.get(e.to);
+    if (!s || e.id === 'meteor') return;
+    this.effect(SPELL_FX[e.id], s.x, s.y - s.tall * 0.45);
+    if (e.id === 'haste') this.label('Haste', s.x, s.y - s.tall - 20, SPELL_GLOW.haste.color, 12, 900);
+    if (e.id === 'rally') this.label('Rally', s.x, s.y - s.tall - 20, SPELL_GLOW.rally.color, 12, 900);
+    if (e.id === 'shield') this.label('Shield', s.x, s.y - s.tall - 20, SPELL_GLOW.shield.color, 12, 900);
   }
 
   /** Burning ground: flames over a 3x3 of tiles for `ms`. */
