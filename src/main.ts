@@ -544,7 +544,6 @@ class Game {
     setup();
     bindMute($('mute'));
     $('fight').addEventListener('click', () => this.begin());
-    $('recruit').addEventListener('click', () => this.gacha.open());
     $('summon').addEventListener('click', () => {
       const before = new Set(this.run.roster.map((h) => h.id));
       const got = summon(this.run);

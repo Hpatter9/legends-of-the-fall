@@ -18,7 +18,8 @@ import { openSettings } from './settings';
 import { openSpellbook } from './spellbook';
 import { resetTipsButton, tips } from './tips';
 import { AREA_NAMES, BUILDING_ICON, ICONS, icon } from './menuArt';
-import { drawHeroGrid, drawHeroSheet, strongest } from './menuHeroes';
+import { drawHeroSheet, strongest } from './menuHeroes';
+import { Tavern } from './tavern';
 import { MenuScene } from './menuScene';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -71,12 +72,14 @@ export class Home {
   private scene!: MenuScene;
   private stopSheet: (() => void) | null = null;
   private sceneKey = '';
+  private tavern: Tavern;
 
   constructor(
     private meta: Meta,
     private hooks: HomeHooks,
   ) {
     this.scene = new MenuScene($('hmScene'));
+    this.tavern = new Tavern((kind) => this.openSheet(kind));
     const pages = $('hmPages');
     const bar = $('hmTabs');
     for (const t of TABS) {
@@ -89,6 +92,8 @@ export class Home {
       bar.append(b);
       this.tabBtns.set(t.id, b);
     }
+    // (the heroes page is the tavern: it draws once and keeps its place while you switch tabs)
+    this.pages.get('heroes')!.append(this.tavern.root);
     // (the battle page keeps the scene behind its own content)
     this.pages.get('battle')!.append($('hmScene'));
     $('hmTrophy').addEventListener('click', () => this.openSub('Achievements', (b) => drawAchievements(b, this.meta)));
@@ -116,6 +121,7 @@ export class Home {
   private go(then: () => void): void {
     $('home').hidden = true;
     this.scene.stop();
+    this.tavern.stop();
     this.note = '';
     then();
   }
@@ -156,11 +162,14 @@ export class Home {
     this.tabBtns.get('battle')!.classList.toggle('new', !m.daily[String(todayKey())]);
     this.drawBattle();
     this.drawRecruit();
-    this.drawHeroes();
+    this.tavern.update(m);
     this.drawCastle();
     this.drawSpells();
     if (this.tab === 'battle') this.scene.start();
     else this.scene.stop();
+    // (the tavern only moves while it is showing, and not under a hero sheet)
+    if (this.tab === 'heroes' && $('hmSheet').hidden) this.tavern.start();
+    else this.tavern.stop();
   }
 
   private drawBattle(): void {
@@ -232,14 +241,6 @@ export class Home {
     page.append(panel);
   }
 
-  private drawHeroes(): void {
-    const page = this.pages.get('heroes')!;
-    page.replaceChildren();
-    const panel = el('div', 'hmPanel wide');
-    drawHeroGrid(panel, this.meta, (kind) => this.openSheet(kind));
-    page.append(panel);
-  }
-
   private drawCastle(): void {
     const m = this.meta;
     const page = this.pages.get('castle')!;
@@ -295,6 +296,7 @@ export class Home {
   private openSheet(kind: string): void {
     this.closeSheet();
     $('hmSheet').hidden = false;
+    this.tavern.stop();
     this.stopSheet = drawHeroSheet($('hmSheetBox'), this.meta, kind, () => this.closeSheet());
   }
 
@@ -302,6 +304,7 @@ export class Home {
     this.stopSheet?.();
     this.stopSheet = null;
     $('hmSheet').hidden = true;
+    if (this.isOpen && this.tab === 'heroes') this.tavern.start();
   }
 
   private openSub(title: string, draw: (body: HTMLElement) => void): void {

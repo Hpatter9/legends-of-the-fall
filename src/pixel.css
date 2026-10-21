@@ -62,7 +62,8 @@ button.primary:not(:disabled), .hmBattle { animation: pxPulse 2.4s steps(1) infi
 #hmTabs { border-top: 8px solid; border-image: url(ui/trim-t.png) 4 0 0 0 / 8px 0 0 0 repeat; }
 @media (orientation: landscape) {
   #panel { border-top: 0; border-left: 8px solid; border-image: url(ui/trim-l.png) 0 0 0 4 / 0 0 0 8px repeat; padding: calc(env(safe-area-inset-top) + 4px) calc(env(safe-area-inset-right) + 6px) 4px 6px; }
-  #buttons button:not(#fight) { flex: 1 1 40%; }
+  #buttons button:not(#fight) { flex: 1 1 28%; }
+  #buttons button#summon:not(#fight) { flex: 1 1 100%; }
   #hmTabs { border-top: 0; border-right: 8px solid; border-image: url(ui/trim-r.png) 0 4 0 0 / 0 8px 0 0 repeat; }
 }
 /* the version line: clear of the round buttons upright (the first row is taller now) and at the bottom right sideways */

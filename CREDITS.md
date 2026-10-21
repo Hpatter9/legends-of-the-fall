@@ -98,3 +98,10 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   generated with PixelLab (`tools/ui/genicons.py`), used as they came.
 - **Pixelify Sans** (Stefie Justprince; SIL Open Font Licence 1.1), from the `@fontsource/pixelify-sans` npm package: the
   text font for the whole interface (`out/web/fonts/`). Press Start 2P stays for the counters.
+
+## The tavern (`src/art/tavern/`, `src/tavern.ts`)
+
+- **Wall, floor, rug, bar, stools, chairs, tables, barrels and crates** (`src/art/tavern/*.png`): generated with PixelLab
+  (`/create-image-pixflux`, side view, final pixel size; see `tools/tavern/README.md`), trimmed, and the floor turned and
+  darkened. No asset-pack tiles are used here: the packs' village, glassblower and dungeon tilesets are all top-down, and
+  the room is a side view. The heroes in it are the Craftpix sheets already credited above.

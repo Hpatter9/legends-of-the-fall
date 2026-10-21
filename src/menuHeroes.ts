@@ -1,12 +1,12 @@
-// The menu's Heroes tab: a grid of hero cards (portrait, rank stars, level, XP bar, rarity frame) and a detail sheet
-// for one hero. Reads the meta only.
+// The hero detail sheet (opened from a tap on a hero in the tavern): portrait, rank stars, level, XP bar, rarity, stats and
+// skills. Reads the meta only.
 
 import { ALL_HEROES, UNITS } from './sim/units';
 import { KITS } from './sim/abilities';
 import { traitsOf, TRAITS } from './sim/traits';
 import { MAX_RANK, RANK_SHARDS, RARITY_NAMES as RARITY, rankMult, rankOf, rarityOf, tierMult, type Meta } from './sim/meta';
 import { levelBoost, progressOf, xpOf } from './sim/levels';
-import { portrait, sprite } from './render/sheets';
+import { sprite } from './render/sheets';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -29,27 +29,6 @@ function xpBar(meta: Meta, kind: string): { level: number; bar: HTMLElement; tex
 export function strongest(meta: Meta, n: number): string[] {
   const score = (k: string) => progressOf(xpOf(meta, k)).level * 100 + rankOf(meta, k) * 10 + rarityOf(k);
   return ALL_HEROES.filter((k) => meta.unlocked.includes(k)).sort((a, b) => score(b) - score(a)).slice(0, n);
-}
-
-export function drawHeroGrid(body: HTMLElement, meta: Meta, onPick: (kind: string) => void): void {
-  const have = ALL_HEROES.filter((k) => meta.unlocked.includes(k)).length;
-  body.append(el('p', 'hint', `${have} of ${ALL_HEROES.length} heroes recruited · tap a card for its details`));
-  const grid = el('div', 'hgrid');
-  const sorted = [...ALL_HEROES].sort((a, b) => Number(meta.unlocked.includes(b)) - Number(meta.unlocked.includes(a)));
-  for (const kind of sorted) {
-    const def = UNITS[kind];
-    const open = meta.unlocked.includes(kind);
-    const card = el('button', `hcard r${rarityOf(kind)}${open ? '' : ' locked'}`);
-    card.append(portrait(def.sheet, 64));
-    card.append(el('b', '', open ? def.name : '???'));
-    if (open) {
-      const x = xpBar(meta, kind);
-      card.append(el('span', 'stars', stars(rankOf(meta, kind))), el('span', 'lv', `Lv ${x.level}`), x.bar);
-    } else card.append(el('span', 'rtag', RARITY[rarityOf(kind)]));
-    card.addEventListener('click', () => onPick(kind));
-    grid.append(card);
-  }
-  body.append(grid);
 }
 
 /** Fill the detail sheet for a hero; returns a function that stops its idle animation. */

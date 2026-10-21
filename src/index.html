@@ -155,7 +155,7 @@
     #panel { left: auto; top: 0; width: 230px; border-top: 0; border-left: 2px solid var(--edge); padding: calc(env(safe-area-inset-top) + 8px) calc(env(safe-area-inset-right) + 8px) 8px 8px; justify-content: center; }
     #bench { grid-template-columns: repeat(3, minmax(0, 1fr)); max-height: 150px; }
     #buttons { flex-wrap: wrap; }
-    #buttons button { flex: 1 1 40%; }
+    #buttons button { flex: 1 1 28%; }
     #top { right: 230px; }
   }
 
@@ -325,6 +325,14 @@
   #hmSubBody { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; touch-action: pan-y; }
   #hmSubBody .hint { margin: 0; font-size: 11px; color: var(--dim); text-align: center; }
   #hmSheet { align-items: center; justify-content: center; padding: 12px; background: rgba(12, 6, 4, 0.75); animation: fade 0.2s ease-out; }
+  /* the tavern: the Heroes page is one pannable picture, with the count pinned over it */
+  .hmPage.hm-heroes { padding: 0; overflow: hidden; background: #1a0f0a; }
+  .tvWrap { position: absolute; inset: 0; }
+  .tvScroll { position: absolute; inset: 0; display: flex; overflow: auto; touch-action: pan-x pan-y; overscroll-behavior: contain; scrollbar-width: none; }
+  .tvScroll::-webkit-scrollbar { display: none; }
+  .tvRoom { flex: none; margin: auto; image-rendering: pixelated; }
+  .tvCount { position: absolute; left: 8px; top: 8px; padding: 3px 9px 4px; font: 700 12px var(--body); letter-spacing: 0.5px; color: var(--gold-hi); text-shadow: 0 1px 0 #000; background: rgba(26, 13, 7, 0.82); border: 2px solid var(--gold-lo); border-radius: 8px; pointer-events: none; }
+  .tvCount small { display: block; font-size: 9px; font-weight: 400; letter-spacing: 0; color: var(--dim); }
   .hgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .hcard { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 4px; min-width: 0; background: linear-gradient(#4a2c1c, #2a170e); border: 3px solid #6b4128; border-radius: 10px; font-weight: normal; }
   .hcard canvas { width: 64px; height: 64px; image-rendering: pixelated; background: rgba(0, 0, 0, 0.3); border-radius: 6px; }
@@ -656,7 +664,7 @@
   <div id="traits"></div><div id="traitHint"></div>
   <div id="relics" hidden></div>
   <div id="bench"></div>
-  <div id="buttons"><button id="summon">Summon</button><button id="recruit">Recruit</button><button id="pack">Pack</button><button id="homeBtn">Home</button><button id="fight" class="primary" disabled>Fight!</button></div>
+  <div id="buttons"><button id="summon">Summon</button><button id="pack">Pack</button><button id="homeBtn">Home</button><button id="fight" class="primary" disabled>Fight!</button></div>
 </div>
 <div id="result" hidden>
   <div id="banner"></div>
