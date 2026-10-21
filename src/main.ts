@@ -7,6 +7,8 @@ import { D, standable, tileAt } from './sim/board';
 import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle } from './sim/battle';
 import { finish, gradeBoost, heroOf, isBossStage, loadRun, newRun, saveRun, setSquad, SQUAD, startStage, summon, summonCost, type Run } from './sim/run';
 import { UNITS } from './sim/units';
+import { earn, loadMeta, saveMeta, type Meta } from './sim/meta';
+import { Gacha } from './gacha';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, SPELL_IDS, type SpellId } from './sim/spells';
 import { BoardView, loadBoardArt } from './render/boardView';
 import { UnitSprite } from './render/unitView';
@@ -40,6 +42,10 @@ class Game {
   private ghost = new Sprite();
   private b!: Battle;
   private run!: Run;
+  private meta!: Meta;
+  private gacha!: Gacha;
+  /** Crowns the last settled fight paid. */
+  private crownGain = 0;
   /** Whether the fight's end has been settled into the run. */
   private settled = false;
   /** Gold the last win paid (for the result screen). */
@@ -69,7 +75,15 @@ class Game {
     this.app.stage.addChild(this.world, this.ghost);
     const query = new URLSearchParams(location.search);
     const seed = Number(query.get('seed'));
-    this.run = (!seed && loadRun()) || newRun(seed || (Date.now() % 100000) + 1);
+    this.meta = loadMeta((Date.now() % 100000) + 1);
+    saveMeta(this.meta);
+    this.run = (!seed && loadRun()) || newRun(seed || (Date.now() % 100000) + 1, this.meta.unlocked);
+    this.run.pool = [...this.meta.unlocked];
+    this.gacha = new Gacha(this.meta, () => {
+      this.run.pool = [...this.meta.unlocked];
+      saveRun(this.run);
+      this.refresh();
+    });
     this.sky = [...document.querySelectorAll<HTMLElement>('#sky div')];
     this.buildSpells();
     this.wire();
@@ -313,13 +327,14 @@ class Game {
     window.addEventListener('pointerup', (e) => this.dragEnd(e));
     window.addEventListener('pointercancel', () => this.endDrag());
     $('fight').addEventListener('click', () => this.begin());
+    $('recruit').addEventListener('click', () => this.gacha.open());
     $('summon').addEventListener('click', () => {
       if (summon(this.run)) saveRun(this.run);
       this.refresh();
     });
     $('next').addEventListener('click', () => {
       if (this.run.over) {
-        this.run = newRun((Date.now() % 100000) + 1);
+        this.run = newRun((Date.now() % 100000) + 1, this.meta.unlocked);
         this.placed.clear();
       }
       saveRun(this.run);
@@ -514,6 +529,8 @@ class Game {
       const before = run.gold;
       finish(run, b.phase === 'won');
       this.gain = run.gold - before;
+      this.crownGain = earn(this.meta, b.phase === 'won' ? run.stage - 1 : run.stage, b.phase === 'won');
+      saveMeta(this.meta);
       saveRun(run);
     }
     document.body.dataset.phase = b.phase;
@@ -534,8 +551,8 @@ class Game {
       $('banner').className = b.phase;
       $('summary').textContent =
         b.phase === 'won'
-          ? `${left} of ${heroesPlaced(b)} heroes standing · +${this.gain} gold · ${clock(b.t)}`
-          : `The run ends at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} summons`;
+          ? `${left} of ${heroesPlaced(b)} heroes standing · +${this.gain} gold · +${this.crownGain} crowns · ${clock(b.t)}`
+          : `The run ends at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} summons · +${this.crownGain} crowns`;
       $('next').textContent = b.phase === 'won' ? `Next stage (${run.stage})` : 'New run';
     }
     this.buildBench();
