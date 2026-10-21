@@ -4,9 +4,9 @@
 tuning: change a number in `units.ts`, `foes.ts`, `run.ts` or `levels.ts`, run it again, compare.
 
 - `npm run balance` plays 4000 fights for the hero table, a quarter of that per cell in the foe and stage tables, and 1000
-  fresh saves (five runs each) for the whole-run table. It takes several minutes.
+  fresh saves (twelve runs each) for the whole-run table. It takes several minutes.
 - `npm run balance -- --games 2000` is quicker and noisier; `--hero-stage 1` plays the hero table at another stage;
-  `--saves 300` plays fewer saves; `--runs-only` prints only the whole-run table (quick when tuning the levels).
+  `--saves 300` plays fewer saves; `--runs-only` prints only the whole-run table (quick when tuning the levels); `--runs 12` sets its number of runs.
 - `tools/balance.ts` holds the report; `tools/balance.mjs` bundles it with esbuild and runs it (as `test.mjs` does).
 
 **What it plays.** Tables 1 to 3 are the plain fight: `startBattle` on a seed's board, the heroes placed at random on their
@@ -19,6 +19,91 @@ Table 4 plays whole runs with the game's own functions (`newRun`, `summon`, `sta
 summons whenever it can afford to, fields the five strongest heroes on the deploy rows, buys no castle upgrades, recruits
 nothing (so a run's pool is the five starting heroes) and equips no gear. The meta carries the XP from run to run, as the
 game does.
+
+## Round 3: the walls
+
+The brief: stage 5 stays as it was (runs 1 to 3 unchanged), and every later boss becomes a wall in the same spirit. Stage 10
+should stop most runs until a few runs after the first boss is beaten; stage 15 a few runs after that; and so on, with the
+field stages between the bosses climbing steadily. The whole-run table now runs twelve runs and reports where each run
+typically gets to.
+
+**What changed**
+
+- **Diminishing returns** (`levels.ts`): levels up to 12 add 22% hp and 18% attack each, as before; each level past 12 adds
+  a quarter of that (`DIM_LEVEL`, `DIM_SHARE`). A long run's levels then stop being decisive, and the walls can hold.
+- **The later bosses** (`foes.ts`, hp and attack): stage 10 forest boss 3,300 / 65 (was 600 / 25); stage 15 demon lord
+  3,600 / 70 (350 / 22); stage 20 forest raider 3,900 / 72 (580 / 26); stage 25 horned ogre 4,800 / 85 (700 / 28); stage 30
+  forest spearman 6,000 / 100 (550 / 24); stage 35 boar king 6,800 / 110 (380 / 22); stage 40 devil leader 7,600 / 120
+  (420 / 24); stage 45 shaman king 8,400 / 130 (400 / 24). Each is stronger than the last. The stage 5 warlord is unchanged.
+- **Tests**: `foes.test.ts` now checks the field bands against the 20 to 80% range (the boss bands are walls, not balanced to
+  it); `levels.test.ts` has the new level-20 boost and checks the quarter step at level 13; `progression.test.ts` is unchanged
+  (the stage 5 numbers hold).
+
+**Tuning.** The levers were the later bosses' stats and the diminishing gain. Each sweep was a 150-save, twelve-run table:
+
+- Stage 10 at 1,500 / 40 (the first try): run 3 passed it 71% of the time, so it was no wall. At 2,800 / 60: 47%. At 3,300 /
+  65: 33%, and run 4 62%. Run 2 passed it 9 to 14%.
+- The diminishing gain: with a half step past level 12 and the first bosses at 1,500 to 2,800 (stage 25 at 2,400 / 48), stage
+  25 was passed by 99% of runs from run 8, so the levels stayed decisive. The quarter step kept here, with the bosses above,
+  held stage 25 at 0% through the first sweep.
+- Stage 20 at 4,400 / 80 was passed by 34% of run 10s, so it went to 3,900 / 72. Stage 25 at 5,200 / 90 was never passed in
+  twelve runs, so it went to 4,800 / 85 (8 to 18% from run 10 on).
+- Runs 1 to 3 move by a few points with these knobs, within the noise of 150 saves.
+
+**Whole runs** (table 4 of this round; 400 saves, twelve runs; the median is the furthest stage each run typically reaches,
+and "past boss N" is the share of runs that fought beyond stage N)
+
+**Whole runs** (a greedy player, 400 fresh saves, twelve runs in a row; the furthest stage each run fought, and the share of runs that got past each boss)
+
+| Run | Median stage | Mean stage | Past boss 5 | Past boss 10 | Past boss 15 | Past boss 20 | Past boss 25 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 5 | 5.2 | 4.3 | 1.3 | 0.3 | 0.0 | 0.0 |
+| 2 | 5 | 6.5 | 23.0 | 7.8 | 0.8 | 0.0 | 0.0 |
+| 3 | 10 | 9.6 | 59.8 | 29.3 | 3.0 | 0.5 | 0.0 |
+| 4 | 15 | 12.8 | 79.0 | 59.3 | 12.3 | 3.8 | 0.8 |
+| 5 | 15 | 15.6 | 92.8 | 86.8 | 23.5 | 8.0 | 1.8 |
+| 6 | 15 | 17.4 | 97.8 | 94.5 | 36.5 | 17.0 | 2.3 |
+| 7 | 15 | 18.9 | 98.8 | 98.3 | 49.5 | 25.5 | 6.0 |
+| 8 | 20 | 20.4 | 100.0 | 100.0 | 61.3 | 37.0 | 10.3 |
+| 9 | 20 | 20.9 | 99.5 | 99.5 | 62.8 | 44.8 | 11.8 |
+| 10 | 20 | 21.6 | 100.0 | 100.0 | 69.0 | 48.3 | 15.5 |
+| 11 | 25 | 22.0 | 100.0 | 100.0 | 71.3 | 51.5 | 18.0 |
+| 12 | 25 | 22.0 | 100.0 | 100.0 | 71.0 | 52.8 | 16.5 |
+
+**Levels after each run** (mean level of each starting kind, all saves)
+
+| Run | Knight | Samurai | Kunoichi | Archer | Fire Wizard |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 2.1 | 2.9 | 2.3 | 2.3 | 2.2 |
+| 2 | 3.0 | 4.8 | 3.5 | 3.7 | 3.6 |
+| 3 | 4.6 | 7.3 | 4.9 | 5.8 | 5.6 |
+| 4 | 6.5 | 10.4 | 6.4 | 8.2 | 7.7 |
+| 5 | 8.7 | 13.7 | 8.2 | 10.6 | 9.8 |
+| 6 | 10.7 | 16.4 | 9.8 | 13.0 | 11.8 |
+| 7 | 12.6 | 18.2 | 11.2 | 14.9 | 13.8 |
+| 8 | 14.4 | 19.2 | 12.4 | 16.4 | 15.3 |
+| 9 | 16.0 | 19.6 | 13.3 | 17.5 | 16.4 |
+| 10 | 17.1 | 19.8 | 14.4 | 18.2 | 17.1 |
+| 11 | 18.0 | 19.9 | 15.1 | 18.6 | 17.7 |
+| 12 | 18.6 | 20.0 | 15.7 | 18.8 | 18.1 |
+
+Stage 5 falls by about a point in run 3 (59.8% here, 60.9% in round 2 at 1,000 saves: within the noise of 400 saves).
+Stage 10 stops most runs through run 3 (a run 2 passes it 8% of the time) and is passed by most runs from run 5. Stage 15
+reaches 50% at run 7, and stage 20 at run 11. Stage 25 is passed by 16 to 18% of runs by run 11 and 12, so it is past the
+table.
+
+**The fresh-team table (3, grade 1 to 3) still reads the bosses at their new stats.** The stage 10 boss is passed by 27% of
+grade-3 teams and no grade-2 team; stage 15 by no grade-3 team at all. That is the intent: a fresh merged team cannot clear
+these, so levels (and, for the castle, later spending) are what get a run past them.
+
+**Open for the owner**
+
+- Stage 25 and up are past the 12-run table. Their walls are set by the same rule as stage 10 to 20 (each a few runs after
+  the one before), and the table should be extended when a run is planned to reach them.
+- The greedy player reads no castle upgrades, party picker or recruiting, all of which add power; the table is a floor on what
+  a real run gets, with the headroom the brief asked for.
+- The levels reach their caps by the late runs (knights at 19, samurai at 20). Whether the caps should be higher is the
+  owner's call.
 
 ## Round 2: hero XP and the first boss
 

@@ -17,8 +17,10 @@ next run.
   Old saves load with none; bad entries are dropped.
 - **Curve**: a level needs `30 × (level − 1) × level` total XP, so each level costs 60 more than the one before. Level 2 at
   60 XP, level 3 at 180, level 5 at 600, level 10 at 2,700, level 20 (the cap, `MAX_LEVEL`) at 11,400.
-- **Stats**: each level above the first adds 22% hp and 18% attack (linear, from the base). Steep on purpose: a team's
-  levels, not just its grades, decide the first boss (see `balance.md`). `levelBoost` gives the
+- **Stats**: each level above the first adds 22% hp and 18% attack (linear, from the base) up to level 12. Past level 12
+  each level adds only a quarter of that (`DIM_LEVEL`, `DIM_SHARE`), so a long run's levels stop being decisive; level 20
+  is 13 steps in all. The gains are steep on purpose: a team's levels, not just its grades, decide the walls (see
+  `balance.md`). `levelBoost` gives the
   multipliers. They stack with the grade and the shard rank: `gradeBoost(grade, rank, level)` in `src/sim/run.ts`, which
   `src/main.ts` passes `levelOfKind(meta, kind)` to, at the place and the drag.
 - **Result screen**: an XP section under the stats (`#xp`, built in `showXp` in `src/main.ts`). One row per hero kind

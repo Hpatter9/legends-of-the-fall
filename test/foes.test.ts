@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DEPLOY_ROWS } from '../src/sim/board';
 import { fight, playOut, startBattle } from '../src/sim/battle';
-import { FOE_BANDS, FOES } from '../src/sim/foes';
+import { FOE_BANDS, FOES, FIELD_BANDS } from '../src/sim/foes';
 import { UNITS } from '../src/sim/units';
 import { readyBattle } from './helpers';
 
@@ -39,8 +39,8 @@ test('a fight against each band ends', () => {
 });
 
 test('the heroes win 20 to 80% of their fights against each band', () => {
-  // (the first boss, orcWarlord, is the gate of a run: a fresh team loses it, see `progression.test.ts`)
-  for (const band of Object.keys(FOE_BANDS).filter((k) => k !== 'orcWarlord')) {
+  // (the bosses are the walls of a run, and are not balanced to this range: see `progression.test.ts`)
+  for (const band of FIELD_BANDS) {
     let wins = 0;
     for (let seed = 1; seed <= 40; seed++) {
       const b = readyBattle(seed, band);

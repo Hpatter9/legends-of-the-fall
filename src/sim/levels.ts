@@ -21,6 +21,9 @@ export const BOSS_KILL = 3;
 /** Hp and attack a level adds, as a share of the base, for each level above the first. */
 export const LEVEL_HP = 0.22;
 export const LEVEL_ATK = 0.18;
+/** From this level on, each level adds only `DIM_SHARE` of its gain (diminishing returns, so a team's levels stop being decisive). */
+export const DIM_LEVEL = 12;
+export const DIM_SHARE = 0.25;
 const CURVE = 30;
 
 /** Total XP to reach a level: 30 × (level − 1) × level, so each level costs 60 more than the one before. */
@@ -43,11 +46,14 @@ export function progressOf(xp: number): { level: number; into: number; need: num
 /** The XP a killing blow is worth: the foe's max hp times `KILL_HP_SHARE` (a boss, `BOSS_KILL` times that). */
 export const killXp = (foe: Pick<Unit, 'def' | 'maxHp'>): number => foe.maxHp * KILL_HP_SHARE * (isBoss(foe.def) ? BOSS_KILL : 1);
 
+/** The levels above the first counted in full: each one past `DIM_LEVEL` counts `DIM_SHARE`. */
+const steps = (level: number): number => Math.min(level - 1, DIM_LEVEL - 1) + DIM_SHARE * Math.max(0, level - DIM_LEVEL);
+
 /** Hp and attack multipliers a level gives (x1 at level 1). */
-export const levelBoost = (level: number): { hp: number; atk: number } => ({ hp: 1 + LEVEL_HP * (level - 1), atk: 1 + LEVEL_ATK * (level - 1) });
+export const levelBoost = (level: number): { hp: number; atk: number } => ({ hp: 1 + LEVEL_HP * steps(level), atk: 1 + LEVEL_ATK * steps(level) });
 
 /** The percentages of hp and attack that the levels from `from` to `to` add, in whole numbers. */
-export const levelGain = (from: number, to: number) => ({ hp: Math.round(LEVEL_HP * 100 * (to - from)), atk: Math.round(LEVEL_ATK * 100 * (to - from)) });
+export const levelGain = (from: number, to: number) => ({ hp: Math.round(LEVEL_HP * 100 * (steps(to) - steps(from))), atk: Math.round(LEVEL_ATK * 100 * (steps(to) - steps(from))) });
 
 export const xpOf = (m: Meta, kind: string): number => m.xp[kind] ?? 0;
 export const levelOfKind = (m: Meta, kind: string): number => levelOf(xpOf(m, kind));

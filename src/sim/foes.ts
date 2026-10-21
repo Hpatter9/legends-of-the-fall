@@ -17,8 +17,9 @@ const DEMON = { side: 'foe', hp: 410, atk: 32, def: 6, range: 1, moveMs: 650, at
 const OGRE = { side: 'foe', hp: 480, atk: 30, def: 8, range: 1, moveMs: 1000, atkMs: 1500, jump: 2, role: 'Huge club, slow' } as const;
 
 // The bosses: much more hp, and each one's own look and skill (its kit, in `abilities.ts`). A forest boss has none.
-// The first boss is the gate of a run (stage 5): six times the hp and three times the attack of an orc chief, so a first
-// run's team cannot win it. Later bosses are at their own stats.
+// The bosses are the walls of a run: the first (stage 5, the orc warlord) is six times the hp and three times the attack of
+// an orc chief, so a first run's team cannot win it; each later boss is stronger than the last (the set in `FOES`, see
+// `docs/notes/balance.md`), so a run stops at each one for a few runs after the one before.
 const WARLORD = { side: 'foe', hp: 2280, atk: 78, def: 10, range: 1, moveMs: 800, atkMs: 1200, jump: 2, role: 'Orc chief, ground slam' } as const;
 const DEMON_LORD = { side: 'foe', hp: 350, atk: 22, def: 9, range: 1, moveMs: 700, atkMs: 1200, jump: 2, flies: true, role: 'Calls imps to his side' } as const;
 const HORNED_OGRE = { side: 'foe', hp: 700, atk: 28, def: 10, range: 1, moveMs: 1000, atkMs: 1500, jump: 2, role: 'Horns, sweeping blows' } as const;
@@ -53,14 +54,14 @@ export const FOES: Record<string, UnitDef> = {
   ogre: { ...OGRE, id: 'ogre', name: 'Ogre', sheet: 'hk_ogre', scale: 0.43 },
 
   orcWarlord: { ...WARLORD, id: 'orcWarlord', name: 'Orc Warlord', sheet: 'hk_orc_warlord', scale: 0.54 },
-  demonLord: { ...DEMON_LORD, id: 'demonLord', name: 'Demon Lord', sheet: 'hk_demon_lord', scale: 0.39 },
-  hornedOgre: { ...HORNED_OGRE, id: 'hornedOgre', name: 'Horned Ogre', sheet: 'hk_ogre_horned', scale: 0.42 },
-  forestBoss1: { ...FOREST, id: 'forestBoss1', name: 'Forest Boss', sheet: 'forest_boss_1', scale: 1.05 },
-  forestBoss2: { ...FOREST, id: 'forestBoss2', name: 'Forest Boss', sheet: 'forest_boss_2', scale: 1.05, hp: 580, atk: 26, def: 6, moveMs: 500, atkMs: 900, jump: 3, role: 'Forest raider, quick' },
-  forestBoss3: { ...FOREST, id: 'forestBoss3', name: 'Forest Boss', sheet: 'forest_boss_3', scale: 1.28, hp: 550, atk: 24, def: 5, range: 2, role: 'Forest spearman' },
-  boarKing: { ...BOAR_KING, id: 'boarKing', name: 'Boar King', sheet: 'boar_king', scale: 0.54 },
-  devilLeader: { ...DEVIL_LEADER, id: 'devilLeader', name: 'Devil Leader', sheet: 'devil_leader', scale: 0.49 },
-  shamanKing: { ...SHAMAN_KING, id: 'shamanKing', name: 'Shaman King', sheet: 'shaman_king', scale: 0.5 },
+  demonLord: { ...DEMON_LORD, id: 'demonLord', name: 'Demon Lord', sheet: 'hk_demon_lord', scale: 0.39, hp: 3600, atk: 70 },
+  hornedOgre: { ...HORNED_OGRE, id: 'hornedOgre', name: 'Horned Ogre', sheet: 'hk_ogre_horned', scale: 0.42, hp: 4800, atk: 85 },
+  forestBoss1: { ...FOREST, id: 'forestBoss1', name: 'Forest Boss', sheet: 'forest_boss_1', scale: 1.05, hp: 3300, atk: 65 },
+  forestBoss2: { ...FOREST, id: 'forestBoss2', name: 'Forest Boss', sheet: 'forest_boss_2', scale: 1.05, hp: 3900, atk: 72, def: 6, moveMs: 500, atkMs: 900, jump: 3, role: 'Forest raider, quick' },
+  forestBoss3: { ...FOREST, id: 'forestBoss3', name: 'Forest Boss', sheet: 'forest_boss_3', scale: 1.28, hp: 6000, atk: 100, def: 5, range: 2, role: 'Forest spearman' },
+  boarKing: { ...BOAR_KING, id: 'boarKing', name: 'Boar King', sheet: 'boar_king', scale: 0.54, hp: 6800, atk: 110 },
+  devilLeader: { ...DEVIL_LEADER, id: 'devilLeader', name: 'Devil Leader', sheet: 'devil_leader', scale: 0.49, hp: 7600, atk: 120 },
+  shamanKing: { ...SHAMAN_KING, id: 'shamanKing', name: 'Shaman King', sheet: 'shaman_king', scale: 0.5, hp: 8400, atk: 130 },
 };
 
 /** The bosses' ids: the first foe of a boss band is one of these. */
