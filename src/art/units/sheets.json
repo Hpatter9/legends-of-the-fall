@@ -654,5 +654,320 @@
   },
   "figure": 95,
   "facesRight": true
+ },
+ "hk_orc_grunt": {
+  "w": 94,
+  "h": 98,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1
+  },
+  "figure": 76,
+  "facesRight": true
+ },
+ "hk_orc_archer": {
+  "w": 84,
+  "h": 79,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1
+  },
+  "figure": 76,
+  "facesRight": true
+ },
+ "hk_orc_brute": {
+  "w": 92,
+  "h": 106,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1
+  },
+  "figure": 75,
+  "facesRight": true
+ },
+ "hk_orc_warlord": {
+  "w": 116,
+  "h": 122,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1
+  },
+  "figure": 85,
+  "facesRight": true
+ },
+ "hk_demon": {
+  "w": 134,
+  "h": 129,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1
+  },
+  "figure": 119,
+  "facesRight": true
+ },
+ "hk_demon_lord": {
+  "w": 132,
+  "h": 124,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1
+  },
+  "figure": 119,
+  "facesRight": true
+ },
+ "hk_imp": {
+  "w": 42,
+  "h": 72,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1
+  },
+  "figure": 46,
+  "facesRight": true
+ },
+ "hk_ogre": {
+  "w": 134,
+  "h": 127,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1
+  },
+  "figure": 107,
+  "facesRight": true
+ },
+ "hk_ogre_horned": {
+  "w": 136,
+  "h": 128,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1
+  },
+  "figure": 109,
+  "facesRight": true
+ },
+ "forest_boss_1": {
+  "w": 118,
+  "h": 45,
+  "perRow": 6,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 6,
+   "attack": 6,
+   "idle": 4,
+   "hurt": 4,
+   "dead": 6
+  },
+  "figure": 44,
+  "facesRight": false
+ },
+ "forest_boss_2": {
+  "w": 66,
+  "h": 47,
+  "perRow": 6,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 6,
+   "attack": 6,
+   "idle": 4,
+   "hurt": 4,
+   "dead": 6
+  },
+  "figure": 44,
+  "facesRight": false
+ },
+ "forest_boss_3": {
+  "w": 56,
+  "h": 39,
+  "perRow": 6,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 6,
+   "attack": 6,
+   "idle": 4,
+   "hurt": 4,
+   "dead": 4
+  },
+  "figure": 36,
+  "facesRight": false
+ },
+ "boar_king": {
+  "w": 138,
+  "h": 108,
+  "perRow": 10,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 10,
+   "attack": 10,
+   "idle": 8,
+   "hurt": 5,
+   "dead": 10
+  },
+  "figure": 85,
+  "facesRight": false
+ },
+ "devil_leader": {
+  "w": 142,
+  "h": 106,
+  "perRow": 10,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 10,
+   "attack": 10,
+   "idle": 8,
+   "hurt": 5,
+   "dead": 10
+  },
+  "figure": 94,
+  "facesRight": false
+ },
+ "shaman_king": {
+  "w": 144,
+  "h": 108,
+  "perRow": 10,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 10,
+   "attack": 10,
+   "idle": 8,
+   "hurt": 5,
+   "dead": 10
+  },
+  "figure": 92,
+  "facesRight": false
  }
 }

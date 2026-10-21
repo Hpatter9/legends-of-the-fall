@@ -30,3 +30,12 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   (`hpatter9/chronos-assets`, `TinyRPGMusic/`). The pack's licence file names Luis Zuno (@ansimuz) as its creator and
   allows use and redistribution in personal and commercial projects, with credit appreciated but not required.
 - **The sound effects** are synthesised in `src/render/sound.ts` with the Web Audio API; no files were copied for them.
+
+## More foes and bosses (copied in for the boss stages and new bands)
+
+- The orc warband (grunt, archer, brute, warlord), demons, demon lord, imp and ogres (`src/art/units/hk_*.png`, as cut by
+  Chronos Settlement's `tools/compose-sheets.cjs`) are from the **Himeko Sutori sprite share**, free to use with
+  attribution: Half-Kaizer sprite template created by Showkaizer; additional Half-Kaizer poses by Aleesa Tana; armour,
+  weapon, demon, ogre and other sprites from Himeko Sutori and Septaroad Voyager by Rockwell Studios, LLC.
+- The three forest bosses are from Craftpix's **Free Forest Bosses**; the Boar King, Devil Leader and Shaman King from
+  Craftpix's **Free Fantasy RPG Top-Down Boss Creatures**.
