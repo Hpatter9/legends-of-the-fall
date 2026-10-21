@@ -130,6 +130,7 @@
   .trait.class { border-style: dashed; }
   .trait.on { color: #1a1008; background: var(--gold); border-color: var(--gold); font-weight: bold; }
   .trait.picked { outline: 2px solid #7cc0ff; }
+  .card .lv { display: block; font-size: 9px; line-height: 1; color: #cfc3b0; }
   .card small { display: flex; justify-content: center; gap: 2px; margin-top: 1px; }
   .card small span { font-size: 9px; line-height: 1; padding: 1px 3px; border-radius: 3px; background: rgba(255, 255, 255, 0.12); color: #cfc3b0; }
 
@@ -159,8 +160,41 @@
   #stars .star em { grid-column: 2; font-size: 11px; font-style: normal; color: var(--gold); }
   #stars .star.on { color: var(--ink); }
   #stars .star.on > span { color: var(--gold); text-shadow: 0 0 10px rgba(255, 200, 80, 0.6); }
+  #xp { display: flex; flex-direction: column; gap: 6px; width: min(300px, 86vw); }
+  #xp[hidden] { display: none; }
+  #xp .xprow { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 8px; padding: 6px 10px; background: var(--wood); border: 2px solid var(--edge); border-radius: 8px; color: var(--ink); }
+  #xp .xprow em { font-style: normal; color: var(--gold); font-size: 12px; }
+  #xp .xprow i { grid-column: span 2; display: block; height: 6px; background: #2a1a10; border-radius: 3px; overflow: hidden; }
+  #xp .xprow i span { display: block; height: 100%; width: 0; background: #7cc0ff; transition: width 0.8s ease-out; }
+  #xp .xprow p { grid-column: span 2; margin: 0; font-size: 12px; color: var(--gold); min-height: 0; }
+  #xp .xprow p:empty { display: none; }
+  #xp .xprow.up { animation: evolve 0.9s ease-out; }
   @keyframes starIn { from { transform: scale(0.4); opacity: 0; } to { transform: none; opacity: 1; } }
   #result .row { display: flex; gap: 10px; margin-top: 6px; }
+  /* the fight's numbers: a row a hero, with a small bar for each number (the bars are scaled to the best hero) */
+  #fightStats { display: flex; flex-direction: column; gap: 2px; width: min(330px, 92vw); padding: 6px 8px; background: var(--wood); border: 2px solid var(--edge); border-radius: 8px; font-size: 12px; color: var(--ink); }
+  #fightStats[hidden] { display: none; }
+  #fightStats .srow { display: grid; grid-template-columns: 96px repeat(4, 1fr); align-items: center; gap: 8px; padding: 2px 0; }
+  #fightStats .srow.head { font-size: 10px; color: var(--dim); }
+  #fightStats .srow b { font-weight: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #fightStats .srow b em { font-style: normal; color: var(--gold); }
+  #fightStats .cell { display: grid; grid-template-columns: 1fr; gap: 2px; text-align: right; }
+  #fightStats .srow.head span { text-align: right; }
+  #fightStats .cell em { font-style: normal; font-size: 11px; }
+  #fightStats .cell i { display: block; height: 4px; background: rgba(255, 255, 255, 0.15); border-radius: 2px; overflow: hidden; }
+  #fightStats .cell i span { display: block; height: 100%; background: var(--gold); }
+  /* the boss's title card: it glides in over the board and a tap skips it */
+  #bossCard { position: fixed; left: 0; right: 0; top: 34%; z-index: 3; padding: 16px; text-align: center; cursor: pointer; background: linear-gradient(transparent, rgba(12, 6, 4, 0.85) 25%, rgba(12, 6, 4, 0.85) 75%, transparent); animation: fade 0.3s ease-out; transition: opacity 0.4s; }
+  #bossCard[hidden] { display: none; }
+  #bossCard.out { opacity: 0; }
+  #bossCard b { display: block; font: bold clamp(22px, 7vw, 34px)/1.1 Georgia, serif; letter-spacing: 3px; color: var(--gold); text-shadow: 0 3px 0 #000, 0 0 24px rgba(0, 0, 0, 0.8); animation: punch 0.5s cubic-bezier(0.2, 1.6, 0.4, 1); }
+  #bossCard span { display: block; margin-top: 6px; color: var(--dim); font-style: italic; text-shadow: 0 1px 0 #000; }
+  /* the boss's health, across the top under the title bar, with its name */
+  #bossBar { position: fixed; left: 12px; right: 12px; z-index: 2; pointer-events: none; text-shadow: 0 1px 0 #000; }
+  #bossBar[hidden] { display: none; }
+  #bossBar b { display: block; font: bold 13px Georgia, serif; letter-spacing: 0.5px; color: var(--gold); }
+  #bossBar i { display: block; height: 10px; margin-top: 2px; background: rgba(0, 0, 0, 0.5); border: 2px solid var(--edge); border-radius: 6px; overflow: hidden; }
+  #bossBar i span { display: block; height: 100%; background: var(--red); transition: width 0.3s; }
   @keyframes fade { from { opacity: 0; } }
   @keyframes punch { from { transform: scale(1.8); opacity: 0; } }
 
@@ -227,6 +261,8 @@
   .hrow em, .brow em { display: block; font-style: normal; font-size: 11px; color: var(--dim); }
   .hrow span { display: block; font-size: 11px; color: var(--gold); }
   .hrow p { margin: 2px 0 0; font-size: 11px; line-height: 1.25; }
+  .xpbar { height: 5px; margin-top: 3px; background: #2a1a10; border-radius: 3px; overflow: hidden; }
+  .xpbar span { display: block; height: 100%; background: #7cc0ff; }
   .hrow p i { font-style: normal; color: #7cc0ff; }
   .brow > div { flex: 1; }
   .brow .pips { color: var(--gold); letter-spacing: 2px; }
@@ -239,7 +275,7 @@
   }
 
   /* the settings page: over the home screen or the fight */
-  #settings { position: fixed; inset: 0; z-index: 6; display: flex; flex-direction: column; gap: 10px; padding: calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 10px); background: rgba(24, 12, 8, 0.96); overflow-y: auto; touch-action: pan-y; }
+  #settings { position: fixed; inset: 0; z-index: 7; display: flex; flex-direction: column; gap: 10px; padding: calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 10px); background: rgba(24, 12, 8, 0.96); overflow-y: auto; touch-action: pan-y; }
   #settings[hidden] { display: none; }
   #settings header { display: flex; align-items: center; gap: 10px; }
   #settings h2 { margin: 0; flex: 1; font-size: 20px; color: var(--gold); }
@@ -252,6 +288,24 @@
   .setting .toggle, .setting .pair button { min-width: 64px; }
   .setting .toggle.on, .setting .pair button.on { background: linear-gradient(#c9762e, #8e4618); border-color: var(--gold); }
   .setting .pair { display: flex; gap: 6px; }
+  /* the first-run tips: a speech bubble by the thing it talks about (placed in src/tips.ts), taps only on itself */
+  #tip {
+    position: fixed; z-index: 6; width: min(280px, calc(100vw - 24px)); padding: 10px 12px; background: var(--wood);
+    border: 2px solid var(--gold); border-radius: 10px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6); font-size: 14px; line-height: 1.3;
+  }
+  #tip[hidden] { display: none; }
+  #tip p { margin: 0 0 8px; }
+  #tip .tipRow { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  #tip button { padding: 7px 12px; font-size: 14px; }
+  #tip #tipSkip { background: none; border-color: transparent; color: var(--dim); text-shadow: none; padding: 7px 4px; font-weight: normal; }
+  #tip #tipSkip[hidden] { display: none; }
+  #tip i { position: absolute; width: 0; height: 0; border: 9px solid transparent; }
+  #tip[data-side='above'] i { bottom: -18px; left: calc(var(--ax) - 9px); border-top-color: var(--gold); }
+  #tip[data-side='below'] i { top: -18px; left: calc(var(--ax) - 9px); border-bottom-color: var(--gold); }
+  #tip[data-side='left'] i { right: -18px; top: calc(var(--ay) - 9px); border-left-color: var(--gold); }
+  #tip[data-side='right'] i { left: -18px; top: calc(var(--ay) - 9px); border-right-color: var(--gold); }
+  .tipLit { outline: 2px solid var(--gold); outline-offset: 3px; box-shadow: 0 0 14px var(--gold); }
+
   #loading { position: fixed; inset: 0; display: grid; place-items: center; font-size: 18px; color: var(--gold); }
   #version { position: fixed; right: 6px; bottom: 2px; font-size: 10px; color: rgba(255, 255, 255, 0.5); text-shadow: 0 1px 0 #000; pointer-events: none; }
   @media (orientation: portrait) { #version { bottom: auto; top: calc(env(safe-area-inset-top) + 34px); } }
@@ -261,6 +315,8 @@
 <div id="sky"><div></div><div></div><div></div><div></div><div></div></div>
 <div id="stage"></div>
 <div id="top"><h1>Legends of the Fall</h1><span id="status"></span><span id="gold"></span><span id="clock"></span><button id="mute"></button><button id="gear" title="Settings">⚙</button><button id="speed">×1</button></div>
+<div id="bossBar" hidden><b></b><i><span></span></i></div>
+<div id="bossCard" hidden><b></b><span></span></div>
 <div id="panel">
   <div id="spells"><div id="mana"><i><span></span></i><b></b></div><div id="spellCards"></div><div id="spellHint"></div></div>
   <div id="traits"></div><div id="traitHint"></div>
@@ -271,6 +327,8 @@
   <div id="banner"></div>
   <div id="summary"></div>
   <div id="stars" hidden></div>
+  <div id="xp" hidden></div>
+  <div id="fightStats" hidden></div>
   <div class="row"><button id="next" class="primary">Next stage</button></div>
 </div>
 <div id="gacha" hidden>
@@ -303,6 +361,7 @@
   <header><h2>Settings</h2><button id="settingsClose">Close</button></header>
   <div id="settingsBody"></div>
 </div>
+<div id="tip" hidden><p id="tipText"></p><div class="tipRow"><button id="tipSkip">Skip tutorial</button><button id="tipGot" class="primary">Got it</button></div><i></i></div>
 <div id="loading">Loading…</div>
 <div id="version">Version __VERSION__</div>
 <script src="game.js"></script>

@@ -3,6 +3,8 @@
 // localStorage (legends.settings); `settings()` is what the rest of the page reads, and `onSettings` tells a module
 // when one changes (the sound's volumes, the frame cap). Nothing here touches the battle.
 
+import { tips } from './tips';
+
 const KEY = 'legends.settings';
 
 export interface Settings {
@@ -109,6 +111,7 @@ function draw(): void {
     toggleRow('Damage numbers', 'The numbers that pop up when a fighter is hit', 'numbers', s.numbers),
     toggleRow('Battery saver', 'Caps the frame rate at 30', 'saver', s.saver),
     toggleRow('Keep screen awake', 'The screen stays on during a fight', 'awake', s.awake),
+    resetTipsRow(),
   );
   const version = document.createElement('p');
   version.className = 'hint';
@@ -175,6 +178,18 @@ function toggleRow(title: string, hint: string, key: 'shake' | 'numbers' | 'save
   b.addEventListener('click', () => {
     setSetting(key, !value);
     draw();
+  });
+  r.append(b);
+  return r;
+}
+
+function resetTipsRow(): HTMLElement {
+  const [r] = row('Tips', 'The first-run tips show again, one at a time');
+  const b = document.createElement('button');
+  b.textContent = 'Reset tips';
+  b.addEventListener('click', () => {
+    tips.reset();
+    b.textContent = 'Tips reset';
   });
   r.append(b);
   return r;

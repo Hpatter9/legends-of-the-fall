@@ -66,6 +66,10 @@ export interface Unit {
   size?: number;
   /** A hero's grade above the first (2 or 3); absent is 1. Only the look reads it. */
   grade?: number;
+  /** What this fighter did, for its XP (`levels.ts`): damage dealt, healing done, kills made. */
+  dealt?: number;
+  healed?: number;
+  kills?: number;
 }
 
 interface Pending {
@@ -97,7 +101,7 @@ export type BattleEvent =
   | { kind: 'zone'; u: number; v: number; ms: number }
   | { kind: 'dodge'; to: number }
   | { kind: 'spell'; id: 'heal' | 'meteor' | 'haste'; u: number; v: number }
-  | { kind: 'heal'; to: number; amount: number }
+  | { kind: 'heal'; to: number; amount: number; by?: number }
   | { kind: 'haste'; to: number; ms: number }
   | { kind: 'end'; won: boolean };
 
@@ -324,10 +328,12 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   const left = onStrike(b, by, to, dmg, src, splash, out);
   if (left === null) return;
   dmg = left;
+  by.dealt = (by.dealt ?? 0) + Math.min(dmg, to.hp);
   to.hp = Math.max(0, to.hp - dmg);
   to.hurtAt = b.t;
   const killed = to.hp <= 0;
   if (killed) {
+    by.kills = (by.kills ?? 0) + 1;
     to.alive = false;
     to.diedAt = b.t;
     to.step = undefined;

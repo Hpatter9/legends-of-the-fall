@@ -15,7 +15,9 @@ Two things: a settings page, and richer effects for the skills, the king's spell
   - Battery saver: caps the Pixi ticker at 30 frames a second (`maxFPS`), set by `onSettings` in `src/main.ts`.
   - Keep screen awake: `src/render/awake.ts` asks for the wake lock only when this is on.
   - The version line (`__GAME_VERSION__`, the same as the page's).
-- **Reset tips**: not in the page yet (there is no `src/tips.ts`), so the page has no such row.
+- **Layering**: the settings page sits above the tip bubble (z-index 7 over 6), so a tip never covers it.
+- **Reset tips**: a row that calls `tips.reset()` (`src/tips.ts`), so the first-run tips show again. The Castle page
+  keeps its own Reset tips button.
 - **Listening**: `settings()` reads the current values; `onSettings(fn)` calls `fn` now and on each change;
   `setSetting` saves and tells the listeners. The page has no sim state, so nothing in `src/sim/` changed.
 
