@@ -335,7 +335,7 @@ class Game {
       const left = b.units.filter((x) => x.alive && x.side === 'hero').length;
       $('banner').textContent = b.phase === 'won' ? 'Victory!' : 'Defeat';
       $('banner').className = b.phase;
-      $('summary').textContent = b.phase === 'won' ? `${left} of ${heroesPlaced(b)} heroes still standing · ${clock(b.t)}` : b.units.some((x) => x.alive && x.side === 'hero') ? 'The skeletons held the field' : 'Every hero has fallen';
+      $('summary').textContent = b.phase === 'won' ? `${left} of ${heroesPlaced(b)} heroes still standing · ${clock(b.t)}` : b.units.some((x) => x.alive && x.side === 'hero') ? 'The foes held the field' : 'Every hero has fallen';
     }
     this.markTiles();
     this.refreshBench();
