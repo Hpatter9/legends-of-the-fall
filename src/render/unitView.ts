@@ -212,7 +212,7 @@ export class UnitSprite {
     // (the fallen go dark as they burn away, or grey as they turn to stone)
     if (!u.alive) {
       const kind = deathKind(def.name, u.side);
-      const k = Math.min(1, (t - (u.diedAt ?? 0)) / 700);
+      const k = Math.max(0, Math.min(1, (t - (u.diedAt ?? 0)) / 700));
       if (kind === 'burn') this.body.tint = mixTint(0xffffff, 0x2a1008, k);
       else if (kind === 'stone') this.body.tint = mixTint(0xffffff, 0x8e9488, k);
     }

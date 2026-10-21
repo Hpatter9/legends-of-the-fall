@@ -162,3 +162,12 @@ and at the end of the wind-up a nova, a ground wave, a second flash and a hard s
 the atlas), `npm run web`, then the lab: `node tools/fxlab/shots.mjs [scenario | all | perf]` builds `tools/fxlab/lab.ts`,
 loads it into the built page, swaps in a chosen battle and steps it by hand, taking nine frames at 393x852 and 852x393
 into `docs/samples/combat-fx-<scenario>-<upright|sideways>.png` (the lab is a dev tool, not shipped).
+
+## Frame time
+
+Measured with `node tools/fxlab/shots.mjs perf`: ten heroes against the "mixed" band at 393x852, skills charged, then the king's
+frost, meteor, chain lightning and poison cast one after another, in headless Chromium on a software renderer (SwiftShader,
+no GPU, so far slower than a phone's). Average frame time over 2.5 to 3 s: plain fight 45 ms (worst 117), frost 42 ms
+(worst 67), meteor 37 ms (worst 50), chain 33 ms (worst 50), poison 38 ms (worst 67). That is a CPU-rasterised lower bound
+on speed; the numbers are for comparing changes, not a phone's frame rate. Live particles stay under the 200 cap (130% for
+big bursts).
