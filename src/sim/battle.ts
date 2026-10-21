@@ -10,7 +10,7 @@ import { boardOk, D, DEPLOY_ROWS, makeBoard, sightClear, standable, tileAt, type
 import { firstStep, walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
 import { FOE_BANDS } from './foes';
-import { afterBlow, landArea, onStrike, rollCrit, tickStatus, tryCast, type Dot, type Zone } from './abilities';
+import { afterBlow, landArea, pierceOf, preyOf, onStrike, rollCrit, tickStatus, tryCast, type Dot, type Zone } from './abilities';
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellState } from './spells';
 import { SPLASH_SHARE, UNITS, type Shot, type Side, type UnitDef } from './units';
 
@@ -52,6 +52,10 @@ export interface Unit {
   dot?: Dot & { by: number; next: number; until: number };
   /** Hasted (the king's spell) until then. */
   hasteUntil?: number;
+  /** Charmed (Kitsune) until then: fights its own side. */
+  charmUntil?: number;
+  /** The next time a healer's passive mends an ally. */
+  mendAt?: number;
   diedAt?: number;
   /** Multiplies the kind's attack (grade, stage); absent is x1. */
   power?: number;
@@ -88,6 +92,7 @@ export type BattleEvent =
   | { kind: 'dash'; by: number; from: At; to: At }
   | { kind: 'blink'; by: number; from: At; to: At }
   | { kind: 'area'; by: number; id: 'volley' | 'meteor'; u: number; v: number; ms: number }
+  | { kind: 'arc'; from: number; to: number }
   | { kind: 'zone'; u: number; v: number; ms: number }
   | { kind: 'dodge'; to: number }
   | { kind: 'spell'; id: 'heal' | 'meteor' | 'haste'; u: number; v: number }
@@ -274,7 +279,7 @@ function settle(b: Battle, p: Pending, out: BattleEvent[]): void {
   // (a sword falls with its wielder; a shot already flying still lands)
   if (!def.shot && !by.alive) return;
   hurt(b, by, to, p.dmg, p.heavy, false, out);
-  afterBlow(b, by, to, !!p.crit);
+  afterBlow(b, by, to, !!p.crit, p.dmg, out);
   if (def.splash)
     for (const n of b.units)
       if (n.alive && n.side === to.side && n !== to && apart(n, to) === 1) hurt(b, by, n, Math.max(1, Math.round(p.dmg * SPLASH_SHARE)), false, true, out);
@@ -301,6 +306,11 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   const def = defOf(me);
   me.step = undefined;
   let foes = b.units.filter((x) => x.alive && x.side !== me.side);
+  // a charmed fighter turns on its own side (if it has anyone left to turn on)
+  if (me.charmUntil !== undefined && me.charmUntil > b.t) {
+    const friends = b.units.filter((x) => x.alive && x !== me && x.side === me.side);
+    if (friends.length) foes = friends;
+  }
   if (!foes.length) return;
   // a taunted fighter goes for whoever drew it
   if (me.taunt) {
@@ -348,7 +358,7 @@ function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[]): voi
   me.facing = way;
   const mult = blowMult(tileOf(b, me).h, tileOf(b, to).h, way, to.facing);
   const crit = rollCrit(b, me);
-  const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - defOf(to).def) * mult * crit * rng.range(0.9, 1.1)));
+  const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - Math.max(0, defOf(to).def - pierceOf(me))) * mult * crit * preyOf(me, to) * rng.range(0.9, 1.1)));
   const quick = speedOf(b, me);
   const atkMs = Math.round(def.atkMs / quick);
   const windup = Math.min(def.shot ? 500 : 400, Math.round(atkMs * 0.4));
@@ -363,7 +373,7 @@ function stepTo(b: Battle, me: Unit, i: number, _out: BattleEvent[]): void {
   const next = { u: i % b.board.w, v: Math.floor(i / b.board.w) };
   const from = tileOf(b, me);
   const to = tileOf(b, next);
-  const cost = 1 + Math.max(0, to.h - from.h);
+  const cost = def.flies ? 1 : 1 + Math.max(0, to.h - from.h);
   const ms = Math.round((def.moveMs * cost) / speedOf(b, me));
   me.step = { u: me.u, v: me.v, h: from.h, at: b.t, ms };
   me.facing = wayTo(me, next);

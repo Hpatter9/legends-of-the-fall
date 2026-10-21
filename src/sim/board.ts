@@ -89,11 +89,16 @@ export function easeRelief(b: Board): void {
 /** Whether a fighter can stand on the tile at all. */
 export const standable = (t: Tile | null): t is Tile => !!t && !t.rock;
 
+/** A jump this high is flight: no height stops it. */
+export const FLY_JUMP = 9;
+
 /** What a step from one tile to the next costs a fighter who can jump `jump`, or null if it's a cliff (too high to
  *  climb, or too far to drop). Each step climbed costs `CLIMB_COST` more. */
 export function canStep(from: Tile, to: Tile, jump: number): number | null {
   if (!standable(to)) return null;
   const rise = to.h - from.h;
+  // (a flier, with a jump of FLY_JUMP, goes over any height at the cost of a level step)
+  if (jump >= FLY_JUMP) return 1;
   if (Math.abs(rise) > Math.min(jump, CLIMB_MAX)) return null;
   return 1 + (rise > 0 ? rise * CLIMB_COST : 0);
 }

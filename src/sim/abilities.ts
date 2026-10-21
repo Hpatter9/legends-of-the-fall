@@ -5,7 +5,7 @@
 //
 // Randomness comes from the battle's own side stream (`b.skillRng`), so the fight's main stream is left alone.
 
-import { standable, tileAt, type At } from './board';
+import { sightClear, standable, tileAt, type At } from './board';
 import { atkOf, blowMult, canStrike, defOf, hurt, tileOf, unitAt, wayTo, type Battle, type BattleEvent, type Unit } from './battle';
 import { Rng } from './rng';
 
@@ -42,6 +42,20 @@ export interface Passive {
   block?: number;
   /** Its blows set the foe alight. */
   ignite?: Dot;
+  /** Its blows ignore this much of the foe's defence. */
+  pierce?: number;
+  /** The chance a blow also arcs to a second foe near the target, for `ARC_SHARE` of the blow. */
+  arc?: number;
+  /** Every `every` ms it mends the most hurt ally (itself too) for `share` of its attack. */
+  mend?: { every: number; share: number };
+  /** Heals this share of its health each second. */
+  regen?: number;
+  /** It heals itself for this share of the damage its blows deal. */
+  leech?: number;
+  /** Its blows deal this much more to shooters. */
+  prey?: number;
+  /** Takes this much less from each ally on the tiles beside it (up to three). */
+  huddle?: number;
 }
 
 export interface Skill {
@@ -206,6 +220,136 @@ function meteor(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   return true;
 }
 
+/** The share of a blow an arc of lightning carries to the second foe. */
+const ARC_SHARE = 0.6;
+const STUN_MS = 1500;
+
+const sorted = (fs: Unit[]) => fs.sort((x, y) => x.hp - y.hp || x.id - y.id);
+
+/** Heal an ally (never past full), with the event for the renderer. */
+function mendUnit(u: Unit, amount: number, out: BattleEvent[]): void {
+  const n = Math.min(Math.round(amount), u.maxHp - u.hp);
+  if (n <= 0 || !u.alive) return;
+  u.hp += n;
+  out.push({ kind: 'heal', to: u.id, amount: n });
+}
+
+/** Ninja Monk: three quick strikes on the weakest foe in reach, and it is stunned. */
+function flurry(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const def = defOf(me);
+  const f = sorted(foesOf(b, me).filter((x) => canStrike(b.board, def, me, x)))[0];
+  if (!f) return false;
+  me.facing = wayTo(me, f);
+  const mult = blowMult(tileOf(b, me).h, tileOf(b, f).h, me.facing, f.facing);
+  for (let i = 0; i < 3; i++) hurt(b, me, f, net(atkOf(me) * 0.8 * mult, f), i === 2, false, out, 'skill');
+  if (f.alive) f.busyUntil = Math.max(f.busyUntil, b.t + STUN_MS);
+  return true;
+}
+
+/** Peasant: the allies within two tiles close ranks and take half damage for a while. */
+const HOLD_MS = 3000;
+function holdTheLine(b: Battle, me: Unit): boolean {
+  if (!foesOf(b, me).some((f) => apart(me, f) <= 3)) return false;
+  for (const a of b.units) if (a.alive && a.side === me.side && apart(me, a) <= 2) a.guardUntil = b.t + HOLD_MS;
+  return true;
+}
+
+/** Lightning Mage: a bolt strikes the most crowded foe and jumps to the nearest foes, weaker each time. */
+const CHAIN_JUMPS = 4;
+function chainLightning(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const def = defOf(me);
+  const first = crowd(b, me, (f) => apart(me, f) <= def.range + 2 && sightClear(b.board, me, f));
+  if (!first) return false;
+  const hit = new Set<number>();
+  let from: Unit = me;
+  let at: Unit | undefined = first;
+  for (let i = 0; at && i <= CHAIN_JUMPS; i++) {
+    out.push({ kind: 'arc', from: from.id, to: at.id });
+    hurt(b, me, at, net(atkOf(me) * 1.7 * Math.pow(0.8, i), at), i === 0, false, out, 'skill');
+    hit.add(at.id);
+    from = at;
+    const here: Unit = at;
+    at = foesOf(b, me).filter((f) => !hit.has(f.id) && apart(f, here) <= 2).sort((x, y) => apart(x, here) - apart(y, here) || x.id - y.id)[0];
+  }
+  return true;
+}
+
+/** Wanderer: a wave of light heals every ally who is hurt and shields them for a moment. */
+const SANCTUARY_MS = 2000;
+function sanctuary(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const hurtAllies = b.units.filter((a) => a.alive && a.side === me.side && a.hp < a.maxHp * 0.75);
+  if (!hurtAllies.length) return false;
+  for (const a of b.units)
+    if (a.alive && a.side === me.side) {
+      mendUnit(a, atkOf(me) * 3, out);
+      a.guardUntil = b.t + SANCTUARY_MS;
+    }
+  return true;
+}
+
+/** Kitsune: the strongest foe near her is charmed, and fights its own side for a while. */
+const CHARM_MS = 3500;
+function charm(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const foes = foesOf(b, me);
+  const f = foes
+    .filter((x) => apart(me, x) <= 5 && !(x.charmUntil !== undefined && x.charmUntil > b.t) && foes.some((o) => o !== x))
+    .sort((x, y) => atkOf(y) - atkOf(x) || x.id - y.id)[0];
+  if (!f) return false;
+  f.charmUntil = b.t + CHARM_MS;
+  f.taunt = undefined;
+  f.busyUntil = Math.min(f.busyUntil, b.t + 300);
+  out.push({ kind: 'arc', from: me.id, to: f.id });
+  return true;
+}
+
+/** Karasu Tengu: drops from the sky beside a shooter (else the weakest foe) and strikes it hard. */
+function dive(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const foes = sorted(foesOf(b, me));
+  for (const f of [...foes.filter((x) => defOf(x).shot), ...foes.filter((x) => !defOf(x).shot)]) {
+    const hf = tileOf(b, f).h;
+    const cands = DIR.map(([du, dv]) => ({ u: f.u + du, v: f.v + dv }))
+      .filter((c) => {
+        const t = tileAt(b.board, c.u, c.v);
+        return t && standable(t) && !unitAt(b, c.u, c.v);
+      })
+      .sort((x, y) => apart(me, x) - apart(me, y) || x.v - y.v || x.u - y.u);
+    if (!cands.length) continue;
+    const to = cands[0];
+    const from = { u: me.u, v: me.v };
+    me.u = to.u;
+    me.v = to.v;
+    me.step = undefined;
+    me.facing = wayTo(me, f);
+    out.push({ kind: 'blink', by: me.id, from, to });
+    hurt(b, me, f, net(atkOf(me) * 2.0 * blowMult(tileOf(b, me).h, hf, me.facing, f.facing), f), true, false, out, 'skill');
+    return true;
+  }
+  return false;
+}
+
+/** Yamabushi Tengu: a gust hurts the foes within two tiles and shoves each a tile away; a drop of two or more hurts more. */
+const GUST_REACH = 2;
+const FALL_DMG = 10;
+function windGust(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const near = foesOf(b, me).filter((f) => apart(me, f) <= GUST_REACH);
+  if (!near.length) return false;
+  for (const f of near) {
+    const way = wayTo(me, f);
+    hurt(b, me, f, net(atkOf(me) * 0.9, f), false, false, out, 'skill');
+    if (!f.alive) continue;
+    const to = { u: f.u + DIR[way][0], v: f.v + DIR[way][1] };
+    const t = tileAt(b.board, to.u, to.v);
+    f.busyUntil = Math.max(f.busyUntil, b.t + 500);
+    if (!t || !standable(t) || unitAt(b, to.u, to.v)) continue;
+    const from = tileOf(b, f);
+    f.step = { u: f.u, v: f.v, h: from.h, at: b.t, ms: 250 };
+    f.u = to.u;
+    f.v = to.v;
+    if (from.h - t.h >= 2) hurt(b, me, f, (from.h - t.h) * FALL_DMG, true, false, out, 'dot');
+  }
+  return true;
+}
+
 export const KITS: Record<string, Kit> = {
   knight: {
     skill: { name: 'Shield Wall', text: 'Foes near him turn on him, and he takes half damage for 4s', need: CHARGE_MAX, dealt: 4, taken: 7, perSec: 2, castMs: 600, anim: 'defend', cast: shieldWall },
@@ -226,6 +370,34 @@ export const KITS: Record<string, Kit> = {
   wizard: {
     skill: { name: 'Meteor', text: 'A meteor blasts a 3x3 and leaves it burning', need: CHARGE_MAX, dealt: 9, taken: 4, perSec: 2, castMs: 800, anim: 'attack', cast: meteor },
     passive: { name: 'Cinders', text: 'Its blows set the foe alight', ignite: { kind: 'burn', dmg: 3, every: 500, ms: 2000 } },
+  },
+  ninjaMonk: {
+    skill: { name: 'Thousand Fists', text: 'Three quick strikes on one foe, who is stunned for 1.5s', need: CHARGE_MAX, dealt: 8, taken: 3, perSec: 2, castMs: 700, anim: 'attack2', cast: flurry },
+    passive: { name: 'Iron Fists', text: 'Blows ignore 3 of the foe\'s defence', pierce: 3 },
+  },
+  peasant: {
+    skill: { name: 'Hold the Line', text: 'Allies within 2 tiles take half damage for 3s', need: CHARGE_MAX, dealt: 5, taken: 6, perSec: 2, castMs: 500, anim: 'attack', cast: holdTheLine },
+    passive: { name: 'Strength in Numbers', text: 'Takes 7% less from each ally beside him (up to 3)', huddle: 0.07 },
+  },
+  lightningMage: {
+    skill: { name: 'Chain Lightning', text: 'A bolt jumps through up to five foes, weaker each time', need: CHARGE_MAX, dealt: 8, taken: 4, perSec: 2, castMs: 700, anim: 'attack', cast: chainLightning },
+    passive: { name: 'Static', text: '25% of blows arc to a second foe nearby', arc: 0.25 },
+  },
+  wanderer: {
+    skill: { name: 'Sanctuary', text: 'Heals every ally and shields them for 2s (when some are hurt)', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 700, anim: 'attack', cast: sanctuary },
+    passive: { name: 'Mending Light', text: 'Every 2.5s heals the most hurt ally', mend: { every: 2500, share: 1.2 } },
+  },
+  kitsune: {
+    skill: { name: 'Fox Charm', text: 'The strongest foe nearby fights its own side for 3.5s', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 600, anim: 'attack', cast: charm },
+    passive: { name: 'Spirit Drain', text: 'Heals for a quarter of the damage her blows deal', leech: 0.25 },
+  },
+  karasu: {
+    skill: { name: 'Dive', text: 'Drops beside a shooter (else the weakest foe) and strikes it for double', need: CHARGE_MAX, dealt: 7, taken: 3, perSec: 2, castMs: 450, anim: 'attack', cast: dive },
+    passive: { name: 'Hunter\'s Eye', text: 'Blows deal 50% more to shooters', prey: 1.5 },
+  },
+  yamabushi: {
+    skill: { name: 'Wind Gust', text: 'Foes within 2 tiles are hurt and shoved back a tile, and fall damage if it drops them 2 or more', need: CHARGE_MAX, dealt: 6, taken: 6, perSec: 2, castMs: 600, anim: 'attack', cast: windGust },
+    passive: { name: 'Mountain Breath', text: 'Heals 2% of his health each second', regen: 0.02 },
   },
 };
 
@@ -258,6 +430,10 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
     return null;
   }
   if (blow && kit?.passive.block && (wayTo(by, to) + 2) % 4 === to.facing) dmg *= 1 - kit.passive.block;
+  if (kit?.passive.huddle && src !== 'dot') {
+    const n = b.units.filter((a) => a.alive && a !== to && a.side === to.side && apart(a, to) === 1).length;
+    dmg *= 1 - kit.passive.huddle * Math.min(3, n);
+  }
   if (to.guardUntil !== undefined && to.guardUntil > b.t) dmg *= GUARD_SHARE;
   if (src !== 'dot') {
     if (blow && !splash) gain(by, kitOf(by)?.skill.dealt ?? 0);
@@ -273,9 +449,22 @@ export function rollCrit(b: Battle, me: Unit): number {
 }
 
 /** After a blow has landed: a crit makes the foe bleed, and a flame blow sets it alight. */
-export function afterBlow(b: Battle, by: Unit, to: Unit, crit: boolean): void {
-  if (!to.alive) return;
+/** How much more a blow deals to this target (Karasu Tengu's prey), as a multiplier. */
+export const preyOf = (by: Unit, to: Unit): number => (kitOf(by)?.passive.prey && defOf(to).shot ? kitOf(by)!.passive.prey! : 1);
+/** How much of the target's defence a blow ignores. */
+export const pierceOf = (by: Unit): number => kitOf(by)?.passive.pierce ?? 0;
+
+export function afterBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg = 0, out: BattleEvent[] = []): void {
   const p = kitOf(by)?.passive;
+  if (p?.leech && by.alive) mendUnit(by, dmg * p.leech, out);
+  if (p?.arc && dmg > 0 && roll(b) < p.arc) {
+    const second = foesOf(b, by).filter((f) => f !== to && apart(f, to) <= 2).sort((x, y) => apart(x, to) - apart(y, to) || x.id - y.id)[0];
+    if (second) {
+      out.push({ kind: 'arc', from: to.id, to: second.id });
+      hurt(b, by, second, net(dmg * ARC_SHARE + defOf(second).def, second), false, true, out, 'skill');
+    }
+  }
+  if (!to.alive) return;
   const dot = crit ? p?.crit?.bleed : p?.ignite;
   if (dot) to.dot = { ...dot, by: by.id, next: b.t + dot.every, until: b.t + dot.ms };
 }
@@ -296,6 +485,16 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
     if (!u.alive) continue;
     const k = kitOf(u);
     if (k) gain(u, (k.skill.perSec * 100) / 1000);
+    const p = k?.passive;
+    if (p?.regen && b.t % 1000 === 0) mendUnit(u, u.maxHp * p.regen, out);
+    if (p?.mend) {
+      u.mendAt ??= b.t + p.mend.every;
+      if (b.t >= u.mendAt) {
+        u.mendAt = b.t + p.mend.every;
+        const weakest = b.units.filter((a) => a.alive && a.side === u.side && a.hp < a.maxHp).sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp || x.id - y.id)[0];
+        if (weakest) mendUnit(weakest, atkOf(u) * p.mend.share, out);
+      }
+    }
     const d = u.dot;
     if (d) {
       if (b.t >= d.until) u.dot = undefined;
