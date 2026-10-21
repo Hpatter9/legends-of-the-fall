@@ -32,6 +32,10 @@ export interface UnitDef {
   heightReach?: number;
   /** One line for the bench card. */
   role: string;
+  /** A hero's rarity in the recruiting draw: 1 common, 2 rare, 3 epic (common when unset). */
+  rarity?: 1 | 2 | 3;
+  /** A hero's sheet at each grade (1 to 3), where the packs have an evolved look; unset grades use `sheet`. */
+  forms?: readonly string[];
 }
 
 /** The share of a splash blow that lands on each tile beside the target. */
@@ -52,3 +56,5 @@ export const UNITS: Record<string, UnitDef> = {
 
 /** The heroes on the bench, in order. */
 export const HEROES = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard'] as const;
+/** Every hero there is (the starting five first; more are unlocked by recruiting). */
+export const ALL_HEROES: readonly string[] = [...HEROES];
