@@ -9,6 +9,7 @@ import { BUILDING_IDS, BUILDINGS, maxLevel, nextCost, upgrade, type BuildingId }
 import { traitsOf, TRAITS } from './sim/traits';
 import { rarityOf, saveMeta, starSummary, type Meta } from './sim/meta';
 import { portrait } from './render/sheets';
+import { openSettings } from './settings';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -36,6 +37,7 @@ export class Home {
     $('homeRecruit').addEventListener('click', () => this.hooks.onRecruit());
     $('homeHeroes').addEventListener('click', () => this.show('heroes'));
     $('homeCastle').addEventListener('click', () => this.show('castle'));
+    $('homeSettings').addEventListener('click', () => openSettings());
     $('homeBack').addEventListener('click', () => this.show('menu'));
   }
 

@@ -57,7 +57,7 @@
   #status { flex: 1; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #clock { font-variant-numeric: tabular-nums; color: var(--ink); }
   #speed { padding: 4px 10px; display: none; }
-  #mute { padding: 4px 8px; font-size: 14px; line-height: 1; }
+  #mute, #gear { padding: 4px 8px; font-size: 14px; line-height: 1; }
   /* upright (a phone is narrow): the title, gold and buttons share the first row and the stage and status the second,
      which keeps clear of the version line at the top right; in a fight the title makes way for the clock */
   @media (orientation: portrait) {
@@ -238,6 +238,20 @@
     #homePage { max-height: calc(100vh - 80px); }
   }
 
+  /* the settings page: over the home screen or the fight */
+  #settings { position: fixed; inset: 0; z-index: 6; display: flex; flex-direction: column; gap: 10px; padding: calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 10px); background: rgba(24, 12, 8, 0.96); overflow-y: auto; touch-action: pan-y; }
+  #settings[hidden] { display: none; }
+  #settings header { display: flex; align-items: center; gap: 10px; }
+  #settings h2 { margin: 0; flex: 1; font-size: 20px; color: var(--gold); }
+  #settingsBody { display: flex; flex-direction: column; gap: 8px; max-width: 480px; width: 100%; margin: 0 auto; }
+  #settingsBody .hint { margin: 6px 0 0; font-size: 11px; color: var(--dim); text-align: center; }
+  .setting { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 10px; padding: 8px 10px; background: rgba(0, 0, 0, 0.35); border: 2px solid #5a3a22; border-radius: 8px; }
+  .setting b { display: block; }
+  .setting em { display: block; font-style: normal; font-size: 11px; color: var(--dim); }
+  .setting input[type='range'] { grid-column: 1 / -1; width: 100%; accent-color: var(--gold); }
+  .setting .toggle, .setting .pair button { min-width: 64px; }
+  .setting .toggle.on, .setting .pair button.on { background: linear-gradient(#c9762e, #8e4618); border-color: var(--gold); }
+  .setting .pair { display: flex; gap: 6px; }
   #loading { position: fixed; inset: 0; display: grid; place-items: center; font-size: 18px; color: var(--gold); }
   #version { position: fixed; right: 6px; bottom: 2px; font-size: 10px; color: rgba(255, 255, 255, 0.5); text-shadow: 0 1px 0 #000; pointer-events: none; }
   @media (orientation: portrait) { #version { bottom: auto; top: calc(env(safe-area-inset-top) + 34px); } }
@@ -246,7 +260,7 @@
 <body data-phase="deploy">
 <div id="sky"><div></div><div></div><div></div><div></div><div></div></div>
 <div id="stage"></div>
-<div id="top"><h1>Legends of the Fall</h1><span id="status"></span><span id="gold"></span><span id="clock"></span><button id="mute"></button><button id="speed">×1</button></div>
+<div id="top"><h1>Legends of the Fall</h1><span id="status"></span><span id="gold"></span><span id="clock"></span><button id="mute"></button><button id="gear" title="Settings">⚙</button><button id="speed">×1</button></div>
 <div id="panel">
   <div id="spells"><div id="mana"><i><span></span></i><b></b></div><div id="spellCards"></div><div id="spellHint"></div></div>
   <div id="traits"></div><div id="traitHint"></div>
@@ -278,11 +292,16 @@
     <button id="homeRecruit">Recruit</button>
     <button id="homeHeroes">Heroes</button>
     <button id="homeCastle">Castle</button>
+    <button id="homeSettings">Settings</button>
   </div>
   <div id="homePage" hidden>
     <header><h2 id="homeTitle"></h2><button id="homeBack">Back</button></header>
     <div id="homeBody"></div>
   </div>
+</div>
+<div id="settings" hidden>
+  <header><h2>Settings</h2><button id="settingsClose">Close</button></header>
+  <div id="settingsBody"></div>
 </div>
 <div id="loading">Loading…</div>
 <div id="version">Version __VERSION__</div>

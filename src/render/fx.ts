@@ -5,16 +5,67 @@
 import { Container, Graphics, Rectangle, Sprite, Text, Texture } from 'pixi.js';
 import { tileAt } from '../sim/board';
 import { defOf, type Battle, type BattleEvent } from '../sim/battle';
+import { kitOf } from '../sim/abilities';
 import type { Shot } from '../sim/units';
+import { settings } from '../settings';
 import { loadImage } from './loadImage';
 import { at, TH, TW } from './iso';
 import { fadeTrauma, popScale, shakeOf, traumaFor } from './juiceRules';
+import { BIG_FOE_HP, SKILL_FX, SPELL_FX, type Effect, type MagicKey } from './skillFx';
 import type { UnitSprite } from './unitView';
 import impactUrl from '../art/fx/impact.png';
 import fireUrl from '../art/fx/hit_fire.png';
 import blastUrl from '../art/fx/blast.png';
 import arrowUrl from '../art/fx/arrow.png';
 import boneUrl from '../art/fx/bone_arrow.png';
+import bloodExplosionUrl from '../art/fx/magic/blood_explosion.png';
+import darkCircleUrl from '../art/fx/magic/dark_circle.png';
+import darkSlashUrl from '../art/fx/magic/dark_slash.png';
+import earthBurstUrl from '../art/fx/magic/earth_burst.png';
+import earthExplosionUrl from '../art/fx/magic/earth_explosion.png';
+import earthShieldUrl from '../art/fx/magic/earth_shield.png';
+import earthWaveUrl from '../art/fx/magic/earth_wave.png';
+import fireCircleUrl from '../art/fx/magic/fire_circle.png';
+import fireExplosionUrl from '../art/fx/magic/fire_explosion.png';
+import goldBurstUrl from '../art/fx/magic/gold_burst.png';
+import iceShieldUrl from '../art/fx/magic/ice_shield.png';
+import lightCircleUrl from '../art/fx/magic/light_circle.png';
+import lightGatherUrl from '../art/fx/magic/light_gather.png';
+import lightNovaUrl from '../art/fx/magic/light_nova.png';
+import lightningBurstUrl from '../art/fx/magic/lightning_burst.png';
+import lightningStrikeUrl from '../art/fx/magic/lightning_strike.png';
+import moonSlashUrl from '../art/fx/magic/moon_slash.png';
+import pinkHeartUrl from '../art/fx/magic/pink_heart.png';
+import whiteBurstUrl from '../art/fx/magic/white_burst.png';
+import windBurstUrl from '../art/fx/magic/wind_burst.png';
+import windVortexUrl from '../art/fx/magic/wind_vortex.png';
+import windWaveUrl from '../art/fx/magic/wind_wave.png';
+
+/** The Pixel Effects sheets (32px frames), by the keys `skillFx.ts` uses. */
+const MAGIC: Record<MagicKey, string> = {
+  bloodExplosion: bloodExplosionUrl,
+  darkCircle: darkCircleUrl,
+  darkSlash: darkSlashUrl,
+  earthBurst: earthBurstUrl,
+  earthExplosion: earthExplosionUrl,
+  earthShield: earthShieldUrl,
+  earthWave: earthWaveUrl,
+  fireCircle: fireCircleUrl,
+  fireExplosion: fireExplosionUrl,
+  goldBurst: goldBurstUrl,
+  iceShield: iceShieldUrl,
+  lightCircle: lightCircleUrl,
+  lightGather: lightGatherUrl,
+  lightNova: lightNovaUrl,
+  lightningBurst: lightningBurstUrl,
+  lightningStrike: lightningStrikeUrl,
+  moonSlash: moonSlashUrl,
+  pinkHeart: pinkHeartUrl,
+  whiteBurst: whiteBurstUrl,
+  windBurst: windBurstUrl,
+  windVortex: windVortexUrl,
+  windWave: windWaveUrl,
+};
 
 interface Strip {
   frames: Texture[];
@@ -25,6 +76,7 @@ let fire: Strip;
 let blast: Strip;
 let arrow: Texture;
 let bone: Texture;
+let magic: Record<MagicKey, Strip>;
 
 async function strip(url: string, size: number): Promise<Strip> {
   const base = Texture.from(await loadImage(url));
@@ -36,6 +88,9 @@ export async function loadFx(): Promise<void> {
   [impact, fire, blast] = await Promise.all([strip(impactUrl, 48), strip(fireUrl, 32), strip(blastUrl, 64)]);
   arrow = Texture.from(await loadImage(arrowUrl));
   bone = Texture.from(await loadImage(boneUrl));
+  const keys = Object.keys(MAGIC) as MagicKey[];
+  const strips = await Promise.all(keys.map((k) => strip(MAGIC[k], 32)));
+  magic = Object.fromEntries(keys.map((k, i) => [k, strips[i]])) as Record<MagicKey, Strip>;
 }
 
 interface Item {
@@ -50,15 +105,35 @@ export class Fx {
   private trauma = 0;
   shakeX = 0;
   shakeY = 0;
+  /** A white flash over the whole screen (on the stage, above the board), for a crit or a big kill. */
+  readonly flashLayer = new Graphics();
+  private flashLeft = 0;
+  private flashMs = 1;
+  private flashPeak = 0;
 
   constructor(private sprites: Map<number, UnitSprite>) {
     this.root.zIndex = 1e7;
+    this.flashLayer.visible = false;
   }
 
   clear(): void {
     for (const it of this.items) it.view.destroy({ children: true });
     this.items = [];
     this.trauma = 0;
+    this.flashLeft = 0;
+  }
+
+  /** The flash covers a screen of this size (set when the page lays out). */
+  fitScreen(w: number, h: number): void {
+    this.flashLayer.clear().rect(0, 0, w, h).fill(0xffffff);
+  }
+
+  /** A white flash that fades over `ms` (not when screen shake is off in the settings). */
+  private flash(peak: number, ms: number): void {
+    if (!settings().shake) return;
+    this.flashPeak = Math.max(peak, this.flashLeft > 0 ? this.flashPeak : 0);
+    this.flashMs = ms;
+    this.flashLeft = ms;
   }
 
   /** Show what a tick of the fight did. */
@@ -84,7 +159,7 @@ export class Fx {
         if (!to || !target) continue;
         // (no `by` is the king's meteor)
         if (!by) {
-          this.anim(blast, to.x, to.y - to.tall * 0.45, 0.8, 45);
+          this.anim(magic.fireExplosion, to.x, to.y - to.tall * 0.45, 1.6, 70);
           this.number(e.dmg, to.x, to.y - to.tall - 10, e.heavy, false);
           continue;
         }
@@ -94,10 +169,26 @@ export class Fx {
           this.number(e.dmg, to.x, to.y - to.tall - 10, false, target.side === 'hero');
           continue;
         }
-        const fiery = defOf(by).shot === 'fire' || defOf(by).shot === 'bolt';
-        this.anim(fiery ? (e.splash ? fire : blast) : impact, to.x, to.y - to.tall * 0.45, fiery && !e.splash ? 0.8 : 0.9, 45);
+        // (a skill's blow has its own sheet; a crit or a big kill adds a burst, a white flash and a harder shake)
+        const skillFx = e.src === 'skill' ? SKILL_FX[kitOf(by)?.skill.name ?? '']?.hit : undefined;
+        if (skillFx) this.effect(skillFx, to.x, to.y - to.tall * 0.45);
+        else {
+          const fiery = defOf(by).shot === 'fire' || defOf(by).shot === 'bolt';
+          this.anim(fiery ? (e.splash ? fire : blast) : impact, to.x, to.y - to.tall * 0.45, fiery && !e.splash ? 0.8 : 0.9, 45);
+        }
         this.number(e.dmg, to.x, to.y - to.tall - 10, e.heavy, target.side === 'hero');
         this.trauma = Math.min(1, this.trauma + traumaFor(e.dmg / target.maxHp, e.killed) * 0.5);
+        if (e.heavy && e.src === 'blow') {
+          // (a crit, or a blow from height: a gold burst and a flash)
+          this.anim(magic.goldBurst, to.x, to.y - to.tall * 0.45, 1.3, 60);
+          this.flash(0.35, 180);
+          this.trauma = Math.min(1, this.trauma + 0.25);
+        }
+        if (e.killed && target.side === 'foe' && target.maxHp >= BIG_FOE_HP) {
+          this.anim(magic.bloodExplosion, to.x, to.y - to.tall * 0.45, 2.2, 60);
+          this.flash(0.5, 260);
+          this.trauma = Math.min(1, this.trauma + 0.4);
+        }
       }
     }
   }
@@ -112,9 +203,12 @@ export class Fx {
       else it.view.destroy({ children: true });
     }
     this.trauma = fadeTrauma(this.trauma, dt / 1000);
-    const s = shakeOf(this.trauma);
+    const s = settings().shake ? shakeOf(this.trauma) : 0;
     this.shakeX = s ? (Math.random() * 2 - 1) * s : 0;
     this.shakeY = s ? (Math.random() * 2 - 1) * s : 0;
+    this.flashLeft = Math.max(0, this.flashLeft - dt);
+    this.flashLayer.visible = this.flashLeft > 0;
+    this.flashLayer.alpha = (this.flashPeak * this.flashLeft) / this.flashMs;
   }
 
   private anim(s: Strip, x: number, y: number, scale: number, frameMs: number): Sprite {
@@ -138,6 +232,13 @@ export class Fx {
     return sp;
   }
 
+  /** One of the Pixel Effects sheets, played on a point (its own scale, speed and tint). */
+  private effect(e: Effect, x: number, y: number): Sprite {
+    const sp = this.anim(magic[e.sheet], x, y, e.scale, e.frameMs ?? 70);
+    if (e.tint !== undefined) sp.tint = e.tint;
+    return sp;
+  }
+
   /** A line of text that rises and fades. */
   private label(text: string, x: number, y: number, fill: number, size: number, life = 900): void {
     const txt = new Text({ text, style: { fontFamily: 'Trebuchet MS, Verdana, sans-serif', fontWeight: 'bold', fontSize: size, fill, stroke: { color: 0x1a1008, width: 3 } }, resolution: 3 });
@@ -156,12 +257,14 @@ export class Fx {
     });
   }
 
-  /** A skill goes off: its name over the caster and a ring of sparks at its feet. */
+  /** A skill goes off: its name over the caster, and its own effect at the caster's feet (sparks if it has none). */
   private skillName(byId: number, name: string): void {
     const by = this.sprites.get(byId);
     if (!by) return;
     this.label(name, by.x, by.y - by.tall - 20, 0xffe27a, 13, 1200);
-    this.anim(impact, by.x, by.y - 4, 1.6, 40);
+    const cast = SKILL_FX[name]?.cast;
+    if (cast) this.effect(cast, by.x, by.y - 4);
+    else this.anim(impact, by.x, by.y - 4, 1.6, 40);
   }
 
   /** The world position of a tile's top. */
@@ -261,7 +364,7 @@ export class Fx {
           ball.position.set(cx + 150 * (1 - f), cy - 360 * (1 - f));
           ball.texture = fire.frames[Math.floor(t / 60) % fire.frames.length];
           if (f >= 1) {
-            this.anim(blast, cx, cy - 12, 2.4, 45);
+            this.anim(magic.fireExplosion, cx, cy - 12, 4.5, 70);
             this.trauma = Math.min(1, this.trauma + 0.5);
           }
         }
@@ -294,8 +397,7 @@ export class Fx {
     for (const x of b.units) {
       const s = this.sprites.get(x.id);
       if (x.alive && x.side === 'hero' && Math.abs(x.u - e.u) <= 1 && Math.abs(x.v - e.v) <= 1 && s) {
-        const sp = this.anim(impact, s.x, s.y - s.tall * 0.45, 1.5, 50);
-        sp.tint = color;
+        this.effect(SPELL_FX[e.id], s.x, s.y - s.tall * 0.45);
         if (e.id === 'haste') this.label('Haste', s.x, s.y - s.tall - 20, color, 12, 900);
       }
     }
@@ -331,6 +433,7 @@ export class Fx {
   }
 
   private number(n: number, x: number, y: number, heavy: boolean, onHero: boolean): void {
+    if (!settings().numbers) return;
     const txt = new Text({
       text: String(n),
       style: { fontFamily: 'Trebuchet MS, Verdana, sans-serif', fontWeight: 'bold', fontSize: heavy ? 17 : 13, fill: onHero ? 0xff7a6a : heavy ? 0xffd34a : 0xffffff, stroke: { color: 0x1a1008, width: 3 } },
