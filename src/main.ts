@@ -5,11 +5,12 @@
 import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { D, standable, tileAt } from './sim/board';
 import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle } from './sim/battle';
-import { finish, gradeBoost, heroOf, isBossStage, loadRun, newRun, saveRun, setSquad, SQUAD, startStage, summon, summonCost, type Run } from './sim/run';
+import { boostOf, finish, heroOf, isBossStage, loadRun, newRun, saveRun, setSquad, SQUAD, startStage, summon, summonCost, type Run } from './sim/run';
 import { formOf, UNITS } from './sim/units';
 import { earn, loadMeta, rankOf, recordStars, saveMeta, type Meta } from './sim/meta';
 import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
 import { Gacha } from './gacha';
+import { Events } from './events';
 import { Home } from './home';
 import { keepAwake } from './render/awake';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, SPELL_IDS, type SpellId } from './sim/spells';
@@ -49,6 +50,7 @@ class Game {
   private run!: Run;
   private meta!: Meta;
   private gacha!: Gacha;
+  private events = new Events();
   private home!: Home;
   /** Crowns the last settled fight paid. */
   private crownGain = 0;
@@ -102,6 +104,8 @@ class Game {
         this.run.pool = [...this.meta.unlocked];
         this.placed.clear();
         this.newBattle();
+        // (a run saved between an event's card and the next fight picks it up again)
+        if (this.run.event) this.events.openEvent(this.run, () => saveRun(this.run));
       },
       onNew: () => this.newRunNow(),
       onRecruit: () => this.gacha.open(),
@@ -128,7 +132,7 @@ class Game {
       const h = heroOf(this.run, id);
       if (!h) continue;
       const at = this.placed.get(String(id)) ?? this.freeTile();
-      if (at && place(this.b, h.kind, at[0], at[1], id, gradeBoost(h.grade, rankOf(this.meta, h.kind)))) this.placed.set(String(id), at);
+      if (at && place(this.b, h.kind, at[0], at[1], id, boostOf(h, rankOf(this.meta, h.kind)))) this.placed.set(String(id), at);
       else setSquad(this.run, id, false);
     }
     this.acc = 0;
@@ -378,7 +382,16 @@ class Game {
       if (this.run.over) return this.goHome();
       saveRun(this.run);
       this.newBattle();
+      // (an event waits between two fights: its card opens over the new stage's board)
+      if (this.run.event) this.events.openEvent(this.run, () => (saveRun(this.run), this.refresh()));
     });
+    $('pack').addEventListener('click', () =>
+      this.events.openPack(this.run, this.b.phase === 'deploy', () => {
+        // (the gear changes the placed heroes' stats: the stage starts again with the squad where it stood)
+        saveRun(this.run);
+        this.newBattle();
+      }),
+    );
     $('speed').addEventListener('click', () => {
       this.speed = this.speed === 1 ? 2 : 1;
       $('speed').textContent = `×${this.speed}`;
@@ -503,7 +516,7 @@ class Game {
 
   private put(id: string, tile: [number, number]): void {
     const h = heroOf(this.run, Number(id))!;
-    if (!this.canPut(id, tile) || !place(this.b, h.kind, tile[0], tile[1], h.id, gradeBoost(h.grade, rankOf(this.meta, h.kind)))) return;
+    if (!this.canPut(id, tile) || !place(this.b, h.kind, tile[0], tile[1], h.id, boostOf(h, rankOf(this.meta, h.kind)))) return;
     setSquad(this.run, h.id, true);
     this.placed.set(id, tile);
     saveRun(this.run);
@@ -642,7 +655,7 @@ class Game {
       $('banner').className = b.phase;
       $('summary').textContent =
         b.phase === 'won'
-          ? `${left} of ${heroesPlaced(b)} heroes standing · +${this.gain} gold · +${this.crownGain} crowns · ${clock(b.t)}`
+          ? `${left} of ${heroesPlaced(b)} heroes standing · +${this.gain} gold · +${this.crownGain} crowns · ${clock(b.t)}${run.found?.length ? ` · found: ${run.found.join(', ')}` : ''}`
           : `The run ends at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} summons · +${this.crownGain} crowns`;
       $('next').textContent = b.phase === 'won' ? `Next stage (${run.stage})` : 'Home';
     }
@@ -650,6 +663,7 @@ class Game {
     this.markTiles();
     this.refreshBench();
     this.refreshTraits();
+    this.events.drawStrip(run);
   }
 
   /** The trait strip: the traits of the heroes placed, lit when their bonus is on; a tap says what one does. */

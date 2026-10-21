@@ -9,6 +9,9 @@ import { bonusGold, heroBoost, manaRate, newCastle, type Castle } from './castle
 import { rankMult } from './meta';
 import { starGold } from './stars';
 import { mixSeed, Rng } from './rng';
+import { drawEvent, eventAfter, type EventCard } from './events';
+import { dropGear, gearBoost, gearText, type Gear, type Slot } from './gear';
+import { relicEffects } from './relics';
 import { HEROES } from './units';
 
 export const MAX_GRADE = 3;
@@ -29,6 +32,19 @@ export interface Owned {
   id: number;
   kind: string;
   grade: number;
+  /** The gear worn, one piece a slot; it stays for the run (a merge hands it back to the pack). */
+  gear?: Partial<Record<Slot, Gear>>;
+  /** Lasting bumps from a training ground, added to the hero's multipliers. */
+  bump?: { hp: number; atk: number };
+}
+
+/** What the next fight carries over from an event: heroes' multipliers, foes' multiplier, a prize for a win. */
+export interface Buff {
+  hp?: number;
+  atk?: number;
+  foes?: number;
+  gold?: number;
+  gear?: Gear;
 }
 
 export interface Run {
@@ -48,6 +64,18 @@ export interface Run {
   pool?: string[];
   /** The castle's levels when the run began (the fights keep them); none when unset. */
   castle?: Castle;
+  /** Relic ids held (`relics.ts`). */
+  relics?: string[];
+  /** Gear in the pack, not worn by anyone. */
+  items?: Gear[];
+  /** The next gear id. */
+  nextGear?: number;
+  /** An event waiting between two fights (`events.ts`). */
+  event?: EventCard;
+  /** The next fight's boons and curses; cleared when it ends. */
+  buff?: Buff;
+  /** Lines about what the last win dropped, for the result screen. */
+  found?: string[];
 }
 
 export function newRun(seed: number, pool: readonly string[] = HEROES, castle: Castle = newCastle()): Run {
@@ -81,6 +109,7 @@ function add(run: Run, kind: string): Owned {
     if (same.length < 3 || made.grade >= MAX_GRADE) return made;
     // (the new one stays in the squad's place of the oldest: the first three leave, one of the next grade arrives)
     const gone = new Set(same.slice(0, 3).map((h) => h.id));
+    for (const h of same.slice(0, 3)) for (const g of Object.values(h.gear ?? {})) (run.items ??= []).push(g);
     const slot = run.squad.findIndex((id) => gone.has(id));
     run.roster = run.roster.filter((h) => !gone.has(h.id));
     run.squad = run.squad.filter((id) => !gone.has(id));
@@ -98,6 +127,34 @@ export const gradeBoost = (grade: number, rank = 0): Boost => {
   const k = GRADE_MULT ** (grade - 1) * rankMult(rank);
   return { hp: k, atk: k, grade };
 };
+/** A roster hero's whole boost: grade and rank, its gear, its training bumps. */
+export function boostOf(h: Owned, rank = 0): Boost {
+  const base = gradeBoost(h.grade, rank);
+  const g = gearBoost(h.gear);
+  return { ...base, hp: base.hp! * g.hp! + (h.bump?.hp ?? 0), atk: base.atk! * g.atk! + (h.bump?.atk ?? 0) };
+}
+
+/** Give a hero a piece of gear from the pack (the piece it replaces goes back). False when it isn't in the pack. */
+export function equip(run: Run, heroId: number, gearId: number): boolean {
+  const h = heroOf(run, heroId);
+  const i = run.items?.findIndex((g) => g.id === gearId) ?? -1;
+  if (!h || i < 0) return false;
+  const [g] = run.items!.splice(i, 1);
+  const old = h.gear?.[g.slot];
+  if (old) run.items!.push(old);
+  h.gear = { ...h.gear, [g.slot]: g };
+  return true;
+}
+
+/** Take a hero's gear in a slot back to the pack. */
+export function unequip(run: Run, heroId: number, slot: Slot): boolean {
+  const h = heroOf(run, heroId);
+  const g = h?.gear?.[slot];
+  if (!h || !g) return false;
+  (run.items ??= []).push(g);
+  delete h.gear![slot];
+  return true;
+}
 
 export const isBossStage = (stage: number) => stage % BOSS_EVERY === 0;
 /** The band stage n meets: a boss band on a boss stage, else the next field band in turn (boss stages skipped). */
@@ -115,15 +172,41 @@ export function stageBoost(stage: number): Stage {
 export const reward = (stage: number) => 20 + 6 * stage + (isBossStage(stage) ? 30 : 0);
 
 /** A fresh fight for the run's current stage (a different board each stage). */
-export const startStage = (run: Run): Battle => startBattle(mixSeed(run.seed, 0x57a6e, run.stage), bandFor(run.stage), { ...stageBoost(run.stage), heroes: heroBoost(run.castle), mana: manaRate(run.castle) });
+export function startStage(run: Run): Battle {
+  const rl = relicEffects(run.relics);
+  const base = stageBoost(run.stage);
+  const castle = heroBoost(run.castle);
+  const foes = run.buff?.foes ?? 1;
+  const { atk, hp, mana, first, revive, gold: _gold, ...team } = rl;
+  return startBattle(mixSeed(run.seed, 0x57a6e, run.stage), bandFor(run.stage), {
+    ...base,
+    foes: { hp: base.foes!.hp! * foes, atk: base.foes!.atk! * foes },
+    heroes: { hp: castle.hp! * (hp ?? 1) * (run.buff?.hp ?? 1), atk: castle.atk! * (atk ?? 1) * (run.buff?.atk ?? 1) },
+    mana: manaRate(run.castle) * (mana ?? 1),
+    relics: Object.keys(team).length || first || revive ? { team, first, revive } : undefined,
+  });
+}
 
 /** Settle a finished fight: a win pays (and its stars pay gold) and moves on to the next stage; a loss ends the run. */
 export function finish(run: Run, won: boolean, stars = 0): void {
   run.best = Math.max(run.best, run.stage);
+  run.found = [];
   if (won) {
-    run.gold += reward(run.stage) + starGold(stars);
+    const boss = isBossStage(run.stage);
+    const bonus = (relicEffects(run.relics).gold ?? 0) + (run.buff?.gold ?? 0);
+    run.gold += reward(run.stage) + starGold(stars) + bonus;
+    // a prize for a cursed path, and a sure piece of gear from a boss (one tier up, from its own stream)
+    const prizes: Gear[] = run.buff?.gear ? [run.buff.gear] : [];
+    if (boss) prizes.push(dropGear(new Rng(mixSeed(run.seed, 0x6ea2, run.stage)), (run.nextGear = (run.nextGear ?? 1) + 1) - 1, run.stage, 1));
+    for (const g of prizes) {
+      (run.items ??= []).push(g);
+      run.found.push(`${g.name} (${g.slot}, ${gearText(g)})`);
+    }
+    if (run.buff?.gold) run.found.push(`${run.buff.gold} gold from the cursed path`);
     run.stage++;
+    run.event = eventAfter(run.stage - 1, boss) ? drawEvent(run, run.stage - 1) : undefined;
   } else run.over = true;
+  run.buff = undefined;
 }
 
 /** Choose or release a hero for the fight. Returns whether the squad changed. */

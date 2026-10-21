@@ -101,6 +101,7 @@
   body:not([data-phase='deploy']) .card.placed::after { content: none; }
   #buttons { display: flex; gap: 8px; }
   #buttons #fight { flex: 1; }
+  #buttons button:not(#fight) { padding: 10px 8px; font-size: 13px; }
   #gold { color: var(--gold); font-weight: bold; white-space: nowrap; }
   body:not([data-phase='deploy']) #buttons { display: none; }
 
@@ -238,6 +239,42 @@
     #homePage { max-height: calc(100vh - 80px); }
   }
 
+
+  /* events, relics and gear */
+  #relics { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+  #relics[hidden] { display: none; }
+  #relics .relic { padding: 2px; border-radius: 6px; line-height: 0; }
+  #relics .relic.picked { border-color: var(--gold); box-shadow: 0 0 8px var(--gold); }
+  #relics .hint { flex: 1 1 100%; font-size: 11px; color: var(--dim); }
+  img.icon { width: 28px; height: 28px; image-rendering: pixelated; flex: none; }
+  #events { position: fixed; inset: 0; z-index: 6; display: flex; align-items: center; justify-content: center; padding: calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 10px); background: rgba(12, 6, 4, 0.7); overflow-y: auto; touch-action: pan-y; animation: fade 0.3s ease-out; }
+  #events[hidden] { display: none; }
+  .evcard { width: min(380px, 100%); max-height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 14px; background: var(--wood); border: 3px solid var(--edge); border-radius: 12px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6); }
+  .evcard h2 { margin: 0; font-size: 20px; color: var(--gold); text-align: center; }
+  .evcard p { margin: 0; color: var(--dim); text-align: center; }
+  .evcard p.note { font-size: 12px; color: var(--ink); }
+  .evcard .gold { text-align: center; color: var(--gold); font-weight: bold; }
+  .evcard header { display: flex; align-items: center; gap: 10px; }
+  .evcard header h2 { flex: 1; text-align: left; }
+  .evcard .opt { display: flex; align-items: center; gap: 10px; text-align: left; font-weight: normal; }
+  .evcard .opt span { flex: 1; }
+  .evcard .opt b, .evcard .row b { display: block; }
+  .evcard .opt small, .evcard .row small { display: block; font-size: 11px; color: var(--dim); }
+  .evcard .opt em { font-style: normal; color: var(--gold); font-weight: bold; }
+  .evcard .opt em::after { content: ' gold'; font-size: 10px; }
+  .evcard .opt.curse { border-color: var(--red); }
+  .evcard .list { display: flex; flex-direction: column; gap: 4px; }
+  .evcard .row { display: flex; align-items: center; gap: 8px; padding: 4px 6px; background: rgba(0, 0, 0, 0.3); border-radius: 6px; text-align: left; font-weight: normal; }
+  .evcard button.row { border: 2px solid #5a3a22; }
+  .evcard .heroes { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 2px; }
+  .evcard .pick { padding: 2px; line-height: 0; flex: none; }
+  .evcard .pick.on { border-color: var(--gold); box-shadow: 0 0 8px var(--gold); }
+  .evcard .pick canvas { width: 40px; height: 40px; image-rendering: pixelated; }
+  .evcard .slots { display: flex; gap: 6px; }
+  .evcard .slot { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; font-weight: normal; min-height: 64px; }
+  .evcard .slot i { width: 28px; height: 28px; line-height: 28px; font-style: normal; color: var(--dim); border: 2px dashed #5a3a22; border-radius: 6px; }
+  .evcard .slot small { font-size: 10px; color: var(--dim); }
+
   #loading { position: fixed; inset: 0; display: grid; place-items: center; font-size: 18px; color: var(--gold); }
   #version { position: fixed; right: 6px; bottom: 2px; font-size: 10px; color: rgba(255, 255, 255, 0.5); text-shadow: 0 1px 0 #000; pointer-events: none; }
   @media (orientation: portrait) { #version { bottom: auto; top: calc(env(safe-area-inset-top) + 34px); } }
@@ -250,8 +287,9 @@
 <div id="panel">
   <div id="spells"><div id="mana"><i><span></span></i><b></b></div><div id="spellCards"></div><div id="spellHint"></div></div>
   <div id="traits"></div><div id="traitHint"></div>
+  <div id="relics" hidden></div>
   <div id="bench"></div>
-  <div id="buttons"><button id="summon">Summon</button><button id="recruit">Recruit</button><button id="homeBtn">Home</button><button id="fight" class="primary" disabled>Fight!</button></div>
+  <div id="buttons"><button id="summon">Summon</button><button id="recruit">Recruit</button><button id="pack">Pack</button><button id="homeBtn">Home</button><button id="fight" class="primary" disabled>Fight!</button></div>
 </div>
 <div id="result" hidden>
   <div id="banner"></div>

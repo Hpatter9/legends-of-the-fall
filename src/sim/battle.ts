@@ -13,6 +13,7 @@ import { FOE_BANDS } from './foes';
 import { afterBlow, landArea, pierceOf, preyOf, onStrike, rollCrit, tickStatus, tryCast, type Dot, type Zone } from './abilities';
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellState } from './spells';
 import { kindsOf, traitEffects, type TraitEffects } from './traits';
+import { mergeEffects } from './relics';
 import { SPLASH_SHARE, UNITS, type Shot, type Side, type UnitDef } from './units';
 
 export const TICK_MS = 100;
@@ -122,6 +123,10 @@ export interface Battle {
   heroBoost?: Boost;
   /** The team bonus of the placed heroes' traits, fixed when the fight starts. */
   traits?: TraitEffects;
+  /** The run's relics, beyond hp and attack (in the heroes' boost): a team bonus, how long the foes wait, a revive. */
+  relics?: { team: TraitEffects; first?: number; revive?: boolean };
+  /** Whether the relic's revive has been spent this fight. */
+  revived?: boolean;
 }
 
 export const defOf = (u: Unit): UnitDef => UNITS[u.def];
@@ -142,6 +147,8 @@ export interface Stage {
   /** Every hero's boost (the castle's), multiplied into the hero's own; and how fast the king's mana fills. */
   heroes?: Boost;
   mana?: number;
+  /** The relics' hooks (`relics.ts`), read when the fight starts. */
+  relics?: { team: TraitEffects; first?: number; revive?: boolean };
 }
 export const apart = (a: At, b: At) => Math.abs(a.u - b.u) + Math.abs(a.v - b.v);
 export const tileOf = (b: Battle, a: At) => tileAt(b.board, a.u, a.v)!;
@@ -181,6 +188,7 @@ export function startBattle(seed: number, band = 'skeletons', stage: Stage = {})
   const board = makeBoard(seed);
   const b: Battle = { seed, board, units: [], phase: 'deploy', t: 0, rng: mixSeed(seed, 0xf167), pending: [], skillRng: mixSeed(seed, 0x5c111), zones: [], nextId: 1, spells: freshSpells(stage.mana) };
   if (stage.heroes) b.heroBoost = stage.heroes;
+  if (stage.relics) b.relics = stage.relics;
   // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed
   const rng = new Rng(mixSeed(seed, 0xf0e5));
   FOE_BANDS[band].forEach((id, n) => {
@@ -252,8 +260,10 @@ export function fight(b: Battle): boolean {
 
 /** Fix the placed heroes' trait bonuses: attack and health now, the rest read by the hooks as the fight goes. */
 function applyTraits(b: Battle): void {
-  const fx = traitEffects(kindsOf(b.units));
+  const fx = mergeEffects(traitEffects(kindsOf(b.units)), b.relics?.team ?? {});
   b.traits = fx;
+  // (a war drum: the foes stand a while before they act)
+  if (b.relics?.first) for (const x of b.units) if (x.side === 'foe') x.busyUntil = b.relics.first;
   if (fx.mana) b.spells.rate *= fx.mana;
   for (const x of b.units) {
     if (x.side !== 'hero') continue;
@@ -326,7 +336,14 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   dmg = left;
   to.hp = Math.max(0, to.hp - dmg);
   to.hurtAt = b.t;
-  const killed = to.hp <= 0;
+  let killed = to.hp <= 0;
+  // (a phoenix feather: the first hero to fall rises at half health)
+  if (killed && to.side === 'hero' && b.relics?.revive && !b.revived) {
+    b.revived = true;
+    killed = false;
+    to.hp = Math.max(1, Math.round(to.maxHp / 2));
+    out.push({ kind: 'heal', to: to.id, amount: to.hp });
+  }
   if (killed) {
     to.alive = false;
     to.diedAt = b.t;
