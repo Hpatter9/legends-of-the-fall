@@ -99,12 +99,21 @@
   }
   @keyframes evolve { 0% { transform: scale(0.8); } 35% { transform: scale(1.18); } 100% { transform: scale(1); } }
   @keyframes evolveFlash { 0% { opacity: 1; transform: scale(0.6); } 100% { opacity: 0; transform: scale(1.7); } }
-  .card.placed { border-color: #4a9cff; }
-  .card.placed::after { content: '✓'; position: absolute; top: 2px; right: 5px; color: #7cc0ff; font-weight: bold; }
+  /* (a hero on the field flies a crimson war banner with gold crossed blades from its corner, waving; the frame is left
+     to the rarity, so the two never look alike) */
+  .card.placed::after {
+    content: '⚔'; position: absolute; top: 0; right: 4px; width: 15px; height: 21px; padding-top: 1px; box-sizing: border-box;
+    font-size: 9px; line-height: 1; color: #ffd86a; text-shadow: 0 0 3px rgba(255, 200, 80, 0.9), 0 1px 0 #000;
+    background: linear-gradient(90deg, #7a0f14, #c4232b 45%, #8e1218); border-top: 2px solid #f0b44a;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 74%, 0 100%); filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
+    transform-origin: top center; animation: banner 2.4s ease-in-out infinite;
+  }
+  .card.placed canvas { filter: drop-shadow(0 0 3px rgba(255, 196, 90, 0.55)); }
+  @keyframes banner { 0%, 100% { transform: skewX(0deg) scaleY(1); } 30% { transform: skewX(-7deg) scaleY(0.96); } 65% { transform: skewX(5deg) scaleY(1.02); } }
+  @media (prefers-reduced-motion: reduce) { .card.placed::after { animation: none; } }
   .card.chosen { border-color: var(--gold); box-shadow: 0 0 10px var(--gold); }
   .card.fallen { opacity: 0.4; filter: grayscale(1); }
   body:not([data-phase='deploy']) .card:not(.placed) { opacity: 0.3; }
-  body:not([data-phase='deploy']) .card.placed::after { content: none; }
   #buttons { display: flex; gap: 8px; }
   #buttons #fight { flex: 1; }
   #buttons button:not(#fight) { padding: 10px 8px; font-size: 13px; }
@@ -459,7 +468,7 @@
   #tip[data-side='right'] i { left: -18px; top: calc(var(--ay) - 9px); border-right-color: var(--gold); }
   .tipLit { outline: 2px solid var(--gold); outline-offset: 3px; box-shadow: 0 0 14px var(--gold); }
 
-  #loading { position: fixed; inset: 0; display: grid; place-items: center; font-size: 18px; color: var(--gold); }
+  #loading { position: fixed; inset: 0; z-index: 30; background: radial-gradient(#4a2c1c, #1c1410); display: grid; place-items: center; font-size: 18px; color: var(--gold); }
   #version { position: fixed; right: 6px; bottom: 2px; font-size: 10px; color: rgba(255, 255, 255, 0.5); text-shadow: 0 1px 0 #000; pointer-events: none; }
   @media (orientation: portrait) { #version { bottom: auto; top: calc(env(safe-area-inset-top) + 34px); } }
   /* The party screen (src/party.ts): five slots, the traits they wake, the heroes to pick from, and the button to start */
