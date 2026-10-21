@@ -12,6 +12,18 @@ import wizard from '../art/units/fire_wizard.png';
 import skeleton from '../art/units/skeleton_warrior.png';
 import spearman from '../art/units/skeleton_spearman.png';
 import boneArcher from '../art/units/skeleton_archer.png';
+import werewolfBlack from '../art/units/werewolf_black.png';
+import werewolfRed from '../art/units/werewolf_red.png';
+import werewolfWhite from '../art/units/werewolf_white.png';
+import minotaur1 from '../art/units/minotaur_1.png';
+import minotaur2 from '../art/units/minotaur_2.png';
+import minotaur3 from '../art/units/minotaur_3.png';
+import gorgon1 from '../art/units/gorgon_1.png';
+import gorgon2 from '../art/units/gorgon_2.png';
+import gorgon3 from '../art/units/gorgon_3.png';
+import satyr1 from '../art/units/satyr_1.png';
+import satyr2 from '../art/units/satyr_2.png';
+import satyr3 from '../art/units/satyr_3.png';
 
 export type Anim = 'idle' | 'walk' | 'attack' | 'hurt' | 'dead';
 
@@ -33,6 +45,18 @@ const URLS: Record<string, string> = {
   skeleton_warrior: skeleton,
   skeleton_spearman: spearman,
   skeleton_archer: boneArcher,
+  werewolf_black: werewolfBlack,
+  werewolf_red: werewolfRed,
+  werewolf_white: werewolfWhite,
+  minotaur_1: minotaur1,
+  minotaur_2: minotaur2,
+  minotaur_3: minotaur3,
+  gorgon_1: gorgon1,
+  gorgon_2: gorgon2,
+  gorgon_3: gorgon3,
+  satyr_1: satyr1,
+  satyr_2: satyr2,
+  satyr_3: satyr3,
 };
 
 const LAYOUT = layout as Record<string, Layout>;

@@ -5,6 +5,7 @@
 import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { D, standable, tileAt } from './sim/board';
 import { canPlace, fight, heroesPlaced, isDeployTile, place, startBattle, stepBattle, TICK_MS, unitAt, unplace, type Battle } from './sim/battle';
+import { FOE_BANDS } from './sim/foes';
 import { HEROES, UNITS } from './sim/units';
 import { BoardView, loadBoardArt } from './render/boardView';
 import { UnitSprite } from './render/unitView';
@@ -33,6 +34,9 @@ class Game {
   private ghost = new Sprite();
   private b!: Battle;
   private seed = 1;
+  /** The foe band. A `?band=` names one for the visit; else each New board takes the next. */
+  private band = 'skeletons';
+  private bandPinned = false;
   /** Where each hero was placed, so a restart puts them back. */
   private placed = new Map<string, [number, number]>();
   private chosen: string | null = null;
@@ -53,7 +57,13 @@ class Game {
     this.ghost.alpha = 0.85;
     this.ghost.visible = false;
     this.app.stage.addChild(this.world, this.ghost);
-    this.seed = Number(new URLSearchParams(location.search).get('seed')) || (Date.now() % 100000) + 1;
+    const query = new URLSearchParams(location.search);
+    this.seed = Number(query.get('seed')) || (Date.now() % 100000) + 1;
+    const band = query.get('band');
+    if (band && band in FOE_BANDS) {
+      this.band = band;
+      this.bandPinned = true;
+    }
     this.buildBench();
     this.wire();
     this.newBattle(true);
@@ -70,8 +80,12 @@ class Game {
     if (!sameBoard) {
       this.seed = (this.seed % 99991) + 1 + Math.floor(Math.random() * 97);
       this.placed.clear();
+      if (!this.bandPinned) {
+        const names = Object.keys(FOE_BANDS);
+        this.band = names[(names.indexOf(this.band) + 1) % names.length];
+      }
     }
-    this.b = startBattle(this.seed);
+    this.b = startBattle(this.seed, this.band);
     for (const [id, [u, v]] of this.placed) place(this.b, id, u, v);
     this.acc = 0;
     this.chosen = null;

@@ -9,7 +9,8 @@
 import { boardOk, D, DEPLOY_ROWS, makeBoard, sightClear, standable, tileAt, type At, type Board } from './board';
 import { firstStep, walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
-import { FOE_BAND, SPLASH_SHARE, UNITS, type Shot, type Side, type UnitDef } from './units';
+import { FOE_BANDS } from './foes';
+import { SPLASH_SHARE, UNITS, type Shot, type Side, type UnitDef } from './units';
 
 export const TICK_MS = 100;
 /** A fight still going after this long is lost (the foes held). */
@@ -102,13 +103,13 @@ export function canStrike(board: Board, def: UnitDef, from: At, to: At): boolean
   return d <= def.range && Math.abs(hf - ht) <= def.jump;
 }
 
-/** A fresh fight on the seed's board: the foes in their rows, no heroes placed yet. */
-export function startBattle(seed: number): Battle {
+/** A fresh fight on the seed's board: the foes of `band` in their rows, no heroes placed yet. */
+export function startBattle(seed: number, band = 'skeletons'): Battle {
   const board = makeBoard(seed);
   const b: Battle = { seed, board, units: [], phase: 'deploy', t: 0, rng: mixSeed(seed, 0xf167), pending: [], nextId: 1 };
   // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed
   const rng = new Rng(mixSeed(seed, 0xf0e5));
-  for (const id of FOE_BAND) {
+  for (const id of FOE_BANDS[band]) {
     const def = UNITS[id];
     const rows = def.shot ? [0, 1, 2] : [DEPLOY_ROWS - 1, DEPLOY_ROWS - 2, 0];
     for (const v of rows) {

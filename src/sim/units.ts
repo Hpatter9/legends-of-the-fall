@@ -2,6 +2,8 @@
 // (Manhattan). A unit with `shot` fires from afar (its range grows on high ground); the rest strike in melee, and can
 // only reach a foe no more than their `jump` above or below them.
 
+import { FOES } from './foes';
+
 export type Side = 'hero' | 'foe';
 export type Shot = 'arrow' | 'bone' | 'fire';
 
@@ -34,6 +36,7 @@ export interface UnitDef {
 export const SPLASH_SHARE = 0.5;
 
 export const UNITS: Record<string, UnitDef> = {
+  ...FOES,
   knight: { id: 'knight', name: 'Knight', side: 'hero', sheet: 'knight_1', scale: 0.74, hp: 480, atk: 20, def: 10, range: 1, moveMs: 700, atkMs: 1100, jump: 2, role: 'Holds the line' },
   samurai: { id: 'samurai', name: 'Samurai', side: 'hero', sheet: 'samurai', scale: 0.72, hp: 300, atk: 34, def: 6, range: 1, moveMs: 600, atkMs: 1000, jump: 2, role: 'Heavy blade' },
   kunoichi: { id: 'kunoichi', name: 'Kunoichi', side: 'hero', sheet: 'kunoichi', scale: 0.74, hp: 220, atk: 19, def: 4, range: 1, moveMs: 420, atkMs: 600, jump: 3, role: 'Quick, climbs well' },
@@ -47,5 +50,3 @@ export const UNITS: Record<string, UnitDef> = {
 
 /** The heroes on the bench, in order. */
 export const HEROES = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard'] as const;
-/** The one band of foes. */
-export const FOE_BAND = ['skeleton', 'skeleton', 'spearman', 'spearman', 'boneArcher'] as const;
