@@ -3,7 +3,7 @@
 `npm run balance` plays thousands of seeded, headless fights with the sim and prints three tables. It is the tool for
 tuning: change a number in `units.ts`, `foes.ts` or `run.ts`, run it again, compare.
 
-- `npm run balance` plays 4000 fights for the hero table and a quarter of that per cell in the others (about 2 minutes).
+- `npm run balance` plays 4000 fights for the hero table and a quarter of that per cell in the others (a few minutes).
 - `npm run balance -- --games 2000` is quicker and noisier; `--hero-stage 1` plays the hero table at another stage.
 - `tools/balance.ts` holds the report; `tools/balance.mjs` bundles it with esbuild and runs it (as `test.mjs` does).
 
@@ -115,10 +115,10 @@ standing XP while it still stands (seed 7's knight now falls in that fight). Eve
 
 ## Open for the owner
 
-- **The knight is still about 10 above average.** Its attack and defence are the numbers the `boarKing` band test
-  depends on: taking the knight's attack below 17, or its defence below 10, pushes that band under the test's 20%
-  floor. Its real strength is the Shield Wall in `abilities.ts`, which is rules, not numbers, so I left it.
+- **The knight is still about 10 above average.** Lowering its defence to 9 drops the `boarKing` band to 7 of 40 wins in
+  the band test (its floor is 8), so the test ties its numbers down. Its real strength is the Shield Wall in
+  `abilities.ts`, which is rules, not numbers, so I left it.
 - The stage curve is steep: each 1% of foe strength moves a grade-1 team about 6 points near 50%. Small later changes to
   foes or to a boss will show up as big swings in the stage table, so rerun the tool after each.
-- The tool plays level-1 heroes with no castle, stars or synergies. Fights in a real run are easier than its grade-1
-  rows for that reason, and the table is a guide, not a promise.
+- The tool plays level-1 heroes with no castle, stars or synergies. A real run adds all of these, so it is stronger than
+  the grade-1 rows; the table is a guide, not a promise.
