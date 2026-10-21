@@ -5,7 +5,7 @@ D='src/art/units/'
 d=json.load(open(D+'sheets.json'))
 fr=[]
 for k,e in d.items():
-    if not((k.startswith('cls_') and k!='cls_treant') or k.startswith('hk_')):continue
+    if not(k.startswith('cls_') or k.startswith('hk_')):continue
     im=Image.open(D+k+'.png');w,h=e['w'],e['h'];ri=e['rows'].index('dead');n=e['counts']['dead']
     fr.append(im.crop(((n-1)*w,ri*h,n*w,(ri+1)*h)))
 def strip(s,perrow):

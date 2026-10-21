@@ -112,6 +112,7 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
 
 ## Art generated with PixelLab
 
+- The Druid's treant (`cls_treant.png`) is generated the same way (base figure from Craftpix Knight and Minotaur style references, then walk, attack and idle clips). Every generated sheet's last death frame is that sheet's idle figure turned exactly 90 degrees (`tools/pixellab/lie.py`), so no extra generation was involved.
 - The class heroes (`cls_*_1/2/3.png`) and the orc, imp, demon and ogre foes (`hk_*.png`) are pixel art generated with
   **PixelLab** (pixellab.ai): a base figure from a text description with Craftpix fighters as style references
   (`/generate-with-style-v2`), animated with `/animate-with-text-v3`. The frames were only cropped and padded into the

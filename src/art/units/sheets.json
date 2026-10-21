@@ -1448,16 +1448,23 @@
   "lies": true
  },
  "cls_treant": {
-  "w": 60,
+  "w": 100,
   "h": 96,
-  "perRow": 1,
+  "perRow": 5,
   "rows": [
-   "idle"
+   "walk",
+   "attack",
+   "idle",
+   "dead"
   ],
   "counts": {
-   "idle": 1
+   "walk": 5,
+   "attack": 5,
+   "idle": 4,
+   "dead": 5
   },
-  "figure": 95,
-  "facesRight": true
+  "figure": 96,
+  "facesRight": true,
+  "lies": true
  }
 }
