@@ -59,6 +59,8 @@ export interface Unit {
   hasteUntil?: number;
   /** Soaks this much damage until then (the king's Shield). */
   shield?: { hp: number; until: number };
+  /** Stunned, held or frozen until then (only the look reads it; `busyUntil` is what holds the fighter). */
+  stunUntil?: number;
   /** Slowed (Frost Nova) until then. */
   slowUntil?: number;
   /** Attack raised (Rally) until then. */

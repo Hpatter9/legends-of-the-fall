@@ -224,6 +224,7 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
     case 'frost':
       for (const x of foesIn(b, u, v)) {
         x.busyUntil = Math.max(x.busyUntil, b.t + FREEZE_MS);
+        x.stunUntil = b.t + FREEZE_MS;
         x.step = undefined;
         x.slowUntil = b.t + SLOW_MS;
         fx(x);

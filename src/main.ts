@@ -103,7 +103,8 @@ class Game {
     const fonts = Promise.all(['900 16px "Cinzel Decorative"', '700 16px "Alegreya Sans"', '16px "Press Start 2P"'].map((f) => document.fonts.load(f))).catch(() => {});
     await Promise.all([loadSheets(), loadBoardArt(), loadFx(), Promise.race([fonts, new Promise((ok) => setTimeout(ok, 2500))])]);
     this.world.sortableChildren = true;
-    this.boardView.root.addChild(this.fx.root);
+    this.boardView.keep.push(this.fx.dimLayer, this.fx.root);
+    this.boardView.root.addChild(...this.boardView.keep);
     this.world.addChild(this.boardView.root);
     this.ghost.anchor.set(0.5, 1);
     this.ghost.alpha = 0.85;
@@ -309,6 +310,8 @@ class Game {
         const events = stepBattle(b);
         tally(this.stats, events);
         this.fx.show(b, events);
+        // (a fighter a skill called up mid-fight has no sprite yet: make it, with its entrance)
+        if (b.units.length !== this.sprites.size) this.syncSprites();
         playEvents(events);
         if (events.some((e) => e.kind === 'hit')) this.refreshBench();
         if (b.phase !== 'fight') this.refresh();
@@ -357,6 +360,7 @@ class Game {
         this.boardView.root.addChild(s.root);
         // (a hero set down on a tile puffs its dust)
         if (u.side === 'hero' && this.b.phase === 'deploy') this.fx.landing(this.b, u.u, u.v);
+        else if (this.b.phase === 'fight') this.fx.summoned(this.b, u);
       }
   }
 

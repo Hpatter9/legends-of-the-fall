@@ -31,6 +31,8 @@ export interface Burst {
   tint?: number;
   alpha?: number;
   add?: boolean;
+  /** A big moment (a burst, a death): lets through a fuller cap than the small bits do. */
+  prio?: boolean;
 }
 
 interface Live {
@@ -59,7 +61,7 @@ export class Particles {
 
   /** Make one, unless the cap is full (then nothing: a crowded moment just shows fewer). */
   spawn(b: Burst): void {
-    if (this.live.length >= this.cap) return;
+    if (this.live.length >= (b.prio ? this.cap * 1.3 : this.cap)) return;
     const sp = this.pool.pop() ?? new Sprite();
     sp.anchor.set(0.5);
     sp.position.set(b.x, b.y);

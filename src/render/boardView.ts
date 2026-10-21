@@ -71,6 +71,8 @@ export class BoardView {
   readonly root = new Container();
   private marks: Graphics[] = [];
   private board: Board | null = null;
+  /** Layers that outlive a rebuild (the effects': `build` must not destroy them, or nothing in a fight would show). */
+  readonly keep: Container[] = [];
 
   constructor() {
     this.root.sortableChildren = true;
@@ -79,7 +81,8 @@ export class BoardView {
   /** Build the board's columns (again, for a new board). */
   build(b: Board): void {
     this.board = b;
-    for (const c of this.root.removeChildren()) c.destroy({ children: true });
+    for (const c of this.root.removeChildren()) if (!this.keep.includes(c)) c.destroy({ children: true });
+    this.root.addChild(...this.keep);
     this.marks = [];
     for (let v = 0; v < b.d; v++)
       for (let u = 0; u < b.w; u++) {
