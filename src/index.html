@@ -228,27 +228,124 @@
   #collection .bar i { display: block; height: 100%; background: var(--gold); }
   @media (orientation: landscape) { #reveal { grid-template-columns: repeat(10, 1fr); } #collection { grid-template-columns: repeat(8, 1fr); } }
 
-  /* the home screen: the castle between runs */
-  #home { position: fixed; inset: 0; z-index: 4; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: calc(env(safe-area-inset-top) + 12px) 14px calc(env(safe-area-inset-bottom) + 12px); background: #1c1410 center / cover no-repeat; image-rendering: pixelated; overflow-y: auto; touch-action: pan-y; }
+  /* the home screen: top bar, five sliding pages, a bottom tab bar (a left rail sideways) */
+  #home { position: fixed; inset: 0; z-index: 4; display: grid; grid-template-rows: auto 1fr auto; grid-template-areas: 'top' 'pages' 'tabs'; background: #1c1410; image-rendering: pixelated; overflow: hidden; }
   #home[hidden] { display: none; }
-  #home::before { content: ''; position: fixed; inset: 0; background: linear-gradient(rgba(20, 10, 6, 0.35), rgba(20, 10, 6, 0.7)); pointer-events: none; }
-  #home > * { position: relative; width: 100%; max-width: 440px; }
-  #home h1 { margin: 0 0 4px; text-align: center; font: bold 30px/1.1 Georgia, serif; color: var(--gold); letter-spacing: 1px; text-shadow: 0 3px 0 #000, 0 0 18px rgba(0, 0, 0, 0.8); }
-  #homeCrowns { text-align: center; color: var(--gold); font-weight: bold; margin-bottom: 10px; text-shadow: 0 1px 0 #000; }
-  #homeBest { text-align: center; color: var(--ink); font-size: 13px; margin: -6px 0 10px; text-shadow: 0 1px 0 #000; }
-  #homeBest[hidden] { display: none; }
-  #homeNote { text-align: center; margin: 0 0 10px; padding: 8px; background: var(--wood); border: 2px solid var(--edge); border-radius: 8px; color: var(--ink); }
-  #homeNote[hidden] { display: none; }
-  #homeMenu { display: grid; gap: 8px; padding: 12px; background: var(--wood); border: 2px solid var(--edge); border-radius: 10px; }
-  #homeMenu button { font-size: 17px; padding: 13px 14px; }
-  #homeMenu button.wide { font-size: 14px; padding: 10px 14px; }
-  #homeMenu button:disabled { opacity: 0.55; }
-  #homeMenu button[hidden], #homeMenu[hidden], #homePage[hidden] { display: none; }
-  #homePage { display: flex; flex-direction: column; gap: 8px; max-height: calc(100vh - 110px); padding: 10px; background: var(--wood); border: 2px solid var(--edge); border-radius: 10px; }
-  #homePage header { display: flex; align-items: center; gap: 10px; }
-  #homePage h2 { margin: 0; flex: 1; font-size: 20px; color: var(--gold); }
-  #homeBody { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; touch-action: pan-y; }
-  #homeBody .hint { margin: 0; font-size: 11px; color: var(--dim); text-align: center; }
+  #hmTop { grid-area: top; position: relative; z-index: 3; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: calc(env(safe-area-inset-top) + 6px) 10px 4px; background: linear-gradient(#3a2218, #28160e); border-bottom: 3px solid var(--gold); box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6); }
+  #hmTop .grow { flex: 1; }
+  .chip { display: flex; align-items: center; gap: 5px; min-width: 70px; padding: 3px 10px 3px 5px; background: #170c07; border: 2px solid var(--edge); border-radius: 14px; color: var(--gold); font-size: 15px; box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6); }
+  .chip[hidden] { display: none; }
+  .chip img { width: 22px; height: 22px; }
+  .round { position: relative; width: 36px; height: 36px; padding: 0; display: grid; place-items: center; border-radius: 50%; font-size: 20px; background: #5a3520; border: 2px solid var(--gold); }
+  .round img { width: 22px; height: 22px; }
+  .round.new::after, i.badge { content: ''; position: absolute; top: -3px; right: -3px; width: 13px; height: 13px; background: var(--red); border: 2px solid #fff; border-radius: 50%; animation: pulse 1.4s ease-in-out infinite; }
+  i.badge { display: block; }
+  .hmTab:not(.new) i.badge { display: none; }
+  #hmBest { flex: 1 1 100%; display: flex; justify-content: space-between; font-size: 11px; color: var(--dim); }
+  #hmPages { grid-area: pages; position: relative; overflow: hidden; }
+  .hmPage { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; touch-action: pan-y; padding: 12px 12px 16px; visibility: hidden; transition: transform 0.32s cubic-bezier(0.3, 0.8, 0.3, 1), visibility 0s 0.32s; background: radial-gradient(#4a2c1c, #1c1410); }
+  .hmPage.on { visibility: visible; transition-delay: 0s; }
+  .hm-battle { padding: 0; overflow: hidden; background: #1c1410; }
+  .hmPanel { max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; padding: 12px; background: linear-gradient(#3a2418, #2a170e); border: 3px solid var(--gold); border-radius: 12px; outline: 2px solid #1a0d07; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6), inset 0 0 0 2px #6b4128; text-align: center; }
+  .hmPanel.wide { max-width: 560px; text-align: left; }
+  .hmPanel h2 { margin: 0; font: bold 22px Georgia, serif; color: var(--gold); text-shadow: 0 2px 0 #000; text-align: center; }
+  .hmPanel .hint { margin: 0; font-size: 11px; color: var(--dim); text-align: center; }
+  .hmPanel img.big { width: 64px; height: 64px; margin: 0 auto; animation: bob 2.4s ease-in-out infinite; }
+  .hmShow { display: flex; justify-content: center; gap: 8px; padding: 10px 0; background: radial-gradient(#6b4a8c, #1a0d2a); border-radius: 10px; }
+  .hmShow canvas { width: 64px; height: 64px; border: 2px solid #5a3a22; border-radius: 8px; background: rgba(0, 0, 0, 0.35); animation: bob 2.6s ease-in-out infinite; }
+  .hmShow canvas:nth-child(2n) { animation-delay: -1.2s; }
+  .hmShow canvas.r2 { border-color: #4a9cff; }
+  .hmShow canvas.r3 { border-color: var(--gold); }
+  .hmBig { padding: 14px; font-size: 22px; letter-spacing: 1px; color: #3a1c06; background: linear-gradient(#ffd878, #e0912a); border: 3px solid #fff2c0; border-radius: 12px; text-shadow: 0 1px 0 #fff4; box-shadow: 0 4px 0 #8a4f12, 0 0 14px rgba(240, 180, 74, 0.5); }
+  .hmBig small { display: block; font-size: 11px; font-weight: normal; letter-spacing: 0; }
+  .hmBig:active, .hmBattle:active { transform: translateY(3px) scale(0.98); box-shadow: 0 1px 0 #8a4f12; }
+  /* the Battle hub */
+  #hmScene { position: absolute; inset: 0; overflow: hidden; }
+  .hmLayer { position: absolute; left: -8%; right: -8%; top: 0; bottom: 0; background: center bottom / auto 100% repeat-x; animation: drift 30s ease-in-out infinite alternate; }
+  .hmLayer:first-child { left: 0; right: 0; animation: none; }
+  #hmScene::after { content: ''; position: absolute; inset: 0; background: linear-gradient(rgba(20, 10, 6, 0.15), rgba(20, 10, 6, 0.1) 50%, rgba(20, 10, 6, 0.55)); pointer-events: none; }
+  .hmGround { position: absolute; left: 0; right: 0; bottom: 0; height: 30%; background: linear-gradient(rgba(40, 24, 12, 0), rgba(30, 18, 10, 0.85)); }
+  .hmHeroes { position: absolute; left: 0; right: 0; bottom: 150px; z-index: 1; display: flex; justify-content: center; align-items: flex-end; gap: 0; }
+  .hmHero { flex: none; filter: drop-shadow(0 6px 3px rgba(0, 0, 0, 0.5)); animation: bobT 2.2s ease-in-out infinite; }
+  .hmFront { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; padding: 14px 12px 14px; pointer-events: none; }
+  .hmFront > * { pointer-events: auto; }
+  .hmBanner { padding: 8px 26px; font: bold 18px Georgia, serif; color: var(--gold); text-shadow: 0 2px 0 #000; background: linear-gradient(#5a3520, #2e1a10); border: 3px solid var(--gold); border-radius: 6px 6px 18px 18px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6); animation: sway 5s ease-in-out infinite; transform-origin: top center; }
+  .hmNote { margin-bottom: 8px; padding: 6px 12px; max-width: 360px; text-align: center; background: var(--wood); border: 2px solid var(--edge); border-radius: 8px; font-size: 13px; }
+  .hmCards { position: absolute; top: 70px; right: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .hmCard { position: relative; width: 98px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 1px; background: linear-gradient(#4a2c1c, #2a170e); border: 2px solid var(--gold); border-radius: 10px; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6); }
+  .hmCard img { width: 30px; height: 30px; }
+  .hmCard b { font-size: 13px; color: var(--gold); }
+  .hmCard small { font-size: 10px; font-weight: normal; color: var(--dim); text-align: center; line-height: 1.15; }
+  .hmCard .gearIcon { font-size: 28px; line-height: 30px; }
+  .hmCard.lockedCard, .hmCard:disabled { filter: grayscale(1) brightness(0.65); border-color: #6a6a6a; opacity: 1; }
+  .hmCard:active { transform: scale(0.95); }
+  .hmGo { position: absolute; left: 0; right: 0; bottom: 16px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .hmBattle { width: min(78%, 330px); padding: 14px 10px 12px; font: bold 38px/1 Georgia, serif; letter-spacing: 2px; color: #4a1a06; background: linear-gradient(#ffe48a, #f0a030 60%, #c86a14); border: 4px solid #fff2c0; border-radius: 18px; text-shadow: 0 2px 0 #fff6; box-shadow: 0 6px 0 #8a4f12, 0 0 24px rgba(255, 190, 70, 0.7); animation: glow 2s ease-in-out infinite; }
+  .hmBattle small { display: block; margin-top: 3px; font: bold 13px/1 'Trebuchet MS', sans-serif; letter-spacing: 0; }
+  .hmLink { padding: 4px 12px; font-size: 12px; background: rgba(0, 0, 0, 0.55); border-color: var(--edge); border-radius: 12px; }
+  /* tabs */
+  #hmTabs { grid-area: tabs; position: relative; z-index: 3; display: flex; align-items: flex-end; padding: 0 4px calc(env(safe-area-inset-bottom) + 2px); background: linear-gradient(#3a2218, #1c0f09); border-top: 3px solid var(--gold); box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.6); }
+  .hmTab { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 1px; min-height: 58px; padding: 6px 2px 3px; background: none; border: 0; border-radius: 10px 10px 0 0; color: var(--dim); font-size: 11px; transition: transform 0.15s, background 0.2s, color 0.2s; }
+  .hmTab img { width: 30px; height: 30px; filter: brightness(0.6) saturate(0.7); transition: transform 0.2s, filter 0.2s; }
+  .hmTab.on { color: var(--gold); background: linear-gradient(rgba(240, 180, 74, 0.28), rgba(240, 180, 74, 0)); box-shadow: inset 0 3px 0 var(--gold); }
+  .hmTab.on img { filter: none drop-shadow(0 0 5px var(--gold)); transform: translateY(-2px) scale(1.12); }
+  .hmTab:active { transform: scale(0.92); }
+  .hmTab i.badge { top: 4px; right: 22%; }
+  .hmTab.hero { flex: 1.3; margin-top: -18px; min-height: 76px; padding-top: 8px; font-size: 13px; color: #4a1a06; background: radial-gradient(#ffe48a, #e8962a 70%); border: 3px solid #fff2c0; border-radius: 50% 50% 12px 12px / 38% 38% 12px 12px; box-shadow: 0 0 18px rgba(255, 190, 70, 0.7); animation: glow 2s ease-in-out infinite; }
+  .hmTab.hero img { width: 38px; height: 38px; filter: drop-shadow(0 2px 0 #0006); }
+  .hmTab.hero.on { color: #4a1a06; box-shadow: 0 0 26px rgba(255, 210, 90, 1); }
+  .hmTab.hero:not(.on) { filter: saturate(0.75) brightness(0.9); }
+  /* the achievements page and the hero sheet, over the tabs */
+  #hmSub, #hmSheet { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; }
+  #hmSub { gap: 8px; padding: calc(env(safe-area-inset-top) + 10px) 12px 12px; background: rgba(24, 12, 8, 0.97); animation: fade 0.2s ease-out; }
+  #hmSub[hidden], #hmSheet[hidden] { display: none; }
+  #hmSub header { display: flex; align-items: center; gap: 10px; }
+  #hmSub h2 { margin: 0; flex: 1; font-size: 20px; color: var(--gold); }
+  #hmSubBody { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; touch-action: pan-y; }
+  #hmSubBody .hint { margin: 0; font-size: 11px; color: var(--dim); text-align: center; }
+  #hmSheet { align-items: center; justify-content: center; padding: 12px; background: rgba(12, 6, 4, 0.75); animation: fade 0.2s ease-out; }
+  .hgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .hcard { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 4px; min-width: 0; background: linear-gradient(#4a2c1c, #2a170e); border: 3px solid #6b4128; border-radius: 10px; font-weight: normal; }
+  .hcard canvas { width: 64px; height: 64px; image-rendering: pixelated; background: rgba(0, 0, 0, 0.3); border-radius: 6px; }
+  .hcard b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+  .hcard .stars, .hsheet .stars { color: var(--gold); font-size: 11px; letter-spacing: 1px; }
+  .hcard .lv { font-size: 11px; color: #9fd0ff; }
+  .hcard .xpbar { width: 100%; }
+  .hcard.r2 { border-color: #4a9cff; box-shadow: 0 0 8px rgba(74, 156, 255, 0.35); }
+  .hcard.r3 { border-color: var(--gold); box-shadow: 0 0 10px rgba(240, 180, 74, 0.5); background: linear-gradient(#5a3c1c, #2a170e); }
+  .hcard.locked canvas { filter: brightness(0.15) grayscale(1); }
+  .hcard.locked { opacity: 0.8; }
+  .hcard:active { transform: scale(0.95); }
+  .hsheet { width: min(400px, 100%); max-height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 14px; background: linear-gradient(#3a2418, #2a170e); border: 4px solid #6b4128; border-radius: 14px; box-shadow: 0 8px 28px rgba(0, 0, 0, 0.7); animation: pop 0.25s ease-out; }
+  .hsheet.r2 { border-color: #4a9cff; }
+  .hsheet.r3 { border-color: var(--gold); }
+  .hhead { display: flex; gap: 12px; align-items: center; }
+  .hhead > div:last-child { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .hhead h3 { margin: 0; font: bold 20px Georgia, serif; color: var(--gold); }
+  .hhead em, .hhead .lv { font-size: 11px; font-style: normal; color: var(--dim); }
+  .hpic { flex: none; position: relative; width: 104px; height: 104px; background: radial-gradient(#6b4a2c, #1c1008); border-radius: 10px; border: 2px solid #1a0d07; overflow: hidden; }
+  .hpic canvas { position: absolute; left: 50%; bottom: 0; }
+  .hstats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; }
+  .hstats div { padding: 4px 2px; background: rgba(0, 0, 0, 0.35); border-radius: 6px; }
+  .hstats b { display: block; font-size: 16px; color: var(--gold); }
+  .hstats small { font-size: 10px; color: var(--dim); }
+  .hsheet p { margin: 0; font-size: 12px; line-height: 1.3; }
+  .hsheet p i { font-style: normal; color: #7cc0ff; }
+  .hsheet .hint { font-size: 10px; color: var(--dim); text-align: center; }
+  .hmLinks { display: flex; gap: 8px; justify-content: center; }
+  .hmLinks .hmCard { flex: 1; width: auto; }
+  .hmBuild img { width: 44px; height: 44px; margin: 0; animation: none; flex: none; }
+  .hmBuild { border: 2px solid #6b4128; background: rgba(0, 0, 0, 0.3); }
+  @keyframes drift { from { transform: translateX(calc(var(--drift) * -1)); } to { transform: translateX(var(--drift)); } }
+  @keyframes bob { 50% { transform: translateY(-4px); } }
+  @keyframes bobT { 50% { translate: 0 -3px; } }
+  @keyframes sway { 50% { transform: rotate(-1.2deg); } }
+  @keyframes pulse { 50% { transform: scale(1.25); } }
+  @keyframes glow { 50% { filter: brightness(1.12); box-shadow: 0 6px 0 #8a4f12, 0 0 34px rgba(255, 210, 90, 0.95); } }
+  @keyframes pop { from { transform: scale(0.85); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .hmLayer, .hmHero, .hmBanner, .hmBattle, .hmTab.hero, .hmPanel img.big, .hmShow canvas { animation: none; } }
+  #home:not([hidden]) ~ #version { z-index: 6; }
+  @media (orientation: portrait) { #home:not([hidden]) ~ #version { top: calc(env(safe-area-inset-top) + 46px); } }
   .hrow, .brow { display: flex; gap: 8px; align-items: center; padding: 6px; background: rgba(0, 0, 0, 0.35); border: 2px solid #5a3a22; border-radius: 8px; }
   .hrow.r2 { border-color: #4a9cff; }
   .hrow.r3 { border-color: var(--gold); }
@@ -268,10 +365,24 @@
   .toast { position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 12px); z-index: 9; transform: translate(-50%, -140%); transition: transform 0.35s ease; max-width: calc(100vw - 28px); padding: 9px 14px; background: var(--wood); border: 2px solid var(--gold); border-radius: 8px; color: var(--gold); font-size: 14px; font-weight: bold; text-align: center; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6); pointer-events: none; }
   .toast.show { transform: translate(-50%, 0); }
   @media (orientation: landscape) {
-    #home { justify-content: flex-start; }
-    #home h1 { font-size: 24px; }
-    #homeMenu { grid-template-columns: 1fr 1fr; }
-    #homePage { max-height: calc(100vh - 80px); }
+    #home { grid-template-columns: 78px 1fr; grid-template-rows: auto 1fr; grid-template-areas: 'top top' 'tabs pages'; }
+    #hmTop { flex-wrap: nowrap; padding-top: calc(env(safe-area-inset-top) + 3px); padding-bottom: 3px; }
+    #hmBest { flex: none; order: 5; }
+    #hmTabs { flex-direction: column; align-items: stretch; padding: 4px 0 4px calc(env(safe-area-inset-left)); border-top: 0; border-right: 3px solid var(--gold); box-shadow: 3px 0 10px rgba(0, 0, 0, 0.6); }
+    .hmTab { min-height: 0; padding: 3px 2px; border-radius: 0 10px 10px 0; }
+    .hmTab img { width: 26px; height: 26px; }
+    .hmTab.on { box-shadow: inset 3px 0 0 var(--gold); background: linear-gradient(90deg, rgba(240, 180, 74, 0.28), rgba(240, 180, 74, 0)); }
+    .hmTab.hero { margin: 0 -6px 0 0; min-height: 0; padding: 3px 2px; border-radius: 0 40px 40px 0; flex: 1.2; }
+    .hmTab.hero img { width: 30px; height: 30px; }
+    .hmTab i.badge { top: 2px; right: 14%; }
+    .hmBanner { font-size: 15px; padding: 4px 20px; }
+    .hmCards { top: 48px; flex-direction: row; right: 8px; }
+    .hmGo { bottom: 8px; left: 8px; right: auto; width: 46%; }
+    .hmBattle { font-size: 28px; padding: 9px 10px 8px; width: 100%; }
+    .hmHeroes { bottom: 8px; left: auto; width: 50%; right: 0; }
+    .hmPage { padding-top: 8px; }
+    .hgrid { grid-template-columns: repeat(5, 1fr); }
+    .hsheet { flex-direction: column; }
   }
 
 
@@ -377,26 +488,21 @@
   <div id="collection"></div>
 </div>
 <div id="home" hidden>
-  <h1>Legends of the Fall</h1>
-  <div id="homeCrowns"></div>
-  <div id="homeBest" hidden></div>
-  <div id="homeNote" hidden></div>
-  <div id="homeMenu">
-    <button id="homeContinue" class="primary">Continue run</button>
-    <button id="homeNew" class="primary">New run</button>
-    <button id="homeDaily" class="wide">Daily challenge</button>
-    <button id="homeTower" class="wide">Endless tower</button>
-    <button id="homeRecruit">Recruit</button>
-    <button id="homeHeroes">Heroes</button>
-    <button id="homeCastle">Castle</button>
-    <button id="homeAchievements">Achievements</button>
-    <button id="homeSpells">Spells</button>
-    <button id="homeSettings">Settings</button>
+  <div id="hmTop">
+    <div class="chip" id="hmCrowns"></div>
+    <div class="chip" id="hmGold" hidden></div>
+    <span class="grow"></span>
+    <button id="hmTrophy" class="round" aria-label="Achievements">🏆</button>
+    <button id="hmGear" class="round" aria-label="Settings">⚙</button>
+    <div id="hmBest"></div>
   </div>
-  <div id="homePage" hidden>
-    <header><h2 id="homeTitle"></h2><button id="homeBack">Back</button></header>
-    <div id="homeBody"></div>
+  <div id="hmPages"><div id="hmScene"></div></div>
+  <div id="hmTabs"></div>
+  <div id="hmSub" hidden>
+    <header><h2 id="hmSubTitle"></h2><button id="hmSubBack">Back</button></header>
+    <div id="hmSubBody"></div>
   </div>
+  <div id="hmSheet" hidden><div id="hmSheetBox"></div></div>
 </div>
 <div id="settings" hidden>
   <header><h2>Settings</h2><button id="settingsClose">Close</button></header>

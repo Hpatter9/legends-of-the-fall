@@ -123,6 +123,10 @@ class Game {
         const r = loadRun();
         return !!r && !r.over;
       },
+      runInfo: () => {
+        const r = loadRun();
+        return r && !r.over ? { stage: r.stage, gold: r.gold } : null;
+      },
       onContinue: () => this.resume(),
       onNew: () => this.newRunNow(),
       onRecruit: () => this.gacha.open(),
