@@ -214,6 +214,24 @@
     #homePage { max-height: calc(100vh - 80px); }
   }
 
+  /* the first-run tips: a speech bubble by the thing it talks about (placed in src/tips.ts), taps only on itself */
+  #tip {
+    position: fixed; z-index: 6; width: min(280px, calc(100vw - 24px)); padding: 10px 12px; background: var(--wood);
+    border: 2px solid var(--gold); border-radius: 10px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6); font-size: 14px; line-height: 1.3;
+  }
+  #tip[hidden] { display: none; }
+  #tip p { margin: 0 0 8px; }
+  #tip .tipRow { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  #tip button { padding: 7px 12px; font-size: 14px; }
+  #tip #tipSkip { background: none; border-color: transparent; color: var(--dim); text-shadow: none; padding: 7px 4px; font-weight: normal; }
+  #tip #tipSkip[hidden] { display: none; }
+  #tip i { position: absolute; width: 0; height: 0; border: 9px solid transparent; }
+  #tip[data-side='above'] i { bottom: -18px; left: calc(var(--ax) - 9px); border-top-color: var(--gold); }
+  #tip[data-side='below'] i { top: -18px; left: calc(var(--ax) - 9px); border-bottom-color: var(--gold); }
+  #tip[data-side='left'] i { right: -18px; top: calc(var(--ay) - 9px); border-left-color: var(--gold); }
+  #tip[data-side='right'] i { left: -18px; top: calc(var(--ay) - 9px); border-right-color: var(--gold); }
+  .tipLit { outline: 2px solid var(--gold); outline-offset: 3px; box-shadow: 0 0 14px var(--gold); }
+
   #loading { position: fixed; inset: 0; display: grid; place-items: center; font-size: 18px; color: var(--gold); }
   #version { position: fixed; right: 6px; bottom: 2px; font-size: 10px; color: rgba(255, 255, 255, 0.5); text-shadow: 0 1px 0 #000; pointer-events: none; }
   @media (orientation: portrait) { #version { bottom: auto; top: calc(env(safe-area-inset-top) + 34px); } }
@@ -257,6 +275,7 @@
     <div id="homeBody"></div>
   </div>
 </div>
+<div id="tip" hidden><p id="tipText"></p><div class="tipRow"><button id="tipSkip">Skip tutorial</button><button id="tipGot" class="primary">Got it</button></div><i></i></div>
 <div id="loading">Loading…</div>
 <div id="version">Version __VERSION__</div>
 <script src="game.js"></script>

@@ -10,6 +10,8 @@ import { formOf, UNITS } from './sim/units';
 import { earn, loadMeta, rankOf, saveMeta, type Meta } from './sim/meta';
 import { Gacha } from './gacha';
 import { Home } from './home';
+import { tips, type Box } from './tips';
+import { CHARGE_MAX, kitOf } from './sim/abilities';
 import { keepAwake } from './render/awake';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, SPELL_IDS, type SpellId } from './sim/spells';
 import { BoardView, loadBoardArt } from './render/boardView';
@@ -158,6 +160,7 @@ class Game {
 
   private frame(dt: number): void {
     const b = this.b;
+    tips.update();
     if (b.phase === 'fight') {
       this.acc += Math.min(dt, 250) * this.speed;
       while (this.acc >= TICK_MS && b.phase === 'fight') {
@@ -339,6 +342,35 @@ class Game {
       if (s && Math.abs(wx - s.x) < 16 && wy < s.y + 6 && wy > s.y - s.tall) return String(h.tag);
     }
     return null;
+  }
+
+  /** The screen box of the blue tiles the heroes go on (for a tip to point at). */
+  private deployBox(): Box | null {
+    const b = this.b.board;
+    let x0 = Infinity;
+    let x1 = -Infinity;
+    let y0 = Infinity;
+    let y1 = -Infinity;
+    for (let v = 0; v < D; v++)
+      for (let u = 0; u < b.w; u++) {
+        const t = tileAt(b, u, v);
+        if (!isDeployTile(v) || !t || !standable(t)) continue;
+        const [x, y] = at(u, v, t.h);
+        x0 = Math.min(x0, x - TW / 2);
+        x1 = Math.max(x1, x + TW / 2);
+        y0 = Math.min(y0, y - TH / 2);
+        y1 = Math.max(y1, y + TH / 2);
+      }
+    if (x0 > x1) return null;
+    return { x: this.world.x + x0 * this.scale, y: this.world.y + y0 * this.scale, w: (x1 - x0) * this.scale, h: (y1 - y0) * this.scale };
+  }
+
+  /** The screen box of a fighter on the board (for a tip to point at), or null if it has gone. */
+  private spriteBox(id: number): Box | null {
+    const s = this.sprites.get(id);
+    if (!s || !s.root.visible) return null;
+    const h = s.tall * this.scale;
+    return { x: this.world.x + s.x * this.scale - 20, y: this.world.y + s.y * this.scale - h, w: 40, h };
   }
 
   /* -------------------------------------------------------------- input */
@@ -567,6 +599,9 @@ class Game {
       card.classList.toggle('armed', this.spell === id);
       (card.querySelector('.cool') as HTMLElement).style.height = `${(cooldownLeft(b, id) / SPELLS[id].cooldownMs) * 100}%`;
     }
+    if (b.spells.mana >= 3) tips.offer('mana', $('spells'));
+    const full = b.units.find((u) => u.side === 'hero' && u.alive && u.charge >= (kitOf(u)?.skill.need ?? CHARGE_MAX));
+    if (full) tips.offer('skill', () => this.spriteBox(full.id));
     $('spellHint').textContent = this.spell ? `${SPELLS[this.spell].text}: tap a tile (tap the card again to cancel)` : '';
     if (dropped) this.markTiles();
   }
@@ -608,6 +643,7 @@ class Game {
           : `The run ends at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} summons · +${this.crownGain} crowns`;
       $('next').textContent = b.phase === 'won' ? `Next stage (${run.stage})` : 'Home';
     }
+    if (b.phase === 'deploy') tips.atDeploy(n, run.stage, () => this.deployBox());
     this.buildBench();
     this.markTiles();
     this.refreshBench();
