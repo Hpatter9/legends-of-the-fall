@@ -10,7 +10,7 @@
 
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { fight, place, startBattle, stepBattle, type Boost, type Stage } from '../src/sim/battle';
-import { FOE_BANDS } from '../src/sim/foes';
+import { FIELD_BANDS } from '../src/sim/foes';
 import { bandFor, gradeBoost, isBossStage, stageBoost } from '../src/sim/run';
 import { mixSeed, Rng } from '../src/sim/rng';
 import { ALL_HEROES, UNITS } from '../src/sim/units';
@@ -24,7 +24,7 @@ const CELL_GAMES = Math.max(200, Math.round(GAMES / 4));
 const TEAM = 5;
 /** The stage the hero table is played at. */
 const HERO_STAGE = 5;
-const BANDS = Object.keys(FOE_BANDS);
+const BANDS = FIELD_BANDS;
 
 /** A random team of `TEAM` different hero kinds (from every hero there is). */
 function pickTeam(rng: Rng): string[] {
@@ -56,15 +56,15 @@ function play(seed: number, band: string, foes: Stage, team: string[], grade = 1
   }
   const boost: Boost | undefined = grade > 1 ? gradeBoost(grade) : undefined;
   team.forEach((id, i) => place(b, id, spots[i][0], spots[i][1], undefined, boost));
-  // (who each fighter is, by its id: the events name fighters by id)
-  const byId = new Map(b.units.map((x) => [x.id, x]));
   const out: Played = { won: false, dealt: new Map(), taken: new Map() };
+  // (the events name fighters by id; a fighter can be added mid-fight, so look each one up as it comes)
+  const unitOf = (id: number) => b.units.find((x) => x.id === id)!;
   fight(b);
   while (b.phase === 'fight') {
     for (const e of stepBattle(b)) {
       if (e.kind !== 'hit') continue;
-      const by = byId.get(e.by)!;
-      const to = byId.get(e.to)!;
+      const by = unitOf(e.by);
+      const to = unitOf(e.to);
       if (UNITS[by.def].side === 'hero' && UNITS[to.def].side === 'foe') out.dealt.set(by.def, (out.dealt.get(by.def) ?? 0) + e.dmg);
       if (UNITS[to.def].side === 'hero' && UNITS[by.def].side === 'foe') out.taken.set(to.def, (out.taken.get(to.def) ?? 0) + e.dmg);
     }

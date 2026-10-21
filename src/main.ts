@@ -4,15 +4,21 @@
 
 import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { D, standable, tileAt } from './sim/board';
-import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle } from './sim/battle';
+import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type Unit } from './sim/battle';
+import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
 import { finish, gradeBoost, heroOf, isBossStage, loadRun, newRun, saveRun, setSquad, SQUAD, startStage, summon, summonCost, type Run } from './sim/run';
 import { formOf, UNITS } from './sim/units';
-import { earn, loadMeta, rankOf, saveMeta, type Meta } from './sim/meta';
+import { earn, loadMeta, rankOf, recordStars, saveMeta, type Meta } from './sim/meta';
+import { fightXp, gainXp, levelGain, levelOfKind, progressOf, xpOf, type LevelUp } from './sim/levels';
+import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
 import { Gacha } from './gacha';
 import { Home } from './home';
+import { tips, type Box } from './tips';
+import { CHARGE_MAX, kitOf } from './sim/abilities';
 import { keepAwake } from './render/awake';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, SPELL_IDS, type SpellId } from './sim/spells';
 import { BoardView, loadBoardArt } from './render/boardView';
+import { countTraits, kindsOf, traitsOf, TRAITS } from './sim/traits';
 import { UnitSprite } from './render/unitView';
 import { Fx, loadFx } from './render/fx';
 import { framesOf, loadSheets, portrait } from './render/sheets';
@@ -23,6 +29,10 @@ TextureSource.defaultOptions.scaleMode = 'nearest';
 
 /** How much bigger the fighters show upright than when the whole board fits the width. */
 const ZOOM = 1.6;
+/** A boss's title card: how long it stays (ms), and how much the camera zooms in on the boss. */
+const INTRO_MS = 2000;
+const INTRO_ZOOM = 0.25;
+const STAT_LABELS: Record<(typeof STAT_KEYS)[number], string> = { dealt: 'Dealt', taken: 'Taken', healed: 'Healed', kills: 'Kills' };
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -65,6 +75,12 @@ class Game {
   private sky: HTMLElement[] = [];
   /** The spell card chosen, waiting for a tile. */
   private spell: SpellId | null = null;
+  /** The fight's numbers for each hero, tallied as the ticks come in. */
+  private stats: FightStats = [];
+  /** A boss's title card: how long it has been on, and the boss it is about. */
+  private intro: { t: number; boss: Unit } | null = null;
+  /** The stages whose boss has had its card this session (a stage's card plays once). */
+  private introduced = new Set<string>();
 
   async start(): Promise<void> {
     await this.app.init({ resizeTo: window, backgroundAlpha: 0, antialias: false, roundPixels: true, autoDensity: true, resolution: Math.min(3, devicePixelRatio || 1) });
@@ -126,7 +142,7 @@ class Game {
       const h = heroOf(this.run, id);
       if (!h) continue;
       const at = this.placed.get(String(id)) ?? this.freeTile();
-      if (at && place(this.b, h.kind, at[0], at[1], id, gradeBoost(h.grade, rankOf(this.meta, h.kind)))) this.placed.set(String(id), at);
+      if (at && place(this.b, h.kind, at[0], at[1], id, gradeBoost(h.grade, rankOf(this.meta, h.kind), levelOfKind(this.meta, h.kind)))) this.placed.set(String(id), at);
       else setSquad(this.run, id, false);
     }
     this.acc = 0;
@@ -137,6 +153,91 @@ class Game {
     this.syncSprites(true);
     this.layout();
     this.refresh();
+    this.startIntro();
+  }
+
+  /** A boss stage's first time: its title card, the camera gliding to the boss and zooming a little, and a rumble. Once per stage. */
+  private startIntro(): void {
+    const key = `${this.run.seed}:${this.run.stage}`;
+    const boss = this.b.units.find((u) => u.side === 'foe' && (u.size ?? 1) > 1);
+    if (!boss || this.introduced.has(key)) return;
+    this.introduced.add(key);
+    this.intro = { t: 0, boss };
+    const card = $('bossCard');
+    card.querySelector('b')!.textContent = `THE ${UNITS[boss.def].name.toUpperCase()}`;
+    card.querySelector('span')!.textContent = UNITS[boss.def].role;
+    card.classList.remove('out');
+    card.hidden = false;
+    play('boom');
+  }
+
+  /** Each frame of the intro: the rumble, the camera on the boss with the zoom swelling and falling back, and the card fading out. */
+  private stepIntro(dt: number): void {
+    const it = this.intro!;
+    it.t += dt;
+    if (it.t >= INTRO_MS) return this.endIntro();
+    if (it.t < INTRO_MS * 0.7) this.fx.rumble(0.7);
+    this.fx.step(dt);
+    if (it.t > INTRO_MS - 400) $('bossCard').classList.add('out');
+    const { u, v } = it.boss;
+    const [x, y] = at(u, v, tileAt(this.b.board, u, v)?.h ?? 0);
+    this.tx = x;
+    this.ty = y;
+    this.zoom = 1 + INTRO_ZOOM * Math.min(1, it.t / 500, (INTRO_MS - it.t) / 500);
+  }
+
+  /** The card goes (a tap, or its time is up) and the camera returns to where the phase has it. */
+  private endIntro(): void {
+    if (!this.intro) return;
+    this.intro = null;
+    this.zoom = 1;
+    const card = $('bossCard');
+    card.hidden = true;
+    card.classList.remove('out');
+    this.focus();
+  }
+
+  /** The boss's name and health across the top, during the fight (none once it has fallen). */
+  private refreshBossBar(): void {
+    const bar = $('bossBar');
+    const boss = this.b.units.find((u) => u.side === 'foe' && (u.size ?? 1) > 1);
+    const show = this.b.phase === 'fight' && !!boss?.alive;
+    bar.hidden = !show;
+    if (!boss || !show) return;
+    bar.querySelector('b')!.textContent = UNITS[boss.def].name;
+    (bar.querySelector('span') as HTMLElement).style.width = `${(boss.hp / boss.maxHp) * 100}%`;
+  }
+
+  /** The fight's numbers: a row a hero, with a bar for each number (scaled to the best hero) and the MVP's crown. */
+  private showStats(): void {
+    const list = $('fightStats');
+    list.replaceChildren();
+    list.hidden = !this.stats.length;
+    if (list.hidden) return;
+    const mvp = mvpOf(this.stats);
+    const head = document.createElement('div');
+    head.className = 'srow head';
+    head.append(document.createElement('span'), ...STAT_KEYS.map((k) => Object.assign(document.createElement('span'), { textContent: STAT_LABELS[k] })));
+    list.append(head);
+    for (const s of this.stats) {
+      const row = document.createElement('div');
+      row.className = 'srow';
+      const name = document.createElement('b');
+      name.textContent = UNITS[s.kind].name;
+      if (s === mvp) name.append(' ', Object.assign(document.createElement('em'), { textContent: '♛', title: 'MVP' }));
+      row.append(name);
+      for (const k of STAT_KEYS) {
+        const top = Math.max(1, ...this.stats.map((x) => x[k]));
+        const cell = document.createElement('span');
+        cell.className = 'cell';
+        cell.append(
+          Object.assign(document.createElement('em'), { textContent: String(Math.round(s[k])) }),
+          Object.assign(document.createElement('i'), { innerHTML: `<span style="width: ${((s[k] / top) * 100).toFixed(1)}%"></span>` }),
+        );
+        row.append(cell);
+      }
+      list.append(row);
+    }
   }
 
   /** The first free standable tile on the heroes' rows, front row first. */
@@ -148,21 +249,26 @@ class Game {
 
   private begin(): void {
     if (!fight(this.b)) return;
+    this.endIntro();
+    this.stats = startStats(this.b.units);
     startFight(isBossStage(this.run.stage));
     keepAwake(true);
     this.chosen = null;
     this.boardView.clearMarks();
+    this.refreshBossBar();
     this.layout();
     this.refresh();
   }
 
   private frame(dt: number): void {
     const b = this.b;
+    tips.update();
     if (b.phase === 'fight') {
       this.acc += Math.min(dt, 250) * this.speed;
       while (this.acc >= TICK_MS && b.phase === 'fight') {
         this.acc -= TICK_MS;
         const events = stepBattle(b);
+        tally(this.stats, events);
         this.fx.show(b, events);
         playEvents(events);
         if (events.some((e) => e.kind === 'hit')) this.refreshBench();
@@ -176,6 +282,8 @@ class Game {
       this.acc += dt;
       this.fx.step(dt);
     }
+    if (this.intro) this.stepIntro(dt);
+    this.refreshBossBar();
     const t = b.phase === 'deploy' ? performance.now() : b.phase === 'fight' ? b.t - TICK_MS + this.acc : b.t + this.acc;
     for (const s of this.sprites.values()) s.update(b.board, t, b.phase !== 'deploy');
     // (the camera eases to where it is sent, unless a finger is holding the board)
@@ -221,6 +329,8 @@ class Game {
   private tx = 0;
   private ty = 0;
   private area = { x: 0, y: 0, w: 1, h: 1 };
+  /** The camera's zoom on the boss during its card (1 otherwise). */
+  private zoom = 1;
   private bbox = { x0: 0, x1: 0, y0: 0, y1: 0 };
 
   /** Fit the board into the room the bench and the top bar leave: upright it is zoomed in and panned, sideways it fits. */
@@ -228,7 +338,11 @@ class Game {
     const top = $('top').getBoundingClientRect();
     const panel = $('panel').getBoundingClientRect();
     const sideways = innerWidth > innerHeight;
-    const area = sideways ? { x: 0, y: top.bottom, w: panel.left, h: innerHeight - top.bottom } : { x: 0, y: top.bottom, w: innerWidth, h: panel.top - top.bottom };
+    const bar = $('bossBar');
+    bar.style.top = `${top.bottom + 4}px`;
+    bar.style.right = sideways ? `${innerWidth - panel.left + 12}px` : '12px';
+    const head = bar.hidden ? top.bottom : bar.getBoundingClientRect().bottom + 4;
+    const area = sideways ? { x: 0, y: head, w: panel.left, h: innerHeight - head } : { x: 0, y: head, w: innerWidth, h: panel.top - head };
     const b = this.b.board;
     let x0 = Infinity;
     let x1 = -Infinity;
@@ -298,7 +412,8 @@ class Game {
 
   /** Put the world where the camera says, and slide the backdrop's layers a little the other way. */
   private place(): void {
-    const k = this.scale;
+    const k = this.scale * this.zoom;
+    this.world.scale.set(k);
     this.baseX = Math.round(this.area.x + this.area.w / 2 - this.cx * k);
     this.baseY = Math.round(this.area.y + this.area.h / 2 - this.cy * k);
     this.world.position.set(this.baseX + this.fx.shakeX, this.baseY + this.fx.shakeY);
@@ -311,8 +426,8 @@ class Game {
   /** The tile under a point on the screen (the nearest column's top or side). */
   private tileAtScreen(sx: number, sy: number): [number, number] | null {
     const b = this.b.board;
-    const wx = (sx - this.world.x) / this.scale;
-    const wy = (sy - this.world.y) / this.scale;
+    const wx = (sx - this.world.x) / this.world.scale.x;
+    const wy = (sy - this.world.y) / this.world.scale.y;
     // (front to back: a column in front hides the tops behind it)
     for (let d = b.w + b.d - 2; d >= 0; d--)
       for (let u = 0; u < b.w; u++) {
@@ -331,14 +446,43 @@ class Game {
 
   /** The placed hero under a point on the screen. */
   private heroAtScreen(sx: number, sy: number): string | null {
-    const wx = (sx - this.world.x) / this.scale;
-    const wy = (sy - this.world.y) / this.scale;
+    const wx = (sx - this.world.x) / this.world.scale.x;
+    const wy = (sy - this.world.y) / this.world.scale.y;
     const heroes = this.b.units.filter((x) => x.side === 'hero').sort((a, c) => c.u + c.v - (a.u + a.v));
     for (const h of heroes) {
       const s = this.sprites.get(h.id);
       if (s && Math.abs(wx - s.x) < 16 && wy < s.y + 6 && wy > s.y - s.tall) return String(h.tag);
     }
     return null;
+  }
+
+  /** The screen box of the blue tiles the heroes go on (for a tip to point at). */
+  private deployBox(): Box | null {
+    const b = this.b.board;
+    let x0 = Infinity;
+    let x1 = -Infinity;
+    let y0 = Infinity;
+    let y1 = -Infinity;
+    for (let v = 0; v < D; v++)
+      for (let u = 0; u < b.w; u++) {
+        const t = tileAt(b, u, v);
+        if (!isDeployTile(v) || !t || !standable(t)) continue;
+        const [x, y] = at(u, v, t.h);
+        x0 = Math.min(x0, x - TW / 2);
+        x1 = Math.max(x1, x + TW / 2);
+        y0 = Math.min(y0, y - TH / 2);
+        y1 = Math.max(y1, y + TH / 2);
+      }
+    if (x0 > x1) return null;
+    return { x: this.world.x + x0 * this.scale, y: this.world.y + y0 * this.scale, w: (x1 - x0) * this.scale, h: (y1 - y0) * this.scale };
+  }
+
+  /** The screen box of a fighter on the board (for a tip to point at), or null if it has gone. */
+  private spriteBox(id: number): Box | null {
+    const s = this.sprites.get(id);
+    if (!s || !s.root.visible) return null;
+    const h = s.tall * this.scale;
+    return { x: this.world.x + s.x * this.scale - 20, y: this.world.y + s.y * this.scale - h, w: 40, h };
   }
 
   /* -------------------------------------------------------------- input */
@@ -377,6 +521,7 @@ class Game {
       saveRun(this.run);
       this.newBattle();
     });
+    $('bossCard').addEventListener('click', () => this.endIntro());
     $('speed').addEventListener('click', () => {
       this.speed = this.speed === 1 ? 2 : 1;
       $('speed').textContent = `×${this.speed}`;
@@ -389,6 +534,66 @@ class Game {
     this.placed.clear();
     saveRun(this.run);
     this.newBattle();
+  }
+
+  /** The result screen's stars: each pops in (CSS) with its reason and what it pays, and a chime; none for a loss. */
+  private showStars(rating: Rating | null): void {
+    const list = $('stars');
+    list.replaceChildren();
+    list.hidden = !rating;
+    rating?.rules.forEach((rule, i) => {
+      const row = document.createElement('div');
+      row.className = rule.earned ? 'star on' : 'star';
+      row.style.animationDelay = `${i * 0.45}s`;
+      const gem = document.createElement('span');
+      gem.textContent = rule.earned ? '★' : '☆';
+      const text = document.createElement('b');
+      text.textContent = rule.text;
+      row.append(gem, text);
+      if (rule.earned) {
+        const pay = document.createElement('em');
+        pay.textContent = `+${STAR_CROWNS} crowns · +${STAR_GOLD} gold`;
+        row.append(pay);
+        setTimeout(() => play('star'), 600 + i * 450);
+      }
+      list.append(row);
+    });
+  }
+
+  /** The result screen's XP: a row per hero kind that fought, its bar filling with the XP it earned. A level up fills the bar, then flashes the new level and its stat gains, with a chime, and the bar starts again from the new level. */
+  private showXp(gains: Record<string, number>, from: Record<string, number>, ups: LevelUp[]): void {
+    const list = $('xp');
+    list.replaceChildren();
+    list.hidden = !Object.keys(gains).length;
+    const share = (p: { into: number; need: number }) => (p.need ? (p.into / p.need) * 100 : 100);
+    Object.entries(gains).forEach(([kind, xp], i) => {
+      const row = document.createElement('div');
+      row.className = 'xprow';
+      const name = document.createElement('b');
+      name.textContent = UNITS[kind].name;
+      const gain = document.createElement('em');
+      gain.textContent = `+${xp} XP`;
+      const bar = document.createElement('i');
+      const fill = document.createElement('span');
+      bar.append(fill);
+      const note = document.createElement('p');
+      row.append(name, gain, bar, note);
+      list.append(row);
+      const after = progressOf(from[kind] + xp);
+      const up = ups.find((u) => u.kind === kind);
+      fill.style.width = `${share(progressOf(from[kind]))}%`;
+      const at = 400 + i * 700;
+      setTimeout(() => (fill.style.width = `${up ? 100 : share(after)}%`), at);
+      if (!up) return;
+      setTimeout(() => {
+        const gained = levelGain(up.from, up.to);
+        note.textContent = `${UNITS[kind].name} reached level ${up.to}! +${gained.hp}% HP · +${gained.atk}% Atk`;
+        row.classList.add('up');
+        fill.style.transition = 'none';
+        fill.style.width = `${share(after)}%`;
+        play('levelUp');
+      }, at + 900);
+    });
   }
 
   /** A run has ended: back to the castle, showing what it earned. */
@@ -406,8 +611,8 @@ class Game {
     if (d.pan) {
       if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 8) return;
       d.moved = true;
-      this.cx = d.pan.cx - (e.clientX - d.x) / this.scale;
-      this.cy = d.pan.cy - (e.clientY - d.y) / this.scale;
+      this.cx = d.pan.cx - (e.clientX - d.x) / this.world.scale.x;
+      this.cy = d.pan.cy - (e.clientY - d.y) / this.world.scale.y;
       this.tx = this.cx;
       this.ty = this.cy;
       this.clampCam();
@@ -477,7 +682,7 @@ class Game {
 
   private put(id: string, tile: [number, number]): void {
     const h = heroOf(this.run, Number(id))!;
-    if (!this.canPut(id, tile) || !place(this.b, h.kind, tile[0], tile[1], h.id, gradeBoost(h.grade, rankOf(this.meta, h.kind)))) return;
+    if (!this.canPut(id, tile) || !place(this.b, h.kind, tile[0], tile[1], h.id, gradeBoost(h.grade, rankOf(this.meta, h.kind), levelOfKind(this.meta, h.kind)))) return;
     setSquad(this.run, h.id, true);
     this.placed.set(id, tile);
     saveRun(this.run);
@@ -498,7 +703,7 @@ class Game {
   /** The bench: a card for every hero owned, rebuilt when the roster changes. */
   private buildBench(): void {
     const bench = $('bench');
-    const key = this.run.roster.map((h) => `${h.id}:${h.grade}`).join();
+    const key = this.run.roster.map((h) => `${h.id}:${h.grade}:${levelOfKind(this.meta, h.kind)}`).join();
     if (bench.dataset.key === key) return;
     bench.dataset.key = key;
     bench.replaceChildren();
@@ -514,7 +719,17 @@ class Game {
       name.textContent = def.name;
       const bar = document.createElement('i');
       bar.append(document.createElement('span'));
-      card.append(portrait(formOf(def, h.grade), 96, h.grade), stars, name, bar);
+      const marks = document.createElement('small');
+      for (const t of traitsOf(h.kind)) {
+        const m = document.createElement('span');
+        m.textContent = TRAITS[t].short;
+        m.dataset.trait = t;
+        marks.append(m);
+      }
+      const lv = document.createElement('span');
+      lv.className = 'lv';
+      lv.textContent = `Lv ${levelOfKind(this.meta, h.kind)}`;
+      card.append(portrait(formOf(def, h.grade), 96, h.grade), stars, name, lv, marks, bar);
       card.title = def.role;
       card.addEventListener('pointerdown', (e) => {
         if (this.b.phase !== 'deploy') return;
@@ -567,6 +782,9 @@ class Game {
       card.classList.toggle('armed', this.spell === id);
       (card.querySelector('.cool') as HTMLElement).style.height = `${(cooldownLeft(b, id) / SPELLS[id].cooldownMs) * 100}%`;
     }
+    if (b.spells.mana >= 3) tips.offer('mana', $('spells'));
+    const full = b.units.find((u) => u.side === 'hero' && u.alive && u.charge >= (kitOf(u)?.skill.need ?? CHARGE_MAX));
+    if (full) tips.offer('skill', () => this.spriteBox(full.id));
     $('spellHint').textContent = this.spell ? `${SPELLS[this.spell].text}: tap a tile (tap the card again to cancel)` : '';
     if (dropped) this.markTiles();
   }
@@ -579,10 +797,19 @@ class Game {
     if ((b.phase === 'won' || b.phase === 'lost') && !this.settled) {
       this.settled = true;
       keepAwake(false);
+      const won = b.phase === 'won';
+      const stage = run.stage;
+      const rating = ratingOf(b, isBossStage(stage));
       const before = run.gold;
-      finish(run, b.phase === 'won');
+      finish(run, won, rating.stars);
       this.gain = run.gold - before;
-      this.crownGain = earn(this.meta, b.phase === 'won' ? run.stage - 1 : run.stage, b.phase === 'won');
+      this.crownGain = earn(this.meta, stage, won, rating.stars);
+      if (won) recordStars(this.meta, stage, rating.stars);
+      this.showStars(won ? rating : null);
+      this.showStats();
+      const gains = fightXp(b);
+      const from = Object.fromEntries(Object.keys(gains).map((k) => [k, xpOf(this.meta, k)]));
+      this.showXp(gains, from, gainXp(this.meta, gains));
       saveMeta(this.meta);
       saveRun(run);
     }
@@ -608,9 +835,35 @@ class Game {
           : `The run ends at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} summons · +${this.crownGain} crowns`;
       $('next').textContent = b.phase === 'won' ? `Next stage (${run.stage})` : 'Home';
     }
+    if (b.phase === 'deploy') tips.atDeploy(n, run.stage, () => this.deployBox());
     this.buildBench();
     this.markTiles();
     this.refreshBench();
+    this.refreshTraits();
+  }
+
+  /** The trait strip: the traits of the heroes placed, lit when their bonus is on; a tap says what one does. */
+  private traitPick?: string;
+  private refreshTraits(): void {
+    const strip = $('traits');
+    const hint = $('traitHint');
+    const counts = countTraits(kindsOf(this.b.units));
+    const key = counts.map((c) => `${c.trait.id}${c.count}`).join() + this.traitPick;
+    if (strip.dataset.key === key) return;
+    strip.dataset.key = key;
+    strip.replaceChildren();
+    for (const c of counts) {
+      const pill = document.createElement('button');
+      pill.className = `trait ${c.trait.kind}${c.active ? ' on' : ''}${this.traitPick === c.trait.id ? ' picked' : ''}`;
+      pill.textContent = `${c.trait.name} ${c.count}/${c.goal}`;
+      pill.addEventListener('click', () => {
+        this.traitPick = this.traitPick === c.trait.id ? undefined : c.trait.id;
+        this.refreshTraits();
+      });
+      strip.append(pill);
+    }
+    const picked = counts.find((c) => c.trait.id === this.traitPick);
+    hint.textContent = picked ? `${picked.trait.name}: ${picked.trait.tiers.map((t) => `${t.need} heroes, ${t.text}`).join('; ')}` : counts.length ? 'Different heroes of a trait give a team bonus' : '';
   }
 
   private refreshBench(): void {

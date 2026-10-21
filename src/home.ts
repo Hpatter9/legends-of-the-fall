@@ -6,8 +6,11 @@ import castleUrl from './art/home/castle.png';
 import { ALL_HEROES, UNITS } from './sim/units';
 import { KITS } from './sim/abilities';
 import { BUILDING_IDS, BUILDINGS, maxLevel, nextCost, upgrade, type BuildingId } from './sim/castle';
-import { rarityOf, saveMeta, type Meta } from './sim/meta';
+import { traitsOf, TRAITS } from './sim/traits';
+import { rarityOf, saveMeta, starSummary, type Meta } from './sim/meta';
+import { progressOf, xpOf } from './sim/levels';
 import { portrait } from './render/sheets';
+import { resetTipsButton, tips } from './tips';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -43,6 +46,9 @@ export class Home {
     this.note = note;
     $('home').hidden = false;
     this.show('menu');
+    tips.offer('home', $('homeNew'));
+    // (a run has just ended: the crowns are there to spend)
+    if (note) tips.offer('crowns', $('homeMenu'));
   }
 
   get isOpen(): boolean {
@@ -66,6 +72,9 @@ export class Home {
     $('homeMenu').hidden = !menu;
     $('homePage').hidden = menu;
     $('homeCrowns').textContent = `${this.meta.crowns} crowns`;
+    const best = starSummary(this.meta);
+    $('homeBest').textContent = best ? `Best: stage ${best.stage}, ${best.total} stars` : '';
+    $('homeBest').hidden = !best;
     $('homeNote').textContent = menu ? this.note : '';
     $('homeNote').hidden = !menu || !this.note;
     ($('homeContinue') as HTMLButtonElement).hidden = !this.hooks.hasRun();
@@ -96,9 +105,21 @@ export class Home {
       tag.textContent = open ? `${RARITY[rarityOf(kind)]} · ${def.role}` : `${RARITY[rarityOf(kind)]} · not yet recruited`;
       text.append(name, tag);
       if (open) {
+        const marks = document.createElement('em');
+        marks.textContent = traitsOf(kind).map((t) => TRAITS[t].name).join(' · ');
+        text.append(marks);
         const stats = document.createElement('span');
         stats.textContent = `HP ${def.hp} · Atk ${def.atk} · Def ${def.def} · Range ${def.range}`;
         text.append(stats);
+        const p = progressOf(xpOf(this.meta, kind));
+        const level = document.createElement('span');
+        level.textContent = p.need ? `Level ${p.level} · ${p.into} of ${p.need} XP to level ${p.level + 1}` : `Level ${p.level} · max`;
+        const bar = document.createElement('div');
+        bar.className = 'xpbar';
+        const fill = document.createElement('span');
+        fill.style.width = `${p.need ? (p.into / p.need) * 100 : 100}%`;
+        bar.append(fill);
+        text.append(level, bar);
         if (kit) {
           const skill = document.createElement('p');
           skill.innerHTML = '';
@@ -123,6 +144,7 @@ export class Home {
     hint.textContent = 'Upgrades last for every run you start from now on.';
     body.append(hint);
     for (const id of BUILDING_IDS) body.append(this.buildingRow(id));
+    body.append(resetTipsButton());
   }
 
   private buildingRow(id: BuildingId): HTMLElement {

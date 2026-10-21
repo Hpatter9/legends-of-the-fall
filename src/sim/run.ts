@@ -1,12 +1,14 @@
 // A run, King God Castle style: gold, a stage number and a roster of owned heroes. Gold buys a random grade-1 hero
 // (`summon`); three of a kind and grade merge into one of the next grade at once; at most five fight, the rest wait on
-// the bench. Stage n meets a band of foes made tougher by n, and every fifth stage a boss. A win pays gold; a lost
+// the bench. Stage n meets a band of foes made tougher by n, and every fifth stage a boss (its own band, led by the boss). A win pays gold; a lost
 // fight ends the run. Pure rules: no Pixi, no DOM; the summon draws from a side stream of the run's seed.
 
 import { startBattle, type Battle, type Boost, type Stage } from './battle';
-import { FOE_BANDS } from './foes';
+import { BOSS_BANDS, FIELD_BANDS } from './foes';
 import { bonusGold, heroBoost, manaRate, newCastle, type Castle } from './castle';
 import { rankMult } from './meta';
+import { levelBoost } from './levels';
+import { starGold } from './stars';
 import { mixSeed, Rng } from './rng';
 import { HEROES } from './units';
 
@@ -18,11 +20,12 @@ export const SUMMON_STEP = 5;
 /** Hp and attack grow by this for each grade above the first. */
 export const GRADE_MULT = 1.6;
 /** Foes' hp and attack at stage 1, as a share of their stats in `foes.ts`. */
-export const FOE_START = 0.6;
+export const FOE_START = 0.55;
 /** Foes' hp and attack grow by this share for each stage after the first. */
-export const STAGE_GROWTH = 0.167;
+export const STAGE_GROWTH = 0.2;
 export const BOSS_EVERY = 5;
-export const BOSS: Boost = { hp: 1.3, atk: 1.05, size: 1.4 };
+/** A boss is drawn half as big again; its kind (`foes.ts`) carries its own stats and skill. */
+export const BOSS: Boost = { size: 1.5 };
 
 export interface Owned {
   /** Never reused, so a placed hero stays itself when others merge away. */
@@ -93,17 +96,19 @@ function add(run: Run, kind: string): Owned {
 export const heroOf = (run: Run, id: number) => run.roster.find((h) => h.id === id);
 export const benched = (run: Run) => run.roster.filter((h) => !run.squad.includes(h.id));
 
-/** Hp and attack multipliers of a grade, times the hero kind's rank (from its shards). */
-export const gradeBoost = (grade: number, rank = 0): Boost => {
+/** Hp and attack multipliers of a grade, times the hero kind's rank (from its shards) and its level (from its XP). */
+export const gradeBoost = (grade: number, rank = 0, level = 1): Boost => {
   const k = GRADE_MULT ** (grade - 1) * rankMult(rank);
-  return { hp: k, atk: k, grade };
+  const lv = levelBoost(level);
+  return { hp: k * lv.hp, atk: k * lv.atk, grade };
 };
 
 export const isBossStage = (stage: number) => stage % BOSS_EVERY === 0;
-/** The band stage n meets, in turn. */
+/** The band stage n meets: a boss band on a boss stage, else the next field band in turn (boss stages skipped). */
 export const bandFor = (stage: number) => {
-  const names = Object.keys(FOE_BANDS);
-  return names[(stage - 1) % names.length];
+  if (isBossStage(stage)) return BOSS_BANDS[(stage / BOSS_EVERY - 1) % BOSS_BANDS.length];
+  const fieldsBefore = stage - 1 - Math.floor((stage - 1) / BOSS_EVERY);
+  return FIELD_BANDS[fieldsBefore % FIELD_BANDS.length];
 };
 /** How the foes of stage n are boosted. */
 export function stageBoost(stage: number): Stage {
@@ -116,11 +121,11 @@ export const reward = (stage: number) => 20 + 6 * stage + (isBossStage(stage) ? 
 /** A fresh fight for the run's current stage (a different board each stage). */
 export const startStage = (run: Run): Battle => startBattle(mixSeed(run.seed, 0x57a6e, run.stage), bandFor(run.stage), { ...stageBoost(run.stage), heroes: heroBoost(run.castle), mana: manaRate(run.castle) });
 
-/** Settle a finished fight: a win pays and moves on to the next stage; a loss ends the run. */
-export function finish(run: Run, won: boolean): void {
+/** Settle a finished fight: a win pays (and its stars pay gold) and moves on to the next stage; a loss ends the run. */
+export function finish(run: Run, won: boolean, stars = 0): void {
   run.best = Math.max(run.best, run.stage);
   if (won) {
-    run.gold += reward(run.stage);
+    run.gold += reward(run.stage) + starGold(stars);
     run.stage++;
   } else run.over = true;
 }

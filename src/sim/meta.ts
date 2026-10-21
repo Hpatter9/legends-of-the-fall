@@ -6,6 +6,7 @@
 import { newCastle, readCastle, type Castle } from './castle';
 import { Rng } from './rng';
 import { ALL_HEROES, HEROES, UNITS } from './units';
+import { MAX_STARS, starCrowns } from './stars';
 
 export const PULL_COST = 100;
 export const PULL10_COST = 900;
@@ -35,6 +36,10 @@ export interface Meta {
   castle: Castle;
   /** Shards per hero kind (missing is none). */
   shards: Record<string, number>;
+  /** The best stars won on each stage (keyed by the stage number; missing is none). */
+  stars: Record<string, number>;
+  /** Lasting XP per hero kind (missing is none); its level is read from it (`levels.ts`). */
+  xp: Record<string, number>;
 }
 
 export interface Pull {
@@ -46,7 +51,7 @@ export interface Pull {
   shards: number;
 }
 
-export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [...HEROES], pulls: 0, dry: 0, shards: {}, castle: newCastle() });
+export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [...HEROES], pulls: 0, dry: 0, shards: {}, stars: {}, xp: {}, castle: newCastle() });
 
 export const rarityOf = (kind: string): 1 | 2 | 3 => UNITS[kind]?.rarity ?? 1;
 /** The rank a hero kind has from its shards (0 to MAX_RANK). */
@@ -58,11 +63,40 @@ export const stageCrowns = (stage: number) => 10 + 2 * stage;
 /** Crowns a run's end pays: more the further it got. */
 export const runCrowns = (best: number) => 10 * (best - 1) + best * best;
 
-/** Pay the crowns for a settled fight (a win pays for the stage; a loss ends the run and pays by how far it got). Returns the sum. */
-export function earn(m: Meta, stage: number, won: boolean): number {
-  const n = won ? stageCrowns(stage) : runCrowns(stage);
+/** Saved XP that is sane: a hero kind in the game and a number of XP. Anything else is dropped. */
+function readXp(raw: unknown): Record<string, number> {
+  const out: Record<string, number> = {};
+  if (raw && typeof raw === 'object') for (const [k, n] of Object.entries(raw)) if (ALL_HEROES.includes(k) && typeof n === 'number' && n >= 0) out[k] = Math.floor(n);
+  return out;
+}
+
+/** Pay the crowns for a settled fight (a win pays for the stage and its stars; a loss ends the run and pays by how far it got). Returns the sum. */
+export function earn(m: Meta, stage: number, won: boolean, stars = 0): number {
+  const n = won ? stageCrowns(stage) + starCrowns(stars) : runCrowns(stage);
   m.crowns += n;
   return n;
+}
+
+/** Keep the best stars won on a stage. Returns whether it beat the one before. */
+export function recordStars(m: Meta, stage: number, stars: number): boolean {
+  const key = String(stage);
+  if (stars <= (m.stars[key] ?? 0)) return false;
+  m.stars[key] = stars;
+  return true;
+}
+
+/** The furthest stage with any stars and the stars won across all stages (null before the first win). */
+export function starSummary(m: Meta): { stage: number; total: number } | null {
+  const stages = Object.keys(m.stars).map(Number);
+  if (!stages.length) return null;
+  return { stage: Math.max(...stages), total: Object.values(m.stars).reduce((n, s) => n + s, 0) };
+}
+
+/** Saved stars that are sane: a stage number and 1 to MAX_STARS. Anything else is dropped. */
+function readStars(raw: unknown): Record<string, number> {
+  const out: Record<string, number> = {};
+  if (raw && typeof raw === 'object') for (const [k, n] of Object.entries(raw)) if (/^[1-9]\d*$/.test(k) && typeof n === 'number' && n >= 1) out[k] = Math.min(MAX_STARS, n | 0);
+  return out;
 }
 
 export const pullCost = (count: 1 | 10) => (count === 10 ? PULL10_COST : PULL_COST);
@@ -117,6 +151,10 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       const shards: Record<string, number> = {};
       if (m.shards && typeof m.shards === 'object') for (const [k, n] of Object.entries(m.shards)) if (ALL_HEROES.includes(k) && typeof n === 'number') shards[k] = n | 0;
       m.shards = shards;
+      // (saves from before stars have none)
+      m.stars = readStars(m.stars);
+      // (saves from before XP have none)
+      m.xp = readXp(m.xp);
       return m;
     }
   } catch {
