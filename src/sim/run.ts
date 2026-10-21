@@ -17,10 +17,12 @@ export const SUMMON_BASE = 30;
 export const SUMMON_STEP = 5;
 /** Hp and attack grow by this for each grade above the first. */
 export const GRADE_MULT = 1.6;
+/** Foes' hp and attack at stage 1, as a share of their stats in `foes.ts`. */
+export const FOE_START = 0.6;
 /** Foes' hp and attack grow by this share for each stage after the first. */
-export const STAGE_GROWTH = 0.12;
+export const STAGE_GROWTH = 0.167;
 export const BOSS_EVERY = 5;
-export const BOSS: Boost = { hp: 3, atk: 1.6, size: 1.4 };
+export const BOSS: Boost = { hp: 1.3, atk: 1.05, size: 1.4 };
 
 export interface Owned {
   /** Never reused, so a placed hero stays itself when others merge away. */
@@ -105,7 +107,7 @@ export const bandFor = (stage: number) => {
 };
 /** How the foes of stage n are boosted. */
 export function stageBoost(stage: number): Stage {
-  const k = 1 + STAGE_GROWTH * (stage - 1);
+  const k = FOE_START * (1 + STAGE_GROWTH * (stage - 1));
   return { foes: { hp: k, atk: k }, boss: isBossStage(stage) ? BOSS : undefined };
 }
 /** Gold a win on stage n pays. */

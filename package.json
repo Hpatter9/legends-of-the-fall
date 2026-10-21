@@ -8,7 +8,8 @@
     "typecheck": "tsc --noEmit",
     "test": "node test.mjs",
     "web": "node build.mjs",
-    "dev": "node build.mjs --serve"
+    "dev": "node build.mjs --serve",
+    "balance": "node tools/balance.mjs"
   },
   "license": "UNLICENSED",
   "devDependencies": {

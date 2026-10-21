@@ -48,15 +48,15 @@ export const SPLASH_SHARE = 0.5;
 
 export const UNITS: Record<string, UnitDef> = {
   ...FOES,
-  knight: { id: 'knight', name: 'Knight', side: 'hero', sheet: 'knight_1', scale: 0.74, hp: 380, atk: 19, def: 11, range: 1, moveMs: 760, atkMs: 1100, jump: 2, role: 'Holds the line', forms: ['knight_1', 'knight_2', 'knight_3'] },
-  samurai: { id: 'samurai', name: 'Samurai', side: 'hero', sheet: 'samurai', scale: 0.72, hp: 225, atk: 34, def: 6, range: 1, moveMs: 600, atkMs: 1000, jump: 2, role: 'Heavy blade', forms: ['samurai', 'samurai', 'samurai_commander'] },
-  kunoichi: { id: 'kunoichi', name: 'Kunoichi', side: 'hero', sheet: 'kunoichi', scale: 0.74, hp: 165, atk: 17, def: 4, range: 1, moveMs: 420, atkMs: 550, jump: 3, role: 'Quick, climbs well' },
-  archer: { id: 'archer', name: 'Archer', side: 'hero', sheet: 'samurai_archer', scale: 0.6, hp: 142, atk: 24, def: 3, range: 4, moveMs: 650, atkMs: 1300, jump: 2, shot: 'arrow', heightReach: 1.4, role: 'Long shots, twice as far from high' },
-  wizard: { id: 'wizard', name: 'Fire Wizard', side: 'hero', sheet: 'fire_wizard', scale: 0.79, hp: 135, atk: 26, def: 2, range: 3, moveMs: 700, atkMs: 1700, jump: 2, shot: 'fire', splash: true, role: 'Fire that spreads' },
+  knight: { id: 'knight', name: 'Knight', side: 'hero', sheet: 'knight_1', scale: 0.74, hp: 300, atk: 18, def: 10, range: 1, moveMs: 760, atkMs: 1100, jump: 2, role: 'Holds the line', forms: ['knight_1', 'knight_2', 'knight_3'] },
+  samurai: { id: 'samurai', name: 'Samurai', side: 'hero', sheet: 'samurai', scale: 0.72, hp: 225, atk: 31, def: 6, range: 1, moveMs: 600, atkMs: 1000, jump: 2, role: 'Heavy blade', forms: ['samurai', 'samurai', 'samurai_commander'] },
+  kunoichi: { id: 'kunoichi', name: 'Kunoichi', side: 'hero', sheet: 'kunoichi', scale: 0.74, hp: 178, atk: 17, def: 4, range: 1, moveMs: 420, atkMs: 550, jump: 3, role: 'Quick, climbs well' },
+  archer: { id: 'archer', name: 'Archer', side: 'hero', sheet: 'samurai_archer', scale: 0.6, hp: 158, atk: 26, def: 3, range: 4, moveMs: 650, atkMs: 1300, jump: 2, shot: 'arrow', heightReach: 1.4, role: 'Long shots, twice as far from high' },
+  wizard: { id: 'wizard', name: 'Fire Wizard', side: 'hero', sheet: 'fire_wizard', scale: 0.79, hp: 135, atk: 30, def: 2, range: 3, moveMs: 700, atkMs: 1700, jump: 2, shot: 'fire', splash: true, role: 'Fire that spreads' },
 
   ninjaMonk: { id: 'ninjaMonk', name: 'Ninja Monk', side: 'hero', sheet: 'ninja_monk', scale: 0.65, hp: 250, atk: 17, def: 6, range: 1, moveMs: 480, atkMs: 650, jump: 3, rarity: 2, role: 'Bare-handed combos' },
-  peasant: { id: 'peasant', name: 'Peasant', side: 'hero', sheet: 'ninja_peasant', scale: 0.68, hp: 280, atk: 18, def: 6, range: 2, moveMs: 650, atkMs: 1100, jump: 2, rarity: 1, role: 'Spear militia, tougher in a crowd' },
-  lightningMage: { id: 'lightningMage', name: 'Lightning Mage', side: 'hero', sheet: 'lightning_mage', scale: 0.73, hp: 150, atk: 30, def: 2, range: 3, moveMs: 700, atkMs: 1500, jump: 2, shot: 'bolt', rarity: 2, role: 'Lightning that jumps between foes' },
+  peasant: { id: 'peasant', name: 'Peasant', side: 'hero', sheet: 'ninja_peasant', scale: 0.68, hp: 300, atk: 18, def: 6, range: 2, moveMs: 650, atkMs: 1100, jump: 2, rarity: 1, role: 'Spear militia, tougher in a crowd' },
+  lightningMage: { id: 'lightningMage', name: 'Lightning Mage', side: 'hero', sheet: 'lightning_mage', scale: 0.73, hp: 150, atk: 34, def: 2, range: 3, moveMs: 700, atkMs: 1500, jump: 2, shot: 'bolt', rarity: 2, role: 'Lightning that jumps between foes' },
   wanderer: { id: 'wanderer', name: 'Wanderer', side: 'hero', sheet: 'wanderer_mage', scale: 0.7, hp: 165, atk: 16, def: 3, range: 3, moveMs: 700, atkMs: 1500, jump: 2, shot: 'fire', rarity: 2, role: 'Heals the weakest ally' },
   kitsune: { id: 'kitsune', name: 'Kitsune', side: 'hero', sheet: 'kitsune', scale: 0.59, hp: 200, atk: 22, def: 5, range: 1, moveMs: 480, atkMs: 800, jump: 3, rarity: 3, role: 'Charms a foe to fight for her' },
   karasu: { id: 'karasu', name: 'Karasu Tengu', side: 'hero', sheet: 'karasu_tengu', scale: 0.53, hp: 200, atk: 30, def: 4, range: 1, moveMs: 420, atkMs: 900, jump: 9, flies: true, rarity: 3, role: 'Flies; dives on shooters' },
