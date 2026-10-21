@@ -4,9 +4,11 @@
 // on each tick's events, `startFight` when a fight begins, and `play` for the rest.
 //
 // Phones block sound until a tap, so `setup` starts the audio on the first pointer-down, and every later call is
-// safe before that (it does nothing). The mute button's choice is remembered in localStorage (legends.sound).
+// safe before that (it does nothing). The mute button's choice is remembered in localStorage (legends.sound); the
+// volumes come from the settings page (`settings.ts`).
 
 import type { BattleEvent } from '../sim/battle';
+import { onSettings, settings } from '../settings';
 
 const MUSIC_LEVEL = 0.22;
 const SFX_LEVEL = 0.5;
@@ -64,7 +66,7 @@ function unlock(): void {
     master.gain.value = muted ? 0 : 1;
     master.connect(ctx.destination);
     sfxBus = ctx.createGain();
-    sfxBus.gain.value = SFX_LEVEL;
+    sfxBus.gain.value = SFX_LEVEL * effectsLevel();
     sfxBus.connect(master);
     // (one second of white noise, shared by the bursts)
     noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
@@ -77,10 +79,22 @@ function unlock(): void {
 
 /** Starts the audio on the first tap, and makes every button press a tap sound. Call once, from the page's start. */
 export function setup(): void {
+  onSettings(applyLevels);
   window.addEventListener('pointerdown', unlock, true);
   document.addEventListener('click', (e) => {
     if ((e.target as Element).closest?.('button')) play('tap');
   });
+}
+
+/** The volumes from the settings page (0 to 1 each, on top of the levels above). */
+const effectsLevel = () => settings().effects / 100;
+const musicLevel = () => settings().music / 100;
+
+/** The settings page changed a volume: the music now playing and the effects follow. */
+function applyLevels(): void {
+  if (!ctx) return;
+  sfxBus.gain.setTargetAtTime(SFX_LEVEL * effectsLevel(), ctx.currentTime, 0.05);
+  if (current) players.get(current)?.gain.gain.setTargetAtTime(MUSIC_LEVEL * musicLevel(), ctx.currentTime, 0.05);
 }
 
 /** The mute button: shows the speaker, toggles the sound and remembers the choice. */
@@ -158,7 +172,7 @@ function setMusic(track: Track): void {
     }, FADE_S * 1000);
   }
   const next = player(track);
-  next.gain.gain.setTargetAtTime(MUSIC_LEVEL, t, FADE_S / 3);
+  next.gain.gain.setTargetAtTime(MUSIC_LEVEL * musicLevel(), t, FADE_S / 3);
   next.el.currentTime = 0;
   void next.el.play().catch(() => {});
 }

@@ -55,3 +55,12 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
 
 - **The home screen** (`src/art/home/castle.png`): the Fantasy 2D Battlegrounds pixel pack (Craftpix), Battleground 2
   (Bright), `Battleground2.png`, scaled to half size.
+
+## Magic effects (the spells, the skills and the crits)
+
+- **The skill, spell and hit effects** (`src/art/fx/magic/`, 22 sheets of six 32px frames each, copied unchanged from the
+  `sheet-32.png` strips of the **5000 Pixel Effects** pack by blueberry (`pixel-effects/sprites/<effect>/`, from the
+  private assets repository): light gather, light nova and circle, wind vortex, wave, burst and strike, earth shield,
+  burst, explosion and wave, ice shield, fire circle and explosion, gold, white and blood bursts, dark circle and slash,
+  moon slash, lightning burst and strike, and the pink heart. The pack's licence allows use in games, commercial ones
+  included; credit appreciated (https://blueberry-assets.itch.io). Mapped to skills and spells in `src/render/skillFx.ts`.
