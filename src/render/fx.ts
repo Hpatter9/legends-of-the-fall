@@ -611,6 +611,12 @@ export class Fx {
     txt.anchor.set(0.5, 1);
     // (lifted above every label still showing, the fading ones too, so two never overprint)
     this.shownLabels = this.shownLabels.filter((o) => !o.destroyed);
+    // (the same word over the same fighter while the last is still up, a run of blocks say, shows once rather than as a tower)
+    const twin = this.shownLabels.find((o) => o.text === text && o.alpha > 0.5 && Math.abs(o.x - x) < 40);
+    if (twin) {
+      txt.destroy();
+      return { txt: twin, cut: () => {} };
+    }
     const spot = placeLabel(this.shownLabels.map((o) => ({ x: o.x, y: o.y, w: o.width, h: o.height })), { x, y, w: txt.width, h: txt.height }, this.view);
     txt.position.set(spot.x, spot.y);
     this.root.addChild(txt);
