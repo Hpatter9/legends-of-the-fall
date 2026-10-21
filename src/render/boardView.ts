@@ -1,21 +1,16 @@
-// The board drawn: each tile a column, its top the Fields tileset's grass (stony cobbles on the high ground) laid onto
-// the diamond with tufts, flowers and pebbles, its two sides earth shaded in code, down to a common foot. Boulders and
-// bushes are the Fields tileset's own. The column sprite is drawn as in Chronos's raid board (tacticsView.ts
+// The board drawn: each tile a column, its top a detailed grass (cracked flagstones on the high ground) laid onto the
+// diamond, its two sides the dark rock face of the Undead tileset, down to a common foot. Boulders and bushes are the
+// Fields tileset's own. The column sprite is drawn as in Chronos's raid board (tacticsView.ts
 // `column`).
 
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import { tileAt, type Board, type Tile } from '../sim/board';
 import { loadImage } from './loadImage';
 import { at, depth, FOOT, HH, TH, TW } from './iso';
-import grassUrl from '../art/ground/grass.png';
-import cobbleUrl from '../art/ground/cobble.png';
-import tuft1 from '../art/ground/tuft1.png';
-import tuft2 from '../art/ground/tuft2.png';
-import tuft3 from '../art/ground/tuft3.png';
-import flower1 from '../art/ground/flower1.png';
-import flower3 from '../art/ground/flower3.png';
-import pebble1 from '../art/ground/pebble1.png';
-import pebble2 from '../art/ground/pebble2.png';
+import grass1Url from '../art/ground/grass1.png';
+import grass2Url from '../art/ground/grass2.png';
+import stoneUrl from '../art/ground/stone.png';
+import rockUrl from '../art/ground/rock.png';
 import boulder1 from '../art/ground/boulder1.png';
 import boulder2 from '../art/ground/boulder2.png';
 import bush1 from '../art/ground/bush1.png';
@@ -32,11 +27,13 @@ const MARK_COLOUR: Record<Exclude<Mark, null>, [number, number]> = {
   chosen: [0x6dff8a, 0.45],
 };
 
+/** The ground textures' side (they are laid onto the diamond whole). */
+const SRC = 64;
+
 interface Art {
-  grass: HTMLImageElement;
-  cobble: HTMLImageElement;
-  bits: HTMLImageElement[];
-  stones: HTMLImageElement[];
+  grass: HTMLImageElement[];
+  stone: HTMLImageElement;
+  rock: HTMLImageElement;
   boulders: Texture[];
   bushes: Texture[];
 }
@@ -44,8 +41,8 @@ let art: Art | null = null;
 
 export async function loadBoardArt(): Promise<void> {
   const all = (urls: string[]) => Promise.all(urls.map(loadImage));
-  const [grass, cobble, bits, stones, boulders, bushes] = await Promise.all([loadImage(grassUrl), loadImage(cobbleUrl), all([tuft1, tuft2, tuft3, flower1, tuft2, flower3]), all([pebble1, pebble2]), all([boulder1, boulder2]), all([bush1, bush2])]);
-  art = { grass, cobble, bits, stones, boulders: boulders.map((i) => Texture.from(i)), bushes: bushes.map((i) => Texture.from(i)) };
+  const [grass, stone, rock, boulders, bushes] = await Promise.all([all([grass1Url, grass2Url]), loadImage(stoneUrl), loadImage(rockUrl), all([boulder1, boulder2]), all([bush1, bush2])]);
+  art = { grass, stone, rock, boulders: boulders.map((i) => Texture.from(i)), bushes: bushes.map((i) => Texture.from(i)) };
 }
 
 export class BoardView {
@@ -118,18 +115,41 @@ export class BoardView {
     const g = c.getContext('2d')!;
     g.imageSmoothingEnabled = false;
     const stony = t.h >= STONY;
-    const [l, r, lip] = stony ? ['#8a857c', '#6e6a62', '#a39e94'] : ['#8a6642', '#6c4f33', '#7e9a48'];
-    const face = (pts: [number, number][], col: string) => {
-      g.fillStyle = col;
+    const lip = stony ? '#a39e94' : '#7e9a48';
+    const face = (pts: [number, number][], fill: string | CanvasPattern) => {
+      g.fillStyle = fill;
       g.beginPath();
       g.moveTo(pts[0][0], pts[0][1]);
       for (const p of pts.slice(1)) g.lineTo(p[0], p[1]);
       g.closePath();
       g.fill();
     };
-    face([[0, TH / 2], [TW / 2, TH], [TW / 2, TH + deep], [0, TH / 2 + deep]], l);
-    face([[TW / 2, TH], [TW, TH / 2], [TW, TH / 2 + deep], [TW / 2, TH + deep]], r);
-    // faint lines at each step, and a speckle of stones in the earth
+    // the sides: the rock face tiled down them, the left lit and the right in shade
+    const rock = art?.rock;
+    const side = (x0: number, x1: number, y0: number, y1: number, shade: string) => {
+      g.save();
+      g.beginPath();
+      g.moveTo(x0, y0);
+      g.lineTo(x1, y1);
+      g.lineTo(x1, y1 + deep);
+      g.lineTo(x0, y0 + deep);
+      g.closePath();
+      if (rock) {
+        g.clip();
+        const off = ((u * 23 + v * 11) % 5) * 16;
+        for (let y = 0; y < TH + deep; y += rock.height)
+          for (let x = -off; x < TW; x += rock.width) g.drawImage(rock, x, y);
+        g.fillStyle = shade;
+        g.fillRect(0, 0, TW, TH + deep);
+      } else {
+        g.fillStyle = '#6e6a62';
+        g.fill();
+      }
+      g.restore();
+    };
+    side(0, TW / 2, TH / 2, TH, 'rgba(60,40,20,0.12)');
+    side(TW / 2, TW, TH, TH / 2, 'rgba(8,6,14,0.45)');
+    // faint lines at each step
     g.strokeStyle = 'rgba(0,0,0,0.2)';
     g.lineWidth = 1;
     for (let k = HH; k < deep; k += HH) {
@@ -139,15 +159,8 @@ export class BoardView {
       g.lineTo(TW, TH / 2 + k);
       g.stroke();
     }
-    for (let i = 0; i < deep / 3; i++) {
-      const sx = ((u * 31 + v * 17 + i * 13) % (TW - 4)) + 2;
-      const k = ((u * 7 + v * 5 + i * 29) % Math.max(1, deep - 4)) + 2;
-      const y = (sx < TW / 2 ? TH / 2 + sx / 2 : TH - (sx - TW / 2) / 2) + k;
-      g.fillStyle = i % 2 ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.16)';
-      g.fillRect(sx, y, 2, 1);
-    }
     face([[0, TH / 2], [TW / 2, TH], [TW, TH / 2], [TW, TH / 2 + 3], [TW / 2, TH + 3], [0, TH / 2 + 3]], lip);
-    // the top: the tile's ground laid onto the diamond, then its tufts and stones
+    // the top: the tile's ground laid onto the diamond
     g.save();
     g.beginPath();
     g.moveTo(TW / 2, 0);
@@ -157,21 +170,14 @@ export class BoardView {
     g.closePath();
     g.clip();
     if (art) {
-      const a = TW / 64;
-      const b = TH / 64;
+      const a = TW / (2 * SRC);
+      const b = TH / (2 * SRC);
+      g.imageSmoothingEnabled = true;
       g.setTransform(a, b, -a, b, TW / 2, 0);
-      g.drawImage(stony ? art.cobble : art.grass, 0, 0, 32, 32, 0, 0, 32, 32);
+      g.drawImage(stony ? art.stone : art.grass[(t.deco + u + v) % art.grass.length], 0, 0, SRC, SRC);
       g.setTransform(1, 0, 0, 1, 0, 0);
-      const bits = stony ? art.stones : art.bits;
-      const n = 2 + (t.deco % 3);
-      for (let i = 0; i < n; i++) {
-        const im = bits[(t.deco + i * 7) % bits.length];
-        const px = 14 + ((t.deco * (i + 3) * 13) % (TW - 28));
-        const py = 8 + ((t.deco * (i + 5) * 7) % (TH - 16));
-        g.drawImage(im, Math.round(px - im.width / 2), Math.round(py - im.height / 2));
-      }
     } else {
-      g.fillStyle = stony ? '#a39e94' : '#7e9a48';
+      g.fillStyle = lip;
       g.fillRect(0, 0, TW, TH);
     }
     // (high ground a shade lighter, so the heights read at a glance)
