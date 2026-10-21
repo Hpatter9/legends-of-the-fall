@@ -54,9 +54,18 @@ const FONTS = [
   ['alegreya-sans', 'alegreya-sans-latin-400-normal.woff2'],
   ['alegreya-sans', 'alegreya-sans-latin-700-normal.woff2'],
   ['press-start-2p', 'press-start-2p-latin-400-normal.woff2'],
+  ['pixelify-sans', 'pixelify-sans-latin-400-normal.woff2'],
+  ['pixelify-sans', 'pixelify-sans-latin-700-normal.woff2'],
 ];
 mkdirSync(`${out}/fonts`, { recursive: true });
 for (const [pkgName, f] of FONTS) copyFileSync(`node_modules/@fontsource/${pkgName}/files/${f}`, `${out}/fonts/${f}`);
+// (the pixel UI's frames, as files the CSS 9-slices by URL: ui/<name>.png; the tab icons are bundled into game.js instead)
+const UI_FILES = [];
+mkdirSync(`${out}/ui`, { recursive: true });
+for (const f of readdirSync('src/art/ui').filter((f) => f.endsWith('.png') && !f.startsWith('tab-'))) {
+  copyFileSync(`src/art/ui/${f}`, `${out}/ui/${f}`);
+  UI_FILES.push(`ui/${f}`);
+}
 // (the music: played as files, so the service worker keeps them for offline too)
 const AUDIO = ['town.ogg', 'battle.ogg', 'boss.ogg'];
 for (const f of AUDIO) copyFileSync(`src/audio/${f}`, `${out}/${f}`);
@@ -85,7 +94,7 @@ writeFileSync(
 writeFileSync(
   `${out}/sw.js`,
   `const CACHE = 'legends-${version}';
-const FILES = ['.', 'index.html', 'game.js', 'bg1.png', 'bg2.png', 'bg3.png', 'bg4.png', 'bg5.png', ${AREA_BGS.map((f) => `'${f}'`).join(', ')}, 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', ${AUDIO.map((f) => `'${f}'`).join(', ')}, ${FONTS.map(([, f]) => `'fonts/${f}'`).join(', ')}];
+const FILES = ['.', 'index.html', 'game.js', 'bg1.png', 'bg2.png', 'bg3.png', 'bg4.png', 'bg5.png', ${AREA_BGS.map((f) => `'${f}'`).join(', ')}, 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', ${AUDIO.map((f) => `'${f}'`).join(', ')}, ${FONTS.map(([, f]) => `'fonts/${f}'`).join(', ')}, ${UI_FILES.map((f) => `'${f}'`).join(', ')}];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k))))); self.clients.claim(); });
 // (network first, but a connection that hangs, like a plane's, gives up after a few seconds and the saved copy is used;

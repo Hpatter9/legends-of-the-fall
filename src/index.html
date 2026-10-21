@@ -642,6 +642,110 @@
   @keyframes beamIn { from { opacity: 0; transform: scale(0.2); } }
   @keyframes tremble { 25% { transform: translate(-2px, 1px) rotate(-2deg); } 75% { transform: translate(2px, -1px) rotate(2deg); } }
   @media (prefers-reduced-motion: reduce) { .card.r4, .hcard.r4, .card.r5, .hcard.r5, .hsheet.r5, .hrow.r5, .ptSlot.r5, #collection .hero.r5, .flip .beams, .flip.r5.shake .back, .hmShow canvas.r5 { animation: none !important; } }
+  /* ===== Pixel UI: frames are 9-slices from ui/*.png (drawn natively by tools/ui/frames.py), shown at whole-number scales only
+     (2x for buttons and cards, 3x for the big gold button) with pixelated rendering. Phase 1: the battle tab and the bench. ===== */
+  @font-face { font-family: 'Pixelify Sans'; font-weight: 400; font-display: swap; src: url(fonts/pixelify-sans-latin-400-normal.woff2) format('woff2'); }
+  @font-face { font-family: 'Pixelify Sans'; font-weight: 700; font-display: swap; src: url(fonts/pixelify-sans-latin-700-normal.woff2) format('woff2'); }
+  :root { --display: 'Pixelify Sans', 'Press Start 2P', monospace; --body: 'Pixelify Sans', 'Press Start 2P', monospace; }
+  button, .card, .chip, .hmCard, .hmNote, .hmLink, #panel, #hmTabs, #hmTop, .hmBanner, .trait, .spell, .round { image-rendering: pixelated; }
+  button {
+    border-style: solid; border-width: 10px 10px 12px; border-radius: 0; background: none; padding: 2px 6px; box-shadow: none; text-shadow: 0 2px 0 #000;
+    border-image: url(ui/btn.png) 5 5 6 fill / 10px 10px 12px stretch;
+  }
+  button:active:not(:disabled) { transform: none; border-image-source: url(ui/btn-down.png); padding-top: 4px; padding-bottom: 0; }
+  button:disabled { opacity: 1; border-image-source: url(ui/btn-off.png); color: #8a7c6c; }
+  button.primary, .hmBig {
+    background: none; border-style: solid; border-width: 10px 10px 12px; border-image: url(ui/btn-gold.png) 5 5 6 fill / 10px 10px 12px stretch; overflow: visible; color: #4a1a06; text-shadow: 0 2px 0 rgba(255, 228, 138, 0.7); font-size: 17px; box-shadow: none;
+  }
+  button.primary:active:not(:disabled), .hmBig:active { border-image-source: url(ui/btn-gold-down.png); }
+  button.primary:disabled { border-image-source: url(ui/btn-off.png); }
+  button.primary::after { display: none; }
+  #mute, #gear { padding: 0 2px; min-width: 24px; }
+  /* (the Fight button takes the first row to itself, the four small ones share the second: the frames need the room) */
+  #buttons { flex-wrap: wrap; }
+  #buttons #fight { order: -1; flex: 1 1 100%; }
+  #buttons button:not(#fight) { flex: 1 1 0; min-width: 0; padding: 2px 0; font-size: 12px; }
+  #speed { padding: 0 6px; }
+
+  /* the bars: wood with a gold line along the edge */
+  #top { background: none; }
+  #panel, #hmTabs { background: url(ui/wood.png) 0 0 / 32px 32px; box-shadow: none; }
+  #panel { border-top: 8px solid; border-image: url(ui/trim-t.png) 4 0 0 0 / 8px 0 0 0 repeat; }
+  #hmTop { background: url(ui/wood.png) 0 0 / 32px 32px; box-shadow: none; border-bottom: 8px solid; border-image: url(ui/trim-b.png) 0 0 4 0 / 0 0 8px 0 repeat; }
+  #hmTabs { border-top: 8px solid; border-image: url(ui/trim-t.png) 4 0 0 0 / 8px 0 0 0 repeat; }
+  @media (orientation: landscape) {
+    #panel { border-top: 0; border-left: 8px solid; border-image: url(ui/trim-l.png) 0 0 0 4 / 0 0 0 8px repeat; }
+    #buttons button:not(#fight) { flex: 1 1 40%; }
+    #hmTabs { border-top: 0; border-right: 8px solid; border-image: url(ui/trim-r.png) 0 4 0 0 / 0 8px 0 0 repeat; }
+  }
+
+  /* the bench: a card frame in the hero's rarity colour */
+  .card, .spell { border-style: solid; border-width: 6px; border-radius: 0; box-shadow: none; padding: 0 0 2px; background: none; border-image: url(ui/card.png) 3 fill / 6px stretch; }
+  .card.r1 { border-image-source: url(ui/card-r1.png); } .card.r2 { border-image-source: url(ui/card-r2.png); } .card.r3 { border-image-source: url(ui/card-r3.png); }
+  .card.r4 { border-image-source: url(ui/card-r4.png); } .card.r5 { border-image-source: url(ui/card-r5.png); }
+  .card.chosen, .spell.armed { border-image-source: url(ui/card-chosen.png); box-shadow: none; animation: none; }
+  .card.g2 { box-shadow: 0 0 0 2px #b8c8e0; background: none; } .card.g3 { box-shadow: 0 0 0 2px #f0c040; background: none; }
+  .card.chosen.g2, .card.chosen.g3 { box-shadow: 0 0 0 2px var(--gold-hi); }
+  .card.placed canvas { filter: none; }
+  .card i { height: 8px; margin: 2px 2px 0; background: #12090a; border: 1px solid var(--deep); border-radius: 0; }
+  .card i span { background: linear-gradient(#9af09a 50%, #3fa83f 50%); }
+  .card small span { border-radius: 0; background: rgba(255, 255, 255, 0.16); }
+  .card em { top: -2px; left: 0; }
+  /* the war banner on a placed card: a pixel flag, swaying in whole pixels */
+  .card.placed::after {
+    content: ''; top: -5px; right: 0; width: 16px; height: 22px; padding: 0; background: url(ui/flag.png) 0 0 / 16px 22px no-repeat; border: 0; clip-path: none; filter: none;
+    text-shadow: none; animation: pxSway 2.4s steps(1) infinite; image-rendering: pixelated;
+  }
+  @keyframes pxSway { 0%, 100% { transform: translateX(0); } 33% { transform: translateX(-2px); } 66% { transform: translateX(2px); } }
+  @media (prefers-reduced-motion: reduce) { .card.placed::after { animation: none; } }
+  .card.evolve { animation: none; }
+  .trait { border-style: solid; border-width: 6px; border-radius: 0; padding: 0 4px; background: none; border-image: url(ui/card.png) 3 fill / 6px stretch; }
+  .trait.on { border-image-source: url(ui/card-on.png); color: #3a1c06; box-shadow: none; }
+  .spell.dim { filter: grayscale(0.8); }
+
+  /* the home screen: tab bar, top bar, the Battle page */
+  .chip { border-style: solid; border-width: 6px; border-radius: 0; box-shadow: none; padding: 1px 6px 1px 2px; background: none; border-image: url(ui/card.png) 3 fill / 6px stretch; }
+  .round { width: 48px; height: 48px; padding: 0; border-radius: 0; background: none; }
+  .round img { width: 22px; height: 22px; }
+  .round.new::after, i.badge {
+    width: 14px; height: 14px; border-radius: 0; border: 2px solid #fff; animation: pxBlink 1.4s steps(1) infinite;
+    clip-path: polygon(2px 0, calc(100% - 2px) 0, 100% 2px, 100% calc(100% - 2px), calc(100% - 2px) 100%, 2px 100%, 0 calc(100% - 2px), 0 2px);
+  }
+  @keyframes pxBlink { 50% { opacity: 0.55; } }
+  .hmTab { min-height: 66px; padding: 2px 2px 0; border: 6px solid transparent; border-radius: 0; font-size: 12px; background: none; box-shadow: none; text-shadow: 0 2px 0 #000; }
+  .hmTab img { width: 32px; height: 32px; filter: brightness(0.62) saturate(0.7); }
+  .hmTab.on { color: var(--gold-hi); background: none; box-shadow: none; border-image: url(ui/card-r4.png) 3 fill / 6px stretch; }
+  .hmTab.on img { filter: none; transform: translateY(-2px); }
+  .hmTab:active { transform: none; }
+  .hmTab.hero, .hmTab.hero.on {
+    margin-top: -16px; min-height: 82px; padding: 2px 2px 0; border-style: solid; border-width: 10px 10px 12px; border-radius: 0; background: none; box-shadow: none; animation: none;
+    border-image: url(ui/btn-gold.png) 5 5 6 fill / 10px 10px 12px stretch; color: #4a1a06; text-shadow: 0 2px 0 rgba(255, 228, 138, 0.7); font-size: 13px;
+  }
+  .hmTab.hero:not(.on) { filter: brightness(0.82) saturate(0.8); }
+  .hmTab.hero img, .hmTab.hero.on img { width: 32px; height: 32px; filter: none; transform: none; }
+  .hmTab.hero:active { border-image-source: url(ui/btn-gold-down.png); }
+  @media (orientation: landscape) {
+    .hmTab { min-height: 0; padding: 0 2px; border-radius: 0; }
+    .hmTab img { width: 32px; height: 32px; }
+    .hmTab.on { background: none; box-shadow: none; }
+    .hmTab.hero, .hmTab.hero.on { margin: 0; min-height: 0; padding: 0 2px; border-radius: 0; background: none; flex: 1.2; }
+    .hmTab.hero img { width: 32px; height: 32px; }
+  }
+  .hmBanner {
+    height: 32px; display: flex; align-items: center; padding: 0 28px; border-style: solid; border-width: 0 24px; border-radius: 0; background: none; box-shadow: none; animation: none;
+    border-image: url(ui/ribbon.png) 0 12 fill / 0 24px stretch; font-size: 16px; white-space: nowrap;
+  }
+  .hmNote { border-style: solid; border-width: 6px; border-radius: 0; box-shadow: none; background: none; border-image: url(ui/card.png) 3 fill / 6px stretch; }
+  .hmCard { border-style: solid; border-width: 6px; border-radius: 0; box-shadow: none; background: none; border-image: url(ui/card-r4.png) 3 fill / 6px stretch; }
+  .hmCard.lockedCard, .hmCard:disabled { border-image-source: url(ui/card-r1.png); }
+  .hmCard:active { transform: none; }
+  .hmBattle, .hmBattle:active {
+    border-style: solid; border-width: 15px 15px 18px; border-radius: 0; background: none; box-shadow: none; animation: none; padding: 4px 4px 2px; overflow: visible;
+    border-image: url(ui/btn-gold.png) 5 5 6 fill / 15px 15px 18px stretch; color: #4a1a06; text-shadow: 0 3px 0 rgba(255, 228, 138, 0.7); font-size: 36px;
+  }
+  .hmBattle:active { border-image-source: url(ui/btn-gold-down.png); transform: none; padding-top: 7px; padding-bottom: 0; }
+  .hmBattle::after { display: none; }
+  .hmLink { padding: 0 4px; border-width: 6px 8px; border-image: url(ui/card.png) 3 fill / 6px 8px stretch; background: none; }
 </style>
 </head>
 <body data-phase="deploy">
