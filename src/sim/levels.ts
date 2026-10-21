@@ -1,26 +1,29 @@
-// Levels for the hero kinds. Each fight gives every hero that fought some XP: a part for taking part, more for a win, and
-// a share for the damage it dealt, the healing it did and the kills it made (a fallen hero gets less). The XP is kept per
-// kind in the meta, and the level is read from it. Each level above the first adds to the kind's hp and attack, up to
-// `MAX_LEVEL`, and the curve rises so each level takes a little more XP than the last. Pure rules: no Pixi, no DOM.
+// Levels for the hero kinds. Each fight gives every hero that fought some XP, and most of it is for what the hero killed:
+// a kill is worth a tenth of the foe's max hp (a boss kill, several times that), so the XP grows with the foes' strength.
+// A smaller share is for the damage it dealt and the healing it did, and a little for taking part (and for a win). A
+// fallen hero keeps all it earned. The XP is kept per kind in the meta, and the level is read from it. Each level above
+// the first adds to the kind's hp and attack, up to `MAX_LEVEL`, and the curve rises so each level takes more XP than the
+// last. Pure rules: no Pixi, no DOM.
 
-import type { Battle } from './battle';
+import type { Battle, Unit } from './battle';
+import { isBoss } from './foes';
 import type { Meta } from './meta';
 
 export const MAX_LEVEL = 20;
-export const XP_TAKE_PART = 10;
-export const XP_WIN = 10;
+export const XP_TAKE_PART = 5;
+export const XP_WIN = 5;
 /** One XP for each this much damage dealt, or healing done. */
-export const XP_PER_DAMAGE = 20;
-export const XP_PER_HEALING = 20;
-export const XP_PER_KILL = 5;
-/** A fallen hero keeps this share of its XP. */
-export const FALLEN_SHARE = 0.75;
+export const XP_PER_DAMAGE = 40;
+export const XP_PER_HEALING = 40;
+/** A kill is worth this share of the foe's max hp (a tenth), and a boss kill `BOSS_KILL` times that. */
+export const KILL_HP_SHARE = 0.1;
+export const BOSS_KILL = 3;
 /** Hp and attack a level adds, as a share of the base, for each level above the first. */
-export const LEVEL_HP = 0.04;
-export const LEVEL_ATK = 0.03;
-const CURVE = 12;
+export const LEVEL_HP = 0.22;
+export const LEVEL_ATK = 0.18;
+const CURVE = 30;
 
-/** Total XP to reach a level: 12 × (level − 1) × level, so each level costs 24 more than the one before. */
+/** Total XP to reach a level: 30 × (level − 1) × level, so each level costs 60 more than the one before. */
 export const xpFor = (level: number) => CURVE * (level - 1) * level;
 
 /** The level a total of XP reaches (1 to `MAX_LEVEL`). */
@@ -37,6 +40,9 @@ export function progressOf(xp: number): { level: number; into: number; need: num
   return { level, into: xp - xpFor(level), need: xpFor(level + 1) - xpFor(level) };
 }
 
+/** The XP a killing blow is worth: the foe's max hp times `KILL_HP_SHARE` (a boss, `BOSS_KILL` times that). */
+export const killXp = (foe: Pick<Unit, 'def' | 'maxHp'>): number => foe.maxHp * KILL_HP_SHARE * (isBoss(foe.def) ? BOSS_KILL : 1);
+
 /** Hp and attack multipliers a level gives (x1 at level 1). */
 export const levelBoost = (level: number): { hp: number; atk: number } => ({ hp: 1 + LEVEL_HP * (level - 1), atk: 1 + LEVEL_ATK * (level - 1) });
 
@@ -52,8 +58,8 @@ export function fightXp(b: Battle): Record<string, number> {
   const won = b.phase === 'won';
   for (const u of b.units) {
     if (u.side !== 'hero') continue;
-    const share = (u.dealt ?? 0) / XP_PER_DAMAGE + (u.healed ?? 0) / XP_PER_HEALING + (u.kills ?? 0) * XP_PER_KILL;
-    const xp = Math.round((XP_TAKE_PART + (won ? XP_WIN : 0) + share) * (u.alive ? 1 : FALLEN_SHARE));
+    const share = (u.dealt ?? 0) / XP_PER_DAMAGE + (u.healed ?? 0) / XP_PER_HEALING + (u.slain ?? 0);
+    const xp = Math.round(XP_TAKE_PART + (won ? XP_WIN : 0) + share);
     out[u.def] = (out[u.def] ?? 0) + xp;
   }
   return out;
