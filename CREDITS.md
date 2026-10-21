@@ -88,3 +88,13 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
 - **Fonts** (`out/web/fonts/`, copied by `build.mjs` from the `@fontsource` npm packages, all under the SIL Open Font
   Licence 1.1): **Cinzel Decorative** (Natanael Gama; titles, banners and big buttons), **Alegreya Sans** (Juan Pablo
   del Peral, Huerta Tipográfica; body text) and **Press Start 2P** (CodeMan38; counters and damage numbers).
+
+## The pixel UI (`src/art/ui/`, `src/pixel.css`)
+
+- **Frames, buttons, bars, ribbons, the wood tile, the card back and the war-banner flag** (`src/art/ui/*.png` except `tab-*` and
+  `ic-*`): drawn natively at their final size by `tools/ui/frames.py` (our own pixel art, in the game's brown and gold palette),
+  shown as CSS 9-slices at whole-number scales.
+- **The tab icons** (`tab-*.png`) and **the gold, crown, gear, sound, mute and trophy icons** (`ic-*.png`): 32x32 pixel art
+  generated with PixelLab (`tools/ui/genicons.py`), used as they came.
+- **Pixelify Sans** (Stefie Justprince; SIL Open Font Licence 1.1), from the `@fontsource/pixelify-sans` npm package: the
+  text font for the whole interface (`out/web/fonts/`). Press Start 2P stays for the counters.
