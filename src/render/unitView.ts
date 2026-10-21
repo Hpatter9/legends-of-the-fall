@@ -26,16 +26,29 @@ const GRADE3_SIZE = 1.08;
 /** How long the evolve burst lasts (ms). */
 const BURST_MS = 800;
 
-/** The colour grade of a hero above the first: richer tones, and for grade 3 a warm gold cast. Built once per sprite. */
+/** The colour grade of a hero above the first: richer tones; grade 3 lifts red and green together and trims blue, so
+ *  highlights go warm gold without turning grey armour pink. Built once per sprite. */
 function gradeFilter(grade: number): ColorMatrixFilter {
   const f = new ColorMatrixFilter();
-  f.saturate(grade > 2 ? 0.35 : 0.22, false);
+  f.saturate(grade > 2 ? 0.2 : 0.4, false);
   if (grade > 2) {
     const m = f.matrix;
-    m[0] *= 1.12; m[1] *= 1.12; m[2] *= 1.12;
-    m[10] *= 0.82; m[11] *= 0.82; m[12] *= 0.82;
-    m[5] *= 1.04; m[6] *= 1.04; m[7] *= 1.04;
+    for (const r of [0, 1, 2]) {
+      m[r] *= 1.07;
+      m[5 + r] *= 1.07;
+      m[10 + r] *= 0.84;
+    }
+    m[4] += 0.03;
+    m[9] += 0.025;
   }
+  return f;
+}
+
+/** A flat-colour filter for the rim copies of the sprite. */
+function flatFilter(color: number): ColorMatrixFilter {
+  const f = new ColorMatrixFilter();
+  // prettier-ignore
+  f.matrix = [0, 0, 0, 0, ((color >> 16) & 255) / 255, 0, 0, 0, 0, ((color >> 8) & 255) / 255, 0, 0, 0, 0, (color & 255) / 255, 0, 0, 0, 1, 0];
   return f;
 }
 
@@ -47,6 +60,8 @@ export class UnitSprite {
   private aura = new Graphics();
   private flash = 0;
   private glow = new Graphics();
+  /** Four flat-coloured copies of the body, a pixel out each way: a rim behind the sprite. */
+  private rim = new Container();
   private sparks = new Graphics();
   private burstAt = -1;
   private readonly grade: number;
@@ -65,17 +80,24 @@ export class UnitSprite {
     this.tall = figureOf(this.sheet) * def.scale * size;
     this.root.scale.set(size);
     if (this.grade > 1) {
-      // a soft halo of stacked ellipses behind the body (silver, then gold), drawn once
-      const col = this.grade > 2 ? 0xffd45a : 0xcfe0ff;
+      // a halo of stacked ellipses behind the body (silver-blue, then gold), drawn once, and a rim of the body's own shape
+      const col = this.grade > 2 ? 0xffc83a : 0x9cc8ff;
       const h = this.tall * 0.62;
-      for (let i = 4; i >= 1; i--) this.glow.ellipse(0, -this.tall * 0.45, (10 + i * 4) / size, (h * (0.55 + i * 0.12)) / size).fill({ color: col, alpha: this.grade > 2 ? 0.1 : 0.07 });
+      for (let i = 5; i >= 1; i--) this.glow.ellipse(0, -this.tall * 0.45, (12 + i * 5) / size, (h * (0.5 + i * 0.13)) / size).fill({ color: col, alpha: this.grade > 2 ? 0.14 : 0.1 });
+      for (const [dx, dy] of [[-1.6, 0], [1.6, 0], [0, -1.6], [0, 1.6]]) {
+        const r = new Sprite();
+        r.anchor.set(0.5, 1);
+        r.position.set(dx, dy);
+        this.rim.addChild(r);
+      }
+      this.rim.filters = [flatFilter(this.grade > 2 ? 0xffd24a : 0xa8d0ff)];
       this.body.filters = [gradeFilter(this.grade)];
     }
     this.shadow.ellipse(0, 0, 13, 5).fill({ color: 0x000000, alpha: 0.32 });
     this.body.anchor.set(0.5, 1);
     this.aura.ellipse(0, -this.tall * 0.4, 17, this.tall * 0.62).stroke({ color: 0x8fc4ff, width: 2, alpha: 0.9 });
     this.aura.visible = false;
-    this.root.addChild(this.shadow, this.glow, this.aura, this.body, this.sparks, this.bar);
+    this.root.addChild(this.shadow, this.glow, this.aura, this.rim, this.body, this.sparks, this.bar);
   }
 
   /** Draw it at the time `t` of the fight (ms), on the board. */
@@ -130,6 +152,10 @@ export class UnitSprite {
     // (the sheets face right; the board's +u runs down to the right, +v down to the left)
     const dx = [1, -1, -1, 1][u.facing];
     this.body.scale.set(def.scale * dx, def.scale);
+    for (const r of this.rim.children as Sprite[]) {
+      r.texture = this.body.texture;
+      r.scale.copyFrom(this.body.scale);
+    }
     // a blink of white when struck
     if (u.hurtAt !== undefined && t - u.hurtAt < 90 && u.alive) this.flash = 1;
     this.body.tint = this.flash > 0 ? 0xffb0b0 : u.alive && u.dot ? (u.dot.kind === 'burn' ? 0xffc890 : 0xff9a9a) : 0xffffff;
@@ -165,10 +191,10 @@ export class UnitSprite {
     const now = Date.now();
     const gold = this.grade > 2 ? 0xffe27a : 0xdce8ff;
     if (this.grade > 2)
-      for (let i = 0; i < 4; i++) {
-        const f = ((now / 1400 + i / 4) % 1);
-        const x = Math.sin(i * 2.4 + now / 900) * 11;
-        g.star(x, -this.tall * 0.15 - f * this.tall * 0.8, 4, 2.2, 0.8).fill({ color: gold, alpha: Math.sin(Math.PI * f) });
+      for (let i = 0; i < 6; i++) {
+        const f = ((now / 1500 + i / 6) % 1);
+        const x = Math.sin(i * 2.4 + now / 900) * 14;
+        g.star(x, -this.tall * 0.1 - f * this.tall * 0.95, 4, 3.4, 1.3).fill({ color: gold, alpha: Math.sin(Math.PI * f) });
       }
     if (burst <= 1) {
       g.ellipse(0, -this.tall * 0.4, 8 + burst * 34, 4 + burst * 20).stroke({ color: 0xfff2b0, width: 3 * (1 - burst) + 0.5, alpha: 1 - burst });
