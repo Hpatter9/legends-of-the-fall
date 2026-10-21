@@ -177,6 +177,43 @@
   #collection .bar i { display: block; height: 100%; background: var(--gold); }
   @media (orientation: landscape) { #reveal { grid-template-columns: repeat(10, 1fr); } #collection { grid-template-columns: repeat(8, 1fr); } }
 
+  /* the home screen: the castle between runs */
+  #home { position: fixed; inset: 0; z-index: 4; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: calc(env(safe-area-inset-top) + 12px) 14px calc(env(safe-area-inset-bottom) + 12px); background: #1c1410 center / cover no-repeat; image-rendering: pixelated; overflow-y: auto; touch-action: pan-y; }
+  #home[hidden] { display: none; }
+  #home::before { content: ''; position: fixed; inset: 0; background: linear-gradient(rgba(20, 10, 6, 0.35), rgba(20, 10, 6, 0.7)); pointer-events: none; }
+  #home > * { position: relative; width: 100%; max-width: 440px; }
+  #home h1 { margin: 0 0 4px; text-align: center; font: bold 30px/1.1 Georgia, serif; color: var(--gold); letter-spacing: 1px; text-shadow: 0 3px 0 #000, 0 0 18px rgba(0, 0, 0, 0.8); }
+  #homeCrowns { text-align: center; color: var(--gold); font-weight: bold; margin-bottom: 10px; text-shadow: 0 1px 0 #000; }
+  #homeNote { text-align: center; margin: 0 0 10px; padding: 8px; background: var(--wood); border: 2px solid var(--edge); border-radius: 8px; color: var(--ink); }
+  #homeNote[hidden] { display: none; }
+  #homeMenu { display: grid; gap: 8px; padding: 12px; background: var(--wood); border: 2px solid var(--edge); border-radius: 10px; }
+  #homeMenu button { font-size: 17px; padding: 13px 14px; }
+  #homeMenu button[hidden], #homeMenu[hidden], #homePage[hidden] { display: none; }
+  #homePage { display: flex; flex-direction: column; gap: 8px; max-height: calc(100vh - 110px); padding: 10px; background: var(--wood); border: 2px solid var(--edge); border-radius: 10px; }
+  #homePage header { display: flex; align-items: center; gap: 10px; }
+  #homePage h2 { margin: 0; flex: 1; font-size: 20px; color: var(--gold); }
+  #homeBody { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; touch-action: pan-y; }
+  #homeBody .hint { margin: 0; font-size: 11px; color: var(--dim); text-align: center; }
+  .hrow, .brow { display: flex; gap: 8px; align-items: center; padding: 6px; background: rgba(0, 0, 0, 0.35); border: 2px solid #5a3a22; border-radius: 8px; }
+  .hrow.r2 { border-color: #4a9cff; }
+  .hrow.r3 { border-color: var(--gold); }
+  .hrow canvas { width: 64px; height: 64px; flex: none; image-rendering: pixelated; }
+  .hrow.locked canvas { filter: brightness(0.15) grayscale(1); }
+  .hrow b, .brow b { display: block; }
+  .hrow em, .brow em { display: block; font-style: normal; font-size: 11px; color: var(--dim); }
+  .hrow span { display: block; font-size: 11px; color: var(--gold); }
+  .hrow p { margin: 2px 0 0; font-size: 11px; line-height: 1.25; }
+  .hrow p i { font-style: normal; color: #7cc0ff; }
+  .brow > div { flex: 1; }
+  .brow .pips { color: var(--gold); letter-spacing: 2px; }
+  .brow button { flex: none; min-width: 92px; }
+  @media (orientation: landscape) {
+    #home { justify-content: flex-start; }
+    #home h1 { font-size: 24px; }
+    #homeMenu { grid-template-columns: 1fr 1fr; }
+    #homePage { max-height: calc(100vh - 80px); }
+  }
+
   #loading { position: fixed; inset: 0; display: grid; place-items: center; font-size: 18px; color: var(--gold); }
   #version { position: fixed; right: 6px; bottom: 2px; font-size: 10px; color: rgba(255, 255, 255, 0.5); text-shadow: 0 1px 0 #000; pointer-events: none; }
   @media (orientation: portrait) { #version { bottom: auto; top: calc(env(safe-area-inset-top) + 34px); } }
@@ -189,7 +226,7 @@
 <div id="panel">
   <div id="spells"><div id="mana"><i><span></span></i><b></b></div><div id="spellCards"></div><div id="spellHint"></div></div>
   <div id="bench"></div>
-  <div id="buttons"><button id="summon">Summon</button><button id="recruit">Recruit</button><button id="fight" class="primary" disabled>Fight!</button></div>
+  <div id="buttons"><button id="summon">Summon</button><button id="recruit">Recruit</button><button id="homeBtn">Home</button><button id="fight" class="primary" disabled>Fight!</button></div>
 </div>
 <div id="result" hidden>
   <div id="banner"></div>
@@ -203,6 +240,22 @@
   <div id="rates"></div>
   <div id="reveal"></div>
   <div id="collection"></div>
+</div>
+<div id="home" hidden>
+  <h1>Legends of the Fall</h1>
+  <div id="homeCrowns"></div>
+  <div id="homeNote" hidden></div>
+  <div id="homeMenu">
+    <button id="homeContinue" class="primary">Continue run</button>
+    <button id="homeNew" class="primary">New run</button>
+    <button id="homeRecruit">Recruit</button>
+    <button id="homeHeroes">Heroes</button>
+    <button id="homeCastle">Castle</button>
+  </div>
+  <div id="homePage" hidden>
+    <header><h2 id="homeTitle"></h2><button id="homeBack">Back</button></header>
+    <div id="homeBody"></div>
+  </div>
 </div>
 <div id="loading">Loading…</div>
 <div id="version">Version __VERSION__</div>

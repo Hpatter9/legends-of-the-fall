@@ -39,3 +39,6 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   weapon, demon, ogre and other sprites from Himeko Sutori and Septaroad Voyager by Rockwell Studios, LLC.
 - The three forest bosses are from Craftpix's **Free Forest Bosses**; the Boar King, Devil Leader and Shaman King from
   Craftpix's **Free Fantasy RPG Top-Down Boss Creatures**.
+
+- **The home screen** (`src/art/home/castle.png`): the Fantasy 2D Battlegrounds pixel pack (Craftpix), Battleground 2
+  (Bright), `Battleground2.png`, scaled to half size.

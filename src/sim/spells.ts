@@ -54,11 +54,13 @@ export interface SpellState {
   /** When each spell may next be cast. */
   ready: Record<SpellId, number>;
   falls: Fall[];
+  /** How fast the mana fills (1 is usual; the castle's Mage Tower raises it). */
+  rate: number;
   /** Events recorded between ticks, handed out by the next one. */
   events: BattleEvent[];
 }
 
-export const freshSpells = (): SpellState => ({ mana: MANA_START, ready: { heal: 0, meteor: 0, haste: 0 }, falls: [], events: [] });
+export const freshSpells = (rate = 1): SpellState => ({ mana: MANA_START, ready: { heal: 0, meteor: 0, haste: 0 }, falls: [], rate, events: [] });
 
 /** The king stands behind the meteor's blows: not on the board, so it has no side effects on the fighters. */
 const KING: Unit = { id: 0, def: 'king', side: 'hero', u: 0, v: 0, hp: 1, maxHp: 1, facing: 0, alive: true, busyUntil: 0, charge: 0 };
@@ -72,7 +74,7 @@ export const speedOf = (b: Battle, x: Unit) => (isHasted(b, x) ? HASTE_MULT : 1)
 
 /** Mana gain for one tick. */
 export function fillMana(b: Battle): void {
-  b.spells.mana = Math.min(MANA_MAX, Math.round((b.spells.mana + (TICK_MS * MANA_PER_SEC) / 1000) * 1000) / 1000);
+  b.spells.mana = Math.min(MANA_MAX, Math.round((b.spells.mana + (TICK_MS * MANA_PER_SEC * b.spells.rate) / 1000) * 1000) / 1000);
 }
 
 /** Milliseconds until a spell may be cast again (0 when ready). */

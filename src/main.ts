@@ -9,6 +9,7 @@ import { finish, gradeBoost, heroOf, isBossStage, loadRun, newRun, saveRun, setS
 import { formOf, UNITS } from './sim/units';
 import { earn, loadMeta, rankOf, saveMeta, type Meta } from './sim/meta';
 import { Gacha } from './gacha';
+import { Home } from './home';
 import { keepAwake } from './render/awake';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, SPELL_IDS, type SpellId } from './sim/spells';
 import { BoardView, loadBoardArt } from './render/boardView';
@@ -46,6 +47,7 @@ class Game {
   private run!: Run;
   private meta!: Meta;
   private gacha!: Gacha;
+  private home!: Home;
   /** Crowns the last settled fight paid. */
   private crownGain = 0;
   /** Whether the fight's end has been settled into the run. */
@@ -79,17 +81,35 @@ class Game {
     const seed = Number(query.get('seed'));
     this.meta = loadMeta((Date.now() % 100000) + 1);
     saveMeta(this.meta);
-    this.run = (!seed && loadRun()) || newRun(seed || (Date.now() % 100000) + 1, this.meta.unlocked);
+    this.run = (!seed && loadRun()) || newRun(seed || (Date.now() % 100000) + 1, this.meta.unlocked, this.meta.castle);
     this.run.pool = [...this.meta.unlocked];
     this.gacha = new Gacha(this.meta, () => {
       this.run.pool = [...this.meta.unlocked];
       saveRun(this.run);
       this.refresh();
+      this.home.refresh();
+    });
+    this.home = new Home(this.meta, {
+      hasRun: () => {
+        const r = loadRun();
+        return !!r && !r.over;
+      },
+      onContinue: () => {
+        const r = loadRun();
+        if (r && !r.over) this.run = r;
+        this.run.pool = [...this.meta.unlocked];
+        this.placed.clear();
+        this.newBattle();
+      },
+      onNew: () => this.newRunNow(),
+      onRecruit: () => this.gacha.open(),
     });
     this.sky = [...document.querySelectorAll<HTMLElement>('#sky div')];
     this.buildSpells();
     this.wire();
     this.newBattle();
+    // (the game opens on the castle, unless a seed is given in the address)
+    if (!seed) this.home.open();
     this.app.ticker.add((tk) => this.frame(tk.deltaMS));
     window.addEventListener('resize', () => this.layout());
     $('loading').remove();
@@ -350,11 +370,10 @@ class Game {
       this.evolved = new Set(this.run.roster.filter((h) => h.grade > 1 && !before.has(h.id)).map((h) => h.id));
       this.refresh();
     });
+    $('homeBtn').addEventListener('click', () => this.home.open());
     $('next').addEventListener('click', () => {
-      if (this.run.over) {
-        this.run = newRun((Date.now() % 100000) + 1, this.meta.unlocked);
-        this.placed.clear();
-      }
+      // (a lost run goes back to the castle, with its summary)
+      if (this.run.over) return this.goHome();
       saveRun(this.run);
       this.newBattle();
     });
@@ -362,6 +381,21 @@ class Game {
       this.speed = this.speed === 1 ? 2 : 1;
       $('speed').textContent = `×${this.speed}`;
     });
+  }
+
+  /** Begin a new run (with the castle as it stands) and its first fight. */
+  private newRunNow(): void {
+    this.run = newRun((Date.now() % 100000) + 1, this.meta.unlocked, this.meta.castle);
+    this.placed.clear();
+    saveRun(this.run);
+    this.newBattle();
+  }
+
+  /** A run has ended: back to the castle, showing what it earned. */
+  private goHome(): void {
+    const r = this.run;
+    $('result').hidden = true;
+    this.home.open(`The run ended at stage ${r.best}: +${this.crownGain} crowns earned`);
   }
 
   private dragMove(e: PointerEvent): void {
@@ -572,7 +606,7 @@ class Game {
         b.phase === 'won'
           ? `${left} of ${heroesPlaced(b)} heroes standing · +${this.gain} gold · +${this.crownGain} crowns · ${clock(b.t)}`
           : `The run ends at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} summons · +${this.crownGain} crowns`;
-      $('next').textContent = b.phase === 'won' ? `Next stage (${run.stage})` : 'New run';
+      $('next').textContent = b.phase === 'won' ? `Next stage (${run.stage})` : 'Home';
     }
     this.buildBench();
     this.markTiles();

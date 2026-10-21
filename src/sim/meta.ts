@@ -3,6 +3,7 @@
 // rank, and each rank makes its heroes a little stronger in every fight. Pure rules: no Pixi, no DOM; every pull draws
 // from a side stream of the meta seed and the pull counter, so it replays exactly.
 
+import { newCastle, readCastle, type Castle } from './castle';
 import { Rng } from './rng';
 import { ALL_HEROES, HEROES, UNITS } from './units';
 
@@ -30,6 +31,8 @@ export interface Meta {
   pulls: number;
   /** Pulls since the last epic. */
   dry: number;
+  /** The castle's upgrades (see `castle.ts`). */
+  castle: Castle;
   /** Shards per hero kind (missing is none). */
   shards: Record<string, number>;
 }
@@ -43,7 +46,7 @@ export interface Pull {
   shards: number;
 }
 
-export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [...HEROES], pulls: 0, dry: 0, shards: {} });
+export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [...HEROES], pulls: 0, dry: 0, shards: {}, castle: newCastle() });
 
 export const rarityOf = (kind: string): 1 | 2 | 3 => UNITS[kind]?.rarity ?? 1;
 /** The rank a hero kind has from its shards (0 to MAX_RANK). */
@@ -109,6 +112,7 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.unlocked = [...new Set([...HEROES, ...m.unlocked.filter((k) => ALL_HEROES.includes(k))])];
       m.pulls = m.pulls | 0;
       m.dry = m.dry | 0;
+      m.castle = readCastle(m.castle);
       // (saves from before shards have none)
       const shards: Record<string, number> = {};
       if (m.shards && typeof m.shards === 'object') for (const [k, n] of Object.entries(m.shards)) if (ALL_HEROES.includes(k) && typeof n === 'number') shards[k] = n | 0;

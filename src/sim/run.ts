@@ -5,6 +5,7 @@
 
 import { startBattle, type Battle, type Boost, type Stage } from './battle';
 import { BOSS_BANDS, FIELD_BANDS } from './foes';
+import { bonusGold, heroBoost, manaRate, newCastle, type Castle } from './castle';
 import { rankMult } from './meta';
 import { mixSeed, Rng } from './rng';
 import { HEROES } from './units';
@@ -44,10 +45,12 @@ export interface Run {
   best: number;
   /** The hero kinds summons draw from (the unlocked ones); the starting five when unset. */
   pool?: string[];
+  /** The castle's levels when the run began (the fights keep them); none when unset. */
+  castle?: Castle;
 }
 
-export function newRun(seed: number, pool: readonly string[] = HEROES): Run {
-  const run: Run = { seed, gold: START_GOLD, stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...pool] };
+export function newRun(seed: number, pool: readonly string[] = HEROES, castle: Castle = newCastle()): Run {
+  const run: Run = { seed, gold: START_GOLD + bonusGold(castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...pool], castle: { ...castle } };
   // two grade-1 heroes, drawn from the same stream as every summon but free
   for (let i = 0; i < 2; i++) run.squad.push(add(run, draw(run)).id);
   return run;
@@ -111,7 +114,7 @@ export function stageBoost(stage: number): Stage {
 export const reward = (stage: number) => 20 + 6 * stage + (isBossStage(stage) ? 30 : 0);
 
 /** A fresh fight for the run's current stage (a different board each stage). */
-export const startStage = (run: Run): Battle => startBattle(mixSeed(run.seed, 0x57a6e, run.stage), bandFor(run.stage), stageBoost(run.stage));
+export const startStage = (run: Run): Battle => startBattle(mixSeed(run.seed, 0x57a6e, run.stage), bandFor(run.stage), { ...stageBoost(run.stage), heroes: heroBoost(run.castle), mana: manaRate(run.castle) });
 
 /** Settle a finished fight: a win pays and moves on to the next stage; a loss ends the run. */
 export function finish(run: Run, won: boolean): void {

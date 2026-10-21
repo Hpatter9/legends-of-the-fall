@@ -117,6 +117,8 @@ export interface Battle {
   nextId: number;
   /** The king's mana, spell cooldowns and meteors falling. */
   spells: SpellState;
+  /** The castle's boost for every hero placed. */
+  heroBoost?: Boost;
 }
 
 export const defOf = (u: Unit): UnitDef => UNITS[u.def];
@@ -134,6 +136,9 @@ export interface Boost {
 export interface Stage {
   foes?: Boost;
   boss?: Boost;
+  /** Every hero's boost (the castle's), multiplied into the hero's own; and how fast the king's mana fills. */
+  heroes?: Boost;
+  mana?: number;
 }
 export const apart = (a: At, b: At) => Math.abs(a.u - b.u) + Math.abs(a.v - b.v);
 export const tileOf = (b: Battle, a: At) => tileAt(b.board, a.u, a.v)!;
@@ -171,7 +176,8 @@ export function canStrike(board: Board, def: UnitDef, from: At, to: At): boolean
 /** A fresh fight on the seed's board: the foes of `band` in their rows, no heroes placed yet. */
 export function startBattle(seed: number, band = 'skeletons', stage: Stage = {}): Battle {
   const board = makeBoard(seed);
-  const b: Battle = { seed, board, units: [], phase: 'deploy', t: 0, rng: mixSeed(seed, 0xf167), pending: [], skillRng: mixSeed(seed, 0x5c111), zones: [], nextId: 1, spells: freshSpells() };
+  const b: Battle = { seed, board, units: [], phase: 'deploy', t: 0, rng: mixSeed(seed, 0xf167), pending: [], skillRng: mixSeed(seed, 0x5c111), zones: [], nextId: 1, spells: freshSpells(stage.mana) };
+  if (stage.heroes) b.heroBoost = stage.heroes;
   // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed
   const rng = new Rng(mixSeed(seed, 0xf0e5));
   FOE_BANDS[band].forEach((id, n) => {
@@ -191,9 +197,11 @@ export function startBattle(seed: number, band = 'skeletons', stage: Stage = {})
 
 export function addUnit(b: Battle, defId: string, u: number, v: number, boost: Boost = {}, tag?: number): Unit {
   const def = UNITS[defId];
-  const hp = Math.round(def.hp * (boost.hp ?? 1));
+  const castle = def.side === 'hero' ? b.heroBoost : undefined;
+  const hp = Math.round(def.hp * (boost.hp ?? 1) * (castle?.hp ?? 1));
   const unit: Unit = { id: b.nextId++, def: defId, side: def.side, u, v, hp, maxHp: hp, facing: def.side === 'hero' ? 3 : 1, alive: true, busyUntil: 0, charge: 0 };
-  if (boost.atk && boost.atk !== 1) unit.power = boost.atk;
+  const power = (boost.atk ?? 1) * (castle?.atk ?? 1);
+  if (power !== 1) unit.power = power;
   if (boost.size && boost.size !== 1) unit.size = boost.size;
   if (boost.grade && boost.grade > 1) unit.grade = boost.grade;
   if (tag !== undefined) unit.tag = tag;
