@@ -149,7 +149,7 @@ const foesIn = (b: Battle, u: number, v: number) => b.units.filter((x) => x.aliv
 /** The fallen hero a Resurrect on this tile would lift: the nearest in the 3x3 whose tile is free. */
 const fallenIn = (b: Battle, u: number, v: number) =>
   b.units
-    .filter((x) => !x.alive && x.side === 'hero' && inArea(x, u, v) && !b.units.some((o) => o.alive && o.u === x.u && o.v === x.v))
+    .filter((x) => !x.alive && x.side === 'hero' && !defOf(x).summon && inArea(x, u, v) && !b.units.some((o) => o.alive && o.u === x.u && o.v === x.v))
     .sort((x, y) => apart(x, { u, v }) - apart(y, { u, v }) || x.id - y.id)[0];
 
 /** A raw blow from the king: the foe's defence comes off. */

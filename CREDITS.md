@@ -53,6 +53,17 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
 - The three forest bosses are from Craftpix's **Free Forest Bosses**; the Boar King, Devil Leader and Shaman King from
   Craftpix's **Free Fantasy RPG Top-Down Boss Creatures**.
 
+## The class heroes (`src/art/units/cls_*.png`)
+
+- The Paladin, Cleric, Druid, Barbarian, Ranger, Warlock, Illusionist and Gunslinger (three looks each, one per grade) are
+  layered from the **Himeko Sutori sprite share** (a body template, an outfit, a helm and a weapon laid on one another and
+  cut to the right-facing poses by `tools/compose-class-heroes.cjs`, adapted from Chronos Settlement's
+  `tools/compose-sheets.cjs`), free to use with attribution:
+  - Half-Kaizer sprite template created by Showkaizer.
+  - Additional Half-Kaizer poses by Aleesa Tana.
+  - Armor, weapon, shield, helmet, hair and other sprites are from Himeko Sutori and Septaroad Voyager by Rockwell Studios, LLC.
+- The Druid's treant (`cls_treant.png`) is one picture from the **Golems and elementals** pack by batareya (the pack folder has no licence file: check the author's terms before any public release).
+
 - **The home screen** (`src/art/home/castle.png`): the Fantasy 2D Battlegrounds pixel pack (Craftpix), Battleground 2
   (Bright), `Battleground2.png`, scaled to half size.
 

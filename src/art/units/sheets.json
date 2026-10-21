@@ -969,5 +969,546 @@
   },
   "figure": 92,
   "facesRight": false
+ },
+ "cls_paladin_1": {
+  "w": 98,
+  "h": 102,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1
+  },
+  "figure": 75,
+  "facesRight": true
+ },
+ "cls_paladin_2": {
+  "w": 100,
+  "h": 104,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1
+  },
+  "figure": 75,
+  "facesRight": true
+ },
+ "cls_paladin_3": {
+  "w": 98,
+  "h": 106,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1
+  },
+  "figure": 75,
+  "facesRight": true
+ },
+ "cls_cleric_1": {
+  "w": 84,
+  "h": 96,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1,
+   "attack2": 2
+  },
+  "figure": 75,
+  "facesRight": true
+ },
+ "cls_cleric_2": {
+  "w": 108,
+  "h": 115,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1,
+   "attack2": 2
+  },
+  "figure": 75,
+  "facesRight": true
+ },
+ "cls_cleric_3": {
+  "w": 94,
+  "h": 109,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1,
+   "attack2": 2
+  },
+  "figure": 81,
+  "facesRight": true
+ },
+ "cls_druid_1": {
+  "w": 84,
+  "h": 101,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1,
+   "attack2": 2
+  },
+  "figure": 73,
+  "facesRight": true
+ },
+ "cls_druid_2": {
+  "w": 86,
+  "h": 102,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1,
+   "attack2": 2
+  },
+  "figure": 95,
+  "facesRight": true
+ },
+ "cls_druid_3": {
+  "w": 86,
+  "h": 102,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1,
+   "attack2": 2
+  },
+  "figure": 95,
+  "facesRight": true
+ },
+ "cls_barbarian_1": {
+  "w": 86,
+  "h": 98,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1
+  },
+  "figure": 76,
+  "facesRight": true
+ },
+ "cls_barbarian_2": {
+  "w": 88,
+  "h": 99,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1
+  },
+  "figure": 76,
+  "facesRight": true
+ },
+ "cls_barbarian_3": {
+  "w": 116,
+  "h": 122,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1
+  },
+  "figure": 85,
+  "facesRight": true
+ },
+ "cls_ranger_1": {
+  "w": 78,
+  "h": 76,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1
+  },
+  "figure": 73,
+  "facesRight": true
+ },
+ "cls_ranger_2": {
+  "w": 94,
+  "h": 80,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1
+  },
+  "figure": 76,
+  "facesRight": true
+ },
+ "cls_ranger_3": {
+  "w": 94,
+  "h": 83,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1
+  },
+  "figure": 76,
+  "facesRight": true
+ },
+ "cls_warlock_1": {
+  "w": 84,
+  "h": 91,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1,
+   "attack2": 2
+  },
+  "figure": 75,
+  "facesRight": true
+ },
+ "cls_warlock_2": {
+  "w": 84,
+  "h": 92,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1,
+   "attack2": 2
+  },
+  "figure": 77,
+  "facesRight": true
+ },
+ "cls_warlock_3": {
+  "w": 84,
+  "h": 102,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1,
+   "attack2": 2
+  },
+  "figure": 85,
+  "facesRight": true
+ },
+ "cls_illusionist_1": {
+  "w": 78,
+  "h": 91,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1,
+   "attack2": 2
+  },
+  "figure": 73,
+  "facesRight": true
+ },
+ "cls_illusionist_2": {
+  "w": 78,
+  "h": 91,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1,
+   "attack2": 2
+  },
+  "figure": 83,
+  "facesRight": true
+ },
+ "cls_illusionist_3": {
+  "w": 86,
+  "h": 98,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1,
+   "attack2": 2
+  },
+  "figure": 83,
+  "facesRight": true
+ },
+ "cls_gunslinger_1": {
+  "w": 82,
+  "h": 78,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1
+  },
+  "figure": 75,
+  "facesRight": true
+ },
+ "cls_gunslinger_2": {
+  "w": 86,
+  "h": 84,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1
+  },
+  "figure": 80,
+  "facesRight": true
+ },
+ "cls_gunslinger_3": {
+  "w": 98,
+  "h": 85,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1
+  },
+  "figure": 83,
+  "facesRight": true
+ },
+ "cls_treant": {
+  "w": 60,
+  "h": 96,
+  "perRow": 1,
+  "rows": [
+   "idle"
+  ],
+  "counts": {
+   "idle": 1
+  },
+  "figure": 95,
+  "facesRight": true
  }
 }
