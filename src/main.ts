@@ -20,7 +20,8 @@ import { clockSeed, todayKey } from './modes';
 import { tips, type Box } from './tips';
 import { CHARGE_MAX, kitOf } from './sim/abilities';
 import { keepAwake } from './render/awake';
-import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, SPELL_IDS, type SpellId } from './sim/spells';
+import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, type SpellId } from './sim/spells';
+import { bindSpellbook } from './spellbook';
 import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
 import { countTraits, kindsOf, traitsOf, TRAITS } from './sim/traits';
@@ -40,6 +41,9 @@ const ZOOM = 1.6;
 const INTRO_MS = 2000;
 const INTRO_ZOOM = 0.25;
 const STAT_LABELS: Record<(typeof STAT_KEYS)[number], string> = { dealt: 'Dealt', taken: 'Taken', healed: 'Healed', kills: 'Kills' };
+
+/** The spells that hurt foes (their 3x3 shows red). */
+const HURTING = new Set<SpellId>(['meteor', 'smite', 'chain', 'poison', 'frost']);
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -120,6 +124,10 @@ class Game {
         const r = loadRun();
         return !!r && !r.over;
       },
+      runInfo: () => {
+        const r = loadRun();
+        return r && !r.over ? { stage: r.stage, gold: r.gold } : null;
+      },
       onContinue: () => this.resume(),
       onNew: () => this.newRunNow(),
       onRecruit: () => this.gacha.open(),
@@ -129,7 +137,10 @@ class Game {
       },
       onTower: () => this.startRun(towerRun(clockSeed(), this.meta)),
     });
-    this.buildSpells();
+    bindSpellbook(this.meta, () => {
+      saveMeta(this.meta);
+      this.home.refresh();
+    });
     this.wire();
     this.newBattle();
     // (the game opens on the castle, unless a seed is given in the address)
@@ -158,6 +169,7 @@ class Game {
     this.acc = 0;
     this.chosen = null;
     this.spell = null;
+    this.buildSpells();
     this.setSpeed(settings().speed);
     this.fx.clear();
     this.boardView.build(this.b.board);
@@ -817,9 +829,11 @@ class Game {
 
   /* -------------------------------------------------------------- the king's spells */
 
+  /** The spell bar: a card for each spell equipped in the spellbook. */
   private buildSpells(): void {
     const cards = $('spellCards');
-    for (const id of SPELL_IDS) {
+    cards.replaceChildren();
+    for (const id of this.meta.spellbook.equipped) {
       const sp = SPELLS[id];
       const card = document.createElement('button');
       card.className = 'spell';
@@ -828,7 +842,9 @@ class Game {
       card.innerHTML = `<b>${sp.name}</b><em>${sp.cost} mana</em><span class="cool"></span>`;
       card.addEventListener('click', () => {
         if (this.b.phase !== 'fight') return;
-        this.spell = this.spell === id ? null : canAfford(this.b, id) ? id : this.spell;
+        // (a spell that goes everywhere needs no tile: it is cast at once)
+        if (sp.target === 'all') castSpell(this.b, id, 0, 0);
+        else this.spell = this.spell === id ? null : canAfford(this.b, id) ? id : this.spell;
         this.hover = null;
         this.refreshSpells();
         this.markTiles();
@@ -962,7 +978,7 @@ class Game {
     if (b.phase === 'fight' && this.spell && this.hover) {
       // the spell's 3x3 around the tile under the finger
       for (let du = -1; du <= 1; du++)
-        for (let dv = -1; dv <= 1; dv++) if (tileAt(b.board, this.hover[0] + du, this.hover[1] + dv)) this.boardView.mark(this.hover[0] + du, this.hover[1] + dv, this.spell === 'meteor' ? 'bad' : 'chosen');
+        for (let dv = -1; dv <= 1; dv++) if (tileAt(b.board, this.hover[0] + du, this.hover[1] + dv)) this.boardView.mark(this.hover[0] + du, this.hover[1] + dv, HURTING.has(this.spell) ? 'bad' : 'chosen');
     }
     if (b.phase !== 'deploy') return;
     const who = this.chosen;

@@ -163,3 +163,27 @@ export function portrait(sheet: string, size: number, grade = 1): HTMLCanvasElem
   }
   return c;
 }
+
+/** A live sprite on a plain canvas for the menus: the idle frames of a sheet, shown one at a time by `tick`. */
+export function sprite(sheet: string, figurePx: number): { canvas: HTMLCanvasElement; tick(n: number): void; faceRight: boolean } {
+  const c = document.createElement('canvas');
+  const l = LAYOUT[sheet];
+  const img = images.get(sheet);
+  c.width = l.w;
+  c.height = l.h;
+  // (scaled so the figure itself is `figurePx` tall)
+  const k = figurePx / l.figure;
+  c.style.width = `${Math.round(l.w * k)}px`;
+  c.style.height = `${Math.round(l.h * k)}px`;
+  const g = c.getContext('2d')!;
+  g.imageSmoothingEnabled = false;
+  const row = l.rows.indexOf('idle');
+  const count = l.counts.idle ?? 1;
+  const tick = (n: number) => {
+    if (!img) return;
+    g.clearRect(0, 0, l.w, l.h);
+    g.drawImage(img, (n % count) * l.w, row * l.h, l.w, l.h, 0, 0, l.w, l.h);
+  };
+  tick(0);
+  return { canvas: c, tick, faceRight: l.facesRight !== false };
+}
