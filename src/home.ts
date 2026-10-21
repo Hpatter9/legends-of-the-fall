@@ -6,8 +6,8 @@ import castleUrl from './art/home/castle.png';
 import { ALL_HEROES, UNITS } from './sim/units';
 import { KITS } from './sim/abilities';
 import { BUILDING_IDS, BUILDINGS, maxLevel, nextCost, upgrade, type BuildingId } from './sim/castle';
-import { rarityOf, saveMeta, type Meta } from './sim/meta';
 import { traitsOf, TRAITS } from './sim/traits';
+import { rarityOf, saveMeta, starSummary, type Meta } from './sim/meta';
 import { portrait } from './render/sheets';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -67,6 +67,9 @@ export class Home {
     $('homeMenu').hidden = !menu;
     $('homePage').hidden = menu;
     $('homeCrowns').textContent = `${this.meta.crowns} crowns`;
+    const best = starSummary(this.meta);
+    $('homeBest').textContent = best ? `Best: stage ${best.stage}, ${best.total} stars` : '';
+    $('homeBest').hidden = !best;
     $('homeNote').textContent = menu ? this.note : '';
     $('homeNote').hidden = !menu || !this.note;
     ($('homeContinue') as HTMLButtonElement).hidden = !this.hooks.hasRun();

@@ -7,7 +7,8 @@ import { D, standable, tileAt } from './sim/board';
 import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle } from './sim/battle';
 import { finish, gradeBoost, heroOf, isBossStage, loadRun, newRun, saveRun, setSquad, SQUAD, startStage, summon, summonCost, type Run } from './sim/run';
 import { formOf, UNITS } from './sim/units';
-import { earn, loadMeta, rankOf, saveMeta, type Meta } from './sim/meta';
+import { earn, loadMeta, rankOf, recordStars, saveMeta, type Meta } from './sim/meta';
+import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
 import { Gacha } from './gacha';
 import { Home } from './home';
 import { keepAwake } from './render/awake';
@@ -392,6 +393,30 @@ class Game {
     this.newBattle();
   }
 
+  /** The result screen's stars: each pops in (CSS) with its reason and what it pays, and a chime; none for a loss. */
+  private showStars(rating: Rating | null): void {
+    const list = $('stars');
+    list.replaceChildren();
+    list.hidden = !rating;
+    rating?.rules.forEach((rule, i) => {
+      const row = document.createElement('div');
+      row.className = rule.earned ? 'star on' : 'star';
+      row.style.animationDelay = `${i * 0.45}s`;
+      const gem = document.createElement('span');
+      gem.textContent = rule.earned ? '★' : '☆';
+      const text = document.createElement('b');
+      text.textContent = rule.text;
+      row.append(gem, text);
+      if (rule.earned) {
+        const pay = document.createElement('em');
+        pay.textContent = `+${STAR_CROWNS} crowns · +${STAR_GOLD} gold`;
+        row.append(pay);
+        setTimeout(() => play('star'), 600 + i * 450);
+      }
+      list.append(row);
+    });
+  }
+
   /** A run has ended: back to the castle, showing what it earned. */
   private goHome(): void {
     const r = this.run;
@@ -587,10 +612,15 @@ class Game {
     if ((b.phase === 'won' || b.phase === 'lost') && !this.settled) {
       this.settled = true;
       keepAwake(false);
+      const won = b.phase === 'won';
+      const stage = run.stage;
+      const rating = ratingOf(b, isBossStage(stage));
       const before = run.gold;
-      finish(run, b.phase === 'won');
+      finish(run, won, rating.stars);
       this.gain = run.gold - before;
-      this.crownGain = earn(this.meta, b.phase === 'won' ? run.stage - 1 : run.stage, b.phase === 'won');
+      this.crownGain = earn(this.meta, stage, won, rating.stars);
+      if (won) recordStars(this.meta, stage, rating.stars);
+      this.showStars(won ? rating : null);
       saveMeta(this.meta);
       saveRun(run);
     }

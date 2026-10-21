@@ -151,6 +151,15 @@
   #banner.won { color: var(--gold); }
   #banner.lost { color: var(--red); }
   #summary { color: var(--dim); text-shadow: 0 1px 0 #000; }
+  #stars { display: flex; flex-direction: column; gap: 6px; width: min(300px, 86vw); }
+  #stars[hidden] { display: none; }
+  #stars .star { display: grid; grid-template-columns: 30px 1fr; align-items: center; gap: 0 8px; padding: 6px 10px; background: var(--wood); border: 2px solid var(--edge); border-radius: 8px; color: var(--dim); opacity: 0; animation: starIn 0.45s cubic-bezier(0.2, 1.6, 0.4, 1) forwards; }
+  #stars .star > span { grid-row: span 2; font-size: 26px; line-height: 1; text-align: center; }
+  #stars .star b { font-weight: normal; }
+  #stars .star em { grid-column: 2; font-size: 11px; font-style: normal; color: var(--gold); }
+  #stars .star.on { color: var(--ink); }
+  #stars .star.on > span { color: var(--gold); text-shadow: 0 0 10px rgba(255, 200, 80, 0.6); }
+  @keyframes starIn { from { transform: scale(0.4); opacity: 0; } to { transform: none; opacity: 1; } }
   #result .row { display: flex; gap: 10px; margin-top: 6px; }
   @keyframes fade { from { opacity: 0; } }
   @keyframes punch { from { transform: scale(1.8); opacity: 0; } }
@@ -197,6 +206,8 @@
   #home > * { position: relative; width: 100%; max-width: 440px; }
   #home h1 { margin: 0 0 4px; text-align: center; font: bold 30px/1.1 Georgia, serif; color: var(--gold); letter-spacing: 1px; text-shadow: 0 3px 0 #000, 0 0 18px rgba(0, 0, 0, 0.8); }
   #homeCrowns { text-align: center; color: var(--gold); font-weight: bold; margin-bottom: 10px; text-shadow: 0 1px 0 #000; }
+  #homeBest { text-align: center; color: var(--ink); font-size: 13px; margin: -6px 0 10px; text-shadow: 0 1px 0 #000; }
+  #homeBest[hidden] { display: none; }
   #homeNote { text-align: center; margin: 0 0 10px; padding: 8px; background: var(--wood); border: 2px solid var(--edge); border-radius: 8px; color: var(--ink); }
   #homeNote[hidden] { display: none; }
   #homeMenu { display: grid; gap: 8px; padding: 12px; background: var(--wood); border: 2px solid var(--edge); border-radius: 10px; }
@@ -245,6 +256,7 @@
 <div id="result" hidden>
   <div id="banner"></div>
   <div id="summary"></div>
+  <div id="stars" hidden></div>
   <div class="row"><button id="next" class="primary">Next stage</button></div>
 </div>
 <div id="gacha" hidden>
@@ -258,6 +270,7 @@
 <div id="home" hidden>
   <h1>Legends of the Fall</h1>
   <div id="homeCrowns"></div>
+  <div id="homeBest" hidden></div>
   <div id="homeNote" hidden></div>
   <div id="homeMenu">
     <button id="homeContinue" class="primary">Continue run</button>
