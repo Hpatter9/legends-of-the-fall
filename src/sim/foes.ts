@@ -5,7 +5,7 @@
 import type { UnitDef } from './units';
 
 const WOLF = { side: 'foe', hp: 230, atk: 24, def: 4, range: 1, moveMs: 380, atkMs: 800, jump: 3, role: 'Fast, leaps ledges' } as const;
-const MINOTAUR = { side: 'foe', hp: 360, atk: 22, def: 9, range: 1, moveMs: 900, atkMs: 1400, jump: 2, role: 'Tanky, heavy blows' } as const;
+const MINOTAUR = { side: 'foe', hp: 440, atk: 27, def: 9, range: 1, moveMs: 900, atkMs: 1400, jump: 2, role: 'Tanky, heavy blows' } as const;
 const GORGON = { side: 'foe', hp: 280, atk: 24, def: 5, range: 4, moveMs: 700, atkMs: 1500, jump: 2, shot: 'bone', role: 'Shoots from afar' } as const;
 const SATYR = { side: 'foe', hp: 300, atk: 25, def: 6, range: 1, moveMs: 600, atkMs: 1100, jump: 2, role: 'Middling melee' } as const;
 
