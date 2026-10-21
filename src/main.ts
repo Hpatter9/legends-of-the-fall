@@ -18,6 +18,7 @@ import { tips, type Box } from './tips';
 import { CHARGE_MAX, kitOf } from './sim/abilities';
 import { keepAwake } from './render/awake';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, SPELL_IDS, type SpellId } from './sim/spells';
+import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
 import { countTraits, kindsOf, traitsOf, TRAITS } from './sim/traits';
 import { UnitSprite } from './render/unitView';
@@ -74,7 +75,6 @@ class Game {
   private speed = 1;
   private acc = 0;
   private scale = 1;
-  private sky: HTMLElement[] = [];
   /** The spell card chosen, waiting for a tile. */
   private spell: SpellId | null = null;
   /** The fight's numbers for each hero, tallied as the ticks come in. */
@@ -124,7 +124,6 @@ class Game {
       onNew: () => this.newRunNow(),
       onRecruit: () => this.gacha.open(),
     });
-    this.sky = [...document.querySelectorAll<HTMLElement>('#sky div')];
     this.buildSpells();
     this.wire();
     this.newBattle();
@@ -154,6 +153,7 @@ class Game {
     this.spell = null;
     this.fx.clear();
     this.boardView.build(this.b.board);
+    setBackdrop(this.b.board.area);
     this.syncSprites(true);
     this.layout();
     this.refresh();
@@ -424,7 +424,7 @@ class Game {
     const { x0, x1, y0, y1 } = this.bbox;
     const fx = x1 > x0 ? (this.cx - (x0 + x1) / 2) / (x1 - x0) : 0;
     const fy = y1 > y0 ? (this.cy - (y0 + y1) / 2) / (y1 - y0) : 0;
-    this.sky.forEach((el, i) => (el.style.transform = `translate(${(-fx * (i + 1) * 14).toFixed(1)}px, ${(-fy * i * 10).toFixed(1)}px)`));
+    panBackdrop(fx, fy);
   }
 
   /** The tile under a point on the screen (the nearest column's top or side). */

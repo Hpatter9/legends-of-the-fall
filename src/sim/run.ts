@@ -4,6 +4,7 @@
 // fight ends the run. Pure rules: no Pixi, no DOM; the summon draws from a side stream of the run's seed.
 
 import { startBattle, type Battle, type Boost, type Stage } from './battle';
+import { AREAS, type Area } from './board';
 import { BOSS_BANDS, FIELD_BANDS } from './foes';
 import { bonusGold, heroBoost, manaRate, newCastle, type Castle } from './castle';
 import { rankMult } from './meta';
@@ -165,6 +166,9 @@ export const bandFor = (stage: number) => {
   const fieldsBefore = stage - 1 - Math.floor((stage - 1) / BOSS_EVERY);
   return FIELD_BANDS[fieldsBefore % FIELD_BANDS.length];
 };
+/** The land stage n is fought in: each area for `AREA_STAGES` stages in turn, then round again. */
+export const AREA_STAGES = 5;
+export const areaFor = (stage: number): Area => AREAS[Math.floor((stage - 1) / AREA_STAGES) % AREAS.length];
 /** How the foes of stage n are boosted. */
 export function stageBoost(stage: number): Stage {
   const k = 1 + STAGE_GROWTH * (stage - 1);
@@ -182,6 +186,7 @@ export function startStage(run: Run): Battle {
   const { atk, hp, mana, first, revive, gold: _gold, ...team } = rl;
   return startBattle(mixSeed(run.seed, 0x57a6e, run.stage), bandFor(run.stage), {
     ...base,
+    area: areaFor(run.stage),
     foes: { hp: base.foes!.hp! * foes, atk: base.foes!.atk! * foes },
     heroes: { hp: castle.hp! * (hp ?? 1) * (run.buff?.hp ?? 1), atk: castle.atk! * (atk ?? 1) * (run.buff?.atk ?? 1) },
     mana: manaRate(run.castle) * (mana ?? 1),
