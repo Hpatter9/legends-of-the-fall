@@ -7,6 +7,7 @@ import { startBattle, type Battle, type Boost, type Stage } from './battle';
 import { FOE_BANDS } from './foes';
 import { bonusGold, heroBoost, manaRate, newCastle, type Castle } from './castle';
 import { rankMult } from './meta';
+import { starGold } from './stars';
 import { mixSeed, Rng } from './rng';
 import { HEROES } from './units';
 
@@ -114,11 +115,11 @@ export const reward = (stage: number) => 20 + 6 * stage + (isBossStage(stage) ? 
 /** A fresh fight for the run's current stage (a different board each stage). */
 export const startStage = (run: Run): Battle => startBattle(mixSeed(run.seed, 0x57a6e, run.stage), bandFor(run.stage), { ...stageBoost(run.stage), heroes: heroBoost(run.castle), mana: manaRate(run.castle) });
 
-/** Settle a finished fight: a win pays and moves on to the next stage; a loss ends the run. */
-export function finish(run: Run, won: boolean): void {
+/** Settle a finished fight: a win pays (and its stars pay gold) and moves on to the next stage; a loss ends the run. */
+export function finish(run: Run, won: boolean, stars = 0): void {
   run.best = Math.max(run.best, run.stage);
   if (won) {
-    run.gold += reward(run.stage);
+    run.gold += reward(run.stage) + starGold(stars);
     run.stage++;
   } else run.over = true;
 }
