@@ -442,7 +442,7 @@ export class Fx {
 
   /** A line of text that rises and fades. */
   private label(text: string, x: number, y: number, fill: number, size: number, life = 900): void {
-    const txt = new Text({ text, style: { fontFamily: 'Trebuchet MS, Verdana, sans-serif', fontWeight: 'bold', fontSize: size, fill, stroke: { color: 0x1a1008, width: 3 } }, resolution: 3 });
+    const txt = new Text({ text, style: { fontFamily: "'Alegreya Sans', 'Trebuchet MS', sans-serif", fontWeight: 'bold', fontSize: size + 2, fill, stroke: { color: 0x1a1008, width: 3 } }, resolution: 3 });
     txt.anchor.set(0.5, 1);
     txt.position.set(x, y);
     this.root.addChild(txt);
@@ -645,7 +645,7 @@ export class Fx {
     if (!settings().numbers) return;
     const txt = new Text({
       text: String(n),
-      style: { fontFamily: 'Trebuchet MS, Verdana, sans-serif', fontWeight: 'bold', fontSize: heavy ? 17 : 13, fill: onHero ? 0xff7a6a : heavy ? 0xffd34a : 0xffffff, stroke: { color: 0x1a1008, width: 3 } },
+      style: { fontFamily: "'Press Start 2P', monospace", fontWeight: 'normal', fontSize: heavy ? 12 : 9, fill: onHero ? 0xff7a6a : heavy ? 0xffd34a : 0xffffff, stroke: { color: 0x1a1008, width: 3 } },
       resolution: 3,
     });
     txt.anchor.set(0.5, 1);

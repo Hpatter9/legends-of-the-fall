@@ -99,7 +99,9 @@ class Game {
   async start(): Promise<void> {
     await this.app.init({ resizeTo: window, backgroundAlpha: 0, antialias: false, roundPixels: true, autoDensity: true, resolution: Math.min(3, devicePixelRatio || 1) });
     $('stage').appendChild(this.app.canvas);
-    await Promise.all([loadSheets(), loadBoardArt(), loadFx()]);
+    // (the fonts first, so the first damage number is not drawn in a fallback face; a slow load gives up after a moment)
+    const fonts = Promise.all(['900 16px "Cinzel Decorative"', '700 16px "Alegreya Sans"', '16px "Press Start 2P"'].map((f) => document.fonts.load(f))).catch(() => {});
+    await Promise.all([loadSheets(), loadBoardArt(), loadFx(), Promise.race([fonts, new Promise((ok) => setTimeout(ok, 2500))])]);
     this.world.sortableChildren = true;
     this.boardView.root.addChild(this.fx.root);
     this.world.addChild(this.boardView.root);
