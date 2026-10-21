@@ -102,6 +102,11 @@ export class Fx {
     }
   }
 
+  /** Shake at least this hard for now (a boss walking in); it fades as usual once the rumble stops. */
+  rumble(level: number): void {
+    this.trauma = Math.max(this.trauma, level);
+  }
+
   /** Advance the effects by `dt` ms of the fight. */
   step(dt: number): void {
     // (an item may add more while it steps, so they go to a fresh list)

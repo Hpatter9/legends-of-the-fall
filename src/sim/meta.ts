@@ -38,6 +38,8 @@ export interface Meta {
   shards: Record<string, number>;
   /** The best stars won on each stage (keyed by the stage number; missing is none). */
   stars: Record<string, number>;
+  /** Lasting XP per hero kind (missing is none); its level is read from it (`levels.ts`). */
+  xp: Record<string, number>;
 }
 
 export interface Pull {
@@ -49,7 +51,7 @@ export interface Pull {
   shards: number;
 }
 
-export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [...HEROES], pulls: 0, dry: 0, shards: {}, stars: {}, castle: newCastle() });
+export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [...HEROES], pulls: 0, dry: 0, shards: {}, stars: {}, xp: {}, castle: newCastle() });
 
 export const rarityOf = (kind: string): 1 | 2 | 3 => UNITS[kind]?.rarity ?? 1;
 /** The rank a hero kind has from its shards (0 to MAX_RANK). */
@@ -60,6 +62,13 @@ export const rankMult = (rank: number): number => RANK_MULT ** rank;
 export const stageCrowns = (stage: number) => 10 + 2 * stage;
 /** Crowns a run's end pays: more the further it got. */
 export const runCrowns = (best: number) => 10 * (best - 1) + best * best;
+
+/** Saved XP that is sane: a hero kind in the game and a number of XP. Anything else is dropped. */
+function readXp(raw: unknown): Record<string, number> {
+  const out: Record<string, number> = {};
+  if (raw && typeof raw === 'object') for (const [k, n] of Object.entries(raw)) if (ALL_HEROES.includes(k) && typeof n === 'number' && n >= 0) out[k] = Math.floor(n);
+  return out;
+}
 
 /** Pay the crowns for a settled fight (a win pays for the stage and its stars; a loss ends the run and pays by how far it got). Returns the sum. */
 export function earn(m: Meta, stage: number, won: boolean, stars = 0): number {
@@ -144,6 +153,8 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.shards = shards;
       // (saves from before stars have none)
       m.stars = readStars(m.stars);
+      // (saves from before XP have none)
+      m.xp = readXp(m.xp);
       return m;
     }
   } catch {

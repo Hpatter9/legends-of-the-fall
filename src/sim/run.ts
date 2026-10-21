@@ -8,6 +8,7 @@ import { AREAS, type Area } from './board';
 import { BOSS_BANDS, FIELD_BANDS } from './foes';
 import { bonusGold, heroBoost, manaRate, newCastle, type Castle } from './castle';
 import { rankMult } from './meta';
+import { levelBoost } from './levels';
 import { starGold } from './stars';
 import { mixSeed, Rng } from './rng';
 import { HEROES } from './units';
@@ -94,10 +95,11 @@ function add(run: Run, kind: string): Owned {
 export const heroOf = (run: Run, id: number) => run.roster.find((h) => h.id === id);
 export const benched = (run: Run) => run.roster.filter((h) => !run.squad.includes(h.id));
 
-/** Hp and attack multipliers of a grade, times the hero kind's rank (from its shards). */
-export const gradeBoost = (grade: number, rank = 0): Boost => {
+/** Hp and attack multipliers of a grade, times the hero kind's rank (from its shards) and its level (from its XP). */
+export const gradeBoost = (grade: number, rank = 0, level = 1): Boost => {
   const k = GRADE_MULT ** (grade - 1) * rankMult(rank);
-  return { hp: k, atk: k, grade };
+  const lv = levelBoost(level);
+  return { hp: k * lv.hp, atk: k * lv.atk, grade };
 };
 
 export const isBossStage = (stage: number) => stage % BOSS_EVERY === 0;
