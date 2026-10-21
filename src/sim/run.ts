@@ -23,8 +23,10 @@ export const SUMMON_BASE = 30;
 export const SUMMON_STEP = 5;
 /** Hp and attack grow by this for each grade above the first. */
 export const GRADE_MULT = 1.6;
+/** Foes' hp and attack at stage 1, as a share of their stats in `foes.ts`. */
+export const FOE_START = 0.55;
 /** Foes' hp and attack grow by this share for each stage after the first. */
-export const STAGE_GROWTH = 0.12;
+export const STAGE_GROWTH = 0.2;
 export const BOSS_EVERY = 5;
 /** A boss is drawn half as big again; its kind (`foes.ts`) carries its own stats and skill. */
 export const BOSS: Boost = { size: 1.5 };
@@ -180,7 +182,7 @@ export const AREA_STAGES = 5;
 export const areaFor = (stage: number): Area => AREAS[Math.floor((stage - 1) / AREA_STAGES) % AREAS.length];
 /** How the foes of stage n are boosted. */
 export function stageBoost(stage: number): Stage {
-  const k = 1 + STAGE_GROWTH * (stage - 1);
+  const k = FOE_START * (1 + STAGE_GROWTH * (stage - 1));
   return { foes: { hp: k, atk: k }, boss: isBossStage(stage) ? BOSS : undefined };
 }
 /** Gold a win on stage n pays. */

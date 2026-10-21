@@ -34,8 +34,10 @@ test('a fallen hero earns less than one left standing', () => {
   fight(b);
   playOut(b);
   const u = b.units.find((x) => x.side === 'hero')!;
-  const standing = fightXp(b)[u.def];
+  // (the hero stands for the first reading, whether or not it fell in this fight)
   const was = u.alive;
+  u.alive = true;
+  const standing = fightXp(b)[u.def];
   u.alive = false;
   const fallen = fightXp(b)[u.def];
   u.alive = was;

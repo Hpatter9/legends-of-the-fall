@@ -6,18 +6,18 @@
 
 import type { UnitDef } from './units';
 
-const WOLF = { side: 'foe', hp: 230, atk: 24, def: 4, range: 1, moveMs: 380, atkMs: 800, jump: 3, role: 'Fast, leaps ledges' } as const;
+const WOLF = { side: 'foe', hp: 250, atk: 24, def: 4, range: 1, moveMs: 380, atkMs: 800, jump: 3, role: 'Fast, leaps ledges' } as const;
 const MINOTAUR = { side: 'foe', hp: 440, atk: 27, def: 9, range: 1, moveMs: 900, atkMs: 1400, jump: 2, role: 'Tanky, heavy blows' } as const;
-const GORGON = { side: 'foe', hp: 280, atk: 24, def: 5, range: 4, moveMs: 700, atkMs: 1500, jump: 2, shot: 'bone', role: 'Shoots from afar' } as const;
-const SATYR = { side: 'foe', hp: 300, atk: 25, def: 6, range: 1, moveMs: 600, atkMs: 1100, jump: 2, role: 'Middling melee' } as const;
+const GORGON = { side: 'foe', hp: 300, atk: 26, def: 5, range: 4, moveMs: 700, atkMs: 1500, jump: 2, shot: 'bone', role: 'Shoots from afar' } as const;
+const SATYR = { side: 'foe', hp: 320, atk: 25, def: 6, range: 1, moveMs: 600, atkMs: 1100, jump: 2, role: 'Middling melee' } as const;
 
 const ORC = { side: 'foe', hp: 280, atk: 26, def: 5, range: 1, moveMs: 600, atkMs: 1000, jump: 2, role: 'Cheap and in numbers' } as const;
 const IMP = { side: 'foe', hp: 200, atk: 22, def: 2, range: 1, moveMs: 380, atkMs: 700, jump: 3, role: 'Small and quick' } as const;
-const DEMON = { side: 'foe', hp: 380, atk: 30, def: 6, range: 1, moveMs: 650, atkMs: 1100, jump: 2, flies: true, role: 'Flies, hits hard' } as const;
+const DEMON = { side: 'foe', hp: 380, atk: 32, def: 6, range: 1, moveMs: 650, atkMs: 1100, jump: 2, flies: true, role: 'Flies, hits hard' } as const;
 const OGRE = { side: 'foe', hp: 480, atk: 30, def: 8, range: 1, moveMs: 1000, atkMs: 1500, jump: 2, role: 'Huge club, slow' } as const;
 
 // The bosses: much more hp, and each one's own look and skill (its kit, in `abilities.ts`). A forest boss has none.
-const WARLORD = { side: 'foe', hp: 500, atk: 26, def: 10, range: 1, moveMs: 800, atkMs: 1200, jump: 2, role: 'Orc chief, ground slam' } as const;
+const WARLORD = { side: 'foe', hp: 380, atk: 26, def: 10, range: 1, moveMs: 800, atkMs: 1200, jump: 2, role: 'Orc chief, ground slam' } as const;
 const DEMON_LORD = { side: 'foe', hp: 350, atk: 22, def: 9, range: 1, moveMs: 700, atkMs: 1200, jump: 2, flies: true, role: 'Calls imps to his side' } as const;
 const HORNED_OGRE = { side: 'foe', hp: 700, atk: 28, def: 10, range: 1, moveMs: 1000, atkMs: 1500, jump: 2, role: 'Horns, sweeping blows' } as const;
 const FOREST = { side: 'foe', hp: 600, atk: 25, def: 8, range: 1, moveMs: 600, atkMs: 1000, jump: 2, role: 'Forest brute' } as const;
@@ -27,7 +27,7 @@ const SHAMAN_KING = { side: 'foe', hp: 400, atk: 24, def: 7, range: 3, moveMs: 7
 
 export const FOES: Record<string, UnitDef> = {
   wolfBlack: { ...WOLF, id: 'wolfBlack', name: 'Black Werewolf', sheet: 'werewolf_black', scale: 0.81 },
-  wolfRed: { ...WOLF, id: 'wolfRed', name: 'Red Werewolf', sheet: 'werewolf_red', scale: 0.81, hp: 250, atk: 26, def: 3 },
+  wolfRed: { ...WOLF, id: 'wolfRed', name: 'Red Werewolf', sheet: 'werewolf_red', scale: 0.81, hp: 250, atk: 25, def: 3 },
   wolfWhite: { ...WOLF, id: 'wolfWhite', name: 'White Werewolf', sheet: 'werewolf_white', scale: 0.81, hp: 210, atk: 22, def: 5, moveMs: 340 },
 
   minotaur1: { ...MINOTAUR, id: 'minotaur1', name: 'Minotaur', sheet: 'minotaur_1', scale: 0.5 },

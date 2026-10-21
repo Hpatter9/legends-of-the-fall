@@ -4,7 +4,7 @@ import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { fight, place, startBattle, stepBattle, type Battle } from '../src/sim/battle';
 import { rollCrit } from '../src/sim/abilities';
 import { speedOf } from '../src/sim/spells';
-import { ALL_HEROES } from '../src/sim/units';
+import { ALL_HEROES, UNITS } from '../src/sim/units';
 import { countTraits, HERO_TRAITS, membersOf, TRAITS, traitEffects } from '../src/sim/traits';
 
 const spots = (b: Battle) => {
@@ -51,7 +51,7 @@ test('each trait bonus applies to the heroes in the fight', () => {
   assert.equal(hero(started(['samurai', 'kunoichi', 'archer', 'ninjaMonk']), 'samurai').power, TRAITS.samurai.tiers[1].effects.atk);
   // Knightly: health
   const k = hero(started(['knight', 'peasant']), 'knight');
-  assert.ok(k.maxHp > 380 && k.hp === k.maxHp);
+  assert.ok(k.maxHp > UNITS.knight.hp && k.hp === k.maxHp);
   // Mystic: the king's mana
   assert.equal(started(['wizard', 'wanderer']).spells.rate, TRAITS.mystic.tiers[0].effects.mana);
   assert.equal(started(['wizard']).spells.rate, 1);
