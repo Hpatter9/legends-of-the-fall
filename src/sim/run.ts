@@ -5,6 +5,7 @@
 
 import { startBattle, type Battle, type Boost, type Stage } from './battle';
 import { BOSS_BANDS, FIELD_BANDS } from './foes';
+import { rankMult } from './meta';
 import { mixSeed, Rng } from './rng';
 import { HEROES } from './units';
 
@@ -88,8 +89,11 @@ function add(run: Run, kind: string): Owned {
 export const heroOf = (run: Run, id: number) => run.roster.find((h) => h.id === id);
 export const benched = (run: Run) => run.roster.filter((h) => !run.squad.includes(h.id));
 
-/** Hp and attack multipliers of a grade. */
-export const gradeBoost = (grade: number): Boost => ({ hp: GRADE_MULT ** (grade - 1), atk: GRADE_MULT ** (grade - 1), grade });
+/** Hp and attack multipliers of a grade, times the hero kind's rank (from its shards). */
+export const gradeBoost = (grade: number, rank = 0): Boost => {
+  const k = GRADE_MULT ** (grade - 1) * rankMult(rank);
+  return { hp: k, atk: k, grade };
+};
 
 export const isBossStage = (stage: number) => stage % BOSS_EVERY === 0;
 /** The band stage n meets: a boss band on a boss stage, else the next field band in turn (boss stages skipped). */
