@@ -63,7 +63,20 @@ export const SKILL_FX: Record<string, SkillFx> = {
   'Summon Imps': { cast: { sheet: 'darkCircle', scale: 1.8, tint: 0xff7a4a } },
   Hellfire: { cast: { sheet: 'fireCircle', scale: 1.6 }, hit: { sheet: 'fireExplosion', scale: 1.1 } },
   'Spirit Ward': { cast: { sheet: 'lightCircle', scale: 1.6 } },
+  'Holy Challenge': { cast: { sheet: 'lightCircle', scale: 1.6, tint: 0xffe27a } },
+  Benediction: { cast: { sheet: 'lightGather', scale: 1.8 } },
+  'Call Treant': { cast: { sheet: 'earthBurst', scale: 1.6, tint: 0x8aff5a } },
+  Whirlwind: { cast: { sheet: 'windVortex', scale: 1.4, tint: 0xff9a6a }, hit: { sheet: 'bloodExplosion', scale: 0.6, frameMs: 50 } },
+  'Snare Trap': { hit: { sheet: 'earthBurst', scale: 1 } },
+  Hex: { cast: { sheet: 'darkCircle', scale: 1.4, tint: 0xb06aff }, hit: { sheet: 'darkSlash', scale: 1 } },
+  'Mirror Image': { cast: { sheet: 'whiteBurst', scale: 1.5, tint: 0xd8b0ff } },
+  'Dead Eye': { hit: { sheet: 'whiteBurst', scale: 1, frameMs: 50 } },
   'Tusk Flurry': { hit: { sheet: 'bloodExplosion', scale: 0.6, frameMs: 50 } },
+  Ravage: { cast: { sheet: 'darkSlash', scale: 1.2 }, hit: { sheet: 'bloodExplosion', scale: 0.6 } },
+  'Gore Charge': { cast: { sheet: 'earthWave', scale: 1.4 }, hit: { sheet: 'earthBurst', scale: 0.9 } },
+  'Pipes of Pan': { cast: { sheet: 'lightGather', scale: 1.3, tint: 0xffd27a } },
+  'Petrifying Gaze': { cast: { sheet: 'darkCircle', scale: 1.3, tint: 0x9be07a } },
+  'War Banner': { cast: { sheet: 'goldBurst', scale: 1.4 } },
 };
 
 /** The king's spells: a sheet on each fighter the spell touches (the meteor's is its landing). */

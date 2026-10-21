@@ -7,7 +7,7 @@ import { BOSS_BANDS } from './foes';
 import type { Meta } from './meta';
 import { levelOfKind } from './levels';
 import type { Run } from './run';
-import { ALL_HEROES } from './units';
+import { ALL_HEROES, UNITS } from './units';
 import { traitsOf } from './traits';
 
 export interface AchievementCtx {
@@ -35,7 +35,7 @@ export interface Achievement {
 }
 
 /** The heroes that fought in a finished fight: every hero placed (alive or fallen). */
-const heroesIn = (b: Battle | undefined) => (b?.units ?? []).filter((u) => u.side === 'hero');
+const heroesIn = (b: Battle | undefined) => (b?.units ?? []).filter((u) => u.side === 'hero' && !UNITS[u.def].summon);
 const sumStars = (m: Meta) => Object.values(m.stars).reduce((n, s) => n + s, 0);
 const bestDaily = (m: Meta) => Math.max(0, ...Object.values(m.daily).map((e) => e.best));
 
