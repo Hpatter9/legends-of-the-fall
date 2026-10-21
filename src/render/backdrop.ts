@@ -20,6 +20,9 @@ const TINT: Record<Area, string> = {
 let layers: HTMLElement[] = [];
 let shown: Area | null = null;
 
+/** The files of an area's parallax layers, back to front (the menus lay their own copy). */
+export const backdropFiles = (area: Area): string[] => Array.from({ length: LAYERS[area] }, (_, i) => file(area, i + 1));
+
 /** Show an area's backdrop (nothing to do when it is already up). */
 export function setBackdrop(area: Area): void {
   const sky = document.getElementById('sky');

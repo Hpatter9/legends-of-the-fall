@@ -3,7 +3,8 @@
 // rank, and each rank makes its heroes a little stronger in every fight. Pure rules: no Pixi, no DOM; every pull draws
 // from a side stream of the meta seed and the pull counter, so it replays exactly.
 
-import { newCastle, readCastle, type Castle } from './castle';
+import { newCastle, readCastle, spellBudget, type Castle } from './castle';
+import { newLoadout, readLoadout, type Loadout } from './spells';
 import { Rng } from './rng';
 import { ALL_HEROES, HEROES, UNITS } from './units';
 import { MAX_STARS, starCrowns } from './stars';
@@ -37,6 +38,8 @@ export interface Meta {
   castle: Castle;
   /** Shards per hero kind (missing is none). */
   shards: Record<string, number>;
+  /** The king's spells owned and equipped (see `spells.ts`; saves from before have the starting three). */
+  spellbook: Loadout;
   /** The best stars won on each stage (keyed by the stage number; missing is none). */
   stars: Record<string, number>;
   /** Lasting XP per hero kind (missing is none); its level is read from it (`levels.ts`). */
@@ -67,7 +70,7 @@ export interface Pull {
   shards: number;
 }
 
-export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [...HEROES], pulls: 0, dry: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), bestStage: 1, tower: 0, daily: {}, bosses: [], achievements: [] });
+export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [...HEROES], pulls: 0, dry: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], achievements: [] });
 
 export const rarityOf = (kind: string): 1 | 2 | 3 => UNITS[kind]?.rarity ?? 1;
 /** The rank a hero kind has from its shards (0 to MAX_RANK). */
@@ -174,6 +177,7 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.pulls = m.pulls | 0;
       m.dry = m.dry | 0;
       m.castle = readCastle(m.castle);
+      m.spellbook = readLoadout(m.spellbook, spellBudget(m.castle));
       // (saves from before shards have none)
       const shards: Record<string, number> = {};
       if (m.shards && typeof m.shards === 'object') for (const [k, n] of Object.entries(m.shards)) if (ALL_HEROES.includes(k) && typeof n === 'number') shards[k] = n | 0;

@@ -12,7 +12,7 @@ import { mixSeed, Rng } from './rng';
 import { FOE_BANDS } from './foes';
 import { killXp } from './levels';
 import { afterBlow, landArea, pierceOf, preyOf, onStrike, rollCrit, tickStatus, tryCast, type Dot, type Zone } from './abilities';
-import { fillMana, freshSpells, settleFalls, speedOf, type SpellState } from './spells';
+import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellState } from './spells';
 import { kindsOf, traitEffects, type TraitEffects } from './traits';
 import { mergeEffects } from './relics';
 import { SPLASH_SHARE, UNITS, type Shot, type Side, type UnitDef } from './units';
@@ -55,6 +55,12 @@ export interface Unit {
   dot?: Dot & { by: number; next: number; until: number };
   /** Hasted (the king's spell) until then. */
   hasteUntil?: number;
+  /** Soaks this much damage until then (the king's Shield). */
+  shield?: { hp: number; until: number };
+  /** Slowed (Frost Nova) until then. */
+  slowUntil?: number;
+  /** Attack raised (Rally) until then. */
+  rallyUntil?: number;
   /** Charmed (Kitsune) until then: fights its own side. */
   charmUntil?: number;
   /** The next time a healer's passive mends an ally. */
@@ -103,7 +109,9 @@ export type BattleEvent =
   | { kind: 'arc'; from: number; to: number }
   | { kind: 'zone'; u: number; v: number; ms: number }
   | { kind: 'dodge'; to: number }
-  | { kind: 'spell'; id: 'heal' | 'meteor' | 'haste'; u: number; v: number }
+  | { kind: 'spell'; id: SpellId; u: number; v: number }
+  /** A spell touches this fighter (the renderer plays the spell's sheet on it). */
+  | { kind: 'spellfx'; id: SpellId; to: number }
   | { kind: 'heal'; to: number; amount: number; by?: number }
   | { kind: 'haste'; to: number; ms: number }
   | { kind: 'end'; won: boolean };
@@ -342,6 +350,16 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   const left = onStrike(b, by, to, dmg, src, splash, out);
   if (left === null) return;
   dmg = left;
+  if (to.shield) {
+    if (to.shield.until <= b.t) to.shield = undefined;
+    else {
+      const soaked = Math.min(dmg, to.shield.hp);
+      to.shield.hp -= soaked;
+      dmg -= soaked;
+      if (to.shield.hp <= 0) to.shield = undefined;
+      if (dmg <= 0) return;
+    }
+  }
   by.dealt = (by.dealt ?? 0) + Math.min(dmg, to.hp);
   to.hp = Math.max(0, to.hp - dmg);
   to.hurtAt = b.t;

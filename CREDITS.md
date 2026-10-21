@@ -64,3 +64,11 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   burst, explosion and wave, ice shield, fire circle and explosion, gold, white and blood bursts, dark circle and slash,
   moon slash, lightning burst and strike, and the pink heart. The pack's licence allows use in games, commercial ones
   included; credit appreciated (https://blueberry-assets.itch.io). Mapped to skills and spells in `src/render/skillFx.ts`.
+
+## Fight effects (`src/art/fx/vfx/`)
+
+- 27 Pixel Effects strips (six 32px frames each, copied unchanged from `pixel-effects/sprites/<effect>/sheet-32.png` in
+  the private assets repository, the **5000 Pixel Effects** pack by blueberry, https://blueberry-assets.itch.io): light,
+  earth, wind slashes; white, gold, wind, fire, ice, sand and blood puffs; white and gold dust; water ripple and splash;
+  fire sparkle and flame; white dash; light hit; dark smoke; light pillar; gold level-up; light sparkle; white sparkle;
+  gold star; and the burning, bleeding, hasted and shielded-icon status strips. Used by `src/render/vfxArt.ts`.
