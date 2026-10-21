@@ -23,14 +23,11 @@ def box(w, h, rings, fill, corner_cut=True):
     return im, px
 
 def panel():
-    # 24x24, slice 8: dark outline, gold rim (lit on top), dark gap, wood bevel, wood, gold corner studs
-    im, px = box(24, 24, [DEEP, (GOLDHI, GOLDLO), DEEP, EDGE], WOOD1)
-    for ox, oy in ((4, 4), (19, 4), (4, 19), (19, 19)):
-        for dx in (0, 1):
-            for dy in (0, 1): px[ox + dx, oy + dy] = GOLD
-        px[ox, oy] = GOLDHI; px[ox + 1, oy + 1] = GOLDLO
-    # (a soft lighter band under the rim so the wood reads as lit from above)
-    for x in range(5, 19): px[x, 5] = WOOD3
+    # 16x16, slice 6 (shown 2x, a 12px frame): dark outline, gold rim (lit on top), dark gap, wood bevel, rivets in the corners
+    im, px = box(16, 16, [DEEP, (GOLDHI, GOLDLO), DEEP, EDGE], WOOD1)
+    for ox, oy in ((2, 2), (12, 2), (2, 12), (12, 12)):
+        px[ox, oy] = GOLDHI; px[ox + 1, oy] = GOLD; px[ox, oy + 1] = GOLD; px[ox + 1, oy + 1] = GOLDLO
+    for x in range(5, 11): px[x, 5] = WOOD3
     return im
 
 def button(rim_hi, rim_lo, fill, fill_hi, lip, lip_hi=None, rim_edge=None):
@@ -49,6 +46,32 @@ def button(rim_hi, rim_lo, fill, fill_hi, lip, lip_hi=None, rim_edge=None):
     for y in range(16): px[0, y] = DEEP; px[15, y] = DEEP
     for x, y in ((0, 0), (15, 0), (0, 15), (15, 15)): px[x, y] = T
     for x, y in ((1, 1), (14, 1), (1, 14), (14, 14)): px[x, y] = DEEP
+    for x in range(4, 12): px[x, 2] = fill_hi
+    for y in range(4, 11): px[2, y] = fill_hi; px[13, y] = lip
+    # rivets: a lit pixel with a shadow pixel beside it in each corner
+    for x, y, dx in ((3, 3, 1), (12, 3, -1), (3, 12, 1), (12, 12, -1)):
+        px[x, y] = rim_hi; px[x + dx, y] = lip
+    return im
+
+def button_s(rim_hi, rim_lo, fill, fill_hi, lip):
+    # 10x10, slice 3 3 4 (shown 2x: 6px sides, 8px lower lip): the small button for crowded rows
+    im = Image.new('RGBA', (10, 10), fill); px = im.load()
+    for x in range(10):
+        for y in range(10): px[x, y] = fill
+    for x in range(2, 8): px[x, 2] = fill_hi
+    for y in (6, 7):
+        for x in range(2, 8): px[x, y] = lip
+    for x in range(1, 9): px[x, 1] = rim_hi; px[x, 8] = rim_lo
+    for y in range(1, 9): px[1, y] = rim_hi; px[8, y] = rim_lo
+    for x in range(10): px[x, 0] = DEEP; px[x, 9] = DEEP
+    for y in range(10): px[0, y] = DEEP; px[9, y] = DEEP
+    for x, y in ((0, 0), (9, 0), (0, 9), (9, 9)): px[x, y] = T
+    px[2, 2] = rim_hi; px[7, 2] = rim_hi
+    return im
+
+def chip(rim, fill):
+    # 6x6, slice 2 (shown 2x, a 4px frame): a slim label frame
+    im, px = box(6, 6, [DEEP, rim], fill)
     return im
 
 def card(rim, rim_lo, fill='#2a1a10'):
@@ -73,11 +96,12 @@ def wood():
         px[x, y] = WOOD3
     return im
 
-def ribbon():
+def ribbon(crimson=True):
     # 32x16, slice 0 12 (left and right 12 px): a crimson band with gold edges and swallow-tailed ends
     w, h = 32, 16
     im = Image.new('RGBA', (w, h)); px = im.load()
-    body = [rgb('#2a0a06'), GOLD, rgb('#c4232b'), rgb('#c4232b'), rgb('#d9573f'), rgb('#c4232b'), rgb('#c4232b'), rgb('#c4232b'), rgb('#c4232b'), rgb('#9c1a20'), rgb('#9c1a20'), rgb('#7a0f14'), GOLDLO, rgb('#2a0a06')]
+    c = ('#c4232b', '#d9573f', '#9c1a20', '#7a0f14') if crimson else ('#5a5a62', '#7a7a84', '#44444c', '#34343a')
+    body = [rgb('#2a0a06'), GOLD if crimson else rgb('#8a8a94'), rgb(c[0]), rgb(c[0]), rgb(c[1]), rgb(c[0]), rgb(c[0]), rgb(c[0]), rgb(c[0]), rgb(c[2]), rgb(c[2]), rgb(c[3]), GOLDLO if crimson else rgb('#5a5a62'), rgb('#2a0a06')]
     for x in range(w):
         for y in range(1, 15): px[x, y] = body[y - 1]
     for y in range(1, 15):  # swallow tails: a notch cut into each end
@@ -95,9 +119,24 @@ save('btn', button(EDGE, rgb('#4a2c1c'), rgb('#5a3520'), rgb('#6b4128'), rgb('#3
 save('btn-gold', button(rgb('#fff2c0'), GOLDLO, rgb('#e8962a'), rgb('#f0b44a'), rgb('#b8761e'), rgb('#8a4f12')))
 save('btn-down', button(rgb('#4a2c1c'), EDGE, rgb('#3b2316'), rgb('#3b2316'), rgb('#3b2316')))
 save('btn-gold-down', button(GOLDLO, rgb('#fff2c0'), rgb('#c4761e'), rgb('#c4761e'), rgb('#c4761e')))
+save('btn-s', button_s(EDGE, rgb('#4a2c1c'), rgb('#5a3520'), rgb('#6b4128'), rgb('#3b2316')))
+save('btn-s-down', button_s(rgb('#4a2c1c'), EDGE, rgb('#3b2316'), rgb('#3b2316'), rgb('#3b2316')))
+save('btn-s-off', button_s(rgb('#5a5048'), rgb('#2e2824'), rgb('#3e3732'), rgb('#4a423c'), rgb('#2e2824')))
+save('chip', chip(EDGE, rgb('#2a1a10')))
+save('chip-on', chip(GOLDHI, rgb('#e0912a')))
 save('btn-off', button(rgb('#5a5048'), rgb('#2e2824'), rgb('#3e3732'), rgb('#4a423c'), rgb('#2e2824')))
 RAR = {'': ('#6b4128', '#3b2316'), 'r1': ('#9a9a9a', '#555555'), 'r2': ('#4a9cff', '#2c5aa0'), 'r3': ('#b06aff', '#6a3aa8'), 'r4': ('#f0b44a', '#b8761e'), 'r5': ('#ff3a4a', '#a01828'), 'chosen': ('#ffe48a', '#f0b44a')}
 for k, (a, b) in RAR.items(): save('card' + ('-' + k if k else ''), card(rgb(a), rgb(b)))
+for k, (a, b) in RAR.items():
+    im, px = box(8, 8, [DEEP, rgb(a)], rgb('#2a1a10'))
+    save('cardb' + ('-' + k if k else ''), im)
+def cardback():
+    # 8x8 diagonal-striped tile for the back of a recruit card (tiles both ways)
+    im = Image.new('RGBA', (8, 8)); px = im.load()
+    for x in range(8):
+        for y in range(8): px[x, y] = rgb('#7a4a28') if (x + y) % 8 < 4 else rgb('#5a3520')
+    return im
+save('cardback', cardback())
 save('card-on', card(GOLDHI, GOLDLO, '#e0912a'))
 def flag():
     # 8x11 war banner for a placed card: gold bar on top, crimson cloth with gold crossed blades, a swallow tail
@@ -118,3 +157,4 @@ save('trim-l', t.transpose(Image.ROTATE_90))        # on the left edge
 save('trim-r', t.transpose(Image.ROTATE_270))       # on the right edge
 save('wood', wood())
 save('ribbon', ribbon())
+save('ribbon-grey', ribbon(False))

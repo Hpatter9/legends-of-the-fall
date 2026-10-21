@@ -3,9 +3,7 @@
 
 import coin from './art/items/lucky_coin.png';
 import sword from './art/items/weapon1.png';
-import charm from './art/items/charm1.png';
 import armour1 from './art/items/armour1.png';
-import phoenix from './art/items/phoenix.png';
 import whetstone from './art/items/whetstone.png';
 import hourglass from './art/items/hourglass.png';
 import spyglass from './art/items/spyglass.png';
@@ -14,10 +12,13 @@ import tabHeroes from './art/ui/tab-heroes.png';
 import tabBattle from './art/ui/tab-battle.png';
 import tabCastle from './art/ui/tab-castle.png';
 import tabSpells from './art/ui/tab-spells.png';
+import icCrown from './art/ui/ic-crown.png';
+import icGold from './art/ui/ic-gold.png';
+import icTrophy from './art/ui/ic-trophy.png';
 import type { Area } from './sim/board';
 import type { BuildingId } from './sim/castle';
 
-export const ICONS = { crowns: coin, gold: charm, recruit: tabRecruit, heroes: tabHeroes, battle: tabBattle, castle: tabCastle, spells: tabSpells, trophy: phoenix, daily: hourglass, tower: spyglass };
+export const ICONS = { crowns: icCrown, gold: icGold, recruit: tabRecruit, heroes: tabHeroes, battle: tabBattle, castle: tabCastle, spells: tabSpells, trophy: icTrophy, daily: hourglass, tower: spyglass };
 export const BUILDING_ICON: Record<BuildingId, string> = { treasury: coin, barracks: armour1, armoury: sword, mageTower: whetstone };
 
 export const AREA_NAMES: Record<Area, string> = { highlands: 'Highlands', forest: 'Greenwood', snow: 'Snowfields', desert: 'Dunes', volcano: 'Ashlands', dungeon: 'Dungeon' };
