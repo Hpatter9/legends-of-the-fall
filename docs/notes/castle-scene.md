@@ -32,7 +32,7 @@
   (a dpr-1 phone) the frame pans. When the village is smaller than the frame the canvas grows to fill it (`view`): grass tiles all round, and beyond a
   three-tile margin woods behind the wall and only low bushes and flowers in front of it. Taps and name tags use the same mapping (`view.ox/oy`).
 - One canvas, drawn with nearest neighbour. There is a single arrangement now (`YARD`); the earlier upright and sideways ones are gone.
-- **Pictures** (`src/art/castle/`, 50 PNGs, about 0.9 MB, bundled into game.js as data URLs, so the service worker's `FILES` is unchanged): each is one
+- **Pictures** (`src/art/castle/`, 52 PNGs, about 0.9 MB, bundled into game.js as data URLs, so the service worker's `FILES` is unchanged): each is one
   piece of the kits at **half size** (`tools/castle/prep.py`: 2x2 box average, then solid or clear), so a cottage is about 100 pixels wide.
   Nothing is drawn by code but the scaffolding, flags and effects.
 - **Ground**: `grass_tile` and `cobble_tile` (the Knights kit's) are laid as the lattice of diamonds 90 across and 52 down (`TILE_W`, `TILE_H`), rows
