@@ -2,9 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { BUILDING_IDS, maxLevel } from '../src/sim/castle';
-import { BLURB, effectText, footprint, inBlock, isPaved, layoutFor, LIGHTS, LOOKS, lookBox, SPRITE_SIZE, spriteName, stageOf, STAGES, TALL, TILE_H, TILE_W, VENTS, walkTiles, WIDE } from '../src/render/castleSpots';
+import { BLURB, effectText, footprint, inBlock, isPaved, LIGHTS, LOOKS, lookBox, pickScale, SPRITE_SIZE, spriteName, stageOf, STAGES, TILE_H, TILE_W, VENTS, walkTiles, YARD } from '../src/render/castleSpots';
 
-const LAYOUTS = { tall: TALL, wide: WIDE };
+const LAYOUTS = { yard: YARD };
 const looksOf = (id: (typeof BUILDING_IDS)[number]) => LOOKS[id];
 
 test('every picture the looks and props name exists, and its size in the table is the file\'s own', () => {
@@ -39,7 +39,7 @@ test('the wall, what stands beyond it and the trees are drawn behind everything,
   }
 });
 
-test('every upgrade has four looks and a plot on the tile lattice, inside the yard, in both arrangements', () => {
+test('every upgrade has four looks and a plot on the tile lattice, inside the yard', () => {
   for (const [name, lay] of Object.entries(LAYOUTS)) {
     assert.deepEqual(Object.keys(lay.plots).sort(), [...BUILDING_IDS].sort(), name);
     for (const id of BUILDING_IDS) {
@@ -72,8 +72,8 @@ test('every building\'s door opens onto a paved tile in front of it, and every d
     const tiles = walkTiles(lay);
     const key = (t: { u: number; v: number }) => `${t.u},${t.v}`;
     const gate = lay.props.find((p) => p.sprite === 'gatehouse')!;
-    // (the gatehouse's face looks down and right: the tile in front of it is one step along `u`)
-    const start = { u: gate.u + 1, v: gate.v };
+    // (the gatehouse stands in the south-east run, `u` = the yard's far side: the tile inside it is one step back along `u`)
+    const start = { u: gate.u - 1, v: gate.v };
     assert.ok(isPaved(lay, start.u, start.v), `${name} the road starts at the gate`);
     const seen = new Set([key(start)]);
     const queue = [start];
@@ -115,22 +115,52 @@ test('the plaza is a clear 3 x 3 of paving with the statue in its middle and a b
   }
 });
 
-test('props stand on tiles clear of every plot, and the wall closes the yard: a corner tower, a gatehouse and runs that meet', () => {
+test('props stand on tiles clear of every plot', () => {
   for (const [name, lay] of Object.entries(LAYOUTS)) {
     const used = new Set<string>();
     for (const id of BUILDING_IDS) for (const t of footprint(lay.plots[id])) used.add(`${t.u},${t.v}`);
-    for (const p of lay.props) if (p.depth === undefined) assert.ok(!used.has(`${p.u},${p.v}`), `${name} ${p.sprite} at ${p.u},${p.v} is on a plot`);
-    const tower = lay.props.find((p) => p.sprite === 'watchtower')!;
-    const gate = lay.props.find((p) => p.sprite === 'gatehouse')!;
-    assert.ok(tower && gate, name);
-    // (the left run is along `v` at the tower's `u`, the right run along `u` at its `v`; the gatehouse is in the left run)
-    assert.equal(gate.u, tower.u, `${name} gate is in the left wall`);
-    assert.ok(gate.v > tower.v, `${name} gate is below the tower`);
-    for (const p of lay.props.filter((q) => q.sprite === 'wall')) assert.ok(p.flip ? p.v === tower.v && p.u > tower.u : p.u === tower.u && p.v > tower.v, `${name} wall piece at ${p.u},${p.v} is in line with the tower`);
-    // (the yard lies inside the wall: no plot, road or plaza tile is behind it)
-    for (const id of BUILDING_IDS) assert.ok(lay.plots[id].u > tower.u + 1 && lay.plots[id].v > tower.v + 1, `${name} ${id} is inside the wall`);
-    for (const t of walkTiles(lay)) assert.ok(t.u > tower.u && t.v > tower.v, `${name} road tile ${t.u},${t.v} is inside the wall`);
+    for (const p of lay.props) if (p.depth === undefined || p.depth > -1000) assert.ok(!used.has(`${p.u},${p.v}`), `${name} ${p.sprite} at ${p.u},${p.v} is on a plot`);
   }
+});
+
+test('the wall is one closed ring: a tower at every corner, runs along all four sides with no gap, exactly one gate, and every plot well inside', () => {
+  const lay = YARD;
+  const { u0, v0, u1, v1 } = lay.yard;
+  const towers = lay.props.filter((p) => p.sprite === 'watchtower').map((p) => `${p.u},${p.v}`).sort();
+  assert.deepEqual(towers, [`${u0},${v0}`, `${u1},${v0}`, `${u0},${v1}`, `${u1},${v1}`].sort(), 'a tower on each of the four corners');
+  const gates = lay.props.filter((p) => p.sprite === 'gatehouse');
+  assert.equal(gates.length, 1, 'exactly one gate');
+  // (each side: the pieces, in order along it; a wall piece covers one tile either side of its middle, the gatehouse a tile and a half, the corner towers half a tile)
+  const sides: { name: string; along: 'u' | 'v'; fixed: number; from: number; to: number; flip?: boolean }[] = [
+    { name: 'north-west', along: 'v', fixed: u0, from: v0, to: v1 },
+    { name: 'south-east', along: 'v', fixed: u1, from: v0, to: v1 },
+    { name: 'north-east', along: 'u', fixed: v0, from: u0, to: u1, flip: true },
+    { name: 'south-west', along: 'u', fixed: v1, from: u0, to: u1, flip: true },
+  ];
+  for (const side of sides) {
+    const on = (p: { u: number; v: number }) => (side.along === 'v' ? p.u === side.fixed : p.v === side.fixed);
+    const at = (p: { u: number; v: number }) => (side.along === 'v' ? p.v : p.u);
+    const pieces = lay.props.filter((p) => (p.sprite === 'wall' || p.sprite === 'gatehouse') && on(p));
+    assert.ok(pieces.length >= 3, `${side.name} run has pieces`);
+    for (const p of pieces.filter((q) => q.sprite === 'wall')) assert.equal(!!p.flip, !!side.flip, `${side.name} piece faces the right way`);
+    const spans = pieces.map((p) => [at(p) - (p.sprite === 'gatehouse' ? 1.5 : 1), at(p) + (p.sprite === 'gatehouse' ? 1.5 : 1)]).sort((a, b) => a[0] - b[0]);
+    let reach = side.from + 0.5;
+    for (const [a, b] of spans) {
+      assert.ok(a <= reach + 0.75, `${side.name} run has a gap before ${a} (covered to ${reach})`);
+      reach = Math.max(reach, b);
+    }
+    assert.ok(reach >= side.to - 0.5 - 0.75, `${side.name} run reaches the far corner`);
+  }
+  assert.equal(gates[0].u, u1, 'the gate is in the south-east run');
+  // (the back runs sit behind everything; the near ones are sorted with the rest by their feet)
+  for (const p of lay.props.filter((q) => q.sprite === 'wall')) assert.equal(p.depth !== undefined, p.u === u0 || p.v === v0, `wall piece at ${p.u},${p.v} depth`);
+  // (the near runs must not hide any plot: two tiles of grass between a plot and a near run)
+  for (const id of BUILDING_IDS) {
+    const p = lay.plots[id];
+    assert.ok(p.u >= u0 + 2 && p.v >= v0 + 2, `${id} has grass behind it`);
+    assert.ok(p.u + p.w - 1 <= u1 - 2 && p.v + p.d - 1 <= v1 - 2, `${id} has grass between it and the near wall`);
+  }
+  for (const t of walkTiles(lay)) assert.ok(t.u > u0 && t.u < u1 && t.v > v0 && t.v < v1, `road tile ${t.u},${t.v} is inside the wall`);
 });
 
 test('a house is never used for two buildings, and every look is bigger than the one before it', () => {
@@ -149,7 +179,7 @@ test('a house is never used for two buildings, and every look is bigger than the
   }
 });
 
-test('all four buildings fit inside the scene, with nothing clipped, and the upright scene is narrow enough for a phone', () => {
+test('all four buildings fit inside the scene, with nothing clipped', () => {
   for (const [name, lay] of Object.entries(LAYOUTS))
     for (const id of BUILDING_IDS) {
       const p = lay.plots[id];
@@ -160,9 +190,39 @@ test('all four buildings fit inside the scene, with nothing clipped, and the upr
       }
       assert.ok(p.tagY! > 0 && p.tagY! <= lay.h, `${name} ${id} tag`);
     }
-  // (393 css pixels wide on the phone this is made for, 852 high: with the bars the scene gets 600, so the upright yard fits without panning)
-  assert.ok(TALL.w <= 393 && TALL.h <= 600);
-  assert.ok(WIDE.openTop >= 0 && WIDE.openTop < WIDE.h);
+  // (the whole ring and its towers, with a little grass outside)
+  for (const p of YARD.props) assert.ok(p.x > 0 && p.x < YARD.w, `${p.sprite} at ${p.u},${p.v} is inside the scene`);
+});
+
+test('the scale is a whole number of device pixels per scene pixel, as large as lets the whole village show, and it fits', () => {
+  const frames: [number, number, number][] = [
+    [393, 600, 2.75], // a phone standing (the bars take 250 of the 852)
+    [393, 600, 3],
+    [393, 600, 2.6],
+    [852, 300, 2.75], // the same phone lying down
+    [852, 300, 3],
+    [1280, 720, 1], // a desktop
+    [1920, 1000, 1],
+    [1920, 1000, 2],
+  ];
+  for (const [w, h, dpr] of frames) {
+    const { k, css } = pickScale(w, h, dpr, YARD.w, YARD.h);
+    assert.ok(Number.isInteger(k) && k >= 1, `${w}x${h}@${dpr}: k is whole`);
+    assert.ok(Math.abs(css - k / dpr) < 1e-9, 'css is k over the pixel ratio');
+    // (the whole village shows: the canvas is YARD.w * k device pixels, i.e. YARD.w * css css pixels)
+    if (k > 1 || (YARD.w * k) / dpr <= w) {
+      assert.ok(YARD.w * css <= w + 1e-6 && YARD.h * css <= h + 1e-6, `${w}x${h}@${dpr}: the village fits at k=${k}`);
+      const bigger = pickScale(w, h, dpr, YARD.w, YARD.h).k + 1;
+      assert.ok(YARD.w * bigger / dpr > w || YARD.h * bigger / dpr > h, `${w}x${h}@${dpr}: k=${k} is the largest that fits`);
+    }
+  }
+  // (a phone fits the whole village at one device pixel per scene pixel; a dpr-1 desktop gets a whole css scale)
+  assert.equal(pickScale(393, 600, 3, YARD.w, YARD.h).k, 1);
+  assert.equal(pickScale(1920, 1000, 1, YARD.w, YARD.h).css, 1);
+  // (a screen too small even at one: it still draws at one and pans)
+  assert.equal(pickScale(300, 200, 1, YARD.w, YARD.h).k, 1);
+  // (a much smaller village could be drawn bigger: the picker takes the largest whole k)
+  assert.equal(pickScale(393, 600, 3, 300, 400).k, 3);
 });
 
 test('buildings stand apart: at most a corner overlap between their grand looks', () => {
@@ -194,11 +254,6 @@ test('a building has a plot at level 0, the grand look at its top level, and eve
   assert.equal(stageOf('treasury', -3), 0);
   assert.equal(stageOf('treasury', 99), STAGES - 1);
   assert.equal(spriteName('mageTower', 2), 'mageTower2');
-});
-
-test('the upright yard is for portrait screens and the wide one for the rest', () => {
-  assert.equal(layoutFor(true), TALL);
-  assert.equal(layoutFor(false), WIDE);
 });
 
 test('vents and lights sit on the look they belong to', () => {

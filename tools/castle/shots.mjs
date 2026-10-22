@@ -1,5 +1,6 @@
 // Serves out/web and takes the Castle tab's samples at both phone sizes, with every upgrade at 0, part-built and maxed:
-//   node tools/castle/shots.mjs [extra]      (PORT; the pictures go to docs/samples/castle-<state>-<upright|sideways>.png)
+//   node tools/castle/shots.mjs [extra]      (PORT; DPR = device pixel ratio, default 3, a phone's; the pictures go to docs/samples/castle-<state>-<upright|sideways>.png,
+//   with -dpr1 added for a ratio of 1)
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
 import { readFileSync, existsSync, mkdirSync } from 'node:fs';
@@ -15,14 +16,16 @@ const srv = createServer((q, r) => {
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const HEROES = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard', 'barbarian', 'paladin', 'druid'];
 const STATES = { empty: { treasury: 0, barracks: 0, armoury: 0, mageTower: 0 }, part: { treasury: 1, barracks: 3, armoury: 2, mageTower: 1 }, maxed: { treasury: 5, barracks: 5, armoury: 5, mageTower: 4 } };
-const SIZES = { upright: { width: 393, height: 852 }, sideways: { width: 852, height: 393 } };
+const DPR = Number(process.env.DPR ?? 3);
+const TAG = DPR === 1 ? '-dpr1' : '';
+const SIZES = { upright: { width: 393, height: 852 }, sideways: { width: 852, height: 393 }, ...(process.env.DESKTOP ? { desktop: { width: 1280, height: 800 } } : {}) };
 mkdirSync('docs/samples', { recursive: true });
 const only = (process.env.ONLY ?? '').split(',').filter(Boolean);
 for (const [size, vp] of Object.entries(SIZES)) {
   if (process.env.SIZES && process.env.SIZES !== size) continue;
   for (const [state, castle] of Object.entries(STATES)) {
     if (only.length && !only.includes(state)) continue;
-    const ctx = await browser.newContext({ viewport: vp, deviceScaleFactor: 1, hasTouch: true });
+    const ctx = await browser.newContext({ viewport: vp, deviceScaleFactor: DPR, hasTouch: true });
     const page = await ctx.newPage();
     page.on('pageerror', (e) => console.log('PAGE ERROR', e.message));
     page.on('console', (m) => m.type() === 'error' && console.log('console error', m.text()));
@@ -36,7 +39,7 @@ for (const [size, vp] of Object.entries(SIZES)) {
     await page.waitForTimeout(1200);
     await page.locator('.hmTab').nth(3).click();
     await page.waitForTimeout(Number(process.env.WAIT ?? 2500));
-    await page.screenshot({ path: `docs/samples/castle-${state}-${size}.png` });
+    await page.screenshot({ path: `docs/samples/castle-${state}-${size}${TAG}.png` });
     console.log('shot', state, size);
     if (process.env.FULL) await page.evaluate(() => document.querySelector('.ctRoom').toDataURL()).then((u) => import('node:fs').then((fs) => fs.writeFileSync(`${process.env.FULL}/castle-full-${state}.png`, Buffer.from(u.split(',')[1], 'base64'))));
     if (state === 'part' && process.env.CARD) {
@@ -45,9 +48,9 @@ for (const [size, vp] of Object.entries(SIZES)) {
       await page.waitForTimeout(200);
       await page.mouse.click(box.x, box.y);
       await page.waitForTimeout(500);
-      await page.screenshot({ path: `docs/samples/castle-card-${size}.png` });
+      await page.screenshot({ path: `docs/samples/castle-card-${size}${TAG}.png` });
       await page.locator('.bcard .primary').click();
-      for (const [i, ms] of [150, 300, 400, 600, 900].entries()) { await page.waitForTimeout(ms); await page.screenshot({ path: `docs/samples/castle-build-${size}-${i}.png` }); }
+      if (DPR === 1) for (const [i, ms] of [150, 300, 400, 600, 900].entries()) { await page.waitForTimeout(ms); await page.screenshot({ path: `docs/samples/castle-build-${size}${TAG}-${i}.png` }); }
     }
     await ctx.close();
   }

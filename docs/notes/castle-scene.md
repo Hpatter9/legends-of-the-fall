@@ -3,9 +3,9 @@
 ## What it is
 - The Castle tab is a castle courtyard seen in the isometric (2:1, lit from the upper left) view of Chronos's building kits
   (`src/castle.ts`, data in `src/render/castleSpots.ts`). The owner's ask was "use some of the nicer sprites": the earlier 3/4 village yard
-  (Chronos's plain village houses, 0.48.0, `docs/samples/castle-before-after.png` shows it beside this) gave way to the richer isometric kits
+  (Chronos's plain village houses, 0.48.0; `docs/samples/castle-before-after.png` shows it beside this) gave way to the richer isometric kits
   the first worker had passed over as "far too detailed". Everything shares one view: a lattice of grass tiles with cobbled roads and a plaza, a
-  stone castle wall with a gate and a watchtower across the top, a statue in the plaza, flowerbeds and braziers.
+  closed ring of stone castle wall with a tower on each corner and one gate, a statue in the plaza, flowerbeds and braziers.
   `docs/samples/castle-candidates.png` is the contact sheet of what was surveyed (every pack in the assets repo and Chronos's building art);
   the other packs are side-view (Craftpix tropical city, vector) or top-down (Craftpix village, dungeon), so they would mix perspectives.
 - **Planned on the isometric grid** (`castleSpots.ts`): the yard is a lattice of ground tiles `(u, v)` (`u` down-right, `v` down-left; `Layout.grid` is
@@ -13,21 +13,25 @@
   - **Plots**: each building has a fixed footprint of tiles sized for its grand look (1 x 2 or 2 x 1), a `door` tile, and `flip` (the kit's doors face
     down-left; mirrored they face down-right, so the left-hand buildings are mirrored and every door faces its road). At least one tile of grass or path
     lies between any two plots, and a test keeps it so.
-  - **Roads**: one road enters by the gatehouse, winds to the plaza (a clear 3 x 3 of cobbles, the statue on the middle tile, a brazier on each corner)
+  - **Roads**: one road enters by the gatehouse and leads to the plaza (a clear 3 x 3 of cobbles, the statue on the middle tile, a brazier on each corner)
     and branches to every door; each door has a road tile in front of it. Heroes stroll those tiles only (`walkTiles`, a breadth-first route from tile
     to tile), never over the statue or a brazier.
-  - **Walls**: a corner tower, the gatehouse in the left run and plain runs in the right run, all on the same lattice lines (tower at (-5,-5), runs along
-    `u = -5` and `v = -5`), drawn behind everything (`depth`). Trees beyond them are behind the wall.
+  - **Walls: one closed ring** (`ring()` in `castleSpots.ts`): a tower on each of the four corners of an 11 x 11 tile yard (`Layout.yard`), a straight
+    run of the same wall pieces on every side (each two tiles long, mirrored on the two sides that run down-right), no gap between runs, and exactly one
+    gatehouse, in the near right-hand run (the south-east one; the road from it leads to the plaza). The two back runs are drawn behind everything
+    (`depth`); the two near runs and the side towers are sorted with the rest by their feet. Every plot is at least two tiles inside the near runs and the
+    back ones, so the near wall never hides a building.
   - **Props** sit on grass tiles beside the building they belong to, never on a road or a plot: crates and barrels by the treasury and armoury, a weapon
-    rack and hay by the barracks, crystals by the tower, lamps, flowerbeds, bushes and trees along the walls and the edges. (There is no training dummy
-    in the kits; the orcs' weapon stall is the rack.)
-  - **Name tags** sit above the roofs of the two back buildings and below the feet of the two front ones, so they never cover a door or the heroes' road.
-- One canvas in the scene's own pixels, drawn a whole number times bigger with nearest neighbour (1 on a phone, up to 4 on a big screen), panned by
-  native scroll when the screen is smaller than the scene. **Two arrangements of the same plaza** (`Layout`, `layoutFor(width < height)`):
-  - `TALL` (upright): 392 x 584, the plaza with mage tower and treasury on its north side and barracks and armoury on short roads off its south side.
-    It fits a 393x852 phone (600 px for the scene) with no panning, so nothing is cut off.
-  - `WIDE` (sideways): 756 x 520, the same plaza with all four buildings on the two roads that wrap its north side (barracks and armoury at the far
-    ends), the wall closing the yard on both sides. It opens framed on the plaza (`openTop`), with a short pan up to the gate and tower.
+    rack and hay by the barracks, crystals by the tower, lamps along the roads, flowerbeds, bushes and trees in the corners of the yard. (There is no
+    training dummy in the kits; the orcs' weapon stall is the rack.)
+  - **Name tags** sit above the roofs and shrink a little (`--ts`) with the village, but stay readable; tap targets are at least about 22 css pixels.
+- **One village for every screen, zoomed to show all of it**: the scene is 1040 x 708 scene pixels. `pickScale(boxW, boxH, dpr, sceneW, sceneH)` picks the
+  largest whole number `k` of **device** pixels per scene pixel that still shows the whole village, and the canvas's backing store is `k` times the
+  scene in device pixels (its css size is that over `devicePixelRatio`), so it stays sharp at any pixel ratio. On a phone (ratio about 2.6 to 3) that is
+  `k = 1`, about a third of a css pixel per scene pixel; on a dpr-1 desktop it is a whole css scale (1, 2, ...); if even `k = 1` does not fit the frame
+  (a dpr-1 phone) the frame pans. When the village is smaller than the frame the canvas grows to fill it (`view`): grass tiles all round, and beyond a
+  three-tile margin woods behind the wall and only low bushes and flowers in front of it. Taps and name tags use the same mapping (`view.ox/oy`).
+- One canvas, drawn with nearest neighbour. There is a single arrangement now (`YARD`); the earlier upright and sideways ones are gone.
 - **Pictures** (`src/art/castle/`, 34 PNGs, 568 KB, bundled into game.js as data URLs, so the service worker's `FILES` is unchanged): each is one
   piece of the kits at **half size** (`tools/castle/prep.py`: 2x2 box average, then solid or clear), so a cottage is about 100 pixels wide.
   Nothing is drawn by code but the scaffolding, flags and effects.
@@ -77,5 +81,6 @@
   reachable by road from the gate; the plaza is a clear 3 x 3 with the statue in the middle and a brazier on each corner; no prop stands in a road or
   on a plot; the wall's runs line up with its tower; buildings overlap at most by a corner; vents and lights lie on
   their look; the card words grow with the level.
-- `node tools/castle/shots.mjs` (after `npm run web`; `CARD=1` adds the card and build frames) makes `docs/samples/castle-{empty,part,maxed}-{upright,sideways}.png`,
-  `castle-card-*.png` and `castle-build-*-0..4.png`.
+- `node tools/castle/shots.mjs` (after `npm run web`; `CARD=1` adds the card, and the build frames at a ratio of 1) makes `docs/samples/castle-{empty,part,maxed}-{upright,sideways}.png`
+  and `castle-card-*.png` at a device pixel ratio of 3 (`DPR=3`, a phone's), and the same with `-dpr1` added at a ratio of 1 (`DPR=1`; `DESKTOP=1` adds a 1280x800 frame, where
+  the village is drawn at a whole css scale), plus `castle-build-*-dpr1-0..4.png`. At a ratio of 1 a phone-sized frame cannot hold the village at one css pixel per scene pixel, so it pans.

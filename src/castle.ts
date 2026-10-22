@@ -15,7 +15,7 @@ import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
 import { gradeOfRank } from './render/tavernSpots';
 import { strongest } from './menuHeroes';
-import { cellX, cellY, GRASS, isPaved, layoutFor, LIGHTS, LOOKS, lookBox, NAME_OF, stageOf, TILE_H, TILE_W, VENTS, walkTiles, WIDE, type Layout, type Look } from './render/castleSpots';
+import { cellX, cellY, GRASS, isPaved, layoutFor, LIGHTS, LOOKS, lookBox, NAME_OF, pickScale, stageOf, TILE_H, TILE_W, VENTS, walkTiles, YARD, type Layout, type Look } from './render/castleSpots';
 import anvil_stallUrl from './art/castle/anvil_stall.png';
 import bannerUrl from './art/castle/banner.png';
 import barracksUrl from './art/castle/barracks.png';
@@ -271,7 +271,11 @@ export class CastleScene {
   private levels: Partial<Record<BuildingId, number>> = {};
   private tagEls = new Map<BuildingId, HTMLButtonElement>();
   private scale = 1;
-  private lay: Layout = WIDE;
+  private lay: Layout = YARD;
+  /** Css pixels per scene pixel (the scale in device pixels over the device pixel ratio). */
+  private css = 1;
+  /** The canvas in scene pixels: the village in the middle, and grass all round it to fill the frame (`ox`, `oy` is where the village's corner sits). */
+  private view = { w: YARD.w, h: YARD.h, ox: 0, oy: 0 };
   private raf = 0;
   private last = 0;
   private now = 0;
@@ -374,27 +378,37 @@ export class CastleScene {
     this.raf = 0;
   }
 
-  /** Pick the arrangement and the whole-number scale (the yard bigger on a big screen); on a small one it pans inside its frame. */
+  /** Pick the whole-number scale: the largest count of device pixels per scene pixel that shows the whole village (so it stays sharp at any pixel ratio);
+   *  if even one does not fit, the frame pans inside. */
   private fit(): void {
     const h = this.root.clientHeight;
     const w = this.root.clientWidth;
     if (!h || !art) return;
-    const lay = layoutFor(w < h);
-    const s = Math.max(1, Math.min(4, Math.floor(Math.min(w / lay.w, h / lay.h))));
-    if (lay === this.lay && s === this.scale && this.still && this.canvas.width === lay.w * s) return;
+    const lay = layoutFor();
+    const dpr = window.devicePixelRatio || 1;
+    const { k, css } = pickScale(w, h, dpr, lay.w, lay.h);
+    // (the canvas fills the frame when the village is smaller than it: grass all round, the village in the middle)
+    const vw = Math.max(lay.w, Math.ceil(w / css));
+    const vh = Math.max(lay.h, Math.ceil(h / css));
+    if (lay === this.lay && k === this.scale && css === this.css && this.still && this.view.w === vw && this.view.h === vh) return;
     const changed = lay !== this.lay;
     this.lay = lay;
     this.tiles = walkTiles(lay);
-    this.scale = s;
-    this.canvas.width = lay.w * s;
-    this.canvas.height = lay.h * s;
+    this.scale = k;
+    this.css = css;
+    // (the backing store is in device pixels, k to a scene pixel; its css size is that over the pixel ratio, so one scene pixel is k whole device pixels)
+    this.view = { w: vw, h: vh, ox: Math.floor((vw - lay.w) / 2), oy: Math.floor((vh - lay.h) / 2) };
+    this.canvas.width = vw * k;
+    this.canvas.height = vh * k;
     for (const e of [this.canvas, this.stage]) {
-      e.style.width = `${lay.w * s}px`;
-      e.style.height = `${lay.h * s}px`;
+      e.style.width = `${vw * css}px`;
+      e.style.height = `${vh * css}px`;
     }
+    // (the name tags shrink a little with the village, but stay readable)
+    this.stage.style.setProperty('--ts', String(Math.max(0.7, Math.min(1, css * 1.6))));
     this.ctx.imageSmoothingEnabled = false;
-    this.still = this.paintStill(art, s);
-    this.glow = this.paintGlow(s);
+    this.still = this.paintStill(art, k);
+    this.glow = this.paintGlow(k);
     // (the heroes go back onto the new arrangement's road when it changes)
     if (changed)
       for (const wk of this.walkers.values()) {
@@ -403,13 +417,14 @@ export class CastleScene {
     this.layTags();
     requestAnimationFrame(() => {
       this.scroll.scrollLeft = (this.scroll.scrollWidth - this.scroll.clientWidth) / 2;
-      this.scroll.scrollTop = Math.max(0, lay.openTop * s);
+      this.scroll.scrollTop = (this.scroll.scrollHeight - this.scroll.clientHeight) / 2;
     });
   }
 
   /** The part that never changes: the ground (a lattice of grass tiles, cobbles where the roads and plaza are) with a few flowers laid by a fixed pattern. */
   private paintStill(a: Record<string, HTMLImageElement>, s: number): HTMLCanvasElement {
-    const { w, h, grid } = this.lay;
+    const { grid, yard } = this.lay;
+    const { w, h, ox, oy } = this.view;
     const c = el('canvas');
     c.width = w * s;
     c.height = h * s;
@@ -417,36 +432,46 @@ export class CastleScene {
     g.imageSmoothingEnabled = false;
     g.fillStyle = GRASS;
     g.fillRect(0, 0, c.width, c.height);
-    const paved = (cx: number, cy: number): boolean => {
-      const rr = Math.round((cy - grid.y) / (TILE_H / 2));
-      const cc = Math.round((cx - grid.x) / (TILE_W / 2));
-      const u = (rr + cc) / 2;
-      const v = (rr - cc) / 2;
-      return Number.isInteger(u) && isPaved(this.lay, u, v);
+    // (from here on the village's own coordinates)
+    g.translate(ox * s, oy * s);
+    const paved = (u: number, v: number): boolean => isPaved(this.lay, u, v);
+    const draw = (im: HTMLImageElement, x: number, y: number, mirror = false): void => {
+      if (mirror) {
+        g.save();
+        g.translate(x + im.width * s, y);
+        g.scale(-1, 1);
+        g.drawImage(im, 0, 0, im.width * s, im.height * s);
+        g.restore();
+      } else g.drawImage(im, x, y, im.width * s, im.height * s);
     };
     // (rows of tiles from the back to the front, each row half a tile along from the last, so a tile's rim is covered by the row in front)
-    const rows0 = Math.floor((0 - grid.y) / (TILE_H / 2)) - 2;
-    const rows1 = Math.ceil((h - grid.y) / (TILE_H / 2)) + 2;
+    const rows0 = Math.floor((-oy - grid.y) / (TILE_H / 2)) - 2;
+    const rows1 = Math.ceil((h - oy - grid.y) / (TILE_H / 2)) + 2;
+    const first = Math.floor((-ox - grid.x) / (TILE_W / 2)) - 2;
+    const decor: { r: number; x: number; y: number; im: HTMLImageElement; mirror: boolean }[] = [];
     for (let r = rows0; r <= rows1; r++) {
       const cy = grid.y + r * (TILE_H / 2);
-      const first = Math.floor((0 - grid.x) / (TILE_W / 2)) - 2;
-      for (let k = first; (k * TILE_W) / 2 + grid.x < w + TILE_W; k++) {
+      for (let k = first; (k * TILE_W) / 2 + grid.x < w - ox + TILE_W; k++) {
         if ((k - r) % 2 !== 0) continue;
         const cx = grid.x + (k * TILE_W) / 2;
-        const tile = paved(cx, cy) ? a.cobble_tile : a.grass_tile;
+        const u = (r + k) / 2;
+        const v = (r - k) / 2;
+        const tile = paved(u, v) ? a.cobble_tile : a.grass_tile;
         // (every other grass tile is mirrored, so the lawn does not show its repeat)
-        const mirror = tile === a.grass_tile && (r * 7 + k * 3) % 5 < 2;
-        const x = Math.round(cx - tile.width / 2) * s;
-        const y = (cy - TILE_H / 2) * s;
-        if (mirror) {
-          g.save();
-          g.translate(x + tile.width * s, y);
-          g.scale(-1, 1);
-          g.drawImage(tile, 0, 0, tile.width * s, tile.height * s);
-          g.restore();
-        } else g.drawImage(tile, x, y, tile.width * s, tile.height * s);
+        draw(tile, Math.round(cx - tile.width / 2) * s, (cy - TILE_H / 2) * s, tile === a.grass_tile && (r * 7 + k * 3) % 5 < 2);
+        // (beyond the wall, past a margin of grass: woods behind it, and only low bushes and flowers in front of it, so nothing hides the near runs)
+        const hash = ((u * 73856093) ^ (v * 19349663)) >>> 0;
+        const pick = hash % 100;
+        const behind = u < yard.u0 - 3 || v < yard.v0 - 3;
+        const front = !behind && (u > yard.u1 + 3 || v > yard.v1 + 3);
+        const kinds = behind ? ['oak', 'pine', 'bush', 'pine', 'oak'] : front ? ['bush', 'flowers', 'roses', 'berries'] : [];
+        if (kinds.length && pick < (behind ? 11 : 8)) {
+          const im = a[kinds[(hash >>> 8) % kinds.length]];
+          decor.push({ r, x: Math.round(cx - im.width / 2) * s, y: (cy + TILE_H / 2 - im.height) * s, im, mirror: (hash & 1) === 1 });
+        }
       }
     }
+    for (const d of decor) draw(d.im, d.x, d.y, d.mirror);
     return c;
   }
 
@@ -472,8 +497,8 @@ export class CastleScene {
       const tag = this.tagEls.get(id)!;
       const p = this.lay.plots[id];
       const box = lookBox(LOOKS[id][stageOf(id, this.levels[id] ?? 0)], p.flip);
-      tag.style.left = `${((p.x + (box.x0 + box.x1) / 2) / this.lay.w) * 100}%`;
-      tag.style.top = `${((p.tagY ?? p.y - box.h - 4) / this.lay.h) * 100}%`;
+      tag.style.left = `${((this.view.ox + p.x + (box.x0 + box.x1) / 2) / this.view.w) * 100}%`;
+      tag.style.top = `${((this.view.oy + (p.tagY ?? p.y - box.h - 4)) / this.view.h) * 100}%`;
     }
   }
 
@@ -495,7 +520,7 @@ export class CastleScene {
   }
 
   /** The tiles a hero may stroll on (the plaza's ring and the roads), for the arrangement showing. */
-  private tiles: { u: number; v: number }[] = [];
+  private tiles: { u: number; v: number }[] = walkTiles(YARD);
 
   /** Stand a hero on a random paved tile. */
   private putOnRoad(w: Walker): void {
@@ -633,6 +658,8 @@ export class CastleScene {
     if (!a || !this.still) return;
     g.globalAlpha = 1;
     g.drawImage(this.still, 0, 0);
+    g.save();
+    g.translate(this.view.ox * s, this.view.oy * s);
     const list: { depth: number; paint: () => void }[] = [];
     for (const p of this.lay.props) {
       const im = a[p.sprite];
@@ -655,6 +682,7 @@ export class CastleScene {
     this.flags();
     this.glows();
     this.motesDraw();
+    g.restore();
   }
 
   private drawLook(a: Record<string, HTMLImageElement>, id: BuildingId, look: Look, lift = 0): void {
@@ -837,16 +865,16 @@ export class CastleScene {
 
   private tap(e: PointerEvent): void {
     const box = this.canvas.getBoundingClientRect();
-    const rx = ((e.clientX - box.left) / box.width) * this.lay.w;
-    const ry = ((e.clientY - box.top) / box.height) * this.lay.h;
+    const rx = ((e.clientX - box.left) / box.width) * this.view.w - this.view.ox;
+    const ry = ((e.clientY - box.top) / box.height) * this.view.h - this.view.oy;
     let best: { id: BuildingId; depth: number } | null = null;
     for (const id of BUILDING_IDS) {
       const p = this.lay.plots[id];
       const b = lookBox(LOOKS[id][stageOf(id, this.levels[id] ?? 0)], p.flip);
       // (an empty plot is small to hit, so every building has at least a generous patch of ground)
       const cx = p.x + (b.x0 + b.x1) / 2;
-      const half = Math.max(b.w / 2, 24);
-      const tall = Math.max(b.h, 36);
+      const half = Math.max(b.w / 2, 24, 22 / this.css);
+      const tall = Math.max(b.h, 36, 40 / this.css);
       if (rx < cx - half || rx > cx + half || ry < p.y - tall || ry > p.y + 6) continue;
       if (!best || p.y > best.depth) best = { id, depth: p.y };
     }
