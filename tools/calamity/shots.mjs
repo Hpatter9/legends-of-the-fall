@@ -82,14 +82,6 @@ for (const [w, h] of [[393, 852], [360, 780]]) {
       g.towerView.open(g.run);
       return hit.id;
     }, kind);
-    await page.evaluate(() => { window.__game.run.gold = 300; });
-    const camp = await jump('recruit');
-    await climb(camp);
-    await shot('calamity-recruit');
-    await page.evaluate(() => document.querySelector('.rtItem:not([disabled])')?.click());
-    await page.waitForTimeout(300);
-    await shot('calamity-recruit-hired');
-    await closeCard();
     // a full squad: nine more heroes at assorted levels, hurt
     await page.evaluate(() => {
       const g = window.__game;
@@ -117,6 +109,14 @@ for (const [w, h] of [[393, 852], [360, 780]]) {
       await page.waitForTimeout(3500);
       await shot('calamity-result');
     }
+    await page.evaluate(() => { window.__game.run.gold = 300; });
+    const camp = await jump('recruit');
+    await climb(camp);
+    await shot('calamity-recruit');
+    await page.evaluate(() => document.querySelector('.rtItem:not([disabled])')?.click());
+    await page.waitForTimeout(300);
+    await shot('calamity-recruit-hired');
+    await closeCard();
   }
   await ctx.close();
 }

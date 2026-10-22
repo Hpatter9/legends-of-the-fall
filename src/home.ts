@@ -277,8 +277,16 @@ export class Home {
     fr.append(el('div', 'hmBanner', army && info ? `${army.name} · wave ${info.stage}/${army.waves.length}` : info ? `Stage ${info.stage} · ${next.name}` : `${next.name} · next`));
     // (the daily and tower cards hang on signposts in the camp)
     const daily = el('button', 'hmCard cpPlank');
-    daily.append(icon(ICONS.daily), el('b', '', 'Daily'), el('small', '', dailyLine(m, todayKey()).replace('Daily challenge · ', '')));
-    if (!m.daily[String(todayKey())]) daily.append(el('i', 'badge'));
+    const today = m.daily[String(todayKey())];
+    daily.append(icon(ICONS.daily), el('b', '', 'Daily'), el('small', '', today ? 'done today' : dailyLine(m, todayKey()).replace('Daily challenge · ', '')));
+    // (a new daily glows with the badge; a completed one wears a pixel check instead)
+    if (today) {
+      daily.classList.add('done');
+      const tick = el('i', 'dailyDone');
+      tick.setAttribute('role', 'img');
+      tick.setAttribute('aria-label', 'Done today');
+      daily.append(tick);
+    } else daily.append(el('i', 'badge'));
     daily.addEventListener('click', () => this.go(this.hooks.onDaily));
     const tower = el('button', `hmCard cpPlank${towerOpen(m) ? '' : ' lockedCard'}`);
     const climbing = this.hooks.slotInfo?.('tower');

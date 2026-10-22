@@ -16,6 +16,7 @@ import { drawEvent, eventAfter, type EventCard } from './events';
 import { dropGear, gearBoost, gearText, type Gear, type Slot } from './gear';
 import type { EquipStats } from './equipment';
 import { relicEffects } from './relics';
+import { noteGold, type RunRecap } from './runRecap';
 import type { TowerState } from './tower';
 import { HEROES, UNITS } from './units';
 
@@ -26,8 +27,12 @@ export const CALAMITY_SQUAD = 10;
 export const START_GOLD = 70;
 export const SUMMON_BASE = 30;
 export const SUMMON_STEP = 5;
-/** A recycled hero pays back this share of the gold paid into it (rounded, at least 1, and always less than it cost). */
-export const RECYCLE_SHARE = 0.4;
+/** A recycled hero pays back this share of the current Hire price (rounded, at least 1). */
+export const RECYCLE_SHARE = 0.5;
+/** At most this many heroes wait on the bench (the heroes not chosen for the squad); a Hire that would add an eleventh is refused. */
+export const BENCH_MAX = 10;
+/** A run may retry a wave it lost this many times. */
+export const MAX_RETRIES = 2;
 /** Hp and attack grow by this for each grade above the first. */
 export const GRADE_MULT = 1.6;
 /** Foes' hp and attack at stage 1, as a share of their stats in `foes.ts`. */
@@ -110,6 +115,10 @@ export interface Run {
   tower?: TowerState;
   /** An army run's tally for its stars (`armyStars.ts`): the battle time so far, heroes lost over the run, heroes lost in the fight with the last boss, and heroes lost in all the boss fights (the mid-bosses too). */
   tally?: { ms: number; lost: number; bossLost: number; bossFell?: number };
+  /** Retries used so far (`MAX_RETRIES` in all). */
+  retries?: number;
+  /** The whole run's figures for the recap shown when it ends (`runRecap.ts`). */
+  recap?: RunRecap;
 }
 
 /** A run that is not an ordinary one: an army's campaign (its stages are the army's waves), today's daily challenge (`practice` for a replay that does not count), or the endless tower. */
@@ -177,16 +186,34 @@ const draw = (run: Run): string => {
 };
 export const summonCost = (run: Run) => SUMMON_BASE + SUMMON_STEP * run.summons;
 
-/** Buy a random hero: grade 1, or now and then grade 2 (`luckyChance`). Returns it (or what it merged into), or null when too poor or the run is over. */
+/** The hero the next Hire would bring: its kind, and its grade (now and then a summon arrives a grade up, from its own side stream so the draws stay as they were). */
+const nextHire = (run: Run): { kind: string; grade: number } => ({
+  kind: draw(run),
+  grade: new Rng(mixSeed(run.seed, 0x1c4b, run.nextId)).chance(luckyChance(run)) ? 2 : 1,
+});
+
+/** Whether the bench is at its limit (`BENCH_MAX`). */
+export const benchFull = (run: Run): boolean => benched(run).length >= BENCH_MAX;
+
+/** Why a Hire is refused now, if it is: the run is over, gold is short, or the bench is full (a hire that would merge three of a kind into one is let through, as it frees room). */
+export function hireBlock(run: Run): 'over' | 'gold' | 'bench' | null {
+  if (run.over) return 'over';
+  if (run.gold < summonCost(run)) return 'gold';
+  if (!benchFull(run)) return null;
+  const next = nextHire(run);
+  const merges = next.grade < MAX_GRADE && run.roster.filter((h) => h.kind === next.kind && h.grade === next.grade).length >= 2;
+  return merges ? null : 'bench';
+}
+
+/** Buy a random hero: grade 1, or now and then grade 2 (`luckyChance`). Returns it (or what it merged into), or null when too poor, the bench is full or the run is over. */
 export function summon(run: Run): Owned | null {
+  if (hireBlock(run)) return null;
   const cost = summonCost(run);
-  if (run.over || run.gold < cost) return null;
   run.gold -= cost;
+  noteGold(run, 'spent', cost);
   run.summons++;
-  const kind = draw(run);
-  // (now and then a summon arrives a grade up, from its own side stream so the draws stay as they were)
-  const lucky = new Rng(mixSeed(run.seed, 0x1c4b, run.nextId)).chance(luckyChance(run));
-  return add(run, kind, cost, lucky ? 2 : 1);
+  const { kind, grade } = nextHire(run);
+  return add(run, kind, cost, grade);
 }
 
 /** The chance a bought summon arrives already at grade 2 (two stars). */
@@ -217,19 +244,36 @@ function add(run: Run, kind: string, paid: number, grade = 1): Owned {
 
 /** The gold paid into a hero. A hero from an older save has no record: it is taken to have cost the base price of a summon for each grade-1 hero in it. */
 export const paidOf = (h: Owned): number => h.paid ?? SUMMON_BASE * 3 ** (h.grade - 1);
-/** The gold recycling a hero pays back: a share of what it cost, at least 1 and never as much as it cost. */
-export const recycleValue = (h: Owned): number => Math.max(1, Math.min(paidOf(h) - 1, Math.round(paidOf(h) * RECYCLE_SHARE)));
+/** The gold recycling a hero pays back: half the Hire price as it stands now, rounded, at least 1 (whatever the hero's grade or cost). */
+export const recycleValue = (run: Run): number => Math.max(1, Math.round(summonCost(run) * RECYCLE_SHARE));
 
 /** Recycle a hero for gold: it leaves the roster and the squad, its gear goes back to the pack, and `recycleValue` is paid. The price of the next summon does not
  *  change, so this is no way to reroll for free. Returns the gold paid, or null when the hero is unknown, the run is over, or it is the last hero. */
 export function recycle(run: Run, heroId: number): number | null {
   const h = heroOf(run, heroId);
   if (!h || run.over || run.roster.length <= 1) return null;
-  const gold = recycleValue(h);
+  const gold = recycleValue(run);
   for (const g of Object.values(h.gear ?? {})) (run.items ??= []).push(g);
   run.roster = run.roster.filter((x) => x.id !== heroId);
   run.squad = run.squad.filter((id) => id !== heroId);
   run.gold += gold;
+  noteGold(run, 'earned', gold);
+  return gold;
+}
+
+/** Retries left in the run. */
+export const retriesLeft = (run: Run): number => Math.max(0, MAX_RETRIES - (run.retries ?? 0));
+/** The gold a retry pays to help the second go: one Hire at the price it stands at. */
+export const retryGold = (run: Run): number => summonCost(run);
+/** Whether a wave just lost may be tried again: the run is still going (a loss is settled by `finish` only once the player gives up), has retries left, and is not the tower (which has its own way of failing). */
+export const canRetry = (run: Run): boolean => !run.over && !run.tower && retriesLeft(run) > 0;
+/** Retry the wave: the same stage with the same buff, a `retryGold` boost to spend, one retry used. Returns the gold paid, or null when no retry may be had. */
+export function retryWave(run: Run): number | null {
+  if (!canRetry(run)) return null;
+  const gold = retryGold(run);
+  run.retries = (run.retries ?? 0) + 1;
+  run.gold += gold;
+  noteGold(run, 'earned', gold);
   return gold;
 }
 
@@ -319,7 +363,9 @@ export function finish(run: Run, won: boolean, stars = 0): void {
     const boss = isBossRun(run);
     const army = armyOfRun(run);
     const bonus = (relicEffects(run.relics).gold ?? 0) + (run.buff?.gold ?? 0);
-    run.gold += reward(run.stage) + starGold(stars) + bonus;
+    const pay = reward(run.stage) + starGold(stars) + bonus;
+    run.gold += pay;
+    noteGold(run, 'earned', pay);
     // a prize for a cursed path, and a sure piece of gear from a boss (one tier up, from its own stream)
     const prizes: Gear[] = run.buff?.gear ? [run.buff.gear] : [];
     if (boss) prizes.push(dropGear(new Rng(mixSeed(run.seed, 0x6ea2, run.stage)), (run.nextGear = (run.nextGear ?? 1) + 1) - 1, run.stage + (army ? GEAR_STAGES * armyIndex(army.id) : 0), 1));

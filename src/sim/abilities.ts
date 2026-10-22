@@ -13,6 +13,8 @@ import { fxBlow, fxStruck, fxTick, hidden } from './equipFx';
 
 /** A skill fires at this much charge. */
 export const CHARGE_MAX = 100;
+/** A foe frozen by Deep Freeze takes this much more from every blow until it thaws. */
+export const BRITTLE_MULT = 1.3;
 /** A Mythic's ultimate gathers charge at this share of its first skill's rate. */
 export const ULT_RATE = 0.45;
 
@@ -1599,6 +1601,7 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
     dmg *= 1 - huddle * Math.min(3, n);
   }
   if (to.guardUntil !== undefined && to.guardUntil > b.t) dmg *= GUARD_SHARE;
+  if (to.brittleUntil !== undefined && to.brittleUntil > b.t) dmg *= BRITTLE_MULT;
   if (team?.guard) dmg *= 1 - team.guard;
   if (src === 'dot' && to.eq?.resist) dmg *= 1 - to.eq.resist;
   if (src !== 'dot') {

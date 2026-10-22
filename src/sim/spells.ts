@@ -1,16 +1,19 @@
 // The king's spell cards, King God Castle style: the one thing the player does during a fight. Mana fills slowly over
 // the fight; a spell costs some and then has to cool down. Each spell also has a power rating, and the three the
 // player equips for a run must fit the power budget (`spellBudget` in castle.ts), so three strong spells can't be
-// taken together. Most work on a 3x3 of tiles; Rally and Earthquake need no tile. `castSpell` is the only way in; it
+// taken together. Most work on a 3x3 of tiles; Rally, Earthquake, Battle Cry and Bulwark need no tile. `castSpell` is the only way in; it
 // checks the mana, the cooldown and the tile, and leaves its events for the next tick to hand to the renderer.
 //
 // Pure rules: no Pixi, no DOM, no randomness (a cast does the same every time).
 
-import { tileAt } from './board';
-import { apart, defOf, hurt, TICK_MS, type Battle, type BattleEvent, type Unit } from './battle';
+import { standable, tileAt } from './board';
+import { CHARGE_MAX, mendUnit } from './abilities';
+import { addUnit, apart, defOf, hurt, TICK_MS, unitAt, type Battle, type BattleEvent, type Unit } from './battle';
 import { spellBudget, type Castle } from './castle';
 
-export type SpellId = 'heal' | 'meteor' | 'haste' | 'shield' | 'chain' | 'frost' | 'rally' | 'quake' | 'smite' | 'resurrect' | 'poison';
+export type SpellId =
+  | 'heal' | 'meteor' | 'haste' | 'shield' | 'chain' | 'frost' | 'rally' | 'quake' | 'smite' | 'resurrect' | 'poison'
+  | 'cleanse' | 'blink' | 'hex' | 'lance' | 'renewal' | 'deepfreeze' | 'warcry' | 'bulwark' | 'wolves' | 'starfall';
 
 /** The mana bar's top, and what it gains each second. */
 export const MANA_MAX = 10;
@@ -54,6 +57,33 @@ export const POISON_MS = 6000;
 export const POISON_EVERY = 1000;
 export const POISON_DMG = 14;
 
+/** Light Lance: raw power on every foe in the tapped tile's column. */
+export const LANCE_POWER = 85;
+/** Bulwark: every hero's shield soaks this share of its health, for `BULWARK_MS`. */
+export const BULWARK_SHARE = 0.3;
+export const BULWARK_MS = 6000;
+/** Deep Freeze: the sturdiest foe in the area is held for `DEEPFREEZE_MS` and takes `BRITTLE_MULT` times from every blow until it thaws. */
+export const DEEPFREEZE_MS = 4000;
+/** Battle Cry: every hero's skill meter jumps by this much. */
+export const WARCRY_CHARGE = 40;
+/** Meteor Shower: five small meteors (a plus, two tiles out), one every `SHOWER_GAP` ms, each blasting a 3x3 for `SHOWER_POWER` raw. */
+export const SHOWER_POWER = 55;
+export const SHOWER_GAP = 300;
+export const SHOWER_SPOTS: readonly (readonly [number, number])[] = [[0, 0], [-2, 0], [2, 0], [0, -2], [0, 2]];
+/** Call the Wolves: this many Dire Wolves (a little tougher than the Beastmaster's) come up on free tiles in the area. */
+export const WOLVES = 2;
+export const WOLF_BOOST = { hp: 1.3, atk: 1.1 };
+/** Cleanse: the share of its health a cleansed hero gains back. */
+export const CLEANSE_HEAL = 0.15;
+/** Blink: the most wounded hero leaps to the tapped tile and cannot be targeted for `BLINK_HIDE_MS`. */
+export const BLINK_HIDE_MS = 1500;
+/** Renewal: heroes in the area regain this share of their health every second for `RENEWAL_MS`. */
+export const RENEWAL_SHARE = 0.08;
+export const RENEWAL_MS = 8000;
+/** Hex: foes in the area strike with this share of their attack for `HEX_MS`. */
+export const HEX_MULT = 0.7;
+export const HEX_MS = 8000;
+
 export interface Spell {
   id: SpellId;
   name: string;
@@ -83,8 +113,18 @@ export const SPELLS: Record<SpellId, Spell> = {
   rally: sp('rally', 'Rally', 'Every hero attacks 25% harder for 8s', 4, 14000, 3, 150, 'all'),
   quake: sp('quake', 'Earthquake', 'The ground shakes: every foe on low ground takes damage', 5, 14000, 4, 180, 'all'),
   resurrect: sp('resurrect', 'Resurrect', 'A fallen hero in a 3x3 rises with half its health', 5, 20000, 5, 250),
+  cleanse: sp('cleanse', 'Cleanse', 'Heroes in a 3x3 shake off burns, bleeding, curses, slows, holds and charms, and regain 15% of their health', 2, 8000, 1, 90),
+  blink: sp('blink', 'Blink', 'Your most wounded hero leaps to the tapped tile and cannot be targeted for 1.5s', 3, 12000, 2, 110),
+  hex: sp('hex', 'Hex', 'Foes in a 3x3 strike 30% weaker for 8s', 3, 10000, 2, 130),
+  lance: sp('lance', 'Light Lance', 'A beam of light runs down a whole column and hits every foe in it', 4, 9000, 3, 140),
+  renewal: sp('renewal', 'Renewal', 'Heroes in a 3x3 regain 8% of their health every second for 8s', 4, 14000, 3, 150),
+  deepfreeze: sp('deepfreeze', 'Deep Freeze', 'The sturdiest foe in a 3x3 is frozen for 4s and takes 30% more from every blow', 4, 12000, 3, 170),
+  warcry: sp('warcry', 'Battle Cry', 'Every hero\'s skill meter jumps by 40', 4, 14000, 3, 180, 'all'),
+  bulwark: sp('bulwark', 'Bulwark', 'Every hero gains a shield worth 30% of its health for 6s', 5, 16000, 4, 220, 'all'),
+  wolves: sp('wolves', 'Call the Wolves', 'Two Dire Wolves come up on free tiles in a 3x3 and fight for you', 5, 20000, 4, 240),
+  starfall: sp('starfall', 'Meteor Shower', 'Five small meteors rain round the tapped tile, one after another, each blasting a 3x3', 7, 18000, 5, 300),
 };
-export const SPELL_IDS: SpellId[] = ['heal', 'meteor', 'haste', 'shield', 'smite', 'chain', 'poison', 'frost', 'rally', 'quake', 'resurrect'];
+export const SPELL_IDS: SpellId[] = ['heal', 'meteor', 'haste', 'shield', 'smite', 'chain', 'poison', 'frost', 'rally', 'quake', 'resurrect', 'cleanse', 'blink', 'hex', 'lance', 'renewal', 'deepfreeze', 'warcry', 'bulwark', 'wolves', 'starfall'];
 /** The three every save starts with (and has equipped). */
 export const STARTER_SPELLS: readonly SpellId[] = ['heal', 'meteor', 'haste'];
 /** How many spells a run takes. */
@@ -95,6 +135,8 @@ export interface Fall {
   at: number;
   u: number;
   v: number;
+  /** The raw power it lands with (a meteor's own `METEOR_POWER` when unset). */
+  power?: number;
 }
 
 /** A poison cloud over the 3x3 around a tile. */
@@ -152,6 +194,15 @@ const fallenIn = (b: Battle, u: number, v: number) =>
     .filter((x) => !x.alive && x.side === 'hero' && !defOf(x).summon && inArea(x, u, v) && !b.units.some((o) => o.alive && o.u === x.u && o.v === x.v))
     .sort((x, y) => apart(x, { u, v }) - apart(y, { u, v }) || x.id - y.id)[0];
 
+/** The free tiles in the 3x3 around a tile that a conjured fighter could stand on, nearest first. */
+const freeIn = (b: Battle, u: number, v: number) => {
+  const spots: { u: number; v: number }[] = [];
+  for (let dv = -1; dv <= 1; dv++) for (let du = -1; du <= 1; du++) if (standable(tileAt(b.board, u + du, v + dv)) && !unitAt(b, u + du, v + dv)) spots.push({ u: u + du, v: v + dv });
+  return spots.sort((x, y) => apart(x, { u, v }) - apart(y, { u, v }) || x.v - y.v || x.u - y.u);
+};
+/** The hero Blink would move: the one with the least health left, as a share (the lowest id of equals). */
+const mostWounded = (b: Battle) => b.units.filter((x) => x.alive && x.side === 'hero' && !defOf(x).summon).sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp || x.id - y.id)[0];
+
 /** A raw blow from the king: the foe's defence comes off. */
 const strike = (b: Battle, x: Unit, power: number, heavy: boolean, out: BattleEvent[]) => hurt(b, KING, x, Math.max(1, Math.round(power) - defOf(x).def), heavy, false, out, 'skill');
 
@@ -161,6 +212,11 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
   if (!spell || (spell.target === 'tile' && !tileAt(b.board, u, v)) || !canAfford(b, id)) return false;
   const fallen = id === 'resurrect' ? fallenIn(b, u, v) : undefined;
   if (id === 'resurrect' && !fallen) return false;
+  // (Blink needs a free tile to land on and a hero to move; the wolves need room to come up)
+  const leaper = id === 'blink' ? mostWounded(b) : undefined;
+  if (id === 'blink' && (!leaper || !standable(tileAt(b.board, u, v)) || unitAt(b, u, v))) return false;
+  const room = id === 'wolves' ? freeIn(b, u, v) : [];
+  if (id === 'wolves' && !room.length) return false;
   const s = b.spells;
   s.mana -= spell.cost;
   s.ready[id] = b.t + spell.cooldownMs;
@@ -239,6 +295,91 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
     case 'poison':
       s.clouds.push({ u, v, until: b.t + POISON_MS, next: b.t + POISON_EVERY });
       break;
+    case 'lance':
+      for (const x of b.units.filter((y) => y.alive && y.side === 'foe' && y.u === u).sort((y, z) => y.v - z.v || y.id - z.id)) {
+        fx(x);
+        strike(b, x, LANCE_POWER, false, ev);
+      }
+      break;
+    case 'bulwark':
+      for (const x of b.units) {
+        if (!x.alive || x.side !== 'hero') continue;
+        x.shield = { hp: Math.round(x.maxHp * BULWARK_SHARE), until: b.t + BULWARK_MS };
+        fx(x);
+      }
+      break;
+    case 'deepfreeze': {
+      const x = foesIn(b, u, v).sort((y, z) => z.hp - y.hp || y.id - z.id)[0];
+      if (x) {
+        x.busyUntil = Math.max(x.busyUntil, b.t + DEEPFREEZE_MS);
+        x.stunUntil = b.t + DEEPFREEZE_MS;
+        x.step = undefined;
+        x.brittleUntil = b.t + DEEPFREEZE_MS;
+        fx(x);
+      }
+      break;
+    }
+    case 'warcry':
+      for (const x of b.units) {
+        if (!x.alive || x.side !== 'hero') continue;
+        x.charge = Math.min(CHARGE_MAX, x.charge + WARCRY_CHARGE);
+        fx(x);
+      }
+      break;
+    case 'starfall':
+      SHOWER_SPOTS.forEach(([du, dv], i) => {
+        const at = { u: u + du, v: v + dv };
+        if (!tileAt(b.board, at.u, at.v)) return;
+        const ms = METEOR_MS + i * SHOWER_GAP;
+        s.falls.push({ at: b.t + ms, ...at, power: SHOWER_POWER });
+        ev.push({ kind: 'area', by: 0, id: 'meteor', ...at, ms });
+      });
+      break;
+    case 'wolves':
+      for (const at of room.slice(0, WOLVES)) fx(addUnit(b, 'wolf', at.u, at.v, WOLF_BOOST));
+      break;
+    case 'cleanse':
+      for (const x of b.units) {
+        if (!x.alive || x.side !== 'hero' || !inArea(x, u, v)) continue;
+        x.dot = undefined;
+        x.slowUntil = undefined;
+        x.charmUntil = undefined;
+        x.weakUntil = undefined;
+        // (a hold or freeze is broken: the hero is free to act on the next tick)
+        if (x.stunUntil !== undefined && x.stunUntil > b.t) x.busyUntil = Math.min(x.busyUntil, b.t + TICK_MS);
+        x.stunUntil = undefined;
+        mendUnit(x, x.maxHp * CLEANSE_HEAL, ev);
+        fx(x);
+      }
+      break;
+    case 'blink': {
+      const x = leaper!;
+      const from = { u: x.u, v: x.v };
+      x.u = u;
+      x.v = v;
+      x.step = undefined;
+      x.swing = undefined;
+      x.busyUntil = Math.max(x.busyUntil, b.t + TICK_MS * 2);
+      x.hideUntil = b.t + BLINK_HIDE_MS;
+      ev.push({ kind: 'blink', by: x.id, from, to: { u, v } });
+      fx(x);
+      break;
+    }
+    case 'renewal':
+      for (const x of b.units) {
+        if (!x.alive || x.side !== 'hero' || !inArea(x, u, v)) continue;
+        x.hot = { amount: x.maxHp * RENEWAL_SHARE, every: 1000, next: b.t + 1000, until: b.t + RENEWAL_MS + 1, by: x.id }; // (+1: the eighth second's mend still lands)
+        fx(x);
+      }
+      break;
+    case 'hex':
+      for (const x of foesIn(b, u, v)) {
+        // (a second hex only lengthens the first: the attack is cut once)
+        if (x.weakUntil === undefined) x.power = (x.power ?? 1) * HEX_MULT;
+        x.weakUntil = b.t + HEX_MS;
+        fx(x);
+      }
+      break;
     case 'resurrect': {
       const x = fallen!;
       x.alive = true;
@@ -264,7 +405,7 @@ export function settleFalls(b: Battle, out: BattleEvent[]): void {
     const f = s.falls.shift()!;
     for (const x of b.units) {
       if (!x.alive || x.side !== 'foe' || !inArea(x, f.u, f.v)) continue;
-      hurt(b, KING, x, Math.max(1, METEOR_POWER - defOf(x).def), true, false, out, 'skill');
+      hurt(b, KING, x, Math.max(1, (f.power ?? METEOR_POWER) - defOf(x).def), true, false, out, 'skill');
     }
   }
   for (const c of s.clouds) {
@@ -274,11 +415,16 @@ export function settleFalls(b: Battle, out: BattleEvent[]): void {
     }
   }
   s.clouds = s.clouds.filter((c) => c.until > b.t);
-  for (const x of b.units)
+  for (const x of b.units) {
     if (x.rallyUntil !== undefined && x.rallyUntil <= b.t) {
       x.power = (x.power ?? 1) / RALLY_MULT;
       x.rallyUntil = undefined;
     }
+    if (x.weakUntil !== undefined && x.weakUntil <= b.t) {
+      x.power = (x.power ?? 1) / HEX_MULT;
+      x.weakUntil = undefined;
+    }
+  }
 }
 
 /* -------------------------------------------------------------- the loadout */
