@@ -50,7 +50,8 @@ import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, type SpellId } fr
 import { bindSpellbook } from './spellbook';
 import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
-import { countTraits, kindsOf, traitsOf, TRAITS } from './sim/traits';
+import { closestTrait, countTraits, kindsOf, nextTierLine, traitsOf, TRAITS } from './sim/traits';
+import { placeSynergies, startSynergies } from './synergyView';
 import { UnitSprite } from './render/unitView';
 import { flyUp, recyclePuff, summonBurst } from './render/uiFx';
 import { Fx, loadFx } from './render/fx';
@@ -419,6 +420,7 @@ class Game {
     this.endIntro();
     this.stats = startStats(this.b.units);
     startFight(isBossRun(this.run));
+    startSynergies(countTraits(kindsOf(this.b.units)));
     keepAwake(true);
     this.chosen = null;
     this.boardView.clearMarks();
@@ -559,7 +561,8 @@ class Game {
     twist.style.top = `${top.bottom + 2}px`;
     const below = twist.hidden ? top.bottom : twist.getBoundingClientRect().bottom + 2;
     bar.style.top = `${below + 4}px`;
-    const head = bar.hidden ? below : bar.getBoundingClientRect().bottom + 4;
+    // (the row of active synergies sits under the bars during a fight)
+    const head = placeSynergies(bar.hidden ? below : bar.getBoundingClientRect().bottom + 4);
     const area = { x: 0, y: head, w: viewW(), h: panel.top - head };
     const b = this.b.board;
     let x0 = Infinity;
@@ -1591,6 +1594,8 @@ class Game {
 
   /** The trait strip: the traits of the heroes placed, lit when their bonus is on; a tap says what one does. */
   private traitPick?: string;
+  /** The tier each trait stood at the last time the strip was drawn, so a tier that just woke can light up once. */
+  private traitTiers = new Map<string, number>();
   private refreshTraits(): void {
     const strip = $('traits');
     const hint = $('traitHint');
@@ -1599,18 +1604,41 @@ class Game {
     if (strip.dataset.key === key) return;
     strip.dataset.key = key;
     strip.replaceChildren();
+    const woke: string[] = [];
     for (const c of counts) {
+      const was = this.traitTiers.get(c.trait.id) ?? -1;
+      const lit = c.tier > was && strip.dataset.drawn === '1';
+      if (lit) woke.push(`${c.trait.name}: ${c.trait.tiers[c.tier].text}`);
       const pill = document.createElement('button');
-      pill.className = `trait ${c.trait.kind}${c.active ? ' on' : ''}${this.traitPick === c.trait.id ? ' picked' : ''}`;
+      pill.className = `trait ${c.trait.kind}${c.active ? ' on' : ''}${lit ? ' wake' : ''}${this.traitPick === c.trait.id ? ' picked' : ''}`;
+      // (the chip says the count and what the next tier gives; a trait at its top tier shows just the count)
+      const next = c.trait.tiers[c.tier + 1];
       pill.textContent = `${c.trait.name} ${c.count}/${c.goal}`;
+      if (next) {
+        const fx = document.createElement('small');
+        fx.textContent = next.text;
+        pill.append(fx);
+      }
       pill.addEventListener('click', () => {
         this.traitPick = this.traitPick === c.trait.id ? undefined : c.trait.id;
         this.refreshTraits();
       });
       strip.append(pill);
     }
+    this.traitTiers = new Map(counts.map((c) => [c.trait.id, c.tier]));
+    strip.dataset.drawn = '1';
     const picked = counts.find((c) => c.trait.id === this.traitPick);
-    hint.textContent = picked ? `${picked.trait.name}: ${picked.trait.tiers.map((t) => `${t.need} heroes, ${t.text}`).join('; ')}` : counts.length ? 'Different heroes of a trait give a team bonus' : '';
+    const near = closestTrait(counts);
+    hint.classList.toggle('wake', woke.length > 0);
+    hint.textContent = woke.length
+      ? `Synergy active! ${woke.join('; ')}`
+      : picked
+        ? `${picked.trait.name}: ${picked.trait.tiers.map((t) => `${t.need} heroes, ${t.text}`).join('; ')}`
+        : near
+          ? `${near.trait.name}: ${nextTierLine(near)}`
+          : counts.length
+            ? 'Different heroes of a trait give a team bonus'
+            : '';
   }
 
   private refreshBench(): void {

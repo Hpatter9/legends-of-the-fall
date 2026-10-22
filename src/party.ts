@@ -10,6 +10,7 @@ import { countTraits, TRAITS, traitsOf } from './sim/traits';
 import { portrait } from './render/sheets';
 import { drawHeroSheet, starsOf } from './menuHeroes';
 import { kindPower, powerText } from './sim/power';
+import { ROLE_NAMES, roleOf, suggestParty } from './sim/suggest';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -36,6 +37,7 @@ export class Party {
   ) {
     $('ptBack').addEventListener('click', () => this.close(this.onBack));
     $('ptGo').addEventListener('click', () => this.confirm());
+    $('ptSuggest').addEventListener('click', () => this.suggest());
     $('ptSheet').addEventListener('click', (e) => e.target === $('ptSheet') && this.closeSheet());
   }
 
@@ -64,6 +66,16 @@ export class Party {
     this.closeSheet();
     $('party').hidden = true;
     then?.();
+  }
+
+  /** Fill the draft with the best party the unlocked heroes make (nothing is saved until Start or Done). */
+  private suggest(): void {
+    this.picked = suggestParty(this.meta.unlocked, this.slots, (k) => kindPower(this.meta, k));
+    const traits = countTraits(this.picked).filter((c) => c.active).map((c) => c.trait.name);
+    const roles = [...new Set(this.picked.map(roleOf))].map((r) => ROLE_NAMES[r]);
+    this.note = '';
+    this.draw();
+    $('ptHint').textContent = `Suggested: ${traits.length ? `wakes ${traits.join(', ')}; ` : ''}${roles.join(', ')}`;
   }
 
   /** Add a hero to the party, or take it out. A full party asks for one out first. */
