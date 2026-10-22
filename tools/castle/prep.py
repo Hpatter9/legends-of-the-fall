@@ -18,9 +18,9 @@ PICKS = {
     'tavern': K + 'tavern', 'church': K + 'chapel', 'stable': K + 'stable', 'cart': K + 'cart', 'shed': S + 'stockpile', 'granary': K + 'granary',
     'atelier': F + 'workshop', 'manor': L + 'tavern', 'baskets': DR + 'baskets', 'stall': K + 'market_stall', 'stall2': S + 'market_stall', 'stall3': N + 'carpet_stall',
     'field': K + 'field_tile', 'field2': S + 'field_tile', 'herb': DR + 'herb_garden_tile', 'signpost': K + 'signpost',
-    # the countryside: farmhouse, silo, corral, pen, bridge, fence, trees, a signpost, a big haystack
-    'farmhouse': S + 'cottage', 'silo': S + 'granary', 'corral': N + 'horse_corral', 'pen': DR + 'animal_pen', 'bridge': S + 'bridge', 'fence': S + 'fence',
-    'birch': DR + 'birch_tree', 'great': DR + 'great_oak', 'sign': S + 'signpost', 'haybig': N + 'hay_bales', 'water_tile': 'kits/merfolk/shallow_water_tile',
+    # trees to peek over the wall, a signpost for the Armies road, and the courtyard's well, patterned paving, pots and hedge
+    'birch': DR + 'birch_tree', 'great': DR + 'great_oak', 'sign': S + 'signpost', 'well': K + 'well', 'flagstone': D + 'flagstone_tile',
+    'pots': DR + 'clay_pots', 'hedge': DR + 'hedge_wall_run',
     # walls and gates
     'gatehouse': K + 'gatehouse', 'wall': K + 'stone_wall_run',
     # props
@@ -116,11 +116,6 @@ for name, src in sorted(PICKS.items()):
         im = soften_rim(im)
     if name == 'wall':
         im = wall_cell(im)
-    if name == 'water_tile':
-        # (the water tile is a diamond a little narrower than the ground's 90: stretched to 90 across so tiles laid edge to edge show no grass between)
-        im = Image.open(ISO + 'kits/merfolk/shallow_water_tile.png').convert('RGBA')
-        im = im.resize((90, round(im.height * 90 / im.width)), Image.NEAREST)
-        im = im.crop(im.getchannel('A').getbbox())
     im.save(f'{out}/{name}.png', optimize=True)
     sizes[name] = im.size
 print('SPRITE_SIZE:')

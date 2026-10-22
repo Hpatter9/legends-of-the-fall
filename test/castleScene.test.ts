@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { BUILDING_IDS, maxLevel } from '../src/sim/castle';
-import { BLURB, effectText, footprint, inBlock, isPaved, LIGHTS, lookFor, LOOKS, lookBox, pickScale, PLACE_IDS, PLACE_LOOK, PLACES, PLOT_IDS, SPRITE_SIZE, spriteName, stageOf, STAGES, TILE_H, TILE_W, VENTS, walkTiles, wallBounds, WALL_RISE, WALL_STEP, YARD } from '../src/render/castleSpots';
+import { BLURB, cellX, cellY, decorAt, effectText, footprint, inBlock, isPaved, pavingAt, TOP_GAP, viewFor, VIEW_W, LIGHTS, lookFor, LOOKS, lookBox, pickScale, PLACE_IDS, PLACE_LOOK, PLACES, PLOT_IDS, SPRITE_SIZE, spriteName, stageOf, STAGES, TILE_H, TILE_W, VENTS, walkTiles, WALL_RISE, WALL_STEP, YARD } from '../src/render/castleSpots';
 
 const LAYOUTS = { yard: YARD };
 const looksOf = (id: (typeof BUILDING_IDS)[number]) => LOOKS[id];
@@ -21,10 +21,17 @@ test('every picture the looks and props name exists, and its size in the table i
 });
 
 test('every picture is used (by a look, a prop or the ground), and the ground tiles are one lattice cell across', () => {
-  const used = new Set<string>(['grass_tile', 'cobble_tile', 'water_tile']);
+  const used = new Set<string>(['grass_tile', 'cobble_tile']);
   for (const id of BUILDING_IDS) for (const look of looksOf(id)) for (const p of look.parts) used.add(p.sprite);
   for (const id of PLACE_IDS) for (const p of PLACE_LOOK[id].parts) used.add(p.sprite);
-  for (const lay of Object.values(LAYOUTS)) for (const p of [...lay.props, ...lay.ground, ...lay.scenery]) used.add(p.sprite);
+  for (const lay of Object.values(LAYOUTS)) for (const p of lay.props) used.add(p.sprite);
+  // (the paving's flagstones, and the woods and lawn scenery, are picked tile by tile)
+  for (const lay of Object.values(LAYOUTS)) for (let u = -40; u <= 60; u++) for (let v = -40; v <= 60; v++) {
+    const d = decorAt(lay, u, v);
+    if (d) used.add(d.sprite);
+    const pv = pavingAt(lay, u, v);
+    if (pv) used.add(pv);
+  }
   assert.deepEqual(Object.keys(SPRITE_SIZE).filter((k) => !used.has(k)), []);
   // (the tiles come from the isometric kits, half size: a diamond about 90 across, so rows half a tile apart meet edge to edge)
   for (const t of ['grass_tile', 'cobble_tile']) assert.ok(Math.abs(SPRITE_SIZE[t][0] - TILE_W) <= 1, t);
@@ -73,8 +80,8 @@ test('every building\'s door opens onto a paved tile in front of it, and every d
     const tiles = walkTiles(lay);
     const key = (t: { u: number; v: number }) => `${t.u},${t.v}`;
     const gate = lay.props.find((p) => p.sprite === 'gatehouse')!;
-    // (the gatehouse stands in the north-west run, whose face looks down and right: the tile inside it is one step on along `u`)
-    const start = { u: gate.u + 1, v: gate.v };
+    // (the gatehouse stands in the north-east run, whose face looks down and left: the tile inside it is one step on along `v`)
+    const start = { u: gate.u, v: gate.v + 1 };
     assert.ok(isPaved(lay, start.u, start.v), `${name} the road starts at the gate`);
     const seen = new Set([key(start)]);
     const queue = [start];
@@ -131,7 +138,7 @@ test('the wall has two sides, north-west and north-east: a tower at the corner a
   assert.deepEqual(towers.map((p) => `${p.u},${p.v}`).sort(), [`${u0},${v0}`, `${u1},${v0}`, `${u0},${v1}`].sort(), 'a tower at the north corner and at the end of each run');
   const gates = lay.props.filter((p) => p.sprite === 'gatehouse');
   assert.equal(gates.length, 1, 'exactly one gate');
-  assert.equal(gates[0].u, u0, 'the gate is in the north-west run');
+  assert.equal(gates[0].v, v0, 'the gate is in the north-east run');
   const [W] = SPRITE_SIZE.wall;
   const north = towers.find((p) => p.u === u0 && p.v === v0)!;
   const cells = lay.props.filter((p) => p.sprite === 'wall');
@@ -168,9 +175,9 @@ test('the wall has two sides, north-west and north-east: a tower at the corner a
   for (const p of lay.props.filter((q) => q.sprite === 'wall' || q.sprite === 'gatehouse')) assert.ok(p.depth !== undefined && p.depth <= -1000 + 1, `wall piece at ${p.u},${p.v} is behind`);
   for (const p of towers.filter((q) => q.depth !== undefined)) assert.ok(p.depth! > cells[0].depth!, 'a tower is drawn over the wall');
   for (const id of PLOT_IDS) assert.ok(lay.plots[id].u >= u0 + 1 && lay.plots[id].v >= v0 + 1, `${id} has a tile of grass behind it`);
-  // (the chapel is not in the corner: the corner tower shows)
+  // (the chapel does not hide the corner tower: its spire stays below the tower's top)
   const chapel = lay.plots.chapel;
-  assert.ok(chapel.u >= u0 + 2 && chapel.v >= v0 + 2, 'the chapel stands two tiles in from the corner');
+  assert.ok(chapel.y - lookBox(lookFor('chapel', 0)).h > north.y - SPRITE_SIZE.watchtower[1] + 40, 'the corner tower shows above the chapel');
   for (const t of walkTiles(lay)) assert.ok(t.u > u0 && t.v > v0, `road tile ${t.u},${t.v} is inside the wall`);
 });
 
@@ -205,33 +212,89 @@ test('all four buildings fit inside the scene, with nothing clipped', () => {
   for (const p of YARD.props) assert.ok(p.x > 0 && p.x < YARD.w, `${p.sprite} at ${p.u},${p.v} is inside the scene`);
 });
 
-test('one fixed scale: a whole number of device pixels per scene pixel, the largest at which the wall fits the frame from side to side with a margin', () => {
-  const wall = wallBounds(YARD);
-  const wallW = wall.x1 - wall.x0;
-  // (from the left tower's outer edge to the right tower's: the whole width of the village, no wider than the scene)
-  assert.ok(wallW > 900 && wallW <= YARD.w, `wall is ${wallW} wide`);
-  assert.ok(wall.top >= 0, 'the back corner tower is inside the scene');
-  const frames: [number, number][] = [
-    [393, 2.6], [393, 2.75], [393, 3], // a phone standing
-    [1280, 1], [1920, 1], [1920, 2], [2560, 1],
-  ];
-  for (const [w, dpr] of frames) {
-    const { k, css } = pickScale(w, dpr, wallW);
-    assert.ok(Number.isInteger(k) && k >= 1, `${w}@${dpr}: k is whole`);
-    assert.ok(Math.abs(css - k / dpr) < 1e-9, 'css is k over the pixel ratio');
-    // (the wall fits with 8 css pixels spare each side, unless even one device pixel per scene pixel is too big)
-    if (wallW / dpr <= w - 16) {
-      assert.ok(wallW * css <= w - 16 + 1e-6, `${w}@${dpr}: the wall fits at k=${k}`);
-      assert.ok((wallW * (k + 1)) / dpr > w - 16, `${w}@${dpr}: k=${k} is the largest that fits`);
-    } else assert.equal(k, 1);
+test('one close-up scale: a whole number of device pixels per scene pixel that shows about the same width on every screen', () => {
+  // (a phone standing: 2 device pixels per scene pixel at a ratio of 2.6 to 3, the frame showing about 540 to 620 scene pixels across)
+  for (const w of [360, 393, 412]) for (const dpr of [2.6, 2.75, 3]) {
+    const { k, css } = pickScale(w, dpr);
+    assert.equal(k, 2, `${w}@${dpr}`);
+    assert.ok(Math.abs(css - k / dpr) < 1e-9);
+    assert.ok(w / css >= 450 && w / css <= 650, `${w}@${dpr} shows ${w / css} scene pixels across`);
   }
-  // (a phone standing: one device pixel per scene pixel, the wall nearly the whole width; at dpr 1 a whole css scale)
-  assert.equal(pickScale(393, 3, wallW).k, 1);
-  assert.equal(pickScale(393, 2.75, wallW).k, 1);
-  assert.ok(wallW * pickScale(393, 2.75, wallW).css > 393 * 0.85);
-  assert.equal(pickScale(1280, 1, wallW).css, 1);
-  assert.equal(pickScale(2560, 1, wallW).css, 2);
-  assert.equal(pickScale(300, 1, wallW).k, 1);
+  // (any other screen gets the whole number that shows about the same: a ratio of 1 a whole css scale)
+  for (const [w, dpr] of [[393, 1], [393, 2], [412, 1.5], [1280, 1], [1920, 1], [1920, 2], [2560, 1]] as const) {
+    const { k, css } = pickScale(w, dpr);
+    assert.ok(Number.isInteger(k) && k >= 1, `${w}@${dpr}: k is whole`);
+    assert.ok(Math.abs(css - k / dpr) < 1e-9);
+    if (dpr === 1) assert.ok(Number.isInteger(css), `${w}@${dpr}: a whole css scale`);
+    if (w >= 1000) assert.ok(w / css >= VIEW_W * 0.65 && w / css <= VIEW_W * 1.6, `${w}@${dpr} shows ${w / css}`);
+  }
+});
+
+// the three phones the game is checked on (css pixels: the frame is what is left between the chips bar and the tab bar)
+const PHONES: [number, number][] = [[393, 650], [360, 580], [412, 715]];
+
+test('the wall runs off both sides of the screen with no end tower showing, and the courtyard and every door are on screen at every phone size', () => {
+  const lay = YARD;
+  const towers = lay.props.filter((p) => p.sprite === 'watchtower');
+  const [tw] = SPRITE_SIZE.watchtower;
+  for (const [w, h] of PHONES)
+    for (const dpr of [2.75, 3]) {
+      const view = viewFor(lay, w, h, dpr);
+      const left = -view.ox;
+      const right = view.w - view.ox;
+      assert.equal(view.h, Math.ceil(h / view.css), 'the canvas is exactly the frame');
+      // (the corner tower stands under the top of the frame; the other two towers, at the runs' far ends, are off the screen)
+      const north = towers.find((p) => p.u === lay.yard.u0 && p.v === lay.yard.v0)!;
+      assert.ok(Math.abs((view.oy + north.y - 134) * view.css - TOP_GAP) < 2, `${w}x${h}@${dpr} corner tower under the top`);
+      for (const t of towers) if (t !== north) assert.ok(t.x + tw / 2 < left || t.x - tw / 2 > right, `${w}x${h}@${dpr} the tower at ${t.u},${t.v} is off the screen`);
+      // (so the two runs reach both edges)
+      const cells = lay.props.filter((p) => p.sprite === 'wall');
+      assert.ok(cells.some((c) => c.x < left + 10), `${w}x${h}@${dpr} the north-west run reaches the left edge`);
+      assert.ok(cells.some((c) => c.x > right - 10), `${w}x${h}@${dpr} the north-east run reaches the right edge`);
+      // (the plaza, every door and every tag are inside the frame, the sign and its tag too)
+      const inside = (x: number, y: number, what: string): void => {
+        assert.ok(x >= left && x <= right && y >= -view.oy && y <= view.h - view.oy, `${w}x${h}@${dpr} ${what} (${x}, ${y}) is on screen`);
+      };
+      const plaza = lay.plaza;
+      for (const [u, v] of [[plaza.u0, plaza.v0], [plaza.u1, plaza.v0], [plaza.u0, plaza.v1], [plaza.u1, plaza.v1]]) inside(cellX(lay.grid, u, v), cellY(lay.grid, u, v), 'a plaza corner');
+      for (const id of PLOT_IDS) {
+        const p = lay.plots[id];
+        inside(cellX(lay.grid, p.door.u, p.door.v), cellY(lay.grid, p.door.u, p.door.v), `${id} door`);
+        const box = lookBox(lookFor(id, STAGES - 1), p.flip);
+        const tx = p.x + (box.x0 + box.x1) / 2 + (p.tagDx ?? 0);
+        // (a tag is about 55 css pixels across: its whole width fits)
+        const half = 30 / view.css;
+        assert.ok(tx - half >= left && tx + half <= right, `${w}x${h}@${dpr} ${id} tag fits across`);
+        inside(tx, p.tagY!, `${id} tag`);
+        // (a building at the edge may be cropped, but more than half of it shows)
+        const shown = Math.min(p.x + box.x1, right) - Math.max(p.x + box.x0, left);
+        assert.ok(shown >= box.w * 0.55, `${w}x${h}@${dpr} ${id} is cropped to ${Math.round((shown / box.w) * 100)}%`);
+      }
+    }
+});
+
+test('the countryside is only the road, the lawn and its scenery: nothing stands on a road, a plot or a village prop, and the signpost is on the road', () => {
+  const lay = YARD;
+  const taken = new Set<string>();
+  for (const id of PLOT_IDS) for (const t of footprint(lay.plots[id])) taken.add(`${t.u},${t.v}`);
+  for (const p of lay.props) taken.add(`${p.u},${p.v}`);
+  let count = 0;
+  for (let u = -40; u <= 60; u++)
+    for (let v = -40; v <= 60; v++) {
+      const d = decorAt(lay, u, v);
+      if (!d) continue;
+      count++;
+      assert.ok(!taken.has(`${u},${v}`) && !isPaved(lay, u, v), `${d.sprite} at ${u},${v} is on a road, a plot or a prop`);
+      assert.ok(u < lay.yard.u0 || v < lay.yard.v0 || u > lay.yard.u1 || v > lay.yard.v1, `${d.sprite} at ${u},${v} is inside the wall`);
+    }
+  assert.ok(count > 200, 'woods behind the wall and scenery on the lawn');
+  // (the road runs from the village's south street to the bottom of the scene)
+  assert.ok(isPaved(lay, 3, 6), 'the road starts at the village');
+  assert.ok(Math.max(...lay.land.road.map((r) => r.u0 + r.v0)) * 26 + lay.grid.y > lay.h - 100, 'the road runs to the bottom');
+  assert.ok(isPaved(lay, lay.plots.armies.door.u, lay.plots.armies.door.v), 'the signpost opens onto the road');
+  assert.equal(pavingAt(lay, 1, 1), 'flagstone');
+  assert.equal(pavingAt(lay, 1, 2), 'cobble_tile');
+  assert.equal(pavingAt(lay, 20, -20), null);
 });
 
 test('buildings stand apart: at most a corner overlap between their grand looks', () => {
@@ -321,26 +384,4 @@ test('the market and the garden: two or three stalls on the plaza\'s edge or the
   // (the beds sit together in the south corner: three on one row, next to each other)
   const row = beds.filter((p) => p.v === 5).map((p) => p.u).sort((a, b) => a - b);
   assert.ok(row.length >= 3 && row.every((u, i) => i === 0 || u === row[i - 1] + 1), 'three beds side by side');
-});
-
-test('the countryside: the road runs from the village to the bottom of the scene, and no scenery sits on a road, the water or a plot', () => {
-  const lay = YARD;
-  const { land } = lay;
-  // (the main road reaches the bottom of the scene's land and joins the village's own road)
-  assert.ok(isPaved(lay, 3, 6), 'the road starts at the village');
-  assert.ok(Math.max(...land.road.map((r) => r.u0 + r.v0)) * 26 + lay.grid.y > lay.h - 200, 'the road runs to the bottom');
-  const taken = new Set<string>();
-  for (const b of [lay.plaza, ...lay.roads]) for (let u = b.u0; u <= b.u1; u++) for (let v = b.v0; v <= b.v1; v++) taken.add(`${u},${v}`);
-  const water = new Set(land.water.map((t) => `${t.u},${t.v}`));
-  for (const id of PLOT_IDS) for (const t of footprint(lay.plots[id])) taken.add(`${t.u},${t.v}`);
-  for (const p of [...lay.scenery, ...lay.ground]) {
-    // (the bridge is the one thing that stands on the road)
-    if (p.sprite === 'bridge') continue;
-    assert.ok(!taken.has(`${p.u},${p.v}`), `${p.sprite} at ${p.u},${p.v} is on a road or a plot`);
-    assert.ok(!water.has(`${p.u},${p.v}`), `${p.sprite} at ${p.u},${p.v} is in the water`);
-  }
-  for (const p of lay.props) if (p.depth === undefined) assert.ok(!lay.scenery.some((q) => q.u === p.u && q.v === p.v), `scenery on the village prop at ${p.u},${p.v}`);
-  assert.ok(isPaved(lay, land.bridge.u, land.bridge.v), 'the bridge carries the road');
-  assert.ok(isPaved(lay, lay.plots.armies.door.u, lay.plots.armies.door.v), 'the signpost opens onto the road');
-  assert.ok(lay.villageH < lay.h);
 });

@@ -31,27 +31,27 @@
     rack and hay by the barracks, crystals by the tower, lamps along the roads, flowerbeds, bushes and trees in the corners of the yard. (There is no
     training dummy in the kits; the orcs' weapon stall is the rack.)
   - **Name tags** sit above the roofs and shrink a little (`--ts`) with the village, but stay readable; tap targets are at least about 22 css pixels.
-- **One fixed scale, no zoom** (the owner: "the map doesn't need to zoom, it just needs to fit the wall from side to side"). `pickScale(boxW, dpr, wallW)` picks the
-  largest whole number `k` of **device** pixels per scene pixel at which the wall, from the left tower's outer edge to the right tower's (`wallBounds`),
-  fits the frame width with 8 css pixels spare each side (at least 1); the canvas's backing store is `k` times the scene and its css size is that over
-  `devicePixelRatio`, so it stays sharp at any pixel ratio. On a phone 393 css wide at a ratio of 2.75 to 3 that is `k = 1`, the wall spanning nearly the
-  whole width. The game is upright only: there is no sideways layout. There is no zoom, pinch or double tap, and the page does not scroll.
-  - The canvas fills the whole frame with real ground tiles (no fade, no flat field): the back corner tower sits `TOP_GAP` (6 css px) under the chips bar,
-    the wall centred side to side. The canvas is exactly the frame's height (chips bar to tab bar): a taller phone shows more countryside, a shorter one crops the
-    bottom of it and never the village (`Layout.villageH`). Taps and name tags use
-    the same mapping (`view.ox/oy`).
+- **One close-up scale, no zoom** (the owner: "way more zoomed in ... the wall needs to extend past the edge of the screen"). `pickScale(boxW, dpr)` picks the whole
+  number `k` of **device** pixels per scene pixel that shows about `VIEW_W` (560) scene pixels across the frame: `k = 2` on a phone 360 to 412 css wide at a ratio of
+  2.6 to 3 (a scene pixel about 0.7 css pixels), `k = 1` on a ratio-2 phone, the whole css scale (1, 2, 3) of about the same look at a ratio of 1. The canvas's
+  backing store is `k` times the scene and its css size is that over `devicePixelRatio`, so it stays sharp at any ratio. The game is upright only; there is no zoom,
+  pinch, double tap, or scrolling.
+  - `viewFor(lay, boxW, boxH, dpr)` (castleSpots.ts) gives the frame's mapping: the canvas is exactly the frame (chips bar to tab bar), the plaza's column (the back
+    corner tower's) in the middle, the back corner tower `TOP_GAP` (26 css px) under the top so treetops show over the wall. The two back wall runs run diagonally
+    off both sides of the screen (the far towers are 11 tiles out, off screen). The gatehouse stands in the north-east run (a gap between the treasury and the
+    armoury, with a short road down to the main street), half off the right edge. Beyond the wall it is woods (`decorAt`).
+  - The courtyard is the plaza (flagstones and cobbles in a chequer, `pavingAt`) with the statue, four braziers, a well, a market of three stalls with barrels and
+    crates, lanterns, banners on poles, pots, flowerbeds, a garden, hay; the eight buildings stand round it (the chapel under the corner tower, the mage tower and
+    barracks down the left, the treasury and armoury down the right, the stable and tavern in front of the plaza and the library below). Buildings at the left
+    and right edges may be cropped (a test keeps more than half of each in view, with its door and tag, at 360x580, 393x650 and 412x715 css).
+  - **The front**: the main road leaves the village's open front and zigzags down to the bottom of the scene, with a signpost beside it (the Armies place: tag
+    "Armies · to battle", a tap goes to the Battle tab) and a lawn of bushes, flowers, rocks, hay and trees thickening outward (`decorAt`: a fixed hash of the
+    tile, never on paving, a plot, a village prop or within a tile of the road). A taller phone shows more of the road and lawn; a shorter one crops the bottom of it.
+    Heroes stroll the plaza and the roads as far down as the picture shows (`fit()` filters the walk tiles to the view).
   - **Name tags** are real buttons at least 32 css px square with 10 px names and 9 px second lines ("Mage Tower" / "4/4", "Tavern" / "· your heroes"), put at
-    fixed spots (`Plot.tagAt`, scene pixels) round the village so none overlap at `k = 1` and none covers a door.
+    fixed spots (`Plot.tagAt`, scene pixels) round the village so none overlap and none covers a door; every tag's whole width is inside the frame at the three phone sizes.
 - One canvas, drawn with nearest neighbour. There is a single arrangement (`YARD`), upright only.
-- **The countryside** (`src/render/castleLand.ts`, plain data on the same lattice, built by `buildLand`): the main road leaves the village's open front
-  (tile 3,6) and zigzags two tiles wide down to the bottom of the scene (`LAND_ROWS`); a stream crosses it under a little bridge and a pond lies east of
-  it; fields (the kits' field tiles, fenced on two sides) lie either side with a farmhouse, silo and haystacks, a horse corral and an animal pen, an orchard
-  of oaks and berry bushes; woods (oak, pine, birch, great oak) thicken towards the edges and further down. Everything is placed by a fixed hash of the
-  tile (no randomness), never within a tile of the road or water, never in the village's box, never on a plot (`test/castleScene.test.ts` checks it).
-  Water tiles and field beds are painted into the still ground; trees, fences and buildings are drawn sorted with the village by their foot, and only those
-  in view. A signpost by the road near the bottom is the **Armies** place (tag "Armies · to battle"; a tap goes to the Battle tab). Heroes stroll the road
-  as far down as the picture shows (`fit()` filters the walk tiles to the view).
-- **Pictures** (`src/art/castle/`, 52 PNGs, about 0.9 MB, bundled into game.js as data URLs, so the service worker's `FILES` is unchanged): each is one
+- **Pictures** (`src/art/castle/`, 59 PNGs, about 1 MB, bundled into game.js as data URLs, so the service worker's `FILES` is unchanged): each is one
   piece of the kits at **half size** (`tools/castle/prep.py`: 2x2 box average, then solid or clear), so a cottage is about 100 pixels wide.
   Nothing is drawn by code but the scaffolding, flags and effects.
 - **Ground**: `grass_tile` and `cobble_tile` (the Knights kit's) are laid as the lattice of diamonds 90 across and 52 down (`TILE_W`, `TILE_H`), rows
@@ -120,10 +120,10 @@
 ## Tests and samples
 - `test/castleScene.test.ts`: every picture named exists and its size in `SPRITE_SIZE` is the file's own (read from the PNG header); four looks
   per building, a plot inside the yard; no house sprite in two buildings and every look bigger than the last; the grand
-  look of every building fits inside the yard and the upright yard is no wider than a phone; every picture is used and the ground tiles are one
+  look of every building fits inside the yard; every picture is used and the ground tiles are one
   lattice cell wide; no two plots share a tile or sit nearer than one tile apart; every door has a paved tile in front of it, facing the right way and
   reachable by road from the gate; the plaza is a clear 3 x 3 with the statue in the middle and a brazier on each corner; no prop stands in a road or
-  on a plot; no scenery sits on a road, the water or a plot, the bridge carries the road and the signpost opens onto it; the wall's runs line up with its tower; buildings overlap at most by a corner; vents and lights lie on
+  on a plot; no lawn or woods scenery sits on a road, a plot or a prop and the signpost opens onto the road; the wall runs off both screen edges with no end tower showing and the plaza, every door and tag are on screen at three phone sizes; the one close-up scale is whole and about the same width everywhere; the wall's runs line up with its tower; buildings overlap at most by a corner; vents and lights lie on
   their look; the card words grow with the level.
 - `node tools/castle/shots.mjs` (after `npm run web`; `CARD=1` adds the card) makes `docs/samples/castle-{empty,part,maxed}-upright.png` at 393x852 and `castle-card-upright.png`,
   plus `castle-maxed-360x780.png` and `castle-maxed-412x915.png`, all at a device pixel ratio of 3 (`DPR=3`, a phone's).
