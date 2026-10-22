@@ -8,7 +8,7 @@ import { BUILDING_IDS, BUILDINGS, buildMs, canBuildChapel, CHAPEL_COST, CHAPEL_M
 import { CastleScene, lookPicture } from './castle';
 import { BLURB, effectText } from './render/castleSpots';
 import { PULL_COST, saveMeta, type Meta, type Pull } from './sim/meta';
-import { dailyLine, towerLine, towerOpen } from './sim/modes';
+import { dailyLine, towerOpen } from './sim/modes';
 import { CAL_MAPS } from './sim/calamity';
 import { ARMIES, armyById, armyCleared, armyIsNew, armyStars, armyUnlocked, bossOf, clearedCount, markSeen } from './sim/armies';
 import { ACHIEVEMENTS, claimAchievement, unclaimed } from './sim/achievements';
@@ -272,55 +272,67 @@ export class Home {
     // (the party stands round the fire, the strongest in the middle)
     const party = strongest(m, 99).filter((k) => m.party.includes(k));
     const boss = UNITS[bossOf(next)];
-    this.camp.update(m, party, { army: next, boss: boss.name, sheet: boss.sheet });
     page.querySelector('.hmFront')?.remove();
+    // (the bottom bar, below the camp's picture so it covers none of it: what the next fight is, then Party, Battle! and Continue)
     const fr = el('div', 'hmFront');
     if (this.note) fr.append(el('div', 'hmNote', this.note));
-    fr.append(el('div', 'hmBanner', army && info ? `${army.name} · wave ${info.stage}/${army.waves.length}` : info ? `Stage ${info.stage} · ${next.name}` : `${next.name} · next`));
-    // (the daily and tower cards hang on signposts in the camp)
-    const daily = el('button', 'hmCard cpPlank');
+    // (the run's wave is shown once, on Continue: the ribbon names the army alone, or the next army when no run is going)
+    fr.append(el('div', 'hmBanner', info ? (army ? army.name : `${next.name}`) : `${next.name} · next`));
+    const go = el('div', 'hmGo');
+    const has = this.hooks.hasRun();
+    const party2 = el('button', 'hmLink hmSide', 'Party');
+    party2.id = 'hmParty';
+    party2.addEventListener('click', () => this.go(this.hooks.onParty));
+    const battle = el('button', 'hmBattle');
+    battle.id = 'hmBattle';
+    battle.append(el('span', '', 'Battle!'));
+    battle.setAttribute('aria-label', ARMIES.some((a) => armyIsNew(m, a.id)) ? 'Battle! A new army marches. Choose an army' : 'Battle! Choose an army');
+    if (ARMIES.some((a) => armyIsNew(m, a.id))) battle.append(el('i', 'badge'));
+    battle.addEventListener('click', () => this.openArmies());
+    go.append(party2, battle);
+    if (has) {
+      const cont = el('button', 'hmLink hmSide hmCont');
+      cont.append(el('b', '', 'Continue'), el('small', '', army && info ? `wave ${info.stage}/${army.waves.length}` : info ? info.label.replace(/^tower · /, '') : 'run'));
+      cont.addEventListener('click', () => this.go(this.hooks.onContinue));
+      go.append(cont);
+    } else go.append(el('span', 'hmSpacer'));
+    fr.append(go);
+    // (the camp's places, each tapped in the scene: a picture with its name plate under it)
+    const place = (id: string, cls: string, title: string, line: string, label: string, onTap: () => void): HTMLButtonElement => {
+      const b = el('button', `cpPlace ${cls}`.trim());
+      if (id) b.id = id;
+      const tag = el('span', 'cpTag');
+      tag.append(el('b', '', title), el('small', '', line));
+      b.append(tag);
+      b.setAttribute('aria-label', label);
+      b.addEventListener('click', onTap);
+      return b;
+    };
+    // (the Daily board: a new daily wears the red dot; a done one a green check)
     const today = m.daily[String(todayKey())];
-    daily.append(icon(ICONS.daily), el('b', '', 'Daily'), el('small', '', today ? 'done today' : dailyLine(m, todayKey()).replace('Daily challenge · ', '')));
-    // (a new daily glows with the badge; a completed one wears a pixel check instead)
+    const dailyLineText = today ? 'done today' : dailyLine(m, todayKey()).replace('Daily challenge · ', '');
+    const daily = place('hmDaily', today ? 'daily done' : 'daily', 'Daily', dailyLineText, `Daily challenge: ${dailyLineText}`, () => this.go(this.hooks.onDaily));
     if (today) {
-      daily.classList.add('done');
       const tick = el('i', 'dailyDone');
       tick.setAttribute('role', 'img');
       tick.setAttribute('aria-label', 'Done today');
       daily.append(tick);
     } else daily.append(el('i', 'badge'));
-    daily.addEventListener('click', () => this.go(this.hooks.onDaily));
-    const tower = el('button', `hmCard cpPlank${towerOpen(m) ? '' : ' lockedCard'}`);
-    tower.id = 'hmTower';
+    // (the Tower: shut, dimmed and chained, until the first army is beaten; a climb begun stays open whatever the unlock says)
     const climbing = this.hooks.slotInfo?.('tower');
-    tower.append(icon(ICONS.tower), el('b', '', 'Tower'), el('small', '', climbing ?? (towerOpen(m) ? towerLine(m).replace('Endless tower · ', '') : `after ${ARMIES[0].name.split(' ')[0]}s`)));
-    // (a climb begun stays open, whatever the unlock says)
-    tower.disabled = !towerOpen(m) && !climbing;
-    tower.addEventListener('click', () => this.go(this.hooks.onTower));
+    const towerUp = towerOpen(m) || !!climbing;
+    const towerLine2 = climbing ?? (towerOpen(m) ? (m.tower ? `best ${m.tower}` : 'not climbed yet') : `opens after ${ARMIES[0].name.split(' ')[0]}s`);
+    const tower = place('hmTower', towerUp ? '' : 'locked', 'Tower', towerLine2, `Endless tower: ${towerLine2}`, () => this.go(this.hooks.onTower));
+    tower.disabled = !towerUp;
+    // (the Calamity: the portal; the plate carries the saved run or the best)
+    const going = this.hooks.slotInfo?.('calamity');
+    const calLine = going ?? (m.calamity?.best ? `best ${m.calamity.best} of ${CAL_MAPS} maps` : 'one hero, a climb');
+    const calamity = place('hmCalamity', '', 'Calamity', calLine, `The Calamity portal: ${calLine}`, () => this.go(this.hooks.onCalamity));
     this.camp.dailySlot.replaceChildren(daily);
     this.camp.towerSlot.replaceChildren(tower);
-    const go = el('div', 'hmGo');
-    const has = this.hooks.hasRun();
-    const battle = el('button', 'hmBattle');
-    battle.id = 'hmBattle';
-    battle.append(el('span', '', 'Battle!'), el('small', '', ARMIES.some((a) => armyIsNew(m, a.id)) ? 'A new army marches' : 'Choose an army'));
-    battle.addEventListener('click', () => this.openArmies());
-    go.append(battle);
-    const party2 = el('button', 'hmLink', 'Party');
-    party2.id = 'hmParty';
-    party2.addEventListener('click', () => this.go(this.hooks.onParty));
-    go.append(party2);
-    // (the calamity: a card of its own under the party link; it carries the run being played, if one is saved)
-    const going = this.hooks.slotInfo?.('calamity');
-    const calamity = el('button', 'hmLink hmCalamity', `Calamity · ${going ?? (m.calamity?.best ? `best ${m.calamity.best} of ${CAL_MAPS} maps` : 'one hero, a short climb')}`);
-    calamity.id = 'hmCalamity';
-    calamity.addEventListener('click', () => this.go(this.hooks.onCalamity));
-    go.append(calamity);
-    if (has) {
-      const cont = el('button', 'hmLink', `Continue · ${info?.label ?? 'run'}`);
-      cont.addEventListener('click', () => this.go(this.hooks.onContinue));
-      go.append(cont);
-    }
+    this.camp.calamitySlot.querySelector('.cpPlace')?.remove();
+    this.camp.calamitySlot.append(calamity);
+    this.camp.update(m, party, { army: next, boss: boss.name, sheet: boss.sheet }, !towerUp);
     // (the chest stash: the chests the armies' stars have earned sit on the camp's cart, on the left)
     const stash = el('div', 'csStash');
     drawChestStash(stash, m, () => {
@@ -328,7 +340,6 @@ export class Home {
       this.refresh();
     });
     this.camp.stashMount.replaceChildren(stash);
-    fr.append(go);
     page.append(fr);
   }
 

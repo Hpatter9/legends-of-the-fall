@@ -194,5 +194,5 @@ body.towerUp #version { z-index: 7; }
 .cvHero.on { border-color: var(--gold-hi); box-shadow: 0 0 0 3px var(--gold-hi), 0 0 12px rgba(255, 220, 120, 0.5); }
 .cvNote { margin: 0; min-height: 34px; display: flex; flex-direction: column; text-align: center; font-size: 12px; color: var(--dim); }
 .cvNote b { color: var(--gold-hi); font: 700 15px var(--display); }
-.hmCalamity { color: #ffb08a; border-color: #b8442e; }
+.hmCalamity b { color: #ffb08a; }
 .rtLv { color: var(--gold-hi); font-size: 10px; }

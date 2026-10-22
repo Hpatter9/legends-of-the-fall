@@ -15,7 +15,8 @@ import { dropGear, gearText, type Gear } from './gear';
 import { FALLEN, healParty } from './health';
 import { drawEvent, TOWER_EVENT_KINDS } from './events';
 import type { Meta } from './meta';
-import { drawOffer, eliteAt, eliteFight, OFFER_SIZE } from './elites';
+import { drawOffer, eliteAt, eliteFight, OFFER_SIZE, sideEliteAt } from './elites';
+import { SIDE_BASE, sideSpots, type SideSpot } from './calLand';
 import { ALL_RELIC_IDS, RELICS, relicEffects } from './relics';
 import { mixSeed, Rng } from './rng';
 import { addTwists, TWISTS } from './twists';
@@ -113,6 +114,8 @@ export interface Current {
   camp?: string;
   /** A mystery floor's choice has turned into a mimic's fight, made when the card closes (`finishMystery`). */
   mimic?: boolean;
+  /** A hidden side spot of a calamity's map (`calLand.ts`): clearing it leaves the party where it stood, on the same floor. */
+  side?: boolean;
 }
 
 export interface TowerSummary {
@@ -152,6 +155,8 @@ export interface TowerState {
   armies: string[];
   /** The nodes taken on this act's map, in order. */
   path: number[];
+  /** The hidden side spots taken or skipped on this act's map (by id, `calLand.ts`); a calamity's. */
+  sideDone?: number[];
   /** The relics an elite offers, until one is taken (`takeRelic` in `elites.ts`). */
   offer?: string[];
   /** The elite that paid the offer (for the card's words). */
@@ -333,6 +338,13 @@ export function choices(run: Run): MapNode[] {
   return t.map[t.at].next.map((id) => t.map[id]);
 }
 
+/** The hidden side spots the party may take now: those hanging from the node it stands at, not yet taken (a calamity's; none while a node is in play). They are optional: the road's own choices stay as they are. */
+export function sideChoices(run: Run): SideSpot[] {
+  const t = run.tower;
+  if (!t?.maps || t.cur || run.over || t.at < 0) return [];
+  return sideSpots(run.seed, t.act, t.map).filter((s) => s.from === t.at && !t.sideDone?.includes(s.id));
+}
+
 /* ------------------------------------------------------------------ the fights */
 
 /** Foes' hp and attack on a floor, as a share of their stats in `foes.ts`. */
@@ -383,7 +395,7 @@ function baseSpec(run: Run, kind: NodeKind, floor: number, nodeId?: number): Fig
   }
   if (kind === 'boss') return { band: [...FOE_BANDS[BOSS_BANDS[((run.tower?.act ?? actOf(floor)) - 1) % BOSS_BANDS.length]]], stage: { foes: { hp: k, atk: k }, boss: BOSS, area } };
   // (a named elite waits at an elite node; a call without a node keeps the plain elite band)
-  const named = kind === 'elite' && nodeId !== undefined && run.tower ? eliteAt(run.seed, run.tower.act, run.tower.map, nodeId) : undefined;
+  const named = kind === 'elite' && nodeId !== undefined && run.tower ? (nodeId >= SIDE_BASE ? sideEliteAt(run.seed, run.tower.act, run.tower.map, nodeId - SIDE_BASE) : eliteAt(run.seed, run.tower.act, run.tower.map, nodeId)) : undefined;
   if (named) return eliteFight(named, k, ELITE_MULT, area);
   if (kind === 'elite') return { band: bandFor(run, floor, 1), stage: { foes: { hp: k * ELITE_MULT, atk: k * ELITE_MULT }, boss: ELITE_LEADER, area } };
   return { band: bandFor(run, floor, 0), stage: { foes: { hp: k, atk: k }, area } };
@@ -462,15 +474,19 @@ function stockChest(run: Run, floor: number): Treasure {
 /** Enter a node from the choices: a battle is made ready (the page starts it), the rest are laid out. False when it can't be picked now. */
 export function enterNode(run: Run, id: number): boolean {
   const t = run.tower;
-  const node = choices(run).find((n) => n.id === id);
+  const side = id >= SIDE_BASE ? sideChoices(run).find((s) => s.id === id) : undefined;
+  const node = side ? { id, kind: side.kind as NodeKind, twist: undefined } : choices(run).find((n) => n.id === id);
   if (!t || !node) return false;
   const floor = run.stage;
   t.lastBoss = undefined;
   const cur: Current = { id, kind: node.kind };
+  if (side) cur.side = true;
   if (node.kind === 'fight' || node.kind === 'elite' || node.kind === 'boss') cur.fight = fightSpec(run, node.kind, floor, node.twist, id);
   if (node.kind === 'shop') cur.shop = stockShop(run, floor);
   if (node.kind === 'recruit') cur.hires = stockHires(run, floor);
   if (node.kind === 'treasure') cur.chest = stockChest(run, floor);
+  // (a hidden hoard is gold alone: the side spots are small rewards, so the road's own stay what they were)
+  if (side && cur.chest) cur.chest = { gold: Math.round(cur.chest.gold / 2) };
   t.cur = cur;
   if (node.kind === 'mystery') run.event = drawEvent(run, floor, TOWER_EVENT_KINDS);
   return true;
@@ -484,6 +500,13 @@ export function clearNode(run: Run): void {
   const t = run.tower;
   const cur = t?.cur;
   if (!t || !cur) return;
+  if (cur.side) {
+    // (a hidden side spot is done: the party is back on the road where it stood, on the same floor, and the road's choices are as they were)
+    (t.sideDone ??= []).push(cur.id);
+    t.cur = undefined;
+    run.event = undefined;
+    return;
+  }
   t.path.push(cur.id);
   t.cur = undefined;
   run.event = undefined;
@@ -502,6 +525,7 @@ export function clearNode(run: Run): void {
     t.at = -1;
     t.row = 0;
     t.path = [];
+    t.sideDone = undefined;
   } else {
     t.at = cur.id;
     t.row++;
@@ -536,7 +560,7 @@ export const FIGHT_GEAR = 0.3;
 /** A won fight teaches the run's heroes: their XP (by hero) goes onto them, and `t.gains` keeps what each got for the result screen. */
 function teachFight(run: Run, b: Battle): void {
   const t = run.tower!;
-  const gains = fightXpByHero(b, xpRate(run.castle));
+  const gains = fightXpByHero(b, xpRate(run.castle) * (t.cur?.side ? 0.5 : 1));
   const before = new Map(run.roster.map((h) => [h.id, levelOfXp(h.xp ?? 0, RUN_MAX_LEVEL)] as const));
   const ups = new Map(gainRunXp(run, gains).map((u: LevelUp & { id: number }) => [u.id, u] as const));
   t.gains = Object.entries(gains).map(([id, xp]) => {
@@ -565,20 +589,23 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
   }
   for (const u of b.units) if (u.side === 'hero' && u.tag !== undefined) t.hp[String(u.tag)] = u.alive ? Math.max(FALLEN * 0.4, u.hp / u.maxHp) : FALLEN;
   if (run.local) teachFight(run, b);
-  healParty(run, kind === 'boss' ? BOSS_HEAL : WIN_HEAL);
+  // (a hidden spot's win does not heal: the party goes back to the road as hurt as the fight left it)
+  if (!t.cur?.side) healParty(run, kind === 'boss' ? BOSS_HEAL : WIN_HEAL);
   const bonus = (relicEffects(run.relics).gold ?? 0) + (run.buff?.gold ?? 0);
   const twist = t.cur?.fight?.stage.twist;
-  run.gold += Math.round(reward(floor) * (kind === 'elite' ? ELITE_GOLD : kind === 'boss' ? 1.2 : 1) * (twist?.gold ?? 1)) + bonus;
+  run.gold += Math.round(reward(floor) * (kind === 'elite' && !t.cur?.side ? ELITE_GOLD : kind === 'boss' ? 1.2 : 1) * (twist?.gold ?? 1)) + bonus;
   const prizes: Gear[] = run.buff?.gear ? [run.buff.gear] : [];
   const rng = new Rng(mixSeed(run.seed, 0xe11e, floor));
   // (a run whose heroes start bare finds gear in its fights too: now and then in a plain one, always from an elite; from a side stream)
-  if (run.local && (kind === 'elite' || (kind === 'fight' && new Rng(mixSeed(run.seed, 0x6ea5, floor)).chance(FIGHT_GEAR)))) prizes.push(dropGear(new Rng(mixSeed(run.seed, 0x6ea6, floor)), gearId(run), floor, kind === 'elite' ? 1 : 0));
+  if (run.local && !t.cur?.side && (kind === 'elite' || (kind === 'fight' && new Rng(mixSeed(run.seed, 0x6ea5, floor)).chance(FIGHT_GEAR)))) prizes.push(dropGear(new Rng(mixSeed(run.seed, 0x6ea6, floor)), gearId(run), floor, kind === 'elite' ? 1 : 0));
   const relics = unownedRelics(run);
   const relicOf = (id: string) => {
     (run.relics ??= []).push(id);
     run.found!.push(`the ${RELICS[id].name} (${RELICS[id].text})`);
   };
-  if (kind === 'elite') {
+  if (kind === 'elite' && t.cur?.side) {
+    // (a hidden mini-boss pays the gold, and neither a relic nor gear)
+  } else if (kind === 'elite') {
     // (an elite always pays a relic, one of three: the page offers them on the map; none left, it pays gear)
     const offer = drawOffer(run, floor);
     if (offer.length) {

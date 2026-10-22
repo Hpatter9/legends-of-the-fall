@@ -1,7 +1,7 @@
 # Calamity
 
 A King God Castle style mode on the tower's machinery (`src/sim/calamity.ts`, `tower.ts`, `modes.ts` `calamityRun`,
-`towerView.ts`, `calamityView.ts`). Home screen: a "Calamity" pill under Party (open from the start).
+`towerView.ts`, `calamityView.ts`). Home screen: a portal in the war camp with a small board under it (open from the start). **The map is no longer the tower's look: it is a local isometric land with fog and hidden side spots, see `calamity-map.md`.**
 
 - **Start**: pick one owned hero (level 1). The run's `local` rules apply (see tower-reset.md); 40 gold.
 - **Maps**: 6 maps of 6, 7, 7, 8, 8 and 8 floors (`CAL_ROWS`), each ending in a boss of its own (`calamityBosses.ts`); each map has its own
