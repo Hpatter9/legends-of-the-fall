@@ -31,3 +31,8 @@ None used (0 generations). The shared account's balance read 0 generations (the 
 
 ## Home.ts
 Only the Battle tab changed: `drawBattle` now feeds the camp and hangs the cards in its boards; `MenuScene` (`src/menuScene.ts`) and its CSS are gone.
+
+## Finishing touches
+- The chests lie in one row on the cart (up to four, then a "+n" count), checked with 1, 3 and 6 chests and an opening (`docs/samples/camp-after-chests-{1,3,6}-*.png`, `-open`).
+- The war table's plate hangs just below the table (it covers no tent or hero); the Tower board reads "Tower / after Orcs" while locked.
+- The party stays at the whole-number size it has: a step up would double the figures past the frame.

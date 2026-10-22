@@ -237,7 +237,7 @@ export class Home {
     if (!m.daily[String(todayKey())]) daily.append(el('i', 'badge'));
     daily.addEventListener('click', () => this.go(this.hooks.onDaily));
     const tower = el('button', `hmCard cpPlank${towerOpen(m) ? '' : ' lockedCard'}`);
-    tower.append(icon(ICONS.tower), el('b', '', towerOpen(m) ? 'Tower' : 'Locked'), el('small', '', towerLine(m).replace('Endless tower · ', '').replace(/^beat the /i, 'beat ')));
+    tower.append(icon(ICONS.tower), el('b', '', 'Tower'), el('small', '', towerOpen(m) ? towerLine(m).replace('Endless tower · ', '') : `after ${ARMIES[0].name.split(' ')[0]}s`));
     tower.disabled = !towerOpen(m);
     tower.addEventListener('click', () => this.go(this.hooks.onTower));
     this.camp.dailySlot.replaceChildren(daily);

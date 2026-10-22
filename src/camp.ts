@@ -370,8 +370,7 @@ export class CampScene {
     if (!n) return;
     this.plate.replaceChildren(el('b', '', n.army.name), el('small', '', `led by ${n.boss}`));
     this.plate.setAttribute('aria-label', `War table: ${n.army.name}, led by ${n.boss}. Opens your party.`);
-    const t = this.table;
-    Object.assign(this.plate.style, this.at(camp.table.x, camp.table.y - (t ? t.height - 10 : 80)));
+    Object.assign(this.plate.style, this.at(camp.table.x, camp.table.y + 1));
   }
 
   /** The sky: the dusk's own sky picture with the night's showing through at the top, in a few steps (so it keeps its pixels). */

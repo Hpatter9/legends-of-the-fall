@@ -105,7 +105,7 @@ export function campLayout(w: number, h: number): Camp {
   const fx = cx;
   const hero = (dx: number, dy: number, face: 1 | -1): HeroSpot => ({ x: fx + dx, y: fireY + dy, face });
   const heroes = [hero(0, 50, 1), hero(-56, 36, 1), hero(56, 36, -1), hero(-96, 6, 1), hero(96, 6, -1)];
-  const tableY = buttonTop - 10;
+  const tableY = buttonTop - 38;
   const cartY = buttonTop - 6;
   const wall: Piece[] = [];
   // (the wall runs from the gate down and out to both edges, one cell at a time, each laid a step along and below the last)
@@ -133,7 +133,7 @@ export function campLayout(w: number, h: number): Camp {
     { sprite: 'bush', x: cx + 40, y: fireY + 126 },
     { sprite: 'rocks', x: cx - 24, y: fireY + 134 },
   ];
-  const cart = { x: cx - 108, y: cartY };
+  const cart = { x: cx - 98, y: cartY };
   const boardY = gateY - 4;
   return {
     w,
@@ -146,7 +146,7 @@ export function campLayout(w: number, h: number): Camp {
     heroes,
     table: { x: cx + 104, y: tableY },
     cart,
-    stash: { x: cart.x - 66, y: cart.y - 84, w: 132, h: 66 },
+    stash: { x: cart.x - 78, y: cart.y - 84, w: 156, h: 66 },
     boards: {
       daily: { x: w - BOARD.w - 8, y: boardY, w: BOARD.w, h: BOARD.h },
       tower: { x: 8, y: boardY, w: BOARD.w, h: BOARD.h },

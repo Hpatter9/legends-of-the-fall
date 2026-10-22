@@ -1,4 +1,5 @@
 // Serves out/web and takes the war camp's samples on upright phones: node tools/camp/shots.mjs <before|after>   (PORT; DPR default 2)
+// STASH=<n> seeds n chests on the cart; OPEN=<ms> taps the first one and shoots after that long.
 // Pictures go to docs/samples/camp-<tag>-<size>.png (the Battle tab at rest, with a hero sheet open, and a few seconds on).
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
@@ -18,7 +19,7 @@ const HEROES = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard'];
 const DPR = Number(process.env.DPR ?? 2);
 const SIZES = { '393x852': { width: 393, height: 852 }, '360x780': { width: 360, height: 780 }, '412x915': { width: 412, height: 915 } };
 mkdirSync('docs/samples', { recursive: true });
-const meta = { seed: 7, crowns: 300, unlocked: HEROES, party: HEROES, pulls: 0, dry: 0, dryMythic: 0, castle: { treasury: 0, barracks: 0, armoury: 0, mageTower: 0, stable: 0, library: 0 }, shards: {}, stars: {}, xp: {}, bestStage: 3, tower: 0, daily: {}, bosses: [], achievements: [], armies: {}, ...(process.env.STASH ? { stash: [3, 5, 10].map((at, i) => ({ army: 'orcs', at, tier: 0, seed: i + 1 })) } : {}) };
+const meta = { seed: 7, crowns: 300, unlocked: HEROES, party: HEROES, pulls: 0, dry: 0, dryMythic: 0, castle: { treasury: 0, barracks: 0, armoury: 0, mageTower: 0, stable: 0, library: 0 }, shards: {}, stars: {}, xp: {}, bestStage: 3, tower: 0, daily: {}, bosses: [], achievements: [], armies: {}, ...(process.env.STASH ? { stash: Array.from({ length: Number(process.env.STASH) }, (_, i) => ({ army: ['orcs', 'undead'][i % 2], at: [3, 5, 10][Math.floor(i / 2) % 3], tier: 0, seed: i + 1 })) } : {}) };
 for (const [size, vp] of Object.entries(SIZES)) {
   const ctx = await browser.newContext({ viewport: vp, deviceScaleFactor: DPR, hasTouch: true });
   const page = await ctx.newPage();
@@ -28,6 +29,11 @@ for (const [size, vp] of Object.entries(SIZES)) {
   await page.goto(`http://localhost:${srv.address().port}/`);
   await page.waitForTimeout(2500);
   await page.screenshot({ path: `docs/samples/camp-${tag}-${size}.png` });
+  if (process.env.OPEN) {
+    await page.locator('.csChest').first().click();
+    await page.waitForTimeout(Number(process.env.OPEN));
+    await page.screenshot({ path: `docs/samples/camp-${tag}-${size}-open.png` });
+  }
   if (process.env.EXTRA) {
     await page.waitForTimeout(3000);
     await page.screenshot({ path: `docs/samples/camp-${tag}-${size}-later.png` });
