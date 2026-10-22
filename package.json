@@ -10,7 +10,8 @@
     "web": "node build.mjs",
     "dev": "node build.mjs --serve",
     "balance": "node tools/balance.mjs",
-    "gear-balance": "node tools/gear-balance.mjs"
+    "gear-balance": "node tools/gear-balance.mjs",
+    "talent-balance": "node tools/talent-balance.mjs"
   },
   "license": "UNLICENSED",
   "devDependencies": {
