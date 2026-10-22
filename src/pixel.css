@@ -26,14 +26,15 @@ button.primary:active:not(:disabled), .hmBig:active { border-image-source: url(u
 button.primary:disabled { border-image-source: url(ui/btn-off.png); }
 /* the glint: a pixel-wide stripe sliding over the button in steps, and a slow two-step glow */
 button.primary::after, .hmBattle::after {
-  content: ''; position: absolute; top: 0; bottom: 0; left: -24px; width: 12px; transform: none; pointer-events: none; display: block;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0 25%, rgba(255, 255, 255, 0.75) 25% 50%, rgba(255, 255, 255, 0.4) 50% 75%, rgba(255, 255, 255, 0) 75%);
-  animation: pxGlint 3.4s steps(24) infinite;
+  content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 12px; pointer-events: none; display: block;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0 25%, rgba(255, 255, 255, 0.55) 25% 50%, rgba(255, 255, 255, 0.3) 50% 75%, rgba(255, 255, 255, 0) 75%);
+  transform: translateX(-24px); will-change: transform; animation: pxGlint 3.4s linear infinite;
 }
 button.primary:disabled::after { display: none; }
-button.primary:not(:disabled), .hmBattle { animation: pxPulse 2.4s steps(1) infinite; }
-@keyframes pxGlint { 0%, 55% { left: -24px; } 100% { left: calc(100% + 12px); } }
-@keyframes pxPulse { 50% { filter: brightness(1.12); } }
+/* (the glint glides on the compositor, by transform, so it never re-lays out or re-paints the 9-slice frame under it; the old
+   one stepped its left edge and the whole button blinked brighter twice a second, which read as flashing and tearing) */
+button.primary:not(:disabled), .hmBattle { animation: none; }
+@keyframes pxGlint { 0%, 55% { transform: translateX(-24px); } 100% { transform: translateX(var(--glintEnd, 420px)); } }
 /* the small button, for crowded rows: 6px sides, 8px lower lip */
 .small, #mute, #gear, #speed, .round, #buttons button:not(#fight) {
   border-width: 6px 6px 8px; border-image: url(ui/btn-s.png) 3 3 4 fill / 6px 6px 8px stretch; min-height: 40px; padding: 0 2px;
@@ -209,9 +210,9 @@ body .sbSlot { min-height: 44px; }
 .hmTab:active { transform: none; }
 .hmTab.hero, .hmTab.hero.on {
   margin-top: -16px; min-height: 82px; padding: 2px 2px 0; border-style: solid; border-width: 10px 10px 12px; border-radius: 0; background: none; box-shadow: none; overflow: hidden;
-  border-image: url(ui/btn-gold.png) 5 5 6 fill / 10px 10px 12px stretch; color: #4a1a06; text-shadow: 0 2px 0 rgba(255, 228, 138, 0.7); font-size: 13px; animation: pxPulse 2.4s steps(1) infinite;
+  border-image: url(ui/btn-gold.png) 5 5 6 fill / 10px 10px 12px stretch; color: #4a1a06; text-shadow: 0 2px 0 rgba(255, 228, 138, 0.7); font-size: 13px;
 }
-.hmTab.hero::after { content: ''; position: absolute; top: 0; bottom: 0; left: -24px; width: 12px; pointer-events: none; background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0 25%, rgba(255, 255, 255, 0.75) 25% 50%, rgba(255, 255, 255, 0.4) 50% 75%, rgba(255, 255, 255, 0) 75%); animation: pxGlint 3.4s steps(24) 1.2s infinite; }
+.hmTab.hero::after { content: ''; position: absolute; top: 0; bottom: 0; left: -24px; width: 12px; pointer-events: none; background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0 25%, rgba(255, 255, 255, 0.75) 25% 50%, rgba(255, 255, 255, 0.4) 50% 75%, rgba(255, 255, 255, 0) 75%); transform: translateX(-24px); will-change: transform; animation: pxGlint 3.4s linear 1.2s infinite; --glintEnd: 120px; }
 .hmTab.hero:not(.on) { filter: brightness(0.82) saturate(0.8); }
 .hmTab.hero img, .hmTab.hero.on img { width: 32px; height: 32px; filter: none; transform: none; }
 .hmTab.hero:active { border-image-source: url(ui/btn-gold-down.png); }
@@ -219,7 +220,7 @@ body .sbSlot { min-height: 44px; }
   border-style: solid; border-width: 15px 15px 18px; border-radius: 0; background: none; box-shadow: none; padding: 4px 4px 2px; overflow: hidden;
   border-image: url(ui/btn-gold.png) 5 5 6 fill / 15px 15px 18px stretch; color: #4a1a06; text-shadow: 0 3px 0 rgba(255, 228, 138, 0.7); font-size: 36px;
 }
-.hmBattle::after { width: 20px; }
+.hmBattle::after { width: 20px; --glintEnd: 360px; }
 .hmBattle:active { border-image-source: url(ui/btn-gold-down.png); transform: none; padding-top: 7px; padding-bottom: 0; }
 .hmLink { padding: 0 4px; border-width: 6px 8px; border-image: url(ui/chip.png) 2 fill / 4px 4px stretch; background: none; min-height: 32px; }
 .hmBuild img { image-rendering: pixelated; }
