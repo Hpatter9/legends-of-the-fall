@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { BUILDING_IDS, maxLevel } from '../src/sim/castle';
-import { BLURB, effectText, layoutFor, LIGHTS, LOOKS, lookBox, SPRITE_SIZE, spriteName, stageOf, STAGES, TALL, VENTS, WIDE } from '../src/render/castleSpots';
+import { BLURB, effectText, layoutFor, LIGHTS, LOOKS, lookBox, SPRITE_SIZE, spriteName, stageOf, STAGES, TALL, TILE_H, TILE_W, VENTS, WIDE } from '../src/render/castleSpots';
 
 const LAYOUTS = { tall: TALL, wide: WIDE };
 const looksOf = (id: (typeof BUILDING_IDS)[number]) => LOOKS[id];
@@ -18,6 +18,31 @@ test('every picture the looks and props name exists, and its size in the table i
   }
   for (const id of BUILDING_IDS) for (const look of looksOf(id)) for (const p of look.parts) assert.ok(SPRITE_SIZE[p.sprite], `${id} uses ${p.sprite}`);
   for (const lay of Object.values(LAYOUTS)) for (const p of lay.props) assert.ok(SPRITE_SIZE[p.sprite], p.sprite);
+});
+
+test('every picture is used (by a look, a prop or the ground), and the ground tiles are one lattice cell across', () => {
+  const used = new Set<string>(['grass_tile', 'cobble_tile']);
+  for (const id of BUILDING_IDS) for (const look of looksOf(id)) for (const p of look.parts) used.add(p.sprite);
+  for (const lay of Object.values(LAYOUTS)) for (const p of lay.props) used.add(p.sprite);
+  assert.deepEqual(Object.keys(SPRITE_SIZE).filter((k) => !used.has(k)), []);
+  // (the tiles come from the isometric kits, half size: a diamond about 90 across, so rows half a tile apart meet edge to edge)
+  for (const t of ['grass_tile', 'cobble_tile']) assert.ok(Math.abs(SPRITE_SIZE[t][0] - TILE_W) <= 1, t);
+  assert.ok(TILE_H > 0 && TILE_H <= SPRITE_SIZE.grass_tile[1]);
+});
+
+test('the back wall, its gate and what stands beyond it are drawn behind everything, and the roads lie in the yard', () => {
+  for (const [name, lay] of Object.entries(LAYOUTS)) {
+    const behind = lay.props.filter((p) => p.depth !== undefined);
+    assert.ok(behind.length >= 3, `${name} has its wall and trees behind`);
+    assert.ok(lay.props.some((p) => p.sprite === 'gate'), `${name} has a gate`);
+    assert.ok(lay.props.some((p) => p.sprite === 'statue'), `${name} has a statue in the plaza`);
+    assert.ok(lay.roads.length >= 2, `${name} has roads`);
+    assert.equal(lay.flags.length >= 2, true, `${name} flags`);
+    // (a prop with no depth of its own is sorted by its foot, so it must stand below the wall)
+    for (const p of lay.props) if (p.depth === undefined) assert.ok(p.y > lay.wallY, `${name} ${p.sprite} stands below the wall`);
+    for (const f of lay.flags) assert.ok(f.x > 0 && f.x < lay.w && f.y > 0 && f.y < lay.h, `${name} flag`);
+    for (const r of lay.roads) if ('x0' in r) assert.ok(r.x1 > r.x0 && r.y1 > r.y0, `${name} road`);
+  }
 });
 
 test('every upgrade has four looks and a plot inside the yard, in both arrangements', () => {
@@ -36,7 +61,7 @@ test('every upgrade has four looks and a plot inside the yard, in both arrangeme
 });
 
 test('a house is never used for two buildings, and every look is bigger than the one before it', () => {
-  const HOUSES = ['house1', 'house2', 'house4', 'gb_house', 'gb_shop', 'gb_canopy', 'tt_long', 'tt_gable', 'yurt1', 'yurt2', 'camp3', 'tower1', 'tower2', 'tower3'];
+  const HOUSES = ['shrine', 'spiral', 'chapel', 'stockpile', 'longhouse', 'great_hall', 'cottage', 'thatch', 'barracks', 'anvil_stall', 'workshop', 'forge', 'campfire'];
   const owner: Record<string, string> = {};
   for (const id of BUILDING_IDS)
     for (const look of looksOf(id))

@@ -1,11 +1,11 @@
-// The Castle tab's picture: a village courtyard seen from slightly above, drawn with Chronos's village art (flat-colour pixel houses, tents,
-// props, palisade and cobbles) in the scene's own pixels, whole-number times bigger. A cobbled road leads from the palisade gate to a plaza with a
-// well; each upgrade is a building on its own plot that grows through four looks (castleSpots.ts): an empty plot, a small, a bigger and a grand
-// one. Flags wave at the gate, chimneys smoke, sparks fly at the forge, the tower's windows glow and shed runes, the gold glints, and a few of
-// your heroes (their sheets shrunk by a whole number so they stand a little taller than a door) stroll the road. Tapping a building (or its name tag)
-// opens its upgrade card; a level bought plays a short build: scaffolding and dust, the new look with a flash, then sparkles. One canvas, drawn
-// with nearest neighbour and panned by native scroll when the screen is smaller than the scene. It only draws (Math.random is fine here:
-// nothing that is played depends on it) and runs only while the tab shows.
+// The Castle tab's picture: a castle courtyard in the isometric view of Chronos's building kits (stone wall, gate and tower, a lattice of grass
+// and cobble tiles, houses, forges, a statue), drawn half size in the scene's own pixels, whole-number times bigger. A cobbled road leads from the
+// wall's gate to a plaza; each upgrade is a building on its own plot that grows through four looks (castleSpots.ts): an empty plot, a small, a
+// bigger and a grand one. Flags wave on the wall towers, chimneys smoke, sparks fly at the forge, the tower's windows glow and shed runes, the gold
+// glints, and a few of your heroes (their sheets shrunk by a whole number so they stand about a door high) stroll the plaza. Tapping a building (or
+// its name tag) opens its upgrade card; a level bought plays a short build: scaffolding and dust, the new look with a flash, then sparkles. One
+// canvas, drawn with nearest neighbour and panned by native scroll when the screen is smaller than the scene. It only draws (Math.random is fine
+// here: nothing that is played depends on it) and runs only while the tab shows.
 
 import { BUILDING_IDS, maxLevel, nextCost, type BuildingId } from './sim/castle';
 import { formOf, UNITS } from './sim/units';
@@ -15,115 +15,77 @@ import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
 import { gradeOfRank } from './render/tavernSpots';
 import { strongest } from './menuHeroes';
-import { GRASS, layoutFor, LIGHTS, LOOKS, lookBox, NAME_OF, stageOf, VENTS, WIDE, type Layout, type Look } from './render/castleSpots';
-import anvilUrl from './art/castle/anvil.png';
-import barrelUrl from './art/castle/barrel.png';
-import box1Url from './art/castle/box1.png';
-import box2Url from './art/castle/box2.png';
-import bush1Url from './art/castle/bush1.png';
-import bush2Url from './art/castle/bush2.png';
-import camp3Url from './art/castle/camp3.png';
-import cartUrl from './art/castle/cart.png';
-import chest_goldUrl from './art/castle/chest_gold.png';
-import cobbleUrl from './art/castle/cobble.png';
-import crateUrl from './art/castle/crate.png';
-import crate_stackUrl from './art/castle/crate_stack.png';
-import crates_tallUrl from './art/castle/crates_tall.png';
-import fenceUrl from './art/castle/fence.png';
-import flower1Url from './art/castle/flower1.png';
-import flower3Url from './art/castle/flower3.png';
-import flower5Url from './art/castle/flower5.png';
+import { GRASS, layoutFor, LIGHTS, LOOKS, lookBox, NAME_OF, stageOf, TILE_H, TILE_W, VENTS, WIDE, type Layout, type Look } from './render/castleSpots';
+import anvil_stallUrl from './art/castle/anvil_stall.png';
+import bannerUrl from './art/castle/banner.png';
+import barracksUrl from './art/castle/barracks.png';
+import barrelsUrl from './art/castle/barrels.png';
+import berriesUrl from './art/castle/berries.png';
+import brazierUrl from './art/castle/brazier.png';
+import bushUrl from './art/castle/bush.png';
+import campfireUrl from './art/castle/campfire.png';
+import chapelUrl from './art/castle/chapel.png';
+import chestsUrl from './art/castle/chests.png';
+import cobble_tileUrl from './art/castle/cobble_tile.png';
+import cottageUrl from './art/castle/cottage.png';
+import cratesUrl from './art/castle/crates.png';
+import crystalsUrl from './art/castle/crystals.png';
+import flowersUrl from './art/castle/flowers.png';
+import forgeUrl from './art/castle/forge.png';
 import gateUrl from './art/castle/gate.png';
-import gb_barrelsUrl from './art/castle/gb_barrels.png';
-import gb_canopyUrl from './art/castle/gb_canopy.png';
-import gb_cratesUrl from './art/castle/gb_crates.png';
-import gb_houseUrl from './art/castle/gb_house.png';
-import gb_sacksUrl from './art/castle/gb_sacks.png';
-import gb_shopUrl from './art/castle/gb_shop.png';
-import gb_signpostUrl from './art/castle/gb_signpost.png';
-import gold1Url from './art/castle/gold1.png';
-import gold2Url from './art/castle/gold2.png';
-import house1Url from './art/castle/house1.png';
-import house2Url from './art/castle/house2.png';
-import house4Url from './art/castle/house4.png';
-import lanternUrl from './art/castle/lantern.png';
-import logUrl from './art/castle/log.png';
-import palisadeUrl from './art/castle/palisade.png';
-import palisade2Url from './art/castle/palisade2.png';
-import pebble1Url from './art/castle/pebble1.png';
-import pebble3Url from './art/castle/pebble3.png';
-import pebble5Url from './art/castle/pebble5.png';
-import planksUrl from './art/castle/planks.png';
-import rackUrl from './art/castle/rack.png';
-import sign_swordUrl from './art/castle/sign_sword.png';
-import tower1Url from './art/castle/tower1.png';
-import tower2Url from './art/castle/tower2.png';
-import tower3Url from './art/castle/tower3.png';
-import tree1Url from './art/castle/tree1.png';
-import tree2Url from './art/castle/tree2.png';
-import tt_gableUrl from './art/castle/tt_gable.png';
-import tt_longUrl from './art/castle/tt_long.png';
-import tuft1Url from './art/castle/tuft1.png';
-import tuft2Url from './art/castle/tuft2.png';
-import tuft3Url from './art/castle/tuft3.png';
-import wellUrl from './art/castle/well.png';
-import yurt1Url from './art/castle/yurt1.png';
-import yurt2Url from './art/castle/yurt2.png';
+import grass_tileUrl from './art/castle/grass_tile.png';
+import great_hallUrl from './art/castle/great_hall.png';
+import hayUrl from './art/castle/hay.png';
+import longhouseUrl from './art/castle/longhouse.png';
+import oakUrl from './art/castle/oak.png';
+import pineUrl from './art/castle/pine.png';
+import rocksUrl from './art/castle/rocks.png';
+import rosesUrl from './art/castle/roses.png';
+import shrineUrl from './art/castle/shrine.png';
+import spiralUrl from './art/castle/spiral.png';
+import statueUrl from './art/castle/statue.png';
+import stockpileUrl from './art/castle/stockpile.png';
+import thatchUrl from './art/castle/thatch.png';
+import wallUrl from './art/castle/wall.png';
+import watchtowerUrl from './art/castle/watchtower.png';
+import woodpileUrl from './art/castle/woodpile.png';
+import workshopUrl from './art/castle/workshop.png';
 
 const ART: Record<string, string> = {
-  anvil: anvilUrl,
-  barrel: barrelUrl,
-  box1: box1Url,
-  box2: box2Url,
-  bush1: bush1Url,
-  bush2: bush2Url,
-  camp3: camp3Url,
-  cart: cartUrl,
-  chest_gold: chest_goldUrl,
-  cobble: cobbleUrl,
-  crate: crateUrl,
-  crate_stack: crate_stackUrl,
-  crates_tall: crates_tallUrl,
-  fence: fenceUrl,
-  flower1: flower1Url,
-  flower3: flower3Url,
-  flower5: flower5Url,
+  anvil_stall: anvil_stallUrl,
+  banner: bannerUrl,
+  barracks: barracksUrl,
+  barrels: barrelsUrl,
+  berries: berriesUrl,
+  brazier: brazierUrl,
+  bush: bushUrl,
+  campfire: campfireUrl,
+  chapel: chapelUrl,
+  chests: chestsUrl,
+  cobble_tile: cobble_tileUrl,
+  cottage: cottageUrl,
+  crates: cratesUrl,
+  crystals: crystalsUrl,
+  flowers: flowersUrl,
+  forge: forgeUrl,
   gate: gateUrl,
-  gb_barrels: gb_barrelsUrl,
-  gb_canopy: gb_canopyUrl,
-  gb_crates: gb_cratesUrl,
-  gb_house: gb_houseUrl,
-  gb_sacks: gb_sacksUrl,
-  gb_shop: gb_shopUrl,
-  gb_signpost: gb_signpostUrl,
-  gold1: gold1Url,
-  gold2: gold2Url,
-  house1: house1Url,
-  house2: house2Url,
-  house4: house4Url,
-  lantern: lanternUrl,
-  log: logUrl,
-  palisade: palisadeUrl,
-  palisade2: palisade2Url,
-  pebble1: pebble1Url,
-  pebble3: pebble3Url,
-  pebble5: pebble5Url,
-  planks: planksUrl,
-  rack: rackUrl,
-  sign_sword: sign_swordUrl,
-  tower1: tower1Url,
-  tower2: tower2Url,
-  tower3: tower3Url,
-  tree1: tree1Url,
-  tree2: tree2Url,
-  tt_gable: tt_gableUrl,
-  tt_long: tt_longUrl,
-  tuft1: tuft1Url,
-  tuft2: tuft2Url,
-  tuft3: tuft3Url,
-  well: wellUrl,
-  yurt1: yurt1Url,
-  yurt2: yurt2Url,
+  grass_tile: grass_tileUrl,
+  great_hall: great_hallUrl,
+  hay: hayUrl,
+  longhouse: longhouseUrl,
+  oak: oakUrl,
+  pine: pineUrl,
+  rocks: rocksUrl,
+  roses: rosesUrl,
+  shrine: shrineUrl,
+  spiral: spiralUrl,
+  statue: statueUrl,
+  stockpile: stockpileUrl,
+  thatch: thatchUrl,
+  wall: wallUrl,
+  watchtower: watchtowerUrl,
+  woodpile: woodpileUrl,
+  workshop: workshopUrl,
 };
 
 let art: Record<string, HTMLImageElement> | null = null;
@@ -188,8 +150,12 @@ interface Small {
   facesRight: boolean;
 }
 
+/** How tall a hero stands in the yard, about: a sheet is shrunk by the whole number that comes nearest. */
+const HERO_PX = 32;
+const heroShrink = (figure: number): number => Math.max(1, Math.round(figure / HERO_PX));
+
 function shrinkRig(rig: Rig): Small {
-  const n = Math.max(2, Math.round(rig.figure / 24));
+  const n = heroShrink(rig.figure);
   const fw = Math.floor(rig.w / n);
   const fh = Math.floor(rig.h / n);
   const rows = ['idle', 'walk'].map((r) => (rig.rows.includes(r) ? r : 'idle'));
@@ -273,6 +239,11 @@ interface Build {
   to: number;
   start: number;
 }
+
+/** The pictures with a flame: where it burns from the picture's foot, and its glow. */
+const GLOWING: Record<string, { dx: number; dy: number; size: number; al: number; tint: string }> = {
+  brazier: { dx: 0, dy: -72, size: 34, al: 0.55, tint: '#ff9a3c' },
+};
 
 const BUILD_MS = 1500;
 const SWAP_MS = 800;
@@ -362,7 +333,7 @@ export class CastleScene {
       const w = this.walkers.get(kind);
       if (w) {
         // (a new form after a rank-up: re-cut only when the sheet changed)
-        if (w.small.facesRight !== rig.facesRight || w.small.fh !== Math.floor(rig.h / Math.max(2, Math.round(rig.figure / 24)))) w.small = shrinkRig(rig);
+        if (w.small.facesRight !== rig.facesRight || w.small.fh !== Math.floor(rig.h / heroShrink(rig.figure))) w.small = shrinkRig(rig);
         return;
       }
       const x = rand(this.lay.walk.x0, this.lay.walk.x1);
@@ -429,9 +400,9 @@ export class CastleScene {
     });
   }
 
-  /** The part that never changes: flat grass with its tufts and flowers, the cobbled road and plaza, the palisade with its gate. */
+  /** The part that never changes: the ground (a lattice of grass tiles, cobbles where the roads and plaza are) with a few flowers laid by a fixed pattern. */
   private paintStill(a: Record<string, HTMLImageElement>, s: number): HTMLCanvasElement {
-    const { w, h } = this.lay;
+    const { w, h, grid } = this.lay;
     const c = el('canvas');
     c.width = w * s;
     c.height = h * s;
@@ -439,28 +410,36 @@ export class CastleScene {
     g.imageSmoothingEnabled = false;
     g.fillStyle = GRASS;
     g.fillRect(0, 0, c.width, c.height);
-    // (tufts and flowers laid by a fixed pattern, so the yard looks the same every time)
-    let seed = w * 31 + h;
-    const next = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
-    const bits = ['tuft1', 'tuft2', 'tuft3', 'flower1', 'flower3', 'flower5', 'tuft2', 'tuft3'];
-    for (let i = 0; i < Math.round((w * h) / 2600); i++) {
-      const im = a[bits[Math.floor(next() * bits.length)]];
-      g.drawImage(im, Math.floor(next() * (w - im.width)) * s, Math.floor((this.lay.wallY + 40 + next() * (h - this.lay.wallY - 50)) * s), im.width * s, im.height * s);
+    const paved = (cx: number, cy: number): boolean => {
+      const rr = Math.round((cy - grid.y) / (TILE_H / 2));
+      const cc = Math.round((cx - grid.x) / (TILE_W / 2));
+      const u = (rr + cc) / 2;
+      const v = (rr - cc) / 2;
+      return this.lay.roads.some((r) => ('u0' in r ? u >= r.u0 && u <= r.u1 && v >= r.v0 && v <= r.v1 : cx >= r.x0 && cx <= r.x1 && cy >= r.y0 && cy <= r.y1));
+    };
+    // (rows of tiles from the back to the front, each row half a tile along from the last, so a tile's rim is covered by the row in front)
+    const rows0 = Math.floor((0 - grid.y) / (TILE_H / 2)) - 2;
+    const rows1 = Math.ceil((h - grid.y) / (TILE_H / 2)) + 2;
+    for (let r = rows0; r <= rows1; r++) {
+      const cy = grid.y + r * (TILE_H / 2);
+      const first = Math.floor((0 - grid.x) / (TILE_W / 2)) - 2;
+      for (let k = first; (k * TILE_W) / 2 + grid.x < w + TILE_W; k++) {
+        if ((k - r) % 2 !== 0) continue;
+        const cx = grid.x + (k * TILE_W) / 2;
+        const tile = paved(cx, cy) ? a.cobble_tile : a.grass_tile;
+        // (every other grass tile is mirrored, so the lawn does not show its repeat)
+        const mirror = tile === a.grass_tile && (r * 7 + k * 3) % 5 < 2;
+        const x = Math.round(cx - tile.width / 2) * s;
+        const y = (cy - TILE_H / 2) * s;
+        if (mirror) {
+          g.save();
+          g.translate(x + tile.width * s, y);
+          g.scale(-1, 1);
+          g.drawImage(tile, 0, 0, tile.width * s, tile.height * s);
+          g.restore();
+        } else g.drawImage(tile, x, y, tile.width * s, tile.height * s);
+      }
     }
-    // (the road: the cobble sheet's inner tile, with a dark edge)
-    const cob = a.cobble;
-    for (const { x0, y0, x1, y1 } of this.lay.roads) {
-      for (let x = x0; x < x1; x += 16) for (let y = y0; y < y1; y += 16) g.drawImage(cob, 0, 0, Math.min(16, x1 - x), Math.min(16, y1 - y), x * s, y * s, Math.min(16, x1 - x) * s, Math.min(16, y1 - y) * s);
-    }
-    g.fillStyle = 'rgba(30, 44, 74, 0.9)';
-    for (const { x0, y0, x1, y1 } of this.lay.roads) {
-      g.fillRect(x0 * s, y0 * s, s, (y1 - y0) * s);
-      g.fillRect((x1 - 1) * s, y0 * s, s, (y1 - y0) * s);
-    }
-    // (the palisade runs across the top, with the gate in the middle)
-    const pal = [a.palisade, a.palisade2];
-    for (let x = 0, i = 0; x < w; x += 32, i++) g.drawImage(pal[i % 2 && i % 3 ? 1 : 0], x * s, this.lay.wallY * s, 32 * s, 32 * s);
-    for (const dx of [-48, -16, 16]) g.drawImage(a.gate, (this.lay.gateX + dx) * s, this.lay.wallY * s, 32 * s, 32 * s);
     return c;
   }
 
@@ -487,7 +466,7 @@ export class CastleScene {
       const p = this.lay.plots[id];
       const box = lookBox(LOOKS[id][stageOf(id, this.levels[id] ?? 0)]);
       tag.style.left = `${((p.x + (box.x0 + box.x1) / 2) / this.lay.w) * 100}%`;
-      tag.style.top = `${((p.y - box.h - 4) / this.lay.h) * 100}%`;
+      tag.style.top = `${((p.tagY ?? p.y - box.h - 4) / this.lay.h) * 100}%`;
     }
   }
 
@@ -600,7 +579,17 @@ export class CastleScene {
     const list: { depth: number; paint: () => void }[] = [];
     for (const p of this.lay.props) {
       const im = a[p.sprite];
-      list.push({ depth: p.y, paint: () => g.drawImage(im, Math.round(p.x - im.width / 2) * s, (p.y - im.height) * s, im.width * s, im.height * s) });
+      const x = Math.round(p.x - im.width / 2) * s;
+      const paint = p.flip
+        ? () => {
+            g.save();
+            g.translate(x + im.width * s, 0);
+            g.scale(-1, 1);
+            g.drawImage(im, 0, (p.y - im.height) * s, im.width * s, im.height * s);
+            g.restore();
+          }
+        : () => g.drawImage(im, x, (p.y - im.height) * s, im.width * s, im.height * s);
+      list.push({ depth: p.depth ?? p.y, paint });
     }
     for (const id of BUILDING_IDS) list.push({ depth: this.lay.plots[id].y, paint: () => this.building(a, id) });
     for (const w of this.walkers.values()) list.push({ depth: w.y, paint: () => this.hero(w) });
@@ -690,9 +679,15 @@ export class CastleScene {
       const p = this.lay.plots[id];
       const stage = this.shown(id);
       for (const l of LIGHTS[id][stage] ?? []) spot(p.x + l.dx, p.y + l.dy, l.size, l.al, l.tint);
-      for (const part of LOOKS[id][stage].parts) if (part.sprite === 'lantern') spot(p.x + part.dx, p.y + part.dy - 32, 22, 0.45, '#ffcf70');
+      for (const part of LOOKS[id][stage].parts) {
+        const glow = GLOWING[part.sprite];
+        if (glow) spot(p.x + part.dx + glow.dx, p.y + part.dy + glow.dy, glow.size, glow.al, glow.tint);
+      }
     }
-    for (const pr of this.lay.props) if (pr.sprite === 'lantern') spot(pr.x, pr.y - 32, 22, 0.45, '#ffcf70');
+    for (const pr of this.lay.props) {
+      const glow = GLOWING[pr.sprite];
+      if (glow) spot(pr.x + glow.dx, pr.y + glow.dy, glow.size, glow.al, glow.tint);
+    }
     // (a build in progress gives a warm flash as the new look arrives)
     for (const b of this.builds) {
       const age = this.now - b.start;

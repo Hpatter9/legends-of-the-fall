@@ -1,6 +1,6 @@
-// The castle courtyard's floor plan: each upgrade's four looks (pictures from Chronos's village art, put together from parts), where
+// The castle courtyard's floor plan: each upgrade's four looks (pictures from Chronos's isometric building kits, put together from parts), where
 // every building stands in the two arrangements of the yard (upright and sideways), what smokes, glints or glows, the road, the wall and
-// the heroes' lawn, and the words of the upgrade cards. Plain data (no Pixi, no DOM), so a test can check it. All numbers are in the scene's
+// the heroes' strolling band, and the words of the upgrade cards. Plain data (no Pixi, no DOM), so a test can check it. All numbers are in the scene's
 // own pixels (the art's own pixels: the scene is drawn whole-number times bigger); `y` is a building's foot line, which the scene sorts by.
 
 import { BUILDING_IDS, BUILDINGS, GOLD_PER_LEVEL, HP_PER_LEVEL, ATK_PER_LEVEL, MANA_PER_LEVEL, maxLevel, spellBudget, type BuildingId } from '../sim/castle';
@@ -17,59 +17,40 @@ export function stageOf(id: BuildingId, level: number): number {
 
 /** Every picture in `src/art/castle/` and its size (a test checks the table against the files). */
 export const SPRITE_SIZE: Record<string, readonly [number, number]> = {
-  anvil: [20, 14],
-  barrel: [20, 22],
-  box1: [17, 16],
-  box2: [18, 18],
-  bush1: [35, 46],
-  bush2: [37, 48],
-  camp3: [53, 34],
-  cart: [48, 26],
-  chest_gold: [19, 14],
-  cobble: [16, 16],
-  crate: [16, 21],
-  crate_stack: [27, 30],
-  crates_tall: [25, 30],
-  fence: [27, 15],
-  flower1: [6, 6],
-  flower3: [5, 5],
-  flower5: [6, 4],
-  gate: [32, 32],
-  gb_barrels: [38, 42],
-  gb_canopy: [129, 87],
-  gb_crates: [21, 38],
-  gb_house: [139, 160],
-  gb_sacks: [42, 29],
-  gb_shop: [110, 98],
-  gb_signpost: [28, 44],
-  gold1: [19, 17],
-  gold2: [15, 13],
-  house1: [116, 112],
-  house2: [156, 135],
-  house4: [154, 149],
-  lantern: [16, 40],
-  log: [34, 21],
-  palisade: [32, 32],
-  palisade2: [32, 32],
-  pebble1: [11, 8],
-  pebble3: [11, 7],
-  pebble5: [7, 5],
-  planks: [26, 17],
-  rack: [28, 42],
-  sign_sword: [23, 21],
-  tower1: [30, 57],
-  tower2: [54, 98],
-  tower3: [68, 134],
-  tree1: [114, 129],
-  tree2: [108, 147],
-  tt_gable: [48, 132],
-  tt_long: [96, 109],
-  tuft1: [5, 6],
-  tuft2: [9, 6],
-  tuft3: [5, 7],
-  well: [43, 54],
-  yurt1: [79, 76],
-  yurt2: [79, 76]
+  anvil_stall: [72, 89],
+  banner: [25, 79],
+  barracks: [138, 129],
+  barrels: [33, 44],
+  berries: [60, 73],
+  brazier: [36, 90],
+  bush: [38, 37],
+  campfire: [66, 46],
+  chapel: [101, 162],
+  chests: [70, 54],
+  cobble_tile: [90, 60],
+  cottage: [103, 101],
+  crates: [43, 52],
+  crystals: [41, 60],
+  flowers: [41, 32],
+  forge: [114, 139],
+  gate: [214, 99],
+  grass_tile: [89, 59],
+  great_hall: [146, 147],
+  hay: [48, 51],
+  longhouse: [119, 112],
+  oak: [64, 90],
+  pine: [41, 88],
+  rocks: [36, 38],
+  roses: [38, 51],
+  shrine: [77, 86],
+  spiral: [68, 128],
+  statue: [79, 119],
+  stockpile: [87, 89],
+  thatch: [129, 118],
+  wall: [168, 81],
+  watchtower: [79, 134],
+  woodpile: [50, 54],
+  workshop: [95, 110],
 };
 
 /** One picture in a look: its centre across and where its bottom edge sits, from the building's plot (y down, 0 = the foot line). */
@@ -85,32 +66,32 @@ export interface Look {
   parts: readonly Part[];
 }
 
-/** The four looks of each building. A house is never used for two buildings: the village art has seven, so a building grows by adding
- *  wings, props and neighbours, and the mage tower's three towers are one family (made in the village's palette). */
+/** The four looks of each building, all from the isometric kits (one 2:1 view, lit from the upper left). A piece is never used for two
+ *  buildings; a building grows by getting a bigger house and more props around it. */
 export const LOOKS: Record<BuildingId, readonly Look[]> = {
   treasury: [
-    { parts: [P('crates_tall', -22), P('crate_stack', 6, -2), P('box1', 30, 3)] },
-    { parts: [P('house1', 0), P('chest_gold', -38, 7)] },
-    { parts: [P('tt_long', 0), P('chest_gold', -60, 6), P('gold1', -40, 9), P('gold2', 42, 9), P('crates_tall', 64)] },
-    { parts: [P('gb_house', 0), P('crates_tall', 74), P('lantern', -84), P('gold1', -62, 9), P('gold2', -46, 12), P('chest_gold', -30, 11), P('gold1', 46, 9), P('chest_gold', 34, 12)] },
+    { parts: [P('barrels', -26, 4), P('chests', 8)] },
+    { parts: [P('stockpile', 0), P('chests', 62, 8)] },
+    { parts: [P('longhouse', 0), P('chests', 70, 8), P('barrels', -70, 6)] },
+    { parts: [P('great_hall', 0), P('brazier', 88, 8), P('chests', 46, 20), P('barrels', -50, 18)] },
   ],
   barracks: [
-    { parts: [P('camp3', 0)] },
-    { parts: [P('yurt1', 0), P('box2', -54, 2), P('rack', 52, 4)] },
-    { parts: [P('house2', 0), P('rack', 86, 6), P('lantern', -84)] },
-    { parts: [P('house4', 0), P('yurt2', -50, 24), P('rack', 86, 6), P('lantern', -84), P('fence', 64, 14)] },
+    { parts: [P('campfire', 0, 4), P('hay', -44, 2)] },
+    { parts: [P('cottage', 0), P('hay', -60, 8)] },
+    { parts: [P('thatch', 0), P('campfire', 78, 14)] },
+    { parts: [P('barracks', 0), P('banner', 78, 10), P('hay', -66, 12), P('crates', 56, 26)] },
   ],
   armoury: [
-    { parts: [P('planks', -34, -2), P('anvil', -8), P('log', 18)] },
-    { parts: [P('gb_canopy', 0), P('anvil', -30, 7), P('rack', 40, 7)] },
-    { parts: [P('gb_shop', 0), P('anvil', -44, 8), P('rack', 46, 8), P('sign_sword', 34, -2)] },
-    { parts: [P('gb_shop', -26), P('tt_gable', 54), P('anvil', -64, 10), P('rack', -4, 12), P('sign_sword', -46, -2)] },
+    { parts: [P('rocks', -26, 2), P('crates', 8), P('woodpile', 44, 4)] },
+    { parts: [P('anvil_stall', 0), P('crates', 52, 8)] },
+    { parts: [P('workshop', 0), P('woodpile', -64, 8), P('crates', 62, 10)] },
+    { parts: [P('forge', 24), P('anvil_stall', -66, 12)] },
   ],
   mageTower: [
-    { parts: [P('box2', -30, 2), P('pebble1', -12), P('pebble3', 12, 2), P('pebble5', 26, -1)] },
-    { parts: [P('tower1', 0), P('pebble5', -24, 2)] },
-    { parts: [P('tower2', 0), P('pebble1', -32, 2)] },
-    { parts: [P('tower3', 0), P('pebble1', -42, 2), P('pebble3', 44, 3)] },
+    { parts: [P('rocks', -20, 2), P('crystals', 16)] },
+    { parts: [P('shrine', 0)] },
+    { parts: [P('spiral', 26), P('shrine', -40, 8)] },
+    { parts: [P('spiral', 54, -6), P('chapel', 0, 6), P('crystals', -48, 16)] },
   ],
 };
 
@@ -155,60 +136,63 @@ const smokeAt = (id: BuildingId, stage: number, index: number, fx: number, fy: n
 
 export const VENTS: Record<BuildingId, readonly (readonly Vent[])[]> = {
   treasury: [
-    [],
-    [smokeAt('treasury', 1, 0, 0.17, 0.08)],
-    [smokeAt('treasury', 2, 0, 0.24, 0.02), { dx: -40, dy: -8, kind: 'glint' }, { dx: 42, dy: -6, kind: 'glint' }],
-    [smokeAt('treasury', 3, 0, 0.33, 0.02), { dx: -62, dy: -8, kind: 'glint' }, { dx: -30, dy: -10, kind: 'glint' }, { dx: 46, dy: -8, kind: 'glint' }, { dx: 34, dy: -11, kind: 'glint' }],
+    [{ dx: 8, dy: -30, kind: 'glint' }],
+    [{ dx: 62, dy: -30, kind: 'glint' }],
+    [smokeAt('treasury', 2, 0, 0.64, 0.04), { dx: 70, dy: -30, kind: 'glint' }],
+    [{ dx: 46, dy: -42, kind: 'glint' }, { dx: 30, dy: -38, kind: 'glint' }, { dx: 88, dy: -80, kind: 'smoke' }],
   ],
-  barracks: [[], [], [smokeAt('barracks', 2, 0, 0.17, 0.23)], [smokeAt('barracks', 3, 0, 0.4, 0.09)]],
+  barracks: [[{ dx: 0, dy: -30, kind: 'smoke' }], [smokeAt('barracks', 1, 0, 0.7, 0.04)], [{ dx: 78, dy: -34, kind: 'smoke' }], [smokeAt('barracks', 3, 0, 0.5, 0.02)]],
   armoury: [
     [],
-    [{ dx: -30, dy: -12, kind: 'spark' }],
-    [{ dx: -44, dy: -13, kind: 'spark' }],
-    [{ dx: -64, dy: -16, kind: 'spark' }, { dx: -60, dy: -16, kind: 'spark' }],
+    [{ dx: -8, dy: -28, kind: 'spark' }],
+    [{ dx: -2, dy: -26, kind: 'spark' }, smokeAt('armoury', 2, 0, 0.5, 0.04)],
+    [{ dx: 14, dy: -30, kind: 'spark' }, { dx: -66, dy: -30, kind: 'spark' }, smokeAt('armoury', 3, 0, 0.62, 0.02)],
   ],
-  mageTower: [[], [], [{ dx: 0, dy: -50, kind: 'rune' }], [{ dx: 0, dy: -70, kind: 'rune' }]],
+  mageTower: [[], [{ dx: 0, dy: -40, kind: 'rune' }], [{ dx: 26, dy: -80, kind: 'rune' }, { dx: -40, dy: -44, kind: 'rune' }], [{ dx: 0, dy: -100, kind: 'rune' }, { dx: 54, dy: -90, kind: 'rune' }]],
 };
 
 export const LIGHTS: Record<BuildingId, readonly (readonly Light[])[]> = {
-  treasury: [[], [], [{ dx: 0, dy: -40, size: 56, tint: '#ffd24a', al: 0.25 }], [{ dx: 0, dy: -50, size: 80, tint: '#ffd24a', al: 0.3 }]],
-  barracks: [[], [], [], []],
-  armoury: [[], [{ dx: -30, dy: -10, size: 28, tint: '#ff9a3c', al: 0.5 }], [{ dx: -44, dy: -10, size: 30, tint: '#ff9a3c', al: 0.5 }], [{ dx: -64, dy: -12, size: 34, tint: '#ff9a3c', al: 0.55 }]],
-  mageTower: [[], [], [{ dx: 0, dy: -52, size: 44, tint: '#58d8ff', al: 0.7 }], [{ dx: 0, dy: -86, size: 40, tint: '#b890ff', al: 0.6 }, { dx: 0, dy: -52, size: 52, tint: '#58d8ff', al: 0.7 }]],
+  treasury: [[], [], [{ dx: 0, dy: -40, size: 56, tint: '#ffd24a', al: 0.18 }], [{ dx: 0, dy: -50, size: 80, tint: '#ffd24a', al: 0.25 }]],
+  barracks: [[{ dx: 0, dy: -12, size: 40, tint: '#ff9a3c', al: 0.5 }], [], [{ dx: 78, dy: -12, size: 34, tint: '#ff9a3c', al: 0.45 }], []],
+  armoury: [[], [{ dx: -8, dy: -26, size: 30, tint: '#ff9a3c', al: 0.5 }], [{ dx: -2, dy: -30, size: 40, tint: '#ff9a3c', al: 0.5 }], [{ dx: 14, dy: -36, size: 52, tint: '#ff9a3c', al: 0.55 }]],
+  mageTower: [[], [{ dx: 0, dy: -50, size: 44, tint: '#58d8ff', al: 0.6 }], [{ dx: 26, dy: -104, size: 40, tint: '#b890ff', al: 0.6 }, { dx: -40, dy: -50, size: 44, tint: '#58d8ff', al: 0.6 }], [{ dx: 0, dy: -104, size: 56, tint: '#58f0d0', al: 0.55 }, { dx: 54, dy: -96, size: 36, tint: '#b890ff', al: 0.5 }]],
 };
 
 export interface Plot {
   /** Centre across and the foot line. */
   x: number;
   y: number;
+  /** Where the bottom of the name tag sits (the scene row); by default just above the building's roof. */
+  tagY?: number;
 }
 
-/** A standing prop of the yard (sorted with the buildings and heroes by its foot line). */
+/** A standing prop of the yard (sorted with the buildings and heroes by its foot line, or by `depth` when given: walls and what stands
+ *  beyond them sit behind everything). `flip` mirrors it (a wall run seen from the other side). */
 export interface Prop {
   sprite: string;
   x: number;
   y: number;
+  flip?: boolean;
+  depth?: number;
 }
 
-/** A cobbled patch (scene pixels). */
-export interface Patch {
-  x0: number;
-  y0: number;
-  x1: number;
-  y1: number;
-}
+/** A paved patch of the ground: the ground is a lattice of 90 x 52 diamonds (one tile each), and a tile is cobbles when its middle falls inside a
+ *  patch. A patch is a rectangle of the scene (`x0`..`y1`), or a run of tiles along the grid's own axes (`u`: down and right, `v`: down and left,
+ *  counted from the layout's `grid` tile). */
+export type Patch = { x0: number; y0: number; x1: number; y1: number } | { u0: number; v0: number; u1: number; v1: number };
 
 /** One arrangement of the yard. */
 export interface Layout {
   /** The scene's size. */
   w: number;
   h: number;
-  /** The palisade runs across at `wallY` (its top); the gate stands at `gateX`. */
+  /** The top of the yard proper: the line the buildings stand below (the back wall is above it). */
   wallY: number;
-  gateX: number;
+  /** The middle of one ground tile; the rest of the lattice follows from it. */
+  grid: { x: number; y: number };
   plots: Record<BuildingId, Plot>;
   props: readonly Prop[];
-  /** The cobbled road and plaza. */
+  /** The cobbled roads and plaza. */
   roads: readonly Patch[];
   /** Pennant poles: foot of the pole and which way the cloth blows. */
   flags: readonly { x: number; y: number; dir: 1 | -1 }[];
@@ -218,39 +202,46 @@ export interface Layout {
   openTop: number;
 }
 
-/** Upright (a phone standing): 360 wide, a road down the middle from the gate; tower and treasury behind the plaza, barracks and armoury in front. All four show at once. */
+/** Ground tiles: a diamond 90 across and 52 down, laid in rows half a tile along and half a tile down from the last. */
+export const TILE_W = 90;
+export const TILE_H = 52;
+
+/** Upright (a phone standing): 360 wide, a castle wall across the top with its gate, a road down to a plaza with a well and a statue; mage tower and
+ *  treasury behind the plaza, barracks and armoury in front. All four show at once. */
 export const TALL: Layout = {
   w: 360,
   h: 600,
-  wallY: 44,
-  gateX: 180,
+  wallY: 170,
+  grid: { x: 180, y: 414 },
   plots: {
-    mageTower: { x: 80, y: 300 },
-    treasury: { x: 268, y: 306 },
-    barracks: { x: 98, y: 522 },
-    armoury: { x: 272, y: 524 },
+    mageTower: { x: 84, y: 376 },
+    treasury: { x: 252, y: 372 },
+    barracks: { x: 100, y: 570, tagY: 598 },
+    armoury: { x: 270, y: 574, tagY: 598 },
   },
   props: [
-    { sprite: 'lantern', x: 126, y: 80 },
-    { sprite: 'lantern', x: 234, y: 80 },
-    { sprite: 'well', x: 180, y: 366 },
-    { sprite: 'tree1', x: 36, y: 188 },
-    { sprite: 'tree2', x: 326, y: 190 },
-    { sprite: 'bush1', x: 20, y: 380 },
-    { sprite: 'bush2', x: 340, y: 590 },
-    { sprite: 'gb_barrels', x: 128, y: 390 },
-    { sprite: 'cart', x: 326, y: 432 },
-    { sprite: 'gb_sacks', x: 40, y: 440 },
+    { sprite: 'watchtower', x: 188, y: 178, depth: 1 },
+    { sprite: 'gate', x: 92, y: 226, depth: 0 },
+    { sprite: 'wall', x: 264, y: 196, flip: true, depth: 0 },
+    { sprite: 'statue', x: 180, y: 430 },
+    { sprite: 'oak', x: 40, y: 120, depth: -2 },
+    { sprite: 'pine', x: 326, y: 100, depth: -2 },
+    { sprite: 'flowers', x: 26, y: 470 },
+    { sprite: 'bush', x: 340, y: 470 },
+    { sprite: 'roses', x: 22, y: 436 },
+    { sprite: 'berries', x: 338, y: 440 },
   ],
   roads: [
-    { x0: 148, y0: 76, x1: 212, y1: 600 },
-    { x0: 112, y0: 322, x1: 248, y1: 374 },
+    { u0: -7, v0: -4, u1: -1, v1: -3 },
+    { x0: 120, y0: 270, x1: 250, y1: 300 },
+    { x0: -20, y0: 386, x1: 380, y1: 446 },
+    { x0: 150, y0: 446, x1: 212, y1: 620 },
   ],
   flags: [
-    { x: 112, y: 56, dir: 1 },
-    { x: 248, y: 56, dir: -1 },
+    { x: 28, y: 138, dir: 1 },
+    { x: 338, y: 134, dir: -1 },
   ],
-  walk: { x0: 128, x1: 232, y0: 110, y1: 592 },
+  walk: { x0: 28, x1: 332, y0: 398, y1: 436 },
   openTop: 0,
 };
 
@@ -258,43 +249,43 @@ export const TALL: Layout = {
 export const WIDE: Layout = {
   w: 756,
   h: 300,
-  wallY: 10,
-  gateX: 378,
+  wallY: 60,
+  grid: { x: 360, y: 234 },
   plots: {
-    mageTower: { x: 58, y: 244 },
-    treasury: { x: 238, y: 248 },
-    barracks: { x: 492, y: 246 },
-    armoury: { x: 668, y: 248 },
+    mageTower: { x: 90, y: 262 },
+    treasury: { x: 262, y: 262 },
+    barracks: { x: 502, y: 262 },
+    armoury: { x: 672, y: 264 },
   },
   props: [
-    { sprite: 'lantern', x: 324, y: 46 },
-    { sprite: 'lantern', x: 432, y: 46 },
-    { sprite: 'well', x: 378, y: 270 },
-    { sprite: 'tree1', x: 30, y: 128 },
-    { sprite: 'tree2', x: 722, y: 130 },
-    { sprite: 'bush1', x: 336, y: 150 },
-    { sprite: 'bush2', x: 428, y: 150 },
-    { sprite: 'gb_barrels', x: 310, y: 296 },
-    { sprite: 'cart', x: 580, y: 296 },
+    { sprite: 'wall', x: 46, y: 210, depth: -3 },
+    { sprite: 'wall', x: 212, y: 176, depth: -3 },
+    { sprite: 'gate', x: 388, y: 142, depth: -3 },
+    { sprite: 'wall', x: 554, y: 108, depth: -3 },
+    { sprite: 'wall', x: 720, y: 74, depth: -3 },
+    { sprite: 'oak', x: 40, y: 130, depth: -4 },
+    { sprite: 'pine', x: 300, y: 50, depth: -4 },
+    { sprite: 'statue', x: 378, y: 290 },
+    { sprite: 'roses', x: 330, y: 288 },
+    { sprite: 'berries', x: 426, y: 290 },
   ],
   roads: [
-    { x0: 362, y0: 42, x1: 394, y1: 292 },
-    { x0: 24, y0: 252, x1: 732, y1: 284 },
-    { x0: 344, y0: 248, x1: 412, y1: 296 },
+    { x0: 308, y0: 140, x1: 452, y1: 252 },
+    { x0: -20, y0: 262, x1: 780, y1: 320 },
   ],
   flags: [
-    { x: 304, y: 22, dir: 1 },
-    { x: 452, y: 22, dir: -1 },
+    { x: 296, y: 100, dir: 1 },
+    { x: 470, y: 66, dir: 1 },
   ],
-  walk: { x0: 40, x1: 716, y0: 258, y1: 294 },
-  openTop: 40,
+  walk: { x0: 40, x1: 716, y0: 274, y1: 296 },
+  openTop: 0,
 };
 
 /** The arrangement for a screen: the upright one when it is taller than wide. */
 export const layoutFor = (portrait: boolean): Layout => (portrait ? TALL : WIDE);
 
-/** The grass: one flat colour (the village ground sheet's), and the page behind the scene is the same. */
-export const GRASS = '#a0b35a';
+/** The ground's flat colour: the grass tile's own average, used for the page behind the scene. */
+export const GRASS = '#64742f';
 
 /** The words a building's upgrade card shows for a level (0 = nothing built). */
 export function effectText(id: BuildingId, level: number): string {

@@ -35,7 +35,7 @@ for (const [size, vp] of Object.entries(SIZES)) {
     await page.goto(`http://localhost:${srv.address().port}/`);
     await page.waitForTimeout(1200);
     await page.locator('.hmTab').nth(3).click();
-    await page.waitForTimeout(2500);
+    await page.waitForTimeout(Number(process.env.WAIT ?? 2500));
     await page.screenshot({ path: `docs/samples/castle-${state}-${size}.png` });
     console.log('shot', state, size);
     if (process.env.FULL) await page.evaluate(() => document.querySelector('.ctRoom').toDataURL()).then((u) => import('node:fs').then((fs) => fs.writeFileSync(`${process.env.FULL}/castle-full-${state}.png`, Buffer.from(u.split(',')[1], 'base64'))));

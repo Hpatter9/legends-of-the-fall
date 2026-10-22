@@ -1,34 +1,70 @@
-"""Copy the courtyard's pictures into src/art/castle/ under short names (one sprite at a time, as CLAUDE.md asks).
-Usage: prep.py <dir with the generated towers t1_3.png t2_2.png t3_2.png>
-Sources: Chronos (hpatter9/little-town, src/renderer/art/, cut from the Craftpix village, Fields, Path and Road, Tiny RPG Town and Dungeon packs,
-and DawnLike-free pieces) and the Tiny RPG Town vegetation props in hpatter9/chronos-assets. The towers are generated (PixelLab)."""
-import os, sys
+"""Copy the courtyard's pictures into src/art/castle/ under short names, each shrunk to half size by a 2x2 box average (then solid or clear),
+so the isometric kits' big pieces (a cottage is about 200 px wide) fit a phone-sized yard and stay crisp pixel art.
+Source: the isometric kits and castle pieces in hpatter9/little-town (src/renderer/art/iso/; drawn in one 2:1 view, lit from the upper left).
+Prints the SPRITE_SIZE table for src/render/castleSpots.ts and the imports for src/castle.ts."""
+import os
 from PIL import Image
-LT = '/home/user/hpatter9/little-town/src/renderer/art/'
-TT = '/home/user/chronos-assets/tiny-rpg-town-files/tiny-rpg-town-files/Assets/Environments/Vegetation props/'
+ISO = '/home/user/hpatter9/little-town/src/renderer/art/iso/'
 out = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'src', 'art', 'castle')
-os.makedirs(out, exist_ok=True)
-FROM_LT = {
-    'house1': 'village/house1', 'house2': 'village/house2', 'house4': 'village/house4',
-    'gb_house': 'shops/gb_house', 'gb_shop': 'shops/gb_shop', 'gb_canopy': 'shops/gb_canopy',
-    'tt_long': 'packs/tt_long', 'tt_gable': 'packs/tt_gable',
-    'yurt1': 'packs/rocky_yurt1', 'yurt2': 'packs/rocky_yurt2', 'camp3': 'village/camp3',
-    'anvil': 'packs/v_anvil', 'rack': 'packs/v_rack', 'well': 'packs/v_well', 'sign_sword': 'packs/v_sign_sword', 'planks': 'packs/v_planks',
-    'log': 'village/log1', 'lantern': 'village/lantern', 'barrel': 'village/barrel', 'crate': 'village/crate', 'box1': 'village/box1', 'box2': 'village/box2',
-    'cart': 'village/cart', 'gb_barrels': 'shops/gb_barrels', 'gb_sacks': 'shops/gb_sacks', 'gb_crates': 'shops/gb_crates', 'gb_signpost': 'shops/gb_signpost',
-    'gold1': 'clutter/gold1', 'gold2': 'clutter/gold2', 'chest_gold': 'clutter/chest_gold', 'crates_tall': 'clutter/crates_tall', 'crate_stack': 'clutter/crate_stack',
-    'palisade': 'village/palisade01', 'palisade2': 'village/palisade02', 'gate': 'village/palisade05',
-    'tuft1': 'fields/tuft1', 'tuft2': 'fields/tuft2', 'tuft3': 'fields/tuft3', 'flower1': 'fields/flower1', 'flower3': 'fields/flower3', 'flower5': 'fields/flower5',
-    'pebble1': 'fields/pebble1', 'pebble3': 'fields/pebble3', 'pebble5': 'fields/pebble5', 'fence': 'fields/fence1',
+K, S, D, B, F, N, L, DR = 'kits/knights/', 'kits/settlers/', 'kits/dwarves/', 'kits/bloodcourt/', 'kits/fae/', 'kits/nomads/', 'kits/liches/', 'kits/druids/'
+PICKS = {
+    # buildings
+    'shrine': F + 'shrine', 'spiral': F + 'spiral_watchtower', 'watchtower': K + 'watchtower', 'chapel': L + 'chapel',
+    'stockpile': K + 'stockpile', 'longhouse': K + 'longhouse', 'great_hall': D + 'great_hall',
+    'cottage': K + 'cottage', 'thatch': S + 'longhouse', 'barracks': K + 'barracks',
+    'anvil_stall': D + 'anvil_stall', 'workshop': K + 'workshop', 'forge': D + 'forge',
+    # walls and gates
+    'gate': S + 'stone_gate', 'wall': S + 'stone_wall_run',
+    # props
+    'chests': N + 'chests', 'campfire': K + 'campfire', 'hay': K + 'hay_bales', 'crates': K + 'crates', 'barrels': K + 'barrels', 'woodpile': K + 'woodpile',
+        'brazier': D + 'brazier', 'banner': B + 'banner', 'statue': D + 'shrine', 'oak': K + 'oak_tree', 'pine': K + 'pine_tree', 'bush': K + 'bush',
+    'rocks': K + 'rocks', 'flowers': DR + 'flower_patch', 'berries': DR + 'berry_bush', 'roses': B + 'rose_bush', 'crystals': D + 'crystals',
+    # ground
+    'grass_tile': K + 'grass_tile', 'cobble_tile': K + 'cobble_tile',
 }
-for name, src in FROM_LT.items():
-    Image.open(LT + src + '.png').convert('RGBA').save(f'{out}/{name}.png')
-for name, src in {'tree1': 'tree-1', 'tree2': 'tree-2', 'bush1': 'bush-1', 'bush2': 'bush-3'}.items():
-    Image.open(TT + src + '.png').convert('RGBA').save(f'{out}/{name}.png')
-# the road's cobbles: one inner tile of Path and Road's cobble sheet; the grass is a flat colour read from the village ground sheet
-Image.open(LT + 'roads/road1_grass.png').convert('RGBA').crop((32, 16, 48, 32)).save(f'{out}/cobble.png')
-for name, src in {'tower1': 't1_3', 'tower2': 't2_2', 'tower3': 't3_2'}.items():
-    im = Image.open(f'{sys.argv[1]}/{src}.png').convert('RGBA')
-    im.crop(im.getchannel('A').getbbox()).save(f'{out}/{name}.png')
-for f in sorted(os.listdir(out)):
-    print(f, Image.open(f'{out}/{f}').size)
+def half(im):
+    w, h = im.width // 2, im.height // 2
+    src = im.convert('RGBA').load()
+    o = Image.new('RGBA', (w, h))
+    px = o.load()
+    for y in range(h):
+        for x in range(w):
+            a = r = g = b = 0
+            for dy in (0, 1):
+                for dx in (0, 1):
+                    p = src[2 * x + dx, 2 * y + dy]
+                    a += p[3]; r += p[0] * p[3]; g += p[1] * p[3]; b += p[2] * p[3]
+            if a >= 510:
+                px[x, y] = (round(r / a), round(g / a), round(b / a), 255)
+    return o
+def soften_rim(im):
+    """The ground tile's dark outline along its two back edges would show as a grid between tiles laid edge to edge; paint it over with the grass just inside."""
+    w, h = im.size
+    px = im.load()
+    cx, cy = (w - 1) / 2, 26
+    out = im.copy()
+    op = out.load()
+    for y in range(0, 28):
+        for x in range(w):
+            if px[x, y][3] == 0:
+                continue
+            near = any(0 <= x + dx < w and 0 <= y + dy < h and px[x + dx, y + dy][3] == 0 for dx in (-2, -1, 0, 1, 2) for dy in (-2, -1, 0, 1, 2))
+            if near:
+                d = max(1.0, ((cx - x) ** 2 + (cy - y) ** 2) ** 0.5)
+                sx, sy = round(x + 3 * (cx - x) / d), round(y + 3 * (cy - y) / d)
+                op[x, y] = px[sx, sy]
+    return out
+os.makedirs(out, exist_ok=True)
+for f in os.listdir(out):
+    os.remove(os.path.join(out, f))
+sizes = {}
+for name, src in sorted(PICKS.items()):
+    im = half(Image.open(ISO + src + '.png'))
+    bb = im.getchannel('A').getbbox()
+    im = im.crop(bb)
+    if name == 'grass_tile':
+        im = soften_rim(im)
+    im.save(f'{out}/{name}.png', optimize=True)
+    sizes[name] = im.size
+print('SPRITE_SIZE:')
+for k, (w, h) in sizes.items(): print(f'  {k}: [{w}, {h}],')
