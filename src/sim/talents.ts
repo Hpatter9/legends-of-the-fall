@@ -226,7 +226,7 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     ],
     [
       { name: 'Second Chance', icon: 'feather', text: 'Once a fight, when she would fall she rises at 30% health.', abilities: [ab('tl_wanderer_chance', 'Second Chance', 'death', 'revive', { v: 0.3 })] },
-      { name: "Shepherd's Flame", icon: 'vial', text: 'Every 7s the weakest ally is healed a quarter of its health.', abilities: [ab('tl_wanderer_flame', "Shepherd's Flame", 'tick', 'healAlly', { n: 7, v: 0.25, show: true })] },
+      { name: "Shepherd's Flame", icon: 'vial', text: 'Every 8s the weakest ally is healed 18% of its health.', abilities: [ab('tl_wanderer_flame', "Shepherd's Flame", 'tick', 'healAlly', { n: 8, v: 0.18, show: true })] },
     ],
   ),
   kitsune: tree(
@@ -255,26 +255,26 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
   ),
   yamabushi: tree(
     'yamabushi',
-    [['Mountain Stance', 'plate', { hp: HP }], ['Staff Drill', 'spear', { atk: ATK }], ['Iron Sandals', 'boots', { def: 1 }], ['Deep Breath', 'elixir', { regen: 0.003 }]],
+    [['Mountain Stance', 'plate', { hp: 0.03 }], ['Staff Drill', 'spear', { atk: 0.03 }], ['Iron Sandals', 'boots', { def: 1 }], ['Deep Breath', 'elixir', { regen: 0.002 }]],
     [
       { name: 'Gale Force', icon: 'feather', text: 'Wind Gust reaches 1 tile further.', tal: { reach: 1 } },
-      { name: 'Hurricane', icon: 'stormstaff', text: 'Wind Gust and Tempest hit 30% harder.', tal: { pow: 0.3 } },
+      { name: 'Hurricane', icon: 'stormstaff', text: 'Wind Gust and Tempest hit a fifth harder.', tal: { pow: 0.2 } },
     ],
     [
-      { name: 'Eye of the Storm', icon: 'orb', text: 'Tempest hits 35% harder, stuns half as long again and charges 30% faster.', tal: { ultPow: 0.35, dur: 0.5, ultRate: 0.3 } },
-      { name: 'Mountain Spirit', icon: 'idol', text: 'Once, when low, he takes half damage for 4s and mends a fifth of his health.', abilities: [ab('tl_yamabushi_spirit', 'Mountain Spirit', 'low', 'guard', { w: 4 }), ab('tl_yamabushi_spirit2', 'Mountain Spirit', 'low', 'heal', { v: 0.2 })] },
+      { name: 'Eye of the Storm', icon: 'orb', text: 'Tempest hits a quarter harder, stuns 30% longer and charges 20% faster.', tal: { ultPow: 0.25, dur: 0.3, ultRate: 0.2 } },
+      { name: 'Mountain Spirit', icon: 'idol', text: 'Once, when low, he takes half damage for 3s and mends 12% of his health.', abilities: [ab('tl_yamabushi_spirit', 'Mountain Spirit', 'low', 'guard', { w: 3 }), ab('tl_yamabushi_spirit2', 'Mountain Spirit', 'low', 'heal', { v: 0.12 })] },
     ],
   ),
   werewolf: tree(
     'werewolf',
     [['Thick Pelt', 'hide', { hp: HP }], ['Sharp Fangs', 'bone', { atk: ATK }], ['Night Hunter', 'boots', { moveSpeed: 0.06 }], ['Wild Eyes', 'spectacles', { crit: 0.03 }]],
     [
-      { name: 'Bloodthirst', icon: 'scythe', text: 'Ravage bites 40% harder, and heals him for that much more.', tal: { pow: 0.4 } },
+      { name: 'Bloodthirst', icon: 'scythe', text: 'Ravage bites 30% harder, and heals him for that much more.', tal: { pow: 0.3 } },
       { name: 'Savage Pace', icon: 'boots', text: 'His kill frenzy stacks two higher (five).', tal: { frenzyMax: 2 } },
     ],
     [
       { name: "Hunter's Instinct", icon: 'ruby', text: 'Each kill heals him a tenth of his health.', abilities: [ab('tl_werewolf_instinct', "Hunter's Instinct", 'kill', 'heal', { v: 0.1 })] },
-      { name: 'Undying Beast', icon: 'amulet', text: 'Once a fight, when he would fall he rises at a quarter of his health.', abilities: [ab('tl_werewolf_undying', 'Undying Beast', 'death', 'revive', { v: 0.25 })] },
+      { name: 'Undying Beast', icon: 'amulet', text: 'Once a fight, when he would fall he rises at a fifth of his health.', abilities: [ab('tl_werewolf_undying', 'Undying Beast', 'death', 'revive', { v: 0.2 })] },
     ],
   ),
   minotaur: tree(
@@ -330,7 +330,7 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     [['Blessed Plate', 'plate', { hp: HP }], ['Holy Mace', 'mace', { atk: ATK }], ['Oath of Steel', 'aegis', { def: 1 }], ['Prayer', 'scroll', { regen: 0.004 }]],
     [
       { name: 'Righteous Anger', icon: 'bell', text: 'Holy Challenge holds foes on him 70% longer.', tal: { dur: 0.7 } },
-      { name: 'Lay on Hands', icon: 'emerald', text: 'Holy Challenge heals 60% more.', tal: { pow: 0.6 } },
+      { name: 'Lay on Hands', icon: 'emerald', text: 'Holy Challenge heals 45% more.', tal: { pow: 0.45 } },
     ],
     [
       { name: 'Aegis of Light', icon: 'bastion', text: 'Holy Challenge gives him a shield of 15% of his health.', tal: { castShield: 0.15 } },
@@ -387,9 +387,9 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
   ),
   warlock: tree(
     'warlock',
-    [['Dark Focus', 'tome', { atk: ATK }], ['Shadow Weave', 'silk', { hp: 0.04 }], ['Whispers', 'scroll', { charge: 0.1 }], ['Bone Charm', 'bone', { def: 1 }]],
+    [['Dark Focus', 'tome', { atk: 0.03 }], ['Shadow Weave', 'silk', { hp: 0.03 }], ['Whispers', 'scroll', { charge: 0.06 }], ['Bone Charm', 'bone', { def: 1 }]],
     [
-      { name: 'Lingering Curse', icon: 'orb', text: 'Hex burns for 8s.', tal: { dur: 0.6 } },
+      { name: 'Lingering Curse', icon: 'orb', text: 'Hex burns for 7s.', tal: { dur: 0.4 } },
       { name: 'Soul Feast', icon: 'shard', text: 'Casting Hex heals him 15% of his health.', tal: { castHeal: 0.15 } },
     ],
     [
@@ -402,11 +402,11 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     [['Nimble Fingers', 'ring', { atkSpeed: 0.04 }], ['Silk Sleeves', 'silk', { dodge: 0.03 }], ['Trickster\'s Edge', 'dagger', { atk: ATK }], ['Quick Feet', 'boots', { moveSpeed: 0.06 }]],
     [
       { name: 'Lasting Mirage', icon: 'orb', text: 'The decoys draw the foes 80% longer (5.4s).', tal: { dur: 0.8 } },
-      { name: 'Cloak of Mirrors', icon: 'shadowcloak', text: 'Mirror Image gives her a shield of a fifth of her health.', tal: { castShield: 0.2 } },
+      { name: 'Cloak of Mirrors', icon: 'shadowcloak', text: 'Mirror Image gives her a shield of 12% of her health.', tal: { castShield: 0.12 } },
     ],
     [
       { name: 'Trickster', icon: 'charm', text: '+8% dodge, and 20% of blows taken are answered with a strike.', stats: { dodge: 0.08 }, abilities: [ab('tl_illusionist_trick', 'Trickster', 'struck', 'counter', { p: 0.2, v: 0.8 })] },
-      { name: 'Vanishing Act', icon: 'vial', text: 'Hidden for 3s at the start and again every 12s.', abilities: [ab('tl_illusionist_vanish', 'Vanishing Act', 'start', 'stealth', { w: 3 }), ab('tl_illusionist_vanish2', 'Vanishing Act', 'tick', 'stealth', { n: 12, w: 3, show: true })] },
+      { name: 'Vanishing Act', icon: 'vial', text: 'Hidden for 2s at the start and again every 14s.', abilities: [ab('tl_illusionist_vanish', 'Vanishing Act', 'start', 'stealth', { w: 2 }), ab('tl_illusionist_vanish2', 'Vanishing Act', 'tick', 'stealth', { n: 14, w: 2, show: true })] },
     ],
   ),
   gunslinger: tree(
