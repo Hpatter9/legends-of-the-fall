@@ -1015,7 +1015,7 @@ class Game {
   }
 
   /** The result screen's XP: a row per hero kind that fought, its bar filling with the XP it earned. A level up fills the bar, then flashes the new level and its stat gains, with a chime, and the bar starts again from the new level. */
-  private showXp(gains: Record<string, number>, from: Record<string, number>, ups: LevelUp[]): void {
+  private showXp(gains: Record<string, number>, from: Record<string, number>, ups: LevelUp[], lasting = true): void {
     const list = $('xp');
     list.replaceChildren();
     list.hidden = !Object.keys(gains).length;
@@ -1050,7 +1050,7 @@ class Game {
       setTimeout(() => (fill.style.width = `${up ? 100 : share(after)}%`), at);
       if (!up) return;
       setTimeout(() => {
-        const gained = levelGain(up.from, up.to);
+        const gained = levelGain(up.from, up.to, lasting);
         // (the level-up: a stamp, the badge ticking over, the gains popping in one after the other, a sweep of light and a
         //  burst of sparks; all of it once, none of it looping)
         const stamp = document.createElement('span');
@@ -1528,7 +1528,7 @@ class Game {
         this.showStars(won ? rating : null);
         drawRunStars($('armyStars'), army && run.cleared ? this.runStars : null, army ? tierOf(tierOfRun(run)).name : '');
         this.showStats();
-        this.showXp(gains, from, ups);
+        this.showXp(gains, from, ups, !own);
       }
       saveMeta(this.meta);
       saveRun(run);

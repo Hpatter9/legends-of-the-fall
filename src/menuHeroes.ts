@@ -6,7 +6,7 @@ import { KITS } from './sim/abilities';
 import { traitsOf, TRAITS } from './sim/traits';
 import { MAX_RANK, RANK_SHARDS, rankMult, rankOf, type Meta } from './sim/meta';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
-import { levelBoost, progressOf, xpOf } from './sim/levels';
+import { lastingBoost, progressOf, xpOf } from './sim/levels';
 import { drawEquipment } from './equipView';
 import { drawTalents } from './talentView';
 import { TREES } from './sim/talents';
@@ -63,7 +63,7 @@ export function drawHeroSheet(box: HTMLElement, meta: Meta, kind: string, close:
   head.append(pic, title);
   box.append(head);
   if (open) {
-    const b = levelBoost(x.level);
+    const b = lastingBoost(x.level);
     const m = rankMult(rank);
     const stat = el('div', 'hstats');
     for (const [name, v] of [['HP', Math.round(def.hp * b.hp * m)], ['Attack', Math.round(def.atk * b.atk * m)], ['Defence', def.def], ['Range', def.range]] as const) {

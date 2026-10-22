@@ -12,10 +12,11 @@ const store = () => {
   return { getItem: (k: string) => d.get(k) ?? null, setItem: (k: string, v: string) => void d.set(k, v) };
 };
 
-test('every building has 3 to 5 levels with rising costs', () => {
+test('every building has 3 to 7 levels with rising costs (only the Barracks and Armoury go past 5)', () => {
   for (const id of BUILDING_IDS) {
     const c = BUILDINGS[id].costs;
-    assert.ok(c.length >= 3 && c.length <= 5, id);
+    assert.ok(c.length >= 3 && c.length <= 7, id);
+    assert.ok(c.length <= 5 || id === 'barracks' || id === 'armoury', id);
     for (let i = 1; i < c.length; i++) assert.ok(c[i] > c[i - 1], id);
   }
 });
@@ -142,7 +143,7 @@ test('the stable and library start at level 0 in a save that has none, cost like
   assert.equal(m.castle.treasury, 2);
   for (const id of ['stable', 'library'] as const) {
     assert.equal(maxLevel(id), 5);
-    assert.deepEqual(BUILDINGS[id].costs, BUILDINGS.armoury.costs);
+    assert.deepEqual(BUILDINGS[id].costs, BUILDINGS.armoury.costs.slice(0, 5), 'the first five levels cost like the Armoury (which goes on to seven)');
     assert.equal(upgrade(m, id), true);
     assert.equal(m.castle[id], 1);
   }

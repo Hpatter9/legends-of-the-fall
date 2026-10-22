@@ -25,7 +25,7 @@ import { calBossBoost, fitBand, squadFoeMult } from './calamity';
 import { calBossBand } from './calamityBosses';
 import { fightXpByHero, gainRunXp, hireHero } from './climb';
 import { xpRate } from './castle';
-import { levelOf as levelOfXp, type LevelUp } from './levels';
+import { levelOf as levelOfXp, RUN_MAX_LEVEL, type LevelUp } from './levels';
 
 /** Floors in an act: the path floors, then the boss on the last. */
 export const ACT_ROWS = 13;
@@ -522,7 +522,7 @@ export const FIGHT_GEAR = 0.3;
 function teachFight(run: Run, b: Battle): void {
   const t = run.tower!;
   const gains = fightXpByHero(b, xpRate(run.castle));
-  const before = new Map(run.roster.map((h) => [h.id, levelOfXp(h.xp ?? 0)] as const));
+  const before = new Map(run.roster.map((h) => [h.id, levelOfXp(h.xp ?? 0, RUN_MAX_LEVEL)] as const));
   const ups = new Map(gainRunXp(run, gains).map((u: LevelUp & { id: number }) => [u.id, u] as const));
   t.gains = Object.entries(gains).map(([id, xp]) => {
     const h = run.roster.find((x) => x.id === Number(id));

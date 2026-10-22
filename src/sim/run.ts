@@ -9,7 +9,7 @@ import { BOSS_BANDS, FIELD_BANDS } from './foes';
 import { armyById, armyIndex, waveBoost, type Army } from './armies';
 import { bonusGold, heroBoost, manaRate, moveRate, newCastle, type Castle } from './castle';
 import { rankMult } from './meta';
-import { levelBoost } from './levels';
+import { lastingBoost } from './levels';
 import { starGold } from './stars';
 import { mixSeed, Rng } from './rng';
 import { drawEvent, eventAfter, type EventCard } from './events';
@@ -283,7 +283,7 @@ export const benched = (run: Run) => run.roster.filter((h) => !run.squad.include
 /** Hp and attack multipliers of a grade, times the hero kind's rank (from its shards) and its level (from its XP). Every hero kind is alike here: what sets one apart is its own stats and skill. */
 export const gradeBoost = (grade: number, rank = 0, level = 1): Boost => {
   const k = GRADE_MULT ** (grade - 1) * rankMult(rank);
-  const lv = levelBoost(level);
+  const lv = lastingBoost(level);
   return { hp: k * lv.hp, atk: k * lv.atk, grade };
 };
 /** A roster hero's whole boost: grade and rank, its gear, its training bumps, and the kind's permanent equipment (`equip`, from `equipStats(meta, kind)`; none when it wears nothing). */

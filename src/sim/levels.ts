@@ -10,7 +10,7 @@ import { isBoss } from './foes';
 import type { Meta } from './meta';
 import { UNITS } from './units';
 
-export const MAX_LEVEL = 20;
+export const MAX_LEVEL = 30;
 export const XP_TAKE_PART = 5;
 export const XP_WIN = 5;
 /** One XP for each this much damage dealt, or healing done. */
@@ -25,15 +25,30 @@ export const LEVEL_ATK = 0.18;
 /** From this level on, each level adds only `DIM_SHARE` of its gain (diminishing returns, so a team's levels stop being decisive). */
 export const DIM_LEVEL = 12;
 export const DIM_SHARE = 0.25;
+/** A hero kind's lasting level goes on to `MAX_LEVEL`; the levels a run gives its own heroes (the spire, Calamity) stop at `RUN_MAX_LEVEL`. */
+export const RUN_MAX_LEVEL = 20;
+/** Each lasting level past `RUN_MAX_LEVEL` adds this share of its full gain (the levels before it fade to `DIM_SHARE`): the late armies' power, now heroes have no rarity. */
+export const LATE_SHARE = 0.3;
+/** The extra hp and attack (as shares of the base) a lasting level gives for reaching it. */
+export const MILESTONES: readonly { level: number; hp: number; atk: number }[] = [
+  { level: 25, hp: 0.15, atk: 0.12 },
+  { level: 30, hp: 0.25, atk: 0.2 },
+];
 const CURVE = 30;
 
-/** Total XP to reach a level: 30 × (level − 1) × level, so each level costs 60 more than the one before. */
-export const xpFor = (level: number) => CURVE * (level - 1) * level;
+/** Each level past `RUN_MAX_LEVEL` costs this many times what the plain curve asks, so the late levels are for the long game. */
+export const LATE_XP = 4;
 
-/** The level a total of XP reaches (1 to `MAX_LEVEL`). */
-export function levelOf(xp: number): number {
+/** Total XP to reach a level: 30 × (level − 1) × level, so each level costs 60 more than the one before (past `RUN_MAX_LEVEL`, `LATE_XP` times that). */
+export const xpFor = (level: number) => {
+  const plain = (n: number) => CURVE * (n - 1) * n;
+  return level <= RUN_MAX_LEVEL ? plain(level) : plain(RUN_MAX_LEVEL) + LATE_XP * (plain(level) - plain(RUN_MAX_LEVEL));
+};
+
+/** The level a total of XP reaches (1 to `max`, `MAX_LEVEL` unless a run's own cap is given). */
+export function levelOf(xp: number, max = MAX_LEVEL): number {
   let level = 1;
-  while (level < MAX_LEVEL && xp >= xpFor(level + 1)) level++;
+  while (level < max && xp >= xpFor(level + 1)) level++;
   return level;
 }
 
@@ -53,8 +68,21 @@ const steps = (level: number): number => Math.min(level - 1, DIM_LEVEL - 1) + DI
 /** Hp and attack multipliers a level gives (x1 at level 1). */
 export const levelBoost = (level: number): { hp: number; atk: number } => ({ hp: 1 + LEVEL_HP * steps(level), atk: 1 + LEVEL_ATK * steps(level) });
 
-/** The percentages of hp and attack that the levels from `from` to `to` add, in whole numbers. */
-export const levelGain = (from: number, to: number) => ({ hp: Math.round(LEVEL_HP * 100 * (steps(to) - steps(from))), atk: Math.round(LEVEL_ATK * 100 * (steps(to) - steps(from))) });
+/** Like `steps`, with the lasting levels' bigger late share. */
+const lastingSteps = (level: number): number => steps(Math.min(level, RUN_MAX_LEVEL)) + LATE_SHARE * Math.max(0, level - RUN_MAX_LEVEL);
+const milestone = (level: number, key: 'hp' | 'atk'): number => MILESTONES.reduce((n, m) => (level >= m.level ? n + m[key] : n), 0);
+
+/** Hp and attack multipliers of a hero kind's lasting level (x1 at level 1): `levelBoost`, but the late levels pay more and the milestones add a lump. */
+export const lastingBoost = (level: number): { hp: number; atk: number } => ({
+  hp: 1 + LEVEL_HP * lastingSteps(level) + milestone(level, 'hp'),
+  atk: 1 + LEVEL_ATK * lastingSteps(level) + milestone(level, 'atk'),
+});
+
+/** The percentages of hp and attack (of the base) that the levels from `from` to `to` add, in whole numbers. `lasting` is a hero kind's level, not a run's own. */
+export function levelGain(from: number, to: number, lasting = true): { hp: number; atk: number } {
+  const [a, b] = lasting ? [lastingBoost(from), lastingBoost(to)] : [levelBoost(from), levelBoost(to)];
+  return { hp: Math.round((b.hp - a.hp) * 100), atk: Math.round((b.atk - a.atk) * 100) };
+}
 
 export const xpOf = (m: Meta, kind: string): number => m.xp[kind] ?? 0;
 export const levelOfKind = (m: Meta, kind: string): number => levelOf(xpOf(m, kind));
