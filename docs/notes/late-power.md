@@ -34,8 +34,8 @@ So levels 1 to 20 are exactly as before, and the new power sits above 20, where 
 | Army | Before rarity left | Tries 0.95.0 | Tries now | Clear now |
 |---|---|---|---|---|
 | Orc Warband | 2.3 | 2.7 | 2.7 | 100% |
-| Undead Legion | 2.7 | 2.6 | 2.5 | 100% |
-| Beast Packs | 2.4 | 2.7 | 2.8 | 100% |
+| Undead Legion | 2.4 | 2.6 | 2.5 | 100% |
+| Beast Packs | 1.7 | 2.7 | 2.8 | 100% |
 | The Wildwood | 1.9 | 5.1 | 3.9 | 100% |
 | The Labyrinth | 2.2 | 5.6 | 3.2 | 100% |
 | Ogre Clans | 1.9 | 5.0 | 2.7 | 100% |
@@ -43,7 +43,7 @@ So levels 1 to 20 are exactly as before, and the new power sits above 20, where 
 | Yokai Night Parade | 2.5 | 7.7 | 2.1 | 100% |
 | Golem Forge | 3.2 | 7.7 | 2.7 | 100% |
 
-(The first column is from `no-rarity.md`'s 'before' figures, which list the first three armies as 2.3 / 2.7, 2.4 / 2.6 and 1.7 / 2.7 before and after; 0.95.0 clear rates were Infernal Host 95%, Yokai 90%, Golem Forge 77%.) The first three armies are within 0.2.
+(The first column is from `no-rarity.md`'s 'before' figures, which gives the first three armies as 2.3 / 2.7, 2.4 / 2.6 and 1.7 / 2.7 (before / after the rarity change); 0.95.0 clear rates were Infernal Host 95%, Yokai 90%, Golem Forge 77%.) The first three armies are within 0.2.
 The Wildwood is the one miss: 3.9 against a target of about 3.5. Its party is mostly level 15 and under, which the change
 leaves alone on purpose (touching it moves Beast; two tries with a gentle bump below 20 gave Beast 2.4 and Undead 2.3,
 at the edge of the 0.3 allowance). It wants the next lever to be an army-side or castle one rather than more hero levels.
