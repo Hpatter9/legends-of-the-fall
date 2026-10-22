@@ -13,7 +13,7 @@ import { fxBlow, fxStruck, fxTick, hidden } from './equipFx';
 
 /** A skill fires at this much charge. */
 export const CHARGE_MAX = 100;
-/** A Mythic's ultimate gathers charge at this share of its first skill's rate. */
+/** An ultimate gathers charge at this share of its first skill's rate. */
 export const ULT_RATE = 0.45;
 
 /** Damage over time: `dmg` every `every` ms for `ms`. */
@@ -128,7 +128,7 @@ export interface Skill {
 
 export interface Kit {
   skill: Skill;
-  /** A Mythic's second, bigger skill: it charges on its own meter, `ULT_RATE` as fast as the first (its own charge rates are unused). */
+  /** An ultimate, a second, bigger skill (eight heroes have one): it charges on its own meter, `ULT_RATE` as fast as the first (its own charge rates are unused). */
   ultimate?: Skill;
   passive: Passive;
 }

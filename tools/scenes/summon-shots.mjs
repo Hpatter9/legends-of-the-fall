@@ -1,5 +1,5 @@
 // Plays made-up pulls in the summoning hall on an upright phone (393x852) and saves a contact sheet of frames for each:
-//   node tools/scenes/summon-shots.mjs      (PORT; pictures go to docs/samples/summon-<name>.png)
+//   node tools/scenes/summon-shots.mjs      (PORT; ONLY=new,repeat,tenpull; pictures go to docs/samples/summon-<name>.png)
 // Needs `npm run web` first. The hall's `window.__hall.play(pulls)` is called directly; nothing is saved.
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
@@ -15,16 +15,14 @@ const srv = createServer((q, r) => {
 }).listen(Number(process.env.PORT ?? 8129));
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const HEROES = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard'];
-const meta = { seed: 7, crowns: 2000, unlocked: HEROES, party: HEROES, pulls: 0, dry: 29, dryMythic: 89, castle: { treasury: 0, barracks: 0, armoury: 0, mageTower: 0, stable: 0, library: 0 }, shards: {}, stars: {}, xp: {}, bestStage: 3, tower: 0, daily: {}, bosses: [], achievements: [], spellbook: undefined };
-const P = (kind, rarity, isNew = true, shards = 0) => ({ kind, rarity, isNew, shards });
+const meta = { seed: 7, crowns: 2000, unlocked: HEROES, party: HEROES, pulls: 0, sinceNew: 11, castle: { treasury: 0, barracks: 0, armoury: 0, mageTower: 0, stable: 0, library: 0 }, shards: {}, stars: {}, xp: {}, bestStage: 3, tower: 0, daily: {}, bosses: [], achievements: [], spellbook: undefined };
+const P = (kind, isNew = true, shards = 0) => ({ kind, isNew, shards });
 const COMMONS = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard'];
-const ten = (...hi) => [...hi, ...COMMONS.concat(COMMONS).slice(0, 10 - hi.length).map((k) => P(k, 1, false, 1))];
+const ten = (...hi) => [...hi, ...COMMONS.concat(COMMONS).slice(0, 10 - hi.length).map((k) => P(k, false, 1))];
 const SCENES = {
-  epic: { pulls: [P('lightningMage', 3)], step: 380, n: 10 },
-  legendary: { pulls: [P('warlock', 4)], step: 450, n: 12 },
-  mythic: { pulls: [P('kitsune', 5)], step: 520, n: 12 },
-  'mythic-dup': { pulls: [P('kitsune', 5, false, 3)], step: 340, n: 12 },
-  tenpull: { pulls: ten(P('kitsune', 5), P('werewolf', 4)), step: 600, n: 18 },
+  new: { pulls: [P('kitsune')], step: 450, n: 12 },
+  repeat: { pulls: [P('kitsune', false, 1)], step: 340, n: 10 },
+  tenpull: { pulls: ten(P('tyrant'), P('werewolf')), step: 600, n: 18 },
 };
 const only = process.env.ONLY?.split(',');
 mkdirSync('docs/samples', { recursive: true });

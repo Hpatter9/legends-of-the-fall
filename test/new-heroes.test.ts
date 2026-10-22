@@ -1,3 +1,4 @@
+import { starterPacks } from '../src/sim/starter';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addUnit, fight, playOut, stepBattle, startBattle, place, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
@@ -224,7 +225,7 @@ test('Mountain Breath heals each second', () => {
   assert.equal(y.hp, 100 + Math.round(y.maxHp * 0.02));
 });
 
-test('any team of five new heroes is about as strong as the starting five', () => {
+test('a team of new heroes is about as strong as the starting five', () => {
   const wins = (ids: string[]) => {
     let w = 0;
     for (let seed = 1; seed <= 30; seed++) {
@@ -238,9 +239,13 @@ test('any team of five new heroes is about as strong as the starting five', () =
     return w;
   };
   const base = wins([...HEROES]);
-  // (a tank first, as with the knight)
-  for (const team of [['yamabushi', 'ninjaMonk', 'peasant', 'lightningMage', 'wanderer'], ['peasant', 'yamabushi', 'kitsune', 'karasu', 'lightningMage'], ['yamabushi', 'kitsune', 'wanderer', 'karasu', 'lightningMage']]) {
-    const w = wins(team);
-    assert.ok(w >= base * 0.6 && w <= base * 1.4, `${team} won ${w}, base ${base}`);
-  }
+  // (with no tiers, teams of new heroes are no stronger than the old five: teams made of two starter packs, which have a front-liner, a striker and a back-liner each)
+  const teams = [1, 2, 3, 4, 5, 6].map((seed) => {
+    const [a, b] = starterPacks(seed);
+    return [...a, b[0], b[2]];
+  });
+  const results = teams.map((t) => wins(t));
+  const mean = results.reduce((x, y) => x + y, 0) / results.length;
+  assert.ok(mean >= base * 0.6 && mean <= base * 1.4, `the teams won ${results} on average ${mean}, base ${base}`);
+  for (const [i, w] of results.entries()) assert.ok(w >= base * 0.4 && w <= base * 1.6, `${teams[i]} won ${w}, base ${base}`);
 });

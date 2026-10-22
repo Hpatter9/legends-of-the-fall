@@ -14,7 +14,8 @@ import { tierOf } from './sim/tiers';
 import { formOf, UNITS } from './sim/units';
 import { ELITE_BY_ID } from './sim/elites';
 import { isBoss } from './sim/foes';
-import { earn, loadMeta, rankOf, recordStars, saveMeta, type Meta } from './sim/meta';
+import { earn, loadMeta, needsStarter, pickStarter, rankOf, recordStars, saveMeta, type Meta } from './sim/meta';
+import { chooseStarter } from './starter';
 import { xpRate } from './sim/castle';
 import { heroStats } from './sim/talents';
 import { powerOf, powerText } from './sim/power';
@@ -147,6 +148,12 @@ class Game {
     const seed = Number(query.get('seed'));
     this.meta = loadMeta((Date.now() % 100000) + 1);
     saveMeta(this.meta);
+    // (a new save, or one after Start over, picks its first three heroes before anything else; an address with a seed is a test page and takes the first pack)
+    if (needsStarter(this.meta)) {
+      if (seed) pickStarter(this.meta, 0);
+      else await chooseStarter(this.meta);
+      saveMeta(this.meta);
+    }
     // (a fresh page with no saved run shows the first army's board behind the home screen)
     this.run = (!seed && loadRun()) || armyRun(seed || (Date.now() % 100000) + 1, ARMIES[0].id, this.meta.party, this.meta.castle);
     this.syncPool();

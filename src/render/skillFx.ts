@@ -89,7 +89,7 @@ export const SKILL_FX: Record<string, SkillFx> = {
   'Magma Burst': { cast: { sheet: 'fireCircle', scale: 1.4 }, hit: { sheet: 'fireExplosion', scale: 1.2 } },
   'Forge Hammer': { cast: { sheet: 'earthWave', scale: 2, tint: 0xffc070 }, hit: { sheet: 'earthExplosion', scale: 1.2 } },
   'Furnace Blast': { cast: { sheet: 'fireCircle', scale: 2.2 }, hit: { sheet: 'fireExplosion', scale: 1.6 } },
-  // the Mythics' ultimates
+  // the ultimates
   'Nine-Tailed Dream': { cast: { sheet: 'pinkHeart', scale: 2.6 }, hit: { sheet: 'pinkHeart', scale: 1 } },
   'Feather Storm': { cast: { sheet: 'windVortex', scale: 2, tint: 0xff5a6a }, hit: { sheet: 'windBurst', scale: 1.3, tint: 0xff8a8a } },
   Tempest: { cast: { sheet: 'windVortex', scale: 2.6 }, hit: { sheet: 'windBurst', scale: 1.1 } },
@@ -117,7 +117,7 @@ export const SKILL_FX: Record<string, SkillFx> = {
   Starfall: { cast: { sheet: 'lightCircle', scale: 1.6, tint: 0xffe27a }, hit: { sheet: 'goldBurst', scale: 1.1 } },
   'Hellblade Sweep': { cast: { sheet: 'darkSlash', scale: 1.6, tint: 0xff6a6a }, hit: { sheet: 'bloodExplosion', scale: 0.7 } },
   Judgement: { cast: { sheet: 'darkCircle', scale: 1.8, tint: 0xff4a4a }, hit: { sheet: 'darkSlash', scale: 1.2, tint: 0xff6a6a } },
-  // ... and its Mythics' ultimates
+  // ... and its ultimates
   'Astral Convergence': { cast: { sheet: 'lightNova', scale: 2.8, tint: 0xffe27a }, hit: { sheet: 'goldBurst', scale: 1.1 } },
   'Demon Form': { cast: { sheet: 'darkCircle', scale: 2.4, tint: 0xff4a4a } },
   'Reign of Terror': { cast: { sheet: 'darkCircle', scale: 2.8, tint: 0xb06aff }, hit: { sheet: 'darkSlash', scale: 1.1, tint: 0xb06aff } },

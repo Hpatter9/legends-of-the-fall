@@ -12,7 +12,7 @@ import { gradeBoost } from './run';
 import { heroStats } from './talents';
 import { UNITS } from './units';
 
-/** Scales the result so a fresh Common hero sits near a thousand. */
+/** Scales the result so a fresh hero sits near a thousand. */
 const POWER_SCALE = 10;
 /** Defence counts against blows of about this size. */
 const DEF_REF = 15;

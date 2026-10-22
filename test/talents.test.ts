@@ -8,7 +8,7 @@ import { firedCount } from '../src/sim/equipFx';
 import { ABILITIES, emptyStats, equipItem, grantEquipment, type EquipStats } from '../src/sim/equipment';
 import { loadMeta, startedMeta, saveMeta } from '../src/sim/meta';
 import { xpFor, levelOfKind } from '../src/sim/levels';
-import { ALL_HEROES } from '../src/sim/units';
+import { ALL_HEROES, UNITS } from '../src/sim/units';
 import {
   FULL_TREE_POINTS, LEVEL_POINT_EVERY, MAX_SHARD_POINTS, RESPEC_BASE, RESPEC_PER_POINT, SHARD_POINT_COST, TAL_KEYS, TALENT_ABILITIES, TREES, boughtOf, buyPoint, canBuyPoint, canLearn, heroStats, learn,
   levelPoints, nodeOf, picksOf, pointsEarned, pointsFree, pointsSpent, respec, respecCost, talentStats, tierNodes, whyNot,
@@ -431,7 +431,8 @@ test('every capstone ability fires', () => {
     let fired = 0;
     for (const seed of [3, 4, 5, 6]) {
       const eq = stats({ abilities: [{ id, name: a.name, s: 1 }] });
-      if (a.trig === 'low' || a.trig === 'death') eq.hp = -0.8;
+      // (a knight with about 76 hp: low enough to be hurt past its threshold, tough enough to live through the hit that does it)
+      if (a.trig === 'low' || a.trig === 'death') eq.hp = -(1 - 76 / UNITS.knight.hp);
       else eq.hp = 2;
       if (['hit', 'nth', 'kill', 'crit'].includes(a.trig)) eq.atk = 2;
       if (a.trig === 'crit') eq.crit = 1;

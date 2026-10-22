@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { fight, place, playOut, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
 import { Rng } from '../src/sim/rng';
-import { ALL_HEROES, HEROES } from '../src/sim/units';
+import { ALL_HEROES, HEROES, UNITS } from '../src/sim/units';
 import { loadMeta, startedMeta, saveMeta } from '../src/sim/meta';
 import { boostOf } from '../src/sim/run';
 import {
@@ -175,7 +175,7 @@ test('a sword raises the damage dealt, armour cuts the damage taken', () => {
   // (hp and attack go through the unit's stats)
   const w = duel(stats({ hp: 0.5, atk: 0.5 }));
   const k = w.units.find((u) => u.def === 'knight')!;
-  assert.equal(k.maxHp, Math.round(380 * 1.5));
+  assert.equal(k.maxHp, Math.round(UNITS.knight.hp * 1.5));
   assert.equal(k.power, 1.5);
 });
 

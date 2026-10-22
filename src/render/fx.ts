@@ -642,7 +642,7 @@ export class Fx {
   }
 
   /** A skill goes off: its name over the caster, a wind-up circle and motes for the length of the cast, and its own effect at
-   *  the caster's feet. A Mythic's ultimate dims the world, flashes and ends in a nova; a boss's skill rumbles. */
+   *  the caster's feet. An ultimate dims the world, flashes and ends in a nova; a boss's skill rumbles. */
   private skillName(byId: number, name: string, ms: number): void {
     const by = this.sprites.get(byId);
     if (!by) return;

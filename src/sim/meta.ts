@@ -153,7 +153,7 @@ export function setParty(m: Meta, kinds: readonly string[]): boolean {
   return ok;
 }
 
-/** Saved party that is sane: unlocked kinds, no repeats, at most five. Missing or empty means the first five unlocked. */
+/** Saved party that is sane: unlocked kinds, no repeats, at most five. Missing or empty means the first unlocked. */
 function readParty(raw: unknown, unlocked: readonly string[]): string[] {
   const kept = Array.isArray(raw) ? [...new Set(raw)].filter((k): k is string => typeof k === 'string' && unlocked.includes(k)).slice(0, PARTY_SIZE) : [];
   return kept.length ? kept : unlocked.slice(0, PARTY_SIZE);

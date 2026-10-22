@@ -49,7 +49,7 @@ export interface Owned {
   gear?: Partial<Record<Slot, Gear>>;
   /** Lasting bumps from a training ground, added to the hero's multipliers. */
   bump?: { hp: number; atk: number };
-  /** Skill charge (and a Mythic's ultimate charge) kept from the last wave, so a skill half-filled is not lost between waves. */
+  /** Skill charge (and an ultimate's charge) kept from the last wave, so a skill half-filled is not lost between waves. */
   charge?: number;
   charge2?: number;
 }

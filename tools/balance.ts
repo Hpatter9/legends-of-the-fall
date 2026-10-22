@@ -6,7 +6,7 @@
 //   npm run balance -- --games 800     fewer fights, quicker and noisier
 //   npm run balance -- --hero-stage 1  play the hero table at another stage (default 5)
 //   npm run balance -- --saves 200     fresh saves in the whole-run table (default 400)
-//   npm run balance -- --heroes-only  only the hero value table (table 1)
+//   npm run balance -- --heroes-only  only the hero value table (table 1); --json file.json also writes each hero's win rate and lift; --seed-offset n plays other fights
 //   npm run balance -- --runs-only     only the whole-run table (quicker when tuning the levels)
 //   npm run balance -- --armies-only   only the armies' tables (win rate per wave at given hero levels, and the climb through them)
 //   npm run balance -- --only orcs,undead --levels 1,5,10 --party starters   a few armies, levels or one party
@@ -20,14 +20,13 @@
 // runs (a greedy player on fresh saves, carrying the hero levels from run to run). Every fight is seeded, so the same
 // numbers come out again on the same code.
 
-import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
-import { fight, place, playOut, startBattle, stepBattle, type Battle, type Stage } from '../src/sim/battle';
+import { fight, place, playOut } from '../src/sim/battle';
 import { FIELD_BANDS } from '../src/sim/foes';
 import { chooseOption, leaveEvent } from '../src/sim/events';
 import { fightXp, gainXp, levelOfKind } from '../src/sim/levels';
 import { BUILDINGS, maxLevel, newCastle, nextCost, upgrade, xpRate, type BuildingId, type Castle } from '../src/sim/castle';
 import { startedMeta, PULL_COST, rankOf, rankMult, recruit, type Meta } from '../src/sim/meta';
-import { boostOf, bandFor, finish, gradeBoost, isBossStage, newRun, type Owned, type Run, SQUAD, stageBoost, startStage, summon } from '../src/sim/run';
+import { boostOf, bandFor, finish, isBossStage, newRun, type Owned, type Run, SQUAD, stageBoost, startStage, summon } from '../src/sim/run';
 import { ARMIES, armyById, settleWave } from '../src/sim/armies';
 import { TIERS } from '../src/sim/tiers';
 import { playArmy, savedAt } from './autoplay';
@@ -35,6 +34,7 @@ import { towerTable } from './tower-balance';
 import { ratingOf } from '../src/sim/stars';
 import { mixSeed, Rng } from '../src/sim/rng';
 import { ALL_HEROES, HEROES, UNITS } from '../src/sim/units';
+import { deploySpots, fieldBoost, pickTeam, play } from './heroSweep';
 import { CLASS_NAMES, CLASS_OF, type StarterClass } from '../src/sim/starter';
 import { writeFileSync } from 'node:fs';
 
@@ -43,69 +43,16 @@ const arg = (name: string, fallback: number): number => {
   return i >= 0 && Number(process.argv[i + 1]) > 0 ? Number(process.argv[i + 1]) : fallback;
 };
 const GAMES = arg('--games', 4000);
+/** Added to every seed of the hero table, to check a tuning on fights it was not tuned on (`--seed-offset 100000`). */
+const SEED_OFFSET = process.argv.includes('--seed-offset') ? Number(process.argv[process.argv.indexOf('--seed-offset') + 1]) | 0 : 0;
 const CELL_GAMES = Math.max(200, Math.round(GAMES / 4));
 const SAVES = arg('--saves', 400);
-const TEAM = 5;
 /** The stage the hero table is played at. */
 const HERO_STAGE = arg('--hero-stage', 5);
 const RUNS_ONLY = process.argv.includes('--runs-only');
 const ARMIES_ONLY = process.argv.includes('--armies-only');
 const HEROES_ONLY = process.argv.includes('--heroes-only');
 const BANDS = FIELD_BANDS;
-
-/** The boost of a field band at stage s: a field band has no boss, even on a boss stage. */
-const fieldBoost = (s: number): Stage => ({ ...stageBoost(s), boss: undefined });
-
-/** A random team of `TEAM` different hero kinds (from every hero there is). */
-function pickTeam(rng: Rng): string[] {
-  const pool = [...ALL_HEROES];
-  const team: string[] = [];
-  for (let i = 0; i < TEAM; i++) team.push(pool.splice(rng.int(0, pool.length - 1), 1)[0]);
-  return team;
-}
-
-/** The deploy tiles (the heroes' rows), shuffled by the side stream `rng`, so a team lands at random. */
-function deploySpots(b: Battle, rng: Rng): [number, number][] {
-  const spots: [number, number][] = [];
-  for (let v = D - DEPLOY_ROWS; v < D; v++) for (let u = 0; u < b.board.w; u++) if (standable(tileAt(b.board, u, v))) spots.push([u, v]);
-  for (let i = spots.length - 1; i > 0; i--) {
-    const j = rng.int(0, i);
-    [spots[i], spots[j]] = [spots[j], spots[i]];
-  }
-  return spots;
-}
-
-interface Played {
-  won: boolean;
-  /** Damage each hero kind dealt, and took, in this fight. */
-  dealt: Map<string, number>;
-  taken: Map<string, number>;
-}
-
-/**
- * One fight: the foes of `band` (boosted by `foes`) against `team`, placed at random on the heroes' rows, every hero at
- * `grade` (1 = plain, 2 = merged once). The placing draws from a side stream of the seed, so it is the same every time.
- */
-function play(seed: number, band: string, foes: Stage, team: string[], grade = 1): Played {
-  const b = startBattle(seed, band, foes);
-  const spots = deploySpots(b, new Rng(mixSeed(seed, 0xba1a)));
-  team.forEach((id, i) => place(b, id, spots[i][0], spots[i][1], undefined, gradeBoost(grade, 0, 1)));
-  const out: Played = { won: false, dealt: new Map(), taken: new Map() };
-  // (the events name fighters by id; a fighter can be added mid-fight, so look each one up as it comes)
-  const unitOf = (id: number) => b.units.find((x) => x.id === id)!;
-  fight(b);
-  while (b.phase === 'fight') {
-    for (const e of stepBattle(b)) {
-      if (e.kind !== 'hit') continue;
-      const by = unitOf(e.by);
-      const to = unitOf(e.to);
-      if (UNITS[by.def].side === 'hero' && UNITS[to.def].side === 'foe') out.dealt.set(by.def, (out.dealt.get(by.def) ?? 0) + e.dmg);
-      if (UNITS[to.def].side === 'hero' && UNITS[by.def].side === 'foe') out.taken.set(to.def, (out.taken.get(to.def) ?? 0) + e.dmg);
-    }
-  }
-  out.won = b.phase === 'won';
-  return out;
-}
 
 const pct = (w: number, n: number) => (n ? (100 * w) / n : 0);
 const f1 = (x: number) => x.toFixed(1).padStart(6);
@@ -128,7 +75,7 @@ function heroValue(): void {
   }
   const tally = new Map<string, HeroTally>(ALL_HEROES.map((h) => [h, { inN: 0, inW: 0, outN: 0, outW: 0, dealt: 0, taken: 0, fights: 0 }]));
   for (let g = 0; g < GAMES; g++) {
-    const seed = g + 1;
+    const seed = g + 1 + SEED_OFFSET;
     const team = pickTeam(new Rng(mixSeed(seed, 0x7ea4)));
     const r = play(seed, BANDS[g % BANDS.length], fieldBoost(HERO_STAGE), team);
     for (const h of ALL_HEROES) {
