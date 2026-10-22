@@ -7,6 +7,7 @@
 // Pure rules: no Pixi, no DOM. The renderer reads the battle and the events each tick returns.
 
 import { boardOk, D, DEPLOY_ROWS, GROUND_COST, LAVA_BURN, makeBoard, sightClear, standable, tileAt, type Area, type At, type Board } from './board';
+import { twistBoard, type TwistFx } from './twists';
 import { firstStep, walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
 import { FOE_BANDS } from './foes';
@@ -103,6 +104,8 @@ export interface Unit {
   slain?: number;
   /** For a fighter a skill called up (a decoy, a treant, an imp), the unit id of the one that called it: what it does counts for its caller. */
   owner?: number;
+  /** All healing it receives is multiplied by this (a holy-ground twist); absent is x1. */
+  healMult?: number;
 }
 
 interface Pending {
@@ -182,6 +185,8 @@ export interface Battle {
   relics?: { team: TraitEffects; first?: number; revive?: boolean };
   /** Whether the relic's revive has been spent this fight. */
   revived?: boolean;
+  /** The floor's twist (`twists.ts`), when it has one. */
+  twist?: TwistFx;
 }
 
 export const defOf = (u: Unit): UnitDef => UNITS[u.def];
@@ -219,6 +224,8 @@ export interface Stage {
   relics?: { team: TraitEffects; first?: number; revive?: boolean };
   /** The land the fight is on (`areaFor` in run.ts); the highlands when unset. */
   area?: Area;
+  /** The floor's twist (the tower's, `twists.ts`); none when unset. */
+  twist?: TwistFx;
 }
 export const apart = (a: At, b: At) => Math.abs(a.u - b.u) + Math.abs(a.v - b.v);
 export const tileOf = (b: Battle, a: At) => tileAt(b.board, a.u, a.v)!;
@@ -256,10 +263,16 @@ export function canStrike(board: Board, def: UnitDef, from: At, to: At): boolean
 /** A fresh fight on the seed's board: the foes of `band` (a band's name in `FOE_BANDS`, or the foes' ids themselves) in their rows, no heroes placed yet. */
 export function startBattle(seed: number, band: string | readonly string[] = 'skeletons', stage: Stage = {}): Battle {
   const board = makeBoard(seed, stage.area);
-  const b: Battle = { seed, board, units: [], phase: 'deploy', t: 0, rng: mixSeed(seed, 0xf167), pending: [], skillRng: mixSeed(seed, 0x5c111), zones: [], nextId: 1, spells: freshSpells(stage.mana) };
+  const tw = stage.twist;
+  if (tw) twistBoard(board, tw, seed);
+  const b: Battle = { seed, board, units: [], phase: 'deploy', t: 0, rng: mixSeed(seed, 0xf167), pending: [], skillRng: mixSeed(seed, 0x5c111), zones: [], nextId: 1, spells: freshSpells(tw?.mana ? (stage.mana ?? 1) * tw.mana : stage.mana) };
+  if (tw) b.twist = tw;
   if (stage.heroes) b.heroBoost = stage.heroes;
+  if (tw?.heroAtk) b.heroBoost = { ...b.heroBoost, atk: (b.heroBoost?.atk ?? 1) * tw.heroAtk };
+  // (the foes' boost with the twist's share in it)
+  const foes: Boost | undefined = tw?.foeAtk || tw?.foeHp ? { ...stage.foes, hp: (stage.foes?.hp ?? 1) * (tw.foeHp ?? 1), atk: (stage.foes?.atk ?? 1) * (tw.foeAtk ?? 1) } : stage.foes;
   if (stage.move && stage.move !== 1) b.heroMove = stage.move;
-  if (stage.foes) b.foeBoost = stage.foes;
+  if (foes) b.foeBoost = foes;
   if (stage.foes?.speed && stage.foes.speed !== 1) b.foeSpeed = stage.foes.speed;
   if (stage.relics) b.relics = stage.relics;
   // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed
@@ -272,11 +285,25 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
       for (let u = 0; u < board.w; u++) if (standable(tileAt(board, u, v)) && !unitAt(b, u, v)) free.push(u);
       if (!free.length) continue;
       const boss = n === 0 ? stage.boss : undefined;
-      addUnit(b, id, rng.pick(free), v, { hp: (stage.foes?.hp ?? 1) * (boss?.hp ?? 1), atk: (stage.foes?.atk ?? 1) * (boss?.atk ?? 1), size: boss?.size });
+      addUnit(b, id, rng.pick(free), v, { hp: (foes?.hp ?? 1) * (boss?.hp ?? 1), atk: (foes?.atk ?? 1) * (boss?.atk ?? 1), size: boss?.size });
       break;
     }
   });
+  if (tw?.ambush) ambush(b);
   return b;
+}
+
+/** An ambush: the band's last plain fighter (not the leader) stands among the heroes' back row instead. */
+function ambush(b: Battle): void {
+  const foes = b.units.filter((x) => x.side === 'foe');
+  const who = [...foes.slice(1)].reverse().find((x) => !UNITS[x.def].shot) ?? foes[foes.length - 1];
+  if (!who || foes.length < 2) return;
+  const free: number[] = [];
+  for (let u = 0; u < b.board.w; u++) if (standable(tileAt(b.board, u, D - 1)) && !unitAt(b, u, D - 1)) free.push(u);
+  if (!free.length) return;
+  who.u = free[new Rng(mixSeed(b.seed, 0xa3b5)).int(0, free.length - 1)];
+  who.v = D - 1;
+  who.facing = 3;
 }
 
 export function addUnit(b: Battle, defId: string, u: number, v: number, boost: Boost = {}, tag?: number): Unit {
@@ -292,6 +319,7 @@ export function addUnit(b: Battle, defId: string, u: number, v: number, boost: B
     unit.carry = Math.max(0.01, boost.carry);
     unit.hp = Math.max(1, Math.round(hp * unit.carry));
   }
+  if (b.twist?.heal) unit.healMult = b.twist.heal;
   if (boost.size && boost.size !== 1) unit.size = boost.size;
   if (boost.grade && boost.grade > 1) unit.grade = boost.grade;
   if (tag !== undefined) unit.tag = tag;
@@ -358,6 +386,8 @@ function applyTraits(b: Battle): void {
       x.hp = x.maxHp;
     }
     if (x.carry !== undefined) x.hp = Math.max(1, Math.round(x.maxHp * x.carry));
+    // (a cursed floor: the heroes start the fight wounded)
+    if (b.twist?.wound) x.hp = Math.max(1, Math.round(x.hp * (1 - b.twist.wound)));
   }
 }
 
@@ -366,8 +396,11 @@ export function strikeDef(b: Battle, me: Unit): UnitDef {
   const def = defOf(me);
   const reach = me.side === 'hero' ? b.traits?.reach : undefined;
   const extra = me.eq?.range ?? 0;
-  if (!extra && !(reach && def.shot)) return def;
-  return { ...def, range: def.range + extra, ...(reach && def.shot ? { heightReach: (def.heightReach ?? 0.7) + reach } : {}) };
+  // (twists: fog shortens a shooter's range, a gale lifts every jump)
+  const fog = def.shot ? b.twist?.fog ?? 0 : 0;
+  const jump = b.twist?.jump ?? 0;
+  if (!extra && !fog && !jump && !(reach && def.shot)) return def;
+  return { ...def, range: Math.max(1, def.range + extra - fog), ...(jump ? { jump: def.jump + jump } : {}), ...(reach && def.shot ? { heightReach: (def.heightReach ?? 0.7) + reach } : {}) };
 }
 
 /** One tick of the fight. Returns what happened, for the renderer to show. */
@@ -534,7 +567,7 @@ function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void {
   const to = tileOf(b, next);
   // (a sure-footed fighter climbs at no extra cost)
   const cost = def.flies ? 1 : 1 + (sureFooted(me) ? 0 : Math.max(0, to.h - from.h)) + (to.ground ? GROUND_COST[to.ground] : 0);
-  const ms = Math.round((def.moveMs * cost) / (speedOf(b, me) * (1 + (me.eq?.moveSpeed ?? 0)) * (me.side === 'hero' ? b.heroMove ?? 1 : 1)));
+  const ms = Math.round((def.moveMs * cost) / (speedOf(b, me) * (1 + (me.eq?.moveSpeed ?? 0)) * (me.side === 'hero' ? b.heroMove ?? 1 : 1) * (b.twist?.chill ?? 1)));
   me.step = { u: me.u, v: me.v, h: from.h, at: b.t, ms };
   me.facing = wayTo(me, next);
   me.u = next.u;

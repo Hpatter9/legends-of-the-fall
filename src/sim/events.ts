@@ -14,6 +14,9 @@
 //   gambler   stake gold on a coin flip (the flip is drawn with the card)
 //   altar     pay a share of every hero's hp for a relic
 //
+// and eleven more with real risks (`mystery.ts`; `MYSTERY_KINDS`): a black altar, a gambling imp, a prisoner, a fountain, a
+// forge, a trainer, a blood-and-iron shrine, a mimic chest, a black book, a knight's cairn and bandits.
+//
 // Pure rules: no Pixi, no DOM. It changes a Run only through `chooseOption` and `leaveEvent`; it imports no values from
 // run.ts (which calls `drawEvent`), only the types.
 
@@ -22,12 +25,15 @@ import { dropGear, gearText, type Gear } from './gear';
 import { RELIC_IDS, RELICS } from './relics';
 import { healParty, hurtParty } from './health';
 import { UNITS } from './units';
+import { applyMystery, drawMystery, type MysteryAct } from './mystery';
 import type { Run } from './run';
 
-export type EventKind = 'shrine' | 'merchant' | 'chest' | 'cursed' | 'training' | 'spring' | 'gambler' | 'altar';
+export type EventKind = 'shrine' | 'merchant' | 'chest' | 'cursed' | 'training' | 'spring' | 'gambler' | 'altar' | 'blackAltar' | 'imp' | 'prisoner' | 'fountain' | 'forge' | 'trainer' | 'oath' | 'mimic' | 'tome' | 'cairn' | 'bandits';
 export const EVENT_KINDS: readonly EventKind[] = ['shrine', 'merchant', 'chest', 'cursed', 'training'];
-/** What a mystery floor of the tower can be: the usual five and the three about health. */
-export const TOWER_EVENT_KINDS: readonly EventKind[] = [...EVENT_KINDS, 'spring', 'gambler', 'altar'];
+/** The tower's eleven newer mystery floors, with real choices (`mystery.ts`). */
+export const MYSTERY_KINDS: readonly EventKind[] = ['blackAltar', 'imp', 'prisoner', 'fountain', 'forge', 'trainer', 'oath', 'mimic', 'tome', 'cairn', 'bandits'];
+/** What a mystery floor of the tower can be: the usual five, the three about health, and the eleven newer ones. */
+export const TOWER_EVENT_KINDS: readonly EventKind[] = [...EVENT_KINDS, 'spring', 'gambler', 'altar', ...MYSTERY_KINDS];
 
 /** What taking an option does. */
 export type Effect =
@@ -40,7 +46,8 @@ export type Effect =
   | { t: 'train'; hero: number; hp?: number; atk?: number }
   | { t: 'heal'; frac: number }
   | { t: 'gamble'; win: boolean; n: number }
-  | { t: 'altar'; frac: number; id: string };
+  | { t: 'altar'; frac: number; id: string }
+  | { t: 'mystery'; act: MysteryAct };
 
 export interface EventOption {
   label: string;
@@ -82,6 +89,7 @@ const gearOption = (g: Gear, cost: number): EventOption => ({ label: g.name, tex
 export function drawEvent(run: Run, stage: number, kinds: readonly EventKind[] = EVENT_KINDS): EventCard {
   const rng = new Rng(mixSeed(run.seed, 0xe7e47, stage));
   const kind = pick(rng, kinds);
+  if (MYSTERY_KINDS.includes(kind)) return drawMystery(run, stage, kind, rng);
   const relics = unownedRelics(run);
   switch (kind) {
     case 'shrine':
@@ -215,6 +223,9 @@ export function chooseOption(run: Run, i: number): string | null {
       if (!run.relics) run.relics = [];
       if (!run.relics.includes(fx.id)) run.relics.push(fx.id);
       line = `The altar drinks deep and gives the ${RELICS[fx.id].name}.`;
+      break;
+    case 'mystery':
+      line = applyMystery(run, fx.act);
       break;
     case 'leave':
       break;

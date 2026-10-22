@@ -9,7 +9,7 @@ import { saveMeta, type Meta } from './sim/meta';
 import { hpShare } from './sim/health';
 import { RELICS } from './sim/relics';
 import {
-  ACT_ROWS, buy, chestLine, choices, clearNode, enterNode, finishMystery, floorOf, LANES, NODE_NAMES, openTreasure, REST_HEAL, rest, train, trainXp, type MapNode, type NodeKind, type ShopItem, type TowerSummary,
+  ACT_ROWS, buy, chestLine, choices, clearNode, enterNode, finishMystery, floorOf, inBattle, LANES, NODE_NAMES, openTreasure, REST_HEAL, rest, takeXp, train, trainXp, type MapNode, type NodeKind, type ShopItem, type TowerSummary,
 } from './sim/tower';
 import { saveRun, type Run } from './sim/run';
 import { UNITS } from './sim/units';
@@ -29,6 +29,7 @@ import elixir from './art/rogue/elixir.png';
 import chestIcon from './art/ui/chest-bronze.png';
 import crown from './art/ui/ic-crown.png';
 import type { Events } from './events';
+import { twistBadge, twistLine } from './twistView';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -87,6 +88,7 @@ export class TowerView {
     this.card = null;
     this.root.hidden = false;
     document.body.classList.add('towerUp');
+    this.collectXp();
     this.draw(true);
     const cur = run.tower?.cur;
     if (cur && !cur.fight) this.resumeNode();
@@ -219,11 +221,13 @@ export class TowerView {
     b.style.left = `${x}%`;
     b.style.top = `${this.rowY(n.row)}px`;
     b.append(icon(NODE_INFO[n.kind].icon, 'rtIco'));
+    const badge = twistBadge(n.twist);
+    if (badge) b.append(badge);
     if (state === 'done') b.append(el('i', 'rtTick'));
     b.setAttribute('aria-label', `${NODE_NAMES[n.kind]}, floor ${floorOf(t.act, n.row)}`);
     b.addEventListener('click', () => {
       this.picked = open.has(n.id) ? n.id : -1;
-      this.say(`Floor ${floorOf(t.act, n.row)} · ${NODE_NAMES[n.kind]}: ${NODE_INFO[n.kind].text}`);
+      this.say(`Floor ${floorOf(t.act, n.row)} · ${NODE_NAMES[n.kind]}: ${NODE_INFO[n.kind].text}${twistLine(n.twist)}`);
       this.markPicked();
     });
     return b;
@@ -278,6 +282,15 @@ export class TowerView {
     this.resumeNode();
   }
 
+  /** XP a mystery floor taught goes into the meta (the lessons are kept for good). */
+  private collectXp(): void {
+    const got = takeXp(this.run);
+    if (!got) return;
+    const m = this.hooks.meta();
+    gainXp(m, got);
+    saveMeta(m);
+  }
+
   /** The screen of a node that is not a battle and is in play. */
   private resumeNode(): void {
     const run = this.run;
@@ -285,7 +298,14 @@ export class TowerView {
     if (cur.kind === 'mystery') {
       this.hooks.events.openEvent(run, () => {
         finishMystery(run);
+        this.collectXp();
         saveRun(run);
+        // (a mimic's chest was opened: the fight begins)
+        if (inBattle(run)) {
+          this.close();
+          this.hooks.onFight();
+          return;
+        }
         this.draw(true);
       });
     } else if (cur.kind === 'shop') this.shopCard();

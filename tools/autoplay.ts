@@ -14,7 +14,7 @@ import { armyRun, boostOf, equip, finish, isBossRun, noteFight, SQUAD, startStag
 import { armyRules } from '../src/sim/armyStars';
 import { ratingOf } from '../src/sim/stars';
 import { UNITS } from '../src/sim/units';
-import { buy, choices, clearNode, enterNode, finishMystery, finishTower, openTreasure, rest, train, type MapNode, type NodeKind } from '../src/sim/tower';
+import { buy, choices, clearNode, enterNode, finishMystery, finishTower, openTreasure, rest, takeXp, train, type MapNode, type NodeKind } from '../src/sim/tower';
 import { towerRun } from '../src/sim/modes';
 import { squadHealth } from '../src/sim/health';
 
@@ -146,12 +146,14 @@ export function playTower(meta: Meta, seed: number, party: readonly string[] = m
     const pick = [...choices(run)].sort((a, b) => wantOf(run, b) - wantOf(run, a) || a.id - b.id)[0];
     enterNode(run, pick.id);
     const cur = run.tower!.cur!;
-    if (cur.fight) {
+    const fightIt = () => {
       const b = fightNode(meta, run);
       const ok = b.phase === 'won';
       gainXp(meta, fightXp(b, xpRate(castle)));
       finishTower(run, b, ok, ratingOf(b, cur.kind === 'boss').stars);
-    } else if (cur.kind === 'campfire') {
+    };
+    if (cur.fight) fightIt();
+    else if (cur.kind === 'campfire') {
       if (squadHealth(run) < 0.75) rest(run);
       else {
         const hero = [...run.roster].sort((a, b) => strengthOf(meta, b) - strengthOf(meta, a))[0];
@@ -168,6 +170,10 @@ export function playTower(meta: Meta, seed: number, party: readonly string[] = m
     } else {
       while (run.event) if (chooseOption(run, 0) === null) leaveEvent(run);
       finishMystery(run);
+      // (a mimic's chest turns into a fight; a trainer's lesson goes into the meta)
+      const xp = takeXp(run);
+      if (xp) gainXp(meta, xp);
+      if (run.tower!.cur?.fight) fightIt();
     }
   }
   return { floors: run.stage - 1, bosses: run.tower!.bosses, act: run.tower!.act };

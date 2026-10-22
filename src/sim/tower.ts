@@ -17,6 +17,7 @@ import { drawEvent, TOWER_EVENT_KINDS } from './events';
 import type { Meta } from './meta';
 import { RELIC_IDS, RELICS, relicEffects } from './relics';
 import { mixSeed, Rng } from './rng';
+import { addTwists, TWISTS } from './twists';
 import { BOSS, FOE_START, recruit, reward, summonCost, type Run } from './run';
 import { UNITS } from './units';
 
@@ -49,12 +50,18 @@ export interface MapNode {
   kind: NodeKind;
   /** The ids of the nodes one row up that this one leads to. */
   next: number[];
+  /** The twist a fight, elite or boss node carries (`twists.ts`); none when absent (and in a map from an older save). */
+  twist?: string;
 }
 
 /** A battle's band and strength, fixed when its node is entered. */
 export interface FightSpec {
   band: string[];
   stage: Stage;
+  /** The floor's twist, by id (its effects are in `stage.twist`). */
+  twist?: string;
+  /** A mimic's fight (from a mystery floor): its win pays a great chest. */
+  mimic?: boolean;
 }
 
 export interface ShopItem {
@@ -84,6 +91,8 @@ export interface Current {
   chest?: Treasure;
   /** What the campfire did (rested or trained), once it has. */
   camp?: string;
+  /** A mystery floor's choice has turned into a mimic's fight, made when the card closes (`finishMystery`). */
+  mimic?: boolean;
 }
 
 export interface TowerSummary {
@@ -121,6 +130,8 @@ export interface TowerState {
   /** Crowns the fights have paid so far, and act bosses felled. */
   crowns: number;
   bosses: number;
+  /** XP a mystery floor has taught, by hero kind, waiting for the page to add it to the meta (`takeXp`). */
+  xp?: Record<string, number>;
   /** The tower record when the run began. */
   prevBest: number;
   summary?: TowerSummary;
@@ -140,7 +151,7 @@ const KIND_WEIGHTS: Record<string, number> = { fight: 44, mystery: 22, elite: 13
 const TREASURE_ROW = 5;
 
 /** An act's map, from the seed: `PATHS` paths walked up through `LANES` lanes (no two ever cross twice), every one ending at the boss. */
-export function makeMap(seed: number, act: number): MapNode[] {
+export function makeMap(seed: number, act: number, twists = true): MapNode[] {
   const rng = new Rng(mixSeed(seed, 0x70ad, act));
   const last = ACT_ROWS - 1;
   const grid = new Map<number, Set<number>>();
@@ -197,6 +208,8 @@ export function makeMap(seed: number, act: number): MapNode[] {
     const spots = nodes.filter((n) => n.kind === 'fight' && n.row >= 3 && n.row < last - 2);
     if (spots.length) rng.pick(spots).kind = want;
   }
+  // (the twists come last, from their own stream: the kinds and links above are as they always were)
+  if (twists) addTwists(nodes, seed, act);
   return nodes;
 }
 
@@ -229,13 +242,26 @@ function bandFor(run: Run, floor: number, salt: number): string[] {
 }
 
 /** The fight a node brings on a floor. */
-export function fightSpec(run: Run, kind: NodeKind, floor: number): FightSpec {
+export function fightSpec(run: Run, kind: NodeKind, floor: number, twist?: string): FightSpec {
+  const spec = plainSpec(run, kind, floor);
+  const tw = twist ? TWISTS[twist] : undefined;
+  if (tw) {
+    spec.twist = tw.id;
+    spec.stage.twist = tw.fx;
+  }
+  return spec;
+}
+
+function plainSpec(run: Run, kind: NodeKind, floor: number): FightSpec {
   const k = foeScale(floor);
   const area = AREAS[Math.floor((floor - 1) / 5) % AREAS.length];
   if (kind === 'boss') return { band: [...FOE_BANDS[BOSS_BANDS[(actOf(floor) - 1) % BOSS_BANDS.length]]], stage: { foes: { hp: k, atk: k }, boss: BOSS, area } };
   if (kind === 'elite') return { band: bandFor(run, floor, 1), stage: { foes: { hp: k * ELITE_MULT, atk: k * ELITE_MULT }, boss: ELITE_LEADER, area } };
   return { band: bandFor(run, floor, 0), stage: { foes: { hp: k, atk: k }, area } };
 }
+
+/** The gold a mimic's chest holds besides its relic and gear. */
+export const mimicGold = (floor: number): number => 40 + 8 * floor;
 
 const unownedRelics = (run: Run) => RELIC_IDS.filter((id) => !run.relics?.includes(id));
 const gearId = (run: Run) => (run.nextGear = (run.nextGear ?? 1) + 1) - 1;
@@ -277,7 +303,7 @@ export function enterNode(run: Run, id: number): boolean {
   const floor = run.stage;
   t.lastBoss = undefined;
   const cur: Current = { id, kind: node.kind };
-  if (node.kind === 'fight' || node.kind === 'elite' || node.kind === 'boss') cur.fight = fightSpec(run, node.kind, floor);
+  if (node.kind === 'fight' || node.kind === 'elite' || node.kind === 'boss') cur.fight = fightSpec(run, node.kind, floor, node.twist);
   if (node.kind === 'shop') cur.shop = stockShop(run, floor);
   if (node.kind === 'treasure') cur.chest = stockChest(run, floor);
   t.cur = cur;
@@ -312,7 +338,24 @@ export function clearNode(run: Run): void {
 
 /** A mystery floor's card has been closed: the floor is done. */
 export function finishMystery(run: Run): void {
-  if (run.tower?.cur?.kind === 'mystery' && !run.event) clearNode(run);
+  const cur = run.tower?.cur;
+  if (cur?.kind !== 'mystery' || run.event) return;
+  // (a mimic: the chest was opened, and it bites: an elite's strength under a different band, its win paying a great chest)
+  if (cur.mimic) {
+    cur.mimic = false;
+    cur.fight = { ...plainSpec(run, 'elite', run.stage), band: bandFor(run, run.stage, 2), mimic: true };
+    return;
+  }
+  if (!cur.fight) clearNode(run);
+}
+
+/** The XP a mystery floor has taught, by hero kind (the page adds it to the meta); null when there is none waiting. */
+export function takeXp(run: Run): Record<string, number> | null {
+  const t = run.tower;
+  if (!t?.xp || !Object.keys(t.xp).length) return null;
+  const xp = t.xp;
+  t.xp = undefined;
+  return xp;
 }
 
 /**
@@ -335,7 +378,8 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
   for (const u of b.units) if (u.side === 'hero' && u.tag !== undefined) t.hp[String(u.tag)] = u.alive ? Math.max(FALLEN * 0.4, u.hp / u.maxHp) : FALLEN;
   healParty(run, kind === 'boss' ? BOSS_HEAL : WIN_HEAL);
   const bonus = (relicEffects(run.relics).gold ?? 0) + (run.buff?.gold ?? 0);
-  run.gold += Math.round(reward(floor) * (kind === 'elite' ? 1.5 : kind === 'boss' ? 1.2 : 1)) + bonus;
+  const twist = t.cur?.fight?.stage.twist;
+  run.gold += Math.round(reward(floor) * (kind === 'elite' ? 1.5 : kind === 'boss' ? 1.2 : 1) * (twist?.gold ?? 1)) + bonus;
   const prizes: Gear[] = run.buff?.gear ? [run.buff.gear] : [];
   const rng = new Rng(mixSeed(run.seed, 0xe11e, floor));
   const relics = unownedRelics(run);
@@ -352,6 +396,14 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
     prizes.push(dropGear(rng, gearId(run), floor, 1));
     if (relics.length) relicOf(rng.pick(relics));
     t.lastBoss = t.cur?.fight?.band[0];
+  }
+  if (t.cur?.fight?.mimic) {
+    // (a felled mimic spills a great chest: gold, a relic if one is left, and a good piece of gear)
+    const gold = mimicGold(floor);
+    run.gold += gold;
+    run.found.push(`${gold} gold from the mimic's chest`);
+    if (relics.length) relicOf(rng.pick(relics));
+    prizes.push(dropGear(rng, gearId(run), floor, 1));
   }
   for (const g of prizes) {
     (run.items ??= []).push(g);
