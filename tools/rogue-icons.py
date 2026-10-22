@@ -6,7 +6,7 @@ from PIL import Image, ImageOps
 src = sys.argv[1] if len(sys.argv) > 1 else '../chronos-assets/DawnLike'
 ICONS = {
   'fire': ('Objects/Effect0', 21, 1), 'skull': ('Objects/Effect0', 23, 2), 'coin': ('Items/Money', 1, 0), 'question': ('GUI/GUI1', 0, 1),
-  'heart': ('GUI/GUI1', 1, 0), 'potion': ('Items/Potion', 0, 0), 'elixir': ('Items/Potion', 0, 6), 'bone': ('Items/Flesh', 3, 1),
+  'heart': ('GUI/GUI1', 1, 0), 'potion': ('Items/Potion', 0, 0), 'elixir': ('Items/Potion', 0, 6),
 }
 out = os.path.join(os.path.dirname(__file__), '..', 'src', 'art', 'rogue')
 os.makedirs(out, exist_ok=True)
