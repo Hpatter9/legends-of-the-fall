@@ -39,6 +39,7 @@ import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, framing, PAUSE_MS, settle, viewFor,
 import { titleOf } from './render/bossTitles';
 import { at, FOOT, HH, TH, TW } from './render/iso';
 import { bindMute, play, playEvents, setup, startFight } from './render/sound';
+import { colLeft, viewH, viewW } from './viewport';
 import { onSettings, openSettings, settings } from './settings';
 
 TextureSource.defaultOptions.scaleMode = 'nearest';
@@ -109,7 +110,7 @@ class Game {
   private introduced = new Set<string>();
 
   async start(): Promise<void> {
-    await this.app.init({ resizeTo: window, backgroundAlpha: 0, antialias: false, roundPixels: true, autoDensity: true, resolution: Math.min(3, devicePixelRatio || 1) });
+    await this.app.init({ resizeTo: $('stage'), backgroundAlpha: 0, antialias: false, roundPixels: true, autoDensity: true, resolution: Math.min(3, devicePixelRatio || 1) });
     $('stage').appendChild(this.app.canvas);
     // (the fonts first, so the first damage number is not drawn in a fallback face; a slow load gives up after a moment)
     const fonts = Promise.all(['900 16px "Cinzel Decorative"', '700 16px "Alegreya Sans"', '16px "Press Start 2P"'].map((f) => document.fonts.load(f))).catch(() => {});
@@ -180,6 +181,19 @@ class Game {
     // (battery saver caps the frame rate at 30)
     onSettings((s) => (this.app.ticker.maxFPS = s.saver ? 30 : 0));
     window.addEventListener('resize', () => this.layout());
+    // (the home screen covers the board, so the board is not drawn while it is up: the canvas cost nothing but heat and battery behind it)
+    const home = $('home');
+    const sync = () => {
+      this.homeUp = !home.hidden;
+      this.app.stage.renderable = !this.homeUp;
+      // (a board that is not in a fight stops its ticker under the home screen; coming back starts it again)
+      if (!this.homeUp) this.app.ticker.start();
+      else if (this.b.phase !== 'fight') this.app.ticker.stop();
+    };
+    // (the tips on the home screen are still looked after, a few times a second)
+    setInterval(() => this.homeUp && tips.update(), 250);
+    new MutationObserver(sync).observe(home, { attributes: true, attributeFilter: ['hidden'] });
+    sync();
     $('loading').remove();
     (window as unknown as { __game: Game }).__game = this;
   }
@@ -225,9 +239,9 @@ class Game {
     // (the portrait is cropped from the sheet and scaled up by a whole number, so its pixels stay square)
     const info = sheetInfo(def.sheet);
     const side = info ? Math.min(info.figure + 6, info.h) : 64;
-    // (about 48% of the width upright, up to 55% of the height sideways; at least once over, at most 90% of the width)
-    const want = innerWidth > innerHeight ? innerHeight * 0.55 : innerWidth * 0.48;
-    const n = Math.max(1, Math.min(Math.round(want / side), Math.floor((innerWidth * 0.9) / side)));
+    // (about 48% of the width; at least once over, at most 90% of the width)
+    const want = viewW() * 0.48;
+    const n = Math.max(1, Math.min(Math.round(want / side), Math.floor((viewW() * 0.9) / side)));
     const old = card.querySelector('canvas')!;
     const face = portrait(def.sheet, side * n);
     // (the sheets face right; a boss that faces left looks the other way)
@@ -332,9 +346,16 @@ class Game {
     this.refresh();
   }
 
+  /** The home screen is up over the board (nothing of the board is seen, so a board not in a fight is left alone). */
+  private homeUp = false;
+
   private frame(dt: number): void {
     const b = this.b;
     tips.update();
+    if (this.homeUp && b.phase !== 'fight') {
+      this.app.ticker.stop();
+      return;
+    }
     if (b.phase === 'fight') {
       // (a boss's fall slows the fight for a beat: `timeScale`)
       this.acc += Math.min(dt, 250) * this.speed * this.fx.timeScale();
@@ -439,17 +460,16 @@ class Game {
     return Math.min(1, (this.area.w - 20) / (x1 - x0) / this.scale);
   }
 
-  /** Fit the board into the room the bench and the top bar leave: upright it is zoomed in and panned, sideways it fits. */
+  /** Fit the board into the room the bench and the top bar leave: it is zoomed in and panned. */
   private layout(): void {
-    this.fx.fitScreen(innerWidth, innerHeight);
+    this.fx.fitScreen(viewW(), viewH());
     const top = $('top').getBoundingClientRect();
     const panel = $('panel').getBoundingClientRect();
-    const sideways = innerWidth > innerHeight;
     const bar = $('bossBar');
     bar.style.top = `${top.bottom + 4}px`;
-    bar.style.right = sideways ? `${innerWidth - panel.left + 12}px` : '12px';
+    bar.style.right = '12px';
     const head = bar.hidden ? top.bottom : bar.getBoundingClientRect().bottom + 4;
-    const area = sideways ? { x: 0, y: head, w: panel.left, h: innerHeight - head } : { x: 0, y: head, w: innerWidth, h: panel.top - head };
+    const area = { x: 0, y: head, w: viewW(), h: panel.top - head };
     const b = this.b.board;
     let x0 = Infinity;
     let x1 = -Infinity;
@@ -467,7 +487,7 @@ class Game {
       }
     const pad = 10;
     const fit = Math.min(3, (area.w - pad * 2) / (x1 - x0), (area.h - pad * 2) / (y1 - y0));
-    const k = sideways ? fit : Math.min(3, fit * ZOOM);
+    const k = Math.min(3, fit * ZOOM);
     this.scale = k;
     this.world.scale.set(k);
     this.ghost.scale.set(k);
@@ -532,13 +552,13 @@ class Game {
     panBackdrop(fx, fy);
     // (the labels may use the board's room on the screen, in world px)
     const w = this.world;
-    this.fx.view = { x0: (0 - w.x) / k + 4, x1: (innerWidth - w.x) / k - 4, y0: (this.area.y - w.y) / k + 4, y1: (this.area.y + this.area.h - w.y) / k };
+    this.fx.view = { x0: (0 - w.x) / k + 4, x1: (viewW() - w.x) / k - 4, y0: (this.area.y - w.y) / k + 4, y1: (this.area.y + this.area.h - w.y) / k };
   }
 
   /** The tile under a point on the screen (the nearest column's top or side). */
   private tileAtScreen(sx: number, sy: number): [number, number] | null {
     const b = this.b.board;
-    const wx = (sx - this.world.x) / this.world.scale.x;
+    const wx = (sx - colLeft() - this.world.x) / this.world.scale.x;
     const wy = (sy - this.world.y) / this.world.scale.y;
     // (front to back: a column in front hides the tops behind it)
     for (let d = b.w + b.d - 2; d >= 0; d--)
@@ -558,7 +578,7 @@ class Game {
 
   /** The placed hero under a point on the screen. */
   private heroAtScreen(sx: number, sy: number): string | null {
-    const wx = (sx - this.world.x) / this.world.scale.x;
+    const wx = (sx - colLeft() - this.world.x) / this.world.scale.x;
     const wy = (sy - this.world.y) / this.world.scale.y;
     const heroes = this.b.units.filter((x) => x.side === 'hero').sort((a, c) => c.u + c.v - (a.u + a.v));
     for (const h of heroes) {
@@ -796,7 +816,7 @@ class Game {
     // (the hero is held a little over the finger, so it can be seen)
     this.ghost.texture = framesOf(this.defOf(d.id).sheet, 'idle')[0];
     this.ghost.scale.set(this.scale * this.defOf(d.id).scale);
-    this.ghost.position.set(e.clientX, e.clientY - 24);
+    this.ghost.position.set(e.clientX - colLeft(), e.clientY - 24);
     this.ghost.visible = true;
     this.hover = this.tileAtScreen(e.clientX, e.clientY - 24);
     this.markTiles();

@@ -1,5 +1,5 @@
 // The castle courtyard's floor plan: each upgrade's four looks (pictures from Chronos's isometric building kits, put together from parts), where
-// every building stands in the two arrangements of the yard (upright and sideways), what smokes, glints or glows, the road, the wall and
+// every building stands in the two arrangements of the yard, what smokes, glints or glows, the road, the wall and
 // the heroes' strolling band, and the words of the upgrade cards. Plain data (no Pixi, no DOM), so a test can check it. All numbers are in the scene's
 // own pixels (the art's own pixels: the scene is drawn whole-number times bigger); `y` is a building's foot line, which the scene sorts by.
 

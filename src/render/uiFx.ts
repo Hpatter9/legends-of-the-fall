@@ -1,6 +1,8 @@
 // The page's own little effects, outside the board: a summoned card's burst of light, and the gold and crowns a result
 // pays out rising off the result screen. Plain DOM and the Web Animations API, so they cost nothing while idle.
 
+import { colLeft } from '../viewport';
+
 /** The colour of each tier's light (index 0 unused). */
 export const RARITY_LIGHT = ['', '#c8c8c8', '#4a9cff', '#b06aff', '#f0b44a', '#ff3a4a'];
 
@@ -32,7 +34,7 @@ export function summonBurst(card: HTMLElement, rarity = 1): void {
   const ring = document.createElement('div');
   Object.assign(ring.style, {
     position: 'fixed',
-    left: `${r.left + r.width / 2 - 20}px`,
+    left: `${r.left - colLeft() + r.width / 2 - 20}px`,
     top: `${r.top + r.height / 2 - 20}px`,
     width: '40px',
     height: '40px',
@@ -53,7 +55,7 @@ export function flyUp(text: string, from: Element, to?: Element): void {
   el.textContent = text;
   Object.assign(el.style, {
     position: 'fixed',
-    left: `${r.left + r.width / 2}px`,
+    left: `${r.left - colLeft() + r.width / 2}px`,
     top: `${r.top}px`,
     font: 'bold 16px "Alegreya Sans", "Trebuchet MS", sans-serif',
     color: '#ffe27a',
