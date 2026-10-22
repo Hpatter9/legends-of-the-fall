@@ -78,7 +78,7 @@ writeFileSync(
       short_name: 'Legends',
       start_url: '.',
       display: 'standalone',
-      orientation: 'any',
+      orientation: 'portrait',
       background_color: '#1c1410',
       theme_color: '#3a2218',
       icons: [
