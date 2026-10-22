@@ -1466,5 +1466,27 @@
   "figure": 96,
   "facesRight": true,
   "lies": true
+ },
+ "lich_king": {
+  "w": 134,
+  "h": 128,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "walk": 5,
+   "attack": 5,
+   "idle": 4,
+   "dead": 5,
+   "attack2": 5
+  },
+  "figure": 126,
+  "facesRight": true,
+  "lies": true
  }
 }

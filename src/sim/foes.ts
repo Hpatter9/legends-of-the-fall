@@ -28,6 +28,19 @@ const BOAR_KING = { side: 'foe', hp: 380, atk: 22, def: 10, range: 1, moveMs: 70
 const DEVIL_LEADER = { side: 'foe', hp: 420, atk: 24, def: 9, range: 1, moveMs: 700, atkMs: 1200, jump: 2, role: 'Hurls hellfire' } as const;
 const SHAMAN_KING = { side: 'foe', hp: 400, atk: 24, def: 7, range: 3, moveMs: 700, atkMs: 1500, jump: 2, shot: 'bolt', role: 'Bolts from afar, wards its own' } as const;
 
+// The armies' own looks (`armies.ts`): the same sheets as the common foes, each army's kind with a skill of its own
+// (the kits are in `abilities.ts`), and the mid-bosses and the Lich King and Labyrinth champion the armies add.
+const BONE_VOLLEY = { side: 'foe', hp: 210, atk: 24, def: 3, range: 4, moveMs: 700, atkMs: 1500, jump: 2, shot: 'bone', role: 'Shoots, and rains volleys' } as const;
+const PACK = { side: 'foe', hp: 250, atk: 24, def: 4, range: 1, moveMs: 360, atkMs: 800, jump: 3, role: 'Fast flanker, bites weak foes' } as const;
+const GROVE = { side: 'foe', hp: 320, atk: 25, def: 6, range: 1, moveMs: 600, atkMs: 1100, jump: 2, role: 'Pipes the pack faster' } as const;
+const MAZE_MINO = { side: 'foe', hp: 440, atk: 27, def: 9, range: 1, moveMs: 900, atkMs: 1400, jump: 2, role: 'Charges down a line' } as const;
+const MAZE_GORGON = { side: 'foe', hp: 300, atk: 26, def: 5, range: 4, moveMs: 700, atkMs: 1500, jump: 2, shot: 'bone', role: 'Stiffens the strongest foe' } as const;
+const CLAN_OGRE = { side: 'foe', hp: 480, atk: 30, def: 8, range: 1, moveMs: 1000, atkMs: 1500, jump: 2, role: 'Shoves heroes back' } as const;
+const HELL_IMP = { side: 'foe', hp: 200, atk: 22, def: 2, range: 1, moveMs: 380, atkMs: 700, jump: 3, role: 'Small, quick, sets alight' } as const;
+const MID = { side: 'foe', hp: 1500, atk: 46, def: 9, range: 1, moveMs: 750, atkMs: 1200, jump: 2 } as const;
+const LICH_KING = { side: 'foe', hp: 2600, atk: 60, def: 8, range: 3, moveMs: 800, atkMs: 1500, jump: 2, shot: 'curse', role: 'Raises the dead, freezes the living' } as const;
+const CHAMPION = { side: 'foe', hp: 4200, atk: 90, def: 12, range: 1, moveMs: 800, atkMs: 1300, jump: 2, role: 'Charges, gores, shrugs off blows' } as const;
+
 export const FOES: Record<string, UnitDef> = {
   wolfBlack: { ...WOLF, id: 'wolfBlack', name: 'Black Werewolf', sheet: 'werewolf_black', scale: 0.81 },
   wolfRed: { ...WOLF, id: 'wolfRed', name: 'Red Werewolf', sheet: 'werewolf_red', scale: 0.81, hp: 250, atk: 25, def: 3 },
@@ -56,16 +69,41 @@ export const FOES: Record<string, UnitDef> = {
   orcWarlord: { ...WARLORD, id: 'orcWarlord', name: 'Orc Warlord', sheet: 'hk_orc_warlord', scale: 0.55 },
   demonLord: { ...DEMON_LORD, id: 'demonLord', name: 'Demon Lord', sheet: 'hk_demon_lord', scale: 0.46, hp: 3600, atk: 70 },
   hornedOgre: { ...HORNED_OGRE, id: 'hornedOgre', name: 'Horned Ogre', sheet: 'hk_ogre_horned', scale: 0.47, hp: 4800, atk: 85 },
-  forestBoss1: { ...FOREST, id: 'forestBoss1', name: 'Forest Boss', sheet: 'forest_boss_1', scale: 1.05, hp: 3300, atk: 65 },
-  forestBoss2: { ...FOREST, id: 'forestBoss2', name: 'Forest Boss', sheet: 'forest_boss_2', scale: 1.05, hp: 3900, atk: 72, def: 6, moveMs: 500, atkMs: 900, jump: 3, role: 'Forest raider, quick' },
-  forestBoss3: { ...FOREST, id: 'forestBoss3', name: 'Forest Boss', sheet: 'forest_boss_3', scale: 1.28, hp: 6000, atk: 100, def: 5, range: 2, role: 'Forest spearman' },
+  forestBoss1: { ...FOREST, id: 'forestBoss1', name: 'Thorn Warden', sheet: 'forest_boss_1', scale: 1.05, hp: 3300, atk: 65 },
+  forestBoss2: { ...FOREST, id: 'forestBoss2', name: 'Wood Raider', sheet: 'forest_boss_2', scale: 1.05, hp: 3900, atk: 72, def: 6, moveMs: 500, atkMs: 900, jump: 3, role: 'Forest raider, quick' },
+  forestBoss3: { ...FOREST, id: 'forestBoss3', name: 'Grove Spearlord', sheet: 'forest_boss_3', scale: 1.28, hp: 6000, atk: 100, def: 5, range: 2, role: 'Forest spearman' },
+  // the armies' kinds (same sheets, a skill each)
+  boneVolley: { ...BONE_VOLLEY, id: 'boneVolley', name: 'Skeleton Marksman', sheet: 'skeleton_archer', scale: 0.79 },
+  packBlack: { ...PACK, id: 'packBlack', name: 'Black Werewolf', sheet: 'werewolf_black', scale: 0.81 },
+  packRed: { ...PACK, id: 'packRed', name: 'Red Werewolf', sheet: 'werewolf_red', scale: 0.81, atk: 25, def: 3 },
+  packWhite: { ...PACK, id: 'packWhite', name: 'White Werewolf', sheet: 'werewolf_white', scale: 0.81, hp: 210, atk: 22, def: 5, moveMs: 330 },
+  groveSatyr1: { ...GROVE, id: 'groveSatyr1', name: 'Grove Satyr', sheet: 'satyr_1', scale: 0.62 },
+  groveSatyr2: { ...GROVE, id: 'groveSatyr2', name: 'Grove Satyr', sheet: 'satyr_2', scale: 0.52, atk: 26 },
+  groveSatyr3: { ...GROVE, id: 'groveSatyr3', name: 'Grove Satyr', sheet: 'satyr_3', scale: 0.61, hp: 270, def: 4 },
+  mazeMino1: { ...MAZE_MINO, id: 'mazeMino1', name: 'Minotaur', sheet: 'minotaur_1', scale: 0.5 },
+  mazeMino2: { ...MAZE_MINO, id: 'mazeMino2', name: 'Minotaur', sheet: 'minotaur_2', scale: 0.54, hp: 330, atk: 24 },
+  mazeMino3: { ...MAZE_MINO, id: 'mazeMino3', name: 'Minotaur', sheet: 'minotaur_3', scale: 0.5, hp: 400, def: 10, atk: 20 },
+  mazeGorgon1: { ...MAZE_GORGON, id: 'mazeGorgon1', name: 'Gorgon', sheet: 'gorgon_1', scale: 0.6 },
+  mazeGorgon2: { ...MAZE_GORGON, id: 'mazeGorgon2', name: 'Gorgon', sheet: 'gorgon_2', scale: 0.6, atk: 22 },
+  mazeGorgon3: { ...MAZE_GORGON, id: 'mazeGorgon3', name: 'Gorgon', sheet: 'gorgon_3', scale: 0.6, hp: 250, atk: 26 },
+  clanOgre: { ...CLAN_OGRE, id: 'clanOgre', name: 'Ogre', sheet: 'hk_ogre', scale: 0.42 },
+  clanBrute: { side: 'foe', hp: 420, atk: 30, def: 8, range: 1, moveMs: 900, atkMs: 1300, jump: 2, role: 'Heavy, slow blows', id: 'clanBrute', name: 'Orc Brute', sheet: 'hk_orc_brute', scale: 0.57 },
+  hellImp: { ...HELL_IMP, id: 'hellImp', name: 'Imp', sheet: 'hk_imp', scale: 0.65 },
+  hellDemon: { ...DEMON, id: 'hellDemon', name: 'Demon', sheet: 'hk_demon', scale: 0.39, role: 'Flies, hurls hellfire' },
+  // the mid-bosses (a boss band's first foe, drawn bigger), the Lich King and the Labyrinth's champion
+  orcChieftain: { ...MID, id: 'orcChieftain', name: 'Orc Chieftain', sheet: 'hk_orc_brute', scale: 0.62, role: 'Rallies the warband with a banner' },
+  boneCaptain: { ...MID, id: 'boneCaptain', name: 'Bone Captain', sheet: 'skeleton_warrior', scale: 0.86, hp: 1400, atk: 44, role: 'Rallies the dead with a banner' },
+  alphaWolf: { ...MID, id: 'alphaWolf', name: 'Alpha Werewolf', sheet: 'werewolf_black', scale: 1.05, hp: 1200, atk: 42, def: 6, moveMs: 420, atkMs: 800, jump: 3, role: 'Leader of the pack, rends the weak' },
+  gorgonQueen: { ...MID, id: 'gorgonQueen', name: 'Gorgon Queen', sheet: 'gorgon_1', scale: 0.95, hp: 1300, atk: 44, def: 7, range: 4, shot: 'bone', moveMs: 700, atkMs: 1500, role: 'Her gaze turns heroes to stone' },
+  lichKing: { ...LICH_KING, id: 'lichKing', name: 'Lich King', sheet: 'lich_king', scale: 0.45 },
+  minotaurChampion: { ...CHAMPION, id: 'minotaurChampion', name: 'Minotaur Champion', sheet: 'minotaur_1', scale: 0.78 },
   boarKing: { ...BOAR_KING, id: 'boarKing', name: 'Boar King', sheet: 'boar_king', scale: 0.54, hp: 6800, atk: 110 },
   devilLeader: { ...DEVIL_LEADER, id: 'devilLeader', name: 'Devil Leader', sheet: 'devil_leader', scale: 0.49, hp: 7600, atk: 120 },
   shamanKing: { ...SHAMAN_KING, id: 'shamanKing', name: 'Shaman King', sheet: 'shaman_king', scale: 0.5, hp: 8400, atk: 130 },
 };
 
 /** The bosses' ids: the first foe of a boss band is one of these. */
-export const BOSS_IDS: readonly string[] = ['orcWarlord', 'demonLord', 'hornedOgre', 'forestBoss1', 'forestBoss2', 'forestBoss3', 'boarKing', 'devilLeader', 'shamanKing'];
+export const BOSS_IDS: readonly string[] = ['orcWarlord', 'demonLord', 'hornedOgre', 'forestBoss1', 'forestBoss2', 'forestBoss3', 'boarKing', 'devilLeader', 'shamanKing', 'orcChieftain', 'boneCaptain', 'alphaWolf', 'gorgonQueen', 'lichKing', 'minotaurChampion'];
 export const isBoss = (id: string) => BOSS_IDS.includes(id);
 
 /** The bands a fight can meet: five foes each, by their ids in `UNITS`. The boss bands are below (their first foe is the boss). */

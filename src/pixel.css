@@ -241,3 +241,40 @@ body .sbSlot { min-height: 44px; }
   button.primary:not(:disabled), .hmBattle, .hmTab.hero, .hmTab.hero.on { animation: none; }
   button.primary::after, .hmBattle::after, .hmTab.hero::after { display: none; }
 }
+
+/* ---- the Armies screen: a card an army, with its boss's face; a locked one greyed with the boss that opens it ---- */
+.army { image-rendering: pixelated; position: relative; display: flex; gap: 8px; align-items: flex-start; flex: none; padding: 2px; border-style: solid; border-width: 6px; border-radius: 0; background: none; border-image: url(ui/card-r2.png) 3 fill / 6px stretch; text-align: left; }
+.army.done { border-image-source: url(ui/card-r3.png); }
+.army.locked { border-image-source: url(ui/card-r1.png); }
+.army.fresh { border-image-source: url(ui/card-r4.png); animation: pxArmyGlow 1.4s steps(1) infinite; }
+@keyframes pxArmyGlow { 0%, 100% { filter: none; } 50% { filter: brightness(1.28) drop-shadow(0 0 6px var(--gold-hi)); } }
+.armyFace { flex: none; width: 72px; height: 72px; image-rendering: pixelated; border: 2px solid var(--deep, #1a0d07); background: rgba(0, 0, 0, 0.35); }
+.army.locked .armyFace { filter: brightness(0.18) contrast(1.2); }
+.armyText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.armyText b { font: bold 17px var(--display); color: var(--gold-hi); text-shadow: 0 2px 0 #000; }
+.army.locked .armyText b { color: #8a7c6c; }
+.armyText em { font-style: normal; font-size: 12px; color: var(--dim); line-height: 1.15; }
+.armyStat { font-size: 12px; color: var(--ink); }
+.armyPay { display: flex; flex-wrap: wrap; align-items: center; gap: 0 4px; font-size: 12px; color: var(--gold-hi); }
+.armyCrowns { display: inline-flex; align-items: center; gap: 2px; font-weight: bold; color: var(--ink); }
+.armyCrowns img { width: 16px; height: 16px; }
+.armyLock { font-size: 13px; color: #d9a08a; }
+.armyLock::before { content: ''; display: inline-block; width: 10px; height: 8px; margin: 0 5px 0 0; background: #8a7c6c; box-shadow: 0 -4px 0 -2px #8a7c6c, 2px -6px 0 -2px #8a7c6c, -2px -6px 0 -2px #8a7c6c; }
+.army button { margin-top: 4px; align-self: stretch; min-height: 40px; font-size: 15px; }
+.army button.small { min-height: 32px; font-size: 12px; margin-top: 0; }
+.armyCont { flex: none; }
+.armyNew { position: absolute; top: -6px; right: -4px; padding: 1px 6px; font: bold 11px var(--display); font-style: normal; color: #4a1a06; background: var(--gold-hi); box-shadow: 0 2px 0 #000; }
+/* the unlock moment */
+.unlock { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px; text-align: center; background: rgba(8, 4, 2, 0.88); animation: pxUnlockIn 0.5s steps(5) both; }
+@keyframes pxUnlockIn { from { opacity: 0; } to { opacity: 1; } }
+.unlockDown { font-size: 13px; color: var(--dim); text-shadow: var(--outline); }
+.unlockRib { display: flex; align-items: center; justify-content: center; min-height: 64px; padding: 0 8px; border-style: solid; border-width: 0 48px; border-image: url(ui/ribbon.png) 0 12 fill / 0 48px stretch; image-rendering: pixelated; animation: pxUnlockSlam 0.6s steps(6) 0.25s both; }
+.unlockRib b { font: bold clamp(20px, 6.4vw, 28px) var(--display); color: var(--gold-hi); text-shadow: 0 2px 0 #2a0a06; white-space: nowrap; }
+@keyframes pxUnlockSlam { from { transform: translateY(-120px); opacity: 0; } 70% { transform: translateY(6px); opacity: 1; } to { transform: none; } }
+.unlockFace { width: min(144px, 40vw); height: min(144px, 40vw); image-rendering: pixelated; border: 4px solid var(--gold-hi); background: radial-gradient(#4a2c1c, #1a0d07); animation: pxArmyGlow 1.4s steps(1) 0.8s infinite; }
+.unlockName { font: bold 22px var(--display); color: var(--gold-hi); text-shadow: var(--outline); }
+.unlockLine { max-width: 320px; font-size: 13px; color: var(--ink); text-shadow: var(--outline); }
+.unlock button { min-width: 200px; }
+@media (orientation: landscape) { .unlock { flex-flow: row wrap; gap: 8px 16px; } .unlockFace { width: 96px; height: 96px; } .unlockRib { order: -1; flex: 1 1 100%; } .unlockDown { order: -2; flex: 1 1 100%; } }
+@media (prefers-reduced-motion: reduce) { .army.fresh, .unlockFace, .unlockRib, .unlock { animation: none; } }
+.army { width: 100%; max-width: 620px; align-self: center; }

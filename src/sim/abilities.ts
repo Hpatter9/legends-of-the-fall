@@ -620,6 +620,44 @@ function summonImps(b: Battle, me: Unit): boolean {
   return true;
 }
 
+/** Lich King: two skeletons climb out of the ground beside him once fewer than two of them stand (six in all in a fight). */
+const RAISED = 2;
+const RAISE_LIMIT = 6;
+function raiseDead(b: Battle, me: Unit): boolean {
+  if ((me.raised ?? 0) >= RAISE_LIMIT || b.units.filter((x) => x.alive && x.side === me.side && x.def === 'skeleton').length >= RAISED) return false;
+  const jump = defOf(me).jump;
+  const h = tileOf(b, me).h;
+  const spots: At[] = [];
+  for (let dv = -2; dv <= 2; dv++)
+    for (let du = -2; du <= 2; du++) {
+      const at = { u: me.u + du, v: me.v + dv };
+      const t = tileAt(b.board, at.u, at.v);
+      if (apart(me, at) >= 1 && t && standable(t) && !unitAt(b, at.u, at.v) && Math.abs(t.h - h) <= jump) spots.push(at);
+    }
+  if (!spots.length) return false;
+  spots.sort((x, y) => apart(me, x) - apart(me, y) || x.v - y.v || x.u - y.u);
+  for (const at of spots.slice(0, RAISED)) {
+    addUnit(b, 'skeleton', at.u, at.v, { hp: b.foeBoost?.hp, atk: b.foeBoost?.atk });
+    me.raised = (me.raised ?? 0) + 1;
+  }
+  return true;
+}
+
+/** Lich King's ultimate, Soul Nova: a ring of cold soul fire hurts every foe within four tiles and freezes it where it stands. */
+const NOVA_REACH = 4;
+const NOVA_MS = 1800;
+function soulNova(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const near = foesOf(b, me).filter((f) => apart(me, f) <= NOVA_REACH);
+  if (!near.length) return false;
+  for (const f of near) {
+    hurt(b, me, f, net(atkOf(me) * 1.3, f), false, false, out, 'skill');
+    if (!f.alive) continue;
+    f.busyUntil = Math.max(f.busyUntil, b.t + NOVA_MS);
+    f.stunUntil = b.t + NOVA_MS;
+  }
+  return true;
+}
+
 /** Paladin: foes near him must go for him for a few seconds, and the allies beside him are healed. */
 const CHALLENGE_MS = 3000;
 function holyChallenge(b: Battle, me: Unit, out: BattleEvent[]): boolean {
@@ -922,6 +960,26 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Tough Hide', text: 'Blows from the front lose a fifth', block: 0.2 },
   },
 };
+
+// The armies' kinds (`foes.ts`) borrow the heroes' skills: an army has a look of its own, and the Lich King his own two.
+KITS.lichKing = {
+  skill: { name: 'Raise Dead', text: 'Two skeletons climb out of the ground beside him (up to six in a fight)', need: CHARGE_MAX, dealt: 4, taken: 4, perSec: 3, castMs: 800, anim: 'attack2', cast: raiseDead },
+  ultimate: { name: 'Soul Nova', text: 'A ring of cold soul fire hurts every hero within 4 tiles and freezes them for 1.8s', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 900, anim: 'attack2', cast: soulNova },
+  passive: { name: 'Soul Drain', text: 'Heals for a sixth of the damage his blows deal', leech: 0.16 },
+};
+KITS.boneVolley = { skill: KITS.archer.skill, passive: { name: 'Dead Aim', text: 'Arrows ignore 2 defence', pierce: 2 } };
+for (const id of ['packBlack', 'packRed', 'packWhite']) KITS[id] = KITS.werewolf;
+for (const id of ['groveSatyr1', 'groveSatyr2', 'groveSatyr3']) KITS[id] = KITS.satyr;
+for (const id of ['mazeMino1', 'mazeMino2', 'mazeMino3']) KITS[id] = KITS.minotaur;
+for (const id of ['mazeGorgon1', 'mazeGorgon2', 'mazeGorgon3']) KITS[id] = { skill: KITS.gorgon.skill, passive: KITS.gorgon.passive };
+for (const id of ['clanOgre', 'clanBrute']) KITS[id] = KITS.hornedOgre;
+KITS.hellImp = { skill: KITS.boarKing.skill, passive: KITS.devilLeader.passive };
+KITS.hellDemon = { skill: KITS.devilLeader.skill, passive: KITS.devilLeader.passive };
+KITS.orcChieftain = { skill: KITS.samuraiCommander.skill, passive: { name: 'Thick Hide', text: 'Blows from the front lose a fifth', block: 0.2 } };
+KITS.boneCaptain = { skill: KITS.samuraiCommander.skill, passive: { name: 'Bone Plate', text: 'Blows from the front lose a quarter', block: 0.25 } };
+KITS.alphaWolf = KITS.werewolf;
+KITS.gorgonQueen = { skill: KITS.gorgon.skill, ultimate: KITS.gorgon.ultimate, passive: KITS.gorgon.passive };
+KITS.minotaurChampion = { skill: KITS.minotaur.skill, passive: { name: 'Unyielding', text: 'Blows from the front lose a fifth, and he cannot be knocked back', block: 0.2, steady: true } };
 
 export const kitOf = (u: Unit): Kit | undefined => KITS[u.def];
 

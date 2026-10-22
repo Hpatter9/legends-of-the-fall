@@ -112,7 +112,8 @@ const cast = (b: Battle, me: Unit): BattleEvent[] => {
 
 test('exactly the Mythics have an ultimate, and it charges slower than the skill', () => {
   assert.deepEqual(MYTHICS.sort(), ['gorgon', 'karasu', 'kitsune', 'samuraiCommander', 'yamabushi']);
-  for (const k of Object.keys(KITS)) assert.equal(!!KITS[k].ultimate, MYTHICS.includes(k), k);
+  // (the heroes: a few foes of the armies have an ultimate of their own, which is theirs alone)
+  for (const k of ALL_HEROES) assert.equal(!!KITS[k].ultimate, MYTHICS.includes(k), k);
   const b = arena();
   const u = addUnit(b, 'kitsune', 3, 8);
   addUnit(b, 'skeleton', 3, 4);

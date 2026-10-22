@@ -8,11 +8,12 @@ import { AREAS, type Area } from './board';
 import { checkAchievements, type Achievement } from './achievements';
 import { Rng, mixSeed } from './rng';
 import type { Battle } from './battle';
-import { isBossStage, bandFor, newRun, START_GOLD, type Run } from './run';
+import { armyOfRun, bandFor, isBossRun, isBossStage, newRun, START_GOLD, type Run } from './run';
+import { armyCleared, ARMIES } from './armies';
 import { HEROES } from './units';
 import type { Meta } from './meta';
 
-/** The stage the endless tower opens at (reached in any run). */
+/** The stage the endless tower opens at (reached in any run), or once the first army has been beaten. */
 export const TOWER_UNLOCK = 10;
 export const SCORE_STAGE = 100;
 export const SCORE_STAR = 10;
@@ -72,7 +73,7 @@ export function towerRun(seed: number, m: Meta): Run {
   return run;
 }
 
-export const towerOpen = (m: Meta): boolean => m.bestStage >= TOWER_UNLOCK;
+export const towerOpen = (m: Meta): boolean => m.bestStage >= TOWER_UNLOCK || armyCleared(m, ARMIES[0].id);
 
 /** Floors cleared in the tower by a run (the stage it is on, less one). */
 export const floorsCleared = (run: Run): number => run.stage - 1;
@@ -83,8 +84,11 @@ export const floorsCleared = (run: Run): number => run.stage - 1;
  * Returns the achievements earned now (their crowns are paid).
  */
 export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: number; stars: number; battle?: Battle }): Achievement[] {
-  m.bestStage = Math.max(m.bestStage, run.best);
-  if (fight.won && isBossStage(fight.stage) && !m.bosses.includes(bandFor(fight.stage))) m.bosses.push(bandFor(fight.stage));
+  const army = armyOfRun(run);
+  // (an army's waves are not stages of the endless climb: they keep their own record, `settleWave`)
+  if (!army) m.bestStage = Math.max(m.bestStage, run.best);
+  const boss = army ? (isBossRun(run, fight.stage) ? army.waves[fight.stage - 1].foes[0] : '') : isBossStage(fight.stage) ? bandFor(fight.stage) : '';
+  if (fight.won && boss && !m.bosses.includes(boss)) m.bosses.push(boss);
   if (run.mode?.kind === 'tower') m.tower = Math.max(m.tower, floorsCleared(run));
   if (run.mode?.kind === 'daily' && run.over && !run.mode.practice) {
     const entry = (m.daily[String(run.mode.date)] ??= { best: 0, plays: 1 });
@@ -101,7 +105,7 @@ export function dailyLine(m: Meta, date: number): string {
 }
 
 /** The home screen's line for the endless tower button. */
-export const towerLine = (m: Meta): string => (towerOpen(m) ? `Endless tower · best floor ${m.tower}` : `Endless tower · reach stage ${TOWER_UNLOCK}`);
+export const towerLine = (m: Meta): string => (towerOpen(m) ? `Endless tower · best floor ${m.tower}` : 'Endless tower · beat the Orc Warband');
 
 /** A line on the result screen for a daily run that has ended ("" for any other run). */
 export function modeNote(run: Run): string {

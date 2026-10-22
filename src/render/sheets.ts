@@ -74,6 +74,7 @@ import clsGunslinger3 from '../art/units/cls_gunslinger_3.png';
 import clsTreant from '../art/units/cls_treant.png';
 import devilLeader from '../art/units/devil_leader.png';
 import shamanKing from '../art/units/shaman_king.png';
+import lichKing from '../art/units/lich_king.png';
 
 export type Anim = 'idle' | 'walk' | 'attack' | 'hurt' | 'dead';
 
@@ -134,6 +135,7 @@ const URLS: Record<string, string> = {
   boar_king: boarKing,
   devil_leader: devilLeader,
   shaman_king: shamanKing,
+  lich_king: lichKing,
   cls_paladin_1: clsPaladin1,
   cls_paladin_2: clsPaladin2,
   cls_paladin_3: clsPaladin3,

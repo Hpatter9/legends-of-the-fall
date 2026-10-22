@@ -46,3 +46,16 @@ usage reports. About 1,880 of 4,189 generations were used in all, including 12 l
 - `tools/pixellab/api.py` holds the helpers (style references from the game's sheets, submit, poll); `strip.py` makes the strip.
 - Sample: `docs/samples/treant-deaths.png` (treant at 1:1 and 3x, then the final death frame of every generated sheet).
 - Cost: generations 1959.75 before, 1803.75 after (156 used, for 1 base and 8 animation clips; the job usage reports far less).
+
+
+## The Lich King (armies)
+
+A skeletal king in a jagged crown, dark robes and spiked pauldrons, with a bone staff and cold blue soul fire (`lich_king`, 134x128
+cells, figure 126 px, faces right, drawn at scale 0.45 and 1.5 times that as a boss). Made as above: 4 base candidates at 128 px
+from Craftpix Minotaur, Samurai Commander and Skeleton Warrior frames (the fourth picked by eye), then 4-frame clips of idle, walk,
+attack (a staff thrust, used for his shots), cast (the staff swept up, with blue fire) and dead. The robe hides the legs, so the
+walk is a slow glide, which suits him. The dead clip barely moves, so his death is the last frame only: the idle figure turned
+exactly 90 degrees by `lie.py` (which now also takes `lich_king`). There is no hurt row (it plays idle). Steps: `tools/pixellab/lich.py`.
+Cost: 122 generations by the balance readings (1720.75 before the base, 1598.75 after the last clip): 22 for the base, 50 for
+the five first clips and 50 for three re-rolled ones (walk, cast and dead, with stronger prompts). The balance dropped
+further afterwards, but that was another worker's use of the same account.

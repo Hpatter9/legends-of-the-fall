@@ -112,6 +112,7 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
 
 ## Art generated with PixelLab
 
+- The **Lich King** (`lich_king.png`, the Undead Legion's boss) is generated the same way as the other bosses: a base figure (`/generate-with-style-v2`, 128 px, Craftpix Minotaur, Samurai Commander and Skeleton Warrior frames as style references), then idle, walk, attack, cast and death clips (`/animate-with-text-v3`), cropped and padded only (native pixels, hard alpha), with a last lying death frame made by an exact 90-degree turn (`tools/pixellab/lie.py`). The steps are in `tools/pixellab/lich.py`; see `docs/notes/armies.md`.
 - The Druid's treant (`cls_treant.png`) is generated the same way (base figure from Craftpix Knight and Minotaur style references, then walk, attack and idle clips). Every generated sheet's last death frame is that sheet's idle figure turned exactly 90 degrees (`tools/pixellab/lie.py`), so no extra generation was involved.
 - The class heroes (`cls_*_1/2/3.png`) and the orc, imp, demon and ogre foes (`hk_*.png`) are pixel art generated with
   **PixelLab** (pixellab.ai): a base figure from a text description with Craftpix fighters as style references
