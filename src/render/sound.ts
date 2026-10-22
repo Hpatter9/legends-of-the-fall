@@ -299,6 +299,11 @@ const SOUNDS: Record<Cue, (t: number) => void> = {
     [523, 659, 784].forEach((f, i) => note(t + i * 0.12, f, 0.2, 0.14));
     note(t + 0.36, 1047, 0.6, 0.16);
   },
+  // (a recycled hero's gold: two bright coin pings)
+  coin: (t) => {
+    note(t, 1568, 0.08, 0.12, 'triangle');
+    note(t + 0.07, 2093, 0.3, 0.12, 'triangle');
+  },
   star: (t) => {
     note(t, 988, 0.12, 0.14, 'triangle');
     note(t + 0.07, 1319, 0.2, 0.14, 'triangle');

@@ -1,5 +1,5 @@
-// The armies: the stages of a run, King God Castle style. A player picks an army and fights through its waves, each
-// tougher than the last, with a mid-boss around halfway and the army's boss at the end; the army's final boss falling
+// The armies: the stages of a run, King God Castle style. A player picks an army and fights through its 15 waves, each
+// tougher than the last, with a mid-boss around halfway (or boss waves at thirds, in the Wildwood) and the army's boss at the end; the army's final boss falling
 // unlocks the next. A lost fight ends the run and the army starts again from wave 1 (heroes keep their XP and levels,
 // which is what makes the next try stronger). A beaten army can be fought again for a small share of its first-clear
 // rewards. Pure rules: no Pixi, no DOM; the meta is changed only through the functions here.
@@ -54,28 +54,32 @@ function waves(field: readonly Wave[], bosses: Record<number, string[]>): Wave[]
   return out;
 }
 
+/** Every army fights this many waves (the run's length, so merges and evolutions have room). */
+export const ARMY_WAVES = 15;
+
+/**
+ * `count` field waves that ramp up from three foes to six: wave j takes its foes in turn from the army's troop `pattern`, starting two
+ * places further along each wave, so the mix shifts from wave to wave while every wave is made of the army's own troops.
+ */
+function ramp(pattern: readonly string[], count: number): Wave[] {
+  return Array.from({ length: count }, (_, j) => {
+    const size = Math.min(6, 3 + Math.floor((j * 4) / count));
+    return wave(...Array.from({ length: size }, (_, k) => pattern[(2 * j + k) % pattern.length]));
+  });
+}
+
 export const ARMIES: readonly Army[] = [
   {
     id: 'orcs',
     name: 'Orc Warband',
     blurb: 'Grunts, archers and brutes behind a warlord.',
     area: 'highlands',
-    waves: waves(
-      [
-        wave('orcGrunt', 'orcGrunt', 'orcArcher'),
-        wave('orcGrunt', 'orcGrunt', 'orcGrunt', 'orcArcher'),
-        wave('orcGrunt', 'orcGrunt', 'orcArcher', 'orcBrute'),
-        wave('orcGrunt', 'orcGrunt', 'orcArcher', 'orcArcher', 'orcBrute'),
-        wave('orcGrunt', 'orcBrute', 'orcGrunt', 'orcArcher', 'orcBrute'),
-        wave('orcGrunt', 'orcGrunt', 'orcBrute', 'orcArcher', 'orcBrute', 'orcArcher'),
-      ],
-      { 4: ['orcChieftain', 'orcGrunt', 'orcGrunt', 'orcArcher'], 8: ['orcWarlord', 'orcGrunt', 'orcArcher', 'orcGrunt', 'orcBrute'] },
-    ),
+    waves: waves(ramp(['orcGrunt', 'orcGrunt', 'orcArcher', 'orcBrute', 'orcGrunt', 'orcArcher', 'orcBrute', 'orcGrunt'], 13), { 8: ['orcChieftain', 'orcGrunt', 'orcGrunt', 'orcArcher'], 15: ['orcWarlord', 'orcGrunt', 'orcArcher', 'orcGrunt', 'orcBrute', 'orcBrute'] }),
     start: 0.5,
-    growth: 0.2,
+    growth: 0.176,
     mid: { hp: 1500, atk: 50 },
     last: { hp: 3500, atk: 85 },
-    pay: 1,
+    pay: 0.52,
     clear: 120,
   },
   {
@@ -83,22 +87,12 @@ export const ARMIES: readonly Army[] = [
     name: 'Undead Legion',
     blurb: 'Skeleton warriors, spearmen and archers, led by a lich.',
     area: 'dungeon',
-    waves: waves(
-      [
-        wave('skeleton', 'skeleton', 'boneVolley'),
-        wave('skeleton', 'spearman', 'spearman', 'boneVolley'),
-        wave('skeleton', 'skeleton', 'spearman', 'boneVolley'),
-        wave('skeleton', 'skeleton', 'spearman', 'spearman', 'boneVolley'),
-        wave('skeleton', 'spearman', 'skeleton', 'boneVolley', 'boneVolley'),
-        wave('skeleton', 'skeleton', 'spearman', 'spearman', 'boneVolley', 'boneVolley'),
-      ],
-      { 4: ['boneCaptain', 'skeleton', 'spearman', 'boneVolley'], 8: ['lichKing', 'skeleton', 'spearman', 'spearman', 'boneVolley'] },
-    ),
+    waves: waves(ramp(['skeleton', 'skeleton', 'boneVolley', 'spearman', 'skeleton', 'spearman', 'boneVolley', 'spearman'], 13), { 8: ['boneCaptain', 'skeleton', 'spearman', 'boneVolley'], 15: ['lichKing', 'skeleton', 'spearman', 'spearman', 'boneVolley', 'boneVolley'] }),
     start: 0.7,
-    growth: 0.2,
+    growth: 0.17,
     mid: { hp: 1800, atk: 56 },
     last: { hp: 2600, atk: 70 },
-    pay: 1.5,
+    pay: 0.78,
     clear: 200,
   },
   {
@@ -106,22 +100,12 @@ export const ARMIES: readonly Army[] = [
     name: 'Beast Packs',
     blurb: 'Black, red and white werewolves, fast and hungry.',
     area: 'snow',
-    waves: waves(
-      [
-        wave('packBlack', 'packRed', 'packWhite'),
-        wave('packBlack', 'packRed', 'packWhite', 'packBlack'),
-        wave('packRed', 'packWhite', 'packBlack', 'packRed'),
-        wave('packBlack', 'packRed', 'packWhite', 'packBlack', 'packRed'),
-        wave('packWhite', 'packBlack', 'packRed', 'packWhite', 'packBlack'),
-        wave('packBlack', 'packRed', 'packWhite', 'packBlack', 'packRed', 'packWhite'),
-      ],
-      { 4: ['alphaWolf', 'packBlack', 'packRed', 'packWhite'], 8: ['boarKing', 'packBlack', 'packRed', 'packWhite', 'packBlack'] },
-    ),
+    waves: waves(ramp(['packBlack', 'packRed', 'packWhite', 'packBlack', 'packRed', 'packWhite', 'packBlack'], 13), { 8: ['alphaWolf', 'packBlack', 'packRed', 'packWhite'], 15: ['boarKing', 'packBlack', 'packRed', 'packWhite', 'packBlack', 'packWhite'] }),
     start: 0.85,
-    growth: 0.18,
+    growth: 0.15,
     mid: { hp: 2000, atk: 60 },
     last: { hp: 3400, atk: 80 },
-    pay: 2.1,
+    pay: 1.1,
     clear: 300,
   },
   {
@@ -129,26 +113,16 @@ export const ARMIES: readonly Army[] = [
     name: 'The Wildwood',
     blurb: 'Satyrs pipe the grove into a frenzy; three forest lords guard it.',
     area: 'forest',
-    waves: waves(
-      [
-        wave('groveSatyr1', 'groveSatyr2', 'groveSatyr3'),
-        wave('groveSatyr1', 'groveSatyr2', 'groveSatyr3', 'groveSatyr1'),
-        wave('groveSatyr2', 'groveSatyr3', 'groveSatyr1', 'groveSatyr2', 'groveSatyr3'),
-        wave('groveSatyr1', 'groveSatyr2', 'groveSatyr3', 'groveSatyr1', 'groveSatyr2'),
-        wave('groveSatyr3', 'groveSatyr1', 'groveSatyr2', 'groveSatyr3', 'groveSatyr1', 'groveSatyr2'),
-        wave('groveSatyr1', 'groveSatyr2', 'groveSatyr3', 'groveSatyr1', 'groveSatyr2', 'groveSatyr3'),
-      ],
-      {
-        3: ['forestBoss1', 'groveSatyr1', 'groveSatyr2', 'groveSatyr3'],
-        6: ['forestBoss2', 'groveSatyr3', 'groveSatyr1', 'groveSatyr2', 'groveSatyr3'],
-        9: ['forestBoss3', 'groveSatyr1', 'groveSatyr2', 'groveSatyr3', 'groveSatyr1'],
-      },
-    ),
+    waves: waves(ramp(['groveSatyr1', 'groveSatyr2', 'groveSatyr3', 'groveSatyr1', 'groveSatyr2'], 12), {
+        5: ['forestBoss1', 'groveSatyr1', 'groveSatyr2', 'groveSatyr3'],
+        10: ['forestBoss2', 'groveSatyr3', 'groveSatyr1', 'groveSatyr2', 'groveSatyr3'],
+        15: ['forestBoss3', 'groveSatyr1', 'groveSatyr2', 'groveSatyr3', 'groveSatyr1', 'groveSatyr2'],
+      }),
     start: 1.15,
-    growth: 0.17,
+    growth: 0.136,
     mid: { hp: 2400, atk: 60 },
     last: { hp: 3000, atk: 72 },
-    pay: 2.8,
+    pay: 1.72,
     clear: 430,
   },
   {
@@ -156,23 +130,12 @@ export const ARMIES: readonly Army[] = [
     name: 'The Labyrinth',
     blurb: 'Minotaurs charge and gorgons turn heroes to stone.',
     area: 'dungeon',
-    waves: waves(
-      [
-        wave('mazeMino1', 'mazeMino2', 'mazeGorgon1'),
-        wave('mazeMino1', 'mazeMino3', 'mazeGorgon2', 'mazeGorgon1'),
-        wave('mazeMino2', 'mazeMino3', 'mazeMino1', 'mazeGorgon3'),
-        wave('mazeMino1', 'mazeMino2', 'mazeGorgon1', 'mazeGorgon2', 'mazeMino3'),
-        wave('mazeMino3', 'mazeMino1', 'mazeMino2', 'mazeGorgon3', 'mazeGorgon1'),
-        wave('mazeMino1', 'mazeMino2', 'mazeMino3', 'mazeGorgon1', 'mazeGorgon2', 'mazeGorgon3'),
-        wave('mazeMino2', 'mazeMino3', 'mazeMino1', 'mazeMino2', 'mazeGorgon2', 'mazeGorgon3'),
-      ],
-      { 5: ['gorgonQueen', 'mazeMino1', 'mazeMino2', 'mazeGorgon3'], 9: ['minotaurChampion', 'mazeMino1', 'mazeGorgon1', 'mazeMino2', 'mazeGorgon2'] },
-    ),
+    waves: waves(ramp(['mazeMino1', 'mazeMino2', 'mazeGorgon1', 'mazeMino3', 'mazeGorgon2', 'mazeMino1', 'mazeGorgon3', 'mazeMino2'], 13), { 8: ['gorgonQueen', 'mazeMino1', 'mazeMino2', 'mazeGorgon3'], 15: ['minotaurChampion', 'mazeMino1', 'mazeGorgon1', 'mazeMino2', 'mazeGorgon2', 'mazeMino3'] }),
     start: 1.38,
-    growth: 0.17,
+    growth: 0.128,
     mid: { hp: 1700, atk: 46 },
     last: { hp: 2500, atk: 60 },
-    pay: 3.6,
+    pay: 2.21,
     clear: 600,
   },
   {
@@ -180,24 +143,12 @@ export const ARMIES: readonly Army[] = [
     name: 'Ogre Clans',
     blurb: 'Ogres and orc brutes, a shaman king and a horned giant.',
     area: 'highlands',
-    waves: waves(
-      [
-        wave('clanOgre', 'clanBrute', 'clanBrute'),
-        wave('clanOgre', 'clanOgre', 'clanBrute'),
-        wave('clanBrute', 'clanOgre', 'clanBrute', 'clanOgre'),
-        wave('clanOgre', 'clanOgre', 'clanBrute', 'clanBrute'),
-        wave('clanOgre', 'clanBrute', 'clanOgre', 'clanOgre', 'clanBrute'),
-        wave('clanOgre', 'clanOgre', 'clanOgre', 'clanBrute', 'clanBrute'),
-        wave('clanOgre', 'clanOgre', 'clanBrute', 'clanOgre', 'clanBrute', 'clanOgre'),
-        wave('clanOgre', 'clanOgre', 'clanOgre', 'clanOgre', 'clanBrute', 'clanBrute'),
-      ],
-      { 5: ['shamanKing', 'clanBrute', 'clanOgre', 'clanBrute'], 10: ['hornedOgre', 'clanOgre', 'clanBrute', 'clanOgre', 'clanBrute'] },
-    ),
+    waves: waves(ramp(['clanOgre', 'clanBrute', 'clanBrute', 'clanOgre', 'clanOgre', 'clanBrute', 'clanOgre'], 13), { 8: ['shamanKing', 'clanBrute', 'clanOgre', 'clanBrute'], 15: ['hornedOgre', 'clanOgre', 'clanBrute', 'clanOgre', 'clanBrute', 'clanOgre'] }),
     start: 1.55,
-    growth: 0.16,
+    growth: 0.124,
     mid: { hp: 1800, atk: 48 },
     last: { hp: 2600, atk: 52 },
-    pay: 4.6,
+    pay: 3.23,
     clear: 820,
   },
   {
@@ -205,24 +156,12 @@ export const ARMIES: readonly Army[] = [
     name: 'Infernal Host',
     blurb: 'Imps and demons of the pit, a devil and a demon lord.',
     area: 'volcano',
-    waves: waves(
-      [
-        wave('hellImp', 'hellImp', 'hellDemon'),
-        wave('hellImp', 'hellImp', 'hellImp', 'hellDemon'),
-        wave('hellImp', 'hellDemon', 'hellImp', 'hellDemon'),
-        wave('hellImp', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon'),
-        wave('hellImp', 'hellImp', 'hellDemon', 'hellDemon', 'hellImp'),
-        wave('hellDemon', 'hellImp', 'hellImp', 'hellDemon', 'hellImp', 'hellImp'),
-        wave('hellImp', 'hellDemon', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon'),
-        wave('hellDemon', 'hellDemon', 'hellImp', 'hellImp', 'hellDemon', 'hellImp'),
-      ],
-      { 5: ['devilLeader', 'hellImp', 'hellDemon', 'hellImp'], 10: ['demonLord', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon'] },
-    ),
+    waves: waves(ramp(['hellImp', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon'], 13), { 8: ['devilLeader', 'hellImp', 'hellDemon', 'hellImp'], 15: ['demonLord', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon', 'hellImp'] }),
     start: 1.64,
-    growth: 0.16,
+    growth: 0.13,
     mid: { hp: 2000, atk: 50 },
     last: { hp: 2300, atk: 45 },
-    pay: 5.8,
+    pay: 4.1,
     clear: 1100,
   },
   {
@@ -230,24 +169,12 @@ export const ARMIES: readonly Army[] = [
     name: 'Yokai Night Parade',
     blurb: 'Fox spirits, crows and tengu monks of the night parade, led by a nine-tailed fox and the Oni King.',
     area: 'forest',
-    waves: waves(
-      [
-        wave('yokaiFox', 'yokaiCrow', 'yokaiMonk'),
-        wave('yokaiFox', 'yokaiWitch', 'yokaiCrow', 'yokaiMonk'),
-        wave('yokaiCrow', 'yokaiSeer', 'yokaiFox', 'yokaiMonk'),
-        wave('yokaiWitch', 'yokaiFox', 'yokaiMonk', 'yokaiCrow', 'yokaiSeer'),
-        wave('yokaiMonk', 'yokaiWitch', 'yokaiCrow', 'yokaiFox', 'yokaiSeer'),
-        wave('yokaiFox', 'yokaiWitch', 'yokaiMonk', 'yokaiCrow', 'yokaiSeer', 'yokaiMonk'),
-        wave('yokaiCrow', 'yokaiWitch', 'yokaiFox', 'yokaiSeer', 'yokaiMonk', 'yokaiWitch'),
-        wave('yokaiMonk', 'yokaiMonk', 'yokaiWitch', 'yokaiFox', 'yokaiCrow', 'yokaiSeer'),
-      ],
-      { 5: ['nineTails', 'yokaiFox', 'yokaiWitch', 'yokaiCrow'], 10: ['oniKing', 'yokaiMonk', 'yokaiWitch', 'yokaiSeer', 'yokaiFox'] },
-    ),
+    waves: waves(ramp(['yokaiFox', 'yokaiCrow', 'yokaiMonk', 'yokaiWitch', 'yokaiSeer', 'yokaiFox', 'yokaiMonk', 'yokaiCrow', 'yokaiWitch'], 13), { 8: ['nineTails', 'yokaiFox', 'yokaiWitch', 'yokaiCrow'], 15: ['oniKing', 'yokaiMonk', 'yokaiWitch', 'yokaiSeer', 'yokaiFox', 'yokaiCrow'] }),
     start: 1.68,
-    growth: 0.16,
+    growth: 0.127,
     mid: { hp: 2200, atk: 52 },
     last: { hp: 3000, atk: 55 },
-    pay: 7.2,
+    pay: 5.11,
     clear: 1450,
   },
   {
@@ -255,24 +182,12 @@ export const ARMIES: readonly Army[] = [
     name: 'Golem Forge',
     blurb: 'Stone, iron, crystal and magma golems, a sapphire colossus and the Forge Titan.',
     area: 'desert',
-    waves: waves(
-      [
-        wave('stoneGolem', 'ironGolem', 'crystalGolem'),
-        wave('stoneGolem', 'stoneGolem', 'magmaGolem'),
-        wave('ironGolem', 'crystalGolem', 'stoneGolem', 'magmaGolem'),
-        wave('stoneGolem', 'ironGolem', 'ironGolem', 'crystalGolem'),
-        wave('magmaGolem', 'crystalGolem', 'stoneGolem', 'ironGolem', 'magmaGolem'),
-        wave('ironGolem', 'stoneGolem', 'crystalGolem', 'magmaGolem', 'stoneGolem'),
-        wave('crystalGolem', 'ironGolem', 'stoneGolem', 'magmaGolem', 'crystalGolem', 'ironGolem'),
-        wave('stoneGolem', 'magmaGolem', 'ironGolem', 'crystalGolem', 'stoneGolem', 'magmaGolem'),
-      ],
-      { 5: ['sapphireColossus', 'stoneGolem', 'crystalGolem', 'ironGolem'], 10: ['forgeTitan', 'ironGolem', 'magmaGolem', 'crystalGolem', 'stoneGolem'] },
-    ),
+    waves: waves(ramp(['stoneGolem', 'ironGolem', 'crystalGolem', 'magmaGolem', 'stoneGolem', 'ironGolem', 'magmaGolem'], 13), { 8: ['sapphireColossus', 'stoneGolem', 'crystalGolem', 'ironGolem'], 15: ['forgeTitan', 'ironGolem', 'magmaGolem', 'crystalGolem', 'stoneGolem', 'magmaGolem'] }),
     start: 1.7,
-    growth: 0.16,
+    growth: 0.124,
     mid: { hp: 1800, atk: 56 },
     last: { hp: 2400, atk: 60 },
-    pay: 8.8,
+    pay: 6.26,
     clear: 1800,
   },
 ];
@@ -318,6 +233,8 @@ export const replayTotal = (a: Army, tier = 0): number => a.waves.reduce((n, _, 
 // ---- the meta's record of the armies -----------------------------------------------------------------------------------
 
 export interface ArmyRecord {
+  /** The army's length (in waves) that `best`, `won` and `hard` count in. Missing is a save from when the army was shorter (`OLD_WAVES`). */
+  waves?: number;
   /** The furthest wave reached in any attempt. */
   best: number;
   /** The furthest wave won. */
@@ -334,7 +251,7 @@ export interface ArmyRecord {
   chests?: number[];
 }
 
-const blank = (): ArmyRecord => ({ best: 0, won: 0, clears: 0, stars: {} });
+const blank = (): ArmyRecord => ({ waves: ARMY_WAVES, best: 0, won: 0, clears: 0, stars: {} });
 export const recordOf = (m: Meta, id: string): ArmyRecord => m.armies[id] ?? blank();
 export const armyCleared = (m: Meta, id: string): boolean => recordOf(m, id).clears > 0;
 /** An army is open when it is the first or the one before it has been beaten. */
@@ -405,6 +322,27 @@ export function settleWave(m: Meta, id: string, n: number, won: boolean, stars: 
   return { crowns, replay, firstClear, unlocked: firstClear && !tier ? nextArmy(a) : undefined };
 }
 
+/** How many waves each army had before all of them were made 15: a saved record without `waves` counts in these. */
+export const OLD_WAVES: Readonly<Record<string, number>> = { orcs: 8, undead: 8, beasts: 8, wildwood: 9, labyrinth: 9, ogres: 10, infernal: 10, yokai: 10, golems: 10 };
+
+/** A wave count of an old record mapped onto the army's new length: the share of the way it had come, up to `cap` (an army already cleared has every wave won). */
+const mapWave = (n: number, old: number, now: number, cap: number): number => Math.min(cap, n >= old ? now : Math.floor((n * now) / old));
+
+/** Carry a record from the army's old length to its new one: the best and won waves, the harder tiers' won waves. Stars, chests and the conditions met are untouched. */
+function mapLength(rec: ArmyRecord, a: Army): void {
+  const old = OLD_WAVES[a.id] ?? a.waves.length;
+  if (rec.waves === a.waves.length || old === a.waves.length) {
+    rec.waves = a.waves.length;
+    return;
+  }
+  const now = a.waves.length;
+  // (a wave won is never the last unless the army was cleared)
+  rec.best = rec.clears > 0 ? now : mapWave(rec.best, old, now, now);
+  rec.won = rec.clears > 0 ? now : mapWave(rec.won, old, now, now - 1);
+  for (const h of Object.values(rec.hard ?? {})) h.won = h.clears > 0 ? now : mapWave(h.won, old, now, now - 1);
+  rec.waves = a.waves.length;
+}
+
 /**
  * A save from before the armies has its furthest stage mapped onto them: five stages to an army, so a save that won
  * the first boss (stage 5) has cleared the Orc Warband, and so on up the list. Nothing else changes.
@@ -419,6 +357,8 @@ export function migrateArmies(raw: unknown, bestStage: number): Record<string, A
       if (r.stars && typeof r.stars === 'object') for (const [k, s] of Object.entries(r.stars)) if (/^[1-9]\d*$/.test(k) && typeof s === 'number' && s >= 1) stars[k] = Math.min(3, s | 0);
       const rec: ArmyRecord = { best: Math.max(0, (r.best ?? 0) | 0), won: Math.max(0, (r.won ?? 0) | 0), clears: Math.max(0, (r.clears ?? 0) | 0), stars };
       readTiers(rec, r);
+      if (typeof r.waves === 'number') rec.waves = r.waves | 0;
+      mapLength(rec, a);
       // (a save from before the 10 stars: an army already beaten has its Normal clear star, and the old stars of its last wave say more)
       if (!r.met && rec.clears > 0) rec.met = { '0': oldStarMask(rec, a) };
       out[a.id] = rec;
@@ -426,12 +366,12 @@ export function migrateArmies(raw: unknown, bestStage: number): Record<string, A
     return out;
   }
   const beaten = Math.min(ARMIES.length, Math.max(0, Math.floor((bestStage - 1) / 5)));
-  ARMIES.slice(0, beaten).forEach((a) => (out[a.id] = { best: a.waves.length, won: a.waves.length, clears: 1, stars: {}, met: { '0': 1 } }));
+  ARMIES.slice(0, beaten).forEach((a) => (out[a.id] = { waves: a.waves.length, best: a.waves.length, won: a.waves.length, clears: 1, stars: {}, met: { '0': 1 } }));
   return out;
 }
 
-/** The Normal conditions an old record implies: the clear, and (if the last wave earned all three old stars) no hero lost in the final fight. */
-const oldStarMask = (rec: ArmyRecord, a: Army): number => 1 | (rec.stars[String(a.waves.length)] === 3 ? 2 : 0);
+/** The Normal conditions an old record implies: the clear, and (if the last wave, as it was then, earned all three old stars) no hero lost in the final fight. */
+const oldStarMask = (rec: ArmyRecord, a: Army): number => 1 | (rec.stars[String(OLD_WAVES[a.id] ?? a.waves.length)] === 3 ? 2 : 0);
 
 /** Read the 10-star fields of a saved record: only what makes sense is kept. */
 function readTiers(rec: ArmyRecord, r: Partial<ArmyRecord>): void {

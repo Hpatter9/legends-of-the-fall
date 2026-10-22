@@ -24,6 +24,8 @@ export const SQUAD = 5;
 export const START_GOLD = 70;
 export const SUMMON_BASE = 30;
 export const SUMMON_STEP = 5;
+/** A recycled hero pays back this share of the gold paid into it (rounded, at least 1, and always less than it cost). */
+export const RECYCLE_SHARE = 0.4;
 /** Hp and attack grow by this for each grade above the first. */
 export const GRADE_MULT = 1.6;
 /** Foes' hp and attack at stage 1, as a share of their stats in `foes.ts`. */
@@ -41,7 +43,9 @@ export interface Owned {
   id: number;
   kind: string;
   grade: number;
-  /** The gear worn, one piece a slot; it stays for the run (a merge hands it back to the pack). */
+  /** The gold paid into this hero: the price of the summon that brought it out, plus what the heroes merged into it paid (`paidOf`). */
+  paid?: number;
+  /** The gear worn, one piece a slot; it stays for the run (a merge or a recycle hands it back to the pack). */
   gear?: Partial<Record<Slot, Gear>>;
   /** Lasting bumps from a training ground, added to the hero's multipliers. */
   bump?: { hp: number; atk: number };
@@ -109,7 +113,7 @@ export type RunMode = { kind: 'army'; army: string; tier?: number } | { kind: 'd
 export function newRun(seed: number, party: readonly string[] = HEROES, castle: Castle = newCastle()): Run {
   const run: Run = { seed, gold: START_GOLD + bonusGold(castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...party], castle: { ...castle } };
   // two grade-1 heroes, drawn from the same stream as every summon but free
-  for (let i = 0; i < 2; i++) run.squad.push(add(run, draw(run)).id);
+  for (let i = 0; i < 2; i++) run.squad.push(add(run, draw(run), SUMMON_BASE).id);
   return run;
 }
 
@@ -156,7 +160,7 @@ export const isBossRun = (run: Run, stage = run.stage): boolean => {
 export const wavesOf = (run: Run): number => armyOfRun(run)?.waves.length ?? 0;
 
 /** Hire a particular grade-1 hero (the tower's shop sells them); three of a kind merge as ever. */
-export const recruit = (run: Run, kind: string): Owned => add(run, kind);
+export const recruit = (run: Run, kind: string, paid = SUMMON_BASE): Owned => add(run, kind, paid);
 
 const draw = (run: Run): string => {
   const pool = run.pool?.length ? run.pool : HEROES;
@@ -173,7 +177,7 @@ export function summon(run: Run): Owned | null {
   const kind = draw(run);
   // (now and then a summon arrives a grade up, from its own side stream so the draws stay as they were)
   const lucky = new Rng(mixSeed(run.seed, 0x1c4b, run.nextId)).chance(luckyChance(run));
-  return add(run, kind, lucky ? 2 : 1);
+  return add(run, kind, cost, lucky ? 2 : 1);
 }
 
 /** The chance a bought summon arrives already at grade 2 (two stars). */
@@ -181,9 +185,9 @@ export const LUCKY_SUMMON = 0.05;
 /** A run's chance of a grade-2 summon: the base for now; castle buildings or items can add to it later. */
 export const luckyChance = (_run: Run): number => LUCKY_SUMMON;
 
-/** Add a hero (grade 1 unless told otherwise), then merge threes of a kind and grade, upward. Returns the hero that ends up holding the new one's place. */
-function add(run: Run, kind: string, grade = 1): Owned {
-  let made: Owned = { id: run.nextId++, kind, grade };
+/** Add a hero (bought at `paid` gold; grade 1 unless told otherwise), then merge threes of a kind and grade, upward. Returns the hero that ends up holding the new one's place. */
+function add(run: Run, kind: string, paid: number, grade = 1): Owned {
+  let made: Owned = { id: run.nextId++, kind, grade, paid };
   run.roster.push(made);
   for (;;) {
     const same = run.roster.filter((h) => h.kind === made.kind && h.grade === made.grade);
@@ -194,10 +198,28 @@ function add(run: Run, kind: string, grade = 1): Owned {
     const slot = run.squad.findIndex((id) => gone.has(id));
     run.roster = run.roster.filter((h) => !gone.has(h.id));
     run.squad = run.squad.filter((id) => !gone.has(id));
-    made = { id: run.nextId++, kind: made.kind, grade: made.grade + 1 };
+    made = { id: run.nextId++, kind: made.kind, grade: made.grade + 1, paid: same.slice(0, 3).reduce((n, h) => n + paidOf(h), 0) };
     run.roster.push(made);
     if (slot >= 0 && run.squad.length < SQUAD) run.squad.splice(Math.min(slot, run.squad.length), 0, made.id);
   }
+}
+
+/** The gold paid into a hero. A hero from an older save has no record: it is taken to have cost the base price of a summon for each grade-1 hero in it. */
+export const paidOf = (h: Owned): number => h.paid ?? SUMMON_BASE * 3 ** (h.grade - 1);
+/** The gold recycling a hero pays back: a share of what it cost, at least 1 and never as much as it cost. */
+export const recycleValue = (h: Owned): number => Math.max(1, Math.min(paidOf(h) - 1, Math.round(paidOf(h) * RECYCLE_SHARE)));
+
+/** Recycle a hero for gold: it leaves the roster and the squad, its gear goes back to the pack, and `recycleValue` is paid. The price of the next summon does not
+ *  change, so this is no way to reroll for free. Returns the gold paid, or null when the hero is unknown, the run is over, or it is the last hero. */
+export function recycle(run: Run, heroId: number): number | null {
+  const h = heroOf(run, heroId);
+  if (!h || run.over || run.roster.length <= 1) return null;
+  const gold = recycleValue(h);
+  for (const g of Object.values(h.gear ?? {})) (run.items ??= []).push(g);
+  run.roster = run.roster.filter((x) => x.id !== heroId);
+  run.squad = run.squad.filter((id) => id !== heroId);
+  run.gold += gold;
+  return gold;
 }
 
 export const heroOf = (run: Run, id: number) => run.roster.find((h) => h.id === id);
