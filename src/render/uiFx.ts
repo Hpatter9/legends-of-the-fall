@@ -20,7 +20,7 @@ export function rarityFlash(rarity: number): void {
     background: mythic ? 'radial-gradient(circle, #fff 0%, #ffd24a 25%, #ff3a4a 60%, rgba(60, 0, 10, 0.9) 100%)' : 'radial-gradient(circle, #fff 0%, #f0b44a 45%, rgba(90, 50, 0, 0.6) 100%)',
   });
   document.body.append(veil);
-  veil.animate([{ opacity: 0 }, { opacity: mythic ? 0.95 : 0.7, offset: 0.18 }, { opacity: 0 }], { duration: mythic ? 1300 : 700, easing: 'ease-out' }).onfinish = () => veil.remove();
+  veil.animate([{ opacity: 0 }, { opacity: 0.45, offset: 0.3 }, { opacity: 0 }], { duration: 150, easing: 'ease-out' }).onfinish = () => veil.remove();
 }
 
 /** A card just summoned: it springs in, and a ring of light opens under it (in the tier's colour; a Legendary or Mythic also flashes the page). */

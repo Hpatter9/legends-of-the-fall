@@ -45,3 +45,7 @@ hushes whatever is still ringing (`hushSummon`).
 - `node tools/scenes/summon-shots.mjs` (after `npm run web`; `ONLY=`, `SIZE=360x780`, `REDUCED=1`) plays made-up pulls with the hall's `window.__hall.play(...)` hook and writes contact sheets:
   `docs/samples/summon-epic.png`, `summon-legendary.png`, `summon-mythic.png`, `summon-mythic-dup.png`, `summon-tenpull.png` (Mythic and Legendary new), `summon-reveal.png` (a skipped show into the flip with its tease),
   plus `summon-mythic-360x780.png` and `summon-mythic-reduced.png`.
+
+## Anti-flashing (the owner dislikes flashing)
+- The show has two flash moments at most: the DOM flash at the flare (one shot, 120 ms, at most 0.5 alpha, off with the shake setting) and the canvas flare tint (a soft fade, 0.3 at most). The card flip flashes the page once per pull (the best card only, 150 ms, 0.45 alpha).
+- No strobing: the Mythic ring no longer alternates colours, the tint and aura flicker was slowed to a gentle swell, the halo and beam no longer bob by whole pixels. Heartbeat dips are single thumps.

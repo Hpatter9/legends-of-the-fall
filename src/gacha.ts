@@ -108,7 +108,9 @@ export class Gacha {
     const box = $('reveal');
     box.replaceChildren();
     const cards: HTMLElement[] = [];
-    got.forEach((p) => {
+    // (only the best card of a pull flashes the page, once)
+    const best = got.reduce((b, p, i) => (p.rarity > got[b].rarity ? i : b), 0);
+    got.forEach((p, i) => {
       const def = UNITS[p.kind];
       const card = document.createElement('div');
       card.className = `flip r${p.rarity}`;
@@ -137,7 +139,7 @@ export class Gacha {
       const flip = () => {
         card.classList.remove('shake', 'tease');
         card.classList.add('up');
-        rarityFlash(p.rarity);
+        if (i === best) rarityFlash(p.rarity);
       };
       card.addEventListener('click', flip);
       box.append(card);

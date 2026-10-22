@@ -552,7 +552,7 @@ export class SummoningHall {
     if (!this.shakeOn || this.reduced) return;
     const mythic = s.plan.tier === 'mythic';
     this.flashEl.style.background = mythic ? 'radial-gradient(circle, #fff 0%, #ffe0a0 30%, #ff3a4a 80%)' : '#fff';
-    this.flashEl.animate([{ opacity: 0 }, { opacity: mythic ? 0.9 : 0.8, offset: 0.12 }, { opacity: 0 }], { duration: mythic ? 900 : 550, easing: 'ease-out' });
+    this.flashEl.animate([{ opacity: 0 }, { opacity: 0.5, offset: 0.3 }, { opacity: 0 }], { duration: 120, easing: 'ease-out' });
   }
 
   /** The ribbon, the NEW HERO banner and the hero's card, put up as their times come. */
@@ -755,7 +755,7 @@ export class SummoningHall {
         g.fillStyle = color;
         g.fillRect((circle.x - w / 2) * s, top * s, w * s, (circle.y - top) * s);
       };
-      col(even(30 * wk) + 2 * Math.round(Math.sin(this.now / 90)), haze, 0.22);
+      col(even(30 * wk), haze, 0.22);
       col(even(20 * wk), haze, 0.35);
       col(even(10 * wk), core, 0.8);
       if (tier !== 'plain' && acc && rise > 0.1 && !this.reduced) {
@@ -859,7 +859,7 @@ export class SummoningHall {
       if (tint && show) {
         const build = Math.min(1, t / show.tl.charge);
         const after = t < show.tl.beam ? 1 : Math.max(tier === 'mythic' ? 0.4 : 0, 1 - (t - show.tl.beam) / 800);
-        g.globalAlpha = Math.min(1, 0.9 * build * after * (0.85 + 0.15 * Math.sin(this.now / 70)));
+        g.globalAlpha = Math.min(1, 0.9 * build * after * (0.9 + 0.1 * Math.sin(this.now / 700)));
         g.drawImage(tint, 0, 0);
       }
       g.globalCompositeOperation = 'source-over';
@@ -874,7 +874,7 @@ export class SummoningHall {
     // the white of the flare over the whole room (a gentle one when flashes are off)
     if (show && t >= show.tl.charge && t < show.tl.flare + 200) {
       const p = (t - show.tl.charge) / (show.tl.flare + 200 - show.tl.charge);
-      g.globalAlpha = (this.shakeOn && !this.reduced ? 0.32 : 0.1) * (1 - p);
+      g.globalAlpha = (this.shakeOn && !this.reduced ? 0.3 : 0.08) * (1 - p);
       g.fillStyle = BEAM[beamKind(show.best)][1];
       g.fillRect(0, 0, W, H);
       g.globalAlpha = 1;
@@ -913,7 +913,7 @@ export class SummoningHall {
     const dw = ar.w * ar.k * s;
     const dh = ar.h * ar.k * s;
     // (the ring under the feet pulses; a Mythic's alternates crimson and gold)
-    const light = ar.rarity === 5 && Math.floor(this.now / 300) % 2 ? '#ffd24a' : RARITY_LIGHT[ar.rarity];
+    const light = RARITY_LIGHT[ar.rarity];
     // (a Legendary or Mythic star: a glow around the hero, and a halo ring over its head once it is in view)
     if (o.star === 'legendary' || o.star === 'mythic') {
       const acc = ACCENT[o.star];
@@ -922,7 +922,7 @@ export class SummoningHall {
       g.save();
       g.globalCompositeOperation = 'lighter';
       const rg = g.createRadialGradient(x * s, mid, 0, x * s, mid, rad);
-      const al = (o.star === 'mythic' ? 0.5 : 0.4) * e * o.alpha * (0.85 + 0.15 * Math.sin(this.now / 160));
+      const al = (o.star === 'mythic' ? 0.5 : 0.4) * e * o.alpha * (0.9 + 0.1 * Math.sin(this.now / 800));
       rg.addColorStop(0, `rgba(${acc.rgb}, ${al})`);
       rg.addColorStop(1, `rgba(${acc.rgb}, 0)`);
       g.fillStyle = rg;
@@ -930,9 +930,9 @@ export class SummoningHall {
       if (o.sil < 0.6 && e > 0.8) {
         g.globalAlpha = o.alpha * (1 - o.sil);
         g.fillStyle = acc.core;
-        this.ring(x, Math.round(y - ar.fig - 4 - 2 * Math.sin(this.now / 300)), Math.round(8 * gf), Math.round(2 * gf) + 1);
+        this.ring(x, Math.round(y - ar.fig - 4), Math.round(8 * gf), Math.round(2 * gf) + 1);
         g.fillStyle = acc.main;
-        this.ring(x, Math.round(y - ar.fig - 4 - 2 * Math.sin(this.now / 300)), Math.round(10 * gf), Math.round(3 * gf) + 1);
+        this.ring(x, Math.round(y - ar.fig - 4), Math.round(10 * gf), Math.round(3 * gf) + 1);
       }
       g.restore();
     }
