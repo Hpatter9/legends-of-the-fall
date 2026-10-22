@@ -151,9 +151,11 @@ export const PLACE_LOOK: Record<PlaceId, Look> = {
   chapel: { parts: [P('church', 3)] },
   armies: { parts: [P('sign', 0)] },
 };
+/** The Chapel's plot until it is bought: a few rocks and a woodpile where the walls will rise (kit pieces; the owner's call, 200 crowns). */
+export const CHAPEL_SITE: Look = { parts: [P('rocks', -16, 2), P('woodpile', 18, 4)] };
 export const isPlaceId = (id: PlotId): id is PlaceId => (PLACE_IDS as string[]).includes(id);
 /** The look of a plot: a building's at a stage, or a place's own. */
-export const lookFor = (id: PlotId, stage: number): Look => (isPlaceId(id) ? PLACE_LOOK[id] : LOOKS[id][stage]);
+export const lookFor = (id: PlotId, stage: number): Look => (id === 'chapel' && stage === 0 ? CHAPEL_SITE : isPlaceId(id) ? PLACE_LOOK[id] : LOOKS[id][stage]);
 
 export const spriteName = (id: BuildingId, stage: number): string => `${id}${stage}`;
 

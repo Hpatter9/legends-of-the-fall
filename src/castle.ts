@@ -8,7 +8,7 @@
 // canvas, drawn with nearest neighbour and panned by native scroll when the screen is smaller than the scene. It only draws (Math.random is fine
 // here: nothing that is played depends on it) and runs only while the tab shows.
 
-import { BUILDING_IDS, maxLevel, nextCost, type BuildingId } from './sim/castle';
+import { BUILDING_IDS, CHAPEL_COST, chapelBuilt, canBuildChapel, maxLevel, nextCost, type BuildingId } from './sim/castle';
 import { formOf, UNITS } from './sim/units';
 import { rankOf, type Meta } from './sim/meta';
 import { sheetInfo } from './render/sheets';
@@ -16,7 +16,7 @@ import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
 import { gradeOfRank } from './render/tavernSpots';
 import { strongest } from './menuHeroes';
-import { cellX, cellY, decorAt, GRASS, isPlaceId, pavingAt, layoutFor, LIGHTS, lookBox, lookFor, LOOKS, NAME_OF, viewFor, PLACE_IDS, PLACE_VENTS, PLACES, PLOT_IDS, stageOf, TILE_H, TILE_W, VENTS, walkTiles, YARD, type Layout, type Look, type PlotId } from './render/castleSpots';
+import { cellX, cellY, decorAt, GRASS, isPlaceId, pavingAt, layoutFor, LIGHTS, lookBox, lookFor, NAME_OF, viewFor, PLACE_IDS, PLACE_VENTS, PLACES, PLOT_IDS, stageOf, TILE_H, TILE_W, VENTS, walkTiles, YARD, type Layout, type Look, type PlotId } from './render/castleSpots';
 import anvil_stallUrl from './art/castle/anvil_stall.png';
 import atelierUrl from './art/castle/atelier.png';
 import bannerUrl from './art/castle/banner.png';
@@ -149,13 +149,13 @@ async function loadArt(): Promise<Record<string, HTMLImageElement>> {
 
 const picCache = new Map<string, string>();
 /** A building's look at a level as one picture (a data URL) for its card; empty until the courtyard has loaded its art. */
-export function lookPicture(id: BuildingId, level: number): string {
+export function lookPicture(id: PlotId, level: number): string {
   if (!art) return '';
-  const stage = stageOf(id, level);
+  const stage = id === 'chapel' ? level : isPlace(id) ? 0 : stageOf(id, level);
   const key = `${id}${stage}`;
   let url = picCache.get(key);
   if (url === undefined) {
-    const look = LOOKS[id][stage];
+    const look = lookFor(id, stage);
     const box = lookBox(look);
     const c = el('canvas');
     c.width = Math.ceil(box.w) + 2;
@@ -288,7 +288,7 @@ interface Mote {
 
 /** A level just bought: the old look shows behind scaffolding until `SWAP_MS`, then the new look and sparkles. */
 interface Build {
-  id: BuildingId;
+  id: PlotId;
   from: number;
   to: number;
   start: number;
@@ -318,6 +318,8 @@ export class CastleScene {
   private motes: Mote[] = [];
   private builds: Build[] = [];
   private levels: Partial<Record<BuildingId, number>> = {};
+  /** Whether the Chapel stands (undefined until the first update, so loading a built one plays no build). */
+  private chapel: boolean | undefined;
   private tagEls = new Map<PlotId, HTMLButtonElement>();
   private scale = 1;
   private lay: Layout = YARD;
@@ -393,6 +395,7 @@ export class CastleScene {
       if (ready) tag.append(el('i', 'ctUp', '▲'));
       tag.setAttribute('aria-label', `${NAME_OF(id)}, level ${level} of ${maxLevel(id)}${ready ? ', can upgrade' : ''}`);
     }
+    this.updateChapel(meta);
     // heroes: the strongest few that are unlocked stroll the road
     const want = strongest(meta, 5);
     for (const k of [...this.walkers.keys()]) if (!want.includes(k)) this.walkers.delete(k);
@@ -411,6 +414,33 @@ export class CastleScene {
       this.walkers.set(kind, wk);
     });
     this.layTags();
+  }
+
+  /** The Chapel's plot: an empty site with a "Chapel · 200" tag (glowing "build" once affordable) until bought; the build plays like an upgrade's. */
+  private updateChapel(meta: Meta): void {
+    const built = chapelBuilt(meta);
+    const before = this.chapel;
+    this.chapel = built;
+    if (before === false && built && this.running && !this.reduced) {
+      this.builds = this.builds.filter((b) => b.id !== 'chapel');
+      this.builds.push({ id: 'chapel', from: 0, to: 1, start: this.now });
+      this.burst('chapel', 'dust', 26);
+    } else if (before === false && built) this.burst('chapel', 'spark', 14);
+    const tag = this.tagEls.get('chapel')!;
+    const ready = canBuildChapel(meta);
+    const key = `${built}|${ready}`;
+    if (tag.dataset.key === key) return;
+    tag.dataset.key = key;
+    if (built) {
+      tag.className = 'ctTag place';
+      tag.replaceChildren(el('b', '', PLACES.chapel.name), el('span', '', `· ${PLACES.chapel.to}`));
+      tag.setAttribute('aria-label', `${PLACES.chapel.name} · ${PLACES.chapel.to}`);
+      return;
+    }
+    tag.className = `ctTag${ready ? ' ready' : ''}`;
+    tag.replaceChildren(el('b', '', PLACES.chapel.name), el('span', '', ready ? '· build' : `· ${CHAPEL_COST}`));
+    if (ready) tag.append(el('i', 'ctUp', '▲'));
+    tag.setAttribute('aria-label', `${PLACES.chapel.name}, not built, ${CHAPEL_COST} crowns${ready ? ', can build' : ''}`);
   }
 
   /** Start drawing (the tab is showing). */
@@ -636,7 +666,7 @@ export class CastleScene {
   }
 
   /** A bunch of motes at a building: dust round its foot, the build's puffs, or sparkles. */
-  private burst(id: BuildingId, kind: 'dust' | 'spark', n: number): void {
+  private burst(id: PlotId, kind: 'dust' | 'spark', n: number): void {
     const p = this.lay.plots[id];
     const wide = 34;
     for (let i = 0; i < n; i++) {
@@ -704,7 +734,6 @@ export class CastleScene {
 
   /** The look a building shows now (while it is being built, the old one until the swap). */
   private shown(id: PlotId): number {
-    if (isPlace(id)) return 0;
     const b = this.builds.find((x) => x.id === id);
     if (b) return this.now - b.start < SWAP_MS ? b.from : b.to;
     return this.stageNow(id);
@@ -712,7 +741,7 @@ export class CastleScene {
 
   /** The look a plot has at its level (a place has only one). */
   private stageNow(id: PlotId): number {
-    return isPlace(id) ? 0 : stageOf(id, this.levels[id] ?? 0);
+    return id === 'chapel' ? (this.chapel ? 1 : 0) : isPlace(id) ? 0 : stageOf(id, this.levels[id] ?? 0);
   }
 
   // ---- drawing ----
@@ -779,20 +808,20 @@ export class CastleScene {
 
   private building(a: Record<string, HTMLImageElement>, id: PlotId): void {
     const stage = this.shown(id);
-    const b = isPlace(id) ? undefined : this.builds.find((x) => x.id === id);
+    const b = this.builds.find((x) => x.id === id);
     const age = b ? this.now - b.start : BUILD_MS;
     // (a look that has just arrived settles three pixels, and the scaffolding comes down)
     const pop = b && age >= SWAP_MS && age < SWAP_MS + 180 ? Math.round((1 - (age - SWAP_MS) / 180) * 3) : 0;
     this.drawLook(a, id, lookFor(id, stage), pop);
-    if (b && !isPlace(id) && age < SWAP_MS + 300) {
-      const o = lookBox(LOOKS[id][b.from], this.lay.plots[id].flip);
-      const n = lookBox(LOOKS[id][b.to], this.lay.plots[id].flip);
+    if (b && age < SWAP_MS + 300) {
+      const o = lookBox(lookFor(id, b.from), this.lay.plots[id].flip);
+      const n = lookBox(lookFor(id, b.to), this.lay.plots[id].flip);
       this.scaffold(id, Math.min(o.x0, n.x0), Math.max(o.x1, n.x1), Math.max(o.h, n.h), age < SWAP_MS ? 1 : 1 - (age - SWAP_MS) / 300);
     }
   }
 
   /** Poles and planks round the footprint; they shrink away as the build finishes. */
-  private scaffold(id: BuildingId, x0: number, x1: number, h: number, grow: number): void {
+  private scaffold(id: PlotId, x0: number, x1: number, h: number, grow: number): void {
     const g = this.ctx;
     const s = this.scale;
     const p = this.lay.plots[id];
@@ -859,7 +888,7 @@ export class CastleScene {
     for (const b of this.builds) {
       const age = this.now - b.start;
       if (age > SWAP_MS - 100 && age < SWAP_MS + 450) {
-        const box = lookBox(LOOKS[b.id][b.to], this.lay.plots[b.id].flip);
+        const box = lookBox(lookFor(b.id, b.to), this.lay.plots[b.id].flip);
         const p = this.lay.plots[b.id];
         const sz = Math.max(box.w, box.h) + 30;
         g.globalAlpha = 0.65 * (1 - (age - SWAP_MS + 100) / 550);

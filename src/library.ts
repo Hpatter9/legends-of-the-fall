@@ -8,6 +8,7 @@ import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
 import { spellbookView } from './spellbook';
 import type { Meta } from './sim/meta';
+import { spellsOpen } from './sim/castle';
 import { CANDLES, LECTERN, LIB_H, LIB_W } from './render/libraryLayout';
 import wallUrl from './art/library/wall.png';
 import lecternUrl from './art/library/lectern.png';
@@ -44,6 +45,11 @@ const CSS = `
 .lbPage .sbCard.locked { opacity: 1; background: #d8c690; border-style: dashed; color: #5a4a30; }
 .lbPage .sbCard .text { color: #5a4020; }
 .lbPage .sbNote { color: #a82a1c; }
+.lbDim { position: absolute; inset: 0; background: rgba(8, 4, 10, 0.68); pointer-events: none; }
+.lbLock { text-align: center; padding: 14px 14px 16px; }
+.lbLock h2 { margin: 0 0 6px; font: 700 20px var(--display); color: #7a2a1c; letter-spacing: 1px; text-shadow: 0 1px 0 #f6e8c0; }
+.lbLock p { margin: 0 0 12px; font: 400 14px/1.35 var(--body); color: #3a2210; }
+.lbLock .lbGo { min-height: 40px; padding: 0 16px; font: 700 14px var(--body); color: #f6e8c0; background: #7a2a1c; border: 2px solid #3a2210; border-radius: 0; cursor: pointer; }
 `;
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -66,6 +72,9 @@ export class Library {
   private canvas = el('canvas', 'lbRoom');
   private ctx = this.canvas.getContext('2d')!;
   private panel = el('div', 'lbPanel');
+  private dim = el('div', 'lbDim');
+  private lock = el('div', 'lbPage lbLock');
+  private page = el('div', 'lbPage');
   private crowns = el('span');
   private book = spellbookView(() => (this.crowns.textContent = this.book?.crowns() ?? ''));
   private glow: HTMLCanvasElement | null = null;
@@ -79,19 +88,22 @@ export class Library {
   private saver = settings().saver;
   private watch: ResizeObserver;
 
-  constructor() {
+  constructor(onCastle: () => void = () => {}) {
     if (!document.getElementById('libraryStyle')) {
       const st = el('style');
       st.id = 'libraryStyle';
       st.textContent = CSS;
       document.head.append(st);
     }
-    const page = el('div', 'lbPage');
+    const page = this.page;
+    const go = el('button', 'lbGo', 'To the Castle');
+    go.addEventListener('click', onCastle);
+    this.lock.append(el('h2', '', 'The spellbook is locked'), el('p', '', 'Build the Chapel in the castle to study spells'), go);
     const head = el('div', 'lbHead');
     head.append(el('h2', '', 'Spellbook'), this.crowns);
     page.append(head, this.book.root);
-    this.panel.append(page);
-    this.root.append(this.canvas, this.panel);
+    this.panel.append(page, this.lock);
+    this.root.append(this.canvas, this.dim, this.panel);
     this.crowns.textContent = this.book.crowns();
     this.ctx.imageSmoothingEnabled = false;
     onSettings((s) => (this.saver = s.saver));
@@ -102,7 +114,12 @@ export class Library {
   }
 
   /** Redraw the book from the Meta (crowns and unlocks may have changed elsewhere). */
-  update(_meta: Meta): void {
+  update(meta: Meta): void {
+    // (until the Chapel is built the room is darkened and a locked parchment stands in for the book; the starting spells still work in fights)
+    const open = spellsOpen(meta);
+    this.dim.hidden = open;
+    this.lock.hidden = open;
+    this.page.hidden = !open;
     this.book.redraw();
   }
 
