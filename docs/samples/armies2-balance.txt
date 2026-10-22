@@ -1,0 +1,18 @@
+5c. THE REALISTIC CLIMB  (120 fresh saves; recruits, a castle grown from the crowns each try pays (50% of what it has), gear, levels carried; at most 25 tries an army)
+army                  cleared %  tries (mean)  median  90th  party level  party tier  castle lvls  heroes owned
+Orc Warband               100.0           3.1       3     4          1.0        1.00          0.0           5.0
+Undead Legion             100.0           2.4       2     4          5.9        1.16          2.6           5.8
+Beast Packs               100.0           1.9       2     3          8.8        1.29          5.7           7.2
+The Wildwood              100.0           2.7       2     5         10.8        1.43          8.5           9.0
+The Labyrinth             100.0           2.9       3     6         14.5        1.50         11.1          11.4
+Ogre Clans                100.0           2.4       2     5         16.9        1.53         14.1          14.0
+Infernal Host             100.0           2.7       2     6         18.2        1.55         16.6          16.4
+Yokai Night Parade        100.0           2.8       2     6         19.1        1.56         19.6          18.5
+Golem Forge               100.0           3.2       2     6         19.5        1.56         22.0          20.1
+5d. A MAXED CASTLE  (the starting five, every hero at the level shown, every building at its top; 20 attempts a cell; % of attempts that cleared the army)
+level          orcs     undead     beasts   wildwood  labyrinth      ogres   infernal      yokai     golems
+1              60.0       20.0        0.0        0.0        0.0        0.0        0.0        0.0        0.0
+5             100.0       40.0       20.0        0.0        5.0        0.0        0.0        0.0        0.0
+10            100.0      100.0       95.0       55.0       25.0        5.0        0.0        0.0        0.0
+15            100.0      100.0      100.0       60.0       45.0       30.0        0.0        0.0        0.0
+20            100.0      100.0      100.0       70.0       50.0       40.0        5.0        0.0        0.0
