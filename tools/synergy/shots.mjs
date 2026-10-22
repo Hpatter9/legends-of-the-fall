@@ -82,7 +82,7 @@ for (const [w, h] of [[393, 852], [360, 780]]) {
   await shot('fight-banner');
   await page.waitForTimeout(3600);
   await shot('fight-row');
-  await page.evaluate(() => document.getElementById('synRow')?.click());
+  await page.evaluate(() => document.getElementById('synCol')?.click());
   await page.waitForTimeout(200);
   await shot('fight-list');
   // 3. the system tips, one by one
