@@ -14,4 +14,5 @@ A level-up is played once, with nothing looping:
 - a sweep of light crosses the row, which takes a gold edge and glow;
 - ten gold sparks burst out from the face.
 
-The light pillar and the chime stay as before. Under prefers-reduced-motion it shows the same end state with no motion.
+The old light pillar, a box that flashed in the middle of the row, is gone: a gold wash (`.xpWash`) now spreads across the
+whole row from the hero's face, then fades. The chime stays as before. Under prefers-reduced-motion it shows the same end state with no motion.

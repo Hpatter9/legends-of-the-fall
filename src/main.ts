@@ -44,7 +44,6 @@ import { countTraits, kindsOf, traitsOf, TRAITS } from './sim/traits';
 import { UnitSprite } from './render/unitView';
 import { flyUp, recyclePuff, summonBurst } from './render/uiFx';
 import { Fx, loadFx } from './render/fx';
-import pillarLightUrl from './art/fx/vfx/pillar_light.png';
 import { framesOf, loadSheets, portrait, sheetInfo } from './render/sheets';
 import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, framing, PAUSE_MS, settle, viewFor, type View } from './render/cameraRules';
 import { titleOf } from './render/bossTitles';
@@ -1007,11 +1006,10 @@ class Game {
         row.classList.add('up');
         fill.style.transition = 'none';
         fill.style.width = `${share(after)}%`;
-        // (the level-up's light pillar: on this row, and over the heroes of this kind on the board, if it's showing)
-        const pillar = document.createElement('span');
-        pillar.className = 'pillar';
-        pillar.style.backgroundImage = `url(${pillarLightUrl})`;
-        row.append(pillar);
+        // (a gold wash spreads across the row from the hero's face; the heroes of this kind on the board, if it's showing, rise in light)
+        const wash = document.createElement('span');
+        wash.className = 'xpWash';
+        row.append(wash);
         for (const u of this.b.units) if (u.side === 'hero' && u.def === kind) this.sprites.get(u.id)?.evolve();
         play('levelUp');
       }, at + 900);
