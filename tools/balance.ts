@@ -10,6 +10,7 @@
 //   npm run balance -- --armies-only   only the armies' tables (win rate per wave at given hero levels, and the climb through them)
 //   npm run balance -- --only orcs,undead --levels 1,5,10 --party starters   a few armies, levels or one party
 //   npm run balance -- --attempts 40   attempts a cell plays in the armies' first table (default 30)
+//   npm run balance -- --no-tables --tiers --levels 8,14,20   table 5e: each army on each difficulty tier (recruits, maxed castle, gear)
 //   npm run balance -- --no-tables --climb --saves 60   the realistic climb (recruits, castle, gear), table 5c; `--maxed` plays 5d, a full castle
 //
 // Four tables: each hero's value (its win rate in random five-hero teams with it, against the same teams without it),
@@ -26,6 +27,7 @@ import { BUILDINGS, maxLevel, newCastle, nextCost, upgrade, xpRate, type Buildin
 import { newMeta, PULL_COST, rankOf, rankMult, rarityOf, RARITY_NAMES, recruit, tierMult, type Meta } from '../src/sim/meta';
 import { boostOf, bandFor, finish, gradeBoost, isBossStage, newRun, type Owned, type Run, SQUAD, stageBoost, startStage, summon } from '../src/sim/run';
 import { ARMIES, armyById, settleWave } from '../src/sim/armies';
+import { TIERS } from '../src/sim/tiers';
 import { playArmy, savedAt } from './autoplay';
 import { ratingOf } from '../src/sim/stars';
 import { mixSeed, Rng } from '../src/sim/rng';
@@ -473,6 +475,36 @@ function maxedCastle(): void {
   }
 }
 
+/**
+ * 5e. THE TIERS: the recruits' party with a maxed castle and the gear its runs find, at the levels in `--levels`, against each army on each tier:
+ * the % of attempts that cleared, and the mean stars of a clear (Normal 3 at most). Legendary should need a strong, levelled, evolved team.
+ */
+function tiers(): void {
+  const maxed = newCastle();
+  for (const id of Object.keys(BUILDINGS) as BuildingId[]) maxed[id] = maxLevel(id);
+  const party = PARTIES.recruits;
+  console.log(`\n5e. THE DIFFICULTY TIERS  (${party.map((k) => UNITS[k].name).join(', ')}; every hero at the level shown, a maxed castle, gear dressed; ${ATTEMPTS} attempts a cell; clear % / mean stars of a clear)\n`);
+  for (const army of ARMIES.filter((a) => !ONLY || ONLY.includes(a.id))) {
+    console.log(`${army.name}`);
+    console.log([pad('  level', 8), ...TIERS.map((t) => rpad(t.name, 16))].join(''));
+    for (const L of LEVELS) {
+      const cells = TIERS.map((_, t) => {
+        let clears = 0;
+        let stars = 0;
+        for (let a = 0; a < ATTEMPTS; a++) {
+          const r = playArmy(savedAt(L, party, a + 1), army.id, mixSeed(a + 1, 0xa450, ARMIES.indexOf(army) * 10 + t), party, maxed, true, t);
+          if (r.cleared) {
+            clears++;
+            stars += r.stars;
+          }
+        }
+        return rpad(`${f1(pct(clears, ATTEMPTS)).trim()} / ${clears ? (stars / clears).toFixed(1) : '-'}`, 16);
+      });
+      console.log([pad(`  ${L}`, 8), ...cells].join(''));
+    }
+  }
+}
+
 if (process.argv.includes('--no-tables')) {
   // (only the climbs asked for below)
 } else if (ARMIES_ONLY) {
@@ -488,4 +520,5 @@ if (process.argv.includes('--no-tables')) {
 }
 if (process.argv.includes('--climb')) realClimb();
 if (process.argv.includes('--maxed')) maxedCastle();
+if (process.argv.includes('--tiers')) tiers();
 console.log('');

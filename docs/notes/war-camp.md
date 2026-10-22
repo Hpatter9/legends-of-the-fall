@@ -21,7 +21,7 @@ tests in `test/camp.test.ts`, samples `docs/samples/camp-{before,after}-*.png`, 
   yet cleared). Its plate reads "Army / led by boss"; the plate and the table open the party. The Party link stays under Battle!.
 - **Signs**: the Daily and Tower cards hang on two notice boards on posts under the wall.
 - **Chest stash mount**: `CampScene.stashMount`, an absolutely positioned div over the cart's bed on the left (the cart is the Knights'), placed and sized
-  by the scene (`camp.stash`, 56 x 34 scene pixels). The stash module appends its chests to it.
+  by the scene (`camp.stash`, 56 x 34 scene pixels). `drawChestStash` fills it (home.ts mounts its `.csStash` there); the chests lie in a row along the cart (`.cpStash .csStash` in index.html), keep their tap-to-open, and the stash sample is `camp-after-chests-*.png` (`STASH=1`).
 - **Cost**: draws only while the Battle tab shows and no hero sheet is open, stops when the page is hidden; battery saver caps it at 30 fps; reduced
   motion stops strolls, sparks, drifting clouds, the flame's wave and the star fade.
 - **Offline**: all pictures are bundled into game.js as data URLs, so the service worker's `FILES` is unchanged.

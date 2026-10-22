@@ -13,6 +13,7 @@ import { ARMIES, armyById, armyCleared, armyIsNew, armyStars, armyUnlocked, boss
 import { ACHIEVEMENTS } from './sim/achievements';
 import { UNITS } from './sim/units';
 import { drawArmies } from './armiesView';
+import { drawChestStash } from './chestStash';
 import { drawAchievements } from './achievementsView';
 import { todayKey } from './modes';
 import { openSettings } from './settings';
@@ -39,7 +40,7 @@ export interface HomeHooks {
   runInfo?(): { stage: number; gold: number; army?: string; label: string } | null;
   onContinue(): void;
   /** Start an army from wave 1 (the page picks the party first). */
-  onArmy(id: string): void;
+  onArmy(id: string, tier: number): void;
   /** Opens the party screen to change the party (the Battle page's Party button). */
   onParty(): void;
   /** Opens the collection screen (the heroes, their ranks and the odds). */
@@ -158,6 +159,8 @@ export class Home {
 
   private show(tab: Tab): void {
     this.tab = tab;
+    // (the tab bar stays under the armies: a tap on it leaves them)
+    if ($('hmSub').classList.contains('armies')) this.closeSub();
     this.refresh();
   }
 
@@ -255,6 +258,13 @@ export class Home {
       cont.addEventListener('click', () => this.go(this.hooks.onContinue));
       go.append(cont);
     }
+    // (the chest stash: the chests the armies' stars have earned sit on the camp's cart, on the left)
+    const stash = el('div', 'csStash');
+    drawChestStash(stash, m, () => {
+      saveMeta(m);
+      this.refresh();
+    });
+    this.camp.stashMount.replaceChildren(stash);
     fr.append(go);
     page.append(fr);
   }
@@ -386,7 +396,7 @@ export class Home {
   }
 
   /** The Armies screen, over the home screen (the Battle button, and the unlock moment's way on). */
-  openArmies(): void {
+  openArmies(focus?: string): void {
     $('home').hidden = false;
     this.openSub(
       'Armies',
@@ -394,16 +404,22 @@ export class Home {
         drawArmies(body, this.meta, {
           running: this.hooks.runInfo?.() ?? null,
           onContinue: () => this.go(this.hooks.onContinue),
-          onFight: (id) => this.go(() => this.hooks.onArmy(id)),
+          onFight: (id, tier) => this.go(() => this.hooks.onArmy(id, tier)),
+          focus,
+          onBack: () => this.closeSub(),
         }),
       false,
+      true,
     );
     // (the cards a new army lit have been seen now: they glow no more the next time)
     if (markSeen(this.meta)) saveMeta(this.meta);
   }
 
-  private openSub(title: string, draw: (body: HTMLElement) => void, achievements = true): void {
+  private openSub(title: string, draw: (body: HTMLElement) => void, achievements = true, full = false): void {
     $('hmSub').hidden = false;
+    // (the armies fill the page between the top bar and the tabs, with no header of their own)
+    $('hmSub').classList.toggle('armies', full);
+    $('hmSubBody').classList.remove('asBody');
     $('hmSubTitle').textContent = title;
     const body = $('hmSubBody');
     body.replaceChildren();

@@ -168,8 +168,8 @@
   #banner.won { color: var(--gold); }
   #banner.lost { color: var(--red); }
   #summary { color: var(--dim); text-shadow: 0 1px 0 #000; }
-  #stars { display: flex; flex-direction: column; gap: 6px; width: min(300px, calc(86 * var(--vw))); }
-  #stars[hidden] { display: none; }
+  #stars, #armyStars { display: flex; flex-direction: column; gap: 6px; width: min(300px, calc(86 * var(--vw))); }
+  #stars[hidden], #armyStars[hidden] { display: none; }
   #stars .star { display: grid; grid-template-columns: 30px 1fr; align-items: center; gap: 0 8px; padding: 6px 10px; background: var(--wood); border: 2px solid var(--edge); border-radius: 8px; color: var(--dim); opacity: 0; animation: starIn 0.45s cubic-bezier(0.2, 1.6, 0.4, 1) forwards; }
   #stars .star > span { grid-row: span 2; font-size: 26px; line-height: 1; text-align: center; }
   #stars .star b { font-weight: normal; }
@@ -294,6 +294,10 @@
   .cpWrap { position: absolute; inset: 0; overflow: hidden; background: #2c2a55; }
   .cpRoom { position: absolute; top: 0; image-rendering: pixelated; touch-action: manipulation; }
   .cpStash, .cpSlot { position: absolute; }
+  /* (the chest stash lies on the cart: its chests in a row along the bed instead of the stack down the page) */
+  .cpStash { display: flex; align-items: flex-end; justify-content: center; }
+  .cpStash .csStash { position: static; flex-direction: row; flex-wrap: wrap-reverse; justify-content: center; align-content: flex-end; width: 100%; gap: 0 2px; padding: 0; background: none; border: 0; }
+  .cpStash .csChest { width: 40px; }
   .cpPlank { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 2px; justify-content: center; }
   .cpPlank:active { transform: none; }
   .cpPlank img { display: none; }
@@ -684,6 +688,7 @@
   <div id="banner"></div>
   <div id="summary"></div>
   <div id="stars" hidden></div>
+  <div id="armyStars" hidden></div>
   <div id="xp" hidden></div>
   <div id="fightStats" hidden></div>
   <div class="row"><button id="next" class="primary">Next stage</button></div>

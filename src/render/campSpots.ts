@@ -146,7 +146,7 @@ export function campLayout(w: number, h: number): Camp {
     heroes,
     table: { x: cx + 104, y: tableY },
     cart,
-    stash: { x: cart.x - 28, y: cart.y - 56, w: 56, h: 34 },
+    stash: { x: cart.x - 66, y: cart.y - 84, w: 132, h: 66 },
     boards: {
       daily: { x: w - BOARD.w - 8, y: boardY, w: BOARD.w, h: BOARD.h },
       tower: { x: 8, y: boardY, w: BOARD.w, h: BOARD.h },

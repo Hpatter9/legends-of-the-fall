@@ -18,7 +18,7 @@ const HEROES = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard'];
 const DPR = Number(process.env.DPR ?? 2);
 const SIZES = { '393x852': { width: 393, height: 852 }, '360x780': { width: 360, height: 780 }, '412x915': { width: 412, height: 915 } };
 mkdirSync('docs/samples', { recursive: true });
-const meta = { seed: 7, crowns: 300, unlocked: HEROES, party: HEROES, pulls: 0, dry: 0, dryMythic: 0, castle: { treasury: 0, barracks: 0, armoury: 0, mageTower: 0, stable: 0, library: 0 }, shards: {}, stars: {}, xp: {}, bestStage: 3, tower: 0, daily: {}, bosses: [], achievements: [], armies: {} };
+const meta = { seed: 7, crowns: 300, unlocked: HEROES, party: HEROES, pulls: 0, dry: 0, dryMythic: 0, castle: { treasury: 0, barracks: 0, armoury: 0, mageTower: 0, stable: 0, library: 0 }, shards: {}, stars: {}, xp: {}, bestStage: 3, tower: 0, daily: {}, bosses: [], achievements: [], armies: {}, ...(process.env.STASH ? { stash: [3, 5, 10].map((at, i) => ({ army: 'orcs', at, tier: 0, seed: i + 1 })) } : {}) };
 for (const [size, vp] of Object.entries(SIZES)) {
   const ctx = await browser.newContext({ viewport: vp, deviceScaleFactor: DPR, hasTouch: true });
   const page = await ctx.newPage();

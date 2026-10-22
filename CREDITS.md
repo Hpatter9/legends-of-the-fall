@@ -22,6 +22,7 @@ the raw files), copied one sprite at a time from the private assets repository (
   **Super Pixel Effects Gigapack (Free Version)** by unTied Games, as Chronos Settlement cut them
   (`src/renderer/art/effects/`).
 - **Item icons** (`src/art/items/`): single 16x16 tiles cut from the **DawnLike** tileset by DragonDePlatino (Items: Armor, Amulet, Boot, Hat, LongWep, Ring, Shield), for relics and gear.
+- **Army chests** (`src/art/ui/chest-bronze.png`, `chest-silver.png`, `chest-gold.png`): the chest (closed and open frames) from the Craftpix **Free Platformer Game Tileset Pixel Art** pack (`chest.png`), cropped, with its iron bands tinted bronze, silver and gold by a script (hue shifts only). The army scenes on the Armies screen use the foes' existing sprite sheets and the land backdrops, with no new art.
 
 Code borrowed from Chronos Settlement (`hpatter9/little-town`): the seeded random numbers (`src/sim/rng.ts`), the
 board's relief, step and sight rules (`src/sim/board.ts`), the blow and reach rules (`src/sim/battle.ts`), the
