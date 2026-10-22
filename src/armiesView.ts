@@ -6,6 +6,7 @@
 // `tiers.ts`; this only draws them.
 
 import { ARMIES, armyCleared, armyIsNew, armyStars, armyUnlocked, bossOf, bossesOf, firstClearTotal, recordOf, replayTotal, tierOpen, tierStars, type Army } from './sim/armies';
+import { AUTO_COUNTS, canAutoReplay } from './sim/autoReplay';
 import { armyRules, chestKind, chestsOf, type StarResult } from './sim/armyStars';
 import { ARMY_STARS, MILESTONES, TIERS, tierRange } from './sim/tiers';
 import { UNITS } from './sim/units';
@@ -24,7 +25,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 
 export interface ArmiesHooks {
   /** Pick the party and start this army from wave 1, on a difficulty tier. */
-  onFight(id: string, tier: number): void;
+  onFight(id: string, tier: number, auto?: number): void;
   /** Carry on with the run in progress. */
   onContinue(): void;
   /** Close the screen. */
@@ -287,6 +288,9 @@ const crowns = (n: number): HTMLElement => {
   return s;
 };
 
+/** What the Auto toggle was last set to (it is kept while the cards are redrawn). */
+const autoPick = { on: false, count: 3 as number };
+
 function card(a: Army, i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLElement; figures: Figure[] } {
   const open = armyUnlocked(m, a.id);
   const rec = recordOf(m, a.id);
@@ -368,13 +372,41 @@ function card(a: Army, i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLElem
       cont.addEventListener('click', () => hooks.onContinue());
       info.append(cont);
     }
+    // (a tier already cleared can be farmed: the Auto toggle beside Fight! repeats it for a count of runs)
+    const farm = open && !running && canAutoReplay(m, a.id, tier);
+    const auto = farm && autoPick.on;
     const go = el('button', open ? 'primary asFight' : 'asFight', !open ? 'Locked' : running ? `Continue · wave ${running.stage}` : rec.best > 0 || done ? `Fight again · ${t.name}` : 'Fight!');
     // (starting another army while a run is going would lose it: a second tap says yes)
+    if (auto) go.textContent = `Auto-fight ×${autoPick.count}`;
+    const runs = auto ? autoPick.count : undefined;
     if (!open) go.disabled = true;
     else if (running) go.addEventListener('click', () => hooks.onContinue());
-    else if (hooks.running) twoTap(go, `Leave ${hooks.running.label}?`, () => hooks.onFight(a.id, tier));
-    else go.addEventListener('click', () => hooks.onFight(a.id, tier));
-    info.append(go);
+    else if (hooks.running) twoTap(go, `Leave ${hooks.running.label}?`, () => hooks.onFight(a.id, tier, runs));
+    else go.addEventListener('click', () => hooks.onFight(a.id, tier, runs));
+    if (farm) {
+      const toggle = el('button', `asAuto${auto ? ' on' : ''}`, auto ? 'Auto ✓' : 'Auto');
+      toggle.title = 'Repeat this army on its own';
+      toggle.setAttribute('aria-pressed', String(auto));
+      toggle.addEventListener('click', () => {
+        autoPick.on = !autoPick.on;
+        draw();
+      });
+      const row = el('div', 'asGo');
+      row.append(go, toggle);
+      if (auto) {
+        const counts = el('div', 'asCounts', 'Runs');
+        for (const n of AUTO_COUNTS) {
+          const c = el('button', n === autoPick.count ? 'on' : '', String(n));
+          c.addEventListener('click', () => {
+            autoPick.count = n;
+            draw();
+          });
+          counts.append(c);
+        }
+        info.append(counts);
+      }
+      info.append(row);
+    } else info.append(go);
     if (running) {
       const again = el('button', 'small armyAgain', 'Restart from wave 1');
       twoTap(again, 'Lose this run and restart?', () => hooks.onFight(a.id, tier));

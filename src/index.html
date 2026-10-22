@@ -676,6 +676,7 @@
 <div id="sky"></div>
 <div id="stage"></div>
 <div id="top"><h1>Legends of the Fall</h1><span id="status"></span><span id="gold"></span><span id="clock"></span><button id="mute"></button><button id="gear" title="Settings">⚙</button><button id="speed">×1</button></div>
+<div id="autoBar" hidden><b></b><span></span><button id="autoStop">Stop</button></div>
 <div id="bossBar" hidden><b></b><i><span></span></i></div>
 <div id="bossCard" hidden><canvas></canvas><div class="rib"><b></b></div><span></span></div>
 <div id="panel">
@@ -683,7 +684,7 @@
   <div id="traits"></div><div id="traitHint"></div>
   <div id="relics" hidden></div>
   <div id="bench"></div>
-  <div id="buttons"><button id="summon">Summon</button><button id="pack">Pack</button><button id="homeBtn">Home</button><button id="fight" class="primary" disabled>Fight!</button></div>
+  <div id="buttons"><button id="summon">Summon</button><button id="pack">Pack</button><button id="auto" title="Place the heroes for me"><svg viewBox="0 0 10 10" width="12" height="12" aria-hidden="true"><path d="M5 0l1.2 3.8L10 5 6.2 6.2 5 10 3.8 6.2 0 5l3.8-1.2z" fill="currentColor"/></svg>Auto</button><button id="homeBtn">Home</button><button id="fight" class="primary" disabled>Fight!</button></div>
 </div>
 <div id="result" hidden>
   <div id="banner"></div>
@@ -694,6 +695,7 @@
   <div id="fightStats" hidden></div>
   <div class="row"><button id="next" class="primary">Next stage</button></div>
 </div>
+<div id="autoSum" hidden><div class="asumCard"><h2></h2><p class="asumWhy"></p><div class="asumRows"></div><button id="asumOk" class="primary">To the armies</button></div></div>
 <div id="gacha" hidden>
   <header><h2>Recruit</h2><span id="crowns"></span><button id="gachaClose">Close</button></header>
   <div class="pulls"><button id="pull1"></button><button id="pull10" class="primary"></button></div>

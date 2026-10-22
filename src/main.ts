@@ -7,7 +7,7 @@ import { D, standable, tileAt } from './sim/board';
 import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type Unit } from './sim/battle';
 import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
 import { armyOfRun, armyRun, boostOf, finish, heroOf, isBossRun, loadRun, noteFight, saveRun, setSquad, SQUAD, startStage, summon, summonCost, tierOfRun, type Run } from './sim/run';
-import { ARMIES, settleWave, type ArmyPay } from './sim/armies';
+import { ARMIES, armyById, settleWave, type ArmyPay } from './sim/armies';
 import { drawRunStars, showUnlock } from './armiesView';
 import { settleArmyRun, type StarResult } from './sim/armyStars';
 import { tierOf } from './sim/tiers';
@@ -18,6 +18,8 @@ import { xpRate } from './sim/castle';
 import { equipStats } from './sim/equipment';
 import { fightXp, gainXp, levelGain, levelOfKind, progressOf, xpOf, type LevelUp } from './sim/levels';
 import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
+import { autoDeploy, autoRound, gearCount, pickSquad } from './sim/autoplay';
+import { afterFight, maxSpeed, startAuto, stopAuto, type AutoReplay } from './sim/autoReplay';
 import { Gacha } from './gacha';
 import { Events } from './events';
 import { Home } from './home';
@@ -100,7 +102,7 @@ class Game {
   private chosen: string | null = null;
   private drag: Drag | null = null;
   private hover: [number, number] | null = null;
-  private speed = 1;
+  private speed: 1 | 2 | 3 = 1;
   private acc = 0;
   private scale = 1;
   /** The spell card chosen, waiting for a tile. */
@@ -111,6 +113,12 @@ class Game {
   private intro: { t: number; boss: Unit; slammed: boolean } | null = null;
   /** The stages whose boss has had its card this session (a stage's card plays once). */
   private introduced = new Set<string>();
+  /** The auto-replay going on, if any (`sim/autoReplay.ts`); it plays the waves and starts the next runs from the frame loop, so a hidden tab (no frames) pauses it. */
+  private auto: AutoReplay | null = null;
+  /** Real milliseconds until the auto-replay's next step (the pause after the heroes are placed, and after a fight). */
+  private autoWait = 0;
+  /** What the auto-replay does when the wait is over, after the fight it just settled: the next wave, a new run, or the end. */
+  private autoNext: 'wave' | 'run' | 'end' | null = null;
 
   async start(): Promise<void> {
     await this.app.init({ resizeTo: $('stage'), backgroundAlpha: 0, antialias: false, roundPixels: true, autoDensity: true, resolution: Math.min(3, devicePixelRatio || 1) });
@@ -156,8 +164,11 @@ class Game {
       },
       onContinue: () => this.resume(),
       // (an army starts from wave 1 once its party is picked)
-      onArmy: (id, tier) =>
-        this.party.open('start', () => this.startRun(armyRun(clockSeed(), id, this.meta.party, this.meta.castle, tier))),
+      onArmy: (id, tier, auto) =>
+        this.party.open('start', () => {
+          this.startRun(armyRun(clockSeed(), id, this.meta.party, this.meta.castle, tier));
+          if (auto) this.beginAuto(id, tier, auto);
+        }),
       onParty: () =>
         this.party.open('edit', () => {
           // (a run going on draws from the new party from now on)
@@ -220,7 +231,8 @@ class Game {
     this.chosen = null;
     this.spell = null;
     this.buildSpells();
-    this.setSpeed(settings().speed);
+    // (an auto-replay keeps the speed it is at from wave to wave)
+    this.setSpeed(this.auto ? this.speed : settings().speed);
     this.fx.clear();
     this.boardView.build(this.b.board);
     setBackdrop(this.b.board.area);
@@ -361,6 +373,7 @@ class Game {
       this.app.ticker.stop();
       return;
     }
+    if (this.auto) this.autoTick(dt);
     if (b.phase === 'fight') {
       // (a boss's fall slows the fight for a beat: `timeScale`)
       this.acc += Math.min(dt, 250) * this.speed * this.fx.timeScale();
@@ -675,14 +688,132 @@ class Game {
       }),
     );
     $('bossCard').addEventListener('click', () => this.endIntro());
-    $('speed').addEventListener('click', () => this.setSpeed(this.speed === 1 ? 2 : 1));
+    $('speed').addEventListener('click', () => this.setSpeed(this.speed >= this.fastest() ? 1 : ((this.speed + 1) as 2 | 3)));
+    $('auto').addEventListener('click', () => this.autoArrange(true));
+    $('autoStop').addEventListener('click', () => this.endAuto('stopped'));
+    $('asumOk').addEventListener('click', () => this.closeAutoSummary());
+    // (a hidden tab draws no frames, so the replay and its fight stand still; the banner says so, and the screen lock is asked for again on return)
+    document.addEventListener('visibilitychange', () => this.auto && this.refreshAuto());
     $('gear').addEventListener('click', () => openSettings());
   }
 
-  /** The fight's speed (×1 or ×2), shown on the top bar's button. */
-  private setSpeed(n: 1 | 2): void {
-    this.speed = n;
-    $('speed').textContent = `×${n}`;
+  /** The fastest speed this fight may run at: ×3 on an army tier already cleared, or during an auto-replay; ×2 otherwise. */
+  private fastest(): 2 | 3 {
+    return maxSpeed(this.meta, armyOfRun(this.run)?.id, tierOfRun(this.run), !!this.auto);
+  }
+
+  /** The fight's speed (×1, ×2 or, where allowed, ×3), shown on the top bar's button. */
+  private setSpeed(n: 1 | 2 | 3): void {
+    this.speed = Math.min(n, this.fastest()) as 1 | 2 | 3;
+    $('speed').textContent = `×${this.speed}`;
+  }
+
+  /* -------------------------------------------------------------- auto-deploy and auto-replay */
+
+  /** The Auto button: choose the squad (the heroes already placed stay, the strongest fill the rest) and set them out by `autoFormation`. The player can still move anyone by hand after. */
+  private autoArrange(manual = false): void {
+    const b = this.b;
+    if (b.phase !== 'deploy') return;
+    const keep = manual ? this.run.squad : [];
+    this.run.squad = pickSquad(this.run, this.meta, keep).map((h) => h.id);
+    this.placed.clear();
+    for (const s of autoDeploy(b, this.run, this.meta, (k) => equipStats(this.meta, k))) this.placed.set(String(s.id), [s.u, s.v]);
+    this.chosen = null;
+    saveRun(this.run);
+    this.syncSprites();
+    if (manual) play('summon');
+    this.refresh();
+  }
+
+  /** Starts an auto-replay of the army just begun (the run is on wave 1 already). Only cleared armies and tiers take it. */
+  private beginAuto(army: string, tier: number, count: number): void {
+    const a = startAuto(this.meta, army, tier, count);
+    if (!a) return;
+    this.auto = a;
+    this.autoNext = null;
+    keepAwake(true);
+    this.autoPrep();
+  }
+
+  /** Between fights, as the greedy player: the event, the summons, the squad and its gear; then a fresh board with the heroes set out. */
+  private autoPrep(): void {
+    autoRound(this.run, this.meta);
+    saveRun(this.run);
+    this.newBattle();
+    this.endIntro();
+    this.autoArrange();
+    this.autoWait = 700;
+    this.refresh();
+  }
+
+  /** Each frame of an auto-replay: wait out the pause, then fight the board that is set out, or move on from the fight that has ended. */
+  private autoTick(dt: number): void {
+    const a = this.auto!;
+    if (document.hidden) return;
+    if (this.autoWait > 0) return void (this.autoWait -= dt * this.speed);
+    const b = this.b;
+    if (b.phase === 'deploy') return void this.begin();
+    if ((b.phase !== 'won' && b.phase !== 'lost') || !this.settled) return;
+    const next = this.autoNext;
+    this.autoNext = null;
+    if (next === 'wave') {
+      this.autoPrep();
+    } else if (next === 'run') {
+      this.startRun(armyRun(clockSeed(), a.army, this.meta.party, this.meta.castle, a.tier));
+      this.autoPrep();
+    } else this.endAuto(a.ended ?? 'done');
+  }
+
+  /** The banner over the fight: "Auto 2/5", the wave, and Stop. */
+  private refreshAuto(): void {
+    const a = this.auto;
+    const bar = $('autoBar');
+    document.body.classList.toggle('auto', !!a);
+    bar.hidden = !a;
+    if (!a) return;
+    const army = armyOfRun(this.run);
+    bar.classList.toggle('paused', document.hidden);
+    bar.querySelector('b')!.textContent = `Auto ${a.run}/${a.count}`;
+    bar.querySelector('span')!.textContent = document.hidden ? 'Paused' : army ? `${army.name} · wave ${Math.min(this.run.stage, army.waves.length)}/${army.waves.length}` : '';
+  }
+
+  /** The replay is over (the count ran out, a run was lost, or Stop was tapped): the banner goes and the summary card shows the totals. */
+  private endAuto(why: 'done' | 'loss' | 'stopped'): void {
+    const a = this.auto;
+    if (!a) return;
+    if (why === 'stopped') stopAuto(a);
+    this.auto = null;
+    this.autoNext = null;
+    // (a fight still going keeps its screen lock until it ends)
+    if (this.b.phase !== 'fight') keepAwake(false);
+    this.refreshAuto();
+    const army = armyById(a.army)!;
+    const card = $('autoSum');
+    card.querySelector('h2')!.textContent = why === 'done' ? 'Auto-replay done' : why === 'loss' ? 'Auto-replay stopped' : 'Auto-replay stopped';
+    card.querySelector('.asumWhy')!.textContent =
+      why === 'done'
+        ? `${a.totals.runs} of ${a.count} runs of the ${army.name} cleared`
+        : why === 'loss'
+          ? `The ${army.name} held at wave ${a.lostAt}. ${a.totals.runs} of ${a.count} runs cleared first`
+          : `You stopped it. ${a.totals.runs} of ${a.count} runs cleared`;
+    const rows = card.querySelector('.asumRows')!;
+    rows.replaceChildren();
+    for (const [label, n] of [['Crowns', a.totals.crowns], ['XP', a.totals.xp], ['Chests', a.totals.chests], ['Gear found', a.totals.gear]] as const) {
+      rows.append(Object.assign(document.createElement('span'), { textContent: label }), Object.assign(document.createElement('b'), { textContent: String(n) }));
+    }
+    $('asumOk').textContent = why === 'stopped' ? 'Back to the board' : 'To the armies';
+    card.dataset.why = why;
+    card.hidden = false;
+    this.refresh();
+  }
+
+  private closeAutoSummary(): void {
+    const card = $('autoSum');
+    card.hidden = true;
+    const why = card.dataset.why;
+    // (a run that was stopped carries on by hand where it stands; a finished one goes on to the armies, a lost one home)
+    if (why === 'done') this.armyWon();
+    else if (why === 'loss') this.goHome();
   }
 
   /** Begin a run (any mode's) and its first fight. */
@@ -1020,7 +1151,8 @@ class Game {
     const n = heroesPlaced(b);
     if ((b.phase === 'won' || b.phase === 'lost') && !this.settled) {
       this.settled = true;
-      keepAwake(false);
+      // (an auto-replay keeps the screen awake from fight to fight)
+      if (!this.auto) keepAwake(false);
       const won = b.phase === 'won';
       const stage = run.stage;
       const army = armyOfRun(run);
@@ -1035,12 +1167,30 @@ class Game {
       if (won && !army) recordStars(this.meta, stage, rating.stars);
       const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b });
       this.runStars = settleArmyRun(this.meta, run);
-      this.showStars(won ? rating : null);
-      drawRunStars($('armyStars'), army && run.cleared ? this.runStars : null, army ? tierOf(tierOfRun(run)).name : '');
-      this.showStats();
       const gains = fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp);
       const from = Object.fromEntries(Object.keys(gains).map((k) => [k, xpOf(this.meta, k)]));
-      this.showXp(gains, from, gainXp(this.meta, gains));
+      if (this.auto) {
+        // (no result screen to show: the fight's pay goes into the replay's totals)
+        gainXp(this.meta, gains);
+        this.showStars(null);
+        for (const id of ['armyStars', 'xp', 'fightStats']) $(id).hidden = true;
+        const over = run.cleared || !won;
+        this.autoNext = afterFight(this.auto, {
+          won,
+          cleared: !!run.cleared,
+          wave: stage,
+          crowns: this.crownGain,
+          xp: Object.values(gains).reduce((n, x) => n + x, 0),
+          chests: run.cleared ? this.runStars?.chests.length ?? 0 : 0,
+          gear: over ? gearCount(run) : 0,
+        });
+        this.autoWait = 900;
+      } else {
+        this.showStars(won ? rating : null);
+        drawRunStars($('armyStars'), army && run.cleared ? this.runStars : null, army ? tierOf(tierOfRun(run)).name : '');
+        this.showStats();
+        this.showXp(gains, from, gainXp(this.meta, gains));
+      }
       saveMeta(this.meta);
       saveRun(run);
       toastAchievements(earned);
@@ -1057,7 +1207,7 @@ class Game {
     ($('fight') as HTMLButtonElement).disabled = b.phase !== 'deploy' || n === 0;
     $('clock').textContent = b.phase === 'deploy' ? '' : clock(b.t);
     const result = $('result');
-    result.hidden = b.phase !== 'won' && b.phase !== 'lost';
+    result.hidden = (b.phase !== 'won' && b.phase !== 'lost') || !!this.auto;
     if (!result.hidden) {
       const left = b.units.filter((x) => x.alive && x.side === 'hero').length;
       $('banner').textContent = run.cleared ? 'Army defeated!' : b.phase === 'won' ? 'Victory!' : 'Defeat';
@@ -1072,7 +1222,8 @@ class Game {
             : `The run ends at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} summons · +${this.crownGain} crowns${modeNote(run)}`;
       $('next').textContent = run.cleared ? (this.pay?.unlocked ? 'A new army marches…' : 'To the armies') : b.phase === 'won' ? (army ? `Next wave (${run.stage})` : `Next stage (${run.stage})`) : 'Home';
     }
-    if (b.phase === 'deploy') tips.atDeploy(n, run.stage, () => this.deployBox());
+    this.refreshAuto();
+    if (b.phase === 'deploy' && !this.auto) tips.atDeploy(n, run.stage, () => this.deployBox());
     this.buildBench();
     this.markTiles();
     this.refreshBench();

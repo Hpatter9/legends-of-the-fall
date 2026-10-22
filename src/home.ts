@@ -40,7 +40,7 @@ export interface HomeHooks {
   runInfo?(): { stage: number; gold: number; army?: string; label: string } | null;
   onContinue(): void;
   /** Start an army from wave 1 (the page picks the party first). */
-  onArmy(id: string, tier: number): void;
+  onArmy(id: string, tier: number, auto?: number): void;
   /** Opens the party screen to change the party (the Battle page's Party button). */
   onParty(): void;
   /** Opens the collection screen (the heroes, their ranks and the odds). */
@@ -404,7 +404,7 @@ export class Home {
         drawArmies(body, this.meta, {
           running: this.hooks.runInfo?.() ?? null,
           onContinue: () => this.go(this.hooks.onContinue),
-          onFight: (id, tier) => this.go(() => this.hooks.onArmy(id, tier)),
+          onFight: (id, tier, auto) => this.go(() => this.hooks.onArmy(id, tier, auto)),
           focus,
           onBack: () => this.closeSub(),
         }),

@@ -401,3 +401,29 @@ body .sbSlot { min-height: 44px; }
 .csChest.silver .chestPic { filter: drop-shadow(0 0 5px #bcd8ff); }
 .csCount { align-self: stretch; text-align: center; font: bold 13px var(--display); font-style: normal; color: #4a1a06; background: var(--gold-hi); }
 @media (prefers-reduced-motion: reduce) { .csChest { animation: none; } }
+
+/* auto-deploy and auto-replay: the Auto button in the deploy bar, the banner over the fight, the summary card */
+#auto { display: inline-flex; align-items: center; gap: 4px; }
+#auto svg { flex: none; color: var(--gold-hi); }
+#autoBar { position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 74px); z-index: 3; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; max-width: calc(100 * var(--vw) - 20px); padding: 3px 4px 3px 10px; background: var(--panel-bg); border: 2px solid var(--gold-lo); box-shadow: 0 0 0 2px var(--deep), 0 3px 8px rgba(0, 0, 0, 0.55); white-space: nowrap; }
+#autoBar[hidden] { display: none; }
+#autoBar b { font-family: var(--pixel); font-size: 10px; color: var(--gold-hi); }
+#autoBar span { font-size: 12px; color: var(--ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+#autoBar.paused b { color: var(--dim); }
+#autoStop { min-height: 30px; padding: 0 12px; font-size: 13px; background: linear-gradient(#a82818, #5a1008); border-color: var(--gold-hi); }
+#autoSum { position: fixed; inset: 0; z-index: 9; display: flex; align-items: center; justify-content: center; padding: 12px; background: rgba(8, 3, 2, 0.82); animation: fade 0.3s ease-out; }
+#autoSum[hidden] { display: none; }
+.asumCard { width: min(320px, calc(100 * var(--vw) - 24px)); display: flex; flex-direction: column; gap: 8px; padding: 14px 14px 12px; background: var(--panel-bg); border: 2px solid var(--gold-lo); box-shadow: 0 0 0 2px var(--deep), 0 6px 18px rgba(0, 0, 0, 0.7); text-align: center; }
+.asumCard h2 { margin: 0; font: 900 22px var(--display); color: var(--gold-hi); text-shadow: 0 2px 0 #000; }
+.asumWhy { margin: 0; font-size: 13px; color: var(--dim); }
+.asumRows { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; padding: 6px 10px; background: rgba(0, 0, 0, 0.35); border: 2px solid #3a2414; font-size: 14px; text-align: left; }
+.asumRows b { text-align: right; color: var(--gold-hi); font-variant-numeric: tabular-nums; }
+/* the Auto toggle beside Fight! on an army's card, and the run counts it opens */
+.asGo { display: flex; gap: 6px; margin-top: auto; }
+.asGo .asFight { flex: 1; margin-top: 0; min-width: 0; }
+.asAuto { flex: none; width: 88px; white-space: nowrap; min-height: 52px; padding: 0 6px; font-size: 15px; }
+.asAuto.on { background: linear-gradient(#3f9a52, #1e5a2c); border-color: var(--gold-hi); }
+.asCounts { display: flex; gap: 4px; justify-content: center; align-items: center; font-size: 12px; color: var(--dim); }
+.asCounts button { min-height: 28px; min-width: 40px; padding: 0 8px; font-size: 13px; }
+.asCounts button.on { background: linear-gradient(#c9762e, #8e4618); border-color: var(--gold-hi); }
+body.auto #buttons { display: none; }
