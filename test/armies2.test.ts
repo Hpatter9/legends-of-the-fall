@@ -5,7 +5,7 @@ import { ARMIES, armyById, armyFoes, armyIndex, armyUnlocked, bossOf, bossesOf, 
 import { CHARGE_MAX, KITS, tryCast } from '../src/sim/abilities';
 import { fight, type BattleEvent } from '../src/sim/battle';
 import { isBoss } from '../src/sim/foes';
-import { newMeta } from '../src/sim/meta';
+import { startedMeta } from '../src/sim/meta';
 import { BOSS_TITLES } from '../src/render/bossTitles';
 import { HEROES, UNITS } from '../src/sim/units';
 import { playArmy, savedAt } from '../tools/autoplay';
@@ -20,7 +20,7 @@ test('the Yokai Night Parade follows the Infernal Host and the Golem Forge the Y
   assert.equal(nextArmy(armyById('infernal')!)!.id, 'yokai');
   assert.equal(nextArmy(armyById('yokai')!)!.id, 'golems');
   assert.equal(bossOf(armyById('infernal')!), 'demonLord');
-  const m = newMeta(1);
+  const m = startedMeta(1);
   for (const a of ARMIES.slice(0, 7)) for (let n = 1; n <= a.waves.length; n++) settleWave(m, a.id, n, true, 0);
   assert.equal(armyUnlocked(m, 'yokai'), true);
   assert.equal(armyUnlocked(m, 'golems'), false);

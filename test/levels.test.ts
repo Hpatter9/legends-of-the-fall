@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addUnit, hurt, place, playOut, fight, startBattle } from '../src/sim/battle';
 import { DIM_SHARE, fightXp, gainXp, killXp, levelBoost, levelGain, levelOf, levelOfKind, MAX_LEVEL, progressOf, XP_TAKE_PART, xpFor, xpOf } from '../src/sim/levels';
-import { loadMeta, newMeta } from '../src/sim/meta';
+import { loadMeta, startedMeta } from '../src/sim/meta';
 import { gradeBoost } from '../src/sim/run';
 import { HEROES, UNITS } from '../src/sim/units';
 import { readyBattle } from './helpers';
@@ -89,7 +89,7 @@ test('the XP curve rises, and a level is read from the XP it takes', () => {
 });
 
 test('level ups add to the kind\'s stats, and the gains are reported', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   assert.deepEqual(gainXp(m, { knight: 10 }), []);
   assert.equal(levelOfKind(m, 'knight'), 1);
   const ups = gainXp(m, { knight: xpFor(4) });

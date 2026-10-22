@@ -5,7 +5,7 @@ import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { place, startBattle, type Battle } from '../src/sim/battle';
 import { BOSS_BANDS, BOSS_IDS } from '../src/sim/foes';
 import { ARMIES } from '../src/sim/armies';
-import { loadMeta, newMeta, saveMeta } from '../src/sim/meta';
+import { loadMeta, startedMeta, saveMeta } from '../src/sim/meta';
 import { dailyRun, settleRun } from '../src/sim/modes';
 import { armyRun, newRun } from '../src/sim/run';
 import { xpFor } from '../src/sim/levels';
@@ -23,7 +23,7 @@ function fight(kinds: string[], won = true): Battle {
 
 /** A context for a check: a win on `stage` with `stars`, or the run alone (no fight). */
 function ctx(over: Partial<AchievementCtx> = {}): AchievementCtx {
-  const meta = newMeta(1);
+  const meta = startedMeta(1);
   return { won: false, stage: 1, stars: 0, run: newRun(2), meta, ...over };
 }
 
@@ -88,7 +88,7 @@ test('five relics in one run', () => {
 });
 
 test('a hero at level 10', () => {
-  const meta = newMeta(1);
+  const meta = startedMeta(1);
   meta.xp.samurai = xpFor(10) - 1;
   assert.equal(earned('level10', ctx({ meta })), false);
   meta.xp.samurai = xpFor(10);
@@ -96,14 +96,14 @@ test('a hero at level 10', () => {
 });
 
 test('every hero unlocked', () => {
-  const meta = newMeta(1);
+  const meta = startedMeta(1);
   assert.equal(earned('allHeroes', ctx({ meta })), false);
   meta.unlocked = [...ALL_HEROES];
   assert.equal(earned('allHeroes', ctx({ meta })), true);
 });
 
 test('every boss beaten', () => {
-  const meta = newMeta(1);
+  const meta = startedMeta(1);
   meta.bosses = BOSS_IDS.slice(1);
   assert.equal(earned('bosses', ctx({ meta })), false);
   meta.bosses = [...BOSS_IDS];
@@ -111,7 +111,7 @@ test('every boss beaten', () => {
 });
 
 test('fifty stars in all, across the stages', () => {
-  const meta = newMeta(1);
+  const meta = startedMeta(1);
   // sixteen stages of three stars make 48; one more star is 49
   for (let stage = 1; stage <= 16; stage++) meta.stars[String(stage)] = 3;
   meta.stars['17'] = 1;
@@ -121,7 +121,7 @@ test('fifty stars in all, across the stages', () => {
 });
 
 test('a daily score of 1000', () => {
-  const meta = newMeta(1);
+  const meta = startedMeta(1);
   meta.daily = { '20261021': { best: 990, plays: 1 } };
   assert.equal(earned('daily1000', ctx({ meta })), false);
   meta.daily['20261021'].best = 1000;
@@ -139,7 +139,7 @@ test('finishing a daily challenge, counted or not', () => {
 });
 
 test('the tower: a floor, and twenty floors', () => {
-  const meta = newMeta(1);
+  const meta = startedMeta(1);
   assert.equal(earned('tower1', ctx({ meta })), false);
   meta.tower = 1;
   assert.equal(earned('tower1', ctx({ meta })), true);
@@ -149,7 +149,7 @@ test('the tower: a floor, and twenty floors', () => {
 });
 
 test('recruiter: ten pulls', () => {
-  const meta = newMeta(1);
+  const meta = startedMeta(1);
   meta.pulls = 9;
   assert.equal(earned('recruiter', ctx({ meta })), false);
   meta.pulls = 10;
@@ -157,7 +157,7 @@ test('recruiter: ten pulls', () => {
 });
 
 test('checking earns each achievement once and returns only what is new; its crowns wait for a claim, paid once', () => {
-  const meta = newMeta(1);
+  const meta = startedMeta(1);
   const crowns = meta.crowns;
   const first = checkAchievements(ctx({ meta, won: true, stage: 10, battle: fight(['knight']) }));
   assert.ok(first.some((a) => a.id === 'firstWin'));
@@ -178,7 +178,7 @@ test('checking earns each achievement once and returns only what is new; its cro
 });
 
 test('beating every boss, the endless climb\'s and every army\'s, earns the boss achievement', () => {
-  const meta = newMeta(1);
+  const meta = startedMeta(1);
   const run = newRun(6);
   BOSS_BANDS.forEach((_, i) => {
     const got = settleRun(meta, run, { won: true, stage: (i + 1) * 5, stars: 0 });
@@ -199,7 +199,7 @@ test('beating every boss, the endless climb\'s and every army\'s, earns the boss
 test('a settled fight earns its achievements, and they save with the crowns', () => {
   const store: Record<string, string> = {};
   const s = { getItem: (k: string) => store[k] ?? null, setItem: (k: string, v: string) => void (store[k] = v) };
-  const meta = newMeta(2);
+  const meta = startedMeta(2);
   const got = settleRun(meta, newRun(8), { won: true, stage: 1, stars: 3, battle: fight(['knight']) });
   assert.deepEqual(got.map((a) => a.id).sort(), ['firstWin', 'flawless', 'perfect']);
   saveMeta(meta, s);
@@ -209,7 +209,7 @@ test('a settled fight earns its achievements, and they save with the crowns', ()
 });
 
 test('an older save, whose achievements paid when earned, loads with them all claimed', () => {
-  const old = { ...newMeta(3), achievements: ['firstWin', 'stage10'] } as Record<string, unknown>;
+  const old = { ...startedMeta(3), achievements: ['firstWin', 'stage10'] } as Record<string, unknown>;
   delete old.claimed;
   const back = loadMeta(1, { getItem: () => JSON.stringify(old) });
   assert.deepEqual(back.claimed, ['firstWin', 'stage10']);

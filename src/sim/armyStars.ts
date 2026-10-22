@@ -7,12 +7,12 @@
 // Pixi, no DOM.
 
 import { ARMIES, armyById, armyIndex, recordOf, type Army, type ArmyRecord } from './armies';
-import { grantEquipment, itemName, rollEquipment, type NewEquipment } from './equipment';
-import { kindsOf, RATES, rarityOf, RARITY_NAMES, type Meta, type StashChest } from './meta';
+import { grantEquipment, itemName, RARITY_NAMES, rollEquipment, type NewEquipment } from './equipment';
+import { type Meta, type StashChest } from './meta';
 import { mixSeed, Rng } from './rng';
 import { armyOfRun, tierOfRun, type Run } from './run';
 import { MILESTONES, RUN_STARS, TIERS } from './tiers';
-import { UNITS, type Rarity } from './units';
+import { ALL_HEROES, UNITS } from './units';
 
 // ---- the conditions -----------------------------------------------------------------------------------------------------
 
@@ -133,7 +133,7 @@ export interface LootItem {
   ref?: string;
   /** A piece of equipment this reward is (for its icon and frame). */
   equip?: NewEquipment;
-  /** A hero's rarity (for the card colour). */
+  /** A piece of equipment's rarity (for the card colour; heroes have none). */
   rarity?: number;
   /** The chest's big prize. */
   prize?: boolean;
@@ -154,28 +154,18 @@ export const chestSeed = (seed: number, a: Army, at: number): number => mixSeed(
 /** The crowns a chest pays before its draw: the milestone's base, rising with the army's place in the list and the tier. */
 export const chestCrowns = (at: number, armyIdx: number, tier = 0): number => roundTo(({ 3: 150, 5: 420, 10: 1300 } as Record<number, number>)[at] * (1 + 0.32 * armyIdx) * (1 + 0.15 * tier), 10);
 
-/** A rarity drawn from the pull rates, tilted towards the rare ones by the chest's quality. */
-function drawRarity(rng: Rng, quality: number, min: Rarity = 1): Rarity {
-  const w = {} as Record<string, number>;
-  for (let r = min; r <= 5; r++) w[String(r)] = RATES[r as Rarity] * quality ** (r - 1);
-  return Number(rng.weighted(w)) as Rarity;
-}
-
 /** What a chest holds, drawn from its seed without touching the meta: the same chest always rolls the same. */
 export function rollChest(seed: number, a: Army, at: number, tier = 0): { crowns: number; shards: string[]; recruits: { kind: string; prize: boolean }[]; gear: GearDrop[] } {
   const idx = armyIndex(a.id);
   const step = CHEST_STEP(at);
   const rng = new Rng(seed);
-  // quality: how far the rare ones are tilted up (1 is the plain pull rates)
-  const quality = 1 + 0.28 * (step - 1) + 0.06 * idx + 0.1 * tier;
   const crowns = roundTo(chestCrowns(at, idx, tier) * rng.range(0.85, 1.15), 10);
-  const shards = Array.from({ length: 1 + step + (at >= 10 ? 1 : 0) }, () => rng.pick(kindsOf(drawRarity(rng, quality))));
+  const shards = Array.from({ length: 1 + step + (at >= 10 ? 1 : 0) }, () => rng.pick(ALL_HEROES));
   const recruits: { kind: string; prize: boolean }[] = [];
-  if (step === 2 && rng.chance(0.3 + 0.04 * idx + 0.05 * tier)) recruits.push({ kind: rng.pick(kindsOf(drawRarity(rng, quality, 2))), prize: false });
+  if (step === 2 && rng.chance(0.3 + 0.04 * idx + 0.05 * tier)) recruits.push({ kind: rng.pick(ALL_HEROES), prize: false });
   if (step === 3) {
-    // the 10-star chest always holds a hero: Epic or better, Legendary from the fourth army, Mythic from the eighth
-    const floor = (idx >= 7 ? 5 : idx >= 3 ? 4 : 3) as Rarity;
-    recruits.push({ kind: rng.pick(kindsOf(drawRarity(rng, quality, floor))), prize: true });
+    // the 10-star chest always holds a hero (any of them, as likely as another)
+    recruits.push({ kind: rng.pick(ALL_HEROES), prize: true });
   }
   return { crowns, shards, recruits, gear: rollGear(rng, at, idx) };
 }
@@ -195,7 +185,7 @@ function lootOf(m: Meta, c: StashChest, apply: boolean): Loot {
   for (const k of roll.shards) shards.set(k, (shards.get(k) ?? 0) + 1);
   for (const [kind, n] of shards) {
     if (apply) m.shards[kind] = (m.shards[kind] ?? 0) + n;
-    items.push({ type: 'shards', text: `${n} ${UNITS[kind].name} shard${n > 1 ? 's' : ''}`, ref: kind, rarity: rarityOf(kind) });
+    items.push({ type: 'shards', text: `${n} ${UNITS[kind].name} shard${n > 1 ? 's' : ''}`, ref: kind });
   }
   for (const r of roll.recruits) {
     // (a hero not yet owned is recruited; one owned pays shards instead)
@@ -204,7 +194,7 @@ function lootOf(m: Meta, c: StashChest, apply: boolean): Loot {
       if (isNew) m.unlocked.push(r.kind);
       else m.shards[r.kind] = (m.shards[r.kind] ?? 0) + 2;
     }
-    items.push({ type: 'hero', text: isNew ? `${UNITS[r.kind].name} joins you (${RARITY_NAMES[rarityOf(r.kind)]})` : `${UNITS[r.kind].name}: 2 shards (already yours)`, ref: r.kind, rarity: rarityOf(r.kind), prize: r.prize });
+    items.push({ type: 'hero', text: isNew ? `${UNITS[r.kind].name} joins you` : `${UNITS[r.kind].name}: 2 shards (already yours)`, ref: r.kind, prize: r.prize });
   }
   // (equipment: last, as it was drawn last; granted once, when the chest is opened)
   for (const g of roll.gear) {

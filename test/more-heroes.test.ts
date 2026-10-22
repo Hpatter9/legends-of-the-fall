@@ -9,7 +9,6 @@ import { TREES } from '../src/sim/talents';
 import { SKILL_FX } from '../src/render/skillFx';
 import { SKILL_ELEMENT } from '../src/render/fxRules';
 import { SPOTS } from '../src/render/tavernSpots';
-import { kindsOf, rarityOf } from '../src/sim/meta';
 import layout from '../src/art/units/sheets.json';
 
 const NEW = ['shambler', 'rifleBot', 'mercenary', 'mummy', 'buccaneer', 'wolfBard', 'beastmaster', 'kraken', 'lancer', 'reaper', 'timeWitch', 'arcBlade', 'dreadPirate', 'siegeBot', 'priestess', 'dragoon', 'juggernaut', 'sage', 'demonSwordsman', 'tyrant'];
@@ -34,15 +33,12 @@ const run = (b: Battle, ms: number): BattleEvent[] => {
 };
 const skillsBy = (ev: BattleEvent[], u: Unit) => ev.filter((e) => e.kind === 'skill' && e.by === u.id).map((e) => (e as { name: string }).name);
 
-test('twenty heroes join, in the planned spread, each with a kit, a tree, traits, a tavern spot and a skill look', () => {
-  const count = [0, 0, 0, 0, 0, 0];
+test('twenty heroes join, each with a kit, a tree, traits, a tavern spot and a skill look', () => {
   for (const id of NEW) {
     assert.ok(ALL_HEROES.includes(id), id);
     const d = UNITS[id];
     assert.equal(d.side, 'hero');
-    assert.ok(d.rarity && d.rarity >= 1 && d.rarity <= 5, id);
-    count[d.rarity!]++;
-    assert.equal(d.rarity === 5, !!KITS[id].ultimate, `${id} ultimate`);
+    assert.equal(['sage', 'demonSwordsman', 'tyrant'].includes(id), !!KITS[id].ultimate, `${id} ultimate`);
     assert.ok(KITS[id].skill.name && KITS[id].passive.name, id);
     for (const s of [KITS[id].skill, KITS[id].ultimate]) if (s) assert.ok(SKILL_FX[s.name] && SKILL_ELEMENT[s.name], s.name);
     assert.equal(TREES[id]?.nodes.length, 8, `${id} tree`);
@@ -50,11 +46,9 @@ test('twenty heroes join, in the planned spread, each with a kit, a tree, traits
     assert.equal(TRAITS[o].kind, 'origin');
     assert.equal(TRAITS[c].kind, 'class');
     assert.ok(SPOTS[id], `${id} tavern spot`);
-    assert.ok(kindsOf(rarityOf(id)).includes(id), `${id} is in the recruiting pool`);
     assert.match(d.name, /^[A-Z]/);
     assert.ok(d.role.length > 10, id);
   }
-  assert.deepEqual(count.slice(1), [5, 5, 4, 3, 3]);
   assert.equal(new Set(NEW).size, NEW.length);
   assert.equal(ALL_HEROES.length, 45);
   assert.equal(new Set(ALL_HEROES).size, 45);

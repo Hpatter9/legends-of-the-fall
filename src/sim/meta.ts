@@ -6,7 +6,8 @@
 import { newCastle, readCastle, readChapel, readWorks, spellBudget, type Castle, type Works } from './castle';
 import { newLoadout, readLoadout, STARTER_SPELLS, type Loadout } from './spells';
 import { Rng } from './rng';
-import { ALL_HEROES, HEROES, UNITS, type Rarity } from './units';
+import { ALL_HEROES, HEROES } from './units';
+import { readStarter, starterPacks, type Starter } from './starter';
 import { MAX_STARS, starCrowns } from './stars';
 import { BOSS_IDS } from './foes';
 import { readEquipment, readEquipped, type EquipSlot, type Equipment } from './equipment';
@@ -16,18 +17,8 @@ import { readTalents, type KindTalents } from './talents';
 
 export const PULL_COST = 100;
 export const PULL10_COST = 900;
-/** The tiers' names, by rarity (index 0 is unused). */
-export const RARITY_NAMES: readonly string[] = ['', 'Common', 'Rare', 'Epic', 'Legendary', 'Mythic'];
-/** Chance of each rarity (1 Common to 5 Mythic), in percent. */
-export const RATES: Readonly<Record<Rarity, number>> = { 1: 50, 2: 28, 3: 14, 4: 6, 5: 2 };
-/** A Legendary or better is guaranteed by this pull without one. */
-export const PITY = 30;
-/** A Mythic is guaranteed by this pull without one. */
-export const MYTHIC_PITY = 90;
-/** Hp and attack a hero of each tier has over a Common one (index 0 is unused). */
-export const TIER_MULT: readonly number[] = [1, 1, 1.08, 1.16, 1.26, 1.4];
-/** A Mythic is drawn this much bigger on the board. */
-export const MYTHIC_SIZE = 1.12;
+/** Every hero is as likely as any other in a pull. After this many pulls in a row that gave one already owned, the next pull is a hero not yet owned (while any is left). */
+export const NEW_PITY = 12;
 /** Shards a repeat pull gives. */
 export const DUPLICATE_SHARDS = 1;
 /** Shards each rank needs in all: rank 1 at 1, rank 2 at 3, rank 3 at 6, rank 4 at 10. */
@@ -48,10 +39,10 @@ export interface Meta {
   party: string[];
   /** Pulls so far (the draw follows it). */
   pulls: number;
-  /** Pulls since the last Legendary or better. */
-  dry: number;
-  /** Pulls since the last Mythic (saves from before the Mythics start at none). */
-  dryMythic: number;
+  /** Pulls since the last one that gave a new hero (saves from before start at none; their old `dry` and `dryMythic` counters are left in the save, unused). */
+  sinceNew?: number;
+  /** The starter pick: the three packs offered to a new save, and which was taken (null until then). Saves from before the pick have none. */
+  starter?: Starter;
   /** The castle's upgrades (see `castle.ts`). */
   castle: Castle;
   /** Whether the Chapel has been bought (it opens the spellbook; saves from before count it built if they had spells or upgrades; see `castle.ts`). */
@@ -113,18 +104,36 @@ export interface DailyEntry {
 
 export interface Pull {
   kind: string;
-  rarity: Rarity;
   /** The kind was not unlocked before this pull. */
   isNew: boolean;
   /** Shards a duplicate gives (0 for a new kind). */
   shards: number;
 }
 
-export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [...HEROES], party: [...HEROES], pulls: 0, dry: 0, dryMythic: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], achievements: [], claimed: [], stash: [] });
+/** A brand-new save: no hero yet, only the three starter packs to pick from (`pickStarter`). */
+export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [], party: [], starter: { packs: starterPacks(seed), pick: null }, pulls: 0, sinceNew: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], achievements: [], claimed: [], stash: [] });
 
-export const rarityOf = (kind: string): Rarity => UNITS[kind]?.rarity ?? 1;
-/** Hp and attack multiplier of a hero kind's tier. */
-export const tierMult = (kind: string): number => TIER_MULT[rarityOf(kind)];
+/** A save past the pick with the old starting five unlocked and in the party: what the saves from before the pick have, and what the tests and tools play with. */
+export function startedMeta(seed: number): Meta {
+  const m = newMeta(seed);
+  delete m.starter;
+  m.unlocked = [...HEROES];
+  m.party = [...HEROES];
+  return m;
+}
+
+/** Whether the save still waits for its starter pick (a new save, or one after Start over). */
+export const needsStarter = (m: Meta): boolean => m.starter?.pick === null;
+
+/** Take starter pack `index`: its three heroes become the unlocked heroes and the party. False (and nothing changes) when there is no pick to make or no such pack. */
+export function pickStarter(m: Meta, index: number): boolean {
+  const pack = m.starter?.packs[index];
+  if (!m.starter || m.starter.pick !== null || !pack) return false;
+  m.starter.pick = index;
+  m.unlocked = [...pack];
+  m.party = [...pack];
+  return true;
+}
 /** The rank a hero kind has from its shards (0 to MAX_RANK). */
 export const rankOf = (m: Meta, kind: string): number => RANK_SHARDS.filter((need) => (m.shards[kind] ?? 0) >= need).length;
 /** Hp and attack multiplier a rank gives. */
@@ -199,41 +208,18 @@ function readStars(raw: unknown): Record<string, number> {
 
 export const pullCost = (count: 1 | 10) => (count === 10 ? PULL10_COST : PULL_COST);
 
-/** The hero kinds of a rarity; when none exist, the nearest rarity below, then above. */
-export function kindsOf(rarity: Rarity): readonly string[] {
-  const all: Rarity[] = [1, 2, 3, 4, 5];
-  const order = all.filter((x) => x <= rarity).reverse().concat(all.filter((x) => x > rarity));
-  for (const r of order) {
-    const list = ALL_HEROES.filter((k) => rarityOf(k) === r);
-    if (list.length) return list;
-  }
-  return ALL_HEROES;
-}
-
-/** One pull (no payment): rolls the rarity (a Legendary or better when the pity is reached, a Mythic at the Mythic pity), then a kind of it, and unlocks it. */
+/** One pull (no payment): every hero is as likely as any other, and it unlocks the one drawn. After `NEW_PITY` pulls without a new hero, the pull is one not yet owned. */
 export function pullOnce(m: Meta): Pull {
   const rng = Rng.from(m.seed, SALT, m.pulls);
-  const roll = rng.next() * 100;
-  let rarity: Rarity = 1;
-  for (let r = 5, edge = 0; r >= 1; r--) {
-    edge += RATES[r as Rarity];
-    if (roll < edge) {
-      rarity = r as Rarity;
-      break;
-    }
-  }
-  if (m.dryMythic + 1 >= MYTHIC_PITY) rarity = 5;
-  else if (m.dry + 1 >= PITY && rarity < 4) rarity = 4;
-  const kind = rng.pick(kindsOf(rarity));
-  rarity = rarityOf(kind);
+  const unowned = ALL_HEROES.filter((k) => !m.unlocked.includes(k));
+  const kind = (m.sinceNew ?? 0) + 1 >= NEW_PITY && unowned.length ? rng.pick(unowned) : rng.pick(ALL_HEROES);
   m.pulls++;
-  m.dry = rarity >= 4 ? 0 : m.dry + 1;
-  m.dryMythic = rarity === 5 ? 0 : m.dryMythic + 1;
   const isNew = !m.unlocked.includes(kind);
+  m.sinceNew = isNew ? 0 : (m.sinceNew ?? 0) + 1;
   let shards = 0;
   if (isNew) m.unlocked.push(kind);
   else m.shards[kind] = (m.shards[kind] ?? 0) + (shards = DUPLICATE_SHARDS);
-  return { kind, rarity, isNew, shards };
+  return { kind, isNew, shards };
 }
 
 /** Pay for and make 1 or 10 pulls. Null when too poor. */
@@ -246,18 +232,19 @@ export function recruit(m: Meta, count: 1 | 10): Pull[] | null {
 
 const KEY = 'legends.meta';
 export const saveMeta = (m: Meta, store: Pick<Storage, 'setItem'> = localStorage) => store.setItem(KEY, JSON.stringify(m));
-/** The saved meta, or a fresh one from `seed`. Kinds no longer in the game are dropped; the starting five always stay. */
+/** The saved meta, or a fresh one from `seed`. Kinds no longer in the game are dropped; a save from before the starter pick keeps the starting five. */
 export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localStorage): Meta {
   try {
     const m = JSON.parse(store.getItem(KEY) ?? 'null') as Meta | null;
     if (m && typeof m.crowns === 'number' && Array.isArray(m.unlocked) && typeof m.seed === 'number') {
-      m.unlocked = [...new Set([...HEROES, ...m.unlocked.filter((k) => ALL_HEROES.includes(k))])];
+      // (a save from before the starter pick always has the old five; one with a pick keeps just what it unlocked, and its pack)
+      m.starter = readStarter(m.starter, m.seed);
+      m.unlocked = [...new Set([...(m.starter ? [] : HEROES), ...m.unlocked.filter((k) => ALL_HEROES.includes(k))])];
+      if (!m.starter) delete m.starter;
       // (saves from before parties have the first five unlocked)
       m.party = readParty(m.party, m.unlocked);
       m.pulls = m.pulls | 0;
-      m.dry = m.dry | 0;
-      // (saves from before the Mythics count their dry spell from the start)
-      m.dryMythic = Math.max(0, m.dryMythic | 0);
+      m.sinceNew = Math.max(0, (m.sinceNew ?? 0) | 0);
       m.castle = readCastle(m.castle);
       m.spellbook = readLoadout(m.spellbook, spellBudget(m.castle));
       m.chapel = readChapel(m.chapel, m.castle, m.spellbook, STARTER_SPELLS);

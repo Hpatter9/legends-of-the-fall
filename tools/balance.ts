@@ -26,7 +26,7 @@ import { FIELD_BANDS } from '../src/sim/foes';
 import { chooseOption, leaveEvent } from '../src/sim/events';
 import { fightXp, gainXp, levelOfKind } from '../src/sim/levels';
 import { BUILDINGS, maxLevel, newCastle, nextCost, upgrade, xpRate, type BuildingId, type Castle } from '../src/sim/castle';
-import { newMeta, PULL_COST, rankOf, rankMult, rarityOf, RARITY_NAMES, recruit, tierMult, type Meta } from '../src/sim/meta';
+import { startedMeta, PULL_COST, rankOf, rankMult, recruit, type Meta } from '../src/sim/meta';
 import { boostOf, bandFor, finish, gradeBoost, isBossStage, newRun, type Owned, type Run, SQUAD, stageBoost, startStage, summon } from '../src/sim/run';
 import { ARMIES, armyById, settleWave } from '../src/sim/armies';
 import { TIERS } from '../src/sim/tiers';
@@ -35,6 +35,8 @@ import { towerTable } from './tower-balance';
 import { ratingOf } from '../src/sim/stars';
 import { mixSeed, Rng } from '../src/sim/rng';
 import { ALL_HEROES, HEROES, UNITS } from '../src/sim/units';
+import { CLASS_NAMES, CLASS_OF, type StarterClass } from '../src/sim/starter';
+import { writeFileSync } from 'node:fs';
 
 const arg = (name: string, fallback: number): number => {
   const i = process.argv.indexOf(name);
@@ -87,8 +89,7 @@ interface Played {
 function play(seed: number, band: string, foes: Stage, team: string[], grade = 1): Played {
   const b = startBattle(seed, band, foes);
   const spots = deploySpots(b, new Rng(mixSeed(seed, 0xba1a)));
-  // (each hero carries its tier's multiplier, so the hero values spread by tier on purpose)
-  team.forEach((id, i) => place(b, id, spots[i][0], spots[i][1], undefined, gradeBoost(grade, 0, 1, id)));
+  team.forEach((id, i) => place(b, id, spots[i][0], spots[i][1], undefined, gradeBoost(grade, 0, 1)));
   const out: Played = { won: false, dealt: new Map(), taken: new Map() };
   // (the events name fighters by id; a fighter can be added mid-fight, so look each one up as it comes)
   const unitOf = (id: number) => b.units.find((x) => x.id === id)!;
@@ -168,21 +169,20 @@ function heroValue(): void {
     );
   });
   console.log(`  average win rate with a hero: ${average.toFixed(1)}%  (value: with minus without; dealt and taken: hp per fight)`);
-  console.log('  lift against the other heroes of the same rarity (points of win rate; new heroes are held to within about 5):');
-  for (const r of [1, 2, 3, 4, 5] as const) {
-    const at = ALL_HEROES.map((h, i) => [h, withRates[i]] as const).filter(([h]) => rarityOf(h) === r);
-    const line = at.map(([h, w]) => {
-      const others = at.filter(([o]) => o !== h);
-      const lift = w - others.reduce((n, [, x]) => n + x, 0) / Math.max(1, others.length);
-      return `${UNITS[h].name} ${lift >= 0 ? '+' : ''}${lift.toFixed(1)}`;
-    });
-    if (line.length) console.log(`    ${pad(RARITY_NAMES[r], 10)} ${line.join(', ')}`);
+  console.log('  lift against the roster average (points of win rate; every hero is held to within about 4), by role:');
+  const over = ALL_HEROES.filter((_, i) => Math.abs(withRates[i] - average) > 4);
+  for (const c of Object.keys(CLASS_NAMES) as StarterClass[]) {
+    const line = ALL_HEROES.map((h, i) => [h, withRates[i]] as const)
+      .filter(([h]) => CLASS_OF[h] === c)
+      .map(([h, w]) => `${UNITS[h].name} ${w - average >= 0 ? '+' : ''}${(w - average).toFixed(1)}`);
+    if (line.length) console.log(`    ${pad(CLASS_NAMES[c], 12)} ${line.join(', ')}`);
   }
-  console.log('  by tier (mean win % with a hero of it):');
-  for (const r of [1, 2, 3, 4, 5] as const) {
-    const at = ALL_HEROES.map((h, i) => [h, withRates[i]] as const).filter(([h]) => rarityOf(h) === r);
-    if (at.length) console.log(`    ${pad(RARITY_NAMES[r], 10)} ${f1(at.reduce((n, [, w]) => n + w, 0) / at.length)}  (${at.length} heroes)`);
-  }
+  console.log(`  heroes beyond 4 points of the average: ${over.length ? over.map((h) => UNITS[h].name).join(', ') : 'none'}`);
+  const best = Math.max(...withRates);
+  const worst = Math.min(...withRates);
+  console.log(`  spread: ${worst.toFixed(1)}% to ${best.toFixed(1)}%  (${(best - worst).toFixed(1)} points between the best and the worst)`);
+  const json = process.argv.indexOf('--json');
+  if (json >= 0) writeFileSync(process.argv[json + 1], JSON.stringify({ games: GAMES, stage: HERO_STAGE, average, heroes: ALL_HEROES.map((h, i) => ({ kind: h, name: UNITS[h].name, with: withRates[i], lift: withRates[i] - average })) }, null, 1));
 }
 
 // ---- 2. Foe bands ----------------------------------------------------------------------------------------------------
@@ -281,7 +281,7 @@ function wholeRuns(): void {
   const best: number[][] = Array.from({ length: RUNS }, () => []);
   const levelSum: Record<string, number>[] = Array.from({ length: RUNS }, () => Object.fromEntries(HEROES.map((k) => [k, 0])));
   for (let save = 1; save <= SAVES; save++) {
-    const meta = newMeta(save);
+    const meta = startedMeta(save);
     for (let r = 0; r < RUNS; r++) {
       best[r].push(playRun(meta, mixSeed(save, 0x7a0c, r)));
       for (const k of HEROES) levelSum[r][k] += levelOfKind(meta, k);
@@ -325,7 +325,7 @@ if (process.argv.includes('--set'))
 const ONLY = process.argv.includes('--only') ? flag('--only')!.split(',') : null;
 const SKIP_PARTY = process.argv.includes('--party') ? flag('--party') : null;
 const MAX_TRIES = 25;
-/** A party of recruits (rarer kinds in the mix), the other of the five starting heroes. */
+/** A party of recruits (drawn by the recruiting), the other of the five starting heroes. */
 const PARTIES: Record<string, readonly string[]> = { starters: HEROES, recruits: ['knight', 'paladin', 'archer', 'warlock', 'cleric'] };
 
 function armies(): void {
@@ -352,7 +352,7 @@ function armies(): void {
   console.log([pad('army', 16), rpad('cleared %', 11), rpad('tries (mean)', 14), rpad('tries (median)', 16), rpad('first try: wave', 17), rpad('level on first try', 20), rpad('crowns (1st clear)', 20)].join(''));
   const stats = ARMIES.map(() => ({ tries: [] as number[], clear: 0, first: 0, lv: 0, seen: 0, crowns: 0 }));
   for (let save = 1; save <= SAVES; save++) {
-    const meta = newMeta(save);
+    const meta = startedMeta(save);
     for (let i = 0; i < ARMIES.length; i++) {
       const army = ARMIES[i];
       let tries = 0;
@@ -398,14 +398,14 @@ function armies(): void {
 // ---- 6. The realistic climb -------------------------------------------------------------------------------------------
 // (`--climb`, with `--saves 60` or so.) A player who plays as the page lets them: a fresh save fights the armies in order, trying
 // each until it falls. Between tries it spends the crowns it has: `CASTLE_SHARE` on the castle (barracks, armoury, library,
-// treasury and stable, the lowest building first) and the rest on single recruits; it fields the five best heroes it owns (rarer
-// kinds, higher ranks and levels first), dresses them with the gear its runs find, and the XP and levels carry over.
+// treasury and stable, the lowest building first) and the rest on single recruits; it fields the five best heroes it owns (higher
+// ranks and levels first), dresses them with the gear its runs find, and the XP and levels carry over.
 const CASTLE_SHARE = 0.5;
 const SPEND: BuildingId[] = ['barracks', 'armoury', 'library', 'treasury', 'stable'];
 
-/** The five heroes a player would take out: the kinds ranked by hp x attack x their tier, rank and level (a little extra for a shooter). */
+/** The five heroes a player would take out: the kinds ranked by hp x attack x their rank and level (a little extra for a shooter). */
 function bestParty(meta: Meta): string[] {
-  const score = (k: string) => UNITS[k].hp * UNITS[k].atk * tierMult(k) * rankMult(rankOf(meta, k)) * (1 + 0.1 * levelOfKind(meta, k)) * (UNITS[k].range > 1 ? 1.15 : 1);
+  const score = (k: string) => UNITS[k].hp * UNITS[k].atk * rankMult(rankOf(meta, k)) * (1 + 0.1 * levelOfKind(meta, k)) * (UNITS[k].range > 1 ? 1.15 : 1);
   return [...meta.unlocked].sort((a, b) => score(b) - score(a) || a.localeCompare(b)).slice(0, 5);
 }
 
@@ -424,10 +424,10 @@ function spendCrowns(meta: Meta): void {
 
 function realClimb(): void {
   console.log(`\n5c. THE REALISTIC CLIMB  (${SAVES} fresh saves; recruits, a castle grown from the crowns each try pays (${CASTLE_SHARE * 100}% of what it has), gear, levels carried; at most ${MAX_TRIES} tries an army)\n`);
-  console.log([pad('army', 20), rpad('cleared %', 11), rpad('tries (mean)', 14), rpad('median', 8), rpad('90th', 6), rpad('party level', 13), rpad('party tier', 12), rpad('castle lvls', 13), rpad('heroes owned', 14)].join(''));
-  const stats = ARMIES.map(() => ({ tries: [] as number[], clear: 0, lv: 0, tier: 0, castle: 0, owned: 0, seen: 0 }));
+  console.log([pad('army', 20), rpad('cleared %', 11), rpad('tries (mean)', 14), rpad('median', 8), rpad('90th', 6), rpad('party level', 13), rpad('castle lvls', 13), rpad('heroes owned', 14)].join(''));
+  const stats = ARMIES.map(() => ({ tries: [] as number[], clear: 0, lv: 0, castle: 0, owned: 0, seen: 0 }));
   for (let save = 1; save <= SAVES; save++) {
-    const meta = newMeta(save);
+    const meta = startedMeta(save);
     for (let i = 0; i < ARMIES.length; i++) {
       const army = ARMIES[i];
       let tries = 0;
@@ -438,7 +438,6 @@ function realClimb(): void {
         const party = bestParty(meta);
         if (tries === 0) {
           st.lv += party.reduce((n, k) => n + levelOfKind(meta, k), 0) / party.length;
-          st.tier += party.reduce((n, k) => n + rarityOf(k), 0) / party.length;
           st.castle += Object.values(meta.castle).reduce((n, v) => n + v, 0);
           st.owned += meta.unlocked.length;
           st.seen++;
@@ -465,7 +464,6 @@ function realClimb(): void {
         rpad(st.tries.length ? String(sorted[Math.floor(sorted.length / 2)]) : '-', 8),
         rpad(st.tries.length ? String(sorted[Math.floor(sorted.length * 0.9)]) : '-', 6),
         rpad((st.lv / n).toFixed(1), 13),
-        rpad((st.tier / n).toFixed(2), 12),
         rpad((st.castle / n).toFixed(1), 13),
         rpad((st.owned / n).toFixed(1), 14),
       ].join(''),

@@ -8,7 +8,7 @@
 
 import type { Meta } from './meta';
 import type { Rng } from './rng';
-import { ALL_HEROES, UNITS, type Rarity } from './units';
+import { ALL_HEROES, UNITS } from './units';
 import { levelOfKind } from './levels';
 
 import { ABILITIES, EQUIP_BASES, EQUIP_BASE_IDS, EQUIP_LIST, type Ability, type Calling, type EquipSlot, type Kind, type MainKey } from './equipBases';
@@ -17,6 +17,11 @@ export type { Ability, Calling, EquipSlot, MainKey };
 
 export const EQUIP_SLOTS: readonly EquipSlot[] = ['weapon', 'armour', 'trinket'];
 export const SLOT_NAMES: Readonly<Record<EquipSlot, string>> = { weapon: 'Weapon', armour: 'Armour', trinket: 'Trinket' };
+
+/** A piece of equipment's tier, 1 (Common) to 5 (Mythic). Heroes have none: only gear is graded. */
+export type Rarity = 1 | 2 | 3 | 4 | 5;
+/** The tiers' names, by rarity (index 0 is unused). */
+export const RARITY_NAMES: readonly string[] = ['', 'Common', 'Rare', 'Epic', 'Legendary', 'Mythic'];
 
 /** A chest's quality sets the odds of each rarity. */
 export type Quality = 'bronze' | 'silver' | 'gold';
@@ -408,10 +413,10 @@ export function equipBest(m: Meta, kind: string, takeFromOthers = false, locked:
   return n;
 }
 
-/** The unlocked hero kinds, strongest first (level, then rank, then rarity): the order `equipAll` serves them in. */
+/** The unlocked hero kinds, strongest first (level, then rank): the order `equipAll` serves them in. */
 export function strongestFirst(m: Meta): string[] {
   const rank = (k: string) => RANK_SHARDS_FOR(m, k);
-  return ALL_HEROES.filter((k) => m.unlocked.includes(k)).sort((a, b) => levelOfKind(m, b) - levelOfKind(m, a) || rank(b) - rank(a) || (UNITS[b].rarity ?? 1) - (UNITS[a].rarity ?? 1) || ALL_HEROES.indexOf(a) - ALL_HEROES.indexOf(b));
+  return ALL_HEROES.filter((k) => m.unlocked.includes(k)).sort((a, b) => levelOfKind(m, b) - levelOfKind(m, a) || rank(b) - rank(a) || ALL_HEROES.indexOf(a) - ALL_HEROES.indexOf(b));
 }
 const RANK_SHARDS_FOR = (m: Meta, k: string): number => m.shards[k] ?? 0;
 

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { loadMeta, newMeta, partySlots, saveMeta, setParty, type Meta } from '../src/sim/meta';
+import { loadMeta, startedMeta, partySlots, saveMeta, setParty, type Meta } from '../src/sim/meta';
 import { newRun, summon, START_GOLD } from '../src/sim/run';
 import { ALL_HEROES, HEROES } from '../src/sim/units';
 
@@ -8,13 +8,13 @@ import { ALL_HEROES, HEROES } from '../src/sim/units';
 const storeOf = (value: unknown) => ({ getItem: () => (value === undefined ? null : JSON.stringify(value)) });
 
 test('a new meta takes the first five heroes as its party', () => {
-  const m = newMeta(4);
+  const m = startedMeta(4);
   assert.deepEqual(m.party, [...HEROES]);
   assert.equal(partySlots(m), 5);
 });
 
 test('a party is saved and loaded back', () => {
-  const m = newMeta(4);
+  const m = startedMeta(4);
   m.unlocked.push('kitsune', 'karasu');
   assert.equal(setParty(m, ['knight', 'kitsune', 'karasu', 'archer', 'wizard']), true);
   const store: Record<string, string> = {};
@@ -24,13 +24,13 @@ test('a party is saved and loaded back', () => {
 });
 
 test('a party takes only unlocked kinds, each once, and a full five (or all unlocked)', () => {
-  const m = newMeta(4);
+  const m = startedMeta(4);
   assert.equal(setParty(m, ['knight', 'samurai', 'kunoichi', 'archer']), false, 'four is not a party of five');
   assert.equal(setParty(m, ['knight', 'knight', 'kunoichi', 'archer', 'wizard']), false, 'no repeats');
   assert.equal(setParty(m, ['knight', 'samurai', 'kunoichi', 'archer', 'kitsune']), false, 'kitsune is not unlocked');
   assert.deepEqual(m.party, [...HEROES], 'a refused party changes nothing');
   // with only three unlocked, a party is those three
-  const few = { ...newMeta(4), unlocked: ['knight', 'archer', 'wizard'] } as Meta;
+  const few = { ...startedMeta(4), unlocked: ['knight', 'archer', 'wizard'] } as Meta;
   assert.equal(partySlots(few), 3);
   assert.equal(setParty(few, ['wizard', 'knight', 'archer']), true);
 });
@@ -46,7 +46,7 @@ test('summons draw only from the party, starting heroes included', () => {
 });
 
 test('a run from a full party pays for summons from that party', () => {
-  const m = newMeta(9);
+  const m = startedMeta(9);
   m.unlocked.push('peasant');
   setParty(m, ['peasant', 'samurai', 'kunoichi', 'archer', 'wizard']);
   const r = newRun(5, m.party, m.castle);
@@ -70,7 +70,7 @@ test('a saved party keeps only kinds still unlocked, unique, at most five', () =
 });
 
 test('every hero in the game can be put in a party once unlocked', () => {
-  const m = newMeta(2);
+  const m = startedMeta(2);
   m.unlocked = [...ALL_HEROES];
   assert.equal(setParty(m, ALL_HEROES.slice(-5)), true);
 });

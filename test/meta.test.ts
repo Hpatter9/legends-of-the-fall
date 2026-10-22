@@ -1,11 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DUPLICATE_SHARDS, earn, loadMeta, newMeta, pullCost, pullOnce, PITY, PULL10_COST, PULL_COST, RATES, recruit, runCrowns, saveMeta, stageCrowns } from '../src/sim/meta';
+import { DUPLICATE_SHARDS, earn, loadMeta, startedMeta, newMeta, NEW_PITY, pullCost, pullOnce, PULL10_COST, PULL_COST, recruit, runCrowns, saveMeta, stageCrowns } from '../src/sim/meta';
 import { newRun, summon } from '../src/sim/run';
-import { HEROES } from '../src/sim/units';
+import { ALL_HEROES, HEROES } from '../src/sim/units';
 
-test('the starting five are unlocked, and crowns are earned', () => {
-  const m = newMeta(1);
+test('a played save has its heroes unlocked, and crowns are earned', () => {
+  const m = startedMeta(1);
   assert.deepEqual(m.unlocked, [...HEROES]);
   assert.equal(earn(m, 3, true), stageCrowns(3));
   assert.ok(stageCrowns(4) > stageCrowns(3));
@@ -19,7 +19,7 @@ test('pull costs: ten is cheaper than ten singles, and a poor player gets nothin
   assert.equal(pullCost(1), PULL_COST);
   assert.equal(pullCost(10), PULL10_COST);
   assert.ok(PULL10_COST < 10 * PULL_COST);
-  const m = newMeta(2);
+  const m = startedMeta(2);
   m.crowns = PULL_COST - 1;
   assert.equal(recruit(m, 1), null);
   assert.equal(m.crowns, PULL_COST - 1);
@@ -32,38 +32,55 @@ test('pull costs: ten is cheaper than ten singles, and a poor player gets nothin
 });
 
 test('pulls are deterministic', () => {
-  const a = newMeta(9);
-  const b = newMeta(9);
+  const a = startedMeta(9);
+  const b = startedMeta(9);
   const ka = Array.from({ length: 20 }, () => pullOnce(a).kind);
   const kb = Array.from({ length: 20 }, () => pullOnce(b).kind);
   assert.deepEqual(ka, kb);
 });
 
-test('rates over many pulls follow the table, and the pity counters cap the dry spells', () => {
-  const m = newMeta(5);
-  const seen = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-  let dry = 0;
-  let longest = 0;
-  const N = 20000;
+test('every hero is as likely as any other in a pull (no tiers, no rates)', () => {
+  const m = startedMeta(5);
+  m.unlocked = [...ALL_HEROES];
+  const N = 45000;
+  const seen = new Map<string, number>();
   for (let i = 0; i < N; i++) {
     const p = pullOnce(m);
-    seen[p.rarity]++;
-    dry = p.rarity >= 4 ? 0 : dry + 1;
-    longest = Math.max(longest, dry);
+    assert.equal('rarity' in p, false, 'a pull has no rarity');
+    seen.set(p.kind, (seen.get(p.kind) ?? 0) + 1);
   }
-  assert.ok(longest < PITY, `longest dry spell ${longest}`);
-  for (const r of [1, 2, 3, 4, 5] as const) assert.ok(Math.abs(seen[r] / N - RATES[r] / 100) < 0.05, `tier ${r}`);
+  // (45 heroes, 45000 pulls: about 1000 each, and 4 standard deviations is about 125)
+  assert.equal(seen.size, ALL_HEROES.length);
+  for (const [k, n] of seen) assert.ok(Math.abs(n - 1000) < 130, `${k} came up ${n} times`);
 });
 
-test('pity forces a legendary or better by the 30th pull', () => {
-  const m = newMeta(3);
-  m.dry = PITY - 1;
-  assert.ok(pullOnce(m).rarity >= 4);
-  assert.equal(m.dry, 0);
+test('the fair helper: a long run of repeats ends in a hero not yet owned, and never a repeat while one is left', () => {
+  const m = startedMeta(3);
+  // (all but two heroes owned, so a plain pull is a repeat 43 times in 45)
+  const missing = ['tyrant', 'sage'];
+  m.unlocked = ALL_HEROES.filter((k) => !missing.includes(k));
+  let dry = 0;
+  let longest = 0;
+  while (missing.some((k) => !m.unlocked.includes(k))) {
+    const p = pullOnce(m);
+    dry = p.isNew ? 0 : dry + 1;
+    longest = Math.max(longest, dry);
+    assert.ok(dry < NEW_PITY, `${dry} repeats in a row`);
+  }
+  assert.ok(longest >= 0);
+  // (with every hero owned the helper has nothing to give: a pull is a plain draw and a shard)
+  const p = pullOnce(m);
+  assert.equal(p.isNew, false);
+  assert.equal(p.shards, DUPLICATE_SHARDS);
+  // (a counter at the limit gives a new hero on the very next pull)
+  const n = startedMeta(4);
+  n.sinceNew = NEW_PITY - 1;
+  assert.equal(pullOnce(n).isNew, true);
+  assert.equal(n.sinceNew, 0);
 });
 
 test('a new kind unlocks; a duplicate gives a shard of it', () => {
-  const m = newMeta(4);
+  const m = startedMeta(4);
   const first = pullOnce(m);
   assert.equal(first.isNew, !(HEROES as readonly string[]).includes(first.kind));
   assert.ok(m.unlocked.includes(first.kind));
@@ -88,9 +105,16 @@ test('run summons draw only unlocked kinds', () => {
   assert.ok(r.roster.every((h) => pool.includes(h.kind)));
 });
 
-test('meta saves and loads, keeping the starting five', () => {
+test('a brand-new save has no hero until the starter pick (see starter.test.ts)', () => {
+  const m = newMeta(12);
+  assert.deepEqual(m.unlocked, []);
+  assert.deepEqual(m.party, []);
+  assert.equal(m.starter?.pick, null);
+});
+
+test('meta saves and loads, keeping the starting five of a save from before the pick', () => {
   const store: Record<string, string> = {};
-  const m = newMeta(8);
+  const m = startedMeta(8);
   m.crowns = 77;
   saveMeta(m, { setItem: (k, v) => void (store[k] = v) });
   const back = loadMeta(1, { getItem: (k) => store[k] ?? null });

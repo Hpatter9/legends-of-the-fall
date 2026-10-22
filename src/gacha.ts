@@ -2,10 +2,9 @@
 // every hero with the locked ones shaded. It only reads and changes the Meta through the sim's own functions.
 
 import { ALL_HEROES, UNITS } from './sim/units';
-import { MAX_RANK, MYTHIC_PITY, PITY, pullCost, RANK_MULT, RANK_SHARDS, rankOf, RARITY_NAMES, RATES, recruit, rarityOf, saveMeta, type Meta, type Pull } from './sim/meta';
+import { MAX_RANK, NEW_PITY, pullCost, RANK_MULT, RANK_SHARDS, rankOf, recruit, saveMeta, type Meta, type Pull } from './sim/meta';
+import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { portrait } from './render/sheets';
-import { rarityFlash } from './render/uiFx';
-import { settings } from './settings';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -19,7 +18,7 @@ export class Gacha {
     $('pull1').addEventListener('click', () => this.pull(1));
     $('pull10').addEventListener('click', () => this.pull(10));
     $('gachaClose').addEventListener('click', () => this.close());
-    $('rates').textContent = `${([1, 2, 3, 4, 5] as const).map((r) => `${RARITY_NAMES[r]} ${RATES[r]}%`).join(' · ')} · a Legendary or better is sure by pull ${PITY}, a Mythic by pull ${MYTHIC_PITY}. A repeat gives a shard; shards raise a hero's rank (+${Math.round((RANK_MULT - 1) * 100)}% hp and attack a rank, up to ${MAX_RANK}).`;
+    $('rates').textContent = `Every hero is as likely as any other. After ${NEW_PITY} pulls without a new hero, the next one is a hero you do not have yet. A repeat gives a shard; shards raise a hero's rank (+${Math.round((RANK_MULT - 1) * 100)}% hp and attack a rank, up to ${MAX_RANK}).`;
   }
 
   open(): void {
@@ -41,19 +40,17 @@ export class Gacha {
       b.textContent = `Pull ${n} · ${pullCost(n)}`;
       b.disabled = this.busy || m.crowns < pullCost(n);
     }
-    $('pity').textContent = `Legendary in at most ${PITY - m.dry} pulls · Mythic in at most ${MYTHIC_PITY - m.dryMythic}`;
+    const left = Math.max(1, NEW_PITY - (m.sinceNew ?? 0));
+    $('pity').textContent = ALL_HEROES.every((k) => m.unlocked.includes(k)) ? 'You have every hero' : `A new hero is sure within ${left} pull${left === 1 ? '' : 's'}`;
     const list = $('collection');
     list.replaceChildren();
     for (const kind of ALL_HEROES) {
       const def = UNITS[kind];
       const cell = document.createElement('div');
-      cell.className = `hero r${rarityOf(kind)}${m.unlocked.includes(kind) ? '' : ' locked'}`;
+      cell.className = `hero${m.unlocked.includes(kind) ? '' : ' locked'}`;
       const name = document.createElement('b');
       name.textContent = m.unlocked.includes(kind) ? def.name : '???';
-      const tag = document.createElement('em');
-      tag.className = 'rtag';
-      tag.textContent = RARITY_NAMES[rarityOf(kind)];
-      cell.append(portrait(def.sheet, 72), name, tag);
+      cell.append(portrait(def.sheet, 72), name);
       if (m.unlocked.includes(kind)) cell.append(this.rankLine(kind));
       list.append(cell);
     }
@@ -103,57 +100,38 @@ export class Gacha {
     this.reveal(got);
   }
 
-  /** The pulls as face-down cards that flip over one after another, the best last; an Epic or better glows and trembles in its colour first as a tease, a Legendary waits a beat and flashes, a Mythic trembles longer, then flips slowly under crimson beams and a flash over the screen. */
+  /** The pulls as face-down cards that flip over one after another, the repeats first and the new heroes last (a new hero's card glows steadily and is held a beat longer). A tap on a card turns it at once. */
   private reveal(got: Pull[]): void {
     const box = $('reveal');
     box.replaceChildren();
     const cards: HTMLElement[] = [];
-    // (only the best card of a pull flashes the page, once)
-    const best = got.reduce((b, p, i) => (p.rarity > got[b].rarity ? i : b), 0);
-    got.forEach((p, i) => {
+    got.forEach((p) => {
       const def = UNITS[p.kind];
       const card = document.createElement('div');
-      card.className = `flip r${p.rarity}`;
+      card.className = 'flip';
       const face = document.createElement('div');
       face.className = 'face';
       const name = document.createElement('b');
       name.textContent = def.name;
       const tag = document.createElement('em');
       tag.textContent = p.isNew ? 'NEW' : `+${p.shards} shard`;
-      const tier = document.createElement('small');
-      tier.className = 'rtag';
-      tier.textContent = RARITY_NAMES[p.rarity];
-      face.append(portrait(def.sheet, 72), name, tier, tag);
+      const role = document.createElement('small');
+      role.className = 'rtag';
+      role.textContent = CLASS_NAMES[CLASS_OF[p.kind]];
+      face.append(portrait(def.sheet, 72), name, role, tag);
       if (p.isNew) card.classList.add('new');
       const back = document.createElement('div');
       back.className = 'back';
       card.append(back, face);
-      if (p.rarity >= 4) {
-        const beams = document.createElement('div');
-        beams.className = 'beams';
-        card.prepend(beams);
-      }
-      // (the tease: a pre-flip glow in the rarity colour, and for a Legendary or better a shake, until the card turns)
-      if (p.rarity >= 3) card.classList.add('tease');
-      if (p.rarity >= 4 && settings().shake) card.classList.add('shake');
-      const flip = () => {
-        card.classList.remove('shake', 'tease');
-        card.classList.add('up');
-        if (i === best) rarityFlash(p.rarity);
-      };
-      card.addEventListener('click', flip);
+      card.addEventListener('click', () => card.classList.add('up'));
       box.append(card);
       cards.push(card);
     });
-    // (they turn in order of rarity, the best last; a tap on a card turns it at once)
-    const order = got.map((_, i) => i).sort((x, y) => got[x].rarity - got[y].rarity || x - y);
+    const order = got.map((_, i) => i).sort((x, y) => Number(got[x].isNew) - Number(got[y].isNew) || x - y);
     let at = 350;
     for (const i of order) {
-      const p = got[i];
-      const mythic = p.rarity === 5;
-      at += mythic ? 900 : 0;
       setTimeout(() => cards[i].click(), at);
-      at += p.rarity === 4 ? 600 : mythic ? 1500 : 260;
+      at += got[i].isNew ? 420 : 260;
     }
     setTimeout(() => {
       this.busy = false;

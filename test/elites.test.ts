@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fight, place, playOut, stepBattle } from '../src/sim/battle';
 import { boostOf, newRun, saveRun, loadRun, SQUAD, startStage } from '../src/sim/run';
-import { newMeta } from '../src/sim/meta';
+import { startedMeta } from '../src/sim/meta';
 import { towerRun } from '../src/sim/modes';
 import { kitOf } from '../src/sim/abilities';
 import { drawOffer, ELITES, ELITE_BY_ID, eliteAt, eliteOrder, eliteOfDef, OFFER_SIZE, takeRelic, tierOf } from '../src/sim/elites';
@@ -57,7 +57,7 @@ test('which elite waits at a node is the same from the same seed, and the map it
 
 /** A tower run standing at its first elite node. */
 const atElite = (seed: number) => {
-  const run = towerRun(seed, newMeta(1));
+  const run = towerRun(seed, startedMeta(1));
   const t = run.tower!;
   const node = t.map.find((n) => n.kind === 'elite')!;
   // (walk the run to the elite's row: only the pick matters here)
@@ -88,7 +88,7 @@ test('an elite node brings its named elite: its fighter leads, its escort follow
 
 /** A won elite fight, settled. */
 const wonElite = (seed = 4) => {
-  const run = towerRun(seed, newMeta(1));
+  const run = towerRun(seed, startedMeta(1));
   for (const h of run.roster) h.bump = { hp: 6, atk: 6 };
   const node = run.tower!.map.find((n) => n.row === 0 && n.kind === 'fight')!;
   assert.ok(enterNode(run, node.id));
@@ -134,7 +134,7 @@ test('the offer is the same from the same run, and leans to a set already begun'
   const { run } = atElite(5);
   assert.deepEqual(drawOffer(run, 9), drawOffer(run, 9));
   for (const set of SET_IDS) {
-    const r = towerRun(5, newMeta(1));
+    const r = towerRun(5, startedMeta(1));
     r.relics = [SETS[set].relics[0]];
     for (let floor = 1; floor <= 30; floor++) {
       const o = drawOffer(r, floor);
@@ -142,7 +142,7 @@ test('the offer is the same from the same run, and leans to a set already begun'
       assert.ok(!o.includes(SETS[set].relics[0]));
     }
   }
-  const all = towerRun(5, newMeta(1));
+  const all = towerRun(5, startedMeta(1));
   all.relics = [...ALL_RELIC_IDS];
   assert.deepEqual(drawOffer(all, 3), [], 'nothing left, nothing offered');
 });

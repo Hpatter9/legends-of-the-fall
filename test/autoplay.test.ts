@@ -6,7 +6,7 @@ import { autoDeploy, autoEvent, autoFormation, autoRound, gearCount, isBackline 
 import { canPlace, fight, playOut, startBattle } from '../src/sim/battle';
 import { D, DEPLOY_ROWS, makeBoard, standable, tileAt, type Board } from '../src/sim/board';
 import { fightXp, gainXp, xpFor } from '../src/sim/levels';
-import { newMeta } from '../src/sim/meta';
+import { startedMeta } from '../src/sim/meta';
 import type { EventCard } from '../src/sim/events';
 import { armyRun, finish, newRun, isBossRun, noteFight, startStage, SQUAD } from '../src/sim/run';
 import { ratingOf } from '../src/sim/stars';
@@ -23,7 +23,7 @@ const flat = (seed = 3): Board => {
 test('auto-deploy is legal on every board and the same each time', () => {
   for (let seed = 1; seed <= 60; seed++) {
     const run = armyRun(seed, ARMIES[seed % ARMIES.length].id, HEROES);
-    const meta = newMeta(seed);
+    const meta = startedMeta(seed);
     run.gold = 500;
     autoRound(run, meta);
     assert.equal(run.squad.length, Math.min(SQUAD, run.roster.length));
@@ -102,7 +102,7 @@ test('auto picks for an event are free and never a curse', () => {
 });
 
 test('auto-replay is offered only on armies and tiers already cleared', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   const [first, second] = ARMIES;
   assert.equal(canAutoReplay(m, first.id, 0), false);
   assert.equal(startAuto(m, first.id, 0, 3), null);
@@ -123,7 +123,7 @@ test('auto-replay is offered only on armies and tiers already cleared', () => {
 });
 
 test('x3 speed is for cleared tiers and auto-replay only', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   const id = ARMIES[0].id;
   assert.equal(maxSpeed(m, id, 0, false), 2);
   assert.equal(maxSpeed(m, undefined, 0, false), 2);
@@ -135,7 +135,7 @@ test('x3 speed is for cleared tiers and auto-replay only', () => {
 });
 
 test('auto-replay stops on its count, on a loss and on Stop', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   m.armies[ARMIES[0].id] = { best: 8, won: 8, clears: 1, stars: {} };
   const win = { won: true, cleared: false, wave: 1, crowns: 10, xp: 5 };
   const clear = { ...win, cleared: true, chests: 1, gear: 2 };
@@ -160,7 +160,7 @@ test('auto-replay stops on its count, on a loss and on Stop', () => {
 
 /** Plays an auto-replay through the sim the way the page does (no settling of the meta beyond the XP), until it ends. */
 function replay(count: number, level: number, armyIndex = 0) {
-  const m = newMeta(9);
+  const m = startedMeta(9);
   for (const k of HEROES) m.xp[k] = xpFor(level);
   const army = ARMIES[armyIndex];
   // (every army up to this one has been beaten, so this one is open)
@@ -201,7 +201,7 @@ test('an auto-replay of a party too weak for the army stops on the loss', () => 
 });
 
 test('settling a wave still pays when it is a replay (the totals count the pay)', () => {
-  const m = newMeta(2);
+  const m = startedMeta(2);
   const id = ARMIES[0].id;
   const first = settleWave(m, id, 1, true, 3);
   const again = settleWave(m, id, 1, true, 3);

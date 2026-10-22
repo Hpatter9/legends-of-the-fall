@@ -27,7 +27,7 @@ import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { BOSS_IDS, FOE_BANDS, isBoss } from '../src/sim/foes';
 import { levelOfKind, xpFor } from '../src/sim/levels';
 import { timeTarget } from '../src/sim/armyStars';
-import { loadMeta, newMeta, saveMeta } from '../src/sim/meta';
+import { loadMeta, startedMeta, saveMeta } from '../src/sim/meta';
 import { BOSS_TITLES, titleOf } from '../src/render/bossTitles';
 import { armyOfRun, armyRun, bandFor, finish, gradeBoost, isBossRun, loadRun, newRun, saveRun, startStage } from '../src/sim/run';
 import { dailyRun, towerRun } from '../src/sim/modes';
@@ -96,7 +96,7 @@ test('the foes of an army get tougher each wave, and each army starts tougher th
 });
 
 test('only the first army is open on a fresh save, and each opens when the one before has fallen', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   assert.deepEqual(ARMIES.filter((a) => armyUnlocked(m, a.id)).map((a) => a.id), ['orcs']);
   for (const [i, a] of ARMIES.entries()) {
     // (winning the army's waves but not its last boss opens nothing)
@@ -113,7 +113,7 @@ test('only the first army is open on a fresh save, and each opens when the one b
 });
 
 test('a fight lost sends the army back to wave 1 and costs nothing the heroes have earned', () => {
-  const m = newMeta(2);
+  const m = startedMeta(2);
   m.xp.knight = xpFor(6);
   m.crowns = 55;
   const run = armyRun(3, 'orcs', HEROES);
@@ -148,7 +148,7 @@ test('a run that is over is not resumed, so a loss cannot be continued from a ch
 });
 
 test('a first win of a wave pays in full, a replay a share, and stars pay only what they add', () => {
-  const m = newMeta(3);
+  const m = startedMeta(3);
   const a = armyById('undead')!;
   const first = settleWave(m, a.id, 2, true, 3);
   assert.equal(first.replay, false);
@@ -170,7 +170,7 @@ test('replaying a beaten army pays a small fraction of its first clear, and its 
     assert.ok(replayTotal(a) > 0);
     assert.ok(replayTotal(a) <= firstClearTotal(a) * 0.2, a.id);
   }
-  const m = newMeta(4);
+  const m = startedMeta(4);
   const a = armyById('orcs')!;
   const pays = a.waves.map((_, i) => settleWave(m, a.id, i + 1, true, 0));
   assert.equal(pays.reduce((n, p) => n + p.crowns, 0), firstClearTotal(a));
@@ -195,7 +195,7 @@ test('harder armies pay more, for a first clear and for a replay', () => {
 });
 
 test('a newly opened army glows until its card has been seen', () => {
-  const m = newMeta(5);
+  const m = startedMeta(5);
   assert.equal(armyIsNew(m, 'orcs'), false);
   assert.equal(armyIsNew(m, 'undead'), false);
   const a = armyById('orcs')!;
@@ -240,7 +240,7 @@ test('an old save that never beat the first boss has the first army only; a very
   assert.deepEqual(Object.keys(migrateArmies(undefined, 6)), ['orcs']);
   assert.equal(Object.keys(migrateArmies(undefined, 99)).length, ARMIES.length);
   const s = store();
-  s.setItem('legends.meta', JSON.stringify({ ...newMeta(1), armies: undefined, bestStage: 4 }));
+  s.setItem('legends.meta', JSON.stringify({ ...startedMeta(1), armies: undefined, bestStage: 4 }));
   const m = loadMeta(1, s);
   assert.equal(clearedCount(m), 0);
   assert.equal(armyUnlocked(m, 'orcs'), true);
@@ -266,7 +266,7 @@ test('an older run saved mid-way (no army) still loads and plays on as it did', 
 });
 
 test('the daily challenge and the tower keep their own foe mixes', () => {
-  const tower = towerRun(3, newMeta(1));
+  const tower = towerRun(3, startedMeta(1));
   tower.stage = 5;
   assert.ok(startStage(tower).units.some((u) => u.def === 'orcWarlord'));
   const daily = dailyRun(20260101);
@@ -316,7 +316,7 @@ test('winning waves moves on, the last boss wins the army and ends the run', () 
 test('the first wave of the first army is won by a fresh party, every time', () => {
   let wins = 0;
   for (let seed = 1; seed <= 24; seed++) {
-    const meta = newMeta(seed);
+    const meta = startedMeta(seed);
     const r = playArmy(meta, 'orcs', seed * 7, HEROES);
     if (r.won >= 1) wins++;
   }
@@ -404,7 +404,7 @@ test('a whole fight against the Lich King plays out to an end, the same every ti
     const b = startStage({ ...armyRun(14, 'undead', HEROES), stage: 15 });
     const spots: [number, number][] = [];
     for (let v = D - DEPLOY_ROWS; v < D; v++) for (let u = 0; u < b.board.w; u++) if (standable(tileAt(b.board, u, v))) spots.push([u, v]);
-    HEROES.forEach((id, i) => place(b, id, ...spots[(i * 3) % spots.length], undefined, gradeBoost(2, 0, 9, id)));
+    HEROES.forEach((id, i) => place(b, id, ...spots[(i * 3) % spots.length], undefined, gradeBoost(2, 0, 9)));
     assert.equal(stepBattle(b).length, 0, 'nothing happens before the fight starts');
     fight(b);
     playOut(b);
@@ -459,12 +459,12 @@ test('records saved when the armies were shorter map onto the fifteen waves: a c
   assert.deepEqual([rec.wildwood.best, rec.wildwood.won, rec.wildwood.clears], [15, 15, 1]);
   // (a record already in fifteen waves is not mapped again, and loading twice changes nothing)
   assert.deepEqual(migrateArmies(JSON.parse(JSON.stringify(rec)), 1), rec);
-  const fresh = newMeta(4);
+  const fresh = startedMeta(4);
   settleWave(fresh, 'orcs', 5, true, 0);
   const back = migrateArmies(JSON.parse(JSON.stringify(fresh.armies)), 1);
   assert.deepEqual([back.orcs.best, back.orcs.won], [5, 5]);
   // (an army cleared in the old length still counts as a replay on every wave of the new one)
-  const m = newMeta(5);
+  const m = startedMeta(5);
   m.armies = rec;
   assert.equal(settleWave(m, 'orcs', 12, true, 0).replay, true);
   assert.equal(armyCleared(m, 'orcs'), true);

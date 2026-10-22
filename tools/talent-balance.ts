@@ -11,7 +11,7 @@ import { FIELD_BANDS } from '../src/sim/foes';
 import { mixSeed, Rng } from '../src/sim/rng';
 import { ALL_HEROES } from '../src/sim/units';
 import type { EquipStats } from '../src/sim/equipment';
-import { newMeta } from '../src/sim/meta';
+import { startedMeta } from '../src/sim/meta';
 import { xpFor } from '../src/sim/levels';
 import { buyPoint, learn, talentStats, tierNodes } from '../src/sim/talents';
 import { gradeBoost, stageBoost } from '../src/sim/run';
@@ -38,7 +38,7 @@ function won(seed: number, team: string[], equip: (kind: string) => EquipStats |
   }
   team.forEach((id, i) => {
     const eq = equip(id);
-    const g = gradeBoost(1, 0, LEVEL, id);
+    const g = gradeBoost(1, 0, LEVEL);
     place(b, id, spots[i][0], spots[i][1], undefined, { ...g, hp: g.hp! * mult, atk: g.atk! * mult, ...(eq ? { equip: eq } : {}) });
   });
   fight(b);
@@ -71,7 +71,7 @@ function effective(equip: (kind: string) => EquipStats | undefined): string {
 
 /** A kind's talents with these node ids taken (in order), as the fight stats; undefined for none. */
 function taken(kind: string, ids: string[]): EquipStats | undefined {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   m.unlocked.push(kind);
   m.xp[kind] = xpFor(20);
   m.shards[kind] = 9;

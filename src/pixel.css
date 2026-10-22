@@ -80,10 +80,8 @@ button.primary:not(:disabled), .hmBattle { animation: none; }
 #home:has(#hmSheet:not([hidden])) ~ #version { display: none; }
 #home:has(#hmSub:not([hidden]):not(.armies)) ~ #version { display: none; }
 
-/* ---- the bench: a slim card frame in the hero's rarity colour ---- */
+/* ---- the bench: a slim card frame (every hero's is alike) ---- */
 .card, .spell { border-style: solid; border-width: 4px; border-radius: 0; box-shadow: none; padding: 0 0 2px; background: none; border-image: url(ui/cardb.png) 2 fill / 4px stretch; }
-.card.r1 { border-image-source: url(ui/cardb-r1.png); } .card.r2 { border-image-source: url(ui/cardb-r2.png); } .card.r3 { border-image-source: url(ui/cardb-r3.png); }
-.card.r4 { border-image-source: url(ui/cardb-r4.png); } .card.r5 { border-image-source: url(ui/cardb-r5.png); }
 .card.chosen, .spell.armed { border-image-source: url(ui/cardb-chosen.png); box-shadow: none; animation: none; }
 .card.g2 { box-shadow: 0 0 0 2px #b8c8e0; background: none; } .card.g3 { box-shadow: 0 0 0 2px #f0c040; background: none; }
 .card.chosen.g2, .card.chosen.g3 { box-shadow: 0 0 0 2px var(--gold-hi); }
@@ -129,7 +127,6 @@ body .sbMeter i span { background: linear-gradient(#ffd27a 50%, #d6903a 50%); } 
 }
 .hmPanel { padding: 4px; }
 .hsheet, .evcard { padding: 4px; }
-.hsheet.r2, .hsheet.r3, .hsheet.r4, .hsheet.r5 { outline: 2px solid var(--rc); outline-offset: -2px; box-shadow: none; }
 #tip { padding: 0; }
 #tip button { min-height: 40px; font-size: 14px; }
 #tip #tipSkip { background: none; border: 0; border-image: none; min-height: 40px; padding: 0 4px; }
@@ -152,13 +149,6 @@ body .sbMeter i span { background: linear-gradient(#ffd27a 50%, #d6903a 50%); } 
 .hmCard:active { transform: none; }
 .hcard, .ptCard { min-height: auto; }
 .hcard:active, .ptCard:active { transform: none; }
-.hcard.r2, .hcard.r3, .hcard.r4, .hcard.r5, .hrow.r2, .hrow.r3, .hrow.r4, .hrow.r5, .ptSlot.r2, .ptSlot.r3, .ptSlot.r4, .ptSlot.r5, #collection .hero.r2, #collection .hero.r3, #collection .hero.r4, #collection .hero.r5,
-.card.r3, .card.r4, .card.r5, .hmShow canvas.r4 { box-shadow: none; }
-.hcard.r1, .hrow.r1, .ptSlot.r1, #collection .hero.r1, .hmShow canvas.r1 { border-image-source: url(ui/card-r1.png); }
-.hcard.r2, .hrow.r2, .ptSlot.r2, #collection .hero.r2, .hmShow canvas.r2 { border-image-source: url(ui/card-r2.png); }
-.hcard.r3, .hrow.r3, .ptSlot.r3, #collection .hero.r3, .hmShow canvas.r3 { border-image-source: url(ui/card-r3.png); }
-.hcard.r4, .hrow.r4, .ptSlot.r4, #collection .hero.r4, .hmShow canvas.r4 { border-image-source: url(ui/card-r4.png); }
-.hcard.r5, .hrow.r5, .ptSlot.r5, #collection .hero.r5, .hmShow canvas.r5 { border-image-source: url(ui/card-r5.png); }
 .hmShow canvas { border-style: solid; border-width: 6px; border-radius: 0; background: none; border-image: url(ui/card.png) 3 fill / 6px stretch; animation: none; }
 .hcard canvas, .hpic, .hrow canvas { border-radius: 0; }
 .hpic { border: 2px solid var(--deep); }
@@ -173,9 +163,7 @@ body .sbMeter i span { background: linear-gradient(#ffd27a 50%, #d6903a 50%); } 
 .flip .face, .flip .back { border-style: solid; border-width: 6px; border-radius: 0; box-shadow: none; }
 .flip .face { border-image: url(ui/card.png) 3 fill / 6px stretch; }
 .flip .back { border-image: url(ui/card.png) 3 / 6px stretch; background: url(ui/cardback.png) 0 0 / 16px 16px; }
-.flip.r1 .face { border-image-source: url(ui/card-r1.png); } .flip.r2 .face { border-image-source: url(ui/card-r2.png); } .flip.r3 .face { border-image-source: url(ui/card-r3.png); }
-.flip.r4 .face { border-image-source: url(ui/card-r4.png); } .flip.r5 .face { border-image-source: url(ui/card-r5.png); }
-.flip.r2 .face, .flip.r3 .face, .flip.r4 .face, .flip.r5 .face { box-shadow: none; }
+.flip.new .face { border-image-source: url(ui/card-r4.png); }
 body .sbCard, body .sbSlot { padding: 2px 4px; }
 body .sbSlot { min-height: 44px; }
 

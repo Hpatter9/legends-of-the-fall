@@ -3,11 +3,11 @@ import assert from 'node:assert/strict';
 import { ARMIES, armyById, armyStars, migrateArmies, recordOf, settleWave, tierOpen, tierStars, waveBoost, firstClearTotal, replayTotal } from '../src/sim/armies';
 import { armyRules, bestChest, chestCrowns, chestSeed, chestsOf, grantChests, openChest, peekChest, rollChest, settleArmyRun, timeTarget } from '../src/sim/armyStars';
 import { ARMY_STARS, MILESTONES, RUN_STARS, TIERS, tierRange } from '../src/sim/tiers';
-import { loadMeta, newMeta, saveMeta, rarityOf } from '../src/sim/meta';
+import { ALL_HEROES, UNITS } from '../src/sim/units';
+import { loadMeta, startedMeta, saveMeta } from '../src/sim/meta';
 import { armyRun, noteFight, startStage, tierOfRun, type Run } from '../src/sim/run';
 import { fight, stepBattle, startBattle } from '../src/sim/battle';
 import { speedOf } from '../src/sim/spells';
-import { UNITS } from '../src/sim/units';
 import { readyBattle } from './helpers';
 
 const store = () => {
@@ -34,7 +34,7 @@ test('the tiers hold 3, 3, 3 and 1 stars: ten in all, numbered in order', () => 
 });
 
 test('each tier opens when the stars before it are all won', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   const a = ARMIES[0];
   assert.deepEqual([0, 1, 2, 3].map((t) => tierOpen(m, a, t)), [true, false, false, false]);
   m.armies.orcs = { best: 8, won: 8, clears: 1, stars: {}, met: { 0: 7 } };
@@ -51,22 +51,22 @@ test('each tier opens when the stars before it are all won', () => {
 });
 
 test('a run earns at most three stars, whatever the tier', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   for (const [t, a] of [[0, 'orcs'], [1, 'orcs'], [2, 'undead'], [3, 'undead']] as const) {
     const res = settleArmyRun(m, cleared(a, t, perfect))!;
     assert.ok(res.gained <= RUN_STARS && res.gained >= 1, `tier ${t}`);
     assert.equal(res.rules.length, t === 3 ? 1 : 3);
   }
   // (Legendary's single star is a flawless clear)
-  const lost = settleArmyRun(newMeta(2), cleared('orcs', 3, { ms: 1, lost: 1, bossLost: 0, bossFell: 1 }))!;
+  const lost = settleArmyRun(startedMeta(2), cleared('orcs', 3, { ms: 1, lost: 1, bossLost: 0, bossFell: 1 }))!;
   assert.equal(lost.gained, 0);
   // (a hero lost in the field waves, but none in a boss fight, is still flawless)
-  assert.equal(settleArmyRun(newMeta(2), cleared('orcs', 3, { ms: 1, lost: 4, bossLost: 0, bossFell: 0 }))!.gained, 1);
-  const flawless = settleArmyRun(newMeta(2), cleared('orcs', 3, perfect))!;
+  assert.equal(settleArmyRun(startedMeta(2), cleared('orcs', 3, { ms: 1, lost: 4, bossLost: 0, bossFell: 0 }))!.gained, 1);
+  const flawless = settleArmyRun(startedMeta(2), cleared('orcs', 3, perfect))!;
   assert.equal(flawless.gained, 1);
   // (a run that did not clear its army earns nothing)
   const run = armyRun(1, 'orcs');
-  assert.equal(settleArmyRun(newMeta(3), run), null);
+  assert.equal(settleArmyRun(startedMeta(3), run), null);
 });
 
 test('the conditions: clear, no hero lost in the last boss fight, and a battle-time target', () => {
@@ -82,7 +82,7 @@ test('the conditions: clear, no hero lost in the last boss fight, and a battle-t
 });
 
 test('stars are the best ever per tier: a replay adds only the new ones', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   const first = settleArmyRun(m, cleared('orcs', 0, { ms: 1e9, lost: 5, bossLost: 2 }))!;
   assert.equal(first.gained, 1);
   assert.equal(tierStars(recordOf(m, 'orcs'), 0), 1);
@@ -104,7 +104,7 @@ test('stars are the best ever per tier: a replay adds only the new ones', () => 
 });
 
 test('a milestone puts a chest in the stash once; opening removes it and pays its rewards once', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   const a = armyById('orcs')!;
   assert.deepEqual(chestsOf(m, a).map((c) => c.state), ['locked', 'locked', 'locked']);
   assert.equal(m.stash.length, 0);
@@ -157,7 +157,7 @@ test('chest contents are deterministic: fixed when earned, by save seed, army an
   assert.notDeepEqual(rollChest(seed(77, 5), a, 5), rollChest(seed(77, 5, armyById('undead')!), armyById('undead')!, 5));
   // two chests, opened in either order on twin saves, give the same rewards
   const make = () => {
-    const m = newMeta(4242);
+    const m = startedMeta(4242);
     m.armies.orcs = { best: 8, won: 8, clears: 1, stars: {}, met: { 0: 7, 1: 7 } };
     grantChests(m, armyById('orcs')!, m.armies.orcs);
     return m;
@@ -196,43 +196,37 @@ test('chests pay better by milestone, by army and by tier', () => {
   let items3 = 0;
   let items5 = 0;
   let items10 = 0;
-  let rare3 = 0;
-  let rare10 = 0;
   for (let seed = 1; seed <= 200; seed++) {
     for (const a of [ARMIES[0], ARMIES[8]]) {
       const [r3, r5, r10] = [3, 5, 10].map((at) => roll(seed, a, at));
       items3 += r3.shards.length + r3.recruits.length;
       items5 += r5.shards.length + r5.recruits.length;
       items10 += r10.shards.length + r10.recruits.length;
-      rare3 += r3.shards.filter((k) => rarityOf(k) >= 3).length;
-      rare10 += r10.shards.filter((k) => rarityOf(k) >= 3).length;
     }
   }
   assert.ok(items3 < items5 && items5 < items10, `${items3} ${items5} ${items10}`);
-  assert.ok(rare10 > rare3, `${rare10} ${rare3}`);
-  const rare = (a: (typeof ARMIES)[number], tier = 0) => {
-    let n = 0;
-    for (let seed = 1; seed <= 400; seed++) n += roll(seed, a, 5, tier).shards.reduce((s, k) => s + rarityOf(k), 0);
-    return n;
-  };
-  assert.ok(rare(ARMIES[8]) > rare(ARMIES[0]));
-  assert.ok(rare(ARMIES[4], 3) > rare(ARMIES[4], 0));
 });
 
-test('the 10-star chest always holds a hero of Epic or better (higher on later armies)', () => {
+test('the 10-star chest always holds a hero, and every hero is as likely as any other in a chest', () => {
   const roll = (seed: number, a: (typeof ARMIES)[number], at: number) => rollChest(chestSeed(seed, a, at), a, at);
-  for (let seed = 1; seed <= 100; seed++) {
-    const early = roll(seed, ARMIES[0], 10);
-    assert.equal(early.recruits.length, 1);
-    assert.ok(rarityOf(early.recruits[0].kind) >= 3);
-    assert.ok(rarityOf(roll(seed, ARMIES[4], 10).recruits[0].kind) >= 4);
-    assert.equal(rarityOf(roll(seed, ARMIES[8], 10).recruits[0].kind), 5);
+  const seen = new Map<string, number>();
+  const runs = 4500;
+  for (let seed = 1; seed <= runs; seed++) {
+    for (const a of [ARMIES[0], ARMIES[8]]) {
+      const r = roll(seed, a, 10);
+      assert.equal(r.recruits.length, 1);
+      assert.ok(ALL_HEROES.includes(r.recruits[0].kind));
+      if (a === ARMIES[0]) seen.set(r.recruits[0].kind, (seen.get(r.recruits[0].kind) ?? 0) + 1);
+    }
     assert.equal(roll(seed, ARMIES[0], 3).recruits.length, 0);
   }
+  // (45 heroes: each should come up about runs / 45 = 100 times)
+  assert.equal(seen.size, ALL_HEROES.length, 'every hero comes up');
+  for (const [k, n] of seen) assert.ok(n > 55 && n < 150, `${k} came up ${n} times`);
 });
 
 test('opening a chest pays crowns, shards and a recruit (or shards if owned)', () => {
-  const m = newMeta(9);
+  const m = startedMeta(9);
   m.armies.golems = { best: 10, won: 10, clears: 1, stars: {}, met: { 0: 7, 1: 7, 2: 7, 3: 1 } };
   grantChests(m, armyById('golems')!, m.armies.golems);
   assert.deepEqual(m.stash.map((c) => c.at), [3, 5, 10]);
@@ -267,7 +261,7 @@ test('chests drop permanent hero equipment: silver and gold always, bronze somet
   const level = (army: number) => Array.from({ length: 100 }, (_, i) => rollChest(i + 1, ARMIES[army], 5).gear[0].item.level).reduce((a, n) => a + n, 0);
   assert.ok(level(6) > level(0) + 500);
   // (opening grants the item once, and it is the one the preview showed)
-  const m = newMeta(4);
+  const m = startedMeta(4);
   m.armies.golems = { best: 10, won: 10, clears: 1, stars: {}, met: { 0: 7, 1: 7, 2: 7, 3: 1 } };
   grantChests(m, armyById('golems')!, m.armies.golems);
   const peek = peekChest(m, 1)!.items.find((i) => i.type === 'gear')!;
@@ -328,7 +322,7 @@ test('a harder tier pays more crowns, and keeps its own firsts and clears', () =
   }
   // (15 waves: a first clear pays about 15% more than the 8 waves it was, 294)
   assert.equal(firstClearTotal(a), 339);
-  const m = newMeta(1);
+  const m = startedMeta(1);
   const normal = settleWave(m, 'orcs', 1, true, 0, 0);
   const again = settleWave(m, 'orcs', 1, true, 0, 0);
   const hard = settleWave(m, 'orcs', 1, true, 0, 1);
@@ -339,7 +333,7 @@ test('a harder tier pays more crowns, and keeps its own firsts and clears', () =
   assert.ok(hard.crowns > normal.crowns);
   assert.equal(settleWave(m, 'orcs', 1, true, 0, 1).replay, true);
   // only the first Normal clear opens the next army
-  const m2 = newMeta(2);
+  const m2 = startedMeta(2);
   const last = a.waves.length;
   assert.equal(settleWave(m2, 'orcs', last, true, 0, 1).unlocked, undefined);
   assert.equal(recordOf(m2, 'orcs').clears, 0);
@@ -386,7 +380,7 @@ test('saves from before the 10 stars: a beaten army has its Normal clear star, n
   assert.deepEqual(Object.keys(old), ['orcs', 'undead']);
   assert.equal(old.orcs.met!['0'], 1);
   // loading: the stars count, nothing opens, and a second load changes nothing
-  const m = newMeta(5);
+  const m = startedMeta(5);
   m.armies = { orcs: { best: 8, won: 8, clears: 1, stars: { 8: 3 } } };
   const s = store();
   saveMeta(m, s);
@@ -399,7 +393,7 @@ test('saves from before the 10 stars: a beaten army has its Normal clear star, n
   assert.deepEqual(b.stash, []);
   assert.equal(a.stash.length, 0);
   // a save that has chests keeps exactly them (given, opened), and drops what is not a milestone
-  const m3 = newMeta(5);
+  const m3 = startedMeta(5);
   m3.armies.orcs = { best: 8, won: 8, clears: 1, stars: {}, met: { 0: 7, 1: 7, 2: 99 }, chests: [3, 5, 7 as number], hard: { 1: { won: 8, clears: 1 } } };
   m3.stash = [{ army: 'orcs', at: 5, tier: 1, seed: 123 }, { army: 'orcs', at: 5, tier: 1, seed: 124 }, { army: 'nope', at: 3, tier: 0, seed: 1 }, { army: 'orcs', at: 4, tier: 0, seed: 1 }];
   saveMeta(m3, s);
@@ -415,7 +409,7 @@ test('saves from before the 10 stars: a beaten army has its Normal clear star, n
 });
 
 test('the army card total counts the army stars (and the top bar sums them)', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   m.armies.orcs = { best: 8, won: 8, clears: 1, stars: {}, met: { 0: 7, 3: 1 } };
   m.armies.undead = { best: 8, won: 8, clears: 1, stars: {}, met: { 0: 1 } };
   assert.equal(ARMIES.reduce((n, a) => n + armyStars(m, a).got, 0), 5);
@@ -423,7 +417,7 @@ test('the army card total counts the army stars (and the top bar sums them)', ()
 });
 
 test('a save from the earlier chest format keeps its unopened chests, none twice, none lost', () => {
-  const m = newMeta(31);
+  const m = startedMeta(31);
   const s = store();
   const old = { ...m, armies: { orcs: { best: 8, won: 8, clears: 1, stars: {}, met: { 0: 7, 1: 7 }, chests: [3, 5], opened: [3] }, undead: { best: 8, won: 8, clears: 1, stars: {}, met: { 0: 7 }, chests: [3], opened: [3] } } };
   delete (old as Partial<typeof old>).stash;

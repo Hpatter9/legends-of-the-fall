@@ -6,14 +6,14 @@ import { startBattle } from '../src/sim/battle';
 import { hpShare, hurtParty } from '../src/sim/health';
 import { makeGear } from '../src/sim/gear';
 import { GREAT_RELIC_IDS, RELICS, RELIC_IDS, relicEffects } from '../src/sim/relics';
-import { newMeta } from '../src/sim/meta';
+import { startedMeta } from '../src/sim/meta';
 import { towerRun } from '../src/sim/modes';
 import { boostOf, startStage, type Run } from '../src/sim/run';
 import { clearNode, finishMystery, finishTower, inBattle, takeXp } from '../src/sim/tower';
 
 /** A tower run standing on a mystery floor whose card is `kind`'s. */
 function onFloor(kind: EventKind, seed = 3, floor = 4): Run {
-  const run = towerRun(seed, newMeta(1));
+  const run = towerRun(seed, startedMeta(1));
   run.stage = floor;
   run.tower!.cur = { id: 0, kind: 'mystery' };
   run.event = drawEvent(run, floor, [kind]);
@@ -64,7 +64,7 @@ test('every event is the same from the same seed, and every option can be taken 
 });
 
 test('the events join the draw: a long climb meets them all, and the old kinds are still there', () => {
-  const run = towerRun(9, newMeta(1));
+  const run = towerRun(9, startedMeta(1));
   const seen = new Set<string>();
   for (let floor = 1; floor < 600; floor++) seen.add(drawEvent(run, floor, TOWER_EVENT_KINDS).kind);
   assert.equal(seen.size, TOWER_EVENT_KINDS.length);

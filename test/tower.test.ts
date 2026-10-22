@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fight, place, playOut } from '../src/sim/battle';
 import { boostOf, finish, loadRun, newRun, saveRun, startStage, SQUAD, summonCost } from '../src/sim/run';
-import { loadMeta, newMeta, saveMeta } from '../src/sim/meta';
+import { loadMeta, startedMeta, saveMeta } from '../src/sim/meta';
 import { settleRun, towerRun } from '../src/sim/modes';
 import { drawEvent, chooseOption, TOWER_EVENT_KINDS } from '../src/sim/events';
 import { FALLEN, healParty, hpShare, hurtParty, squadHealth } from '../src/sim/health';
@@ -78,7 +78,7 @@ test('floors count on through the acts', () => {
 });
 
 test('a tower run starts on the first floor of a map, with a whole party', () => {
-  const run = towerRun(5, newMeta(1));
+  const run = towerRun(5, startedMeta(1));
   assert.equal(run.stage, 1);
   assert.equal(run.tower!.act, 1);
   assert.deepEqual(choices(run).map((n) => n.row), choices(run).map(() => 0));
@@ -87,7 +87,7 @@ test('a tower run starts on the first floor of a map, with a whole party', () =>
 });
 
 test('picking a node: only those joined to the last, and a node in play shuts the map', () => {
-  const run = towerRun(5, newMeta(1));
+  const run = towerRun(5, startedMeta(1));
   const t = run.tower!;
   const far = t.map.find((n) => n.row === 4)!;
   assert.equal(enterNode(run, far.id), false);
@@ -103,12 +103,12 @@ test('picking a node: only those joined to the last, and a node in play shuts th
 });
 
 test('a fight node brings a band fixed at entry, and a boss node the act boss', () => {
-  const run = towerRun(5, newMeta(1));
+  const run = towerRun(5, startedMeta(1));
   enterNode(run, choices(run)[0].id);
   const spec = run.tower!.cur!.fight!;
   assert.equal(startStage(run).units.filter((u) => u.side === 'foe').length, spec.band.length);
   assert.deepEqual(startStage(run).units.map((u) => u.def), startStage(run).units.map((u) => u.def));
-  const boss = towerRun(5, newMeta(1));
+  const boss = towerRun(5, startedMeta(1));
   boss.tower!.at = -1;
   boss.stage = ACT_ROWS;
   boss.tower!.row = ACT_ROWS - 1;
@@ -121,7 +121,7 @@ test('a fight node brings a band fixed at entry, and a boss node the act boss', 
 
 /** A run at a node of the kind, entered, with the floor given. */
 const at = (kind: NodeKind, floor = 4, seed = 9) => {
-  const run = towerRun(seed, newMeta(1));
+  const run = towerRun(seed, startedMeta(1));
   run.stage = floor;
   const node = run.tower!.map.find((n) => n.kind === kind)!;
   run.tower!.row = node.row;
@@ -214,14 +214,14 @@ test('treasure: the chest gives its gold and a relic or gear, once', () => {
 test('a mystery floor draws a card from the tower kinds; a spring heals; closing the card clears the floor', () => {
   assert.ok(TOWER_EVENT_KINDS.length > 5);
   const kinds = new Set<string>();
-  for (let s = 1; s <= 80; s++) kinds.add(drawEvent(towerRun(s, newMeta(1)), 4, TOWER_EVENT_KINDS).kind);
+  for (let s = 1; s <= 80; s++) kinds.add(drawEvent(towerRun(s, startedMeta(1)), 4, TOWER_EVENT_KINDS).kind);
   for (const k of ['spring', 'gambler', 'altar']) assert.ok(kinds.has(k), `${k} comes up`);
-  const run = towerRun(2, newMeta(1));
+  const run = towerRun(2, startedMeta(1));
   run.tower!.hp = { [run.roster[0].id]: 0.3 };
   run.event = { kind: 'spring', stage: 4, title: '', text: '', options: [{ label: 'Drink', text: '', cost: 0, effect: { t: 'heal', frac: 0.4 } }] };
   assert.ok(chooseOption(run, 0));
   assert.ok(Math.abs(hpShare(run, run.roster[0].id) - 0.7) < 1e-9);
-  const m = towerRun(3, newMeta(1));
+  const m = towerRun(3, startedMeta(1));
   const node = m.tower!.map.find((n) => n.kind === 'mystery')!;
   m.tower!.row = node.row;
   m.stage = floorOf(1, node.row);
@@ -235,13 +235,13 @@ test('a mystery floor draws a card from the tower kinds; a spring heals; closing
 });
 
 test('the altar costs every hero hp for a relic, a gambler pays only on a win', () => {
-  const run = towerRun(2, newMeta(1));
+  const run = towerRun(2, startedMeta(1));
   run.event = { kind: 'altar', stage: 4, title: '', text: '', options: [{ label: 'x', text: '', cost: 0, effect: { t: 'altar', frac: 0.25, id: 'banner' } }] };
   chooseOption(run, 0);
   assert.ok(run.relics!.includes('banner'));
   assert.ok(Math.abs(hpShare(run, run.roster[0].id) - 0.75) < 1e-9);
   const g = (win: boolean) => {
-    const r = towerRun(2, newMeta(1));
+    const r = towerRun(2, startedMeta(1));
     r.gold = 100;
     r.event = { kind: 'gambler', stage: 4, title: '', text: '', options: [{ label: 'x', text: '', cost: 40, effect: { t: 'gamble', win, n: 90 } }] };
     chooseOption(r, 0);
@@ -253,7 +253,7 @@ test('the altar costs every hero hp for a relic, a gambler pays only on a win', 
 
 /** A run whose heroes are strong enough to win the first floor, entered at a fight node. */
 const strongFight = (kind: NodeKind = 'fight') => {
-  const run = towerRun(4, newMeta(1));
+  const run = towerRun(4, startedMeta(1));
   for (const h of run.roster) h.bump = { hp: 6, atk: 6 };
   const node = run.tower!.map.find((n) => n.row === 0 && n.kind === 'fight')!;
   assert.ok(enterNode(run, node.id));
@@ -323,7 +323,7 @@ test('an elite offers a relic choice and pays more; a loss ends the run', () => 
 });
 
 test('a boss felled opens the next act: a new map from the first row, the floors running on', () => {
-  const run = towerRun(5, newMeta(1));
+  const run = towerRun(5, startedMeta(1));
   run.stage = ACT_ROWS;
   run.tower!.row = ACT_ROWS - 1;
   const boss = run.tower!.map.find((n) => n.kind === 'boss')!;
@@ -340,7 +340,7 @@ test('a boss felled opens the next act: a new map from the first row, the floors
 });
 
 test('later acts draw foes from the armies the run began with, and a harder foe each floor', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   const run = towerRun(7, m);
   run.stage = ACT_ROWS + 3;
   run.tower!.act = 2;
@@ -359,7 +359,7 @@ test('later acts draw foes from the armies the run began with, and a harder foe 
 });
 
 test('the foes grow stronger with each floor, an elite stronger than a fight', () => {
-  const run = towerRun(7, newMeta(1));
+  const run = towerRun(7, startedMeta(1));
   const hp = (kind: NodeKind, floor: number) => fightSpec(run, kind, floor).stage.foes!.hp!;
   assert.ok(hp('fight', 10) > hp('fight', 2));
   assert.ok(hp('elite', 6) > hp('fight', 6));
@@ -376,14 +376,14 @@ test('chests and equipment by floors: rewards grow with the furthest floor', () 
 
 test('a lost run pays its chests into the stash and its equipment into the inventory, once and the same every time', () => {
   const lost = (floors: number, bosses: number) => {
-    const run = towerRun(21, newMeta(1));
+    const run = towerRun(21, startedMeta(1));
     run.stage = floors + 1;
     run.tower!.bosses = bosses;
     run.tower!.act = bosses + 1;
     run.over = true;
     return run;
   };
-  const a = newMeta(1);
+  const a = startedMeta(1);
   const run = lost(30, 2);
   assert.equal(settleTower(a, { ...run, over: false }), null, 'not while it goes on');
   const s = settleTower(a, run)!;
@@ -396,18 +396,18 @@ test('a lost run pays its chests into the stash and its equipment into the inven
   const again = settleTower(a, run)!;
   assert.deepEqual(again, s);
   assert.equal(a.stash.length, s.bronze + s.silver + s.gold, 'paid once');
-  const b = newMeta(1);
+  const b = startedMeta(1);
   settleTower(b, lost(30, 2));
   assert.deepEqual(b.stash, a.stash);
   assert.deepEqual(b.equipment, a.equipment);
-  const small = newMeta(1);
+  const small = startedMeta(1);
   const ss = settleTower(small, lost(2, 0))!;
   assert.equal(small.stash.length, 0);
   assert.ok(ss.floors < s.floors);
 });
 
 test('the chests of a run survive a reload, even several of one kind', () => {
-  const m = newMeta(3);
+  const m = startedMeta(3);
   const run = towerRun(8, m);
   run.stage = 25;
   run.over = true;
@@ -420,7 +420,7 @@ test('the chests of a run survive a reload, even several of one kind', () => {
 });
 
 test('the tower record is the furthest floor cleared, and an old best carries over', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   m.tower = 17;
   const s = store();
   saveMeta(m, s);

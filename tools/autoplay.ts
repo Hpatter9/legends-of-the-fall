@@ -8,7 +8,7 @@ import { fight, place, playOut, type Battle } from '../src/sim/battle';
 import { chooseOption, leaveEvent } from '../src/sim/events';
 import { fightXp, gainXp, levelOfKind, xpFor } from '../src/sim/levels';
 import { newCastle, xpRate, type Castle } from '../src/sim/castle';
-import { newMeta, rankOf, type Meta } from '../src/sim/meta';
+import { startedMeta, rankOf, type Meta } from '../src/sim/meta';
 import { armyById } from '../src/sim/armies';
 import { armyRun, boostOf, finish, isBossRun, noteFight, SQUAD, startStage, summon, tierOfRun, type Run } from '../src/sim/run';
 import { armyRules } from '../src/sim/armyStars';
@@ -56,7 +56,7 @@ export function playArmy(meta: Meta, armyId: string, seed: number, party: readon
 
 /** A save whose party kinds are all at `level` (and nothing else). */
 export function savedAt(level: number, party: readonly string[], seed: number): Meta {
-  const m = newMeta(seed);
+  const m = startedMeta(seed);
   for (const k of party) m.xp[k] = xpFor(level);
   return m;
 }

@@ -14,7 +14,7 @@ import { tierOf } from './sim/tiers';
 import { formOf, UNITS } from './sim/units';
 import { ELITE_BY_ID } from './sim/elites';
 import { isBoss } from './sim/foes';
-import { earn, loadMeta, rankOf, rarityOf, recordStars, saveMeta, type Meta } from './sim/meta';
+import { earn, loadMeta, rankOf, recordStars, saveMeta, type Meta } from './sim/meta';
 import { xpRate } from './sim/castle';
 import { heroStats } from './sim/talents';
 import { powerOf, powerText } from './sim/power';
@@ -709,7 +709,7 @@ class Game {
       this.evolved = new Set(this.run.roster.filter((h) => h.grade > 1 && !before.has(h.id)).map((h) => h.id));
       this.refresh();
       const card = got ? $('bench').querySelector<HTMLElement>(`[data-id="${got.id}"]`) : null;
-      if (card) summonBurst(card, got ? rarityOf(got.kind) : 1);
+      if (card) summonBurst(card);
     });
     $('homeBtn').addEventListener('click', () => this.home.open());
     $('next').addEventListener('click', () => {
@@ -1183,7 +1183,7 @@ class Game {
       const def = UNITS[h.kind];
       const id = String(h.id);
       const card = document.createElement('div');
-      card.className = `card g${h.grade} r${rarityOf(h.kind)}${this.evolved.has(h.id) ? ' evolve' : ''}`;
+      card.className = `card g${h.grade}${this.evolved.has(h.id) ? ' evolve' : ''}`;
       card.dataset.id = id;
       const stars = document.createElement('em');
       stars.textContent = '★'.repeat(h.grade);

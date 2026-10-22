@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readyBattle } from './helpers';
 import { playOut, type Battle } from '../src/sim/battle';
 import { BOSS_STAR_TIME_MS, ratingOf, starCrowns, starGold, STAR_CROWNS, STAR_GOLD, STAR_TIME_MS } from '../src/sim/stars';
-import { earn, loadMeta, newMeta, recordStars, runCrowns, saveMeta, stageCrowns, starSummary } from '../src/sim/meta';
+import { earn, loadMeta, startedMeta, recordStars, runCrowns, saveMeta, stageCrowns, starSummary } from '../src/sim/meta';
 import { finish, newRun, reward, START_GOLD } from '../src/sim/run';
 
 /** A fight already won in `t` ms, with no one fallen unless `fallen` says a hero did. */
@@ -64,7 +64,7 @@ test('each star adds crowns and gold to the win', () => {
   assert.equal(starCrowns(3), 3 * STAR_CROWNS);
   assert.equal(starGold(2), 2 * STAR_GOLD);
   assert.equal(starCrowns(0), 0);
-  const m = newMeta(1);
+  const m = startedMeta(1);
   assert.equal(earn(m, 4, true, 3), stageCrowns(4) + 9);
   assert.equal(earn(m, 4, false, 3), runCrowns(4));
   const r = newRun(4);
@@ -73,7 +73,7 @@ test('each star adds crowns and gold to the win', () => {
 });
 
 test('the best stars are kept for each stage', () => {
-  const m = newMeta(2);
+  const m = startedMeta(2);
   assert.equal(starSummary(m), null);
   assert.equal(recordStars(m, 4, 2), true);
   assert.equal(recordStars(m, 4, 1), false);
@@ -93,7 +93,7 @@ test('a save from before stars loads with none, and bad entries are dropped', ()
 });
 
 test('stars save and load', () => {
-  const m = newMeta(6);
+  const m = startedMeta(6);
   recordStars(m, 9, 2);
   const saved: Record<string, string> = {};
   saveMeta(m, { setItem: (k, v) => (saved[k] = v) });

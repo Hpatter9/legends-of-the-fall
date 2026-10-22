@@ -6,9 +6,9 @@ import { apart, fight, place, startBattle, stepBattle, type Battle, type BattleE
 import { afterBlow, KITS, onKill, onStrike, rageOf, tal } from '../src/sim/abilities';
 import { firedCount } from '../src/sim/equipFx';
 import { ABILITIES, emptyStats, equipItem, grantEquipment, type EquipStats } from '../src/sim/equipment';
-import { loadMeta, newMeta, saveMeta } from '../src/sim/meta';
+import { loadMeta, startedMeta, saveMeta } from '../src/sim/meta';
 import { xpFor, levelOfKind } from '../src/sim/levels';
-import { ALL_HEROES, UNITS } from '../src/sim/units';
+import { ALL_HEROES } from '../src/sim/units';
 import {
   FULL_TREE_POINTS, LEVEL_POINT_EVERY, MAX_SHARD_POINTS, RESPEC_BASE, RESPEC_PER_POINT, SHARD_POINT_COST, TAL_KEYS, TALENT_ABILITIES, TREES, boughtOf, buyPoint, canBuyPoint, canLearn, heroStats, learn,
   levelPoints, nodeOf, picksOf, pointsEarned, pointsFree, pointsSpent, respec, respecCost, talentStats, tierNodes, whyNot,
@@ -18,7 +18,7 @@ import { EQUIP_ICONS } from '../src/equipArt';
 const stats = (p: Partial<EquipStats>): EquipStats => ({ ...emptyStats(), ...p });
 /** A meta with `kind` unlocked, at `level` (by its XP) and with `shards` shards. */
 function metaAt(kind: string, level: number, shards = 0) {
-  const m = newMeta(5);
+  const m = startedMeta(5);
   if (!m.unlocked.includes(kind)) m.unlocked.push(kind);
   m.xp[kind] = xpFor(level);
   m.shards[kind] = shards;
@@ -67,10 +67,10 @@ test('every hero has a tree of eight nodes in three tiers, with icons, words and
   assert.equal(FULL_TREE_POINTS, 9);
 });
 
-test('a skill-changing node in each tier-2 pair, and the Mythics\' capstones reach their ultimates', () => {
+test('a skill-changing node in each tier-2 pair, and the capstones of the heroes with an ultimate reach it', () => {
   for (const kind of ALL_HEROES) {
     for (const n of tierNodes(kind, 2)) assert.ok(n.tal, `${n.id} changes the skill`);
-    if (UNITS[kind].rarity === 5 && KITS[kind].ultimate) assert.ok(tierNodes(kind, 3).some((n) => n.tal?.ultRate || n.tal?.ultPow || n.tal?.dur), `${kind} capstone`);
+    if (KITS[kind].ultimate) assert.ok(tierNodes(kind, 3).some((n) => n.tal?.ultRate || n.tal?.ultPow || n.tal?.dur), `${kind} capstone`);
   }
 });
 
@@ -98,7 +98,7 @@ test('points come from levels and from shards', () => {
   // (a level 20 hero with every shard point can take a whole tree)
   assert.ok(levelPoints(20) + MAX_SHARD_POINTS >= FULL_TREE_POINTS);
   // (a locked hero cannot buy)
-  const fresh = newMeta(1);
+  const fresh = startedMeta(1);
   fresh.shards.kitsune = 30;
   assert.equal(canBuyPoint(fresh, 'kitsune'), false);
 });
@@ -127,7 +127,7 @@ test('a node costs its tier, and the tiers open in turn', () => {
   const poor = metaAt('knight', 3);
   assert.ok(learn(poor, 'knight', 'knight:1a'));
   assert.match(whyNot(poor, 'knight', 'knight:1b')!, /point/);
-  assert.equal(learn(newMeta(1), 'kitsune', 'kitsune:1a'), false, 'a locked hero');
+  assert.equal(learn(startedMeta(1), 'kitsune', 'kitsune:1a'), false, 'a locked hero');
   assert.equal(learn(metaAt('knight', 20), 'knight', 'samurai:1a'), false, 'a node of another hero');
 });
 
@@ -174,7 +174,7 @@ test('a respec costs crowns and gives every point back', () => {
 // ---- saves ----
 
 test('old saves load with no talents, and a damaged one keeps only what is legal', () => {
-  const m = newMeta(9);
+  const m = startedMeta(9);
   const old = JSON.parse(JSON.stringify(m));
   delete old.talents;
   const store = { getItem: () => JSON.stringify(old) };
@@ -497,7 +497,7 @@ test('a hero with talents fights, the same fight twice plays out the same, and a
     assert.notEqual(one.log, play(kind, undefined).log, `${kind}: the talents change the fight`);
   }
   // (a hero with no talents and no equipment has no `eq`, as before)
-  const plain = arena('knight', heroStats(newMeta(1), 'knight'), 2);
+  const plain = arena('knight', heroStats(startedMeta(1), 'knight'), 2);
   assert.equal(plain.hero.eq, undefined);
 });
 

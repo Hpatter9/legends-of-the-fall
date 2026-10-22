@@ -32,7 +32,6 @@ test('the seven new heroes are registered with kits, rarities and sensible scale
     assert.ok(ALL_HEROES.includes(id), id);
     const d = UNITS[id];
     assert.equal(d.side, 'hero');
-    assert.ok(d.rarity, id);
     assert.ok(KITS[id].skill.name && KITS[id].passive.name, id);
     const fig = (layout as Record<string, { figure: number }>)[d.sheet].figure * d.scale;
     assert.ok(fig > 40 && fig < 52, `${id} ${fig}`);

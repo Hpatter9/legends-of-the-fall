@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { newCastle, spellBudget, SPELL_BUDGET } from '../src/sim/castle';
-import { loadMeta, newMeta, saveMeta } from '../src/sim/meta';
+import { loadMeta, startedMeta, saveMeta } from '../src/sim/meta';
 import { budgetOf, equipBlock, equipSpell, LOADOUT_SIZE, powerOf, readLoadout, SPELLS, SPELL_IDS, STARTER_SPELLS, unequipSpell, unlockSpell } from '../src/sim/spells';
 
 const store = () => {
@@ -10,14 +10,14 @@ const store = () => {
 };
 
 test('a new game owns and has equipped the starting three, within the budget', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   assert.deepEqual(m.spellbook.owned, [...STARTER_SPELLS]);
   assert.deepEqual(m.spellbook.equipped, [...STARTER_SPELLS]);
   assert.ok(powerOf(m.spellbook.equipped) <= budgetOf(m));
 });
 
 test('three strong spells cannot be equipped together', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   m.spellbook.owned = [...SPELL_IDS];
   m.spellbook.equipped = [];
   assert.ok(equipSpell(m, 'meteor'));
@@ -31,14 +31,14 @@ test('three strong spells cannot be equipped together', () => {
 });
 
 test('a full loadout refuses another until one is unequipped; an unowned or equipped spell is refused', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   m.spellbook.owned = [...SPELL_IDS];
   assert.equal(equipBlock(m, 'shield'), 'All three slots are full: unequip one first');
   assert.equal(equipBlock(m, 'heal'), 'Already equipped');
   assert.ok(unequipSpell(m, 'meteor'));
   assert.equal(unequipSpell(m, 'meteor'), false);
   assert.ok(equipSpell(m, 'shield'));
-  const n = newMeta(2);
+  const n = startedMeta(2);
   assert.equal(equipBlock(n, 'quake'), 'Not unlocked yet');
 });
 
@@ -51,7 +51,7 @@ test('the Mage Tower raises the budget at levels 2 and 4', () => {
   assert.equal(spellBudget(c), SPELL_BUDGET + 1);
   c.mageTower = 4;
   assert.equal(spellBudget(c), SPELL_BUDGET + 2);
-  const m = newMeta(1);
+  const m = startedMeta(1);
   m.spellbook.owned = [...SPELL_IDS];
   m.spellbook.equipped = ['meteor', 'quake'];
   assert.equal(equipBlock(m, 'heal'), 'Over the power budget');
@@ -60,7 +60,7 @@ test('the Mage Tower raises the budget at levels 2 and 4', () => {
 });
 
 test('unlocking costs crowns once, and only with enough', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   assert.equal(unlockSpell(m, 'shield'), false);
   m.crowns = SPELLS.shield.price + 5;
   assert.ok(unlockSpell(m, 'shield'));
@@ -73,7 +73,7 @@ test('unlocking costs crowns once, and only with enough', () => {
 
 test('the spellbook is saved and loaded', () => {
   const s = store();
-  const m = newMeta(3);
+  const m = startedMeta(3);
   m.crowns = 500;
   unlockSpell(m, 'shield');
   unequipSpell(m, 'meteor');
@@ -86,7 +86,7 @@ test('the spellbook is saved and loaded', () => {
 
 test('old saves without a spellbook get the starting three equipped', () => {
   const s = store();
-  const m = newMeta(3) as unknown as Record<string, unknown>;
+  const m = startedMeta(3) as unknown as Record<string, unknown>;
   delete m.spellbook;
   s.setItem('legends.meta', JSON.stringify(m));
   const back = loadMeta(1, s);

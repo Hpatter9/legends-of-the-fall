@@ -33,7 +33,7 @@ test('the eight class heroes are registered, drawn at a sensible size, with a fo
     assert.ok(ALL_HEROES.includes(id), id);
     const d = UNITS[id];
     assert.equal(d.side, 'hero');
-    assert.ok(d.rarity && d.forms?.length === 3, id);
+    assert.ok(d.forms?.length === 3, id);
     assert.ok(KITS[id].skill.name && KITS[id].passive.name, id);
     assert.ok(SKILL_FX[KITS[id].skill.name], id);
     for (const f of d.forms!) assert.ok((layout as Record<string, unknown>)[f], f);
