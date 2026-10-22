@@ -58,14 +58,15 @@ export const levelGain = (from: number, to: number) => ({ hp: Math.round(LEVEL_H
 export const xpOf = (m: Meta, kind: string): number => m.xp[kind] ?? 0;
 export const levelOfKind = (m: Meta, kind: string): number => levelOf(xpOf(m, kind));
 
-/** The XP each hero kind earns from a finished fight, by kind: every hero that fought counts once, and a win pays more. */
-export function fightXp(b: Battle): Record<string, number> {
+/** The XP each hero kind earns from a finished fight, by kind: every hero that fought counts once, and a win pays more. `rate` is the castle's Library
+ *  (1 without it); it multiplies each hero's pay. */
+export function fightXp(b: Battle, rate = 1): Record<string, number> {
   const out: Record<string, number> = {};
   const won = b.phase === 'won';
   for (const u of b.units) {
     if (u.side !== 'hero') continue;
     const share = (u.dealt ?? 0) / XP_PER_DAMAGE + (u.healed ?? 0) / XP_PER_HEALING + (u.slain ?? 0);
-    const xp = Math.round(XP_TAKE_PART + (won ? XP_WIN : 0) + share);
+    const xp = Math.round((XP_TAKE_PART + (won ? XP_WIN : 0) + share) * rate);
     out[u.def] = (out[u.def] ?? 0) + xp;
   }
   return out;

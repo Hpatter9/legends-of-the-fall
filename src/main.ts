@@ -12,6 +12,7 @@ import { showUnlock } from './armiesView';
 import { formOf, UNITS } from './sim/units';
 import { isBoss } from './sim/foes';
 import { earn, loadMeta, rankOf, rarityOf, recordStars, saveMeta, type Meta } from './sim/meta';
+import { xpRate } from './sim/castle';
 import { fightXp, gainXp, levelGain, levelOfKind, progressOf, xpOf, type LevelUp } from './sim/levels';
 import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
 import { Gacha } from './gacha';
@@ -1001,7 +1002,7 @@ class Game {
       const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b });
       this.showStars(won ? rating : null);
       this.showStats();
-      const gains = fightXp(b);
+      const gains = fightXp(b, xpRate(this.meta.castle));
       const from = Object.fromEntries(Object.keys(gains).map((k) => [k, xpOf(this.meta, k)]));
       this.showXp(gains, from, gainXp(this.meta, gains));
       saveMeta(this.meta);

@@ -13,6 +13,10 @@ PICKS = {
     'stockpile': K + 'stockpile', 'longhouse': K + 'longhouse', 'great_hall': D + 'great_hall',
     'cottage': K + 'cottage', 'thatch': S + 'longhouse', 'barracks': K + 'barracks',
     'anvil_stall': D + 'anvil_stall', 'workshop': K + 'workshop', 'forge': D + 'forge',
+    # the tavern and the chapel (places, not upgrades), the stable and the library, the market and the garden
+    'tavern': K + 'tavern', 'church': K + 'chapel', 'stable': K + 'stable', 'cart': K + 'cart', 'shed': S + 'stockpile', 'granary': K + 'granary',
+    'atelier': F + 'workshop', 'manor': L + 'tavern', 'baskets': DR + 'baskets', 'stall': K + 'market_stall', 'stall2': S + 'market_stall', 'stall3': N + 'carpet_stall',
+    'field': K + 'field_tile', 'field2': S + 'field_tile', 'herb': DR + 'herb_garden_tile', 'signpost': K + 'signpost',
     # walls and gates
     'gatehouse': K + 'gatehouse', 'wall': K + 'stone_wall_run',
     # props

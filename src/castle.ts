@@ -15,38 +15,54 @@ import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
 import { gradeOfRank } from './render/tavernSpots';
 import { strongest } from './menuHeroes';
-import { cellX, cellY, GRASS, isPaved, layoutFor, LIGHTS, LOOKS, lookBox, NAME_OF, pickScale, stageOf, TILE_H, TILE_W, VENTS, walkTiles, YARD, type Layout, type Look } from './render/castleSpots';
+import { cellX, cellY, GRASS, isPaved, layoutFor, LIGHTS, lookBox, lookFor, LOOKS, NAME_OF, pickScale, PLACE_IDS, PLACE_VENTS, PLACES, PLOT_IDS, stageOf, TILE_H, TILE_W, VENTS, walkTiles, YARD, type Layout, type Look, type PlaceId, type PlotId } from './render/castleSpots';
 import anvil_stallUrl from './art/castle/anvil_stall.png';
+import atelierUrl from './art/castle/atelier.png';
 import bannerUrl from './art/castle/banner.png';
 import barracksUrl from './art/castle/barracks.png';
 import barrelsUrl from './art/castle/barrels.png';
+import basketsUrl from './art/castle/baskets.png';
 import berriesUrl from './art/castle/berries.png';
 import brazierUrl from './art/castle/brazier.png';
 import bushUrl from './art/castle/bush.png';
 import campfireUrl from './art/castle/campfire.png';
+import cartUrl from './art/castle/cart.png';
 import chapelUrl from './art/castle/chapel.png';
 import chestsUrl from './art/castle/chests.png';
+import churchUrl from './art/castle/church.png';
 import cobble_tileUrl from './art/castle/cobble_tile.png';
 import cottageUrl from './art/castle/cottage.png';
 import cratesUrl from './art/castle/crates.png';
 import crystalsUrl from './art/castle/crystals.png';
+import fieldUrl from './art/castle/field.png';
+import field2Url from './art/castle/field2.png';
 import flowersUrl from './art/castle/flowers.png';
 import forgeUrl from './art/castle/forge.png';
 import gatehouseUrl from './art/castle/gatehouse.png';
+import granaryUrl from './art/castle/granary.png';
 import grass_tileUrl from './art/castle/grass_tile.png';
 import great_hallUrl from './art/castle/great_hall.png';
 import hayUrl from './art/castle/hay.png';
+import herbUrl from './art/castle/herb.png';
 import lampUrl from './art/castle/lamp.png';
 import longhouseUrl from './art/castle/longhouse.png';
+import manorUrl from './art/castle/manor.png';
 import oakUrl from './art/castle/oak.png';
 import pineUrl from './art/castle/pine.png';
 import rackUrl from './art/castle/rack.png';
 import rocksUrl from './art/castle/rocks.png';
 import rosesUrl from './art/castle/roses.png';
+import shedUrl from './art/castle/shed.png';
 import shrineUrl from './art/castle/shrine.png';
+import signpostUrl from './art/castle/signpost.png';
 import spiralUrl from './art/castle/spiral.png';
+import stableUrl from './art/castle/stable.png';
+import stallUrl from './art/castle/stall.png';
+import stall2Url from './art/castle/stall2.png';
+import stall3Url from './art/castle/stall3.png';
 import statueUrl from './art/castle/statue.png';
 import stockpileUrl from './art/castle/stockpile.png';
+import tavernUrl from './art/castle/tavern.png';
 import thatchUrl from './art/castle/thatch.png';
 import wallUrl from './art/castle/wall.png';
 import watchtowerUrl from './art/castle/watchtower.png';
@@ -55,36 +71,52 @@ import workshopUrl from './art/castle/workshop.png';
 
 const ART: Record<string, string> = {
   anvil_stall: anvil_stallUrl,
+  atelier: atelierUrl,
   banner: bannerUrl,
   barracks: barracksUrl,
   barrels: barrelsUrl,
+  baskets: basketsUrl,
   berries: berriesUrl,
   brazier: brazierUrl,
   bush: bushUrl,
   campfire: campfireUrl,
+  cart: cartUrl,
   chapel: chapelUrl,
   chests: chestsUrl,
+  church: churchUrl,
   cobble_tile: cobble_tileUrl,
   cottage: cottageUrl,
   crates: cratesUrl,
   crystals: crystalsUrl,
+  field: fieldUrl,
+  field2: field2Url,
   flowers: flowersUrl,
   forge: forgeUrl,
   gatehouse: gatehouseUrl,
+  granary: granaryUrl,
   grass_tile: grass_tileUrl,
   great_hall: great_hallUrl,
   hay: hayUrl,
+  herb: herbUrl,
   lamp: lampUrl,
   longhouse: longhouseUrl,
+  manor: manorUrl,
   oak: oakUrl,
   pine: pineUrl,
   rack: rackUrl,
   rocks: rocksUrl,
   roses: rosesUrl,
+  shed: shedUrl,
   shrine: shrineUrl,
+  signpost: signpostUrl,
   spiral: spiralUrl,
+  stable: stableUrl,
+  stall: stallUrl,
+  stall2: stall2Url,
+  stall3: stall3Url,
   statue: statueUrl,
   stockpile: stockpileUrl,
+  tavern: tavernUrl,
   thatch: thatchUrl,
   wall: wallUrl,
   watchtower: watchtowerUrl,
@@ -253,6 +285,8 @@ const GLOWING: Record<string, { dx: number; dy: number; size: number; al: number
   lamp: { dx: 0, dy: -66, size: 26, al: 0.5, tint: '#ffcf70' },
 };
 
+const isPlace = (id: PlotId): id is PlaceId => id === 'tavern' || id === 'chapel';
+
 const BUILD_MS = 1500;
 const SWAP_MS = 800;
 
@@ -269,7 +303,7 @@ export class CastleScene {
   private motes: Mote[] = [];
   private builds: Build[] = [];
   private levels: Partial<Record<BuildingId, number>> = {};
-  private tagEls = new Map<BuildingId, HTMLButtonElement>();
+  private tagEls = new Map<PlotId, HTMLButtonElement>();
   private scale = 1;
   private lay: Layout = YARD;
   /** Css pixels per scene pixel (the scale in device pixels over the device pixel ratio). */
@@ -288,16 +322,23 @@ export class CastleScene {
   private down: { x: number; y: number; t: number } | null = null;
   private watch: ResizeObserver;
 
-  constructor(private onPick: (id: BuildingId) => void) {
+  constructor(private onPick: (id: PlotId) => void) {
     this.stage.append(this.canvas, this.tags);
     this.scroll.append(this.stage);
     this.root.append(this.scroll);
     this.ctx.imageSmoothingEnabled = false;
-    for (const id of BUILDING_IDS) {
+    for (const id of PLOT_IDS) {
       const b = el('button', 'ctTag');
       b.addEventListener('click', () => this.onPick(id));
       this.tags.append(b);
       this.tagEls.set(id, b);
+    }
+    // (the places' tags say where they lead, and never change)
+    for (const id of PLACE_IDS) {
+      const tag = this.tagEls.get(id)!;
+      tag.className = 'ctTag place';
+      tag.replaceChildren(el('b', '', PLACES[id].name), el('span', '', `· ${PLACES[id].to}`));
+      tag.setAttribute('aria-label', `${PLACES[id].name} · ${PLACES[id].to}`);
     }
     onSettings((s) => (this.saver = s.saver));
     window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
@@ -331,7 +372,7 @@ export class CastleScene {
       if (tag.dataset.key === key) continue;
       tag.dataset.key = key;
       tag.className = `ctTag${ready ? ' ready' : ''}${cost === null ? ' full' : ''}`;
-      tag.replaceChildren(el('b', '', NAME_OF(id)), el('span', '', level === 0 ? 'not built' : `level ${level}/${maxLevel(id)}`));
+      tag.replaceChildren(el('b', '', NAME_OF(id)), el('span', '', level === 0 ? 'not built' : `Lv ${level}/${maxLevel(id)}`));
       if (ready) tag.append(el('i', 'ctUp', '▲'));
       tag.setAttribute('aria-label', `${NAME_OF(id)}, level ${level} of ${maxLevel(id)}${ready ? ', can upgrade' : ''}`);
     }
@@ -405,7 +446,7 @@ export class CastleScene {
       e.style.height = `${vh * css}px`;
     }
     // (the name tags shrink a little with the village, but stay readable)
-    this.stage.style.setProperty('--ts', String(Math.max(0.7, Math.min(1, css * 1.6))));
+    this.stage.style.setProperty('--ts', String(Math.max(0.55, Math.min(1, css * 1.6))));
     this.ctx.imageSmoothingEnabled = false;
     this.still = this.paintStill(art, k);
     this.glow = this.paintGlow(k);
@@ -493,11 +534,11 @@ export class CastleScene {
 
   /** Place the name tags over their buildings (percentages of the scene, so they follow its scale). */
   private layTags(): void {
-    for (const id of BUILDING_IDS) {
+    for (const id of PLOT_IDS) {
       const tag = this.tagEls.get(id)!;
       const p = this.lay.plots[id];
-      const box = lookBox(LOOKS[id][stageOf(id, this.levels[id] ?? 0)], p.flip);
-      tag.style.left = `${((this.view.ox + p.x + (box.x0 + box.x1) / 2) / this.view.w) * 100}%`;
+      const box = lookBox(lookFor(id, this.stageNow(id)), p.flip);
+      tag.style.left = `${((this.view.ox + p.x + (box.x0 + box.x1) / 2 + (p.tagDx ?? 0)) / this.view.w) * 100}%`;
       tag.style.top = `${((this.view.oy + (p.tagY ?? p.y - box.h - 4)) / this.view.h) * 100}%`;
     }
   }
@@ -629,9 +670,9 @@ export class CastleScene {
     if (spark) this.nextSpark = this.now + rand(140, 320);
     const glint = this.now >= this.nextGlint;
     if (glint) this.nextGlint = this.now + rand(350, 800);
-    for (const id of BUILDING_IDS) {
+    for (const id of PLOT_IDS) {
       const p = this.lay.plots[id];
-      for (const v of VENTS[id][this.shown(id)] ?? []) {
+      for (const v of isPlace(id) ? PLACE_VENTS[id] : VENTS[id][this.shown(id)] ?? []) {
         const x = p.x + (p.flip ? -v.dx : v.dx);
         const y = p.y + v.dy;
         if (v.kind === 'smoke' && puff) this.motes.push({ x, y, vx: rand(-1, 3), vy: rand(-14, -8), age: 0, life: rand(2000, 3000), size: 3, color: '#d8d4cc', grow: 3, kind: 'smoke' });
@@ -643,10 +684,16 @@ export class CastleScene {
   }
 
   /** The look a building shows now (while it is being built, the old one until the swap). */
-  private shown(id: BuildingId): number {
+  private shown(id: PlotId): number {
+    if (isPlace(id)) return 0;
     const b = this.builds.find((x) => x.id === id);
     if (b) return this.now - b.start < SWAP_MS ? b.from : b.to;
-    return stageOf(id, this.levels[id] ?? 0);
+    return this.stageNow(id);
+  }
+
+  /** The look a plot has at its level (a place has only one). */
+  private stageNow(id: PlotId): number {
+    return isPlace(id) ? 0 : stageOf(id, this.levels[id] ?? 0);
   }
 
   // ---- drawing ----
@@ -675,7 +722,7 @@ export class CastleScene {
         : () => g.drawImage(im, x, (p.y - im.height) * s, im.width * s, im.height * s);
       list.push({ depth: p.depth ?? p.y, paint });
     }
-    for (const id of BUILDING_IDS) list.push({ depth: this.lay.plots[id].y, paint: () => this.building(a, id) });
+    for (const id of PLOT_IDS) list.push({ depth: this.lay.plots[id].y, paint: () => this.building(a, id) });
     for (const w of this.walkers.values()) list.push({ depth: w.y, paint: () => this.hero(w) });
     list.sort((p, q) => p.depth - q.depth);
     for (const e of list) e.paint();
@@ -685,7 +732,7 @@ export class CastleScene {
     g.restore();
   }
 
-  private drawLook(a: Record<string, HTMLImageElement>, id: BuildingId, look: Look, lift = 0): void {
+  private drawLook(a: Record<string, HTMLImageElement>, id: PlotId, look: Look, lift = 0): void {
     const g = this.ctx;
     const s = this.scale;
     const p = this.lay.plots[id];
@@ -702,14 +749,14 @@ export class CastleScene {
     }
   }
 
-  private building(a: Record<string, HTMLImageElement>, id: BuildingId): void {
+  private building(a: Record<string, HTMLImageElement>, id: PlotId): void {
     const stage = this.shown(id);
-    const b = this.builds.find((x) => x.id === id);
+    const b = isPlace(id) ? undefined : this.builds.find((x) => x.id === id);
     const age = b ? this.now - b.start : BUILD_MS;
     // (a look that has just arrived settles three pixels, and the scaffolding comes down)
     const pop = b && age >= SWAP_MS && age < SWAP_MS + 180 ? Math.round((1 - (age - SWAP_MS) / 180) * 3) : 0;
-    this.drawLook(a, id, LOOKS[id][stage], pop);
-    if (b && age < SWAP_MS + 300) {
+    this.drawLook(a, id, lookFor(id, stage), pop);
+    if (b && !isPlace(id) && age < SWAP_MS + 300) {
       const o = lookBox(LOOKS[id][b.from], this.lay.plots[id].flip);
       const n = lookBox(LOOKS[id][b.to], this.lay.plots[id].flip);
       this.scaffold(id, Math.min(o.x0, n.x0), Math.max(o.x1, n.x1), Math.max(o.h, n.h), age < SWAP_MS ? 1 : 1 - (age - SWAP_MS) / 300);
@@ -767,11 +814,11 @@ export class CastleScene {
       g.globalAlpha = Math.max(0, Math.min(1, al * pulse));
       g.drawImage(this.tinted(tint), (cx - size / 2) * s, (cy - size / 2) * s, size * s, size * s);
     };
-    for (const id of BUILDING_IDS) {
+    for (const id of PLOT_IDS) {
       const p = this.lay.plots[id];
       const stage = this.shown(id);
-      for (const l of LIGHTS[id][stage] ?? []) spot(p.x + (p.flip ? -l.dx : l.dx), p.y + l.dy, l.size, l.al, l.tint);
-      for (const part of LOOKS[id][stage].parts) {
+      for (const l of isPlace(id) ? [] : LIGHTS[id][stage] ?? []) spot(p.x + (p.flip ? -l.dx : l.dx), p.y + l.dy, l.size, l.al, l.tint);
+      for (const part of lookFor(id, stage).parts) {
         const glow = GLOWING[part.sprite];
         if (glow) spot(p.x + (p.flip ? -part.dx : part.dx) + glow.dx, p.y + part.dy + glow.dy, glow.size, glow.al, glow.tint);
       }
@@ -867,10 +914,10 @@ export class CastleScene {
     const box = this.canvas.getBoundingClientRect();
     const rx = ((e.clientX - box.left) / box.width) * this.view.w - this.view.ox;
     const ry = ((e.clientY - box.top) / box.height) * this.view.h - this.view.oy;
-    let best: { id: BuildingId; depth: number } | null = null;
-    for (const id of BUILDING_IDS) {
+    let best: { id: PlotId; depth: number } | null = null;
+    for (const id of PLOT_IDS) {
       const p = this.lay.plots[id];
-      const b = lookBox(LOOKS[id][stageOf(id, this.levels[id] ?? 0)], p.flip);
+      const b = lookBox(lookFor(id, this.stageNow(id)), p.flip);
       // (an empty plot is small to hit, so every building has at least a generous patch of ground)
       const cx = p.x + (b.x0 + b.x1) / 2;
       const half = Math.max(b.w / 2, 24, 22 / this.css);

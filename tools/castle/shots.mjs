@@ -15,7 +15,7 @@ const srv = createServer((q, r) => {
 }).listen(Number(process.env.PORT ?? 8127));
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const HEROES = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard', 'barbarian', 'paladin', 'druid'];
-const STATES = { empty: { treasury: 0, barracks: 0, armoury: 0, mageTower: 0 }, part: { treasury: 1, barracks: 3, armoury: 2, mageTower: 1 }, maxed: { treasury: 5, barracks: 5, armoury: 5, mageTower: 4 } };
+const STATES = { empty: { treasury: 0, barracks: 0, armoury: 0, mageTower: 0, stable: 0, library: 0 }, part: { treasury: 1, barracks: 3, armoury: 2, mageTower: 1, stable: 2, library: 4 }, maxed: { treasury: 5, barracks: 5, armoury: 5, mageTower: 4, stable: 5, library: 5 } };
 const DPR = Number(process.env.DPR ?? 3);
 const TAG = DPR === 1 ? '-dpr1' : '';
 const SIZES = { upright: { width: 393, height: 852 }, sideways: { width: 852, height: 393 }, ...(process.env.DESKTOP ? { desktop: { width: 1280, height: 800 } } : {}) };

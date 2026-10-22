@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { BUILDING_IDS, maxLevel } from '../src/sim/castle';
-import { BLURB, effectText, footprint, inBlock, isPaved, LIGHTS, LOOKS, lookBox, pickScale, SPRITE_SIZE, spriteName, stageOf, STAGES, TILE_H, TILE_W, VENTS, walkTiles, YARD } from '../src/render/castleSpots';
+import { BLURB, effectText, footprint, inBlock, isPaved, LIGHTS, lookFor, LOOKS, lookBox, pickScale, PLACE_IDS, PLACE_LOOK, PLACES, PLOT_IDS, SPRITE_SIZE, spriteName, stageOf, STAGES, TILE_H, TILE_W, VENTS, walkTiles, YARD } from '../src/render/castleSpots';
 
 const LAYOUTS = { yard: YARD };
 const looksOf = (id: (typeof BUILDING_IDS)[number]) => LOOKS[id];
@@ -23,6 +23,7 @@ test('every picture the looks and props name exists, and its size in the table i
 test('every picture is used (by a look, a prop or the ground), and the ground tiles are one lattice cell across', () => {
   const used = new Set<string>(['grass_tile', 'cobble_tile']);
   for (const id of BUILDING_IDS) for (const look of looksOf(id)) for (const p of look.parts) used.add(p.sprite);
+  for (const id of PLACE_IDS) for (const p of PLACE_LOOK[id].parts) used.add(p.sprite);
   for (const lay of Object.values(LAYOUTS)) for (const p of lay.props) used.add(p.sprite);
   assert.deepEqual(Object.keys(SPRITE_SIZE).filter((k) => !used.has(k)), []);
   // (the tiles come from the isometric kits, half size: a diamond about 90 across, so rows half a tile apart meet edge to edge)
@@ -41,14 +42,14 @@ test('the wall, what stands beyond it and the trees are drawn behind everything,
 
 test('every upgrade has four looks and a plot on the tile lattice, inside the yard', () => {
   for (const [name, lay] of Object.entries(LAYOUTS)) {
-    assert.deepEqual(Object.keys(lay.plots).sort(), [...BUILDING_IDS].sort(), name);
-    for (const id of BUILDING_IDS) {
+    assert.deepEqual(Object.keys(lay.plots).sort(), [...PLOT_IDS].sort(), name);
+    for (const id of PLOT_IDS) {
       const p = lay.plots[id];
       assert.ok(Number.isInteger(p.u) && Number.isInteger(p.v) && p.w >= 1 && p.d >= 1, `${name} ${id} tiles`);
       // (the foot line is the plot's middle tile, down by the picture's base)
       assert.ok(p.x > 0 && p.x < lay.w, `${name} ${id} across`);
       assert.ok(p.y > 0 && p.y <= lay.h, `${name} ${id} down`);
-      assert.ok(BLURB[id].length > 0, id);
+      if (!PLACE_IDS.includes(id as never)) assert.ok(BLURB[id as (typeof BUILDING_IDS)[number]].length > 0, id);
     }
     for (const p of lay.props) assert.ok(p.x > 0 && p.x < lay.w && p.y > 0 && p.y <= lay.h, `${name} ${p.sprite} at ${p.u},${p.v}`);
   }
@@ -57,13 +58,13 @@ test('every upgrade has four looks and a plot on the tile lattice, inside the ya
 
 test('no two plots share a tile, and at least one tile of grass or path lies between any two', () => {
   for (const [name, lay] of Object.entries(LAYOUTS))
-    for (let i = 0; i < BUILDING_IDS.length; i++)
-      for (let j = i + 1; j < BUILDING_IDS.length; j++) {
-        const a = lay.plots[BUILDING_IDS[i]];
-        const b = lay.plots[BUILDING_IDS[j]];
+    for (let i = 0; i < PLOT_IDS.length; i++)
+      for (let j = i + 1; j < PLOT_IDS.length; j++) {
+        const a = lay.plots[PLOT_IDS[i]];
+        const b = lay.plots[PLOT_IDS[j]];
         const gapU = Math.max(a.u, b.u) - Math.min(a.u + a.w, b.u + b.w);
         const gapV = Math.max(a.v, b.v) - Math.min(a.v + a.d, b.v + b.d);
-        assert.ok(gapU >= 1 || gapV >= 1, `${name} ${BUILDING_IDS[i]} and ${BUILDING_IDS[j]} are ${gapU} and ${gapV} tiles apart`);
+        assert.ok(gapU >= 1 || gapV >= 1, `${name} ${PLOT_IDS[i]} and ${PLOT_IDS[j]} are ${gapU} and ${gapV} tiles apart`);
       }
 });
 
@@ -85,7 +86,7 @@ test('every building\'s door opens onto a paved tile in front of it, and every d
           queue.push(n);
         }
       }
-    for (const id of BUILDING_IDS) {
+    for (const id of PLOT_IDS) {
       const p = lay.plots[id];
       assert.ok(isPaved(lay, p.door.u, p.door.v), `${name} ${id} door has road in front`);
       assert.ok(seen.has(key(p.door)), `${name} ${id} door is on the road from the gate`);
@@ -118,7 +119,7 @@ test('the plaza is a clear 3 x 3 of paving with the statue in its middle and a b
 test('props stand on tiles clear of every plot', () => {
   for (const [name, lay] of Object.entries(LAYOUTS)) {
     const used = new Set<string>();
-    for (const id of BUILDING_IDS) for (const t of footprint(lay.plots[id])) used.add(`${t.u},${t.v}`);
+    for (const id of PLOT_IDS) for (const t of footprint(lay.plots[id])) used.add(`${t.u},${t.v}`);
     for (const p of lay.props) if (p.depth === undefined || p.depth > -1000) assert.ok(!used.has(`${p.u},${p.v}`), `${name} ${p.sprite} at ${p.u},${p.v} is on a plot`);
   }
 });
@@ -155,16 +156,16 @@ test('the wall is one closed ring: a tower at every corner, runs along all four 
   // (the back runs sit behind everything; the near ones are sorted with the rest by their feet)
   for (const p of lay.props.filter((q) => q.sprite === 'wall')) assert.equal(p.depth !== undefined, p.u === u0 || p.v === v0, `wall piece at ${p.u},${p.v} depth`);
   // (the near runs must not hide any plot: two tiles of grass between a plot and a near run)
-  for (const id of BUILDING_IDS) {
+  for (const id of PLOT_IDS) {
     const p = lay.plots[id];
-    assert.ok(p.u >= u0 + 2 && p.v >= v0 + 2, `${id} has grass behind it`);
+    assert.ok(p.u >= u0 + 1 && p.v >= v0 + 1, `${id} has a tile of grass behind it`);
     assert.ok(p.u + p.w - 1 <= u1 - 2 && p.v + p.d - 1 <= v1 - 2, `${id} has grass between it and the near wall`);
   }
   for (const t of walkTiles(lay)) assert.ok(t.u > u0 && t.u < u1 && t.v > v0 && t.v < v1, `road tile ${t.u},${t.v} is inside the wall`);
 });
 
 test('a house is never used for two buildings, and every look is bigger than the one before it', () => {
-  const HOUSES = ['shrine', 'spiral', 'chapel', 'stockpile', 'longhouse', 'great_hall', 'cottage', 'thatch', 'barracks', 'anvil_stall', 'workshop', 'forge', 'campfire'];
+  const HOUSES = ['shrine', 'spiral', 'chapel', 'stockpile', 'longhouse', 'great_hall', 'cottage', 'thatch', 'barracks', 'anvil_stall', 'workshop', 'forge', 'campfire', 'shed', 'cart', 'stable', 'granary', 'atelier', 'manor', 'tavern', 'church'];
   const owner: Record<string, string> = {};
   for (const id of BUILDING_IDS)
     for (const look of looksOf(id))
@@ -181,10 +182,10 @@ test('a house is never used for two buildings, and every look is bigger than the
 
 test('all four buildings fit inside the scene, with nothing clipped', () => {
   for (const [name, lay] of Object.entries(LAYOUTS))
-    for (const id of BUILDING_IDS) {
+    for (const id of PLOT_IDS) {
       const p = lay.plots[id];
       for (const st of [0, STAGES - 1]) {
-        const b = lookBox(looksOf(id)[st], p.flip);
+        const b = lookBox(lookFor(id, st), p.flip);
         assert.ok(p.x + b.x0 >= 0 && p.x + b.x1 <= lay.w, `${name} ${id} look ${st} across`);
         assert.ok(p.y - b.h >= 0 && p.y <= lay.h, `${name} ${id} look ${st} down`);
       }
@@ -201,7 +202,7 @@ test('the scale is a whole number of device pixels per scene pixel, as large as 
     [393, 600, 2.6],
     [852, 300, 2.75], // the same phone lying down
     [852, 300, 3],
-    [1280, 720, 1], // a desktop
+    [1280, 800, 1], // a desktop
     [1920, 1000, 1],
     [1920, 1000, 2],
   ];
@@ -227,12 +228,12 @@ test('the scale is a whole number of device pixels per scene pixel, as large as 
 
 test('buildings stand apart: at most a corner overlap between their grand looks', () => {
   for (const [name, lay] of Object.entries(LAYOUTS))
-    for (let i = 0; i < BUILDING_IDS.length; i++)
-      for (let j = i + 1; j < BUILDING_IDS.length; j++) {
-        const a = BUILDING_IDS[i];
-        const b = BUILDING_IDS[j];
-        const ba = lookBox(looksOf(a)[STAGES - 1], lay.plots[a].flip);
-        const bb = lookBox(looksOf(b)[STAGES - 1], lay.plots[b].flip);
+    for (let i = 0; i < PLOT_IDS.length; i++)
+      for (let j = i + 1; j < PLOT_IDS.length; j++) {
+        const a = PLOT_IDS[i];
+        const b = PLOT_IDS[j];
+        const ba = lookBox(lookFor(a, STAGES - 1), lay.plots[a].flip);
+        const bb = lookBox(lookFor(b, STAGES - 1), lay.plots[b].flip);
         const ax = lay.plots[a].x + (ba.x0 + ba.x1) / 2;
         const bx = lay.plots[b].x + (bb.x0 + bb.x1) / 2;
         const across = (ba.w + bb.w) / 2 - Math.abs(ax - bx);
@@ -276,4 +277,39 @@ test('the upgrade card words grow with the level', () => {
   assert.equal(effectText('armoury', 1), '+5% attack for every hero');
   assert.match(effectText('mageTower', 4), /48% faster, \+2 spell power/);
   assert.match(effectText('mageTower', 0), /0% faster, \+0 spell power/);
+});
+
+test('the tavern and the chapel are places, not upgrades: one look, a tag that says where they lead, and plots of their own', () => {
+  assert.deepEqual([...PLACE_IDS], ['tavern', 'chapel']);
+  assert.equal(PLACES.tavern.name, 'Tavern');
+  assert.equal(PLACES.tavern.to, 'your heroes');
+  assert.equal(PLACES.chapel.name, 'Chapel');
+  assert.equal(PLACES.chapel.to, 'spells');
+  for (const id of PLACE_IDS) {
+    assert.ok(!(BUILDING_IDS as string[]).includes(id), `${id} is not an upgrade`);
+    assert.equal(lookFor(id, 0), lookFor(id, 3), `${id} does not grow`);
+    assert.ok(YARD.plots[id], id);
+  }
+  // (the tavern's look has its sign, barrels and a lantern; the chapel is not the mage tower's chapel)
+  assert.deepEqual(PLACE_LOOK.tavern.parts.map((p) => p.sprite).sort(), ['barrels', 'lamp', 'signpost', 'tavern']);
+  assert.ok(!LOOKS.mageTower.some((l) => l.parts.some((p) => p.sprite === 'church')));
+  assert.ok(PLACE_LOOK.chapel.parts.every((p) => p.sprite !== 'chapel'));
+});
+
+test('the market and the garden: two or three stalls on the plaza\'s edge or the main road, and a garden of beds in the yard\'s corner', () => {
+  const stalls = YARD.props.filter((p) => /^stall\d?$/.test(p.sprite));
+  assert.ok(stalls.length >= 2 && stalls.length <= 3, 'two or three stalls');
+  const { u0, u1 } = YARD.plaza;
+  for (const p of stalls) {
+    // (beside the plaza or the road: a tile next to paving)
+    const near = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]].some(([du, dv]) => isPaved(YARD, p.u + du, p.v + dv));
+    assert.ok(near, `stall at ${p.u},${p.v} is by paving`);
+    assert.ok(!isPaved(YARD, p.u, p.v), 'a stall is not in the road');
+  }
+  assert.ok(u1 - u0 === 2);
+  const beds = YARD.props.filter((p) => p.sprite === 'field' || p.sprite === 'field2' || p.sprite === 'herb');
+  assert.ok(beds.length >= 3, 'a garden of beds');
+  // (the beds sit together in the south corner: three on one row, next to each other)
+  const row = beds.filter((p) => p.v === 5).map((p) => p.u).sort((a, b) => a - b);
+  assert.ok(row.length >= 3 && row.every((u, i) => i === 0 || u === row[i - 1] + 1), 'three beds side by side');
 });

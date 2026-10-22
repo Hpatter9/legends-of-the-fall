@@ -3,7 +3,7 @@
 // the heroes' strolling band, and the words of the upgrade cards. Plain data (no Pixi, no DOM), so a test can check it. All numbers are in the scene's
 // own pixels (the art's own pixels: the scene is drawn whole-number times bigger); `y` is a building's foot line, which the scene sorts by.
 
-import { BUILDING_IDS, BUILDINGS, GOLD_PER_LEVEL, HP_PER_LEVEL, ATK_PER_LEVEL, MANA_PER_LEVEL, maxLevel, spellBudget, type BuildingId } from '../sim/castle';
+import { BUILDING_IDS, BUILDINGS, GOLD_PER_LEVEL, HP_PER_LEVEL, ATK_PER_LEVEL, MANA_PER_LEVEL, MOVE_PER_LEVEL, XP_PER_LEVEL, maxLevel, newCastle, spellBudget, type BuildingId } from '../sim/castle';
 
 /** How many looks a building has: 0 an empty plot, 1 small, 2 bigger, 3 grand. */
 export const STAGES = 4;
@@ -18,38 +18,54 @@ export function stageOf(id: BuildingId, level: number): number {
 /** Every picture in `src/art/castle/` and its size (a test checks the table against the files). */
 export const SPRITE_SIZE: Record<string, readonly [number, number]> = {
   anvil_stall: [72, 89],
+  atelier: [93, 105],
   banner: [25, 79],
   barracks: [138, 129],
   barrels: [33, 44],
+  baskets: [41, 59],
   berries: [60, 73],
   brazier: [36, 90],
   bush: [38, 37],
   campfire: [66, 46],
+  cart: [82, 60],
   chapel: [101, 162],
   chests: [70, 54],
+  church: [99, 158],
   cobble_tile: [90, 60],
   cottage: [103, 101],
   crates: [43, 52],
   crystals: [41, 60],
+  field: [97, 65],
+  field2: [106, 63],
   flowers: [41, 32],
   forge: [114, 139],
   gatehouse: [137, 127],
+  granary: [72, 99],
   grass_tile: [89, 59],
   great_hall: [146, 147],
   hay: [48, 51],
+  herb: [94, 59],
+  lamp: [26, 81],
   longhouse: [119, 112],
+  manor: [121, 142],
   oak: [64, 90],
   pine: [41, 88],
+  rack: [86, 84],
   rocks: [36, 38],
   roses: [38, 51],
+  shed: [82, 76],
   shrine: [77, 86],
+  signpost: [37, 74],
   spiral: [68, 128],
+  stable: [176, 135],
+  stall: [69, 75],
+  stall2: [100, 80],
+  stall3: [106, 83],
   statue: [79, 119],
   stockpile: [87, 89],
+  tavern: [119, 125],
   thatch: [129, 118],
   wall: [120, 114],
-  lamp: [26, 81],
-  rack: [86, 84],
   watchtower: [79, 134],
   woodpile: [50, 54],
   workshop: [95, 110],
@@ -95,7 +111,38 @@ export const LOOKS: Record<BuildingId, readonly Look[]> = {
     { parts: [P('spiral', 18), P('shrine', -34, 8)] },
     { parts: [P('spiral', 38, -6), P('chapel', -10, 6)] },
   ],
+  stable: [
+    { parts: [P('hay', -16, 2), P('woodpile', 22, 4)] },
+    { parts: [P('cart', 0, 6), P('hay', -50, 8)] },
+    { parts: [P('shed', -10), P('cart', 58, 14)] },
+    { parts: [P('stable', 0)] },
+  ],
+  library: [
+    { parts: [P('baskets', -14, 4), P('crates', 22, 6)] },
+    { parts: [P('granary', 0), P('baskets', -46, 10)] },
+    { parts: [P('atelier', 0), P('baskets', -58, 10)] },
+    { parts: [P('manor', 0)] },
+  ],
 };
+
+/** The two places that are not upgrades: tapping the tavern goes to the Heroes tab (the tavern scene), tapping the chapel to the Spells tab. */
+export type PlaceId = 'tavern' | 'chapel';
+export const PLACE_IDS: PlaceId[] = ['tavern', 'chapel'];
+/** Anything with a plot in the yard: the six upgrades and the two places. */
+export type PlotId = BuildingId | PlaceId;
+export const PLOT_IDS: PlotId[] = [...BUILDING_IDS, ...PLACE_IDS];
+/** What a place is called on its tag, and what it leads to. */
+export const PLACES: Record<PlaceId, { name: string; to: string }> = {
+  tavern: { name: 'Tavern', to: 'your heroes' },
+  chapel: { name: 'Chapel', to: 'spells' },
+};
+/** A place's one look (it does not grow): the tavern with its sign, barrels and lantern; the chapel on its own. */
+export const PLACE_LOOK: Record<PlaceId, Look> = {
+  tavern: { parts: [P('tavern', 0), P('lamp', -58, 8), P('barrels', 52, 22), P('signpost', 84, 14)] },
+  chapel: { parts: [P('church', 0)] },
+};
+/** The look of a plot: a building's at a stage, or a place's own. */
+export const lookFor = (id: PlotId, stage: number): Look => (id === 'tavern' || id === 'chapel' ? PLACE_LOOK[id] : LOOKS[id][stage]);
 
 export const spriteName = (id: BuildingId, stage: number): string => `${id}${stage}`;
 
@@ -150,15 +197,22 @@ export const VENTS: Record<BuildingId, readonly (readonly Vent[])[]> = {
     [{ dx: 2, dy: -26, kind: 'spark' }, smokeAt('armoury', 2, 0, 0.5, 0.04)],
     [{ dx: 4, dy: -30, kind: 'spark' }, { dx: -48, dy: -30, kind: 'spark' }, smokeAt('armoury', 3, 0, 0.62, 0.02)],
   ],
+  stable: [[], [], [{ dx: -10, dy: -60, kind: 'smoke' }], [{ dx: 30, dy: -120, kind: 'smoke' }]],
+  library: [[], [{ dx: 0, dy: -100, kind: 'smoke' }], [{ dx: 0, dy: -60, kind: 'rune' }, { dx: -20, dy: -80, kind: 'rune' }], [{ dx: 0, dy: -110, kind: 'rune' }, { dx: 30, dy: -80, kind: 'rune' }, { dx: -30, dy: -60, kind: 'rune' }]],
   mageTower: [[], [{ dx: 0, dy: -40, kind: 'rune' }], [{ dx: 18, dy: -80, kind: 'rune' }, { dx: -34, dy: -44, kind: 'rune' }], [{ dx: -10, dy: -100, kind: 'rune' }, { dx: 38, dy: -96, kind: 'rune' }]],
 };
 
 export const LIGHTS: Record<BuildingId, readonly (readonly Light[])[]> = {
+  stable: [[], [], [], []],
+  library: [[], [], [{ dx: 0, dy: -70, size: 40, tint: '#b890ff', al: 0.5 }], [{ dx: 0, dy: -80, size: 56, tint: '#58f0d0', al: 0.5 }]],
   treasury: [[], [], [{ dx: 0, dy: -40, size: 56, tint: '#ffd24a', al: 0.18 }], [{ dx: 0, dy: -50, size: 80, tint: '#ffd24a', al: 0.25 }]],
   barracks: [[{ dx: 0, dy: -12, size: 40, tint: '#ff9a3c', al: 0.5 }], [], [{ dx: 52, dy: -12, size: 34, tint: '#ff9a3c', al: 0.45 }], []],
   armoury: [[], [{ dx: -14, dy: -26, size: 30, tint: '#ff9a3c', al: 0.5 }], [{ dx: 2, dy: -30, size: 40, tint: '#ff9a3c', al: 0.5 }], [{ dx: 4, dy: -36, size: 52, tint: '#ff9a3c', al: 0.55 }]],
   mageTower: [[], [{ dx: 0, dy: -50, size: 44, tint: '#58d8ff', al: 0.6 }], [{ dx: 18, dy: -104, size: 40, tint: '#b890ff', al: 0.6 }, { dx: -34, dy: -50, size: 44, tint: '#58d8ff', al: 0.6 }], [{ dx: -10, dy: -104, size: 56, tint: '#58f0d0', al: 0.55 }, { dx: 38, dy: -96, size: 36, tint: '#b890ff', al: 0.5 }]],
 };
+
+/** What smokes at a place: the tavern's chimney. */
+export const PLACE_VENTS: Record<PlaceId, readonly Vent[]> = { tavern: [{ dx: 22, dy: -118, kind: 'smoke' }], chapel: [] };
 
 /** Ground tiles: a diamond 90 across and 52 down, laid in rows half a tile along and half a tile down from the last. */
 export const TILE_W = 90;
@@ -198,6 +252,8 @@ export interface Plot {
   y: number;
   /** Where the bottom of the name tag sits (the scene row); by default just above the building's roof. */
   tagY?: number;
+  /** How far the tag sits across from the building's middle (to keep neighbours' tags apart). */
+  tagDx?: number;
 }
 
 /** A standing prop of the yard on its own tile (sorted with the buildings and heroes by its foot, or by `depth` when given: the wall and what
@@ -220,7 +276,7 @@ export interface Layout {
   grid: Grid;
   /** The tiles of the wall's four corner towers (the ring runs between them). */
   yard: Block;
-  plots: Record<BuildingId, Plot>;
+  plots: Record<PlotId, Plot>;
   props: readonly Prop[];
   /** The plaza and the roads, as blocks of tiles. */
   plaza: Block;
@@ -247,13 +303,13 @@ export const footprint = (p: Plot): { u: number; v: number }[] => {
   return out;
 };
 
-type PlotSpec = { u: number; v: number; w: number; d: number; flip: boolean; door: { u: number; v: number }; tag?: 'below' };
+type PlotSpec = { u: number; v: number; w: number; d: number; flip: boolean; door: { u: number; v: number }; tag?: 'below'; tagDx?: number; tagDy?: number };
 interface Spec {
   w: number;
   h: number;
   grid: Grid;
   yard: Block;
-  plots: Record<BuildingId, PlotSpec>;
+  plots: Record<PlotId, PlotSpec>;
   /** [sprite, u, v, options]: `u`, `v` may be halves for a wall piece that spans two tiles. */
   props: readonly (readonly [string, number, number, { flip?: boolean; depth?: number; dx?: number; dy?: number }?])[];
   plaza: Block;
@@ -264,15 +320,15 @@ interface Spec {
 
 function build(spec: Spec): Layout {
   const g = spec.grid;
-  const plots = {} as Record<BuildingId, Plot>;
-  for (const id of BUILDING_IDS) {
+  const plots = {} as Record<PlotId, Plot>;
+  for (const id of PLOT_IDS) {
     const q = spec.plots[id];
     const cu = q.u + (q.w - 1) / 2;
     const cv = q.v + (q.d - 1) / 2;
     const x = Math.round(cellX(g, cu, cv));
     const y = Math.round(cellY(g, cu, cv) + PLOT_FOOT);
-    const box = lookBox(LOOKS[id][STAGES - 1]);
-    plots[id] = { u: q.u, v: q.v, w: q.w, d: q.d, flip: q.flip, door: q.door, x, y, tagY: q.tag === 'below' ? y + 46 : y - box.h - 4 };
+    const box = lookBox(lookFor(id, STAGES - 1));
+    plots[id] = { u: q.u, v: q.v, w: q.w, d: q.d, flip: q.flip, door: q.door, x, y, tagY: (q.tag === 'below' ? y + 46 : y - box.h - 4) + (q.tagDy ?? 0), tagDx: q.tagDx };
   }
   const props: Prop[] = spec.props.map(([sprite, u, v, o]) => ({
     sprite,
@@ -324,24 +380,31 @@ function ring(u0: number, v0: number, u1: number, v1: number, gateV: number): Pr
  *  right. The scene is drawn a whole number of device pixels per scene pixel, as large as lets the whole village show (`pickScale`). The wall is far
  *  enough from every plot that the near runs hide none of it. */
 export const YARD: Layout = build({
-  w: 1040,
-  h: 708,
-  grid: { x: 520, y: 340 },
-  yard: { u0: -4, v0: -4, u1: 6, v1: 6 },
+  w: 1030,
+  h: 730,
+  grid: { x: 540, y: 288 },
+  yard: { u0: -3, v0: -3, u1: 7, v1: 8 },
   plaza: { u0: 0, v0: 0, u1: 2, v1: 2 },
   roads: [
     { u0: -1, v0: -1, u1: 4, v1: -1 },
-    { u0: -1, v0: -1, u1: -1, v1: 4 },
-    { u0: 3, v0: 1, u1: 5, v1: 1 },
+    { u0: -1, v0: -2, u1: -1, v1: 4 },
+    { u0: 3, v0: 1, u1: 6, v1: 1 },
+    { u0: 3, v0: 2, u1: 3, v1: 6 },
+    { u0: 1, v0: 4, u1: 5, v1: 4 },
+    { u0: 3, v0: 6, u1: 5, v1: 6 },
   ],
   plots: {
-    mageTower: { u: -2, v: 0, w: 1, d: 2, flip: true, door: { u: -1, v: 0 } },
-    treasury: { u: 0, v: -2, w: 2, d: 1, flip: false, door: { u: 0, v: -1 } },
-    barracks: { u: -2, v: 3, w: 1, d: 2, flip: true, door: { u: -1, v: 3 } },
-    armoury: { u: 3, v: -2, w: 2, d: 1, flip: false, door: { u: 3, v: -1 } },
+    mageTower: { u: -2, v: 0, w: 1, d: 2, flip: true, door: { u: -1, v: 0 }, tagDx: -30 },
+    treasury: { u: 0, v: -2, w: 2, d: 1, flip: false, door: { u: 0, v: -1 }, tagDx: 30 },
+    barracks: { u: -2, v: 3, w: 1, d: 2, flip: true, door: { u: -1, v: 3 }, tagDx: -30 },
+    armoury: { u: 3, v: -2, w: 2, d: 1, flip: false, door: { u: 3, v: -1 }, tagDx: 30 },
+    stable: { u: 1, v: 3, w: 2, d: 1, flip: false, door: { u: 1, v: 4 }, tagDx: -40 },
+    library: { u: 4, v: 5, w: 2, d: 1, flip: false, door: { u: 4, v: 6 }, tag: 'below', tagDx: 20 },
+    tavern: { u: 5, v: 3, w: 1, d: 1, flip: false, door: { u: 5, v: 4 }, tagDx: 60, tagDy: 70 },
+    chapel: { u: -2, v: -2, w: 1, d: 1, flip: true, door: { u: -1, v: -2 } },
   },
   props: [
-    ...ring(-4, -4, 6, 6, 1),
+    ...ring(-3, -3, 7, 8, 1),
     // the plaza
     ['statue', 1, 1],
     ['brazier', 0, 0],
@@ -349,43 +412,40 @@ export const YARD: Layout = build({
     ['brazier', 0, 2],
     ['brazier', 2, 2],
     // beyond the wall
-    ['oak', -6, -5, { depth: BEHIND - 2 }],
-    ['pine', 1, -9, { depth: BEHIND - 2 }],
-    ['pine', -1, -8, { depth: BEHIND - 2 }],
-    // lamps along the roads
-    ['lamp', -2, -1],
-    ['lamp', 4, 0],
-    ['lamp', 4, 2],
-    // by the treasury and the armoury: crates and barrels
-    ['barrels', -1, -2],
-    ['crates', 2, -2],
-    ['crates', 3, -3],
-    ['barrels', 5, -2],
-    // by the mage tower: crystals
+    ['oak', -5, -4, { depth: BEHIND - 2 }],
+    ['pine', 1, -8, { depth: BEHIND - 2 }],
+    ['pine', -1, -7, { depth: BEHIND - 2 }],
+    // the market: stalls by the plaza and at the end of the main road
+    ['stall', 2, -2],
+    ['stall2', 5, -1],
+    ['stall3', 5, -2],
+    // by the mage tower: crystals; by the chapel and along the road: a lamp and flowerbeds
     ['crystals', -3, 1, { dx: 8 }],
-    ['flowers', -3, -2],
+    ['lamp', -2, -1],
+    ['flowers', -3, 2],
+    // by the armoury, across the road: flowerbeds
+    ['flowers', 3, 0],
+    ['flowers', 4, 0],
     // by the barracks: a weapon rack and hay
-    ['rack', 0, 3],
-    ['hay', 0, 4],
-    ['hay', -3, 4],
-    // flowerbeds, bushes and trees along the walls and the grass edges
-    ['roses', -3, -3],
-    ['berries', 3, 0],
-    ['bush', -3, 5, { dx: 4 }],
-    ['flowers', 1, 5],
-    ['oak', 2, 5],
-    ['pine', 4, 4],
-    ['bush', 5, 3],
-    ['flowers', 5, 5],
-    ['roses', 3, 4],
+    ['rack', -2, 5],
+    ['hay', -1, 5],
+    ['roses', -3, 5],
+    // the garden: vegetable beds and an herb bed in the south corner, with a bush
+    ['field', 0, 5],
+    ['field', 1, 5],
+    ['herb', 2, 5],
+    ['bush', -3, 6, { dx: 4 }],
+    // a berry bush and a vegetable bed at the garden's end
+    ['berries', 0, 6],
+    ['field2', 1, 6],
   ],
   flags: [
-    [-4, -4, -96, 1],
-    [6, -4, -96, -1],
-    [-4, 6, -96, 1],
-    [6, 6, -96, -1],
-    [6, 1, -92, 1, 52],
-    [6, 1, -98, -1, -52],
+    [-3, -3, -96, 1],
+    [7, -3, -96, -1],
+    [-3, 8, -96, 1],
+    [7, 8, -96, -1],
+    [7, 1, -92, 1, 52],
+    [7, 1, -98, -1, -52],
   ],
 });
 
@@ -413,8 +473,12 @@ export function effectText(id: BuildingId, level: number): string {
       return `+${Math.round(HP_PER_LEVEL * level * 100)}% hp for every hero`;
     case 'armoury':
       return `+${Math.round(ATK_PER_LEVEL * level * 100)}% attack for every hero`;
+    case 'stable':
+      return `heroes walk ${Math.round(MOVE_PER_LEVEL * level * 100)}% faster`;
+    case 'library':
+      return `heroes earn ${Math.round(XP_PER_LEVEL * level * 100)}% more XP from every fight`;
     case 'mageTower':
-      return `mana fills ${Math.round(MANA_PER_LEVEL * level * 100)}% faster, +${spellBudget({ treasury: 0, barracks: 0, armoury: 0, mageTower: level }) - spellBudget()} spell power`;
+      return `mana fills ${Math.round(MANA_PER_LEVEL * level * 100)}% faster, +${spellBudget({ ...newCastle(), mageTower: level }) - spellBudget()} spell power`;
   }
 }
 
@@ -423,6 +487,8 @@ export const BLURB: Record<BuildingId, string> = {
   barracks: 'Beds and a training yard: your heroes are tougher.',
   armoury: 'Smiths and weapon racks: your heroes hit harder.',
   mageTower: 'The king\'s own spires: mana comes quicker and spells hit harder.',
+  stable: 'Horses and a farrier: your heroes cover the ground quicker.',
+  library: 'Shelves of old campaigns: every hero learns more from every fight.',
 };
 
 export const NAME_OF = (id: BuildingId): string => BUILDINGS[id].name;

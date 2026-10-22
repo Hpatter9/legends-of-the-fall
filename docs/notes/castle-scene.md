@@ -32,7 +32,7 @@
   (a dpr-1 phone) the frame pans. When the village is smaller than the frame the canvas grows to fill it (`view`): grass tiles all round, and beyond a
   three-tile margin woods behind the wall and only low bushes and flowers in front of it. Taps and name tags use the same mapping (`view.ox/oy`).
 - One canvas, drawn with nearest neighbour. There is a single arrangement now (`YARD`); the earlier upright and sideways ones are gone.
-- **Pictures** (`src/art/castle/`, 34 PNGs, 568 KB, bundled into game.js as data URLs, so the service worker's `FILES` is unchanged): each is one
+- **Pictures** (`src/art/castle/`, 50 PNGs, about 0.9 MB, bundled into game.js as data URLs, so the service worker's `FILES` is unchanged): each is one
   piece of the kits at **half size** (`tools/castle/prep.py`: 2x2 box average, then solid or clear), so a cottage is about 100 pixels wide.
   Nothing is drawn by code but the scaffolding, flags and effects.
 - **Ground**: `grass_tile` and `cobble_tile` (the Knights kit's) are laid as the lattice of diamonds 90 across and 52 down (`TILE_W`, `TILE_H`), rows
@@ -52,6 +52,31 @@
 - **Tap a building** (or its name tag: level and a green arrow when you can afford the next) and its card opens: picture, pips, what it gives now and
   next (`effectText`), cost, Build. Build does what the old list's button did (`upgrade`, `saveMeta`, `refresh`), after closing the card.
 - Achievements, Settings and Reset tips are chips in a slim bar between the top bar and the scene (they cover nothing).
+
+## Eight plots: six upgrades and two places
+- The sim has **six upgrades** now (`BUILDING_IDS` in `src/sim/castle.ts`): the four old ones and two new ones, each with five levels and the old cost curve
+  (60, 120, 200, 320, 520 crowns), starting at level 0 in saves that lack them (`readCastle`):
+  - **Stable**, +4% move speed per level (`MOVE_PER_LEVEL`, `moveRate`): `startStage` passes `move` to the fight, which keeps it as `Battle.heroMove`, and
+    `stepTo` divides a hero's step time by it. Steps only (swings and skills keep their speed), heroes only (foes walk as before); 1 when unset, so a plain
+    fight is unchanged.
+  - **Library**, +6% XP per level (`XP_PER_LEVEL`, `xpRate`): `fightXp(b, rate)` multiplies each hero's pay, and `main.ts` passes the meta's rate.
+  - Tests in `test/castle.test.ts`: the step time shortens by exactly the rate, foes unaffected; XP scales by the rate; old saves start at 0, five levels.
+  - **Balance** (`npm run balance -- --games 800 --saves 100`): the default report is byte-for-byte the same before and after (no castle, no change). A new
+    `--castle stable=5,library=5` flag plays the whole-run table with a castle. Mean furthest stage over 12 runs of a greedy player (100 saves):
+    base 5.1 / 7.2 / 10.6 / 13.6 / 16.9 / 22.8 (runs 1-5, 10); Stable 5 alone 5.1 / 7.1 / 11.1 / 13.5 / 16.8 / 23.1 (noise: walking faster barely matters to the
+    greedy player); Library 5 alone 5.5 / 9.4 / 14.0 / 17.1 / 19.6 / 23.1 (heroes level sooner, then it fades); both 5.4 / 8.4 / 13.3 / 17.3 / 19.5 / 23.8.
+- Two **places** that are not upgrades (`PLACE_IDS`): the **Tavern** (the Knights' inn, with its sign, barrels and lantern) and the **Chapel** (the Knights'
+  church; not the Mage Tower's). They have one look, a tag "Tavern · your heroes" / "Chapel · spells", and tapping them goes to the Heroes tab (the tavern
+  scene) and opens the spellbook (what the Spells tab does). `PlotId` is a building or a place; `lookFor(id, stage)` gives a plot's look.
+- Looks (four each for the new upgrades): Stable: hay and a woodpile; a cart and hay; a thatched shed and the cart; the Knights' stable with its horses.
+  Library: baskets and crates; the Knights' granary tower with baskets; the Fae observatory-house; the Liches' manor with teal windows (runes rise from it).
+- Plots: Mage Tower, Treasury, Barracks, Armoury as before; Stable (2 x 1, door on the road below it) south of the plaza; Tavern (1 x 1) and Library (2 x 1)
+  at the south-east; Chapel (1 x 1) in the north-west corner behind the mage tower. Every door has a road tile (the roads grew a south street), plots keep a
+  tile apart, and the near walls hide none of them. The yard is 11 x 11 tiles still (the back margin is one tile now: a back wall hides nothing).
+- **Village life**: three market stalls (`stall`, `stall2`, `stall3`) by the plaza and at the end of the main road, and a garden in the south corner: vegetable
+  beds and an herb bed side by side, with a bush and flowers. (No kit has a scarecrow.) A building's goods stand beside it: crates and barrels with the
+  treasury, a rack and hay with the barracks, crystals with the tower.
+- Name tags are smaller (they shrink with the village) and sit where they cover no door.
 
 ## Life
 - Pennants wave on the wall towers; chimneys smoke (`VENTS`, given from each look); sparks fly at the anvil; the tower's windows pulse cyan and violet and

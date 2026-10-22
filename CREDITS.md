@@ -128,5 +128,8 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   chapel, Knights watchtower, gatehouse, stone wall run, lamp post, stockpile, longhouse, cottage, barracks, workshop, campfire, hay bales, crates, barrels, woodpile, oak, pine,
   bush, rocks and grass and cobble tiles, Dwarves great hall, forge, anvil stall, brazier, shrine (the statue) and crystals, Settlers longhouse,
   Orcs weapon stall (the weapon rack), Blood Court banner and rose bush, Druids flower patch and berry bush, Nomads chests.
+- The tavern, chapel, stable, library and market pieces are from the same kits: Knights tavern, chapel, stable, cart, granary, market stall, field tile and signpost,
+  Settlers stockpile (the shed), market stall and field tile, Fae workshop (the library's observatory), Liches tavern (the library's manor), Druids baskets and
+  herb garden tile, Nomads carpet stall.
 - The heroes who stroll the yard use their own sheets (see above), shrunk by a whole number when the page loads.
 - Nothing was generated for this look.
