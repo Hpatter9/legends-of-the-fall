@@ -6,9 +6,11 @@ import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { D, standable, tileAt } from './sim/board';
 import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type Unit } from './sim/battle';
 import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
-import { armyOfRun, armyRun, boostOf, finish, heroOf, isBossRun, loadRun, saveRun, setSquad, SQUAD, startStage, summon, summonCost, type Run } from './sim/run';
+import { armyOfRun, armyRun, boostOf, finish, heroOf, isBossRun, loadRun, noteFight, saveRun, setSquad, SQUAD, startStage, summon, summonCost, tierOfRun, type Run } from './sim/run';
 import { ARMIES, settleWave, type ArmyPay } from './sim/armies';
-import { showUnlock } from './armiesView';
+import { drawRunStars, showUnlock } from './armiesView';
+import { settleArmyRun, type StarResult } from './sim/armyStars';
+import { tierOf } from './sim/tiers';
 import { formOf, UNITS } from './sim/units';
 import { isBoss } from './sim/foes';
 import { earn, loadMeta, rankOf, rarityOf, recordStars, saveMeta, type Meta } from './sim/meta';
@@ -154,7 +156,8 @@ class Game {
       },
       onContinue: () => this.resume(),
       // (an army starts from wave 1 once its party is picked)
-      onArmy: (id) => this.party.open('start', () => this.startRun(armyRun(clockSeed(), id, this.meta.party, this.meta.castle))),
+      onArmy: (id, tier) =>
+        this.party.open('start', () => this.startRun(armyRun(clockSeed(), id, this.meta.party, this.meta.castle, tier))),
       onParty: () =>
         this.party.open('edit', () => {
           // (a run going on draws from the new party from now on)
@@ -683,6 +686,9 @@ class Game {
   }
 
   /** Begin a run (any mode's) and its first fight. */
+  /** The army-run stars the last cleared army run earned (for the result screen). */
+  private runStars: StarResult | null = null;
+
   private startRun(run: Run): void {
     this.run = run;
     this.syncPool();
@@ -791,8 +797,10 @@ class Game {
     $('result').hidden = true;
     const next = this.pay?.unlocked ?? undefined;
     this.home.open();
-    if (next) showUnlock(next, army, () => this.home.openArmies());
-    else this.home.openArmies();
+    // (a chest this clear earned went to the stash; the army's card opens first, with its chest ticked)
+    const focus = this.runStars?.chests.length ? army.id : undefined;
+    if (next) showUnlock(next, army, () => this.home.openArmies(focus));
+    else this.home.openArmies(focus);
   }
 
   private dragMove(e: PointerEvent): void {
@@ -1018,6 +1026,7 @@ class Game {
       const army = armyOfRun(run);
       const rating = ratingOf(b, isBossRun(run));
       const before = run.gold;
+      noteFight(run, b);
       finish(run, won, rating.stars);
       this.gain = run.gold - before;
       // (an army pays by wave, and its last boss a clear; any other run pays as it always did)
@@ -1025,9 +1034,11 @@ class Game {
       this.crownGain = this.pay ? this.pay.crowns : earn(this.meta, stage, won, rating.stars);
       if (won && !army) recordStars(this.meta, stage, rating.stars);
       const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b });
+      this.runStars = settleArmyRun(this.meta, run);
       this.showStars(won ? rating : null);
+      drawRunStars($('armyStars'), army && run.cleared ? this.runStars : null, army ? tierOf(tierOfRun(run)).name : '');
       this.showStats();
-      const gains = fightXp(b, xpRate(this.meta.castle));
+      const gains = fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp);
       const from = Object.fromEntries(Object.keys(gains).map((k) => [k, xpOf(this.meta, k)]));
       this.showXp(gains, from, gainXp(this.meta, gains));
       saveMeta(this.meta);

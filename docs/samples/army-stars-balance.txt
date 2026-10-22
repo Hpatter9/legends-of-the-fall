@@ -1,0 +1,75 @@
+
+> legends-of-the-fall@0.57.0 balance
+> node tools/balance.mjs --no-tables --tiers --levels 8,14,20 --attempts 16
+
+
+5e. THE DIFFICULTY TIERS  (Knight, Paladin, Archer, Warlock, Cleric; every hero at the level shown, a maxed castle, gear dressed; 16 attempts a cell; clear % / mean stars of a clear)
+
+Orc Warband
+  level           Normal            Hard           Elite       Legendary
+  8          100.0 / 2.9     100.0 / 2.5     100.0 / 2.2      25.0 / 0.0
+  14         100.0 / 2.9     100.0 / 2.8     100.0 / 2.6      87.5 / 0.1
+  20         100.0 / 2.9     100.0 / 2.8     100.0 / 2.6      93.8 / 0.1
+Undead Legion
+  level           Normal            Hard           Elite       Legendary
+  8          100.0 / 2.6      93.8 / 2.3      56.3 / 2.0       6.3 / 0.0
+  14         100.0 / 2.9     100.0 / 2.9     100.0 / 2.4       6.3 / 0.0
+  20         100.0 / 3.0     100.0 / 2.9     100.0 / 2.4      25.0 / 0.0
+Beast Packs
+  level           Normal            Hard           Elite       Legendary
+  8          100.0 / 2.2      68.8 / 2.1       6.3 / 2.0         0.0 / -
+  14         100.0 / 2.8     100.0 / 2.2      75.0 / 2.0         0.0 / -
+  20         100.0 / 2.8     100.0 / 2.3      93.8 / 2.0         0.0 / -
+The Wildwood
+  level           Normal            Hard           Elite       Legendary
+  8           68.8 / 2.0      43.8 / 2.0         0.0 / -         0.0 / -
+  14          87.5 / 2.1      68.8 / 2.0         0.0 / -         0.0 / -
+  20          93.8 / 2.1      87.5 / 2.0       6.3 / 2.0         0.0 / -
+The Labyrinth
+  level           Normal            Hard           Elite       Legendary
+  8           68.8 / 2.0      31.3 / 1.6         0.0 / -         0.0 / -
+  14          93.8 / 2.3      50.0 / 2.1         0.0 / -         0.0 / -
+  20         100.0 / 2.4      75.0 / 1.9         0.0 / -         0.0 / -
+Ogre Clans
+  level           Normal            Hard           Elite       Legendary
+  8           68.8 / 1.3      18.8 / 1.0         0.0 / -         0.0 / -
+  14          93.8 / 2.3      56.3 / 1.4         0.0 / -         0.0 / -
+  20         100.0 / 2.4      68.8 / 1.7         0.0 / -         0.0 / -
+Infernal Host
+  level           Normal            Hard           Elite       Legendary
+  8           25.0 / 2.0         0.0 / -         0.0 / -         0.0 / -
+  14          75.0 / 2.3      18.8 / 2.0         0.0 / -         0.0 / -
+  20         100.0 / 2.3      25.0 / 1.8         0.0 / -         0.0 / -
+Yokai Night Parade
+  level           Normal            Hard           Elite       Legendary
+  8            6.3 / 2.0         0.0 / -         0.0 / -         0.0 / -
+  14          50.0 / 2.0         0.0 / -         0.0 / -         0.0 / -
+  20          68.8 / 2.0       6.3 / 2.0         0.0 / -         0.0 / -
+Golem Forge
+  level           Normal            Hard           Elite       Legendary
+  8            6.3 / 1.0         0.0 / -         0.0 / -         0.0 / -
+  14          25.0 / 1.5       6.3 / 1.0         0.0 / -         0.0 / -
+  20          68.8 / 2.0       6.3 / 1.0         0.0 / -         0.0 / -
+
+
+
+5a. ARMIES BY WAVE  (starters: Knight, Samurai, Kunoichi, Archer, Fire Wizard; every hero at the level shown; 20 attempts a cell; % of attempts that won each wave)
+
+Orc Warband  (8 waves; bosses at 4, 8)
+  level     w1    w2    w3   w4*    w5    w6    w7   w8*  clear
+  5      100.0 100.0 100.0 100.0 100.0 100.0 100.0  40.0   40.0
+  8      100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0  100.0
+  11     100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0  100.0
+Undead Legion  (8 waves; bosses at 4, 8)
+  level     w1    w2    w3   w4*    w5    w6    w7   w8*  clear
+  5      100.0 100.0 100.0  95.0  95.0  95.0  90.0   0.0    0.0
+  8      100.0 100.0 100.0 100.0 100.0 100.0 100.0  10.0   10.0
+  11     100.0 100.0 100.0 100.0 100.0 100.0 100.0  80.0   80.0
+Beast Packs  (8 waves; bosses at 4, 8)
+  level     w1    w2    w3   w4*    w5    w6    w7   w8*  clear
+  5      100.0 100.0 100.0  15.0  15.0  15.0  15.0   0.0    0.0
+  8      100.0 100.0 100.0  90.0  90.0  90.0  90.0   0.0    0.0
+  11     100.0 100.0 100.0 100.0 100.0 100.0 100.0  30.0   30.0
+
+5b. THE CLIMB THROUGH THE ARMIES  (400 fresh saves on the starting five, each army tried until it falls, at most 25 tries; no castle, no recruits)
+

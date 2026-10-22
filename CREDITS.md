@@ -23,6 +23,7 @@ the raw files), copied one sprite at a time from the private assets repository (
   (`src/renderer/art/effects/`).
 - **Item icons** (`src/art/items/`): single 16x16 tiles cut from the **DawnLike** tileset by DragonDePlatino (Items: Armor, Amulet, Boot, Hat, LongWep, Ring, Shield), for relics and gear.
 - **Equipment icons** (`src/art/equip/`): 16x16 tiles cut one tile each from the same **DawnLike** tileset by DragonDePlatino (Items: LongWep, ShortWep, Ammo, Wand, Book, Scroll, Armor, Amulet, Ring, Boot, Glove, Hat, Music, Potion, Rock, Tool), by `tools/equip-icons.py`, for the hero equipment (CC-BY 4.0).
+- **Army chests** (`src/art/ui/chest-bronze.png`, `chest-silver.png`, `chest-gold.png`): the chest (closed and open frames) from the Craftpix **Free Platformer Game Tileset Pixel Art** pack (`chest.png`), cropped, with its iron bands tinted bronze, silver and gold by a script (hue shifts only). The army scenes on the Armies screen use the foes' existing sprite sheets and the land backdrops, with no new art.
 
 Code borrowed from Chronos Settlement (`hpatter9/little-town`): the seeded random numbers (`src/sim/rng.ts`), the
 board's relief, step and sight rules (`src/sim/board.ts`), the blow and reach rules (`src/sim/battle.ts`), the
@@ -147,3 +148,7 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   by unTied Games, copied as it is.
 - The town square's fountain (`tools/castle/generated/fountain.png`) and its benches (`bench.png`) were generated with PixelLab (`/generate-with-style-v2`, kit pieces as style references; see `tools/castle/gen.py` and `docs/notes/castle-scene.md`): 10 generations; the picks are used as they came, halved by `prep.py` like the kit pieces. Nothing else in this look was generated.
 - The Lich King's new walk and hurt rows, and the treant's evolved forms (`cls_treant_2.png`, `cls_treant_3.png`), are generated the same way as the other generated sheets (`/generate-with-style-v2` with the existing treant and Craftpix Minotaur and Samurai Commander frames as style references, then `/animate-with-text-v3`; native pixels, hard alpha, last death frame by `tools/pixellab/lie.py`). See `docs/notes/hero-art.md`.
+
+- **The war camp** (`src/art/camp/`, Battle tab): the gatehouse, felt and striped tents, war banner, water skins, skull torch and dirt tile are pieces of the
+  isometric kits in Chronos (`iso/kits/knights`, `nomads`, `orcs`), halved by `tools/camp/prep.py`; the sky, clouds and night sky are the Craftpix
+  "Free Pixel Art Cloud and Sky Backgrounds" pack. The rest are pictures already in `src/art/castle/`. The war table is drawn in code.

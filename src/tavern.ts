@@ -51,13 +51,13 @@ const rand = (a: number, b: number) => a + Math.random() * (b - a);
 const chance = (p: number) => Math.random() < p;
 
 // ---- little pixel pictures for the emote bubbles (7 wide, 7 high; '.' is clear) ----
-const EMOTES: Record<string, { rows: string[]; ink: Record<string, string> }> = {
+export const EMOTES: Record<string, { rows: string[]; ink: Record<string, string> }> = {
   mug: { rows: ['wwwww..', '#ooo###', '#ooo#.#', '#ooo#.#', '#ooo###', '#####..', '.......'], ink: { w: '#ffffff', '#': '#4a2a14', o: '#e8a030' } },
   note: { rows: ['..#####', '..#...#', '..#....', '..#....', '###....', '###....', '.#.....'], ink: { '#': '#3a2a6a' } },
   zz: { rows: ['#####..', '...#...', '..#..##', '.#..#..', '#####..', '...#.##', '....###'], ink: { '#': '#4a68b8' } },
   bang: { rows: ['..###..', '..###..', '..###..', '...#...', '.......', '..###..', '..###..'], ink: { '#': '#d02a2a' } },
 };
-const EMOTE_NAMES = ['mug', 'mug', 'note', 'note', 'zz', 'bang'];
+export const EMOTE_NAMES = ['mug', 'mug', 'note', 'note', 'zz', 'bang'];
 
 interface Rig {
   img: HTMLImageElement;

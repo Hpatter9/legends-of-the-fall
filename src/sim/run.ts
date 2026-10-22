@@ -16,7 +16,7 @@ import { drawEvent, eventAfter, type EventCard } from './events';
 import { dropGear, gearBoost, gearText, type Gear, type Slot } from './gear';
 import type { EquipStats } from './equipment';
 import { relicEffects } from './relics';
-import { HEROES } from './units';
+import { HEROES, UNITS } from './units';
 
 export const MAX_GRADE = 3;
 export const SQUAD = 5;
@@ -92,10 +92,12 @@ export interface Run {
   stars?: number;
   /** An army run's last boss has fallen (the run is over, and won). */
   cleared?: boolean;
+  /** An army run's tally for its stars (`armyStars.ts`): the battle time so far, heroes lost over the run, heroes lost in the fight with the last boss, and heroes lost in all the boss fights (the mid-bosses too). */
+  tally?: { ms: number; lost: number; bossLost: number; bossFell?: number };
 }
 
 /** A run that is not an ordinary one: an army's campaign (its stages are the army's waves), today's daily challenge (`practice` for a replay that does not count), or the endless tower. */
-export type RunMode = { kind: 'army'; army: string } | { kind: 'daily'; date: number; practice: boolean } | { kind: 'tower' };
+export type RunMode = { kind: 'army'; army: string; tier?: number } | { kind: 'daily'; date: number; practice: boolean } | { kind: 'tower' };
 
 /** A new run drawing from `party` (the hero kinds its summons and starting heroes come from). */
 export function newRun(seed: number, party: readonly string[] = HEROES, castle: Castle = newCastle()): Run {
@@ -106,10 +108,24 @@ export function newRun(seed: number, party: readonly string[] = HEROES, castle: 
 }
 
 /** A run that fights an army: from wave 1, with the party and castle as they stand. */
-export function armyRun(seed: number, army: string, party: readonly string[] = HEROES, castle: Castle = newCastle()): Run {
+export function armyRun(seed: number, army: string, party: readonly string[] = HEROES, castle: Castle = newCastle(), tier = 0): Run {
   const run = newRun(seed, party, castle);
-  run.mode = { kind: 'army', army };
+  run.mode = tier > 0 ? { kind: 'army', army, tier } : { kind: 'army', army };
   return run;
+}
+/** The difficulty tier an army run is fought on (0 Normal, for any other run too). */
+export const tierOfRun = (run: Run): number => (run.mode?.kind === 'army' ? run.mode.tier ?? 0 : 0);
+
+/** Add a finished fight to an army run's tally: its time, the heroes that fell (summoned helpers do not count), and whether this was the last boss. */
+export function noteFight(run: Run, b: Battle): void {
+  const army = armyOfRun(run);
+  if (!army) return;
+  const fell = b.units.filter((u) => u.side === 'hero' && !u.alive && !UNITS[u.def].summon).length;
+  const t = (run.tally ??= { ms: 0, lost: 0, bossLost: 0 });
+  t.ms += b.t;
+  t.lost += fell;
+  if (run.stage >= army.waves.length) t.bossLost = fell;
+  if (army.waves[run.stage - 1]?.boss) t.bossFell = (t.bossFell ?? 0) + fell;
 }
 /** The army a run is fighting, if it is an army run. */
 export const armyOfRun = (run: Run): Army | undefined => (run.mode?.kind === 'army' ? armyById(run.mode.army) : undefined);
@@ -215,14 +231,14 @@ export const reward = (stage: number) => 20 + 6 * stage + (isBossStage(stage) ? 
 export function startStage(run: Run): Battle {
   const rl = relicEffects(run.relics);
   const army = armyOfRun(run);
-  const base = army ? waveBoost(army, run.stage) : stageBoost(run.stage);
+  const base = army ? waveBoost(army, run.stage, tierOfRun(run)) : stageBoost(run.stage);
   const castle = heroBoost(run.castle);
   const foes = run.buff?.foes ?? 1;
   const { atk, hp, mana, first, revive, gold: _gold, ...team } = rl;
   return startBattle(mixSeed(run.seed, 0x57a6e, run.stage), army ? army.waves[run.stage - 1].foes : bandFor(run.stage), {
     ...base,
     area: run.area ?? base.area ?? areaFor(run.stage),
-    foes: { hp: base.foes!.hp! * foes, atk: base.foes!.atk! * foes },
+    foes: { hp: base.foes!.hp! * foes, atk: base.foes!.atk! * foes, speed: base.foes!.speed },
     heroes: { hp: castle.hp! * (hp ?? 1) * (run.buff?.hp ?? 1), atk: castle.atk! * (atk ?? 1) * (run.buff?.atk ?? 1) },
     mana: manaRate(run.castle) * (mana ?? 1),
     move: moveRate(run.castle),

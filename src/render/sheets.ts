@@ -241,15 +241,15 @@ export function portrait(sheet: string, size: number, grade = 1): HTMLCanvasElem
   return c;
 }
 
-/** A live sprite on a plain canvas for the menus: the idle frames of a sheet, shown one at a time by `tick`. */
-export function sprite(sheet: string, figurePx: number): { canvas: HTMLCanvasElement; tick(n: number): void; faceRight: boolean } {
+/** A live sprite on a plain canvas for the menus: the idle frames of a sheet, shown one at a time by `tick`. With `whole` the sheet is drawn at that whole-number scale (crisp), else so the figure is `figurePx` tall. */
+export function sprite(sheet: string, figurePx: number, whole?: number): { canvas: HTMLCanvasElement; tick(n: number): void; faceRight: boolean } {
   const c = document.createElement('canvas');
   const l = LAYOUT[sheet];
   const img = images.get(sheet);
   c.width = l.w;
   c.height = l.h;
   // (scaled so the figure itself is `figurePx` tall)
-  const k = figurePx / l.figure;
+  const k = whole ?? figurePx / l.figure;
   c.style.width = `${Math.round(l.w * k)}px`;
   c.style.height = `${Math.round(l.h * k)}px`;
   const g = c.getContext('2d')!;

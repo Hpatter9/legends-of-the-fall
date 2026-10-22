@@ -9,21 +9,21 @@ import { CastleScene, lookPicture } from './castle';
 import { BLURB, effectText } from './render/castleSpots';
 import { PULL_COST, saveMeta, type Meta, type Pull } from './sim/meta';
 import { dailyLine, towerLine, towerOpen } from './sim/modes';
-import { ARMIES, armyById, armyIsNew, armyStars, armyUnlocked, clearedCount, markSeen } from './sim/armies';
+import { ARMIES, armyById, armyCleared, armyIsNew, armyStars, armyUnlocked, bossOf, clearedCount, markSeen } from './sim/armies';
 import { ACHIEVEMENTS } from './sim/achievements';
-import { AREAS } from './sim/board';
-import { areaFor } from './sim/run';
+import { UNITS } from './sim/units';
 import { drawArmies } from './armiesView';
+import { drawChestStash } from './chestStash';
 import { drawAchievements } from './achievementsView';
 import { todayKey } from './modes';
 import { openSettings } from './settings';
 import { resetTipsButton, tips } from './tips';
-import { AREA_NAMES, ICONS, icon } from './menuArt';
+import { ICONS, icon } from './menuArt';
 import { drawHeroSheet, strongest } from './menuHeroes';
 import { Tavern } from './tavern';
 import { SummoningHall } from './hall';
 import { Library } from './library';
-import { MenuScene } from './menuScene';
+import { CampScene } from './camp';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -40,7 +40,7 @@ export interface HomeHooks {
   runInfo?(): { stage: number; gold: number; army?: string; label: string } | null;
   onContinue(): void;
   /** Start an army from wave 1 (the page picks the party first). */
-  onArmy(id: string): void;
+  onArmy(id: string, tier: number): void;
   /** Opens the party screen to change the party (the Battle page's Party button). */
   onParty(): void;
   /** Opens the collection screen (the heroes, their ranks and the odds). */
@@ -74,9 +74,8 @@ export class Home {
   private note = '';
   private pages = new Map<Tab, HTMLElement>();
   private tabBtns = new Map<Tab, HTMLButtonElement>();
-  private scene!: MenuScene;
+  private camp: CampScene;
   private stopSheet: (() => void) | null = null;
-  private sceneKey = '';
   private tavern: Tavern;
   private castle: CastleScene;
   private hall: SummoningHall;
@@ -88,7 +87,8 @@ export class Home {
     private meta: Meta,
     private hooks: HomeHooks,
   ) {
-    this.scene = new MenuScene($('hmScene'));
+    // (the Battle page is the war camp: tapping a hero opens their sheet, the war table opens the party)
+    this.camp = new CampScene((kind) => this.openSheet(kind), () => this.go(this.hooks.onParty));
     this.tavern = new Tavern((kind) => this.openSheet(kind));
     // (the tavern leads to the Heroes tab, the chapel to the Spells tab and the signpost to the battle screen; the six upgrades open their cards)
     this.hall = new SummoningHall({
@@ -122,8 +122,8 @@ export class Home {
     this.pages.get('heroes')!.append(this.tavern.root);
     // (the castle page is the courtyard, with its shortcut buttons on top)
     this.pages.get('castle')!.append(this.castleBar, this.castle.root);
-    // (the battle page keeps the scene behind its own content)
-    this.pages.get('battle')!.append($('hmScene'));
+    // (the battle page keeps the camp behind its own content)
+    this.pages.get('battle')!.append(this.camp.root);
     $('hmTrophy').addEventListener('click', () => this.openSub('Achievements', (b) => drawAchievements(b, this.meta)));
     $('hmGear').addEventListener('click', () => openSettings());
     $('hmSubBack').addEventListener('click', () => this.closeSub());
@@ -148,7 +148,7 @@ export class Home {
 
   private go(then: () => void): void {
     $('home').hidden = true;
-    this.scene.stop();
+    this.camp.stop();
     this.tavern.stop();
     this.castle.stop();
     this.hall.stop();
@@ -159,6 +159,8 @@ export class Home {
 
   private show(tab: Tab): void {
     this.tab = tab;
+    // (the tab bar stays under the armies: a tap on it leaves them)
+    if ($('hmSub').classList.contains('armies')) this.closeSub();
     this.refresh();
   }
 
@@ -196,8 +198,9 @@ export class Home {
     this.castle.update(m);
     this.hall.update(m);
     this.library.update(m);
-    if (this.tab === 'battle') this.scene.start();
-    else this.scene.stop();
+    // (the camp only moves while the Battle tab shows, and not under a hero sheet)
+    if (this.tab === 'battle' && $('hmSheet').hidden) this.camp.start();
+    else this.camp.stop();
     // (the tavern only moves while it is showing, and not under a hero sheet)
     if (this.tab === 'heroes' && $('hmSheet').hidden) this.tavern.start();
     else this.tavern.stop();
@@ -215,30 +218,30 @@ export class Home {
     const m = this.meta;
     const page = this.pages.get('battle')!;
     const info = this.hooks.runInfo?.() ?? null;
-    // (the land is the army's in a run, else the newest army open)
-    const front = [...ARMIES].reverse().find((a) => armyUnlocked(m, a.id)) ?? ARMIES[0];
+    // (the war table shows the army in the run, else the first army open that is not cleared yet, else the newest)
+    const open = ARMIES.filter((a) => armyUnlocked(m, a.id));
+    const front = open.find((a) => !armyCleared(m, a.id)) ?? open[open.length - 1] ?? ARMIES[0];
     const army = info?.army ? armyById(info.army) : undefined;
-    const area = AREAS.includes((army ?? front).area) ? (army ?? front).area : info && !army ? areaFor(info.stage) : 'highlands';
-    const heroes = strongest(m, 5);
-    const key = `${area}|${heroes.join(',')}`;
-    if (key !== this.sceneKey) {
-      this.sceneKey = key;
-      this.scene.set(area, heroes);
-    }
+    const next = army ?? front;
+    // (the party stands round the fire, the strongest in the middle)
+    const party = strongest(m, 99).filter((k) => m.party.includes(k));
+    const boss = UNITS[bossOf(next)];
+    this.camp.update(m, party, { army: next, boss: boss.name, sheet: boss.sheet });
     page.querySelector('.hmFront')?.remove();
     const fr = el('div', 'hmFront');
     if (this.note) fr.append(el('div', 'hmNote', this.note));
-    fr.append(el('div', 'hmBanner', army && info ? `${army.name} · wave ${info.stage}/${army.waves.length}` : info ? `Stage ${info.stage} · ${AREA_NAMES[area]}` : `${front.name} · ${AREA_NAMES[area]}`));
-    const cards = el('div', 'hmCards');
-    const daily = el('button', 'hmCard');
+    fr.append(el('div', 'hmBanner', army && info ? `${army.name} · wave ${info.stage}/${army.waves.length}` : info ? `Stage ${info.stage} · ${next.name}` : `${next.name} · next`));
+    // (the daily and tower cards hang on signposts in the camp)
+    const daily = el('button', 'hmCard cpPlank');
     daily.append(icon(ICONS.daily), el('b', '', 'Daily'), el('small', '', dailyLine(m, todayKey()).replace('Daily challenge · ', '')));
     if (!m.daily[String(todayKey())]) daily.append(el('i', 'badge'));
     daily.addEventListener('click', () => this.go(this.hooks.onDaily));
-    const tower = el('button', `hmCard${towerOpen(m) ? '' : ' lockedCard'}`);
-    tower.append(icon(ICONS.tower), el('b', '', towerOpen(m) ? 'Tower' : 'Locked'), el('small', '', towerLine(m).replace('Endless tower · ', '')));
+    const tower = el('button', `hmCard cpPlank${towerOpen(m) ? '' : ' lockedCard'}`);
+    tower.append(icon(ICONS.tower), el('b', '', 'Tower'), el('small', '', towerOpen(m) ? towerLine(m).replace('Endless tower · ', '') : `after ${ARMIES[0].name.split(' ')[0]}s`));
     tower.disabled = !towerOpen(m);
     tower.addEventListener('click', () => this.go(this.hooks.onTower));
-    cards.append(daily, tower);
+    this.camp.dailySlot.replaceChildren(daily);
+    this.camp.towerSlot.replaceChildren(tower);
     const go = el('div', 'hmGo');
     const has = this.hooks.hasRun();
     const battle = el('button', 'hmBattle');
@@ -246,16 +249,23 @@ export class Home {
     battle.append(el('span', '', 'Battle!'), el('small', '', ARMIES.some((a) => armyIsNew(m, a.id)) ? 'A new army marches' : 'Choose an army'));
     battle.addEventListener('click', () => this.openArmies());
     go.append(battle);
-    const party = el('button', 'hmLink', 'Party');
-    party.id = 'hmParty';
-    party.addEventListener('click', () => this.go(this.hooks.onParty));
-    go.append(party);
+    const party2 = el('button', 'hmLink', 'Party');
+    party2.id = 'hmParty';
+    party2.addEventListener('click', () => this.go(this.hooks.onParty));
+    go.append(party2);
     if (has) {
       const cont = el('button', 'hmLink', `Continue · ${info?.label ?? 'run'}`);
       cont.addEventListener('click', () => this.go(this.hooks.onContinue));
       go.append(cont);
     }
-    fr.append(cards, go);
+    // (the chest stash: the chests the armies' stars have earned sit on the camp's cart, on the left)
+    const stash = el('div', 'csStash');
+    drawChestStash(stash, m, () => {
+      saveMeta(m);
+      this.refresh();
+    });
+    this.camp.stashMount.replaceChildren(stash);
+    fr.append(go);
     page.append(fr);
   }
 
@@ -371,6 +381,7 @@ export class Home {
     this.closeSheet();
     $('hmSheet').hidden = false;
     this.tavern.stop();
+    this.camp.stop();
     this.stopSheet = drawHeroSheet($('hmSheetBox'), this.meta, kind, () => this.closeSheet());
   }
 
@@ -380,11 +391,12 @@ export class Home {
     $('hmSheet').hidden = true;
     this.cardOpen = false;
     if (this.isOpen && this.tab === 'heroes') this.tavern.start();
+    if (this.isOpen && this.tab === 'battle') this.camp.start();
     if (this.isOpen && this.tab === 'castle') this.castle.start();
   }
 
   /** The Armies screen, over the home screen (the Battle button, and the unlock moment's way on). */
-  openArmies(): void {
+  openArmies(focus?: string): void {
     $('home').hidden = false;
     this.openSub(
       'Armies',
@@ -392,16 +404,22 @@ export class Home {
         drawArmies(body, this.meta, {
           running: this.hooks.runInfo?.() ?? null,
           onContinue: () => this.go(this.hooks.onContinue),
-          onFight: (id) => this.go(() => this.hooks.onArmy(id)),
+          onFight: (id, tier) => this.go(() => this.hooks.onArmy(id, tier)),
+          focus,
+          onBack: () => this.closeSub(),
         }),
       false,
+      true,
     );
     // (the cards a new army lit have been seen now: they glow no more the next time)
     if (markSeen(this.meta)) saveMeta(this.meta);
   }
 
-  private openSub(title: string, draw: (body: HTMLElement) => void, achievements = true): void {
+  private openSub(title: string, draw: (body: HTMLElement) => void, achievements = true, full = false): void {
     $('hmSub').hidden = false;
+    // (the armies fill the page between the top bar and the tabs, with no header of their own)
+    $('hmSub').classList.toggle('armies', full);
+    $('hmSubBody').classList.remove('asBody');
     $('hmSubTitle').textContent = title;
     const body = $('hmSubBody');
     body.replaceChildren();
