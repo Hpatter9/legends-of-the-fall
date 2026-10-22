@@ -176,3 +176,15 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
 - The Dire Wolf the Beastmaster calls is the Red Werewolf sheet of the Free Werewolf Sprite Sheets (Craftpix), already listed above.
 
 - **The loading screen** (`src/art/loading/`): the Knight's and the Demon Lord's attack rows, cut from the unit sheets above by `tools/loading-art.py`, with the slash (`src/art/fx/magic/moon_slash.png`) and the impact burst (`src/art/fx/impact.png`), all inlined into the page by `build.mjs`.
+
+## The Calamity's map and portal (`src/art/calmap/`, cut by `tools/calmap/prep.py`)
+
+- The lands' ground tiles (grass, dirt, moss, forest floor, stone path, dry grass, snow, scorched earth, cracked earth, cobble, flagstone, rocky floor), trees, bushes,
+  rocks, and the landmarks (weapon stall, hide tent, war drum, skull banner and meat pile, skull pile, market stall, striped tent and standard, chests, loot chests,
+  campfire, moon shrine, stone circle) and the six lairs (Orcs skull gate, Druids tree gate, Blood Court crypt and gatehouse, Moonpack cave den, Liches gatehouse) are single
+  pieces of Chronos Settlement's isometric kits (`hpatter9/little-town`, `src/renderer/art/iso/kits/`: Knights, Druids, Nomads, Moonpack, Orcs, Liches, Blood Court,
+  Dwarves, Fae), shrunk to half size by a 2x2 box average like the castle's and the camp's, and packed into one atlas (256 colours). The "spent" pictures (a done
+  stall, tent, chest, shrine; the burnt-out campfire) are made from the live ones by draining and darkening their colours. Chronos credits the kits as drawn with
+  ChatGPT's image generation from prompts written for the game, then cut, cleaned and reduced to 256 colours.
+- The portal (`portal.png`, also in the war camp) is the `rift-portal` effect of **PVFX Foundry** (Pixel VFX Studio, `pvfx-foundry-thirteen-spritesheets`), CC0 1.0: sixteen
+  frames, the visible 64 pixels of each, in one row.

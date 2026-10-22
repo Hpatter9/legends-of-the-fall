@@ -310,12 +310,18 @@ export class Home {
     party2.id = 'hmParty';
     party2.addEventListener('click', () => this.go(this.hooks.onParty));
     go.append(party2);
-    // (the calamity: a card of its own under the party link; it carries the run being played, if one is saved)
+    // (the calamity: a portal in the camp's road, with a small board under it carrying the saved run or the best; both open it)
     const going = this.hooks.slotInfo?.('calamity');
-    const calamity = el('button', 'hmLink hmCalamity', `Calamity · ${going ?? (m.calamity?.best ? `best ${m.calamity.best} of ${CAL_MAPS} maps` : 'one hero, a short climb')}`);
+    const calamity = el('button', 'hmCard cpPlank hmCalamity');
     calamity.id = 'hmCalamity';
+    calamity.append(el('b', '', 'Calamity'), el('small', '', going ?? (m.calamity?.best ? `best ${m.calamity.best} of ${CAL_MAPS} maps` : 'one hero, a climb')));
     calamity.addEventListener('click', () => this.go(this.hooks.onCalamity));
-    go.append(calamity);
+    this.camp.calamitySlot.replaceChildren(calamity);
+    const portal = el('button', 'cpPortalHit');
+    portal.setAttribute('aria-label', 'The Calamity portal');
+    portal.addEventListener('click', () => this.go(this.hooks.onCalamity));
+    this.camp.portalSlot.querySelector('.cpPortalHit')?.remove();
+    this.camp.portalSlot.append(portal);
     if (has) {
       const cont = el('button', 'hmLink', `Continue · ${info?.label ?? 'run'}`);
       cont.addEventListener('click', () => this.go(this.hooks.onContinue));

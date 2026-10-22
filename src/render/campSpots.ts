@@ -43,6 +43,8 @@ export const WALL_STEP = { dx: 93, dy: 54 };
 export const TABLE = { w: 56, h: 28 };
 /** The notice boards the signposts carry, in scene pixels (the page's Daily and Tower cards sit in them). */
 export const BOARD = { w: 92, h: 60, post: 30 };
+/** The portal's picture (the visible 64 of the pack's frames, in scene pixels) and the small board under it. */
+export const PORTAL = { size: 64, board: { w: 92, h: 46 } };
 /** How far up from the page's foot the Battle! button and its Party link cover the scene, in scene pixels (about css pixels). */
 export const BUTTON_ZONE = 140;
 /** From the fire's foot line up to the centre of the ground diamond it stands on. */
@@ -91,7 +93,9 @@ export interface Camp {
   cart: { x: number; y: number };
   stash: Rect;
   /** The two notice boards on posts (the page's Daily card on the right, the Tower card on the left), each as a box with the post running down from it. */
-  boards: { daily: Rect; tower: Rect };
+  boards: { daily: Rect; tower: Rect; calamity: Rect };
+  /** The Calamity's portal in the road inside the gate: its centre across, its foot line, and the box the tap covers. */
+  portal: { x: number; y: number; hit: Rect };
   /** The first row of scene pixels the Battle! button covers. */
   buttonTop: number;
 }
@@ -119,8 +123,8 @@ export function campLayout(w: number, h: number): Camp {
   const props: Piece[] = [
     { sprite: 'tent1', x: cx - 126, y: fireY + 2 },
     { sprite: 'tent2', x: cx + 128, y: fireY - 6 },
-    { sprite: 'standard', x: cx - 64, y: fireY - 50 },
-    { sprite: 'rack', x: cx + 62, y: fireY - 38 },
+    { sprite: 'standard', x: cx - 98, y: fireY - 44 },
+    { sprite: 'rack', x: cx + 92, y: fireY - 36 },
     { sprite: 'torch', x: cx - 58, y: gateY + 14 },
     { sprite: 'torch', x: cx + 58, y: gateY + 14 },
     { sprite: 'woodpile', x: cx + 72, y: fireY + 30 },
@@ -135,6 +139,7 @@ export function campLayout(w: number, h: number): Camp {
   ];
   const cart = { x: cx - 98, y: cartY };
   const boardY = gateY - 4;
+  const portalFoot = gateY + 62;
   return {
     w,
     h,
@@ -150,7 +155,9 @@ export function campLayout(w: number, h: number): Camp {
     boards: {
       daily: { x: w - BOARD.w - 8, y: boardY, w: BOARD.w, h: BOARD.h },
       tower: { x: 8, y: boardY, w: BOARD.w, h: BOARD.h },
+      calamity: { x: cx - PORTAL.board.w / 2, y: portalFoot + 8, w: PORTAL.board.w, h: PORTAL.board.h },
     },
+    portal: { x: cx, y: portalFoot, hit: { x: cx - 36, y: portalFoot - PORTAL.size, w: 72, h: PORTAL.size + 6 } },
     buttonTop,
   };
 }

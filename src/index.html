@@ -346,6 +346,9 @@
   .cpWrap { position: absolute; inset: 0; overflow: hidden; background: #2c2a55; }
   .cpRoom { position: absolute; top: 0; image-rendering: pixelated; touch-action: manipulation; }
   .cpStash, .cpSlot { position: absolute; }
+  .cpPortalHit { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0; border: 0; border-image: none; background: none; box-shadow: none; z-index: 4; }
+  .cpPortalHit:active { transform: none; }
+  .cpPortalSlot .calPortal { z-index: 1; }
   /* (the chest stash lies on the cart: its chests in a row along the bed instead of the stack down the page) */
   .cpStash { display: flex; align-items: flex-end; justify-content: center; }
   .cpStash .csStash { position: static; flex-direction: row; flex-wrap: wrap-reverse; justify-content: center; align-content: flex-end; width: 100%; gap: 0; padding: 0; background: none; border: 0; }

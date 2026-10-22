@@ -8,10 +8,12 @@ import type { Meta } from './sim/meta';
 import { heroRig, lookKey } from './render/awakenRig';
 import type { Army } from './sim/armies';
 import { sheetInfo } from './render/sheets';
+import { canvasOf, ROWS, shrinkRig, type Small } from './render/smallRig';
 import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
 import { EMOTE_NAMES, EMOTES } from './tavern';
-import { BOARD, campLayout, groundCells, starsFor, TABLE, type Camp, type Piece } from './render/campSpots';
+import { BOARD, campLayout, PORTAL, groundCells, starsFor, TABLE, type Camp, type Piece } from './render/campSpots';
+import portalUrl from './art/calmap/portal.png';
 import gateUrl from './art/camp/gate.png';
 import tent1Url from './art/camp/tent1.png';
 import tent2Url from './art/camp/tent2.png';
@@ -58,80 +60,6 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 };
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 const chance = (p: number) => Math.random() < p;
-const canvasOf = (w: number, h: number): HTMLCanvasElement => {
-  const c = el('canvas');
-  c.width = w;
-  c.height = h;
-  return c;
-};
-
-// ---- heroes: the idle, walk and attack rows shrunk by a whole number so a hero is about 52 scene pixels tall ----
-
-/** How tall a hero's figure is drawn, near enough, in scene pixels (the sheet is shrunk by the whole number that comes closest). */
-const HERO_PX = 52;
-interface Small {
-  c: HTMLCanvasElement;
-  fw: number;
-  fh: number;
-  counts: Record<string, number>;
-  rows: string[];
-  facesRight: boolean;
-  figure: number;
-}
-const ROWS = ['idle', 'walk', 'attack'];
-
-function shrinkRig(rig: NonNullable<ReturnType<typeof sheetInfo>>, px = HERO_PX): Small {
-  const n = Math.max(1, Math.round(rig.figure / px));
-  // (a tiny figure is drawn twice as big instead, a whole number again)
-  const up = n === 1 && rig.figure < px * 0.7 ? 2 : 1;
-  const fw = Math.floor(rig.w / n);
-  const fh = Math.floor(rig.h / n);
-  const rows = ROWS.map((r) => (rig.rows.includes(r) ? r : 'idle'));
-  const counts = rows.map((r) => rig.counts[r] ?? 1);
-  const src = canvasOf(rig.img.width, rig.img.height);
-  const sg = src.getContext('2d', { willReadFrequently: true })!;
-  sg.drawImage(rig.img, 0, 0);
-  const out = canvasOf(fw * up * Math.max(...counts), fh * up * ROWS.length);
-  const og = out.getContext('2d')!;
-  rows.forEach((r, ri) => {
-    const row = rig.rows.indexOf(r);
-    for (let i = 0; i < counts[ri]; i++) {
-      const data = sg.getImageData(i * rig.w, row * rig.h, rig.w, rig.h).data;
-      const dst = og.createImageData(fw, fh);
-      for (let oy = 0; oy < fh; oy++)
-        for (let ox = 0; ox < fw; ox++) {
-          let a = 0;
-          let rr = 0;
-          let gg = 0;
-          let bb = 0;
-          for (let y = 0; y < n; y++)
-            for (let x = 0; x < n; x++) {
-              const k = ((oy * n + y) * rig.w + ox * n + x) * 4;
-              const al = data[k + 3];
-              a += al;
-              rr += data[k] * al;
-              gg += data[k + 1] * al;
-              bb += data[k + 2] * al;
-            }
-          const o = (oy * fw + ox) * 4;
-          if (a >= 255 * n * n * 0.5) {
-            dst.data[o] = rr / a;
-            dst.data[o + 1] = gg / a;
-            dst.data[o + 2] = bb / a;
-            dst.data[o + 3] = 255;
-          }
-        }
-      if (up === 1) og.putImageData(dst, i * fw, ri * fh);
-      else {
-        const tmp = canvasOf(fw, fh);
-        tmp.getContext('2d')!.putImageData(dst, 0, 0);
-        og.imageSmoothingEnabled = false;
-        og.drawImage(tmp, 0, 0, fw, fh, i * fw * up, ri * fh * up, fw * up, fh * up);
-      }
-    }
-  });
-  return { c: out, fw: fw * up, fh: fh * up, counts: Object.fromEntries(ROWS.map((r, i) => [r, counts[i]])), rows: ROWS, facesRight: rig.facesRight, figure: Math.round((rig.figure * up) / n) };
-}
 
 type Mood = 'idle' | 'out' | 'pause' | 'back' | 'flourish';
 
@@ -187,6 +115,10 @@ export class CampScene {
   /** The two notice boards' slots: the page hangs its Daily and Tower cards in these (each is the board's box). */
   readonly dailySlot = el('div', 'cpSlot');
   readonly towerSlot = el('div', 'cpSlot');
+  /** The Calamity's portal: the page puts a tap button in `portalSlot` (the portal turns under it) and its small board in `calamitySlot`. */
+  readonly portalSlot = el('div', 'cpSlot cpPortalSlot');
+  readonly calamitySlot = el('div', 'cpSlot');
+  private portalFx = el('div', 'calPortal');
   /** The table's plate: the next army's name and boss; a tap opens the party. */
   private plate = el('button', 'cpPlate');
   private canvas = el('canvas', 'cpRoom');
@@ -221,7 +153,9 @@ export class CampScene {
     private onParty: () => void,
   ) {
     this.plate.addEventListener('click', () => this.onParty());
-    this.root.append(this.canvas, this.stashMount, this.dailySlot, this.towerSlot, this.plate);
+    this.portalFx.style.setProperty('--calPortal', `url(${portalUrl})`);
+    this.portalSlot.append(this.portalFx);
+    this.root.append(this.canvas, this.stashMount, this.dailySlot, this.towerSlot, this.portalSlot, this.calamitySlot, this.plate);
     this.ctx.imageSmoothingEnabled = false;
     onSettings((s) => (this.saver = s.saver));
     window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
@@ -357,6 +291,12 @@ export class CampScene {
     box(this.stashMount, camp.stash);
     box(this.dailySlot, camp.boards.daily);
     box(this.towerSlot, camp.boards.tower);
+    box(this.calamitySlot, camp.boards.calamity);
+    box(this.portalSlot, camp.portal.hit);
+    // (the portal's picture sits in the tap box, its foot on the box's foot; `--pu` is the css pixels in a scene pixel)
+    const pu = this.unit;
+    this.portalSlot.style.setProperty('--pu', String(pu));
+    Object.assign(this.portalFx.style, { left: `${(camp.portal.hit.w - PORTAL.size) / 2 * pu}px`, top: '0px', width: `${PORTAL.size * pu}px`, height: `${PORTAL.size * pu}px` });
     this.layPlate();
   }
 
@@ -416,7 +356,7 @@ export class CampScene {
     const wall = [...camp.wall].sort((p, q) => p.y - q.y || Math.abs(q.x - camp.cx) - Math.abs(p.x - camp.cx));
     for (const p of wall) this.piece(g, a, p);
     this.piece(g, a, { sprite: 'gate', x: camp.cx, y: camp.gateY });
-    for (const b of [camp.boards.daily, camp.boards.tower]) this.posts(g, b.x, b.y + b.h);
+    for (const b of [camp.boards.daily, camp.boards.tower, camp.boards.calamity]) this.posts(g, b.x, b.y + b.h);
     this.front = c;
   }
 
