@@ -289,6 +289,7 @@ export class Home {
     } else daily.append(el('i', 'badge'));
     daily.addEventListener('click', () => this.go(this.hooks.onDaily));
     const tower = el('button', `hmCard cpPlank${towerOpen(m) ? '' : ' lockedCard'}`);
+    tower.id = 'hmTower';
     const climbing = this.hooks.slotInfo?.('tower');
     tower.append(icon(ICONS.tower), el('b', '', 'Tower'), el('small', '', climbing ?? (towerOpen(m) ? towerLine(m).replace('Endless tower · ', '') : `after ${ARMIES[0].name.split(' ')[0]}s`)));
     // (a climb begun stays open, whatever the unlock says)
