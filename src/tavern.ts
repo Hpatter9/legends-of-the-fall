@@ -191,8 +191,8 @@ export class Tavern {
   private fit(): void {
     const h = this.root.clientHeight;
     if (!h || !art) return;
-    // (upright the room is drawn a size bigger so the floor and the heroes fill the page, and it pans both ways)
-    const s = this.root.clientWidth < h ? 3 : Math.max(2, Math.min(4, Math.floor(h / ROOM_H)));
+    // (the room is drawn a size bigger so the floor and the heroes fill the page, and it pans both ways)
+    const s = 3;
     if (s === this.scale && this.still && this.canvas.width === ROOM_W * s) return;
     this.scale = s;
     this.canvas.width = ROOM_W * s;
@@ -202,7 +202,7 @@ export class Tavern {
     this.ctx.imageSmoothingEnabled = false;
     this.still = this.paintStill(art, s);
     this.glow = this.paintGlow(s);
-    // (upright, the middle of the room; the floor, where the heroes are, in view)
+    // (the middle of the room; the floor, where the heroes are, in view)
     requestAnimationFrame(() => {
       this.scroll.scrollLeft = (this.scroll.scrollWidth - this.scroll.clientWidth) / 2;
       this.scroll.scrollTop = this.scroll.scrollHeight;
@@ -331,7 +331,12 @@ export class Tavern {
     const a = art;
     if (!a || !this.still) return;
     g.globalAlpha = 1;
-    g.drawImage(this.still, 0, 0);
+    // (only the part of the room on the screen is repainted: the rest is out of sight, and the frame is a third of the room wide)
+    const vx = Math.max(0, Math.floor(this.scroll.scrollLeft));
+    const vy = Math.max(0, Math.floor(this.scroll.scrollTop));
+    const vw = Math.min(this.canvas.width - vx, this.scroll.clientWidth + 1) || this.canvas.width;
+    const vh = Math.min(this.canvas.height - vy, this.scroll.clientHeight + 1) || this.canvas.height;
+    g.drawImage(this.still, vx, vy, vw, vh, vx, vy, vw, vh);
     const list: { depth: number; paint: () => void }[] = [];
     for (const p of PROPS) {
       const im = a[p.sprite];
@@ -350,7 +355,7 @@ export class Tavern {
     if (this.glow) {
       g.globalCompositeOperation = 'lighter';
       g.globalAlpha = 0.55 + 0.25 * Math.sin(this.now / 130) * Math.sin(this.now / 410 + 1) + 0.08 * Math.sin(this.now / 47);
-      g.drawImage(this.glow, 0, 0);
+      g.drawImage(this.glow, vx, vy, vw, vh, vx, vy, vw, vh);
       g.globalCompositeOperation = 'source-over';
       g.globalAlpha = 1;
     }
@@ -363,11 +368,9 @@ export class Tavern {
     const x = Math.round(spot.x - im.width / 2) * s;
     const y = (spot.y + 1 - im.height) * s;
     if (spot.seat === 'chair' && spot.facing === -1) {
-      g.save();
-      g.translate(x + im.width * s, y);
-      g.scale(-1, 1);
+      g.setTransform(-1, 0, 0, 1, x + im.width * s, y);
       g.drawImage(im, 0, 0, im.width * s, im.height * s);
-      g.restore();
+      g.setTransform(1, 0, 0, 1, 0, 0);
     } else g.drawImage(im, x, y, im.width * s, im.height * s);
   }
 
@@ -409,36 +412,50 @@ export class Tavern {
     const dy = (fy - lift) * s - dh;
     const flip = (a.face === 1) !== rig.facesRight;
     if (flip) {
-      g.save();
-      g.translate(fx * s, 0);
-      g.scale(-1, 1);
+      // (a mirrored transform set and put back by hand: save and restore are slow on a phone's canvas)
+      g.setTransform(-1, 0, 0, 1, fx * s, 0);
       g.drawImage(rig.img, i * rig.w, r * rig.h, rig.w, rig.h, -dw / 2, dy, dw, dh);
-      g.restore();
+      g.setTransform(1, 0, 0, 1, 0, 0);
     } else g.drawImage(rig.img, i * rig.w, r * rig.h, rig.w, rig.h, dx, dy, dw, dh);
     if (a.emote) this.bubble(a, fx, fy - Math.round(rig.figure * k) - 15);
   }
 
-  private bubble(a: Actor, cx: number, top: number): void {
-    const g = this.ctx;
+  /** The speech bubbles drawn once each (a bubble is a couple of hundred pixel rectangles, too many to redraw every frame). */
+  private bubbles = new Map<string, HTMLCanvasElement>();
+
+  private bubbleArt(name: string): HTMLCanvasElement {
+    const key = `${name}@${this.scale}`;
+    let c = this.bubbles.get(key);
+    if (c) return c;
     const s = this.scale;
-    const e = EMOTES[a.emote!.name];
-    // (it hops a pixel now and then)
-    const y = top + (Math.floor(this.now / 380) % 2);
-    const x = cx - 6;
+    const e = EMOTES[name];
+    c = document.createElement('canvas');
+    c.width = 13 * s;
+    c.height = 15 * s;
+    const g = c.getContext('2d')!;
+    // (drawn with its top left at 0, 0: the speech box is 13 across, the tail below it points at the speaker, 6 across from the left)
     g.fillStyle = '#3a2218';
-    g.fillRect((x + 1) * s, y * s, 11 * s, 13 * s);
-    g.fillRect(x * s, (y + 1) * s, 13 * s, 11 * s);
-    g.fillRect((cx - 1) * s, (y + 13) * s, 3 * s, 2 * s);
+    g.fillRect(s, 0, 11 * s, 13 * s);
+    g.fillRect(0, s, 13 * s, 11 * s);
+    g.fillRect(5 * s, 13 * s, 3 * s, 2 * s);
     g.fillStyle = '#f6ecd2';
-    g.fillRect((x + 1) * s, (y + 1) * s, 11 * s, 11 * s);
-    g.fillRect((cx - 1) * s, (y + 13) * s, 2 * s, s);
+    g.fillRect(s, s, 11 * s, 11 * s);
+    g.fillRect(5 * s, 13 * s, 2 * s, s);
     e.rows.forEach((row, ry) =>
       [...row].forEach((ch, rx) => {
         if (ch === '.') return;
         g.fillStyle = e.ink[ch];
-        g.fillRect((x + 3 + rx) * s, (y + 3 + ry) * s, s, s);
+        g.fillRect((3 + rx) * s, (3 + ry) * s, s, s);
       }),
     );
+    this.bubbles.set(key, c);
+    return c;
+  }
+
+  private bubble(a: Actor, cx: number, top: number): void {
+    // (it hops a pixel now and then)
+    const y = top + (Math.floor(this.now / 380) % 2);
+    this.ctx.drawImage(this.bubbleArt(a.emote!.name), (cx - 6) * this.scale, y * this.scale);
   }
 
   // ---- tapping ----

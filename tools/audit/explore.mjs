@@ -1,0 +1,20 @@
+import { serve, launch, HEROES, saveScript } from './lib.mjs';
+const SC = '/tmp/claude-0/-home-user-legends-of-the-fall/bbd26aa1-8f69-51f4-958e-93d0de0dae29/scratchpad';
+const srv = serve(); const browser = await launch();
+const ctx = await browser.newContext({ viewport: { width: 393, height: 852 }, deviceScaleFactor: 2, hasTouch: true });
+const page = await ctx.newPage();
+page.on('pageerror', (e) => console.log('PAGE ERROR', e.message));
+await page.addInitScript(saveScript(), [HEROES, {}]);
+await page.goto(`http://localhost:${srv.address().port}/`);
+await page.waitForTimeout(1500);
+await page.evaluate(() => { const g = window.__game; g.run.gold = 99999; g.run.stage = 8; });
+for (let i = 0; i < 6; i++) { await page.evaluate(() => document.getElementById('summon')?.click()); await page.waitForTimeout(150); }
+console.log(await page.evaluate(() => { const g = window.__game; return JSON.stringify({ phase: g.b.phase, squad: g.run.squad, units: g.b.units.length, home: !document.getElementById('home').hidden }); }));
+await page.evaluate(() => { const g = window.__game; document.getElementById('home').hidden = true; g.newBattle(); });
+await page.waitForTimeout(800);
+console.log(await page.evaluate(() => { const g = window.__game; return JSON.stringify({ phase: g.b.phase, units: g.b.units.map(u=>u.side+':'+u.def).join(',') }); }));
+await page.evaluate(() => document.getElementById('fight').click());
+await page.waitForTimeout(4000);
+console.log(await page.evaluate(() => { const g = window.__game; return JSON.stringify({ phase: g.b.phase, t: g.b.t, mana: g.b.spells.mana }); }));
+await page.screenshot({ path: SC+'/e1.png' });
+await browser.close(); srv.close();

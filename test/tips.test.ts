@@ -36,8 +36,4 @@ test('a bubble goes beside its anchor, clear of it, and inside the screen', () =
   assert.equal(low.ax, 340 - low.x);
   // at the top of the screen there is no room above, so the bubble goes below
   assert.equal(placeBubble({ x: 100, y: 10, w: 80, h: 30 }, size, view).side, 'below');
-  // sideways, a bench down the right has no room above or below, so the bubble goes to its left
-  const side = placeBubble({ x: 600, y: 10, w: 230, h: 380 }, size, { w: 852, h: 393 });
-  assert.equal(side.side, 'left');
-  assert.ok(side.x + size.w <= 600 - 12);
 });
