@@ -211,8 +211,11 @@ body .sbSlot { min-height: 44px; }
 .hmTab.hero, .hmTab.hero.on {
   margin-top: -16px; min-height: 82px; padding: 2px 2px 0; border-style: solid; border-width: 10px 10px 12px; border-radius: 0; background: none; box-shadow: none; overflow: hidden;
   border-image: url(ui/btn-gold.png) 5 5 6 fill / 10px 10px 12px stretch; color: #4a1a06; text-shadow: 0 2px 0 rgba(255, 228, 138, 0.7); font-size: 13px;
+  /* (steady: the old smooth look's glow pulse, a brightness and halo throb, still ran under the pixel frame and read as flashing) */
+  animation: none; filter: none;
 }
-.hmTab.hero::after { content: ''; position: absolute; top: 0; bottom: 0; left: -24px; width: 12px; pointer-events: none; background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0 25%, rgba(255, 255, 255, 0.75) 25% 50%, rgba(255, 255, 255, 0.4) 50% 75%, rgba(255, 255, 255, 0) 75%); transform: translateX(-24px); will-change: transform; animation: pxGlint 3.4s linear 1.2s infinite; --glintEnd: 120px; }
+/* (no glint on the tab either: it is a place to go, not a call to act, and the sweep there read as a flicker beside the Battle! button's own) */
+.hmTab.hero::after { content: none; }
 .hmTab.hero:not(.on) { filter: brightness(0.82) saturate(0.8); }
 .hmTab.hero img, .hmTab.hero.on img { width: 32px; height: 32px; filter: none; transform: none; }
 .hmTab.hero:active { border-image-source: url(ui/btn-gold-down.png); }
