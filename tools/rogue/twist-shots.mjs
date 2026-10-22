@@ -5,8 +5,12 @@
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
 import { readFileSync, existsSync } from 'node:fs';
+import * as esbuild from 'esbuild';
 const { chromium } = createRequire('/opt/node-tools/node_modules/')('playwright');
 const [root = 'out/web'] = process.argv.slice(2);
+// (the sim's event draw, bundled here so the script can find the stage that draws a wanted card)
+const built = await esbuild.build({ stdin: { contents: "export { drawEvent, TOWER_EVENT_KINDS } from './src/sim/events';", resolveDir: process.cwd(), loader: 'ts' }, bundle: true, write: false, format: 'esm', platform: 'node', loader: { '.png': 'empty' }, logLevel: 'warning' });
+const { drawEvent, TOWER_EVENT_KINDS } = await import('data:text/javascript;base64,' + Buffer.from(built.outputFiles[0].text).toString('base64'));
 const types = { html: 'text/html', js: 'text/javascript', png: 'image/png', woff2: 'font/woff2', json: 'application/json', webmanifest: 'application/json', ogg: 'audio/ogg', css: 'text/css' };
 const srv = createServer((q, r) => {
   const p = `${root}/` + (q.url.split('?')[0].slice(1) || 'index.html');
@@ -14,7 +18,7 @@ const srv = createServer((q, r) => {
   r.writeHead(200, { 'content-type': types[p.split('.').pop()] ?? 'application/octet-stream' });
   r.end(readFileSync(p));
 }).listen(8138);
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const HEROES = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard', 'paladin', 'cleric'];
 for (const [w, h] of [[393, 852], [360, 780]]) {
   const suffix = w === 393 ? '' : `-${w}`;
@@ -69,33 +73,27 @@ for (const [w, h] of [[393, 852], [360, 780]]) {
     await page.waitForTimeout(400);
     await shot(name);
   }
-  // 3. two of the new events: the stage is nudged until the mystery floor draws the one wanted
+  // 3. two of the new events: the stage is chosen (by drawing the card here, off the page's own run) so the mystery floor draws the one wanted
   for (const [name, title] of [['event-altar', 'A black altar'], ['event-imp', 'A gambling imp']]) {
     await load(7);
     await page.evaluate(() => { const g = window.__game; g.run.gold = 240; g.run.roster.push({ id: 90, kind: 'wizard', grade: 1 }); g.run.relics = ['banner']; });
-    let got = false;
-    for (let stage = 3; stage < 400 && !got; stage++) {
-      got = await page.evaluate((args) => {
-        const [stage, title] = args;
-        const g = window.__game;
-        const t = g.run.tower;
-        t.cur = undefined;
-        g.run.event = undefined;
-        document.getElementById('events').hidden = true;
-        g.run.stage = stage;
-        const n = t.map.find((x) => x.row === 0);
-        n.kind = 'mystery';
-        t.at = -1;
-        t.row = 0;
-        g.towerView.open(g.run);
-        g.towerView.picked = n.id;
-        g.towerView.go();
-        return document.querySelector('#events .evcard h2')?.textContent === title;
-      }, [stage, title]);
-    }
-    await page.waitForTimeout(300);
+    const run = await page.evaluate(() => JSON.parse(JSON.stringify(window.__game.run)));
+    let stage = 3;
+    while (stage < 600 && drawEvent(run, stage, TOWER_EVENT_KINDS).title !== title) stage++;
+    await page.evaluate((stage) => {
+      const g = window.__game;
+      g.run.stage = stage;
+      const n = g.run.tower.map.find((x) => x.row === 0);
+      n.kind = 'mystery';
+      g.towerView.open(g.run);
+      g.towerView.picked = n.id;
+      g.towerView.go();
+    }, stage);
+    // (the party's marker walks to the node first; the card opens when it arrives)
+    await page.waitForFunction(() => !document.getElementById('events').hidden, null, { timeout: 15000 });
+    await page.waitForTimeout(400);
+    console.log(name, 'stage', stage, await page.evaluate(() => document.querySelector('#events .evcard h2')?.textContent));
     await shot(name);
-    console.log(name, got);
   }
   await ctx.close();
 }
