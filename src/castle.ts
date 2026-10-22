@@ -40,7 +40,6 @@ import field2Url from './art/castle/field2.png';
 import flagstoneUrl from './art/castle/flagstone.png';
 import flowersUrl from './art/castle/flowers.png';
 import forgeUrl from './art/castle/forge.png';
-import gatehouseUrl from './art/castle/gatehouse.png';
 import granaryUrl from './art/castle/granary.png';
 import grass_tileUrl from './art/castle/grass_tile.png';
 import greatUrl from './art/castle/great.png';
@@ -101,7 +100,6 @@ const ART: Record<string, string> = {
   flagstone: flagstoneUrl,
   flowers: flowersUrl,
   forge: forgeUrl,
-  gatehouse: gatehouseUrl,
   granary: granaryUrl,
   grass_tile: grass_tileUrl,
   great: greatUrl,
@@ -201,7 +199,7 @@ interface Small {
 }
 
 /** How tall a hero stands in the yard, about: a sheet is shrunk by the whole number that comes nearest. */
-const HERO_PX = 32;
+const HERO_PX = 44;
 const heroShrink = (figure: number): number => Math.max(1, Math.round(figure / HERO_PX));
 
 function shrinkRig(rig: Rig): Small {
@@ -716,7 +714,7 @@ export class CastleScene {
     const list: { depth: number; paint: () => void }[] = [];
     const wallsOnly = (window as unknown as { __castleWallsOnly?: boolean }).__castleWallsOnly === true;
     for (const p of this.lay.props) {
-      if (wallsOnly && p.sprite !== 'wall' && p.sprite !== 'gatehouse' && p.sprite !== 'watchtower') continue;
+      if (wallsOnly && p.sprite !== 'wall' && p.sprite !== 'watchtower') continue;
       const im = a[p.sprite];
       const x = Math.round(p.x - im.width / 2) * s;
       const y = (p.y - im.height) * s;

@@ -339,7 +339,7 @@
   /* the tavern: the Heroes page is one pannable picture, with the count pinned over it */
   .hmPage.hm-heroes { padding: 0; overflow: hidden; background: #1a0f0a; }
   .tvWrap { position: absolute; inset: 0; }
-  .tvScroll { position: absolute; inset: 0; display: flex; overflow: hidden; overscroll-behavior: contain; scrollbar-width: none; }
+  .tvScroll { position: absolute; inset: 0; display: flex; overflow-x: hidden; overflow-y: auto; touch-action: pan-y; overscroll-behavior: contain; scrollbar-width: none; }
   .tvScroll::-webkit-scrollbar { display: none; }
   .tvRoom { flex: none; margin: auto; image-rendering: pixelated; }
   .tvCount { position: absolute; left: 8px; top: 8px; padding: 3px 9px 4px; font: 700 12px var(--body); letter-spacing: 0.5px; color: var(--gold-hi); text-shadow: 0 1px 0 #000; background: rgba(26, 13, 7, 0.82); border: 2px solid var(--gold-lo); border-radius: 8px; pointer-events: none; }
@@ -347,7 +347,7 @@
   /* the castle courtyard (Castle tab) */
   .hmPage.hm-castle { padding: 0; overflow: hidden; background: #64742f; display: flex; flex-direction: column; }
   .ctWrap { position: relative; flex: 1; min-height: 0; }
-  .ctScroll { position: absolute; inset: 0; display: flex; overflow: hidden; overscroll-behavior: contain; scrollbar-width: none; }
+  .ctScroll { position: absolute; inset: 0; display: flex; overflow-x: hidden; overflow-y: auto; touch-action: pan-y; overscroll-behavior: contain; scrollbar-width: none; }
   .ctScroll::-webkit-scrollbar { display: none; }
   .ctStage { position: relative; flex: none; margin: auto; }
   .ctRoom { display: block; image-rendering: pixelated; }
