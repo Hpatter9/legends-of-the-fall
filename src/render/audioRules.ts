@@ -5,6 +5,7 @@
 import type { Battle, BattleEvent } from '../sim/battle';
 import { D, W } from '../sim/board';
 import { at } from './iso';
+import type { Cue } from './soundRules';
 
 /* ------------------------------------------------------------------ stereo */
 
@@ -223,4 +224,250 @@ export const ACT_COLOURS: readonly ActColour[] = [
 export function colourOf(act: number | null): ActColour | null {
   if (act === null || !Number.isFinite(act)) return null;
   return ACT_COLOURS[(Math.max(1, Math.floor(act)) - 1) % ACT_COLOURS.length];
+}
+
+/* ------------------------------------------------------------------ ambience beds */
+
+/** Where the player is, as far as the sound cares: a home tab, the armies screen, or off the home screen. */
+export type HomeSpot = 'recruit' | 'heroes' | 'battle' | 'castle' | 'spells' | 'armies';
+
+/** The scenes the ambience knows. The castle and the spells share a bed; the tower has one for each of its three looks. */
+export type Scene = 'camp' | 'tavern' | 'hall' | 'castle' | 'spells' | 'armies' | 'field' | 'tower1' | 'tower2' | 'tower3';
+
+/** The beds themselves (one is playing at a time, besides a crossfade). */
+export type BedId = 'camp' | 'tavern' | 'hall' | 'castle' | 'armies' | 'field' | 'crypt' | 'halls' | 'storm';
+
+export const BED_OF: Record<Scene, BedId> = {
+  camp: 'camp',
+  tavern: 'tavern',
+  hall: 'hall',
+  castle: 'castle',
+  spells: 'castle',
+  armies: 'armies',
+  field: 'field',
+  tower1: 'crypt',
+  tower2: 'halls',
+  tower3: 'storm',
+};
+
+const HOME_SCENE: Record<HomeSpot, Scene> = { battle: 'camp', heroes: 'tavern', recruit: 'hall', castle: 'castle', spells: 'spells', armies: 'armies' };
+
+/** The scene for what is on screen: the home tab (or the armies) while the home screen is up, else the tower's act (its map
+ *  and its fights both) or the field (a stage, an army's wave or a daily). Acts 4 and up reuse the three, as the music does. */
+export function sceneOf(spot: HomeSpot | null, act: number | null): Scene {
+  if (spot) return HOME_SCENE[spot];
+  if (act === null || !Number.isFinite(act)) return 'field';
+  return `tower${((Math.max(1, Math.floor(act)) - 1) % 3) + 1}` as Scene;
+}
+
+/** How long a bed takes to crossfade in or out (seconds). */
+export const BED_FADE_S = 1.5;
+/** No bed's own level goes past this (the bus is already at the music's level, so a bed is never louder than the music). */
+export const BED_LEVEL_MAX = 0.5;
+/** The least time between two random one-shots of a bed (seconds): they are an occasional touch, not a pattern. */
+export const MIN_SHOT_GAP_S = 2.5;
+
+/** The one-shots a bed can sprinkle in. */
+export type ShotKind = 'pop' | 'clink' | 'twinkle' | 'bird' | 'drum' | 'drip' | 'thunder' | 'gust';
+
+/** A continuous layer of a bed: filtered noise or a held tone, with slow movement. */
+export interface BedLayer {
+  kind: 'noise' | 'tone';
+  /** For a noise layer, the filter type and its Q; for a tone, the wave (`wave`). */
+  filter?: BiquadFilterType;
+  q?: number;
+  wave?: OscillatorType;
+  /** The filter's centre or cutoff (noise), or the pitch (tone), in Hz. */
+  hz: number;
+  /** A second copy this many cents away, so a tone beats slowly. */
+  detune?: number;
+  gain: number;
+  /** The filter slowly sweeps this far (Hz) at this rate (noise only). */
+  sweep?: { hz: number; depth: number };
+  /** Swells of loudness: each is a slow (or fast) tremolo of `depth` (0 to 1) at `hz`. */
+  mods?: { hz: number; depth: number }[];
+}
+
+export interface BedSpec {
+  id: BedId;
+  /** The whole bed's level (0 to `BED_LEVEL_MAX`). */
+  level: number;
+  layers: BedLayer[];
+  /** A feedback delay on the bed (an echoing hall): the delay in seconds, the feedback and the wet share. */
+  echo?: { delay: number; feedback: number; mix: number };
+  /** The random one-shots: what they can be (weighted), and the range of the gap between them in seconds. */
+  shots: { kind: ShotKind; weight: number }[];
+  gap: [number, number];
+}
+
+const slow = (hz: number, depth: number) => ({ hz, depth });
+
+export const BEDS: Record<BedId, BedSpec> = {
+  // the war camp: a campfire (a low body of flame, a bright flutter, pops) and soft night insects
+  camp: {
+    id: 'camp',
+    level: 0.4,
+    layers: [
+      { kind: 'noise', filter: 'lowpass', q: 0.7, hz: 520, gain: 0.5, mods: [slow(0.35, 0.5), slow(1.9, 0.25)] },
+      { kind: 'noise', filter: 'bandpass', q: 1.2, hz: 2600, gain: 0.07, mods: [slow(3.1, 0.7)] },
+      // (crickets: a high band chirping fast, in slow bursts)
+      { kind: 'noise', filter: 'bandpass', q: 16, hz: 4600, gain: 0.05, mods: [slow(17, 1), slow(0.23, 0.9)] },
+      { kind: 'noise', filter: 'bandpass', q: 16, hz: 5300, gain: 0.035, mods: [slow(21, 1), slow(0.17, 0.9)] },
+    ],
+    shots: [{ kind: 'pop', weight: 1 }],
+    gap: [2.5, 5.5],
+  },
+  // the tavern: murmured talk (two bands swelling out of step), a hearth, the odd mug
+  tavern: {
+    id: 'tavern',
+    level: 0.4,
+    layers: [
+      { kind: 'noise', filter: 'bandpass', q: 1.3, hz: 420, gain: 0.45, sweep: { hz: 0.11, depth: 90 }, mods: [slow(0.13, 0.7), slow(0.7, 0.2)] },
+      { kind: 'noise', filter: 'bandpass', q: 1.0, hz: 950, gain: 0.25, sweep: { hz: 0.07, depth: 160 }, mods: [slow(0.09, 0.8)] },
+      { kind: 'noise', filter: 'lowpass', q: 0.7, hz: 380, gain: 0.22, mods: [slow(0.4, 0.4)] },
+    ],
+    shots: [
+      { kind: 'clink', weight: 2 },
+      { kind: 'pop', weight: 1 },
+    ],
+    gap: [4, 9],
+  },
+  // the summoning hall: a low hum and a shimmer of high partials
+  hall: {
+    id: 'hall',
+    level: 0.11,
+    layers: [
+      { kind: 'tone', wave: 'sine', hz: 110, detune: 7, gain: 0.3, mods: [slow(0.08, 0.35)] },
+      { kind: 'tone', wave: 'sine', hz: 165, detune: 5, gain: 0.16, mods: [slow(0.06, 0.5)] },
+      { kind: 'tone', wave: 'sine', hz: 1760, gain: 0.03, mods: [slow(0.21, 1)] },
+      { kind: 'tone', wave: 'sine', hz: 2637, gain: 0.022, mods: [slow(0.34, 1)] },
+      { kind: 'tone', wave: 'sine', hz: 3520, gain: 0.015, mods: [slow(0.27, 1)] },
+    ],
+    shots: [{ kind: 'twinkle', weight: 1 }],
+    gap: [4, 9],
+  },
+  // the castle and the spells: quiet wind, a far bird
+  castle: {
+    id: 'castle',
+    level: 0.35,
+    layers: [{ kind: 'noise', filter: 'bandpass', q: 0.8, hz: 480, gain: 0.5, sweep: { hz: 0.12, depth: 220 }, mods: [slow(0.09, 0.6)] }],
+    shots: [{ kind: 'bird', weight: 1 }],
+    gap: [8, 18],
+  },
+  // the armies: a very soft low rumble and a distant drum
+  armies: {
+    id: 'armies',
+    level: 0.5,
+    layers: [{ kind: 'noise', filter: 'lowpass', q: 0.7, hz: 140, gain: 0.3, mods: [slow(0.1, 0.5)] }],
+    shots: [{ kind: 'drum', weight: 1 }],
+    gap: [4, 7],
+  },
+  // a field fight: soft wind, now and then a bird
+  field: {
+    id: 'field',
+    level: 0.45,
+    layers: [{ kind: 'noise', filter: 'bandpass', q: 0.7, hz: 620, gain: 0.45, sweep: { hz: 0.15, depth: 260 }, mods: [slow(0.11, 0.55)] }],
+    shots: [{ kind: 'bird', weight: 1 }],
+    gap: [6, 14],
+  },
+  // tower act 1, the crypt: drips and a cold low drone
+  crypt: {
+    id: 'crypt',
+    level: 0.11,
+    layers: [
+      { kind: 'tone', wave: 'sine', hz: 55, detune: 6, gain: 0.35, mods: [slow(0.07, 0.3)] },
+      { kind: 'tone', wave: 'triangle', hz: 82.4, detune: 9, gain: 0.08, mods: [slow(0.05, 0.5)] },
+      { kind: 'noise', filter: 'lowpass', q: 0.7, hz: 260, gain: 0.18, mods: [slow(0.08, 0.5)] },
+    ],
+    shots: [{ kind: 'drip', weight: 1 }],
+    gap: [3, 7],
+  },
+  // act 2, the echoing halls: wind with a long echo
+  halls: {
+    id: 'halls',
+    level: 0.3,
+    layers: [{ kind: 'noise', filter: 'bandpass', q: 1.1, hz: 540, gain: 0.5, sweep: { hz: 0.1, depth: 240 }, mods: [slow(0.08, 0.7)] }],
+    echo: { delay: 0.42, feedback: 0.45, mix: 0.55 },
+    shots: [{ kind: 'gust', weight: 1 }],
+    gap: [6, 12],
+  },
+  // act 3, the storm: rain, wind, far thunder
+  storm: {
+    id: 'storm',
+    level: 0.21,
+    layers: [
+      { kind: 'noise', filter: 'highpass', q: 0.6, hz: 1700, gain: 0.2, mods: [slow(0.13, 0.25)] },
+      { kind: 'noise', filter: 'bandpass', q: 0.5, hz: 5500, gain: 0.12, mods: [slow(0.31, 0.3)] },
+      { kind: 'noise', filter: 'bandpass', q: 0.9, hz: 380, gain: 0.4, sweep: { hz: 0.16, depth: 160 }, mods: [slow(0.12, 0.6)] },
+    ],
+    shots: [{ kind: 'thunder', weight: 1 }],
+    gap: [9, 20],
+  },
+};
+
+/** The gap (seconds) for a unit random number `r` in a bed's range, never under `MIN_SHOT_GAP_S`. */
+export function shotGap(range: readonly [number, number], r: number): number {
+  const [lo, hi] = range;
+  return Math.max(MIN_SHOT_GAP_S, lo + (hi - lo) * clamp01(r));
+}
+
+/** Which one-shot a bed makes for a unit random number `r` (by weight). */
+export function pickShot(shots: readonly { kind: ShotKind; weight: number }[], r: number): ShotKind {
+  const total = shots.reduce((n, s) => n + s.weight, 0);
+  let x = clamp01(r) * total;
+  for (const s of shots) {
+    if (x < s.weight) return s.kind;
+    x -= s.weight;
+  }
+  return shots[shots.length - 1].kind;
+}
+
+/** When a bed's next random one-shot is due (on the audio clock, in seconds). Never sooner than `MIN_SHOT_GAP_S` after the last
+ *  one or after the bed began, and never catching up: a clock that jumped (the page was away) gives one shot, then a fresh gap. */
+export class ShotClock {
+  private next: number;
+
+  constructor(
+    private readonly range: readonly [number, number],
+    private readonly rand: () => number,
+    start: number,
+  ) {
+    this.next = start + shotGap(range, rand());
+  }
+
+  /** Whether a shot is due at `now`. Call `fired` when it is made. */
+  due(now: number): boolean {
+    return now >= this.next;
+  }
+
+  fired(now: number): void {
+    this.next = now + shotGap(this.range, this.rand());
+  }
+
+  get at(): number {
+    return this.next;
+  }
+}
+
+/* ------------------------------------------------------------------ the new cues */
+
+/** A cue a thing calls for, with its own level and a delay in ms (as the fight's `cuesFor` gives). */
+export interface PlannedCue {
+  cue: Cue;
+  gain?: number;
+  delay?: number;
+}
+
+/** The sound of a twist's reveal: a dark tone for a curse, a bright one for a blessing, and a mixed twist both, softly. */
+export function twistCues(tone: 'curse' | 'blessing' | 'mixed'): PlannedCue[] {
+  if (tone === 'curse') return [{ cue: 'twistCurse' }];
+  if (tone === 'blessing') return [{ cue: 'twistBlessing' }];
+  return [{ cue: 'twistCurse', gain: 0.6 }, { cue: 'twistBlessing', gain: 0.6, delay: 220 }];
+}
+
+/** The chime for a relic set tier just reached: a 2-piece chord, a bigger 3-piece fanfare (null for anything else). */
+export function setChime(pieces: number): Cue | null {
+  if (pieces === 2) return 'setChime2';
+  if (pieces >= 3) return 'setChime3';
+  return null;
 }

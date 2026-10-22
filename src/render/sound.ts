@@ -7,14 +7,15 @@
 // safe before that (it does nothing). The mute button's choice is remembered in localStorage (legends.sound); the
 // volumes come from the settings page (`settings.ts`).
 //
-// Buses: music, sfx, ui and ambience, meeting at a master with a limiter (see `BusMixer`). Ambience beds and new cues
-// for later screens are added through `play`, `setAct` and `duck` here; `docs/notes/audio-engine.md` says how.
+// Buses: music, sfx, ui and ambience, meeting at a master with a limiter (see `BusMixer`). The ambience beds (`audioBeds.ts`)
+// follow `setScene`; new cues are added through `play`; `docs/notes/audio-engine.md` and `audio-beds.md` say how.
 
 import { createEngine } from '@audiorective/core';
 import type { Battle, BattleEvent } from '../sim/battle';
 import { onSettings, settings } from '../settings';
 import { BusMixer, CueSynth, MusicPlayer, type BusName } from './audioProcessors';
-import { DuckCounter, panOfEvent, type Track } from './audioRules';
+import { AmbientBeds } from './audioBeds';
+import { DuckCounter, panOfEvent, type PlannedCue, type Scene, type Track } from './audioRules';
 import { Mixer, cuesFor, intensityOf, type Cue } from './soundRules';
 
 const MUSIC_LEVEL = 0.22;
@@ -24,7 +25,9 @@ const SAVE_KEY = 'legends.sound';
 export type Sfx = Cue;
 
 /** The cues that are the page's own taps and chimes: they go to the ui bus. */
-const UI_CUES = new Set<Cue>(['tap', 'summon', 'merge', 'coin', 'star', 'levelUp']);
+const UI_CUES = new Set<Cue>([
+  'tap', 'summon', 'merge', 'coin', 'star', 'levelUp', 'coinRecycle', 'coinClaim', 'sparkle', 'autoStart', 'autoStop', 'autoDone', 'setChime2', 'setChime3',
+]);
 /** The summoning show's sounds go to their own bus, so a tap that skips the show can hush them. */
 const SHOW_CUES = new Set<Cue>(['riseEpic', 'riseLegend', 'riseMythic', 'stingEpic', 'stingLegend', 'stingMythic', 'heartbeat', 'slam']);
 
@@ -34,6 +37,7 @@ interface Parts {
   mixer: BusMixer;
   synth: CueSynth;
   music: MusicPlayer;
+  beds: AmbientBeds;
 }
 
 let engine: (Parts & { core: { context: AudioContext; start(): Promise<void> } }) | null = null;
@@ -43,8 +47,9 @@ let tensionTick = 0;
 let muted = readMuted();
 /** What is holding the music down (menus, cards, the summoning show), by reason. */
 const ducks = new DuckCounter();
-/** The track and act asked for before the audio was unlocked. */
+/** The act and scene asked for before the audio was unlocked. */
 let wantAct: number | null = null;
+let wantScene: Scene | null = null;
 
 function readMuted(): boolean {
   try {
@@ -62,12 +67,15 @@ function unlock(): void {
       const synth = new CueSynth(ctx, (n) => mixer.bus(n));
       const music = new MusicPlayer(ctx);
       music.output.connect(mixer.bus('music'));
-      return { mixer, synth, music };
+      const beds = new AmbientBeds(ctx);
+      beds.output.connect(mixer.bus('ambience'));
+      return { mixer, synth, music, beds };
     });
     engine.mixer.params.master.value = muted ? 0 : 1;
     applyLevels();
     if (ducks.ducked) engine.mixer.setDuck(true);
     engine.music.setAct(wantAct);
+    engine.beds.setScene(wantScene);
   }
   if (engine.core.context.state !== 'running') void engine.core.start();
   if (!engine.music.current) setMusic('town');
@@ -87,7 +95,7 @@ export function setup(): void {
   // (for the tests and the owner: `window.__audioDebug()` says what the engine is doing)
   const w = window as unknown as { __audioDebug?: () => unknown; __audioApi?: unknown };
   w.__audioDebug = debugState;
-  w.__audioApi = { setAct, setMusic, setTension, duck };
+  w.__audioApi = { setAct, setMusic, setTension, duck, setScene, probe };
 }
 
 /** Stop all sound while the game is out of sight: the music's element pauses and the effects' clock is suspended. */
@@ -180,6 +188,11 @@ export function play(name: Sfx): void {
   cue(name, 1, 1, 0, 0);
 }
 
+/** Several cues at once, each with its own level and delay (a twist's reveal, a mixed one, is two). */
+export function playAll(cues: PlannedCue[]): void {
+  for (const q of cues) cue(q.cue, 1, q.gain ?? 1, q.delay ?? 0, 0);
+}
+
 /** One cue through the mixer: held back if too soon or the mix is full, else made `delay` ms from now. */
 function cue(name: Cue, speed: number, gain: number, delay: number, pan: number): void {
   if (!engine || engine.core.context.state !== 'running' || muted) return;
@@ -206,7 +219,14 @@ export function setAct(act: number | null): void {
   engine?.music.setAct(act);
 }
 
-/** Holds the music (and later the ambience) down, about -8 dB with a low-pass, or lets it up again. Counted by reason: the
+/** The place the player is in, for the ambience bed under the music (null for none): it crossfades over about 1.5 s, and
+ *  the same bed again changes nothing. See `sceneOf` in `audioRules.ts` for what each screen asks for. */
+export function setScene(scene: Scene | null): void {
+  wantScene = scene;
+  engine?.beds.setScene(scene);
+}
+
+/** Holds the music and the ambience down, about -8 dB with a low-pass, or lets it up again. Counted by reason: the
  *  music comes back when every reason has been let go, and a reason raised twice needs two lets. */
 export function duck(on: boolean, reason: string): void {
   const was = ducks.ducked;
@@ -238,10 +258,33 @@ function debugState(): unknown {
     track: music.current,
     tension: music.tension,
     act: music.act,
+    scene: engine.beds.scene,
+    bed: engine.beds.bed,
+    beds: engine.beds.live,
     ducked: ducks.reasons,
     limiter: m.limited,
     master: m.params.master.read(),
     buses: { music: m.params.music.read(), sfx: m.params.sfx.read(), ui: m.params.ui.read(), ambience: m.params.ambience.read() },
     duckGain: m.params.duck.read(),
   };
+}
+
+/** For the owner and the tests: the RMS level (0 to 1) now at the music and ambience buses, before the ducker, to check a bed
+ *  sits under the music. Taps are made on the first call and left in place (an analyser costs next to nothing). */
+const taps = new Map<'music' | 'ambience', AnalyserNode>();
+function probe(): Record<string, number> {
+  const out: Record<string, number> = {};
+  if (!engine) return out;
+  for (const name of ['music', 'ambience'] as const) {
+    let a = taps.get(name);
+    if (!a) {
+      a = new AnalyserNode(engine.core.context, { fftSize: 2048 });
+      engine.mixer.bus(name).connect(a);
+      taps.set(name, a);
+    }
+    const d = new Float32Array(a.fftSize);
+    a.getFloatTimeDomainData(d);
+    out[name] = Math.sqrt(d.reduce((n, x) => n + x * x, 0) / d.length);
+  }
+  return out;
 }

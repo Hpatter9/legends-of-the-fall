@@ -1,6 +1,6 @@
 // The page's audio parts, each an audiorective AudioProcessor: `CueSynth` makes the synthesised effects, `BusMixer` holds
 // the buses (music, sfx, ui, ambience) and the master with its limiter, and `MusicPlayer` plays the looped tracks with
-// their adaptive colour (a tension low-pass, a percussion layer, a drone for each tower act). They know nothing of the
+// their adaptive colour (a tension low-pass, a rumble swell, a drone for each tower act). They know nothing of the
 // sim or the DOM; `sound.ts` creates them through the engine and is the page's API. Not imported by the tests.
 
 import { AudioProcessor, FilePlayer, type SchedulableParam } from '@audiorective/core';
@@ -576,19 +576,85 @@ export const SOUNDS: Record<Cue, (s: Voices, t: number) => void> = {
     s.ring(t + 0.12, 660, 0.6, 0.06);
     s.note(t, 220, 0.5, 0.07, 'triangle', 110);
   },
+
+  // the tower: three soft footfalls up the stairs, stone and dust
+  steps: (s, t) =>
+    [0, 0.16, 0.33].forEach((d, i) => {
+      s.note(t + d, 120 - i * 8, 0.08, 0.1, 'sine', 70);
+      s.hiss(t + d, 0.06, 900 + i * 120, 'lowpass', 0.09);
+      s.click(t + d, 0.03, 1800);
+    }),
+  // a curse: a sinking, beating low tone under a dull knell and a dry rasp
+  twistCurse: (s, t) => {
+    s.note(t, 98, 0.9, 0.14, 'sawtooth', 70);
+    s.note(t, 104, 0.9, 0.1, 'sawtooth', 74);
+    s.ring(t + 0.05, 311, 0.8, 0.06);
+    s.hiss(t, 0.5, 700, 'lowpass', 0.08, 220);
+  },
+  // a blessing: a bright rising run into a ringing top
+  twistBlessing: (s, t) => {
+    [784, 988, 1319, 1568].forEach((f, i) => s.ring(t + i * 0.07, f, 0.6, 0.06));
+    s.ring(t + 0.28, 2349, 0.9, 0.04);
+    s.hiss(t + 0.2, 0.4, 7000, 'highpass', 0.04);
+  },
+  // an elite stirs: a low brassy fifth, a clang and a rising rush
+  eliteSting: (s, t) => {
+    s.note(t, 82, 1, 0.22, 'sawtooth', 65);
+    s.note(t, 123, 1, 0.12, 'sawtooth', 98);
+    s.ring(t + 0.02, 440, 0.9, 0.08);
+    s.note(t, 55, 0.9, 0.3, 'sine', 32);
+    s.hiss(t, 0.6, 300, 'bandpass', 0.12, 2400);
+  },
+  // a relic set: a two-piece's open chord, and a three-piece's fuller one with a rising run and a shimmer
+  setChime2: (s, t) => {
+    [523, 784, 1047].forEach((f) => s.ring(t, f, 1, 0.07));
+    s.pad(t, 262, 1, 0.04, 'triangle', 1600);
+  },
+  setChime3: (s, t) => {
+    [523, 659, 784, 1047].forEach((f, i) => s.note(t + i * 0.09, f, 0.22, 0.12, 'sawtooth'));
+    [523, 659, 784, 1047].forEach((f) => s.pad(t + 0.36, f, 1.5, 0.07, 'triangle', 2600));
+    s.ring(t + 0.36, 2093, 1.4, 0.06);
+    s.ring(t + 0.36, 3136, 1.2, 0.04);
+    s.note(t + 0.36, 131, 1.3, 0.16, 'sine');
+    s.hiss(t + 0.4, 0.9, 6500, 'highpass', 0.07);
+  },
+
+  // the menus: a recycle's coins tumble down, a claim's climb up with a ring
+  coinRecycle: (s, t) => [2093, 1760, 1568].forEach((f, i) => s.note(t + i * 0.06, f, 0.14, 0.1, 'triangle')),
+  coinClaim: (s, t) => {
+    [1319, 1568, 2093].forEach((f, i) => s.note(t + i * 0.07, f, 0.16, 0.11, 'triangle'));
+    s.ring(t + 0.21, 3136, 0.45, 0.05);
+    s.hiss(t + 0.2, 0.3, 7500, 'highpass', 0.03);
+  },
+  // a lucky hire: sparkles scattered high over the merge's chime
+  sparkle: (s, t) => {
+    [2349, 3136, 2794, 3951, 3322].forEach((f, i) => s.ring(t + 0.18 + i * 0.06, f, 0.35, 0.035));
+    s.hiss(t + 0.2, 0.5, 8000, 'highpass', 0.03);
+  },
+  // an auto-replay: a quick pair of ticks as it starts; a falling pair when it is stopped; a small resolving chord when it is done
+  autoStart: (s, t) => {
+    s.click(t, 0.08, 2600);
+    s.note(t + 0.07, 880, 0.08, 0.08, 'square');
+    s.note(t + 0.14, 1175, 0.12, 0.08, 'square');
+  },
+  autoStop: (s, t) => {
+    s.note(t, 880, 0.12, 0.09, 'triangle');
+    s.note(t + 0.1, 587, 0.3, 0.1, 'triangle');
+  },
+  autoDone: (s, t) => {
+    [523, 659, 784].forEach((f, i) => s.note(t + i * 0.1, f, 0.18, 0.1, 'triangle'));
+    [523, 784, 1047].forEach((f) => s.ring(t + 0.34, f, 0.7, 0.05));
+  },
 };
 /* -------------------------------------------------------------- the music */
 
 export const TRACK_FILES: Record<Track, string> = { town: 'town.ogg', battle: 'battle.ogg', boss: 'boss.ogg' };
 
-/** How loud a drone sits against the tracks (it is under them), and the percussion layer at its fullest. */
+/** How loud a drone sits against the tracks (it is under them), and the rumble layer at its fullest. */
 const DRONE_SCALE = 0.35;
-const PERC_SCALE = 0.2;
-/** The percussion layer's pulse: a beat every this many seconds (an eighth of a bar at about 104 bpm), at the track's pace. */
-const PERC_STEP_S = 0.288;
-/** How far ahead (seconds) the percussion layer schedules its hits, and how often it looks. */
-const PERC_AHEAD_S = 0.35;
-const PERC_EVERY_MS = 120;
+const RUMBLE_SCALE = 0.12;
+/** The rumble's breathing: a slow swell of this share of its level, this many times a second (not a beat, so no track can clash). */
+const RUMBLE_SWELL = { depth: 0.6, hz: 0.18 };
 
 /** One act's drone as it plays: its fade gain (the one thing that changes while it sounds) and how to let it go. */
 interface DroneNow {
@@ -597,8 +663,8 @@ interface DroneNow {
 }
 
 /** The music: the three looped tracks (streamed, through audiorective's FilePlayer) crossfaded into one low-pass that
- *  opens with the fight's tension and closes to the tower act's ceiling, a swell, a quiet synthesised percussion layer
- *  that fades in when the fight runs hot, and a drone under the tracks for the tower's acts. Everything leaves through
+ *  opens with the fight's tension and closes to the tower act's ceiling, a swell, a quiet synthesised rumble
+ *  swell that fades in when the fight runs hot, and a drone under the tracks for the tower's acts. Everything leaves through
  *  `output`, to the mixer's music bus. */
 export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swell: SchedulableParam; perc: SchedulableParam }> {
   private readonly players = new Map<Track, FilePlayer>();
@@ -608,10 +674,8 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swel
   private readonly droneOut: GainNode;
   private noise: AudioBuffer | null = null;
   private drone: DroneNow | null = null;
-  private percTimer: ReturnType<typeof setInterval> | null = null;
-  private percStopping = false;
-  private nextHit = 0;
-  private step = 0;
+  private rumble: { stop: () => void } | null = null;
+  private rumbleStopping = false;
   /** The track playing (or the last that was, while the page is hushed), the fight's tension and the tower act. */
   current: Track | null = null;
   tension = 0;
@@ -700,10 +764,10 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swel
     this.params.cutoff.setTargetAtTime(cutoffOf(track, this.tension, this.act), t, tc);
     this.params.swell.setTargetAtTime(swellOf(track, this.tension), t, tc);
     const hot = track === 'town' ? 0 : this.tension;
-    this.params.perc.setTargetAtTime(percLevel(hot) * PERC_SCALE, t, 0.8);
+    this.params.perc.setTargetAtTime(percLevel(hot) * RUMBLE_SCALE, t, 0.8);
     this.players.get(track)!.playbackRate = rateOf(track, this.tension, this.act);
-    if (percActive(hot)) this.startPerc();
-    else if (this.percTimer) this.stopPercSoon();
+    if (percActive(hot)) this.startRumble();
+    else if (this.rumble) this.stopRumbleSoon();
   }
 
   /** The page is out of sight: the tracks pause (the context is suspended by the caller). */
@@ -789,77 +853,50 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swel
     return this.noise;
   }
 
-  /* ------------------------------------------------------------ the percussion layer */
+  /* ------------------------------------------------------------ the rumble layer */
 
-  /** Starts the scheduler that lays the percussion a little ahead of the clock. It runs only while the fight is hot. */
-  private startPerc(): void {
-    if (this.percTimer) return;
-    this.nextHit = this.ac.currentTime + 0.05;
-    this.step = 0;
-    this.percTimer = setInterval(() => this.schedulePerc(), PERC_EVERY_MS);
+  /** Starts the rumble that swells under a hot fight: low, unpitched noise breathing slowly. It is a handful of long-lived
+   *  nodes (no hits to schedule, so it cannot fall out of step with a track) and is let go once it has faded out. */
+  private startRumble(): void {
+    if (this.rumble) return;
+    const ac = this.ac;
+    const src = new AudioBufferSourceNode(ac, { buffer: this.noiseBuffer(), loop: true });
+    const lp = new BiquadFilterNode(ac, { type: 'lowpass', frequency: 150, Q: 0.7 });
+    const breath = new GainNode(ac, { gain: 1 - RUMBLE_SWELL.depth / 2 });
+    const lfo = new OscillatorNode(ac, { frequency: RUMBLE_SWELL.hz });
+    lfo.connect(new GainNode(ac, { gain: RUMBLE_SWELL.depth / 2 })).connect(breath.gain);
+    src.connect(lp).connect(breath).connect(this.percOut);
+    src.start();
+    lfo.start();
+    this.rumble = {
+      stop: () => {
+        for (const n of [src, lfo]) {
+          try {
+            n.stop();
+          } catch {
+            /* (already stopped) */
+          }
+        }
+        breath.disconnect();
+      },
+    };
   }
 
-  /** Stops the scheduler once the layer has faded out (the fade is about a second and a half). */
-  private stopPercSoon(): void {
-    if (this.percStopping) return;
-    this.percStopping = true;
+  /** Lets the rumble go once its layer has faded out (the fade is about a second and a half). */
+  private stopRumbleSoon(): void {
+    if (this.rumbleStopping) return;
+    this.rumbleStopping = true;
     setTimeout(() => {
-      this.percStopping = false;
-      if (this.percTimer && !percActive(this.current === 'town' ? 0 : this.tension)) {
-        clearInterval(this.percTimer);
-        this.percTimer = null;
+      this.rumbleStopping = false;
+      if (this.rumble && !percActive(this.current === 'town' ? 0 : this.tension)) {
+        this.rumble.stop();
+        this.rumble = null;
       }
     }, 1800);
   }
 
-  private schedulePerc(): void {
-    const ac = this.ac;
-    if (ac.state !== 'running') return;
-    const pace = this.current ? rateOf(this.current, this.tension, this.act) : 1;
-    // (a long gap, such as the page being away, is not caught up with)
-    if (this.nextHit < ac.currentTime - 0.1) this.nextHit = ac.currentTime + 0.02;
-    while (this.nextHit < ac.currentTime + PERC_AHEAD_S) {
-      this.hit(this.nextHit, this.step % 8);
-      this.nextHit += PERC_STEP_S / pace;
-      this.step++;
-    }
-  }
-
-  /** One step of an eight-step war-drum bar: low drums on the beat and a soft tick between. */
-  private hit(t: number, step: number): void {
-    if (step === 0 || step === 4) this.drum(t, 70, 0.22, 0.9);
-    else if (step === 3 || step === 6) this.drum(t, 110, 0.16, 0.5);
-    else this.tick(t);
-  }
-
-  private drum(t: number, f: number, d: number, v: number): void {
-    const ac = this.ac;
-    const o = new OscillatorNode(ac, { type: 'sine', frequency: f });
-    o.frequency.exponentialRampToValueAtTime(f * 0.5, t + d);
-    const g = new GainNode(ac, { gain: 0.0001 });
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(v, t + 0.008);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + d);
-    o.connect(g).connect(this.percOut);
-    o.start(t);
-    o.stop(t + d + 0.03);
-  }
-
-  private tick(t: number): void {
-    const ac = this.ac;
-    const src = new AudioBufferSourceNode(ac, { buffer: this.noiseBuffer() });
-    const hp = new BiquadFilterNode(ac, { type: 'highpass', frequency: 5000 });
-    const g = new GainNode(ac, { gain: 0.0001 });
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(0.25, t + 0.004);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
-    src.connect(hp).connect(g).connect(this.percOut);
-    src.start(t, Math.random());
-    src.stop(t + 0.06);
-  }
-
   destroy(): void {
-    if (this.percTimer) clearInterval(this.percTimer);
+    this.rumble?.stop();
     this.drone?.stop();
     for (const p of this.players.values()) p.destroy();
     super.destroy();

@@ -3,6 +3,8 @@
 // cut by `tools/twist-icons.py` and bundled into game.js, so it all plays offline.
 
 import { TWISTS, type Tone } from './sim/twists';
+import { playAll } from './render/sound';
+import { twistCues } from './render/audioRules';
 import fog from './art/twists/fog.png';
 import holy from './art/twists/holy.png';
 import lava from './art/twists/lava.png';
@@ -55,6 +57,12 @@ export function twistLine(id: string | undefined): string {
   return tw ? ` ${TONE_NAMES[tw.tone]} twist, ${tw.name}: ${tw.text}` : '';
 }
 
+/** The reveal's sound: a dark tone for a curse, a bright one for a blessing (nothing for an id that is not known). */
+export function playTwist(id: string | undefined): void {
+  const tw = id ? TWISTS[id] : undefined;
+  if (tw) playAll(twistCues(tw.tone));
+}
+
 /** The banner over a fight's board (`#twistBanner`): shown for a fight with a twist, hidden otherwise. */
 export function showTwistBanner(id: string | undefined): void {
   const box = document.getElementById('twistBanner');
@@ -64,6 +72,7 @@ export function showTwistBanner(id: string | undefined): void {
   box.replaceChildren();
   if (!tw) return;
   box.className = tw.tone;
+  playTwist(tw.id);
   const words = el('span');
   words.append(el('b', '', `${tw.name} · ${TONE_NAMES[tw.tone]}`), el('small', '', tw.text));
   box.append(pic(tw.id, 'twIco'), words);

@@ -12,6 +12,7 @@ import { dailyLine, towerLine, towerOpen } from './sim/modes';
 import { ARMIES, armyById, armyCleared, armyIsNew, armyStars, armyUnlocked, bossOf, clearedCount, markSeen } from './sim/armies';
 import { ACHIEVEMENTS, claimAchievement, unclaimed } from './sim/achievements';
 import { play } from './render/sound';
+import type { HomeSpot } from './render/audioRules';
 import { UNITS } from './sim/units';
 import { drawArmies } from './armiesView';
 import { drawChestStash } from './chestStash';
@@ -50,6 +51,8 @@ export interface HomeHooks {
   onSummon?(count: 1 | 10, play: (got: Pull[]) => Promise<void>): void;
   onDaily(): void;
   onTower(): void;
+  /** The home screen's tab, or the armies, changed (or it was left): the ambience follows (`spot`). */
+  onScene?(): void;
 }
 
 type Tab = 'recruit' | 'heroes' | 'battle' | 'castle' | 'spells';
@@ -147,6 +150,12 @@ export class Home {
     return !$('home').hidden;
   }
 
+  /** Where on the home screen the player is, for the ambience: the armies if that screen is up, else the tab; null off the home screen. */
+  get spot(): HomeSpot | null {
+    if (!this.isOpen) return null;
+    return !$('hmSub').hidden && $('hmSub').classList.contains('armies') ? 'armies' : this.tab;
+  }
+
   private go(then: () => void): void {
     $('home').hidden = true;
     this.camp.stop();
@@ -155,6 +164,7 @@ export class Home {
     this.hall.stop();
     this.library.stop();
     this.note = '';
+    this.hooks.onScene?.();
     then();
   }
 
@@ -199,6 +209,7 @@ export class Home {
     this.castle.update(m);
     this.hall.update(m);
     this.library.update(m);
+    this.hooks.onScene?.();
     // (the camp only moves while the Battle tab shows, and not under a hero sheet)
     if (this.tab === 'battle' && $('hmSheet').hidden) this.camp.start();
     else this.camp.stop();
@@ -423,7 +434,7 @@ export class Home {
         const paid = ids.reduce((n, id) => n + claimAchievement(this.meta, id), 0);
         if (!paid) return;
         saveMeta(this.meta);
-        play('coin');
+        play('coinClaim');
         b.replaceChildren();
         draw(b);
         this.refresh();
@@ -452,5 +463,6 @@ export class Home {
 
   private closeSub(): void {
     $('hmSub').hidden = true;
+    this.hooks.onScene?.();
   }
 }
