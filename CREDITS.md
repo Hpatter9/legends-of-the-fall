@@ -135,3 +135,10 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   great oak, Settlers signpost (the Armies road).
 - The heroes who stroll the yard use their own sheets (see above), shrunk by a whole number when the page loads.
 - Nothing was generated for this look.
+
+## The summoning hall and the library (`src/art/hall/`, `src/art/library/`)
+
+- The hall's wall, floor, summoning circle, summoner (two poses), brazier and pillar, and the library's wall and lectern are **generated with
+  PixelLab** (see `tools/scenes/README.md` for the prompts).
+- The braziers' flames (`src/art/hall/fx_fire-flame.png`) are the `fire-flame-16` sheet from the **Super Pixel Effects Gigapack (Free Version)**
+  by unTied Games, copied as it is.

@@ -4,11 +4,10 @@
 // older screens (gacha, modes, achievements, settings, castle upgrades); it only reads and changes the Meta through the
 // sim's own functions.
 
-import { ALL_HEROES, UNITS } from './sim/units';
 import { BUILDING_IDS, BUILDINGS, maxLevel, nextCost, upgrade, type BuildingId } from './sim/castle';
 import { CastleScene, lookPicture } from './castle';
 import { BLURB, effectText } from './render/castleSpots';
-import { MYTHIC_PITY, PITY, PULL_COST, PULL10_COST, rarityOf, saveMeta, type Meta } from './sim/meta';
+import { PULL_COST, saveMeta, type Meta, type Pull } from './sim/meta';
 import { dailyLine, towerLine, towerOpen } from './sim/modes';
 import { ARMIES, armyById, armyIsNew, armyStars, armyUnlocked, clearedCount, markSeen } from './sim/armies';
 import { ACHIEVEMENTS } from './sim/achievements';
@@ -17,13 +16,13 @@ import { areaFor } from './sim/run';
 import { drawArmies } from './armiesView';
 import { drawAchievements } from './achievementsView';
 import { todayKey } from './modes';
-import { portrait } from './render/sheets';
 import { openSettings } from './settings';
-import { openSpellbook } from './spellbook';
 import { resetTipsButton, tips } from './tips';
 import { AREA_NAMES, ICONS, icon } from './menuArt';
 import { drawHeroSheet, strongest } from './menuHeroes';
 import { Tavern } from './tavern';
+import { SummoningHall } from './hall';
+import { Library } from './library';
 import { MenuScene } from './menuScene';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -44,11 +43,12 @@ export interface HomeHooks {
   onArmy(id: string): void;
   /** Opens the party screen to change the party (the Battle page's Party button). */
   onParty(): void;
+  /** Opens the collection screen (the heroes, their ranks and the odds). */
   onRecruit(): void;
+  /** Does a pull of `count`, calling `play` with the heroes it gave so the hall can show them, then opens the card reveal. */
+  onSummon?(count: 1 | 10, play: (got: Pull[]) => Promise<void>): void;
   onDaily(): void;
   onTower(): void;
-  /** Opens the spellbook; until it exists the Spells tab shows a "coming soon" page. */
-  onSpells?(): void;
 }
 
 type Tab = 'recruit' | 'heroes' | 'battle' | 'castle' | 'spells';
@@ -79,6 +79,8 @@ export class Home {
   private sceneKey = '';
   private tavern: Tavern;
   private castle: CastleScene;
+  private hall: SummoningHall;
+  private library = new Library();
   private castleBar = el('div', 'ctBar');
   private cardOpen = false;
 
@@ -89,6 +91,17 @@ export class Home {
     this.scene = new MenuScene($('hmScene'));
     this.tavern = new Tavern((kind) => this.openSheet(kind));
     // (the tavern leads to the Heroes tab, the chapel to the Spells tab and the signpost to the battle screen; the six upgrades open their cards)
+    this.hall = new SummoningHall({
+      onSummon: (n) => {
+        // (the gacha pulls and keeps the result; the hall plays it, then the usual card reveal opens over the page)
+        if (this.hooks.onSummon) this.hooks.onSummon(n, (got) => this.hall.play(got).then(() => this.hall.stop()));
+        else this.hooks.onRecruit();
+      },
+      onCollection: () => {
+        this.hall.stop();
+        this.hooks.onRecruit();
+      },
+    });
     this.castle = new CastleScene((id) => (id === 'tavern' ? this.show('heroes') : id === 'chapel' ? this.show('spells') : id === 'armies' ? this.show('battle') : this.openBuilding(id)));
     const pages = $('hmPages');
     const bar = $('hmTabs');
@@ -102,6 +115,9 @@ export class Home {
       bar.append(b);
       this.tabBtns.set(t.id, b);
     }
+    // (the recruit page is the summoning hall and the spells page the library: each draws once and keeps its place)
+    this.pages.get('recruit')!.append(this.hall.root);
+    this.pages.get('spells')!.append(this.library.root);
     // (the heroes page is the tavern: it draws once and keeps its place while you switch tabs)
     this.pages.get('heroes')!.append(this.tavern.root);
     // (the castle page is the courtyard, with its shortcut buttons on top)
@@ -135,12 +151,13 @@ export class Home {
     this.scene.stop();
     this.tavern.stop();
     this.castle.stop();
+    this.hall.stop();
+    this.library.stop();
     this.note = '';
     then();
   }
 
   private show(tab: Tab): void {
-    if (tab === 'spells') return this.hooks.onSpells ? this.hooks.onSpells() : openSpellbook();
     this.tab = tab;
     this.refresh();
   }
@@ -174,16 +191,21 @@ export class Home {
     this.tabBtns.get('recruit')!.classList.toggle('new', m.crowns >= PULL_COST);
     this.tabBtns.get('battle')!.classList.toggle('new', !m.daily[String(todayKey())] || ARMIES.some((a) => armyIsNew(m, a.id)));
     this.drawBattle();
-    this.drawRecruit();
     this.tavern.update(m);
     this.drawCastle();
     this.castle.update(m);
-    this.drawSpells();
+    this.hall.update(m);
+    this.library.update(m);
     if (this.tab === 'battle') this.scene.start();
     else this.scene.stop();
     // (the tavern only moves while it is showing, and not under a hero sheet)
     if (this.tab === 'heroes' && $('hmSheet').hidden) this.tavern.start();
     else this.tavern.stop();
+    // (the hall and the library move only while their tab shows; a pull in flight is not cut short by a redraw)
+    if (this.tab === 'recruit' && $('gacha').hidden) this.hall.start();
+    else if (this.tab !== 'recruit') this.hall.stop();
+    if (this.tab === 'spells') this.library.start();
+    else this.library.stop();
     // (the courtyard moves only while it is showing, and not under a building card)
     if (this.tab === 'castle' && !this.cardOpen) this.castle.start();
     else this.castle.stop();
@@ -235,29 +257,6 @@ export class Home {
     }
     fr.append(cards, go);
     page.append(fr);
-  }
-
-  private drawRecruit(): void {
-    const m = this.meta;
-    const page = this.pages.get('recruit')!;
-    page.replaceChildren();
-    const panel = el('div', 'hmPanel');
-    panel.append(el('h2', '', 'Summoning hall'));
-    const locked = ALL_HEROES.filter((k) => !m.unlocked.includes(k));
-    const show = el('div', 'hmShow');
-    for (const k of (locked.length ? locked : ALL_HEROES).slice(0, 4)) {
-      const c = portrait(UNITS[k].sheet, 72);
-      c.className = `r${rarityOf(k)}`;
-      if (locked.length) c.style.filter = 'brightness(0.25)';
-      show.append(c);
-    }
-    panel.append(show);
-    panel.append(el('p', 'hint', `${m.unlocked.length} of ${ALL_HEROES.length} heroes recruited · a Legendary is guaranteed within ${PITY} pulls (${Math.max(0, PITY - m.dry)} to go), a Mythic within ${MYTHIC_PITY} (${Math.max(0, MYTHIC_PITY - m.dryMythic)})`));
-    const sum = el('button', 'hmBig', 'Summon');
-    sum.append(el('small', '', `1 pull ${PULL_COST} · 10 pulls ${PULL10_COST} crowns`));
-    sum.addEventListener('click', () => this.hooks.onRecruit());
-    panel.append(sum);
-    page.append(panel);
   }
 
   /** The chips over the courtyard's sky: the achievements and settings shortcuts, the tips reset and a line of help. */
@@ -330,14 +329,6 @@ export class Home {
     const row = el('div', 'brow2');
     row.append(buy, done);
     box.append(row);
-  }
-
-  private drawSpells(): void {
-    const page = this.pages.get('spells')!;
-    page.replaceChildren();
-    const panel = el('div', 'hmPanel');
-    panel.append(el('h2', '', 'Spells'), icon(ICONS.spells, 'ico big'), el('p', 'hint', 'Coming soon: the king\'s spellbook.'));
-    page.append(panel);
   }
 
   private openSheet(kind: string): void {

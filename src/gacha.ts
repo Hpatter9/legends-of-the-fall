@@ -79,6 +79,20 @@ export class Gacha {
     return frag;
   }
 
+  /** A pull started from the summoning hall: the pull is made at once (so it is saved whatever happens), the hall plays it, then the usual reveal opens. */
+  summon(count: 1 | 10, play: (got: Pull[]) => Promise<void>): void {
+    if (this.busy) return;
+    const got = recruit(this.meta, count);
+    if (!got) return;
+    saveMeta(this.meta);
+    this.busy = true;
+    void play(got).then(() => {
+      $('gacha').hidden = false;
+      this.refresh();
+      this.reveal(got);
+    });
+  }
+
   private pull(count: 1 | 10): void {
     const got = recruit(this.meta, count);
     if (!got) return;
