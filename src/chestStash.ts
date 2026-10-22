@@ -3,6 +3,8 @@
 // small module so the home screen can mount it anywhere: `drawChestStash(host, meta, onChange)` fills a host element, and
 // `showChest` is the opening moment. The rules (what is in a chest, opening it once) are in `src/sim/armyStars.ts`.
 
+import { itemIcon } from './equipView';
+import { EQUIP_BASES } from './sim/equipment';
 import { chestKind, openChest, type ChestKind, type Loot, type LootItem } from './sim/armyStars';
 import { armyById } from './sim/armies';
 import { saveMeta, type Meta } from './sim/meta';
@@ -69,6 +71,7 @@ export function chestPicture(kind: ChestKind, scale: number): { root: HTMLElemen
 /** The reward line's picture: a hero's face, a piece of gear's icon, or the crown. */
 function lootIcon(it: LootItem): HTMLElement {
   if (it.type === 'crowns') return icon(ICONS.crowns, 'lootIco');
+  if (it.type === 'gear' && it.equip) return itemIcon({ ...it.equip, id: 0 }, EQUIP_BASES[it.equip.base].slot, 'small');
   if (it.type === 'gear') return icon(gearIcon(it.ref ?? 'weapon', 1), 'lootIco');
   const face = portrait(UNITS[it.ref ?? ''].sheet, 48);
   face.className = 'lootFace';

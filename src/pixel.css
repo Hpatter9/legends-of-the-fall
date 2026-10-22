@@ -340,7 +340,7 @@ body .sbSlot { min-height: 44px; }
 .asBody .hint { display: none; }
 
 /* the chest opening: shake, burst, light, and the rewards flying out into cards */
-.chestShow { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 10px; padding: 8vh 14px 14px; background: rgba(6, 3, 2, 0.94); overflow: hidden; animation: pxUnlockIn 0.3s steps(3) both; }
+.chestShow { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 10px; padding: 6vh 14px 14px; background: rgba(6, 3, 2, 0.94); overflow: hidden auto; overscroll-behavior: contain; animation: pxUnlockIn 0.3s steps(3) both; }
 .chestTitle { font: bold 22px var(--display); color: var(--gold-hi); text-shadow: 0 3px 0 #2a0a06; z-index: 2; }
 .chestStage { position: relative; width: 220px; height: 170px; display: grid; place-items: center; z-index: 2; }
 .chestStage .chestPic { z-index: 2; }
@@ -363,7 +363,10 @@ body .sbSlot { min-height: 44px; }
 .chestSparks i { position: absolute; width: 6px; height: 6px; margin: -3px; background: #ffe48a; opacity: 0; }
 .chestShow.lit .chestSparks i { animation: asSpark 0.9s steps(9) var(--d) both; }
 @keyframes asSpark { 0% { opacity: 1; transform: rotate(var(--a)) translateY(0); } 100% { opacity: 0; transform: rotate(var(--a)) translateY(calc(var(--r) * -1)); } }
-.chestLoot { position: relative; z-index: 2; width: min(360px, 100%); display: flex; flex-direction: column; gap: 5px; max-height: 46vh; overflow-y: auto; }
+.chestLoot { position: relative; z-index: 2; width: min(360px, 100%); display: flex; flex-direction: column; gap: 5px; max-height: 46vh; overflow-y: auto; overscroll-behavior: contain; flex: 0 1 auto; }
+/* (every reward card keeps its height: a long chest scrolls its list rather than squashing or clipping the last card) */
+.chestLoot > .lootCard { flex: none; }
+.chestShow > * { flex-shrink: 0; }
 .lootCard { display: flex; align-items: center; gap: 8px; padding: 4px 8px; font-size: 13px; color: var(--ink); background: rgba(40, 22, 12, 0.92); border: 2px solid var(--gold-lo); animation: asLootIn 0.4s steps(5) both; text-align: left; }
 .lootCard.r3 { border-color: #a070e0; } .lootCard.r4 { border-color: #f0a030; } .lootCard.r5 { border-color: #ff6a8a; }
 .lootCard.prize { border-color: var(--gold-hi); background: rgba(90, 52, 14, 0.95); box-shadow: 0 0 14px rgba(255, 210, 90, 0.7); font-weight: bold; font-size: 14px; }

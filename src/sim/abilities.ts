@@ -6,8 +6,9 @@
 // Randomness comes from the battle's own side stream (`b.skillRng`), so the fight's main stream is left alone.
 
 import { sightClear, standable, tileAt, type At } from './board';
-import { addUnit, atkOf, blowMult, canStrike, defOf, hurt, strikeDef, tileOf, unitAt, wayTo, type Battle, type BattleEvent, type Unit } from './battle';
+import { addUnit, atkOf, blowMult, canStrike, defenceOf, defOf, hurt, strikeDef, tileOf, unitAt, wayTo, type Battle, type BattleEvent, type Unit } from './battle';
 import { Rng } from './rng';
+import { fxBlow, fxStruck, fxTick, hidden } from './equipFx';
 
 /** A skill fires at this much charge. */
 export const CHARGE_MAX = 100;
@@ -130,7 +131,7 @@ const DIR: [number, number][] = [
   [0, -1],
 ];
 const apart = (a: At, c: At) => Math.abs(a.u - c.u) + Math.abs(a.v - c.v);
-const foesOf = (b: Battle, me: Unit) => b.units.filter((x) => x.alive && x.side !== me.side);
+export const foesOf = (b: Battle, me: Unit) => b.units.filter((x) => x.alive && x.side !== me.side && !hidden(b, x));
 const near3x3 = (a: At, c: At) => Math.abs(a.u - c.u) <= 1 && Math.abs(a.v - c.v) <= 1;
 
 /** One roll of the battle's skill stream, 0 to 1. */
@@ -142,7 +143,7 @@ export function roll(b: Battle): number {
 }
 
 /** The raw power of a skill, taken off by the foe's defence once it lands. */
-const net = (power: number, to: Unit) => Math.max(1, Math.round(power - defOf(to).def));
+const net = (power: number, to: Unit) => Math.max(1, Math.round(power - defenceOf(to)));
 
 /** The foe with the most foes in the 3x3 around it (the weakest wins a tie), among those `ok` allows. */
 function crowd(b: Battle, me: Unit, ok: (f: Unit) => boolean): Unit | undefined {
@@ -272,7 +273,7 @@ const STUN_MS = 1500;
 const sorted = (fs: Unit[]) => fs.sort((x, y) => x.hp - y.hp || x.id - y.id);
 
 /** Heal an ally (never past full), with the event for the renderer; the healing counts for `by` (its healer, or itself). */
-function mendUnit(u: Unit, amount: number, out: BattleEvent[], by: Unit = u): void {
+export function mendUnit(u: Unit, amount: number, out: BattleEvent[], by: Unit = u): void {
   const n = Math.min(Math.round(amount), u.maxHp - u.hp);
   if (n <= 0 || !u.alive) return;
   u.hp += n;
@@ -1057,7 +1058,7 @@ function began(b: Battle, me: Unit, s: Skill, out: BattleEvent[]): boolean {
 /** Whether a hero's ultimate is full. */
 export const ultimateReady = (u: Unit): boolean => !!kitOf(u)?.ultimate && (u.charge2 ?? 0) >= kitOf(u)!.ultimate!.need;
 
-const gain = (u: Unit, n: number) => {
+export const gain = (u: Unit, n: number) => {
   const k = u.alive ? kitOf(u) : undefined;
   if (!k) return;
   u.charge = Math.min(CHARGE_MAX, u.charge + n);
@@ -1069,7 +1070,7 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
   const blow = src === 'blow';
   const kit = kitOf(to);
   const team = to.side === 'hero' ? b.traits : undefined;
-  const dodge = (kit?.passive.dodge ?? 0) + (team?.dodge ?? 0);
+  const dodge = (kit?.passive.dodge ?? 0) + (team?.dodge ?? 0) + (to.eq?.dodge ?? 0);
   if (blow && dodge && roll(b) < dodge) {
     out.push({ kind: 'dodge', to: to.id });
     gain(to, (kit?.skill.taken ?? 0) * 0.5);
@@ -1087,11 +1088,13 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
   }
   if (to.guardUntil !== undefined && to.guardUntil > b.t) dmg *= GUARD_SHARE;
   if (team?.guard) dmg *= 1 - team.guard;
+  if (src === 'dot' && to.eq?.resist) dmg *= 1 - to.eq.resist;
   if (src !== 'dot') {
     if (blow && !splash) gain(by, kitOf(by)?.skill.dealt ?? 0);
     gain(to, kit?.skill.taken ?? 0);
   }
   const left = Math.max(1, Math.round(dmg));
+  fxStruck(b, by, to, left, blow && !splash, out);
   // (thorns: a melee blow hurts the one who swung it)
   if (blow && !splash && kit?.passive.thorns && apart(by, to) === 1 && by.alive) hurt(b, to, by, Math.max(1, Math.round(left * kit.passive.thorns)), false, false, out, 'skill');
   return left;
@@ -1100,7 +1103,7 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
 /** A blow's own odds at swing time: a crit, with its extra damage. */
 export function rollCrit(b: Battle, me: Unit): number {
   const c = kitOf(me)?.passive.crit;
-  const chance = (c?.chance ?? 0) + (me.side === 'hero' ? b.traits?.crit ?? 0 : 0);
+  const chance = (c?.chance ?? 0) + (me.side === 'hero' ? b.traits?.crit ?? 0 : 0) + (me.eq?.crit ?? 0);
   return chance && roll(b) < chance ? c?.mult ?? 1.5 : 1;
 }
 
@@ -1128,16 +1131,17 @@ export const pierceOf = (by: Unit): number => kitOf(by)?.passive.pierce ?? 0;
 export function afterBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg = 0, out: BattleEvent[] = []): void {
   const p = kitOf(by)?.passive;
   if (p?.leech && by.alive) mendUnit(by, dmg * p.leech, out);
+  fxBlow(b, by, to, crit, dmg, out);
   if (p?.through && dmg > 0) {
     const way = wayTo(by, to);
     const behind = foesOf(b, by).find((f) => f.u === to.u + DIR[way][0] && f.v === to.v + DIR[way][1]);
-    if (behind) hurt(b, by, behind, net(dmg * p.through + defOf(behind).def, behind), false, true, out, 'skill');
+    if (behind) hurt(b, by, behind, net(dmg * p.through + defenceOf(behind), behind), false, true, out, 'skill');
   }
   if (p?.arc && dmg > 0 && roll(b) < p.arc) {
     const second = foesOf(b, by).filter((f) => f !== to && apart(f, to) <= 2).sort((x, y) => apart(x, to) - apart(y, to) || x.id - y.id)[0];
     if (second) {
       out.push({ kind: 'arc', from: to.id, to: second.id });
-      hurt(b, by, second, net(dmg * ARC_SHARE + defOf(second).def, second), false, true, out, 'skill');
+      hurt(b, by, second, net(dmg * ARC_SHARE + defenceOf(second), second), false, true, out, 'skill');
     }
   }
   if (!to.alive) return;
@@ -1160,11 +1164,12 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
   for (const u of b.units) {
     if (!u.alive) continue;
     const k = kitOf(u);
-    if (k) gain(u, ((k.skill.perSec * 100) / 1000) * (u.side === 'hero' ? b.traits?.charge ?? 1 : 1));
+    if (k) gain(u, ((k.skill.perSec * 100) / 1000) * (u.side === 'hero' ? (b.traits?.charge ?? 1) * (1 + (u.eq?.charge ?? 0)) : 1));
     if (u.banner && b.t >= u.banner.until) {
       u.power = (u.power ?? 1) / BANNER_MULT;
       u.banner = undefined;
     }
+    fxTick(b, u, out);
     const p = k?.passive;
     if (p?.aura && b.t % 1000 === 0) for (const a of b.units) if (a.alive && a.side === u.side && apart(a, u) <= 2) mendUnit(a, a.maxHp * p.aura, out, u);
     if (u.hot) {

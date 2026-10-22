@@ -7,7 +7,7 @@
 // Pixi, no DOM.
 
 import { ARMIES, armyById, armyIndex, recordOf, type Army, type ArmyRecord } from './armies';
-import type { Slot } from './gear';
+import { grantEquipment, itemName, rollEquipment, type NewEquipment } from './equipment';
 import { kindsOf, RATES, rarityOf, RARITY_NAMES, type Meta, type StashChest } from './meta';
 import { mixSeed, Rng } from './rng';
 import { armyOfRun, tierOfRun, type Run } from './run';
@@ -108,25 +108,31 @@ export function chestsOf(m: Meta, a: Army): ChestState[] {
   return MILESTONES.map((at) => ({ at, kind: chestKind(at), state: rec.chests?.includes(at) ? 'earned' : 'locked', waiting: m.stash.some((c) => c.army === a.id && c.at === at) }));
 }
 
-/** The gear a chest could drop. A hook for permanent hero gear: it rolls nothing yet (see `rollGear`), and the reward list below carries it. */
+/** A piece of permanent hero equipment a chest drops (`equipment.ts`); it is granted to the meta when the chest is opened. */
 export interface GearDrop {
-  slot: Slot;
-  tier: number;
+  item: NewEquipment;
 }
+/** The chance a bronze chest holds a piece of equipment (silver and gold chests always do). */
+export const BRONZE_GEAR_CHANCE = 0.35;
 /**
- * GEAR HOOK. The slot where a chest's gear is rolled. It returns nothing yet, and it takes the chest's own stream *last* (after
- * everything else is drawn), so filling it in later changes no other reward of any chest. `step` is 1 for a bronze chest, 2 silver, 3 gold.
+ * The chest's equipment, rolled with `rollEquipment`: the chest's quality (bronze, silver or gold), the army's place in the list and, for the
+ * 10-star chest, a milestone bonus. It takes the chest's own stream *last* (after everything else is drawn), so the other rewards of every
+ * chest are what they were before equipment existed. `at` is the star milestone (3, 5 or 10).
  */
-export function rollGear(_rng: Rng, _step: number, _armyIdx: number, _tier: number): GearDrop[] {
-  return [];
+export function rollGear(rng: Rng, at: number, armyIdx: number): GearDrop[] {
+  const quality = chestKind(at);
+  if (quality === 'bronze' && !rng.chance(BRONZE_GEAR_CHANCE)) return [];
+  return [{ item: rollEquipment(rng, { quality, armyIndex: armyIdx, milestone: at >= 10 }) }];
 }
 
 export interface LootItem {
   type: 'crowns' | 'shards' | 'hero' | 'gear';
   /** A line for the reveal: "320 crowns", "3 Knight shards". */
   text: string;
-  /** The hero kind (or gear slot) it is about. */
+  /** The hero kind (or the equipment's base) it is about. */
   ref?: string;
+  /** A piece of equipment this reward is (for its icon and frame). */
+  equip?: NewEquipment;
   /** A hero's rarity (for the card colour). */
   rarity?: number;
   /** The chest's big prize. */
@@ -171,7 +177,7 @@ export function rollChest(seed: number, a: Army, at: number, tier = 0): { crowns
     const floor = (idx >= 7 ? 5 : idx >= 3 ? 4 : 3) as Rarity;
     recruits.push({ kind: rng.pick(kindsOf(drawRarity(rng, quality, floor))), prize: true });
   }
-  return { crowns, shards, recruits, gear: rollGear(rng, step, idx, tier) };
+  return { crowns, shards, recruits, gear: rollGear(rng, at, idx) };
 }
 
 /** The chest of the stash at `index`, rolled (null when there is none). */
@@ -200,8 +206,11 @@ function lootOf(m: Meta, c: StashChest, apply: boolean): Loot {
     }
     items.push({ type: 'hero', text: isNew ? `${UNITS[r.kind].name} joins you (${RARITY_NAMES[rarityOf(r.kind)]})` : `${UNITS[r.kind].name}: 2 shards (already yours)`, ref: r.kind, rarity: rarityOf(r.kind), prize: r.prize });
   }
-  // (gear: the hook rolls nothing yet; a follow-up gives hero gear here, and its items join the list)
-  for (const g of roll.gear) items.push({ type: 'gear', text: `${g.slot} (tier ${g.tier})`, ref: g.slot });
+  // (equipment: last, as it was drawn last; granted once, when the chest is opened)
+  for (const g of roll.gear) {
+    if (apply) grantEquipment(m, g.item);
+    items.push({ type: 'gear', text: `${itemName(g.item)} (${RARITY_NAMES[g.item.rarity]}, Lv ${g.item.level})`, ref: g.item.base, rarity: g.item.rarity, equip: g.item, prize: g.item.rarity >= 5 });
+  }
   return { at: c.at, kind: chestKind(c.at), army: c.army, items };
 }
 

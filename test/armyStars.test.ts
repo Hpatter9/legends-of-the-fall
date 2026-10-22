@@ -1,8 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ARMIES, armyById, armyStars, migrateArmies, recordOf, settleWave, tierOpen, tierStars, waveBoost, firstClearTotal, replayTotal } from '../src/sim/armies';
-import { armyRules, chestCrowns, chestSeed, chestsOf, grantChests, openChest, peekChest, rollChest, rollGear, settleArmyRun, timeTarget } from '../src/sim/armyStars';
-import { Rng } from '../src/sim/rng';
+import { armyRules, chestCrowns, chestSeed, chestsOf, grantChests, openChest, peekChest, rollChest, settleArmyRun, timeTarget } from '../src/sim/armyStars';
 import { ARMY_STARS, MILESTONES, RUN_STARS, TIERS, tierRange } from '../src/sim/tiers';
 import { loadMeta, newMeta, saveMeta, rarityOf } from '../src/sim/meta';
 import { armyRun, noteFight, startStage, tierOfRun, type Run } from '../src/sim/run';
@@ -232,7 +231,7 @@ test('the 10-star chest always holds a hero of Epic or better (higher on later a
   }
 });
 
-test('opening a chest pays crowns, shards and a recruit (or shards if owned); the gear hook rolls nothing yet', () => {
+test('opening a chest pays crowns, shards and a recruit (or shards if owned)', () => {
   const m = newMeta(9);
   m.armies.golems = { best: 10, won: 10, clears: 1, stars: {}, met: { 0: 7, 1: 7, 2: 7, 3: 1 } };
   grantChests(m, armyById('golems')!, m.armies.golems);
@@ -251,10 +250,37 @@ test('opening a chest pays crowns, shards and a recruit (or shards if owned); th
   const again = openChest(m, 0)!;
   assert.ok(again.items.some((i) => i.type === 'crowns'));
   assert.ok(owned.every((k) => m.unlocked.includes(k)));
-  // the gear hook: a typed slot that rolls nothing, and chests carry no gear yet
-  assert.deepEqual(rollGear(new Rng(1), 3, 8, 3), []);
-  for (let seed = 1; seed <= 50; seed++) for (const at of MILESTONES) assert.deepEqual(rollChest(seed, ARMIES[3], at).gear, []);
-  assert.ok(loot.items.every((i) => i.type !== 'gear'));
+});
+
+test('chests drop permanent hero equipment: silver and gold always, bronze sometimes, once, and the same every time', () => {
+  let bronze = 0;
+  for (let seed = 1; seed <= 200; seed++) {
+    assert.equal(rollChest(seed, ARMIES[3], 5).gear.length, 1);
+    assert.equal(rollChest(seed, ARMIES[3], 10).gear.length, 1);
+    const b = rollChest(seed, ARMIES[3], 3).gear;
+    bronze += b.length;
+    for (const g of b) assert.ok(g.item.rarity <= 3, 'a bronze chest never drops Legendary or better');
+    assert.deepEqual(rollChest(seed, ARMIES[3], 10), rollChest(seed, ARMIES[3], 10));
+  }
+  assert.ok(bronze > 40 && bronze < 110, `bronze dropped ${bronze} of 200`);
+  // (later armies roll higher item levels)
+  const level = (army: number) => Array.from({ length: 100 }, (_, i) => rollChest(i + 1, ARMIES[army], 5).gear[0].item.level).reduce((a, n) => a + n, 0);
+  assert.ok(level(6) > level(0) + 500);
+  // (opening grants the item once, and it is the one the preview showed)
+  const m = newMeta(4);
+  m.armies.golems = { best: 10, won: 10, clears: 1, stars: {}, met: { 0: 7, 1: 7, 2: 7, 3: 1 } };
+  grantChests(m, armyById('golems')!, m.armies.golems);
+  const peek = peekChest(m, 1)!.items.find((i) => i.type === 'gear')!;
+  assert.equal(m.equipment?.length ?? 0, 0, 'a look in the stash grants nothing');
+  const loot = openChest(m, 1)!;
+  const gear = loot.items.filter((i) => i.type === 'gear');
+  assert.equal(gear.length, 1);
+  assert.deepEqual(gear[0].equip, peek.equip);
+  assert.equal(m.equipment!.length, 1);
+  assert.equal(m.equipment![0].base, peek.equip!.base);
+  assert.equal(m.equipment![0].rarity, peek.equip!.rarity);
+  assert.equal(openChest(m, 5), null);
+  assert.equal(m.equipment!.length, 1);
 });
 
 test('the foes get tougher by tier: hp, attack and speed', () => {
