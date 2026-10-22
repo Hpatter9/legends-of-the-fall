@@ -25,12 +25,18 @@
     rack and hay by the barracks, crystals by the tower, lamps along the roads, flowerbeds, bushes and trees in the corners of the yard. (There is no
     training dummy in the kits; the orcs' weapon stall is the rack.)
   - **Name tags** sit above the roofs and shrink a little (`--ts`) with the village, but stay readable; tap targets are at least about 22 css pixels.
-- **One village for every screen, zoomed to show all of it**: the scene is 1040 x 708 scene pixels. `pickScale(boxW, boxH, dpr, sceneW, sceneH)` picks the
-  largest whole number `k` of **device** pixels per scene pixel that still shows the whole village, and the canvas's backing store is `k` times the
-  scene in device pixels (its css size is that over `devicePixelRatio`), so it stays sharp at any pixel ratio. On a phone (ratio about 2.6 to 3) that is
-  `k = 1`, about a third of a css pixel per scene pixel; on a dpr-1 desktop it is a whole css scale (1, 2, ...); if even `k = 1` does not fit the frame
-  (a dpr-1 phone) the frame pans. When the village is smaller than the frame the canvas grows to fill it (`view`): grass tiles all round, and beyond a
-  three-tile margin woods behind the wall and only low bushes and flowers in front of it. Taps and name tags use the same mapping (`view.ox/oy`).
+- **One village for every screen, drawn at a whole zoom** `k` (device pixels per scene pixel, so it stays sharp at any pixel ratio; the canvas's backing store is
+  `k` times the scene and its css size is that over `devicePixelRatio`). The scene is 1030 x 730 scene pixels.
+  - **Opens at 2** on a phone (a pixel ratio of 2 or more; `defaultZoom`), framed on the plaza, so most of the village shows and the rest is a drag away; at a
+    ratio of 1 it opens at css 1 (or the biggest whole scale that shows the whole village, `pickScale`, if a big screen has room).
+  - **1 is the overview** of the whole ring; 3 is a close-up on a sharp screen (`zoomLevels`: 1, 2, 3 at a ratio of 2 or more, 1 and 2 at a ratio of 1).
+  - **Pinch** steps one level in or out when the fingers spread past a quarter (`pinchStep`), **double tap on empty ground** swaps the overview and the opening
+    zoom (`doubleTapZoom`); the scene point under the fingers stays where it was. One finger (or the mouse) drags; the frame is `touch-action: none` and pans
+    by script, so a pinch is never taken by the browser. The last zoom is kept in `localStorage` (`lotf-castle-zoom`, in try/catch) and used if the screen
+    offers it (`rememberedZoom`).
+  - The canvas holds the village with a modest margin (60 scene pixels, more up and down only to fill a taller frame, at most 240); beyond it the page's flat
+    grass colour shows, and a CSS mask fades the canvas edges into it, so the overview is a village in a soft-edged field. Taps and name tags use the same
+    mapping (`view.ox/oy`).
 - One canvas, drawn with nearest neighbour. There is a single arrangement now (`YARD`); the earlier upright and sideways ones are gone.
 - **Pictures** (`src/art/castle/`, 52 PNGs, about 0.9 MB, bundled into game.js as data URLs, so the service worker's `FILES` is unchanged): each is one
   piece of the kits at **half size** (`tools/castle/prep.py`: 2x2 box average, then solid or clear), so a cottage is about 100 pixels wide.
@@ -106,6 +112,6 @@
   reachable by road from the gate; the plaza is a clear 3 x 3 with the statue in the middle and a brazier on each corner; no prop stands in a road or
   on a plot; the wall's runs line up with its tower; buildings overlap at most by a corner; vents and lights lie on
   their look; the card words grow with the level.
-- `node tools/castle/shots.mjs` (after `npm run web`; `CARD=1` adds the card, and the build frames at a ratio of 1) makes `docs/samples/castle-{empty,part,maxed}-{upright,sideways}.png`
+- `node tools/castle/shots.mjs` (after `npm run web`; `CARD=1` adds the card, and the build frames at a ratio of 1; `ZOOM=1` takes the overview, with `-k1` added) makes `docs/samples/castle-{empty,part,maxed}-{upright,sideways}.png`
   and `castle-card-*.png` at a device pixel ratio of 3 (`DPR=3`, a phone's), and the same with `-dpr1` added at a ratio of 1 (`DPR=1`; `DESKTOP=1` adds a 1280x800 frame, where
   the village is drawn at a whole css scale), plus `castle-build-*-dpr1-0..4.png`. At a ratio of 1 a phone-sized frame cannot hold the village at one css pixel per scene pixel, so it pans.

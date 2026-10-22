@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { BUILDING_IDS, maxLevel } from '../src/sim/castle';
-import { BLURB, effectText, footprint, inBlock, isPaved, LIGHTS, lookFor, LOOKS, lookBox, pickScale, PLACE_IDS, PLACE_LOOK, PLACES, PLOT_IDS, SPRITE_SIZE, spriteName, stageOf, STAGES, TILE_H, TILE_W, VENTS, walkTiles, YARD } from '../src/render/castleSpots';
+import { BLURB, defaultZoom, doubleTapZoom, effectText, footprint, inBlock, isPaved, LIGHTS, lookFor, LOOKS, lookBox, pickScale, PLACE_IDS, PLACE_LOOK, PLACES, pinchStep, PLOT_IDS, rememberedZoom, SPRITE_SIZE, spriteName, stageOf, STAGES, stepZoom, TILE_H, TILE_W, VENTS, walkTiles, YARD, zoomLevels } from '../src/render/castleSpots';
 
 const LAYOUTS = { yard: YARD };
 const looksOf = (id: (typeof BUILDING_IDS)[number]) => LOOKS[id];
@@ -312,4 +312,41 @@ test('the market and the garden: two or three stalls on the plaza\'s edge or the
   // (the beds sit together in the south corner: three on one row, next to each other)
   const row = beds.filter((p) => p.v === 5).map((p) => p.u).sort((a, b) => a - b);
   assert.ok(row.length >= 3 && row.every((u, i) => i === 0 || u === row[i - 1] + 1), 'three beds side by side');
+});
+
+test('zoom: whole steps only, open at 2 on a phone and css 1 at dpr 1, remember the last, step with a pinch, swap with a double tap', () => {
+  const fit = (dpr: number, w = 393, h = 654) => pickScale(w, h, dpr, YARD.w, YARD.h).k;
+  // (a phone: dpr 2 to 3 opens at 2 device pixels per scene pixel, and offers 1 (the overview), 2 and 3 (close-ups))
+  for (const dpr of [2, 2.5, 2.6, 2.75, 3]) {
+    assert.equal(defaultZoom(dpr, fit(dpr)), 2, `dpr ${dpr}`);
+    assert.deepEqual(zoomLevels(dpr, fit(dpr)), [1, 2, 3], `dpr ${dpr}`);
+  }
+  // (dpr 1: css 1 by default, and css 2 as the one step in)
+  assert.equal(defaultZoom(1, fit(1, 1280, 800)), 1);
+  assert.deepEqual(zoomLevels(1, fit(1, 1280, 800)), [1, 2]);
+  // (a screen that shows the whole village bigger than that opens at what fits)
+  assert.equal(defaultZoom(1, 2), 2);
+  assert.ok(zoomLevels(1, 3).includes(3));
+  // (the remembered zoom is used only when this screen offers it)
+  assert.equal(rememberedZoom(1, 3, 1), 1);
+  assert.equal(rememberedZoom(3, 3, 1), 3);
+  assert.equal(rememberedZoom(null, 3, 1), 2);
+  assert.equal(rememberedZoom(3, 1, 1), 1);
+  assert.equal(rememberedZoom(7, 3, 1), 2);
+  // (a pinch steps one level at a time and stops at the ends)
+  const lv = zoomLevels(3, 1);
+  assert.equal(stepZoom(1, 1, lv), 2);
+  assert.equal(stepZoom(2, 1, lv), 3);
+  assert.equal(stepZoom(3, 1, lv), 3);
+  assert.equal(stepZoom(1, -1, lv), 1);
+  assert.equal(stepZoom(3, -1, lv), 2);
+  assert.equal(pinchStep(1.5), 1);
+  assert.equal(pinchStep(0.6), -1);
+  assert.equal(pinchStep(1.1), 0);
+  assert.equal(pinchStep(0.9), 0);
+  // (a double tap on empty ground: the overview goes to the opening zoom, anything closer goes to the overview)
+  assert.equal(doubleTapZoom(1, 3, 1), 2);
+  assert.equal(doubleTapZoom(2, 3, 1), 1);
+  assert.equal(doubleTapZoom(3, 3, 1), 1);
+  assert.equal(doubleTapZoom(1, 1, 1), 1);
 });

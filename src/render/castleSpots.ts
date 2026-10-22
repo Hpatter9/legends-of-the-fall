@@ -461,6 +461,33 @@ export function pickScale(boxW: number, boxH: number, dpr: number, sceneW: numbe
   return { k, css: k / dpr };
 }
 
+/** The zoom steps a screen offers, as whole device pixels per scene pixel: 1 (the overview of the whole village), 2, and 3 for close-ups on a sharp screen
+ *  (a device pixel ratio of 2 or more; a dpr-1 screen gets 1 and 2 css pixels). `fitK` is the largest that shows the whole village (`pickScale`); a bigger
+ *  screen may offer more than that. */
+export function zoomLevels(dpr: number, fitK: number): number[] {
+  const top = Math.max(fitK, dpr >= 2 ? 3 : 2);
+  return Array.from({ length: top }, (_, i) => i + 1);
+}
+
+/** The zoom the village opens at: 2 device pixels per scene pixel on a phone (a dpr of 2 or more, framed on the plaza), css 1 at a dpr of 1, or the
+ *  overview's own if the whole village already shows bigger than that. */
+export const defaultZoom = (dpr: number, fitK: number): number => Math.max(fitK, dpr >= 2 ? 2 : 1);
+
+/** A remembered zoom, kept only if this screen offers it (else the default). */
+export const rememberedZoom = (saved: number | null, dpr: number, fitK: number): number => (saved !== null && zoomLevels(dpr, fitK).includes(saved) ? saved : defaultZoom(dpr, fitK));
+
+/** One step in or out between the offered zooms (`dir` +1 in, -1 out), staying inside them. */
+export function stepZoom(k: number, dir: 1 | -1, levels: readonly number[]): number {
+  const i = levels.indexOf(k);
+  return levels[Math.max(0, Math.min(levels.length - 1, (i < 0 ? 0 : i) + dir))];
+}
+
+/** What a double tap does: from the overview, in to 2 (or the zoom the village opens at); from anything closer, out to the overview. */
+export const doubleTapZoom = (k: number, dpr: number, fitK: number): number => (k <= 1 ? defaultZoom(dpr, fitK) : 1);
+
+/** A pinch's spread against where it began: in past a quarter bigger, out past a quarter smaller, else no step. */
+export const pinchStep = (ratio: number): 1 | -1 | 0 => (ratio > 1.25 ? 1 : ratio < 0.8 ? -1 : 0);
+
 /** The ground's flat colour: the grass tile's own average, used for the page behind the scene. */
 export const GRASS = '#64742f';
 

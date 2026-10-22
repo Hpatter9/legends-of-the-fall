@@ -17,7 +17,8 @@ const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromi
 const HEROES = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard', 'barbarian', 'paladin', 'druid'];
 const STATES = { empty: { treasury: 0, barracks: 0, armoury: 0, mageTower: 0, stable: 0, library: 0 }, part: { treasury: 1, barracks: 3, armoury: 2, mageTower: 1, stable: 2, library: 4 }, maxed: { treasury: 5, barracks: 5, armoury: 5, mageTower: 4, stable: 5, library: 5 } };
 const DPR = Number(process.env.DPR ?? 3);
-const TAG = DPR === 1 ? '-dpr1' : '';
+const ZOOM = process.env.ZOOM; // 1 = the overview of the whole village (the default is 2 on a phone)
+const TAG = (DPR === 1 ? '-dpr1' : '') + (ZOOM ? `-k${ZOOM}` : '');
 const SIZES = { upright: { width: 393, height: 852 }, sideways: { width: 852, height: 393 }, ...(process.env.DESKTOP ? { desktop: { width: 1280, height: 800 } } : {}) };
 mkdirSync('docs/samples', { recursive: true });
 const only = (process.env.ONLY ?? '').split(',').filter(Boolean);
@@ -29,12 +30,13 @@ for (const [size, vp] of Object.entries(SIZES)) {
     const page = await ctx.newPage();
     page.on('pageerror', (e) => console.log('PAGE ERROR', e.message));
     page.on('console', (m) => m.type() === 'error' && console.log('console error', m.text()));
-    await page.addInitScript(([castle, heroes]) => {
+    await page.addInitScript(([castle, heroes, zoom]) => {
       try {
         localStorage.setItem('legends.meta', JSON.stringify({ seed: 7, crowns: 400, unlocked: heroes, party: heroes.slice(0, 5), pulls: 0, dry: 0, dryMythic: 0, castle, shards: {}, stars: {}, xp: {}, bestStage: 3, tower: 0, daily: {}, bosses: [], achievements: [] }));
         localStorage.setItem('lotf-tips-off', '1');
+        if (zoom) localStorage.setItem('lotf-castle-zoom', zoom);
       } catch {}
-    }, [castle, HEROES]);
+    }, [castle, HEROES, ZOOM ?? '']);
     await page.goto(`http://localhost:${srv.address().port}/`);
     await page.waitForTimeout(1200);
     await page.locator('.hmTab').nth(3).click();
