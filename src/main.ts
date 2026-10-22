@@ -49,7 +49,7 @@ import { framesOf, loadSheets, portrait, sheetInfo } from './render/sheets';
 import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, framing, PAUSE_MS, settle, viewFor, type View } from './render/cameraRules';
 import { titleOf } from './render/bossTitles';
 import { at, FOOT, HH, TH, TW } from './render/iso';
-import { bindMute, play, playEvents, setup, startFight } from './render/sound';
+import { bindDuck, bindMute, play, playEvents, setAct, setup, startFight } from './render/sound';
 import { colLeft, viewH, viewW } from './viewport';
 import { onSettings, openSettings, settings } from './settings';
 
@@ -220,6 +220,7 @@ class Game {
     const home = $('home');
     const sync = () => {
       this.homeUp = !home.hidden;
+      this.syncAct();
       this.app.stage.renderable = !this.homeUp;
       // (a board that is not in a fight stops its ticker under the home screen; coming back starts it again)
       if (!this.homeUp) this.app.ticker.start();
@@ -684,6 +685,10 @@ class Game {
     window.addEventListener('pointercancel', () => this.endDrag());
     setup();
     bindMute($('mute'));
+    // (the music dips under menus, sheets, the boss card and the event cards while they show)
+    for (const id of ['settings', 'hmSheet', 'hmSub', 'ptSheet', 'autoSum']) bindDuck($(id), 'sheet');
+    bindDuck($('bossCard'), 'boss');
+    bindDuck($('events'), 'event');
     $('fight').addEventListener('click', () => this.begin());
     $('summon').addEventListener('click', () => {
       const before = new Set(this.run.roster.map((h) => h.id));
@@ -1281,9 +1286,15 @@ class Game {
   }
 
   /** The page and the board's lit tiles, after anything changes. */
+  /** The tower act the music is coloured by: the run's, while a tower run is on show (not the home screen). */
+  private syncAct(): void {
+    setAct(this.homeUp ? null : (this.run.tower?.act ?? null));
+  }
+
   private refresh(): void {
     const b = this.b;
     const run = this.run;
+    this.syncAct();
     const n = heroesPlaced(b);
     if ((b.phase === 'won' || b.phase === 'lost') && !this.settled) {
       this.settled = true;

@@ -13,7 +13,7 @@ import { onSettings, settings } from './settings';
 import { gradeOfRank } from './render/tavernSpots';
 import { beamKind, fanSpots, hallLayout, MIN_H, ROOM_W, WALL_H, type BeamKind, type HallLayout, type Timeline } from './render/hallSpots';
 import { cardAt, dimAt, shakeAt, showcaseAt, summonPlan, type ShowPlan, type ShowTier } from './render/summonRules';
-import { hushSummon, play as playSfx } from './render/sound';
+import { duck, hushSummon, play as playSfx } from './render/sound';
 import wallUrl from './art/hall/wall.png';
 import floorUrl from './art/hall/floor.png';
 import circleUrl from './art/hall/circle.png';
@@ -297,6 +297,7 @@ export class SummoningHall {
       }
       this.show = { t0: this.now, plan, tl, best, arrivals, resolve, got, cueI: 0, burst: false, flashed: false, cardKey: '', cracks };
       this.skipPad.classList.add('on');
+      duck(true, 'summon');
       // (the arrivals are drawn in the order of the pull, so the heroes appear one after another)
     });
   }
@@ -331,6 +332,7 @@ export class SummoningHall {
     if (!s) return;
     this.show = null;
     if (cut) hushSummon();
+    duck(false, 'summon');
     this.skipPad.classList.remove('on');
     this.over.replaceChildren();
     this.flashEl.getAnimations().forEach((a) => a.cancel());
