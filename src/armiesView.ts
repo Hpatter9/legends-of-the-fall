@@ -106,6 +106,21 @@ const SLOTS: [number, number][] = [
 interface Figure {
   sheet: string;
   s: ReturnType<typeof sprite>;
+  /** Where it stands, as a percentage of the scene (from the left, and up from the ground). */
+  x: number;
+  y: number;
+}
+
+/** Put a card's figures on whole pixels: a percentage of the scene is a fraction of a pixel, and scaled pixel art sitting between pixels shimmers. */
+function snapFigures(c: { root: HTMLElement; figures: Figure[] }): void {
+  const scene = c.root.querySelector<HTMLElement>('.asScene');
+  if (!scene || !scene.clientWidth) return;
+  for (const f of c.figures) {
+    const cv = f.s.canvas;
+    cv.style.left = `${Math.round((f.x / 100) * scene.clientWidth - cv.offsetWidth / 2)}px`;
+    cv.style.bottom = `${Math.round((f.y / 100) * scene.clientHeight)}px`;
+    cv.classList.add('snapped');
+  }
 }
 
 /** An army's scene: the backdrop layers, the ground, the troops in ranks (front ones lower and in front), the mid-bosses and the boss large at the back. Returns the scene and the figures to animate. */
@@ -135,7 +150,7 @@ function buildScene(a: Army, locked: boolean): { root: HTMLElement; figures: Fig
     s.canvas.style.setProperty('--flip', s.faceRight ? '-1' : '1');
     s.tick(n % 4);
     crowd.append(s.canvas);
-    figures.push({ sheet: def.sheet, s });
+    figures.push({ sheet: def.sheet, s, x, y });
   };
   // troops stand at one figure height (whole-number scales, the nearest to `TROOP_PX`), the boss at 1.5 to 2 times a troop, a mid-boss between
   const scaleFor = (kind: string, px: number, max: number) => {
@@ -171,7 +186,9 @@ function buildScene(a: Army, locked: boolean): { root: HTMLElement; figures: Fig
     for (let i = 0; i < p.n; i++) {
       const e = el('i', `asP ${p.fall ? 'fall' : 'rise'}`);
       e.style.setProperty('--x', `${Math.round(rnd() * 100)}%`);
-      e.style.setProperty('--dx', `${Math.round((rnd() - 0.5) * (p.fall ? 90 : 60))}px`);
+      const dx = Math.round((rnd() - 0.5) * (p.fall ? 90 : 60));
+      e.style.setProperty('--dx', `${dx}px`);
+      e.style.setProperty('--n', String(Math.max(1, Math.abs(dx))));
       const sz = Math.round(p.size[0] + rnd() * (p.size[1] - p.size[0]));
       e.style.setProperty('--s', `${sz}px`);
       e.style.setProperty('--c', p.colours[(i + mi) % p.colours.length]);
@@ -215,6 +232,7 @@ export function drawArmies(body: HTMLElement, m: Meta, hooks: ArmiesHooks): void
       dots.append(d);
     });
     mark();
+    requestAnimationFrame(() => cards.forEach(snapFigures));
   };
   const go = (i: number): void => {
     const to = Math.max(0, Math.min(ARMIES.length - 1, i));
@@ -256,6 +274,7 @@ export function drawArmies(body: HTMLElement, m: Meta, hooks: ArmiesHooks): void
   const fit = () => {
     const h = track.querySelector<HTMLElement>('.asScene')?.offsetHeight;
     if (h) root.style.setProperty('--sceneH', `${h}px`);
+    cards.forEach(snapFigures);
   };
   window.addEventListener('resize', fit);
   const place = () => {

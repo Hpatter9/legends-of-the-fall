@@ -39,13 +39,13 @@ button.primary:disabled { border-image-source: url(ui/btn-off.png); }
 button.primary::after, .hmBattle::after {
   content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 12px; pointer-events: none; display: block;
   background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0 25%, rgba(255, 255, 255, 0.55) 25% 50%, rgba(255, 255, 255, 0.3) 50% 75%, rgba(255, 255, 255, 0) 75%);
-  transform: translateX(-24px); will-change: transform; animation: pxGlint 3.4s linear infinite;
+  transform: translateX(-24px); will-change: transform; animation: pxGlint 3.4s linear 1 forwards;
 }
 button.primary:disabled::after { display: none; }
 /* (the glint glides on the compositor, by transform, so it never re-lays out or re-paints the 9-slice frame under it; the old
    one stepped its left edge and the whole button blinked brighter twice a second, which read as flashing and tearing) */
 button.primary:not(:disabled), .hmBattle { animation: none; }
-@keyframes pxGlint { 0%, 55% { transform: translateX(-24px); } 100% { transform: translateX(var(--glintEnd, 420px)); } }
+@keyframes pxGlint { 0%, 55% { transform: translateX(-24px); } 99% { transform: translateX(var(--glintEnd, 420px)); } 100% { transform: translateX(-24px); } }
 /* the small button, for crowded rows: 6px sides, 8px lower lip */
 .small, #mute, #gear, #speed, .round, #buttons button:not(#fight) {
   border-width: 6px 6px 8px; border-image: url(ui/btn-s.png) 3 3 4 fill / 6px 6px 8px stretch; min-height: 40px; padding: 0 2px;
@@ -289,14 +289,18 @@ body .sbSlot { min-height: 44px; }
 .asGround { top: 56%; background: linear-gradient(rgba(30, 18, 10, 0), rgba(20, 12, 6, 0.55)); }
 .asCrowd { translate: calc(var(--par) * -14px) 0; }
 .asFig { position: absolute; transform: translateX(-50%) scaleX(var(--flip, 1)); transform-origin: 50% 100%; filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.45)); image-rendering: pixelated; }
+.asFig.snapped { transform: scaleX(var(--flip, 1)); }
 .asVig { background: radial-gradient(ellipse at 50% 55%, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, 0.6) 100%), linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0) 26%, rgba(0, 0, 0, 0) 70%, rgba(0, 0, 0, 0.5)); }
 .asTint { mix-blend-mode: soft-light; }
-.asP { position: absolute; left: var(--x); width: var(--s); height: var(--s); background: var(--c); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2); opacity: 0; }
-.asP.rise { bottom: -10px; animation: asRise var(--t) steps(18) var(--d) infinite; }
-.asP.fall { top: -10px; animation: asFall var(--t) steps(18) var(--d) infinite; }
-@keyframes asRise { 0% { transform: translate(0, 0); opacity: 0; } 12% { opacity: 1; } 85% { opacity: 0.8; } 100% { transform: translate(var(--dx), -320px); opacity: 0; } }
-@keyframes asFall { 0% { transform: translate(0, 0); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 0.9; } 100% { transform: translate(var(--dx), 330px); opacity: 0; } }
-.asFog { position: absolute; left: -50%; top: var(--y); width: 200%; height: 90px; background: radial-gradient(ellipse at 50% 50%, rgba(220, 230, 240, 0.26), rgba(220, 230, 240, 0) 70%); animation: asFog var(--t) steps(50) var(--d) infinite alternate; }
+.asP { position: absolute; left: var(--x); width: var(--s); height: var(--s); background: var(--c); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2); opacity: 0.85; }
+.asP.rise { bottom: -10px; animation: asRise var(--t) steps(480) var(--d) infinite, asDrift var(--t) steps(var(--n)) var(--d) infinite; }
+.asP.fall { top: -10px; animation: asFall var(--t) steps(480) var(--d) infinite, asDrift var(--t) steps(var(--n)) var(--d) infinite; }
+/* (a mote moves a whole pixel at a time, up or down by one animation and across by another, so it never sits between pixels; it is
+   always seen at one strength and enters and leaves past the edges of the scene, not by fading, which read as blinking; the scene clips it) */
+@keyframes asRise { from { transform: translateY(0); } to { transform: translateY(-480px); } }
+@keyframes asFall { from { transform: translateY(0); } to { transform: translateY(480px); } }
+@keyframes asDrift { from { translate: 0 0; } to { translate: var(--dx) 0; } }
+.asFog { position: absolute; left: -50%; top: var(--y); width: 200%; height: 90px; background: radial-gradient(ellipse at 50% 50%, rgba(220, 230, 240, 0.26), rgba(220, 230, 240, 0) 70%); animation: asFog var(--t) ease-in-out var(--d) infinite alternate; }
 @keyframes asFog { from { transform: translateX(-12%); } to { transform: translateX(12%); } }
 .asCard.locked .asScene .asFig { filter: brightness(0); }
 .asCard.locked .asLayer { filter: brightness(0.35) saturate(0.4); }
@@ -343,7 +347,7 @@ body .sbSlot { min-height: 44px; }
 .asFight:disabled { filter: grayscale(1) brightness(0.6); }
 .asChest.earned small { font-weight: bold; color: var(--gold-hi); }
 .asChest.earned .chestPic { filter: drop-shadow(0 0 4px rgba(255, 208, 90, 0.8)); }
-@keyframes asChestBob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -3px; } }
+@keyframes asChestBob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -2px; } }
 .chestPic { position: relative; flex: none; image-rendering: pixelated; }
 .asRules { display: flex; flex-direction: column; gap: 1px; align-items: flex-start; padding: 4px 8px; background: rgba(0, 0, 0, 0.35); border: 2px solid #3a2414; }
 .asRule { font-size: 12px; color: var(--dim); text-align: left; }
@@ -412,7 +416,7 @@ body .sbSlot { min-height: 44px; }
 /* the chest stash on the Battle tab: a stack of earned chests down the left, tap one to open it */
 .csStash { position: absolute; left: 8px; top: 70px; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 62px; padding: 6px 0; background: rgba(12, 6, 4, 0.55); border: 2px solid rgba(240, 180, 74, 0.5); }
 .csStash.empty { display: none; }
-.csChest { width: 46px; min-height: 0; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 0; background: none; border: 0; box-shadow: none; font-size: 11px; color: var(--gold-hi); animation: asChestBob 1.2s steps(2) infinite; }
+.csChest { width: 46px; min-height: 0; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 0; background: none; border: 0; box-shadow: none; font-size: 11px; color: var(--gold-hi); animation: asChestBob 1.2s steps(1) infinite; }
 .csChest small { font-size: 12px; font-weight: bold; text-shadow: 0 1px 0 #000; }
 .csChest .chestPic { filter: drop-shadow(0 0 5px #ffd05a); }
 .csChest.silver .chestPic { filter: drop-shadow(0 0 5px #bcd8ff); }
@@ -460,3 +464,11 @@ body.auto #buttons { display: none; }
   clip-path: polygon(2px 0, calc(100% - 2px) 0, 100% 2px, 100% calc(100% - 2px), calc(100% - 2px) 100%, 2px 100%, 0 calc(100% - 2px), 0 2px);
 }
 .cpPlank.done small { color: #a8e6a0; }
+
+/* ---- steady menus (the flicker pass, see docs/notes/menus-extras.md) ---- */
+/* (the green "ready" arrow on a castle tag stays put: its eased bob moved text between pixels) */
+.ctTag .ctUp { animation: none; }
+/* (the result screen's stars: no looping twinkle, which scaled and rotated text between pixels) */
+#stars .star.on > span { animation: none; }
+/* (the tower's rest fire and "new best" line held still: their steps(2) loops were blinks) */
+.rtFlame, .rtBest { animation: none; }

@@ -174,3 +174,5 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   - Armor, weapon, shield, helmet, hair, skeleton, zombie, demon, fairy, mecha, wolf, boar, pumpkin, turkey, slime,
     skullbird, dragon, cactus, and other sprites are from Himeko Sutori and Septaroad Voyager by Rockwell Studios, LLC.
 - The Dire Wolf the Beastmaster calls is the Red Werewolf sheet of the Free Werewolf Sprite Sheets (Craftpix), already listed above.
+
+- **The loading screen** (`src/art/loading/`): the Knight's and the Demon Lord's attack rows, cut from the unit sheets above by `tools/loading-art.py`, with the slash (`src/art/fx/magic/moon_slash.png`) and the impact burst (`src/art/fx/impact.png`), all inlined into the page by `build.mjs`.
