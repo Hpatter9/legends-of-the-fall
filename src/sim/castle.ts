@@ -50,6 +50,82 @@ export function upgrade(m: { crowns: number; castle: Castle }, id: BuildingId): 
   return true;
 }
 
+/* -------------------------------------------------------------- building takes time */
+
+/** What the builders are raising: a building's next level (or the Chapel), and when it stands. One at a time. */
+export type BuildSite = BuildingId | 'chapel';
+export interface Works {
+  id: BuildSite;
+  /** The level it reaches when done (1 for the Chapel). */
+  level: number;
+  /** When it stands, in the page's clock (ms since 1970: the page passes `Date.now()`, so these rules stay pure). */
+  doneAt: number;
+}
+/** How long a level takes, by the level being built (the owner's ask: higher tiers take longer): 1 min, 5 min, 20 min, 1 hour, 3 hours. */
+export const BUILD_MS: readonly number[] = [60_000, 5 * 60_000, 20 * 60_000, 60 * 60_000, 3 * 60 * 60_000];
+/** The Chapel takes as long as a second level. */
+export const CHAPEL_MS = BUILD_MS[1];
+export const buildMs = (id: BuildSite, level: number): number => (id === 'chapel' ? CHAPEL_MS : BUILD_MS[Math.min(BUILD_MS.length, Math.max(1, level)) - 1]);
+
+/** The slice of the Meta the builders read and change. */
+export interface WorksMeta extends ChapelMeta {
+  castle: Castle;
+  works?: Works;
+}
+
+/** Pay for a building's next level and set the builders to it. False (and nothing changed) at the top level, when too poor, or while the builders are busy. */
+export function startBuild(m: WorksMeta, id: BuildingId, now: number): boolean {
+  const cost = nextCost(m.castle, id);
+  if (m.works || cost === null || m.crowns < cost) return false;
+  m.crowns -= cost;
+  const level = m.castle[id] + 1;
+  m.works = { id, level, doneAt: now + buildMs(id, level) };
+  return true;
+}
+
+/** Pay for the Chapel and set the builders to it. False when it stands, is being built, the crowns are short, or the builders are busy. */
+export function startChapel(m: WorksMeta, now: number): boolean {
+  if (m.works || !canBuildChapel(m)) return false;
+  m.crowns -= CHAPEL_COST;
+  m.works = { id: 'chapel', level: 1, doneAt: now + CHAPEL_MS };
+  return true;
+}
+
+/** Finish the works if their time is up: the level (or the Chapel) is raised. Returns what was finished, or null. */
+export function settleWorks(m: WorksMeta, now: number): BuildSite | null {
+  const w = m.works;
+  if (!w || now < w.doneAt) return null;
+  if (w.id === 'chapel') m.chapel = true;
+  else m.castle[w.id] = Math.max(m.castle[w.id], Math.min(maxLevel(w.id), w.level));
+  delete m.works;
+  return w.id;
+}
+
+/** Milliseconds until the works stand (0 when there are none, or they are due). */
+export const worksLeft = (m: Pick<WorksMeta, 'works'>, now: number): number => (m.works ? Math.max(0, m.works.doneAt - now) : 0);
+
+/** A time left for the page: "45s", "4:05", "1:02:09". */
+export function clockText(ms: number): string {
+  const s = Math.ceil(ms / 1000);
+  if (s < 60) return `${s}s`;
+  const h = Math.floor(s / 3600);
+  const mm = Math.floor((s % 3600) / 60);
+  const ss = String(s % 60).padStart(2, '0');
+  return h ? `${h}:${String(mm).padStart(2, '0')}:${ss}` : `${mm}:${ss}`;
+}
+
+/** Works read from a save: undefined unless sane (a known site, a level it can reach, a finite time). */
+export function readWorks(raw: unknown): Works | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const w = raw as Partial<Works>;
+  const id = w.id as BuildSite;
+  const okId = id === 'chapel' || BUILDING_IDS.includes(id as BuildingId);
+  const level = Math.floor(Number(w.level));
+  const doneAt = Number(w.doneAt);
+  if (!okId || !Number.isFinite(doneAt) || !(level >= 1) || (id !== 'chapel' && level > maxLevel(id as BuildingId))) return undefined;
+  return { id, level, doneAt };
+}
+
 /** The castle read from a saved value: missing, odd or too-high levels become 0 or the top. */
 export function readCastle(raw: unknown): Castle {
   const c = newCastle();
