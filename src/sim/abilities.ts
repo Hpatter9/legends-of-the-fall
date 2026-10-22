@@ -134,6 +134,13 @@ const apart = (a: At, c: At) => Math.abs(a.u - c.u) + Math.abs(a.v - c.v);
 export const foesOf = (b: Battle, me: Unit) => b.units.filter((x) => x.alive && x.side !== me.side && !hidden(b, x));
 const near3x3 = (a: At, c: At) => Math.abs(a.u - c.u) <= 1 && Math.abs(a.v - c.v) <= 1;
 
+/** A talent modifier a hero has (`talents.ts` lists the keys; 0 for a hero without it, and for every foe). */
+export const tal = (u: Unit, key: string): number => u.eq?.tal?.[key] ?? 0;
+/** A skill's duration in ms, lengthened by the caster's `dur` talent. */
+const durOf = (me: Unit, ms: number): number => Math.round(ms * (1 + tal(me, 'dur')));
+/** A skill's reach in tiles, lengthened by the caster's `reach` talent. */
+const reachOf = (me: Unit, n: number): number => n + tal(me, 'reach');
+
 /** One roll of the battle's skill stream, 0 to 1. */
 export function roll(b: Battle): number {
   const r = new Rng(b.skillRng);
@@ -161,10 +168,11 @@ function crowd(b: Battle, me: Unit, ok: (f: Unit) => boolean): Unit | undefined 
 /** Knight: draws the foes near him to attack him, and takes half damage for a while. */
 const SHIELD_WALL_MS = 4000;
 function shieldWall(b: Battle, me: Unit): boolean {
-  const near = foesOf(b, me).filter((f) => apart(me, f) <= 3);
+  const near = foesOf(b, me).filter((f) => apart(me, f) <= reachOf(me, 3));
   if (!near.length) return false;
-  for (const f of near) f.taunt = { to: me.id, until: b.t + SHIELD_WALL_MS };
-  me.guardUntil = b.t + SHIELD_WALL_MS;
+  const ms = durOf(me, SHIELD_WALL_MS);
+  for (const f of near) f.taunt = { to: me.id, until: b.t + ms };
+  me.guardUntil = b.t + ms;
   return true;
 }
 /** What a guard lets through. */
@@ -180,7 +188,7 @@ function iaido(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     let h = tileOf(b, me).h;
     let land: At | undefined;
     const hit: Unit[] = [];
-    for (let i = 1; i <= DASH_TILES; i++) {
+    for (let i = 1; i <= reachOf(me, DASH_TILES); i++) {
       const n = { u: me.u + du * i, v: me.v + dv * i };
       const t = tileAt(b.board, n.u, n.v);
       if (!t || !standable(t) || Math.abs(t.h - h) > def.jump) break;
@@ -250,7 +258,17 @@ function volley(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!aim) return false;
   b.pending.push({ at: b.t + VOLLEY_MS, kind: 'rain', by: me.id, to: aim.id, dmg: atkOf(me) * 1.0, heavy: false, u: aim.u, v: aim.v });
   out.push({ kind: 'area', by: me.id, id: 'volley', u: aim.u, v: aim.v, ms: VOLLEY_MS });
+  followUp(b, me, 'rain', aim, atkOf(me) * 1.0, 'volley', VOLLEY_MS, out);
   return true;
+}
+
+/** A talent's `extra` on a volley or meteor: a second one falls on the same spot a moment after the first, for 70% of it. */
+const FOLLOW_SHARE = 0.7;
+const FOLLOW_GAP = 500;
+function followUp(b: Battle, me: Unit, kind: 'rain' | 'meteor', aim: Unit, power: number, id: 'volley' | 'meteor', ms: number, out: BattleEvent[]): void {
+  if (tal(me, 'extra') < 1) return;
+  b.pending.push({ at: b.t + ms + FOLLOW_GAP, kind, by: me.id, to: aim.id, dmg: power * FOLLOW_SHARE, heavy: kind === 'meteor', u: aim.u, v: aim.v });
+  out.push({ kind: 'area', by: me.id, id, u: aim.u, v: aim.v, ms: ms + FOLLOW_GAP });
 }
 
 /** Wizard: a meteor falls on a 3x3 and leaves it burning. */
@@ -259,10 +277,11 @@ const METEOR_REACH = 6;
 const BURN_MS = 4000;
 const BURN_EVERY = 500;
 function meteor(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const aim = crowd(b, me, (f) => apart(me, f) <= METEOR_REACH);
+  const aim = crowd(b, me, (f) => apart(me, f) <= reachOf(me, METEOR_REACH));
   if (!aim) return false;
   b.pending.push({ at: b.t + METEOR_MS, kind: 'meteor', by: me.id, to: aim.id, dmg: atkOf(me) * 2.2, heavy: true, u: aim.u, v: aim.v });
   out.push({ kind: 'area', by: me.id, id: 'meteor', u: aim.u, v: aim.v, ms: METEOR_MS });
+  followUp(b, me, 'meteor', aim, atkOf(me) * 2.2, 'meteor', METEOR_MS, out);
   return true;
 }
 
@@ -288,10 +307,11 @@ function flurry(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!f) return false;
   me.facing = wayTo(me, f);
   const mult = blowMult(tileOf(b, me).h, tileOf(b, f).h, me.facing, f.facing);
-  for (let i = 0; i < 3; i++) hurt(b, me, f, net(atkOf(me) * 0.8 * mult, f), i === 2, false, out, 'skill');
+  const strikes = 3 + tal(me, 'extra');
+  for (let i = 0; i < strikes; i++) hurt(b, me, f, net(atkOf(me) * 0.8 * mult, f), i === strikes - 1, false, out, 'skill');
   if (f.alive) {
-    f.busyUntil = Math.max(f.busyUntil, b.t + STUN_MS);
-    f.stunUntil = b.t + STUN_MS;
+    f.busyUntil = Math.max(f.busyUntil, b.t + durOf(me, STUN_MS));
+    f.stunUntil = b.t + durOf(me, STUN_MS);
   }
   return true;
 }
@@ -299,8 +319,8 @@ function flurry(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 /** Peasant: the allies within two tiles close ranks and take half damage for a while. */
 const HOLD_MS = 3000;
 function holdTheLine(b: Battle, me: Unit): boolean {
-  if (!foesOf(b, me).some((f) => apart(me, f) <= 3)) return false;
-  for (const a of b.units) if (a.alive && a.side === me.side && apart(me, a) <= 2) a.guardUntil = b.t + HOLD_MS;
+  if (!foesOf(b, me).some((f) => apart(me, f) <= reachOf(me, 3))) return false;
+  for (const a of b.units) if (a.alive && a.side === me.side && apart(me, a) <= reachOf(me, 2)) a.guardUntil = b.t + durOf(me, HOLD_MS);
   return true;
 }
 
@@ -313,7 +333,7 @@ function chainLightning(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const hit = new Set<number>();
   let from: Unit = me;
   let at: Unit | undefined = first;
-  for (let i = 0; at && i <= CHAIN_JUMPS; i++) {
+  for (let i = 0; at && i <= CHAIN_JUMPS + tal(me, 'extra'); i++) {
     out.push({ kind: 'arc', from: from.id, to: at.id });
     hurt(b, me, at, net(atkOf(me) * 1.7 * Math.pow(0.8, i), at), i === 0, false, out, 'skill');
     hit.add(at.id);
@@ -332,7 +352,7 @@ function sanctuary(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   for (const a of b.units)
     if (a.alive && a.side === me.side) {
       mendUnit(a, atkOf(me) * 3, out, me);
-      a.guardUntil = b.t + SANCTUARY_MS;
+      a.guardUntil = b.t + durOf(me, SANCTUARY_MS);
     }
   return true;
 }
@@ -342,10 +362,10 @@ const CHARM_MS = 3500;
 function charm(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const foes = foesOf(b, me);
   const f = foes
-    .filter((x) => apart(me, x) <= 5 && !(x.charmUntil !== undefined && x.charmUntil > b.t) && foes.some((o) => o !== x))
+    .filter((x) => apart(me, x) <= reachOf(me, 5) && !(x.charmUntil !== undefined && x.charmUntil > b.t) && foes.some((o) => o !== x))
     .sort((x, y) => atkOf(y) - atkOf(x) || x.id - y.id)[0];
   if (!f) return false;
-  f.charmUntil = b.t + CHARM_MS;
+  f.charmUntil = b.t + durOf(me, CHARM_MS);
   f.taunt = undefined;
   f.busyUntil = Math.min(f.busyUntil, b.t + 300);
   out.push({ kind: 'arc', from: me.id, to: f.id });
@@ -380,7 +400,7 @@ function dive(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 /** Yamabushi Tengu: a gust hurts the foes within two tiles and shoves each a tile away; a drop of two or more hurts more. */
 const GUST_REACH = 2;
 const FALL_DMG = 10;
-const windGust = (b: Battle, me: Unit, out: BattleEvent[]) => gust(b, me, out, GUST_REACH, 0.9, 0);
+const windGust = (b: Battle, me: Unit, out: BattleEvent[]) => gust(b, me, out, reachOf(me, GUST_REACH), 0.9, 0);
 function gust(b: Battle, me: Unit, out: BattleEvent[], reach: number, mult: number, stunMs: number): boolean {
   const near = foesOf(b, me).filter((f) => apart(me, f) <= reach);
   if (!near.length) return false;
@@ -407,7 +427,7 @@ function gust(b: Battle, me: Unit, out: BattleEvent[], reach: number, mult: numb
 }
 
 /** Yamabushi Tengu's ultimate, Tempest: a great gale over four tiles that hurts hard, shoves and stuns every foe in it. */
-const tempest = (b: Battle, me: Unit, out: BattleEvent[]) => gust(b, me, out, 4, 1.8, 1500);
+const tempest = (b: Battle, me: Unit, out: BattleEvent[]) => gust(b, me, out, 4, 1.8, durOf(me, 1500));
 
 /** Werewolf: bites the weakest foe in reach for double, and heals for half of the damage it dealt. */
 const LEECH_SHARE = 0.5;
@@ -428,7 +448,7 @@ export function onKill(b: Battle, by: Unit, out: BattleEvent[]): void {
   const f = kitOf(by)?.passive.frenzy;
   if (!f || !by.alive) return;
   const n = by.frenzy && by.frenzy.until > b.t ? by.frenzy.n : 0;
-  by.frenzy = { n: Math.min(f.max, n + 1), until: b.t + f.ms };
+  by.frenzy = { n: Math.min(f.max + tal(by, 'frenzyMax'), n + 1), until: b.t + f.ms };
   out.push({ kind: 'frenzy', by: by.id, n: by.frenzy.n });
 }
 /** How much faster a fighter's blows come, from its frenzy (1 when none). */
@@ -446,7 +466,7 @@ function goreCharge(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     const [du, dv] = DIR[way];
     let h = tileOf(b, me).h;
     let land: At = { u: me.u, v: me.v };
-    for (let i = 1; i <= CHARGE_TILES; i++) {
+    for (let i = 1; i <= reachOf(me, CHARGE_TILES); i++) {
       const n = { u: me.u + du * i, v: me.v + dv * i };
       const t = tileAt(b.board, n.u, n.v);
       if (!t || !standable(t) || Math.abs(t.h - h) > def.jump) break;
@@ -473,8 +493,8 @@ function goreCharge(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   }
   hurt(b, me, f, net(power, f), true, false, out, 'skill');
   if (!f.alive) return true;
-  f.busyUntil = Math.max(f.busyUntil, b.t + STUN_MS);
-  f.stunUntil = b.t + STUN_MS;
+  f.busyUntil = Math.max(f.busyUntil, b.t + durOf(me, STUN_MS));
+  f.stunUntil = b.t + durOf(me, STUN_MS);
   const to = { u: f.u + DIR[way][0], v: f.v + DIR[way][1] };
   const t = tileAt(b.board, to.u, to.v);
   if (kitOf(f)?.passive.steady || !t || !standable(t) || unitAt(b, to.u, to.v)) return true;
@@ -488,10 +508,11 @@ function goreCharge(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 const SONG_REACH = 3;
 const SONG_MS = 4000;
 function pipes(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const near = b.units.filter((a) => a.alive && a.side === me.side && apart(me, a) <= SONG_REACH);
+  const near = b.units.filter((a) => a.alive && a.side === me.side && apart(me, a) <= reachOf(me, SONG_REACH));
   if (!near.some((a) => a !== me)) return false;
-  for (const a of near) a.hasteUntil = b.t + SONG_MS;
-  out.push({ kind: 'song', by: me.id, ms: SONG_MS });
+  const ms = durOf(me, SONG_MS);
+  for (const a of near) a.hasteUntil = b.t + ms;
+  out.push({ kind: 'song', by: me.id, ms });
   return true;
 }
 /** Sure-footed fighters (Satyr) climb for nothing. */
@@ -502,14 +523,14 @@ const GAZE_REACH = 5;
 const PETRIFY_MS = 3000;
 function gaze(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const f = foesOf(b, me)
-    .filter((x) => apart(me, x) <= GAZE_REACH && sightClear(b.board, me, x))
+    .filter((x) => apart(me, x) <= reachOf(me, GAZE_REACH) && sightClear(b.board, me, x))
     .sort((x, y) => atkOf(y) - atkOf(x) || x.id - y.id)[0];
   if (!f) return false;
   me.facing = wayTo(me, f);
   hurt(b, me, f, net(atkOf(me), f), false, false, out, 'skill');
   if (f.alive) {
-    f.busyUntil = Math.max(f.busyUntil, b.t + PETRIFY_MS);
-    f.stunUntil = b.t + PETRIFY_MS;
+    f.busyUntil = Math.max(f.busyUntil, b.t + durOf(me, PETRIFY_MS));
+    f.stunUntil = b.t + durOf(me, PETRIFY_MS);
   }
   out.push({ kind: 'gaze', by: me.id, to: f.id });
   return true;
@@ -525,7 +546,7 @@ function nineTails(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     .slice(0, Math.min(3, foes.length - 1));
   if (!prey.length) return false;
   for (const f of prey) {
-    f.charmUntil = b.t + DREAM_MS;
+    f.charmUntil = b.t + durOf(me, DREAM_MS);
     f.taunt = undefined;
     f.busyUntil = Math.min(f.busyUntil, b.t + 300);
     out.push({ kind: 'arc', from: me.id, to: f.id });
@@ -547,14 +568,14 @@ function featherStorm(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 const CURSE_REACH = 6;
 const STONE_MS = 2500;
 function stoneCurse(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const seen = foesOf(b, me).filter((x) => apart(me, x) <= CURSE_REACH && sightClear(b.board, me, x));
+  const seen = foesOf(b, me).filter((x) => apart(me, x) <= reachOf(me, CURSE_REACH) && sightClear(b.board, me, x));
   if (!seen.length) return false;
   me.facing = wayTo(me, seen.sort((x, y) => atkOf(y) - atkOf(x) || x.id - y.id)[0]);
   for (const f of seen) {
     hurt(b, me, f, net(atkOf(me) * 1.2, f), false, false, out, 'skill');
     if (f.alive) {
-      f.busyUntil = Math.max(f.busyUntil, b.t + STONE_MS);
-      f.stunUntil = b.t + STONE_MS;
+      f.busyUntil = Math.max(f.busyUntil, b.t + durOf(me, STONE_MS));
+      f.stunUntil = b.t + durOf(me, STONE_MS);
     }
     out.push({ kind: 'gaze', by: me.id, to: f.id });
   }
@@ -569,10 +590,10 @@ function rallyCry(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!all.some((a) => a !== me)) return false;
   for (const a of all) {
     if (a.banner === undefined) a.power = (a.power ?? 1) * BANNER_MULT;
-    a.banner = { until: b.t + RALLY_MS };
+    a.banner = { until: b.t + durOf(me, RALLY_MS) };
     mendUnit(a, a.maxHp * RALLY_HEAL, out, me);
   }
-  out.push({ kind: 'banner', by: me.id, ms: RALLY_MS });
+  out.push({ kind: 'banner', by: me.id, ms: durOf(me, RALLY_MS) });
   return true;
 }
 
@@ -580,14 +601,15 @@ function rallyCry(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 export const BANNER_MULT = 1.25;
 const BANNER_MS = 6000;
 function banner(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const near = b.units.filter((a) => a.alive && a.side === me.side && apart(me, a) <= 3);
+  const near = b.units.filter((a) => a.alive && a.side === me.side && apart(me, a) <= reachOf(me, 3));
   if (!near.some((a) => a !== me)) return false;
+  const ms = durOf(me, BANNER_MS);
   for (const a of near) {
     // (a second banner only lengthens the first: the attack is raised once)
     if (a.banner === undefined) a.power = (a.power ?? 1) * BANNER_MULT;
-    a.banner = { until: b.t + BANNER_MS };
+    a.banner = { until: b.t + ms };
   }
-  out.push({ kind: 'banner', by: me.id, ms: BANNER_MS });
+  out.push({ kind: 'banner', by: me.id, ms });
   return true;
 }
 
@@ -677,9 +699,9 @@ function shardBurst(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 /** Paladin: foes near him must go for him for a few seconds, and the allies beside him are healed. */
 const CHALLENGE_MS = 3000;
 function holyChallenge(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const near = foesOf(b, me).filter((f) => apart(me, f) <= 3);
+  const near = foesOf(b, me).filter((f) => apart(me, f) <= reachOf(me, 3));
   if (!near.length) return false;
-  for (const f of near) f.taunt = { to: me.id, until: b.t + CHALLENGE_MS };
+  for (const f of near) f.taunt = { to: me.id, until: b.t + durOf(me, CHALLENGE_MS) };
   for (const a of b.units) if (a.alive && a.side === me.side && apart(me, a) <= 2) mendUnit(a, atkOf(me) * 2.5, out, me);
   return true;
 }
@@ -691,7 +713,7 @@ function benediction(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!team.some((a) => a.dot || a.hp < a.maxHp * 0.85)) return false;
   for (const a of team) {
     a.dot = undefined;
-    a.hot = { amount: atkOf(me) * 1.2, every: 1000, next: b.t + 1000, until: b.t + BLESS_MS, by: me.id };
+    a.hot = { amount: atkOf(me) * 1.2, every: 1000, next: b.t + 1000, until: b.t + durOf(me, BLESS_MS), by: me.id };
     out.push({ kind: 'heal', to: a.id, amount: 0, by: me.id });
   }
   return true;
@@ -699,7 +721,7 @@ function benediction(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 
 /** Druid: a treant rises beside her (one at a time) and fights for her side. */
 function callTreant(b: Battle, me: Unit): boolean {
-  if (b.units.some((x) => x.alive && x.side === me.side && x.def === 'treant')) return false;
+  if (b.units.filter((x) => x.alive && x.side === me.side && x.def === 'treant').length > tal(me, 'extra')) return false;
   const foes = foesOf(b, me);
   if (!foes.length) return false;
   const near = sorted([...foes]).sort((x, y) => apart(me, x) - apart(me, y))[0];
@@ -721,7 +743,8 @@ function callTreant(b: Battle, me: Unit): boolean {
 
 /** Barbarian: spins, and every foe in the 3x3 around him is cut. */
 function whirlwind(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const near = foesOf(b, me).filter((f) => near3x3(me, f));
+  const wide = tal(me, 'reach');
+  const near = foesOf(b, me).filter((f) => (wide ? Math.abs(me.u - f.u) <= 1 + wide && Math.abs(me.v - f.v) <= 1 + wide : near3x3(me, f)));
   if (!near.length) return false;
   for (const f of near) hurt(b, me, f, net(atkOf(me) * 1.5, f), true, false, out, 'skill');
   return true;
@@ -736,7 +759,7 @@ function snareTrap(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const foes = foesOf(b, me).filter((f) => apart(me, f) <= defOf(me).range + 3).sort((x, y) => apart(me, x) - apart(me, y) || x.id - y.id);
   let laid = 0;
   for (const f of foes) {
-    if (laid >= TRAPS) break;
+    if (laid >= TRAPS + tal(me, 'extra')) break;
     const spot = DIR.map(([du, dv]) => ({ u: f.u + du, v: f.v + dv }))
       .filter((c) => {
         const t = tileAt(b.board, c.u, c.v);
@@ -763,7 +786,7 @@ function hex(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     .slice(0, 3);
   if (!prey.length) return false;
   for (const f of prey) {
-    f.dot = { kind: 'curse', dmg: Math.max(1, Math.round(atkOf(me) * 0.35)), every: HEX_EVERY, ms: HEX_MS, by: me.id, next: b.t + HEX_EVERY, until: b.t + HEX_MS };
+    f.dot = { kind: 'curse', dmg: Math.max(1, Math.round(atkOf(me) * 0.35)), every: HEX_EVERY, ms: durOf(me, HEX_MS), by: me.id, next: b.t + HEX_EVERY, until: b.t + durOf(me, HEX_MS) };
     out.push({ kind: 'arc', from: me.id, to: f.id });
   }
   return true;
@@ -806,10 +829,10 @@ function mirrorImage(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     d.hp = d.maxHp = Math.max(1, Math.round(me.maxHp * DECOY_HP));
     d.facing = wayTo(d, near);
     // (a decoy stands where it appeared for a moment, so the foes find it there)
-    d.busyUntil = b.t + 1500;
+    d.busyUntil = b.t + durOf(me, 1500);
     decoys.push(d);
   }
-  for (const f of foes.filter((x) => apart(from, x) <= 4)) f.taunt = { to: decoys.sort((x, y) => apart(f, x) - apart(f, y) || x.id - y.id)[0].id, until: b.t + DECOY_MS };
+  for (const f of foes.filter((x) => apart(from, x) <= 4)) f.taunt = { to: decoys.sort((x, y) => apart(f, x) - apart(f, y) || x.id - y.id)[0].id, until: b.t + durOf(me, DECOY_MS) };
   return true;
 }
 
@@ -825,7 +848,7 @@ function deadEye(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     return foes.filter((f) => {
       const proj = ((f.u - me.u) * du + (f.v - me.v) * dv) / len;
       const perp = Math.abs((f.u - me.u) * dv - (f.v - me.v) * du) / len;
-      return proj > 0 && proj <= def.range + 3 && perp <= LINE_WIDTH;
+      return proj > 0 && proj <= def.range + reachOf(me, 3) && perp <= LINE_WIDTH;
     });
   };
   let best: Unit[] = [];
@@ -1038,16 +1061,36 @@ export function tryCast(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const k = kitOf(me);
   if (!k) return false;
   // (a full ultimate goes first; if it has nothing to hit, the ordinary skill may still go)
-  if (k.ultimate && (me.charge2 ?? 0) >= k.ultimate.need && k.ultimate.cast(b, me, out)) {
+  if (k.ultimate && (me.charge2 ?? 0) >= k.ultimate.need && powered(b, me, k.ultimate, tal(me, 'ultPow'), out)) {
     me.charge2! -= k.ultimate.need;
     return began(b, me, k.ultimate, out);
   }
-  if (me.charge < k.skill.need || !k.skill.cast(b, me, out)) return false;
+  if (me.charge < k.skill.need || !powered(b, me, k.skill, 0, out)) return false;
   me.charge -= k.skill.need;
   return began(b, me, k.skill, out);
 }
 
+/** Cast a skill with the caster's `pow` talent (and `more`, an ultimate's) lifting its attack while it runs: the blows, the volleys and meteors, the healing and what is called up all take it. */
+function powered(b: Battle, me: Unit, s: Skill, more: number, out: BattleEvent[]): boolean {
+  const k = 1 + tal(me, 'pow') + more;
+  if (k === 1) return s.cast(b, me, out);
+  me.power = (me.power ?? 1) * k;
+  const ok = s.cast(b, me, out);
+  me.power = (me.power ?? 1) / k;
+  return ok;
+}
+
 function began(b: Battle, me: Unit, s: Skill, out: BattleEvent[]): boolean {
+  const t = me.eq?.tal;
+  if (t) {
+    if (t.castHeal) mendUnit(me, me.maxHp * t.castHeal, out);
+    if (t.castShield) me.shield = { hp: Math.round(me.maxHp * t.castShield), until: b.t + 3000 };
+    if (t.castHaste) {
+      me.hasteUntil = Math.max(me.hasteUntil ?? 0, b.t + t.castHaste);
+      out.push({ kind: 'haste', to: me.id, ms: t.castHaste });
+    }
+    if (t.refund) gain(me, t.refund);
+  }
   me.cast = { at: b.t, ms: s.castMs, anim: s.anim };
   me.swing = undefined;
   me.busyUntil = b.t + s.castMs;
@@ -1062,7 +1105,7 @@ export const gain = (u: Unit, n: number) => {
   const k = u.alive ? kitOf(u) : undefined;
   if (!k) return;
   u.charge = Math.min(CHARGE_MAX, u.charge + n);
-  if (k.ultimate) u.charge2 = Math.min(CHARGE_MAX, (u.charge2 ?? 0) + n * ULT_RATE);
+  if (k.ultimate) u.charge2 = Math.min(CHARGE_MAX, (u.charge2 ?? 0) + n * ULT_RATE * (1 + tal(u, 'ultRate')));
 };
 
 /** What a blow or skill does to its target after guards, blocks and dodges (null when slipped), charging both sides. */
@@ -1076,15 +1119,17 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
     gain(to, (kit?.skill.taken ?? 0) * 0.5);
     return null;
   }
-  if (blow && kit?.passive.block && (wayTo(by, to) + 2) % 4 === to.facing) {
-    const turned = dmg * kit.passive.block;
+  const block = (kit?.passive.block ?? 0) + tal(to, 'block');
+  if (blow && block && (wayTo(by, to) + 2) % 4 === to.facing) {
+    const turned = dmg * block;
     dmg -= turned;
-    if (kit.passive.blockHeal) mendUnit(to, turned * kit.passive.blockHeal, out);
+    if (kit?.passive.blockHeal) mendUnit(to, turned * kit.passive.blockHeal, out);
   }
   if (blow && kit?.passive.scales && defOf(by).shot) dmg *= 1 - kit.passive.scales;
-  if (kit?.passive.huddle && src !== 'dot') {
+  const huddle = (kit?.passive.huddle ?? 0) + tal(to, 'huddle');
+  if (huddle && src !== 'dot') {
     const n = b.units.filter((a) => a.alive && a !== to && a.side === to.side && apart(a, to) === 1).length;
-    dmg *= 1 - kit.passive.huddle * Math.min(3, n);
+    dmg *= 1 - huddle * Math.min(3, n);
   }
   if (to.guardUntil !== undefined && to.guardUntil > b.t) dmg *= GUARD_SHARE;
   if (team?.guard) dmg *= 1 - team.guard;
@@ -1094,9 +1139,18 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
     gain(to, kit?.skill.taken ?? 0);
   }
   const left = Math.max(1, Math.round(dmg));
+  // (a talent's rider on a skill: what it hits is slowed or held)
+  if (src === 'skill' && by.eq?.tal && by.side !== to.side) {
+    if (by.eq.tal.skillSlow) to.slowUntil = Math.max(to.slowUntil ?? 0, b.t + by.eq.tal.skillSlow);
+    if (by.eq.tal.skillStun) {
+      to.busyUntil = Math.max(to.busyUntil, b.t + by.eq.tal.skillStun);
+      to.stunUntil = Math.max(to.stunUntil ?? 0, b.t + by.eq.tal.skillStun);
+    }
+  }
   fxStruck(b, by, to, left, blow && !splash, out);
   // (thorns: a melee blow hurts the one who swung it)
-  if (blow && !splash && kit?.passive.thorns && apart(by, to) === 1 && by.alive) hurt(b, to, by, Math.max(1, Math.round(left * kit.passive.thorns)), false, false, out, 'skill');
+  const thorns = (kit?.passive.thorns ?? 0) + tal(to, 'thorns');
+  if (blow && !splash && thorns && apart(by, to) === 1 && by.alive) hurt(b, to, by, Math.max(1, Math.round(left * thorns)), false, false, out, 'skill');
   return left;
 }
 
@@ -1123,14 +1177,15 @@ export const farOf = (by: Unit, to: Unit): number => {
 };
 /** How much more attack a fighter has as its health falls (the Barbarian's rage), as a multiplier. */
 export const rageOf = (u: Unit): number => {
-  const r = kitOf(u)?.passive.rage;
+  const r = (kitOf(u)?.passive.rage ?? 0) + tal(u, 'rage');
   return r ? 1 + r * (1 - u.hp / u.maxHp) : 1;
 };
 export const pierceOf = (by: Unit): number => kitOf(by)?.passive.pierce ?? 0;
 
 export function afterBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg = 0, out: BattleEvent[] = []): void {
   const p = kitOf(by)?.passive;
-  if (p?.leech && by.alive) mendUnit(by, dmg * p.leech, out);
+  const leech = (p?.leech ?? 0) + tal(by, 'leech');
+  if (leech && by.alive) mendUnit(by, dmg * leech, out);
   fxBlow(b, by, to, crit, dmg, out);
   if (p?.through && dmg > 0) {
     const way = wayTo(by, to);
@@ -1154,8 +1209,9 @@ export function landArea(b: Battle, kind: 'rain' | 'meteor', by: Unit, u: number
   for (const f of b.units)
     if (f.alive && f.side !== by.side && near3x3(f, { u, v })) hurt(b, by, f, net(power, f), kind === 'meteor', false, out, 'skill');
   if (kind === 'meteor') {
-    b.zones.push({ u, v, side: by.side, by: by.id, until: b.t + BURN_MS, next: b.t + BURN_EVERY, dmg: 6 });
-    out.push({ kind: 'zone', u, v, ms: BURN_MS });
+    const ms = durOf(by, BURN_MS);
+    b.zones.push({ u, v, side: by.side, by: by.id, until: b.t + ms, next: b.t + BURN_EVERY, dmg: 6 });
+    out.push({ kind: 'zone', u, v, ms });
   }
 }
 
@@ -1214,10 +1270,11 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
       const f = b.units.find((x) => x.alive && x.side !== tr.side && x.u === tr.u && x.v === tr.v);
       if (!f) continue;
       tr.until = 0;
-      hurt(b, b.units.find((x) => x.id === tr.by)!, f, net(tr.dmg, f), true, false, out, 'skill');
+      const layer = b.units.find((x) => x.id === tr.by)!;
+      hurt(b, layer, f, net(tr.dmg, f), true, false, out, 'skill');
       if (f.alive) {
-        f.busyUntil = Math.max(f.busyUntil, b.t + ROOT_MS);
-        f.stunUntil = b.t + ROOT_MS;
+        f.busyUntil = Math.max(f.busyUntil, b.t + durOf(layer, ROOT_MS));
+        f.stunUntil = b.t + durOf(layer, ROOT_MS);
       }
     }
     b.traps = b.traps.filter((tr) => tr.until > b.t);

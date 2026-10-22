@@ -15,7 +15,7 @@ import { formOf, UNITS } from './sim/units';
 import { isBoss } from './sim/foes';
 import { earn, loadMeta, rankOf, rarityOf, recordStars, saveMeta, type Meta } from './sim/meta';
 import { xpRate } from './sim/castle';
-import { equipStats } from './sim/equipment';
+import { heroStats } from './sim/talents';
 import { fightXp, gainXp, levelGain, levelOfKind, progressOf, xpOf, type LevelUp } from './sim/levels';
 import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
 import { Gacha } from './gacha';
@@ -723,7 +723,7 @@ class Game {
 
   /** A roster hero's boost for the fight: its grade, rank, level, gear and equipment, and the tower's wounds. */
   private boostFor(h: Owned): Boost {
-    return { ...boostOf(h, rankOf(this.meta, h.kind), levelOfKind(this.meta, h.kind), equipStats(this.meta, h.kind)), carry: hpShare(this.run, h.id) };
+    return { ...boostOf(h, rankOf(this.meta, h.kind), levelOfKind(this.meta, h.kind), heroStats(this.meta, h.kind)), carry: hpShare(this.run, h.id) };
   }
 
   /** Begin a tower run: its map first, the fights as they are picked. */
