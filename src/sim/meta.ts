@@ -3,8 +3,8 @@
 // rank, and each rank makes its heroes a little stronger in every fight. Pure rules: no Pixi, no DOM; every pull draws
 // from a side stream of the meta seed and the pull counter, so it replays exactly.
 
-import { newCastle, readCastle, spellBudget, type Castle } from './castle';
-import { newLoadout, readLoadout, type Loadout } from './spells';
+import { newCastle, readCastle, readChapel, spellBudget, type Castle } from './castle';
+import { newLoadout, readLoadout, STARTER_SPELLS, type Loadout } from './spells';
 import { Rng } from './rng';
 import { ALL_HEROES, HEROES, UNITS, type Rarity } from './units';
 import { MAX_STARS, starCrowns } from './stars';
@@ -51,6 +51,8 @@ export interface Meta {
   dryMythic: number;
   /** The castle's upgrades (see `castle.ts`). */
   castle: Castle;
+  /** Whether the Chapel has been bought (it opens the spellbook; saves from before count it built if they had spells or upgrades; see `castle.ts`). */
+  chapel?: boolean;
   /** Shards per hero kind (missing is none). */
   shards: Record<string, number>;
   /** The king's spells owned and equipped (see `spells.ts`; saves from before have the starting three). */
@@ -89,7 +91,7 @@ export interface Pull {
   shards: number;
 }
 
-export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [...HEROES], party: [...HEROES], pulls: 0, dry: 0, dryMythic: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], achievements: [] });
+export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [...HEROES], party: [...HEROES], pulls: 0, dry: 0, dryMythic: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], achievements: [] });
 
 export const rarityOf = (kind: string): Rarity => UNITS[kind]?.rarity ?? 1;
 /** Hp and attack multiplier of a hero kind's tier. */
@@ -229,6 +231,7 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.dryMythic = Math.max(0, m.dryMythic | 0);
       m.castle = readCastle(m.castle);
       m.spellbook = readLoadout(m.spellbook, spellBudget(m.castle));
+      m.chapel = readChapel(m.chapel, m.castle, m.spellbook, STARTER_SPELLS);
       // (saves from before shards have none)
       const shards: Record<string, number> = {};
       if (m.shards && typeof m.shards === 'object') for (const [k, n] of Object.entries(m.shards)) if (ALL_HEROES.includes(k) && typeof n === 'number') shards[k] = n | 0;

@@ -76,3 +76,34 @@ export const xpRate = (c: Castle = newCastle()) => 1 + XP_PER_LEVEL * c.library;
 /** The power the three equipped spells may add up to: 9, and the Mage Tower adds 1 at level 2 and again at level 4. */
 export const SPELL_BUDGET = 9;
 export const spellBudget = (c: Castle = newCastle()) => SPELL_BUDGET + Math.floor(c.mageTower / 2);
+
+/** The Chapel (the owner's call: the Tavern is free, the Chapel is bought): one purchase of this many crowns, no levels. Until it is built the spellbook is locked. */
+export const CHAPEL_COST = 200;
+
+/** The slice of the Meta the Chapel rules read and change (`chapel` missing is not built). */
+export interface ChapelMeta {
+  crowns: number;
+  chapel?: boolean;
+}
+
+export const chapelBuilt = (m: Pick<ChapelMeta, 'chapel'>): boolean => m.chapel === true;
+export const canBuildChapel = (m: ChapelMeta): boolean => !chapelBuilt(m) && m.crowns >= CHAPEL_COST;
+
+/** Pay for the Chapel. False (and nothing changed) when it stands already or the crowns are short. */
+export function buildChapel(m: ChapelMeta): boolean {
+  if (!canBuildChapel(m)) return false;
+  m.crowns -= CHAPEL_COST;
+  m.chapel = true;
+  return true;
+}
+
+/** The spellbook (changing the loadout, unlocking spells) opens only once the Chapel stands. The starting spells still work in fights either way. */
+export const spellsOpen = (m: Pick<ChapelMeta, 'chapel'>): boolean => chapelBuilt(m);
+
+/** Whether a save counts the Chapel as built: its own flag when it has one, else (saves from before it was bought) yes when the player already owns a spell beyond
+ *  the starting ones, changed the equipped spells, or bought any castle upgrade, so nobody loses what they had. */
+export function readChapel(raw: unknown, castle: Castle, spellbook: { owned: readonly string[]; equipped: readonly string[] }, starters: readonly string[]): boolean {
+  if (typeof raw === 'boolean') return raw;
+  const same = spellbook.equipped.length === starters.length && starters.every((id) => spellbook.equipped.includes(id));
+  return BUILDING_IDS.some((id) => castle[id] > 0) || spellbook.owned.some((id) => !starters.includes(id)) || !same;
+}
