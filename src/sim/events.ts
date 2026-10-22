@@ -8,17 +8,26 @@
 //   cursed    the next fight's foes are 30% tougher, the reward better
 //   training  gold for a lasting stat bump to one hero
 //
+// The endless tower's mystery floors draw from three more (`TOWER_EVENT_KINDS`), which are about the party's health:
+//
+//   spring    free: the party drinks and is healed
+//   gambler   stake gold on a coin flip (the flip is drawn with the card)
+//   altar     pay a share of every hero's hp for a relic
+//
 // Pure rules: no Pixi, no DOM. It changes a Run only through `chooseOption` and `leaveEvent`; it imports no values from
 // run.ts (which calls `drawEvent`), only the types.
 
 import { mixSeed, Rng } from './rng';
 import { dropGear, gearText, type Gear } from './gear';
 import { RELIC_IDS, RELICS } from './relics';
+import { healParty, hurtParty } from './health';
 import { UNITS } from './units';
 import type { Run } from './run';
 
-export type EventKind = 'shrine' | 'merchant' | 'chest' | 'cursed' | 'training';
+export type EventKind = 'shrine' | 'merchant' | 'chest' | 'cursed' | 'training' | 'spring' | 'gambler' | 'altar';
 export const EVENT_KINDS: readonly EventKind[] = ['shrine', 'merchant', 'chest', 'cursed', 'training'];
+/** What a mystery floor of the tower can be: the usual five and the three about health. */
+export const TOWER_EVENT_KINDS: readonly EventKind[] = [...EVENT_KINDS, 'spring', 'gambler', 'altar'];
 
 /** What taking an option does. */
 export type Effect =
@@ -28,7 +37,10 @@ export type Effect =
   | { t: 'gear'; gear: Gear }
   | { t: 'gold'; n: number }
   | { t: 'curse'; foes: number; gold: number; gear: Gear }
-  | { t: 'train'; hero: number; hp?: number; atk?: number };
+  | { t: 'train'; hero: number; hp?: number; atk?: number }
+  | { t: 'heal'; frac: number }
+  | { t: 'gamble'; win: boolean; n: number }
+  | { t: 'altar'; frac: number; id: string };
 
 export interface EventOption {
   label: string;
@@ -53,6 +65,8 @@ export const SHRINE_ATK = 0.15;
 export const CURSE_FOES = 0.3;
 export const TRAIN_HP = 0.2;
 export const TRAIN_ATK = 0.12;
+export const SPRING_HEAL = 0.4;
+export const ALTAR_COST = 0.25;
 
 /** Whether a won stage is followed by an event: every second stage, boss stages excepted. */
 export const eventAfter = (stage: number, boss: boolean) => !boss && stage % 2 === 0;
@@ -64,10 +78,10 @@ const leave = (): EventOption => ({ label: 'Leave', text: 'Move on.', cost: 0, e
 const relicOption = (id: string, cost: number): EventOption => ({ label: RELICS[id].name, text: RELICS[id].text, cost, effect: { t: 'relic', id } });
 const gearOption = (g: Gear, cost: number): EventOption => ({ label: g.name, text: `${g.slot}: ${gearText(g)}`, cost, effect: { t: 'gear', gear: g } });
 
-/** The event card of a stage, made from the run's seed (it draws gear ids from the run). */
-export function drawEvent(run: Run, stage: number): EventCard {
+/** The event card of a stage, made from the run's seed (it draws gear ids from the run); `kinds` is what it may be. */
+export function drawEvent(run: Run, stage: number, kinds: readonly EventKind[] = EVENT_KINDS): EventCard {
   const rng = new Rng(mixSeed(run.seed, 0xe7e47, stage));
-  const kind = pick(rng, EVENT_KINDS);
+  const kind = pick(rng, kinds);
   const relics = unownedRelics(run);
   switch (kind) {
     case 'shrine':
@@ -109,6 +123,26 @@ export function drawEvent(run: Run, stage: number): EventCard {
           { label: 'Take the path', text: `foes +${CURSE_FOES * 100}% hp and attack next fight; win for +${gold} gold and a ${gear.name}`, cost: 0, effect: { t: 'curse', foes: 1 + CURSE_FOES, gold, gear } },
           { label: 'Turn back', text: 'Take the safe road.', cost: 0, effect: { t: 'leave' } },
         ],
+      };
+    }
+    case 'spring':
+      return {
+        kind, stage, title: 'A healing spring', text: 'Clear water wells up between mossy stones. The heroes rest beside it.',
+        options: [{ label: 'Drink deep', text: `heals every hero ${SPRING_HEAL * 100}% of its hp`, cost: 0, effect: { t: 'heal', frac: SPRING_HEAL } }, leave()],
+      };
+    case 'gambler': {
+      const stake = 30 + 2 * stage;
+      const win = rng.chance(0.5);
+      return {
+        kind, stage, title: 'A dicing goblin', text: 'A goblin rattles a cup of bones. "Double or nothing, heroes?"',
+        options: [{ label: 'Roll the bones', text: `stake ${stake} gold: a coin flip for ${stake * 2 + 10} gold`, cost: stake, effect: { t: 'gamble', win, n: stake * 2 + 10 } }, leave()],
+      };
+    }
+    case 'altar': {
+      const id = relics.length ? pick(rng, relics) : '';
+      return {
+        kind, stage, title: 'A blood altar', text: 'A cracked altar hums. It wants something of the heroes, and offers something back.',
+        options: [id ? { label: `Give blood for the ${RELICS[id].name}`, text: `every hero loses ${ALTAR_COST * 100}% of its hp; ${RELICS[id].text}`, cost: 0, effect: { t: 'altar', frac: ALTAR_COST, id } } : { label: 'A sack of coin', text: 'The altar has nothing else to give.', cost: 0, effect: { t: 'gold', n: 25 } }, leave()],
       };
     }
     default: {
@@ -166,6 +200,22 @@ export function chooseOption(run: Run, i: number): string | null {
       line = `Trained: ${o.text}.`;
       break;
     }
+    case 'heal':
+      healParty(run, fx.frac);
+      line = `The party is healed ${Math.round(fx.frac * 100)}%.`;
+      break;
+    case 'gamble':
+      if (fx.win) {
+        run.gold += fx.n;
+        line = `The bones fall your way: +${fx.n} gold.`;
+      } else line = 'The bones fall against you. The goblin grins and the coin is gone.';
+      break;
+    case 'altar':
+      hurtParty(run, fx.frac);
+      if (!run.relics) run.relics = [];
+      if (!run.relics.includes(fx.id)) run.relics.push(fx.id);
+      line = `The altar drinks deep and gives the ${RELICS[fx.id].name}.`;
+      break;
     case 'leave':
       break;
   }
