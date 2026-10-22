@@ -98,3 +98,9 @@ so they were pulled back: the revives rise at 30% (the Werewolf's 25%), Healing 
 15%, Blood Pact 10% leech, Fox Charm's lengthening and the Nine-Tailed Dream's rate smaller. Table 2 now has most single trees at
 +3 to +20 points, the highest (Yamabushi) +26 and the first row alone +0 to +11 (the Yamabushi and Warlock, whose first rows
 are strong already). `npm run balance` (no talents in it) is identical before and after this branch.
+
+## Also on the hero sheet: Equip best, and no blinking
+
+- **Equip best / Equip all heroes** (`equipment.ts`: `itemScore`, `bestFor`, `equipBest`, `equipAll`, `strongestFirst`; buttons in `equipView.ts`). An item scores by its main stats (calling bonus, rarity and item level through `itemStats`) weighted for the hero (shooters value reach and crits, casters charge, sturdy heroes hp and defence) plus its ability (`ABILITY_WORTH` x its strength). By default only the bag is used; the toggle "Taking from other heroes" lets a stronger fit move a piece off another hero. Equip all serves the strongest heroes first and an earlier hero keeps what it was given. No item is ever on two heroes. Tests: `test/equip-best.test.ts`; screenshots `docs/samples/gear-best-{before,after}*.png` (`tools/audit/equip-best.mjs`). "Equip all heroes" sits in the same panel (reachable from the tavern's hero sheet), not on the tavern canvas.
+- The slot picker flow is unchanged (the owner dropped the fewer-taps rework).
+- The talent tree no longer blinks: an available node has a steady highlight; learning a node plays a short one-shot pop.

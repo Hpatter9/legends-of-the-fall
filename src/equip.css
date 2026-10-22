@@ -27,3 +27,5 @@
 .eqBtns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .eqPanel button { min-height: 36px; font-size: 13px; }
 .lootCard.r2 { border-color: #4a9cff; } .lootCard.gear .eqIcon.small { width: 40px; height: 40px; } .lootCard.gear .eqIcon.small img { width: 32px; height: 32px; }
+
+.eqAuto { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; } .eqAuto .eqTake { grid-column: 1 / 3; }

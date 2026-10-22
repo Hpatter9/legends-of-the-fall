@@ -62,6 +62,8 @@ export function drawTalents(meta: Meta, kind: string, changed: () => void = () =
   };
   let sel: string | undefined;
   let confirming = false;
+  /** The node just learned: its tile plays a short one-shot pop (no flashing). */
+  let popped: string | undefined;
 
   const overview = () => {
     panel.replaceChildren(el('h4', '', 'Talents'));
@@ -117,9 +119,11 @@ export function drawTalents(meta: Meta, kind: string, changed: () => void = () =
       tile.style.left = `${nodeX(n)}%`;
       tile.style.top = `${ROW_Y[n.tier] + 28}px`;
       if (sel === n.id) tile.classList.add('sel');
+      if (popped === n.id) tile.classList.add('pop');
       tile.addEventListener('click', () => {
         sel = n.id;
         confirming = false;
+        popped = undefined;
         view();
       });
       box.append(tile);
@@ -147,7 +151,7 @@ export function drawTalents(meta: Meta, kind: string, changed: () => void = () =
       else if (state === 'available') {
         const go = button(`Learn (${costOf(n)} point${costOf(n) > 1 ? 's' : ''})`, 'primary');
         go.addEventListener('click', () => {
-          learn(meta, kind, n.id);
+          if (learn(meta, kind, n.id)) popped = n.id;
           commit();
           view();
         });
