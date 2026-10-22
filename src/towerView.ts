@@ -9,7 +9,7 @@ import { saveMeta, type Meta } from './sim/meta';
 import { hpShare } from './sim/health';
 import { RELICS } from './sim/relics';
 import {
-  ACT_ROWS, buy, chestLine, choices, clearNode, enterNode, finishMystery, floorOf, inBattle, LANES, NODE_NAMES, openTreasure, REST_HEAL, rest, takeXp, train, trainXp, type MapNode, type NodeKind, type ShopItem, type TowerSummary,
+  buy, chestLine, choices, clearNode, enterNode, finishMystery, floorOf, inBattle, NODE_NAMES, openTreasure, REST_HEAL, rest, takeXp, train, trainXp, type MapNode, type NodeKind, type ShopItem, type TowerSummary,
 } from './sim/tower';
 import { saveRun, type Run } from './sim/run';
 import { UNITS } from './sim/units';
@@ -30,6 +30,8 @@ import chestIcon from './art/ui/chest-bronze.png';
 import crown from './art/ui/ic-crown.png';
 import type { Events } from './events';
 import { twistBadge, twistLine } from './twistView';
+import { actLook, bossOfAct } from './towerTheme';
+import { BRICKS, buildBackdrop, Layout, torchEl } from './towerBack';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -59,10 +61,9 @@ export const NODE_INFO: Record<NodeKind, { icon: string; text: string }> = {
   boss: { icon: crown, text: 'The act boss. A wall; drops gear and a relic and heals half.' },
 };
 
-const ROW_H = 66;
-const PAD_TOP = 56;
-const PAD_BOTTOM = 40;
-const BOSS_ROW_H = 40;
+/** The acts whose intro card has been shown this session (by run and act), so it plays once as an act starts. */
+const introSeen = new Set<string>();
+const reduced = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 export class TowerView {
   private root = el('div');
@@ -70,11 +71,25 @@ export class TowerView {
   private picked = -1;
   /** A screen over the map (shop, campfire, treasure, summary). */
   private card: HTMLElement | null = null;
+  private lay = new Layout(393);
+  private marker: HTMLElement | null = null;
+  private moving = false;
+  private introTimer = 0;
+  private introFrame = 0;
 
   constructor(private hooks: TowerHooks) {
     this.root.id = 'towerMap';
     this.root.hidden = true;
     document.body.append(this.root);
+    // (the map's stairs are laid in pixels, so they are laid again if the page changes width)
+    window.addEventListener('resize', () => {
+      if (!this.isOpen || !this.run?.tower || this.moving || this.mapWidth() === this.lay.W) return;
+      this.draw();
+    });
+  }
+
+  private mapWidth(): number {
+    return Math.min(440, Math.max(320, this.root.clientWidth || document.documentElement.clientWidth || 393));
   }
 
   get isOpen(): boolean {
@@ -95,6 +110,7 @@ export class TowerView {
   }
 
   close(): void {
+    this.endIntro();
     this.root.hidden = true;
     this.root.replaceChildren();
     document.body.classList.remove('towerUp');
@@ -111,17 +127,9 @@ export class TowerView {
     // (the map keeps its place while it is redrawn; on opening it scrolls to the row now being picked)
     requestAnimationFrame(() => {
       if (!scrollToNow && keep !== undefined) sc.scrollTop = keep;
-      else sc.scrollTop = Math.max(0, this.rowY(t.row) - sc.clientHeight * 0.62);
+      else sc.scrollTop = Math.max(0, (t.at < 0 ? this.lay.start().y : this.lay.rowY(t.row)) - sc.clientHeight * 0.62);
     });
-  }
-
-  private mapHeight(): number {
-    return PAD_TOP + (ACT_ROWS - 1) * ROW_H + BOSS_ROW_H + PAD_BOTTOM;
-  }
-
-  /** The y (px, from the top of the map) of the centre of a row: the first floor at the foot, the boss at the top. */
-  private rowY(row: number): number {
-    return this.mapHeight() - PAD_BOTTOM - row * ROW_H;
+    if (!this.card) this.maybeIntro();
   }
 
   private header(): HTMLElement {
@@ -182,55 +190,218 @@ export class TowerView {
   private mapBox(): HTMLElement {
     const run = this.run;
     const t = run.tower!;
-    const scroll = el('div', 'rtScroll');
+    const lay = (this.lay = new Layout(this.mapWidth()));
+    const scroll = el('div', `rtScroll look${actLook(t.act).look}`);
+    this.root.style.setProperty('--rtBrick', `url(${BRICKS[actLook(t.act).look]})`);
     const map = el('div', 'rtMap');
-    map.style.height = `${this.mapHeight()}px`;
+    map.style.width = `${lay.W}px`;
+    map.style.height = `${lay.H}px`;
     const open = new Set(choices(run).map((n) => n.id));
     const taken = new Set(t.path);
-    const xOf = (lane: number) => ((lane + 0.5) / LANES) * 100;
-    // the lines first (an SVG over the whole map, in percent across and pixels down)
-    const NS = 'http://www.w3.org/2000/svg';
-    const svg = document.createElementNS(NS, 'svg');
-    svg.setAttribute('class', 'rtLines');
-    svg.setAttribute('width', '100%');
-    svg.setAttribute('height', String(this.mapHeight()));
-    for (const n of t.map) {
-      for (const to of n.next) {
-        const m = t.map[to];
-        const line = document.createElementNS(NS, 'line');
-        line.setAttribute('x1', `${xOf(n.lane)}%`);
-        line.setAttribute('y1', String(this.rowY(n.row)));
-        line.setAttribute('x2', `${xOf(m.lane)}%`);
-        line.setAttribute('y2', String(this.rowY(m.row)));
-        const walked = taken.has(n.id) && taken.has(to);
-        const now = (n.id === t.at && open.has(to)) || (t.at < 0 && n.row === t.row - 1 && false);
-        line.setAttribute('class', walked ? 'walked' : now ? 'now' : '');
-        svg.append(line);
-      }
-    }
-    map.append(svg);
-    for (const n of t.map) map.append(this.nodeButton(n, xOf(n.lane), open, taken));
+    map.append(buildBackdrop(t.act, lay), this.gate(t.act), this.stairs(open, taken, map));
+    for (const n of t.map) map.append(this.nodeButton(n, open, taken));
+    this.marker = this.makeMarker();
+    this.placeMarker(this.markerSpot(t.at));
+    map.append(this.marker);
     scroll.append(map);
     return scroll;
   }
 
-  private nodeButton(n: MapNode, x: number, open: Set<number>, taken: Set<number>): HTMLElement {
+  /** The big gate at the top of the act: the boss that waits there, by name and face. */
+  private gate(act: number): HTMLElement {
+    const boss = UNITS[bossOfAct(act)];
+    const lay = this.lay;
+    const g = el('div', 'rtGate');
+    g.style.left = `${Math.round((lay.W - 224) / 2)}px`;
+    const face = portrait(boss.sheet, 96);
+    face.className = 'rtGateFace';
+    face.style.width = face.style.height = '96px';
+    const arch = el('div', 'rtGateArch');
+    arch.append(face);
+    const plate = el('div', 'rtGatePlate');
+    plate.append(el('small', '', `Act ${act} boss`), el('b', '', boss.name));
+    g.append(el('i', 'rtGateTop'), arch, plate);
+    g.title = `The gate of ${actLook(act).name}: ${boss.name} waits beyond it.`;
+    return g;
+  }
+
+  /** The stairs between the floors, as steps of stone: dim where they are not to be taken, softly lit where they can be, torch-lit where walked. */
+  private stairs(open: Set<number>, taken: Set<number>, map: HTMLElement): SVGElement {
+    const t = this.run.tower!;
+    const lay = this.lay;
+    const NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('class', 'rtLines');
+    svg.setAttribute('width', String(lay.W));
+    svg.setAttribute('height', String(lay.H));
+    const rect = (g: Element, x: number, y: number, w: number, h: number, cls: string) => {
+      const r = document.createElementNS(NS, 'rect');
+      r.setAttribute('x', String(x));
+      r.setAttribute('y', String(y));
+      r.setAttribute('width', String(w));
+      r.setAttribute('height', String(h));
+      r.setAttribute('class', cls);
+      g.append(r);
+    };
+    const flight = (a: { x: number; y: number }, b: { x: number; y: number }, ra: number, rb: number, state: string, torchN: number) => {
+      const g = document.createElementNS(NS, 'g');
+      g.setAttribute('class', `st ${state}`);
+      const dy = a.y - b.y;
+      const n = Math.floor((dy - ra - rb) / 8);
+      for (let i = 0; i < n; i++) {
+        const y = Math.round(a.y - ra - 4 - i * 8);
+        const x = Math.round(a.x + ((b.x - a.x) * (a.y - y)) / dy);
+        if (state === 'now') rect(g, x - 13, y - 7, 26, 13, 'glow');
+        rect(g, x - 10, y - 4, 20, 4, 'tread');
+        rect(g, x - 10, y, 20, 3, 'riser');
+        rect(g, x - 10, y - 4, 1, 7, 'edge');
+        rect(g, x + 9, y - 4, 1, 7, 'edge');
+      }
+      svg.append(g);
+      if (state === 'walked') {
+        const mx = Math.round((a.x + b.x) / 2) + (torchN % 2 ? 24 : -24);
+        map.append(torchEl(mx, Math.round((a.y + b.y) / 2) - 6, torchN));
+      }
+    };
+    let k = 0;
+    const s = lay.start();
+    const startNow = t.at < 0;
+    for (const n of t.map) {
+      if (n.row === 0) flight(s, { x: lay.xAt(n.lane, 0), y: lay.rowY(0) }, 0, 23, taken.has(n.id) ? 'walked' : startNow && open.has(n.id) ? 'now' : 'far', k++);
+    }
+    for (const n of t.map) {
+      for (const to of n.next) {
+        const m = t.map[to];
+        const walked = taken.has(n.id) && taken.has(to);
+        const now = n.id === t.at && open.has(to);
+        flight({ x: lay.xAt(n.lane, n.row), y: lay.rowY(n.row) }, { x: lay.xAt(m.lane, m.row), y: lay.rowY(m.row) }, 23, m.kind === 'boss' ? 31 : 23, walked ? 'walked' : now ? 'now' : 'far', k++);
+      }
+    }
+    // (the last flight, from the boss's door to the gate)
+    const boss = t.map.find((n) => n.kind === 'boss');
+    if (boss) flight({ x: lay.xAt(boss.lane, boss.row), y: lay.rowY(boss.row) }, { x: lay.xAt(boss.lane, boss.row), y: 176 }, 31, 0, open.has(boss.id) ? 'now' : 'far', k++);
+    return svg;
+  }
+
+  private nodeButton(n: MapNode, open: Set<number>, taken: Set<number>): HTMLElement {
     const t = this.run.tower!;
     const state = taken.has(n.id) ? (n.id === t.at ? 'here' : 'done') : open.has(n.id) ? 'open' : t.cur?.id === n.id ? 'here' : 'far';
     const b = el('button', `rtNode ${n.kind} ${state}${this.picked === n.id ? ' picked' : ''}`);
-    b.style.left = `${x}%`;
-    b.style.top = `${this.rowY(n.row)}px`;
-    b.append(icon(NODE_INFO[n.kind].icon, 'rtIco'));
+    // (the frame is two clipped layers behind the icon: the metal, and the plate inside it)
+    const size = n.kind === 'boss' ? 62 : 46;
+    b.style.left = `${this.lay.xAt(n.lane, n.row) - size / 2}px`;
+    b.style.top = `${this.lay.rowY(n.row) - size / 2}px`;
+    b.append(el('i', 'rtFrame'), el('i', 'rtPlate'), icon(NODE_INFO[n.kind].icon, 'rtIco'));
     const badge = twistBadge(n.twist);
     if (badge) b.append(badge);
     if (state === 'done') b.append(el('i', 'rtTick'));
     b.setAttribute('aria-label', `${NODE_NAMES[n.kind]}, floor ${floorOf(t.act, n.row)}`);
     b.addEventListener('click', () => {
+      if (this.moving) return;
       this.picked = open.has(n.id) ? n.id : -1;
       this.say(`Floor ${floorOf(t.act, n.row)} · ${NODE_NAMES[n.kind]}: ${NODE_INFO[n.kind].text}${twistLine(n.twist)}`);
       this.markPicked();
     });
     return b;
+  }
+
+  /* ------------------------------------------------------------------ the party's marker */
+
+  private makeMarker(): HTMLElement {
+    const run = this.run;
+    const lead = run.squad.map((id) => run.roster.find((x) => x.id === id)).find(Boolean);
+    const m = el('div', 'rtMarker');
+    if (lead) {
+      const face = portrait(UNITS[lead.kind].sheet, 36, lead.grade);
+      face.style.width = face.style.height = '36px';
+      m.append(face);
+    } else m.append(el('i', 'rtFlag'));
+    return m;
+  }
+
+  /** Where the marker stands for a node (or the foot of the tower): just above its plate. */
+  private markerSpot(at: number): { x: number; y: number } {
+    const lay = this.lay;
+    const node = at >= 0 ? this.run.tower!.map[at] : null;
+    if (!node) return { x: lay.start().x - 18, y: lay.start().y - 30 };
+    return { x: lay.xAt(node.lane, node.row) - 18, y: lay.rowY(node.row) - 54 };
+  }
+
+  private placeMarker(p: { x: number; y: number }): void {
+    if (!this.marker) return;
+    this.marker.style.left = `${Math.round(p.x)}px`;
+    this.marker.style.top = `${Math.round(p.y)}px`;
+  }
+
+  /** The marker climbs the stairs to a node in half a second (a hop with each step), then `done` runs. Whole pixels only. */
+  private climbTo(id: number, done: () => void): void {
+    const from = this.markerSpot(this.run.tower!.at);
+    const to = this.markerSpot(id);
+    if (!this.marker || reduced()) return done();
+    this.moving = true;
+    const t0 = performance.now();
+    const MS = 500;
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - t0) / MS);
+      const e = p < 0.5 ? 2 * p * p : 1 - 2 * (1 - p) * (1 - p);
+      const hop = p < 1 ? (Math.floor(p * 6) % 2) * -2 : 0;
+      this.placeMarker({ x: from.x + (to.x - from.x) * e, y: from.y + (to.y - from.y) * e + hop });
+      if (p < 1) requestAnimationFrame(tick);
+      else {
+        this.moving = false;
+        done();
+      }
+    };
+    requestAnimationFrame(tick);
+  }
+
+  /* ------------------------------------------------------------------ the act's intro card */
+
+  private maybeIntro(): void {
+    const run = this.run;
+    const t = run.tower!;
+    const key = `${run.seed}:${t.act}`;
+    if (t.at >= 0 || t.path.length || t.cur || introSeen.has(key) || this.root.querySelector('.rtIntro')) return;
+    introSeen.add(key);
+    const look = actLook(t.act);
+    const lay = new Layout(this.mapWidth());
+    const vh = this.root.clientHeight || window.innerHeight;
+    const over = el('div', `rtIntro look${look.look}`);
+    const view = el('div', 'rtIntroView');
+    view.style.width = `${lay.W}px`;
+    view.style.left = `${Math.floor(((this.root.clientWidth || lay.W) - lay.W) / 2)}px`;
+    view.append(buildBackdrop(t.act, lay));
+    const text = el('div', 'rtIntroText');
+    text.append(el('small', '', `Act ${t.act}`), el('h2', '', look.name), el('p', '', look.blurb), el('em', '', 'Tap to skip'));
+    over.append(view, el('div', 'rtIntroShade'), text);
+    this.root.append(over);
+    const span = Math.min(420, Math.max(0, lay.H - vh));
+    const base = -(lay.H - vh);
+    const still = reduced();
+    const t0 = performance.now();
+    const MS = 2000;
+    const pan = (now: number) => {
+      const p = Math.min(1, (now - t0) / MS);
+      view.style.transform = `translate3d(0, ${Math.round(base + span * p * (2 - p))}px, 0)`;
+      if (p < 1) this.introFrame = requestAnimationFrame(pan);
+    };
+    view.style.transform = `translate3d(0, ${base}px, 0)`;
+    if (!still) this.introFrame = requestAnimationFrame(pan);
+    const skip = () => this.endIntro(true);
+    over.addEventListener('click', skip);
+    this.introTimer = window.setTimeout(skip, still ? 1400 : MS);
+  }
+
+  /** Remove the intro card (fading it out in a single step when it was playing). */
+  private endIntro(fade = false): void {
+    clearTimeout(this.introTimer);
+    cancelAnimationFrame(this.introFrame);
+    const over = this.root.querySelector<HTMLElement>('.rtIntro');
+    if (!over) return;
+    if (fade && !reduced()) {
+      over.classList.add('out');
+      setTimeout(() => over.remove(), 260);
+    } else over.remove();
   }
 
   private footer(): HTMLElement {
@@ -269,17 +440,21 @@ export class TowerView {
 
   private go(): void {
     const run = this.run;
-    if (this.picked < 0 || !enterNode(run, this.picked)) return;
-    play('summon');
-    saveRun(run);
-    const cur = run.tower!.cur!;
-    this.picked = -1;
-    if (cur.fight) {
-      this.close();
-      this.hooks.onFight();
-      return;
-    }
-    this.resumeNode();
+    if (this.picked < 0 || this.moving || !choices(run).some((n) => n.id === this.picked)) return;
+    const id = this.picked;
+    this.climbTo(id, () => {
+      if (!enterNode(run, id)) return this.draw();
+      play('summon');
+      saveRun(run);
+      const cur = run.tower!.cur!;
+      this.picked = -1;
+      if (cur.fight) {
+        this.close();
+        this.hooks.onFight();
+        return;
+      }
+      this.resumeNode();
+    });
   }
 
   /** XP a mystery floor taught goes into the meta (the lessons are kept for good). */

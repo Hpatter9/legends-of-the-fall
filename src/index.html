@@ -114,6 +114,9 @@
   .card.placed canvas { filter: drop-shadow(0 0 3px rgba(255, 196, 90, 0.55)); }
   @keyframes banner { 0%, 100% { transform: skewX(0deg) scaleY(1); } 30% { transform: skewX(-7deg) scaleY(0.96); } 65% { transform: skewX(5deg) scaleY(1.02); } }
   @media (prefers-reduced-motion: reduce) { .card.placed::after { animation: none; } }
+  /* (while deploying, a hero already on the field leaves the bench; drag it off the board onto the panel to bring it back) */
+  body[data-phase='deploy'] .card.placed { display: none; }
+  body[data-phase='deploy'] #bench:not(:has(.card:not(.placed)))::before { content: 'Every hero is on the field'; grid-column: 1 / -1; padding: 10px 0; text-align: center; font-size: 12px; color: var(--dim); }
   .card.chosen { border-color: var(--gold); box-shadow: 0 0 10px var(--gold); }
   .card .recycle {
     display: none; position: absolute; left: 2px; right: 2px; bottom: 2px; z-index: 2; padding: 3px 0; font: 700 10px/1 var(--body, sans-serif);
