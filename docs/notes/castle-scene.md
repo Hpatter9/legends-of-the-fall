@@ -16,20 +16,19 @@
   - **Roads**: one road enters by the gatehouse and leads to the plaza (a clear 3 x 3 of cobbles, the statue on the middle tile, a brazier on each corner)
     and branches to every door; each door has a road tile in front of it. Heroes stroll those tiles only (`walkTiles`, a breadth-first route from tile
     to tile), never over the statue or a brazier.
-  - **Walls: one closed ring** (`ring()` in `castleSpots.ts`): a tower on each of the four corners of an 11 x 11 tile yard (`Layout.yard`), a straight
-    run of the same wall pieces on every side (each two tiles long, mirrored on the two sides that run down-right), no gap between runs, and exactly one
-    gatehouse, in the near right-hand run (the south-east one; the road from it leads to the plaza). The two back runs are drawn behind everything
-    (`depth`); the two near runs and the side towers are sorted with the rest by their feet. Every plot is at least two tiles inside the near runs and the
-    back ones, so the near wall never hides a building.
+  - **Walls: the two back sides only** (`ring()` in `castleSpots.ts`): the north-west and north-east runs, each a straight line of the same wall pieces (two tiles
+    long, mirrored on the north-east side) meeting at a tower on the north corner, with a tower at each run's far end and the gatehouse in the north-west
+    run near its south end. The front of the village is open grass. Both runs are drawn behind everything (`depth`), so they never hide a building; every plot
+    has a tile of grass behind it. The road from the gate runs east to the plaza's road network.
   - **Props** sit on grass tiles beside the building they belong to, never on a road or a plot: crates and barrels by the treasury and armoury, a weapon
     rack and hay by the barracks, crystals by the tower, lamps along the roads, flowerbeds, bushes and trees in the corners of the yard. (There is no
     training dummy in the kits; the orcs' weapon stall is the rack.)
   - **Name tags** sit above the roofs and shrink a little (`--ts`) with the village, but stay readable; tap targets are at least about 22 css pixels.
 - **One village for every screen, drawn at a whole zoom** `k` (device pixels per scene pixel, so it stays sharp at any pixel ratio; the canvas's backing store is
-  `k` times the scene and its css size is that over `devicePixelRatio`). The scene is 1030 x 730 scene pixels.
-  - **Opens at 2** on a phone (a pixel ratio of 2 or more; `defaultZoom`), framed on the plaza, so most of the village shows and the rest is a drag away; at a
-    ratio of 1 it opens at css 1 (or the biggest whole scale that shows the whole village, `pickScale`, if a big screen has room).
-  - **1 is the overview** of the whole ring; 3 is a close-up on a sharp screen (`zoomLevels`: 1, 2, 3 at a ratio of 2 or more, 1 and 2 at a ratio of 1).
+  `k` times the scene and its css size is that over `devicePixelRatio`). The scene is 1030 x 640 scene pixels.
+  - **Opens at about one css pixel per scene pixel** on a phone (`round(dpr)` device pixels: 3 at a ratio of 3; `defaultZoom`), framed on the plaza, so the
+    middle of the village fills the screen and the rest is a drag away (it first opened at 2, which was too far out); at a ratio of 1 it opens at css 1 (or the biggest whole scale that shows the whole village, `pickScale`, if a big screen has room).
+  - **1 is the overview** of the whole village; one level closer than the opening zoom is a close-up (`zoomLevels`: 1 to 4 at a ratio of 3, 1 to 3 at 2, 1 and 2 at 1).
   - **Pinch** steps one level in or out when the fingers spread past a quarter (`pinchStep`), **double tap on empty ground** swaps the overview and the opening
     zoom (`doubleTapZoom`); the scene point under the fingers stays where it was. One finger (or the mouse) drags; the frame is `touch-action: none` and pans
     by script, so a pinch is never taken by the browser. The last zoom is kept in `localStorage` (`lotf-castle-zoom`, in try/catch) and used if the screen

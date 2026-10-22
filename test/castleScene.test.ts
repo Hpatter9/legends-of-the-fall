@@ -73,8 +73,8 @@ test('every building\'s door opens onto a paved tile in front of it, and every d
     const tiles = walkTiles(lay);
     const key = (t: { u: number; v: number }) => `${t.u},${t.v}`;
     const gate = lay.props.find((p) => p.sprite === 'gatehouse')!;
-    // (the gatehouse stands in the south-east run, `u` = the yard's far side: the tile inside it is one step back along `u`)
-    const start = { u: gate.u - 1, v: gate.v };
+    // (the gatehouse stands in the north-west run, whose face looks down and right: the tile inside it is one step on along `u`)
+    const start = { u: gate.u + 1, v: gate.v };
     assert.ok(isPaved(lay, start.u, start.v), `${name} the road starts at the gate`);
     const seen = new Set([key(start)]);
     const queue = [start];
@@ -124,44 +124,37 @@ test('props stand on tiles clear of every plot', () => {
   }
 });
 
-test('the wall is one closed ring: a tower at every corner, runs along all four sides with no gap, exactly one gate, and every plot well inside', () => {
+test('the wall has two sides, north-west and north-east: a tower at the corner and at each run\'s end, runs with no gap, exactly one gate, the front open', () => {
   const lay = YARD;
   const { u0, v0, u1, v1 } = lay.yard;
   const towers = lay.props.filter((p) => p.sprite === 'watchtower').map((p) => `${p.u},${p.v}`).sort();
-  assert.deepEqual(towers, [`${u0},${v0}`, `${u1},${v0}`, `${u0},${v1}`, `${u1},${v1}`].sort(), 'a tower on each of the four corners');
+  assert.deepEqual(towers, [`${u0},${v0}`, `${u1},${v0}`, `${u0},${v1}`].sort(), 'a tower at the north corner and at the end of each run');
   const gates = lay.props.filter((p) => p.sprite === 'gatehouse');
   assert.equal(gates.length, 1, 'exactly one gate');
-  // (each side: the pieces, in order along it; a wall piece covers one tile either side of its middle, the gatehouse a tile and a half, the corner towers half a tile)
-  const sides: { name: string; along: 'u' | 'v'; fixed: number; from: number; to: number; flip?: boolean }[] = [
-    { name: 'north-west', along: 'v', fixed: u0, from: v0, to: v1 },
-    { name: 'south-east', along: 'v', fixed: u1, from: v0, to: v1 },
-    { name: 'north-east', along: 'u', fixed: v0, from: u0, to: u1, flip: true },
-    { name: 'south-west', along: 'u', fixed: v1, from: u0, to: u1, flip: true },
+  assert.equal(gates[0].u, u0, 'the gate is in the north-west run');
+  // (each run: the pieces along it; a wall piece covers one tile either side of its middle, the gatehouse a tile and a half)
+  const sides = [
+    { name: 'north-west', fixed: u0, from: v0, to: v1, on: (p: { u: number; v: number }) => p.u === u0, at: (p: { u: number; v: number }) => p.v, flip: false },
+    { name: 'north-east', fixed: v0, from: u0, to: u1, on: (p: { u: number; v: number }) => p.v === v0, at: (p: { u: number; v: number }) => p.u, flip: true },
   ];
   for (const side of sides) {
-    const on = (p: { u: number; v: number }) => (side.along === 'v' ? p.u === side.fixed : p.v === side.fixed);
-    const at = (p: { u: number; v: number }) => (side.along === 'v' ? p.v : p.u);
-    const pieces = lay.props.filter((p) => (p.sprite === 'wall' || p.sprite === 'gatehouse') && on(p));
+    const pieces = lay.props.filter((p) => (p.sprite === 'wall' || p.sprite === 'gatehouse') && side.on(p));
     assert.ok(pieces.length >= 3, `${side.name} run has pieces`);
-    for (const p of pieces.filter((q) => q.sprite === 'wall')) assert.equal(!!p.flip, !!side.flip, `${side.name} piece faces the right way`);
-    const spans = pieces.map((p) => [at(p) - (p.sprite === 'gatehouse' ? 1.5 : 1), at(p) + (p.sprite === 'gatehouse' ? 1.5 : 1)]).sort((a, b) => a[0] - b[0]);
+    for (const p of pieces.filter((q) => q.sprite === 'wall')) assert.equal(!!p.flip, side.flip, `${side.name} piece faces the right way`);
+    const spans = pieces.map((p) => [side.at(p) - (p.sprite === 'gatehouse' ? 1.5 : 1), side.at(p) + (p.sprite === 'gatehouse' ? 1.5 : 1)]).sort((a, b) => a[0] - b[0]);
     let reach = side.from + 0.5;
     for (const [a, b] of spans) {
       assert.ok(a <= reach + 0.75, `${side.name} run has a gap before ${a} (covered to ${reach})`);
       reach = Math.max(reach, b);
     }
-    assert.ok(reach >= side.to - 0.5 - 0.75, `${side.name} run reaches the far corner`);
+    assert.ok(reach >= side.to - 0.5 - 0.75, `${side.name} run reaches its far tower`);
   }
-  assert.equal(gates[0].u, u1, 'the gate is in the south-east run');
-  // (the back runs sit behind everything; the near ones are sorted with the rest by their feet)
-  for (const p of lay.props.filter((q) => q.sprite === 'wall')) assert.equal(p.depth !== undefined, p.u === u0 || p.v === v0, `wall piece at ${p.u},${p.v} depth`);
-  // (the near runs must not hide any plot: two tiles of grass between a plot and a near run)
-  for (const id of PLOT_IDS) {
-    const p = lay.plots[id];
-    assert.ok(p.u >= u0 + 1 && p.v >= v0 + 1, `${id} has a tile of grass behind it`);
-    assert.ok(p.u + p.w - 1 <= u1 - 2 && p.v + p.d - 1 <= v1 - 2, `${id} has grass between it and the near wall`);
-  }
-  for (const t of walkTiles(lay)) assert.ok(t.u > u0 && t.u < u1 && t.v > v0 && t.v < v1, `road tile ${t.u},${t.v} is inside the wall`);
+  // (no wall on the other two sides: nothing stands on the south-east or south-west edge)
+  for (const p of lay.props.filter((q) => q.sprite === 'wall' || q.sprite === 'gatehouse' || q.sprite === 'watchtower')) assert.ok(p.u === u0 || p.v === v0, `${p.sprite} at ${p.u},${p.v} is on a back side`);
+  // (both runs sit behind everything, and every plot has a tile of grass behind it)
+  for (const p of lay.props.filter((q) => q.sprite === 'wall' || q.sprite === 'gatehouse')) assert.ok(p.depth !== undefined && p.depth <= -1000 + 1, `wall piece at ${p.u},${p.v} is behind`);
+  for (const id of PLOT_IDS) assert.ok(lay.plots[id].u >= u0 + 1 && lay.plots[id].v >= v0 + 1, `${id} has a tile of grass behind it`);
+  for (const t of walkTiles(lay)) assert.ok(t.u > u0 && t.v > v0, `road tile ${t.u},${t.v} is inside the wall`);
 });
 
 test('a house is never used for two buildings, and every look is bigger than the one before it', () => {
@@ -314,12 +307,12 @@ test('the market and the garden: two or three stalls on the plaza\'s edge or the
   assert.ok(row.length >= 3 && row.every((u, i) => i === 0 || u === row[i - 1] + 1), 'three beds side by side');
 });
 
-test('zoom: whole steps only, open at 2 on a phone and css 1 at dpr 1, remember the last, step with a pinch, swap with a double tap', () => {
+test('zoom: whole steps only, open at about one css pixel per scene pixel, remember the last, step with a pinch, swap with a double tap', () => {
   const fit = (dpr: number, w = 393, h = 654) => pickScale(w, h, dpr, YARD.w, YARD.h).k;
-  // (a phone: dpr 2 to 3 opens at 2 device pixels per scene pixel, and offers 1 (the overview), 2 and 3 (close-ups))
-  for (const dpr of [2, 2.5, 2.6, 2.75, 3]) {
-    assert.equal(defaultZoom(dpr, fit(dpr)), 2, `dpr ${dpr}`);
-    assert.deepEqual(zoomLevels(dpr, fit(dpr)), [1, 2, 3], `dpr ${dpr}`);
+  // (a phone opens at round(dpr) device pixels per scene pixel, about one css pixel, and offers the overview (1) up to one closer than that)
+  for (const [dpr, open] of [[2, 2], [2.5, 3], [2.75, 3], [3, 3]] as const) {
+    assert.equal(defaultZoom(dpr, fit(dpr)), open, `dpr ${dpr}`);
+    assert.deepEqual(zoomLevels(dpr, fit(dpr)), Array.from({ length: open + 1 }, (_, i) => i + 1), `dpr ${dpr}`);
   }
   // (dpr 1: css 1 by default, and css 2 as the one step in)
   assert.equal(defaultZoom(1, fit(1, 1280, 800)), 1);
@@ -329,15 +322,15 @@ test('zoom: whole steps only, open at 2 on a phone and css 1 at dpr 1, remember 
   assert.ok(zoomLevels(1, 3).includes(3));
   // (the remembered zoom is used only when this screen offers it)
   assert.equal(rememberedZoom(1, 3, 1), 1);
-  assert.equal(rememberedZoom(3, 3, 1), 3);
-  assert.equal(rememberedZoom(null, 3, 1), 2);
+  assert.equal(rememberedZoom(4, 3, 1), 4);
+  assert.equal(rememberedZoom(null, 3, 1), 3);
   assert.equal(rememberedZoom(3, 1, 1), 1);
-  assert.equal(rememberedZoom(7, 3, 1), 2);
+  assert.equal(rememberedZoom(9, 3, 1), 3);
   // (a pinch steps one level at a time and stops at the ends)
   const lv = zoomLevels(3, 1);
   assert.equal(stepZoom(1, 1, lv), 2);
-  assert.equal(stepZoom(2, 1, lv), 3);
-  assert.equal(stepZoom(3, 1, lv), 3);
+  assert.equal(stepZoom(3, 1, lv), 4);
+  assert.equal(stepZoom(4, 1, lv), 4);
   assert.equal(stepZoom(1, -1, lv), 1);
   assert.equal(stepZoom(3, -1, lv), 2);
   assert.equal(pinchStep(1.5), 1);
@@ -345,8 +338,8 @@ test('zoom: whole steps only, open at 2 on a phone and css 1 at dpr 1, remember 
   assert.equal(pinchStep(1.1), 0);
   assert.equal(pinchStep(0.9), 0);
   // (a double tap on empty ground: the overview goes to the opening zoom, anything closer goes to the overview)
-  assert.equal(doubleTapZoom(1, 3, 1), 2);
-  assert.equal(doubleTapZoom(2, 3, 1), 1);
+  assert.equal(doubleTapZoom(1, 3, 1), 3);
   assert.equal(doubleTapZoom(3, 3, 1), 1);
+  assert.equal(doubleTapZoom(4, 3, 1), 1);
   assert.equal(doubleTapZoom(1, 1, 1), 1);
 });

@@ -346,49 +346,38 @@ const BEHIND = -1000;
 
 type PropSpec = Spec['props'][number];
 
-/** A closed ring of wall around the yard: a tower at each of the four corners `(u0, v0)` (north), `(u1, v0)` (east), `(u0, v1)` (west) and `(u1, v1)`
- *  (south), and a straight run of wall pieces (each two tiles long) along every side, the same pieces on all four (mirrored on the two sides that run
- *  down-right). The north-west and north-east runs are behind the yard, so they are drawn behind everything; the two near runs and the side towers are
- *  sorted with the rest by their feet. The gatehouse stands in the south-east run at tile `v = gateV` (it takes the place of two pieces). */
+/** The back wall: the north-west and north-east sides only, meeting at the north corner `(u0, v0)`, each a straight run of wall pieces (two tiles long, the
+ *  same piece mirrored on the north-east side) with a tower at its far end, `(u1, v0)` and `(u0, v1)`. The front of the village is open. Both runs are
+ *  behind the yard, so they are drawn behind everything. The gatehouse stands in the north-west run at tile `v = gateV` (it takes the place of two pieces). */
 function ring(u0: number, v0: number, u1: number, v1: number, gateV: number): PropSpec[] {
   const out: PropSpec[] = [
     ['watchtower', u0, v0, { depth: BEHIND + 2 }],
-    ['watchtower', u1, v0],
+    ['watchtower', u1, v0, { depth: BEHIND + 2 }],
     ['watchtower', u0, v1],
-    ['watchtower', u1, v1],
   ];
   for (let c = 2; c < v1 - v0; c += 2) {
     const v = v0 + c;
-    // north-west run (inner face seen), along `v` at `u0`
-    out.push(['wall', u0, v, { depth: BEHIND }]);
-    // south-east run (outer face seen), along `v` at `u1`, with the gate in it
-    if (Math.abs(v - gateV) > 1.6) out.push(['wall', u1, v]);
+    if (Math.abs(v - gateV) > 1.6) out.push(['wall', u0, v, { depth: BEHIND }]);
   }
-  for (let c = 2; c < u1 - u0; c += 2) {
-    const u = u0 + c;
-    // north-east run, along `u` at `v0`; south-west run, along `u` at `v1`
-    out.push(['wall', u, v0, { flip: true, depth: BEHIND }]);
-    out.push(['wall', u, v1, { flip: true }]);
-  }
-  out.push(['gatehouse', u1, gateV]);
+  for (let c = 2; c < u1 - u0; c += 2) out.push(['wall', u0 + c, v0, { flip: true, depth: BEHIND }]);
+  out.push(['gatehouse', u0, gateV, { depth: BEHIND + 1 }]);
   return out;
 }
 
-/** The village, for every screen: a walled yard 11 x 11 tiles with its four corner towers, the gatehouse in the near right-hand run and a road from
- *  it to the plaza (a clear 3 x 3 of paving, the statue in the middle, a brazier on each corner). Two roads wrap the plaza's north side: the mage
+/** The village, for every screen: a yard 11 x 11 tiles walled on its two back sides (north-west and north-east) with a tower at the north corner and at
+ *  each run's far end, the gatehouse in the north-west run near its south end and a road from it to the plaza (a clear 3 x 3 of paving, the statue in the middle, a brazier on each corner). Two roads wrap the plaza's north side: the mage
  *  tower and the barracks stand on the one at its left (their pictures mirrored so the doors face it), the treasury and the armoury on the one at its
- *  right. The scene is drawn a whole number of device pixels per scene pixel, as large as lets the whole village show (`pickScale`). The wall is far
- *  enough from every plot that the near runs hide none of it. */
+ *  right. The scene is drawn a whole number of device pixels per scene pixel (`zoomLevels`); the front is open grass. */
 export const YARD: Layout = build({
   w: 1030,
-  h: 730,
+  h: 640,
   grid: { x: 540, y: 288 },
   yard: { u0: -3, v0: -3, u1: 7, v1: 8 },
   plaza: { u0: 0, v0: 0, u1: 2, v1: 2 },
   roads: [
     { u0: -1, v0: -1, u1: 4, v1: -1 },
-    { u0: -1, v0: -2, u1: -1, v1: 4 },
-    { u0: 3, v0: 1, u1: 6, v1: 1 },
+    { u0: -1, v0: -2, u1: -1, v1: 6 },
+    { u0: -2, v0: 6, u1: -1, v1: 6 },
     { u0: 3, v0: 2, u1: 3, v1: 6 },
     { u0: 1, v0: 4, u1: 5, v1: 4 },
     { u0: 3, v0: 6, u1: 5, v1: 6 },
@@ -404,7 +393,7 @@ export const YARD: Layout = build({
     chapel: { u: -2, v: -2, w: 1, d: 1, flip: true, door: { u: -1, v: -2 } },
   },
   props: [
-    ...ring(-3, -3, 7, 8, 1),
+    ...ring(-3, -3, 7, 8, 6),
     // the plaza
     ['statue', 1, 1],
     ['brazier', 0, 0],
@@ -428,24 +417,23 @@ export const YARD: Layout = build({
     ['flowers', 4, 0],
     // by the barracks: a weapon rack and hay
     ['rack', -2, 5],
-    ['hay', -1, 5],
-    ['roses', -3, 5],
+    ['hay', 0, 6],
+    ['roses', 1, 7],
     // the garden: vegetable beds and an herb bed in the south corner, with a bush
     ['field', 0, 5],
     ['field', 1, 5],
     ['herb', 2, 5],
-    ['bush', -3, 6, { dx: 4 }],
+    ['bush', 0, 7, { dx: 4 }],
     // a berry bush and a vegetable bed at the garden's end
-    ['berries', 0, 6],
+    ['berries', 2, 6],
     ['field2', 1, 6],
   ],
   flags: [
     [-3, -3, -96, 1],
     [7, -3, -96, -1],
     [-3, 8, -96, 1],
-    [7, 8, -96, -1],
-    [7, 1, -92, 1, 52],
-    [7, 1, -98, -1, -52],
+    [-3, 6, -92, 1, 52],
+    [-3, 6, -98, -1, -52],
   ],
 });
 
@@ -461,17 +449,17 @@ export function pickScale(boxW: number, boxH: number, dpr: number, sceneW: numbe
   return { k, css: k / dpr };
 }
 
-/** The zoom steps a screen offers, as whole device pixels per scene pixel: 1 (the overview of the whole village), 2, and 3 for close-ups on a sharp screen
- *  (a device pixel ratio of 2 or more; a dpr-1 screen gets 1 and 2 css pixels). `fitK` is the largest that shows the whole village (`pickScale`); a bigger
- *  screen may offer more than that. */
+/** The zoom steps a screen offers, as whole device pixels per scene pixel: 1 (the overview of the whole village), up to one past the zoom it opens at, for
+ *  close-ups. A screen with a device pixel ratio of 2 or more opens at about one css pixel per scene pixel (`round(dpr)` device pixels), a dpr-1 screen at 1.
+ *  `fitK` is the largest that shows the whole village (`pickScale`); a bigger screen may offer more than that. */
 export function zoomLevels(dpr: number, fitK: number): number[] {
-  const top = Math.max(fitK, dpr >= 2 ? 3 : 2);
+  const top = Math.max(fitK, defaultZoom(dpr, 1) + 1);
   return Array.from({ length: top }, (_, i) => i + 1);
 }
 
-/** The zoom the village opens at: 2 device pixels per scene pixel on a phone (a dpr of 2 or more, framed on the plaza), css 1 at a dpr of 1, or the
- *  overview's own if the whole village already shows bigger than that. */
-export const defaultZoom = (dpr: number, fitK: number): number => Math.max(fitK, dpr >= 2 ? 2 : 1);
+/** The zoom the village opens at: about one css pixel per scene pixel (3 device pixels on a dpr-3 phone, 2 at dpr 2, css 1 at a dpr of 1), framed on the
+ *  plaza; or the overview's own if the whole village already shows bigger than that. */
+export const defaultZoom = (dpr: number, fitK: number): number => Math.max(fitK, dpr >= 2 ? Math.max(2, Math.round(dpr)) : 1);
 
 /** A remembered zoom, kept only if this screen offers it (else the default). */
 export const rememberedZoom = (saved: number | null, dpr: number, fitK: number): number => (saved !== null && zoomLevels(dpr, fitK).includes(saved) ? saved : defaultZoom(dpr, fitK));
