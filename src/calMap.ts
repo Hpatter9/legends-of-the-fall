@@ -128,7 +128,16 @@ export class CalMap {
   /** The spot the party stands at: the node in play, the one cleared last, or the portal. */
   private standId(): number {
     const t = this.run.tower!;
-    return t.cur?.id ?? (t.at < 0 ? START_ID : t.at);
+    // (a walk begun and not finished when the game closed: the leader is at the spot it was going to, which is not yet entered)
+    const going = t.cur ? undefined : t.going !== undefined && this.openIds().has(t.going) ? t.going : undefined;
+    return t.cur?.id ?? going ?? (t.at < 0 ? START_ID : t.at);
+  }
+
+  /** Put the leader back at the spot the party really stands at (it had set out for another, and the player chose a different one). */
+  restand(): void {
+    this.walk = null;
+    this.stand = this.standId();
+    this.pos = this.standAt(this.stand);
   }
 
   /** Show the land of the run's map (the box is in the page already when this is called: `width` is its width in css pixels). `picked` is the spot lit as chosen. */

@@ -3,7 +3,7 @@
 import { startedMeta } from '../../src/sim/meta';
 import { calamityRun } from '../../src/sim/modes';
 import { hireHero } from '../../src/sim/climb';
-import { floorOf, mapFor, type MapNode } from '../../src/sim/tower';
+import { clearNode, enterNode, floorOf, mapFor, openTreasure, type MapNode } from '../../src/sim/tower';
 import { sideSpots } from '../../src/sim/calLand';
 import { HEROES } from '../../src/sim/units';
 import type { Run } from '../../src/sim/run';
@@ -96,4 +96,14 @@ export function beforeBoss(run: Run, act: number): number {
   const map = mapFor(run, act);
   const boss = map.find((n) => n.kind === 'boss')!;
   return map.find((n) => n.next.includes(boss.id))!.id;
+}
+
+/** The party back on the road after taking a hidden hoard (found from `seed0`), the road's spots before it cleared. */
+export function afterSide(seed0: number): Run {
+  const f = withSide(seed0, 1, 'treasure');
+  const r = standing(fresh(f.seed), f.act, f.from);
+  enterNode(r, f.id);
+  openTreasure(r);
+  clearNode(r);
+  return r;
 }

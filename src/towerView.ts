@@ -9,7 +9,7 @@ import { saveMeta, type Meta } from './sim/meta';
 import { hpShare } from './sim/health';
 import { ELITE_BY_ID, eliteAt } from './sim/elites';
 import {
-  buy, chestLine, choices, clearNode, enterNode, finishMystery, floorOf, hasRoom, hire, inBattle, localTrainXp, NODE_NAMES, openTreasure, REST_HEAL, rest, rowsIn, takeXp, train, trainXp, type MapNode, type NodeKind, type ShopItem, type TowerSummary,
+  buy, chestLine, choices, clearNode, enterNode, finishMystery, setGoing, floorOf, hasRoom, hire, inBattle, localTrainXp, NODE_NAMES, openTreasure, REST_HEAL, rest, rowsIn, takeXp, train, trainXp, type MapNode, type NodeKind, type ShopItem, type TowerSummary,
 } from './sim/tower';
 import { SIDE_BASE, sideSpots } from './sim/calLand';
 import { sideEliteAt } from './sim/elites';
@@ -161,6 +161,8 @@ export class TowerView {
     this.collectXp();
     this.draw(true);
     const cur = run.tower?.cur;
+    // (a calamity closed mid-walk: the spot it was going to is lit as chosen, the leader there)
+    if (this.calamity && !cur && run.tower?.going !== undefined) this.pickSpot(run.tower.going);
     if (cur && !cur.fight) this.resumeNode();
     else if (run.tower?.offer) this.offerCard();
   }
@@ -581,7 +583,14 @@ export class TowerView {
     const id = this.picked;
     const way = (arrive: () => void) => {
       if (!calamity) return this.climbTo(id, arrive);
-      // (the squad's leader walks the road to the spot, the camera with it; a tap skips it)
+      // (the squad's leader walks the road to the spot, the camera with it; a tap skips it. The walk is saved as begun: closed mid-walk, the game reopens with the leader at the spot and its fight not yet started)
+      const t = run.tower!;
+      if (t.going !== undefined && t.going !== id) {
+        t.going = undefined;
+        this.cal!.restand();
+      }
+      setGoing(run, id);
+      saveSlot(run);
       this.moving = true;
       play('steps');
       this.cal!.walkTo(id, () => {

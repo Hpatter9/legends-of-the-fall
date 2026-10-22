@@ -157,6 +157,8 @@ export interface TowerState {
   path: number[];
   /** The hidden side spots taken or skipped on this act's map (by id, `calLand.ts`); a calamity's. */
   sideDone?: number[];
+  /** A calamity's spot the party is walking to (saved when the walk begins, so a game closed mid-walk reopens with the leader there and the spot not yet entered; cleared when it is entered). */
+  going?: number;
   /** The relics an elite offers, until one is taken (`takeRelic` in `elites.ts`). */
   offer?: string[];
   /** The elite that paid the offer (for the card's words). */
@@ -338,6 +340,15 @@ export function choices(run: Run): MapNode[] {
   return t.map[t.at].next.map((id) => t.map[id]);
 }
 
+/** The party sets out for a spot of the calamity's map (one it may pick now); false when it may not. Saved with the run, so reopening carries on at that spot. */
+export function setGoing(run: Run, id: number): boolean {
+  const t = run.tower;
+  if (!t?.maps || t.cur) return false;
+  if (!choices(run).some((n) => n.id === id) && !sideChoices(run).some((s) => s.id === id)) return false;
+  t.going = id;
+  return true;
+}
+
 /** The hidden side spots the party may take now: those hanging from the node it stands at, not yet taken (a calamity's; none while a node is in play). They are optional: the road's own choices stay as they are. */
 export function sideChoices(run: Run): SideSpot[] {
   const t = run.tower;
@@ -481,6 +492,7 @@ export function enterNode(run: Run, id: number): boolean {
   t.lastBoss = undefined;
   const cur: Current = { id, kind: node.kind };
   if (side) cur.side = true;
+  t.going = undefined;
   if (node.kind === 'fight' || node.kind === 'elite' || node.kind === 'boss') cur.fight = fightSpec(run, node.kind, floor, node.twist, id);
   if (node.kind === 'shop') cur.shop = stockShop(run, floor);
   if (node.kind === 'recruit') cur.hires = stockHires(run, floor);

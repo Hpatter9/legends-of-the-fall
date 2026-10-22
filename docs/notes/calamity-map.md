@@ -42,3 +42,16 @@ defined path through it and a similar fog of war." Isometric like the camp; land
 after 87 / 81 / 64 / 43 / 34 / 17 % (the note's figures: 86 / 80 / 64 / 45 / 33 / 14). The first try, with a relic, gear and double gold from the mini-boss, was 30% for a full clear, so the rewards were cut.
 
 Tests: `test/calLand.test.ts`. Art: `tools/calmap/prep.py` (atlas and portal), shots: `tools/calmap/shots.mjs` with `saves.ts` (`docs/samples/calamity-map-*.png`).
+
+## Closing and reopening (the owner's add-on)
+Everything the map shows comes from the calamity's own save slot, which the page saves at every change (`saveSlot`): the leader's spot (the node in play, else the one cleared last, else the
+portal), the fog already lifted and the spent landmarks (all derived from `path`, `at`, `cur` and `sideDone`), and the hidden side spots revealed, taken or skipped (`sideDone`, and the
+node the party stands at). The one new field is `TowerState.going`, set when a walk begins (`setGoing`) and cleared when the spot is entered.
+- **Closed mid-walk:** the walk is saved as begun. Reopening via the portal lands on the map with the leader at the spot it was walking to, that spot lit as chosen with its button ready,
+  and its fight (or card) not yet started. Choosing a different spot puts the leader back where the party really stood first.
+- **Closed mid-fight:** as the tower and the calamity always did: the fight's band and strength are fixed when its node is entered and saved with the run; the fight itself is not saved
+  (no mid-battle state), and the party's wounds are applied only when a fight ends, so reopening starts that same node's fight again from its deploy screen, as if freshly entered.
+- **Closed between maps:** the boss's fall advances the map and is saved at once, so reopening shows the next map's start (the portal, the first floor lit, no side spots taken).
+- Tapping the camp portal (or loading a saved calamity from anywhere) lands on the map with the camera on the leader. The fog lift animation is only for a spot newly seen in this session;
+  after reopening the same view appears (`tools/calmap/reload.mjs` reloads the page mid-map and compares the screenshots byte for byte: identical).
+- Tests (`test/calLand.test.ts`): a run mid-map with fog, a side spot taken and spent spots survives serialising and loading with the same state and the same view; mid-walk; between maps.

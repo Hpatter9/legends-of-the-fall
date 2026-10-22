@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { startedMeta } from '../src/sim/meta';
 import { calamityRun } from '../src/sim/modes';
 import { CAL_ROWS } from '../src/sim/calamity';
-import { calamityMap, choices, clearNode, enterNode, floorOf, mapFor, openTreasure, sideChoices } from '../src/sim/tower';
+import { calamityMap, choices, clearNode, enterNode, floorOf, mapFor, openTreasure, setGoing, sideChoices } from '../src/sim/tower';
 import { fogOf, landOf, roadBetween, SIDE_BASE, sideSpots, START_ID } from '../src/sim/calLand';
 import { loadSlot, saveSlot, type Run } from '../src/sim/run';
 
@@ -194,4 +194,92 @@ test('a calamity saved before side spots existed loads and carries on; a side sp
   openTreasure(again);
   clearNode(again);
   assert.deepEqual(again.tower!.sideDone, [f.id]);
+});
+
+/** What the map shows and offers, from a run's state: the same after a save and a reload. */
+const view = (r: Run) => {
+  const t = r.tower!;
+  const sides = sideSpots(r.seed, t.act, t.map);
+  const fog = fogOf(t, sides);
+  return {
+    act: t.act,
+    spots: [...fog.spots].sort((a, b) => a - b),
+    roads: [...fog.roads].sort(),
+    choices: choices(r).map((n) => n.id),
+    sides: sideChoices(r).map((s) => s.id),
+    path: [...t.path],
+    sideDone: [...(t.sideDone ?? [])],
+    at: t.at,
+    going: t.going,
+    cur: t.cur?.id,
+  };
+};
+
+const reload = (r: Run): Run => {
+  const s = store();
+  saveSlot(r, s as never);
+  return loadSlot('calamity', s as never)!;
+};
+
+test('closed and reopened mid-map: the fog, the spots taken, the spent landmarks and the leader come back exactly', () => {
+  const f = findSide('treasure', 60);
+  const r = run(f.seed);
+  const t = r.tower!;
+  const s = sideSpots(f.seed, f.act, mapFor(r, f.act)).find((x) => x.id === f.id)!;
+  stand(r, f.act, s.from);
+  // (the side spot taken: gold from the hoard, and back on the road)
+  assert.ok(enterNode(r, s.id));
+  openTreasure(r);
+  clearNode(r);
+  const before = view(r);
+  assert.deepEqual(before.sideDone, [s.id]);
+  assert.ok(before.path.length >= 2, 'several spots are spent');
+  const back = reload(r);
+  assert.deepEqual(back, JSON.parse(JSON.stringify(r)), 'the whole run is the same');
+  assert.deepEqual(view(back), before, 'what the map shows and offers is the same');
+  // (a side spot skipped, one revealed but not yet taken, and a spot left behind are all derived from the same state)
+  const next = choices(back)[0];
+  enterNode(back, next.id);
+  clearNode(back);
+  const moved = view(back);
+  assert.ok(!moved.sides.includes(s.id), 'moving on skips the side spot for good');
+  assert.deepEqual(view(reload(back)), moved);
+  assert.deepEqual(t.sideDone, [s.id]);
+});
+
+test('closed mid-walk: the spot being walked to is saved, the leader is there on reopening and its fight is not yet started', () => {
+  const r = run(5);
+  const t = r.tower!;
+  const to = choices(r)[0].id;
+  assert.equal(setGoing(r, to), true);
+  const back = reload(r);
+  assert.equal(back.tower!.going, to);
+  assert.equal(back.tower!.cur, undefined, 'not entered: no fight is begun');
+  assert.deepEqual(view(back), view(r));
+  // (a spot that is not on offer cannot be walked to)
+  assert.equal(setGoing(back, t.map.find((n) => n.row === 3)!.id), false);
+  // (reaching it enters it, and the walk is over)
+  assert.ok(enterNode(back, to));
+  assert.equal(back.tower!.going, undefined);
+  assert.equal((back.tower as { cur?: { id: number } }).cur?.id, to);
+  assert.equal(reload(back).tower!.cur?.id, to, 'closed in the fight: it reopens at that fight, as every fight of the tower does');
+});
+
+test('closed between maps: it reopens on the next map, at its start, with only the first floor lit', () => {
+  const r = run(9);
+  const t = r.tower!;
+  const last = t.map.find((n) => n.kind === 'boss')!;
+  stand(r, 1, t.map.find((n) => n.next.includes(last.id))!.id);
+  assert.ok(enterNode(r, last.id));
+  assert.equal(r.tower!.cur?.kind, 'boss');
+  clearNode(r);
+  assert.equal(r.tower!.act, 2);
+  const back = reload(r);
+  assert.equal(back.tower!.act, 2);
+  assert.equal(back.tower!.at, -1);
+  assert.deepEqual(back.tower!.path, []);
+  const v = view(back);
+  assert.deepEqual(v.spots, [START_ID, ...back.tower!.map.filter((n) => n.row === 0).map((n) => n.id)].sort((a, b) => a - b));
+  assert.deepEqual(v.sideDone, []);
+  assert.deepEqual(v, view(r));
 });
