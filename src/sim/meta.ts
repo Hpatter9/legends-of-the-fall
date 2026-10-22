@@ -78,6 +78,8 @@ export interface Meta {
   armySeen: string[];
   /** The achievements unlocked (`achievements.ts`, by id). */
   achievements: string[];
+  /** The achievements whose crowns have been claimed (an older save's earned ones were paid at once, so they count as claimed). */
+  claimed?: string[];
   /** The permanent equipment owned, worn or spare (`equipment.ts`; missing is none). */
   equipment?: Equipment[];
   /** The item ids each hero kind wears, by slot (an item is on one kind at most). */
@@ -116,7 +118,7 @@ export interface Pull {
   shards: number;
 }
 
-export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [...HEROES], party: [...HEROES], pulls: 0, dry: 0, dryMythic: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], achievements: [], stash: [] });
+export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [...HEROES], party: [...HEROES], pulls: 0, dry: 0, dryMythic: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], achievements: [], claimed: [], stash: [] });
 
 export const rarityOf = (kind: string): Rarity => UNITS[kind]?.rarity ?? 1;
 /** Hp and attack multiplier of a hero kind's tier. */
@@ -276,6 +278,8 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.armies = migrateArmies(m.armies, m.bestStage);
       m.armySeen = fresh ? seenFor(m) : readSeen(m.armySeen);
       m.achievements = Array.isArray(m.achievements) ? m.achievements.filter((a) => typeof a === 'string') : [];
+      // (before claiming, an achievement paid its crowns when earned: those count as claimed)
+      m.claimed = Array.isArray(m.claimed) ? m.claimed.filter((a) => typeof a === 'string' && m.achievements.includes(a)) : [...m.achievements];
       // (saves from before equipment have none)
       m.equipment = readEquipment(m.equipment);
       m.equipped = readEquipped(m.equipped, m.equipment);
