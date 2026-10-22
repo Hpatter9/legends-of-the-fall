@@ -305,7 +305,7 @@ export const footprint = (p: Plot): { u: number; v: number }[] => {
   return out;
 };
 
-type PlotSpec = { u: number; v: number; w: number; d: number; flip: boolean; door: { u: number; v: number }; tag?: 'below'; tagDx?: number; tagDy?: number };
+type PlotSpec = { u: number; v: number; w: number; d: number; flip: boolean; door: { u: number; v: number }; tag?: 'below'; tagDx?: number; tagDy?: number; tagAt?: readonly [number, number] };
 interface Spec {
   w: number;
   h: number;
@@ -330,7 +330,7 @@ function build(spec: Spec): Layout {
     const x = Math.round(cellX(g, cu, cv));
     const y = Math.round(cellY(g, cu, cv) + PLOT_FOOT);
     const box = lookBox(lookFor(id, STAGES - 1));
-    plots[id] = { u: q.u, v: q.v, w: q.w, d: q.d, flip: q.flip, door: q.door, x, y, tagY: (q.tag === 'below' ? y + 46 : y - box.h - 4) + (q.tagDy ?? 0), tagDx: q.tagDx };
+    plots[id] = { u: q.u, v: q.v, w: q.w, d: q.d, flip: q.flip, door: q.door, x, y, tagY: q.tagAt ? q.tagAt[1] : (q.tag === 'below' ? y + 46 : y - box.h - 4) + (q.tagDy ?? 0), tagDx: q.tagAt ? q.tagAt[0] - (x + (box.x0 + box.x1) / 2) : q.tagDx };
   }
   const props: Prop[] = spec.props.map(([sprite, u, v, o]) => ({
     sprite,
@@ -386,10 +386,10 @@ function ring(u0: number, v0: number, u1: number, v1: number, gateV: number): Pr
 /** The village, for every screen: a yard 11 x 11 tiles walled on its two back sides (north-west and north-east) with a tower at the north corner and at
  *  each run's far end, the gatehouse in the north-west run near its south end and a road from it to the plaza (a clear 3 x 3 of paving, the statue in the middle, a brazier on each corner). Two roads wrap the plaza's north side: the mage
  *  tower and the barracks stand on the one at its left (their pictures mirrored so the doors face it), the treasury and the armoury on the one at its
- *  right. The scene is drawn a whole number of device pixels per scene pixel (`zoomLevels`); the front is open grass. */
+ *  right. The scene is drawn a whole number of device pixels per scene pixel (`pickScale`); the front is open grass. */
 export const YARD: Layout = build({
   w: 1030,
-  h: 690,
+  h: 730,
   grid: { x: 540, y: 340 },
   yard: { u0: -4, v0: -4, u1: 6, v1: 7 },
   plaza: { u0: 0, v0: 0, u1: 2, v1: 2 },
@@ -402,14 +402,14 @@ export const YARD: Layout = build({
     { u0: 3, v0: 6, u1: 5, v1: 6 },
   ],
   plots: {
-    mageTower: { u: -2, v: 0, w: 1, d: 2, flip: true, door: { u: -1, v: 0 }, tagDx: -30 },
-    treasury: { u: 0, v: -2, w: 2, d: 1, flip: false, door: { u: 0, v: -1 }, tagDx: 30 },
-    barracks: { u: -2, v: 3, w: 1, d: 2, flip: true, door: { u: -1, v: 3 }, tagDx: -30 },
-    armoury: { u: 3, v: -2, w: 2, d: 1, flip: false, door: { u: 3, v: -1 }, tagDx: 30 },
-    stable: { u: 1, v: 3, w: 2, d: 1, flip: false, door: { u: 1, v: 4 }, tagDx: -40 },
-    library: { u: 4, v: 5, w: 2, d: 1, flip: false, door: { u: 4, v: 6 }, tag: 'below', tagDx: 20 },
-    tavern: { u: 5, v: 3, w: 1, d: 1, flip: false, door: { u: 5, v: 4 }, tagDx: 60, tagDy: 70 },
-    chapel: { u: -2, v: -2, w: 1, d: 1, flip: true, door: { u: -1, v: -2 }, tagDx: 60 },
+    mageTower: { u: -2, v: 0, w: 1, d: 2, flip: true, door: { u: -1, v: 0 }, tagAt: [330, 190] },
+    treasury: { u: 0, v: -2, w: 2, d: 1, flip: false, door: { u: 0, v: -1 }, tagAt: [745, 195] },
+    barracks: { u: -2, v: 3, w: 1, d: 2, flip: true, door: { u: -1, v: 3 }, tagAt: [215, 290] },
+    armoury: { u: 3, v: -2, w: 2, d: 1, flip: false, door: { u: 3, v: -1 }, tagAt: [860, 300] },
+    stable: { u: 1, v: 3, w: 2, d: 1, flip: false, door: { u: 1, v: 4 }, tagAt: [330, 560] },
+    library: { u: 4, v: 5, w: 2, d: 1, flip: false, door: { u: 4, v: 6 }, tagAt: [540, 725] },
+    tavern: { u: 5, v: 3, w: 1, d: 1, flip: false, door: { u: 5, v: 4 }, tagAt: [770, 560] },
+    chapel: { u: -2, v: -2, w: 1, d: 1, flip: true, door: { u: -1, v: -2 }, tagAt: [540, 114] },
   },
   props: [
     ...ring(-4, -4, 6, 7, 5),
@@ -459,41 +459,20 @@ export const YARD: Layout = build({
 /** The village is the same on every screen (the scale does the fitting). */
 export const layoutFor = (): Layout => YARD;
 
-/** How big to draw the scene: the largest whole number `k` of device pixels per scene pixel that still shows all of it in a `boxW` x `boxH` frame
- *  (css pixels) on a screen with `dpr` device pixels per css pixel. On a phone (dpr about 2.7) that is 1 for the whole village; on a dpr-1 desktop it
- *  is a whole css scale. If even 1 does not fit the frame pans. `css` is the size of one scene pixel in css pixels. */
-export function pickScale(boxW: number, boxH: number, dpr: number, sceneW: number, sceneH: number): { k: number; css: number } {
-  let k = 1;
-  for (let n = 2; n <= 12; n++) if ((sceneW * n) / dpr <= boxW && (sceneH * n) / dpr <= boxH) k = n;
+/** The outer edges of the wall from side to side (the left and right towers' outer edges) and the top of the back corner tower, in scene pixels. */
+export function wallBounds(lay: Layout): { x0: number; x1: number; top: number } {
+  const towers = lay.props.filter((p) => p.sprite === 'watchtower');
+  const [tw, th] = SPRITE_SIZE.watchtower;
+  return { x0: Math.min(...towers.map((p) => p.x - tw / 2)), x1: Math.max(...towers.map((p) => p.x + tw / 2)), top: Math.min(...towers.map((p) => p.y - th)) };
+}
+
+/** The one scale the village is drawn at: the largest whole number `k` of device pixels per scene pixel at which the wall, from its left tower's outer edge to
+ *  its right tower's, fits a frame `boxW` css pixels wide with `margin` css pixels spare each side, on a screen with `dpr` device pixels per css pixel (so
+ *  it stays sharp at any pixel ratio: a dpr-1 screen gets the largest whole css scale). At least 1. `css` is the size of a scene pixel in css pixels. */
+export function pickScale(boxW: number, dpr: number, wallW: number, margin = 8): { k: number; css: number } {
+  const k = Math.max(1, Math.floor(((boxW - 2 * margin) * dpr) / wallW));
   return { k, css: k / dpr };
 }
-
-/** The zoom steps a screen offers, as whole device pixels per scene pixel: 1 (the overview of the whole village), up to one past the zoom it opens at, for
- *  close-ups. A screen with a device pixel ratio of 2 or more opens at about one css pixel per scene pixel (`round(dpr)` device pixels), a dpr-1 screen at 1.
- *  `fitK` is the largest that shows the whole village (`pickScale`); a bigger screen may offer more than that. */
-export function zoomLevels(dpr: number, fitK: number): number[] {
-  const top = Math.max(fitK, defaultZoom(dpr, 1) + 1);
-  return Array.from({ length: top }, (_, i) => i + 1);
-}
-
-/** The zoom the village opens at: about one css pixel per scene pixel (3 device pixels on a dpr-3 phone, 2 at dpr 2, css 1 at a dpr of 1), framed on the
- *  plaza; or the overview's own if the whole village already shows bigger than that. */
-export const defaultZoom = (dpr: number, fitK: number): number => Math.max(fitK, dpr >= 2 ? Math.max(2, Math.round(dpr)) : 1);
-
-/** A remembered zoom, kept only if this screen offers it (else the default). */
-export const rememberedZoom = (saved: number | null, dpr: number, fitK: number): number => (saved !== null && zoomLevels(dpr, fitK).includes(saved) ? saved : defaultZoom(dpr, fitK));
-
-/** One step in or out between the offered zooms (`dir` +1 in, -1 out), staying inside them. */
-export function stepZoom(k: number, dir: 1 | -1, levels: readonly number[]): number {
-  const i = levels.indexOf(k);
-  return levels[Math.max(0, Math.min(levels.length - 1, (i < 0 ? 0 : i) + dir))];
-}
-
-/** What a double tap does: from the overview, in to 2 (or the zoom the village opens at); from anything closer, out to the overview. */
-export const doubleTapZoom = (k: number, dpr: number, fitK: number): number => (k <= 1 ? defaultZoom(dpr, fitK) : 1);
-
-/** A pinch's spread against where it began: in past a quarter bigger, out past a quarter smaller, else no step. */
-export const pinchStep = (ratio: number): 1 | -1 | 0 => (ratio > 1.25 ? 1 : ratio < 0.8 ? -1 : 0);
 
 /** The ground's flat colour: the grass tile's own average, used for the page behind the scene. */
 export const GRASS = '#64742f';

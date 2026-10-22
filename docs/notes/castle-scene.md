@@ -31,18 +31,18 @@
     rack and hay by the barracks, crystals by the tower, lamps along the roads, flowerbeds, bushes and trees in the corners of the yard. (There is no
     training dummy in the kits; the orcs' weapon stall is the rack.)
   - **Name tags** sit above the roofs and shrink a little (`--ts`) with the village, but stay readable; tap targets are at least about 22 css pixels.
-- **One village for every screen, drawn at a whole zoom** `k` (device pixels per scene pixel, so it stays sharp at any pixel ratio; the canvas's backing store is
-  `k` times the scene and its css size is that over `devicePixelRatio`). The scene is 1030 x 640 scene pixels.
-  - **Opens at about one css pixel per scene pixel** on a phone (`round(dpr)` device pixels: 3 at a ratio of 3; `defaultZoom`), framed on the plaza, so the
-    middle of the village fills the screen and the rest is a drag away (it first opened at 2, which was too far out); at a ratio of 1 it opens at css 1 (or the biggest whole scale that shows the whole village, `pickScale`, if a big screen has room).
-  - **1 is the overview** of the whole village; one level closer than the opening zoom is a close-up (`zoomLevels`: 1 to 4 at a ratio of 3, 1 to 3 at 2, 1 and 2 at 1).
-  - **Pinch** steps one level in or out when the fingers spread past a quarter (`pinchStep`), **double tap on empty ground** swaps the overview and the opening
-    zoom (`doubleTapZoom`); the scene point under the fingers stays where it was. One finger (or the mouse) drags; the frame is `touch-action: none` and pans
-    by script, so a pinch is never taken by the browser. The last zoom is kept in `localStorage` (`lotf-castle-zoom`, in try/catch) and used if the screen
-    offers it (`rememberedZoom`).
-  - The canvas holds the village with a modest margin (60 scene pixels, more up and down only to fill a taller frame, at most 240); beyond it the page's flat
-    grass colour shows, and a CSS mask fades the canvas edges into it, so the overview is a village in a soft-edged field. Taps and name tags use the same
-    mapping (`view.ox/oy`).
+- **One fixed scale, no zoom** (the owner: "the map doesn't need to zoom, it just needs to fit the wall from side to side"). `pickScale(boxW, dpr, wallW)` picks the
+  largest whole number `k` of **device** pixels per scene pixel at which the wall, from the left tower's outer edge to the right tower's (`wallBounds`),
+  fits the frame width with 8 css pixels spare each side (at least 1); the canvas's backing store is `k` times the scene and its css size is that over
+  `devicePixelRatio`, so it stays sharp at any pixel ratio. On a phone 393 css wide at a ratio of 2.75 to 3 that is `k = 1`, the wall spanning nearly the
+  whole width; lying down (852 wide) it is 2; at a ratio of 1 it is the largest whole css scale that fits. There is no zoom, pinch, double tap or remembered
+  zoom, and the browser keeps its own touch handling: the page scrolls up and down by itself (`touch-action: pan-y`) only when the village is taller than the
+  frame, and never sideways.
+  - The canvas fills the whole frame with real ground tiles (no fade, no flat field): the back corner tower sits `TOP_GAP` (6 css px) under the chips bar,
+    the wall centred side to side, and woods behind the wall and low bushes in front of the village, past a margin of grass, fill the rest. Taps and name tags use
+    the same mapping (`view.ox/oy`).
+  - **Name tags** are real buttons at least 32 css px square with 10 px names and 9 px second lines ("Mage Tower" / "4/4", "Tavern" / "· your heroes"), put at
+    fixed spots (`Plot.tagAt`, scene pixels) round the village so none overlap at `k = 1` and none covers a door.
 - One canvas, drawn with nearest neighbour. There is a single arrangement now (`YARD`); the earlier upright and sideways ones are gone.
 - **Pictures** (`src/art/castle/`, 52 PNGs, about 0.9 MB, bundled into game.js as data URLs, so the service worker's `FILES` is unchanged): each is one
   piece of the kits at **half size** (`tools/castle/prep.py`: 2x2 box average, then solid or clear), so a cottage is about 100 pixels wide.

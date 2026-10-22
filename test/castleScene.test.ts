@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { BUILDING_IDS, maxLevel } from '../src/sim/castle';
-import { BLURB, defaultZoom, doubleTapZoom, effectText, footprint, inBlock, isPaved, LIGHTS, lookFor, LOOKS, lookBox, pickScale, PLACE_IDS, PLACE_LOOK, PLACES, pinchStep, PLOT_IDS, rememberedZoom, SPRITE_SIZE, spriteName, stageOf, STAGES, stepZoom, TILE_H, TILE_W, VENTS, walkTiles, WALL_RISE, WALL_STEP, YARD, zoomLevels } from '../src/render/castleSpots';
+import { BLURB, effectText, footprint, inBlock, isPaved, LIGHTS, lookFor, LOOKS, lookBox, pickScale, PLACE_IDS, PLACE_LOOK, PLACES, PLOT_IDS, SPRITE_SIZE, spriteName, stageOf, STAGES, TILE_H, TILE_W, VENTS, walkTiles, wallBounds, WALL_RISE, WALL_STEP, YARD } from '../src/render/castleSpots';
 
 const LAYOUTS = { yard: YARD };
 const looksOf = (id: (typeof BUILDING_IDS)[number]) => LOOKS[id];
@@ -205,35 +205,35 @@ test('all four buildings fit inside the scene, with nothing clipped', () => {
   for (const p of YARD.props) assert.ok(p.x > 0 && p.x < YARD.w, `${p.sprite} at ${p.u},${p.v} is inside the scene`);
 });
 
-test('the scale is a whole number of device pixels per scene pixel, as large as lets the whole village show, and it fits', () => {
-  const frames: [number, number, number][] = [
-    [393, 600, 2.75], // a phone standing (the bars take 250 of the 852)
-    [393, 600, 3],
-    [393, 600, 2.6],
-    [852, 300, 2.75], // the same phone lying down
-    [852, 300, 3],
-    [1280, 800, 1], // a desktop
-    [1920, 1000, 1],
-    [1920, 1000, 2],
+test('one fixed scale: a whole number of device pixels per scene pixel, the largest at which the wall fits the frame from side to side with a margin', () => {
+  const wall = wallBounds(YARD);
+  const wallW = wall.x1 - wall.x0;
+  // (from the left tower's outer edge to the right tower's: the whole width of the village, no wider than the scene)
+  assert.ok(wallW > 900 && wallW <= YARD.w, `wall is ${wallW} wide`);
+  assert.ok(wall.top >= 0, 'the back corner tower is inside the scene');
+  const frames: [number, number][] = [
+    [393, 2.6], [393, 2.75], [393, 3], // a phone standing
+    [852, 2.75], [852, 3], // the same phone lying down
+    [1280, 1], [1920, 1], [1920, 2], [2560, 1],
   ];
-  for (const [w, h, dpr] of frames) {
-    const { k, css } = pickScale(w, h, dpr, YARD.w, YARD.h);
-    assert.ok(Number.isInteger(k) && k >= 1, `${w}x${h}@${dpr}: k is whole`);
+  for (const [w, dpr] of frames) {
+    const { k, css } = pickScale(w, dpr, wallW);
+    assert.ok(Number.isInteger(k) && k >= 1, `${w}@${dpr}: k is whole`);
     assert.ok(Math.abs(css - k / dpr) < 1e-9, 'css is k over the pixel ratio');
-    // (the whole village shows: the canvas is YARD.w * k device pixels, i.e. YARD.w * css css pixels)
-    if (k > 1 || (YARD.w * k) / dpr <= w) {
-      assert.ok(YARD.w * css <= w + 1e-6 && YARD.h * css <= h + 1e-6, `${w}x${h}@${dpr}: the village fits at k=${k}`);
-      const bigger = pickScale(w, h, dpr, YARD.w, YARD.h).k + 1;
-      assert.ok(YARD.w * bigger / dpr > w || YARD.h * bigger / dpr > h, `${w}x${h}@${dpr}: k=${k} is the largest that fits`);
-    }
+    // (the wall fits with 8 css pixels spare each side, unless even one device pixel per scene pixel is too big)
+    if (wallW / dpr <= w - 16) {
+      assert.ok(wallW * css <= w - 16 + 1e-6, `${w}@${dpr}: the wall fits at k=${k}`);
+      assert.ok((wallW * (k + 1)) / dpr > w - 16, `${w}@${dpr}: k=${k} is the largest that fits`);
+    } else assert.equal(k, 1);
   }
-  // (a phone fits the whole village at one device pixel per scene pixel; a dpr-1 desktop gets a whole css scale)
-  assert.equal(pickScale(393, 600, 3, YARD.w, YARD.h).k, 1);
-  assert.equal(pickScale(1920, 1000, 1, YARD.w, YARD.h).css, 1);
-  // (a screen too small even at one: it still draws at one and pans)
-  assert.equal(pickScale(300, 200, 1, YARD.w, YARD.h).k, 1);
-  // (a much smaller village could be drawn bigger: the picker takes the largest whole k)
-  assert.equal(pickScale(393, 600, 3, 300, 400).k, 3);
+  // (a phone standing: one device pixel per scene pixel, the wall nearly the whole width; at dpr 1 a whole css scale)
+  assert.equal(pickScale(393, 3, wallW).k, 1);
+  assert.equal(pickScale(393, 2.75, wallW).k, 1);
+  assert.ok(wallW * pickScale(393, 2.75, wallW).css > 393 * 0.85);
+  assert.equal(pickScale(852, 3, wallW).k, 2);
+  assert.equal(pickScale(1280, 1, wallW).css, 1);
+  assert.equal(pickScale(2560, 1, wallW).css, 2);
+  assert.equal(pickScale(300, 1, wallW).k, 1);
 });
 
 test('buildings stand apart: at most a corner overlap between their grand looks', () => {
@@ -322,41 +322,4 @@ test('the market and the garden: two or three stalls on the plaza\'s edge or the
   // (the beds sit together in the south corner: three on one row, next to each other)
   const row = beds.filter((p) => p.v === 5).map((p) => p.u).sort((a, b) => a - b);
   assert.ok(row.length >= 3 && row.every((u, i) => i === 0 || u === row[i - 1] + 1), 'three beds side by side');
-});
-
-test('zoom: whole steps only, open at about one css pixel per scene pixel, remember the last, step with a pinch, swap with a double tap', () => {
-  const fit = (dpr: number, w = 393, h = 654) => pickScale(w, h, dpr, YARD.w, YARD.h).k;
-  // (a phone opens at round(dpr) device pixels per scene pixel, about one css pixel, and offers the overview (1) up to one closer than that)
-  for (const [dpr, open] of [[2, 2], [2.5, 3], [2.75, 3], [3, 3]] as const) {
-    assert.equal(defaultZoom(dpr, fit(dpr)), open, `dpr ${dpr}`);
-    assert.deepEqual(zoomLevels(dpr, fit(dpr)), Array.from({ length: open + 1 }, (_, i) => i + 1), `dpr ${dpr}`);
-  }
-  // (dpr 1: css 1 by default, and css 2 as the one step in)
-  assert.equal(defaultZoom(1, fit(1, 1280, 800)), 1);
-  assert.deepEqual(zoomLevels(1, fit(1, 1280, 800)), [1, 2]);
-  // (a screen that shows the whole village bigger than that opens at what fits)
-  assert.equal(defaultZoom(1, 2), 2);
-  assert.ok(zoomLevels(1, 3).includes(3));
-  // (the remembered zoom is used only when this screen offers it)
-  assert.equal(rememberedZoom(1, 3, 1), 1);
-  assert.equal(rememberedZoom(4, 3, 1), 4);
-  assert.equal(rememberedZoom(null, 3, 1), 3);
-  assert.equal(rememberedZoom(3, 1, 1), 1);
-  assert.equal(rememberedZoom(9, 3, 1), 3);
-  // (a pinch steps one level at a time and stops at the ends)
-  const lv = zoomLevels(3, 1);
-  assert.equal(stepZoom(1, 1, lv), 2);
-  assert.equal(stepZoom(3, 1, lv), 4);
-  assert.equal(stepZoom(4, 1, lv), 4);
-  assert.equal(stepZoom(1, -1, lv), 1);
-  assert.equal(stepZoom(3, -1, lv), 2);
-  assert.equal(pinchStep(1.5), 1);
-  assert.equal(pinchStep(0.6), -1);
-  assert.equal(pinchStep(1.1), 0);
-  assert.equal(pinchStep(0.9), 0);
-  // (a double tap on empty ground: the overview goes to the opening zoom, anything closer goes to the overview)
-  assert.equal(doubleTapZoom(1, 3, 1), 3);
-  assert.equal(doubleTapZoom(3, 3, 1), 1);
-  assert.equal(doubleTapZoom(4, 3, 1), 1);
-  assert.equal(doubleTapZoom(1, 1, 1), 1);
 });

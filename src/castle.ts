@@ -15,7 +15,7 @@ import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
 import { gradeOfRank } from './render/tavernSpots';
 import { strongest } from './menuHeroes';
-import { cellX, cellY, doubleTapZoom, GRASS, isPaved, layoutFor, LIGHTS, lookBox, lookFor, LOOKS, NAME_OF, pickScale, pinchStep, rememberedZoom, stepZoom, zoomLevels, PLACE_IDS, PLACE_VENTS, PLACES, PLOT_IDS, stageOf, TILE_H, TILE_W, VENTS, walkTiles, YARD, type Layout, type Look, type PlaceId, type PlotId } from './render/castleSpots';
+import { cellX, cellY, GRASS, isPaved, layoutFor, LIGHTS, lookBox, lookFor, LOOKS, NAME_OF, pickScale, wallBounds, PLACE_IDS, PLACE_VENTS, PLACES, PLOT_IDS, stageOf, TILE_H, TILE_W, VENTS, walkTiles, YARD, type Layout, type Look, type PlaceId, type PlotId } from './render/castleSpots';
 import anvil_stallUrl from './art/castle/anvil_stall.png';
 import atelierUrl from './art/castle/atelier.png';
 import bannerUrl from './art/castle/banner.png';
@@ -287,10 +287,8 @@ const GLOWING: Record<string, { dx: number; dy: number; size: number; al: number
 
 const isPlace = (id: PlotId): id is PlaceId => id === 'tavern' || id === 'chapel';
 
-const ZOOM_KEY = 'lotf-castle-zoom';
-/** Scene pixels of grass and woods kept round the village at the least, and how much more the canvas may add above and below it when the frame is taller. */
-const VIEW_MARGIN = 60;
-const VIEW_EXTRA = 240;
+/** Css pixels between the top of the frame (under the chips bar) and the back corner tower. */
+const TOP_GAP = 6;
 
 const BUILD_MS = 1500;
 const SWAP_MS = 800;
@@ -324,12 +322,7 @@ export class CastleScene {
   private running = false;
   private reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   private saver = settings().saver;
-  private pointers = new Map<number, { x: number; y: number }>();
-  private drag: { x: number; y: number; left: number; top: number; t: number; moved: boolean } | null = null;
-  private pinch: { d: number } | null = null;
-  private lastTap: { x: number; y: number; t: number } | null = null;
-  /** The zoom in whole device pixels per scene pixel; 0 until the first fit picks it (the remembered one, or the default). */
-  private zoom = 0;
+  private down: { x: number; y: number; t: number } | null = null;
   private watch: ResizeObserver;
 
   constructor(private onPick: (id: PlotId) => void) {
@@ -352,11 +345,13 @@ export class CastleScene {
     }
     onSettings((s) => (this.saver = s.saver));
     window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
-    // (a finger or mouse on the village: one drags it, two pinch between the whole-number zooms, a double tap on empty ground switches between the overview and
-    //  the closer zoom; a short tap on a building opens it. The tags are buttons and take their own taps.)
-    this.scroll.addEventListener('pointerdown', (e) => this.pointerDown(e));
-    this.scroll.addEventListener('pointermove', (e) => this.pointerMove(e));
-    for (const t of ['pointerup', 'pointercancel'] as const) this.scroll.addEventListener(t, (e) => this.pointerUp(e));
+    // (a short tap on a building opens it; the page scrolls up and down by itself when the village is taller than the frame, and the tags take their own taps)
+    this.canvas.addEventListener('pointerdown', (e) => (this.down = { x: e.clientX, y: e.clientY, t: performance.now() }));
+    this.canvas.addEventListener('pointerup', (e) => {
+      const d = this.down;
+      this.down = null;
+      if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 9 && performance.now() - d.t < 600) this.tap(e);
+    });
     this.watch = new ResizeObserver(() => this.fit());
     this.watch.observe(this.root);
     document.addEventListener('visibilitychange', () => (document.hidden ? this.halt() : this.running && this.start()));
@@ -381,7 +376,7 @@ export class CastleScene {
       if (tag.dataset.key === key) continue;
       tag.dataset.key = key;
       tag.className = `ctTag${ready ? ' ready' : ''}${cost === null ? ' full' : ''}`;
-      tag.replaceChildren(el('b', '', NAME_OF(id)), el('span', '', level === 0 ? 'not built' : `Lv ${level}/${maxLevel(id)}`));
+      tag.replaceChildren(el('b', '', NAME_OF(id)), el('span', '', level === 0 ? 'not built' : `${level}/${maxLevel(id)}`));
       if (ready) tag.append(el('i', 'ctUp', '▲'));
       tag.setAttribute('aria-label', `${NAME_OF(id)}, level ${level} of ${maxLevel(id)}${ready ? ', can upgrade' : ''}`);
     }
@@ -428,50 +423,36 @@ export class CastleScene {
     this.raf = 0;
   }
 
-  /** The remembered zoom (whole device pixels per scene pixel), or null. */
-  private savedZoom(): number | null {
-    try {
-      const n = Number(localStorage.getItem(ZOOM_KEY));
-      return Number.isInteger(n) && n >= 1 ? n : null;
-    } catch {
-      return null;
-    }
-  }
-
-  /** Draw the village at the zoom (a whole number of device pixels per scene pixel, so it stays sharp at any pixel ratio). It opens at 2 on a phone, framed on
-   *  the plaza, with the rest a drag away; 1 is the overview of the whole ring. `anchor` keeps the scene point under a finger where it was. */
-  private fit(anchor?: { sx: number; sy: number; cx: number; cy: number }): void {
+  /** Draw the village at the one scale (a whole number of device pixels per scene pixel, so it stays sharp at any pixel ratio) at which the wall fits the frame
+   *  from side to side. The canvas fills the frame with ground tiles, the back corner tower just under the top; if the village is taller than the frame the
+   *  page scrolls up and down, and never sideways. */
+  private fit(): void {
     const h = this.root.clientHeight;
     const w = this.root.clientWidth;
     if (!h || !art) return;
     const lay = layoutFor();
     const dpr = window.devicePixelRatio || 1;
-    const fitK = pickScale(w, h, dpr, lay.w, lay.h).k;
-    const levels = zoomLevels(dpr, fitK);
-    if (!this.zoom) this.zoom = rememberedZoom(this.savedZoom(), dpr, fitK);
-    if (!levels.includes(this.zoom)) this.zoom = Math.min(this.zoom, levels[levels.length - 1]);
-    const k = this.zoom;
-    const css = k / dpr;
-    // (the canvas holds the village with a modest margin of grass and woods; when the village is smaller than the frame it fills the frame sideways and a
-    //  little way up and down, and the rest of the frame is the plain grass colour)
-    const vw = Math.max(lay.w + 2 * VIEW_MARGIN, Math.ceil(w / css));
-    const vh = Math.max(lay.h + 2 * VIEW_MARGIN, Math.min(Math.ceil(h / css), lay.h + 2 * VIEW_EXTRA));
-    if (lay === this.lay && k === this.scale && css === this.css && this.still && this.view.w === vw && this.view.h === vh) return;
+    const wall = wallBounds(lay);
+    const { k, css } = pickScale(w, dpr, wall.x1 - wall.x0);
+    const vw = Math.ceil(w / css);
+    const oy = Math.round(TOP_GAP / css) - Math.round(wall.top);
+    const vh = Math.max(Math.ceil(h / css), oy + lay.h + 8);
+    // (the wall's middle in the middle of the frame)
+    const ox = Math.round(vw / 2 - (wall.x0 + wall.x1) / 2);
+    if (lay === this.lay && k === this.scale && css === this.css && this.still && this.view.w === vw && this.view.h === vh && this.view.ox === ox && this.view.oy === oy) return;
     const changed = lay !== this.lay;
     this.lay = lay;
     this.tiles = walkTiles(lay);
     this.scale = k;
     this.css = css;
     // (the backing store is in device pixels, k to a scene pixel; its css size is that over the pixel ratio, so one scene pixel is k whole device pixels)
-    this.view = { w: vw, h: vh, ox: Math.floor((vw - lay.w) / 2), oy: Math.floor((vh - lay.h) / 2) };
+    this.view = { w: vw, h: vh, ox, oy };
     this.canvas.width = vw * k;
     this.canvas.height = vh * k;
     for (const e of [this.canvas, this.stage]) {
       e.style.width = `${vw * css}px`;
       e.style.height = `${vh * css}px`;
     }
-    // (the name tags shrink a little with the village, but stay readable)
-    this.stage.style.setProperty('--ts', String(Math.max(0.55, Math.min(1, css * 1.6))));
     this.ctx.imageSmoothingEnabled = false;
     this.still = this.paintStill(art, k);
     this.glow = this.paintGlow(k);
@@ -481,96 +462,7 @@ export class CastleScene {
         this.putOnRoad(wk);
       }
     this.layTags();
-    const place = () => {
-      if (anchor) {
-        this.scroll.scrollLeft = anchor.sx * css - anchor.cx;
-        this.scroll.scrollTop = anchor.sy * css - anchor.cy;
-      } else {
-        // (framed on the plaza: its middle in the middle of the frame, as far as the village reaches)
-        const g = this.lay.grid;
-        this.scroll.scrollLeft = (this.view.ox + cellX(g, 1, 1)) * css - this.scroll.clientWidth / 2;
-        this.scroll.scrollTop = (this.view.oy + cellY(g, 1, 1)) * css - this.scroll.clientHeight / 2;
-      }
-    };
-    if (anchor) place();
-    else requestAnimationFrame(place);
-  }
-
-  /** Change the zoom to a whole step (remembered), keeping the point at client position `at` where it is. */
-  private setZoom(k: number, at?: { x: number; y: number }): void {
-    if (k === this.zoom) return;
-    let anchor: { sx: number; sy: number; cx: number; cy: number } | undefined;
-    if (at) {
-      const c = this.canvas.getBoundingClientRect();
-      const f = this.scroll.getBoundingClientRect();
-      anchor = { sx: (at.x - c.left) / this.css, sy: (at.y - c.top) / this.css, cx: at.x - f.left, cy: at.y - f.top };
-    }
-    this.zoom = k;
-    try {
-      localStorage.setItem(ZOOM_KEY, String(k));
-    } catch {
-      // (a private window: the zoom is simply not remembered)
-    }
-    this.fit(anchor);
-  }
-
-  private zoomSteps(): number[] {
-    const dpr = window.devicePixelRatio || 1;
-    return zoomLevels(dpr, pickScale(this.root.clientWidth, this.root.clientHeight, dpr, this.lay.w, this.lay.h).k);
-  }
-
-  private pointerDown(e: PointerEvent): void {
-    if ((e.target as HTMLElement).closest('.ctTag')) return;
-    this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (this.pointers.size === 1) this.drag = { x: e.clientX, y: e.clientY, left: this.scroll.scrollLeft, top: this.scroll.scrollTop, t: performance.now(), moved: false };
-    else if (this.pointers.size === 2) {
-      const [a, b] = [...this.pointers.values()];
-      this.pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1 };
-      this.drag = null;
-    }
-  }
-
-  private pointerMove(e: PointerEvent): void {
-    const p = this.pointers.get(e.pointerId);
-    if (!p) return;
-    p.x = e.clientX;
-    p.y = e.clientY;
-    if (this.pinch && this.pointers.size >= 2) {
-      const [a, b] = [...this.pointers.values()];
-      const d = Math.hypot(a.x - b.x, a.y - b.y) || 1;
-      const step = pinchStep(d / this.pinch.d);
-      if (step) {
-        this.setZoom(stepZoom(this.zoom, step, this.zoomSteps()), { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
-        this.pinch.d = d;
-      }
-    } else if (this.drag) {
-      const dx = e.clientX - this.drag.x;
-      const dy = e.clientY - this.drag.y;
-      if (!this.drag.moved && Math.hypot(dx, dy) > 9) this.drag.moved = true;
-      if (this.drag.moved) {
-        this.scroll.scrollLeft = this.drag.left - dx;
-        this.scroll.scrollTop = this.drag.top - dy;
-      }
-    }
-  }
-
-  private pointerUp(e: PointerEvent): void {
-    if (!this.pointers.delete(e.pointerId)) return;
-    const d = this.drag;
-    if (this.pointers.size < 2) this.pinch = null;
-    if (this.pointers.size > 0) return;
-    this.drag = null;
-    if (e.type !== 'pointerup' || !d || d.moved || performance.now() - d.t > 600) return;
-    if (this.tap(e)) return;
-    // (a double tap on empty ground: the overview and the closer zoom swap, the spot under the finger staying put)
-    const now = performance.now();
-    const last = this.lastTap;
-    if (last && now - last.t < 320 && Math.hypot(e.clientX - last.x, e.clientY - last.y) < 30) {
-      this.lastTap = null;
-      const dpr = window.devicePixelRatio || 1;
-      const fitK = pickScale(this.root.clientWidth, this.root.clientHeight, dpr, this.lay.w, this.lay.h).k;
-      this.setZoom(doubleTapZoom(this.zoom, dpr, fitK), { x: e.clientX, y: e.clientY });
-    } else this.lastTap = { x: e.clientX, y: e.clientY, t: now };
+    this.scroll.scrollTop = 0;
   }
 
   /** The part that never changes: the ground (a lattice of grass tiles, cobbles where the roads and plaza are) with a few flowers laid by a fixed pattern. */
