@@ -211,3 +211,32 @@ export function traitEffects(kinds: Iterable<string>): TraitEffects {
 
 /** The kinds of the heroes now placed in a fight, for the functions above. */
 export const kindsOf = (units: readonly { side: string; def: string }[]): string[] => units.filter((u) => u.side === 'hero' && UNITS[u.def]).map((u) => u.def);
+
+/** The tier a trait stands at, for the page: the count it reached it with and what it gives (null while no tier is reached). */
+export function activeTier(c: TraitCount): { need: number; text: string } | null {
+  return c.tier >= 0 ? c.trait.tiers[c.tier] : null;
+}
+
+/** What a trait still wants: "1 more for +10% attack", or null when its last tier is reached. */
+export function nextTierLine(c: TraitCount): string | null {
+  const next = c.trait.tiers[c.tier + 1];
+  if (!next) return null;
+  const more = next.need - c.count;
+  return `${more} more ${more === 1 ? 'hero' : 'heroes'} for ${next.text}`;
+}
+
+/** The traits closest to waking a tier (or a higher one): the single line the deploy strip leads with. */
+export function closestTrait(counts: readonly TraitCount[]): TraitCount | null {
+  let best: TraitCount | null = null;
+  let bestLeft = Infinity;
+  for (const c of counts) {
+    const next = c.trait.tiers[c.tier + 1];
+    if (!next) continue;
+    const left = next.need - c.count;
+    if (left < bestLeft) {
+      best = c;
+      bestLeft = left;
+    }
+  }
+  return best;
+}
