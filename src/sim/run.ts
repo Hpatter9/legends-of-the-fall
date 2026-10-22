@@ -45,6 +45,9 @@ export interface Owned {
   gear?: Partial<Record<Slot, Gear>>;
   /** Lasting bumps from a training ground, added to the hero's multipliers. */
   bump?: { hp: number; atk: number };
+  /** Skill charge (and a Mythic's ultimate charge) kept from the last wave, so a skill half-filled is not lost between waves. */
+  charge?: number;
+  charge2?: number;
 }
 
 /** What the next fight carries over from an event: heroes' multipliers, foes' multiplier, a prize for a win. */
@@ -119,6 +122,17 @@ export function armyRun(seed: number, army: string, party: readonly string[] = H
 /** The difficulty tier an army run is fought on (0 Normal, for any other run too). */
 export const tierOfRun = (run: Run): number => (run.mode?.kind === 'army' ? run.mode.tier ?? 0 : 0);
 
+/** Keep each hero's skill charge for the next wave of the run: a hero still standing keeps what it had built up; one that fell, or that sat
+ *  out the fight, starts the next one empty. */
+export function keepCharges(run: Run, b: Battle): void {
+  for (const h of run.roster) {
+    const u = b.units.find((x) => x.side === 'hero' && x.tag === h.id);
+    const alive = !!u && u.alive;
+    h.charge = alive && u.charge > 0 ? u.charge : undefined;
+    h.charge2 = alive && (u.charge2 ?? 0) > 0 ? u.charge2 : undefined;
+  }
+}
+
 /** Add a finished fight to an army run's tally: its time, the heroes that fell (summoned helpers do not count), and whether this was the last boss. */
 export function noteFight(run: Run, b: Battle): void {
   const army = armyOfRun(run);
@@ -191,7 +205,7 @@ export const gradeBoost = (grade: number, rank = 0, level = 1, kind?: string): B
 export function boostOf(h: Owned, rank = 0, level = 1, equip?: EquipStats): Boost {
   const base = gradeBoost(h.grade, rank, level, h.kind);
   const g = gearBoost(h.gear);
-  return { ...base, hp: base.hp! * g.hp! + (h.bump?.hp ?? 0), atk: base.atk! * g.atk! + (h.bump?.atk ?? 0), ...(equip ? { equip } : {}) };
+  return { ...base, hp: base.hp! * g.hp! + (h.bump?.hp ?? 0), atk: base.atk! * g.atk! + (h.bump?.atk ?? 0), ...(equip ? { equip } : {}), ...(h.charge ? { charge: h.charge } : {}), ...(h.charge2 ? { charge2: h.charge2 } : {}) };
 }
 
 /** Give a hero a piece of gear from the pack (the piece it replaces goes back). False when it isn't in the pack. */

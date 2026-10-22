@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { place, playOut, startBattle } from '../src/sim/battle';
-import { finish, gradeBoost, isBossStage, loadRun, newRun, reward, saveRun, setSquad, stageBoost, startStage, summon, summonCost, START_GOLD, SQUAD, type Run } from '../src/sim/run';
+import { addUnit, place, playOut, startBattle } from '../src/sim/battle';
+import { boostOf, keepCharges, finish, gradeBoost, isBossStage, loadRun, newRun, reward, saveRun, setSquad, stageBoost, startStage, summon, summonCost, START_GOLD, SQUAD, type Run } from '../src/sim/run';
 import { UNITS } from '../src/sim/units';
 
 const kinds = (r: Run) => r.roster.map((h) => `${h.kind}${h.grade}`).join();
@@ -108,3 +108,20 @@ function fightOut(b: ReturnType<typeof startBattle>): void {
   b.phase = 'fight';
   playOut(b);
 }
+
+test('a hero still standing keeps its skill charge into the next wave; one that fell starts empty', () => {
+  const run = newRun(1);
+  const [a, b2] = run.roster;
+  const bt = startBattle(1);
+  const ua = addUnit(bt, a.kind, 0, 7, boostOf(a), a.id);
+  const ub = addUnit(bt, b2.kind, 1, 7, boostOf(b2), b2.id);
+  ua.charge = 60;
+  ub.charge = 80;
+  ub.alive = false;
+  keepCharges(run, bt);
+  assert.equal(a.charge, 60);
+  assert.equal(b2.charge, undefined);
+  const next = startBattle(2);
+  assert.equal(addUnit(next, a.kind, 0, 7, boostOf(a), a.id).charge, 60);
+  assert.equal(addUnit(next, b2.kind, 1, 7, boostOf(b2), b2.id).charge, 0);
+});
