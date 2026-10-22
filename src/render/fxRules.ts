@@ -169,6 +169,16 @@ export const SPELL_ELEMENT: Record<SpellId, Element> = {
   smite: 'light',
   resurrect: 'light',
   poison: 'poison',
+  cleanse: 'light',
+  blink: 'dark',
+  hex: 'dark',
+  lance: 'light',
+  renewal: 'forest',
+  deepfreeze: 'ice',
+  warcry: 'fire',
+  bulwark: 'earth',
+  wolves: 'forest',
+  starfall: 'fire',
 };
 
 /* ------------------------------------------------------------------ deaths */
@@ -275,6 +285,16 @@ export const SPELL_CAST: Record<Exclude<SpellId, 'meteor'>, { key: PackKey; scal
   quake: [{ key: 'earth-wave', scale: 4 }],
   resurrect: [{ key: 'light-circle', scale: 2.8 }, { key: 'light-pillar', scale: 3 }, { key: 'light-rune', scale: 2.8 }],
   poison: [{ key: 'poison-circle', scale: 2.8 }, { key: 'poison-explosion', scale: 3 }],
+  cleanse: [{ key: 'light-circle', scale: 2.8 }, { key: 'light-sparkle', scale: 3 }],
+  blink: [{ key: 'dark-circle', scale: 2.2 }, { key: 'dark-nova', scale: 2.5 }],
+  hex: [{ key: 'dark-circle', scale: 2.8 }, { key: 'dark-rune', scale: 3 }],
+  lance: [{ key: 'light-circle', scale: 2.8 }, { key: 'light-pillar', scale: 3.5 }],
+  renewal: [{ key: 'forest-circle', scale: 2.8 }, { key: 'forest-aura', scale: 3 }],
+  deepfreeze: [{ key: 'ice-circle', scale: 2.8 }, { key: 'ice-pillar', scale: 3.5 }],
+  warcry: [{ key: 'fire-nova', scale: 3 }],
+  bulwark: [{ key: 'earth-shield', scale: 3 }],
+  wolves: [{ key: 'forest-circle', scale: 2.8 }, { key: 'forest-gather', scale: 3 }],
+  starfall: [{ key: 'fire-circle', scale: 3.2 }],
 };
 
 /** What a spell plays on each fighter it touches: a strip, its size as a share of the fighter's height, and where up the body. */
@@ -289,6 +309,16 @@ export const SPELL_TOUCH: Record<Exclude<SpellId, 'meteor'>, { key: PackKey; siz
   quake: { key: 'earth-hit', size: 1.2, at: 0.2 },
   resurrect: { key: 'light-pillar', size: 2.5, at: 0.2 },
   poison: undefined,
+  cleanse: { key: 'light-sparkle', size: 1.3, at: 0.5 },
+  blink: { key: 'dark-nova', size: 1.4, at: 0.5 },
+  hex: { key: 'dark-status', size: 1.2, at: 0.5 },
+  lance: { key: 'light-strike', size: 2.5, at: 0.2 },
+  renewal: { key: 'forest-sparkle', size: 1.3, at: 0.5 },
+  deepfreeze: { key: 'ice-explosion', size: 1.5, at: 0.5 },
+  warcry: { key: 'fire-aura', size: 1.3, at: 0.2 },
+  bulwark: { key: 'earth-shield', size: 1.3, at: 0.5 },
+  wolves: { key: 'forest-nova', size: 1.4, at: 0.3 },
+  starfall: undefined,
 };
 
 /* ------------------------------------------------------------------ keeping big effects readable */
