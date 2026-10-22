@@ -15,7 +15,7 @@ import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
 import { gradeOfRank } from './render/tavernSpots';
 import { strongest } from './menuHeroes';
-import { GRASS, layoutFor, LIGHTS, LOOKS, lookBox, NAME_OF, stageOf, TILE_H, TILE_W, VENTS, WIDE, type Layout, type Look } from './render/castleSpots';
+import { cellX, cellY, GRASS, isPaved, layoutFor, LIGHTS, LOOKS, lookBox, NAME_OF, stageOf, TILE_H, TILE_W, VENTS, walkTiles, WIDE, type Layout, type Look } from './render/castleSpots';
 import anvil_stallUrl from './art/castle/anvil_stall.png';
 import bannerUrl from './art/castle/banner.png';
 import barracksUrl from './art/castle/barracks.png';
@@ -32,13 +32,15 @@ import cratesUrl from './art/castle/crates.png';
 import crystalsUrl from './art/castle/crystals.png';
 import flowersUrl from './art/castle/flowers.png';
 import forgeUrl from './art/castle/forge.png';
-import gateUrl from './art/castle/gate.png';
+import gatehouseUrl from './art/castle/gatehouse.png';
 import grass_tileUrl from './art/castle/grass_tile.png';
 import great_hallUrl from './art/castle/great_hall.png';
 import hayUrl from './art/castle/hay.png';
+import lampUrl from './art/castle/lamp.png';
 import longhouseUrl from './art/castle/longhouse.png';
 import oakUrl from './art/castle/oak.png';
 import pineUrl from './art/castle/pine.png';
+import rackUrl from './art/castle/rack.png';
 import rocksUrl from './art/castle/rocks.png';
 import rosesUrl from './art/castle/roses.png';
 import shrineUrl from './art/castle/shrine.png';
@@ -68,13 +70,15 @@ const ART: Record<string, string> = {
   crystals: crystalsUrl,
   flowers: flowersUrl,
   forge: forgeUrl,
-  gate: gateUrl,
+  gatehouse: gatehouseUrl,
   grass_tile: grass_tileUrl,
   great_hall: great_hallUrl,
   hay: hayUrl,
+  lamp: lampUrl,
   longhouse: longhouseUrl,
   oak: oakUrl,
   pine: pineUrl,
+  rack: rackUrl,
   rocks: rocksUrl,
   roses: rosesUrl,
   shrine: shrineUrl,
@@ -210,8 +214,11 @@ interface Walker {
   small: Small;
   x: number;
   y: number;
+  /** The waypoint being walked to, and the tiles still to come after it. */
   gx: number;
   gy: number;
+  route: { u: number; v: number }[];
+  tile: { u: number; v: number };
   face: 1 | -1;
   mood: Mood;
   at: number;
@@ -243,6 +250,7 @@ interface Build {
 /** The pictures with a flame: where it burns from the picture's foot, and its glow. */
 const GLOWING: Record<string, { dx: number; dy: number; size: number; al: number; tint: string }> = {
   brazier: { dx: 0, dy: -72, size: 34, al: 0.55, tint: '#ff9a3c' },
+  lamp: { dx: 0, dy: -66, size: 26, al: 0.5, tint: '#ffcf70' },
 };
 
 const BUILD_MS = 1500;
@@ -336,9 +344,9 @@ export class CastleScene {
         if (w.small.facesRight !== rig.facesRight || w.small.fh !== Math.floor(rig.h / heroShrink(rig.figure))) w.small = shrinkRig(rig);
         return;
       }
-      const x = rand(this.lay.walk.x0, this.lay.walk.x1);
-      const y = rand(this.lay.walk.y0, this.lay.walk.y1);
-      this.walkers.set(kind, { kind, small: shrinkRig(rig), x, y, gx: x, gy: y, face: chance(0.5) ? 1 : -1, mood: 'idle', at: this.now + 300 * i + rand(300, 2500), clock: rand(0, 3000), phase: rand(0, 6) });
+      const wk: Walker = { kind, small: shrinkRig(rig), x: 0, y: 0, gx: 0, gy: 0, route: [], tile: { u: 0, v: 0 }, face: chance(0.5) ? 1 : -1, mood: 'idle', at: this.now + 300 * i + rand(300, 2500), clock: rand(0, 3000), phase: rand(0, 6) };
+      this.putOnRoad(wk);
+      this.walkers.set(kind, wk);
     });
     this.layTags();
   }
@@ -376,6 +384,7 @@ export class CastleScene {
     if (lay === this.lay && s === this.scale && this.still && this.canvas.width === lay.w * s) return;
     const changed = lay !== this.lay;
     this.lay = lay;
+    this.tiles = walkTiles(lay);
     this.scale = s;
     this.canvas.width = lay.w * s;
     this.canvas.height = lay.h * s;
@@ -389,9 +398,7 @@ export class CastleScene {
     // (the heroes go back onto the new arrangement's road when it changes)
     if (changed)
       for (const wk of this.walkers.values()) {
-        wk.x = wk.gx = rand(lay.walk.x0, lay.walk.x1);
-        wk.y = wk.gy = rand(lay.walk.y0, lay.walk.y1);
-        wk.mood = 'idle';
+        this.putOnRoad(wk);
       }
     this.layTags();
     requestAnimationFrame(() => {
@@ -415,7 +422,7 @@ export class CastleScene {
       const cc = Math.round((cx - grid.x) / (TILE_W / 2));
       const u = (rr + cc) / 2;
       const v = (rr - cc) / 2;
-      return this.lay.roads.some((r) => ('u0' in r ? u >= r.u0 && u <= r.u1 && v >= r.v0 && v <= r.v1 : cx >= r.x0 && cx <= r.x1 && cy >= r.y0 && cy <= r.y1));
+      return Number.isInteger(u) && isPaved(this.lay, u, v);
     };
     // (rows of tiles from the back to the front, each row half a tile along from the last, so a tile's rim is covered by the row in front)
     const rows0 = Math.floor((0 - grid.y) / (TILE_H / 2)) - 2;
@@ -464,7 +471,7 @@ export class CastleScene {
     for (const id of BUILDING_IDS) {
       const tag = this.tagEls.get(id)!;
       const p = this.lay.plots[id];
-      const box = lookBox(LOOKS[id][stageOf(id, this.levels[id] ?? 0)]);
+      const box = lookBox(LOOKS[id][stageOf(id, this.levels[id] ?? 0)], p.flip);
       tag.style.left = `${((p.x + (box.x0 + box.x1) / 2) / this.lay.w) * 100}%`;
       tag.style.top = `${((p.tagY ?? p.y - box.h - 4) / this.lay.h) * 100}%`;
     }
@@ -477,12 +484,59 @@ export class CastleScene {
     const roll = Math.random();
     if (roll < 0.3) w.face = w.face === 1 ? -1 : 1;
     else if (!this.reduced && roll < 0.95) {
-      w.gx = rand(this.lay.walk.x0, this.lay.walk.x1);
-      w.gy = rand(this.lay.walk.y0, this.lay.walk.y1);
-      w.mood = 'walk';
-      w.face = w.gx > w.x ? 1 : -1;
+      const to = this.tiles[Math.floor(Math.random() * this.tiles.length)];
+      w.route = this.route(w.tile, to);
+      if (w.route.length) {
+        this.nextStop(w);
+        w.mood = 'walk';
+      }
     }
     w.at = now + rand(1500, 5000);
+  }
+
+  /** The tiles a hero may stroll on (the plaza's ring and the roads), for the arrangement showing. */
+  private tiles: { u: number; v: number }[] = [];
+
+  /** Stand a hero on a random paved tile. */
+  private putOnRoad(w: Walker): void {
+    const t = this.tiles[Math.floor(Math.random() * this.tiles.length)] ?? { u: 0, v: 0 };
+    w.tile = t;
+    w.x = w.gx = cellX(this.lay.grid, t.u, t.v);
+    w.y = w.gy = cellY(this.lay.grid, t.u, t.v) + 6;
+    w.route = [];
+    w.mood = 'idle';
+  }
+
+  /** The shortest way along the paved tiles from one to another, not counting the start. */
+  private route(from: { u: number; v: number }, to: { u: number; v: number }): { u: number; v: number }[] {
+    const key = (t: { u: number; v: number }) => `${t.u},${t.v}`;
+    const ok = new Set(this.tiles.map(key));
+    const prev = new Map<string, { u: number; v: number } | null>([[key(from), null]]);
+    const queue = [from];
+    for (let i = 0; i < queue.length; i++) {
+      const t = queue[i];
+      if (t.u === to.u && t.v === to.v) break;
+      for (const [du, dv] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const n = { u: t.u + du, v: t.v + dv };
+        if (ok.has(key(n)) && !prev.has(key(n))) {
+          prev.set(key(n), t);
+          queue.push(n);
+        }
+      }
+    }
+    if (!prev.has(key(to))) return [];
+    const path: { u: number; v: number }[] = [];
+    for (let t: { u: number; v: number } | null | undefined = to; t && key(t) !== key(from); t = prev.get(key(t))) path.unshift(t);
+    return path;
+  }
+
+  /** Aim at the next tile of a hero's route. */
+  private nextStop(w: Walker): void {
+    const t = w.route.shift()!;
+    w.tile = t;
+    w.gx = cellX(this.lay.grid, t.u, t.v);
+    w.gy = cellY(this.lay.grid, t.u, t.v) + 6;
+    if (Math.abs(w.gx - w.x) > 2) w.face = w.gx > w.x ? 1 : -1;
   }
 
   private step(w: Walker, dt: number, now: number): void {
@@ -495,8 +549,11 @@ export class CastleScene {
     if (dist <= move) {
       w.x = w.gx;
       w.y = w.gy;
-      w.mood = 'idle';
-      w.at = now + rand(1200, 4000);
+      if (w.route.length) this.nextStop(w);
+      else {
+        w.mood = 'idle';
+        w.at = now + rand(1200, 4000);
+      }
     } else {
       w.x += (dx / dist) * move;
       w.y += (dy / dist) * move;
@@ -550,7 +607,7 @@ export class CastleScene {
     for (const id of BUILDING_IDS) {
       const p = this.lay.plots[id];
       for (const v of VENTS[id][this.shown(id)] ?? []) {
-        const x = p.x + v.dx;
+        const x = p.x + (p.flip ? -v.dx : v.dx);
         const y = p.y + v.dy;
         if (v.kind === 'smoke' && puff) this.motes.push({ x, y, vx: rand(-1, 3), vy: rand(-14, -8), age: 0, life: rand(2000, 3000), size: 3, color: '#d8d4cc', grow: 3, kind: 'smoke' });
         else if (v.kind === 'rune' && puff && chance(0.7)) this.motes.push({ x: x + rand(-14, 14), y: y + rand(-26, 26), vx: rand(-2, 2), vy: rand(-9, -4), age: 0, life: rand(1400, 2400), size: 2, color: chance(0.5) ? '#7fe8ff' : '#c9a6ff', grow: 0, kind: 'rune' });
@@ -606,7 +663,14 @@ export class CastleScene {
     const p = this.lay.plots[id];
     for (const part of look.parts) {
       const im = a[part.sprite];
-      g.drawImage(im, Math.round(p.x + part.dx - im.width / 2) * s, (p.y + part.dy - im.height + lift) * s, im.width * s, im.height * s);
+      const x = Math.round(p.x + (p.flip ? -part.dx : part.dx) - im.width / 2) * s;
+      if (p.flip) {
+        g.save();
+        g.translate(x + im.width * s, 0);
+        g.scale(-1, 1);
+        g.drawImage(im, 0, (p.y + part.dy - im.height + lift) * s, im.width * s, im.height * s);
+        g.restore();
+      } else g.drawImage(im, x, (p.y + part.dy - im.height + lift) * s, im.width * s, im.height * s);
     }
   }
 
@@ -618,8 +682,8 @@ export class CastleScene {
     const pop = b && age >= SWAP_MS && age < SWAP_MS + 180 ? Math.round((1 - (age - SWAP_MS) / 180) * 3) : 0;
     this.drawLook(a, id, LOOKS[id][stage], pop);
     if (b && age < SWAP_MS + 300) {
-      const o = lookBox(LOOKS[id][b.from]);
-      const n = lookBox(LOOKS[id][b.to]);
+      const o = lookBox(LOOKS[id][b.from], this.lay.plots[id].flip);
+      const n = lookBox(LOOKS[id][b.to], this.lay.plots[id].flip);
       this.scaffold(id, Math.min(o.x0, n.x0), Math.max(o.x1, n.x1), Math.max(o.h, n.h), age < SWAP_MS ? 1 : 1 - (age - SWAP_MS) / 300);
     }
   }
@@ -678,10 +742,10 @@ export class CastleScene {
     for (const id of BUILDING_IDS) {
       const p = this.lay.plots[id];
       const stage = this.shown(id);
-      for (const l of LIGHTS[id][stage] ?? []) spot(p.x + l.dx, p.y + l.dy, l.size, l.al, l.tint);
+      for (const l of LIGHTS[id][stage] ?? []) spot(p.x + (p.flip ? -l.dx : l.dx), p.y + l.dy, l.size, l.al, l.tint);
       for (const part of LOOKS[id][stage].parts) {
         const glow = GLOWING[part.sprite];
-        if (glow) spot(p.x + part.dx + glow.dx, p.y + part.dy + glow.dy, glow.size, glow.al, glow.tint);
+        if (glow) spot(p.x + (p.flip ? -part.dx : part.dx) + glow.dx, p.y + part.dy + glow.dy, glow.size, glow.al, glow.tint);
       }
     }
     for (const pr of this.lay.props) {
@@ -692,7 +756,7 @@ export class CastleScene {
     for (const b of this.builds) {
       const age = this.now - b.start;
       if (age > SWAP_MS - 100 && age < SWAP_MS + 450) {
-        const box = lookBox(LOOKS[b.id][b.to]);
+        const box = lookBox(LOOKS[b.id][b.to], this.lay.plots[b.id].flip);
         const p = this.lay.plots[b.id];
         const sz = Math.max(box.w, box.h) + 30;
         g.globalAlpha = 0.65 * (1 - (age - SWAP_MS + 100) / 550);
@@ -778,7 +842,7 @@ export class CastleScene {
     let best: { id: BuildingId; depth: number } | null = null;
     for (const id of BUILDING_IDS) {
       const p = this.lay.plots[id];
-      const b = lookBox(LOOKS[id][stageOf(id, this.levels[id] ?? 0)]);
+      const b = lookBox(LOOKS[id][stageOf(id, this.levels[id] ?? 0)], p.flip);
       // (an empty plot is small to hit, so every building has at least a generous patch of ground)
       const cx = p.x + (b.x0 + b.x1) / 2;
       const half = Math.max(b.w / 2, 24);

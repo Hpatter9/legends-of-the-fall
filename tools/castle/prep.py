@@ -6,7 +6,7 @@ import os
 from PIL import Image
 ISO = '/home/user/hpatter9/little-town/src/renderer/art/iso/'
 out = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'src', 'art', 'castle')
-K, S, D, B, F, N, L, DR = 'kits/knights/', 'kits/settlers/', 'kits/dwarves/', 'kits/bloodcourt/', 'kits/fae/', 'kits/nomads/', 'kits/liches/', 'kits/druids/'
+K, S, D, B, F, N, L, DR, O = 'kits/knights/', 'kits/settlers/', 'kits/dwarves/', 'kits/bloodcourt/', 'kits/fae/', 'kits/nomads/', 'kits/liches/', 'kits/druids/', 'kits/orcs/'
 PICKS = {
     # buildings
     'shrine': F + 'shrine', 'spiral': F + 'spiral_watchtower', 'watchtower': K + 'watchtower', 'chapel': L + 'chapel',
@@ -14,11 +14,11 @@ PICKS = {
     'cottage': K + 'cottage', 'thatch': S + 'longhouse', 'barracks': K + 'barracks',
     'anvil_stall': D + 'anvil_stall', 'workshop': K + 'workshop', 'forge': D + 'forge',
     # walls and gates
-    'gate': S + 'stone_gate', 'wall': S + 'stone_wall_run',
+    'gatehouse': K + 'gatehouse', 'wall': K + 'stone_wall_run',
     # props
     'chests': N + 'chests', 'campfire': K + 'campfire', 'hay': K + 'hay_bales', 'crates': K + 'crates', 'barrels': K + 'barrels', 'woodpile': K + 'woodpile',
         'brazier': D + 'brazier', 'banner': B + 'banner', 'statue': D + 'shrine', 'oak': K + 'oak_tree', 'pine': K + 'pine_tree', 'bush': K + 'bush',
-    'rocks': K + 'rocks', 'flowers': DR + 'flower_patch', 'berries': DR + 'berry_bush', 'roses': B + 'rose_bush', 'crystals': D + 'crystals',
+    'rocks': K + 'rocks', 'flowers': DR + 'flower_patch', 'berries': DR + 'berry_bush', 'roses': B + 'rose_bush', 'crystals': D + 'crystals', 'rack': O + 'weapon_stall', 'lamp': K + 'lamp_post',
     # ground
     'grass_tile': K + 'grass_tile', 'cobble_tile': K + 'cobble_tile',
 }

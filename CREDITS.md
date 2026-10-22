@@ -125,8 +125,8 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   `src/renderer/art/iso/kits/`: the Knights, Settlers, Dwarves, Blood Court, Fae, Liches, Druids and Nomads kits), shrunk to half size
   by a 2x2 box average (`tools/castle/prep.py`). Chronos credits them as made for that project: drawn with ChatGPT's image generation from
   prompts written for the game, then cut into sprites, cleaned and reduced to 256 colours. Used: Fae shrine and spiral watchtower, Liches
-  chapel, Knights watchtower, stockpile, longhouse, cottage, barracks, workshop, campfire, hay bales, crates, barrels, woodpile, oak, pine,
+  chapel, Knights watchtower, gatehouse, stone wall run, lamp post, stockpile, longhouse, cottage, barracks, workshop, campfire, hay bales, crates, barrels, woodpile, oak, pine,
   bush, rocks and grass and cobble tiles, Dwarves great hall, forge, anvil stall, brazier, shrine (the statue) and crystals, Settlers longhouse,
-  stone gate and stone wall run, Blood Court banner and rose bush, Druids flower patch and berry bush, Nomads chests.
+  Orcs weapon stall (the weapon rack), Blood Court banner and rose bush, Druids flower patch and berry bush, Nomads chests.
 - The heroes who stroll the yard use their own sheets (see above), shrunk by a whole number when the page loads.
 - Nothing was generated for this look.
