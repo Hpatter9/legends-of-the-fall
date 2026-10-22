@@ -647,7 +647,7 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
       { name: 'Hellish Edge', icon: 'claymore', text: 'Hellblade Sweep cuts 40% deeper.', tal: { pow: 0.4 } },
     ],
     [
-      { name: 'Demon Ascendant', icon: 'idol', text: 'Demon Form charges 50% faster and lasts 40% longer.', tal: { ultRate: 0.5, dur: 0.4 } },
+      { name: 'Demon Ascendant', icon: 'idol', text: 'Demon Form charges 40% faster and lasts 30% longer.', tal: { ultRate: 0.4, dur: 0.3 } },
       { name: 'Soul Eater', icon: 'amulet', text: 'Each kill heals him 12% of his health.', abilities: [ab('tl_demonSwordsman_eater', 'Soul Eater', 'kill', 'heal', { v: 0.12 })] },
     ],
   ),
@@ -656,11 +656,11 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     [['Iron Crown', 'circlet', { hp: HP }], ['Spiked Staff', 'mace', { atk: ATK }], ['Black Cuirass', 'plate', { def: 1 }], ['Dread Aura', 'bell', { charge: 0.1 }]],
     [
       { name: 'Twin Verdicts', icon: 'scroll', text: 'A second, smaller judgement follows the first.', tal: { extra: 1 } },
-      { name: 'Harsher Law', icon: 'maul', text: 'Judgement hits 40% harder.', tal: { pow: 0.4 } },
+      { name: 'Harsher Law', icon: 'maul', text: 'Judgement hits 30% harder.', tal: { pow: 0.3 } },
     ],
     [
       { name: 'Absolute Rule', icon: 'drum', text: 'Reign of Terror charges 50% faster and lasts 40% longer.', tal: { ultRate: 0.5, dur: 0.4 } },
-      { name: "Tyrant's Due", icon: 'ruby', text: 'Each kill gives back 60 charge, and +8% attack speed.', stats: { atkSpeed: 0.08 }, abilities: [ab('tl_tyrant_due', "Tyrant's Due", 'kill', 'charge', { v: 60 })] },
+      { name: "Tyrant's Due", icon: 'ruby', text: 'Each kill gives back 40 charge, and +5% attack speed.', stats: { atkSpeed: 0.05 }, abilities: [ab('tl_tyrant_due', "Tyrant's Due", 'kill', 'charge', { v: 40 })] },
     ],
   ),
 };

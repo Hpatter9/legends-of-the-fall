@@ -1,5 +1,6 @@
 # Builds the sprite sheets of the twenty "more heroes" into src/art/units/ and adds them to sheets.json.
-# Run from the repo root (python3 -I tools/more-heroes/build_sheets.py); safe to run twice. Reads the asset packs
+# Run from the repo root (python3 -I tools/more-heroes/build_sheets.py; CHRONOS_ASSETS and LITTLE_TOWN name the two clones if they
+# are not next to this repo); safe to run twice. Reads the asset packs
 # (hpatter9/chronos-assets next to this repo, and Little-Town's cut sheets) and never writes to them.
 #
 # - Pixel Champions (8 heroes, three colour looks each): the 1x battler sheets are 9x6 cells of 32 px in the RPG Maker
@@ -15,7 +16,8 @@ from PIL import Image
 ROOT = os.getcwd()
 UNITS = os.path.join(ROOT, 'src/art/units/')
 ASSETS = os.environ.get('CHRONOS_ASSETS', os.path.join(ROOT, '..', 'chronos-assets'))
-TOWN = os.environ.get('LITTLE_TOWN', os.path.join(ROOT, '..', 'hpatter9', 'little-town'))
+# (a clone of hpatter9/little-town: next to this repo, or set LITTLE_TOWN)
+TOWN = os.environ.get('LITTLE_TOWN') or next((d for d in (os.path.join(ROOT, '..', 'little-town'), os.path.join(ROOT, '..', 'hpatter9', 'little-town')) if os.path.isdir(d)), '')
 PC = os.path.join(ASSETS, 'Pixel_Champions_v3/Pixel_Champions_v3/1x-NormalSize/Battlers')
 PACKS = os.path.join(TOWN, 'src/renderer/art/creatures/packs/')
 

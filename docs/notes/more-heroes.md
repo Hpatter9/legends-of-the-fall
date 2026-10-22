@@ -118,6 +118,17 @@ All twenty are inside about 5 points of their peers at every stage. The first pa
 Arc Blade +22, Juggernaut +18, Queen Dragoon +14 at stage 7; Wolf Bard -9, Time Witch -6, Great Sage -7), and the stats and
 the kits' numbers were tuned from there. The raw tables are in `docs/samples/more-heroes-balance.txt`.
 
+**Talents** (`npm run talent-balance -- --games 1200`, `docs/samples/more-heroes-talent-balance.txt`): a full tree lifts the new
+heroes' teams by +2 to +27 points at stage 13, level 3 (the originals: +2 to +24), and the first pass was brought down where it stood out
+(Tyrant +31 to +21, Demon Swordsman +25 to +20 on average): the new trees sit in the existing range, the top ones being Demon Swordsman
+(+20 to +27, against Kitsune +24 and Knight +23), Tyrant (+18 to +22) and High Priestess (+5 to +17, against Cleric +17); the weakest
+are Buccaneer, Lancer and Arc Blade (+1 to +6), like the Lightning Mage, Kunoichi and Samurai.
+
+**The rest of `npm run balance`** (`docs/samples/more-heroes-balance-full.txt`, 4000 games): the whole-run and the armies tables, which play
+only the starting five, are byte-for-byte the same as on the commit this work started from (checked with `--runs-only --saves 80` on both);
+the foe-band and stage-curve tables draw random teams from the whole roster, so they moved with it (the foe-band test's 20 to 80% range still holds). The new 4-piece trait tiers can only add to a team that holds four of
+a trait, which the starting five never do.
+
 ## Samples
 
 `docs/samples/new-heroes-contact.png` (all twenty, grades 1 and 3), `new-heroes-fight-<a-d><1-3>-<393x852|360x780>.png`
