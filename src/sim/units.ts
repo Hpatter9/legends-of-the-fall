@@ -81,7 +81,7 @@ export const UNITS: Record<string, UnitDef> = {
   gunslinger: { id: 'gunslinger', name: 'Gunslinger', side: 'hero', sheet: 'cls_gunslinger_1', scale: 0.7, hp: 145, atk: 42, def: 2, range: 6, moveMs: 700, atkMs: 2400, jump: 2, shot: 'bullet', heightReach: 0.7, rarity: 4, role: 'Slow, piercing shots from very far', forms: ['cls_gunslinger_1', 'cls_gunslinger_2', 'cls_gunslinger_3'] },
 
   // called up by skills (not heroes to place)
-  treant: { id: 'treant', name: 'Treant', side: 'hero', sheet: 'cls_treant', scale: 0.5, hp: 330, atk: 16, def: 8, range: 1, moveMs: 900, atkMs: 1300, jump: 1, summon: true, role: 'A tree called by the Druid' },
+  treant: { id: 'treant', name: 'Treant', side: 'hero', sheet: 'cls_treant', scale: 0.5, hp: 330, atk: 16, def: 8, range: 1, moveMs: 900, atkMs: 1300, jump: 1, summon: true, role: 'A tree called by the Druid (it grows with her grade)', forms: ['cls_treant', 'cls_treant_2', 'cls_treant_3'] },
   decoy: { id: 'decoy', name: 'Decoy', side: 'hero', sheet: 'cls_illusionist_1', scale: 0.71, hp: 80, atk: 5, def: 0, range: 1, moveMs: 700, atkMs: 1200, jump: 2, summon: true, role: 'A mirage that draws blows' },
 
   skeleton: { id: 'skeleton', name: 'Skeleton', side: 'foe', sheet: 'skeleton_warrior', scale: 0.79, hp: 320, atk: 26, def: 7, range: 1, moveMs: 650, atkMs: 1100, jump: 2, role: 'Sword and shield' },

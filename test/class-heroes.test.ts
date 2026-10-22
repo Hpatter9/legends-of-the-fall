@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addUnit, defOf, fight, place, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
 import { CHARGE_MAX, KITS, onStrike, tickStatus } from '../src/sim/abilities';
-import { ALL_HEROES, UNITS } from '../src/sim/units';
+import { ALL_HEROES, formOf, UNITS } from '../src/sim/units';
 import { HERO_TRAITS, TRAITS, membersOf } from '../src/sim/traits';
 import { ratingOf } from '../src/sim/stars';
 import { SKILL_FX } from '../src/render/skillFx';
@@ -129,6 +129,28 @@ test('Call Treant raises one treant beside the Druid, and only one at a time', (
   d.charge = CHARGE_MAX;
   run(b, 1500);
   assert.equal(b.units.filter((x) => x.def === 'treant' && x.alive).length, 1);
+});
+
+test('a treant grows with the Druid\'s grade: its sheet is the form of that grade, and each form has its rows', () => {
+  for (const grade of [1, 2, 3]) {
+    const b = arena();
+    const d = spawn(b, 'druid', 3, 6, CHARGE_MAX);
+    if (grade > 1) d.grade = grade;
+    spawn(b, 'skeleton', 3, 1);
+    run(b, 100);
+    const t = b.units.find((x) => x.def === 'treant')!;
+    assert.equal(t.grade, grade > 1 ? grade : undefined);
+    const sheet = formOf(UNITS.treant, t.grade ?? 1);
+    const l = (layout as Record<string, { rows: string[]; counts: Record<string, number> }>)[sheet];
+    assert.ok(l, sheet);
+    for (const row of ['idle', 'walk', 'attack', 'dead']) assert.ok(l.rows.includes(row) && l.counts[row] > 0, `${sheet} ${row}`);
+  }
+  assert.equal(new Set(UNITS.treant.forms).size, 3);
+});
+
+test('the Lich King has walk, hurt and a lying death', () => {
+  const l = (layout as Record<string, { rows: string[]; counts: Record<string, number> }>).lich_king;
+  for (const row of ['idle', 'walk', 'attack', 'attack2', 'hurt', 'dead']) assert.ok(l.rows.includes(row) && l.counts[row] > 0, row);
 });
 
 test('a treant or decoy is no hero: it does not hold the fight open, and its fall does not cost the star', () => {

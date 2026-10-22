@@ -698,7 +698,7 @@ function callTreant(b: Battle, me: Unit): boolean {
   if (!spots.length) return false;
   spots.sort((x, y) => apart(x, near) - apart(y, near) || apart(me, x) - apart(me, y) || x.v - y.v || x.u - y.u);
   const to = spots[0];
-  const t = addUnit(b, 'treant', to.u, to.v, { atk: me.power ?? 1, hp: me.maxHp / defOf(me).hp });
+  const t = addUnit(b, 'treant', to.u, to.v, { atk: me.power ?? 1, hp: me.maxHp / defOf(me).hp, grade: me.grade });
   t.facing = wayTo(t, near);
   return true;
 }
