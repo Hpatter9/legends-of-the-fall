@@ -8,6 +8,8 @@ import { startedMeta } from '../src/sim/meta';
 import { HEROES } from '../src/sim/units';
 import { mixSeed } from '../src/sim/rng';
 import { playCalamity, playTower } from './autoplay';
+import { CAL_BOSSES } from '../src/sim/calamityBosses';
+import { UNITS } from '../src/sim/units';
 
 const arg = (name: string, fallback: number): number => {
   const i = process.argv.indexOf(name);
@@ -37,7 +39,14 @@ export function towerTable(): void {
 /** Calamity: a greedy player per starting hero kind and seed; the maps cleared (each a boss), full clears, and the heroes held at the end. */
 export function calamityTable(): void {
   const attempts = arg('--attempts', 30);
-  console.log(`\nCalamity: ${attempts} greedy runs (a random starting hero of the five, no castle); maps cleared, of ${CAL_MAPS}`);
+  const asc = arg('--asc', 0);
+  // (`--bossk a,b,c,d,e,f`: try the six bosses' hp scaled by these, their attack by half as much; a tuning run, nothing is written)
+  const k = process.argv.includes('--bossk') ? process.argv[process.argv.indexOf('--bossk') + 1].split(',').map(Number) : [];
+  k.forEach((x, i) => {
+    UNITS[CAL_BOSSES[i]].hp *= x;
+    UNITS[CAL_BOSSES[i]].atk *= 1 - (1 - x) / 2;
+  });
+  console.log(`\nCalamity${asc ? ` at ascension ${asc}` : ''}: ${attempts} greedy runs (a random starting hero of the five, no castle); maps cleared, of ${CAL_MAPS}`);
   console.log(`median  mean  ${Array.from({ length: CAL_MAPS }, (_, i) => `map${i + 1}`.padStart(5)).join(' ')}  cleared  heroes(mean)  floors(median)`);
   const maps: number[] = [];
   const floors: number[] = [];
@@ -46,7 +55,7 @@ export function calamityTable(): void {
   let lv = 0;
   const past = Array.from({ length: CAL_MAPS }, () => 0);
   for (let a = 0; a < attempts; a++) {
-    const r = playCalamity(startedMeta(a + 1), mixSeed(a + 1, 0xca1), HEROES[a % HEROES.length], newCastle());
+    const r = playCalamity(startedMeta(a + 1), mixSeed(a + 1, 0xca1), HEROES[a % HEROES.length], newCastle(), asc);
     maps.push(r.maps);
     floors.push(r.floors);
     heroes += r.heroes;

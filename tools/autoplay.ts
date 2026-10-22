@@ -8,7 +8,8 @@ import { fight, place, playOut, type Battle } from '../src/sim/battle';
 import { chooseOption, leaveEvent } from '../src/sim/events';
 import { fightXp, gainXp, levelOfKind, xpFor } from '../src/sim/levels';
 import { newCastle, xpRate, type Castle } from '../src/sim/castle';
-import { startedMeta, rankOf, type Meta } from '../src/sim/meta';
+import { startedMeta, heroRank, type Meta } from '../src/sim/meta';
+import { awakenStats } from '../src/sim/awaken';
 import { armyById } from '../src/sim/armies';
 import { armyRun, boostOf, finish, isBossRun, noteFight, squadLimit, startStage, summon, tierOfRun, type Run } from '../src/sim/run';
 import { heroLevel, localBoost } from '../src/sim/climb';
@@ -55,6 +56,24 @@ export function playArmy(meta: Meta, armyId: string, seed: number, party: readon
   return { won, cleared, stars: cleared ? armyRules(army, tierOfRun(run), run).filter((r) => r.earned).length : 0 };
 }
 
+/** An army's last wave (its final boss) alone, as a greedy player with a party at the level of `meta`: whether it was won. The waves before it are walked over (their foes made frail), so the gold they pay and the heroes it buys are the campaign's. For tuning the final bosses. */
+export function playFinal(meta: Meta, armyId: string, seed: number, party: readonly string[], castle: Castle = newCastle()): boolean {
+  const army = armyById(armyId)!;
+  const run: Run = armyRun(seed, armyId, party, castle);
+  for (;;) {
+    autoRound(run, meta, false);
+    const b = startStage(run);
+    const last = run.stage === army.waves.length;
+    if (!last) for (const u of b.units) if (u.side === 'foe') u.hp = u.maxHp = 1;
+    autoDeploy(b, run, meta);
+    fight(b);
+    playOut(b);
+    if (last) return b.phase === 'won';
+    noteFight(run, b);
+    finish(run, true, 3);
+  }
+}
+
 /** A save whose party kinds are all at `level` (and nothing else). */
 export function savedAt(level: number, party: readonly string[], seed: number): Meta {
   const m = startedMeta(seed);
@@ -71,7 +90,7 @@ function fightNode(meta: Meta, run: Run): Battle {
   const b = startStage(run);
   const spots = frontSpots(b);
   const order = [...squad].sort((a, c) => Number(UNITS[a.kind].range > 1) - Number(UNITS[c.kind].range > 1));
-  order.forEach((h, i) => place(b, h.kind, spots[i][0], spots[i][1], h.id, { ...(run.local ? localBoost(h) : boostOf(h, rankOf(meta, h.kind), levelOfKind(meta, h.kind))), carry: run.tower!.hp[String(h.id)] }));
+  order.forEach((h, i) => place(b, h.kind, spots[i][0], spots[i][1], h.id, { ...(run.local ? localBoost(h) : boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), awakenStats(meta, h.kind))), carry: run.tower!.hp[String(h.id)] }));
   fight(b);
   playOut(b);
   return b;
@@ -137,9 +156,10 @@ function hireAll(run: Run): void {
   }
 }
 
-/** One calamity as a greedy player: the heroes hired whenever the gold allows. Returns the maps cleared, the floors, whether it was cleared whole and the heroes held. */
-export function playCalamity(meta: Meta, seed: number, hero: string, castle: Castle = newCastle()): { maps: number; floors: number; cleared: boolean; heroes: number; level: number } {
-  const run = calamityRun(seed, { ...meta, castle } as Meta, hero);
+/** One calamity (at an ascension level) as a greedy player: the heroes hired whenever the gold allows. Returns the maps cleared, the floors, whether it was cleared whole and the heroes held. */
+export function playCalamity(meta: Meta, seed: number, hero: string, castle: Castle = newCastle(), ascension = 0): { maps: number; floors: number; cleared: boolean; heroes: number; level: number } {
+  // (the ascension asked for is open: the meta has cleared the one before)
+  const run = calamityRun(seed, { ...meta, castle, ...(ascension ? { calamity: { best: 6, clears: 1, asc: ascension - 1 } } : {}) } as Meta, hero, ascension);
   const r = playClimb(meta, run, 80);
   return { maps: run.tower!.bosses, floors: run.stage - 1, cleared: !!run.cleared, heroes: run.roster.length, level: r.level };
 }

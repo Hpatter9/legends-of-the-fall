@@ -79,6 +79,7 @@ button.primary:not(:disabled), .hmBattle { animation: none; }
 #home:not([hidden]) ~ #version { top: calc(env(safe-area-inset-top) + 64px); }
 #home:has(#hmSheet:not([hidden])) ~ #version { display: none; }
 #home:has(#hmSub:not([hidden]):not(.armies)) ~ #version { display: none; }
+#party:not([hidden]) ~ #version { display: none; }
 
 /* ---- the bench: a slim card frame (every hero's is alike) ---- */
 .card, .spell { border-style: solid; border-width: 4px; border-radius: 0; box-shadow: none; padding: 0 0 2px; background: none; border-image: url(ui/cardb.png) 2 fill / 4px stretch; }

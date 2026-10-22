@@ -245,6 +245,7 @@ export class Fx {
           this.particles.spawn({ frames: VFX.dashWhite, x: to.x, y: to.y - to.tall * 0.5, scale: 1.1, frameMs: 40, alpha: 0.8, add: true });
         }
       } else if (e.kind === 'dash' || e.kind === 'blink') this.streak(b, e);
+      else if (e.kind === 'phase') this.phaseShock(e.by);
       else if (e.kind === 'area') this.area(b, e);
       else if (e.kind === 'spell') this.spell(b, e);
       else if (e.kind === 'spellfx') this.spellFx(e);
@@ -541,6 +542,16 @@ export class Fx {
       if (b.board.area === 'snow') p.spawn({ frames: VFX.dustWhite, x, y: y - 30, scale: 0.6, life: 1200, vx: 0.01, vy: 0.02, alpha: 0.7 });
       else p.spawn({ frames: VFX.dustGold, x, y: y - 14, scale: 0.7, life: 900, vx: 0.025, alpha: 0.5 });
     }
+  }
+
+  /** A boss changes form: one shockwave rolls out of it (once, no loops), the screen shakes and blinks white (a short, soft flash). */
+  private phaseShock(id: number): void {
+    const s = this.sprites.get(id);
+    if (!s) return;
+    play(this.particles, 'dark-wave', s.x, s.y + 2, { scale: 5, frameMs: 90 });
+    play(this.particles, 'blood-circle', s.x, s.y - 2, { scale: 4, life: 700, frameMs: 90, alpha: 0.8 });
+    this.trauma = Math.max(this.trauma, 0.8);
+    this.flash(0.35, 110);
   }
 
   /** Shake at least this hard for now (a boss walking in); it fades as usual once the rumble stops. */

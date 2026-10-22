@@ -23,6 +23,7 @@ import { BOSS, FOE_START, reward, squadLimit, summonCost, type Run } from './run
 import { UNITS } from './units';
 import { calBossBoost, fitBand, squadFoeMult } from './calamity';
 import { calBossBand } from './calamityBosses';
+import { ascChests, ascCrowns, ascOf, ascRules, ascCleared } from './ascension';
 import { fightXpByHero, gainRunXp, hireHero } from './climb';
 import { xpRate } from './castle';
 import { levelOf as levelOfXp, RUN_MAX_LEVEL, type LevelUp } from './levels';
@@ -131,6 +132,8 @@ export interface TowerSummary {
   /** A calamity's: the maps cleared, and whether it was cleared whole. */
   maps?: number;
   cleared?: boolean;
+  /** The ascension level it was played at (none for 0). */
+  ascension?: number;
   /** The player started over rather than fell. */
   abandoned?: boolean;
 }
@@ -263,6 +266,9 @@ export function newTower(seed: number, armies: readonly string[], prevBest = 0):
   return { act: 1, map: makeMap(seed, 1), at: -1, row: 0, hp: {}, armies: [...armies], path: [], crowns: 0, bosses: 0, prevBest };
 }
 
+/** The twists a high ascension puts on boss floors. */
+const CURSES: readonly string[] = ['narrow', 'cursed', 'ambush', 'fortified'];
+
 /** What the middle floors of a calamity map are, by weight. */
 const CAL_WEIGHTS: Record<string, number> = { fight: 50, mystery: 14, elite: 9, shop: 11, treasure: 12 };
 
@@ -272,7 +278,8 @@ const CAL_WEIGHTS: Record<string, number> = { fight: 50, mystery: 14, elite: 9, 
  * floor before the rest are camps too), the floors between are mostly fights with some elites, shops, chests and mysteries,
  * the floor before the boss is a campfire. Every map has a shop and a chest. Its own side stream; the twists come last.
  */
-export function calamityMap(seed: number, act: number, rows: number): MapNode[] {
+export function calamityMap(seed: number, act: number, rows: number, asc = 0): MapNode[] {
+  const rules = ascRules(asc);
   const nodes = makeMap(seed, act, false, rows);
   const rng = new Rng(mixSeed(seed, 0xca1a, act));
   const last = rows - 1;
@@ -282,9 +289,9 @@ export function calamityMap(seed: number, act: number, rows: number): MapNode[] 
     else if (n.row === last) n.kind = 'boss';
     else if (n.row === last - 1) n.kind = 'campfire';
     else if (n.row === 1) n.kind = rng.chance(0.7) ? 'fight' : 'mystery';
-    else if (n.row === 2 || (rows >= 7 && n.row === last - 2 && rng.chance(0.55))) n.kind = 'recruit';
+    else if (n.row === 2 || (rows >= 7 && n.row === last - 2 && rng.chance(0.55) && !rules.fewerCamps)) n.kind = 'recruit';
     else {
-      const w = { ...CAL_WEIGHTS };
+      const w: Record<string, number> = { ...CAL_WEIGHTS, elite: CAL_WEIGHTS.elite * rules.elites };
       for (const p of parents(n)) if (SPECIAL.includes(p.kind)) delete w[p.kind];
       n.kind = rng.weighted(w) as NodeKind;
     }
@@ -310,11 +317,13 @@ export function calamityMap(seed: number, act: number, rows: number): MapNode[] 
     if (pool.length) rng.pick(pool).kind = 'elite';
   }
   addTwists(nodes, seed, act);
+  // (a high ascension curses every boss floor: a twist from the curses, its own stream)
+  if (rules.bossCurse) for (const n of nodes) if (n.kind === 'boss') n.twist = new Rng(mixSeed(seed, 0xa5c8, act)).pick(CURSES);
   return nodes;
 }
 
 /** The map of an act of this run: the tower's, or a calamity's (shorter, with recruit camps). */
-export const mapFor = (run: Run, act: number): MapNode[] => (run.tower?.maps ? calamityMap(run.seed, act, rowsIn(run.tower, act)) : makeMap(run.seed, act, true, rowsIn(run.tower, act)));
+export const mapFor = (run: Run, act: number): MapNode[] => (run.tower?.maps ? calamityMap(run.seed, act, rowsIn(run.tower, act), ascOf(run)) : makeMap(run.seed, act, true, rowsIn(run.tower, act)));
 
 /** The nodes the player may pick next: those the last one leads to (the whole first floor at the start of an act). Empty while a node is in play. */
 export function choices(run: Run): MapNode[] {
@@ -357,8 +366,10 @@ function plainSpec(run: Run, kind: NodeKind, floor: number, nodeId?: number): Fi
   if (run.mode?.kind !== 'calamity') return spec;
   // (a calamity's foes follow the party: fewer for a lone hero, stronger once it is more than five)
   const more = squadFoeMult(run.roster.length);
+  const rules = ascRules(ascOf(run));
   spec.band = fitBand(spec.band, run.roster.length, kind === 'boss');
-  spec.stage.foes = { ...spec.stage.foes, hp: spec.stage.foes!.hp! * more, atk: spec.stage.foes!.atk! * more };
+  spec.stage.foes = { ...spec.stage.foes, hp: spec.stage.foes!.hp! * more * rules.foeHp, atk: spec.stage.foes!.atk! * more * rules.foeAtk };
+  if (rules.heal !== 1) spec.stage.heal = rules.heal;
   return spec;
 }
 
@@ -368,7 +379,7 @@ function baseSpec(run: Run, kind: NodeKind, floor: number, nodeId?: number): Fig
   if (kind === 'boss' && run.tower?.maps) {
     // (a calamity's bosses: one of its own per map, each bigger than the last; the map's twist adds a mechanic from the second on)
     const map = run.tower.act;
-    return { band: calBossBand(map), stage: { foes: { hp: k, atk: k }, boss: calBossBoost(map), area } };
+    return { band: calBossBand(map), stage: { foes: { hp: k, atk: k }, boss: calBossBoost(map, ascRules(ascOf(run)).phaseAt, ascRules(ascOf(run)).bossShield), area } };
   }
   if (kind === 'boss') return { band: [...FOE_BANDS[BOSS_BANDS[((run.tower?.act ?? actOf(floor)) - 1) % BOSS_BANDS.length]]], stage: { foes: { hp: k, atk: k }, boss: BOSS, area } };
   // (a named elite waits at an elite node; a call without a node keeps the plain elite band)
@@ -400,6 +411,10 @@ function stockShop(run: Run, floor: number): ShopItem[] {
   items.push({ kind: 'hero', label: UNITS[kind].name, text: run.mode?.kind === 'calamity' ? 'for hire, joins the party' : 'joins the party, grade 1', cost: run.mode?.kind === 'calamity' ? hireCost(floor) : summonCost(run) + 10, ref: kind });
   items.push({ kind: 'heal', label: 'Healing draught', text: `heals every hero ${DRAUGHT_HEAL * 100}% of its hp`, cost: 20 + floor });
   items.push({ kind: 'elixir', label: 'Elixir', text: 'heals every hero fully, the fallen too', cost: 55 + 2 * floor });
+  // (a high calamity ascension: dearer shops, and a draught that heals half as much)
+  const rules = ascRules(ascOf(run));
+  if (rules.shops !== 1) for (const it of items) it.cost = Math.round(it.cost * rules.shops);
+  if (rules.heal !== 1) for (const it of items) if (it.kind === 'heal') it.text = `heals every hero ${Math.round(DRAUGHT_HEAL * rules.heal * 100)}% of its hp`;
   return items;
 }
 
@@ -649,7 +664,7 @@ export function buy(run: Run, i: number): string | null {
       healParty(run, DRAUGHT_HEAL);
       return 'The party drinks and is healed.';
     default:
-      healParty(run, 1);
+      healParty(run, 1, true);
       return 'The elixir heals everyone.';
   }
 }
@@ -715,22 +730,24 @@ export function settleTower(m: Meta, run: Run): TowerSummary | null {
 
 /** Crowns a calamity pays for each map cleared, on top of its fights'. */
 export const MAP_CROWNS: readonly number[] = [60, 120, 200, 300, 420, 600];
-/** What a calamity cleared whole pays besides: a gold chest. */
-export const CLEAR_CHESTS = { bronze: 0, silver: 0, gold: 1 };
 
-/** Pay a finished calamity (lost, abandoned or cleared), once: crowns for each map cleared, and a chest on a full clear. The best is kept in the meta. */
+/** Pay a finished calamity (lost, abandoned or cleared), once: crowns for each map cleared, and gold chests on a full clear (both more at a high ascension). The best is kept in the meta, and a clear opens the next ascension. */
 function settleCalamity(m: Meta, run: Run): TowerSummary {
   const t = run.tower!;
   const maps = t.bosses;
-  const bonus = MAP_CROWNS.slice(0, maps).reduce((n, c) => n + c, 0);
+  const level = ascOf(run);
+  const bonus = Math.round(MAP_CROWNS.slice(0, maps).reduce((n, c) => n + c, 0) * ascCrowns(level));
   m.crowns += bonus;
-  const c = run.cleared ? CLEAR_CHESTS : { bronze: 0, silver: 0, gold: 0 };
+  const c = run.cleared ? { bronze: 0, silver: 0, gold: ascChests(level) } : { bronze: 0, silver: 0, gold: 0 };
   const armies = t.armies.filter((id) => armyById(id) && armyUnlocked(m, id));
   const army = armyById(armies[armies.length - 1] ?? ARMIES[0].id)!;
   for (let i = 0; i < c.gold; i++) m.stash.push({ army: army.id, at: 10, tier: 0, seed: mixSeed(run.seed, 0xca1c, i + 1), tower: true });
   const best = m.calamity ?? { best: 0, clears: 0 };
-  m.calamity = { best: Math.max(best.best, maps), clears: best.clears + (run.cleared ? 1 : 0) };
-  t.summary = { floors: Math.max(0, run.stage - 1), act: Math.min(t.act, t.maps ?? t.act), crowns: t.crowns + bonus, ...c, gear: [], relics: run.relics?.length ?? 0, heroes: run.roster.length, newBest: maps > best.best, maps, cleared: !!run.cleared, abandoned: t.abandoned };
+  const cleared = ascCleared(m);
+  m.calamity = { ...best, best: Math.max(best.best, maps), clears: best.clears + (run.cleared ? 1 : 0) };
+  if (run.cleared) m.calamity.asc = Math.max(cleared, level);
+  else if (best.asc !== undefined) m.calamity.asc = best.asc;
+  t.summary = { floors: Math.max(0, run.stage - 1), act: Math.min(t.act, t.maps ?? t.act), crowns: t.crowns + bonus, ...c, gear: [], relics: run.relics?.length ?? 0, heroes: run.roster.length, newBest: maps > best.best, maps, cleared: !!run.cleared, abandoned: t.abandoned, ...(level ? { ascension: level } : {}) };
   return t.summary;
 }
 

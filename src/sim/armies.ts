@@ -7,6 +7,7 @@
 import type { Boost, Stage } from './battle';
 import type { Area } from './board';
 import { FOES, isBoss } from './foes';
+import { PHASE_AT } from './bossPhases';
 import type { Meta } from './meta';
 import { starCrowns } from './stars';
 import { ARMY_STARS, MILESTONES, tierOf, TIERS } from './tiers';
@@ -78,7 +79,7 @@ export const ARMIES: readonly Army[] = [
     start: 0.5,
     growth: 0.176,
     mid: { hp: 1500, atk: 50 },
-    last: { hp: 3500, atk: 85 },
+    last: { hp: 2630, atk: 74 },
     pay: 0.52,
     clear: 120,
   },
@@ -91,7 +92,7 @@ export const ARMIES: readonly Army[] = [
     start: 0.7,
     growth: 0.17,
     mid: { hp: 1800, atk: 56 },
-    last: { hp: 2600, atk: 70 },
+    last: { hp: 2080, atk: 63 },
     pay: 0.78,
     clear: 200,
   },
@@ -104,7 +105,7 @@ export const ARMIES: readonly Army[] = [
     start: 0.85,
     growth: 0.15,
     mid: { hp: 2000, atk: 60 },
-    last: { hp: 3400, atk: 80 },
+    last: { hp: 2750, atk: 72 },
     pay: 1.1,
     clear: 300,
   },
@@ -121,7 +122,7 @@ export const ARMIES: readonly Army[] = [
     start: 1.15,
     growth: 0.136,
     mid: { hp: 2400, atk: 60 },
-    last: { hp: 3000, atk: 72 },
+    last: { hp: 2330, atk: 64 },
     pay: 1.72,
     clear: 430,
   },
@@ -134,7 +135,7 @@ export const ARMIES: readonly Army[] = [
     start: 1.38,
     growth: 0.128,
     mid: { hp: 1700, atk: 46 },
-    last: { hp: 2500, atk: 60 },
+    last: { hp: 2125, atk: 55 },
     pay: 2.21,
     clear: 600,
   },
@@ -147,7 +148,7 @@ export const ARMIES: readonly Army[] = [
     start: 1.55,
     growth: 0.124,
     mid: { hp: 1800, atk: 48 },
-    last: { hp: 2600, atk: 52 },
+    last: { hp: 2200, atk: 48 },
     pay: 3.23,
     clear: 820,
   },
@@ -160,7 +161,7 @@ export const ARMIES: readonly Army[] = [
     start: 1.64,
     growth: 0.13,
     mid: { hp: 2000, atk: 50 },
-    last: { hp: 2300, atk: 45 },
+    last: { hp: 1840, atk: 41 },
     pay: 4.1,
     clear: 1100,
   },
@@ -173,7 +174,7 @@ export const ARMIES: readonly Army[] = [
     start: 1.68,
     growth: 0.127,
     mid: { hp: 2200, atk: 52 },
-    last: { hp: 3000, atk: 55 },
+    last: { hp: 2500, atk: 50 },
     pay: 5.11,
     clear: 1450,
   },
@@ -186,7 +187,7 @@ export const ARMIES: readonly Army[] = [
     start: 1.7,
     growth: 0.124,
     mid: { hp: 1800, atk: 56 },
-    last: { hp: 2400, atk: 60 },
+    last: { hp: 2040, atk: 55 },
     pay: 6.26,
     clear: 1800,
   },
@@ -210,7 +211,7 @@ export function waveBoost(a: Army, n: number, tier = 0): Stage {
   if (w?.boss) {
     const want = w.boss === 'final' ? a.last : a.mid;
     const def = FOES[w.foes[0]];
-    boss = { size: w.boss === 'final' ? 1.5 : 1.3, hp: want.hp / def.hp, atk: want.atk / def.atk };
+    boss = { size: w.boss === 'final' ? 1.5 : 1.3, hp: want.hp / def.hp, atk: want.atk / def.atk, ...(w.boss === 'final' ? { phase: PHASE_AT } : {}) };
   }
   return { foes: { hp: k * t.hp, atk: k * t.atk, ...(t.speed !== 1 ? { speed: t.speed } : {}) }, boss, area: a.area };
 }

@@ -122,7 +122,7 @@ export interface Run {
 }
 
 /** A run that is not an ordinary one: an army's campaign (its stages are the army's waves), today's daily challenge (`practice` for a replay that does not count), or the endless tower. */
-export type RunMode = { kind: 'army'; army: string; tier?: number } | { kind: 'daily'; date: number; practice: boolean } | { kind: 'tower' } | { kind: 'calamity' };
+export type RunMode = { kind: 'army'; army: string; tier?: number } | { kind: 'daily'; date: number; practice: boolean } | { kind: 'tower' } | { kind: 'calamity'; ascension?: number };
 
 /** A new run drawing from `party` (the hero kinds its summons and starting heroes come from). */
 export function newRun(seed: number, party: readonly string[] = HEROES, castle: Castle = newCastle()): Run {

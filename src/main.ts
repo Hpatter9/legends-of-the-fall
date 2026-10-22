@@ -4,7 +4,7 @@
 
 import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { D, standable, tileAt } from './sim/board';
-import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type Boost, type Unit } from './sim/battle';
+import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
 import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
 // (`saveSlot` as `saveRun`: a tower or calamity run is saved in its own slot, any other in the ordinary one)
 import { adoptOldTower, armyOfRun, armyRun, benchFull, boostOf, canRetry, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryGold, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, type Owned, type Run } from './sim/run';
@@ -22,7 +22,8 @@ import { tierOf } from './sim/tiers';
 import { formOf, UNITS } from './sim/units';
 import { ELITE_BY_ID } from './sim/elites';
 import { isBoss } from './sim/foes';
-import { earn, loadMeta, needsStarter, pickStarter, rankOf, recordStars, saveMeta, type Meta } from './sim/meta';
+import { awakenedOf } from './sim/awaken';
+import { earn, loadMeta, needsStarter, pickStarter, heroRank, recordStars, saveMeta, type Meta } from './sim/meta';
 import { chooseStarter } from './starter';
 import { xpRate } from './sim/castle';
 import { heroStats } from './sim/talents';
@@ -49,7 +50,8 @@ import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, type SpellId } fr
 import { bindSpellbook } from './spellbook';
 import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
-import { countTraits, kindsOf, traitsOf, TRAITS } from './sim/traits';
+import { closestTrait, countTraits, kindsOf, nextTierLine, traitsOf, TRAITS } from './sim/traits';
+import { placeSynergies, startSynergies } from './synergyView';
 import { UnitSprite } from './render/unitView';
 import { flyUp, recyclePuff, summonBurst } from './render/uiFx';
 import { Fx, loadFx } from './render/fx';
@@ -418,6 +420,7 @@ class Game {
     this.endIntro();
     this.stats = startStats(this.b.units);
     startFight(isBossRun(this.run));
+    startSynergies(countTraits(kindsOf(this.b.units)));
     keepAwake(true);
     this.chosen = null;
     this.boardView.clearMarks();
@@ -448,6 +451,7 @@ class Game {
         // (a fighter a skill called up mid-fight has no sprite yet: make it, with its entrance)
         if (b.units.length !== this.sprites.size) this.syncSprites();
         playEvents(b, events, this.speed);
+        for (const e of events) if (e.kind === 'phase') this.startPhase(e);
         if (events.some((e) => e.kind === 'hit')) this.refreshBench();
         if (b.phase !== 'fight') this.refresh();
       }
@@ -468,7 +472,8 @@ class Game {
     const t = b.phase === 'deploy' ? performance.now() : b.phase === 'fight' ? b.t - TICK_MS + this.acc : b.t + this.acc;
     for (const s of this.sprites.values()) s.update(b.board, t, b.phase !== 'deploy');
     // (the camera eases to where it is sent, unless a finger is holding the board)
-    if (b.phase === 'fight' && !this.intro) this.follow();
+    if (this.phaseBoss && (!b.pause || b.phase !== 'fight')) this.endPhase();
+    if (b.phase === 'fight' && !this.intro) this.phaseBoss ? this.pushOnPhase() : this.follow();
     if (!this.drag?.pan) {
       const f = b.phase === 'fight' && !this.intro;
       this.cx = f ? easeTo(this.cx, this.tx, dt, EASE_MOVE_MS) : this.cx + (this.tx - this.cx) * Math.min(1, dt / 220);
@@ -477,6 +482,40 @@ class Game {
       this.clampCam();
     }
     this.place();
+  }
+
+  /** The boss changing form, while the fight is held: the banner is up and the camera is on it. */
+  private phaseBoss: Unit | null = null;
+  private phaseZoom = 1;
+
+  /** A boss changes form (a sim event): the fight is held for a beat; the camera pushes in on the boss and a banner gives its line. */
+  private startPhase(e: Extract<BattleEvent, { kind: 'phase' }>): void {
+    const boss = this.b.units.find((u) => u.id === e.by);
+    if (!boss) return;
+    this.phaseBoss = boss;
+    this.phaseZoom = Math.min(this.tzoom * 1.4, 3 / this.scale);
+    const banner = $('phaseBanner');
+    banner.querySelector('b')!.textContent = UNITS[boss.def].name.toUpperCase();
+    banner.querySelector('span')!.textContent = `\u201c${e.line}\u201d`;
+    // (a new element each time, so its entrance plays again)
+    banner.replaceWith(banner.cloneNode(true));
+    $('phaseBanner').hidden = false;
+    play('boom');
+  }
+
+  /** The camera closes in on the changing boss. */
+  private pushOnPhase(): void {
+    const boss = this.phaseBoss!;
+    const [x, y] = at(boss.u, boss.v, tileAt(this.b.board, boss.u, boss.v)?.h ?? 0);
+    this.tx = x;
+    this.ty = y;
+    this.tzoom = this.phaseZoom;
+  }
+
+  /** The fight carries on: the banner goes and the camera lets the boss go. */
+  private endPhase(): void {
+    this.phaseBoss = null;
+    $('phaseBanner').hidden = true;
   }
 
   /** The roster ids a merge has just made (they flash on the bench and, if placed, on the board). */
@@ -558,7 +597,8 @@ class Game {
     twist.style.top = `${top.bottom + 2}px`;
     const below = twist.hidden ? top.bottom : twist.getBoundingClientRect().bottom + 2;
     bar.style.top = `${below + 4}px`;
-    const head = bar.hidden ? below : bar.getBoundingClientRect().bottom + 4;
+    // (the row of active synergies sits under the bars during a fight)
+    const head = placeSynergies(bar.hidden ? below : bar.getBoundingClientRect().bottom + 4);
     const area = { x: 0, y: head, w: viewW(), h: panel.top - head };
     const b = this.b.board;
     let x0 = Infinity;
@@ -920,7 +960,7 @@ class Game {
   private boostFor(h: Owned): Boost {
     // (a run that levels its own heroes reads nothing of the meta's levels, gear or talents)
     if (this.run.local) return { ...localBoost(h), carry: hpShare(this.run, h.id) };
-    return { ...boostOf(h, rankOf(this.meta, h.kind), levelOfKind(this.meta, h.kind), heroStats(this.meta, h.kind)), carry: hpShare(this.run, h.id) };
+    return { ...boostOf(h, heroRank(this.meta, h.kind), levelOfKind(this.meta, h.kind), heroStats(this.meta, h.kind)), ...(awakenedOf(this.meta, h.kind) ? { awaken: awakenedOf(this.meta, h.kind) } : {}), carry: hpShare(this.run, h.id) };
   }
 
   /** Begin a tower run: its map first, the fights as they are picked. */
@@ -938,7 +978,7 @@ class Game {
     const saved = loadSlot(kind);
     if (saved) return this.resumeSlot(saved);
     if (kind === 'tower') return this.startTower(towerRun(clockSeed(), this.meta));
-    pickHero(this.meta, (hero) => this.startTower(calamityRun(clockSeed(), this.meta, hero)), () => this.home.open());
+    pickHero(this.meta, (hero, ascension) => this.startTower(calamityRun(clockSeed(), this.meta, hero, ascension)), () => this.home.open());
   }
 
   /** Back into a saved tower or calamity run: its map, or the fight it had picked. */
@@ -1590,6 +1630,8 @@ class Game {
 
   /** The trait strip: the traits of the heroes placed, lit when their bonus is on; a tap says what one does. */
   private traitPick?: string;
+  /** The tier each trait stood at the last time the strip was drawn, so a tier that just woke can light up once. */
+  private traitTiers = new Map<string, number>();
   private refreshTraits(): void {
     const strip = $('traits');
     const hint = $('traitHint');
@@ -1598,18 +1640,41 @@ class Game {
     if (strip.dataset.key === key) return;
     strip.dataset.key = key;
     strip.replaceChildren();
+    const woke: string[] = [];
     for (const c of counts) {
+      const was = this.traitTiers.get(c.trait.id) ?? -1;
+      const lit = c.tier > was && strip.dataset.drawn === '1';
+      if (lit) woke.push(`${c.trait.name}: ${c.trait.tiers[c.tier].text}`);
       const pill = document.createElement('button');
-      pill.className = `trait ${c.trait.kind}${c.active ? ' on' : ''}${this.traitPick === c.trait.id ? ' picked' : ''}`;
+      pill.className = `trait ${c.trait.kind}${c.active ? ' on' : ''}${lit ? ' wake' : ''}${this.traitPick === c.trait.id ? ' picked' : ''}`;
+      // (the chip says the count and what the next tier gives; a trait at its top tier shows just the count)
+      const next = c.trait.tiers[c.tier + 1];
       pill.textContent = `${c.trait.name} ${c.count}/${c.goal}`;
+      if (next) {
+        const fx = document.createElement('small');
+        fx.textContent = next.text;
+        pill.append(fx);
+      }
       pill.addEventListener('click', () => {
         this.traitPick = this.traitPick === c.trait.id ? undefined : c.trait.id;
         this.refreshTraits();
       });
       strip.append(pill);
     }
+    this.traitTiers = new Map(counts.map((c) => [c.trait.id, c.tier]));
+    strip.dataset.drawn = '1';
     const picked = counts.find((c) => c.trait.id === this.traitPick);
-    hint.textContent = picked ? `${picked.trait.name}: ${picked.trait.tiers.map((t) => `${t.need} heroes, ${t.text}`).join('; ')}` : counts.length ? 'Different heroes of a trait give a team bonus' : '';
+    const near = closestTrait(counts);
+    hint.classList.toggle('wake', woke.length > 0);
+    hint.textContent = woke.length
+      ? `Synergy active! ${woke.join('; ')}`
+      : picked
+        ? `${picked.trait.name}: ${picked.trait.tiers.map((t) => `${t.need} heroes, ${t.text}`).join('; ')}`
+        : near
+          ? `${near.trait.name}: ${nextTierLine(near)}`
+          : counts.length
+            ? 'Different heroes of a trait give a team bonus'
+            : '';
   }
 
   private refreshBench(): void {

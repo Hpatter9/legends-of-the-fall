@@ -7,7 +7,7 @@
 
 import type { Boost } from './battle';
 import { levelOfKind } from './levels';
-import { rankOf, type Meta } from './meta';
+import { heroRank, type Meta } from './meta';
 import { gradeBoost } from './run';
 import { heroStats } from './talents';
 import { UNITS } from './units';
@@ -33,7 +33,7 @@ export function powerOf(kind: string, boost: Boost = {}): number {
 /** A kind's power outside a run: grade 1, with its rank, level, tier, equipment and talents. */
 export const kindPower = (m: Meta, kind: string): number => {
   const eq = heroStats(m, kind);
-  return powerOf(kind, { ...gradeBoost(1, rankOf(m, kind), levelOfKind(m, kind)), ...(eq ? { equip: eq } : {}) });
+  return powerOf(kind, { ...gradeBoost(1, heroRank(m, kind), levelOfKind(m, kind)), ...(eq ? { equip: eq } : {}) });
 };
 
 /** How often a hero of `kind` swings, in blows a second, with the attack speed its equipment and talents give (`equip`). */

@@ -14,6 +14,9 @@ import { readEquipment, readEquipped, type EquipSlot, type Equipment } from './e
 import { migrateArmies, readSeen, seenFor, type ArmyRecord } from './armies';
 import { readStash } from './armyStars';
 import { readTalents, type KindTalents } from './talents';
+import { AWAKEN_MULT, OVERFLOW_CROWNS, SHARD_CAP } from './awakenRules';
+import { readAwakened } from './awaken';
+import { readCodex, readCodexClaimed, type CodexRecord } from './codex';
 
 export const PULL_COST = 100;
 export const PULL10_COST = 900;
@@ -62,7 +65,7 @@ export interface Meta {
   /** The most floors cleared in the endless tower. */
   tower: number;
   /** A calamity's record: the most maps cleared in one run, and the runs cleared whole (none before the first calamity). */
-  calamity?: { best: number; clears: number };
+  calamity?: { best: number; clears: number; /** The highest ascension level cleared whole (`ascension.ts`); none before the first clear after it came. */ asc?: number };
   /** The daily challenge per date (yyyymmdd): the best score counted and the plays (the first counts). */
   daily: Record<string, DailyEntry>;
   /** The bosses beaten (`foes.ts`, by id). */
@@ -81,8 +84,13 @@ export interface Meta {
   equipped?: Record<string, Partial<Record<EquipSlot, number>>>;
   /** The next equipment id. */
   nextItem?: number;
+  /** The steps each hero kind has awakened above its top rank, 1 or 2 (`awaken.ts`; missing is none). */
+  awakened?: Record<string, number>;
   /** The talents each hero kind has taken and the points it bought with shards (`talents.ts`; missing is none). */
   talents?: Record<string, KindTalents>;
+  /** The codex: the foe kinds met and the kills per kind (`codex.ts`; saves from before have none), and the milestone rewards claimed. */
+  codex?: CodexRecord;
+  codexClaimed?: string[];
   /** Chests earned from the armies' star milestones and not yet opened, oldest first (`armyStars.ts`). */
   stash: StashChest[];
 }
@@ -110,8 +118,10 @@ export interface Pull {
   kind: string;
   /** The kind was not unlocked before this pull. */
   isNew: boolean;
-  /** Shards a duplicate gives (0 for a new kind). */
+  /** Shards a duplicate gives (0 for a new kind, and for a repeat of a kind with nothing left to buy). */
   shards: number;
+  /** Crowns a repeat gives instead once the kind's shards have nothing left to buy (`SHARD_CAP`). */
+  crowns?: number;
 }
 
 /** A brand-new save: no hero yet, only the three starter packs to pick from (`pickStarter`). */
@@ -140,8 +150,10 @@ export function pickStarter(m: Meta, index: number): boolean {
 }
 /** The rank a hero kind has from its shards (0 to MAX_RANK). */
 export const rankOf = (m: Meta, kind: string): number => RANK_SHARDS.filter((need) => (m.shards[kind] ?? 0) >= need).length;
-/** Hp and attack multiplier a rank gives. */
-export const rankMult = (rank: number): number => RANK_MULT ** rank;
+/** A hero's whole rank: the shard rank (0 to 4) and one for each step it has awakened (`awaken.ts`; 5 and 6). */
+export const heroRank = (m: Meta, kind: string): number => rankOf(m, kind) + (m.awakened?.[kind] ?? 0);
+/** Hp and attack multiplier a rank gives (the ranks above `MAX_RANK` are awakened steps, `AWAKEN_MULT` each). */
+export const rankMult = (rank: number): number => RANK_MULT ** Math.min(rank, MAX_RANK) * AWAKEN_MULT ** Math.max(0, rank - MAX_RANK);
 /** Crowns a won stage pays. */
 export const stageCrowns = (stage: number) => 10 + 2 * stage;
 /** Crowns a run's end pays: more the further it got. */
@@ -221,9 +233,12 @@ export function pullOnce(m: Meta): Pull {
   const isNew = !m.unlocked.includes(kind);
   m.sinceNew = isNew ? 0 : (m.sinceNew ?? 0) + 1;
   let shards = 0;
+  let crowns = 0;
   if (isNew) m.unlocked.push(kind);
+  // (a repeat always has a use: shards for the ranks, the awakening and the talents, then crowns once they are all bought)
+  else if ((m.shards[kind] ?? 0) >= SHARD_CAP) m.crowns += crowns = OVERFLOW_CROWNS;
   else m.shards[kind] = (m.shards[kind] ?? 0) + (shards = DUPLICATE_SHARDS);
-  return { kind, isNew, shards };
+  return crowns ? { kind, isNew, shards, crowns } : { kind, isNew, shards };
 }
 
 /** Pay for and make 1 or 10 pulls. Null when too poor. */
@@ -278,10 +293,16 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.equipment = readEquipment(m.equipment);
       m.equipped = readEquipped(m.equipped, m.equipment);
       m.nextItem = Math.max((m.nextItem ?? 1) | 0, 1, ...m.equipment.map((x) => x.id + 1));
+      // (saves from before awakening have none)
+      m.awakened = readAwakened(m.awakened, m.shards);
+      if (!Object.keys(m.awakened).length) delete m.awakened;
       // (saves from before the talents have none; the rest of the save is read first, as the points depend on levels and shards)
       m.talents = readTalents(m.talents, m);
       // (saves from before the army chests have an empty stash; a chest given but not opened by an earlier format goes into it)
       m.stash = readStash(m.stash, rawArmies, m.seed);
+      // (saves from before the codex have none)
+      m.codex = readCodex(m.codex);
+      m.codexClaimed = readCodexClaimed(m.codexClaimed) ?? [];
       return m;
     }
   } catch {

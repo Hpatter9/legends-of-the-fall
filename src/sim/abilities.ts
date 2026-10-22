@@ -1533,7 +1533,7 @@ for (const [kind, ult] of Object.entries(heroUltimates((kind) => KITS[kind].ulti
 // The named elites of the tower (`elites.ts`) borrow the foes' skills and heroes' skills too.
 Object.assign(KITS, eliteKits(KITS), calBossKits(KITS));
 
-export const kitOf = (u: Unit): Kit | undefined => KITS[u.def];
+export const kitOf = (u: Unit): Kit | undefined => u.kit ?? KITS[u.def];
 
 /** A free hero whose charge is full lets its skill go, if there is something to use it on. */
 export function tryCast(b: Battle, me: Unit, out: BattleEvent[]): boolean {
@@ -1578,10 +1578,12 @@ function began(b: Battle, me: Unit, s: Skill, out: BattleEvent[]): boolean {
   return true;
 }
 
-/** A fighter's ultimate, once it is its own: a hero's waits for the level its `unlock` names. */
+/** A fighter's ultimate, once it is its own: a hero's waits for the level its `unlock` names, and a foe never takes one that has an `unlock` (it is a hero's alone, so a boss that borrows a hero's skill does not borrow the ultimate). */
 export const ultimateOf = (u: Unit): Skill | undefined => {
   const s = kitOf(u)?.ultimate;
-  return s && (!s.unlock || u.side !== 'hero' || (u.level ?? 1) >= s.unlock) ? s : undefined;
+  if (!s) return undefined;
+  if (!s.unlock) return s;
+  return u.side === 'hero' && (u.level ?? 1) >= s.unlock ? s : undefined;
 };
 
 /** Whether a hero's ultimate is full. */

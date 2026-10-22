@@ -4,7 +4,10 @@
 import { ALL_HEROES, UNITS } from './sim/units';
 import { KITS } from './sim/abilities';
 import { traitsOf, TRAITS } from './sim/traits';
-import { MAX_RANK, RANK_SHARDS, rankMult, rankOf, type Meta } from './sim/meta';
+import { MAX_RANK, RANK_SHARDS, heroRank, rankMult, rankOf, type Meta } from './sim/meta';
+import { AWAKEN_SHARDS, awakenedOf, awakenPlan } from './sim/awaken';
+import { drawAwaken, gems, playAwakenShow } from './awakenView';
+import { lookFilter, lookSheet, stepOfRank } from './render/awakenLook';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { lastingBoost, progressOf, xpOf } from './sim/levels';
 import { drawEquipment } from './equipView';
@@ -21,6 +24,8 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   return e;
 };
 export const stars = (rank: number) => '★'.repeat(rank) + '☆'.repeat(MAX_RANK - rank);
+/** A hero's stars and, after them, its awakening gems. */
+export const starsOf = (meta: Meta, kind: string): string => `${stars(rankOf(meta, kind))} ${gems(awakenedOf(meta, kind))}`;
 
 function xpBar(meta: Meta, kind: string): { level: number; bar: HTMLElement; text: string } {
   const p = progressOf(xpOf(meta, kind));
@@ -39,25 +44,40 @@ export function strongest(meta: Meta, n: number): string[] {
 
 /** Fill the detail sheet for a hero; returns a function that stops its idle animation. */
 export function drawHeroSheet(box: HTMLElement, meta: Meta, kind: string, close: () => void): () => void {
+  let stop = paintSheet(box, meta, kind, close, again);
+  // (an awakening draws the sheet again, with the show on the new look)
+  function again(step: number): void {
+    stop();
+    stop = paintSheet(box, meta, kind, close, again, step);
+  }
+  return () => stop();
+}
+
+function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => void, redraw: (step: number) => void, show = 0): () => void {
   const def = UNITS[kind];
+  const rank = rankOf(meta, kind);
   const open = meta.unlocked.includes(kind);
   const kit = KITS[kind];
   box.className = 'hsheet';
   box.replaceChildren();
   const head = el('div', 'hhead');
   const pic = el('div', 'hpic');
-  const spr = sprite(def.sheet, 76);
+  // (an awakened hero wears its awakened look: the pack's variant, or a recolour of its top form)
+  const full = heroRank(meta, kind);
+  const step = stepOfRank(full);
+  const spr = sprite(step ? lookSheet(kind, full, 3) : def.sheet, 76);
+  if (step) spr.canvas.style.filter = lookFilter(kind, step);
   spr.canvas.style.transform = spr.faceRight ? 'translateX(-50%)' : 'translateX(-50%) scaleX(-1)';
   if (!open) spr.canvas.style.filter = 'brightness(0.15) grayscale(1)';
   pic.append(spr.canvas);
   const title = el('div');
   title.append(el('h3', '', open ? def.name : '???'), el('em', '', `${open ? `${CLASS_NAMES[CLASS_OF[kind]]} · ${def.role}` : 'not yet recruited'}`));
   const x = xpBar(meta, kind);
-  const rank = rankOf(meta, kind);
   if (open) {
     const shards = meta.shards[kind] ?? 0;
-    const next = rank < MAX_RANK ? `${shards} / ${RANK_SHARDS[rank]} shards to rank ${rank + 1}` : 'max rank';
-    title.append(el('span', 'stars', stars(rank)), el('span', 'lv', `Level ${x.level} · ${x.text}`), x.bar, el('span', 'lv', next));
+    const plan = awakenPlan(meta, kind);
+    const next = rank < MAX_RANK ? `${shards} / ${RANK_SHARDS[rank]} shards to rank ${rank + 1}` : plan.step ? (plan.can ? 'ready to awaken' : `${shards} / ${AWAKEN_SHARDS[plan.step - 1]} shards to awaken`) : 'fully awakened';
+    title.append(el('span', 'stars', starsOf(meta, kind)), el('span', 'lv', `Level ${x.level} · ${x.text}`), x.bar, el('span', 'lv', next));
     const marks = traitsOf(kind).map((t) => TRAITS[t].name).join(' · ');
     if (marks) title.append(el('em', '', marks));
   }
@@ -65,7 +85,7 @@ export function drawHeroSheet(box: HTMLElement, meta: Meta, kind: string, close:
   box.append(head);
   if (open) {
     const b = lastingBoost(x.level);
-    const m = rankMult(rank);
+    const m = rankMult(full);
     const stat = el('div', 'hstats');
     for (const [name, v] of [['HP', Math.round(def.hp * b.hp * m)], ['Attack', Math.round(def.atk * b.atk * m)], ['Defence', def.def], ['Range', def.range]] as const) {
       const cell = el('div');
@@ -100,10 +120,12 @@ export function drawHeroSheet(box: HTMLElement, meta: Meta, kind: string, close:
         if (locked) p.append(el('small', 'unlock', ` Unlocks at level ${(a as { unlock: number }).unlock}.`));
         box.append(p);
       }
+    box.append(drawAwaken(meta, kind, redraw));
     if (TREES[kind]) box.append(drawTalents(meta, kind, repower));
     box.append(drawEquipment(meta, kind, repower));
     box.append(el('p', 'hint', 'Equipment is kept for good. Gear found in a run lasts that run only.'));
   }
+  if (show) playAwakenShow(pic, show);
   const done = el('button', 'primary', 'Close');
   done.addEventListener('click', close);
   box.append(done);

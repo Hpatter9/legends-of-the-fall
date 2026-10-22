@@ -10,11 +10,13 @@ import { Rng, mixSeed } from './rng';
 import type { Battle } from './battle';
 import { armyOfRun, bandFor, isBossRun, isBossStage, recruit, START_GOLD, SUMMON_BASE, type Run } from './run';
 import { bonusGold } from './castle';
+import { ascRules, ascUnlocked } from './ascension';
 import { CAL_MAPS, CAL_ROWS, CAL_SCALE, CAL_START_GOLD } from './calamity';
 import { armyCleared, armyUnlocked, ARMIES } from './armies';
 import { HEROES } from './units';
 import type { Meta } from './meta';
 import { mapFor, newTower } from './tower';
+import { noteFoes } from './codex';
 
 /** The stage the endless tower opens at (reached in any run), or once the first army has been beaten. */
 export const TOWER_UNLOCK = 10;
@@ -83,11 +85,12 @@ export function towerRun(seed: number, m: Meta): Run {
 }
 
 /** A calamity from a seed: one starting hero (a kind the player owns) at level 1, the castle as it stands, and the first small map. Heroes are hired along the way. */
-export function calamityRun(seed: number, m: Meta, hero: string): Run {
+export function calamityRun(seed: number, m: Meta, hero: string, ascension = 0): Run {
+  const level = Math.max(0, Math.min(Math.floor(ascension) || 0, ascUnlocked(m)));
   const kind = m.unlocked.includes(hero) ? hero : m.party[0];
-  const run: Run = { seed, gold: CAL_START_GOLD + bonusGold(m.castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...m.unlocked], castle: { ...m.castle }, local: true };
+  const run: Run = { seed, gold: Math.max(0, CAL_START_GOLD - ascRules(level).startGold) + bonusGold(m.castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...m.unlocked], castle: { ...m.castle }, local: true };
   run.squad.push(recruit(run, kind, 0).id);
-  run.mode = { kind: 'calamity' };
+  run.mode = level ? { kind: 'calamity', ascension: level } : { kind: 'calamity' };
   const t = newTower(seed, ARMIES.filter((a) => armyUnlocked(m, a.id)).map((a) => a.id), m.tower);
   t.rows = [...CAL_ROWS];
   t.maps = CAL_MAPS;
@@ -118,6 +121,8 @@ export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: numbe
     const entry = (m.daily[String(run.mode.date)] ??= { best: 0, plays: 1 });
     entry.best = Math.max(entry.best, dailyScore(run));
   }
+  // (the codex notes the foes this fight met and felled)
+  if (fight.battle) noteFoes(m, fight.battle);
   return checkAchievements({ battle: fight.battle, won: fight.won, stage: fight.stage, stars: fight.stars, run, meta: m });
 }
 

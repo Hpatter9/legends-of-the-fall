@@ -4,12 +4,13 @@
 // until Start or Done, which saves it through `setParty`; Back throws it away. The rules are in `src/sim/meta.ts`.
 
 import { ALL_HEROES, UNITS } from './sim/units';
-import { partySlots, rankOf, saveMeta, setParty, type Meta } from './sim/meta';
+import { partySlots, saveMeta, setParty, type Meta } from './sim/meta';
 import { progressOf, xpOf } from './sim/levels';
 import { countTraits, TRAITS, traitsOf } from './sim/traits';
 import { portrait } from './render/sheets';
-import { drawHeroSheet, stars } from './menuHeroes';
+import { drawHeroSheet, starsOf } from './menuHeroes';
 import { kindPower, powerText } from './sim/power';
+import { ROLE_NAMES, roleOf, suggestParty } from './sim/suggest';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -36,6 +37,7 @@ export class Party {
   ) {
     $('ptBack').addEventListener('click', () => this.close(this.onBack));
     $('ptGo').addEventListener('click', () => this.confirm());
+    $('ptSuggest').addEventListener('click', () => this.suggest());
     $('ptSheet').addEventListener('click', (e) => e.target === $('ptSheet') && this.closeSheet());
   }
 
@@ -64,6 +66,16 @@ export class Party {
     this.closeSheet();
     $('party').hidden = true;
     then?.();
+  }
+
+  /** Fill the draft with the best party the unlocked heroes make (nothing is saved until Start or Done). */
+  private suggest(): void {
+    this.picked = suggestParty(this.meta.unlocked, this.slots, (k) => kindPower(this.meta, k));
+    const traits = countTraits(this.picked).filter((c) => c.active).map((c) => c.trait.name);
+    const roles = [...new Set(this.picked.map(roleOf))].map((r) => ROLE_NAMES[r]);
+    this.note = '';
+    this.draw();
+    $('ptHint').textContent = `Suggested: ${traits.length ? `wakes ${traits.join(', ')}; ` : ''}${roles.join(', ')}`;
   }
 
   /** Add a hero to the party, or take it out. A full party asks for one out first. */
@@ -153,7 +165,7 @@ export class Party {
       card.append(el('b', '', open ? def.name : '???'));
       if (open) {
         const p = progressOf(xpOf(m, kind));
-        card.append(el('span', 'stars', stars(rankOf(m, kind))), el('span', 'lv', `Lv ${p.level}`), el('span', 'pw', `Power ${powerText(kindPower(m, kind))}`), el('span', 'ptTags', traitsOf(kind).map((t) => TRAITS[t].short).join(' · ')));
+        card.append(el('span', 'stars', starsOf(m, kind)), el('span', 'lv', `Lv ${p.level}`), el('span', 'pw', `Power ${powerText(kindPower(m, kind))}`), el('span', 'ptTags', traitsOf(kind).map((t) => TRAITS[t].short).join(' · ')));
       } else card.append(el('span', 'lv', 'Not recruited'));
       const info = el('span', 'ptInfo', 'i');
       info.addEventListener('click', (e) => {

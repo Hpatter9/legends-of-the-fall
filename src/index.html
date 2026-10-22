@@ -152,13 +152,18 @@
   #spellHint { min-height: 14px; font-size: 11px; color: var(--dim); text-align: center; }
 
   /* the trait strip, in the deploy phase only */
-  #traits { display: flex; gap: 5px; overflow-x: auto; min-height: 24px; }
+  #traits { display: flex; gap: 5px; overflow-x: auto; min-height: 32px; }
   #traitHint { min-height: 13px; font-size: 11px; color: var(--dim); text-align: center; }
   body:not([data-phase='deploy']) #traits, body:not([data-phase='deploy']) #traitHint { display: none; }
   .trait { flex: none; padding: 3px 8px; font-size: 12px; border-radius: 12px; border: 1px solid #5a3a22; background: rgba(0, 0, 0, 0.35); color: var(--dim); }
   .trait.class { border-style: dashed; }
   .trait.on { color: #1a1008; background: var(--gold); border-color: var(--gold); font-weight: bold; }
   .trait.picked { outline: 2px solid #7cc0ff; }
+  .trait small { display: block; font-size: 9px; font-weight: normal; line-height: 1.1; opacity: 0.8; white-space: nowrap; }
+  .trait.wake { animation: traitWake 0.9s ease-out 1; }
+  #traitHint.wake { color: var(--gold); animation: traitHintWake 0.9s ease-out 1; }
+  @keyframes traitWake { 0% { transform: scale(1.35); box-shadow: 0 0 16px 4px rgba(255, 220, 120, 0.95); } 100% { transform: none; } }
+  @keyframes traitHintWake { 0% { opacity: 0; } 100% { opacity: 1; } }
   .card .lv { display: block; font-size: 9px; line-height: 1; color: #cfc3b0; }
   .card small { display: flex; justify-content: center; gap: 2px; margin-top: 1px; }
   .card small span { font-size: 9px; line-height: 1; padding: 1px 3px; border-radius: 3px; background: rgba(255, 255, 255, 0.12); color: #cfc3b0; }
@@ -257,6 +262,14 @@
   @keyframes bcFlash { 0% { opacity: 0.55; } 100% { opacity: 0; } }
   /* (reduced motion: the card just fades in, nothing slides or slams) */
   @media (prefers-reduced-motion: reduce) { #bossCard canvas, #bossCard .rib, #bossCard span { animation: bcDim 0.5s ease-out both; } #bossCard::after { display: none; } }
+  /* a boss changes form: the banner over the held fight (it comes in once; no loops) */
+  #phaseBanner { position: fixed; left: 0; right: 0; top: 17%; z-index: 4; pointer-events: none; text-align: center; padding: 10px 12px; background: linear-gradient(90deg, transparent, rgba(8, 4, 2, 0.82) 15%, rgba(8, 4, 2, 0.82) 85%, transparent); animation: pbIn 0.3s cubic-bezier(0.2, 1.3, 0.4, 1) both; text-shadow: 0 2px 0 #000; }
+  #phaseBanner[hidden] { display: none; }
+  #phaseBanner small { display: block; font: 700 13px var(--display); letter-spacing: 6px; color: #ff9a82; }
+  #phaseBanner b { display: block; font: 900 clamp(24px, calc(8 * var(--vw)), 38px)/1.15 var(--display); letter-spacing: 3px; color: var(--gold); }
+  #phaseBanner span { display: block; margin-top: 2px; font-style: italic; color: var(--ink); }
+  @keyframes pbIn { from { opacity: 0; transform: scale(1.4); } }
+  @media (prefers-reduced-motion: reduce) { #phaseBanner { animation: none; } }
   /* the boss's health, across the top under the title bar, with its name */
   #bossBar { position: fixed; left: 12px; right: 12px; z-index: 2; pointer-events: none; text-shadow: 0 1px 0 #000; }
   #bossBar[hidden] { display: none; }
@@ -623,6 +636,7 @@
   #party { position: fixed; inset: 0; z-index: 6; display: flex; flex-direction: column; gap: 8px; padding: calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 12px); background: rgba(24, 12, 8, 0.97); animation: fade 0.2s ease-out; }
   #party[hidden], #ptSheet[hidden] { display: none; }
   #party > header { display: flex; align-items: center; gap: 10px; }
+  #ptSuggest { margin-left: auto; }
   #party h2 { margin: 0; flex: 1; font-size: 20px; color: var(--gold); }
   #ptSlots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
   .ptSlot { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0; min-height: 82px; padding: 4px 2px; background: rgba(0, 0, 0, 0.35); border: 2px dashed #6b4128; border-radius: 10px; font-weight: normal; }
@@ -764,6 +778,7 @@
 <div id="twistBanner" hidden></div>
 <div id="autoBar" hidden><b></b><span></span><button id="autoStop">Stop</button></div>
 <div id="bossBar" hidden><b></b><i><span></span></i></div>
+<div id="phaseBanner" hidden><small>PHASE 2</small><b></b><span></span></div>
 <div id="bossCard" hidden><canvas></canvas><div class="rib"><b></b></div><span></span></div>
 <div id="panel">
   <div id="spells"><div id="mana"><i><span></span></i><b></b></div><div id="spellCards"></div><div id="spellHint"></div></div>
@@ -811,7 +826,7 @@
   <div id="hmSheet" hidden><div id="hmSheetBox"></div></div>
 </div>
 <div id="party" hidden>
-  <header><button id="ptBack">Back</button><h2>Party</h2></header>
+  <header><button id="ptBack">Back</button><h2>Party</h2><button id="ptSuggest" title="Pick a party that wakes good synergies">Suggest</button></header>
   <div id="ptSlots"></div>
   <p id="ptHint"></p>
   <div id="ptTraits"></div>
