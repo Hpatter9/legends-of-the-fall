@@ -4,6 +4,8 @@
 // only through `equipment.ts`.
 
 import { EQUIP_BASES, describeAbility, hasAbility, EQUIP_SLOTS, SALVAGE_CROWNS, SLOT_NAMES, callingOf, equipAll, equipBest, equipItem, equipStats, itemName, RARITY_NAMES, itemStats, salvageItem, spareEquipment, statLines, unequipItem, wornIn, STAT_KEYS, type EquipSlot, type EquipStats, type Equipment } from './sim/equipment';
+import { combineAll, combineGroup, combineGroups, combinePreview, COMBINE_COUNT } from './sim/equipment';
+import { GEAR_SETS, SET_OF_BASE, activeTiers, setCounts, type GearSet } from './sim/gearSets';
 import { saveMeta, type Meta } from './sim/meta';
 import { UNITS } from './sim/units';
 import { EQUIP_ICONS } from './equipArt';
@@ -72,6 +74,33 @@ function itemCard(it: Equipment, kind: string, against?: Equipment): HTMLElement
 }
 
 
+/** The bases a kind wears now, optionally with `swap` in place of its piece in that slot's. */
+function wornBases(meta: Meta, kind: string, swap?: Equipment): string[] {
+  const out: string[] = [];
+  for (const slot of EQUIP_SLOTS) {
+    const it = swap && EQUIP_BASES[swap.base].slot === slot ? swap : wornIn(meta, kind, slot);
+    if (it) out.push(it.base);
+  }
+  return out;
+}
+
+/** One gear set's progress: its name and count, its pieces (worn ones lit) and each tier (lit when on). */
+function setCard(set: GearSet, worn: ReadonlySet<string>): HTMLElement {
+  const n = set.pieces.filter((p) => worn.has(p)).length;
+  const on = activeTiers(set, n).length;
+  const card = el('div', `eqSet${on ? ' on' : ''}`);
+  card.style.setProperty('--sc', set.colour);
+  const head = el('div', 'eqSetHead');
+  head.append(el('b', '', set.name), el('small', '', `${n} / ${set.pieces.length}`));
+  card.append(head);
+  const pieces = el('div', 'eqSetPieces');
+  for (const p of set.pieces) pieces.append(el('span', worn.has(p) ? 'got' : '', EQUIP_BASES[p].name));
+  card.append(pieces);
+  card.append(el('small', `eqTier${n >= 2 ? ' on' : ''}`, `2 pieces: ${set.two.text}`));
+  if (set.three) card.append(el('small', `eqTier${n >= 3 ? ' on' : ''}`, `3 pieces: ${set.three.text}`));
+  return card;
+}
+
 /** The panel for a hero kind. `changed` is told after anything is equipped, unequipped or salvaged (so the page can refresh). */
 export function drawEquipment(meta: Meta, kind: string, changed: () => void = () => {}): HTMLElement {
   const panel = el('div', 'eqPanel');
@@ -116,6 +145,80 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
     };
     auto.append(best, all, toggle);
     panel.append(auto, note);
+    // the gear sets: the ones this hero wears a piece of, with how far each is
+    const worn = new Set(wornBases(meta, kind));
+    const mine = [...setCounts([...worn]).keys()];
+    if (mine.length) {
+      panel.append(el('h4', 'eqSub', 'Gear sets'));
+      for (const set of mine) panel.append(setCard(set, worn));
+    }
+    const more = el('div', 'eqAuto');
+    const sets = el('button', '', 'All sets');
+    const spares = combineGroups(meta).length;
+    const comb = el('button', '', spares ? `Combine (${spares})` : 'Combine');
+    for (const b of [sets, comb]) b.type = 'button';
+    sets.addEventListener('click', allSets);
+    comb.addEventListener('click', () => combineView());
+    more.append(sets, comb);
+    panel.append(more);
+  };
+
+  const allSets = () => {
+    panel.replaceChildren(el('h4', '', 'Gear sets'));
+    panel.append(el('p', 'eqSum', 'Wear 2 or 3 pieces of a set, of any grade, for its bonus.'));
+    const worn = new Set(wornBases(meta, kind));
+    const list = el('div', 'eqList');
+    for (const set of GEAR_SETS) list.append(setCard(set, worn));
+    panel.append(list);
+    const back = el('button', '', 'Back');
+    back.type = 'button';
+    back.addEventListener('click', overview);
+    panel.append(back);
+  };
+
+  const combineView = (said = '') => {
+    panel.replaceChildren(el('h4', '', 'Combine'));
+    panel.append(el('p', 'eqSum', `${COMBINE_COUNT} spare pieces of one kind and grade make 1 of the next grade, at the best item level of the three. Worn pieces are never used.`));
+    if (said) panel.append(el('small', 'eqUp', said));
+    const groups = combineGroups(meta);
+    const list = el('div', 'eqList');
+    for (const g of groups) {
+      const made = combinePreview(g);
+      const row = el('div', `eqRow r${made.rarity}`);
+      const card = el('div', 'eqCard');
+      const head = el('div', 'eqHead');
+      const title = el('div');
+      title.append(el('b', '', `${EQUIP_BASES[g.base].name}`), el('small', '', `${g.items.length} ${RARITY_NAMES[g.rarity]} → ${RARITY_NAMES[made.rarity]} · Lv ${made.level}`));
+      head.append(itemIcon({ id: 0, ...made }, EQUIP_BASES[g.base].slot, 'small'), title);
+      card.append(head);
+      if (SET_OF_BASE[g.base]) card.append(el('small', 'eqDim', `Part of ${SET_OF_BASE[g.base].name}`));
+      row.append(card);
+      const go = el('button', 'primary', 'Combine');
+      go.type = 'button';
+      go.addEventListener('click', () => {
+        const it = combineGroup(meta, g.base, g.rarity);
+        commit();
+        combineView(it ? `Made ${itemName(it)} (${RARITY_NAMES[it.rarity]}, Lv ${it.level})` : '');
+      });
+      row.append(go);
+      list.append(row);
+    }
+    if (!groups.length) panel.append(el('p', 'eqSum', 'Nothing to combine yet. Chests give more.'));
+    panel.append(list);
+    const btns = el('div', 'eqAuto');
+    const everything = el('button', 'primary', 'Auto-combine all');
+    everything.type = 'button';
+    everything.disabled = !groups.length;
+    everything.addEventListener('click', () => {
+      const made = combineAll(meta);
+      commit();
+      combineView(made.length ? `Made ${made.length} piece(s)` : '');
+    });
+    const back = el('button', '', 'Back');
+    back.type = 'button';
+    back.addEventListener('click', overview);
+    btns.append(everything, back);
+    panel.append(btns);
   };
 
   const picker = (slot: EquipSlot) => {
@@ -140,6 +243,12 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
     for (const it of spare) {
       const row = el('div', `eqRow r${it.rarity}`);
       row.append(itemCard(it, kind, cur));
+      const set = SET_OF_BASE[it.base];
+      if (set) {
+        const before = set.pieces.filter((p) => wornBases(meta, kind).includes(p)).length;
+        const after = set.pieces.filter((p) => wornBases(meta, kind, it).includes(p)).length;
+        row.append(el('small', `eqSetHint${after > before ? ' up' : after < before ? ' down' : ''}`, `${set.name} set: ${before} → ${after} of ${set.pieces.length}`));
+      }
       const btns = el('div', 'eqBtns');
       const on = el('button', 'primary', cur ? 'Swap' : 'Equip');
       on.type = 'button';

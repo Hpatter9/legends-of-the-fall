@@ -4,11 +4,11 @@
 // until Start or Done, which saves it through `setParty`; Back throws it away. The rules are in `src/sim/meta.ts`.
 
 import { ALL_HEROES, UNITS } from './sim/units';
-import { partySlots, rankOf, saveMeta, setParty, type Meta } from './sim/meta';
+import { partySlots, saveMeta, setParty, type Meta } from './sim/meta';
 import { progressOf, xpOf } from './sim/levels';
 import { countTraits, TRAITS, traitsOf } from './sim/traits';
 import { portrait } from './render/sheets';
-import { drawHeroSheet, stars } from './menuHeroes';
+import { drawHeroSheet, starsOf } from './menuHeroes';
 import { kindPower, powerText } from './sim/power';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -153,7 +153,7 @@ export class Party {
       card.append(el('b', '', open ? def.name : '???'));
       if (open) {
         const p = progressOf(xpOf(m, kind));
-        card.append(el('span', 'stars', stars(rankOf(m, kind))), el('span', 'lv', `Lv ${p.level}`), el('span', 'pw', `Power ${powerText(kindPower(m, kind))}`), el('span', 'ptTags', traitsOf(kind).map((t) => TRAITS[t].short).join(' · ')));
+        card.append(el('span', 'stars', starsOf(m, kind)), el('span', 'lv', `Lv ${p.level}`), el('span', 'pw', `Power ${powerText(kindPower(m, kind))}`), el('span', 'ptTags', traitsOf(kind).map((t) => TRAITS[t].short).join(' · ')));
       } else card.append(el('span', 'lv', 'Not recruited'));
       const info = el('span', 'ptInfo', 'i');
       info.addEventListener('click', (e) => {

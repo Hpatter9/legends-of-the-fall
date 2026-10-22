@@ -4,12 +4,11 @@
 // then the page opens the usual card reveal. It only draws: it reads the Meta, never changes it, and the pull itself is done by
 // the gacha. Drawn in the room's own pixels times a whole-number scale, nearest neighbour, only while the tab is showing.
 
-import { ALL_HEROES, formOf, UNITS } from './sim/units';
-import { NEW_PITY, pullCost, rankOf, type Meta, type Pull } from './sim/meta';
-import { sheetInfo } from './render/sheets';
+import { ALL_HEROES, UNITS } from './sim/units';
+import { NEW_PITY, pullCost, type Meta, type Pull } from './sim/meta';
+import { heroRig } from './render/awakenRig';
 import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
-import { gradeOfRank } from './render/tavernSpots';
 import { beamKind, fanSpots, hallLayout, MIN_H, ROOM_W, WALL_H, type BeamKind, type HallLayout, type Timeline } from './render/hallSpots';
 import { cardAt, dimAt, shakeAt, showcaseAt, summonPlan, type ShowPlan } from './render/summonRules';
 import { duck, hushSummon, play as playSfx } from './render/sound';
@@ -230,7 +229,7 @@ export class SummoningHall {
     const arrivals: Arrival[] = [];
     got.forEach((p, i) => {
       const def = UNITS[p.kind];
-      const rig = sheetInfo(formOf(def, gradeOfRank(rankOf(meta, p.kind))));
+      const rig = heroRig(meta, p.kind);
       if (!rig) return;
       const spot = spots[i];
       const fig = Math.min(46, Math.max(30, rig.figure * def.scale * 0.9));

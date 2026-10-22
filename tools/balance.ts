@@ -25,8 +25,9 @@ import { FIELD_BANDS } from '../src/sim/foes';
 import { chooseOption, leaveEvent } from '../src/sim/events';
 import { fightXp, gainXp, levelOfKind } from '../src/sim/levels';
 import { BUILDINGS, maxLevel, newCastle, nextCost, upgrade, xpRate, type BuildingId, type Castle } from '../src/sim/castle';
-import { startedMeta, PULL_COST, rankOf, rankMult, recruit, type Meta } from '../src/sim/meta';
+import { startedMeta, PULL_COST, heroRank, rankMult, recruit, type Meta } from '../src/sim/meta';
 import { boostOf, bandFor, finish, isBossStage, newRun, type Owned, type Run, SQUAD, stageBoost, startStage, summon } from '../src/sim/run';
+import { awakenStats, awaken } from '../src/sim/awaken';
 import { ARMIES, armyById, settleWave } from '../src/sim/armies';
 import { TIERS } from '../src/sim/tiers';
 import { playArmy, savedAt } from './autoplay';
@@ -195,7 +196,7 @@ const MAX_STAGE = 60;
 /** How strong a hero is for the squad: its base hp times attack, times its boosts (grade, rank, level, gear, bumps). */
 function strengthOf(meta: Meta, h: Owned): number {
   const def = UNITS[h.kind];
-  const boost = boostOf(h, rankOf(meta, h.kind), levelOfKind(meta, h.kind));
+  const boost = boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), awakenStats(meta, h.kind));
   return def.hp * def.atk * (boost.hp ?? 1) * (boost.atk ?? 1);
 }
 
@@ -211,7 +212,7 @@ function playRun(meta: Meta, seed: number): number {
     run.squad = squad.map((h) => h.id);
     const b = startStage(run);
     const spots = deploySpots(b, new Rng(mixSeed(seed, 0xba1a, run.stage)));
-    squad.forEach((h, i) => place(b, h.kind, spots[i][0], spots[i][1], h.id, boostOf(h, rankOf(meta, h.kind), levelOfKind(meta, h.kind))));
+    squad.forEach((h, i) => place(b, h.kind, spots[i][0], spots[i][1], h.id, boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), awakenStats(meta, h.kind))));
     fight(b);
     playOut(b);
     finish(run, b.phase === 'won', ratingOf(b, isBossStage(run.stage)).stars);
@@ -352,7 +353,7 @@ const SPEND: BuildingId[] = ['barracks', 'armoury', 'library', 'treasury', 'stab
 
 /** The five heroes a player would take out: the kinds ranked by hp x attack x their rank and level (a little extra for a shooter). */
 function bestParty(meta: Meta): string[] {
-  const score = (k: string) => UNITS[k].hp * UNITS[k].atk * rankMult(rankOf(meta, k)) * (1 + 0.1 * levelOfKind(meta, k)) * (UNITS[k].range > 1 ? 1.15 : 1);
+  const score = (k: string) => UNITS[k].hp * UNITS[k].atk * rankMult(heroRank(meta, k)) * (1 + 0.1 * levelOfKind(meta, k)) * (UNITS[k].range > 1 ? 1.15 : 1);
   return [...meta.unlocked].sort((a, b) => score(b) - score(a) || a.localeCompare(b)).slice(0, 5);
 }
 
@@ -367,6 +368,11 @@ function spendCrowns(meta: Meta): void {
     upgrade(meta, id);
   }
   while (meta.crowns >= PULL_COST) recruit(meta, 1);
+  // (a player awakens a hero as soon as its shards allow; `--no-awaken` plays the climb as it was before awakening, to compare)
+  // (`--force-awaken` is the worst case for the check: the five best heroes are at both steps from the start of the climb; `--force-rank4` is its control, the same heroes at the top shard rank only)
+  if (process.argv.includes('--force-rank4')) for (const k of bestParty(meta)) meta.shards[k] = Math.max(meta.shards[k] ?? 0, 10);
+  else if (process.argv.includes('--force-awaken')) for (const k of bestParty(meta)) ((meta.shards[k] = Math.max(meta.shards[k] ?? 0, 26)), ((meta.awakened ??= {})[k] = 2));
+  else if (!process.argv.includes('--no-awaken')) for (const k of meta.unlocked) while (awaken(meta, k)) { /* every step it can pay */ }
 }
 
 function realClimb(): void {

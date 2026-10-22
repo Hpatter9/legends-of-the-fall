@@ -16,6 +16,8 @@ import type { Ability, Kind, Trig } from './equipBases';
 import { addStats, capStats, emptyStats, equipStats, STAT_KEYS, type EquipStats, type StatKey } from './equipment';
 import { levelOfKind } from './levels';
 import type { Meta } from './meta';
+import { awakenSpent } from './awakenRules';
+import { awakenStats } from './awaken';
 import { ALL_HEROES } from './units';
 
 /** One point for every this many levels (3, 6, 9, 12, 15 and 18). */
@@ -691,7 +693,7 @@ export const pointsEarned = (m: Meta, kind: string): number => levelPoints(level
 export const pointsSpent = (m: Meta, kind: string): number => picksOf(m, kind).reduce((n, id) => n + (nodeOf(kind, id) ? costOf(nodeOf(kind, id)!) : 0), 0);
 export const pointsFree = (m: Meta, kind: string): number => pointsEarned(m, kind) - pointsSpent(m, kind);
 /** Shards of a kind not yet turned into points. */
-export const shardsToSpend = (m: Meta, kind: string): number => (m.shards[kind] ?? 0) - boughtOf(m, kind) * SHARD_POINT_COST;
+export const shardsToSpend = (m: Meta, kind: string): number => (m.shards[kind] ?? 0) - boughtOf(m, kind) * SHARD_POINT_COST - awakenSpent(m.awakened?.[kind] ?? 0);
 /** Whether shards can buy another point now. */
 export const canBuyPoint = (m: Meta, kind: string): boolean => m.unlocked.includes(kind) && !!TREES[kind] && boughtOf(m, kind) < MAX_SHARD_POINTS && shardsToSpend(m, kind) >= SHARD_POINT_COST;
 export function buyPoint(m: Meta, kind: string): boolean {
@@ -748,15 +750,24 @@ export function talentStats(m: Meta, kind: string): EquipStats | undefined {
   return out;
 }
 
-/** Everything a hero kind brings to a fight beyond its stats: its worn equipment and its talents together (undefined when it has neither). */
+/** Everything a hero kind brings to a fight beyond its stats: its worn equipment, its talents and an awakened hero's passive together (undefined when it has none). */
 export function heroStats(m: Meta, kind: string): EquipStats | undefined {
   const worn = equipStats(m, kind);
   const talents = talentStats(m, kind);
-  if (!talents) return worn;
-  if (!worn) return capStats(talents);
-  const total = addStats(worn, talents);
-  if (talents.tal) total.tal = talents.tal;
-  return capStats(total);
+  const awake = awakenStats(m, kind);
+  let total: EquipStats | undefined;
+  if (!talents) total = worn;
+  else if (!worn) total = capStats(talents);
+  else {
+    total = addStats(worn, talents);
+    if (talents.tal) total.tal = talents.tal;
+    total = capStats(total);
+  }
+  // (an awakened hero's passive; a piece or set that already runs the same ability keeps its own)
+  if (!awake) return total;
+  if (!total) return awake;
+  for (const a of awake.abilities) if (!total.abilities.some((x) => x.id === a.id)) total.abilities.push(a);
+  return total;
 }
 
 /** Saved talents that are sane: a kind with a tree, nodes of it that exist, each once, a legal order (the rules of `whyNot`) and no more than the points allow. */
@@ -766,7 +777,7 @@ export function readTalents(raw: unknown, m: Meta): Record<string, KindTalents> 
   for (const [kind, v] of Object.entries(raw as Record<string, unknown>)) {
     const t = v as Partial<KindTalents> | null;
     if (!ALL_HEROES.includes(kind) || !TREES[kind] || !t || typeof t !== 'object') continue;
-    const bought = Math.max(0, Math.min(MAX_SHARD_POINTS, Math.floor(Number(t.bought) || 0), Math.floor(Math.max(0, m.shards[kind] ?? 0) / SHARD_POINT_COST)));
+    const bought = Math.max(0, Math.min(MAX_SHARD_POINTS, Math.floor(Number(t.bought) || 0), Math.floor(Math.max(0, (m.shards[kind] ?? 0) - awakenSpent(m.awakened?.[kind] ?? 0)) / SHARD_POINT_COST)));
     const entry: KindTalents = { picks: [], bought };
     (out[kind] = entry);
     // (replay the picks through the rules; whatever does not fit is dropped)

@@ -5,6 +5,7 @@ import { ColorMatrixFilter, Container, Graphics, Sprite } from 'pixi.js';
 import { tileAt, type Board } from '../sim/board';
 import { defOf, type Unit } from '../sim/battle';
 import { formOf } from '../sim/units';
+import { GLOW, hueOf, isRecoloured, lookSheet } from './awakenLook';
 import type { Texture } from 'pixi.js';
 import { facesRightOf, framesOf, figureOf, type Anim } from './sheets';
 import { CHARGE_MAX, kitOf } from '../sim/abilities';
@@ -97,23 +98,32 @@ export class UnitSprite {
   constructor(readonly unit: Unit) {
     const def = defOf(unit);
     this.grade = unit.side === 'hero' ? (unit.grade ?? 1) : 1;
-    this.sheet = formOf(def, this.grade);
+    const awake = unit.side === 'hero' ? (unit.awaken ?? 0) : 0;
+    this.sheet = awake ? lookSheet(unit.def, 4 + awake, this.grade) : formOf(def, this.grade);
     const size = (unit.size ?? 1) * (this.grade > 2 ? GRADE3_SIZE : 1);
     this.tall = figureOf(this.sheet) * def.scale * size;
     this.root.scale.set(size);
-    if (this.grade > 1) {
+    if (this.grade > 1 || awake) {
       // a halo of stacked ellipses behind the body (silver-blue, then gold), drawn once, and a rim of the body's own shape
-      const col = this.grade > 2 ? 0xffc83a : 0x9cc8ff;
+      const col = awake ? GLOW[awake] : this.grade > 2 ? 0xffc83a : 0x9cc8ff;
       const h = this.tall * 0.62;
-      for (let i = 5; i >= 1; i--) this.glow.ellipse(0, -this.tall * 0.45, (12 + i * 5) / size, (h * (0.5 + i * 0.13)) / size).fill({ color: col, alpha: this.grade > 2 ? 0.14 : 0.1 });
+      for (let i = 5; i >= 1; i--) this.glow.ellipse(0, -this.tall * 0.45, (12 + i * 5) / size, (h * (0.5 + i * 0.13)) / size).fill({ color: col, alpha: awake || this.grade > 2 ? 0.14 : 0.1 });
       for (const [dx, dy] of [[-1.6, 0], [1.6, 0], [0, -1.6], [0, 1.6]]) {
         const r = new Sprite();
         r.anchor.set(0.5, 1);
         r.position.set(dx, dy);
         this.rim.addChild(r);
       }
-      this.rim.filters = [flatFilter(this.grade > 2 ? 0xffd24a : 0xa8d0ff)];
-      if (this.grade > 1) this.body.filters = [gradeFilter(this.grade)];
+      this.rim.filters = [flatFilter(awake ? GLOW[awake] : this.grade > 2 ? 0xffd24a : 0xa8d0ff)];
+      const tone = this.grade > 1 ? [gradeFilter(this.grade)] : [];
+      // (an awakened hero with no pack variant has its colours turned, its own way; the second step is brighter)
+      if (awake && isRecoloured(unit.def)) {
+        const f = new ColorMatrixFilter();
+        f.hue(hueOf(unit.def), false);
+        f.saturate(awake > 1 ? 0.3 : 0.2, true);
+        tone.push(f);
+      }
+      if (tone.length) this.body.filters = tone;
     }
     this.shadow.ellipse(0, 0, 13, 5).fill({ color: 0x000000, alpha: 0.32 });
     this.body.anchor.set(0.5, 1);

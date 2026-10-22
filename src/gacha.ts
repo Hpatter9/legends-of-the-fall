@@ -2,6 +2,7 @@
 // every hero with the locked ones shaded. It only reads and changes the Meta through the sim's own functions.
 
 import { ALL_HEROES, UNITS } from './sim/units';
+import { awakenedOf, AWAKEN_SHARDS } from './sim/awaken';
 import { MAX_RANK, NEW_PITY, pullCost, RANK_MULT, RANK_SHARDS, rankOf, recruit, saveMeta, type Meta, type Pull } from './sim/meta';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { portrait } from './render/sheets';
@@ -18,7 +19,7 @@ export class Gacha {
     $('pull1').addEventListener('click', () => this.pull(1));
     $('pull10').addEventListener('click', () => this.pull(10));
     $('gachaClose').addEventListener('click', () => this.close());
-    $('rates').textContent = `Every hero is as likely as any other. After ${NEW_PITY} pulls without a new hero, the next one is a hero you do not have yet. A repeat gives a shard; shards raise a hero's rank (+${Math.round((RANK_MULT - 1) * 100)}% hp and attack a rank, up to ${MAX_RANK}).`;
+    $('rates').textContent = `Every hero is as likely as any other. After ${NEW_PITY} pulls without a new hero, the next one is a hero you do not have yet. A repeat gives a shard; shards raise a hero's rank (+${Math.round((RANK_MULT - 1) * 100)}% hp and attack a rank, up to ${MAX_RANK}. Past that, extra shards awaken a hero twice; once everything is bought a repeat pays crowns).`;
   }
 
   open(): void {
@@ -61,15 +62,19 @@ export class Gacha {
     const m = this.meta;
     const rank = rankOf(m, kind);
     const got = m.shards[kind] ?? 0;
-    const from = rank ? RANK_SHARDS[rank - 1] : 0;
-    const to = RANK_SHARDS[rank];
+    // (past the top rank the bar runs on towards the awakening steps)
+    const steps = awakenedOf(m, kind);
+    const marks = [...RANK_SHARDS, ...AWAKEN_SHARDS];
+    const at = rank + steps;
+    const from = at ? marks[at - 1] : 0;
+    const to = marks[at];
     const frag = document.createDocumentFragment();
     const label = document.createElement('span');
     label.className = 'rank';
-    label.textContent = `Rank ${rank}`;
+    label.textContent = `Rank ${at}`;
     const bar = document.createElement('span');
     bar.className = 'bar';
-    bar.title = to ? `${got}/${to} shards` : `${got} shards, top rank`;
+    bar.title = to ? `${got}/${to} shards` : `${got} shards, fully awakened`;
     const fill = document.createElement('i');
     fill.style.width = `${to ? ((got - from) / (to - from)) * 100 : 100}%`;
     bar.append(fill);
@@ -114,7 +119,7 @@ export class Gacha {
       const name = document.createElement('b');
       name.textContent = def.name;
       const tag = document.createElement('em');
-      tag.textContent = p.isNew ? 'NEW' : `+${p.shards} shard`;
+      tag.textContent = p.isNew ? 'NEW' : p.crowns ? `+${p.crowns} crowns` : `+${p.shards} shard`;
       const role = document.createElement('small');
       role.className = 'rtag';
       role.textContent = CLASS_NAMES[CLASS_OF[p.kind]];

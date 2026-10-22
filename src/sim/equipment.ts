@@ -10,6 +10,7 @@ import type { Meta } from './meta';
 import type { Rng } from './rng';
 import { ALL_HEROES, UNITS } from './units';
 import { levelOfKind } from './levels';
+import { setBonus, type SetBonus } from './gearSets';
 
 import { ABILITIES, EQUIP_BASES, EQUIP_BASE_IDS, EQUIP_LIST, type Ability, type Calling, type EquipSlot, type Kind, type MainKey } from './equipBases';
 export { ABILITIES, EQUIP_BASES, EQUIP_BASE_IDS, EQUIP_LIST };
@@ -191,15 +192,18 @@ export function wornIn(m: Meta, kind: string, slot: EquipSlot): Equipment | unde
 
 /** What a hero kind's equipment adds in a fight; undefined when it wears nothing (so the fight is exactly as before). */
 export function equipStats(m: Meta, kind: string): EquipStats | undefined {
-  let any = false;
+  const worn = EQUIP_SLOTS.map((slot) => wornIn(m, kind, slot)).filter((x): x is Equipment => !!x);
+  if (!worn.length) return undefined;
   const total = emptyStats();
-  for (const slot of EQUIP_SLOTS) {
-    const it = wornIn(m, kind, slot);
-    if (!it) continue;
-    any = true;
-    addStats(total, itemStats(it, kind));
-  }
-  return any ? capStats(total) : undefined;
+  for (const it of worn) addStats(total, itemStats(it, kind));
+  return capStats(addSetBonus(total, worn.map((x) => x.base)));
+}
+
+/** Fold the bonus of the gear sets these bases make (`gearSets.ts`) into stats. An ability a worn piece already carries is not added twice. */
+export function addSetBonus(total: EquipStats, bases: readonly string[], bonus: SetBonus = setBonus(bases)): EquipStats {
+  for (const [k, v] of Object.entries(bonus.stats) as [MainKey, number][]) total[k] += v;
+  for (const a of bonus.abilities) if (!total.abilities.some((x) => x.id === a.id)) total.abilities.push({ id: a.id, name: a.name, s: a.s });
+  return total;
 }
 
 /** Keep the shares that could stack without end under their caps (the worn pieces and the talents together). */
@@ -257,6 +261,76 @@ export function salvageItem(m: Meta, id: number): number {
   const n = SALVAGE_CROWNS[it.rarity] + (it.level - 1);
   m.crowns += n;
   return n;
+}
+
+// ---- combining: three of a piece make one of the next grade ----
+
+/** Pieces of one base and grade that go into a combine. */
+export const COMBINE_COUNT = 3;
+/** Whether a grade can be combined up (Mythic is the top). */
+export const canCombineGrade = (rarity: number): boolean => rarity >= 1 && rarity < 5;
+
+/** A group of spare pieces of one base and grade, the best item levels first. */
+export interface CombineGroup {
+  base: string;
+  rarity: Rarity;
+  /** Every spare piece in it, best item level first (older id first among equals). */
+  items: Equipment[];
+}
+
+/** The spare pieces grouped by base and grade, in the catalogue's order then the grade's (only groups of `COMBINE_COUNT` or more, below Mythic). */
+export function combineGroups(m: Meta): CombineGroup[] {
+  const groups = new Map<string, CombineGroup>();
+  for (const it of spareEquipment(m)) {
+    if (!canCombineGrade(it.rarity)) continue;
+    const key = `${it.base}:${it.rarity}`;
+    const g = groups.get(key) ?? { base: it.base, rarity: it.rarity, items: [] };
+    g.items.push(it);
+    groups.set(key, g);
+  }
+  const order = (b: string) => EQUIP_BASE_IDS.indexOf(b);
+  return [...groups.values()]
+    .filter((g) => g.items.length >= COMBINE_COUNT)
+    .map((g) => ({ ...g, items: g.items.sort((x, y) => y.level - x.level || x.id - y.id) }))
+    .sort((a, b) => order(a.base) - order(b.base) || a.rarity - b.rarity);
+}
+
+/** What combining a group makes: the next grade of the same base, at the best item level of the three it uses (the best three of the group). */
+export function combinePreview(g: CombineGroup): NewEquipment {
+  return { base: g.base, rarity: (g.rarity + 1) as Rarity, level: g.items[0].level };
+}
+
+/** Combine three spare pieces of one base and grade (given by id) into one of the next grade, at the best of their item levels. Returns the new piece, or null (and nothing changes) when they are not three different spare pieces of one base and grade, or are Mythic. */
+export function combineItems(m: Meta, ids: readonly number[]): Equipment | null {
+  if (ids.length !== COMBINE_COUNT || new Set(ids).size !== COMBINE_COUNT) return null;
+  const spare = spareEquipment(m);
+  const used = ids.map((id) => spare.find((x) => x.id === id));
+  if (used.some((x) => !x)) return null;
+  const [first] = used as Equipment[];
+  if (!canCombineGrade(first.rarity) || (used as Equipment[]).some((x) => x.base !== first.base || x.rarity !== first.rarity)) return null;
+  const level = Math.max(...(used as Equipment[]).map((x) => x.level));
+  m.equipment = m.equipment!.filter((x) => !ids.includes(x.id));
+  return grantEquipment(m, { base: first.base, rarity: (first.rarity + 1) as Rarity, level });
+}
+
+/** Combine one group of a base and grade (its three best pieces). Null when fewer than three are spare. */
+export function combineGroup(m: Meta, base: string, rarity: number): Equipment | null {
+  const g = combineGroups(m).find((x) => x.base === base && x.rarity === rarity);
+  return g ? combineItems(m, g.items.slice(0, COMBINE_COUNT).map((x) => x.id)) : null;
+}
+
+/** Combine everything that can be, lowest grades first, so a new piece can join the next grade's group. Worn pieces are never used. Returns the pieces made. */
+export function combineAll(m: Meta): Equipment[] {
+  const made: Equipment[] = [];
+  for (let rarity = 1; rarity < 5; rarity++)
+    for (;;) {
+      const g = combineGroups(m).find((x) => x.rarity === rarity);
+      if (!g) break;
+      const it = combineItems(m, g.items.slice(0, COMBINE_COUNT).map((x) => x.id));
+      if (!it) break;
+      made.push(it);
+    }
+  return made;
 }
 
 export interface EquipRoll {
@@ -380,24 +454,50 @@ export interface EquipPlan {
   slots: Partial<Record<EquipSlot, number>>;
 }
 
-/** The strongest piece for each slot of a hero kind: from the bag (spare items) and what the kind already wears, and, if `takeFromOthers`, what other heroes wear (never an id in `locked`). An item is chosen only when it beats what the kind wears. */
+/** What a gear set's bonus is worth to a hero kind: its stats and abilities, scored like a piece's. */
+export function setScore(bases: readonly string[], kind: string): number {
+  const bonus = setBonus(bases);
+  const w = weightsFor(kind);
+  let score = 0;
+  for (const [k, v] of Object.entries(bonus.stats) as [StatKey, number][]) score += v * w[k];
+  for (const a of bonus.abilities) score += a.s * ABILITY_WORTH;
+  return score;
+}
+
+/** The strongest set of pieces for a hero kind: from the bag (spare items) and what the kind already wears, and, if `takeFromOthers`, what other heroes wear (never an id in `locked`). The pieces are chosen together, so a gear set's bonus counts: the best combination of one item a slot (the best item of each base) by the pieces' scores plus the sets' worth. A slot changes only when the whole beats what the kind wears. */
 export function bestFor(m: Meta, kind: string, takeFromOthers = false, locked: ReadonlySet<number> = new Set()): EquipPlan {
   const plan: EquipPlan = { slots: {} };
-  const used = new Set<number>();
-  for (const slot of EQUIP_SLOTS) {
+  // (each slot's options: what is worn first, then the best item of each base by the older id, then an empty slot)
+  const options = EQUIP_SLOTS.map((slot) => {
     const cur = wornIn(m, kind, slot);
-    let best = cur;
-    let top = cur ? itemScore(cur, kind) : -1;
+    const list: { it?: Equipment; score: number }[] = [{ it: cur, score: cur ? itemScore(cur, kind) : 0 }];
+    const bestOfBase = new Map<string, { it: Equipment; score: number }>();
     for (const it of m.equipment ?? []) {
-      if (EQUIP_BASES[it.base]?.slot !== slot || it === cur || used.has(it.id) || locked.has(it.id)) continue;
+      if (EQUIP_BASES[it.base]?.slot !== slot || it === cur || locked.has(it.id)) continue;
       const owner = wearerOf(m, it.id);
       if (owner !== undefined && owner !== kind && !takeFromOthers) continue;
       const score = itemScore(it, kind);
+      const held = bestOfBase.get(it.base);
       // (ties go to the older item, so the plan is the same every time)
-      if (score > top + 1e-9) (best = it), (top = score);
+      if (!held || score > held.score + 1e-9) bestOfBase.set(it.base, { it, score });
     }
-    if (best && best !== cur) plan.slots[slot] = best.id;
-  }
+    list.push(...bestOfBase.values());
+    if (cur) list.push({ score: 0 });
+    return list;
+  });
+  let top = -Infinity;
+  let pick: (Equipment | undefined)[] = [];
+  for (const w of options[0])
+    for (const a of options[1])
+      for (const t of options[2]) {
+        const chosen = [w.it, a.it, t.it];
+        const total = w.score + a.score + t.score + setScore(chosen.filter((x): x is Equipment => !!x).map((x) => x.base), kind);
+        if (total > top + 1e-9) (top = total), (pick = chosen);
+      }
+  EQUIP_SLOTS.forEach((slot, i) => {
+    const cur = wornIn(m, kind, slot);
+    if (pick[i] && pick[i] !== cur) plan.slots[slot] = pick[i]!.id;
+  });
   return plan;
 }
 

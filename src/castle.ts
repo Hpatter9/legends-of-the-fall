@@ -9,12 +9,10 @@
 // here: nothing that is played depends on it) and runs only while the tab shows.
 
 import { BUILDING_IDS, CHAPEL_COST, chapelBuilt, canBuildChapel, clockText, maxLevel, nextCost, worksLeft, type BuildingId } from './sim/castle';
-import { formOf, UNITS } from './sim/units';
-import { rankOf, type Meta } from './sim/meta';
-import { sheetInfo } from './render/sheets';
+import type { Meta } from './sim/meta';
+import { heroRig, lookKey } from './render/awakenRig';
 import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
-import { gradeOfRank } from './render/tavernSpots';
 import { strongest } from './menuHeroes';
 import { cellX, cellY, decorAt, GRASS, isPlaceId, pavingAt, layoutFor, LIGHTS, lookBox, lookFor, NAME_OF, viewFor, PLACE_IDS, PLACE_VENTS, PLACES, PLOT_IDS, stageOf, TILE_H, TILE_W, VENTS, walkTiles, YARD, type Layout, type Look, type PlotId } from './render/castleSpots';
 import anvil_stallUrl from './art/castle/anvil_stall.png';
@@ -258,6 +256,8 @@ type Mood = 'idle' | 'walk';
 
 interface Walker {
   kind: string;
+  /** What the hero looked like when `small` was cut (`lookKey`). */
+  look: string;
   small: Small;
   x: number;
   y: number;
@@ -402,16 +402,16 @@ export class CastleScene {
     const want = strongest(meta, 5);
     for (const k of [...this.walkers.keys()]) if (!want.includes(k)) this.walkers.delete(k);
     want.forEach((kind, i) => {
-      const def = UNITS[kind];
-      const rig = sheetInfo(formOf(def, gradeOfRank(rankOf(meta, kind))));
+      const rig = heroRig(meta, kind);
+      const look = lookKey(meta, kind);
       if (!rig) return;
       const w = this.walkers.get(kind);
       if (w) {
         // (a new form after a rank-up: re-cut only when the sheet changed)
-        if (w.small.facesRight !== rig.facesRight || w.small.fh !== Math.floor(rig.h / heroShrink(rig.figure))) w.small = shrinkRig(rig);
+        if (w.look !== look || w.small.facesRight !== rig.facesRight || w.small.fh !== Math.floor(rig.h / heroShrink(rig.figure))) (w.small = shrinkRig(rig)), (w.look = look);
         return;
       }
-      const wk: Walker = { kind, small: shrinkRig(rig), x: 0, y: 0, gx: 0, gy: 0, route: [], tile: { u: 0, v: 0 }, face: chance(0.5) ? 1 : -1, mood: 'idle', at: this.now + 300 * i + rand(300, 2500), clock: rand(0, 3000), phase: rand(0, 6) };
+      const wk: Walker = { kind, look, small: shrinkRig(rig), x: 0, y: 0, gx: 0, gy: 0, route: [], tile: { u: 0, v: 0 }, face: chance(0.5) ? 1 : -1, mood: 'idle', at: this.now + 300 * i + rand(300, 2500), clock: rand(0, 3000), phase: rand(0, 6) };
       this.putOnRoad(wk);
       this.walkers.set(kind, wk);
     });
