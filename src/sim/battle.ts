@@ -101,6 +101,8 @@ export interface Unit {
   healed?: number;
   kills?: number;
   slain?: number;
+  /** For a fighter a skill called up (a decoy, a treant, an imp), the unit id of the one that called it: what it does counts for its caller. */
+  owner?: number;
 }
 
 interface Pending {
@@ -328,7 +330,9 @@ export function unplace(b: Battle, defId: string, tag?: number): boolean {
   return true;
 }
 
-export const heroesPlaced = (b: Battle) => b.units.filter((x) => x.side === 'hero').length;
+export const heroesPlaced = (b: Battle) => b.units.filter((x) => x.side === 'hero' && !UNITS[x.def].summon).length;
+/** Who a fighter's deeds count for: its caller, for one a skill called up; itself otherwise. */
+export const creditOf = (b: Battle, u: Unit): Unit => (u.owner !== undefined ? b.units.find((x) => x.id === u.owner) ?? u : u);
 
 /** Start the fight, if at least one hero is placed. */
 export function fight(b: Battle): boolean {
