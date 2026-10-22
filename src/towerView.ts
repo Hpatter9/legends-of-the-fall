@@ -29,9 +29,9 @@ import elixir from './art/rogue/elixir.png';
 import chestIcon from './art/ui/chest-bronze.png';
 import crown from './art/ui/ic-crown.png';
 import type { Events } from './events';
-import { twistBadge, twistLine } from './twistView';
 import { actLook, bossOfAct } from './towerTheme';
 import { BRICKS, buildBackdrop, Layout, torchEl } from './towerBack';
+import { twistBadge, twistLine } from './twistView';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
