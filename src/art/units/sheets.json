@@ -1475,6 +1475,7 @@
    "walk",
    "attack",
    "idle",
+   "hurt",
    "dead",
    "attack2"
   ],
@@ -1483,9 +1484,50 @@
    "attack": 5,
    "idle": 4,
    "dead": 5,
-   "attack2": 5
+   "attack2": 5,
+   "hurt": 4
   },
   "figure": 126,
+  "facesRight": true,
+  "lies": true
+ },
+ "cls_treant_2": {
+  "w": 134,
+  "h": 127,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "dead"
+  ],
+  "counts": {
+   "walk": 5,
+   "attack": 5,
+   "idle": 4,
+   "dead": 5
+  },
+  "figure": 125,
+  "facesRight": true,
+  "lies": true
+ },
+ "cls_treant_3": {
+  "w": 126,
+  "h": 125,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "dead"
+  ],
+  "counts": {
+   "walk": 5,
+   "attack": 5,
+   "idle": 4,
+   "dead": 5
+  },
+  "figure": 122,
   "facesRight": true,
   "lies": true
  }
