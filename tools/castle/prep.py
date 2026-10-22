@@ -21,8 +21,8 @@ PICKS = {
     # trees to peek over the wall, a signpost for the Armies road, and the courtyard's well, patterned paving, pots and hedge
     'birch': DR + 'birch_tree', 'great': DR + 'great_oak', 'sign': S + 'signpost', 'well': K + 'well', 'flagstone': D + 'flagstone_tile',
     'pots': DR + 'clay_pots', 'hedge': DR + 'hedge_wall_run',
-    # walls and gates
-    'gatehouse': K + 'gatehouse', 'wall': K + 'stone_wall_run',
+    # walls
+    'wall': K + 'stone_wall_run',
     # props
     'chests': N + 'chests', 'campfire': K + 'campfire', 'hay': K + 'hay_bales', 'crates': K + 'crates', 'barrels': K + 'barrels', 'woodpile': K + 'woodpile',
         'brazier': D + 'brazier', 'banner': B + 'banner', 'statue': D + 'shrine', 'oak': K + 'oak_tree', 'pine': K + 'pine_tree', 'bush': K + 'bush',

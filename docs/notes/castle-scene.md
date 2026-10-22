@@ -5,7 +5,7 @@
   (`src/castle.ts`, data in `src/render/castleSpots.ts`). The owner's ask was "use some of the nicer sprites": the earlier 3/4 village yard
   (Chronos's plain village houses, 0.48.0; `docs/samples/castle-before-after.png` shows it beside this) gave way to the richer isometric kits
   the first worker had passed over as "far too detailed". Everything shares one view: a lattice of grass tiles with cobbled roads and a plaza, a
-  closed ring of stone castle wall with a tower on each corner and one gate, a statue in the plaza, flowerbeds and braziers.
+  closed ring of stone castle wall with a tower on each corner, a statue in the square, flowerbeds and braziers.
   `docs/samples/castle-candidates.png` is the contact sheet of what was surveyed (every pack in the assets repo and Chronos's building art);
   the other packs are side-view (Craftpix tropical city, vector) or top-down (Craftpix village, dungeon), so they would mix perspectives.
 - **Planned on the isometric grid** (`castleSpots.ts`): the yard is a lattice of ground tiles `(u, v)` (`u` down-right, `v` down-left; `Layout.grid` is
@@ -13,11 +13,9 @@
   - **Plots**: each building has a fixed footprint of tiles sized for its grand look (1 x 2 or 2 x 1), a `door` tile, and `flip` (the kit's doors face
     down-left; mirrored they face down-right, so the left-hand buildings are mirrored and every door faces its road). At least one tile of grass or path
     lies between any two plots, and a test keeps it so.
-  - **Roads**: one road enters by the gatehouse and leads to the plaza (a clear 3 x 3 of cobbles, the statue on the middle tile, a brazier on each corner)
-    and branches to every door; each door has a road tile in front of it. Heroes stroll those tiles only (`walkTiles`, a breadth-first route from tile
-    to tile), never over the statue or a brazier.
+  - **Roads**: short paths run from the square's edge to the ring road behind the south buildings and the lane (see below).
   - **Walls: the two back sides only** (`ring()` in `castleSpots.ts`): the north-west and north-east runs meet at a tower on the north corner, each ending in
-    a tower (so three towers) with the gatehouse in the north-west run near its south end; the front is open grass. Each run is a line of **identical wall
+    a tower (so three towers) (no gate: the runs are plain wall); the front is open grass. Each run is a line of **identical wall
     cells laid exactly `WALL_STEP` (93, 54) apart**, from the north tower to the far one, the last cell cut (`Prop.cut`) where its tower covers it. The
     cell (`tools/castle/prep.py` `wall_cell`) is made from the kit's wall block, which has end caps, two banners and a slope of 0.44, so a row of the
     raw blocks showed a notch at every joint and drifted off the 26/45 lattice: its caps and dark end columns are left out, the columns past the last
@@ -25,7 +23,7 @@
     apart (five merlons, 93 px) with every column shifted up a whole number of pixels so the top and foot lines run at the lattice slope. Cells then
     butt with no seam (`docs/samples/castle-wall-joints.png`: the north corner, the east and west towers, both gate joints and mid-run seams at 3x; made by
     `node tools/castle/joints.mjs`, which draws the walls alone via a hidden `window.__castleWallsOnly` flag). Runs start and end under the towers' bases,
-    which are drawn over every joint; the gatehouse is drawn over the run, which goes on behind it. Both runs are behind everything (`depth`). The yard is
+    which are drawn over every joint; Both runs are behind everything (`depth`). The yard is
     now 4 tiles back from the first plots' tile row (corner at (-4,-4)), so the corner tower shows two tiles behind the chapel.
   - **Props** sit on grass tiles beside the building they belong to, never on a road or a plot: crates and barrels by the treasury and armoury, a weapon
     rack and hay by the barracks, crystals by the tower, lamps along the roads, flowerbeds, bushes and trees in the corners of the yard. (There is no
@@ -36,18 +34,24 @@
   2.6 to 3 (a scene pixel about 0.7 css pixels), `k = 1` on a ratio-2 phone, the whole css scale (1, 2, 3) of about the same look at a ratio of 1. The canvas's
   backing store is `k` times the scene and its css size is that over `devicePixelRatio`, so it stays sharp at any ratio. The game is upright only; there is no zoom,
   pinch, double tap, or scrolling.
-  - `viewFor(lay, boxW, boxH, dpr)` (castleSpots.ts) gives the frame's mapping: the canvas is exactly the frame (chips bar to tab bar), the plaza's column (the back
-    corner tower's) in the middle, the back corner tower `TOP_GAP` (26 css px) under the top so treetops show over the wall. The two back wall runs run diagonally
-    off both sides of the screen (the far towers are 11 tiles out, off screen). The gatehouse stands in the north-east run (a gap between the treasury and the
-    armoury, with a short road down to the main street), half off the right edge. Beyond the wall it is woods (`decorAt`).
-  - The courtyard is the plaza (flagstones and cobbles in a chequer, `pavingAt`) with the statue, four braziers, a well, a market of three stalls with barrels and
-    crates, lanterns, banners on poles, pots, flowerbeds, a garden, hay; the eight buildings stand round it (the chapel under the corner tower, the mage tower and
-    barracks down the left, the treasury and armoury down the right, the stable and tavern in front of the plaza and the library below). Buildings at the left
-    and right edges may be cropped (a test keeps more than half of each in view, with its door and tag, at 360x580, 393x650 and 412x715 css).
-  - **The front**: the main road leaves the village's open front and zigzags down to the bottom of the scene, with a signpost beside it (the Armies place: tag
-    "Armies · to battle", a tap goes to the Battle tab) and a lawn of bushes, flowers, rocks, hay and trees thickening outward (`decorAt`: a fixed hash of the
-    tile, never on paving, a plot, a village prop or within a tile of the road). A taller phone shows more of the road and lawn; a shorter one crops the bottom of it.
-    Heroes stroll the plaza and the roads as far down as the picture shows (`fit()` filters the walk tiles to the view).
+  - `viewFor(lay, boxW, boxH, dpr)` (castleSpots.ts) gives the frame's mapping: the canvas is the frame (chips bar to tab bar) with the square's column (the back
+    corner tower's) in the middle and the back corner tower `TOP_GAP` (26 css px) under the top, so treetops show over the wall. If the town is taller than the
+    frame (only the shortest phones, 360x780: about 100 css pixels) the page scrolls up and down from the top, never sideways. The two back wall runs are plain
+    continuous wall (no gate) running diagonally off both sides of the screen; the far towers are 16 tiles out, off screen. Beyond the wall it is woods (`decorAt`).
+  - **The town square** (`SQUARE`, 5 x 5 tiles, about three times the old plaza): a border of flagstones all round (`pavingAt`) and a chequer of flagstones and cobbles
+    inside; the statue in the middle with a brazier on each diagonal, a lamp post on three corners and by the north-east door, market stalls along the two south
+    sides, barrels, crates and pots round the edge, banners on poles and a well. Heroes stroll the square and the paths and stand about in it (`walkTiles` leaves
+    out the statue, braziers, stalls, lamps, banners, the well, pots, crates and barrels). There are no benches or fountains in the kits.
+  - **The ring of buildings**: the wall hugs the north-west and north-east sides, backing the four buildings that face the square from those sides (mage tower and
+    barracks down the north-west side, treasury and armoury along the north-east side), their doors opening onto the square's own border. The south-west and south-east
+    sides have a building each (stable, tavern) standing clear of the square with their doors on a ring road behind them (the pictures' doors look down, so they cannot
+    face the square), reached by short paths from the square's south edge; the chapel and the library stand further down either side of the lane that leaves the
+    town, each on a short side path. Gardens fill the north corner between the walls and the buildings; hedges, bushes, flowers, trees, hay and rocks are scattered
+    between the buildings by a fixed hash of the tile (`scatter`), never within a tile of a building or path.
+  - **The front**: the lane zigzags down from the ring road's south corner to the bottom of the scene, with a signpost beside it (the Armies place: tag
+    "Armies · to battle", a tap goes to the Battle tab) and a lawn of bushes, flowers, rocks, hay and trees below the town (`decorAt`, from `FRONT_ROW` down).
+    Heroes stroll the square, the paths and the lane as far down as the picture shows (`fit()` filters the walk tiles to the view). Heroes are drawn about a door high
+    (`HERO_PX` 44).
   - **Name tags** are real buttons at least 32 css px square with 10 px names and 9 px second lines ("Mage Tower" / "4/4", "Tavern" / "· your heroes"), put at
     fixed spots (`Plot.tagAt`, scene pixels) round the village so none overlap and none covers a door; every tag's whole width is inside the frame at the three phone sizes.
 - One canvas, drawn with nearest neighbour. There is a single arrangement (`YARD`), upright only.
@@ -112,7 +116,7 @@
   rule keeps the centring transform (the global `button:active` would move the tag out from under a finger).
 
 ## Art and tools
-- Pictures: `src/art/castle/` (see above; the wall is now all the Knights kit's: gatehouse, wall run and watchtower). `tools/castle/prep.py` copies them from Chronos's isometric kits; `tools/castle/candidates.py` makes the
+- Pictures: `src/art/castle/` (see above; the wall is the Knights kit's wall run and watchtower). `tools/castle/prep.py` copies them from Chronos's isometric kits; `tools/castle/candidates.py` makes the
   survey sheet; credits are in `CREDITS.md`. The kits were made for Chronos (not by PixelLab); the castle pieces in `iso/castles/` (Blood Court
   keep and tower, the dwarves' hold) were surveyed and only the Liches' chapel and the Dwarves' great hall, forge and shrine are used.
 - PixelLab: none this time (0 generations); the old generated towers are gone. The earlier jobs used 57 + 3 + 9.
@@ -122,7 +126,7 @@
   per building, a plot inside the yard; no house sprite in two buildings and every look bigger than the last; the grand
   look of every building fits inside the yard; every picture is used and the ground tiles are one
   lattice cell wide; no two plots share a tile or sit nearer than one tile apart; every door has a paved tile in front of it, facing the right way and
-  reachable by road from the gate; the plaza is a clear 3 x 3 with the statue in the middle and a brazier on each corner; no prop stands in a road or
+  reachable on foot from the square; the square is at least 5 x 5 (twice the old 3 x 3) with the statue in the middle, braziers round it, a flagstone border, lamps and stalls, and a building stands on at least three of its sides; no prop stands in a road or
   on a plot; no lawn or woods scenery sits on a road, a plot or a prop and the signpost opens onto the road; the wall runs off both screen edges with no end tower showing and the plaza, every door and tag are on screen at three phone sizes; the one close-up scale is whole and about the same width everywhere; the wall's runs line up with its tower; buildings overlap at most by a corner; vents and lights lie on
   their look; the card words grow with the level.
 - `node tools/castle/shots.mjs` (after `npm run web`; `CARD=1` adds the card) makes `docs/samples/castle-{empty,part,maxed}-upright.png` at 393x852 and `castle-card-upright.png`,
