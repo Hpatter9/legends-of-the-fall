@@ -8,7 +8,7 @@ Three things reached from the home screen, beside an ordinary run.
   stages cleared x 100 + stars x 10 (`dailyScore`; stars come from `Run.stars`, kept by `finish`). The first play of a
   date counts; a replay is practice (`RunMode.practice`) and does not change the day's best. `Meta.daily` keeps each
   date's best and plays. Continue resumes today's run if it is still going.
-- **Endless tower** (`towerRun`): opens once a run has fought stage 10 (`Meta.bestStage`, from `run.best`). It is an
+- **Endless tower** (`towerRun`; now a roguelike map, see `rogue-tower.md`; the paragraph below is how it began): opens once a run has fought stage 10 (`Meta.bestStage`, from `run.best`). It is an
   ordinary run with `mode: { kind: 'tower' }`: the unlocked heroes at their lasting levels, the castle, gold and
   summons, the same stage scaling and bands (`stageBoost`, `bandFor`, bosses every 5th floor), and no events (`finish`
   skips the event card). `Meta.tower` keeps the floors cleared (the stage it is on, less one).

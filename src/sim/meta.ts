@@ -95,6 +95,8 @@ export interface StashChest {
   /** The difficulty tier of the run that earned it. */
   tier: number;
   seed: number;
+  /** Paid by an endless tower run (a run pays several of one milestone; an army's is given once). */
+  tower?: boolean;
 }
 
 export interface DailyEntry {

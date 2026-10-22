@@ -28,3 +28,16 @@ The Battle tab in the tab bar flashed, most of all on the Armies screen where it
 animation (a brightness and halo throb, `src/index.html`) still ran under the pixel frame, and a glint swept across it as
 well. Both are off for the tab (`.hmTab.hero` in src/pixel.css: `animation: none; filter: none`, and its `::after` glint
 removed). The Battle! and Fight! buttons keep their glint; the tab's small red "new" dot still pulses softly.
+
+## A sweep for flashing
+
+Every screen was checked for flashing: the camp, the hall, the tavern, the castle and its card, the library, a hero's sheet, settings, the
+armies, deploy, a fight and the result. Each was scanned for looping animations that change brightness, opacity, glow or
+colour, and frame-diffed for large areas that brighten or darken together. Fixed:
+- the red "new" dots on the tabs and buttons blinked hard on and off (`pxBlink`, steps): now steady;
+- the tutorial's highlight (`.tipLit`) blinked the same way: now a steady outline and soft glow;
+- the old falling leaves (`#leaves`) drifted over every home page, indoors too, crossing the scenes' own art: removed.
+Earlier fixes in the same vein: the gold buttons' brightness blink (0.56.0), the Battle tab's glow and glint (0.65.0), the
+army cards' sub-pixel backdrop drift (0.66.0). What still moves is meant to: idling heroes, fire and embers, the button
+glints, and a gentle twinkle on earned stars. A fight's whole-screen flashes are already capped (0.35 alpha, 120 ms, only on
+ultimates and big crits) and follow the flash setting.

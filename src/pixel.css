@@ -126,7 +126,7 @@ body .sbMeter i span { background: linear-gradient(#ffd27a 50%, #d6903a 50%); } 
 #tip[data-side='left'] i { right: -16px; top: calc(var(--ay) - 8px); transform: rotate(-90deg); }
 #tip[data-side='right'] i { left: -16px; top: calc(var(--ay) - 8px); transform: rotate(90deg); }
 #tip[data-side] i { border: 0; }
-.tipLit { outline: 2px solid var(--gold-hi); outline-offset: 2px; box-shadow: none; animation: pxBlink 1s steps(1) infinite; }
+.tipLit { outline: 2px solid var(--gold-hi); outline-offset: 2px; box-shadow: 0 0 0 4px rgba(255, 210, 90, 0.35); animation: none; }
 @media (prefers-reduced-motion: reduce) { .tipLit { animation: none; } }
 
 /* ---- rows and cards (6px) ---- */
@@ -199,7 +199,7 @@ body .sbSlot { min-height: 44px; }
 /* ---- the home screen ---- */
 .chip { text-shadow: 0 2px 0 #000; }
 .round.new::after, i.badge {
-  width: 14px; height: 14px; border-radius: 0; border: 2px solid #fff; animation: pxBlink 1.4s steps(1) infinite;
+  width: 14px; height: 14px; border-radius: 0; border: 2px solid #fff; animation: none;
   clip-path: polygon(2px 0, calc(100% - 2px) 0, 100% 2px, 100% calc(100% - 2px), calc(100% - 2px) 100%, 2px 100%, 0 calc(100% - 2px), 0 2px);
 }
 @keyframes pxBlink { 50% { opacity: 0.55; } }
@@ -405,3 +405,11 @@ body .sbSlot { min-height: 44px; }
 .csChest.silver .chestPic { filter: drop-shadow(0 0 5px #bcd8ff); }
 .csCount { align-self: stretch; text-align: center; font: bold 13px var(--display); font-style: normal; color: #4a1a06; background: var(--gold-hi); }
 @media (prefers-reduced-motion: reduce) { .csChest { animation: none; } }
+
+/* ===== No flashing (the owner's ask, after a sweep of every screen): nothing on the menus blinks hard on and off.
+   - The red "new" dots and the tutorial's highlight stand still (they blinked at full strength once a second).
+   - The old falling leaves are gone: a layer of orange specks drifted over every home page, indoors too (the tavern, the
+     hall, the library), and across the scenes' own art. The scenes have their own life (fire, embers, idling heroes). ===== */
+#leaves { display: none; }
+/* (Settings' Start over: a plain button in a warning red, steady) */
+.setting button.danger { flex: none; white-space: nowrap; color: #ffe0d8; background: #6a1a12; border-image: none; border: 2px solid #c8402a; }
