@@ -9,10 +9,9 @@ One card an army, swiped left and right with scroll-snap (arrows and dots too; a
 waiting). It opens on the furthest unlocked army, or on the army just cleared when that run earned a chest (`focus`). The card
 fills the page between the top bar and the tab bar (`#hmSub.armies` takes the `pages` grid area; a tap on a tab leaves it).
 
-- **The scene** (top ~41%): the land's parallax backdrop layers (`backdropFiles`), the army's troops in two ranks of
-  idle sprites (the foes' real sheets, drawn at whole-number scales through `sprite(sheet, _, whole)`, facing the viewer's left as
-  the foes do, depth-sorted by height), the mid-bosses beside the boss and the **boss large at the back** (2x where its sheet
-  is small). A lighting mood per army (`MOODS`): embers, soul fire, snow, leaves, fog, sparks, lanterns or dust particles, a
+- **The scene** (it takes all the page's slack above the info, Fight! pinned at the bottom; a locked card has the same layout, greyed, with a disabled Locked button): the land's parallax backdrop layers (`backdropFiles`), the army's troops in two ranks of
+  idle sprites (the foes' real sheets, each at the whole-number scale nearest to a common 84 px figure height, so the ranks stand level, through `sprite(sheet, _, whole)`; facing the viewer's left as
+  the foes do, depth-sorted by height), the mid-bosses beside the boss and the **boss large at the back** (the whole-number scale that makes it about 1.75x a troop, 1.4x for a mid-boss). A lighting mood per army (`MOODS`): embers, soul fire, snow, leaves, fog, sparks, lanterns or dust particles, a
   colour tint and a vignette. The layers drift slowly and slide with the swipe (`--par`), the crowd a little the other way.
   The title sits in the ribbon. A **locked** army is the same scene darkened, the troops pure silhouettes, with
   "Defeat the <boss> to unlock". Troops idle only on the cards next to the one showing (the timer stops with the page).
@@ -20,7 +19,7 @@ fills the page between the top bar and the tab bar (`#hmSub.armies` takes the `p
   shut), the 10-star track with a chest under the 3rd, 5th and 10th star, the three conditions of the picked tier (earned ones lit),
   the first-clear and replay crowns for the tier, the foes' multipliers, and the Fight! button. A run going shows
   Continue / Restart as before (a second tap confirms leaving).
-- No new art: the chests are three tiles of DawnLike (`src/art/ui/chest-*.png`, see `CREDITS.md`), the scenes are existing
+- No new art: the chest is the Craftpix platformer tileset's chest (closed and open frames, `src/art/ui/chest-*.png`, iron bands tinted bronze, silver and gold; see `CREDITS.md`) used on the cards, in the stash and in the opening (the lid-burst became a swap to the open frame with a pop and the light), the scenes are existing
   sheets and backdrops. **PixelLab was not used (0 generations).**
 
 ## Stars (`src/sim/tiers.ts`, `src/sim/armyStars.ts`, `src/sim/armies.ts`)

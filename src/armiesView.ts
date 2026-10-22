@@ -79,6 +79,17 @@ export function crewOf(a: Army): string[] {
   return seen;
 }
 
+/** The height a troop is drawn at, in px (each troop's scale is the whole number that comes nearest). */
+const TROOP_PX = 84;
+/** The whole-number scale that draws a boss at about `ratio` times a troop's height (1.5 to 2), the troop height being the crew's mean once scaled. */
+function bossScale(kind: string, crew: string[], ratio = 1.75): number {
+  const fig = (k: string) => figureOf(UNITS[k].sheet);
+  const troop = crew.reduce((n, k) => n + fig(k) * Math.max(1, Math.round(TROOP_PX / fig(k))), 0) / Math.max(1, crew.length);
+  let best = 1;
+  for (let k = 1; k <= 5; k++) if (Math.abs((fig(kind) * k) / troop - ratio) < Math.abs((fig(kind) * best) / troop - ratio)) best = k;
+  return best;
+}
+
 /** Where the troops stand: (x across, y up from the bottom, both in percent), front rank first. */
 const SLOTS: [number, number][] = [
   [20, 8],
@@ -125,15 +136,18 @@ function buildScene(a: Army, locked: boolean): { root: HTMLElement; figures: Fig
     crowd.append(s.canvas);
     figures.push({ sheet: def.sheet, s });
   };
-  // (the figures' own sheets are 64 to 100 px tall at 1x: the troops stand at 1x, the boss at 2x where it keeps to the scene)
-  const big = (kind: string) => Math.max(1, Math.min(3, Math.round(140 / figureOf(UNITS[kind].sheet))));
+  // troops stand at one figure height (whole-number scales, the nearest to `TROOP_PX`), the boss at 1.5 to 2 times a troop, a mid-boss between
+  const scaleFor = (kind: string, px: number, max: number) => {
+    const fig = figureOf(UNITS[kind].sheet);
+    return Math.max(1, Math.min(max, Math.round(px / fig)));
+  };
   const crew = crewOf(a);
   const boss = bossOf(a);
   const mids = bossesOf(a).filter((b) => b.id !== boss);
-  stand(boss, 50, 24, big(boss), 0);
-  mids.slice(0, 2).forEach((m, i) => stand(m.id, i ? 77 : 23, 26, Math.max(1, Math.min(2, Math.round(100 / figureOf(UNITS[m.id].sheet)))), i + 1));
+  stand(boss, 50, 22, bossScale(boss, crew), 0);
+  mids.slice(0, 2).forEach((m, i) => stand(m.id, i ? 78 : 22, 25, bossScale(m.id, crew, 1.4), i + 1));
   const slots = mids.length ? SLOTS.filter((s) => !(s[1] > 20 && (s[0] === 31 || s[0] === 69))) : SLOTS;
-  slots.forEach(([x, y], i) => stand(crew[i % crew.length], x, y, 1, i));
+  slots.forEach(([x, y], i) => stand(crew[i % crew.length], x, y, scaleFor(crew[i % crew.length], TROOP_PX, 4), i));
   root.append(crowd);
   // (the lighting: a colour over the land, drifting particles, and a vignette)
   const mood = MOODS[a.id] ?? { moods: [], tint: 'rgba(0,0,0,0)' };
@@ -237,7 +251,14 @@ export function drawArmies(body: HTMLElement, m: Meta, hooks: ArmiesHooks): void
   root.append(track, dots, prev, next, back);
   render();
   // (the first look: on the furthest army, without a slide)
+  // (the dots and arrows sit over the scenes: they follow the scene's height, which takes the page's slack)
+  const fit = () => {
+    const h = track.querySelector<HTMLElement>('.asScene')?.offsetHeight;
+    if (h) root.style.setProperty('--sceneH', `${h}px`);
+  };
+  window.addEventListener('resize', fit);
   const place = () => {
+    fit();
     track.scrollLeft = index * track.clientWidth;
     track.dispatchEvent(new Event('scroll'));
   };
@@ -246,7 +267,10 @@ export function drawArmies(body: HTMLElement, m: Meta, hooks: ArmiesHooks): void
   // (the troops idle while the page shows; the timer ends with the page)
   const timer = window.setInterval(() => {
     if (!root.isConnected || !root.offsetParent) {
-      if (!root.isConnected) clearInterval(timer);
+      if (!root.isConnected) {
+        clearInterval(timer);
+        window.removeEventListener('resize', fit);
+      }
       return;
     }
     frame++;
@@ -257,11 +281,6 @@ export function drawArmies(body: HTMLElement, m: Meta, hooks: ArmiesHooks): void
   }, 160);
 }
 
-function stat(parts: (string | HTMLElement)[]): HTMLElement {
-  const e = el('span', 'asStat');
-  e.append(...parts);
-  return e;
-}
 const crowns = (n: number): HTMLElement => {
   const s = el('span', 'armyCrowns');
   s.append(icon(ICONS.crowns, 'ico'), document.createTextNode(String(n)));
@@ -286,21 +305,17 @@ function card(a: Army, i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLElem
     lock.append(el('b', '', unlockLine(ARMIES[i - 1])), el('small', '', `${a.waves.length} waves · ${AREA_NAMES[a.area]}`));
     scene.append(lock);
   }
-  const info = el('div', 'asInfo');
+  const info = el('div', `asInfo${open ? '' : ' shut'}`);
   root.append(scene, info);
-  if (!open) {
-    info.append(el('p', 'asBlurb', a.blurb), stat([`First clear pays `, crowns(firstClearTotal(a))]));
-    return { root, figures };
-  }
   const running = hooks.running?.army === a.id ? hooks.running : null;
   const stars = armyStars(m, a);
-  const tiers = TIERS.map((_, t) => ({ open: tierOpen(m, a, t), got: tierStars(rec, t) }));
+  const tiers = TIERS.map((_, t) => ({ open: open && tierOpen(m, a, t), got: tierStars(rec, t) }));
   let tier = picked[a.id] ?? tiers.findIndex((t) => t.open && t.got < TIERS[tiers.indexOf(t)].stars);
   if (tier < 0 || !tiers[tier]?.open) tier = Math.max(0, tiers.map((t) => t.open).lastIndexOf(true));
   const draw = (): void => {
     info.replaceChildren();
     const bosses = bossesOf(a);
-    info.append(el('p', 'asBlurb', a.blurb), el('p', 'asMeta', `${a.waves.length} waves · led by the ${boss.name}${bosses.length > 2 ? ` · ${bosses.length} bosses` : ''} · best wave ${Math.min(rec.best, a.waves.length)}`));
+    info.append(el('p', 'asBlurb', a.blurb), el('p', 'asMeta', `${a.waves.length} waves · led by ${open ? `the ${boss.name}` : 'a hidden boss'}${bosses.length > 2 ? ` · ${bosses.length} bosses` : ''}${open ? ` · best wave ${Math.min(rec.best, a.waves.length)}` : ''}`));
     // the tier picks
     const picks = el('div', 'asTiers');
     TIERS.forEach((t, ti) => {
@@ -327,7 +342,7 @@ function card(a: Army, i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLElem
         // (earned chests wait in the stash on the Battle tab: the card only marks the milestone as earned)
         const pic = el('div', `asChest ${ch.kind} ${ch.state}${s === ARMY_STARS ? ' end' : ''}`);
         pic.setAttribute('aria-label', `${CHEST_NAME[ch.kind]}, ${ch.state === 'earned' ? (ch.waiting ? 'earned, in your stash' : 'earned') : `at ${ch.at} stars`}`);
-        pic.append(chestPicture(ch.kind, 3).root, el('small', '', ch.state === 'earned' ? '✓' : `${ch.at}★`));
+        pic.append(chestPicture(ch.kind, 1).root, el('small', '', ch.state === 'earned' ? '✓' : `${ch.at}★`));
         col.append(pic);
       }
       track.append(col);
@@ -353,9 +368,10 @@ function card(a: Army, i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLElem
       cont.addEventListener('click', () => hooks.onContinue());
       info.append(cont);
     }
-    const go = el('button', 'primary asFight', running ? `Continue · wave ${running.stage}` : rec.best > 0 || done ? `Fight again · ${t.name}` : 'Fight!');
+    const go = el('button', open ? 'primary asFight' : 'asFight', !open ? 'Locked' : running ? `Continue · wave ${running.stage}` : rec.best > 0 || done ? `Fight again · ${t.name}` : 'Fight!');
     // (starting another army while a run is going would lose it: a second tap says yes)
-    if (running) go.addEventListener('click', () => hooks.onContinue());
+    if (!open) go.disabled = true;
+    else if (running) go.addEventListener('click', () => hooks.onContinue());
     else if (hooks.running) twoTap(go, `Leave ${hooks.running.label}?`, () => hooks.onFight(a.id, tier));
     else go.addEventListener('click', () => hooks.onFight(a.id, tier));
     info.append(go);

@@ -265,7 +265,7 @@ body .sbSlot { min-height: 44px; }
 .asTrack { display: flex; width: 100%; height: 100%; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; touch-action: pan-x; }
 .asTrack::-webkit-scrollbar { display: none; }
 .asCard { position: relative; flex: 0 0 100%; width: 100%; height: 100%; display: flex; flex-direction: column; scroll-snap-align: center; scroll-snap-stop: always; overflow: hidden; --par: 0; }
-.asScene { position: relative; flex: 0 0 clamp(210px, 41%, 330px); overflow: hidden; background: #1a0d07; border-bottom: 6px solid #0c0604; image-rendering: pixelated; }
+.asScene { position: relative; flex: 1 1 0; min-height: 190px; overflow: hidden; background: #1a0d07; border-bottom: 6px solid #0c0604; image-rendering: pixelated; }
 .asSky, .asCrowd, .asTint, .asAir, .asVig, .asGround { position: absolute; inset: 0; pointer-events: none; }
 .asLayer { position: absolute; left: -8%; right: -8%; top: 0; bottom: 0; background: center bottom / auto 100% repeat-x; translate: calc(var(--par) * var(--k) * -2px) 0; animation: drift 40s steps(60) infinite alternate; }
 .asLayer:first-child { left: 0; right: 0; animation: none; translate: none; }
@@ -290,19 +290,19 @@ body .sbSlot { min-height: 44px; }
 .asCard.locked .asRib { border-image-source: url(ui/ribbon-grey.png); }
 .asCard.locked .asRib b { color: #c8b8a8; }
 .asScene .armyNew { z-index: 300; top: 66px; right: 10px; }
-.asLock { position: absolute; left: 12px; right: 12px; bottom: 16px; z-index: 300; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px; text-align: center; background: rgba(8, 4, 2, 0.8); border: 2px solid #6a5a4a; }
+.asLock { position: absolute; left: 12px; right: 12px; bottom: 34px; z-index: 300; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px; text-align: center; background: rgba(8, 4, 2, 0.8); border: 2px solid #6a5a4a; }
 .asLock b { font: bold 16px var(--display); color: #ffd0b0; text-shadow: 0 2px 0 #000; }
 .asLock small { font-size: 12px; color: var(--dim); }
-.asDots { position: absolute; left: 0; right: 0; top: calc(clamp(210px, 41%, 330px) - 22px); z-index: 301; display: flex; justify-content: center; gap: 7px; pointer-events: none; }
+.asDots { position: absolute; left: 0; right: 0; top: calc(var(--sceneH, 300px) - 22px); z-index: 301; display: flex; justify-content: center; gap: 7px; pointer-events: none; }
 .asDot { pointer-events: auto; width: 10px; height: 10px; min-height: 0; padding: 0; background: rgba(255, 255, 255, 0.28); border: 2px solid #0c0604; border-radius: 0; box-shadow: none; }
 .asDot.on { background: var(--gold-hi); }
 .asDot.shut { background: rgba(60, 50, 44, 0.8); }
-.asArrow { position: absolute; top: calc(clamp(210px, 41%, 330px) / 2 - 22px); z-index: 301; width: 38px; height: 54px; min-height: 0; padding: 0 0 4px; font: bold 34px/1 var(--display); color: var(--gold-hi); background: rgba(12, 6, 4, 0.55); border: 2px solid rgba(240, 180, 74, 0.6); border-radius: 0; box-shadow: none; text-shadow: 0 2px 0 #000; }
+.asArrow { position: absolute; top: calc(var(--sceneH, 300px) / 2 - 22px); z-index: 301; width: 38px; height: 54px; min-height: 0; padding: 0 0 4px; font: bold 34px/1 var(--display); color: var(--gold-hi); background: rgba(12, 6, 4, 0.55); border: 2px solid rgba(240, 180, 74, 0.6); border-radius: 0; box-shadow: none; text-shadow: 0 2px 0 #000; }
 .asArrow.left { left: 4px; }
 .asArrow.right { right: 4px; }
 .asArrow[hidden] { display: none; }
 .asBack { position: absolute; left: 8px; top: 20px; z-index: 302; width: auto; min-height: 32px; padding: 0 10px; font-size: 13px; }
-.asInfo { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 5px; padding: 8px 12px 10px; overflow-y: auto; touch-action: pan-y; background: url(ui/wood.png) 0 0 / 32px 32px, #1c1008; text-align: center; }
+.asInfo { flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 5px; padding: 8px 12px 10px; overflow-y: auto; touch-action: pan-y; background: url(ui/wood.png) 0 0 / 32px 32px, #1c1008; text-align: center; }
 .asBlurb { margin: 0; font-size: 13px; color: var(--ink); line-height: 1.15; }
 .asMeta { margin: 0; font-size: 11px; color: var(--dim); }
 .asStat { font-size: 13px; color: var(--ink); }
@@ -312,16 +312,18 @@ body .sbSlot { min-height: 44px; }
 .asTier small { font-size: 10px; font-weight: normal; color: var(--dim); }
 .asTier.on { background: linear-gradient(#c9762e, #8e4618); border-color: var(--gold-hi); box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.3), 0 0 0 2px #0c0604; }
 .asTier.shut { filter: grayscale(1) brightness(0.55); }
-.asStars { display: flex; justify-content: center; align-items: flex-start; padding: 2px 0 0; min-height: 66px; }
+.asStars { display: flex; justify-content: center; align-items: flex-start; padding: 2px 0 0; min-height: 84px; }
 .asStarCol { position: relative; flex: none; width: 29px; display: flex; flex-direction: column; align-items: center; }
 .asStarCol.gap { margin-left: 9px; }
 .asStar { font-size: 24px; line-height: 26px; color: #6a5a4a; text-shadow: 0 2px 0 #000; }
 .asStar.on { color: var(--gold-hi); text-shadow: 0 2px 0 #7a3a08, 0 0 8px rgba(255, 200, 80, 0.7); }
 .asStarCol.pick .asStar:not(.on) { color: #b8a080; }
-.asChest { position: absolute; top: 28px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 1px; width: 52px; min-height: 0; padding: 0; background: none; border: 0; box-shadow: none; font-size: 10px; color: var(--dim); }
+.asChest { position: absolute; top: 24px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 1px; width: 52px; min-height: 0; padding: 0; background: none; border: 0; box-shadow: none; font-size: 10px; color: var(--dim); }
 .asChest.end { left: auto; right: -3px; transform: none; }
 .asChest small { font-size: 12px; font-weight: normal; text-shadow: 0 1px 0 #000; }
 .asChest.locked { filter: grayscale(0.8) brightness(0.55); }
+.asInfo.shut { filter: grayscale(0.85) brightness(0.7); }
+.asFight:disabled { filter: grayscale(1) brightness(0.6); }
 .asChest.earned small { font-weight: bold; color: var(--gold-hi); }
 .asChest.earned .chestPic { filter: drop-shadow(0 0 4px rgba(255, 208, 90, 0.8)); }
 @keyframes asChestBob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -3px; } }
@@ -340,10 +342,10 @@ body .sbSlot { min-height: 44px; }
 /* the chest opening: shake, burst, light, and the rewards flying out into cards */
 .chestShow { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 10px; padding: 8vh 14px 14px; background: rgba(6, 3, 2, 0.94); overflow: hidden; animation: pxUnlockIn 0.3s steps(3) both; }
 .chestTitle { font: bold 22px var(--display); color: var(--gold-hi); text-shadow: 0 3px 0 #2a0a06; z-index: 2; }
-.chestStage { position: relative; width: 220px; height: 150px; display: grid; place-items: center; z-index: 2; }
+.chestStage { position: relative; width: 220px; height: 170px; display: grid; place-items: center; z-index: 2; }
 .chestStage .chestPic { z-index: 2; }
-.chestRays { position: absolute; left: 50%; top: calc(8vh + 100px); width: 520px; height: 520px; margin: -260px 0 0 -260px; opacity: 0; background: repeating-conic-gradient(from 0deg, rgba(255, 220, 120, 0.5) 0 7deg, rgba(255, 220, 120, 0) 7deg 20deg); -webkit-mask: radial-gradient(circle, #000 8%, transparent 68%); mask: radial-gradient(circle, #000 8%, transparent 68%); animation: asSpin 14s linear infinite; }
-.chestGlow { position: absolute; left: 50%; top: calc(8vh + 100px); width: 300px; height: 300px; margin: -150px 0 0 -150px; opacity: 0; background: radial-gradient(circle, rgba(255, 230, 150, 0.95), rgba(255, 170, 60, 0.35) 45%, transparent 70%); }
+.chestRays { position: absolute; left: 50%; top: calc(8vh + 125px); width: 520px; height: 520px; margin: -260px 0 0 -260px; opacity: 0; background: repeating-conic-gradient(from 0deg, rgba(255, 220, 120, 0.5) 0 7deg, rgba(255, 220, 120, 0) 7deg 20deg); -webkit-mask: radial-gradient(circle, #000 8%, transparent 68%); mask: radial-gradient(circle, #000 8%, transparent 68%); animation: asSpin 14s linear infinite; }
+.chestGlow { position: absolute; left: 50%; top: calc(8vh + 125px); width: 300px; height: 300px; margin: -150px 0 0 -150px; opacity: 0; background: radial-gradient(circle, rgba(255, 230, 150, 0.95), rgba(255, 170, 60, 0.35) 45%, transparent 70%); }
 .chestShow.silver .chestGlow { background: radial-gradient(circle, rgba(220, 240, 255, 0.95), rgba(150, 190, 240, 0.35) 45%, transparent 70%); }
 .chestShow.lit .chestRays { opacity: 1; transition: opacity 0.4s steps(4); }
 .chestShow.lit .chestGlow { animation: asFlash 0.7s steps(7) both; opacity: 0.6; }
@@ -351,10 +353,12 @@ body .sbSlot { min-height: 44px; }
 @keyframes asFlash { 0% { opacity: 1; transform: scale(0.4); } 100% { opacity: 0.55; transform: scale(1.1); } }
 .chestPic.shaking { animation: asShake 0.12s steps(2) infinite; }
 @keyframes asShake { 0% { translate: -4px 0; } 50% { translate: 4px 0; } }
-.chestPic .chestLid, .chestPic .chestBody { transition: none; }
-.chestPic.burst .chestLid { animation: asLid 0.9s steps(9) both; }
+.chestPic .chestOpen { display: none; }
+.chestPic.burst .chestShut { display: none; }
+.chestPic.burst .chestOpen { display: block; }
+.chestPic.burst { animation: asPop 0.5s steps(5) both; }
 .chestPic.burst { filter: drop-shadow(0 0 14px #ffd05a) drop-shadow(0 0 30px #ff9a3a); }
-@keyframes asLid { 0% { transform: none; opacity: 1; } 35% { transform: translate(-10px, -110px) rotate(-28deg); opacity: 1; } 100% { transform: translate(-50px, -230px) rotate(-65deg); opacity: 0; } }
+@keyframes asPop { 0% { transform: scale(0.8); } 40% { transform: scale(1.12); } 100% { transform: none; } }
 .chestSparks { position: absolute; left: 50%; top: 50%; width: 0; height: 0; z-index: 3; }
 .chestSparks i { position: absolute; width: 6px; height: 6px; margin: -3px; background: #ffe48a; opacity: 0; }
 .chestShow.lit .chestSparks i { animation: asSpark 0.9s steps(9) var(--d) both; }
@@ -388,7 +392,7 @@ body .sbSlot { min-height: 44px; }
 /* the chest stash on the Battle tab: a stack of earned chests down the left, tap one to open it */
 .csStash { position: absolute; left: 8px; top: 70px; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 62px; padding: 6px 0; background: rgba(12, 6, 4, 0.55); border: 2px solid rgba(240, 180, 74, 0.5); }
 .csStash.empty { display: none; }
-.csChest { width: 52px; min-height: 0; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 0; background: none; border: 0; box-shadow: none; font-size: 11px; color: var(--gold-hi); animation: asChestBob 1.2s steps(2) infinite; }
+.csChest { width: 46px; min-height: 0; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 0; background: none; border: 0; box-shadow: none; font-size: 11px; color: var(--gold-hi); animation: asChestBob 1.2s steps(2) infinite; }
 .csChest small { font-size: 12px; font-weight: bold; text-shadow: 0 1px 0 #000; }
 .csChest .chestPic { filter: drop-shadow(0 0 5px #ffd05a); }
 .csChest.silver .chestPic { filter: drop-shadow(0 0 5px #bcd8ff); }

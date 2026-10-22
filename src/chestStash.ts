@@ -35,7 +35,7 @@ export function drawChestStash(host: HTMLElement, m: Meta, onChange: () => void)
     const b = el('button', `csChest ${kind}`);
     b.setAttribute('aria-label', `${CHEST_NAME[kind]} from the ${army?.name ?? 'army'}: tap to open`);
     b.style.animationDelay = `${-i * 0.25}s`;
-    b.append(chestPicture(kind, 3).root, el('small', '', `${c.at}★`));
+    b.append(chestPicture(kind, 1).root, el('small', '', `${c.at}★`));
     b.addEventListener('click', () => {
       const loot = openChest(m, i);
       if (!loot) return;
@@ -47,29 +47,23 @@ export function drawChestStash(host: HTMLElement, m: Meta, onChange: () => void)
   if (m.stash.length > STASH_SHOWN) host.append(el('i', 'csCount', `+${m.stash.length - STASH_SHOWN}`));
 }
 
-/** A chest's picture and where its lid ends (in the picture's own pixels). */
-const CHESTS: Record<ChestKind, { url: string; w: number; h: number; lid: number }> = {
-  bronze: { url: chestBronze, w: 14, h: 10, lid: 4 },
-  silver: { url: chestSilver, w: 14, h: 10, lid: 4 },
-  gold: { url: chestGold, w: 14, h: 13, lid: 5 },
-};
+/** The chest sprite (Craftpix platformer tileset, tinted bronze, silver and gold): two frames side by side, closed then open with its treasure showing. */
+const CHEST_W = 42;
+const CHEST_H = 39;
+const CHESTS: Record<ChestKind, string> = { bronze: chestBronze, silver: chestSilver, gold: chestGold };
 export const CHEST_NAME: Record<ChestKind, string> = { bronze: 'Bronze chest', silver: 'Silver chest', gold: 'Gold chest' };
 
-/** A chest picture at a whole-number scale, in two parts (the lid and the body) so the lid can burst off. */
-export function chestPicture(kind: ChestKind, scale: number): { root: HTMLElement; lid: HTMLElement; body: HTMLElement } {
-  const c = CHESTS[kind];
+/** A chest picture at a whole-number scale: the closed frame, and the open frame (shown when the root has the class `burst`). */
+export function chestPicture(kind: ChestKind, scale: number): { root: HTMLElement } {
   const root = el('div', 'chestPic');
-  root.style.width = `${c.w * scale}px`;
-  root.style.height = `${c.h * scale}px`;
-  const part = (cls: string, top: number, rows: number) => {
-    const p = el('div', cls);
-    p.style.cssText = `position:absolute;left:0;top:${top * scale}px;width:${c.w * scale}px;height:${rows * scale}px;background:url(${c.url}) 0 ${-top * scale}px / ${c.w * scale}px ${c.h * scale}px no-repeat;image-rendering:pixelated`;
-    return p;
-  };
-  const body = part('chestBody', c.lid, c.h - c.lid);
-  const lid = part('chestLid', 0, c.lid);
-  root.append(body, lid);
-  return { root, lid, body };
+  root.style.width = `${CHEST_W * scale}px`;
+  root.style.height = `${CHEST_H * scale}px`;
+  for (const [cls, frame] of [['chestShut', 0], ['chestOpen', 1]] as const) {
+    const f = el('div', cls);
+    f.style.cssText = `position:absolute;inset:0;background:url(${CHESTS[kind]}) ${-frame * CHEST_W * scale}px 0 / ${CHEST_W * 2 * scale}px ${CHEST_H * scale}px no-repeat;image-rendering:pixelated`;
+    root.append(f);
+  }
+  return { root };
 }
 
 /** The reward line's picture: a hero's face, a piece of gear's icon, or the crown. */
@@ -88,7 +82,7 @@ export function showChest(loot: Loot, then: () => void): void {
   root.append(el('div', 'chestRays'), el('div', 'chestGlow'));
   const title = el('div', 'chestTitle', CHEST_NAME[loot.kind]);
   const stage = el('div', 'chestStage');
-  const pic = chestPicture(loot.kind, 9);
+  const pic = chestPicture(loot.kind, 4);
   pic.root.classList.add('shaking');
   stage.append(pic.root);
   const spark = el('div', 'chestSparks');
