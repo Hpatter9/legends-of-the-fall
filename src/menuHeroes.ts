@@ -10,7 +10,8 @@ import { lastingBoost, progressOf, xpOf } from './sim/levels';
 import { drawEquipment } from './equipView';
 import { drawTalents } from './talentView';
 import { TREES } from './sim/talents';
-import { kindPower, powerText } from './sim/power';
+import { blowsPerSecond, kindPower, powerText, rateText, tilesPerSecond } from './sim/power';
+import { heroStats } from './sim/talents';
 import { sprite } from './render/sheets';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -71,11 +72,23 @@ export function drawHeroSheet(box: HTMLElement, meta: Meta, kind: string, close:
       cell.append(el('b', '', String(v)), el('small', '', name));
       stat.append(cell);
     }
+    // (how often it swings and how fast it walks, with what its equipment and talents add; they follow an equip or a talent learned)
+    const speeds: [HTMLElement, () => string][] = [];
+    for (const [name, rate] of [['Attack speed', () => rateText(blowsPerSecond(kind, heroStats(meta, kind)))], ['Walk', () => rateText(tilesPerSecond(kind, heroStats(meta, kind)))]] as const) {
+      const cell = el('div', 'hspeed');
+      const v = el('b', '', rate());
+      cell.append(v, el('small', '', name));
+      stat.append(cell);
+      speeds.push([v, rate]);
+    }
     // (one number for how strong the hero is with its level, rank, equipment and talents, to set heroes side by side)
     const power = el('div', 'hpower');
     const pv = el('b', '', powerText(kindPower(meta, kind)));
     power.append(el('small', '', 'Power'), pv);
-    const repower = () => (pv.textContent = powerText(kindPower(meta, kind)));
+    const repower = () => {
+      pv.textContent = powerText(kindPower(meta, kind));
+      for (const [v, rate] of speeds) v.textContent = rate();
+    };
     box.append(power, stat);
     if (kit)
       for (const [label, a] of [['Skill', kit.skill], ...(kit.ultimate ? [['Ultimate', kit.ultimate] as const] : []), ['Passive', kit.passive]] as const) {
