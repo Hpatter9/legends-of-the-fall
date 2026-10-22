@@ -8,6 +8,7 @@
 import { sightClear, standable, tileAt, type At } from './board';
 import { addUnit, atkOf, blowMult, canStrike, defenceOf, defOf, hurt, strikeDef, tileOf, unitAt, wayTo, type Battle, type BattleEvent, type Unit } from './battle';
 import { eliteKits } from './eliteFoes';
+import { calBossKits } from './calamityBosses';
 import { Rng } from './rng';
 import { fxBlow, fxStruck, fxTick, hidden } from './equipFx';
 
@@ -1517,7 +1518,7 @@ KITS.forgeTitan = {
 };
 
 // The named elites of the tower (`elites.ts`) borrow the foes' skills and heroes' skills too.
-Object.assign(KITS, eliteKits(KITS));
+Object.assign(KITS, eliteKits(KITS), calBossKits(KITS));
 
 export const kitOf = (u: Unit): Kit | undefined => KITS[u.def];
 

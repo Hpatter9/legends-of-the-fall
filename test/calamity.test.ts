@@ -4,13 +4,17 @@ import { fight, place, playOut, type Battle } from '../src/sim/battle';
 import { CALAMITY_SQUAD, dropSlot, adoptOldTower, heroOf, loadRun, loadSlot, saveRun, saveSlot, setSquad, squadLimit, startStage, summon, type Run } from '../src/sim/run';
 import { newMeta, type Meta } from '../src/sim/meta';
 import { calamityRun, towerRun } from '../src/sim/modes';
-import { CAL_BOSSES, CAL_MAPS, CAL_ROWS, CAL_SCALE, calBossBoost, fitBand, squadFoeMult } from '../src/sim/calamity';
+import { CAL_BOSSES, CAL_BOSS_TITLES } from '../src/sim/calamityBosses';
+import { KITS } from '../src/sim/abilities';
+import { BOSS_IDS, isBoss } from '../src/sim/foes';
+import { titleOf } from '../src/render/bossTitles';
+import { CAL_MAPS, CAL_ROWS, CAL_SCALE, calBossBoost, fitBand, squadFoeMult } from '../src/sim/calamity';
 import { climbXpView, gainRunXp, heroLevel, hireHero, hireXp, localBoost } from '../src/sim/climb';
 import { levelBoost, xpFor } from '../src/sim/levels';
 import { abandonTower, buy, calamityMap, choices, clearNode, enterNode, finishTower, fightSpec, foeScale, floorOf, hasRoom, hire, HIRE_OFFERS, hireCost, mapFor, MAP_CROWNS, rowsIn, settleTower, train, type MapNode } from '../src/sim/tower';
 import { hpShare } from '../src/sim/health';
 import { frontSpots, playCalamity, playTower } from '../tools/autoplay';
-import { HEROES } from '../src/sim/units';
+import { HEROES, UNITS } from '../src/sim/units';
 import { mixSeed } from '../src/sim/rng';
 
 const store = () => {
@@ -572,4 +576,23 @@ test('a mini-boss pays a relic to choose, gear, and double gold', () => {
   assert.ok(run.tower!.offer && run.tower!.offer.length >= 1, 'a relic to choose');
   assert.ok((run.items?.length ?? 0) >= 1, 'gear');
   assert.ok(run.gold - gold >= 2 * (20 + 6 * floor) * 0.9, 'double gold');
+});
+
+test('each calamity boss has its own name, title and kit, and the mechanics stack up through the maps', () => {
+  const p = (i: number) => KITS[CAL_BOSSES[i]].passive;
+  const names = CAL_BOSSES.map((id) => UNITS[id].name);
+  assert.equal(new Set(names).size, 6);
+  for (const id of CAL_BOSSES) {
+    assert.ok(isBoss(id), 'it gets the boss intro card');
+    assert.ok(CAL_BOSS_TITLES[id].length > 3);
+    assert.equal(titleOf(id), CAL_BOSS_TITLES[id]);
+    assert.ok(!BOSS_IDS.includes(id), 'and stays out of the codex of bosses');
+  }
+  for (let i = 0; i < 6; i++) assert.ok(p(i).rage, 'enrage from the first');
+  assert.ok(!p(0).block && p(1).block, 'a shield wall from map 2');
+  assert.match(KITS[CAL_BOSSES[2]].skill.name, /Imps/, 'imps from map 3');
+  assert.ok(p(3).steady && KITS[CAL_BOSSES[3]].ultimate, 'steady with a shove from map 4');
+  assert.ok(!p(3).ignite && p(4).ignite && p(4).leech, 'poison from map 5');
+  assert.ok(p(5).frenzy && p(5).ignite && p(5).block && p(5).rage && KITS[CAL_BOSSES[5]].ultimate, 'the last has all of it, and a charge');
+  assert.ok(calBossBoost(6).size > calBossBoost(1).size);
 });

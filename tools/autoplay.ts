@@ -144,7 +144,11 @@ export function playCalamity(meta: Meta, seed: number, hero: string, castle: Cas
   return { maps: run.tower!.bosses, floors: run.stage - 1, cleared: !!run.cleared, heroes: run.roster.length, level: r.level };
 }
 
+/** The node kind and act of the fight the last climb lost (for tuning). */
+export let lostAt = '';
+
 function playClimb(meta: Meta, run: Run, maxFloors: number): { floors: number; bosses: number; act: number; level: number } {
+  lostAt = '';
   const calamity = run.mode?.kind === 'calamity';
   while (!run.over && run.stage <= maxFloors) {
     // (the tower's greedy player summons while the gold lasts; a calamity hires instead)
@@ -157,6 +161,7 @@ function playClimb(meta: Meta, run: Run, maxFloors: number): { floors: number; b
     const fightIt = () => {
       const b = fightNode(meta, run);
       const ok = b.phase === 'won';
+      if (!ok) lostAt = `${cur.kind}${run.tower!.act}`;
       if (!run.local) gainXp(meta, fightXp(b, xpRate(run.castle ?? newCastle())));
       finishTower(run, b, ok, ratingOf(b, cur.kind === 'boss').stars);
       // (an elite offers three relics: the greedy player takes the first, a piece of a set it has begun when there is one)

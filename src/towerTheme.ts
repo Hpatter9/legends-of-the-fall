@@ -2,7 +2,7 @@
 // hung with banners, act 3 a summit in the storm; later acts reuse the three looks, tinted by `tint` (a hue turn) and numbered.
 
 import { BOSS_BANDS, FOE_BANDS } from './sim/foes';
-import { CAL_BOSSES } from './sim/calamity';
+import { CAL_BOSSES } from './sim/calamityBosses';
 
 export interface ActLook {
   /** Which of the three looks: 0 crypt, 1 halls, 2 summit. */
@@ -30,7 +30,7 @@ export function actLook(act: number): ActLook {
 }
 
 /** The unit id of the boss that waits at the top of the act (the first foe of its band, as `fightSpec` picks it). */
-export const bossOfAct = (act: number, calamity = false): string => (calamity ? FOE_BANDS[CAL_BOSSES[Math.min(Math.max(1, act), CAL_BOSSES.length) - 1]][0] : FOE_BANDS[BOSS_BANDS[(Math.max(1, act) - 1) % BOSS_BANDS.length]][0]);
+export const bossOfAct = (act: number, calamity = false): string => (calamity ? CAL_BOSSES[Math.min(Math.max(1, act), CAL_BOSSES.length) - 1] : FOE_BANDS[BOSS_BANDS[(Math.max(1, act) - 1) % BOSS_BANDS.length]][0]);
 
 /** The calamity's maps, each with its own name over one of the three looks (the fourth reuses the first, tinted). */
 const CAL_LOOKS: readonly { look: 0 | 1 | 2; name: string; blurb: string; tint: number }[] = [

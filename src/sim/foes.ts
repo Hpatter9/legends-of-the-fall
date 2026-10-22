@@ -123,7 +123,8 @@ export const FOES: Record<string, UnitDef> = {
 
 /** The bosses' ids: the first foe of a boss band is one of these. */
 export const BOSS_IDS: readonly string[] = ['orcWarlord', 'demonLord', 'hornedOgre', 'forestBoss1', 'forestBoss2', 'forestBoss3', 'boarKing', 'devilLeader', 'shamanKing', 'orcChieftain', 'boneCaptain', 'alphaWolf', 'gorgonQueen', 'lichKing', 'minotaurChampion', 'nineTails', 'oniKing', 'sapphireColossus', 'forgeTitan'];
-export const isBoss = (id: string) => BOSS_IDS.includes(id);
+/** A boss: one of the list above, or one of the calamity's own (`calamityBosses.ts`, kept out of the list: it is the meta's boss codex). */
+export const isBoss = (id: string) => BOSS_IDS.includes(id) || id.startsWith('calBoss');
 
 /** The bands a fight can meet: five foes each, by their ids in `UNITS`. The boss bands are below (their first foe is the boss). */
 export const FOE_BANDS: Record<string, string[]> = {

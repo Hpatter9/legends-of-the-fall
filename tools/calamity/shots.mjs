@@ -118,6 +118,23 @@ for (const [w, h] of [[393, 852], [360, 780]]) {
     await shot('calamity-recruit-hired');
     await closeCard();
   }
+  if (main) {
+    // a boss's intro card (map 1's boss, entered from its gate)
+    await page.evaluate(() => {
+      const g = window.__game;
+      const t = g.run.tower;
+      const boss = t.map.find((n) => n.kind === 'boss');
+      const down = t.map.filter((n) => n.next.includes(boss.id))[0];
+      t.at = down.id; t.row = boss.row; t.path = [];
+      g.towerView.open(g.run);
+    });
+    await page.waitForTimeout(400);
+    await page.evaluate(() => { const g = window.__game; const i = g.run.tower.map.findIndex((n) => n.kind === 'boss'); document.querySelectorAll('.rtNode')[i].click(); });
+    await page.waitForTimeout(150);
+    await page.evaluate(() => document.querySelector('.rtGo').click());
+    await page.waitForTimeout(1800);
+    await shot('calamity-boss-intro');
+  }
   await ctx.close();
 }
 await browser.close();

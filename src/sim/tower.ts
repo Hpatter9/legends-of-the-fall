@@ -21,7 +21,8 @@ import { mixSeed, Rng } from './rng';
 import { addTwists, TWISTS } from './twists';
 import { BOSS, FOE_START, reward, squadLimit, summonCost, type Run } from './run';
 import { UNITS } from './units';
-import { CAL_BOSSES, calBossBoost, fitBand, squadFoeMult } from './calamity';
+import { calBossBoost, fitBand, squadFoeMult } from './calamity';
+import { calBossBand } from './calamityBosses';
 import { fightXpByHero, gainRunXp, hireHero } from './climb';
 import { xpRate } from './castle';
 import { levelOf as levelOfXp, type LevelUp } from './levels';
@@ -367,7 +368,7 @@ function baseSpec(run: Run, kind: NodeKind, floor: number, nodeId?: number): Fig
   if (kind === 'boss' && run.tower?.maps) {
     // (a calamity's bosses: one of its own per map, each bigger than the last; the map's twist adds a mechanic from the second on)
     const map = run.tower.act;
-    return { band: [...FOE_BANDS[CAL_BOSSES[Math.min(map, CAL_BOSSES.length) - 1]]], stage: { foes: { hp: k, atk: k }, boss: calBossBoost(map), area } };
+    return { band: calBossBand(map), stage: { foes: { hp: k, atk: k }, boss: calBossBoost(map), area } };
   }
   if (kind === 'boss') return { band: [...FOE_BANDS[BOSS_BANDS[((run.tower?.act ?? actOf(floor)) - 1) % BOSS_BANDS.length]]], stage: { foes: { hp: k, atk: k }, boss: BOSS, area } };
   // (a named elite waits at an elite node; a call without a node keeps the plain elite band)
@@ -574,7 +575,8 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
     // (a boss drops gear, and a relic if one is left)
     prizes.push(dropGear(rng, gearId(run), floor, 1));
     if (relics.length) relicOf(rng.pick(relics));
-    t.lastBoss = t.cur?.fight?.band[0];
+    // (a calamity's bosses are its own: not for the meta's list of bosses beaten)
+    if (!t.maps) t.lastBoss = t.cur?.fight?.band[0];
   }
   if (t.cur?.fight?.mimic) {
     // (a felled mimic spills a great chest: gold, a relic if one is left, and a good piece of gear)
