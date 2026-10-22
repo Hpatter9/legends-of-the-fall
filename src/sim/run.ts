@@ -159,7 +159,7 @@ export const isBossRun = (run: Run, stage = run.stage): boolean => {
 /** How many waves the run's army has (0 for any other run). */
 export const wavesOf = (run: Run): number => armyOfRun(run)?.waves.length ?? 0;
 
-/** Hire a particular grade-1 hero (the tower's shop sells them); three of a kind merge as ever. */
+/** Hire a particular grade-1 hero for `paid` gold (the tower's shop sells them); three of a kind merge as ever. */
 export const recruit = (run: Run, kind: string, paid = SUMMON_BASE): Owned => add(run, kind, paid);
 
 const draw = (run: Run): string => {
@@ -185,7 +185,7 @@ export const LUCKY_SUMMON = 0.05;
 /** A run's chance of a grade-2 summon: the base for now; castle buildings or items can add to it later. */
 export const luckyChance = (_run: Run): number => LUCKY_SUMMON;
 
-/** Add a hero (bought at `paid` gold; grade 1 unless told otherwise), then merge threes of a kind and grade, upward. Returns the hero that ends up holding the new one's place. */
+/** Add a hero bought at `paid` gold (grade 1 unless told otherwise), then merge threes of a kind and grade, upward. Returns the hero that ends up holding the new one's place. */
 function add(run: Run, kind: string, paid: number, grade = 1): Owned {
   let made: Owned = { id: run.nextId++, kind, grade, paid };
   run.roster.push(made);

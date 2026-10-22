@@ -401,7 +401,7 @@ export function buy(run: Run, i: number): string | null {
       (run.items ??= []).push(it.gear!);
       return `Bought the ${it.label}.`;
     case 'hero':
-      recruit(run, it.ref!);
+      recruit(run, it.ref!, it.cost);
       return `A ${it.label} joins the party.`;
     case 'heal':
       healParty(run, DRAUGHT_HEAL);
