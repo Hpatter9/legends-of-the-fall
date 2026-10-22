@@ -1,8 +1,9 @@
-// The Castle tab's picture: a castle courtyard in the isometric view of Chronos's building kits (stone wall, gate and tower, a lattice of grass
-// and cobble tiles, houses, forges, a statue), drawn half size in the scene's own pixels, whole-number times bigger. A cobbled road leads from the
-// wall's gate to a plaza; each upgrade is a building on its own plot that grows through four looks (castleSpots.ts): an empty plot, a small, a
+// The Castle tab's picture: a town in the isometric view of Chronos's building kits (a plain stone wall and tower behind it, a lattice of grass and
+// cobble tiles, houses, forges, benches, and a fountain made for the game with PixelLab), drawn half size in the scene's own pixels, whole-number times bigger.
+// A paved town square with the fountain in the middle has the buildings round it, a lane runs out of the town to the bottom; each upgrade is a building on its
+// own plot that grows through four looks (castleSpots.ts): an empty plot, a small, a
 // bigger and a grand one. Flags wave on the wall towers, chimneys smoke, sparks fly at the forge, the tower's windows glow and shed runes, the gold
-// glints, and a few of your heroes (their sheets shrunk by a whole number so they stand about a door high) stroll the plaza. Tapping a building (or
+// glints, and a few of your heroes (their sheets shrunk by a whole number so they stand about a door high) stroll the square and the paths. Tapping a building (or
 // its name tag) opens its upgrade card; a level bought plays a short build: scaffolding and dust, the new look with a flash, then sparkles. One
 // canvas, drawn with nearest neighbour and panned by native scroll when the screen is smaller than the scene. It only draws (Math.random is fine
 // here: nothing that is played depends on it) and runs only while the tab shows.
@@ -22,6 +23,7 @@ import bannerUrl from './art/castle/banner.png';
 import barracksUrl from './art/castle/barracks.png';
 import barrelsUrl from './art/castle/barrels.png';
 import basketsUrl from './art/castle/baskets.png';
+import benchUrl from './art/castle/bench.png';
 import berriesUrl from './art/castle/berries.png';
 import birchUrl from './art/castle/birch.png';
 import brazierUrl from './art/castle/brazier.png';
@@ -40,6 +42,7 @@ import field2Url from './art/castle/field2.png';
 import flagstoneUrl from './art/castle/flagstone.png';
 import flowersUrl from './art/castle/flowers.png';
 import forgeUrl from './art/castle/forge.png';
+import fountainUrl from './art/castle/fountain.png';
 import granaryUrl from './art/castle/granary.png';
 import grass_tileUrl from './art/castle/grass_tile.png';
 import greatUrl from './art/castle/great.png';
@@ -65,7 +68,6 @@ import stableUrl from './art/castle/stable.png';
 import stallUrl from './art/castle/stall.png';
 import stall2Url from './art/castle/stall2.png';
 import stall3Url from './art/castle/stall3.png';
-import statueUrl from './art/castle/statue.png';
 import stockpileUrl from './art/castle/stockpile.png';
 import tavernUrl from './art/castle/tavern.png';
 import thatchUrl from './art/castle/thatch.png';
@@ -82,6 +84,7 @@ const ART: Record<string, string> = {
   barracks: barracksUrl,
   barrels: barrelsUrl,
   baskets: basketsUrl,
+  bench: benchUrl,
   berries: berriesUrl,
   birch: birchUrl,
   brazier: brazierUrl,
@@ -100,6 +103,7 @@ const ART: Record<string, string> = {
   flagstone: flagstoneUrl,
   flowers: flowersUrl,
   forge: forgeUrl,
+  fountain: fountainUrl,
   granary: granaryUrl,
   grass_tile: grass_tileUrl,
   great: greatUrl,
@@ -125,7 +129,6 @@ const ART: Record<string, string> = {
   stall: stallUrl,
   stall2: stall2Url,
   stall3: stall3Url,
-  statue: statueUrl,
   stockpile: stockpileUrl,
   tavern: tavernUrl,
   thatch: thatchUrl,
@@ -280,7 +283,7 @@ interface Mote {
   size: number;
   color: string;
   grow: number;
-  kind: 'dust' | 'smoke' | 'spark' | 'rune' | 'glint';
+  kind: 'dust' | 'smoke' | 'spark' | 'rune' | 'glint' | 'drop';
 }
 
 /** A level just bought: the old look shows behind scaffolding until `SWAP_MS`, then the new look and sparkles. */
@@ -328,6 +331,7 @@ export class CastleScene {
   private nextSmoke = 0;
   private nextSpark = 0;
   private nextGlint = 0;
+  private nextDrop = 0;
   private running = false;
   private reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   private saver = settings().saver;
@@ -660,6 +664,7 @@ export class CastleScene {
       m.y += (m.vy * dt) / 1000;
       if (m.kind === 'smoke') m.vx += (dt / 1000) * 0.8;
       if (m.kind === 'spark') m.vy += (dt / 1000) * 30;
+      if (m.kind === 'drop') m.vy += (dt / 1000) * 90;
     }
     this.motes = this.motes.filter((m) => m.age < m.life);
     this.draw();
@@ -674,6 +679,16 @@ export class CastleScene {
     if (spark) this.nextSpark = this.now + rand(140, 320);
     const glint = this.now >= this.nextGlint;
     if (glint) this.nextGlint = this.now + rand(350, 800);
+    // the fountain: droplets falling from the top bowl down the two streams, and sparkles on the water of the basin (positions on the picture, 108 x 94)
+    const drop = this.now >= this.nextDrop;
+    if (drop) this.nextDrop = this.now + rand(60, 140);
+    const fountain = this.lay.props.find((p) => p.sprite === 'fountain');
+    if (fountain) {
+      const left = fountain.x - 54;
+      const top = fountain.y - 94;
+      if (drop) for (const sx of [41, 65]) if (chance(0.7)) this.motes.push({ x: left + sx + rand(-1, 1), y: top + rand(14, 26), vx: rand(-2, 2), vy: rand(4, 14), age: 0, life: rand(280, 420), size: 1, color: chance(0.5) ? '#d8ecff' : '#8fc4f0', grow: 0, kind: 'drop' });
+      if (glint && chance(0.8)) this.motes.push({ x: left + 54 + rand(-26, 26), y: top + 46 + rand(-8, 8), vx: 0, vy: 0, age: 0, life: 420, size: 3, color: '#e8f6ff', grow: 0, kind: 'glint' });
+    }
     for (const id of PLOT_IDS) {
       const p = this.lay.plots[id];
       for (const v of isPlace(id) ? PLACE_VENTS[id] : VENTS[id][this.shown(id)] ?? []) {

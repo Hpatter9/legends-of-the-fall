@@ -25,7 +25,7 @@ PICKS = {
     'wall': K + 'stone_wall_run',
     # props
     'chests': N + 'chests', 'campfire': K + 'campfire', 'hay': K + 'hay_bales', 'crates': K + 'crates', 'barrels': K + 'barrels', 'woodpile': K + 'woodpile',
-        'brazier': D + 'brazier', 'banner': B + 'banner', 'statue': D + 'shrine', 'oak': K + 'oak_tree', 'pine': K + 'pine_tree', 'bush': K + 'bush',
+        'brazier': D + 'brazier', 'banner': B + 'banner', 'oak': K + 'oak_tree', 'pine': K + 'pine_tree', 'bush': K + 'bush',
     'rocks': K + 'rocks', 'flowers': DR + 'flower_patch', 'berries': DR + 'berry_bush', 'roses': B + 'rose_bush', 'crystals': D + 'crystals', 'rack': O + 'weapon_stall', 'lamp': K + 'lamp_post',
     # ground
     'grass_tile': K + 'grass_tile', 'cobble_tile': K + 'cobble_tile',
@@ -116,6 +116,18 @@ for name, src in sorted(PICKS.items()):
         im = soften_rim(im)
     if name == 'wall':
         im = wall_cell(im)
+    im.save(f'{out}/{name}.png', optimize=True)
+    sizes[name] = im.size
+# the pieces made with PixelLab (tools/castle/gen.py): the picked candidate at its full size, halved like the kit pieces
+GEN = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'generated')
+for f in sorted(os.listdir(GEN)):
+    if not f.endswith('.png'): continue
+    name = f[:-4]
+    im = half(Image.open(os.path.join(GEN, f)))
+    if name == 'bench':
+        # (a bench is a small thing: a quarter of the size it was made at)
+        im = half(im.crop(im.getchannel('A').getbbox()))
+    im = im.crop(im.getchannel('A').getbbox())
     im.save(f'{out}/{name}.png', optimize=True)
     sizes[name] = im.size
 print('SPRITE_SIZE:')
