@@ -10,7 +10,8 @@ import { BLURB, effectText } from './render/castleSpots';
 import { PULL_COST, saveMeta, type Meta, type Pull } from './sim/meta';
 import { dailyLine, towerLine, towerOpen } from './sim/modes';
 import { ARMIES, armyById, armyCleared, armyIsNew, armyStars, armyUnlocked, bossOf, clearedCount, markSeen } from './sim/armies';
-import { ACHIEVEMENTS } from './sim/achievements';
+import { ACHIEVEMENTS, claimAchievement, unclaimed } from './sim/achievements';
+import { play } from './render/sound';
 import { UNITS } from './sim/units';
 import { drawArmies } from './armiesView';
 import { drawChestStash } from './chestStash';
@@ -40,7 +41,7 @@ export interface HomeHooks {
   runInfo?(): { stage: number; gold: number; army?: string; label: string } | null;
   onContinue(): void;
   /** Start an army from wave 1 (the page picks the party first). */
-  onArmy(id: string, tier: number): void;
+  onArmy(id: string, tier: number, auto?: number): void;
   /** Opens the party screen to change the party (the Battle page's Party button). */
   onParty(): void;
   /** Opens the collection screen (the heroes, their ranks and the odds). */
@@ -124,7 +125,7 @@ export class Home {
     this.pages.get('castle')!.append(this.castleBar, this.castle.root);
     // (the battle page keeps the camp behind its own content)
     this.pages.get('battle')!.append(this.camp.root);
-    $('hmTrophy').addEventListener('click', () => this.openSub('Achievements', (b) => drawAchievements(b, this.meta)));
+    $('hmTrophy').addEventListener('click', () => this.openAchievements());
     $('hmGear').addEventListener('click', () => openSettings());
     $('hmSubBack').addEventListener('click', () => this.closeSub());
     $('hmSheet').addEventListener('click', (e) => e.target === $('hmSheet') && this.closeSheet());
@@ -175,7 +176,7 @@ export class Home {
     if (info) $('hmGold').replaceChildren(icon(ICONS.gold), el('b', '', String(info.gold)));
     const stars = ARMIES.reduce((n, a) => n + armyStars(m, a).got, 0);
     $('hmBest').textContent = `Armies ${clearedCount(m)}/${ARMIES.length} · ★ ${stars}`;
-    const fresh = m.achievements.length > seenCount();
+    const fresh = m.achievements.length > seenCount() || unclaimed(m).length > 0;
     $('hmTrophy').classList.toggle('new', fresh);
     // tabs
     const order = TABS.map((t) => t.id);
@@ -278,8 +279,8 @@ export class Home {
     const got = ACHIEVEMENTS.filter((a) => m.achievements.includes(a.id)).length;
     const ach = el('button', 'ctChip');
     ach.append(icon(ICONS.trophy), el('b', '', 'Achievements'), el('small', '', `${got}/${ACHIEVEMENTS.length}`));
-    if (m.achievements.length > seenCount()) ach.append(el('i', 'badge'));
-    ach.addEventListener('click', () => this.openSub('Achievements', (b) => drawAchievements(b, this.meta)));
+    if (m.achievements.length > seenCount() || unclaimed(m).length) ach.append(el('i', 'badge'));
+    ach.addEventListener('click', () => this.openAchievements());
     const set = el('button', 'ctChip');
     set.append(el('span', 'gearIcon', '⚙'), el('b', '', 'Settings'));
     set.addEventListener('click', () => openSettings());
@@ -404,7 +405,7 @@ export class Home {
         drawArmies(body, this.meta, {
           running: this.hooks.runInfo?.() ?? null,
           onContinue: () => this.go(this.hooks.onContinue),
-          onFight: (id, tier) => this.go(() => this.hooks.onArmy(id, tier)),
+          onFight: (id, tier, auto) => this.go(() => this.hooks.onArmy(id, tier, auto)),
           focus,
           onBack: () => this.closeSub(),
         }),
@@ -413,6 +414,21 @@ export class Home {
     );
     // (the cards a new army lit have been seen now: they glow no more the next time)
     if (markSeen(this.meta)) saveMeta(this.meta);
+  }
+
+  /** The achievements page; a Claim takes the crowns, saves, and draws the page again. */
+  private openAchievements(): void {
+    const draw = (b: HTMLElement) =>
+      drawAchievements(b, this.meta, (ids) => {
+        const paid = ids.reduce((n, id) => n + claimAchievement(this.meta, id), 0);
+        if (!paid) return;
+        saveMeta(this.meta);
+        play('coin');
+        b.replaceChildren();
+        draw(b);
+        this.refresh();
+      });
+    this.openSub('Achievements', draw);
   }
 
   private openSub(title: string, draw: (body: HTMLElement) => void, achievements = true, full = false): void {

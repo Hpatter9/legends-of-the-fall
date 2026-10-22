@@ -22,6 +22,10 @@ import shadow_cloak from '../art/items/shadow_cloak.png';
 import viper_fang from '../art/items/viper_fang.png';
 import wolf_fang from '../art/items/wolf_fang.png';
 import beast_harness from '../art/items/beast_harness.png';
+import sun_crown from '../art/items/sun_crown.png';
+import dragon_heart from '../art/items/dragon_heart.png';
+import storm_ring from '../art/items/storm_ring.png';
+import void_lens from '../art/items/void_lens.png';
 import weapon1 from '../art/items/weapon1.png';
 import weapon2 from '../art/items/weapon2.png';
 import weapon3 from '../art/items/weapon3.png';
@@ -55,6 +59,10 @@ const RELIC_ICONS: Record<string, string> = {
   viperFang: viper_fang,
   wolfFang: wolf_fang,
   beastHarness: beast_harness,
+  sunCrown: sun_crown,
+  dragonHeart: dragon_heart,
+  stormRing: storm_ring,
+  voidLens: void_lens,
 };
 const GEAR_ICONS: Record<string, readonly string[]> = {
   weapon: [weapon1, weapon2, weapon3],

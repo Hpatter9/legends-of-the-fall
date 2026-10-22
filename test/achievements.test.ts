@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ACHIEVEMENTS, achievementById, checkAchievements, type AchievementCtx } from '../src/sim/achievements';
+import { ACHIEVEMENTS, achievementById, checkAchievements, claimAchievement, unclaimed, type AchievementCtx } from '../src/sim/achievements';
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { place, startBattle, type Battle } from '../src/sim/battle';
 import { BOSS_BANDS, BOSS_IDS } from '../src/sim/foes';
@@ -156,14 +156,20 @@ test('recruiter: ten pulls', () => {
   assert.equal(earned('recruiter', ctx({ meta })), true);
 });
 
-test('checking pays each achievement once, and returns only what is new', () => {
+test('checking earns each achievement once and returns only what is new; its crowns wait for a claim, paid once', () => {
   const meta = newMeta(1);
   const crowns = meta.crowns;
   const first = checkAchievements(ctx({ meta, won: true, stage: 10, battle: fight(['knight']) }));
   assert.ok(first.some((a) => a.id === 'firstWin'));
   assert.ok(first.some((a) => a.id === 'stage10'));
-  const paid = first.reduce((n, a) => n + a.crowns, 0);
+  assert.equal(meta.crowns, crowns, 'nothing is paid until it is claimed');
+  assert.deepEqual(unclaimed(meta).map((a) => a.id).sort(), first.map((a) => a.id).sort());
+  const paid = first.reduce((n, a) => n + claimAchievement(meta, a.id), 0);
+  assert.equal(paid, first.reduce((n, a) => n + a.crowns, 0));
   assert.equal(meta.crowns, crowns + paid);
+  assert.equal(claimAchievement(meta, 'stage10'), 0, 'a claim pays once');
+  assert.equal(claimAchievement(meta, 'recruiter'), 0, 'an achievement not earned pays nothing');
+  assert.equal(unclaimed(meta).length, 0);
   assert.deepEqual(
     checkAchievements(ctx({ meta, won: true, stage: 10, battle: fight(['knight']) })).map((a) => a.id),
     [],
@@ -200,4 +206,12 @@ test('a settled fight earns its achievements, and they save with the crowns', ()
   const back = loadMeta(1, { getItem: (k) => s.getItem(k) });
   assert.deepEqual(back.achievements, meta.achievements);
   assert.equal(back.crowns, meta.crowns);
+});
+
+test('an older save, whose achievements paid when earned, loads with them all claimed', () => {
+  const old = { ...newMeta(3), achievements: ['firstWin', 'stage10'] } as Record<string, unknown>;
+  delete old.claimed;
+  const back = loadMeta(1, { getItem: () => JSON.stringify(old) });
+  assert.deepEqual(back.claimed, ['firstWin', 'stage10']);
+  assert.equal(unclaimed(back).length, 0);
 });

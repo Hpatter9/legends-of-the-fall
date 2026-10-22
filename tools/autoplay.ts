@@ -1,6 +1,6 @@
 // A greedy player for the armies, shared by the balance report (`tools/balance.ts`) and the tests: it summons whenever
-// the gold allows, takes the first option of an event, fields the five strongest heroes (fighters in front, shooters
-// behind) and plays an army's waves from wave 1 until a fight is lost or the last boss falls. Hero levels come from, and
+// the gold allows, takes the best free pick of an event, fields the five strongest heroes (fighters in front, shooters
+// behind, on high ground; see `src/sim/autoplay.ts`, which the Auto button and the auto-replay share) and plays an army's waves from wave 1 until a fight is lost or the last boss falls. Hero levels come from, and
 // XP goes into, the save's meta, as the page does.
 
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
@@ -10,40 +10,24 @@ import { fightXp, gainXp, levelOfKind, xpFor } from '../src/sim/levels';
 import { newCastle, xpRate, type Castle } from '../src/sim/castle';
 import { newMeta, rankOf, type Meta } from '../src/sim/meta';
 import { armyById } from '../src/sim/armies';
-import { armyRun, boostOf, equip, finish, isBossRun, noteFight, SQUAD, startStage, summon, tierOfRun, type Owned, type Run } from '../src/sim/run';
+import { armyRun, boostOf, finish, isBossRun, noteFight, SQUAD, startStage, summon, tierOfRun, type Run } from '../src/sim/run';
 import { armyRules } from '../src/sim/armyStars';
 import { ratingOf } from '../src/sim/stars';
+import { autoDeploy, autoRound, dressSquad, strengthOf } from '../src/sim/autoplay';
 import { UNITS } from '../src/sim/units';
 import { takeRelic } from '../src/sim/elites';
-import { buy, choices, clearNode, enterNode, finishMystery, finishTower, openTreasure, rest, train, type MapNode, type NodeKind } from '../src/sim/tower';
+import { buy, choices, clearNode, enterNode, finishMystery, finishTower, openTreasure, rest, takeXp, train, type MapNode, type NodeKind } from '../src/sim/tower';
 import { towerRun } from '../src/sim/modes';
 import { squadHealth } from '../src/sim/health';
 
-/** How strong a hero is for the squad: its base hp times attack, times its boosts (grade, rank, level, gear, bumps). */
-export function strengthOf(meta: Meta, h: Owned): number {
-  const def = UNITS[h.kind];
-  const boost = boostOf(h, rankOf(meta, h.kind), levelOfKind(meta, h.kind));
-  return def.hp * def.atk * (boost.hp ?? 1) * (boost.atk ?? 1);
-}
+export { strengthOf };
 
-/** The deploy tiles front row first, the middle of a row first: where a careful player puts the heroes that hold the line. */
+/** The deploy tiles front row first, the middle of a row first: where the tower climb's greedy player puts the heroes that hold the line. */
 export function frontSpots(b: Battle): [number, number][] {
   const spots: [number, number][] = [];
   for (let v = D - DEPLOY_ROWS; v < D; v++) for (let u = 0; u < b.board.w; u++) if (standable(tileAt(b.board, u, v))) spots.push([u, v]);
   const mid = (b.board.w - 1) / 2;
   return spots.sort((a, c) => a[1] - c[1] || Math.abs(a[0] - mid) - Math.abs(c[0] - mid) || a[0] - c[0]);
-}
-
-/** Gives the squad the gear in the pack: each piece to the squad hero whose piece in that slot is weakest (or missing), if it is better. */
-function dressSquad(run: Run): void {
-  for (let again = true; again; ) {
-    again = false;
-    for (const g of [...(run.items ?? [])]) {
-      const score = (x?: { hp: number; atk: number }) => (x ? x.hp + x.atk : -1);
-      const hero = run.roster.filter((h) => run.squad.includes(h.id)).sort((a, c) => score(a.gear?.[g.slot]) - score(c.gear?.[g.slot]))[0];
-      if (hero && score(g) > score(hero.gear?.[g.slot]) && equip(run, hero.id, g.id)) again = true;
-    }
-  }
 }
 
 /**
@@ -55,18 +39,9 @@ export function playArmy(meta: Meta, armyId: string, seed: number, party: readon
   const run: Run = armyRun(seed, armyId, party, castle, tier);
   let won = 0;
   while (!run.over) {
-    while (run.event) if (chooseOption(run, 0) === null) leaveEvent(run);
-    while (summon(run)) {
-      // (summons while the gold lasts)
-    }
-    const squad = [...run.roster].sort((a, b) => strengthOf(meta, b) - strengthOf(meta, a)).slice(0, SQUAD);
-    run.squad = squad.map((h) => h.id);
-    if (gear) dressSquad(run);
+    autoRound(run, meta, gear);
     const b = startStage(run);
-    // (shooters and casters go behind the fighters)
-    const spots = frontSpots(b);
-    const order = [...squad].sort((a, c) => Number(UNITS[a.kind].range > 1) - Number(UNITS[c.kind].range > 1));
-    order.forEach((h, i) => place(b, h.kind, spots[i][0], spots[i][1], h.id, boostOf(h, rankOf(meta, h.kind), levelOfKind(meta, h.kind))));
+    autoDeploy(b, run, meta);
     fight(b);
     playOut(b);
     const ok = b.phase === 'won';
@@ -147,14 +122,16 @@ export function playTower(meta: Meta, seed: number, party: readonly string[] = m
     const pick = [...choices(run)].sort((a, b) => wantOf(run, b) - wantOf(run, a) || a.id - b.id)[0];
     enterNode(run, pick.id);
     const cur = run.tower!.cur!;
-    if (cur.fight) {
+    const fightIt = () => {
       const b = fightNode(meta, run);
       const ok = b.phase === 'won';
       gainXp(meta, fightXp(b, xpRate(castle)));
       finishTower(run, b, ok, ratingOf(b, cur.kind === 'boss').stars);
       // (an elite offers three relics: the greedy player takes the first, a piece of a set it has begun when there is one)
       if (run.tower!.offer) takeRelic(run, run.tower!.offer[0]);
-    } else if (cur.kind === 'campfire') {
+    };
+    if (cur.fight) fightIt();
+    else if (cur.kind === 'campfire') {
       if (squadHealth(run) < 0.75) rest(run);
       else {
         const hero = [...run.roster].sort((a, b) => strengthOf(meta, b) - strengthOf(meta, a))[0];
@@ -171,6 +148,10 @@ export function playTower(meta: Meta, seed: number, party: readonly string[] = m
     } else {
       while (run.event) if (chooseOption(run, 0) === null) leaveEvent(run);
       finishMystery(run);
+      // (a mimic's chest turns into a fight; a trainer's lesson goes into the meta)
+      const xp = takeXp(run);
+      if (xp) gainXp(meta, xp);
+      if (run.tower!.cur?.fight) fightIt();
     }
   }
   return { floors: run.stage - 1, bosses: run.tower!.bosses, act: run.tower!.act };

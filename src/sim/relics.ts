@@ -14,6 +14,8 @@ export interface Relic {
   /** What it does, in plain words. */
   text: string;
   effects: RelicEffects;
+  /** A legendary relic: only the mystery floors give it (never a shop, chest or drop), and it is worth a price. */
+  great?: boolean;
 }
 
 /** What a set of relics gives. Multipliers are x1 when absent. */
@@ -41,12 +43,19 @@ export const RELICS: Record<string, Relic> = {
   swiftBoots: { id: 'swiftBoots', name: 'Swift Boots', text: 'heroes act and walk 6% faster', effects: { speed: 1.06 } },
   scholarScroll: { id: 'scholarScroll', name: "Scholar's Scroll", text: 'skills charge 20% faster', effects: { charge: 1.2 } },
   spyglass: { id: 'spyglass', name: 'Spyglass', text: 'shooters reach further from high ground', effects: { reach: 0.3 } },
+  // (the legendary ones: from the tower's cursed altar only, so the ordinary draws are as they were)
+  sunCrown: { id: 'sunCrown', name: 'Sun Crown', text: 'LEGENDARY: +14% attack and +14% hp for every hero', effects: { atk: 1.14, hp: 1.14 }, great: true },
+  dragonHeart: { id: 'dragonHeart', name: 'Dragon Heart', text: 'LEGENDARY: +12% hp, and heroes take 12% less damage', effects: { hp: 1.12, guard: 0.12 }, great: true },
+  stormRing: { id: 'stormRing', name: 'Storm Ring', text: 'LEGENDARY: heroes act and walk 14% faster, +10% crit', effects: { speed: 1.14, crit: 0.1 }, great: true },
+  voidLens: { id: 'voidLens', name: 'Void Lens', text: "LEGENDARY: skills charge 40% faster, and the king's mana fills 40% faster", effects: { charge: 1.4, mana: 1.4 }, great: true },
 };
-/** The twelve older relics: events and the old runs draw from these. */
-export const RELIC_IDS = Object.keys(RELICS);
+/** The ordinary relics (what events and old runs draw from), before the sets' own. */
+export const RELIC_IDS = Object.keys(RELICS).filter((id) => !RELICS[id].great);
+/** The legendary relics. */
+export const GREAT_RELIC_IDS = Object.keys(RELICS).filter((id) => RELICS[id].great);
 // the set relics (`relicSets.ts`) are found in the tower: its shops, chests, bosses and elites
 Object.assign(RELICS, SET_RELICS);
-export const ALL_RELIC_IDS = Object.keys(RELICS);
+export const ALL_RELIC_IDS = Object.keys(RELICS).filter((id) => !RELICS[id].great);
 
 /** The sum of a set of relics: multipliers multiply, shares and times add, `revive` is any. Unknown ids are skipped. */
 export function relicEffects(ids: readonly string[] = []): RelicEffects {

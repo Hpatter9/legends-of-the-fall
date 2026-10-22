@@ -69,6 +69,7 @@ which leans to a set it has begun). Floors cleared, median (mean) and the share 
 | 11 | 38 (33.5), 95/65/5% | 38 (46.8), 95/73/35% |
 | 14 | 38 (39.0), 98/80/20% | 77 (58.8), 95/90/60% |
 
+After merging the twists and the new look the "after" column reads (median, mean): 10 (10.3), 12 (16.2), 25 (32.5), 38 (47.8), 77 (61.5), boss 1/2/3 at level 14 100/95/65%.
 Medians hold at levels 5 to 11; the late climbs (level 14) run much deeper, as elites now always pay a relic and the sets
 stack. If the deep tower should stay a wall, the knobs are the set 3 bonuses and `boost` of the tier 3 elites.
 

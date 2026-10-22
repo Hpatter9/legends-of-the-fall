@@ -131,7 +131,7 @@ export const isHasted = (b: Battle, x: Unit) => x.hasteUntil !== undefined && x.
 /** Whether a fighter is slowed (Frost Nova) now. */
 export const isSlowed = (b: Battle, x: Unit) => x.slowUntil !== undefined && x.slowUntil > b.t;
 /** How much faster a fighter acts now (1 when neither hasted nor slowed): it moves and swings at this speed. */
-export const speedOf = (b: Battle, x: Unit) => (isHasted(b, x) ? HASTE_MULT : 1) * (isSlowed(b, x) ? SLOW_MULT : 1) * (x.side === 'hero' ? b.traits?.speed ?? 1 : b.foeSpeed ?? 1);
+export const speedOf = (b: Battle, x: Unit) => (isHasted(b, x) ? HASTE_MULT : 1) * (isSlowed(b, x) ? SLOW_MULT : 1) * (x.side === 'hero' ? b.traits?.speed ?? 1 : b.foeSpeed ?? 1) * (b.twist?.pace ?? 1);
 
 /** Mana gain for one tick. */
 export function fillMana(b: Battle): void {
@@ -178,7 +178,7 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
       for (const x of b.units) {
         if (!x.alive || x.side !== 'hero' || !inArea(x, u, v)) continue;
         if (id === 'heal') {
-          const amount = Math.min(x.maxHp - x.hp, Math.round(x.maxHp * HEAL_SHARE));
+          const amount = Math.min(x.maxHp - x.hp, Math.round(x.maxHp * HEAL_SHARE * (x.healMult ?? 1)));
           x.hp += amount;
           ev.push({ kind: 'heal', to: x.id, amount });
         } else if (id === 'haste') {
