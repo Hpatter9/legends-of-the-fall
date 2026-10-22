@@ -6,7 +6,8 @@
 import { Container, Graphics, Sprite, Texture, type Renderer } from 'pixi.js';
 import { tileAt, type Area, type Board, type Tile } from '../sim/board';
 import { loadImage } from './loadImage';
-import { at, depth, FOOT, HH, TH, TW } from './iso';
+import { depthIn, FOOT, HH, project, rawAt, TH, TW, type Frame } from './iso';
+import type { Rot } from '../sim/turn';
 import { AREA_URLS, BUSH_URLS, GROUND_URLS } from './areaArt';
 
 /** From this height up, a tile's top is stony. */
@@ -92,7 +93,8 @@ export interface Look {
 export interface Scene {
   board: Board;
   look: Look;
-  /** Where its tile (0, 0) lies against the host's, in tiles. */
+  /** How many quarter turns it lies, and where its footprint's corner lies against the host's, in world tiles. */
+  rot: Rot;
   ou: number;
   ov: number;
 }
@@ -113,7 +115,9 @@ export class BoardView {
   private baked = new Map<Board, Baked>();
   private toBake: Scene[] = [];
   /** The section just fought, kept as live tiles while the heroes walk off it. */
-  private old: (Built & { ou: number; ov: number; section: Board }) | null = null;
+  private old: (Built & { rot: Rot; ou: number; ov: number; section: Board }) | null = null;
+  /** How the host section lies. */
+  private rot: Rot = 0;
   /** The renderer, for baking (set by the page). */
   renderer: Renderer | null = null;
 
@@ -124,15 +128,16 @@ export class BoardView {
   }
 
   /** Build the board's columns (again, for a new board). `keepOld` leaves everything on the stage (the section handed to `demote`, the fighters walking off it) and only adds the new columns. */
-  build(b: Board, look: Look = {}, keepOld = false): void {
+  build(b: Board, look: Look = {}, rot: Rot = 0, keepOld = false): void {
     this.board = b;
+    this.rot = rot;
     if (!keepOld) {
       for (const c of this.root.removeChildren()) if (!this.keep.includes(c)) c.destroy({ children: true });
       this.dropOld();
       this.root.addChild(...this.keep);
     }
     this.freeBuilt();
-    this.built = this.section(b, look, 0, 0);
+    this.built = this.section(b, look, { rot, ou: 0, ov: 0 });
     this.marks = this.built.marks;
     this.root.addChild(...this.built.tiles);
   }
@@ -141,12 +146,13 @@ export class BoardView {
   demote(section: Board, ou: number, ov: number): void {
     if (!this.built || !this.board) return;
     this.dropOld();
-    const [ox, oy] = at(ou, ov, 0);
+    const [ox, oy] = rawAt(ou, ov, 0);
+    const f = { rot: this.rot, ou, ov };
     this.built.tiles.forEach((t, i) => {
       t.position.set(ox, oy);
-      t.zIndex = depth((i % this.board!.w) + ou, Math.floor(i / this.board!.w) + ov);
+      t.zIndex = depthIn(f, i % this.board!.w, Math.floor(i / this.board!.w));
     });
-    this.old = { ...this.built, ou, ov, section };
+    this.old = { ...this.built, rot: this.rot, ou, ov, section };
     for (const g of this.old.marks) g.clear();
     this.built = null;
   }
@@ -155,7 +161,7 @@ export class BoardView {
   retire(look: Look): void {
     const o = this.old;
     if (!o) return;
-    const scene = { board: o.section, look, ou: o.ou, ov: o.ov };
+    const scene = { board: o.section, look, rot: o.rot, ou: o.ou, ov: o.ov };
     for (const t of o.tiles) t.destroy({ children: true });
     for (const x of o.tex) x.destroy(true);
     this.old = null;
@@ -219,7 +225,7 @@ export class BoardView {
 
   private bake(s: Scene): void {
     if (this.baked.has(s.board) || !this.renderer) return;
-    const built = this.section(s.board, s.look, 0, 0);
+    const built = this.section(s.board, s.look, { rot: s.rot, ou: 0, ov: 0 });
     const c = new Container();
     c.sortableChildren = true;
     c.addChild(...built.tiles);
@@ -247,21 +253,21 @@ export class BoardView {
       this.sceneryOf.set(s.board, sp);
       this.scenery.addChild(sp);
     }
-    const [ox, oy] = at(s.ou, s.ov, 0);
+    const [ox, oy] = rawAt(s.ou, s.ov, 0);
     sp.position.set(ox + b.x, oy + b.y);
   }
 
-  /** The tiles of a board, built at (ou, ov) tiles from the origin. */
-  private section(b: Board, look: Look, ou: number, ov: number): Built {
+  /** The tiles of a board, laid as the frame says (turned, and its footprint's corner some tiles from the origin). */
+  private section(b: Board, look: Look, f: Frame): Built {
     const tiles: Container[] = [];
     const marks: Graphics[] = [];
     const tex: Texture[] = [];
     for (let v = 0; v < b.d; v++)
       for (let u = 0; u < b.w; u++) {
         const t = tileAt(b, u, v)!;
-        const [x, y] = at(u + ou, v + ov, t.h);
+        const [x, y] = project(f, u, v, t.h);
         const tile = new Container();
-        tile.zIndex = depth(u + ou, v + ov);
+        tile.zIndex = depthIn(f, u, v);
         const ct = this.column(t, u, v, b.area, !!look.boss);
         tex.push(ct);
         const col = new Sprite(ct);

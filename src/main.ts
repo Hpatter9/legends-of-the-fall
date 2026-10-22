@@ -51,7 +51,7 @@ import { bindSpellbook } from './spellbook';
 import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
 import { ChainView } from './render/chainView';
-import { transferFormation } from './sim/chain';
+import { against, frameOf, transferFormation } from './sim/chain';
 import { closestTrait, countTraits, kindsOf, nextTierLine, traitsOf, TRAITS } from './sim/traits';
 import { placeSynergies, startSynergies } from './synergyView';
 import { UnitSprite } from './render/unitView';
@@ -60,7 +60,7 @@ import { Fx, loadFx } from './render/fx';
 import { framesOf, loadSheets, portrait, sheetInfo, wholeFigure } from './render/sheets';
 import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, framing, PAUSE_MS, settle, viewFor, type View } from './render/cameraRules';
 import { titleOf } from './render/bossTitles';
-import { at, FOOT, HH, TH, TW } from './render/iso';
+import { at, depth, FOOT, HH, rawAt, setFrame, TH, TW } from './render/iso';
 import { bindDuck, bindMute, play, playEvents, setAct, setScene, setup, startFight } from './render/sound';
 import { sceneOf } from './render/audioRules';
 import { colLeft, viewH, viewW } from './viewport';
@@ -286,6 +286,9 @@ class Game {
     this.chain.finish();
     this.walking.clear();
     this.b = startStage(this.run);
+    // (an army's section may lie turned on the long map: everything is drawn and tapped through its frame)
+    const section = chainOf(this.run)?.[this.run.stage - 1];
+    setFrame(section ? frameOf(section, section) : undefined);
     this.settled = false;
     this.endWait = 0;
     this.pendingLoss = false;
@@ -305,7 +308,7 @@ class Game {
     // (an auto-replay keeps the speed it is at from wave to wave)
     this.setSpeed(this.auto ? this.speed : settings().speed);
     this.fx.clear();
-    this.boardView.build(this.b.board, { boss: !!armyOfRun(this.run) && isBossRun(this.run) });
+    this.boardView.build(this.b.board, { boss: !!armyOfRun(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
     this.syncChain();
     setBackdrop(this.b.board.area);
     showTwistBanner(this.run.tower?.cur?.fight?.twist);
@@ -340,6 +343,17 @@ class Game {
       return goal ? [{ unit, goal }] : [];
     });
     this.walking = new Set(walkers.map((w) => w.unit.id));
+    // (the finished fight's fallen are still drawn, where the old section lies against the new one)
+    setFrame(frameOf(c[wave - 1], next));
+    // (and the camera stays on the same ground, which has moved in the world against the new section)
+    const lie = against(c[wave - 1], next);
+    const [dx, dy] = rawAt(lie.u, lie.v, 0);
+    this.cx += dx;
+    this.cy += dy;
+    this.tx += dx;
+    this.ty += dy;
+    this.held = null;
+    this.bbox = { x0: this.bbox.x0 + dx, x1: this.bbox.x1 + dx, y0: this.bbox.y0 + dy, y1: this.bbox.y1 + dy };
     document.body.dataset.move = '1';
     this.chain.begin(c, wave - 1, walkers, () => delete document.body.dataset.move);
     this.survey = false;
@@ -790,20 +804,23 @@ class Game {
     const b = this.b.board;
     const wx = (sx - colLeft() - this.world.x) / this.world.scale.x;
     const wy = (sy - this.world.y) / this.world.scale.y;
-    // (front to back: a column in front hides the tops behind it)
-    for (let d = b.w + b.d - 2; d >= 0; d--)
+    // (the nearest column under the point wins: a column in front hides the tops behind it)
+    let best: [number, number] | null = null;
+    let nearest = -Infinity;
+    for (let v = 0; v < b.d; v++)
       for (let u = 0; u < b.w; u++) {
-        const v = d - u;
-        const t = tileAt(b, u, v);
-        if (!t) continue;
+        const t = tileAt(b, u, v)!;
         const [x, y] = at(u, v, t.h);
         const dx = Math.abs(wx - x) / (TW / 2);
         if (dx > 1) continue;
-        if (dx + Math.abs(wy - y) / (TH / 2) <= 1) return [u, v];
-        // (the column's sides, below its top's left and right edges)
-        if (wy > y && wy < y + TH / 2 * (1 - dx) + t.h * HH + FOOT) return [u, v];
+        // (the top, or the column's sides below its top's left and right edges)
+        const hit = dx + Math.abs(wy - y) / (TH / 2) <= 1 || (wy > y && wy < y + (TH / 2) * (1 - dx) + t.h * HH + FOOT);
+        if (hit && depth(u, v) > nearest) {
+          nearest = depth(u, v);
+          best = [u, v];
+        }
       }
-    return null;
+    return best;
   }
 
   /** The placed hero under a point on the screen. */

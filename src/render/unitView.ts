@@ -9,7 +9,7 @@ import { GLOW, hueOf, isRecoloured, lookSheet } from './awakenLook';
 import type { Texture } from 'pixi.js';
 import { facesRightOf, framesOf, figureOf, type Anim } from './sheets';
 import { CHARGE_MAX, kitOf } from '../sim/abilities';
-import { at, depth, HH } from './iso';
+import { at, depth, facesRight, HH } from './iso';
 import { VFX } from './vfxArt';
 import { PACK } from './fxSheets';
 import { deathKind, maxStatuses, statusesOf, STATUS_LOOKS } from './fxRules';
@@ -194,7 +194,7 @@ export class UnitSprite {
     }
     this.drawBadge(u, t);
     // (most sheets face right, the forest and boss ones left; the board's +u runs down to the right, +v down to the left)
-    const dx = [1, -1, -1, 1][u.facing] * (facesRightOf(this.sheet) ? 1 : -1);
+    const dx = (facesRight(u.facing) ? 1 : -1) * (facesRightOf(this.sheet) ? 1 : -1);
     this.body.scale.set(def.scale * dx, def.scale);
     // a flyer hovers: its body bobs above a smaller shadow on the ground
     const bob = def.flies && u.alive ? Math.sin(t / 260) * 2 - 12 : 0;
