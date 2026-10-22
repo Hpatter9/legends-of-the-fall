@@ -4,12 +4,12 @@
 // hum, nod off, stroll a few steps and back, now and then a flourish. It only draws (Math.random is fine here: nothing
 // that is played depends on it) and runs only while the tab is showing.
 
-import { ALL_HEROES, formOf, UNITS } from './sim/units';
-import { rankOf, type Meta } from './sim/meta';
-import { sheetInfo } from './render/sheets';
+import { ALL_HEROES, UNITS } from './sim/units';
+import type { Meta } from './sim/meta';
+import { heroRig } from './render/awakenRig';
 import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
-import { gradeOfRank, PROPS, ROOM_H, ROOM_W, RUG, SPOTS, WALL_H, type Spot } from './render/tavernSpots';
+import { PROPS, ROOM_H, ROOM_W, RUG, SPOTS, WALL_H, type Spot } from './render/tavernSpots';
 import wallUrl from './art/tavern/wall.png';
 import floorUrl from './art/tavern/floor.png';
 import rugUrl from './art/tavern/rug.png';
@@ -145,7 +145,7 @@ export class Tavern {
     for (const k of [...this.actors.keys()]) if (!have.includes(k)) this.actors.delete(k);
     for (const kind of have) {
       const def = UNITS[kind];
-      const rig = sheetInfo(formOf(def, gradeOfRank(rankOf(meta, kind))));
+      const rig = heroRig(meta, kind);
       const spot = SPOTS[kind];
       if (!rig || !spot) continue;
       const k = Math.min(54, Math.max(34, rig.figure * def.scale * 0.9)) / rig.figure;

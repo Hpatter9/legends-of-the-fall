@@ -152,13 +152,18 @@
   #spellHint { min-height: 14px; font-size: 11px; color: var(--dim); text-align: center; }
 
   /* the trait strip, in the deploy phase only */
-  #traits { display: flex; gap: 5px; overflow-x: auto; min-height: 24px; }
+  #traits { display: flex; gap: 5px; overflow-x: auto; min-height: 32px; }
   #traitHint { min-height: 13px; font-size: 11px; color: var(--dim); text-align: center; }
   body:not([data-phase='deploy']) #traits, body:not([data-phase='deploy']) #traitHint { display: none; }
   .trait { flex: none; padding: 3px 8px; font-size: 12px; border-radius: 12px; border: 1px solid #5a3a22; background: rgba(0, 0, 0, 0.35); color: var(--dim); }
   .trait.class { border-style: dashed; }
   .trait.on { color: #1a1008; background: var(--gold); border-color: var(--gold); font-weight: bold; }
   .trait.picked { outline: 2px solid #7cc0ff; }
+  .trait small { display: block; font-size: 9px; font-weight: normal; line-height: 1.1; opacity: 0.8; white-space: nowrap; }
+  .trait.wake { animation: traitWake 0.9s ease-out 1; }
+  #traitHint.wake { color: var(--gold); animation: traitHintWake 0.9s ease-out 1; }
+  @keyframes traitWake { 0% { transform: scale(1.35); box-shadow: 0 0 16px 4px rgba(255, 220, 120, 0.95); } 100% { transform: none; } }
+  @keyframes traitHintWake { 0% { opacity: 0; } 100% { opacity: 1; } }
   .card .lv { display: block; font-size: 9px; line-height: 1; color: #cfc3b0; }
   .card small { display: flex; justify-content: center; gap: 2px; margin-top: 1px; }
   .card small span { font-size: 9px; line-height: 1; padding: 1px 3px; border-radius: 3px; background: rgba(255, 255, 255, 0.12); color: #cfc3b0; }
@@ -627,6 +632,7 @@
   #party { position: fixed; inset: 0; z-index: 6; display: flex; flex-direction: column; gap: 8px; padding: calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 12px); background: rgba(24, 12, 8, 0.97); animation: fade 0.2s ease-out; }
   #party[hidden], #ptSheet[hidden] { display: none; }
   #party > header { display: flex; align-items: center; gap: 10px; }
+  #ptSuggest { margin-left: auto; }
   #party h2 { margin: 0; flex: 1; font-size: 20px; color: var(--gold); }
   #ptSlots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
   .ptSlot { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0; min-height: 82px; padding: 4px 2px; background: rgba(0, 0, 0, 0.35); border: 2px dashed #6b4128; border-radius: 10px; font-weight: normal; }
@@ -816,7 +822,7 @@
   <div id="hmSheet" hidden><div id="hmSheetBox"></div></div>
 </div>
 <div id="party" hidden>
-  <header><button id="ptBack">Back</button><h2>Party</h2></header>
+  <header><button id="ptBack">Back</button><h2>Party</h2><button id="ptSuggest" title="Pick a party that wakes good synergies">Suggest</button></header>
   <div id="ptSlots"></div>
   <p id="ptHint"></p>
   <div id="ptTraits"></div>

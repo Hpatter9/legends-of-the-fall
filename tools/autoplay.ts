@@ -8,7 +8,8 @@ import { fight, place, playOut, type Battle } from '../src/sim/battle';
 import { chooseOption, leaveEvent } from '../src/sim/events';
 import { fightXp, gainXp, levelOfKind, xpFor } from '../src/sim/levels';
 import { newCastle, xpRate, type Castle } from '../src/sim/castle';
-import { startedMeta, rankOf, type Meta } from '../src/sim/meta';
+import { startedMeta, heroRank, type Meta } from '../src/sim/meta';
+import { awakenStats } from '../src/sim/awaken';
 import { armyById } from '../src/sim/armies';
 import { armyRun, boostOf, finish, isBossRun, noteFight, squadLimit, startStage, summon, tierOfRun, type Run } from '../src/sim/run';
 import { heroLevel, localBoost } from '../src/sim/climb';
@@ -89,7 +90,7 @@ function fightNode(meta: Meta, run: Run): Battle {
   const b = startStage(run);
   const spots = frontSpots(b);
   const order = [...squad].sort((a, c) => Number(UNITS[a.kind].range > 1) - Number(UNITS[c.kind].range > 1));
-  order.forEach((h, i) => place(b, h.kind, spots[i][0], spots[i][1], h.id, { ...(run.local ? localBoost(h) : boostOf(h, rankOf(meta, h.kind), levelOfKind(meta, h.kind))), carry: run.tower!.hp[String(h.id)] }));
+  order.forEach((h, i) => place(b, h.kind, spots[i][0], spots[i][1], h.id, { ...(run.local ? localBoost(h) : boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), awakenStats(meta, h.kind))), carry: run.tower!.hp[String(h.id)] }));
   fight(b);
   playOut(b);
   return b;
