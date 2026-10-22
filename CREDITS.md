@@ -131,5 +131,7 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
 - The tavern, chapel, stable, library and market pieces are from the same kits: Knights tavern, chapel, stable, cart, granary, market stall, field tile and signpost,
   Settlers stockpile (the shed), market stall and field tile, Fae workshop (the library's observatory), Liches tavern (the library's manor), Druids baskets and
   herb garden tile, Nomads carpet stall.
+- The countryside below the village is from the same kits too: Settlers cottage (the farmhouse), granary (the silo), bridge, fence and signpost, Nomads horse
+  corral and hay bales, Druids animal pen, birch tree and great oak, and the Merfolk shallow water tile (stretched to the ground tile's width).
 - The heroes who stroll the yard use their own sheets (see above), shrunk by a whole number when the page loads.
 - Nothing was generated for this look.

@@ -15,7 +15,7 @@ import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
 import { gradeOfRank } from './render/tavernSpots';
 import { strongest } from './menuHeroes';
-import { cellX, cellY, GRASS, isPaved, layoutFor, LIGHTS, lookBox, lookFor, LOOKS, NAME_OF, pickScale, wallBounds, PLACE_IDS, PLACE_VENTS, PLACES, PLOT_IDS, stageOf, TILE_H, TILE_W, VENTS, walkTiles, YARD, type Layout, type Look, type PlaceId, type PlotId } from './render/castleSpots';
+import { cellX, cellY, GRASS, isPaved, isPlaceId, layoutFor, LIGHTS, lookBox, lookFor, LOOKS, NAME_OF, pickScale, wallBounds, PLACE_IDS, PLACE_VENTS, PLACES, PLOT_IDS, stageOf, TILE_H, TILE_W, VENTS, walkTiles, YARD, type Layout, type Look, type PlotId } from './render/castleSpots';
 import anvil_stallUrl from './art/castle/anvil_stall.png';
 import atelierUrl from './art/castle/atelier.png';
 import bannerUrl from './art/castle/banner.png';
@@ -23,7 +23,9 @@ import barracksUrl from './art/castle/barracks.png';
 import barrelsUrl from './art/castle/barrels.png';
 import basketsUrl from './art/castle/baskets.png';
 import berriesUrl from './art/castle/berries.png';
+import birchUrl from './art/castle/birch.png';
 import brazierUrl from './art/castle/brazier.png';
+import bridgeUrl from './art/castle/bridge.png';
 import bushUrl from './art/castle/bush.png';
 import campfireUrl from './art/castle/campfire.png';
 import cartUrl from './art/castle/cart.png';
@@ -31,9 +33,12 @@ import chapelUrl from './art/castle/chapel.png';
 import chestsUrl from './art/castle/chests.png';
 import churchUrl from './art/castle/church.png';
 import cobble_tileUrl from './art/castle/cobble_tile.png';
+import corralUrl from './art/castle/corral.png';
 import cottageUrl from './art/castle/cottage.png';
 import cratesUrl from './art/castle/crates.png';
 import crystalsUrl from './art/castle/crystals.png';
+import farmhouseUrl from './art/castle/farmhouse.png';
+import fenceUrl from './art/castle/fence.png';
 import fieldUrl from './art/castle/field.png';
 import field2Url from './art/castle/field2.png';
 import flowersUrl from './art/castle/flowers.png';
@@ -41,20 +46,25 @@ import forgeUrl from './art/castle/forge.png';
 import gatehouseUrl from './art/castle/gatehouse.png';
 import granaryUrl from './art/castle/granary.png';
 import grass_tileUrl from './art/castle/grass_tile.png';
+import greatUrl from './art/castle/great.png';
 import great_hallUrl from './art/castle/great_hall.png';
 import hayUrl from './art/castle/hay.png';
+import haybigUrl from './art/castle/haybig.png';
 import herbUrl from './art/castle/herb.png';
 import lampUrl from './art/castle/lamp.png';
 import longhouseUrl from './art/castle/longhouse.png';
 import manorUrl from './art/castle/manor.png';
 import oakUrl from './art/castle/oak.png';
+import penUrl from './art/castle/pen.png';
 import pineUrl from './art/castle/pine.png';
 import rackUrl from './art/castle/rack.png';
 import rocksUrl from './art/castle/rocks.png';
 import rosesUrl from './art/castle/roses.png';
 import shedUrl from './art/castle/shed.png';
 import shrineUrl from './art/castle/shrine.png';
+import signUrl from './art/castle/sign.png';
 import signpostUrl from './art/castle/signpost.png';
+import siloUrl from './art/castle/silo.png';
 import spiralUrl from './art/castle/spiral.png';
 import stableUrl from './art/castle/stable.png';
 import stallUrl from './art/castle/stall.png';
@@ -66,6 +76,7 @@ import tavernUrl from './art/castle/tavern.png';
 import thatchUrl from './art/castle/thatch.png';
 import wallUrl from './art/castle/wall.png';
 import watchtowerUrl from './art/castle/watchtower.png';
+import water_tileUrl from './art/castle/water_tile.png';
 import woodpileUrl from './art/castle/woodpile.png';
 import workshopUrl from './art/castle/workshop.png';
 
@@ -77,7 +88,9 @@ const ART: Record<string, string> = {
   barrels: barrelsUrl,
   baskets: basketsUrl,
   berries: berriesUrl,
+  birch: birchUrl,
   brazier: brazierUrl,
+  bridge: bridgeUrl,
   bush: bushUrl,
   campfire: campfireUrl,
   cart: cartUrl,
@@ -85,9 +98,12 @@ const ART: Record<string, string> = {
   chests: chestsUrl,
   church: churchUrl,
   cobble_tile: cobble_tileUrl,
+  corral: corralUrl,
   cottage: cottageUrl,
   crates: cratesUrl,
   crystals: crystalsUrl,
+  farmhouse: farmhouseUrl,
+  fence: fenceUrl,
   field: fieldUrl,
   field2: field2Url,
   flowers: flowersUrl,
@@ -95,20 +111,25 @@ const ART: Record<string, string> = {
   gatehouse: gatehouseUrl,
   granary: granaryUrl,
   grass_tile: grass_tileUrl,
+  great: greatUrl,
   great_hall: great_hallUrl,
   hay: hayUrl,
+  haybig: haybigUrl,
   herb: herbUrl,
   lamp: lampUrl,
   longhouse: longhouseUrl,
   manor: manorUrl,
   oak: oakUrl,
+  pen: penUrl,
   pine: pineUrl,
   rack: rackUrl,
   rocks: rocksUrl,
   roses: rosesUrl,
   shed: shedUrl,
   shrine: shrineUrl,
+  sign: signUrl,
   signpost: signpostUrl,
+  silo: siloUrl,
   spiral: spiralUrl,
   stable: stableUrl,
   stall: stallUrl,
@@ -120,6 +141,7 @@ const ART: Record<string, string> = {
   thatch: thatchUrl,
   wall: wallUrl,
   watchtower: watchtowerUrl,
+  water_tile: water_tileUrl,
   woodpile: woodpileUrl,
   workshop: workshopUrl,
 };
@@ -285,7 +307,7 @@ const GLOWING: Record<string, { dx: number; dy: number; size: number; al: number
   lamp: { dx: 0, dy: -66, size: 26, al: 0.5, tint: '#ffcf70' },
 };
 
-const isPlace = (id: PlotId): id is PlaceId => id === 'tavern' || id === 'chapel';
+const isPlace = isPlaceId;
 
 /** Css pixels between the top of the frame (under the chips bar) and the back corner tower. */
 const TOP_GAP = 6;
@@ -436,13 +458,13 @@ export class CastleScene {
     const { k, css } = pickScale(w, dpr, wall.x1 - wall.x0);
     const vw = Math.ceil(w / css);
     const oy = Math.round(TOP_GAP / css) - Math.round(wall.top);
-    const vh = Math.max(Math.ceil(h / css), oy + lay.h + 8);
+    // (exactly the frame's height: no scrolling; a taller phone shows more countryside, a shorter one less, and never less than the village)
+    const vh = Math.max(Math.ceil(h / css), oy + lay.villageH + 8);
     // (the wall's middle in the middle of the frame)
     const ox = Math.round(vw / 2 - (wall.x0 + wall.x1) / 2);
     if (lay === this.lay && k === this.scale && css === this.css && this.still && this.view.w === vw && this.view.h === vh && this.view.ox === ox && this.view.oy === oy) return;
     const changed = lay !== this.lay;
     this.lay = lay;
-    this.tiles = walkTiles(lay);
     this.scale = k;
     this.css = css;
     // (the backing store is in device pixels, k to a scene pixel; its css size is that over the pixel ratio, so one scene pixel is k whole device pixels)
@@ -454,6 +476,8 @@ export class CastleScene {
       e.style.height = `${vh * css}px`;
     }
     this.ctx.imageSmoothingEnabled = false;
+    // (heroes stroll the road only as far down as the picture shows)
+    this.tiles = walkTiles(lay).filter((t) => cellY(lay.grid, t.u, t.v) + oy < vh - 20);
     this.still = this.paintStill(art, k);
     this.glow = this.paintGlow(k);
     // (the heroes go back onto the new arrangement's road when it changes)
@@ -492,6 +516,7 @@ export class CastleScene {
     const rows0 = Math.floor((-oy - grid.y) / (TILE_H / 2)) - 2;
     const rows1 = Math.ceil((h - oy - grid.y) / (TILE_H / 2)) + 2;
     const first = Math.floor((-ox - grid.x) / (TILE_W / 2)) - 2;
+    const water = new Set(this.lay.land.water.map((t) => `${t.u},${t.v}`));
     const decor: { r: number; x: number; y: number; im: HTMLImageElement; mirror: boolean }[] = [];
     for (let r = rows0; r <= rows1; r++) {
       const cy = grid.y + r * (TILE_H / 2);
@@ -500,22 +525,28 @@ export class CastleScene {
         const cx = grid.x + (k * TILE_W) / 2;
         const u = (r + k) / 2;
         const v = (r - k) / 2;
-        const tile = paved(u, v) ? a.cobble_tile : a.grass_tile;
+        const wet = water.has(`${u},${v}`);
+        const tile = paved(u, v) ? a.cobble_tile : wet ? a.water_tile : a.grass_tile;
         // (every other grass tile is mirrored, so the lawn does not show its repeat)
         draw(tile, Math.round(cx - tile.width / 2) * s, (cy - TILE_H / 2) * s, tile === a.grass_tile && (r * 7 + k * 3) % 5 < 2);
         // (beyond the wall, past a margin of grass: woods behind it, and only low bushes and flowers in front of it, so nothing hides the near runs)
         const hash = ((u * 73856093) ^ (v * 19349663)) >>> 0;
         const pick = hash % 100;
         const behind = u < yard.u0 - 3 || v < yard.v0 - 3;
-        const front = !behind && (u > yard.u1 + 3 || v > yard.v1 + 3);
-        const kinds = behind ? ['oak', 'pine', 'bush', 'pine', 'oak'] : front ? ['bush', 'flowers', 'roses', 'berries'] : [];
-        if (kinds.length && pick < (behind ? 11 : 8)) {
+        const kinds = ['oak', 'pine', 'bush', 'pine', 'oak'];
+        if (behind && !wet && pick < 11) {
           const im = a[kinds[(hash >>> 8) % kinds.length]];
           decor.push({ r, x: Math.round(cx - im.width / 2) * s, y: (cy + TILE_H / 2 - im.height) * s, im, mirror: (hash & 1) === 1 });
         }
       }
     }
     for (const d of decor) draw(d.im, d.x, d.y, d.mirror);
+    // (the fields' beds and the bridge lie flat on the ground)
+    for (const p of this.lay.ground) {
+      const im = a[p.sprite];
+      if (p.y + oy < -20 || p.y - im.height + oy > h) continue;
+      draw(im, Math.round(p.x - im.width / 2) * s, (p.y - im.height) * s, p.flip);
+    }
     return c;
   }
 
@@ -543,6 +574,8 @@ export class CastleScene {
       const box = lookBox(lookFor(id, this.stageNow(id)), p.flip);
       tag.style.left = `${((this.view.ox + p.x + (box.x0 + box.x1) / 2 + (p.tagDx ?? 0)) / this.view.w) * 100}%`;
       tag.style.top = `${((this.view.oy + (p.tagY ?? p.y - box.h - 4)) / this.view.h) * 100}%`;
+      // (a signpost below the bottom of a short screen has no tag to tap)
+      tag.hidden = this.view.oy + p.y > this.view.h - 6;
     }
   }
 
@@ -733,6 +766,28 @@ export class CastleScene {
         g.restore();
       };
       list.push({ depth: p.depth ?? p.y, paint });
+    }
+    if (!wallsOnly) {
+      const top = -this.view.oy - 40;
+      const bottom = this.view.h - this.view.oy + 160;
+      for (const p of this.lay.scenery) {
+        if (p.y < top || p.y > bottom) continue;
+        const im = a[p.sprite];
+        const x = Math.round(p.x - im.width / 2) * s;
+        const y = (p.y - im.height) * s;
+        list.push({
+          depth: p.y,
+          paint: () => {
+            if (p.flip) {
+              g.save();
+              g.translate(x + im.width * s, 0);
+              g.scale(-1, 1);
+              g.drawImage(im, 0, y, im.width * s, im.height * s);
+              g.restore();
+            } else g.drawImage(im, x, y, im.width * s, im.height * s);
+          },
+        });
+      }
     }
     if (!wallsOnly) for (const id of PLOT_IDS) list.push({ depth: this.lay.plots[id].y, paint: () => this.building(a, id) });
     if (!wallsOnly) for (const w of this.walkers.values()) list.push({ depth: w.y, paint: () => this.hero(w) });

@@ -1,6 +1,7 @@
-// Serves out/web and takes the Castle tab's samples at both phone sizes, with every upgrade at 0, part-built and maxed:
-//   node tools/castle/shots.mjs [extra]      (PORT; DPR = device pixel ratio, default 3, a phone's; the pictures go to docs/samples/castle-<state>-<upright|sideways>.png,
-//   with -dpr1 added for a ratio of 1)
+// Serves out/web and takes the Castle tab's samples on an upright phone (393x852), with every upgrade at 0, part-built and maxed, and the maxed village on
+// two other phones (360x780, 412x915):
+//   node tools/castle/shots.mjs      (PORT; DPR = device pixel ratio, default 3, a phone's; the pictures go to docs/samples/castle-<state>-upright.png and
+//   castle-maxed-<width>x<height>.png)
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
 import { readFileSync, existsSync, mkdirSync } from 'node:fs';
@@ -18,13 +19,14 @@ const HEROES = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard', 'barbarian'
 const STATES = { empty: { treasury: 0, barracks: 0, armoury: 0, mageTower: 0, stable: 0, library: 0 }, part: { treasury: 1, barracks: 3, armoury: 2, mageTower: 1, stable: 2, library: 4 }, maxed: { treasury: 5, barracks: 5, armoury: 5, mageTower: 4, stable: 5, library: 5 } };
 const DPR = Number(process.env.DPR ?? 3);
 const TAG = DPR === 1 ? '-dpr1' : '';
-const SIZES = { upright: { width: 393, height: 852 }, sideways: { width: 852, height: 393 }, ...(process.env.DESKTOP ? { desktop: { width: 1280, height: 800 } } : {}) };
+const SIZES = { upright: { width: 393, height: 852 }, '360x780': { width: 360, height: 780 }, '412x915': { width: 412, height: 915 } };
 mkdirSync('docs/samples', { recursive: true });
 const only = (process.env.ONLY ?? '').split(',').filter(Boolean);
 for (const [size, vp] of Object.entries(SIZES)) {
   if (process.env.SIZES && process.env.SIZES !== size) continue;
   for (const [state, castle] of Object.entries(STATES)) {
     if (only.length && !only.includes(state)) continue;
+    if (size !== 'upright' && state !== 'maxed') continue;
     const ctx = await browser.newContext({ viewport: vp, deviceScaleFactor: DPR, hasTouch: true });
     const page = await ctx.newPage();
     page.on('pageerror', (e) => console.log('PAGE ERROR', e.message));
@@ -39,7 +41,7 @@ for (const [size, vp] of Object.entries(SIZES)) {
     await page.waitForTimeout(1200);
     await page.locator('.hmTab').nth(3).click();
     await page.waitForTimeout(Number(process.env.WAIT ?? 2500));
-    await page.screenshot({ path: `docs/samples/castle-${state}-${size}${TAG}.png` });
+    await page.screenshot({ path: `docs/samples/castle-${state}-${size === 'upright' ? 'upright' : size}${TAG}.png` });
     console.log('shot', state, size);
     if (process.env.FULL) await page.evaluate(() => document.querySelector('.ctRoom').toDataURL()).then((u) => import('node:fs').then((fs) => fs.writeFileSync(`${process.env.FULL}/castle-full-${state}.png`, Buffer.from(u.split(',')[1], 'base64'))));
     if (state === 'part' && process.env.CARD) {

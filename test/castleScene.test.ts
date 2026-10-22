@@ -21,10 +21,10 @@ test('every picture the looks and props name exists, and its size in the table i
 });
 
 test('every picture is used (by a look, a prop or the ground), and the ground tiles are one lattice cell across', () => {
-  const used = new Set<string>(['grass_tile', 'cobble_tile']);
+  const used = new Set<string>(['grass_tile', 'cobble_tile', 'water_tile']);
   for (const id of BUILDING_IDS) for (const look of looksOf(id)) for (const p of look.parts) used.add(p.sprite);
   for (const id of PLACE_IDS) for (const p of PLACE_LOOK[id].parts) used.add(p.sprite);
-  for (const lay of Object.values(LAYOUTS)) for (const p of lay.props) used.add(p.sprite);
+  for (const lay of Object.values(LAYOUTS)) for (const p of [...lay.props, ...lay.ground, ...lay.scenery]) used.add(p.sprite);
   assert.deepEqual(Object.keys(SPRITE_SIZE).filter((k) => !used.has(k)), []);
   // (the tiles come from the isometric kits, half size: a diamond about 90 across, so rows half a tile apart meet edge to edge)
   for (const t of ['grass_tile', 'cobble_tile']) assert.ok(Math.abs(SPRITE_SIZE[t][0] - TILE_W) <= 1, t);
@@ -213,7 +213,6 @@ test('one fixed scale: a whole number of device pixels per scene pixel, the larg
   assert.ok(wall.top >= 0, 'the back corner tower is inside the scene');
   const frames: [number, number][] = [
     [393, 2.6], [393, 2.75], [393, 3], // a phone standing
-    [852, 2.75], [852, 3], // the same phone lying down
     [1280, 1], [1920, 1], [1920, 2], [2560, 1],
   ];
   for (const [w, dpr] of frames) {
@@ -230,7 +229,6 @@ test('one fixed scale: a whole number of device pixels per scene pixel, the larg
   assert.equal(pickScale(393, 3, wallW).k, 1);
   assert.equal(pickScale(393, 2.75, wallW).k, 1);
   assert.ok(wallW * pickScale(393, 2.75, wallW).css > 393 * 0.85);
-  assert.equal(pickScale(852, 3, wallW).k, 2);
   assert.equal(pickScale(1280, 1, wallW).css, 1);
   assert.equal(pickScale(2560, 1, wallW).css, 2);
   assert.equal(pickScale(300, 1, wallW).k, 1);
@@ -289,8 +287,9 @@ test('the upgrade card words grow with the level', () => {
   assert.match(effectText('mageTower', 0), /0% faster, \+0 spell power/);
 });
 
-test('the tavern and the chapel are places, not upgrades: one look, a tag that says where they lead, and plots of their own', () => {
-  assert.deepEqual([...PLACE_IDS], ['tavern', 'chapel']);
+test('the tavern, the chapel and the Armies signpost are places, not upgrades: one look, a tag that says where they lead, and plots of their own', () => {
+  assert.deepEqual([...PLACE_IDS], ['tavern', 'chapel', 'armies']);
+  assert.equal(PLACES.armies.name, 'Armies');
   assert.equal(PLACES.tavern.name, 'Tavern');
   assert.equal(PLACES.tavern.to, 'your heroes');
   assert.equal(PLACES.chapel.name, 'Chapel');
@@ -322,4 +321,26 @@ test('the market and the garden: two or three stalls on the plaza\'s edge or the
   // (the beds sit together in the south corner: three on one row, next to each other)
   const row = beds.filter((p) => p.v === 5).map((p) => p.u).sort((a, b) => a - b);
   assert.ok(row.length >= 3 && row.every((u, i) => i === 0 || u === row[i - 1] + 1), 'three beds side by side');
+});
+
+test('the countryside: the road runs from the village to the bottom of the scene, and no scenery sits on a road, the water or a plot', () => {
+  const lay = YARD;
+  const { land } = lay;
+  // (the main road reaches the bottom of the scene's land and joins the village's own road)
+  assert.ok(isPaved(lay, 3, 6), 'the road starts at the village');
+  assert.ok(Math.max(...land.road.map((r) => r.u0 + r.v0)) * 26 + lay.grid.y > lay.h - 200, 'the road runs to the bottom');
+  const taken = new Set<string>();
+  for (const b of [lay.plaza, ...lay.roads]) for (let u = b.u0; u <= b.u1; u++) for (let v = b.v0; v <= b.v1; v++) taken.add(`${u},${v}`);
+  const water = new Set(land.water.map((t) => `${t.u},${t.v}`));
+  for (const id of PLOT_IDS) for (const t of footprint(lay.plots[id])) taken.add(`${t.u},${t.v}`);
+  for (const p of [...lay.scenery, ...lay.ground]) {
+    // (the bridge is the one thing that stands on the road)
+    if (p.sprite === 'bridge') continue;
+    assert.ok(!taken.has(`${p.u},${p.v}`), `${p.sprite} at ${p.u},${p.v} is on a road or a plot`);
+    assert.ok(!water.has(`${p.u},${p.v}`), `${p.sprite} at ${p.u},${p.v} is in the water`);
+  }
+  for (const p of lay.props) if (p.depth === undefined) assert.ok(!lay.scenery.some((q) => q.u === p.u && q.v === p.v), `scenery on the village prop at ${p.u},${p.v}`);
+  assert.ok(isPaved(lay, land.bridge.u, land.bridge.v), 'the bridge carries the road');
+  assert.ok(isPaved(lay, lay.plots.armies.door.u, lay.plots.armies.door.v), 'the signpost opens onto the road');
+  assert.ok(lay.villageH < lay.h);
 });

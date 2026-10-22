@@ -3,6 +3,7 @@
 // the heroes' strolling band, and the words of the upgrade cards. Plain data (no Pixi, no DOM), so a test can check it. All numbers are in the scene's
 // own pixels (the art's own pixels: the scene is drawn whole-number times bigger); `y` is a building's foot line, which the scene sorts by.
 
+import { buildLand, type Land, type LandProp } from './castleLand';
 import { BUILDING_IDS, BUILDINGS, GOLD_PER_LEVEL, HP_PER_LEVEL, ATK_PER_LEVEL, MANA_PER_LEVEL, MOVE_PER_LEVEL, XP_PER_LEVEL, maxLevel, newCastle, spellBudget, type BuildingId } from '../sim/castle';
 
 /** How many looks a building has: 0 an empty plot, 1 small, 2 bigger, 3 grand. */
@@ -24,7 +25,9 @@ export const SPRITE_SIZE: Record<string, readonly [number, number]> = {
   barrels: [33, 44],
   baskets: [41, 59],
   berries: [60, 73],
+  birch: [55, 135],
   brazier: [36, 90],
+  bridge: [186, 96],
   bush: [38, 37],
   campfire: [66, 46],
   cart: [82, 60],
@@ -32,9 +35,12 @@ export const SPRITE_SIZE: Record<string, readonly [number, number]> = {
   chests: [70, 54],
   church: [99, 158],
   cobble_tile: [90, 60],
+  corral: [244, 104],
   cottage: [103, 101],
   crates: [43, 52],
   crystals: [41, 60],
+  farmhouse: [90, 85],
+  fence: [78, 59],
   field: [97, 65],
   field2: [106, 63],
   flowers: [41, 32],
@@ -42,20 +48,25 @@ export const SPRITE_SIZE: Record<string, readonly [number, number]> = {
   gatehouse: [137, 127],
   granary: [72, 99],
   grass_tile: [89, 59],
+  great: [136, 153],
   great_hall: [146, 147],
   hay: [48, 51],
+  haybig: [72, 56],
   herb: [94, 59],
   lamp: [26, 81],
   longhouse: [119, 112],
   manor: [121, 142],
   oak: [64, 90],
+  pen: [153, 100],
   pine: [41, 88],
   rack: [86, 84],
   rocks: [36, 38],
   roses: [38, 51],
   shed: [82, 76],
   shrine: [77, 86],
+  sign: [34, 64],
   signpost: [37, 74],
+  silo: [94, 97],
   spiral: [68, 128],
   stable: [176, 135],
   stall: [69, 75],
@@ -66,6 +77,7 @@ export const SPRITE_SIZE: Record<string, readonly [number, number]> = {
   tavern: [119, 125],
   thatch: [129, 118],
   wall: [93, 121],
+  water_tile: [90, 56],
   watchtower: [79, 134],
   woodpile: [50, 54],
   workshop: [95, 110],
@@ -125,9 +137,9 @@ export const LOOKS: Record<BuildingId, readonly Look[]> = {
   ],
 };
 
-/** The two places that are not upgrades: tapping the tavern goes to the Heroes tab (the tavern scene), tapping the chapel to the Spells tab. */
-export type PlaceId = 'tavern' | 'chapel';
-export const PLACE_IDS: PlaceId[] = ['tavern', 'chapel'];
+/** The places that are not upgrades: tapping the tavern goes to the Heroes tab (the tavern scene), the chapel to the Spells tab, the signpost down the road to the Armies screen. */
+export type PlaceId = 'tavern' | 'chapel' | 'armies';
+export const PLACE_IDS: PlaceId[] = ['tavern', 'chapel', 'armies'];
 /** Anything with a plot in the yard: the six upgrades and the two places. */
 export type PlotId = BuildingId | PlaceId;
 export const PLOT_IDS: PlotId[] = [...BUILDING_IDS, ...PLACE_IDS];
@@ -135,14 +147,17 @@ export const PLOT_IDS: PlotId[] = [...BUILDING_IDS, ...PLACE_IDS];
 export const PLACES: Record<PlaceId, { name: string; to: string }> = {
   tavern: { name: 'Tavern', to: 'your heroes' },
   chapel: { name: 'Chapel', to: 'spells' },
+  armies: { name: 'Armies', to: 'to battle' },
 };
 /** A place's one look (it does not grow): the tavern with its sign, barrels and lantern; the chapel on its own. */
 export const PLACE_LOOK: Record<PlaceId, Look> = {
   tavern: { parts: [P('tavern', 0), P('lamp', -58, 8), P('barrels', 52, 22), P('signpost', 84, 14)] },
   chapel: { parts: [P('church', 0)] },
+  armies: { parts: [P('sign', 0)] },
 };
+export const isPlaceId = (id: PlotId): id is PlaceId => (PLACE_IDS as string[]).includes(id);
 /** The look of a plot: a building's at a stage, or a place's own. */
-export const lookFor = (id: PlotId, stage: number): Look => (id === 'tavern' || id === 'chapel' ? PLACE_LOOK[id] : LOOKS[id][stage]);
+export const lookFor = (id: PlotId, stage: number): Look => (isPlaceId(id) ? PLACE_LOOK[id] : LOOKS[id][stage]);
 
 export const spriteName = (id: BuildingId, stage: number): string => `${id}${stage}`;
 
@@ -212,7 +227,7 @@ export const LIGHTS: Record<BuildingId, readonly (readonly Light[])[]> = {
 };
 
 /** What smokes at a place: the tavern's chimney. */
-export const PLACE_VENTS: Record<PlaceId, readonly Vent[]> = { tavern: [{ dx: 22, dy: -118, kind: 'smoke' }], chapel: [] };
+export const PLACE_VENTS: Record<PlaceId, readonly Vent[]> = { tavern: [{ dx: 22, dy: -118, kind: 'smoke' }], chapel: [], armies: [] };
 
 /** Ground tiles: a diamond 90 across and 52 down, laid in rows half a tile along and half a tile down from the last. */
 export const TILE_W = 90;
@@ -275,7 +290,14 @@ export interface Layout {
   /** The scene's size. */
   w: number;
   h: number;
+  /** How far down the village itself reaches (the countryside runs on below it, to `h`). */
+  villageH: number;
   grid: Grid;
+  /** The countryside below the village. */
+  land: Land;
+  /** Flat things on the countryside's ground (field beds, the bridge) and its standing scenery (trees, fences, farm buildings), by tile. */
+  ground: readonly Prop[];
+  scenery: readonly Prop[];
   /** The tiles of the wall's four corner towers (the ring runs between them). */
   yard: Block;
   plots: Record<PlotId, Plot>;
@@ -289,13 +311,29 @@ export interface Layout {
 
 export const inBlock = (b: Block, u: number, v: number): boolean => u >= b.u0 && u <= b.u1 && v >= b.v0 && v <= b.v1;
 /** Whether a tile is paved (the plaza or a road). */
-export const isPaved = (lay: Layout, u: number, v: number): boolean => inBlock(lay.plaza, u, v) || lay.roads.some((r) => inBlock(r, u, v));
+const pavedSets = new WeakMap<Layout, Set<string>>();
+export const isPaved = (lay: Layout, u: number, v: number): boolean => {
+  let set = pavedSets.get(lay);
+  if (!set) {
+    set = new Set();
+    for (const b of [lay.plaza, ...lay.roads]) for (let a = b.u0; a <= b.u1; a++) for (let c = b.v0; c <= b.v1; c++) set.add(`${a},${c}`);
+    pavedSets.set(lay, set);
+  }
+  return set.has(`${u},${v}`);
+};
 /** The tiles a hero may stroll on: the paving, but not where the statue or a brazier stands. */
 export function walkTiles(lay: Layout): { u: number; v: number }[] {
   const blocked = new Set(lay.props.filter((p) => p.sprite === 'statue' || p.sprite === 'brazier').map((p) => `${p.u},${p.v}`));
   const out: { u: number; v: number }[] = [];
+  const seen = new Set<string>();
   for (const b of [lay.plaza, ...lay.roads])
-    for (let u = b.u0; u <= b.u1; u++) for (let v = b.v0; v <= b.v1; v++) if (!blocked.has(`${u},${v}`) && !out.some((t) => t.u === u && t.v === v)) out.push({ u, v });
+    for (let u = b.u0; u <= b.u1; u++)
+      for (let v = b.v0; v <= b.v1; v++) {
+        const k = `${u},${v}`;
+        if (blocked.has(k) || seen.has(k)) continue;
+        seen.add(k);
+        out.push({ u, v });
+      }
   return out;
 }
 /** The tiles under a plot. */
@@ -309,7 +347,9 @@ type PlotSpec = { u: number; v: number; w: number; d: number; flip: boolean; doo
 interface Spec {
   w: number;
   h: number;
+  villageH: number;
   grid: Grid;
+  land: Land;
   yard: Block;
   plots: Record<PlotId, PlotSpec>;
   /** [sprite, u, v, options]: `u`, `v` may be halves for a wall piece that spans two tiles. */
@@ -342,7 +382,8 @@ function build(spec: Spec): Layout {
     depth: o?.depth,
     cut: o?.cut,
   }));
-  return { w: spec.w, h: spec.h, grid: g, yard: spec.yard, plots, props, plaza: spec.plaza, roads: spec.roads, flags: spec.flags.map(([u, v, dy, dir, dx]) => ({ x: Math.round(cellX(g, u, v) + (dx ?? 0)), y: Math.round(cellY(g, u, v) + dy), dir })) };
+  const onTile = (p: LandProp): Prop => ({ sprite: p.sprite, u: p.u, v: p.v, x: Math.round(cellX(g, p.u, p.v) + (p.dx ?? 0)), y: Math.round(cellY(g, p.u, p.v) + TILE_H / 2 + (p.dy ?? 0)), flip: p.flip });
+  return { w: spec.w, h: spec.h, villageH: spec.villageH, land: spec.land, ground: [...spec.land.ground, { sprite: 'bridge', ...spec.land.bridge }].map(onTile), scenery: spec.land.scenery.map(onTile), grid: g, yard: spec.yard, plots, props, plaza: spec.plaza, roads: spec.roads, flags: spec.flags.map(([u, v, dy, dir, dx]) => ({ x: Math.round(cellX(g, u, v) + (dx ?? 0)), y: Math.round(cellY(g, u, v) + dy), dir })) };
 }
 
 const BEHIND = -1000;
@@ -387,11 +428,16 @@ function ring(u0: number, v0: number, u1: number, v1: number, gateV: number): Pr
  *  each run's far end, the gatehouse in the north-west run near its south end and a road from it to the plaza (a clear 3 x 3 of paving, the statue in the middle, a brazier on each corner). Two roads wrap the plaza's north side: the mage
  *  tower and the barracks stand on the one at its left (their pictures mirrored so the doors face it), the treasury and the armoury on the one at its
  *  right. The scene is drawn a whole number of device pixels per scene pixel (`pickScale`); the front is open grass. */
+const VILLAGE_YARD: Block = { u0: -4, v0: -4, u1: 6, v1: 7 };
+/** The countryside, laid on the lattice round the village (nothing within two tiles of the wall's box). */
+const LAND = buildLand((u, v) => inBlock({ u0: VILLAGE_YARD.u0 - 2, v0: VILLAGE_YARD.v0 - 2, u1: VILLAGE_YARD.u1 + 2, v1: VILLAGE_YARD.v1 + 2 }, u, v));
 export const YARD: Layout = build({
   w: 1030,
-  h: 730,
+  h: 3000,
+  villageH: 730,
   grid: { x: 540, y: 340 },
-  yard: { u0: -4, v0: -4, u1: 6, v1: 7 },
+  land: LAND,
+  yard: VILLAGE_YARD,
   plaza: { u0: 0, v0: 0, u1: 2, v1: 2 },
   roads: [
     { u0: -1, v0: -1, u1: 4, v1: -1 },
@@ -400,6 +446,7 @@ export const YARD: Layout = build({
     { u0: 3, v0: 2, u1: 3, v1: 6 },
     { u0: 1, v0: 4, u1: 5, v1: 4 },
     { u0: 3, v0: 6, u1: 5, v1: 6 },
+    ...LAND.road,
   ],
   plots: {
     mageTower: { u: -2, v: 0, w: 1, d: 2, flip: true, door: { u: -1, v: 0 }, tagAt: [330, 190] },
@@ -410,6 +457,7 @@ export const YARD: Layout = build({
     library: { u: 4, v: 5, w: 2, d: 1, flip: false, door: { u: 4, v: 6 }, tagAt: [540, 725] },
     tavern: { u: 5, v: 3, w: 1, d: 1, flip: false, door: { u: 5, v: 4 }, tagAt: [770, 560] },
     chapel: { u: -2, v: -2, w: 1, d: 1, flip: true, door: { u: -1, v: -2 }, tagAt: [540, 114] },
+    armies: { u: LAND.sign.u, v: LAND.sign.v, w: 1, d: 1, flip: false, door: LAND.sign.door },
   },
   props: [
     ...ring(-4, -4, 6, 7, 5),
