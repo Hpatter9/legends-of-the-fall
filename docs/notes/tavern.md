@@ -31,3 +31,9 @@ The town-square work had locked the tavern's scroller to up-and-down (`overflow-
 sides of the room could not be reached. The room now pans by hand: a drag on the canvas moves `.tvScroll`'s scroll both
 ways (pointer events with capture, `touch-action: none`), with a finger or the mouse, and a short still press is still a
 tap that opens the hero's sheet. The wheel still scrolls too.
+
+## Easier to tap
+
+A tap in the tavern now picks the hero whose body is nearest the finger, within a reach a little wider and taller than
+the body (and down past the feet onto the seat), rather than only a tap inside a tight box; on a near tie the one in front
+wins (`tap()` in src/tavern.ts). A press may wander 14 px and last 0.7 s and still count as a tap.

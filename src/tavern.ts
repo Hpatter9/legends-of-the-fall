@@ -134,7 +134,7 @@ export class Tavern {
     this.canvas.addEventListener('pointerup', (e) => {
       const d = this.down;
       this.down = this.grip = null;
-      if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 9 && performance.now() - d.t < 600) this.tap(e);
+      if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 14 && performance.now() - d.t < 700) this.tap(e);
     });
     this.watch = new ResizeObserver(() => this.fit());
     this.watch.observe(this.root);
@@ -477,16 +477,19 @@ export class Tavern {
     const box = this.canvas.getBoundingClientRect();
     const rx = ((e.clientX - box.left) / box.width) * ROOM_W;
     const ry = ((e.clientY - box.top) / box.height) * ROOM_H;
-    let best: { kind: string; depth: number } | null = null;
+    // (generous: the hero whose body is nearest the finger wins, within a reach a little wider and taller than the body, so a
+    // thumb that lands beside a hero, or on the seat they sit on, still picks them; on a tie the one in front wins)
+    let best: { kind: string; d: number; depth: number } | null = null;
     for (const kind of ALL_HEROES) {
       const spot = SPOTS[kind];
       const a = this.actors.get(kind);
       // (a hero's body, or the empty seat that waits for them)
-      const half = a ? (a.rig.w * a.k) / 4 : 14;
-      const tall = a ? a.rig.figure * a.k : 34;
+      const half = Math.max(16, a ? (a.rig.w * a.k) / 4 : 14) + 8;
+      const tall = (a ? a.rig.figure * a.k : 34) + 6;
       const cx = a ? a.x : spot.x;
-      if (rx < cx - half || rx > cx + half || ry < spot.y - tall || ry > spot.y + 3) continue;
-      if (!best || spot.depth > best.depth) best = { kind, depth: spot.depth };
+      if (rx < cx - half || rx > cx + half || ry < spot.y - tall || ry > spot.y + 12) continue;
+      const d = Math.hypot((rx - cx) / half, (ry - (spot.y - tall / 2)) / (tall / 2));
+      if (!best || d < best.d - 0.15 || (Math.abs(d - best.d) <= 0.15 && spot.depth > best.depth)) best = { kind, d, depth: spot.depth };
     }
     if (best) this.onPick(best.kind);
   }
