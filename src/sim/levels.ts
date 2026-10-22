@@ -8,6 +8,7 @@
 import type { Battle, Unit } from './battle';
 import { isBoss } from './foes';
 import type { Meta } from './meta';
+import { UNITS } from './units';
 
 export const MAX_LEVEL = 20;
 export const XP_TAKE_PART = 5;
@@ -65,7 +66,8 @@ export function fightXp(b: Battle, rate = 1): Record<string, number> {
   const won = b.phase === 'won';
   const shareOf = (u: Unit) => (u.dealt ?? 0) / XP_PER_DAMAGE + (u.healed ?? 0) / XP_PER_HEALING + (u.slain ?? 0);
   for (const u of b.units) {
-    if (u.side !== 'hero' || u.owner !== undefined) continue;
+    // (a fighter the king's own spell called up (Call the Wolves) has no caller and earns no XP of its own)
+    if (u.side !== 'hero' || u.owner !== undefined || UNITS[u.def]?.summon) continue;
     // (what the fighters its skills called up did counts as its own)
     const called = b.units.filter((x) => x.owner === u.id).reduce((n, x) => n + shareOf(x), 0);
     const xp = Math.round((XP_TAKE_PART + (won ? XP_WIN : 0) + shareOf(u) + called) * rate);

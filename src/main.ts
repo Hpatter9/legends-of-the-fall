@@ -9,6 +9,7 @@ import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/figh
 import { armyOfRun, armyRun, boostOf, finish, heroOf, isBossRun, keepCharges, loadRun, noteFight, paidOf, recycle, recycleValue, saveRun, setSquad, SQUAD, startStage, summon, summonCost, tierOfRun, type Owned, type Run } from './sim/run';
 import { ARMIES, armyById, armyUnlocked, settleWave, type ArmyPay } from './sim/armies';
 import { drawRunStars, showUnlock } from './armiesView';
+import { spellIconHtml } from './spellIcons';
 import { settleArmyRun, type StarResult } from './sim/armyStars';
 import { tierOf } from './sim/tiers';
 import { formOf, UNITS } from './sim/units';
@@ -1252,7 +1253,7 @@ class Game {
       card.className = 'spell';
       card.dataset.id = id;
       card.title = sp.text;
-      card.innerHTML = `<b>${sp.name}</b><em>${sp.cost} mana</em><span class="cool"></span>`;
+      card.innerHTML = `${spellIconHtml(id)}<b>${sp.name}</b><em>${sp.cost} mana</em><span class="cool"></span>`;
       card.addEventListener('click', () => {
         if (this.b.phase !== 'fight') return;
         // (a spell that goes everywhere needs no tile: it is cast at once)

@@ -3,7 +3,7 @@
 // so a faster fight is faster here too.
 
 import { Container, Graphics, Rectangle, Sprite, Text, Texture } from 'pixi.js';
-import { tileAt, type Board } from '../sim/board';
+import { D, tileAt, type Board } from '../sim/board';
 import { defOf, type Battle, type BattleEvent, type Unit } from '../sim/battle';
 import { isBoss } from '../sim/foes';
 import { kitOf } from '../sim/abilities';
@@ -13,7 +13,7 @@ import { settings } from '../settings';
 import { loadImage } from './loadImage';
 import { at, TH, TW } from './iso';
 import { fadeTrauma, popScale, shakeOf, traumaFor } from './juiceRules';
-import { BIG_FOE_HP, SKILL_FX, SPELL_FX, SPELL_GLOW, type Effect, type MagicKey } from './skillFx';
+import { BIG_FOE_HP, SKILL_FX, SPELL_FX, SPELL_GLOW, SPELL_WORD, type Effect, type MagicKey } from './skillFx';
 import type { UnitSprite } from './unitView';
 import { Particles } from './particles';
 import { loadVfxArt, VFX } from './vfxArt';
@@ -842,7 +842,8 @@ export class Fx {
 
   /** A spell goes off: the 3x3 lit for a moment (a poison cloud's for as long as it lingers), and, for the ones that go everywhere, nothing here (the `spellfx` events light each fighter). */
   private spell(b: Battle, e: Extract<BattleEvent, { kind: 'spell' }>): void {
-    if (e.id === 'meteor') return;
+    // (a meteor, and the shower of them, are drawn by their own `area` events)
+    if (e.id === 'meteor' || e.id === 'starfall') return;
     // (the spell's own circle, nova or pillar at the tapped tile; an everywhere spell has none, only the shake of a quake)
     if (e.id === 'quake') this.trauma = Math.max(this.trauma, 0.7);
     if (SPELLS[e.id].target === 'all') return;
@@ -856,7 +857,14 @@ export class Fx {
             const [tx, ty] = this.tilePos(b, e.u + du, e.v + dv);
             play(this.particles, 'ice-spikes', tx, ty, { scale: 1.2, frameMs: 80, add: false, delay: (Math.abs(du) + Math.abs(dv)) * 60 });
           }
-    if (e.id === 'smite' || e.id === 'chain') this.trauma = Math.max(this.trauma, 0.45);
+    // (a lance runs the whole column: a pillar of light on every other tile of it, from the far end in)
+    if (e.id === 'lance')
+      for (let dv = 0, row = 0; dv < D; dv++)
+        if (tileAt(b.board, e.u, dv)) {
+          const [tx, ty] = this.tilePos(b, e.u, dv);
+          play(this.particles, 'light-pillar', tx, ty, { scale: 2, frameMs: 70, delay: row++ * 40 });
+        }
+    if (e.id === 'smite' || e.id === 'chain' || e.id === 'lance') this.trauma = Math.max(this.trauma, 0.45);
     const { color, ms } = SPELL_GLOW[e.id];
     const g = new Graphics();
     this.root.addChild(g);
@@ -900,6 +908,8 @@ export class Fx {
     if (e.id === 'haste') this.label('Haste', s.x, s.y - s.tall - 20, SPELL_GLOW.haste.color, 12, 900);
     if (e.id === 'rally') this.label('Rally', s.x, s.y - s.tall - 20, SPELL_GLOW.rally.color, 12, 900);
     if (e.id === 'shield') this.label('Shield', s.x, s.y - s.tall - 20, SPELL_GLOW.shield.color, 12, 900);
+    const word = SPELL_WORD[e.id];
+    if (word) this.label(word, s.x, s.y - s.tall - 20, SPELL_GLOW[e.id].color, 12, 900);
   }
 
   /** Burning ground: flames over a 3x3 of tiles for `ms`. */

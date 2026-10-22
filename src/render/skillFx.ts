@@ -135,7 +135,20 @@ export const SPELL_FX: Record<Exclude<SpellId, 'meteor'>, Effect> = {
   quake: { sheet: 'earthExplosion', scale: 1.2 },
   resurrect: { sheet: 'lightGather', scale: 2.2, tint: 0xfff2a0 },
   poison: { sheet: 'darkCircle', scale: 1.6, tint: 0x8aff5a },
+  cleanse: { sheet: 'whiteBurst', scale: 1.4 },
+  blink: { sheet: 'darkCircle', scale: 1.4, tint: 0xb08af0 },
+  hex: { sheet: 'darkCircle', scale: 1.4, tint: 0xb06aff },
+  lance: { sheet: 'lightNova', scale: 1.6, tint: 0xfff2a0 },
+  renewal: { sheet: 'lightGather', scale: 1.6, tint: 0x7dff8a },
+  deepfreeze: { sheet: 'iceShield', scale: 1.8 },
+  warcry: { sheet: 'goldBurst', scale: 1.6 },
+  bulwark: { sheet: 'earthShield', scale: 1.8 },
+  wolves: { sheet: 'earthBurst', scale: 1.4 },
+  starfall: { sheet: 'fireExplosion', scale: 1.2 },
 };
+
+/** The word that floats up from each fighter a spell touches (Haste, Rally and Shield say theirs in `fx.ts`). */
+export const SPELL_WORD: Partial<Record<SpellId, string>> = { cleanse: 'Cleansed', hex: 'Hexed', renewal: 'Renewal', deepfreeze: 'Frozen', warcry: 'Battle Cry', bulwark: 'Bulwark', wolves: 'Wolf', blink: 'Blink' };
 
 /** The tint of the tiles a spell lights, and how long (ms) they glow. */
 export const SPELL_GLOW: Record<Exclude<SpellId, 'meteor'>, { color: number; ms: number }> = {
@@ -149,6 +162,16 @@ export const SPELL_GLOW: Record<Exclude<SpellId, 'meteor'>, { color: number; ms:
   quake: { color: 0xb88a5a, ms: 700 },
   resurrect: { color: 0xffffff, ms: 800 },
   poison: { color: 0x8aff5a, ms: 6000 },
+  cleanse: { color: 0xdff8ff, ms: 600 },
+  blink: { color: 0xb08af0, ms: 500 },
+  hex: { color: 0xb06aff, ms: 700 },
+  lance: { color: 0xfff2a0, ms: 500 },
+  renewal: { color: 0x7dff8a, ms: 900 },
+  deepfreeze: { color: 0x8ae8ff, ms: 900 },
+  warcry: { color: 0xffb04a, ms: 600 },
+  bulwark: { color: 0xb88a5a, ms: 600 },
+  wolves: { color: 0x7dff8a, ms: 600 },
+  starfall: { color: 0xff5a2a, ms: 700 },
 };
 
 /** A foe this big (its full health) that dies is a big kill: a burst, a white flash, a hard shake. */

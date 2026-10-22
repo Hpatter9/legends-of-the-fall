@@ -3,6 +3,7 @@
 // `spellbookView()` builds the book's body (the Spells tab's library puts it on a lectern) and `openSpellbook()` still shows it as an overlay. `bindSpellbook` gives it the Meta once (and
 // a callback for when something changed, to save and refresh the crowns shown). All the rules are in `sim/spells.ts`.
 
+import { spellIconHtml } from './spellIcons';
 import { budgetOf, equipBlock, equipSpell, LOADOUT_SIZE, powerOf, SPELLS, SPELL_IDS, unequipSpell, unlockSpell, type SpellId, type SpellMeta } from './sim/spells';
 
 const CSS = `
@@ -80,7 +81,7 @@ export function spellbookView(onDraw: () => void = () => {}): { root: HTMLElemen
     const slots = el('div', 'sbSlots');
     for (let i = 0; i < LOADOUT_SIZE; i++) {
       const id = l.equipped[i];
-      const slot = el('button', `sbSlot${id ? ' on' : ''}`, id ? `<b>${SPELLS[id].name}</b><em>${SPELLS[id].cost} mana · power ${SPELLS[id].power}</em>` : '<span>Empty</span>');
+      const slot = el('button', `sbSlot${id ? ' on' : ''}`, id ? `${spellIconHtml(id)}<b>${SPELLS[id].name}</b><em>${SPELLS[id].cost} mana · power ${SPELLS[id].power}</em>` : '<span>Empty</span>');
       if (id) slot.addEventListener('click', () => act(() => unequipSpell(m, id), ''));
       slots.append(slot);
     }
@@ -94,7 +95,7 @@ export function spellbookView(onDraw: () => void = () => {}): { root: HTMLElemen
       const owned = l.owned.includes(id);
       const on = l.equipped.includes(id);
       const card = el('div', `sbCard${on ? ' on' : ''}${owned ? '' : ' locked'}`);
-      card.append(el('div', 'top', `<b>${sp.name}</b><span>${pips(sp.power)}</span>`));
+      card.append(el('div', 'top', `${spellIconHtml(id)}<b>${sp.name}</b><span>${pips(sp.power)}</span>`));
       card.append(el('div', 'stats', `${sp.cost} mana · power ${sp.power} · ${sp.cooldownMs / 1000}s cooldown`));
       card.append(el('div', 'text', sp.text));
       const btn = el('button') as HTMLButtonElement;
