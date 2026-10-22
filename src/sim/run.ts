@@ -1,4 +1,4 @@
-// A run, King God Castle style: gold, a stage number and a roster of owned heroes. Gold buys a random grade-1 hero
+// A run, King God Castle style: gold, a stage number and a roster of owned heroes. Gold buys a random hero (grade 1, now and then grade 2)
 // (`summon`); three of a kind and grade merge into one of the next grade at once; at most five fight, the rest wait on
 // the bench. Stage n meets a band of foes made tougher by n, and every fifth stage a boss (its own band, led by the boss). A win pays gold; a lost
 // fight ends the run. Pure rules: no Pixi, no DOM; the summon draws from a side stream of the run's seed.
@@ -164,18 +164,26 @@ const draw = (run: Run): string => {
 };
 export const summonCost = (run: Run) => SUMMON_BASE + SUMMON_STEP * run.summons;
 
-/** Buy a random grade-1 hero. Returns it (or what it merged into), or null when too poor or the run is over. */
+/** Buy a random hero: grade 1, or now and then grade 2 (`luckyChance`). Returns it (or what it merged into), or null when too poor or the run is over. */
 export function summon(run: Run): Owned | null {
   const cost = summonCost(run);
   if (run.over || run.gold < cost) return null;
   run.gold -= cost;
   run.summons++;
-  return add(run, draw(run));
+  const kind = draw(run);
+  // (now and then a summon arrives a grade up, from its own side stream so the draws stay as they were)
+  const lucky = new Rng(mixSeed(run.seed, 0x1c4b, run.nextId)).chance(luckyChance(run));
+  return add(run, kind, lucky ? 2 : 1);
 }
 
-/** Add a grade-1 hero, then merge threes of a kind and grade, upward. Returns the hero that ends up holding the new one's place. */
-function add(run: Run, kind: string): Owned {
-  let made: Owned = { id: run.nextId++, kind, grade: 1 };
+/** The chance a bought summon arrives already at grade 2 (two stars). */
+export const LUCKY_SUMMON = 0.05;
+/** A run's chance of a grade-2 summon: the base for now; castle buildings or items can add to it later. */
+export const luckyChance = (_run: Run): number => LUCKY_SUMMON;
+
+/** Add a hero (grade 1 unless told otherwise), then merge threes of a kind and grade, upward. Returns the hero that ends up holding the new one's place. */
+function add(run: Run, kind: string, grade = 1): Owned {
+  let made: Owned = { id: run.nextId++, kind, grade };
   run.roster.push(made);
   for (;;) {
     const same = run.roster.filter((h) => h.kind === made.kind && h.grade === made.grade);
