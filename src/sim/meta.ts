@@ -3,7 +3,7 @@
 // rank, and each rank makes its heroes a little stronger in every fight. Pure rules: no Pixi, no DOM; every pull draws
 // from a side stream of the meta seed and the pull counter, so it replays exactly.
 
-import { newCastle, readCastle, readChapel, spellBudget, type Castle } from './castle';
+import { newCastle, readCastle, readChapel, readWorks, spellBudget, type Castle, type Works } from './castle';
 import { newLoadout, readLoadout, STARTER_SPELLS, type Loadout } from './spells';
 import { Rng } from './rng';
 import { ALL_HEROES, HEROES, UNITS, type Rarity } from './units';
@@ -56,6 +56,8 @@ export interface Meta {
   castle: Castle;
   /** Whether the Chapel has been bought (it opens the spellbook; saves from before count it built if they had spells or upgrades; see `castle.ts`). */
   chapel?: boolean;
+  /** The builders' works: a castle level or the Chapel going up, and when it stands (`castle.ts`); none when they are idle. */
+  works?: Works;
   /** Shards per hero kind (missing is none). */
   shards: Record<string, number>;
   /** The king's spells owned and equipped (see `spells.ts`; saves from before have the starting three). */
@@ -259,6 +261,7 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.castle = readCastle(m.castle);
       m.spellbook = readLoadout(m.spellbook, spellBudget(m.castle));
       m.chapel = readChapel(m.chapel, m.castle, m.spellbook, STARTER_SPELLS);
+      m.works = readWorks(m.works);
       // (saves from before shards have none)
       const shards: Record<string, number> = {};
       if (m.shards && typeof m.shards === 'object') for (const [k, n] of Object.entries(m.shards)) if (ALL_HEROES.includes(k) && typeof n === 'number') shards[k] = n | 0;

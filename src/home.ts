@@ -4,7 +4,7 @@
 // older screens (gacha, modes, achievements, settings, castle upgrades); it only reads and changes the Meta through the
 // sim's own functions.
 
-import { BUILDING_IDS, BUILDINGS, buildChapel, canBuildChapel, CHAPEL_COST, chapelBuilt, maxLevel, nextCost, upgrade, type BuildingId } from './sim/castle';
+import { BUILDING_IDS, BUILDINGS, buildMs, canBuildChapel, CHAPEL_COST, CHAPEL_MS, chapelBuilt, clockText, maxLevel, nextCost, settleWorks, startBuild, startChapel, worksLeft, type BuildingId, type BuildSite } from './sim/castle';
 import { CastleScene, lookPicture } from './castle';
 import { BLURB, effectText } from './render/castleSpots';
 import { PULL_COST, saveMeta, type Meta, type Pull } from './sim/meta';
@@ -132,7 +132,32 @@ export class Home {
     $('hmGear').addEventListener('click', () => openSettings());
     $('hmSubBack').addEventListener('click', () => this.closeSub());
     $('hmSheet').addEventListener('click', (e) => e.target === $('hmSheet') && this.closeSheet());
+    // (the builders' clock: once a second while something is going up, the countdowns tick and a finished build is raised)
+    setInterval(() => this.tickWorks(), 1000);
   }
+
+  /** The builders' second: raise what is done (saved, with its build in the courtyard), else tick the countdowns on the page. */
+  private tickWorks(): void {
+    const m = this.meta;
+    if (!m.works) return;
+    if (settleWorks(m, Date.now())) {
+      saveMeta(m);
+      this.refresh();
+      // (an open card redraws with the new level)
+      if (this.cardOpen && this.cardFor) this.cardFor === 'chapel' ? this.openChapel() : this.openBuilding(this.cardFor);
+      return;
+    }
+    const left = clockText(worksLeft(m, Date.now()));
+    for (const e of document.querySelectorAll<HTMLElement>('.worksLeft')) e.textContent = left;
+    if (this.isOpen && this.tab === 'castle') this.castle.update(m);
+  }
+
+  /** What the builders are up to, for a card's button: busy here (with the time left), busy elsewhere, or free. */
+  private worksOn(site: BuildSite): 'here' | 'elsewhere' | null {
+    const w = this.meta.works;
+    return !w ? null : w.id === site ? 'here' : 'elsewhere';
+  }
+  private cardFor: BuildSite | null = null;
 
   /** Open the home screen; `note` is a line shown on the Battle page (the last run's end). */
   open(note = this.note): void {
@@ -179,6 +204,8 @@ export class Home {
   refresh(): void {
     if (!this.isOpen) return;
     const m = this.meta;
+    // (a build that finished while the game was away stands now)
+    if (settleWorks(m, Date.now())) saveMeta(m);
     const info = this.hooks.runInfo?.() ?? null;
     // top bar
     $('hmCrowns').replaceChildren(icon(ICONS.crowns), el('b', '', String(m.crowns)));
@@ -326,19 +353,11 @@ export class Home {
     pic.alt = '';
     pic.draggable = false;
     const title = el('div');
-    title.append(el('h3', '', 'Chapel'), el('em', '', 'not built yet'));
+    title.append(el('h3', '', 'Chapel'), el('em', '', m.works?.id === 'chapel' ? 'being built' : 'not built yet'));
     head.append(pic, title);
     box.append(head, el('p', 'hint', 'A place to study the king\'s spells: opens the spellbook.'), el('p', 'hint', 'One purchase, no levels. Your starting spells still work in fights until then.'));
-    const buy = el('button', '', `Build · ${CHAPEL_COST}`);
-    buy.disabled = !canBuildChapel(m);
-    if (!buy.disabled) buy.classList.add('primary');
-    buy.addEventListener('click', () => {
-      // (close the card first so the build plays in the courtyard, then pay)
-      this.closeSheet();
-      if (!buildChapel(m)) return;
-      saveMeta(m);
-      this.refresh();
-    });
+    this.cardFor = 'chapel';
+    const buy = this.buildButton('chapel', CHAPEL_COST, CHAPEL_MS, canBuildChapel(m), () => startChapel(m, Date.now()));
     const done = el('button', '', 'Close');
     done.addEventListener('click', () => this.closeSheet());
     const row = el('div', 'brow2');
@@ -358,7 +377,7 @@ export class Home {
     pic.alt = '';
     pic.draggable = false;
     const title = el('div');
-    title.append(el('h3', '', b.name), el('span', 'pips', '◆'.repeat(level) + '◇'.repeat(top - level)), el('em', '', level === 0 ? 'not built yet' : `level ${level} of ${top}`));
+    title.append(el('h3', '', b.name), el('span', 'pips', '◆'.repeat(level) + '◇'.repeat(top - level)), el('em', '', m.works?.id === id ? `building level ${m.works.level}` : level === 0 ? 'not built yet' : `level ${level} of ${top}`));
     head.append(pic, title);
     box.append(head, el('p', 'hint', BLURB[id]));
     const now = el('p');
@@ -371,22 +390,47 @@ export class Home {
       box.append(next);
     } else box.append(el('p', 'hint', 'Fully built.'));
     box.append(el('p', 'hint', `Each level: ${b.perLevel}. Upgrades last for every run you start from now on.`));
-    const buy = el('button', '');
-    buy.textContent = cost === null ? 'Full' : `Build · ${cost}`;
-    buy.disabled = cost === null || m.crowns < cost;
-    if (!buy.disabled) buy.classList.add('primary');
-    buy.addEventListener('click', () => {
-      // (close the card first so the build plays in the courtyard, then buy)
-      this.closeSheet();
-      if (!upgrade(m, id)) return;
-      saveMeta(m);
-      this.refresh();
-    });
+    this.cardFor = id;
+    const buy = this.buildButton(id, cost, cost === null ? 0 : buildMs(id, level + 1), cost !== null && m.crowns >= cost, () => startBuild(m, id, Date.now()));
     const done = el('button', '', 'Close');
     done.addEventListener('click', () => this.closeSheet());
     const row = el('div', 'brow2');
     row.append(buy, done);
     box.append(row);
+  }
+
+  /** A card's Build button: the price and how long it takes; "Building · 4:05" while it goes up; greyed while the builders are busy
+   *  elsewhere (a hint says where); "Full" at the top. A tap pays and starts the works, and the card shows the countdown. */
+  private buildButton(site: BuildSite, cost: number | null, ms: number, affordable: boolean, start: () => boolean): HTMLElement {
+    const wrap = el('div', 'buildBtn');
+    const buy = el('button', '');
+    const on = this.worksOn(site);
+    if (on === 'here') {
+      buy.append('Building · ', el('span', 'worksLeft', clockText(worksLeft(this.meta, Date.now()))));
+      buy.disabled = true;
+    } else if (cost === null) {
+      buy.textContent = 'Full';
+      buy.disabled = true;
+    } else {
+      buy.textContent = `Build · ${cost} · ${clockText(ms)}`;
+      buy.disabled = on === 'elsewhere' || !affordable;
+      if (!buy.disabled) buy.classList.add('primary');
+    }
+    buy.addEventListener('click', () => {
+      if (!start()) return;
+      saveMeta(this.meta);
+      this.refresh();
+      site === 'chapel' ? this.openChapel() : this.openBuilding(site);
+    });
+    wrap.append(buy);
+    if (on === 'elsewhere') {
+      const w = this.meta.works!;
+      const name = w.id === 'chapel' ? 'Chapel' : BUILDINGS[w.id].name;
+      const hint = el('p', 'hint', `The builders are at the ${name}: `);
+      hint.append(el('span', 'worksLeft', clockText(worksLeft(this.meta, Date.now()))), ' left.');
+      wrap.append(hint);
+    }
+    return wrap;
   }
 
   private openSheet(kind: string): void {
@@ -402,6 +446,7 @@ export class Home {
     this.stopSheet = null;
     $('hmSheet').hidden = true;
     this.cardOpen = false;
+    this.cardFor = null;
     if (this.isOpen && this.tab === 'heroes') this.tavern.start();
     if (this.isOpen && this.tab === 'battle') this.camp.start();
     if (this.isOpen && this.tab === 'castle') this.castle.start();

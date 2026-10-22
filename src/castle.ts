@@ -8,7 +8,7 @@
 // canvas, drawn with nearest neighbour and panned by native scroll when the screen is smaller than the scene. It only draws (Math.random is fine
 // here: nothing that is played depends on it) and runs only while the tab shows.
 
-import { BUILDING_IDS, CHAPEL_COST, chapelBuilt, canBuildChapel, maxLevel, nextCost, type BuildingId } from './sim/castle';
+import { BUILDING_IDS, CHAPEL_COST, chapelBuilt, canBuildChapel, clockText, maxLevel, nextCost, worksLeft, type BuildingId } from './sim/castle';
 import { formOf, UNITS } from './sim/units';
 import { rankOf, type Meta } from './sim/meta';
 import { sheetInfo } from './render/sheets';
@@ -385,13 +385,15 @@ export class CastleScene {
       } else if (before !== undefined && level > before) this.burst(id, 'spark', 14);
       const tag = this.tagEls.get(id)!;
       const cost = nextCost(meta.castle, id);
-      const ready = cost !== null && meta.crowns >= cost;
+      // (while the builders are at it, the tag counts down instead)
+      const going = meta.works?.id === id ? clockText(worksLeft(meta, Date.now())) : null;
+      const ready = !going && !meta.works && cost !== null && meta.crowns >= cost;
       // (rebuilt only when it changes, so a finger that is down on a tag is not pulled out from under)
-      const key = `${level}|${ready}|${cost === null}`;
+      const key = `${level}|${ready}|${cost === null}|${going}`;
       if (tag.dataset.key === key) continue;
       tag.dataset.key = key;
-      tag.className = `ctTag${ready ? ' ready' : ''}${cost === null ? ' full' : ''}`;
-      tag.replaceChildren(el('b', '', NAME_OF(id)), el('span', '', level === 0 ? 'not built' : `${level}/${maxLevel(id)}`));
+      tag.className = `ctTag${ready ? ' ready' : ''}${cost === null ? ' full' : ''}${going ? ' going' : ''}`;
+      tag.replaceChildren(el('b', '', NAME_OF(id)), el('span', '', going ? `building ${going}` : level === 0 ? 'not built' : `${level}/${maxLevel(id)}`));
       if (ready) tag.append(el('i', 'ctUp', '▲'));
       tag.setAttribute('aria-label', `${NAME_OF(id)}, level ${level} of ${maxLevel(id)}${ready ? ', can upgrade' : ''}`);
     }
@@ -427,10 +429,17 @@ export class CastleScene {
       this.burst('chapel', 'dust', 26);
     } else if (before === false && built) this.burst('chapel', 'spark', 14);
     const tag = this.tagEls.get('chapel')!;
-    const ready = canBuildChapel(meta);
-    const key = `${built}|${ready}`;
+    const going = meta.works?.id === 'chapel' ? clockText(worksLeft(meta, Date.now())) : null;
+    const ready = !going && !meta.works && canBuildChapel(meta);
+    const key = `${built}|${ready}|${going}`;
     if (tag.dataset.key === key) return;
     tag.dataset.key = key;
+    if (going) {
+      tag.className = 'ctTag going';
+      tag.replaceChildren(el('b', '', PLACES.chapel.name), el('span', '', `· building ${going}`));
+      tag.setAttribute('aria-label', `${PLACES.chapel.name}, being built, ${going} left`);
+      return;
+    }
     if (built) {
       tag.className = 'ctTag place';
       tag.replaceChildren(el('b', '', PLACES.chapel.name), el('span', '', `· ${PLACES.chapel.to}`));
