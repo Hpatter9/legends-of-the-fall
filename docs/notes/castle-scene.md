@@ -51,3 +51,15 @@
   bigger and grand looks, reached in order, grand at the top level; vents lie inside the picture; the card words grow with the level.
 - `node tools/castle/shots.mjs` (needs `npm run web`; `CARD=1` also takes the card and the build frames) makes the samples at 393x852 and
   852x393 with every upgrade at 0, part-built and maxed.
+
+## Mock-ups for a coherent look (not built yet)
+The owner found the first courtyard "off": side-on wall, 3/4 buildings, noisy top-down lawn and large heroes did not share one view or scale.
+Two stills (upright 393x852, middle level of every building, five heroes) and a stage chart for each, made by `tools/castle/mock.py`:
+- **A, side view** (`docs/samples/castle-mock-A.png`, `-A-stages.png`): Craftpix *Medieval Field Work* platformer pieces (`Building`, `Environment`,
+  `Platformer`, `Background`), each shrunk by 7 (whole number) into a 40-colour palette so a door is 18x37 px like a hero. Houses are built from
+  wall, roof-half, door, window, chimney, canopy, banner pieces; looks are an empty scaffold, an open timber shed, a house, a two-storey house; the
+  tower is stacked brick pieces with stone windows; the barracks dummy is pillar, barrel and bucket pieces. Gold piles are the only generated art
+  (3 PixelLab generations, side view). A tiered yard: wall and terrace behind, courtyard in front, 196 px wide at scale 2.
+- **B, 3/4 view** (`castle-mock-B.png`, `-B-stages.png`): Chronos's own village art at native size: Craftpix village houses (`house1`..`house4`, `gb_shop`, `gb_house`),
+  awnings and tents, `su_*` towers and castle, props (`v_anvil`, `v_rack`, `v_well`, gold and chest clutter), palisade tiles, the road-sheet cobbles,
+  the village ground green and tufts and flowers, Tiny RPG Town trees. Scale 1, a 393x657 yard, nothing generated.
