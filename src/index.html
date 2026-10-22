@@ -198,6 +198,28 @@
   #xp .xprow.up { animation: evolve 0.9s ease-out; }
   /* the level-up's light pillar: the six 32px frames of pillar_light, scaled to 120px, rising over the card then fading */
   #xp .xprow { position: relative; overflow: visible; }
+  /* (the after-wave XP rows: a face with its level badge, the name and XP, the bar; a level-up stamps "Level up!", ticks the
+     badge over, pops in its gains, sweeps a light across the row and bursts sparks from the face, all once) */
+  #xp .xprow { grid-template-columns: auto 1fr auto; }
+  #xp .xprow .xpFace { grid-row: span 3; position: relative; width: 44px; height: 44px; display: grid; place-items: center; background: rgba(0, 0, 0, 0.4); border: 2px solid #6b4128; }
+  #xp .xprow .xpFace canvas { width: 40px; height: 40px; image-rendering: pixelated; }
+  #xp .xprow .xpLv { position: absolute; right: -6px; bottom: -6px; padding: 1px 3px; font-family: var(--pixel); font-size: 8px; color: #fff; background: #3a2214; border: 1px solid var(--gold-lo); }
+  #xp .xprow i, #xp .xprow p { grid-column: 2 / span 2; }
+  #xp .xprow p { display: flex; flex-wrap: wrap; gap: 4px; }
+  #xp .xprow p span { padding: 1px 5px; font-family: var(--pixel); font-size: 8px; color: #2a1606; background: linear-gradient(#ffe48a, #e8a93a); border: 1px solid #fff2c0; box-shadow: 0 1px 0 #000; animation: xpChip 0.3s steps(3) both; }
+  #xp .xprow.up { border-color: #ffd36a; box-shadow: 0 0 0 2px var(--deep), 0 0 12px rgba(255, 200, 90, 0.55); overflow: hidden; }
+  #xp .xprow.up .xpFace { border-color: #ffd36a; }
+  #xp .xprow.up .xpLv { color: #2a1606; background: #ffd36a; animation: xpBump 0.45s steps(4) both; }
+  #xp .xprow.up::after { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 40%; pointer-events: none; background: linear-gradient(100deg, transparent, rgba(255, 240, 190, 0.45), transparent); transform: translateX(-120%); animation: xpShine 0.7s ease-out 0.1s forwards; }
+  #xp .xprow .xpStamp { display: inline-block; margin-left: 8px; vertical-align: 2px; padding: 2px 5px; font-family: var(--pixel); font-size: 8px; color: #fff; background: #c4232b; border: 2px solid #ffd36a; box-shadow: 0 2px 0 #000; transform: rotate(-6deg); animation: xpStamp 0.4s steps(4) both; }
+  #xp .xprow .xpSparks { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
+  #xp .xprow .xpSparks i { position: absolute; left: -2px; top: -2px; width: 4px; height: 4px; background: #ffe48a; box-shadow: 0 0 3px #ffd36a; animation: xpSpark 0.8s ease-out forwards; }
+  @keyframes xpChip { from { transform: scale(0); } to { transform: scale(1); } }
+  @keyframes xpBump { 0% { transform: scale(1); } 50% { transform: scale(2); } 100% { transform: scale(1); } }
+  @keyframes xpShine { to { transform: translateX(280%); } }
+  @keyframes xpStamp { 0% { transform: rotate(-6deg) scale(3); opacity: 0; } 70% { transform: rotate(-6deg) scale(0.9); opacity: 1; } 100% { transform: rotate(-6deg) scale(1); opacity: 1; } }
+  @keyframes xpSpark { from { transform: translate(0, 0); opacity: 1; } to { transform: translate(var(--dx), var(--dy)); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { #xp .xprow p span, #xp .xprow.up .xpLv, #xp .xprow .xpStamp { animation: none; } #xp .xprow.up::after, #xp .xprow .xpSparks { display: none; } }
   #xp .xprow .pillar { position: absolute; left: 50%; bottom: 0; width: 120px; height: 120px; margin-left: -60px; pointer-events: none; mix-blend-mode: screen; background: 0 0 / 720px 120px no-repeat; animation: pillarFrames 0.9s steps(6, jump-none) forwards, pillarFade 0.9s linear forwards; }
   @keyframes pillarFrames { from { background-position: 0 0; } to { background-position: -600px 0; } }
   @keyframes pillarFade { 0%, 50% { opacity: 1; } to { opacity: 0; } }
