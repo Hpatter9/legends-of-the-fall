@@ -6,18 +6,14 @@
 // `tiers.ts`; this only draws them.
 
 import { ARMIES, armyCleared, armyIsNew, armyStars, armyUnlocked, bossOf, bossesOf, firstClearTotal, recordOf, replayTotal, tierOpen, tierStars, type Army } from './sim/armies';
-import { armyRules, chestKind, chestsOf, chestsReady, openChest, type ChestKind, type Loot, type LootItem, type StarResult } from './sim/armyStars';
+import { armyRules, chestKind, chestsOf, type StarResult } from './sim/armyStars';
 import { ARMY_STARS, MILESTONES, TIERS, tierRange } from './sim/tiers';
 import { UNITS } from './sim/units';
-import { saveMeta, type Meta } from './sim/meta';
+import type { Meta } from './sim/meta';
 import { backdropFiles } from './render/backdrop';
 import { figureOf, portrait, sprite } from './render/sheets';
-import { gearIcon, relicIcon } from './render/items';
 import { AREA_NAMES, ICONS, icon } from './menuArt';
-import chestBronze from './art/ui/chest-bronze.png';
-import chestSilver from './art/ui/chest-silver.png';
-import chestGold from './art/ui/chest-gold.png';
-import { play } from './render/sound';
+import { CHEST_NAME, chestPicture } from './chestStash';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -33,8 +29,6 @@ export interface ArmiesHooks {
   onContinue(): void;
   /** Close the screen. */
   onBack(): void;
-  /** The meta changed (a chest was opened): the page redraws its top bar. */
-  onChange(): void;
   /** An army to open on (the one just cleared, with a chest waiting); the furthest unlocked when unset. */
   focus?: string;
   /** The run saved and not over, if any: the army it fights (none for a daily, tower or older run), and the stage it is on. */
@@ -176,117 +170,6 @@ function buildScene(a: Army, locked: boolean): { root: HTMLElement; figures: Fig
   return { root, figures };
 }
 
-// ---- the chests -------------------------------------------------------------------------------------------------------
-
-/** A chest's picture and where its lid ends (in the picture's own pixels). */
-const CHESTS: Record<ChestKind, { url: string; w: number; h: number; lid: number }> = {
-  bronze: { url: chestBronze, w: 14, h: 10, lid: 4 },
-  silver: { url: chestSilver, w: 14, h: 10, lid: 4 },
-  gold: { url: chestGold, w: 14, h: 13, lid: 5 },
-};
-const CHEST_NAME: Record<ChestKind, string> = { bronze: 'Bronze chest', silver: 'Silver chest', gold: 'Gold chest' };
-
-/** A chest picture at a whole-number scale, in two parts (the lid and the body) so the lid can burst off. */
-function chestPicture(kind: ChestKind, scale: number): { root: HTMLElement; lid: HTMLElement; body: HTMLElement } {
-  const c = CHESTS[kind];
-  const root = el('div', 'chestPic');
-  root.style.width = `${c.w * scale}px`;
-  root.style.height = `${c.h * scale}px`;
-  const part = (cls: string, top: number, rows: number) => {
-    const p = el('div', cls);
-    p.style.cssText = `position:absolute;left:0;top:${top * scale}px;width:${c.w * scale}px;height:${rows * scale}px;background:url(${c.url}) 0 ${-top * scale}px / ${c.w * scale}px ${c.h * scale}px no-repeat;image-rendering:pixelated`;
-    return p;
-  };
-  const body = part('chestBody', c.lid, c.h - c.lid);
-  const lid = part('chestLid', 0, c.lid);
-  root.append(body, lid);
-  return { root, lid, body };
-}
-
-/** The reward line's picture: a hero's face, a relic's or gear's icon, or the crown. */
-function lootIcon(it: LootItem): HTMLElement {
-  if (it.type === 'crowns') return icon(ICONS.crowns, 'lootIco');
-  if (it.type === 'relic') return icon(relicIcon(it.ref ?? ''), 'lootIco');
-  if (it.type === 'gear') return icon(gearIcon(it.ref ?? 'weapon', 2), 'lootIco');
-  const face = portrait(UNITS[it.ref ?? ''].sheet, 48);
-  face.className = 'lootFace';
-  return face;
-}
-
-/** The chest-opening moment: the chest shakes, its lid bursts off in a flood of light, and the rewards fly out into a row of cards. `then` runs when it is closed. */
-export function showChest(loot: Loot, then: () => void): void {
-  const root = el('div', `chestShow ${loot.kind}`);
-  root.setAttribute('role', 'dialog');
-  root.append(el('div', 'chestRays'), el('div', 'chestGlow'));
-  const title = el('div', 'chestTitle', CHEST_NAME[loot.kind]);
-  const stage = el('div', 'chestStage');
-  const pic = chestPicture(loot.kind, 9);
-  pic.root.classList.add('shaking');
-  stage.append(pic.root);
-  const spark = el('div', 'chestSparks');
-  for (let i = 0; i < 14; i++) {
-    const s = el('i');
-    s.style.setProperty('--a', `${i * 25.7}deg`);
-    s.style.setProperty('--r', `${70 + (i % 4) * 26}px`);
-    s.style.setProperty('--d', `${(i % 5) * 0.04}s`);
-    spark.append(s);
-  }
-  stage.append(spark);
-  const list = el('div', 'chestLoot');
-  const go = el('button', 'primary chestGo', 'Collect');
-  go.hidden = true;
-  root.append(title, stage, list, go);
-  document.body.append(root);
-  const timers: number[] = [];
-  const at = (ms: number, f: () => void) => timers.push(window.setTimeout(f, ms));
-  let fast = false;
-  const done = () => {
-    timers.forEach(clearTimeout);
-    root.remove();
-    then();
-  };
-  go.addEventListener('click', done);
-  // (a tap before the end hurries the rest along)
-  root.addEventListener('click', (e) => {
-    if (e.target !== go) fast = true;
-  });
-  at(900, () => {
-    play('star');
-    pic.root.classList.remove('shaking');
-    pic.root.classList.add('burst');
-    root.classList.add('lit');
-  });
-  loot.items.forEach((it, i) => {
-    at(1500 + i * 520, () => {
-      const card = el('div', `lootCard ${it.type}${it.prize ? ' prize' : ''}${it.rarity ? ` r${it.rarity}` : ''}`);
-      card.append(lootIcon(it), el('span', '', it.text));
-      list.append(card);
-      play(it.prize ? 'merge' : 'summon');
-    });
-  });
-  const end = 1500 + loot.items.length * 520 + 500;
-  at(end, () => (go.hidden = false));
-  // (hurry: show everything now)
-  const tick = window.setInterval(() => {
-    if (!fast) return;
-    clearInterval(tick);
-    timers.forEach(clearTimeout);
-    root.classList.add('lit');
-    pic.root.classList.remove('shaking');
-    pic.root.classList.add('burst');
-    list.replaceChildren(
-      ...loot.items.map((it) => {
-        const card = el('div', `lootCard ${it.type}${it.prize ? ' prize' : ''}${it.rarity ? ` r${it.rarity}` : ''}`);
-        card.style.animation = 'none';
-        card.append(lootIcon(it), el('span', '', it.text));
-        return card;
-      }),
-    );
-    go.hidden = false;
-  }, 80);
-  timers.push(tick as unknown as number);
-}
-
 // ---- the screen -------------------------------------------------------------------------------------------------------
 
 /** The tier last picked on each army's card, kept while the page lives. */
@@ -308,11 +191,7 @@ export function drawArmies(body: HTMLElement, m: Meta, hooks: ArmiesHooks): void
     dots.replaceChildren();
     cards.length = 0;
     ARMIES.forEach((a, i) => {
-      const c = card(a, i, m, hooks, () => {
-        const keep = track.scrollLeft;
-        render();
-        track.scrollLeft = keep;
-      });
+      const c = card(a, i, m, hooks);
       cards.push(c);
       track.append(c.root);
       const d = el('button', 'asDot');
@@ -331,11 +210,8 @@ export function drawArmies(body: HTMLElement, m: Meta, hooks: ArmiesHooks): void
     cards.forEach((c, i) => c.root.classList.toggle('near', Math.abs(i - index) <= 1));
     prev.hidden = index === 0;
     next.hidden = index === ARMIES.length - 1;
-    // (a dot is lit gold when its army has a chest waiting, and a plain one when it is locked)
-    [...dots.children].forEach((d, i) => {
-      d.classList.toggle('chest', chestsReady(m, ARMIES[i]) > 0);
-      d.classList.toggle('shut', !armyUnlocked(m, ARMIES[i].id));
-    });
+    // (a dot is dark when its army is locked)
+    [...dots.children].forEach((d, i) => d.classList.toggle('shut', !armyUnlocked(m, ARMIES[i].id)));
   };
   const prev = el('button', 'asArrow left', '‹');
   const next = el('button', 'asArrow right', '›');
@@ -392,7 +268,7 @@ const crowns = (n: number): HTMLElement => {
   return s;
 };
 
-function card(a: Army, i: number, m: Meta, hooks: ArmiesHooks, redraw: () => void): { root: HTMLElement; figures: Figure[] } {
+function card(a: Army, i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLElement; figures: Figure[] } {
   const open = armyUnlocked(m, a.id);
   const rec = recordOf(m, a.id);
   const done = armyCleared(m, a.id);
@@ -448,20 +324,10 @@ function card(a: Army, i: number, m: Meta, hooks: ArmiesHooks, redraw: () => voi
       col.append(el('span', `asStar${lit ? ' on' : ''}`, lit ? '★' : '☆'));
       const ch = chests.find((c) => c.at === s);
       if (ch) {
-        const pic = el('button', `asChest ${ch.kind} ${ch.state}${s === ARMY_STARS ? ' end' : ''}`);
-        pic.setAttribute('aria-label', `${CHEST_NAME[ch.kind]}, ${ch.state === 'ready' ? 'tap to open' : ch.state === 'opened' ? 'opened' : `at ${ch.at} stars`}`);
-        const p = chestPicture(ch.kind, 3);
-        if (ch.state === 'opened') p.lid.classList.add('up');
-        pic.append(p.root, el('small', '', ch.state === 'ready' ? 'Open!' : `${ch.at}★`));
-        if (ch.state === 'ready')
-          pic.addEventListener('click', () => {
-            const loot = openChest(m, a.id, ch.at);
-            if (!loot) return;
-            saveMeta(m);
-            hooks.onChange();
-            showChest(loot, redraw);
-          });
-        else pic.disabled = true;
+        // (earned chests wait in the stash on the Battle tab: the card only marks the milestone as earned)
+        const pic = el('div', `asChest ${ch.kind} ${ch.state}${s === ARMY_STARS ? ' end' : ''}`);
+        pic.setAttribute('aria-label', `${CHEST_NAME[ch.kind]}, ${ch.state === 'earned' ? (ch.waiting ? 'earned, in your stash' : 'earned') : `at ${ch.at} stars`}`);
+        pic.append(chestPicture(ch.kind, 3).root, el('small', '', ch.state === 'earned' ? '✓' : `${ch.at}★`));
         col.append(pic);
       }
       track.append(col);
@@ -533,7 +399,7 @@ export function drawRunStars(root: HTMLElement, res: StarResult | null, tierName
     row.append(el('span', '', r.earned ? '★' : '☆'), el('b', '', r.text), ...(fresh ? [el('em', '', 'NEW')] : []));
     root.append(row);
   });
-  for (const at of res.chests) root.append(el('div', 'armyChestNote', `A ${CHEST_NAME[chestKind(at)].toLowerCase()} is waiting on the army's card!`));
+  for (const at of res.chests) root.append(el('div', 'armyChestNote', `A ${CHEST_NAME[chestKind(at)].toLowerCase()} was added to your stash on the Battle tab!`));
 }
 
 /** The unlock moment after an army's last boss falls: its next army's banner rises over the board. `then` runs when it is dismissed. */

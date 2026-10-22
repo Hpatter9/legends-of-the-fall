@@ -57,18 +57,30 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   }
   await page.waitForTimeout(500);
   await shot('locked');
-  // 4. an unopened chest (Orc Warband: 5 stars, the bronze and the silver chest waiting)
+  // 4. chests in the stash on the Battle tab (three, then six with the badge), the card with its milestones ticked
+  const stashOf = (ids) => ids.map(([army, at, tier], i) => ({ army, at, tier, seed: 1000 + i }));
   await load((ids) => {
     const m = window.__game.meta;
-    m.armies = { orcs: { best: 8, won: 8, clears: 1, stars: {}, met: { 0: 7, 1: 3 }, chests: [3, 5], opened: [] } };
+    m.armies = { orcs: { best: 8, won: 8, clears: 1, stars: {}, met: { 0: 7, 1: 3 }, chests: [3, 5] } };
     m.armySeen = ids.slice(0, 2);
+    m.stash = [{ army: 'orcs', at: 3, tier: 0, seed: 1001 }, { army: 'orcs', at: 5, tier: 1, seed: 1002 }];
   });
+  await shot('stash');
   await openArmies();
   await page.evaluate(() => document.querySelector('.asArrow.left').click());
   await page.waitForTimeout(900);
   await shot('chest');
+  await page.evaluate(() => document.querySelector('.asBack').click());
+  await page.waitForTimeout(300);
+  await page.evaluate(() => {
+    const m = window.__game.meta;
+    m.stash.push({ army: 'undead', at: 3, tier: 0, seed: 7 }, { army: 'undead', at: 5, tier: 0, seed: 8 }, { army: 'beasts', at: 3, tier: 0, seed: 9 }, { army: 'beasts', at: 10, tier: 3, seed: 10 });
+    window.__game.home.refresh();
+  });
+  await page.waitForTimeout(300);
+  await shot('stash-many');
   // 5. the chest opening
-  await page.evaluate(() => document.querySelector('.asChest.ready').click());
+  await page.evaluate(() => document.querySelector('.csChest').click());
   await page.waitForTimeout(500);
   await shot('chest-shake');
   await page.waitForTimeout(1100);
@@ -78,21 +90,23 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   await page.evaluate(() => document.querySelector('.chestGo').click());
   await page.waitForTimeout(500);
   await shot('chest-after');
-  // 6. the gold chest on a late army, and a Hard pick
+  // 6. a gold chest on a late army
   await load((ids) => {
     const m = window.__game.meta;
-    m.armies = Object.fromEntries(ids.slice(0, 8).map((id) => [id, { best: 10, won: 10, clears: 1, stars: {}, met: { 0: 7, 1: 7, 2: 5 }, chests: [3, 5], opened: [3, 5] }]));
+    m.armies = Object.fromEntries(ids.slice(0, 8).map((id) => [id, { best: 10, won: 10, clears: 1, stars: {}, met: { 0: 7, 1: 7, 2: 5 }, chests: [3, 5] }]));
     m.armies.yokai.met = { 0: 7, 1: 7, 2: 7, 3: 1 };
     m.armies.yokai.chests = [3, 5, 10];
-    m.armies.yokai.opened = [3, 5];
     m.armySeen = ids;
+    m.stash = [{ army: 'yokai', at: 10, tier: 3, seed: 4242 }];
   });
   await openArmies();
   await page.evaluate(() => document.querySelector('.asArrow.left').click());
   await page.waitForTimeout(900);
   await shot('gold-army');
-  await page.evaluate(() => document.querySelector('.asChest.ready').click());
-  await page.waitForTimeout(6800);
+  await page.evaluate(() => document.querySelector('.asBack').click());
+  await page.waitForTimeout(300);
+  await page.evaluate(() => document.querySelector('.csChest').click());
+  await page.waitForTimeout(5500);
   await shot('gold-loot');
   // 7. the result screen of a cleared army
   await load((ids) => {

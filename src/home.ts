@@ -14,6 +14,7 @@ import { ACHIEVEMENTS } from './sim/achievements';
 import { AREAS } from './sim/board';
 import { areaFor } from './sim/run';
 import { drawArmies } from './armiesView';
+import { drawChestStash } from './chestStash';
 import { drawAchievements } from './achievementsView';
 import { todayKey } from './modes';
 import { openSettings } from './settings';
@@ -257,7 +258,13 @@ export class Home {
       cont.addEventListener('click', () => this.go(this.hooks.onContinue));
       go.append(cont);
     }
-    fr.append(cards, go);
+    // (the chest stash: the chests the armies' stars have earned, on the left)
+    const stash = el('div', 'csStash');
+    drawChestStash(stash, m, () => {
+      saveMeta(m);
+      this.refresh();
+    });
+    fr.append(cards, stash, go);
     page.append(fr);
   }
 
@@ -361,7 +368,6 @@ export class Home {
           onFight: (id, tier) => this.go(() => this.hooks.onArmy(id, tier)),
           focus,
           onBack: () => this.closeSub(),
-          onChange: () => this.refresh(),
         }),
       false,
       true,

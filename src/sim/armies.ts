@@ -330,9 +330,8 @@ export interface ArmyRecord {
   met?: Record<string, number>;
   /** The waves won and clears of the harder tiers (Normal's are `won` and `clears` above). */
   hard?: Record<string, { won: number; clears: number }>;
-  /** The chest milestones given (3, 5, 10 stars) and the ones opened; each is given once. */
+  /** The chest milestones given (3, 5, 10 stars); each is given once, into the meta's stash (`armyStars.ts`). */
   chests?: number[];
-  opened?: number[];
 }
 
 const blank = (): ArmyRecord => ({ best: 0, won: 0, clears: 0, stars: {} });
@@ -455,7 +454,6 @@ function readTiers(rec: ArmyRecord, r: Partial<ArmyRecord>): void {
   }
   const milestones = (v: unknown): number[] => (Array.isArray(v) ? MILESTONES.filter((n) => v.includes(n)) : []);
   if (r.chests) rec.chests = milestones(r.chests);
-  if (r.opened) rec.opened = milestones(r.opened);
 }
 
 /** The ids of the armies a saved list names (anything else is dropped). */

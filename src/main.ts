@@ -9,7 +9,7 @@ import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/figh
 import { armyOfRun, armyRun, boostOf, finish, heroOf, isBossRun, loadRun, noteFight, saveRun, setSquad, SQUAD, startStage, summon, summonCost, tierOfRun, type Run } from './sim/run';
 import { ARMIES, settleWave, type ArmyPay } from './sim/armies';
 import { drawRunStars, showUnlock } from './armiesView';
-import { settleArmyRun, takeVault, type StarResult } from './sim/armyStars';
+import { settleArmyRun, type StarResult } from './sim/armyStars';
 import { tierOf } from './sim/tiers';
 import { formOf, UNITS } from './sim/units';
 import { isBoss } from './sim/foes';
@@ -156,13 +156,7 @@ class Game {
       onContinue: () => this.resume(),
       // (an army starts from wave 1 once its party is picked)
       onArmy: (id, tier) =>
-        this.party.open('start', () => {
-          const run = armyRun(clockSeed(), id, this.meta.party, this.meta.castle, tier);
-          // (relics and gear won from chests go with the new run)
-          takeVault(this.meta, run);
-          saveMeta(this.meta);
-          this.startRun(run);
-        }),
+        this.party.open('start', () => this.startRun(armyRun(clockSeed(), id, this.meta.party, this.meta.castle, tier))),
       onParty: () =>
         this.party.open('edit', () => {
           // (a run going on draws from the new party from now on)
@@ -799,7 +793,7 @@ class Game {
     $('result').hidden = true;
     const next = this.pay?.unlocked ?? undefined;
     this.home.open();
-    // (a chest this clear earned: the card of this army opens first, with the chest glowing)
+    // (a chest this clear earned went to the stash; the army's card opens first, with its chest ticked)
     const focus = this.runStars?.chests.length ? army.id : undefined;
     if (next) showUnlock(next, army, () => this.home.openArmies(focus));
     else this.home.openArmies(focus);

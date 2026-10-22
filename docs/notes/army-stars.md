@@ -49,28 +49,38 @@ fills the page between the top bar and the tab bar (`#hmSub.armies` takes the `p
 - The old per-wave star rating (`stars.ts`) still pays crowns and gold per fight; it is no longer shown on the cards. The top
   bar's star total and achievements read the army stars (`armyStars`, now out of 10 an army); `Meta.stars` (the endless climb's) is untouched.
 
-## Chests
+## Chests and the stash (`src/chestStash.ts`, `src/sim/armyStars.ts`)
 
-At 3 / 5 / 10 stars an army gets a **bronze / silver / gold** chest, once each (`ArmyRecord.chests`, given by `grantChests`, which is
-idempotent; opened ones in `ArmyRecord.opened`). A ready chest glows and bobs under its star; tapping it plays the opening
-(`showChest`): the chest shakes, the lid bursts off in a flare of light and rays, sparks fly, the rewards drop into cards one by
-one (a tap hurries it), then Collect.
+At 3 / 5 / 10 stars an army earns a **bronze / silver / gold** chest, once each (`ArmyRecord.chests` records the milestones given, so
+`grantChests` is idempotent). The chest goes straight into **`Meta.stash`**, an ordered list of unopened chests
+`{army, at, tier, seed}`. It is **not** opened on the army card: the card only marks the milestone earned (a small chest icon with a tick).
+The result screen says a chest was added to the stash.
 
-- **Seeded**: `rollChest(seed, army, milestone)` draws from `new Rng(mixSeed(seed, 0xc4e57, armyIndex + 1, milestone))`, independent of the
-  meta's other state, so reloading cannot reroll; `openChest` applies it to the meta and refuses a chest not ready or already opened.
-- **Contents**: crowns (150 / 420 / 1300 x (1 + 0.32 x army index), +-15%); shards for random heroes (owned or not) by the pull
-  rarity weights tilted to the rarer by quality `1 + 0.28 x (step - 1) + 0.06 x army index` (2 / 3 / 5 draws); silver: a relic (and
-  often a tier-2 piece of gear) and a 30%+ chance of a Rare-or-better recruit; bronze: a 40% chance of a relic or gear; **gold: a guaranteed hero**
-  (Epic or better; Legendary or better from the 4th army, a Mythic from the 8th, a new hero is unlocked, an owned one pays 2 shards), shards,
-  a relic, two pieces of gear (one a tier up). Relics and gear go to `Meta.vault` and **a new run starts with them** (`takeVault` in the
-  page's army start), because relics and gear only live inside a run.
+- **The stash** is its own module, `src/chestStash.ts`: `drawChestStash(host, meta, onChange)` fills a host element, and the home screen
+  mounts it in `drawBattle` as `.csStash` (a stack down the left of the Battle tab, clear of the Battle! button and the hero lineup;
+  nothing shows when empty; four chests are shown, with a "+N" badge for more). To move it, mount the same call somewhere else and move the
+  `.csStash` CSS. A tap opens that chest: `openChest(meta, index)` removes it from the stash and pays it once, then `showChest` plays the
+  opening (the chest shakes, the lid bursts off in light and rays, sparks fly, the rewards drop into cards one by one, a tap hurries it, then
+  Collect).
+- **Deterministic per chest**: the seed is fixed **when the chest is earned** (`chestSeed` = `mixSeed(saveSeed, 0xc4e57, armyIndex + 1, milestone)`
+  and stored in the stash entry), and `rollChest(seed, army, milestone, tier)` draws only from it, so the order of opening does not matter and
+  a reload cannot reroll.
+- **Contents**: crowns (150 / 420 / 1300 x (1 + 0.32 x army index) x (1 + 0.15 x tier), +-15%); shards for random heroes (owned or not) by the pull
+  rarity weights tilted to the rarer by quality `1 + 0.28 x (step - 1) + 0.06 x army index + 0.1 x tier` (2 / 3 / 5 draws); silver: a 30%+ chance of a
+  Rare-or-better recruit; **gold: a guaranteed hero** (Epic or better; Legendary or better from the 4th army, a Mythic from the 8th; a new hero is
+  unlocked, an owned one pays 2 shards).
+- **The `gear` hook**: relics and run gear are no longer in chests (they were, in an earlier version of this branch, via a vault; that is gone).
+  `rollGear(rng, step, armyIdx, tier): GearDrop[]` in `armyStars.ts` is the typed slot for permanent hero gear and **rolls nothing yet**;
+  `rollChest` returns `gear` from it, `LootItem` has a `gear` type, and the reveal shows any it returns. It draws **last** from the chest's own stream, so
+  filling it in later does not change any other reward of any chest. The follow-up worker adds the gear itself and the hero-gear store.
 
 ## Saves
 
 `migrateArmies`: an army already beaten gets its Normal clear star (`met: {0: 1}`), plus the "no hero lost" star when its last wave had all
 three old stars; the old per-wave stars are kept. No chest is given by migration (it never reaches 3 stars), and chests given or opened are
-only ever added. `loadMeta` reads `met`, `hard`, `chests` and `opened` defensively (masks cut to the tier's stars, milestones filtered) and
-an empty `vault` for older saves.
+only ever added. `loadMeta` reads `met`, `hard`, `chests` and `stash` defensively (masks cut to the tier's stars, milestones filtered) and
+an empty `stash` for older saves. A save from the earlier chest format (given and `opened` lists on the army record, a vault) keeps its **unopened** chests:
+`readStash` moves each given-but-not-opened milestone into the stash with the seed it would have been earned with (the vault, never released, is dropped), and none is added twice.
 
 ## Balance (`npm run balance -- --no-tables --tiers --levels 8,14,20 --attempts 16`, raw output in `docs/samples/army-stars-balance.txt`)
 
@@ -97,14 +107,15 @@ The Hard multipliers were first 1.45 / 1.3 and Legendary 3.1 / 2.2; the later ar
 
 ## Tests (`test/armyStars.test.ts`)
 
-Tier numbering and unlock order; stars capped at 3 a run (and Legendary's one); the three conditions; the best-ever merge; chests given exactly
-once (and not again on later runs, loads or migration) and opened once; deterministic chest contents (same seed, army and milestone; independent of
-crowns and pulls; survives a save and reload); reward scaling by milestone and army (crowns, item counts, rarity); the 10-star chest's guaranteed hero
-by army; opening pays the meta and the vault goes into the next run once; foe scaling by tier (hp, attack, speed, a fight's foes, Normal unchanged,
+Tier numbering and unlock order; stars capped at 3 a run (and Legendary's one); the three conditions; the best-ever merge; a milestone puts a chest in
+the stash exactly once (not again on later runs or loads), opening removes it and pays it once, in any order; deterministic chest contents (fixed by
+save seed, army and milestone; independent of crowns, pulls and opening order; survives a save and reload); reward scaling by milestone, army and
+tier (crowns, item counts, rarity); the 10-star chest's guaranteed hero by army; the gear hook rolling nothing; the stash's save checks and the
+earlier chest format's migration; foe scaling by tier (hp, attack, speed, a fight's foes, Normal unchanged,
 deterministic); tier pay with its own firsts and clears, and only Normal opening the next army; the run tally; save migration and the loader's checks.
 
 ## Screenshots
 
 `docs/samples/army-stars-*.png` at 393x852 (plain names) and `-360x780`, `-412x915`, made by `node tools/armies/shots-stars.mjs out/web`:
-`fresh` (the carousel on a fresh save), `mid` and `mid-prev` (mid-progress, with Hard picked), `locked`, `chest` (two chests glowing), `chest-shake`,
-`chest-burst`, `chest-loot`, `chest-after`, `gold-army` and `gold-loot` (a gold chest on the 8th army), `result` (the stars on the result screen).
+`fresh` (the carousel on a fresh save), `mid` and `mid-prev` (mid-progress, with Hard picked), `locked`, `stash` and `stash-many` (the Battle tab's chest stash, with the badge), `chest` (the army card with its milestones ticked), `chest-shake`,
+`chest-burst`, `chest-loot`, `chest-after`, `gold-army` and `gold-loot` (a gold chest from the 8th army, opened from the stash), `result` (the stars on the result screen).
