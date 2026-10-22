@@ -29,10 +29,15 @@
     --display: 'Cinzel Decorative', Georgia, serif;
     --body: 'Alegreya Sans', 'Trebuchet MS', Verdana, sans-serif;
     --pixel: 'Press Start 2P', monospace;
+    --vw: min(1vw, 4.8px);
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { background: #0c0705; }
   html, body { margin: 0; height: 100%; overflow: hidden; }
+  /* the game is a phone-width column: on a wide desktop window it stays centred with the dark backdrop either side
+     (the transform makes the column the box that the fixed layers fill) */
   body {
+    max-width: 480px; margin: 0 auto; position: relative; transform: translateZ(0);
     background: #cdc8e0;
     image-rendering: pixelated;
     color: var(--ink);
@@ -66,13 +71,11 @@
   #mute, #gear { padding: 4px 8px; font-size: 14px; line-height: 1; }
   /* upright (a phone is narrow): the title, gold and buttons share the first row and the stage and status the second,
      which keeps clear of the version line at the top right; in a fight the title makes way for the clock */
-  @media (orientation: portrait) {
-    #top { flex-wrap: wrap; row-gap: 2px; }
-    #top h1 { font-size: 14px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-    body[data-phase="fight"] #top h1 { display: none; }
-    #gold { margin-right: auto; }
-    #status { order: 1; flex: 1 1 100%; padding-right: 140px; font-size: 13px; }
-  }
+  #top { flex-wrap: wrap; row-gap: 2px; }
+  #top h1 { font-size: 14px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  body[data-phase="fight"] #top h1 { display: none; }
+  #gold { margin-right: auto; }
+  #status { order: 1; flex: 1 1 100%; padding-right: 140px; font-size: 13px; }
   body[data-phase='fight'] #speed { display: block; }
 
   #panel {
@@ -150,14 +153,6 @@
   .card small { display: flex; justify-content: center; gap: 2px; margin-top: 1px; }
   .card small span { font-size: 9px; line-height: 1; padding: 1px 3px; border-radius: 3px; background: rgba(255, 255, 255, 0.12); color: #cfc3b0; }
 
-  /* sideways: the bench down the right */
-  @media (orientation: landscape) {
-    #panel { left: auto; top: 0; width: 230px; border-top: 0; border-left: 2px solid var(--edge); padding: calc(env(safe-area-inset-top) + 8px) calc(env(safe-area-inset-right) + 8px) 8px 8px; justify-content: center; }
-    #bench { grid-template-columns: repeat(3, minmax(0, 1fr)); max-height: 150px; }
-    #buttons { flex-wrap: wrap; }
-    #buttons button { flex: 1 1 28%; }
-    #top { right: 230px; }
-  }
 
   #result {
     position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
@@ -168,7 +163,7 @@
   #banner.won { color: var(--gold); }
   #banner.lost { color: var(--red); }
   #summary { color: var(--dim); text-shadow: 0 1px 0 #000; }
-  #stars { display: flex; flex-direction: column; gap: 6px; width: min(300px, 86vw); }
+  #stars { display: flex; flex-direction: column; gap: 6px; width: min(300px, calc(86 * var(--vw))); }
   #stars[hidden] { display: none; }
   #stars .star { display: grid; grid-template-columns: 30px 1fr; align-items: center; gap: 0 8px; padding: 6px 10px; background: var(--wood); border: 2px solid var(--edge); border-radius: 8px; color: var(--dim); opacity: 0; animation: starIn 0.45s cubic-bezier(0.2, 1.6, 0.4, 1) forwards; }
   #stars .star > span { grid-row: span 2; font-size: 26px; line-height: 1; text-align: center; }
@@ -178,7 +173,7 @@
   #stars .star.on > span { color: var(--gold); text-shadow: 0 0 10px rgba(255, 200, 80, 0.6); }
   #stars .star.on > span { animation: twinkle 1.6s ease-in-out 0.5s infinite; }
   @keyframes twinkle { 50% { transform: scale(1.22) rotate(12deg); text-shadow: 0 0 16px rgba(255, 220, 120, 0.9); } }
-  #xp { display: flex; flex-direction: column; gap: 6px; width: min(300px, 86vw); }
+  #xp { display: flex; flex-direction: column; gap: 6px; width: min(300px, calc(86 * var(--vw))); }
   #xp[hidden] { display: none; }
   #xp .xprow { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 8px; padding: 6px 10px; background: var(--wood); border: 2px solid var(--edge); border-radius: 8px; color: var(--ink); }
   #xp .xprow em { font-style: normal; color: var(--gold); font-size: 12px; }
@@ -195,7 +190,7 @@
   @keyframes starIn { from { transform: scale(0.4); opacity: 0; } to { transform: none; opacity: 1; } }
   #result .row { display: flex; gap: 10px; margin-top: 6px; }
   /* the fight's numbers: a row a hero, with a small bar for each number (the bars are scaled to the best hero) */
-  #fightStats { display: flex; flex-direction: column; gap: 2px; width: min(330px, 92vw); padding: 6px 8px; background: var(--wood); border: 2px solid var(--edge); border-radius: 8px; font-size: 12px; color: var(--ink); }
+  #fightStats { display: flex; flex-direction: column; gap: 2px; width: min(330px, calc(92 * var(--vw))); padding: 6px 8px; background: var(--wood); border: 2px solid var(--edge); border-radius: 8px; font-size: 12px; color: var(--ink); }
   #fightStats[hidden] { display: none; }
   #fightStats .srow { display: grid; grid-template-columns: 96px repeat(4, minmax(0, 1fr)); align-items: center; gap: 8px; padding: 2px 0; }
   #fightStats .srow.head { font-size: 10px; color: var(--dim); }
@@ -213,15 +208,14 @@
   #bossCard::after { content: ''; position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; animation: bcFlash 0.25s ease-out 0.85s; }
   #bossCard canvas { image-rendering: pixelated; animation: bcPort 0.5s cubic-bezier(0.2, 0.9, 0.3, 1) both; filter: drop-shadow(0 6px 0 rgba(0, 0, 0, 0.6)); }
   #bossCard .rib { max-width: 100%; animation: bcSlam 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) 0.8s both; }
-  #bossCard b { display: block; font: 900 clamp(30px, 10.5vw, 48px)/1.15 var(--display); letter-spacing: 4px; color: var(--gold); text-shadow: 0 3px 0 #000, 0 0 24px rgba(0, 0, 0, 0.8); }
+  #bossCard b { display: block; font: 900 clamp(30px, calc(10.5 * var(--vw)), 48px)/1.15 var(--display); letter-spacing: 4px; color: var(--gold); text-shadow: 0 3px 0 #000, 0 0 24px rgba(0, 0, 0, 0.8); }
   #bossCard span { display: block; color: var(--dim); font-style: italic; text-shadow: 0 1px 0 #000; animation: bcTitle 0.4s ease-out 1.1s both; }
   @keyframes bcDim { from { opacity: 0; } }
-  @keyframes bcPort { from { transform: translateX(-120vw); } }
+  @keyframes bcPort { from { transform: translateX(calc(-120 * var(--vw))); } }
   @keyframes bcSlam { 0% { opacity: 0; transform: scale(2.2); } 100% { opacity: 1; transform: none; } }
   @keyframes bcTitle { from { opacity: 0; transform: translateY(6px); } }
   @keyframes bcFlash { 0% { opacity: 0.55; } 100% { opacity: 0; } }
   /* (reduced motion: the card just fades in, nothing slides or slams) */
-  @media (orientation: landscape) { #bossCard b { font-size: clamp(26px, 10vh, 40px); } #bossCard { padding-bottom: 8vh; } }
   @media (prefers-reduced-motion: reduce) { #bossCard canvas, #bossCard .rib, #bossCard span { animation: bcDim 0.5s ease-out both; } #bossCard::after { display: none; } }
   /* the boss's health, across the top under the title bar, with its name */
   #bossBar { position: fixed; left: 12px; right: 12px; z-index: 2; pointer-events: none; text-shadow: 0 1px 0 #000; }
@@ -260,9 +254,8 @@
   #collection .rank { display: block; color: var(--gold); }
   #collection .bar { display: block; height: 4px; margin: 2px 4px 4px; background: rgba(255, 255, 255, 0.15); border-radius: 2px; overflow: hidden; }
   #collection .bar i { display: block; height: 100%; background: var(--gold); }
-  @media (orientation: landscape) { #reveal { grid-template-columns: repeat(10, minmax(0, 1fr)); } #collection { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
 
-  /* the home screen: top bar, five sliding pages, a bottom tab bar (a left rail sideways) */
+  /* the home screen: top bar, five sliding pages, a bottom tab bar */
   #home { position: fixed; inset: 0; z-index: 4; display: grid; grid-template-rows: auto 1fr auto; grid-template-areas: 'top' 'pages' 'tabs'; background: #1c1410; image-rendering: pixelated; overflow: hidden; }
   #home[hidden] { display: none; }
   #hmTop { grid-area: top; position: relative; z-index: 3; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: calc(env(safe-area-inset-top) + 6px) 10px 4px; background: linear-gradient(#3a2218, #28160e); border-bottom: 3px solid var(--gold); box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6); }
@@ -374,7 +367,6 @@
   .bcard em { display: block; font-style: normal; font-size: 11px; color: var(--dim); }
   .bcard .brow2 { display: flex; gap: 8px; }
   .bcard .brow2 button { flex: 1; }
-  @media (orientation: landscape) { .bcard .bpic { height: 80px; } }
   .hgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .hcard { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 4px; min-width: 0; background: linear-gradient(#4a2c1c, #2a170e); border: 3px solid #6b4128; border-radius: 10px; font-weight: normal; }
   .hcard canvas { width: 64px; height: 64px; image-rendering: pixelated; background: rgba(0, 0, 0, 0.3); border-radius: 6px; }
@@ -412,7 +404,7 @@
   @keyframes pop { from { transform: scale(0.85); opacity: 0; } }
   @media (prefers-reduced-motion: reduce) { .hmLayer, .hmHero, .hmBanner, .hmBattle, .hmTab.hero, .hmPanel img.big, .hmShow canvas { animation: none; } }
   #home:not([hidden]) ~ #version { z-index: 6; }
-  @media (orientation: portrait) { #home:not([hidden]) ~ #version { top: calc(env(safe-area-inset-top) + 46px); } }
+  #home:not([hidden]) ~ #version { top: calc(env(safe-area-inset-top) + 46px); }
   .hrow, .brow { display: flex; gap: 8px; align-items: center; padding: 6px; background: rgba(0, 0, 0, 0.35); border: 2px solid #5a3a22; border-radius: 8px; }
   .hrow canvas { width: 64px; height: 64px; flex: none; image-rendering: pixelated; }
   .hrow.locked canvas { filter: brightness(0.15) grayscale(1); }
@@ -427,28 +419,8 @@
   .brow .pips { color: var(--gold); letter-spacing: 2px; }
   .brow button { flex: none; min-width: 92px; }
   .ach.done { border-color: var(--gold); }
-  .toast { position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 12px); z-index: 9; transform: translate(-50%, -140%); transition: transform 0.35s ease; max-width: calc(100vw - 28px); padding: 9px 14px; background: var(--wood); border: 2px solid var(--gold); border-radius: 8px; color: var(--gold); font-size: 14px; font-weight: bold; text-align: center; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6); pointer-events: none; }
+  .toast { position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 12px); z-index: 9; transform: translate(-50%, -140%); transition: transform 0.35s ease; max-width: calc(calc(100 * var(--vw)) - 28px); padding: 9px 14px; background: var(--wood); border: 2px solid var(--gold); border-radius: 8px; color: var(--gold); font-size: 14px; font-weight: bold; text-align: center; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6); pointer-events: none; }
   .toast.show { transform: translate(-50%, 0); }
-  @media (orientation: landscape) {
-    #home { grid-template-columns: 78px 1fr; grid-template-rows: auto 1fr; grid-template-areas: 'top top' 'tabs pages'; }
-    #hmTop { flex-wrap: nowrap; padding-top: calc(env(safe-area-inset-top) + 3px); padding-bottom: 3px; }
-    #hmBest { flex: none; order: 5; }
-    #hmTabs { flex-direction: column; align-items: stretch; padding: 4px 0 4px calc(env(safe-area-inset-left)); border-top: 0; border-right: 3px solid var(--gold); box-shadow: 3px 0 10px rgba(0, 0, 0, 0.6); }
-    .hmTab { min-height: 0; padding: 3px 2px; border-radius: 0 10px 10px 0; }
-    .hmTab img { width: 26px; height: 26px; }
-    .hmTab.on { box-shadow: inset 3px 0 0 var(--gold); background: linear-gradient(90deg, rgba(240, 180, 74, 0.28), rgba(240, 180, 74, 0)); }
-    .hmTab.hero { margin: 0 -6px 0 0; min-height: 0; padding: 3px 2px; border-radius: 0 40px 40px 0; flex: 1.2; }
-    .hmTab.hero img { width: 30px; height: 30px; }
-    .hmTab i.badge { top: 2px; right: 14%; }
-    .hmBanner { font-size: 15px; padding: 4px 20px; }
-    .hmCards { top: 48px; flex-direction: row; right: 8px; }
-    .hmGo { bottom: 8px; left: 8px; right: auto; width: 46%; }
-    .hmBattle { font-size: 28px; padding: 9px 10px 8px; width: 100%; }
-    .hmHeroes { bottom: 8px; left: auto; width: 50%; right: 0; }
-    .hmPage { padding-top: 8px; }
-    .hgrid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-    .hsheet { flex-direction: column; }
-  }
 
 
   /* events, relics and gear */
@@ -502,7 +474,7 @@
   .setting .pair { display: flex; gap: 6px; }
   /* the first-run tips: a speech bubble by the thing it talks about (placed in src/tips.ts), taps only on itself */
   #tip {
-    position: fixed; z-index: 6; width: min(280px, calc(100vw - 24px)); padding: 10px 12px; background: var(--wood);
+    position: fixed; z-index: 6; width: min(280px, calc(calc(100 * var(--vw)) - 24px)); padding: 10px 12px; background: var(--wood);
     border: 2px solid var(--gold); border-radius: 10px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6); font-size: 14px; line-height: 1.3;
   }
   #tip[hidden] { display: none; }
@@ -520,7 +492,7 @@
 
   #loading { position: fixed; inset: 0; z-index: 30; background: radial-gradient(#4a2c1c, #1c1410); display: grid; place-items: center; font-size: 18px; color: var(--gold); }
   #version { position: fixed; right: 6px; bottom: 2px; font-size: 10px; color: rgba(255, 255, 255, 0.5); text-shadow: 0 1px 0 #000; pointer-events: none; }
-  @media (orientation: portrait) { #version { bottom: auto; top: calc(env(safe-area-inset-top) + 34px); } }
+  #version { bottom: auto; top: calc(env(safe-area-inset-top) + 34px); }
   /* The party screen (src/party.ts): five slots, the traits they wake, the heroes to pick from, and the button to start */
   #party { position: fixed; inset: 0; z-index: 6; display: flex; flex-direction: column; gap: 8px; padding: calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 12px); background: rgba(24, 12, 8, 0.97); animation: fade 0.2s ease-out; }
   #party[hidden], #ptSheet[hidden] { display: none; }
@@ -545,14 +517,6 @@
   .ptInfo { position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; line-height: 18px; border-radius: 50%; font: bold italic 12px/18px Georgia, serif; text-align: center; color: var(--gold); background: rgba(0, 0, 0, 0.55); }
   #ptGo { width: 100%; padding: 12px; font-size: 18px; }
   #ptSheet { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; padding: 12px; background: rgba(12, 6, 4, 0.75); animation: fade 0.2s ease-out; }
-  /* sideways (a short screen): the traits run across, the grid has more columns, the slots are shorter */
-  @media (max-height: 500px) {
-    #ptSlots .ptSlot { min-height: 60px; }
-    #ptSlots .ptSlot canvas { width: 36px; height: 36px; }
-    #ptTraits { flex-direction: row; flex-wrap: wrap; gap: 0 14px; }
-    #ptGrid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-    #ptGo { padding: 8px; font-size: 16px; }
-  }
 
   /* ---- the skin: dark fantasy, autumn and gold. Shared panel, button and title looks; the screens that build their own
      overlay (spellbook, party picker, ...) pick it up through the same classes and the body prefix. ---- */
@@ -590,9 +554,8 @@
   .hmTab { font-family: var(--body); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
   .hmTab.hero { font-family: var(--display); font-weight: 900; font-size: 12px; }
   #panel { background: linear-gradient(#3a2218, #1d0f08); border-top: 3px solid var(--gold-lo); box-shadow: 0 -1px 0 var(--gold-hi), 0 -4px 12px rgba(0, 0, 0, 0.6); }
-  @media (orientation: landscape) { #panel { border-top: 0; border-left: 3px solid var(--gold-lo); box-shadow: -1px 0 0 var(--gold-hi), -4px 0 12px rgba(0, 0, 0, 0.6); } }
   #top h1 { font-size: 15px; font-weight: 900; text-shadow: 0 2px 0 #000, 0 0 10px rgba(255, 150, 40, 0.5); }
-  @media (orientation: portrait) { #top h1 { font-size: 13px; } }
+  #top h1 { font-size: 13px; }
   #gold, #clock, .chip, #crowns, #mana b { font-family: var(--pixel); font-size: 11px; font-weight: 400; letter-spacing: 0; text-shadow: 0 1px 0 #000; }
   #status { font-size: 15px; }
   .chip { font-size: 12px; background: linear-gradient(#0f0704, #1d0f08); border-color: var(--gold-lo); }
@@ -626,11 +589,11 @@
 
   /* the result: a ribboned banner over a dim vignette */
   #result { background: radial-gradient(ellipse at center, rgba(40, 14, 6, 0.55), rgba(8, 3, 2, 0.88)); }
-  #banner { padding: 8px 34px 10px; font-weight: 900; font-size: clamp(30px, 11vw, 46px); background: linear-gradient(#5a1c12, #34100a); border-top: 3px solid var(--gold); border-bottom: 3px solid var(--gold);
+  #banner { padding: 8px 34px 10px; font-weight: 900; font-size: clamp(30px, calc(11 * var(--vw)), 46px); background: linear-gradient(#5a1c12, #34100a); border-top: 3px solid var(--gold); border-bottom: 3px solid var(--gold);
     clip-path: polygon(0 0, 100% 0, calc(100% - 18px) 50%, 100% 100%, 0 100%, 18px 50%); filter: drop-shadow(0 4px 0 #000); }
   #banner.won { color: var(--gold-hi); text-shadow: 0 3px 0 #000, 0 0 22px rgba(255, 190, 70, 0.9); }
   #banner.lost { color: #ff7a5a; background: linear-gradient(#2a1a1a, #14090a); text-shadow: 0 3px 0 #000, 0 0 18px rgba(255, 60, 30, 0.6); }
-  #summary { font-size: 16px; max-width: min(340px, 90vw); text-align: center; }
+  #summary { font-size: 16px; max-width: min(340px, calc(90 * var(--vw))); text-align: center; }
   #stars .star, #xp .xprow, #fightStats { background: var(--panel-bg); border: 2px solid var(--gold-lo); box-shadow: 0 0 0 2px var(--deep), 0 3px 8px rgba(0, 0, 0, 0.55); }
   #xp .xprow em, #fightStats .cell em, #fightStats .srow.head { font-family: var(--pixel); font-size: 8px; }
   #xp .xprow i span { background: linear-gradient(#9fd4ff, #3a78d6); }
@@ -656,7 +619,6 @@
   @keyframes leaf { 0% { transform: translate(0, 0) rotate(0); } 25% { transform: translate(30px, 25vh) rotate(120deg); } 50% { transform: translate(-20px, 50vh) rotate(240deg); }
     75% { transform: translate(34px, 75vh) rotate(330deg); } 100% { transform: translate(-6px, 108vh) rotate(450deg); } }
   #home[hidden] #leaves { display: none; }
-  @media (orientation: landscape) { .hmTab.hero.on { background: radial-gradient(#ffe48a, #e8962a 70%); } }
   @media (prefers-reduced-motion: reduce) { #leaves { display: none; } button.primary::after, .hmBattle::after { animation: none; } }
 
   /* rarity: 1 Common grey, 2 Rare blue, 3 Epic purple, 4 Legendary gold, 5 Mythic crimson-to-gold. --rc is the tier's colour. */

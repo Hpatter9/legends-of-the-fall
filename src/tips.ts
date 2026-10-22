@@ -4,6 +4,8 @@
 // What has been seen is kept in localStorage ('legends.tips'). The store and the placing are pure, so the tests run
 // them; the page parts only touch the DOM when they are used.
 
+import { colLeft, viewH, viewW } from './viewport';
+
 /** Every tip, by the moment it is for. */
 export type TipId = 'home' | 'deploy' | 'fight' | 'mana' | 'skill' | 'summon' | 'crowns';
 
@@ -173,7 +175,7 @@ class Tips {
 
   private position(box: Box): void {
     const card = this.cardEl();
-    const p = placeBubble(box, { w: card.offsetWidth, h: card.offsetHeight }, { w: innerWidth, h: innerHeight });
+    const p = placeBubble(box, { w: card.offsetWidth, h: card.offsetHeight }, { w: viewW(), h: viewH() });
     card.style.left = `${p.x}px`;
     card.style.top = `${p.y}px`;
     card.dataset.side = p.side;
@@ -222,7 +224,7 @@ function pageUp(page: 'home' | 'game'): boolean {
 function boxOf(anchor: Anchor): Box | null {
   if (!(anchor instanceof HTMLElement)) return anchor();
   const r = anchor.getBoundingClientRect();
-  return r.width > 0 && r.height > 0 ? { x: r.left, y: r.top, w: r.width, h: r.height } : null;
+  return r.width > 0 && r.height > 0 ? { x: r.left - colLeft(), y: r.top, w: r.width, h: r.height } : null;
 }
 
 export const tips = new Tips();
