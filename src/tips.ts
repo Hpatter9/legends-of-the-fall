@@ -5,14 +5,18 @@
 // them; the page parts only touch the DOM when they are used.
 
 import { colLeft, viewH, viewW } from './viewport';
+import { SYSTEM_FINDERS } from './systemTips';
 
 /** Every tip, by the moment it is for. */
-export type TipId = 'home' | 'deploy' | 'fight' | 'mana' | 'skill' | 'summon' | 'crowns';
+export type TipId = 'home' | 'deploy' | 'fight' | 'mana' | 'skill' | 'summon' | 'crowns' | SystemTipId;
+
+/** The tips for the newer systems: each shows once, the first time its element is on the page and open to the player. */
+export type SystemTipId = 'calamity' | 'tower' | 'talents' | 'castle' | 'spellbook' | 'stash' | 'equipment' | 'recycle' | 'retry' | 'autoReplay';
 
 /** Where a tip's bubble is shown: on the home screen, or in the game (not under the recruit page or a result). */
 interface TipDef {
   text: string;
-  page: 'home' | 'game';
+  page: 'home' | 'game' | 'result' | 'any';
   /** The battle phase it is for; a tip still waiting when the phase has moved on is dropped. */
   during?: 'deploy' | 'fight';
 }
@@ -25,6 +29,16 @@ export const TIPS: Readonly<Record<TipId, TipDef>> = {
   skill: { text: 'Skills fire on their own when the gold bar fills.', page: 'game', during: 'fight' },
   summon: { text: 'Spend gold to Hire a hero. Three of the same hero merge into a stronger one.', page: 'game', during: 'deploy' },
   crowns: { text: 'Recruit unlocks new heroes; the Castle gives lasting upgrades.', page: 'home' },
+  calamity: { text: 'Calamity: climb the maps with one hero, and hire more at camps and shops. Each map ends in a boss.', page: 'home' },
+  tower: { text: 'The Tower: pick your path floor by floor, with relics, shops and bosses. It never ends.', page: 'home' },
+  talents: { text: 'Spend talent points here to change how this hero fights. Each hero has its own tree.', page: 'any' },
+  castle: { text: 'Each build takes real time, and the builders do one at a time. It carries on while the game is closed.', page: 'home' },
+  spellbook: { text: 'The Chapel holds the king\'s spells. Pick three, within the power budget, to cast in a fight.', page: 'home' },
+  stash: { text: 'Chests from army stars wait on the cart. Tap one to open it.', page: 'home' },
+  equipment: { text: 'Equip best puts the strongest spare gear on this hero. Chests drop more.', page: 'any' },
+  recycle: { text: 'Drag a hero you do not need onto Recycle to turn it back into gold.', page: 'game', during: 'deploy' },
+  retry: { text: 'Your party fell. Retry the wave with bonus gold, or give up and end the run.', page: 'result' },
+  autoReplay: { text: 'Switch Auto on to repeat a cleared army by itself, for as many runs as you set.', page: 'home' },
 };
 
 const IDS = Object.keys(TIPS) as TipId[];
@@ -122,8 +136,24 @@ class Tips {
     if (stage > 1) this.offer('summon', $('summon'));
   }
 
+  /** The newer systems' tips, looked for a few times a second: one is offered when its element is on show. They wait until the
+   *  first tip (or "Skip tutorial") has been seen, so a new player meets them after the basics and a skip silences them all. */
+  private lastScan = 0;
+  private scan(): void {
+    const now = Date.now();
+    if (now - this.lastScan < 300) return;
+    this.lastScan = now;
+    if (!this.known().has('home')) return;
+    for (const id of Object.keys(SYSTEM_FINDERS) as SystemTipId[]) {
+      if (this.known().has(id) || this.shown?.id === id || this.queue.some((q) => q.id === id)) continue;
+      const found = SYSTEM_FINDERS[id]!();
+      if (found) this.offer(id, found);
+    }
+  }
+
   /** Each frame: keep the bubble by its anchor, and show the next waiting tip whose page is up. */
   update(): void {
+    this.scan();
     if (this.shown) {
       const box = boxOf(this.shown.anchor);
       // (the thing it points at has gone: the bubble goes, unseen, and the tip is offered again when it is back)
@@ -214,9 +244,11 @@ class Tips {
 const $ = (id: string) => document.getElementById(id) as HTMLElement;
 
 /** Whether the page a tip belongs to is the one showing: the home screen, or the game under no recruit page or result. */
-function pageUp(page: 'home' | 'game'): boolean {
+function pageUp(page: TipDef['page']): boolean {
   const up = (id: string) => !$(id).hidden;
   if (up('gacha')) return false;
+  if (page === 'any') return true;
+  if (page === 'result') return !up('home') && up('result');
   return page === 'home' ? up('home') : !up('home') && !up('result');
 }
 
