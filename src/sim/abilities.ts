@@ -293,7 +293,7 @@ const sorted = (fs: Unit[]) => fs.sort((x, y) => x.hp - y.hp || x.id - y.id);
 
 /** Heal an ally (never past full), with the event for the renderer; the healing counts for `by` (its healer, or itself). */
 export function mendUnit(u: Unit, amount: number, out: BattleEvent[], by: Unit = u): void {
-  const n = Math.min(Math.round(amount), u.maxHp - u.hp);
+  const n = Math.min(Math.round(amount * (u.healMult ?? 1)), u.maxHp - u.hp);
   if (n <= 0 || !u.alive) return;
   u.hp += n;
   by.healed = (by.healed ?? 0) + n;
