@@ -6,7 +6,7 @@
 
 import { ALL_HEROES, UNITS } from './sim/units';
 import { BUILDING_IDS, BUILDINGS, maxLevel, nextCost, upgrade, type BuildingId } from './sim/castle';
-import { CastleScene, lookUrl } from './castle';
+import { CastleScene, lookPicture } from './castle';
 import { BLURB, effectText } from './render/castleSpots';
 import { MYTHIC_PITY, PITY, PULL_COST, PULL10_COST, rarityOf, saveMeta, type Meta } from './sim/meta';
 import { dailyLine, towerLine, towerOpen } from './sim/modes';
@@ -296,7 +296,7 @@ export class Home {
     box.replaceChildren();
     const head = el('div', 'bhead');
     const pic = el('img', 'bpic');
-    pic.src = lookUrl(id, level);
+    pic.src = lookPicture(id, level);
     pic.alt = '';
     pic.draggable = false;
     const title = el('div');
