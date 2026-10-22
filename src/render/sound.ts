@@ -79,6 +79,24 @@ export function setup(): void {
   document.addEventListener('click', (e) => {
     if ((e.target as Element).closest?.('button')) play('tap');
   });
+  // (the game hidden, closed or switched away from: every sound stops, and comes back when the game is seen again)
+  document.addEventListener('visibilitychange', () => (document.hidden ? hush() : wake()));
+  window.addEventListener('pagehide', hush);
+  window.addEventListener('pageshow', () => !document.hidden && wake());
+}
+
+/** Stop all sound while the game is out of sight: the music's element pauses and the effects' clock is suspended. */
+function hush(): void {
+  if (!ctx) return;
+  for (const p of players.values()) p.el.pause();
+  void ctx.suspend();
+}
+
+/** The game is back in sight: the clock runs again and the track that was playing carries on. */
+function wake(): void {
+  if (!ctx) return;
+  void ctx.resume();
+  if (current) void players.get(current)?.el.play().catch(() => {});
 }
 
 /** The volumes from the settings page (0 to 1 each, on top of the levels above). */
