@@ -333,6 +333,37 @@
   .tvRoom { flex: none; margin: auto; image-rendering: pixelated; }
   .tvCount { position: absolute; left: 8px; top: 8px; padding: 3px 9px 4px; font: 700 12px var(--body); letter-spacing: 0.5px; color: var(--gold-hi); text-shadow: 0 1px 0 #000; background: rgba(26, 13, 7, 0.82); border: 2px solid var(--gold-lo); border-radius: 8px; pointer-events: none; }
   .tvCount small { display: block; font-size: 9px; font-weight: 400; letter-spacing: 0; color: var(--dim); }
+  /* the castle courtyard (Castle tab) */
+  .hmPage.hm-castle { padding: 0; overflow: hidden; background: #2a4a20; }
+  .ctWrap { position: absolute; inset: 0; }
+  .ctScroll { position: absolute; inset: 0; display: flex; overflow: auto; touch-action: pan-x pan-y; overscroll-behavior: contain; scrollbar-width: none; }
+  .ctScroll::-webkit-scrollbar { display: none; }
+  .ctStage { position: relative; flex: none; margin: auto; }
+  .ctRoom { display: block; image-rendering: pixelated; }
+  .ctTags { position: absolute; inset: 0; pointer-events: none; }
+  .ctTag { position: absolute; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; padding: 2px 8px 3px; font: 700 12px var(--body); letter-spacing: 0.4px; color: var(--gold-hi); text-shadow: 0 1px 0 #000; background: rgba(26, 13, 7, 0.86); border: 2px solid var(--gold-lo); border-radius: 8px; pointer-events: auto; white-space: nowrap; cursor: pointer; }
+  .ctTag span { font-weight: 400; font-size: 10px; color: var(--dim); }
+  .ctTag:active:not(:disabled) { transform: translate(-50%, -100%) scale(0.94); }
+  .ctTag.ready { border-color: var(--gold-hi); box-shadow: 0 0 8px rgba(255, 210, 90, 0.7); }
+  .ctTag .ctUp { position: absolute; right: -7px; top: -9px; font-style: normal; font-size: 13px; color: #8ff08a; text-shadow: 0 1px 0 #000, 0 0 4px #1d5a1a; animation: ctbob 0.9s ease-in-out infinite; }
+  @keyframes ctbob { 50% { transform: translateY(-3px); } }
+  .ctBar { position: absolute; left: 8px; right: 8px; top: 8px; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; pointer-events: none; }
+  .ctBar > * { pointer-events: auto; }
+  .ctChips { display: flex; gap: 5px; flex-wrap: wrap; }
+  .ctChip, .ctChips > button { position: relative; display: flex; align-items: center; gap: 4px; min-width: 0; padding: 3px 8px 3px 5px; font: 700 11px var(--body); color: var(--gold-hi); text-shadow: 0 1px 0 #000; background: rgba(26, 13, 7, 0.86); border: 2px solid var(--gold-lo); border-radius: 8px; }
+  .ctChip img { width: 18px; height: 18px; image-rendering: pixelated; }
+  .ctChip small { font-size: 10px; font-weight: 400; color: var(--dim); }
+  .ctChip .gearIcon { font-size: 16px; line-height: 18px; }
+  .ctChip .badge { position: absolute; right: -4px; top: -4px; }
+  .ctHelp { padding: 2px 8px; font-size: 10px; color: var(--dim); background: rgba(26, 13, 7, 0.82); border: 2px solid var(--gold-lo); border-radius: 8px; pointer-events: none !important; }
+  .bcard .bhead { display: flex; gap: 12px; align-items: flex-end; }
+  .bcard .bpic { height: 112px; width: auto; max-width: 150px; object-fit: contain; image-rendering: pixelated; flex: none; }
+  .bcard h3 { margin: 0; font-size: 20px; color: var(--gold-hi); }
+  .bcard .pips { display: block; color: var(--gold); letter-spacing: 2px; }
+  .bcard em { display: block; font-style: normal; font-size: 11px; color: var(--dim); }
+  .bcard .brow2 { display: flex; gap: 8px; }
+  .bcard .brow2 button { flex: 1; }
+  @media (orientation: landscape) { .bcard .bpic { height: 80px; } }
   .hgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .hcard { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 4px; min-width: 0; background: linear-gradient(#4a2c1c, #2a170e); border: 3px solid #6b4128; border-radius: 10px; font-weight: normal; }
   .hcard canvas { width: 64px; height: 64px; image-rendering: pixelated; background: rgba(0, 0, 0, 0.3); border-radius: 6px; }

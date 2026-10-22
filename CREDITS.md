@@ -116,3 +116,9 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   **PixelLab** (pixellab.ai): a base figure from a text description with Craftpix fighters as style references
   (`/generate-with-style-v2`), animated with `/animate-with-text-v3`. The frames were only cropped and padded into the
   sheets (no resizing; alpha made hard, lone stray pixels dropped). The prompts are in `tools/pixellab/spec.py`.
+
+## Castle courtyard (`src/art/castle/`)
+
+- The buildings (each upgrade at four looks), the sky, hills, wall, gate, well, tree, crates and the cobbles were generated with
+  PixelLab (`tools/castle/gen.py`, `pick.py`) at their final pixel size. The lawn (`grass.png`) is the battleground grass already
+  in `src/art/ground/` (Fantasy 2D Battlegrounds pixel pack). The heroes who stroll the yard use their own sheets (see above).

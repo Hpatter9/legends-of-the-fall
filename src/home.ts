@@ -6,6 +6,8 @@
 
 import { ALL_HEROES, UNITS } from './sim/units';
 import { BUILDING_IDS, BUILDINGS, maxLevel, nextCost, upgrade, type BuildingId } from './sim/castle';
+import { CastleScene, lookUrl } from './castle';
+import { BLURB, effectText } from './render/castleSpots';
 import { MYTHIC_PITY, PITY, PULL_COST, PULL10_COST, rarityOf, saveMeta, starSummary, type Meta } from './sim/meta';
 import { dailyLine, towerLine, towerOpen } from './sim/modes';
 import { ACHIEVEMENTS } from './sim/achievements';
@@ -17,7 +19,7 @@ import { portrait } from './render/sheets';
 import { openSettings } from './settings';
 import { openSpellbook } from './spellbook';
 import { resetTipsButton, tips } from './tips';
-import { AREA_NAMES, BUILDING_ICON, ICONS, icon } from './menuArt';
+import { AREA_NAMES, ICONS, icon } from './menuArt';
 import { drawHeroSheet, strongest } from './menuHeroes';
 import { Tavern } from './tavern';
 import { MenuScene } from './menuScene';
@@ -73,6 +75,9 @@ export class Home {
   private stopSheet: (() => void) | null = null;
   private sceneKey = '';
   private tavern: Tavern;
+  private castle: CastleScene;
+  private castleBar = el('div', 'ctBar');
+  private cardOpen = false;
 
   constructor(
     private meta: Meta,
@@ -80,6 +85,7 @@ export class Home {
   ) {
     this.scene = new MenuScene($('hmScene'));
     this.tavern = new Tavern((kind) => this.openSheet(kind));
+    this.castle = new CastleScene((id) => this.openBuilding(id));
     const pages = $('hmPages');
     const bar = $('hmTabs');
     for (const t of TABS) {
@@ -94,6 +100,8 @@ export class Home {
     }
     // (the heroes page is the tavern: it draws once and keeps its place while you switch tabs)
     this.pages.get('heroes')!.append(this.tavern.root);
+    // (the castle page is the courtyard, with its shortcut buttons on top)
+    this.pages.get('castle')!.append(this.castle.root, this.castleBar);
     // (the battle page keeps the scene behind its own content)
     this.pages.get('battle')!.append($('hmScene'));
     $('hmTrophy').addEventListener('click', () => this.openSub('Achievements', (b) => drawAchievements(b, this.meta)));
@@ -122,6 +130,7 @@ export class Home {
     $('home').hidden = true;
     this.scene.stop();
     this.tavern.stop();
+    this.castle.stop();
     this.note = '';
     then();
   }
@@ -164,12 +173,16 @@ export class Home {
     this.drawRecruit();
     this.tavern.update(m);
     this.drawCastle();
+    this.castle.update(m);
     this.drawSpells();
     if (this.tab === 'battle') this.scene.start();
     else this.scene.stop();
     // (the tavern only moves while it is showing, and not under a hero sheet)
     if (this.tab === 'heroes' && $('hmSheet').hidden) this.tavern.start();
     else this.tavern.stop();
+    // (the courtyard moves only while it is showing, and not under a building card)
+    if (this.tab === 'castle' && !this.cardOpen) this.castle.start();
+    else this.castle.stop();
   }
 
   private drawBattle(): void {
@@ -241,25 +254,76 @@ export class Home {
     page.append(panel);
   }
 
+  /** The chips over the courtyard's sky: the achievements and settings shortcuts, the tips reset and a line of help. */
   private drawCastle(): void {
     const m = this.meta;
-    const page = this.pages.get('castle')!;
-    page.replaceChildren();
-    const panel = el('div', 'hmPanel wide');
-    const links = el('div', 'hmLinks');
-    const ach = el('button', 'hmCard');
+    const bar = this.castleBar;
+    bar.replaceChildren();
+    const row = el('div', 'ctChips');
     const got = ACHIEVEMENTS.filter((a) => m.achievements.includes(a.id)).length;
-    ach.append(icon(ICONS.trophy), el('b', '', 'Achievements'), el('small', '', `${got} of ${ACHIEVEMENTS.length}`));
+    const ach = el('button', 'ctChip');
+    ach.append(icon(ICONS.trophy), el('b', '', 'Achievements'), el('small', '', `${got}/${ACHIEVEMENTS.length}`));
     if (m.achievements.length > seenCount()) ach.append(el('i', 'badge'));
     ach.addEventListener('click', () => this.openSub('Achievements', (b) => drawAchievements(b, this.meta)));
-    const set = el('button', 'hmCard');
-    set.append(el('span', 'gearIcon', '⚙'), el('b', '', 'Settings'), el('small', '', 'sound, speed, more'));
+    const set = el('button', 'ctChip');
+    set.append(el('span', 'gearIcon', '⚙'), el('b', '', 'Settings'));
     set.addEventListener('click', () => openSettings());
-    links.append(ach, set);
-    panel.append(links, el('p', 'hint', 'Upgrades last for every run you start from now on.'));
-    for (const id of BUILDING_IDS) panel.append(this.buildingRow(id));
-    panel.append(resetTipsButton());
-    page.append(panel);
+    row.append(ach, set, resetTipsButton());
+    bar.append(row, el('div', 'ctHelp', 'Tap a building to upgrade it · drag to look round'));
+  }
+
+  /** A building's upgrade card (over the courtyard): what it gives now and next, its cost, and the Build button. */
+  private openBuilding(id: BuildingId): void {
+    this.closeSheet();
+    this.cardOpen = true;
+    this.castle.stop();
+    $('hmSheet').hidden = false;
+    const box = $('hmSheetBox');
+    box.className = 'hsheet bcard';
+    this.drawBuildingCard(box, id);
+  }
+
+  private drawBuildingCard(box: HTMLElement, id: BuildingId): void {
+    const m = this.meta;
+    const b = BUILDINGS[id];
+    const level = m.castle[id];
+    const top = maxLevel(id);
+    box.replaceChildren();
+    const head = el('div', 'bhead');
+    const pic = el('img', 'bpic');
+    pic.src = lookUrl(id, level);
+    pic.alt = '';
+    pic.draggable = false;
+    const title = el('div');
+    title.append(el('h3', '', b.name), el('span', 'pips', '◆'.repeat(level) + '◇'.repeat(top - level)), el('em', '', level === 0 ? 'not built yet' : `level ${level} of ${top}`));
+    head.append(pic, title);
+    box.append(head, el('p', 'hint', BLURB[id]));
+    const now = el('p');
+    now.append(el('i', '', 'Now: '), level === 0 ? 'nothing yet' : effectText(id, level));
+    box.append(now);
+    const cost = nextCost(m.castle, id);
+    if (cost !== null) {
+      const next = el('p');
+      next.append(el('i', '', `Level ${level + 1}: `), effectText(id, level + 1));
+      box.append(next);
+    } else box.append(el('p', 'hint', 'Fully built.'));
+    box.append(el('p', 'hint', `Each level: ${b.perLevel}. Upgrades last for every run you start from now on.`));
+    const buy = el('button', '');
+    buy.textContent = cost === null ? 'Full' : `Build · ${cost}`;
+    buy.disabled = cost === null || m.crowns < cost;
+    if (!buy.disabled) buy.classList.add('primary');
+    buy.addEventListener('click', () => {
+      // (close the card first so the build plays in the courtyard, then buy)
+      this.closeSheet();
+      if (!upgrade(m, id)) return;
+      saveMeta(m);
+      this.refresh();
+    });
+    const done = el('button', '', 'Close');
+    done.addEventListener('click', () => this.closeSheet());
+    const row = el('div', 'brow2');
+    row.append(buy, done);
+    box.append(row);
   }
 
   private drawSpells(): void {
@@ -268,29 +332,6 @@ export class Home {
     const panel = el('div', 'hmPanel');
     panel.append(el('h2', '', 'Spells'), icon(ICONS.spells, 'ico big'), el('p', 'hint', 'Coming soon: the king\'s spellbook.'));
     page.append(panel);
-  }
-
-  private buildingRow(id: BuildingId): HTMLElement {
-    const m = this.meta;
-    const b = BUILDINGS[id];
-    const level = m.castle[id];
-    const row = el('div', 'brow hmBuild');
-    const text = el('div');
-    const name = el('b', '', `${b.name} · level ${level}/${maxLevel(id)}`);
-    const pips = el('span', 'pips', '◆'.repeat(level) + '◇'.repeat(maxLevel(id) - level));
-    text.append(name, pips, el('em', '', `Each level: ${b.perLevel}`));
-    const buy = el('button', '');
-    const cost = nextCost(m.castle, id);
-    buy.textContent = cost === null ? 'Full' : `Build · ${cost}`;
-    buy.disabled = cost === null || m.crowns < cost;
-    if (!buy.disabled) buy.classList.add('primary');
-    buy.addEventListener('click', () => {
-      if (!upgrade(m, id)) return;
-      saveMeta(m);
-      this.refresh();
-    });
-    row.append(icon(BUILDING_ICON[id], 'ico big'), text, buy);
-    return row;
   }
 
   private openSheet(kind: string): void {
@@ -304,7 +345,9 @@ export class Home {
     this.stopSheet?.();
     this.stopSheet = null;
     $('hmSheet').hidden = true;
+    this.cardOpen = false;
     if (this.isOpen && this.tab === 'heroes') this.tavern.start();
+    if (this.isOpen && this.tab === 'castle') this.castle.start();
   }
 
   private openSub(title: string, draw: (body: HTMLElement) => void): void {
