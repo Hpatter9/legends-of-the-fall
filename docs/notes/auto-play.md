@@ -19,6 +19,7 @@ The rules live in `src/sim/autoplay.ts` (pure and deterministic, no random numbe
 - `pickSquad`, `autoEvent` (the best **free** pick: relic, gear, blessing, coin; never a cursed path or anything dear),
   `dressSquad` (gear to whoever's piece is weakest), `autoRound` (event, summons while the gold lasts, squad, gear) and
   `autoDeploy(battle, run, meta)`, which takes back placed heroes and places the squad.
+- Placements go through the page's `boostFor` (talents, equipment, tower carry), passed to `autoDeploy`.
 - The old "remember the last manual formation per hero" idea was left out: the page already puts a hero back where it stood
   from wave to wave.
 

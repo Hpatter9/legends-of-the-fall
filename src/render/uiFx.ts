@@ -2,13 +2,14 @@
 // pays out rising off the result screen. Plain DOM and the Web Animations API, so they cost nothing while idle.
 
 import { colLeft } from '../viewport';
+import { settings } from '../settings';
 
 /** The colour of each tier's light (index 0 unused). */
 export const RARITY_LIGHT = ['', '#c8c8c8', '#4a9cff', '#b06aff', '#f0b44a', '#ff3a4a'];
 
 /** A flash over the whole page in a tier's colour: a Legendary pull or summon is brief, a Mythic fills the screen with crimson and gold. */
 export function rarityFlash(rarity: number): void {
-  if (rarity < 4) return;
+  if (rarity < 4 || !settings().shake || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const mythic = rarity === 5;
   const veil = document.createElement('div');
   Object.assign(veil.style, {
@@ -19,7 +20,7 @@ export function rarityFlash(rarity: number): void {
     background: mythic ? 'radial-gradient(circle, #fff 0%, #ffd24a 25%, #ff3a4a 60%, rgba(60, 0, 10, 0.9) 100%)' : 'radial-gradient(circle, #fff 0%, #f0b44a 45%, rgba(90, 50, 0, 0.6) 100%)',
   });
   document.body.append(veil);
-  veil.animate([{ opacity: 0 }, { opacity: mythic ? 0.95 : 0.7, offset: 0.18 }, { opacity: 0 }], { duration: mythic ? 1300 : 700, easing: 'ease-out' }).onfinish = () => veil.remove();
+  veil.animate([{ opacity: 0 }, { opacity: 0.45, offset: 0.3 }, { opacity: 0 }], { duration: 150, easing: 'ease-out' }).onfinish = () => veil.remove();
 }
 
 /** A card just summoned: it springs in, and a ring of light opens under it (in the tier's colour; a Legendary or Mythic also flashes the page). */
@@ -46,6 +47,33 @@ export function summonBurst(card: HTMLElement, rarity = 1): void {
   });
   document.body.append(ring);
   ring.animate([{ transform: 'scale(0.5)', opacity: 1 }, { transform: `scale(${rarity > 3 ? 7 : 3})`, opacity: 0 }], { duration: rarity === 5 ? 1100 : 600, easing: 'ease-out' }).onfinish = () => ring.remove();
+}
+
+/** A card sent to the recycler: a few puffs of dust spread from where it stood and fade (once, no loop). */
+export function recyclePuff(card: Element): void {
+  const r = card.getBoundingClientRect();
+  const cx = r.left - colLeft() + r.width / 2;
+  const cy = r.top + r.height / 2;
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2;
+    const dot = document.createElement('div');
+    Object.assign(dot.style, {
+      position: 'fixed',
+      left: `${cx - 7}px`,
+      top: `${cy - 7}px`,
+      width: '14px',
+      height: '14px',
+      borderRadius: '50%',
+      background: i % 2 ? 'rgba(255, 226, 122, 0.85)' : 'rgba(210, 200, 185, 0.8)',
+      pointerEvents: 'none',
+      zIndex: '9',
+    });
+    document.body.append(dot);
+    dot.animate(
+      [{ transform: 'translate(0, 0) scale(0.6)', opacity: 0.9 }, { transform: `translate(${Math.cos(a) * 30}px, ${Math.sin(a) * 24 - 6}px) scale(1.5)`, opacity: 0 }],
+      { duration: 520, easing: 'ease-out' },
+    ).onfinish = () => dot.remove();
+  }
 }
 
 /** A label that rises off `from` and fades; with `to`, it flies on to that element (the gold, to the top bar). */

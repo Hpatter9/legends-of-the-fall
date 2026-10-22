@@ -25,9 +25,13 @@ export function startStats(units: Unit[]): FightStats {
   return units.filter((u) => u.side === 'hero').map((u) => ({ id: u.id, kind: u.def, dealt: 0, taken: 0, healed: 0, kills: 0 }));
 }
 
-/** Add one tick's events to the tally. Foes and the king's own spells have no row, so they count for no one. */
-export function tally(stats: FightStats, events: BattleEvent[]): void {
-  const row = (id: number) => stats.find((s) => s.id === id);
+/** Add one tick's events to the tally (`units` are the fight's, to find who called up a decoy or treant). Foes and the king's own spells have no row, so they count for no one. */
+export function tally(stats: FightStats, events: BattleEvent[], units: readonly Unit[] = []): void {
+  // (a fighter a skill called up has no row: what it does, and what it takes, count for its caller)
+  const row = (id: number) => {
+    const owner = units.find((u) => u.id === id)?.owner;
+    return stats.find((s) => s.id === (owner ?? id));
+  };
   for (const e of events) {
     if (e.kind === 'hit') {
       const by = row(e.by);

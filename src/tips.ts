@@ -23,7 +23,7 @@ export const TIPS: Readonly<Record<TipId, TipDef>> = {
   fight: { text: 'Press Fight! Your heroes fight on their own.', page: 'game', during: 'deploy' },
   mana: { text: 'Tap a spell card, then a tile, to cast.', page: 'game', during: 'fight' },
   skill: { text: 'Skills fire on their own when the gold bar fills.', page: 'game', during: 'fight' },
-  summon: { text: 'Spend gold to Summon. Three of the same hero merge into a stronger one.', page: 'game', during: 'deploy' },
+  summon: { text: 'Spend gold to Hire a hero. Three of the same hero merge into a stronger one.', page: 'game', during: 'deploy' },
   crowns: { text: 'Recruit unlocks new heroes; the Castle gives lasting upgrades.', page: 'home' },
 };
 

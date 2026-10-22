@@ -4,8 +4,7 @@
 // same run and the same board always give the same formation.
 
 import { D, DEPLOY_ROWS, standable, tileAt, type Board } from './board';
-import { place, unplace, type Battle } from './battle';
-import type { EquipStats } from './equipment';
+import { place, unplace, type Battle, type Boost } from './battle';
 import { chooseOption, leaveEvent, type EventOption } from './events';
 import { levelOfKind } from './levels';
 import { rankOf, type Meta } from './meta';
@@ -142,14 +141,14 @@ export function autoFormation(board: Board, heroes: readonly { id: number; kind:
   return taken;
 }
 
-/** Arranges the run's squad on the battle's deploy rows by `autoFormation` (taking back any hero already placed first). Returns the spots. */
-export function autoDeploy(b: Battle, run: Run, meta: Meta, equipOf?: (kind: string) => EquipStats | undefined): Spot[] {
+/** Arranges the run's squad (`boostFor` gives a hero's whole boost, as the page places it; the plain grade, rank and level when unset) on the battle's deploy rows by `autoFormation` (taking back any hero already placed first). Returns the spots. */
+export function autoDeploy(b: Battle, run: Run, meta: Meta, boostFor?: (h: Owned) => Boost): Spot[] {
   for (const u of [...b.units]) if (u.side === 'hero') unplace(b, u.def, u.tag);
   const squad = run.squad.map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h);
   const spots = autoFormation(b.board, squad);
   for (const s of spots) {
     const h = squad.find((x) => x.id === s.id)!;
-    place(b, h.kind, s.u, s.v, h.id, boostOf(h, rankOf(meta, h.kind), levelOfKind(meta, h.kind), equipOf?.(h.kind)));
+    place(b, h.kind, s.u, s.v, h.id, boostFor?.(h) ?? boostOf(h, rankOf(meta, h.kind), levelOfKind(meta, h.kind)));
   }
   return spots;
 }

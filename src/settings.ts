@@ -112,6 +112,7 @@ function draw(): void {
     toggleRow('Battery saver', 'Caps the frame rate at 30', 'saver', s.saver),
     toggleRow('Keep screen awake', 'The screen stays on during a fight', 'awake', s.awake),
     resetTipsRow(),
+    startOverRow(),
   );
   const version = document.createElement('p');
   version.className = 'hint';
@@ -190,6 +191,38 @@ function resetTipsRow(): HTMLElement {
   b.addEventListener('click', () => {
     tips.reset();
     b.textContent = 'Tips reset';
+  });
+  r.append(b);
+  return r;
+}
+
+/** The saves "Start over" wipes: the meta (heroes, crowns, castle, armies, gear, chests), the run in progress, the tips and
+ *  what the achievements page has shown. The settings (volume, speed and the rest) and the sound switch are kept. */
+export const SAVE_KEYS = ['legends.meta', 'legends.run', 'legends.tips', 'lotf-achievements-seen'];
+
+/** Start over: wipe every save and reload to a fresh game. Two taps, the second within a few seconds, so it can't happen by a slip. */
+function startOverRow(): HTMLElement {
+  const [r] = row('Start over', 'Wipes all progress: heroes, crowns, castle, armies and gear. Settings stay.');
+  const b = document.createElement('button');
+  b.className = 'danger';
+  b.textContent = 'Start over';
+  let armed = 0;
+  b.addEventListener('click', () => {
+    if (Date.now() - armed > 4000) {
+      armed = Date.now();
+      b.textContent = 'Sure? Tap again';
+      setTimeout(() => {
+        if (Date.now() - armed >= 4000) b.textContent = 'Start over';
+      }, 4100);
+      return;
+    }
+    for (const k of SAVE_KEYS)
+      try {
+        localStorage.removeItem(k);
+      } catch {
+        /* storage blocked: nothing saved to wipe */
+      }
+    location.reload();
   });
   r.append(b);
   return r;

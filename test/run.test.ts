@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { place, playOut, startBattle } from '../src/sim/battle';
-import { finish, gradeBoost, isBossStage, loadRun, newRun, reward, saveRun, setSquad, stageBoost, startStage, summon, summonCost, START_GOLD, SQUAD, type Run } from '../src/sim/run';
+import { addUnit, place, playOut, startBattle } from '../src/sim/battle';
+import { boostOf, keepCharges, finish, gradeBoost, isBossStage, loadRun, newRun, reward, saveRun, setSquad, stageBoost, startStage, summon, summonCost, LUCKY_SUMMON, START_GOLD, SQUAD, type Run } from '../src/sim/run';
 import { UNITS } from '../src/sim/units';
 
 const kinds = (r: Run) => r.roster.map((h) => `${h.kind}${h.grade}`).join();
@@ -108,3 +108,39 @@ function fightOut(b: ReturnType<typeof startBattle>): void {
   b.phase = 'fight';
   playOut(b);
 }
+
+test('a hero still standing keeps its skill charge into the next wave; one that fell starts empty', () => {
+  const run = newRun(1);
+  const [a, b2] = run.roster;
+  const bt = startBattle(1);
+  const ua = addUnit(bt, a.kind, 0, 7, boostOf(a), a.id);
+  const ub = addUnit(bt, b2.kind, 1, 7, boostOf(b2), b2.id);
+  ua.charge = 60;
+  ub.charge = 80;
+  ub.alive = false;
+  keepCharges(run, bt);
+  assert.equal(a.charge, 60);
+  assert.equal(b2.charge, undefined);
+  const next = startBattle(2);
+  assert.equal(addUnit(next, a.kind, 0, 7, boostOf(a), a.id).charge, 60);
+  assert.equal(addUnit(next, b2.kind, 1, 7, boostOf(b2), b2.id).charge, 0);
+});
+
+test('now and then a summon arrives at grade 2, about as often as LUCKY_SUMMON says', () => {
+  let lucky = 0;
+  let total = 0;
+  for (let seed = 1; seed <= 400; seed++) {
+    const r = newRun(seed);
+    r.gold = 1e6;
+    for (let i = 0; i < 5; i++) {
+      const before = new Set(r.roster.map((h) => h.id));
+      const got = summon(r)!;
+      total++;
+      // (a grade-2 hero no three grade-1s made: the summon's own luck)
+      const merged = r.roster.length < before.size + 1;
+      if (got.grade === 2 && !merged) lucky++;
+    }
+  }
+  const rate = lucky / total;
+  assert.ok(rate > LUCKY_SUMMON * 0.5 && rate < LUCKY_SUMMON * 1.6, `rate ${rate}`);
+});

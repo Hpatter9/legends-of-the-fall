@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   ARMIES,
+  ARMY_WAVES,
   armyById,
   armyCleared,
   armyIsNew,
@@ -25,6 +26,7 @@ import { fight, place, playOut, stepBattle, type BattleEvent } from '../src/sim/
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { BOSS_IDS, FOE_BANDS, isBoss } from '../src/sim/foes';
 import { levelOfKind, xpFor } from '../src/sim/levels';
+import { timeTarget } from '../src/sim/armyStars';
 import { loadMeta, newMeta, saveMeta } from '../src/sim/meta';
 import { BOSS_TITLES, titleOf } from '../src/render/bossTitles';
 import { armyOfRun, armyRun, bandFor, finish, gradeBoost, isBossRun, loadRun, newRun, saveRun, startStage } from '../src/sim/run';
@@ -45,23 +47,30 @@ function clearRate(army: string, level: number, n = 8): number {
   return wins / n;
 }
 
-test('there are nine armies in the owner\'s order, each of 8 to 10 waves, with real foes and a boss at the end', () => {
+test('there are nine armies in the owner\'s order, each of 15 waves, with real foes and a boss at the end', () => {
   assert.deepEqual(
     ARMIES.map((a) => a.id),
     ['orcs', 'undead', 'beasts', 'wildwood', 'labyrinth', 'ogres', 'infernal', 'yokai', 'golems'],
   );
   assert.deepEqual(ARMIES.map((a) => bossOf(a)), ['orcWarlord', 'lichKing', 'boarKing', 'forestBoss3', 'minotaurChampion', 'hornedOgre', 'demonLord', 'oniKing', 'forgeTitan']);
   for (const a of ARMIES) {
-    assert.ok(a.waves.length >= 8 && a.waves.length <= 10, a.id);
+    assert.equal(a.waves.length, ARMY_WAVES, a.id);
     for (const w of a.waves) for (const id of w.foes) assert.ok(UNITS[id] && UNITS[id].side === 'foe', `${a.id} ${id}`);
     const bosses = bossesOf(a);
     // (the last wave is the final boss, and there is a mid-boss somewhere around halfway)
     assert.equal(a.waves[a.waves.length - 1].boss, 'final', a.id);
     assert.ok(isBoss(bossOf(a)), a.id);
     assert.ok(bosses.some((b) => b.wave >= a.waves.length * 0.3 && b.wave < a.waves.length), `${a.id} has a mid-boss`);
+    // (the mid-bosses are spread: none in the first four waves or the last, and no two within four waves of each other)
+    for (const [i, b] of bosses.entries()) {
+      assert.ok(b.wave >= 5, `${a.id} wave ${b.wave}`);
+      if (i > 0) assert.ok(b.wave - bosses[i - 1].wave >= 5, `${a.id} wave ${b.wave}`);
+    }
     for (const b of bosses) assert.ok(isBoss(b.id), `${a.id} wave ${b.wave}`);
   }
   // (the owner's mid-bosses: the Shaman King before the Horned Ogre, the Devil Leader before the Demon Lord)
+  assert.deepEqual(bossesOf(armyById('orcs')!).map((b) => b.wave), [8, 15]);
+  assert.deepEqual(bossesOf(armyById('wildwood')!).map((b) => b.wave), [5, 10, 15]);
   assert.deepEqual(bossesOf(armyById('ogres')!).map((b) => b.id), ['shamanKing', 'hornedOgre']);
   assert.deepEqual(bossesOf(armyById('infernal')!).map((b) => b.id), ['devilLeader', 'demonLord']);
   assert.deepEqual(bossesOf(armyById('yokai')!).map((b) => b.id), ['nineTails', 'oniKing']);
@@ -237,8 +246,9 @@ test('an old save that never beat the first boss has the first army only; a very
   assert.equal(armyUnlocked(m, 'orcs'), true);
   assert.equal(armyUnlocked(m, 'undead'), false);
   // (garbage in the army records is dropped, good records are kept)
+  // (a record from the 8-wave Orc Warband keeps its share of the way on the 15 waves; the stars are as they were)
   const odd = migrateArmies({ orcs: { best: 3.7, won: 'x', clears: -2, stars: { 2: 9, a: 1 } }, nope: {} }, 40);
-  assert.deepEqual(odd, { orcs: { best: 3, won: 0, clears: 0, stars: { 2: 3 } } });
+  assert.deepEqual(odd, { orcs: { waves: 15, best: 5, won: 0, clears: 0, stars: { 2: 3 } } });
 });
 
 test('an older run saved mid-way (no army) still loads and plays on as it did', () => {
@@ -315,18 +325,18 @@ test('the first wave of the first army is won by a fresh party, every time', () 
 
 test('the Orc Warlord is a wall at level 1 that levelling takes down', () => {
   assert.ok(clearRate('orcs', 1) <= 0.25, 'level 1');
-  assert.ok(clearRate('orcs', 9) >= 0.8, 'level 9');
+  assert.ok(clearRate('orcs', 14) >= 0.7, 'level 14');
 });
 
 test('each army needs more levels than the one before: the same hero levels clear the early ones and fail the later', () => {
-  // (the starting five alone, no castle, no recruits: the second army falls around level 12, the third around 16, and the last
-  // is out of their reach, which is what the rarer heroes, ranks and the castle are for)
+  // (the starting five alone, no castle, no recruits, over fifteen waves: the second army falls around level 20, the third is a long way
+  // off, and the later ones are out of their reach, which is what the rarer heroes, ranks and the castle are for)
   assert.ok(clearRate('undead', 4) <= 0.25, 'undead at 4');
-  assert.ok(clearRate('undead', 12, 16) >= 0.5, 'undead at 12');
+  assert.ok(clearRate('undead', 20, 16) >= 0.35, 'undead at 20');
   assert.ok(clearRate('beasts', 6) <= 0.25, 'beasts at 6');
-  assert.ok(clearRate('beasts', 16, 16) >= 0.35, 'beasts at 16');
-  assert.ok(clearRate('infernal', 9) <= 0.1, 'infernal at 9');
-  assert.ok(clearRate('orcs', 9) > clearRate('infernal', 9));
+  assert.ok(clearRate('beasts', 20, 16) >= 0.3, 'beasts at 20');
+  assert.ok(clearRate('infernal', 14) <= 0.1, 'infernal at 14');
+  assert.ok(clearRate('orcs', 14) > clearRate('infernal', 14));
 });
 
 test('the Lich King has a title, a size, a sheet row for every animation, and a crown of skills', () => {
@@ -334,7 +344,7 @@ test('the Lich King has a title, a size, a sheet row for every animation, and a 
   assert.equal(lich.side, 'foe');
   assert.ok(lich.shot);
   assert.ok(KITS.lichKing.skill.name === 'Raise Dead' && KITS.lichKing.ultimate?.name === 'Soul Nova');
-  const b = startStage({ ...armyRun(13, 'undead', HEROES), stage: 8 });
+  const b = startStage({ ...armyRun(13, 'undead', HEROES), stage: 15 });
   const king = b.units.find((u) => u.def === 'lichKing')!;
   assert.ok(king.size! >= 1.5);
   assert.ok(king.maxHp > 2000);
@@ -391,7 +401,7 @@ test('Soul Nova hurts and freezes every hero within four tiles, and none beyond'
 
 test('a whole fight against the Lich King plays out to an end, the same every time', () => {
   const play = () => {
-    const b = startStage({ ...armyRun(14, 'undead', HEROES), stage: 8 });
+    const b = startStage({ ...armyRun(14, 'undead', HEROES), stage: 15 });
     const spots: [number, number][] = [];
     for (let v = D - DEPLOY_ROWS; v < D; v++) for (let u = 0; u < b.board.w; u++) if (standable(tileAt(b.board, u, v))) spots.push([u, v]);
     HEROES.forEach((id, i) => place(b, id, ...spots[(i * 3) % spots.length], undefined, gradeBoost(2, 0, 9, id)));
@@ -403,4 +413,60 @@ test('a whole fight against the Lich King plays out to an end, the same every ti
   const first = play();
   assert.deepEqual(first, play());
   assert.ok(first[0] === 'won' || first[0] === 'lost');
+});
+
+test('every army has fifteen waves, and the first-clear pay rose a little (about 15%), not by half', () => {
+  assert.equal(ARMY_WAVES, 15);
+  // (the totals as they were with 8, 9 and 10 waves)
+  const before: Record<string, number> = { orcs: 294, undead: 460, beasts: 665, wildwood: 1026, labyrinth: 1334, ogres: 1901, infernal: 2463, yokai: 3142, golems: 3868 };
+  for (const a of ARMIES) {
+    assert.equal(a.waves.length, 15, a.id);
+    const ratio = firstClearTotal(a) / before[a.id];
+    assert.ok(ratio > 1.05 && ratio < 1.25, `${a.id} ${ratio.toFixed(2)}`);
+    // (the replay share is the same 15% of everything)
+    assert.ok(Math.abs(replayTotal(a) / firstClearTotal(a) - REPLAY_SHARE) < 0.03, a.id);
+    // (waves ramp from three foes to six, and each is the army's own troops)
+    const sizes = a.waves.filter((w) => !w.boss).map((w) => w.foes.length);
+    assert.equal(sizes[0], 3, a.id);
+    assert.ok(sizes.every((n, i) => i === 0 || n >= sizes[i - 1]), a.id);
+    assert.ok(Math.max(...sizes) <= 6, a.id);
+  }
+});
+
+test('the time target for the third star scales with the fifteen waves', () => {
+  for (const a of ARMIES) assert.equal(timeTarget(a, 0), 15 * 26_000);
+});
+
+test('records saved when the armies were shorter map onto the fifteen waves: a cleared army stays cleared, stars and chests are untouched', () => {
+  const rec = migrateArmies(
+    {
+      orcs: { best: 8, won: 8, clears: 2, stars: { 8: 3, 4: 2 }, met: { 0: 7 }, hard: { 1: { won: 8, clears: 1 }, 2: { won: 5, clears: 0 } }, chests: [3, 5] },
+      undead: { best: 6, won: 4, clears: 0, stars: { 3: 1 } },
+      beasts: { best: 8, won: 7, clears: 0, stars: {} },
+      wildwood: { best: 9, won: 9, clears: 1, stars: {} },
+    },
+    1,
+  );
+  // (cleared: all fifteen waves are won, the clear count is kept)
+  assert.deepEqual([rec.orcs.best, rec.orcs.won, rec.orcs.clears, rec.orcs.waves], [15, 15, 2, 15]);
+  assert.deepEqual(rec.orcs.stars, { 8: 3, 4: 2 });
+  assert.equal(rec.orcs.met?.['0'], 7);
+  assert.deepEqual(rec.orcs.chests, [3, 5]);
+  assert.deepEqual(rec.orcs.hard, { '1': { won: 15, clears: 1 }, '2': { won: 9, clears: 0 } });
+  // (not cleared: the share of the way it had come, never past the last wave)
+  assert.deepEqual([rec.undead.best, rec.undead.won], [11, 7]);
+  assert.deepEqual([rec.beasts.best, rec.beasts.won, rec.beasts.clears], [15, 13, 0]);
+  assert.deepEqual([rec.wildwood.best, rec.wildwood.won, rec.wildwood.clears], [15, 15, 1]);
+  // (a record already in fifteen waves is not mapped again, and loading twice changes nothing)
+  assert.deepEqual(migrateArmies(JSON.parse(JSON.stringify(rec)), 1), rec);
+  const fresh = newMeta(4);
+  settleWave(fresh, 'orcs', 5, true, 0);
+  const back = migrateArmies(JSON.parse(JSON.stringify(fresh.armies)), 1);
+  assert.deepEqual([back.orcs.best, back.orcs.won], [5, 5]);
+  // (an army cleared in the old length still counts as a replay on every wave of the new one)
+  const m = newMeta(5);
+  m.armies = rec;
+  assert.equal(settleWave(m, 'orcs', 12, true, 0).replay, true);
+  assert.equal(armyCleared(m, 'orcs'), true);
+  assert.equal(armyUnlocked(m, 'undead'), true);
 });

@@ -66,6 +66,7 @@ button.primary:not(:disabled), .hmBattle { animation: none; }
 /* the version line: clear of the round buttons upright (the first row is taller now) */
 #version { top: calc(env(safe-area-inset-top) + 56px); }
 #home:not([hidden]) ~ #version { top: calc(env(safe-area-inset-top) + 64px); }
+#home:has(#hmSheet:not([hidden])) ~ #version { display: none; }
 
 /* ---- the bench: a slim card frame in the hero's rarity colour ---- */
 .card, .spell { border-style: solid; border-width: 4px; border-radius: 0; box-shadow: none; padding: 0 0 2px; background: none; border-image: url(ui/cardb.png) 2 fill / 4px stretch; }
@@ -126,7 +127,7 @@ body .sbMeter i span { background: linear-gradient(#ffd27a 50%, #d6903a 50%); } 
 #tip[data-side='left'] i { right: -16px; top: calc(var(--ay) - 8px); transform: rotate(-90deg); }
 #tip[data-side='right'] i { left: -16px; top: calc(var(--ay) - 8px); transform: rotate(90deg); }
 #tip[data-side] i { border: 0; }
-.tipLit { outline: 2px solid var(--gold-hi); outline-offset: 2px; box-shadow: none; animation: pxBlink 1s steps(1) infinite; }
+.tipLit { outline: 2px solid var(--gold-hi); outline-offset: 2px; box-shadow: 0 0 0 4px rgba(255, 210, 90, 0.35); animation: none; }
 @media (prefers-reduced-motion: reduce) { .tipLit { animation: none; } }
 
 /* ---- rows and cards (6px) ---- */
@@ -199,7 +200,7 @@ body .sbSlot { min-height: 44px; }
 /* ---- the home screen ---- */
 .chip { text-shadow: 0 2px 0 #000; }
 .round.new::after, i.badge {
-  width: 14px; height: 14px; border-radius: 0; border: 2px solid #fff; animation: pxBlink 1.4s steps(1) infinite;
+  width: 14px; height: 14px; border-radius: 0; border: 2px solid #fff; animation: none;
   clip-path: polygon(2px 0, calc(100% - 2px) 0, 100% 2px, 100% calc(100% - 2px), calc(100% - 2px) 100%, 2px 100%, 0 calc(100% - 2px), 0 2px);
 }
 @keyframes pxBlink { 50% { opacity: 0.55; } }
@@ -211,8 +212,11 @@ body .sbSlot { min-height: 44px; }
 .hmTab.hero, .hmTab.hero.on {
   margin-top: -16px; min-height: 82px; padding: 2px 2px 0; border-style: solid; border-width: 10px 10px 12px; border-radius: 0; background: none; box-shadow: none; overflow: hidden;
   border-image: url(ui/btn-gold.png) 5 5 6 fill / 10px 10px 12px stretch; color: #4a1a06; text-shadow: 0 2px 0 rgba(255, 228, 138, 0.7); font-size: 13px;
+  /* (steady: the old smooth look's glow pulse, a brightness and halo throb, still ran under the pixel frame and read as flashing) */
+  animation: none; filter: none;
 }
-.hmTab.hero::after { content: ''; position: absolute; top: 0; bottom: 0; left: -24px; width: 12px; pointer-events: none; background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0 25%, rgba(255, 255, 255, 0.75) 25% 50%, rgba(255, 255, 255, 0.4) 50% 75%, rgba(255, 255, 255, 0) 75%); transform: translateX(-24px); will-change: transform; animation: pxGlint 3.4s linear 1.2s infinite; --glintEnd: 120px; }
+/* (no glint on the tab either: it is a place to go, not a call to act, and the sweep there read as a flicker beside the Battle! button's own) */
+.hmTab.hero::after { content: none; }
 .hmTab.hero:not(.on) { filter: brightness(0.82) saturate(0.8); }
 .hmTab.hero img, .hmTab.hero.on img { width: 32px; height: 32px; filter: none; transform: none; }
 .hmTab.hero:active { border-image-source: url(ui/btn-gold-down.png); }
@@ -267,7 +271,8 @@ body .sbSlot { min-height: 44px; }
 .asCard { position: relative; flex: 0 0 100%; width: 100%; height: 100%; display: flex; flex-direction: column; scroll-snap-align: center; scroll-snap-stop: always; overflow: hidden; --par: 0; }
 .asScene { position: relative; flex: 1 1 0; min-height: 190px; overflow: hidden; background: #1a0d07; border-bottom: 6px solid #0c0604; image-rendering: pixelated; }
 .asSky, .asCrowd, .asTint, .asAir, .asVig, .asGround { position: absolute; inset: 0; pointer-events: none; }
-.asLayer { position: absolute; left: -8%; right: -8%; top: 0; bottom: 0; background: center bottom / auto 100% repeat-x; translate: calc(var(--par) * var(--k) * -2px) 0; animation: drift 40s steps(60) infinite alternate; }
+/* (the backdrop's layers stand still: drifting them moved scaled pixel art by fractions of a pixel, and the whole mountain shimmered and tore) */
+.asLayer { position: absolute; left: -8%; right: -8%; top: 0; bottom: 0; background: center bottom / auto 100% repeat-x; translate: round(calc(var(--par) * var(--k) * -2px), 1px) 0; animation: none; }
 .asLayer:first-child { left: 0; right: 0; animation: none; translate: none; }
 .asGround { top: 56%; background: linear-gradient(rgba(30, 18, 10, 0), rgba(20, 12, 6, 0.55)); }
 .asCrowd { translate: calc(var(--par) * -14px) 0; }
@@ -411,7 +416,7 @@ body .sbSlot { min-height: 44px; }
 #autoBar span { font-size: 12px; color: var(--ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 #autoBar.paused b { color: var(--dim); }
 #autoStop { min-height: 30px; padding: 0 12px; font-size: 13px; background: linear-gradient(#a82818, #5a1008); border-color: var(--gold-hi); }
-#autoSum { position: fixed; inset: 0; z-index: 9; display: flex; align-items: center; justify-content: center; padding: 12px; background: rgba(8, 3, 2, 0.82); animation: fade 0.3s ease-out; }
+#autoSum { position: fixed; inset: 0; z-index: 9; display: flex; align-items: center; justify-content: center; padding: 12px; background: rgba(8, 3, 2, 0.82); }
 #autoSum[hidden] { display: none; }
 .asumCard { width: min(320px, calc(100 * var(--vw) - 24px)); display: flex; flex-direction: column; gap: 8px; padding: 14px 14px 12px; background: var(--panel-bg); border: 2px solid var(--gold-lo); box-shadow: 0 0 0 2px var(--deep), 0 6px 18px rgba(0, 0, 0, 0.7); text-align: center; }
 .asumCard h2 { margin: 0; font: 900 22px var(--display); color: var(--gold-hi); text-shadow: 0 2px 0 #000; }
@@ -427,3 +432,11 @@ body .sbSlot { min-height: 44px; }
 .asCounts button { min-height: 28px; min-width: 40px; padding: 0 8px; font-size: 13px; }
 .asCounts button.on { background: linear-gradient(#c9762e, #8e4618); border-color: var(--gold-hi); }
 body.auto #buttons { display: none; }
+
+/* ===== No flashing (the owner's ask, after a sweep of every screen): nothing on the menus blinks hard on and off.
+   - The red "new" dots and the tutorial's highlight stand still (they blinked at full strength once a second).
+   - The old falling leaves are gone: a layer of orange specks drifted over every home page, indoors too (the tavern, the
+     hall, the library), and across the scenes' own art. The scenes have their own life (fire, embers, idling heroes). ===== */
+#leaves { display: none; }
+/* (Settings' Start over: a plain button in a warning red, steady) */
+.setting button.danger { flex: none; white-space: nowrap; color: #ffe0d8; background: #6a1a12; border-image: none; border: 2px solid #c8402a; }

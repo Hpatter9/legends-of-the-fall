@@ -11,7 +11,7 @@ import { SPELL_ELEMENT, deathKind, impactElement, missileOf, skillElement, type 
 
 /** Every sound the page can make. The first group is the page's own (taps, summons, stingers); the rest are the fight's. */
 export type Cue =
-  | 'tap' | 'summon' | 'merge' | 'star' | 'levelUp' | 'boom' | 'victory' | 'defeat' | 'skill' | 'spell'
+  | 'tap' | 'summon' | 'merge' | 'coin' | 'star' | 'levelUp' | 'boom' | 'victory' | 'defeat' | 'skill' | 'spell'
   // blows: the swing, then what it lands as
   | 'swingLight' | 'swingSword' | 'swingHeavy' | 'swingSpear' | 'swingFist'
   | 'hitLight' | 'hitSword' | 'hitHeavy' | 'hitBone' | 'hitFist' | 'hitSpear' | 'crit' | 'block' | 'miss'
@@ -26,6 +26,8 @@ export type Cue =
   | 'dash' | 'blink' | 'trap'
   // big moments
   | 'ultimate' | 'bossSkill'
+  // the summoning hall's build-ups and stingers by rarity, a Mythic's heartbeat, and a ribbon slamming in
+  | 'riseEpic' | 'riseLegend' | 'riseMythic' | 'stingEpic' | 'stingLegend' | 'stingMythic' | 'heartbeat' | 'slam'
   // deaths
   | 'deathBones' | 'deathBurn' | 'deathThud' | 'deathStone' | 'deathBlood' | 'deathLight';
 
@@ -46,6 +48,7 @@ export const CUES: Record<Cue, CueSpec> = {
   tap: c(60, 60, 1, 1, 1),
   summon: c(60, 600, 2, 2),
   merge: c(60, 900, 3, 2),
+  coin: c(80, 400, 1, 1),
   star: c(120, 300, 2, 1),
   levelUp: c(200, 700, 3, 2),
   boom: c(0, 1000, 3, 3),
@@ -104,6 +107,15 @@ export const CUES: Record<Cue, CueSpec> = {
 
   ultimate: c(600, 1400, 6, 3),
   bossSkill: c(500, 900, 4, 3),
+
+  riseEpic: c(0, 1600, 3, 3),
+  riseLegend: c(0, 2300, 4, 3),
+  riseMythic: c(0, 3000, 4, 3),
+  stingEpic: c(0, 1200, 3, 3),
+  stingLegend: c(0, 1800, 4, 3),
+  stingMythic: c(0, 2600, 5, 3),
+  heartbeat: c(0, 500, 2, 3),
+  slam: c(0, 700, 2, 3),
 
   deathBones: c(140, 600, 3, 2),
   deathBurn: c(160, 900, 3, 2),

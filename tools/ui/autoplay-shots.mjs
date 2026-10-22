@@ -41,6 +41,7 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   });
   await wait(page, 800);
   await page.click('.asAuto');
+  await page.click('.asCounts button >> nth=1');
   await wait(page, 300);
   await page.screenshot({ path: `${out}/autoplay-card-${w}x${h}.png` });
   await page.click('.asFight');
@@ -54,7 +55,7 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   await wait(page, 4500);
   await page.screenshot({ path: `${out}/autoplay-banner-${w}x${h}.png` });
   await page.evaluate(() => { window.__game.setSpeed(3); });
-  await page.waitForSelector('#autoSum:not([hidden])', { timeout: 120000 });
+  await page.waitForSelector('#autoSum:not([hidden])', { timeout: 300000 });
   await wait(page, 500);
   await page.screenshot({ path: `${out}/autoplay-summary-${w}x${h}.png` });
   await page.close();

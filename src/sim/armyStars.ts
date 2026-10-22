@@ -57,7 +57,7 @@ export function settleArmyRun(m: Meta, run: Run): StarResult | null {
   if (!a || !run.cleared) return null;
   const tier = tierOfRun(run);
   const rules = armyRules(a, tier, run);
-  const rec = (m.armies[a.id] ??= { best: 0, won: 0, clears: 0, stars: {} });
+  const rec = (m.armies[a.id] ??= { waves: a.waves.length, best: 0, won: 0, clears: 0, stars: {} });
   const before = rec.met?.[String(tier)] ?? 0;
   let mask = 0;
   const fresh: number[] = [];
@@ -105,7 +105,7 @@ export interface ChestState {
 /** The three chests of an army and where each stands. */
 export function chestsOf(m: Meta, a: Army): ChestState[] {
   const rec = recordOf(m, a.id);
-  return MILESTONES.map((at) => ({ at, kind: chestKind(at), state: rec.chests?.includes(at) ? 'earned' : 'locked', waiting: m.stash.some((c) => c.army === a.id && c.at === at) }));
+  return MILESTONES.map((at) => ({ at, kind: chestKind(at), state: rec.chests?.includes(at) ? 'earned' : 'locked', waiting: m.stash.some((c) => !c.tower && c.army === a.id && c.at === at) }));
 }
 
 /** A piece of permanent hero equipment a chest drops (`equipment.ts`); it is granted to the meta when the chest is opened. */
@@ -229,11 +229,12 @@ export function openChest(m: Meta, index: number): Loot | null {
 export function readStash(raw: unknown, rawArmies: unknown, seed: number): StashChest[] {
   const out: StashChest[] = [];
   const add = (c: StashChest) => {
-    if (!out.some((x) => x.army === c.army && x.at === c.at)) out.push(c);
+    // (a tower chest is one of several a run pays, told apart by its seed; an army's milestone is given once)
+    if (!out.some((x) => (c.tower || x.tower ? x.tower === c.tower && x.seed === c.seed : x.army === c.army && x.at === c.at))) out.push(c);
   };
   if (Array.isArray(raw))
     for (const c of raw as Partial<StashChest>[]) {
-      if (c && typeof c.army === 'string' && armyById(c.army) && MILESTONES.includes(c.at as number) && typeof c.seed === 'number') add({ army: c.army, at: c.at as number, tier: Math.max(0, Math.min(TIERS.length - 1, (c.tier ?? 0) | 0)), seed: c.seed >>> 0 });
+      if (c && typeof c.army === 'string' && armyById(c.army) && MILESTONES.includes(c.at as number) && typeof c.seed === 'number') add({ army: c.army, at: c.at as number, tier: Math.max(0, Math.min(TIERS.length - 1, (c.tier ?? 0) | 0)), seed: c.seed >>> 0, ...(c.tower === true ? { tower: true } : {}) });
     }
   // (the earlier format: a record with its given chests and the opened ones)
   if (rawArmies && typeof rawArmies === 'object')

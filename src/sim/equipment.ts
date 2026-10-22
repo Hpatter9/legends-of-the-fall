@@ -9,6 +9,7 @@
 import type { Meta } from './meta';
 import type { Rng } from './rng';
 import { ALL_HEROES, UNITS, type Rarity } from './units';
+import { levelOfKind } from './levels';
 
 import { ABILITIES, EQUIP_BASES, EQUIP_BASE_IDS, EQUIP_LIST, type Ability, type Calling, type EquipSlot, type Kind, type MainKey } from './equipBases';
 export { ABILITIES, EQUIP_BASES, EQUIP_BASE_IDS, EQUIP_LIST };
@@ -71,10 +72,12 @@ export interface EquipStats {
   regen: number;
   /** The share of burning and bleeding damage shrugged off. */
   resist: number;
-  /** The signature abilities of the worn Epic or better pieces. */
+  /** The signature abilities of the worn Epic or better pieces (and a talent's, `talents.ts`). */
   abilities: ActiveAbility[];
+  /** The skill and passive modifiers the hero's talents add (`talents.ts` lists the keys; the skills in `abilities.ts` read them). */
+  tal?: Record<string, number>;
 }
-export type StatKey = Exclude<keyof EquipStats, 'abilities'>;
+export type StatKey = Exclude<keyof EquipStats, 'abilities' | 'tal'>;
 export const STAT_KEYS: readonly StatKey[] = ['atk', 'hp', 'def', 'atkSpeed', 'moveSpeed', 'crit', 'range', 'dodge', 'charge', 'regen', 'resist'];
 export const emptyStats = (): EquipStats => ({ hp: 0, atk: 0, def: 0, atkSpeed: 0, moveSpeed: 0, crit: 0, range: 0, dodge: 0, charge: 0, regen: 0, resist: 0, abilities: [] });
 
@@ -169,7 +172,7 @@ export function itemStats(it: NewEquipment | Equipment, kind?: string): EquipSta
   return out;
 }
 
-function addStats(a: EquipStats, b: EquipStats): EquipStats {
+export function addStats(a: EquipStats, b: EquipStats): EquipStats {
   for (const k of STAT_KEYS) a[k] += b[k];
   a.abilities.push(...b.abilities);
   return a;
@@ -191,8 +194,13 @@ export function equipStats(m: Meta, kind: string): EquipStats | undefined {
     any = true;
     addStats(total, itemStats(it, kind));
   }
+  return any ? capStats(total) : undefined;
+}
+
+/** Keep the shares that could stack without end under their caps (the worn pieces and the talents together). */
+export function capStats(total: EquipStats): EquipStats {
   for (const [k, cap] of Object.entries(CAPS) as [MainKey, number][]) total[k] = Math.min(cap, total[k]);
-  return any ? total : undefined;
+  return total;
 }
 
 /** The items owned and not worn by anyone, optionally of one slot. */
@@ -331,4 +339,89 @@ export function readEquipped(raw: unknown, items: readonly Equipment[]): Record<
       }
     }
   return out;
+}
+
+// ---- equipping the best ----
+
+/** What a point of each main stat is worth to a hero in an item's score (the shares are 0.06 for +6%; `def` and `range` are flat). */
+const STAT_WORTH: Readonly<Record<StatKey, number>> = { atk: 100, hp: 60, def: 3, atkSpeed: 80, moveSpeed: 20, crit: 50, range: 12, dodge: 50, charge: 30, regen: 800, resist: 10 };
+/** What a signature ability is worth, for each point of its strength (`ABILITY_SCALE` .45 to .7 and a little more per item level). */
+export const ABILITY_WORTH = 60;
+
+/** How much each stat counts for this hero: its calling (shooters want reach and crits, casters charge, the melee defence), and a sturdy hero (high hp or defence) wants hp and defence more. */
+function weightsFor(kind: string): Record<StatKey, number> {
+  const w = { ...STAT_WORTH };
+  const calling = callingOf(kind);
+  const def = UNITS[kind];
+  if (calling === 'shooter') (w.range *= 2), (w.crit *= 1.3), (w.atkSpeed *= 1.2);
+  if (calling === 'caster') (w.charge *= 1.6), (w.atk *= 1.1);
+  if (def && (def.def >= 8 || def.hp >= 280)) (w.hp *= 1.4), (w.def *= 1.6), (w.regen *= 1.3);
+  if (def && def.hp <= 170) w.dodge *= 1.3;
+  return w;
+}
+
+/** An item's value to a hero kind: its main stats (with the calling bonus, rarity and item level, through `itemStats`) weighted for the hero's role, plus its signature ability. */
+export function itemScore(it: NewEquipment | Equipment, kind: string): number {
+  const s = itemStats(it, kind);
+  const w = weightsFor(kind);
+  let score = 0;
+  for (const k of STAT_KEYS) score += s[k] * w[k];
+  for (const a of s.abilities) score += a.s * ABILITY_WORTH;
+  return score;
+}
+
+export interface EquipPlan {
+  /** The item chosen for each slot a change is made in (slots left as they are are missing). */
+  slots: Partial<Record<EquipSlot, number>>;
+}
+
+/** The strongest piece for each slot of a hero kind: from the bag (spare items) and what the kind already wears, and, if `takeFromOthers`, what other heroes wear (never an id in `locked`). An item is chosen only when it beats what the kind wears. */
+export function bestFor(m: Meta, kind: string, takeFromOthers = false, locked: ReadonlySet<number> = new Set()): EquipPlan {
+  const plan: EquipPlan = { slots: {} };
+  const used = new Set<number>();
+  for (const slot of EQUIP_SLOTS) {
+    const cur = wornIn(m, kind, slot);
+    let best = cur;
+    let top = cur ? itemScore(cur, kind) : -1;
+    for (const it of m.equipment ?? []) {
+      if (EQUIP_BASES[it.base]?.slot !== slot || it === cur || used.has(it.id) || locked.has(it.id)) continue;
+      const owner = wearerOf(m, it.id);
+      if (owner !== undefined && owner !== kind && !takeFromOthers) continue;
+      const score = itemScore(it, kind);
+      // (ties go to the older item, so the plan is the same every time)
+      if (score > top + 1e-9) (best = it), (top = score);
+    }
+    if (best && best !== cur) plan.slots[slot] = best.id;
+  }
+  return plan;
+}
+
+/** Put the best pieces on a hero kind. Returns how many slots changed. A piece taken from another hero leaves that hero's slot empty; no item is ever on two heroes. */
+export function equipBest(m: Meta, kind: string, takeFromOthers = false, locked: ReadonlySet<number> = new Set()): number {
+  if (!m.unlocked.includes(kind)) return 0;
+  let n = 0;
+  for (const [slot, id] of Object.entries(bestFor(m, kind, takeFromOthers, locked).slots) as [EquipSlot, number][]) {
+    const owner = wearerOf(m, id);
+    if (owner !== undefined && owner !== kind) unequipItem(m, owner, slot);
+    if (equipItem(m, kind, id)) n++;
+  }
+  return n;
+}
+
+/** The unlocked hero kinds, strongest first (level, then rank, then rarity): the order `equipAll` serves them in. */
+export function strongestFirst(m: Meta): string[] {
+  const rank = (k: string) => RANK_SHARDS_FOR(m, k);
+  return ALL_HEROES.filter((k) => m.unlocked.includes(k)).sort((a, b) => levelOfKind(m, b) - levelOfKind(m, a) || rank(b) - rank(a) || (UNITS[b].rarity ?? 1) - (UNITS[a].rarity ?? 1) || ALL_HEROES.indexOf(a) - ALL_HEROES.indexOf(b));
+}
+const RANK_SHARDS_FOR = (m: Meta, k: string): number => m.shards[k] ?? 0;
+
+/** Equip every unlocked hero (or the kinds given), strongest first. A hero served earlier keeps what it was given (`takeFromOthers` only strips heroes not yet served). Returns the slots changed. */
+export function equipAll(m: Meta, takeFromOthers = false, kinds: readonly string[] = strongestFirst(m)): number {
+  const locked = new Set<number>();
+  let n = 0;
+  for (const kind of kinds) {
+    n += equipBest(m, kind, takeFromOthers, locked);
+    for (const id of Object.values(m.equipped?.[kind] ?? {})) locked.add(id);
+  }
+  return n;
 }
