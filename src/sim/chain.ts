@@ -1,53 +1,138 @@
 // The long map of an army run: the waves are sections of one winding road. Each section is a board of its own, seven
-// across by nine deep, so a fight, its pathing and its balance are those of a single board; the sections are joined
-// edge to edge, each new one on the northeast or the northwest edge of the one before. Pure rules (no Pixi, no DOM): the
-// renderer draws the chain and walks the heroes over it, but the sim only ever fights on one section.
+// across by nine deep, so a fight, its pathing and its balance are those of a single board. The fight stays in the board's
+// own coordinates (`u` across, `v` from the foes' edge at 0 to the heroes' edge at D - 1); the road lays each section in the
+// world turned a quarter turn at a time (`turn.ts`), so the heroes deploy on the edge they came in by and fight along the
+// road, whichever way the road runs. Pure rules (no Pixi, no DOM): the renderer draws the chain and walks the heroes over
+// it, but the sim only ever fights on one section.
 //
-// Placement: `origin` is where a section's tile (0, 0) lies, in tiles, measured from the first section's. The northeast
-// edge of a board is its v = 0 row, the northwest edge its u = 0 column. A northeast join puts the new section's back row
-// (v = D - 1, where the heroes deploy) against the old section's foes' row; a northwest join puts the new section's
-// u = W - 1 column against the old u = 0 column. Both steps move up the screen, one a way right and one left, so every
-// section has its own place on the lattice and the road can never cross itself.
+// The world is a grid of tiles (U runs down to the right on the screen, V down to the left). A section's `origin` is the
+// corner of its footprint (a 7x9 rectangle, 9x7 when turned a quarter), and its tile (u, v) lies at `origin + turnTile(rot, u, v)`.
+// A new section goes on the side of the one before: straight on (its foes' side), or either flank, never back over the edge the
+// road came in by, and never on top of an earlier section. Its heroes' edge (its board's v = D - 1 row) lies against that side.
 
-import { CLIMB_MAX, D, DIRS, DEPLOY_ROWS, makeBoard, standable, tileAt, TOP, W, type Area, type Board, type Tile } from './board';
+import { CLIMB_MAX, D, DEPLOY_ROWS, DIRS, makeBoard, standable, TOP, W, tileAt, type Area, type Board, type Tile } from './board';
 import { walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
+import { footDims, turnDir, turnTile, unturnTile, type Rot } from './turn';
 
-export type Join = 'ne' | 'nw';
+/** The side of a section the next goes on, by where it lies on the screen (U runs southeast, V southwest). */
+export type Join = 'ne' | 'nw' | 'se' | 'sw';
+const SIDE: Record<Join, [number, number]> = { ne: [0, -1], nw: [-1, 0], se: [1, 0], sw: [0, 1] };
+const JOINS = Object.keys(SIDE) as Join[];
 
 export interface Section {
   /** The wave it hosts (from 1). */
   wave: number;
   board: Board;
-  /** Where its tile (0, 0) lies against the first section's, in tiles. */
+  /** How many quarter turns the board is laid in the world. */
+  rot: Rot;
+  /** Where the corner of its footprint lies, in world tiles. */
   origin: { u: number; v: number };
-  /** How it joins the section before it (none for the first). */
+  /** The side of the section before it that it joins (none for the first). */
   join: Join | null;
   /** A boss arena. */
   boss: boolean;
 }
 
-/** The most the road may drift to one side before the next join steers it back (northeast steps minus northwest steps). */
-export const DRIFT_MAX = 2;
-/** How far a joined edge tile may stand above or below the tile it joins (gentler than a cliff). */
+/** How far a joined edge tile may stand above or below the tile it meets (gentler than a cliff). */
 export const JOIN_STEP = 1;
+/** The fewest tiles a new section's heroes' edge must touch of the section before. */
+export const MIN_CONTACT = 5;
 
-/** The joins of a road of `n` sections (the first has none): seeded, but steered back once the road has drifted `DRIFT_MAX` to a side. */
-export function joinsOf(seed: number, n: number): (Join | null)[] {
-  const out: (Join | null)[] = [null];
-  let drift = 0;
-  for (let k = 2; k <= n; k++) {
-    let j: Join = new Rng(mixSeed(seed, 0xc4a1, k)).chance(0.5) ? 'ne' : 'nw';
-    if (drift >= DRIFT_MAX) j = 'nw';
-    else if (drift <= -DRIFT_MAX) j = 'ne';
-    drift += j === 'ne' ? 1 : -1;
-    out.push(j);
+/** Where a section lies, before it has a board. */
+export interface Place {
+  rot: Rot;
+  ou: number;
+  ov: number;
+  join: Join | null;
+}
+interface Rect {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+}
+const rectOf = (p: Place): Rect => {
+  const [w, d] = footDims(p.rot);
+  return { x0: p.ou, y0: p.ov, x1: p.ou + w, y1: p.ov + d };
+};
+export const footprint = (s: Section): Rect => rectOf({ rot: s.rot, ou: s.origin.u, ov: s.origin.v, join: s.join });
+const overlaps = (a: Rect, b: Rect) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+
+/** The quarter turn that puts a board's heroes' edge against a side whose outward normal is `n` (the board's back, +v, then points at the section before). */
+function rotFacing(n: [number, number]): Rot {
+  for (const r of [0, 1, 2, 3] as const) {
+    const [a, b] = turnDir(r, 0, 1);
+    if (a === -n[0] && b === -n[1]) return r;
+  }
+  return 0;
+}
+
+/** Every place the section after `prev` can go: each side but the one the road came in by, each way of sliding along it that keeps `MIN_CONTACT` tiles together. */
+export function placesAfter(prev: Place): Place[] {
+  const back = turnDir(prev.rot, 0, 1);
+  const p = rectOf(prev);
+  const out: Place[] = [];
+  for (const join of JOINS) {
+    const n = SIDE[join];
+    if (n[0] === back[0] && n[1] === back[1]) continue;
+    const rot = rotFacing(n);
+    const [w, d] = footDims(rot);
+    // (the new section's heroes' edge is seven tiles; it slides along the side so that at least five touch)
+    const alongX = n[1] !== 0;
+    const len = alongX ? p.x1 - p.x0 : p.y1 - p.y0;
+    for (let t = -(W - MIN_CONTACT); t <= len - MIN_CONTACT; t++) {
+      const ou = n[0] > 0 ? p.x1 : n[0] < 0 ? p.x0 - w : p.x0 + t;
+      const ov = n[1] > 0 ? p.y1 : n[1] < 0 ? p.y0 - d : p.y0 + t;
+      out.push({ rot, ou, ov, join });
+    }
   }
   return out;
 }
 
-/** Where the section `join` puts it lies against the one before, in tiles. */
-export const stepOf = (join: Join): { u: number; v: number } => (join === 'ne' ? { u: 0, v: -D } : { u: -W, v: 0 });
+/** The road's places for `n` sections: the first as always (not turned, the heroes in the southwest), each after chosen by the seed among those that fit, leaning to a compact road, with a step back (never needed in practice) if a choice paints the road into a corner. */
+export function layRoad(seed: number, n: number): Place[] {
+  const road: Place[] = [{ rot: 0, ou: 0, ov: 0, join: null }];
+  let budget = 20000;
+  const bounds = (list: Place[]) => {
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const q of list) {
+      const r = rectOf(q);
+      x0 = Math.min(x0, r.x0); y0 = Math.min(y0, r.y0); x1 = Math.max(x1, r.x1); y1 = Math.max(y1, r.y1);
+    }
+    return (x1 - x0) + (y1 - y0) + 2 * Math.max(x1 - x0, y1 - y0);
+  };
+  const go = (): boolean => {
+    if (road.length >= n) return true;
+    if (budget-- <= 0) return false;
+    const rng = new Rng(mixSeed(seed, 0xc4a1, road.length + 1));
+    const prev = road[road.length - 1];
+    const fits = placesAfter(prev).filter((c) => road.every((q) => !overlaps(rectOf(c), rectOf(q))));
+    // (a lean to the compact, softened by the seed so the road does not always curl the same way; a straight run of three is a little dearer)
+    const run = road.length >= 3 && road[road.length - 1].join === road[road.length - 2].join && road[road.length - 2].join === road[road.length - 3].join;
+    const scored = fits.map((c) => ({ c, s: bounds([...road, c]) + rng.next() * 16 + (run && c.join === prev.join ? 4 : 0) })).sort((a, b) => a.s - b.s);
+    for (const { c } of scored) {
+      road.push(c);
+      if (go()) return true;
+      road.pop();
+    }
+    return false;
+  };
+  if (!go()) throw new Error(`no road of ${n} sections for seed ${seed}`);
+  return road;
+}
+
+/** The world tile of board tile (u, v) of a section. */
+export function worldOf(s: Pick<Section, 'rot' | 'origin'>, u: number, v: number): [number, number] {
+  const [a, b] = turnTile(s.rot, u, v);
+  return [a + s.origin.u, b + s.origin.v];
+}
+
+/** The board tile of a section at a world tile, or null if the section does not cover it. */
+export function boardTileAt(s: Pick<Section, 'rot' | 'origin' | 'board'>, U: number, V: number): [number, number] | null {
+  const [u, v] = unturnTile(s.rot, U - s.origin.u, V - s.origin.v);
+  return u >= 0 && v >= 0 && u < s.board.w && v < s.board.d ? [u, v] : null;
+}
 
 /** Ease the board's heights so no neighbours are more than `CLIMB_MAX` apart, never moving a pinned tile. */
 function easePinned(b: Board, pinned: ReadonlySet<number>): void {
@@ -74,59 +159,63 @@ function easePinned(b: Board, pinned: ReadonlySet<number>): void {
   }
 }
 
-/** The indices of a board's edge that meets the section before, in walking order. */
-export function edgeOf(b: Board, join: Join): number[] {
-  const out: number[] = [];
-  if (join === 'ne') for (let u = 0; u < b.w; u++) out.push((b.d - 1) * b.w + u);
-  else for (let v = 0; v < b.d; v++) out.push(v * b.w + b.w - 1);
+/** The pairs of tiles that meet where a new section's heroes' edge lies against the section before: the new board's tile, the old board's. */
+export function contactPairs(prev: Section, next: Section): { n: [number, number]; p: [number, number] }[] {
+  const [bu, bv] = turnDir(next.rot, 0, 1);
+  const out: { n: [number, number]; p: [number, number] }[] = [];
+  for (let u = 0; u < W; u++) {
+    const [U, V] = worldOf(next, u, D - 1);
+    const p = boardTileAt(prev, U + bu, V + bv);
+    if (p) out.push({ n: [u, D - 1], p });
+  }
   return out;
 }
 
-/** The tiles of the old board that face `edgeOf` of the new one, in the same order. */
-function facingOf(old: Board, join: Join): Tile[] {
-  const out: Tile[] = [];
-  if (join === 'ne') for (let u = 0; u < old.w; u++) out.push(old.tiles[u]);
-  else for (let v = 0; v < old.d; v++) out.push(old.tiles[v * old.w]);
-  return out;
-}
-
-/** Join a fresh board onto the one before it: the joined edge is cleared of boulders and special ground, each of its tiles stands within `JOIN_STEP` of the tile it meets, and the land inside is eased to match. Edits `next` only. */
-export function joinBoard(old: Board, next: Board, join: Join): void {
-  const edge = edgeOf(next, join);
-  const facing = facingOf(old, join);
-  let prev = -1;
-  edge.forEach((idx, k) => {
-    const t = next.tiles[idx];
+/** Join a fresh board onto the one before it: its heroes' edge is cleared of boulders and special ground, each tile of it stands within `JOIN_STEP` of the tile it meets, and the land inside is eased to match. Edits `next.board` only. */
+export function joinBoard(prev: Section, next: Section): void {
+  const b = next.board;
+  const pairs = contactPairs(prev, next);
+  const meets = new Map(pairs.map((q) => [q.n[0], q.p]));
+  const edge: number[] = [];
+  const h: number[] = new Array(W).fill(-1);
+  let last = -1;
+  let first = -1;
+  let end = -1;
+  for (let u = 0; u < W; u++) {
+    const t = b.tiles[(D - 1) * W + u];
+    edge.push((D - 1) * W + u);
     delete t.rock;
     delete t.ground;
-    let lo = Math.max(0, facing[k].h - JOIN_STEP);
-    let hi = Math.min(TOP, facing[k].h + JOIN_STEP);
-    // (and within a climb of the edge tile beside it, which the first clamp can leave out of reach)
-    if (prev >= 0) {
-      lo = Math.max(lo, prev - CLIMB_MAX);
-      hi = Math.min(hi, prev + CLIMB_MAX);
+    const p = meets.get(u);
+    if (!p) continue;
+    // (a tile that meets another stands within `JOIN_STEP` of it, and within a climb of the edge tile beside it, which the first clamp can leave out of reach)
+    const meet = prev.board.tiles[p[1] * prev.board.w + p[0]].h;
+    let lo = Math.max(0, meet - JOIN_STEP);
+    let hi = Math.min(TOP, meet + JOIN_STEP);
+    if (last >= 0) {
+      lo = Math.max(lo, last - CLIMB_MAX);
+      hi = Math.min(hi, last + CLIMB_MAX);
     }
-    t.h = Math.min(hi, Math.max(lo, t.h));
-    prev = t.h;
-  });
-  easePinned(next, new Set(edge));
+    h[u] = last = Math.min(hi, Math.max(lo, t.h));
+    if (first < 0) first = u;
+    end = u;
+  }
+  // (the tiles of the edge that meet nothing follow their neighbours' heights, outwards from the ones that do)
+  for (let u = end + 1; u < W; u++) h[u] = Math.min(h[u - 1] + CLIMB_MAX, Math.max(h[u - 1] - CLIMB_MAX, b.tiles[(D - 1) * W + u].h));
+  for (let u = first - 1; u >= 0; u--) h[u] = Math.min(h[u + 1] + CLIMB_MAX, Math.max(h[u + 1] - CLIMB_MAX, b.tiles[(D - 1) * W + u].h));
+  if (first >= 0) for (let u = 0; u < W; u++) b.tiles[(D - 1) * W + u].h = h[u];
+  easePinned(b, new Set(edge));
 }
 
-/** The road of `waves` sections for a run: wave n's board is `makeBoard(boardSeed(n), area)`, joined to the one before. */
+/** The road of `waves` sections for a run: wave n's board is `makeBoard(boardSeed(n), area)`, laid on the road and joined to the one before. */
 export function buildChain(seed: number, waves: number, area: Area, boardSeed: (wave: number) => number, boss: (wave: number) => boolean): Section[] {
-  const joins = joinsOf(seed, waves);
+  const road = layRoad(seed, waves);
   const out: Section[] = [];
   for (let n = 1; n <= waves; n++) {
-    const board = makeBoard(boardSeed(n), area);
-    const join = joins[n - 1];
-    let origin = { u: 0, v: 0 };
-    if (join) {
-      const prev = out[n - 2];
-      joinBoard(prev.board, board, join);
-      const s = stepOf(join);
-      origin = { u: prev.origin.u + s.u, v: prev.origin.v + s.v };
-    }
-    out.push({ wave: n, board, origin, join, boss: boss(n) });
+    const q = road[n - 1];
+    const s: Section = { wave: n, board: makeBoard(boardSeed(n), area), rot: q.rot, origin: { u: q.ou, v: q.ov }, join: q.join, boss: boss(n) };
+    if (n > 1) joinBoard(out[n - 2], s);
+    out.push(s);
   }
   return out;
 }
@@ -134,11 +223,11 @@ export function buildChain(seed: number, waves: number, area: Area, boardSeed: (
 /** A board of its own for a fight: the section's, copied so the fight can change it freely. */
 export const cloneBoard = (b: Board): Board => ({ ...b, tiles: b.tiles.map((t) => ({ ...t })) });
 
-/** Where section `of` lies against section `host`, in tiles (the host's tile (0, 0) is the origin of the frame the renderer draws in). */
+/** Where section `of` lies against section `host`, in world tiles. */
 export const against = (of: Section, host: Section): { u: number; v: number } => ({ u: of.origin.u - host.origin.u, v: of.origin.v - host.origin.v });
 
-/** Where the old section's tiles lie in the frame of the section that follows it, given how that one joined. */
-export const behind = (join: Join): { u: number; v: number } => (join === 'ne' ? { u: 0, v: D } : { u: W, v: 0 });
+/** The frame (`render/iso.ts`) a section is drawn in with `host` at the origin. */
+export const frameOf = (s: Section, host: Section): { rot: Rot; ou: number; ov: number } => ({ rot: s.rot, ou: s.origin.u - host.origin.u, ov: s.origin.v - host.origin.v });
 
 // ---- the heroes' walk --------------------------------------------------------------------------------------------------
 
@@ -182,24 +271,37 @@ export function transferFormation(next: Board, formation: readonly Spot[]): Map<
   return out;
 }
 
-/** The two sections as one board, in the frame of the new one (its tile (0, 0) is the origin); the old section's tiles are shifted by `offset`. A walker's path over both is found on it. */
-export function seam(old: Board, next: Board, join: Join): { board: Board; offset: { u: number; v: number } } {
-  const off = behind(join);
-  if (join === 'ne') return { board: { seed: next.seed, area: next.area, w: next.w, d: next.d + old.d, tiles: [...next.tiles, ...old.tiles] }, offset: off };
-  const w = next.w + old.w;
+/** The two sections as one board of world tiles (a tile neither covers is a wall); `minU`, `minV` are the world tile of its (0, 0). A walker's path over both is found on it. */
+export function seam(a: Section, b: Section): { board: Board; minU: number; minV: number } {
+  const ra = footprint(a);
+  const rb = footprint(b);
+  const minU = Math.min(ra.x0, rb.x0);
+  const minV = Math.min(ra.y0, rb.y0);
+  const w = Math.max(ra.x1, rb.x1) - minU;
+  const d = Math.max(ra.y1, rb.y1) - minV;
+  const wall: Tile = { h: 0, rock: true, deco: 0 };
   const tiles: Tile[] = [];
-  for (let v = 0; v < next.d; v++) for (let u = 0; u < w; u++) tiles.push(u < next.w ? next.tiles[v * next.w + u] : old.tiles[v * old.w + u - next.w]);
-  return { board: { seed: next.seed, area: next.area, w, d: next.d, tiles }, offset: off };
+  for (let v = 0; v < d; v++)
+    for (let u = 0; u < w; u++) {
+      const U = u + minU;
+      const V = v + minV;
+      const inB = boardTileAt(b, U, V);
+      const inA = boardTileAt(a, U, V);
+      tiles.push(inB ? b.board.tiles[inB[1] * b.board.w + inB[0]] : inA ? a.board.tiles[inA[1] * a.board.w + inA[0]] : wall);
+    }
+  return { board: { seed: b.board.seed, area: b.board.area, w, d, tiles }, minU, minV };
 }
 
-/** The tiles a walker takes from `from` on the old section to `to` on the new, in the new section's frame (both ends included). A walker that jumps `jump` never climbs a cliff; a path that cannot be found is a straight dash. */
-export function walkAcross(old: Board, next: Board, join: Join, from: { u: number; v: number }, to: { u: number; v: number }, jump: number): { u: number; v: number }[] {
-  const { board, offset } = seam(old, next, join);
-  const start = { u: from.u + offset.u, v: from.v + offset.v };
+/** The world tiles a walker takes from `from` on the old section to `to` on the new, both ends included. A walker that jumps `jump` never climbs a cliff; a path that cannot be found is a straight dash. */
+export function walkAcross(old: Section, next: Section, from: { u: number; v: number }, to: { u: number; v: number }, jump: number): { u: number; v: number }[] {
+  const { board, minU, minV } = seam(old, next);
+  const [fu, fv] = worldOf(old, from.u, from.v);
+  const [tu, tv] = worldOf(next, to.u, to.v);
+  const start = { u: fu - minU, v: fv - minV };
   const w = walkFrom(board, start, jump, new Set());
-  const goal = to.v * board.w + to.u;
-  if (!Number.isFinite(w.cost[goal])) return [start, to];
+  const goal = (tv - minV) * board.w + (tu - minU);
+  if (!Number.isFinite(w.cost[goal])) return [{ u: fu, v: fv }, { u: tu, v: tv }];
   const path: { u: number; v: number }[] = [];
-  for (let j = goal; j >= 0; j = w.from[j]) path.push({ u: j % board.w, v: Math.floor(j / board.w) });
+  for (let j = goal; j >= 0; j = w.from[j]) path.push({ u: (j % board.w) + minU, v: Math.floor(j / board.w) + minV });
   return path.reverse();
 }
