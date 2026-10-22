@@ -11,6 +11,7 @@ import { eliteKits } from './eliteFoes';
 import { calBossKits } from './calamityBosses';
 import { Rng } from './rng';
 import { fxBlow, fxStruck, fxTick, hidden } from './equipFx';
+import { heroUltimates } from './ultimates';
 
 /** A skill fires at this much charge. */
 export const CHARGE_MAX = 100;
@@ -18,6 +19,8 @@ export const CHARGE_MAX = 100;
 export const BRITTLE_MULT = 1.3;
 /** An ultimate gathers charge at this share of its first skill's rate. */
 export const ULT_RATE = 0.45;
+/** The level a hero fights at to have an ultimate that carries `unlock: ULT_LEVEL` (a kind's lasting level; in the spire and Calamity, the in-run level). */
+export const ULT_LEVEL = 15;
 
 /** Damage over time: `dmg` every `every` ms for `ms`. */
 export interface Dot {
@@ -125,13 +128,19 @@ export interface Skill {
   /** How long the hero is busy casting, and which row of its sheet plays. */
   castMs: number;
   anim: 'attack' | 'attack2' | 'defend';
+  /** For a hero's ultimate: the level it fights at before this ultimate is its own (it neither charges nor fires below it); unset is always. A foe's never waits. */
+  unlock?: number;
+  /** For an ultimate: how strong it is, as a multiple of the caster's attack while it casts (its blows, healing and callings take it; 1 is as written). The balance knob for each hero's ultimate. */
+  power?: number;
+  /** For an ultimate: how fast it charges, as a multiple of `ULT_RATE` (1 is as written): the other balance knob, since a slow-hitting hero's meter would otherwise fill too late to matter. */
+  rate?: number;
   /** Fire it if there is something to fire at; false leaves the charge full for a moment later. */
   cast(b: Battle, me: Unit, out: BattleEvent[]): boolean;
 }
 
 export interface Kit {
   skill: Skill;
-  /** An ultimate, a second, bigger skill (eight heroes have one): it charges on its own meter, `ULT_RATE` as fast as the first (its own charge rates are unused). */
+  /** An ultimate, a second, bigger skill (every hero has one; `ultimates.ts` has all but the first eight's): it charges on its own meter, `ULT_RATE` as fast as the first (its own charge rates are unused). */
   ultimate?: Skill;
   passive: Passive;
 }
@@ -192,7 +201,7 @@ export const GUARD_SHARE = 0.5;
 
 /** Samurai: a dash along a line of tiles, cutting every foe on it and landing on the last free tile. */
 const DASH_TILES = 4;
-function iaido(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+function iaido(b: Battle, me: Unit, out: BattleEvent[], tiles = DASH_TILES, mult = 1.6): boolean {
   const def = defOf(me);
   let best: { way: number; land: At; hit: Unit[]; hp: number } | undefined;
   for (let way = 0; way < 4; way++) {
@@ -200,7 +209,7 @@ function iaido(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     let h = tileOf(b, me).h;
     let land: At | undefined;
     const hit: Unit[] = [];
-    for (let i = 1; i <= reachOf(me, DASH_TILES); i++) {
+    for (let i = 1; i <= reachOf(me, tiles); i++) {
       const n = { u: me.u + du * i, v: me.v + dv * i };
       const t = tileAt(b.board, n.u, n.v);
       if (!t || !standable(t) || Math.abs(t.h - h) > def.jump) break;
@@ -219,7 +228,7 @@ function iaido(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const h0 = tileOf(b, me).h;
   me.facing = best.way;
   for (const f of best.hit) {
-    const power = atkOf(me) * 1.6 * blowMult(h0, tileOf(b, f).h, best.way, f.facing);
+    const power = atkOf(me) * mult * blowMult(h0, tileOf(b, f).h, best.way, f.facing);
     hurt(b, me, f, net(power, f), true, false, out, 'skill');
   }
   const ms = 260;
@@ -230,10 +239,10 @@ function iaido(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   return true;
 }
 
-/** A blink behind a foe (the first `order` puts first that has a free tile beside it) and a backstab for `mult` of the attack. */
-function blinkStrike(b: Battle, me: Unit, out: BattleEvent[], mult: number, order: (x: Unit, y: Unit) => number): boolean {
+/** A blink behind a foe (the first `order` puts first that has a free tile beside it) and a backstab for `mult` of the attack. A foe in `done` is passed over, and the one struck is added to it. */
+function blinkStrike(b: Battle, me: Unit, out: BattleEvent[], mult: number, order: (x: Unit, y: Unit) => number, done?: Set<number>): boolean {
   const def = defOf(me);
-  const foes = foesOf(b, me).sort(order);
+  const foes = foesOf(b, me).filter((f) => !done?.has(f.id)).sort(order);
   for (const f of foes) {
     const hf = tileOf(b, f).h;
     // behind is where a foe's facing points away from; then its sides, then its front
@@ -257,6 +266,7 @@ function blinkStrike(b: Battle, me: Unit, out: BattleEvent[], mult: number, orde
     out.push({ kind: 'blink', by: me.id, from, to });
     const power = atkOf(me) * mult * blowMult(tileOf(b, me).h, hf, me.facing, f.facing);
     hurt(b, me, f, net(power, f), true, false, out, 'skill');
+    done?.add(f.id);
     return true;
   }
   return false;
@@ -1517,6 +1527,9 @@ KITS.forgeTitan = {
   passive: { name: 'Adamant Plate', text: 'Blows from the front lose a third, it cannot be knocked back and it mends 1% of its health a second', block: 0.33, steady: true, regen: 0.01 },
 };
 
+// Every other hero's ultimate (`ultimates.ts`), unlocked at `ULT_LEVEL`; the first eight's are retuned there.
+for (const [kind, ult] of Object.entries(heroUltimates((kind) => KITS[kind].ultimate))) KITS[kind].ultimate = ult;
+
 // The named elites of the tower (`elites.ts`) borrow the foes' skills and heroes' skills too.
 Object.assign(KITS, eliteKits(KITS), calBossKits(KITS));
 
@@ -1527,9 +1540,10 @@ export function tryCast(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const k = kitOf(me);
   if (!k) return false;
   // (a full ultimate goes first; if it has nothing to hit, the ordinary skill may still go)
-  if (k.ultimate && (me.charge2 ?? 0) >= k.ultimate.need && powered(b, me, k.ultimate, tal(me, 'ultPow'), out)) {
-    me.charge2! -= k.ultimate.need;
-    return began(b, me, k.ultimate, out);
+  const ult = ultimateOf(me);
+  if (ult && (me.charge2 ?? 0) >= ult.need && powered(b, me, ult, tal(me, 'ultPow') + (ult.power ?? 1) - 1, out)) {
+    me.charge2! -= ult.need;
+    return began(b, me, ult, out);
   }
   if (me.charge < k.skill.need || !powered(b, me, k.skill, 0, out)) return false;
   me.charge -= k.skill.need;
@@ -1564,14 +1578,20 @@ function began(b: Battle, me: Unit, s: Skill, out: BattleEvent[]): boolean {
   return true;
 }
 
+/** A fighter's ultimate, once it is its own: a hero's waits for the level its `unlock` names. */
+export const ultimateOf = (u: Unit): Skill | undefined => {
+  const s = kitOf(u)?.ultimate;
+  return s && (!s.unlock || u.side !== 'hero' || (u.level ?? 1) >= s.unlock) ? s : undefined;
+};
+
 /** Whether a hero's ultimate is full. */
-export const ultimateReady = (u: Unit): boolean => !!kitOf(u)?.ultimate && (u.charge2 ?? 0) >= kitOf(u)!.ultimate!.need;
+export const ultimateReady = (u: Unit): boolean => !!ultimateOf(u) && (u.charge2 ?? 0) >= ultimateOf(u)!.need;
 
 export const gain = (u: Unit, n: number) => {
   const k = u.alive ? kitOf(u) : undefined;
   if (!k) return;
   u.charge = Math.min(CHARGE_MAX, u.charge + n);
-  if (k.ultimate) u.charge2 = Math.min(CHARGE_MAX, (u.charge2 ?? 0) + n * ULT_RATE * (1 + tal(u, 'ultRate')));
+  if (ultimateOf(u)) u.charge2 = Math.min(CHARGE_MAX, (u.charge2 ?? 0) + n * ULT_RATE * (ultimateOf(u)!.rate ?? 1) * (1 + tal(u, 'ultRate')));
 };
 
 /** What a blow or skill does to its target after guards, blocks and dodges (null when slipped), charging both sides. */
@@ -1778,3 +1798,6 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
     b.traps = b.traps.filter((tr) => tr.until > b.t);
   }
 }
+
+/** What `ultimates.ts` builds the heroes' ultimates from: the skills' own engines and rules. */
+export { apart, near3x3, net, crowd, slowFor, drag, durOf, reachOf, callSummon, blinkStrike, iaido, chargeAt, lineFoes, DIR, HEX_EVERY };

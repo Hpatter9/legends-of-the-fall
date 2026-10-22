@@ -60,6 +60,14 @@ const SCENARIOS = {
   'boss-entrance': { heroes: ['knight', 'archer', 'wizard'], band: 'orcWarlord', boss: { hp: 0.2, atk: 1, size: 1.5 }, step: 130, zoom: 1.8, entrance: true },
   'boss-skill': { heroes: ['knight', 'archer', 'wizard'], band: 'orcWarlord', boss: { hp: 0.2, atk: 1, size: 1.5 }, foesCharged: true, until: 'skill', step: 130, zoom: 1.8 },
   'status-burn-slow': { heroes: ['wizard', 'knight'], band: 'skeletons', until: 'hit', skip: 2500, cast: 'frost', step: 300, zoom: 2.2 },
+  // the other heroes' ultimates (docs/notes/ultimates.md): contact sheets go to docs/samples/ultimates-<name>-upright.png
+  'ultimates-arrow-storm': { heroes: ['archer', 'knight', 'samurai'], band: 'orcs', charged: true, until: 'skill:Arrow Storm', step: 130, zoom: 1.5 },
+  'ultimates-armageddon': { heroes: ['wizard', 'knight', 'samurai'], band: 'skeletons', charged: true, until: 'skill:Armageddon', step: 150, zoom: 1.5 },
+  'ultimates-last-bastion': { heroes: ['knight', 'samurai', 'archer'], band: 'werewolves', charged: true, until: 'skill:Last Bastion', step: 160, zoom: 1.8 },
+  'ultimates-divine-intervention': { heroes: ['cleric', 'knight', 'samurai', 'archer'], band: 'skeletons', charged: true, wound: 0.35, until: 'skill:Divine Intervention', step: 150, zoom: 1.9 },
+  'ultimates-hunt-of-the-pack': { heroes: ['beastmaster', 'knight', 'samurai'], band: 'orcs', charged: true, until: 'skill:Hunt of the Pack', step: 150, zoom: 1.9 },
+  'ultimates-time-stop': { heroes: ['timeWitch', 'knight', 'samurai'], band: 'werewolves', charged: true, until: 'skill:Time Stop', step: 150, zoom: 1.7 },
+  'ultimates-cataclysm': { heroes: ['juggernaut', 'knight', 'samurai'], band: 'orcs', charged: true, until: 'skill:Cataclysm', step: 130, zoom: 1.8 },
   'status-stun-thousand-fists': { heroes: ['ninjaMonk', 'knight'], band: 'skeletons', charged: true, until: 'skill', step: 150, zoom: 2.4 },
 };
 const arg = process.argv[2];
@@ -111,7 +119,7 @@ for (const [tag, w, h] of arg === 'perf' ? [] : (process.env.SIZES ?? 'upright,s
         if (process.env.DEBUG) console.log(i, [...new Set(seen.map((e) => e[1] + (e[2] ? ':' + e[2] : '')))].join(' '));
       }
       const files = shots.map((buf, k) => { const f = `out/fxframes/${name}-${tag}-${k}.png`; writeFileSync(f, buf); return f; });
-      execFileSync('python3', ['-I', 'tools/fxlab/sheet.py', `docs/samples/combat-fx-${name}-${tag}.png`, ...files]);
+      execFileSync('python3', ['-I', 'tools/fxlab/sheet.py', name.startsWith('ultimates-') ? `docs/samples/${name}-${tag}.png` : `docs/samples/combat-fx-${name}-${tag}.png`, ...files]);
       console.log('ok', name, tag);
     } catch (e) { console.log('FAILED', name, tag, e.message.split('\n')[0]); }
     await ctx.close();

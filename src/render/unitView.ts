@@ -7,7 +7,7 @@ import { defOf, type Unit } from '../sim/battle';
 import { formOf } from '../sim/units';
 import type { Texture } from 'pixi.js';
 import { facesRightOf, framesOf, figureOf, type Anim } from './sheets';
-import { CHARGE_MAX, kitOf } from '../sim/abilities';
+import { CHARGE_MAX, kitOf, ultimateOf } from '../sim/abilities';
 import { at, depth, HH } from './iso';
 import { VFX } from './vfxArt';
 import { PACK } from './fxSheets';
@@ -346,9 +346,10 @@ export class UnitSprite {
       const c = Math.min(1, u.charge / CHARGE_MAX);
       g.rect(-BAR_W / 2 - 1, top + 5, BAR_W + 2, 4).fill({ color: 0x1a1410, alpha: 0.85 });
       g.rect(-BAR_W / 2, top + 6, BAR_W * c, 2).fill(full ? (Math.floor(t / 150) % 2 ? 0xffe27a : 0xffb030) : 0x4a90e8);
-      // an ultimate (the heroes that have one), a violet sliver under it
-      if (kit.ultimate) {
-        const ready = (u.charge2 ?? 0) >= kit.ultimate.need;
+      // an ultimate (once the hero has reached its level), a violet sliver under it
+      const ult = ultimateOf(u);
+      if (ult) {
+        const ready = (u.charge2 ?? 0) >= ult.need;
         g.rect(-BAR_W / 2 - 1, top + 9, BAR_W + 2, 3).fill({ color: 0x1a1410, alpha: 0.85 });
         g.rect(-BAR_W / 2, top + 10, BAR_W * Math.min(1, (u.charge2 ?? 0) / CHARGE_MAX), 1).fill(ready ? (Math.floor(t / 120) % 2 ? 0xffffff : ULT_READY) : ULT_FILL);
       }
