@@ -11,7 +11,7 @@ import { SPELL_ELEMENT, deathKind, impactElement, missileOf, skillElement, type 
 
 /** Every sound the page can make. The first group is the page's own (taps, summons, stingers); the rest are the fight's. */
 export type Cue =
-  | 'tap' | 'summon' | 'merge' | 'star' | 'levelUp' | 'boom' | 'victory' | 'defeat' | 'skill' | 'spell'
+  | 'tap' | 'summon' | 'merge' | 'coin' | 'star' | 'levelUp' | 'boom' | 'victory' | 'defeat' | 'skill' | 'spell'
   // blows: the swing, then what it lands as
   | 'swingLight' | 'swingSword' | 'swingHeavy' | 'swingSpear' | 'swingFist'
   | 'hitLight' | 'hitSword' | 'hitHeavy' | 'hitBone' | 'hitFist' | 'hitSpear' | 'crit' | 'block' | 'miss'
@@ -48,6 +48,7 @@ export const CUES: Record<Cue, CueSpec> = {
   tap: c(60, 60, 1, 1, 1),
   summon: c(60, 600, 2, 2),
   merge: c(60, 900, 3, 2),
+  coin: c(80, 400, 1, 1),
   star: c(120, 300, 2, 1),
   levelUp: c(200, 700, 3, 2),
   boom: c(0, 1000, 3, 3),

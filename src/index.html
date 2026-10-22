@@ -115,6 +115,12 @@
   @keyframes banner { 0%, 100% { transform: skewX(0deg) scaleY(1); } 30% { transform: skewX(-7deg) scaleY(0.96); } 65% { transform: skewX(5deg) scaleY(1.02); } }
   @media (prefers-reduced-motion: reduce) { .card.placed::after { animation: none; } }
   .card.chosen { border-color: var(--gold); box-shadow: 0 0 10px var(--gold); }
+  .card .recycle {
+    display: none; position: absolute; left: 2px; right: 2px; bottom: 2px; z-index: 2; padding: 3px 0; font: 700 10px/1 var(--body, sans-serif);
+    color: #1a1008; background: #f0c040; border: 1px solid #8a5a1c; border-radius: 5px; touch-action: manipulation;
+  }
+  .card .recycle.sure { background: #e0603a; color: #fff; }
+  body[data-phase='deploy'] .card.chosen .recycle { display: block; }
   .card.fallen { opacity: 0.4; filter: grayscale(1); }
   body:not([data-phase='deploy']) .card:not(.placed) { opacity: 0.3; }
   #buttons { display: flex; gap: 8px; }

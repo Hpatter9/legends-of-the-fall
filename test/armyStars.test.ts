@@ -326,7 +326,8 @@ test('a harder tier pays more crowns, and keeps its own firsts and clears', () =
     assert.ok(firstClearTotal(a, t) > firstClearTotal(a, t - 1));
     assert.ok(replayTotal(a, t) > replayTotal(a, t - 1));
   }
-  assert.equal(firstClearTotal(a), 294);
+  // (15 waves: a first clear pays about 15% more than the 8 waves it was, 294)
+  assert.equal(firstClearTotal(a), 339);
   const m = newMeta(1);
   const normal = settleWave(m, 'orcs', 1, true, 0, 0);
   const again = settleWave(m, 'orcs', 1, true, 0, 0);
