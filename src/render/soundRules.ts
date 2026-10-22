@@ -26,6 +26,8 @@ export type Cue =
   | 'dash' | 'blink' | 'trap'
   // big moments
   | 'ultimate' | 'bossSkill'
+  // the summoning hall's build-ups and stingers by rarity, a Mythic's heartbeat, and a ribbon slamming in
+  | 'riseEpic' | 'riseLegend' | 'riseMythic' | 'stingEpic' | 'stingLegend' | 'stingMythic' | 'heartbeat' | 'slam'
   // deaths
   | 'deathBones' | 'deathBurn' | 'deathThud' | 'deathStone' | 'deathBlood' | 'deathLight';
 
@@ -105,6 +107,15 @@ export const CUES: Record<Cue, CueSpec> = {
 
   ultimate: c(600, 1400, 6, 3),
   bossSkill: c(500, 900, 4, 3),
+
+  riseEpic: c(0, 1600, 3, 3),
+  riseLegend: c(0, 2300, 4, 3),
+  riseMythic: c(0, 3000, 4, 3),
+  stingEpic: c(0, 1200, 3, 3),
+  stingLegend: c(0, 1800, 4, 3),
+  stingMythic: c(0, 2600, 5, 3),
+  heartbeat: c(0, 500, 2, 3),
+  slam: c(0, 700, 2, 3),
 
   deathBones: c(140, 600, 3, 2),
   deathBurn: c(160, 900, 3, 2),

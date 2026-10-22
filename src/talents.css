@@ -1,0 +1,40 @@
+/* ===== Talents: the hero sheet's panel and tree (`talentView.ts`). Inlined after equip.css by build.mjs. The icons are 16px tiles
+   drawn at 3x (48px), never smoothed; a tile's frame shows its state (locked, available, learned, ruled out). ===== */
+.tPanel { display: flex; flex-direction: column; gap: 6px; padding: 6px; background: rgba(0, 0, 0, 0.3); border: 2px solid #1a0d07; }
+.tPanel h4 { margin: 0; font: 700 14px var(--display); color: var(--gold-hi); }
+.tHead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.tPoints { font: 700 15px var(--display); color: var(--gold-hi); }
+.tSum { margin: 0; font-size: 11px; color: #fff; text-align: center; } .tSum.dim, .tPanel .dim, .tSub { color: var(--dim); } .tSub { font-size: 10px; text-align: center; line-height: 1.25; }
+.tChips { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
+.tChips .tNode { position: static; transform: none; width: 40px; height: 40px; min-height: 0; }
+.tChips .tNode img { width: 32px; height: 32px; }
+.tChips .tNode .tCost { display: none; }
+.tTree { position: relative; width: 100%; }
+.tLines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.tLine { stroke: #4a2c1c; stroke-width: 2; vector-effect: non-scaling-stroke; shape-rendering: crispEdges; }
+.tLine.lit { stroke: var(--gold-hi); } .tLine.ruled { stroke: #2a1810; stroke-dasharray: 3 3; }
+.tRow { position: absolute; left: 0; font-size: 9px; color: var(--dim); letter-spacing: 0.5px; text-transform: uppercase; }
+.tNode { position: absolute; transform: translate(-50%, -50%); display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 56px; height: 56px; min-height: 0; padding: 0; background: #1a0d07; border: 2px solid #6b4128; box-shadow: inset 0 0 0 2px #0c0604; }
+.tNode img { width: 48px; height: 48px; image-rendering: pixelated; display: block; pointer-events: none; }
+.tNode .tCost { position: absolute; right: -2px; bottom: -2px; min-width: 14px; padding: 0 3px; font: 700 11px/14px var(--display); font-style: normal; text-align: center; color: #1a0d07; background: #c9a24a; box-shadow: 0 1px 0 #000; }
+.tNode.available { border-color: var(--gold-hi); box-shadow: inset 0 0 0 2px #0c0604, 0 0 0 2px #6b4128; }
+.tNode.pop { animation: tPop 0.4s steps(4) 1; }
+@keyframes tPop { 0% { transform: translate(-50%, -50%) scale(1.35); } 100% { transform: translate(-50%, -50%) scale(1); } }
+.tNode.taken { border-color: var(--gold-hi); background: radial-gradient(#8e5a1c, #3a2008); box-shadow: inset 0 0 0 2px #0c0604, 0 0 0 2px var(--gold-hi); }
+.tNode.taken .tCost { background: #6fdc6f; }
+.tNode.locked img { opacity: 0.3; filter: grayscale(1); } .tNode.locked { border-color: #3a2416; }
+.tNode.locked .tCost { background: #6b4128; color: #c9a88a; }
+.tNode.ruled { border-color: #2a1810; border-style: dashed; }
+.tNode.ruled img { opacity: 0.18; filter: grayscale(1); }
+.tNode.ruled::after { content: ''; position: absolute; inset: 4px; background: linear-gradient(to top right, transparent calc(50% - 2px), #8a2a1e calc(50% - 2px), #8a2a1e calc(50% + 2px), transparent calc(50% + 2px)); pointer-events: none; }
+.tNode.sel { outline: 2px solid #fff; outline-offset: 2px; }
+.tCard { display: flex; flex-direction: column; gap: 4px; min-height: 92px; padding: 6px; background: rgba(0, 0, 0, 0.35); border: 2px solid #6b4128; }
+.tCard p { margin: 0; font-size: 12px; line-height: 1.3; color: #fff; }
+.tTitle { display: grid; grid-template-columns: 40px 1fr; column-gap: 8px; align-items: center; }
+.tTitle .tNode { position: static; transform: none; grid-row: 1 / 3; width: 40px; height: 40px; pointer-events: none; }
+.tTitle .tNode img { width: 32px; height: 32px; } .tTitle .tNode .tCost { display: none; }
+.tTitle b { font-size: 14px; color: var(--gold-hi); } .tTitle small { font-size: 10px; color: var(--dim); }
+.tGood { color: #6fdc6f; font-size: 11px; } .tBad { color: #ff9a5a; font-size: 11px; }
+.tBar { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.tPanel button { min-height: 36px; font-size: 13px; }
+.tPanel .tNode { min-height: 0; }

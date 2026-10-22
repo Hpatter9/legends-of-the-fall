@@ -25,6 +25,10 @@ export type Sfx = Cue;
 let ctx: AudioContext | null = null;
 let master: GainNode;
 let sfxBus: GainNode;
+/** The bus the summoning show's sounds go through, so a tap that skips the show can hush them. */
+let showBus: GainNode;
+/** Where the sound being made now is sent (`sfxBus`, or `showBus` for the summoning's). */
+let out: AudioNode;
 let noise: AudioBuffer;
 const players = new Map<Track, { el: HTMLAudioElement; gain: GainNode }>();
 let current: Track | null = null;
@@ -56,6 +60,9 @@ function unlock(): void {
     sfxBus = ctx.createGain();
     sfxBus.gain.value = SFX_LEVEL * effectsLevel();
     sfxBus.connect(master);
+    showBus = ctx.createGain();
+    showBus.connect(sfxBus);
+    out = sfxBus;
     // (one second of white noise, shared by the bursts)
     noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
     const data = noise.getChannelData(0);
@@ -128,6 +135,17 @@ export function playEvents(b: Battle, events: BattleEvent[], speed = 1): void {
   if (b.phase === 'fight' && ++tensionTick % 5 === 0) setTension(intensityOf(b));
 }
 
+const SHOW_CUES = new Set<Cue>(['riseEpic', 'riseLegend', 'riseMythic', 'stingEpic', 'stingLegend', 'stingMythic', 'heartbeat', 'slam']);
+
+/** A tap skipped the summoning show: whatever of its sound is still ringing fades out at once. */
+export function hushSummon(): void {
+  if (!ctx || !showBus) return;
+  const t = ctx.currentTime;
+  showBus.gain.cancelScheduledValues(t);
+  showBus.gain.setTargetAtTime(0, t, 0.04);
+  showBus.gain.setTargetAtTime(1, t + 0.4, 0.02);
+}
+
 /** One effect now, unless the same one played too recently. */
 export function play(name: Sfx): void {
   cue(name, 1, 1, 0);
@@ -142,7 +160,9 @@ function cue(name: Cue, speed: number, gain: number, delay: number): void {
   (window as unknown as { __sfxLog?: string[] }).__sfxLog?.push(name);
   pitch = v.pitch;
   voiceGain = v.gain;
+  out = SHOW_CUES.has(name) ? showBus : sfxBus;
   SOUNDS[name](ctx.currentTime + 0.01 + delay / 1000);
+  out = sfxBus;
   pitch = 1;
   voiceGain = 1;
 }
@@ -207,9 +227,31 @@ function note(t: number, f: number, d: number, v: number, type: OscillatorType =
   g.gain.setValueAtTime(0.0001, t);
   g.gain.exponentialRampToValueAtTime(v * voiceGain, t + 0.01);
   g.gain.exponentialRampToValueAtTime(0.0001, t + d);
-  o.connect(g).connect(sfxBus);
+  o.connect(g).connect(out);
   o.start(t);
   o.stop(t + d + 0.05);
+}
+
+/** A held, slowly swelling voice (a choir-like pad when `type` is soft): two slightly detuned oscillators through a low-pass filter. */
+function pad(t: number, f: number, d: number, v: number, type: OscillatorType = 'triangle', bright = 1800, to?: number): void {
+  const c = ctx!;
+  const filter = c.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(bright, t);
+  const g = c.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(v * voiceGain, t + d * 0.65);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+  filter.connect(g).connect(out);
+  for (const det of [0.996, 1.004]) {
+    const o = c.createOscillator();
+    o.type = type;
+    o.frequency.setValueAtTime(f * pitch * det, t);
+    if (to) o.frequency.exponentialRampToValueAtTime(to * pitch * det, t + d);
+    o.connect(filter);
+    o.start(t);
+    o.stop(t + d + 0.05);
+  }
 }
 
 /** A burst of filtered noise for `d` seconds, its filter at `f` (sweeping to `to` if given). */
@@ -227,7 +269,7 @@ function hiss(t: number, d: number, f: number, type: BiquadFilterType, v: number
   g.gain.setValueAtTime(0.0001, t);
   g.gain.exponentialRampToValueAtTime(v * voiceGain, t + 0.008);
   g.gain.exponentialRampToValueAtTime(0.0001, t + d);
-  src.connect(filter).connect(g).connect(sfxBus);
+  src.connect(filter).connect(g).connect(out);
   src.start(t, Math.random() * 0.5);
   src.stop(t + d + 0.02);
 }
@@ -475,6 +517,48 @@ const SOUNDS: Record<Cue, (t: number) => void> = {
     hiss(t, 0.7, 200, 'bandpass', 0.2, 3500);
     hiss(t + 0.35, 0.9, 6500, 'highpass', 0.12);
     ring(t + 0.35, 1760, 0.9, 0.06);
+  },
+  // the summoning hall: chimes climbing for an Epic, a choir-like swell for a Legendary, a deep rising drone for a Mythic
+  riseEpic: (t) => {
+    [784, 988, 1175, 1319, 1568, 1976].forEach((f, i) => ring(t + i * 0.22, f, 0.7, 0.07));
+    note(t, 220, 1.5, 0.05, 'sine', 440);
+  },
+  riseLegend: (t) => {
+    [220, 277, 330, 440].forEach((f, i) => pad(t + i * 0.12, f, 2.2, 0.05, 'triangle', 1500, f * 1.5));
+    hiss(t, 2.2, 600, 'bandpass', 0.05, 3500, 4);
+  },
+  riseMythic: (t) => {
+    note(t, 55, 3, 0.2, 'sine', 110);
+    pad(t, 82, 3, 0.07, 'sawtooth', 500, 164);
+    hiss(t, 3, 150, 'lowpass', 0.14, 1200);
+  },
+  stingEpic: (t) => {
+    [659, 880, 1319].forEach((f) => ring(t, f, 1, 0.08));
+    hiss(t, 0.4, 5000, 'highpass', 0.06);
+  },
+  stingLegend: (t) => {
+    note(t, 80, 0.7, 0.3, 'sine', 36);
+    [392, 494, 587, 784].forEach((f) => pad(t, f, 1.6, 0.07, 'triangle', 2400));
+    ring(t, 2093, 1.4, 0.06);
+    hiss(t, 0.9, 6500, 'highpass', 0.08);
+  },
+  stingMythic: (t) => {
+    note(t, 60, 1.2, 0.45, 'sine', 28);
+    hiss(t, 0.9, 400, 'lowpass', 0.3, 80);
+    [220, 262, 330, 440].forEach((f) => pad(t, f, 2.4, 0.07, 'sawtooth', 1200));
+    ring(t + 0.1, 1568, 1.6, 0.06);
+    ring(t + 0.1, 2349, 1.6, 0.04);
+    hiss(t + 0.1, 1.2, 6000, 'highpass', 0.1);
+  },
+  // two low thumps, a heart
+  heartbeat: (t) => {
+    note(t, 64, 0.2, 0.5, 'sine', 38);
+    note(t + 0.2, 56, 0.26, 0.4, 'sine', 34);
+  },
+  // a ribbon slamming in
+  slam: (t) => {
+    note(t, 100, 0.35, 0.4, 'sine', 40);
+    hiss(t, 0.25, 900, 'lowpass', 0.22);
   },
   // a boss's skill: a low growl and rumble
   bossSkill: (t) => {

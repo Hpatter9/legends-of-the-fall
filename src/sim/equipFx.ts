@@ -8,6 +8,7 @@
 import { apart, atkOf, defenceOf, hurt, wayTo, type Battle, type BattleEvent, type Unit } from './battle';
 import { BANNER_MULT, foesOf, gain, mendUnit, roll } from './abilities';
 import { ABILITIES, type Ability, type Kind } from './equipBases';
+import { TALENT_ABILITIES } from './talents';
 import { MANA_MAX } from './spells';
 
 const DIRS = [
@@ -28,7 +29,7 @@ const MELEE_KINDS: ReadonlySet<Kind> = new Set<Kind>(['reflect', 'counter']);
 /** Whether a fighter cannot be targeted now (a Shadowcloak's stealth). */
 export const hidden = (b: Battle, u: Unit): boolean => u.hideUntil !== undefined && u.hideUntil > b.t;
 
-const abilitiesOf = (u: Unit): { a: Ability; s: number }[] => (u.eq?.abilities ?? []).map((x) => ({ a: ABILITIES[x.id], s: x.s, name: x.name })).filter((x) => x.a);
+const abilitiesOf = (u: Unit): { a: Ability; s: number }[] => (u.eq?.abilities ?? []).map((x) => ({ a: ABILITIES[x.id] ?? TALENT_ABILITIES[x.id], s: x.s, name: x.name })).filter((x) => x.a);
 const key = (u: Unit, k: string) => u.fx?.[k] ?? 0;
 const setKey = (u: Unit, k: string, n: number) => ((u.fx ??= {})[k] = n);
 /** How many times an ability has fired for this fighter so far. */
@@ -207,7 +208,7 @@ export function fxStart(b: Battle, u: Unit): void {
 export function fxTick(b: Battle, u: Unit, out: BattleEvent[]): void {
   if (!u.eq) return;
   if (u.eq.regen && b.t % 1000 === 0) mendUnit(u, u.maxHp * u.eq.regen, out);
-  for (const { a, s } of abilitiesOf(u)) if (a.trig === 'tick' && b.t % ((a.n ?? 1) * 1000) === 0) fire(b, u, a, s, undefined, 0, out, false);
+  for (const { a, s } of abilitiesOf(u)) if (a.trig === 'tick' && b.t % ((a.n ?? 1) * 1000) === 0) fire(b, u, a, s, undefined, 0, out, !!a.show);
 }
 
 /** After the wearer took damage and still stands: the `low` abilities, once each. */

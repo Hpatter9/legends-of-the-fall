@@ -30,6 +30,8 @@ export interface Ability {
   n?: number;
   /** Chance per blow, 0 to 1 (`hit`, `crit`, `kill`, `struck`). */
   p?: number;
+  /** Shows its name as a pop-up each time it fires (a talent's second skill does; the gear's abilities fire without one on ticks and starts). */
+  show?: boolean;
 }
 
 export interface EquipBase {
