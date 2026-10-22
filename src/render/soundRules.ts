@@ -29,7 +29,11 @@ export type Cue =
   // the summoning hall's build-ups and stingers by rarity, a Mythic's heartbeat, and a ribbon slamming in
   | 'riseEpic' | 'riseLegend' | 'riseMythic' | 'stingEpic' | 'stingLegend' | 'stingMythic' | 'heartbeat' | 'slam'
   // deaths
-  | 'deathBones' | 'deathBurn' | 'deathThud' | 'deathStone' | 'deathBlood' | 'deathLight';
+  | 'deathBones' | 'deathBurn' | 'deathThud' | 'deathStone' | 'deathBlood' | 'deathLight'
+  // the tower: footsteps on the stairs, a twist's reveal (dark or bright), an elite's sting, a relic set's chime (two pieces, three)
+  | 'steps' | 'twistCurse' | 'twistBlessing' | 'eliteSting' | 'setChime2' | 'setChime3'
+  // the menus: coins from a recycle and from a claim, a lucky hire's sparkle, an auto-replay's start, stop and finish
+  | 'coinRecycle' | 'coinClaim' | 'sparkle' | 'autoStart' | 'autoStop' | 'autoDone';
 
 /** How a sound mixes. `gap`: least ms (real time) between two of it. `ms`: how long it rings, which is how long it holds
  *  its voices. `weight`: voices it uses. `prio`: 0 may be dropped first when the mix is full, 3 always plays. `gain`: its
@@ -56,6 +60,18 @@ export const CUES: Record<Cue, CueSpec> = {
   defeat: c(0, 2000, 4, 3),
   skill: c(150, 400, 3, 1),
   spell: c(200, 400, 2, 1),
+  steps: c(300, 600, 2, 1),
+  twistCurse: c(400, 900, 2, 2),
+  twistBlessing: c(400, 900, 2, 2),
+  eliteSting: c(0, 1400, 3, 3),
+  setChime2: c(0, 1200, 3, 2),
+  setChime3: c(0, 1800, 4, 3),
+  coinRecycle: c(100, 600, 2, 1),
+  coinClaim: c(100, 800, 2, 1),
+  sparkle: c(150, 900, 2, 1),
+  autoStart: c(0, 400, 1, 2),
+  autoStop: c(0, 600, 2, 2),
+  autoDone: c(0, 1000, 3, 2),
 
   swingLight: c(110, 120, 1, 0, 0.8),
   swingSword: c(110, 160, 1, 0, 0.9),

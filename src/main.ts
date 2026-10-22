@@ -49,7 +49,8 @@ import { framesOf, loadSheets, portrait, sheetInfo } from './render/sheets';
 import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, framing, PAUSE_MS, settle, viewFor, type View } from './render/cameraRules';
 import { titleOf } from './render/bossTitles';
 import { at, FOOT, HH, TH, TW } from './render/iso';
-import { bindDuck, bindMute, play, playEvents, setAct, setup, startFight } from './render/sound';
+import { bindDuck, bindMute, play, playEvents, setAct, setScene, setup, startFight } from './render/sound';
+import { sceneOf } from './render/audioRules';
 import { colLeft, viewH, viewW } from './viewport';
 import { onSettings, openSettings, settings } from './settings';
 
@@ -192,6 +193,7 @@ class Game {
         this.startRun(startDaily(this.meta, todayKey()));
       },
       onTower: () => this.startTower(towerRun(clockSeed(), this.meta)),
+      onScene: () => this.syncScene(),
     });
     this.towerView = new TowerView({
       meta: () => this.meta,
@@ -221,6 +223,7 @@ class Game {
     const sync = () => {
       this.homeUp = !home.hidden;
       this.syncAct();
+      this.syncScene();
       this.app.stage.renderable = !this.homeUp;
       // (a board that is not in a fight stops its ticker under the home screen; coming back starts it again)
       if (!this.homeUp) this.app.ticker.start();
@@ -230,6 +233,8 @@ class Game {
     setInterval(() => this.homeUp && tips.update(), 250);
     new MutationObserver(sync).observe(home, { attributes: true, attributeFilter: ['hidden'] });
     sync();
+    // (the tower's map comes and goes without the home screen changing: the ambience follows it too)
+    new MutationObserver(() => this.syncScene()).observe($('towerMap'), { attributes: true, attributeFilter: ['hidden'] });
     $('loading').remove();
     (window as unknown as { __game: Game }).__game = this;
   }
@@ -293,6 +298,7 @@ class Game {
     old.replaceWith(face);
     card.classList.remove('out');
     card.hidden = false;
+    if (elite) play('eliteSting');
   }
 
   /** Each frame of the intro: the slam (a rumble and a boom, the rumble only if shaking is on), the camera on the boss with the zoom swelling and falling back, and the card fading out. */
@@ -696,6 +702,8 @@ class Game {
       if (got) {
         saveRun(this.run);
         play(got.grade > 1 ? 'merge' : 'summon');
+        // (a lucky hire, already a higher star: a sparkle over the merge's chime)
+        if (got.grade > 1) play('sparkle');
         this.clearMerged(got);
       }
       // (a hero of a higher grade that wasn't there before is a merge's: it flashes)
@@ -773,6 +781,7 @@ class Game {
     if (!a) return;
     this.auto = a;
     this.autoNext = null;
+    play('autoStart');
     keepAwake(true);
     this.autoPrep();
   }
@@ -824,6 +833,7 @@ class Game {
     const a = this.auto;
     if (!a) return;
     if (why === 'stopped') stopAuto(a);
+    play(why === 'done' ? 'autoDone' : 'autoStop');
     this.auto = null;
     this.autoNext = null;
     // (a fight still going keeps its screen lock until it ends)
@@ -1147,7 +1157,7 @@ class Game {
     this.chosen = null;
     recyclePuff(card);
     flyUp(`+${gold} gold`, card, $('gold'));
-    play('coin');
+    play('coinRecycle');
     saveRun(this.run);
     this.syncSprites();
     this.refresh();
@@ -1291,10 +1301,16 @@ class Game {
     setAct(this.homeUp ? null : (this.run.tower?.act ?? null));
   }
 
+  /** The ambience bed: the home tab or the armies while the home screen is up, else the tower's act (its map and fights) or the field. */
+  private syncScene(): void {
+    setScene(sceneOf(this.home?.spot ?? null, this.run?.tower?.act ?? null));
+  }
+
   private refresh(): void {
     const b = this.b;
     const run = this.run;
     this.syncAct();
+    this.syncScene();
     const n = heroesPlaced(b);
     if ((b.phase === 'won' || b.phase === 'lost') && !this.settled) {
       this.settled = true;

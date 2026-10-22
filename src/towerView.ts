@@ -32,7 +32,7 @@ import crown from './art/ui/ic-crown.png';
 import type { Events } from './events';
 import { actLook, bossOfAct } from './towerTheme';
 import { BRICKS, buildBackdrop, Layout, torchEl } from './towerBack';
-import { twistBadge, twistLine } from './twistView';
+import { playTwist, twistBadge, twistLine } from './twistView';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -77,6 +77,8 @@ export class TowerView {
   private moving = false;
   private introTimer = 0;
   private introFrame = 0;
+  /** The node tapped last, so tapping the same twisted one again does not repeat its reveal. */
+  private lastTapped = -1;
 
   constructor(private hooks: TowerHooks) {
     this.root.id = 'towerMap';
@@ -101,6 +103,7 @@ export class TowerView {
   open(run: Run): void {
     this.run = run;
     this.picked = -1;
+    this.lastTapped = -1;
     this.card = null;
     this.root.hidden = false;
     document.body.classList.add('towerUp');
@@ -296,6 +299,9 @@ export class TowerView {
     b.setAttribute('aria-label', `${NODE_NAMES[n.kind]}, floor ${floorOf(t.act, n.row)}`);
     b.addEventListener('click', () => {
       if (this.moving) return;
+      // (a twist is revealed once as its node is first tapped)
+      if (n.twist && n.id !== this.lastTapped) playTwist(n.twist);
+      this.lastTapped = n.id;
       this.picked = open.has(n.id) ? n.id : -1;
       const elite = n.kind === 'elite' ? eliteAt(this.run.seed, t.act, t.map, n.id) : undefined;
       if (elite) this.sayNode(eliteInfo(elite, floorOf(t.act, n.row)));
@@ -337,7 +343,9 @@ export class TowerView {
   private climbTo(id: number, done: () => void): void {
     const from = this.markerSpot(this.run.tower!.at);
     const to = this.markerSpot(id);
-    if (!this.marker || reduced()) return done();
+    if (!this.marker) return done();
+    play('steps');
+    if (reduced()) return done();
     this.moving = true;
     const t0 = performance.now();
     const MS = 500;

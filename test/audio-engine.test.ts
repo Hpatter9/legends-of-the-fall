@@ -186,7 +186,7 @@ test('every cue can be made, and a panned cue goes through a panner while a cent
   }
 });
 
-test('the music player crossfades tracks, colours them by tension and act, and runs the percussion only when the fight is hot', async () => {
+test('the music player crossfades tracks, colours them by tension and act, and keeps a rumble (no beat) only while the fight is hot', async () => {
   const undo = installFakeAudio();
   const { MusicPlayer } = await import('../src/render/audioProcessors');
   try {
@@ -203,18 +203,20 @@ test('the music player crossfades tracks, colours them by tension and act, and r
     assert.ok(closed < OPEN_HZ);
     music.setTension(0.4);
     assert.ok(cutoff()! > closed);
-    assert.equal(perc(), 0, 'no percussion yet');
+    assert.equal(perc(), 0, 'no rumble yet');
     const before = FakeContext.made.length;
     music.setTension(0.95);
-    assert.ok(perc()! > 0, 'percussion fades in');
+    assert.ok(perc()! > 0, 'the rumble fades in');
+    assert.ok(perc()! <= 0.12 + 1e-9, 'and sits quietly');
     assert.ok(cutoff()! > OPEN_HZ * 0.9);
-    // (the scheduler lays hits ahead of the clock, once)
+    // (a few long-lived nodes, made once: no hits are scheduled, so nothing is made as the clock runs on)
+    const rumble = FakeContext.made.length - before;
+    assert.ok(rumble > 0 && rumble <= 8, `a handful of nodes (${rumble})`);
+    music.setTension(1);
     await new Promise((r) => setTimeout(r, 300));
-    assert.ok(FakeContext.made.length > before, 'percussion nodes were made');
-    const made = FakeContext.made.length;
     ctx.currentTime = 5;
     await new Promise((r) => setTimeout(r, 250));
-    assert.ok(FakeContext.made.length > made, 'and more as the clock moves on');
+    assert.equal(FakeContext.made.length - before, rumble, 'no node is made per beat or per tick');
     // the fight ends: back to the town, tension spent
     music.setTension(0);
     music.setTrack('town');

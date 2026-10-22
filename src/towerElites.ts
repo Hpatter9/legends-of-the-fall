@@ -11,6 +11,7 @@ import { UNITS } from './sim/units';
 import { iconImg, relicIcon } from './render/items';
 import { portrait, sheetInfo } from './render/sheets';
 import { play } from './render/sound';
+import { setChime } from './render/audioRules';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -149,6 +150,9 @@ export function relicChoice(run: Run, card: HTMLElement, elite: string | undefin
     card.querySelector('.rtLead')!.textContent = `You take ${line}.`;
     if (set && tiersOn(set, setCount(set, run.relics)).length > before.get(set.id)!) {
       const tier = tiersOn(set, setCount(set, run.relics)).pop()!;
+      // (a set tier reached: the chord for two pieces, the fanfare for three)
+      const chime = setChime(setCount(set, run.relics));
+      if (chime) play(chime);
       card.insertBefore(el('p', 'rtNote', `${set.name} set bonus: ${tier.text}.`), take);
     }
     take.textContent = 'Climb on';

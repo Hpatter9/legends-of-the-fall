@@ -12,7 +12,7 @@ no caller changed except to add the new hooks below.
 - `src/render/audioProcessors.ts`: the three `AudioProcessor` subclasses.
   - `BusMixer`: the buses and the master (named `BusMixer` because `soundRules.ts` already has a voice-limiting `Mixer`).
   - `CueSynth`: the synthesised cues. The `SOUNDS` table is the old one, ported unchanged (it takes the synth as an argument).
-  - `MusicPlayer`: the looped tracks (audiorective `FilePlayer`), the tension low-pass and swell, the percussion layer,
+  - `MusicPlayer`: the looped tracks (audiorective `FilePlayer`), the tension low-pass and swell, the rumble layer,
     and the tower acts' drones.
 - `src/render/audioRules.ts`: pure helpers with no DOM and no Web Audio: pan, `DuckCounter`, tension and act mappings.
   Tested in `test/audio-engine.test.ts` (with `test/audioFake.ts`, a stand-in for Web Audio so the processors build under Node).
@@ -58,15 +58,15 @@ panned one adds one `StereoPannerNode` in front of its bus. `play(name)` (the pa
 
 - **Tension** (`setTension`, from `playEvents` about twice a second): the battle and boss tracks' low-pass opens from 55 % of
   its ceiling to fully open (exponentially); the swell and the 8 % pace-up are as before (the pace never goes past +8 %).
-  Above tension 0.5 a quiet synthesised percussion layer fades in (two low drums and a soft tick in an eight-step bar); its
-  scheduler runs only while the layer is audible.
+  Above tension 0.5 a quiet unpitched rumble swell fades in (phase 2 replaced the drum beat, which was not synced to the
+  tracks; see `audio-beds.md`); its nodes exist only while the layer is audible.
 - **Tower acts** (`setAct(act | null)`, called from `main.ts` `syncAct`): a low-pass ceiling, a pace and a drone under the
   tracks, from `ACT_COLOURS` in `audioRules.ts`: act 1 crypt (2.6 kHz ceiling, 0.97× pace, low sine and saw drone), act 2 halls
   (open, a slow triad swell), act 3 storm (5.2 kHz, 1.03×, a low rumble and swept wind). Acts 4 and up reuse the three.
   Tracks crossfade over about 1.2 s and drones fade in and out over the same.
 - The home screen counts as no act.
 
-## For phase 2
+## For phase 2 (done: see `audio-beds.md`)
 
 - **A new cue:** add the name to the `Cue` union and a `CUES` entry in `soundRules.ts`, and a function in the `SOUNDS` table in
   `audioProcessors.ts` (it gets the synth `s` and a start time `t`: `s.note`, `s.pad`, `s.hiss`, `s.ring`, `s.click`,
@@ -83,10 +83,8 @@ panned one adds one `StereoPannerNode` in front of its bus. `play(name)` (the pa
 
 I cannot hear sound, so these are by design and by reading, not by ear:
 
-- how loud the drones sit under the tracks (`DRONE_SCALE` 0.35) and the percussion (`PERC_SCALE` 0.2), and whether the act
+- how loud the drones sit under the tracks (`DRONE_SCALE` 0.35) and the rumble (`RUMBLE_SCALE` 0.12), and whether the act
   colours read as "dark, grand, stormy";
-- the percussion is **not synced** to the tracks' tempo (a fixed pulse near 104 bpm, scaled by the pace); if it clashes with
-  a track it can be retuned or switched off by lowering `percActive`;
 - the 55 % opening of the battle low-pass at zero tension may be duller than wanted (`TENSION_CLOSED`);
 - the limiter's threshold (-2 dB) and the native compressor's fallback settings;
 - on a real phone: iOS Safari's `AudioWorklet` load and the first-tap unlock (checked only in Chromium).
@@ -94,7 +92,7 @@ I cannot hear sound, so these are by design and by reading, not by ear:
 Checked in Chromium (393x852): no errors or warnings from audio on load; the first tap starts the context and `town.ogg`;
 a fight plays cues and switches to `battle.ogg`; hiding the page suspends the context and showing it resumes it and replays
 the track; mute drops the master to 0 and stops cues; ducking by two reasons stays at -8 dB until both are let go; panned
-cues stay within ±0.6; the percussion creates nodes only at high tension.
+cues stay within ±0.6; the rumble creates nodes only at high tension.
 
 `audiorective`'s `ParamSync` runs a `requestAnimationFrame` loop while any of its `SchedulableParam`s exists (about a dozen
 here, read back every 100 ms). That is its cost for reactive params; it stops while the page is hidden.
