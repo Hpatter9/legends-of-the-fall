@@ -183,12 +183,12 @@ test('set bonuses switch on at two and three pieces', () => {
   }
   // the numbers, two sets at once
   const fx = relicEffects(['phoenix', 'warDrum', 'ironShield', 'hourglass']);
-  assert.ok(Math.abs(fx.crit! - 0.05) < 1e-9 && Math.abs(fx.guard! - (0.06 + 0.04)) < 1e-9);
-  assert.equal(relicEffects(['phoenix', 'warDrum', 'emberRuby']).set!.burn, 0.15);
-  assert.equal(relicEffects(['ironShield', 'hourglass', 'frostSapphire']).set!.chill, 3000);
-  assert.equal(relicEffects(['banner', 'scholarScroll', 'holyChalice']).set!.regen, 0.02);
+  assert.ok(Math.abs(fx.crit! - 0.02) < 1e-9 && Math.abs(fx.guard! - (0.06 + 0.02)) < 1e-9);
+  assert.equal(relicEffects(['phoenix', 'warDrum', 'emberRuby']).set!.burn, 0.03);
+  assert.equal(relicEffects(['ironShield', 'hourglass', 'frostSapphire']).set!.chill, 1000);
+  assert.equal(relicEffects(['banner', 'scholarScroll', 'holyChalice']).set!.regen, 0.005);
   assert.ok(relicEffects(['featherCharm', 'hawkEye', 'shadowCloak']).set!.bleed! > 0);
-  assert.ok(Math.abs(relicEffects(['whetstone', 'swiftBoots', 'wolfFang']).atk! - 1.08 * 1.05 * 1.1) < 1e-9);
+  assert.ok(Math.abs(relicEffects(['whetstone', 'swiftBoots', 'wolfFang']).atk! - 1.08 * 1.05 * 1.02) < 1e-9);
 });
 
 const battleWith = (relics: string[]) => {
@@ -233,8 +233,8 @@ test('Holy 3: heroes heal a little each second; two pieces do not', () => {
   };
   const three = heal(['banner', 'scholarScroll', 'holyChalice']);
   const two = heal(['banner', 'scholarScroll']);
-  assert.ok(three > 0.03, `healed ${three}`);
-  assert.ok(two < 0.005, 'no heal with two');
+  assert.ok(three > 0.004, `healed ${three}`);
+  assert.ok(two < 0.002, 'no heal with two');
 });
 
 test('no set pieces, no change: a run plays out exactly as before', () => {

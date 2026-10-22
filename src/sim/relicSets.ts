@@ -53,32 +53,32 @@ export const SETS: Record<string, RelicSet> = {
   fire: {
     id: 'fire', name: 'Fire', colour: '#e8683a',
     relics: ['phoenix', 'warDrum', 'emberRuby', 'dragonScale'],
-    two: { text: '+5% crit chance', fx: { crit: 0.05 } },
-    three: { text: "heroes' blows set foes burning", hooks: { burn: 0.15 } },
+    two: { text: '+2% crit chance', fx: { crit: 0.02 } },
+    three: { text: "heroes' blows set foes burning", hooks: { burn: 0.03 } },
   },
   frost: {
     id: 'frost', name: 'Frost', colour: '#6fc3f0',
     relics: ['ironShield', 'hourglass', 'frostSapphire', 'winterCloak'],
-    two: { text: 'heroes take 4% less damage', fx: { guard: 0.04 } },
-    three: { text: 'the first blow on each foe chills it', hooks: { chill: 3000 } },
+    two: { text: 'heroes take 2% less damage', fx: { guard: 0.02 } },
+    three: { text: 'the first blow on each foe chills it', hooks: { chill: 1000 } },
   },
   holy: {
     id: 'holy', name: 'Holy', colour: '#f4d35e',
     relics: ['banner', 'scholarScroll', 'holyChalice', 'saintMedal'],
-    two: { text: '+4% hp', fx: { hp: 1.04 } },
-    three: { text: 'heroes heal 2% of their hp a second', hooks: { regen: 0.02 } },
+    two: { text: '+2% hp', fx: { hp: 1.02 } },
+    three: { text: 'heroes heal 0.5% of their hp a second', hooks: { regen: 0.005 } },
   },
   shadow: {
     id: 'shadow', name: 'Shadow', colour: '#a77be0',
     relics: ['featherCharm', 'hawkEye', 'shadowCloak', 'viperFang'],
-    two: { text: 'heroes slip 4% of blows', fx: { dodge: 0.04 } },
-    three: { text: "+8% crit chance, and heroes' crits make foes bleed", fx: { crit: 0.08 }, hooks: { bleed: 0.12 } },
+    two: { text: 'heroes slip 2% of blows', fx: { dodge: 0.02 } },
+    three: { text: "+2% crit chance, and heroes' crits make foes bleed", fx: { crit: 0.02 }, hooks: { bleed: 0.02 } },
   },
   beast: {
     id: 'beast', name: 'Beast', colour: '#7bc96f',
     relics: ['whetstone', 'swiftBoots', 'wolfFang', 'beastHarness'],
-    two: { text: 'heroes act and walk 4% faster', fx: { speed: 1.04 } },
-    three: { text: '+10% attack and 6% faster still', fx: { atk: 1.1, speed: 1.06 } },
+    two: { text: 'heroes act and walk 2% faster', fx: { speed: 1.02 } },
+    three: { text: '+2% attack and 1% faster still', fx: { atk: 1.02, speed: 1.01 } },
   },
 };
 export const SET_IDS = Object.keys(SETS);

@@ -46,10 +46,10 @@ export const ELITES: readonly Elite[] = [
   { id: 'cindra', def: 'eliteCindra', name: 'Cindra the Ashen', epithet: 'Where she walks, the floor burns', tier: 2, trait: 'Hellfire; her blows set heroes alight', boost: lead(1.8, 1.2), escort: ['imp', 'imp', 'imp'] },
   { id: 'vexor', def: 'eliteVexor', name: 'Vexor the Imp-Caller', epithet: 'Never fights alone', tier: 2, trait: 'Summons imps when his own are gone', boost: lead(1.8, 1.15), escort: ['imp', 'demon', 'imp'] },
   { id: 'thrum', def: 'eliteThrum', name: 'Thrum Hillbreaker', epithet: 'Older than the road', tier: 2, trait: 'Horned Shove; blows from the front lose a quarter', boost: lead(1.7, 1.15), escort: ['ogre', 'imp', 'ogre'] },
-  { id: 'nyssa', def: 'eliteNyssa', name: 'Nyssa the Plaguebringer', epithet: 'Her touch rots the strong', tier: 3, trait: 'Hex; poisons and drinks what it deals', boost: lead(1.8, 1.2), escort: ['yokaiFox', 'yokaiFox', 'yokaiMonk'] },
-  { id: 'warden', def: 'eliteWarden', name: 'The Iron Warden', epithet: 'Nothing passes unasked', tier: 3, trait: 'Ground Slam; plated, cannot be knocked back', boost: lead(1.7, 1.15), escort: ['stoneGolem', 'stoneGolem', 'crystalGolem'] },
-  { id: 'kuro', def: 'eliteKuro', name: 'Kuro the Stormcrow', epithet: 'Falls on archers from the cloud', tier: 3, trait: 'Flies; dives on shooters', boost: lead(1.8, 1.2, 1.4), escort: ['yokaiCrow', 'yokaiSeer', 'yokaiFox'] },
-  { id: 'silenus', def: 'eliteSilenus', name: 'Silenus the Mad Piper', epithet: 'Every dance ends in a fall', tier: 3, trait: 'Pipes of Pan hasten the pack', boost: lead(1.8, 1.15), escort: ['packBlack', 'packRed', 'groveSatyr1', 'groveSatyr2'] },
+  { id: 'nyssa', def: 'eliteNyssa', name: 'Nyssa the Plaguebringer', epithet: 'Her touch rots the strong', tier: 3, trait: 'Hex; poisons and drinks what it deals', boost: lead(2.9, 1.55), escort: ['yokaiFox', 'yokaiFox', 'yokaiMonk'] },
+  { id: 'warden', def: 'eliteWarden', name: 'The Iron Warden', epithet: 'Nothing passes unasked', tier: 3, trait: 'Ground Slam; plated, cannot be knocked back', boost: lead(2.9, 1.55), escort: ['stoneGolem', 'stoneGolem', 'crystalGolem'] },
+  { id: 'kuro', def: 'eliteKuro', name: 'Kuro the Stormcrow', epithet: 'Falls on archers from the cloud', tier: 3, trait: 'Flies; dives on shooters', boost: lead(2.9, 1.55, 1.4), escort: ['yokaiCrow', 'yokaiSeer', 'yokaiFox'] },
+  { id: 'silenus', def: 'eliteSilenus', name: 'Silenus the Mad Piper', epithet: 'Every dance ends in a fall', tier: 3, trait: 'Pipes of Pan hasten the pack', boost: lead(2.9, 1.55), escort: ['packBlack', 'packRed', 'groveSatyr1', 'groveSatyr2'] },
 ];
 export const ELITE_BY_ID: Record<string, Elite> = Object.fromEntries(ELITES.map((e) => [e.id, e]));
 /** The elite whose fighter is `def` (the band's leader), if any. */

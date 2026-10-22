@@ -26,7 +26,7 @@ in turn. The map's own stream is not touched, so existing maps are unchanged.
 | 3 | Kuro the Stormcrow | Flies; dives on shooters | 2 crows, seer, fox |
 | 3 | Silenus the Mad Piper | Pipes of Pan hasten the pack | 2 werewolves, 2 satyrs |
 
-The elite band is x1.22 as before, its leader boosted by its own `boost` (hp x1.7 to x1.9, attack x1.1 to x1.2, drawn x1.3 or
+The elite band is x1.22 as before, its leader boosted by its own `boost` (hp x1.7 to x1.9, attack x1.1 to x1.2; tier 3 hp x2.9, attack x1.55, drawn x1.3 or
 bigger). The map's node info shows the elite's portrait, title, trait and what it pays; the fight opens with the boss intro
 card (title, epithet). A win pays double gold (was x1.5) and **always a choice of three relics** (`tower.offer`, kept in the
 save; `takeRelic`): the first drawn from a set the run has begun (any set when none), the others from anything unowned; with
@@ -42,11 +42,11 @@ and the fight is exactly as before (tested).
 
 | Set | Relics | 2 pieces | 3 pieces |
 | --- | --- | --- | --- |
-| Fire | Phoenix Feather, War Drum, Ember Ruby, Dragon Scale | +5% crit | heroes' blows set foes burning (15% of attack a tick, 2s) |
-| Frost | Iron Shield, Hourglass, Frost Sapphire, Winter Cloak | heroes take 4% less | the first blow on each foe chills it for 3s |
-| Holy | Banner, Scholar's Scroll, Holy Chalice, Saint's Medal | +4% hp | heroes heal 2% of their hp a second |
-| Shadow | Feather Charm, Hawk Eye, Shadow Cloak, Viper Fang | heroes slip 4% of blows | +8% crit, and crits make foes bleed (12% of attack a tick, 3s) |
-| Beast | Whetstone, Swift Boots, Wolf Fang, Beast Harness | heroes act and walk 4% faster | +10% attack, 6% faster still |
+| Fire | Phoenix Feather, War Drum, Ember Ruby, Dragon Scale | +2% crit | heroes' blows set foes burning (3% of attack a tick, 2s) |
+| Frost | Iron Shield, Hourglass, Frost Sapphire, Winter Cloak | heroes take 2% less | the first blow on each foe chills it for 1s |
+| Holy | Banner, Scholar's Scroll, Holy Chalice, Saint's Medal | +2% hp | heroes heal 0.5% of their hp a second |
+| Shadow | Feather Charm, Hawk Eye, Shadow Cloak, Viper Fang | heroes slip 2% of blows | +2% crit, and crits make foes bleed (2% of attack a tick, 3s) |
+| Beast | Whetstone, Swift Boots, Wolf Fang, Beast Harness | heroes act and walk 2% faster | +2% attack, 1% faster still |
 
 Lucky Coin and Spyglass belong to no set. The older twelve stay `RELIC_IDS` (events and old runs draw from them); the tower's
 shops, chests, bosses and elites draw from `ALL_RELIC_IDS` too. The tower header frames each set relic in its set's colour
@@ -58,19 +58,21 @@ New fields are optional: `FightSpec.elite`, `TowerState.offer`, `TowerState.last
 
 ## Balance
 
-`npm run balance -- --no-tables --tower --levels 3,5,8,11,14 --attempts 40` (the greedy player takes the first relic offered,
-which leans to a set it has begun). Floors cleared, median (mean) and the share felling boss 1/2/3:
+`npm run balance -- --no-tables --tower --levels 3,5,8,11,14 --attempts 300` (the greedy player takes the first relic offered,
+which leans to a set it has begun). Use 300 climbs: with 40 a row the level-14 median jumps between 38 and 77 by chance.
+Floors cleared, median (mean), and the share felling boss 1/2/3, on the merged tree:
 
-| Hero level | Before | After |
+| Hero level | No set bonuses | Final sets (tuned) |
 | --- | --- | --- |
-| 3 | 9 (9.1), 0/0/0% | 10 (10.2), 3/3/0% |
-| 5 | 12 (13.8), 18/5/0% | 12 (17.9), 20/15/8% |
-| 8 | 25 (20.2), 55/10/0% | 25 (27.5), 60/30/13% |
-| 11 | 38 (33.5), 95/65/5% | 38 (46.8), 95/73/35% |
-| 14 | 38 (39.0), 98/80/20% | 77 (58.8), 95/90/60% |
+| 3 | 12 (10.2), 3/1/0% | 12 (10.3), 4/1/0% |
+| 5 | 12 (15.2), 21/4/1% | 12 (15.4), 21/5/2% |
+| 8 | 25 (24.9), 68/28/4% | 25 (26.8), 69/31/8% |
+| 11 | 38 (36.8), 96/70/15% | 38 (40.8), 96/75/24% |
+| 14 | 38 (42.6), 98/84/27% | 38 (46.0), 98/85/36% |
 
-After merging the twists and the new look the "after" column reads (median, mean): 10 (10.3), 12 (16.2), 25 (32.5), 38 (47.8), 77 (61.5), boss 1/2/3 at level 14 100/95/65%.
-Medians hold at levels 5 to 11; the late climbs (level 14) run much deeper, as elites now always pay a relic and the sets
-stack. If the deep tower should stay a wall, the knobs are the set 3 bonuses and `boost` of the tier 3 elites.
+The first sets (3-piece bonuses of 15% burn, 3s chill, 2% regen, +10% attack) took level 14 to a mean of 61 and boss 3 to 60%;
+the fight hooks (chill and regen above all) were most of it, so every set bonus was cut. The median sits on 38 because
+boss 3 (floor 39) is the wall. Tier-3 elite leaders were also raised (hp x2.9, attack x1.55). Before the elites, on the older
+tree, the medians were 9, 12, 25, 38, 38 at levels 3 to 14.
 
 Screens: `docs/samples/tower-elites-*.png` from `tools/rogue/elite-shots.mjs`.
