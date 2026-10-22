@@ -5,7 +5,7 @@ campaign of 8 to 10 waves with a mid-boss around halfway and a final boss; beati
 The run inside a campaign is the run as it was (summons and merges, events, relics and gear, stars, XP): the army only
 decides which foes each stage meets.
 
-## The seven armies (`src/sim/armies.ts`)
+## The nine armies (`src/sim/armies.ts`, the last two are described at the end)
 
 | # | Army | Waves | Bosses (wave) | Land | Identity |
 | --- | --- | --- | --- | --- | --- |
@@ -146,6 +146,76 @@ and the Lich King (title, raise at most two at a time and six in all, Soul Nova'
 screen, the Armies screen fresh / mid-progress (with a glowing new army) / all open (and scrolled), a wave deploying and fighting,
 the Lich King's boss intro, deploy and fight, a victory, the unlock moment, the screen after it, a defeat and the main screen it
 returns to.
+
+## Armies 8 and 9, and the balance pass of nine (armies-2)
+
+### The Yokai Night Parade (after the Demon Lord) and the Golem Forge (after the Yokai boss)
+
+| # | Army | Waves | Bosses (wave) | Land | Identity |
+| --- | --- | --- | --- | --- | --- |
+| 8 | Yokai Night Parade | 10 | Nine-Tailed Fox (5), **Oni King** (10) | Greenwood | fox spirits slip away and curse, crows dive and possess, a tengu monk blows heroes about |
+| 9 | Golem Forge | 10 | Sapphire Colossus (5), **Forge Titan** (10) | Dunes | slow tanks: crushing slams, armour plate, crystal shards, magma |
+
+- **Art.** The free yokai pack has only three characters (Kitsune, Karasu Tengu, Yamabushi Tengu, all already heroes), so the troops are
+  those sheets under foe ids (`yokaiFox`, `yokaiWitch` (range 3, curses), `yokaiCrow`, `yokaiSeer`, `yokaiMonk`) and the mid-boss is the Kitsune
+  drawn big. The pack has no boss-sized figure, so the **Oni King** was generated with PixelLab (`tools/pixellab/oni.py`, as the Lich King: 4 base
+  candidates, the armoured one picked, 4-frame idle / walk / attack / attack2 / dead clips, `lie.py` for the last frame; the job ids are in `tools/w/job_*.json`,
+  not committed). Generations: 661.75 before the base, 562.75 after the last clip (99 used, far under the cap; later readings are lower because the other
+  workers share the account). The Golems pack is **still figures** (64x96, 34 of them), so `tools/golems/cut.py` makes the sheets with whole-pixel moves
+  (a stomping walk, a lean into the blow, a slump and a 90-degree lie): nothing is resampled, so it stays crisp. Stone, Iron, Crystal and Magma Golems are the troops, the
+  Sapphire Colossus (blue crystal) the mid-boss and the Forge Titan (gilded clockwork) the last, both drawn at 0.85.
+- **Skills** (`abilities.ts`): Fox Spirit = Mirror Image (illusions); Fox Witch = Hex (curses); Karasu Tengu = Dive; Crow Seer = Possession (a renamed Fox
+  Charm: the strongest hero fights its own side); Yamabushi Monk = Wind Gust. Nine-Tailed Fox: **Foxfire** (a burning meteor) and, as ultimate, Nine-Tailed Dream.
+  Oni King: **Kanabo Smash** (a 3x3 slam), ultimate **Thunder Drum** (Tempest: hurt, shoved, stunned 1.5 s), rage and unshakeable. Stone Golem: Crushing
+  Slam; Iron Golem: Shield Wall with 33% armour; Crystal Golem: **Shard Burst** (new: hurts and holds every hero within 2 tiles for 1.2 s) with thorns; Magma Golem:
+  Magma Burst and burning blows; Sapphire Colossus: Shard Storm and crystal armour; Forge Titan: Forge Hammer, ultimate Furnace Blast (meteor), armour and regen.
+  Every skill has an effect and an element (`skillFx.ts`, `fxRules.ts`). Boss titles: *Lantern of the Hundred Nights*, *Lord of the Night Parade*, *Heart of the Blue Vein*,
+  *Master of the Eternal Forge*.
+- **Rewards**: `pay` 7.2 / 8.8 and `clear` 1450 / 1800: first clear 3142 / 3868 crowns (Infernal 2463), replay 472 / 580 (Infernal 370).
+- **Lands**: the Yokai fight in the Greenwood, the Golems on the Dunes (the one land no army used); no new backdrop was made (other workers are on the scenes).
+
+### The balance pass
+
+New tooling in `npm run balance`: `playArmy` takes a castle and dresses the squad with the gear it finds; table **5c** (`--no-tables --climb --saves 120`) is the realistic player (a
+fresh save that fights the armies in order, spending half its crowns on the castle (barracks, armoury, library, treasury, stable, lowest first) and the rest on single recruits, fielding
+the five best owned heroes, levels carried); table **5d** (`--maxed`) gives the starting five a maxed castle at fixed levels. Raw output: `docs/samples/armies2-balance.txt`.
+
+Tries (mean) to clear each army, realistic player, **before** (foes as they were; the two new armies at their first guess; 80 saves) and **after** (120 saves):
+
+| Army | Before: tries | Before: cleared % | After: tries | After: cleared % | After: median / 90th | Party level | Castle levels |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Orc Warband | 3.1 | 100.0 | 3.1 | 100.0 | 3 / 4 | 1.0 | 0.0 |
+| Undead Legion | 2.4 | 100.0 | 2.4 | 100.0 | 2 / 4 | 5.9 | 2.6 |
+| Beast Packs | 2.0 | 100.0 | 1.9 | 100.0 | 2 / 3 | 8.8 | 5.7 |
+| The Wildwood | 1.4 | 100.0 | 2.7 | 100.0 | 2 / 5 | 10.8 | 8.5 |
+| The Labyrinth | 1.2 | 100.0 | 2.9 | 100.0 | 3 / 6 | 14.5 | 11.1 |
+| Ogre Clans | 1.1 | 100.0 | 2.4 | 100.0 | 2 / 5 | 16.9 | 14.1 |
+| Infernal Host | 1.1 | 100.0 | 2.7 | 100.0 | 2 / 6 | 18.2 | 16.6 |
+| Yokai Night Parade | 1.2 | 100.0 | 2.8 | 100.0 | 2 / 6 | 19.1 | 19.6 |
+| Golem Forge | 2.7 | 100.0 | 3.2 | 100.0 | 2 / 6 | 19.5 | 22.0 |
+
+Targets met: the Orc Warband 3.1 tries, every later army 1.9 to 3.2 (the Infernal Host 2.7, under the 5 asked), Yokai and Golems 2.8 and 3.2 with a 90th percentile of 6 (challenging, reachable).
+Before the pass the realistic player walked through armies 4 to 8 in about one to three tries (Labyrinth 1.2, Ogres 1.1, Infernal 1.1, Yokai 1.2): recruits, a castle growing towards
+its top and levels of 15 and over had outgrown the foes. Only the foes, waves and walls were changed (never the heroes): the army multiplier `start` went 0.9 to 1.15 (Wildwood), 1.0 to 1.38
+(Labyrinth), 1.1 to 1.55 (Ogres), 1.25 to 1.64 (Infernal), and the new armies sit at 1.68 and 1.7 (it must rise army to army, as a test checks); the Golems' own stats were cut about 12%
+and their bosses set at 1,800 / 56 and 2,400 / 60 after a first guess (2,600 and 3,600 hp) made them a 9 to 14 try wall; the Yokai bosses are 2,200 / 52 and 3,000 / 55. The first three armies are untouched.
+
+A **maxed castle** (every building at its top) on the starting five alone, % of 20 attempts clearing, by hero level:
+
+| Level | Orc | Undead | Beasts | Wildwood | Labyrinth | Ogres | Infernal | Yokai | Golems |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 60.0 | 20.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
+| 5 | 100.0 | 40.0 | 20.0 | 0.0 | 5.0 | 0.0 | 0.0 | 0.0 | 0.0 |
+| 10 | 100.0 | 100.0 | 95.0 | 55.0 | 25.0 | 5.0 | 0.0 | 0.0 | 0.0 |
+| 15 | 100.0 | 100.0 | 100.0 | 60.0 | 45.0 | 30.0 | 0.0 | 0.0 | 0.0 |
+| 20 | 100.0 | 100.0 | 100.0 | 70.0 | 50.0 | 40.0 | 5.0 | 0.0 | 0.0 |
+
+The first two armies are easy for a veteran with a maxed castle by design (a new player replays them for crowns, and a level-1 team still fails them); from the Wildwood on even a maxed castle at level 20 does
+not clear an army with the starting five, and the last three are out of their reach (Infernal 5%, Yokai and Golems 0), which is what recruits and ranks are for: with those the climb above is 2 to 4 tries.
+
+Tests: `test/armies2.test.ts` (order and unlock, rewards above the Infernal Host's, a kit and sheet rows for every new foe, titles, Shard Burst, Thunder Drum, the new walls, lying deaths);
+`test/armies.test.ts` lists nine armies. Screenshots (393x852, `node tools/armies/shots2.mjs out/web`): `docs/samples/armies2-*.png`; the crispness lineup is
+`docs/samples/armies2-lineup.png` (1:1 and 3x, beside a Craftpix Knight and Skeleton Warrior).
 
 ## Not done / notes
 
