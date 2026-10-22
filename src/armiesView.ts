@@ -1,12 +1,23 @@
-// The Armies screen (opened by the Battle tab's big button) and the "A new army marches" moment. One card an army, in
-// order: its boss's portrait, name, waves, the furthest wave reached, stars, and the rewards of a first clear and of a
-// replay; a locked army says which boss opens it. The rules are in `src/sim/armies.ts`; this only draws them.
+// The Armies screen (opened by the Battle tab's big button) and the "A new army marches" moment. The screen is a swipeable
+// carousel, one army a card, each card filling the page between the top bar and the tab bar: a cinematic scene of the army
+// (its land's backdrop, its troops in ranks and its boss large at the back, with a lighting mood and a slow parallax),
+// and below it the army's 10-star track with its chests, the difficulty picks, the conditions, the rewards and the Fight!
+// button. A locked army shows its scene as a silhouette. The rules are in `src/sim/armies.ts`, `armyStars.ts` and
+// `tiers.ts`; this only draws them.
 
-import { ARMIES, armyCleared, armyIsNew, armyStars, armyUnlocked, bossOf, bossesOf, firstClearTotal, recordOf, replayTotal, type Army } from './sim/armies';
+import { ARMIES, armyCleared, armyIsNew, armyStars, armyUnlocked, bossOf, bossesOf, firstClearTotal, recordOf, replayTotal, tierOpen, tierStars, type Army } from './sim/armies';
+import { armyRules, chestKind, chestsOf, chestsReady, openChest, type ChestKind, type Loot, type LootItem, type StarResult } from './sim/armyStars';
+import { ARMY_STARS, MILESTONES, TIERS, tierRange } from './sim/tiers';
 import { UNITS } from './sim/units';
-import type { Meta } from './sim/meta';
-import { portrait } from './render/sheets';
-import { ICONS, icon } from './menuArt';
+import { saveMeta, type Meta } from './sim/meta';
+import { backdropFiles } from './render/backdrop';
+import { figureOf, portrait, sprite } from './render/sheets';
+import { gearIcon, relicIcon } from './render/items';
+import { AREA_NAMES, ICONS, icon } from './menuArt';
+import chestBronze from './art/ui/chest-bronze.png';
+import chestSilver from './art/ui/chest-silver.png';
+import chestGold from './art/ui/chest-gold.png';
+import { play } from './render/sound';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -16,10 +27,16 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 };
 
 export interface ArmiesHooks {
-  /** Pick the party and start this army from wave 1. */
-  onFight(id: string): void;
+  /** Pick the party and start this army from wave 1, on a difficulty tier. */
+  onFight(id: string, tier: number): void;
   /** Carry on with the run in progress. */
   onContinue(): void;
+  /** Close the screen. */
+  onBack(): void;
+  /** The meta changed (a chest was opened): the page redraws its top bar. */
+  onChange(): void;
+  /** An army to open on (the one just cleared, with a chest waiting); the furthest unlocked when unset. */
+  focus?: string;
   /** The run saved and not over, if any: the army it fights (none for a daily, tower or older run), and the stage it is on. */
   running: { army?: string; stage: number; label: string } | null;
 }
@@ -27,65 +44,463 @@ export interface ArmiesHooks {
 /** The boss's name that opens the army after `a` (shown on the locked card): its last boss. */
 export const unlockLine = (prev: Army): string => `Defeat the ${UNITS[bossOf(prev)].name} to unlock`;
 
-/** The Armies screen's body. */
-export function drawArmies(body: HTMLElement, m: Meta, hooks: ArmiesHooks): void {
-  const run = hooks.running;
-  const cleared = ARMIES.filter((a) => armyCleared(m, a.id)).length;
-  body.append(el('p', 'hint', `${cleared} of ${ARMIES.length} armies beaten. A lost fight sends the army back to wave 1; your heroes keep their levels.`));
-  if (run && !run.army) {
-    const cont = el('button', 'primary armyCont', `Continue ${run.label}`);
-    cont.addEventListener('click', () => hooks.onContinue());
-    body.append(cont);
-  }
-  ARMIES.forEach((a, i) => body.append(card(a, i, m, hooks)));
+// ---- the scenes -------------------------------------------------------------------------------------------------------
+
+type Mood = 'embers' | 'souls' | 'snow' | 'leaves' | 'fog' | 'sparks' | 'lanterns' | 'dust';
+/** The light of each army's scene: drifting particles and a colour laid over the land. */
+const MOODS: Record<string, { moods: Mood[]; tint: string }> = {
+  orcs: { moods: ['embers', 'dust'], tint: 'rgba(255, 130, 50, 0.16)' },
+  undead: { moods: ['fog', 'souls'], tint: 'rgba(60, 200, 190, 0.18)' },
+  beasts: { moods: ['snow', 'fog'], tint: 'rgba(150, 190, 255, 0.14)' },
+  wildwood: { moods: ['leaves', 'fog'], tint: 'rgba(80, 200, 90, 0.14)' },
+  labyrinth: { moods: ['fog', 'dust'], tint: 'rgba(150, 90, 220, 0.18)' },
+  ogres: { moods: ['dust', 'embers'], tint: 'rgba(220, 150, 70, 0.14)' },
+  infernal: { moods: ['embers', 'embers'], tint: 'rgba(255, 50, 20, 0.22)' },
+  yokai: { moods: ['lanterns', 'souls'], tint: 'rgba(200, 80, 200, 0.18)' },
+  golems: { moods: ['sparks', 'dust'], tint: 'rgba(255, 190, 80, 0.16)' },
+};
+const PARTICLE: Record<Mood, { colours: string[]; size: [number, number]; n: number; fall: boolean; time: [number, number] }> = {
+  embers: { colours: ['#ff9a3a', '#ffd05a', '#ff5a2a'], size: [3, 6], n: 16, fall: false, time: [5, 9] },
+  souls: { colours: ['#8af0e0', '#b8fff0', '#5ad0d8'], size: [4, 8], n: 12, fall: false, time: [7, 12] },
+  snow: { colours: ['#ffffff', '#dfeaff'], size: [3, 6], n: 24, fall: true, time: [5, 9] },
+  leaves: { colours: ['#7cc04a', '#c8a03a', '#4a8a30'], size: [4, 7], n: 14, fall: true, time: [7, 12] },
+  fog: { colours: [], size: [0, 0], n: 3, fall: false, time: [26, 40] },
+  sparks: { colours: ['#ffe48a', '#ffb03a', '#ffffff'], size: [3, 5], n: 16, fall: false, time: [3, 6] },
+  lanterns: { colours: ['#ff7ab8', '#ffb0d8', '#c890ff'], size: [5, 8], n: 10, fall: false, time: [9, 14] },
+  dust: { colours: ['#d8c098', '#b89868'], size: [3, 5], n: 14, fall: false, time: [8, 13] },
+};
+
+/** A small deterministic stream for the scene's look (the same each visit). */
+function lcg(seed: string): () => number {
+  let s = 2166136261;
+  for (const ch of seed) s = Math.imul(s ^ ch.charCodeAt(0), 16777619);
+  return () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
 }
 
-function card(a: Army, i: number, m: Meta, hooks: ArmiesHooks): HTMLElement {
+/** The foes of an army's field waves, in order of first appearance, then back to the start to fill the ranks. */
+export function crewOf(a: Army): string[] {
+  const boss = new Set(bossesOf(a).map((b) => b.id));
+  const seen: string[] = [];
+  for (const w of a.waves) for (const f of w.foes) if (!boss.has(f) && !seen.includes(f)) seen.push(f);
+  return seen;
+}
+
+/** Where the troops stand: (x across, y up from the bottom, both in percent), front rank first. */
+const SLOTS: [number, number][] = [
+  [20, 8],
+  [40, 5],
+  [60, 5],
+  [80, 8],
+  [9, 21],
+  [31, 22],
+  [69, 22],
+  [91, 21],
+];
+
+interface Figure {
+  sheet: string;
+  s: ReturnType<typeof sprite>;
+}
+
+/** An army's scene: the backdrop layers, the ground, the troops in ranks (front ones lower and in front), the mid-bosses and the boss large at the back. Returns the scene and the figures to animate. */
+function buildScene(a: Army, locked: boolean): { root: HTMLElement; figures: Figure[] } {
+  const root = el('div', 'asScene');
+  const sky = el('div', 'asSky');
+  backdropFiles(a.area).forEach((file, i, all) => {
+    const layer = el('div', 'asLayer');
+    layer.style.backgroundImage = `url(${file})`;
+    if (i === 0) layer.style.backgroundSize = '100% 100%';
+    layer.style.setProperty('--k', String(i * 7));
+    layer.style.setProperty('--drift', `${i * 5}px`);
+    layer.style.animationDuration = `${44 - (i * 28) / Math.max(1, all.length - 1)}s`;
+    sky.append(layer);
+  });
+  root.append(sky, el('div', 'asGround'));
+  const crowd = el('div', 'asCrowd');
+  const figures: Figure[] = [];
+  const stand = (kind: string, x: number, y: number, scale: number, n: number) => {
+    const def = UNITS[kind];
+    const s = sprite(def.sheet, 0, scale);
+    s.canvas.className = 'asFig';
+    s.canvas.style.left = `${x}%`;
+    s.canvas.style.bottom = `${y}%`;
+    // (nearer to the viewer, higher in the stack)
+    s.canvas.style.zIndex = String(100 - Math.round(y));
+    s.canvas.style.setProperty('--flip', s.faceRight ? '-1' : '1');
+    s.tick(n % 4);
+    crowd.append(s.canvas);
+    figures.push({ sheet: def.sheet, s });
+  };
+  // (the figures' own sheets are 64 to 100 px tall at 1x: the troops stand at 1x, the boss at 2x where it keeps to the scene)
+  const big = (kind: string) => Math.max(1, Math.min(3, Math.round(140 / figureOf(UNITS[kind].sheet))));
+  const crew = crewOf(a);
+  const boss = bossOf(a);
+  const mids = bossesOf(a).filter((b) => b.id !== boss);
+  stand(boss, 50, 24, big(boss), 0);
+  mids.slice(0, 2).forEach((m, i) => stand(m.id, i ? 77 : 23, 26, Math.max(1, Math.min(2, Math.round(100 / figureOf(UNITS[m.id].sheet)))), i + 1));
+  const slots = mids.length ? SLOTS.filter((s) => !(s[1] > 20 && (s[0] === 31 || s[0] === 69))) : SLOTS;
+  slots.forEach(([x, y], i) => stand(crew[i % crew.length], x, y, 1, i));
+  root.append(crowd);
+  // (the lighting: a colour over the land, drifting particles, and a vignette)
+  const mood = MOODS[a.id] ?? { moods: [], tint: 'rgba(0,0,0,0)' };
+  const tint = el('div', 'asTint');
+  tint.style.background = mood.tint;
+  const air = el('div', 'asAir');
+  const rnd = lcg(a.id);
+  mood.moods.forEach((m, mi) => {
+    const p = PARTICLE[m];
+    if (m === 'fog') {
+      for (let i = 0; i < p.n; i++) {
+        const f = el('i', 'asFog');
+        f.style.setProperty('--y', `${30 + i * 22}%`);
+        f.style.setProperty('--t', `${p.time[0] + rnd() * (p.time[1] - p.time[0])}s`);
+        f.style.setProperty('--d', `${-rnd() * 30}s`);
+        air.append(f);
+      }
+      return;
+    }
+    for (let i = 0; i < p.n; i++) {
+      const e = el('i', `asP ${p.fall ? 'fall' : 'rise'}`);
+      e.style.setProperty('--x', `${Math.round(rnd() * 100)}%`);
+      e.style.setProperty('--dx', `${Math.round((rnd() - 0.5) * (p.fall ? 90 : 60))}px`);
+      const sz = Math.round(p.size[0] + rnd() * (p.size[1] - p.size[0]));
+      e.style.setProperty('--s', `${sz}px`);
+      e.style.setProperty('--c', p.colours[(i + mi) % p.colours.length]);
+      e.style.setProperty('--t', `${(p.time[0] + rnd() * (p.time[1] - p.time[0])).toFixed(1)}s`);
+      e.style.setProperty('--d', `${(-rnd() * 12).toFixed(1)}s`);
+      air.append(e);
+    }
+  });
+  root.append(tint, air, el('div', 'asVig'));
+  if (locked) root.classList.add('asDark');
+  return { root, figures };
+}
+
+// ---- the chests -------------------------------------------------------------------------------------------------------
+
+/** A chest's picture and where its lid ends (in the picture's own pixels). */
+const CHESTS: Record<ChestKind, { url: string; w: number; h: number; lid: number }> = {
+  bronze: { url: chestBronze, w: 14, h: 10, lid: 4 },
+  silver: { url: chestSilver, w: 14, h: 10, lid: 4 },
+  gold: { url: chestGold, w: 14, h: 13, lid: 5 },
+};
+const CHEST_NAME: Record<ChestKind, string> = { bronze: 'Bronze chest', silver: 'Silver chest', gold: 'Gold chest' };
+
+/** A chest picture at a whole-number scale, in two parts (the lid and the body) so the lid can burst off. */
+function chestPicture(kind: ChestKind, scale: number): { root: HTMLElement; lid: HTMLElement; body: HTMLElement } {
+  const c = CHESTS[kind];
+  const root = el('div', 'chestPic');
+  root.style.width = `${c.w * scale}px`;
+  root.style.height = `${c.h * scale}px`;
+  const part = (cls: string, top: number, rows: number) => {
+    const p = el('div', cls);
+    p.style.cssText = `position:absolute;left:0;top:${top * scale}px;width:${c.w * scale}px;height:${rows * scale}px;background:url(${c.url}) 0 ${-top * scale}px / ${c.w * scale}px ${c.h * scale}px no-repeat;image-rendering:pixelated`;
+    return p;
+  };
+  const body = part('chestBody', c.lid, c.h - c.lid);
+  const lid = part('chestLid', 0, c.lid);
+  root.append(body, lid);
+  return { root, lid, body };
+}
+
+/** The reward line's picture: a hero's face, a relic's or gear's icon, or the crown. */
+function lootIcon(it: LootItem): HTMLElement {
+  if (it.type === 'crowns') return icon(ICONS.crowns, 'lootIco');
+  if (it.type === 'relic') return icon(relicIcon(it.ref ?? ''), 'lootIco');
+  if (it.type === 'gear') return icon(gearIcon(it.ref ?? 'weapon', 2), 'lootIco');
+  const face = portrait(UNITS[it.ref ?? ''].sheet, 48);
+  face.className = 'lootFace';
+  return face;
+}
+
+/** The chest-opening moment: the chest shakes, its lid bursts off in a flood of light, and the rewards fly out into a row of cards. `then` runs when it is closed. */
+export function showChest(loot: Loot, then: () => void): void {
+  const root = el('div', `chestShow ${loot.kind}`);
+  root.setAttribute('role', 'dialog');
+  root.append(el('div', 'chestRays'), el('div', 'chestGlow'));
+  const title = el('div', 'chestTitle', CHEST_NAME[loot.kind]);
+  const stage = el('div', 'chestStage');
+  const pic = chestPicture(loot.kind, 9);
+  pic.root.classList.add('shaking');
+  stage.append(pic.root);
+  const spark = el('div', 'chestSparks');
+  for (let i = 0; i < 14; i++) {
+    const s = el('i');
+    s.style.setProperty('--a', `${i * 25.7}deg`);
+    s.style.setProperty('--r', `${70 + (i % 4) * 26}px`);
+    s.style.setProperty('--d', `${(i % 5) * 0.04}s`);
+    spark.append(s);
+  }
+  stage.append(spark);
+  const list = el('div', 'chestLoot');
+  const go = el('button', 'primary chestGo', 'Collect');
+  go.hidden = true;
+  root.append(title, stage, list, go);
+  document.body.append(root);
+  const timers: number[] = [];
+  const at = (ms: number, f: () => void) => timers.push(window.setTimeout(f, ms));
+  let fast = false;
+  const done = () => {
+    timers.forEach(clearTimeout);
+    root.remove();
+    then();
+  };
+  go.addEventListener('click', done);
+  // (a tap before the end hurries the rest along)
+  root.addEventListener('click', (e) => {
+    if (e.target !== go) fast = true;
+  });
+  at(900, () => {
+    play('star');
+    pic.root.classList.remove('shaking');
+    pic.root.classList.add('burst');
+    root.classList.add('lit');
+  });
+  loot.items.forEach((it, i) => {
+    at(1500 + i * 520, () => {
+      const card = el('div', `lootCard ${it.type}${it.prize ? ' prize' : ''}${it.rarity ? ` r${it.rarity}` : ''}`);
+      card.append(lootIcon(it), el('span', '', it.text));
+      list.append(card);
+      play(it.prize ? 'merge' : 'summon');
+    });
+  });
+  const end = 1500 + loot.items.length * 520 + 500;
+  at(end, () => (go.hidden = false));
+  // (hurry: show everything now)
+  const tick = window.setInterval(() => {
+    if (!fast) return;
+    clearInterval(tick);
+    timers.forEach(clearTimeout);
+    root.classList.add('lit');
+    pic.root.classList.remove('shaking');
+    pic.root.classList.add('burst');
+    list.replaceChildren(
+      ...loot.items.map((it) => {
+        const card = el('div', `lootCard ${it.type}${it.prize ? ' prize' : ''}${it.rarity ? ` r${it.rarity}` : ''}`);
+        card.style.animation = 'none';
+        card.append(lootIcon(it), el('span', '', it.text));
+        return card;
+      }),
+    );
+    go.hidden = false;
+  }, 80);
+  timers.push(tick as unknown as number);
+}
+
+// ---- the screen -------------------------------------------------------------------------------------------------------
+
+/** The tier last picked on each army's card, kept while the page lives. */
+const picked: Record<string, number> = {};
+
+/** The Armies screen's body: the carousel of full-screen cards, opening on the furthest army unlocked. */
+export function drawArmies(body: HTMLElement, m: Meta, hooks: ArmiesHooks): void {
+  body.classList.add('asBody');
+  const root = el('div', 'asRoot');
+  body.append(root);
+  const focus = ARMIES.findIndex((a) => a.id === hooks.focus);
+  let index = focus >= 0 ? focus : Math.max(0, ARMIES.map((a) => armyUnlocked(m, a.id)).lastIndexOf(true));
+  const track = el('div', 'asTrack');
+  const dots = el('div', 'asDots');
+  const cards: { root: HTMLElement; figures: Figure[] }[] = [];
+
+  const render = (): void => {
+    track.replaceChildren();
+    dots.replaceChildren();
+    cards.length = 0;
+    ARMIES.forEach((a, i) => {
+      const c = card(a, i, m, hooks, () => {
+        const keep = track.scrollLeft;
+        render();
+        track.scrollLeft = keep;
+      });
+      cards.push(c);
+      track.append(c.root);
+      const d = el('button', 'asDot');
+      d.setAttribute('aria-label', a.name);
+      d.addEventListener('click', () => go(i));
+      dots.append(d);
+    });
+    mark();
+  };
+  const go = (i: number): void => {
+    const to = Math.max(0, Math.min(ARMIES.length - 1, i));
+    track.scrollTo({ left: to * track.clientWidth, behavior: 'smooth' });
+  };
+  const mark = (): void => {
+    [...dots.children].forEach((d, i) => d.classList.toggle('on', i === index));
+    cards.forEach((c, i) => c.root.classList.toggle('near', Math.abs(i - index) <= 1));
+    prev.hidden = index === 0;
+    next.hidden = index === ARMIES.length - 1;
+    // (a dot is lit gold when its army has a chest waiting, and a plain one when it is locked)
+    [...dots.children].forEach((d, i) => {
+      d.classList.toggle('chest', chestsReady(m, ARMIES[i]) > 0);
+      d.classList.toggle('shut', !armyUnlocked(m, ARMIES[i].id));
+    });
+  };
+  const prev = el('button', 'asArrow left', '‹');
+  const next = el('button', 'asArrow right', '›');
+  prev.setAttribute('aria-label', 'Previous army');
+  next.setAttribute('aria-label', 'Next army');
+  prev.addEventListener('click', () => go(index - 1));
+  next.addEventListener('click', () => go(index + 1));
+  const back = el('button', 'asBack', '‹ Back');
+  back.addEventListener('click', () => hooks.onBack());
+
+  let frame = 0;
+  track.addEventListener('scroll', () => {
+    const w = track.clientWidth || 1;
+    const now = Math.round(track.scrollLeft / w);
+    cards.forEach((c, i) => {
+      if (Math.abs(i - track.scrollLeft / w) < 1.2) c.root.style.setProperty('--par', String(((i * w - track.scrollLeft) / w).toFixed(3)));
+    });
+    if (now !== index) {
+      index = now;
+      mark();
+    }
+  });
+  root.append(track, dots, prev, next, back);
+  render();
+  // (the first look: on the furthest army, without a slide)
+  const place = () => {
+    track.scrollLeft = index * track.clientWidth;
+    track.dispatchEvent(new Event('scroll'));
+  };
+  requestAnimationFrame(place);
+  requestAnimationFrame(() => requestAnimationFrame(place));
+  // (the troops idle while the page shows; the timer ends with the page)
+  const timer = window.setInterval(() => {
+    if (!root.isConnected || !root.offsetParent) {
+      if (!root.isConnected) clearInterval(timer);
+      return;
+    }
+    frame++;
+    cards.forEach((c, i) => {
+      if (Math.abs(i - index) > 1) return;
+      c.figures.forEach((f, k) => f.s.tick(frame + (k % 3)));
+    });
+  }, 160);
+}
+
+function stat(parts: (string | HTMLElement)[]): HTMLElement {
+  const e = el('span', 'asStat');
+  e.append(...parts);
+  return e;
+}
+const crowns = (n: number): HTMLElement => {
+  const s = el('span', 'armyCrowns');
+  s.append(icon(ICONS.crowns, 'ico'), document.createTextNode(String(n)));
+  return s;
+};
+
+function card(a: Army, i: number, m: Meta, hooks: ArmiesHooks, redraw: () => void): { root: HTMLElement; figures: Figure[] } {
   const open = armyUnlocked(m, a.id);
   const rec = recordOf(m, a.id);
   const done = armyCleared(m, a.id);
   const fresh = armyIsNew(m, a.id);
   const boss = UNITS[bossOf(a)];
-  const root = el('div', `army${open ? '' : ' locked'}${done ? ' done' : ''}${fresh ? ' fresh' : ''}`);
+  const root = el('section', `asCard${open ? '' : ' locked'}${done ? ' done' : ''}${fresh ? ' fresh' : ''}`);
   root.dataset.army = a.id;
-  const face = portrait(boss.sheet, 72);
-  face.className = 'armyFace';
-  const text = el('div', 'armyText');
-  text.append(el('b', '', a.name));
-  if (open) {
+  const { root: scene, figures } = buildScene(a, !open);
+  const rib = el('div', 'asRib');
+  rib.append(el('b', '', open ? a.name : '???'));
+  scene.append(rib);
+  if (fresh) scene.append(el('i', 'armyNew', 'NEW'));
+  if (!open) {
+    const lock = el('div', 'asLock');
+    lock.append(el('b', '', unlockLine(ARMIES[i - 1])), el('small', '', `${a.waves.length} waves · ${AREA_NAMES[a.area]}`));
+    scene.append(lock);
+  }
+  const info = el('div', 'asInfo');
+  root.append(scene, info);
+  if (!open) {
+    info.append(el('p', 'asBlurb', a.blurb), stat([`First clear pays `, crowns(firstClearTotal(a))]));
+    return { root, figures };
+  }
+  const running = hooks.running?.army === a.id ? hooks.running : null;
+  const stars = armyStars(m, a);
+  const tiers = TIERS.map((_, t) => ({ open: tierOpen(m, a, t), got: tierStars(rec, t) }));
+  let tier = picked[a.id] ?? tiers.findIndex((t) => t.open && t.got < TIERS[tiers.indexOf(t)].stars);
+  if (tier < 0 || !tiers[tier]?.open) tier = Math.max(0, tiers.map((t) => t.open).lastIndexOf(true));
+  const draw = (): void => {
+    info.replaceChildren();
     const bosses = bossesOf(a);
-    text.append(el('em', '', a.blurb));
-    const stars = armyStars(m, a);
-    text.append(
-      el('span', 'armyStat', `${a.waves.length} waves · boss: ${boss.name}`),
-      el('span', 'armyStat', `Best wave ${Math.min(rec.best, a.waves.length)}/${a.waves.length} · ★ ${stars.got}/${stars.max}${bosses.length > 2 ? ` · ${bosses.length} bosses` : ''}`),
-    );
-    const pay = el('span', 'armyPay');
-    const crowns = (n: number) => {
-      const s = el('span', 'armyCrowns');
-      s.append(icon(ICONS.crowns, 'ico'), document.createTextNode(String(n)));
-      return s;
-    };
-    pay.append(done ? 'Cleared ✓ · ' : 'First clear ', done ? '' : crowns(firstClearTotal(a)), done ? 'Replay ' : ' · Replay ', crowns(replayTotal(a)));
-    text.append(pay);
-    const running = hooks.running?.army === a.id ? hooks.running : null;
-    const go = el('button', done && !running ? '' : 'primary', running ? `Continue · wave ${running.stage}` : rec.best > 0 || done ? 'Fight again' : 'Fight!');
+    info.append(el('p', 'asBlurb', a.blurb), el('p', 'asMeta', `${a.waves.length} waves · led by the ${boss.name}${bosses.length > 2 ? ` · ${bosses.length} bosses` : ''} · best wave ${Math.min(rec.best, a.waves.length)}`));
+    // the tier picks
+    const picks = el('div', 'asTiers');
+    TIERS.forEach((t, ti) => {
+      const b = el('button', `asTier${ti === tier ? ' on' : ''}${tiers[ti].open ? '' : ' shut'}`);
+      b.append(el('b', '', t.name), el('small', '', tiers[ti].open ? `${tiers[ti].got}/${t.stars} ★` : `needs ${t.need} ★`));
+      b.addEventListener('click', () => {
+        if (!tiers[ti].open) return;
+        picked[a.id] = tier = ti;
+        draw();
+      });
+      picks.append(b);
+    });
+    info.append(picks);
+    // the 10-star track, with a chest under the 3rd, 5th and 10th star
+    const track = el('div', 'asStars');
+    const chests = chestsOf(m, a);
+    for (let s = 1; s <= ARMY_STARS; s++) {
+      const ti = TIERS.findIndex((_, k) => s >= tierRange(k)[0] && s <= tierRange(k)[1]);
+      const lit = s - tierRange(ti)[0] < tiers[ti].got;
+      const col = el('div', `asStarCol${ti === tier ? ' pick' : ''}${s === tierRange(ti)[0] && ti > 0 ? ' gap' : ''}`);
+      col.append(el('span', `asStar${lit ? ' on' : ''}`, lit ? '★' : '☆'));
+      const ch = chests.find((c) => c.at === s);
+      if (ch) {
+        const pic = el('button', `asChest ${ch.kind} ${ch.state}${s === ARMY_STARS ? ' end' : ''}`);
+        pic.setAttribute('aria-label', `${CHEST_NAME[ch.kind]}, ${ch.state === 'ready' ? 'tap to open' : ch.state === 'opened' ? 'opened' : `at ${ch.at} stars`}`);
+        const p = chestPicture(ch.kind, 3);
+        if (ch.state === 'opened') p.lid.classList.add('up');
+        pic.append(p.root, el('small', '', ch.state === 'ready' ? 'Open!' : `${ch.at}★`));
+        if (ch.state === 'ready')
+          pic.addEventListener('click', () => {
+            const loot = openChest(m, a.id, ch.at);
+            if (!loot) return;
+            saveMeta(m);
+            hooks.onChange();
+            showChest(loot, redraw);
+          });
+        else pic.disabled = true;
+        col.append(pic);
+      }
+      track.append(col);
+    }
+    info.append(track, el('p', 'asHint', `${stars.got}/${ARMY_STARS} stars · chests at ${MILESTONES.join(', ')} stars`));
+    // the conditions of the picked tier (three stars a tier, the first and last tier's the same words)
+    const rules = el('div', 'asRules');
+    const earned = rec.met?.[String(tier)] ?? 0;
+    armyRules(a, tier).forEach((r, k) => {
+      const got = !!(earned & (1 << k));
+      rules.append(el('span', `asRule${got ? ' on' : ''}`, `${got ? '★' : '☆'} ${r.text}`));
+    });
+    info.append(rules);
+    // the rewards of the picked tier
+    const t = TIERS[tier];
+    const tierDone = tier === 0 ? done : (rec.hard?.[String(tier)]?.clears ?? 0) > 0;
+    const pay = el('div', 'asPay');
+    pay.append(tierDone ? 'Cleared ✓ · ' : 'First clear ', tierDone ? '' : crowns(firstClearTotal(a, tier)), tierDone ? 'Replay ' : ' · Replay ', crowns(replayTotal(a, tier)));
+    info.append(pay);
+    if (tier > 0) info.append(el('p', 'asHint', `Foes ×${t.hp} hp, ×${t.atk} attack, ×${t.speed} speed · crowns ×${t.pay} · XP ×${t.xp}`));
+    if (hooks.running && !hooks.running.army) {
+      const cont = el('button', 'small asCont', `Continue ${hooks.running.label}`);
+      cont.addEventListener('click', () => hooks.onContinue());
+      info.append(cont);
+    }
+    const go = el('button', 'primary asFight', running ? `Continue · wave ${running.stage}` : rec.best > 0 || done ? `Fight again · ${t.name}` : 'Fight!');
     // (starting another army while a run is going would lose it: a second tap says yes)
     if (running) go.addEventListener('click', () => hooks.onContinue());
-    else if (hooks.running) twoTap(go, `Leave ${hooks.running.label}?`, () => hooks.onFight(a.id));
-    else go.addEventListener('click', () => hooks.onFight(a.id));
-    text.append(go);
+    else if (hooks.running) twoTap(go, `Leave ${hooks.running.label}?`, () => hooks.onFight(a.id, tier));
+    else go.addEventListener('click', () => hooks.onFight(a.id, tier));
+    info.append(go);
     if (running) {
       const again = el('button', 'small armyAgain', 'Restart from wave 1');
-      twoTap(again, 'Lose this run and restart?', () => hooks.onFight(a.id));
-      text.append(again);
+      twoTap(again, 'Lose this run and restart?', () => hooks.onFight(a.id, tier));
+      info.append(again);
     }
-    if (fresh) root.append(el('i', 'armyNew', 'NEW'));
-  } else {
-    text.append(el('span', 'armyLock', unlockLine(ARMIES[i - 1])), el('span', 'armyStat', `${a.waves.length} waves · first clear ${firstClearTotal(a)} crowns`));
-  }
-  root.append(face, text);
-  return root;
+  };
+  draw();
+  return { root, figures };
 }
 
 /** A button that asks first: the first tap changes its words, the second does it (and a pause puts it back). */
@@ -104,6 +519,21 @@ function twoTap(btn: HTMLButtonElement, ask: string, then: () => void): void {
     clearTimeout(armed);
     then();
   });
+}
+
+/** The army stars of a cleared run, on the result screen: the three conditions, which are new, the total, and any chests it reached. `tierName` is the difficulty. */
+export function drawRunStars(root: HTMLElement, res: StarResult | null, tierName: string): void {
+  root.replaceChildren();
+  root.hidden = !res;
+  if (!res) return;
+  root.append(el('h4', '', `${tierName} stars · ${res.total}/${ARMY_STARS}${res.gained ? ` (+${res.gained})` : ''}`));
+  res.rules.forEach((r, i) => {
+    const fresh = res.fresh.includes(i);
+    const row = el('div', `armyStarRow${r.earned ? ' on' : ''}${fresh ? ' fresh' : ''}`);
+    row.append(el('span', '', r.earned ? '★' : '☆'), el('b', '', r.text), ...(fresh ? [el('em', '', 'NEW')] : []));
+    root.append(row);
+  });
+  for (const at of res.chests) root.append(el('div', 'armyChestNote', `A ${CHEST_NAME[chestKind(at)].toLowerCase()} is waiting on the army's card!`));
 }
 
 /** The unlock moment after an army's last boss falls: its next army's banner rises over the board. `then` runs when it is dismissed. */

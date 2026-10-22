@@ -10,6 +10,8 @@ import { ALL_HEROES, HEROES, UNITS, type Rarity } from './units';
 import { MAX_STARS, starCrowns } from './stars';
 import { BOSS_IDS } from './foes';
 import { migrateArmies, readSeen, seenFor, type ArmyRecord } from './armies';
+import { RELICS } from './relics';
+import { makeGear, SLOTS, type Gear } from './gear';
 
 export const PULL_COST = 100;
 export const PULL10_COST = 900;
@@ -73,6 +75,24 @@ export interface Meta {
   armySeen: string[];
   /** The achievements unlocked (`achievements.ts`, by id). */
   achievements: string[];
+  /** Relics and gear won from army chests, waiting for the next run: it starts with them (`takeVault` in `armyStars.ts`). */
+  vault: Vault;
+}
+
+export interface Vault {
+  relics: string[];
+  gear: Gear[];
+}
+export const emptyVault = (): Vault => ({ relics: [], gear: [] });
+
+/** A saved vault that is sane: known relics, and gear of a real slot and tier (given fresh ids when a run takes it). */
+function readVault(raw: unknown): Vault {
+  const out = emptyVault();
+  const v = raw as Partial<Vault> | null;
+  if (!v || typeof v !== 'object') return out;
+  if (Array.isArray(v.relics)) out.relics = [...new Set(v.relics.filter((r): r is string => typeof r === 'string' && !!RELICS[r]))];
+  if (Array.isArray(v.gear)) for (const g of v.gear) if (g && SLOTS.includes(g.slot) && typeof g.tier === 'number') out.gear.push(makeGear(0, g.slot, g.tier));
+  return out;
 }
 
 export interface DailyEntry {
@@ -89,7 +109,7 @@ export interface Pull {
   shards: number;
 }
 
-export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [...HEROES], party: [...HEROES], pulls: 0, dry: 0, dryMythic: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], achievements: [] });
+export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [...HEROES], party: [...HEROES], pulls: 0, dry: 0, dryMythic: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], achievements: [], vault: emptyVault() });
 
 export const rarityOf = (kind: string): Rarity => UNITS[kind]?.rarity ?? 1;
 /** Hp and attack multiplier of a hero kind's tier. */
@@ -169,7 +189,7 @@ function readStars(raw: unknown): Record<string, number> {
 export const pullCost = (count: 1 | 10) => (count === 10 ? PULL10_COST : PULL_COST);
 
 /** The hero kinds of a rarity; when none exist, the nearest rarity below, then above. */
-function kindsOf(rarity: Rarity): readonly string[] {
+export function kindsOf(rarity: Rarity): readonly string[] {
   const all: Rarity[] = [1, 2, 3, 4, 5];
   const order = all.filter((x) => x <= rarity).reverse().concat(all.filter((x) => x > rarity));
   for (const r of order) {
@@ -247,6 +267,8 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.armies = migrateArmies(m.armies, m.bestStage);
       m.armySeen = fresh ? seenFor(m) : readSeen(m.armySeen);
       m.achievements = Array.isArray(m.achievements) ? m.achievements.filter((a) => typeof a === 'string') : [];
+      // (saves from before the army chests have an empty vault)
+      m.vault = readVault(m.vault);
       return m;
     }
   } catch {

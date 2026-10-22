@@ -10,7 +10,8 @@ import { fightXp, gainXp, levelOfKind, xpFor } from '../src/sim/levels';
 import { newCastle, xpRate, type Castle } from '../src/sim/castle';
 import { newMeta, rankOf, type Meta } from '../src/sim/meta';
 import { armyById } from '../src/sim/armies';
-import { armyRun, boostOf, equip, finish, isBossRun, SQUAD, startStage, summon, type Owned, type Run } from '../src/sim/run';
+import { armyRun, boostOf, equip, finish, isBossRun, noteFight, SQUAD, startStage, summon, tierOfRun, type Owned, type Run } from '../src/sim/run';
+import { armyRules } from '../src/sim/armyStars';
 import { ratingOf } from '../src/sim/stars';
 import { UNITS } from '../src/sim/units';
 
@@ -45,9 +46,9 @@ function dressSquad(run: Run): void {
  * One attempt at an army from wave 1, as a greedy player: returns the waves won and whether the army fell. Gains XP into `meta`.
  * With `castle` the run takes its buildings (and the library's share of XP); `gear` dresses the squad with the pieces the run finds.
  */
-export function playArmy(meta: Meta, armyId: string, seed: number, party: readonly string[], castle: Castle = newCastle(), gear = false): { won: number; cleared: boolean } {
+export function playArmy(meta: Meta, armyId: string, seed: number, party: readonly string[], castle: Castle = newCastle(), gear = false, tier = 0): { won: number; cleared: boolean; stars: number } {
   const army = armyById(armyId)!;
-  const run: Run = armyRun(seed, armyId, party, castle);
+  const run: Run = armyRun(seed, armyId, party, castle, tier);
   let won = 0;
   while (!run.over) {
     while (run.event) if (chooseOption(run, 0) === null) leaveEvent(run);
@@ -66,10 +67,12 @@ export function playArmy(meta: Meta, armyId: string, seed: number, party: readon
     playOut(b);
     const ok = b.phase === 'won';
     if (ok) won = run.stage;
+    noteFight(run, b);
     finish(run, ok, ratingOf(b, isBossRun(run)).stars);
     gainXp(meta, fightXp(b, xpRate(castle)));
   }
-  return { won, cleared: !!run.cleared && won === army.waves.length };
+  const cleared = !!run.cleared && won === army.waves.length;
+  return { won, cleared, stars: cleared ? armyRules(army, tierOfRun(run), run).filter((r) => r.earned).length : 0 };
 }
 
 /** A save whose party kinds are all at `level` (and nothing else). */
