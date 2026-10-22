@@ -161,6 +161,7 @@ class Game {
           this.home.open();
         }),
       onRecruit: () => this.gacha.open(),
+      onSummon: (n, play) => this.gacha.summon(n, play),
       onDaily: () => {
         if (dailyInProgress(loadRun(), todayKey())) return this.resume();
         this.startRun(startDaily(this.meta, todayKey()));
