@@ -12,6 +12,10 @@ import hawk_eye from '../art/items/hawk_eye.png';
 import swift_boots from '../art/items/swift_boots.png';
 import scholar_scroll from '../art/items/scholar_scroll.png';
 import spyglass from '../art/items/spyglass.png';
+import sun_crown from '../art/items/sun_crown.png';
+import dragon_heart from '../art/items/dragon_heart.png';
+import storm_ring from '../art/items/storm_ring.png';
+import void_lens from '../art/items/void_lens.png';
 import weapon1 from '../art/items/weapon1.png';
 import weapon2 from '../art/items/weapon2.png';
 import weapon3 from '../art/items/weapon3.png';
@@ -35,6 +39,10 @@ const RELIC_ICONS: Record<string, string> = {
   swiftBoots: swift_boots,
   scholarScroll: scholar_scroll,
   spyglass: spyglass,
+  sunCrown: sun_crown,
+  dragonHeart: dragon_heart,
+  stormRing: storm_ring,
+  voidLens: void_lens,
 };
 const GEAR_ICONS: Record<string, readonly string[]> = {
   weapon: [weapon1, weapon2, weapon3],

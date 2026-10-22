@@ -1,6 +1,7 @@
 // Achievements: things a player can do, each with crowns for the first time it is earned. A check reads what the game
 // has just settled (a finished fight, the run, the meta), so it is pure: no Pixi, no DOM. The unlocked ids are kept in
-// `Meta.achievements`; `checkAchievements` pays the crowns and returns what was new, for the toast.
+// `Meta.achievements`; `checkAchievements` returns what was new, for the toast. The crowns wait until the player taps Claim on
+// the achievements page (`claimAchievement`); the ones already paid are kept in `Meta.claimed`.
 
 import type { Battle } from './battle';
 import { BOSS_IDS } from './foes';
@@ -125,14 +126,27 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
 
 export const achievementById = (id: string): Achievement | undefined => ACHIEVEMENTS.find((a) => a.id === id);
 
-/** Check every achievement not yet unlocked. Each one earned is kept in the meta and pays its crowns; returns those, for the toast. */
+/** Check every achievement not yet unlocked. Each one earned is kept in the meta, its crowns waiting to be claimed; returns those, for the toast. */
 export function checkAchievements(c: AchievementCtx): Achievement[] {
   const got: Achievement[] = [];
   for (const a of ACHIEVEMENTS) {
     if (c.meta.achievements.includes(a.id) || !a.earned(c)) continue;
     c.meta.achievements.push(a.id);
-    c.meta.crowns += a.crowns;
     got.push(a);
   }
   return got;
+}
+
+/** Whether an achievement is earned and its crowns not yet taken. */
+export const claimable = (m: Meta, id: string): boolean => m.achievements.includes(id) && !(m.claimed ?? []).includes(id);
+/** The achievements earned whose crowns are still waiting. */
+export const unclaimed = (m: Meta): Achievement[] => ACHIEVEMENTS.filter((a) => claimable(m, a.id));
+
+/** Take an earned achievement's crowns. Returns the crowns paid (0 when it isn't earned, or was claimed already). */
+export function claimAchievement(m: Meta, id: string): number {
+  const a = achievementById(id);
+  if (!a || !claimable(m, id)) return 0;
+  (m.claimed ??= []).push(id);
+  m.crowns += a.crowns;
+  return a.crowns;
 }

@@ -447,6 +447,8 @@
   .brow .pips { color: var(--gold); letter-spacing: 2px; }
   .brow button { flex: none; min-width: 92px; }
   .ach.done { border-color: var(--gold); }
+  .ach.ready { border-color: #7ad06a; background: linear-gradient(rgba(122, 208, 106, 0.12), rgba(0, 0, 0, 0.25)), #2a1a10; }
+  .claimAll { width: 100%; margin-bottom: 6px; }
   .toast { position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 12px); z-index: 9; transform: translate(-50%, -140%); transition: transform 0.35s ease; max-width: calc(calc(100 * var(--vw)) - 28px); padding: 9px 14px; background: var(--wood); border: 2px solid var(--gold); border-radius: 8px; color: var(--gold); font-size: 14px; font-weight: bold; text-align: center; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6); pointer-events: none; }
   .toast.show { transform: translate(-50%, 0); }
 
@@ -693,6 +695,7 @@
 <div id="sky"></div>
 <div id="stage"></div>
 <div id="top"><h1>Legends of the Fall</h1><span id="status"></span><span id="gold"></span><span id="clock"></span><button id="mute"></button><button id="gear" title="Settings">⚙</button><button id="speed">×1</button></div>
+<div id="twistBanner" hidden></div>
 <div id="bossBar" hidden><b></b><i><span></span></i></div>
 <div id="bossCard" hidden><canvas></canvas><div class="rib"><b></b></div><span></span></div>
 <div id="panel">

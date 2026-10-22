@@ -1,0 +1,14 @@
+/* ===== Floor twists (`twistView.ts`): the map nodes' corner badge and the banner over a fight's board. Curses red, blessings green, mixed ones gold.
+   No animation anywhere (nothing blinks). 16px tiles are drawn at 1x or 2x only. ===== */
+.twBadge { position: absolute; right: -9px; top: -9px; width: 22px; height: 22px; display: grid; place-items: center; box-sizing: border-box; background: #120c10; border: 2px solid var(--tw, #d8a84a); box-shadow: 0 2px 0 #0b070b; pointer-events: none; z-index: 3; }
+.twBadge .twIco { width: 16px; height: 16px; image-rendering: pixelated; }
+.twBadge.curse { --tw: #e0503c; } .twBadge.blessing { --tw: #6ccb5a; } .twBadge.mixed { --tw: #e8b84a; }
+.rtNode:not(.open):not(.here):not(.picked) .twBadge .twIco { filter: brightness(0.85); }
+#twistBanner { position: fixed; left: 8px; right: 8px; z-index: 2; display: flex; align-items: center; gap: 8px; padding: 4px 8px; box-sizing: border-box; pointer-events: none; background: rgba(18, 12, 16, 0.86); border: 2px solid var(--tw, #e8b84a); box-shadow: 0 2px 0 #000; text-shadow: 0 1px 0 #000; }
+#twistBanner[hidden] { display: none; }
+#twistBanner.curse { --tw: #e0503c; } #twistBanner.blessing { --tw: #6ccb5a; } #twistBanner.mixed { --tw: #e8b84a; }
+#twistBanner .twIco { flex: none; width: 32px; height: 32px; image-rendering: pixelated; }
+#twistBanner span { min-width: 0; display: flex; flex-direction: column; line-height: 1.15; }
+#twistBanner b { font: 700 13px var(--display); color: var(--tw); letter-spacing: 0.5px; }
+#twistBanner small { font-size: 12px; color: var(--ink); }
+body[data-phase='won'] #twistBanner, body[data-phase='lost'] #twistBanner { display: none; }

@@ -22,6 +22,7 @@ import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
 import { Gacha } from './gacha';
 import { Events } from './events';
 import { TowerView } from './towerView';
+import { showTwistBanner } from './twistView';
 import { finishTower, migrateTower, settleTower } from './sim/tower';
 import { hpShare } from './sim/health';
 import { Home } from './home';
@@ -229,7 +230,9 @@ class Game {
     for (const id of [...this.run.squad]) {
       const h = heroOf(this.run, id);
       if (!h) continue;
-      const at = this.placed.get(String(id)) ?? this.freeTile();
+      // (a spot from the last fight may be a boulder or a foe's now: a floor's twist can change the deploy rows)
+      const was = this.placed.get(String(id));
+      const at = was && canPlace(this.b, h.kind, was[0], was[1], id) ? was : this.freeTile();
       if (at && place(this.b, h.kind, at[0], at[1], id, this.boostFor(h))) this.placed.set(String(id), at);
       else setSquad(this.run, id, false);
     }
@@ -241,6 +244,7 @@ class Game {
     this.fx.clear();
     this.boardView.build(this.b.board);
     setBackdrop(this.b.board.area);
+    showTwistBanner(this.run.tower?.cur?.fight?.twist);
     this.syncSprites(true);
     this.layout();
     this.refresh();
@@ -490,7 +494,12 @@ class Game {
     const bar = $('bossBar');
     bar.style.top = `${top.bottom + 4}px`;
     bar.style.right = '12px';
-    const head = bar.hidden ? top.bottom : bar.getBoundingClientRect().bottom + 4;
+    // (a floor's twist banner sits under the top bar; the bar for a boss goes below it)
+    const twist = $('twistBanner');
+    twist.style.top = `${top.bottom + 2}px`;
+    const below = twist.hidden ? top.bottom : twist.getBoundingClientRect().bottom + 2;
+    bar.style.top = `${below + 4}px`;
+    const head = bar.hidden ? below : bar.getBoundingClientRect().bottom + 4;
     const area = { x: 0, y: head, w: viewW(), h: panel.top - head };
     const b = this.b.board;
     let x0 = Infinity;
