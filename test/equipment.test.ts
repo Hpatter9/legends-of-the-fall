@@ -1,18 +1,20 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
-import { fight, place, playOut, startBattle, stepBattle, type Battle, type BattleEvent } from '../src/sim/battle';
+import { fight, place, playOut, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
 import { Rng } from '../src/sim/rng';
 import { ALL_HEROES, HEROES } from '../src/sim/units';
 import { loadMeta, newMeta, saveMeta } from '../src/sim/meta';
 import { boostOf } from '../src/sim/run';
 import {
-  AFFIXES, CALLING_BONUS, EQUIP_BASES, EQUIP_BASE_IDS, MAX_ITEM_LEVEL, QUALITY_WEIGHTS, RARITY_SCALE, SALVAGE_CROWNS, affixCount, callingOf, emptyStats, equipItem, equipStats, grantEquipment,
-  grantSampleEquipment, itemStats, rollEquipment, salvageItem, spareEquipment, unequipItem, wearerOf, wornIn, type EquipStats, type NewEquipment,
+  ABILITIES, ABILITY_SCALE, CALLING_BONUS, EQUIP_BASES, EQUIP_BASE_IDS, EQUIP_LIST, EQUIP_SLOTS, MAX_ITEM_LEVEL, QUALITY_WEIGHTS, RARITY_SCALE, SALVAGE_CROWNS, callingOf, describeAbility, emptyStats, equipItem, equipStats, grantEquipment,
+  grantSampleEquipment, hasAbility, itemName, itemStats, rollEquipment, salvageItem, spareEquipment, unequipItem, wearerOf, wornIn, type EquipStats, type NewEquipment,
 } from '../src/sim/equipment';
+import { firedCount } from '../src/sim/equipFx';
+import { existsSync } from 'node:fs';
 import { readyBattle } from './helpers';
 
-const sword = (rarity: 1 | 2 | 3 | 4 | 5 = 1, level = 1): NewEquipment => ({ base: 'ironSword', rarity, level, affixes: [] });
+const sword = (rarity: 1 | 2 | 3 | 4 | 5 = 1, level = 1): NewEquipment => ({ base: 'ironSword', rarity, level });
 const stats = (p: Partial<EquipStats>): EquipStats => ({ ...emptyStats(), ...p });
 
 /** A knight (with `eq`) placed on the front row against the skeleton band; the fight is begun. */
@@ -38,9 +40,7 @@ test('rolls are deterministic per seed and always a valid item', () => {
   for (const it of roll(5)) {
     assert.ok(EQUIP_BASES[it.base]);
     assert.ok(it.rarity >= 1 && it.rarity <= 5 && it.level >= 1 && it.level <= MAX_ITEM_LEVEL);
-    assert.equal(it.affixes.length, affixCount(it.rarity));
-    assert.equal(new Set(it.affixes).size, it.affixes.length);
-    for (const a of it.affixes) assert.ok(EQUIP_BASES[it.base].affixes.includes(a));
+    assert.equal(itemStats(it).abilities.length, hasAbility(it.rarity) ? 1 : 0);
   }
 });
 
@@ -76,16 +76,13 @@ test('items grow with rarity and level; a piece for the hero\'s calling is stron
   for (let r = 2; r <= 5; r++) assert.ok(RARITY_SCALE[r] > RARITY_SCALE[r - 1]);
   assert.ok(itemStats(sword(3)).atk > itemStats(sword(2)).atk);
   assert.ok(itemStats(sword(1, 10)).atk > itemStats(sword(1, 1)).atk);
-  const bow: NewEquipment = { base: 'huntersBow', rarity: 2, level: 3, affixes: [] };
+  const bow: NewEquipment = { base: 'huntersBow', rarity: 2, level: 3 };
   assert.equal(callingOf('archer'), 'shooter');
   assert.equal(callingOf('wizard'), 'caster');
   assert.equal(callingOf('knight'), 'melee');
   assert.ok(Math.abs(itemStats(bow, 'archer').atk / itemStats(bow, 'knight').atk - CALLING_BONUS) < 1e-9);
   assert.equal(itemStats(bow, 'archer').range, 1);
   assert.ok(itemStats(sword(1), 'archer').atk === itemStats(sword(1), 'knight').atk);
-  // (affixes ride on Epic and better)
-  assert.ok(itemStats({ base: 'ironSword', rarity: 3, level: 1, affixes: ['lifesteal'] }).lifesteal > 0);
-  for (const id of EQUIP_BASE_IDS) assert.ok(EQUIP_BASES[id].affixes.every((a) => a in AFFIXES));
 });
 
 test('equip, swap, unequip and salvage follow the rules', () => {
@@ -125,7 +122,7 @@ test('equip, swap, unequip and salvage follow the rules', () => {
 test('a slot holds one piece, by the base\'s slot', () => {
   const m = newMeta(1);
   const w = grantEquipment(m, sword(1));
-  const ar = grantEquipment(m, { base: 'chainMail', rarity: 2, level: 1, affixes: [] });
+  const ar = grantEquipment(m, { base: 'chainMail', rarity: 2, level: 1 });
   equipItem(m, 'knight', w.id);
   equipItem(m, 'knight', ar.id);
   assert.equal(wornIn(m, 'knight', 'weapon')?.id, w.id);
@@ -157,12 +154,12 @@ test('equipment survives a save, and an old save loads with none', () => {
   assert.equal(equipStats(loaded, 'knight'), undefined);
   // (nonsense is dropped: unknown bases, an item on two heroes, the wrong slot)
   const bad = JSON.parse(JSON.stringify(m));
-  bad.equipment.push({ id: 77, base: 'nope', rarity: 3, level: 2, affixes: [] }, { id: 78, base: 'ironSword', rarity: 9, level: 999, affixes: ['x', 'burn'] });
+  bad.equipment.push({ id: 77, base: 'nope', rarity: 3, level: 2 }, { id: 78, base: 'ironSword', rarity: 9, level: 999 });
   bad.equipped = { knight: { weapon: bad.equipment[1].id, armour: 78 }, samurai: { weapon: bad.equipment[1].id }, ghost: { weapon: 78 } };
   const fixed = loadMeta(8, { getItem: () => JSON.stringify(bad) });
   assert.ok(!fixed.equipment!.some((x) => x.id === 77));
   const clamped = fixed.equipment!.find((x) => x.id === 78)!;
-  assert.deepEqual([clamped.rarity, clamped.level, clamped.affixes], [5, MAX_ITEM_LEVEL, ['burn']]);
+  assert.deepEqual([clamped.rarity, clamped.level], [5, MAX_ITEM_LEVEL]);
   assert.deepEqual(fixed.equipped, { knight: { weapon: bad.equipment[1].id } });
 });
 
@@ -175,7 +172,6 @@ test('a sword raises the damage dealt, armour cuts the damage taken', () => {
   assert.ok(firstHit(duel(stats({ atk: 0.5 })), 'hero').dmg > plain);
   const taken = firstHit(duel(), 'foe').dmg;
   assert.ok(firstHit(duel(stats({ def: 6 })), 'foe').dmg < taken);
-  assert.ok(firstHit(duel(stats({ guard: 0.3 })), 'foe').dmg < taken);
   // (hp and attack go through the unit's stats)
   const w = duel(stats({ hp: 0.5, atk: 0.5 }));
   const k = w.units.find((u) => u.def === 'knight')!;
@@ -197,30 +193,139 @@ test('faster blows, crits and longer reach change the fight', () => {
   assert.ok(crits(stats({ crit: 1 })) >= crits());
 });
 
-test('the affixes fire through the sim\'s own hooks', () => {
-  // lifesteal: the wielder mends after its blow
-  const hb = duel(stats({ lifesteal: 0.5 }));
-  const h = events(hb, 600);
-  assert.ok(h.some((e) => e.kind === 'heal' && e.to === me(hb).id), 'lifesteal heals');
-  const pb = duel();
-  assert.ok(!events(pb, 600).some((e) => e.kind === 'heal' && e.to === me(pb).id));
-  // burn: a foe it hit burns
-  const b = duel(stats({ burn: 0.3 }));
-  let burned = false;
-  for (let i = 0; i < 600 && b.phase === 'fight'; i++) {
-    stepBattle(b);
-    if (b.units.some((u) => u.side === 'foe' && u.dot?.kind === 'burn')) burned = true;
+// ---- the catalogue ----
+
+test('60 item types, twenty a slot, each with its own look, stats, ability and Mythic name', () => {
+  assert.equal(EQUIP_LIST.length, 60);
+  for (const slot of EQUIP_SLOTS) assert.equal(EQUIP_LIST.filter((b) => b.slot === slot).length, 20, slot);
+  assert.equal(new Set(EQUIP_BASE_IDS).size, 60);
+  for (const pick of [(b: (typeof EQUIP_LIST)[number]) => b.name, (b: (typeof EQUIP_LIST)[number]) => b.mythic, (b: (typeof EQUIP_LIST)[number]) => b.icon, (b: (typeof EQUIP_LIST)[number]) => b.ability.id, (b: (typeof EQUIP_LIST)[number]) => b.ability.name, (b: (typeof EQUIP_LIST)[number]) => JSON.stringify(b.main)])
+    assert.equal(new Set(EQUIP_LIST.map(pick)).size, 60);
+  for (const b of EQUIP_LIST) {
+    assert.ok(existsSync(`src/art/equip/${b.icon}.png`), `icon ${b.icon}`);
+    assert.ok(Object.keys(b.main).length >= 1);
+    assert.equal(ABILITIES[b.ability.id], b.ability);
+    assert.ok(describeAbility(b.ability, 1).length > 10);
   }
-  assert.ok(burned, 'burn sets the foe alight');
-  // thorns: a foe that struck it is hurt back
-  const tb = duel(stats({ thorns: 0.5 }));
-  const t = events(tb, 900);
-  assert.ok(t.some((e) => e.kind === 'hit' && e.src === 'skill' && e.by === me(tb).id), 'thorns hit back');
-  // a start shield
-  const s = duel(stats({ shield: 0.5 }));
-  const k = s.units.find((u) => u.def === 'knight')!;
-  assert.equal(k.shield?.hp, Math.round(k.maxHp * 0.5));
+  // (every calling has weapons, and the main stats vary: speed, crit, range, dodge, charge, regen and resist all appear)
+  for (const c of ['melee', 'shooter', 'caster']) assert.ok(EQUIP_LIST.some((b) => b.slot === 'weapon' && b.calling === c), c);
+  const used = new Set(EQUIP_LIST.flatMap((b) => Object.keys(b.main)));
+  for (const k of ['hp', 'atk', 'def', 'atkSpeed', 'moveSpeed', 'crit', 'range', 'dodge', 'charge', 'regen', 'resist']) assert.ok(used.has(k), k);
+  // (a Mythic piece has its own name)
+  assert.equal(itemName({ base: 'stormStaff', rarity: 5, level: 1 }), "Thunderlord's Reach");
+  assert.equal(itemName({ base: 'stormStaff', rarity: 4, level: 1 }), 'Stormcaller Staff');
 });
+
+test('a signature ability switches on at Epic and grows at Legendary and Mythic', () => {
+  for (const id of EQUIP_BASE_IDS) {
+    for (const r of [1, 2] as const) assert.equal(itemStats({ base: id, rarity: r, level: 5 }).abilities.length, 0, `${id} ${r}`);
+    const scales = ([3, 4, 5] as const).map((r) => {
+      const s = itemStats({ base: id, rarity: r, level: 5 });
+      assert.equal(s.abilities.length, 1);
+      assert.equal(s.abilities[0].id, EQUIP_BASES[id].ability.id);
+      return s.abilities[0].s;
+    });
+    assert.ok(scales[0] < scales[1] && scales[1] < scales[2], id);
+  }
+  assert.equal(ABILITY_SCALE[2], 0);
+  assert.equal(hasAbility(2), false);
+  assert.equal(hasAbility(3), true);
+  // (the words grow with the strength)
+  assert.notEqual(describeAbility(ABILITIES.chainLightning, 1), describeAbility(ABILITIES.chainLightning, 1.8));
+});
+
+// ---- the abilities in a small fight ----
+
+/** A fight with the base's piece (Mythic, level 10) on the hero that suits it, tuned so its trigger comes up. */
+function trial(baseId: string, seed: number, tweak: Partial<EquipStats> = {}): { b: Battle; hero: Unit } {
+  const base = EQUIP_BASES[baseId];
+  const kind = base.calling === 'shooter' ? 'archer' : base.calling === 'caster' ? 'wizard' : 'knight';
+  const eq = { ...itemStats({ base: baseId, rarity: 5, level: 10 }, kind), ...tweak };
+  const trig = base.ability.trig;
+  if (trig !== 'low' && trig !== 'death') eq.hp += 2;
+  if (trig === 'crit') eq.crit = 1;
+  if (trig === 'low') eq.hp = -0.5;
+  if (trig === 'death') eq.hp = -0.85;
+  if (trig === 'kill' || trig === 'hit' || trig === 'nth' || trig === 'crit') eq.atk += 1.5;
+  const b = startBattle(seed, 'skeletons', trig === 'low' || trig === 'death' ? { foes: { atk: 1.6 } } : {});
+  const spots: [number, number][] = [];
+  for (let u = 0; u < b.board.w; u++) if (standable(tileAt(b.board, u, D - DEPLOY_ROWS))) spots.push([u, D - DEPLOY_ROWS]);
+  // (the hero and an ally on two tiles side by side)
+  const i = spots.findIndex((s, n) => n > 0 && spots[n - 1][0] + 1 === s[0]);
+  place(b, kind, spots[i - 1][0], spots[i - 1][1], 1, { equip: eq });
+  place(b, 'samurai', spots[i][0], spots[i][1], 2, { hp: 2 });
+  fight(b);
+  return { b, hero: b.units.find((u) => u.tag === 1)! };
+}
+
+test('every ability fires in a small fight, deterministically', () => {
+  for (const base of EQUIP_LIST) {
+    let fired = false;
+    for (let seed = 1; seed <= 8 && !fired; seed++) {
+      const { b, hero } = trial(base.id, seed);
+      for (let i = 0; i < 1500 && b.phase === 'fight'; i++) stepBattle(b);
+      fired = firedCount(hero, base.ability.id) > 0;
+    }
+    assert.ok(fired, `${base.name}: ${base.ability.name} never fired`);
+  }
+  // (the same seed fires the same number of times)
+  const run = () => {
+    const { b, hero } = trial('honestStrike' in ABILITIES ? 'ironSword' : 'runedBlade', 3);
+    playOut(b);
+    return [firedCount(hero, 'honestStrike'), b.t, JSON.stringify(b.units.map((u) => u.hp))];
+  };
+  assert.deepEqual(run(), run());
+});
+
+test('a few abilities do what they say', () => {
+  // stealth: no foe can target the wearer while it lasts, and none hits it
+  const st = trial('shadowcloak', 2);
+  const early = events(st.b, 25).filter((e) => e.kind === 'hit' && e.to === st.hero.id);
+  assert.equal(early.length, 0);
+  assert.ok(st.hero.hideUntil! > st.b.t);
+  // a start shield
+  const sh = trial('scaleHauberk', 2);
+  assert.ok(sh.hero.shield && sh.hero.shield.hp > 0);
+  // a phoenix feather: it rises once
+  const ph = trial('phoenixFeather', 2);
+  let rose = false;
+  for (let i = 0; i < 1500 && ph.b.phase === 'fight'; i++) if (stepBattle(ph.b).some((e) => e.kind === 'skill' && e.name === 'Heart of the Phoenix')) rose = true;
+  assert.ok(rose);
+  assert.equal(firedCount(ph.hero, 'rebirth'), 1);
+  // thorns hurt the attacker back (skill hits by the wearer)
+  const th = trial('thornplate', 2, { hp: 3 });
+  assert.ok(events(th.b, 900).some((e) => e.kind === 'hit' && e.src === 'skill' && e.by === th.hero.id));
+  // chain lightning: an arc between foes
+  let arced = false;
+  for (let seed = 1; seed <= 8 && !arced; seed++) arced = events(trial('stormStaff', seed).b, 1500).some((e) => e.kind === 'arc');
+  assert.ok(arced);
+  // a freeze stuns the struck foe
+  const fb = trial('frostbrand', 2);
+  let frozen = false;
+  for (let i = 0; i < 1200 && fb.b.phase === 'fight'; i++) {
+    stepBattle(fb.b);
+    if (fb.b.units.some((u) => u.side === 'foe' && u.stunUntil !== undefined && u.stunUntil > fb.b.t)) frozen = true;
+  }
+  assert.ok(frozen);
+  // a war drum lifts an ally's attack
+  const wd = trial('warDrum', 2);
+  events(wd.b, 30);
+  assert.ok((wd.b.units.find((u) => u.tag === 2)!.power ?? 1) > 1.2);
+  // runes feed the king's mana
+  const rb = trial('runedBlade', 2);
+  const mana0 = rb.b.spells.mana;
+  events(rb.b, 1500);
+  assert.ok(rb.b.spells.mana > mana0 || firedCount(rb.hero, 'runeSurge') > 0);
+});
+
+test('abilities only run when an Epic or better piece is worn', () => {
+  const common = itemStats({ base: 'shadowcloak', rarity: 2, level: 10 });
+  const b = startBattle(2);
+  place(b, 'knight', 3, D - 1, 1, { equip: common });
+  fight(b);
+  assert.equal(b.units.find((u) => u.tag === 1)!.hideUntil, undefined);
+}
+);
 
 test('a run with no equipment plays out exactly as before', () => {
   const key = (b: Battle) => JSON.stringify([b.phase, b.t, b.units.map((u) => [u.def, u.hp, u.alive, u.power, u.u, u.v])]);

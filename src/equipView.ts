@@ -3,7 +3,7 @@
 // would change (green for better, red for worse) and the buttons Equip, Unequip and Salvage. Reads and changes the meta
 // only through `equipment.ts`.
 
-import { AFFIXES, EQUIP_BASES, EQUIP_SLOTS, SALVAGE_CROWNS, SLOT_NAMES, callingOf, equipItem, equipStats, itemName, itemStats, salvageItem, spareEquipment, statLines, unequipItem, wornIn, STAT_KEYS, type EquipSlot, type EquipStats, type Equipment, type StatKey } from './sim/equipment';
+import { EQUIP_BASES, describeAbility, hasAbility, EQUIP_SLOTS, SALVAGE_CROWNS, SLOT_NAMES, callingOf, equipItem, equipStats, itemName, itemStats, salvageItem, spareEquipment, statLines, unequipItem, wornIn, STAT_KEYS, type EquipSlot, type EquipStats, type Equipment } from './sim/equipment';
 import { RARITY_NAMES, saveMeta, type Meta } from './sim/meta';
 import { UNITS } from './sim/units';
 import { EQUIP_ICONS } from './equipArt';
@@ -26,8 +26,6 @@ export function itemIcon(it: Equipment | undefined, slot: EquipSlot, size: 'big'
   return frame;
 }
 
-/** The stats the affixes give; they are shown as their own lines, not as rows. */
-const AFFIX_STATS = new Set<StatKey>(Object.values(AFFIXES).map((a) => a.stat));
 const CALLING_NAMES = { melee: 'melee fighters', shooter: 'shooters', caster: 'casters' } as const;
 
 /** The stat changes `next` makes against `cur` (either may be missing): a row per stat either has. */
@@ -35,7 +33,7 @@ function compareRows(next: EquipStats, cur: EquipStats | undefined): HTMLElement
   const rows: HTMLElement[] = [];
   const lines = new Map(statLines(next).map((l) => [l.key, l]));
   const was = new Map(statLines(cur ?? ({} as EquipStats)).map((l) => [l.key, l]));
-  for (const key of STAT_KEYS.filter((k) => !AFFIX_STATS.has(k))) {
+  for (const key of STAT_KEYS) {
     const a = lines.get(key);
     const b = was.get(key);
     if (!a && !b) continue;
@@ -65,14 +63,14 @@ function itemCard(it: Equipment, kind: string, against?: Equipment): HTMLElement
   card.append(head);
   const stats = itemStats(it, kind);
   card.append(...compareRows(stats, against ? itemStats(against, kind) : undefined));
-  for (const a of it.affixes) card.append(el('p', 'eqAffix', `${affixName(a)}: ${affixText(a, stats)}`));
+  const sig = stats.abilities[0];
+  if (sig) card.append(el('p', 'eqAffix', `${sig.name}: ${describeAbility(base.ability, sig.s)}`));
+  else if (!hasAbility(it.rarity)) card.append(el('small', 'eqDim', `Epic and up: ${base.ability.name}`));
   if (base.calling && base.calling === callingOf(kind)) card.append(el('p', 'eqSuit', `Suits ${CALLING_NAMES[base.calling]}: more of its stats`));
   else if (base.calling) card.append(el('small', 'eqDim', `Made for ${CALLING_NAMES[base.calling]}`));
   return card;
 }
 
-const affixName = (a: keyof typeof AFFIXES) => AFFIXES[a].name;
-const affixText = (a: keyof typeof AFFIXES, s: EquipStats) => AFFIXES[a].text(s[AFFIXES[a].stat]);
 
 /** The panel for a hero kind. `changed` is told after anything is equipped, unequipped or salvaged (so the page can refresh). */
 export function drawEquipment(meta: Meta, kind: string, changed: () => void = () => {}): HTMLElement {

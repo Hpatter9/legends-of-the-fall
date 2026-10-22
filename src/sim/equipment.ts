@@ -2,7 +2,7 @@
 // `gear.ts`, which lasts one run). A hero kind wears three pieces, a weapon, armour and a trinket; any kind can wear
 // any piece, but a piece made for a calling (a staff for casters, a bow for shooters) is stronger on a hero of that
 // calling. An item has a base (its name and what it gives), a rarity (Common to Mythic, as for heroes), an item level
-// and, from Epic up, one or two special affixes. What a kind wears is added to its stats in every fight, through the
+// and, from Epic up, the base's signature ability (`equipBases.ts`; run by `equipFx.ts`). What a kind wears is added to its stats in every fight, through the
 // same boost the levels and grades use (`Boost.equip`, read by `addUnit` in battle.ts). Pure rules: no Pixi, no DOM;
 // the roll draws only from the stream it is given.
 
@@ -10,10 +10,12 @@ import type { Meta } from './meta';
 import type { Rng } from './rng';
 import { ALL_HEROES, UNITS, type Rarity } from './units';
 
-export type EquipSlot = 'weapon' | 'armour' | 'trinket';
+import { ABILITIES, EQUIP_BASES, EQUIP_BASE_IDS, EQUIP_LIST, type Ability, type Calling, type EquipSlot, type Kind, type MainKey } from './equipBases';
+export { ABILITIES, EQUIP_BASES, EQUIP_BASE_IDS, EQUIP_LIST };
+export type { Ability, Calling, EquipSlot, MainKey };
+
 export const EQUIP_SLOTS: readonly EquipSlot[] = ['weapon', 'armour', 'trinket'];
 export const SLOT_NAMES: Readonly<Record<EquipSlot, string>> = { weapon: 'Weapon', armour: 'Armour', trinket: 'Trinket' };
-export type Calling = 'melee' | 'shooter' | 'caster';
 
 /** A chest's quality sets the odds of each rarity. */
 export type Quality = 'bronze' | 'silver' | 'gold';
@@ -25,13 +27,28 @@ export const QUALITY_WEIGHTS: Readonly<Record<Quality, Readonly<Record<Rarity, n
 };
 export const MAX_ITEM_LEVEL = 20;
 /** What a main stat of each rarity is worth against a Common one (index 0 is unused). */
-export const RARITY_SCALE: readonly number[] = [1, 1, 1.35, 1.8, 2.4, 3.2];
+export const RARITY_SCALE: readonly number[] = [1, 1, 1.3, 1.65, 2.1, 2.6];
+/** One knob for every main stat: the catalogue's numbers are written as a share of a hero, this keeps the whole kit modest next to levels (`tools/gear-balance.ts`). */
+export const MAIN_SCALE = 0.6;
 /** Each item level above the first adds this share of the level-1 stat. */
-export const LEVEL_STEP = 0.07;
+export const LEVEL_STEP = 0.04;
 /** A piece made for the wearer's calling gives this much more of its main stats. */
 export const CALLING_BONUS = 1.25;
 /** Crowns an unwanted item turns into, by rarity (index 0 is unused). */
 export const SALVAGE_CROWNS: readonly number[] = [0, 5, 12, 30, 70, 150];
+/** The first rarity whose pieces carry their signature ability (Epic). */
+export const ABILITY_RARITY = 3;
+/** How strong the signature ability is at each rarity (index 0 is unused; Common and Rare have none). */
+export const ABILITY_SCALE: readonly number[] = [0, 0, 0, 1, 1.35, 1.8];
+/** The most a hero's worn pieces add to the shares that could otherwise stack without end. */
+const CAPS: Partial<Record<MainKey, number>> = { dodge: 0.35, crit: 0.6, resist: 0.6, atkSpeed: 0.8, moveSpeed: 0.8, charge: 1, regen: 0.03 };
+
+/** A signature ability a worn piece switches on: its id, the name to show, and its strength (`ABILITY_SCALE`, a little more per item level). */
+export interface ActiveAbility {
+  id: string;
+  name: string;
+  s: number;
+}
 
 /** The numbers a hero's equipment adds in a fight. Shares are 0.06 for +6%; `def` and `range` are flat. */
 export interface EquipStats {
@@ -46,70 +63,75 @@ export interface EquipStats {
   crit: number;
   /** Tiles of reach (whole). */
   range: number;
-  /** Affixes: the share of damage dealt that heals the wielder. */
-  lifesteal: number;
-  /** A blow sets the foe burning: each tick deals this share of the wielder's attack. */
-  burn: number;
-  /** A melee blow taken hurts the attacker for this share of it. */
-  thorns: number;
-  /** The wielder starts the fight with a shield of this share of its max hp. */
-  shield: number;
-  /** Damage taken is cut by this share. */
-  guard: number;
+  /** The share of blows slipped. */
+  dodge: number;
+  /** A share faster skill charge. */
+  charge: number;
+  /** Hp mended a second, as a share of max hp. */
+  regen: number;
+  /** The share of burning and bleeding damage shrugged off. */
+  resist: number;
+  /** The signature abilities of the worn Epic or better pieces. */
+  abilities: ActiveAbility[];
 }
-export type StatKey = keyof EquipStats;
-export const STAT_KEYS: readonly StatKey[] = ['atk', 'hp', 'def', 'atkSpeed', 'moveSpeed', 'crit', 'range', 'lifesteal', 'burn', 'thorns', 'shield', 'guard'];
-export const emptyStats = (): EquipStats => ({ hp: 0, atk: 0, def: 0, atkSpeed: 0, moveSpeed: 0, crit: 0, range: 0, lifesteal: 0, burn: 0, thorns: 0, shield: 0, guard: 0 });
+export type StatKey = Exclude<keyof EquipStats, 'abilities'>;
+export const STAT_KEYS: readonly StatKey[] = ['atk', 'hp', 'def', 'atkSpeed', 'moveSpeed', 'crit', 'range', 'dodge', 'charge', 'regen', 'resist'];
+export const emptyStats = (): EquipStats => ({ hp: 0, atk: 0, def: 0, atkSpeed: 0, moveSpeed: 0, crit: 0, range: 0, dodge: 0, charge: 0, regen: 0, resist: 0, abilities: [] });
 
-export type AffixId = 'lifesteal' | 'burn' | 'thorns' | 'shield' | 'guard';
-export const AFFIXES: Readonly<Record<AffixId, { name: string; stat: StatKey; base: number; text: (v: number) => string }>> = {
-  lifesteal: { name: 'Vampiric', stat: 'lifesteal', base: 0.06, text: (v) => `heals ${pct(v)} of the damage it deals` },
-  burn: { name: 'Burning', stat: 'burn', base: 0.1, text: (v) => `blows set the foe alight (${pct(v)} of attack a second)` },
-  thorns: { name: 'Thorned', stat: 'thorns', base: 0.12, text: (v) => `melee attackers take ${pct(v)} of the blow back` },
-  shield: { name: 'Warded', stat: 'shield', base: 0.12, text: (v) => `starts the fight with a ${pct(v)} hp shield` },
-  guard: { name: 'Stalwart', stat: 'guard', base: 0.04, text: (v) => `takes ${pct(v)} less damage` },
-};
-/** An affix is a little stronger at the higher rarities (index 0 is unused). */
-const AFFIX_SCALE: readonly number[] = [1, 1, 1, 1, 1.25, 1.5];
 const pct = (v: number) => `${Math.round(v * 100)}%`;
+const secs = (w: number) => `${Math.round(w * 10) / 10}s`;
+const num = (v: number) => String(Math.round(v * 10) / 10);
 
-export interface EquipBase {
-  id: string;
-  name: string;
-  slot: EquipSlot;
-  /** The icon file (`src/art/equip/<icon>.png`). */
-  icon: string;
-  /** The calling it suits (a bonus on a hero of that calling); none suits all alike. */
-  calling?: Calling;
-  /** Main stats at Common, item level 1. */
-  main: Partial<Record<'hp' | 'atk' | 'def' | 'atkSpeed' | 'moveSpeed' | 'crit' | 'range', number>>;
-  /** The affixes an Epic or better piece of it can carry. */
-  affixes: readonly AffixId[];
-  text: string;
+/** What an ability does, in plain words, at strength `s`. */
+export function describeAbility(a: Ability, s = 1): string {
+  const v = (a.v ?? 0) * s;
+  const w = (a.w ?? 0) * (1 + (s - 1) / 2);
+  const p = Math.min(0.9, (a.p ?? 1) * s);
+  const when: Record<string, string> = {
+    hit: a.p ? `${pct(p)} of blows` : 'Each blow',
+    nth: `Every ${a.n}th blow`,
+    crit: 'On a crit',
+    kill: 'On a kill',
+    struck: a.n ? `Every ${a.n}th blow taken` : a.p ? `${pct(p)} of blows taken` : 'When struck',
+    start: 'At the start',
+    tick: a.n && a.n > 1 ? `Every ${a.n} seconds` : 'Every second',
+    low: 'Once, below 35% hp',
+    death: 'Once, when it would fall',
+  };
+  const what: Record<Kind, string> = {
+    leech: `heals ${pct(v)} of the damage dealt`,
+    burn: `sets the foe alight (${pct(v)} of attack a second)`,
+    bleed: `makes the foe bleed (${pct(v)} of attack a second)`,
+    curse: `curses the foe: ${pct(v)} of attack a second, and it feeds the wielder`,
+    slow: `slows the foe for ${secs(w)}`,
+    stun: `stuns the foe for ${secs(w)}`,
+    chain: `lightning leaps to a second foe for ${pct(v)} of the blow`,
+    splash: `${pct(v)} of the blow hits the foes beside the target`,
+    pierce: `${pct(v)} of the blow hits the foe behind`,
+    smite: `deals ${pct(v)} more of the blow`,
+    execute: `deals ${pct(v)} more to a foe below 30% hp`,
+    burst: `the slain bursts for ${pct(v)} of attack on foes beside it`,
+    charge: `adds ${num(v)} skill charge`,
+    mana: `adds ${num(v)} mana to the king`,
+    heal: `heals ${pct(v)} of max hp`,
+    healAlly: `heals the weakest ally for ${pct(v)} of its hp`,
+    shield: `a shield of ${pct(v)} of max hp for ${secs(w)}`,
+    haste: `hastes the wielder for ${secs(w)}`,
+    stealth: `cannot be targeted for ${secs(w)}`,
+    guard: `takes half damage for ${secs(w)}`,
+    reflect: `the attacker takes ${pct(v)} of the blow back`,
+    counter: `strikes back for ${pct(v)} of attack`,
+    taunt: `the attacker must go for the wielder for ${secs(w)}`,
+    revive: `rises at ${pct(v)} hp`,
+    regen: `mends ${pct(v)} of max hp`,
+    aura: `heals allies beside it for ${pct(v)} of their hp`,
+    banner: 'raises the attack of allies beside it (+25%)',
+    rally: `raises the attack of allies near it (+25%) for ${secs(w)}`,
+    berserk: `+${pct(v)} attack for the rest of the fight`,
+    cleanse: `cleanses burns, bleeds and slows, and heals ${pct(v)}`,
+  };
+  return `${when[a.trig]}: ${what[a.kind]}`;
 }
-
-export const EQUIP_BASES: Readonly<Record<string, EquipBase>> = Object.fromEntries(
-  (
-    [
-      { id: 'ironSword', name: 'Iron Sword', slot: 'weapon', icon: 'sword', main: { atk: 0.07 }, affixes: ['lifesteal', 'thorns'], text: 'A plain, honest blade.' },
-      { id: 'runedBlade', name: 'Runed Blade', slot: 'weapon', icon: 'blade', calling: 'melee', main: { atk: 0.08, crit: 0.02 }, affixes: ['lifesteal', 'burn'], text: 'Etched runes glow in a fight.' },
-      { id: 'dragonboneAxe', name: 'Dragonbone Axe', slot: 'weapon', icon: 'axe', calling: 'melee', main: { atk: 0.11, atkSpeed: 0.02 }, affixes: ['burn', 'thorns', 'lifesteal'], text: 'Carved from a dragon\'s rib.' },
-      { id: 'huntersBow', name: "Hunter's Bow", slot: 'weapon', icon: 'bow', calling: 'shooter', main: { atk: 0.06, range: 1, atkSpeed: 0.03 }, affixes: ['burn', 'lifesteal'], text: 'Light, true and long.' },
-      { id: 'oakStaff', name: 'Oak Staff', slot: 'weapon', icon: 'staff', calling: 'caster', main: { atk: 0.08, atkSpeed: 0.03 }, affixes: ['shield', 'burn'], text: 'A gnarled staff humming with spells.' },
-      { id: 'stormStaff', name: 'Stormcaller Staff', slot: 'weapon', icon: 'wand', calling: 'caster', main: { atk: 0.1, crit: 0.03 }, affixes: ['burn', 'lifesteal'], text: 'Its tip crackles with lightning.' },
-      { id: 'leatherJerkin', name: 'Leather Jerkin', slot: 'armour', icon: 'jerkin', main: { hp: 0.06, moveSpeed: 0.03 }, affixes: ['guard', 'shield'], text: 'Light armour that lets you run.' },
-      { id: 'chainMail', name: 'Chain Mail', slot: 'armour', icon: 'mail', main: { hp: 0.08, def: 0.6 }, affixes: ['guard', 'thorns'], text: 'Rings of steel.' },
-      { id: 'plateCuirass', name: 'Plate Cuirass', slot: 'armour', icon: 'plate', calling: 'melee', main: { hp: 0.11, def: 1 }, affixes: ['guard', 'thorns', 'shield'], text: 'Heavy, and worth every ounce.' },
-      { id: 'mageRobe', name: 'Mage Robe', slot: 'armour', icon: 'robe', calling: 'caster', main: { hp: 0.05, atk: 0.05 }, affixes: ['shield', 'guard'], text: 'Woven with a ward.' },
-      { id: 'rangerCloak', name: "Ranger's Cloak", slot: 'armour', icon: 'cloak', calling: 'shooter', main: { hp: 0.05, moveSpeed: 0.05, crit: 0.02 }, affixes: ['guard', 'shield'], text: 'Green and grey, hard to hit.' },
-      { id: 'luckyCharm', name: 'Lucky Charm', slot: 'trinket', icon: 'charm', main: { crit: 0.04 }, affixes: ['lifesteal', 'burn'], text: 'Rubbed smooth by many thumbs.' },
-      { id: 'ironRing', name: 'Iron Ring', slot: 'trinket', icon: 'ring', main: { def: 0.6, hp: 0.03 }, affixes: ['guard', 'thorns'], text: 'Cold and heavy on the finger.' },
-      { id: 'swiftBoots', name: 'Boots of Haste', slot: 'trinket', icon: 'boots', main: { moveSpeed: 0.06, atkSpeed: 0.03 }, affixes: ['shield', 'guard'], text: 'You hardly touch the ground.' },
-      { id: 'phoenixFeather', name: 'Phoenix Feather', slot: 'trinket', icon: 'feather', main: { hp: 0.06, atk: 0.04 }, affixes: ['shield', 'burn', 'lifesteal'], text: 'Warm to the touch, even now.' },
-    ] as EquipBase[]
-  ).map((b) => [b.id, b]),
-);
-export const EQUIP_BASE_IDS = Object.keys(EQUIP_BASES);
 
 export interface Equipment {
   /** Stable for the life of the save; never reused. */
@@ -118,8 +140,6 @@ export interface Equipment {
   rarity: Rarity;
   /** 1 to `MAX_ITEM_LEVEL`. */
   level: number;
-  /** The affixes it carries (Epic and Legendary one, Mythic two). */
-  affixes: AffixId[];
 }
 export type NewEquipment = Omit<Equipment, 'id'>;
 
@@ -130,21 +150,28 @@ export function callingOf(kind: string): Calling {
   return shot === 'arrow' || shot === 'bullet' || shot === 'bone' ? 'shooter' : 'caster';
 }
 
-export const affixCount = (rarity: number): number => (rarity >= 5 ? 2 : rarity >= 3 ? 1 : 0);
+/** Whether a piece of this rarity carries its signature ability. */
+export const hasAbility = (rarity: number): boolean => rarity >= ABILITY_RARITY;
+/** The ability's strength at a rarity and item level. */
+export const abilityScale = (rarity: number, level: number): number => ABILITY_SCALE[rarity] * (1 + 0.01 * (level - 1));
+
+/** What an item is called: its base's name, or the Mythic name at Mythic. */
+export const itemName = (it: NewEquipment | Equipment): string => (it.rarity >= 5 ? EQUIP_BASES[it.base]?.mythic : EQUIP_BASES[it.base]?.name) ?? 'Unknown';
 
 /** The numbers one item gives a hero of `kind` (a `kind` makes the calling bonus count). */
 export function itemStats(it: NewEquipment | Equipment, kind?: string): EquipStats {
   const base = EQUIP_BASES[it.base];
   const out = emptyStats();
   if (!base) return out;
-  const k = RARITY_SCALE[it.rarity] * (1 + LEVEL_STEP * (it.level - 1)) * (kind && base.calling && base.calling === callingOf(kind) ? CALLING_BONUS : 1);
-  for (const [stat, v] of Object.entries(base.main) as [keyof EquipBase['main'], number][]) out[stat] = stat === 'range' ? Math.floor((v * (it.rarity + 1)) / 3) : v * k;
-  for (const a of it.affixes) if (AFFIXES[a]) out[AFFIXES[a].stat] += AFFIXES[a].base * AFFIX_SCALE[it.rarity];
+  const k = MAIN_SCALE * RARITY_SCALE[it.rarity] * (1 + LEVEL_STEP * (it.level - 1)) * (kind && base.calling && base.calling === callingOf(kind) ? CALLING_BONUS : 1);
+  for (const [stat, v] of Object.entries(base.main) as [MainKey, number][]) out[stat] = stat === 'range' ? Math.floor((v * (it.rarity + 1)) / 3) : v * k;
+  if (hasAbility(it.rarity)) out.abilities.push({ id: base.ability.id, name: it.rarity >= 5 ? base.mythic : base.ability.name, s: abilityScale(it.rarity, it.level) });
   return out;
 }
 
 function addStats(a: EquipStats, b: EquipStats): EquipStats {
   for (const k of STAT_KEYS) a[k] += b[k];
+  a.abilities.push(...b.abilities);
   return a;
 }
 
@@ -164,6 +191,7 @@ export function equipStats(m: Meta, kind: string): EquipStats | undefined {
     any = true;
     addStats(total, itemStats(it, kind));
   }
+  for (const [k, cap] of Object.entries(CAPS) as [MainKey, number][]) total[k] = Math.min(cap, total[k]);
   return any ? total : undefined;
 }
 
@@ -184,7 +212,7 @@ export function grantEquipment(m: Meta, item: NewEquipment): Equipment {
   const have = m.equipment ?? (m.equipment = []);
   const id = Math.max(m.nextItem ?? 1, ...have.map((x) => x.id + 1));
   m.nextItem = id + 1;
-  const made: Equipment = { id, base: item.base, rarity: item.rarity, level: item.level, affixes: [...item.affixes] };
+  const made: Equipment = { id, base: item.base, rarity: item.rarity, level: item.level };
   have.push(made);
   return made;
 }
@@ -236,13 +264,8 @@ export function rollEquipment(rng: Rng, roll: EquipRoll): NewEquipment {
   const rarity = Number(rng.weighted(QUALITY_WEIGHTS[roll.quality])) as Rarity;
   const base = EQUIP_BASES[rng.pick(EQUIP_BASE_IDS)];
   const level = rollLevel(rng, roll.armyIndex, roll.milestone);
-  const pool = [...base.affixes];
-  const affixes: AffixId[] = [];
-  for (let n = affixCount(rarity); n > 0 && pool.length; n--) affixes.push(pool.splice(rng.int(0, pool.length - 1), 1)[0]);
-  return { base: base.id, rarity, level, affixes };
+  return { base: base.id, rarity, level };
 }
-
-export const itemName = (it: NewEquipment | Equipment): string => EQUIP_BASES[it.base]?.name ?? 'Unknown';
 
 /** Plain-English lines for a set of stats, the non-zero ones. */
 export function statLines(s: EquipStats): { key: StatKey; label: string; value: number; text: string }[] {
@@ -254,11 +277,10 @@ export function statLines(s: EquipStats): { key: StatKey; label: string; value: 
     moveSpeed: ['Move speed', (v) => `+${pct(v)}`],
     crit: ['Crit chance', (v) => `+${pct(v)}`],
     range: ['Range', (v) => `+${v}`],
-    lifesteal: ['Lifesteal', (v) => pct(v)],
-    burn: ['Burn', (v) => pct(v)],
-    thorns: ['Thorns', (v) => pct(v)],
-    shield: ['Shield', (v) => pct(v)],
-    guard: ['Guard', (v) => pct(v)],
+    dodge: ['Dodge', (v) => `+${pct(v)}`],
+    charge: ['Skill charge', (v) => `+${pct(v)}`],
+    regen: ['Regen', (v) => `${Math.round(v * 1000) / 10}% hp/s`],
+    resist: ['Resist', (v) => `+${pct(v)}`],
   };
   return STAT_KEYS.filter((k) => s[k] > 0).map((key) => ({ key, label: label[key][0], value: s[key], text: label[key][1](s[key]) }));
 }
@@ -266,19 +288,19 @@ export function statLines(s: EquipStats): { key: StatKey; label: string; value: 
 /** A few items for the screenshots and tests: one of each slot at a spread of rarities. Adds them to the inventory and returns them. */
 export function grantSampleEquipment(m: Meta): Equipment[] {
   const picks: NewEquipment[] = [
-    { base: 'ironSword', rarity: 1, level: 1, affixes: [] },
-    { base: 'runedBlade', rarity: 3, level: 4, affixes: ['lifesteal'] },
-    { base: 'dragonboneAxe', rarity: 5, level: 9, affixes: ['burn', 'thorns'] },
-    { base: 'huntersBow', rarity: 2, level: 3, affixes: [] },
-    { base: 'leatherJerkin', rarity: 2, level: 2, affixes: [] },
-    { base: 'plateCuirass', rarity: 4, level: 7, affixes: ['guard'] },
-    { base: 'luckyCharm', rarity: 1, level: 1, affixes: [] },
-    { base: 'phoenixFeather', rarity: 4, level: 6, affixes: ['shield'] },
+    { base: 'ironSword', rarity: 1, level: 1 },
+    { base: 'runedBlade', rarity: 3, level: 4 },
+    { base: 'stormStaff', rarity: 5, level: 9 },
+    { base: 'huntersBow', rarity: 2, level: 3 },
+    { base: 'leatherJerkin', rarity: 2, level: 2 },
+    { base: 'thornplate', rarity: 4, level: 7 },
+    { base: 'luckyCharm', rarity: 1, level: 1 },
+    { base: 'phoenixFeather', rarity: 4, level: 6 },
   ];
   return picks.map((p) => grantEquipment(m, p));
 }
 
-/** Saved equipment that is sane: known bases, rarity 1 to 5, a level in range, known affixes, unique ids. Anything else is dropped. */
+/** Saved equipment that is sane: known bases, rarity 1 to 5, a level in range, unique ids. Anything else is dropped. */
 export function readEquipment(raw: unknown): Equipment[] {
   const out: Equipment[] = [];
   const seen = new Set<number>();
@@ -287,9 +309,8 @@ export function readEquipment(raw: unknown): Equipment[] {
       if (!x || typeof x.id !== 'number' || !Number.isInteger(x.id) || x.id < 1 || seen.has(x.id) || typeof x.base !== 'string' || !EQUIP_BASES[x.base]) continue;
       const rarity = Math.min(5, Math.max(1, Math.floor(Number(x.rarity)) || 1)) as Rarity;
       const level = Math.min(MAX_ITEM_LEVEL, Math.max(1, Math.floor(Number(x.level)) || 1));
-      const affixes = (Array.isArray(x.affixes) ? x.affixes : []).filter((a): a is AffixId => typeof a === 'string' && a in AFFIXES).slice(0, 2);
       seen.add(x.id);
-      out.push({ id: x.id, base: x.base, rarity, level, affixes });
+      out.push({ id: x.id, base: x.base, rarity, level });
     }
   return out;
 }

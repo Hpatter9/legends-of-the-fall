@@ -5,9 +5,8 @@ const srv = serve();
 const browser = await launch();
 const base = `http://localhost:${srv.address().port}/`;
 const items = [
-  ['ironSword', 1, 1, []], ['runedBlade', 3, 4, ['lifesteal']], ['dragonboneAxe', 5, 9, ['burn', 'thorns']], ['huntersBow', 2, 3, []],
-  ['leatherJerkin', 2, 2, []], ['plateCuirass', 4, 7, ['guard']], ['luckyCharm', 1, 1, []], ['phoenixFeather', 4, 6, ['shield']],
-].map(([base, rarity, level, affixes], i) => ({ id: i + 1, base, rarity, level, affixes }));
+  ['ironSword', 1, 1], ['runedBlade', 3, 4], ['stormStaff', 5, 9], ['huntersBow', 2, 3], ['leatherJerkin', 2, 2], ['thornplate', 4, 7], ['luckyCharm', 1, 1], ['phoenixFeather', 4, 6],
+].map(([base, rarity, level], i) => ({ id: i + 1, base, rarity, level }));
 async function open(extra) {
   const ctx = await browser.newContext({ viewport: { width: 393, height: 852 }, deviceScaleFactor: 2, hasTouch: true });
   const page = await ctx.newPage();

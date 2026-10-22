@@ -8,6 +8,7 @@
 import { sightClear, standable, tileAt, type At } from './board';
 import { addUnit, atkOf, blowMult, canStrike, defenceOf, defOf, hurt, strikeDef, tileOf, unitAt, wayTo, type Battle, type BattleEvent, type Unit } from './battle';
 import { Rng } from './rng';
+import { fxBlow, fxStruck, fxTick, hidden } from './equipFx';
 
 /** A skill fires at this much charge. */
 export const CHARGE_MAX = 100;
@@ -130,7 +131,7 @@ const DIR: [number, number][] = [
   [0, -1],
 ];
 const apart = (a: At, c: At) => Math.abs(a.u - c.u) + Math.abs(a.v - c.v);
-const foesOf = (b: Battle, me: Unit) => b.units.filter((x) => x.alive && x.side !== me.side);
+export const foesOf = (b: Battle, me: Unit) => b.units.filter((x) => x.alive && x.side !== me.side && !hidden(b, x));
 const near3x3 = (a: At, c: At) => Math.abs(a.u - c.u) <= 1 && Math.abs(a.v - c.v) <= 1;
 
 /** One roll of the battle's skill stream, 0 to 1. */
@@ -272,7 +273,7 @@ const STUN_MS = 1500;
 const sorted = (fs: Unit[]) => fs.sort((x, y) => x.hp - y.hp || x.id - y.id);
 
 /** Heal an ally (never past full), with the event for the renderer; the healing counts for `by` (its healer, or itself). */
-function mendUnit(u: Unit, amount: number, out: BattleEvent[], by: Unit = u): void {
+export function mendUnit(u: Unit, amount: number, out: BattleEvent[], by: Unit = u): void {
   const n = Math.min(Math.round(amount), u.maxHp - u.hp);
   if (n <= 0 || !u.alive) return;
   u.hp += n;
@@ -1057,7 +1058,7 @@ function began(b: Battle, me: Unit, s: Skill, out: BattleEvent[]): boolean {
 /** Whether a hero's ultimate is full. */
 export const ultimateReady = (u: Unit): boolean => !!kitOf(u)?.ultimate && (u.charge2 ?? 0) >= kitOf(u)!.ultimate!.need;
 
-const gain = (u: Unit, n: number) => {
+export const gain = (u: Unit, n: number) => {
   const k = u.alive ? kitOf(u) : undefined;
   if (!k) return;
   u.charge = Math.min(CHARGE_MAX, u.charge + n);
@@ -1069,7 +1070,7 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
   const blow = src === 'blow';
   const kit = kitOf(to);
   const team = to.side === 'hero' ? b.traits : undefined;
-  const dodge = (kit?.passive.dodge ?? 0) + (team?.dodge ?? 0);
+  const dodge = (kit?.passive.dodge ?? 0) + (team?.dodge ?? 0) + (to.eq?.dodge ?? 0);
   if (blow && dodge && roll(b) < dodge) {
     out.push({ kind: 'dodge', to: to.id });
     gain(to, (kit?.skill.taken ?? 0) * 0.5);
@@ -1087,14 +1088,13 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
   }
   if (to.guardUntil !== undefined && to.guardUntil > b.t) dmg *= GUARD_SHARE;
   if (team?.guard) dmg *= 1 - team.guard;
-  if (to.eq?.guard) dmg *= 1 - to.eq.guard;
+  if (src === 'dot' && to.eq?.resist) dmg *= 1 - to.eq.resist;
   if (src !== 'dot') {
     if (blow && !splash) gain(by, kitOf(by)?.skill.dealt ?? 0);
     gain(to, kit?.skill.taken ?? 0);
   }
   const left = Math.max(1, Math.round(dmg));
-  // (thorned armour: a melee blow hurts the one who swung it, as a Druid's thorns do)
-  if (blow && !splash && to.eq?.thorns && apart(by, to) === 1 && by.alive) hurt(b, to, by, Math.max(1, Math.round(left * to.eq.thorns)), false, false, out, 'skill');
+  fxStruck(b, by, to, left, blow && !splash, out);
   // (thorns: a melee blow hurts the one who swung it)
   if (blow && !splash && kit?.passive.thorns && apart(by, to) === 1 && by.alive) hurt(b, to, by, Math.max(1, Math.round(left * kit.passive.thorns)), false, false, out, 'skill');
   return left;
@@ -1131,7 +1131,7 @@ export const pierceOf = (by: Unit): number => kitOf(by)?.passive.pierce ?? 0;
 export function afterBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg = 0, out: BattleEvent[] = []): void {
   const p = kitOf(by)?.passive;
   if (p?.leech && by.alive) mendUnit(by, dmg * p.leech, out);
-  if (by.eq?.lifesteal && by.alive) mendUnit(by, dmg * by.eq.lifesteal, out);
+  fxBlow(b, by, to, crit, dmg, out);
   if (p?.through && dmg > 0) {
     const way = wayTo(by, to);
     const behind = foesOf(b, by).find((f) => f.u === to.u + DIR[way][0] && f.v === to.v + DIR[way][1]);
@@ -1147,8 +1147,6 @@ export function afterBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg = 0,
   if (!to.alive) return;
   const dot = crit ? p?.crit?.bleed : p?.ignite;
   if (dot) to.dot = { ...dot, by: by.id, next: b.t + dot.every, until: b.t + dot.ms };
-  // (a burning piece sets the foe alight, unless a skill's own burn or bleed is already on it)
-  else if (by.eq?.burn && !to.dot) to.dot = { kind: 'burn', dmg: Math.max(1, Math.round(atkOf(by) * by.eq.burn)), every: 1000, ms: 3000, by: by.id, next: b.t + 1000, until: b.t + 3000 };
 }
 
 /** Land a volley or a meteor: everything of the caster's foes in the 3x3 is struck. */
@@ -1166,11 +1164,12 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
   for (const u of b.units) {
     if (!u.alive) continue;
     const k = kitOf(u);
-    if (k) gain(u, ((k.skill.perSec * 100) / 1000) * (u.side === 'hero' ? b.traits?.charge ?? 1 : 1));
+    if (k) gain(u, ((k.skill.perSec * 100) / 1000) * (u.side === 'hero' ? (b.traits?.charge ?? 1) * (1 + (u.eq?.charge ?? 0)) : 1));
     if (u.banner && b.t >= u.banner.until) {
       u.power = (u.power ?? 1) / BANNER_MULT;
       u.banner = undefined;
     }
+    fxTick(b, u, out);
     const p = k?.passive;
     if (p?.aura && b.t % 1000 === 0) for (const a of b.units) if (a.alive && a.side === u.side && apart(a, u) <= 2) mendUnit(a, a.maxHp * p.aura, out, u);
     if (u.hot) {

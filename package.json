@@ -9,7 +9,8 @@
     "test": "node test.mjs",
     "web": "node build.mjs",
     "dev": "node build.mjs --serve",
-    "balance": "node tools/balance.mjs"
+    "balance": "node tools/balance.mjs",
+    "gear-balance": "node tools/gear-balance.mjs"
   },
   "license": "UNLICENSED",
   "devDependencies": {

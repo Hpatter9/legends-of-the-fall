@@ -14,6 +14,7 @@ import { killXp } from './levels';
 import { afterBlow, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, rollCrit, sureFooted, tickStatus, tryCast, type Dot, type Hot, type Trap, type Zone } from './abilities';
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellState } from './spells';
 import { kindsOf, traitEffects, type TraitEffects } from './traits';
+import { fxHurt, fxKill, fxRevive, fxStart, hidden } from './equipFx';
 import { mergeEffects } from './relics';
 import type { EquipStats } from './equipment';
 import { SPLASH_SHARE, UNITS, type Shot, type Side, type UnitDef } from './units';
@@ -89,6 +90,10 @@ export interface Unit {
   grade?: number;
   /** What the hero's permanent equipment adds (`equipment.ts`); absent when it wears none. */
   eq?: EquipStats;
+  /** The equipment abilities' counters and spent once-a-fight triggers (`equipFx.ts`). */
+  fx?: Record<string, number>;
+  /** Cannot be targeted until then (a Shadowcloak). */
+  hideUntil?: number;
   /** What this fighter did, for its XP (`levels.ts`): damage dealt, healing done, kills made, and the XP its kills are worth. */
   dealt?: number;
   healed?: number;
@@ -323,8 +328,7 @@ function applyTraits(b: Battle): void {
   if (fx.mana) b.spells.rate *= fx.mana;
   for (const x of b.units) {
     if (x.side !== 'hero') continue;
-    // (a warded piece: the hero starts behind a shield)
-    if (x.eq?.shield) x.shield = { hp: Math.round(x.maxHp * x.eq.shield), until: TIME_LIMIT_MS };
+    fxStart(b, x);
     if (fx.atk) x.power = (x.power ?? 1) * fx.atk;
     if (fx.hp) {
       x.maxHp = Math.round(x.maxHp * fx.hp);
@@ -415,6 +419,9 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
     to.hp = Math.max(1, Math.round(to.maxHp / 2));
     out.push({ kind: 'heal', to: to.id, amount: to.hp });
   }
+  // (a rising feather: the wearer comes back once a fight)
+  if (killed && to.eq && fxRevive(to, out)) killed = false;
+  if (!killed && to.eq) fxHurt(b, to, out);
   if (killed) {
     by.kills = (by.kills ?? 0) + 1;
     by.slain = (by.slain ?? 0) + killXp(to);
@@ -424,13 +431,16 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
     to.swing = undefined;
   }
   out.push({ kind: 'hit', by: by.id, to: to.id, dmg, heavy, splash, killed, src });
-  if (killed) onKill(b, by, out);
+  if (killed) {
+    onKill(b, by, out);
+    fxKill(b, by, to, out);
+  }
 }
 
 function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   const def = strikeDef(b, me);
   me.step = undefined;
-  let foes = b.units.filter((x) => x.alive && x.side !== me.side);
+  let foes = b.units.filter((x) => x.alive && x.side !== me.side && !hidden(b, x));
   // a charmed fighter turns on its own side (if it has anyone left to turn on)
   if (me.charmUntil !== undefined && me.charmUntil > b.t) {
     const friends = b.units.filter((x) => x.alive && x !== me && x.side === me.side);

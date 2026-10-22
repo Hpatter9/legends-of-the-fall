@@ -22,7 +22,7 @@ the raw files), copied one sprite at a time from the private assets repository (
   **Super Pixel Effects Gigapack (Free Version)** by unTied Games, as Chronos Settlement cut them
   (`src/renderer/art/effects/`).
 - **Item icons** (`src/art/items/`): single 16x16 tiles cut from the **DawnLike** tileset by DragonDePlatino (Items: Armor, Amulet, Boot, Hat, LongWep, Ring, Shield), for relics and gear.
-- **Equipment icons** (`src/art/equip/`): 16x16 tiles cut one at a time from the same **DawnLike** tileset by DragonDePlatino (Items: LongWep, Ammo, Wand, Armor, Amulet, Ring, Boot), for the hero equipment (CC-BY 4.0).
+- **Equipment icons** (`src/art/equip/`): 16x16 tiles cut one tile each from the same **DawnLike** tileset by DragonDePlatino (Items: LongWep, ShortWep, Ammo, Wand, Book, Scroll, Armor, Amulet, Ring, Boot, Glove, Hat, Music, Potion, Rock, Tool), by `tools/equip-icons.py`, for the hero equipment (CC-BY 4.0).
 
 Code borrowed from Chronos Settlement (`hpatter9/little-town`): the seeded random numbers (`src/sim/rng.ts`), the
 board's relief, step and sight rules (`src/sim/board.ts`), the blow and reach rules (`src/sim/battle.ts`), the
