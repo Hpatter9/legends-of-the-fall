@@ -9,6 +9,7 @@ import { levelBoost, progressOf, xpOf } from './sim/levels';
 import { drawEquipment } from './equipView';
 import { drawTalents } from './talentView';
 import { TREES } from './sim/talents';
+import { kindPower, powerText } from './sim/power';
 import { sprite } from './render/sheets';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -71,15 +72,20 @@ export function drawHeroSheet(box: HTMLElement, meta: Meta, kind: string, close:
       cell.append(el('b', '', String(v)), el('small', '', name));
       stat.append(cell);
     }
-    box.append(stat);
+    // (one number for how strong the hero is with its level, rank, equipment and talents, to set heroes side by side)
+    const power = el('div', 'hpower');
+    const pv = el('b', '', powerText(kindPower(meta, kind)));
+    power.append(el('small', '', 'Power'), pv);
+    const repower = () => (pv.textContent = powerText(kindPower(meta, kind)));
+    box.append(power, stat);
     if (kit)
       for (const [label, a] of [['Skill', kit.skill], ...(kit.ultimate ? [['Ultimate', kit.ultimate] as const] : []), ['Passive', kit.passive]] as const) {
         const p = el('p');
         p.append(el('i', '', `${label} · ${a.name}: `), a.text);
         box.append(p);
       }
-    if (TREES[kind]) box.append(drawTalents(meta, kind));
-    box.append(drawEquipment(meta, kind));
+    if (TREES[kind]) box.append(drawTalents(meta, kind, repower));
+    box.append(drawEquipment(meta, kind, repower));
     box.append(el('p', 'hint', 'Equipment is kept for good. Gear found in a run lasts that run only.'));
   }
   const done = el('button', 'primary', 'Close');

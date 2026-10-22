@@ -16,6 +16,7 @@ import { isBoss } from './sim/foes';
 import { earn, loadMeta, rankOf, rarityOf, recordStars, saveMeta, type Meta } from './sim/meta';
 import { xpRate } from './sim/castle';
 import { heroStats } from './sim/talents';
+import { powerOf, powerText } from './sim/power';
 import { fightXp, gainXp, levelGain, levelOfKind, progressOf, xpOf, type LevelUp } from './sim/levels';
 import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
 import { Gacha } from './gacha';
@@ -968,7 +969,7 @@ class Game {
   /** The bench: a card for every hero owned, rebuilt when the roster changes. */
   private buildBench(): void {
     const bench = $('bench');
-    const key = this.run.roster.map((h) => `${h.id}:${h.grade}:${levelOfKind(this.meta, h.kind)}`).join();
+    const key = this.run.roster.map((h) => `${h.id}:${h.grade}:${levelOfKind(this.meta, h.kind)}:${powerOf(h.kind, this.boostFor(h))}`).join();
     if (bench.dataset.key === key) return;
     bench.dataset.key = key;
     bench.replaceChildren();
@@ -994,7 +995,10 @@ class Game {
       const lv = document.createElement('span');
       lv.className = 'lv';
       lv.textContent = `Lv ${levelOfKind(this.meta, h.kind)}`;
-      card.append(portrait(formOf(def, h.grade), 96, h.grade), stars, name, lv, marks, bar);
+      const pw = document.createElement('span');
+      pw.className = 'pw';
+      pw.textContent = `Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;
+      card.append(portrait(formOf(def, h.grade), 96, h.grade), stars, name, lv, pw, marks, bar);
       card.title = def.role;
       card.addEventListener('pointerdown', (e) => {
         if (this.b.phase !== 'deploy') return;
@@ -1104,7 +1108,7 @@ class Game {
       b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : n ? `${stage} · ${n} of ${SQUAD} placed` : `${stage} · drag heroes onto the blue tiles`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
     $('gold').textContent = `${run.gold} gold`;
     const buy = $('summon') as HTMLButtonElement;
-    buy.textContent = `Summon · ${summonCost(run)}`;
+    buy.textContent = `Hire · ${summonCost(run)}`;
     buy.disabled = run.gold < summonCost(run);
     ($('fight') as HTMLButtonElement).disabled = b.phase !== 'deploy' || n === 0;
     $('clock').textContent = b.phase === 'deploy' ? '' : clock(b.t);
