@@ -10,7 +10,8 @@ const NEW_BANDS = ['orcs', 'demons', 'ogres'];
 
 test('the new bands start five foes each, and every boss band leads with its own boss', () => {
   for (const band of [...NEW_BANDS, ...FIELD_BANDS, ...BOSS_BANDS]) assert.equal(FOE_BANDS[band].length, 5, band);
-  assert.equal(BOSS_BANDS.length, BOSS_IDS.length);
+  // (the endless climb meets the nine first bosses; the armies add their mid-bosses, the Lich King and the champion)
+  for (const id of BOSS_BANDS) assert.ok(BOSS_IDS.includes(id), id);
   for (const band of BOSS_BANDS) {
     const ids = FOE_BANDS[band];
     assert.ok(isBoss(ids[0]), band);
@@ -32,14 +33,14 @@ test('every boss stage meets exactly one boss, drawn larger, and the bosses come
     assert.equal(bosses[0].size, 1.5, `stage ${stage}`);
     seen.push(bosses[0].def);
   }
-  assert.deepEqual(seen.slice(0, BOSS_IDS.length), [...BOSS_BANDS]);
-  assert.deepEqual([...new Set(seen)].sort(), [...BOSS_IDS].sort());
+  assert.deepEqual(seen.slice(0, BOSS_BANDS.length), [...BOSS_BANDS]);
+  assert.deepEqual([...new Set(seen)].sort(), [...BOSS_BANDS].sort());
 });
 
 test('the bosses with skills have one, and the skill fires when charged', () => {
-  // (a Demon Lord summons only once its imps are gone, so it has a test of its own)
-  for (const id of BOSS_IDS.filter((x) => KITS[x] && x !== 'demonLord')) {
-    const b = readyBattle(1, id);
+  // (a Demon Lord summons only once its imps are gone, and a banner needs an ally beside it: those have tests of their own)
+  for (const id of BOSS_IDS.filter((x) => KITS[x] && !['demonLord', 'orcChieftain', 'boneCaptain'].includes(x))) {
+    const b = readyBattle(1, FOE_BANDS[id] ?? [id, 'orcGrunt']);
     const boss = b.units.find((u) => u.def === id)!;
     const hero = b.units.find((u) => u.side === 'hero')!;
     // (the boss beside a hero, so the skill has something to hit)

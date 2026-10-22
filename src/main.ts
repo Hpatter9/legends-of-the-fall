@@ -6,7 +6,9 @@ import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { D, standable, tileAt } from './sim/board';
 import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type Unit } from './sim/battle';
 import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
-import { boostOf, finish, heroOf, isBossStage, loadRun, newRun, saveRun, setSquad, SQUAD, startStage, summon, summonCost, type Run } from './sim/run';
+import { armyOfRun, armyRun, boostOf, finish, heroOf, isBossRun, loadRun, saveRun, setSquad, SQUAD, startStage, summon, summonCost, type Run } from './sim/run';
+import { ARMIES, settleWave, type ArmyPay } from './sim/armies';
+import { showUnlock } from './armiesView';
 import { formOf, UNITS } from './sim/units';
 import { isBoss } from './sim/foes';
 import { earn, loadMeta, rankOf, rarityOf, recordStars, saveMeta, type Meta } from './sim/meta';
@@ -84,6 +86,8 @@ class Game {
   private crownGain = 0;
   /** Whether the fight's end has been settled into the run. */
   private settled = false;
+  /** What an army's last settled fight paid (null for any other run). */
+  private pay: ArmyPay | null = null;
   /** Gold the last win paid (for the result screen). */
   private gain = 0;
   /** Where each hero (by roster id) was placed, so the next stage puts them back. */
@@ -121,7 +125,8 @@ class Game {
     const seed = Number(query.get('seed'));
     this.meta = loadMeta((Date.now() % 100000) + 1);
     saveMeta(this.meta);
-    this.run = (!seed && loadRun()) || newRun(seed || (Date.now() % 100000) + 1, this.meta.party, this.meta.castle);
+    // (a fresh page with no saved run shows the first army's board behind the home screen)
+    this.run = (!seed && loadRun()) || armyRun(seed || (Date.now() % 100000) + 1, ARMIES[0].id, this.meta.party, this.meta.castle);
     this.syncPool();
     this.gacha = new Gacha(this.meta, () => {
       this.syncPool();
@@ -139,11 +144,14 @@ class Game {
       },
       runInfo: () => {
         const r = loadRun();
-        return r && !r.over ? { stage: r.stage, gold: r.gold } : null;
+        if (!r || r.over) return null;
+        const army = armyOfRun(r);
+        const label = army ? `${army.name} · wave ${r.stage}/${army.waves.length}` : r.mode?.kind === 'daily' ? 'daily challenge' : r.mode?.kind === 'tower' ? `tower floor ${r.stage}` : `stage ${r.stage}`;
+        return { stage: r.stage, gold: r.gold, army: army?.id, label };
       },
       onContinue: () => this.resume(),
-      // (a new run starts once its party is picked)
-      onNew: () => this.party.open('start', () => this.newRunNow()),
+      // (an army starts from wave 1 once its party is picked)
+      onArmy: (id) => this.party.open('start', () => this.startRun(armyRun(clockSeed(), id, this.meta.party, this.meta.castle))),
       onParty: () =>
         this.party.open('edit', () => {
           // (a run going on draws from the new party from now on)
@@ -314,7 +322,7 @@ class Game {
     if (!fight(this.b)) return;
     this.endIntro();
     this.stats = startStats(this.b.units);
-    startFight(isBossStage(this.run.stage));
+    startFight(isBossRun(this.run));
     keepAwake(true);
     this.chosen = null;
     this.boardView.clearMarks();
@@ -621,7 +629,9 @@ class Game {
     });
     $('homeBtn').addEventListener('click', () => this.home.open());
     $('next').addEventListener('click', () => {
-      // (a lost run goes back to the castle, with its summary)
+      // (an army's last boss has fallen: the next army's unlock moment, if it opened one, then the armies)
+      if (this.run.cleared) return this.armyWon();
+      // (a lost run goes back to the main screen, with its summary)
       if (this.run.over) return this.goHome();
       saveRun(this.run);
       this.newBattle();
@@ -644,11 +654,6 @@ class Game {
   private setSpeed(n: 1 | 2): void {
     this.speed = n;
     $('speed').textContent = `×${n}`;
-  }
-
-  /** Begin a new run (with the castle as it stands) and its first fight. */
-  private newRunNow(): void {
-    this.startRun(newRun(clockSeed(), this.meta.party, this.meta.castle));
   }
 
   /** Begin a run (any mode's) and its first fight. */
@@ -746,11 +751,22 @@ class Game {
     });
   }
 
-  /** A run has ended: back to the castle, showing what it earned. */
+  /** A run has ended: back to the main screen, showing what it earned. */
   private goHome(): void {
     const r = this.run;
+    const army = armyOfRun(r);
     $('result').hidden = true;
-    this.home.open(`The run ended at stage ${r.best}: +${this.crownGain} crowns earned`);
+    this.home.open(army ? `The ${army.name} stopped you at wave ${r.best}/${army.waves.length}. Heroes keep their levels: go again.` : `The run ended at stage ${r.best}: +${this.crownGain} crowns earned`);
+  }
+
+  /** An army's last boss has fallen: if that opens the next army, its banner rises first ("A new army marches"), then the armies screen. */
+  private armyWon(): void {
+    const army = armyOfRun(this.run)!;
+    $('result').hidden = true;
+    const next = this.pay?.unlocked ?? undefined;
+    this.home.open();
+    if (next) showUnlock(next, army, () => this.home.openArmies());
+    else this.home.openArmies();
   }
 
   private dragMove(e: PointerEvent): void {
@@ -973,12 +989,15 @@ class Game {
       keepAwake(false);
       const won = b.phase === 'won';
       const stage = run.stage;
-      const rating = ratingOf(b, isBossStage(stage));
+      const army = armyOfRun(run);
+      const rating = ratingOf(b, isBossRun(run));
       const before = run.gold;
       finish(run, won, rating.stars);
       this.gain = run.gold - before;
-      this.crownGain = earn(this.meta, stage, won, rating.stars);
-      if (won) recordStars(this.meta, stage, rating.stars);
+      // (an army pays by wave, and its last boss a clear; any other run pays as it always did)
+      this.pay = army ? settleWave(this.meta, army.id, stage, won, rating.stars) : null;
+      this.crownGain = this.pay ? this.pay.crowns : earn(this.meta, stage, won, rating.stars);
+      if (won && !army) recordStars(this.meta, stage, rating.stars);
       const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b });
       this.showStars(won ? rating : null);
       this.showStats();
@@ -990,7 +1009,8 @@ class Game {
       toastAchievements(earned);
     }
     document.body.dataset.phase = b.phase;
-    const stage = `Stage ${run.stage}${isBossStage(run.stage) ? ' · Boss' : ''}`;
+    const army = armyOfRun(run);
+    const stage = `${army ? `Wave ${run.stage}/${army.waves.length}` : `Stage ${run.stage}`}${isBossRun(run) ? ' · Boss' : ''}`;
     $('status').textContent =
       b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : n ? `${stage} · ${n} of ${SQUAD} placed` : `${stage} · drag heroes onto the blue tiles`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
     $('gold').textContent = `${run.gold} gold`;
@@ -1003,13 +1023,17 @@ class Game {
     result.hidden = b.phase !== 'won' && b.phase !== 'lost';
     if (!result.hidden) {
       const left = b.units.filter((x) => x.alive && x.side === 'hero').length;
-      $('banner').textContent = b.phase === 'won' ? 'Victory!' : 'Defeat';
+      $('banner').textContent = run.cleared ? 'Army defeated!' : b.phase === 'won' ? 'Victory!' : 'Defeat';
       $('banner').className = b.phase;
+      const share = this.pay?.replay ? ' (a replay pays a share)' : '';
+      const clear = this.pay?.firstClear ? ' · first clear!' : '';
       $('summary').textContent =
         b.phase === 'won'
-          ? `${left} of ${heroesPlaced(b)} heroes standing · +${this.gain} gold · +${this.crownGain} crowns · ${clock(b.t)}${run.found?.length ? ` · found: ${run.found.join(', ')}` : ''}`
-          : `The run ends at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} summons · +${this.crownGain} crowns${modeNote(run)}`;
-      $('next').textContent = b.phase === 'won' ? `Next stage (${run.stage})` : 'Home';
+          ? `${left} of ${heroesPlaced(b)} heroes standing · +${this.gain} gold · +${this.crownGain} crowns${share}${clear} · ${clock(b.t)}${run.found?.length ? ` · found: ${run.found.join(', ')}` : ''}`
+          : army
+            ? `The ${army.name} holds at wave ${run.best} of ${army.waves.length}. It starts again from wave 1; your heroes keep their levels.`
+            : `The run ends at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} summons · +${this.crownGain} crowns${modeNote(run)}`;
+      $('next').textContent = run.cleared ? (this.pay?.unlocked ? 'A new army marches…' : 'To the armies') : b.phase === 'won' ? (army ? `Next wave (${run.stage})` : `Next stage (${run.stage})`) : 'Home';
     }
     if (b.phase === 'deploy') tips.atDeploy(n, run.stage, () => this.deployBox());
     this.buildBench();

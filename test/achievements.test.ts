@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import { ACHIEVEMENTS, achievementById, checkAchievements, type AchievementCtx } from '../src/sim/achievements';
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { place, startBattle, type Battle } from '../src/sim/battle';
-import { BOSS_BANDS } from '../src/sim/foes';
+import { BOSS_BANDS, BOSS_IDS } from '../src/sim/foes';
+import { ARMIES } from '../src/sim/armies';
 import { loadMeta, newMeta, saveMeta } from '../src/sim/meta';
 import { dailyRun, settleRun } from '../src/sim/modes';
-import { newRun } from '../src/sim/run';
+import { armyRun, newRun } from '../src/sim/run';
 import { xpFor } from '../src/sim/levels';
 import { ALL_HEROES } from '../src/sim/units';
 
@@ -103,9 +104,9 @@ test('every hero unlocked', () => {
 
 test('every boss beaten', () => {
   const meta = newMeta(1);
-  meta.bosses = BOSS_BANDS.slice(1);
+  meta.bosses = BOSS_IDS.slice(1);
   assert.equal(earned('bosses', ctx({ meta })), false);
-  meta.bosses = [...BOSS_BANDS];
+  meta.bosses = [...BOSS_IDS];
   assert.equal(earned('bosses', ctx({ meta })), true);
 });
 
@@ -170,14 +171,22 @@ test('checking pays each achievement once, and returns only what is new', () => 
   assert.ok(meta.achievements.includes('stage10'));
 });
 
-test('beating every boss band, one boss stage at a time, earns the boss achievement', () => {
+test('beating every boss, the endless climb\'s and every army\'s, earns the boss achievement', () => {
   const meta = newMeta(1);
   const run = newRun(6);
   BOSS_BANDS.forEach((_, i) => {
     const got = settleRun(meta, run, { won: true, stage: (i + 1) * 5, stars: 0 });
-    if (i < BOSS_BANDS.length - 1) assert.ok(!got.some((a) => a.id === 'bosses'));
+    assert.ok(!got.some((a) => a.id === 'bosses'));
   });
   assert.equal(meta.bosses.length, BOSS_BANDS.length);
+  // (the armies' bosses count too, a wave at a time)
+  for (const a of ARMIES) {
+    const ar = armyRun(6, a.id);
+    a.waves.forEach((w, i) => {
+      if (w.boss) settleRun(meta, ar, { won: true, stage: i + 1, stars: 0 });
+    });
+  }
+  assert.equal(new Set(meta.bosses).size, BOSS_IDS.length);
   assert.ok(meta.achievements.includes('bosses'));
 });
 

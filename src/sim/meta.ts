@@ -8,7 +8,8 @@ import { newLoadout, readLoadout, type Loadout } from './spells';
 import { Rng } from './rng';
 import { ALL_HEROES, HEROES, UNITS, type Rarity } from './units';
 import { MAX_STARS, starCrowns } from './stars';
-import { BOSS_BANDS } from './foes';
+import { BOSS_IDS } from './foes';
+import { migrateArmies, readSeen, seenFor, type ArmyRecord } from './armies';
 
 export const PULL_COST = 100;
 export const PULL10_COST = 900;
@@ -64,8 +65,12 @@ export interface Meta {
   tower: number;
   /** The daily challenge per date (yyyymmdd): the best score counted and the plays (the first counts). */
   daily: Record<string, DailyEntry>;
-  /** The boss bands beaten (`foes.ts`, by band name). */
+  /** The bosses beaten (`foes.ts`, by id). */
   bosses: string[];
+  /** Each army's record: furthest wave, wins, clears and stars (`armies.ts`; missing is none). */
+  armies: Record<string, ArmyRecord>;
+  /** The armies whose open card the player has seen (a newly opened one glows until then). */
+  armySeen: string[];
   /** The achievements unlocked (`achievements.ts`, by id). */
   achievements: string[];
 }
@@ -84,7 +89,7 @@ export interface Pull {
   shards: number;
 }
 
-export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [...HEROES], party: [...HEROES], pulls: 0, dry: 0, dryMythic: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], achievements: [] });
+export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [...HEROES], party: [...HEROES], pulls: 0, dry: 0, dryMythic: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], achievements: [] });
 
 export const rarityOf = (kind: string): Rarity => UNITS[kind]?.rarity ?? 1;
 /** Hp and attack multiplier of a hero kind's tier. */
@@ -236,7 +241,11 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.bestStage = Math.max(1, m.bestStage | 0);
       m.tower = Math.max(0, m.tower | 0);
       m.daily = readDaily(m.daily);
-      m.bosses = Array.isArray(m.bosses) ? m.bosses.filter((b) => BOSS_BANDS.includes(b)) : [];
+      m.bosses = Array.isArray(m.bosses) ? m.bosses.filter((b) => BOSS_IDS.includes(b)) : [];
+      // (saves from before the armies have their furthest stage mapped onto them, and the armies it opens are not new)
+      const fresh = !m.armies || typeof m.armies !== 'object';
+      m.armies = migrateArmies(m.armies, m.bestStage);
+      m.armySeen = fresh ? seenFor(m) : readSeen(m.armySeen);
       m.achievements = Array.isArray(m.achievements) ? m.achievements.filter((a) => typeof a === 'string') : [];
       return m;
     }

@@ -3,7 +3,7 @@
 // `Meta.achievements`; `checkAchievements` pays the crowns and returns what was new, for the toast.
 
 import type { Battle } from './battle';
-import { BOSS_BANDS } from './foes';
+import { BOSS_IDS } from './foes';
 import type { Meta } from './meta';
 import { levelOfKind } from './levels';
 import type { Run } from './run';
@@ -78,8 +78,8 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
     name: 'Boss Slayer',
     text: 'Beat every boss.',
     crowns: 50,
-    earned: (c) => BOSS_BANDS.every((b) => c.meta.bosses.includes(b)),
-    meter: (m) => ({ now: BOSS_BANDS.filter((b) => m.bosses.includes(b)).length, need: BOSS_BANDS.length }),
+    earned: (c) => BOSS_IDS.every((b) => c.meta.bosses.includes(b)),
+    meter: (m) => ({ now: BOSS_IDS.filter((b) => m.bosses.includes(b)).length, need: BOSS_IDS.length }),
   },
   {
     id: 'stars50',

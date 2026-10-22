@@ -7,6 +7,9 @@
 //   npm run balance -- --hero-stage 1  play the hero table at another stage (default 5)
 //   npm run balance -- --saves 200     fresh saves in the whole-run table (default 400)
 //   npm run balance -- --runs-only     only the whole-run table (quicker when tuning the levels)
+//   npm run balance -- --armies-only   only the armies' tables (win rate per wave at given hero levels, and the climb through them)
+//   npm run balance -- --only orcs,undead --levels 1,5,10 --party starters   a few armies, levels or one party
+//   npm run balance -- --attempts 40   attempts a cell plays in the armies' first table (default 30)
 //
 // Four tables: each hero's value (its win rate in random five-hero teams with it, against the same teams without it),
 // each foe band at four stage strengths, the stage curve from 1 to 15 with grade-1, grade-2 and grade-3 teams, and whole
@@ -20,6 +23,8 @@ import { chooseOption, leaveEvent } from '../src/sim/events';
 import { fightXp, gainXp, levelOfKind } from '../src/sim/levels';
 import { newMeta, rankOf, rarityOf, RARITY_NAMES, type Meta } from '../src/sim/meta';
 import { boostOf, bandFor, finish, gradeBoost, isBossStage, newRun, type Owned, type Run, SQUAD, stageBoost, startStage, summon } from '../src/sim/run';
+import { ARMIES, armyById, settleWave } from '../src/sim/armies';
+import { playArmy, savedAt } from './autoplay';
 import { ratingOf } from '../src/sim/stars';
 import { mixSeed, Rng } from '../src/sim/rng';
 import { ALL_HEROES, HEROES, UNITS } from '../src/sim/units';
@@ -35,6 +40,7 @@ const TEAM = 5;
 /** The stage the hero table is played at. */
 const HERO_STAGE = arg('--hero-stage', 5);
 const RUNS_ONLY = process.argv.includes('--runs-only');
+const ARMIES_ONLY = process.argv.includes('--armies-only');
 const BANDS = FIELD_BANDS;
 
 /** The boost of a field band at stage s: a field band has no boss, even on a boss stage. */
@@ -272,10 +278,107 @@ function wholeRuns(): void {
   for (let r = 0; r < RUNS; r++) console.log([pad(`${r + 1}`, 5), ...HEROES.map((k) => rpad((levelSum[r][k] / best[r].length).toFixed(1), 10))].join(''));
 }
 
-if (!RUNS_ONLY) {
-  heroValue();
-  foeBands();
-  stageCurve();
+// ---- 5. Armies -----------------------------------------------------------------------------------------------------
+// An army is a campaign of waves, fought by a run: the greedy player of table 4, from wave 1, on the party's kinds. A lost
+// fight sends the army back to wave 1 (the XP stays). Table 5a: the party's heroes all at one level, how many attempts
+// win each wave (as a share of the attempts, so each column is the chance of getting that far). Table 5b: a fresh save
+// fights the armies in order, trying each until it falls (at most `MAX_TRIES`), levels carried from try to try; it shows
+// how many tries each took and the levels it had.
+
+const ATTEMPTS = arg('--attempts', 30);
+const flag = (name: string): string | undefined => process.argv[process.argv.indexOf(name) + 1];
+const LEVELS = process.argv.includes('--levels') ? flag('--levels')!.split(',').map(Number) : [1, 3, 5, 8, 11, 14, 17, 20];
+// (`--set orcs.last.hp=4000,orcs.growth=0.2` overrides an army's numbers for this run only, for tuning)
+if (process.argv.includes('--set'))
+  for (const kv of flag('--set')!.split(',')) {
+    const [path, val] = kv.split('=');
+    const [id, ...keys] = path.split('.');
+    let o: any = armyById(id)!;
+    for (const k of keys.slice(0, -1)) o = o[k];
+    o[keys[keys.length - 1]] = Number(val);
+  }
+const ONLY = process.argv.includes('--only') ? flag('--only')!.split(',') : null;
+const SKIP_PARTY = process.argv.includes('--party') ? flag('--party') : null;
+const MAX_TRIES = 25;
+/** A party of recruits (rarer kinds in the mix), the other of the five starting heroes. */
+const PARTIES: Record<string, readonly string[]> = { starters: HEROES, recruits: ['knight', 'paladin', 'archer', 'warlock', 'cleric'] };
+
+function armies(): void {
+  for (const [name, party] of Object.entries(PARTIES).filter(([n]) => !SKIP_PARTY || n === SKIP_PARTY)) {
+    console.log(`\n5a. ARMIES BY WAVE  (${name}: ${party.map((k) => UNITS[k].name).join(', ')}; every hero at the level shown; ${ATTEMPTS} attempts a cell; % of attempts that won each wave)\n`);
+    for (const army of ARMIES.filter((a) => !ONLY || ONLY.includes(a.id))) {
+      const n = army.waves.length;
+      const bosses = army.waves.map((w, i) => (w.boss ? i + 1 : 0)).filter(Boolean);
+      console.log(`${army.name}  (${n} waves; bosses at ${bosses.join(', ')})`);
+      console.log([pad('  level', 8), ...army.waves.map((_, i) => rpad(`w${i + 1}${army.waves[i].boss ? '*' : ''}`, 6)), rpad('clear', 7)].join(''));
+      for (const L of LEVELS) {
+        const wins = army.waves.map(() => 0);
+        let clears = 0;
+        for (let a = 0; a < ATTEMPTS; a++) {
+          const r = playArmy(savedAt(L, party, a + 1), army.id, mixSeed(a + 1, 0xa44e, ARMIES.indexOf(army)), party);
+          for (let w = 0; w < r.won; w++) wins[w]++;
+          if (r.cleared) clears++;
+        }
+        console.log([pad(`  ${L}`, 8), ...wins.map((w) => rpad(f1(pct(w, ATTEMPTS)).trim(), 6)), rpad(f1(pct(clears, ATTEMPTS)).trim(), 7)].join(''));
+      }
+    }
+  }
+  console.log(`\n5b. THE CLIMB THROUGH THE ARMIES  (${SAVES} fresh saves on the starting five, each army tried until it falls, at most ${MAX_TRIES} tries; no castle, no recruits)\n`);
+  console.log([pad('army', 16), rpad('cleared %', 11), rpad('tries (mean)', 14), rpad('tries (median)', 16), rpad('first try: wave', 17), rpad('level on first try', 20), rpad('crowns (1st clear)', 20)].join(''));
+  const stats = ARMIES.map(() => ({ tries: [] as number[], clear: 0, first: 0, lv: 0, seen: 0, crowns: 0 }));
+  for (let save = 1; save <= SAVES; save++) {
+    const meta = newMeta(save);
+    for (let i = 0; i < ARMIES.length; i++) {
+      const army = ARMIES[i];
+      let tries = 0;
+      let cleared = false;
+      const st = stats[i];
+      const pay = { crowns: 0 };
+      while (tries < MAX_TRIES && !cleared) {
+        const lv = HEROES.reduce((n, k) => n + levelOfKind(meta, k), 0) / HEROES.length;
+        const r = playArmy(meta, army.id, mixSeed(save, 0xc11b, i * 100 + tries), HEROES);
+        // (the rewards a first clear pays, as the page settles them)
+        for (let w = 1; w <= r.won; w++) pay.crowns += settleWave(meta, army.id, w, true, 0).crowns;
+        if (tries === 0) {
+          st.first += r.won;
+          st.lv += lv;
+          st.seen++;
+        }
+        tries++;
+        cleared = r.cleared;
+      }
+      if (!cleared) break;
+      st.clear++;
+      st.tries.push(tries);
+      st.crowns += pay.crowns;
+    }
+  }
+  ARMIES.forEach((army, i) => {
+    const st = stats[i];
+    const sorted = [...st.tries].sort((a, b) => a - b);
+    console.log(
+      [
+        pad(army.name, 16),
+        rpad(f1(pct(st.clear, SAVES)).trim(), 11),
+        rpad(st.tries.length ? (st.tries.reduce((a, b) => a + b, 0) / st.tries.length).toFixed(1) : '-', 14),
+        rpad(st.tries.length ? String(sorted[Math.floor(sorted.length / 2)]) : '-', 16),
+        rpad(st.seen ? (st.first / st.seen).toFixed(1) : '-', 17),
+        rpad(st.seen ? (st.lv / st.seen).toFixed(1) : '-', 20),
+        rpad(st.clear ? String(Math.round(st.crowns / st.clear)) : '-', 20),
+      ].join(''),
+    );
+  });
 }
-wholeRuns();
+
+if (ARMIES_ONLY) {
+  armies();
+} else {
+  if (!RUNS_ONLY) {
+    heroValue();
+    foeBands();
+    stageCurve();
+  }
+  wholeRuns();
+  armies();
+}
 console.log('');

@@ -10,6 +10,12 @@ export const BOSS_TITLES: Record<string, string> = {
   boarKing: 'King of the Thundering Herd',
   devilLeader: 'Bringer of Hellfire',
   shamanKing: 'Whisperer of the Dead',
+  orcChieftain: 'Breaker of Shields',
+  boneCaptain: 'Marshal of the Fallen',
+  alphaWolf: 'Leader of the Moonlit Pack',
+  gorgonQueen: 'Queen of Stone',
+  lichKing: 'The Frozen Crown',
+  minotaurChampion: 'Champion of the Labyrinth',
 };
 
 /** A boss's title line (a plain one for any boss without its own). */
