@@ -3,7 +3,7 @@
 // whole-number scales, so scrolling costs nothing. The map's geometry (`Layout`) lives here too: the stairs and the nodes sit on it.
 
 import { ACT_ROWS, LANES } from './sim/tower';
-import { actLook } from './towerTheme';
+import { actLook, type ActLook } from './towerTheme';
 import brick1 from './art/tower/brick.png';
 import brick2 from './art/tower/brick2.png';
 import brick3 from './art/tower/brick3.png';
@@ -33,8 +33,14 @@ const SIDE = 34;
 
 /** Where everything of one act's map sits, in whole pixels: the tower is `W` wide and `H` tall, row 0 at the foot and the boss at the top. */
 export class Layout {
-  readonly H = PAD_TOP + (ACT_ROWS - 1) * ROW_H + BOSS_ROW_H + PAD_BOTTOM;
-  constructor(readonly W: number) {}
+  readonly H: number;
+  /** `rows` is the floors of the map (the tower's `ACT_ROWS`; a calamity's maps are shorter). */
+  constructor(
+    readonly W: number,
+    readonly rows = ACT_ROWS,
+  ) {
+    this.H = PAD_TOP + (rows - 1) * ROW_H + BOSS_ROW_H + PAD_BOTTOM;
+  }
 
   /** The y of the centre of a row. */
   rowY(row: number): number {
@@ -48,7 +54,7 @@ export class Layout {
 
   /** How far the wall is in from each edge at a section. */
   inset(section: number): number {
-    return Math.round((this.W * TAPER * section) / this.section(ACT_ROWS - 1));
+    return Math.round((this.W * TAPER * section) / this.section(this.rows - 1));
   }
 
   xAt(lane: number, row: number): number {
@@ -63,7 +69,7 @@ export class Layout {
 
   /** The y band (top, bottom) of a wall section. */
   band(s: number): [number, number] {
-    const top = s >= this.section(ACT_ROWS - 1) ? 0 : Math.round(this.rowY(s * SECTION_ROWS + SECTION_ROWS) + ROW_H / 2);
+    const top = s >= this.section(this.rows - 1) ? 0 : Math.round(this.rowY(s * SECTION_ROWS + SECTION_ROWS) + ROW_H / 2);
     const bottom = s === 0 ? this.H : Math.round(this.rowY(s * SECTION_ROWS) + ROW_H / 2);
     return [top, bottom];
   }
@@ -85,8 +91,7 @@ export function torchEl(x: number, y: number, n: number, lit = true): HTMLElemen
 }
 
 /** The backdrop of an act: sky, clouds, stepped walls, windows, torches and banners, in the pack's own colours. */
-export function buildBackdrop(act: number, lay: Layout): HTMLElement {
-  const look = actLook(act);
+export function buildBackdrop(act: number, lay: Layout, look: ActLook = actLook(act)): HTMLElement {
   const root = div(`tbBack look${look.look}`, { width: px(lay.W), height: px(lay.H) });
   if (look.tint) root.style.filter = `hue-rotate(${look.tint}deg)`;
   const sky = div('tbSky');
@@ -103,7 +108,7 @@ export function buildBackdrop(act: number, lay: Layout): HTMLElement {
     root.append(i);
     return i;
   };
-  const top = lay.section(ACT_ROWS - 1);
+  const top = lay.section(lay.rows - 1);
   // clouds drifting nowhere: fixed in the sky at the edges, more of them the higher the tower
   if (look.look > 0) {
     const set = look.look === 1 ? [cloudW, cloudW2] : [cloudK, cloudG, cloudK2];
@@ -133,7 +138,7 @@ export function buildBackdrop(act: number, lay: Layout): HTMLElement {
   for (let x = topInset - 4; x < lay.W - topInset; x += 24) root.append(div('tbMerlon', { left: px(x), top: px(0) }));
   // windows, torches and banners on the walls between the floors
   let n = 0;
-  for (let r = 0; r < ACT_ROWS - 1; r++) {
+  for (let r = 0; r < lay.rows - 1; r++) {
     const y = (lay.rowY(r) + lay.rowY(r + 1)) / 2;
     const inset = lay.inset(lay.section(r));
     const left = r % 2 === 0;

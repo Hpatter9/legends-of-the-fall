@@ -159,3 +159,30 @@ body.towerUp #version { z-index: 7; }
 .rtReward b { font-size: 15px; color: var(--gold-hi); }
 .rtGear { margin: 0; text-align: center; font-size: 13px; color: #ffd27a; }
 @media (max-height: 800px) { .rtFace { width: 30px; height: 30px; } .rtHead { gap: 3px; } .rtRelics { min-height: 22px; } }
+
+/* ===== The calamity's pick screen, the start-over box and the full squad bar (`calamityView.ts`, `towerView.ts`). ===== */
+.rtParty.ten { grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 2px; }
+.rtParty.ten .rtFace { width: 28px; height: 28px; }
+.rtParty.ten .rtHero small { font-size: 9px; }
+.rtAbandon { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 18px; }
+.rtAbandon .hint { margin: 0; font-size: 11px; color: var(--dim); }
+.rtLink { min-height: 0; padding: 0 2px; background: none; border: 0; box-shadow: none; color: var(--dim); font-size: 11px; text-decoration: underline; }
+.cvVeil { position: absolute; inset: 0; z-index: 12; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(8, 4, 2, 0.86); }
+.cvBox { width: min(340px, 100%); display: flex; flex-direction: column; gap: 8px; padding: 14px; background: var(--wood); border: 3px solid var(--edge); box-shadow: 0 0 0 2px #1a0d07, 0 6px 24px rgba(0, 0, 0, 0.6); }
+.cvBox h2 { margin: 0; text-align: center; font: 700 19px var(--display); color: var(--gold-hi); text-shadow: var(--outline); }
+.cvBox p { margin: 0; text-align: center; font-size: 13px; color: var(--ink); }
+.cvRow { display: flex; gap: 8px; }
+.cvRow button { flex: 1; min-width: 0; }
+.cvPick { position: fixed; inset: 0; z-index: 8; display: flex; align-items: center; justify-content: center; padding: calc(env(safe-area-inset-top) + 8px) 10px calc(env(safe-area-inset-bottom) + 8px); background: rgba(8, 4, 2, 0.92); image-rendering: pixelated; animation: fade 0.2s ease-out; }
+.cvCard { width: min(400px, 100%); max-height: 100%; display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--wood); border: 3px solid var(--edge); box-shadow: 0 0 0 2px #1a0d07, 0 6px 24px rgba(0, 0, 0, 0.6); min-height: 0; }
+.cvCard h2 { margin: 0; text-align: center; font: 700 22px var(--display); color: var(--gold-hi); text-shadow: var(--outline); }
+.cvLead { margin: 0; text-align: center; font-size: 12px; color: var(--dim); line-height: 1.3; }
+.cvGrid { min-height: 0; max-height: 52vh; overflow-y: auto; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; align-content: start; touch-action: pan-y; }
+.cvHero { display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 0; padding: 4px 2px; font-weight: normal; }
+.cvHero canvas { image-rendering: pixelated; }
+.cvHero small { font-size: 10px; line-height: 1.1; color: var(--ink); text-align: center; overflow: hidden; max-width: 100%; min-height: 22px; }
+.cvHero.on { border-color: var(--gold-hi); box-shadow: 0 0 0 3px var(--gold-hi), 0 0 12px rgba(255, 220, 120, 0.5); }
+.cvNote { margin: 0; min-height: 34px; display: flex; flex-direction: column; text-align: center; font-size: 12px; color: var(--dim); }
+.cvNote b { color: var(--gold-hi); font: 700 15px var(--display); }
+.hmCalamity { color: #ffb08a; border-color: #b8442e; }
+.rtLv { color: var(--gold-hi); font-size: 10px; }

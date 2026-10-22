@@ -8,7 +8,7 @@ import { makeGear } from '../src/sim/gear';
 import { GREAT_RELIC_IDS, RELICS, RELIC_IDS, relicEffects } from '../src/sim/relics';
 import { newMeta } from '../src/sim/meta';
 import { towerRun } from '../src/sim/modes';
-import { boostOf, startStage, type Run } from '../src/sim/run';
+import { boostOf, SQUAD, startStage, type Run } from '../src/sim/run';
 import { clearNode, finishMystery, finishTower, inBattle, takeXp } from '../src/sim/tower';
 
 /** A tower run standing on a mystery floor whose card is `kind`'s. */
@@ -136,7 +136,7 @@ test('prisoner: freeing him adds a hero and hurts the party; robbing him pays go
   const a = act(run, /^Free/) as Extract<MysteryAct, { k: 'free' }>;
   take(run, /^Free/);
   assert.equal(run.roster.length, heroes + 1);
-  assert.equal(run.squad.length, squad + 1);
+  assert.equal(run.squad.length, Math.min(squad + 1, SQUAD), 'the squad takes him if it has room');
   assert.ok(run.roster.some((h) => h.kind === a.kind));
   for (const h of run.roster.slice(0, heroes)) assert.ok(hpShare(run, h.id) < 1);
   const rob = onFloor('prisoner', 5);
@@ -211,6 +211,8 @@ test('forge: a piece at the top tier can only be melted', () => {
 
 test('trainer: gold buys XP for one hero kind, kept for the page to add to the meta', () => {
   const run = onFloor('trainer', 6);
+  // (a run saved before the climbs were reset teaches the lasting XP)
+  run.local = false;
   const a = act(run, /^Teach/) as Extract<MysteryAct, { k: 'lesson' }>;
   const cost = run.event!.options[pick(run, /^Teach/)].cost;
   const gold = run.gold;

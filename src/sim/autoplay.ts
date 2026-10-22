@@ -8,13 +8,14 @@ import { place, unplace, type Battle, type Boost } from './battle';
 import { chooseOption, leaveEvent, type EventOption } from './events';
 import { levelOfKind } from './levels';
 import { rankOf, type Meta } from './meta';
-import { boostOf, equip, SQUAD, summon, type Owned, type Run } from './run';
+import { boostOf, equip, squadLimit, summon, type Owned, type Run } from './run';
+import { localBoost } from './climb';
 import { UNITS } from './units';
 
 /** How strong a hero is for the squad: its base hp times attack, times its boosts (grade, rank, level, gear, bumps). */
-export function strengthOf(meta: Meta, h: Owned): number {
+export function strengthOf(meta: Meta, h: Owned, run?: Run): number {
   const def = UNITS[h.kind];
-  const boost = boostOf(h, rankOf(meta, h.kind), levelOfKind(meta, h.kind));
+  const boost = run?.local ? localBoost(h) : boostOf(h, rankOf(meta, h.kind), levelOfKind(meta, h.kind));
   return def.hp * def.atk * (boost.hp ?? 1) * (boost.atk ?? 1);
 }
 
@@ -23,9 +24,9 @@ export const isBackline = (kind: string): boolean => !!UNITS[kind].shot || UNITS
 
 /** The squad for the next fight: the heroes in `keep` (that are still owned) first, then the strongest of the rest, up to `SQUAD`. */
 export function pickSquad(run: Run, meta: Meta, keep: readonly number[] = []): Owned[] {
-  const kept = keep.map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h).slice(0, SQUAD);
-  const rest = run.roster.filter((h) => !kept.includes(h)).sort((a, b) => strengthOf(meta, b) - strengthOf(meta, a) || a.id - b.id);
-  return [...kept, ...rest].slice(0, SQUAD);
+  const kept = keep.map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h).slice(0, squadLimit(run));
+  const rest = run.roster.filter((h) => !kept.includes(h)).sort((a, b) => strengthOf(meta, b, run) - strengthOf(meta, a, run) || a.id - b.id);
+  return [...kept, ...rest].slice(0, squadLimit(run));
 }
 
 /** The best way to spend an event: the free relic, then gear, then a blessing, then coin. A cursed path and anything dear is left alone. */
@@ -148,7 +149,7 @@ export function autoDeploy(b: Battle, run: Run, meta: Meta, boostFor?: (h: Owned
   const spots = autoFormation(b.board, squad);
   for (const s of spots) {
     const h = squad.find((x) => x.id === s.id)!;
-    place(b, h.kind, s.u, s.v, h.id, boostFor?.(h) ?? boostOf(h, rankOf(meta, h.kind), levelOfKind(meta, h.kind)));
+    place(b, h.kind, s.u, s.v, h.id, boostFor?.(h) ?? (run.local ? localBoost(h) : boostOf(h, rankOf(meta, h.kind), levelOfKind(meta, h.kind))));
   }
   return spots;
 }

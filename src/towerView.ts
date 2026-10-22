@@ -9,9 +9,11 @@ import { saveMeta, type Meta } from './sim/meta';
 import { hpShare } from './sim/health';
 import { ELITE_BY_ID, eliteAt } from './sim/elites';
 import {
-  buy, chestLine, choices, clearNode, enterNode, finishMystery, floorOf, inBattle, NODE_NAMES, openTreasure, REST_HEAL, rest, takeXp, train, trainXp, type MapNode, type NodeKind, type ShopItem, type TowerSummary,
+  buy, chestLine, choices, clearNode, enterNode, finishMystery, floorOf, hasRoom, hire, inBattle, localTrainXp, NODE_NAMES, openTreasure, REST_HEAL, rest, rowsIn, takeXp, train, trainXp, type MapNode, type NodeKind, type ShopItem, type TowerSummary,
 } from './sim/tower';
-import { saveRun, type Run } from './sim/run';
+import { saveSlot, squadLimit, type Run } from './sim/run';
+import { heroLevel } from './sim/climb';
+import { CAL_MAPS } from './sim/calamity';
 import { UNITS } from './sim/units';
 import { gearIcon, iconImg, relicIcon } from './render/items';
 import { portrait } from './render/sheets';
@@ -29,9 +31,11 @@ import potion from './art/rogue/potion.png';
 import elixir from './art/rogue/elixir.png';
 import chestIcon from './art/ui/chest-bronze.png';
 import crown from './art/ui/ic-crown.png';
+import recruitIcon from './art/rogue/recruit.png';
 import type { Events } from './events';
-import { actLook, bossOfAct } from './towerTheme';
+import { actLook, bossOfAct, calamityLook, type ActLook } from './towerTheme';
 import { BRICKS, buildBackdrop, Layout, torchEl } from './towerBack';
+import { confirmBox } from './calamityView';
 import { playTwist, twistBadge, twistLine } from './twistView';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -49,6 +53,8 @@ export interface TowerHooks {
   onFight(): void;
   onPack(): void;
   onHome(): void;
+  /** The player chose to start over (after the confirm): end the run and show what it earned. */
+  onAbandon(): void;
 }
 
 /** Each kind of node: its icon, and what it is, in a line. */
@@ -60,6 +66,7 @@ export const NODE_INFO: Record<NodeKind, { icon: string; text: string }> = {
   treasure: { icon: chestIcon, text: 'A chest: gold, and a relic or gear.' },
   mystery: { icon: question, text: 'Something strange. A choice, with a price or a prize.' },
   boss: { icon: crown, text: 'The act boss. A wall; drops gear and a relic and heals half.' },
+  recruit: { icon: recruitIcon, text: 'Heroes for hire. Pay gold, and one joins the party.' },
 };
 
 /** The acts whose intro card has been shown this session (by run and act), so it plays once as an act starts. */
@@ -79,6 +86,16 @@ export class TowerView {
   private introFrame = 0;
   /** The node tapped last, so tapping the same twisted one again does not repeat its reveal. */
   private lastTapped = -1;
+
+  /** The look of the run's current act or map. */
+  private look(): ActLook {
+    const t = this.run.tower!;
+    return this.run.mode?.kind === 'calamity' ? calamityLook(t.act) : actLook(t.act);
+  }
+
+  private get calamity(): boolean {
+    return this.run.mode?.kind === 'calamity';
+  }
 
   constructor(private hooks: TowerHooks) {
     this.root.id = 'towerMap';
@@ -142,7 +159,7 @@ export class TowerView {
     const t = run.tower!;
     const head = el('header', 'rtHead');
     const top = el('div', 'rtTop');
-    top.append(el('h2', '', `Act ${t.act} · Floor ${run.stage}`));
+    top.append(el('h2', '', this.calamity ? `Map ${t.act}/${CAL_MAPS} · Floor ${run.stage}` : `Act ${t.act} · Floor ${run.stage}`));
     const gold = el('span', 'rtGold');
     gold.append(icon(ICONS.gold), el('b', '', String(run.gold)));
     top.append(gold);
@@ -150,12 +167,13 @@ export class TowerView {
     pack.addEventListener('click', () => this.hooks.onPack());
     const home = el('button', 'small', 'Home');
     home.addEventListener('click', () => {
-      saveRun(run);
+      saveSlot(run);
       this.close();
       this.hooks.onHome();
     });
     top.append(pack, home);
     head.append(top, this.partyBars());
+    head.append(this.abandonRow());
     const relics = el('div', 'rtRelics');
     for (const id of run.relics ?? []) {
       relics.append(relicButton(run, id, () => relicPopup(run, id, this.root)));
@@ -165,10 +183,27 @@ export class TowerView {
     return head;
   }
 
-  /** The squad's faces with their health bars. */
+  /** Start over: a small link under the party, behind a confirm. */
+  private abandonRow(): HTMLElement {
+    const run = this.run;
+    const row = el('div', 'rtAbandon');
+    const calamity = this.calamity;
+    const btn = el('button', 'rtLink', calamity ? 'Abandon this calamity' : 'Abandon this climb');
+    btn.addEventListener('click', () =>
+      confirmBox(this.root, calamity ? 'Abandon this calamity?' : 'Abandon this climb?', `The run ends here and cannot be taken up again. The crowns${calamity ? ' and map bonuses' : ' and chests'} it earned are kept; its heroes, gold and finds are lost.`, 'Abandon', () => {
+        this.close();
+        this.hooks.onAbandon();
+      }),
+    );
+    row.append(el('span', 'hint', `${run.roster.length} hero${run.roster.length === 1 ? '' : 'es'} · saved`), btn);
+    return row;
+  }
+
+  /** The squad's faces with their health bars (and levels, in a run that levels its own heroes). */
   private partyBars(): HTMLElement {
     const run = this.run;
-    const bars = el('div', 'rtParty');
+    const compact = run.squad.length > 5;
+    const bars = el('div', `rtParty${compact ? ' ten' : ''}`);
     for (const id of run.squad) {
       const h = run.roster.find((x) => x.id === id);
       if (!h) continue;
@@ -180,8 +215,9 @@ export class TowerView {
       const fill = el('span');
       fill.style.width = `${Math.max(4, share * 100)}%`;
       bar.append(fill);
-      cell.append(face, bar, el('small', '', `${Math.round(share * 100)}%`));
-      cell.title = `${UNITS[h.kind].name}: ${Math.round(share * 100)}% hp`;
+      if (run.local && !compact) cell.append(face, el('small', 'rtLv', `Lv ${heroLevel(h)}`), bar, el('small', '', `${Math.round(share * 100)}%`));
+      else cell.append(face, bar, el('small', '', run.local ? `L${heroLevel(h)}` : `${Math.round(share * 100)}%`));
+      cell.title = `${UNITS[h.kind].name}${run.local ? `, level ${heroLevel(h)}` : ''}: ${Math.round(share * 100)}% hp`;
       bars.append(cell);
     }
     if (!run.squad.length) bars.append(el('span', 'hint', 'No heroes in the squad: pick them in the next fight.'));
@@ -191,15 +227,15 @@ export class TowerView {
   private mapBox(): HTMLElement {
     const run = this.run;
     const t = run.tower!;
-    const lay = (this.lay = new Layout(this.mapWidth()));
-    const scroll = el('div', `rtScroll look${actLook(t.act).look}`);
-    this.root.style.setProperty('--rtBrick', `url(${BRICKS[actLook(t.act).look]})`);
+    const lay = (this.lay = new Layout(this.mapWidth(), rowsIn(t, t.act)));
+    const scroll = el('div', `rtScroll look${this.look().look}`);
+    this.root.style.setProperty('--rtBrick', `url(${BRICKS[this.look().look]})`);
     const map = el('div', 'rtMap');
     map.style.width = `${lay.W}px`;
     map.style.height = `${lay.H}px`;
     const open = new Set(choices(run).map((n) => n.id));
     const taken = new Set(t.path);
-    map.append(buildBackdrop(t.act, lay), this.gate(t.act), this.stairs(open, taken, map));
+    map.append(buildBackdrop(t.act, lay, this.look()), this.gate(t.act), this.stairs(open, taken, map));
     for (const n of t.map) map.append(this.nodeButton(n, open, taken));
     this.marker = this.makeMarker();
     this.placeMarker(this.markerSpot(t.at));
@@ -210,7 +246,7 @@ export class TowerView {
 
   /** The big gate at the top of the act: the boss that waits there, by name and face. */
   private gate(act: number): HTMLElement {
-    const boss = UNITS[bossOfAct(act)];
+    const boss = UNITS[bossOfAct(act, this.calamity)];
     const lay = this.lay;
     const g = el('div', 'rtGate');
     g.style.left = `${Math.round((lay.W - 224) / 2)}px`;
@@ -220,9 +256,9 @@ export class TowerView {
     const arch = el('div', 'rtGateArch');
     arch.append(face);
     const plate = el('div', 'rtGatePlate');
-    plate.append(el('small', '', `Act ${act} boss`), el('b', '', boss.name));
+    plate.append(el('small', '', this.calamity ? `Map ${act} boss` : `Act ${act} boss`), el('b', '', boss.name));
     g.append(el('i', 'rtGateTop'), arch, plate);
-    g.title = `The gate of ${actLook(act).name}: ${boss.name} waits beyond it.`;
+    g.title = `The gate of ${this.look().name}: ${boss.name} waits beyond it.`;
     return g;
   }
 
@@ -296,7 +332,7 @@ export class TowerView {
     const badge = twistBadge(n.twist);
     if (badge) b.append(badge);
     if (state === 'done') b.append(el('i', 'rtTick'));
-    b.setAttribute('aria-label', `${NODE_NAMES[n.kind]}, floor ${floorOf(t.act, n.row)}`);
+    b.setAttribute('aria-label', `${NODE_NAMES[n.kind]}, floor ${floorOf(t.act, n.row, t)}`);
     b.addEventListener('click', () => {
       if (this.moving) return;
       // (a twist is revealed once as its node is first tapped)
@@ -304,8 +340,8 @@ export class TowerView {
       this.lastTapped = n.id;
       this.picked = open.has(n.id) ? n.id : -1;
       const elite = n.kind === 'elite' ? eliteAt(this.run.seed, t.act, t.map, n.id) : undefined;
-      if (elite) this.sayNode(eliteInfo(elite, floorOf(t.act, n.row)));
-      else this.say(`Floor ${floorOf(t.act, n.row)} · ${NODE_NAMES[n.kind]}: ${NODE_INFO[n.kind].text}${twistLine(n.twist)}`);
+      if (elite) this.sayNode(eliteInfo(elite, floorOf(t.act, n.row, t)));
+      else this.say(`Floor ${floorOf(t.act, n.row, t)} · ${NODE_NAMES[n.kind]}: ${NODE_INFO[n.kind].text}${twistLine(n.twist)}`);
       this.markPicked();
     });
     return b;
@@ -371,16 +407,16 @@ export class TowerView {
     const key = `${run.seed}:${t.act}`;
     if (t.at >= 0 || t.path.length || t.cur || introSeen.has(key) || this.root.querySelector('.rtIntro')) return;
     introSeen.add(key);
-    const look = actLook(t.act);
-    const lay = new Layout(this.mapWidth());
+    const look = this.look();
+    const lay = new Layout(this.mapWidth(), rowsIn(t, t.act));
     const vh = this.root.clientHeight || window.innerHeight;
     const over = el('div', `rtIntro look${look.look}`);
     const view = el('div', 'rtIntroView');
     view.style.width = `${lay.W}px`;
     view.style.left = `${Math.floor(((this.root.clientWidth || lay.W) - lay.W) / 2)}px`;
-    view.append(buildBackdrop(t.act, lay));
+    view.append(buildBackdrop(t.act, lay, look));
     const text = el('div', 'rtIntroText');
-    text.append(el('small', '', `Act ${t.act}`), el('h2', '', look.name), el('p', '', look.blurb), el('em', '', 'Tap to skip'));
+    text.append(el('small', '', this.calamity ? `Map ${t.act} of ${CAL_MAPS}` : `Act ${t.act}`), el('h2', '', look.name), el('p', '', look.blurb), el('em', '', 'Tap to skip'));
     over.append(view, el('div', 'rtIntroShade'), text);
     this.root.append(over);
     const span = Math.min(420, Math.max(0, lay.H - vh));
@@ -447,7 +483,7 @@ export class TowerView {
     if (go) {
       go.disabled = this.picked < 0;
       const kind = this.picked >= 0 ? map[this.picked].kind : null;
-      go.textContent = kind ? (kind === 'fight' || kind === 'elite' || kind === 'boss' ? 'To battle!' : `Go to the ${NODE_NAMES[kind].toLowerCase()}`) : 'Climb';
+      go.textContent = kind ? (kind === 'fight' || kind === 'elite' || kind === 'boss' ? 'To battle!' : kind === 'recruit' ? 'Meet the recruits' : `Go to the ${NODE_NAMES[kind].toLowerCase()}`) : 'Climb';
     }
   }
 
@@ -458,7 +494,7 @@ export class TowerView {
     this.climbTo(id, () => {
       if (!enterNode(run, id)) return this.draw();
       play('summon');
-      saveRun(run);
+      saveSlot(run);
       const cur = run.tower!.cur!;
       this.picked = -1;
       if (cur.fight) {
@@ -487,7 +523,7 @@ export class TowerView {
       this.hooks.events.openEvent(run, () => {
         finishMystery(run);
         this.collectXp();
-        saveRun(run);
+        saveSlot(run);
         // (a mimic's chest was opened: the fight begins)
         if (inBattle(run)) {
           this.close();
@@ -499,6 +535,7 @@ export class TowerView {
     } else if (cur.kind === 'shop') this.shopCard();
     else if (cur.kind === 'campfire') this.campCard();
     else if (cur.kind === 'treasure') this.treasureCard();
+    else if (cur.kind === 'recruit') this.recruitCard();
   }
 
   /* ------------------------------------------------------------------ the cards */
@@ -520,18 +557,18 @@ export class TowerView {
     const card = this.cardShell('Choose a relic', 'elite');
     const lastElite = run.tower!.lastElite;
     relicChoice(run, card, lastElite ? ELITE_BY_ID[lastElite]?.name : undefined, () => {
-      saveRun(run);
+      saveSlot(run);
       this.card?.remove();
       this.card = null;
       this.draw(true);
     });
-    saveRun(run);
+    saveSlot(run);
   }
 
   /** Close the card and the node: the run climbs a floor and the map is drawn again. */
   private leave(): void {
     clearNode(this.run);
-    saveRun(this.run);
+    saveSlot(this.run);
     this.card?.remove();
     this.card = null;
     this.draw(true);
@@ -562,6 +599,43 @@ export class TowerView {
 
   private note = '';
 
+  /** The heroes for hire at a recruit node: a row for each, with its price; the squad's room is shown. */
+  private recruitCard(): void {
+    const run = this.run;
+    const hires = run.tower!.cur!.hires ?? [];
+    const card = this.cardShell('Heroes for hire', 'recruit');
+    card.append(el('p', 'rtLead', 'Sellswords wait by the road, each with a price and a tale. Pay, and one joins the party.'), this.goldLine(), this.partyBars());
+    card.append(el('p', 'rtNote', `${run.roster.length} of ${squadLimit(run)} places filled`));
+    const list = el('div', 'rtShop');
+    hires.forEach((h, i) => {
+      const def = UNITS[h.kind];
+      const row = el('button', `rtItem hero${h.hired ? ' sold' : ''}`);
+      const pic = portrait(def.sheet, 40);
+      pic.classList.add('rtShopPic');
+      const words = el('span');
+      words.append(el('b', '', h.hired ? `${def.name} · hired` : def.name), el('small', '', def.role));
+      row.append(pic, words, el('em', '', h.hired ? '' : String(h.cost)));
+      row.disabled = !!h.hired || run.gold < h.cost || !hasRoom(run);
+      row.addEventListener('click', () => {
+        const line = hire(run, i);
+        if (line === null) return;
+        play('summon');
+        this.note = line;
+        saveSlot(run);
+        this.recruitCard();
+      });
+      list.append(row);
+    });
+    card.append(list);
+    if (this.note) card.append(el('p', 'rtNote', this.note));
+    const out = el('button', 'primary', 'Move on');
+    out.addEventListener('click', () => {
+      this.note = '';
+      this.leave();
+    });
+    card.append(out);
+  }
+
   private shopRow(it: ShopItem, i: number): HTMLElement {
     const run = this.run;
     const row = el('button', `rtItem ${it.kind}${it.sold ? ' sold' : ''}`);
@@ -571,13 +645,13 @@ export class TowerView {
     const words = el('span');
     words.append(el('b', '', it.sold ? `${it.label} · sold` : it.label), el('small', '', it.text));
     row.append(pic, words, el('em', '', it.sold ? '' : String(it.cost)));
-    row.disabled = it.sold || run.gold < it.cost;
+    row.disabled = it.sold || run.gold < it.cost || (it.kind === 'hero' && !hasRoom(run));
     row.addEventListener('click', () => {
       const line = buy(run, i);
       if (line === null) return;
       play('summon');
       this.note = line;
-      saveRun(run);
+      saveSlot(run);
       this.shopCard();
     });
     return row;
@@ -604,26 +678,29 @@ export class TowerView {
     restBtn.addEventListener('click', () => {
       rest(run);
       play('summon');
-      saveRun(run);
+      saveSlot(run);
       this.campCard();
     });
-    card.append(restBtn, el('p', 'rtLead', `Or train a hero by the fire (+${trainXp(run.stage)} XP, kept for good):`));
+    card.append(restBtn, el('p', 'rtLead', run.local ? `Or train a hero by the fire (+${localTrainXp(run.stage)} XP, for this run):` : `Or train a hero by the fire (+${trainXp(run.stage)} XP, kept for good):`));
     const heroes = el('div', 'rtTrain');
     const seen = new Set<string>();
     for (const h of run.roster) {
-      if (seen.has(h.kind)) continue;
+      // (the lasting levels are a kind's; a run's own are each hero's)
+      if (!run.local && seen.has(h.kind)) continue;
       seen.add(h.kind);
       const b = el('button', 'rtTrainHero');
       const face = portrait(UNITS[h.kind].sheet, 40, h.grade);
-      b.append(face, el('small', '', UNITS[h.kind].name), el('em', '', `Lv ${levelOf(xpOf(this.hooks.meta(), h.kind))}`));
+      b.append(face, el('small', '', UNITS[h.kind].name), el('em', '', `Lv ${run.local ? heroLevel(h) : levelOf(xpOf(this.hooks.meta(), h.kind))}`));
       b.addEventListener('click', () => {
         const got = train(run, h.id);
         if (!got) return;
-        const m = this.hooks.meta();
-        gainXp(m, { [got.kind]: got.xp });
-        saveMeta(m);
+        if (got.xp) {
+          const m = this.hooks.meta();
+          gainXp(m, { [got.kind]: got.xp });
+          saveMeta(m);
+        }
         play('summon');
-        saveRun(run);
+        saveSlot(run);
         this.campCard();
       });
       heroes.append(b);
@@ -644,7 +721,7 @@ export class TowerView {
       open.addEventListener('click', () => {
         const lines = openTreasure(run) ?? [];
         play('star');
-        saveRun(run);
+        saveSlot(run);
         pic.root.classList.add('burst');
         card.querySelector('.rtLead')!.textContent = 'The lid swings open:';
         const list = el('ul', 'rtLoot');
@@ -670,7 +747,11 @@ export class TowerView {
     this.root.replaceChildren();
     const wrap = el('div', 'rtCardWrap solo');
     const card = el('div', 'rtCard summary');
-    card.append(el('h2', '', 'The climb ends'), el('p', 'rtLead', `The heroes fall on floor ${run.stage}, in act ${s.act}.`));
+    const cal = s.maps !== undefined;
+    card.append(
+      el('h2', '', cal ? (s.cleared ? 'The calamity is ended!' : 'The calamity goes on') : s.abandoned ? 'The climb is over' : 'The climb ends'),
+      el('p', 'rtLead', cal ? (s.cleared ? `All ${CAL_MAPS} maps are cleared: the calamity falls.` : s.abandoned ? `The party turns back on floor ${run.stage}, in map ${Math.min(s.act, CAL_MAPS)}.` : `The party falls on floor ${run.stage}, in map ${Math.min(s.act, CAL_MAPS)}.`) : s.abandoned ? `The heroes turn back on floor ${run.stage}, in act ${s.act}.` : `The heroes fall on floor ${run.stage}, in act ${s.act}.`),
+    );
     const stats = el('div', 'rtStats');
     const stat = (label: string, value: string) => {
       const row = el('div');
@@ -678,12 +759,12 @@ export class TowerView {
       stats.append(row);
     };
     stat('Floors climbed', String(s.floors));
-    stat('Acts', String(s.act));
+    stat(cal ? 'Maps cleared' : 'Acts', cal ? `${s.maps} of ${CAL_MAPS}` : String(s.act));
     stat('Relics', String(s.relics));
     stat('Heroes', String(s.heroes));
     stat('Crowns earned', String(s.crowns));
     card.append(stats);
-    if (s.newBest) card.append(el('p', 'rtBest', `A new best floor: ${s.floors}!`));
+    if (s.newBest) card.append(el('p', 'rtBest', cal ? `A new best: ${s.maps} map${s.maps === 1 ? '' : 's'} cleared!` : `A new best floor: ${s.floors}!`));
     const rewards = el('div', 'rtRewards');
     for (const [name, n] of [['bronze', s.bronze], ['silver', s.silver], ['gold', s.gold]] as const) {
       if (!n) continue;
@@ -694,7 +775,7 @@ export class TowerView {
     }
     card.append(rewards);
     const line = chestLine(s);
-    card.append(el('p', 'rtLead', line ? `${line} added to your stash.` : 'No chests yet: climb further to earn them.'));
+    card.append(el('p', 'rtLead', line ? `${line} added to your stash.` : cal ? 'Clear every map for a chest.' : 'No chests yet: climb further to earn them.'));
     for (const g of s.gear) card.append(el('p', 'rtGear', `Equipment found: ${g}`));
     const go = el('button', 'primary', 'Back to camp');
     go.addEventListener('click', () => {

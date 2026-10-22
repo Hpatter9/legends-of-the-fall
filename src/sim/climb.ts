@@ -1,0 +1,95 @@
+// Heroes that level within a run. A tower climb and a calamity start every hero at level 1, with no worn equipment and no
+// talents (the meta's levels, gear and talents are not read, and not changed); the hero's level comes from the XP it earns
+// in the run (`Owned.xp`), by the same curve as the lasting levels (`levels.ts`), and its gear is what the run finds.
+// Pure rules: no Pixi, no DOM.
+
+import type { Battle, Boost, Unit } from './battle';
+import { GRADE_MULT, recruit, squadLimit, type Owned, type Run } from './run';
+import { gearBoost } from './gear';
+import { XP_PER_DAMAGE, XP_PER_HEALING, XP_TAKE_PART, XP_WIN, levelBoost, levelOf, type LevelUp } from './levels';
+
+
+/** What a hero's run-level XP is worth on top of the lasting rate: the climb is tuned on this. */
+export const CLIMB_XP = 4;
+/** A hired hero joins with this share of the roster's mean XP, so it is not left a level-1 passenger behind a levelled squad. */
+export const HIRE_CATCH_UP = 0.7;
+
+/** Whether a run's heroes level within it. */
+export const isLocal = (run: Run): boolean => !!run.local;
+
+/** A hero's level in the run (1 for a hero with no XP). */
+export const heroLevel = (h: Owned): number => levelOf(h.xp ?? 0);
+
+/**
+ * A run hero's whole boost: its grade and level, its gear and training bumps, and the skill charge it keeps. No rank, no
+ * lasting equipment or talents, and no kind-by-kind multipliers: every hero starts the climb alike.
+ */
+export function localBoost(h: Owned): Boost {
+  const k = GRADE_MULT ** (h.grade - 1);
+  const lv = levelBoost(heroLevel(h));
+  const g = gearBoost(h.gear);
+  return { hp: k * lv.hp * g.hp! + (h.bump?.hp ?? 0), atk: k * lv.atk * g.atk! + (h.bump?.atk ?? 0), grade: h.grade, ...(h.charge ? { charge: h.charge } : {}), ...(h.charge2 ? { charge2: h.charge2 } : {}) };
+}
+
+/** The XP each hero (by roster id) earned in a finished fight: the same pay as `fightXp`, but kept for the hero, not its kind. `rate` is the castle's Library. */
+export function fightXpByHero(b: Battle, rate = 1): Record<number, number> {
+  const out: Record<number, number> = {};
+  const won = b.phase === 'won';
+  const shareOf = (u: Unit) => (u.dealt ?? 0) / XP_PER_DAMAGE + (u.healed ?? 0) / XP_PER_HEALING + (u.slain ?? 0);
+  for (const u of b.units) {
+    if (u.side !== 'hero' || u.owner !== undefined || u.tag === undefined) continue;
+    const called = b.units.filter((x) => x.owner === u.id).reduce((n, x) => n + shareOf(x), 0);
+    out[Number(u.tag)] = (out[Number(u.tag)] ?? 0) + Math.round((XP_TAKE_PART + (won ? XP_WIN : 0) + shareOf(u) + called) * rate * CLIMB_XP);
+  }
+  return out;
+}
+
+/** Add XP to the run's heroes (by roster id). Returns those that reached a new level. */
+export function gainRunXp(run: Run, gains: Record<number, number>): (LevelUp & { id: number })[] {
+  const ups: (LevelUp & { id: number })[] = [];
+  for (const [id, n] of Object.entries(gains)) {
+    const h = run.roster.find((x) => x.id === Number(id));
+    if (!h || !(n > 0)) continue;
+    const from = heroLevel(h);
+    h.xp = (h.xp ?? 0) + n;
+    const to = heroLevel(h);
+    if (to > from) ups.push({ id: h.id, kind: h.kind, from, to });
+  }
+  return ups;
+}
+
+/** Add XP to every hero of a kind (a campfire's lesson, a trainer's). */
+export function gainKindXp(run: Run, kind: string, n: number): void {
+  for (const h of run.roster) if (h.kind === kind) h.xp = (h.xp ?? 0) + n;
+}
+
+/** The XP a hired hero joins with: `HIRE_CATCH_UP` of the roster's mean. */
+export function hireXp(run: Run): number {
+  if (!run.roster.length) return 0;
+  return Math.floor((run.roster.reduce((n, h) => n + (h.xp ?? 0), 0) / run.roster.length) * HIRE_CATCH_UP);
+}
+
+/** Hire a hero for `paid` gold: it joins at the run's catch-up XP, and (in a calamity, unless told otherwise) takes a place in the squad if there is room. */
+export function hireHero(run: Run, kind: string, paid: number, toSquad = run.mode?.kind === 'calamity'): Owned {
+  const xp = run.local ? hireXp(run) : 0;
+  const h = recruit(run, kind, paid);
+  if (run.local && xp) h.xp = xp;
+  if (toSquad && run.squad.length < squadLimit(run) && !run.squad.includes(h.id)) run.squad.push(h.id);
+  return h;
+}
+
+
+/** What the last fight taught the run's heroes, in the shape the result screen draws (by kind: the XP it earned, and the XP it had before): its level-ups too. */
+export function climbXpView(run: Run): { gains: Record<string, number>; from: Record<string, number>; ups: LevelUp[] } {
+  const gains: Record<string, number> = {};
+  const from: Record<string, number> = {};
+  const ups: LevelUp[] = [];
+  for (const g of run.tower?.gains ?? []) {
+    if (g.kind in gains) continue;
+    const h = run.roster.find((x) => x.id === g.id);
+    gains[g.kind] = g.xp;
+    from[g.kind] = Math.max(0, (h?.xp ?? 0) - g.xp);
+    if (g.to > g.from) ups.push({ kind: g.kind, from: g.from, to: g.to });
+  }
+  return { gains, from, ups };
+}

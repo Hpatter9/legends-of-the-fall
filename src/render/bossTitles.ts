@@ -1,5 +1,7 @@
 // The title line under each boss's name on its intro banner (keyed by the boss's id in `FOES`).
 
+import { CAL_BOSS_TITLES } from '../sim/calamityBosses';
+
 export const BOSS_TITLES: Record<string, string> = {
   orcWarlord: 'Lord of the Red Tusk',
   demonLord: 'Master of the Imp Hordes',
@@ -23,4 +25,4 @@ export const BOSS_TITLES: Record<string, string> = {
 };
 
 /** A boss's title line (a plain one for any boss without its own). */
-export const titleOf = (id: string): string => BOSS_TITLES[id] ?? 'Guardian of the Stage';
+export const titleOf = (id: string): string => BOSS_TITLES[id] ?? CAL_BOSS_TITLES[id] ?? 'Guardian of the Stage';

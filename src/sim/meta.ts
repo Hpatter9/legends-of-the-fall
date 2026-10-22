@@ -70,6 +70,8 @@ export interface Meta {
   bestStage: number;
   /** The most floors cleared in the endless tower. */
   tower: number;
+  /** A calamity's record: the most maps cleared in one run, and the runs cleared whole (none before the first calamity). */
+  calamity?: { best: number; clears: number };
   /** The daily challenge per date (yyyymmdd): the best score counted and the plays (the first counts). */
   daily: Record<string, DailyEntry>;
   /** The bosses beaten (`foes.ts`, by id). */

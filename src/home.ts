@@ -9,6 +9,7 @@ import { CastleScene, lookPicture } from './castle';
 import { BLURB, effectText } from './render/castleSpots';
 import { PULL_COST, saveMeta, type Meta, type Pull } from './sim/meta';
 import { dailyLine, towerLine, towerOpen } from './sim/modes';
+import { CAL_MAPS } from './sim/calamity';
 import { ARMIES, armyById, armyCleared, armyIsNew, armyStars, armyUnlocked, bossOf, clearedCount, markSeen } from './sim/armies';
 import { ACHIEVEMENTS, claimAchievement, unclaimed } from './sim/achievements';
 import { play } from './render/sound';
@@ -51,6 +52,10 @@ export interface HomeHooks {
   onSummon?(count: 1 | 10, play: (got: Pull[]) => Promise<void>): void;
   onDaily(): void;
   onTower(): void;
+  /** Opens the calamity: the saved run's map, or the choice of a starting hero. */
+  onCalamity(): void;
+  /** A line about the tower's or the calamity's saved run ("Floor 7 · continue"), or null when there is none going. */
+  slotInfo?(kind: 'tower' | 'calamity'): string | null;
   /** The home screen's tab, or the armies, changed (or it was left): the ambience follows (`spot`). */
   onScene?(): void;
 }
@@ -284,8 +289,10 @@ export class Home {
     } else daily.append(el('i', 'badge'));
     daily.addEventListener('click', () => this.go(this.hooks.onDaily));
     const tower = el('button', `hmCard cpPlank${towerOpen(m) ? '' : ' lockedCard'}`);
-    tower.append(icon(ICONS.tower), el('b', '', 'Tower'), el('small', '', towerOpen(m) ? towerLine(m).replace('Endless tower · ', '') : `after ${ARMIES[0].name.split(' ')[0]}s`));
-    tower.disabled = !towerOpen(m);
+    const climbing = this.hooks.slotInfo?.('tower');
+    tower.append(icon(ICONS.tower), el('b', '', 'Tower'), el('small', '', climbing ?? (towerOpen(m) ? towerLine(m).replace('Endless tower · ', '') : `after ${ARMIES[0].name.split(' ')[0]}s`)));
+    // (a climb begun stays open, whatever the unlock says)
+    tower.disabled = !towerOpen(m) && !climbing;
     tower.addEventListener('click', () => this.go(this.hooks.onTower));
     this.camp.dailySlot.replaceChildren(daily);
     this.camp.towerSlot.replaceChildren(tower);
@@ -300,6 +307,12 @@ export class Home {
     party2.id = 'hmParty';
     party2.addEventListener('click', () => this.go(this.hooks.onParty));
     go.append(party2);
+    // (the calamity: a card of its own under the party link; it carries the run being played, if one is saved)
+    const going = this.hooks.slotInfo?.('calamity');
+    const calamity = el('button', 'hmLink hmCalamity', `Calamity · ${going ?? (m.calamity?.best ? `best ${m.calamity.best} of ${CAL_MAPS} maps` : 'one hero, a short climb')}`);
+    calamity.id = 'hmCalamity';
+    calamity.addEventListener('click', () => this.go(this.hooks.onCalamity));
+    go.append(calamity);
     if (has) {
       const cont = el('button', 'hmLink', `Continue · ${info?.label ?? 'run'}`);
       cont.addEventListener('click', () => this.go(this.hooks.onContinue));
