@@ -117,7 +117,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
         const locked = label === 'Ultimate' && 'unlock' in a && !!a.unlock && x.level < a.unlock;
         if (locked) p.classList.add('locked');
         p.append(el('i', '', `${label} · ${a.name}: `), a.text);
-        if (locked) p.append(el('small', 'unlock', ` Unlocks at level ${(a as { unlock: number }).unlock}.`));
+        if (locked) p.append(el('span', 'ultLock', ` Unlocks at level ${(a as { unlock: number }).unlock}.`));
         box.append(p);
       }
     box.append(drawAwaken(meta, kind, redraw));

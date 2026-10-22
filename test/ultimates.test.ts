@@ -39,7 +39,7 @@ test('every hero has an ultimate, and it charges slower than the skill', () => {
   const u = addUnit(b, 'kitsune', 3, 8);
   addUnit(b, 'skeleton', 3, 4);
   run(b, 1000);
-  assert.ok(u.charge > 0 && Math.abs((u.charge2 ?? 0) - u.charge * ULT_RATE * (KITS.kitsune.ultimate!.rate ?? 1)) < 1e-6);
+  assert.ok(u.charge > 0 && Math.abs((u.charge2 ?? 0) - u.charge * ULT_RATE) < 1e-6);
   assert.equal(ultimateReady(u), false);
 });
 
@@ -59,6 +59,18 @@ test('the first eight ultimates are always the hero\'s own; every other one unlo
     assert.equal(ultimateOf(at)?.name, KITS[k].ultimate!.name, `${k} is unlocked at level ${ULT_LEVEL}`);
     b.units = b.units.filter((x) => x === first);
   }
+});
+
+test('an ultimate\'s tuned meter speed and strength apply from level 15 up, and not below (the first eight keep their first numbers)', () => {
+  for (const k of ALL_HEROES) assert.ok(KITS[k].ultimate!.tuned, `${k} is tuned`);
+  const b = arena();
+  const low = addUnit(b, 'kitsune', 1, 8, gradeBoost(1, 0, ULT_LEVEL - 1));
+  const up = addUnit(b, 'kitsune', 5, 8, gradeBoost(1, 0, ULT_LEVEL));
+  addUnit(b, 'skeleton', 3, 2);
+  run(b, 1000);
+  assert.ok(low.charge > 0);
+  assert.ok(Math.abs((low.charge2 ?? 0) - low.charge * ULT_RATE) < 1e-6, 'below 15 the meter fills at the plain rate');
+  assert.ok(Math.abs((up.charge2 ?? 0) - up.charge * ULT_RATE * KITS.kitsune.ultimate!.tuned!.rate) < 1e-6, 'from 15 it fills at the tuned rate');
 });
 
 test('a locked ultimate neither charges nor casts, and the unlocked one does both', () => {

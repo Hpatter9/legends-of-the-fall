@@ -24,6 +24,7 @@ import {
   apart,
   blinkStrike,
   callSummon,
+  castPower,
   chargeAt,
   crowd,
   drag,
@@ -42,6 +43,10 @@ import {
   type Skill,
 } from './abilities';
 
+/** A duration in ms, as the caster's `dur` talent lengthens it, and the ultimate's strength: a stronger ultimate holds, guards and hastens a little longer (by the square root of its strength). */
+const dur = (me: Unit, ms: number): number => durOf(me, Math.round(ms * Math.sqrt(castPower())));
+/** A share of a max hp (a shield, a heal, a drink), times the ultimate's strength. */
+const share = (x: number): number => x * castPower();
 const alliesOf = (b: Battle, me: Unit): Unit[] => b.units.filter((a) => a.alive && a.side === me.side);
 const byId = (x: Unit, y: Unit) => x.id - y.id;
 const strongest = (x: Unit, y: Unit) => atkOf(y) - atkOf(x) || x.id - y.id;
@@ -136,17 +141,17 @@ function smite(b: Battle, me: Unit, out: BattleEvent[], o: Smite): boolean {
     if (o.arcs) out.push({ kind: 'arc', from: me.id, to: f.id });
     if (o.mult) hurt(b, me, f, net(atkOf(me) * o.mult, f), false, false, out, 'skill');
     if (!f.alive) continue;
-    if (o.stun) stun(b, f, durOf(me, o.stun));
-    if (o.slow) slowFor(b, f, durOf(me, o.slow));
-    if (o.brittle) f.brittleUntil = Math.max(f.brittleUntil ?? 0, b.t + durOf(me, o.brittle));
+    if (o.stun) stun(b, f, dur(me, o.stun));
+    if (o.slow) slowFor(b, f, dur(me, o.slow));
+    if (o.brittle) f.brittleUntil = Math.max(f.brittleUntil ?? 0, b.t + dur(me, o.brittle));
     if (o.pull && drag(b, f, me)) f.busyUntil = Math.max(f.busyUntil, b.t + 400);
     if (o.curse) {
-      const ms = durOf(me, o.curse.ms);
+      const ms = dur(me, o.curse.ms);
       f.dot = { kind: 'curse', dmg: Math.max(1, Math.round(atkOf(me) * o.curse.dot)), every: HEX_EVERY, ms, by: me.id, next: b.t + HEX_EVERY, until: b.t + ms };
     }
   }
-  if (o.drink) mendUnit(me, Math.min(o.drink.cap, o.drink.each * foes.length) * me.maxHp, out);
-  if (o.shield) me.shield = { hp: Math.round(me.maxHp * o.shield), until: b.t + durOf(me, 5000) };
+  if (o.drink) mendUnit(me, share(Math.min(o.drink.cap, o.drink.each * foes.length)) * me.maxHp, out);
+  if (o.shield) me.shield = { hp: Math.round(me.maxHp * share(o.shield)), until: b.t + dur(me, 5000) };
   return true;
 }
 
@@ -175,24 +180,24 @@ function bless(b: Battle, me: Unit, out: BattleEvent[], o: Bless): void {
     if (o.reach !== undefined && apart(me, a) > reachOf(me, o.reach)) continue;
     if (o.cleanse) a.dot = undefined;
     if (o.heal) mendUnit(a, atkOf(me) * o.heal, out, me);
-    if (o.healShare) mendUnit(a, a.maxHp * o.healShare, out, me);
-    if (o.hot) a.hot = { amount: atkOf(me) * o.hot.amount, every: 1000, next: b.t + 1000, until: b.t + durOf(me, o.hot.ms), by: me.id };
-    if (o.shield) a.shield = { hp: Math.round(a.maxHp * o.shield), until: b.t + durOf(me, 4000) };
-    if (o.guard) a.guardUntil = Math.max(a.guardUntil ?? 0, b.t + durOf(me, o.guard));
+    if (o.healShare) mendUnit(a, a.maxHp * share(o.healShare), out, me);
+    if (o.hot) a.hot = { amount: atkOf(me) * o.hot.amount, every: 1000, next: b.t + 1000, until: b.t + dur(me, o.hot.ms), by: me.id };
+    if (o.shield) a.shield = { hp: Math.round(a.maxHp * share(o.shield)), until: b.t + dur(me, 4000) };
+    if (o.guard) a.guardUntil = Math.max(a.guardUntil ?? 0, b.t + dur(me, o.guard));
     if (o.haste) {
-      a.hasteUntil = Math.max(a.hasteUntil ?? 0, b.t + durOf(me, o.haste));
-      out.push({ kind: 'haste', to: a.id, ms: durOf(me, o.haste) });
+      a.hasteUntil = Math.max(a.hasteUntil ?? 0, b.t + dur(me, o.haste));
+      out.push({ kind: 'haste', to: a.id, ms: dur(me, o.haste) });
     }
     if (o.banner) {
       // (a second banner only lengthens the first: the attack is raised once)
       if (a.banner === undefined) a.power = (a.power ?? 1) * BANNER_MULT;
-      a.banner = { until: b.t + durOf(me, o.banner) };
+      a.banner = { until: b.t + dur(me, o.banner) };
     }
     if (o.charge) gain(a, o.charge);
     if (!o.heal && !o.healShare && !o.haste) out.push({ kind: 'heal', to: a.id, amount: 0, by: me.id });
   }
-  if (o.banner) out.push({ kind: 'banner', by: me.id, ms: durOf(me, o.banner) });
-  if (o.song) out.push({ kind: 'song', by: me.id, ms: durOf(me, o.song) });
+  if (o.banner) out.push({ kind: 'banner', by: me.id, ms: dur(me, o.banner) });
+  if (o.song) out.push({ kind: 'song', by: me.id, ms: dur(me, o.song) });
 }
 
 // ---- fortify: foes drawn to the caster ----
@@ -212,14 +217,14 @@ function fortify(b: Battle, me: Unit, out: BattleEvent[], o: Fortify): boolean {
   const near = foesOf(b, me).filter((f) => apart(me, f) <= reachOf(me, o.reach));
   if (!near.length) return false;
   for (const f of near) {
-    f.taunt = { to: me.id, until: b.t + durOf(me, o.taunt) };
+    f.taunt = { to: me.id, until: b.t + dur(me, o.taunt) };
     if (o.smite) hurt(b, me, f, net(atkOf(me) * o.smite, f), false, false, out, 'skill');
   }
-  me.guardUntil = Math.max(me.guardUntil ?? 0, b.t + durOf(me, o.guard));
-  if (o.shield) me.shield = { hp: Math.round(me.maxHp * o.shield), until: b.t + durOf(me, o.guard) };
+  me.guardUntil = Math.max(me.guardUntil ?? 0, b.t + dur(me, o.guard));
+  if (o.shield) me.shield = { hp: Math.round(me.maxHp * share(o.shield)), until: b.t + dur(me, o.guard) };
   for (const a of alliesOf(b, me))
     if (a !== me && o.allies !== undefined && apart(me, a) <= reachOf(me, o.allies)) {
-      a.guardUntil = Math.max(a.guardUntil ?? 0, b.t + durOf(me, o.guard));
+      a.guardUntil = Math.max(a.guardUntil ?? 0, b.t + dur(me, o.guard));
       if (o.heal) mendUnit(a, atkOf(me) * o.heal, out, me);
     }
   return true;
@@ -283,7 +288,7 @@ function fists(b: Battle, me: Unit, out: BattleEvent[], foesN: number, blows: nu
   for (const f of foes) {
     me.facing = wayTo(me, f);
     for (let i = 0; i < blows && f.alive; i++) hurt(b, me, f, net(atkOf(me) * mult, f), i === blows - 1, false, out, 'skill');
-    if (f.alive) stun(b, f, durOf(me, holdMs));
+    if (f.alive) stun(b, f, dur(me, holdMs));
   }
   return true;
 }
@@ -296,8 +301,8 @@ function bloodlust(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const before = me.dealt ?? 0;
   for (const f of near) hurt(b, me, f, net(atkOf(me) * 3.0, f), true, false, out, 'skill');
   mendUnit(me, ((me.dealt ?? 0) - before) * 0.3, out);
-  me.hasteUntil = Math.max(me.hasteUntil ?? 0, b.t + durOf(me, 5000));
-  out.push({ kind: 'haste', to: me.id, ms: durOf(me, 5000) });
+  me.hasteUntil = Math.max(me.hasteUntil ?? 0, b.t + dur(me, 5000));
+  out.push({ kind: 'haste', to: me.id, ms: dur(me, 5000) });
   return true;
 }
 
@@ -305,8 +310,8 @@ function bloodlust(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 function fullMoon(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const f = kitOf(me)?.passive.frenzy;
   if (!f || !foesOf(b, me).some((x) => apart(me, x) <= 7)) return false;
-  me.frenzy = { n: f.max + 2 + tal(me, 'frenzyMax'), until: b.t + durOf(me, 7000) };
-  mendUnit(me, me.maxHp * 0.25, out);
+  me.frenzy = { n: f.max + 2 + tal(me, 'frenzyMax'), until: b.t + dur(me, 7000) };
+  mendUnit(me, me.maxHp * share(0.25), out);
   out.push({ kind: 'frenzy', by: me.id, n: me.frenzy.n });
   return true;
 }
@@ -338,7 +343,7 @@ function harvest(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     hurt(b, me, f, net(atkOf(me) * (doomed ? 3.6 : 1.1), f), doomed, false, out, 'skill');
     if (!f.alive) kills++;
   }
-  if (kills) mendUnit(me, Math.min(0.4, 0.1 * kills) * me.maxHp, out);
+  if (kills) mendUnit(me, share(Math.min(0.4, 0.1 * kills)) * me.maxHp, out);
   return true;
 }
 
@@ -355,7 +360,7 @@ function infernoBreath(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   }
   if (!best.length) return false;
   me.facing = wayTo(me, best[0]);
-  const ms = durOf(me, 5000);
+  const ms = dur(me, 5000);
   for (const f of best.sort((x, y) => apart(me, x) - apart(me, y) || x.id - y.id)) {
     out.push({ kind: 'shot', by: me.id, to: f.id, shot: 'fire', ms: 120 + apart(me, f) * 40 });
     hurt(b, me, f, net(atkOf(me) * 2.8, f), true, false, out, 'skill');
@@ -385,7 +390,7 @@ function keelhaul(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     me.facing = wayTo(me, f);
     out.push({ kind: 'arc', from: me.id, to: f.id });
     hurt(b, me, f, net(atkOf(me) * 2.4, f), true, false, out, 'skill');
-    if (f.alive) stun(b, f, durOf(me, 1500));
+    if (f.alive) stun(b, f, dur(me, 1500));
     hooked++;
   }
   return hooked > 0;
@@ -400,13 +405,13 @@ function hallOfMirrors(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const decoys = spots.map((at) => {
     const d = addUnit(b, 'decoy', at.u, at.v);
     d.owner = me.id;
-    d.hp = d.maxHp = Math.max(1, Math.round(me.maxHp * 0.5));
+    d.hp = d.maxHp = Math.max(1, Math.round(me.maxHp * Math.min(1, share(0.5))));
     d.facing = wayTo(d, foes[0]);
     d.busyUntil = b.t + 1000;
     out.push({ kind: 'heal', to: d.id, amount: 0, by: me.id });
     return d;
   });
-  for (const f of foes) f.taunt = { to: [...decoys].sort((x, y) => apart(f, x) - apart(f, y) || x.id - y.id)[0].id, until: b.t + durOf(me, 4500) };
+  for (const f of foes) f.taunt = { to: [...decoys].sort((x, y) => apart(f, x) - apart(f, y) || x.id - y.id)[0].id, until: b.t + dur(me, 4500) };
   return true;
 }
 
@@ -441,9 +446,56 @@ function timeStop(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 /** The eight heroes whose ultimates are in `abilities.ts`: they are retuned here with the rest. */
 const FIRST_EIGHT = ['kitsune', 'karasu', 'yamabushi', 'gorgon', 'samuraiCommander', 'sage', 'demonSwordsman', 'tyrant'];
 
-/** Each hero's ultimate balance, tuned so every hero sits within the band of the roster average with ultimates locked (low levels) and unlocked (level 15 and up): `rate`
- *  (how fast the meter fills, times `ULT_RATE`) and `power` (times the caster's attack while it casts). `test/hero-balance.test.ts` holds it. */
-const TUNE: Record<string, Pick<Skill, 'rate' | 'power'>> = {};
+/** Each hero's ultimate balance from level 15 up, tuned so every hero sits within the band of the roster average: `rate` (how fast the meter fills, times `ULT_RATE`) and
+ *  `power` (times the caster's attack while it casts; a stun, guard, shield or heal scales with it too). `test/hero-balance-ultimates.test.ts` holds it, and
+ *  `test/hero-balance.test.ts` holds the low levels, where the first eight heroes' ultimates are as written. */
+const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
+  knight: { rate: 0.78, power: 0.91 },
+  samurai: { rate: 1.69, power: 1.19 },
+  kunoichi: { rate: 0.83, power: 0.7 },
+  archer: { rate: 0.9, power: 0.7 },
+  wizard: { rate: 1.28, power: 0.9 },
+  peasant: { rate: 0.64, power: 0.7 },
+  ninjaMonk: { rate: 0.67, power: 0.7 },
+  wanderer: { rate: 0.85, power: 0.7 },
+  lightningMage: { rate: 0.96, power: 0.7 },
+  kitsune: { rate: 0.89, power: 0.7 },
+  karasu: { rate: 1.18, power: 0.7 },
+  yamabushi: { rate: 1.42, power: 1.54 },
+  werewolf: { rate: 0.96, power: 0.7 },
+  minotaur: { rate: 1.27, power: 1.06 },
+  satyr: { rate: 0.79, power: 0.7 },
+  gorgon: { rate: 0.84, power: 0.7 },
+  samuraiCommander: { rate: 1.48, power: 1.01 },
+  paladin: { rate: 0.65, power: 0.7 },
+  cleric: { rate: 0.7, power: 0.7 },
+  druid: { rate: 0.89, power: 0.7 },
+  barbarian: { rate: 0.84, power: 0.7 },
+  ranger: { rate: 0.87, power: 0.7 },
+  warlock: { rate: 0.79, power: 0.7 },
+  illusionist: { rate: 0.88, power: 0.7 },
+  gunslinger: { rate: 0.86, power: 0.7 },
+  shambler: { rate: 0.64, power: 0.7 },
+  rifleBot: { rate: 0.88, power: 0.7 },
+  mercenary: { rate: 1.08, power: 0.7 },
+  mummy: { rate: 0.74, power: 0.7 },
+  buccaneer: { rate: 1.1, power: 0.7 },
+  wolfBard: { rate: 0.84, power: 0.7 },
+  beastmaster: { rate: 0.95, power: 0.68 },
+  kraken: { rate: 0.73, power: 0.7 },
+  lancer: { rate: 0.97, power: 0.7 },
+  reaper: { rate: 1.21, power: 0.67 },
+  timeWitch: { rate: 0.77, power: 0.68 },
+  arcBlade: { rate: 0.96, power: 0.7 },
+  dreadPirate: { rate: 0.81, power: 0.7 },
+  siegeBot: { rate: 0.99, power: 0.89 },
+  priestess: { rate: 0.74, power: 0.7 },
+  dragoon: { rate: 0.97, power: 0.7 },
+  juggernaut: { rate: 0.88, power: 0.96 },
+  sage: { rate: 1.0, power: 0.7 },
+  demonSwordsman: { rate: 1.62, power: 1.3 },
+  tyrant: { rate: 1.03, power: 0.92 },
+};
 
 /** Every hero's ultimate: the first eight's (as `first` gives them) and the rest's, which unlock at `ULT_LEVEL`; `abilities.ts` puts them in its kits. */
 export function heroUltimates(first: (kind: string) => Skill | undefined): Record<string, Skill> {
@@ -500,9 +552,9 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
     rifleBot: ult('Overclock', 'Hits half as hard again and shoots faster for 7s, and fires four shots at the weakest foe', 700, 'attack2', (b, me, out) => {
       if (!shots(b, me, out, { n: 4, mult: 0.9, order: (x, y) => x.hp - y.hp || x.id - y.id, shot: 'bullet', one: true })) return false;
       if (me.form === undefined) me.power = (me.power ?? 1) * FORM_MULT;
-      me.form = { until: b.t + durOf(me, 7000) };
-      me.hasteUntil = Math.max(me.hasteUntil ?? 0, b.t + durOf(me, 7000));
-      out.push({ kind: 'haste', to: me.id, ms: durOf(me, 7000) });
+      me.form = { until: b.t + dur(me, 7000) };
+      me.hasteUntil = Math.max(me.hasteUntil ?? 0, b.t + dur(me, 7000));
+      out.push({ kind: 'haste', to: me.id, ms: dur(me, 7000) });
       return true;
     }),
     siegeBot: ult('Orbital Strike', 'A great shell on the thickest crowd for more than six times the attack, and a second on the same spot a moment after', 900, 'attack', orbital),
@@ -541,6 +593,6 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
   };
   // the first eight heroes' ultimates are copied (a foe's own copy of one, such as the Gorgon Queen's, stays as it was) and all forty-five take their balance
   for (const kind of FIRST_EIGHT) all[kind] = { ...first(kind)! };
-  for (const [kind, t] of Object.entries(TUNE)) Object.assign(all[kind], t);
+  for (const [kind, t] of Object.entries(TUNE)) all[kind].tuned = t;
   return all;
 }

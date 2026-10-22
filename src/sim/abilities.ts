@@ -130,10 +130,8 @@ export interface Skill {
   anim: 'attack' | 'attack2' | 'defend';
   /** For a hero's ultimate: the level it fights at before this ultimate is its own (it neither charges nor fires below it); unset is always. A foe's never waits. */
   unlock?: number;
-  /** For an ultimate: how strong it is, as a multiple of the caster's attack while it casts (its blows, healing and callings take it; 1 is as written). The balance knob for each hero's ultimate. */
-  power?: number;
-  /** For an ultimate: how fast it charges, as a multiple of `ULT_RATE` (1 is as written): the other balance knob, since a slow-hitting hero's meter would otherwise fill too late to matter. */
-  rate?: number;
+  /** For a hero's ultimate: its meter speed (times `ULT_RATE`) and its strength (times the caster's attack while it casts, and what a stun, guard or heal is worth) once the hero fights at `ULT_LEVEL` or more. These are the balance knobs, tuned per hero (`ultimates.ts`) so every hero stays within the band of the roster average at level 15 and up; below that level the ultimate is as written. */
+  tuned?: { rate: number; power: number };
   /** Fire it if there is something to fire at; false leaves the charge full for a moment later. */
   cast(b: Battle, me: Unit, out: BattleEvent[]): boolean;
 }
@@ -1541,7 +1539,7 @@ export function tryCast(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!k) return false;
   // (a full ultimate goes first; if it has nothing to hit, the ordinary skill may still go)
   const ult = ultimateOf(me);
-  if (ult && (me.charge2 ?? 0) >= ult.need && powered(b, me, ult, tal(me, 'ultPow') + (ult.power ?? 1) - 1, out)) {
+  if (ult && (me.charge2 ?? 0) >= ult.need && powered(b, me, ult, tal(me, 'ultPow') + (ultTune(me, ult)?.power ?? 1) - 1, out)) {
     me.charge2! -= ult.need;
     return began(b, me, ult, out);
   }
@@ -1555,10 +1553,15 @@ function powered(b: Battle, me: Unit, s: Skill, more: number, out: BattleEvent[]
   const k = 1 + tal(me, 'pow') + more;
   if (k === 1) return s.cast(b, me, out);
   me.power = (me.power ?? 1) * k;
+  castK = k;
   const ok = s.cast(b, me, out);
+  castK = 1;
   me.power = (me.power ?? 1) / k;
   return ok;
 }
+/** How strong the skill being cast is, as a multiple (1 unless a talent or an ultimate's `power` lifts it): an ultimate's engines scale what is not an attack (how long a stun or guard lasts, how much is shielded) by it. */
+let castK = 1;
+export const castPower = (): number => castK;
 
 function began(b: Battle, me: Unit, s: Skill, out: BattleEvent[]): boolean {
   const t = me.eq?.tal;
@@ -1586,14 +1589,18 @@ export const ultimateOf = (u: Unit): Skill | undefined => {
   return u.side === 'hero' && (u.level ?? 1) >= s.unlock ? s : undefined;
 };
 
+/** The balance knobs of a hero's ultimate, once it fights at `ULT_LEVEL` or more (none for a foe, or a hero below it). */
+const ultTune = (u: Unit, s: Skill): Skill['tuned'] => (u.side === 'hero' && (u.level ?? 1) >= ULT_LEVEL ? s.tuned : undefined);
+
 /** Whether a hero's ultimate is full. */
 export const ultimateReady = (u: Unit): boolean => !!ultimateOf(u) && (u.charge2 ?? 0) >= ultimateOf(u)!.need;
 
-export const gain = (u: Unit, n: number) => {
+/** Charge a fighter's skill meter by `n`, and its ultimate's (at `ULT_RATE` of it) unless `skillOnly`. */
+export const gain = (u: Unit, n: number, skillOnly = false) => {
   const k = u.alive ? kitOf(u) : undefined;
   if (!k) return;
   u.charge = Math.min(CHARGE_MAX, u.charge + n);
-  if (ultimateOf(u)) u.charge2 = Math.min(CHARGE_MAX, (u.charge2 ?? 0) + n * ULT_RATE * (ultimateOf(u)!.rate ?? 1) * (1 + tal(u, 'ultRate')));
+  if (!skillOnly && ultimateOf(u)) u.charge2 = Math.min(CHARGE_MAX, (u.charge2 ?? 0) + n * ULT_RATE * (ultTune(u, ultimateOf(u)!)?.rate ?? 1) * (1 + tal(u, 'ultRate')));
 };
 
 /** What a blow or skill does to its target after guards, blocks and dodges (null when slipped), charging both sides. */
@@ -1751,7 +1758,7 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
           .filter((a) => a.alive && a !== u && a.side === u.side && apart(a, u) <= 4 && kitOf(a))
           .sort((x, y) => x.charge - y.charge || x.id - y.id)[0];
         if (friend) {
-          gain(friend, p.tune.charge);
+          gain(friend, p.tune.charge, true);
           out.push({ kind: 'song', by: u.id, ms: 700 });
         }
       }
