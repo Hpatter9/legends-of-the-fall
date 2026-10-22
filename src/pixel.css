@@ -3,6 +3,8 @@
    CSS border-image at whole-number scales only (2x for most, 3x for the big gold button) with pixelated rendering. ===== */
 @font-face { font-family: 'Pixelify Sans'; font-weight: 400; font-display: swap; src: url(fonts/pixelify-sans-latin-400-normal.woff2) format('woff2'); }
 @font-face { font-family: 'Pixelify Sans'; font-weight: 700; font-display: swap; src: url(fonts/pixelify-sans-latin-700-normal.woff2) format('woff2'); }
+/* (Pixelify Sans draws its "fi" ligature as one blocky glyph that reads as "A", so "first" looked like "Arst": ligatures off everywhere) */
+html, body, button, input { font-variant-ligatures: none; font-feature-settings: "liga" 0, "clig" 0; }
 :root { --display: 'Pixelify Sans', 'Press Start 2P', monospace; --body: 'Pixelify Sans', 'Press Start 2P', monospace; }
 button, .card, .chip, .hmCard, .hmNote, .hmLink, #panel, #hmTabs, #hmTop, .hmBanner, .trait, .spell, .round, .hmPanel, .hsheet, .evcard, #tip, .hcard, .hrow, .brow,
 .setting, .toast, .flip .face, .flip .back, #collection .hero, #banner, #hmSub h2, #settings h2, #gacha h2, body #spellbook h2 { image-rendering: pixelated; }
