@@ -6,7 +6,7 @@ import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { D, standable, tileAt } from './sim/board';
 import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type Unit } from './sim/battle';
 import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
-import { armyOfRun, armyRun, boostOf, finish, heroOf, isBossRun, keepCharges, loadRun, noteFight, saveRun, setSquad, SQUAD, startStage, summon, summonCost, tierOfRun, type Run } from './sim/run';
+import { armyOfRun, armyRun, boostOf, finish, heroOf, isBossRun, keepCharges, loadRun, noteFight, paidOf, recycle, recycleValue, saveRun, setSquad, SQUAD, startStage, summon, summonCost, tierOfRun, type Run } from './sim/run';
 import { ARMIES, settleWave, type ArmyPay } from './sim/armies';
 import { drawRunStars, showUnlock } from './armiesView';
 import { settleArmyRun, type StarResult } from './sim/armyStars';
@@ -34,7 +34,7 @@ import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
 import { countTraits, kindsOf, traitsOf, TRAITS } from './sim/traits';
 import { UnitSprite } from './render/unitView';
-import { flyUp, summonBurst } from './render/uiFx';
+import { flyUp, recyclePuff, summonBurst } from './render/uiFx';
 import { Fx, loadFx } from './render/fx';
 import pillarLightUrl from './art/fx/vfx/pillar_light.png';
 import { framesOf, loadSheets, portrait, sheetInfo } from './render/sheets';
@@ -909,6 +909,25 @@ class Game {
     this.syncSprites();
   }
 
+  /** Send a hero on the bench to the recycler for gold: off the board if it stood there, with a coin and a puff. */
+  private recycleHero(heroId: number, card: HTMLElement): void {
+    if (this.b.phase !== 'deploy') return;
+    const h = heroOf(this.run, heroId);
+    if (!h) return;
+    const kind = h.kind;
+    const gold = recycle(this.run, heroId);
+    if (gold === null) return;
+    unplace(this.b, kind, heroId);
+    this.placed.delete(String(heroId));
+    this.chosen = null;
+    recyclePuff(card);
+    flyUp(`+${gold} gold`, card, $('gold'));
+    play('coin');
+    saveRun(this.run);
+    this.syncSprites();
+    this.refresh();
+  }
+
   private takeBack(id: string): void {
     const h = heroOf(this.run, Number(id))!;
     unplace(this.b, h.kind, h.id);
@@ -949,7 +968,32 @@ class Game {
       const lv = document.createElement('span');
       lv.className = 'lv';
       lv.textContent = `Lv ${levelOfKind(this.meta, h.kind)}`;
+      const sell = document.createElement('button');
+      sell.className = 'recycle';
+      const value = recycleValue(h);
+      sell.textContent = `Recycle · +${value}`;
+      sell.title = `Recycle for ${value} gold (it cost ${paidOf(h)})`;
+      // (a hero of grade 2 or more asks again: a second tap within a few seconds does it)
+      let sure: ReturnType<typeof setTimeout> | undefined;
+      sell.addEventListener('pointerdown', (e) => e.stopPropagation());
+      sell.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (h.grade > 1 && !sure) {
+          sell.textContent = `Sure? +${value}`;
+          sell.classList.add('sure');
+          sure = setTimeout(() => {
+            sure = undefined;
+            sell.textContent = `Recycle · +${value}`;
+            sell.classList.remove('sure');
+          }, 3000);
+          return;
+        }
+        clearTimeout(sure);
+        this.recycleHero(h.id, card);
+      });
       card.append(portrait(formOf(def, h.grade), 96, h.grade), stars, name, lv, marks, bar);
+      // (the last hero cannot be recycled)
+      if (this.run.roster.length > 1) card.append(sell);
       card.title = def.role;
       card.addEventListener('pointerdown', (e) => {
         if (this.b.phase !== 'deploy') return;

@@ -48,6 +48,33 @@ export function summonBurst(card: HTMLElement, rarity = 1): void {
   ring.animate([{ transform: 'scale(0.5)', opacity: 1 }, { transform: `scale(${rarity > 3 ? 7 : 3})`, opacity: 0 }], { duration: rarity === 5 ? 1100 : 600, easing: 'ease-out' }).onfinish = () => ring.remove();
 }
 
+/** A card sent to the recycler: a few puffs of dust spread from where it stood and fade (once, no loop). */
+export function recyclePuff(card: Element): void {
+  const r = card.getBoundingClientRect();
+  const cx = r.left - colLeft() + r.width / 2;
+  const cy = r.top + r.height / 2;
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2;
+    const dot = document.createElement('div');
+    Object.assign(dot.style, {
+      position: 'fixed',
+      left: `${cx - 7}px`,
+      top: `${cy - 7}px`,
+      width: '14px',
+      height: '14px',
+      borderRadius: '50%',
+      background: i % 2 ? 'rgba(255, 226, 122, 0.85)' : 'rgba(210, 200, 185, 0.8)',
+      pointerEvents: 'none',
+      zIndex: '9',
+    });
+    document.body.append(dot);
+    dot.animate(
+      [{ transform: 'translate(0, 0) scale(0.6)', opacity: 0.9 }, { transform: `translate(${Math.cos(a) * 30}px, ${Math.sin(a) * 24 - 6}px) scale(1.5)`, opacity: 0 }],
+      { duration: 520, easing: 'ease-out' },
+    ).onfinish = () => dot.remove();
+  }
+}
+
 /** A label that rises off `from` and fades; with `to`, it flies on to that element (the gold, to the top bar). */
 export function flyUp(text: string, from: Element, to?: Element): void {
   const r = from.getBoundingClientRect();

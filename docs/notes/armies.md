@@ -1,5 +1,7 @@
 # Armies
 
+> Since `sell-waves.md` every army has 15 waves (mid-boss at 8, or 5 and 10 in the Wildwood, final boss at 15); the wave counts and tables below are from before.
+
 The stages are now **armies**, King God Castle style. The Battle tab's big button opens the Armies screen; an army is a
 campaign of 8 to 10 waves with a mid-boss around halfway and a final boss; beating the final boss opens the next army.
 The run inside a campaign is the run as it was (summons and merges, events, relics and gear, stars, XP): the army only

@@ -14,7 +14,7 @@ import { readyBattle } from './helpers';
 const sheets: Record<string, { w: number; h: number; perRow: number; rows: string[]; counts: Record<string, number> }> = JSON.parse(readFileSync('src/art/units/sheets.json', 'utf8'));
 const NEW = ['yokai', 'golems'].map((id) => armyById(id)!);
 
-test('the Yokai Night Parade follows the Infernal Host and the Golem Forge the Yokai, each of ten waves with two bosses', () => {
+test('the Yokai Night Parade follows the Infernal Host and the Golem Forge the Yokai, each of fifteen waves with two bosses', () => {
   assert.equal(armyIndex('yokai'), armyIndex('infernal') + 1);
   assert.equal(armyIndex('golems'), armyIndex('yokai') + 1);
   assert.equal(nextArmy(armyById('infernal')!)!.id, 'yokai');
@@ -24,10 +24,10 @@ test('the Yokai Night Parade follows the Infernal Host and the Golem Forge the Y
   for (const a of ARMIES.slice(0, 7)) for (let n = 1; n <= a.waves.length; n++) settleWave(m, a.id, n, true, 0);
   assert.equal(armyUnlocked(m, 'yokai'), true);
   assert.equal(armyUnlocked(m, 'golems'), false);
-  for (let n = 1; n <= 10; n++) settleWave(m, 'yokai', n, true, 0);
+  for (let n = 1; n <= 15; n++) settleWave(m, 'yokai', n, true, 0);
   assert.equal(armyUnlocked(m, 'golems'), true);
   for (const a of NEW) {
-    assert.equal(a.waves.length, 10);
+    assert.equal(a.waves.length, 15);
     assert.equal(bossesOf(a).length, 2);
     assert.ok(armyFoes(a).length >= 5, a.id);
   }

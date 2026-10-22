@@ -1,0 +1,323 @@
+# sell-waves balance (15 waves an army). Tables: 5a/5b starters only (60 saves in 5b), 5c realistic climb (120 saves) before and after, 5e tiers before and after.
+
+## 5a/5b after
+
+> legends-of-the-fall@0.68.0 balance
+> node tools/balance.mjs --armies-only --party starters --levels 5,8,11,14,20 --attempts 20 --saves 60
+
+
+5a. ARMIES BY WAVE  (starters: Knight, Samurai, Kunoichi, Archer, Fire Wizard; every hero at the level shown; 20 attempts a cell; % of attempts that won each wave)
+
+Orc Warband  (15 waves; bosses at 8, 15)
+  level     w1    w2    w3    w4    w5    w6    w7   w8*    w9   w10   w11   w12   w13   w14  w15*  clear
+  5      100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0  25.0   25.0
+  8      100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0  75.0   75.0
+  11     100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0  85.0   85.0
+  14     100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0  85.0   85.0
+  20     100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0  95.0   95.0
+Undead Legion  (15 waves; bosses at 8, 15)
+  level     w1    w2    w3    w4    w5    w6    w7   w8*    w9   w10   w11   w12   w13   w14  w15*  clear
+  5      100.0 100.0 100.0 100.0 100.0 100.0 100.0  90.0  90.0  90.0  90.0  90.0  90.0  90.0   0.0    0.0
+  8      100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0   0.0    0.0
+  11     100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0  20.0   20.0
+  14     100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0  25.0   25.0
+  20     100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0  45.0   45.0
+Beast Packs  (15 waves; bosses at 8, 15)
+  level     w1    w2    w3    w4    w5    w6    w7   w8*    w9   w10   w11   w12   w13   w14  w15*  clear
+  5      100.0 100.0 100.0 100.0 100.0 100.0 100.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  8      100.0 100.0 100.0 100.0 100.0 100.0 100.0  55.0  55.0  55.0  55.0  55.0  55.0  55.0   5.0    5.0
+  11     100.0 100.0 100.0 100.0 100.0 100.0 100.0  95.0  95.0  95.0  95.0  95.0  95.0  95.0  10.0   10.0
+  14     100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0  25.0   25.0
+  20     100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0  35.0   35.0
+The Wildwood  (15 waves; bosses at 5, 10, 15)
+  level     w1    w2    w3    w4   w5*    w6    w7    w8    w9  w10*   w11   w12   w13   w14  w15*  clear
+  5      100.0 100.0 100.0 100.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  8      100.0 100.0 100.0 100.0  40.0  40.0  40.0  40.0  40.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  11     100.0 100.0 100.0 100.0  85.0  85.0  85.0  85.0  85.0  30.0  30.0  30.0  25.0  25.0   0.0    0.0
+  14     100.0 100.0 100.0 100.0  90.0  90.0  90.0  90.0  90.0  45.0  45.0  45.0  45.0  45.0   0.0    0.0
+  20     100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0  80.0  80.0  80.0  80.0  80.0   5.0    5.0
+The Labyrinth  (15 waves; bosses at 8, 15)
+  level     w1    w2    w3    w4    w5    w6    w7   w8*    w9   w10   w11   w12   w13   w14  w15*  clear
+  5      100.0 100.0  95.0  95.0  55.0  45.0  35.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  8      100.0 100.0 100.0 100.0  95.0  95.0  85.0  15.0  15.0  15.0  15.0  10.0   5.0   5.0   0.0    0.0
+  11     100.0 100.0 100.0 100.0 100.0 100.0 100.0  65.0  65.0  65.0  65.0  65.0  60.0  55.0   0.0    0.0
+  14     100.0 100.0 100.0 100.0 100.0 100.0 100.0  85.0  85.0  85.0  85.0  80.0  75.0  65.0   0.0    0.0
+  20     100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0  90.0  85.0   0.0    0.0
+Ogre Clans  (15 waves; bosses at 8, 15)
+  level     w1    w2    w3    w4    w5    w6    w7   w8*    w9   w10   w11   w12   w13   w14  w15*  clear
+  5       70.0  55.0  45.0  35.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  8       95.0  95.0  80.0  80.0  60.0  50.0  45.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  11     100.0 100.0 100.0 100.0  90.0  90.0  90.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  14     100.0 100.0 100.0 100.0 100.0 100.0 100.0   5.0   5.0   5.0   5.0   5.0   0.0   0.0   0.0    0.0
+  20     100.0 100.0 100.0 100.0 100.0 100.0 100.0  20.0  20.0  20.0  20.0  15.0   5.0   5.0   0.0    0.0
+Infernal Host  (15 waves; bosses at 8, 15)
+  level     w1    w2    w3    w4    w5    w6    w7   w8*    w9   w10   w11   w12   w13   w14  w15*  clear
+  5       85.0  45.0  20.0  20.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  8      100.0 100.0  90.0  90.0  70.0  50.0  45.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  11     100.0 100.0 100.0 100.0  95.0  95.0  95.0  10.0  10.0   5.0   5.0   0.0   0.0   0.0   0.0    0.0
+  14     100.0 100.0 100.0 100.0 100.0 100.0 100.0  30.0  30.0  20.0  20.0   0.0   0.0   0.0   0.0    0.0
+  20     100.0 100.0 100.0 100.0 100.0 100.0 100.0  50.0  50.0  40.0  40.0  15.0   5.0   0.0   0.0    0.0
+Yokai Night Parade  (15 waves; bosses at 8, 15)
+  level     w1    w2    w3    w4    w5    w6    w7   w8*    w9   w10   w11   w12   w13   w14  w15*  clear
+  5       95.0  95.0  85.0  65.0  20.0  10.0  10.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  8      100.0 100.0 100.0 100.0  75.0  70.0  65.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  11     100.0 100.0 100.0 100.0  95.0  95.0  80.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  14     100.0 100.0 100.0 100.0 100.0 100.0  95.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  20     100.0 100.0 100.0 100.0 100.0 100.0 100.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+Golem Forge  (15 waves; bosses at 8, 15)
+  level     w1    w2    w3    w4    w5    w6    w7   w8*    w9   w10   w11   w12   w13   w14  w15*  clear
+  5       65.0  35.0  15.0  15.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  8       95.0  95.0  85.0  85.0  55.0  35.0  20.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  11     100.0 100.0 100.0 100.0  95.0  95.0  80.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  14     100.0 100.0 100.0 100.0  95.0  95.0  90.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  20     100.0 100.0 100.0 100.0 100.0 100.0 100.0  15.0  15.0  15.0  10.0   0.0   0.0   0.0   0.0    0.0
+
+5b. THE CLIMB THROUGH THE ARMIES  (60 fresh saves on the starting five, each army tried until it falls, at most 25 tries; no castle, no recruits)
+
+army              cleared %  tries (mean)  tries (median)  first try: wave  level on first try  crowns (1st clear)
+Orc Warband           100.0           3.4               3             14.0                 1.0                 409
+Undead Legion         100.0           4.8               4             14.1                 9.3                 692
+Beast Packs           100.0           5.0               4             14.0                14.8                1003
+The Wildwood           53.3          11.3              10             13.0                17.4                2067
+The Labyrinth           5.0          16.0              18             12.9                19.6                3205
+Ogre Clans              1.7           1.0               1              9.7                20.0                2187
+Infernal Host           0.0             -               -              9.0                20.0                   -
+Yokai Night Parade        0.0             -               -                -                   -                   -
+Golem Forge             0.0             -               -                -                   -                   -
+
+
+## 5c before (8 to 10 waves)
+
+> legends-of-the-fall@0.68.0 balance
+> node tools/balance.mjs --no-tables --climb --saves 120
+
+
+5c. THE REALISTIC CLIMB  (120 fresh saves; recruits, a castle grown from the crowns each try pays (50% of what it has), gear, levels carried; at most 25 tries an army)
+
+army                  cleared %  tries (mean)  median  90th  party level  party tier  castle lvls  heroes owned
+Orc Warband               100.0           3.1       3     4          1.0        1.00          0.0           5.0
+Undead Legion             100.0           2.4       2     4          5.9        1.16          2.6           5.8
+Beast Packs               100.0           1.9       2     3          8.8        1.29          5.7           7.2
+The Wildwood              100.0           2.7       2     5         10.8        1.43          8.5           9.0
+The Labyrinth             100.0           2.9       3     6         14.5        1.50         11.1          11.4
+Ogre Clans                100.0           2.4       2     5         16.9        1.53         14.1          14.0
+Infernal Host             100.0           2.7       2     6         18.2        1.55         16.6          16.4
+Yokai Night Parade        100.0           2.8       2     6         19.1        1.56         19.6          18.5
+Golem Forge               100.0           3.2       2     6         19.5        1.56         22.0          20.1
+
+
+## 5c after (15 waves)
+
+> legends-of-the-fall@0.68.0 balance
+> node tools/balance.mjs --no-tables --climb --saves 120
+
+
+5c. THE REALISTIC CLIMB  (120 fresh saves; recruits, a castle grown from the crowns each try pays (50% of what it has), gear, levels carried; at most 25 tries an army)
+
+army                  cleared %  tries (mean)  median  90th  party level  party tier  castle lvls  heroes owned
+Orc Warband               100.0           2.7       3     4          1.0        1.00          0.0           5.0
+Undead Legion             100.0           2.6       2     5          8.1        1.21          2.2           6.1
+Beast Packs               100.0           2.0       2     4         12.3        1.34          5.6           7.9
+The Wildwood              100.0           2.4       2     4         14.6        1.43          8.6           9.9
+The Labyrinth             100.0           2.5       2     4         17.2        1.50         11.7          12.5
+Ogre Clans                100.0           2.1       2     4         18.5        1.52         15.0          15.0
+Infernal Host             100.0           2.7       2     5         19.2        1.56         17.5          17.5
+Yokai Night Parade        100.0           2.8       2     5         19.7        1.55         20.5          19.4
+Golem Forge               100.0           3.1       2     7         19.8        1.56         23.3          20.8
+
+
+## 5e before
+
+> legends-of-the-fall@0.68.0 balance
+> node tools/balance.mjs --no-tables --tiers --levels 8,14,20 --attempts 20
+
+
+5e. THE DIFFICULTY TIERS  (Knight, Paladin, Archer, Warlock, Cleric; every hero at the level shown, a maxed castle, gear dressed; 20 attempts a cell; clear % / mean stars of a clear)
+
+Orc Warband
+  level           Normal            Hard           Elite       Legendary
+  8          100.0 / 2.9     100.0 / 2.5     100.0 / 2.2      25.0 / 0.0
+  14         100.0 / 2.9     100.0 / 2.8     100.0 / 2.5      90.0 / 0.2
+  20         100.0 / 2.9     100.0 / 2.8     100.0 / 2.7      95.0 / 0.1
+Undead Legion
+  level           Normal            Hard           Elite       Legendary
+  8          100.0 / 2.6      95.0 / 2.4      65.0 / 2.0       5.0 / 0.0
+  14         100.0 / 3.0     100.0 / 2.9     100.0 / 2.4      10.0 / 0.0
+  20         100.0 / 3.0     100.0 / 2.9     100.0 / 2.4      30.0 / 0.0
+Beast Packs
+  level           Normal            Hard           Elite       Legendary
+  8          100.0 / 2.2      70.0 / 2.1       5.0 / 2.0         0.0 / -
+  14         100.0 / 2.6     100.0 / 2.3      80.0 / 2.0         0.0 / -
+  20         100.0 / 2.8     100.0 / 2.3      95.0 / 2.0       5.0 / 0.0
+The Wildwood
+  level           Normal            Hard           Elite       Legendary
+  8           70.0 / 2.0      45.0 / 2.0         0.0 / -         0.0 / -
+  14          90.0 / 2.1      65.0 / 2.0         0.0 / -         0.0 / -
+  20          95.0 / 2.2      85.0 / 2.0       5.0 / 2.0         0.0 / -
+The Labyrinth
+  level           Normal            Hard           Elite       Legendary
+  8           65.0 / 1.9      30.0 / 1.5         0.0 / -         0.0 / -
+  14          90.0 / 2.3      50.0 / 2.1         0.0 / -         0.0 / -
+  20         100.0 / 2.4      75.0 / 1.8       5.0 / 2.0         0.0 / -
+Ogre Clans
+  level           Normal            Hard           Elite       Legendary
+  8           60.0 / 1.3      15.0 / 1.0         0.0 / -         0.0 / -
+  14          95.0 / 2.2      60.0 / 1.4         0.0 / -         0.0 / -
+  20         100.0 / 2.4      70.0 / 1.6         0.0 / -         0.0 / -
+Infernal Host
+  level           Normal            Hard           Elite       Legendary
+  8           20.0 / 2.0         0.0 / -         0.0 / -         0.0 / -
+  14          65.0 / 2.2      15.0 / 2.0         0.0 / -         0.0 / -
+  20          95.0 / 2.3      20.0 / 1.8         0.0 / -         0.0 / -
+Yokai Night Parade
+  level           Normal            Hard           Elite       Legendary
+  8            5.0 / 2.0         0.0 / -         0.0 / -         0.0 / -
+  14          45.0 / 2.0         0.0 / -         0.0 / -         0.0 / -
+  20          70.0 / 2.1      15.0 / 2.0         0.0 / -         0.0 / -
+Golem Forge
+  level           Normal            Hard           Elite       Legendary
+  8           10.0 / 1.0         0.0 / -         0.0 / -         0.0 / -
+  14          30.0 / 1.7       5.0 / 1.0         0.0 / -         0.0 / -
+  20          75.0 / 2.0       5.0 / 1.0         0.0 / -         0.0 / -
+
+
+## 5e after
+
+> legends-of-the-fall@0.68.0 balance
+> node tools/balance.mjs --no-tables --tiers --levels 8,14,20 --attempts 20
+
+
+5e. THE DIFFICULTY TIERS  (Knight, Paladin, Archer, Warlock, Cleric; every hero at the level shown, a maxed castle, gear dressed; 20 attempts a cell; clear % / mean stars of a clear)
+
+Orc Warband
+  level           Normal            Hard           Elite       Legendary
+  8          100.0 / 2.5     100.0 / 2.6      75.0 / 2.2      25.0 / 0.0
+  14         100.0 / 2.8     100.0 / 2.8      85.0 / 2.2      40.0 / 0.1
+  20         100.0 / 2.9     100.0 / 2.8      95.0 / 2.3      50.0 / 0.4
+Undead Legion
+  level           Normal            Hard           Elite       Legendary
+  8           95.0 / 2.7      80.0 / 2.4      30.0 / 2.2         0.0 / -
+  14         100.0 / 2.7     100.0 / 2.6      50.0 / 2.2         0.0 / -
+  20         100.0 / 2.9     100.0 / 2.8      65.0 / 2.2       5.0 / 0.0
+Beast Packs
+  level           Normal            Hard           Elite       Legendary
+  8           95.0 / 2.2      55.0 / 2.2      15.0 / 2.0         0.0 / -
+  14          95.0 / 2.6      80.0 / 2.1      35.0 / 2.0         0.0 / -
+  20         100.0 / 2.8      85.0 / 2.4      40.0 / 2.0         0.0 / -
+The Wildwood
+  level           Normal            Hard           Elite       Legendary
+  8           85.0 / 2.1      10.0 / 2.0         0.0 / -         0.0 / -
+  14         100.0 / 2.3      55.0 / 2.2         0.0 / -         0.0 / -
+  20         100.0 / 2.4      60.0 / 2.3         0.0 / -         0.0 / -
+The Labyrinth
+  level           Normal            Hard           Elite       Legendary
+  8           75.0 / 2.1      15.0 / 1.7         0.0 / -         0.0 / -
+  14          85.0 / 2.1      55.0 / 2.0         0.0 / -         0.0 / -
+  20          95.0 / 2.1      65.0 / 2.0         0.0 / -         0.0 / -
+Ogre Clans
+  level           Normal            Hard           Elite       Legendary
+  8           75.0 / 1.9      20.0 / 1.3         0.0 / -         0.0 / -
+  14          80.0 / 2.4      40.0 / 2.0         0.0 / -         0.0 / -
+  20          90.0 / 2.3      50.0 / 2.3         0.0 / -         0.0 / -
+Infernal Host
+  level           Normal            Hard           Elite       Legendary
+  8           35.0 / 2.1         0.0 / -         0.0 / -         0.0 / -
+  14          55.0 / 2.3      10.0 / 2.0         0.0 / -         0.0 / -
+  20          75.0 / 2.4      20.0 / 2.0         0.0 / -         0.0 / -
+Yokai Night Parade
+  level           Normal            Hard           Elite       Legendary
+  8              0.0 / -         0.0 / -         0.0 / -         0.0 / -
+  14          35.0 / 2.1         0.0 / -         0.0 / -         0.0 / -
+  20          45.0 / 2.1      10.0 / 2.0         0.0 / -         0.0 / -
+Golem Forge
+  level           Normal            Hard           Elite       Legendary
+  8           35.0 / 1.9         0.0 / -         0.0 / -         0.0 / -
+  14          45.0 / 2.1         0.0 / -         0.0 / -         0.0 / -
+  20          50.0 / 2.5         0.0 / -         0.0 / -         0.0 / -
+
+
+## 5a before (starters, 20 attempts)
+
+> legends-of-the-fall@0.68.0 balance
+> node tools/balance.mjs --armies-only --party starters --levels 5,8,11,14,20 --attempts 20
+
+
+5a. ARMIES BY WAVE  (starters: Knight, Samurai, Kunoichi, Archer, Fire Wizard; every hero at the level shown; 20 attempts a cell; % of attempts that won each wave)
+
+Orc Warband  (8 waves; bosses at 4, 8)
+  level     w1    w2    w3   w4*    w5    w6    w7   w8*  clear
+  5      100.0 100.0 100.0 100.0 100.0 100.0 100.0  40.0   40.0
+  8      100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0  100.0
+  11     100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0  100.0
+  14     100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0  100.0
+  20     100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0  100.0
+Undead Legion  (8 waves; bosses at 4, 8)
+  level     w1    w2    w3   w4*    w5    w6    w7   w8*  clear
+  5      100.0 100.0 100.0  95.0  95.0  95.0  90.0   0.0    0.0
+  8      100.0 100.0 100.0 100.0 100.0 100.0 100.0  10.0   10.0
+  11     100.0 100.0 100.0 100.0 100.0 100.0 100.0  80.0   80.0
+  14     100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0  100.0
+  20     100.0 100.0 100.0 100.0 100.0 100.0 100.0 100.0  100.0
+Beast Packs  (8 waves; bosses at 4, 8)
+  level     w1    w2    w3   w4*    w5    w6    w7   w8*  clear
+  5      100.0 100.0 100.0  15.0  15.0  15.0  15.0   0.0    0.0
+  8      100.0 100.0 100.0  90.0  90.0  90.0  90.0   0.0    0.0
+  11     100.0 100.0 100.0 100.0 100.0 100.0 100.0  30.0   30.0
+  14     100.0 100.0 100.0 100.0 100.0 100.0 100.0  65.0   65.0
+  20     100.0 100.0 100.0 100.0 100.0 100.0 100.0  80.0   80.0
+The Wildwood  (9 waves; bosses at 3, 6, 9)
+  level     w1    w2   w3*    w4    w5   w6*    w7    w8   w9*  clear
+  5      100.0 100.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  8      100.0 100.0  55.0  55.0  45.0   0.0   0.0   0.0   0.0    0.0
+  11     100.0 100.0  80.0  80.0  80.0  50.0  50.0  50.0   0.0    0.0
+  14     100.0 100.0  90.0  90.0  90.0  70.0  70.0  70.0   5.0    5.0
+  20     100.0 100.0 100.0 100.0 100.0  95.0  95.0  95.0  20.0   20.0
+The Labyrinth  (9 waves; bosses at 5, 9)
+  level     w1    w2    w3    w4   w5*    w6    w7    w8   w9*  clear
+  5      100.0  75.0  65.0  10.0   0.0   0.0   0.0   0.0   0.0    0.0
+  8      100.0 100.0 100.0  90.0   5.0   5.0   0.0   0.0   0.0    0.0
+  11     100.0 100.0 100.0 100.0  35.0  35.0  15.0  15.0   0.0    0.0
+  14     100.0 100.0 100.0 100.0  55.0  55.0  40.0  40.0   0.0    0.0
+  20     100.0 100.0 100.0 100.0  70.0  70.0  60.0  60.0   0.0    0.0
+Ogre Clans  (10 waves; bosses at 5, 10)
+  level     w1    w2    w3    w4   w5*    w6    w7    w8    w9  w10*  clear
+  5       70.0  60.0  10.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  8       95.0  95.0  55.0  50.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  11     100.0 100.0  90.0  90.0   5.0   0.0   0.0   0.0   0.0   0.0    0.0
+  14     100.0 100.0 100.0 100.0  20.0  20.0  15.0   0.0   0.0   0.0    0.0
+  20     100.0 100.0 100.0 100.0  35.0  35.0  30.0  15.0   0.0   0.0    0.0
+Infernal Host  (10 waves; bosses at 5, 10)
+  level     w1    w2    w3    w4   w5*    w6    w7    w8    w9  w10*  clear
+  5       85.0  35.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  8      100.0  95.0  70.0  15.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  11     100.0 100.0  90.0  70.0   5.0   0.0   0.0   0.0   0.0   0.0    0.0
+  14     100.0 100.0  95.0  95.0  30.0  25.0   5.0   5.0   0.0   0.0    0.0
+  20     100.0 100.0  95.0  95.0  45.0  45.0  20.0  20.0   0.0   0.0    0.0
+Yokai Night Parade  (10 waves; bosses at 5, 10)
+  level     w1    w2    w3    w4   w5*    w6    w7    w8    w9  w10*  clear
+  5       95.0  50.0  15.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  8      100.0 100.0  90.0  70.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  11     100.0 100.0 100.0 100.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  14     100.0 100.0 100.0 100.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  20     100.0 100.0 100.0 100.0   5.0   5.0   5.0   5.0   5.0   0.0    0.0
+Golem Forge  (10 waves; bosses at 5, 10)
+  level     w1    w2    w3    w4   w5*    w6    w7    w8    w9  w10*  clear
+  5       65.0  35.0   5.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  8       95.0  90.0  60.0  35.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  11     100.0 100.0  95.0  90.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  14     100.0 100.0  95.0  95.0   0.0   0.0   0.0   0.0   0.0   0.0    0.0
+  20     100.0 100.0 100.0 100.0  10.0   5.0   0.0   0.0   0.0   0.0    0.0
+
+5b. THE CLIMB THROUGH THE ARMIES  (400 fresh saves on the starting five, each army tried until it falls, at most 25 tries; no castle, no recruits)
+
+army              cleared %  tries (mean)  tries (median)  first try: wave  level on first try  crowns (1st clear)
+Orc Warband           100.0           3.4               3              6.8                 1.0                 341
+Undead Legion         100.0           3.3               3              7.1                 6.5                 532
+Beast Packs           100.0           3.4               3              6.9                10.2                 764
+The Wildwood           95.5           9.9               9              5.8                13.1                1530
+The Labyrinth          38.8          11.4              11              6.7                18.2                2051
+Ogre Clans              0.5           2.5               4              5.1                19.7                1998
+Infernal Host           0.0             -               -              7.0                19.8                   -
+Yokai Night Parade        0.0             -               -                -                   -                   -
+Golem Forge             0.0             -               -                -                   -                   -
+

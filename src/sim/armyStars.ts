@@ -57,7 +57,7 @@ export function settleArmyRun(m: Meta, run: Run): StarResult | null {
   if (!a || !run.cleared) return null;
   const tier = tierOfRun(run);
   const rules = armyRules(a, tier, run);
-  const rec = (m.armies[a.id] ??= { best: 0, won: 0, clears: 0, stars: {} });
+  const rec = (m.armies[a.id] ??= { waves: a.waves.length, best: 0, won: 0, clears: 0, stars: {} });
   const before = rec.met?.[String(tier)] ?? 0;
   let mask = 0;
   const fresh: number[] = [];
