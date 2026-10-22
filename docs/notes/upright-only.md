@@ -13,3 +13,11 @@ a second (`pxPulse`, a hard step), and the light stripe moved by stepping its `l
 repainting the 9-slice frame under it each step, which read as flashing and tearing as the stripe crossed. The blink is
 gone, and the stripe now glides by `transform: translateX` (on the compositor, `will-change: transform`), softer and
 smooth (`pxGlint` in src/pixel.css; `--glintEnd` sets how far it travels on each button).
+
+## Room to place heroes, and a report that scrolls
+
+- The battle camera now has some give up and down (`clampCam` in src/main.ts: 45% of the view's half-height past the
+  board's edge), so on an upright phone any row, the near deploy rows included, can be dragged clear of the bench and the
+  top bar. Side to side it is clamped as before.
+- The result screen (`#result`) scrolls when the report is longer than the screen (`justify-content: safe center`,
+  `overflow-y: auto`), and its button row sticks to the foot over a fade, so Next stage or Home can always be pressed.

@@ -533,11 +533,14 @@ class Game {
     const { x0, x1, y0, y1 } = this.bbox;
     const hw = this.area.w / 2 / (this.scale * this.zoom);
     const hh = this.area.h / 2 / (this.scale * this.zoom);
-    const lim = (c: number, lo: number, hi: number, half: number) => (hi - lo <= half * 2 ? (lo + hi) / 2 : Math.min(hi - half, Math.max(lo + half, c)));
+    const lim = (c: number, lo: number, hi: number, half: number, slack = 0) =>
+      hi - lo <= half * 2 ? Math.min((lo + hi) / 2 + slack, Math.max((lo + hi) / 2 - slack, c)) : Math.min(hi - half + slack, Math.max(lo + half - slack, c));
+    // (up and down there is some give past the board's edge, so any row can be dragged clear of the bench and the top bar)
+    const give = hh * 0.45;
     this.cx = lim(this.cx, x0, x1, hw);
-    this.cy = lim(this.cy, y0, y1, hh);
+    this.cy = lim(this.cy, y0, y1, hh, give);
     this.tx = lim(this.tx, x0, x1, hw);
-    this.ty = lim(this.ty, y0, y1, hh);
+    this.ty = lim(this.ty, y0, y1, hh, give);
   }
 
   /** Put the world where the camera says, and slide the backdrop's layers a little the other way. */

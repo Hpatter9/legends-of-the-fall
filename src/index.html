@@ -155,9 +155,14 @@
 
 
   #result {
-    position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+    position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: safe center; gap: 12px;
     background: rgba(12, 6, 4, 0.55); animation: fade 0.4s ease-out;
+    /* (a long report scrolls, and its button rides along at the foot so it can always be pressed) */
+    overflow-y: auto; overscroll-behavior: contain; padding: calc(env(safe-area-inset-top) + 16px) 12px 0;
   }
+  #result > * { flex: none; }
+  #result > .row { position: sticky; bottom: 0; margin-top: auto; padding: 10px 0 calc(env(safe-area-inset-bottom) + 14px); width: 100%; justify-content: center;
+    background: linear-gradient(rgba(12, 6, 4, 0), rgba(12, 6, 4, 0.92) 40%); }
   #result[hidden] { display: none; }
   #banner { font: bold 46px/1 var(--display); letter-spacing: 2px; text-shadow: 0 3px 0 #000, 0 0 24px rgba(0, 0, 0, 0.8); animation: punch 0.5s cubic-bezier(0.2, 1.6, 0.4, 1); }
   #banner.won { color: var(--gold); }
