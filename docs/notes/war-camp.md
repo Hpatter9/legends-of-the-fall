@@ -36,3 +36,10 @@ Only the Battle tab changed: `drawBattle` now feeds the camp and hangs the cards
 - The chests lie in one row on the cart (up to four, then a "+n" count), checked with 1, 3 and 6 chests and an opening (`docs/samples/camp-after-chests-{1,3,6}-*.png`, `-open`).
 - The war table's plate hangs just below the table (it covers no tent or hero); the Tower board reads "Tower / after Orcs" while locked.
 - The party stays at the whole-number size it has: a step up would double the figures past the frame.
+
+## One chest on the cart
+
+The cart now shows a single chest for the whole stash: the best one waiting (the highest milestone, 10 before 5 before 3,
+then the hardest tier, then the later army; `bestChest` in src/sim/armyStars.ts), with a "×N" count beside it when more
+than one waits. A tap opens that best chest, and the next best takes its place. The four-chest row and its "+N" badge are
+gone (`drawChestStash` in src/chestStash.ts).

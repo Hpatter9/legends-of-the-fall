@@ -5,7 +5,7 @@
 
 import { itemIcon } from './equipView';
 import { EQUIP_BASES } from './sim/equipment';
-import { chestKind, openChest, type ChestKind, type Loot, type LootItem } from './sim/armyStars';
+import { bestChest, chestKind, openChest, type ChestKind, type Loot, type LootItem } from './sim/armyStars';
 import { armyById } from './sim/armies';
 import { saveMeta, type Meta } from './sim/meta';
 import { UNITS } from './sim/units';
@@ -24,29 +24,27 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   return e;
 };
 
-/** How many chests the stack shows; more are counted in the badge. */
-export const STASH_SHOWN = 4;
-
 /** Fill `host` with the stash: nothing when it is empty. A tap on a chest opens it; `onChange` runs after the meta changes (and the opening is closed). */
 export function drawChestStash(host: HTMLElement, m: Meta, onChange: () => void): void {
   host.replaceChildren();
   host.classList.toggle('empty', m.stash.length === 0);
-  m.stash.slice(0, STASH_SHOWN).forEach((c, i) => {
-    const army = armyById(c.army);
-    const kind = chestKind(c.at);
-    const b = el('button', `csChest ${kind}`);
-    b.setAttribute('aria-label', `${CHEST_NAME[kind]} from the ${army?.name ?? 'army'}: tap to open`);
-    b.style.animationDelay = `${-i * 0.25}s`;
-    b.append(chestPicture(kind, 1).root, el('small', '', `${c.at}★`));
-    b.addEventListener('click', () => {
-      const loot = openChest(m, i);
-      if (!loot) return;
-      saveMeta(m);
-      showChest(loot, onChange);
-    });
-    host.append(b);
+  if (!m.stash.length) return;
+  // (one chest stands for the whole pile: the best one waiting, with how many there are beside it; a tap opens that best one)
+  const i = bestChest(m.stash);
+  const c = m.stash[i];
+  const army = armyById(c.army);
+  const kind = chestKind(c.at);
+  const b = el('button', `csChest ${kind}`);
+  b.setAttribute('aria-label', `${CHEST_NAME[kind]} from the ${army?.name ?? 'army'}${m.stash.length > 1 ? `, ${m.stash.length} chests waiting` : ''}: tap to open`);
+  b.append(chestPicture(kind, 1).root, el('small', '', `${c.at}★`));
+  b.addEventListener('click', () => {
+    const loot = openChest(m, i);
+    if (!loot) return;
+    saveMeta(m);
+    showChest(loot, onChange);
   });
-  if (m.stash.length > STASH_SHOWN) host.append(el('i', 'csCount', `+${m.stash.length - STASH_SHOWN}`));
+  host.append(b);
+  if (m.stash.length > 1) host.append(el('i', 'csCount', `×${m.stash.length}`));
 }
 
 /** The chest sprite (Craftpix platformer tileset, tinted bronze, silver and gold): two frames side by side, closed then open with its treasure showing. */

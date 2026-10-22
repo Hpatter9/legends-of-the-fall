@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ARMIES, armyById, armyStars, migrateArmies, recordOf, settleWave, tierOpen, tierStars, waveBoost, firstClearTotal, replayTotal } from '../src/sim/armies';
-import { armyRules, chestCrowns, chestSeed, chestsOf, grantChests, openChest, peekChest, rollChest, settleArmyRun, timeTarget } from '../src/sim/armyStars';
+import { armyRules, bestChest, chestCrowns, chestSeed, chestsOf, grantChests, openChest, peekChest, rollChest, settleArmyRun, timeTarget } from '../src/sim/armyStars';
 import { ARMY_STARS, MILESTONES, RUN_STARS, TIERS, tierRange } from '../src/sim/tiers';
 import { loadMeta, newMeta, saveMeta, rarityOf } from '../src/sim/meta';
 import { armyRun, noteFight, startStage, tierOfRun, type Run } from '../src/sim/run';
@@ -438,4 +438,12 @@ test('a save from the earlier chest format keeps its unopened chests, none twice
   // (the chest that was opened is not given again)
   assert.deepEqual(grantChests(b, armyById('undead')!, b.armies.undead), []);
   assert.equal(b.stash.length, 1);
+});
+
+test('the cart shows the best chest waiting: the highest milestone, then the hardest tier, then the later army', () => {
+  assert.equal(bestChest([]), -1);
+  assert.equal(bestChest([{ army: 'orcs', at: 3, tier: 0 }]), 0);
+  assert.equal(bestChest([{ army: 'orcs', at: 3, tier: 0 }, { army: 'orcs', at: 10, tier: 0 }, { army: 'orcs', at: 5, tier: 2 }]), 1);
+  assert.equal(bestChest([{ army: 'orcs', at: 5, tier: 0 }, { army: 'orcs', at: 5, tier: 1 }]), 1);
+  assert.equal(bestChest([{ army: 'undead', at: 5, tier: 0 }, { army: 'orcs', at: 5, tier: 0 }]), 0);
 });

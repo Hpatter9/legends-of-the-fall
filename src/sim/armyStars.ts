@@ -244,3 +244,14 @@ export function readStash(raw: unknown, rawArmies: unknown, seed: number): Stash
     }
   return out;
 }
+
+/** Which chest in the stash the camp's cart shows (and a tap opens): the highest milestone (10 before 5 before 3), then the
+ *  hardest tier, then the later army; the first of equals. -1 for an empty stash. */
+export function bestChest(stash: readonly { army: string; at: number; tier: number }[]): number {
+  const rank = (c: { army: string; at: number; tier: number }) => c.at * 1000 + c.tier * 100 + Math.max(0, armyIndex(c.army));
+  let best = stash.length ? 0 : -1;
+  stash.forEach((c, k) => {
+    if (rank(c) > rank(stash[best])) best = k;
+  });
+  return best;
+}
