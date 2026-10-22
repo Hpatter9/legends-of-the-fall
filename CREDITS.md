@@ -121,11 +121,17 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
 
 ## Castle courtyard (`src/art/castle/`)
 
-- The houses, tents, awnings, props, palisade, gate, lantern, tufts, flowers, pebbles and gold clutter are single sprites copied from
-  Chronos Settlement's art (`hpatter9/little-town`, `src/renderer/art/`), which cut them from Craftpix's free Village (top-down defence),
-  Fields, Path and Road, Dungeon and Rocky Area packs and the Tiny RPG Town buildings (`tt_long`, `tt_gable`) by Luis Zuno (@ansimuz).
-  The cobbles are one inner tile of Path and Road's cobble sheet; the grass colour is read from its village ground sheet.
-- The trees and bushes are the Tiny RPG Town vegetation props by Luis Zuno (@ansimuz, `Environments/Vegetation props`, public licence), from
-  `hpatter9/chronos-assets`.
-- The Mage Tower's three towers (`tower1..3.png`) were generated with PixelLab at their final pixel size, in the palette of the village
-  houses (`tools/castle/towers.py`). The heroes who stroll the road use their own sheets (see above), shrunk by a whole number when the page loads.
+- Every building, wall, gate, prop and ground tile is a single piece of Chronos Settlement's isometric kits (`hpatter9/little-town`,
+  `src/renderer/art/iso/kits/`: the Knights, Settlers, Dwarves, Blood Court, Fae, Liches, Druids and Nomads kits), shrunk to half size
+  by a 2x2 box average (`tools/castle/prep.py`). Chronos credits them as made for that project: drawn with ChatGPT's image generation from
+  prompts written for the game, then cut into sprites, cleaned and reduced to 256 colours. Used: Fae shrine and spiral watchtower, Liches
+  chapel, Knights watchtower, gatehouse, stone wall run, lamp post, stockpile, longhouse, cottage, barracks, workshop, campfire, hay bales, crates, barrels, woodpile, oak, pine,
+  bush, rocks and grass and cobble tiles, Dwarves great hall, forge, anvil stall, brazier, shrine (the statue) and crystals, Settlers longhouse,
+  Orcs weapon stall (the weapon rack), Blood Court banner and rose bush, Druids flower patch and berry bush, Nomads chests.
+- The tavern, chapel, stable, library and market pieces are from the same kits: Knights tavern, chapel, stable, cart, granary, market stall, field tile and signpost,
+  Settlers stockpile (the shed), market stall and field tile, Fae workshop (the library's observatory), Liches tavern (the library's manor), Druids baskets and
+  herb garden tile, Nomads carpet stall.
+- The courtyard's extras and the front lawn are from the same kits: Knights well, Dwarves flagstone tile (the plaza's chequer), Druids clay pots, hedge wall, birch tree and
+  great oak, Settlers signpost (the Armies road).
+- The heroes who stroll the yard use their own sheets (see above), shrunk by a whole number when the page loads.
+- Nothing was generated for this look.

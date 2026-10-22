@@ -10,13 +10,13 @@ Chronos later, so keep its conventions.
 1. Work on a branch of your own; never push to `main` directly (the owner merges).
 2. Read a file and its neighbours before editing it, and copy their style: plain-English comments, British spelling
    in the game's text.
-3. Check your work: `npm run typecheck`, `npm test`, and `npm run web` plus a look at phone sizes (393x852 upright,
-   852x393 sideways) when the page or the renderer changes. Never skip, delete or loosen a test to get it to pass.
+3. Check your work: `npm run typecheck`, `npm test`, and `npm run web` plus a look at the upright phone sizes (393x852, 360x780
+   and 412x915) when the page or the renderer changes. Never skip, delete or loosen a test to get it to pass.
 4. Add a test in `test/` for any new rule in the simulation.
 5. Write a short note of what you built in `docs/notes/<topic>.md`.
 6. Never put a model name or ID in code, comments or docs.
-7. **The version (the owner's ask):** the page shows "Version <package.json version> · <commit>" (top right upright,
-   bottom right sideways). Every merge into the working branch bumps the minor version in `package.json`
+7. **The version (the owner's ask):** the page shows "Version <package.json version> · <commit>" (top right).
+   Every merge into the working branch bumps the minor version in `package.json`
    (0.2.0, 0.3.0, ...), done by whoever merges (the director); workers never change it.
 
 ## Rules that are easy to break
@@ -26,7 +26,7 @@ Chronos later, so keep its conventions.
   system takes its own side stream, so existing fights play out the same.
 - **The renderer never changes the battle** except through the sim's own functions (`place`, `unplace`, `fight`,
   `stepBattle`). Modules the tests import must not import Pixi or touch the DOM.
-- **Phone first.** Design every change for the upright phone first.
+- **Upright phone only.** The game is played upright only (the owner's call): design and check every change at 393x852 (and 360x780, 412x915). There is no sideways layout to keep: a phone held sideways is asked to turn upright (`#turnUp`), and the manifest asks for portrait.
 - **Use the asset packs, not code-drawn art**, wherever a pack has the thing. The packs are in the private repo
   `hpatter9/chronos-assets` (clone it next to this one). Copy only the sprites used into `src/art/`, credit them in
   `CREDITS.md`, and never change the assets repo. Chronos's cut sheets (`src/renderer/art/creatures/packs/` and

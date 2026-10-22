@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { BUILDING_IDS, BUILDINGS, bonusGold, GOLD_PER_LEVEL, maxLevel, newCastle, nextCost, readCastle, upgrade } from '../src/sim/castle';
+import { BUILDING_IDS, BUILDINGS, bonusGold, GOLD_PER_LEVEL, maxLevel, moveRate, MOVE_PER_LEVEL, newCastle, nextCost, readCastle, upgrade, xpRate, XP_PER_LEVEL } from '../src/sim/castle';
+import { fightXp } from '../src/sim/levels';
 import { loadMeta, newMeta, saveMeta } from '../src/sim/meta';
 import { place, startBattle, fight, stepBattle } from '../src/sim/battle';
 import { newRun, startStage, START_GOLD, gradeBoost } from '../src/sim/run';
@@ -82,9 +83,67 @@ test('old saves load with an empty castle; odd levels are clamped; a castle surv
   const m = loadMeta(1, s);
   assert.deepEqual(m.castle, newCastle());
   assert.equal(m.crowns, 50);
-  assert.deepEqual(readCastle({ treasury: 99, barracks: -4, armoury: 'x', mageTower: 2.7 }), { treasury: 5, barracks: 0, armoury: 0, mageTower: 2 });
+  assert.deepEqual(readCastle({ treasury: 99, barracks: -4, armoury: 'x', mageTower: 2.7 }), { ...newCastle(), treasury: 5, mageTower: 2 });
   m.crowns = 1000;
   upgrade(m, 'armoury');
   saveMeta(m, s);
   assert.equal(loadMeta(1, s).castle.armoury, 1);
+});
+
+test('the stable speeds up every hero\'s steps by 4% a level, and nothing else', () => {
+  assert.equal(moveRate(), 1);
+  assert.ok(Math.abs(moveRate({ ...newCastle(), stable: 5 }) - (1 + 5 * MOVE_PER_LEVEL)) < 1e-12);
+  const firstStep = (stable: number, side: 'hero' | 'foe') => {
+    const b = startStage(newRun(6, undefined, { ...newCastle(), stable }));
+    place(b, 'knight', 3, 8);
+    fight(b);
+    for (let i = 0; i < 200; i++) {
+      stepBattle(b);
+      const u = b.units.find((x) => x.side === side && x.step);
+      if (u) return { ms: u.step!.ms, def: u.def, heroMove: b.heroMove };
+    }
+    throw new Error('nobody moved');
+  };
+  const plain = firstStep(0, 'hero');
+  const fast = firstStep(5, 'hero');
+  assert.equal(plain.heroMove, undefined);
+  assert.equal(fast.heroMove, 1.2);
+  assert.ok(fast.ms < plain.ms, `${fast.ms} < ${plain.ms}`);
+  assert.ok(Math.abs(fast.ms - plain.ms / 1.2) <= 1, `${fast.ms} is a fifth quicker than ${plain.ms}`);
+  // (the foes walk as before)
+  assert.equal(firstStep(5, 'foe').ms, firstStep(0, 'foe').ms);
+  // (a level is exactly 4%)
+  assert.ok(Math.abs(firstStep(1, 'hero').ms - plain.ms / (1 + MOVE_PER_LEVEL)) <= 1);
+});
+
+test('the library adds 6% XP a level to every hero\'s pay from a fight', () => {
+  assert.equal(xpRate(), 1);
+  assert.ok(Math.abs(xpRate({ ...newCastle(), library: 5 }) - (1 + 5 * XP_PER_LEVEL)) < 1e-12);
+  const b = startBattle(2);
+  place(b, 'knight', 3, 8);
+  place(b, 'archer', 4, 8);
+  b.phase = 'won';
+  for (const u of b.units) if (u.side === 'hero') u.dealt = 400;
+  const plain = fightXp(b);
+  const lib = fightXp(b, xpRate({ ...newCastle(), library: 5 }));
+  assert.deepEqual(Object.keys(lib).sort(), Object.keys(plain).sort());
+  for (const k of Object.keys(plain)) {
+    assert.ok(plain[k] > 0);
+    assert.equal(lib[k], Math.round(plain[k] * 1.3), k);
+    assert.ok(lib[k] > plain[k]);
+  }
+  assert.deepEqual(fightXp(b, 1), plain);
+});
+
+test('the stable and library start at level 0 in a save that has none, cost like the others, and have five levels', () => {
+  const m = loadMeta(1, (() => { const s = store(); s.setItem('legends.meta', JSON.stringify({ seed: 3, crowns: 900, unlocked: ['knight'], pulls: 0, dry: 0, castle: { treasury: 2 } })); return s; })());
+  assert.equal(m.castle.stable, 0);
+  assert.equal(m.castle.library, 0);
+  assert.equal(m.castle.treasury, 2);
+  for (const id of ['stable', 'library'] as const) {
+    assert.equal(maxLevel(id), 5);
+    assert.deepEqual(BUILDINGS[id].costs, BUILDINGS.armoury.costs);
+    assert.equal(upgrade(m, id), true);
+    assert.equal(m.castle[id], 1);
+  }
 });

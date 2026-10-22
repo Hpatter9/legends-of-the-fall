@@ -280,3 +280,12 @@ body .sbSlot { min-height: 44px; }
 @media (orientation: landscape) { .unlock { flex-flow: row wrap; gap: 8px 16px; } .unlockFace { width: 96px; height: 96px; } .unlockRib { order: -1; flex: 1 1 100%; } .unlockDown { order: -2; flex: 1 1 100%; } }
 @media (prefers-reduced-motion: reduce) { .army.fresh, .unlockFace, .unlockRib, .unlock { animation: none; } }
 .army { width: 100%; max-width: 620px; align-self: center; }
+
+/* (the game is played upright only: a phone held sideways is asked to turn back; a desktop window of any shape plays on) */
+#turnUp { display: none; }
+@media (orientation: landscape) and (pointer: coarse) and (max-height: 600px) {
+  #turnUp { display: flex; position: fixed; inset: 0; z-index: 50; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    background: radial-gradient(#4a2c1c, #1c1410); color: var(--gold); text-align: center; padding: 16px; }
+  #turnUp b { font-size: 22px; text-shadow: var(--outline); }
+  #turnUp span { font-size: 14px; color: var(--ink); }
+}
