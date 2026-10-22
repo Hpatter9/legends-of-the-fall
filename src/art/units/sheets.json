@@ -1530,5 +1530,159 @@
   "figure": 122,
   "facesRight": true,
   "lies": true
+ },
+ "golem_stone": {
+  "w": 96,
+  "h": 120,
+  "perRow": 6,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 6,
+   "attack": 5,
+   "idle": 4,
+   "hurt": 2,
+   "dead": 5
+  },
+  "figure": 92,
+  "facesRight": true,
+  "lies": true
+ },
+ "golem_crystal": {
+  "w": 96,
+  "h": 120,
+  "perRow": 6,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 6,
+   "attack": 5,
+   "idle": 4,
+   "hurt": 2,
+   "dead": 5
+  },
+  "figure": 91,
+  "facesRight": true,
+  "lies": true
+ },
+ "golem_iron": {
+  "w": 96,
+  "h": 120,
+  "perRow": 6,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 6,
+   "attack": 5,
+   "idle": 4,
+   "hurt": 2,
+   "dead": 5
+  },
+  "figure": 87,
+  "facesRight": true,
+  "lies": true
+ },
+ "golem_magma": {
+  "w": 96,
+  "h": 120,
+  "perRow": 6,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 6,
+   "attack": 5,
+   "idle": 4,
+   "hurt": 2,
+   "dead": 5
+  },
+  "figure": 85,
+  "facesRight": true,
+  "lies": true
+ },
+ "golem_sapphire": {
+  "w": 96,
+  "h": 120,
+  "perRow": 6,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 6,
+   "attack": 5,
+   "idle": 4,
+   "hurt": 2,
+   "dead": 5
+  },
+  "figure": 89,
+  "facesRight": true,
+  "lies": true
+ },
+ "golem_forge": {
+  "w": 96,
+  "h": 120,
+  "perRow": 6,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 6,
+   "attack": 5,
+   "idle": 4,
+   "hurt": 2,
+   "dead": 5
+  },
+  "figure": 92,
+  "facesRight": true,
+  "lies": true
+ },
+ "oni_king": {
+  "w": 134,
+  "h": 128,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "walk": 5,
+   "attack": 5,
+   "idle": 4,
+   "dead": 5,
+   "attack2": 5
+  },
+  "figure": 127,
+  "facesRight": true,
+  "lies": true
  }
 }

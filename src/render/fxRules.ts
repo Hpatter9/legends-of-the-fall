@@ -118,6 +118,16 @@ export const SKILL_ELEMENT: Record<string, Element> = {
   'Tusk Flurry': 'blood',
   'Raise Dead': 'dark',
   'Soul Nova': 'ice',
+  Possession: 'dark',
+  Foxfire: 'fire',
+  'Kanabo Smash': 'earth',
+  'Thunder Drum': 'lightning',
+  'Crushing Slam': 'earth',
+  'Shard Burst': 'ice',
+  'Shard Storm': 'ice',
+  'Magma Burst': 'fire',
+  'Forge Hammer': 'earth',
+  'Furnace Blast': 'fire',
 };
 
 export const skillElement = (name: string): Element => SKILL_ELEMENT[name] ?? 'light';

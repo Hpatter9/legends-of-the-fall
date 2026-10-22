@@ -45,12 +45,12 @@ function clearRate(army: string, level: number, n = 8): number {
   return wins / n;
 }
 
-test('there are seven armies in the owner\'s order, each of 8 to 10 waves, with real foes and a boss at the end', () => {
+test('there are nine armies in the owner\'s order, each of 8 to 10 waves, with real foes and a boss at the end', () => {
   assert.deepEqual(
     ARMIES.map((a) => a.id),
-    ['orcs', 'undead', 'beasts', 'wildwood', 'labyrinth', 'ogres', 'infernal'],
+    ['orcs', 'undead', 'beasts', 'wildwood', 'labyrinth', 'ogres', 'infernal', 'yokai', 'golems'],
   );
-  assert.deepEqual(ARMIES.map((a) => bossOf(a)), ['orcWarlord', 'lichKing', 'boarKing', 'forestBoss3', 'minotaurChampion', 'hornedOgre', 'demonLord']);
+  assert.deepEqual(ARMIES.map((a) => bossOf(a)), ['orcWarlord', 'lichKing', 'boarKing', 'forestBoss3', 'minotaurChampion', 'hornedOgre', 'demonLord', 'oniKing', 'forgeTitan']);
   for (const a of ARMIES) {
     assert.ok(a.waves.length >= 8 && a.waves.length <= 10, a.id);
     for (const w of a.waves) for (const id of w.foes) assert.ok(UNITS[id] && UNITS[id].side === 'foe', `${a.id} ${id}`);
@@ -64,6 +64,8 @@ test('there are seven armies in the owner\'s order, each of 8 to 10 waves, with 
   // (the owner's mid-bosses: the Shaman King before the Horned Ogre, the Devil Leader before the Demon Lord)
   assert.deepEqual(bossesOf(armyById('ogres')!).map((b) => b.id), ['shamanKing', 'hornedOgre']);
   assert.deepEqual(bossesOf(armyById('infernal')!).map((b) => b.id), ['devilLeader', 'demonLord']);
+  assert.deepEqual(bossesOf(armyById('yokai')!).map((b) => b.id), ['nineTails', 'oniKing']);
+  assert.deepEqual(bossesOf(armyById('golems')!).map((b) => b.id), ['sapphireColossus', 'forgeTitan']);
   assert.deepEqual(bossesOf(armyById('wildwood')!).map((b) => b.id), ['forestBoss1', 'forestBoss2', 'forestBoss3']);
 });
 

@@ -7,7 +7,7 @@ from PIL import Image
 D='src/art/units/'
 d=json.load(open(D+'sheets.json'))
 for k,e in d.items():
-    if not(k.startswith('cls_') or k.startswith('hk_') or k=='lich_king') or e.get('lies'):continue
+    if not(k.startswith('cls_') or k.startswith('hk_') or k in('lich_king','oni_king')) or e.get('lies'):continue
     im=Image.open(D+k+'.png').convert('RGBA');w,h=e['w'],e['h'];rows=e['rows'];per=e['perRow']
     cell=lambda r,i:im.crop((i*w,rows.index(r)*h,(i+1)*w,(rows.index(r)+1)*h))
     idle=cell('idle',0);b=idle.getbbox();cx=(b[0]+b[2])/2
