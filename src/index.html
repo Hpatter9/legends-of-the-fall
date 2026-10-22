@@ -179,6 +179,10 @@
   #result > .row { position: sticky; bottom: 0; margin-top: auto; padding: 10px 0 calc(env(safe-area-inset-bottom) + 14px); width: 100%; justify-content: center;
     background: linear-gradient(rgba(12, 6, 4, 0), rgba(12, 6, 4, 0.92) 40%); }
   #result[hidden] { display: none; }
+  /* (an army wave won: the next section falls into place and the party walks across it behind the recap, which shows only its banner until they have arrived) */
+  #result > :is(#stars, #armyStars, #xp, #fightStats) { transition: opacity 0.6s ease-out; }
+  body[data-move] #result { background: none; }
+  body[data-move] #result > :is(#stars, #armyStars, #xp, #fightStats) { opacity: 0; pointer-events: none; }
   #banner { font: bold 46px/1 var(--display); letter-spacing: 2px; text-shadow: 0 3px 0 #000, 0 0 24px rgba(0, 0, 0, 0.8); animation: punch 0.5s cubic-bezier(0.2, 1.6, 0.4, 1); }
   #banner.won { color: var(--gold); }
   #banner.lost { color: var(--red); }
