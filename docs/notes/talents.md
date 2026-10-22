@@ -104,3 +104,14 @@ are strong already). `npm run balance` (no talents in it) is identical before an
 - **Equip best / Equip all heroes** (`equipment.ts`: `itemScore`, `bestFor`, `equipBest`, `equipAll`, `strongestFirst`; buttons in `equipView.ts`). An item scores by its main stats (calling bonus, rarity and item level through `itemStats`) weighted for the hero (shooters value reach and crits, casters charge, sturdy heroes hp and defence) plus its ability (`ABILITY_WORTH` x its strength). By default only the bag is used; the toggle "Taking from other heroes" lets a stronger fit move a piece off another hero. Equip all serves the strongest heroes first and an earlier hero keeps what it was given. No item is ever on two heroes. Tests: `test/equip-best.test.ts`; screenshots `docs/samples/gear-best-{before,after}*.png` (`tools/audit/equip-best.mjs`). "Equip all heroes" sits in the same panel (reachable from the tavern's hero sheet), not on the tavern canvas.
 - The slot picker flow is unchanged (the owner dropped the fewer-taps rework).
 - The talent tree no longer blinks: an available node has a steady highlight; learning a node plays a short one-shot pop.
+
+## Second balance pass (no single tree above about +20 points)
+
+Trimmed: the Yamabushi's first row (hp and attack +3%, regen 0.2%) and its Hurricane (+20%), Eye of the Storm and Mountain Spirit; the
+Warlock's first row (+3% attack and hp, +6% charge) and Lingering Curse (+40%); the Illusionist's shield and vanish; the Werewolf's
+Bloodthirst (+30%) and Undying Beast (a fifth); the Wanderer's Shepherd's Flame; the Paladin's Lay on Hands (+45%). After
+(`npm run talent-balance`, 600 teams): every hero alone lifts at most +19.4 points (Paladin 2b+3a), then Knight +19.4, Werewolf +19.0, Kitsune +19.4;
+the Yamabushi is +5.7 first row and +18.0 at most, the Warlock +9.8 and +18.9. Everyone's whole tree: +16% effective (63.3% won).
+
+Equip best (above) scores by tier and power together (rarity scales every stat and the ability, `itemScore`) rather than tier alone, and never
+takes a piece another hero wears unless that toggle is on.
