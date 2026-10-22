@@ -15,11 +15,11 @@ The heroes can wear **equipment** found in reward chests. It is kept for good an
   main-stat profile (no two alike; fast and light against slow and heavy, crit against raw attack, range for bows and
   guns, dodge, skill charge, regen, resist), its own icon, its own signature ability and its own Mythic name.
 - **Main stats**: attack, hp (shares), defence (flat), attack speed, move speed, crit, range (whole tiles), dodge, skill
-  charge, regen (hp a second) and resist (against burning and bleeding). `RARITY_SCALE` multiplies them (x1 to x2.6), each
-  item level adds 4% (`LEVEL_STEP`, levels 1 to 20) and `MAIN_SCALE` (0.6) is the one knob that keeps the kit modest next
+  charge, regen (hp a second) and resist (against burning and bleeding). `RARITY_SCALE` multiplies them (x1 to x2.05), each
+  item level adds 4% (`LEVEL_STEP`, levels 1 to 20) and `MAIN_SCALE` (0.4) is the one knob that keeps the kit modest next
   to hero levels. Sums are capped (`CAPS`).
-- **Signature ability**: only at Epic and above (`hasAbility`); Common and Rare have stats only. It is x1 at Epic, x1.35 at
-  Legendary and x1.8 at Mythic (`ABILITY_SCALE`, plus 1% per item level): bigger numbers, longer durations, better odds.
+- **Signature ability**: only at Epic and above (`hasAbility`); Common and Rare have stats only. It is x0.45 at Epic, x0.55 at
+  Legendary and x0.7 at Mythic (`ABILITY_SCALE`, plus 1% per item level; the catalogue's numbers are the full-strength ones): bigger numbers, longer durations, better odds.
   A **Mythic** also takes its own name (`itemName`: "Stormcaller Staff" becomes "Thunderlord's Reach"), and the name
   shows as the pop-up when its ability fires. (No sprite change: the pop-up is the cheap effect.)
 - **Callings**: a base can suit `melee`, `shooter` or `caster` (`callingOf(kind)`); on a matching hero its main stats are
@@ -66,30 +66,36 @@ fight, a few effects, determinism, the rules and old saves).
 
 ### Balance (`npm run gear-balance`)
 
-`tools/gear-balance.ts` plays random five-hero teams at stage 12, hero level 3 (about 32% won with nothing worn), paired
-by seed. A whole kit on every hero lifts that to about 57% (Common), 72% (Rare), 96% (Epic) and 100% (Legendary and Mythic);
-that is an extreme (every hero in a full kit) at a steep part of the curve (one hero level is worth about 45 points there).
-A single Mythic level-10 piece worn by every hero lifts it from +6 (Scholar's Scroll) to +68 points (Phoenix Feather,
-Blunderbuss, Vial of Vigor, Healer's Lyre); the middle is +45 to +55. `MAIN_SCALE` (0.6) was set from this, and three weak
-pieces were nudged up. If the climb gets too easy, lower `MAIN_SCALE` or `ABILITY_SCALE` first.
+`tools/gear-balance.ts` plays random five-hero teams (300 per cell) at stage 13, hero level 3 (17.7% won with nothing worn),
+paired by seed. Table 1 gives a whole kit's **effective strength**: the plain hp and attack bonus, with no equipment, that wins
+as often as the kit (a random weapon, armour and trinket on every hero, item level 1 + 3 per army). The owner's target is a full
+Mythic kit at a high item level worth about +25 to +35%.
 
-## Hook for the chests
+| item level | Common | Rare | Epic | Legendary | Mythic |
+|---|---|---|---|---|---|
+| **Before** (`MAIN_SCALE` 0.6, ability x1 / 1.35 / 1.8) | | | | | |
+| 1 (army 1) | +9% | +13% | +32% | +40% | +44% |
+| 7 (army 3) | +11% | +17% | +36% | over +50% | over +50% |
+| 13 (army 5) | +14% | +18% | +37% | over +50% | over +50% |
+| 19 (army 7) | +16% | +21% | +41% | over +50% | over +50% |
+| **After** (`MAIN_SCALE` 0.4, rarity x1 to x2.05, ability x0.45 / 0.55 / 0.7) | | | | | |
+| 1 (army 1) | +6% | +8% | +18% | +21% | +29% |
+| 7 (army 3) | +7% | +11% | +21% | +25% | +30% |
+| 13 (army 5) | +9% | +12% | +22% | +27% | +34% |
+| 19 (army 7) | +9% | +14% | +27% | +30% | +36% |
 
-```ts
-import { grantEquipment, rollEquipment } from './sim/equipment';
-import { Rng, mixSeed } from './sim/rng';
+("Over +50%" is a kit that wins more than 99% of the fights, past what the table can measure.) Table 2 is each of the 60
+types alone, worn Mythic at level 10 by every hero, as a win-rate lift in points: now from +1 (Scholar's Scroll) to the high
+thirties, none breaking the balance. To tune further, lower `MAIN_SCALE` or `ABILITY_SCALE` in `equipment.ts`. (`npm run
+balance` has no equipment in it; `gear-balance` is its equipment counterpart.)
 
-// in the reward roll's `gear` hook (the chest worker's), with the chest's quality ('bronze' | 'silver' | 'gold'):
-const rng = new Rng(mixSeed(meta.seed, <a salt for chests>, <the chest counter>));      // its own side stream
-const item = grantEquipment(meta, rollEquipment(rng, { quality, armyIndex, milestone }));
-saveMeta(meta);
-// `item` is the Equipment granted (with its id), to show in the reward
-```
+## Chests (done)
 
-`rollEquipment` draws only from the rng it is given, so a chest's contents follow its seed. `armyIndex` is 0 for the first
-army (item level 1 + 3 per army + 0 to 2) and `milestone` (boolean or a count) adds 2 levels each (a boss wave, a clear).
-Quality sets the rarity odds (`QUALITY_WEIGHTS`, percent): bronze 70/25/5/0/0, silver 30/40/22/7/1, gold 5/25/40/24/6.
-For the screenshots and tests, `grantSampleEquipment(meta)` adds eight items of mixed rarity. A rolled item has no affixes: its ability comes from its base at Epic and up.
+`rollGear(rng, at, armyIdx)` in `src/sim/armyStars.ts` is filled in: silver (5 stars) and gold (10 stars) chests always drop one
+piece, bronze (3 stars) 35% of the time (`BRONZE_GEAR_CHANCE`), by `rollEquipment` with the chest's quality, the army's place in
+the list and a milestone bonus on the 10-star chest. It draws last from the chest's own stream, so no other reward changed.
+`lootOf` grants it with `grantEquipment` when the chest is opened (a look at the stash grants nothing), and the reveal shows
+the item's icon on its rarity frame ("Lucky Charm (Epic, Lv 20)"; a Mythic is a prize card). Tests: `test/armyStars.test.ts`.
 
 ## UI
 
@@ -103,5 +109,5 @@ For the screenshots and tests, `grantSampleEquipment(meta)` adds eight items of 
 
 ## Screenshots
 
-`node tools/audit/gear.mjs` (after `npm run web`) writes `docs/samples/gear-*.png` at 393x852: `sheet-empty`,
+`node tools/audit/gear.mjs` (after `npm run web`) writes `docs/samples/gear-*.png` at 393x852 (and the sheet, picker and chest reveal also at 360x780 and 412x915): `sheet-empty`,
 `sheet-filled`, `picker`, `deploy` and `fight` (a hero wearing a Runed Blade, Thornplate and Phoenix Feather). `docs/samples/gear-icons.png` (`python3 tools/equip-sheet.py`) is all 60 icons with their names.

@@ -7,8 +7,8 @@ const base = `http://localhost:${srv.address().port}/`;
 const items = [
   ['ironSword', 1, 1], ['runedBlade', 3, 4], ['stormStaff', 5, 9], ['huntersBow', 2, 3], ['leatherJerkin', 2, 2], ['thornplate', 4, 7], ['luckyCharm', 1, 1], ['phoenixFeather', 4, 6],
 ].map(([base, rarity, level], i) => ({ id: i + 1, base, rarity, level }));
-async function open(extra) {
-  const ctx = await browser.newContext({ viewport: { width: 393, height: 852 }, deviceScaleFactor: 2, hasTouch: true });
+async function open(extra, vp = { width: 393, height: 852 }) {
+  const ctx = await browser.newContext({ viewport: vp, deviceScaleFactor: 2, hasTouch: true });
   const page = await ctx.newPage();
   page.on('pageerror', (e) => console.log('PAGE ERROR', e.message));
   await page.addInitScript(saveScript(), [HEROES, extra]);
@@ -56,5 +56,26 @@ await page.waitForTimeout(4500);
 await page.screenshot({ path: out('fight') });
 console.log(await page.evaluate(() => JSON.stringify(window.__game.b.units.filter((u) => u.eq).map((u) => [u.def, u.maxHp, u.power, u.eq]))));
 await page.context().close();
+
+// the other upright phones (the sheet with the picker open, and a chest that drops equipment) and the chest reveal
+const owned = { equipment: items, nextItem: 9, equipped: { knight: { weapon: 2, armour: 6, trinket: 8 } } };
+for (const [w, h] of [[360, 780], [412, 915], [393, 852]]) {
+  const size = w === 393 ? '' : `-${w}x${h}`;
+  const p = await open(owned, { width: w, height: h });
+  await sheet(p);
+  await p.screenshot({ path: out(`sheet-filled${size}`) });
+  await p.locator('.eqSlot').nth(0).click();
+  await p.waitForTimeout(300);
+  await p.locator('.eqPanel').scrollIntoViewIfNeeded();
+  await p.screenshot({ path: out(`picker${size}`) });
+  await p.context().close();
+  const c = await open({ stash: [{ army: 'golems', at: 10, tier: 0, seed: 11 }] }, { width: w, height: h });
+  await c.locator('.hmTab').nth(2).click();
+  await c.waitForTimeout(1500);
+  await c.locator('.csChest').first().click();
+  await c.waitForTimeout(6500);
+  await c.screenshot({ path: out(`chest${size}`) });
+  await c.context().close();
+}
 await browser.close();
 srv.close();

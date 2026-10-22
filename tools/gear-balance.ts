@@ -17,11 +17,11 @@ const arg = (name: string, fallback: number): number => {
   return i >= 0 && Number(process.argv[i + 1]) > 0 ? Number(process.argv[i + 1]) : fallback;
 };
 const GAMES = arg('--games', 600);
-const STAGE = arg('--stage', 8);
-const LEVEL = arg('--level', 6);
+const STAGE = arg("--stage", 13);
+const LEVEL = arg("--level", 3);
 const fieldBoost = (s: number): Stage => ({ ...stageBoost(s), boss: undefined });
 
-function won(seed: number, team: string[], equip: (kind: string) => EquipStats | undefined): boolean {
+function won(seed: number, team: string[], equip: (kind: string) => EquipStats | undefined, mult = 1): boolean {
   const band = FIELD_BANDS[seed % FIELD_BANDS.length];
   const b: Battle = startBattle(seed, band, fieldBoost(STAGE));
   const rng = new Rng(mixSeed(seed, 0xba1a));
@@ -33,7 +33,8 @@ function won(seed: number, team: string[], equip: (kind: string) => EquipStats |
   }
   team.forEach((id, i) => {
     const eq = equip(id);
-    place(b, id, spots[i][0], spots[i][1], undefined, { ...gradeBoost(1, 0, LEVEL, id), ...(eq ? { equip: eq } : {}) });
+    const g = gradeBoost(1, 0, LEVEL, id);
+    place(b, id, spots[i][0], spots[i][1], undefined, { ...g, hp: g.hp! * mult, atk: g.atk! * mult, ...(eq ? { equip: eq } : {}) });
   });
   fight(b);
   while (b.phase === 'fight') stepBattle(b);
@@ -48,7 +49,20 @@ const teams = (): string[][] => {
   });
 };
 const T = teams();
-const rate = (equip: (kind: string) => EquipStats | undefined) => (100 * T.filter((t, i) => won(1000 + i, t, equip)).length) / GAMES;
+const rate = (equip: (kind: string) => EquipStats | undefined, mult = 1) => (100 * T.filter((t, i) => won(1000 + i, t, equip, mult)).length) / GAMES;
+/** The plain hp and attack multiplier (no equipment) that wins as often as `equip`: the kit's "effective strength", as +%. */
+function effective(equip: (kind: string) => EquipStats | undefined): string {
+  const target = rate(equip);
+  if (target >= 99) return '>';
+  let lo = 1;
+  let hi = 2;
+  for (let i = 0; i < 7; i++) {
+    const mid = (lo + hi) / 2;
+    if (rate(() => undefined, mid) < target) lo = mid;
+    else hi = mid;
+  }
+  return `+${Math.round(((lo + hi) / 2 - 1) * 100)}%`;
+}
 const sum = (items: NewEquipment[], kind: string): EquipStats => {
   const out = emptyStats();
   for (const it of items) {
@@ -61,8 +75,8 @@ const sum = (items: NewEquipment[], kind: string): EquipStats => {
 
 const base = rate(() => undefined);
 console.log(`Stage ${STAGE}, hero level ${LEVEL}, ${GAMES} random teams. No equipment: ${base.toFixed(1)}% won.\n`);
-console.log('1. A whole kit on every hero (a random weapon, armour and trinket, item level 1 + 3 per army):');
-for (const [army, lvl] of [[0, 1], [1, 4], [2, 7], [4, 13]] as const) {
+console.log('1. Effective strength of a whole kit on every hero (a random weapon, armour and trinket; item level 1 + 3 per army): the plain hp and attack bonus that wins as often.');
+for (const [army, lvl] of [[0, 1], [2, 7], [4, 13], [6, 19]] as const) {
   const row: string[] = [];
   for (const r of [1, 2, 3, 4, 5] as const) {
     const rng = new Rng(77 + r + lvl);
@@ -70,10 +84,11 @@ for (const [army, lvl] of [[0, 1], [1, 4], [2, 7], [4, 13]] as const) {
       const pool = EQUIP_LIST.filter((b) => b.slot === slot);
       return { base: pool[rng.int(0, pool.length - 1)].id, rarity: r, level: lvl };
     }), kind);
-    row.push(`${['Common', 'Rare', 'Epic', 'Legendary', 'Mythic'][r - 1]} ${rate(kit).toFixed(0)}%`);
+    row.push(`${['Common', 'Rare', 'Epic', 'Legendary', 'Mythic'][r - 1]} ${effective(kit)}`);
   }
   console.log(`  army ${army + 1} (item level ${lvl}):  ${row.join('   ')}`);
 }
+if (process.argv.includes('--kits-only')) process.exit(0);
 console.log('\n2. Each type alone, worn Mythic at level 10 by every hero (win-rate lift in points):');
 const lifts = EQUIP_LIST.map((b) => ({ b, lift: rate((k) => sum([{ base: b.id, rarity: 5, level: 10 }], k)) - base })).sort((x, y) => y.lift - x.lift);
 for (const { b, lift } of lifts) console.log(`  ${b.name.padEnd(22)} ${b.ability.name.padEnd(18)} ${lift >= 0 ? '+' : ''}${lift.toFixed(1)}`);

@@ -27,9 +27,9 @@ export const QUALITY_WEIGHTS: Readonly<Record<Quality, Readonly<Record<Rarity, n
 };
 export const MAX_ITEM_LEVEL = 20;
 /** What a main stat of each rarity is worth against a Common one (index 0 is unused). */
-export const RARITY_SCALE: readonly number[] = [1, 1, 1.3, 1.65, 2.1, 2.6];
+export const RARITY_SCALE: readonly number[] = [1, 1, 1.2, 1.45, 1.75, 2.05];
 /** One knob for every main stat: the catalogue's numbers are written as a share of a hero, this keeps the whole kit modest next to levels (`tools/gear-balance.ts`). */
-export const MAIN_SCALE = 0.6;
+export const MAIN_SCALE = 0.4;
 /** Each item level above the first adds this share of the level-1 stat. */
 export const LEVEL_STEP = 0.04;
 /** A piece made for the wearer's calling gives this much more of its main stats. */
@@ -39,7 +39,7 @@ export const SALVAGE_CROWNS: readonly number[] = [0, 5, 12, 30, 70, 150];
 /** The first rarity whose pieces carry their signature ability (Epic). */
 export const ABILITY_RARITY = 3;
 /** How strong the signature ability is at each rarity (index 0 is unused; Common and Rare have none). */
-export const ABILITY_SCALE: readonly number[] = [0, 0, 0, 1, 1.35, 1.8];
+export const ABILITY_SCALE: readonly number[] = [0, 0, 0, 0.45, 0.55, 0.7];
 /** The most a hero's worn pieces add to the shares that could otherwise stack without end. */
 const CAPS: Partial<Record<MainKey, number>> = { dodge: 0.35, crit: 0.6, resist: 0.6, atkSpeed: 0.8, moveSpeed: 0.8, charge: 1, regen: 0.03 };
 
