@@ -118,3 +118,14 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   **PixelLab** (pixellab.ai): a base figure from a text description with Craftpix fighters as style references
   (`/generate-with-style-v2`), animated with `/animate-with-text-v3`. The frames were only cropped and padded into the
   sheets (no resizing; alpha made hard, lone stray pixels dropped). The prompts are in `tools/pixellab/spec.py`.
+
+## Castle courtyard (`src/art/castle/`)
+
+- The houses, tents, awnings, props, palisade, gate, lantern, tufts, flowers, pebbles and gold clutter are single sprites copied from
+  Chronos Settlement's art (`hpatter9/little-town`, `src/renderer/art/`), which cut them from Craftpix's free Village (top-down defence),
+  Fields, Path and Road, Dungeon and Rocky Area packs and the Tiny RPG Town buildings (`tt_long`, `tt_gable`) by Luis Zuno (@ansimuz).
+  The cobbles are one inner tile of Path and Road's cobble sheet; the grass colour is read from its village ground sheet.
+- The trees and bushes are the Tiny RPG Town vegetation props by Luis Zuno (@ansimuz, `Environments/Vegetation props`, public licence), from
+  `hpatter9/chronos-assets`.
+- The Mage Tower's three towers (`tower1..3.png`) were generated with PixelLab at their final pixel size, in the palette of the village
+  houses (`tools/castle/towers.py`). The heroes who stroll the road use their own sheets (see above), shrunk by a whole number when the page loads.
