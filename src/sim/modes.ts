@@ -1,7 +1,7 @@
 // The modes beside an ordinary run. The daily challenge is one run a day: a seed from the date, the starting five heroes
 // in the squad, a land that is fixed for the day, played until defeat; its score is the stages cleared x 100 plus the
 // stars x 10. The first play of a date counts, and a replay is practice (it does not change the day's best). The endless
-// tower is a run with no events that opens once a run has fought stage 10; its floors are the run's own stages. Pure
+// tower is a map of floors (`tower.ts`) that opens once a run has fought stage 10; its floors are the run's own stages. Pure
 // rules: no Pixi, no DOM; the date is passed in as yyyymmdd.
 
 import { AREAS, type Area } from './board';
@@ -9,9 +9,10 @@ import { checkAchievements, type Achievement } from './achievements';
 import { Rng, mixSeed } from './rng';
 import type { Battle } from './battle';
 import { armyOfRun, bandFor, isBossRun, isBossStage, newRun, START_GOLD, type Run } from './run';
-import { armyCleared, ARMIES } from './armies';
+import { armyCleared, armyUnlocked, ARMIES } from './armies';
 import { HEROES } from './units';
 import type { Meta } from './meta';
+import { newTower } from './tower';
 
 /** The stage the endless tower opens at (reached in any run), or once the first army has been beaten. */
 export const TOWER_UNLOCK = 10;
@@ -66,10 +67,11 @@ export const dailyInProgress = (run: Run | null, date: number): Run | null => (r
 /** A daily run's score: the stages cleared x 100 plus the stars x 10. */
 export const dailyScore = (run: Run): number => (run.stage - 1) * SCORE_STAGE + (run.stars ?? 0) * SCORE_STAR;
 
-/** A tower run from a seed: the party at its lasting levels, the castle as it stands, and no events. */
+/** A tower run from a seed: the party at its lasting levels, the castle as it stands, and the first act's map (`tower.ts`). */
 export function towerRun(seed: number, m: Meta): Run {
   const run = newRun(seed, m.party, m.castle);
   run.mode = { kind: 'tower' };
+  run.tower = newTower(seed, ARMIES.filter((a) => armyUnlocked(m, a.id)).map((a) => a.id), m.tower);
   return run;
 }
 
@@ -87,7 +89,7 @@ export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: numbe
   const army = armyOfRun(run);
   // (an army's waves are not stages of the endless climb: they keep their own record, `settleWave`)
   if (!army) m.bestStage = Math.max(m.bestStage, run.best);
-  const boss = army ? (isBossRun(run, fight.stage) ? army.waves[fight.stage - 1].foes[0] : '') : isBossStage(fight.stage) ? bandFor(fight.stage) : '';
+  const boss = army ? (isBossRun(run, fight.stage) ? army.waves[fight.stage - 1].foes[0] : '') : run.tower ? run.tower.lastBoss ?? '' : isBossStage(fight.stage) ? bandFor(fight.stage) : '';
   if (fight.won && boss && !m.bosses.includes(boss)) m.bosses.push(boss);
   if (run.mode?.kind === 'tower') m.tower = Math.max(m.tower, floorsCleared(run));
   if (run.mode?.kind === 'daily' && run.over && !run.mode.practice) {
