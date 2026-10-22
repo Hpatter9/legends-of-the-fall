@@ -11,7 +11,7 @@ import { firstStep, walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
 import { FOE_BANDS } from './foes';
 import { killXp } from './levels';
-import { afterBlow, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, rollCrit, sureFooted, tickStatus, tryCast, type Dot, type Hot, type Trap, type Zone } from './abilities';
+import { afterBlow, CHARGE_MAX, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, rollCrit, sureFooted, tickStatus, tryCast, type Dot, type Hot, type Trap, type Zone } from './abilities';
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellState } from './spells';
 import { kindsOf, traitEffects, type TraitEffects } from './traits';
 import { fxHurt, fxKill, fxRevive, fxStart, hidden } from './equipFx';
@@ -196,6 +196,9 @@ export interface Boost {
   equip?: EquipStats;
   /** How much faster the foes act and walk (a harder army tier); only the foes' boost reads it. */
   speed?: number;
+  /** Skill charge carried over from the run's last wave (and a Mythic's ultimate charge). */
+  charge?: number;
+  charge2?: number;
 }
 /** Boosts for a fight's foes: all of them by `foes`, and the first one more by `boss` (a boss stage). */
 export interface Stage {
@@ -282,6 +285,9 @@ export function addUnit(b: Battle, defId: string, u: number, v: number, boost: B
   if (boost.size && boost.size !== 1) unit.size = boost.size;
   if (boost.grade && boost.grade > 1) unit.grade = boost.grade;
   if (tag !== undefined) unit.tag = tag;
+  // (a hero's skill keeps the charge it built up in the run's last wave)
+  if (boost.charge) unit.charge = Math.min(CHARGE_MAX, boost.charge);
+  if (boost.charge2) unit.charge2 = Math.min(CHARGE_MAX, boost.charge2);
   b.units.push(unit);
   return unit;
 }

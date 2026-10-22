@@ -6,7 +6,7 @@ import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { D, standable, tileAt } from './sim/board';
 import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type Unit } from './sim/battle';
 import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
-import { armyOfRun, armyRun, boostOf, finish, heroOf, isBossRun, loadRun, noteFight, saveRun, setSquad, SQUAD, startStage, summon, summonCost, tierOfRun, type Run } from './sim/run';
+import { armyOfRun, armyRun, boostOf, finish, heroOf, isBossRun, keepCharges, loadRun, noteFight, saveRun, setSquad, SQUAD, startStage, summon, summonCost, tierOfRun, type Run } from './sim/run';
 import { ARMIES, settleWave, type ArmyPay } from './sim/armies';
 import { drawRunStars, showUnlock } from './armiesView';
 import { settleArmyRun, type StarResult } from './sim/armyStars';
@@ -1027,6 +1027,8 @@ class Game {
       const rating = ratingOf(b, isBossRun(run));
       const before = run.gold;
       noteFight(run, b);
+      // (the heroes' skills keep their charge for the next wave)
+      if (won) keepCharges(run, b);
       finish(run, won, rating.stars);
       this.gain = run.gold - before;
       // (an army pays by wave, and its last boss a clear; any other run pays as it always did)

@@ -411,3 +411,5 @@ body .sbSlot { min-height: 44px; }
    - The old falling leaves are gone: a layer of orange specks drifted over every home page, indoors too (the tavern, the
      hall, the library), and across the scenes' own art. The scenes have their own life (fire, embers, idling heroes). ===== */
 #leaves { display: none; }
+/* (Settings' Start over: a plain button in a warning red, steady) */
+.setting button.danger { flex: none; white-space: nowrap; color: #ffe0d8; background: #6a1a12; border-image: none; border: 2px solid #c8402a; }
