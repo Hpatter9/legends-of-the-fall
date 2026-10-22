@@ -452,3 +452,11 @@ body.auto #buttons { display: none; }
 #leaves { display: none; }
 /* (Settings' Start over: a plain button in a warning red, steady) */
 .setting button.danger { flex: none; white-space: nowrap; color: #ffe0d8; background: #6a1a12; border-image: none; border: 2px solid #c8402a; }
+
+/* ---- the camp's daily signboard once today's daily is done: a green pixel tile with a white check where the red badge was (steady, no animation) ---- */
+.cpPlank i.dailyDone {
+  position: absolute; top: -9px; right: -9px; width: 24px; height: 24px; box-sizing: border-box; display: block; border: 2px solid #fff; background: #2f9e44 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 7' shape-rendering='crispEdges'%3E%3Cpath fill='%23fff' d='M7 0h2v1H7zM6 1h2v1H6zM5 2h2v1H5zM0 3h2v1H0zM4 3h2v1H4zM1 4h4v1H1zM2 5h2v1H2z'/%3E%3C/svg%3E") center / 18px 14px no-repeat;
+  image-rendering: pixelated; box-shadow: 0 2px 0 #12401c;
+  clip-path: polygon(2px 0, calc(100% - 2px) 0, 100% 2px, 100% calc(100% - 2px), calc(100% - 2px) 100%, 2px 100%, 0 calc(100% - 2px), 0 2px);
+}
+.cpPlank.done small { color: #a8e6a0; }
