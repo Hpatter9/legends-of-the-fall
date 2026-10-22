@@ -13,7 +13,7 @@ import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
 import { gradeOfRank } from './render/tavernSpots';
 import { strongest } from './menuHeroes';
-import { GROUND_Y, NAME_OF, PLOTS, PROPS, SCENE_H, SCENE_W, spriteName, stageOf, VENTS, WALK } from './render/castleSpots';
+import { layoutFor, NAME_OF, spriteName, stageOf, VENTS, WIDE, type Layout } from './render/castleSpots';
 import skyUrl from './art/castle/sky.png';
 import hillsUrl from './art/castle/hills.png';
 import wallUrl from './art/castle/wall.png';
@@ -132,6 +132,7 @@ export class CastleScene {
   private levels: Partial<Record<BuildingId, number>> = {};
   private tagEls = new Map<BuildingId, HTMLButtonElement>();
   private scale = 2;
+  private lay: Layout = WIDE;
   private raf = 0;
   private last = 0;
   private now = 0;
@@ -204,8 +205,8 @@ export class CastleScene {
         w.k = k;
         return;
       }
-      const x = rand(WALK.x0, WALK.x1);
-      const y = rand(WALK.y0, WALK.y1);
+      const x = rand(this.lay.walk.x0, this.lay.walk.x1);
+      const y = rand(this.lay.walk.y0, this.lay.walk.y1);
       this.walkers.set(kind, { kind, rig, k, x, y, gx: x, gy: y, face: chance(0.5) ? 1 : -1, mood: 'idle', at: this.now + 300 * i + rand(300, 2500), clock: rand(0, 3000), phase: rand(0, 6) });
     });
     this.layTags();
@@ -237,68 +238,85 @@ export class CastleScene {
   /** Pick the whole-number scale and size the canvas; the scene pans inside its frame when it is bigger than the screen. */
   private fit(): void {
     const h = this.root.clientHeight;
+    const w = this.root.clientWidth;
     if (!h || !art) return;
-    // (upright the scene is as tall as the page, so it pans across; sideways it is drawn at 2 and pans both ways)
-    const s = this.root.clientWidth < h ? Math.max(2, Math.min(4, Math.floor(h / SCENE_H))) : Math.max(2, Math.min(4, Math.floor(h / (SCENE_H * 0.8))));
-    if (s === this.scale && this.still && this.canvas.width === SCENE_W * s) return;
+    // (upright the tall yard fits the width at scale 2 with nothing clipped, and pans down if the page is shorter than it;
+    // sideways the wide yard is drawn at 2 and pans both ways)
+    const portrait = w < h;
+    const lay = layoutFor(portrait);
+    const s = portrait ? Math.max(2, Math.min(4, Math.floor(w / lay.w))) : Math.max(2, Math.min(4, Math.floor(h / (lay.h * 0.8))));
+    if (lay === this.lay && s === this.scale && this.still && this.canvas.width === lay.w * s) return;
+    const changed = lay !== this.lay;
+    this.lay = lay;
     this.scale = s;
-    this.canvas.width = SCENE_W * s;
-    this.canvas.height = SCENE_H * s;
+    this.canvas.width = lay.w * s;
+    this.canvas.height = lay.h * s;
     for (const e of [this.canvas, this.stage]) {
-      e.style.width = `${SCENE_W * s}px`;
-      e.style.height = `${SCENE_H * s}px`;
+      e.style.width = `${lay.w * s}px`;
+      e.style.height = `${lay.h * s}px`;
     }
     this.ctx.imageSmoothingEnabled = false;
     this.still = this.paintStill(art, s);
     this.glow = this.paintGlow(s);
+    // (the heroes go back to the new yard's lawn when the arrangement changes)
+    if (changed)
+      for (const wk of this.walkers.values()) {
+        wk.x = wk.gx = rand(lay.walk.x0, lay.walk.x1);
+        wk.y = wk.gy = rand(lay.walk.y0, lay.walk.y1);
+        wk.mood = 'idle';
+      }
     this.layTags();
-    // (open on the middle of the yard, with the buildings round it; sideways, the lower part where the yard is)
+    // (open with the buildings in view: the middle across, and the row the layout names down)
     requestAnimationFrame(() => {
       this.scroll.scrollLeft = (this.scroll.scrollWidth - this.scroll.clientWidth) / 2;
-      this.scroll.scrollTop = Math.max(0, 250 * s - this.scroll.clientHeight / 2);
+      this.scroll.scrollTop = Math.max(0, lay.openTop * s);
     });
   }
 
   /** The part that never changes: sky, hills, the wall and gate, the lawn with its cobbled path, and the shade. */
   private paintStill(a: Record<string, HTMLImageElement>, s: number): HTMLCanvasElement {
+    const { w, h, groundY } = this.lay;
     const c = el('canvas');
-    c.width = SCENE_W * s;
-    c.height = SCENE_H * s;
+    c.width = w * s;
+    c.height = h * s;
     const g = c.getContext('2d')!;
     g.imageSmoothingEnabled = false;
     g.fillStyle = '#7fa8d8';
     g.fillRect(0, 0, c.width, c.height);
-    g.drawImage(a.sky, 0, 0, SCENE_W * s, a.sky.height * s);
-    g.drawImage(a.hills, 0, (GROUND_Y - 62) * s, SCENE_W * s, a.hills.height * s);
+    // (the sky and hills are 384 across; a narrower yard shows their middle)
+    const cut = Math.max(0, Math.floor((a.sky.width - w) / 2));
+    g.drawImage(a.sky, cut, 0, w, a.sky.height, 0, 0, w * s, a.sky.height * s);
+    g.drawImage(a.hills, cut, 0, w, a.hills.height, 0, (groundY - 62) * s, w * s, a.hills.height * s);
     // (the lawn)
     const gw = a.grass.width;
-    for (let x = 0; x < SCENE_W; x += gw) for (let y = GROUND_Y - 6; y < SCENE_H; y += gw) g.drawImage(a.grass, x * s, y * s, gw * s, gw * s);
-    // (a cobbled path from the gate down the middle of the yard, with a small plaza round the well)
+    for (let x = 0; x < w; x += gw) for (let y = groundY - 6; y < h; y += gw) g.drawImage(a.grass, x * s, y * s, gw * s, gw * s);
+    // (cobbled patches: the path from the gate and a plaza)
     const cw = a.cobble.width;
     const ch = a.cobble.height;
-    const path = (x0: number, y0: number, x1: number, y1: number) => {
+    for (const { x0, y0, x1, y1 } of this.lay.paths) {
       for (let x = x0; x < x1; x += cw) for (let y = y0; y < y1; y += ch) g.drawImage(a.cobble, 0, 0, Math.min(cw, x1 - x), Math.min(ch, y1 - y), x * s, y * s, Math.min(cw, x1 - x) * s, Math.min(ch, y1 - y) * s);
       g.fillStyle = 'rgba(20, 12, 4, 0.6)';
       g.fillRect(x0 * s, y0 * s, (x1 - x0) * s, s);
       g.fillRect(x0 * s, (y1 - 1) * s, (x1 - x0) * s, s);
       g.fillRect(x0 * s, y0 * s, s, (y1 - y0) * s);
       g.fillRect((x1 - 1) * s, y0 * s, s, (y1 - y0) * s);
-    };
-    path(176, GROUND_Y - 4, 208, SCENE_H);
-    path(160, 228, 232, 252);
+    }
     // (the back wall, with a gate in its middle)
-    const wy = GROUND_Y + 2 - a.wall.height;
-    g.drawImage(a.wall, 0, wy * s, a.wall.width * s, a.wall.height * s);
-    g.save();
-    g.translate(SCENE_W * s, 0);
-    g.scale(-1, 1);
-    g.drawImage(a.wall, 0, wy * s, a.wall.width * s, a.wall.height * s);
-    g.restore();
-    g.drawImage(a.gate, Math.round(SCENE_W / 2 - a.gate.width / 2) * s, (GROUND_Y + 3 - a.gate.height) * s, a.gate.width * s, a.gate.height * s);
-    // (the yard is darker near the wall and at the edges; steps, not a smooth blend, to stay pixel art)
+    const wy = groundY + 2 - a.wall.height;
+    this.lay.wallXs.forEach((x, i) => {
+      if (this.lay.mirrorWall && i > 0) {
+        g.save();
+        g.translate(w * s, 0);
+        g.scale(-1, 1);
+        g.drawImage(a.wall, 0, wy * s, a.wall.width * s, a.wall.height * s);
+        g.restore();
+      } else g.drawImage(a.wall, x * s, wy * s, a.wall.width * s, a.wall.height * s);
+    });
+    g.drawImage(a.gate, Math.round(this.lay.gateX - a.gate.width / 2) * s, (groundY + 3 - a.gate.height) * s, a.gate.width * s, a.gate.height * s);
+    // (the yard is darker near the wall; steps, not a smooth blend, to stay pixel art)
     [0.3, 0.2, 0.12, 0.06].forEach((al, i) => {
       g.fillStyle = `rgba(10, 20, 6, ${al})`;
-      g.fillRect(0, (GROUND_Y + 3 + i * 6) * s, SCENE_W * s, 6 * s);
+      g.fillRect(0, (groundY + 3 + i * 6) * s, w * s, 6 * s);
     });
     return c;
   }
@@ -324,10 +342,10 @@ export class CastleScene {
     if (!a) return;
     for (const id of BUILDING_IDS) {
       const tag = this.tagEls.get(id)!;
-      const p = PLOTS[id];
+      const p = this.lay.plots[id];
       const im = a[spriteName(id, stageOf(id, this.levels[id] ?? 0))];
-      tag.style.left = `${(p.x / SCENE_W) * 100}%`;
-      tag.style.top = `${((p.y - im.height - 4) / SCENE_H) * 100}%`;
+      tag.style.left = `${(p.x / this.lay.w) * 100}%`;
+      tag.style.top = `${((p.y - im.height - 4) / this.lay.h) * 100}%`;
     }
   }
 
@@ -338,8 +356,8 @@ export class CastleScene {
     const roll = Math.random();
     if (roll < 0.3) w.face = w.face === 1 ? -1 : 1;
     else if (!this.reduced && roll < 0.95) {
-      w.gx = rand(WALK.x0, WALK.x1);
-      w.gy = rand(WALK.y0, WALK.y1);
+      w.gx = rand(this.lay.walk.x0, this.lay.walk.x1);
+      w.gy = rand(this.lay.walk.y0, this.lay.walk.y1);
       w.mood = 'walk';
       w.face = w.gx > w.x ? 1 : -1;
     }
@@ -367,7 +385,7 @@ export class CastleScene {
 
   /** A bunch of motes at a building: dust and sparks round its foot, the build's puffs. */
   private burst(id: BuildingId, kind: 'dust' | 'spark', n: number): void {
-    const p = PLOTS[id];
+    const p = this.lay.plots[id];
     const wide = 30;
     for (let i = 0; i < n; i++) {
       if (kind === 'dust') this.motes.push({ x: p.x + rand(-wide, wide), y: p.y - rand(0, 6), vx: rand(-14, 14), vy: rand(-18, -4), age: 0, life: rand(600, 1100), size: rand(2, 4), color: chance(0.5) ? '#d8c29a' : '#a58a62', grow: 5, kind });
@@ -409,8 +427,8 @@ export class CastleScene {
         for (const v of VENTS[id]) {
           if (!v.stages.includes(stage)) continue;
           const im = a[spriteName(id, stage)];
-          const x = PLOTS[id].x - im.width / 2 + v.fx * im.width;
-          const y = PLOTS[id].y - im.height + v.fy * im.height;
+          const x = this.lay.plots[id].x - im.width / 2 + v.fx * im.width;
+          const y = this.lay.plots[id].y - im.height + v.fy * im.height;
           if (v.kind === 'smoke') this.motes.push({ x, y, vx: rand(-1, 3), vy: rand(-14, -8), age: 0, life: rand(2000, 3000), size: 3, color: '#d8d4cc', grow: 3, kind: 'smoke' });
           else if (v.kind === 'rune') {
             if (chance(0.6)) this.motes.push({ x: x + rand(-14, 14), y: y + rand(-20, 20), vx: rand(-2, 2), vy: rand(-9, -4), age: 0, life: rand(1400, 2400), size: 2, color: chance(0.5) ? '#7fe8ff' : '#c9a6ff', grow: 0, kind: 'rune' });
@@ -425,7 +443,7 @@ export class CastleScene {
       if (glints.length) {
         const v = glints[Math.floor(Math.random() * glints.length)];
         const im = a[spriteName('treasury', stage)];
-        this.motes.push({ x: PLOTS.treasury.x - im.width / 2 + v.fx * im.width + rand(-6, 6), y: PLOTS.treasury.y - im.height + v.fy * im.height + rand(-4, 4), vx: 0, vy: 0, age: 0, life: 380, size: 3, color: '#fff6c0', grow: 0, kind: 'spark' });
+        this.motes.push({ x: this.lay.plots.treasury.x - im.width / 2 + v.fx * im.width + rand(-6, 6), y: this.lay.plots.treasury.y - im.height + v.fy * im.height + rand(-4, 4), vx: 0, vy: 0, age: 0, life: 380, size: 3, color: '#fff6c0', grow: 0, kind: 'spark' });
       }
     }
   }
@@ -447,11 +465,11 @@ export class CastleScene {
     g.globalAlpha = 1;
     g.drawImage(this.still, 0, 0);
     const list: { depth: number; paint: () => void }[] = [];
-    for (const p of PROPS) {
+    for (const p of this.lay.props) {
       const im = a[p.sprite];
       list.push({ depth: p.y, paint: () => g.drawImage(im, Math.round(p.x - im.width / 2) * s, (p.y - im.height) * s, im.width * s, im.height * s) });
     }
-    for (const id of BUILDING_IDS) list.push({ depth: PLOTS[id].y, paint: () => this.building(a, id) });
+    for (const id of BUILDING_IDS) list.push({ depth: this.lay.plots[id].y, paint: () => this.building(a, id) });
     for (const w of this.walkers.values()) list.push({ depth: w.y, paint: () => this.hero(w) });
     list.sort((p, q) => p.depth - q.depth);
     for (const e of list) e.paint();
@@ -463,7 +481,7 @@ export class CastleScene {
   private building(a: Record<string, HTMLImageElement>, id: BuildingId): void {
     const g = this.ctx;
     const s = this.scale;
-    const p = PLOTS[id];
+    const p = this.lay.plots[id];
     const stage = this.shown(id);
     const im = a[spriteName(id, stage)];
     const b = this.builds.find((x) => x.id === id);
@@ -499,11 +517,8 @@ export class CastleScene {
   private flags(): void {
     const g = this.ctx;
     const s = this.scale;
-    const poles: [number, number, 1 | -1][] = [
-      [14, GROUND_Y - 52, 1],
-      [SCENE_W - 15, GROUND_Y - 52, -1],
-    ];
-    for (const [px, py, dir] of poles) {
+    for (const { x: px, dir } of this.lay.flags) {
+      const py = this.lay.groundY - 52;
       g.fillStyle = '#2a1a0e';
       g.fillRect(px * s, (py - 12) * s, s, 13 * s);
       for (let i = 0; i < 12; i++) {
@@ -530,8 +545,8 @@ export class CastleScene {
       const stage = this.shown(id);
       if (stage < 1) return;
       const im = a[spriteName(id, stage)];
-      const cx = PLOTS[id].x - im.width / 2 + fx * im.width;
-      const cy = PLOTS[id].y - im.height + fy * im.height;
+      const cx = this.lay.plots[id].x - im.width / 2 + fx * im.width;
+      const cy = this.lay.plots[id].y - im.height + fy * im.height;
       g.globalAlpha = Math.max(0, Math.min(1, al * pulse * (0.4 + stage * 0.3)));
       const tmp = this.tinted(tint);
       g.drawImage(tmp, (cx - size / 2) * s, (cy - size / 2) * s, size * s, size * s);
@@ -547,7 +562,7 @@ export class CastleScene {
         const im = a[spriteName(b.id, b.to)];
         g.globalAlpha = 0.65 * (1 - (age - SWAP_MS + 100) / 550);
         const sz = Math.max(im.width, im.height) + 30;
-        g.drawImage(this.tinted('#fff0b0'), (PLOTS[b.id].x - sz / 2) * s, (PLOTS[b.id].y - im.height / 2 - sz / 2) * s, sz * s, sz * s);
+        g.drawImage(this.tinted('#fff0b0'), (this.lay.plots[b.id].x - sz / 2) * s, (this.lay.plots[b.id].y - im.height / 2 - sz / 2) * s, sz * s, sz * s);
       }
     }
     g.globalCompositeOperation = 'source-over';
@@ -638,11 +653,11 @@ export class CastleScene {
     const a = art;
     if (!a) return;
     const box = this.canvas.getBoundingClientRect();
-    const rx = ((e.clientX - box.left) / box.width) * SCENE_W;
-    const ry = ((e.clientY - box.top) / box.height) * SCENE_H;
+    const rx = ((e.clientX - box.left) / box.width) * this.lay.w;
+    const ry = ((e.clientY - box.top) / box.height) * this.lay.h;
     let best: { id: BuildingId; depth: number } | null = null;
     for (const id of BUILDING_IDS) {
-      const p = PLOTS[id];
+      const p = this.lay.plots[id];
       const im = a[spriteName(id, stageOf(id, this.levels[id] ?? 0))];
       // (an empty plot is small to hit, so every building has at least a generous patch of ground)
       const half = Math.max(im.width / 2, 26);

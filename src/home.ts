@@ -101,7 +101,7 @@ export class Home {
     // (the heroes page is the tavern: it draws once and keeps its place while you switch tabs)
     this.pages.get('heroes')!.append(this.tavern.root);
     // (the castle page is the courtyard, with its shortcut buttons on top)
-    this.pages.get('castle')!.append(this.castle.root, this.castleBar);
+    this.pages.get('castle')!.append(this.castleBar, this.castle.root);
     // (the battle page keeps the scene behind its own content)
     this.pages.get('battle')!.append($('hmScene'));
     $('hmTrophy').addEventListener('click', () => this.openSub('Achievements', (b) => drawAchievements(b, this.meta)));
@@ -269,7 +269,7 @@ export class Home {
     set.append(el('span', 'gearIcon', '⚙'), el('b', '', 'Settings'));
     set.addEventListener('click', () => openSettings());
     row.append(ach, set, resetTipsButton());
-    bar.append(row, el('div', 'ctHelp', 'Tap a building to upgrade it · drag to look round'));
+    bar.append(row, el('div', 'ctHelp', 'tap a building to upgrade it · drag to look round'));
   }
 
   /** A building's upgrade card (over the courtyard): what it gives now and next, its cost, and the Build button. */

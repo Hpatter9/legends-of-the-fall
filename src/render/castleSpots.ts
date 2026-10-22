@@ -4,11 +4,6 @@
 
 import { BUILDING_IDS, BUILDINGS, GOLD_PER_LEVEL, HP_PER_LEVEL, ATK_PER_LEVEL, MANA_PER_LEVEL, maxLevel, spellBudget, type BuildingId } from '../sim/castle';
 
-export const SCENE_W = 384;
-export const SCENE_H = 340;
-/** Where the back wall's foot is: the courtyard lies below. */
-export const GROUND_Y = 150;
-
 /** How many looks a building has: 0 an empty plot, 1 small, 2 bigger, 3 grand. */
 export const STAGES = 4;
 
@@ -25,13 +20,111 @@ export interface Plot {
   y: number;
 }
 
-/** Where each building stands: the tall tower and the treasury at the back, the barracks and armoury in front. */
-export const PLOTS: Record<BuildingId, Plot> = {
-  mageTower: { x: 44, y: 214 },
-  treasury: { x: 324, y: 220 },
-  barracks: { x: 108, y: 326 },
-  armoury: { x: 292, y: 326 },
+/** The plain props of the yard (drawn with the buildings and heroes, sorted by their foot line). */
+export interface Prop {
+  sprite: 'well' | 'tree' | 'crates';
+  x: number;
+  y: number;
+}
+
+/** A cobbled patch (scene pixels). */
+export interface Patch {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+}
+
+/** One arrangement of the same scene pieces. */
+export interface Layout {
+  /** The scene's size in its own pixels. */
+  w: number;
+  h: number;
+  /** Where the back wall's foot is: the courtyard lies below. */
+  groundY: number;
+  /** Where each building stands. */
+  plots: Record<BuildingId, Plot>;
+  props: readonly Prop[];
+  /** The wall's left edges (a wall and, when `mirrorWall`, its mirror) and the gate's centre. */
+  wallXs: readonly number[];
+  mirrorWall: boolean;
+  gateX: number;
+  /** Pole feet of the pennants (and which way they blow). */
+  flags: readonly { x: number; dir: 1 | -1 }[];
+  paths: readonly Patch[];
+  /** Where the heroes stroll: open lawn (they pass behind the buildings, which are sorted in front of them). */
+  walk: { x0: number; x1: number; y0: number; y1: number };
+  /** The scene row at the top of the view when it opens (scene pixels), so the buildings are in view. */
+  openTop: number;
+}
+
+/** The wide yard (sideways, or a big screen): the tall tower and the treasury at the back, the barracks and armoury in front. */
+export const WIDE: Layout = {
+  w: 384,
+  h: 340,
+  groundY: 150,
+  plots: {
+    mageTower: { x: 44, y: 214 },
+    treasury: { x: 324, y: 220 },
+    barracks: { x: 108, y: 326 },
+    armoury: { x: 292, y: 326 },
+  },
+  props: [
+    { sprite: 'well', x: 196, y: 236 },
+    { sprite: 'tree', x: 16, y: 330 },
+    { sprite: 'tree', x: 368, y: 334 },
+    { sprite: 'crates', x: 236, y: 336 },
+  ],
+  wallXs: [0, 202],
+  mirrorWall: true,
+  gateX: 192,
+  flags: [
+    { x: 14, dir: 1 },
+    { x: 369, dir: -1 },
+  ],
+  paths: [
+    { x0: 176, y0: 146, x1: 208, y1: 340 },
+    { x0: 160, y0: 228, x1: 232, y1: 252 },
+  ],
+  walk: { x0: 128, x1: 262, y0: 200, y1: 318 },
+  openTop: 150,
 };
+
+/**
+ * The tall yard (upright phone: 196 pixels across, so at scale 2 it fits the screen with nothing clipped): the tower and treasury
+ * side by side under the wall, the barracks and armoury side by side below them, the lawn for the heroes along the bottom.
+ * The grand barracks and armoury are each wider than half the yard, so they overlap a little at the corner, the nearer
+ * (the barracks) in front.
+ */
+export const TALL: Layout = {
+  w: 196,
+  h: 352,
+  groundY: 84,
+  plots: {
+    mageTower: { x: 44, y: 190 },
+    treasury: { x: 142, y: 190 },
+    armoury: { x: 143, y: 314 },
+    barracks: { x: 56, y: 318 },
+  },
+  props: [
+    { sprite: 'well', x: 168, y: 348 },
+    { sprite: 'tree', x: 14, y: 350 },
+    { sprite: 'crates', x: 114, y: 350 },
+  ],
+  wallXs: [7],
+  mirrorWall: false,
+  gateX: 98,
+  flags: [
+    { x: 21, dir: 1 },
+    { x: 174, dir: -1 },
+  ],
+  paths: [{ x0: 82, y0: 80, x1: 114, y1: 104 }],
+  walk: { x0: 8, x1: 188, y0: 296, y1: 331 },
+  openTop: 14,
+};
+
+/** The arrangement for a screen: the tall yard when it is taller than wide. */
+export const layoutFor = (portrait: boolean): Layout => (portrait ? TALL : WIDE);
 
 /** Where a building's pictures are (file names without .png; one per stage). */
 export const spriteName = (id: BuildingId, stage: number): string => `${id}${stage}`;
@@ -62,25 +155,6 @@ export const VENTS: Record<BuildingId, readonly Vent[]> = {
     { fx: 0.5, fy: 0.35, stages: [3], kind: 'rune' },
   ],
 };
-
-/** The plain props of the yard (drawn with the buildings and heroes, sorted by their foot line). */
-export interface Prop {
-  sprite: 'well' | 'tree' | 'crates';
-  x: number;
-  y: number;
-}
-export const PROPS: readonly Prop[] = [
-  { sprite: 'well', x: 196, y: 236 },
-  { sprite: 'tree', x: 16, y: 330 },
-  { sprite: 'tree', x: 368, y: 334 },
-  { sprite: 'crates', x: 236, y: 336 },
-];
-
-/** The back wall and its gate. */
-export const WALL = { y: GROUND_Y, gateX: 192 };
-
-/** Where the heroes stroll: the open lawn in the middle (they pass behind the buildings, which are sorted in front of them). */
-export const WALK = { x0: 128, x1: 262, y0: 200, y1: 318 };
 
 /** The words a building's upgrade card shows for a level (0 = nothing built). */
 export function effectText(id: BuildingId, level: number): string {

@@ -2,9 +2,14 @@
 
 ## What it is
 - The Castle tab is a pixel-art courtyard (`src/castle.ts`, data in `src/render/castleSpots.ts`): sky and hills, a stone wall with a
-  gate, a lawn with a cobbled path and a well. One canvas, 384x340 scene pixels, drawn at a whole-number scale with nearest
-  neighbour (2 upright, which is as tall as the page so it pans across only; 2 sideways, where it pans both ways; up to 4 on a big
-  landscape screen). It opens centred on the yard, scrolled so the buildings are in view.
+  gate, a lawn with a cobbled path and a well. One canvas drawn at a whole-number scale with nearest neighbour, panned by native
+  scroll. **Two arrangements of the same pieces** (`Layout`, picked in `fit()` by `layoutFor(width < height)`):
+  - `TALL` (upright): 196 x 352 scene pixels, so at scale 2 it is exactly a phone wide and opens with all four buildings and their
+    tags in view, nothing clipped, no panning (it only pans down a little on a page shorter than about 310 scene rows). Tower and
+    treasury side by side under the wall, barracks and armoury side by side below them (the grand pair overlap by a corner, the nearer
+    in front), the heroes on the lawn at the bottom.
+  - `WIDE` (sideways, big screens): 384 x 340, scale 2 or more, pans both ways, opens on the lower middle.
+  A layout also names its wall, gate, pennants, cobbled patches, props, where heroes walk and the row to open on.
 - **Four upgrades, four plots** (`PLOTS`): Mage Tower and Treasury at the back, Barracks and Armoury in front. Each has
   four looks (`stageOf(id, level)`): 0 an empty plot (stakes, rope, stones; the tower's is a ruined ring with a faint rune circle),
   1 small, 2 bigger, 3 grand, reached in order and always at the top level (Treasury, Barracks and Armoury have 5 levels, the
@@ -13,7 +18,7 @@
 - **Tap a building** (or its name tag, which says the level and shows a green arrow when you can afford the next one) and its card
   opens over the scene: picture, level pips, what it gives, the effect now and at the next level (`effectText`), the cost and a Build button.
   Build does exactly what the old list's button did (`upgrade`, `saveMeta`, `refresh`), after closing the card.
-- **Everything the list offered stays**: Achievements and Settings chips and a "Reset tips" chip sit over the sky; the card repeats
+- **Everything the list offered stays**: Achievements and Settings chips and a "Reset tips" chip sit in a slim bar under the top bar (above the scene, so they cover nothing); the card repeats
   "each level" and "upgrades last for every run you start from now on". The old list (`buildingRow`) is gone.
 
 ## Life
@@ -42,7 +47,7 @@
 - **Offline**: the pictures are bundled into game.js as data URLs, so the service worker's `FILES` is unchanged.
 
 ## Tests
-- `test/castleScene.test.ts`: every upgrade has a plot inside the courtyard and none overlap; each building has plot, small,
+- `test/castleScene.test.ts`: in both layouts every upgrade has a plot inside the courtyard, the grand buildings fit inside it, and they overlap at most by a corner; the tall yard is no wider than a phone at scale 2 and its buildings fit one phone screen; each building has plot, small,
   bigger and grand looks, reached in order, grand at the top level; vents lie inside the picture; the card words grow with the level.
 - `node tools/castle/shots.mjs` (needs `npm run web`; `CARD=1` also takes the card and the build frames) makes the samples at 393x852 and
   852x393 with every upgrade at 0, part-built and maxed.
