@@ -23,5 +23,9 @@
     "esbuild": "^0.28.2",
     "pixi.js": "^8.21.0",
     "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@audiorective/core": "2.3.2",
+    "@audiorective/effects": "2.3.2"
   }
 }
