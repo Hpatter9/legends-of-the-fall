@@ -1,46 +1,132 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { boardOk, canStep, CLIMB_MAX, D, DEPLOY_ROWS, DIRS, standable, tileAt, W } from '../src/sim/board';
-import { buildChain, edgeOf, joinsOf, seam, stepOf, transferFormation, walkAcross, DRIFT_MAX } from '../src/sim/chain';
+import { boardTileAt, buildChain, contactPairs, footprint, frameOf, layRoad, MIN_CONTACT, seam, transferFormation, walkAcross, worldOf, type Section } from '../src/sim/chain';
+import { footDims, turnDir, turnTile, unturnTile, type Rot } from '../src/sim/turn';
 import { armyRun, chainOf, startStage } from '../src/sim/run';
 import { ARMIES } from '../src/sim/armies';
 import { mixSeed } from '../src/sim/rng';
 import { dropDelay, dropEnd, dropPose, FALL_MS, FALL_PX, stepMs } from '../src/render/dropRules';
+import { depthIn, facesRight, inFrame, project, rawAt } from '../src/render/iso';
 
 const road = (seed: number, n = 15) => buildChain(seed, n, 'highlands', (w) => mixSeed(seed, 0x57a6e, w), (w) => w % 5 === 0);
+const ROTS: Rot[] = [0, 1, 2, 3];
+const overlaps = (a: ReturnType<typeof footprint>, b: ReturnType<typeof footprint>) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+
+test('a turned board covers its footprint tile for tile, and turns back', () => {
+  for (const r of ROTS) {
+    const [fw, fd] = footDims(r);
+    assert.equal(fw * fd, W * D);
+    const seen = new Set<string>();
+    for (let v = 0; v < D; v++)
+      for (let u = 0; u < W; u++) {
+        const [a, b] = turnTile(r, u, v);
+        assert.ok(a >= 0 && b >= 0 && a < fw && b < fd);
+        seen.add(`${a},${b}`);
+        assert.deepEqual(unturnTile(r, a, b), [u, v]);
+      }
+    assert.equal(seen.size, W * D);
+    // (a quarter turn carries neighbours to neighbours: the board's steps are the world's, turned)
+    for (const [du, dv] of DIRS) {
+      const [a, b] = turnTile(r, 2, 3);
+      const [c, d] = turnTile(r, 2 + du, 3 + dv);
+      assert.deepEqual([c - a, d - b], turnDir(r, du, dv));
+    }
+  }
+  assert.deepEqual(turnTile(0, 4, 5), [4, 5]);
+});
+
+test('the heroes always face the foes across the screen, in every turn, and the first section is as it always was', () => {
+  for (const r of ROTS) {
+    const f = { rot: r, ou: 0, ov: 0 };
+    inFrame(f, () => {
+      // heroes face -v (dir 3), foes +v (dir 1): never the same way on the screen
+      assert.notEqual(facesRight(3), facesRight(1));
+      // and the hero's look is toward the foe's tile
+      const [hx] = project(f, 3, D - 1, 0);
+      const [fx] = project(f, 3, 0, 0);
+      if (Math.abs(hx - fx) > 1) assert.equal(facesRight(3), fx > hx, `rot ${r}`);
+      // dir 0 (+u) and dir 2 (-u) are opposite, as are 1 and 3
+      assert.notEqual(facesRight(0), facesRight(2));
+    });
+  }
+  inFrame({ rot: 0, ou: 0, ov: 0 }, () => assert.deepEqual([0, 1, 2, 3].map((d) => facesRight(d)), [true, false, false, true]));
+  // (the home frame draws as the old projection did)
+  assert.deepEqual(rawAt(3, 5, 2), [(3 - 5) * 32, (3 + 5) * 16 - 24]);
+});
+
+test('a nearer tile of a turned board is drawn later', () => {
+  for (const r of ROTS) {
+    const f = { rot: r, ou: 2, ov: -3 };
+    for (let v = 0; v < D; v++)
+      for (let u = 0; u < W; u++) {
+        const [a, b] = turnTile(r, u, v);
+        assert.equal(depthIn(f, u, v), (a + 2 + b - 3) * 10);
+        // (one step on the screen's diagonal further down is later)
+        const [x, y] = project(f, u, v, 0);
+        assert.deepEqual([x, y], rawAt(a + 2, b - 3, 0));
+      }
+  }
+});
 
 test('the road is the same for the same seed, and differs between seeds', () => {
   assert.deepEqual(road(7), road(7));
-  assert.notDeepEqual(road(7).map((s) => s.board.tiles.map((t) => t.h)), road(8).map((s) => s.board.tiles.map((t) => t.h)));
-  assert.notDeepEqual(joinsOf(1, 15), joinsOf(2, 15));
+  assert.notDeepEqual(layRoad(1, 15), layRoad(2, 15));
 });
 
-test('the first section is the board a wave always had', () => {
+test('the first section is the board a wave always had, not turned, with the heroes in the southwest', () => {
   const c = road(11);
   assert.equal(c[0].join, null);
+  assert.equal(c[0].rot, 0);
+  assert.deepEqual(c[0].origin, { u: 0, v: 0 });
   assert.equal(c.length, 15);
   assert.equal(c[0].board.tiles.length, W * D);
 });
 
-test('every joined edge can be walked across, and every section stays one region', () => {
-  for (let seed = 1; seed <= 60; seed++) {
+test('the road never overlaps itself, never turns back on the edge it came in by, and stays compact: 1000 seeds', () => {
+  const dirs = new Set<string>();
+  let widest = 0;
+  for (let seed = 1; seed <= 1000; seed++) {
+    const places = layRoad(seed, 15);
+    assert.deepEqual(layRoad(seed, 15), places, `seed ${seed} is not repeatable`);
+    const rects = places.map((p) => footprint({ rot: p.rot, origin: { u: p.ou, v: p.ov } } as Section));
+    for (let a = 0; a < rects.length; a++) for (let b = 0; b < a; b++) assert.ok(!overlaps(rects[a], rects[b]), `seed ${seed}: ${a + 1} overlaps ${b + 1}`);
+    for (let k = 1; k < places.length; k++) {
+      const p = places[k - 1];
+      const n = places[k];
+      // (the new heroes' edge is against the old section, and the old section's own heroes' edge is not the one it uses)
+      const back = turnDir(p.rot, 0, 1);
+      const away = turnDir(n.rot, 0, -1);
+      assert.notDeepEqual([-away[0], -away[1]], back, `seed ${seed}: ${k + 1} doubles back`);
+      dirs.add(`${n.rot}`);
+    }
+    const x0 = Math.min(...rects.map((r) => r.x0));
+    const x1 = Math.max(...rects.map((r) => r.x1));
+    const y0 = Math.min(...rects.map((r) => r.y0));
+    const y1 = Math.max(...rects.map((r) => r.y1));
+    widest = Math.max(widest, x1 - x0, y1 - y0);
+  }
+  // (every way of lying turns up, and a 15-section road fits in about five sections' width)
+  assert.equal(dirs.size, 4);
+  assert.ok(widest <= 48, `the road reached ${widest} tiles across`);
+});
+
+test('every joined edge meets enough of the section before, within a step, with a way across', () => {
+  for (let seed = 1; seed <= 150; seed++) {
     const c = road(seed);
     for (let k = 1; k < c.length; k++) {
-      const { board, offset } = seam(c[k - 1].board, c[k].board, c[k].join!);
-      assert.ok(boardOk(c[k].board), `seed ${seed} section ${k + 1}`);
-      // every tile across the seam from another is within a climb, and at least one pair can be stepped
+      const pairs = contactPairs(c[k - 1], c[k]);
+      assert.ok(pairs.length >= MIN_CONTACT, `seed ${seed} join ${k + 1} touches ${pairs.length}`);
       let open = 0;
-      const edge = edgeOf(c[k].board, c[k].join!);
-      edge.forEach((idx) => {
-        const u = idx % W;
-        const v = Math.floor(idx / W);
-        const [du, dv] = c[k].join === 'ne' ? DIRS[1] : DIRS[0];
-        const n = tileAt(board, u + du, v + dv)!;
-        assert.ok(Math.abs(n.h - board.tiles[v * board.w + u].h) <= 1, `seed ${seed} join ${k + 1}`);
-        if (canStep(board.tiles[v * board.w + u], n, 2) !== null) open++;
-      });
-      assert.ok(open >= 5, `seed ${seed} join ${k + 1} has ${open} open tiles`);
-      assert.deepEqual(offset, c[k].join === 'ne' ? { u: 0, v: D } : { u: W, v: 0 });
+      for (const { n, p } of pairs) {
+        const tn = c[k].board.tiles[n[1] * W + n[0]];
+        const tp = c[k - 1].board.tiles[p[1] * W + p[0]];
+        assert.ok(Math.abs(tn.h - tp.h) <= 1, `seed ${seed} join ${k + 1}`);
+        assert.ok(!tn.rock && !tn.ground, 'the joined edge is clear');
+        if (canStep(tp, tn, 2) !== null && canStep(tn, tp, 2) !== null) open++;
+      }
+      assert.ok(open >= 1, `seed ${seed} join ${k + 1} has no way across`);
+      assert.ok(boardOk(c[k].board), `seed ${seed} section ${k + 1}`);
       for (let v = 0; v < D; v++)
         for (let u = 0; u < W; u++)
           for (const [du, dv] of DIRS) {
@@ -51,23 +137,57 @@ test('every joined edge can be walked across, and every section stays one region
   }
 });
 
-test('a hero can walk from the old formation to the new one over the seam', () => {
-  for (let seed = 1; seed <= 30; seed++) {
-    const c = road(seed, 6);
+test('heroes arrive on the edge joined to the road and face along it', () => {
+  for (let seed = 1; seed <= 100; seed++) {
+    const c = road(seed);
     for (let k = 1; k < c.length; k++) {
+      // the deploy rows are against the section before; the foes' row is the far side
+      const near = worldOf(c[k], 3, D - 1);
+      const far = worldOf(c[k], 3, 0);
+      const back = worldOf(c[k - 1], 3, 4);
+      const fp = footprint(c[k - 1]);
+      const dist = (a: number[]) => Math.abs(a[0] - (fp.x0 + fp.x1) / 2) + Math.abs(a[1] - (fp.y0 + fp.y1) / 2);
+      assert.ok(dist(near) < dist(far), `seed ${seed} section ${k + 1}: deploy rows are not the near edge`);
+      assert.ok(back);
+    }
+  }
+});
+
+test('a hero can walk from the old formation to the new one over the seam, in every direction', () => {
+  const joins = new Set<string>();
+  for (let seed = 1; seed <= 60; seed++) {
+    const c = road(seed, 8);
+    for (let k = 1; k < c.length; k++) {
+      joins.add(c[k].join!);
       const from = { u: 3, v: 8 };
-      // (any standable tile of the old deploy rows to any standable tile of the new)
       for (let v = D - DEPLOY_ROWS; v < D; v++)
         for (let u = 0; u < W; u++) {
           if (!standable(tileAt(c[k - 1].board, from.u, from.v)) || !standable(tileAt(c[k].board, u, v))) continue;
-          const p = walkAcross(c[k - 1].board, c[k].board, c[k].join!, from, { u, v }, 2);
-          const off = stepOf(c[k].join!);
-          assert.deepEqual(p[0], { u: from.u - off.u, v: from.v - off.v });
-          assert.deepEqual(p[p.length - 1], { u, v });
+          const p = walkAcross(c[k - 1], c[k], from, { u, v }, 2);
+          const [fu, fv] = worldOf(c[k - 1], from.u, from.v);
+          const [tu, tv] = worldOf(c[k], u, v);
+          assert.deepEqual(p[0], { u: fu, v: fv });
+          assert.deepEqual(p[p.length - 1], { u: tu, v: tv });
           assert.ok(p.length > 2, 'the walk crosses the seam');
           for (let i = 1; i < p.length; i++) assert.equal(Math.abs(p[i].u - p[i - 1].u) + Math.abs(p[i].v - p[i - 1].v), 1);
         }
     }
+  }
+  assert.ok(joins.size >= 3, `joins seen: ${[...joins]}`);
+});
+
+test('the seam board holds both sections, tile for tile', () => {
+  const c = road(3, 4);
+  for (let k = 1; k < c.length; k++) {
+    const { board, minU, minV } = seam(c[k - 1], c[k]);
+    for (const s of [c[k - 1], c[k]])
+      for (let v = 0; v < D; v++)
+        for (let u = 0; u < W; u++) {
+          const [U, V] = worldOf(s, u, v);
+          assert.equal(board.tiles[(V - minV) * board.w + (U - minU)], s.board.tiles[v * W + u]);
+          assert.deepEqual(boardTileAt(s, U, V), [u, v]);
+        }
+    assert.deepEqual(frameOf(c[k], c[k]), { rot: c[k].rot, ou: 0, ov: 0 });
   }
 });
 
@@ -104,36 +224,7 @@ test('a formation tile that is not free is replaced by the nearest free deploy t
   assert.deepEqual(got.get('2'), [3, 7]);
 });
 
-test('fifteen sections wind without overlapping, and the road does not run away to a side', () => {
-  for (let seed = 1; seed <= 200; seed++) {
-    const c = road(seed);
-    const seen = new Set<string>();
-    for (const s of c) {
-      for (let v = 0; v < D; v++) for (let u = 0; u < W; u++) {
-        const key = `${s.origin.u + u},${s.origin.v + v}`;
-        assert.ok(!seen.has(key), `seed ${seed}: section ${s.wave} overlaps at ${key}`);
-        seen.add(key);
-      }
-    }
-    assert.equal(seen.size, 15 * W * D);
-    // (each section's rectangle meets the one before along a whole edge)
-    for (let k = 1; k < c.length; k++) {
-      const s = stepOf(c[k].join!);
-      assert.deepEqual({ u: c[k].origin.u - c[k - 1].origin.u, v: c[k].origin.v - c[k - 1].origin.v }, s);
-    }
-    let drift = 0;
-    let worst = 0;
-    for (const j of joinsOf(seed, 15)) {
-      if (j) drift += j === 'ne' ? 1 : -1;
-      worst = Math.max(worst, Math.abs(drift));
-    }
-    assert.ok(worst <= DRIFT_MAX, `seed ${seed} drifted ${worst}`);
-    // (and it bends: not all one way)
-    assert.ok(new Set(joinsOf(seed, 15)).size === 3, `seed ${seed} never bends`);
-  }
-});
-
-test('an army run fights each wave on its section of the long map', () => {
+test('an army run fights each wave on its section of the long map, in the board\'s own coordinates', () => {
   const army = ARMIES[0];
   const run = armyRun(99, army.id);
   const c = chainOf(run)!;
@@ -143,6 +234,8 @@ test('an army run fights each wave on its section of the long map', () => {
     const b = startStage(run);
     assert.deepEqual(b.board.tiles, c[w - 1].board.tiles);
     assert.notEqual(b.board, c[w - 1].board);
+    // (the fight is as ever: foes in the rows at v = 0, heroes to deploy at the rows from v = 6)
+    for (const u of b.units) assert.ok(u.v < DEPLOY_ROWS);
   }
   // (retrying a wave replays the same section)
   run.stage = 3;
@@ -159,19 +252,19 @@ test('only armies have a long map', () => {
 });
 
 test('columns fall one row after another from the joined edge, each lands once and nothing flashes', () => {
-  for (const join of ['ne', 'nw'] as const) {
+  {
     // the joined edge lands first
-    const edge = join === 'ne' ? [3, D - 1] : [W - 1, 4];
-    const far = join === 'ne' ? [3, 0] : [0, 4];
-    assert.ok(dropDelay(join, edge[0], edge[1]) < dropDelay(join, far[0], far[1]));
+    const edge = [3, D - 1];
+    const far = [3, 0];
+    assert.ok(dropDelay(edge[0], edge[1]) < dropDelay(far[0], far[1]));
     for (let v = 0; v < D; v++)
       for (let u = 0; u < W; u++) {
-        const d = dropDelay(join, u, v);
-        assert.ok(d >= 0 && d < dropEnd(join));
+        const d = dropDelay(u, v);
+        assert.ok(d >= 0 && d < dropEnd());
         let landedAt = -1;
         let prevAlpha = 0;
         let prevY = -Infinity;
-        for (let t = 0; t <= dropEnd(join) + 100; t += 10) {
+        for (let t = 0; t <= dropEnd() + 100; t += 10) {
           const p = dropPose(t, d);
           // (it fades in and stays: the alpha never drops)
           assert.ok(p.alpha >= prevAlpha);
@@ -184,10 +277,10 @@ test('columns fall one row after another from the joined edge, each lands once a
           assert.ok(p.dy <= 0 && p.dy >= -FALL_PX);
         }
         assert.ok(landedAt >= d + FALL_MS && landedAt < d + FALL_MS + 20);
-        assert.deepEqual(dropPose(dropEnd(join) + 500, d), { dy: 0, alpha: 1, landed: true });
+        assert.deepEqual(dropPose(dropEnd() + 500, d), { dy: 0, alpha: 1, landed: true });
       }
   }
-  assert.ok(dropEnd('ne') < 2000, 'the whole section is down in under two seconds');
+  assert.ok(dropEnd() < 2000, 'the whole section is down in under two seconds');
 });
 
 test('a walk step lasts a hero\'s own pace, within bounds', () => {

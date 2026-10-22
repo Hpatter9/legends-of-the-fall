@@ -51,16 +51,16 @@ import { bindSpellbook } from './spellbook';
 import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
 import { ChainView } from './render/chainView';
-import { transferFormation } from './sim/chain';
+import { against, frameOf, transferFormation } from './sim/chain';
 import { closestTrait, countTraits, kindsOf, nextTierLine, traitsOf, TRAITS } from './sim/traits';
 import { placeSynergies, startSynergies } from './synergyView';
 import { UnitSprite } from './render/unitView';
 import { flyUp, recyclePuff, summonBurst } from './render/uiFx';
 import { Fx, loadFx } from './render/fx';
-import { framesOf, loadSheets, portrait, sheetInfo } from './render/sheets';
+import { framesOf, loadSheets, portrait, sheetInfo, wholeFigure } from './render/sheets';
 import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, framing, PAUSE_MS, settle, viewFor, type View } from './render/cameraRules';
 import { titleOf } from './render/bossTitles';
-import { at, FOOT, HH, TH, TW } from './render/iso';
+import { at, depth, FOOT, HH, rawAt, setFrame, TH, TW } from './render/iso';
 import { bindDuck, bindMute, play, playEvents, setAct, setScene, setup, startFight } from './render/sound';
 import { sceneOf } from './render/audioRules';
 import { colLeft, viewH, viewW } from './viewport';
@@ -286,6 +286,9 @@ class Game {
     this.chain.finish();
     this.walking.clear();
     this.b = startStage(this.run);
+    // (an army's section may lie turned on the long map: everything is drawn and tapped through its frame)
+    const section = chainOf(this.run)?.[this.run.stage - 1];
+    setFrame(section ? frameOf(section, section) : undefined);
     this.settled = false;
     this.endWait = 0;
     this.pendingLoss = false;
@@ -305,7 +308,7 @@ class Game {
     // (an auto-replay keeps the speed it is at from wave to wave)
     this.setSpeed(this.auto ? this.speed : settings().speed);
     this.fx.clear();
-    this.boardView.build(this.b.board, { boss: !!armyOfRun(this.run) && isBossRun(this.run) });
+    this.boardView.build(this.b.board, { boss: !!armyOfRun(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
     this.syncChain();
     setBackdrop(this.b.board.area);
     showTwistBanner(this.run.tower?.cur?.fight?.twist);
@@ -340,6 +343,17 @@ class Game {
       return goal ? [{ unit, goal }] : [];
     });
     this.walking = new Set(walkers.map((w) => w.unit.id));
+    // (the finished fight's fallen are still drawn, where the old section lies against the new one)
+    setFrame(frameOf(c[wave - 1], next));
+    // (and the camera stays on the same ground, which has moved in the world against the new section)
+    const lie = against(c[wave - 1], next);
+    const [dx, dy] = rawAt(lie.u, lie.v, 0);
+    this.cx += dx;
+    this.cy += dy;
+    this.tx += dx;
+    this.ty += dy;
+    this.held = null;
+    this.bbox = { x0: this.bbox.x0 + dx, x1: this.bbox.x1 + dx, y0: this.bbox.y0 + dy, y1: this.bbox.y1 + dy };
     document.body.dataset.move = '1';
     this.chain.begin(c, wave - 1, walkers, () => delete document.body.dataset.move);
     this.survey = false;
@@ -366,19 +380,34 @@ class Game {
     const card = $('bossCard');
     const def = UNITS[boss.def];
     card.classList.toggle('elite', !!elite);
-    card.querySelector('b')!.textContent = (elite ? elite.name : def.name).toUpperCase();
+    const name = (elite ? elite.name : def.name).toUpperCase();
+    const nameEl = card.querySelector('b')!;
+    nameEl.textContent = name;
+    // (the name's size, a multiple of 12, the largest whose longest word fits the ribbon and that takes two lines at most (three at 24px); the
+    // face's glyphs are two thirds of the size wide, plus the letter spacing, and the ribbon's ends take 148px)
+    const room = Math.min(viewW(), 640) - 12 - 148;
+    const fits = (px: number) => {
+      const per = (px * 2) / 3 + (px >= 36 ? 4 : 2);
+      const cols = Math.floor(room / per);
+      const words = name.split(' ');
+      if (words.some((w) => w.length > cols)) return false;
+      let lines = 1;
+      let used = 0;
+      for (const w of words) {
+        if (used && used + 1 + w.length > cols) (lines++, (used = w.length));
+        else used += (used ? 1 : 0) + w.length;
+      }
+      return lines <= (px <= 24 ? 3 : 2);
+    };
+    const px = [48, 36, 24].find(fits) ?? 12;
+    nameEl.style.fontSize = `${px}px`;
+    nameEl.style.letterSpacing = `${px >= 36 ? 4 : 2}px`;
     card.querySelector('span')!.textContent = elite ? elite.epithet : titleOf(boss.def);
-    // (the portrait is cropped from the sheet and scaled up by a whole number, so its pixels stay square)
+    // (the whole figure, weapons and all, at a whole-number scale: up to 80% of the width and 38% of the height, so nothing is cut)
     const info = sheetInfo(def.sheet);
-    const side = info ? Math.min(info.figure + 6, info.h) : 64;
-    // (about 48% of the width; at least once over, at most 90% of the width)
-    const want = viewW() * 0.48;
-    const n = Math.max(1, Math.min(Math.round(want / side), Math.floor((viewW() * 0.9) / side)));
     const old = card.querySelector('canvas')!;
-    const face = portrait(def.sheet, side * n);
-    // (the sheets face right; a boss that faces left looks the other way)
-    face.style.width = face.style.height = `${side * n}px`;
-    if (info && !info.facesRight) face.style.transform = 'scaleX(-1)';
+    // (the sheets face right; a boss that faces left looks the other way, mirrored in the drawing so the slide-in keeps it)
+    const face = wholeFigure(def.sheet, viewW() * 0.8, viewH() * 0.38, !!info && !info.facesRight);
     old.replaceWith(face);
     card.classList.remove('out');
     card.hidden = false;
@@ -775,20 +804,23 @@ class Game {
     const b = this.b.board;
     const wx = (sx - colLeft() - this.world.x) / this.world.scale.x;
     const wy = (sy - this.world.y) / this.world.scale.y;
-    // (front to back: a column in front hides the tops behind it)
-    for (let d = b.w + b.d - 2; d >= 0; d--)
+    // (the nearest column under the point wins: a column in front hides the tops behind it)
+    let best: [number, number] | null = null;
+    let nearest = -Infinity;
+    for (let v = 0; v < b.d; v++)
       for (let u = 0; u < b.w; u++) {
-        const v = d - u;
-        const t = tileAt(b, u, v);
-        if (!t) continue;
+        const t = tileAt(b, u, v)!;
         const [x, y] = at(u, v, t.h);
         const dx = Math.abs(wx - x) / (TW / 2);
         if (dx > 1) continue;
-        if (dx + Math.abs(wy - y) / (TH / 2) <= 1) return [u, v];
-        // (the column's sides, below its top's left and right edges)
-        if (wy > y && wy < y + TH / 2 * (1 - dx) + t.h * HH + FOOT) return [u, v];
+        // (the top, or the column's sides below its top's left and right edges)
+        const hit = dx + Math.abs(wy - y) / (TH / 2) <= 1 || (wy > y && wy < y + (TH / 2) * (1 - dx) + t.h * HH + FOOT);
+        if (hit && depth(u, v) > nearest) {
+          nearest = depth(u, v);
+          best = [u, v];
+        }
       }
-    return null;
+    return best;
   }
 
   /** The placed hero under a point on the screen. */
