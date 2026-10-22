@@ -1520,7 +1520,7 @@ KITS.forgeTitan = {
 // The named elites of the tower (`elites.ts`) borrow the foes' skills and heroes' skills too.
 Object.assign(KITS, eliteKits(KITS), calBossKits(KITS));
 
-export const kitOf = (u: Unit): Kit | undefined => KITS[u.def];
+export const kitOf = (u: Unit): Kit | undefined => u.kit ?? KITS[u.def];
 
 /** A free hero whose charge is full lets its skill go, if there is something to use it on. */
 export function tryCast(b: Battle, me: Unit, out: BattleEvent[]): boolean {

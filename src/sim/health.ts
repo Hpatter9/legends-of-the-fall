@@ -2,6 +2,7 @@
 // (`run.tower.hp`, by roster id; a hero not listed is whole). A hero that falls in a fight comes back to its feet at
 // `FALLEN` of its hp. Pure rules: no Pixi, no DOM; it imports only the Run's type.
 
+import { ascOf, ascRules } from './ascension';
 import type { Run } from './run';
 
 /** The share of its hp a hero that fell in a fight is carried off with. */
@@ -12,10 +13,11 @@ const LEAST = 0.05;
 /** A hero's share of its hp (1 outside the tower). */
 export const hpShare = (run: Run, id: number): number => run.tower?.hp[String(id)] ?? 1;
 
-/** Heal every hero of the roster by `frac` of its full hp, a fallen one included. */
-export function healParty(run: Run, frac: number): void {
+/** Heal every hero of the roster by `frac` of its full hp, a fallen one included (an ascended calamity halves it, an elixir `whole` excepted). */
+export function healParty(run: Run, frac: number, whole = false): void {
   const t = run.tower;
   if (!t) return;
+  if (!whole) frac *= ascRules(ascOf(run)).heal;
   for (const h of run.roster) {
     const now = hpShare(run, h.id);
     if (now < 1) t.hp[String(h.id)] = Math.min(1, now + frac);
