@@ -18,6 +18,8 @@ import { UNITS } from './sim/units';
 import { drawArmies } from './armiesView';
 import { drawChestStash } from './chestStash';
 import { drawAchievements } from './achievementsView';
+import { drawCodex, stopCodex } from './codexView';
+import { claimCodex, codexWaiting, gotOf, totalOf } from './sim/codex';
 import { todayKey } from './modes';
 import { openSettings } from './settings';
 import { resetTipsButton, tips } from './tips';
@@ -343,7 +345,12 @@ export class Home {
     const set = el('button', 'ctChip');
     set.append(el('span', 'gearIcon', '⚙'), el('b', '', 'Settings'));
     set.addEventListener('click', () => openSettings());
-    row.append(ach, set, resetTipsButton());
+    // (the codex sits by the achievements: both are the records of the castle's library of deeds; its badge shows a milestone to claim)
+    const cdx = el('button', 'ctChip');
+    cdx.append(icon(ICONS.spells), el('b', '', 'Codex'), el('small', '', `${gotOf(m, 'bestiary') + gotOf(m, 'heroes')}/${totalOf('bestiary') + totalOf('heroes')}`));
+    if (codexWaiting(m).length) cdx.append(el('i', 'badge'));
+    cdx.addEventListener('click', () => this.openCodex());
+    row.append(ach, cdx, set, resetTipsButton());
     bar.append(row, el('div', 'ctHelp', 'tap a building to upgrade it · drag to look round'));
   }
 
@@ -508,10 +515,29 @@ export class Home {
     this.openSub('Achievements', draw);
   }
 
+  /** The codex page; a Claim takes a milestone's crowns, saves, and draws the page again. */
+  private openCodex(): void {
+    const draw = (b: HTMLElement) =>
+      drawCodex(b, this.meta, (id) => {
+        if (!claimCodex(this.meta, id)) return;
+        saveMeta(this.meta);
+        play('coinClaim');
+        const keep = b.scrollTop;
+        b.replaceChildren();
+        draw(b);
+        b.scrollTop = keep;
+        this.refresh();
+      });
+    this.openSub('Codex', draw, false);
+    $('hmSub').classList.add('codex');
+  }
+
   private openSub(title: string, draw: (body: HTMLElement) => void, achievements = true, full = false): void {
     $('hmSub').hidden = false;
     // (the armies fill the page between the top bar and the tabs, with no header of their own)
     $('hmSub').classList.toggle('armies', full);
+    $('hmSub').classList.remove('codex');
+    stopCodex();
     $('hmSubBody').classList.remove('asBody');
     $('hmSubTitle').textContent = title;
     const body = $('hmSubBody');
@@ -528,6 +554,7 @@ export class Home {
   }
 
   private closeSub(): void {
+    stopCodex();
     $('hmSub').hidden = true;
     this.hooks.onScene?.();
   }

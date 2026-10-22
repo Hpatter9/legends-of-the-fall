@@ -14,6 +14,7 @@ import { readEquipment, readEquipped, type EquipSlot, type Equipment } from './e
 import { migrateArmies, readSeen, seenFor, type ArmyRecord } from './armies';
 import { readStash } from './armyStars';
 import { readTalents, type KindTalents } from './talents';
+import { readCodex, readCodexClaimed, type CodexRecord } from './codex';
 
 export const PULL_COST = 100;
 export const PULL10_COST = 900;
@@ -83,6 +84,9 @@ export interface Meta {
   nextItem?: number;
   /** The talents each hero kind has taken and the points it bought with shards (`talents.ts`; missing is none). */
   talents?: Record<string, KindTalents>;
+  /** The codex: the foe kinds met and the kills per kind (`codex.ts`; saves from before have none), and the milestone rewards claimed. */
+  codex?: CodexRecord;
+  codexClaimed?: string[];
   /** Chests earned from the armies' star milestones and not yet opened, oldest first (`armyStars.ts`). */
   stash: StashChest[];
 }
@@ -282,6 +286,9 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.talents = readTalents(m.talents, m);
       // (saves from before the army chests have an empty stash; a chest given but not opened by an earlier format goes into it)
       m.stash = readStash(m.stash, rawArmies, m.seed);
+      // (saves from before the codex have none)
+      m.codex = readCodex(m.codex);
+      m.codexClaimed = readCodexClaimed(m.codexClaimed) ?? [];
       return m;
     }
   } catch {
