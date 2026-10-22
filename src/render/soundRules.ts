@@ -172,10 +172,10 @@ export type Weight = 'light' | 'sword' | 'heavy' | 'spear' | 'fist' | 'bone';
  *  thrust, fists thump, the skeletons clack, daggers and claws of the quick are light, and the rest are swords. */
 export function weightOf(name: string): Weight {
   if (/skeleton/i.test(name)) return 'bone';
-  if (/ogre|brute|minotaur|warlord|demon lord|boar|werewolf|barbarian|treant|forest boss|gorgon/i.test(name)) return 'heavy';
+  if (/ogre|brute|minotaur|warlord|demon lord|boar|werewolf|barbarian|treant|forest boss|gorgon|juggernaut|tyrant|siege bot|shambler|dire wolf/i.test(name)) return 'heavy';
   if (/monk/i.test(name)) return 'fist';
-  if (/spear|peasant|yamabushi|staff|cleric/i.test(name)) return 'spear';
-  if (/kunoichi|karasu|kitsune|imp|assassin|illusionist|decoy/i.test(name)) return 'light';
+  if (/spear|peasant|yamabushi|staff|cleric|lancer|dragoon/i.test(name)) return 'spear';
+  if (/kunoichi|karasu|kitsune|imp|assassin|illusionist|decoy|reaper|arc blade|buccaneer|mercenary/i.test(name)) return 'light';
   return 'sword';
 }
 

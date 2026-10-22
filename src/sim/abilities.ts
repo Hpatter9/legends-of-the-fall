@@ -101,6 +101,14 @@ export interface Passive {
   far?: number;
   /** A blow also hits the foe right behind its target, for this share. */
   through?: number;
+  /** Its blows slow the foe for this many ms. */
+  slow?: number;
+  /** Every `every` ms the ally with the least skill charge near it gains `charge`. */
+  tune?: { every: number; charge: number };
+  /** The allies within 2 tiles (and it) take this much less from every blow. */
+  halo?: number;
+  /** Once a fight, when it would fall it rises with this share of its health. */
+  undying?: number;
 }
 
 export interface Skill {
@@ -219,10 +227,10 @@ function iaido(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   return true;
 }
 
-/** Kunoichi: slips behind the weakest foe and backstabs it. */
-function shadowStep(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+/** A blink behind a foe (the first `order` puts first that has a free tile beside it) and a backstab for `mult` of the attack. */
+function blinkStrike(b: Battle, me: Unit, out: BattleEvent[], mult: number, order: (x: Unit, y: Unit) => number): boolean {
   const def = defOf(me);
-  const foes = foesOf(b, me).sort((x, y) => x.hp - y.hp || x.id - y.id);
+  const foes = foesOf(b, me).sort(order);
   for (const f of foes) {
     const hf = tileOf(b, f).h;
     // behind is where a foe's facing points away from; then its sides, then its front
@@ -244,12 +252,17 @@ function shadowStep(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     me.step = undefined;
     me.facing = wayTo(me, f);
     out.push({ kind: 'blink', by: me.id, from, to });
-    const power = atkOf(me) * 1.8 * blowMult(tileOf(b, me).h, hf, me.facing, f.facing);
+    const power = atkOf(me) * mult * blowMult(tileOf(b, me).h, hf, me.facing, f.facing);
     hurt(b, me, f, net(power, f), true, false, out, 'skill');
     return true;
   }
   return false;
 }
+
+/** Kunoichi: slips behind the weakest foe and backstabs it. */
+const shadowStep = (b: Battle, me: Unit, out: BattleEvent[]) => blinkStrike(b, me, out, 1.8, (x, y) => x.hp - y.hp || x.id - y.id);
+/** Mercenary: slips beside the strongest foe (the hardest hitter) and cuts it for its bounty. */
+const bountyHunt = (b: Battle, me: Unit, out: BattleEvent[]) => blinkStrike(b, me, out, 1.9, (x, y) => atkOf(y) - atkOf(x) || x.id - y.id);
 
 /** Archer: arrows rain on a 3x3 of tiles a moment after the call, on whoever is standing there. */
 const VOLLEY_MS = 700;
@@ -460,14 +473,22 @@ export const frenzyOf = (b: Battle, u: Unit): number => {
 
 /** Minotaur: charges up a line of up to four tiles at the weakest foe it meets, hits it for double, knocks it back and stuns it. */
 const CHARGE_TILES = 4;
-function goreCharge(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+interface ChargeOpts {
+  tiles: number;
+  mult: number;
+  stun: boolean;
+  knock: boolean;
+  /** Ms of haste the charger gains afterwards. */
+  haste: number;
+}
+function chargeAt(b: Battle, me: Unit, out: BattleEvent[], o: ChargeOpts): boolean {
   const def = defOf(me);
   let best: { way: number; land: At; f: Unit } | undefined;
   for (let way = 0; way < 4; way++) {
     const [du, dv] = DIR[way];
     let h = tileOf(b, me).h;
     let land: At = { u: me.u, v: me.v };
-    for (let i = 1; i <= reachOf(me, CHARGE_TILES); i++) {
+    for (let i = 1; i <= reachOf(me, o.tiles); i++) {
       const n = { u: me.u + du * i, v: me.v + dv * i };
       const t = tileAt(b.board, n.u, n.v);
       if (!t || !standable(t) || Math.abs(t.h - h) > def.jump) break;
@@ -484,7 +505,7 @@ function goreCharge(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const { way, land, f } = best;
   const from = { u: me.u, v: me.v };
   const h0 = tileOf(b, me).h;
-  const power = atkOf(me) * 2 * blowMult(h0, tileOf(b, f).h, way, f.facing);
+  const power = atkOf(me) * o.mult * blowMult(h0, tileOf(b, f).h, way, f.facing);
   me.facing = way;
   if (land.u !== from.u || land.v !== from.v) {
     me.step = { u: from.u, v: from.v, h: h0, at: b.t, ms: 260 };
@@ -493,9 +514,16 @@ function goreCharge(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     out.push({ kind: 'dash', by: me.id, from, to: land });
   }
   hurt(b, me, f, net(power, f), true, false, out, 'skill');
+  if (o.haste) {
+    me.hasteUntil = Math.max(me.hasteUntil ?? 0, b.t + durOf(me, o.haste));
+    out.push({ kind: 'haste', to: me.id, ms: durOf(me, o.haste) });
+  }
   if (!f.alive) return true;
-  f.busyUntil = Math.max(f.busyUntil, b.t + durOf(me, STUN_MS));
-  f.stunUntil = b.t + durOf(me, STUN_MS);
+  if (o.stun) {
+    f.busyUntil = Math.max(f.busyUntil, b.t + durOf(me, STUN_MS));
+    f.stunUntil = b.t + durOf(me, STUN_MS);
+  }
+  if (!o.knock) return true;
   const to = { u: f.u + DIR[way][0], v: f.v + DIR[way][1] };
   const t = tileAt(b.board, to.u, to.v);
   if (kitOf(f)?.passive.steady || !t || !standable(t) || unitAt(b, to.u, to.v)) return true;
@@ -504,6 +532,10 @@ function goreCharge(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   f.v = to.v;
   return true;
 }
+
+const goreCharge = (b: Battle, me: Unit, out: BattleEvent[]) => chargeAt(b, me, out, { tiles: CHARGE_TILES, mult: 2, stun: true, knock: true, haste: 0 });
+/** Lancer: the same charge with a couched lance (no shove, no stun), and the rider gallops faster for a while after. */
+const lanceCharge = (b: Battle, me: Unit, out: BattleEvent[]) => chargeAt(b, me, out, { tiles: 5, mult: 2.2, stun: false, knock: false, haste: 3000 });
 
 /** Satyr: its pipes hasten the allies within three tiles (itself too) for a while. It needs an ally to play to. */
 const SONG_REACH = 3;
@@ -686,13 +718,17 @@ function soulNova(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 const SHARD_REACH = 2;
 const SHARD_MS = 1200;
 function shardBurst(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const near = foesOf(b, me).filter((f) => apart(me, f) <= SHARD_REACH);
+  return burstAround(b, me, out, SHARD_REACH, 1.0, SHARD_MS);
+}
+/** Every foe within `reach` is hurt for `mult` of the attack and held still for `ms`. */
+function burstAround(b: Battle, me: Unit, out: BattleEvent[], reach: number, mult: number, ms: number): boolean {
+  const near = foesOf(b, me).filter((f) => apart(me, f) <= reach);
   if (!near.length) return false;
   for (const f of near) {
-    hurt(b, me, f, net(atkOf(me) * 1.0, f), false, false, out, 'skill');
+    hurt(b, me, f, net(atkOf(me) * mult, f), false, false, out, 'skill');
     if (!f.alive) continue;
-    f.busyUntil = Math.max(f.busyUntil, b.t + SHARD_MS);
-    f.stunUntil = b.t + SHARD_MS;
+    f.busyUntil = Math.max(f.busyUntil, b.t + ms);
+    f.stunUntil = b.t + ms;
   }
   return true;
 }
@@ -721,8 +757,12 @@ function benediction(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 }
 
 /** Druid: a treant rises beside her (one at a time) and fights for her side. */
-function callTreant(b: Battle, me: Unit): boolean {
-  if (b.units.filter((x) => x.alive && x.side === me.side && x.def === 'treant').length > tal(me, 'extra')) return false;
+const callTreant = (b: Battle, me: Unit) => callSummon(b, me, 'treant', tal(me, 'extra'));
+/** Beastmaster: dire wolves (two at a time) come at his call. */
+const callWolves = (b: Battle, me: Unit) => callSummon(b, me, 'wolf', 1 + tal(me, 'extra'));
+/** A fighter of `kind` rises on the free tile beside the caster that is nearest the nearest foe, unless more than `more` of its kind stand already. */
+function callSummon(b: Battle, me: Unit, kind: string, more: number): boolean {
+  if (b.units.filter((x) => x.alive && x.side === me.side && x.def === kind).length > more) return false;
   const foes = foesOf(b, me);
   if (!foes.length) return false;
   const near = sorted([...foes]).sort((x, y) => apart(me, x) - apart(me, y))[0];
@@ -737,7 +777,7 @@ function callTreant(b: Battle, me: Unit): boolean {
   if (!spots.length) return false;
   spots.sort((x, y) => apart(x, near) - apart(y, near) || apart(me, x) - apart(me, y) || x.v - y.v || x.u - y.u);
   const to = spots[0];
-  const t = addUnit(b, 'treant', to.u, to.v, { atk: me.power ?? 1, hp: me.maxHp / defOf(me).hp, grade: me.grade });
+  const t = addUnit(b, kind, to.u, to.v, { atk: me.power ?? 1, hp: me.maxHp / defOf(me).hp, grade: me.grade });
   t.owner = me.id;
   t.facing = wayTo(t, near);
   return true;
@@ -841,19 +881,21 @@ function mirrorImage(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 
 /** Gunslinger: one slug through every foe in a line, whatever is between. */
 const LINE_WIDTH = 0.7;
+/** The foes standing on the line from `me` through `aim`, no further than `len` tiles. */
+function lineFoes(foes: Unit[], me: Unit, aim: Unit, len: number): Unit[] {
+  const du = aim.u - me.u;
+  const dv = aim.v - me.v;
+  const l = Math.hypot(du, dv);
+  return foes.filter((f) => {
+    const proj = ((f.u - me.u) * du + (f.v - me.v) * dv) / l;
+    const perp = Math.abs((f.u - me.u) * dv - (f.v - me.v) * du) / l;
+    return proj > 0 && proj <= len && perp <= LINE_WIDTH;
+  });
+}
 function deadEye(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const def = strikeDef(b, me);
   const foes = foesOf(b, me);
-  const line = (aim: Unit) => {
-    const du = aim.u - me.u;
-    const dv = aim.v - me.v;
-    const len = Math.hypot(du, dv);
-    return foes.filter((f) => {
-      const proj = ((f.u - me.u) * du + (f.v - me.v) * dv) / len;
-      const perp = Math.abs((f.u - me.u) * dv - (f.v - me.v) * du) / len;
-      return proj > 0 && proj <= def.range + reachOf(me, 3) && perp <= LINE_WIDTH;
-    });
-  };
+  const line = (aim: Unit) => lineFoes(foes, me, aim, def.range + reachOf(me, 3));
   let best: Unit[] = [];
   let bestHp = 0;
   for (const aim of foes.filter((f) => canStrike(b.board, def, me, f))) {
@@ -867,6 +909,336 @@ function deadEye(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     out.push({ kind: 'shot', by: me.id, to: f.id, shot: 'bullet', ms: 120 + apart(me, f) * 40 });
     hurt(b, me, f, net(atkOf(me) * 2.4 * blowMult(tileOf(b, me).h, tileOf(b, f).h, me.facing, f.facing), f), true, false, out, 'skill');
   }
+  return true;
+}
+
+// ---- the second wave of heroes (docs/notes/more-heroes.md) ----
+
+/** Move a foe one tile toward `to` (it is dragged, so its own climbing does not matter); false when the tile is not free. */
+function drag(b: Battle, f: Unit, to: At): boolean {
+  const way = wayTo(f, to);
+  const at = { u: f.u + DIR[way][0], v: f.v + DIR[way][1] };
+  const t = tileAt(b.board, at.u, at.v);
+  if (!t || !standable(t) || unitAt(b, at.u, at.v) || kitOf(f)?.passive.steady) return false;
+  f.step = { u: f.u, v: f.v, h: tileOf(b, f).h, at: b.t, ms: 250 };
+  f.u = at.u;
+  f.v = at.v;
+  return true;
+}
+
+/** The ms a foe is slowed for, taken on to any slow it has already. */
+const slowFor = (b: Battle, f: Unit, ms: number) => (f.slowUntil = Math.max(f.slowUntil ?? 0, b.t + ms));
+
+/** Shambler: every foe within two tiles starts to rot, and the Shambler drinks part of what it costs them. */
+const ROT_MS = 4000;
+function rottingTouch(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const near = foesOf(b, me).filter((f) => apart(me, f) <= reachOf(me, 2));
+  if (!near.length) return false;
+  const ms = durOf(me, ROT_MS);
+  for (const f of near) {
+    f.dot = { kind: 'curse', dmg: Math.max(1, Math.round(atkOf(me) * 0.3)), every: HEX_EVERY, ms, by: me.id, next: b.t + HEX_EVERY, until: b.t + ms };
+    out.push({ kind: 'arc', from: me.id, to: f.id });
+  }
+  return true;
+}
+
+/** Rifle Bot: three quick shots at the weakest foe in reach. */
+function burstFire(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const def = strikeDef(b, me);
+  const f = sorted(foesOf(b, me).filter((x) => canStrike(b.board, def, me, x)))[0];
+  if (!f) return false;
+  me.facing = wayTo(me, f);
+  const mult = blowMult(tileOf(b, me).h, tileOf(b, f).h, me.facing, f.facing);
+  const shots = 3 + tal(me, 'extra');
+  for (let i = 0; i < shots && f.alive; i++) {
+    out.push({ kind: 'shot', by: me.id, to: f.id, shot: 'bullet', ms: 120 + apart(me, f) * 40 });
+    hurt(b, me, f, net(atkOf(me) * 0.9 * mult, f), i === shots - 1, false, out, 'skill');
+  }
+  return true;
+}
+
+/** Mummy: bandages lash every foe within two tiles and slow it. */
+const WRAP_MS = 3000;
+function bindingWraps(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const near = foesOf(b, me).filter((f) => apart(me, f) <= reachOf(me, 2));
+  if (!near.length) return false;
+  for (const f of near) {
+    hurt(b, me, f, net(atkOf(me) * 0.8, f), false, false, out, 'skill');
+    if (f.alive) slowFor(b, f, durOf(me, WRAP_MS));
+  }
+  return true;
+}
+
+/** Buccaneer: a hook yanks the nearest shooter (else the nearest foe) up beside him, and he cuts it down. */
+function grapple(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const far = foesOf(b, me)
+    .filter((f) => apart(me, f) >= 2 && apart(me, f) <= reachOf(me, 5) && !kitOf(f)?.passive.steady)
+    .sort((x, y) => apart(me, x) - apart(me, y) || x.id - y.id);
+  for (const f of [...far.filter((x) => defOf(x).shot), ...far.filter((x) => !defOf(x).shot)]) {
+    const to = DIR.map(([du, dv]) => ({ u: me.u + du, v: me.v + dv }))
+      .filter((c) => {
+        const t = tileAt(b.board, c.u, c.v);
+        return t && standable(t) && !unitAt(b, c.u, c.v);
+      })
+      .sort((x, y) => apart(x, f) - apart(y, f) || x.v - y.v || x.u - y.u)[0];
+    if (!to) return false;
+    f.step = { u: f.u, v: f.v, h: tileOf(b, f).h, at: b.t, ms: 250 };
+    f.u = to.u;
+    f.v = to.v;
+    me.facing = wayTo(me, f);
+    out.push({ kind: 'arc', from: me.id, to: f.id });
+    hurt(b, me, f, net(atkOf(me) * 1.6 * blowMult(tileOf(b, me).h, tileOf(b, f).h, me.facing, f.facing), f), true, false, out, 'skill');
+    if (f.alive) {
+      f.busyUntil = Math.max(f.busyUntil, b.t + durOf(me, 1000));
+      f.stunUntil = b.t + durOf(me, 1000);
+    }
+    return true;
+  }
+  return false;
+}
+
+/** Wolf Bard: a dirge hurts every foe within four tiles a little and slows it. */
+const DIRGE_MS = 4000;
+function dirge(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const near = foesOf(b, me).filter((f) => apart(me, f) <= reachOf(me, 4));
+  if (!near.length) return false;
+  for (const f of near) {
+    hurt(b, me, f, net(atkOf(me) * 1.0, f), false, false, out, 'skill');
+    if (f.alive) slowFor(b, f, durOf(me, DIRGE_MS));
+  }
+  out.push({ kind: 'song', by: me.id, ms: durOf(me, DIRGE_MS) });
+  return true;
+}
+
+/** Kraken Mate: an undertow hurts every foe within four tiles, slows it and drags it a tile closer. */
+const UNDERTOW_MS = 2000;
+function undertow(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const near = foesOf(b, me).filter((f) => apart(me, f) <= reachOf(me, 4));
+  if (!near.length) return false;
+  for (const f of near) {
+    hurt(b, me, f, net(atkOf(me) * 0.9, f), false, false, out, 'skill');
+    if (!f.alive) continue;
+    slowFor(b, f, durOf(me, UNDERTOW_MS));
+    if (drag(b, f, me)) f.busyUntil = Math.max(f.busyUntil, b.t + 400);
+  }
+  return true;
+}
+
+/** Reaper: a sweep of the scythe cuts every foe within three tiles, and a foe under three tenths of its health is reaped for nearly three times as much. */
+const REAP_UNDER = 0.3;
+function reap(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const near = foesOf(b, me).filter((f) => apart(me, f) <= reachOf(me, 3));
+  if (!near.length) return false;
+  for (const f of near) {
+    const doomed = f.hp < f.maxHp * REAP_UNDER;
+    hurt(b, me, f, net(atkOf(me) * (doomed ? 2.8 : 0.9), f), doomed, false, out, 'skill');
+  }
+  return true;
+}
+
+/** Time Witch: time speeds up around her friends (within three tiles) and drags for the foes within four. */
+const SURGE_MS = 4000;
+function temporalSurge(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const foes = foesOf(b, me).filter((f) => apart(me, f) <= reachOf(me, 4));
+  if (!foes.length) return false;
+  const ms = durOf(me, SURGE_MS);
+  for (const a of b.units)
+    if (a.alive && a.side === me.side && apart(me, a) <= reachOf(me, 3)) {
+      a.hasteUntil = Math.max(a.hasteUntil ?? 0, b.t + ms);
+      out.push({ kind: 'haste', to: a.id, ms });
+    }
+  for (const f of foes) {
+    slowFor(b, f, ms);
+    out.push({ kind: 'arc', from: me.id, to: f.id });
+  }
+  return true;
+}
+
+/** Arc Blade: blinks beside the thickest knot of foes and discharges, hurting every foe in the 3x3 round it and holding it still for a moment. */
+const DISCHARGE_MS = 1000;
+function voltageBlink(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const def = defOf(me);
+  const aim = crowd(b, me, (f) => apart(me, f) <= reachOf(me, 6));
+  if (!aim) return false;
+  if (apart(me, aim) > 1) {
+    const ha = tileOf(b, aim).h;
+    const to = DIR.map(([du, dv]) => ({ u: aim.u + du, v: aim.v + dv }))
+      .filter((c) => {
+        const t = tileAt(b.board, c.u, c.v);
+        return t && standable(t) && !unitAt(b, c.u, c.v) && Math.abs(t.h - ha) <= def.jump;
+      })
+      .sort((x, y) => apart(me, x) - apart(me, y) || x.v - y.v || x.u - y.u)[0];
+    if (!to) return false;
+    const from = { u: me.u, v: me.v };
+    me.u = to.u;
+    me.v = to.v;
+    me.step = undefined;
+    out.push({ kind: 'blink', by: me.id, from, to });
+  }
+  me.facing = wayTo(me, aim);
+  const hit = foesOf(b, me).filter((f) => near3x3(f, aim));
+  for (const f of hit) {
+    out.push({ kind: 'arc', from: me.id, to: f.id });
+    hurt(b, me, f, net(atkOf(me) * 1.4, f), false, false, out, 'skill');
+    if (f.alive) {
+      f.busyUntil = Math.max(f.busyUntil, b.t + durOf(me, DISCHARGE_MS));
+      f.stunUntil = b.t + durOf(me, DISCHARGE_MS);
+    }
+  }
+  return true;
+}
+
+/** Dread Pirate: a broadside from a ghost ship falls on a 3x3 of tiles a moment after the call. */
+const BROADSIDE_MS = 800;
+function broadside(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const aim = crowd(b, me, (f) => apart(me, f) <= reachOf(me, 6));
+  if (!aim) return false;
+  b.pending.push({ at: b.t + BROADSIDE_MS, kind: 'rain', by: me.id, to: aim.id, dmg: atkOf(me) * 1.7, heavy: false, u: aim.u, v: aim.v });
+  out.push({ kind: 'area', by: me.id, id: 'volley', u: aim.u, v: aim.v, ms: BROADSIDE_MS });
+  followUp(b, me, 'rain', aim, atkOf(me) * 1.7, 'volley', BROADSIDE_MS, out);
+  return true;
+}
+
+/** Siege Bot: a heavy shell bursts on the thickest crowd, far off. */
+const SHELL_MS = 900;
+function shellBarrage(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const aim = crowd(b, me, (f) => apart(me, f) <= reachOf(me, 7));
+  if (!aim) return false;
+  b.pending.push({ at: b.t + SHELL_MS, kind: 'rain', by: me.id, to: aim.id, dmg: atkOf(me) * 2.1, heavy: true, u: aim.u, v: aim.v });
+  out.push({ kind: 'area', by: me.id, id: 'meteor', u: aim.u, v: aim.v, ms: SHELL_MS });
+  followUp(b, me, 'rain', aim, atkOf(me) * 2.1, 'meteor', SHELL_MS, out);
+  return true;
+}
+
+/** High Priestess: a great healing light on the worst hurt ally (cleansing it), and half as much on the allies within two tiles of it. */
+function holyLight(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const team = b.units.filter((a) => a.alive && a.side === me.side);
+  const worst = team.filter((a) => a.hp < a.maxHp * 0.8).sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp || x.id - y.id)[0];
+  if (!worst) return false;
+  worst.dot = undefined;
+  mendUnit(worst, atkOf(me) * 5, out, me);
+  for (const a of team) if (a !== worst && apart(a, worst) <= reachOf(me, 2)) mendUnit(a, atkOf(me) * 2, out, me);
+  return true;
+}
+
+/** Queen Dragoon: fire down the line of foes that holds the most, hurting each and setting it alight. */
+const BREATH_REACH = 4;
+function dragonBreath(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const foes = foesOf(b, me);
+  const len = reachOf(me, BREATH_REACH);
+  let best: Unit[] = [];
+  let bestHp = 0;
+  for (const aim of foes.filter((f) => apart(me, f) <= len)) {
+    const hit = lineFoes(foes, me, aim, len);
+    const hp = hit.reduce((n, f) => n + f.hp, 0);
+    if (hit.length > best.length || (hit.length === best.length && hp < bestHp)) (best = hit), (bestHp = hp);
+  }
+  if (!best.length) return false;
+  me.facing = wayTo(me, best[0]);
+  const ms = durOf(me, 3000);
+  for (const f of best.sort((x, y) => apart(me, x) - apart(me, y) || x.id - y.id)) {
+    out.push({ kind: 'shot', by: me.id, to: f.id, shot: 'fire', ms: 120 + apart(me, f) * 40 });
+    hurt(b, me, f, net(atkOf(me) * 1.4, f), true, false, out, 'skill');
+    if (f.alive) f.dot = { kind: 'burn', dmg: Math.max(1, Math.round(atkOf(me) * 0.12)), every: 500, ms, by: me.id, next: b.t + 500, until: b.t + ms };
+  }
+  return true;
+}
+
+/** Juggernaut: the ground heaves, hurting every foe within three tiles and holding it still. */
+const QUAKE_MS = 1200;
+const quake = (b: Battle, me: Unit, out: BattleEvent[]) => burstAround(b, me, out, reachOf(me, 3), 1.2, durOf(me, QUAKE_MS));
+
+/** Great Sage: stars fall on up to three separate crowds a moment after the call. */
+const STARFALL_MS = 900;
+const STARS = 3;
+function starfall(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const aimed: Unit[] = [];
+  for (let i = 0; i < STARS + tal(me, 'extra'); i++) {
+    const aim = crowd(b, me, (f) => apart(me, f) <= reachOf(me, 7) && !aimed.some((a) => near3x3(f, a)));
+    if (!aim) break;
+    aimed.push(aim);
+    b.pending.push({ at: b.t + STARFALL_MS, kind: 'rain', by: me.id, to: aim.id, dmg: atkOf(me) * 1.45, heavy: false, u: aim.u, v: aim.v });
+    out.push({ kind: 'area', by: me.id, id: 'meteor', u: aim.u, v: aim.v, ms: STARFALL_MS });
+  }
+  return aimed.length > 0;
+}
+
+/** Great Sage's ultimate, Astral Convergence: every ally's skill meter jumps and a shield of starlight forms round it. */
+const CONVERGE_CHARGE = 50;
+const CONVERGE_SHIELD = 0.12;
+function astralConvergence(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const team = b.units.filter((a) => a.alive && a.side === me.side);
+  if (!team.some((a) => a !== me) || !foesOf(b, me).length) return false;
+  for (const a of team) {
+    gain(a, CONVERGE_CHARGE);
+    a.shield = { hp: Math.round(a.maxHp * CONVERGE_SHIELD), until: b.t + durOf(me, 4000) };
+    out.push({ kind: 'heal', to: a.id, amount: 0, by: me.id });
+  }
+  return true;
+}
+
+/** Demon Swordsman: a sweep cuts every foe within two tiles, and he drinks a quarter of what it deals. */
+const SWEEP_DRINK = 0.25;
+function hellbladeSweep(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const near = foesOf(b, me).filter((f) => apart(me, f) <= reachOf(me, 2));
+  if (!near.length) return false;
+  const before = me.dealt ?? 0;
+  for (const f of near) hurt(b, me, f, net(atkOf(me) * 1.3, f), false, false, out, 'skill');
+  mendUnit(me, ((me.dealt ?? 0) - before) * SWEEP_DRINK, out);
+  return true;
+}
+
+/** Demon Swordsman's ultimate, Demon Form: for a while he hits half as hard again, and a fifth of his health comes back. */
+export const FORM_MULT = 1.5;
+const FORM_MS = 7000;
+const FORM_HEAL = 0.2;
+function demonForm(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  if (!foesOf(b, me).some((f) => apart(me, f) <= 7)) return false;
+  if (me.form === undefined) me.power = (me.power ?? 1) * FORM_MULT;
+  me.form = { until: b.t + durOf(me, FORM_MS) };
+  mendUnit(me, me.maxHp * FORM_HEAL, out);
+  out.push({ kind: 'frenzy', by: me.id, n: 3 });
+  return true;
+}
+
+/** Tyrant: a judgement falls on the toughest foe in reach, and a 3x3 round it, a moment after the call. */
+const JUDGEMENT_MS = 1200;
+function judgement(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const f = foesOf(b, me)
+    .filter((x) => apart(me, x) <= reachOf(me, 6))
+    .sort((x, y) => y.hp - x.hp || x.id - y.id)[0];
+  if (!f) return false;
+  b.pending.push({ at: b.t + JUDGEMENT_MS, kind: 'rain', by: me.id, to: f.id, dmg: atkOf(me) * 2.4, heavy: true, u: f.u, v: f.v });
+  out.push({ kind: 'area', by: me.id, id: 'meteor', u: f.u, v: f.v, ms: JUDGEMENT_MS });
+  followUp(b, me, 'rain', f, atkOf(me) * 2.4, 'meteor', JUDGEMENT_MS, out);
+  return true;
+}
+
+/** Tyrant's ultimate, Reign of Terror: every foe within six tiles is hurt and slowed, and every ally is rallied under a war banner. */
+const REIGN_MS = 7000;
+function reignOfTerror(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const foes = foesOf(b, me).filter((f) => apart(me, f) <= reachOf(me, 6));
+  if (!foes.length) return false;
+  for (const f of foes) {
+    hurt(b, me, f, net(atkOf(me) * 1.0, f), false, false, out, 'skill');
+    if (f.alive) slowFor(b, f, durOf(me, 5000));
+  }
+  for (const a of b.units)
+    if (a.alive && a.side === me.side) {
+      if (a.banner === undefined) a.power = (a.power ?? 1) * BANNER_MULT;
+      a.banner = { until: b.t + durOf(me, REIGN_MS) };
+    }
+  out.push({ kind: 'banner', by: me.id, ms: durOf(me, REIGN_MS) });
+  return true;
+}
+
+/** Dread Pirate's Deathless: the first time it would fall in a fight, it rises with the share of its health its passive names. */
+export function undying(to: Unit, out: BattleEvent[]): boolean {
+  const share = kitOf(to)?.passive.undying;
+  if (!share || to.undyingUsed) return false;
+  to.undyingUsed = true;
+  to.hp = Math.max(1, Math.round(to.maxHp * share));
+  out.push({ kind: 'heal', to: to.id, amount: to.hp });
   return true;
 }
 
@@ -953,6 +1325,91 @@ export const KITS: Record<string, Kit> = {
   gunslinger: {
     skill: { name: 'Dead Eye', text: 'One slug through every foe in a line, for more than double', need: CHARGE_MAX, dealt: 14, taken: 4, perSec: 1.5, castMs: 500, anim: 'attack', cast: deadEye },
     passive: { name: 'Piercing Rounds', text: 'Shots ignore 4 defence and also hit the foe behind the target for half', pierce: 4, through: 0.5 },
+  },
+
+  // ---- the second wave ----
+  shambler: {
+    skill: { name: 'Rotting Touch', text: 'Every foe within 2 tiles rots for 4s, and he drinks part of it', need: CHARGE_MAX, dealt: 5, taken: 6, perSec: 2, castMs: 600, anim: 'attack', cast: rottingTouch },
+    passive: { name: 'Undying Flesh', text: 'Heals 2% of his health each second', regen: 0.02 },
+  },
+  rifleBot: {
+    skill: { name: 'Burst Fire', text: 'Three rapid shots at the weakest foe in reach', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 500, anim: 'attack2', cast: burstFire },
+    passive: { name: 'Targeting Array', text: 'Shots deal 30% more to foes 4 or more tiles away', far: 0.3 },
+  },
+  mercenary: {
+    skill: { name: 'Bounty Hunt', text: 'Slips beside the strongest foe and cuts it for nearly double', need: CHARGE_MAX, dealt: 6, taken: 4, perSec: 2, castMs: 450, anim: 'attack2', cast: bountyHunt },
+    passive: { name: 'Hired Blade', text: '20% of blows crit for x1.7 and make the foe bleed', crit: { chance: 0.2, mult: 1.7, bleed: { kind: 'bleed', dmg: 4, every: 500, ms: 3000 } } },
+  },
+  mummy: {
+    skill: { name: 'Binding Wraps', text: 'Bandages lash every foe within 2 tiles and slow it for 3s', need: CHARGE_MAX, dealt: 5, taken: 6, perSec: 2, castMs: 600, anim: 'attack2', cast: bindingWraps },
+    passive: { name: 'Dry Husk', text: 'Blows from the front lose a fifth', block: 0.2 },
+  },
+  buccaneer: {
+    skill: { name: 'Grappling Hook', text: 'Yanks the nearest shooter (else foe) in beside him, cuts it and holds it for 1s', need: CHARGE_MAX, dealt: 6, taken: 4, perSec: 2, castMs: 500, anim: 'attack2', cast: grapple },
+    passive: { name: 'Sea Legs', text: 'Slips 12% of blows and climbs ledges at no extra cost', dodge: 0.12, sure: true },
+  },
+  wolfBard: {
+    skill: { name: 'Dirge', text: 'Every foe within 4 tiles is hurt a little and slowed for 4s', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 700, anim: 'attack2', cast: dirge },
+    passive: { name: 'Catchy Tune', text: 'Every 3.5s the ally with the least skill charge near him gains 16', tune: { every: 3500, charge: 16 } },
+  },
+  beastmaster: {
+    skill: { name: 'Call of the Wild', text: 'Two dire wolves answer his call and fight for him', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 700, anim: 'attack2', cast: callWolves },
+    passive: { name: 'Whip Crack', text: 'His blows slow the foe for 1.5s', slow: 1500 },
+  },
+  kraken: {
+    skill: { name: 'Undertow', text: 'Every foe within 4 tiles is hurt, slowed for 2s and dragged a tile closer', need: CHARGE_MAX, dealt: 5, taken: 6, perSec: 2, castMs: 600, anim: 'attack', cast: undertow },
+    passive: { name: 'Barnacled Hide', text: 'Blows from the front lose a fifth', block: 0.2 },
+  },
+  lancer: {
+    skill: { name: 'Lance Charge', text: 'Charges up to 5 tiles at a foe for more than double, then rides faster for 3s', need: CHARGE_MAX, dealt: 6, taken: 4, perSec: 2, castMs: 500, anim: 'attack', cast: lanceCharge },
+    passive: { name: 'Couched Lance', text: 'Blows deal 40% more to shooters', prey: 1.4 },
+  },
+  reaper: {
+    skill: { name: 'Reap', text: 'Cuts every foe within 3 tiles; a foe under 30% health takes nearly triple', need: CHARGE_MAX, dealt: 6, taken: 3, perSec: 2, castMs: 500, anim: 'attack2', cast: reap },
+    passive: { name: 'Wraith Form', text: 'Slips 20% of blows', dodge: 0.2 },
+  },
+  timeWitch: {
+    skill: { name: 'Temporal Surge', text: 'Allies within 3 tiles are hasted, and foes within 4 slowed, for 4s', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 700, anim: 'attack2', cast: temporalSurge },
+    passive: { name: 'Stutter', text: 'Slips 20% of blows', dodge: 0.2 },
+  },
+  arcBlade: {
+    skill: { name: 'Voltage Blink', text: 'Blinks beside the thickest knot of foes and discharges: the 3x3 is hurt and held for 1s', need: CHARGE_MAX, dealt: 8, taken: 4, perSec: 2, castMs: 450, anim: 'attack2', cast: voltageBlink },
+    passive: { name: 'Static Discharge', text: '25% of blows arc to a second foe nearby', arc: 0.25 },
+  },
+  dreadPirate: {
+    skill: { name: 'Broadside', text: 'A ghost ship\'s broadside falls on a 3x3 of tiles', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 2, castMs: 700, anim: 'attack2', cast: broadside },
+    passive: { name: 'Deathless', text: 'Once a fight, when he would fall he rises at 35% health', undying: 0.35 },
+  },
+  siegeBot: {
+    skill: { name: 'Shell Barrage', text: 'A heavy shell bursts on the thickest crowd within 7 tiles', need: CHARGE_MAX, dealt: 9, taken: 4, perSec: 2, castMs: 800, anim: 'attack2', cast: shellBarrage },
+    passive: { name: 'Reinforced Chassis', text: 'Blows from the front lose a fifth, and it cannot be knocked back', block: 0.2, steady: true },
+  },
+  priestess: {
+    skill: { name: 'Holy Light', text: 'A great light heals the worst hurt ally and cleanses it; allies near it are healed too', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 700, anim: 'attack2', cast: holyLight },
+    passive: { name: 'Halo', text: 'Allies within 2 tiles (and she) take 8% less from every blow', halo: 0.08 },
+  },
+  dragoon: {
+    skill: { name: 'Dragon Breath', text: 'Fire down the line that holds the most foes, hurting each and setting it alight', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 600, anim: 'attack2', cast: dragonBreath },
+    passive: { name: 'Dragon Scales', text: 'Takes a quarter less from shots', scales: 0.25 },
+  },
+  juggernaut: {
+    skill: { name: 'Earthquake', text: 'Every foe within 3 tiles is hurt and held still for 1.2s', need: CHARGE_MAX, dealt: 4, taken: 7, perSec: 2, castMs: 700, anim: 'attack', cast: quake },
+    passive: { name: 'Living Rampart', text: 'Blows from the front lose a third, and he cannot be knocked back', block: 0.33, steady: true },
+  },
+  sage: {
+    skill: { name: 'Starfall', text: 'Stars fall on up to three separate crowds a moment after the call', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 800, anim: 'attack2', cast: starfall },
+    ultimate: { name: 'Astral Convergence', text: 'Every ally\'s skill meter jumps by 50 and a starlit shield forms round it for 4s', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 800, anim: 'attack2', cast: astralConvergence },
+    passive: { name: 'Arcane Insight', text: 'His blows ignore 4 defence', pierce: 4 },
+  },
+  demonSwordsman: {
+    skill: { name: 'Hellblade Sweep', text: 'Cuts every foe within 2 tiles, and he drinks a third of what it deals', need: CHARGE_MAX, dealt: 7, taken: 5, perSec: 2, castMs: 550, anim: 'attack2', cast: hellbladeSweep },
+    ultimate: { name: 'Demon Form', text: 'For 7s he hits half as hard again, and a fifth of his health comes back', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 800, anim: 'attack2', cast: demonForm },
+    passive: { name: 'Soul Pact', text: 'Heals for 8% of the damage his blows deal, and hits up to 25% harder as his health falls', leech: 0.08, rage: 0.25 },
+  },
+  tyrant: {
+    skill: { name: 'Judgement', text: 'A judgement falls on the toughest foe in reach, and the 3x3 round it', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 800, anim: 'attack2', cast: judgement },
+    ultimate: { name: 'Reign of Terror', text: 'Every foe within 6 tiles is hurt and slowed for 5s; every ally is rallied: attack up a quarter for 7s', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 900, anim: 'attack2', cast: reignOfTerror },
+    passive: { name: 'Iron Throne', text: 'Blows from the front lose a quarter, and he cannot be knocked back', block: 0.25, steady: true },
   },
   // the bosses' skills (their escorts and forest bosses have none); a boss charges as the heroes do, a little faster
   orcWarlord: {
@@ -1132,6 +1589,10 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
     if (kit?.passive.blockHeal) mendUnit(to, turned * kit.passive.blockHeal, out);
   }
   if (blow && kit?.passive.scales && defOf(by).shot) dmg *= 1 - kit.passive.scales;
+  // (a halo: the ally who wears it shields those within two tiles, itself too)
+  let halo = 0;
+  for (const a of b.units) if (a.alive && a.side === to.side && apart(a, to) <= 2) halo = Math.max(halo, kitOf(a)?.passive.halo ?? 0);
+  if (halo && src !== 'dot') dmg *= 1 - halo;
   const huddle = (kit?.passive.huddle ?? 0) + tal(to, 'huddle');
   if (huddle && src !== 'dot') {
     const n = b.units.filter((a) => a.alive && a !== to && a.side === to.side && apart(a, to) === 1).length;
@@ -1206,6 +1667,7 @@ export function afterBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg = 0,
     }
   }
   if (!to.alive) return;
+  if (p?.slow) to.slowUntil = Math.max(to.slowUntil ?? 0, b.t + p.slow);
   // (the relic sets: a hero's blows burn the foe, its first blow chills it, its crits make it bleed)
   const set = by.side === 'hero' ? b.relics?.set : undefined;
   if (set?.chill && !to.chilled) {
@@ -1235,6 +1697,10 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
     if (!u.alive) continue;
     const k = kitOf(u);
     if (k) gain(u, ((k.skill.perSec * 100) / 1000) * (u.side === 'hero' ? (b.traits?.charge ?? 1) * (1 + (u.eq?.charge ?? 0)) : 1));
+    if (u.form && b.t >= u.form.until) {
+      u.power = (u.power ?? 1) / FORM_MULT;
+      u.form = undefined;
+    }
     if (u.banner && b.t >= u.banner.until) {
       u.power = (u.power ?? 1) / BANNER_MULT;
       u.banner = undefined;
@@ -1251,6 +1717,19 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
     }
     const regen = (p?.regen ?? 0) + (u.side === 'hero' ? b.relics?.set?.regen ?? 0 : 0);
     if (regen && b.t % 1000 === 0) mendUnit(u, u.maxHp * regen, out);
+    if (p?.tune) {
+      u.tuneAt ??= b.t + p.tune.every;
+      if (b.t >= u.tuneAt) {
+        u.tuneAt = b.t + p.tune.every;
+        const friend = b.units
+          .filter((a) => a.alive && a !== u && a.side === u.side && apart(a, u) <= 4 && kitOf(a))
+          .sort((x, y) => x.charge - y.charge || x.id - y.id)[0];
+        if (friend) {
+          gain(friend, p.tune.charge);
+          out.push({ kind: 'song', by: u.id, ms: 700 });
+        }
+      }
+    }
     if (p?.mend) {
       u.mendAt ??= b.t + p.mend.every;
       if (b.t >= u.mendAt) {
