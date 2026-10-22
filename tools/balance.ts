@@ -6,6 +6,7 @@
 //   npm run balance -- --games 800     fewer fights, quicker and noisier
 //   npm run balance -- --hero-stage 1  play the hero table at another stage (default 5)
 //   npm run balance -- --saves 200     fresh saves in the whole-run table (default 400)
+//   npm run balance -- --heroes-only  only the hero value table (table 1)
 //   npm run balance -- --runs-only     only the whole-run table (quicker when tuning the levels)
 //   npm run balance -- --armies-only   only the armies' tables (win rate per wave at given hero levels, and the climb through them)
 //   npm run balance -- --only orcs,undead --levels 1,5,10 --party starters   a few armies, levels or one party
@@ -47,6 +48,7 @@ const TEAM = 5;
 const HERO_STAGE = arg('--hero-stage', 5);
 const RUNS_ONLY = process.argv.includes('--runs-only');
 const ARMIES_ONLY = process.argv.includes('--armies-only');
+const HEROES_ONLY = process.argv.includes('--heroes-only');
 const BANDS = FIELD_BANDS;
 
 /** The boost of a field band at stage s: a field band has no boss, even on a boss stage. */
@@ -166,6 +168,16 @@ function heroValue(): void {
     );
   });
   console.log(`  average win rate with a hero: ${average.toFixed(1)}%  (value: with minus without; dealt and taken: hp per fight)`);
+  console.log('  lift against the other heroes of the same rarity (points of win rate; new heroes are held to within about 5):');
+  for (const r of [1, 2, 3, 4, 5] as const) {
+    const at = ALL_HEROES.map((h, i) => [h, withRates[i]] as const).filter(([h]) => rarityOf(h) === r);
+    const line = at.map(([h, w]) => {
+      const others = at.filter(([o]) => o !== h);
+      const lift = w - others.reduce((n, [, x]) => n + x, 0) / Math.max(1, others.length);
+      return `${UNITS[h].name} ${lift >= 0 ? '+' : ''}${lift.toFixed(1)}`;
+    });
+    if (line.length) console.log(`    ${pad(RARITY_NAMES[r], 10)} ${line.join(', ')}`);
+  }
   console.log('  by tier (mean win % with a hero of it):');
   for (const r of [1, 2, 3, 4, 5] as const) {
     const at = ALL_HEROES.map((h, i) => [h, withRates[i]] as const).filter(([h]) => rarityOf(h) === r);
@@ -509,6 +521,8 @@ function tiers(): void {
 
 if (process.argv.includes('--no-tables')) {
   // (only the climbs asked for below)
+} else if (HEROES_ONLY) {
+  heroValue();
 } else if (ARMIES_ONLY) {
   armies();
 } else {

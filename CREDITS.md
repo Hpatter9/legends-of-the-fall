@@ -156,3 +156,21 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
 - **The war camp** (`src/art/camp/`, Battle tab): the gatehouse, felt and striped tents, war banner, water skins, skull torch and dirt tile are pieces of the
   isometric kits in Chronos (`iso/kits/knights`, `nomads`, `orcs`), halved by `tools/camp/prep.py`; the sky, clouds and night sky are the Craftpix
   "Free Pixel Art Cloud and Sky Backgrounds" pack. The rest are pictures already in `src/art/castle/`. The war table is drawn in code.
+
+## The second wave of heroes (`src/art/units/`, built by `tools/more-heroes/build_sheets.py`)
+
+- **Pixel Champions v3** (Micro Edition, by Alex / @alexdraws; the pack folder has only its `ABOUT.jpg` and no licence file:
+  check the author's terms before any public release): the Wolf Bard (Ouzo), Beastmaster (Ley), High Priestess (Linail),
+  Time Witch (Hex), Mercenary (Oratio), Queen Dragoon (Wyvera), Great Sage (Prime) and Demon Swordsman (Glenys), three
+  colour looks each (`pc_<name>_<1-3>.png`). The 1x battler sheets are rebuilt into the game's rows and doubled by whole pixels.
+- Craftpix's **Free Robot Pixel Art Sprite Sheets** (Infantryman = Rifle Bot, Swordsman = Arc Blade, Destroyer = Siege Bot),
+  **Fantasy RPG Pirate Boss Character Pack** (Pirate Leader = Buccaneer, Pirate Zombie = Dread Pirate, Squidman = Kraken
+  Mate) and **Free Enemy Pixel Pack for Top-Down Defense** (the horse rider = Lancer): Chronos Settlement's cut sheets
+  (`robot_*.png`, `pirate_*.png`, `squidman.png`, `horde_2.png`), copied as they are.
+- From the **Himeko Sutori sprite share** (as Chronos cut them, `hk_*.png`): the Juggernaut, Tyrant, Mummy (Mummy), Ghost
+  (Reaper) and the three zombies (Shambler's three looks). Those sprites are free to use with attribution:
+  - Half-Kaizer sprite template created by Showkaizer.
+  - Additional Half-Kaizer poses by Aleesa Tana.
+  - Armor, weapon, shield, helmet, hair, skeleton, zombie, demon, fairy, mecha, wolf, boar, pumpkin, turkey, slime,
+    skullbird, dragon, cactus, and other sprites are from Himeko Sutori and Septaroad Voyager by Rockwell Studios, LLC.
+- The Dire Wolf the Beastmaster calls is the Red Werewolf sheet of the Free Werewolf Sprite Sheets (Craftpix), already listed above.

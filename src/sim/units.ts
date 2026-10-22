@@ -82,6 +82,35 @@ export const UNITS: Record<string, UnitDef> = {
   illusionist: { id: 'illusionist', name: 'Illusionist', side: 'hero', sheet: 'cls_illusionist_1', scale: 0.71, hp: 175, atk: 18, def: 3, range: 1, moveMs: 480, atkMs: 750, jump: 3, rarity: 3, role: 'Leaves decoys and slips away', forms: ['cls_illusionist_1', 'cls_illusionist_2', 'cls_illusionist_3'] },
   gunslinger: { id: 'gunslinger', name: 'Gunslinger', side: 'hero', sheet: 'cls_gunslinger_1', scale: 0.7, hp: 145, atk: 42, def: 2, range: 6, moveMs: 700, atkMs: 2400, jump: 2, shot: 'bullet', heightReach: 0.7, rarity: 4, role: 'Slow, piercing shots from very far', forms: ['cls_gunslinger_1', 'cls_gunslinger_2', 'cls_gunslinger_3'] },
 
+  // the second wave of heroes (docs/notes/more-heroes.md)
+  shambler: { id: 'shambler', name: 'Shambler', side: 'hero', sheet: 'hk_zombie_bare', scale: 0.62, hp: 300, atk: 16, def: 4, range: 1, moveMs: 900, atkMs: 1100, jump: 2, rarity: 1, role: 'Slow and rotting; its touch festers and it mends itself', forms: ['hk_zombie_bare', 'hk_zombie', 'hk_zombie_brute'] },
+  rifleBot: { id: 'rifleBot', name: 'Rifle Bot', side: 'hero', sheet: 'robot_infantry', scale: 0.65, hp: 160, atk: 27, def: 3, range: 4, moveMs: 700, atkMs: 1300, jump: 2, shot: 'bullet', rarity: 1, role: 'Rapid bursts; deadly from afar' },
+  mercenary: { id: 'mercenary', name: 'Mercenary', side: 'hero', sheet: 'pc_oratio_1', scale: 1, hp: 215, atk: 24, def: 5, range: 1, moveMs: 520, atkMs: 800, jump: 3, rarity: 1, role: 'Hunts the strongest foe for a bounty', forms: ['pc_oratio_1', 'pc_oratio_2', 'pc_oratio_3'] },
+  mummy: { id: 'mummy', name: 'Mummy', side: 'hero', sheet: 'hk_mummy', scale: 0.62, hp: 270, atk: 17, def: 7, range: 1, moveMs: 800, atkMs: 1200, jump: 2, rarity: 1, role: 'Wraps foes in bandages that slow them', },
+  buccaneer: { id: 'buccaneer', name: 'Buccaneer', side: 'hero', sheet: 'pirate_leader', scale: 0.55, hp: 210, atk: 23, def: 5, range: 1, moveMs: 560, atkMs: 850, jump: 3, rarity: 1, role: 'Hooks a shooter in and cuts it down' },
+
+  wolfBard: { id: 'wolfBard', name: 'Wolf Bard', side: 'hero', sheet: 'pc_ouzo_1', scale: 1, hp: 230, atk: 22, def: 3, range: 3, moveMs: 700, atkMs: 1500, jump: 2, shot: 'holy', rarity: 2, role: 'A dirge that slows foes; his tune charges his friends', forms: ['pc_ouzo_1', 'pc_ouzo_2', 'pc_ouzo_3'] },
+  beastmaster: { id: 'beastmaster', name: 'Beastmaster', side: 'hero', sheet: 'pc_ley_1', scale: 1, hp: 205, atk: 18, def: 4, range: 1, moveMs: 620, atkMs: 900, jump: 2, rarity: 2, role: 'Calls dire wolves; his whip slows foes', forms: ['pc_ley_1', 'pc_ley_2', 'pc_ley_3'] },
+  kraken: { id: 'kraken', name: 'Kraken Mate', side: 'hero', sheet: 'squidman', scale: 0.55, hp: 280, atk: 20, def: 6, range: 1, moveMs: 700, atkMs: 1100, jump: 2, rarity: 2, role: 'An undertow that drags foes in close' },
+  lancer: { id: 'lancer', name: 'Lancer', side: 'hero', sheet: 'horde_2', scale: 0.8, hp: 230, atk: 25, def: 5, range: 1, moveMs: 380, atkMs: 900, jump: 3, rarity: 2, role: 'Charges down a line, then rides faster' },
+  reaper: { id: 'reaper', name: 'Reaper', side: 'hero', sheet: 'hk_ghost', scale: 0.6, hp: 170, atk: 26, def: 2, range: 1, moveMs: 420, atkMs: 800, jump: 9, flies: true, rarity: 2, role: 'Flies; reaps the nearly dead' },
+
+  timeWitch: { id: 'timeWitch', name: 'Time Witch', side: 'hero', sheet: 'pc_hex_1', scale: 1, hp: 185, atk: 27, def: 2, range: 3, moveMs: 700, atkMs: 1500, jump: 2, shot: 'bolt', rarity: 3, role: 'Slows the foes and hastens her friends', forms: ['pc_hex_1', 'pc_hex_2', 'pc_hex_3'] },
+  arcBlade: { id: 'arcBlade', name: 'Arc Blade', side: 'hero', sheet: 'robot_swordsman', scale: 0.7, hp: 200, atk: 24, def: 4, range: 1, moveMs: 400, atkMs: 750, jump: 3, rarity: 3, role: 'Blinks into a crowd and discharges' },
+  dreadPirate: { id: 'dreadPirate', name: 'Dread Pirate', side: 'hero', sheet: 'pirate_zombie', scale: 0.58, hp: 265, atk: 21, def: 7, range: 1, moveMs: 780, atkMs: 1200, jump: 2, rarity: 3, role: 'Broadsides a crowd; rises once from death' },
+  siegeBot: { id: 'siegeBot', name: 'Siege Bot', side: 'hero', sheet: 'robot_destroyer', scale: 0.65, hp: 200, atk: 34, def: 6, range: 5, moveMs: 900, atkMs: 2200, jump: 2, shot: 'bullet', heightReach: 0.7, rarity: 3, role: 'Slow shells that burst on a crowd' },
+
+  priestess: { id: 'priestess', name: 'High Priestess', side: 'hero', sheet: 'pc_linail_1', scale: 1, hp: 245, atk: 19, def: 4, range: 3, moveMs: 700, atkMs: 1400, jump: 2, shot: 'holy', rarity: 4, role: 'Mends the worst hurt; a halo shields those near', forms: ['pc_linail_1', 'pc_linail_2', 'pc_linail_3'] },
+  dragoon: { id: 'dragoon', name: 'Queen Dragoon', side: 'hero', sheet: 'pc_wyvera_1', scale: 1, hp: 225, atk: 24, def: 6, range: 1, moveMs: 420, atkMs: 900, jump: 9, flies: true, rarity: 4, role: 'Flies; breathes fire down a line', forms: ['pc_wyvera_1', 'pc_wyvera_2', 'pc_wyvera_3'] },
+  juggernaut: { id: 'juggernaut', name: 'Juggernaut', side: 'hero', sheet: 'hk_juggernaut', scale: 0.5, hp: 365, atk: 20, def: 9, range: 1, moveMs: 950, atkMs: 1500, jump: 1, rarity: 4, role: 'A walking wall; its quake stuns all near' },
+
+  sage: { id: 'sage', name: 'Great Sage', side: 'hero', sheet: 'pc_prime_1', scale: 1, hp: 205, atk: 33, def: 3, range: 4, moveMs: 700, atkMs: 1600, jump: 2, shot: 'fire', rarity: 5, role: 'Calls stars on three crowds; fills his friends\' skill meters', forms: ['pc_prime_1', 'pc_prime_2', 'pc_prime_3'] },
+  demonSwordsman: { id: 'demonSwordsman', name: 'Demon Swordsman', side: 'hero', sheet: 'pc_glenys_1', scale: 1, hp: 215, atk: 23, def: 7, range: 1, moveMs: 560, atkMs: 950, jump: 3, rarity: 5, role: 'Drinks what he cuts; the demon takes him', forms: ['pc_glenys_1', 'pc_glenys_2', 'pc_glenys_3'] },
+  tyrant: { id: 'tyrant', name: 'Tyrant', side: 'hero', sheet: 'hk_tyrant', scale: 0.55, hp: 255, atk: 23, def: 6, range: 2, moveMs: 800, atkMs: 1250, jump: 2, rarity: 5, role: 'Passes judgement; his reign breaks and rallies', },
+
+  // called up by Beastmaster
+  wolf: { id: 'wolf', name: 'Dire Wolf', side: 'hero', sheet: 'werewolf_red', scale: 0.6, hp: 120, atk: 14, def: 2, range: 1, moveMs: 360, atkMs: 700, jump: 3, summon: true, role: 'A wolf called by the Beastmaster' },
+
   // called up by skills (not heroes to place)
   treant: { id: 'treant', name: 'Treant', side: 'hero', sheet: 'cls_treant', scale: 0.5, hp: 330, atk: 16, def: 8, range: 1, moveMs: 900, atkMs: 1300, jump: 1, summon: true, role: 'A tree called by the Druid (it grows with her grade)', forms: ['cls_treant', 'cls_treant_2', 'cls_treant_3'] },
   decoy: { id: 'decoy', name: 'Decoy', side: 'hero', sheet: 'cls_illusionist_1', scale: 0.71, hp: 80, atk: 5, def: 0, range: 1, moveMs: 700, atkMs: 1200, jump: 2, summon: true, role: 'A mirage that draws blows' },
@@ -94,4 +123,4 @@ export const UNITS: Record<string, UnitDef> = {
 /** The heroes on the bench, in order. */
 export const HEROES = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard'] as const;
 /** Every hero there is (the starting five first; more are unlocked by recruiting). */
-export const ALL_HEROES: readonly string[] = [...HEROES, 'peasant', 'ninjaMonk', 'wanderer', 'lightningMage', 'kitsune', 'karasu', 'yamabushi', 'werewolf', 'minotaur', 'satyr', 'gorgon', 'samuraiCommander', 'paladin', 'cleric', 'druid', 'barbarian', 'ranger', 'warlock', 'illusionist', 'gunslinger'];
+export const ALL_HEROES: readonly string[] = [...HEROES, 'peasant', 'ninjaMonk', 'wanderer', 'lightningMage', 'kitsune', 'karasu', 'yamabushi', 'werewolf', 'minotaur', 'satyr', 'gorgon', 'samuraiCommander', 'paladin', 'cleric', 'druid', 'barbarian', 'ranger', 'warlock', 'illusionist', 'gunslinger', 'shambler', 'rifleBot', 'mercenary', 'mummy', 'buccaneer', 'wolfBard', 'beastmaster', 'kraken', 'lancer', 'reaper', 'timeWitch', 'arcBlade', 'dreadPirate', 'siegeBot', 'priestess', 'dragoon', 'juggernaut', 'sage', 'demonSwordsman', 'tyrant'];

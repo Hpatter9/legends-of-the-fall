@@ -15,7 +15,7 @@ test('every hero has a tier, in the planned spread, and the starting five are Co
     assert.ok(r && r >= 1 && r <= 5, k);
     count[r!]++;
   }
-  assert.deepEqual(count.slice(1), [6, 6, 5, 3, 5]);
+  assert.deepEqual(count.slice(1), [11, 11, 9, 6, 8]);
   for (const k of HEROES) assert.equal(rarityOf(k), 1);
   assert.equal(RARITY_NAMES[5], 'Mythic');
 });
@@ -111,7 +111,7 @@ const cast = (b: Battle, me: Unit): BattleEvent[] => {
 };
 
 test('exactly the Mythics have an ultimate, and it charges slower than the skill', () => {
-  assert.deepEqual(MYTHICS.sort(), ['gorgon', 'karasu', 'kitsune', 'samuraiCommander', 'yamabushi']);
+  assert.deepEqual(MYTHICS.sort(), ['demonSwordsman', 'gorgon', 'karasu', 'kitsune', 'sage', 'samuraiCommander', 'tyrant', 'yamabushi']);
   // (the heroes: a few foes of the armies have an ultimate of their own, which is theirs alone)
   for (const k of ALL_HEROES) assert.equal(!!KITS[k].ultimate, MYTHICS.includes(k), k);
   const b = arena();

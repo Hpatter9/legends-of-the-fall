@@ -1,0 +1,261 @@
+# Hero value tables of the second wave (npm run balance -- --heroes-only --games 20000 --hero-stage N)
+
+######## stage 5
+
+1. HERO VALUE  (20000 random five-hero teams, six bands in turn, stage 5 foes)
+
+hero              with %  without %   value  vs avg   dealt   taken
+Knight              96.7       95.0     1.7     1.5     203     187
+Samurai             96.1       95.0     1.0     0.9     335     205
+Kunoichi            90.3       95.8    -5.5    -4.9     191     189
+Archer              89.5       95.9    -6.4    -5.7     274     101
+Fire Wizard         90.4       95.7    -5.3    -4.8     285     109
+Peasant             92.6       95.5    -2.9    -2.6     212     195
+Ninja Monk          94.8       95.2    -0.4    -0.3     302     232
+Wanderer            93.2       95.4    -2.2    -2.0     128     165
+Lightning Mage      93.4       95.4    -2.0    -1.8     378     121
+Kitsune             99.0       94.7     4.3     3.9     425     234
+Karasu Tengu        99.1       94.7     4.4     4.0     575     210
+Yamabushi Tengu     99.5       94.6     4.8     4.3     381     178
+Werewolf            96.9       94.9     1.9     1.7     394     236
+Minotaur            97.4       94.9     2.5     2.3     363     193
+Satyr               93.3       95.4    -2.1    -1.9     210     244
+Gorgon              97.0       94.9     2.0     1.8     413     103
+Samurai Commander    99.5       94.6     4.9     4.3     440     176
+Paladin             96.5       95.0     1.5     1.3     199     257
+Cleric              93.7       95.3    -1.7    -1.5     121     247
+Druid               93.8       95.3    -1.5    -1.3     196     162
+Barbarian           95.4       95.1     0.3     0.3     374     236
+Ranger              91.5       95.6    -4.1    -3.7     335      94
+Warlock             96.5       95.0     1.6     1.4     415     162
+Illusionist         94.8       95.2    -0.4    -0.4     184     187
+Gunslinger          95.8       95.1     0.7     0.6     503      74
+Shambler            92.6       95.5    -2.9    -2.6     208     306
+Rifle Bot           91.9       95.5    -3.6    -3.2     333     102
+Mercenary           94.4       95.2    -0.8    -0.7     305     210
+Mummy               92.2       95.5    -3.3    -2.9     158     223
+Buccaneer           91.5       95.6    -4.1    -3.7     210     212
+Wolf Bard           92.8       95.5    -2.7    -2.4     245     157
+Beastmaster         95.2       95.2     0.0     0.0     168     186
+Kraken Mate         95.2       95.2     0.0     0.0     269     217
+Lancer              94.7       95.2    -0.5    -0.5     323     234
+Reaper              92.9       95.4    -2.6    -2.3     257     195
+Time Witch          94.6       95.2    -0.7    -0.6     308     129
+Arc Blade           96.1       95.0     1.0     0.9     359     225
+Dread Pirate        96.1       95.0     1.0     0.9     316     274
+Siege Bot           96.1       95.0     1.1     1.0     385      83
+High Priestess      97.2       94.9     2.3     2.1     264     162
+Queen Dragoon       98.0       94.8     3.1     2.8     431     229
+Juggernaut          97.0       94.9     2.1     1.9     301     155
+Great Sage          98.6       94.7     3.8     3.4     552      93
+Demon Swordsman     99.4       94.6     4.8     4.2     482     209
+Tyrant              99.1       94.7     4.4     3.9     444     136
+  average win rate with a hero: 95.2%  (value: with minus without; dealt and taken: hp per fight)
+  lift against the other heroes of the same rarity (points of win rate; new heroes are held to within about 5):
+    Common     Knight +4.5, Samurai +3.9, Kunoichi -2.5, Archer -3.4, Fire Wizard -2.4, Peasant +0.0, Shambler +0.0, Rifle Bot -0.7, Mercenary +2.1, Mummy -0.4, Buccaneer -1.2
+    Rare       Ninja Monk +1.1, Wanderer -0.8, Satyr -0.7, Cleric -0.2, Barbarian +1.7, Ranger -2.6, Wolf Bard -1.2, Beastmaster +1.4, Kraken Mate +1.5, Lancer +0.9, Reaper -1.1
+    Epic       Lightning Mage -2.3, Minotaur +2.3, Paladin +1.2, Druid -1.8, Illusionist -0.7, Time Witch -0.9, Arc Blade +0.7, Dread Pirate +0.7, Siege Bot +0.8
+    Legendary  Werewolf -0.0, Warlock -0.4, Gunslinger -1.3, High Priestess +0.4, Queen Dragoon +1.3, Juggernaut +0.2
+    Mythic     Kitsune +0.2, Karasu Tengu +0.2, Yamabushi Tengu +0.7, Gorgon -2.2, Samurai Commander +0.7, Great Sage -0.4, Demon Swordsman +0.6, Tyrant +0.2
+  by tier (mean win % with a hero of it):
+    Common       92.6  (11 heroes)
+    Rare         93.9  (11 heroes)
+    Epic         95.4  (9 heroes)
+    Legendary    96.9  (6 heroes)
+    Mythic       98.9  (8 heroes)
+
+
+######## stage 6
+
+1. HERO VALUE  (20000 random five-hero teams, six bands in turn, stage 6 foes)
+
+hero              with %  without %   value  vs avg   dealt   taken
+Knight              79.3       74.7     4.6     4.1     224     294
+Samurai             73.5       75.4    -1.9    -1.7     315     232
+Kunoichi            61.9       76.9   -15.0   -13.3     169     195  <- off
+Archer              59.9       77.1   -17.2   -15.3     288     132  <- off
+Fire Wizard         60.7       77.0   -16.3   -14.5     297     129  <- off
+Peasant             68.9       76.0    -7.1    -6.3     218     263
+Ninja Monk          72.1       75.6    -3.5    -3.1     284     267
+Wanderer            70.8       75.8    -4.9    -4.4     133     204
+Lightning Mage      68.8       76.0    -7.3    -6.4     392     149
+Kitsune             89.3       73.6    15.8    14.1     440     292  <- off
+Karasu Tengu        87.7       73.6    14.1    12.5     561     248  <- off
+Yamabushi Tengu     92.8       73.0    19.8    17.6     486     313  <- off
+Werewolf            78.4       74.8     3.6     3.2     369     266
+Minotaur            79.3       74.7     4.6     4.1     389     285
+Satyr               67.1       76.2    -9.1    -8.1     190     270  <- off
+Gorgon              81.4       74.4     6.9     6.2     471     161
+Samurai Commander    89.5       73.4    16.1    14.3     489     260  <- off
+Paladin             78.7       74.8     4.0     3.5     213     373
+Cleric              73.1       75.5    -2.4    -2.1     123     309
+Druid               69.8       75.9    -6.0    -5.4     212     203
+Barbarian           75.3       75.2     0.1     0.1     373     278
+Ranger              67.4       76.2    -8.7    -7.8     364     132
+Warlock             79.5       74.7     4.8     4.3     481     227
+Illusionist         74.8       75.3    -0.4    -0.4     178     208
+Gunslinger          79.1       74.7     4.3     3.9     556     106
+Shambler            67.1       76.2    -9.1    -8.1     215     384  <- off
+Rifle Bot           66.6       76.3    -9.7    -8.6     348     131  <- off
+Mercenary           70.8       75.8    -5.0    -4.4     278     227
+Mummy               66.4       76.3   -10.0    -8.8     152     270  <- off
+Buccaneer           66.6       76.3    -9.7    -8.6     188     225  <- off
+Wolf Bard           70.4       75.8    -5.4    -4.8     260     207
+Beastmaster         74.2       75.3    -1.1    -1.0     167     212
+Kraken Mate         72.0       75.6    -3.7    -3.2     274     280
+Lancer              70.9       75.7    -4.8    -4.3     293     257
+Reaper              68.0       76.1    -8.1    -7.2     230     203
+Time Witch          73.2       75.5    -2.3    -2.0     333     171
+Arc Blade           75.3       75.2     0.2     0.1     327     242
+Dread Pirate        76.7       75.0     1.6     1.5     340     375
+Siege Bot           76.1       75.1     1.0     0.9     455     140
+High Priestess      81.6       74.4     7.2     6.4     298     257
+Queen Dragoon       81.7       74.4     7.3     6.5     417     270
+Juggernaut          81.5       74.4     7.0     6.3     373     283
+Great Sage          87.3       73.7    13.6    12.1     638     144  <- off
+Demon Swordsman     90.0       73.3    16.7    14.8     531     279  <- off
+Tyrant              88.4       73.6    14.9    13.2     524     217  <- off
+  average win rate with a hero: 75.2%  (value: with minus without; dealt and taken: hp per fight)
+  lift against the other heroes of the same rarity (points of win rate; new heroes are held to within about 5):
+    Common     Knight +13.0, Samurai +6.7, Kunoichi -6.1, Archer -8.3, Fire Wizard -7.4, Peasant +1.7, Shambler -0.3, Rifle Bot -1.0, Mercenary +3.7, Mummy -1.2, Buccaneer -0.9
+    Rare       Ninja Monk +1.2, Wanderer -0.2, Satyr -4.3, Cleric +2.2, Barbarian +4.7, Ranger -4.0, Wolf Bard -0.7, Beastmaster +3.5, Kraken Mate +1.0, Lancer -0.1, Reaper -3.3
+    Epic       Lightning Mage -6.8, Minotaur +5.2, Paladin +4.5, Druid -5.5, Illusionist +0.1, Time Witch -1.8, Arc Blade +0.7, Dread Pirate +2.1, Siege Bot +1.5
+    Legendary  Werewolf -2.3, Warlock -1.0, Gunslinger -1.5, High Priestess +1.6, Queen Dragoon +1.7, Juggernaut +1.4
+    Mythic     Kitsune +1.2, Karasu Tengu -0.7, Yamabushi Tengu +5.1, Gorgon -7.9, Samurai Commander +1.3, Great Sage -1.2, Demon Swordsman +2.0, Tyrant +0.1
+  by tier (mean win % with a hero of it):
+    Common       67.4  (11 heroes)
+    Rare         71.0  (11 heroes)
+    Epic         74.8  (9 heroes)
+    Legendary    80.3  (6 heroes)
+    Mythic       88.3  (8 heroes)
+
+
+######## stage 7
+
+1. HERO VALUE  (20000 random five-hero teams, six bands in turn, stage 7 foes)
+
+hero              with %  without %   value  vs avg   dealt   taken
+Knight              50.8       42.2     8.6     7.7     213     371
+Samurai             38.2       43.8    -5.6    -4.9     276     243
+Kunoichi            26.5       45.3   -18.8   -16.7     147     199  <- off
+Archer              27.3       45.2   -17.9   -15.9     276     158  <- off
+Fire Wizard         28.0       45.1   -17.0   -15.1     287     145  <- off
+Peasant             34.5       44.3    -9.8    -8.7     198     307  <- off
+Ninja Monk          37.4       43.9    -6.5    -5.8     249     286
+Wanderer            40.7       43.5    -2.9    -2.5     128     230
+Lightning Mage      35.3       44.2    -8.9    -7.9     383     173
+Kitsune             65.1       40.6    24.5    22.0     425     339  <- off
+Karasu Tengu        59.4       41.1    18.3    16.2     524     276  <- off
+Yamabushi Tengu     67.2       40.2    27.1    24.0     541     469  <- off
+Werewolf            42.7       43.2    -0.5    -0.5     324     283
+Minotaur            47.1       42.7     4.4     3.9     366     351
+Satyr               32.5       44.5   -12.0   -10.6     166     279  <- off
+Gorgon              51.4       42.2     9.2     8.2     487     224  <- off
+Samurai Commander    59.8       41.0    18.7    16.6     483     339  <- off
+Paladin             47.5       42.7     4.9     4.3     197     449
+Cleric              40.1       43.6    -3.4    -3.1     110     337
+Druid               37.0       43.9    -6.9    -6.2     213     235
+Barbarian           40.1       43.6    -3.5    -3.1     338     299
+Ranger              32.5       44.5   -12.1   -10.7     359     170  <- off
+Warlock             52.4       42.0    10.4     9.2     506     290  <- off
+Illusionist         41.4       43.4    -2.0    -1.7     163     220
+Gunslinger          48.6       42.5     6.1     5.4     585     146
+Shambler            35.3       44.2    -8.9    -7.9     193     411
+Rifle Bot           34.2       44.3   -10.1    -9.0     335     158  <- off
+Mercenary           36.7       44.0    -7.3    -6.5     246     233
+Mummy               33.0       44.5   -11.4   -10.1     133     292  <- off
+Buccaneer           31.3       44.6   -13.4   -11.9     165     231  <- off
+Wolf Bard           38.4       43.8    -5.4    -4.8     252     246
+Beastmaster         41.0       43.5    -2.5    -2.2     156     234
+Kraken Mate         38.6       43.8    -5.1    -4.5     247     314
+Lancer              37.2       43.9    -6.7    -6.0     253     267
+Reaper              35.5       44.1    -8.6    -7.6     203     208
+Time Witch          40.9       43.5    -2.5    -2.2     324     209
+Arc Blade           39.1       43.7    -4.6    -4.1     291     251
+Dread Pirate        44.0       43.1     0.9     0.8     324     435
+Siege Bot           41.1       43.4    -2.3    -2.0     474     201
+High Priestess      50.7       42.3     8.4     7.5     299     346
+Queen Dragoon       47.2       42.7     4.5     4.0     380     294
+Juggernaut          51.7       42.1     9.6     8.5     391     406  <- off
+Great Sage          61.0       41.0    20.0    17.8     690     213  <- off
+Demon Swordsman     60.8       40.9    19.9    17.6     528     341  <- off
+Tyrant              61.7       40.9    20.8    18.5     553     297  <- off
+  average win rate with a hero: 43.2%  (value: with minus without; dealt and taken: hp per fight)
+  lift against the other heroes of the same rarity (points of win rate; new heroes are held to within about 5):
+    Common     Knight +18.3, Samurai +4.5, Kunoichi -8.4, Archer -7.6, Fire Wizard -6.8, Peasant +0.4, Shambler +1.2, Rifle Bot +0.0, Mercenary +2.8, Mummy -1.2, Buccaneer -3.2
+    Rare       Ninja Monk -0.3, Wanderer +3.3, Satyr -5.6, Cleric +2.7, Barbarian +2.7, Ranger -5.7, Wolf Bard +0.8, Beastmaster +3.7, Kraken Mate +1.1, Lancer -0.5, Reaper -2.3
+    Epic       Lightning Mage -7.0, Minotaur +6.3, Paladin +6.8, Druid -5.0, Illusionist -0.1, Time Witch -0.6, Arc Blade -2.7, Dread Pirate +2.8, Siege Bot -0.4
+    Legendary  Werewolf -7.4, Warlock +4.2, Gunslinger -0.3, High Priestess +2.2, Queen Dragoon -2.0, Juggernaut +3.4
+    Mythic     Kitsune +5.0, Karasu Tengu -1.6, Yamabushi Tengu +7.3, Gorgon -10.8, Samurai Commander -1.2, Great Sage +0.2, Demon Swordsman -0.0, Tyrant +1.0
+  by tier (mean win % with a hero of it):
+    Common       34.2  (11 heroes)
+    Rare         37.6  (11 heroes)
+    Epic         41.5  (9 heroes)
+    Legendary    48.9  (6 heroes)
+    Mythic       60.8  (8 heroes)
+
+
+######## stage 8
+
+1. HERO VALUE  (20000 random five-hero teams, six bands in turn, stage 8 foes)
+
+hero              with %  without %   value  vs avg   dealt   taken
+Knight              23.7       16.5     7.2     6.4     183     400
+Samurai             13.1       17.8    -4.7    -4.2     238     247
+Kunoichi             8.0       18.4   -10.4    -9.3     129     199  <- off
+Archer               8.9       18.3    -9.4    -8.4     252     172  <- off
+Fire Wizard          9.3       18.3    -8.9    -8.0     264     152
+Peasant             12.0       18.0    -6.0    -5.3     172     325
+Ninja Monk          13.3       17.8    -4.5    -4.0     217     292
+Wanderer            16.5       17.4    -0.8    -0.7     113     240
+Lightning Mage      12.9       17.8    -4.9    -4.4     356     189
+Kitsune             34.0       15.3    18.7    16.7     377     362  <- off
+Karasu Tengu        28.4       15.9    12.5    11.1     467     294  <- off
+Yamabushi Tengu     31.5       15.5    16.0    14.2     500     548  <- off
+Werewolf            16.1       17.4    -1.4    -1.2     278     286
+Minotaur            18.3       17.2     1.1     1.0     317     381
+Satyr               10.6       18.1    -7.5    -6.7     145     281
+Gorgon              24.3       16.4     7.8     7.0     451     272
+Samurai Commander    26.7       16.1    10.7     9.4     430     378  <- off
+Paladin             21.5       16.8     4.8     4.2     167     467
+Cleric              15.5       17.5    -2.0    -1.8      95     342
+Druid               14.0       17.7    -3.7    -3.3     200     249
+Barbarian           14.1       17.7    -3.6    -3.2     299     309
+Ranger              11.3       18.0    -6.7    -5.9     329     190
+Warlock             23.7       16.5     7.2     6.4     470     324
+Illusionist         16.2       17.4    -1.2    -1.1     145     226
+Gunslinger          22.5       16.6     5.9     5.2     568     180
+Shambler            10.9       18.1    -7.2    -6.4     164     407
+Rifle Bot           11.5       18.0    -6.5    -5.8     300     175
+Mercenary           12.3       17.9    -5.7    -5.0     214     236
+Mummy               11.4       18.0    -6.6    -5.9     114     297
+Buccaneer           10.1       18.2    -8.0    -7.2     146     232
+Wolf Bard           14.8       17.6    -2.8    -2.5     227     267
+Beastmaster         16.5       17.4    -0.9    -0.8     139     243
+Kraken Mate         14.4       17.7    -3.3    -2.9     215     325
+Lancer              12.7       17.9    -5.2    -4.6     219     272
+Reaper              11.0       18.1    -7.0    -6.3     179     208
+Time Witch          15.9       17.5    -1.6    -1.4     291     230
+Arc Blade           12.8       17.9    -5.1    -4.5     259     254
+Dread Pirate        16.6       17.4    -0.7    -0.7     290     459
+Siege Bot           15.1       17.6    -2.5    -2.2     446     236
+High Priestess      21.9       16.7     5.2     4.7     271     395
+Queen Dragoon       17.8       17.2     0.6     0.5     334     305
+Juggernaut          21.9       16.7     5.2     4.6     356     468
+Great Sage          29.1       15.8    13.3    11.9     674     269  <- off
+Demon Swordsman     26.2       16.1    10.1     8.9     469     369  <- off
+Tyrant              28.4       15.9    12.5    11.1     522     355  <- off
+  average win rate with a hero: 17.3%  (value: with minus without; dealt and taken: hp per fight)
+  lift against the other heroes of the same rarity (points of win rate; new heroes are held to within about 5):
+    Common     Knight +12.9, Samurai +1.3, Kunoichi -4.3, Archer -3.3, Fire Wizard -2.9, Peasant +0.1, Shambler -1.1, Rifle Bot -0.5, Mercenary +0.4, Mummy -0.6, Buccaneer -2.0
+    Rare       Ninja Monk -0.4, Wanderer +3.1, Satyr -3.4, Cleric +2.0, Barbarian +0.4, Ranger -2.6, Wolf Bard +1.2, Beastmaster +3.1, Kraken Mate +0.7, Lancer -1.1, Reaper -2.9
+    Epic       Lightning Mage -3.4, Minotaur +2.6, Paladin +6.3, Druid -2.2, Illusionist +0.3, Time Witch -0.0, Arc Blade -3.5, Dread Pirate +0.8, Siege Bot -1.0
+    Legendary  Werewolf -5.5, Warlock +3.6, Gunslinger +2.2, High Priestess +1.6, Queen Dragoon -3.4, Juggernaut +1.5
+    Mythic     Kitsune +6.2, Karasu Tengu -0.2, Yamabushi Tengu +3.3, Gorgon -4.9, Samurai Commander -2.1, Great Sage +0.6, Demon Swordsman -2.7, Tyrant -0.2
+  by tier (mean win % with a hero of it):
+    Common       11.9  (11 heroes)
+    Rare         13.7  (11 heroes)
+    Epic         15.9  (9 heroes)
+    Legendary    20.7  (6 heroes)
+    Mythic       28.6  (8 heroes)
+
