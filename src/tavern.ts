@@ -109,6 +109,7 @@ export class Tavern {
   private reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   private saver = settings().saver;
   private down: { x: number; y: number; t: number } | null = null;
+  private grip: { x: number; y: number } | null = null;
   private watch: ResizeObserver;
 
   constructor(private onPick: (kind: string) => void) {
@@ -117,10 +118,22 @@ export class Tavern {
     this.ctx.imageSmoothingEnabled = false;
     onSettings((s) => (this.saver = s.saver));
     window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
-    this.canvas.addEventListener('pointerdown', (e) => (this.down = { x: e.clientX, y: e.clientY, t: performance.now() }));
+    // (a drag pans the room by hand, both ways, with a finger or the mouse; a short still press is a tap)
+    this.canvas.addEventListener('pointerdown', (e) => {
+      this.down = { x: e.clientX, y: e.clientY, t: performance.now() };
+      this.grip = { x: e.clientX, y: e.clientY };
+      this.canvas.setPointerCapture?.(e.pointerId);
+    });
+    this.canvas.addEventListener('pointermove', (e) => {
+      if (!this.down || !this.grip) return;
+      this.scroll.scrollLeft -= e.clientX - this.grip.x;
+      this.scroll.scrollTop -= e.clientY - this.grip.y;
+      this.grip = { x: e.clientX, y: e.clientY };
+    });
+    this.canvas.addEventListener('pointercancel', () => (this.down = this.grip = null));
     this.canvas.addEventListener('pointerup', (e) => {
       const d = this.down;
-      this.down = null;
+      this.down = this.grip = null;
       if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 9 && performance.now() - d.t < 600) this.tap(e);
     });
     this.watch = new ResizeObserver(() => this.fit());

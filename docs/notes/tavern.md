@@ -24,3 +24,10 @@
 ## Recruiting only between battles
 - The battle screen's button bar is Fight!, Summon, Pack, Home: the Recruit button and its listener are gone. The gacha is
   reached only from the home Recruit tab. Sideways the three small buttons are Summon on its own row, Pack and Home below.
+
+## Dragging round the room
+
+The town-square work had locked the tavern's scroller to up-and-down (`overflow-x: hidden; touch-action: pan-y`), so the
+sides of the room could not be reached. The room now pans by hand: a drag on the canvas moves `.tvScroll`'s scroll both
+ways (pointer events with capture, `touch-action: none`), with a finger or the mouse, and a short still press is still a
+tap that opens the hero's sheet. The wheel still scrolls too.
