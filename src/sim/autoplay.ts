@@ -7,7 +7,8 @@ import { D, DEPLOY_ROWS, standable, tileAt, type Board } from './board';
 import { place, unplace, type Battle, type Boost } from './battle';
 import { chooseOption, leaveEvent, type EventOption } from './events';
 import { levelOfKind } from './levels';
-import { rankOf, type Meta } from './meta';
+import { heroRank, type Meta } from './meta';
+import { awakenStats } from './awaken';
 import { boostOf, equip, squadLimit, summon, type Owned, type Run } from './run';
 import { localBoost } from './climb';
 import { UNITS } from './units';
@@ -15,7 +16,7 @@ import { UNITS } from './units';
 /** How strong a hero is for the squad: its base hp times attack, times its boosts (grade, rank, level, gear, bumps). */
 export function strengthOf(meta: Meta, h: Owned, run?: Run): number {
   const def = UNITS[h.kind];
-  const boost = run?.local ? localBoost(h) : boostOf(h, rankOf(meta, h.kind), levelOfKind(meta, h.kind));
+  const boost = run?.local ? localBoost(h) : boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), awakenStats(meta, h.kind));
   return def.hp * def.atk * (boost.hp ?? 1) * (boost.atk ?? 1);
 }
 
@@ -149,7 +150,7 @@ export function autoDeploy(b: Battle, run: Run, meta: Meta, boostFor?: (h: Owned
   const spots = autoFormation(b.board, squad);
   for (const s of spots) {
     const h = squad.find((x) => x.id === s.id)!;
-    place(b, h.kind, s.u, s.v, h.id, boostFor?.(h) ?? (run.local ? localBoost(h) : boostOf(h, rankOf(meta, h.kind), levelOfKind(meta, h.kind))));
+    place(b, h.kind, s.u, s.v, h.id, boostFor?.(h) ?? (run.local ? localBoost(h) : boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), awakenStats(meta, h.kind))));
   }
   return spots;
 }

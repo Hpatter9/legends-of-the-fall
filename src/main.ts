@@ -22,7 +22,8 @@ import { tierOf } from './sim/tiers';
 import { formOf, UNITS } from './sim/units';
 import { ELITE_BY_ID } from './sim/elites';
 import { isBoss } from './sim/foes';
-import { earn, loadMeta, needsStarter, pickStarter, rankOf, recordStars, saveMeta, type Meta } from './sim/meta';
+import { awakenedOf } from './sim/awaken';
+import { earn, loadMeta, needsStarter, pickStarter, heroRank, recordStars, saveMeta, type Meta } from './sim/meta';
 import { chooseStarter } from './starter';
 import { xpRate } from './sim/castle';
 import { heroStats } from './sim/talents';
@@ -923,7 +924,7 @@ class Game {
   private boostFor(h: Owned): Boost {
     // (a run that levels its own heroes reads nothing of the meta's levels, gear or talents)
     if (this.run.local) return { ...localBoost(h), carry: hpShare(this.run, h.id) };
-    return { ...boostOf(h, rankOf(this.meta, h.kind), levelOfKind(this.meta, h.kind), heroStats(this.meta, h.kind)), carry: hpShare(this.run, h.id) };
+    return { ...boostOf(h, heroRank(this.meta, h.kind), levelOfKind(this.meta, h.kind), heroStats(this.meta, h.kind)), ...(awakenedOf(this.meta, h.kind) ? { awaken: awakenedOf(this.meta, h.kind) } : {}), carry: hpShare(this.run, h.id) };
   }
 
   /** Begin a tower run: its map first, the fights as they are picked. */

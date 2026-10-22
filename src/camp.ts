@@ -4,9 +4,8 @@
 // signposts (`dailySlot`, `towerSlot`). One canvas drawn in scene pixels times a whole-number scale (nearest neighbour). It only
 // draws (Math.random is fine here: nothing that is played depends on it) and runs only while the tab is showing.
 
-import { formOf, UNITS } from './sim/units';
-import { gradeOfRank } from './render/tavernSpots';
-import { rankOf, type Meta } from './sim/meta';
+import type { Meta } from './sim/meta';
+import { heroRig, lookKey } from './render/awakenRig';
 import type { Army } from './sim/armies';
 import { sheetInfo } from './render/sheets';
 import { loadImage } from './render/loadImage';
@@ -256,9 +255,8 @@ export class CampScene {
   private dress(meta: Meta): void {
     const camp = this.camp!;
     this.party.forEach((kind, i) => {
-      const def = UNITS[kind];
-      const sheet = formOf(def, gradeOfRank(rankOf(meta, kind)));
-      const rig = sheetInfo(sheet);
+      const sheet = lookKey(meta, kind);
+      const rig = heroRig(meta, kind);
       const spot = camp.heroes[i];
       if (!rig || !spot) return;
       const a = this.actors.get(kind);
