@@ -16,10 +16,17 @@
   - **Roads**: one road enters by the gatehouse and leads to the plaza (a clear 3 x 3 of cobbles, the statue on the middle tile, a brazier on each corner)
     and branches to every door; each door has a road tile in front of it. Heroes stroll those tiles only (`walkTiles`, a breadth-first route from tile
     to tile), never over the statue or a brazier.
-  - **Walls: the two back sides only** (`ring()` in `castleSpots.ts`): the north-west and north-east runs, each a straight line of the same wall pieces (two tiles
-    long, mirrored on the north-east side) meeting at a tower on the north corner, with a tower at each run's far end and the gatehouse in the north-west
-    run near its south end. The front of the village is open grass. Both runs are drawn behind everything (`depth`), so they never hide a building; every plot
-    has a tile of grass behind it. The road from the gate runs east to the plaza's road network.
+  - **Walls: the two back sides only** (`ring()` in `castleSpots.ts`): the north-west and north-east runs meet at a tower on the north corner, each ending in
+    a tower (so three towers) with the gatehouse in the north-west run near its south end; the front is open grass. Each run is a line of **identical wall
+    cells laid exactly `WALL_STEP` (93, 54) apart**, from the north tower to the far one, the last cell cut (`Prop.cut`) where its tower covers it. The
+    cell (`tools/castle/prep.py` `wall_cell`) is made from the kit's wall block, which has end caps, two banners and a slope of 0.44, so a row of the
+    raw blocks showed a notch at every joint and drifted off the 26/45 lattice: its caps and dark end columns are left out, the columns past the last
+    merlon rebuilt from one merlon back, the first banner painted over (the cell starts in its middle), and it is cut at merlon starts one merlon period
+    apart (five merlons, 93 px) with every column shifted up a whole number of pixels so the top and foot lines run at the lattice slope. Cells then
+    butt with no seam (`docs/samples/castle-wall-joints.png`: the north corner, the east and west towers, both gate joints and mid-run seams at 3x; made by
+    `node tools/castle/joints.mjs`, which draws the walls alone via a hidden `window.__castleWallsOnly` flag). Runs start and end under the towers' bases,
+    which are drawn over every joint; the gatehouse is drawn over the run, which goes on behind it. Both runs are behind everything (`depth`). The yard is
+    now 4 tiles back from the first plots' tile row (corner at (-4,-4)), so the corner tower shows two tiles behind the chapel.
   - **Props** sit on grass tiles beside the building they belong to, never on a road or a plot: crates and barrels by the treasury and armoury, a weapon
     rack and hay by the barracks, crystals by the tower, lamps along the roads, flowerbeds, bushes and trees in the corners of the yard. (There is no
     training dummy in the kits; the orcs' weapon stall is the rack.)

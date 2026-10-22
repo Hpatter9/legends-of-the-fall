@@ -65,7 +65,7 @@ export const SPRITE_SIZE: Record<string, readonly [number, number]> = {
   stockpile: [87, 89],
   tavern: [119, 125],
   thatch: [129, 118],
-  wall: [120, 114],
+  wall: [93, 121],
   watchtower: [79, 134],
   woodpile: [50, 54],
   workshop: [95, 110],
@@ -266,6 +266,8 @@ export interface Prop {
   y: number;
   flip?: boolean;
   depth?: number;
+  /** Draw only the columns `[from, to)` of the picture as seen (the last piece of a wall run, cut where the tower covers it). */
+  cut?: readonly [number, number];
 }
 
 /** One arrangement of the yard. */
@@ -311,7 +313,7 @@ interface Spec {
   yard: Block;
   plots: Record<PlotId, PlotSpec>;
   /** [sprite, u, v, options]: `u`, `v` may be halves for a wall piece that spans two tiles. */
-  props: readonly (readonly [string, number, number, { flip?: boolean; depth?: number; dx?: number; dy?: number }?])[];
+  props: readonly (readonly [string, number, number, { flip?: boolean; depth?: number; dx?: number; dy?: number; cut?: readonly [number, number] }?])[];
   plaza: Block;
   roads: readonly Block[];
   /** [u, v, up from the tile's foot, which way the cloth blows, across from the tile's middle] */
@@ -338,6 +340,7 @@ function build(spec: Spec): Layout {
     y: Math.round(cellY(g, u, v) + TILE_H / 2 + (o?.dy ?? 0)),
     flip: o?.flip,
     depth: o?.depth,
+    cut: o?.cut,
   }));
   return { w: spec.w, h: spec.h, grid: g, yard: spec.yard, plots, props, plaza: spec.plaza, roads: spec.roads, flags: spec.flags.map(([u, v, dy, dir, dx]) => ({ x: Math.round(cellX(g, u, v) + (dx ?? 0)), y: Math.round(cellY(g, u, v) + dy), dir })) };
 }
@@ -346,21 +349,37 @@ const BEHIND = -1000;
 
 type PropSpec = Spec['props'][number];
 
-/** The back wall: the north-west and north-east sides only, meeting at the north corner `(u0, v0)`, each a straight run of wall pieces (two tiles long, the
- *  same piece mirrored on the north-east side) with a tower at its far end, `(u1, v0)` and `(u0, v1)`. The front of the village is open. Both runs are
- *  behind the yard, so they are drawn behind everything. The gatehouse stands in the north-west run at tile `v = gateV` (it takes the place of two pieces). */
+/** One wall cell butts the next at this offset along a run (a run's top and foot lines are exactly straight, at the lattice's slope of 26 down for
+ *  45 across); `WALL_RISE` is how much higher a cell's far end stands than its near one (its lowest point is the near end of the foot). */
+export const WALL_STEP = { dx: 93, dy: 54 };
+export const WALL_RISE = 53;
+/** How far above a tower's foot line a run's foot meets it (the tower's base is about a dozen pixels deep). */
+const WALL_JOIN = 12;
+
+/** The back wall: the north-west and north-east sides only, meeting at the tower on the north corner `(u0, v0)`, each a straight run of identical wall
+ *  cells laid exactly `WALL_STEP` apart from that tower to the tower at its far end, `(u1, v0)` and `(u0, v1)` (the last cell is cut where the tower
+ *  covers it). The runs start and end under the towers' bases, so every joint is covered by a tower, and the gatehouse, drawn over the run, takes the
+ *  place of nothing: the wall goes on behind it. The front of the village is open. Both runs are behind the yard, so they are drawn behind everything. */
 function ring(u0: number, v0: number, u1: number, v1: number, gateV: number): PropSpec[] {
-  const out: PropSpec[] = [
-    ['watchtower', u0, v0, { depth: BEHIND + 2 }],
-    ['watchtower', u1, v0, { depth: BEHIND + 2 }],
-    ['watchtower', u0, v1],
-  ];
-  for (let c = 2; c < v1 - v0; c += 2) {
-    const v = v0 + c;
-    if (Math.abs(v - gateV) > 1.6) out.push(['wall', u0, v, { depth: BEHIND }]);
-  }
-  for (let c = 2; c < u1 - u0; c += 2) out.push(['wall', u0 + c, v0, { flip: true, depth: BEHIND }]);
-  out.push(['gatehouse', u0, gateV, { depth: BEHIND + 1 }]);
+  const out: PropSpec[] = [];
+  const W = SPRITE_SIZE.wall[0];
+  const run = (lengthTiles: number, side: 'nw' | 'ne'): void => {
+    const length = lengthTiles * (TILE_W / 2);
+    const n = Math.ceil(length / WALL_STEP.dx);
+    for (let i = 0; i < n; i++) {
+      const rem = length - i * WALL_STEP.dx;
+      // (the north-west run goes down-left from the corner tower, its cell's high end nearer the tower; the north-east one goes down-right, mirrored)
+      const dx = side === 'nw' ? -i * WALL_STEP.dx - (W - 1) / 2 : i * WALL_STEP.dx + (W - 1) / 2;
+      const cut = rem >= W ? undefined : side === 'nw' ? ([W - rem, W] as const) : ([0, rem] as const);
+      out.push(['wall', u0, v0, { dx, dy: WALL_RISE - WALL_JOIN + i * WALL_STEP.dy, flip: side === 'ne', depth: BEHIND, cut }]);
+    }
+  };
+  run(v1 - v0, 'nw');
+  run(u1 - u0, 'ne');
+  out.push(['gatehouse', u0, gateV, { depth: BEHIND + 1, dy: 2 }]);
+  out.push(['watchtower', u0, v0, { depth: BEHIND + 2 }]);
+  out.push(['watchtower', u1, v0, { depth: BEHIND + 2 }]);
+  out.push(['watchtower', u0, v1]);
   return out;
 }
 
@@ -370,14 +389,14 @@ function ring(u0: number, v0: number, u1: number, v1: number, gateV: number): Pr
  *  right. The scene is drawn a whole number of device pixels per scene pixel (`zoomLevels`); the front is open grass. */
 export const YARD: Layout = build({
   w: 1030,
-  h: 640,
-  grid: { x: 540, y: 288 },
-  yard: { u0: -3, v0: -3, u1: 7, v1: 8 },
+  h: 690,
+  grid: { x: 540, y: 340 },
+  yard: { u0: -4, v0: -4, u1: 6, v1: 7 },
   plaza: { u0: 0, v0: 0, u1: 2, v1: 2 },
   roads: [
     { u0: -1, v0: -1, u1: 4, v1: -1 },
-    { u0: -1, v0: -2, u1: -1, v1: 6 },
-    { u0: -2, v0: 6, u1: -1, v1: 6 },
+    { u0: -1, v0: -2, u1: -1, v1: 5 },
+    { u0: -3, v0: 5, u1: -1, v1: 5 },
     { u0: 3, v0: 2, u1: 3, v1: 6 },
     { u0: 1, v0: 4, u1: 5, v1: 4 },
     { u0: 3, v0: 6, u1: 5, v1: 6 },
@@ -390,10 +409,10 @@ export const YARD: Layout = build({
     stable: { u: 1, v: 3, w: 2, d: 1, flip: false, door: { u: 1, v: 4 }, tagDx: -40 },
     library: { u: 4, v: 5, w: 2, d: 1, flip: false, door: { u: 4, v: 6 }, tag: 'below', tagDx: 20 },
     tavern: { u: 5, v: 3, w: 1, d: 1, flip: false, door: { u: 5, v: 4 }, tagDx: 60, tagDy: 70 },
-    chapel: { u: -2, v: -2, w: 1, d: 1, flip: true, door: { u: -1, v: -2 } },
+    chapel: { u: -2, v: -2, w: 1, d: 1, flip: true, door: { u: -1, v: -2 }, tagDx: 60 },
   },
   props: [
-    ...ring(-3, -3, 7, 8, 6),
+    ...ring(-4, -4, 6, 7, 5),
     // the plaza
     ['statue', 1, 1],
     ['brazier', 0, 0],
@@ -416,7 +435,7 @@ export const YARD: Layout = build({
     ['flowers', 3, 0],
     ['flowers', 4, 0],
     // by the barracks: a weapon rack and hay
-    ['rack', -2, 5],
+    ['rack', -2, 6],
     ['hay', 0, 6],
     ['roses', 1, 7],
     // the garden: vegetable beds and an herb bed in the south corner, with a bush
@@ -429,11 +448,11 @@ export const YARD: Layout = build({
     ['field2', 1, 6],
   ],
   flags: [
-    [-3, -3, -96, 1],
-    [7, -3, -96, -1],
-    [-3, 8, -96, 1],
-    [-3, 6, -92, 1, 52],
-    [-3, 6, -98, -1, -52],
+    [-4, -4, -96, 1],
+    [6, -4, -96, -1],
+    [-4, 7, -96, 1],
+    [-4, 5, -92, 1, 52],
+    [-4, 5, -98, -1, -52],
   ],
 });
 

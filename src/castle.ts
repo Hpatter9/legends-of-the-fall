@@ -819,22 +819,31 @@ export class CastleScene {
     g.save();
     g.translate(this.view.ox * s, this.view.oy * s);
     const list: { depth: number; paint: () => void }[] = [];
+    const wallsOnly = (window as unknown as { __castleWallsOnly?: boolean }).__castleWallsOnly === true;
     for (const p of this.lay.props) {
+      if (wallsOnly && p.sprite !== 'wall' && p.sprite !== 'gatehouse' && p.sprite !== 'watchtower') continue;
       const im = a[p.sprite];
       const x = Math.round(p.x - im.width / 2) * s;
-      const paint = p.flip
-        ? () => {
-            g.save();
-            g.translate(x + im.width * s, 0);
-            g.scale(-1, 1);
-            g.drawImage(im, 0, (p.y - im.height) * s, im.width * s, im.height * s);
-            g.restore();
-          }
-        : () => g.drawImage(im, x, (p.y - im.height) * s, im.width * s, im.height * s);
+      const y = (p.y - im.height) * s;
+      const paint = () => {
+        g.save();
+        // (the last cell of a wall run is cut where its tower covers it: only the columns of the picture as drawn from `cut[0]` to `cut[1]` show)
+        if (p.cut) {
+          g.beginPath();
+          g.rect(x + p.cut[0] * s, y, (p.cut[1] - p.cut[0]) * s, im.height * s);
+          g.clip();
+        }
+        if (p.flip) {
+          g.translate(x + im.width * s, 0);
+          g.scale(-1, 1);
+          g.drawImage(im, 0, y, im.width * s, im.height * s);
+        } else g.drawImage(im, x, y, im.width * s, im.height * s);
+        g.restore();
+      };
       list.push({ depth: p.depth ?? p.y, paint });
     }
-    for (const id of PLOT_IDS) list.push({ depth: this.lay.plots[id].y, paint: () => this.building(a, id) });
-    for (const w of this.walkers.values()) list.push({ depth: w.y, paint: () => this.hero(w) });
+    if (!wallsOnly) for (const id of PLOT_IDS) list.push({ depth: this.lay.plots[id].y, paint: () => this.building(a, id) });
+    if (!wallsOnly) for (const w of this.walkers.values()) list.push({ depth: w.y, paint: () => this.hero(w) });
     list.sort((p, q) => p.depth - q.depth);
     for (const e of list) e.paint();
     this.flags();

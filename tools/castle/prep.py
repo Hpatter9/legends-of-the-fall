@@ -3,6 +3,7 @@ so the isometric kits' big pieces (a cottage is about 200 px wide) fit a phone-s
 Source: the isometric kits and castle pieces in hpatter9/little-town (src/renderer/art/iso/; drawn in one 2:1 view, lit from the upper left).
 Prints the SPRITE_SIZE table for src/render/castleSpots.ts and the imports for src/castle.ts."""
 import os
+import numpy as np
 from PIL import Image
 ISO = '/home/user/hpatter9/little-town/src/renderer/art/iso/'
 out = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'src', 'art', 'castle')
@@ -41,6 +42,48 @@ def half(im):
             if a >= 510:
                 px[x, y] = (round(r / a), round(g / a), round(b / a), 255)
     return o
+def wall_cell(im):
+    """The kit's wall run is one block with end caps, a banner at each end and a slope of about 0.44; a row of those shows a notch at every joint and
+    drifts off the ground lattice (2:1 tiles have a slope of 26/45). This makes one repeating cell of it: the end caps and the dark end columns left
+    out (the columns past the last merlon rebuilt from one merlon back), the first banner painted over with stone from along the wall (the cell starts
+    in its middle), the columns cut at merlon starts one merlon period (about 18.6 px) apart so a cell is five merlons, 93 px wide, and every column
+    shifted up a whole number of pixels so the top and the foot of the wall run at the lattice slope. Cells then butt exactly at an offset of
+    (93, 54) along a run (castleSpots.ts WALL_STEP) with no seam."""
+    a = np.array(im.convert('RGBA')).astype(int)
+    H, W = a.shape[:2]
+    r, g, b, al = a[:, :, 0], a[:, :, 1], a[:, :, 2], a[:, :, 3]
+    blue = (b > r + 30) & (b > g + 10) & (al > 0)
+    m = np.zeros_like(blue)
+    m[:, 18:40] = blue[:, 18:40]
+    d = m.copy()
+    for _ in range(3):
+        d2 = d.copy(); d2[1:] |= d[:-1]; d2[:-1] |= d[1:]; d2[:, 1:] |= d[:, :-1]; d2[:, :-1] |= d[:, 1:]; d = d2
+    out = a.copy()
+    for y, x in zip(*np.where(d)):
+        sx, sy = x + 47, y - 20
+        if 0 <= sy < H and 0 <= sx < W and al[sy, sx] > 0 and not blue[sy, sx]:
+            out[y, x] = a[sy, sx]
+    ext = np.zeros((H, W + 2, 4), dtype=int)
+    ext[:, :W] = out
+    for c in (118, 119, 120, 121):
+        for y in range(H):
+            sy = y + 8
+            if 0 <= sy < H:
+                ext[y, c] = out[sy, c - 19]
+    cell = ext[:, 29:122]
+    Wc = cell.shape[1]
+    k = 26 / 45 - 0.436
+    Hn = H + int(round(k * (Wc - 1))) + 1
+    res = np.zeros((Hn, Wc, 4), dtype=np.uint8)
+    for x in range(Wc):
+        sh = int(round(k * x))
+        for y in range(H):
+            ny = y + (Hn - H) - sh
+            if 0 <= ny < Hn:
+                res[ny, x] = cell[y, x]
+    R = Image.fromarray(res, 'RGBA')
+    return R.crop(R.getchannel('A').getbbox())
+
 def soften_rim(im):
     """The ground tile's dark outline along its two back edges would show as a grid between tiles laid edge to edge; paint it over with the grass just inside."""
     w, h = im.size
@@ -68,6 +111,8 @@ for name, src in sorted(PICKS.items()):
     im = im.crop(bb)
     if name == 'grass_tile':
         im = soften_rim(im)
+    if name == 'wall':
+        im = wall_cell(im)
     im.save(f'{out}/{name}.png', optimize=True)
     sizes[name] = im.size
 print('SPRITE_SIZE:')

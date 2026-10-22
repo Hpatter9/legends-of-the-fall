@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { BUILDING_IDS, maxLevel } from '../src/sim/castle';
-import { BLURB, defaultZoom, doubleTapZoom, effectText, footprint, inBlock, isPaved, LIGHTS, lookFor, LOOKS, lookBox, pickScale, PLACE_IDS, PLACE_LOOK, PLACES, pinchStep, PLOT_IDS, rememberedZoom, SPRITE_SIZE, spriteName, stageOf, STAGES, stepZoom, TILE_H, TILE_W, VENTS, walkTiles, YARD, zoomLevels } from '../src/render/castleSpots';
+import { BLURB, defaultZoom, doubleTapZoom, effectText, footprint, inBlock, isPaved, LIGHTS, lookFor, LOOKS, lookBox, pickScale, PLACE_IDS, PLACE_LOOK, PLACES, pinchStep, PLOT_IDS, rememberedZoom, SPRITE_SIZE, spriteName, stageOf, STAGES, stepZoom, TILE_H, TILE_W, VENTS, walkTiles, WALL_RISE, WALL_STEP, YARD, zoomLevels } from '../src/render/castleSpots';
 
 const LAYOUTS = { yard: YARD };
 const looksOf = (id: (typeof BUILDING_IDS)[number]) => LOOKS[id];
@@ -124,36 +124,53 @@ test('props stand on tiles clear of every plot', () => {
   }
 });
 
-test('the wall has two sides, north-west and north-east: a tower at the corner and at each run\'s end, runs with no gap, exactly one gate, the front open', () => {
+test('the wall has two sides, north-west and north-east: a tower at the corner and at each run\'s end, runs of cells exactly one repeat apart, exactly one gate, the front open', () => {
   const lay = YARD;
   const { u0, v0, u1, v1 } = lay.yard;
-  const towers = lay.props.filter((p) => p.sprite === 'watchtower').map((p) => `${p.u},${p.v}`).sort();
-  assert.deepEqual(towers, [`${u0},${v0}`, `${u1},${v0}`, `${u0},${v1}`].sort(), 'a tower at the north corner and at the end of each run');
+  const towers = lay.props.filter((p) => p.sprite === 'watchtower');
+  assert.deepEqual(towers.map((p) => `${p.u},${p.v}`).sort(), [`${u0},${v0}`, `${u1},${v0}`, `${u0},${v1}`].sort(), 'a tower at the north corner and at the end of each run');
   const gates = lay.props.filter((p) => p.sprite === 'gatehouse');
   assert.equal(gates.length, 1, 'exactly one gate');
   assert.equal(gates[0].u, u0, 'the gate is in the north-west run');
-  // (each run: the pieces along it; a wall piece covers one tile either side of its middle, the gatehouse a tile and a half)
-  const sides = [
-    { name: 'north-west', fixed: u0, from: v0, to: v1, on: (p: { u: number; v: number }) => p.u === u0, at: (p: { u: number; v: number }) => p.v, flip: false },
-    { name: 'north-east', fixed: v0, from: u0, to: u1, on: (p: { u: number; v: number }) => p.v === v0, at: (p: { u: number; v: number }) => p.u, flip: true },
+  const [W] = SPRITE_SIZE.wall;
+  const north = towers.find((p) => p.u === u0 && p.v === v0)!;
+  const cells = lay.props.filter((p) => p.sprite === 'wall');
+  // (each run: cells in order from the north tower; the north-west one goes down-left, the north-east one down-right and mirrored)
+  const runs = [
+    { name: 'north-west', cells: cells.filter((p) => !p.flip).sort((a, b) => b.x - a.x), sign: -1, far: towers.find((p) => p.u === u0 && p.v === v1)!, tiles: v1 - v0 },
+    { name: 'north-east', cells: cells.filter((p) => p.flip).sort((a, b) => a.x - b.x), sign: 1, far: towers.find((p) => p.u === u1 && p.v === v0)!, tiles: u1 - u0 },
   ];
-  for (const side of sides) {
-    const pieces = lay.props.filter((p) => (p.sprite === 'wall' || p.sprite === 'gatehouse') && side.on(p));
-    assert.ok(pieces.length >= 3, `${side.name} run has pieces`);
-    for (const p of pieces.filter((q) => q.sprite === 'wall')) assert.equal(!!p.flip, side.flip, `${side.name} piece faces the right way`);
-    const spans = pieces.map((p) => [side.at(p) - (p.sprite === 'gatehouse' ? 1.5 : 1), side.at(p) + (p.sprite === 'gatehouse' ? 1.5 : 1)]).sort((a, b) => a[0] - b[0]);
-    let reach = side.from + 0.5;
-    for (const [a, b] of spans) {
-      assert.ok(a <= reach + 0.75, `${side.name} run has a gap before ${a} (covered to ${reach})`);
-      reach = Math.max(reach, b);
-    }
-    assert.ok(reach >= side.to - 0.5 - 0.75, `${side.name} run reaches its far tower`);
+  for (const run of runs) {
+    assert.ok(run.cells.length >= 4, `${run.name} run has cells`);
+    run.cells.forEach((c, i) => {
+      if (i === 0) return;
+      const prev = run.cells[i - 1];
+      assert.equal(c.x - prev.x, run.sign * WALL_STEP.dx, `${run.name} cell ${i} is one repeat across from the last`);
+      assert.equal(c.y - prev.y, WALL_STEP.dy, `${run.name} cell ${i} is one repeat down from the last`);
+    });
+    // (the foot line of the run: a cell's lowest point is its near-end corner; the far end stands WALL_RISE higher; the next cell's near end is exactly where this one's far end is)
+    const first = run.cells[0];
+    // the first cell's high end is at the north tower's middle: its far corner (x) and its foot line (y, a dozen pixels above the tower's foot)
+    const northX = north.x;
+    const edge = run.sign < 0 ? first.x + Math.round(W / 2) - 1 : first.x - Math.round(W / 2) + 1;
+    assert.ok(Math.abs(edge - northX) <= 1, `${run.name} run starts at the north tower (${edge} vs ${northX})`);
+    assert.equal(first.y - WALL_RISE, north.y - 12, `${run.name} run's foot meets the tower's base`);
+    // the run reaches the far tower: the cells cover the whole length between the tower middles, the last one cut exactly where the run ends
+    const last = run.cells[run.cells.length - 1];
+    const lastWidth = last.cut ? last.cut[1] - last.cut[0] : W;
+    const covered = (run.cells.length - 1) * WALL_STEP.dx + lastWidth;
+    assert.ok(Math.abs(covered - run.tiles * 45) <= 1, `${run.name} run covers ${covered} of ${run.tiles * 45}`);
+    assert.equal(Math.abs(run.far.x - northX), run.tiles * 45, `${run.name} far tower is ${run.tiles} tiles along`);
   }
   // (no wall on the other two sides: nothing stands on the south-east or south-west edge)
   for (const p of lay.props.filter((q) => q.sprite === 'wall' || q.sprite === 'gatehouse' || q.sprite === 'watchtower')) assert.ok(p.u === u0 || p.v === v0, `${p.sprite} at ${p.u},${p.v} is on a back side`);
-  // (both runs sit behind everything, and every plot has a tile of grass behind it)
+  // (both runs sit behind everything, the towers over their joints; every plot has a tile of grass behind it)
   for (const p of lay.props.filter((q) => q.sprite === 'wall' || q.sprite === 'gatehouse')) assert.ok(p.depth !== undefined && p.depth <= -1000 + 1, `wall piece at ${p.u},${p.v} is behind`);
+  for (const p of towers.filter((q) => q.depth !== undefined)) assert.ok(p.depth! > cells[0].depth!, 'a tower is drawn over the wall');
   for (const id of PLOT_IDS) assert.ok(lay.plots[id].u >= u0 + 1 && lay.plots[id].v >= v0 + 1, `${id} has a tile of grass behind it`);
+  // (the chapel is not in the corner: the corner tower shows)
+  const chapel = lay.plots.chapel;
+  assert.ok(chapel.u >= u0 + 2 && chapel.v >= v0 + 2, 'the chapel stands two tiles in from the corner');
   for (const t of walkTiles(lay)) assert.ok(t.u > u0 && t.v > v0, `road tile ${t.u},${t.v} is inside the wall`);
 });
 
