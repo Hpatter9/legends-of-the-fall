@@ -8,11 +8,13 @@ import { AREAS, type Area } from './board';
 import { checkAchievements, type Achievement } from './achievements';
 import { Rng, mixSeed } from './rng';
 import type { Battle } from './battle';
-import { armyOfRun, bandFor, isBossRun, isBossStage, newRun, START_GOLD, type Run } from './run';
+import { armyOfRun, bandFor, isBossRun, isBossStage, recruit, START_GOLD, SUMMON_BASE, type Run } from './run';
+import { bonusGold } from './castle';
+import { CAL_MAPS, CAL_ROWS, CAL_SCALE, CAL_START_GOLD } from './calamity';
 import { armyCleared, armyUnlocked, ARMIES } from './armies';
 import { HEROES } from './units';
 import type { Meta } from './meta';
-import { newTower } from './tower';
+import { mapFor, newTower } from './tower';
 
 /** The stage the endless tower opens at (reached in any run), or once the first army has been beaten. */
 export const TOWER_UNLOCK = 10;
@@ -67,11 +69,31 @@ export const dailyInProgress = (run: Run | null, date: number): Run | null => (r
 /** A daily run's score: the stages cleared x 100 plus the stars x 10. */
 export const dailyScore = (run: Run): number => (run.stage - 1) * SCORE_STAGE + (run.stars ?? 0) * SCORE_STAR;
 
-/** A tower run from a seed: the party at its lasting levels, the castle as it stands, and the first act's map (`tower.ts`). */
+/**
+ * A tower run from a seed: the whole party, every hero back at level 1 with no equipment and no talents for the climb (the meta's
+ * levels, gear and talents are not read and not changed: the heroes level and find gear in the run, `climb.ts`), the castle as
+ * it stands, and the first act's map (`tower.ts`).
+ */
 export function towerRun(seed: number, m: Meta): Run {
-  const run = newRun(seed, m.party, m.castle);
+  const run: Run = { seed, gold: START_GOLD + bonusGold(m.castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...m.party], castle: { ...m.castle }, local: true };
+  for (const kind of m.party) run.squad.push(recruit(run, kind, SUMMON_BASE).id);
   run.mode = { kind: 'tower' };
   run.tower = newTower(seed, ARMIES.filter((a) => armyUnlocked(m, a.id)).map((a) => a.id), m.tower);
+  return run;
+}
+
+/** A calamity from a seed: one starting hero (a kind the player owns) at level 1, the castle as it stands, and the first small map. Heroes are hired along the way. */
+export function calamityRun(seed: number, m: Meta, hero: string): Run {
+  const kind = m.unlocked.includes(hero) ? hero : m.party[0];
+  const run: Run = { seed, gold: CAL_START_GOLD + bonusGold(m.castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...m.unlocked], castle: { ...m.castle }, local: true };
+  run.squad.push(recruit(run, kind, 0).id);
+  run.mode = { kind: 'calamity' };
+  const t = newTower(seed, ARMIES.filter((a) => armyUnlocked(m, a.id)).map((a) => a.id), m.tower);
+  t.rows = [...CAL_ROWS];
+  t.maps = CAL_MAPS;
+  t.scale = { start: CAL_SCALE.start, growth: CAL_SCALE.growth, step: CAL_SCALE.step };
+  run.tower = t;
+  t.map = mapFor(run, 1);
   return run;
 }
 
@@ -88,7 +110,7 @@ export const floorsCleared = (run: Run): number => run.stage - 1;
 export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: number; stars: number; battle?: Battle }): Achievement[] {
   const army = armyOfRun(run);
   // (an army's waves are not stages of the endless climb: they keep their own record, `settleWave`)
-  if (!army) m.bestStage = Math.max(m.bestStage, run.best);
+  if (!army && run.mode?.kind !== 'calamity') m.bestStage = Math.max(m.bestStage, run.best);
   const boss = army ? (isBossRun(run, fight.stage) ? army.waves[fight.stage - 1].foes[0] : '') : run.tower ? run.tower.lastBoss ?? '' : isBossStage(fight.stage) ? bandFor(fight.stage) : '';
   if (fight.won && boss && !m.bosses.includes(boss)) m.bosses.push(boss);
   if (run.mode?.kind === 'tower') m.tower = Math.max(m.tower, floorsCleared(run));

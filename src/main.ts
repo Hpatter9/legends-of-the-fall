@@ -6,7 +6,12 @@ import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { D, standable, tileAt } from './sim/board';
 import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type Boost, type Unit } from './sim/battle';
 import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
-import { armyOfRun, armyRun, boostOf, finish, heroOf, isBossRun, keepCharges, loadRun, noteFight, paidOf, recycle, recycleValue, saveRun, setSquad, SQUAD, startStage, summon, summonCost, tierOfRun, type Owned, type Run } from './sim/run';
+// (`saveSlot` as `saveRun`: a tower or calamity run is saved in its own slot, any other in the ordinary one)
+import { adoptOldTower, armyOfRun, armyRun, boostOf, dropSlot, finish, heroOf, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, type Owned, type Run } from './sim/run';
+import { climbXpView, heroLevel, localBoost } from './sim/climb';
+import { calamityRun } from './sim/modes';
+import { CAL_MAPS } from './sim/calamity';
+import { pickHero } from './calamityView';
 import { ARMIES, armyById, armyUnlocked, settleWave, type ArmyPay } from './sim/armies';
 import { drawRunStars, showUnlock } from './armiesView';
 import { settleArmyRun, type StarResult } from './sim/armyStars';
@@ -26,7 +31,7 @@ import { Gacha } from './gacha';
 import { Events } from './events';
 import { TowerView } from './towerView';
 import { showTwistBanner } from './twistView';
-import { finishTower, migrateTower, settleTower } from './sim/tower';
+import { abandonTower, finishTower, migrateTower, settleTower } from './sim/tower';
 import { hpShare } from './sim/health';
 import { Home } from './home';
 import { Party } from './party';
@@ -147,6 +152,8 @@ class Game {
     const seed = Number(query.get('seed'));
     this.meta = loadMeta((Date.now() % 100000) + 1);
     saveMeta(this.meta);
+    // (a tower run saved by an older version sat in the ordinary slot: it moves to the tower's own)
+    adoptOldTower();
     // (a fresh page with no saved run shows the first army's board behind the home screen)
     this.run = (!seed && loadRun()) || armyRun(seed || (Date.now() % 100000) + 1, ARMIES[0].id, this.meta.party, this.meta.castle);
     this.syncPool();
@@ -191,7 +198,13 @@ class Game {
         if (dailyInProgress(loadRun(), todayKey())) return this.resume();
         this.startRun(startDaily(this.meta, todayKey()));
       },
-      onTower: () => this.startTower(towerRun(clockSeed(), this.meta)),
+      onTower: () => this.openMode('tower'),
+      onCalamity: () => this.openMode('calamity'),
+      slotInfo: (kind) => {
+        const r = loadSlot(kind);
+        if (!r) return null;
+        return kind === 'calamity' ? `Map ${r.tower?.act ?? 1}/${CAL_MAPS} · continue` : `Floor ${r.stage} · continue`;
+      },
       onScene: () => this.syncScene(),
     });
     this.towerView = new TowerView({
@@ -203,6 +216,7 @@ class Game {
       },
       onPack: () => this.events.openPack(this.run, true, () => saveRun(this.run)),
       onHome: () => this.home.open(),
+      onAbandon: () => this.abandon(),
     });
     this.party = new Party(this.meta, () => this.home.open());
     bindSpellbook(this.meta, () => {
@@ -714,12 +728,12 @@ class Game {
     $('homeBtn').addEventListener('click', () => this.home.open());
     $('next').addEventListener('click', () => {
       // (an army's last boss has fallen: the next army's unlock moment, if it opened one, then the armies)
-      if (this.run.cleared) return this.armyWon();
+      if (this.run.cleared && !this.run.tower) return this.armyWon();
       // (the tower: a lost run shows its summary, a won floor goes back to the map)
       if (this.run.tower) {
         $('result').hidden = true;
         saveRun(this.run);
-        if (this.run.over) return this.towerView.showSummary(this.run, this.run.tower.summary ?? settleTower(this.meta, this.run)!, () => this.home.open(`The climb ended on floor ${this.run.stage}: +${this.run.tower!.crowns} crowns earned`));
+        if (this.run.over) return this.towerView.showSummary(this.run, this.run.tower.summary ?? settleTower(this.meta, this.run)!, () => this.home.open(`${this.run.mode?.kind === 'calamity' ? (this.run.cleared ? 'The calamity is ended' : 'The calamity ended') : 'The climb ended'} on floor ${this.run.stage}: +${this.run.tower!.summary?.crowns ?? this.run.tower!.crowns} crowns earned`));
         return this.towerView.open(this.run);
       }
       // (a lost run goes back to the main screen, with its summary)
@@ -882,6 +896,8 @@ class Game {
 
   /** A roster hero's boost for the fight: its grade, rank, level, gear and equipment, and the tower's wounds. */
   private boostFor(h: Owned): Boost {
+    // (a run that levels its own heroes reads nothing of the meta's levels, gear or talents)
+    if (this.run.local) return { ...localBoost(h), carry: hpShare(this.run, h.id) };
     return { ...boostOf(h, rankOf(this.meta, h.kind), levelOfKind(this.meta, h.kind), heroStats(this.meta, h.kind)), carry: hpShare(this.run, h.id) };
   }
 
@@ -893,6 +909,35 @@ class Game {
     saveMeta(this.meta);
     saveRun(run);
     this.towerView.open(run);
+  }
+
+  /** The tower or the calamity from the home screen: its saved run carries on where it stood; with none, a new one begins (the calamity asks for its hero first). */
+  private openMode(kind: 'tower' | 'calamity'): void {
+    const saved = loadSlot(kind);
+    if (saved) return this.resumeSlot(saved);
+    if (kind === 'tower') return this.startTower(towerRun(clockSeed(), this.meta));
+    pickHero(this.meta, (hero) => this.startTower(calamityRun(clockSeed(), this.meta, hero)), () => this.home.open());
+  }
+
+  /** Back into a saved tower or calamity run: its map, or the fight it had picked. */
+  private resumeSlot(r: Run): void {
+    this.run = r;
+    this.syncPool();
+    this.placed.clear();
+    migrateTower(r, ARMIES.filter((a) => armyUnlocked(this.meta, a.id)).map((a) => a.id), this.meta.tower);
+    if (r.tower!.cur?.fight) this.newBattle();
+    else this.towerView.open(r);
+  }
+
+  /** The player chose to start over, behind the map's confirm: the run ends where it stands, pays what it earned, and its slot is emptied. */
+  private abandon(): void {
+    const run = this.run;
+    if (!abandonTower(run)) return this.home.open();
+    const summary = settleTower(this.meta, run)!;
+    saveMeta(this.meta);
+    saveRun(run);
+    dropSlot(run.mode?.kind === 'calamity' ? 'calamity' : 'tower');
+    this.towerView.showSummary(run, summary, () => this.home.open());
   }
 
   /** Carry on with the saved run (a run saved between an event's card and the next fight picks its card up again). */
@@ -914,7 +959,9 @@ class Game {
 
   /** The draw pool is the party, except a daily challenge, which keeps its starting five. */
   private syncPool(): void {
-    if (this.run.mode?.kind !== 'daily') this.run.pool = [...this.meta.party];
+    // (a calamity hires from every hero owned; a tower run's pool is the party)
+    if (this.run.mode?.kind === 'calamity') this.run.pool = [...this.meta.unlocked];
+    else if (this.run.mode?.kind !== 'daily') this.run.pool = [...this.meta.party];
   }
 
   /** The result screen's stars: each pops in (CSS) with its reason and what it pays, and a chime; none for a loss. */
@@ -1113,7 +1160,7 @@ class Game {
   private canPut(id: string, [u, v]: [number, number]): boolean {
     const h = heroOf(this.run, Number(id));
     if (!h || !canPlace(this.b, h.kind, u, v, h.id)) return false;
-    return this.run.squad.includes(h.id) || this.run.squad.length < SQUAD;
+    return this.run.squad.includes(h.id) || this.run.squad.length < squadLimit(this.run);
   }
 
   private put(id: string, tile: [number, number]): void {
@@ -1172,10 +1219,15 @@ class Game {
 
   /* -------------------------------------------------------------- the page */
 
+  /** A hero's level: its own in a run that levels its heroes, else its kind's lasting level. */
+  private levelOf(h: Owned): number {
+    return this.run.local ? heroLevel(h) : levelOfKind(this.meta, h.kind);
+  }
+
   /** The bench: a card for every hero owned, rebuilt when the roster changes. */
   private buildBench(): void {
     const bench = $('bench');
-    const key = this.run.roster.map((h) => `${h.id}:${h.grade}:${levelOfKind(this.meta, h.kind)}:${powerOf(h.kind, this.boostFor(h))}`).join();
+    const key = this.run.roster.map((h) => `${h.id}:${h.grade}:${this.levelOf(h)}:${powerOf(h.kind, this.boostFor(h))}`).join();
     if (bench.dataset.key === key) return;
     bench.dataset.key = key;
     bench.replaceChildren();
@@ -1200,7 +1252,7 @@ class Game {
       }
       const lv = document.createElement('span');
       lv.className = 'lv';
-      lv.textContent = `Lv ${levelOfKind(this.meta, h.kind)}`;
+      lv.textContent = `Lv ${this.levelOf(h)}`;
       const sell = document.createElement('button');
       sell.className = 'recycle';
       const value = recycleValue(h);
@@ -1331,14 +1383,16 @@ class Game {
       this.crownGain = this.pay ? this.pay.crowns : earn(this.meta, stage, won, rating.stars);
       if (run.tower) run.tower.crowns += this.crownGain;
       if (run.tower && run.over) settleTower(this.meta, run);
-      if (won && !army) recordStars(this.meta, stage, rating.stars);
+      if (won && !army && run.mode?.kind !== 'calamity') recordStars(this.meta, stage, rating.stars);
       const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b });
       this.runStars = settleArmyRun(this.meta, run);
-      const gains = fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp);
-      const from = Object.fromEntries(Object.keys(gains).map((k) => [k, xpOf(this.meta, k)]));
+      // (a run that levels its own heroes taught them in `finishTower`; the lasting XP is not touched)
+      const own = run.local ? climbXpView(run) : null;
+      const gains = own ? own.gains : fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp);
+      const from = own ? own.from : Object.fromEntries(Object.keys(gains).map((k) => [k, xpOf(this.meta, k)]));
       if (this.auto) {
         // (no result screen to show: the fight's pay goes into the replay's totals)
-        gainXp(this.meta, gains);
+        if (!own) gainXp(this.meta, gains);
         this.showStars(null);
         for (const id of ['armyStars', 'xp', 'fightStats']) $(id).hidden = true;
         const over = run.cleared || !won;
@@ -1356,7 +1410,7 @@ class Game {
         this.showStars(won ? rating : null);
         drawRunStars($('armyStars'), army && run.cleared ? this.runStars : null, army ? tierOf(tierOfRun(run)).name : '');
         this.showStats();
-        this.showXp(gains, from, gainXp(this.meta, gains));
+        this.showXp(gains, from, own ? own.ups : gainXp(this.meta, gains));
       }
       saveMeta(this.meta);
       saveRun(run);
@@ -1365,11 +1419,13 @@ class Game {
     document.body.dataset.phase = b.phase;
     const army = armyOfRun(run);
     const kind = run.tower?.cur?.kind;
-    const stage = `${army ? `Wave ${run.stage}/${army.waves.length}` : run.tower ? `Floor ${run.stage}` : `Stage ${run.stage}`}${kind === 'elite' ? ' · Elite' : isBossRun(run) ? ' · Boss' : ''}`;
+    const stage = `${army ? `Wave ${run.stage}/${army.waves.length}` : run.mode?.kind === 'calamity' ? `Map ${run.tower!.act} · Floor ${run.stage}` : run.tower ? `Floor ${run.stage}` : `Stage ${run.stage}`}${kind === 'elite' ? ' · Elite' : isBossRun(run) ? ' · Boss' : ''}`;
     $('status').textContent =
-      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : n ? `${stage} · ${n} of ${SQUAD} placed` : `${stage} · drag heroes onto the blue tiles`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
+      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : n ? `${stage} · ${n} of ${squadLimit(run)} placed` : `${stage} · drag heroes onto the blue tiles`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
     $('gold').textContent = `${run.gold} gold`;
     const buy = $('summon') as HTMLButtonElement;
+    // (a calamity hires the heroes it meets, at the recruit camps and shops: no random summons)
+    buy.hidden = run.mode?.kind === 'calamity';
     buy.textContent = `Hire · ${summonCost(run)}`;
     buy.disabled = run.gold < summonCost(run);
     ($('fight') as HTMLButtonElement).disabled = b.phase !== 'deploy' || n === 0;
@@ -1378,7 +1434,8 @@ class Game {
     result.hidden = (b.phase !== 'won' && b.phase !== 'lost') || this.towerView.isOpen || !!this.auto;
     if (!result.hidden) {
       const left = b.units.filter((x) => x.alive && x.side === 'hero' && !UNITS[x.def].summon).length;
-      $('banner').textContent = run.cleared ? 'Army defeated!' : this.bossDown ? `Act ${run.tower!.act - 1} cleared!` : b.phase === 'won' ? (run.tower ? 'Floor cleared!' : 'Victory!') : 'Defeat';
+      const cal = run.mode?.kind === 'calamity';
+      $('banner').textContent = run.cleared ? (cal ? 'Calamity ended!' : 'Army defeated!') : this.bossDown ? `${cal ? 'Map' : 'Act'} ${run.tower!.act - 1} cleared!` : b.phase === 'won' ? (run.tower ? 'Floor cleared!' : 'Victory!') : 'Defeat';
       $('banner').className = b.phase;
       const share = this.pay?.replay ? ' (a replay pays a share)' : '';
       const clear = this.pay?.firstClear ? ' · first clear!' : '';
@@ -1386,11 +1443,11 @@ class Game {
         b.phase === 'won'
           ? `${run.tower ? `Floor ${run.stage - 1} done · ` : ''}${left} of ${heroesPlaced(b)} heroes standing · +${this.gain} gold · +${this.crownGain} crowns${share}${clear} · ${clock(b.t)}${run.found?.length ? ` · found: ${run.found.join(', ')}` : ''}`
           : run.tower
-            ? `The climb ends on floor ${run.stage}, act ${run.tower.act} · ${run.stage - 1} floors cleared · +${this.crownGain} crowns`
+            ? `The ${cal ? 'calamity' : 'climb'} ends on floor ${run.stage}, ${cal ? 'map' : 'act'} ${run.tower.act} · ${run.stage - 1} floors cleared · +${this.crownGain} crowns`
             : army
             ? `The ${army.name} holds at wave ${run.best} of ${army.waves.length}. It starts again from wave 1; your heroes keep their levels.`
             : `The run ends at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} summons · +${this.crownGain} crowns${modeNote(run)}`;
-      $('next').textContent = run.cleared ? (this.pay?.unlocked ? 'A new army marches…' : 'To the armies') : b.phase === 'won' ? (army ? `Next wave (${run.stage})` : run.tower ? 'To the map' : `Next stage (${run.stage})`) : run.tower ? 'See the summary' : 'Home';
+      $('next').textContent = run.cleared ? (run.tower ? 'See the summary' : this.pay?.unlocked ? 'A new army marches…' : 'To the armies') : b.phase === 'won' ? (army ? `Next wave (${run.stage})` : run.tower ? 'To the map' : `Next stage (${run.stage})`) : run.tower ? 'See the summary' : 'Home';
     }
     this.refreshAuto();
     if (b.phase === 'deploy' && !this.auto) tips.atDeploy(n, run.stage, () => this.deployBox());

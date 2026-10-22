@@ -19,8 +19,12 @@ import { drawOffer, eliteAt, eliteFight, OFFER_SIZE } from './elites';
 import { ALL_RELIC_IDS, RELICS, relicEffects } from './relics';
 import { mixSeed, Rng } from './rng';
 import { addTwists, TWISTS } from './twists';
-import { BOSS, FOE_START, recruit, reward, summonCost, type Run } from './run';
+import { BOSS, FOE_START, reward, squadLimit, summonCost, type Run } from './run';
 import { UNITS } from './units';
+import { fitBand, squadFoeMult } from './calamity';
+import { fightXpByHero, gainRunXp, hireHero } from './climb';
+import { xpRate } from './castle';
+import { levelOf as levelOfXp, type LevelUp } from './levels';
 
 /** Floors in an act: the path floors, then the boss on the last. */
 export const ACT_ROWS = 13;
@@ -43,8 +47,8 @@ export const BOSS_HEAL = 0.5;
 /** The healing draught and the elixir of the shop. */
 export const DRAUGHT_HEAL = 0.4;
 
-export type NodeKind = 'fight' | 'elite' | 'campfire' | 'shop' | 'treasure' | 'mystery' | 'boss';
-export const NODE_NAMES: Record<NodeKind, string> = { fight: 'Fight', elite: 'Elite', campfire: 'Campfire', shop: 'Shop', treasure: 'Treasure', mystery: 'Mystery', boss: 'Boss' };
+export type NodeKind = 'fight' | 'elite' | 'campfire' | 'shop' | 'treasure' | 'mystery' | 'boss' | 'recruit';
+export const NODE_NAMES: Record<NodeKind, string> = { fight: 'Fight', elite: 'Elite', campfire: 'Campfire', shop: 'Shop', treasure: 'Treasure', mystery: 'Mystery', boss: 'Boss', recruit: 'Recruit' };
 
 export interface MapNode {
   id: number;
@@ -80,6 +84,13 @@ export interface ShopItem {
   sold?: boolean;
 }
 
+/** A hero for hire at a recruit node (a calamity's): a particular kind, for gold. */
+export interface Hire {
+  kind: string;
+  cost: number;
+  hired?: boolean;
+}
+
 export interface Treasure {
   gold: number;
   relic?: string;
@@ -94,6 +105,8 @@ export interface Current {
   fight?: FightSpec;
   shop?: ShopItem[];
   chest?: Treasure;
+  /** The heroes a recruit node offers. */
+  hires?: Hire[];
   /** What the campfire did (rested or trained), once it has. */
   camp?: string;
   /** A mystery floor's choice has turned into a mimic's fight, made when the card closes (`finishMystery`). */
@@ -114,6 +127,11 @@ export interface TowerSummary {
   relics: number;
   heroes: number;
   newBest: boolean;
+  /** A calamity's: the maps cleared, and whether it was cleared whole. */
+  maps?: number;
+  cleared?: boolean;
+  /** The player started over rather than fell. */
+  abandoned?: boolean;
 }
 
 export interface TowerState {
@@ -141,6 +159,16 @@ export interface TowerState {
   bosses: number;
   /** XP a mystery floor has taught, by hero kind, waiting for the page to add it to the meta (`takeXp`). */
   xp?: Record<string, number>;
+  /** Floors in each map, by act (`ACT_ROWS` for the tower, and for a map not listed). A calamity's maps are shorter. */
+  rows?: number[];
+  /** A finite climb (a calamity): the number of maps; the last boss's fall clears the run. The endless tower has none. */
+  maps?: number;
+  /** Foes' strength on a floor: `start` x (1 + `growth` x (floor - 1)); the tower's own when absent. */
+  scale?: { start: number; growth: number; step?: number };
+  /** The player ended the run by starting over (it was not lost). */
+  abandoned?: boolean;
+  /** What the last fight taught the run's heroes (a run that levels its own heroes; the result screen shows it). */
+  gains?: { id: number; kind: string; xp: number; from: number; to: number }[];
   /** The tower record when the run began. */
   prevBest: number;
   summary?: TowerSummary;
@@ -148,8 +176,14 @@ export interface TowerState {
 
 /* ------------------------------------------------------------------ the map */
 
+/** The floors in an act's map (a calamity's maps are shorter, and may differ). */
+export const rowsIn = (t: Pick<TowerState, 'rows'> | undefined, act: number): number => t?.rows?.[act - 1] ?? t?.rows?.[t.rows.length - 1] ?? ACT_ROWS;
 /** The floor (the run's stage) of a row of an act. */
-export const floorOf = (act: number, row: number): number => (act - 1) * ACT_ROWS + row + 1;
+export function floorOf(act: number, row: number, t?: Pick<TowerState, 'rows'>): number {
+  let before = 0;
+  for (let a = 1; a < act; a++) before += rowsIn(t, a);
+  return before + row + 1;
+}
 /** The act a floor is in, and its row there. */
 export const actOf = (floor: number): number => Math.floor((floor - 1) / ACT_ROWS) + 1;
 export const rowOf = (floor: number): number => (floor - 1) % ACT_ROWS;
@@ -159,10 +193,11 @@ const KIND_WEIGHTS: Record<string, number> = { fight: 44, mystery: 22, elite: 13
 /** The row of the one sure chest, and the row of the sure campfire before the boss. */
 const TREASURE_ROW = 5;
 
-/** An act's map, from the seed: `PATHS` paths walked up through `LANES` lanes (no two ever cross twice), every one ending at the boss. */
-export function makeMap(seed: number, act: number, twists = true): MapNode[] {
+/** An act's map, from the seed: `PATHS` paths walked up through `LANES` lanes (no two ever cross twice), every one ending at the boss. `rows` is its floors (a calamity's maps have fewer). */
+export function makeMap(seed: number, act: number, twists = true, rows = ACT_ROWS, chestRow = TREASURE_ROW): MapNode[] {
   const rng = new Rng(mixSeed(seed, 0x70ad, act));
-  const last = ACT_ROWS - 1;
+  const last = rows - 1;
+  const treasureRow = Math.min(chestRow, last - 2);
   const grid = new Map<number, Set<number>>();
   const key = (row: number, lane: number) => row * LANES + lane;
   const mid = Math.floor(LANES / 2);
@@ -201,7 +236,7 @@ export function makeMap(seed: number, act: number, twists = true): MapNode[] {
     if (n.row === 0) n.kind = 'fight';
     else if (n.row === last) n.kind = 'boss';
     else if (n.row === last - 1) n.kind = 'campfire';
-    else if (n.row === TREASURE_ROW) n.kind = 'treasure';
+    else if (n.row === treasureRow) n.kind = 'treasure';
     else {
       const w = { ...KIND_WEIGHTS };
       if (n.row < 3) delete w.elite;
@@ -227,6 +262,46 @@ export function newTower(seed: number, armies: readonly string[], prevBest = 0):
   return { act: 1, map: makeMap(seed, 1), at: -1, row: 0, hp: {}, armies: [...armies], path: [], crowns: 0, bosses: 0, prevBest };
 }
 
+/** What the middle floors of a calamity map are, by weight. */
+const CAL_WEIGHTS: Record<string, number> = { fight: 50, mystery: 14, elite: 9, shop: 11, treasure: 12 };
+
+/**
+ * A calamity's map: the usual links over fewer floors, with its own kinds. The first floor fights, the second fights or is a
+ * mystery, the third is a recruit camp (every node of it, so every path passes one; on the longer maps about half of the
+ * floor before the rest are camps too), the floors between are mostly fights with some elites, shops, chests and mysteries,
+ * the floor before the boss is a campfire. Every map has a shop and a chest. Its own side stream; the twists come last.
+ */
+export function calamityMap(seed: number, act: number, rows: number): MapNode[] {
+  const nodes = makeMap(seed, act, false, rows);
+  const rng = new Rng(mixSeed(seed, 0xca1a, act));
+  const last = rows - 1;
+  const parents = (n: MapNode) => nodes.filter((p) => p.next.includes(n.id));
+  for (const n of nodes) {
+    if (n.row === 0) n.kind = 'fight';
+    else if (n.row === last) n.kind = 'boss';
+    else if (n.row === last - 1) n.kind = 'campfire';
+    else if (n.row === 1) n.kind = rng.chance(0.7) ? 'fight' : 'mystery';
+    else if (n.row === 2 || (rows >= 7 && n.row === last - 2 && rng.chance(0.55))) n.kind = 'recruit';
+    else {
+      const w = { ...CAL_WEIGHTS };
+      for (const p of parents(n)) if (SPECIAL.includes(p.kind)) delete w[p.kind];
+      n.kind = rng.weighted(w) as NodeKind;
+    }
+  }
+  // (a shop and a chest on every map, among the floors between)
+  const between = nodes.filter((n) => n.row > 2 && n.row < last - 1 && n.kind !== 'recruit');
+  for (const want of ['shop', 'treasure'] as const) {
+    if (nodes.some((n) => n.kind === want)) continue;
+    const spots = between.filter((n) => n.kind === 'fight' || n.kind === 'mystery');
+    if (spots.length) rng.pick(spots).kind = want;
+  }
+  addTwists(nodes, seed, act);
+  return nodes;
+}
+
+/** The map of an act of this run: the tower's, or a calamity's (shorter, with recruit camps). */
+export const mapFor = (run: Run, act: number): MapNode[] => (run.tower?.maps ? calamityMap(run.seed, act, rowsIn(run.tower, act)) : makeMap(run.seed, act, true, rowsIn(run.tower, act)));
+
 /** The nodes the player may pick next: those the last one leads to (the whole first floor at the start of an act). Empty while a node is in play. */
 export function choices(run: Run): MapNode[] {
   const t = run.tower;
@@ -238,15 +313,17 @@ export function choices(run: Run): MapNode[] {
 /* ------------------------------------------------------------------ the fights */
 
 /** Foes' hp and attack on a floor, as a share of their stats in `foes.ts`. */
-export const foeScale = (floor: number): number => FOE_START * (1 + TOWER_GROWTH * (floor - 1));
+export const foeScale = (floor: number, scale?: TowerState['scale'], act = 1): number => (scale?.start ?? FOE_START) * (1 + (scale?.growth ?? TOWER_GROWTH) * (floor - 1)) * (1 + (scale?.step ?? 0) * (act - 1));
 
 /** The band of a plain fight or an elite on a floor: the usual field bands in the first act, then those and the waves of every unlocked army. */
 function bandFor(run: Run, floor: number, salt: number): string[] {
   const rng = new Rng(mixSeed(run.seed, 0x7b4d, floor, salt));
   const fields = (): string[] => [...FOE_BANDS[FIELD_BANDS[rng.int(0, FIELD_BANDS.length - 1)]]];
   const armies = (run.tower?.armies ?? []).map((id) => armyById(id)).filter((a) => !!a);
-  if (actOf(floor) === 1 || !armies.length || rng.chance(0.25)) return fields();
-  const waves = rng.pick(armies)!.waves.filter((w) => !w.boss);
+  const act = run.tower?.act ?? actOf(floor);
+  if (act === 1 || !armies.length || rng.chance(0.25)) return fields();
+  // (a calamity's second map meets the first army's waves, its third the second's, and so on)
+  const waves = (run.tower?.maps ? armies[Math.min(act - 2, armies.length - 1)] : rng.pick(armies))!.waves.filter((w) => !w.boss);
   return [...rng.pick(waves).foes];
 }
 
@@ -262,9 +339,19 @@ export function fightSpec(run: Run, kind: NodeKind, floor: number, twist?: strin
 }
 
 function plainSpec(run: Run, kind: NodeKind, floor: number, nodeId?: number): FightSpec {
-  const k = foeScale(floor);
+  const spec = baseSpec(run, kind, floor, nodeId);
+  if (run.mode?.kind !== 'calamity') return spec;
+  // (a calamity's foes follow the party: fewer for a lone hero, stronger once it is more than five)
+  const more = squadFoeMult(run.roster.length);
+  spec.band = fitBand(spec.band, run.roster.length, kind === 'boss');
+  spec.stage.foes = { ...spec.stage.foes, hp: spec.stage.foes!.hp! * more, atk: spec.stage.foes!.atk! * more };
+  return spec;
+}
+
+function baseSpec(run: Run, kind: NodeKind, floor: number, nodeId?: number): FightSpec {
+  const k = foeScale(floor, run.tower?.scale, run.tower?.act);
   const area = AREAS[Math.floor((floor - 1) / 5) % AREAS.length];
-  if (kind === 'boss') return { band: [...FOE_BANDS[BOSS_BANDS[(actOf(floor) - 1) % BOSS_BANDS.length]]], stage: { foes: { hp: k, atk: k }, boss: BOSS, area } };
+  if (kind === 'boss') return { band: [...FOE_BANDS[BOSS_BANDS[((run.tower?.act ?? actOf(floor)) - 1) % BOSS_BANDS.length]]], stage: { foes: { hp: k, atk: k }, boss: BOSS, area } };
   // (a named elite waits at an elite node; a call without a node keeps the plain elite band)
   const named = kind === 'elite' && nodeId !== undefined && run.tower ? eliteAt(run.seed, run.tower.act, run.tower.map, nodeId) : undefined;
   if (named) return eliteFight(named, k, ELITE_MULT, area);
@@ -291,10 +378,41 @@ function stockShop(run: Run, floor: number): ShopItem[] {
   items.push({ kind: 'gear', label: g.name, text: `${g.slot}: ${gearText(g)}`, cost: 24 * g.tier + 2 * floor, gear: g });
   const pool = run.pool?.length ? run.pool : Object.keys(UNITS).filter((k) => UNITS[k].side === 'hero');
   const kind = rng.pick(pool);
-  items.push({ kind: 'hero', label: UNITS[kind].name, text: 'joins the party, grade 1', cost: summonCost(run) + 10, ref: kind });
+  items.push({ kind: 'hero', label: UNITS[kind].name, text: run.mode?.kind === 'calamity' ? 'for hire, joins the party' : 'joins the party, grade 1', cost: run.mode?.kind === 'calamity' ? hireCost(floor) : summonCost(run) + 10, ref: kind });
   items.push({ kind: 'heal', label: 'Healing draught', text: `heals every hero ${DRAUGHT_HEAL * 100}% of its hp`, cost: 20 + floor });
   items.push({ kind: 'elixir', label: 'Elixir', text: 'heals every hero fully, the fallen too', cost: 55 + 2 * floor });
   return items;
+}
+
+/** What hiring a hero costs on a floor (a calamity's). */
+export const hireCost = (floor: number): number => 45 + 7 * floor;
+/** Heroes a recruit node offers. */
+export const HIRE_OFFERS = 3;
+
+/** The heroes for hire on a floor, from the run's pool: kinds the run does not have yet first, each a different kind. */
+function stockHires(run: Run, floor: number): Hire[] {
+  const rng = new Rng(mixSeed(run.seed, 0xca11, floor));
+  const pool = (run.pool?.length ? run.pool : Object.keys(UNITS).filter((k) => UNITS[k].side === 'hero')).filter((k) => UNITS[k]);
+  const fresh = pool.filter((k) => !run.roster.some((h) => h.kind === k));
+  const from = fresh.length >= HIRE_OFFERS ? fresh : pool;
+  const left = [...from];
+  const out: Hire[] = [];
+  while (out.length < HIRE_OFFERS && left.length) out.push({ kind: left.splice(rng.int(0, left.length - 1), 1)[0], cost: hireCost(floor) });
+  return out;
+}
+
+/** Whether the run has room for another hero (a calamity owns at most its squad limit). */
+export const hasRoom = (run: Run): boolean => run.mode?.kind !== 'calamity' || run.roster.length < squadLimit(run);
+
+/** Hire hero `i` at the recruit node. Returns a line, or null when it can't be done (too poor, no room, already hired). */
+export function hire(run: Run, i: number): string | null {
+  const cur = run.tower?.cur;
+  const h = cur?.hires?.[i];
+  if (cur?.kind !== 'recruit' || !h || h.hired || run.gold < h.cost || !hasRoom(run)) return null;
+  run.gold -= h.cost;
+  h.hired = true;
+  hireHero(run, h.kind, h.cost);
+  return `The ${UNITS[h.kind].name} joins the party.`;
 }
 
 /** A chest on a floor: gold, and a relic or a piece of gear. */
@@ -317,6 +435,7 @@ export function enterNode(run: Run, id: number): boolean {
   const cur: Current = { id, kind: node.kind };
   if (node.kind === 'fight' || node.kind === 'elite' || node.kind === 'boss') cur.fight = fightSpec(run, node.kind, floor, node.twist, id);
   if (node.kind === 'shop') cur.shop = stockShop(run, floor);
+  if (node.kind === 'recruit') cur.hires = stockHires(run, floor);
   if (node.kind === 'treasure') cur.chest = stockChest(run, floor);
   t.cur = cur;
   if (node.kind === 'mystery') run.event = drawEvent(run, floor, TOWER_EVENT_KINDS);
@@ -335,10 +454,17 @@ export function clearNode(run: Run): void {
   t.cur = undefined;
   run.event = undefined;
   run.stage++;
+  if (cur.kind === 'boss' && t.maps && t.act >= t.maps) {
+    // (the last map's boss: a calamity is cleared)
+    t.bosses++;
+    run.cleared = true;
+    run.over = true;
+    return;
+  }
   if (cur.kind === 'boss') {
     t.act++;
     t.bosses++;
-    t.map = makeMap(run.seed, t.act);
+    t.map = mapFor(run, t.act);
     t.at = -1;
     t.row = 0;
     t.path = [];
@@ -370,6 +496,21 @@ export function takeXp(run: Run): Record<string, number> | null {
   return xp;
 }
 
+/** The chance a plain fight of a run that levels its own heroes drops a piece of gear. */
+export const FIGHT_GEAR = 0.3;
+
+/** A won fight teaches the run's heroes: their XP (by hero) goes onto them, and `t.gains` keeps what each got for the result screen. */
+function teachFight(run: Run, b: Battle): void {
+  const t = run.tower!;
+  const gains = fightXpByHero(b, xpRate(run.castle));
+  const before = new Map(run.roster.map((h) => [h.id, levelOfXp(h.xp ?? 0)] as const));
+  const ups = new Map(gainRunXp(run, gains).map((u: LevelUp & { id: number }) => [u.id, u] as const));
+  t.gains = Object.entries(gains).map(([id, xp]) => {
+    const h = run.roster.find((x) => x.id === Number(id));
+    return { id: Number(id), kind: h?.kind ?? '', xp, from: before.get(Number(id)) ?? 1, to: ups.get(Number(id))?.to ?? before.get(Number(id)) ?? 1 };
+  }).filter((g) => g.kind);
+}
+
 /**
  * Settle a finished battle of the tower: the wounds are carried (a fallen hero comes back at `FALLEN`), a win pays gold and
  * heals a little and may drop a relic or gear, and the run climbs on; a loss ends it.
@@ -379,6 +520,7 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
   if (!t) return;
   const kind = t.cur?.kind ?? 'fight';
   const floor = run.stage;
+  t.gains = undefined;
   run.best = Math.max(run.best, floor);
   run.found = [];
   run.stars = (run.stars ?? 0) + stars;
@@ -388,12 +530,15 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
     return;
   }
   for (const u of b.units) if (u.side === 'hero' && u.tag !== undefined) t.hp[String(u.tag)] = u.alive ? Math.max(FALLEN * 0.4, u.hp / u.maxHp) : FALLEN;
+  if (run.local) teachFight(run, b);
   healParty(run, kind === 'boss' ? BOSS_HEAL : WIN_HEAL);
   const bonus = (relicEffects(run.relics).gold ?? 0) + (run.buff?.gold ?? 0);
   const twist = t.cur?.fight?.stage.twist;
   run.gold += Math.round(reward(floor) * (kind === 'elite' ? ELITE_GOLD : kind === 'boss' ? 1.2 : 1) * (twist?.gold ?? 1)) + bonus;
   const prizes: Gear[] = run.buff?.gear ? [run.buff.gear] : [];
   const rng = new Rng(mixSeed(run.seed, 0xe11e, floor));
+  // (a run whose heroes start bare finds gear in its fights too: now and then in a plain one, always from an elite; from a side stream)
+  if (run.local && (kind === 'elite' || (kind === 'fight' && new Rng(mixSeed(run.seed, 0x6ea5, floor)).chance(FIGHT_GEAR)))) prizes.push(dropGear(new Rng(mixSeed(run.seed, 0x6ea6, floor)), gearId(run), floor, kind === 'elite' ? 1 : 0));
   const relics = unownedRelics(run);
   const relicOf = (id: string) => {
     (run.relics ??= []).push(id);
@@ -444,11 +589,20 @@ export function rest(run: Run): boolean {
 /** XP a hero is taught at a campfire (it is the kind's lasting XP: the page adds it to the meta). */
 export const trainXp = (floor: number): number => 40 + 10 * floor;
 
-/** At a campfire: train a hero. Returns its kind and the XP to add to the meta, or null when it can't be done. */
+/** XP a hero is taught at a campfire in a run that levels its own heroes (it is the hero's, for the run). */
+export const localTrainXp = (floor: number): number => 30 + 8 * floor;
+
+/** At a campfire: train a hero. Returns its kind and the XP to add to the meta (none in a run that levels its own heroes: the hero is taught in the run), or null when it can't be done. */
 export function train(run: Run, heroId: number): { kind: string; xp: number } | null {
   const cur = run.tower?.cur;
   const h = run.roster.find((x) => x.id === heroId);
   if (cur?.kind !== 'campfire' || cur.camp || !h) return null;
+  if (run.local) {
+    const n = localTrainXp(run.stage);
+    h.xp = (h.xp ?? 0) + n;
+    cur.camp = `The ${UNITS[h.kind].name} trains by the fire: +${n} XP.`;
+    return { kind: h.kind, xp: 0 };
+  }
   const xp = trainXp(run.stage);
   cur.camp = `The ${UNITS[h.kind].name} trains by the fire: +${xp} XP.`;
   return { kind: h.kind, xp };
@@ -458,7 +612,7 @@ export function train(run: Run, heroId: number): { kind: string; xp: number } | 
 export function buy(run: Run, i: number): string | null {
   const cur = run.tower?.cur;
   const it = cur?.shop?.[i];
-  if (cur?.kind !== 'shop' || !it || it.sold || run.gold < it.cost) return null;
+  if (cur?.kind !== 'shop' || !it || it.sold || run.gold < it.cost || (it.kind === 'hero' && !hasRoom(run))) return null;
   run.gold -= it.cost;
   it.sold = true;
   switch (it.kind) {
@@ -469,7 +623,7 @@ export function buy(run: Run, i: number): string | null {
       (run.items ??= []).push(it.gear!);
       return `Bought the ${it.label}.`;
     case 'hero':
-      recruit(run, it.ref!, it.cost);
+      hireHero(run, it.ref!, it.cost);
       return `A ${it.label} joins the party.`;
     case 'heal':
       healParty(run, DRAUGHT_HEAL);
@@ -515,6 +669,7 @@ export function settleTower(m: Meta, run: Run): TowerSummary | null {
   const t = run.tower;
   if (!t || !run.over) return null;
   if (t.summary) return t.summary;
+  if (run.mode?.kind === 'calamity') return settleCalamity(m, run);
   const floors = Math.max(0, run.stage - 1);
   const c = chestsFor(floors, t.bosses);
   const armies = t.armies.filter((id) => armyById(id) && armyUnlocked(m, id));
@@ -534,8 +689,42 @@ export function settleTower(m: Meta, run: Run): TowerSummary | null {
     const item = grantEquipment(m, rollEquipment(rng, { quality, armyIndex: armyIndex(army.id), milestone: floors >= 39 }));
     gear.push(itemName(item));
   }
-  t.summary = { floors, act: t.act, crowns: t.crowns, ...c, gear, relics: run.relics?.length ?? 0, heroes: run.roster.length, newBest: floors > t.prevBest };
+  t.summary = { floors, act: t.act, crowns: t.crowns, ...c, gear, relics: run.relics?.length ?? 0, heroes: run.roster.length, newBest: floors > t.prevBest, abandoned: t.abandoned };
   return t.summary;
+}
+
+/** Crowns a calamity pays for each map cleared, on top of its fights'. */
+export const MAP_CROWNS: readonly number[] = [60, 120, 200, 300, 420];
+/** What a calamity cleared whole pays besides: a gold chest. */
+export const CLEAR_CHESTS = { bronze: 0, silver: 0, gold: 1 };
+
+/** Pay a finished calamity (lost, abandoned or cleared), once: crowns for each map cleared, and a chest on a full clear. The best is kept in the meta. */
+function settleCalamity(m: Meta, run: Run): TowerSummary {
+  const t = run.tower!;
+  const maps = t.bosses;
+  const bonus = MAP_CROWNS.slice(0, maps).reduce((n, c) => n + c, 0);
+  m.crowns += bonus;
+  const c = run.cleared ? CLEAR_CHESTS : { bronze: 0, silver: 0, gold: 0 };
+  const armies = t.armies.filter((id) => armyById(id) && armyUnlocked(m, id));
+  const army = armyById(armies[armies.length - 1] ?? ARMIES[0].id)!;
+  for (let i = 0; i < c.gold; i++) m.stash.push({ army: army.id, at: 10, tier: 0, seed: mixSeed(run.seed, 0xca1c, i + 1), tower: true });
+  const best = m.calamity ?? { best: 0, clears: 0 };
+  m.calamity = { best: Math.max(best.best, maps), clears: best.clears + (run.cleared ? 1 : 0) };
+  t.summary = { floors: Math.max(0, run.stage - 1), act: Math.min(t.act, t.maps ?? t.act), crowns: t.crowns + bonus, ...c, gear: [], relics: run.relics?.length ?? 0, heroes: run.roster.length, newBest: maps > best.best, maps, cleared: !!run.cleared, abandoned: t.abandoned };
+  return t.summary;
+}
+
+/** The player starts over: the run ends where it stands (no node in play), and `settleTower` pays what it earned, as for a lost run. False when there is no run to end. */
+export function abandonTower(run: Run): boolean {
+  const t = run.tower;
+  if (!t || run.over) return false;
+  t.cur = undefined;
+  t.offer = undefined;
+  t.abandoned = true;
+  run.event = undefined;
+  run.over = true;
+  run.found = [];
+  return true;
 }
 
 /** A line for a summary's chests, "2 bronze chests, a silver chest" (empty when none). */

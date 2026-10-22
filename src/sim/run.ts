@@ -21,6 +21,8 @@ import { HEROES, UNITS } from './units';
 
 export const MAX_GRADE = 3;
 export const SQUAD = 5;
+/** A calamity run fields up to this many heroes (and owns no more). */
+export const CALAMITY_SQUAD = 10;
 export const START_GOLD = 70;
 export const SUMMON_BASE = 30;
 export const SUMMON_STEP = 5;
@@ -47,6 +49,8 @@ export interface Owned {
   paid?: number;
   /** The gear worn, one piece a slot; it stays for the run (a merge or a recycle hands it back to the pack). */
   gear?: Partial<Record<Slot, Gear>>;
+  /** Run-level XP of a hero in a run that levels its own heroes (`Run.local`; `climb.ts`). */
+  xp?: number;
   /** Lasting bumps from a training ground, added to the hero's multipliers. */
   bump?: { hp: number; atk: number };
   /** Skill charge (and a Mythic's ultimate charge) kept from the last wave, so a skill half-filled is not lost between waves. */
@@ -100,14 +104,16 @@ export interface Run {
   stars?: number;
   /** An army run's last boss has fallen (the run is over, and won). */
   cleared?: boolean;
-  /** The endless tower's own state (its map, position, wounds and shop); set on a tower run (`tower.ts`). */
+  /** The heroes level, and wear only what they find, within this run (a tower climb or a calamity): the meta's levels, gear and talents do not count (`climb.ts`). */
+  local?: boolean;
+  /** The tower's own state (its map, position, wounds and shop); set on a tower or calamity run (`tower.ts`). */
   tower?: TowerState;
   /** An army run's tally for its stars (`armyStars.ts`): the battle time so far, heroes lost over the run, heroes lost in the fight with the last boss, and heroes lost in all the boss fights (the mid-bosses too). */
   tally?: { ms: number; lost: number; bossLost: number; bossFell?: number };
 }
 
 /** A run that is not an ordinary one: an army's campaign (its stages are the army's waves), today's daily challenge (`practice` for a replay that does not count), or the endless tower. */
-export type RunMode = { kind: 'army'; army: string; tier?: number } | { kind: 'daily'; date: number; practice: boolean } | { kind: 'tower' };
+export type RunMode = { kind: 'army'; army: string; tier?: number } | { kind: 'daily'; date: number; practice: boolean } | { kind: 'tower' } | { kind: 'calamity' };
 
 /** A new run drawing from `party` (the hero kinds its summons and starting heroes come from). */
 export function newRun(seed: number, party: readonly string[] = HEROES, castle: Castle = newCastle()): Run {
@@ -159,6 +165,9 @@ export const isBossRun = (run: Run, stage = run.stage): boolean => {
 /** How many waves the run's army has (0 for any other run). */
 export const wavesOf = (run: Run): number => armyOfRun(run)?.waves.length ?? 0;
 
+/** How many heroes the run fields: five, or ten in a calamity. */
+export const squadLimit = (run: Run): number => (run.mode?.kind === 'calamity' ? CALAMITY_SQUAD : SQUAD);
+
 /** Hire a particular grade-1 hero for `paid` gold (the tower's shop sells them); three of a kind merge as ever. */
 export const recruit = (run: Run, kind: string, paid = SUMMON_BASE): Owned => add(run, kind, paid);
 
@@ -190,6 +199,8 @@ function add(run: Run, kind: string, paid: number, grade = 1): Owned {
   let made: Owned = { id: run.nextId++, kind, grade, paid };
   run.roster.push(made);
   for (;;) {
+    // (a calamity has no merging: three of a kind stay three)
+    if (run.mode?.kind === 'calamity') return made;
     const same = run.roster.filter((h) => h.kind === made.kind && h.grade === made.grade);
     if (same.length < 3 || made.grade >= MAX_GRADE) return made;
     // (the new one stays in the squad's place of the oldest: the first three leave, one of the next grade arrives)
@@ -198,9 +209,9 @@ function add(run: Run, kind: string, paid: number, grade = 1): Owned {
     const slot = run.squad.findIndex((id) => gone.has(id));
     run.roster = run.roster.filter((h) => !gone.has(h.id));
     run.squad = run.squad.filter((id) => !gone.has(id));
-    made = { id: run.nextId++, kind: made.kind, grade: made.grade + 1, paid: same.slice(0, 3).reduce((n, h) => n + paidOf(h), 0) };
+    made = { id: run.nextId++, kind: made.kind, grade: made.grade + 1, paid: same.slice(0, 3).reduce((n, h) => n + paidOf(h), 0), ...(run.local ? { xp: Math.max(...same.slice(0, 3).map((h) => h.xp ?? 0)) } : {}) };
     run.roster.push(made);
-    if (slot >= 0 && run.squad.length < SQUAD) run.squad.splice(Math.min(slot, run.squad.length), 0, made.id);
+    if (slot >= 0 && run.squad.length < squadLimit(run)) run.squad.splice(Math.min(slot, run.squad.length), 0, made.id);
   }
 }
 
@@ -336,13 +347,37 @@ export function setSquad(run: Run, id: number, on: boolean): boolean {
   const has = run.squad.includes(id);
   if (on === has || !heroOf(run, id)) return false;
   if (on) {
-    if (run.squad.length >= SQUAD) return false;
+    if (run.squad.length >= squadLimit(run)) return false;
     run.squad.push(id);
   } else run.squad = run.squad.filter((x) => x !== id);
   return true;
 }
 
 const KEY = 'legends.run';
+/** The tower and the calamity each keep their own save, so a climb survives the armies' runs and a reload (`saveSlot`). */
+const SLOT_KEYS = { tower: 'legends.tower', calamity: 'legends.calamity' } as const;
+export type SlotKind = keyof typeof SLOT_KEYS;
+/** Save a run where it belongs: a tower or calamity run in its own slot, any other in the ordinary one. */
+export const saveSlot = (run: Run, store: Pick<Storage, 'setItem'> = localStorage) => store.setItem(run.mode?.kind === 'tower' || run.mode?.kind === 'calamity' ? SLOT_KEYS[run.mode.kind] : KEY, JSON.stringify(run));
+/** The run saved in a mode's slot, if it is still going (a lost or cleared one is no run to carry on). */
+export function loadSlot(kind: SlotKind, store: Pick<Storage, 'getItem'> = localStorage): Run | null {
+  try {
+    const r = JSON.parse(store.getItem(SLOT_KEYS[kind]) ?? 'null') as Run | null;
+    return r && Array.isArray(r.roster) && typeof r.gold === 'number' && r.mode?.kind === kind && !r.over ? r : null;
+  } catch {
+    return null;
+  }
+}
+/** Empty a mode's slot (the run was abandoned or ended). */
+export const dropSlot = (kind: SlotKind, store: Pick<Storage, 'removeItem'> = localStorage) => store.removeItem(SLOT_KEYS[kind]);
+/** An older save kept the tower in the ordinary slot: move it to the tower's own. Returns whether it moved. */
+export function adoptOldTower(store: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'> = localStorage): boolean {
+  const old = loadRun(store);
+  if (!old || old.over || old.mode?.kind !== 'tower' || store.getItem(SLOT_KEYS.tower)) return false;
+  saveSlot(old, store);
+  store.removeItem(KEY);
+  return true;
+}
 export const saveRun = (run: Run, store: Pick<Storage, 'setItem'> = localStorage) => store.setItem(KEY, JSON.stringify(run));
 export function loadRun(store: Pick<Storage, 'getItem'> = localStorage): Run | null {
   try {

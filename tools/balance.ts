@@ -31,7 +31,7 @@ import { boostOf, bandFor, finish, gradeBoost, isBossStage, newRun, type Owned, 
 import { ARMIES, armyById, settleWave } from '../src/sim/armies';
 import { TIERS } from '../src/sim/tiers';
 import { playArmy, savedAt } from './autoplay';
-import { towerTable } from './tower-balance';
+import { calamityTable, towerTable } from './tower-balance';
 import { ratingOf } from '../src/sim/stars';
 import { mixSeed, Rng } from '../src/sim/rng';
 import { ALL_HEROES, HEROES, UNITS } from '../src/sim/units';
@@ -535,6 +535,7 @@ if (process.argv.includes('--no-tables')) {
   armies();
 }
 if (process.argv.includes('--tower')) towerTable();
+if (process.argv.includes('--calamity')) calamityTable();
 if (process.argv.includes('--climb')) realClimb();
 if (process.argv.includes('--maxed')) maxedCastle();
 if (process.argv.includes('--tiers')) tiers();

@@ -30,3 +30,16 @@ export function actLook(act: number): ActLook {
 
 /** The unit id of the boss that waits at the top of the act (the first foe of its band, as `fightSpec` picks it). */
 export const bossOfAct = (act: number): string => FOE_BANDS[BOSS_BANDS[(Math.max(1, act) - 1) % BOSS_BANDS.length]][0];
+
+/** The calamity's maps, each with its own name over one of the three looks (the fourth reuses the first, tinted). */
+const CAL_LOOKS: readonly { look: 0 | 1 | 2; name: string; blurb: string; tint: number }[] = [
+  { look: 0, name: 'The Ashen Road', blurb: 'Cinders drift over a road the calamity walked first.', tint: 0 },
+  { look: 1, name: 'The Broken Keep', blurb: 'A fortress with its banners burnt and its halls open to the wind.', tint: 0 },
+  { look: 2, name: 'The Burning Spire', blurb: 'The calamity\'s tower, lit from within.', tint: 0 },
+  { look: 0, name: 'The Hollow Heart', blurb: 'Where the calamity sleeps, and waits.', tint: 200 },
+];
+
+/** How a calamity's map `n` (1-based) looks and is called. */
+export function calamityLook(n: number): ActLook {
+  return { ...CAL_LOOKS[Math.min(Math.max(1, Math.floor(n)), CAL_LOOKS.length) - 1] };
+}
