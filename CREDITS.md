@@ -146,3 +146,7 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   by unTied Games, copied as it is.
 - The town square's fountain (`tools/castle/generated/fountain.png`) and its benches (`bench.png`) were generated with PixelLab (`/generate-with-style-v2`, kit pieces as style references; see `tools/castle/gen.py` and `docs/notes/castle-scene.md`): 10 generations; the picks are used as they came, halved by `prep.py` like the kit pieces. Nothing else in this look was generated.
 - The Lich King's new walk and hurt rows, and the treant's evolved forms (`cls_treant_2.png`, `cls_treant_3.png`), are generated the same way as the other generated sheets (`/generate-with-style-v2` with the existing treant and Craftpix Minotaur and Samurai Commander frames as style references, then `/animate-with-text-v3`; native pixels, hard alpha, last death frame by `tools/pixellab/lie.py`). See `docs/notes/hero-art.md`.
+
+- **The war camp** (`src/art/camp/`, Battle tab): the gatehouse, felt and striped tents, war banner, water skins, skull torch and dirt tile are pieces of the
+  isometric kits in Chronos (`iso/kits/knights`, `nomads`, `orcs`), halved by `tools/camp/prep.py`; the sky, clouds and night sky are the Craftpix
+  "Free Pixel Art Cloud and Sky Backgrounds" pack. The rest are pictures already in `src/art/castle/`. The war table is drawn in code.
