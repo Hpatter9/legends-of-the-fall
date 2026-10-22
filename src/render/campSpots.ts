@@ -7,6 +7,9 @@
 /** The pictures' sizes in scene pixels (src/art/camp/ from tools/camp/prep.py; the rest are the castle's own). */
 export const SIZES: Record<string, [number, number]> = {
   gate: [137, 127],
+  tower: [79, 134],
+  tower_locked: [79, 134],
+  board: [46, 78],
   tent1: [103, 66],
   tent2: [105, 67],
   standard: [68, 123],
@@ -41,12 +44,10 @@ export const TILE_H = 52;
 export const WALL_STEP = { dx: 93, dy: 54 };
 /** The war table's top: a diamond twice as wide as tall, with the map on it. */
 export const TABLE = { w: 56, h: 28 };
-/** The notice boards the signposts carry, in scene pixels (the page's Daily and Tower cards sit in them). */
-export const BOARD = { w: 92, h: 60, post: 30 };
-/** The portal's picture (the visible 64 of the pack's frames, in scene pixels) and the small board under it. */
-export const PORTAL = { size: 64, board: { w: 92, h: 46 } };
-/** How far up from the page's foot the Battle! button and its Party link cover the scene, in scene pixels (about css pixels). */
-export const BUTTON_ZONE = 140;
+/** The camp's three places (the Tower, the Daily board, the Calamity portal): each a picture in the scene with a name plate under it, and one tap box over both. */
+export const PLACE = { plate: { w: 108, h: 52 }, portal: 64 };
+/** The scene's rows kept clear at its foot (the page's bottom bar, with the Battle! button, sits below the scene, so nothing covers it). */
+export const BUTTON_ZONE = 8;
 /** From the fire's foot line up to the centre of the ground diamond it stands on. */
 export const FIRE_RISE = 16;
 
@@ -74,6 +75,13 @@ export interface Rect {
   h: number;
 }
 
+export interface Place {
+  x: number;
+  foot: number;
+  plate: Rect;
+  box: Rect;
+}
+
 export interface Camp {
   w: number;
   h: number;
@@ -92,10 +100,8 @@ export interface Camp {
   /** The cart on the left; its bed is the chest stash's mount. */
   cart: { x: number; y: number };
   stash: Rect;
-  /** The two notice boards on posts (the page's Daily card on the right, the Tower card on the left), each as a box with the post running down from it. */
-  boards: { daily: Rect; tower: Rect; calamity: Rect };
-  /** The Calamity's portal in the road inside the gate: its centre across, its foot line, and the box the tap covers. */
-  portal: { x: number; y: number; hit: Rect };
+  /** The places: the Tower on the left, the Daily board on the right, the Calamity's portal in the road inside the gate. `x` is a place's centre, `foot` the foot line of its picture, `plate` its name plate and `box` the tap box (picture and plate together). */
+  places: { tower: Place; daily: Place; calamity: Place };
   /** The first row of scene pixels the Battle! button covers. */
   buttonTop: number;
 }
@@ -123,8 +129,6 @@ export function campLayout(w: number, h: number): Camp {
   const props: Piece[] = [
     { sprite: 'tent1', x: cx - 126, y: fireY + 2 },
     { sprite: 'tent2', x: cx + 128, y: fireY - 6 },
-    { sprite: 'standard', x: cx - 98, y: fireY - 44 },
-    { sprite: 'rack', x: cx + 92, y: fireY - 36 },
     { sprite: 'torch', x: cx - 58, y: gateY + 14 },
     { sprite: 'torch', x: cx + 58, y: gateY + 14 },
     { sprite: 'woodpile', x: cx + 72, y: fireY + 30 },
@@ -138,8 +142,14 @@ export function campLayout(w: number, h: number): Camp {
     { sprite: 'rocks', x: cx - 24, y: fireY + 134 },
   ];
   const cart = { x: cx - 98, y: cartY };
-  const boardY = gateY - 4;
-  const portalFoot = gateY + 62;
+  // (the places: the plates are PLACE.plate across, kept on the screen, and their pictures stand over them)
+  const pw = PLACE.plate.w;
+  const place = (x: number, foot: number, top: number): Place => {
+    const px = Math.max(4, Math.min(w - pw - 4, Math.round(x - pw / 2)));
+    const plate = { x: px, y: foot + 4, w: pw, h: PLACE.plate.h };
+    return { x, foot, plate, box: { x: px, y: foot - top, w: pw, h: top + 4 + PLACE.plate.h } };
+  };
+  const side = Math.max(pw / 2 + 4, Math.min(cx - 128, 128));
   return {
     w,
     h,
@@ -152,12 +162,11 @@ export function campLayout(w: number, h: number): Camp {
     table: { x: cx + 104, y: tableY },
     cart,
     stash: { x: cart.x - 78, y: cart.y - 84, w: 156, h: 66 },
-    boards: {
-      daily: { x: w - BOARD.w - 8, y: boardY, w: BOARD.w, h: BOARD.h },
-      tower: { x: 8, y: boardY, w: BOARD.w, h: BOARD.h },
-      calamity: { x: cx - PORTAL.board.w / 2, y: portalFoot + 8, w: PORTAL.board.w, h: PORTAL.board.h },
+    places: {
+      tower: place(side, gateY + 36, SIZES.tower[1]),
+      daily: place(w - side, gateY + 36, SIZES.board[1]),
+      calamity: place(cx, gateY + 42, PLACE.portal),
     },
-    portal: { x: cx, y: portalFoot, hit: { x: cx - 36, y: portalFoot - PORTAL.size, w: 72, h: PORTAL.size + 6 } },
     buttonTop,
   };
 }

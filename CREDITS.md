@@ -188,3 +188,7 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   ChatGPT's image generation from prompts written for the game, then cut, cleaned and reduced to 256 colours.
 - The portal (`portal.png`, also in the war camp) is the `rift-portal` effect of **PVFX Foundry** (Pixel VFX Studio, `pvfx-foundry-thirteen-spritesheets`), CC0 1.0: sixteen
   frames, the visible 64 pixels of each, in one row.
+
+- **The camp's places** (`src/art/camp/tower.png`, `tower_locked.png`, `board.png`, `tools/camp/places.py`): the Tower is the Knights watchtower already used by the castle
+  (`src/art/castle/watchtower.png`), its locked picture that drained of colour with a chain and padlock drawn on it; the Daily board is the Fae ribbon signpost of the same
+  isometric kits (`hpatter9/little-town`), halved by a 2x2 box average.
