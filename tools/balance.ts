@@ -10,6 +10,7 @@
 //   npm run balance -- --armies-only   only the armies' tables (win rate per wave at given hero levels, and the climb through them)
 //   npm run balance -- --only orcs,undead --levels 1,5,10 --party starters   a few armies, levels or one party
 //   npm run balance -- --attempts 40   attempts a cell plays in the armies' first table (default 30)
+//   npm run balance -- --no-tables --climb --saves 60   the realistic climb (recruits, castle, gear), table 5c; `--maxed` plays 5d, a full castle
 //
 // Four tables: each hero's value (its win rate in random five-hero teams with it, against the same teams without it),
 // each foe band at four stage strengths, the stage curve from 1 to 15 with grade-1, grade-2 and grade-3 teams, and whole
@@ -21,8 +22,8 @@ import { fight, place, playOut, startBattle, stepBattle, type Battle, type Stage
 import { FIELD_BANDS } from '../src/sim/foes';
 import { chooseOption, leaveEvent } from '../src/sim/events';
 import { fightXp, gainXp, levelOfKind } from '../src/sim/levels';
-import { maxLevel, newCastle, xpRate, type Castle } from '../src/sim/castle';
-import { newMeta, rankOf, rarityOf, RARITY_NAMES, type Meta } from '../src/sim/meta';
+import { BUILDINGS, maxLevel, newCastle, nextCost, upgrade, xpRate, type BuildingId, type Castle } from '../src/sim/castle';
+import { newMeta, PULL_COST, rankOf, rankMult, rarityOf, RARITY_NAMES, recruit, tierMult, type Meta } from '../src/sim/meta';
 import { boostOf, bandFor, finish, gradeBoost, isBossStage, newRun, type Owned, type Run, SQUAD, stageBoost, startStage, summon } from '../src/sim/run';
 import { ARMIES, armyById, settleWave } from '../src/sim/armies';
 import { playArmy, savedAt } from './autoplay';
@@ -323,7 +324,7 @@ function armies(): void {
         const wins = army.waves.map(() => 0);
         let clears = 0;
         for (let a = 0; a < ATTEMPTS; a++) {
-          const r = playArmy(savedAt(L, party, a + 1), army.id, mixSeed(a + 1, 0xa44e, ARMIES.indexOf(army)), party);
+          const r = playArmy(savedAt(L, party, a + 1), army.id, mixSeed(a + 1, 0xa44e, ARMIES.indexOf(army)), party, CASTLE);
           for (let w = 0; w < r.won; w++) wins[w]++;
           if (r.cleared) clears++;
         }
@@ -378,7 +379,103 @@ function armies(): void {
   });
 }
 
-if (ARMIES_ONLY) {
+// ---- 6. The realistic climb -------------------------------------------------------------------------------------------
+// (`--climb`, with `--saves 60` or so.) A player who plays as the page lets them: a fresh save fights the armies in order, trying
+// each until it falls. Between tries it spends the crowns it has: `CASTLE_SHARE` on the castle (barracks, armoury, library,
+// treasury and stable, the lowest building first) and the rest on single recruits; it fields the five best heroes it owns (rarer
+// kinds, higher ranks and levels first), dresses them with the gear its runs find, and the XP and levels carry over.
+const CASTLE_SHARE = 0.5;
+const SPEND: BuildingId[] = ['barracks', 'armoury', 'library', 'treasury', 'stable'];
+
+/** The five heroes a player would take out: the kinds ranked by hp x attack x their tier, rank and level (a little extra for a shooter). */
+function bestParty(meta: Meta): string[] {
+  const score = (k: string) => UNITS[k].hp * UNITS[k].atk * tierMult(k) * rankMult(rankOf(meta, k)) * (1 + 0.1 * levelOfKind(meta, k)) * (UNITS[k].range > 1 ? 1.15 : 1);
+  return [...meta.unlocked].sort((a, b) => score(b) - score(a) || a.localeCompare(b)).slice(0, 5);
+}
+
+/** Spends the crowns: the castle's share on upgrades (the lowest of the five buildings first), the rest on recruits. */
+function spendCrowns(meta: Meta): void {
+  let castleBudget = Math.floor(meta.crowns * CASTLE_SHARE);
+  for (;;) {
+    const id = [...SPEND].sort((a, b) => meta.castle[a] - meta.castle[b])[0];
+    const cost = nextCost(meta.castle, id);
+    if (cost === null || cost > castleBudget || cost > meta.crowns) break;
+    castleBudget -= cost;
+    upgrade(meta, id);
+  }
+  while (meta.crowns >= PULL_COST) recruit(meta, 1);
+}
+
+function realClimb(): void {
+  console.log(`\n5c. THE REALISTIC CLIMB  (${SAVES} fresh saves; recruits, a castle grown from the crowns each try pays (${CASTLE_SHARE * 100}% of what it has), gear, levels carried; at most ${MAX_TRIES} tries an army)\n`);
+  console.log([pad('army', 20), rpad('cleared %', 11), rpad('tries (mean)', 14), rpad('median', 8), rpad('90th', 6), rpad('party level', 13), rpad('party tier', 12), rpad('castle lvls', 13), rpad('heroes owned', 14)].join(''));
+  const stats = ARMIES.map(() => ({ tries: [] as number[], clear: 0, lv: 0, tier: 0, castle: 0, owned: 0, seen: 0 }));
+  for (let save = 1; save <= SAVES; save++) {
+    const meta = newMeta(save);
+    for (let i = 0; i < ARMIES.length; i++) {
+      const army = ARMIES[i];
+      let tries = 0;
+      let cleared = false;
+      const st = stats[i];
+      while (tries < MAX_TRIES && !cleared) {
+        spendCrowns(meta);
+        const party = bestParty(meta);
+        if (tries === 0) {
+          st.lv += party.reduce((n, k) => n + levelOfKind(meta, k), 0) / party.length;
+          st.tier += party.reduce((n, k) => n + rarityOf(k), 0) / party.length;
+          st.castle += Object.values(meta.castle).reduce((n, v) => n + v, 0);
+          st.owned += meta.unlocked.length;
+          st.seen++;
+        }
+        const r = playArmy(meta, army.id, mixSeed(save, 0xc11c, i * 100 + tries), party, { ...meta.castle }, true);
+        for (let w = 1; w <= r.won; w++) settleWave(meta, army.id, w, true, 0);
+        tries++;
+        cleared = r.cleared;
+      }
+      if (!cleared) break;
+      st.clear++;
+      st.tries.push(tries);
+    }
+  }
+  ARMIES.forEach((army, i) => {
+    const st = stats[i];
+    const sorted = [...st.tries].sort((a, b) => a - b);
+    const n = Math.max(1, st.seen);
+    console.log(
+      [
+        pad(army.name, 20),
+        rpad(f1(pct(st.clear, SAVES)).trim(), 11),
+        rpad(st.tries.length ? (st.tries.reduce((a, b) => a + b, 0) / st.tries.length).toFixed(1) : '-', 14),
+        rpad(st.tries.length ? String(sorted[Math.floor(sorted.length / 2)]) : '-', 8),
+        rpad(st.tries.length ? String(sorted[Math.floor(sorted.length * 0.9)]) : '-', 6),
+        rpad((st.lv / n).toFixed(1), 13),
+        rpad((st.tier / n).toFixed(2), 12),
+        rpad((st.castle / n).toFixed(1), 13),
+        rpad((st.owned / n).toFixed(1), 14),
+      ].join(''),
+    );
+  });
+}
+
+/** The maxed castle (every building at its top) at the party levels in `--levels`: no army may fall to it trivially. */
+function maxedCastle(): void {
+  const maxed = newCastle();
+  for (const id of Object.keys(BUILDINGS) as BuildingId[]) maxed[id] = maxLevel(id);
+  console.log(`\n5d. A MAXED CASTLE  (the starting five, every hero at the level shown, every building at its top; ${ATTEMPTS} attempts a cell; % of attempts that cleared the army)\n`);
+  console.log([pad('level', 8), ...ARMIES.map((a) => rpad(a.id, 11))].join(''));
+  for (const L of LEVELS) {
+    const row = ARMIES.map((army, i) => {
+      let clears = 0;
+      for (let a = 0; a < ATTEMPTS; a++) if (playArmy(savedAt(L, HEROES, a + 1), army.id, mixSeed(a + 1, 0xa44f, i), HEROES, maxed).cleared) clears++;
+      return rpad(f1(pct(clears, ATTEMPTS)).trim(), 11);
+    });
+    console.log([pad(`${L}`, 8), ...row].join(''));
+  }
+}
+
+if (process.argv.includes('--no-tables')) {
+  // (only the climbs asked for below)
+} else if (ARMIES_ONLY) {
   armies();
 } else {
   if (!RUNS_ONLY) {
@@ -389,4 +486,6 @@ if (ARMIES_ONLY) {
   wholeRuns();
   armies();
 }
+if (process.argv.includes('--climb')) realClimb();
+if (process.argv.includes('--maxed')) maxedCastle();
 console.log('');

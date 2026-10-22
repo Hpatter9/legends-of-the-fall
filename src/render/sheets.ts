@@ -75,6 +75,13 @@ import clsTreant from '../art/units/cls_treant.png';
 import devilLeader from '../art/units/devil_leader.png';
 import shamanKing from '../art/units/shaman_king.png';
 import lichKing from '../art/units/lich_king.png';
+import oniKing from '../art/units/oni_king.png';
+import golemStone from '../art/units/golem_stone.png';
+import golemCrystal from '../art/units/golem_crystal.png';
+import golemIron from '../art/units/golem_iron.png';
+import golemMagma from '../art/units/golem_magma.png';
+import golemSapphire from '../art/units/golem_sapphire.png';
+import golemForge from '../art/units/golem_forge.png';
 
 export type Anim = 'idle' | 'walk' | 'attack' | 'hurt' | 'dead';
 
@@ -136,6 +143,13 @@ const URLS: Record<string, string> = {
   devil_leader: devilLeader,
   shaman_king: shamanKing,
   lich_king: lichKing,
+  oni_king: oniKing,
+  golem_stone: golemStone,
+  golem_crystal: golemCrystal,
+  golem_iron: golemIron,
+  golem_magma: golemMagma,
+  golem_sapphire: golemSapphire,
+  golem_forge: golemForge,
   cls_paladin_1: clsPaladin1,
   cls_paladin_2: clsPaladin2,
   cls_paladin_3: clsPaladin3,

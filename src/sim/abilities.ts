@@ -658,6 +658,21 @@ function soulNova(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   return true;
 }
 
+/** The Golem Forge's crystal golems: a burst of shards hurts every foe within two tiles and holds it still for a moment. */
+const SHARD_REACH = 2;
+const SHARD_MS = 1200;
+function shardBurst(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const near = foesOf(b, me).filter((f) => apart(me, f) <= SHARD_REACH);
+  if (!near.length) return false;
+  for (const f of near) {
+    hurt(b, me, f, net(atkOf(me) * 1.0, f), false, false, out, 'skill');
+    if (!f.alive) continue;
+    f.busyUntil = Math.max(f.busyUntil, b.t + SHARD_MS);
+    f.stunUntil = b.t + SHARD_MS;
+  }
+  return true;
+}
+
 /** Paladin: foes near him must go for him for a few seconds, and the allies beside him are healed. */
 const CHALLENGE_MS = 3000;
 function holyChallenge(b: Battle, me: Unit, out: BattleEvent[]): boolean {
@@ -980,6 +995,40 @@ KITS.boneCaptain = { skill: KITS.samuraiCommander.skill, passive: { name: 'Bone 
 KITS.alphaWolf = KITS.werewolf;
 KITS.gorgonQueen = { skill: KITS.gorgon.skill, ultimate: KITS.gorgon.ultimate, passive: KITS.gorgon.passive };
 KITS.minotaurChampion = { skill: KITS.minotaur.skill, passive: { name: 'Unyielding', text: 'Blows from the front lose a fifth, and he cannot be knocked back', block: 0.2, steady: true } };
+
+// The Yokai Night Parade (`foes.ts`): fox spirits trick and curse, crows dive and possess, the tengu monk blows heroes about.
+KITS.yokaiFox = { skill: KITS.illusionist.skill, passive: { name: 'Fox Guile', text: 'Slips 20% of blows', dodge: 0.2 } };
+KITS.yokaiWitch = { skill: KITS.warlock.skill, passive: { name: 'Black Curse', text: 'Heals for a sixth of the damage its blows deal', leech: 0.16 } };
+KITS.yokaiCrow = { skill: KITS.karasu.skill, passive: KITS.karasu.passive };
+KITS.yokaiSeer = { skill: { ...KITS.kitsune.skill, name: 'Possession', text: 'The strongest hero nearby is possessed and fights its own side for 3.5s' }, passive: { name: 'Evil Eye', text: 'Blows deal 30% more to shooters', prey: 1.3 } };
+KITS.yokaiMonk = { skill: KITS.yamabushi.skill, passive: KITS.yamabushi.passive };
+KITS.nineTails = {
+  skill: { name: 'Foxfire', text: 'A fireball blasts a 3x3 of heroes and leaves it burning', need: CHARGE_MAX, dealt: 4, taken: 4, perSec: 3, castMs: 800, anim: 'attack', cast: meteor },
+  ultimate: KITS.kitsune.ultimate,
+  passive: { name: 'Spirit Drain', text: 'Heals for a fifth of the damage its blows deal', leech: 0.2 },
+};
+KITS.oniKing = {
+  skill: { name: 'Kanabo Smash', text: 'Smashes a 3x3 of tiles, hurting the heroes on it', need: CHARGE_MAX, dealt: 4, taken: 4, perSec: 3, castMs: 700, anim: 'attack', cast: groundSlam },
+  ultimate: { name: 'Thunder Drum', text: 'A roar that hurts every hero within 4 tiles, shoves them back and stuns them for 1.5s', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 800, anim: 'attack2', cast: tempest },
+  passive: { name: 'Demon Fury', text: 'Attack grows by up to 60% as its health falls, and it cannot be knocked back', rage: 0.6, steady: true },
+};
+// The Golem Forge: slow tanks; crushing blows, armour plate and crystal shards.
+KITS.stoneGolem = { skill: { ...KITS.orcWarlord.skill, name: 'Crushing Slam' }, passive: { name: 'Stone Hide', text: 'Blows from the front lose a quarter', block: 0.25 } };
+KITS.ironGolem = { skill: KITS.knight.skill, passive: { name: 'Iron Plate', text: 'Blows from the front lose a third, and it cannot be knocked back', block: 0.33, steady: true } };
+KITS.crystalGolem = {
+  skill: { name: 'Shard Burst', text: 'Crystal shards hurt every hero within 2 tiles and hold them still for 1.2s', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 600, anim: 'attack', cast: shardBurst },
+  passive: { name: 'Crystal Skin', text: 'A third of the damage of a melee blow it takes is sent back', thorns: 0.33 },
+};
+KITS.magmaGolem = { skill: { ...KITS.wizard.skill, name: 'Magma Burst', text: 'A gout of magma blasts a 3x3 and leaves it burning' }, passive: { name: 'Molten Skin', text: 'Its blows set the hero alight', ignite: { kind: 'burn', dmg: 3, every: 500, ms: 2000 } } };
+KITS.sapphireColossus = {
+  skill: { name: 'Shard Storm', text: 'Crystal shards hurt every hero within 2 tiles and hold them still for 1.2s', need: CHARGE_MAX, dealt: 4, taken: 4, perSec: 3, castMs: 700, anim: 'attack', cast: shardBurst },
+  passive: { name: 'Crystal Armour', text: 'Blows from the front lose a quarter, and a third of a melee blow is sent back', block: 0.25, thorns: 0.33 },
+};
+KITS.forgeTitan = {
+  skill: { name: 'Forge Hammer', text: 'Slams a 3x3 of tiles, hurting the heroes on it', need: CHARGE_MAX, dealt: 4, taken: 4, perSec: 3, castMs: 700, anim: 'attack', cast: groundSlam },
+  ultimate: { name: 'Furnace Blast', text: 'A meteor of molten iron blasts a 3x3 of heroes and leaves it burning', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 900, anim: 'attack', cast: meteor },
+  passive: { name: 'Adamant Plate', text: 'Blows from the front lose a third, it cannot be knocked back and it mends 1% of its health a second', block: 0.33, steady: true, regen: 0.01 },
+};
 
 export const kitOf = (u: Unit): Kit | undefined => KITS[u.def];
 

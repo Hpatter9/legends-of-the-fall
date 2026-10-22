@@ -78,6 +78,17 @@ export const SKILL_FX: Record<string, SkillFx> = {
   'Petrifying Gaze': { cast: { sheet: 'darkCircle', scale: 1.3, tint: 0x9be07a } },
   'War Banner': { cast: { sheet: 'goldBurst', scale: 1.4 } },
   'Raise Dead': { cast: { sheet: 'darkCircle', scale: 1.8, tint: 0x6ab8ff } },
+  // the Yokai Night Parade and the Golem Forge
+  Possession: { cast: { sheet: 'pinkHeart', scale: 1.4, tint: 0xb06aff } },
+  Foxfire: { cast: { sheet: 'fireCircle', scale: 1.6, tint: 0x9ad0ff }, hit: { sheet: 'fireExplosion', scale: 1.2, tint: 0x9ad0ff } },
+  'Kanabo Smash': { cast: { sheet: 'earthWave', scale: 2, tint: 0xff8a6a }, hit: { sheet: 'earthExplosion', scale: 1.1 } },
+  'Thunder Drum': { cast: { sheet: 'lightningBurst', scale: 2.6 }, hit: { sheet: 'lightningStrike', scale: 1.1 } },
+  'Crushing Slam': { cast: { sheet: 'earthWave', scale: 1.8 }, hit: { sheet: 'earthExplosion', scale: 1 } },
+  'Shard Burst': { cast: { sheet: 'iceShield', scale: 1.6, tint: 0xd8a0ff }, hit: { sheet: 'whiteBurst', scale: 0.9, tint: 0xd8a0ff } },
+  'Shard Storm': { cast: { sheet: 'iceShield', scale: 2.2, tint: 0x80b0ff }, hit: { sheet: 'whiteBurst', scale: 1, tint: 0x80b0ff } },
+  'Magma Burst': { cast: { sheet: 'fireCircle', scale: 1.4 }, hit: { sheet: 'fireExplosion', scale: 1.2 } },
+  'Forge Hammer': { cast: { sheet: 'earthWave', scale: 2, tint: 0xffc070 }, hit: { sheet: 'earthExplosion', scale: 1.2 } },
+  'Furnace Blast': { cast: { sheet: 'fireCircle', scale: 2.2 }, hit: { sheet: 'fireExplosion', scale: 1.6 } },
   // the Mythics' ultimates
   'Nine-Tailed Dream': { cast: { sheet: 'pinkHeart', scale: 2.6 }, hit: { sheet: 'pinkHeart', scale: 1 } },
   'Feather Storm': { cast: { sheet: 'windVortex', scale: 2, tint: 0xff5a6a }, hit: { sheet: 'windBurst', scale: 1.3, tint: 0xff8a8a } },
