@@ -317,6 +317,58 @@ export function portrait(sheet: string, size: number, grade = 1): HTMLCanvasElem
   return c;
 }
 
+/** Where a sheet's idle figure really lies in its frame (the box round every pixel of every idle frame), found once. */
+const bounds = new Map<string, { x: number; y: number; w: number; h: number }>();
+function idleBounds(sheet: string): { x: number; y: number; w: number; h: number } | null {
+  const l = LAYOUT[sheet];
+  const img = images.get(sheet);
+  if (!img || !l) return null;
+  const known = bounds.get(sheet);
+  if (known) return known;
+  const row = Math.max(0, l.rows.indexOf('idle'));
+  const count = l.counts.idle ?? 1;
+  const c = document.createElement('canvas');
+  c.width = l.w * count;
+  c.height = l.h;
+  const g = c.getContext('2d', { willReadFrequently: true })!;
+  g.drawImage(img, 0, row * l.h, l.w * count, l.h, 0, 0, l.w * count, l.h);
+  const px = g.getImageData(0, 0, c.width, c.height).data;
+  let x0 = l.w, y0 = l.h, x1 = -1, y1 = -1;
+  for (let y = 0; y < l.h; y++)
+    for (let x = 0; x < c.width; x++)
+      if (px[(y * c.width + x) * 4 + 3] > 8) {
+        const fx = x % l.w;
+        x0 = Math.min(x0, fx);
+        x1 = Math.max(x1, fx);
+        y0 = Math.min(y0, y);
+        y1 = Math.max(y1, y);
+      }
+  const box = x1 < 0 ? { x: 0, y: 0, w: l.w, h: l.h } : { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
+  bounds.set(sheet, box);
+  return box;
+}
+
+/** The whole figure (weapons, wings and all, nothing cut off) of a sheet's first idle frame, at the largest whole-number
+ * scale that fits `maxW` x `maxH` CSS pixels (at least once over), mirrored with `mirror`. For the boss card. */
+export function wholeFigure(sheet: string, maxW: number, maxH: number, mirror = false): HTMLCanvasElement {
+  const c = document.createElement('canvas');
+  const l = LAYOUT[sheet];
+  const img = images.get(sheet);
+  const box = idleBounds(sheet);
+  if (!img || !l || !box) return c;
+  // (a pixel of room on each side, so the drop shadow's edge is not cut either)
+  c.width = box.w + 2;
+  c.height = box.h + 2;
+  const g = c.getContext('2d')!;
+  g.imageSmoothingEnabled = false;
+  if (mirror) g.setTransform(-1, 0, 0, 1, c.width, 0);
+  g.drawImage(img, box.x, Math.max(0, l.rows.indexOf('idle')) * l.h + box.y, box.w, box.h, 1, 1, box.w, box.h);
+  const n = Math.max(1, Math.min(Math.floor(maxW / c.width), Math.floor(maxH / c.height)));
+  c.style.width = `${c.width * n}px`;
+  c.style.height = `${c.height * n}px`;
+  return c;
+}
+
 /** A live sprite on a plain canvas for the menus: the idle frames of a sheet, shown one at a time by `tick`. With `whole` the sheet is drawn at that whole-number scale (crisp), else so the figure is `figurePx` tall. */
 export function sprite(sheet: string, figurePx: number, whole?: number): { canvas: HTMLCanvasElement; tick(n: number): void; faceRight: boolean } {
   const c = document.createElement('canvas');
