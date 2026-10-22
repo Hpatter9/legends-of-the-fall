@@ -9,6 +9,7 @@ import type { Area } from './board';
 import { FOES, isBoss } from './foes';
 import type { Meta } from './meta';
 import { starCrowns } from './stars';
+import { ARMY_STARS, MILESTONES, tierOf, TIERS } from './tiers';
 
 export interface Wave {
   /** The foes by their ids in `UNITS`; the first of a boss wave is its boss. */
@@ -285,8 +286,9 @@ export const nextArmy = (a: Army): Army | undefined => ARMIES[armyIndex(a.id) + 
 /** The bosses (mid and final) of an army's waves, in order, by wave number. */
 export const bossesOf = (a: Army): { wave: number; id: string }[] => a.waves.flatMap((w, i) => (w.boss ? [{ wave: i + 1, id: w.foes[0] }] : []));
 
-/** How the foes of wave n of an army are boosted (n from 1). */
-export function waveBoost(a: Army, n: number): Stage {
+/** How the foes of wave n of an army are boosted (n from 1), on a difficulty tier (Normal by default): hp, attack and speed. */
+export function waveBoost(a: Army, n: number, tier = 0): Stage {
+  const t = tierOf(tier);
   const k = a.start * (1 + a.growth * (n - 1));
   const w = a.waves[n - 1];
   let boss: Boost | undefined;
@@ -295,7 +297,7 @@ export function waveBoost(a: Army, n: number): Stage {
     const def = FOES[w.foes[0]];
     boss = { size: w.boss === 'final' ? 1.5 : 1.3, hp: want.hp / def.hp, atk: want.atk / def.atk };
   }
-  return { foes: { hp: k, atk: k }, boss, area: a.area };
+  return { foes: { hp: k * t.hp, atk: k * t.atk, ...(t.speed !== 1 ? { speed: t.speed } : {}) }, boss, area: a.area };
 }
 
 // ---- rewards -----------------------------------------------------------------------------------------------------------
@@ -306,10 +308,12 @@ export const REPLAY_SHARE = 0.15;
 export const waveCrowns = (a: Army, n: number): number => Math.round((10 + 2 * n) * a.pay * (a.waves[n - 1]?.boss ? 1.5 : 1));
 /** The share a replay pays of an amount of crowns (at least one). */
 export const replayOf = (crowns: number): number => Math.max(1, Math.round(crowns * REPLAY_SHARE));
-/** Everything a first clear pays: each wave's first win and the army's clear bonus. */
-export const firstClearTotal = (a: Army): number => a.waves.reduce((n, _, i) => n + waveCrowns(a, i + 1), 0) + a.clear;
-/** Everything a replay of the whole army pays. */
-export const replayTotal = (a: Army): number => a.waves.reduce((n, _, i) => n + replayOf(waveCrowns(a, i + 1)), 0) + replayOf(a.clear);
+/** Crowns on a tier: the tier's pay on top of an amount (Normal pays as it was). */
+export const tierCrowns = (crowns: number, tier: number): number => Math.round(crowns * tierOf(tier).pay);
+/** Everything a first clear of a tier pays: each wave's first win and the army's clear bonus. */
+export const firstClearTotal = (a: Army, tier = 0): number => a.waves.reduce((n, _, i) => n + tierCrowns(waveCrowns(a, i + 1), tier), 0) + tierCrowns(a.clear, tier);
+/** Everything a replay of the whole army pays on a tier. */
+export const replayTotal = (a: Army, tier = 0): number => a.waves.reduce((n, _, i) => n + replayOf(tierCrowns(waveCrowns(a, i + 1), tier)), 0) + replayOf(tierCrowns(a.clear, tier));
 
 // ---- the meta's record of the armies -----------------------------------------------------------------------------------
 
@@ -322,6 +326,12 @@ export interface ArmyRecord {
   clears: number;
   /** The best stars won on each wave (keyed by wave number). */
   stars: Record<string, number>;
+  /** The army-run star conditions met on each tier, as a bitmask (keyed by tier number; see `armyStars.ts`). Missing is none. */
+  met?: Record<string, number>;
+  /** The waves won and clears of the harder tiers (Normal's are `won` and `clears` above). */
+  hard?: Record<string, { won: number; clears: number }>;
+  /** The chest milestones given (3, 5, 10 stars); each is given once, into the meta's stash (`armyStars.ts`). */
+  chests?: number[];
 }
 
 const blank = (): ArmyRecord => ({ best: 0, won: 0, clears: 0, stars: {} });
@@ -334,8 +344,18 @@ export function armyUnlocked(m: Meta, id: string): boolean {
 }
 /** The armies beaten so far. */
 export const clearedCount = (m: Meta): number => ARMIES.filter((a) => armyCleared(m, a.id)).length;
-/** The stars won across an army's waves, and the most there are. */
-export const armyStars = (m: Meta, a: Army): { got: number; max: number } => ({ got: Object.values(recordOf(m, a.id).stars).reduce((n, s) => n + s, 0), max: a.waves.length * 3 });
+const bits = (n: number): number => {
+  let c = 0;
+  for (let x = n | 0; x; x &= x - 1) c++;
+  return c;
+};
+/** The conditions a tier has met (a bitmask) and the stars that makes. */
+export const metOf = (rec: ArmyRecord, tier: number): number => (rec.met?.[String(tier)] ?? 0) & ((1 << tierOf(tier).stars) - 1);
+export const tierStars = (rec: ArmyRecord, tier: number): number => bits(metOf(rec, tier));
+/** The stars an army has won over its four tiers, and the most there are (10). */
+export const armyStars = (m: Meta, a: Army): { got: number; max: number } => ({ got: TIERS.reduce((n, _, i) => n + tierStars(recordOf(m, a.id), i), 0), max: ARMY_STARS });
+/** Whether a tier is open to fight: Normal with the army, the harder ones once the stars before them are all won. */
+export const tierOpen = (m: Meta, a: Army, tier: number): boolean => armyUnlocked(m, a.id) && armyStars(m, a).got >= tierOf(tier).need;
 /** An unlocked army whose unlock the player has not looked at yet (its card glows). */
 export const armyIsNew = (m: Meta, id: string): boolean => armyIndex(id) > 0 && armyUnlocked(m, id) && !m.armySeen.includes(id);
 /** The player has seen these armies' cards. */
@@ -357,14 +377,17 @@ export interface ArmyPay {
 }
 
 /** Settle a fought wave in the meta: the furthest wave reached, and for a win the wave's crowns, its stars and an army's clear. */
-export function settleWave(m: Meta, id: string, n: number, won: boolean, stars: number): ArmyPay {
+export function settleWave(m: Meta, id: string, n: number, won: boolean, stars: number, tier = 0): ArmyPay {
   const a = armyById(id)!;
   const rec = (m.armies[id] ??= blank());
   rec.best = Math.max(rec.best, n);
   if (!won) return { crowns: 0, replay: false, firstClear: false };
-  const replay = n <= rec.won;
-  rec.won = Math.max(rec.won, n);
-  let crowns = replay ? replayOf(waveCrowns(a, n)) : waveCrowns(a, n);
+  // (a harder tier keeps its own waves won and clears; its crowns are the tier's pay on the same amounts)
+  const mine: { won: number; clears: number } = tier ? ((rec.hard ??= {})[String(tier)] ??= { won: 0, clears: 0 }) : rec;
+  const replay = n <= mine.won;
+  mine.won = Math.max(mine.won, n);
+  let crowns = tierCrowns(waveCrowns(a, n), tier);
+  if (replay) crowns = replayOf(crowns);
   // (stars pay only what they add to the wave's best: a farmed wave does not pay them twice)
   const before = rec.stars[String(n)] ?? 0;
   if (stars > before) {
@@ -372,13 +395,14 @@ export function settleWave(m: Meta, id: string, n: number, won: boolean, stars: 
     rec.stars[String(n)] = stars;
   }
   const last = n >= a.waves.length;
-  const firstClear = last && rec.clears === 0;
+  const firstClear = last && mine.clears === 0;
   if (last) {
-    crowns += firstClear ? a.clear : replayOf(a.clear);
-    rec.clears++;
+    crowns += firstClear ? tierCrowns(a.clear, tier) : replayOf(tierCrowns(a.clear, tier));
+    mine.clears++;
   }
   m.crowns += crowns;
-  return { crowns, replay, firstClear, unlocked: firstClear ? nextArmy(a) : undefined };
+  // (only the first Normal clear opens the next army)
+  return { crowns, replay, firstClear, unlocked: firstClear && !tier ? nextArmy(a) : undefined };
 }
 
 /**
@@ -393,13 +417,43 @@ export function migrateArmies(raw: unknown, bestStage: number): Record<string, A
       if (!r || typeof r !== 'object') continue;
       const stars: Record<string, number> = {};
       if (r.stars && typeof r.stars === 'object') for (const [k, s] of Object.entries(r.stars)) if (/^[1-9]\d*$/.test(k) && typeof s === 'number' && s >= 1) stars[k] = Math.min(3, s | 0);
-      out[a.id] = { best: Math.max(0, (r.best ?? 0) | 0), won: Math.max(0, (r.won ?? 0) | 0), clears: Math.max(0, (r.clears ?? 0) | 0), stars };
+      const rec: ArmyRecord = { best: Math.max(0, (r.best ?? 0) | 0), won: Math.max(0, (r.won ?? 0) | 0), clears: Math.max(0, (r.clears ?? 0) | 0), stars };
+      readTiers(rec, r);
+      // (a save from before the 10 stars: an army already beaten has its Normal clear star, and the old stars of its last wave say more)
+      if (!r.met && rec.clears > 0) rec.met = { '0': oldStarMask(rec, a) };
+      out[a.id] = rec;
     }
     return out;
   }
   const beaten = Math.min(ARMIES.length, Math.max(0, Math.floor((bestStage - 1) / 5)));
-  ARMIES.slice(0, beaten).forEach((a) => (out[a.id] = { best: a.waves.length, won: a.waves.length, clears: 1, stars: {} }));
+  ARMIES.slice(0, beaten).forEach((a) => (out[a.id] = { best: a.waves.length, won: a.waves.length, clears: 1, stars: {}, met: { '0': 1 } }));
   return out;
+}
+
+/** The Normal conditions an old record implies: the clear, and (if the last wave earned all three old stars) no hero lost in the final fight. */
+const oldStarMask = (rec: ArmyRecord, a: Army): number => 1 | (rec.stars[String(a.waves.length)] === 3 ? 2 : 0);
+
+/** Read the 10-star fields of a saved record: only what makes sense is kept. */
+function readTiers(rec: ArmyRecord, r: Partial<ArmyRecord>): void {
+  if (r.met && typeof r.met === 'object') {
+    const met: Record<string, number> = {};
+    TIERS.forEach((t, i) => {
+      const v = (r.met as Record<string, unknown>)[String(i)];
+      const mask = typeof v === 'number' ? (v | 0) & ((1 << t.stars) - 1) : 0;
+      if (mask) met[String(i)] = mask;
+    });
+    rec.met = met;
+  }
+  if (r.hard && typeof r.hard === 'object') {
+    const hard: Record<string, { won: number; clears: number }> = {};
+    for (let i = 1; i < TIERS.length; i++) {
+      const h = (r.hard as Record<string, { won?: unknown; clears?: unknown } | undefined>)[String(i)];
+      if (h && typeof h === 'object') hard[String(i)] = { won: Math.max(0, Number(h.won) | 0), clears: Math.max(0, Number(h.clears) | 0) };
+    }
+    rec.hard = hard;
+  }
+  const milestones = (v: unknown): number[] => (Array.isArray(v) ? MILESTONES.filter((n) => v.includes(n)) : []);
+  if (r.chests) rec.chests = milestones(r.chests);
 }
 
 /** The ids of the armies a saved list names (anything else is dropped). */

@@ -131,7 +131,7 @@ export const isHasted = (b: Battle, x: Unit) => x.hasteUntil !== undefined && x.
 /** Whether a fighter is slowed (Frost Nova) now. */
 export const isSlowed = (b: Battle, x: Unit) => x.slowUntil !== undefined && x.slowUntil > b.t;
 /** How much faster a fighter acts now (1 when neither hasted nor slowed): it moves and swings at this speed. */
-export const speedOf = (b: Battle, x: Unit) => (isHasted(b, x) ? HASTE_MULT : 1) * (isSlowed(b, x) ? SLOW_MULT : 1) * (x.side === 'hero' ? b.traits?.speed ?? 1 : 1);
+export const speedOf = (b: Battle, x: Unit) => (isHasted(b, x) ? HASTE_MULT : 1) * (isSlowed(b, x) ? SLOW_MULT : 1) * (x.side === 'hero' ? b.traits?.speed ?? 1 : b.foeSpeed ?? 1);
 
 /** Mana gain for one tick. */
 export function fillMana(b: Battle): void {
