@@ -4,7 +4,7 @@
 
 import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { D, standable, tileAt } from './sim/board';
-import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type Boost, type Unit } from './sim/battle';
+import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
 import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
 // (`saveSlot` as `saveRun`: a tower or calamity run is saved in its own slot, any other in the ordinary one)
 import { adoptOldTower, armyOfRun, armyRun, benchFull, boostOf, canRetry, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryGold, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, type Owned, type Run } from './sim/run';
@@ -451,6 +451,7 @@ class Game {
         // (a fighter a skill called up mid-fight has no sprite yet: make it, with its entrance)
         if (b.units.length !== this.sprites.size) this.syncSprites();
         playEvents(b, events, this.speed);
+        for (const e of events) if (e.kind === 'phase') this.startPhase(e);
         if (events.some((e) => e.kind === 'hit')) this.refreshBench();
         if (b.phase !== 'fight') this.refresh();
       }
@@ -471,7 +472,8 @@ class Game {
     const t = b.phase === 'deploy' ? performance.now() : b.phase === 'fight' ? b.t - TICK_MS + this.acc : b.t + this.acc;
     for (const s of this.sprites.values()) s.update(b.board, t, b.phase !== 'deploy');
     // (the camera eases to where it is sent, unless a finger is holding the board)
-    if (b.phase === 'fight' && !this.intro) this.follow();
+    if (this.phaseBoss && (!b.pause || b.phase !== 'fight')) this.endPhase();
+    if (b.phase === 'fight' && !this.intro) this.phaseBoss ? this.pushOnPhase() : this.follow();
     if (!this.drag?.pan) {
       const f = b.phase === 'fight' && !this.intro;
       this.cx = f ? easeTo(this.cx, this.tx, dt, EASE_MOVE_MS) : this.cx + (this.tx - this.cx) * Math.min(1, dt / 220);
@@ -480,6 +482,40 @@ class Game {
       this.clampCam();
     }
     this.place();
+  }
+
+  /** The boss changing form, while the fight is held: the banner is up and the camera is on it. */
+  private phaseBoss: Unit | null = null;
+  private phaseZoom = 1;
+
+  /** A boss changes form (a sim event): the fight is held for a beat; the camera pushes in on the boss and a banner gives its line. */
+  private startPhase(e: Extract<BattleEvent, { kind: 'phase' }>): void {
+    const boss = this.b.units.find((u) => u.id === e.by);
+    if (!boss) return;
+    this.phaseBoss = boss;
+    this.phaseZoom = Math.min(this.tzoom * 1.4, 3 / this.scale);
+    const banner = $('phaseBanner');
+    banner.querySelector('b')!.textContent = UNITS[boss.def].name.toUpperCase();
+    banner.querySelector('span')!.textContent = `\u201c${e.line}\u201d`;
+    // (a new element each time, so its entrance plays again)
+    banner.replaceWith(banner.cloneNode(true));
+    $('phaseBanner').hidden = false;
+    play('boom');
+  }
+
+  /** The camera closes in on the changing boss. */
+  private pushOnPhase(): void {
+    const boss = this.phaseBoss!;
+    const [x, y] = at(boss.u, boss.v, tileAt(this.b.board, boss.u, boss.v)?.h ?? 0);
+    this.tx = x;
+    this.ty = y;
+    this.tzoom = this.phaseZoom;
+  }
+
+  /** The fight carries on: the banner goes and the camera lets the boss go. */
+  private endPhase(): void {
+    this.phaseBoss = null;
+    $('phaseBanner').hidden = true;
   }
 
   /** The roster ids a merge has just made (they flash on the bench and, if placed, on the board). */
@@ -942,7 +978,7 @@ class Game {
     const saved = loadSlot(kind);
     if (saved) return this.resumeSlot(saved);
     if (kind === 'tower') return this.startTower(towerRun(clockSeed(), this.meta));
-    pickHero(this.meta, (hero) => this.startTower(calamityRun(clockSeed(), this.meta, hero)), () => this.home.open());
+    pickHero(this.meta, (hero, ascension) => this.startTower(calamityRun(clockSeed(), this.meta, hero, ascension)), () => this.home.open());
   }
 
   /** Back into a saved tower or calamity run: its map, or the fight it had picked. */

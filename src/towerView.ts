@@ -14,6 +14,7 @@ import {
 import { saveSlot, squadLimit, type Run } from './sim/run';
 import { heroLevel } from './sim/climb';
 import { CAL_MAPS } from './sim/calamity';
+import { ASC_MAX } from './sim/ascension';
 import { UNITS } from './sim/units';
 import { gearIcon, iconImg, relicIcon } from './render/items';
 import { portrait } from './render/sheets';
@@ -759,6 +760,7 @@ export class TowerView {
       stats.append(row);
     };
     stat('Floors climbed', String(s.floors));
+    if (cal && s.ascension) stat('Ascension', String(s.ascension));
     stat(cal ? 'Maps cleared' : 'Acts', cal ? `${s.maps} of ${CAL_MAPS}` : String(s.act));
     stat('Relics', String(s.relics));
     stat('Heroes', String(s.heroes));
@@ -776,6 +778,7 @@ export class TowerView {
     card.append(rewards);
     const line = chestLine(s);
     card.append(el('p', 'rtLead', line ? `${line} added to your stash.` : cal ? 'Clear every map for a chest.' : 'No chests yet: climb further to earn them.'));
+    if (cal && s.cleared && (s.ascension ?? 0) < ASC_MAX) card.append(el('p', 'rtBest', `Ascension ${Math.max(s.ascension ?? 0, 0) + 1} is open.`));
     for (const g of s.gear) card.append(el('p', 'rtGear', `Equipment found: ${g}`));
     const go = el('button', 'primary', 'Back to camp');
     go.addEventListener('click', () => {

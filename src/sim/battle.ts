@@ -12,7 +12,8 @@ import { firstStep, walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
 import { FOE_BANDS } from './foes';
 import { killXp } from './levels';
-import { afterBlow, CHARGE_MAX, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, rollCrit, sureFooted, tickStatus, tryCast, type Dot, type Hot, type Trap, type Zone } from './abilities';
+import { enterPhase, PHASE2 } from './bossPhases';
+import { afterBlow, CHARGE_MAX, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, rollCrit, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellState } from './spells';
 import type { SetHooks } from './relicSets';
 import { kindsOf, traitEffects, type TraitEffects } from './traits';
@@ -121,6 +122,10 @@ export interface Unit {
   owner?: number;
   /** All healing it receives is multiplied by this (a holy-ground twist); absent is x1. */
   healMult?: number;
+  /** A boss that changes form (`bossPhases.ts`): the share of its health it does so at, and whether it has. */
+  phase?: { at: number; done: boolean };
+  /** The kit it fights with after changing form (instead of its kind's). */
+  kit?: Kit;
 }
 
 interface Pending {
@@ -165,6 +170,8 @@ export type BattleEvent =
   /** A war banner goes up (Samurai Commander), for `ms`. */
   | { kind: 'banner'; by: number; ms: number }
   | { kind: 'haste'; to: number; ms: number }
+  /** A boss changes form (`bossPhases.ts`): the fight is held for `ms` while the page plays it. */
+  | { kind: 'phase'; by: number; phase: 2; line: string; ms: number }
   | { kind: 'end'; won: boolean };
 
 export interface Battle {
@@ -202,6 +209,10 @@ export interface Battle {
   revived?: boolean;
   /** The floor's twist (`twists.ts`), when it has one. */
   twist?: TwistFx;
+  /** Time still to hold the fight for a boss changing form (ms); nothing moves while it runs down. */
+  pause?: number;
+  /** Every hero's healing is multiplied by this (a calamity ascension). */
+  heroHeal?: number;
 }
 
 export const defOf = (u: Unit): UnitDef => UNITS[u.def];
@@ -227,6 +238,10 @@ export interface Boost {
   charge2?: number;
   /** The share of its hp a hero starts the fight with (the endless tower's wounds carry over); whole when unset. */
   carry?: number;
+  /** A boss that changes form at this share of its health (`bossPhases.ts`); none when unset. */
+  phase?: number;
+  /** A boss starts the fight behind a shield of this share of its health. */
+  shield?: number;
 }
 /** Boosts for a fight's foes: all of them by `foes`, and the first one more by `boss` (a boss stage). */
 export interface Stage {
@@ -243,6 +258,8 @@ export interface Stage {
   area?: Area;
   /** The floor's twist (the tower's, `twists.ts`); none when unset. */
   twist?: TwistFx;
+  /** Every hero's healing is multiplied by this (a calamity ascension). */
+  heal?: number;
 }
 export const apart = (a: At, b: At) => Math.abs(a.u - b.u) + Math.abs(a.v - b.v);
 export const tileOf = (b: Battle, a: At) => tileAt(b.board, a.u, a.v)!;
@@ -292,6 +309,7 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   if (foes) b.foeBoost = foes;
   if (stage.foes?.speed && stage.foes.speed !== 1) b.foeSpeed = stage.foes.speed;
   if (stage.relics) b.relics = stage.relics;
+  if (stage.heal && stage.heal !== 1) b.heroHeal = stage.heal;
   // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed
   const rng = new Rng(mixSeed(seed, 0xf0e5));
   (typeof band === 'string' ? FOE_BANDS[band] : band).forEach((id, n) => {
@@ -302,7 +320,7 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
       for (let u = 0; u < board.w; u++) if (standable(tileAt(board, u, v)) && !unitAt(b, u, v)) free.push(u);
       if (!free.length) continue;
       const boss = n === 0 ? stage.boss : undefined;
-      addUnit(b, id, rng.pick(free), v, { hp: (foes?.hp ?? 1) * (boss?.hp ?? 1), atk: (foes?.atk ?? 1) * (boss?.atk ?? 1), size: boss?.size });
+      addUnit(b, id, rng.pick(free), v, { hp: (foes?.hp ?? 1) * (boss?.hp ?? 1), atk: (foes?.atk ?? 1) * (boss?.atk ?? 1), size: boss?.size, phase: boss?.phase, shield: boss?.shield });
       break;
     }
   });
@@ -336,7 +354,10 @@ export function addUnit(b: Battle, defId: string, u: number, v: number, boost: B
     unit.carry = Math.max(0.01, boost.carry);
     unit.hp = Math.max(1, Math.round(hp * unit.carry));
   }
-  if (b.twist?.heal) unit.healMult = b.twist.heal;
+  const heal = (b.twist?.heal ?? 1) * (def.side === 'hero' ? b.heroHeal ?? 1 : 1);
+  if (heal !== 1) unit.healMult = heal;
+  if (boost.phase && PHASE2[defId]) unit.phase = { at: boost.phase, done: false };
+  if (boost.shield) unit.shield = { hp: Math.round(hp * boost.shield), until: 1e9 };
   if (boost.size && boost.size !== 1) unit.size = boost.size;
   if (boost.grade && boost.grade > 1) unit.grade = boost.grade;
   if (boost.awaken) unit.awaken = boost.awaken;
@@ -425,6 +446,11 @@ export function strikeDef(b: Battle, me: Unit): UnitDef {
 export function stepBattle(b: Battle): BattleEvent[] {
   const out: BattleEvent[] = [];
   if (b.phase !== 'fight') return out;
+  // (a boss changing form holds the whole fight)
+  if (b.pause) {
+    b.pause = Math.max(0, b.pause - TICK_MS);
+    return out;
+  }
   b.t += TICK_MS;
   const rng = new Rng(b.rng);
   out.push(...b.spells.events.splice(0));
@@ -436,6 +462,7 @@ export function stepBattle(b: Battle): BattleEvent[] {
   tickStatus(b, out);
   for (const me of b.units) if (me.alive && me.busyUntil <= b.t) decide(b, me, rng, out);
   b.rng = rng.state;
+  for (const u of b.units) if (u.alive && u.phase && !u.phase.done && u.hp <= u.maxHp * u.phase.at) enterPhase(b, u, out);
   const heroes = b.units.some((x) => x.alive && x.side === 'hero' && !defOf(x).summon);
   const foes = b.units.some((x) => x.alive && x.side === 'foe');
   if (!heroes || !foes || b.t >= TIME_LIMIT_MS) {

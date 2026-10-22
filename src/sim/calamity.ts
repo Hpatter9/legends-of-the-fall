@@ -7,7 +7,7 @@
 import { CALAMITY_SQUAD } from './run';
 
 /** A map's boss is drawn bigger and tougher the further on (map 1 is a plain boss). */
-export const calBossBoost = (map: number): { size: number; hp: number; atk: number } => ({ size: 1.5 + 0.06 * (map - 1), hp: CAL_SCALE.bossHp + CAL_SCALE.bossStep * (map - 1), atk: 1 + 0.03 * (map - 1) });
+export const calBossBoost = (map: number, phaseAt = 0.5, shield = 0): { size: number; hp: number; atk: number; phase: number; shield?: number } => ({ size: 1.5 + 0.06 * (map - 1), hp: CAL_SCALE.bossHp + CAL_SCALE.bossStep * (map - 1), atk: 1 + 0.03 * (map - 1), phase: phaseAt, ...(shield ? { shield } : {}) });
 
 /** The maps of a calamity, and the floors in each (six to eight; the last node of each is its boss). */
 export const CAL_ROWS: readonly number[] = [6, 7, 7, 8, 8, 8];

@@ -262,6 +262,14 @@
   @keyframes bcFlash { 0% { opacity: 0.55; } 100% { opacity: 0; } }
   /* (reduced motion: the card just fades in, nothing slides or slams) */
   @media (prefers-reduced-motion: reduce) { #bossCard canvas, #bossCard .rib, #bossCard span { animation: bcDim 0.5s ease-out both; } #bossCard::after { display: none; } }
+  /* a boss changes form: the banner over the held fight (it comes in once; no loops) */
+  #phaseBanner { position: fixed; left: 0; right: 0; top: 17%; z-index: 4; pointer-events: none; text-align: center; padding: 10px 12px; background: linear-gradient(90deg, transparent, rgba(8, 4, 2, 0.82) 15%, rgba(8, 4, 2, 0.82) 85%, transparent); animation: pbIn 0.3s cubic-bezier(0.2, 1.3, 0.4, 1) both; text-shadow: 0 2px 0 #000; }
+  #phaseBanner[hidden] { display: none; }
+  #phaseBanner small { display: block; font: 700 13px var(--display); letter-spacing: 6px; color: #ff9a82; }
+  #phaseBanner b { display: block; font: 900 clamp(24px, calc(8 * var(--vw)), 38px)/1.15 var(--display); letter-spacing: 3px; color: var(--gold); }
+  #phaseBanner span { display: block; margin-top: 2px; font-style: italic; color: var(--ink); }
+  @keyframes pbIn { from { opacity: 0; transform: scale(1.4); } }
+  @media (prefers-reduced-motion: reduce) { #phaseBanner { animation: none; } }
   /* the boss's health, across the top under the title bar, with its name */
   #bossBar { position: fixed; left: 12px; right: 12px; z-index: 2; pointer-events: none; text-shadow: 0 1px 0 #000; }
   #bossBar[hidden] { display: none; }
@@ -766,6 +774,7 @@
 <div id="twistBanner" hidden></div>
 <div id="autoBar" hidden><b></b><span></span><button id="autoStop">Stop</button></div>
 <div id="bossBar" hidden><b></b><i><span></span></i></div>
+<div id="phaseBanner" hidden><small>PHASE 2</small><b></b><span></span></div>
 <div id="bossCard" hidden><canvas></canvas><div class="rib"><b></b></div><span></span></div>
 <div id="panel">
   <div id="spells"><div id="mana"><i><span></span></i><b></b></div><div id="spellCards"></div><div id="spellHint"></div></div>
