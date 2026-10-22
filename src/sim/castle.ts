@@ -17,8 +17,8 @@ export interface Building {
 
 export const BUILDINGS: Record<BuildingId, Building> = {
   treasury: { id: 'treasury', name: 'Treasury', perLevel: '+10 starting gold', costs: [50, 100, 180, 300, 500] },
-  barracks: { id: 'barracks', name: 'Barracks', perLevel: '+6% hp for every hero', costs: [60, 120, 200, 320, 520] },
-  armoury: { id: 'armoury', name: 'Armoury', perLevel: '+5% attack for every hero', costs: [60, 120, 200, 320, 520] },
+  barracks: { id: 'barracks', name: 'Barracks', perLevel: '+6% hp for every hero', costs: [60, 120, 200, 320, 520, 850, 1400] },
+  armoury: { id: 'armoury', name: 'Armoury', perLevel: '+5% attack for every hero', costs: [60, 120, 200, 320, 520, 850, 1400] },
   stable: { id: 'stable', name: 'Stable', perLevel: '+4% move speed for every hero', costs: [60, 120, 200, 320, 520] },
   library: { id: 'library', name: 'Library', perLevel: '+6% XP from every fight', costs: [60, 120, 200, 320, 520] },
   mageTower: { id: 'mageTower', name: 'Mage Tower', perLevel: 'the king\'s mana fills 12% faster (and +1 spell power at levels 2 and 4)', costs: [80, 160, 280, 450] },
@@ -61,8 +61,9 @@ export interface Works {
   /** When it stands, in the page's clock (ms since 1970: the page passes `Date.now()`, so these rules stay pure). */
   doneAt: number;
 }
-/** How long a level takes, by the level being built (the owner's ask: higher tiers take longer): 1 min, 5 min, 20 min, 1 hour, 3 hours. */
-export const BUILD_MS: readonly number[] = [60_000, 5 * 60_000, 20 * 60_000, 60 * 60_000, 3 * 60 * 60_000];
+/** How long a level takes, by the level being built (the owner's ask: higher tiers take longer): 1 min, 5 min, 20 min, 1 hour, 3 hours, then 8 hours and 1 day for the
+ *  Barracks' and Armoury's sixth and seventh levels (the late armies' lift). */
+export const BUILD_MS: readonly number[] = [60_000, 5 * 60_000, 20 * 60_000, 60 * 60_000, 3 * 60 * 60_000, 8 * 60 * 60_000, 24 * 60 * 60_000];
 /** The Chapel takes as long as a second level. */
 export const CHAPEL_MS = BUILD_MS[1];
 export const buildMs = (id: BuildSite, level: number): number => (id === 'chapel' ? CHAPEL_MS : BUILD_MS[Math.min(BUILD_MS.length, Math.max(1, level)) - 1]);

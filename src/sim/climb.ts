@@ -6,7 +6,7 @@
 import type { Battle, Boost, Unit } from './battle';
 import { GRADE_MULT, recruit, squadLimit, type Owned, type Run } from './run';
 import { gearBoost } from './gear';
-import { XP_PER_DAMAGE, XP_PER_HEALING, XP_TAKE_PART, XP_WIN, levelBoost, levelOf, type LevelUp } from './levels';
+import { XP_PER_DAMAGE, XP_PER_HEALING, XP_TAKE_PART, XP_WIN, levelBoost, levelOf, RUN_MAX_LEVEL, type LevelUp } from './levels';
 
 
 /** What a hero's run-level XP is worth on top of the lasting rate: the climb is tuned on this. */
@@ -18,7 +18,7 @@ export const HIRE_CATCH_UP = 0.7;
 export const isLocal = (run: Run): boolean => !!run.local;
 
 /** A hero's level in the run (1 for a hero with no XP). */
-export const heroLevel = (h: Owned): number => levelOf(h.xp ?? 0);
+export const heroLevel = (h: Owned): number => levelOf(h.xp ?? 0, RUN_MAX_LEVEL);
 
 /**
  * A run hero's whole boost: its grade and level, its gear and training bumps, and the skill charge it keeps. No rank, no

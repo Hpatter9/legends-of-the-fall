@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { BUILD_MS, CHAPEL_MS, clockText, newCastle, readWorks, settleWorks, startBuild, startChapel, worksLeft, type WorksMeta } from '../src/sim/castle';
+import { BUILD_MS, BUILDING_IDS, maxLevel, CHAPEL_MS, clockText, newCastle, readWorks, settleWorks, startBuild, startChapel, worksLeft, type WorksMeta } from '../src/sim/castle';
 import { loadMeta, startedMeta } from '../src/sim/meta';
 
 const meta = (crowns = 5000): WorksMeta => ({ crowns, castle: newCastle() });
@@ -16,6 +16,22 @@ test('a level is paid at once but stands only when its time is up', () => {
   assert.equal(settleWorks(m, 1000 + BUILD_MS[0]), 'barracks');
   assert.equal(m.castle.barracks, 1);
   assert.equal(m.works, undefined);
+});
+
+test('every level of every building has a build time, and the Barracks and Armoury reach seven levels', () => {
+  for (const id of BUILDING_IDS) assert.ok(maxLevel(id) <= BUILD_MS.length, id);
+  assert.equal(maxLevel('barracks'), 7);
+  assert.equal(maxLevel('armoury'), 7);
+  assert.equal(BUILD_MS[5], 8 * 60 * 60_000);
+  assert.equal(BUILD_MS[6], 24 * 60 * 60_000);
+  const m = meta();
+  m.crowns = 1e6;
+  m.castle.barracks = 6;
+  assert.equal(startBuild(m, 'barracks', 0), true);
+  assert.equal(m.works!.doneAt, BUILD_MS[6]);
+  settleWorks(m, BUILD_MS[6]);
+  assert.equal(m.castle.barracks, 7);
+  assert.equal(startBuild(m, 'barracks', 0), false);
 });
 
 test('higher tiers take longer', () => {
