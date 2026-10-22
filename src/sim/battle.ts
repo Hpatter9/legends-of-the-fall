@@ -61,6 +61,8 @@ export interface Unit {
   shield?: { hp: number; until: number };
   /** Stunned, held or frozen until then (only the look reads it; `busyUntil` is what holds the fighter). */
   stunUntil?: number;
+  /** Fighters a skill has called up so far this fight (a Lich King raises only so many). */
+  raised?: number;
   /** Slowed (Frost Nova) until then. */
   slowUntil?: number;
   /** Attack raised (Rally) until then. */
@@ -156,6 +158,8 @@ export interface Battle {
   spells: SpellState;
   /** The castle's boost for every hero placed. */
   heroBoost?: Boost;
+  /** The boost the foes of this fight were made with (the fighters a foe calls up take it too). */
+  foeBoost?: Boost;
   /** The team bonus of the placed heroes' traits, fixed when the fight starts. */
   traits?: TraitEffects;
   /** The run's relics, beyond hp and attack (in the heroes' boost): a team bonus, how long the foes wait, a revive. */
@@ -220,15 +224,16 @@ export function canStrike(board: Board, def: UnitDef, from: At, to: At): boolean
   return d <= def.range && Math.abs(hf - ht) <= def.jump;
 }
 
-/** A fresh fight on the seed's board: the foes of `band` in their rows, no heroes placed yet. */
-export function startBattle(seed: number, band = 'skeletons', stage: Stage = {}): Battle {
+/** A fresh fight on the seed's board: the foes of `band` (a band's name in `FOE_BANDS`, or the foes' ids themselves) in their rows, no heroes placed yet. */
+export function startBattle(seed: number, band: string | readonly string[] = 'skeletons', stage: Stage = {}): Battle {
   const board = makeBoard(seed, stage.area);
   const b: Battle = { seed, board, units: [], phase: 'deploy', t: 0, rng: mixSeed(seed, 0xf167), pending: [], skillRng: mixSeed(seed, 0x5c111), zones: [], nextId: 1, spells: freshSpells(stage.mana) };
   if (stage.heroes) b.heroBoost = stage.heroes;
+  if (stage.foes) b.foeBoost = stage.foes;
   if (stage.relics) b.relics = stage.relics;
   // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed
   const rng = new Rng(mixSeed(seed, 0xf0e5));
-  FOE_BANDS[band].forEach((id, n) => {
+  (typeof band === 'string' ? FOE_BANDS[band] : band).forEach((id, n) => {
     const def = UNITS[id];
     const rows = def.shot ? [0, 1, 2] : [DEPLOY_ROWS - 1, DEPLOY_ROWS - 2, 0];
     for (const v of rows) {

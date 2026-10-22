@@ -93,10 +93,10 @@ test('a daily run in progress is resumed on the same date only', () => {
   assert.match(dailyLine(newMeta(1), 20261021), /one run today/);
 });
 
-test('the endless tower opens once a run has fought stage 10, and not before', () => {
+test('the endless tower opens once a run has fought stage 10, or the first army is beaten, and not before', () => {
   const m = newMeta(1);
   assert.equal(towerOpen(m), false);
-  assert.match(towerLine(m), /reach stage 10/);
+  assert.match(towerLine(m), /beat the Orc Warband/);
   m.bestStage = TOWER_UNLOCK - 1;
   assert.equal(towerOpen(m), false);
   const run = newRun(5);

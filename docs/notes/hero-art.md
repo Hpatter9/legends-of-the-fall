@@ -28,4 +28,34 @@ Fights at 393x852 and 852x393: `hero-art-phase2-fight-a/b.png`, `hero-art-phase2
 
 Animations cost about 11 generations a 4-frame clip (80 px; more at 128 px) and a base 15 (10 at 128 px), not the 1 the job
 usage reports. About 1,880 of 4,189 generations were used in all, including 12 lost to requests that timed out.
-The Druid's treant and the decoy sheet (`cls_treant`, which is not a hero sheet) are untouched.
+
+
+## Treant and lying deaths (treant-deaths)
+
+- **Treant** (`cls_treant`, the Druid's summon; there is one form, the game uses one sheet for it): a mossy bark tree-folk, 96x96,
+  generated like the heroes (Craftpix Knight and Minotaur padded to 96x96 as style references; 4 candidates, the mossy one picked).
+  Rows walk (5), attack (5), idle (4) and dead (5). The first attack take had a glitchy yellow flash on its last frames, so attack
+  and walk are second takes (seed 1). `scale` stays 0.5. The treant faces the camera more than sideways; the renderer mirrors it
+  as for every sheet.
+- **Deaths:** the generated dead rows ended in a crouch or kneel. `tools/pixellab/lie.py` adds one last dead frame to every
+  `cls_*` and `hk_*` sheet: the idle figure rotated by exactly 90 degrees (head to the left, so it falls backwards), standing on
+  the old ground line, centred on the idle figure. It is a lossless pixel move, so the art stays crisp and the API is not used.
+  Cells are padded wider (never resampled) where the lying figure does not fit. `sheets.json` gets `"lies": true` so the script
+  is safe to run twice. `unitView.ts` already holds the last dead frame, so the body stays on the ground until it fades.
+  The treant's topple frames from the API barely tilt, so its dead row is those frames then the rotated idle.
+- `tools/pixellab/api.py` holds the helpers (style references from the game's sheets, submit, poll); `strip.py` makes the strip.
+- Sample: `docs/samples/treant-deaths.png` (treant at 1:1 and 3x, then the final death frame of every generated sheet).
+- Cost: generations 1959.75 before, 1803.75 after (156 used, for 1 base and 8 animation clips; the job usage reports far less).
+
+
+## The Lich King (armies)
+
+A skeletal king in a jagged crown, dark robes and spiked pauldrons, with a bone staff and cold blue soul fire (`lich_king`, 134x128
+cells, figure 126 px, faces right, drawn at scale 0.45 and 1.5 times that as a boss). Made as above: 4 base candidates at 128 px
+from Craftpix Minotaur, Samurai Commander and Skeleton Warrior frames (the fourth picked by eye), then 4-frame clips of idle, walk,
+attack (a staff thrust, used for his shots), cast (the staff swept up, with blue fire) and dead. The robe hides the legs, so the
+walk is a slow glide, which suits him. The dead clip barely moves, so his death is the last frame only: the idle figure turned
+exactly 90 degrees by `lie.py` (which now also takes `lich_king`). There is no hurt row (it plays idle). Steps: `tools/pixellab/lich.py`.
+Cost: 122 generations by the balance readings (1720.75 before the base, 1598.75 after the last clip): 22 for the base, 50 for
+the five first clips and 50 for three re-rolled ones (walk, cast and dead, with stronger prompts). The balance dropped
+further afterwards, but that was another worker's use of the same account.

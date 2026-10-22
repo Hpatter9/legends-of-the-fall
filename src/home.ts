@@ -8,11 +8,13 @@ import { ALL_HEROES, UNITS } from './sim/units';
 import { BUILDING_IDS, BUILDINGS, maxLevel, nextCost, upgrade, type BuildingId } from './sim/castle';
 import { CastleScene, lookUrl } from './castle';
 import { BLURB, effectText } from './render/castleSpots';
-import { MYTHIC_PITY, PITY, PULL_COST, PULL10_COST, rarityOf, saveMeta, starSummary, type Meta } from './sim/meta';
+import { MYTHIC_PITY, PITY, PULL_COST, PULL10_COST, rarityOf, saveMeta, type Meta } from './sim/meta';
 import { dailyLine, towerLine, towerOpen } from './sim/modes';
+import { ARMIES, armyById, armyIsNew, armyStars, armyUnlocked, clearedCount, markSeen } from './sim/armies';
 import { ACHIEVEMENTS } from './sim/achievements';
 import { AREAS } from './sim/board';
 import { areaFor } from './sim/run';
+import { drawArmies } from './armiesView';
 import { drawAchievements } from './achievementsView';
 import { todayKey } from './modes';
 import { portrait } from './render/sheets';
@@ -35,10 +37,11 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 export interface HomeHooks {
   /** Whether a run is saved and not over. */
   hasRun(): boolean;
-  /** The saved run's stage and gold, if there is one going. */
-  runInfo?(): { stage: number; gold: number } | null;
+  /** The saved run's stage and gold, if there is one going: with the army it fights (none for a daily, tower or older run) and a line naming it. */
+  runInfo?(): { stage: number; gold: number; army?: string; label: string } | null;
   onContinue(): void;
-  onNew(): void;
+  /** Start an army from wave 1 (the page picks the party first). */
+  onArmy(id: string): void;
   /** Opens the party screen to change the party (the Battle page's Party button). */
   onParty(): void;
   onRecruit(): void;
@@ -150,8 +153,8 @@ export class Home {
     $('hmCrowns').replaceChildren(icon(ICONS.crowns), el('b', '', String(m.crowns)));
     $('hmGold').hidden = !info;
     if (info) $('hmGold').replaceChildren(icon(ICONS.gold), el('b', '', String(info.gold)));
-    const best = starSummary(m);
-    $('hmBest').textContent = best ? `Best stage ${best.stage} · ★ ${best.total}` : `Best stage ${m.bestStage}`;
+    const stars = ARMIES.reduce((n, a) => n + armyStars(m, a).got, 0);
+    $('hmBest').textContent = `Armies ${clearedCount(m)}/${ARMIES.length} · ★ ${stars}`;
     const fresh = m.achievements.length > seenCount();
     $('hmTrophy').classList.toggle('new', fresh);
     // tabs
@@ -168,7 +171,7 @@ export class Home {
     });
     this.tabBtns.get('castle')!.classList.toggle('new', affordable || fresh);
     this.tabBtns.get('recruit')!.classList.toggle('new', m.crowns >= PULL_COST);
-    this.tabBtns.get('battle')!.classList.toggle('new', !m.daily[String(todayKey())]);
+    this.tabBtns.get('battle')!.classList.toggle('new', !m.daily[String(todayKey())] || ARMIES.some((a) => armyIsNew(m, a.id)));
     this.drawBattle();
     this.drawRecruit();
     this.tavern.update(m);
@@ -189,8 +192,10 @@ export class Home {
     const m = this.meta;
     const page = this.pages.get('battle')!;
     const info = this.hooks.runInfo?.() ?? null;
-    const stage = info ? info.stage : Math.max(1, m.bestStage);
-    const area = AREAS.includes(areaFor(stage)) ? areaFor(stage) : 'highlands';
+    // (the land is the army's in a run, else the newest army open)
+    const front = [...ARMIES].reverse().find((a) => armyUnlocked(m, a.id)) ?? ARMIES[0];
+    const army = info?.army ? armyById(info.army) : undefined;
+    const area = AREAS.includes((army ?? front).area) ? (army ?? front).area : info && !army ? areaFor(info.stage) : 'highlands';
     const heroes = strongest(m, 5);
     const key = `${area}|${heroes.join(',')}`;
     if (key !== this.sceneKey) {
@@ -198,9 +203,9 @@ export class Home {
       this.scene.set(area, heroes);
     }
     page.querySelector('.hmFront')?.remove();
-    const front = el('div', 'hmFront');
-    if (this.note) front.append(el('div', 'hmNote', this.note));
-    front.append(el('div', 'hmBanner', `${info ? 'Stage' : 'Best: stage'} ${stage} · ${AREA_NAMES[area]}`));
+    const fr = el('div', 'hmFront');
+    if (this.note) fr.append(el('div', 'hmNote', this.note));
+    fr.append(el('div', 'hmBanner', army && info ? `${army.name} · wave ${info.stage}/${army.waves.length}` : info ? `Stage ${info.stage} · ${AREA_NAMES[area]}` : `${front.name} · ${AREA_NAMES[area]}`));
     const cards = el('div', 'hmCards');
     const daily = el('button', 'hmCard');
     daily.append(icon(ICONS.daily), el('b', '', 'Daily'), el('small', '', dailyLine(m, todayKey()).replace('Daily challenge · ', '')));
@@ -215,20 +220,20 @@ export class Home {
     const has = this.hooks.hasRun();
     const battle = el('button', 'hmBattle');
     battle.id = 'hmBattle';
-    battle.append(el('span', '', 'Battle!'), el('small', '', has ? `Continue run · stage ${info?.stage ?? ''}`.replace(/ · stage $/, '') : 'New run'));
-    battle.addEventListener('click', () => this.go(has ? this.hooks.onContinue : this.hooks.onNew));
+    battle.append(el('span', '', 'Battle!'), el('small', '', ARMIES.some((a) => armyIsNew(m, a.id)) ? 'A new army marches' : 'Choose an army'));
+    battle.addEventListener('click', () => this.openArmies());
     go.append(battle);
     const party = el('button', 'hmLink', 'Party');
     party.id = 'hmParty';
     party.addEventListener('click', () => this.go(this.hooks.onParty));
     go.append(party);
     if (has) {
-      const fresh = el('button', 'hmLink', 'Start a new run');
-      fresh.addEventListener('click', () => this.go(this.hooks.onNew));
-      go.append(fresh);
+      const cont = el('button', 'hmLink', `Continue · ${info?.label ?? 'run'}`);
+      cont.addEventListener('click', () => this.go(this.hooks.onContinue));
+      go.append(cont);
     }
-    front.append(cards, go);
-    page.append(front);
+    fr.append(cards, go);
+    page.append(fr);
   }
 
   private drawRecruit(): void {
@@ -350,18 +355,36 @@ export class Home {
     if (this.isOpen && this.tab === 'castle') this.castle.start();
   }
 
-  private openSub(title: string, draw: (body: HTMLElement) => void): void {
+  /** The Armies screen, over the home screen (the Battle button, and the unlock moment's way on). */
+  openArmies(): void {
+    $('home').hidden = false;
+    this.openSub(
+      'Armies',
+      (body) =>
+        drawArmies(body, this.meta, {
+          running: this.hooks.runInfo?.() ?? null,
+          onContinue: () => this.go(this.hooks.onContinue),
+          onFight: (id) => this.go(() => this.hooks.onArmy(id)),
+        }),
+      false,
+    );
+    // (the cards a new army lit have been seen now: they glow no more the next time)
+    if (markSeen(this.meta)) saveMeta(this.meta);
+  }
+
+  private openSub(title: string, draw: (body: HTMLElement) => void, achievements = true): void {
     $('hmSub').hidden = false;
     $('hmSubTitle').textContent = title;
     const body = $('hmSubBody');
     body.replaceChildren();
     draw(body);
     // (looking at the achievements clears the badge)
-    try {
-      localStorage.setItem(SEEN, String(this.meta.achievements.length));
-    } catch {
-      /* private mode: the badge just stays */
-    }
+    if (achievements)
+      try {
+        localStorage.setItem(SEEN, String(this.meta.achievements.length));
+      } catch {
+        /* private mode: the badge just stays */
+      }
     this.refresh();
   }
 

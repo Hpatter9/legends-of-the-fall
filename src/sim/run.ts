@@ -6,6 +6,7 @@
 import { startBattle, type Battle, type Boost, type Stage } from './battle';
 import { AREAS, type Area } from './board';
 import { BOSS_BANDS, FIELD_BANDS } from './foes';
+import { armyById, armyIndex, waveBoost, type Army } from './armies';
 import { bonusGold, heroBoost, manaRate, newCastle, type Castle } from './castle';
 import { MYTHIC_SIZE, rankMult, rarityOf, tierMult } from './meta';
 import { levelBoost } from './levels';
@@ -28,6 +29,8 @@ export const FOE_START = 0.55;
 /** Foes' hp and attack grow by this share for each stage after the first. */
 export const STAGE_GROWTH = 0.2;
 export const BOSS_EVERY = 5;
+/** Gear drops rise a tier every 8 stages; each army further on drops as if this many stages further. */
+const GEAR_STAGES = 6;
 /** A boss is drawn half as big again; its kind (`foes.ts`) carries its own stats and skill. */
 export const BOSS: Boost = { size: 1.5 };
 
@@ -86,10 +89,12 @@ export interface Run {
   area?: Area;
   /** Stars won across the run (the daily challenge's score counts them). */
   stars?: number;
+  /** An army run's last boss has fallen (the run is over, and won). */
+  cleared?: boolean;
 }
 
-/** A run that is not an ordinary one: today's daily challenge (`practice` for a replay that does not count), or the endless tower. */
-export type RunMode = { kind: 'daily'; date: number; practice: boolean } | { kind: 'tower' };
+/** A run that is not an ordinary one: an army's campaign (its stages are the army's waves), today's daily challenge (`practice` for a replay that does not count), or the endless tower. */
+export type RunMode = { kind: 'army'; army: string } | { kind: 'daily'; date: number; practice: boolean } | { kind: 'tower' };
 
 /** A new run drawing from `party` (the hero kinds its summons and starting heroes come from). */
 export function newRun(seed: number, party: readonly string[] = HEROES, castle: Castle = newCastle()): Run {
@@ -98,6 +103,22 @@ export function newRun(seed: number, party: readonly string[] = HEROES, castle: 
   for (let i = 0; i < 2; i++) run.squad.push(add(run, draw(run)).id);
   return run;
 }
+
+/** A run that fights an army: from wave 1, with the party and castle as they stand. */
+export function armyRun(seed: number, army: string, party: readonly string[] = HEROES, castle: Castle = newCastle()): Run {
+  const run = newRun(seed, party, castle);
+  run.mode = { kind: 'army', army };
+  return run;
+}
+/** The army a run is fighting, if it is an army run. */
+export const armyOfRun = (run: Run): Army | undefined => (run.mode?.kind === 'army' ? armyById(run.mode.army) : undefined);
+/** Whether stage n of the run (its current one by default) has a boss. */
+export const isBossRun = (run: Run, stage = run.stage): boolean => {
+  const a = armyOfRun(run);
+  return a ? !!a.waves[stage - 1]?.boss : isBossStage(stage);
+};
+/** How many waves the run's army has (0 for any other run). */
+export const wavesOf = (run: Run): number => armyOfRun(run)?.waves.length ?? 0;
 
 const draw = (run: Run): string => {
   const pool = run.pool?.length ? run.pool : HEROES;
@@ -192,13 +213,14 @@ export const reward = (stage: number) => 20 + 6 * stage + (isBossStage(stage) ? 
 /** A fresh fight for the run's current stage (a different board each stage). */
 export function startStage(run: Run): Battle {
   const rl = relicEffects(run.relics);
-  const base = stageBoost(run.stage);
+  const army = armyOfRun(run);
+  const base = army ? waveBoost(army, run.stage) : stageBoost(run.stage);
   const castle = heroBoost(run.castle);
   const foes = run.buff?.foes ?? 1;
   const { atk, hp, mana, first, revive, gold: _gold, ...team } = rl;
-  return startBattle(mixSeed(run.seed, 0x57a6e, run.stage), bandFor(run.stage), {
+  return startBattle(mixSeed(run.seed, 0x57a6e, run.stage), army ? army.waves[run.stage - 1].foes : bandFor(run.stage), {
     ...base,
-    area: run.area ?? areaFor(run.stage),
+    area: run.area ?? base.area ?? areaFor(run.stage),
     foes: { hp: base.foes!.hp! * foes, atk: base.foes!.atk! * foes },
     heroes: { hp: castle.hp! * (hp ?? 1) * (run.buff?.hp ?? 1), atk: castle.atk! * (atk ?? 1) * (run.buff?.atk ?? 1) },
     mana: manaRate(run.castle) * (mana ?? 1),
@@ -212,20 +234,28 @@ export function finish(run: Run, won: boolean, stars = 0): void {
   run.found = [];
   run.stars = (run.stars ?? 0) + stars;
   if (won) {
-    const boss = isBossStage(run.stage);
+    const boss = isBossRun(run);
+    const army = armyOfRun(run);
     const bonus = (relicEffects(run.relics).gold ?? 0) + (run.buff?.gold ?? 0);
     run.gold += reward(run.stage) + starGold(stars) + bonus;
     // a prize for a cursed path, and a sure piece of gear from a boss (one tier up, from its own stream)
     const prizes: Gear[] = run.buff?.gear ? [run.buff.gear] : [];
-    if (boss) prizes.push(dropGear(new Rng(mixSeed(run.seed, 0x6ea2, run.stage)), (run.nextGear = (run.nextGear ?? 1) + 1) - 1, run.stage, 1));
+    if (boss) prizes.push(dropGear(new Rng(mixSeed(run.seed, 0x6ea2, run.stage)), (run.nextGear = (run.nextGear ?? 1) + 1) - 1, run.stage + (army ? GEAR_STAGES * armyIndex(army.id) : 0), 1));
     for (const g of prizes) {
       (run.items ??= []).push(g);
       run.found.push(`${g.name} (${g.slot}, ${gearText(g)})`);
     }
     if (run.buff?.gold) run.found.push(`${run.buff.gold} gold from the cursed path`);
-    run.stage++;
-    // (the endless tower has no events)
-    run.event = run.mode?.kind !== 'tower' && eventAfter(run.stage - 1, boss) ? drawEvent(run, run.stage - 1) : undefined;
+    if (army && run.stage >= army.waves.length) {
+      // (the army's last boss has fallen: the run is won and over)
+      run.cleared = true;
+      run.over = true;
+      run.event = undefined;
+    } else {
+      run.stage++;
+      // (the endless tower has no events)
+      run.event = run.mode?.kind !== 'tower' && eventAfter(run.stage - 1, boss) ? drawEvent(run, run.stage - 1) : undefined;
+    }
   } else run.over = true;
   run.buff = undefined;
 }

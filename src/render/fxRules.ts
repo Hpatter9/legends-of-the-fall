@@ -116,6 +116,8 @@ export const SKILL_ELEMENT: Record<string, Element> = {
   'War Banner': 'light',
   'Rally Cry': 'light',
   'Tusk Flurry': 'blood',
+  'Raise Dead': 'dark',
+  'Soul Nova': 'ice',
 };
 
 export const skillElement = (name: string): Element => SKILL_ELEMENT[name] ?? 'light';

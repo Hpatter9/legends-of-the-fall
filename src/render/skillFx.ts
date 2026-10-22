@@ -77,12 +77,14 @@ export const SKILL_FX: Record<string, SkillFx> = {
   'Pipes of Pan': { cast: { sheet: 'lightGather', scale: 1.3, tint: 0xffd27a } },
   'Petrifying Gaze': { cast: { sheet: 'darkCircle', scale: 1.3, tint: 0x9be07a } },
   'War Banner': { cast: { sheet: 'goldBurst', scale: 1.4 } },
+  'Raise Dead': { cast: { sheet: 'darkCircle', scale: 1.8, tint: 0x6ab8ff } },
   // the Mythics' ultimates
   'Nine-Tailed Dream': { cast: { sheet: 'pinkHeart', scale: 2.6 }, hit: { sheet: 'pinkHeart', scale: 1 } },
   'Feather Storm': { cast: { sheet: 'windVortex', scale: 2, tint: 0xff5a6a }, hit: { sheet: 'windBurst', scale: 1.3, tint: 0xff8a8a } },
   Tempest: { cast: { sheet: 'windVortex', scale: 2.6 }, hit: { sheet: 'windBurst', scale: 1.1 } },
   'Stone Curse': { cast: { sheet: 'darkCircle', scale: 2.2, tint: 0x9be07a }, hit: { sheet: 'whiteBurst', scale: 0.9, tint: 0xb0c0a0 } },
   'Rally Cry': { cast: { sheet: 'goldBurst', scale: 2.6 } },
+  'Soul Nova': { cast: { sheet: 'lightNova', scale: 2.8, tint: 0x6ab8ff }, hit: { sheet: 'iceShield', scale: 1.3 } },
 };
 
 /** The king's spells: a sheet on each fighter the spell touches (the meteor's is its landing). */

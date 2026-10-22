@@ -6,8 +6,11 @@ import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { D, standable, tileAt } from './sim/board';
 import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type Unit } from './sim/battle';
 import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
-import { boostOf, finish, heroOf, isBossStage, loadRun, newRun, saveRun, setSquad, SQUAD, startStage, summon, summonCost, type Run } from './sim/run';
+import { armyOfRun, armyRun, boostOf, finish, heroOf, isBossRun, loadRun, saveRun, setSquad, SQUAD, startStage, summon, summonCost, type Run } from './sim/run';
+import { ARMIES, settleWave, type ArmyPay } from './sim/armies';
+import { showUnlock } from './armiesView';
 import { formOf, UNITS } from './sim/units';
+import { isBoss } from './sim/foes';
 import { earn, loadMeta, rankOf, rarityOf, recordStars, saveMeta, type Meta } from './sim/meta';
 import { fightXp, gainXp, levelGain, levelOfKind, progressOf, xpOf, type LevelUp } from './sim/levels';
 import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
@@ -30,7 +33,9 @@ import { UnitSprite } from './render/unitView';
 import { flyUp, summonBurst } from './render/uiFx';
 import { Fx, loadFx } from './render/fx';
 import pillarLightUrl from './art/fx/vfx/pillar_light.png';
-import { framesOf, loadSheets, portrait } from './render/sheets';
+import { framesOf, loadSheets, portrait, sheetInfo } from './render/sheets';
+import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, framing, PAUSE_MS, settle, viewFor, type View } from './render/cameraRules';
+import { titleOf } from './render/bossTitles';
 import { at, FOOT, HH, TH, TW } from './render/iso';
 import { bindMute, play, playEvents, setup, startFight } from './render/sound';
 import { onSettings, openSettings, settings } from './settings';
@@ -40,7 +45,11 @@ TextureSource.defaultOptions.scaleMode = 'nearest';
 /** How much bigger the fighters show upright than when the whole board fits the width. */
 const ZOOM = 1.6;
 /** A boss's title card: how long it stays (ms), and how much the camera zooms in on the boss. */
-const INTRO_MS = 2000;
+const INTRO_MS = 2400;
+/** When the ribbon slams down inside the intro (ms): the rumble and the boom. */
+const SLAM_MS = 850;
+/** How far the follow camera may zoom in, in multiples of the layout's scale (out is to the whole board's width). */
+const FOLLOW_IN = 1.7;
 const INTRO_ZOOM = 0.25;
 const STAT_LABELS: Record<(typeof STAT_KEYS)[number], string> = { dealt: 'Dealt', taken: 'Taken', healed: 'Healed', kills: 'Kills' };
 
@@ -77,6 +86,8 @@ class Game {
   private crownGain = 0;
   /** Whether the fight's end has been settled into the run. */
   private settled = false;
+  /** What an army's last settled fight paid (null for any other run). */
+  private pay: ArmyPay | null = null;
   /** Gold the last win paid (for the result screen). */
   private gain = 0;
   /** Where each hero (by roster id) was placed, so the next stage puts them back. */
@@ -92,7 +103,7 @@ class Game {
   /** The fight's numbers for each hero, tallied as the ticks come in. */
   private stats: FightStats = [];
   /** A boss's title card: how long it has been on, and the boss it is about. */
-  private intro: { t: number; boss: Unit } | null = null;
+  private intro: { t: number; boss: Unit; slammed: boolean } | null = null;
   /** The stages whose boss has had its card this session (a stage's card plays once). */
   private introduced = new Set<string>();
 
@@ -114,7 +125,8 @@ class Game {
     const seed = Number(query.get('seed'));
     this.meta = loadMeta((Date.now() % 100000) + 1);
     saveMeta(this.meta);
-    this.run = (!seed && loadRun()) || newRun(seed || (Date.now() % 100000) + 1, this.meta.party, this.meta.castle);
+    // (a fresh page with no saved run shows the first army's board behind the home screen)
+    this.run = (!seed && loadRun()) || armyRun(seed || (Date.now() % 100000) + 1, ARMIES[0].id, this.meta.party, this.meta.castle);
     this.syncPool();
     this.gacha = new Gacha(this.meta, () => {
       this.syncPool();
@@ -132,11 +144,14 @@ class Game {
       },
       runInfo: () => {
         const r = loadRun();
-        return r && !r.over ? { stage: r.stage, gold: r.gold } : null;
+        if (!r || r.over) return null;
+        const army = armyOfRun(r);
+        const label = army ? `${army.name} · wave ${r.stage}/${army.waves.length}` : r.mode?.kind === 'daily' ? 'daily challenge' : r.mode?.kind === 'tower' ? `tower floor ${r.stage}` : `stage ${r.stage}`;
+        return { stage: r.stage, gold: r.gold, army: army?.id, label };
       },
       onContinue: () => this.resume(),
-      // (a new run starts once its party is picked)
-      onNew: () => this.party.open('start', () => this.newRunNow()),
+      // (an army starts from wave 1 once its party is picked)
+      onArmy: (id) => this.party.open('start', () => this.startRun(armyRun(clockSeed(), id, this.meta.party, this.meta.castle))),
       onParty: () =>
         this.party.open('edit', () => {
           // (a run going on draws from the new party from now on)
@@ -195,27 +210,43 @@ class Game {
     this.startIntro();
   }
 
-  /** A boss stage's first time: its title card, the camera gliding to the boss and zooming a little, and a rumble. Once per stage. */
+  /** A boss stage's first time: the screen dims, the boss's portrait slides in, its name on a ribbon slams down with its title, and the camera glides to it. Once per stage (a restart of the same fight does not replay it). */
   private startIntro(): void {
     const key = `${this.run.seed}:${this.run.stage}`;
-    const boss = this.b.units.find((u) => u.side === 'foe' && (u.size ?? 1) > 1);
+    const boss = this.b.units.find((u) => u.side === 'foe' && isBoss(u.def));
     if (!boss || this.introduced.has(key)) return;
     this.introduced.add(key);
-    this.intro = { t: 0, boss };
+    this.intro = { t: 0, boss, slammed: false };
     const card = $('bossCard');
-    card.querySelector('b')!.textContent = `THE ${UNITS[boss.def].name.toUpperCase()}`;
-    card.querySelector('span')!.textContent = UNITS[boss.def].role;
+    const def = UNITS[boss.def];
+    card.querySelector('b')!.textContent = def.name.toUpperCase();
+    card.querySelector('span')!.textContent = titleOf(boss.def);
+    // (the portrait is cropped from the sheet and scaled up by a whole number, so its pixels stay square)
+    const info = sheetInfo(def.sheet);
+    const side = info ? Math.min(info.figure + 6, info.h) : 64;
+    // (about 48% of the width upright, up to 55% of the height sideways; at least once over, at most 90% of the width)
+    const want = innerWidth > innerHeight ? innerHeight * 0.55 : innerWidth * 0.48;
+    const n = Math.max(1, Math.min(Math.round(want / side), Math.floor((innerWidth * 0.9) / side)));
+    const old = card.querySelector('canvas')!;
+    const face = portrait(def.sheet, side * n);
+    // (the sheets face right; a boss that faces left looks the other way)
+    face.style.width = face.style.height = `${side * n}px`;
+    if (info && !info.facesRight) face.style.transform = 'scaleX(-1)';
+    old.replaceWith(face);
     card.classList.remove('out');
     card.hidden = false;
-    play('boom');
   }
 
-  /** Each frame of the intro: the rumble, the camera on the boss with the zoom swelling and falling back, and the card fading out. */
+  /** Each frame of the intro: the slam (a rumble and a boom, the rumble only if shaking is on), the camera on the boss with the zoom swelling and falling back, and the card fading out. */
   private stepIntro(dt: number): void {
     const it = this.intro!;
     it.t += dt;
     if (it.t >= INTRO_MS) return this.endIntro();
-    if (it.t < INTRO_MS * 0.7) this.fx.rumble(0.7);
+    if (!it.slammed && it.t >= SLAM_MS) {
+      it.slammed = true;
+      this.fx.rumble(0.8);
+      play('boom');
+    }
     this.fx.step(dt);
     if (it.t > INTRO_MS - 400) $('bossCard').classList.add('out');
     const { u, v } = it.boss;
@@ -223,13 +254,14 @@ class Game {
     this.tx = x;
     this.ty = y;
     this.zoom = 1 + INTRO_ZOOM * Math.min(1, it.t / 500, (INTRO_MS - it.t) / 500);
+    this.tzoom = this.zoom;
   }
 
   /** The card goes (a tap, or its time is up) and the camera returns to where the phase has it. */
   private endIntro(): void {
     if (!this.intro) return;
     this.intro = null;
-    this.zoom = 1;
+    this.zoom = this.tzoom = 1;
     const card = $('bossCard');
     card.hidden = true;
     card.classList.remove('out');
@@ -290,7 +322,7 @@ class Game {
     if (!fight(this.b)) return;
     this.endIntro();
     this.stats = startStats(this.b.units);
-    startFight(isBossStage(this.run.stage));
+    startFight(isBossRun(this.run));
     keepAwake(true);
     this.chosen = null;
     this.boardView.clearMarks();
@@ -312,7 +344,7 @@ class Game {
         this.fx.show(b, events);
         // (a fighter a skill called up mid-fight has no sprite yet: make it, with its entrance)
         if (b.units.length !== this.sprites.size) this.syncSprites();
-        playEvents(events);
+        playEvents(b, events, this.speed);
         if (events.some((e) => e.kind === 'hit')) this.refreshBench();
         if (b.phase !== 'fight') this.refresh();
       }
@@ -329,9 +361,12 @@ class Game {
     const t = b.phase === 'deploy' ? performance.now() : b.phase === 'fight' ? b.t - TICK_MS + this.acc : b.t + this.acc;
     for (const s of this.sprites.values()) s.update(b.board, t, b.phase !== 'deploy');
     // (the camera eases to where it is sent, unless a finger is holding the board)
+    if (b.phase === 'fight' && !this.intro) this.follow();
     if (!this.drag?.pan) {
-      this.cx += (this.tx - this.cx) * Math.min(1, dt / 220);
-      this.cy += (this.ty - this.cy) * Math.min(1, dt / 220);
+      const f = b.phase === 'fight' && !this.intro;
+      this.cx = f ? easeTo(this.cx, this.tx, dt, EASE_MOVE_MS) : this.cx + (this.tx - this.cx) * Math.min(1, dt / 220);
+      this.cy = f ? easeTo(this.cy, this.ty, dt, EASE_MOVE_MS) : this.cy + (this.ty - this.cy) * Math.min(1, dt / 220);
+      if (f) this.zoom = easeTo(this.zoom, this.tzoom, dt, EASE_ZOOM_MS);
       this.clampCam();
     }
     this.place();
@@ -376,7 +411,32 @@ class Game {
   private area = { x: 0, y: 0, w: 1, h: 1 };
   /** The camera's zoom on the boss during its card (1 otherwise). */
   private zoom = 1;
+  /** Where the zoom is heading, the view the follow camera is holding (its dead zone), and when it may follow again after a manual move. */
+  private tzoom = 1;
+  private held: View | null = null;
+  private pausedUntil = 0;
   private bbox = { x0: 0, x1: 0, y0: 0, y1: 0 };
+
+  /** The fight camera: frame the living fighters, zoomed in as far as fits, holding still for small moves. A manual pan pauses it for a few seconds. */
+  private follow(): void {
+    if (performance.now() < this.pausedUntil) return;
+    const spots = this.b.units.filter((u) => u.alive).flatMap((u) => this.sprites.get(u.id) ?? []);
+    const box = framing(spots);
+    if (!box) return;
+    // (never wider than the board's own width, never closer than a little over the layout's scale, so pixels stay a sensible size)
+    const lo = this.minZoom();
+    const want = viewFor(box, this.area.w, this.area.h, this.scale, lo, Math.max(lo, Math.min(FOLLOW_IN, 3 / this.scale)));
+    this.held = this.held ? settle(this.held, want) : want;
+    this.tx = this.held.cx;
+    this.ty = this.held.cy;
+    this.tzoom = this.held.zoom;
+  }
+
+  /** The least zoom of the fight camera: the whole board across the room (the layout's scale upright is zoomed in past that). */
+  private minZoom(): number {
+    const { x0, x1 } = this.bbox;
+    return Math.min(1, (this.area.w - 20) / (x1 - x0) / this.scale);
+  }
 
   /** Fit the board into the room the bench and the top bar leave: upright it is zoomed in and panned, sideways it fits. */
   private layout(): void {
@@ -436,6 +496,8 @@ class Game {
       this.tx = (x0 + x1) / 2;
       this.ty = (y0 + y1) / 2;
     }
+    this.held = null;
+    this.tzoom = this.zoom = 1;
     if (snap) {
       this.cx = this.tx;
       this.cy = this.ty;
@@ -447,8 +509,8 @@ class Game {
   /** Keep the camera over the board: no scrolling past its edge, and a board that fits stays centred. */
   private clampCam(): void {
     const { x0, x1, y0, y1 } = this.bbox;
-    const hw = this.area.w / 2 / this.scale;
-    const hh = this.area.h / 2 / this.scale;
+    const hw = this.area.w / 2 / (this.scale * this.zoom);
+    const hh = this.area.h / 2 / (this.scale * this.zoom);
     const lim = (c: number, lo: number, hi: number, half: number) => (hi - lo <= half * 2 ? (lo + hi) / 2 : Math.min(hi - half, Math.max(lo + half, c)));
     this.cx = lim(this.cx, x0, x1, hw);
     this.cy = lim(this.cy, y0, y1, hh);
@@ -467,6 +529,9 @@ class Game {
     const fx = x1 > x0 ? (this.cx - (x0 + x1) / 2) / (x1 - x0) : 0;
     const fy = y1 > y0 ? (this.cy - (y0 + y1) / 2) / (y1 - y0) : 0;
     panBackdrop(fx, fy);
+    // (the labels may use the board's room on the screen, in world px)
+    const w = this.world;
+    this.fx.view = { x0: (0 - w.x) / k + 4, x1: (innerWidth - w.x) / k - 4, y0: (this.area.y - w.y) / k + 4, y1: (this.area.y + this.area.h - w.y) / k };
   }
 
   /** The tile under a point on the screen (the nearest column's top or side). */
@@ -564,7 +629,9 @@ class Game {
     });
     $('homeBtn').addEventListener('click', () => this.home.open());
     $('next').addEventListener('click', () => {
-      // (a lost run goes back to the castle, with its summary)
+      // (an army's last boss has fallen: the next army's unlock moment, if it opened one, then the armies)
+      if (this.run.cleared) return this.armyWon();
+      // (a lost run goes back to the main screen, with its summary)
       if (this.run.over) return this.goHome();
       saveRun(this.run);
       this.newBattle();
@@ -587,11 +654,6 @@ class Game {
   private setSpeed(n: 1 | 2): void {
     this.speed = n;
     $('speed').textContent = `×${n}`;
-  }
-
-  /** Begin a new run (with the castle as it stands) and its first fight. */
-  private newRunNow(): void {
-    this.startRun(newRun(clockSeed(), this.meta.party, this.meta.castle));
   }
 
   /** Begin a run (any mode's) and its first fight. */
@@ -689,11 +751,22 @@ class Game {
     });
   }
 
-  /** A run has ended: back to the castle, showing what it earned. */
+  /** A run has ended: back to the main screen, showing what it earned. */
   private goHome(): void {
     const r = this.run;
+    const army = armyOfRun(r);
     $('result').hidden = true;
-    this.home.open(`The run ended at stage ${r.best}: +${this.crownGain} crowns earned`);
+    this.home.open(army ? `The ${army.name} stopped you at wave ${r.best}/${army.waves.length}. Heroes keep their levels: go again.` : `The run ended at stage ${r.best}: +${this.crownGain} crowns earned`);
+  }
+
+  /** An army's last boss has fallen: if that opens the next army, its banner rises first ("A new army marches"), then the armies screen. */
+  private armyWon(): void {
+    const army = armyOfRun(this.run)!;
+    $('result').hidden = true;
+    const next = this.pay?.unlocked ?? undefined;
+    this.home.open();
+    if (next) showUnlock(next, army, () => this.home.openArmies());
+    else this.home.openArmies();
   }
 
   private dragMove(e: PointerEvent): void {
@@ -704,6 +777,9 @@ class Game {
     if (d.pan) {
       if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 8) return;
       d.moved = true;
+      // (a manual pan pauses the fight camera's follow for a few seconds)
+      this.pausedUntil = performance.now() + PAUSE_MS;
+      this.held = null;
       this.cx = d.pan.cx - (e.clientX - d.x) / this.world.scale.x;
       this.cy = d.pan.cy - (e.clientY - d.y) / this.world.scale.y;
       this.tx = this.cx;
@@ -913,12 +989,15 @@ class Game {
       keepAwake(false);
       const won = b.phase === 'won';
       const stage = run.stage;
-      const rating = ratingOf(b, isBossStage(stage));
+      const army = armyOfRun(run);
+      const rating = ratingOf(b, isBossRun(run));
       const before = run.gold;
       finish(run, won, rating.stars);
       this.gain = run.gold - before;
-      this.crownGain = earn(this.meta, stage, won, rating.stars);
-      if (won) recordStars(this.meta, stage, rating.stars);
+      // (an army pays by wave, and its last boss a clear; any other run pays as it always did)
+      this.pay = army ? settleWave(this.meta, army.id, stage, won, rating.stars) : null;
+      this.crownGain = this.pay ? this.pay.crowns : earn(this.meta, stage, won, rating.stars);
+      if (won && !army) recordStars(this.meta, stage, rating.stars);
       const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b });
       this.showStars(won ? rating : null);
       this.showStats();
@@ -930,7 +1009,8 @@ class Game {
       toastAchievements(earned);
     }
     document.body.dataset.phase = b.phase;
-    const stage = `Stage ${run.stage}${isBossStage(run.stage) ? ' · Boss' : ''}`;
+    const army = armyOfRun(run);
+    const stage = `${army ? `Wave ${run.stage}/${army.waves.length}` : `Stage ${run.stage}`}${isBossRun(run) ? ' · Boss' : ''}`;
     $('status').textContent =
       b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : n ? `${stage} · ${n} of ${SQUAD} placed` : `${stage} · drag heroes onto the blue tiles`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
     $('gold').textContent = `${run.gold} gold`;
@@ -943,13 +1023,17 @@ class Game {
     result.hidden = b.phase !== 'won' && b.phase !== 'lost';
     if (!result.hidden) {
       const left = b.units.filter((x) => x.alive && x.side === 'hero').length;
-      $('banner').textContent = b.phase === 'won' ? 'Victory!' : 'Defeat';
+      $('banner').textContent = run.cleared ? 'Army defeated!' : b.phase === 'won' ? 'Victory!' : 'Defeat';
       $('banner').className = b.phase;
+      const share = this.pay?.replay ? ' (a replay pays a share)' : '';
+      const clear = this.pay?.firstClear ? ' · first clear!' : '';
       $('summary').textContent =
         b.phase === 'won'
-          ? `${left} of ${heroesPlaced(b)} heroes standing · +${this.gain} gold · +${this.crownGain} crowns · ${clock(b.t)}${run.found?.length ? ` · found: ${run.found.join(', ')}` : ''}`
-          : `The run ends at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} summons · +${this.crownGain} crowns${modeNote(run)}`;
-      $('next').textContent = b.phase === 'won' ? `Next stage (${run.stage})` : 'Home';
+          ? `${left} of ${heroesPlaced(b)} heroes standing · +${this.gain} gold · +${this.crownGain} crowns${share}${clear} · ${clock(b.t)}${run.found?.length ? ` · found: ${run.found.join(', ')}` : ''}`
+          : army
+            ? `The ${army.name} holds at wave ${run.best} of ${army.waves.length}. It starts again from wave 1; your heroes keep their levels.`
+            : `The run ends at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} summons · +${this.crownGain} crowns${modeNote(run)}`;
+      $('next').textContent = run.cleared ? (this.pay?.unlocked ? 'A new army marches…' : 'To the armies') : b.phase === 'won' ? (army ? `Next wave (${run.stage})` : `Next stage (${run.stage})`) : 'Home';
     }
     if (b.phase === 'deploy') tips.atDeploy(n, run.stage, () => this.deployBox());
     this.buildBench();
