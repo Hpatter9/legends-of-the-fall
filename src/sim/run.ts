@@ -16,6 +16,7 @@ import { drawEvent, eventAfter, type EventCard } from './events';
 import { dropGear, gearBoost, gearText, type Gear, type Slot } from './gear';
 import type { EquipStats } from './equipment';
 import { relicEffects } from './relics';
+import type { TowerState } from './tower';
 import { HEROES, UNITS } from './units';
 
 export const MAX_GRADE = 3;
@@ -44,6 +45,9 @@ export interface Owned {
   gear?: Partial<Record<Slot, Gear>>;
   /** Lasting bumps from a training ground, added to the hero's multipliers. */
   bump?: { hp: number; atk: number };
+  /** Skill charge (and a Mythic's ultimate charge) kept from the last wave, so a skill half-filled is not lost between waves. */
+  charge?: number;
+  charge2?: number;
 }
 
 /** What the next fight carries over from an event: heroes' multipliers, foes' multiplier, a prize for a win. */
@@ -92,6 +96,8 @@ export interface Run {
   stars?: number;
   /** An army run's last boss has fallen (the run is over, and won). */
   cleared?: boolean;
+  /** The endless tower's own state (its map, position, wounds and shop); set on a tower run (`tower.ts`). */
+  tower?: TowerState;
   /** An army run's tally for its stars (`armyStars.ts`): the battle time so far, heroes lost over the run, heroes lost in the fight with the last boss, and heroes lost in all the boss fights (the mid-bosses too). */
   tally?: { ms: number; lost: number; bossLost: number; bossFell?: number };
 }
@@ -116,6 +122,17 @@ export function armyRun(seed: number, army: string, party: readonly string[] = H
 /** The difficulty tier an army run is fought on (0 Normal, for any other run too). */
 export const tierOfRun = (run: Run): number => (run.mode?.kind === 'army' ? run.mode.tier ?? 0 : 0);
 
+/** Keep each hero's skill charge for the next wave of the run: a hero still standing keeps what it had built up; one that fell, or that sat
+ *  out the fight, starts the next one empty. */
+export function keepCharges(run: Run, b: Battle): void {
+  for (const h of run.roster) {
+    const u = b.units.find((x) => x.side === 'hero' && x.tag === h.id);
+    const alive = !!u && u.alive;
+    h.charge = alive && u.charge > 0 ? u.charge : undefined;
+    h.charge2 = alive && (u.charge2 ?? 0) > 0 ? u.charge2 : undefined;
+  }
+}
+
 /** Add a finished fight to an army run's tally: its time, the heroes that fell (summoned helpers do not count), and whether this was the last boss. */
 export function noteFight(run: Run, b: Battle): void {
   const army = armyOfRun(run);
@@ -131,11 +148,15 @@ export function noteFight(run: Run, b: Battle): void {
 export const armyOfRun = (run: Run): Army | undefined => (run.mode?.kind === 'army' ? armyById(run.mode.army) : undefined);
 /** Whether stage n of the run (its current one by default) has a boss. */
 export const isBossRun = (run: Run, stage = run.stage): boolean => {
+  if (run.tower) return run.tower.cur?.kind === 'boss';
   const a = armyOfRun(run);
   return a ? !!a.waves[stage - 1]?.boss : isBossStage(stage);
 };
 /** How many waves the run's army has (0 for any other run). */
 export const wavesOf = (run: Run): number => armyOfRun(run)?.waves.length ?? 0;
+
+/** Hire a particular grade-1 hero (the tower's shop sells them); three of a kind merge as ever. */
+export const recruit = (run: Run, kind: string): Owned => add(run, kind);
 
 const draw = (run: Run): string => {
   const pool = run.pool?.length ? run.pool : HEROES;
@@ -184,7 +205,7 @@ export const gradeBoost = (grade: number, rank = 0, level = 1, kind?: string): B
 export function boostOf(h: Owned, rank = 0, level = 1, equip?: EquipStats): Boost {
   const base = gradeBoost(h.grade, rank, level, h.kind);
   const g = gearBoost(h.gear);
-  return { ...base, hp: base.hp! * g.hp! + (h.bump?.hp ?? 0), atk: base.atk! * g.atk! + (h.bump?.atk ?? 0), ...(equip ? { equip } : {}) };
+  return { ...base, hp: base.hp! * g.hp! + (h.bump?.hp ?? 0), atk: base.atk! * g.atk! + (h.bump?.atk ?? 0), ...(equip ? { equip } : {}), ...(h.charge ? { charge: h.charge } : {}), ...(h.charge2 ? { charge2: h.charge2 } : {}) };
 }
 
 /** Give a hero a piece of gear from the pack (the piece it replaces goes back). False when it isn't in the pack. */
@@ -231,11 +252,13 @@ export const reward = (stage: number) => 20 + 6 * stage + (isBossStage(stage) ? 
 export function startStage(run: Run): Battle {
   const rl = relicEffects(run.relics);
   const army = armyOfRun(run);
-  const base = army ? waveBoost(army, run.stage, tierOfRun(run)) : stageBoost(run.stage);
+  // (a floor of the tower brings its own band and strength, fixed when the node was entered)
+  const node = run.tower?.cur?.fight;
+  const base = node ? node.stage : army ? waveBoost(army, run.stage, tierOfRun(run)) : stageBoost(run.stage);
   const castle = heroBoost(run.castle);
   const foes = run.buff?.foes ?? 1;
   const { atk, hp, mana, first, revive, gold: _gold, ...team } = rl;
-  return startBattle(mixSeed(run.seed, 0x57a6e, run.stage), army ? army.waves[run.stage - 1].foes : bandFor(run.stage), {
+  return startBattle(mixSeed(run.seed, 0x57a6e, run.stage), node ? node.band : army ? army.waves[run.stage - 1].foes : bandFor(run.stage), {
     ...base,
     area: run.area ?? base.area ?? areaFor(run.stage),
     foes: { hp: base.foes!.hp! * foes, atk: base.foes!.atk! * foes, speed: base.foes!.speed },

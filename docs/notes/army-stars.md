@@ -118,3 +118,9 @@ deterministic); tier pay with its own firsts and clears, and only Normal opening
 `docs/samples/army-stars-*.png` at 393x852 (plain names) and `-360x780`, `-412x915`, made by `node tools/armies/shots-stars.mjs out/web`:
 `fresh` (the carousel on a fresh save), `mid` and `mid-prev` (mid-progress, with Hard picked), `locked`, `stash` and `stash-many` (the Battle tab's chest stash, with the badge), `chest` (the army card with its milestones ticked), `chest-shake`,
 `chest-burst`, `chest-loot`, `chest-after`, `gold-army` and `gold-loot` (a gold chest from the 8th army, opened from the stash), `result` (the stars on the result screen).
+
+## Steady backdrops
+
+The army cards' backdrop layers no longer drift (`.asLayer` in src/pixel.css, `animation: none`). The drift slid the scaled
+pixel-art layers by fractions of a pixel in sixty steps, so the mountains shimmered and seemed to tear on every step. The
+layers now stand still, offset by a whole number of pixels for the parallax depth; the embers, dust and fog still move.
