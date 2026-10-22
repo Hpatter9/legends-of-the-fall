@@ -8,11 +8,14 @@
 import { sightClear, standable, tileAt, type At } from './board';
 import { addUnit, atkOf, blowMult, canStrike, defenceOf, defOf, hurt, strikeDef, tileOf, unitAt, wayTo, type Battle, type BattleEvent, type Unit } from './battle';
 import { eliteKits } from './eliteFoes';
+import { calBossKits } from './calamityBosses';
 import { Rng } from './rng';
 import { fxBlow, fxStruck, fxTick, hidden } from './equipFx';
 
 /** A skill fires at this much charge. */
 export const CHARGE_MAX = 100;
+/** A foe frozen by Deep Freeze takes this much more from every blow until it thaws. */
+export const BRITTLE_MULT = 1.3;
 /** An ultimate gathers charge at this share of its first skill's rate. */
 export const ULT_RATE = 0.45;
 
@@ -1515,7 +1518,7 @@ KITS.forgeTitan = {
 };
 
 // The named elites of the tower (`elites.ts`) borrow the foes' skills and heroes' skills too.
-Object.assign(KITS, eliteKits(KITS));
+Object.assign(KITS, eliteKits(KITS), calBossKits(KITS));
 
 export const kitOf = (u: Unit): Kit | undefined => KITS[u.def];
 
@@ -1599,6 +1602,7 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
     dmg *= 1 - huddle * Math.min(3, n);
   }
   if (to.guardUntil !== undefined && to.guardUntil > b.t) dmg *= GUARD_SHARE;
+  if (to.brittleUntil !== undefined && to.brittleUntil > b.t) dmg *= BRITTLE_MULT;
   if (team?.guard) dmg *= 1 - team.guard;
   if (src === 'dot' && to.eq?.resist) dmg *= 1 - to.eq.resist;
   if (src !== 'dot') {

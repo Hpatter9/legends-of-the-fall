@@ -293,6 +293,18 @@ function spellCues(id: keyof typeof SPELL_ELEMENT): Cued[] {
     case 'resurrect': return [{ cue: 'holyChime' }, { cue: 'heal', delay: 200 }];
     case 'haste': return [{ cue: 'windGust' }];
     case 'poison': return [{ cue: 'poisonHiss', gain: 1.2 }];
+    case 'cleanse': return [{ cue: 'holyChime' }, { cue: 'heal', delay: 150, gain: 0.7 }];
+    // (the blink event plays its own cue)
+    case 'blink': return [];
+    case 'hex': return [{ cue: 'shadowHum' }];
+    case 'lance': return [{ cue: 'holyChime' }, { cue: 'thunder', delay: 60, gain: 0.7 }];
+    case 'renewal': return [{ cue: 'heal' }];
+    case 'deepfreeze': return [{ cue: 'frostCrack' }, { cue: 'frostShatter', delay: 200, gain: 0.6 }];
+    case 'warcry': return [{ cue: 'horn' }];
+    case 'bulwark': return [{ cue: 'shieldHum' }, { cue: 'earthRumble', gain: 0.6 }];
+    case 'wolves': return [{ cue: 'windGust', gain: 0.8 }, { cue: 'shadowHum', gain: 0.5, delay: 100 }];
+    // (each meteor's fall and boom come from its own `area` event)
+    case 'starfall': return [{ cue: 'fireWhoosh', gain: 0.5 }];
   }
 }
 

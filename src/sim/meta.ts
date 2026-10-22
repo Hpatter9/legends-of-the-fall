@@ -61,6 +61,8 @@ export interface Meta {
   bestStage: number;
   /** The most floors cleared in the endless tower. */
   tower: number;
+  /** A calamity's record: the most maps cleared in one run, and the runs cleared whole (none before the first calamity). */
+  calamity?: { best: number; clears: number };
   /** The daily challenge per date (yyyymmdd): the best score counted and the plays (the first counts). */
   daily: Record<string, DailyEntry>;
   /** The bosses beaten (`foes.ts`, by id). */
@@ -95,6 +97,8 @@ export interface StashChest {
   seed: number;
   /** Paid by an endless tower run (a run pays several of one milestone; an army's is given once). */
   tower?: boolean;
+  /** Paid for an army's first clear on a tier (one per army and tier, told apart by its seed; `at` only sets the chest's size). */
+  first?: boolean;
 }
 
 export interface DailyEntry {

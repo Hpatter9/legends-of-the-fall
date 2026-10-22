@@ -139,6 +139,8 @@ test('a campfire: rest heals everyone a share, the fallen too, once; training gi
   assert.equal(rest(run), false, 'one thing at a fire');
   assert.equal(train(run, run.roster[0].id), null);
   const fire = at('campfire', 6);
+  // (a run saved before the climbs were reset trains the lasting XP of the kind)
+  fire.local = false;
   const got = train(fire, fire.roster[0].id)!;
   assert.equal(got.kind, fire.roster[0].kind);
   assert.equal(got.xp, trainXp(6));
@@ -475,12 +477,12 @@ test('finish() still moves a plain run on, and a plain run has no tower', () => 
   assert.equal(run.stage, 2);
 });
 
-test('the greedy climb is deterministic, climbs past a fresh party and goes deeper with a strong one', () => {
+test('the greedy climb is deterministic, climbs past a fresh party and (at the meta\'s lasting levels, as an older save does) goes deeper with a strong one', () => {
   const a = playTower(savedAt(3, HEROES, 1), 33, HEROES);
   const b = playTower(savedAt(3, HEROES, 1), 33, HEROES);
   assert.deepEqual(a, b);
   assert.ok(a.floors >= 1);
-  const weak = playTower(savedAt(1, HEROES, 2), 34, HEROES, undefined, 40).floors;
-  const strong = playTower(savedAt(20, HEROES, 2), 34, HEROES, undefined, 40).floors;
+  const weak = playTower(savedAt(1, HEROES, 2), 34, HEROES, undefined, 40, true).floors;
+  const strong = playTower(savedAt(20, HEROES, 2), 34, HEROES, undefined, 40, true).floors;
   assert.ok(strong > weak);
 });

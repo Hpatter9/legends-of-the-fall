@@ -23,7 +23,8 @@ import { dropGear, gearText, makeGear, MAX_TIER, SLOTS, type Gear } from './gear
 import { GREAT_RELIC_IDS, RELIC_IDS, RELICS } from './relics';
 import { hpShare, healParty, hurtParty } from './health';
 import { HEROES, UNITS } from './units';
-import { recruit, SQUAD, type Run } from './run';
+import { squadLimit, type Run } from './run';
+import { gainKindXp, hireHero } from './climb';
 import type { EventCard, EventKind, EventOption } from './events';
 
 /** What taking one of these options does. */
@@ -157,8 +158,8 @@ export function drawMystery(run: Run, stage: number, kind: EventKind, rng: Rng):
       const price = 30 + 3 * stage;
       const xp = 80 + 15 * stage;
       return card('A wandering trainer', 'A scarred old soldier leans on a practice dummy. "Coin for the lesson. The lesson stays."', [
-        act(`Teach the ${UNITS[a].name}`, `+${xp} XP for every ${UNITS[a].name}, kept for good`, price, { k: 'lesson', kind: a, xp }),
-        ...(b !== a ? [act(`Teach the ${UNITS[b].name}`, `+${xp} XP for every ${UNITS[b].name}, kept for good`, price, { k: 'lesson', kind: b, xp })] : []),
+        act(`Teach the ${UNITS[a].name}`, `+${xp} XP for every ${UNITS[a].name}${run.local ? '' : ', kept for good'}`, price, { k: 'lesson', kind: a, xp }),
+        ...(b !== a ? [act(`Teach the ${UNITS[b].name}`, `+${xp} XP for every ${UNITS[b].name}${run.local ? '' : ', kept for good'}`, price, { k: 'lesson', kind: b, xp })] : []),
         leave(),
       ]);
     }
@@ -268,8 +269,8 @@ export function applyMystery(run: Run, a: MysteryAct): string {
       }
       return 'Snake eyes. The imp pockets your stake and grins from ear to ear.';
     case 'free': {
-      const got = recruit(run, a.kind, 0);
-      if (run.squad.length < SQUAD && !run.squad.includes(got.id)) run.squad.push(got.id);
+      const got = hireHero(run, a.kind, 0, false);
+      if (run.squad.length < squadLimit(run) && !run.squad.includes(got.id)) run.squad.push(got.id);
       hurtParty(run, a.hurt);
       return `The ${UNITS[a.kind].name} is free and joins the party. The guards wake and give chase, and the party is hurt.`;
     }
@@ -303,8 +304,10 @@ export function applyMystery(run: Run, a: MysteryAct): string {
       return `You hammer out a ${a.gear.name} (${a.gear.slot}, ${gearText(a.gear)}).`;
     case 'lesson': {
       const t = run.tower;
-      if (t) (t.xp ??= {})[a.kind] = (t.xp[a.kind] ?? 0) + a.xp;
-      return `The ${UNITS[a.kind].name} learns well: +${a.xp} XP, kept for good.`;
+      // (a run that levels its own heroes teaches them in the run; any other adds to the lasting XP)
+      if (run.local) gainKindXp(run, a.kind, a.xp);
+      else if (t) (t.xp ??= {})[a.kind] = (t.xp[a.kind] ?? 0) + a.xp;
+      return `The ${UNITS[a.kind].name} learns well: +${a.xp} XP${run.local ? '' : ', kept for good'}.`;
     }
     case 'oath':
       for (const h of a.hero ? run.roster.filter((x) => x.id === a.hero) : run.roster) bump(run, h.id, -a.hp, a.atk);

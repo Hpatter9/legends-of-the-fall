@@ -8,6 +8,7 @@ import { EQUIP_BASES } from './sim/equipment';
 import { bestChest, chestKind, openChest, type ChestKind, type Loot, type LootItem } from './sim/armyStars';
 import { armyById } from './sim/armies';
 import { saveMeta, type Meta } from './sim/meta';
+import { tierOf } from './sim/tiers';
 import { UNITS } from './sim/units';
 import { portrait } from './render/sheets';
 import { gearIcon } from './render/items';
@@ -35,8 +36,8 @@ export function drawChestStash(host: HTMLElement, m: Meta, onChange: () => void)
   const army = armyById(c.army);
   const kind = chestKind(c.at);
   const b = el('button', `csChest ${kind}`);
-  b.setAttribute('aria-label', `${CHEST_NAME[kind]} from the ${army?.name ?? 'army'}${m.stash.length > 1 ? `, ${m.stash.length} chests waiting` : ''}: tap to open`);
-  b.append(chestPicture(kind, 1).root, el('small', '', `${c.at}★`));
+  b.setAttribute('aria-label', `${CHEST_NAME[kind]} from the ${army?.name ?? 'army'}${c.first ? ` (first ${tierOf(c.tier).name} clear)` : ''}${m.stash.length > 1 ? `, ${m.stash.length} chests waiting` : ''}: tap to open`);
+  b.append(chestPicture(kind, 1).root, el('small', '', c.first ? `${tierOf(c.tier).name}` : `${c.at}★`));
   b.addEventListener('click', () => {
     const loot = openChest(m, i);
     if (!loot) return;

@@ -73,6 +73,10 @@ export interface Unit {
   chilled?: boolean;
   /** Attack raised (Rally) until then. */
   rallyUntil?: number;
+  /** Attack cut (Hex) until then (reverted when it fades). */
+  weakUntil?: number;
+  /** Takes extra from every blow until then (Deep Freeze). */
+  brittleUntil?: number;
   /** Charmed (Kitsune) until then: fights its own side. */
   charmUntil?: number;
   /** Quickened by its kills (Werewolf): how many stack, and until when. */

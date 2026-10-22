@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ARMIES, armyById, armyStars, migrateArmies, recordOf, settleWave, tierOpen, tierStars, waveBoost, firstClearTotal, replayTotal } from '../src/sim/armies';
-import { armyRules, bestChest, chestCrowns, chestSeed, chestsOf, grantChests, openChest, peekChest, rollChest, settleArmyRun, timeTarget } from '../src/sim/armyStars';
+import { FIRST_CLEAR_CHEST, chestKind, armyRules, bestChest, chestCrowns, chestSeed, chestsOf, grantChests, openChest, peekChest, rollChest, settleArmyRun, timeTarget } from '../src/sim/armyStars';
 import { ARMY_STARS, MILESTONES, RUN_STARS, TIERS, tierRange } from '../src/sim/tiers';
 import { ALL_HEROES, UNITS } from '../src/sim/units';
 import { loadMeta, startedMeta, saveMeta } from '../src/sim/meta';
@@ -108,6 +108,8 @@ test('a milestone puts a chest in the stash once; opening removes it and pays it
   const a = armyById('orcs')!;
   assert.deepEqual(chestsOf(m, a).map((c) => c.state), ['locked', 'locked', 'locked']);
   assert.equal(m.stash.length, 0);
+  // (this one is about the star milestones: the first-clear chests are marked paid so they stay out of the stash)
+  m.armies.orcs = { waves: a.waves.length, best: 0, won: 0, clears: 0, stars: {}, first: 0b1111 };
   const r1 = settleArmyRun(m, cleared('orcs', 0, perfect))!;
   assert.deepEqual(r1.chests, [3]);
   assert.deepEqual(m.stash.map((c) => [c.army, c.at, c.tier]), [['orcs', 3, 0]]);
@@ -441,4 +443,49 @@ test('the cart shows the best chest waiting: the highest milestone, then the har
   assert.equal(bestChest([{ army: 'orcs', at: 3, tier: 0 }, { army: 'orcs', at: 10, tier: 0 }, { army: 'orcs', at: 5, tier: 2 }]), 1);
   assert.equal(bestChest([{ army: 'orcs', at: 5, tier: 0 }, { army: 'orcs', at: 5, tier: 1 }]), 1);
   assert.equal(bestChest([{ army: 'undead', at: 5, tier: 0 }, { army: 'orcs', at: 5, tier: 0 }]), 0);
+});
+
+test('the first clear of an army on each tier pays a chest, once: Normal bronze, Hard and Elite silver, Legendary gold', () => {
+  const m = startedMeta(9);
+  const sizes: string[] = [];
+  TIERS.forEach((_, tier) => {
+    const res = settleArmyRun(m, cleared('orcs', tier, { ms: 1e9, lost: 3, bossLost: 3 }))!;
+    assert.equal(res.firstClear, FIRST_CLEAR_CHEST[tier]);
+    sizes.push(chestKind(res.firstClear));
+    // (clearing it again pays no second one)
+    assert.equal(settleArmyRun(m, cleared('orcs', tier, perfect))!.firstClear, 0);
+  });
+  assert.deepEqual(sizes, ['bronze', 'silver', 'silver', 'gold']);
+  const first = m.stash.filter((c) => c.first);
+  assert.deepEqual(first.map((c) => c.tier), [0, 1, 2, 3]);
+  assert.equal(new Set(first.map((c) => c.seed)).size, 4);
+  // (a chest of another army is separate; a lost run pays nothing)
+  assert.equal(settleArmyRun(m, cleared('undead', 0, perfect))!.firstClear, 3);
+  const lost = armyRun(1, 'orcs', undefined, undefined, 0);
+  assert.equal(settleArmyRun(m, lost), null);
+  // (it opens like any chest, once, and its kind sets the size)
+  const i = m.stash.findIndex((c) => c.first && c.tier === 3);
+  const crowns = m.crowns;
+  const loot = openChest(m, i)!;
+  assert.equal(loot.kind, 'gold');
+  assert.ok(m.crowns > crowns);
+  // (they survive a save and load, none lost or merged with the milestone chests of the same size)
+  const s = store();
+  saveMeta(m, s);
+  const back = loadMeta(1, s);
+  assert.equal(back.stash.length, m.stash.length);
+  assert.equal(back.stash.filter((c) => c.first).length, m.stash.filter((c) => c.first).length);
+});
+
+test('a save from before the first-clear chests gives none back-dated, and a new clear still pays', () => {
+  const m = startedMeta(5);
+  m.armies = { orcs: { best: 8, won: 8, clears: 1, stars: {}, hard: { 1: { won: 8, clears: 1 } }, met: { 0: 1, 1: 1 } } };
+  const s = store();
+  saveMeta(m, s);
+  const a = loadMeta(1, s);
+  assert.equal(a.armies.orcs.first, 0b11);
+  assert.equal(a.stash.length, 0);
+  assert.equal(settleArmyRun(a, cleared('orcs', 0, perfect))!.firstClear, 0);
+  assert.equal(settleArmyRun(a, cleared('orcs', 1, perfect))!.firstClear, 0);
+  assert.equal(settleArmyRun(a, cleared('orcs', 2, perfect))!.firstClear, 5);
 });

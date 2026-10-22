@@ -16,16 +16,23 @@ import { drawEvent, eventAfter, type EventCard } from './events';
 import { dropGear, gearBoost, gearText, type Gear, type Slot } from './gear';
 import type { EquipStats } from './equipment';
 import { relicEffects } from './relics';
+import { noteGold, type RunRecap } from './runRecap';
 import type { TowerState } from './tower';
 import { HEROES, UNITS } from './units';
 
 export const MAX_GRADE = 3;
 export const SQUAD = 5;
+/** A calamity run fields up to this many heroes (and owns no more). */
+export const CALAMITY_SQUAD = 10;
 export const START_GOLD = 70;
 export const SUMMON_BASE = 30;
 export const SUMMON_STEP = 5;
-/** A recycled hero pays back this share of the gold paid into it (rounded, at least 1, and always less than it cost). */
-export const RECYCLE_SHARE = 0.4;
+/** A recycled hero pays back this share of the current Hire price (rounded, at least 1). */
+export const RECYCLE_SHARE = 0.5;
+/** At most this many heroes wait on the bench (the heroes not chosen for the squad); a Hire that would add an eleventh is refused. */
+export const BENCH_MAX = 10;
+/** A run may retry a wave it lost this many times. */
+export const MAX_RETRIES = 2;
 /** Hp and attack grow by this for each grade above the first. */
 export const GRADE_MULT = 1.6;
 /** Foes' hp and attack at stage 1, as a share of their stats in `foes.ts`. */
@@ -47,6 +54,8 @@ export interface Owned {
   paid?: number;
   /** The gear worn, one piece a slot; it stays for the run (a merge or a recycle hands it back to the pack). */
   gear?: Partial<Record<Slot, Gear>>;
+  /** Run-level XP of a hero in a run that levels its own heroes (`Run.local`; `climb.ts`). */
+  xp?: number;
   /** Lasting bumps from a training ground, added to the hero's multipliers. */
   bump?: { hp: number; atk: number };
   /** Skill charge (and an ultimate's charge) kept from the last wave, so a skill half-filled is not lost between waves. */
@@ -100,14 +109,20 @@ export interface Run {
   stars?: number;
   /** An army run's last boss has fallen (the run is over, and won). */
   cleared?: boolean;
-  /** The endless tower's own state (its map, position, wounds and shop); set on a tower run (`tower.ts`). */
+  /** The heroes level, and wear only what they find, within this run (a tower climb or a calamity): the meta's levels, gear and talents do not count (`climb.ts`). */
+  local?: boolean;
+  /** The tower's own state (its map, position, wounds and shop); set on a tower or calamity run (`tower.ts`). */
   tower?: TowerState;
   /** An army run's tally for its stars (`armyStars.ts`): the battle time so far, heroes lost over the run, heroes lost in the fight with the last boss, and heroes lost in all the boss fights (the mid-bosses too). */
   tally?: { ms: number; lost: number; bossLost: number; bossFell?: number };
+  /** Retries used so far (`MAX_RETRIES` in all). */
+  retries?: number;
+  /** The whole run's figures for the recap shown when it ends (`runRecap.ts`). */
+  recap?: RunRecap;
 }
 
 /** A run that is not an ordinary one: an army's campaign (its stages are the army's waves), today's daily challenge (`practice` for a replay that does not count), or the endless tower. */
-export type RunMode = { kind: 'army'; army: string; tier?: number } | { kind: 'daily'; date: number; practice: boolean } | { kind: 'tower' };
+export type RunMode = { kind: 'army'; army: string; tier?: number } | { kind: 'daily'; date: number; practice: boolean } | { kind: 'tower' } | { kind: 'calamity' };
 
 /** A new run drawing from `party` (the hero kinds its summons and starting heroes come from). */
 export function newRun(seed: number, party: readonly string[] = HEROES, castle: Castle = newCastle()): Run {
@@ -159,6 +174,9 @@ export const isBossRun = (run: Run, stage = run.stage): boolean => {
 /** How many waves the run's army has (0 for any other run). */
 export const wavesOf = (run: Run): number => armyOfRun(run)?.waves.length ?? 0;
 
+/** How many heroes the run fields: five, or ten in a calamity. */
+export const squadLimit = (run: Run): number => (run.mode?.kind === 'calamity' ? CALAMITY_SQUAD : SQUAD);
+
 /** Hire a particular grade-1 hero for `paid` gold (the tower's shop sells them); three of a kind merge as ever. */
 export const recruit = (run: Run, kind: string, paid = SUMMON_BASE): Owned => add(run, kind, paid);
 
@@ -168,16 +186,34 @@ const draw = (run: Run): string => {
 };
 export const summonCost = (run: Run) => SUMMON_BASE + SUMMON_STEP * run.summons;
 
-/** Buy a random hero: grade 1, or now and then grade 2 (`luckyChance`). Returns it (or what it merged into), or null when too poor or the run is over. */
+/** The hero the next Hire would bring: its kind, and its grade (now and then a summon arrives a grade up, from its own side stream so the draws stay as they were). */
+const nextHire = (run: Run): { kind: string; grade: number } => ({
+  kind: draw(run),
+  grade: new Rng(mixSeed(run.seed, 0x1c4b, run.nextId)).chance(luckyChance(run)) ? 2 : 1,
+});
+
+/** Whether the bench is at its limit (`BENCH_MAX`). */
+export const benchFull = (run: Run): boolean => benched(run).length >= BENCH_MAX;
+
+/** Why a Hire is refused now, if it is: the run is over, gold is short, or the bench is full (a hire that would merge three of a kind into one is let through, as it frees room). */
+export function hireBlock(run: Run): 'over' | 'gold' | 'bench' | null {
+  if (run.over) return 'over';
+  if (run.gold < summonCost(run)) return 'gold';
+  if (!benchFull(run)) return null;
+  const next = nextHire(run);
+  const merges = next.grade < MAX_GRADE && run.roster.filter((h) => h.kind === next.kind && h.grade === next.grade).length >= 2;
+  return merges ? null : 'bench';
+}
+
+/** Buy a random hero: grade 1, or now and then grade 2 (`luckyChance`). Returns it (or what it merged into), or null when too poor, the bench is full or the run is over. */
 export function summon(run: Run): Owned | null {
+  if (hireBlock(run)) return null;
   const cost = summonCost(run);
-  if (run.over || run.gold < cost) return null;
   run.gold -= cost;
+  noteGold(run, 'spent', cost);
   run.summons++;
-  const kind = draw(run);
-  // (now and then a summon arrives a grade up, from its own side stream so the draws stay as they were)
-  const lucky = new Rng(mixSeed(run.seed, 0x1c4b, run.nextId)).chance(luckyChance(run));
-  return add(run, kind, cost, lucky ? 2 : 1);
+  const { kind, grade } = nextHire(run);
+  return add(run, kind, cost, grade);
 }
 
 /** The chance a bought summon arrives already at grade 2 (two stars). */
@@ -190,6 +226,8 @@ function add(run: Run, kind: string, paid: number, grade = 1): Owned {
   let made: Owned = { id: run.nextId++, kind, grade, paid };
   run.roster.push(made);
   for (;;) {
+    // (a calamity has no merging: three of a kind stay three)
+    if (run.mode?.kind === 'calamity') return made;
     const same = run.roster.filter((h) => h.kind === made.kind && h.grade === made.grade);
     if (same.length < 3 || made.grade >= MAX_GRADE) return made;
     // (the new one stays in the squad's place of the oldest: the first three leave, one of the next grade arrives)
@@ -198,27 +236,44 @@ function add(run: Run, kind: string, paid: number, grade = 1): Owned {
     const slot = run.squad.findIndex((id) => gone.has(id));
     run.roster = run.roster.filter((h) => !gone.has(h.id));
     run.squad = run.squad.filter((id) => !gone.has(id));
-    made = { id: run.nextId++, kind: made.kind, grade: made.grade + 1, paid: same.slice(0, 3).reduce((n, h) => n + paidOf(h), 0) };
+    made = { id: run.nextId++, kind: made.kind, grade: made.grade + 1, paid: same.slice(0, 3).reduce((n, h) => n + paidOf(h), 0), ...(run.local ? { xp: Math.max(...same.slice(0, 3).map((h) => h.xp ?? 0)) } : {}) };
     run.roster.push(made);
-    if (slot >= 0 && run.squad.length < SQUAD) run.squad.splice(Math.min(slot, run.squad.length), 0, made.id);
+    if (slot >= 0 && run.squad.length < squadLimit(run)) run.squad.splice(Math.min(slot, run.squad.length), 0, made.id);
   }
 }
 
 /** The gold paid into a hero. A hero from an older save has no record: it is taken to have cost the base price of a summon for each grade-1 hero in it. */
 export const paidOf = (h: Owned): number => h.paid ?? SUMMON_BASE * 3 ** (h.grade - 1);
-/** The gold recycling a hero pays back: a share of what it cost, at least 1 and never as much as it cost. */
-export const recycleValue = (h: Owned): number => Math.max(1, Math.min(paidOf(h) - 1, Math.round(paidOf(h) * RECYCLE_SHARE)));
+/** The gold recycling a hero pays back: half the Hire price as it stands now, rounded, at least 1 (whatever the hero's grade or cost). */
+export const recycleValue = (run: Run): number => Math.max(1, Math.round(summonCost(run) * RECYCLE_SHARE));
 
 /** Recycle a hero for gold: it leaves the roster and the squad, its gear goes back to the pack, and `recycleValue` is paid. The price of the next summon does not
  *  change, so this is no way to reroll for free. Returns the gold paid, or null when the hero is unknown, the run is over, or it is the last hero. */
 export function recycle(run: Run, heroId: number): number | null {
   const h = heroOf(run, heroId);
   if (!h || run.over || run.roster.length <= 1) return null;
-  const gold = recycleValue(h);
+  const gold = recycleValue(run);
   for (const g of Object.values(h.gear ?? {})) (run.items ??= []).push(g);
   run.roster = run.roster.filter((x) => x.id !== heroId);
   run.squad = run.squad.filter((id) => id !== heroId);
   run.gold += gold;
+  noteGold(run, 'earned', gold);
+  return gold;
+}
+
+/** Retries left in the run. */
+export const retriesLeft = (run: Run): number => Math.max(0, MAX_RETRIES - (run.retries ?? 0));
+/** The gold a retry pays to help the second go: one Hire at the price it stands at. */
+export const retryGold = (run: Run): number => summonCost(run);
+/** Whether a wave just lost may be tried again: the run is still going (a loss is settled by `finish` only once the player gives up), has retries left, and is not the tower (which has its own way of failing). */
+export const canRetry = (run: Run): boolean => !run.over && !run.tower && retriesLeft(run) > 0;
+/** Retry the wave: the same stage with the same buff, a `retryGold` boost to spend, one retry used. Returns the gold paid, or null when no retry may be had. */
+export function retryWave(run: Run): number | null {
+  if (!canRetry(run)) return null;
+  const gold = retryGold(run);
+  run.retries = (run.retries ?? 0) + 1;
+  run.gold += gold;
+  noteGold(run, 'earned', gold);
   return gold;
 }
 
@@ -308,7 +363,9 @@ export function finish(run: Run, won: boolean, stars = 0): void {
     const boss = isBossRun(run);
     const army = armyOfRun(run);
     const bonus = (relicEffects(run.relics).gold ?? 0) + (run.buff?.gold ?? 0);
-    run.gold += reward(run.stage) + starGold(stars) + bonus;
+    const pay = reward(run.stage) + starGold(stars) + bonus;
+    run.gold += pay;
+    noteGold(run, 'earned', pay);
     // a prize for a cursed path, and a sure piece of gear from a boss (one tier up, from its own stream)
     const prizes: Gear[] = run.buff?.gear ? [run.buff.gear] : [];
     if (boss) prizes.push(dropGear(new Rng(mixSeed(run.seed, 0x6ea2, run.stage)), (run.nextGear = (run.nextGear ?? 1) + 1) - 1, run.stage + (army ? GEAR_STAGES * armyIndex(army.id) : 0), 1));
@@ -336,13 +393,37 @@ export function setSquad(run: Run, id: number, on: boolean): boolean {
   const has = run.squad.includes(id);
   if (on === has || !heroOf(run, id)) return false;
   if (on) {
-    if (run.squad.length >= SQUAD) return false;
+    if (run.squad.length >= squadLimit(run)) return false;
     run.squad.push(id);
   } else run.squad = run.squad.filter((x) => x !== id);
   return true;
 }
 
 const KEY = 'legends.run';
+/** The tower and the calamity each keep their own save, so a climb survives the armies' runs and a reload (`saveSlot`). */
+const SLOT_KEYS = { tower: 'legends.tower', calamity: 'legends.calamity' } as const;
+export type SlotKind = keyof typeof SLOT_KEYS;
+/** Save a run where it belongs: a tower or calamity run in its own slot, any other in the ordinary one. */
+export const saveSlot = (run: Run, store: Pick<Storage, 'setItem'> = localStorage) => store.setItem(run.mode?.kind === 'tower' || run.mode?.kind === 'calamity' ? SLOT_KEYS[run.mode.kind] : KEY, JSON.stringify(run));
+/** The run saved in a mode's slot, if it is still going (a lost or cleared one is no run to carry on). */
+export function loadSlot(kind: SlotKind, store: Pick<Storage, 'getItem'> = localStorage): Run | null {
+  try {
+    const r = JSON.parse(store.getItem(SLOT_KEYS[kind]) ?? 'null') as Run | null;
+    return r && Array.isArray(r.roster) && typeof r.gold === 'number' && r.mode?.kind === kind && !r.over ? r : null;
+  } catch {
+    return null;
+  }
+}
+/** Empty a mode's slot (the run was abandoned or ended). */
+export const dropSlot = (kind: SlotKind, store: Pick<Storage, 'removeItem'> = localStorage) => store.removeItem(SLOT_KEYS[kind]);
+/** An older save kept the tower in the ordinary slot: move it to the tower's own. Returns whether it moved. */
+export function adoptOldTower(store: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'> = localStorage): boolean {
+  const old = loadRun(store);
+  if (!old || old.over || old.mode?.kind !== 'tower' || store.getItem(SLOT_KEYS.tower)) return false;
+  saveSlot(old, store);
+  store.removeItem(KEY);
+  return true;
+}
 export const saveRun = (run: Run, store: Pick<Storage, 'setItem'> = localStorage) => store.setItem(KEY, JSON.stringify(run));
 export function loadRun(store: Pick<Storage, 'getItem'> = localStorage): Run | null {
   try {

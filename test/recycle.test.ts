@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { dropGear } from '../src/sim/gear';
 import { Rng } from '../src/sim/rng';
-import { equip, heroOf, loadRun, newRun, paidOf, recycle, recycleValue, saveRun, summon, summonCost, SUMMON_BASE, type Run } from '../src/sim/run';
+import { equip, heroOf, loadRun, newRun, paidOf, recycle, recycleValue, saveRun, summon, summonCost, SUMMON_BASE, SUMMON_STEP, type Run } from '../src/sim/run';
 
 /** A run with plenty of gold that has bought `n` heroes. */
 function bought(seed: number, n: number): Run {
@@ -26,19 +26,22 @@ test('a hero keeps count of the gold paid into it: starters the base price, summ
   assert.ok(r.roster.some((h) => h.grade > 1));
 });
 
-test('recycling pays about 40% of what the hero cost, never as much as it cost, and at least 1', () => {
+test('recycling pays half the current Hire price, rounded, at least 1, whatever the hero cost', () => {
   const r = bought(7, 12);
   for (const h of r.roster) {
-    const v = recycleValue(h);
-    assert.ok(v >= 1 && v < paidOf(h), `${h.kind}${h.grade}`);
-    assert.equal(v, Math.round(paidOf(h) * 0.4));
+    const v = recycleValue(r);
+    assert.ok(v >= 1, `${h.kind}${h.grade}`);
+    assert.equal(v, Math.round(summonCost(r) / 2));
   }
-  const g1 = { id: 1, kind: 'knight', grade: 1, paid: 30 };
-  assert.equal(recycleValue(g1), 12);
-  assert.equal(recycleValue({ ...g1, paid: 1 }), 1);
-  assert.equal(recycleValue({ ...g1, paid: 2 }), 1);
-  // (a hero from an older save, without a record, cost the base price for each grade-1 hero in it)
-  assert.equal(recycleValue({ id: 2, kind: 'knight', grade: 2 }), Math.round(SUMMON_BASE * 3 * 0.4));
+  const fresh = newRun(8);
+  assert.equal(summonCost(fresh), SUMMON_BASE);
+  assert.equal(recycleValue(fresh), 15);
+  fresh.summons = 1;
+  assert.equal(summonCost(fresh), SUMMON_BASE + SUMMON_STEP);
+  assert.equal(recycleValue(fresh), 18);
+  // (the price goes up with each hire, and so does what a recycle pays)
+  const cheap = { ...fresh, summons: 0 };
+  assert.ok(recycleValue(fresh) > recycleValue(cheap));
 });
 
 test('recycle removes the hero from the roster and squad, pays the gold, and leaves the others', () => {
@@ -47,8 +50,9 @@ test('recycle removes the hero from the roster and squad, pays the gold, and lea
   assert.ok(r.squad.includes(h.id));
   const gold = r.gold;
   const left = r.roster.length - 1;
+  const want = recycleValue(r);
   const pay = recycle(r, h.id)!;
-  assert.equal(pay, recycleValue(h));
+  assert.equal(pay, want);
   assert.equal(r.gold, gold + pay);
   assert.equal(r.roster.length, left);
   assert.equal(heroOf(r, h.id), undefined);
@@ -88,7 +92,7 @@ test('recycling never makes summons cheaper or rerolls them: the price and the d
   for (const h of [...a.roster].slice(0, 4)) recycle(a, h.id);
   assert.equal(a.summons, b.summons);
   assert.equal(summonCost(a), summonCost(b));
-  // (the gold back never covers even one summon of what the hero cost: buying and recycling over and over is a steady loss)
+  // (the gold back is half a hire: buying and recycling over and over is a steady loss)
   const r = newRun(22);
   r.gold = 1000;
   const start = r.gold;
