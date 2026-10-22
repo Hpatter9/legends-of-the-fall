@@ -447,6 +447,7 @@ export function drawRunStars(root: HTMLElement, res: StarResult | null, tierName
     row.append(el('span', '', r.earned ? '★' : '☆'), el('b', '', r.text), ...(fresh ? [el('em', '', 'NEW')] : []));
     root.append(row);
   });
+  if (res.firstClear) root.append(el('div', 'armyChestNote', `First ${tierName} clear! A ${CHEST_NAME[chestKind(res.firstClear)].toLowerCase()} was added to your stash on the Battle tab!`));
   for (const at of res.chests) root.append(el('div', 'armyChestNote', `A ${CHEST_NAME[chestKind(at)].toLowerCase()} was added to your stash on the Battle tab!`));
 }
 

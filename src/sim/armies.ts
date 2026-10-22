@@ -249,6 +249,8 @@ export interface ArmyRecord {
   hard?: Record<string, { won: number; clears: number }>;
   /** The chest milestones given (3, 5, 10 stars); each is given once, into the meta's stash (`armyStars.ts`). */
   chests?: number[];
+  /** The tiers the army has been cleared on, as a bitmask (bit per tier): each one's first clear pays a chest once (`armyStars.ts`). */
+  first?: number;
 }
 
 const blank = (): ArmyRecord => ({ waves: ARMY_WAVES, best: 0, won: 0, clears: 0, stars: {} });
@@ -366,7 +368,7 @@ export function migrateArmies(raw: unknown, bestStage: number): Record<string, A
     return out;
   }
   const beaten = Math.min(ARMIES.length, Math.max(0, Math.floor((bestStage - 1) / 5)));
-  ARMIES.slice(0, beaten).forEach((a) => (out[a.id] = { waves: a.waves.length, best: a.waves.length, won: a.waves.length, clears: 1, stars: {}, met: { '0': 1 } }));
+  ARMIES.slice(0, beaten).forEach((a) => (out[a.id] = { waves: a.waves.length, best: a.waves.length, won: a.waves.length, clears: 1, stars: {}, met: { '0': 1 }, first: 1 }));
   return out;
 }
 
@@ -394,6 +396,15 @@ function readTiers(rec: ArmyRecord, r: Partial<ArmyRecord>): void {
   }
   const milestones = (v: unknown): number[] => (Array.isArray(v) ? MILESTONES.filter((n) => v.includes(n)) : []);
   if (r.chests) rec.chests = milestones(r.chests);
+  // (a save from before the first-clear chests: the tiers already cleared count as paid, so nothing is given back-dated)
+  if (typeof r.first === 'number') rec.first = (r.first | 0) & ((1 << TIERS.length) - 1);
+  else {
+    let mask = rec.clears > 0 ? 1 : 0;
+    TIERS.forEach((_, i) => {
+      if (i > 0 && (rec.hard?.[String(i)]?.clears ?? 0) > 0) mask |= 1 << i;
+    });
+    if (mask) rec.first = mask;
+  }
 }
 
 /** The ids of the armies a saved list names (anything else is dropped). */

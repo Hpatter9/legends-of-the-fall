@@ -104,6 +104,8 @@ export interface StashChest {
   seed: number;
   /** Paid by an endless tower run (a run pays several of one milestone; an army's is given once). */
   tower?: boolean;
+  /** Paid for an army's first clear on a tier (one per army and tier, told apart by its seed; `at` only sets the chest's size). */
+  first?: boolean;
 }
 
 export interface DailyEntry {

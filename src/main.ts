@@ -1348,7 +1348,7 @@ class Game {
           wave: stage,
           crowns: this.crownGain,
           xp: Object.values(gains).reduce((n, x) => n + x, 0),
-          chests: run.cleared ? this.runStars?.chests.length ?? 0 : 0,
+          chests: run.cleared ? (this.runStars?.chests.length ?? 0) + (this.runStars?.firstClear ? 1 : 0) : 0,
           gear: over ? gearCount(run) : 0,
         });
         this.autoWait = 900;
