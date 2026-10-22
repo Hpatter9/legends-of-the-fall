@@ -4,7 +4,7 @@
 
 import type { Boost } from './battle';
 
-export type BuildingId = 'treasury' | 'barracks' | 'armoury' | 'mageTower';
+export type BuildingId = 'treasury' | 'barracks' | 'armoury' | 'mageTower' | 'stable' | 'library';
 
 export interface Building {
   id: BuildingId;
@@ -19,9 +19,11 @@ export const BUILDINGS: Record<BuildingId, Building> = {
   treasury: { id: 'treasury', name: 'Treasury', perLevel: '+10 starting gold', costs: [50, 100, 180, 300, 500] },
   barracks: { id: 'barracks', name: 'Barracks', perLevel: '+6% hp for every hero', costs: [60, 120, 200, 320, 520] },
   armoury: { id: 'armoury', name: 'Armoury', perLevel: '+5% attack for every hero', costs: [60, 120, 200, 320, 520] },
+  stable: { id: 'stable', name: 'Stable', perLevel: '+4% move speed for every hero', costs: [60, 120, 200, 320, 520] },
+  library: { id: 'library', name: 'Library', perLevel: '+6% XP from every fight', costs: [60, 120, 200, 320, 520] },
   mageTower: { id: 'mageTower', name: 'Mage Tower', perLevel: 'the king\'s mana fills 12% faster (and +1 spell power at levels 2 and 4)', costs: [80, 160, 280, 450] },
 };
-export const BUILDING_IDS: BuildingId[] = ['treasury', 'barracks', 'armoury', 'mageTower'];
+export const BUILDING_IDS: BuildingId[] = ['treasury', 'barracks', 'armoury', 'mageTower', 'stable', 'library'];
 
 /** The level of each building (0 = not built). */
 export type Castle = Record<BuildingId, number>;
@@ -30,8 +32,10 @@ export const GOLD_PER_LEVEL = 10;
 export const HP_PER_LEVEL = 0.06;
 export const ATK_PER_LEVEL = 0.05;
 export const MANA_PER_LEVEL = 0.12;
+export const MOVE_PER_LEVEL = 0.04;
+export const XP_PER_LEVEL = 0.06;
 
-export const newCastle = (): Castle => ({ treasury: 0, barracks: 0, armoury: 0, mageTower: 0 });
+export const newCastle = (): Castle => ({ treasury: 0, barracks: 0, armoury: 0, mageTower: 0, stable: 0, library: 0 });
 
 export const maxLevel = (id: BuildingId) => BUILDINGS[id].costs.length;
 /** The crowns the next level costs, or null at the top. */
@@ -63,6 +67,11 @@ export const bonusGold = (c: Castle = newCastle()) => GOLD_PER_LEVEL * c.treasur
 export const heroBoost = (c: Castle = newCastle()): Boost => ({ hp: 1 + HP_PER_LEVEL * c.barracks, atk: 1 + ATK_PER_LEVEL * c.armoury });
 /** How much faster than usual the king's mana fills. */
 export const manaRate = (c: Castle = newCastle()) => 1 + MANA_PER_LEVEL * c.mageTower;
+
+/** How much faster than usual every hero walks (the Stable): its steps take this much less time; it does not speed up swings or skills. */
+export const moveRate = (c: Castle = newCastle()) => 1 + MOVE_PER_LEVEL * c.stable;
+/** How much more XP every hero earns from a fight (the Library). */
+export const xpRate = (c: Castle = newCastle()) => 1 + XP_PER_LEVEL * c.library;
 
 /** The power the three equipped spells may add up to: 9, and the Mage Tower adds 1 at level 2 and again at level 4. */
 export const SPELL_BUDGET = 9;

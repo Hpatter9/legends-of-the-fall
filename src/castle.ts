@@ -1,11 +1,11 @@
-// The Castle tab's picture: a village courtyard seen from slightly above, drawn with Chronos's village art (flat-colour pixel houses, tents,
-// props, palisade and cobbles) in the scene's own pixels, whole-number times bigger. A cobbled road leads from the palisade gate to a plaza with a
-// well; each upgrade is a building on its own plot that grows through four looks (castleSpots.ts): an empty plot, a small, a bigger and a grand
-// one. Flags wave at the gate, chimneys smoke, sparks fly at the forge, the tower's windows glow and shed runes, the gold glints, and a few of
-// your heroes (their sheets shrunk by a whole number so they stand a little taller than a door) stroll the road. Tapping a building (or its name tag)
-// opens its upgrade card; a level bought plays a short build: scaffolding and dust, the new look with a flash, then sparkles. One canvas, drawn
-// with nearest neighbour and panned by native scroll when the screen is smaller than the scene. It only draws (Math.random is fine here:
-// nothing that is played depends on it) and runs only while the tab shows.
+// The Castle tab's picture: a castle courtyard in the isometric view of Chronos's building kits (stone wall, gate and tower, a lattice of grass
+// and cobble tiles, houses, forges, a statue), drawn half size in the scene's own pixels, whole-number times bigger. A cobbled road leads from the
+// wall's gate to a plaza; each upgrade is a building on its own plot that grows through four looks (castleSpots.ts): an empty plot, a small, a
+// bigger and a grand one. Flags wave on the wall towers, chimneys smoke, sparks fly at the forge, the tower's windows glow and shed runes, the gold
+// glints, and a few of your heroes (their sheets shrunk by a whole number so they stand about a door high) stroll the plaza. Tapping a building (or
+// its name tag) opens its upgrade card; a level bought plays a short build: scaffolding and dust, the new look with a flash, then sparkles. One
+// canvas, drawn with nearest neighbour and panned by native scroll when the screen is smaller than the scene. It only draws (Math.random is fine
+// here: nothing that is played depends on it) and runs only while the tab shows.
 
 import { BUILDING_IDS, maxLevel, nextCost, type BuildingId } from './sim/castle';
 import { formOf, UNITS } from './sim/units';
@@ -15,115 +15,135 @@ import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
 import { gradeOfRank } from './render/tavernSpots';
 import { strongest } from './menuHeroes';
-import { GRASS, layoutFor, LIGHTS, LOOKS, lookBox, NAME_OF, stageOf, VENTS, WIDE, type Layout, type Look } from './render/castleSpots';
-import anvilUrl from './art/castle/anvil.png';
-import barrelUrl from './art/castle/barrel.png';
-import box1Url from './art/castle/box1.png';
-import box2Url from './art/castle/box2.png';
-import bush1Url from './art/castle/bush1.png';
-import bush2Url from './art/castle/bush2.png';
-import camp3Url from './art/castle/camp3.png';
+import { cellX, cellY, GRASS, isPaved, isPlaceId, layoutFor, LIGHTS, lookBox, lookFor, LOOKS, NAME_OF, pickScale, wallBounds, PLACE_IDS, PLACE_VENTS, PLACES, PLOT_IDS, stageOf, TILE_H, TILE_W, VENTS, walkTiles, YARD, type Layout, type Look, type PlotId } from './render/castleSpots';
+import anvil_stallUrl from './art/castle/anvil_stall.png';
+import atelierUrl from './art/castle/atelier.png';
+import bannerUrl from './art/castle/banner.png';
+import barracksUrl from './art/castle/barracks.png';
+import barrelsUrl from './art/castle/barrels.png';
+import basketsUrl from './art/castle/baskets.png';
+import berriesUrl from './art/castle/berries.png';
+import birchUrl from './art/castle/birch.png';
+import brazierUrl from './art/castle/brazier.png';
+import bridgeUrl from './art/castle/bridge.png';
+import bushUrl from './art/castle/bush.png';
+import campfireUrl from './art/castle/campfire.png';
 import cartUrl from './art/castle/cart.png';
-import chest_goldUrl from './art/castle/chest_gold.png';
-import cobbleUrl from './art/castle/cobble.png';
-import crateUrl from './art/castle/crate.png';
-import crate_stackUrl from './art/castle/crate_stack.png';
-import crates_tallUrl from './art/castle/crates_tall.png';
+import chapelUrl from './art/castle/chapel.png';
+import chestsUrl from './art/castle/chests.png';
+import churchUrl from './art/castle/church.png';
+import cobble_tileUrl from './art/castle/cobble_tile.png';
+import corralUrl from './art/castle/corral.png';
+import cottageUrl from './art/castle/cottage.png';
+import cratesUrl from './art/castle/crates.png';
+import crystalsUrl from './art/castle/crystals.png';
+import farmhouseUrl from './art/castle/farmhouse.png';
 import fenceUrl from './art/castle/fence.png';
-import flower1Url from './art/castle/flower1.png';
-import flower3Url from './art/castle/flower3.png';
-import flower5Url from './art/castle/flower5.png';
-import gateUrl from './art/castle/gate.png';
-import gb_barrelsUrl from './art/castle/gb_barrels.png';
-import gb_canopyUrl from './art/castle/gb_canopy.png';
-import gb_cratesUrl from './art/castle/gb_crates.png';
-import gb_houseUrl from './art/castle/gb_house.png';
-import gb_sacksUrl from './art/castle/gb_sacks.png';
-import gb_shopUrl from './art/castle/gb_shop.png';
-import gb_signpostUrl from './art/castle/gb_signpost.png';
-import gold1Url from './art/castle/gold1.png';
-import gold2Url from './art/castle/gold2.png';
-import house1Url from './art/castle/house1.png';
-import house2Url from './art/castle/house2.png';
-import house4Url from './art/castle/house4.png';
-import lanternUrl from './art/castle/lantern.png';
-import logUrl from './art/castle/log.png';
-import palisadeUrl from './art/castle/palisade.png';
-import palisade2Url from './art/castle/palisade2.png';
-import pebble1Url from './art/castle/pebble1.png';
-import pebble3Url from './art/castle/pebble3.png';
-import pebble5Url from './art/castle/pebble5.png';
-import planksUrl from './art/castle/planks.png';
+import fieldUrl from './art/castle/field.png';
+import field2Url from './art/castle/field2.png';
+import flowersUrl from './art/castle/flowers.png';
+import forgeUrl from './art/castle/forge.png';
+import gatehouseUrl from './art/castle/gatehouse.png';
+import granaryUrl from './art/castle/granary.png';
+import grass_tileUrl from './art/castle/grass_tile.png';
+import greatUrl from './art/castle/great.png';
+import great_hallUrl from './art/castle/great_hall.png';
+import hayUrl from './art/castle/hay.png';
+import haybigUrl from './art/castle/haybig.png';
+import herbUrl from './art/castle/herb.png';
+import lampUrl from './art/castle/lamp.png';
+import longhouseUrl from './art/castle/longhouse.png';
+import manorUrl from './art/castle/manor.png';
+import oakUrl from './art/castle/oak.png';
+import penUrl from './art/castle/pen.png';
+import pineUrl from './art/castle/pine.png';
 import rackUrl from './art/castle/rack.png';
-import sign_swordUrl from './art/castle/sign_sword.png';
-import tower1Url from './art/castle/tower1.png';
-import tower2Url from './art/castle/tower2.png';
-import tower3Url from './art/castle/tower3.png';
-import tree1Url from './art/castle/tree1.png';
-import tree2Url from './art/castle/tree2.png';
-import tt_gableUrl from './art/castle/tt_gable.png';
-import tt_longUrl from './art/castle/tt_long.png';
-import tuft1Url from './art/castle/tuft1.png';
-import tuft2Url from './art/castle/tuft2.png';
-import tuft3Url from './art/castle/tuft3.png';
-import wellUrl from './art/castle/well.png';
-import yurt1Url from './art/castle/yurt1.png';
-import yurt2Url from './art/castle/yurt2.png';
+import rocksUrl from './art/castle/rocks.png';
+import rosesUrl from './art/castle/roses.png';
+import shedUrl from './art/castle/shed.png';
+import shrineUrl from './art/castle/shrine.png';
+import signUrl from './art/castle/sign.png';
+import signpostUrl from './art/castle/signpost.png';
+import siloUrl from './art/castle/silo.png';
+import spiralUrl from './art/castle/spiral.png';
+import stableUrl from './art/castle/stable.png';
+import stallUrl from './art/castle/stall.png';
+import stall2Url from './art/castle/stall2.png';
+import stall3Url from './art/castle/stall3.png';
+import statueUrl from './art/castle/statue.png';
+import stockpileUrl from './art/castle/stockpile.png';
+import tavernUrl from './art/castle/tavern.png';
+import thatchUrl from './art/castle/thatch.png';
+import wallUrl from './art/castle/wall.png';
+import watchtowerUrl from './art/castle/watchtower.png';
+import water_tileUrl from './art/castle/water_tile.png';
+import woodpileUrl from './art/castle/woodpile.png';
+import workshopUrl from './art/castle/workshop.png';
 
 const ART: Record<string, string> = {
-  anvil: anvilUrl,
-  barrel: barrelUrl,
-  box1: box1Url,
-  box2: box2Url,
-  bush1: bush1Url,
-  bush2: bush2Url,
-  camp3: camp3Url,
+  anvil_stall: anvil_stallUrl,
+  atelier: atelierUrl,
+  banner: bannerUrl,
+  barracks: barracksUrl,
+  barrels: barrelsUrl,
+  baskets: basketsUrl,
+  berries: berriesUrl,
+  birch: birchUrl,
+  brazier: brazierUrl,
+  bridge: bridgeUrl,
+  bush: bushUrl,
+  campfire: campfireUrl,
   cart: cartUrl,
-  chest_gold: chest_goldUrl,
-  cobble: cobbleUrl,
-  crate: crateUrl,
-  crate_stack: crate_stackUrl,
-  crates_tall: crates_tallUrl,
+  chapel: chapelUrl,
+  chests: chestsUrl,
+  church: churchUrl,
+  cobble_tile: cobble_tileUrl,
+  corral: corralUrl,
+  cottage: cottageUrl,
+  crates: cratesUrl,
+  crystals: crystalsUrl,
+  farmhouse: farmhouseUrl,
   fence: fenceUrl,
-  flower1: flower1Url,
-  flower3: flower3Url,
-  flower5: flower5Url,
-  gate: gateUrl,
-  gb_barrels: gb_barrelsUrl,
-  gb_canopy: gb_canopyUrl,
-  gb_crates: gb_cratesUrl,
-  gb_house: gb_houseUrl,
-  gb_sacks: gb_sacksUrl,
-  gb_shop: gb_shopUrl,
-  gb_signpost: gb_signpostUrl,
-  gold1: gold1Url,
-  gold2: gold2Url,
-  house1: house1Url,
-  house2: house2Url,
-  house4: house4Url,
-  lantern: lanternUrl,
-  log: logUrl,
-  palisade: palisadeUrl,
-  palisade2: palisade2Url,
-  pebble1: pebble1Url,
-  pebble3: pebble3Url,
-  pebble5: pebble5Url,
-  planks: planksUrl,
+  field: fieldUrl,
+  field2: field2Url,
+  flowers: flowersUrl,
+  forge: forgeUrl,
+  gatehouse: gatehouseUrl,
+  granary: granaryUrl,
+  grass_tile: grass_tileUrl,
+  great: greatUrl,
+  great_hall: great_hallUrl,
+  hay: hayUrl,
+  haybig: haybigUrl,
+  herb: herbUrl,
+  lamp: lampUrl,
+  longhouse: longhouseUrl,
+  manor: manorUrl,
+  oak: oakUrl,
+  pen: penUrl,
+  pine: pineUrl,
   rack: rackUrl,
-  sign_sword: sign_swordUrl,
-  tower1: tower1Url,
-  tower2: tower2Url,
-  tower3: tower3Url,
-  tree1: tree1Url,
-  tree2: tree2Url,
-  tt_gable: tt_gableUrl,
-  tt_long: tt_longUrl,
-  tuft1: tuft1Url,
-  tuft2: tuft2Url,
-  tuft3: tuft3Url,
-  well: wellUrl,
-  yurt1: yurt1Url,
-  yurt2: yurt2Url,
+  rocks: rocksUrl,
+  roses: rosesUrl,
+  shed: shedUrl,
+  shrine: shrineUrl,
+  sign: signUrl,
+  signpost: signpostUrl,
+  silo: siloUrl,
+  spiral: spiralUrl,
+  stable: stableUrl,
+  stall: stallUrl,
+  stall2: stall2Url,
+  stall3: stall3Url,
+  statue: statueUrl,
+  stockpile: stockpileUrl,
+  tavern: tavernUrl,
+  thatch: thatchUrl,
+  wall: wallUrl,
+  watchtower: watchtowerUrl,
+  water_tile: water_tileUrl,
+  woodpile: woodpileUrl,
+  workshop: workshopUrl,
 };
 
 let art: Record<string, HTMLImageElement> | null = null;
@@ -188,8 +208,12 @@ interface Small {
   facesRight: boolean;
 }
 
+/** How tall a hero stands in the yard, about: a sheet is shrunk by the whole number that comes nearest. */
+const HERO_PX = 32;
+const heroShrink = (figure: number): number => Math.max(1, Math.round(figure / HERO_PX));
+
 function shrinkRig(rig: Rig): Small {
-  const n = Math.max(2, Math.round(rig.figure / 24));
+  const n = heroShrink(rig.figure);
   const fw = Math.floor(rig.w / n);
   const fh = Math.floor(rig.h / n);
   const rows = ['idle', 'walk'].map((r) => (rig.rows.includes(r) ? r : 'idle'));
@@ -244,8 +268,11 @@ interface Walker {
   small: Small;
   x: number;
   y: number;
+  /** The waypoint being walked to, and the tiles still to come after it. */
   gx: number;
   gy: number;
+  route: { u: number; v: number }[];
+  tile: { u: number; v: number };
   face: 1 | -1;
   mood: Mood;
   at: number;
@@ -274,6 +301,17 @@ interface Build {
   start: number;
 }
 
+/** The pictures with a flame: where it burns from the picture's foot, and its glow. */
+const GLOWING: Record<string, { dx: number; dy: number; size: number; al: number; tint: string }> = {
+  brazier: { dx: 0, dy: -72, size: 34, al: 0.55, tint: '#ff9a3c' },
+  lamp: { dx: 0, dy: -66, size: 26, al: 0.5, tint: '#ffcf70' },
+};
+
+const isPlace = isPlaceId;
+
+/** Css pixels between the top of the frame (under the chips bar) and the back corner tower. */
+const TOP_GAP = 6;
+
 const BUILD_MS = 1500;
 const SWAP_MS = 800;
 
@@ -290,9 +328,13 @@ export class CastleScene {
   private motes: Mote[] = [];
   private builds: Build[] = [];
   private levels: Partial<Record<BuildingId, number>> = {};
-  private tagEls = new Map<BuildingId, HTMLButtonElement>();
+  private tagEls = new Map<PlotId, HTMLButtonElement>();
   private scale = 1;
-  private lay: Layout = WIDE;
+  private lay: Layout = YARD;
+  /** Css pixels per scene pixel (the scale in device pixels over the device pixel ratio). */
+  private css = 1;
+  /** The canvas in scene pixels: the village in the middle, and grass all round it to fill the frame (`ox`, `oy` is where the village's corner sits). */
+  private view = { w: YARD.w, h: YARD.h, ox: 0, oy: 0 };
   private raf = 0;
   private last = 0;
   private now = 0;
@@ -305,19 +347,27 @@ export class CastleScene {
   private down: { x: number; y: number; t: number } | null = null;
   private watch: ResizeObserver;
 
-  constructor(private onPick: (id: BuildingId) => void) {
+  constructor(private onPick: (id: PlotId) => void) {
     this.stage.append(this.canvas, this.tags);
     this.scroll.append(this.stage);
     this.root.append(this.scroll);
     this.ctx.imageSmoothingEnabled = false;
-    for (const id of BUILDING_IDS) {
+    for (const id of PLOT_IDS) {
       const b = el('button', 'ctTag');
       b.addEventListener('click', () => this.onPick(id));
       this.tags.append(b);
       this.tagEls.set(id, b);
     }
+    // (the places' tags say where they lead, and never change)
+    for (const id of PLACE_IDS) {
+      const tag = this.tagEls.get(id)!;
+      tag.className = 'ctTag place';
+      tag.replaceChildren(el('b', '', PLACES[id].name), el('span', '', `· ${PLACES[id].to}`));
+      tag.setAttribute('aria-label', `${PLACES[id].name} · ${PLACES[id].to}`);
+    }
     onSettings((s) => (this.saver = s.saver));
     window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
+    // (a short tap on a building opens it; the page scrolls up and down by itself when the village is taller than the frame, and the tags take their own taps)
     this.canvas.addEventListener('pointerdown', (e) => (this.down = { x: e.clientX, y: e.clientY, t: performance.now() }));
     this.canvas.addEventListener('pointerup', (e) => {
       const d = this.down;
@@ -348,7 +398,7 @@ export class CastleScene {
       if (tag.dataset.key === key) continue;
       tag.dataset.key = key;
       tag.className = `ctTag${ready ? ' ready' : ''}${cost === null ? ' full' : ''}`;
-      tag.replaceChildren(el('b', '', NAME_OF(id)), el('span', '', level === 0 ? 'not built' : `level ${level}/${maxLevel(id)}`));
+      tag.replaceChildren(el('b', '', NAME_OF(id)), el('span', '', level === 0 ? 'not built' : `${level}/${maxLevel(id)}`));
       if (ready) tag.append(el('i', 'ctUp', '▲'));
       tag.setAttribute('aria-label', `${NAME_OF(id)}, level ${level} of ${maxLevel(id)}${ready ? ', can upgrade' : ''}`);
     }
@@ -362,12 +412,12 @@ export class CastleScene {
       const w = this.walkers.get(kind);
       if (w) {
         // (a new form after a rank-up: re-cut only when the sheet changed)
-        if (w.small.facesRight !== rig.facesRight || w.small.fh !== Math.floor(rig.h / Math.max(2, Math.round(rig.figure / 24)))) w.small = shrinkRig(rig);
+        if (w.small.facesRight !== rig.facesRight || w.small.fh !== Math.floor(rig.h / heroShrink(rig.figure))) w.small = shrinkRig(rig);
         return;
       }
-      const x = rand(this.lay.walk.x0, this.lay.walk.x1);
-      const y = rand(this.lay.walk.y0, this.lay.walk.y1);
-      this.walkers.set(kind, { kind, small: shrinkRig(rig), x, y, gx: x, gy: y, face: chance(0.5) ? 1 : -1, mood: 'idle', at: this.now + 300 * i + rand(300, 2500), clock: rand(0, 3000), phase: rand(0, 6) });
+      const wk: Walker = { kind, small: shrinkRig(rig), x: 0, y: 0, gx: 0, gy: 0, route: [], tile: { u: 0, v: 0 }, face: chance(0.5) ? 1 : -1, mood: 'idle', at: this.now + 300 * i + rand(300, 2500), clock: rand(0, 3000), phase: rand(0, 6) };
+      this.putOnRoad(wk);
+      this.walkers.set(kind, wk);
     });
     this.layTags();
   }
@@ -395,43 +445,54 @@ export class CastleScene {
     this.raf = 0;
   }
 
-  /** Pick the arrangement and the whole-number scale (the yard bigger on a big screen); on a small one it pans inside its frame. */
+  /** Draw the village at the one scale (a whole number of device pixels per scene pixel, so it stays sharp at any pixel ratio) at which the wall fits the frame
+   *  from side to side. The canvas fills the frame with ground tiles, the back corner tower just under the top; if the village is taller than the frame the
+   *  page scrolls up and down, and never sideways. */
   private fit(): void {
     const h = this.root.clientHeight;
     const w = this.root.clientWidth;
     if (!h || !art) return;
-    const lay = layoutFor(w < h);
-    const s = Math.max(1, Math.min(4, Math.floor(Math.min(w / lay.w, h / lay.h))));
-    if (lay === this.lay && s === this.scale && this.still && this.canvas.width === lay.w * s) return;
+    const lay = layoutFor();
+    const dpr = window.devicePixelRatio || 1;
+    const wall = wallBounds(lay);
+    const { k, css } = pickScale(w, dpr, wall.x1 - wall.x0);
+    const vw = Math.ceil(w / css);
+    const oy = Math.round(TOP_GAP / css) - Math.round(wall.top);
+    // (exactly the frame's height: no scrolling; a taller phone shows more countryside, a shorter one less, and never less than the village)
+    const vh = Math.max(Math.ceil(h / css), oy + lay.villageH + 8);
+    // (the wall's middle in the middle of the frame)
+    const ox = Math.round(vw / 2 - (wall.x0 + wall.x1) / 2);
+    if (lay === this.lay && k === this.scale && css === this.css && this.still && this.view.w === vw && this.view.h === vh && this.view.ox === ox && this.view.oy === oy) return;
     const changed = lay !== this.lay;
     this.lay = lay;
-    this.scale = s;
-    this.canvas.width = lay.w * s;
-    this.canvas.height = lay.h * s;
+    this.scale = k;
+    this.css = css;
+    // (the backing store is in device pixels, k to a scene pixel; its css size is that over the pixel ratio, so one scene pixel is k whole device pixels)
+    this.view = { w: vw, h: vh, ox, oy };
+    this.canvas.width = vw * k;
+    this.canvas.height = vh * k;
     for (const e of [this.canvas, this.stage]) {
-      e.style.width = `${lay.w * s}px`;
-      e.style.height = `${lay.h * s}px`;
+      e.style.width = `${vw * css}px`;
+      e.style.height = `${vh * css}px`;
     }
     this.ctx.imageSmoothingEnabled = false;
-    this.still = this.paintStill(art, s);
-    this.glow = this.paintGlow(s);
+    // (heroes stroll the road only as far down as the picture shows)
+    this.tiles = walkTiles(lay).filter((t) => cellY(lay.grid, t.u, t.v) + oy < vh - 20);
+    this.still = this.paintStill(art, k);
+    this.glow = this.paintGlow(k);
     // (the heroes go back onto the new arrangement's road when it changes)
     if (changed)
       for (const wk of this.walkers.values()) {
-        wk.x = wk.gx = rand(lay.walk.x0, lay.walk.x1);
-        wk.y = wk.gy = rand(lay.walk.y0, lay.walk.y1);
-        wk.mood = 'idle';
+        this.putOnRoad(wk);
       }
     this.layTags();
-    requestAnimationFrame(() => {
-      this.scroll.scrollLeft = (this.scroll.scrollWidth - this.scroll.clientWidth) / 2;
-      this.scroll.scrollTop = Math.max(0, lay.openTop * s);
-    });
+    this.scroll.scrollTop = 0;
   }
 
-  /** The part that never changes: flat grass with its tufts and flowers, the cobbled road and plaza, the palisade with its gate. */
+  /** The part that never changes: the ground (a lattice of grass tiles, cobbles where the roads and plaza are) with a few flowers laid by a fixed pattern. */
   private paintStill(a: Record<string, HTMLImageElement>, s: number): HTMLCanvasElement {
-    const { w, h } = this.lay;
+    const { grid, yard } = this.lay;
+    const { w, h, ox, oy } = this.view;
     const c = el('canvas');
     c.width = w * s;
     c.height = h * s;
@@ -439,28 +500,53 @@ export class CastleScene {
     g.imageSmoothingEnabled = false;
     g.fillStyle = GRASS;
     g.fillRect(0, 0, c.width, c.height);
-    // (tufts and flowers laid by a fixed pattern, so the yard looks the same every time)
-    let seed = w * 31 + h;
-    const next = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
-    const bits = ['tuft1', 'tuft2', 'tuft3', 'flower1', 'flower3', 'flower5', 'tuft2', 'tuft3'];
-    for (let i = 0; i < Math.round((w * h) / 2600); i++) {
-      const im = a[bits[Math.floor(next() * bits.length)]];
-      g.drawImage(im, Math.floor(next() * (w - im.width)) * s, Math.floor((this.lay.wallY + 40 + next() * (h - this.lay.wallY - 50)) * s), im.width * s, im.height * s);
+    // (from here on the village's own coordinates)
+    g.translate(ox * s, oy * s);
+    const paved = (u: number, v: number): boolean => isPaved(this.lay, u, v);
+    const draw = (im: HTMLImageElement, x: number, y: number, mirror = false): void => {
+      if (mirror) {
+        g.save();
+        g.translate(x + im.width * s, y);
+        g.scale(-1, 1);
+        g.drawImage(im, 0, 0, im.width * s, im.height * s);
+        g.restore();
+      } else g.drawImage(im, x, y, im.width * s, im.height * s);
+    };
+    // (rows of tiles from the back to the front, each row half a tile along from the last, so a tile's rim is covered by the row in front)
+    const rows0 = Math.floor((-oy - grid.y) / (TILE_H / 2)) - 2;
+    const rows1 = Math.ceil((h - oy - grid.y) / (TILE_H / 2)) + 2;
+    const first = Math.floor((-ox - grid.x) / (TILE_W / 2)) - 2;
+    const water = new Set(this.lay.land.water.map((t) => `${t.u},${t.v}`));
+    const decor: { r: number; x: number; y: number; im: HTMLImageElement; mirror: boolean }[] = [];
+    for (let r = rows0; r <= rows1; r++) {
+      const cy = grid.y + r * (TILE_H / 2);
+      for (let k = first; (k * TILE_W) / 2 + grid.x < w - ox + TILE_W; k++) {
+        if ((k - r) % 2 !== 0) continue;
+        const cx = grid.x + (k * TILE_W) / 2;
+        const u = (r + k) / 2;
+        const v = (r - k) / 2;
+        const wet = water.has(`${u},${v}`);
+        const tile = paved(u, v) ? a.cobble_tile : wet ? a.water_tile : a.grass_tile;
+        // (every other grass tile is mirrored, so the lawn does not show its repeat)
+        draw(tile, Math.round(cx - tile.width / 2) * s, (cy - TILE_H / 2) * s, tile === a.grass_tile && (r * 7 + k * 3) % 5 < 2);
+        // (beyond the wall, past a margin of grass: woods behind it, and only low bushes and flowers in front of it, so nothing hides the near runs)
+        const hash = ((u * 73856093) ^ (v * 19349663)) >>> 0;
+        const pick = hash % 100;
+        const behind = u < yard.u0 - 3 || v < yard.v0 - 3;
+        const kinds = ['oak', 'pine', 'bush', 'pine', 'oak'];
+        if (behind && !wet && pick < 11) {
+          const im = a[kinds[(hash >>> 8) % kinds.length]];
+          decor.push({ r, x: Math.round(cx - im.width / 2) * s, y: (cy + TILE_H / 2 - im.height) * s, im, mirror: (hash & 1) === 1 });
+        }
+      }
     }
-    // (the road: the cobble sheet's inner tile, with a dark edge)
-    const cob = a.cobble;
-    for (const { x0, y0, x1, y1 } of this.lay.roads) {
-      for (let x = x0; x < x1; x += 16) for (let y = y0; y < y1; y += 16) g.drawImage(cob, 0, 0, Math.min(16, x1 - x), Math.min(16, y1 - y), x * s, y * s, Math.min(16, x1 - x) * s, Math.min(16, y1 - y) * s);
+    for (const d of decor) draw(d.im, d.x, d.y, d.mirror);
+    // (the fields' beds and the bridge lie flat on the ground)
+    for (const p of this.lay.ground) {
+      const im = a[p.sprite];
+      if (p.y + oy < -20 || p.y - im.height + oy > h) continue;
+      draw(im, Math.round(p.x - im.width / 2) * s, (p.y - im.height) * s, p.flip);
     }
-    g.fillStyle = 'rgba(30, 44, 74, 0.9)';
-    for (const { x0, y0, x1, y1 } of this.lay.roads) {
-      g.fillRect(x0 * s, y0 * s, s, (y1 - y0) * s);
-      g.fillRect((x1 - 1) * s, y0 * s, s, (y1 - y0) * s);
-    }
-    // (the palisade runs across the top, with the gate in the middle)
-    const pal = [a.palisade, a.palisade2];
-    for (let x = 0, i = 0; x < w; x += 32, i++) g.drawImage(pal[i % 2 && i % 3 ? 1 : 0], x * s, this.lay.wallY * s, 32 * s, 32 * s);
-    for (const dx of [-48, -16, 16]) g.drawImage(a.gate, (this.lay.gateX + dx) * s, this.lay.wallY * s, 32 * s, 32 * s);
     return c;
   }
 
@@ -482,12 +568,14 @@ export class CastleScene {
 
   /** Place the name tags over their buildings (percentages of the scene, so they follow its scale). */
   private layTags(): void {
-    for (const id of BUILDING_IDS) {
+    for (const id of PLOT_IDS) {
       const tag = this.tagEls.get(id)!;
       const p = this.lay.plots[id];
-      const box = lookBox(LOOKS[id][stageOf(id, this.levels[id] ?? 0)]);
-      tag.style.left = `${((p.x + (box.x0 + box.x1) / 2) / this.lay.w) * 100}%`;
-      tag.style.top = `${((p.y - box.h - 4) / this.lay.h) * 100}%`;
+      const box = lookBox(lookFor(id, this.stageNow(id)), p.flip);
+      tag.style.left = `${((this.view.ox + p.x + (box.x0 + box.x1) / 2 + (p.tagDx ?? 0)) / this.view.w) * 100}%`;
+      tag.style.top = `${((this.view.oy + (p.tagY ?? p.y - box.h - 4)) / this.view.h) * 100}%`;
+      // (a signpost below the bottom of a short screen has no tag to tap)
+      tag.hidden = this.view.oy + p.y > this.view.h - 6;
     }
   }
 
@@ -498,12 +586,59 @@ export class CastleScene {
     const roll = Math.random();
     if (roll < 0.3) w.face = w.face === 1 ? -1 : 1;
     else if (!this.reduced && roll < 0.95) {
-      w.gx = rand(this.lay.walk.x0, this.lay.walk.x1);
-      w.gy = rand(this.lay.walk.y0, this.lay.walk.y1);
-      w.mood = 'walk';
-      w.face = w.gx > w.x ? 1 : -1;
+      const to = this.tiles[Math.floor(Math.random() * this.tiles.length)];
+      w.route = this.route(w.tile, to);
+      if (w.route.length) {
+        this.nextStop(w);
+        w.mood = 'walk';
+      }
     }
     w.at = now + rand(1500, 5000);
+  }
+
+  /** The tiles a hero may stroll on (the plaza's ring and the roads), for the arrangement showing. */
+  private tiles: { u: number; v: number }[] = walkTiles(YARD);
+
+  /** Stand a hero on a random paved tile. */
+  private putOnRoad(w: Walker): void {
+    const t = this.tiles[Math.floor(Math.random() * this.tiles.length)] ?? { u: 0, v: 0 };
+    w.tile = t;
+    w.x = w.gx = cellX(this.lay.grid, t.u, t.v);
+    w.y = w.gy = cellY(this.lay.grid, t.u, t.v) + 6;
+    w.route = [];
+    w.mood = 'idle';
+  }
+
+  /** The shortest way along the paved tiles from one to another, not counting the start. */
+  private route(from: { u: number; v: number }, to: { u: number; v: number }): { u: number; v: number }[] {
+    const key = (t: { u: number; v: number }) => `${t.u},${t.v}`;
+    const ok = new Set(this.tiles.map(key));
+    const prev = new Map<string, { u: number; v: number } | null>([[key(from), null]]);
+    const queue = [from];
+    for (let i = 0; i < queue.length; i++) {
+      const t = queue[i];
+      if (t.u === to.u && t.v === to.v) break;
+      for (const [du, dv] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const n = { u: t.u + du, v: t.v + dv };
+        if (ok.has(key(n)) && !prev.has(key(n))) {
+          prev.set(key(n), t);
+          queue.push(n);
+        }
+      }
+    }
+    if (!prev.has(key(to))) return [];
+    const path: { u: number; v: number }[] = [];
+    for (let t: { u: number; v: number } | null | undefined = to; t && key(t) !== key(from); t = prev.get(key(t))) path.unshift(t);
+    return path;
+  }
+
+  /** Aim at the next tile of a hero's route. */
+  private nextStop(w: Walker): void {
+    const t = w.route.shift()!;
+    w.tile = t;
+    w.gx = cellX(this.lay.grid, t.u, t.v);
+    w.gy = cellY(this.lay.grid, t.u, t.v) + 6;
+    if (Math.abs(w.gx - w.x) > 2) w.face = w.gx > w.x ? 1 : -1;
   }
 
   private step(w: Walker, dt: number, now: number): void {
@@ -516,8 +651,11 @@ export class CastleScene {
     if (dist <= move) {
       w.x = w.gx;
       w.y = w.gy;
-      w.mood = 'idle';
-      w.at = now + rand(1200, 4000);
+      if (w.route.length) this.nextStop(w);
+      else {
+        w.mood = 'idle';
+        w.at = now + rand(1200, 4000);
+      }
     } else {
       w.x += (dx / dist) * move;
       w.y += (dy / dist) * move;
@@ -568,10 +706,10 @@ export class CastleScene {
     if (spark) this.nextSpark = this.now + rand(140, 320);
     const glint = this.now >= this.nextGlint;
     if (glint) this.nextGlint = this.now + rand(350, 800);
-    for (const id of BUILDING_IDS) {
+    for (const id of PLOT_IDS) {
       const p = this.lay.plots[id];
-      for (const v of VENTS[id][this.shown(id)] ?? []) {
-        const x = p.x + v.dx;
+      for (const v of isPlace(id) ? PLACE_VENTS[id] : VENTS[id][this.shown(id)] ?? []) {
+        const x = p.x + (p.flip ? -v.dx : v.dx);
         const y = p.y + v.dy;
         if (v.kind === 'smoke' && puff) this.motes.push({ x, y, vx: rand(-1, 3), vy: rand(-14, -8), age: 0, life: rand(2000, 3000), size: 3, color: '#d8d4cc', grow: 3, kind: 'smoke' });
         else if (v.kind === 'rune' && puff && chance(0.7)) this.motes.push({ x: x + rand(-14, 14), y: y + rand(-26, 26), vx: rand(-2, 2), vy: rand(-9, -4), age: 0, life: rand(1400, 2400), size: 2, color: chance(0.5) ? '#7fe8ff' : '#c9a6ff', grow: 0, kind: 'rune' });
@@ -582,10 +720,16 @@ export class CastleScene {
   }
 
   /** The look a building shows now (while it is being built, the old one until the swap). */
-  private shown(id: BuildingId): number {
+  private shown(id: PlotId): number {
+    if (isPlace(id)) return 0;
     const b = this.builds.find((x) => x.id === id);
     if (b) return this.now - b.start < SWAP_MS ? b.from : b.to;
-    return stageOf(id, this.levels[id] ?? 0);
+    return this.stageNow(id);
+  }
+
+  /** The look a plot has at its level (a place has only one). */
+  private stageNow(id: PlotId): number {
+    return isPlace(id) ? 0 : stageOf(id, this.levels[id] ?? 0);
   }
 
   // ---- drawing ----
@@ -597,40 +741,91 @@ export class CastleScene {
     if (!a || !this.still) return;
     g.globalAlpha = 1;
     g.drawImage(this.still, 0, 0);
+    g.save();
+    g.translate(this.view.ox * s, this.view.oy * s);
     const list: { depth: number; paint: () => void }[] = [];
+    const wallsOnly = (window as unknown as { __castleWallsOnly?: boolean }).__castleWallsOnly === true;
     for (const p of this.lay.props) {
+      if (wallsOnly && p.sprite !== 'wall' && p.sprite !== 'gatehouse' && p.sprite !== 'watchtower') continue;
       const im = a[p.sprite];
-      list.push({ depth: p.y, paint: () => g.drawImage(im, Math.round(p.x - im.width / 2) * s, (p.y - im.height) * s, im.width * s, im.height * s) });
+      const x = Math.round(p.x - im.width / 2) * s;
+      const y = (p.y - im.height) * s;
+      const paint = () => {
+        g.save();
+        // (the last cell of a wall run is cut where its tower covers it: only the columns of the picture as drawn from `cut[0]` to `cut[1]` show)
+        if (p.cut) {
+          g.beginPath();
+          g.rect(x + p.cut[0] * s, y, (p.cut[1] - p.cut[0]) * s, im.height * s);
+          g.clip();
+        }
+        if (p.flip) {
+          g.translate(x + im.width * s, 0);
+          g.scale(-1, 1);
+          g.drawImage(im, 0, y, im.width * s, im.height * s);
+        } else g.drawImage(im, x, y, im.width * s, im.height * s);
+        g.restore();
+      };
+      list.push({ depth: p.depth ?? p.y, paint });
     }
-    for (const id of BUILDING_IDS) list.push({ depth: this.lay.plots[id].y, paint: () => this.building(a, id) });
-    for (const w of this.walkers.values()) list.push({ depth: w.y, paint: () => this.hero(w) });
+    if (!wallsOnly) {
+      const top = -this.view.oy - 40;
+      const bottom = this.view.h - this.view.oy + 160;
+      for (const p of this.lay.scenery) {
+        if (p.y < top || p.y > bottom) continue;
+        const im = a[p.sprite];
+        const x = Math.round(p.x - im.width / 2) * s;
+        const y = (p.y - im.height) * s;
+        list.push({
+          depth: p.y,
+          paint: () => {
+            if (p.flip) {
+              g.save();
+              g.translate(x + im.width * s, 0);
+              g.scale(-1, 1);
+              g.drawImage(im, 0, y, im.width * s, im.height * s);
+              g.restore();
+            } else g.drawImage(im, x, y, im.width * s, im.height * s);
+          },
+        });
+      }
+    }
+    if (!wallsOnly) for (const id of PLOT_IDS) list.push({ depth: this.lay.plots[id].y, paint: () => this.building(a, id) });
+    if (!wallsOnly) for (const w of this.walkers.values()) list.push({ depth: w.y, paint: () => this.hero(w) });
     list.sort((p, q) => p.depth - q.depth);
     for (const e of list) e.paint();
     this.flags();
     this.glows();
     this.motesDraw();
+    g.restore();
   }
 
-  private drawLook(a: Record<string, HTMLImageElement>, id: BuildingId, look: Look, lift = 0): void {
+  private drawLook(a: Record<string, HTMLImageElement>, id: PlotId, look: Look, lift = 0): void {
     const g = this.ctx;
     const s = this.scale;
     const p = this.lay.plots[id];
     for (const part of look.parts) {
       const im = a[part.sprite];
-      g.drawImage(im, Math.round(p.x + part.dx - im.width / 2) * s, (p.y + part.dy - im.height + lift) * s, im.width * s, im.height * s);
+      const x = Math.round(p.x + (p.flip ? -part.dx : part.dx) - im.width / 2) * s;
+      if (p.flip) {
+        g.save();
+        g.translate(x + im.width * s, 0);
+        g.scale(-1, 1);
+        g.drawImage(im, 0, (p.y + part.dy - im.height + lift) * s, im.width * s, im.height * s);
+        g.restore();
+      } else g.drawImage(im, x, (p.y + part.dy - im.height + lift) * s, im.width * s, im.height * s);
     }
   }
 
-  private building(a: Record<string, HTMLImageElement>, id: BuildingId): void {
+  private building(a: Record<string, HTMLImageElement>, id: PlotId): void {
     const stage = this.shown(id);
-    const b = this.builds.find((x) => x.id === id);
+    const b = isPlace(id) ? undefined : this.builds.find((x) => x.id === id);
     const age = b ? this.now - b.start : BUILD_MS;
     // (a look that has just arrived settles three pixels, and the scaffolding comes down)
     const pop = b && age >= SWAP_MS && age < SWAP_MS + 180 ? Math.round((1 - (age - SWAP_MS) / 180) * 3) : 0;
-    this.drawLook(a, id, LOOKS[id][stage], pop);
-    if (b && age < SWAP_MS + 300) {
-      const o = lookBox(LOOKS[id][b.from]);
-      const n = lookBox(LOOKS[id][b.to]);
+    this.drawLook(a, id, lookFor(id, stage), pop);
+    if (b && !isPlace(id) && age < SWAP_MS + 300) {
+      const o = lookBox(LOOKS[id][b.from], this.lay.plots[id].flip);
+      const n = lookBox(LOOKS[id][b.to], this.lay.plots[id].flip);
       this.scaffold(id, Math.min(o.x0, n.x0), Math.max(o.x1, n.x1), Math.max(o.h, n.h), age < SWAP_MS ? 1 : 1 - (age - SWAP_MS) / 300);
     }
   }
@@ -686,18 +881,24 @@ export class CastleScene {
       g.globalAlpha = Math.max(0, Math.min(1, al * pulse));
       g.drawImage(this.tinted(tint), (cx - size / 2) * s, (cy - size / 2) * s, size * s, size * s);
     };
-    for (const id of BUILDING_IDS) {
+    for (const id of PLOT_IDS) {
       const p = this.lay.plots[id];
       const stage = this.shown(id);
-      for (const l of LIGHTS[id][stage] ?? []) spot(p.x + l.dx, p.y + l.dy, l.size, l.al, l.tint);
-      for (const part of LOOKS[id][stage].parts) if (part.sprite === 'lantern') spot(p.x + part.dx, p.y + part.dy - 32, 22, 0.45, '#ffcf70');
+      for (const l of isPlace(id) ? [] : LIGHTS[id][stage] ?? []) spot(p.x + (p.flip ? -l.dx : l.dx), p.y + l.dy, l.size, l.al, l.tint);
+      for (const part of lookFor(id, stage).parts) {
+        const glow = GLOWING[part.sprite];
+        if (glow) spot(p.x + (p.flip ? -part.dx : part.dx) + glow.dx, p.y + part.dy + glow.dy, glow.size, glow.al, glow.tint);
+      }
     }
-    for (const pr of this.lay.props) if (pr.sprite === 'lantern') spot(pr.x, pr.y - 32, 22, 0.45, '#ffcf70');
+    for (const pr of this.lay.props) {
+      const glow = GLOWING[pr.sprite];
+      if (glow) spot(pr.x + glow.dx, pr.y + glow.dy, glow.size, glow.al, glow.tint);
+    }
     // (a build in progress gives a warm flash as the new look arrives)
     for (const b of this.builds) {
       const age = this.now - b.start;
       if (age > SWAP_MS - 100 && age < SWAP_MS + 450) {
-        const box = lookBox(LOOKS[b.id][b.to]);
+        const box = lookBox(LOOKS[b.id][b.to], this.lay.plots[b.id].flip);
         const p = this.lay.plots[b.id];
         const sz = Math.max(box.w, box.h) + 30;
         g.globalAlpha = 0.65 * (1 - (age - SWAP_MS + 100) / 550);
@@ -776,22 +977,24 @@ export class CastleScene {
 
   // ---- tapping ----
 
-  private tap(e: PointerEvent): void {
+  /** A tap on a building opens it; false when it fell on empty ground. */
+  private tap(e: PointerEvent): boolean {
     const box = this.canvas.getBoundingClientRect();
-    const rx = ((e.clientX - box.left) / box.width) * this.lay.w;
-    const ry = ((e.clientY - box.top) / box.height) * this.lay.h;
-    let best: { id: BuildingId; depth: number } | null = null;
-    for (const id of BUILDING_IDS) {
+    const rx = ((e.clientX - box.left) / box.width) * this.view.w - this.view.ox;
+    const ry = ((e.clientY - box.top) / box.height) * this.view.h - this.view.oy;
+    let best: { id: PlotId; depth: number } | null = null;
+    for (const id of PLOT_IDS) {
       const p = this.lay.plots[id];
-      const b = lookBox(LOOKS[id][stageOf(id, this.levels[id] ?? 0)]);
+      const b = lookBox(lookFor(id, this.stageNow(id)), p.flip);
       // (an empty plot is small to hit, so every building has at least a generous patch of ground)
       const cx = p.x + (b.x0 + b.x1) / 2;
-      const half = Math.max(b.w / 2, 24);
-      const tall = Math.max(b.h, 36);
+      const half = Math.max(b.w / 2, 24, 22 / this.css);
+      const tall = Math.max(b.h, 36, 40 / this.css);
       if (rx < cx - half || rx > cx + half || ry < p.y - tall || ry > p.y + 6) continue;
       if (!best || p.y > best.depth) best = { id, depth: p.y };
     }
     if (best) this.onPick(best.id);
+    return !!best;
   }
 }
 

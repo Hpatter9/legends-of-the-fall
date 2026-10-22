@@ -158,6 +158,8 @@ export interface Battle {
   spells: SpellState;
   /** The castle's boost for every hero placed. */
   heroBoost?: Boost;
+  /** How much faster every hero walks (the castle's Stable); 1 when unset. */
+  heroMove?: number;
   /** The boost the foes of this fight were made with (the fighters a foe calls up take it too). */
   foeBoost?: Boost;
   /** The team bonus of the placed heroes' traits, fixed when the fight starts. */
@@ -186,6 +188,8 @@ export interface Stage {
   /** Every hero's boost (the castle's), multiplied into the hero's own; and how fast the king's mana fills. */
   heroes?: Boost;
   mana?: number;
+  /** How much faster every hero walks (the castle's Stable); steps only, not swings. */
+  move?: number;
   /** The relics' hooks (`relics.ts`), read when the fight starts. */
   relics?: { team: TraitEffects; first?: number; revive?: boolean };
   /** The land the fight is on (`areaFor` in run.ts); the highlands when unset. */
@@ -229,6 +233,7 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   const board = makeBoard(seed, stage.area);
   const b: Battle = { seed, board, units: [], phase: 'deploy', t: 0, rng: mixSeed(seed, 0xf167), pending: [], skillRng: mixSeed(seed, 0x5c111), zones: [], nextId: 1, spells: freshSpells(stage.mana) };
   if (stage.heroes) b.heroBoost = stage.heroes;
+  if (stage.move && stage.move !== 1) b.heroMove = stage.move;
   if (stage.foes) b.foeBoost = stage.foes;
   if (stage.relics) b.relics = stage.relics;
   // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed
@@ -482,7 +487,7 @@ function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void {
   const to = tileOf(b, next);
   // (a sure-footed fighter climbs at no extra cost)
   const cost = def.flies ? 1 : 1 + (sureFooted(me) ? 0 : Math.max(0, to.h - from.h)) + (to.ground ? GROUND_COST[to.ground] : 0);
-  const ms = Math.round((def.moveMs * cost) / speedOf(b, me));
+  const ms = Math.round((def.moveMs * cost) / (speedOf(b, me) * (me.side === 'hero' ? b.heroMove ?? 1 : 1)));
   me.step = { u: me.u, v: me.v, h: from.h, at: b.t, ms };
   me.facing = wayTo(me, next);
   me.u = next.u;

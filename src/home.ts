@@ -88,7 +88,8 @@ export class Home {
   ) {
     this.scene = new MenuScene($('hmScene'));
     this.tavern = new Tavern((kind) => this.openSheet(kind));
-    this.castle = new CastleScene((id) => this.openBuilding(id));
+    // (the tavern leads to the Heroes tab, the chapel to the Spells tab and the signpost to the battle screen; the six upgrades open their cards)
+    this.castle = new CastleScene((id) => (id === 'tavern' ? this.show('heroes') : id === 'chapel' ? this.show('spells') : id === 'armies' ? this.show('battle') : this.openBuilding(id)));
     const pages = $('hmPages');
     const bar = $('hmTabs');
     for (const t of TABS) {

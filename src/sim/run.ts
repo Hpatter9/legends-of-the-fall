@@ -7,7 +7,7 @@ import { startBattle, type Battle, type Boost, type Stage } from './battle';
 import { AREAS, type Area } from './board';
 import { BOSS_BANDS, FIELD_BANDS } from './foes';
 import { armyById, armyIndex, waveBoost, type Army } from './armies';
-import { bonusGold, heroBoost, manaRate, newCastle, type Castle } from './castle';
+import { bonusGold, heroBoost, manaRate, moveRate, newCastle, type Castle } from './castle';
 import { MYTHIC_SIZE, rankMult, rarityOf, tierMult } from './meta';
 import { levelBoost } from './levels';
 import { starGold } from './stars';
@@ -224,6 +224,7 @@ export function startStage(run: Run): Battle {
     foes: { hp: base.foes!.hp! * foes, atk: base.foes!.atk! * foes },
     heroes: { hp: castle.hp! * (hp ?? 1) * (run.buff?.hp ?? 1), atk: castle.atk! * (atk ?? 1) * (run.buff?.atk ?? 1) },
     mana: manaRate(run.castle) * (mana ?? 1),
+    move: moveRate(run.castle),
     relics: Object.keys(team).length || first || revive ? { team, first, revive } : undefined,
   });
 }

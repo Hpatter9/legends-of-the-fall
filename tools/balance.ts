@@ -21,6 +21,7 @@ import { fight, place, playOut, startBattle, stepBattle, type Battle, type Stage
 import { FIELD_BANDS } from '../src/sim/foes';
 import { chooseOption, leaveEvent } from '../src/sim/events';
 import { fightXp, gainXp, levelOfKind } from '../src/sim/levels';
+import { maxLevel, newCastle, xpRate, type Castle } from '../src/sim/castle';
 import { newMeta, rankOf, rarityOf, RARITY_NAMES, type Meta } from '../src/sim/meta';
 import { boostOf, bandFor, finish, gradeBoost, isBossStage, newRun, type Owned, type Run, SQUAD, stageBoost, startStage, summon } from '../src/sim/run';
 import { ARMIES, armyById, settleWave } from '../src/sim/armies';
@@ -218,6 +219,13 @@ function stageCurve(): void {
 // heroes) and equips no gear. A run ends on a lost fight; `run.best` is the furthest stage fought.
 
 const RUNS = arg('--runs', 12);
+// (`--castle stable=5,library=5` plays the whole-run table with those castle levels, to see what an upgrade does to the climb)
+const CASTLE: Castle = newCastle();
+if (process.argv.includes('--castle'))
+  for (const kv of process.argv[process.argv.indexOf('--castle') + 1].split(',')) {
+    const [id, n] = kv.split('=');
+    if (id in CASTLE) CASTLE[id as keyof Castle] = Math.max(0, Math.min(maxLevel(id as keyof Castle), Number(n)));
+  }
 const MAX_STAGE = 60;
 
 /** How strong a hero is for the squad: its base hp times attack, times its boosts (grade, rank, level, gear, bumps). */
@@ -229,7 +237,7 @@ function strengthOf(meta: Meta, h: Owned): number {
 
 /** One whole run for a save: returns the furthest stage fought. The XP of every fight goes into the save's meta. */
 function playRun(meta: Meta, seed: number): number {
-  const run: Run = newRun(seed, HEROES);
+  const run: Run = newRun(seed, HEROES, { ...CASTLE });
   while (!run.over && run.stage <= MAX_STAGE) {
     while (run.event) if (chooseOption(run, 0) === null) leaveEvent(run);
     while (summon(run)) {
@@ -243,7 +251,7 @@ function playRun(meta: Meta, seed: number): number {
     fight(b);
     playOut(b);
     finish(run, b.phase === 'won', ratingOf(b, isBossStage(run.stage)).stars);
-    gainXp(meta, fightXp(b));
+    gainXp(meta, fightXp(b, xpRate(CASTLE)));
   }
   return run.best;
 }

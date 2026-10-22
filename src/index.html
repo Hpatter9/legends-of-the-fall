@@ -339,21 +339,21 @@
   /* the tavern: the Heroes page is one pannable picture, with the count pinned over it */
   .hmPage.hm-heroes { padding: 0; overflow: hidden; background: #1a0f0a; }
   .tvWrap { position: absolute; inset: 0; }
-  .tvScroll { position: absolute; inset: 0; display: flex; overflow: auto; touch-action: pan-x pan-y; overscroll-behavior: contain; scrollbar-width: none; }
+  .tvScroll { position: absolute; inset: 0; display: flex; overflow: hidden; overscroll-behavior: contain; scrollbar-width: none; }
   .tvScroll::-webkit-scrollbar { display: none; }
   .tvRoom { flex: none; margin: auto; image-rendering: pixelated; }
   .tvCount { position: absolute; left: 8px; top: 8px; padding: 3px 9px 4px; font: 700 12px var(--body); letter-spacing: 0.5px; color: var(--gold-hi); text-shadow: 0 1px 0 #000; background: rgba(26, 13, 7, 0.82); border: 2px solid var(--gold-lo); border-radius: 8px; pointer-events: none; }
   .tvCount small { display: block; font-size: 9px; font-weight: 400; letter-spacing: 0; color: var(--dim); }
   /* the castle courtyard (Castle tab) */
-  .hmPage.hm-castle { padding: 0; overflow: hidden; background: #a0b35a; display: flex; flex-direction: column; }
+  .hmPage.hm-castle { padding: 0; overflow: hidden; background: #64742f; display: flex; flex-direction: column; }
   .ctWrap { position: relative; flex: 1; min-height: 0; }
-  .ctScroll { position: absolute; inset: 0; display: flex; overflow: auto; touch-action: pan-x pan-y; overscroll-behavior: contain; scrollbar-width: none; }
+  .ctScroll { position: absolute; inset: 0; display: flex; overflow: hidden; overscroll-behavior: contain; scrollbar-width: none; }
   .ctScroll::-webkit-scrollbar { display: none; }
   .ctStage { position: relative; flex: none; margin: auto; }
   .ctRoom { display: block; image-rendering: pixelated; }
   .ctTags { position: absolute; inset: 0; pointer-events: none; }
-  .ctTag { position: absolute; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; padding: 2px 8px 3px; font: 700 12px var(--body); letter-spacing: 0.4px; color: var(--gold-hi); text-shadow: 0 1px 0 #000; background: rgba(26, 13, 7, 0.86); border: 2px solid var(--gold-lo); border-radius: 8px; pointer-events: auto; white-space: nowrap; cursor: pointer; }
-  .ctTag span { font-weight: 400; font-size: 10px; color: var(--dim); }
+  .ctTag { position: absolute; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 32px; min-height: 32px; padding: 1px 5px 2px; font: 700 10px/1.15 var(--body); letter-spacing: 0.2px; color: var(--gold-hi); text-shadow: 0 1px 0 #000; background: rgba(26, 13, 7, 0.88); border: 2px solid var(--gold-lo); border-radius: 7px; pointer-events: auto; white-space: nowrap; cursor: pointer; }
+  .ctTag span { font-weight: 400; font-size: 9px; color: var(--dim); }
   .ctTag:active:not(:disabled) { transform: translate(-50%, -100%) scale(0.94); }
   .ctTag.ready { border-color: var(--gold-hi); box-shadow: 0 0 8px rgba(255, 210, 90, 0.7); }
   .ctTag .ctUp { position: absolute; right: -7px; top: -9px; font-style: normal; font-size: 13px; color: #8ff08a; text-shadow: 0 1px 0 #000, 0 0 4px #1d5a1a; animation: ctbob 0.9s ease-in-out infinite; }

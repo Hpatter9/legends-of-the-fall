@@ -1,9 +1,10 @@
-// The castle courtyard's floor plan: each upgrade's four looks (pictures from Chronos's village art, put together from parts), where
+// The castle courtyard's floor plan: each upgrade's four looks (pictures from Chronos's isometric building kits, put together from parts), where
 // every building stands in the two arrangements of the yard (upright and sideways), what smokes, glints or glows, the road, the wall and
-// the heroes' lawn, and the words of the upgrade cards. Plain data (no Pixi, no DOM), so a test can check it. All numbers are in the scene's
+// the heroes' strolling band, and the words of the upgrade cards. Plain data (no Pixi, no DOM), so a test can check it. All numbers are in the scene's
 // own pixels (the art's own pixels: the scene is drawn whole-number times bigger); `y` is a building's foot line, which the scene sorts by.
 
-import { BUILDING_IDS, BUILDINGS, GOLD_PER_LEVEL, HP_PER_LEVEL, ATK_PER_LEVEL, MANA_PER_LEVEL, maxLevel, spellBudget, type BuildingId } from '../sim/castle';
+import { buildLand, type Land, type LandProp } from './castleLand';
+import { BUILDING_IDS, BUILDINGS, GOLD_PER_LEVEL, HP_PER_LEVEL, ATK_PER_LEVEL, MANA_PER_LEVEL, MOVE_PER_LEVEL, XP_PER_LEVEL, maxLevel, newCastle, spellBudget, type BuildingId } from '../sim/castle';
 
 /** How many looks a building has: 0 an empty plot, 1 small, 2 bigger, 3 grand. */
 export const STAGES = 4;
@@ -17,59 +18,69 @@ export function stageOf(id: BuildingId, level: number): number {
 
 /** Every picture in `src/art/castle/` and its size (a test checks the table against the files). */
 export const SPRITE_SIZE: Record<string, readonly [number, number]> = {
-  anvil: [20, 14],
-  barrel: [20, 22],
-  box1: [17, 16],
-  box2: [18, 18],
-  bush1: [35, 46],
-  bush2: [37, 48],
-  camp3: [53, 34],
-  cart: [48, 26],
-  chest_gold: [19, 14],
-  cobble: [16, 16],
-  crate: [16, 21],
-  crate_stack: [27, 30],
-  crates_tall: [25, 30],
-  fence: [27, 15],
-  flower1: [6, 6],
-  flower3: [5, 5],
-  flower5: [6, 4],
-  gate: [32, 32],
-  gb_barrels: [38, 42],
-  gb_canopy: [129, 87],
-  gb_crates: [21, 38],
-  gb_house: [139, 160],
-  gb_sacks: [42, 29],
-  gb_shop: [110, 98],
-  gb_signpost: [28, 44],
-  gold1: [19, 17],
-  gold2: [15, 13],
-  house1: [116, 112],
-  house2: [156, 135],
-  house4: [154, 149],
-  lantern: [16, 40],
-  log: [34, 21],
-  palisade: [32, 32],
-  palisade2: [32, 32],
-  pebble1: [11, 8],
-  pebble3: [11, 7],
-  pebble5: [7, 5],
-  planks: [26, 17],
-  rack: [28, 42],
-  sign_sword: [23, 21],
-  tower1: [30, 57],
-  tower2: [54, 98],
-  tower3: [68, 134],
-  tree1: [114, 129],
-  tree2: [108, 147],
-  tt_gable: [48, 132],
-  tt_long: [96, 109],
-  tuft1: [5, 6],
-  tuft2: [9, 6],
-  tuft3: [5, 7],
-  well: [43, 54],
-  yurt1: [79, 76],
-  yurt2: [79, 76]
+  anvil_stall: [72, 89],
+  atelier: [93, 105],
+  banner: [25, 79],
+  barracks: [138, 129],
+  barrels: [33, 44],
+  baskets: [41, 59],
+  berries: [60, 73],
+  birch: [55, 135],
+  brazier: [36, 90],
+  bridge: [186, 96],
+  bush: [38, 37],
+  campfire: [66, 46],
+  cart: [82, 60],
+  chapel: [101, 162],
+  chests: [70, 54],
+  church: [99, 158],
+  cobble_tile: [90, 60],
+  corral: [244, 104],
+  cottage: [103, 101],
+  crates: [43, 52],
+  crystals: [41, 60],
+  farmhouse: [90, 85],
+  fence: [78, 59],
+  field: [97, 65],
+  field2: [106, 63],
+  flowers: [41, 32],
+  forge: [114, 139],
+  gatehouse: [137, 127],
+  granary: [72, 99],
+  grass_tile: [89, 59],
+  great: [136, 153],
+  great_hall: [146, 147],
+  hay: [48, 51],
+  haybig: [72, 56],
+  herb: [94, 59],
+  lamp: [26, 81],
+  longhouse: [119, 112],
+  manor: [121, 142],
+  oak: [64, 90],
+  pen: [153, 100],
+  pine: [41, 88],
+  rack: [86, 84],
+  rocks: [36, 38],
+  roses: [38, 51],
+  shed: [82, 76],
+  shrine: [77, 86],
+  sign: [34, 64],
+  signpost: [37, 74],
+  silo: [94, 97],
+  spiral: [68, 128],
+  stable: [176, 135],
+  stall: [69, 75],
+  stall2: [100, 80],
+  stall3: [106, 83],
+  statue: [79, 119],
+  stockpile: [87, 89],
+  tavern: [119, 125],
+  thatch: [129, 118],
+  wall: [93, 121],
+  water_tile: [90, 56],
+  watchtower: [79, 134],
+  woodpile: [50, 54],
+  workshop: [95, 110],
 };
 
 /** One picture in a look: its centre across and where its bottom edge sits, from the building's plot (y down, 0 = the foot line). */
@@ -85,39 +96,73 @@ export interface Look {
   parts: readonly Part[];
 }
 
-/** The four looks of each building. A house is never used for two buildings: the village art has seven, so a building grows by adding
- *  wings, props and neighbours, and the mage tower's three towers are one family (made in the village's palette). */
+/** The four looks of each building, all from the isometric kits (one 2:1 view, lit from the upper left). A piece is never used for two
+ *  buildings; a building grows by getting a bigger house and more props around it. */
 export const LOOKS: Record<BuildingId, readonly Look[]> = {
   treasury: [
-    { parts: [P('crates_tall', -22), P('crate_stack', 6, -2), P('box1', 30, 3)] },
-    { parts: [P('house1', 0), P('chest_gold', -38, 7)] },
-    { parts: [P('tt_long', 0), P('chest_gold', -60, 6), P('gold1', -40, 9), P('gold2', 42, 9), P('crates_tall', 64)] },
-    { parts: [P('gb_house', 0), P('crates_tall', 74), P('lantern', -84), P('gold1', -62, 9), P('gold2', -46, 12), P('chest_gold', -30, 11), P('gold1', 46, 9), P('chest_gold', 34, 12)] },
+    { parts: [P('barrels', -22, 4), P('chests', 12)] },
+    { parts: [P('stockpile', -6), P('chests', 44, 10)] },
+    { parts: [P('longhouse', 6), P('barrels', -60, 8)] },
+    { parts: [P('great_hall', 0)] },
   ],
   barracks: [
-    { parts: [P('camp3', 0)] },
-    { parts: [P('yurt1', 0), P('box2', -54, 2), P('rack', 52, 4)] },
-    { parts: [P('house2', 0), P('rack', 86, 6), P('lantern', -84)] },
-    { parts: [P('house4', 0), P('yurt2', -50, 24), P('rack', 86, 6), P('lantern', -84), P('fence', 64, 14)] },
+    { parts: [P('campfire', 0, 4), P('hay', -44, 2)] },
+    { parts: [P('cottage', 8), P('hay', -50, 8)] },
+    { parts: [P('thatch', -4), P('campfire', 52, 22)] },
+    { parts: [P('barracks', 2), P('banner', -70, 16)] },
   ],
   armoury: [
-    { parts: [P('planks', -34, -2), P('anvil', -8), P('log', 18)] },
-    { parts: [P('gb_canopy', 0), P('anvil', -30, 7), P('rack', 40, 7)] },
-    { parts: [P('gb_shop', 0), P('anvil', -44, 8), P('rack', 46, 8), P('sign_sword', 34, -2)] },
-    { parts: [P('gb_shop', -26), P('tt_gable', 54), P('anvil', -64, 10), P('rack', -4, 12), P('sign_sword', -46, -2)] },
+    { parts: [P('rocks', -26, 2), P('crates', 8), P('woodpile', 44, 4)] },
+    { parts: [P('anvil_stall', -6), P('crates', 46, 10)] },
+    { parts: [P('workshop', 4), P('woodpile', -56, 10), P('crates', 58, 12)] },
+    { parts: [P('forge', 14), P('anvil_stall', -48, 14)] },
   ],
   mageTower: [
-    { parts: [P('box2', -30, 2), P('pebble1', -12), P('pebble3', 12, 2), P('pebble5', 26, -1)] },
-    { parts: [P('tower1', 0), P('pebble5', -24, 2)] },
-    { parts: [P('tower2', 0), P('pebble1', -32, 2)] },
-    { parts: [P('tower3', 0), P('pebble1', -42, 2), P('pebble3', 44, 3)] },
+    { parts: [P('rocks', -20, 2), P('crystals', 16)] },
+    { parts: [P('shrine', 0)] },
+    { parts: [P('spiral', 18), P('shrine', -34, 8)] },
+    { parts: [P('spiral', 38, -6), P('chapel', -10, 6)] },
+  ],
+  stable: [
+    { parts: [P('hay', -16, 2), P('woodpile', 22, 4)] },
+    { parts: [P('cart', 0, 6), P('hay', -50, 8)] },
+    { parts: [P('shed', -10), P('cart', 58, 14)] },
+    { parts: [P('stable', 0)] },
+  ],
+  library: [
+    { parts: [P('baskets', -14, 4), P('crates', 22, 6)] },
+    { parts: [P('granary', 0), P('baskets', -46, 10)] },
+    { parts: [P('atelier', 0), P('baskets', -58, 10)] },
+    { parts: [P('manor', 0)] },
   ],
 };
+
+/** The places that are not upgrades: tapping the tavern goes to the Heroes tab (the tavern scene), the chapel to the Spells tab, the signpost down the road to the Armies screen. */
+export type PlaceId = 'tavern' | 'chapel' | 'armies';
+export const PLACE_IDS: PlaceId[] = ['tavern', 'chapel', 'armies'];
+/** Anything with a plot in the yard: the six upgrades and the two places. */
+export type PlotId = BuildingId | PlaceId;
+export const PLOT_IDS: PlotId[] = [...BUILDING_IDS, ...PLACE_IDS];
+/** What a place is called on its tag, and what it leads to. */
+export const PLACES: Record<PlaceId, { name: string; to: string }> = {
+  tavern: { name: 'Tavern', to: 'your heroes' },
+  chapel: { name: 'Chapel', to: 'spells' },
+  armies: { name: 'Armies', to: 'to battle' },
+};
+/** A place's one look (it does not grow): the tavern with its sign, barrels and lantern; the chapel on its own. */
+export const PLACE_LOOK: Record<PlaceId, Look> = {
+  tavern: { parts: [P('tavern', 0), P('lamp', -58, 8), P('barrels', 52, 22), P('signpost', 84, 14)] },
+  chapel: { parts: [P('church', 0)] },
+  armies: { parts: [P('sign', 0)] },
+};
+export const isPlaceId = (id: PlotId): id is PlaceId => (PLACE_IDS as string[]).includes(id);
+/** The look of a plot: a building's at a stage, or a place's own. */
+export const lookFor = (id: PlotId, stage: number): Look => (isPlaceId(id) ? PLACE_LOOK[id] : LOOKS[id][stage]);
 
 export const spriteName = (id: BuildingId, stage: number): string => `${id}${stage}`;
 
 /** The box a look fills: across from `x0` to `x1` (from the plot's centre) and `h` up from the foot line. */
-export function lookBox(look: Look): { x0: number; x1: number; h: number; w: number } {
+export function lookBox(look: Look, flip = false): { x0: number; x1: number; h: number; w: number } {
   let x0 = Infinity;
   let x1 = -Infinity;
   let h = 0;
@@ -127,7 +172,7 @@ export function lookBox(look: Look): { x0: number; x1: number; h: number; w: num
     x1 = Math.max(x1, p.dx + w / 2);
     h = Math.max(h, ph - p.dy);
   }
-  return { x0, x1, h, w: x1 - x0 };
+  return flip ? { x0: -x1, x1: -x0, h, w: x1 - x0 } : { x0, x1, h, w: x1 - x0 };
 }
 
 /** The thing that comes from a spot on a look (offsets from the plot's foot): smoke from a chimney, a glint on gold, a spark at the forge, runes by the tower. */
@@ -155,47 +200,89 @@ const smokeAt = (id: BuildingId, stage: number, index: number, fx: number, fy: n
 
 export const VENTS: Record<BuildingId, readonly (readonly Vent[])[]> = {
   treasury: [
-    [],
-    [smokeAt('treasury', 1, 0, 0.17, 0.08)],
-    [smokeAt('treasury', 2, 0, 0.24, 0.02), { dx: -40, dy: -8, kind: 'glint' }, { dx: 42, dy: -6, kind: 'glint' }],
-    [smokeAt('treasury', 3, 0, 0.33, 0.02), { dx: -62, dy: -8, kind: 'glint' }, { dx: -30, dy: -10, kind: 'glint' }, { dx: 46, dy: -8, kind: 'glint' }, { dx: 34, dy: -11, kind: 'glint' }],
+    [{ dx: 12, dy: -30, kind: 'glint' }],
+    [{ dx: 44, dy: -30, kind: 'glint' }],
+    [smokeAt('treasury', 2, 0, 0.64, 0.04)],
+    [{ dx: -4, dy: -34, kind: 'glint' }, { dx: -22, dy: -28, kind: 'glint' }],
   ],
-  barracks: [[], [], [smokeAt('barracks', 2, 0, 0.17, 0.23)], [smokeAt('barracks', 3, 0, 0.4, 0.09)]],
+  barracks: [[{ dx: 0, dy: -30, kind: 'smoke' }], [smokeAt('barracks', 1, 0, 0.7, 0.04)], [{ dx: 52, dy: -20, kind: 'smoke' }], [smokeAt('barracks', 3, 0, 0.5, 0.02)]],
   armoury: [
     [],
-    [{ dx: -30, dy: -12, kind: 'spark' }],
-    [{ dx: -44, dy: -13, kind: 'spark' }],
-    [{ dx: -64, dy: -16, kind: 'spark' }, { dx: -60, dy: -16, kind: 'spark' }],
+    [{ dx: -14, dy: -28, kind: 'spark' }],
+    [{ dx: 2, dy: -26, kind: 'spark' }, smokeAt('armoury', 2, 0, 0.5, 0.04)],
+    [{ dx: 4, dy: -30, kind: 'spark' }, { dx: -48, dy: -30, kind: 'spark' }, smokeAt('armoury', 3, 0, 0.62, 0.02)],
   ],
-  mageTower: [[], [], [{ dx: 0, dy: -50, kind: 'rune' }], [{ dx: 0, dy: -70, kind: 'rune' }]],
+  stable: [[], [], [{ dx: -10, dy: -60, kind: 'smoke' }], [{ dx: 30, dy: -120, kind: 'smoke' }]],
+  library: [[], [{ dx: 0, dy: -100, kind: 'smoke' }], [{ dx: 0, dy: -60, kind: 'rune' }, { dx: -20, dy: -80, kind: 'rune' }], [{ dx: 0, dy: -110, kind: 'rune' }, { dx: 30, dy: -80, kind: 'rune' }, { dx: -30, dy: -60, kind: 'rune' }]],
+  mageTower: [[], [{ dx: 0, dy: -40, kind: 'rune' }], [{ dx: 18, dy: -80, kind: 'rune' }, { dx: -34, dy: -44, kind: 'rune' }], [{ dx: -10, dy: -100, kind: 'rune' }, { dx: 38, dy: -96, kind: 'rune' }]],
 };
 
 export const LIGHTS: Record<BuildingId, readonly (readonly Light[])[]> = {
-  treasury: [[], [], [{ dx: 0, dy: -40, size: 56, tint: '#ffd24a', al: 0.25 }], [{ dx: 0, dy: -50, size: 80, tint: '#ffd24a', al: 0.3 }]],
-  barracks: [[], [], [], []],
-  armoury: [[], [{ dx: -30, dy: -10, size: 28, tint: '#ff9a3c', al: 0.5 }], [{ dx: -44, dy: -10, size: 30, tint: '#ff9a3c', al: 0.5 }], [{ dx: -64, dy: -12, size: 34, tint: '#ff9a3c', al: 0.55 }]],
-  mageTower: [[], [], [{ dx: 0, dy: -52, size: 44, tint: '#58d8ff', al: 0.7 }], [{ dx: 0, dy: -86, size: 40, tint: '#b890ff', al: 0.6 }, { dx: 0, dy: -52, size: 52, tint: '#58d8ff', al: 0.7 }]],
+  stable: [[], [], [], []],
+  library: [[], [], [{ dx: 0, dy: -70, size: 40, tint: '#b890ff', al: 0.5 }], [{ dx: 0, dy: -80, size: 56, tint: '#58f0d0', al: 0.5 }]],
+  treasury: [[], [], [{ dx: 0, dy: -40, size: 56, tint: '#ffd24a', al: 0.18 }], [{ dx: 0, dy: -50, size: 80, tint: '#ffd24a', al: 0.25 }]],
+  barracks: [[{ dx: 0, dy: -12, size: 40, tint: '#ff9a3c', al: 0.5 }], [], [{ dx: 52, dy: -12, size: 34, tint: '#ff9a3c', al: 0.45 }], []],
+  armoury: [[], [{ dx: -14, dy: -26, size: 30, tint: '#ff9a3c', al: 0.5 }], [{ dx: 2, dy: -30, size: 40, tint: '#ff9a3c', al: 0.5 }], [{ dx: 4, dy: -36, size: 52, tint: '#ff9a3c', al: 0.55 }]],
+  mageTower: [[], [{ dx: 0, dy: -50, size: 44, tint: '#58d8ff', al: 0.6 }], [{ dx: 18, dy: -104, size: 40, tint: '#b890ff', al: 0.6 }, { dx: -34, dy: -50, size: 44, tint: '#58d8ff', al: 0.6 }], [{ dx: -10, dy: -104, size: 56, tint: '#58f0d0', al: 0.55 }, { dx: 38, dy: -96, size: 36, tint: '#b890ff', al: 0.5 }]],
 };
 
+/** What smokes at a place: the tavern's chimney. */
+export const PLACE_VENTS: Record<PlaceId, readonly Vent[]> = { tavern: [{ dx: 22, dy: -118, kind: 'smoke' }], chapel: [], armies: [] };
+
+/** Ground tiles: a diamond 90 across and 52 down, laid in rows half a tile along and half a tile down from the last. */
+export const TILE_W = 90;
+export const TILE_H = 52;
+
+/** The yard is a lattice of ground tiles on the isometric grid: a tile is `(u, v)`, `u` running down and to the right, `v` down and to the left.
+ *  `grid` is the screen position of the middle of tile (0, 0). Everything that stands in the yard is snapped to a tile. */
+export interface Grid {
+  x: number;
+  y: number;
+}
+export const cellX = (g: Grid, u: number, v: number): number => g.x + ((u - v) * TILE_W) / 2;
+export const cellY = (g: Grid, u: number, v: number): number => g.y + ((u + v) * TILE_H) / 2;
+
+/** A block of tiles, both ends included. */
+export interface Block {
+  u0: number;
+  v0: number;
+  u1: number;
+  v1: number;
+}
+
+/** How far below a plot's middle tile the picture's foot line sits (a building's own base is about a tile and a half across). */
+const PLOT_FOOT = 40;
+
+/** A building's plot: the tiles it stands on (`u`, `v` the first, `w` across in `u`, `d` in `v`), which tile its door opens onto, and whether its
+ *  picture is mirrored so the door faces its road (the pictures' doors face down-left; mirrored, down-right). `x`, `y` are the foot line. */
 export interface Plot {
+  u: number;
+  v: number;
+  w: number;
+  d: number;
+  flip: boolean;
+  door: { u: number; v: number };
   /** Centre across and the foot line. */
   x: number;
   y: number;
+  /** Where the bottom of the name tag sits (the scene row); by default just above the building's roof. */
+  tagY?: number;
+  /** How far the tag sits across from the building's middle (to keep neighbours' tags apart). */
+  tagDx?: number;
 }
 
-/** A standing prop of the yard (sorted with the buildings and heroes by its foot line). */
+/** A standing prop of the yard on its own tile (sorted with the buildings and heroes by its foot, or by `depth` when given: the wall and what
+ *  stands beyond it sit behind everything). `flip` mirrors it (a wall run seen from the other side). `x`, `y` are the foot, from the tile. */
 export interface Prop {
   sprite: string;
+  u: number;
+  v: number;
   x: number;
   y: number;
-}
-
-/** A cobbled patch (scene pixels). */
-export interface Patch {
-  x0: number;
-  y0: number;
-  x1: number;
-  y1: number;
+  flip?: boolean;
+  depth?: number;
+  /** Draw only the columns `[from, to)` of the picture as seen (the last piece of a wall run, cut where the tower covers it). */
+  cut?: readonly [number, number];
 }
 
 /** One arrangement of the yard. */
@@ -203,98 +290,240 @@ export interface Layout {
   /** The scene's size. */
   w: number;
   h: number;
-  /** The palisade runs across at `wallY` (its top); the gate stands at `gateX`. */
-  wallY: number;
-  gateX: number;
-  plots: Record<BuildingId, Plot>;
+  /** How far down the village itself reaches (the countryside runs on below it, to `h`). */
+  villageH: number;
+  grid: Grid;
+  /** The countryside below the village. */
+  land: Land;
+  /** Flat things on the countryside's ground (field beds, the bridge) and its standing scenery (trees, fences, farm buildings), by tile. */
+  ground: readonly Prop[];
+  scenery: readonly Prop[];
+  /** The tiles of the wall's four corner towers (the ring runs between them). */
+  yard: Block;
+  plots: Record<PlotId, Plot>;
   props: readonly Prop[];
-  /** The cobbled road and plaza. */
-  roads: readonly Patch[];
+  /** The plaza and the roads, as blocks of tiles. */
+  plaza: Block;
+  roads: readonly Block[];
   /** Pennant poles: foot of the pole and which way the cloth blows. */
   flags: readonly { x: number; y: number; dir: 1 | -1 }[];
-  /** Where the heroes stroll (they pass behind and in front of buildings by their foot line). */
-  walk: { x0: number; x1: number; y0: number; y1: number };
-  /** The scene row at the top of the view when it opens, for a screen shorter than the scene. */
-  openTop: number;
 }
 
-/** Upright (a phone standing): 360 wide, a road down the middle from the gate; tower and treasury behind the plaza, barracks and armoury in front. All four show at once. */
-export const TALL: Layout = {
-  w: 360,
-  h: 600,
-  wallY: 44,
-  gateX: 180,
-  plots: {
-    mageTower: { x: 80, y: 300 },
-    treasury: { x: 268, y: 306 },
-    barracks: { x: 98, y: 522 },
-    armoury: { x: 272, y: 524 },
-  },
-  props: [
-    { sprite: 'lantern', x: 126, y: 80 },
-    { sprite: 'lantern', x: 234, y: 80 },
-    { sprite: 'well', x: 180, y: 366 },
-    { sprite: 'tree1', x: 36, y: 188 },
-    { sprite: 'tree2', x: 326, y: 190 },
-    { sprite: 'bush1', x: 20, y: 380 },
-    { sprite: 'bush2', x: 340, y: 590 },
-    { sprite: 'gb_barrels', x: 128, y: 390 },
-    { sprite: 'cart', x: 326, y: 432 },
-    { sprite: 'gb_sacks', x: 40, y: 440 },
-  ],
-  roads: [
-    { x0: 148, y0: 76, x1: 212, y1: 600 },
-    { x0: 112, y0: 322, x1: 248, y1: 374 },
-  ],
-  flags: [
-    { x: 112, y: 56, dir: 1 },
-    { x: 248, y: 56, dir: -1 },
-  ],
-  walk: { x0: 128, x1: 232, y0: 110, y1: 592 },
-  openTop: 0,
+export const inBlock = (b: Block, u: number, v: number): boolean => u >= b.u0 && u <= b.u1 && v >= b.v0 && v <= b.v1;
+/** Whether a tile is paved (the plaza or a road). */
+const pavedSets = new WeakMap<Layout, Set<string>>();
+export const isPaved = (lay: Layout, u: number, v: number): boolean => {
+  let set = pavedSets.get(lay);
+  if (!set) {
+    set = new Set();
+    for (const b of [lay.plaza, ...lay.roads]) for (let a = b.u0; a <= b.u1; a++) for (let c = b.v0; c <= b.v1; c++) set.add(`${a},${c}`);
+    pavedSets.set(lay, set);
+  }
+  return set.has(`${u},${v}`);
+};
+/** The tiles a hero may stroll on: the paving, but not where the statue or a brazier stands. */
+export function walkTiles(lay: Layout): { u: number; v: number }[] {
+  const blocked = new Set(lay.props.filter((p) => p.sprite === 'statue' || p.sprite === 'brazier').map((p) => `${p.u},${p.v}`));
+  const out: { u: number; v: number }[] = [];
+  const seen = new Set<string>();
+  for (const b of [lay.plaza, ...lay.roads])
+    for (let u = b.u0; u <= b.u1; u++)
+      for (let v = b.v0; v <= b.v1; v++) {
+        const k = `${u},${v}`;
+        if (blocked.has(k) || seen.has(k)) continue;
+        seen.add(k);
+        out.push({ u, v });
+      }
+  return out;
+}
+/** The tiles under a plot. */
+export const footprint = (p: Plot): { u: number; v: number }[] => {
+  const out: { u: number; v: number }[] = [];
+  for (let i = 0; i < p.w; i++) for (let j = 0; j < p.d; j++) out.push({ u: p.u + i, v: p.v + j });
+  return out;
 };
 
-/** Sideways (a phone lying down): 756 wide, the four buildings in a row either side of the gate road, the road along their feet. */
-export const WIDE: Layout = {
-  w: 756,
-  h: 300,
-  wallY: 10,
-  gateX: 378,
+type PlotSpec = { u: number; v: number; w: number; d: number; flip: boolean; door: { u: number; v: number }; tag?: 'below'; tagDx?: number; tagDy?: number; tagAt?: readonly [number, number] };
+interface Spec {
+  w: number;
+  h: number;
+  villageH: number;
+  grid: Grid;
+  land: Land;
+  yard: Block;
+  plots: Record<PlotId, PlotSpec>;
+  /** [sprite, u, v, options]: `u`, `v` may be halves for a wall piece that spans two tiles. */
+  props: readonly (readonly [string, number, number, { flip?: boolean; depth?: number; dx?: number; dy?: number; cut?: readonly [number, number] }?])[];
+  plaza: Block;
+  roads: readonly Block[];
+  /** [u, v, up from the tile's foot, which way the cloth blows, across from the tile's middle] */
+  flags: readonly (readonly [number, number, number, 1 | -1, number?])[];
+}
+
+function build(spec: Spec): Layout {
+  const g = spec.grid;
+  const plots = {} as Record<PlotId, Plot>;
+  for (const id of PLOT_IDS) {
+    const q = spec.plots[id];
+    const cu = q.u + (q.w - 1) / 2;
+    const cv = q.v + (q.d - 1) / 2;
+    const x = Math.round(cellX(g, cu, cv));
+    const y = Math.round(cellY(g, cu, cv) + PLOT_FOOT);
+    const box = lookBox(lookFor(id, STAGES - 1));
+    plots[id] = { u: q.u, v: q.v, w: q.w, d: q.d, flip: q.flip, door: q.door, x, y, tagY: q.tagAt ? q.tagAt[1] : (q.tag === 'below' ? y + 46 : y - box.h - 4) + (q.tagDy ?? 0), tagDx: q.tagAt ? q.tagAt[0] - (x + (box.x0 + box.x1) / 2) : q.tagDx };
+  }
+  const props: Prop[] = spec.props.map(([sprite, u, v, o]) => ({
+    sprite,
+    u,
+    v,
+    x: Math.round(cellX(g, u, v) + (o?.dx ?? 0)),
+    y: Math.round(cellY(g, u, v) + TILE_H / 2 + (o?.dy ?? 0)),
+    flip: o?.flip,
+    depth: o?.depth,
+    cut: o?.cut,
+  }));
+  const onTile = (p: LandProp): Prop => ({ sprite: p.sprite, u: p.u, v: p.v, x: Math.round(cellX(g, p.u, p.v) + (p.dx ?? 0)), y: Math.round(cellY(g, p.u, p.v) + TILE_H / 2 + (p.dy ?? 0)), flip: p.flip });
+  return { w: spec.w, h: spec.h, villageH: spec.villageH, land: spec.land, ground: [...spec.land.ground, { sprite: 'bridge', ...spec.land.bridge }].map(onTile), scenery: spec.land.scenery.map(onTile), grid: g, yard: spec.yard, plots, props, plaza: spec.plaza, roads: spec.roads, flags: spec.flags.map(([u, v, dy, dir, dx]) => ({ x: Math.round(cellX(g, u, v) + (dx ?? 0)), y: Math.round(cellY(g, u, v) + dy), dir })) };
+}
+
+const BEHIND = -1000;
+
+type PropSpec = Spec['props'][number];
+
+/** One wall cell butts the next at this offset along a run (a run's top and foot lines are exactly straight, at the lattice's slope of 26 down for
+ *  45 across); `WALL_RISE` is how much higher a cell's far end stands than its near one (its lowest point is the near end of the foot). */
+export const WALL_STEP = { dx: 93, dy: 54 };
+export const WALL_RISE = 53;
+/** How far above a tower's foot line a run's foot meets it (the tower's base is about a dozen pixels deep). */
+const WALL_JOIN = 12;
+
+/** The back wall: the north-west and north-east sides only, meeting at the tower on the north corner `(u0, v0)`, each a straight run of identical wall
+ *  cells laid exactly `WALL_STEP` apart from that tower to the tower at its far end, `(u1, v0)` and `(u0, v1)` (the last cell is cut where the tower
+ *  covers it). The runs start and end under the towers' bases, so every joint is covered by a tower, and the gatehouse, drawn over the run, takes the
+ *  place of nothing: the wall goes on behind it. The front of the village is open. Both runs are behind the yard, so they are drawn behind everything. */
+function ring(u0: number, v0: number, u1: number, v1: number, gateV: number): PropSpec[] {
+  const out: PropSpec[] = [];
+  const W = SPRITE_SIZE.wall[0];
+  const run = (lengthTiles: number, side: 'nw' | 'ne'): void => {
+    const length = lengthTiles * (TILE_W / 2);
+    const n = Math.ceil(length / WALL_STEP.dx);
+    for (let i = 0; i < n; i++) {
+      const rem = length - i * WALL_STEP.dx;
+      // (the north-west run goes down-left from the corner tower, its cell's high end nearer the tower; the north-east one goes down-right, mirrored)
+      const dx = side === 'nw' ? -i * WALL_STEP.dx - (W - 1) / 2 : i * WALL_STEP.dx + (W - 1) / 2;
+      const cut = rem >= W ? undefined : side === 'nw' ? ([W - rem, W] as const) : ([0, rem] as const);
+      out.push(['wall', u0, v0, { dx, dy: WALL_RISE - WALL_JOIN + i * WALL_STEP.dy, flip: side === 'ne', depth: BEHIND, cut }]);
+    }
+  };
+  run(v1 - v0, 'nw');
+  run(u1 - u0, 'ne');
+  out.push(['gatehouse', u0, gateV, { depth: BEHIND + 1, dy: 2 }]);
+  out.push(['watchtower', u0, v0, { depth: BEHIND + 2 }]);
+  out.push(['watchtower', u1, v0, { depth: BEHIND + 2 }]);
+  out.push(['watchtower', u0, v1]);
+  return out;
+}
+
+/** The village, for every screen: a yard 11 x 11 tiles walled on its two back sides (north-west and north-east) with a tower at the north corner and at
+ *  each run's far end, the gatehouse in the north-west run near its south end and a road from it to the plaza (a clear 3 x 3 of paving, the statue in the middle, a brazier on each corner). Two roads wrap the plaza's north side: the mage
+ *  tower and the barracks stand on the one at its left (their pictures mirrored so the doors face it), the treasury and the armoury on the one at its
+ *  right. The scene is drawn a whole number of device pixels per scene pixel (`pickScale`); the front is open grass. */
+const VILLAGE_YARD: Block = { u0: -4, v0: -4, u1: 6, v1: 7 };
+/** The countryside, laid on the lattice round the village (nothing within two tiles of the wall's box). */
+const LAND = buildLand((u, v) => inBlock({ u0: VILLAGE_YARD.u0 - 2, v0: VILLAGE_YARD.v0 - 2, u1: VILLAGE_YARD.u1 + 2, v1: VILLAGE_YARD.v1 + 2 }, u, v));
+export const YARD: Layout = build({
+  w: 1030,
+  h: 3000,
+  villageH: 730,
+  grid: { x: 540, y: 340 },
+  land: LAND,
+  yard: VILLAGE_YARD,
+  plaza: { u0: 0, v0: 0, u1: 2, v1: 2 },
+  roads: [
+    { u0: -1, v0: -1, u1: 4, v1: -1 },
+    { u0: -1, v0: -2, u1: -1, v1: 5 },
+    { u0: -3, v0: 5, u1: -1, v1: 5 },
+    { u0: 3, v0: 2, u1: 3, v1: 6 },
+    { u0: 1, v0: 4, u1: 5, v1: 4 },
+    { u0: 3, v0: 6, u1: 5, v1: 6 },
+    ...LAND.road,
+  ],
   plots: {
-    mageTower: { x: 58, y: 244 },
-    treasury: { x: 238, y: 248 },
-    barracks: { x: 492, y: 246 },
-    armoury: { x: 668, y: 248 },
+    mageTower: { u: -2, v: 0, w: 1, d: 2, flip: true, door: { u: -1, v: 0 }, tagAt: [330, 190] },
+    treasury: { u: 0, v: -2, w: 2, d: 1, flip: false, door: { u: 0, v: -1 }, tagAt: [745, 195] },
+    barracks: { u: -2, v: 3, w: 1, d: 2, flip: true, door: { u: -1, v: 3 }, tagAt: [215, 290] },
+    armoury: { u: 3, v: -2, w: 2, d: 1, flip: false, door: { u: 3, v: -1 }, tagAt: [860, 300] },
+    stable: { u: 1, v: 3, w: 2, d: 1, flip: false, door: { u: 1, v: 4 }, tagAt: [330, 560] },
+    library: { u: 4, v: 5, w: 2, d: 1, flip: false, door: { u: 4, v: 6 }, tagAt: [540, 725] },
+    tavern: { u: 5, v: 3, w: 1, d: 1, flip: false, door: { u: 5, v: 4 }, tagAt: [770, 560] },
+    chapel: { u: -2, v: -2, w: 1, d: 1, flip: true, door: { u: -1, v: -2 }, tagAt: [540, 114] },
+    armies: { u: LAND.sign.u, v: LAND.sign.v, w: 1, d: 1, flip: false, door: LAND.sign.door },
   },
   props: [
-    { sprite: 'lantern', x: 324, y: 46 },
-    { sprite: 'lantern', x: 432, y: 46 },
-    { sprite: 'well', x: 378, y: 270 },
-    { sprite: 'tree1', x: 30, y: 128 },
-    { sprite: 'tree2', x: 722, y: 130 },
-    { sprite: 'bush1', x: 336, y: 150 },
-    { sprite: 'bush2', x: 428, y: 150 },
-    { sprite: 'gb_barrels', x: 310, y: 296 },
-    { sprite: 'cart', x: 580, y: 296 },
-  ],
-  roads: [
-    { x0: 362, y0: 42, x1: 394, y1: 292 },
-    { x0: 24, y0: 252, x1: 732, y1: 284 },
-    { x0: 344, y0: 248, x1: 412, y1: 296 },
+    ...ring(-4, -4, 6, 7, 5),
+    // the plaza
+    ['statue', 1, 1],
+    ['brazier', 0, 0],
+    ['brazier', 2, 0],
+    ['brazier', 0, 2],
+    ['brazier', 2, 2],
+    // beyond the wall
+    ['oak', -5, -4, { depth: BEHIND - 2 }],
+    ['pine', 1, -8, { depth: BEHIND - 2 }],
+    ['pine', -1, -7, { depth: BEHIND - 2 }],
+    // the market: stalls by the plaza and at the end of the main road
+    ['stall', 2, -2],
+    ['stall2', 5, -1],
+    ['stall3', 5, -2],
+    // by the mage tower: crystals; by the chapel and along the road: a lamp and flowerbeds
+    ['crystals', -3, 1, { dx: 8 }],
+    ['lamp', -2, -1],
+    ['flowers', -3, 2],
+    // by the armoury, across the road: flowerbeds
+    ['flowers', 3, 0],
+    ['flowers', 4, 0],
+    // by the barracks: a weapon rack and hay
+    ['rack', -2, 6],
+    ['hay', 0, 6],
+    ['roses', 1, 7],
+    // the garden: vegetable beds and an herb bed in the south corner, with a bush
+    ['field', 0, 5],
+    ['field', 1, 5],
+    ['herb', 2, 5],
+    ['bush', 0, 7, { dx: 4 }],
+    // a berry bush and a vegetable bed at the garden's end
+    ['berries', 2, 6],
+    ['field2', 1, 6],
   ],
   flags: [
-    { x: 304, y: 22, dir: 1 },
-    { x: 452, y: 22, dir: -1 },
+    [-4, -4, -96, 1],
+    [6, -4, -96, -1],
+    [-4, 7, -96, 1],
+    [-4, 5, -92, 1, 52],
+    [-4, 5, -98, -1, -52],
   ],
-  walk: { x0: 40, x1: 716, y0: 258, y1: 294 },
-  openTop: 40,
-};
+});
 
-/** The arrangement for a screen: the upright one when it is taller than wide. */
-export const layoutFor = (portrait: boolean): Layout => (portrait ? TALL : WIDE);
+/** The village is the same on every screen (the scale does the fitting). */
+export const layoutFor = (): Layout => YARD;
 
-/** The grass: one flat colour (the village ground sheet's), and the page behind the scene is the same. */
-export const GRASS = '#a0b35a';
+/** The outer edges of the wall from side to side (the left and right towers' outer edges) and the top of the back corner tower, in scene pixels. */
+export function wallBounds(lay: Layout): { x0: number; x1: number; top: number } {
+  const towers = lay.props.filter((p) => p.sprite === 'watchtower');
+  const [tw, th] = SPRITE_SIZE.watchtower;
+  return { x0: Math.min(...towers.map((p) => p.x - tw / 2)), x1: Math.max(...towers.map((p) => p.x + tw / 2)), top: Math.min(...towers.map((p) => p.y - th)) };
+}
+
+/** The one scale the village is drawn at: the largest whole number `k` of device pixels per scene pixel at which the wall, from its left tower's outer edge to
+ *  its right tower's, fits a frame `boxW` css pixels wide with `margin` css pixels spare each side, on a screen with `dpr` device pixels per css pixel (so
+ *  it stays sharp at any pixel ratio: a dpr-1 screen gets the largest whole css scale). At least 1. `css` is the size of a scene pixel in css pixels. */
+export function pickScale(boxW: number, dpr: number, wallW: number, margin = 8): { k: number; css: number } {
+  const k = Math.max(1, Math.floor(((boxW - 2 * margin) * dpr) / wallW));
+  return { k, css: k / dpr };
+}
+
+/** The ground's flat colour: the grass tile's own average, used for the page behind the scene. */
+export const GRASS = '#64742f';
 
 /** The words a building's upgrade card shows for a level (0 = nothing built). */
 export function effectText(id: BuildingId, level: number): string {
@@ -305,8 +534,12 @@ export function effectText(id: BuildingId, level: number): string {
       return `+${Math.round(HP_PER_LEVEL * level * 100)}% hp for every hero`;
     case 'armoury':
       return `+${Math.round(ATK_PER_LEVEL * level * 100)}% attack for every hero`;
+    case 'stable':
+      return `heroes walk ${Math.round(MOVE_PER_LEVEL * level * 100)}% faster`;
+    case 'library':
+      return `heroes earn ${Math.round(XP_PER_LEVEL * level * 100)}% more XP from every fight`;
     case 'mageTower':
-      return `mana fills ${Math.round(MANA_PER_LEVEL * level * 100)}% faster, +${spellBudget({ treasury: 0, barracks: 0, armoury: 0, mageTower: level }) - spellBudget()} spell power`;
+      return `mana fills ${Math.round(MANA_PER_LEVEL * level * 100)}% faster, +${spellBudget({ ...newCastle(), mageTower: level }) - spellBudget()} spell power`;
   }
 }
 
@@ -315,6 +548,8 @@ export const BLURB: Record<BuildingId, string> = {
   barracks: 'Beds and a training yard: your heroes are tougher.',
   armoury: 'Smiths and weapon racks: your heroes hit harder.',
   mageTower: 'The king\'s own spires: mana comes quicker and spells hit harder.',
+  stable: 'Horses and a farrier: your heroes cover the ground quicker.',
+  library: 'Shelves of old campaigns: every hero learns more from every fight.',
 };
 
 export const NAME_OF = (id: BuildingId): string => BUILDINGS[id].name;
