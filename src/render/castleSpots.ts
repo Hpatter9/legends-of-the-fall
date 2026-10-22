@@ -24,6 +24,7 @@ export const SPRITE_SIZE: Record<string, readonly [number, number]> = {
   barracks: [138, 129],
   barrels: [33, 44],
   baskets: [41, 59],
+  bench: [41, 36],
   berries: [60, 73],
   birch: [55, 135],
   brazier: [36, 90],
@@ -42,6 +43,7 @@ export const SPRITE_SIZE: Record<string, readonly [number, number]> = {
   flagstone: [94, 61],
   flowers: [41, 32],
   forge: [114, 139],
+  fountain: [108, 94],
   granary: [72, 99],
   grass_tile: [89, 59],
   great: [136, 153],
@@ -67,7 +69,6 @@ export const SPRITE_SIZE: Record<string, readonly [number, number]> = {
   stall: [69, 75],
   stall2: [100, 80],
   stall3: [106, 83],
-  statue: [79, 119],
   stockpile: [87, 89],
   tavern: [119, 125],
   thatch: [129, 118],
@@ -103,8 +104,8 @@ export const LOOKS: Record<BuildingId, readonly Look[]> = {
   barracks: [
     { parts: [P('campfire', 0, 4), P('hay', -44, 2)] },
     { parts: [P('cottage', 8), P('hay', -50, 8)] },
-    { parts: [P('thatch', -4), P('campfire', 52, 22)] },
-    { parts: [P('barracks', 2), P('banner', 76, 16)] },
+    { parts: [P('thatch', -4), P('campfire', 40, 22)] },
+    { parts: [P('barracks', -4)] },
   ],
   armoury: [
     { parts: [P('rocks', -26, 2), P('crates', 8), P('woodpile', 44, 4)] },
@@ -116,7 +117,7 @@ export const LOOKS: Record<BuildingId, readonly Look[]> = {
     { parts: [P('rocks', -20, 2), P('crystals', 16)] },
     { parts: [P('shrine', 0)] },
     { parts: [P('spiral', 18), P('shrine', -34, 8)] },
-    { parts: [P('spiral', 32, -6), P('chapel', -16, 6)] },
+    { parts: [P('spiral', 28, -6), P('chapel', -10, 6)] },
   ],
   stable: [
     { parts: [P('hay', -16, 2), P('woodpile', 22, 4)] },
@@ -147,7 +148,7 @@ export const PLACES: Record<PlaceId, { name: string; to: string }> = {
 /** A place's one look (it does not grow): the tavern with its sign, barrels and lantern; the chapel on its own. */
 export const PLACE_LOOK: Record<PlaceId, Look> = {
   tavern: { parts: [P('tavern', 0), P('lamp', -58, 8), P('barrels', 52, 22), P('signpost', 84, 14)] },
-  chapel: { parts: [P('church', 0)] },
+  chapel: { parts: [P('church', 3)] },
   armies: { parts: [P('sign', 0)] },
 };
 export const isPlaceId = (id: PlotId): id is PlaceId => (PLACE_IDS as string[]).includes(id);
@@ -200,7 +201,7 @@ export const VENTS: Record<BuildingId, readonly (readonly Vent[])[]> = {
     [smokeAt('treasury', 2, 0, 0.64, 0.04)],
     [{ dx: -4, dy: -34, kind: 'glint' }, { dx: -22, dy: -28, kind: 'glint' }],
   ],
-  barracks: [[{ dx: 0, dy: -30, kind: 'smoke' }], [smokeAt('barracks', 1, 0, 0.7, 0.04)], [{ dx: 52, dy: -20, kind: 'smoke' }], [smokeAt('barracks', 3, 0, 0.5, 0.02)]],
+  barracks: [[{ dx: 0, dy: -30, kind: 'smoke' }], [smokeAt('barracks', 1, 0, 0.7, 0.04)], [{ dx: 40, dy: -20, kind: 'smoke' }], [smokeAt('barracks', 3, 0, 0.5, 0.02)]],
   armoury: [
     [],
     [{ dx: -14, dy: -28, kind: 'spark' }],
@@ -209,16 +210,16 @@ export const VENTS: Record<BuildingId, readonly (readonly Vent[])[]> = {
   ],
   stable: [[], [], [{ dx: -10, dy: -60, kind: 'smoke' }], [{ dx: 30, dy: -120, kind: 'smoke' }]],
   library: [[], [{ dx: 0, dy: -100, kind: 'smoke' }], [{ dx: 0, dy: -60, kind: 'rune' }, { dx: -20, dy: -80, kind: 'rune' }], [{ dx: 0, dy: -110, kind: 'rune' }, { dx: 30, dy: -80, kind: 'rune' }, { dx: -30, dy: -60, kind: 'rune' }]],
-  mageTower: [[], [{ dx: 0, dy: -40, kind: 'rune' }], [{ dx: 18, dy: -80, kind: 'rune' }, { dx: -34, dy: -44, kind: 'rune' }], [{ dx: -16, dy: -100, kind: 'rune' }, { dx: 32, dy: -96, kind: 'rune' }]],
+  mageTower: [[], [{ dx: 0, dy: -40, kind: 'rune' }], [{ dx: 18, dy: -80, kind: 'rune' }, { dx: -34, dy: -44, kind: 'rune' }], [{ dx: -10, dy: -100, kind: 'rune' }, { dx: 28, dy: -96, kind: 'rune' }]],
 };
 
 export const LIGHTS: Record<BuildingId, readonly (readonly Light[])[]> = {
   stable: [[], [], [], []],
   library: [[], [], [{ dx: 0, dy: -70, size: 40, tint: '#b890ff', al: 0.5 }], [{ dx: 0, dy: -80, size: 56, tint: '#58f0d0', al: 0.5 }]],
   treasury: [[], [], [{ dx: 0, dy: -40, size: 56, tint: '#ffd24a', al: 0.18 }], [{ dx: 0, dy: -50, size: 80, tint: '#ffd24a', al: 0.25 }]],
-  barracks: [[{ dx: 0, dy: -12, size: 40, tint: '#ff9a3c', al: 0.5 }], [], [{ dx: 52, dy: -12, size: 34, tint: '#ff9a3c', al: 0.45 }], []],
+  barracks: [[{ dx: 0, dy: -12, size: 40, tint: '#ff9a3c', al: 0.5 }], [], [{ dx: 40, dy: -12, size: 34, tint: '#ff9a3c', al: 0.45 }], []],
   armoury: [[], [{ dx: -14, dy: -26, size: 30, tint: '#ff9a3c', al: 0.5 }], [{ dx: 2, dy: -30, size: 40, tint: '#ff9a3c', al: 0.5 }], [{ dx: 4, dy: -36, size: 52, tint: '#ff9a3c', al: 0.55 }]],
-  mageTower: [[], [{ dx: 0, dy: -50, size: 44, tint: '#58d8ff', al: 0.6 }], [{ dx: 18, dy: -104, size: 40, tint: '#b890ff', al: 0.6 }, { dx: -34, dy: -50, size: 44, tint: '#58d8ff', al: 0.6 }], [{ dx: -16, dy: -104, size: 56, tint: '#58f0d0', al: 0.55 }, { dx: 32, dy: -96, size: 36, tint: '#b890ff', al: 0.5 }]],
+  mageTower: [[], [{ dx: 0, dy: -50, size: 44, tint: '#58d8ff', al: 0.6 }], [{ dx: 18, dy: -104, size: 40, tint: '#b890ff', al: 0.6 }, { dx: -34, dy: -50, size: 44, tint: '#58d8ff', al: 0.6 }], [{ dx: -10, dy: -104, size: 56, tint: '#58f0d0', al: 0.55 }, { dx: 28, dy: -96, size: 36, tint: '#b890ff', al: 0.5 }]],
 };
 
 /** What smokes at a place: the tavern's chimney. */
@@ -314,7 +315,7 @@ export const isPaved = (lay: Layout, u: number, v: number): boolean => {
   return set.has(`${u},${v}`);
 };
 /** Standing things a hero walks round on the paving. */
-const NOT_WALKED = new Set(['statue', 'brazier', 'stall', 'stall2', 'stall3', 'lamp', 'banner', 'well', 'pots', 'crates', 'barrels']);
+const NOT_WALKED = new Set(['fountain', 'bench', 'brazier', 'stall', 'stall2', 'stall3', 'lamp', 'banner', 'well', 'pots', 'crates', 'barrels']);
 /** The tiles a hero may stroll on: the paving, but not where something stands. */
 export function walkTiles(lay: Layout): { u: number; v: number }[] {
   const blocked = new Set(lay.props.filter((p) => NOT_WALKED.has(p.sprite)).map((p) => `${p.u},${p.v}`));
@@ -424,10 +425,9 @@ function ring(u0: number, v0: number, u1: number, v1: number): PropSpec[] {
   return out;
 }
 
-/** The village, for every screen: a yard 11 x 11 tiles walled on its two back sides (north-west and north-east) with a tower at the north corner and at
- *  each run's far end, the gatehouse in the north-west run near its south end and a road from it to the plaza (a clear 3 x 3 of paving, the statue in the middle, a brazier on each corner). Two roads wrap the plaza's north side: the mage
- *  tower and the barracks stand on the one at its left (their pictures mirrored so the doors face it), the treasury and the armoury on the one at its
- *  right. The scene is drawn a whole number of device pixels per scene pixel (`pickScale`); the front is open grass. */
+/** The town, for every screen: a yard walled on its two back sides (north-west and north-east, plain wall with a tower at the north corner and one at each run's far
+ *  end), a town square of 5 x 5 tiles with the fountain in the middle and the eight buildings round it (`PLOTS`), gardens and scenery between them, and a lane
+ *  that leaves the front. The scene is drawn a whole number of device pixels per scene pixel (`pickScale`); the front is open grass. */
 /** The lawn below the town: tiles from this row of the lattice (`u + v`) down are scattered with scenery whether or not they are inside the wall's box. */
 export const FRONT_ROW = 27;
 /** A fixed pseudo-random number in [0, 1) for a tile and a salt. */
@@ -444,28 +444,29 @@ const SQUARE: Block = { u0: 2, v0: 2, u1: 6, v1: 6 };
 const ROADS: Block[] = [
   // short paths from the square's edge: out to the north-west and north-east (to the gardens), and down to the south ring road
   { u0: 0, v0: 4, u1: 1, v1: 4 },
-  { u0: 5, v0: 0, u1: 5, v1: 1 },
+  { u0: 4, v0: 0, u1: 4, v1: 1 },
+  { u0: 2, v0: 1, u1: 3, v1: 1 },
   { u0: 4, v0: 7, u1: 4, v1: 10 },
   { u0: 7, v0: 4, u1: 10, v1: 4 },
   // the ring road behind the south side's buildings (their doors look away from the square), and the lane that leaves the town at the bottom
   { u0: 4, v0: 10, u1: 10, v1: 10 },
   { u0: 10, v0: 4, u1: 10, v1: 10 },
   // the side paths to the two buildings down the lane
-  { u0: 8, v0: 12, u1: 11, v1: 12 },
-  { u0: 12, v0: 9, u1: 12, v1: 9 },
+  { u0: 8, v0: 11, u1: 10, v1: 11 },
+  { u0: 11, v0: 9, u1: 11, v1: 9 },
   ...LAND.road,
 ];
 /** The eight buildings round the square: two on each of the north-west and north-east sides facing it (backed by the wall), two on the south sides (their doors on
  *  the ring road behind them), and two down the lane. */
 const PLOTS: Record<PlotId, PlotSpec> = {
-  mageTower: { u: 1, v: 2, w: 1, d: 2, flip: true, door: { u: 2, v: 3 } },
-  barracks: { u: 1, v: 5, w: 1, d: 2, flip: true, door: { u: 2, v: 5 }, tagDx: 14 },
-  treasury: { u: 3, v: 1, w: 2, d: 1, flip: false, door: { u: 3, v: 2 } },
-  armoury: { u: 6, v: 1, w: 1, d: 1, flip: false, door: { u: 6, v: 2 }, tagDx: -26 },
+  mageTower: { u: 1, v: 2, w: 1, d: 1, flip: true, door: { u: 2, v: 2 } },
+  barracks: { u: 1, v: 5, w: 1, d: 1, flip: true, door: { u: 2, v: 5 } },
+  treasury: { u: 1, v: 0, w: 2, d: 1, flip: false, door: { u: 2, v: 1 } },
+  armoury: { u: 5, v: 1, w: 1, d: 1, flip: false, door: { u: 5, v: 2 } },
   stable: { u: 7, v: 9, w: 2, d: 1, flip: false, door: { u: 7, v: 10 } },
   tavern: { u: 9, v: 6, w: 1, d: 1, flip: true, door: { u: 10, v: 6 } },
-  chapel: { u: 7, v: 12, w: 1, d: 1, flip: true, door: { u: 8, v: 12 }, tagDx: 28 },
-  library: { u: 12, v: 8, w: 2, d: 1, flip: false, door: { u: 12, v: 9 }, tagDx: -12 },
+  chapel: { u: 7, v: 11, w: 1, d: 1, flip: true, door: { u: 8, v: 11 } },
+  library: { u: 11, v: 8, w: 2, d: 1, flip: false, door: { u: 11, v: 9 } },
   armies: { u: LAND.sign.u, v: LAND.sign.v, w: 1, d: 1, flip: false, door: LAND.sign.door, tagDx: -100, tagDy: 62 },
 };
 
@@ -497,17 +498,17 @@ function scatter(taken: ReadonlySet<string>): PropSpec[] {
 
 /** What stands in and round the square and in the gardens (by tile). */
 const FIXTURES: PropSpec[] = [
-  // the square: the statue in the middle with a brazier on each diagonal, lamp posts on the corners, market stalls along the two south sides
-  ['statue', 4, 4],
-  ['brazier', 3, 3],
-  ['brazier', 5, 3],
-  ['brazier', 3, 5],
-  ['brazier', 5, 5],
-  ['lamp', 2, 2],
-  ['lamp', 4, 2],
-  ['lamp', 7, 2],
-  ['lamp', 2, 6],
-  ['lamp', 6, 6],
+  // the square: the fountain in the middle with a walk all round it, braziers on three corners, lamp posts beside it, benches on the two north sides facing
+  // the fountain, market stalls along the two south sides
+  ['fountain', 4, 4, { dy: -4 }],
+  ['bench', 3, 2],
+  ['bench', 2, 3, { flip: true }],
+  ['brazier', 6, 2],
+  ['brazier', 2, 6],
+  ['brazier', 6, 6],
+  ['lamp', 1, 6],
+  ['lamp', 7, 7],
+  ['lamp', 6, 1],
   ['stall', 3, 6],
   ['stall2', 5, 6],
   ['stall3', 6, 3],
@@ -515,29 +516,27 @@ const FIXTURES: PropSpec[] = [
   // barrels and crates by the stalls, banners and pots round the edge
   ['barrels', 3, 7],
   ['crates', 7, 3],
-  ['barrels', 8, 2],
+  ['barrels', 7, 2],
   ['banner', 6, 9],
   ['banner', 9, 5],
   ['pots', 2, 7],
-  ['pots', 9, 3],
+  ['pots', 8, 3],
   // the garden in the north corner, between the walls and the two buildings nearest them
   ['field', 0, 0],
-  ['field2', 1, 0],
-  ['herb', 0, 1],
-  ['field', 1, 1],
+  ['field2', 0, 1],
+  ['herb', 1, 1],
   ['hedge', 0, 8],
   ['hedge', 8, 0, { flip: true }],
   ['roses', 0, 2],
-  ['flowers', 2, 0],
   ['hay', 3, 9],
   ['well', 3, 8],
-  ['rack', 7, 1],
+  ['rack', 5, 8],
   ['berries', 9, 8],
   // lanterns along the ring road and the lane
   ['lamp', 3, 10],
   ['lamp', 10, 3],
-  ['lamp', 11, 9],
-  ['lamp', 9, 11],
+  ['lamp', 12, 9],
+  ['lamp', 9, 12],
 ];
 const taken = new Set<string>(FIXTURES.map(([, u, v]) => `${u},${v}`));
 export const YARD: Layout = build({

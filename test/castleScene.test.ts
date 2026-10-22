@@ -105,20 +105,23 @@ test('every building\'s door opens onto a paved tile in front of it, and every d
   }
 });
 
-test('the town square is a large open paved square (at least 5 x 5) with the statue in its middle, braziers round it, a border of flagstones and stalls along it', () => {
+test('the town square is a large open paved square (at least 5 x 5) with the fountain in the middle, braziers and lamps round the edge, benches, a border of flagstones and stalls along it', () => {
   for (const [name, lay] of Object.entries(LAYOUTS)) {
     const pz = lay.plaza;
     const n = pz.u1 - pz.u0 + 1;
     assert.ok(n >= 5 && pz.v1 - pz.v0 + 1 === n, `${name} the square is ${n} x ${pz.v1 - pz.v0 + 1}`);
     assert.ok(n * n >= 2 * 9, `${name} the square is at least twice the old 3 x 3`);
     const mid = { u: (pz.u0 + pz.u1) / 2, v: (pz.v0 + pz.v1) / 2 };
-    const statue = lay.props.filter((p) => p.sprite === 'statue');
+    const statue = lay.props.filter((p) => p.sprite === 'fountain');
     assert.equal(statue.length, 1, name);
-    assert.deepEqual([statue[0].u, statue[0].v], [mid.u, mid.v], `${name} statue is centred`);
+    assert.deepEqual([statue[0].u, statue[0].v], [mid.u, mid.v], `${name} the fountain is centred`);
     const braziers = lay.props.filter((p) => p.sprite === 'brazier');
-    assert.ok(braziers.length >= 4, `${name} braziers`);
-    for (const b of braziers) assert.ok(inBlock(pz, b.u, b.v) && Math.abs(b.u - mid.u) === 1 && Math.abs(b.v - mid.v) === 1, `${name} brazier at ${b.u},${b.v} is round the statue`);
-    assert.ok(lay.props.filter((p) => p.sprite === 'lamp' && inBlock(pz, p.u, p.v)).length >= 3, `${name} lamp posts on the square`);
+    assert.ok(braziers.length >= 3, `${name} braziers`);
+    for (const b of braziers) assert.ok(inBlock(pz, b.u, b.v) && (b.u === pz.u0 || b.u === pz.u1 || b.v === pz.v0 || b.v === pz.v1), `${name} brazier at ${b.u},${b.v} is on the square's edge`);
+    const lamps = lay.props.filter((p) => p.sprite === 'lamp' && inBlock({ u0: pz.u0 - 1, v0: pz.v0 - 1, u1: pz.u1 + 1, v1: pz.v1 + 1 }, p.u, p.v));
+    assert.ok(lamps.length >= 3, `${name} lamp posts round the square`);
+    const benches = lay.props.filter((p) => p.sprite === 'bench');
+    assert.ok(benches.length >= 2 && benches.length <= 3 && benches.every((b) => inBlock(pz, b.u, b.v)), `${name} two or three benches on the square`);
     assert.ok(lay.props.filter((p) => /^stall\d?$/.test(p.sprite) && inBlock(pz, p.u, p.v)).length >= 3, `${name} market stalls along the square`);
     // (a border of flagstones all the way round, a chequer inside it)
     for (let u = pz.u0; u <= pz.u1; u++) for (let v = pz.v0; v <= pz.v1; v++) {
@@ -148,17 +151,40 @@ test('the square is enclosed: a building stands on at least three of its four si
     if (cv > pz.v1 && cu >= pz.u0 - 1 && cu <= pz.u1 + 1) sides.add('sw');
   }
   assert.ok(sides.size >= 3, `buildings stand on ${[...sides].join(', ')}`);
-  // (two buildings face the square from the north-west and two from the north-east: their doors open onto the square's own border)
-  const facing = PLOT_IDS.filter((id) => id !== 'armies' && inBlock(pz, lay.plots[id].door.u, lay.plots[id].door.v));
-  assert.ok(facing.length >= 4, `${facing.length} doors open onto the square`);
+  // (four buildings face the square from the north: their doors open onto its border or a one-tile path from it)
+  const touching = (u: number, v: number): boolean => inBlock(pz, u, v) || [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([du, dv]) => inBlock(pz, u + du, v + dv));
+  const facing = PLOT_IDS.filter((id) => id !== 'armies' && touching(lay.plots[id].door.u, lay.plots[id].door.v));
+  assert.ok(facing.length >= 4, `${facing.length} doors open onto the square or a one-tile path from it`);
 });
 
 test('heroes may stroll the whole square except where something stands, and gather in it', () => {
   const tiles = walkTiles(YARD);
   const pz = YARD.plaza;
   const inSquare = tiles.filter((t) => inBlock(pz, t.u, t.v));
-  assert.ok(inSquare.length >= 12, `${inSquare.length} walkable tiles on the square`);
-  for (const p of YARD.props) assert.ok(!(['statue', 'brazier', 'stall', 'stall2', 'stall3', 'lamp'].includes(p.sprite) && tiles.some((t) => t.u === p.u && t.v === p.v)), `${p.sprite} at ${p.u},${p.v} is not walked through`);
+  assert.ok(inSquare.length >= 10, `${inSquare.length} walkable tiles on the square`);
+  // (the middle of each side stays open, so the paths run into the square, and the walkable tiles of the square are all joined)
+  const mid = { u: (pz.u0 + pz.u1) / 2, v: (pz.v0 + pz.v1) / 2 };
+  const key = (t: { u: number; v: number }): string => `${t.u},${t.v}`;
+  for (const t of [{ u: mid.u, v: pz.v0 }, { u: pz.u0, v: mid.v }, { u: mid.u, v: pz.v1 }, { u: pz.u1, v: mid.v }]) assert.ok(tiles.some((q) => key(q) === key(t)), `the middle of a side, ${key(t)}, is walkable`);
+  // (and a good stretch of it is one connected piece, so heroes can gather: the biggest joined group of walkable tiles covers at least half of them)
+  const ok = new Set(inSquare.map(key));
+  let best = 0;
+  const done = new Set<string>();
+  for (const t of inSquare) {
+    if (done.has(key(t))) continue;
+    const queue = [t];
+    done.add(key(t));
+    for (let i = 0; i < queue.length; i++)
+      for (const [du, dv] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const n = { u: queue[i].u + du, v: queue[i].v + dv };
+        if (ok.has(key(n)) && !done.has(key(n))) {
+          done.add(key(n));
+          queue.push(n);
+        }
+      }
+    best = Math.max(best, queue.length);
+  }
+  assert.ok(best * 2 >= inSquare.length, `the biggest joined group is ${best} of ${inSquare.length} walkable tiles`);
 });
 
 test('props stand on tiles clear of every plot', () => {
@@ -296,6 +322,11 @@ test('the wall runs off both sides of the screen with no end tower showing, and 
       };
       const plaza = lay.plaza;
       for (const [u, v] of [[plaza.u0, plaza.v0], [plaza.u1, plaza.v0], [plaza.u0, plaza.v1], [plaza.u1, plaza.v1]]) inside(cellX(lay.grid, u, v), cellY(lay.grid, u, v), 'a square corner', true);
+      // (the market stalls are whole on the screen too, at 393 and 412 wide)
+      if (w >= 393) for (const st of lay.props.filter((q) => /^stall\d?$/.test(q.sprite))) {
+        const [sw] = SPRITE_SIZE[st.sprite];
+        assert.ok(st.x - sw / 2 >= left && st.x + sw / 2 <= right, `${w}x${h}@${dpr} the stall at ${st.u},${st.v} is cut off`);
+      }
       for (const id of PLOT_IDS) {
         const p = lay.plots[id];
         inside(cellX(lay.grid, p.door.u, p.door.v), cellY(lay.grid, p.door.u, p.door.v), `${id} door`);
@@ -305,9 +336,8 @@ test('the wall runs off both sides of the screen with no end tower showing, and 
         const half = 30 / view.css;
         assert.ok(tx - half >= left && tx + half <= right, `${w}x${h}@${dpr} ${id} tag fits across`);
         inside(tx, p.tagY!, `${id} tag`);
-        // (a building at the edge may be cropped, but more than half of it shows)
-        const shown = Math.min(p.x + box.x1, right) - Math.max(p.x + box.x0, left);
-        assert.ok(shown >= box.w * 0.55, `${w}x${h}@${dpr} ${id} is cropped to ${Math.round((shown / box.w) * 100)}%`);
+        // (every building is whole on the screen: no cropping at any of the three phone sizes)
+        if (id !== 'armies') assert.ok(p.x + box.x0 >= left && p.x + box.x1 <= right, `${w}x${h}@${dpr} ${id} (${Math.round(p.x + box.x0 - lay.grid.x)} to ${Math.round(p.x + box.x1 - lay.grid.x)}) is cut off`);
       }
     }
 });

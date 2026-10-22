@@ -126,7 +126,7 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   by a 2x2 box average (`tools/castle/prep.py`). Chronos credits them as made for that project: drawn with ChatGPT's image generation from
   prompts written for the game, then cut into sprites, cleaned and reduced to 256 colours. Used: Fae shrine and spiral watchtower, Liches
   chapel, Knights watchtower, stone wall run, lamp post, stockpile, longhouse, cottage, barracks, workshop, campfire, hay bales, crates, barrels, woodpile, oak, pine,
-  bush, rocks and grass and cobble tiles, Dwarves great hall, forge, anvil stall, brazier, shrine (the statue) and crystals, Settlers longhouse,
+  bush, rocks and grass and cobble tiles, Dwarves great hall, forge, anvil stall, brazier, shrine and crystals, Settlers longhouse,
   Orcs weapon stall (the weapon rack), Blood Court banner and rose bush, Druids flower patch and berry bush, Nomads chests.
 - The tavern, chapel, stable, library and market pieces are from the same kits: Knights tavern, chapel, stable, cart, granary, market stall, field tile and signpost,
   Settlers stockpile (the shed), market stall and field tile, Fae workshop (the library's observatory), Liches tavern (the library's manor), Druids baskets and
@@ -142,3 +142,4 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   PixelLab** (see `tools/scenes/README.md` for the prompts).
 - The braziers' flames (`src/art/hall/fx_fire-flame.png`) are the `fire-flame-16` sheet from the **Super Pixel Effects Gigapack (Free Version)**
   by unTied Games, copied as it is.
+- The town square's fountain (`tools/castle/generated/fountain.png`) and its benches (`bench.png`) were generated with PixelLab (`/generate-with-style-v2`, kit pieces as style references; see `tools/castle/gen.py` and `docs/notes/castle-scene.md`): 10 generations; the picks are used as they came, halved by `prep.py` like the kit pieces. Nothing else in this look was generated.

@@ -5,7 +5,7 @@
   (`src/castle.ts`, data in `src/render/castleSpots.ts`). The owner's ask was "use some of the nicer sprites": the earlier 3/4 village yard
   (Chronos's plain village houses, 0.48.0; `docs/samples/castle-before-after.png` shows it beside this) gave way to the richer isometric kits
   the first worker had passed over as "far too detailed". Everything shares one view: a lattice of grass tiles with cobbled roads and a plaza, a
-  closed ring of stone castle wall with a tower on each corner, a statue in the square, flowerbeds and braziers.
+  closed ring of stone castle wall with a tower on each corner, a fountain in the square, flowerbeds and braziers.
   `docs/samples/castle-candidates.png` is the contact sheet of what was surveyed (every pack in the assets repo and Chronos's building art);
   the other packs are side-view (Craftpix tropical city, vector) or top-down (Craftpix village, dungeon), so they would mix perspectives.
 - **Planned on the isometric grid** (`castleSpots.ts`): the yard is a lattice of ground tiles `(u, v)` (`u` down-right, `v` down-left; `Layout.grid` is
@@ -39,11 +39,21 @@
     frame (only the shortest phones, 360x780: about 100 css pixels) the page scrolls up and down from the top, never sideways. The two back wall runs are plain
     continuous wall (no gate) running diagonally off both sides of the screen; the far towers are 16 tiles out, off screen. Beyond the wall it is woods (`decorAt`).
   - **The town square** (`SQUARE`, 5 x 5 tiles, about three times the old plaza): a border of flagstones all round (`pavingAt`) and a chequer of flagstones and cobbles
-    inside; the statue in the middle with a brazier on each diagonal, a lamp post on three corners and by the north-east door, market stalls along the two south
-    sides, barrels, crates and pots round the edge, banners on poles and a well. Heroes stroll the square and the paths and stand about in it (`walkTiles` leaves
-    out the statue, braziers, stalls, lamps, banners, the well, pots, crates and barrels). There are no benches or fountains in the kits.
+    inside; the **fountain** in the middle with a walk all round it, braziers on three corners and lamp posts beside the square, two **benches** on the two north
+    sides facing the fountain, market stalls along the two south sides, barrels, crates and pots round the edge, banners on poles and a well. Heroes stroll the
+    square and the paths and stand about in it (`walkTiles` leaves out the fountain, benches, braziers, stalls, lamps, banners, the well, pots, crates and barrels).
+  - **The fountain and the benches are made with PixelLab** (no kit has either): `tools/castle/gen.py` calls `/generate-with-style-v2` with kit pieces (Knights well,
+    Dwarves shrine and brazier, Knights chapel for the fountain; Knights cart, woodpile, crates and signpost for the bench) as style references on a 256 px canvas
+    (192 px for the first rounds), `no_background`, a description of the piece in the 2:1 isometric view. Each job id is saved to a scratch folder before it is polled;
+    10 generations in all (seeds 11-14 and 31-33 for the fountain, 21-23 for the bench; 4 jobs at most in flight). The picks, by eye, are copied to
+    `tools/castle/generated/fountain.png` (seed 33 at 256 px, 216 x 189) and `bench.png` (seed 22 at 192 px, 164 x 145); `prep.py` halves them like the kit pieces
+    (the bench twice, so it is 41 x 36). In code the fountain has droplets falling down its two streams and sparkles on its water (`CastleScene.emit`; not drawn
+    when the page asks for reduced motion).
+  - **Nothing is cut off**: the buildings are placed so that every look is whole on the screen at 360, 393 and 412 css pixels wide (within 247 scene pixels of the
+    square's column), and so are the market stalls at 393 and 412; scenery may be cropped. The four north buildings sit on two tiers (mage tower and treasury nearest
+    the corner tower, barracks and armoury out on the sides of the square) so that they do not overlap.
   - **The ring of buildings**: the wall hugs the north-west and north-east sides, backing the four buildings that face the square from those sides (mage tower and
-    barracks down the north-west side, treasury and armoury along the north-east side), their doors opening onto the square's own border. The south-west and south-east
+    barracks down the north-west side, treasury and armoury along the north-east side), their doors opening onto the square's border or a one-tile path from it. The south-west and south-east
     sides have a building each (stable, tavern) standing clear of the square with their doors on a ring road behind them (the pictures' doors look down, so they cannot
     face the square), reached by short paths from the square's south edge; the chapel and the library stand further down either side of the lane that leaves the
     town, each on a short side path. Gardens fill the north corner between the walls and the buildings; hedges, bushes, flowers, trees, hay and rocks are scattered
@@ -126,7 +136,7 @@
   per building, a plot inside the yard; no house sprite in two buildings and every look bigger than the last; the grand
   look of every building fits inside the yard; every picture is used and the ground tiles are one
   lattice cell wide; no two plots share a tile or sit nearer than one tile apart; every door has a paved tile in front of it, facing the right way and
-  reachable on foot from the square; the square is at least 5 x 5 (twice the old 3 x 3) with the statue in the middle, braziers round it, a flagstone border, lamps and stalls, and a building stands on at least three of its sides; no prop stands in a road or
+  reachable on foot from the square; the square is at least 5 x 5 (twice the old 3 x 3) with the fountain in the middle, braziers and lamps round the edge, benches, a flagstone border and stalls, and a building stands on at least three of its sides; every building is whole on screen at the three phone sizes; no prop stands in a road or
   on a plot; no lawn or woods scenery sits on a road, a plot or a prop and the signpost opens onto the road; the wall runs off both screen edges with no end tower showing and the plaza, every door and tag are on screen at three phone sizes; the one close-up scale is whole and about the same width everywhere; the wall's runs line up with its tower; buildings overlap at most by a corner; vents and lights lie on
   their look; the card words grow with the level.
 - `node tools/castle/shots.mjs` (after `npm run web`; `CARD=1` adds the card) makes `docs/samples/castle-{empty,part,maxed}-upright.png` at 393x852 and `castle-card-upright.png`,
