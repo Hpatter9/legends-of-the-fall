@@ -90,6 +90,8 @@ export interface Unit {
   grade?: number;
   /** What the hero's permanent equipment adds (`equipment.ts`); absent when it wears none. */
   eq?: EquipStats;
+  /** The share of its hp the hero starts the fight with (a wound carried over from the last floor of the tower); absent is whole. */
+  carry?: number;
   /** The equipment abilities' counters and spent once-a-fight triggers (`equipFx.ts`). */
   fx?: Record<string, number>;
   /** Cannot be targeted until then (a Shadowcloak). */
@@ -196,6 +198,8 @@ export interface Boost {
   equip?: EquipStats;
   /** How much faster the foes act and walk (a harder army tier); only the foes' boost reads it. */
   speed?: number;
+  /** The share of its hp a hero starts the fight with (the endless tower's wounds carry over); whole when unset. */
+  carry?: number;
 }
 /** Boosts for a fight's foes: all of them by `foes`, and the first one more by `boss` (a boss stage). */
 export interface Stage {
@@ -279,6 +283,10 @@ export function addUnit(b: Battle, defId: string, u: number, v: number, boost: B
   const power = (boost.atk ?? 1) * (castle?.atk ?? 1) * (1 + (eq?.atk ?? 0));
   if (power !== 1) unit.power = power;
   if (eq) unit.eq = eq;
+  if (def.side === 'hero' && boost.carry !== undefined && boost.carry < 1) {
+    unit.carry = Math.max(0.01, boost.carry);
+    unit.hp = Math.max(1, Math.round(hp * unit.carry));
+  }
   if (boost.size && boost.size !== 1) unit.size = boost.size;
   if (boost.grade && boost.grade > 1) unit.grade = boost.grade;
   if (tag !== undefined) unit.tag = tag;
@@ -339,6 +347,7 @@ function applyTraits(b: Battle): void {
       x.maxHp = Math.round(x.maxHp * fx.hp);
       x.hp = x.maxHp;
     }
+    if (x.carry !== undefined) x.hp = Math.max(1, Math.round(x.maxHp * x.carry));
   }
 }
 
