@@ -21,3 +21,10 @@ smooth (`pxGlint` in src/pixel.css; `--glintEnd` sets how far it travels on each
   top bar. Side to side it is clamped as before.
 - The result screen (`#result`) scrolls when the report is longer than the screen (`justify-content: safe center`,
   `overflow-y: auto`), and its button row sticks to the foot over a fade, so Next stage or Home can always be pressed.
+
+## A steady Battle tab
+
+The Battle tab in the tab bar flashed, most of all on the Armies screen where it sits lit: the old smooth look's `glow`
+animation (a brightness and halo throb, `src/index.html`) still ran under the pixel frame, and a glint swept across it as
+well. Both are off for the tab (`.hmTab.hero` in src/pixel.css: `animation: none; filter: none`, and its `::after` glint
+removed). The Battle! and Fight! buttons keep their glint; the tab's small red "new" dot still pulses softly.
