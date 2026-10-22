@@ -22,3 +22,10 @@ Test: `test/power.test.ts`.
 
 The bench's gold button was "Summon", the same word as the crown pulls in the Recruit hall. It now reads "Hire · <cost>", and
 so does its tip. "Summon" means only the Recruit hall's pulls. The code names (`summon`, `#summon`) are unchanged.
+
+## Placed heroes leave the bench while deploying
+
+During deploy, a hero already on the board is hidden from the bench (`body[data-phase='deploy'] .card.placed` in
+`index.html`), so the bench shows only who is still waiting. Dragging a hero off the board onto the panel brings it back.
+Once every hero is placed, the bench reads "Every hero is on the field". In the fight and on the result screen the cards come
+back, with their health bars.
