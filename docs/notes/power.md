@@ -29,3 +29,15 @@ During deploy, a hero already on the board is hidden from the bench (`body[data-
 `index.html`), so the bench shows only who is still waiting. Dragging a hero off the board onto the panel brings it back.
 Once every hero is placed, the bench reads "Every hero is on the field". In the fight and on the result screen the cards come
 back, with their health bars.
+
+## Attack speed and walk on the hero sheet
+
+The hero sheet's stats now have a second row:
+
+- **Attack speed**: blows a second, `blowsPerSecond(kind, equip)` = 1000 / `atkMs` × (1 + the equipment's and talents'
+  `atkSpeed`).
+- **Walk**: level tiles a second, `tilesPerSecond(kind, equip)` from `moveMs` and `moveSpeed`.
+
+Both read `heroStats(meta, kind)`, so they follow an equip or a talent learned (the sheet's `repower`). `rateText` shows them
+as "0.77/s" or "1.3/s". Levels and ranks don't change either one: they raise hp and attack only. In a fight, traits, Haste
+and twists speed heroes up on top. All in `src/sim/power.ts` and `menuHeroes.ts`; test in `test/power.test.ts`.

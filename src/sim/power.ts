@@ -36,5 +36,12 @@ export const kindPower = (m: Meta, kind: string): number => {
   return powerOf(kind, { ...gradeBoost(1, rankOf(m, kind), levelOfKind(m, kind)), ...(eq ? { equip: eq } : {}) });
 };
 
+/** How often a hero of `kind` swings, in blows a second, with the attack speed its equipment and talents give (`equip`). */
+export const blowsPerSecond = (kind: string, equip?: { atkSpeed: number }): number => (UNITS[kind] ? (1000 / UNITS[kind].atkMs) * (1 + (equip?.atkSpeed ?? 0)) : 0);
+/** How many level tiles a hero of `kind` walks a second, with its equipment's and talents' move speed. */
+export const tilesPerSecond = (kind: string, equip?: { moveSpeed: number }): number => (UNITS[kind] ? (1000 / UNITS[kind].moveMs) * (1 + (equip?.moveSpeed ?? 0)) : 0);
+/** A rate for the page, to two figures: "0.91/s", "1.2/s". */
+export const rateText = (r: number): string => `${r >= 1 ? r.toFixed(1) : r.toFixed(2)}/s`;
+
 /** A power for the page: 1,234. */
 export const powerText = (p: number): string => p.toLocaleString('en-GB');

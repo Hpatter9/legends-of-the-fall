@@ -22,3 +22,14 @@ test('grade, level and equipment each raise a hero\'s power', () => {
   const eq = { ...emptyStats(), atk: 0.2, hp: 0.2 };
   assert.ok(powerOf(k, { ...gradeBoost(1, 0, 1), equip: eq }) > base);
 });
+
+test('attack speed reads as blows a second, and equipment speeds it up', async () => {
+  const { blowsPerSecond, rateText, tilesPerSecond } = await import('../src/sim/power');
+  const { UNITS } = await import('../src/sim/units');
+  const k = 'knight';
+  assert.equal(blowsPerSecond(k), 1000 / UNITS[k].atkMs);
+  assert.ok(blowsPerSecond(k, { atkSpeed: 0.2 }) > blowsPerSecond(k));
+  assert.ok(tilesPerSecond(k, { moveSpeed: 0.1 }) > tilesPerSecond(k));
+  assert.equal(rateText(0.909), '0.91/s');
+  assert.equal(rateText(1.25), '1.3/s');
+});
