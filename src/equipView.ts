@@ -3,7 +3,7 @@
 // would change (green for better, red for worse) and the buttons Equip, Unequip and Salvage. Reads and changes the meta
 // only through `equipment.ts`.
 
-import { EQUIP_BASES, describeAbility, hasAbility, EQUIP_SLOTS, SALVAGE_CROWNS, SLOT_NAMES, callingOf, equipItem, equipStats, itemName, itemStats, salvageItem, spareEquipment, statLines, unequipItem, wornIn, STAT_KEYS, type EquipSlot, type EquipStats, type Equipment } from './sim/equipment';
+import { EQUIP_BASES, describeAbility, hasAbility, EQUIP_SLOTS, SALVAGE_CROWNS, SLOT_NAMES, callingOf, equipAll, equipBest, equipItem, equipStats, itemName, itemStats, salvageItem, spareEquipment, statLines, unequipItem, wornIn, STAT_KEYS, type EquipSlot, type EquipStats, type Equipment } from './sim/equipment';
 import { RARITY_NAMES, saveMeta, type Meta } from './sim/meta';
 import { UNITS } from './sim/units';
 import { EQUIP_ICONS } from './equipArt';
@@ -80,6 +80,7 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
     changed();
   };
 
+  let takeOthers = false;
   const overview = () => {
     panel.replaceChildren(el('h4', '', 'Equipment'));
     const slots = el('div', 'eqSlots');
@@ -95,6 +96,26 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
     const s = equipStats(meta, kind);
     const lines = s ? statLines(s).filter((l) => ['atk', 'hp', 'def', 'atkSpeed', 'moveSpeed', 'crit', 'range'].includes(l.key)).map((l) => `${l.text} ${l.label.toLowerCase()}`) : [];
     panel.append(el('p', 'eqSum', lines.length ? lines.join(' · ') : 'Nothing worn. Chests hold equipment for any hero.'));
+    // the best pieces: for this hero or for everyone (strongest first); by default only from the bag
+    const auto = el('div', 'eqAuto');
+    const best = el('button', 'primary', 'Equip best');
+    const all = el('button', '', 'Equip all heroes');
+    const toggle = el('button', 'eqTake', takeOthers ? 'Taking from other heroes' : 'From the bag only');
+    const note = el('small', 'eqDim', takeOthers ? 'Pieces other heroes wear may be moved to a stronger fit.' : 'Pieces other heroes wear stay where they are.');
+    for (const b of [best, all, toggle]) b.type = 'button';
+    best.addEventListener('click', () => done(`${equipBest(meta, kind, takeOthers)} slot(s) changed`));
+    all.addEventListener('click', () => done(`${equipAll(meta, takeOthers)} slot(s) changed across the heroes`));
+    toggle.addEventListener('click', () => {
+      takeOthers = !takeOthers;
+      overview();
+    });
+    const done = (what: string) => {
+      commit();
+      overview();
+      panel.append(el('small', 'eqUp', what));
+    };
+    auto.append(best, all, toggle);
+    panel.append(auto, note);
   };
 
   const picker = (slot: EquipSlot) => {
