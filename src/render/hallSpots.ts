@@ -54,10 +54,10 @@ export function fanSpots(count: number, cx: number, cy: number): { x: number; y:
   return out;
 }
 
-export type BeamKind = 'star' | 'crystal' | 'light' | 'fire';
+export type BeamKind = 'star' | 'light';
 
-/** The beam's colour by the best rarity pulled: blue for Common and Rare, violet Epic, gold Legendary, crimson Mythic. */
-export const beamKind = (best: number): BeamKind => (best >= 5 ? 'fire' : best === 4 ? 'light' : best === 3 ? 'crystal' : 'star');
+/** The beam's colour: gold for the grand show (a pull with a new hero), blue for the plain one. */
+export const beamKind = (grand: boolean): BeamKind => (grand ? 'light' : 'star');
 
 export interface Timeline {
   /** The circle charges until `charge`, flares until `flare`, then the beam stands until `beamEnd`. */
@@ -71,10 +71,10 @@ export interface Timeline {
   done: number;
 }
 
-/** The timing of a pull of `count` heroes. A Mythic holds the charge a beat longer. Reduced motion is a short flash and the heroes at once. */
-export function pullTimeline(count: number, best = 1, reduced = false): Timeline {
+/** The timing of a pull of `count` heroes. Reduced motion is a short flash and the heroes at once. */
+export function pullTimeline(count: number, reduced = false): Timeline {
   if (reduced) return { charge: 120, flare: 260, beam: 260, heroAt: Array.from({ length: count }, () => 260), rise: 1, done: 900 };
-  const charge = best >= 5 ? 1100 : 700;
+  const charge = 700;
   const flare = charge + 200;
   const beam = flare + 600;
   const gap = count > 5 ? 110 : 160;

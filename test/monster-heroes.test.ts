@@ -34,7 +34,6 @@ test('the five beast and commander heroes are registered, with two traits each, 
     assert.ok(ALL_HEROES.includes(id), id);
     const d = UNITS[id];
     assert.equal(d.side, 'hero');
-    assert.ok(d.rarity, id);
     assert.ok(KITS[id].skill.name && KITS[id].passive.name, id);
     assert.equal(HERO_TRAITS[id].length, 2, id);
     // (the commander's pack has one look only)

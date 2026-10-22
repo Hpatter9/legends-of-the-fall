@@ -1,3 +1,5 @@
+> Rarity was removed (see `no-rarity.md`): the tiers, rates, pity and tier shows described below are gone.
+
 # Summoning FX: a flashier summon for higher ranks
 
 Renderer and sound only; the gacha rules, odds, pity and costs are untouched (`Gacha.summon` still pulls first and saves, then the hall plays it).

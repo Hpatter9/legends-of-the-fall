@@ -1,3 +1,5 @@
+> Hero rarity was removed later (see `no-rarity.md`): where this note gives a hero a tier, rarity frame or tier bonus, that no longer applies.
+
 # Class heroes
 
 Eight heroes join the roster (`ALL_HEROES`), each with its own kit in `abilities.ts`, a rarity, two traits and three looks (one

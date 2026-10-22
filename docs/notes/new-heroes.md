@@ -1,3 +1,5 @@
+> Hero rarity was removed later (see `no-rarity.md`): where this note gives a hero a tier, rarity frame or tier bonus, that no longer applies.
+
 # New heroes
 
 Seven heroes join the starting five (`ALL_HEROES` in `units.ts`; `HEROES` stays the five). Each has a kit in

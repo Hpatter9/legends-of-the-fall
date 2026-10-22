@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fight, place, playOut, type Battle } from '../src/sim/battle';
 import { CALAMITY_SQUAD, dropSlot, adoptOldTower, heroOf, loadRun, loadSlot, saveRun, saveSlot, setSquad, squadLimit, startStage, summon, type Run } from '../src/sim/run';
-import { newMeta, type Meta } from '../src/sim/meta';
+import { startedMeta, type Meta } from '../src/sim/meta';
 import { calamityRun, towerRun } from '../src/sim/modes';
 import { CAL_BOSSES, CAL_BOSS_TITLES } from '../src/sim/calamityBosses';
 import { KITS } from '../src/sim/abilities';
@@ -24,7 +24,7 @@ const store = () => {
 
 /** A meta with every hero of the first rows unlocked, and some lasting levels, gear and talents the climbs must not read. */
 function richMeta(): Meta {
-  const m = newMeta(5);
+  const m = startedMeta(5);
   m.unlocked = [...HEROES, 'paladin', 'cleric'];
   m.xp = { knight: xpFor(15), samurai: xpFor(15) };
   m.shards = { knight: 400 };
@@ -125,7 +125,7 @@ test('a fight teaches each hero that fought: its level rises in the run, the las
 });
 
 test('the levels follow the same curve, and a level makes a hero stronger in the run', () => {
-  const run = towerRun(3, newMeta(1));
+  const run = towerRun(3, startedMeta(1));
   const h = run.roster[0];
   const ups = gainRunXp(run, { [h.id]: xpFor(5) });
   assert.deepEqual(ups, [{ id: h.id, kind: h.kind, from: 1, to: 5 }]);
@@ -138,7 +138,7 @@ test('a climb finds gear in its plain fights (from its own stream), more than an
   const drops = (local: boolean) => {
     let n = 0;
     for (let seed = 1; seed <= 40; seed++) {
-      const run = towerRun(seed, newMeta(1));
+      const run = towerRun(seed, startedMeta(1));
       run.local = local;
       enterNode(run, choices(run)[0].id);
       const b = playNode(run);
@@ -154,7 +154,7 @@ test('a climb finds gear in its plain fights (from its own stream), more than an
 });
 
 test('a campfire trains the hero in the run, not the meta', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   const run = towerRun(5, m);
   reachNode(run, 'campfire');
   const h = run.roster[2];
@@ -230,7 +230,7 @@ test('a calamity run asks for the heroes it meets: recruit camps stock a differe
 });
 
 test('a hired hero joins at part of the roster\'s XP, so it is not left behind', () => {
-  const run = calamityRun(2, newMeta(1), 'knight');
+  const run = calamityRun(2, startedMeta(1), 'knight');
   gainRunXp(run, { [run.roster[0].id]: xpFor(6) });
   const want = Math.floor(xpFor(6) * 0.7);
   assert.equal(hireXp(run), want);
@@ -240,7 +240,7 @@ test('a hired hero joins at part of the roster\'s XP, so it is not left behind',
 });
 
 test('the squad takes ten and no more, and a full roster cannot hire', () => {
-  const run = calamityRun(2, newMeta(1), 'knight');
+  const run = calamityRun(2, startedMeta(1), 'knight');
   const kinds = [...HEROES, 'paladin', 'cleric', 'knight', 'archer'];
   for (let i = 0; i < 9; i++) hireHero(run, kinds[i], 10);
   assert.equal(run.roster.length, 10);
@@ -255,20 +255,20 @@ test('the squad takes ten and no more, and a full roster cannot hire', () => {
   run.gold = 9999;
   reachNode(run, 'recruit');
   assert.equal(hire(run, 0), null);
-  const ordinary = towerRun(1, newMeta(1));
+  const ordinary = towerRun(1, startedMeta(1));
   assert.equal(squadLimit(ordinary), 5);
   assert.equal(setSquad(ordinary, 999, true), false);
 });
 
 test('there is no merging in a calamity: three of a kind stay three, and the tower still merges', () => {
-  const run = calamityRun(4, newMeta(1), 'knight');
+  const run = calamityRun(4, startedMeta(1), 'knight');
   hireHero(run, 'knight', 10);
   hireHero(run, 'knight', 10);
   hireHero(run, 'knight', 10);
   assert.equal(run.roster.filter((h) => h.kind === 'knight').length, 4);
   assert.ok(run.roster.every((h) => h.grade === 1));
   // (the tower's rule is as it was)
-  const tower = towerRun(4, newMeta(1));
+  const tower = towerRun(4, startedMeta(1));
   const knight = tower.roster.find((h) => h.kind === 'knight')!;
   tower.gold = 9999;
   while (tower.roster.some((h) => h.id === knight.id)) if (!summon(tower)) break;
@@ -282,7 +282,7 @@ test('a calamity fight follows the party: a lone hero meets two foes, ten heroes
   assert.equal(fitBand(['boss', 'a', 'b', 'c', 'd'], 1, true)[0], 'boss');
   assert.equal(squadFoeMult(5), 1);
   assert.ok(squadFoeMult(10) > squadFoeMult(7));
-  const run = calamityRun(8, newMeta(1), 'knight');
+  const run = calamityRun(8, startedMeta(1), 'knight');
   enterNode(run, choices(run)[0].id);
   assert.equal(run.tower!.cur!.fight!.band.length, 2);
 });
@@ -359,13 +359,13 @@ test('a finished calamity pays crowns for each map cleared, and a gold chest onl
 });
 
 test('a lost calamity fight ends the run, and abandoning ends it too, once', () => {
-  const run = calamityRun(15, newMeta(1), 'knight');
+  const run = calamityRun(15, startedMeta(1), 'knight');
   enterNode(run, choices(run)[0].id);
   const b = playNode(run, false);
   assert.equal(b.phase, 'lost');
   finishTower(run, b, false);
   assert.equal(run.over, true);
-  const other = calamityRun(16, newMeta(1), 'knight');
+  const other = calamityRun(16, startedMeta(1), 'knight');
   assert.equal(abandonTower(other), true);
   assert.equal(other.over, true);
   assert.equal(abandonTower(other), false);
@@ -379,8 +379,8 @@ test('the calamity shop sells a hero for a hire, and the greedy calamity is dete
   run.gold = hero.cost;
   assert.match(buy(run, run.tower!.cur!.shop!.indexOf(hero))!, /joins the party/);
   assert.equal(run.roster.length, 2);
-  const a = playCalamity(newMeta(1), 77, 'knight');
-  assert.deepEqual(a, playCalamity(newMeta(1), 77, 'knight'));
+  const a = playCalamity(startedMeta(1), 77, 'knight');
+  assert.deepEqual(a, playCalamity(startedMeta(1), 77, 'knight'));
   assert.ok(a.heroes >= 1 && a.floors >= 1);
 });
 
@@ -388,7 +388,7 @@ test('the calamity shop sells a hero for a hire, and the greedy calamity is dete
 
 test('a saved tower run reloads at the same node with the same roster, gold and hp, in its own slot', () => {
   const s = store();
-  const m = newMeta(3);
+  const m = startedMeta(3);
   const run = towerRun(31, m);
   // a few floors in, wounded, with gold, a hero levelled and a node in play
   for (let i = 0; i < 3; i++) {
@@ -451,11 +451,11 @@ test('a saved calamity reloads at the same node with the same squad, gold, level
 
 test('a run that is over, or of another mode, is no saved run; a slot can be emptied', () => {
   const s = store();
-  const run = towerRun(51, newMeta(1));
+  const run = towerRun(51, startedMeta(1));
   run.over = true;
   saveSlot(run, s);
   assert.equal(loadSlot('tower', s), null, 'a lost climb is not carried on');
-  const live = towerRun(52, newMeta(1));
+  const live = towerRun(52, startedMeta(1));
   saveSlot(live, s);
   assert.notEqual(loadSlot('tower', s), null);
   assert.equal(loadSlot('calamity', s), null, 'the tower is not a calamity');
@@ -466,7 +466,7 @@ test('a run that is over, or of another mode, is no saved run; a slot can be emp
 
 test('abandoning the climb empties its slot and pays what it earned; a fresh one then starts', () => {
   const s = store();
-  const m = newMeta(1);
+  const m = startedMeta(1);
   const run = towerRun(61, m);
   saveSlot(run, s);
   assert.equal(abandonTower(run), true);
@@ -480,7 +480,7 @@ test('abandoning the climb empties its slot and pays what it earned; a fresh one
 
 test('a tower run saved by an older version in the ordinary slot moves to the tower\'s own, and still loads', () => {
   const s = store();
-  const run = towerRun(71, newMeta(1));
+  const run = towerRun(71, startedMeta(1));
   run.local = undefined;
   saveRun(run, s);
   assert.equal(adoptOldTower(s), true);
@@ -490,7 +490,7 @@ test('a tower run saved by an older version in the ordinary slot moves to the to
   assert.equal(back.local, undefined, 'an old run keeps levelling in the meta');
   assert.equal(adoptOldTower(s), false);
   // an ordinary run is left where it is
-  const army = towerRun(72, newMeta(1));
+  const army = towerRun(72, startedMeta(1));
   army.mode = undefined;
   army.tower = undefined;
   const t = store();
@@ -515,11 +515,11 @@ test('an older tower save (no local flag, no rows) plays on as it did: the meta\
 });
 
 test('the reset climb is fair: a greedy climb gets past the opening floors and is the same each time', () => {
-  const a = playTower(newMeta(4), 90, HEROES);
-  assert.deepEqual(a, playTower(newMeta(4), 90, HEROES));
+  const a = playTower(startedMeta(4), 90, HEROES);
+  assert.deepEqual(a, playTower(startedMeta(4), 90, HEROES));
   assert.ok(a.floors >= 4);
   let total = 0;
-  for (let i = 1; i <= 12; i++) total += playTower(newMeta(i), mixSeed(i, 0x70c1), HEROES).floors;
+  for (let i = 1; i <= 12; i++) total += playTower(startedMeta(i), mixSeed(i, 0x70c1), HEROES).floors;
   assert.ok(total / 12 >= 7, `the mean climb reaches the middle of the first act (${total / 12})`);
 });
 
@@ -528,7 +528,7 @@ test('the greedy calamity: the first map can be cleared, and a full clear is har
   let full = 0;
   const N = 24;
   for (let i = 1; i <= N; i++) {
-    const r = playCalamity(newMeta(i), mixSeed(i, 0xca1), HEROES[i % HEROES.length]);
+    const r = playCalamity(startedMeta(i), mixSeed(i, 0xca1), HEROES[i % HEROES.length]);
     if (r.maps >= 1) map1++;
     if (r.cleared) full++;
   }
@@ -541,7 +541,7 @@ test('six maps, each ending in its own boss, bigger than the last; the later map
   assert.equal(CAL_MAPS, 6);
   assert.equal(new Set(CAL_BOSSES).size, 6, 'six different bosses');
   for (let k = 2; k <= 6; k++) assert.ok(calBossBoost(k).size > calBossBoost(k - 1).size && calBossBoost(k).hp > calBossBoost(k - 1).hp);
-  const run = calamityRun(5, newMeta(1), 'knight');
+  const run = calamityRun(5, startedMeta(1), 'knight');
   const t = run.tower!;
   const specs: string[] = [];
   for (let act = 1; act <= CAL_MAPS; act++) {
@@ -568,7 +568,7 @@ test('every calamity map has a mini-boss on a floor with other ways round it, a 
 });
 
 test('a mini-boss pays a relic to choose, gear, and double gold', () => {
-  const run = calamityRun(23, newMeta(1), 'knight');
+  const run = calamityRun(23, startedMeta(1), 'knight');
   reachNode(run, 'elite');
   const gold = run.gold;
   const floor = run.stage;

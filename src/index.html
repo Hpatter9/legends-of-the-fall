@@ -103,8 +103,7 @@
   }
   @keyframes evolve { 0% { transform: scale(0.8); } 35% { transform: scale(1.18); } 100% { transform: scale(1); } }
   @keyframes evolveFlash { 0% { opacity: 1; transform: scale(0.6); } 100% { opacity: 0; transform: scale(1.7); } }
-  /* (a hero on the field flies a crimson war banner with gold crossed blades from its corner, waving; the frame is left
-     to the rarity, so the two never look alike) */
+  /* (a hero on the field flies a crimson war banner with gold crossed blades from its corner, waving) */
   .card.placed::after {
     content: '⚔'; position: absolute; top: 0; right: 4px; width: 15px; height: 21px; padding-top: 1px; box-sizing: border-box;
     font-size: 9px; line-height: 1; color: #ffd86a; text-shadow: 0 0 3px rgba(255, 200, 80, 0.9), 0 1px 0 #000;
@@ -741,43 +740,14 @@
   #home[hidden] #leaves { display: none; }
   @media (prefers-reduced-motion: reduce) { #leaves { display: none; } button.primary::after, .hmBattle::after { animation: none; } }
 
-  /* rarity: 1 Common grey, 2 Rare blue, 3 Epic purple, 4 Legendary gold, 5 Mythic crimson-to-gold. --rc is the tier's colour. */
+  /* gear grades (heroes have none): 1 Common grey, 2 Rare blue, 3 Epic purple, 4 Legendary gold, 5 Mythic crimson. --rc is the grade's colour, which the equipment views use. */
   :root { --r1: #9a9a9a; --r2: #4a9cff; --r3: #b06aff; --r4: #f0b44a; --r5: #ff3a4a; }
   .r1 { --rc: var(--r1); } .r2 { --rc: var(--r2); } .r3 { --rc: var(--r3); } .r4 { --rc: var(--r4); } .r5 { --rc: var(--r5); }
-  .card.r2, .card.r3, .card.r4, .card.r5, .hcard.r2, .hcard.r3, .hcard.r4, .hcard.r5, .hsheet.r2, .hsheet.r3, .hsheet.r4, .hsheet.r5, .hrow.r2, .hrow.r3, .hrow.r4, .hrow.r5,
-  .ptSlot.r2, .ptSlot.r3, .ptSlot.r4, .ptSlot.r5, #collection .hero.r2, #collection .hero.r3, #collection .hero.r4, #collection .hero.r5, .hmShow canvas.r2, .hmShow canvas.r3, .hmShow canvas.r4, .hmShow canvas.r5 { border-style: solid; border-color: var(--rc); }
-  .flip.r1 .face { border-color: var(--r1); }
-  .flip.r2 .face, .flip.r3 .face, .flip.r4 .face, .flip.r5 .face { border-color: var(--rc); box-shadow: 0 0 10px var(--rc); }
-  .hcard.r3, .card.r3 { box-shadow: 0 0 8px rgba(176, 106, 255, 0.45); }
-  .hcard.r4, .card.r4, .hsheet.r4, .ptSlot.r4, .hmShow canvas.r4 { box-shadow: 0 0 10px rgba(240, 180, 74, 0.6), inset 0 0 8px rgba(255, 210, 90, 0.25); }
-  .hcard.r4, .card.r4 { background: linear-gradient(#5a3c1c, #2a170e); animation: gleam 2.8s ease-in-out infinite; }
-  .flip.r4 .face { box-shadow: 0 0 18px 4px var(--r4); }
   .card, .hcard, .hrow, .ptSlot { min-width: 0; box-sizing: border-box; } .hrow > :not(canvas) { min-width: 0; }
-  .rtag { font-style: normal; font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--rc); }
-  /* a Mythic's frame is a slow crimson-and-gold shimmer */
-  .card.r5, .hcard.r5, .hsheet.r5, .hrow.r5, .ptSlot.r5, #collection .hero.r5, .flip.r5 .face, .hmShow canvas.r5 {
-    border: 2px solid transparent; background: linear-gradient(#3a1018, #1c0a0e) padding-box, linear-gradient(120deg, #ff2a4a, #ffd24a, #ff2a4a, #ffd24a) border-box; background-size: 100% 100%, 300% 300%;
-    animation: shimmer 3s linear infinite; box-shadow: 0 0 14px rgba(255, 58, 74, 0.7), 0 0 6px rgba(255, 210, 74, 0.6); }
-  .card.r5 em, .hcard.r5 .lv { color: #ffd24a; }
-  @keyframes shimmer { to { background-position: 0 0, 300% 300%; } }
-  @keyframes gleam { 50% { box-shadow: 0 0 16px rgba(255, 210, 90, 0.9), inset 0 0 10px rgba(255, 210, 90, 0.4); } }
-  /* the recruit reveal: a legendary or mythic pull gets beams behind the card, a longer flip and a flash over the screen */
-  .flip.r4, .flip.r5 { z-index: 1; }
-  .flip.r4.up, .flip.r5.up { transform: scale(1.12); transition: transform 0.4s; }
-  .flip .beams { position: absolute; left: 50%; top: 50%; width: 320%; aspect-ratio: 1; margin: -160% 0 0 -160%; z-index: -1; pointer-events: none; opacity: 0; border-radius: 50%;
-    background: repeating-conic-gradient(from 0deg, var(--rc) 0 8deg, transparent 8deg 24deg); -webkit-mask: radial-gradient(circle, #000 5%, transparent 68%); mask: radial-gradient(circle, #000 5%, transparent 68%); }
-  .flip.r4.up .beams, .flip.r5.up .beams { opacity: 0.75; animation: spin 6s linear infinite, beamIn 0.6s ease-out; }
-  .flip.r5.up .beams { background: repeating-conic-gradient(from 0deg, #ff3a4a 0 6deg, #ffd24a 6deg 12deg, transparent 12deg 24deg); animation: spin 4s linear infinite, beamIn 0.6s ease-out; }
-  .flip.r5 .back, .flip.r5 .face { transition-duration: 1.2s; }
-  .flip.r5.shake .back { animation: tremble 0.12s linear infinite; box-shadow: 0 0 18px var(--r5); }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes beamIn { from { opacity: 0; transform: scale(0.2); } }
-  .flip.tease:not(.up) .back { animation: tease 1.1s ease-in-out infinite; }
-  .flip.r5.tease:not(.up) .back { animation: tease 0.7s ease-in-out infinite; }
-  .flip.shake:not(.up):not(.r5) { animation: tremble 0.14s linear infinite; }
-  @keyframes tease { 0%, 100% { filter: brightness(1) drop-shadow(0 0 2px var(--rc)); } 50% { filter: brightness(1.5) drop-shadow(0 0 10px var(--rc)); } }
-  @keyframes tremble { 25% { transform: translate(-2px, 1px) rotate(-2deg); } 75% { transform: translate(2px, -1px) rotate(2deg); } }
-  @media (prefers-reduced-motion: reduce) { .card.r4, .hcard.r4, .card.r5, .hcard.r5, .hsheet.r5, .hrow.r5, .ptSlot.r5, #collection .hero.r5, .flip .beams, .flip.r5.shake .back, .flip.tease .back, .flip.shake, .hmShow canvas.r5 { animation: none !important; } }
+  .rtag { font-style: normal; font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; color: #c8b890; }
+  /* the recruit reveal: the cards flip over one after another; a new hero's card has a steady gold glow (nothing flashes or trembles) */
+  .flip.new .face { box-shadow: 0 0 14px 2px rgba(255, 226, 122, 0.75); }
+  .flip.new.up { z-index: 1; transform: scale(1.08); transition: transform 0.4s; }
 /*__PIXEL_CSS__*/
 </style>
 </head>

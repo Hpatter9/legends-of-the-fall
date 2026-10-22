@@ -49,7 +49,7 @@ export interface Unit {
   hurtAt?: number;
   /** Skill charge, 0 to `CHARGE_MAX` (heroes only). */
   charge: number;
-  /** A Mythic's ultimate charge, 0 to `CHARGE_MAX` (none for the rest). */
+  /** An ultimate's charge, 0 to `CHARGE_MAX` (only the heroes with an ultimate fill it). */
   charge2?: number;
   /** The skill being cast, from when and for how long. */
   cast?: { at: number; ms: number; anim: 'attack' | 'attack2' | 'defend' };
@@ -218,7 +218,7 @@ export interface Boost {
   equip?: EquipStats;
   /** How much faster the foes act and walk (a harder army tier); only the foes' boost reads it. */
   speed?: number;
-  /** Skill charge carried over from the run's last wave (and a Mythic's ultimate charge). */
+  /** Skill charge carried over from the run's last wave (and an ultimate's charge). */
   charge?: number;
   charge2?: number;
   /** The share of its hp a hero starts the fight with (the endless tower's wounds carry over); whole when unset. */

@@ -1,3 +1,5 @@
+> Hero rarity was removed later (see `no-rarity.md`): where this note gives a hero a tier, rarity frame or tier bonus, that no longer applies.
+
 # More heroes (the second wave)
 
 Twenty heroes join the 25 (`ALL_HEROES` in `units.ts` is now 45; `HEROES` stays the five, and their numbers did not change).

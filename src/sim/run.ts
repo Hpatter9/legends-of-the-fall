@@ -8,7 +8,7 @@ import { AREAS, type Area } from './board';
 import { BOSS_BANDS, FIELD_BANDS } from './foes';
 import { armyById, armyIndex, waveBoost, type Army } from './armies';
 import { bonusGold, heroBoost, manaRate, moveRate, newCastle, type Castle } from './castle';
-import { MYTHIC_SIZE, rankMult, rarityOf, tierMult } from './meta';
+import { rankMult } from './meta';
 import { levelBoost } from './levels';
 import { starGold } from './stars';
 import { mixSeed, Rng } from './rng';
@@ -58,7 +58,7 @@ export interface Owned {
   xp?: number;
   /** Lasting bumps from a training ground, added to the hero's multipliers. */
   bump?: { hp: number; atk: number };
-  /** Skill charge (and a Mythic's ultimate charge) kept from the last wave, so a skill half-filled is not lost between waves. */
+  /** Skill charge (and an ultimate's charge) kept from the last wave, so a skill half-filled is not lost between waves. */
   charge?: number;
   charge2?: number;
 }
@@ -280,15 +280,15 @@ export function retryWave(run: Run): number | null {
 export const heroOf = (run: Run, id: number) => run.roster.find((h) => h.id === id);
 export const benched = (run: Run) => run.roster.filter((h) => !run.squad.includes(h.id));
 
-/** Hp and attack multipliers of a grade, times the hero kind's rank (from its shards), its level (from its XP) and its tier (`kind`; Common when unset); a Mythic is also drawn bigger. */
-export const gradeBoost = (grade: number, rank = 0, level = 1, kind?: string): Boost => {
-  const k = GRADE_MULT ** (grade - 1) * rankMult(rank) * (kind ? tierMult(kind) : 1);
+/** Hp and attack multipliers of a grade, times the hero kind's rank (from its shards) and its level (from its XP). Every hero kind is alike here: what sets one apart is its own stats and skill. */
+export const gradeBoost = (grade: number, rank = 0, level = 1): Boost => {
+  const k = GRADE_MULT ** (grade - 1) * rankMult(rank);
   const lv = levelBoost(level);
-  return { hp: k * lv.hp, atk: k * lv.atk, grade, ...(kind && rarityOf(kind) === 5 ? { size: MYTHIC_SIZE } : {}) };
+  return { hp: k * lv.hp, atk: k * lv.atk, grade };
 };
 /** A roster hero's whole boost: grade and rank, its gear, its training bumps, and the kind's permanent equipment (`equip`, from `equipStats(meta, kind)`; none when it wears nothing). */
 export function boostOf(h: Owned, rank = 0, level = 1, equip?: EquipStats): Boost {
-  const base = gradeBoost(h.grade, rank, level, h.kind);
+  const base = gradeBoost(h.grade, rank, level);
   const g = gearBoost(h.gear);
   return { ...base, hp: base.hp! * g.hp! + (h.bump?.hp ?? 0), atk: base.atk! * g.atk! + (h.bump?.atk ?? 0), ...(equip ? { equip } : {}), ...(h.charge ? { charge: h.charge } : {}), ...(h.charge2 ? { charge2: h.charge2 } : {}) };
 }

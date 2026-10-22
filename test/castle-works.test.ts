@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { BUILD_MS, CHAPEL_MS, clockText, newCastle, readWorks, settleWorks, startBuild, startChapel, worksLeft, type WorksMeta } from '../src/sim/castle';
-import { loadMeta, newMeta } from '../src/sim/meta';
+import { loadMeta, startedMeta } from '../src/sim/meta';
 
 const meta = (crowns = 5000): WorksMeta => ({ crowns, castle: newCastle() });
 
@@ -49,7 +49,7 @@ test('the Chapel takes its time too, and the spellbook opens only when it stands
 });
 
 test('works survive a save and a bad saved value is dropped', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   m.crowns = 999;
   startBuild(m, 'stable', 5);
   const back = loadMeta(1, { getItem: () => JSON.stringify(m) });

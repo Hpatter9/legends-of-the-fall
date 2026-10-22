@@ -9,7 +9,7 @@ console.log(
     wave.map((id) => {
       const d = UNITS[id];
       const k = KITS[id];
-      return { id, name: d.name, rarity: d.rarity, forms: d.forms ?? [d.sheet], traits: HERO_TRAITS[id].map((t) => TRAITS[t].name), skill: k.skill.name, ultimate: k.ultimate?.name ?? null };
+      return { id, name: d.name, forms: d.forms ?? [d.sheet], traits: HERO_TRAITS[id].map((t) => TRAITS[t].name), skill: k.skill.name, ultimate: k.ultimate?.name ?? null };
     }),
   ),
 );

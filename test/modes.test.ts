@@ -4,7 +4,7 @@ import { isBoss } from '../src/sim/foes';
 import { bandFor, finish, isBossStage, loadRun, newRun, saveRun, startStage, START_GOLD, stageBoost } from '../src/sim/run';
 import { AREAS } from '../src/sim/board';
 import { dailyArea, dailyInProgress, dailyLine, dailyRun, dailyScore, dailySeed, dateKey, modeNote, settleRun, startDaily, towerLine, towerOpen, towerRun, TOWER_UNLOCK } from '../src/sim/modes';
-import { loadMeta, newMeta, saveMeta, setParty } from '../src/sim/meta';
+import { loadMeta, startedMeta, saveMeta, setParty } from '../src/sim/meta';
 import { HEROES } from '../src/sim/units';
 import { levelOfKind, xpFor } from '../src/sim/levels';
 
@@ -46,7 +46,7 @@ test('a daily run has no castle upgrades and its summons draw from the starting 
 });
 
 test('the first play of a date counts; a replay is practice and does not change the best', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   const first = startDaily(m, 20261021);
   assert.equal(first.mode?.kind === 'daily' && first.mode.practice, false);
   assert.equal(m.daily['20261021'].plays, 1);
@@ -84,17 +84,17 @@ test('a daily score is the stages cleared x 100 plus the stars x 10', () => {
 });
 
 test('a daily run in progress is resumed on the same date only', () => {
-  const run = startDaily(newMeta(1), 20261021);
+  const run = startDaily(startedMeta(1), 20261021);
   assert.equal(dailyInProgress(run, 20261021), run);
   assert.equal(dailyInProgress(run, 20261022), null);
   run.over = true;
   assert.equal(dailyInProgress(run, 20261021), null);
   assert.equal(dailyInProgress(newRun(3), 20261021), null);
-  assert.match(dailyLine(newMeta(1), 20261021), /one run today/);
+  assert.match(dailyLine(startedMeta(1), 20261021), /one run today/);
 });
 
 test('the endless tower opens once a run has fought stage 10, or the first army is beaten, and not before', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   assert.equal(towerOpen(m), false);
   assert.match(towerLine(m), /beat the Orc Warband/);
   m.bestStage = TOWER_UNLOCK - 1;
@@ -112,7 +112,7 @@ test('tower floors climb with the stage scaling, and every fifth floor is a boss
   assert.ok(stageBoost(30).foes!.atk! > stageBoost(29).foes!.atk!);
   assert.equal(isBossStage(5), true);
   assert.equal(isBossStage(6), false);
-  const run = towerRun(9, newMeta(1));
+  const run = towerRun(9, startedMeta(1));
   run.stage = 5;
   const b = startStage(run);
   assert.ok(b.units.some((u) => u.side === 'foe' && isBoss(u.def)), 'a boss floor has its boss');
@@ -121,7 +121,7 @@ test('tower floors climb with the stage scaling, and every fifth floor is a boss
 });
 
 test('the tower has no events, pays gold as a run does, and keeps its best floor', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   m.bestStage = 12;
   const run = towerRun(7, m);
   assert.deepEqual(run.mode, { kind: 'tower' });
@@ -146,7 +146,7 @@ test('the tower has no events, pays gold as a run does, and keeps its best floor
 });
 
 test('a tower fight draws from the party at the heroes\' lasting levels', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   m.unlocked.push('kitsune');
   assert.equal(setParty(m, ['knight', 'samurai', 'kunoichi', 'archer', 'kitsune']), true);
   m.xp.knight = xpFor(10);
@@ -158,7 +158,7 @@ test('a tower fight draws from the party at the heroes\' lasting levels', () => 
 });
 
 test('a boss won is kept by band, once', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   const run = newRun(2);
   run.stage = 5;
   finish(run, true, 1);
@@ -169,7 +169,7 @@ test('a boss won is kept by band, once', () => {
 
 test('the modes survive a save and a load, and bad entries are dropped', () => {
   const s = store();
-  const m = newMeta(4);
+  const m = startedMeta(4);
   m.bestStage = 14;
   m.tower = 6;
   m.daily = { '20261021': { best: 880, plays: 2 } };

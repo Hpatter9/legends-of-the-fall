@@ -1,10 +1,11 @@
-// The hero detail sheet (opened from a tap on a hero in the tavern): portrait, rank stars, level, XP bar, rarity, stats and
+// The hero detail sheet (opened from a tap on a hero in the tavern): portrait, rank stars, level, XP bar, role, stats and
 // skills. Reads the meta only.
 
 import { ALL_HEROES, UNITS } from './sim/units';
 import { KITS } from './sim/abilities';
 import { traitsOf, TRAITS } from './sim/traits';
-import { MAX_RANK, RANK_SHARDS, RARITY_NAMES as RARITY, rankMult, rankOf, rarityOf, tierMult, type Meta } from './sim/meta';
+import { MAX_RANK, RANK_SHARDS, rankMult, rankOf, type Meta } from './sim/meta';
+import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { levelBoost, progressOf, xpOf } from './sim/levels';
 import { drawEquipment } from './equipView';
 import { drawTalents } from './talentView';
@@ -29,9 +30,9 @@ function xpBar(meta: Meta, kind: string): { level: number; bar: HTMLElement; tex
   return { level: p.level, bar, text: p.need ? `${p.into} / ${p.need} XP` : 'max level' };
 }
 
-/** The strongest unlocked heroes (level, then rank, then rarity), best first. */
+/** The strongest unlocked heroes (level, then rank), best first. */
 export function strongest(meta: Meta, n: number): string[] {
-  const score = (k: string) => progressOf(xpOf(meta, k)).level * 100 + rankOf(meta, k) * 10 + rarityOf(k);
+  const score = (k: string) => progressOf(xpOf(meta, k)).level * 100 + rankOf(meta, k) * 10;
   return ALL_HEROES.filter((k) => meta.unlocked.includes(k)).sort((a, b) => score(b) - score(a)).slice(0, n);
 }
 
@@ -40,7 +41,7 @@ export function drawHeroSheet(box: HTMLElement, meta: Meta, kind: string, close:
   const def = UNITS[kind];
   const open = meta.unlocked.includes(kind);
   const kit = KITS[kind];
-  box.className = `hsheet r${rarityOf(kind)}`;
+  box.className = 'hsheet';
   box.replaceChildren();
   const head = el('div', 'hhead');
   const pic = el('div', 'hpic');
@@ -49,15 +50,13 @@ export function drawHeroSheet(box: HTMLElement, meta: Meta, kind: string, close:
   if (!open) spr.canvas.style.filter = 'brightness(0.15) grayscale(1)';
   pic.append(spr.canvas);
   const title = el('div');
-  title.append(el('h3', '', open ? def.name : '???'), el('em', '', `${RARITY[rarityOf(kind)]} · ${open ? def.role : 'not yet recruited'}`));
+  title.append(el('h3', '', open ? def.name : '???'), el('em', '', `${open ? `${CLASS_NAMES[CLASS_OF[kind]]} · ${def.role}` : 'not yet recruited'}`));
   const x = xpBar(meta, kind);
   const rank = rankOf(meta, kind);
   if (open) {
     const shards = meta.shards[kind] ?? 0;
     const next = rank < MAX_RANK ? `${shards} / ${RANK_SHARDS[rank]} shards to rank ${rank + 1}` : 'max rank';
     title.append(el('span', 'stars', stars(rank)), el('span', 'lv', `Level ${x.level} · ${x.text}`), x.bar, el('span', 'lv', next));
-    const tier = tierMult(kind);
-    if (tier > 1) title.append(el('em', 'rtag', `${RARITY[rarityOf(kind)]} tier: +${Math.round((tier - 1) * 100)}% hp and attack`));
     const marks = traitsOf(kind).map((t) => TRAITS[t].name).join(' · ');
     if (marks) title.append(el('em', '', marks));
   }
@@ -65,7 +64,7 @@ export function drawHeroSheet(box: HTMLElement, meta: Meta, kind: string, close:
   box.append(head);
   if (open) {
     const b = levelBoost(x.level);
-    const m = rankMult(rank) * tierMult(kind);
+    const m = rankMult(rank);
     const stat = el('div', 'hstats');
     for (const [name, v] of [['HP', Math.round(def.hp * b.hp * m)], ['Attack', Math.round(def.atk * b.atk * m)], ['Defence', def.def], ['Range', def.range]] as const) {
       const cell = el('div');

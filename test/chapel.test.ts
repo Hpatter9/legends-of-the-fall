@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildChapel, canBuildChapel, CHAPEL_COST, chapelBuilt, spellsOpen, upgrade } from '../src/sim/castle';
-import { loadMeta, newMeta, saveMeta } from '../src/sim/meta';
+import { loadMeta, startedMeta, saveMeta } from '../src/sim/meta';
 import { unlockSpell } from '../src/sim/spells';
 import { CHAPEL_SITE, lookFor, PLACE_LOOK } from '../src/render/castleSpots';
 
@@ -17,7 +17,7 @@ const saved = (extra: Record<string, unknown>) => {
 
 test('the Chapel costs 200 crowns, once: the cost is taken, a short purse changes nothing, and a second build does nothing', () => {
   assert.equal(CHAPEL_COST, 200);
-  const m = newMeta(1);
+  const m = startedMeta(1);
   assert.equal(chapelBuilt(m), false);
   m.crowns = 199;
   assert.equal(canBuildChapel(m), false);
@@ -34,7 +34,7 @@ test('the Chapel costs 200 crowns, once: the cost is taken, a short purse change
 });
 
 test('the spellbook is locked until the Chapel stands, and a build survives a save', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   assert.equal(spellsOpen(m), false);
   m.crowns = 200;
   buildChapel(m);
@@ -54,14 +54,14 @@ test('old saves keep what they had: a spell beyond the starters, a changed loado
   assert.equal(saved({ chapel: false, castle: { treasury: 1 } }).chapel, false);
   assert.equal(saved({ chapel: true }).chapel, true);
   // (a fresh player who unlocks a spell later, with the book open, still has the Chapel as the flag says)
-  const m = newMeta(1);
+  const m = startedMeta(1);
   m.crowns = 1000;
   upgrade(m, 'treasury');
   assert.equal(chapelBuilt(m), false);
 });
 
 test('unlocking a spell once the Chapel is built still works as before', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   m.crowns = 1000;
   buildChapel(m);
   assert.equal(unlockSpell(m, 'shield'), true);

@@ -1,3 +1,5 @@
+> Hero rarity was removed later (see `no-rarity.md`): where this note gives a hero a tier, rarity frame or tier bonus, that no longer applies.
+
 # Home screen and castle
 
 - The game opens on `#home` (`src/home.ts`), a castle picture behind wood panels: Continue run (when a run is saved and

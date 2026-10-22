@@ -4,7 +4,7 @@
 // until Start or Done, which saves it through `setParty`; Back throws it away. The rules are in `src/sim/meta.ts`.
 
 import { ALL_HEROES, UNITS } from './sim/units';
-import { partySlots, rankOf, rarityOf, saveMeta, setParty, type Meta } from './sim/meta';
+import { partySlots, rankOf, saveMeta, setParty, type Meta } from './sim/meta';
 import { progressOf, xpOf } from './sim/levels';
 import { countTraits, TRAITS, traitsOf } from './sim/traits';
 import { portrait } from './render/sheets';
@@ -118,7 +118,7 @@ export class Party {
         row.append(el('div', 'ptSlot empty', '+'));
         continue;
       }
-      const b = el('button', `ptSlot r${rarityOf(kind)}`);
+      const b = el('button', 'ptSlot');
       b.append(portrait(UNITS[kind].sheet, 48), el('small', '', UNITS[kind].name));
       b.addEventListener('click', () => (this.held ? (this.held = false) : this.toggle(kind)));
       this.holdTo(b, kind);
@@ -148,7 +148,7 @@ export class Party {
       const def = UNITS[kind];
       const open = m.unlocked.includes(kind);
       const on = this.picked.includes(kind);
-      const card = el('button', `hcard ptCard r${rarityOf(kind)}${open ? '' : ' locked'}${on ? ' picked' : ''}`);
+      const card = el('button', `hcard ptCard${open ? '' : ' locked'}${on ? ' picked' : ''}`);
       card.append(portrait(def.sheet, 56));
       card.append(el('b', '', open ? def.name : '???'));
       if (open) {

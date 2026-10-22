@@ -5,7 +5,7 @@ import { canPlace, fight, place, playOut, startBattle, stepBattle, strikeDef, ty
 import { mendUnit } from '../src/sim/abilities';
 import { speedOf } from '../src/sim/spells';
 import { HEROES } from '../src/sim/units';
-import { newMeta } from '../src/sim/meta';
+import { startedMeta } from '../src/sim/meta';
 import { towerRun } from '../src/sim/modes';
 import { startStage } from '../src/sim/run';
 import { ACT_ROWS, enterNode, choices, finishTower, fightSpec, makeMap } from '../src/sim/tower';
@@ -245,7 +245,7 @@ test('twistBoard changes only the lava and the boulders, and keeps every board p
 
 test('the tower brings a node\'s twist into its fight, and a win pays for it', () => {
   const gold = (twist?: string) => {
-    const run = towerRun(5, newMeta(1));
+    const run = towerRun(5, startedMeta(1));
     const first = choices(run)[0];
     run.tower!.map[first.id].twist = twist;
     enterNode(run, first.id);
@@ -265,7 +265,7 @@ test('the tower brings a node\'s twist into its fight, and a win pays for it', (
 });
 
 test('an old save\'s map, with no twists on it, plays as it did', () => {
-  const run = towerRun(8, newMeta(1));
+  const run = towerRun(8, startedMeta(1));
   for (const n of run.tower!.map) delete n.twist;
   const first = choices(run)[0];
   enterNode(run, first.id);

@@ -5,7 +5,7 @@
 // that is played depends on it) and runs only while the tab is showing.
 
 import { ALL_HEROES, formOf, UNITS } from './sim/units';
-import { rankOf, rarityOf, type Meta } from './sim/meta';
+import { rankOf, type Meta } from './sim/meta';
 import { sheetInfo } from './render/sheets';
 import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
@@ -87,10 +87,7 @@ interface Actor {
   clip: string;
   emote: { name: string; until: number } | null;
   phase: number;
-  rarity: number;
 }
-
-const RARITY_GEM: Record<number, string[]> = { 2: ['#5ab4ff'], 3: ['#b06aff'], 4: ['#f0b44a'], 5: ['#ff4a4a', '#ffd24a'] };
 
 export class Tavern {
   readonly root = el('div', 'tvWrap');
@@ -172,7 +169,6 @@ export class Tavern {
         clip: 'idle',
         emote: null,
         phase: rand(0, 6),
-        rarity: rarityOf(kind),
       });
     }
   }
@@ -407,18 +403,11 @@ export class Tavern {
     const r = rig.rows.indexOf(rig.rows.includes(row) ? row : 'idle');
     const fx = Math.round(a.x);
     const fy = a.spot.y;
-    // (a shadow and, for the rare kinds, a small gem under the feet)
+    // (a shadow under the feet)
     g.fillStyle = 'rgba(8, 3, 1, 0.38)';
     const sw = Math.round(rig.figure * k * 0.34);
     g.fillRect((fx - sw) * s, fy * s, sw * 2 * s, 2 * s);
     g.fillRect((fx - sw + 2) * s, (fy - 1) * s, (sw - 2) * 2 * s, s);
-    const gem = RARITY_GEM[a.rarity];
-    if (gem) {
-      g.fillStyle = gem[a.rarity === 5 && Math.floor(this.now / 700) % 2 ? 1 : 0];
-      g.fillRect((fx - 1) * s, (fy + 2) * s, 3 * s, s);
-      g.fillRect(fx * s, (fy + 3) * s, s, s);
-      g.fillRect(fx * s, (fy + 1) * s, s, s);
-    }
     const dw = rig.w * k * s;
     const dh = rig.h * k * s;
     const dx = fx * s - dw / 2;

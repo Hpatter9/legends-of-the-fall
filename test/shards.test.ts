@@ -1,12 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { place, startBattle } from '../src/sim/battle';
-import { loadMeta, MAX_RANK, newMeta, pullOnce, rankMult, rankOf, RANK_MULT, saveMeta } from '../src/sim/meta';
+import { loadMeta, MAX_RANK, startedMeta, pullOnce, rankMult, rankOf, RANK_MULT, saveMeta } from '../src/sim/meta';
 import { gradeBoost } from '../src/sim/run';
 import { ALL_HEROES, HEROES, UNITS } from '../src/sim/units';
 
 test('a duplicate gives shards of its kind, not crowns; a new kind gives none', () => {
-  const m = newMeta(12);
+  const m = startedMeta(12);
   const seen: string[] = [];
   for (let i = 0; i < 300; i++) {
     const crowns = m.crowns;
@@ -24,7 +24,7 @@ test('a duplicate gives shards of its kind, not crowns; a new kind gives none', 
 });
 
 test('ranks come at the shard thresholds: 1, 3, 6 and 10', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   const rankAt = (n: number) => {
     m.shards.knight = n;
     return rankOf(m, 'knight');
@@ -69,7 +69,7 @@ test('a saved meta without shards loads with none, and junk shards are dropped',
 
 test('shards save and load back', () => {
   const store: Record<string, string> = {};
-  const m = newMeta(6);
+  const m = startedMeta(6);
   m.shards.archer = 7;
   saveMeta(m, { setItem: (k, v) => void (store[k] = v) });
   const back = loadMeta(1, { getItem: (k) => store[k] ?? null });

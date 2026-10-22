@@ -1,3 +1,5 @@
+> Hero rarity was removed later (see `no-rarity.md`): where this note gives a hero a tier, rarity frame or tier bonus, that no longer applies.
+
 # The tavern (Heroes tab) and no recruiting mid-run
 
 ## The tavern

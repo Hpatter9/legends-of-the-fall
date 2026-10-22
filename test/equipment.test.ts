@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { fight, place, playOut, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
 import { Rng } from '../src/sim/rng';
-import { ALL_HEROES, HEROES } from '../src/sim/units';
-import { loadMeta, newMeta, saveMeta } from '../src/sim/meta';
+import { ALL_HEROES, HEROES, UNITS } from '../src/sim/units';
+import { loadMeta, startedMeta, saveMeta } from '../src/sim/meta';
 import { boostOf } from '../src/sim/run';
 import {
   ABILITIES, ABILITY_SCALE, CALLING_BONUS, EQUIP_BASES, EQUIP_BASE_IDS, EQUIP_LIST, EQUIP_SLOTS, MAX_ITEM_LEVEL, QUALITY_WEIGHTS, RARITY_SCALE, SALVAGE_CROWNS, callingOf, describeAbility, emptyStats, equipItem, equipStats, grantEquipment,
@@ -86,7 +86,7 @@ test('items grow with rarity and level; a piece for the hero\'s calling is stron
 });
 
 test('equip, swap, unequip and salvage follow the rules', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   const a = grantEquipment(m, sword(1));
   const b = grantEquipment(m, sword(3));
   assert.notEqual(a.id, b.id);
@@ -120,7 +120,7 @@ test('equip, swap, unequip and salvage follow the rules', () => {
 });
 
 test('a slot holds one piece, by the base\'s slot', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   const w = grantEquipment(m, sword(1));
   const ar = grantEquipment(m, { base: 'chainMail', rarity: 2, level: 1 });
   equipItem(m, 'knight', w.id);
@@ -135,7 +135,7 @@ test('a slot holds one piece, by the base\'s slot', () => {
 
 test('equipment survives a save, and an old save loads with none', () => {
   const store: Record<string, string> = {};
-  const m = newMeta(8);
+  const m = startedMeta(8);
   grantSampleEquipment(m);
   equipItem(m, 'knight', m.equipment![1].id);
   saveMeta(m, { setItem: (k, v) => void (store[k] = v) });
@@ -144,7 +144,7 @@ test('equipment survives a save, and an old save loads with none', () => {
   assert.deepEqual(back.equipped, m.equipped);
   assert.equal(back.nextItem, m.nextItem);
   // (a save from before equipment)
-  const old = JSON.parse(JSON.stringify(newMeta(8)));
+  const old = JSON.parse(JSON.stringify(startedMeta(8)));
   delete old.equipment;
   delete old.equipped;
   delete old.nextItem;
@@ -175,7 +175,7 @@ test('a sword raises the damage dealt, armour cuts the damage taken', () => {
   // (hp and attack go through the unit's stats)
   const w = duel(stats({ hp: 0.5, atk: 0.5 }));
   const k = w.units.find((u) => u.def === 'knight')!;
-  assert.equal(k.maxHp, Math.round(380 * 1.5));
+  assert.equal(k.maxHp, Math.round(UNITS.knight.hp * 1.5));
   assert.equal(k.power, 1.5);
 });
 
@@ -336,13 +336,13 @@ test('a run with no equipment plays out exactly as before', () => {
   // (an empty set of stats equals no equipment, and boostOf adds nothing without it)
   assert.deepEqual(boostOf({ id: 1, kind: 'knight', grade: 1 }), boostOf({ id: 1, kind: 'knight', grade: 1 }, 0, 1, undefined));
   assert.equal('equip' in boostOf({ id: 1, kind: 'knight', grade: 1 }), false);
-  const m = newMeta(1);
+  const m = startedMeta(1);
   for (const k of ALL_HEROES) assert.equal(equipStats(m, k), undefined);
   assert.equal(HEROES.length, 5);
 });
 
 test('worn equipment reaches the boost a run places its hero with', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   equipItem(m, 'knight', grantEquipment(m, sword(4, 5)).id);
   const eq = equipStats(m, 'knight');
   assert.ok(eq && eq.atk > 0);

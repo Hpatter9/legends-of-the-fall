@@ -12,7 +12,7 @@ import { gradeBoost } from './run';
 import { heroStats } from './talents';
 import { UNITS } from './units';
 
-/** Scales the result so a fresh Common hero sits near a thousand. */
+/** Scales the result so a fresh hero sits near a thousand. */
 const POWER_SCALE = 10;
 /** Defence counts against blows of about this size. */
 const DEF_REF = 15;
@@ -33,7 +33,7 @@ export function powerOf(kind: string, boost: Boost = {}): number {
 /** A kind's power outside a run: grade 1, with its rank, level, tier, equipment and talents. */
 export const kindPower = (m: Meta, kind: string): number => {
   const eq = heroStats(m, kind);
-  return powerOf(kind, { ...gradeBoost(1, rankOf(m, kind), levelOfKind(m, kind), kind), ...(eq ? { equip: eq } : {}) });
+  return powerOf(kind, { ...gradeBoost(1, rankOf(m, kind), levelOfKind(m, kind)), ...(eq ? { equip: eq } : {}) });
 };
 
 /** A power for the page: 1,234. */

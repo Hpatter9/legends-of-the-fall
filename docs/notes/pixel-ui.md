@@ -1,3 +1,5 @@
+> Hero rarity was removed later (see `no-rarity.md`): where this note gives a hero a tier, rarity frame or tier bonus, that no longer applies.
+
 # Pixel UI
 
 The whole interface now looks like the sprites: a SNES-RPG feel in the same dark brown and gold.

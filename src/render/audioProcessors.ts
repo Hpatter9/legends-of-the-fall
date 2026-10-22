@@ -490,42 +490,16 @@ export const SOUNDS: Record<Cue, (s: Voices, t: number) => void> = {
     s.hiss(t + 0.35, 0.9, 6500, 'highpass', 0.12);
     s.ring(t + 0.35, 1760, 0.9, 0.06);
   },
-  // the summoning hall: chimes climbing for an Epic, a choir-like swell for a Legendary, a deep rising drone for a Mythic
-  riseEpic: (s, t) => {
-    [784, 988, 1175, 1319, 1568, 1976].forEach((f, i) => s.ring(t + i * 0.22, f, 0.7, 0.07));
-    s.note(t, 220, 1.5, 0.05, 'sine', 440);
-  },
-  riseLegend: (s, t) => {
+  // the summoning hall: a choir-like swell as the circle charges, and the stinger as it flares
+  riseSummon: (s, t) => {
     [220, 277, 330, 440].forEach((f, i) => s.pad(t + i * 0.12, f, 2.2, 0.05, 'triangle', 1500, f * 1.5));
     s.hiss(t, 2.2, 600, 'bandpass', 0.05, 3500, 4);
   },
-  riseMythic: (s, t) => {
-    s.note(t, 55, 3, 0.2, 'sine', 110);
-    s.pad(t, 82, 3, 0.07, 'sawtooth', 500, 164);
-    s.hiss(t, 3, 150, 'lowpass', 0.14, 1200);
-  },
-  stingEpic: (s, t) => {
-    [659, 880, 1319].forEach((f) => s.ring(t, f, 1, 0.08));
-    s.hiss(t, 0.4, 5000, 'highpass', 0.06);
-  },
-  stingLegend: (s, t) => {
+  stingSummon: (s, t) => {
     s.note(t, 80, 0.7, 0.3, 'sine', 36);
     [392, 494, 587, 784].forEach((f) => s.pad(t, f, 1.6, 0.07, 'triangle', 2400));
     s.ring(t, 2093, 1.4, 0.06);
     s.hiss(t, 0.9, 6500, 'highpass', 0.08);
-  },
-  stingMythic: (s, t) => {
-    s.note(t, 60, 1.2, 0.45, 'sine', 28);
-    s.hiss(t, 0.9, 400, 'lowpass', 0.3, 80);
-    [220, 262, 330, 440].forEach((f) => s.pad(t, f, 2.4, 0.07, 'sawtooth', 1200));
-    s.ring(t + 0.1, 1568, 1.6, 0.06);
-    s.ring(t + 0.1, 2349, 1.6, 0.04);
-    s.hiss(t + 0.1, 1.2, 6000, 'highpass', 0.1);
-  },
-  // two low thumps, a heart
-  heartbeat: (s, t) => {
-    s.note(t, 64, 0.2, 0.5, 'sine', 38);
-    s.note(t + 0.2, 56, 0.26, 0.4, 'sine', 34);
   },
   // a ribbon slamming in
   slam: (s, t) => {

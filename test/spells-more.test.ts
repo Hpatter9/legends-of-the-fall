@@ -9,7 +9,7 @@ import {
   SPELL_IDS, SPELLS, STARTER_SPELLS, unlockSpell, WARCRY_CHARGE, WOLVES, readLoadout, equipSpell, type SpellId,
 } from '../src/sim/spells';
 import { tileAt } from '../src/sim/board';
-import { newMeta } from '../src/sim/meta';
+import { startedMeta } from '../src/sim/meta';
 import { readyBattle } from './helpers';
 
 const NEW: SpellId[] = ['cleanse', 'blink', 'hex', 'lance', 'renewal', 'deepfreeze', 'warcry', 'bulwark', 'wolves', 'starfall'];
@@ -48,14 +48,14 @@ test('ten new spells: costs, cooldowns and power fit the rules, each costs crown
   // (the strongest costs the most mana, and nothing outdoes the existing top spells in power)
   assert.equal(Math.max(...NEW.map((id) => SPELLS[id].power)), 5);
   // (three of the new ones that fit the base budget exist, and the biggest three never do)
-  const m = newMeta(1);
+  const m = startedMeta(1);
   m.spellbook.owned = [...SPELL_IDS];
   m.spellbook.equipped = [];
   for (const id of ['hex', 'lance', 'renewal'] as const) assert.ok(equipSpell(m, id), id);
 });
 
 test('the new spells are bought with crowns like the others, and a saved loadout keeps them', () => {
-  const m = newMeta(2);
+  const m = startedMeta(2);
   m.crowns = 100;
   assert.equal(unlockSpell(m, 'starfall'), false);
   assert.ok(unlockSpell(m, 'cleanse'));

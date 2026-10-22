@@ -1,3 +1,5 @@
+> Hero rarity was removed later (see `no-rarity.md`): where this note gives a hero a tier, rarity frame or tier bonus, that no longer applies.
+
 # The summoning hall (Recruit tab) and the library (Spells tab)
 
 The last two tabs are places now, like the tavern and the courtyard. Both are side views in the tavern's style (so the Heroes,

@@ -22,7 +22,8 @@ import { tierOf } from './sim/tiers';
 import { formOf, UNITS } from './sim/units';
 import { ELITE_BY_ID } from './sim/elites';
 import { isBoss } from './sim/foes';
-import { earn, loadMeta, rankOf, rarityOf, recordStars, saveMeta, type Meta } from './sim/meta';
+import { earn, loadMeta, needsStarter, pickStarter, rankOf, recordStars, saveMeta, type Meta } from './sim/meta';
+import { chooseStarter } from './starter';
 import { xpRate } from './sim/castle';
 import { heroStats } from './sim/talents';
 import { powerOf, powerText } from './sim/power';
@@ -161,6 +162,12 @@ class Game {
     const seed = Number(query.get('seed'));
     this.meta = loadMeta((Date.now() % 100000) + 1);
     saveMeta(this.meta);
+    // (a new save, or one after Start over, picks its first three heroes before anything else; an address with a seed is a test page and takes the first pack)
+    if (needsStarter(this.meta)) {
+      if (seed) pickStarter(this.meta, 0);
+      else await chooseStarter(this.meta);
+      saveMeta(this.meta);
+    }
     // (a tower run saved by an older version sat in the ordinary slot: it moves to the tower's own)
     adoptOldTower();
     // (a fresh page with no saved run shows the first army's board behind the home screen)
@@ -738,7 +745,7 @@ class Game {
       this.evolved = new Set(this.run.roster.filter((h) => h.grade > 1 && !before.has(h.id)).map((h) => h.id));
       this.refresh();
       const card = got ? $('bench').querySelector<HTMLElement>(`[data-id="${got.id}"]`) : null;
-      if (card) summonBurst(card, got ? rarityOf(got.kind) : 1);
+      if (card) summonBurst(card);
     });
     $('homeBtn').addEventListener('click', () => this.home.open());
     $('retry').addEventListener('click', () => this.retry());
@@ -1341,7 +1348,7 @@ class Game {
       const def = UNITS[h.kind];
       const id = String(h.id);
       const card = document.createElement('div');
-      card.className = `card g${h.grade} r${rarityOf(h.kind)}${this.evolved.has(h.id) ? ' evolve' : ''}`;
+      card.className = `card g${h.grade}${this.evolved.has(h.id) ? ' evolve' : ''}`;
       card.dataset.id = id;
       const stars = document.createElement('em');
       stars.textContent = '★'.repeat(h.grade);

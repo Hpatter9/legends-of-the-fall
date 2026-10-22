@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { BUILDING_IDS, BUILDINGS, bonusGold, GOLD_PER_LEVEL, maxLevel, moveRate, MOVE_PER_LEVEL, newCastle, nextCost, readCastle, upgrade, xpRate, XP_PER_LEVEL } from '../src/sim/castle';
 import { fightXp } from '../src/sim/levels';
-import { loadMeta, newMeta, saveMeta } from '../src/sim/meta';
+import { loadMeta, startedMeta, saveMeta } from '../src/sim/meta';
 import { place, startBattle, fight, stepBattle } from '../src/sim/battle';
 import { newRun, startStage, START_GOLD, gradeBoost } from '../src/sim/run';
 import { UNITS } from '../src/sim/units';
@@ -21,7 +21,7 @@ test('every building has 3 to 5 levels with rising costs', () => {
 });
 
 test('upgrading pays the cost, levels up, and stops at the top or when poor', () => {
-  const m = newMeta(1);
+  const m = startedMeta(1);
   m.crowns = 49;
   assert.equal(upgrade(m, 'treasury'), false);
   assert.equal(m.crowns, 49);

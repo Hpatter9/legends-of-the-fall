@@ -29,7 +29,7 @@ const UI_CUES = new Set<Cue>([
   'tap', 'summon', 'merge', 'coin', 'star', 'levelUp', 'coinRecycle', 'coinClaim', 'sparkle', 'autoStart', 'autoStop', 'autoDone', 'setChime2', 'setChime3',
 ]);
 /** The summoning show's sounds go to their own bus, so a tap that skips the show can hush them. */
-const SHOW_CUES = new Set<Cue>(['riseEpic', 'riseLegend', 'riseMythic', 'stingEpic', 'stingLegend', 'stingMythic', 'heartbeat', 'slam']);
+const SHOW_CUES = new Set<Cue>(['riseSummon', 'stingSummon', 'slam']);
 
 const busOf = (name: Cue): BusName => (SHOW_CUES.has(name) ? 'show' : UI_CUES.has(name) ? 'ui' : 'sfx');
 

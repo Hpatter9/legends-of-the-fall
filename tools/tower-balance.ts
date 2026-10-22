@@ -4,7 +4,7 @@
 import { newCastle } from '../src/sim/castle';
 import { ACT_ROWS } from '../src/sim/tower';
 import { CAL_MAPS } from '../src/sim/calamity';
-import { newMeta } from '../src/sim/meta';
+import { startedMeta } from '../src/sim/meta';
 import { HEROES } from '../src/sim/units';
 import { mixSeed } from '../src/sim/rng';
 import { playCalamity, playTower } from './autoplay';
@@ -22,7 +22,7 @@ export function towerTable(): void {
   const past = [0, 0, 0];
   let lv = 0;
   for (let a = 0; a < attempts; a++) {
-    const r = playTower(newMeta(a + 1), mixSeed(a + 1, 0x70c1), HEROES, newCastle(), 80);
+    const r = playTower(startedMeta(a + 1), mixSeed(a + 1, 0x70c1), HEROES, newCastle(), 80);
     floors.push(r.floors);
     lv += r.level;
     for (let k = 0; k < 3; k++) if (r.bosses > k) past[k]++;
@@ -46,7 +46,7 @@ export function calamityTable(): void {
   let lv = 0;
   const past = Array.from({ length: CAL_MAPS }, () => 0);
   for (let a = 0; a < attempts; a++) {
-    const r = playCalamity(newMeta(a + 1), mixSeed(a + 1, 0xca1), HEROES[a % HEROES.length], newCastle());
+    const r = playCalamity(startedMeta(a + 1), mixSeed(a + 1, 0xca1), HEROES[a % HEROES.length], newCastle());
     maps.push(r.maps);
     floors.push(r.floors);
     heroes += r.heroes;

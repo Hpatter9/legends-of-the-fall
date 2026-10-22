@@ -25,8 +25,9 @@ test('a pull fans out over the circle: up to five in a row, then two rows, nobod
   assert.equal(new Set(fanSpots(10, 96, 100).map((s) => s.y)).size, 2);
 });
 
-test('the beam is blue, violet, gold or crimson by the best rarity pulled', () => {
-  assert.deepEqual([1, 2, 3, 4, 5].map(beamKind), ['star', 'star', 'crystal', 'light', 'fire']);
+test('the beam is gold for a pull with a new hero in it and blue for a pull of repeats', () => {
+  assert.equal(beamKind(true), 'light');
+  assert.equal(beamKind(false), 'star');
 });
 
 test('a pull plays charge, flare, beam, then the heroes one after another, then hands over', () => {
@@ -38,11 +39,10 @@ test('a pull plays charge, flare, beam, then the heroes one after another, then 
   assert.ok(t.done > t.heroAt[9] + t.rise);
   assert.ok(t.done < 6000, 'a ten pull does not make the player wait');
   assert.ok(pullTimeline(1).done < t.done);
-  assert.ok(pullTimeline(1, 5).charge > pullTimeline(1, 1).charge, 'a Mythic holds the charge a beat longer');
 });
 
 test('reduced motion is a short flash with every hero there at once', () => {
-  const t = pullTimeline(10, 5, true);
+  const t = pullTimeline(10, true);
   assert.ok(t.done <= 1000);
   assert.ok(t.heroAt.every((a) => a === t.heroAt[0]));
 });

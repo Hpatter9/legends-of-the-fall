@@ -1,3 +1,5 @@
+> Hero rarity was removed later (see `no-rarity.md`): where this note gives a hero a tier, rarity frame or tier bonus, that no longer applies.
+
 # Armies
 
 > Since `sell-waves.md` every army has 15 waves (mid-boss at 8, or 5 and 10 in the Wildwood, final boss at 15); the wave counts and tables below are from before.

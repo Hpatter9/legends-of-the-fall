@@ -1,3 +1,5 @@
+> Hero rarity was removed later (see `no-rarity.md`): where this note gives a hero a tier, rarity frame or tier bonus, that no longer applies.
+
 # Army stars, tiers and chests (army-stars)
 
 The Armies screen is now a full-screen carousel, each army has **10 stars over four difficulty tiers**, and the 3rd, 5th and 10th

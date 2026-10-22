@@ -33,7 +33,7 @@ function won(seed: number, team: string[], equip: (kind: string) => EquipStats |
   }
   team.forEach((id, i) => {
     const eq = equip(id);
-    const g = gradeBoost(1, 0, LEVEL, id);
+    const g = gradeBoost(1, 0, LEVEL);
     place(b, id, spots[i][0], spots[i][1], undefined, { ...g, hp: g.hp! * mult, atk: g.atk! * mult, ...(eq ? { equip: eq } : {}) });
   });
   fight(b);

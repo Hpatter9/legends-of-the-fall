@@ -179,7 +179,7 @@ test('every cue can be made, and a panned cue goes through a panner while a cent
     const panner = FakeContext.made.filter((n) => n.pan.value === -0.4)[0];
     assert.ok(panner.to.includes(mixer.bus('sfx') as unknown as FakeNode), 'the panner feeds its bus');
     // (the summoning show's and the ui's cues reach their own buses)
-    synth.play('riseEpic', 1, { gain: 1, pitch: 1, bus: 'show' });
+    synth.play('riseSummon', 1, { gain: 1, pitch: 1, bus: 'show' });
     synth.play('tap', 1, { gain: 1, pitch: 1, bus: 'ui' });
   } finally {
     undo();

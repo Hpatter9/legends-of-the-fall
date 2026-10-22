@@ -39,6 +39,7 @@ Chronos later, so keep its conventions.
 ## Layout
 
 - `src/sim/board.ts`: the grid (7 across, 9 deep), heights, `canStep`, `sightClear`, `makeBoard(seed)`.
+- `src/sim/starter.ts` / `src/starter.ts`: the starter pick (three packs of three heroes for a new save). Heroes have no rarity; every hero is as strong as any other (`docs/notes/no-rarity.md`).
 - `src/sim/units.ts`: `UNITS` (the five heroes; the foes come from `foes.ts`), `HEROES`. `src/sim/foes.ts`: `FOES`, `FOE_BANDS`.
 - `src/sim/battle.ts`: deploying (`canPlace`, `place`, `unplace`), `fight`, `stepBattle` (100 ms ticks), the AI,
   `blowMult`, `shotReach`, `canStrike`.
