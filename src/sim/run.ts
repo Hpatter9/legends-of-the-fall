@@ -5,6 +5,7 @@
 
 import { startBattle, type Battle, type Boost, type Stage } from './battle';
 import { AREAS, type Area } from './board';
+import { buildChain, type Section } from './chain';
 import { BOSS_BANDS, FIELD_BANDS } from './foes';
 import { armyById, armyIndex, waveBoost, type Army } from './armies';
 import { bonusGold, heroBoost, manaRate, moveRate, newCastle, type Castle } from './castle';
@@ -333,7 +334,26 @@ export function stageBoost(stage: number): Stage {
 /** Gold a win on stage n pays. */
 export const reward = (stage: number) => 20 + 6 * stage + (isBossStage(stage) ? 30 : 0);
 
-/** A fresh fight for the run's current stage (a different board each stage). */
+/** The fight board a wave is fought on: the seed of its own, as it has always been. */
+export const boardSeedOf = (run: Run, stage: number): number => mixSeed(run.seed, 0x57a6e, stage);
+
+const chains = new Map<string, Section[]>();
+/** An army run's long map: one section for each wave, joined edge to edge (`chain.ts`). Worked out from the run's seed alone, so a saved run rebuilds it; null for any other run. */
+export function chainOf(run: Run): Section[] | null {
+  const army = armyOfRun(run);
+  if (!army) return null;
+  const area = run.area ?? army.area ?? areaFor(1);
+  const key = `${run.seed}:${army.id}:${area}`;
+  let c = chains.get(key);
+  if (!c) {
+    c = buildChain(run.seed, army.waves.length, area, (n) => boardSeedOf(run, n), (n) => !!army.waves[n - 1].boss);
+    if (chains.size > 8) chains.clear();
+    chains.set(key, c);
+  }
+  return c;
+}
+
+/** A fresh fight for the run's current stage (a different board each stage; an army's is its section of the long map). */
 export function startStage(run: Run): Battle {
   const rl = relicEffects(run.relics);
   const army = armyOfRun(run);
@@ -343,9 +363,11 @@ export function startStage(run: Run): Battle {
   const castle = heroBoost(run.castle);
   const foes = run.buff?.foes ?? 1;
   const { atk, hp, mana, first, revive, gold: _gold, set, ...team } = rl;
-  return startBattle(mixSeed(run.seed, 0x57a6e, run.stage), node ? node.band : army ? army.waves[run.stage - 1].foes : bandFor(run.stage), {
+  const section = chainOf(run)?.[run.stage - 1];
+  return startBattle(boardSeedOf(run, run.stage), node ? node.band : army ? army.waves[run.stage - 1].foes : bandFor(run.stage), {
     ...base,
     area: run.area ?? base.area ?? areaFor(run.stage),
+    board: section?.board,
     foes: { hp: base.foes!.hp! * foes, atk: base.foes!.atk! * foes, speed: base.foes!.speed },
     heroes: { hp: castle.hp! * (hp ?? 1) * (run.buff?.hp ?? 1), atk: castle.atk! * (atk ?? 1) * (run.buff?.atk ?? 1) },
     mana: manaRate(run.castle) * (mana ?? 1),
