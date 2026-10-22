@@ -1,3 +1,5 @@
+> Rarity was removed (see `no-rarity.md`): the tiers, rates, pity and tier shows described below are gone.
+
 # Recruiting (the gacha)
 
 - `src/sim/meta.ts` (pure): lasting progress in localStorage `legends.meta`: crowns, unlocked hero kinds (the starting

@@ -1,3 +1,5 @@
+> Hero rarity was removed later (see `no-rarity.md`): where this note gives a hero a tier, rarity frame or tier bonus, that no longer applies.
+
 # Monster heroes
 
 Five heroes from the monster sheets join the roster (`ALL_HEROES` in `units.ts`; `HEROES` stays the five). Each has a

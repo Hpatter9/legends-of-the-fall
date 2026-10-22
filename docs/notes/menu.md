@@ -1,3 +1,5 @@
+> Hero rarity was removed later (see `no-rarity.md`): where this note gives a hero a tier, rarity frame or tier bonus, that no longer applies.
+
 # Menu (King God Castle style)
 
 - `src/home.ts` is now a shell: a top bar (crowns, gold during a run, best stage and stars, trophy and settings
