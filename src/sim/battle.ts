@@ -12,7 +12,7 @@ import { firstStep, walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
 import { FOE_BANDS } from './foes';
 import { killXp } from './levels';
-import { afterBlow, CHARGE_MAX, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, rollCrit, sureFooted, tickStatus, tryCast, type Dot, type Hot, type Trap, type Zone } from './abilities';
+import { afterBlow, CHARGE_MAX, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, rollCrit, sureFooted, tickStatus, tryCast, type Dot, type Hot, type Trap, type Zone } from './abilities';
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellState } from './spells';
 import type { SetHooks } from './relicSets';
 import { kindsOf, traitEffects, type TraitEffects } from './traits';
@@ -83,6 +83,12 @@ export interface Unit {
   hot?: Hot;
   /** The next time a healer's passive mends an ally. */
   mendAt?: number;
+  /** The next time a bard's tune charges a friend. */
+  tuneAt?: number;
+  /** Its attack raised by a demon form until then (reverted when it fades). */
+  form?: { until: number };
+  /** Its once-a-fight rising from death has been spent. */
+  undyingUsed?: boolean;
   diedAt?: number;
   /** Multiplies the kind's attack (grade, stage); absent is x1. */
   power?: number;
@@ -481,6 +487,8 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   }
   // (a rising feather: the wearer comes back once a fight)
   if (killed && to.eq && fxRevive(to, out)) killed = false;
+  // (a deathless pirate: the same, from its own passive)
+  if (killed && undying(to, out)) killed = false;
   if (!killed && to.eq) fxHurt(b, to, out);
   if (killed) {
     by.kills = (by.kills ?? 0) + 1;

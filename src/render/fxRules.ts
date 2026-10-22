@@ -128,6 +128,30 @@ export const SKILL_ELEMENT: Record<string, Element> = {
   'Magma Burst': 'fire',
   'Forge Hammer': 'earth',
   'Furnace Blast': 'fire',
+  // the second wave of heroes
+  'Rotting Touch': 'poison',
+  'Burst Fire': 'fire',
+  'Bounty Hunt': 'blood',
+  'Binding Wraps': 'earth',
+  'Grappling Hook': 'blood',
+  Dirge: 'ice',
+  'Call of the Wild': 'forest',
+  Undertow: 'ice',
+  'Lance Charge': 'earth',
+  Reap: 'dark',
+  'Temporal Surge': 'light',
+  'Voltage Blink': 'lightning',
+  Broadside: 'fire',
+  'Shell Barrage': 'fire',
+  'Holy Light': 'light',
+  'Dragon Breath': 'fire',
+  Earthquake: 'earth',
+  Starfall: 'light',
+  'Hellblade Sweep': 'blood',
+  Judgement: 'dark',
+  'Astral Convergence': 'light',
+  'Demon Form': 'blood',
+  'Reign of Terror': 'dark',
 };
 
 export const skillElement = (name: string): Element => SKILL_ELEMENT[name] ?? 'light';
@@ -157,7 +181,7 @@ export type DeathKind = 'bones' | 'burn' | 'thud' | 'stone' | 'blood' | 'light';
 export function deathKind(name: string, side: 'hero' | 'foe'): DeathKind {
   if (/skeleton/i.test(name)) return 'bones';
   if (/^(imp|demon|devil)/i.test(name)) return 'burn';
-  if (/ogre|minotaur|warlord|boar|brute|forest boss/i.test(name)) return 'thud';
+  if (/ogre|minotaur|warlord|boar|brute|forest boss|juggernaut/i.test(name)) return 'thud';
   if (/gorgon/i.test(name)) return 'stone';
   return side === 'hero' ? 'light' : 'blood';
 }
@@ -192,7 +216,7 @@ export const STATUS_LOOKS: Record<Exclude<StatusKey, 'stun'>, StatusLook> = {
 };
 
 /** The fields of a fighter the statuses read (a `Unit` has them all). */
-export type StatusSource = Pick<Unit, 'alive' | 'dot' | 'slowUntil' | 'hasteUntil' | 'rallyUntil' | 'banner' | 'frenzy' | 'hot' | 'shield' | 'stunUntil'>;
+export type StatusSource = Pick<Unit, 'alive' | 'dot' | 'slowUntil' | 'hasteUntil' | 'rallyUntil' | 'banner' | 'frenzy' | 'form' | 'hot' | 'shield' | 'stunUntil'>;
 
 /** The statuses holding on a fighter at time `t`, most telling first. */
 export function statusesOf(u: StatusSource, t: number): StatusKey[] {
@@ -205,7 +229,8 @@ export function statusesOf(u: StatusSource, t: number): StatusKey[] {
   if (u.hasteUntil !== undefined && t < u.hasteUntil) out.push('haste');
   if (u.rallyUntil !== undefined && t < u.rallyUntil) out.push('rally');
   if (u.banner && t < u.banner.until) out.push('banner');
-  if (u.frenzy && t < u.frenzy.until) out.push('frenzy');
+  // (a demon form burns with the same red aura as a frenzy)
+  if ((u.frenzy && t < u.frenzy.until) || (u.form && t < u.form.until)) out.push('frenzy');
   if (u.hot && t < u.hot.until) out.push('regen');
   return out;
 }

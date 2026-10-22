@@ -96,6 +96,31 @@ export const SKILL_FX: Record<string, SkillFx> = {
   'Stone Curse': { cast: { sheet: 'darkCircle', scale: 2.2, tint: 0x9be07a }, hit: { sheet: 'whiteBurst', scale: 0.9, tint: 0xb0c0a0 } },
   'Rally Cry': { cast: { sheet: 'goldBurst', scale: 2.6 } },
   'Soul Nova': { cast: { sheet: 'lightNova', scale: 2.8, tint: 0x6ab8ff }, hit: { sheet: 'iceShield', scale: 1.3 } },
+  // the second wave of heroes
+  'Rotting Touch': { cast: { sheet: 'darkCircle', scale: 1.5, tint: 0x8aff5a }, hit: { sheet: 'darkSlash', scale: 0.9, tint: 0x8aff5a } },
+  'Burst Fire': { hit: { sheet: 'whiteBurst', scale: 0.7, frameMs: 50 } },
+  'Bounty Hunt': { cast: { sheet: 'darkCircle', scale: 1.2, tint: 0xffd24a }, hit: { sheet: 'goldBurst', scale: 1 } },
+  'Binding Wraps': { cast: { sheet: 'earthShield', scale: 1.6, tint: 0xe8d8a0 }, hit: { sheet: 'whiteBurst', scale: 0.8, tint: 0xe8d8a0 } },
+  'Grappling Hook': { hit: { sheet: 'darkSlash', scale: 1.1 } },
+  Dirge: { cast: { sheet: 'lightGather', scale: 1.8, tint: 0x9ad0ff }, hit: { sheet: 'iceShield', scale: 0.9 } },
+  'Call of the Wild': { cast: { sheet: 'earthBurst', scale: 1.6, tint: 0xffb07a } },
+  Undertow: { cast: { sheet: 'windVortex', scale: 1.8, tint: 0x5ab8d8 }, hit: { sheet: 'windBurst', scale: 0.9, tint: 0x5ab8d8 } },
+  'Lance Charge': { cast: { sheet: 'earthWave', scale: 1.4, tint: 0xffd0a0 }, hit: { sheet: 'earthBurst', scale: 0.9 } },
+  Reap: { cast: { sheet: 'darkCircle', scale: 1.8, tint: 0x6a70ff }, hit: { sheet: 'darkSlash', scale: 1.1 } },
+  'Temporal Surge': { cast: { sheet: 'lightCircle', scale: 2, tint: 0xff9ad8 }, hit: { sheet: 'iceShield', scale: 0.9, tint: 0xff9ad8 } },
+  'Voltage Blink': { cast: { sheet: 'lightningBurst', scale: 1.4 }, hit: { sheet: 'lightningStrike', scale: 1.1 } },
+  Broadside: { hit: { sheet: 'fireExplosion', scale: 1, tint: 0x9ad0b0 } },
+  'Shell Barrage': { cast: { sheet: 'earthWave', scale: 1.4, tint: 0xb0b8d0 }, hit: { sheet: 'fireExplosion', scale: 1.2 } },
+  'Holy Light': { cast: { sheet: 'lightGather', scale: 2 }, hit: { sheet: 'lightNova', scale: 1 } },
+  'Dragon Breath': { cast: { sheet: 'fireCircle', scale: 1.4, tint: 0xd890ff }, hit: { sheet: 'fireExplosion', scale: 0.9 } },
+  Earthquake: { cast: { sheet: 'earthWave', scale: 2.2 }, hit: { sheet: 'earthExplosion', scale: 1 } },
+  Starfall: { cast: { sheet: 'lightCircle', scale: 1.6, tint: 0xffe27a }, hit: { sheet: 'goldBurst', scale: 1.1 } },
+  'Hellblade Sweep': { cast: { sheet: 'darkSlash', scale: 1.6, tint: 0xff6a6a }, hit: { sheet: 'bloodExplosion', scale: 0.7 } },
+  Judgement: { cast: { sheet: 'darkCircle', scale: 1.8, tint: 0xff4a4a }, hit: { sheet: 'darkSlash', scale: 1.2, tint: 0xff6a6a } },
+  // ... and its Mythics' ultimates
+  'Astral Convergence': { cast: { sheet: 'lightNova', scale: 2.8, tint: 0xffe27a }, hit: { sheet: 'goldBurst', scale: 1.1 } },
+  'Demon Form': { cast: { sheet: 'darkCircle', scale: 2.4, tint: 0xff4a4a } },
+  'Reign of Terror': { cast: { sheet: 'darkCircle', scale: 2.8, tint: 0xb06aff }, hit: { sheet: 'darkSlash', scale: 1.1, tint: 0xb06aff } },
 };
 
 /** The king's spells: a sheet on each fighter the spell touches (the meteor's is its landing). */

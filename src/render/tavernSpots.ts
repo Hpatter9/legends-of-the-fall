@@ -1,4 +1,4 @@
-// The tavern's floor plan: the room's size, its furniture and the one fixed spot each of the 25 heroes keeps. Plain data
+// The tavern's floor plan: the room's size, its furniture and the one fixed spot each of the heroes keeps. Plain data
 // (no Pixi, no DOM), so a test can check it. All numbers are in the room's own pixels; `y` is where the hero's feet stand
 // and what the room sorts by, front to back (a bigger `depth` is drawn later, so nearer).
 
@@ -76,6 +76,27 @@ export const SPOTS: Record<string, Spot> = {
   minotaur: S(344, 292, -1),
   illusionist: S(124, 240, 1),
   gunslinger: S(364, 262, -1),
+  // the second wave: the open floor at the back, along the left wall and beside the bar
+  shambler: S(250, 236, -1),
+  rifleBot: S(198, 236, -1),
+  mercenary: S(42, 236, 1),
+  mummy: S(250, 250, -1),
+  buccaneer: S(198, 186, -1),
+  wolfBard: S(172, 186, 1),
+  beastmaster: S(250, 270, -1),
+  kraken: S(94, 186, 1),
+  lancer: S(172, 236, 1),
+  reaper: S(16, 186, 1),
+  timeWitch: S(354, 186, -1),
+  arcBlade: S(146, 186, 1),
+  dreadPirate: S(224, 236, -1),
+  siegeBot: S(328, 186, -1),
+  priestess: S(146, 236, 1),
+  dragoon: S(68, 186, 1),
+  juggernaut: S(42, 186, 1),
+  sage: S(94, 236, 1),
+  demonSwordsman: S(120, 186, 1),
+  tyrant: S(16, 236, 1),
 };
 
 /** The look a hero has in the tavern from their rank: rank 2 wears the second form, the top rank the third. */

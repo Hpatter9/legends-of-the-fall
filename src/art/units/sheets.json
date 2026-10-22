@@ -1684,5 +1684,904 @@
   "figure": 127,
   "facesRight": true,
   "lies": true
+ },
+ "pc_ouzo_1": {
+  "w": 68,
+  "h": 62,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 3,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5,
+   "attack2": 3,
+   "defend": 3
+  },
+  "figure": 56,
+  "facesRight": false
+ },
+ "pc_ouzo_2": {
+  "w": 68,
+  "h": 62,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 3,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5,
+   "attack2": 3,
+   "defend": 3
+  },
+  "figure": 56,
+  "facesRight": false
+ },
+ "pc_ouzo_3": {
+  "w": 68,
+  "h": 62,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 3,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5,
+   "attack2": 3,
+   "defend": 3
+  },
+  "figure": 56,
+  "facesRight": false
+ },
+ "pc_ley_1": {
+  "w": 60,
+  "h": 60,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 3,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5,
+   "attack2": 3,
+   "defend": 3
+  },
+  "figure": 56,
+  "facesRight": false
+ },
+ "pc_ley_2": {
+  "w": 60,
+  "h": 60,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 3,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5,
+   "attack2": 3,
+   "defend": 3
+  },
+  "figure": 56,
+  "facesRight": false
+ },
+ "pc_ley_3": {
+  "w": 60,
+  "h": 60,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 3,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5,
+   "attack2": 3,
+   "defend": 3
+  },
+  "figure": 56,
+  "facesRight": false
+ },
+ "pc_linail_1": {
+  "w": 60,
+  "h": 58,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 3,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5,
+   "attack2": 3,
+   "defend": 3
+  },
+  "figure": 52,
+  "facesRight": false
+ },
+ "pc_linail_2": {
+  "w": 60,
+  "h": 58,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 3,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5,
+   "attack2": 3,
+   "defend": 3
+  },
+  "figure": 52,
+  "facesRight": false
+ },
+ "pc_linail_3": {
+  "w": 60,
+  "h": 58,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 3,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5,
+   "attack2": 3,
+   "defend": 3
+  },
+  "figure": 52,
+  "facesRight": false
+ },
+ "pc_hex_1": {
+  "w": 52,
+  "h": 54,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 3,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5,
+   "attack2": 3,
+   "defend": 3
+  },
+  "figure": 48,
+  "facesRight": false
+ },
+ "pc_hex_2": {
+  "w": 52,
+  "h": 54,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 3,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5,
+   "attack2": 3,
+   "defend": 3
+  },
+  "figure": 48,
+  "facesRight": false
+ },
+ "pc_hex_3": {
+  "w": 52,
+  "h": 54,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 3,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5,
+   "attack2": 3,
+   "defend": 3
+  },
+  "figure": 48,
+  "facesRight": false
+ },
+ "pc_oratio_1": {
+  "w": 52,
+  "h": 52,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 3,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5,
+   "attack2": 3,
+   "defend": 3
+  },
+  "figure": 48,
+  "facesRight": false
+ },
+ "pc_oratio_2": {
+  "w": 52,
+  "h": 52,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 3,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5,
+   "attack2": 3,
+   "defend": 3
+  },
+  "figure": 48,
+  "facesRight": false
+ },
+ "pc_oratio_3": {
+  "w": 52,
+  "h": 52,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 3,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5,
+   "attack2": 3,
+   "defend": 3
+  },
+  "figure": 48,
+  "facesRight": false
+ },
+ "pc_wyvera_1": {
+  "w": 60,
+  "h": 54,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 3,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5,
+   "attack2": 3,
+   "defend": 3
+  },
+  "figure": 50,
+  "facesRight": false
+ },
+ "pc_wyvera_2": {
+  "w": 60,
+  "h": 54,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 3,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5,
+   "attack2": 3,
+   "defend": 3
+  },
+  "figure": 50,
+  "facesRight": false
+ },
+ "pc_wyvera_3": {
+  "w": 60,
+  "h": 54,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 3,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5,
+   "attack2": 3,
+   "defend": 3
+  },
+  "figure": 50,
+  "facesRight": false
+ },
+ "pc_prime_1": {
+  "w": 56,
+  "h": 58,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 3,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5,
+   "attack2": 3,
+   "defend": 3
+  },
+  "figure": 52,
+  "facesRight": false
+ },
+ "pc_prime_2": {
+  "w": 56,
+  "h": 58,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 3,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5,
+   "attack2": 3,
+   "defend": 3
+  },
+  "figure": 52,
+  "facesRight": false
+ },
+ "pc_prime_3": {
+  "w": 56,
+  "h": 58,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 3,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5,
+   "attack2": 3,
+   "defend": 3
+  },
+  "figure": 52,
+  "facesRight": false
+ },
+ "pc_glenys_1": {
+  "w": 64,
+  "h": 58,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 3,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5,
+   "attack2": 3,
+   "defend": 3
+  },
+  "figure": 54,
+  "facesRight": false
+ },
+ "pc_glenys_2": {
+  "w": 64,
+  "h": 58,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 3,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5,
+   "attack2": 3,
+   "defend": 3
+  },
+  "figure": 54,
+  "facesRight": false
+ },
+ "pc_glenys_3": {
+  "w": 64,
+  "h": 58,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2",
+   "defend"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 3,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5,
+   "attack2": 3,
+   "defend": 3
+  },
+  "figure": 54,
+  "facesRight": false
+ },
+ "robot_destroyer": {
+  "w": 116,
+  "h": 80,
+  "perRow": 8,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 8,
+   "attack": 8,
+   "idle": 5,
+   "hurt": 3,
+   "dead": 7
+  },
+  "figure": 77,
+  "facesRight": true
+ },
+ "robot_infantry": {
+  "w": 122,
+  "h": 75,
+  "perRow": 6,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 6,
+   "attack": 5,
+   "idle": 6,
+   "hurt": 4,
+   "dead": 5
+  },
+  "figure": 72,
+  "facesRight": true
+ },
+ "robot_swordsman": {
+  "w": 112,
+  "h": 69,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 5,
+   "attack": 4,
+   "idle": 5,
+   "hurt": 3,
+   "dead": 4
+  },
+  "figure": 67,
+  "facesRight": true
+ },
+ "pirate_leader": {
+  "w": 138,
+  "h": 106,
+  "perRow": 10,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 10,
+   "attack": 10,
+   "idle": 8,
+   "hurt": 5,
+   "dead": 10
+  },
+  "figure": 89,
+  "facesRight": false
+ },
+ "pirate_zombie": {
+  "w": 138,
+  "h": 103,
+  "perRow": 10,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 10,
+   "attack": 10,
+   "idle": 8,
+   "hurt": 5,
+   "dead": 10
+  },
+  "figure": 82,
+  "facesRight": false
+ },
+ "squidman": {
+  "w": 136,
+  "h": 107,
+  "perRow": 10,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 10,
+   "attack": 10,
+   "idle": 8,
+   "hurt": 5,
+   "dead": 10
+  },
+  "figure": 88,
+  "facesRight": false
+ },
+ "horde_2": {
+  "w": 92,
+  "h": 66,
+  "perRow": 6,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "dead"
+  ],
+  "counts": {
+   "walk": 6,
+   "attack": 6,
+   "idle": 6,
+   "dead": 6
+  },
+  "figure": 62,
+  "facesRight": false
+ },
+ "hk_tyrant": {
+  "w": 120,
+  "h": 123,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 2
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true
+ },
+ "hk_juggernaut": {
+  "w": 128,
+  "h": 117,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 2
+  },
+  "figure": 114,
+  "facesRight": true,
+  "lies": true
+ },
+ "hk_ghost": {
+  "w": 114,
+  "h": 98,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 2
+  },
+  "figure": 82,
+  "facesRight": true,
+  "lies": true
+ },
+ "hk_mummy": {
+  "w": 82,
+  "h": 78,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 2
+  },
+  "figure": 75,
+  "facesRight": true,
+  "lies": true
+ },
+ "hk_zombie": {
+  "w": 90,
+  "h": 84,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 2
+  },
+  "figure": 75,
+  "facesRight": true,
+  "lies": true
+ },
+ "hk_zombie_bare": {
+  "w": 90,
+  "h": 84,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 2
+  },
+  "figure": 75,
+  "facesRight": true,
+  "lies": true
+ },
+ "hk_zombie_brute": {
+  "w": 92,
+  "h": 94,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 2
+  },
+  "figure": 75,
+  "facesRight": true,
+  "lies": true
  }
 }

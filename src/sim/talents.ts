@@ -421,6 +421,248 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
       { name: 'Quick Draw', icon: 'ring', text: 'Dead Eye gives back 40 charge, and +8% attack speed.', tal: { refund: 40 }, stats: { atkSpeed: 0.08 } },
     ],
   ),
+
+  // ---- the second wave of heroes ----
+  shambler: tree(
+    'shambler',
+    [['Grave Soil', 'hide', { hp: HP }], ['Rusted Nails', 'bone', { atk: ATK }], ['Thick Skin', 'scale', { def: 1 }], ['Festering Wounds', 'vial', { regen: 0.004 }]],
+    [
+      { name: 'Lingering Rot', icon: 'elixir', text: 'Rotting Touch festers for 6s.', tal: { dur: 0.5 } },
+      { name: 'Wider Stench', icon: 'bell', text: 'Rotting Touch reaches 2 tiles further.', tal: { reach: 2 } },
+    ],
+    [
+      { name: 'Plague Carrier', icon: 'vial', text: '35% of his blows make the foe bleed.', abilities: [ab('tl_shambler_plague', 'Plague Carrier', 'hit', 'bleed', { p: 0.35, v: 0.25 })] },
+      { name: 'Rise Again', icon: 'amulet', text: 'Once a fight, when he would fall he rises at 30% health.', abilities: [ab('tl_shambler_rise', 'Rise Again', 'death', 'revive', { v: 0.3 })] },
+    ],
+  ),
+  rifleBot: tree(
+    'rifleBot',
+    [['Scope Upgrade', 'spectacles', { crit: 0.03 }], ['Overclocked Barrel', 'blunderbuss', { atk: ATK }], ['Plated Casing', 'plate', { hp: 0.04 }], ['Servo Joints', 'ring', { atkSpeed: 0.04 }]],
+    [
+      { name: 'Extended Magazine', icon: 'crossbow', text: 'Burst Fire shoots a fourth round.', tal: { extra: 1 } },
+      { name: 'Armour-piercing Rounds', icon: 'shard', text: 'Burst Fire hits 35% harder.', tal: { pow: 0.35 } },
+    ],
+    [
+      { name: 'Suppressing Fire', icon: 'bell', text: '40% of his shots slow the foe for 1.5s.', abilities: [ab('tl_rifleBot_suppress', 'Suppressing Fire', 'hit', 'slow', { p: 0.4, w: 1.5 })] },
+      { name: 'Target Lock', icon: 'ring', text: 'Burst Fire gives back 40 charge, and +8% attack speed.', tal: { refund: 40 }, stats: { atkSpeed: 0.08 } },
+    ],
+  ),
+  mercenary: tree(
+    'mercenary',
+    [['Veteran Grit', 'jerkin', { hp: HP }], ['Notched Sabre', 'sword', { atk: ATK }], ['Coin Purse', 'pendant', { crit: 0.03 }], ['Marching Boots', 'boots', { moveSpeed: 0.06 }]],
+    [
+      { name: 'Bigger Bounty', icon: 'dagger', text: 'Bounty Hunt cuts 40% deeper.', tal: { pow: 0.4 } },
+      { name: 'Quick Contract', icon: 'ring', text: 'After Bounty Hunt he is hasted for 3s.', tal: { castHaste: 3000 } },
+    ],
+    [
+      { name: 'Dirty Fighter', icon: 'axe', text: 'Every 3rd blow hits nearly twice as hard.', abilities: [ab('tl_mercenary_dirty', 'Dirty Fighter', 'nth', 'smite', { n: 3, v: 0.9 })] },
+      { name: 'Hired Protection', icon: 'bastion', text: 'Bounty Hunt gives him a shield of 12% of his health, and +8% hp.', tal: { castShield: 0.12 }, stats: { hp: 0.08 } },
+    ],
+  ),
+  mummy: tree(
+    'mummy',
+    [['Linen Layers', 'silk', { hp: HP }], ['Dusty Fists', 'fist', { atk: ATK }], ['Ancient Amulet', 'amulet', { def: 1 }], ['Embalmed', 'elixir', { regen: 0.004 }]],
+    [
+      { name: 'Tight Bindings', icon: 'bone', text: 'Binding Wraps slow for 5s.', tal: { dur: 0.65 } },
+      { name: 'Long Wraps', icon: 'bell', text: 'Binding Wraps reach 2 tiles further.', tal: { reach: 2 } },
+    ],
+    [
+      { name: "Pharaoh's Curse", icon: 'ruby', text: '35% of his blows curse the foe.', abilities: [ab('tl_mummy_curse', "Pharaoh's Curse", 'hit', 'curse', { p: 0.35, v: 0.2 })] },
+      { name: 'Sarcophagus', icon: 'bastion', text: 'Blows from the front lose a further 15%, and +1 defence.', tal: { block: 0.15 }, stats: { def: 1 } },
+    ],
+  ),
+  buccaneer: tree(
+    'buccaneer',
+    [['Salt Air', 'jerkin', { hp: HP }], ['Sharp Cutlass', 'sword', { atk: ATK }], ['Steady Legs', 'boots', { moveSpeed: 0.06 }], ['Lucky Coin', 'charm', { crit: 0.03 }]],
+    [
+      { name: 'Long Chain', icon: 'crossbow', text: 'Grappling Hook reaches 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Barbed Hook', icon: 'dagger', text: 'Grappling Hook cuts 40% deeper.', tal: { pow: 0.4 } },
+    ],
+    [
+      { name: 'Plunder', icon: 'ruby', text: 'Each kill gives back 60 charge.', abilities: [ab('tl_buccaneer_plunder', 'Plunder', 'kill', 'charge', { v: 60 })] },
+      { name: 'Rum Ration', icon: 'vial', text: 'Mends 8% of his health every 6s.', abilities: [ab('tl_buccaneer_rum', 'Rum Ration', 'tick', 'heal', { n: 6, v: 0.08 })] },
+    ],
+  ),
+  wolfBard: tree(
+    'wolfBard',
+    [['Fine Fur', 'hide', { hp: HP }], ['Sharp Notes', 'lyre', { atk: ATK }], ['Quick Fingers', 'ring', { atkSpeed: 0.04 }], ['Travelling Cloak', 'cloak', { def: 1 }]],
+    [
+      { name: 'Long Verse', icon: 'scroll', text: 'Dirge lasts 60% longer.', tal: { dur: 0.6 } },
+      { name: 'Loud Chorus', icon: 'bell', text: 'Dirge reaches 2 tiles further.', tal: { reach: 2 } },
+    ],
+    [
+      { name: 'Encore', icon: 'drum', text: 'Dirge gives back 40 charge, and +10% skill charge.', tal: { refund: 40 }, stats: { charge: 0.1 } },
+      { name: 'Rousing Ballad', icon: 'emerald', text: 'Every 8s the weakest ally is healed 15% of its health.', abilities: [ab('tl_wolfBard_ballad', 'Rousing Ballad', 'tick', 'healAlly', { n: 8, v: 0.15, show: true })] },
+    ],
+  ),
+  beastmaster: tree(
+    'beastmaster',
+    [['Leather Gloves', 'jerkin', { hp: HP }], ['Hooked Whip', 'dagger', { atk: ATK }], ['Animal Lore', 'scroll', { charge: 0.1 }], ['Sure Footing', 'boots', { moveSpeed: 0.06 }]],
+    [
+      { name: 'Third Wolf', icon: 'bone', text: 'He can keep a third wolf at his side.', tal: { extra: 1 } },
+      { name: "Alpha's Howl", icon: 'bell', text: 'The wolves he calls hit 40% harder.', tal: { pow: 0.4 } },
+    ],
+    [
+      { name: 'Pack Hunter', icon: 'charm', text: 'Takes 6% less from each ally beside him (the wolves count), and +5% hp.', tal: { huddle: 0.06 }, stats: { hp: 0.05 } },
+      { name: 'Wild Bond', icon: 'emerald', text: 'Every 6s the weakest ally is healed 15% of its health.', abilities: [ab('tl_beastmaster_bond', 'Wild Bond', 'tick', 'healAlly', { n: 6, v: 0.15, show: true })] },
+    ],
+  ),
+  kraken: tree(
+    'kraken',
+    [['Barnacle Plates', 'scale', { def: 1 }], ['Hooked Claws', 'dagger', { atk: ATK }], ['Deep Lungs', 'amulet', { hp: HP }], ['Brine-soaked', 'vial', { regen: 0.004 }]],
+    [
+      { name: 'Riptide', icon: 'bell', text: 'Undertow reaches 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Crushing Depths', icon: 'maul', text: 'Undertow hits 40% harder.', tal: { pow: 0.4 } },
+    ],
+    [
+      { name: "Kraken's Grasp", icon: 'idol', text: 'Foes struck by Undertow are held for 0.7s.', tal: { skillStun: 700 } },
+      { name: 'Ink Screen', icon: 'shadowcloak', text: 'Hidden for 2s at the start and again every 14s.', abilities: [ab('tl_kraken_ink', 'Ink Screen', 'start', 'stealth', { w: 2 }), ab('tl_kraken_ink2', 'Ink Screen', 'tick', 'stealth', { n: 14, w: 2, show: true })] },
+    ],
+  ),
+  lancer: tree(
+    'lancer',
+    [['Barding', 'plate', { hp: HP }], ['Steel Lance', 'spear', { atk: ATK }], ['Spurs', 'boots', { moveSpeed: 0.06 }], ['Pennon', 'charm', { crit: 0.03 }]],
+    [
+      { name: 'Longer Run-up', icon: 'longbow', text: 'Lance Charge runs 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Hard Charge', icon: 'maul', text: 'Lance Charge hits 35% harder.', tal: { pow: 0.35 } },
+    ],
+    [
+      { name: 'Victory Lap', icon: 'ruby', text: 'Each kill gives back 60 charge.', abilities: [ab('tl_lancer_lap', 'Victory Lap', 'kill', 'charge', { v: 60 })] },
+      { name: 'Shock Impact', icon: 'idol', text: 'Foes struck by Lance Charge are held for 0.8s.', tal: { skillStun: 800 } },
+    ],
+  ),
+  reaper: tree(
+    'reaper',
+    [['Pale Mist', 'silk', { dodge: 0.03 }], ['Honed Scythe', 'scythe', { atk: ATK }], ['Hollow Form', 'hide', { hp: HP }], ['Grim Patience', 'spectacles', { crit: 0.03 }]],
+    [
+      { name: 'Wider Sweep', icon: 'blade', text: 'Reap reaches 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Soul Harvest', icon: 'ruby', text: 'Reap cuts 40% deeper.', tal: { pow: 0.4 } },
+    ],
+    [
+      { name: 'Collector', icon: 'idol', text: 'Each kill heals him a tenth of his health and gives back 40 charge.', abilities: [ab('tl_reaper_collector', 'Collector', 'kill', 'heal', { v: 0.1 }), ab('tl_reaper_collector2', 'Collector', 'kill', 'charge', { v: 40 })] },
+      { name: 'Cold Touch', icon: 'shard', text: '35% of his blows slow the foe for 1.5s.', abilities: [ab('tl_reaper_cold', 'Cold Touch', 'hit', 'slow', { p: 0.35, w: 1.5 })] },
+    ],
+  ),
+  timeWitch: tree(
+    'timeWitch',
+    [['Hourglass Sand', 'orb', { charge: 0.1 }], ['Chrono Focus', 'wand', { atk: ATK }], ['Silk Sleeves', 'silk', { hp: 0.04 }], ['Pocket Watch', 'pendant', { dodge: 0.03 }]],
+    [
+      { name: 'Stretched Seconds', icon: 'scroll', text: 'Temporal Surge lasts 60% longer.', tal: { dur: 0.6 } },
+      { name: 'Wider Field', icon: 'bell', text: 'Temporal Surge reaches 2 tiles further.', tal: { reach: 2 } },
+    ],
+    [
+      { name: 'Time Loop', icon: 'sapphire', text: 'Once a fight, when she would fall she rises at 30% health.', abilities: [ab('tl_timeWitch_loop', 'Time Loop', 'death', 'revive', { v: 0.3 })] },
+      { name: 'Borrowed Time', icon: 'ring', text: 'Temporal Surge gives back 40 charge, and +8% attack speed.', tal: { refund: 40 }, stats: { atkSpeed: 0.08 } },
+    ],
+  ),
+  arcBlade: tree(
+    'arcBlade',
+    [['Capacitors', 'ring', { charge: 0.1 }], ['Plasma Edge', 'blade', { atk: ATK }], ['Hardened Chassis', 'plate', { hp: HP }], ['Servo Boots', 'boots', { moveSpeed: 0.06 }]],
+    [
+      { name: 'Bigger Discharge', icon: 'stormstaff', text: 'Voltage Blink hits 40% harder.', tal: { pow: 0.4 } },
+      { name: 'Longer Arc', icon: 'bell', text: 'Voltage Blink jumps 2 tiles further.', tal: { reach: 2 } },
+    ],
+    [
+      { name: 'Overload', icon: 'orb', text: '30% of his blows leap on to a second foe.', abilities: [ab('tl_arcBlade_overload', 'Overload', 'hit', 'chain', { p: 0.3, v: 0.6 })] },
+      { name: 'Shock Plating', icon: 'thornplate', text: 'Sends back a further quarter of a melee blow.', tal: { thorns: 0.25 } },
+    ],
+  ),
+  dreadPirate: tree(
+    'dreadPirate',
+    [['Barnacled Bones', 'bone', { hp: HP }], ['Rusty Cutlass', 'sword', { atk: ATK }], ['Sea Boots', 'boots', { def: 1 }], ['Ghostly Grog', 'vial', { regen: 0.004 }]],
+    [
+      { name: 'Double Charge', icon: 'ruby', text: 'A second, smaller broadside follows the first.', tal: { extra: 1 } },
+      { name: 'Heavy Shot', icon: 'maul', text: 'Broadside hits 40% harder.', tal: { pow: 0.4 } },
+    ],
+    [
+      { name: 'Ghost Crew', icon: 'drum', text: 'Every 10s, allies within 3 tiles hit a quarter harder for 4s.', abilities: [ab('tl_dreadPirate_crew', 'Ghost Crew', 'tick', 'rally', { n: 10, w: 4, show: true })] },
+      { name: 'Dead Men Tell No Tales', icon: 'scythe', text: 'Each kill heals him 12% of his health.', abilities: [ab('tl_dreadPirate_tales', 'Dead Men Tell No Tales', 'kill', 'heal', { v: 0.12 })] },
+    ],
+  ),
+  siegeBot: tree(
+    'siegeBot',
+    [['Heavy Armour', 'plate', { hp: HP }], ['High-yield Shells', 'blunderbuss', { atk: ATK }], ['Targeting Scope', 'spectacles', { crit: 0.03 }], ['Auto-loader', 'ring', { atkSpeed: 0.04 }]],
+    [
+      { name: 'Twin Shells', icon: 'crossbow', text: 'A second, smaller shell follows the first.', tal: { extra: 1 } },
+      { name: 'Longer Barrel', icon: 'longbow', text: 'Shell Barrage reaches 2 tiles further.', tal: { reach: 2 } },
+    ],
+    [
+      { name: 'Cluster Rounds', icon: 'orb', text: '40% of his shots burst: half again on the foes beside the target.', abilities: [ab('tl_siegeBot_cluster', 'Cluster Rounds', 'hit', 'splash', { p: 0.4, v: 0.5 })] },
+      { name: 'Fortress Mode', icon: 'bastion', text: 'Blows from the front lose a further 15%, and +1 defence.', tal: { block: 0.15 }, stats: { def: 1 } },
+    ],
+  ),
+  priestess: tree(
+    'priestess',
+    [['Holy Vestments', 'vestments', { hp: HP }], ['Radiant Focus', 'tome', { atk: ATK }], ['Prayer Beads', 'amulet', { charge: 0.1 }], ['Pilgrim Sandals', 'boots', { moveSpeed: 0.06 }]],
+    [
+      { name: 'Overflowing Light', icon: 'emerald', text: 'Holy Light heals half as much again.', tal: { pow: 0.5 } },
+      { name: 'Healing Rain', icon: 'bell', text: 'Holy Light reaches the allies 2 tiles further round its target.', tal: { reach: 2 } },
+    ],
+    [
+      { name: 'Divine Intervention', icon: 'feather', text: 'Once a fight, when she would fall she rises at 40% health.', abilities: [ab('tl_priestess_divine', 'Divine Intervention', 'death', 'revive', { v: 0.4 })] },
+      { name: 'Sanctified Ground', icon: 'circlet', text: 'Every 6s the allies beside her heal 8% of their health.', abilities: [ab('tl_priestess_ground', 'Sanctified Ground', 'tick', 'aura', { n: 6, v: 0.08, show: true })] },
+    ],
+  ),
+  dragoon: tree(
+    'dragoon',
+    [['Dragonscale Mail', 'dragonscale', { hp: HP }], ['Wyvern Spear', 'spear', { atk: ATK }], ['Wing Muscles', 'feather', { moveSpeed: 0.06 }], ['Royal Poise', 'circlet', { crit: 0.03 }]],
+    [
+      { name: 'Longer Breath', icon: 'longbow', text: 'Dragon Breath reaches 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Searing Flame', icon: 'emberrobe', text: 'Dragon Breath hits 40% harder.', tal: { pow: 0.4 } },
+    ],
+    [
+      { name: 'Dragon Blood', icon: 'ruby', text: 'Heals for a further 10% of the damage her blows deal.', tal: { leech: 0.1 } },
+      { name: 'Wyvern Rider', icon: 'feather', text: 'Every 8s she is hasted for 3s, and hits 6% harder.', stats: { atk: 0.06 }, abilities: [ab('tl_dragoon_rider', 'Wyvern Rider', 'tick', 'haste', { n: 8, w: 3, show: true })] },
+    ],
+  ),
+  juggernaut: tree(
+    'juggernaut',
+    [['Reinforced Plating', 'plate', { hp: HP }], ['Piston Fists', 'fist', { atk: ATK }], ['Heavy Treads', 'boots', { def: 1 }], ['Coolant Leak', 'vial', { regen: 0.004 }]],
+    [
+      { name: 'Deeper Fault', icon: 'idol', text: 'Earthquake holds foes 60% longer.', tal: { dur: 0.6 } },
+      { name: 'Wider Quake', icon: 'bell', text: 'Earthquake reaches 2 tiles further.', tal: { reach: 2 } },
+    ],
+    [
+      { name: 'Unstoppable', icon: 'bastion', text: 'Blows from the front lose a further 15%, and +1 defence.', tal: { block: 0.15 }, stats: { def: 1 } },
+      { name: 'Seismic Counter', icon: 'thornplate', text: 'Sends back a further third of a melee blow.', tal: { thorns: 0.33 } },
+    ],
+  ),
+  sage: tree(
+    'sage',
+    [['Ancient Tomes', 'tome', { atk: ATK }], ['Wide Hat', 'circlet', { hp: HP }], ["Sage's Sandals", 'boots', { moveSpeed: 0.06 }], ['Quiet Mind', 'scroll', { charge: 0.1 }]],
+    [
+      { name: 'Fourth Star', icon: 'orb', text: 'Starfall calls a fourth star.', tal: { extra: 1 } },
+      { name: 'Brighter Stars', icon: 'sapphire', text: 'Starfall hits 40% harder.', tal: { pow: 0.4 } },
+    ],
+    [
+      { name: 'Cosmic Wisdom', icon: 'ring', text: 'Astral Convergence charges 50% faster, and its shields last 40% longer.', tal: { ultRate: 0.5, dur: 0.4 } },
+      { name: 'Eternal Study', icon: 'spectacles', text: '+8% attack and +10% faster skill charge.', stats: { atk: 0.08, charge: 0.1 } },
+    ],
+  ),
+  demonSwordsman: tree(
+    'demonSwordsman',
+    [['Infernal Plate', 'plate', { hp: HP }], ['Demonblade', 'blade', { atk: ATK }], ['Dark Reflexes', 'shadowcloak', { dodge: 0.03 }], ['Hellfire Veins', 'ruby', { regen: 0.004 }]],
+    [
+      { name: 'Wider Sweep', icon: 'scythe', text: 'Hellblade Sweep reaches 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Hellish Edge', icon: 'claymore', text: 'Hellblade Sweep cuts 40% deeper.', tal: { pow: 0.4 } },
+    ],
+    [
+      { name: 'Demon Ascendant', icon: 'idol', text: 'Demon Form charges 50% faster and lasts 40% longer.', tal: { ultRate: 0.5, dur: 0.4 } },
+      { name: 'Soul Eater', icon: 'amulet', text: 'Each kill heals him 12% of his health.', abilities: [ab('tl_demonSwordsman_eater', 'Soul Eater', 'kill', 'heal', { v: 0.12 })] },
+    ],
+  ),
+  tyrant: tree(
+    'tyrant',
+    [['Iron Crown', 'circlet', { hp: HP }], ['Spiked Staff', 'mace', { atk: ATK }], ['Black Cuirass', 'plate', { def: 1 }], ['Dread Aura', 'bell', { charge: 0.1 }]],
+    [
+      { name: 'Twin Verdicts', icon: 'scroll', text: 'A second, smaller judgement follows the first.', tal: { extra: 1 } },
+      { name: 'Harsher Law', icon: 'maul', text: 'Judgement hits 40% harder.', tal: { pow: 0.4 } },
+    ],
+    [
+      { name: 'Absolute Rule', icon: 'drum', text: 'Reign of Terror charges 50% faster and lasts 40% longer.', tal: { ultRate: 0.5, dur: 0.4 } },
+      { name: "Tyrant's Due", icon: 'ruby', text: 'Each kill gives back 60 charge, and +8% attack speed.', stats: { atkSpeed: 0.08 }, abilities: [ab('tl_tyrant_due', "Tyrant's Due", 'kill', 'charge', { v: 60 })] },
+    ],
+  ),
 };
 
 // ---- lookups ----
