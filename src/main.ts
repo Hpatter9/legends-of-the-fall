@@ -6,7 +6,9 @@ import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { D, standable, tileAt } from './sim/board';
 import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type Boost, type Unit } from './sim/battle';
 import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
-import { armyOfRun, armyRun, boostOf, finish, heroOf, isBossRun, keepCharges, loadRun, noteFight, paidOf, recycle, recycleValue, saveRun, setSquad, SQUAD, startStage, summon, summonCost, tierOfRun, type Owned, type Run } from './sim/run';
+import { armyOfRun, armyRun, benchFull, boostOf, canRetry, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryGold, retryWave, saveRun, setSquad, SQUAD, startStage, summon, summonCost, tierOfRun, type Owned, type Run } from './sim/run';
+import { noteFightStats, notePayout, recapOf } from './sim/runRecap';
+import { showRecap } from './recapView';
 import { ARMIES, armyById, armyUnlocked, settleWave, type ArmyPay } from './sim/armies';
 import { drawRunStars, showUnlock } from './armiesView';
 import { spellIconHtml } from './spellIcons';
@@ -65,6 +67,8 @@ const SLAM_MS = 850;
 /** How far the follow camera may zoom in, in multiples of the layout's scale (out is to the whole board's width). */
 const FOLLOW_IN = 1.7;
 const INTRO_ZOOM = 0.25;
+/** How long the board stays on show after the last kill before the wave recap comes up (ms). */
+const END_WAIT_MS = 2000;
 const STAT_LABELS: Record<(typeof STAT_KEYS)[number], string> = { dealt: 'Dealt', taken: 'Taken', healed: 'Healed', kills: 'Kills' };
 
 /** The spells that hurt foes (their 3x3 shows red). */
@@ -103,6 +107,10 @@ class Game {
   private crownGain = 0;
   /** Whether the fight's end has been settled into the run. */
   private settled = false;
+  /** How long the fight has been over (ms): the recap waits `END_WAIT_MS` after the last kill, so the deaths play out. */
+  private endWait = 0;
+  /** A wave was lost and the player is choosing between a retry and giving up: nothing is settled yet. */
+  private pendingLoss = false;
   /** What an army's last settled fight paid (null for any other run). */
   private pay: ArmyPay | null = null;
   /** Gold the last win paid (for the result screen). */
@@ -245,6 +253,8 @@ class Game {
   private newBattle(): void {
     this.b = startStage(this.run);
     this.settled = false;
+    this.endWait = 0;
+    this.pendingLoss = false;
     for (const id of [...this.run.squad]) {
       const h = heroOf(this.run, id);
       if (!h) continue;
@@ -424,9 +434,13 @@ class Game {
       $('clock').textContent = clock(b.t);
       this.refreshSpells();
     } else if (b.phase !== 'deploy') {
-      // (the fallen finish falling after the end)
+      // (the fallen finish falling after the end; the recap comes up once the wait is over)
       this.acc += dt;
       this.fx.step(dt);
+      if (this.endWait < END_WAIT_MS) {
+        this.endWait += dt;
+        if (this.endWait >= END_WAIT_MS) this.refresh();
+      }
     }
     if (this.intro) this.stepIntro(dt);
     this.refreshBossBar();
@@ -713,29 +727,29 @@ class Game {
       if (card) summonBurst(card, got ? rarityOf(got.kind) : 1);
     });
     $('homeBtn').addEventListener('click', () => this.home.open());
+    $('retry').addEventListener('click', () => this.retry());
     $('next').addEventListener('click', () => {
-      // (an army's last boss has fallen: the next army's unlock moment, if it opened one, then the armies)
-      if (this.run.cleared) return this.armyWon();
-      // (the tower: a lost run shows its summary, a won floor goes back to the map)
-      if (this.run.tower) {
-        $('result').hidden = true;
-        saveRun(this.run);
-        if (this.run.over) return this.towerView.showSummary(this.run, this.run.tower.summary ?? settleTower(this.meta, this.run)!, () => this.home.open(`The climb ended on floor ${this.run.stage}: +${this.run.tower!.crowns} crowns earned`));
-        return this.towerView.open(this.run);
+      // (a wave lost with retries left: giving up settles it, and the run's recap follows)
+      if (this.pendingLoss) {
+        this.pendingLoss = false;
+        this.refresh();
+        return this.showRunRecap();
       }
-      // (a lost run goes back to the main screen, with its summary)
-      if (this.run.over) return this.goHome();
-      saveRun(this.run);
-      this.newBattle();
-      // (an event waits between two fights: its card opens over the new stage's board)
-      if (this.run.event) this.events.openEvent(this.run, () => (saveRun(this.run), this.refresh()));
+      if (this.run.over && !this.run.tower && !this.auto) return this.showRunRecap();
+      this.afterResult();
     });
     $('pack').addEventListener('click', () =>
-      this.events.openPack(this.run, this.b.phase === 'deploy', () => {
-        // (the gear changes the placed heroes' stats: the stage starts again with the squad where it stood)
-        saveRun(this.run);
-        this.newBattle();
-      }),
+      this.events.openPack(
+        this.run,
+        this.b.phase === 'deploy',
+        () => {
+          // (the gear changes the placed heroes' stats: the stage starts again with the squad where it stood)
+          saveRun(this.run);
+          this.newBattle();
+        },
+        // (only the heroes on the field are listed)
+        this.fielded(),
+      ),
     );
     $('bossCard').addEventListener('click', () => this.endIntro());
     $('speed').addEventListener('click', () => this.setSpeed(this.speed >= this.fastest() ? 1 : ((this.speed + 1) as 2 | 3)));
@@ -961,7 +975,10 @@ class Game {
       const lv = document.createElement('small');
       lv.className = 'xpLv';
       lv.textContent = `Lv ${progressOf(from[kind]).level}`;
-      face.append(portrait(UNITS[kind].sheet, 40), lv);
+      // (the look it fought in: the highest grade of the kind that stood in the fight, in that grade's form, framed whole)
+      const grade = this.b.units.reduce((g, u) => (u.side === 'hero' && u.def === kind && u.owner === undefined ? Math.max(g, u.grade ?? 1) : g), 1);
+      face.className = `xpFace g${grade}`;
+      face.append(portrait(formOf(UNITS[kind], grade), 64, grade), lv);
       const name = document.createElement('b');
       name.textContent = UNITS[kind].name;
       const gain = document.createElement('em');
@@ -1017,6 +1034,62 @@ class Game {
     });
   }
 
+  /** The roster ids of the heroes on the field (the squad when none is placed yet). */
+  private fielded(): number[] {
+    const ids = this.b.units.filter((u) => u.side === 'hero' && u.tag !== undefined && !u.owner).map((u) => u.tag!);
+    return ids.length ? ids : [...this.run.squad];
+  }
+
+  /** The result screen's way on, once any recap has been seen. */
+  private afterResult(): void {
+    // (an army's last boss has fallen: the next army's unlock moment, if it opened one, then the armies)
+    if (this.run.cleared) return this.armyWon();
+    // (the tower: a lost run shows its summary, a won floor goes back to the map)
+    if (this.run.tower) {
+      $('result').hidden = true;
+      saveRun(this.run);
+      if (this.run.over) return this.towerView.showSummary(this.run, this.run.tower.summary ?? settleTower(this.meta, this.run)!, () => this.home.open(`The climb ended on floor ${this.run.stage}: +${this.run.tower!.crowns} crowns earned`));
+      return this.towerView.open(this.run);
+    }
+    // (a lost run goes back to the main screen, with its summary)
+    if (this.run.over) return this.goHome();
+    saveRun(this.run);
+    this.newBattle();
+    // (an event waits between two fights: its card opens over the new stage's board)
+    if (this.run.event) this.events.openEvent(this.run, () => (saveRun(this.run), this.refresh()));
+  }
+
+  /** Retry the wave just lost: the same stage, a hire's worth of gold to spend, one retry used. The failed go still counts in the run's figures. */
+  private retry(): void {
+    if (!this.pendingLoss || !canRetry(this.run)) return;
+    this.noteRecap({}, [], false, false);
+    const gold = retryWave(this.run)!;
+    this.pendingLoss = false;
+    play('coinRecycle');
+    saveRun(this.run);
+    this.newBattle();
+    flyUp(`+${gold} gold`, $('gold'));
+  }
+
+  /** Add the fight just ended (stats, time, pay) to the run's recap. */
+  private noteRecap(gains: Record<string, number>, ups: LevelUp[], won: boolean, settled = true): void {
+    const grades: Record<string, number> = {};
+    for (const u of this.b.units) if (u.side === 'hero' && u.owner === undefined) grades[u.def] = Math.max(grades[u.def] ?? 1, u.grade ?? 1);
+    noteFightStats(this.run, this.stats, this.b.t, won, grades);
+    notePayout(this.run, gains, ups, settled ? this.crownGain : 0, this.run.cleared ? this.runStars?.chests.length ?? 0 : 0);
+  }
+
+  /** The full recap of the run that has ended, then the way on (the home screen, or the armies). */
+  private showRunRecap(): void {
+    const run = this.run;
+    const army = armyOfRun(run);
+    const won = !!run.cleared;
+    const head = won
+      ? { title: 'Army defeated!', tone: 'won' as const, line: `${army?.name ?? 'The run'} cleared in ${run.recap?.fights ?? 0} fights` }
+      : { title: 'Run over', tone: 'lost' as const, line: army ? `The ${army.name} held at wave ${run.best} of ${army.waves.length}` : `Fell at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} hires` };
+    showRecap($('recap'), recapOf(run), head, () => this.afterResult());
+  }
+
   /** A run has ended: back to the main screen, showing what it earned. */
   private goHome(): void {
     const r = this.run;
@@ -1060,12 +1133,20 @@ class Game {
     if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 8) return;
     d.moved = true;
     this.chosen = d.id;
+    // (a card dragged off the bench in the deploy phase shows the recycle area; over it the card is let go to sell it)
+    if (!d.fromBoard && this.b.phase === 'deploy') {
+      $('recycleGold').textContent = `+${recycleValue(this.run)}`;
+      $('recycleZone').hidden = false;
+      $('bench').querySelector(`[data-id="${d.id}"]`)?.classList.add('dragging');
+    }
     // (the hero is held a little over the finger, so it can be seen)
     this.ghost.texture = framesOf(this.defOf(d.id).sheet, 'idle')[0];
     this.ghost.scale.set(this.scale * this.defOf(d.id).scale);
     this.ghost.position.set(e.clientX - colLeft(), e.clientY - 24);
     this.ghost.visible = true;
-    this.hover = this.tileAtScreen(e.clientX, e.clientY - 24);
+    const sell = !d.fromBoard && overRecycle(e.clientX, e.clientY);
+    $('recycleZone').classList.toggle('hot', sell);
+    this.hover = sell ? null : this.tileAtScreen(e.clientX, e.clientY - 24);
     this.markTiles();
   }
 
@@ -1082,7 +1163,8 @@ class Game {
     if (d.moved && d.id) {
       // dropped: on a tile of the heroes' rows, or back on the bench
       const tile = this.tileAtScreen(e.clientX, e.clientY - 24);
-      if (tile && this.canPut(d.id, tile)) this.put(d.id, tile);
+      if (!d.fromBoard && overRecycle(e.clientX, e.clientY)) this.recycleDropped(d.id);
+      else if (tile && this.canPut(d.id, tile)) this.put(d.id, tile);
       else if (overBench(e.clientX, e.clientY)) this.takeBack(d.id);
       this.chosen = null;
     } else if (d.fromBoard && (e.target as HTMLElement) === this.app.canvas) {
@@ -1101,6 +1183,9 @@ class Game {
 
   private endDrag(): void {
     this.drag = null;
+    $('recycleZone').hidden = true;
+    $('recycleZone').classList.remove('hot');
+    for (const c of $('bench').querySelectorAll('.dragging')) c.classList.remove('dragging');
     this.hover = null;
     this.ghost.visible = false;
     this.refresh();
@@ -1143,6 +1228,26 @@ class Game {
     this.syncSprites();
   }
 
+  /** A card was let go over the recycle area: a hero of grade 2 or more asks first. */
+  private recycleDropped(id: string): void {
+    const h = heroOf(this.run, Number(id));
+    const card = $('bench').querySelector<HTMLElement>(`[data-id="${id}"]`);
+    if (!h || !card || this.run.roster.length <= 1) return;
+    if (h.grade < 2) return this.recycleHero(h.id, card);
+    const value = recycleValue(this.run);
+    $('askText').textContent = `Recycle the ${'★'.repeat(h.grade)} ${UNITS[h.kind].name} for ${value} gold?`;
+    $('ask').hidden = false;
+    const close = () => {
+      $('ask').hidden = true;
+      $('askYes').onclick = $('askNo').onclick = null;
+    };
+    $('askNo').onclick = close;
+    $('askYes').onclick = () => {
+      close();
+      this.recycleHero(h.id, card);
+    };
+  }
+
   /** Send a hero on the bench to the recycler for gold: off the board if it stood there, with a coin and a puff. */
   private recycleHero(heroId: number, card: HTMLElement): void {
     if (this.b.phase !== 'deploy') return;
@@ -1176,7 +1281,7 @@ class Game {
   /** The bench: a card for every hero owned, rebuilt when the roster changes. */
   private buildBench(): void {
     const bench = $('bench');
-    const key = this.run.roster.map((h) => `${h.id}:${h.grade}:${levelOfKind(this.meta, h.kind)}:${powerOf(h.kind, this.boostFor(h))}`).join();
+    const key = `${summonCost(this.run)};` + this.run.roster.map((h) => `${h.id}:${h.grade}:${levelOfKind(this.meta, h.kind)}:${powerOf(h.kind, this.boostFor(h))}`).join();
     if (bench.dataset.key === key) return;
     bench.dataset.key = key;
     bench.replaceChildren();
@@ -1204,7 +1309,7 @@ class Game {
       lv.textContent = `Lv ${levelOfKind(this.meta, h.kind)}`;
       const sell = document.createElement('button');
       sell.className = 'recycle';
-      const value = recycleValue(h);
+      const value = recycleValue(this.run);
       sell.textContent = `Recycle · +${value}`;
       sell.title = `Recycle for ${value} gold (it cost ${paidOf(h)})`;
       // (a hero of grade 2 or more asks again: a second tap within a few seconds does it)
@@ -1231,7 +1336,7 @@ class Game {
       card.append(portrait(formOf(def, h.grade), 96, h.grade), stars, name, lv, pw, marks, bar);
       // (the last hero cannot be recycled)
       if (this.run.roster.length > 1) card.append(sell);
-      card.title = def.role;
+      card.title = `${def.role} · Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;
       card.addEventListener('pointerdown', (e) => {
         if (this.b.phase !== 'deploy') return;
         e.preventDefault();
@@ -1311,7 +1416,11 @@ class Game {
     this.syncAct();
     this.syncScene();
     const n = heroesPlaced(b);
-    if ((b.phase === 'won' || b.phase === 'lost') && !this.settled) {
+    const ended = b.phase === 'won' || b.phase === 'lost';
+    const ready = ended && (!!this.auto || this.endWait >= END_WAIT_MS);
+    // (a wave lost with retries left waits for the player's choice before it is settled into the run)
+    if (ready && b.phase === 'lost' && !this.settled && !this.auto && canRetry(run)) this.pendingLoss = true;
+    if (ready && !this.settled && !this.pendingLoss) {
       this.settled = true;
       // (an auto-replay keeps the screen awake from fight to fight)
       if (!this.auto) keepAwake(false);
@@ -1337,9 +1446,10 @@ class Game {
       this.runStars = settleArmyRun(this.meta, run);
       const gains = fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp);
       const from = Object.fromEntries(Object.keys(gains).map((k) => [k, xpOf(this.meta, k)]));
+      const ups = gainXp(this.meta, gains);
+      this.noteRecap(gains, ups, won);
       if (this.auto) {
         // (no result screen to show: the fight's pay goes into the replay's totals)
-        gainXp(this.meta, gains);
         this.showStars(null);
         for (const id of ['armyStars', 'xp', 'fightStats']) $(id).hidden = true;
         const over = run.cleared || !won;
@@ -1357,7 +1467,7 @@ class Game {
         this.showStars(won ? rating : null);
         drawRunStars($('armyStars'), army && run.cleared ? this.runStars : null, army ? tierOf(tierOfRun(run)).name : '');
         this.showStats();
-        this.showXp(gains, from, gainXp(this.meta, gains));
+        this.showXp(gains, from, ups);
       }
       saveMeta(this.meta);
       saveRun(run);
@@ -1368,16 +1478,28 @@ class Game {
     const kind = run.tower?.cur?.kind;
     const stage = `${army ? `Wave ${run.stage}/${army.waves.length}` : run.tower ? `Floor ${run.stage}` : `Stage ${run.stage}`}${kind === 'elite' ? ' · Elite' : isBossRun(run) ? ' · Boss' : ''}`;
     $('status').textContent =
-      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : n ? `${stage} · ${n} of ${SQUAD} placed` : `${stage} · drag heroes onto the blue tiles`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
+      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : benchFull(run) ? `${stage} · bench full: recycle a hero to hire` : n ? `${stage} · ${n} of ${SQUAD} placed` : `${stage} · drag heroes onto the blue tiles`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
     $('gold').textContent = `${run.gold} gold`;
     const buy = $('summon') as HTMLButtonElement;
-    buy.textContent = `Hire · ${summonCost(run)}`;
-    buy.disabled = run.gold < summonCost(run);
+    const block = hireBlock(run);
+    buy.textContent = block === 'bench' ? 'Bench full' : `Hire · ${summonCost(run)}`;
+    buy.disabled = block !== null;
+    buy.title = block === 'bench' ? 'The bench holds 10 heroes: recycle one, or send one to the field, to hire another' : '';
     ($('fight') as HTMLButtonElement).disabled = b.phase !== 'deploy' || n === 0;
     $('clock').textContent = b.phase === 'deploy' ? '' : clock(b.t);
     const result = $('result');
-    result.hidden = (b.phase !== 'won' && b.phase !== 'lost') || this.towerView.isOpen || !!this.auto;
-    if (!result.hidden) {
+    result.hidden = !ready || this.towerView.isOpen || !!this.auto;
+    ($('retry') as HTMLButtonElement).hidden = !this.pendingLoss;
+    if (!result.hidden && this.pendingLoss) {
+      // (the party fell with retries left: replay the wave with a gold boost, or give up and end the run)
+      for (const id of ['stars', 'armyStars', 'xp', 'fightStats']) $(id).hidden = true;
+      const left = retriesLeft(run);
+      $('banner').textContent = 'Defeat';
+      $('banner').className = 'lost';
+      $('summary').textContent = `Your party fell on ${stage}. Retry it with +${retryGold(run)} gold to spend, or give up and end the run.`;
+      $('retry').textContent = `Retry wave · ${left} left`;
+      $('next').textContent = 'Give up';
+    } else if (!result.hidden) {
       const left = b.units.filter((x) => x.alive && x.side === 'hero' && !UNITS[x.def].summon).length;
       $('banner').textContent = run.cleared ? 'Army defeated!' : this.bossDown ? `Act ${run.tower!.act - 1} cleared!` : b.phase === 'won' ? (run.tower ? 'Floor cleared!' : 'Victory!') : 'Defeat';
       $('banner').className = b.phase;
@@ -1391,7 +1513,7 @@ class Game {
             : army
             ? `The ${army.name} holds at wave ${run.best} of ${army.waves.length}. It starts again from wave 1; your heroes keep their levels.`
             : `The run ends at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} summons · +${this.crownGain} crowns${modeNote(run)}`;
-      $('next').textContent = run.cleared ? (this.pay?.unlocked ? 'A new army marches…' : 'To the armies') : b.phase === 'won' ? (army ? `Next wave (${run.stage})` : run.tower ? 'To the map' : `Next stage (${run.stage})`) : run.tower ? 'See the summary' : 'Home';
+      $('next').textContent = run.over && !run.tower ? 'Run recap' : b.phase === 'won' ? (army ? `Next wave (${run.stage})` : run.tower ? 'To the map' : `Next stage (${run.stage})`) : run.tower ? 'See the summary' : 'Home';
     }
     this.refreshAuto();
     if (b.phase === 'deploy' && !this.auto) tips.atDeploy(n, run.stage, () => this.deployBox());
@@ -1465,6 +1587,13 @@ const clock = (ms: number) => {
   const s = Math.floor(ms / 1000);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 };
+
+function overRecycle(x: number, y: number): boolean {
+  const z = $('recycleZone');
+  if (z.hidden) return false;
+  const r = z.getBoundingClientRect();
+  return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+}
 
 function overBench(x: number, y: number): boolean {
   const r = $('panel').getBoundingClientRect();
