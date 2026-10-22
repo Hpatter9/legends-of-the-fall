@@ -212,6 +212,8 @@
   #xp .xprow.up .xpLv { color: #2a1606; background: #ffd36a; animation: xpBump 0.45s steps(4) both; }
   #xp .xprow.up::after { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 40%; pointer-events: none; background: linear-gradient(100deg, transparent, rgba(255, 240, 190, 0.45), transparent); transform: translateX(-120%); animation: xpShine 0.7s ease-out 0.1s forwards; }
   #xp .xprow .xpStamp { display: inline-block; margin-left: 8px; vertical-align: 2px; padding: 2px 5px; font-family: var(--pixel); font-size: 8px; color: #fff; background: #c4232b; border: 2px solid #ffd36a; box-shadow: 0 2px 0 #000; transform: rotate(-6deg); animation: xpStamp 0.4s steps(4) both; }
+  #xp .xprow .xpWash { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(255, 214, 110, 0.55), rgba(255, 190, 80, 0.35) 60%, rgba(255, 190, 80, 0.1)); transform-origin: 30px 50%; transform: scaleX(0); animation: xpWash 0.9s ease-out forwards; }
+  @keyframes xpWash { 0% { transform: scaleX(0); opacity: 1; } 45% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
   #xp .xprow .xpSparks { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
   #xp .xprow .xpSparks i { position: absolute; left: -2px; top: -2px; width: 4px; height: 4px; background: #ffe48a; box-shadow: 0 0 3px #ffd36a; animation: xpSpark 0.8s ease-out forwards; }
   @keyframes xpChip { from { transform: scale(0); } to { transform: scale(1); } }
@@ -219,7 +221,7 @@
   @keyframes xpShine { to { transform: translateX(280%); } }
   @keyframes xpStamp { 0% { transform: rotate(-6deg) scale(3); opacity: 0; } 70% { transform: rotate(-6deg) scale(0.9); opacity: 1; } 100% { transform: rotate(-6deg) scale(1); opacity: 1; } }
   @keyframes xpSpark { from { transform: translate(0, 0); opacity: 1; } to { transform: translate(var(--dx), var(--dy)); opacity: 0; } }
-  @media (prefers-reduced-motion: reduce) { #xp .xprow p span, #xp .xprow.up .xpLv, #xp .xprow .xpStamp { animation: none; } #xp .xprow.up::after, #xp .xprow .xpSparks { display: none; } }
+  @media (prefers-reduced-motion: reduce) { #xp .xprow p span, #xp .xprow.up .xpLv, #xp .xprow .xpStamp { animation: none; } #xp .xprow.up::after, #xp .xprow .xpSparks, #xp .xprow .xpWash { display: none; } }
   #xp .xprow .pillar { position: absolute; left: 50%; bottom: 0; width: 120px; height: 120px; margin-left: -60px; pointer-events: none; mix-blend-mode: screen; background: 0 0 / 720px 120px no-repeat; animation: pillarFrames 0.9s steps(6, jump-none) forwards, pillarFade 0.9s linear forwards; }
   @keyframes pillarFrames { from { background-position: 0 0; } to { background-position: -600px 0; } }
   @keyframes pillarFade { 0%, 50% { opacity: 1; } to { opacity: 0; } }
