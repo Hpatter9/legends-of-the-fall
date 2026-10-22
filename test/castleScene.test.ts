@@ -428,7 +428,8 @@ test('the tavern, the chapel and the Armies signpost are places, not upgrades: o
   assert.equal(PLACES.chapel.to, 'spells');
   for (const id of PLACE_IDS) {
     assert.ok(!(BUILDING_IDS as string[]).includes(id), `${id} is not an upgrade`);
-    assert.equal(lookFor(id, 0), lookFor(id, 3), `${id} does not grow`);
+    // (the chapel has two looks, its empty site and the church, but does not grow past the church)
+    assert.equal(lookFor(id, id === 'chapel' ? 1 : 0), lookFor(id, 3), `${id} does not grow`);
     assert.ok(YARD.plots[id], id);
   }
   // (the tavern's look has its sign, barrels and a lantern; the chapel is not the mage tower's chapel)

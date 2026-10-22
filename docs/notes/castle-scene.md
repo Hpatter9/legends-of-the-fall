@@ -141,3 +141,15 @@
   their look; the card words grow with the level.
 - `node tools/castle/shots.mjs` (after `npm run web`; `CARD=1` adds the card) makes `docs/samples/castle-{empty,part,maxed}-upright.png` at 393x852 and `castle-card-upright.png`,
   plus `castle-maxed-360x780.png` and `castle-maxed-412x915.png`, all at a device pixel ratio of 3 (`DPR=3`, a phone's).
+
+## The Chapel is bought (200 crowns)
+- The owner's call: the Tavern stays free and always standing; the Chapel must be bought, **200 crowns, one purchase, no levels** (`CHAPEL_COST`, `buildChapel`, `canBuildChapel` in `src/sim/castle.ts`).
+  The flag is `Meta.chapel?: boolean` (a fresh save is `false`).
+- **Old saves** (`readChapel`, called by `loadMeta`): a save without the flag counts the Chapel as built when it already owns a spell beyond the starting ones, has changed its
+  equipped spells, or has bought any castle upgrade, so nobody loses what they had. A saved flag is kept as it is.
+- **Courtyard**: until built, the plot shows `CHAPEL_SITE` (rocks and a woodpile from the kit, `castleSpots.ts`); the tag reads "Chapel · 200", or "Chapel · build" with the green arrow and glow once
+  affordable. A tap opens a card like the upgrades' (description, cost, Build button). Building plays the usual scaffold, dust, flash and sparkles before the church shows; afterwards the tag
+  and a tap lead to the Spells tab. `lookFor('chapel', 0)` is the site, `lookFor('chapel', 1)` the church.
+- **Spells tab**: until built (`spellsOpen`), the library is darkened and a locked parchment ("Build the Chapel in the castle to study spells") with a "To the Castle" button stands in for the book.
+  The equipped spells are unchanged, so the starting three still work in fights; only changing or unlocking them is shut.
+- Tests: `test/chapel.test.ts`. Samples: `docs/samples/chapel-*.png` (393x852).

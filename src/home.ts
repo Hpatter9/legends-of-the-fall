@@ -4,7 +4,7 @@
 // older screens (gacha, modes, achievements, settings, castle upgrades); it only reads and changes the Meta through the
 // sim's own functions.
 
-import { BUILDING_IDS, BUILDINGS, maxLevel, nextCost, upgrade, type BuildingId } from './sim/castle';
+import { BUILDING_IDS, BUILDINGS, buildChapel, canBuildChapel, CHAPEL_COST, chapelBuilt, maxLevel, nextCost, upgrade, type BuildingId } from './sim/castle';
 import { CastleScene, lookPicture } from './castle';
 import { BLURB, effectText } from './render/castleSpots';
 import { PULL_COST, saveMeta, type Meta, type Pull } from './sim/meta';
@@ -80,7 +80,7 @@ export class Home {
   private tavern: Tavern;
   private castle: CastleScene;
   private hall: SummoningHall;
-  private library = new Library();
+  private library = new Library(() => this.show('castle'));
   private castleBar = el('div', 'ctBar');
   private cardOpen = false;
 
@@ -102,7 +102,7 @@ export class Home {
         this.hooks.onRecruit();
       },
     });
-    this.castle = new CastleScene((id) => (id === 'tavern' ? this.show('heroes') : id === 'chapel' ? this.show('spells') : id === 'armies' ? this.show('battle') : this.openBuilding(id)));
+    this.castle = new CastleScene((id) => (id === 'tavern' ? this.show('heroes') : id === 'chapel' ? (chapelBuilt(this.meta) ? this.show('spells') : this.openChapel()) : id === 'armies' ? this.show('battle') : this.openBuilding(id)));
     const pages = $('hmPages');
     const bar = $('hmTabs');
     for (const t of TABS) {
@@ -187,7 +187,7 @@ export class Home {
       const c = nextCost(m.castle, id);
       return c !== null && m.crowns >= c;
     });
-    this.tabBtns.get('castle')!.classList.toggle('new', affordable || fresh);
+    this.tabBtns.get('castle')!.classList.toggle('new', affordable || canBuildChapel(m) || fresh);
     this.tabBtns.get('recruit')!.classList.toggle('new', m.crowns >= PULL_COST);
     this.tabBtns.get('battle')!.classList.toggle('new', !m.daily[String(todayKey())] || ARMIES.some((a) => armyIsNew(m, a.id)));
     this.drawBattle();
@@ -286,6 +286,42 @@ export class Home {
     const box = $('hmSheetBox');
     box.className = 'hsheet bcard';
     this.drawBuildingCard(box, id);
+  }
+
+  /** The Chapel's card (over the courtyard): what it opens, its one price and the Build button. */
+  private openChapel(): void {
+    this.closeSheet();
+    this.cardOpen = true;
+    this.castle.stop();
+    $('hmSheet').hidden = false;
+    const box = $('hmSheetBox');
+    box.className = 'hsheet bcard';
+    const m = this.meta;
+    box.replaceChildren();
+    const head = el('div', 'bhead');
+    const pic = el('img', 'bpic');
+    pic.src = lookPicture('chapel', 0);
+    pic.alt = '';
+    pic.draggable = false;
+    const title = el('div');
+    title.append(el('h3', '', 'Chapel'), el('em', '', 'not built yet'));
+    head.append(pic, title);
+    box.append(head, el('p', 'hint', 'A place to study the king\'s spells: opens the spellbook.'), el('p', 'hint', 'One purchase, no levels. Your starting spells still work in fights until then.'));
+    const buy = el('button', '', `Build · ${CHAPEL_COST}`);
+    buy.disabled = !canBuildChapel(m);
+    if (!buy.disabled) buy.classList.add('primary');
+    buy.addEventListener('click', () => {
+      // (close the card first so the build plays in the courtyard, then pay)
+      this.closeSheet();
+      if (!buildChapel(m)) return;
+      saveMeta(m);
+      this.refresh();
+    });
+    const done = el('button', '', 'Close');
+    done.addEventListener('click', () => this.closeSheet());
+    const row = el('div', 'brow2');
+    row.append(buy, done);
+    box.append(row);
   }
 
   private drawBuildingCard(box: HTMLElement, id: BuildingId): void {
