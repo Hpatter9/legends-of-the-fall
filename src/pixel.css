@@ -5,7 +5,18 @@
 @font-face { font-family: 'Pixelify Sans'; font-weight: 700; font-display: swap; src: url(fonts/pixelify-sans-latin-700-normal.woff2) format('woff2'); }
 /* (Pixelify Sans draws its "fi" ligature as one blocky glyph that reads as "A", so "first" looked like "Arst": ligatures off everywhere) */
 html, body, button, input { font-variant-ligatures: none; font-feature-settings: "liga" 0, "clig" 0; }
-:root { --display: 'Pixelify Sans', 'Press Start 2P', monospace; --body: 'Pixelify Sans', 'Press Start 2P', monospace; }
+/* (the owner's pick: Press Start 2P everywhere, for numbers that can't be misread; Pixelify Sans drew its 5 and 2 like an 8. Press Start
+   is far wider, so the page's text uses it through its own face drawn at two-thirds size: a 12px label draws at 8px, its native
+   grid, and everything sized for the old font still fits. The pixel-sized bits (`--pixel`) keep the full-size face. It has one
+   weight only: the browser's fake bold smeared it into a doubled, shadowed look, so no synthesis.) */
+@font-face { font-family: 'Press Start Text'; font-weight: 100 900; font-display: swap; size-adjust: 66.667%; src: url(fonts/press-start-2p-latin-400-normal.woff2) format('woff2'); }
+:root { --display: 'Press Start Text', 'Press Start 2P', monospace; --body: 'Press Start Text', 'Press Start 2P', monospace; }
+html, body, button, input { font-synthesis: none; }
+/* (Press Start is wide: the battle's top line drops the game's name and gives the status room clear of the version line, and the
+   hero cards' names close up a pixel between letters so "Kunoichi" and "Fire Wizard" fit a narrow phone) */
+#top h1 { display: none; }
+#status { padding-right: 180px; font-size: 12px; white-space: normal; line-height: 1.3; }
+.card b, .ptCard b, .ptSlot b { letter-spacing: -1px; }
 button, .card, .chip, .hmCard, .hmNote, .hmLink, #panel, #hmTabs, #hmTop, .hmBanner, .trait, .spell, .round, .hmPanel, .hsheet, .evcard, #tip, .hcard, .hrow, .brow,
 .setting, .toast, .flip .face, .flip .back, #collection .hero, #banner, #hmSub h2, #settings h2, #gacha h2, body #spellbook h2 { image-rendering: pixelated; }
 /* a hard four-way outline for text that sits straight on the board or the sky */

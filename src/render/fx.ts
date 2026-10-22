@@ -953,15 +953,25 @@ export class Fx {
     });
   }
 
+  /** The damage numbers still rising over each spot, so a new one over the same fighter starts above the last, not on it. */
+  private stacks = new Map<string, { at: number; n: number }>();
+
   private number(n: number, x: number, y: number, heavy: boolean, onHero: boolean): void {
     if (!settings().numbers) return;
+    // (numbers over the same fighter within half a second step up a row each, and to alternate sides, so they never sit on each other)
+    const key = `${Math.round(x / 16)},${Math.round(y / 16)}`;
+    const now = performance.now();
+    const prev = this.stacks.get(key);
+    const k = prev && now - prev.at < 500 ? (prev.n + 1) % 4 : 0;
+    this.stacks.set(key, { at: now, n: k });
+    if (this.stacks.size > 64) for (const [s, v] of this.stacks) if (now - v.at > 1000) this.stacks.delete(s);
     const txt = new Text({
       text: String(n),
       style: { fontFamily: "'Press Start 2P', monospace", fontWeight: 'normal', fontSize: heavy ? 12 : 9, fill: onHero ? 0xff7a6a : heavy ? 0xffd34a : 0xffffff, stroke: { color: 0x1a1008, width: 3 } },
       resolution: 3,
     });
     txt.anchor.set(0.5, 1);
-    txt.position.set(x + (Math.random() * 10 - 5), y);
+    txt.position.set(Math.round(x + (k % 2 ? 9 : -9) * Math.sign(k)), Math.round(y - k * 13));
     this.root.addChild(txt);
     let t = 0;
     const life = 800;
