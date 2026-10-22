@@ -101,6 +101,14 @@ button.primary:not(:disabled), .hmBattle { animation: none; }
 }
 @keyframes pxSway { 0%, 100% { transform: translateX(0); } 33% { transform: translateX(-2px); } 66% { transform: translateX(2px); } }
 #bench { gap: 4px; }
+/* (a compact card, so ten heroes wait in two rows with no scrolling) */
+#bench { max-height: none; overflow: visible; }
+#bench .card { padding-bottom: 1px; }
+#bench .card canvas { max-width: 46px; margin-top: 1px; }
+#bench .card b { font-size: 11px; line-height: 1.1; }
+#bench .card .pw, #bench .card small { display: none; }
+#bench .card .lv { font-size: 8px; line-height: 1.2; }
+#bench .card i { height: 6px; margin-top: 2px; }
 #spells { gap: 3px; } #spellCards { gap: 4px; }
 /* the trait strip and its hint, slimmer */
 #traits { min-height: 0; gap: 4px; }
@@ -435,6 +443,61 @@ body .sbSlot { min-height: 44px; }
 .asumWhy { margin: 0; font-size: 13px; color: var(--dim); }
 .asumRows { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; padding: 6px 10px; background: rgba(0, 0, 0, 0.35); border: 2px solid #3a2414; font-size: 14px; text-align: left; }
 .asumRows b { text-align: right; color: var(--gold-hi); font-variant-numeric: tabular-nums; }
+
+/* the retry prompt, the recycle drop area and the full recap of a run */
+#ask { position: fixed; inset: 0; z-index: 9; display: flex; align-items: center; justify-content: center; padding: 12px; background: rgba(8, 3, 2, 0.7); }
+#ask[hidden] { display: none; }
+#ask .row { display: flex; gap: 10px; justify-content: center; }
+#askText { margin: 0; font-size: 15px; line-height: 1.3; }
+#result .row #retry[hidden] { display: none; }
+#result .row { flex-wrap: wrap; }
+#recycleZone { position: absolute; left: 0; top: 0; bottom: 0; width: 22%; z-index: 4; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 4px; text-align: center;
+  color: #ffd9b0; background: repeating-linear-gradient(45deg, rgba(120, 28, 20, 0.92) 0 6px, rgba(90, 20, 14, 0.92) 6px 12px); border: 3px dashed #ff9a6a; box-shadow: 0 0 0 2px var(--deep); touch-action: none; }
+#recycleZone[hidden] { display: none; }
+#recycleZone b { font-family: var(--pixel); font-size: 8px; letter-spacing: 0; }
+#recycleZone span { font-family: var(--pixel); font-size: 8px; color: var(--gold-hi); }
+#recycleZone.hot { background: repeating-linear-gradient(45deg, rgba(210, 70, 40, 0.97) 0 6px, rgba(160, 44, 26, 0.97) 6px 12px); border-color: #fff2c0; color: #fff; }
+#recycleZone svg { image-rendering: pixelated; }
+.card.dragging { opacity: 0.45; }
+
+#recap { position: fixed; inset: 0; z-index: 8; display: flex; flex-direction: column; background: radial-gradient(ellipse at 50% 0, rgba(120, 60, 24, 0.55), rgba(14, 7, 4, 0.97) 70%), rgba(14, 7, 4, 0.97); }
+#recap[hidden] { display: none; }
+.rcSheet { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; padding: calc(env(safe-area-inset-top) + 14px) 12px 10px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.rcSheet > * { flex: none; width: min(380px, 100%); }
+.rcTitle { font: 900 34px/1 var(--display); text-align: center; letter-spacing: 1px; text-shadow: 0 3px 0 #000, 0 0 18px rgba(0, 0, 0, 0.8); }
+.rcTitle.won { color: var(--gold-hi); } .rcTitle.lost { color: var(--red); }
+.rcLine { margin: 0; text-align: center; color: var(--dim); font-size: 14px; text-shadow: 0 1px 0 #000; }
+.rcSheet h3 { margin: 6px 0 0; padding: 3px 10px; font: 900 15px var(--display); color: var(--gold-hi); background: linear-gradient(#7a2a1c, #4e180f); border-top: 2px solid #d9573f; border-bottom: 2px solid #2a0a06; text-shadow: 0 2px 0 #000; }
+.rcGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.rcFig { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 4px; background: var(--panel-bg); border: 2px solid var(--gold-lo); box-shadow: 0 0 0 2px var(--deep), 0 3px 8px rgba(0, 0, 0, 0.55); }
+.rcFig b { font: 400 13px var(--pixel); color: var(--gold-hi); text-shadow: 0 2px 0 #000; }
+.rcFig span { font-size: 12px; color: var(--dim); }
+.rcHeroes, .rcXp { display: flex; flex-direction: column; gap: 6px; }
+.rcHero { display: grid; grid-template-columns: 64px 1fr; grid-template-rows: auto 1fr; gap: 2px 10px; padding: 8px; background: var(--panel-bg); border: 2px solid var(--gold-lo); box-shadow: 0 0 0 2px var(--deep), 0 3px 8px rgba(0, 0, 0, 0.55); animation: rcIn 0.35s ease-out both; animation-delay: calc(var(--i) * 70ms); }
+.rcHero.mvp { border-color: var(--gold-hi); box-shadow: 0 0 0 2px var(--deep), 0 0 14px rgba(255, 200, 90, 0.5); }
+.rcFace { grid-row: span 2; position: relative; width: 64px; height: 64px; display: grid; place-items: center; overflow: hidden; background: rgba(0, 0, 0, 0.45); border: 2px solid #6b4128; }
+.rcFace.g2 { border-color: #b8c8e0; } .rcFace.g3 { border-color: #f0c040; background: rgba(74, 56, 16, 0.6); }
+.rcFace canvas { width: 60px; height: 60px; image-rendering: pixelated; display: block; }
+.rcCrown { position: absolute; top: -2px; right: 1px; font-style: normal; font-size: 14px; color: var(--gold-hi); text-shadow: 0 1px 0 #000, 0 0 6px #e8a93a; }
+.rcHero > b { align-self: end; font: 700 15px var(--body); color: var(--ink); }
+.rcHero > b small { margin-left: 8px; padding: 1px 4px; font: 400 8px var(--pixel); color: #2a1606; background: linear-gradient(#ffe48a, #e8a93a); border: 1px solid #fff2c0; vertical-align: 2px; }
+.rcBars { display: flex; flex-direction: column; gap: 3px; }
+.rcBar { display: grid; grid-template-columns: 50px 1fr 54px; align-items: center; gap: 6px; }
+.rcBar small { font-size: 11px; color: var(--dim); }
+.rcBar em { font: normal 8px var(--pixel); text-align: right; color: var(--ink); }
+.rcBar i { display: block; height: 7px; background: #12090a; border: 1px solid var(--deep); overflow: hidden; }
+.rcBar i span { display: block; height: 100%; background: linear-gradient(var(--gold-hi) 50%, var(--gold-lo) 50%); }
+.rcBar:nth-child(2) i span { background: linear-gradient(#9af09a 50%, #3fa83f 50%); }
+.rcBar:nth-child(3) i span { background: linear-gradient(#ff9a8a 50%, #c4332b 50%); }
+.rcXpRow { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px; padding: 6px 10px; background: var(--panel-bg); border: 2px solid var(--gold-lo); box-shadow: 0 0 0 2px var(--deep); }
+.rcXpRow b { font: 700 14px var(--body); }
+.rcXpRow em { font: normal 8px var(--pixel); color: var(--gold); }
+.rcXpRow span { font: 400 8px var(--pixel); color: var(--dim); min-width: 8px; }
+.rcXpRow span.up { padding: 2px 5px; color: #2a1606; background: linear-gradient(#ffe48a, #e8a93a); border: 1px solid #fff2c0; }
+.rcFoot { flex: none; display: flex; justify-content: center; padding: 10px 12px calc(env(safe-area-inset-bottom) + 12px); background: linear-gradient(rgba(14, 7, 4, 0), rgba(14, 7, 4, 0.95) 30%); }
+@keyframes rcIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .rcHero { animation: none; } }
+
 /* the Auto toggle beside Fight! on an army's card, and the run counts it opens */
 .asGo { display: flex; gap: 6px; margin-top: auto; }
 .asGo .asFight { flex: 1; margin-top: 0; min-width: 0; }

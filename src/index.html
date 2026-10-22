@@ -82,6 +82,7 @@
     position: fixed; left: 0; right: 0; bottom: 0; padding: 8px 8px calc(env(safe-area-inset-bottom) + 8px);
     background: var(--wood); border-top: 2px solid var(--edge); display: flex; flex-direction: column; gap: 8px;
   }
+  #benchWrap { position: relative; }
   #bench { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; max-height: 172px; overflow-y: auto; }
   .card {
     position: relative; background: rgba(0, 0, 0, 0.35); border: 2px solid #5a3a22; border-radius: 8px; padding: 2px 2px 4px;
@@ -125,7 +126,8 @@
   .card .recycle.sure { background: #e0603a; color: #fff; }
   body[data-phase='deploy'] .card.chosen .recycle { display: block; }
   .card.fallen { opacity: 0.4; filter: grayscale(1); }
-  body:not([data-phase='deploy']) .card:not(.placed) { opacity: 0.3; }
+  /* (during the fight the bar shows only the heroes on the field) */
+  body:not([data-phase='deploy']) .card:not(.placed) { display: none; }
   #buttons { display: flex; gap: 8px; }
   #buttons #fight { flex: 1; }
   #buttons button:not(#fight) { padding: 10px 8px; font-size: 13px; }
@@ -201,8 +203,9 @@
   /* (the after-wave XP rows: a face with its level badge, the name and XP, the bar; a level-up stamps "Level up!", ticks the
      badge over, pops in its gains, sweeps a light across the row and bursts sparks from the face, all once) */
   #xp .xprow { grid-template-columns: auto 1fr auto; }
-  #xp .xprow .xpFace { grid-row: span 3; position: relative; width: 44px; height: 44px; display: grid; place-items: center; background: rgba(0, 0, 0, 0.4); border: 2px solid #6b4128; }
-  #xp .xprow .xpFace canvas { width: 40px; height: 40px; image-rendering: pixelated; }
+  #xp .xprow .xpFace { grid-row: span 3; position: relative; width: 60px; height: 60px; display: grid; place-items: center; background: rgba(0, 0, 0, 0.4); border: 2px solid #6b4128; }
+  #xp .xprow .xpFace.g2 { border-color: #b8c8e0; } #xp .xprow .xpFace.g3 { border-color: #f0c040; background: rgba(74, 56, 16, 0.6); }
+  #xp .xprow .xpFace canvas { width: 56px; height: 56px; image-rendering: pixelated; display: block; }
   #xp .xprow .xpLv { position: absolute; right: -6px; bottom: -6px; padding: 1px 3px; font-family: var(--pixel); font-size: 8px; color: #fff; background: #3a2214; border: 1px solid var(--gold-lo); }
   #xp .xprow i, #xp .xprow p { grid-column: 2 / span 2; }
   #xp .xprow p { display: flex; flex-wrap: wrap; gap: 4px; }
@@ -730,7 +733,7 @@
   <div id="spells"><div id="mana"><i><span></span></i><b></b></div><div id="spellCards"></div><div id="spellHint"></div></div>
   <div id="traits"></div><div id="traitHint"></div>
   <div id="relics" hidden></div>
-  <div id="bench"></div>
+  <div id="benchWrap"><div id="bench"></div><div id="recycleZone" hidden><svg viewBox="0 0 12 14" width="18" height="21" aria-hidden="true"><path d="M1 3h10v1H1zM4 0h4v2H4zM2 5h8l-1 9H3z" fill="currentColor"/></svg><b>Recycle</b><span id="recycleGold"></span></div></div>
   <div id="buttons"><button id="summon">Hire</button><button id="pack">Pack</button><button id="auto" title="Place the heroes for me"><svg viewBox="0 0 10 10" width="12" height="12" aria-hidden="true"><path d="M5 0l1.2 3.8L10 5 6.2 6.2 5 10 3.8 6.2 0 5l3.8-1.2z" fill="currentColor"/></svg>Auto</button><button id="homeBtn">Home</button><button id="fight" class="primary" disabled>Fight!</button></div>
 </div>
 <div id="result" hidden>
@@ -740,8 +743,10 @@
   <div id="armyStars" hidden></div>
   <div id="xp" hidden></div>
   <div id="fightStats" hidden></div>
-  <div class="row"><button id="next" class="primary">Next stage</button></div>
+  <div class="row"><button id="retry" class="primary" hidden>Retry wave</button><button id="next" class="primary">Next stage</button></div>
 </div>
+<div id="recap" hidden></div>
+<div id="ask" hidden><div class="asumCard"><p id="askText"></p><div class="row"><button id="askNo">Keep</button><button id="askYes" class="primary">Recycle</button></div></div></div>
 <div id="autoSum" hidden><div class="asumCard"><h2></h2><p class="asumWhy"></p><div class="asumRows"></div><button id="asumOk" class="primary">To the armies</button></div></div>
 <div id="gacha" hidden>
   <header><h2>Recruit</h2><span id="crowns"></span><button id="gachaClose">Close</button></header>

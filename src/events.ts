@@ -6,6 +6,7 @@ import { chooseOption, leaveEvent, type EventOption } from './sim/events';
 import { gearText, SLOTS, type Gear } from './sim/gear';
 import { RELICS } from './sim/relics';
 import { equip, unequip, type Run } from './sim/run';
+import { equipBestRun } from './sim/runGear';
 import { formOf, UNITS } from './sim/units';
 import { gearIcon, iconImg, relicIcon } from './render/items';
 import { portrait } from './render/sheets';
@@ -28,6 +29,8 @@ export class Events {
   private pick?: string;
   /** Whether gear may be changed now (before a fight), and what runs after it is. */
   private canEquip = true;
+  /** The heroes the pack lists (those on the field); all of the roster when unset. */
+  private only?: readonly number[];
   private onChange: () => void = () => {};
 
   constructor() {
@@ -120,14 +123,20 @@ export class Events {
   /* ------------------------------------------------------------ the pack */
 
   /** The pack: relics, a hero's gear and the loose items. `canEquip` is false in a fight; `change` runs after gear moves. */
-  openPack(run: Run, canEquip: boolean, change: () => void): void {
+  openPack(run: Run, canEquip: boolean, change: () => void, only?: readonly number[]): void {
     this.run = run;
     this.canEquip = canEquip;
     this.onChange = change;
-    if (!run.roster.some((h) => h.id === this.hero)) this.hero = run.squad[0] ?? run.roster[0]?.id ?? 0;
+    this.only = only;
+    if (!this.listed().some((h) => h.id === this.hero)) this.hero = this.listed()[0]?.id ?? 0;
     this.root.hidden = false;
     this.after = () => {};
     this.drawPack();
+  }
+
+  /** The heroes the pack lists: those on the field when told which, else everyone owned. */
+  private listed() {
+    return this.run.roster.filter((h) => !this.only || this.only.includes(h.id));
   }
 
   private drawPack(): void {
@@ -156,7 +165,7 @@ export class Events {
     card.append(relics);
     // the heroes, then the chosen one's slots
     const heroes = el('div', 'heroes');
-    for (const h of run.roster) {
+    for (const h of this.listed()) {
       const b = el('button', h.id === this.hero ? 'pick on' : 'pick');
       b.append(portrait(formOf(UNITS[h.kind], h.grade), 48, h.grade));
       b.addEventListener('click', () => {
@@ -166,7 +175,15 @@ export class Events {
       heroes.append(b);
     }
     card.append(heroes);
-    const hero = run.roster.find((h) => h.id === this.hero);
+    const hero = this.listed().find((h) => h.id === this.hero);
+    // (one tap dresses the whole squad from the pack: the best pieces on the strongest heroes)
+    const best = el('button', 'primary equipBest', 'Equip best');
+    best.disabled = !this.canEquip || !this.listed().length;
+    best.title = this.canEquip ? 'Give the heroes on the field the best gear in the pack' : 'Gear changes before a fight';
+    best.addEventListener('click', () => {
+      if (equipBestRun(run, this.listed().map((h) => h.id))) this.changed();
+    });
+    card.append(best);
     if (hero) {
       card.append(el('p', 'note', `${UNITS[hero.kind].name}${hero.bump ? ` (trained: ${hero.bump.atk ? `+${Math.round(hero.bump.atk * 100)}% attack ` : ''}${hero.bump.hp ? `+${Math.round(hero.bump.hp * 100)}% hp` : ''})` : ''}`));
       const slots = el('div', 'slots');
