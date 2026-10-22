@@ -6,7 +6,8 @@
 // `tiers.ts`; this only draws them.
 
 import { ARMIES, armyCleared, armyIsNew, armyStars, armyUnlocked, bossOf, bossesOf, firstClearTotal, recordOf, replayTotal, tierOpen, tierStars, type Army } from './sim/armies';
-import { AUTO_COUNTS, canAutoReplay } from './sim/autoReplay';
+import { AUTO_COUNTS, AUTO_TICKETS, canAutoReplay, ticketsLeft } from './sim/autoReplay';
+import { todayKey } from './modes';
 import { armyRules, chestKind, chestsOf, type StarResult } from './sim/armyStars';
 import { ARMY_STARS, MILESTONES, TIERS, tierRange } from './sim/tiers';
 import { UNITS } from './sim/units';
@@ -396,9 +397,12 @@ function card(a: Army, i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLElem
     const auto = farm && autoPick.on;
     const go = el('button', open ? 'primary asFight' : 'asFight', !open ? 'Locked' : running ? `Continue · wave ${running.stage}` : rec.best > 0 || done ? `Fight again · ${t.name}` : 'Fight!');
     // (starting another army while a run is going would lose it: a second tap says yes)
-    if (auto) go.textContent = `Auto-fight ×${autoPick.count}`;
-    const runs = auto ? autoPick.count : undefined;
-    if (!open) go.disabled = true;
+    // (auto runs are limited to AUTO_TICKETS a day: the count asked for is cut to what is left)
+    const left = farm ? ticketsLeft(m, todayKey()) : 0;
+    const count = Math.min(autoPick.count, Math.max(...AUTO_COUNTS.filter((n) => n <= left), 0));
+    if (auto) go.textContent = count ? `Auto-fight ×${count}` : 'No auto runs left';
+    const runs = auto ? count : undefined;
+    if (!open || (auto && !count)) go.disabled = true;
     else if (running) go.addEventListener('click', () => hooks.onContinue());
     else if (hooks.running) twoTap(go, `Leave ${hooks.running.label}?`, () => hooks.onFight(a.id, tier, runs));
     else go.addEventListener('click', () => hooks.onFight(a.id, tier, runs));
@@ -415,14 +419,15 @@ function card(a: Army, i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLElem
       if (auto) {
         const counts = el('div', 'asCounts', 'Runs');
         for (const n of AUTO_COUNTS) {
-          const c = el('button', n === autoPick.count ? 'on' : '', String(n));
+          const c = el('button', n === count ? 'on' : '', String(n));
+          c.disabled = n > left;
           c.addEventListener('click', () => {
             autoPick.count = n;
             draw();
           });
           counts.append(c);
         }
-        info.append(counts);
+        info.append(counts, el('p', 'asHint', `Auto runs left today: ${left}/${AUTO_TICKETS} · more at midnight`));
       }
       info.append(row);
     } else info.append(go);

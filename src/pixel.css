@@ -499,6 +499,7 @@ body .sbSlot { min-height: 44px; }
 .asCounts { display: flex; gap: 4px; justify-content: center; align-items: center; font-size: 12px; color: var(--dim); }
 .asCounts button { min-height: 28px; min-width: 40px; padding: 0 8px; font-size: 13px; }
 .asCounts button.on { background: linear-gradient(#c9762e, #8e4618); border-color: var(--gold-hi); }
+.asCounts button:disabled { opacity: 0.4; }
 body.auto #buttons { display: none; }
 
 /* ===== No flashing (the owner's ask, after a sweep of every screen): nothing on the menus blinks hard on and off.
