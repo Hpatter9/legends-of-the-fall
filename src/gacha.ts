@@ -5,6 +5,7 @@ import { ALL_HEROES, UNITS } from './sim/units';
 import { MAX_RANK, MYTHIC_PITY, PITY, pullCost, RANK_MULT, RANK_SHARDS, rankOf, RARITY_NAMES, RATES, recruit, rarityOf, saveMeta, type Meta, type Pull } from './sim/meta';
 import { portrait } from './render/sheets';
 import { rarityFlash } from './render/uiFx';
+import { settings } from './settings';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -102,11 +103,11 @@ export class Gacha {
     this.reveal(got);
   }
 
-  /** The pulls as face-down cards that flip over one after another; a Legendary waits a beat and flashes, a Mythic trembles first, then flips slowly under crimson beams and a flash over the screen. */
+  /** The pulls as face-down cards that flip over one after another, the best last; an Epic or better glows and trembles in its colour first as a tease, a Legendary waits a beat and flashes, a Mythic trembles longer, then flips slowly under crimson beams and a flash over the screen. */
   private reveal(got: Pull[]): void {
     const box = $('reveal');
     box.replaceChildren();
-    let at = 350;
+    const cards: HTMLElement[] = [];
     got.forEach((p) => {
       const def = UNITS[p.kind];
       const card = document.createElement('div');
@@ -130,20 +131,28 @@ export class Gacha {
         beams.className = 'beams';
         card.prepend(beams);
       }
+      // (the tease: a pre-flip glow in the rarity colour, and for a Legendary or better a shake, until the card turns)
+      if (p.rarity >= 3) card.classList.add('tease');
+      if (p.rarity >= 4 && settings().shake) card.classList.add('shake');
       const flip = () => {
-        card.classList.remove('shake');
+        card.classList.remove('shake', 'tease');
         card.classList.add('up');
         rarityFlash(p.rarity);
       };
       card.addEventListener('click', flip);
       box.append(card);
-      const mythic = p.rarity === 5;
-      // (the Mythic's card shakes for a moment before it turns)
-      if (mythic) setTimeout(() => card.classList.add('shake'), at);
-      at += mythic ? 900 : 0;
-      setTimeout(flip, at);
-      at += p.rarity === 4 ? 600 : mythic ? 1500 : 260;
+      cards.push(card);
     });
+    // (they turn in order of rarity, the best last; a tap on a card turns it at once)
+    const order = got.map((_, i) => i).sort((x, y) => got[x].rarity - got[y].rarity || x - y);
+    let at = 350;
+    for (const i of order) {
+      const p = got[i];
+      const mythic = p.rarity === 5;
+      at += mythic ? 900 : 0;
+      setTimeout(() => cards[i].click(), at);
+      at += p.rarity === 4 ? 600 : mythic ? 1500 : 260;
+    }
     setTimeout(() => {
       this.busy = false;
       this.refresh();

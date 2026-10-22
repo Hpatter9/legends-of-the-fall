@@ -2,13 +2,14 @@
 // pays out rising off the result screen. Plain DOM and the Web Animations API, so they cost nothing while idle.
 
 import { colLeft } from '../viewport';
+import { settings } from '../settings';
 
 /** The colour of each tier's light (index 0 unused). */
 export const RARITY_LIGHT = ['', '#c8c8c8', '#4a9cff', '#b06aff', '#f0b44a', '#ff3a4a'];
 
 /** A flash over the whole page in a tier's colour: a Legendary pull or summon is brief, a Mythic fills the screen with crimson and gold. */
 export function rarityFlash(rarity: number): void {
-  if (rarity < 4) return;
+  if (rarity < 4 || !settings().shake || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const mythic = rarity === 5;
   const veil = document.createElement('div');
   Object.assign(veil.style, {
