@@ -14,6 +14,7 @@ import { FOE_BANDS } from './foes';
 import { killXp } from './levels';
 import { afterBlow, CHARGE_MAX, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, rollCrit, sureFooted, tickStatus, tryCast, type Dot, type Hot, type Trap, type Zone } from './abilities';
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellState } from './spells';
+import type { SetHooks } from './relicSets';
 import { kindsOf, traitEffects, type TraitEffects } from './traits';
 import { fxHurt, fxKill, fxRevive, fxStart, hidden } from './equipFx';
 import { mergeEffects } from './relics';
@@ -68,6 +69,8 @@ export interface Unit {
   raised?: number;
   /** Slowed (Frost Nova) until then. */
   slowUntil?: number;
+  /** A frost set's first-blow chill has been dealt to it. */
+  chilled?: boolean;
   /** Attack raised (Rally) until then. */
   rallyUntil?: number;
   /** Charmed (Kitsune) until then: fights its own side. */
@@ -182,7 +185,7 @@ export interface Battle {
   /** The team bonus of the placed heroes' traits, fixed when the fight starts. */
   traits?: TraitEffects;
   /** The run's relics, beyond hp and attack (in the heroes' boost): a team bonus, how long the foes wait, a revive. */
-  relics?: { team: TraitEffects; first?: number; revive?: boolean };
+  relics?: { team: TraitEffects; first?: number; revive?: boolean; set?: SetHooks };
   /** Whether the relic's revive has been spent this fight. */
   revived?: boolean;
   /** The floor's twist (`twists.ts`), when it has one. */
@@ -221,7 +224,7 @@ export interface Stage {
   /** How much faster every hero walks (the castle's Stable); steps only, not swings. */
   move?: number;
   /** The relics' hooks (`relics.ts`), read when the fight starts. */
-  relics?: { team: TraitEffects; first?: number; revive?: boolean };
+  relics?: { team: TraitEffects; first?: number; revive?: boolean; set?: SetHooks };
   /** The land the fight is on (`areaFor` in run.ts); the highlands when unset. */
   area?: Area;
   /** The floor's twist (the tower's, `twists.ts`); none when unset. */

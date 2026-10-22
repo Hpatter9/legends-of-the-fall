@@ -69,7 +69,7 @@ for (const f of readdirSync('src/art/ui').filter((f) => f.endsWith('.png') && !f
 // (the music: played as files, so the service worker keeps them for offline too)
 const AUDIO = ['town.ogg', 'battle.ogg', 'boss.ogg'];
 for (const f of AUDIO) copyFileSync(`src/audio/${f}`, `${out}/${f}`);
-writeFileSync(`${out}/index.html`, readFileSync('src/index.html', 'utf8').replace('/*__PIXEL_CSS__*/', () => readFileSync('src/pixel.css', 'utf8') + readFileSync('src/equip.css', 'utf8') + readFileSync('src/rogue.css', 'utf8') + readFileSync('src/twists.css', 'utf8') + readFileSync('src/talents.css', 'utf8')).replace('__VERSION__', version));
+writeFileSync(`${out}/index.html`, readFileSync('src/index.html', 'utf8').replace('/*__PIXEL_CSS__*/', () => readFileSync('src/pixel.css', 'utf8') + readFileSync('src/equip.css', 'utf8') + readFileSync('src/rogue.css', 'utf8') + readFileSync('src/twists.css', 'utf8') + readFileSync('src/eliteSets.css', 'utf8') + readFileSync('src/talents.css', 'utf8')).replace('__VERSION__', version));
 writeFileSync(
   `${out}/manifest.webmanifest`,
   JSON.stringify(

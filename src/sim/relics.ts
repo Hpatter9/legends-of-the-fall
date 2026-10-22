@@ -5,6 +5,7 @@
 //
 // Pure rules: no Pixi, no DOM, no randomness.
 
+import { setBonus, SET_RELICS, type SetHooks } from './relicSets';
 import type { TraitEffects } from './traits';
 
 export interface Relic {
@@ -25,6 +26,8 @@ export interface RelicEffects extends TraitEffects {
   revive?: boolean;
   /** Extra gold for each win. */
   gold?: number;
+  /** What the owned sets' bonuses ask of the fight (`relicSets.ts`); absent when no set is switched on. */
+  set?: SetHooks;
 }
 
 export const RELICS: Record<string, Relic> = {
@@ -46,10 +49,13 @@ export const RELICS: Record<string, Relic> = {
   stormRing: { id: 'stormRing', name: 'Storm Ring', text: 'LEGENDARY: heroes act and walk 14% faster, +10% crit', effects: { speed: 1.14, crit: 0.1 }, great: true },
   voidLens: { id: 'voidLens', name: 'Void Lens', text: "LEGENDARY: skills charge 40% faster, and the king's mana fills 40% faster", effects: { charge: 1.4, mana: 1.4 }, great: true },
 };
-/** The ordinary relics (what shops, chests and drops draw from). */
+/** The ordinary relics (what events and old runs draw from), before the sets' own. */
 export const RELIC_IDS = Object.keys(RELICS).filter((id) => !RELICS[id].great);
 /** The legendary relics. */
 export const GREAT_RELIC_IDS = Object.keys(RELICS).filter((id) => RELICS[id].great);
+// the set relics (`relicSets.ts`) are found in the tower: its shops, chests, bosses and elites
+Object.assign(RELICS, SET_RELICS);
+export const ALL_RELIC_IDS = Object.keys(RELICS).filter((id) => !RELICS[id].great);
 
 /** The sum of a set of relics: multipliers multiply, shares and times add, `revive` is any. Unknown ids are skipped. */
 export function relicEffects(ids: readonly string[] = []): RelicEffects {
@@ -61,6 +67,11 @@ export function relicEffects(ids: readonly string[] = []): RelicEffects {
     for (const k of ['guard', 'dodge', 'crit', 'reach', 'first', 'gold'] as const) if (fx[k]) out[k] = (out[k] ?? 0) + fx[k]!;
     if (fx.revive) out.revive = true;
   }
+  // (the sets: two of one give a small bonus, three a strong one)
+  const { fx, hooks } = setBonus([...new Set(ids)]);
+  for (const k of ['atk', 'hp', 'mana', 'charge', 'speed'] as const) if (fx[k]) out[k] = (out[k] ?? 1) * fx[k]!;
+  for (const k of ['guard', 'dodge', 'crit'] as const) if (fx[k]) out[k] = (out[k] ?? 0) + fx[k]!;
+  if (Object.keys(hooks).length) out.set = hooks;
   return out;
 }
 

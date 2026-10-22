@@ -7,7 +7,7 @@ import { chestKind } from './sim/armyStars';
 import { gainXp, xpOf, levelOf } from './sim/levels';
 import { saveMeta, type Meta } from './sim/meta';
 import { hpShare } from './sim/health';
-import { RELICS } from './sim/relics';
+import { ELITE_BY_ID, eliteAt } from './sim/elites';
 import {
   buy, chestLine, choices, clearNode, enterNode, finishMystery, floorOf, inBattle, NODE_NAMES, openTreasure, REST_HEAL, rest, takeXp, train, trainXp, type MapNode, type NodeKind, type ShopItem, type TowerSummary,
 } from './sim/tower';
@@ -17,6 +17,7 @@ import { gearIcon, iconImg, relicIcon } from './render/items';
 import { portrait } from './render/sheets';
 import { play } from './render/sound';
 import { chestPicture } from './chestStash';
+import { eliteInfo, relicButton, relicChoice, relicPopup } from './towerElites';
 import { ICONS, icon } from './menuArt';
 import swords from './art/rogue/swords.png';
 import skull from './art/rogue/skull.png';
@@ -53,7 +54,7 @@ export interface TowerHooks {
 /** Each kind of node: its icon, and what it is, in a line. */
 export const NODE_INFO: Record<NodeKind, { icon: string; text: string }> = {
   fight: { icon: swords, text: 'A band of foes. Win to go on; gold for the win.' },
-  elite: { icon: skull, text: 'A tougher band with a mini-boss. Drops a relic or gear.' },
+  elite: { icon: skull, text: 'A named mini-boss with an escort. Pays a choice of three relics.' },
   campfire: { icon: fire, text: 'Rest to heal the party, or train a hero for XP.' },
   shop: { icon: coin, text: 'Spend gold on relics, gear, healing, or a new hero.' },
   treasure: { icon: chestIcon, text: 'A chest: gold, and a relic or gear.' },
@@ -107,6 +108,7 @@ export class TowerView {
     this.draw(true);
     const cur = run.tower?.cur;
     if (cur && !cur.fight) this.resumeNode();
+    else if (run.tower?.offer) this.offerCard();
   }
 
   close(): void {
@@ -153,11 +155,7 @@ export class TowerView {
     head.append(top, this.partyBars());
     const relics = el('div', 'rtRelics');
     for (const id of run.relics ?? []) {
-      const b = el('button', 'relic');
-      b.title = `${RELICS[id].name}: ${RELICS[id].text}`;
-      b.append(iconImg(relicIcon(id), RELICS[id].name));
-      b.addEventListener('click', () => this.say(`${RELICS[id].name}: ${RELICS[id].text}`));
-      relics.append(b);
+      relics.append(relicButton(run, id, () => relicPopup(run, id, this.root)));
     }
     if (!run.relics?.length) relics.append(el('span', 'hint', 'No relics yet. Elites, bosses, chests and shops have them.'));
     head.append(relics);
@@ -299,7 +297,9 @@ export class TowerView {
     b.addEventListener('click', () => {
       if (this.moving) return;
       this.picked = open.has(n.id) ? n.id : -1;
-      this.say(`Floor ${floorOf(t.act, n.row)} · ${NODE_NAMES[n.kind]}: ${NODE_INFO[n.kind].text}${twistLine(n.twist)}`);
+      const elite = n.kind === 'elite' ? eliteAt(this.run.seed, t.act, t.map, n.id) : undefined;
+      if (elite) this.sayNode(eliteInfo(elite, floorOf(t.act, n.row)));
+      else this.say(`Floor ${floorOf(t.act, n.row)} · ${NODE_NAMES[n.kind]}: ${NODE_INFO[n.kind].text}${twistLine(n.twist)}`);
       this.markPicked();
     });
     return b;
@@ -425,6 +425,11 @@ export class TowerView {
     if (s) s.textContent = text;
   }
 
+  /** The same line, with an element in it (an elite's portrait and name). */
+  private sayNode(node: HTMLElement): void {
+    this.root.querySelector('.rtSay')?.replaceChildren(node);
+  }
+
   /** The picked node is lit and the Climb button wakes, without redrawing the map. */
   private markPicked(): void {
     const nodes = this.root.querySelectorAll<HTMLElement>('.rtNode');
@@ -499,6 +504,20 @@ export class TowerView {
     this.root.append(wrap);
     this.card = wrap;
     return card;
+  }
+
+  /** The relics an elite paid: choose one (the offer is kept in the run, so leaving and coming back finds it). */
+  private offerCard(): void {
+    const run = this.run;
+    const card = this.cardShell('Choose a relic', 'elite');
+    const lastElite = run.tower!.lastElite;
+    relicChoice(run, card, lastElite ? ELITE_BY_ID[lastElite]?.name : undefined, () => {
+      saveRun(run);
+      this.card?.remove();
+      this.card = null;
+      this.draw(true);
+    });
+    saveRun(run);
   }
 
   /** Close the card and the node: the run climbs a floor and the map is drawn again. */

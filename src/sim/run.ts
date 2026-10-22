@@ -287,7 +287,7 @@ export function startStage(run: Run): Battle {
   const base = node ? node.stage : army ? waveBoost(army, run.stage, tierOfRun(run)) : stageBoost(run.stage);
   const castle = heroBoost(run.castle);
   const foes = run.buff?.foes ?? 1;
-  const { atk, hp, mana, first, revive, gold: _gold, ...team } = rl;
+  const { atk, hp, mana, first, revive, gold: _gold, set, ...team } = rl;
   return startBattle(mixSeed(run.seed, 0x57a6e, run.stage), node ? node.band : army ? army.waves[run.stage - 1].foes : bandFor(run.stage), {
     ...base,
     area: run.area ?? base.area ?? areaFor(run.stage),
@@ -295,7 +295,7 @@ export function startStage(run: Run): Battle {
     heroes: { hp: castle.hp! * (hp ?? 1) * (run.buff?.hp ?? 1), atk: castle.atk! * (atk ?? 1) * (run.buff?.atk ?? 1) },
     mana: manaRate(run.castle) * (mana ?? 1),
     move: moveRate(run.castle),
-    relics: Object.keys(team).length || first || revive ? { team, first, revive } : undefined,
+    relics: Object.keys(team).length || first || revive || set ? { team, first, revive, set } : undefined,
   });
 }
 

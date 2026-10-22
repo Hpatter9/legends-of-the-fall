@@ -7,6 +7,7 @@
 
 import { sightClear, standable, tileAt, type At } from './board';
 import { addUnit, atkOf, blowMult, canStrike, defenceOf, defOf, hurt, strikeDef, tileOf, unitAt, wayTo, type Battle, type BattleEvent, type Unit } from './battle';
+import { eliteKits } from './eliteFoes';
 import { Rng } from './rng';
 import { fxBlow, fxStruck, fxTick, hidden } from './equipFx';
 
@@ -1056,6 +1057,9 @@ KITS.forgeTitan = {
   passive: { name: 'Adamant Plate', text: 'Blows from the front lose a third, it cannot be knocked back and it mends 1% of its health a second', block: 0.33, steady: true, regen: 0.01 },
 };
 
+// The named elites of the tower (`elites.ts`) borrow the foes' skills and heroes' skills too.
+Object.assign(KITS, eliteKits(KITS));
+
 export const kitOf = (u: Unit): Kit | undefined => KITS[u.def];
 
 /** A free hero whose charge is full lets its skill go, if there is something to use it on. */
@@ -1202,7 +1206,15 @@ export function afterBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg = 0,
     }
   }
   if (!to.alive) return;
-  const dot = crit ? p?.crit?.bleed : p?.ignite;
+  // (the relic sets: a hero's blows burn the foe, its first blow chills it, its crits make it bleed)
+  const set = by.side === 'hero' ? b.relics?.set : undefined;
+  if (set?.chill && !to.chilled) {
+    to.chilled = true;
+    to.slowUntil = Math.max(to.slowUntil ?? 0, b.t + set.chill);
+  }
+  const share = set && (crit ? set.bleed : set.burn);
+  const setDot: Dot | undefined = share ? { kind: crit ? 'bleed' : 'burn', dmg: Math.max(1, Math.round(atkOf(by) * share)), every: 500, ms: crit ? 3000 : 2000 } : undefined;
+  const dot = (crit ? p?.crit?.bleed : p?.ignite) ?? setDot;
   if (dot) to.dot = { ...dot, by: by.id, next: b.t + dot.every, until: b.t + dot.ms };
 }
 
@@ -1237,7 +1249,8 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
         mendUnit(u, u.hot.amount, out, b.units.find((x) => x.id === u.hot!.by) ?? u);
       }
     }
-    if (p?.regen && b.t % 1000 === 0) mendUnit(u, u.maxHp * p.regen, out);
+    const regen = (p?.regen ?? 0) + (u.side === 'hero' ? b.relics?.set?.regen ?? 0 : 0);
+    if (regen && b.t % 1000 === 0) mendUnit(u, u.maxHp * regen, out);
     if (p?.mend) {
       u.mendAt ??= b.t + p.mend.every;
       if (b.t >= u.mendAt) {
