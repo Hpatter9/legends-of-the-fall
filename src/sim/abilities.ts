@@ -639,7 +639,7 @@ function summonImps(b: Battle, me: Unit): boolean {
     }
   if (!spots.length) return false;
   spots.sort((x, y) => apart(me, x) - apart(me, y) || x.v - y.v || x.u - y.u);
-  for (const at of spots.slice(0, SUMMONED)) addUnit(b, 'imp', at.u, at.v, { atk: me.power ?? 1 });
+  for (const at of spots.slice(0, SUMMONED)) addUnit(b, 'imp', at.u, at.v, { atk: me.power ?? 1 }).owner = me.id;
   return true;
 }
 
@@ -660,7 +660,7 @@ function raiseDead(b: Battle, me: Unit): boolean {
   if (!spots.length) return false;
   spots.sort((x, y) => apart(me, x) - apart(me, y) || x.v - y.v || x.u - y.u);
   for (const at of spots.slice(0, RAISED)) {
-    addUnit(b, 'skeleton', at.u, at.v, { hp: b.foeBoost?.hp, atk: b.foeBoost?.atk });
+    addUnit(b, 'skeleton', at.u, at.v, { hp: b.foeBoost?.hp, atk: b.foeBoost?.atk }).owner = me.id;
     me.raised = (me.raised ?? 0) + 1;
   }
   return true;
@@ -737,6 +737,7 @@ function callTreant(b: Battle, me: Unit): boolean {
   spots.sort((x, y) => apart(x, near) - apart(y, near) || apart(me, x) - apart(me, y) || x.v - y.v || x.u - y.u);
   const to = spots[0];
   const t = addUnit(b, 'treant', to.u, to.v, { atk: me.power ?? 1, hp: me.maxHp / defOf(me).hp, grade: me.grade });
+  t.owner = me.id;
   t.facing = wayTo(t, near);
   return true;
 }
@@ -826,6 +827,7 @@ function mirrorImage(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const decoys: Unit[] = [];
   for (const at of beside ? [from, beside] : [from]) {
     const d = addUnit(b, 'decoy', at.u, at.v);
+    d.owner = me.id;
     d.hp = d.maxHp = Math.max(1, Math.round(me.maxHp * DECOY_HP));
     d.facing = wayTo(d, near);
     // (a decoy stands where it appeared for a moment, so the foes find it there)

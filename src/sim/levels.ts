@@ -63,10 +63,12 @@ export const levelOfKind = (m: Meta, kind: string): number => levelOf(xpOf(m, ki
 export function fightXp(b: Battle, rate = 1): Record<string, number> {
   const out: Record<string, number> = {};
   const won = b.phase === 'won';
+  const shareOf = (u: Unit) => (u.dealt ?? 0) / XP_PER_DAMAGE + (u.healed ?? 0) / XP_PER_HEALING + (u.slain ?? 0);
   for (const u of b.units) {
-    if (u.side !== 'hero') continue;
-    const share = (u.dealt ?? 0) / XP_PER_DAMAGE + (u.healed ?? 0) / XP_PER_HEALING + (u.slain ?? 0);
-    const xp = Math.round((XP_TAKE_PART + (won ? XP_WIN : 0) + share) * rate);
+    if (u.side !== 'hero' || u.owner !== undefined) continue;
+    // (what the fighters its skills called up did counts as its own)
+    const called = b.units.filter((x) => x.owner === u.id).reduce((n, x) => n + shareOf(x), 0);
+    const xp = Math.round((XP_TAKE_PART + (won ? XP_WIN : 0) + shareOf(u) + called) * rate);
     out[u.def] = (out[u.def] ?? 0) + xp;
   }
   return out;

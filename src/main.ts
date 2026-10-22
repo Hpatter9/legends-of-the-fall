@@ -384,7 +384,7 @@ class Game {
       while (this.acc >= TICK_MS && b.phase === 'fight') {
         this.acc -= TICK_MS;
         const events = stepBattle(b);
-        tally(this.stats, events);
+        tally(this.stats, events, b.units);
         this.fx.show(b, events);
         // (a fighter a skill called up mid-fight has no sprite yet: make it, with its entrance)
         if (b.units.length !== this.sprites.size) this.syncSprites();
@@ -1115,7 +1115,7 @@ class Game {
     const result = $('result');
     result.hidden = (b.phase !== 'won' && b.phase !== 'lost') || this.towerView.isOpen;
     if (!result.hidden) {
-      const left = b.units.filter((x) => x.alive && x.side === 'hero').length;
+      const left = b.units.filter((x) => x.alive && x.side === 'hero' && !UNITS[x.def].summon).length;
       $('banner').textContent = run.cleared ? 'Army defeated!' : this.bossDown ? `Act ${run.tower!.act - 1} cleared!` : b.phase === 'won' ? (run.tower ? 'Floor cleared!' : 'Victory!') : 'Defeat';
       $('banner').className = b.phase;
       const share = this.pay?.replay ? ' (a replay pays a share)' : '';
