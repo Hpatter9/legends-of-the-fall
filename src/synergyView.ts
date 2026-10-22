@@ -15,19 +15,19 @@ const CSS = `
 #synRow { position: fixed; left: 8px; z-index: 2; display: flex; gap: 4px; align-items: center; height: 26px; padding: 2px 4px; max-width: calc(100% - 16px); box-sizing: border-box; overflow: hidden; background: rgba(18, 12, 16, 0.7); border: 1px solid #6b4128; border-radius: 4px; color: var(--ink, #f4e6c8); font: inherit; }
 #synRow[hidden] { display: none; }
 body:not([data-phase='fight']) #synRow, body:not([data-phase='fight']) #synBanner, body:not([data-phase='fight']) #synList { display: none; }
-#synRow .sy { flex: none; min-width: 26px; height: 20px; padding: 0 4px; box-sizing: border-box; border-radius: 3px; border: 1px solid var(--gold, #f0b44a); background: #2a1a10; color: var(--gold, #f0b44a); font-size: 11px; font-weight: bold; line-height: 18px; text-align: center; }
+#synRow .sy { flex: none; min-width: 26px; height: 20px; padding: 0 4px; box-sizing: border-box; border-radius: 3px; border: 1px solid var(--gold, #f0b44a); background: #2a1a10; color: var(--gold, #f0b44a); font-size: 12px; font-weight: normal; line-height: 18px; text-align: center; }
 #synRow .sy.class { border-style: dashed; }
 #synRow .sy.top { background: var(--gold, #f0b44a); color: #1a1008; }
-#synRow small { font-size: 10px; color: var(--dim, #b8a888); white-space: nowrap; }
-#synBanner { position: fixed; left: 12px; right: 12px; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: none; text-align: center; text-shadow: 0 2px 0 #000; font-size: 13px; font-weight: bold; color: var(--gold-hi, #ffe27a); animation: synBanner 2.6s ease-out forwards; }
+#synRow small { font-size: 12px; color: var(--dim, #b8a888); white-space: nowrap; }
+#synBanner { position: fixed; left: 12px; right: 12px; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: none; text-align: center; text-shadow: 1px 0 0 #000, -1px 0 0 #000, 0 1px 0 #000, 0 -1px 0 #000, 0 2px 0 #000; font-size: 12px; font-weight: normal; line-height: 1.6; color: var(--gold-hi, #ffe27a); animation: synBanner 2.6s ease-out forwards; }
 #synBanner[hidden] { display: none; }
-#synBanner b { font: 700 12px var(--display, inherit); letter-spacing: 1px; color: #fff; }
+#synBanner b { font: 400 12px var(--display, inherit); color: #fff; }
 #synBanner span { padding: 2px 10px; background: rgba(18, 12, 16, 0.8); border: 1px solid var(--gold, #f0b44a); }
 @keyframes synBanner { 0% { opacity: 0; transform: translateY(-8px); } 10% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; } }
-#synList { position: fixed; left: 8px; right: 8px; z-index: 4; padding: 8px 10px; box-sizing: border-box; background: rgba(18, 12, 16, 0.96); border: 2px solid var(--gold, #f0b44a); box-shadow: 0 2px 0 #000; color: var(--ink, #f4e6c8); font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
+#synList { position: fixed; left: 8px; right: 8px; z-index: 4; padding: 8px 10px; box-sizing: border-box; background: rgba(18, 12, 16, 0.96); border: 2px solid var(--gold, #f0b44a); box-shadow: 0 2px 0 #000; color: var(--ink, #f4e6c8); font-size: 12px; line-height: 1.5; display: flex; flex-direction: column; gap: 4px; }
 #synList[hidden] { display: none; }
 #synList b { color: var(--gold, #f0b44a); }
-#synList small { color: var(--dim, #b8a888); font-size: 11px; }
+#synList small { color: var(--dim, #b8a888); font-size: 12px; }
 @media (prefers-reduced-motion: reduce) { #synBanner { animation-duration: 0.01s; opacity: 1; } }
 `;
 
