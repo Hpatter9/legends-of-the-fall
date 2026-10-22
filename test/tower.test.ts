@@ -301,7 +301,7 @@ test('after a win the wounds are kept as shares, a fallen hero comes back at a q
   assert.deepEqual(run.tower!.path.length, 1);
 });
 
-test('an elite drops a relic or gear and pays more; a loss ends the run', () => {
+test('an elite offers a relic choice and pays more; a loss ends the run', () => {
   const run = strongFight('elite');
   const b = play(run);
   fight(b);
@@ -313,7 +313,7 @@ test('an elite drops a relic or gear and pays more; a loss ends the run', () => 
   finishTower(plain, pb, true);
   finishTower(run, b, true);
   assert.ok(run.found!.length >= 1);
-  assert.ok((run.relics?.length ?? 0) + (run.items?.length ?? 0) >= 1);
+  assert.equal(run.tower!.offer?.length, 3, 'an elite offers a choice of three relics (the page takes one: test/elites.test.ts)');
   assert.ok(run.gold > plain.gold, 'an elite pays more');
   const lost = strongFight();
   const lb = play(lost);

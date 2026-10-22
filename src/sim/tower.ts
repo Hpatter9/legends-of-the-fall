@@ -15,7 +15,8 @@ import { dropGear, gearText, type Gear } from './gear';
 import { FALLEN, healParty } from './health';
 import { drawEvent, TOWER_EVENT_KINDS } from './events';
 import type { Meta } from './meta';
-import { RELIC_IDS, RELICS, relicEffects } from './relics';
+import { drawOffer, eliteAt, eliteFight, OFFER_SIZE } from './elites';
+import { ALL_RELIC_IDS, RELICS, relicEffects } from './relics';
 import { mixSeed, Rng } from './rng';
 import { BOSS, FOE_START, recruit, reward, summonCost, type Run } from './run';
 import { UNITS } from './units';
@@ -30,6 +31,8 @@ export const PATHS = 4;
 export const TOWER_GROWTH = 0.17;
 /** An elite's foes are this much stronger than a plain fight's, and its leader is a mini-boss. */
 export const ELITE_MULT = 1.22;
+/** An elite pays this much more than a fight. */
+export const ELITE_GOLD = 2;
 export const ELITE_LEADER: Boost = { size: 1.3, hp: 1.7, atk: 1.2 };
 /** What the party heals after every won fight, and at a campfire's rest. */
 export const WIN_HEAL = 0.1;
@@ -55,6 +58,8 @@ export interface MapNode {
 export interface FightSpec {
   band: string[];
   stage: Stage;
+  /** The named elite this fight is against (`elites.ts`), when it is an elite's. */
+  elite?: string;
 }
 
 export interface ShopItem {
@@ -116,6 +121,10 @@ export interface TowerState {
   armies: string[];
   /** The nodes taken on this act's map, in order. */
   path: number[];
+  /** The relics an elite offers, until one is taken (`takeRelic` in `elites.ts`). */
+  offer?: string[];
+  /** The elite that paid the offer (for the card's words). */
+  lastElite?: string;
   /** The boss that fell last (for the meta's list of bosses beaten). */
   lastBoss?: string;
   /** Crowns the fights have paid so far, and act bosses felled. */
@@ -229,15 +238,18 @@ function bandFor(run: Run, floor: number, salt: number): string[] {
 }
 
 /** The fight a node brings on a floor. */
-export function fightSpec(run: Run, kind: NodeKind, floor: number): FightSpec {
+export function fightSpec(run: Run, kind: NodeKind, floor: number, nodeId?: number): FightSpec {
   const k = foeScale(floor);
   const area = AREAS[Math.floor((floor - 1) / 5) % AREAS.length];
   if (kind === 'boss') return { band: [...FOE_BANDS[BOSS_BANDS[(actOf(floor) - 1) % BOSS_BANDS.length]]], stage: { foes: { hp: k, atk: k }, boss: BOSS, area } };
+  // (a named elite waits at an elite node; a call without a node keeps the plain elite band)
+  const named = kind === 'elite' && nodeId !== undefined && run.tower ? eliteAt(run.seed, run.tower.act, run.tower.map, nodeId) : undefined;
+  if (named) return eliteFight(named, k, ELITE_MULT, area);
   if (kind === 'elite') return { band: bandFor(run, floor, 1), stage: { foes: { hp: k * ELITE_MULT, atk: k * ELITE_MULT }, boss: ELITE_LEADER, area } };
   return { band: bandFor(run, floor, 0), stage: { foes: { hp: k, atk: k }, area } };
 }
 
-const unownedRelics = (run: Run) => RELIC_IDS.filter((id) => !run.relics?.includes(id));
+const unownedRelics = (run: Run) => ALL_RELIC_IDS.filter((id) => !run.relics?.includes(id));
 const gearId = (run: Run) => (run.nextGear = (run.nextGear ?? 1) + 1) - 1;
 
 /** What a shop on a floor sells, drawn from the run's seed. */
@@ -277,7 +289,7 @@ export function enterNode(run: Run, id: number): boolean {
   const floor = run.stage;
   t.lastBoss = undefined;
   const cur: Current = { id, kind: node.kind };
-  if (node.kind === 'fight' || node.kind === 'elite' || node.kind === 'boss') cur.fight = fightSpec(run, node.kind, floor);
+  if (node.kind === 'fight' || node.kind === 'elite' || node.kind === 'boss') cur.fight = fightSpec(run, node.kind, floor, id);
   if (node.kind === 'shop') cur.shop = stockShop(run, floor);
   if (node.kind === 'treasure') cur.chest = stockChest(run, floor);
   t.cur = cur;
@@ -335,7 +347,7 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
   for (const u of b.units) if (u.side === 'hero' && u.tag !== undefined) t.hp[String(u.tag)] = u.alive ? Math.max(FALLEN * 0.4, u.hp / u.maxHp) : FALLEN;
   healParty(run, kind === 'boss' ? BOSS_HEAL : WIN_HEAL);
   const bonus = (relicEffects(run.relics).gold ?? 0) + (run.buff?.gold ?? 0);
-  run.gold += Math.round(reward(floor) * (kind === 'elite' ? 1.5 : kind === 'boss' ? 1.2 : 1)) + bonus;
+  run.gold += Math.round(reward(floor) * (kind === 'elite' ? ELITE_GOLD : kind === 'boss' ? 1.2 : 1)) + bonus;
   const prizes: Gear[] = run.buff?.gear ? [run.buff.gear] : [];
   const rng = new Rng(mixSeed(run.seed, 0xe11e, floor));
   const relics = unownedRelics(run);
@@ -344,9 +356,13 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
     run.found!.push(`the ${RELICS[id].name} (${RELICS[id].text})`);
   };
   if (kind === 'elite') {
-    // (an elite drops a relic or a piece of gear)
-    if (relics.length && rng.chance(0.5)) relicOf(rng.pick(relics));
-    else prizes.push(dropGear(rng, gearId(run), floor, 1));
+    // (an elite always pays a relic, one of three: the page offers them on the map; none left, it pays gear)
+    const offer = drawOffer(run, floor);
+    if (offer.length) {
+      t.offer = offer;
+      t.lastElite = t.cur?.fight?.elite;
+      run.found.push(`a choice of ${offer.length >= OFFER_SIZE ? 'three' : offer.length} relics, on the map`);
+    } else prizes.push(dropGear(rng, gearId(run), floor, 1));
   } else if (kind === 'boss') {
     // (a boss drops gear, and a relic if one is left)
     prizes.push(dropGear(rng, gearId(run), floor, 1));

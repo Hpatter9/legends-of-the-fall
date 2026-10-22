@@ -5,6 +5,7 @@
 //
 // Pure rules: no Pixi, no DOM, no randomness.
 
+import { setBonus, SET_RELICS, type SetHooks } from './relicSets';
 import type { TraitEffects } from './traits';
 
 export interface Relic {
@@ -23,6 +24,8 @@ export interface RelicEffects extends TraitEffects {
   revive?: boolean;
   /** Extra gold for each win. */
   gold?: number;
+  /** What the owned sets' bonuses ask of the fight (`relicSets.ts`); absent when no set is switched on. */
+  set?: SetHooks;
 }
 
 export const RELICS: Record<string, Relic> = {
@@ -39,7 +42,11 @@ export const RELICS: Record<string, Relic> = {
   scholarScroll: { id: 'scholarScroll', name: "Scholar's Scroll", text: 'skills charge 20% faster', effects: { charge: 1.2 } },
   spyglass: { id: 'spyglass', name: 'Spyglass', text: 'shooters reach further from high ground', effects: { reach: 0.3 } },
 };
+/** The twelve older relics: events and the old runs draw from these. */
 export const RELIC_IDS = Object.keys(RELICS);
+// the set relics (`relicSets.ts`) are found in the tower: its shops, chests, bosses and elites
+Object.assign(RELICS, SET_RELICS);
+export const ALL_RELIC_IDS = Object.keys(RELICS);
 
 /** The sum of a set of relics: multipliers multiply, shares and times add, `revive` is any. Unknown ids are skipped. */
 export function relicEffects(ids: readonly string[] = []): RelicEffects {
@@ -51,6 +58,11 @@ export function relicEffects(ids: readonly string[] = []): RelicEffects {
     for (const k of ['guard', 'dodge', 'crit', 'reach', 'first', 'gold'] as const) if (fx[k]) out[k] = (out[k] ?? 0) + fx[k]!;
     if (fx.revive) out.revive = true;
   }
+  // (the sets: two of one give a small bonus, three a strong one)
+  const { fx, hooks } = setBonus([...new Set(ids)]);
+  for (const k of ['atk', 'hp', 'mana', 'charge', 'speed'] as const) if (fx[k]) out[k] = (out[k] ?? 1) * fx[k]!;
+  for (const k of ['guard', 'dodge', 'crit'] as const) if (fx[k]) out[k] = (out[k] ?? 0) + fx[k]!;
+  if (Object.keys(hooks).length) out.set = hooks;
   return out;
 }
 

@@ -2,6 +2,7 @@
 // (Manhattan). A unit with `shot` fires from afar (its range grows on high ground); the rest strike in melee, and can
 // only reach a foe no more than their `jump` above or below them.
 
+import { ELITE_FOES } from './eliteFoes';
 import { FOES } from './foes';
 
 export type Side = 'hero' | 'foe';
@@ -52,6 +53,7 @@ export const SPLASH_SHARE = 0.5;
 
 export const UNITS: Record<string, UnitDef> = {
   ...FOES,
+  ...ELITE_FOES,
   knight: { id: 'knight', name: 'Knight', side: 'hero', sheet: 'knight_1', scale: 0.74, hp: 380, atk: 17, def: 10, range: 1, moveMs: 760, atkMs: 1100, jump: 2, rarity: 1, role: 'Holds the line', forms: ['knight_1', 'knight_2', 'knight_3'] },
   samurai: { id: 'samurai', name: 'Samurai', side: 'hero', sheet: 'samurai', scale: 0.72, hp: 225, atk: 31, def: 6, range: 1, moveMs: 600, atkMs: 1000, jump: 2, rarity: 1, role: 'Heavy blade', forms: ['samurai', 'samurai', 'samurai_commander'] },
   kunoichi: { id: 'kunoichi', name: 'Kunoichi', side: 'hero', sheet: 'kunoichi', scale: 0.74, hp: 178, atk: 17, def: 4, range: 1, moveMs: 420, atkMs: 550, jump: 3, rarity: 1, role: 'Quick, climbs well' },

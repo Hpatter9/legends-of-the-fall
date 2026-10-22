@@ -12,6 +12,16 @@ import hawk_eye from '../art/items/hawk_eye.png';
 import swift_boots from '../art/items/swift_boots.png';
 import scholar_scroll from '../art/items/scholar_scroll.png';
 import spyglass from '../art/items/spyglass.png';
+import ember_ruby from '../art/items/ember_ruby.png';
+import dragon_scale from '../art/items/dragon_scale.png';
+import frost_sapphire from '../art/items/frost_sapphire.png';
+import winter_cloak from '../art/items/winter_cloak.png';
+import holy_chalice from '../art/items/holy_chalice.png';
+import saint_medal from '../art/items/saint_medal.png';
+import shadow_cloak from '../art/items/shadow_cloak.png';
+import viper_fang from '../art/items/viper_fang.png';
+import wolf_fang from '../art/items/wolf_fang.png';
+import beast_harness from '../art/items/beast_harness.png';
 import weapon1 from '../art/items/weapon1.png';
 import weapon2 from '../art/items/weapon2.png';
 import weapon3 from '../art/items/weapon3.png';
@@ -35,6 +45,16 @@ const RELIC_ICONS: Record<string, string> = {
   swiftBoots: swift_boots,
   scholarScroll: scholar_scroll,
   spyglass: spyglass,
+  emberRuby: ember_ruby,
+  dragonScale: dragon_scale,
+  frostSapphire: frost_sapphire,
+  winterCloak: winter_cloak,
+  holyChalice: holy_chalice,
+  saintMedal: saint_medal,
+  shadowCloak: shadow_cloak,
+  viperFang: viper_fang,
+  wolfFang: wolf_fang,
+  beastHarness: beast_harness,
 };
 const GEAR_ICONS: Record<string, readonly string[]> = {
   weapon: [weapon1, weapon2, weapon3],

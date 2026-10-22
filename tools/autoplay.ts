@@ -14,6 +14,7 @@ import { armyRun, boostOf, equip, finish, isBossRun, noteFight, SQUAD, startStag
 import { armyRules } from '../src/sim/armyStars';
 import { ratingOf } from '../src/sim/stars';
 import { UNITS } from '../src/sim/units';
+import { takeRelic } from '../src/sim/elites';
 import { buy, choices, clearNode, enterNode, finishMystery, finishTower, openTreasure, rest, train, type MapNode, type NodeKind } from '../src/sim/tower';
 import { towerRun } from '../src/sim/modes';
 import { squadHealth } from '../src/sim/health';
@@ -151,6 +152,8 @@ export function playTower(meta: Meta, seed: number, party: readonly string[] = m
       const ok = b.phase === 'won';
       gainXp(meta, fightXp(b, xpRate(castle)));
       finishTower(run, b, ok, ratingOf(b, cur.kind === 'boss').stars);
+      // (an elite offers three relics: the greedy player takes the first, a piece of a set it has begun when there is one)
+      if (run.tower!.offer) takeRelic(run, run.tower!.offer[0]);
     } else if (cur.kind === 'campfire') {
       if (squadHealth(run) < 0.75) rest(run);
       else {

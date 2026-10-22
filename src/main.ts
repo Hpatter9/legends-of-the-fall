@@ -12,6 +12,7 @@ import { drawRunStars, showUnlock } from './armiesView';
 import { settleArmyRun, type StarResult } from './sim/armyStars';
 import { tierOf } from './sim/tiers';
 import { formOf, UNITS } from './sim/units';
+import { ELITE_BY_ID } from './sim/elites';
 import { isBoss } from './sim/foes';
 import { earn, loadMeta, rankOf, rarityOf, recordStars, saveMeta, type Meta } from './sim/meta';
 import { xpRate } from './sim/castle';
@@ -250,14 +251,17 @@ class Game {
   /** A boss stage's first time: the screen dims, the boss's portrait slides in, its name on a ribbon slams down with its title, and the camera glides to it. Once per stage (a restart of the same fight does not replay it). */
   private startIntro(): void {
     const key = `${this.run.seed}:${this.run.stage}`;
-    const boss = this.b.units.find((u) => u.side === 'foe' && isBoss(u.def));
+    // (a boss, or the named elite of an elite node, gets the card)
+    const elite = this.run.tower?.cur?.fight?.elite ? ELITE_BY_ID[this.run.tower.cur.fight.elite] : undefined;
+    const boss = this.b.units.find((u) => u.side === 'foe' && (isBoss(u.def) || (elite && u.def === elite.def)));
     if (!boss || this.introduced.has(key)) return;
     this.introduced.add(key);
     this.intro = { t: 0, boss, slammed: false };
     const card = $('bossCard');
     const def = UNITS[boss.def];
-    card.querySelector('b')!.textContent = def.name.toUpperCase();
-    card.querySelector('span')!.textContent = titleOf(boss.def);
+    card.classList.toggle('elite', !!elite);
+    card.querySelector('b')!.textContent = (elite ? elite.name : def.name).toUpperCase();
+    card.querySelector('span')!.textContent = elite ? elite.epithet : titleOf(boss.def);
     // (the portrait is cropped from the sheet and scaled up by a whole number, so its pixels stay square)
     const info = sheetInfo(def.sheet);
     const side = info ? Math.min(info.figure + 6, info.h) : 64;
