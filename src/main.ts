@@ -13,6 +13,7 @@ import { formOf, UNITS } from './sim/units';
 import { isBoss } from './sim/foes';
 import { earn, loadMeta, rankOf, rarityOf, recordStars, saveMeta, type Meta } from './sim/meta';
 import { xpRate } from './sim/castle';
+import { equipStats } from './sim/equipment';
 import { fightXp, gainXp, levelGain, levelOfKind, progressOf, xpOf, type LevelUp } from './sim/levels';
 import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
 import { Gacha } from './gacha';
@@ -209,7 +210,7 @@ class Game {
       const h = heroOf(this.run, id);
       if (!h) continue;
       const at = this.placed.get(String(id)) ?? this.freeTile();
-      if (at && place(this.b, h.kind, at[0], at[1], id, boostOf(h, rankOf(this.meta, h.kind), levelOfKind(this.meta, h.kind)))) this.placed.set(String(id), at);
+      if (at && place(this.b, h.kind, at[0], at[1], id, boostOf(h, rankOf(this.meta, h.kind), levelOfKind(this.meta, h.kind), equipStats(this.meta, h.kind)))) this.placed.set(String(id), at);
       else setSquad(this.run, id, false);
     }
     this.acc = 0;
@@ -876,7 +877,7 @@ class Game {
 
   private put(id: string, tile: [number, number]): void {
     const h = heroOf(this.run, Number(id))!;
-    if (!this.canPut(id, tile) || !place(this.b, h.kind, tile[0], tile[1], h.id, boostOf(h, rankOf(this.meta, h.kind), levelOfKind(this.meta, h.kind)))) return;
+    if (!this.canPut(id, tile) || !place(this.b, h.kind, tile[0], tile[1], h.id, boostOf(h, rankOf(this.meta, h.kind), levelOfKind(this.meta, h.kind), equipStats(this.meta, h.kind)))) return;
     setSquad(this.run, h.id, true);
     this.placed.set(id, tile);
     saveRun(this.run);

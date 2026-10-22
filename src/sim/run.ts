@@ -14,6 +14,7 @@ import { starGold } from './stars';
 import { mixSeed, Rng } from './rng';
 import { drawEvent, eventAfter, type EventCard } from './events';
 import { dropGear, gearBoost, gearText, type Gear, type Slot } from './gear';
+import type { EquipStats } from './equipment';
 import { relicEffects } from './relics';
 import { HEROES } from './units';
 
@@ -163,11 +164,11 @@ export const gradeBoost = (grade: number, rank = 0, level = 1, kind?: string): B
   const lv = levelBoost(level);
   return { hp: k * lv.hp, atk: k * lv.atk, grade, ...(kind && rarityOf(kind) === 5 ? { size: MYTHIC_SIZE } : {}) };
 };
-/** A roster hero's whole boost: grade and rank, its gear, its training bumps. */
-export function boostOf(h: Owned, rank = 0, level = 1): Boost {
+/** A roster hero's whole boost: grade and rank, its gear, its training bumps, and the kind's permanent equipment (`equip`, from `equipStats(meta, kind)`; none when it wears nothing). */
+export function boostOf(h: Owned, rank = 0, level = 1, equip?: EquipStats): Boost {
   const base = gradeBoost(h.grade, rank, level, h.kind);
   const g = gearBoost(h.gear);
-  return { ...base, hp: base.hp! * g.hp! + (h.bump?.hp ?? 0), atk: base.atk! * g.atk! + (h.bump?.atk ?? 0) };
+  return { ...base, hp: base.hp! * g.hp! + (h.bump?.hp ?? 0), atk: base.atk! * g.atk! + (h.bump?.atk ?? 0), ...(equip ? { equip } : {}) };
 }
 
 /** Give a hero a piece of gear from the pack (the piece it replaces goes back). False when it isn't in the pack. */

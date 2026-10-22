@@ -6,6 +6,7 @@ import { KITS } from './sim/abilities';
 import { traitsOf, TRAITS } from './sim/traits';
 import { MAX_RANK, RANK_SHARDS, RARITY_NAMES as RARITY, rankMult, rankOf, rarityOf, tierMult, type Meta } from './sim/meta';
 import { levelBoost, progressOf, xpOf } from './sim/levels';
+import { drawEquipment } from './equipView';
 import { sprite } from './render/sheets';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -75,7 +76,8 @@ export function drawHeroSheet(box: HTMLElement, meta: Meta, kind: string, close:
         p.append(el('i', '', `${label} · ${a.name}: `), a.text);
         box.append(p);
       }
-    box.append(el('p', 'hint', 'Gear is found in a run and worn for that run only.'));
+    box.append(drawEquipment(meta, kind));
+    box.append(el('p', 'hint', 'Equipment is kept for good. Gear found in a run lasts that run only.'));
   }
   const done = el('button', 'primary', 'Close');
   done.addEventListener('click', close);

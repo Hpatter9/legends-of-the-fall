@@ -15,6 +15,7 @@ import { afterBlow, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyO
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellState } from './spells';
 import { kindsOf, traitEffects, type TraitEffects } from './traits';
 import { mergeEffects } from './relics';
+import type { EquipStats } from './equipment';
 import { SPLASH_SHARE, UNITS, type Shot, type Side, type UnitDef } from './units';
 
 export const TICK_MS = 100;
@@ -86,6 +87,8 @@ export interface Unit {
   size?: number;
   /** A hero's grade above the first (2 or 3); absent is 1. Only the look reads it. */
   grade?: number;
+  /** What the hero's permanent equipment adds (`equipment.ts`); absent when it wears none. */
+  eq?: EquipStats;
   /** What this fighter did, for its XP (`levels.ts`): damage dealt, healing done, kills made, and the XP its kills are worth. */
   dealt?: number;
   healed?: number;
@@ -173,6 +176,8 @@ export interface Battle {
 export const defOf = (u: Unit): UnitDef => UNITS[u.def];
 /** A fighter's attack: its kind's, times its own multiplier. */
 export const atkOf = (u: Unit): number => UNITS[u.def].atk * (u.power ?? 1) * rageOf(u);
+/** A fighter's defence: its kind's, plus what its equipment adds. */
+export const defenceOf = (u: Unit): number => UNITS[u.def].def + (u.eq?.def ?? 0);
 /** Per-fighter stat multipliers: hp and attack, and how much bigger it is drawn. */
 export interface Boost {
   hp?: number;
@@ -180,6 +185,8 @@ export interface Boost {
   size?: number;
   /** A hero's grade (1 to 3), for how it is drawn. */
   grade?: number;
+  /** The hero's permanent equipment (`equipment.ts`): hp and attack go into its stats, the rest are read by the fight's hooks. */
+  equip?: EquipStats;
 }
 /** Boosts for a fight's foes: all of them by `foes`, and the first one more by `boss` (a boss stage). */
 export interface Stage {
@@ -256,10 +263,12 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
 export function addUnit(b: Battle, defId: string, u: number, v: number, boost: Boost = {}, tag?: number): Unit {
   const def = UNITS[defId];
   const castle = def.side === 'hero' ? b.heroBoost : undefined;
-  const hp = Math.round(def.hp * (boost.hp ?? 1) * (castle?.hp ?? 1));
+  const eq = def.side === 'hero' ? boost.equip : undefined;
+  const hp = Math.round(def.hp * (boost.hp ?? 1) * (castle?.hp ?? 1) * (1 + (eq?.hp ?? 0)));
   const unit: Unit = { id: b.nextId++, def: defId, side: def.side, u, v, hp, maxHp: hp, facing: def.side === 'hero' ? 3 : 1, alive: true, busyUntil: 0, charge: 0 };
-  const power = (boost.atk ?? 1) * (castle?.atk ?? 1);
+  const power = (boost.atk ?? 1) * (castle?.atk ?? 1) * (1 + (eq?.atk ?? 0));
   if (power !== 1) unit.power = power;
+  if (eq) unit.eq = eq;
   if (boost.size && boost.size !== 1) unit.size = boost.size;
   if (boost.grade && boost.grade > 1) unit.grade = boost.grade;
   if (tag !== undefined) unit.tag = tag;
@@ -314,6 +323,8 @@ function applyTraits(b: Battle): void {
   if (fx.mana) b.spells.rate *= fx.mana;
   for (const x of b.units) {
     if (x.side !== 'hero') continue;
+    // (a warded piece: the hero starts behind a shield)
+    if (x.eq?.shield) x.shield = { hp: Math.round(x.maxHp * x.eq.shield), until: TIME_LIMIT_MS };
     if (fx.atk) x.power = (x.power ?? 1) * fx.atk;
     if (fx.hp) {
       x.maxHp = Math.round(x.maxHp * fx.hp);
@@ -326,7 +337,9 @@ function applyTraits(b: Battle): void {
 export function strikeDef(b: Battle, me: Unit): UnitDef {
   const def = defOf(me);
   const reach = me.side === 'hero' ? b.traits?.reach : undefined;
-  return reach && def.shot ? { ...def, heightReach: (def.heightReach ?? 0.7) + reach } : def;
+  const extra = me.eq?.range ?? 0;
+  if (!extra && !(reach && def.shot)) return def;
+  return { ...def, range: def.range + extra, ...(reach && def.shot ? { heightReach: (def.heightReach ?? 0.7) + reach } : {}) };
 }
 
 /** One tick of the fight. Returns what happened, for the renderer to show. */
@@ -470,8 +483,8 @@ function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[]): voi
   me.facing = way;
   const mult = blowMult(tileOf(b, me).h, tileOf(b, to).h, way, to.facing);
   const crit = rollCrit(b, me);
-  const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - Math.max(0, defOf(to).def - pierceOf(me))) * mult * crit * preyOf(me, to) * farOf(me, to) * finishOf(me, to) * rng.range(0.9, 1.1)));
-  const quick = speedOf(b, me) * frenzyOf(b, me);
+  const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - Math.max(0, defenceOf(to) - pierceOf(me))) * mult * crit * preyOf(me, to) * farOf(me, to) * finishOf(me, to) * rng.range(0.9, 1.1)));
+  const quick = speedOf(b, me) * frenzyOf(b, me) * (1 + (me.eq?.atkSpeed ?? 0));
   const atkMs = Math.round(def.atkMs / quick);
   const windup = Math.min(def.shot ? 500 : 400, Math.round(atkMs * 0.4));
   me.swing = { at: b.t, ms: windup + 250, to: to.id };
@@ -487,7 +500,7 @@ function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void {
   const to = tileOf(b, next);
   // (a sure-footed fighter climbs at no extra cost)
   const cost = def.flies ? 1 : 1 + (sureFooted(me) ? 0 : Math.max(0, to.h - from.h)) + (to.ground ? GROUND_COST[to.ground] : 0);
-  const ms = Math.round((def.moveMs * cost) / (speedOf(b, me) * (me.side === 'hero' ? b.heroMove ?? 1 : 1)));
+  const ms = Math.round((def.moveMs * cost) / (speedOf(b, me) * (1 + (me.eq?.moveSpeed ?? 0)) * (me.side === 'hero' ? b.heroMove ?? 1 : 1)));
   me.step = { u: me.u, v: me.v, h: from.h, at: b.t, ms };
   me.facing = wayTo(me, next);
   me.u = next.u;

@@ -9,6 +9,7 @@ import { Rng } from './rng';
 import { ALL_HEROES, HEROES, UNITS, type Rarity } from './units';
 import { MAX_STARS, starCrowns } from './stars';
 import { BOSS_IDS } from './foes';
+import { readEquipment, readEquipped, type EquipSlot, type Equipment } from './equipment';
 import { migrateArmies, readSeen, seenFor, type ArmyRecord } from './armies';
 
 export const PULL_COST = 100;
@@ -75,6 +76,12 @@ export interface Meta {
   armySeen: string[];
   /** The achievements unlocked (`achievements.ts`, by id). */
   achievements: string[];
+  /** The permanent equipment owned, worn or spare (`equipment.ts`; missing is none). */
+  equipment?: Equipment[];
+  /** The item ids each hero kind wears, by slot (an item is on one kind at most). */
+  equipped?: Record<string, Partial<Record<EquipSlot, number>>>;
+  /** The next equipment id. */
+  nextItem?: number;
 }
 
 export interface DailyEntry {
@@ -250,6 +257,10 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.armies = migrateArmies(m.armies, m.bestStage);
       m.armySeen = fresh ? seenFor(m) : readSeen(m.armySeen);
       m.achievements = Array.isArray(m.achievements) ? m.achievements.filter((a) => typeof a === 'string') : [];
+      // (saves from before equipment have none)
+      m.equipment = readEquipment(m.equipment);
+      m.equipped = readEquipped(m.equipped, m.equipment);
+      m.nextItem = Math.max((m.nextItem ?? 1) | 0, 1, ...m.equipment.map((x) => x.id + 1));
       return m;
     }
   } catch {

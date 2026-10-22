@@ -1,0 +1,28 @@
+/* ===== Equipment: the hero sheet's panel and picker (`equipView.ts`). Inlined after pixel.css by build.mjs. Icons are 16px tiles
+   drawn at whole-number scales (4x on a slot, 3x in a list), never smoothed; rarity colours come from --rc (.r1 to .r5). ===== */
+.eqPanel { display: flex; flex-direction: column; gap: 6px; padding: 6px; background: rgba(0, 0, 0, 0.3); border: 2px solid #1a0d07; }
+.eqPanel h4 { margin: 0; font: 700 14px var(--display); color: var(--gold-hi); }
+.eqSlots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.eqSlot { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 2px; min-height: 0; font-size: 11px; line-height: 1.1; }
+.eqSlot small { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; color: var(--dim); }
+.eqIcon { display: inline-flex; align-items: center; justify-content: center; flex: none; box-sizing: border-box; background: #1a0d07; border: 2px solid var(--rc, #6b4128); box-shadow: inset 0 0 0 2px #000; image-rendering: pixelated; }
+.eqIcon.big { width: 64px; height: 64px; } .eqIcon.small { width: 48px; height: 48px; }
+.eqIcon img { image-rendering: pixelated; display: block; }
+.eqIcon.big img { width: 48px; height: 48px; } .eqIcon.small img { width: 32px; height: 32px; }
+.eqIcon.empty { border-style: dashed; border-color: #6b4128; } .eqIcon.empty img { opacity: 0.25; filter: grayscale(1); }
+.eqSum { margin: 0; font-size: 11px; color: var(--dim); text-align: center; }
+.eqList { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; }
+.eqRow { display: flex; flex-direction: column; gap: 4px; padding: 4px; background: rgba(0, 0, 0, 0.35); border: 2px solid var(--rc, #6b4128); }
+.eqRow.worn { border-style: double; }
+.eqTag { color: var(--gold-hi); font-size: 10px; }
+.eqCard { display: flex; flex-direction: column; gap: 2px; }
+.eqHead { display: flex; gap: 8px; align-items: center; }
+.eqHead div { display: flex; flex-direction: column; }
+.eqHead b { font-size: 13px; color: var(--rc, #fff); } .eqHead small { font-size: 10px; color: var(--dim); }
+.eqStat { display: flex; gap: 6px; font-size: 11px; align-items: baseline; }
+.eqStat span { flex: 1; color: var(--dim); } .eqStat b { color: #fff; font-weight: 400; }
+.eqStat em { font-style: normal; min-width: 42px; text-align: right; }
+.eqStat em.up, .eqUp { color: #6fdc6f; } .eqStat em.down { color: #ff6a5a; }
+.eqAffix { margin: 0; font-size: 11px; color: #ffd27a; } .eqSuit { margin: 0; font-size: 10px; color: #6fdc6f; } .eqDim { font-size: 10px; color: var(--dim); }
+.eqBtns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.eqPanel button { min-height: 36px; font-size: 13px; }

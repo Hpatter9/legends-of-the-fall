@@ -144,7 +144,7 @@ export class Tavern {
   /** Show these heroes (the meta's unlocked ones, at their ranks). Keeps the ones already there as they are. */
   update(meta: Meta): void {
     const have = ALL_HEROES.filter((k) => meta.unlocked.includes(k));
-    this.count.replaceChildren(`${have.length} of ${ALL_HEROES.length} heroes`, el('small', '', 'tap a hero · drag to look round'));
+    this.count.replaceChildren(`${have.length} of ${ALL_HEROES.length} heroes`, el('small', '', `${meta.equipment?.length ?? 0} equipment`), el('small', '', 'tap a hero · drag to look round'));
     for (const k of [...this.actors.keys()]) if (!have.includes(k)) this.actors.delete(k);
     for (const kind of have) {
       const def = UNITS[kind];

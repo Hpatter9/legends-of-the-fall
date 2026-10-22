@@ -6,7 +6,7 @@
 // Randomness comes from the battle's own side stream (`b.skillRng`), so the fight's main stream is left alone.
 
 import { sightClear, standable, tileAt, type At } from './board';
-import { addUnit, atkOf, blowMult, canStrike, defOf, hurt, strikeDef, tileOf, unitAt, wayTo, type Battle, type BattleEvent, type Unit } from './battle';
+import { addUnit, atkOf, blowMult, canStrike, defenceOf, defOf, hurt, strikeDef, tileOf, unitAt, wayTo, type Battle, type BattleEvent, type Unit } from './battle';
 import { Rng } from './rng';
 
 /** A skill fires at this much charge. */
@@ -142,7 +142,7 @@ export function roll(b: Battle): number {
 }
 
 /** The raw power of a skill, taken off by the foe's defence once it lands. */
-const net = (power: number, to: Unit) => Math.max(1, Math.round(power - defOf(to).def));
+const net = (power: number, to: Unit) => Math.max(1, Math.round(power - defenceOf(to)));
 
 /** The foe with the most foes in the 3x3 around it (the weakest wins a tie), among those `ok` allows. */
 function crowd(b: Battle, me: Unit, ok: (f: Unit) => boolean): Unit | undefined {
@@ -1087,11 +1087,14 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
   }
   if (to.guardUntil !== undefined && to.guardUntil > b.t) dmg *= GUARD_SHARE;
   if (team?.guard) dmg *= 1 - team.guard;
+  if (to.eq?.guard) dmg *= 1 - to.eq.guard;
   if (src !== 'dot') {
     if (blow && !splash) gain(by, kitOf(by)?.skill.dealt ?? 0);
     gain(to, kit?.skill.taken ?? 0);
   }
   const left = Math.max(1, Math.round(dmg));
+  // (thorned armour: a melee blow hurts the one who swung it, as a Druid's thorns do)
+  if (blow && !splash && to.eq?.thorns && apart(by, to) === 1 && by.alive) hurt(b, to, by, Math.max(1, Math.round(left * to.eq.thorns)), false, false, out, 'skill');
   // (thorns: a melee blow hurts the one who swung it)
   if (blow && !splash && kit?.passive.thorns && apart(by, to) === 1 && by.alive) hurt(b, to, by, Math.max(1, Math.round(left * kit.passive.thorns)), false, false, out, 'skill');
   return left;
@@ -1100,7 +1103,7 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
 /** A blow's own odds at swing time: a crit, with its extra damage. */
 export function rollCrit(b: Battle, me: Unit): number {
   const c = kitOf(me)?.passive.crit;
-  const chance = (c?.chance ?? 0) + (me.side === 'hero' ? b.traits?.crit ?? 0 : 0);
+  const chance = (c?.chance ?? 0) + (me.side === 'hero' ? b.traits?.crit ?? 0 : 0) + (me.eq?.crit ?? 0);
   return chance && roll(b) < chance ? c?.mult ?? 1.5 : 1;
 }
 
@@ -1128,21 +1131,24 @@ export const pierceOf = (by: Unit): number => kitOf(by)?.passive.pierce ?? 0;
 export function afterBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg = 0, out: BattleEvent[] = []): void {
   const p = kitOf(by)?.passive;
   if (p?.leech && by.alive) mendUnit(by, dmg * p.leech, out);
+  if (by.eq?.lifesteal && by.alive) mendUnit(by, dmg * by.eq.lifesteal, out);
   if (p?.through && dmg > 0) {
     const way = wayTo(by, to);
     const behind = foesOf(b, by).find((f) => f.u === to.u + DIR[way][0] && f.v === to.v + DIR[way][1]);
-    if (behind) hurt(b, by, behind, net(dmg * p.through + defOf(behind).def, behind), false, true, out, 'skill');
+    if (behind) hurt(b, by, behind, net(dmg * p.through + defenceOf(behind), behind), false, true, out, 'skill');
   }
   if (p?.arc && dmg > 0 && roll(b) < p.arc) {
     const second = foesOf(b, by).filter((f) => f !== to && apart(f, to) <= 2).sort((x, y) => apart(x, to) - apart(y, to) || x.id - y.id)[0];
     if (second) {
       out.push({ kind: 'arc', from: to.id, to: second.id });
-      hurt(b, by, second, net(dmg * ARC_SHARE + defOf(second).def, second), false, true, out, 'skill');
+      hurt(b, by, second, net(dmg * ARC_SHARE + defenceOf(second), second), false, true, out, 'skill');
     }
   }
   if (!to.alive) return;
   const dot = crit ? p?.crit?.bleed : p?.ignite;
   if (dot) to.dot = { ...dot, by: by.id, next: b.t + dot.every, until: b.t + dot.ms };
+  // (a burning piece sets the foe alight, unless a skill's own burn or bleed is already on it)
+  else if (by.eq?.burn && !to.dot) to.dot = { kind: 'burn', dmg: Math.max(1, Math.round(atkOf(by) * by.eq.burn)), every: 1000, ms: 3000, by: by.id, next: b.t + 1000, until: b.t + 3000 };
 }
 
 /** Land a volley or a meteor: everything of the caster's foes in the 3x3 is struck. */
