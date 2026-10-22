@@ -135,3 +135,4 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   great oak, Settlers signpost (the Armies road).
 - The heroes who stroll the yard use their own sheets (see above), shrunk by a whole number when the page loads.
 - Nothing was generated for this look.
+- The Lich King's new walk and hurt rows, and the treant's evolved forms (`cls_treant_2.png`, `cls_treant_3.png`), are generated the same way as the other generated sheets (`/generate-with-style-v2` with the existing treant and Craftpix Minotaur and Samurai Commander frames as style references, then `/animate-with-text-v3`; native pixels, hard alpha, last death frame by `tools/pixellab/lie.py`). See `docs/notes/hero-art.md`.

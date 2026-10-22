@@ -59,3 +59,25 @@ exactly 90 degrees by `lie.py` (which now also takes `lich_king`). There is no h
 Cost: 122 generations by the balance readings (1720.75 before the base, 1598.75 after the last clip): 22 for the base, 50 for
 the five first clips and 50 for three re-rolled ones (walk, cast and dead, with stronger prompts). The balance dropped
 further afterwards, but that was another worker's use of the same account.
+
+
+## Lich King walk and hurt, treant forms (lich-treant)
+
+- **Lich King:** the robe hides his legs, so the old walk was a slow glide. Two walk takes were made from his idle frame (a floating drift,
+  and slow steps under the robe hem); the steps take (seed 3) showed more sway and the hem moving, so it is the walk row now (5 frames).
+  A new **hurt** row (4 frames, a flinch back with the robe thrown out) comes from a third clip; a harder-recoil take changed his colours
+  and was dropped. `tools/pixellab/patch_lich.py` swaps the rows into `lich_king.png` by moving the pixels so the figure stands where the
+  old idle figure does (no resampling, hard alpha); the lying death frame is untouched.
+- **Treant forms:** `cls_treant` stays form 1 (the sapling-like treant). **Form 2** `cls_treant_2` is a bigger moss-bark tree-folk with flowers
+  and a staff-like branch; **form 3** `cls_treant_3` is an ancient treant with glowing green runes, autumn leaves and blossoms and a crown of
+  branches. Both are 128 px bases (4 candidates each, from the form 1 figure, Craftpix Minotaur and Samurai Commander as style references;
+  picked by eye), then idle, walk, attack and dead clips (4 frames each). Form 3's first attack had white flashes, so it is a second take
+  (seed 2, a few green rune sparks stay); form 2's walk is a second take. Sheets by `tools/pixellab/treant_sheet.py` (cut.py's rules), then
+  `lie.py` for the lying last death frame. Rows and base steps: `rows.py`, `treant.py`.
+- **Wiring:** `treant` now has `forms` like the class heroes, and Call Treant gives the treant the Druid's grade, so a grade-2 or grade-3 Druid
+  calls the matching form (`unitView` already draws a grade's sheet, glow and filter). `scale` is the def's, so forms 2 and 3 stand about 62 px
+  tall against form 1's 48: bigger on purpose.
+- Tests: `test/class-heroes.test.ts` (the treant takes the Druid's grade and each form has its rows; the Lich King has walk, hurt and death rows).
+- Samples: `docs/samples/lich-treant.png` (new rows at 1:1 and 3x), `lich-treant-fight-lich.png` and `lich-treant-fight-treant.png` (393x852,
+  from `tools/lich-treant/shots.mjs`).
+- Cost: generations 706.75 before, 489.75 after (217 used: 2 bases of 4 candidates, 15 clips including the dropped takes).

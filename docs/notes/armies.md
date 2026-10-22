@@ -149,7 +149,7 @@ returns to.
 
 ## Not done / notes
 
-- A hurt row for the Lich King (he plays his idle frame when hit).
+- (Done in `hero-art.md`: the Lich King now has a hurt row and a stepping walk.)
 - Army skills are shared with the heroes' skills, so their effects use the same visuals; only Raise Dead and Soul Nova are new.
 - The Wildwood and the later armies are tuned for a strong party (see the recruits table); the starting five alone struggle
   at the Infernal Host by design.
