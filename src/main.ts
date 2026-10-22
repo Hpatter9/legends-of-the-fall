@@ -945,6 +945,13 @@ class Game {
     Object.entries(gains).forEach(([kind, xp], i) => {
       const row = document.createElement('div');
       row.className = 'xprow';
+      // (the hero's face, with its level on a badge at the corner)
+      const face = document.createElement('div');
+      face.className = 'xpFace';
+      const lv = document.createElement('small');
+      lv.className = 'xpLv';
+      lv.textContent = `Lv ${progressOf(from[kind]).level}`;
+      face.append(portrait(UNITS[kind].sheet, 40), lv);
       const name = document.createElement('b');
       name.textContent = UNITS[kind].name;
       const gain = document.createElement('em');
@@ -953,7 +960,7 @@ class Game {
       const fill = document.createElement('span');
       bar.append(fill);
       const note = document.createElement('p');
-      row.append(name, gain, bar, note);
+      row.append(face, name, gain, bar, note);
       list.append(row);
       const after = progressOf(from[kind] + xp);
       const up = ups.find((u) => u.kind === kind);
@@ -963,7 +970,30 @@ class Game {
       if (!up) return;
       setTimeout(() => {
         const gained = levelGain(up.from, up.to);
-        note.textContent = `${UNITS[kind].name} reached level ${up.to}! +${gained.hp}% HP · +${gained.atk}% Atk`;
+        // (the level-up: a stamp, the badge ticking over, the gains popping in one after the other, a sweep of light and a
+        //  burst of sparks; all of it once, none of it looping)
+        const stamp = document.createElement('span');
+        stamp.className = 'xpStamp';
+        stamp.textContent = 'Level up!';
+        lv.textContent = `Lv ${up.to}`;
+        const chips = [`+${gained.hp}% HP`, `+${gained.atk}% Atk`].map((t, n) => {
+          const c = document.createElement('span');
+          c.textContent = t;
+          c.style.animationDelay = `${0.25 + n * 0.15}s`;
+          return c;
+        });
+        note.replaceChildren(...chips);
+        const sparks = document.createElement('span');
+        sparks.className = 'xpSparks';
+        for (let s = 0; s < 10; s++) {
+          const dot = document.createElement('i');
+          const ang = (s / 10) * Math.PI * 2;
+          dot.style.setProperty('--dx', `${Math.round(Math.cos(ang) * (26 + (s % 3) * 8))}px`);
+          dot.style.setProperty('--dy', `${Math.round(Math.sin(ang) * (20 + (s % 2) * 8)) - 10}px`);
+          sparks.append(dot);
+        }
+        face.append(sparks);
+        name.append(stamp);
         row.classList.add('up');
         fill.style.transition = 'none';
         fill.style.width = `${share(after)}%`;
