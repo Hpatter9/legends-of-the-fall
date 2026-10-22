@@ -162,6 +162,8 @@ export interface Battle {
   heroMove?: number;
   /** The boost the foes of this fight were made with (the fighters a foe calls up take it too). */
   foeBoost?: Boost;
+  /** The foes' speed multiplier (a harder army tier). */
+  foeSpeed?: number;
   /** The team bonus of the placed heroes' traits, fixed when the fight starts. */
   traits?: TraitEffects;
   /** The run's relics, beyond hp and attack (in the heroes' boost): a team bonus, how long the foes wait, a revive. */
@@ -180,6 +182,8 @@ export interface Boost {
   size?: number;
   /** A hero's grade (1 to 3), for how it is drawn. */
   grade?: number;
+  /** How much faster the foes act and walk (a harder army tier); only the foes' boost reads it. */
+  speed?: number;
 }
 /** Boosts for a fight's foes: all of them by `foes`, and the first one more by `boss` (a boss stage). */
 export interface Stage {
@@ -235,6 +239,7 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   if (stage.heroes) b.heroBoost = stage.heroes;
   if (stage.move && stage.move !== 1) b.heroMove = stage.move;
   if (stage.foes) b.foeBoost = stage.foes;
+  if (stage.foes?.speed && stage.foes.speed !== 1) b.foeSpeed = stage.foes.speed;
   if (stage.relics) b.relics = stage.relics;
   // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed
   const rng = new Rng(mixSeed(seed, 0xf0e5));
