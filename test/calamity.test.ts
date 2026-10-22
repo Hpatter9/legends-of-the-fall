@@ -4,10 +4,10 @@ import { fight, place, playOut, type Battle } from '../src/sim/battle';
 import { CALAMITY_SQUAD, dropSlot, adoptOldTower, heroOf, loadRun, loadSlot, saveRun, saveSlot, setSquad, squadLimit, startStage, summon, type Run } from '../src/sim/run';
 import { newMeta, type Meta } from '../src/sim/meta';
 import { calamityRun, towerRun } from '../src/sim/modes';
-import { CAL_MAPS, CAL_ROWS, CAL_SCALE, fitBand, squadFoeMult } from '../src/sim/calamity';
+import { CAL_BOSSES, CAL_MAPS, CAL_ROWS, CAL_SCALE, calBossBoost, fitBand, squadFoeMult } from '../src/sim/calamity';
 import { climbXpView, gainRunXp, heroLevel, hireHero, hireXp, localBoost } from '../src/sim/climb';
 import { levelBoost, xpFor } from '../src/sim/levels';
-import { abandonTower, buy, calamityMap, choices, clearNode, enterNode, finishTower, foeScale, floorOf, hasRoom, hire, HIRE_OFFERS, hireCost, mapFor, MAP_CROWNS, rowsIn, settleTower, train, type MapNode } from '../src/sim/tower';
+import { abandonTower, buy, calamityMap, choices, clearNode, enterNode, finishTower, fightSpec, foeScale, floorOf, hasRoom, hire, HIRE_OFFERS, hireCost, mapFor, MAP_CROWNS, rowsIn, settleTower, train, type MapNode } from '../src/sim/tower';
 import { hpShare } from '../src/sim/health';
 import { frontSpots, playCalamity, playTower } from '../tools/autoplay';
 import { HEROES } from '../src/sim/units';
@@ -174,7 +174,7 @@ test('a calamity starts with one hero at level 1, the squad limit is ten, and th
   assert.equal(squadLimit(run), CALAMITY_SQUAD);
   assert.equal(CALAMITY_SQUAD, 10);
   assert.equal(run.tower!.maps, CAL_MAPS);
-  assert.ok(CAL_MAPS >= 3 && CAL_MAPS <= 5);
+  assert.ok(CAL_MAPS === 6);
   for (const rows of CAL_ROWS) assert.ok(rows >= 6 && rows <= 8, 'six to eight floors a map');
   assert.deepEqual(run.pool, m.unlocked, 'heroes are hired from the collection');
   assert.equal(calamityRun(7, m, 'nobody').roster[0].kind, m.party[0], 'a kind not owned falls back to the party');
@@ -531,4 +531,45 @@ test('the greedy calamity: the first map can be cleared, and a full clear is har
   assert.ok(map1 >= N * 0.4, `most first maps fall (${map1} of ${N})`);
   assert.ok(full <= N * 0.4, `a full clear is not the common case (${full} of ${N})`);
   assert.ok(map1 > full);
+});
+
+test('six maps, each ending in its own boss, bigger than the last; the later maps add a twist to the boss fight', () => {
+  assert.equal(CAL_MAPS, 6);
+  assert.equal(new Set(CAL_BOSSES).size, 6, 'six different bosses');
+  for (let k = 2; k <= 6; k++) assert.ok(calBossBoost(k).size > calBossBoost(k - 1).size && calBossBoost(k).hp > calBossBoost(k - 1).hp);
+  const run = calamityRun(5, newMeta(1), 'knight');
+  const t = run.tower!;
+  const specs: string[] = [];
+  for (let act = 1; act <= CAL_MAPS; act++) {
+    t.act = act;
+    t.map = mapFor(run, act);
+    const boss = t.map.find((n) => n.kind === 'boss')!;
+    if (act >= 2) assert.ok(boss.twist, `map ${act}'s boss fight has a twist`);
+    const spec = fightSpec(run, 'boss', 10 + act, boss.twist, boss.id);
+    specs.push(spec.band[0]);
+    assert.equal(spec.band[0], CAL_BOSSES[act - 1]);
+  }
+  assert.equal(new Set(specs).size, 6);
+});
+
+test('every calamity map has a mini-boss on a floor with other ways round it, a shop and a chest', () => {
+  for (let seed = 1; seed <= 120; seed++) {
+    for (let act = 1; act <= CAL_MAPS; act++) {
+      const map = calamityMap(seed, act, CAL_ROWS[act - 1]);
+      const skippable = map.filter((n) => n.kind === 'elite' && map.filter((m) => m.row === n.row).length >= 2);
+      assert.ok(skippable.length >= 1, `seed ${seed} map ${act}: a mini-boss that can be skipped`);
+      assert.ok(map.some((n) => n.kind === 'shop') && map.some((n) => n.kind === 'treasure'));
+    }
+  }
+});
+
+test('a mini-boss pays a relic to choose, gear, and double gold', () => {
+  const run = calamityRun(23, newMeta(1), 'knight');
+  reachNode(run, 'elite');
+  const gold = run.gold;
+  const floor = run.stage;
+  finishTower(run, playNode(run), true);
+  assert.ok(run.tower!.offer && run.tower!.offer.length >= 1, 'a relic to choose');
+  assert.ok((run.items?.length ?? 0) >= 1, 'gear');
+  assert.ok(run.gold - gold >= 2 * (20 + 6 * floor) * 0.9, 'double gold');
 });

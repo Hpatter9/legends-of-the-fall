@@ -75,7 +75,7 @@ export function pickHero(meta: Meta, onPick: (kind: string) => void, onCancel: (
   });
   card.append(
     el('h2', '', 'The Calamity'),
-    el('p', 'cvLead', `Pick one hero, at level 1. Climb ${CAL_MAPS} short maps, hiring the heroes you meet (up to ten, none merge); every map ends in a boss. Your party's levels and gear stay out of it.`),
+    el('p', 'cvLead', `Pick one hero, at level 1. Climb ${CAL_MAPS} short maps, hiring the heroes you meet (up to ten, none merge); every map ends in a boss, and optional mini-bosses guard the best rewards. Your party's levels and gear stay out of it.`),
     grid,
     note,
   );

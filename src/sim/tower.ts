@@ -21,7 +21,7 @@ import { mixSeed, Rng } from './rng';
 import { addTwists, TWISTS } from './twists';
 import { BOSS, FOE_START, reward, squadLimit, summonCost, type Run } from './run';
 import { UNITS } from './units';
-import { fitBand, squadFoeMult } from './calamity';
+import { CAL_BOSSES, calBossBoost, fitBand, squadFoeMult } from './calamity';
 import { fightXpByHero, gainRunXp, hireHero } from './climb';
 import { xpRate } from './castle';
 import { levelOf as levelOfXp, type LevelUp } from './levels';
@@ -292,8 +292,21 @@ export function calamityMap(seed: number, act: number, rows: number): MapNode[] 
   const between = nodes.filter((n) => n.row > 2 && n.row < last - 1 && n.kind !== 'recruit');
   for (const want of ['shop', 'treasure'] as const) {
     if (nodes.some((n) => n.kind === want)) continue;
-    const spots = between.filter((n) => n.kind === 'fight' || n.kind === 'mystery');
+    const spare = between.filter((n) => n.kind === 'fight' || n.kind === 'mystery');
+    const any = between.filter((n) => n.kind !== 'shop' && n.kind !== 'treasure');
+    const spots = spare.length > 1 || (spare.length && want === 'shop') ? spare : any.length > 1 || (any.length && want === 'shop') ? any : nodes.filter((n) => n.row === 1);
     if (spots.length) rng.pick(spots).kind = want;
+  }
+  // (the mini-boss: an elite on a floor with other ways round it, so it can be skipped; its win pays a relic to choose, gear and double gold)
+  const optional = between.filter((n) => (n.kind === 'fight' || n.kind === 'mystery') && nodes.filter((m) => m.row === n.row).length >= 2);
+  const elites = nodes.filter((n) => n.kind === 'elite' && nodes.filter((m) => m.row === n.row).length >= 2);
+  if (!elites.length) {
+    // (no plain node to make one of: a spare shop or chest on a floor with company will do)
+    const spare = (n: MapNode) => (n.kind !== 'shop' && n.kind !== 'treasure') || nodes.filter((m) => m.kind === n.kind).length > 1;
+    const company = (n: MapNode) => nodes.filter((m) => m.row === n.row).length >= 2;
+    const late = between.filter((n) => company(n) && spare(n));
+    const pool = optional.length ? optional : late.length ? late : nodes.filter((n) => n.row === 1 && company(n));
+    if (pool.length) rng.pick(pool).kind = 'elite';
   }
   addTwists(nodes, seed, act);
   return nodes;
@@ -351,6 +364,11 @@ function plainSpec(run: Run, kind: NodeKind, floor: number, nodeId?: number): Fi
 function baseSpec(run: Run, kind: NodeKind, floor: number, nodeId?: number): FightSpec {
   const k = foeScale(floor, run.tower?.scale, run.tower?.act);
   const area = AREAS[Math.floor((floor - 1) / 5) % AREAS.length];
+  if (kind === 'boss' && run.tower?.maps) {
+    // (a calamity's bosses: one of its own per map, each bigger than the last; the map's twist adds a mechanic from the second on)
+    const map = run.tower.act;
+    return { band: [...FOE_BANDS[CAL_BOSSES[Math.min(map, CAL_BOSSES.length) - 1]]], stage: { foes: { hp: k, atk: k }, boss: calBossBoost(map), area } };
+  }
   if (kind === 'boss') return { band: [...FOE_BANDS[BOSS_BANDS[((run.tower?.act ?? actOf(floor)) - 1) % BOSS_BANDS.length]]], stage: { foes: { hp: k, atk: k }, boss: BOSS, area } };
   // (a named elite waits at an elite node; a call without a node keeps the plain elite band)
   const named = kind === 'elite' && nodeId !== undefined && run.tower ? eliteAt(run.seed, run.tower.act, run.tower.map, nodeId) : undefined;
@@ -694,7 +712,7 @@ export function settleTower(m: Meta, run: Run): TowerSummary | null {
 }
 
 /** Crowns a calamity pays for each map cleared, on top of its fights'. */
-export const MAP_CROWNS: readonly number[] = [60, 120, 200, 300, 420];
+export const MAP_CROWNS: readonly number[] = [60, 120, 200, 300, 420, 600];
 /** What a calamity cleared whole pays besides: a gold chest. */
 export const CLEAR_CHESTS = { bronze: 0, silver: 0, gold: 1 };
 

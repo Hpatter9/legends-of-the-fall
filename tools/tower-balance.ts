@@ -38,7 +38,7 @@ export function towerTable(): void {
 export function calamityTable(): void {
   const attempts = arg('--attempts', 30);
   console.log(`\nCalamity: ${attempts} greedy runs (a random starting hero of the five, no castle); maps cleared, of ${CAL_MAPS}`);
-  console.log('median  mean  map1  map2  map3  map4  cleared  heroes(mean)  floors(median)');
+  console.log(`median  mean  ${Array.from({ length: CAL_MAPS }, (_, i) => `map${i + 1}`.padStart(5)).join(' ')}  cleared  heroes(mean)  floors(median)`);
   const maps: number[] = [];
   const floors: number[] = [];
   let cleared = 0;

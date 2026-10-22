@@ -246,7 +246,7 @@ export class TowerView {
 
   /** The big gate at the top of the act: the boss that waits there, by name and face. */
   private gate(act: number): HTMLElement {
-    const boss = UNITS[bossOfAct(act)];
+    const boss = UNITS[bossOfAct(act, this.calamity)];
     const lay = this.lay;
     const g = el('div', 'rtGate');
     g.style.left = `${Math.round((lay.W - 224) / 2)}px`;
