@@ -7,6 +7,8 @@ import { traitsOf, TRAITS } from './sim/traits';
 import { MAX_RANK, RANK_SHARDS, RARITY_NAMES as RARITY, rankMult, rankOf, rarityOf, tierMult, type Meta } from './sim/meta';
 import { levelBoost, progressOf, xpOf } from './sim/levels';
 import { drawEquipment } from './equipView';
+import { drawTalents } from './talentView';
+import { TREES } from './sim/talents';
 import { sprite } from './render/sheets';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -76,6 +78,7 @@ export function drawHeroSheet(box: HTMLElement, meta: Meta, kind: string, close:
         p.append(el('i', '', `${label} · ${a.name}: `), a.text);
         box.append(p);
       }
+    if (TREES[kind]) box.append(drawTalents(meta, kind));
     box.append(drawEquipment(meta, kind));
     box.append(el('p', 'hint', 'Equipment is kept for good. Gear found in a run lasts that run only.'));
   }

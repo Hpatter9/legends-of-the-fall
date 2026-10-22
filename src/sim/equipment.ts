@@ -71,10 +71,12 @@ export interface EquipStats {
   regen: number;
   /** The share of burning and bleeding damage shrugged off. */
   resist: number;
-  /** The signature abilities of the worn Epic or better pieces. */
+  /** The signature abilities of the worn Epic or better pieces (and a talent's, `talents.ts`). */
   abilities: ActiveAbility[];
+  /** The skill and passive modifiers the hero's talents add (`talents.ts` lists the keys; the skills in `abilities.ts` read them). */
+  tal?: Record<string, number>;
 }
-export type StatKey = Exclude<keyof EquipStats, 'abilities'>;
+export type StatKey = Exclude<keyof EquipStats, 'abilities' | 'tal'>;
 export const STAT_KEYS: readonly StatKey[] = ['atk', 'hp', 'def', 'atkSpeed', 'moveSpeed', 'crit', 'range', 'dodge', 'charge', 'regen', 'resist'];
 export const emptyStats = (): EquipStats => ({ hp: 0, atk: 0, def: 0, atkSpeed: 0, moveSpeed: 0, crit: 0, range: 0, dodge: 0, charge: 0, regen: 0, resist: 0, abilities: [] });
 
@@ -169,7 +171,7 @@ export function itemStats(it: NewEquipment | Equipment, kind?: string): EquipSta
   return out;
 }
 
-function addStats(a: EquipStats, b: EquipStats): EquipStats {
+export function addStats(a: EquipStats, b: EquipStats): EquipStats {
   for (const k of STAT_KEYS) a[k] += b[k];
   a.abilities.push(...b.abilities);
   return a;
@@ -191,8 +193,13 @@ export function equipStats(m: Meta, kind: string): EquipStats | undefined {
     any = true;
     addStats(total, itemStats(it, kind));
   }
+  return any ? capStats(total) : undefined;
+}
+
+/** Keep the shares that could stack without end under their caps (the worn pieces and the talents together). */
+export function capStats(total: EquipStats): EquipStats {
   for (const [k, cap] of Object.entries(CAPS) as [MainKey, number][]) total[k] = Math.min(cap, total[k]);
-  return any ? total : undefined;
+  return total;
 }
 
 /** The items owned and not worn by anyone, optionally of one slot. */

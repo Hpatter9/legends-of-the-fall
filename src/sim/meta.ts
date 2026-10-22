@@ -12,6 +12,7 @@ import { BOSS_IDS } from './foes';
 import { readEquipment, readEquipped, type EquipSlot, type Equipment } from './equipment';
 import { migrateArmies, readSeen, seenFor, type ArmyRecord } from './armies';
 import { readStash } from './armyStars';
+import { readTalents, type KindTalents } from './talents';
 
 export const PULL_COST = 100;
 export const PULL10_COST = 900;
@@ -83,6 +84,8 @@ export interface Meta {
   equipped?: Record<string, Partial<Record<EquipSlot, number>>>;
   /** The next equipment id. */
   nextItem?: number;
+  /** The talents each hero kind has taken and the points it bought with shards (`talents.ts`; missing is none). */
+  talents?: Record<string, KindTalents>;
   /** Chests earned from the armies' star milestones and not yet opened, oldest first (`armyStars.ts`). */
   stash: StashChest[];
 }
@@ -277,6 +280,8 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.equipment = readEquipment(m.equipment);
       m.equipped = readEquipped(m.equipped, m.equipment);
       m.nextItem = Math.max((m.nextItem ?? 1) | 0, 1, ...m.equipment.map((x) => x.id + 1));
+      // (saves from before the talents have none; the rest of the save is read first, as the points depend on levels and shards)
+      m.talents = readTalents(m.talents, m);
       // (saves from before the army chests have an empty stash; a chest given but not opened by an earlier format goes into it)
       m.stash = readStash(m.stash, rawArmies, m.seed);
       return m;
