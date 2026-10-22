@@ -31,7 +31,7 @@ import { powerOf, powerText } from './sim/power';
 import { fightXp, gainXp, levelGain, levelOfKind, progressOf, xpOf, type LevelUp } from './sim/levels';
 import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
 import { autoDeploy, autoRound, gearCount, pickSquad } from './sim/autoplay';
-import { afterFight, maxSpeed, startAuto, stopAuto, type AutoReplay } from './sim/autoReplay';
+import { afterFight, maxSpeed, spendTicket, startAuto, stopAuto, type AutoReplay } from './sim/autoReplay';
 import { Gacha } from './gacha';
 import { Events } from './events';
 import { TowerView } from './towerView';
@@ -934,8 +934,9 @@ class Game {
 
   /** Starts an auto-replay of the army just begun (the run is on wave 1 already). Only cleared armies and tiers take it. */
   private beginAuto(army: string, tier: number, count: number): void {
-    const a = startAuto(this.meta, army, tier, count);
-    if (!a) return;
+    const a = startAuto(this.meta, army, tier, count, todayKey());
+    if (!a || !spendTicket(this.meta, todayKey())) return;
+    saveMeta(this.meta);
     this.auto = a;
     this.autoNext = null;
     play('autoStart');
@@ -967,6 +968,9 @@ class Game {
     if (next === 'wave') {
       this.autoPrep();
     } else if (next === 'run') {
+      // (each run spends a day's auto ticket; a new day mid-replay refills them)
+      if (!spendTicket(this.meta, todayKey())) return void this.endAuto('tickets');
+      saveMeta(this.meta);
       this.startRun(armyRun(clockSeed(), a.army, this.meta.party, this.meta.castle, a.tier));
       this.autoPrep();
     } else this.endAuto(a.ended ?? 'done');
@@ -986,7 +990,7 @@ class Game {
   }
 
   /** The replay is over (the count ran out, a run was lost, or Stop was tapped): the banner goes and the summary card shows the totals. */
-  private endAuto(why: 'done' | 'loss' | 'stopped'): void {
+  private endAuto(why: 'done' | 'loss' | 'stopped' | 'tickets'): void {
     const a = this.auto;
     if (!a) return;
     if (why === 'stopped') stopAuto(a);
@@ -1004,7 +1008,9 @@ class Game {
         ? `${a.totals.runs} of ${a.count} runs of the ${army.name} cleared`
         : why === 'loss'
           ? `The ${army.name} held at wave ${a.lostAt}. ${a.totals.runs} of ${a.count} runs cleared first`
-          : `You stopped it. ${a.totals.runs} of ${a.count} runs cleared`;
+          : why === 'tickets'
+            ? `No auto runs left today. ${a.totals.runs} of ${a.count} runs cleared`
+            : `You stopped it. ${a.totals.runs} of ${a.count} runs cleared`;
     const rows = card.querySelector('.asumRows')!;
     rows.replaceChildren();
     for (const [label, n] of [['Crowns', a.totals.crowns], ['XP', a.totals.xp], ['Chests', a.totals.chests], ['Gear found', a.totals.gear]] as const) {
