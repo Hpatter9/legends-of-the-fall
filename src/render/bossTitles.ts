@@ -16,6 +16,10 @@ export const BOSS_TITLES: Record<string, string> = {
   gorgonQueen: 'Queen of Stone',
   lichKing: 'The Frozen Crown',
   minotaurChampion: 'Champion of the Labyrinth',
+  nineTails: 'Lantern of the Hundred Nights',
+  oniKing: 'Lord of the Night Parade',
+  sapphireColossus: 'Heart of the Blue Vein',
+  forgeTitan: 'Master of the Eternal Forge',
 };
 
 /** A boss's title line (a plain one for any boss without its own). */

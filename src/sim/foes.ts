@@ -41,6 +41,10 @@ const MID = { side: 'foe', hp: 1500, atk: 46, def: 9, range: 1, moveMs: 750, atk
 const LICH_KING = { side: 'foe', hp: 2600, atk: 60, def: 8, range: 3, moveMs: 800, atkMs: 1500, jump: 2, shot: 'curse', role: 'Raises the dead, freezes the living' } as const;
 const CHAMPION = { side: 'foe', hp: 4200, atk: 90, def: 12, range: 1, moveMs: 800, atkMs: 1300, jump: 2, role: 'Charges, gores, shrugs off blows' } as const;
 
+// The Yokai Night Parade and the Golem Forge (`armies.ts`): fox spirits, crows and a tengu monk, and slow stone, iron and crystal golems.
+const YOKAI = { side: 'foe', hp: 220, atk: 24, def: 4, range: 1, moveMs: 480, atkMs: 800, jump: 3 } as const;
+const GOLEM = { side: 'foe', hp: 460, atk: 28, def: 9, range: 1, moveMs: 1000, atkMs: 1500, jump: 2 } as const;
+
 export const FOES: Record<string, UnitDef> = {
   wolfBlack: { ...WOLF, id: 'wolfBlack', name: 'Black Werewolf', sheet: 'werewolf_black', scale: 0.81 },
   wolfRed: { ...WOLF, id: 'wolfRed', name: 'Red Werewolf', sheet: 'werewolf_red', scale: 0.81, hp: 250, atk: 25, def: 3 },
@@ -97,13 +101,28 @@ export const FOES: Record<string, UnitDef> = {
   gorgonQueen: { ...MID, id: 'gorgonQueen', name: 'Gorgon Queen', sheet: 'gorgon_1', scale: 0.95, hp: 1300, atk: 44, def: 7, range: 4, shot: 'bone', moveMs: 700, atkMs: 1500, role: 'Her gaze turns heroes to stone' },
   lichKing: { ...LICH_KING, id: 'lichKing', name: 'Lich King', sheet: 'lich_king', scale: 0.45 },
   minotaurChampion: { ...CHAMPION, id: 'minotaurChampion', name: 'Minotaur Champion', sheet: 'minotaur_1', scale: 0.78 },
+  // the Yokai Night Parade (kitsune and tengu sheets of the heroes; the Oni King is generated)
+  yokaiFox: { ...YOKAI, id: 'yokaiFox', name: 'Fox Spirit', sheet: 'kitsune', scale: 0.59, role: 'Slips away, leaves decoys' },
+  yokaiWitch: { ...YOKAI, id: 'yokaiWitch', name: 'Fox Witch', sheet: 'kitsune', scale: 0.59, hp: 190, atk: 26, def: 3, range: 3, shot: 'curse', moveMs: 650, atkMs: 1500, role: 'Curses the toughest heroes' },
+  yokaiCrow: { ...YOKAI, id: 'yokaiCrow', name: 'Karasu Tengu', sheet: 'karasu_tengu', scale: 0.53, hp: 210, atk: 28, moveMs: 420, atkMs: 900, jump: 9, flies: true, role: 'Flies, dives on shooters' },
+  yokaiSeer: { ...YOKAI, id: 'yokaiSeer', name: 'Crow Seer', sheet: 'karasu_tengu', scale: 0.53, hp: 200, atk: 24, def: 3, moveMs: 450, atkMs: 900, jump: 9, flies: true, role: 'Possesses the strongest hero' },
+  yokaiMonk: { ...YOKAI, id: 'yokaiMonk', name: 'Yamabushi Monk', sheet: 'yamabushi_tengu', scale: 0.48, hp: 320, atk: 22, def: 9, moveMs: 760, atkMs: 1200, jump: 2, role: 'Wind that shoves heroes off ledges' },
+  nineTails: { ...MID, id: 'nineTails', name: 'Nine-Tailed Fox', sheet: 'kitsune', scale: 0.95, hp: 1500, atk: 46, def: 6, range: 3, shot: 'fire', moveMs: 600, atkMs: 1300, role: 'Foxfire, and heroes turn on their own' },
+  oniKing: { side: 'foe', id: 'oniKing', name: 'Oni King', sheet: 'oni_king', scale: 0.5, hp: 3200, atk: 80, def: 11, range: 1, moveMs: 850, atkMs: 1300, jump: 2, role: 'Smashes the line, roars heroes down' },
+  // the Golem Forge
+  stoneGolem: { ...GOLEM, id: 'stoneGolem', name: 'Stone Golem', sheet: 'golem_stone', scale: 0.55, role: 'Crushing blows' },
+  ironGolem: { ...GOLEM, id: 'ironGolem', name: 'Iron Golem', sheet: 'golem_iron', scale: 0.55, hp: 540, atk: 24, def: 12, moveMs: 1100, role: 'Plated, draws the heroes' },
+  crystalGolem: { ...GOLEM, id: 'crystalGolem', name: 'Crystal Golem', sheet: 'golem_crystal', scale: 0.55, hp: 340, atk: 26, def: 7, moveMs: 900, atkMs: 1300, role: 'Shards that hold heroes still' },
+  magmaGolem: { ...GOLEM, id: 'magmaGolem', name: 'Magma Golem', sheet: 'golem_magma', scale: 0.55, hp: 400, atk: 32, def: 6, moveMs: 950, role: 'Molten blows, bursts of magma' },
+  sapphireColossus: { ...MID, id: 'sapphireColossus', name: 'Sapphire Colossus', sheet: 'golem_sapphire', scale: 0.85, hp: 1800, atk: 50, def: 12, moveMs: 950, atkMs: 1400, role: 'Crystal armour, shard storms' },
+  forgeTitan: { side: 'foe', id: 'forgeTitan', name: 'Forge Titan', sheet: 'golem_forge', scale: 0.85, hp: 4200, atk: 85, def: 14, range: 1, moveMs: 1000, atkMs: 1500, jump: 2, role: 'Hammers the line, furnace blasts' },
   boarKing: { ...BOAR_KING, id: 'boarKing', name: 'Boar King', sheet: 'boar_king', scale: 0.54, hp: 6800, atk: 110 },
   devilLeader: { ...DEVIL_LEADER, id: 'devilLeader', name: 'Devil Leader', sheet: 'devil_leader', scale: 0.49, hp: 7600, atk: 120 },
   shamanKing: { ...SHAMAN_KING, id: 'shamanKing', name: 'Shaman King', sheet: 'shaman_king', scale: 0.5, hp: 8400, atk: 130 },
 };
 
 /** The bosses' ids: the first foe of a boss band is one of these. */
-export const BOSS_IDS: readonly string[] = ['orcWarlord', 'demonLord', 'hornedOgre', 'forestBoss1', 'forestBoss2', 'forestBoss3', 'boarKing', 'devilLeader', 'shamanKing', 'orcChieftain', 'boneCaptain', 'alphaWolf', 'gorgonQueen', 'lichKing', 'minotaurChampion'];
+export const BOSS_IDS: readonly string[] = ['orcWarlord', 'demonLord', 'hornedOgre', 'forestBoss1', 'forestBoss2', 'forestBoss3', 'boarKing', 'devilLeader', 'shamanKing', 'orcChieftain', 'boneCaptain', 'alphaWolf', 'gorgonQueen', 'lichKing', 'minotaurChampion', 'nineTails', 'oniKing', 'sapphireColossus', 'forgeTitan'];
 export const isBoss = (id: string) => BOSS_IDS.includes(id);
 
 /** The bands a fight can meet: five foes each, by their ids in `UNITS`. The boss bands are below (their first foe is the boss). */
