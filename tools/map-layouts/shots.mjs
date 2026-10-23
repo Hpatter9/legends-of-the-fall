@@ -43,7 +43,7 @@ for (const [w, h] of sizes) {
         Object.assign(r, { mode: { kind: 'run' }, stage, over: false, cleared: false, gold: 500, event: undefined });
         document.getElementById('home').hidden = true;
         g.startRun(r);
-        if (g.b.board.layout === want && document.getElementById('bossBar').hidden) {
+        if (g.b.board.layout === want && document.getElementById('bossBar').hidden && !g.b.units.some((u) => u.side === 'foe' && u.size)) {
           for (let k = 0; k < 4; k++) document.getElementById('summon').click();
           document.getElementById('auto').click();
           return stage;
@@ -53,7 +53,8 @@ for (const [w, h] of sizes) {
     }, id);
     found[id] = stage;
     if (!stage) { console.log('no board for', id); continue; }
-    await page.waitForTimeout(800);
+    // (a boss's title card plays for a few seconds when a stage begins: wait it out)
+    await page.waitForTimeout(4600);
     await shot(id);
   }
   console.log(w, h, JSON.stringify(found));
