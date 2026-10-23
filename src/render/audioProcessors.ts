@@ -3,9 +3,11 @@
 // their adaptive colour (a tension low-pass, a rumble swell, a drone for each tower act). They know nothing of the
 // sim or the DOM; `sound.ts` creates them through the engine and is the page's API. Not imported by the tests.
 
-import { AudioProcessor, FilePlayer, type SchedulableParam } from '@audiorective/core';
+import { AudioProcessor, type SchedulableParam } from '@audiorective/core';
 import { Limiter } from '@audiorective/effects';
 import type { Cue } from './soundRules';
+import { bakeTrack, type Baked } from './musicBake';
+import { STEMS, stemLevels, type Stem } from './musicScore';
 import { DUCK_GAIN, DUCK_HZ, OPEN_HZ, colourOf, cutoffOf, percActive, percLevel, rateOf, swellOf, type Track } from './audioRules';
 
 /** The longest a crossfade takes to settle (seconds). */
@@ -149,6 +151,8 @@ export class CueSynth extends AudioProcessor implements Voices {
   private out: AudioNode;
   private pitch = 1;
   private voiceGain = 1;
+  /** The shared room: tonal cues send a share of themselves here (a small convolution reverb, quiet and short). */
+  private readonly send: GainNode;
 
   constructor(
     ctx: BaseAudioContext,
@@ -160,6 +164,18 @@ export class CueSynth extends AudioProcessor implements Voices {
     const data = this.noise.getChannelData(0);
     for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
     this.out = bus('sfx');
+    // (the room: 0.8 s of decaying noise, darkened by a low-pass, made once)
+    const len = Math.floor(ctx.sampleRate * 0.8);
+    const ir = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) {
+      const d = ir.getChannelData(c);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len) ** 3;
+    }
+    const room = new ConvolverNode(ctx, { buffer: ir });
+    const tone = new BiquadFilterNode(ctx, { type: 'lowpass', frequency: 4500 });
+    const wet = new GainNode(ctx, { gain: 0.5 });
+    this.send = new GainNode(ctx, { gain: 1 });
+    this.send.connect(room).connect(tone).connect(wet).connect(bus('sfx'));
   }
 
   get output(): undefined {
@@ -197,6 +213,25 @@ export class CueSynth extends AudioProcessor implements Voices {
     o.connect(g).connect(this.out);
     o.start(t);
     o.stop(t + d + 0.05);
+    // (a longer tone gets a second voice a few cents off, for body, and a share in the room)
+    if (d >= 0.15 && f > 150) {
+      const o2 = c.createOscillator();
+      o2.type = type;
+      o2.detune.value = 7;
+      o2.frequency.setValueAtTime(f * this.pitch, t);
+      if (to) o2.frequency.exponentialRampToValueAtTime(to * this.pitch, t + d);
+      o2.connect(new GainNode(c, { gain: 0.5 })).connect(g);
+      o2.start(t);
+      o2.stop(t + d + 0.05);
+      g.connect(this.wet(0.22));
+    }
+  }
+
+  /** A level into the room for the sound being made now. */
+  private wet(level: number): AudioNode {
+    const g = new GainNode(this.context, { gain: level });
+    g.connect(this.send);
+    return g;
   }
 
   /** A held, slowly swelling voice (a choir-like pad when `type` is soft): two slightly detuned oscillators through a low-pass filter. */
@@ -210,6 +245,7 @@ export class CueSynth extends AudioProcessor implements Voices {
     g.gain.exponentialRampToValueAtTime(v * this.voiceGain, t + d * 0.65);
     g.gain.exponentialRampToValueAtTime(0.0001, t + d);
     filter.connect(g).connect(this.out);
+    g.connect(this.wet(0.35));
     for (const det of [0.996, 1.004]) {
       const o = c.createOscillator();
       o.type = type;
@@ -245,6 +281,7 @@ export class CueSynth extends AudioProcessor implements Voices {
   ring(t: number, f: number, d: number, v: number): void {
     this.note(t, f, d, v, 'sine');
     this.note(t, f * 2.76, d * 0.5, v * 0.35, 'sine');
+    this.note(t, f * 5.4, d * 0.25, v * 0.12, 'sine');
   }
 
   /** A tick of noise (a click, a crack of a bone). */
@@ -622,8 +659,6 @@ export const SOUNDS: Record<Cue, (s: Voices, t: number) => void> = {
 };
 /* -------------------------------------------------------------- the music */
 
-export const TRACK_FILES: Record<Track, string> = { town: 'town.ogg', battle: 'battle.ogg', boss: 'boss.ogg' };
-
 /** How loud a drone sits against the tracks (it is under them), and the rumble layer at its fullest. */
 const DRONE_SCALE = 0.35;
 const RUMBLE_SCALE = 0.12;
@@ -636,12 +671,20 @@ interface DroneNow {
   stop: () => void;
 }
 
-/** The music: the three looped tracks (streamed, through audiorective's FilePlayer) crossfaded into one low-pass that
- *  opens with the fight's tension and closes to the tower act's ceiling, a swell, a quiet synthesised rumble
- *  swell that fades in when the fight runs hot, and a drone under the tracks for the tower's acts. Everything leaves through
- *  `output`, to the mixer's music bus. */
+/** A track as it plays: a looping source and a level for each stem, all started at the same instant so they stay in step,
+ *  behind one fade for the whole track. */
+interface Loop {
+  fade: GainNode;
+  stems: Partial<Record<Stem, { src: AudioBufferSourceNode; gain: GainNode }>>;
+}
+
+/** The music: three baked tracks (`musicBake.ts`; played as buffers, so no media element takes the phone's audio focus)
+ *  crossfaded into one low-pass that opens with the fight's tension and closes to the tower act's ceiling, with each track's
+ *  stems (pad, bass, lead, drums) mixed by the tension, a swell, a quiet synthesised rumble that fades in when the fight
+ *  runs hot, and a drone under the tracks for the tower's acts. Everything leaves through `output`, to the mixer's music bus. */
 export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swell: SchedulableParam; perc: SchedulableParam }> {
-  private readonly players = new Map<Track, FilePlayer>();
+  private readonly baked = new Map<Track, Promise<Baked>>();
+  private readonly loops = new Map<Track, Loop>();
   private readonly out: GainNode;
   private readonly lowpass: BiquadFilterNode;
   private readonly percOut: GainNode;
@@ -650,12 +693,18 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swel
   private drone: DroneNow | null = null;
   private rumble: { stop: () => void } | null = null;
   private rumbleStopping = false;
+  /** Whether the music plays at all (the Music volume is not Off): when not, nothing is baked or sounding. */
+  private enabled = true;
   /** The track playing (or the last that was, while the page is hushed), the fight's tension and the tower act. */
   current: Track | null = null;
   tension = 0;
   act: number | null = null;
 
-  constructor(private readonly ac: AudioContext) {
+  /** `bake` makes a track's stems; the page's is the offline renderer, a test's can be a stand-in. */
+  constructor(
+    private readonly ac: BaseAudioContext,
+    private readonly bake: (track: Track) => Promise<Baked> = (t) => bakeTrack(t),
+  ) {
     const out = new GainNode(ac, { gain: 1 });
     const lowpass = new BiquadFilterNode(ac, { type: 'lowpass', frequency: OPEN_HZ, Q: 0.6 });
     const swell = new GainNode(ac, { gain: 1 });
@@ -681,38 +730,101 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swel
     return this.out;
   }
 
-  /** A track's player, made the first time it is needed: looped, silent, and run into the shared low-pass. */
-  private player(track: Track): FilePlayer {
-    let p = this.players.get(track);
+  /** A track's stems, baked the first time they are asked for (and kept: about 7 MB a track). */
+  private stems(track: Track): Promise<Baked> {
+    let p = this.baked.get(track);
     if (!p) {
-      p = new FilePlayer(this.ac, { src: TRACK_FILES[track], loop: true, volume: 0, crossOrigin: null, preload: 'auto' });
-      p.output.connect(this.lowpass);
-      this.players.set(track, p);
+      p = this.bake(track);
+      // (a bake that fails is forgotten, so the next ask tries again)
+      p.catch(() => this.baked.delete(track));
+      this.baked.set(track, p);
     }
     return p;
   }
 
-  /** Fades the old track out and the new one in, and starts the new one from the top. */
+  /** Bakes a track ahead of its being needed (the battle's, once the town is playing), when the music is on. */
+  warm(track: Track): void {
+    if (this.enabled) void this.stems(track).catch(() => {});
+  }
+
+  /** Turns the music on or off (the Music volume at Off): off lets every loop go; on starts the current track again. */
+  setEnabled(on: boolean): void {
+    if (on === this.enabled) return;
+    this.enabled = on;
+    if (!on) {
+      for (const track of [...this.loops.keys()]) this.release(track, 0.15);
+      return;
+    }
+    const track = this.current;
+    this.current = null;
+    if (track) this.setTrack(track);
+  }
+
+  /** Starts a track's stems together on a new loop, fading in from nothing (null if it is already sounding). */
+  private begin(track: Track, baked: Baked): void {
+    if (this.loops.has(track)) return;
+    const ac = this.ac;
+    const t = ac.currentTime + 0.05;
+    const fade = new GainNode(ac, { gain: 0 });
+    fade.gain.setValueAtTime(0, t);
+    fade.gain.setTargetAtTime(1, t, FADE_S / 3);
+    fade.connect(this.lowpass);
+    const loop: Loop = { fade, stems: {} };
+    const levels = stemLevels(track, this.tension);
+    const rate = rateOf(track, this.tension, this.act);
+    for (const stem of STEMS) {
+      const buffer = baked[stem];
+      if (!buffer) continue;
+      const gain = new GainNode(ac, { gain: levels[stem] });
+      const src = new AudioBufferSourceNode(ac, { buffer, loop: true, playbackRate: rate });
+      src.connect(gain).connect(fade);
+      src.start(t);
+      loop.stems[stem] = { src, gain };
+    }
+    this.loops.set(track, loop);
+  }
+
+  /** Fades a loop out over the crossfade and lets its sources go. */
+  private release(track: Track, seconds = FADE_S): void {
+    const loop = this.loops.get(track);
+    if (!loop) return;
+    this.loops.delete(track);
+    const t = this.ac.currentTime;
+    loop.fade.gain.cancelScheduledValues(t);
+    loop.fade.gain.setTargetAtTime(0, t, seconds / 3);
+    setTimeout(() => {
+      for (const { src } of Object.values(loop.stems)) {
+        try {
+          src.stop();
+        } catch {
+          /* (already stopped) */
+        }
+        src.disconnect();
+      }
+      loop.fade.disconnect();
+    }, seconds * 1000 * 1.6);
+  }
+
+  /** Fades the old track out and the new one in, and starts the new one from the top (once it is baked: the first time a
+   *  track is wanted it is a moment, and the old track plays on meanwhile). */
   setTrack(track: Track): void {
     if (track === this.current) return;
-    const t = this.ac.currentTime;
     const prev = this.current;
     this.current = track;
-    if (prev) {
-      const old = this.players.get(prev)!;
-      old.params.volume.cancelScheduledValues(t);
-      old.params.volume.setTargetAtTime(0, t, FADE_S / 3);
-      // (after the fade, paused, unless it has come back in the meantime)
-      setTimeout(() => {
-        if (this.current !== prev) old.pause();
-      }, FADE_S * 1000);
-    }
-    const next = this.player(track);
-    next.params.volume.cancelScheduledValues(t);
-    next.params.volume.setTargetAtTime(1, t, FADE_S / 3);
-    next.seek(0);
     this.applyColour(true);
-    void next.play();
+    if (!this.enabled) return;
+    void this.stems(track).then(
+      (baked) => {
+        // (the wanted track may have changed while it baked)
+        if (this.current !== track || !this.enabled) return;
+        if (prev && prev !== track) this.release(prev);
+        this.begin(track, baked);
+        this.applyColour(true);
+      },
+      () => {
+        /* (no offline rendering here: the game plays on in silence) */
+      },
+    );
   }
 
   /** The fight's tension (0 to 1). */
@@ -729,7 +841,7 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swel
     this.startDrone();
   }
 
-  /** Moves the low-pass, the swell, the pace and the percussion to where the track, tension and act put them. */
+  /** Moves the low-pass, the swell, the stem levels, the pace and the rumble to where the track, tension and act put them. */
   private applyColour(snap: boolean): void {
     const track = this.current;
     if (!track) return;
@@ -739,20 +851,24 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swel
     this.params.swell.setTargetAtTime(swellOf(track, this.tension), t, tc);
     const hot = track === 'town' ? 0 : this.tension;
     this.params.perc.setTargetAtTime(percLevel(hot) * RUMBLE_SCALE, t, 0.8);
-    this.players.get(track)!.playbackRate = rateOf(track, this.tension, this.act);
+    const loop = this.loops.get(track);
+    if (loop) {
+      const levels = stemLevels(track, this.tension);
+      const rate = rateOf(track, this.tension, this.act);
+      for (const [stem, part] of Object.entries(loop.stems)) {
+        part.gain.gain.setTargetAtTime(levels[stem as Stem], t, tc);
+        part.src.playbackRate.setTargetAtTime(rate, t, 1);
+      }
+    }
     if (percActive(hot)) this.startRumble();
     else if (this.rumble) this.stopRumbleSoon();
   }
 
-  /** The page is out of sight: the tracks pause (the context is suspended by the caller). */
-  hush(): void {
-    for (const p of this.players.values()) p.pause();
-  }
+  /** The page is out of sight. The caller suspends the context, which holds every loop where it is, so there is nothing to do. */
+  hush(): void {}
 
-  /** The page is back: the track that was playing carries on. */
-  wake(): void {
-    if (this.current) void this.players.get(this.current)?.play();
-  }
+  /** The page is back: the caller resumes the context and the loops carry on. */
+  wake(): void {}
 
   /* ------------------------------------------------------------ the drone */
 
@@ -872,7 +988,7 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swel
   destroy(): void {
     this.rumble?.stop();
     this.drone?.stop();
-    for (const p of this.players.values()) p.destroy();
+    for (const track of [...this.loops.keys()]) this.release(track, 0.01);
     super.destroy();
   }
 }

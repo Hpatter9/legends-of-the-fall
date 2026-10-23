@@ -16,6 +16,7 @@ import { onSettings, settings } from '../settings';
 import { BusMixer, CueSynth, MusicPlayer, type BusName } from './audioProcessors';
 import { AmbientBeds } from './audioBeds';
 import { DuckCounter, panOfEvent, type PlannedCue, type Scene, type Track } from './audioRules';
+import { bakeTrack } from './musicBake';
 import { Mixer, cuesFor, intensityOf, type Cue } from './soundRules';
 
 const MUSIC_LEVEL = 0.22;
@@ -74,15 +75,21 @@ function unlock(): void {
     engine.mixer.params.master.value = muted ? 0 : 1;
     applyLevels();
     if (ducks.ducked) engine.mixer.setDuck(true);
+    engine.music.setEnabled(musicLevel() > 0);
     engine.music.setAct(wantAct);
     engine.beds.setScene(wantScene);
   }
   if (engine.core.context.state !== 'running') void engine.core.start();
-  if (!engine.music.current) setMusic('town');
+  if (!engine.music.current) {
+    setMusic('town');
+    // (the fight's track is baked while the town's plays, so a fight's music starts at once)
+    setTimeout(() => engine?.music.warm('battle'), 4000);
+  }
 }
 
 /** Starts the audio on the first tap, and makes every button press a tap sound. Call once, from the page's start. */
 export function setup(): void {
+  mixWithOtherApps();
   onSettings(applyLevels);
   window.addEventListener('pointerdown', unlock, true);
   document.addEventListener('click', (e) => {
@@ -95,7 +102,20 @@ export function setup(): void {
   // (for the tests and the owner: `window.__audioDebug()` says what the engine is doing)
   const w = window as unknown as { __audioDebug?: () => unknown; __audioApi?: unknown };
   w.__audioDebug = debugState;
-  w.__audioApi = { setAct, setMusic, setTension, duck, setScene, probe };
+  w.__audioApi = { setAct, setMusic, setTension, duck, setScene, probe, bake: bakeTrack, renderCue };
+}
+
+/** Lets the game's sound mix with whatever else the phone is playing (a music app), and never take the audio focus: the
+ *  page's audio session is "ambient" where the browser has the Audio Session API (Safari). Nothing in the game is a media
+ *  element (the music is baked into buffers, `musicBake.ts`) and the page registers no media session, which are what make
+ *  a browser claim focus and stop other apps. */
+function mixWithOtherApps(): void {
+  try {
+    const session = (navigator as unknown as { audioSession?: { type: string } }).audioSession;
+    if (session) session.type = 'ambient';
+  } catch {
+    /* (not supported here: the page's sound is Web Audio only, which already mixes) */
+  }
 }
 
 /** Stop all sound while the game is out of sight: the music's element pauses and the effects' clock is suspended. */
@@ -124,6 +144,8 @@ function applyLevels(): void {
   m.setLevel('ui', SFX_LEVEL * effectsLevel());
   m.setLevel('music', MUSIC_LEVEL * musicLevel());
   m.setLevel('ambience', MUSIC_LEVEL * musicLevel());
+  // (Music at Off: no track is baked or playing at all, the effects carry on)
+  engine.music.setEnabled(musicLevel() > 0);
 }
 
 /** The mute button: shows the speaker, toggles the sound and remembers the choice. */
@@ -267,6 +289,17 @@ function debugState(): unknown {
     buses: { music: m.params.music.read(), sfx: m.params.sfx.read(), ui: m.params.ui.read(), ambience: m.params.ambience.read() },
     duckGain: m.params.duck.read(),
   };
+}
+
+/** For the owner and the tests: renders one cue offline (two and a half seconds, stereo) so it can be saved as a WAV and heard
+ *  without a battle. Nothing in the game calls it. */
+async function renderCue(name: Cue): Promise<AudioBuffer> {
+  const rate = 44100;
+  const oc = new OfflineAudioContext(2, Math.round(rate * 2.5), rate);
+  const bus = new GainNode(oc, { gain: 0.5 });
+  bus.connect(oc.destination);
+  new CueSynth(oc, () => bus).play(name, 0.05, { gain: 1, pitch: 1, bus: 'sfx' });
+  return oc.startRendering();
 }
 
 /** For the owner and the tests: the RMS level (0 to 1) now at the music and ambience buses, before the ducker, to check a bed

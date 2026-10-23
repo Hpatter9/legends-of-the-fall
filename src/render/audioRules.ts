@@ -6,6 +6,7 @@ import type { Battle, BattleEvent } from '../sim/battle';
 import { D, W } from '../sim/board';
 import { at } from './iso';
 import type { Cue } from './soundRules';
+import type { Track } from './musicScore';
 
 /* ------------------------------------------------------------------ stereo */
 
@@ -104,7 +105,7 @@ export class DuckCounter {
 
 /* ------------------------------------------------------------------ adaptive music */
 
-export type Track = 'town' | 'battle' | 'boss';
+export type { Track };
 
 /** The music's tempo goes up to this much quicker (a share) as the fight's tension climbs: unchanged from before. */
 export const TENSION_RATE = 0.08;
