@@ -1,7 +1,7 @@
 # Areas: a new land every five stages
 
-- **Which land** (`areaFor` in `src/sim/run.ts`): five stages each, in turn: Highlands, Forest, Snowfields, Desert,
-  Volcano, Dungeon, then round again. `startStage` passes it in the fight's `Stage.area`; `makeBoard(seed, area)` stores
+- **Which land** (`areaFor` in `src/sim/run.ts`): five stages each, in turn, over `CLASSIC_AREAS`: Highlands, Forest, Snowfields, Desert,
+  Volcano, Dungeon, then round again. Eleven more lands came with `docs/notes/map-lands.md`; the climb and the Calamity stay on these six. `startStage` passes it in the fight's `Stage.area`; `makeBoard(seed, area)` stores
   it on the board (`board.area`).
 - **Terrain that matters** (`src/sim/board.ts`, `Tile.ground`): laid on top of the land by its own side stream of the
   seed, so the heights and boulders are the same in every area. Patches of one to three tiles, never under a boulder,

@@ -48,6 +48,15 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   cave rocks). **Tall growth** (`tall1/2.png`): the Fields Tileset's grass tufts, recoloured; the dungeon's are two
   mushrooms of the Free Top-Down Cave Objects pack.
 
+### The eleven newer lands (`src/art/areas/<land>/`, cut by `tools/lands-prep.py`)
+
+All Craftpix, copied one sprite or layer at a time; no PixelLab. Ground tops and sides are the highlands textures recoloured per land, as above.
+
+- **Backdrops** (`bgN.png`): Meadows from Free Summer Pixel Art Backgrounds (summer 7); Autumn Wood from Free Autumn Pixel Backgrounds (background 1); Mire from the Fantasy 2D Battlegrounds pack (Battleground 3, Pale, graded); Graveyard from the same pack (Battleground 4, Pale, graded); City Ruins from Free City Ruin Backgrounds (background 4, toned); Ancient Temple from Free Ancient Temple Pixel Game Backgrounds (background 1); Crystal Caves from Free Crystal Cave Pixel Art Backgrounds (background 4); Forge from Free Steampunk Cityscape Pixel Backgrounds (background 1, recoloured to embers); Moonlit Shrine from the Abandoned Places Background Collection (background 4, graded for night) over the Free Moon Pixel Game Backgrounds (set 4, sky and moon); War Camp from the Free Post-Apocalyptic Pixel Art Game Backgrounds (set 1, Bright); Oasis from the Desert Oasis pack (background 1).
+- **Boulders** (`boulderN.png`, the props that block a tile): Meadows, Autumn Wood and Oasis from the Free Rocks pack and the Rocky Area Objects pack (oval rocks, middle lane rocks); Mire from the Undead Tileset (broken tree) and the Rocky Area Objects (orange mushrooms); Graveyard from the Undead Tileset (gravestones, a pile of skulls); City Ruins from the Undead Tileset (ruins, rock); Ancient Temple from the Rocky Area Objects (stone pyramid recoloured to sandstone, a rock statue); Crystal Caves from the Crystal Caves platformer tileset (the crystal pillar) and the Undead Tileset (crystals, hue-shifted); Forge from the Village Tileset for top-down defence (an anvil and a barrel); Moonlit Shrine from the Rocky Area Objects (the fox statue) and the Village Tileset (a lamp post); War Camp from the Medieval Field Work platformer tileset (the two palisade fences) and the Rocky Area Objects (a yurt).
+- **Tall growth** (`tallN.png`): the Fields Tileset's tufts recoloured (Meadows, Autumn Wood, Forge, Moonlit Shrine, War Camp, Oasis); the Undead Tileset's plants and thorn plants (Mire, Graveyard, City Ruins); the Rocky Area Objects' fern trees (Ancient Temple); two of the Top-Down Cave Objects mushrooms, hue-shifted (Crystal Caves).
+- **Weather** (`src/render/weatherView.ts`) is drawn with plain rectangles and one soft glow; no files were copied for it.
+
 ## More foes and bosses (copied in for the boss stages and new bands)
 
 - The orc warband (grunt, archer, brute, warlord), demons, demon lord, imp and ogres (`src/art/units/hk_*.png`) are
