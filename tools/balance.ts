@@ -5,6 +5,7 @@
 //   npm run balance                    the default number of fights (4000 for the heroes; a quarter of that per cell)
 //   npm run balance -- --games 800     fewer fights, quicker and noisier
 //   npm run balance -- --hero-stage 1  play the hero table at another stage (default 5)
+//   npm run balance -- --heroes-only --hero-level 100 --hero-stage 60   the same with every hero at a level (pick a stage where the average team wins about half)
 //   npm run balance -- --saves 200     fresh saves in the whole-run table (default 400)
 //   npm run balance -- --heroes-only  only the hero value table (table 1); --json file.json also writes each hero's win rate and lift; --seed-offset n plays other fights
 //   npm run balance -- --runs-only     only the whole-run table (quicker when tuning the levels)
@@ -12,6 +13,7 @@
 //   npm run balance -- --only orcs,undead --levels 1,5,10 --party starters   a few armies, levels or one party
 //   npm run balance -- --attempts 40   attempts a cell plays in the armies' first table (default 30)
 //   npm run balance -- --no-tables --tiers --levels 8,14,20   table 5e: each army on each difficulty tier (recruits, maxed castle, gear)
+//   npm run balance -- --no-tables --deep --levels 30,40,60,100 --attempts 10 [--talents] [--tiers-at 2,3]   table 5f: mean tries to clear each army on the top tiers at deep hero levels
 //   npm run balance -- --no-tables --tower --levels 3,8,14 --attempts 30   the endless tower's map climbed by a greedy player (`tools/tower-balance.ts`)
 //   npm run balance -- --no-tables --climb --saves 60   the realistic climb (recruits, castle, gear), table 5c; `--maxed` plays 5d, a full castle
 //
@@ -37,6 +39,7 @@ import { mixSeed, Rng } from '../src/sim/rng';
 import { ALL_HEROES, HEROES, UNITS } from '../src/sim/units';
 import { deploySpots, fieldBoost, pickTeam, play } from './heroSweep';
 import { CLASS_NAMES, CLASS_OF, type StarterClass } from '../src/sim/starter';
+import { heroStats, learn, tierNodes } from '../src/sim/talents';
 import { writeFileSync } from 'node:fs';
 
 const arg = (name: string, fallback: number): number => {
@@ -50,6 +53,8 @@ const CELL_GAMES = Math.max(200, Math.round(GAMES / 4));
 const SAVES = arg('--saves', 400);
 /** The stage the hero table is played at. */
 const HERO_STAGE = arg('--hero-stage', 5);
+/** The level every hero fights at in the hero table (`--hero-level 60`; a stage that suits it is picked with `--hero-stage`). */
+const HERO_LEVEL = arg('--hero-level', 1);
 const RUNS_ONLY = process.argv.includes('--runs-only');
 const ARMIES_ONLY = process.argv.includes('--armies-only');
 const HEROES_ONLY = process.argv.includes('--heroes-only');
@@ -78,7 +83,7 @@ function heroValue(): void {
   for (let g = 0; g < GAMES; g++) {
     const seed = g + 1 + SEED_OFFSET;
     const team = pickTeam(new Rng(mixSeed(seed, 0x7ea4)));
-    const r = play(seed, BANDS[g % BANDS.length], fieldBoost(HERO_STAGE), team);
+    const r = play(seed, BANDS[g % BANDS.length], fieldBoost(HERO_STAGE), team, 1, HERO_LEVEL);
     for (const h of ALL_HEROES) {
       const t = tally.get(h)!;
       if (team.includes(h)) {
@@ -96,7 +101,7 @@ function heroValue(): void {
   const withRates = ALL_HEROES.map((h) => pct(tally.get(h)!.inW, tally.get(h)!.inN));
   const average = withRates.reduce((a, b) => a + b, 0) / withRates.length;
 
-  console.log(`\n1. HERO VALUE  (${GAMES} random five-hero teams, six bands in turn, stage ${HERO_STAGE} foes)\n`);
+  console.log(`\n1. HERO VALUE  (${GAMES} random five-hero teams, six bands in turn, stage ${HERO_STAGE} foes, every hero at level ${HERO_LEVEL})\n`);
   console.log(
     [pad('hero', 16), rpad('with %', 8), rpad('without %', 11), rpad('value', 8), rpad('vs avg', 8), rpad('dealt', 8), rpad('taken', 8)].join(''),
   );
@@ -269,6 +274,15 @@ if (process.argv.includes('--set'))
     let o: any = armyById(id)!;
     for (const k of keys.slice(0, -1)) o = o[k];
     o[keys[keys.length - 1]] = Number(val);
+  }
+// (`--tier 3:hp=4,atk=3` overrides a difficulty tier's foe multipliers for this run only, to try a harder tier: 0 Normal to 3 Legendary)
+if (process.argv.includes('--tier'))
+  for (const spec of flag('--tier')!.split(';')) {
+    const [i, kvs] = spec.split(':');
+    for (const kv of kvs.split(',')) {
+      const [k, v] = kv.split('=');
+      (TIERS[Number(i)] as unknown as Record<string, number>)[k] = Number(v);
+    }
   }
 const ONLY = process.argv.includes('--only') ? flag('--only')!.split(',') : null;
 const SKIP_PARTY = process.argv.includes('--party') ? flag('--party') : null;
@@ -470,6 +484,53 @@ function tiers(): void {
   }
 }
 
+/**
+ * 5f. THE DEEP LEVELS: the recruits' party at the levels in `--levels` (say 30,40,60,100), a maxed castle, the gear its runs find and (with `--talents`) every
+ * talent row its level opens (the first of each pair), against each army on `--tiers-at` (default Elite and Legendary): the mean tries to clear it (a fresh save
+ * each time, at most `MAX_TRIES`) and the share that cleared. Heroes at 100 should find the top tiers easier, but not trivial.
+ */
+function deepLevels(): void {
+  const maxed = newCastle();
+  for (const id of Object.keys(BUILDINGS) as BuildingId[]) maxed[id] = maxLevel(id);
+  const party = PARTIES.recruits;
+  const tiersAt = process.argv.includes('--tiers-at') ? flag('--tiers-at')!.split(',').map(Number) : [2, 3];
+  const talents = process.argv.includes('--talents');
+  const dress = (meta: Meta): void => {
+    if (!talents) return;
+    for (const k of party) {
+      if (!meta.unlocked.includes(k)) meta.unlocked.push(k);
+      // (the points are the level's own, no shards, so the hero's rank is not raised by the test; the first of each pair that opens, and a row the level has not opened stays shut)
+      for (const t of [1, 2, 3, 4, 5, 6, 7] as const) for (const n of tierNodes(k, t)) learn(meta, k, n.id);
+    }
+  };
+  console.log(`\n5f. THE DEEP LEVELS  (${party.map((k) => UNITS[k].name).join(', ')}; every hero at the level shown, a maxed castle, gear dressed${talents ? ', talents learned' : ', no talents'}; ${ATTEMPTS} fresh saves a cell, at most ${MAX_TRIES} tries; mean tries (clear %))\n`);
+  for (const t of tiersAt) {
+    console.log(`${TIERS[t].name}`);
+    console.log([pad('  army', 22), ...LEVELS.map((L) => rpad(`Lv ${L}`, 16))].join(''));
+    for (const army of ARMIES.filter((a) => !ONLY || ONLY.includes(a.id))) {
+      const cells = LEVELS.map((L) => {
+        let tries = 0;
+        let cleared = 0;
+        for (let save = 1; save <= ATTEMPTS; save++) {
+          const meta = savedAt(L, party, save);
+          dress(meta);
+          const boostFor = (h: Owned) => boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), heroStats(meta, h.kind));
+          let n = 0;
+          let ok = false;
+          while (n < MAX_TRIES && !ok) {
+            ok = playArmy(meta, army.id, mixSeed(save, 0xd33b, ARMIES.indexOf(army) * 100 + t * 10 + n), party, maxed, true, t, talents ? boostFor : undefined).cleared;
+            n++;
+          }
+          tries += n;
+          if (ok) cleared++;
+        }
+        return rpad(`${(tries / ATTEMPTS).toFixed(1)} (${f1(pct(cleared, ATTEMPTS)).trim()}%)`, 16);
+      });
+      console.log([pad(`  ${army.name}`, 22), ...cells].join(''));
+    }
+  }
+}
+
 if (process.argv.includes('--no-tables')) {
   // (only the climbs asked for below)
 } else if (HEROES_ONLY) {
@@ -490,4 +551,5 @@ if (process.argv.includes('--calamity')) calamityTable();
 if (process.argv.includes('--climb')) realClimb();
 if (process.argv.includes('--maxed')) maxedCastle();
 if (process.argv.includes('--tiers')) tiers();
+if (process.argv.includes('--deep')) deepLevels();
 console.log('');

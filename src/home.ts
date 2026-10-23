@@ -1,4 +1,4 @@
-// The home screen (#home), King God Castle style: a top bar (crowns, gold, best stage), five pages behind a bottom tab
+// The home screen (#home), King God Castle style: a top bar (crowns, best stage), five pages behind a bottom tab
 // bar (Recruit, Heroes, Battle in the middle, Castle, Spells) that slide as you switch, and the Battle page as the hub
 // with a lively scene, the stage banner, one big Battle button and the daily and tower cards. The pages re-house the
 // older screens (gacha, modes, achievements, settings, castle upgrades); it only reads and changes the Meta through the
@@ -215,11 +215,8 @@ export class Home {
     const m = this.meta;
     // (a build that finished while the game was away stands now)
     if (settleWorks(m, Date.now())) saveMeta(m);
-    const info = this.hooks.runInfo?.() ?? null;
-    // top bar
+    // top bar (the run's gold stays in the run: the owner's call)
     $('hmCrowns').replaceChildren(icon(ICONS.crowns), el('b', '', String(m.crowns)));
-    $('hmGold').hidden = !info;
-    if (info) $('hmGold').replaceChildren(icon(ICONS.gold), el('b', '', String(info.gold)));
     const stars = ARMIES.reduce((n, a) => n + armyStars(m, a).got, 0);
     $('hmBest').textContent = `Armies ${clearedCount(m)}/${ARMIES.length} · ★ ${stars}`;
     const fresh = m.achievements.length > seenCount() || unclaimed(m).length > 0;
@@ -295,6 +292,12 @@ export class Home {
     if (has) {
       const cont = el('button', 'hmLink hmSide hmCont');
       cont.append(el('b', '', 'Continue'), el('small', '', army && info ? `wave ${info.stage}/${army.waves.length}` : info ? info.label.replace(/^tower · /, '') : 'run'));
+      // (the run's gold shows here, beside its stage: the only place in camp it matters)
+      if (info) {
+        const gold = el('small', 'hmContGold');
+        gold.append(icon(ICONS.gold), String(info.gold));
+        cont.append(gold);
+      }
       cont.addEventListener('click', () => this.go(this.hooks.onContinue));
       go.append(cont);
     } else go.append(el('span', 'hmSpacer'));

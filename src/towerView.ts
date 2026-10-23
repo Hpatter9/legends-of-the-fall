@@ -9,9 +9,9 @@ import { saveMeta, type Meta } from './sim/meta';
 import { hpShare } from './sim/health';
 import { ELITE_BY_ID, eliteAt } from './sim/elites';
 import {
-  buy, chestLine, choices, clearNode, enterNode, finishMystery, setGoing, floorOf, hasRoom, hire, inBattle, localTrainXp, NODE_NAMES, openTreasure, REST_HEAL, rest, rowsIn, takeXp, train, trainXp, type MapNode, type NodeKind, type ShopItem, type TowerSummary,
+  buy, chestLine, choices, clearNode, enterNode, finishMystery, setGoing, floorOf, hasRoom, hire, inBattle, localTrainXp, NODE_NAMES, openTreasure, REST_HEAL, rest, mapProgress, moveTo, rowsIn, spotFloor, takeXp, train, trainXp, type MapNode, type NodeKind, type ShopItem, type TowerSummary,
 } from './sim/tower';
-import { SIDE_BASE, sideSpots } from './sim/calLand';
+import { SIDE_BASE, sideSpots, START_ID } from './sim/calLand';
 import { sideEliteAt } from './sim/elites';
 import { CalMap } from './calMap';
 import { saveSlot, squadLimit, type Run } from './sim/run';
@@ -96,7 +96,7 @@ const seenHint = (): void => {
 const calHint = (run: Run): string => {
   const t = run.tower!;
   const first = !hinted() && t.act === 1 && t.path.length === 0;
-  return first ? 'Tap a lit spot on the road to go there. The fog lifts as you clear it.' : 'Tap a lit spot to go there.';
+  return first ? 'Tap a lit spot to go there. Clear spots in any order, and walk back over the bridges. The fog lifts as you clear.' : 'Tap a lit spot to go there, or any cleared spot to walk back.';
 };
 
 export class TowerView {
@@ -177,7 +177,11 @@ export class TowerView {
 
   /* ------------------------------------------------------------------ the map */
 
+  /** The calamity's camera eases back onto the leader when the map is drawn after a spot is cleared (`draw(true)`). */
+  private recentre = false;
+
   private draw(scrollToNow = false): void {
+    this.recentre = scrollToNow;
     const run = this.run;
     const t = run.tower!;
     const keep = this.root.querySelector('.rtScroll')?.scrollTop;
@@ -199,7 +203,13 @@ export class TowerView {
     const t = run.tower!;
     const head = el('header', 'rtHead');
     const top = el('div', 'rtTop');
-    top.append(el('h2', '', this.calamity ? `Map ${t.act}/${CAL_MAPS} · Floor ${run.stage}` : `Act ${t.act} · Floor ${run.stage}`));
+    if (this.calamity) {
+      // (a map to clear before the next, not a floor: its title, and under it how many of its spots are cleared)
+      const { done, total } = mapProgress(t);
+      const title = el('div', 'rtTitle');
+      title.append(el('h2', '', `Map ${t.act}/${CAL_MAPS}`), el('small', '', `${done} of ${total} spots cleared`));
+      top.append(title);
+    } else top.append(el('h2', '', `Act ${t.act} · Floor ${run.stage}`));
     const gold = el('span', 'rtGold');
     gold.append(icon(ICONS.gold), el('b', '', String(run.gold)));
     top.append(gold);
@@ -270,7 +280,7 @@ export class TowerView {
     if (this.calamity) {
       const cal = (this.cal ??= new CalMap({ meta: () => this.hooks.meta(), onSpot: (id) => this.pickSpot(id) }));
       this.calW = this.mapWidth();
-      return cal.mount(run, this.calW, this.picked);
+      return cal.mount(run, this.calW, this.picked, this.recentre);
     }
     const lay = (this.lay = new Layout(this.mapWidth(), rowsIn(t, t.act)));
     const scroll = el('div', `rtScroll look${this.look().look}`);
@@ -537,6 +547,7 @@ export class TowerView {
   /** The kind of a spot of the calamity's land: a map node's, or a hidden side spot's. */
   private kindOf(id: number): NodeKind {
     const run = this.run;
+    if (id === START_ID) return 'fight';
     return id >= SIDE_BASE ? (sideSpots(run.seed, run.tower!.act, run.tower!.map).find((s) => s.id === id)?.kind ?? 'treasure') : run.tower!.map[id].kind;
   }
 
@@ -544,14 +555,20 @@ export class TowerView {
   private pickSpot(id: number): void {
     const run = this.run;
     const t = run.tower!;
-    if (this.moving || this.cal?.walking || !this.cal?.openIds().has(id)) return;
+    if (this.moving || this.cal?.walking || !(this.cal?.openIds().has(id) || this.cal?.walkIds().has(id))) return;
     this.picked = id;
     seenHint();
     const node = id < SIDE_BASE ? t.map[id] : undefined;
     // (a twist is revealed once as its spot is first tapped)
     if (node?.twist && id !== this.lastTapped) playTwist(node.twist);
     this.lastTapped = id;
-    const floor = run.stage;
+    const floor = id === START_ID ? run.stage : spotFloor(run, id);
+    if (!this.cal!.openIds().has(id)) {
+      // (a spot already cleared, or the portal: nothing to do there, only to walk back to)
+      this.say(id === START_ID ? 'The portal you came through. Walk back to it.' : `${id >= SIDE_BASE ? 'The hidden spot' : NODE_NAMES[t.map[id].kind]} is cleared. Walk back to it.`);
+      this.markPicked();
+      return;
+    }
     if (id >= SIDE_BASE) {
       const side = this.kindOf(id);
       if (side === 'elite') this.sayNode(eliteInfo(sideEliteAt(run.seed, t.act, t.map, id - SIDE_BASE), floor));
@@ -559,7 +576,7 @@ export class TowerView {
     } else {
       const elite = node!.kind === 'elite' ? eliteAt(run.seed, t.act, t.map, id) : undefined;
       if (elite) this.sayNode(eliteInfo(elite, floor));
-      else this.say(`Floor ${floor} · ${NODE_NAMES[node!.kind]}: ${NODE_INFO[node!.kind].text}${twistLine(node!.twist)}`);
+      else this.say(`${NODE_NAMES[node!.kind]}${t.path.includes(id) ? ' (cleared: open again)' : ''}: ${NODE_INFO[node!.kind].text}${twistLine(node!.twist)}`);
     }
     this.markPicked();
   }
@@ -572,6 +589,8 @@ export class TowerView {
     if (this.picked < 0) return void (go.textContent = 'Travel');
     const kind = this.kindOf(this.picked);
     const side = this.picked >= SIDE_BASE;
+    if (!this.cal!.openIds().has(this.picked)) return void (go.textContent = 'Walk there');
+    if (this.run.tower!.path.includes(this.picked)) return void (go.textContent = `Visit the ${NODE_NAMES[kind].toLowerCase()} again`);
     go.textContent = kind === 'fight' || kind === 'elite' || kind === 'boss' ? (side ? 'Take the detour!' : 'To battle!') : kind === 'recruit' ? 'Meet the recruits' : side ? 'Take the detour' : `Go to the ${NODE_NAMES[kind].toLowerCase()}`;
   }
 
@@ -579,8 +598,37 @@ export class TowerView {
     const run = this.run;
     const calamity = this.calamity;
     if (this.picked < 0 || this.moving) return;
+    if (calamity && this.cal && !this.cal.openIds().has(this.picked) && this.cal.walkIds().has(this.picked)) return this.walkBack(this.picked);
     if (calamity ? !this.cal?.openIds().has(this.picked) : !choices(run).some((n) => n.id === this.picked)) return;
     const id = this.picked;
+    // (the boss can be fought at any time its lair is in sight: with spots left, it asks first)
+    if (calamity && id < SIDE_BASE && run.tower!.map[id].kind === 'boss') {
+      const { done, total } = mapProgress(run.tower!);
+      if (done < total) {
+        confirmBox(this.root, 'Face the boss now?', `${total - done} spot${total - done === 1 ? '' : 's'} unexplored. Whatever is left behind is XP, gold and loot you will not have.`, 'Face the boss', () => this.goTo(id));
+        return;
+      }
+    }
+    this.goTo(id);
+  }
+
+  /** The party walks to a spot it has cleared (or the portal) and stands there: free and safe. */
+  private walkBack(id: number): void {
+    const run = this.run;
+    this.moving = true;
+    play('steps');
+    this.cal!.walkTo(id, () => {
+      this.moving = false;
+      moveTo(run, id);
+      saveSlot(run);
+      this.picked = -1;
+      this.draw(true);
+    });
+  }
+
+  private goTo(id: number): void {
+    const run = this.run;
+    const calamity = this.calamity;
     const way = (arrive: () => void) => {
       if (!calamity) return this.climbTo(id, arrive);
       // (the squad's leader walks the road to the spot, the camera with it; a tap skips it. The walk is saved as begun: closed mid-walk, the game reopens with the leader at the spot and its fight not yet started)
@@ -857,7 +905,7 @@ export class TowerView {
     const cal = s.maps !== undefined;
     card.append(
       el('h2', '', cal ? (s.cleared ? 'The calamity is ended!' : 'The calamity goes on') : s.abandoned ? 'The climb is over' : 'The climb ends'),
-      el('p', 'rtLead', cal ? (s.cleared ? `All ${CAL_MAPS} maps are cleared: the calamity falls.` : s.abandoned ? `The party turns back on floor ${run.stage}, in map ${Math.min(s.act, CAL_MAPS)}.` : `The party falls on floor ${run.stage}, in map ${Math.min(s.act, CAL_MAPS)}.`) : s.abandoned ? `The heroes turn back on floor ${run.stage}, in act ${s.act}.` : `The heroes fall on floor ${run.stage}, in act ${s.act}.`),
+      el('p', 'rtLead', cal ? (s.cleared ? `All ${CAL_MAPS} maps are cleared: the calamity falls.` : s.abandoned ? `The party turns back in map ${Math.min(s.act, CAL_MAPS)}, ${s.floors} spots cleared.` : `The party falls in map ${Math.min(s.act, CAL_MAPS)}, ${s.floors} spots cleared.`) : s.abandoned ? `The heroes turn back on floor ${run.stage}, in act ${s.act}.` : `The heroes fall on floor ${run.stage}, in act ${s.act}.`),
     );
     const stats = el('div', 'rtStats');
     const stat = (label: string, value: string) => {
@@ -865,7 +913,7 @@ export class TowerView {
       row.append(el('span', '', label), el('b', '', value));
       stats.append(row);
     };
-    stat('Floors climbed', String(s.floors));
+    stat(cal ? 'Spots cleared' : 'Floors climbed', String(s.floors));
     if (cal && s.ascension) stat('Ascension', String(s.ascension));
     stat(cal ? 'Maps cleared' : 'Acts', cal ? `${s.maps} of ${CAL_MAPS}` : String(s.act));
     stat('Relics', String(s.relics));

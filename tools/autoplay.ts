@@ -4,14 +4,14 @@
 // XP goes into, the save's meta, as the page does.
 
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
-import { fight, place, playOut, type Battle } from '../src/sim/battle';
+import { fight, place, playOut, type Battle, type Boost } from '../src/sim/battle';
 import { chooseOption, leaveEvent } from '../src/sim/events';
 import { fightXp, gainXp, levelOfKind, xpFor } from '../src/sim/levels';
 import { newCastle, xpRate, type Castle } from '../src/sim/castle';
 import { startedMeta, heroRank, type Meta } from '../src/sim/meta';
 import { awakenStats } from '../src/sim/awaken';
 import { armyById } from '../src/sim/armies';
-import { armyRun, boostOf, finish, isBossRun, noteFight, squadLimit, startStage, summon, tierOfRun, type Run } from '../src/sim/run';
+import { armyRun, boostOf, finish, isBossRun, noteFight, squadLimit, startStage, summon, tierOfRun, type Owned, type Run } from '../src/sim/run';
 import { heroLevel, localBoost } from '../src/sim/climb';
 import { armyRules } from '../src/sim/armyStars';
 import { ratingOf } from '../src/sim/stars';
@@ -36,14 +36,14 @@ export function frontSpots(b: Battle): [number, number][] {
  * One attempt at an army from wave 1, as a greedy player: returns the waves won and whether the army fell. Gains XP into `meta`.
  * With `castle` the run takes its buildings (and the library's share of XP); `gear` dresses the squad with the pieces the run finds.
  */
-export function playArmy(meta: Meta, armyId: string, seed: number, party: readonly string[], castle: Castle = newCastle(), gear = false, tier = 0): { won: number; cleared: boolean; stars: number } {
+export function playArmy(meta: Meta, armyId: string, seed: number, party: readonly string[], castle: Castle = newCastle(), gear = false, tier = 0, boostFor?: (h: Owned) => Boost): { won: number; cleared: boolean; stars: number } {
   const army = armyById(armyId)!;
   const run: Run = armyRun(seed, armyId, party, castle, tier);
   let won = 0;
   while (!run.over) {
     autoRound(run, meta, gear);
     const b = startStage(run);
-    autoDeploy(b, run, meta);
+    autoDeploy(b, run, meta, boostFor);
     fight(b);
     playOut(b);
     const ok = b.phase === 'won';
@@ -161,7 +161,7 @@ export function playCalamity(meta: Meta, seed: number, hero: string, castle: Cas
   // (the ascension asked for is open: the meta has cleared the one before)
   const run = calamityRun(seed, { ...meta, castle, ...(ascension ? { calamity: { best: 6, clears: 1, asc: ascension - 1 } } : {}) } as Meta, hero, ascension);
   const r = playClimb(meta, run, 80);
-  return { maps: run.tower!.bosses, floors: run.stage - 1, cleared: !!run.cleared, heroes: run.roster.length, level: r.level };
+  return { maps: run.tower!.bosses, floors: r.floors, cleared: !!run.cleared, heroes: run.roster.length, level: r.level };
 }
 
 /** The node kind and act of the fight the last climb lost (for tuning). */
@@ -170,20 +170,40 @@ export let lostAt = '';
 export let starterLevels: number[] = [];
 export let starterEnd = 1;
 
+/**
+ * The greedy explorer's policy on a calamity's free map: clear every spot it can reach, the best-wanted first (fires and shops when hurt, recruits while there is room, a hoard
+ * always, a mini-boss while the squad is hale), take each hidden side spot as it shows (a hoard always, a mini-boss while the squad is above 70%), look in again at a cleared shop with
+ * 70 gold or more before the boss, and only then face the boss: so a map is cleared in full before the next. `--explore n` of the balance tool limits it to the first n spots a map.
+ */
+export const explore = { visitShops: true, limit: Infinity };
+
 function playClimb(meta: Meta, run: Run, maxFloors: number): { floors: number; bosses: number; act: number; level: number } {
   lostAt = '';
   starterLevels = [];
   const calamity = run.mode?.kind === 'calamity';
   const starter = run.roster[0];
-  while (!run.over && run.stage <= maxFloors) {
+  const again = new Set<string>();
+  let guard = 0;
+  while (!run.over && run.stage <= maxFloors && guard++ < 2000) {
     // (the tower's greedy player summons while the gold lasts; a calamity hires instead)
     while (!calamity && summon(run)) {
       // (summons while the gold lasts, but keeps a purse for the shop when a fire is near)
     }
-    const pick = [...choices(run)].sort((a, b) => wantOf(run, b) - wantOf(run, a) || a.id - b.id)[0];
+    const front = choices(run);
+    const others = calamity ? front.filter((n) => n.kind !== 'boss') : front;
+    const cleared = calamity ? run.tower!.path.length : 0;
+    const pick = [...(others.length && cleared < explore.limit ? others : front)].sort((a, b) => wantOf(run, b) - wantOf(run, a) || a.id - b.id)[0];
     // (a hidden side spot of a calamity's map is taken when it is there: a hoard always, a mini-boss while the squad is hale)
-    const side = calamity ? sideChoices(run).find((s) => s.kind === 'treasure' || squadHealth(run) > 0.7) : undefined;
-    enterNode(run, side ? side.id : pick.id);
+    const side = calamity && cleared < explore.limit ? sideChoices(run).find((s) => s.kind === 'treasure' || squadHealth(run) > 0.7) : undefined;
+    // (nothing left but the boss: a look in at a shop it has cleared, with gold to spend, first)
+    let shopId: number | undefined;
+    if (calamity && explore.visitShops && (!others.length || cleared >= explore.limit) && run.gold >= 70) {
+      const t = run.tower!;
+      shopId = t.map.find((n) => n.kind === 'shop' && t.path.includes(n.id) && !again.has(`${t.act}:${n.id}`))?.id;
+      if (shopId !== undefined) again.add(`${t.act}:${shopId}`);
+    }
+    if (!pick && shopId === undefined && !side) break;
+    if (!enterNode(run, side ? side.id : shopId ?? pick.id)) break;
     const cur = run.tower!.cur!;
     const fightIt = () => {
       const b = fightNode(meta, run);
@@ -215,7 +235,11 @@ function playClimb(meta: Meta, run: Run, maxFloors: number): { floors: number; b
       openTreasure(run);
       clearNode(run);
     } else {
-      while (run.event) if (chooseOption(run, 0) === null) leaveEvent(run);
+      // (the first option, but the greedy player never gives a hero away: an offering is passed over)
+      while (run.event) {
+        const i = run.event.options.findIndex((o) => !(o.effect.t === 'mystery' && o.effect.act.k === 'sacrifice'));
+        if (chooseOption(run, Math.max(0, i)) === null) leaveEvent(run);
+      }
       finishMystery(run);
       // (a mimic's chest turns into a fight; a trainer's lesson goes into the meta)
       const xp = takeXp(run);
@@ -224,5 +248,5 @@ function playClimb(meta: Meta, run: Run, maxFloors: number): { floors: number; b
     }
   }
   starterEnd = heroLevel(starter);
-  return { floors: run.stage - 1, bosses: run.tower!.bosses, act: run.tower!.act, level: run.roster.reduce((n, h) => n + heroLevel(h), 0) / run.roster.length };
+  return { floors: calamity ? run.tower!.spots ?? 0 : run.stage - 1, bosses: run.tower!.bosses, act: run.tower!.act, level: run.roster.reduce((n, h) => n + heroLevel(h), 0) / run.roster.length };
 }

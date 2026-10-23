@@ -13,7 +13,7 @@
 .tLines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .tLine { stroke: var(--s6); stroke-width: 2; vector-effect: non-scaling-stroke; shape-rendering: crispEdges; }
 .tLine.lit { stroke: var(--gold-hi); } .tLine.ruled { stroke: var(--s3); stroke-dasharray: 3 3; }
-.tRow { position: absolute; left: 0; font-size: 9px; color: var(--dim); letter-spacing: 0.5px; text-transform: uppercase; }
+.tRow { position: absolute; left: 0; font-size: 12px; line-height: 14px; color: var(--dim); letter-spacing: 0.5px; text-transform: uppercase; }
 .tNode { position: absolute; transform: translate(-50%, -50%); display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 56px; height: 56px; min-height: 0; padding: 0; background: var(--s1); border: 2px solid var(--s8); box-shadow: inset 0 0 0 2px var(--s0); }
 .tNode img { width: 48px; height: 48px; image-rendering: pixelated; display: block; pointer-events: none; }
 .tNode .tCost { position: absolute; right: -2px; bottom: -2px; min-width: 14px; padding: 0 3px; font: 700 11px/14px var(--display); font-style: normal; text-align: center; color: var(--s1); background: var(--e5); box-shadow: 0 1px 0 var(--black); }
