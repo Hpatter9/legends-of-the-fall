@@ -7,7 +7,8 @@
 // the run's chests and equipment into the meta, by the floors cleared. Pure rules: no Pixi, no DOM, no clock.
 
 import type { Battle, Boost, Stage } from './battle';
-import { AREAS } from './board';
+import { CLASSIC_AREAS } from './board';
+import { spireArea } from './lands';
 import { armyById, armyIndex, armyUnlocked, ARMIES } from './armies';
 import { BOSS_BANDS, FIELD_BANDS, FOE_BANDS } from './foes';
 import { grantEquipment, itemName, rollEquipment } from './equipment';
@@ -530,7 +531,8 @@ function plainSpec(run: Run, kind: NodeKind, floor: number, nodeId?: number): Fi
 
 function baseSpec(run: Run, kind: NodeKind, floor: number, nodeId?: number): FightSpec {
   const k = foeScale(floor, run.tower?.scale, run.tower?.act);
-  const area = AREAS[Math.floor((floor - 1) / 5) % AREAS.length];
+  // (a Calamity's maps keep the six old lands, one to a map; the spire draws a land for each five floors from all of them, `lands.ts`)
+  const area = run.tower?.maps ? CLASSIC_AREAS[Math.floor((floor - 1) / 5) % CLASSIC_AREAS.length] : spireArea(run.seed, floor);
   if (kind === 'boss' && run.tower?.maps) {
     // (a calamity's bosses: one of its own per map, each bigger than the last; the map's twist adds a mechanic from the second on)
     const map = run.tower.act;

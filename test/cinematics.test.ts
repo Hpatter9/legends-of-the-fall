@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FEET, fillLine, lineSeconds, sceneSeconds, SCENES, SCENE_ORDER, STAGE_H, STAGE_W, type Scene } from '../src/sim/sceneScripts';
+import { FEET, fillLine, lineSeconds, sceneSeconds, SCENES, SCENE_ORDER, STAGE_H, STAGE_W, summonScene, type Scene } from '../src/sim/sceneScripts';
+import { CONTENT_HEROES } from '../src/sim/contentHeroes';
 import { castOf, dueScene, kindOf, markSeen, namesOf, readScenes, seenScene } from '../src/sim/sceneRules';
 import { actorsAt, beats, BASE_SCALE, cameraAt, keepInside, lineNow, lineStart, lookAt, next, scaleOf, shotLength, start, tick, typedChars, TYPE_RATE } from '../src/render/sceneClock';
 import { loadMeta, newMeta, pickStarter, saveMeta } from '../src/sim/meta';
@@ -25,10 +26,11 @@ const mini: Scene = {
   ],
 };
 
-test('every scene is 20 to 40 seconds as played untouched, with brief lines', () => {
+test('every chapter is 20 to 40 seconds as played untouched, a reveal 5 to 14, with brief lines', () => {
   for (const id of SCENE_ORDER) {
     const secs = sceneSeconds(SCENES[id]);
-    assert.ok(secs >= 20 && secs <= 40, `${id}: ${secs.toFixed(1)} s`);
+    if (SCENES[id].short) assert.ok(secs >= 5 && secs <= 14, `${id}: ${secs.toFixed(1)} s`);
+    else assert.ok(secs >= 20 && secs <= 40, `${id}: ${secs.toFixed(1)} s`);
     for (const s of SCENES[id].shots) for (const l of s.lines ?? []) assert.ok(l.text.length <= 100, `${id}: ${l.text}`);
   }
 });
@@ -172,7 +174,7 @@ test('who plays: the party fills the party roles, the hero is the run\'s lead, f
 });
 
 test('both pilots cast Duchess and she gets a line, as an actor with no fighter to draw', () => {
-  for (const id of SCENE_ORDER) {
+  for (const id of SCENE_ORDER.filter((x) => !SCENES[x].short)) {
     const sc = SCENES[id];
     const goat = Object.entries(sc.cast).find(([, m]) => m.role === 'duchess');
     assert.ok(goat, id);
@@ -220,4 +222,57 @@ test('seen scenes are saved and read back; an old save that had picked its heroe
   // (junk is dropped)
   assert.deepEqual(readScenes(['gorvak', 'gorvak', 7, 'nope'], true), ['gorvak']);
   assert.deepEqual(readScenes('x', false), []);
+});
+
+test('every hero earned in play has its own short reveal, due the moment it joins and only once', () => {
+  for (const c of CONTENT_HEROES) {
+    const id = `earned:${c.kind}`;
+    assert.ok(SCENES[id]?.short, `${c.kind} has a reveal`);
+    const m = newMeta(1);
+    assert.equal(dueScene(m, { kind: 'earned', hero: c.kind }), id);
+    assert.equal(dueScene(m, { kind: 'earned', hero: c.kind === 'sage' ? 'tyrant' : 'sage' }) === id, false, 'only for its own hero');
+    markSeen(m, id);
+    assert.equal(dueScene(m, { kind: 'earned', hero: c.kind }), null);
+  }
+  assert.equal(dueScene(newMeta(1), { kind: 'starter' }), 'opening', 'the earlier moments are as they were');
+});
+
+test('the silhouette steps aside and the hero steps into the light in the same place (the hide act)', () => {
+  const sc = SCENES['earned:werewolf'];
+  const before = actorsAt(sc, { shot: 0, beat: 0, t: 2, shotT: 2 });
+  assert.ok(before.figure.visible && !before.hero.visible);
+  const after = actorsAt(sc, { shot: 1, beat: 0, t: 0.5, shotT: 0.5 });
+  assert.ok(!after.figure.visible && after.hero.visible);
+  assert.equal(after.hero.x, sc.cast.hero.x);
+});
+
+test('the summoning cinematic is about three seconds, is not listed or marked seen, and ends on the hero', () => {
+  const sc = summonScene('knight', 'Knight');
+  const secs = sceneSeconds(sc);
+  assert.ok(secs >= 2 && secs <= 4, `${secs}`);
+  assert.equal(SCENE_ORDER.includes(sc.id), false);
+  assert.equal(SCENES[sc.id], undefined);
+  const end = actorsAt(sc, { shot: 1, beat: 0, t: 1, shotT: 1 });
+  assert.ok(end.hero.visible && !end.figure.visible);
+  assert.equal(sc.shots.filter((s) => s.fx?.includes('flash')).length, 1, 'one flash, once');
+  assert.equal(castOf(sc, { party: [] }).hero.kind, 'knight');
+});
+
+test('the opening plays before the starter pick with a fixed trio, and each scene can name its music', () => {
+  const o = SCENES.opening;
+  assert.equal(o.trio?.length, 3);
+  const cast = castOf(o, { party: [...o.trio!] });
+  for (const id of ['front', 'striker', 'back']) assert.ok(cast[id].kind && o.trio!.includes(cast[id].kind!), id);
+  assert.ok(Object.values(o.cast).some((m) => m.role === 'duchess'), 'Duchess keeps her beat');
+  assert.equal(dueScene(newMeta(1), { kind: 'starter' }), 'opening', 'due with no heroes picked');
+  assert.equal(o.music, 'opening');
+  assert.equal(SCENES.gorvak.music, 'gorvak');
+});
+
+test('the Cinematics setting is on by default and kept when saved', async () => {
+  const { DEFAULTS, parseSettings } = await import('../src/settings');
+  assert.equal(DEFAULTS.cinematics, true);
+  assert.equal(parseSettings(null).cinematics, true);
+  assert.equal(parseSettings('{"cinematics":false}').cinematics, false);
+  assert.equal(parseSettings('{"cinematics":1}').cinematics, true);
 });

@@ -5,7 +5,7 @@
 // new fight code. Kept per kind in `Meta.awakened` (missing is none). Pure rules: no Pixi, no DOM, no randomness.
 
 import type { Meta } from './meta';
-import { MAX_RANK, rankOf } from './meta';
+import { MAX_RANK, takenRank } from './meta';
 import { ABILITIES, type Ability } from './equipBases';
 import { emptyStats, type EquipStats } from './equipment';
 import { ALL_HEROES } from './units';
@@ -77,7 +77,7 @@ export const PASSIVE_STRENGTH: readonly number[] = [0.6, 0.85];
 /** The steps a hero kind has awakened (0 to 2). */
 export const awakenedOf = (m: Meta, kind: string): number => m.awakened?.[kind] ?? 0;
 /** A hero's whole rank for its strength and look: the shard rank, then one for each awakened step (5 and 6). */
-export const heroRank = (m: Meta, kind: string): number => rankOf(m, kind) + awakenedOf(m, kind);
+export const heroRank = (m: Meta, kind: string): number => takenRank(m, kind) + awakenedOf(m, kind);
 
 export interface AwakenPlan {
   /** The step the next awakening would take (1 or 2), or null when the kind is at the top or not ready for any. */
@@ -100,7 +100,7 @@ export function awakenPlan(m: Meta, kind: string): AwakenPlan {
   if (done >= MAX_AWAKEN) return { step: null, cost: 0, need: 0, have, free, can: false };
   const need = AWAKEN_SHARDS[done];
   const cost = AWAKEN_COSTS[done];
-  return { step: done + 1, cost, need, have, free, can: m.unlocked.includes(kind) && rankOf(m, kind) >= MAX_RANK && have >= need && free >= cost };
+  return { step: done + 1, cost, need, have, free, can: m.unlocked.includes(kind) && takenRank(m, kind) >= MAX_RANK && have >= need && free >= cost };
 }
 
 export const canAwaken = (m: Meta, kind: string): boolean => awakenPlan(m, kind).can;
