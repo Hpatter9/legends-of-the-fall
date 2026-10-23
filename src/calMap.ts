@@ -7,8 +7,8 @@
 
 import type { Meta } from './sim/meta';
 import type { Run } from './sim/run';
-import { choices, sideChoices } from './sim/tower';
-import { fogOf, landOf, roadBetween, sideSpots, START_ID, type Cell, type Land, type LandSpot, type SideSpot } from './sim/calLand';
+import { choices, hereOf, routeTo, sideChoices } from './sim/tower';
+import { fogOf, landOf, openSet, sideSpots, START_ID, type Cell, type Land, type LandSpot, type SideSpot } from './sim/calLand';
 import { LAND_ART, RECTS, type LandArt } from './render/calArt';
 import { loadImage } from './render/loadImage';
 import { heroRig, lookKey } from './render/awakenRig';
@@ -188,7 +188,7 @@ export class CalMap {
     const t = this.run.tower!;
     // (a walk begun and not finished when the game closed: the leader is at the spot it was going to, which is not yet entered)
     const going = t.cur ? undefined : t.going !== undefined && this.openIds().has(t.going) ? t.going : undefined;
-    return t.cur?.id ?? going ?? (t.at < 0 ? START_ID : t.at);
+    return going ?? hereOf(t);
   }
 
   /** Put the leader back at the spot the party really stands at (it had set out for another, and the player chose a different one). */
@@ -199,7 +199,7 @@ export class CalMap {
   }
 
   /** Show the land of the run's map (the box is in the page already when this is called: `width` is its width in css pixels). `picked` is the spot lit as chosen. */
-  mount(run: Run, width: number, picked: number): HTMLElement {
+  mount(run: Run, width: number, picked: number, recentre = false): HTMLElement {
     this.run = run;
     this.picked = picked;
     this.active = true;
@@ -248,12 +248,43 @@ export class CalMap {
     // (the camera: on the spot the party stands at, the road ahead above it; kept where it was when the map is redrawn in place)
     requestAnimationFrame(() => {
       if (!this.geo) return;
-      this.root.scrollTop = this.keepTop ? this.top : this.cameraFor(this.pos.y);
+      const target = this.cameraFor(this.pos.y);
+      if (!this.keepTop) {
+        // (a map just opened: the camera starts a little off the party and eases onto it)
+        this.root.scrollTop = reduced() ? target : Math.min(this.root.scrollHeight, target + 150);
+        this.easeCamera(target);
+      } else if (recentre) {
+        // (the box was taken out of the page and put back, which resets its scroll: it starts where it was, and eases onto the party)
+        this.root.scrollTop = this.top;
+        this.easeCamera(target);
+      }
+      else this.root.scrollTop = this.top;
       this.keepTop = true;
       this.parallax();
     });
     this.startLoop();
     return this.root;
+  }
+
+  private easing = 0;
+
+  /** Ease the camera onto a scroll position, the way it follows a walk: smooth, about half a second, no snap (at once under reduced motion). */
+  easeCamera(target: number): void {
+    cancelAnimationFrame(this.easing);
+    const from = this.root.scrollTop;
+    if (reduced() || Math.abs(from - target) < 2) {
+      this.root.scrollTop = target;
+      return;
+    }
+    const t0 = performance.now();
+    const MS = 520;
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - t0) / MS);
+      const e = p < 0.5 ? 2 * p * p : 1 - 2 * (1 - p) * (1 - p);
+      this.root.scrollTop = from + (target - from) * e;
+      if (p < 1 && this.active && !this.walk) this.easing = requestAnimationFrame(tick);
+    };
+    this.easing = requestAnimationFrame(tick);
   }
 
   /** The void's layers for realm `n`: the sky's colours, the stars over it, the nebula and the moon (sized and placed by `parallax`). */
@@ -306,9 +337,16 @@ export class CalMap {
     return !!this.walk;
   }
 
-  /** The spots the party may pick, as their ids: the road's choices, and a hidden side spot it stands beside. */
+  /** The spots the party may go to and enter: any spot a revealed bridge leads to from a cleared one (not yet cleared), a hidden side spot, and a shop already cleared (open to visit again). */
   openIds(): Set<number> {
-    return new Set([...choices(this.run).map((n) => n.id), ...sideChoices(this.run).map((s) => s.id)]);
+    const t = this.run.tower!;
+    const shops = t.map.filter((n) => n.kind === 'shop' && t.path.includes(n.id)).map((n) => n.id);
+    return new Set([...choices(this.run).map((n) => n.id), ...sideChoices(this.run).map((s) => s.id), ...shops]);
+  }
+
+  /** The spots the party has cleared (and the portal): it may walk to any of them, freely. */
+  walkIds(): Set<number> {
+    return openSet(this.run.tower!);
   }
 
   // ---- geometry ----
@@ -368,7 +406,7 @@ export class CalMap {
   private cameraFor(sceneY: number): number {
     const g = this.geo!;
     const view = this.root.clientHeight || 560;
-    return Math.max(0, Math.min(g.H * g.unit - view, sceneY * g.unit - view * 0.62));
+    return Math.max(0, Math.min(g.H * g.unit - view, sceneY * g.unit - view * 0.55));
   }
 
   // ---- painting ----
@@ -401,12 +439,10 @@ export class CalMap {
     }
     if (this.atlas) this.bake(this.atlas, model, done);
     this.setFog(model, fog);
-    // (the leader: where it stands now; a side spot cleared walks it back to the road)
+    // (the leader: where it stands now)
     const to = this.standId();
     if (!this.walk) {
-      if (to !== this.stand && this.stand >= 100 && this.spot(this.stand) && roadBetween(model, to, this.stand)) {
-        this.startWalk(this.stand, to, 0.7, () => undefined);
-      } else if (to !== this.stand) {
+      if (to !== this.stand) {
         this.stand = to;
         this.pos = this.standAt(to);
       } else if (!this.pos.x) this.pos = this.standAt(to);
@@ -768,17 +804,19 @@ export class CalMap {
 
   /** The buttons and rings over the lit spots (the land under the fog has none). */
   private paintMarks(model: Land, lit: Set<number>, open: Set<number>, done: Set<number>): void {
+    const walk = this.walkIds();
     const g = this.geo!;
     const t = this.run.tower!;
     this.marks.replaceChildren();
     const u = g.unit;
     const here = this.standId();
     for (const s of model.spots) {
-      if (s.id === START_ID || !lit.has(s.id)) continue;
+      if (!lit.has(s.id)) continue;
       const p = { x: this.ax(s, done.has(s.id)), y: this.xy(s).y };
       const isOpen = open.has(s.id);
       const isDone = done.has(s.id);
-      const state = isDone ? 'done' : isOpen ? 'open' : t.cur?.id === s.id ? 'here' : 'passed';
+      const walkable = walk.has(s.id);
+      const state = s.id === START_ID ? 'start' : isDone ? (isOpen ? 'done again' : 'done') : isOpen ? 'open' : t.cur?.id === s.id ? 'here' : 'passed';
       const wrap = el('div', `cmSpot ${s.kind} ${state}${s.side ? ' side' : ''}${s.id === this.picked ? ' picked' : ''}`);
       wrap.dataset.id = String(s.id);
       const ring = el('i', 'cmRing');
@@ -794,7 +832,7 @@ export class CalMap {
       b.style.cssText = `left:${(p.x - mk.l - Math.max(0, (48 - body.w) / 2)) * u}px;top:${(p.y + g.th * FOOT - Math.max(48, body.h)) * u}px;width:${w}px;height:${h}px`;
       const label = s.side ? (s.kind === 'elite' ? 'Hidden mini-boss' : 'Hidden hoard') : `${s.kind}`;
       b.setAttribute('aria-label', `${label}${isOpen ? ', lit: tap to choose' : isDone ? ', done' : ''}`);
-      b.disabled = !isOpen;
+      b.disabled = !isOpen && !walkable;
       b.addEventListener('click', () => {
         if (this.walk) return;
         this.hooks.onSpot(s.id);
@@ -883,25 +921,28 @@ export class CalMap {
     this.walker.style.transform = `translate(${Math.round((this.pos.x - small.fw / 2) * u)}px, ${Math.round((this.pos.y - small.fh) * u)}px)`;
   }
 
-  /** Walk the leader along the road to a lit spot, the camera with it; `done` runs on arrival (or when a tap skips). */
+  /** Walk the leader to a spot over the bridges, the shortest way through cleared spots, the camera with it; `done` runs on arrival (or when a tap skips). */
   walkTo(id: number, done: () => void): void {
-    const model = this.model;
-    const from = this.stand;
-    const cells = model && (roadBetween(model, from, id) ?? roadBetween(model, id, from));
-    if (!model || !cells || !this.geo) return done();
-    this.startWalk(from, id, 1, done);
+    const route = routeTo(this.run, id);
+    if (!route || !this.geo || !this.model) return done();
+    this.startWalk(route, 1, done);
   }
 
-  /** Set the leader walking the straight bridge from one spot to another. */
-  private startWalk(from: number, to: number, speed: number, done: () => void): void {
-    // (along the bridge's stones, the leader's feet a little below their line)
-    const there = this.model!.roads.some((r) => r.from === from && r.to === to);
-    const way = there ? this.stones(from, to) : [...this.stones(to, from)].reverse();
-    const pts: { x: number; y: number }[] = [this.standAt(from), ...way.map((q) => ({ x: q.x, y: q.y + 16 })), this.standAt(to)];
+  /** Set the leader walking a route of spots: along each bridge's stones, through the spots between. */
+  private startWalk(route: number[], speed: number, done: () => void): void {
+    const pts: { x: number; y: number }[] = [this.standAt(route[0])];
+    for (let i = 1; i < route.length; i++) {
+      const from = route[i - 1];
+      const to = route[i];
+      const there = this.model!.roads.some((r) => r.from === from && r.to === to);
+      const way = there ? this.stones(from, to) : [...this.stones(to, from)].reverse();
+      for (const q of way) pts.push({ x: q.x, y: q.y + 16 });
+      pts.push(this.standAt(to));
+    }
     let total = 0;
     for (let i = 1; i < pts.length; i++) total += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
     const dur = reduced() ? 1 : Math.max(WALK_MIN * speed, Math.min(WALK_MAX, (total / WALK_SPEED) * 1000));
-    this.stand = to;
+    this.stand = route[route.length - 1];
     this.walk = { pts, total, t0: performance.now(), dur, done };
     this.pos = { ...pts[0] };
     this.startLoop();

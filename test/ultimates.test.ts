@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { addUnit, startBattle, stepBattle, place, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
 import { CHARGE_MAX, KITS, tryCast, ULT_LEVEL, ULT_RATE, ultimateOf, ultimateReady } from '../src/sim/abilities';
 import { localBoost } from '../src/sim/climb';
-import { RUN_MAX_LEVEL, xpFor } from '../src/sim/levels';
+import { RUN_LEVEL_CAP, xpFor } from '../src/sim/levels';
 import { enterPhase } from '../src/sim/bossPhases';
 import { ALL_HEROES } from '../src/sim/units';
 import { gradeBoost } from '../src/sim/run';
@@ -94,7 +94,7 @@ test('a locked ultimate neither charges nor casts, and the unlocked one does bot
   assert.ok(out.some((e) => e.kind === 'skill' && e.name === KITS.knight.ultimate!.name));
 });
 
-test('the level a hero fights at reaches the fight: its kind\'s lasting level, and a run\'s own level capped at 20', () => {
+test('the level a hero fights at reaches the fight: its kind\'s lasting level, and a run\'s own level capped at 30', () => {
   assert.equal(gradeBoost(1, 0, 15).level, 15);
   const b = arena();
   assert.equal(addUnit(b, 'knight', 1, 8, gradeBoost(1, 0, 22)).level, 22);
@@ -102,7 +102,7 @@ test('the level a hero fights at reaches the fight: its kind\'s lasting level, a
   const at = (lv: number) => localBoost({ id: 1, kind: 'knight', grade: 1, xp: xpFor(lv) });
   assert.equal(at(14).level, 14);
   assert.equal(at(15).level, 15);
-  assert.equal(localBoost({ id: 1, kind: 'knight', grade: 1, xp: xpFor(29) }).level, RUN_MAX_LEVEL, 'in a run the level stops at 20');
+  assert.equal(localBoost({ id: 1, kind: 'knight', grade: 1, xp: xpFor(30) }).level, RUN_LEVEL_CAP, 'in a run the level stops at 30');
   assert.ok(ultimateOf(addUnit(b, 'cleric', 3, 8, at(15))));
   assert.equal(ultimateOf(addUnit(b, 'cleric', 4, 8, at(14))), undefined);
 });

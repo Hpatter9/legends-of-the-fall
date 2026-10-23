@@ -161,24 +161,49 @@ export function playCalamity(meta: Meta, seed: number, hero: string, castle: Cas
   // (the ascension asked for is open: the meta has cleared the one before)
   const run = calamityRun(seed, { ...meta, castle, ...(ascension ? { calamity: { best: 6, clears: 1, asc: ascension - 1 } } : {}) } as Meta, hero, ascension);
   const r = playClimb(meta, run, 80);
-  return { maps: run.tower!.bosses, floors: run.stage - 1, cleared: !!run.cleared, heroes: run.roster.length, level: r.level };
+  return { maps: run.tower!.bosses, floors: r.floors, cleared: !!run.cleared, heroes: run.roster.length, level: r.level };
 }
 
 /** The node kind and act of the fight the last climb lost (for tuning). */
 export let lostAt = '';
 
+/** The starting hero's level after each map's boss, in order (the last climb played; for tuning). */
+export let bossLevels: number[] = [];
+
+/**
+ * The greedy explorer's policy on a calamity's free map: clear every spot it can reach, the best-wanted first (fires and shops when hurt, recruits while there is room, a hoard
+ * always, a mini-boss while the squad is hale), take each hidden side spot as it shows (a hoard always, a mini-boss while the squad is above 70%), look in again at a cleared shop with
+ * 70 gold or more before the boss, and only then face the boss: so a map is cleared in full before the next. `--explore n` of the balance tool limits it to the first n spots a map.
+ */
+export const explore = { visitShops: true, limit: Infinity };
+
 function playClimb(meta: Meta, run: Run, maxFloors: number): { floors: number; bosses: number; act: number; level: number } {
   lostAt = '';
+  bossLevels = [];
   const calamity = run.mode?.kind === 'calamity';
-  while (!run.over && run.stage <= maxFloors) {
+  const again = new Set<string>();
+  let bossesSeen = 0;
+  let guard = 0;
+  while (!run.over && run.stage <= maxFloors && guard++ < 2000) {
     // (the tower's greedy player summons while the gold lasts; a calamity hires instead)
     while (!calamity && summon(run)) {
       // (summons while the gold lasts, but keeps a purse for the shop when a fire is near)
     }
-    const pick = [...choices(run)].sort((a, b) => wantOf(run, b) - wantOf(run, a) || a.id - b.id)[0];
+    const front = choices(run);
+    const others = calamity ? front.filter((n) => n.kind !== 'boss') : front;
+    const cleared = calamity ? run.tower!.path.length : 0;
+    const pick = [...(others.length && cleared < explore.limit ? others : front)].sort((a, b) => wantOf(run, b) - wantOf(run, a) || a.id - b.id)[0];
     // (a hidden side spot of a calamity's map is taken when it is there: a hoard always, a mini-boss while the squad is hale)
-    const side = calamity ? sideChoices(run).find((s) => s.kind === 'treasure' || squadHealth(run) > 0.7) : undefined;
-    enterNode(run, side ? side.id : pick.id);
+    const side = calamity && cleared < explore.limit ? sideChoices(run).find((s) => s.kind === 'treasure' || squadHealth(run) > 0.7) : undefined;
+    // (nothing left but the boss: a look in at a shop it has cleared, with gold to spend, first)
+    let shopId: number | undefined;
+    if (calamity && explore.visitShops && (!others.length || cleared >= explore.limit) && run.gold >= 70) {
+      const t = run.tower!;
+      shopId = t.map.find((n) => n.kind === 'shop' && t.path.includes(n.id) && !again.has(`${t.act}:${n.id}`))?.id;
+      if (shopId !== undefined) again.add(`${t.act}:${shopId}`);
+    }
+    if (!pick && shopId === undefined && !side) break;
+    if (!enterNode(run, side ? side.id : shopId ?? pick.id)) break;
     const cur = run.tower!.cur!;
     const fightIt = () => {
       const b = fightNode(meta, run);
@@ -189,8 +214,13 @@ function playClimb(meta: Meta, run: Run, maxFloors: number): { floors: number; b
       // (an elite offers three relics: the greedy player takes the first, a piece of a set it has begun when there is one)
       if (run.tower!.offer) takeRelic(run, run.tower!.offer[0]);
     };
-    if (cur.fight) fightIt();
-    else if (cur.kind === 'campfire') {
+    if (cur.fight) {
+      fightIt();
+      if (calamity && run.tower!.bosses > bossesSeen) {
+        bossesSeen = run.tower!.bosses;
+        bossLevels.push(heroLevel(run.roster[0]));
+      }
+    } else if (cur.kind === 'campfire') {
       if (squadHealth(run) < 0.75) rest(run);
       else {
         const hero = [...run.roster].sort((a, b) => strengthOf(meta, b) - strengthOf(meta, a))[0];
@@ -216,5 +246,5 @@ function playClimb(meta: Meta, run: Run, maxFloors: number): { floors: number; b
       if (run.tower!.cur?.fight) fightIt();
     }
   }
-  return { floors: run.stage - 1, bosses: run.tower!.bosses, act: run.tower!.act, level: run.roster.reduce((n, h) => n + heroLevel(h), 0) / run.roster.length };
+  return { floors: calamity ? run.tower!.spots ?? 0 : run.stage - 1, bosses: run.tower!.bosses, act: run.tower!.act, level: run.roster.reduce((n, h) => n + heroLevel(h), 0) / run.roster.length };
 }

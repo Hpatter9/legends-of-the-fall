@@ -3,11 +3,11 @@
 
 import { newCastle } from '../src/sim/castle';
 import { ACT_ROWS } from '../src/sim/tower';
-import { CAL_MAPS } from '../src/sim/calamity';
+import { CAL_MAPS, CAL_SCALE } from '../src/sim/calamity';
 import { startedMeta } from '../src/sim/meta';
 import { HEROES } from '../src/sim/units';
 import { mixSeed } from '../src/sim/rng';
-import { playCalamity, playTower } from './autoplay';
+import { bossLevels, playCalamity, playTower } from './autoplay';
 import { CAL_BOSSES } from '../src/sim/calamityBosses';
 import { UNITS } from '../src/sim/units';
 
@@ -42,6 +42,11 @@ export function calamityTable(): void {
   const asc = arg('--asc', 0);
   // (`--bossk a,b,c,d,e,f`: try the six bosses' hp scaled by these, their attack by half as much; a tuning run, nothing is written)
   const k = process.argv.includes('--bossk') ? process.argv[process.argv.indexOf('--bossk') + 1].split(',').map(Number) : [];
+  // (`--scale start,growth,step,perHero`: try other foe scales, `--xp n`: the run XP factor; tuning runs, nothing is written)
+  if (process.argv.includes('--scale')) {
+    const [a, b, c, d] = process.argv[process.argv.indexOf('--scale') + 1].split(',').map(Number);
+    Object.assign(CAL_SCALE, { start: a, growth: b, step: c, ...(d ? { perHero: d } : {}) });
+  }
   k.forEach((x, i) => {
     UNITS[CAL_BOSSES[i]].hp *= x;
     UNITS[CAL_BOSSES[i]].atk *= 1 - (1 - x) / 2;
@@ -54,6 +59,7 @@ export function calamityTable(): void {
   let heroes = 0;
   let lv = 0;
   const past = Array.from({ length: CAL_MAPS }, () => 0);
+  const lvls: number[][] = Array.from({ length: CAL_MAPS }, () => []);
   for (let a = 0; a < attempts; a++) {
     const r = playCalamity(startedMeta(a + 1), mixSeed(a + 1, 0xca1), HEROES[a % HEROES.length], newCastle(), asc);
     maps.push(r.maps);
@@ -61,6 +67,7 @@ export function calamityTable(): void {
     heroes += r.heroes;
     lv += r.level;
     if (r.cleared) cleared++;
+    bossLevels.forEach((l, i) => lvls[i].push(l));
     for (let k = 0; k < CAL_MAPS; k++) if (r.maps > k) past[k]++;
   }
   maps.sort((x, y) => x - y);
@@ -69,4 +76,7 @@ export function calamityTable(): void {
   console.log(`(mean hero level at the end: ${(lv / attempts).toFixed(1)})`);
   const mean = maps.reduce((n, x) => n + x, 0) / maps.length;
   console.log(`${String(maps[Math.floor(maps.length / 2)]).padStart(6)} ${mean.toFixed(2).padStart(5)}  ${past.map(pct).join(' ')}  ${pct(cleared).padStart(7)}  ${(heroes / attempts).toFixed(1).padStart(12)}  ${String(floors[Math.floor(floors.length / 2)]).padStart(14)}`);
+  // (the starting hero's level after each map's boss, of the runs that felled it)
+  const q = (v: number[], f: number) => (v.length ? [...v].sort((x, y) => x - y)[Math.min(v.length - 1, Math.floor(v.length * f))] : 0);
+  console.log(`starter's level after each boss: median ${lvls.map((v) => q(v, 0.5)).join(' / ')}   max ${lvls.map((v) => q(v, 1)).join(' / ')}   (spots cleared in a run, median ${String(floors[Math.floor(floors.length / 2)])})`);
 }

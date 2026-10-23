@@ -27,6 +27,21 @@ export const DIM_LEVEL = 12;
 export const DIM_SHARE = 0.25;
 /** A hero kind's lasting level goes on to `MAX_LEVEL`; the levels a run gives its own heroes (the spire, Calamity) stop at `RUN_MAX_LEVEL`. */
 export const RUN_MAX_LEVEL = 20;
+/** The levels a run gives its own heroes (the spire, the Calamity) stop here. */
+export const RUN_LEVEL_CAP = 30;
+/** In a run each level past `RUN_MAX_LEVEL` costs this many times what the plain curve asks (a lasting level's is `LATE_XP`): the late levels come to a thorough run, not to every one. */
+export const RUN_LATE_XP = 3;
+/** Total XP to reach a level in a run: the plain curve (30 × (level − 1) × level) to level 20, then `RUN_LATE_XP` times its steps. */
+export const runXpFor = (level: number): number => {
+  const plain = (n: number) => CURVE * (n - 1) * n;
+  return level <= RUN_MAX_LEVEL ? plain(level) : plain(RUN_MAX_LEVEL) + RUN_LATE_XP * (plain(level) - plain(RUN_MAX_LEVEL));
+};
+/** The level a run's XP reaches (1 to `RUN_LEVEL_CAP`). */
+export function runLevelOf(xp: number): number {
+  let level = 1;
+  while (level < RUN_LEVEL_CAP && xp >= runXpFor(level + 1)) level++;
+  return level;
+}
 /** Each lasting level past `RUN_MAX_LEVEL` adds this share of its full gain (the levels before it fade to `DIM_SHARE`): the late armies' power, now heroes have no rarity. */
 export const LATE_SHARE = 0.3;
 /** The extra hp and attack (as shares of the base) a lasting level gives for reaching it. */
