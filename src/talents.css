@@ -1,7 +1,7 @@
 /* ===== Talents: the hero sheet's panel and tree (`talentView.ts`). Inlined after equip.css by build.mjs. The icons are 16px tiles
    drawn at 3x (48px), never smoothed; a tile's frame shows its state (locked, available, learned, ruled out). ===== */
 .tPanel { display: flex; flex-direction: column; gap: 6px; padding: 6px; background: rgb(var(--black-rgb) / 0.3); border: 2px solid var(--s1); }
-.tPanel h4 { margin: 0; font: 700 14px var(--display); color: var(--gold-hi); }
+.tPanel h4 { margin: 0; font: 400 12px var(--display); color: var(--gold-hi); }
 .tHead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .tPoints { font: 700 15px var(--display); color: var(--gold-hi); }
 .tSum { margin: 0; font-size: 11px; color: var(--white); text-align: center; } .tSum.dim, .tPanel .dim, .tSub { color: var(--dim); } .tSub { font-size: 10px; text-align: center; line-height: 1.25; }
@@ -14,8 +14,8 @@
 .tLine { stroke: var(--s6); stroke-width: 2; vector-effect: non-scaling-stroke; shape-rendering: crispEdges; }
 .tLine.lit { stroke: var(--gold-hi); } .tLine.ruled { stroke: var(--s3); stroke-dasharray: 3 3; }
 .tRow { position: absolute; left: 0; font-size: 12px; line-height: 14px; color: var(--dim); letter-spacing: 0.5px; text-transform: uppercase; }
-.tNode { position: absolute; transform: translate(-50%, -50%); display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 56px; height: 56px; min-height: 0; padding: 0; background: var(--s1); border: 2px solid var(--s8); box-shadow: inset 0 0 0 2px var(--s0); }
-.tNode img { width: 48px; height: 48px; image-rendering: pixelated; display: block; pointer-events: none; }
+.tNode { position: absolute; transform: translate(-50%, -50%); display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 72px; height: 72px; min-height: 0; padding: 0; background: var(--s1); border: 2px solid var(--s8); box-shadow: inset 0 0 0 2px var(--s0); }
+.tNode img { width: 64px; height: 64px; image-rendering: pixelated; display: block; pointer-events: none; }
 .tNode .tCost { position: absolute; right: -2px; bottom: -2px; min-width: 14px; padding: 0 3px; font: 700 11px/14px var(--display); font-style: normal; text-align: center; color: var(--s1); background: var(--e5); box-shadow: 0 1px 0 var(--black); }
 .tNode.available { border-color: var(--gold-hi); box-shadow: inset 0 0 0 2px var(--s0), 0 0 0 2px var(--s8); }
 .tNode.pop { animation: tPop 0.4s steps(4) 1; }
@@ -38,3 +38,12 @@
 .tBar { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .tPanel button { min-height: 36px; font-size: 13px; }
 .tPanel .tNode { min-height: 0; }
+/* the box a tap on a tile opens: over the page, the node's picture, cost and words, then Learn or Back */
+.tModal { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgb(var(--s0-rgb) / 0.75); animation: fade 0.15s ease-out; }
+.tBox { display: flex; flex-direction: column; gap: 12px; box-sizing: border-box; width: min(100%, 360px); padding: 12px; background: var(--s3); border: 2px solid var(--gold-hi); box-shadow: inset 0 0 0 2px var(--s0), 0 0 0 2px var(--s0); }
+.tBox p { margin: 0; font: 400 12px/1.6 var(--body); color: var(--white); }
+.tBox small { font: 400 12px/1.4 var(--body); color: var(--dim); } .tBox small.tGood { color: var(--g4); } .tBox small.tBad { color: var(--danger-hi); }
+.tBox .tTitle { grid-template-columns: 76px 1fr; column-gap: 12px; }
+.tBox .tTitle b { font: 400 12px var(--display); color: var(--gold-hi); }
+.tBig { grid-row: 1 / 3; width: 64px; height: 64px; image-rendering: pixelated; padding: 4px; box-sizing: content-box; background: radial-gradient(var(--e2), var(--s3)); border: 2px solid var(--gold-hi); }
+.tBtns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; } .tBtns button { min-height: 48px; font-size: 12px; }

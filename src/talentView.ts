@@ -1,8 +1,9 @@
 // The Talents panel of the hero sheet: a line of how many points the hero has, and a button that opens its talent tree in
 // place. The tree is the four first-row nodes over the two pairs of tiers 2 and 3, as icon tiles joined by lines; a tile is
-// locked, available, learned or ruled out (the other of its pair was chosen). A tap on a tile shows what it does and a Learn
-// button; the bar above has the shard exchange and the Respec (which asks for a second tap). Reads and changes the meta only
-// through `talents.ts`; the icons are the equipment set's (16px tiles, drawn at 3x, never smoothed).
+// locked, available, learned or ruled out (the other of its pair was chosen). A tap on a tile opens a box over the page with what
+// it does, what it costs, and Learn (spend the point) or Back; the bar below has the shard exchange and the Respec (which asks for a
+// second tap). Reads and changes the meta only through `talents.ts`; the icons are the talent glyphs (`talentArt.ts`: 32px, drawn
+// at 2x, never smoothed), one for each kind of effect (`sim/talentGlyph.ts`).
 
 import { saveMeta, type Meta } from './sim/meta';
 import { UNITS } from './sim/units';
@@ -11,7 +12,8 @@ import {
   DEEP_TREE_POINTS, FULL_TREE_POINTS, MAX_SHARD_POINTS, SHARD_POINT_COST, TIER_COST, TIER_LEVEL, TREES, boughtOf, buyPoint, canBuyPoint, costOf, learn, nodeOf, picksOf, pointsEarned, pointsFree, pointsSpent, respec, respecCost, shardsToSpend,
   whyNot, type TalentNode,
 } from './sim/talents';
-import { EQUIP_ICONS } from './equipArt';
+import { TALENT_ICONS } from './talentArt';
+import { glyphOf } from './sim/talentGlyph';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -45,7 +47,7 @@ export function nodeTile(n: TalentNode, state: NodeState): HTMLButtonElement {
   const img = el('img');
   img.alt = '';
   img.draggable = false;
-  img.src = EQUIP_ICONS[n.icon];
+  img.src = TALENT_ICONS[glyphOf(n)];
   tile.append(img, el('i', 'tCost', String(TIER_COST[n.tier])));
   tile.title = n.name;
   tile.setAttribute('aria-label', `${n.name}, ${state}`);
@@ -82,6 +84,54 @@ export function drawTalents(meta: Meta, kind: string, changed: () => void = () =
     panel.append(open);
   };
 
+  /** The box over the page for a node: its picture, name, cost, what it does, and Learn or Back. */
+  const ask = (n: TalentNode) => {
+    const state = stateOf(meta, kind, n);
+    const back = el('div', 'tModal');
+    const box = el('div', 'tBox');
+    const close = () => {
+      back.remove();
+      sel = undefined;
+      view();
+    };
+    const title = el('div', 'tTitle');
+    const pic = el('img', 'tBig');
+    pic.src = TALENT_ICONS[glyphOf(n)];
+    pic.alt = '';
+    pic.draggable = false;
+    title.append(pic, el('b', '', n.name), el('small', '', `Tier ${n.tier} · ${costOf(n)} point${costOf(n) > 1 ? 's' : ''}`));
+    box.append(title, el('p', '', n.text));
+    if (n.tier === 2 || n.tier === 4) {
+      const skill = KITS[kind]?.skill;
+      if (skill) box.append(el('small', 'dim', `Changes ${skill.name}.`));
+    }
+    const free = pointsFree(meta, kind);
+    const row = el('div', 'tBtns');
+    if (state === 'taken') box.append(el('small', 'tGood', 'Learned.'));
+    else if (state === 'available') {
+      box.append(el('small', 'dim', `You have ${free} point${free === 1 ? '' : 's'}.`));
+      const go = button(`Learn (${costOf(n)} point${costOf(n) > 1 ? 's' : ''})`, 'primary');
+      go.addEventListener('click', () => {
+        if (learn(meta, kind, n.id)) popped = n.id;
+        back.remove();
+        sel = undefined;
+        commit();
+        view();
+      });
+      row.append(go);
+    } else box.append(el('small', 'tBad', whyNot(meta, kind, n.id) ?? ''));
+    const no = button('Back');
+    no.addEventListener('click', close);
+    row.append(no);
+    box.append(row);
+    back.append(box);
+    // (a tap outside the box is Back too)
+    back.addEventListener('click', (e) => {
+      if (e.target === back) close();
+    });
+    document.body.append(back);
+  };
+
   const view = () => {
     panel.replaceChildren();
     const free = pointsFree(meta, kind);
@@ -92,7 +142,7 @@ export function drawTalents(meta: Meta, kind: string, changed: () => void = () =
     // the tree: lines under the tiles
     const box = el('div', 'tTree');
     const w = 100;
-    const h = ROW_Y[7] + 60;
+    const h = ROW_Y[7] + 80;
     const ns = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(ns, 'svg');
     svg.setAttribute('class', 'tLines');
@@ -104,9 +154,9 @@ export function drawTalents(meta: Meta, kind: string, changed: () => void = () =
         if (c.tier !== a.tier + 1) continue;
         const line = document.createElementNS(ns, 'line');
         line.setAttribute('x1', String(nodeX(a)));
-        line.setAttribute('y1', String(ROW_Y[a.tier] + 28));
+        line.setAttribute('y1', String(ROW_Y[a.tier] + 36));
         line.setAttribute('x2', String(nodeX(c)));
-        line.setAttribute('y2', String(ROW_Y[c.tier] + 28));
+        line.setAttribute('y2', String(ROW_Y[c.tier] + 36));
         const lit = states.get(a.id) === 'taken' && states.get(c.id) !== 'ruled';
         line.setAttribute('class', `tLine ${lit ? 'lit' : states.get(c.id) === 'ruled' ? 'ruled' : ''}`);
         svg.append(line);
@@ -117,7 +167,7 @@ export function drawTalents(meta: Meta, kind: string, changed: () => void = () =
     for (const n of tree.nodes) {
       const tile = nodeTile(n, states.get(n.id)!);
       tile.style.left = `${nodeX(n)}%`;
-      tile.style.top = `${ROW_Y[n.tier] + 28}px`;
+      tile.style.top = `${ROW_Y[n.tier] + 36}px`;
       if (sel === n.id) tile.classList.add('sel');
       if (popped === n.id) tile.classList.add('pop');
       tile.addEventListener('click', () => {
@@ -125,6 +175,7 @@ export function drawTalents(meta: Meta, kind: string, changed: () => void = () =
         confirming = false;
         popped = undefined;
         view();
+        ask(n);
       });
       box.append(tile);
     }
@@ -134,31 +185,6 @@ export function drawTalents(meta: Meta, kind: string, changed: () => void = () =
       box.append(tag);
     }
     panel.append(box);
-
-    // the picked node
-    const n = sel ? nodeOf(kind, sel) : undefined;
-    const card = el('div', 'tCard');
-    if (n) {
-      const state = states.get(n.id)!;
-      const title = el('div', 'tTitle');
-      title.append(nodeTile(n, state), el('b', '', n.name), el('small', '', `Tier ${n.tier} · ${costOf(n)} point${costOf(n) > 1 ? 's' : ''}`));
-      card.append(title, el('p', '', n.text));
-      if (n.tier === 2 || n.tier === 4) {
-        const skill = KITS[kind]?.skill;
-        if (skill) card.append(el('small', 'dim', `Changes ${skill.name}.`));
-      }
-      if (state === 'taken') card.append(el('small', 'tGood', 'Learned.'));
-      else if (state === 'available') {
-        const go = button(`Learn (${costOf(n)} point${costOf(n) > 1 ? 's' : ''})`, 'primary');
-        go.addEventListener('click', () => {
-          if (learn(meta, kind, n.id)) popped = n.id;
-          commit();
-          view();
-        });
-        card.append(go);
-      } else card.append(el('small', 'tBad', whyNot(meta, kind, n.id) ?? ''));
-    } else card.append(el('p', 'tSum dim', 'Tap a tile to read it.'));
-    panel.append(card);
 
     // shards, respec
     const bar = el('div', 'tBar');
