@@ -11,3 +11,10 @@ the row can be tapped; the row took the board's room; its text was hard to read)
 - Tapping the column opens the list beside it: each trait's name and count in gold, what it gives, and what its next tier
   needs ("1 more hero for +10% attack"). Tapping the list closes it.
 - `synergyLines` reads "Samurai 3: +1% attack" (it read "3/2" when the count passed the tier's need).
+
+## The deploy strip made readable too
+
+The owner: the synergy text in the lower section (the deploy strip's chips) was still hard to read. Each chip's effect line
+was 9px (drawn 6px tall by the pixel face) at 80% opacity, and the hint line under the strip 11px. In `src/stone.css`
+both lines of a chip and the hint are now 12px with flat token colours (`--text`, `--text-dim`, `--btn-ink` on a lit chip,
+`--accent` when a tier wakes), with no fade, bold or outline.
