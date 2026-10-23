@@ -656,6 +656,8 @@ export class Fx {
       return { txt: twin, cut: () => {} };
     }
     const spot = placeLabel(this.shownLabels.map((o) => ({ x: o.x, y: o.y, w: o.width, h: o.height })), { x, y, w: txt.width, h: txt.height }, this.view);
+    // (a banner is wide: it stays inside the room the board has on the screen)
+    if (plain) spot.x = Math.max(this.view.x0 + txt.width / 2 + 4, Math.min(this.view.x1 - txt.width / 2 - 4, spot.x));
     txt.position.set(spot.x, spot.y);
     this.root.addChild(txt);
     this.shownLabels.push(txt);
@@ -787,8 +789,10 @@ export class Fx {
     promoteBurst(this.particles, grade, sp.x, sp.y, sp.tall);
     const def = defOf(sp.unit);
     const skill = tierSkillOf(sp.unit.def, grade);
-    this.label(`${def.name} · Tier ${grade}`, sp.x, sp.y - sp.tall - 30, grade > 2 ? 0xffe27a : 0xdce8ff, grade > 2 ? 24 : 12, grade > 2 ? 2200 : 1500, true);
-    if (skill) this.label(skill.name, sp.x, sp.y - sp.tall - 12, 0xfff2a0, 12, grade > 2 ? 2200 : 1500, true);
+    // (the banner: the name and the tier's skill small, the tier big over them)
+    const life = grade > 2 ? 2200 : 1500;
+    this.label(skill ? `${def.name} · ${skill.name}` : def.name, sp.x, sp.y - sp.tall - 8, 0xfff2a0, 12, life, true);
+    this.label(`Tier ${grade}`, sp.x, sp.y - sp.tall - 22, grade > 2 ? 0xffe27a : 0xdce8ff, grade > 2 ? 24 : 12, life, true);
     this.trauma = Math.max(this.trauma, grade > 2 ? 0.35 : 0.12);
     if (grade < 3) return;
     this.flash(0.35, 110);

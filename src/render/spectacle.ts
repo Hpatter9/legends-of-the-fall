@@ -59,8 +59,8 @@ export function comboGather(p: Particles, tone: ComboTone, spots: readonly Spot[
 const MAX_FOES = 10;
 export function comboStrike(p: Particles, tone: ComboTone, centre: { x: number; y: number }, foes: readonly Spot[]): void {
   const [a, b, c] = TONE_ELEMENTS[tone];
-  play(p, packKey(a, 'nova'), centre.x, centre.y - 20, { scale: 6, frameMs: 80, alpha: 0.7 });
-  play(p, packKey(b, 'wave'), centre.x, centre.y, { scale: 8, frameMs: 90, add: false, alpha: 0.7 });
+  play(p, packKey(a, 'nova'), centre.x, centre.y - 20, { scale: 5, frameMs: 80, alpha: 0.55 });
+  play(p, packKey(b, 'wave'), centre.x, centre.y, { scale: 7, frameMs: 90, add: false, alpha: 0.6 });
   play(p, packKey(c, 'wave'), centre.x, centre.y, { scale: 5, frameMs: 80, delay: 120, alpha: 0.6 });
   foes.slice(0, MAX_FOES).forEach((f, i) => {
     play(p, packKey(a, 'strike'), f.x, f.y - f.tall * 0.4, { scale: 1.8, frameMs: 50, delay: i * 45 });

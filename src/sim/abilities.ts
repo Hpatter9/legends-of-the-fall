@@ -1365,7 +1365,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Catchy Tune', text: 'Every 3.5s the ally with the least skill charge near him gains 16', tune: { every: 3500, charge: 16 } },
   },
   beastmaster: {
-    skill: { name: 'Call of the Wild', text: 'Two wolves answer his call and fight for him', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 700, anim: 'attack2', cast: callWolves },
+    skill: { name: 'Call of the Wild', text: 'A wolf answers his call and fights for him (two at most stand at once)', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 700, anim: 'attack2', cast: callWolves },
     passive: { name: 'Whip Crack', text: 'His blows slow the foe for 1.5s', slow: 1500 },
   },
   kraken: {

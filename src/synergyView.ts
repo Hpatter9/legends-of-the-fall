@@ -35,7 +35,7 @@ body:not([data-phase='fight']) #comboBar, body:not([data-phase='fight']) #comboL
 #synList[hidden] { display: none; }
 #synList b { font-weight: normal; color: var(--gold, var(--e6)); }
 #synList small { display: block; color: var(--dim, var(--e6)); font-size: 12px; }
-#comboBar { position: fixed; left: 6px; z-index: 2; box-sizing: border-box; width: 48px; padding: 4px 4px 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; background: var(--s1); border: 2px solid var(--s8); box-shadow: 0 2px 0 rgb(var(--black-rgb) / 0.6); color: var(--text); font: 400 12px/1 var(--body, monospace); letter-spacing: 0; text-shadow: none; border-radius: 0; }
+#comboBar { position: fixed; left: 6px; z-index: 2; box-sizing: border-box; width: 56px; padding: 4px 4px 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; background: var(--s1); border: 2px solid var(--s8); box-shadow: 0 2px 0 rgb(var(--black-rgb) / 0.6); color: var(--text); font: 400 12px/1 var(--body, monospace); letter-spacing: 0; text-shadow: none; border-radius: 0; }
 #comboBar[hidden], #comboList[hidden] { display: none; }
 #comboBar .cbName { font-size: 12px; color: var(--accent-hi); }
 #comboBar .cbTrack { position: relative; width: 16px; height: 96px; background: var(--s4); border: 2px solid var(--s9); box-sizing: border-box; overflow: hidden; }
