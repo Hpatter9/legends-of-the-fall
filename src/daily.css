@@ -16,7 +16,10 @@
 .dayStatus { font: 400 12px/1.2 var(--body); color: var(--text-dim); }
 .dayBtns { display: flex; gap: 12px; }
 .dayBtns button { min-width: 120px; }
-/* the result card's daily chest */
-.dayResult { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 4px; font: 400 12px/1.4 var(--body); color: var(--text); }
+/* the result card: a daily's heading is 24px on one line (12px for the wave under a fall), and its chest sits on a violet plate */
+#banner.daily { display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2; font: 400 24px/1.2 var(--display); letter-spacing: 1px; white-space: nowrap; }
+#banner.daily small { font: 400 12px/1.2 var(--body); letter-spacing: 0; color: var(--text); }
+.dayResult { display: flex; align-items: center; justify-content: center; gap: 12px; width: min(300px, calc(86 * var(--vw))); box-sizing: border-box; padding: 6px 8px; text-align: left; font: 400 12px/1.4 var(--body); color: var(--text); background: rgb(var(--p0-rgb) / 0.8); border: 2px solid var(--p2); }
 .dayResult .chestPic { flex: none; filter: drop-shadow(0 0 5px var(--p4)); }
 .dayResult[hidden] { display: none; }
+.chestShow.daily .chestRays { background: repeating-conic-gradient(from 0deg, rgb(var(--p4-rgb) / 0.5) 0 7deg, rgb(var(--p4-rgb) / 0) 7deg 20deg); }

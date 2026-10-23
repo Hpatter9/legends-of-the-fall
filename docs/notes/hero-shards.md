@@ -121,3 +121,5 @@ offer every pullable hero and no content hero).
 - With a flat price and fading odds, a late player can pull hundreds of times a day (the model does); the recruit page has only ×1 and ×10.
 - The pace model's milestone days and the income are guesses; change the constants in `tools/unlockPace.ts`.
 - The owner chose this rule (fading odds, flat price) over a rising price and a daily limit.
+
+> **Daily chest (`docs/notes/daily-goal.md`):** a cleared daily adds a chest (3 shards, now and then a hero draw). The model now plays the daily at a 70% clear rate with that chest; the 45th hero stays at day 186, the middle heroes come a little earlier (10 heroes day 8, 20 on day 36, 30 on day 70, 40 on day 112).

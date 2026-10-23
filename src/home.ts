@@ -8,7 +8,8 @@ import { BUILDING_IDS, BUILDINGS, buildMs, canBuildChapel, CHAPEL_COST, CHAPEL_M
 import { CastleScene, lookPicture } from './castle';
 import { BLURB, effectText } from './render/castleSpots';
 import { pullCost, saveMeta, type Meta, type Pull } from './sim/meta';
-import { dailyLine, towerOpen } from './sim/modes';
+import { dailyBossName } from './sim/daily';
+import { dailyLine, dailyStatus, towerOpen } from './sim/modes';
 import { CAL_MAPS } from './sim/calamity';
 import { ARMIES, armyById, armyCleared, armyIsNew, armyStars, armyUnlocked, bossOf, clearedCount, markSeen } from './sim/armies';
 import { ACHIEVEMENTS, claimAchievement, unclaimed } from './sim/achievements';
@@ -311,8 +312,8 @@ export class Home {
     // (the Daily board: a new daily wears the red dot; a cleared one a green check; the plate names the boss of the day and how it went)
     const today = m.daily[String(todayKey())];
     const cleared = !!today?.cleared;
-    const dailyLineText = dailyLine(m, todayKey());
-    const daily = place('hmDaily', cleared ? 'daily done' : 'daily', 'Daily', dailyLineText, `Daily challenge. ${dailyLineText}`, () => this.go(this.hooks.onDaily));
+    // (the plate names the boss of the day, with how it stands under it: the whole line "Today: Orc Warlord · not tried" is read aloud)
+    const daily = place('hmDaily', cleared ? 'daily done' : 'daily', dailyBossName(todayKey()), dailyStatus(m, todayKey()), `Daily challenge. ${dailyLine(m, todayKey())}`, () => this.go(this.hooks.onDaily));
     if (cleared) {
       const tick = el('i', 'dailyDone');
       tick.setAttribute('role', 'img');

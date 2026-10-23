@@ -1269,7 +1269,7 @@ class Game {
     // (an army's last boss has fallen: the next army's unlock moment, if it opened one, then the armies)
     if (this.run.cleared && this.run.mode?.kind === 'daily') {
       $('result').hidden = true;
-      return this.home.open(this.dailyPay?.counted ? 'Daily cleared! The daily chest is waiting by the camp fire.' : 'Daily cleared in practice.');
+      return this.home.open(this.dailyPay?.counted ? 'Daily cleared! The daily chest is on the cart.' : 'Daily cleared in practice.');
     }
     if (this.run.cleared && !this.run.tower) return this.armyWon();
     // (the tower: a lost run shows its summary, a won floor goes back to the map)
@@ -1794,8 +1794,10 @@ class Game {
       const cal = run.mode?.kind === 'calamity';
       const daily = run.mode?.kind === 'daily';
       const practice = run.mode?.kind === 'daily' && run.mode.practice;
-      $('banner').textContent = daily && run.cleared ? 'Daily cleared!' : daily && run.over ? `Daily over · wave ${run.best}/${DAILY_WAVES}` : run.cleared ? (cal ? 'Calamity ended!' : 'Army defeated!') : this.bossDown ? `${cal ? 'Map' : 'Act'} ${run.tower!.act - 1} cleared!` : b.phase === 'won' ? (run.tower ? 'Floor cleared!' : 'Victory!') : 'Defeat';
-      $('banner').className = b.phase;
+      $('banner').textContent = daily && run.cleared ? 'Daily cleared!' : daily && run.over ? 'Daily over' : run.cleared ? (cal ? 'Calamity ended!' : 'Army defeated!') : this.bossDown ? `${cal ? 'Map' : 'Act'} ${run.tower!.act - 1} cleared!` : b.phase === 'won' ? (run.tower ? 'Floor cleared!' : 'Victory!') : 'Defeat';
+      $('banner').className = `${b.phase}${daily ? ' daily' : ''}`;
+      // (a daily's fall names the wave under its heading: "Daily over · wave 6/10")
+      if (daily && run.over && !run.cleared) $('banner').append(Object.assign(document.createElement('small'), { textContent: `wave ${run.best}/${DAILY_WAVES}` }));
       const share = this.pay?.replay ? ' (a replay pays a share)' : practice ? ' (practice)' : '';
       const clear = this.pay?.firstClear ? ' · first clear!' : '';
       $('summary').textContent =
