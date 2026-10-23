@@ -1,4 +1,4 @@
-// Five-hero combos (working name "Accord"; `COMBO_NAME` is the one place the page reads it from): eight sets of five named heroes that,
+// Five-hero combos (the "Last Oath", the owner's name; `COMBO_NAME` is the one place the page reads it from): eight sets of five named heroes that,
 // fighting together, fill a bar on the left side of the fight and, when it is full, perform one big shared move. All of it is data
 // (`COMBOS`) read by one engine: `startCombo` when the fight begins, `tickCombo` every tick (feeds the bar and fires the move) and
 // `landCombo` when the move lands (its `beats`). No randomness: nothing here draws from any stream, so a fight plays out the same.
@@ -11,8 +11,8 @@ import { atkOf, defOf, hurt, type Battle, type BattleEvent, type Unit } from './
 import { callSummon, foesOf, gain, mendUnit, net } from './abilities';
 import type { Meta } from './meta';
 
-/** What the page calls the combo, until the owner picks a name. */
-export const COMBO_NAME = 'Accord';
+/** What the page calls the combo: the owner's pick of the names below. */
+export const COMBO_NAME = 'Last Oath';
 /** Other names proposed for it (`docs/notes/hero-skills.md`). */
 export const COMBO_NAME_IDEAS: readonly string[] = ['Accord', 'Grand Concord', 'Legend Strike', 'Fellowship Finale', 'Last Oath', 'Oathsong'];
 
