@@ -107,3 +107,45 @@ export function afterSide(seed0: number): Run {
   clearNode(r);
   return r;
 }
+
+/** A map of free exploration: both branches of a fork visited, the party standing back at the fork (a backtrack ahead of it). */
+export function explored(seed0 = 1): { run: Run; fork: number; a: number; b: number } {
+  for (let seed = seed0; seed < seed0 + 400; seed++) {
+    const r = fresh(seed, 'samurai', 4);
+    const t = r.tower!;
+    const n = t.map.find((x) => x.row === 1 && x.next.length >= 2 && t.map.some((p) => p.row === 0 && p.next.includes(x.id)));
+    if (!n) continue;
+    const parent = t.map.find((p) => p.row === 0 && p.next.includes(n.id))!;
+    const [a, b] = n.next;
+    for (const id of [parent.id, n.id, a, b]) {
+      enterNode(r, id);
+      clearNode(r);
+    }
+    // (back at the fork, on the way to the first branch's far side: the leader walks back over the cleared spots)
+    t.here = n.id;
+    t.at = n.id;
+    return { run: r, fork: n.id, a, b };
+  }
+  throw new Error('no fork');
+}
+
+/** The party standing at the spot before the boss's lair on map `act`, most of the map not cleared. */
+export function atDoor(seed: number, act: number): Run {
+  const r = fresh(seed, 'samurai', 4);
+  const t = r.tower!;
+  t.act = act;
+  t.bosses = act - 1;
+  t.map = mapFor(r, act);
+  const boss = t.map.find((n) => n.kind === 'boss')!;
+  const door = t.map.find((n) => n.next.includes(boss.id))!;
+  const chain: number[] = [];
+  for (let at: number | undefined = door.id; at !== undefined; ) {
+    chain.unshift(at);
+    at = t.map.find((n) => n.next.includes(at!) && n.row === t.map[at!].row - 1)?.id;
+  }
+  for (const id of chain) {
+    enterNode(r, id);
+    clearNode(r);
+  }
+  return r;
+}

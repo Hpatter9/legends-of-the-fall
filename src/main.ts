@@ -37,7 +37,7 @@ import { Gacha } from './gacha';
 import { Events } from './events';
 import { TowerView } from './towerView';
 import { showTwistBanner } from './twistView';
-import { abandonTower, finishTower, migrateTower, settleTower } from './sim/tower';
+import { abandonTower, finishTower, mapProgress, migrateTower, settleTower } from './sim/tower';
 import { hpShare } from './sim/health';
 import { Home } from './home';
 import { Party } from './party';
@@ -1267,7 +1267,7 @@ class Game {
     if (this.run.tower) {
       $('result').hidden = true;
       saveRun(this.run);
-      if (this.run.over) return this.towerView.showSummary(this.run, this.run.tower.summary ?? settleTower(this.meta, this.run)!, () => this.home.open(`${this.run.mode?.kind === 'calamity' ? (this.run.cleared ? 'The calamity is ended' : 'The calamity ended') : 'The climb ended'} on floor ${this.run.stage}: +${this.run.tower!.summary?.crowns ?? this.run.tower!.crowns} crowns earned`));
+      if (this.run.over) return this.towerView.showSummary(this.run, this.run.tower.summary ?? settleTower(this.meta, this.run)!, () => this.home.open(`${this.run.mode?.kind === 'calamity' ? (this.run.cleared ? 'The calamity is ended' : 'The calamity ended') : 'The climb ended'} ${this.run.mode?.kind === 'calamity' ? `in map ${Math.min(this.run.tower!.act, CAL_MAPS)}` : `on floor ${this.run.stage}`}: +${this.run.tower!.summary?.crowns ?? this.run.tower!.crowns} crowns earned`));
       return this.towerView.open(this.run);
     }
     // (a lost run goes back to the main screen, with its summary)
@@ -1728,7 +1728,7 @@ class Game {
     document.body.dataset.phase = b.phase;
     const army = armyOfRun(run);
     const kind = run.tower?.cur?.kind;
-    const stage = `${army ? `Wave ${run.stage}/${army.waves.length}` : run.mode?.kind === 'calamity' ? `Map ${run.tower!.act} · Floor ${run.stage}` : run.tower ? `Floor ${run.stage}` : `Stage ${run.stage}`}${kind === 'elite' ? ' · Elite' : isBossRun(run) ? ' · Boss' : ''}`;
+    const stage = `${army ? `Wave ${run.stage}/${army.waves.length}` : run.mode?.kind === 'calamity' ? `Map ${run.tower!.act} · ${mapProgress(run.tower!).done} of ${mapProgress(run.tower!).total} cleared` : run.tower ? `Floor ${run.stage}` : `Stage ${run.stage}`}${kind === 'elite' ? ' · Elite' : isBossRun(run) ? ' · Boss' : ''}`;
     $('status').textContent =
       b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : benchFull(run) ? `${stage} · bench full: recycle a hero to hire` : n ? `${stage} · ${n} of ${squadLimit(run)} placed` : `${stage} · drag heroes onto the blue tiles`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
     $('gold').textContent = `${run.gold} gold`;
@@ -1765,7 +1765,7 @@ class Game {
         b.phase === 'won'
           ? `${run.tower ? `Floor ${run.stage - 1} done · ` : ''}${left} of ${heroesPlaced(b)} heroes standing · +${this.gain} gold · +${this.crownGain} crowns${share}${clear} · ${clock(b.t)}${run.found?.length ? ` · found: ${run.found.join(', ')}` : ''}`
           : run.tower
-            ? `The ${cal ? 'calamity' : 'climb'} ends on floor ${run.stage}, ${cal ? 'map' : 'act'} ${run.tower.act} · ${run.stage - 1} floors cleared · +${this.crownGain} crowns`
+            ? `The ${cal ? 'calamity' : 'climb'} ends ${cal ? '' : `on floor ${run.stage}, `}${cal ? 'map' : 'act'} ${run.tower.act} · ${cal ? `${run.tower.spots ?? 0} spots cleared` : `${run.stage - 1} floors cleared`} · +${this.crownGain} crowns`
             : army
             ? `The ${army.name} holds at wave ${run.best} of ${army.waves.length}. It starts again from wave 1; your heroes keep their levels.`
             : `The run ends at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} summons · +${this.crownGain} crowns${modeNote(run)}`;

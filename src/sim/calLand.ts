@@ -226,8 +226,57 @@ export function landOf(seed: number, act: number, nodes: readonly MapNode[], sid
   return { act, spots, roads, decor, aMin, aMax, bMax: DECOR_B };
 }
 
-/* ------------------------------------------------------------------ the fog */
+/* ------------------------------------------------------------------ the graph, walked both ways */
 
+/** The spots one bridge from a spot: the map's links taken both ways (the portal joins the first floor), and a hidden side spot to the node it hangs from. */
+export function neighboursOf(map: readonly MapNode[], sides: readonly SideSpot[], id: number): number[] {
+  if (id === START_ID) return map.filter((n) => n.row === 0).map((n) => n.id);
+  const side = sides.find((s) => s.id === id);
+  if (side) return [side.from];
+  const n = map[id];
+  if (!n) return [];
+  const out = new Set<number>(n.next);
+  for (const m of map) if (m.next.includes(id)) out.add(m.id);
+  if (n.row === 0) out.add(START_ID);
+  for (const s of sides) if (s.from === id) out.add(s.id);
+  return [...out];
+}
+
+/** The ids the party has cleared on a map, with the portal (which is always open): the spots it may walk through. */
+export function openSet(t: Pick<Seen, 'path' | 'sideDone'>): Set<number> {
+  return new Set<number>([START_ID, ...t.path, ...(t.sideDone ?? [])]);
+}
+
+/**
+ * The shortest walk from spot `from` to spot `to` over the bridges: every spot between them must be one the party has cleared (or the portal); `to` itself may be a spot not yet cleared
+ * when it is next to one. Returns the spots in order, `from` and `to` included, or null when there is no such way. Ties go to the lower id, so it is deterministic.
+ */
+export function routeBetween(map: readonly MapNode[], sides: readonly SideSpot[], open: ReadonlySet<number>, from: number, to: number): number[] | null {
+  if (from === to) return [from];
+  const prev = new Map<number, number>([[from, from]]);
+  let layer = [from];
+  while (layer.length) {
+    const next: number[] = [];
+    for (const a of layer) {
+      for (const b of neighboursOf(map, sides, a).sort((x, y) => x - y)) {
+        if (prev.has(b)) continue;
+        // (an uncleared spot ends a walk, it is never walked through)
+        if (b !== to && !open.has(b)) continue;
+        prev.set(b, a);
+        if (b === to) {
+          const out = [to];
+          for (let at = to; at !== from; ) out.unshift((at = prev.get(at)!));
+          return out;
+        }
+        next.push(b);
+      }
+    }
+    layer = next;
+  }
+  return null;
+}
+
+/* ------------------------------------------------------------------ the fog */
 /** What the party has seen of an act's map (a view of `TowerState`: its map, the node cleared last, the nodes cleared, the node in play and the side spots taken). */
 export interface Seen {
   map: readonly MapNode[];
@@ -235,6 +284,8 @@ export interface Seen {
   path: readonly number[];
   cur?: { id: number };
   sideDone?: readonly number[];
+  /** Where the party stands (a calamity's: any spot, the portal -1); it is `at` when not set. */
+  here?: number;
 }
 
 export interface Fog {
@@ -245,32 +296,28 @@ export interface Fog {
 }
 
 /**
- * The spots the fog has lifted from: the start, the first floor's spots (the road out of the portal), each cleared spot and the spot or
- * spots (both of a fork) its road leads on to, the spot in play, and a side spot once the node it hangs from is cleared. Nothing further.
+ * The spots the fog has lifted from: the portal and the first floor, every cleared spot and every spot a bridge leads to from one (both ways: the party may go back and take what it
+ * passed), the spot in play, and a hidden side spot once the node it hangs from is cleared. Nothing further.
  */
 export function fogOf(t: Seen, sides: readonly SideSpot[]): Fog {
   const spots = new Set<number>([START_ID]);
   const roads = new Set<string>();
-  const cleared = new Set<number>(t.path);
-  for (const n of t.map) {
-    if (n.row === 0) {
-      spots.add(n.id);
-      roads.add(`${START_ID}>${n.id}`);
-    }
-  }
-  for (const id of cleared) {
-    spots.add(id);
-    for (const to of t.map[id]?.next ?? []) {
-      spots.add(to);
-      roads.add(`${id}>${to}`);
-    }
-  }
+  const known = new Set<number>([START_ID, ...t.path, ...(t.sideDone ?? [])]);
   if (t.cur) spots.add(t.cur.id);
-  for (const s of sides) {
-    if (!cleared.has(s.from)) continue;
-    spots.add(s.id);
-    roads.add(`${s.from}>${s.id}`);
+  const road = (a: number, b: number) => {
+    // (a road is named for the way the graph draws it)
+    const forward = a === START_ID || (b !== START_ID && (t.map[a]?.next.includes(b) ?? false)) || sides.some((s) => s.id === b && s.from === a);
+    roads.add(forward ? `${a}>${b}` : `${b}>${a}`);
+  };
+  for (const id of known) {
+    for (const to of neighboursOf(t.map, sides, id)) {
+      // (a side spot shows only from its own node; a node shows from any cleared neighbour)
+      spots.add(to);
+      road(id, to);
+    }
+    if (id !== START_ID) spots.add(id);
   }
+  for (const id of t.path) spots.add(id);
   return { spots, roads };
 }
 

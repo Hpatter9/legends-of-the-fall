@@ -49,3 +49,12 @@
 @keyframes cmBreathe { from { opacity: 0.55; } to { opacity: 0.95; } }
 @media (prefers-reduced-motion: reduce) { .cmNeb, .cmGlow { animation: none; } }
 .cmGround { z-index: 0; }
+
+/* ===== Free exploration (the owner: the map is cleared in any order, and walked back over): the header's two lines, and the rings of spots already cleared. Colours are the stone tokens. ===== */
+.rtTitle { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.rtTitle h2 { flex: none; }
+.rtTitle small { font: 400 12px/1.1 var(--body); color: var(--s13); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cmSpot.done .cmHit { cursor: pointer; }
+.cmSpot.done.again .cmRing { border: 2px solid rgb(var(--g4-rgb) / 0.8); background: rgb(var(--g4-rgb) / 0.1); }
+.cmSpot.picked.done .cmRing, .cmSpot.picked.start .cmRing { border: 2px solid rgb(var(--b4-rgb) / 0.9); background: rgb(var(--b4-rgb) / 0.18); }
+.cmSpot.start .cmRing { border: 0; }
