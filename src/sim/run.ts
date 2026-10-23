@@ -426,7 +426,7 @@ export function setSquad(run: Run, id: number, on: boolean): boolean {
 
 const KEY = 'legends.run';
 /** The tower and the calamity each keep their own save, so a climb survives the armies' runs and a reload (`saveSlot`). */
-const SLOT_KEYS = { tower: 'legends.tower', calamity: 'legends.calamity' } as const;
+export const SLOT_KEYS = { tower: 'legends.tower', calamity: 'legends.calamity' } as const;
 export type SlotKind = keyof typeof SLOT_KEYS;
 /** Save a run where it belongs: a tower or calamity run in its own slot, any other in the ordinary one. */
 export const saveSlot = (run: Run, store: Pick<Storage, 'setItem'> = localStorage) => store.setItem(run.mode?.kind === 'tower' || run.mode?.kind === 'calamity' ? SLOT_KEYS[run.mode.kind] : KEY, JSON.stringify(run));

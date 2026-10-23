@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DEFAULTS, parseSettings } from '../src/settings';
+import { DEFAULTS, parseSettings, SAVE_KEYS } from '../src/settings';
+import { SLOT_KEYS } from '../src/sim/run';
 
 test('nothing saved gives the defaults', () => {
   assert.deepEqual(parseSettings(null), DEFAULTS);
@@ -34,4 +35,9 @@ test('a wrong type or a speed other than 1 or 2 falls back to the default', () =
 test('text that is not JSON gives the defaults', () => {
   assert.deepEqual(parseSettings('{not json'), DEFAULTS);
   assert.deepEqual(parseSettings('42'), DEFAULTS);
+});
+
+test('Start over wipes every run in progress: the ordinary one and the spire and Calamity slots (a new game starts them all afresh)', () => {
+  for (const k of ['legends.meta', 'legends.run', ...Object.values(SLOT_KEYS)]) assert.ok(SAVE_KEYS.includes(k), k);
+  assert.ok(!SAVE_KEYS.includes('legends.settings') && !SAVE_KEYS.includes('legends.sound'));
 });
