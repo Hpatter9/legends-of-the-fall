@@ -17,6 +17,7 @@ import { BusMixer, CueSynth, MusicPlayer, type BusName } from './audioProcessors
 import { AmbientBeds } from './audioBeds';
 import { DuckCounter, panOfEvent, type PlannedCue, type Scene, type Track } from './audioRules';
 import { bakeTrack } from './musicBake';
+import { SCENE_TRACKS } from './musicScore';
 import { Mixer, cuesFor, intensityOf, type Cue } from './soundRules';
 
 const MUSIC_LEVEL = 0.22;
@@ -231,7 +232,12 @@ export function setTension(t: number): void {
 }
 
 /** The cinematics' music: a scene's id to the track it plays (a scene with no score of its own has none). */
-const SCENE_TRACK: Record<string, Track> = { opening: 'opening', gorvak: 'gorvak' };
+const SCENE_TRACK: Record<string, Track> = {
+  ...Object.fromEntries(SCENE_TRACKS.map((t) => [t, t])),
+  // (the Calamity heralds by their foe ids, and some moods by what they are for)
+  calBoss1: 'gorvak', calBoss2: 'herald2', calBoss3: 'herald3', calBoss4: 'herald4', calBoss5: 'herald5', calBoss6: 'herald6',
+  awakening: 'solemn', victory: 'triumph', spireClimb: 'spire',
+};
 /** What was playing before a scene's music took over, so `endScene` can put it back. */
 let beforeScene: Track | null = null;
 
@@ -242,12 +248,12 @@ export function setMusic(track: Track | `scene:${string}`): void {
   engine?.music.setTrack(track as Track);
 }
 
-/** Starts a cinematic's music (`opening`, `gorvak`) by the scene's id; an id with no score leaves the music as it is. It loops until
+/** Starts a cinematic's music by the scene's id (`opening`, `gorvak`, `herald2` to `herald6`, `triumph`, `comic`, `solemn`, `spire`, or a Calamity foe id `calBoss1` to `calBoss6`, or the aliases `awakening`, `victory`, `spireClimb`); an id with no score leaves the music as it is. It loops until
  *  `endScene`. The scenes' stings are cues: `play('sceneBoss')` for a boss arriving, `play('sceneVictory')` for a victory. */
 export function playScene(id: string): void {
   const track = SCENE_TRACK[id];
   if (!track || !engine) return;
-  if (beforeScene === null && engine.music.current && !(engine.music.current in { opening: 1, gorvak: 1 })) beforeScene = engine.music.current;
+  if (beforeScene === null && engine.music.current && !(SCENE_TRACKS as readonly string[]).includes(engine.music.current)) beforeScene = engine.music.current;
   engine.music.setTrack(track);
 }
 

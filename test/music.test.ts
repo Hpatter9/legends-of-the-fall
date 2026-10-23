@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { SCORES, STEMS, TRACK_RMS, loopSeconds, noiseStream, stemLevels } from '../src/render/musicScore';
+import { SCENE_TRACKS, SCORES, STEMS, TRACK_RMS, loopSeconds, noiseStream, stemLevels } from '../src/render/musicScore';
 import { BAKE_RATE, bakeTrack, rms, type OfflineMaker } from '../src/render/musicBake';
 import { FakeContext, installFakeAudio } from './audioFake';
 
-const TRACKS = ['town', 'battle', 'boss', 'opening', 'gorvak'] as const;
+const TRACKS = ['town', 'battle', 'boss', ...SCENE_TRACKS] as const;
 
 test('every track is eight bars, its notes fit the loop and its stems are in sensible ranges', () => {
   for (const track of TRACKS) {

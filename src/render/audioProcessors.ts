@@ -7,7 +7,7 @@ import { AudioProcessor, type SchedulableParam } from '@audiorective/core';
 import { Limiter } from '@audiorective/effects';
 import type { Cue } from './soundRules';
 import { bakeTrack, type Baked } from './musicBake';
-import { CALM_TRACKS, STEMS, stemLevels, type Stem } from './musicScore';
+import { CALM_TRACKS, SCENE_TRACKS, STEMS, stemLevels, type Stem } from './musicScore';
 import { DUCK_GAIN, DUCK_HZ, OPEN_HZ, colourOf, cutoffOf, percActive, percLevel, rateOf, swellOf, type Track } from './audioRules';
 
 /** The longest a crossfade takes to settle (seconds). */
@@ -836,6 +836,8 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swel
         // (the wanted track may have changed while it baked)
         if (this.current !== track || !this.enabled) return;
         if (prev && prev !== track) this.release(prev);
+        // (a scene's track is kept only while it plays: the many short scores would otherwise pile up in memory)
+        for (const t of SCENE_TRACKS) if (t !== track && t !== prev) this.baked.delete(t);
         this.begin(track, baked);
         this.applyColour(true);
       },
