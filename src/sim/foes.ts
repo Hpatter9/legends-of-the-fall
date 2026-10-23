@@ -73,7 +73,7 @@ export const FOES: Record<string, UnitDef> = {
   orcWarlord: { ...WARLORD, id: 'orcWarlord', name: 'Orc Warlord', sheet: 'hk_orc_warlord', scale: 0.55 },
   demonLord: { ...DEMON_LORD, id: 'demonLord', name: 'Demon Lord', sheet: 'hk_demon_lord', scale: 0.46, hp: 3600, atk: 70 },
   hornedOgre: { ...HORNED_OGRE, id: 'hornedOgre', name: 'Horned Ogre', sheet: 'hk_ogre_horned', scale: 0.47, hp: 4800, atk: 85 },
-  forestBoss1: { ...FOREST, id: 'forestBoss1', name: 'Thorn Warden', sheet: 'forest_boss_1', scale: 1.05, hp: 3300, atk: 65 },
+  forestBoss1: { ...FOREST, id: 'forestBoss1', name: 'Thorn Warden', sheet: 'forest_boss_1', scale: 0.45, hp: 3300, atk: 65 },
   forestBoss2: { ...FOREST, id: 'forestBoss2', name: 'Wood Raider', sheet: 'forest_boss_2', scale: 1.05, hp: 3900, atk: 72, def: 6, moveMs: 500, atkMs: 900, jump: 3, role: 'Forest raider, quick' },
   forestBoss3: { ...FOREST, id: 'forestBoss3', name: 'Grove Spearlord', sheet: 'forest_boss_3', scale: 1.28, hp: 6000, atk: 100, def: 5, range: 2, role: 'Forest spearman' },
   // the armies' kinds (same sheets, a skill each)
@@ -110,7 +110,7 @@ export const FOES: Record<string, UnitDef> = {
   nineTails: { ...MID, id: 'nineTails', name: 'Nine-Tailed Fox', sheet: 'kitsune', scale: 0.95, hp: 1500, atk: 46, def: 6, range: 3, shot: 'fire', moveMs: 600, atkMs: 1300, role: 'Foxfire, and heroes turn on their own' },
   oniKing: { side: 'foe', id: 'oniKing', name: 'Oni King', sheet: 'oni_king', scale: 0.5, hp: 3200, atk: 80, def: 11, range: 1, moveMs: 850, atkMs: 1300, jump: 2, role: 'Smashes the line, roars heroes down' },
   // the Golem Forge
-  stoneGolem: { ...GOLEM, id: 'stoneGolem', name: 'Stone Golem', sheet: 'golem_stone', scale: 0.55, role: 'Crushing blows' },
+  stoneGolem: { ...GOLEM, id: 'stoneGolem', name: 'Stone Golem', sheet: 'golem_stone', scale: 0.45, role: 'Crushing blows' },
   ironGolem: { ...GOLEM, id: 'ironGolem', name: 'Iron Golem', sheet: 'golem_iron', scale: 0.55, hp: 540, atk: 24, def: 12, moveMs: 1100, role: 'Plated, draws the heroes' },
   crystalGolem: { ...GOLEM, id: 'crystalGolem', name: 'Crystal Golem', sheet: 'golem_crystal', scale: 0.55, hp: 340, atk: 26, def: 7, moveMs: 900, atkMs: 1300, role: 'Shards that hold heroes still' },
   magmaGolem: { ...GOLEM, id: 'magmaGolem', name: 'Magma Golem', sheet: 'golem_magma', scale: 0.55, hp: 400, atk: 32, def: 6, moveMs: 950, role: 'Molten blows, bursts of magma' },

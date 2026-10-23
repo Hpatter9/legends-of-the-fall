@@ -836,9 +836,9 @@
   "lies": true
  },
  "forest_boss_1": {
-  "w": 118,
-  "h": 45,
-  "perRow": 6,
+  "w": 126,
+  "h": 125,
+  "perRow": 5,
   "rows": [
    "walk",
    "attack",
@@ -847,14 +847,15 @@
    "dead"
   ],
   "counts": {
-   "walk": 6,
-   "attack": 6,
+   "walk": 5,
+   "attack": 5,
    "idle": 4,
    "hurt": 4,
-   "dead": 6
+   "dead": 5
   },
-  "figure": 44,
-  "facesRight": false
+  "figure": 121,
+  "facesRight": true,
+  "lies": true
  },
  "forest_boss_2": {
   "w": 66,
@@ -1532,9 +1533,9 @@
   "lies": true
  },
  "golem_stone": {
-  "w": 96,
-  "h": 120,
-  "perRow": 6,
+  "w": 132,
+  "h": 125,
+  "perRow": 5,
   "rows": [
    "walk",
    "attack",
@@ -1543,13 +1544,13 @@
    "dead"
   ],
   "counts": {
-   "walk": 6,
+   "walk": 5,
    "attack": 5,
    "idle": 4,
-   "hurt": 2,
+   "hurt": 4,
    "dead": 5
   },
-  "figure": 92,
+  "figure": 110,
   "facesRight": true,
   "lies": true
  },
