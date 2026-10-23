@@ -410,7 +410,7 @@ class Game {
   /** The summoning cinematic for a pull: the hero it brought (a new one first) steps into the circle's light. True when a tap skipped it, which skips the hall's show too. It never holds up a pull: a tap anywhere ends it. */
   private async summonCinematic(got: Pull[]): Promise<boolean> {
     const pick = got.find((p) => p.isNew) ?? got[0];
-    if (!pick || !settings().cinematics) return false;
+    if (!pick || !settings().cinematics || !settings().summonScene) return false;
     return (await this.scenes.play(summonScene(pick.kind, UNITS[pick.kind].name), this.players(), true)) === 'skipped';
   }
 
