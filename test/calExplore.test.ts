@@ -6,7 +6,7 @@ import { CAL_ROWS } from '../src/sim/calamity';
 import { buy, calamityMap, choices, clearNode, enterNode, floorOf, hereOf, mapFor, mapProgress, moveTo, routeTo, setGoing, sideChoices, spotFloor } from '../src/sim/tower';
 import { fogOf, neighboursOf, routeBetween, SIDE_BASE, sideSpots, START_ID } from '../src/sim/calLand';
 import { heroLevel } from '../src/sim/climb';
-import { RUN_LATE_XP, RUN_LEVEL_CAP, RUN_MAX_LEVEL, runLevelOf, runXpFor } from '../src/sim/levels';
+import { LATE_LEVEL, levelOf, RUN_MAX_LEVEL, xpFor } from '../src/sim/levels';
 import { loadSlot, saveSlot, type Run } from '../src/sim/run';
 
 const run = (seed: number): Run => calamityRun(seed, startedMeta(5), 'knight', 0);
@@ -257,17 +257,14 @@ test('a calamity saved before free exploration loads and carries on: its cleared
   assert.equal(old.tower!.spots, 1);
 });
 
-test('a run\'s level goes on to 30: levels past 20 cost more, but the cap is 30, not 20', () => {
-  assert.equal(RUN_LEVEL_CAP, 30);
-  assert.equal(runLevelOf(runXpFor(20)), 20);
-  assert.equal(runLevelOf(runXpFor(25)), 25, 'level 25 is reached');
-  assert.equal(runLevelOf(runXpFor(30)), 30);
-  assert.equal(runLevelOf(1e9), 30, 'and no further');
-  assert.ok(runXpFor(21) - runXpFor(20) > runXpFor(20) - runXpFor(19), 'a level past 20 costs more than one before it');
-  assert.equal(runXpFor(21) - runXpFor(20), RUN_LATE_XP * 30 * 2 * 20, 'by the run\'s late factor');
-  for (let l = 1; l < RUN_MAX_LEVEL; l++) assert.equal(runXpFor(l), 30 * (l - 1) * l, 'the curve to 20 is the plain one');
-  const h = { id: 1, kind: 'knight', grade: 1, xp: runXpFor(24) };
-  assert.equal(heroLevel(h), 24);
+test('a run\'s level goes on to 30: levels past 20 cost more, and the run\'s hero levels past 20', () => {
+  assert.equal(RUN_MAX_LEVEL, 30);
+  assert.equal(levelOf(xpFor(LATE_LEVEL), RUN_MAX_LEVEL), 20);
+  assert.equal(levelOf(xpFor(25), RUN_MAX_LEVEL), 25, 'level 25 is reached');
+  assert.equal(levelOf(xpFor(30), RUN_MAX_LEVEL), 30);
+  assert.equal(levelOf(1e9, RUN_MAX_LEVEL), 30, 'and no further');
+  assert.ok(xpFor(21) - xpFor(20) > xpFor(20) - xpFor(19), 'a level past 20 costs more than one before it');
+  assert.equal(heroLevel({ id: 1, kind: 'knight', grade: 1, xp: xpFor(24) }), 24);
 });
 
 test('the calamity\'s map nodes are as they were, and the same for a seed every time', () => {

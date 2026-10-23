@@ -25,24 +25,11 @@ export const LEVEL_ATK = 0.18;
 /** From this level on, each level adds only `DIM_SHARE` of its gain (diminishing returns, so a team's levels stop being decisive). */
 export const DIM_LEVEL = 12;
 export const DIM_SHARE = 0.25;
-/** A hero kind's lasting level goes on to `MAX_LEVEL`; the levels a run gives its own heroes (the spire, Calamity) stop at `RUN_MAX_LEVEL`. */
-export const RUN_MAX_LEVEL = 20;
-/** The levels a run gives its own heroes (the spire, the Calamity) stop here. */
-export const RUN_LEVEL_CAP = 30;
-/** In a run each level past `RUN_MAX_LEVEL` costs this many times what the plain curve asks (a lasting level's is `LATE_XP`): the late levels come to a thorough run, not to every one. */
-export const RUN_LATE_XP = 3;
-/** Total XP to reach a level in a run: the plain curve (30 × (level − 1) × level) to level 20, then `RUN_LATE_XP` times its steps. */
-export const runXpFor = (level: number): number => {
-  const plain = (n: number) => CURVE * (n - 1) * n;
-  return level <= RUN_MAX_LEVEL ? plain(level) : plain(RUN_MAX_LEVEL) + RUN_LATE_XP * (plain(level) - plain(RUN_MAX_LEVEL));
-};
-/** The level a run's XP reaches (1 to `RUN_LEVEL_CAP`). */
-export function runLevelOf(xp: number): number {
-  let level = 1;
-  while (level < RUN_LEVEL_CAP && xp >= runXpFor(level + 1)) level++;
-  return level;
-}
-/** Each lasting level past `RUN_MAX_LEVEL` adds this share of its full gain (the levels before it fade to `DIM_SHARE`): the late armies' power, now heroes have no rarity. */
+/** A hero kind's lasting level goes on to `MAX_LEVEL`, and so do the levels a run gives its own heroes (the spire, Calamity): `RUN_MAX_LEVEL`. */
+export const RUN_MAX_LEVEL = MAX_LEVEL;
+/** The level past which the curve turns steeper: each level costs `LATE_XP` times the plain curve, and a lasting level pays `LATE_SHARE` of a step (it was the run's cap until runs could go on to 30). */
+export const LATE_LEVEL = 20;
+/** Each lasting level past `LATE_LEVEL` adds this share of its full gain (the levels before it fade to `DIM_SHARE`): the late armies' power, now heroes have no rarity. */
 export const LATE_SHARE = 0.3;
 /** The extra hp and attack (as shares of the base) a lasting level gives for reaching it. */
 export const MILESTONES: readonly { level: number; hp: number; atk: number }[] = [
@@ -51,13 +38,13 @@ export const MILESTONES: readonly { level: number; hp: number; atk: number }[] =
 ];
 const CURVE = 30;
 
-/** Each level past `RUN_MAX_LEVEL` costs this many times what the plain curve asks, so the late levels are for the long game. */
+/** Each level past `LATE_LEVEL` costs this many times what the plain curve asks, so the late levels are for the long game. */
 export const LATE_XP = 4;
 
-/** Total XP to reach a level: 30 × (level − 1) × level, so each level costs 60 more than the one before (past `RUN_MAX_LEVEL`, `LATE_XP` times that). */
+/** Total XP to reach a level: 30 × (level − 1) × level, so each level costs 60 more than the one before (past `LATE_LEVEL`, `LATE_XP` times that). */
 export const xpFor = (level: number) => {
   const plain = (n: number) => CURVE * (n - 1) * n;
-  return level <= RUN_MAX_LEVEL ? plain(level) : plain(RUN_MAX_LEVEL) + LATE_XP * (plain(level) - plain(RUN_MAX_LEVEL));
+  return level <= LATE_LEVEL ? plain(level) : plain(LATE_LEVEL) + LATE_XP * (plain(level) - plain(LATE_LEVEL));
 };
 
 /** The level a total of XP reaches (1 to `max`, `MAX_LEVEL` unless a run's own cap is given). */
@@ -84,7 +71,7 @@ const steps = (level: number): number => Math.min(level - 1, DIM_LEVEL - 1) + DI
 export const levelBoost = (level: number): { hp: number; atk: number } => ({ hp: 1 + LEVEL_HP * steps(level), atk: 1 + LEVEL_ATK * steps(level) });
 
 /** Like `steps`, with the lasting levels' bigger late share. */
-const lastingSteps = (level: number): number => steps(Math.min(level, RUN_MAX_LEVEL)) + LATE_SHARE * Math.max(0, level - RUN_MAX_LEVEL);
+const lastingSteps = (level: number): number => steps(Math.min(level, LATE_LEVEL)) + LATE_SHARE * Math.max(0, level - LATE_LEVEL);
 const milestone = (level: number, key: 'hp' | 'atk'): number => MILESTONES.reduce((n, m) => (level >= m.level ? n + m[key] : n), 0);
 
 /** Hp and attack multipliers of a hero kind's lasting level (x1 at level 1): `levelBoost`, but the late levels pay more and the milestones add a lump. */

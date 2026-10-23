@@ -20,3 +20,24 @@ button:disabled, button.primary:disabled, .hmBig:disabled { color: var(--off-ink
 /* the result's line sits on the board's sky: a slate plate behind it keeps it readable */
 #summary { background: rgb(var(--s1-rgb) / 0.82); box-shadow: 0 0 0 2px var(--s7); padding: 6px 10px; color: var(--text); }
 #summary b, #summary em { color: var(--accent-hi); }
+
+/* The lives (an army's retries) beside the gold: the DawnLike heart at twice its size, grey once spent; the one just spent
+   shrinks and fades once (no flashing). */
+#lives { display: flex; gap: 2px; align-items: center; }
+#lives[hidden] { display: none; }
+#lives img { width: 32px; height: 32px; image-rendering: pixelated; }
+#lives img.spent { filter: grayscale(1) brightness(0.55); opacity: 0.6; }
+#lives img.lost { animation: heartLost 0.6s ease-out both; }
+@keyframes heartLost { from { filter: none; opacity: 1; transform: scale(1.25); } to { filter: grayscale(1) brightness(0.55); opacity: 0.6; transform: none; } }
+@media (prefers-reduced-motion: reduce) { #lives img.lost { animation: none; } }
+
+/* The deploy strip's synergy chips and the line under them, made readable (the owner: hard to read). The pixel face reads
+   cleanly only at 12px steps: the effect line was 9px (drawn 6px) and faded, the hint 11px. Both lines at 12px, flat
+   colours, no fade, no bold, no outline. */
+#traits { gap: 4px; align-items: stretch; }
+.trait { font: 400 12px/16px var(--body); letter-spacing: 0; text-shadow: none; padding: 2px 6px; color: var(--text); }
+.trait.on { font-weight: 400; color: var(--btn-ink); }
+.trait small { font: 400 12px/14px var(--body); letter-spacing: 0; opacity: 1; color: var(--text-dim); }
+.trait.on small { color: var(--btn-ink); }
+#traitHint { font: 400 12px/16px var(--body); letter-spacing: 0; text-shadow: none; color: var(--text-dim); min-height: 16px; padding: 2px 0; }
+#traitHint.wake { color: var(--accent); }

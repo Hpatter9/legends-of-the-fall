@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { apart, fight, place, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
-import { afterBlow, onKill, onStrike, rageOf, tal } from '../src/sim/abilities';
+import { afterBlow, onKill, onStrike, rageOf, tal, ULT_LEVEL } from '../src/sim/abilities';
 import { firedCount } from '../src/sim/equipFx';
 import { ABILITIES, emptyStats, equipItem, grantEquipment, type EquipStats } from '../src/sim/equipment';
 import { loadMeta, startedMeta, saveMeta } from '../src/sim/meta';
@@ -213,12 +213,12 @@ test('old saves load with no talents, and a damaged one keeps only what is legal
 // ---- a fight ----
 
 /** The hero on the deploy row with `eq`, three skeletons moved to `distance` tiles from it, the fight begun. */
-function arena(kind: string, eq: EquipStats | undefined, distance = 1, o: { hp?: number; seed?: number } = {}): { b: Battle; hero: Unit; foes: Unit[] } {
+function arena(kind: string, eq: EquipStats | undefined, distance = 1, o: { hp?: number; seed?: number; level?: number } = {}): { b: Battle; hero: Unit; foes: Unit[] } {
   const b = startBattle(o.seed ?? 3, ['skeleton', 'skeleton', 'skeleton']);
   const row = D - DEPLOY_ROWS + 1;
   let u0 = 0;
   while (!standable(tileAt(b.board, u0, row))) u0++;
-  place(b, kind, u0, row, 1, { equip: eq, hp: o.hp ?? 6 });
+  place(b, kind, u0, row, 1, { equip: eq, hp: o.hp ?? 6, ...(o.level ? { level: o.level } : {}) });
   const hero = b.units.find((x) => x.tag === 1)!;
   const foes = b.units.filter((x) => x.side === 'foe');
   const free: [number, number][] = [];
@@ -251,7 +251,7 @@ test('pow lifts what a skill deals (and ultPow only the ultimate)', () => {
   assert.ok(dmg({ pow: 0.5 }) > dmg({}) * 1.3);
   assert.equal(dmg({ ultPow: 0.9 }), dmg({}), 'a skill without an ultimate ignores ultPow');
   const ult = (t: Record<string, number>) => {
-    const a = arena('yamabushi', withTal(t), 1);
+    const a = arena('yamabushi', withTal(t), 1, { level: ULT_LEVEL });
     return skillDamage(castOnce(a, { ult: true }).events, a.hero);
   };
   assert.ok(ult({ ultPow: 0.5 }) > ult({}) * 1.3);
@@ -363,7 +363,7 @@ test('skillSlow and skillStun hold what a skill hits', () => {
 
 test('ultRate fills the ultimate faster', () => {
   const fill = (t: Record<string, number>) => {
-    const a = arena('kitsune', withTal(t), 6);
+    const a = arena('kitsune', withTal(t), 6, { level: ULT_LEVEL });
     for (let i = 0; i < 100; i++) stepBattle(a.b);
     return a.hero.charge2 ?? 0;
   };

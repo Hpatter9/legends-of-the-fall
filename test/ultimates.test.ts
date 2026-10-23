@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { addUnit, startBattle, stepBattle, place, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
 import { CHARGE_MAX, KITS, tryCast, ULT_LEVEL, ULT_RATE, ultimateOf, ultimateReady } from '../src/sim/abilities';
 import { localBoost } from '../src/sim/climb';
-import { RUN_LEVEL_CAP, xpFor } from '../src/sim/levels';
+import { RUN_MAX_LEVEL, xpFor } from '../src/sim/levels';
 import { enterPhase } from '../src/sim/bossPhases';
 import { ALL_HEROES } from '../src/sim/units';
 import { gradeBoost } from '../src/sim/run';
@@ -37,21 +37,22 @@ test('every hero has an ultimate, and it charges slower than the skill', () => {
   const names = ALL_HEROES.map((k) => KITS[k].ultimate!.name);
   assert.equal(new Set(names).size, names.length);
   const b = arena();
-  const u = addUnit(b, 'kitsune', 3, 8);
+  const u = addUnit(b, 'knight', 3, 8, gradeBoost(1, 0, ULT_LEVEL));
   addUnit(b, 'skeleton', 3, 4);
   run(b, 1000);
-  assert.ok(u.charge > 0 && Math.abs((u.charge2 ?? 0) - u.charge * ULT_RATE) < 1e-6);
+  assert.ok(u.charge > 0 && Math.abs((u.charge2 ?? 0) - u.charge * ULT_RATE * KITS.knight.ultimate!.tuned!.rate) < 1e-6);
   assert.equal(ultimateReady(u), false);
 });
 
-test('the first eight ultimates are always the hero\'s own; every other one unlocks at level 15', () => {
-  for (const k of FIRST_EIGHT) assert.equal(KITS[k].ultimate!.unlock, undefined, k);
-  for (const k of OTHERS) assert.equal(KITS[k].ultimate!.unlock, ULT_LEVEL, k);
+test('all 45 ultimates unlock at level 15, the first eight\'s too', () => {
+  for (const k of ALL_HEROES) assert.equal(KITS[k].ultimate!.unlock, ULT_LEVEL, k);
   assert.equal(ULT_LEVEL, 15);
   const b = arena();
   const first = addUnit(b, 'kitsune', 1, 8);
-  assert.ok(ultimateOf(first), 'a level 1 Kitsune has hers');
-  for (const k of OTHERS) {
+  assert.equal(ultimateOf(first), undefined, 'a level 1 Kitsune has no ultimate yet');
+  first.charge2 = CHARGE_MAX;
+  assert.equal(ultimateReady(first), false);
+  for (const k of ALL_HEROES) {
     const low = addUnit(b, k, 0, 8, gradeBoost(1, 0, ULT_LEVEL - 1));
     const at = addUnit(b, k, 2, 8, gradeBoost(1, 0, ULT_LEVEL));
     const bare = addUnit(b, k, 4, 8);
@@ -62,7 +63,7 @@ test('the first eight ultimates are always the hero\'s own; every other one unlo
   }
 });
 
-test('an ultimate\'s tuned meter speed and strength apply from level 15 up, and not below (the first eight keep their first numbers)', () => {
+test('an ultimate\'s tuned meter speed applies from level 15 up, and below it the meter does not fill at all', () => {
   for (const k of ALL_HEROES) assert.ok(KITS[k].ultimate!.tuned, `${k} is tuned`);
   const b = arena();
   const low = addUnit(b, 'kitsune', 1, 8, gradeBoost(1, 0, ULT_LEVEL - 1));
@@ -70,7 +71,7 @@ test('an ultimate\'s tuned meter speed and strength apply from level 15 up, and 
   addUnit(b, 'skeleton', 3, 2);
   run(b, 1000);
   assert.ok(low.charge > 0);
-  assert.ok(Math.abs((low.charge2 ?? 0) - low.charge * ULT_RATE) < 1e-6, 'below 15 the meter fills at the plain rate');
+  assert.ok(!low.charge2, 'below 15 the meter does not fill');
   assert.ok(Math.abs((up.charge2 ?? 0) - up.charge * ULT_RATE * KITS.kitsune.ultimate!.tuned!.rate) < 1e-6, 'from 15 it fills at the tuned rate');
 });
 
@@ -94,7 +95,7 @@ test('a locked ultimate neither charges nor casts, and the unlocked one does bot
   assert.ok(out.some((e) => e.kind === 'skill' && e.name === KITS.knight.ultimate!.name));
 });
 
-test('the level a hero fights at reaches the fight: its kind\'s lasting level, and a run\'s own level capped at 30', () => {
+test('the level a hero fights at reaches the fight: its kind\'s lasting level, and a run\'s own level up to 30', () => {
   assert.equal(gradeBoost(1, 0, 15).level, 15);
   const b = arena();
   assert.equal(addUnit(b, 'knight', 1, 8, gradeBoost(1, 0, 22)).level, 22);
@@ -102,7 +103,8 @@ test('the level a hero fights at reaches the fight: its kind\'s lasting level, a
   const at = (lv: number) => localBoost({ id: 1, kind: 'knight', grade: 1, xp: xpFor(lv) });
   assert.equal(at(14).level, 14);
   assert.equal(at(15).level, 15);
-  assert.equal(localBoost({ id: 1, kind: 'knight', grade: 1, xp: xpFor(30) }).level, RUN_LEVEL_CAP, 'in a run the level stops at 30');
+  assert.equal(localBoost({ id: 1, kind: 'knight', grade: 1, xp: xpFor(29) }).level, 29, 'in a run the level goes past 20');
+  assert.equal(localBoost({ id: 1, kind: 'knight', grade: 1, xp: 1e9 }).level, RUN_MAX_LEVEL, 'and stops at 30');
   assert.ok(ultimateOf(addUnit(b, 'cleric', 3, 8, at(15))));
   assert.equal(ultimateOf(addUnit(b, 'cleric', 4, 8, at(14))), undefined);
 });
@@ -141,7 +143,7 @@ test('a fight with the new ultimates is deterministic', () => {
 
 test('Nine-Tailed Dream charms the three strongest foes', () => {
   const b = arena();
-  const me = addUnit(b, 'kitsune', 3, 8);
+  const me = addUnit(b, 'kitsune', 3, 8, gradeBoost(1, 0, ULT_LEVEL));
   const foes = [4, 3, 2, 5].map((u, i) => addUnit(b, 'skeleton', u, 4 + (i % 2)));
   me.charge2 = CHARGE_MAX;
   cast(b, me);
@@ -152,18 +154,19 @@ test('Nine-Tailed Dream charms the three strongest foes', () => {
 
 test('Feather Storm falls on a crowd for more than double', () => {
   const b = arena();
-  const me = addUnit(b, 'karasu', 3, 8);
+  const me = addUnit(b, 'karasu', 3, 8, gradeBoost(1, 0, ULT_LEVEL));
   const foes = [addUnit(b, 'skeleton', 3, 5), addUnit(b, 'skeleton', 4, 5), addUnit(b, 'skeleton', 3, 4)];
   const hp = foes.map((f) => f.hp);
   me.charge2 = CHARGE_MAX;
   cast(b, me);
   run(b, 1200);
-  assert.ok(foes.every((f, i) => f.hp < hp[i] - 20));
+  // (at level 15 the storm is tuned down to a share of the first-written blow, so it hurts every foe but not by more than double)
+  assert.ok(foes.every((f, i) => f.hp < hp[i]));
 });
 
 test('Tempest hurts, shoves and stuns everything within four tiles', () => {
   const b = arena();
-  const me = addUnit(b, 'yamabushi', 3, 8);
+  const me = addUnit(b, 'yamabushi', 3, 8, gradeBoost(1, 0, ULT_LEVEL));
   const near = addUnit(b, 'skeleton', 3, 5);
   const far = addUnit(b, 'skeleton', 3, 0);
   me.charge2 = CHARGE_MAX;
@@ -176,7 +179,7 @@ test('Tempest hurts, shoves and stuns everything within four tiles', () => {
 
 test('Stone Curse petrifies every foe in sight', () => {
   const b = arena();
-  const me = addUnit(b, 'gorgon', 3, 8);
+  const me = addUnit(b, 'gorgon', 3, 8, gradeBoost(1, 0, ULT_LEVEL));
   const foes = [addUnit(b, 'skeleton', 2, 5), addUnit(b, 'skeleton', 4, 5), addUnit(b, 'spearman', 3, 4)];
   me.charge2 = CHARGE_MAX;
   cast(b, me);
@@ -185,7 +188,7 @@ test('Stone Curse petrifies every foe in sight', () => {
 
 test('Rally Cry heartens the whole army', () => {
   const b = arena();
-  const me = addUnit(b, 'samuraiCommander', 3, 8);
+  const me = addUnit(b, 'samuraiCommander', 3, 8, gradeBoost(1, 0, ULT_LEVEL));
   const ally = addUnit(b, 'knight', 0, 8);
   ally.hp = 100;
   addUnit(b, 'skeleton', 3, 2);
@@ -198,8 +201,8 @@ test('Rally Cry heartens the whole army', () => {
 test('a fight with ultimates is deterministic and its ultimates go off', () => {
   const go = () => {
     const b = startBattle(11, 'skeletons');
-    place(b, 'kitsune', 1, 8, 1, gradeBoost(1, 0, 1));
-    place(b, 'gorgon', 3, 8, 2, gradeBoost(1, 0, 1));
+    place(b, 'kitsune', 1, 8, 1, gradeBoost(1, 0, ULT_LEVEL));
+    place(b, 'gorgon', 3, 8, 2, gradeBoost(1, 0, ULT_LEVEL));
     place(b, 'knight', 5, 8, 3, gradeBoost(1));
     for (const u of b.units) if (u.side === 'hero') u.charge2 = CHARGE_MAX;
     b.phase = 'fight';
@@ -230,4 +233,34 @@ test('a foe never takes a hero\'s ultimate: a boss whose second phase borrows a 
     assert.equal(ultimateReady(boss), false);
     assert.ok(!run(b, 3000).some((e) => e.kind === 'skill' && e.by === boss.id && e.name === KITS[borrowed].ultimate!.name), `${id} does not cast the hero's ultimate`);
   }
+});
+
+// A foe that shares one of the first eight's kits keeps the ultimate, ungated (the elites Sethra and Kuro, the Gorgon Queen, Nine-Tailed Fox):
+// only the hero's own copy waits for its level.
+test('foes that borrow the first eight\'s kits by name keep their ultimates', () => {
+  for (const [id, hero] of [['gorgonQueen', 'gorgon'], ['eliteSethra', 'gorgon'], ['eliteKuro', 'karasu'], ['nineTails', 'kitsune']] as const) {
+    assert.equal(KITS[id].ultimate?.unlock, undefined, `${id}'s ultimate is not gated`);
+    assert.equal(KITS[id].ultimate?.name, KITS[hero].ultimate!.name, id);
+    const b = arena();
+    const foe = addUnit(b, id, 3, 3);
+    assert.equal(ultimateOf(foe)?.name, KITS[hero].ultimate!.name, `${id} fights with it at level 1`);
+    foe.charge2 = CHARGE_MAX;
+    assert.equal(ultimateReady(foe), true, id);
+  }
+  // (and the Gorgon Queen, the Labyrinth's mid boss, really casts it)
+  const b = arena();
+  const queen = addUnit(b, 'gorgonQueen', 3, 3);
+  addUnit(b, 'knight', 3, 8);
+  queen.charge2 = CHARGE_MAX;
+  assert.ok(run(b, 3000).some((e) => e.kind === 'skill' && e.by === queen.id && e.name === KITS.gorgon.ultimate!.name));
+});
+
+test('a run\'s own heroes can level past 20, up to 30, and unlock their ultimates at 15', () => {
+  assert.equal(RUN_MAX_LEVEL, 30);
+  const at = (lv: number) => localBoost({ id: 1, kind: 'tyrant', grade: 1, xp: xpFor(lv) });
+  const b = arena();
+  assert.equal(ultimateOf(addUnit(b, 'tyrant', 0, 8, at(14))), undefined);
+  assert.equal(ultimateOf(addUnit(b, 'tyrant', 1, 8, at(15)))?.name, 'Reign of Terror');
+  for (const lv of [21, 25, 30]) assert.equal(at(lv).level, lv);
+  assert.ok(at(30).hp! > at(20).hp!, 'the levels past 20 still add hp');
 });

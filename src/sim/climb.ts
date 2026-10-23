@@ -6,11 +6,13 @@
 import type { Battle, Boost, Unit } from './battle';
 import { GRADE_MULT, recruit, squadLimit, type Owned, type Run } from './run';
 import { gearBoost } from './gear';
-import { XP_PER_DAMAGE, XP_PER_HEALING, XP_TAKE_PART, XP_WIN, levelBoost, runLevelOf, type LevelUp } from './levels';
+import { XP_PER_DAMAGE, XP_PER_HEALING, XP_TAKE_PART, XP_WIN, levelBoost, levelOf, RUN_MAX_LEVEL, type LevelUp } from './levels';
 
 
 /** What a hero's run-level XP is worth on top of the lasting rate: the climb is tuned on this. */
 export const CLIMB_XP = 4;
+/** The same for a Calamity: its heroes level much faster than the spire's, so a full clear ends with the starting hero well past level 20 (`docs/notes/balance-pass.md`). */
+export const CALAMITY_XP = 15;
 /** A hired hero joins with this share of the roster's mean XP, so it is not left a level-1 passenger behind a levelled squad. */
 export const HIRE_CATCH_UP = 0.7;
 
@@ -18,7 +20,7 @@ export const HIRE_CATCH_UP = 0.7;
 export const isLocal = (run: Run): boolean => !!run.local;
 
 /** A hero's level in the run (1 for a hero with no XP). */
-export const heroLevel = (h: Owned): number => runLevelOf(h.xp ?? 0);
+export const heroLevel = (h: Owned): number => levelOf(h.xp ?? 0, RUN_MAX_LEVEL);
 
 /**
  * A run hero's whole boost: its grade and level, its gear and training bumps, and the skill charge it keeps. No rank, no
@@ -32,14 +34,14 @@ export function localBoost(h: Owned): Boost {
 }
 
 /** The XP each hero (by roster id) earned in a finished fight: the same pay as `fightXp`, but kept for the hero, not its kind. `rate` is the castle's Library. */
-export function fightXpByHero(b: Battle, rate = 1): Record<number, number> {
+export function fightXpByHero(b: Battle, rate = 1, climbXp = CLIMB_XP): Record<number, number> {
   const out: Record<number, number> = {};
   const won = b.phase === 'won';
   const shareOf = (u: Unit) => (u.dealt ?? 0) / XP_PER_DAMAGE + (u.healed ?? 0) / XP_PER_HEALING + (u.slain ?? 0);
   for (const u of b.units) {
     if (u.side !== 'hero' || u.owner !== undefined || u.tag === undefined) continue;
     const called = b.units.filter((x) => x.owner === u.id).reduce((n, x) => n + shareOf(x), 0);
-    out[Number(u.tag)] = (out[Number(u.tag)] ?? 0) + Math.round((XP_TAKE_PART + (won ? XP_WIN : 0) + shareOf(u) + called) * rate * CLIMB_XP);
+    out[Number(u.tag)] = (out[Number(u.tag)] ?? 0) + Math.round((XP_TAKE_PART + (won ? XP_WIN : 0) + shareOf(u) + called) * rate * climbXp);
   }
   return out;
 }

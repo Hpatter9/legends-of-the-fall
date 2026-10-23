@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { addUnit, apart, atkOf, hurt, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
-import { afterBlow, CHARGE_MAX, FORM_MULT, KITS, onStrike } from '../src/sim/abilities';
+import { afterBlow, CHARGE_MAX, FORM_MULT, KITS, onStrike, ULT_LEVEL } from '../src/sim/abilities';
 import { ALL_HEROES, formOf, UNITS } from '../src/sim/units';
 import { countTraits, HERO_TRAITS, membersOf, TRAITS, traitEffects } from '../src/sim/traits';
 import { TREES } from '../src/sim/talents';
@@ -21,8 +21,9 @@ function arena(): Battle {
   b.phase = 'fight';
   return b;
 }
-const spawn = (b: Battle, def: string, u: number, v: number, charge = 0): Unit => {
-  const x = addUnit(b, def, u, v);
+// (`level`: a hero's ultimate waits for level 15, so a test of one spawns the hero at it)
+const spawn = (b: Battle, def: string, u: number, v: number, charge = 0, level?: number): Unit => {
+  const x = addUnit(b, def, u, v, level ? { level } : undefined);
   x.charge = charge;
   return x;
 };
@@ -106,7 +107,7 @@ test('every new hero\'s skill fires in a fight when its charge is full', () => {
 test('the Great Sage\'s, Demon Swordsman\'s and Tyrant\'s ultimates fire when their meters are full', () => {
   for (const id of ['sage', 'demonSwordsman', 'tyrant']) {
     const b = arena();
-    const me = spawn(b, id, 3, 6);
+    const me = spawn(b, id, 3, 6, 0, ULT_LEVEL);
     me.charge2 = CHARGE_MAX;
     spawn(b, 'knight', 4, 6);
     [[3, 4], [4, 4], [3, 3]].forEach(([u, v]) => spawn(b, 'skeleton', u, v));
@@ -335,7 +336,7 @@ test('Starfall calls stars on up to three separate crowds, and Astral Convergenc
   const ev = run(b, 200);
   assert.equal(ev.filter((e) => e.kind === 'area').length, 3);
   const c = arena();
-  const sage = spawn(c, 'sage', 3, 8);
+  const sage = spawn(c, 'sage', 3, 8, 0, ULT_LEVEL);
   sage.charge2 = CHARGE_MAX;
   const ally = spawn(c, 'knight', 4, 8);
   spawn(c, 'skeleton', 3, 0);
@@ -353,7 +354,7 @@ test('Hellblade Sweep heals the Demon Swordsman, and Demon Form lifts his attack
   run(b, 200);
   assert.ok(me.hp > 100);
   const c = arena();
-  const dm = spawn(c, 'demonSwordsman', 3, 6);
+  const dm = spawn(c, 'demonSwordsman', 3, 6, 0, ULT_LEVEL);
   dm.charge2 = CHARGE_MAX;
   spawn(c, 'skeleton', 3, 4);
   const before = dm.power ?? 1;
@@ -374,7 +375,7 @@ test('Judgement falls on the toughest foe, and Reign of Terror slows the foes an
   assert.ok(strong.hp < strong.maxHp);
   assert.ok(weak.hp <= weak.maxHp);
   const c = arena();
-  const t = spawn(c, 'tyrant', 3, 6);
+  const t = spawn(c, 'tyrant', 3, 6, 0, ULT_LEVEL);
   t.charge2 = CHARGE_MAX;
   const ally = spawn(c, 'knight', 4, 6);
   const f = spawn(c, 'skeleton', 3, 3);
