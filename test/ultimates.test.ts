@@ -4,6 +4,7 @@ import { addUnit, startBattle, stepBattle, place, type Battle, type BattleEvent,
 import { CHARGE_MAX, KITS, tryCast, ULT_LEVEL, ULT_RATE, ultimateOf, ultimateReady } from '../src/sim/abilities';
 import { localBoost } from '../src/sim/climb';
 import { RUN_MAX_LEVEL, xpFor } from '../src/sim/levels';
+import { enterPhase } from '../src/sim/bossPhases';
 import { ALL_HEROES } from '../src/sim/units';
 import { gradeBoost } from '../src/sim/run';
 
@@ -214,4 +215,19 @@ test('a fight with ultimates is deterministic and its ultimates go off', () => {
 test('every ultimate has a cast effect', async () => {
   const { SKILL_FX } = await import('../src/render/skillFx');
   for (const k of ALL_HEROES) assert.ok(SKILL_FX[KITS[k].ultimate!.name]?.cast, k);
+});
+
+test('a foe never takes a hero\'s ultimate: a boss whose second phase borrows a hero\'s skill has no ultimate to borrow', () => {
+  // (the Boar King borrows the Minotaur's skill and the Grove Satyr's boss the Satyr's: both heroes have an ultimate now)
+  for (const [id, borrowed] of [['boarKing', 'minotaur'], ['forestBoss3', 'satyr']] as const) {
+    const b = arena();
+    const boss = addUnit(b, id, 3, 3, { phase: 0.5 });
+    addUnit(b, 'knight', 3, 8);
+    const out: BattleEvent[] = [];
+    enterPhase(b, boss, out);
+    assert.equal(ultimateOf(boss), undefined, `${id} has no ultimate`);
+    boss.charge2 = CHARGE_MAX;
+    assert.equal(ultimateReady(boss), false);
+    assert.ok(!run(b, 3000).some((e) => e.kind === 'skill' && e.by === boss.id && e.name === KITS[borrowed].ultimate!.name), `${id} does not cast the hero's ultimate`);
+  }
 });
