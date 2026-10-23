@@ -171,6 +171,16 @@ test('who plays: the party fills the party roles, the hero is the run\'s lead, f
   assert.deepEqual(castOf(withGoat, players).goat, { kind: null, name: 'Duchess' });
 });
 
+test('both pilots cast Duchess and she gets a line, as an actor with no fighter to draw', () => {
+  for (const id of SCENE_ORDER) {
+    const sc = SCENES[id];
+    const goat = Object.entries(sc.cast).find(([, m]) => m.role === 'duchess');
+    assert.ok(goat, id);
+    assert.ok(sc.shots.some((s) => s.lines?.some((l) => l.who === goat[0] && l.text === 'Mehh.')), id);
+    assert.equal(castOf(sc, { party: ['knight', 'samurai', 'archer'] })[goat[0]].kind, null);
+  }
+});
+
 test('the opening is due for a new save that has picked, once; the first Calamity boss on map 1 only', () => {
   const m = newMeta(12);
   pickStarter(m, 0);

@@ -6,7 +6,7 @@
 // on; Skip ends it at once. The picture lives on its own small Pixi canvas, made when a scene starts and dropped when it
 // ends, so nothing costs anything the rest of the time. It never touches a battle.
 
-import { Application, Container, Graphics, Sprite, TilingSprite, Texture } from 'pixi.js';
+import { Application, Container, Graphics, Rectangle, Sprite, TilingSprite, Texture } from 'pixi.js';
 import { FEET, fillLine, STAGE_H, STAGE_W, SCENES, type Scene, type SceneCue, type Shot } from '../sim/sceneScripts';
 import { castOf, namesOf, type Cast, type Players } from '../sim/sceneRules';
 import { UNITS } from '../sim/units';
@@ -15,6 +15,8 @@ import { loadImage } from './loadImage';
 import { facesRightOf, framesOf, figureOf, type Anim } from './sheets';
 import { actorsAt, cameraAt, keepInside, lineNow, lineStart, lookAt, next, scaleOf, shotLength, start, tick, TYPE_RATE, typedChars, type ActorNow, type Cursor } from './sceneClock';
 import { play } from './sound';
+import { goatSheet } from '../duchess';
+import { FRAME as GOAT_FRAME } from './duchessRules';
 import { settings } from '../settings';
 import type { Area } from '../sim/board';
 
@@ -50,6 +52,14 @@ const textureOf = (url: string): Promise<Texture> => {
   }
   return t;
 };
+
+/** Duchess's six frames (48 px: three steps walking left, then three walking right; the middle one of each is standing), cut once. */
+let goat: Promise<Texture[]> | null = null;
+const goatFrames = (): Promise<Texture[]> =>
+  (goat ??= goatSheet().then((img) => {
+    const base = Texture.from(img);
+    return Array.from({ length: 6 }, (_, i) => new Texture({ source: base.source, frame: new Rectangle(i * GOAT_FRAME, 0, GOAT_FRAME, GOAT_FRAME) }));
+  }));
 
 /** What a scene's end was: played to the end, or skipped. */
 export type Ending = 'done' | 'skipped';
@@ -155,6 +165,7 @@ class Run {
   private bandH = 1;
   private cued = -1;
   private frozen = false;
+  private goat: Texture[] | null = null;
   private ended: ((e: Ending) => void) | null = null;
   private now = 0;
   private readonly keys = (e: KeyboardEvent): void => {
@@ -198,6 +209,7 @@ class Run {
       window.addEventListener('keydown', this.keys);
       hud.root.addEventListener('click', tapped);
       hud.skip.addEventListener('click', skipped);
+      if (Object.values(this.scene.cast).some((m) => m.role === 'duchess')) this.goat = await goatFrames();
       // (the backdrops of every shot are loaded up front, so a cut never shows an empty stage)
       this.loadLooks().catch(() => undefined);
       const ending = new Promise<Ending>((ok) => (this.ended = ok));
@@ -351,7 +363,8 @@ class Run {
       const kind = this.cast[id]?.kind;
       let f = this.figures.get(id);
       if (!kind) {
-        if (f) f.box.visible = false;
+        if (this.scene.cast[id].role === 'duchess') this.drawGoat(id, a);
+        else if (f) f.box.visible = false;
         continue;
       }
       const def = UNITS[kind];
@@ -381,6 +394,27 @@ class Run {
       f.body.y = -bob;
       f.box.position.set(Math.round(a.x), FEET);
     }
+  }
+
+  /** Duchess: her sheet's standing frame (chewing, a pixel up and down on a slow beat) or her steps, facing as cast. */
+  private drawGoat(id: string, a: ActorNow): void {
+    let f = this.figures.get(id);
+    if (!f) {
+      const box = new Container();
+      const shadow = new Graphics().ellipse(0, 0, 11, 3.5).fill({ color: 0x000000, alpha: 0.32 });
+      const body = new Sprite();
+      body.anchor.set(0.5, 1);
+      box.addChild(shadow, body);
+      this.actors.addChild(box);
+      f = { box, body };
+      this.figures.set(id, f);
+    }
+    f.box.visible = a.visible && !!this.goat;
+    if (!f.box.visible || !this.goat) return;
+    const step = a.walking ? [0, 1, 2, 1][Math.floor(a.walked * 4) % 4] : 1;
+    f.body.texture = this.goat[(a.facing === 'right' ? 3 : 0) + step];
+    f.body.y = a.walking || reduced() ? 0 : Math.floor(this.now / 420) % 2;
+    f.box.position.set(Math.round(a.x), FEET);
   }
 
   /** The effects over the picture: a pall, a warm glow, a fade, the one-shot flash. Nothing loops. */

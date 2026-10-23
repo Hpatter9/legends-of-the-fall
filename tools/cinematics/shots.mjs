@@ -18,8 +18,8 @@ const srv = createServer((q, r) => {
 // (the flags: another GL path leaves a band under the bars unpainted in headless Chromium)
 // (shot, beat, seconds in): chosen so each line is fully typed
 const FRAMES = {
-  opening: [[0, 0, 2.2], [0, 1, 2.2], [1, 0, 2.2], [1, 1, 2.2], [2, 0, 2.2], [2, 1, 2.2], [2, 2, 2.2], [3, 0, 2.2], [3, 1, 2.2]],
-  gorvak: [[0, 0, 2.6], [1, 0, 2.2], [1, 1, 2.2], [1, 2, 2.2], [2, 0, 2.2], [2, 2, 2.2], [3, 0, 0.05], [3, 0, 2.2], [3, 1, 2.2]],
+  opening: [[0, 0, 2.2], [0, 1, 2.2], [1, 0, 2.2], [1, 1, 2.2], [2, 0, 2.2], [2, 1, 2.2], [2, 2, 2.2], [2, 3, 1.2], [3, 0, 2.2], [3, 1, 2.2]],
+  gorvak: [[0, 0, 2.6], [1, 0, 2.2], [1, 1, 2.2], [1, 2, 2.2], [2, 0, 2.2], [2, 3, 1.2], [2, 4, 1.8], [2, 5, 2.2], [3, 0, 0.05], [3, 0, 2.2], [3, 1, 2.2]],
 };
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {

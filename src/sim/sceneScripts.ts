@@ -23,8 +23,8 @@ export type Pose = 'idle' | 'strike' | 'cast' | 'hurt' | 'down';
 
 /** Who an actor is, filled in when the scene is played: `party:<i>`, the i-th hero of the player's party; `hero`, the hero
  *  the run began with (the party's first when there is no run); `unit:<id>`, a fighter by its id in `UNITS` (a foe, or a
- *  hero kind); `duchess`, the goat (her art arrives with the humour branch: until then she is not drawn, and a scene
- *  that casts her plays on without her). */
+ *  hero kind); `duchess`, the goat (drawn from her own sheet, `art/duchess/goat.png`, standing or
+ *  walking: she has no fighter, so `castOf` gives her none). */
 export type Role = `party:${number}` | 'hero' | `unit:${string}` | 'duchess';
 
 export interface CastMember {
@@ -137,6 +137,7 @@ export const SCENES: Record<string, Scene> = {
       front: { role: 'party:0', x: 262, facing: 'right', hidden: true },
       striker: { role: 'party:1', x: 228, facing: 'right', hidden: true },
       back: { role: 'party:2', x: 194, facing: 'right', hidden: true },
+      duchess: { role: 'duchess', x: 172, facing: 'right', hidden: true },
       herald: { role: 'unit:calBoss1', x: 350, facing: 'left', hidden: true, scale: 1.4, shade: true },
     },
     shots: [
@@ -162,7 +163,8 @@ export const SCENES: Record<string, Scene> = {
       {
         cam: close(['front', 'back'], 1.5),
         caption: 'You',
-        lines: [tell('The king places them. That is you.'), tell('After that they get on with it. You may cheer, or drop a meteor.'), say('front', 'Cheering is optional. The meteors are not.')],
+        acts: [{ who: 'duchess', enter: 172, from: 110 }],
+        lines: [tell('The king places them. That is you.'), tell('After that they get on with it. You may cheer, or drop a meteor.'), say('front', 'Cheering is optional. The meteors are not.'), say('duchess', 'Mehh.')],
       },
       {
         look: 'volcano',
@@ -185,6 +187,7 @@ export const SCENES: Record<string, Scene> = {
       hero: { role: 'hero', x: 285, facing: 'right', hidden: true },
       gorvak: { role: 'unit:calBoss1', x: 395, facing: 'left', hidden: true, scale: 1.5 },
       grunt: { role: 'unit:orcGrunt', x: 455, facing: 'left' },
+      duchess: { role: 'duchess', x: 492, facing: 'left', hidden: true },
     },
     shots: [
       {
@@ -204,8 +207,16 @@ export const SCENES: Record<string, Scene> = {
         lines: [say('gorvak', 'HALT. NONE PASS THE ASHEN ROAD.', 'shout'), say('hero', 'Is there a way round?'), say('gorvak', 'THERE IS. I AM ALSO STANDING ON IT.', 'shout')],
       },
       {
-        cam: close(['gorvak', 'grunt'], 1.5),
-        lines: [say('grunt', 'You did ask us to watch the other roads, boss.'), say('gorvak', 'AND?'), say('grunt', 'We were a grunt short.')],
+        cam: close(['gorvak', 'grunt', 'duchess'], 1.5),
+        acts: [{ who: 'duchess', enter: 492, from: 570, line: 2 }],
+        lines: [
+          say('grunt', 'You did ask us to watch the other roads, boss.'),
+          say('gorvak', 'AND?'),
+          say('grunt', 'We were a grunt short.'),
+          say('duchess', 'Mehh.'),
+          say('gorvak', 'THAT IS A GOAT.', 'shout'),
+          say('grunt', 'She is covering the other roads, boss.'),
+        ],
       },
       {
         cam: close('gorvak', 1.5),

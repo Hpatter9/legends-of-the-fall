@@ -49,10 +49,11 @@ gorvak: {
 - **Roles**: `party:<i>` (the player's i-th party hero), `hero` (the Calamity run's first hero, else the party's first),
   `unit:<id>` (any fighter in `UNITS`: a foe, a boss, a hero kind) and `duchess`. Lines can use `{actor id}` for that
   actor's name.
-- **Duchess** (the goat, from the humour branch) has a place in the format already: a cast member with the role `duchess`
-  is simply not drawn until her art lands (`castOf` gives her no fighter, the view skips her), and the scene plays on. Her
-  art was not on main when this was built, so none was added; when it is, `drawActors` in `render/sceneView.ts` is the one
-  place that learns to draw her.
+- **Duchess** (the goat, `src/duchess.ts`, her sheet `art/duchess/goat.png` shared with the camp and the tavern) is a cast
+  member with the role `duchess`: standing (chewing on her slow beat) or walking, facing as cast, and she speaks as an
+  actor named Duchess. She has no fighter, so `castOf` gives her none and `drawGoat` in `render/sceneView.ts` draws her.
+  Both pilots use her: she wanders in at the end of the opening ("Mehh.") and turns up on Gorvak's road as the grunt
+  who was short.
 - **Acts** can wait for a line (`line: 2`: starts as that line is spoken). `enter` takes `from: 'left' | 'right'` (the
   edge of the stage) or an x just out of the picture (so a walk-in fits the shot).
 - A new scene is a table entry plus its moment in `sceneRules.ts` (`dueScene` is one lookup) and one call at that moment
@@ -132,7 +133,7 @@ Each is a table entry and a call at its moment; the pitch is the joke or the bea
    Settings is a few lines if they annoy.
 3. **Sound.** A scene has only a cue or two as a shot begins (a boom, a rumble). A short music sting or a bed per scene
    (`audio-beds.md`) would help a lot, but is a bigger ask.
-4. **Humour and Duchess.** The voice here is the Chronos voice at a small scale. Once `claude/humour` lands the goat can
-   wander through any scene; say which scenes she should be in.
+4. **Humour and Duchess.** The voice here is the Chronos voice at a small scale, and Duchess is in both pilots. Say which
+   other scenes she should wander through.
 5. **Which scenes next**, from the table above. The cheapest wins for the effect are the Calamity's other bosses and the
    hero awakening (one shape, 45 heroes).
