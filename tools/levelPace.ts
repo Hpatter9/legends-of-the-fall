@@ -11,7 +11,7 @@
 import { ARMIES, replayTotal } from '../src/sim/armies';
 import { fight, playOut } from '../src/sim/battle';
 import { maxLevel, newCastle, xpRate } from '../src/sim/castle';
-import { fightXp, levelOf, MAX_LEVEL, xpFor } from '../src/sim/levels';
+import { BENCH_SHARE, fightXp, levelOf, MAX_LEVEL, xpFor } from '../src/sim/levels';
 import { Rng, mixSeed } from '../src/sim/rng';
 import { armyRun, finish, isBossRun, noteFight, startStage } from '../src/sim/run';
 import { autoDeploy, autoRound } from '../src/sim/autoplay';
@@ -79,19 +79,24 @@ function measure(): number[][][] {
   );
 }
 
-interface Report { day: Record<number, number>; xp: Record<number, number> }
+interface Report { day: Record<number, number>; xp: Record<number, number>; bench: Record<number, number> }
 
 function simulate(seed: number, table: number[][][]): Report {
   const rng = new Rng(mixSeed(seed, 0x9ace));
   const cleared: boolean[][] = ARMIES.map(() => TIERS.map(() => false));
   let xp = 0;
+  /** A hero kept on the bench for every run: it earns `BENCH_SHARE` of the party mean each run. */
+  let benched = 0;
+  const bench: Record<number, number> = {};
   const day: Record<number, number> = {};
   const xpAt: Record<number, number> = {};
   const runXp = (ai: number, t: number, day: number): number => {
     const samples = table[ai][t];
     const lib = newCastle();
     lib.library = libraryAt(day);
-    return samples[rng.int(0, samples.length - 1)] * FAV * TIERS[t].xp * xpRate(lib);
+    const mean = samples[rng.int(0, samples.length - 1)] * TIERS[t].xp * xpRate(lib);
+    benched += BENCH_SHARE * mean;
+    return mean * FAV;
   };
   for (let d = 1; d <= DAYS; d++) {
     let fresh: [number, number][] = [];
@@ -110,10 +115,12 @@ function simulate(seed: number, table: number[][][]): Report {
     if (best) for (let k = 0; k < FARM_RUNS; k++) xp += FAV_PLAYS * runXp(best[0], best[1], d);
     const lv = levelOf(xp);
     for (const m of MARKS) if (day[m] === undefined && lv >= m) day[m] = d;
+    const bl = levelOf(benched);
+    for (const m of MARKS) if (bench[m] === undefined && bl >= m) bench[m] = d;
     if (d % 30 === 0 || d === 7) xpAt[d] = Math.round(xp);
     fresh = [];
   }
-  return { day, xp: xpAt };
+  return { day, xp: xpAt, bench };
 }
 
 const table = measure();
@@ -127,6 +134,11 @@ for (const m of MARKS) {
   const ds = reports.map((r) => r.day[m] ?? Infinity);
   const fmt = (x: number) => (Number.isFinite(x) ? String(x) : `>${DAYS}`);
   console.log(`${String(m).padStart(5)}  ${String(xpFor(m)).padStart(9)}   ${fmt(med(ds)).padStart(5)}  (${fmt(Math.min(...ds))} to ${fmt(Math.max(...ds))})`);
+}
+console.log(`\nA hero kept on the bench for every run (${BENCH_SHARE * 100}% of the party mean a run): day reached`);
+for (const m of MARKS) {
+  const ds = reports.map((r) => r.bench[m] ?? Infinity);
+  console.log(`${String(m).padStart(5)}  ${Number.isFinite(med(ds)) ? String(med(ds)).padStart(5) : `>${DAYS}`.padStart(5)}`);
 }
 console.log('\nday   favourite XP so far (median)');
 for (const d of [7, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360]) if (d <= DAYS) console.log(`${String(d).padStart(3)}   ${String(med(reports.map((r) => r.xp[d] ?? 0))).padStart(9)}`);

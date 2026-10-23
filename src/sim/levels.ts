@@ -138,6 +138,20 @@ export function fightXp(b: Battle, rate = 1): Record<string, number> {
   return out;
 }
 
+/** A hero that did not fight earns this share of the mean XP the fighters earned, so a bench can slowly power-level a low-level hero (and never keep pace). */
+export const BENCH_SHARE = 0.1;
+
+/** The XP the heroes of `kinds` that did not fight earn from a fight whose fighters earned `gains` (by kind): `BENCH_SHARE` of their mean, the same for each. Empty when nobody fought. */
+export function benchXp(gains: Record<string, number>, kinds: readonly string[]): Record<string, number> {
+  const fought = Object.values(gains);
+  const out: Record<string, number> = {};
+  if (!fought.length) return out;
+  const each = Math.round((BENCH_SHARE * fought.reduce((n, x) => n + x, 0)) / fought.length);
+  if (each <= 0) return out;
+  for (const k of new Set(kinds)) if (!(k in gains) && !UNITS[k]?.summon) out[k] = each;
+  return out;
+}
+
 export interface LevelUp {
   kind: string;
   from: number;

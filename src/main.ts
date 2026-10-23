@@ -28,7 +28,7 @@ import { chooseStarter } from './starter';
 import { xpRate } from './sim/castle';
 import { heroStats } from './sim/talents';
 import { powerOf, powerText } from './sim/power';
-import { fightXp, gainXp, levelGain, levelOfKind, progressOf, xpOf, type LevelUp } from './sim/levels';
+import { benchXp, fightXp, gainXp, levelGain, levelOfKind, progressOf, xpOf, type LevelUp } from './sim/levels';
 import { levelBadge } from './levelBadge';
 import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
 import { autoDeploy, autoRound, gearCount, pickSquad } from './sim/autoplay';
@@ -1316,6 +1316,22 @@ class Game {
   }
 
   /** Add the fight just ended (stats, time, pay) to the run's recap. */
+  /** A small line under the XP rows: what the heroes that sat out the fight earned, and any that rose a level. */
+  private showBench(): void {
+    const n = this.benchNote;
+    if (!n) return;
+    const list = $('xp');
+    const rose = n.ups.map((u) => `${UNITS[u.kind].name} Lv ${u.to}`).join(', ');
+    const line = document.createElement('small');
+    line.className = 'xpBench';
+    line.textContent = `Bench +${n.each.toLocaleString('en-GB')} XP each${rose ? ` · ${rose}` : ''}`;
+    list.append(line);
+    list.hidden = false;
+  }
+
+  /** The bench's share of the last fight, for the XP section's small line. */
+  private benchNote: { each: number; ups: LevelUp[] } | null = null;
+
   private noteRecap(gains: Record<string, number>, ups: LevelUp[], won: boolean, settled = true): void {
     const grades: Record<string, number> = {};
     for (const u of this.b.units) if (u.side === 'hero' && u.owner === undefined) grades[u.def] = Math.max(grades[u.def] ?? 1, u.grade ?? 1);
@@ -1698,8 +1714,11 @@ class Game {
       const own = run.local ? climbXpView(run) : null;
       const gains = own ? own.gains : fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp);
       const from = own ? own.from : Object.fromEntries(Object.keys(gains).map((k) => [k, xpOf(this.meta, k)]));
-      const ups = own ? own.ups : gainXp(this.meta, gains);
-      this.noteRecap(gains, ups, won);
+      // (the heroes of the run that sat out the fight earn a small share, to power-level the low ones)
+      const bench = own ? {} : benchXp(gains, run.roster.map((h) => h.kind));
+      const ups = own ? own.ups : gainXp(this.meta, { ...gains, ...bench });
+      this.benchNote = Object.keys(bench).length ? { each: Object.values(bench)[0], ups: ups.filter((u) => u.kind in bench) } : null;
+      this.noteRecap(gains, ups.filter((u) => !(u.kind in bench)), won);
       if (this.auto) {
         // (no result screen to show: the fight's pay goes into the replay's totals)
         this.showStars(null);
@@ -1720,6 +1739,7 @@ class Game {
         drawRunStars($('armyStars'), army && run.cleared ? this.runStars : null, army ? tierOf(tierOfRun(run)).name : '');
         this.showStats();
         this.showXp(gains, from, ups, !own);
+        this.showBench();
       }
       saveMeta(this.meta);
       saveRun(run);

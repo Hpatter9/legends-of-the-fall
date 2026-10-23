@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addUnit, hurt, place, playOut, fight, startBattle } from '../src/sim/battle';
+import { benchXp, BENCH_SHARE } from '../src/sim/levels';
 import { AURA_COLOURS, auraHalo, auraRings } from '../src/render/levelLook';
 import { BADGE_LEVELS, BADGE_NAMES, badgeOf, DEEP_SHARE, DIM_SHARE, fightXp, gainXp, killXp, lastingBoost, LATE_SHARE, LATE_XP, levelBoost, levelGain, levelOf, levelOfKind, LATE_LEVEL, MAX_LEVEL, MILESTONES, milestonePoints, OLD_MAX_LEVEL, progressOf, RUN_MAX_LEVEL, XP_TAKE_PART, xpFor, xpOf } from '../src/sim/levels';
 import { loadMeta, startedMeta } from '../src/sim/meta';
@@ -232,4 +233,24 @@ test('every badge tier has a name and a steady aura of its own colour: none belo
   assert.equal(auraRings(7), 3);
   assert.equal(auraHalo(4), false);
   assert.equal(auraHalo(5), true);
+});
+
+test('heroes that sat out a fight earn a tenth of the fighters\' mean XP, the same each, and never the fighters', () => {
+  assert.equal(BENCH_SHARE, 0.1);
+  const gains = { knight: 300, archer: 100 };
+  // (mean 200, a tenth: 20 each; the two that fought get nothing more, and a summon is no hero)
+  assert.deepEqual(benchXp(gains, ['knight', 'archer', 'wizard', 'samurai', 'wizard']), { wizard: 20, samurai: 20 });
+  assert.deepEqual(benchXp(gains, ['knight', 'archer']), {});
+  assert.deepEqual(benchXp({}, ['wizard']), {}, 'no fighters, no share');
+  assert.deepEqual(benchXp({ knight: 4 }, ['wizard']), {}, 'a share that rounds to nothing is nothing');
+  // a level-1 hero kept on the bench through a run of fights gains levels, but far fewer than a fighter earning the full share
+  const m = startedMeta(2);
+  let ups = 0;
+  for (let i = 0; i < 15; i++) {
+    const b = benchXp({ knight: 400 }, ['knight', 'wizard']);
+    ups += gainXp(m, { knight: 400, ...b }).filter((u) => u.kind === 'wizard').length;
+  }
+  assert.equal(xpOf(m, 'wizard'), 15 * 40);
+  assert.ok(levelOfKind(m, 'wizard') >= 4 && levelOfKind(m, 'wizard') < levelOfKind(m, 'knight'));
+  assert.ok(ups >= 1);
 });

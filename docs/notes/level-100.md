@@ -244,3 +244,16 @@ The realistic climb (`--climb`) never gets past party level 24 by the last army,
 
 `sheet-47` and `sheet-100` (the hero sheet), `talents-top`, `talents-deep` and `talents-tree` (the tree with the deep rows), `levelup`
 (the recap past 30), `bench` (the bench cards with badges) and `roster`, `aura-battle` (rings under a level-99 and a level-70 hero).
+
+## Bench XP (an owner add-on)
+
+A hero of the run that did not fight earns a small share of lasting XP: `BENCH_SHARE` (a tenth) of the mean XP the fighters earned that
+fight, the same for each (`benchXp` in `levels.ts`; deterministic, wins and losses alike). It applies to the lasting-level modes (armies, the
+daily, auto-replays) and not to a run that levels its own heroes (the spire and the Calamity), which have their own rules. The after-fight XP
+section ends with one quiet line, "Bench +12 XP each", naming any benched hero that rose a level (`showBench` in `main.ts`).
+
+How much it is worth (`npm run level-pace`, a hero benched for every run, 13 runs a day): about 120 to 370 XP a run on Normal, rising with
+the tier and the Library. Level 10 on day 2, level 20 on day 6, level 30 on day 23, level 40 on day 149, level 50 on day 240, and level 70 not
+within the year: a fighter-favourite is at 30 on day 4 and 100 on day 181. So a level-1 hero kept on the bench through an army run gains a few
+levels, and is a power-levelling route up to the low 30s, but never keeps pace with the fighters. After the merge of main (0.124.0, the
+Calamity's changes) the pace table above is unchanged: no army or lasting-XP number moved.
