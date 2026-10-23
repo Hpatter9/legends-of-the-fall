@@ -14,7 +14,7 @@ import { loadImage } from './render/loadImage';
 import { heroRig, lookKey } from './render/awakenRig';
 import { shrinkRig, type Small } from './render/smallRig';
 import { hash } from './render/campSpots';
-import { drawStone, drawUnderside, REALMS } from './render/calRealm';
+import { drawChunk, drawIsland, drawStone, outlineOf, REALMS, type IslandSpec } from './render/calRealm';
 import { twistBadge } from './twistView';
 import atlasUrl from './art/calmap/atlas.png';
 import portalUrl from './art/calmap/portal.png';
@@ -81,7 +81,7 @@ const FOOT = 0.31;
 /** The mist's pixels are this many scene pixels across: it is soft, and cheap to redraw while it lifts. */
 const FOG_PX = 4;
 /** The mist's clear patches round an island (across, up, down: the landmark above and the rock below) and along a bridge, in scene pixels. */
-const HOLE_SPOT = { rx: 74, up: 96, down: 84 };
+const HOLE_MARGIN = { rx: 20, up: 22, down: 14 };
 const HOLE_ROAD = 30;
 /** A bridge's stones: how far clear of an island's middle the first stands, and the gap between two. */
 const STONE_CLEAR = 46;
@@ -107,7 +107,8 @@ interface Lift {
   x: number;
   y: number;
   r: number;
-  /** An island's patch reaches this far up (its landmark) and down (its rock). */
+  /** An island's patch (an ellipse): how far it reaches up (its landmark) and down (its rock); an island's `r` is its half width. */
+  island?: boolean;
   up?: number;
   down?: number;
   /** When it starts to clear (ms from the start of the lift) and how long it takes; 0 delay and no `dur` for one already clear. */
@@ -144,6 +145,8 @@ export class CalMap {
   private run!: Run;
   private model: Land | null = null;
   private stoneKey: Land | null = null;
+  private isleKey: Land | null = null;
+  private isleCache = new Map<number, IslandSpec>();
   private stoneCache = new Map<string, { x: number; y: number }[]>();
   private key = '';
   private geo: Geo | null = null;
@@ -481,16 +484,29 @@ export class CalMap {
     return out;
   }
 
-  /** The cells of the island a spot stands on: its own tile (a small island with rock hanging under it); the portal's a plus of five; a lair's a wide diamond. */
-  private islandOf(s: LandSpot): Cell[] {
-    const c = { i: s.i, j: s.j };
-    if (s.id === START_ID) return [c, { i: c.i + 1, j: c.j }, { i: c.i, j: c.j + 1 }, { i: c.i - 1, j: c.j }, { i: c.i, j: c.j - 1 }];
-    if (s.kind === 'boss') {
-      const out: Cell[] = [];
-      for (let di = -2; di <= 2; di++) for (let dj = -2; dj <= 2; dj++) if (Math.abs(di) + Math.abs(dj) <= 3) out.push({ i: c.i + di, j: c.j + dj });
-      return out;
+  /** The island a spot stands on: sized to its landmark (a little ground showing all round it), the portal's and the lair's bigger, never so wide that it meets its neighbours'. */
+  private isleOf(s: LandSpot): IslandSpec {
+    if (this.isleKey !== this.model) {
+      this.isleKey = this.model;
+      this.isleCache.clear();
     }
-    return [c];
+    const hit = this.isleCache.get(s.id);
+    if (hit) return hit;
+    const m = this.markOf(s, false);
+    const half = (m.l + m.r) / 2;
+    let rx = s.id === START_ID ? 82 : s.kind === 'boss' ? Math.max(76, Math.min(124, half * 0.85 + 16)) : Math.max(40, Math.min(66, half * 0.8 + 10));
+    // (islands apart: the ellipses' halves, in the lattice's own squash, must not meet)
+    const p = this.xy(s);
+    for (const o of this.model!.spots) {
+      if (o.id === s.id) continue;
+      const q = this.xy(o);
+      const d = Math.hypot(q.x - p.x, (q.y - p.y) / 0.56);
+      rx = Math.min(rx, Math.max(34, d * 0.5 - 3));
+    }
+    const ry = rx * 0.56;
+    const spec = { cx: this.ax(s), cy: p.y + 8, rx, ry, depth: Math.max(44, Math.min(118, rx * 1.15 + 14)), seed: s.id * 977 + 31, realm: (Number(this.land.dataset.land) || 1) - 1 };
+    this.isleCache.set(s.id, spec);
+    return spec;
   }
 
   private bake(assets: Assets, model: Land, done: Set<number>): void {
@@ -520,11 +536,7 @@ export class CalMap {
       } else c.drawImage(im, sx, sy, w, h, x, y, w, h);
       c.globalAlpha = 1;
     };
-    const key = (cell: Cell) => `${cell.i},${cell.j}`;
-    // (islands: every spot's cells; bridges: the road's cells that are on no island)
-    const islands = model.spots.map((s) => ({ s, cells: this.islandOf(s) }));
-    const onIsland = new Set<string>();
-    for (const isl of islands) for (const cell of isl.cells) onIsland.add(key(cell));
+    const isles = model.spots.map((s) => ({ s, sp: this.isleOf(s) }));
     const foot = Math.round(g.th * FOOT);
     const list: { y: number; x: number; paint: () => void }[] = [];
     // (a bridge: one line of small stones from island to island, a thin beam of light through them, a soft glow under each)
@@ -567,68 +579,73 @@ export class CalMap {
         }),
       );
     }
-    // (an island: the rock hanging under it, then its tiles back to front, a glow under it)
-    const thick = (RECTS[art.ground[0]]?.[3] ?? g.th + 8) - g.th;
-    for (const { s, cells } of islands) {
-      const centres = cells.map((cell) => this.xy(cell));
-      const top = this.xy(s).y;
+    // (an island: a cluster of ground cut to its own rounded outline, an earth lip and a craggy root of rock under it, a glow beneath, a few props on its rim, a fragment of rock near it)
+    for (const { s, sp } of isles) {
       list.push({
-        y: top - 2,
-        x: this.xy(s).x,
+        y: sp.cy - 4,
+        x: sp.cx,
         paint: () => {
-          drawUnderside(c, assets.rock, centres, g.tw, g.th, thick, realm.rock, Math.round(s.id * 7 + 13));
-          const order = cells.map((cell, n) => ({ cell, p: centres[n] })).sort((a, b) => a.p.y - b.p.y || a.p.x - b.p.x);
-          for (const { cell, p } of order) {
-            const t = tileOf(cell);
-            const [sx, sy, w, h] = RECTS[t.name];
-            const x = Math.round(p.x - w / 2);
-            const y = Math.round(p.y - g.th / 2);
-            if (t.flip) {
-              c.setTransform(-1, 0, 0, 1, x + w, 0);
-              c.drawImage(im, sx, sy, w, h, 0, y, w, h);
-              c.setTransform(1, 0, 0, 1, 0, 0);
-            } else c.drawImage(im, sx, sy, w, h, x, y, w, h);
-          }
+          drawIsland(c, assets.rock, sp, (tg, ox, oy) => {
+            const reach = sp.rx * 1.4 + g.tw;
+            for (let a = -Math.ceil(reach / (g.th / 2)); a <= Math.ceil(reach / (g.th / 2)); a++) {
+              for (let b = -Math.ceil(reach / (g.tw / 2)); b <= Math.ceil(reach / (g.tw / 2)); b++) {
+                if ((a + b) & 1) continue;
+                const cell = { i: (a + b) / 2 + s.id * 3, j: (a - b) / 2 + s.id };
+                const px = ox + (b * g.tw) / 2;
+                const py = oy + (a * g.th) / 2;
+                const t = tileOf(cell);
+                const [sx, sy, w, h] = RECTS[t.name];
+                const x = Math.round(px - w / 2);
+                const y = Math.round(py - g.th / 2);
+                if (t.flip) {
+                  tg.setTransform(-1, 0, 0, 1, x + w, 0);
+                  tg.drawImage(im, sx, sy, w, h, 0, y, w, h);
+                  tg.setTransform(1, 0, 0, 1, 0, 0);
+                } else tg.drawImage(im, sx, sy, w, h, x, y, w, h);
+              }
+            }
+          });
           // (the glow under it, in the bridges' colour, faint)
-          let xs = 0;
-          let ys = 0;
-          for (const p of centres) {
-            xs += p.x;
-            ys = Math.max(ys, p.y);
-          }
-          const cx = xs / centres.length;
-          const rg = gl.createRadialGradient(cx, ys + 30, 0, cx, ys + 30, 70 + cells.length * 5);
-          rg.addColorStop(0, `rgba(${realm.bridge.glow}, 0.22)`);
+          const gy = sp.cy + sp.ry + sp.depth * 0.45;
+          const rg = gl.createRadialGradient(sp.cx, gy, 0, sp.cx, gy, sp.rx * 1.3);
+          rg.addColorStop(0, `rgba(${realm.bridge.glow}, 0.2)`);
           rg.addColorStop(1, `rgba(${realm.bridge.glow}, 0)`);
           gl.globalCompositeOperation = 'lighter';
           gl.fillStyle = rg;
           gl.save();
-          gl.translate(cx, ys + 30);
-          gl.scale(1, 0.6);
-          gl.translate(-cx, -(ys + 30));
-          gl.fillRect(cx - 200, ys - 160, 400, 400);
+          gl.translate(sp.cx, gy);
+          gl.scale(1, 0.7);
+          gl.translate(-sp.cx, -gy);
+          gl.fillRect(sp.cx - sp.rx * 1.4, gy - sp.rx * 1.4, sp.rx * 2.8, sp.rx * 2.8);
           gl.restore();
           gl.globalCompositeOperation = 'source-over';
+          // (a fragment of rock drifting near it, now and then)
+          if (hash(s.id, 77) < 0.5) drawChunk(c, sp.cx + (hash(s.id, 3) < 0.5 ? -1 : 1) * (sp.rx + 10 + hash(s.id, 4) * 18), sp.cy + sp.ry + sp.depth * (0.45 + hash(s.id, 5) * 0.3), 4 + hash(s.id, 6) * 5, realm.rock.map((v) => v * 150) as [number, number, number], s.id * 5 + 1);
         },
       });
-      // (a prop on the front cell of an ordinary island: a tree, a bush or a rock of the realm)
-      if (s.id !== START_ID && s.kind !== 'boss' && hash(s.id * 5 + 3, g.W) < 0.8) {
-        const role = (['tree', 'bush', 'rock'] as const)[Math.floor(hash(s.id, 11) * 3)];
-        const set = art[role];
-        const front = centres[0];
-        const dx = (hash(s.id, 5) < 0.5 ? -1 : 1) * 34;
-        list.push({ y: front.y + foot + 14, x: front.x + dx, paint: () => blit(set[s.id % set.length], front.x + dx, front.y + foot + 14, hash(s.id, 9) < 0.5) });
+      // (a prop or two on the front rim of an ordinary island: a tuft, a rock, a crystal of the realm, small beside the landmark)
+      if (s.id !== START_ID && s.kind !== 'boss') {
+        const rim = outlineOf(sp);
+        for (let k = 0; k < 2; k++) {
+          const pt = rim[Math.floor((0.12 + 0.3 * k + hash(s.id, 20 + k) * 0.16) * rim.length) % rim.length];
+          const role = (['bush', 'rock'] as const)[(s.id + k) % 2];
+          const set = art[role];
+          const name = set[(s.id + k) % set.length];
+          const px = pt.x + (sp.cx - pt.x) * 0.12;
+          const py = pt.y - 2;
+          list.push({ y: py, x: px, paint: () => blit(name, px, py, hash(s.id, 30 + k) < 0.5) });
+        }
       }
     }
     // (bits of rock drifting in the void, here and there, clear of the islands and the bridges)
     const allStones = model.roads.flatMap((r) => this.stones(r.from, r.to));
-    const near = (cell: Cell, d: number) => {
+    const near = (cell: Cell) => {
       const p = this.xy(cell);
-      for (let di = -d; di <= d; di++) for (let dj = -d; dj <= d; dj++) if (onIsland.has(`${cell.i + di},${cell.j + dj}`)) return true;
+      if (isles.some(({ sp }) => Math.hypot(sp.cx - p.x, (sp.cy - p.y) / 0.56) < sp.rx * 1.5 + 30)) return true;
       return allStones.some((q) => Math.hypot(q.x - p.x, (q.y - p.y) * 1.6) < 70);
     };
     for (const d of model.decor) {
-      if (d.role !== 'rock' || near(d, 2) || hash(d.i * 3, d.j * 5) > 0.45) continue;
+      if (d.role !== 'rock' || near(d) || hash(d.i * 3, d.j * 5) > 0.3) continue;
       const set = art.rock;
       const name = set[d.v % set.length];
       const p = this.xy(d);
@@ -674,9 +691,9 @@ export class CalMap {
       const sk = `s:${s.id}`;
       const isNew = !!seen && !seen.has(sk);
       now.add(sk);
-      const p = this.xy(s);
       const road = model.roads.find((r) => r.to === s.id && fog.roads.has(`${r.from}>${r.to}`));
-      const it = { key: sk, x: this.ax(s), y: p.y, r: HOLE_SPOT.rx, up: Math.max(HOLE_SPOT.up, this.bodyOf(s).h + 20), down: HOLE_SPOT.down, delay: isNew ? (road ? road.cells.length * LIFT_STEP : 0) : 0 };
+      const sp = this.isleOf(s);
+      const it = { key: sk, x: sp.cx, y: sp.cy, r: sp.rx + HOLE_MARGIN.rx, island: true, up: Math.max(sp.ry + HOLE_MARGIN.up, this.bodyOf(s).h + HOLE_MARGIN.up), down: sp.ry + sp.depth + HOLE_MARGIN.down, delay: isNew ? (road ? road.cells.length * LIFT_STEP : 0) : 0 };
       items.push(it);
       if (isNew) fresh.push(it);
     }
@@ -701,10 +718,10 @@ export class CalMap {
       if (p <= 0) continue;
       // (a soft fade in: ease out)
       const e = 1 - (1 - p) * (1 - p);
-      const isIsland = it.r === HOLE_SPOT.rx;
+      const isIsland = !!it.island;
       const rx = (it.r / FOG_PX) * (isIsland ? 1 : 1);
-      const up = (isIsland ? it.up ?? HOLE_SPOT.up : it.r) / FOG_PX;
-      const down = (isIsland ? it.down ?? HOLE_SPOT.down : it.r) / FOG_PX;
+      const up = (isIsland ? it.up ?? it.r : it.r) / FOG_PX;
+      const down = (isIsland ? it.down ?? it.r : it.r) / FOG_PX;
       const x = it.x / FOG_PX;
       const y = it.y / FOG_PX;
       // (an island's patch is taller above (the landmark) and below (the rock) than it is wide: a unit disc stretched)
@@ -762,7 +779,9 @@ export class CalMap {
       const wrap = el('div', `cmSpot ${s.kind} ${state}${s.side ? ' side' : ''}${s.id === this.picked ? ' picked' : ''}`);
       wrap.dataset.id = String(s.id);
       const ring = el('i', 'cmRing');
-      ring.style.cssText = `left:${(p.x - g.tw / 2) * u}px;top:${(p.y - g.th / 2) * u}px;width:${g.tw * u}px;height:${g.th * u}px`;
+      const sp = this.isleOf(s);
+      const rw = Math.min(g.tw, sp.rx * 1.7);
+      ring.style.cssText = `left:${(p.x - rw / 2) * u}px;top:${(sp.cy - (rw * 0.57) / 2) * u}px;width:${rw * u}px;height:${rw * 0.57 * u}px`;
       // (the button covers the landmark: its picture's size, at least a thumb wide)
       const body = this.bodyOf(s, done.has(s.id));
       const b = el('button', 'cmHit');
