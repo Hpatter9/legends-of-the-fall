@@ -4,11 +4,16 @@
 // buildings in `sceneFamilies.ts`). Pure data: no Pixi, no DOM, no randomness.
 
 import { close, say, tell, wide, type Scene } from './sceneKit';
+import type { Area } from './board';
+import { UNITS } from './units';
 import { EVENT_SCENES } from './sceneEvents';
 import { FAMILY_SCENES } from './sceneFamilies';
 
 export * from './sceneKit';
 
+
+/** The heroes that play the opening, which comes before the starter pick (the player has none yet): a fixed trio. */
+export const OPENING_TRIO: readonly string[] = ['knight', 'samurai', 'archer'];
 
 const PILOTS: Record<string, Scene> = {
   // ---------------------------------------------------------------- the opening: after a new save has picked its heroes
@@ -17,6 +22,8 @@ const PILOTS: Record<string, Scene> = {
     title: 'The Road Begins',
     blurb: 'Your first three heroes, and the Calamity that wants a word.',
     moment: { kind: 'starter' },
+    music: 'opening',
+    trio: OPENING_TRIO,
     cast: {
       front: { role: 'party:0', x: 262, facing: 'right', hidden: true },
       striker: { role: 'party:1', x: 228, facing: 'right', hidden: true },
@@ -67,6 +74,7 @@ const PILOTS: Record<string, Scene> = {
     title: 'The Ashen Road',
     blurb: 'Gorvak the Ashen, the Calamity’s first herald, keeps a very firm roadblock.',
     moment: { kind: 'calBoss', map: 1 },
+    music: 'gorvak',
     cast: {
       hero: { role: 'hero', x: 285, facing: 'right', hidden: true },
       gorvak: { role: 'unit:calBoss1', x: 395, facing: 'left', hidden: true, scale: 1.5 },
@@ -113,15 +121,74 @@ const PILOTS: Record<string, Scene> = {
   },
 };
 
+/* ------------------------------------------------------------ a hero earned in play */
+
+/** The ten heroes earned by a milestone (`contentHeroes.ts`): the land the reveal stands in, what the narrator says of the milestone, and the hero's first words. */
+const EARNED: Readonly<Record<string, { look: Area; why: string; says: string }>> = {
+  werewolf: { look: 'forest', why: 'The Beast Packs have gone quiet. One did not run away: it came to see who had done it.', says: 'Not bad, for a pair of two-legs.' },
+  reaper: { look: 'dungeon', why: 'The Undead Legion marched for a thousand years. Someone has to do the paperwork.', says: 'Your legion was due. I have merely come to collect.' },
+  demonSwordsman: { look: 'volcano', why: 'The Infernal Host was very sure of itself. It was one swordsman short of being right.', says: 'I have left my old employers. The pension was dreadful.' },
+  samuraiCommander: { look: 'highlands', why: 'The Night Parade has gone home. Its commander has not: he has had an idea.', says: 'A fine battle. I shall take the banner. You may keep the field.' },
+  juggernaut: { look: 'dungeon', why: 'The Forge went cold. One golem stayed warm, mostly out of habit.', says: 'Forge quiet now. I carry.' },
+  dreadPirate: { look: 'snow', why: 'Twenty floors up the tower, a ship’s crew came out of the stairwell.', says: 'Do not ask how we got a ship up the tower.' },
+  tyrant: { look: 'dungeon', why: 'Forty floors up, the lights were on. So was a throne.', says: 'You climbed. I admire that. Now do stop hovering.' },
+  timeWitch: { look: 'desert', why: 'The Calamity is over. Somebody noticed, and arrived a little late, and also a little early.', says: 'Do not worry. I have already seen how this ends.' },
+  dragoon: { look: 'volcano', why: 'A Calamity at ascension three. Something with scales noticed the heat and came to compare.', says: 'Hot enough. Shall we go and bother something bigger?' },
+  sage: { look: 'forest', why: 'Half the foes of the bestiary, met and noted. The notes were read by someone who disagrees.', says: 'Fascinating. You have the monsters in the wrong order.' },
+};
+
+/** The reveal of a hero earned in play: a silhouette comes on in the dark, then the hero steps into the light (one flash, once). A few seconds. */
+function earnedScene(kind: string, e: { look: Area; why: string; says: string }): Scene {
+  return {
+    id: `earned:${kind}`,
+    title: `${UNITS[kind].name} joins`,
+    blurb: 'A hero earned in play, not pulled.',
+    moment: { kind: 'earned', hero: kind },
+    short: true,
+    music: 'triumph',
+    family: 'earned',
+    cast: {
+      figure: { role: `unit:${kind}`, x: 330, facing: 'left', hidden: true, shade: true },
+      hero: { role: `unit:${kind}`, x: 330, facing: 'left', hidden: true },
+    },
+    shots: [
+      { look: e.look, cam: wide(300, 205), to: wide(315, 208), fx: ['fadeIn', 'darken'], caption: 'A new hero', acts: [{ who: 'figure', enter: 330, from: 520 }], lines: [tell(e.why)] },
+      { cam: close('hero', 1.5), acts: [{ who: 'figure', hide: true }, { who: 'hero', enter: 330, from: 330 }], fx: ['flash', 'glow'], cue: 'eliteSting', lines: [say('hero', e.says), tell('{hero} joins you.')] },
+    ],
+  };
+}
+
+/** The summoning cinematic, for the hero a pull brought (the new one first): the circle answers in the dark, a flash, and the hero stands in it. About three seconds; a tap ends it (`ScenePlayer.play`'s `quick`). */
+export function summonScene(kind: string, name: string): Scene {
+  return {
+    id: 'summon',
+    title: 'The Summoning',
+    blurb: 'The circle answers.',
+    moment: { kind: 'summon' },
+    short: true,
+    cast: {
+      figure: { role: `unit:${kind}`, x: 288, facing: 'right', hidden: true, shade: true },
+      hero: { role: `unit:${kind}`, x: 288, facing: 'right', hidden: true },
+    },
+    shots: [
+      { look: 'dungeon', cam: wide(288, 205), to: wide(288, 210), fx: ['darken', 'glow'], caption: 'The circle answers', acts: [{ who: 'figure', enter: 288, from: 288 }], hold: 1.3 },
+      { cam: close('hero', 1.5), acts: [{ who: 'figure', hide: true }, { who: 'hero', enter: 288, from: 288 }], fx: ['flash', 'glow'], cue: 'eliteSting', caption: name, hold: 1.5 },
+    ],
+  };
+}
+
+/** The scenes of the heroes earned in play, in the roster's order. */
+const EARNED_SCENES: Scene[] = Object.entries(EARNED).map(([k, e]) => earnedScene(k, e));
+
 /** The score each scene plays under (the audio worker's tracks, `musicScore.ts`): a herald its own, the rest a shared mood. A cut-in has none: the fight's music goes on. */
 const MUSIC: Record<string, string> = {
   opening: 'opening', gorvak: 'gorvak', thornWarden: 'herald2', malphas: 'herald3', hrungar: 'herald4', vorgrath: 'herald5', karnok: 'herald6',
-  calamityEnds: 'triumph', firstLoss: 'comic', eliteMet: 'spire', ascensionOne: 'triumph', dailyBoss: 'spire', mythicOpens: 'triumph', firstSummon: 'comic', duchessInFight: 'comic',
+  calamityEnds: 'triumph', firstLoss: 'comic', eliteMet: 'spire', ascensionOne: 'triumph', dailyBoss: 'spire', mythicOpens: 'triumph', duchessInFight: 'comic',
 };
 const STING: Record<string, Scene['sting']> = { gorvak: 'sceneBoss', thornWarden: 'sceneBoss', malphas: 'sceneBoss', hrungar: 'sceneBoss', vorgrath: 'sceneBoss', karnok: 'sceneBoss', calamityEnds: 'sceneVictory' };
 const FAMILY_MUSIC: Record<string, string> = { oath: 'triumph', clear: 'triumph', awaken: 'solemn', earned: 'triumph', castle: 'comic', spire: 'spire' };
 
-const ALL: Scene[] = [...Object.values(PILOTS), ...EVENT_SCENES, ...FAMILY_SCENES].map((c) => {
+const ALL: Scene[] = [...Object.values(PILOTS), ...EVENT_SCENES, ...FAMILY_SCENES, ...EARNED_SCENES].map((c) => {
   const music = c.music ?? MUSIC[c.id] ?? (c.family ? FAMILY_MUSIC[c.family] : undefined);
   const sting = c.sting ?? (STING[c.id] ?? (c.family === 'clear' ? 'sceneVictory' : c.family === 'oath' || c.family === 'oathcut' ? 'sceneBoss' : undefined));
   return { ...c, ...(music ? { music } : {}), ...(sting ? { sting } : {}) };

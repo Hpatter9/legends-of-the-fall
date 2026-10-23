@@ -23,12 +23,12 @@ import { formOf, UNITS } from './sim/units';
 import { ELITE_BY_ID } from './sim/elites';
 import { isBoss } from './sim/foes';
 import { awakenedOf } from './sim/awaken';
-import { earn, loadMeta, needsStarter, pickStarter, heroRank, recordStars, saveMeta, type Meta } from './sim/meta';
+import { earn, loadMeta, needsStarter, pickStarter, heroRank, recordStars, saveMeta, type Meta, type Pull } from './sim/meta';
 import { chooseStarter } from './starter';
 import { ScenePlayer } from './render/sceneView';
 import { dueScene, markSeen } from './sim/sceneRules';
 import { onAwakened } from './awakenView';
-import { SCENES, SCENE_ORDER, type Moment } from './sim/sceneScripts';
+import { SCENES, SCENE_ORDER, summonScene, type Moment } from './sim/sceneScripts';
 import { previewFrames } from './render/sceneClock';
 import { xpRate } from './sim/castle';
 import { heroStats } from './sim/talents';
@@ -60,6 +60,8 @@ import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, type SpellId } fr
 import { bindSpellbook } from './spellbook';
 import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
+import { WeatherView } from './render/weatherView';
+import { weatherOf, type Weather } from './sim/weather';
 import { ChainView } from './render/chainView';
 import { against, frameOf, transferFormation } from './sim/chain';
 import { traitBadge } from './traitBadge';
@@ -129,6 +131,7 @@ class Game {
   private app = new Application();
   private world = new Container();
   private boardView = new BoardView();
+  private weather = new WeatherView();
   /** The long map of an army run: the finished sections behind the fight, and the walk from one wave to the next. */
   private chain!: ChainView;
   /** The units (of the finished fight) that are walking to the next section: their own sprites stay hidden meanwhile. */
@@ -208,7 +211,7 @@ class Game {
     const fonts = Promise.all(['900 16px "Cinzel Decorative"', '700 16px "Alegreya Sans"', '16px "Press Start 2P"'].map((f) => document.fonts.load(f))).catch(() => {});
     await Promise.all([loadSheets(), loadBoardArt(), loadFx(), Promise.race([fonts, new Promise((ok) => setTimeout(ok, 2500))])]);
     this.world.sortableChildren = true;
-    this.boardView.keep.push(this.fx.dimLayer, this.fx.root);
+    this.boardView.keep.push(this.fx.dimLayer, this.fx.root, this.weather.lights);
     this.boardView.root.addChild(...this.boardView.keep);
     this.world.addChild(this.boardView.root);
     this.boardView.renderer = this.app.renderer;
@@ -216,7 +219,7 @@ class Game {
     this.ghost.anchor.set(0.5, 1);
     this.ghost.alpha = 0.85;
     this.ghost.visible = false;
-    this.app.stage.addChild(this.world, this.ghost, this.fx.flashLayer);
+    this.app.stage.addChild(this.world, this.weather.root, this.ghost, this.fx.flashLayer);
     const query = new URLSearchParams(location.search);
     const seed = Number(query.get('seed'));
     this.meta = loadMeta((Date.now() % 100000) + 1);
@@ -224,18 +227,20 @@ class Game {
     initQuips(this.meta.seed);
     // (a new save, or one after Start over, picks its first three heroes before anything else; an address with a seed is a test page and takes the first pack)
     if (needsStarter(this.meta)) {
+      // (the opening cinematic comes first, before the pick: the player has no heroes yet, so a fixed trio plays it; a test page with a seed has none)
+      if (!seed) await this.playDue({ kind: 'starter' }, { party: [...(SCENES.opening.trio ?? [])] });
       if (seed) pickStarter(this.meta, 0);
       else await chooseStarter(this.meta);
       saveMeta(this.meta);
-      // (the opening cinematic: the heroes just picked, and what they are up against; a test page with a seed has none)
-      if (!seed) await this.playDue({ kind: 'starter' });
     }
     // (a tower run saved by an older version sat in the ordinary slot: it moves to the tower's own)
     adoptOldTower();
     // (a fresh page with no saved run shows the first army's board behind the home screen)
     this.run = (!seed && loadRun()) || armyRun(seed || (Date.now() % 100000) + 1, ARMIES[0].id, this.meta.party, this.meta.castle);
     this.syncPool();
-    this.gacha = new Gacha(this.meta, () => {
+    this.gacha = new Gacha(
+      this.meta,
+      () => {
       this.syncPool();
       // (a pull can earn an achievement too)
       toastAchievements(settleRun(this.meta, this.run, { won: false, stage: this.run.stage, stars: 0 }));
@@ -243,7 +248,10 @@ class Game {
       saveRun(this.run);
       this.refresh();
       this.home.refresh();
-    });
+    },
+    // (a pull from the card reveal runs the hall's show again, like one from the hall)
+    (n) => this.home.summon(n),
+    );
     this.home = new Home(this.meta, {
       hasRun: () => {
         const r = loadRun();
@@ -271,8 +279,8 @@ class Game {
           this.home.open();
         }),
       onRecruit: () => this.gacha.open(),
-      // (the first summon has its cinematic before the hall's own show)
-      onSummon: (n, play) => this.gacha.summon(n, (got) => this.queueScene({ kind: 'firstSummon' }).then(() => play(got))),
+      // (a pull plays the summoning cinematic first, every time: a tap on it skips the hall's show too, and goes straight to the cards)
+      onSummon: (n, play) => this.gacha.summon(n, async (got) => play(got, await this.summonCinematic(got))),
       onDaily: () => {
         if (dailyInProgress(loadRun(), todayKey())) return this.resume();
         // (the start card names the boss and the land; a tap on Fight! starts the run, the first of the date counting)
@@ -383,6 +391,8 @@ class Game {
     this.boardView.build(this.b.board, { boss: !!waveArmyOf(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
     this.syncChain();
     setBackdrop(this.b.board.area);
+    this.weather.resize(this.app.screen.width, this.app.screen.height);
+    this.weather.set(weatherOf(this.b.board), this.b.board.area, this.boardView.litSpots());
     showTwistBanner(this.run.tower?.cur?.fight?.twist);
     this.syncSprites(true);
     this.layout();
@@ -411,7 +421,7 @@ class Game {
 
   /** Whether cinematics play now: not in an auto-replay, and not switched off (the Settings switch, once it exists). */
   private scenesOn(): boolean {
-    return !this.auto && (settings() as { cinematics?: boolean }).cinematics !== false;
+    return !this.auto && settings().cinematics;
   }
 
   /** How many cinematics are queued or playing: the fight is held for them (the renderer waits; the simulation is not touched, so it plays out the same). */
@@ -420,10 +430,11 @@ class Game {
 
   /** Queue the cinematic due at a moment, if there is one: they play one after another, and the returned promise is done when this one is. */
   private queueScene(moment: Moment, party?: readonly string[]): Promise<void> {
+    const players = party ? { ...this.players(), party: [...party] } : undefined;
     if (!this.scenesOn() || !dueScene(this.meta, moment)) return this.sceneChain;
     this.sceneHold++;
     this.sceneChain = this.sceneChain
-      .then(() => this.playDue(moment, party))
+      .then(() => this.playDue(moment, players))
       .catch(() => undefined)
       .then(() => void this.sceneHold--);
     return this.sceneChain;
@@ -448,12 +459,13 @@ class Game {
   }
 
   /** The cinematic due at a moment, if the save has not seen it: marked seen as it begins (a closed page does not bring it back), then played. */
-  private async playDue(moment: Moment, party?: readonly string[]): Promise<void> {
+  private async playDue(moment: Moment, players = this.players()): Promise<void> {
     const id = dueScene(this.meta, moment);
     if (!id) return;
+    // (with the Cinematics setting off it is still marked seen, so the Scenes list can play it; it just does not start by itself)
     markSeen(this.meta, id);
     saveMeta(this.meta);
-    await this.scenes.play(id, party ? { ...this.players(), party: [...party] } : this.players());
+    if (settings().cinematics) await this.scenes.play(id, players);
   }
 
   /** Every cinematic's id, and the frames of one worth a screenshot (previews: `tools/cinematics/shots.mjs`). */
@@ -463,6 +475,24 @@ class Game {
 
   sceneFrames(id: string): [number, number, number][] {
     return previewFrames(SCENES[id]);
+  }
+
+  /** The summoning cinematic for a pull: the hero it brought (a new one first) steps into the circle's light. True when a tap skipped it, which skips the hall's show too. It never holds up a pull: a tap anywhere ends it. */
+  private async summonCinematic(got: Pull[]): Promise<boolean> {
+    const pick = got.find((p) => p.isNew) ?? got[0];
+    if (!pick || !settings().cinematics) return false;
+    return (await this.scenes.play(summonScene(pick.kind, UNITS[pick.kind].name), this.players(), true)) === 'skipped';
+  }
+
+  /** The heroes earned in play since the last result was closed: each has its reveal, once, before the game goes on. */
+  private earned: string[] = [];
+  private async revealEarned(): Promise<void> {
+    for (const kind of this.earned.splice(0)) await this.playDue({ kind: 'earned', hero: kind });
+  }
+
+  /** Show a weather on this board whatever the fight rolled (for previews and the screenshots: `__game.previewWeather('rain')`). */
+  previewWeather(w: Weather): void {
+    this.weather.set(w, this.b.board.area, this.boardView.litSpots());
   }
 
   /** Play a cinematic by id (the Scenes list, and previews: `__game.playScene('opening')`). */
@@ -775,6 +805,7 @@ class Game {
     }
     if (this.survey) this.standBack(dt);
     this.boardView.pump();
+    this.weather.step(dt);
     // (the camera eases to where it is sent, unless a finger is holding the board)
     if (this.phaseBoss && (!b.pause || b.phase !== 'fight')) this.endPhase();
     if (b.phase === 'fight' && !this.intro) this.phaseBoss ? this.pushOnPhase() : (this.follow(), this.leanIn(dt));
@@ -930,6 +961,7 @@ class Game {
   /** Fit the board into the room the bench and the top bar leave: it is zoomed in and panned. */
   private layout(): void {
     this.fx.fitScreen(viewW(), viewH());
+    this.weather.resize(this.app.screen.width, this.app.screen.height);
     const top = $('top').getBoundingClientRect();
     const panel = $('panel').getBoundingClientRect();
     const bar = $('bossBar');
@@ -1624,7 +1656,7 @@ class Game {
       ? { title: 'Army defeated!', tone: 'won' as const, line: `${army?.name ?? 'The run'} cleared in ${run.recap?.fights ?? 0} fights` }
       : { title: 'Run over', tone: 'lost' as const, line: army ? `The ${army.name} held at wave ${run.best} of ${army.waves.length}` : `Fell at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} hires` };
     const joke = Rng.from(run.seed, won ? 0x7e1 : 0x7e2).pick(won ? RECAP_WIN : RECAP_LOSS);
-    showRecap($('recap'), recapOf(run), { ...head, joke }, () => this.afterResult());
+    showRecap($('recap'), recapOf(run), { ...head, joke }, () => void this.revealEarned().then(() => this.afterResult()));
   }
 
   /** A run has ended: back to the main screen, showing what it earned. */
@@ -2054,10 +2086,10 @@ class Game {
       // (a milestone this fight reached may bring in a hero)
       const joined = grantContent(this.meta);
       toastJoined(joined);
-      // (the fight's cinematics, one after another: an army's last stand, the Calamity's end, a first loss, the heroes earned)
+      // (the fight's cinematics, one after another: an army's last stand, the Calamity's end; a hero earned has its own reveal)
       if (army && this.pay?.firstClear) void this.queueScene({ kind: 'armyClear', army: army.id });
       if (won && run.cleared && run.mode?.kind === 'calamity') void this.queueScene({ kind: 'calVictory' });
-      for (const hero of joined) void this.queueScene({ kind: 'earned', hero });
+      this.earned.push(...joined);
       // (a run that levels its own heroes taught them in `finishTower`; the lasting XP is not touched)
       const own = run.local ? climbXpView(run) : null;
       const gains = own ? own.gains : fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp);

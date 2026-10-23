@@ -3,7 +3,7 @@
 
 import { ALL_HEROES, UNITS } from './sim/units';
 import { awakenedOf, AWAKEN_SHARDS } from './sim/awaken';
-import { MAX_RANK, pullCost, RANK_MULT, RANK_SHARDS, rankOf, recruit, saveMeta, type Meta, type Pull } from './sim/meta';
+import { MAX_RANK, pullCost, RANK_MULT, RANK_SHARDS, rankOf, recruit, saveMeta, takenRank, type Meta, type Pull } from './sim/meta';
 import { closest, haveOf, needOf, ownedCount } from './sim/unlock';
 import { isContent, pityAt } from './sim/unlockRules';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
@@ -17,6 +17,8 @@ export class Gacha {
   constructor(
     private meta: Meta,
     private onClose: () => void,
+    /** A pull started from the reveal screen runs the hall's show again, like one from the hall (the screen shuts under it). */
+    private again?: (count: 1 | 10) => void,
   ) {
     $('pull1').addEventListener('click', () => this.pull(1));
     $('pull10').addEventListener('click', () => this.pull(10));
@@ -78,7 +80,7 @@ export class Gacha {
     const frag = document.createDocumentFragment();
     const label = document.createElement('span');
     label.className = 'rank';
-    label.textContent = `Rank ${at}`;
+    label.textContent = `Rank ${takenRank(m, kind) + steps}${rank > takenRank(m, kind) ? ' · rank up ready' : ''}`;
     const bar = document.createElement('span');
     bar.className = 'bar';
     bar.title = to ? `${got}/${to} shards` : `${got} shards, fully awakened`;
@@ -104,6 +106,12 @@ export class Gacha {
   }
 
   private pull(count: 1 | 10): void {
+    if (this.again) {
+      if (this.busy || this.meta.crowns < pullCost(count)) return;
+      $('gacha').hidden = true;
+      this.again(count);
+      return;
+    }
     const got = recruit(this.meta, count);
     if (!got) return;
     saveMeta(this.meta);
@@ -204,5 +212,5 @@ export function pityLine(m: Meta): string {
 
 /** The recruit page's short rule: what a pull is, and why new heroes turn up less as the roster grows. */
 export function ratesText(): string {
-  return `A pull gives a shard of one hero. A new hero joins when its bar fills; one you have gains rank (+${Math.round((RANK_MULT - 1) * 100)}% hp and attack a rank, up to ${MAX_RANK}, then awakening). The more heroes you have, the more pulls land on them rather than on a new one. Ten heroes are earned in play, never pulled: see the Heroes tab.`;
+  return `A pull gives a shard of one hero. A new hero joins when its bar fills; one you have earns rank (+${Math.round((RANK_MULT - 1) * 100)}% hp and attack a rank, up to ${MAX_RANK}, then awakening): tap Rank up on its sheet to take it. The more heroes you have, the more pulls land on them rather than on a new one. Ten heroes are earned in play, never pulled: see the Heroes tab.`;
 }

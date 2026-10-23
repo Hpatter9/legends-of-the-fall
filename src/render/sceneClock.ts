@@ -110,6 +110,7 @@ export function actorsAt(script: Scene, c: Cursor): Record<string, ActorNow> {
       if ('look' in act) a.look = act.look;
       else if ('face' in act) a.facing = act.face;
       else if ('pose' in act) a.pose = act.pose;
+      else if ('hide' in act) a.visible = false;
       else {
         const from = 'enter' in act ? (typeof act.from === 'number' ? act.from : OFF[act.from]) : a.x;
         const to = 'walk' in act ? act.walk : 'enter' in act ? act.enter : OFF[act.exit];

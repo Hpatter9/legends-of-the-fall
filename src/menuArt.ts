@@ -23,7 +23,10 @@ import type { BuildingId } from './sim/castle';
 export const ICONS = { crowns: icCrown, gold: icGold, recruit: tabRecruit, heroes: tabHeroes, battle: tabBattle, castle: tabCastle, spells: tabSpells, trophy: icTrophy, daily: hourglass, tower: spyglass };
 export const BUILDING_ICON: Record<BuildingId, string> = { treasury: coin, barracks: armour1, armoury: sword, mageTower: whetstone, stable: boots, library: scroll };
 
-export const AREA_NAMES: Record<Area, string> = { highlands: 'Highlands', forest: 'Greenwood', snow: 'Snowfields', desert: 'Dunes', volcano: 'Ashlands', dungeon: 'Dungeon' };
+export const AREA_NAMES: Record<Area, string> = {
+  highlands: 'Highlands', forest: 'Greenwood', snow: 'Snowfields', desert: 'Dunes', volcano: 'Ashlands', dungeon: 'Dungeon',
+  plains: 'Meadows', autumn: 'Autumn Wood', swamp: 'Mire', graveyard: 'Graveyard', ruins: 'City Ruins', temple: 'Ancient Temple', crystal: 'Crystal Caves', forge: 'Forge', shrine: 'Moonlit Shrine', warcamp: 'War Camp', oasis: 'Oasis',
+};
 
 /** An icon as an <img> (pixel art, never smoothed). */
 export function icon(url: string, cls = 'ico'): HTMLImageElement {

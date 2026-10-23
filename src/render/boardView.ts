@@ -9,6 +9,7 @@ import { loadImage } from './loadImage';
 import { depthIn, FOOT, HH, project, rawAt, TH, TW, type Frame } from './iso';
 import { footDims, liesBehind, type Rot } from '../sim/turn';
 import { AREA_URLS, BUSH_URLS, GROUND_URLS } from './areaArt';
+import { LIT_PROPS } from './weatherRules';
 
 /** From this height up, a tile's top is stony. */
 const STONY = 3;
@@ -29,6 +30,17 @@ const LIP: Record<Area, [string, string]> = {
   desert: ['#d9b878', '#e2c690'],
   volcano: ['#4a3430', '#6a5450'],
   dungeon: ['#585874', '#7c7c98'],
+  plains: ['#6ea23c', '#a4ac84'],
+  autumn: ['#b0641e', '#a08a74'],
+  swamp: ['#2c5a40', '#667a68'],
+  graveyard: ['#3c4a42', '#6e7690'],
+  ruins: ['#948462', '#a8a08c'],
+  temple: ['#3a7a48', '#d2c28e'],
+  crystal: ['#3c3c92', '#7c8cd0'],
+  forge: ['#463630', '#807672'],
+  shrine: ['#4a3678', '#8c80a6'],
+  warcamp: ['#6e6230', '#8c7258'],
+  oasis: ['#64aa50', '#e4cc9a'],
 };
 
 /** The lip of a boss arena's tiles. */
@@ -316,6 +328,20 @@ export class BoardView {
         tiles.push(tile);
       }
     return { tiles, marks, tex };
+  }
+
+  /** Where the board's lit props stand (world px; a lantern, a torch, a forge fire), for night's glows (`weatherView.ts`). */
+  litSpots(): [number, number][] {
+    const b = this.board;
+    const lit = b && LIT_PROPS[b.area];
+    if (!b || !lit) return [];
+    const n = AREA_URLS[b.area].boulders.length;
+    const f = { rot: this.rot, ou: 0, ov: 0 };
+    const out: [number, number][] = [];
+    b.tiles.forEach((t, i) => {
+      if (t.rock && lit.includes(t.deco % n)) out.push(project(f, i % b.w, Math.floor(i / b.w), t.h));
+    });
+    return out;
   }
 
   /** Light a tile (or clear it). */

@@ -71,7 +71,7 @@ export const namesOf = (cast: Record<string, Cast>): Record<string, string> => O
 export function momentText(mo: Moment): string {
   switch (mo.kind) {
     case 'starter':
-      return 'A new save, once its first heroes are picked.';
+      return 'A new save, before its first heroes are picked.';
     case 'calBoss':
       return `The Calamity's map ${mo.map} boss, as the fight is set up.`;
     case 'calVictory':
@@ -81,7 +81,7 @@ export function momentText(mo: Moment): string {
     case 'awaken':
       return 'A hero awakens.';
     case 'earned':
-      return 'A hero joins by a milestone.';
+      return 'A hero earned in play, the moment it joins.';
     case 'combo':
       return 'A set of five fires its Last Oath for the first time.';
     case 'comboCut':
@@ -98,8 +98,8 @@ export function momentText(mo: Moment): string {
       return 'A boss changes form.';
     case 'mythic':
       return 'An army opened on Mythic.';
-    case 'firstSummon':
-      return 'Your first summon in the hall.';
+    case 'summon':
+      return 'Every pull in the summoning hall.';
     case 'elite':
       return 'The first elite you meet.';
     case 'ascension':

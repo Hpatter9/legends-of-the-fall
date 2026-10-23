@@ -492,39 +492,6 @@ export const EVENT_SCENES: Scene[] = [
     ],
   },
   {
-    id: 'firstSummon',
-    title: 'The Right Room?',
-    blurb: 'The first summon: the circle looks at the summoner, and a hero steps out and asks if this is the right room.',
-    moment: { kind: 'firstSummon' },
-    cast: {
-      hero: { role: 'party:0', x: 270, facing: 'left', hidden: true },
-      other: { role: 'party:1', x: 215, facing: 'right', hidden: true },
-      duchess: { role: 'duchess', x: 175, facing: 'right', hidden: true },
-    },
-    shots: [
-      {
-        look: 'dungeon',
-        cam: wide(240, 205),
-        fx: ['fadeIn', 'darken', 'glow'],
-        caption: 'The hall',
-        acts: [{ who: 'other', enter: 215, from: 130 }],
-        lines: [tell('The summoning circle looks at the summoner. The summoner looks back, with hope.')],
-      },
-      {
-        cam: close(['hero', 'other'], 1.5),
-        acts: [{ who: 'hero', enter: 270, from: 270 }],
-        fx: ['flash'],
-        cue: 'boom',
-        lines: [say('hero', 'Hello? Is this the right room?'), say('other', 'It is the room. You are the hero.'), say('hero', 'There was a lot of light. I assumed it was a different room.')],
-      },
-      {
-        cam: close(['hero', 'duchess'], 1.5),
-        acts: [{ who: 'duchess', enter: 175, from: 90 }],
-        lines: [say('duchess', 'Mehh.'), say('hero', 'And you are?'), tell('She is Duchess. She does not discuss her duties.')],
-      },
-    ],
-  },
-  {
     id: 'duchessInFight',
     title: 'She Was Not on the List',
     blurb: 'Duchess turns up in a fight, uninvited, and everyone is too polite to say.',

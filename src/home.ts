@@ -30,6 +30,7 @@ import { Tavern } from './tavern';
 import { SummoningHall } from './hall';
 import { Library } from './library';
 import { CampScene } from './camp';
+import { readyKinds } from './sim/rankUp';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -52,7 +53,7 @@ export interface HomeHooks {
   /** Opens the collection screen (the heroes, their ranks and the odds). */
   onRecruit(): void;
   /** Does a pull of `count`, calling `play` with the heroes it gave so the hall can show them, then opens the card reveal. */
-  onSummon?(count: 1 | 10, play: (got: Pull[]) => Promise<void>): void;
+  onSummon?(count: 1 | 10, play: (got: Pull[], skip?: boolean) => Promise<void>): void;
   onDaily(): void;
   onTower(): void;
   /** Opens the calamity: the saved run's map, or the choice of a starting hero. */
@@ -108,11 +109,7 @@ export class Home {
     this.tavern = new Tavern((kind) => this.openSheet(kind), () => this.openRoster());
     // (the tavern leads to the Heroes tab, the chapel to the Spells tab and the signpost to the battle screen; the six upgrades open their cards)
     this.hall = new SummoningHall({
-      onSummon: (n) => {
-        // (the gacha pulls and keeps the result; the hall plays it, then the usual card reveal opens over the page)
-        if (this.hooks.onSummon) this.hooks.onSummon(n, (got) => this.hall.play(got).then(() => this.hall.stop()));
-        else this.hooks.onRecruit();
-      },
+      onSummon: (n) => this.summon(n),
       onCollection: () => {
         this.hall.stop();
         this.hooks.onRecruit();
@@ -195,6 +192,12 @@ export class Home {
     return !$('hmSub').hidden && $('hmSub').classList.contains('armies') ? 'armies' : this.tab;
   }
 
+  /** A pull from the hall, or again from the card reveal: the gacha pulls and keeps the result; the cinematic and the hall play it (every time), then the usual card reveal opens over the page. */
+  summon(n: 1 | 10): void {
+    if (this.hooks.onSummon) this.hooks.onSummon(n, (got, skip) => this.hall.play(got, skip).then(() => this.hall.stop()));
+    else this.hooks.onRecruit();
+  }
+
   private go(then: () => void): void {
     $('home').hidden = true;
     this.camp.stop();
@@ -244,6 +247,8 @@ export class Home {
     });
     this.tabBtns.get('castle')!.classList.toggle('new', affordable || canBuildChapel(m) || fresh);
     this.tabBtns.get('recruit')!.classList.toggle('new', m.crowns >= pullCost(1));
+    // (a rank earned, or an awakening paid for, waits for the player's tap on the Heroes tab)
+    this.tabBtns.get('heroes')!.classList.toggle('new', readyKinds(m, m.unlocked).length > 0);
     this.tabBtns.get('battle')!.classList.toggle('new', !m.daily[String(todayKey())] || ARMIES.some((a) => armyIsNew(m, a.id)));
     this.drawBattle();
     this.tavern.update(m);

@@ -141,13 +141,13 @@ export class ScenePlayer {
     return this.busy;
   }
 
-  /** Play a scene to its end (or until it is skipped) and say which. A scene already playing is not interrupted: this one ends at once, skipped. */
-  async play(id: string, players: Players): Promise<Ending> {
-    const scene = SCENES[id];
+  /** Play a scene to its end (or until it is skipped) and say which. A scene already playing is not interrupted: this one ends at once, skipped. `quick`: any tap ends it (the summoning's: it never holds up a pull), where a tap otherwise moves on a beat. */
+  async play(id: string | Scene, players: Players, quick = false): Promise<Ending> {
+    const scene = typeof id === 'string' ? SCENES[id] : id;
     if (!scene || this.busy) return 'skipped';
     this.busy = true;
     try {
-      this.run = new Run(scene, players, (this.hud ??= new Hud()));
+      this.run = new Run(scene, players, (this.hud ??= new Hud()), quick);
       return await this.run.go();
     } finally {
       this.busy = false;
@@ -185,7 +185,8 @@ class Run {
     if (e.key === 'Escape') this.finish('skipped');
     else if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      this.tap();
+      if (this.quick) this.finish('skipped');
+      else this.tap();
     }
   };
   private readonly resize = (): void => this.layout();
@@ -194,6 +195,7 @@ class Run {
     private readonly scene: Scene,
     players: Players,
     private readonly hud: Hud,
+    private readonly quick = false,
   ) {
     this.cast = castOf(scene, players);
     this.names = namesOf(this.cast);
@@ -203,16 +205,15 @@ class Run {
   async go(): Promise<Ending> {
     const hud = this.hud;
     hud.show(true);
-    if (this.scene.music) playScene(this.scene.music);
-    if (this.scene.sting) play(this.scene.sting);
     hud.line(null, '', '', false);
     hud.caption(null, 0);
-    const tapped = (): void => this.tap();
+    const tapped = (): void => (this.quick ? this.finish('skipped') : this.tap());
     const skipped = (e: Event): void => {
       e.stopPropagation();
       this.finish('skipped');
     };
     let result: Ending = 'skipped';
+    let scored = false;
     try {
       // (the stage first: a canvas as big as the column, black until the backdrop has loaded)
       await this.app.init({ resizeTo: hud.host, backgroundColor: 0x000000, antialias: false, roundPixels: true, autoDensity: true, resolution: Math.min(3, devicePixelRatio || 1) });
@@ -225,6 +226,11 @@ class Run {
       hud.root.addEventListener('click', tapped);
       hud.skip.addEventListener('click', skipped);
       if (Object.values(this.scene.cast).some((m) => m.role === 'duchess')) this.goat = await goatFrames();
+      if (this.scene.music) {
+        playScene(this.scene.music);
+        scored = true;
+      }
+      if (this.scene.sting) play(this.scene.sting);
       // (the backdrops of every shot are loaded up front, so a cut never shows an empty stage)
       this.loadLooks().catch(() => undefined);
       const ending = new Promise<Ending>((ok) => (this.ended = ok));
@@ -244,7 +250,8 @@ class Run {
         /* (it never got as far as a renderer) */
       }
       hud.show(false);
-      if (this.scene.music) endScene();
+      // (the music it replaced comes back, whether it ended or was skipped)
+      if (scored) endScene();
     }
     return result;
   }

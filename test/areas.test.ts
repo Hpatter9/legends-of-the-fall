@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { AREAS, boardOk, canStep, D, DEPLOY_ROWS, GROUND_COST, LAVA_BURN, makeBoard, sightClear, tileAt, W, type Area, type Tile } from '../src/sim/board';
+import { AREAS, CLASSIC_AREAS, boardOk, canStep, D, DEPLOY_ROWS, GROUND_COST, LAVA_BURN, makeBoard, sightClear, tileAt, W, type Area, type Tile } from '../src/sim/board';
 import { addUnit, fight, place, startBattle, stepBattle } from '../src/sim/battle';
 import { AREA_STAGES, areaFor, newRun, startStage } from '../src/sim/run';
 import { walkFrom } from '../src/sim/path';
@@ -22,8 +22,8 @@ test('the area follows the stage: five stages each, in turn, then round again', 
   assert.equal(areaFor(1), 'highlands');
   assert.equal(areaFor(AREA_STAGES), 'highlands');
   assert.equal(areaFor(AREA_STAGES + 1), 'forest');
-  assert.deepEqual([1, 6, 11, 16, 21, 26].map(areaFor), [...AREAS]);
-  assert.equal(areaFor(AREA_STAGES * AREAS.length + 1), 'highlands');
+  assert.deepEqual([1, 6, 11, 16, 21, 26].map(areaFor), [...CLASSIC_AREAS]);
+  assert.equal(areaFor(AREA_STAGES * CLASSIC_AREAS.length + 1), 'highlands');
   assert.equal(startStage(newRun(5)).board.area, 'highlands');
   const run = newRun(5);
   run.stage = 21;

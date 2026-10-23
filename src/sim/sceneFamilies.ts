@@ -1,5 +1,4 @@
-// The cinematics made once for many: the first clear of each army (nine), a hero awakening (all 45), a hero earned
-// through play (the ten content heroes), a castle build (each building), the endless tower's milestone floors, and a
+// The cinematics made once for many: the first clear of each army (nine), a hero awakening (all 45), a castle build (each building), the endless tower's milestone floors, and a
 // boss changing form (a cut-in of a few seconds, each time). Each family is one shape filled in from a table, so a new
 // army, hero or building is a row, not a script. Pure data; it imports only the kit, the fighters' table and the lore
 // (not the armies or the battle, which load this file's way round).
@@ -28,7 +27,7 @@ interface ArmyClear {
 
 const CLEARS: ArmyClear[] = [
   {
-    army: 'orcs', name: 'Orc Warband', area: 'highlands', boss: 'orcWarlord', escort: 'orcGrunt',
+    army: 'orcs', name: 'Orc Warband', area: 'warcamp', boss: 'orcWarlord', escort: 'orcGrunt',
     setup: 'The Orc Warlord went down on one knee, which is the orcish for “a setback”.',
     last: 'THIS IS NOT THE END. WRITE THAT DOWN.',
     remark: 'Who has the pen, boss?',
@@ -36,7 +35,7 @@ const CLEARS: ArmyClear[] = [
     tail: 'The orcs held a meeting about who would tell the Warlord’s mother. The heroes waited politely.',
   },
   {
-    army: 'undead', name: 'Undead Legion', area: 'dungeon', boss: 'lichKing', escort: 'skeleton',
+    army: 'undead', name: 'Undead Legion', area: 'graveyard', boss: 'lichKing', escort: 'skeleton',
     setup: 'The Lich King fell apart with great dignity, and then a little more.',
     last: 'DEATH IS NOT THE END. ...HOLD ON, I AM ON HOLD WITH THE AFTERLIFE.',
     remark: 'Press one for “defeated”, my liege.',
@@ -44,7 +43,7 @@ const CLEARS: ArmyClear[] = [
     tail: 'The legion filed away in good order. Several kept their appointments with the afterlife.',
   },
   {
-    army: 'beasts', name: 'Beast Packs', area: 'snow', boss: 'boarKing', escort: 'wolfWhite',
+    army: 'beasts', name: 'Beast Packs', area: 'plains', boss: 'boarKing', escort: 'wolfWhite',
     setup: 'The Boar King does not kneel. He was simply examining the ground very closely.',
     last: 'A BOAR KING NEVER FALLS. HE ONLY... INSPECTS.',
     remark: 'The pack would like a word about the inspection.',
@@ -60,7 +59,7 @@ const CLEARS: ArmyClear[] = [
     tail: 'Somewhere in the wood, a tree took it personally. The rest of the leaves rustled in agreement.',
   },
   {
-    army: 'labyrinth', name: 'The Labyrinth', area: 'dungeon', boss: 'minotaurChampion', escort: 'mazeMino1',
+    army: 'labyrinth', name: 'The Labyrinth', area: 'temple', boss: 'minotaurChampion', escort: 'mazeMino1',
     setup: 'The Minotaur Champion sat down heavily at the centre of his labyrinth.',
     last: 'THE MAZE... YOU WALKED STRAIGHT THROUGH IT.',
     remark: 'We did put up a sign, boss. It said “this way”.',
@@ -84,7 +83,7 @@ const CLEARS: ArmyClear[] = [
     tail: 'The imps filed an appeal. It was stamped, signed and thrown in the lava.',
   },
   {
-    army: 'yokai', name: 'Yokai Night Parade', area: 'forest', boss: 'oniKing', escort: 'yokaiFox',
+    army: 'yokai', name: 'Yokai Night Parade', area: 'shrine', boss: 'oniKing', escort: 'yokaiFox',
     setup: 'The Oni King lifted his drum, hit it once, and nothing happened.',
     last: 'THE THUNDER DRUM... HAS LOST ITS STICKS.',
     remark: 'We lent them to the tengu, my king.',
@@ -92,7 +91,7 @@ const CLEARS: ArmyClear[] = [
     tail: 'The night parade packed up its lanterns and went home by the long way, singing a little.',
   },
   {
-    army: 'golems', name: 'Golem Forge', area: 'desert', boss: 'forgeTitan', escort: 'stoneGolem',
+    army: 'golems', name: 'Golem Forge', area: 'forge', boss: 'forgeTitan', escort: 'stoneGolem',
     setup: 'The Forge Titan stood up very slowly, then stopped, as a kettle does.',
     last: 'FORGE... COOLING. PLEASE DO NOT TOUCH. IT IS STILL HOT.',
     remark: 'He means it, he is quite warm.',
@@ -201,63 +200,6 @@ const awakenScene = (kind: string, i: number): Scene => ({
   ],
 });
 
-/* ------------------------------------------------------------ a hero earned through play */
-
-interface Earned {
-  kind: string;
-  /** The deed, as the narrator puts it. */
-  how: string;
-  arrive: string;
-  reply: string;
-}
-
-const EARNED: Earned[] = [
-  { kind: 'werewolf', how: 'For clearing the Beast Packs, {hero} has joined.', arrive: 'I was the one in the pack who bit people. Do you need that?', reply: 'Constantly.' },
-  { kind: 'reaper', how: 'For clearing the Undead Legion on Hard, {hero} has joined.', arrive: 'I am told there is a vacancy at the front.', reply: 'It is the whole job.' },
-  { kind: 'demonSwordsman', how: 'For clearing the Infernal Host on Hard, {hero} has joined.', arrive: 'Hell was overstaffed. I took a sideways step.', reply: 'We have a sideways step spare.' },
-  { kind: 'samuraiCommander', how: 'For clearing the Yokai Night Parade on Elite, {hero} has joined.', arrive: 'I have come to command. Who is first?', reply: 'The goat does not take orders.' },
-  { kind: 'juggernaut', how: 'For clearing the Golem Forge on Hard, {hero} has joined.', arrive: 'I used to be a forge. I got up and left. Is that all right?', reply: 'As long as you leave the door the way you found it.' },
-  { kind: 'dreadPirate', how: 'For climbing twenty floors, {hero} has joined.', arrive: 'I hear there is a tower. I have come about the treasure.', reply: 'There is no treasure. There are floors.' },
-  { kind: 'tyrant', how: 'For climbing forty floors, {hero} has joined.', arrive: 'Forty floors. I was above all of them. It was lonely.', reply: 'We have a spare chair.' },
-  { kind: 'timeWitch', how: 'For ending a Calamity, {hero} has joined.', arrive: 'I have been here before. I am about to be late.', reply: 'You are on time, as it happens.' },
-  { kind: 'dragoon', how: 'For ending a Calamity at ascension three, {hero} has joined.', arrive: 'Three ascents. I only came for the view.', reply: 'How was it?' },
-  { kind: 'sage', how: 'For meeting half the bestiary, {hero} has joined.', arrive: 'I have read about everyone in this room.', reply: 'Is it flattering?' },
-];
-
-const earnedScene = (e: Earned, i: number): Scene => ({
-  id: `earned:${e.kind}`,
-  title: `${UNITS[e.kind].name}: Arrival`,
-  blurb: 'A hero earned through play walks in, and the others make room.',
-  moment: { kind: 'earned', hero: e.kind },
-  family: 'earned',
-  cast: {
-    hero: { role: `unit:${e.kind}`, x: 285, facing: 'left', hidden: true },
-    a: { role: 'party:0', x: 215, facing: 'right', hidden: true },
-    b: { role: 'party:1', x: 175, facing: 'right', hidden: true },
-    duchess: { role: 'duchess', x: 130, facing: 'right', hidden: true },
-  },
-  shots: [
-    {
-      look: AWAKE_AREAS[i % AWAKE_AREAS.length],
-      cam: wide(240, 205),
-      fx: ['fadeIn'],
-      caption: 'A new hero',
-      acts: [{ who: 'a', enter: 215, from: 130 }, { who: 'b', enter: 175, from: 90 }, { who: 'hero', enter: 285, from: 450 }],
-      lines: [tell(e.how)],
-    },
-    {
-      cam: close(['hero', 'a', 'b'], 1.5),
-      acts: [{ who: 'a', face: 'right' }, { who: 'b', walk: 160, line: 1 }],
-      lines: [say('hero', e.arrive), say('a', e.reply)],
-    },
-    {
-      cam: close(['a', 'hero', 'duchess'], 1.5),
-      acts: [{ who: 'duchess', enter: 130, from: 40 }],
-      lines: [say('b', 'Someone make room. Someone ask about the sandwiches.'), say('duchess', 'Mehh.'), tell('The sandwiches were, in the end, adequate.')],
-    },
-  ],
-});
-
 /* ------------------------------------------------------------ a castle build */
 
 interface Build {
@@ -359,15 +301,15 @@ interface Form {
 }
 
 const FORMS: Form[] = [
-  { boss: 'orcWarlord', area: 'highlands', line: 'WAAAGH! Burn it all down!' },
-  { boss: 'lichKing', area: 'dungeon', line: 'Rise, my legion, and take them!' },
-  { boss: 'boarKing', area: 'snow', line: 'Out of my way, little ones!' },
+  { boss: 'orcWarlord', area: 'warcamp', line: 'WAAAGH! Burn it all down!' },
+  { boss: 'lichKing', area: 'graveyard', line: 'Rise, my legion, and take them!' },
+  { boss: 'boarKing', area: 'plains', line: 'Out of my way, little ones!' },
   { boss: 'forestBoss3', area: 'forest', line: 'The grove answers me!' },
-  { boss: 'minotaurChampion', area: 'dungeon', line: 'The maze closes. There is no way out.' },
+  { boss: 'minotaurChampion', area: 'temple', line: 'The maze closes. There is no way out.' },
   { boss: 'hornedOgre', area: 'highlands', line: 'The mountain does not fall!' },
   { boss: 'demonLord', area: 'volcano', line: 'Burn, all of you!' },
-  { boss: 'oniKing', area: 'forest', line: 'Hear the thunder drum!' },
-  { boss: 'forgeTitan', area: 'desert', line: 'The forge runs white-hot!' },
+  { boss: 'oniKing', area: 'shrine', line: 'Hear the thunder drum!' },
+  { boss: 'forgeTitan', area: 'forge', line: 'The forge runs white-hot!' },
   { boss: 'calBoss1', area: 'volcano', line: 'The ashes remember!' },
   { boss: 'calBoss2', area: 'forest', line: 'The thorns bloom!' },
   { boss: 'calBoss3', area: 'dungeon', line: 'Come, my court!' },
@@ -461,7 +403,6 @@ const oathCut = (o: Oath): Scene => ({
 export const FAMILY_SCENES: Scene[] = [
   ...CLEARS.map(clearScene),
   ...ALL_HEROES.map((k, i) => awakenScene(k, i)),
-  ...EARNED.map(earnedScene),
   ...BUILDS.map(buildScene),
   ...SPIRES.map(spireScene),
   ...FORMS.map(formScene),

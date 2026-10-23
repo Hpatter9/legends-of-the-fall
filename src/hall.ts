@@ -218,11 +218,13 @@ export class SummoningHall {
     this.scroll.replaceChildren(line, odds);
   }
 
-  /** Play a pull in the hall: resolves when the heroes have stepped out and it is time for the card reveal. */
-  play(got: Pull[]): Promise<void> {
+  /** Play a pull in the hall: resolves when the heroes have stepped out and it is time for the card reveal. It plays every time (the hall is woken first if a page change or an earlier pull stopped it); `skip` (a tap on the summoning cinematic) goes straight to the reveal. */
+  async play(got: Pull[], skip = false): Promise<void> {
+    if (skip) return;
+    if (!this.show) await this.start();
     const a = art;
     const meta = this.meta;
-    if (!this.running || !a || !this.still || !meta || this.show) return Promise.resolve();
+    if (!this.running || !a || !this.still || !meta || this.show) return;
     const plan = summonPlan(got, this.reduced);
     const tl = plan.tl;
     const spots = fanSpots(got.length, this.lay.circle.x, this.lay.circle.y);
@@ -250,7 +252,7 @@ export class SummoningHall {
       });
     });
     this.pull1.disabled = this.pull10.disabled = true;
-    return new Promise((resolve) => {
+    await new Promise<void>((resolve) => {
       this.show = { t0: this.now, plan, tl, arrivals, resolve, got, cueI: 0, burst: false, cardKey: '' };
       this.skipPad.classList.add('on');
       duck(true, 'summon');
@@ -258,11 +260,11 @@ export class SummoningHall {
     });
   }
 
-  /** Start drawing (the tab is showing). */
-  start(): void {
+  /** Start drawing (the tab is showing); resolves once the room is drawn and moving. */
+  start(): Promise<void> {
     this.running = true;
-    if (this.raf || document.hidden) return;
-    void loadArt().then(() => {
+    if (this.raf || document.hidden) return Promise.resolve();
+    return loadArt().then(() => {
       if (!this.running || this.raf) return;
       this.fit();
       this.last = performance.now();

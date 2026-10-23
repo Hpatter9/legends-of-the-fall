@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FEET, fillLine, holdOf, lineLen, lineSeconds, sceneSeconds, SCENES, SCENE_ORDER, STAGE_H, STAGE_W, type Scene } from '../src/sim/sceneScripts';
+import { FEET, fillLine, holdOf, lineLen, lineSeconds, sceneSeconds, SCENES, SCENE_ORDER, STAGE_H, STAGE_W, summonScene, type Scene } from '../src/sim/sceneScripts';
 import { castOf, dueScene, kindOf, markSeen, namesOf, readScenes, seenScene } from '../src/sim/sceneRules';
 import { actorsAt, beats, BASE_SCALE, cameraAt, keepInside, lineNow, lineStart, lookAt, next, scaleOf, shotLength, start, tick, typedChars, TYPE_RATE } from '../src/render/sceneClock';
 import { loadMeta, newMeta, pickStarter, saveMeta } from '../src/sim/meta';
@@ -30,11 +30,13 @@ const mini: Scene = {
 test('every scene is 10 to 40 seconds as played untouched (a cut-in 2 to 6), with brief lines', () => {
   for (const id of SCENE_ORDER) {
     const secs = sceneSeconds(SCENES[id]);
-    const short = !!SCENES[id].short;
+    const cutIn = !!SCENES[id].again;
+    const reveal = !!SCENES[id].short && !cutIn;
     const oath = SCENES[id].family === 'oath';
     // (a slowed shot takes longer than its beats: the cut-in's real length counts it)
     const real = SCENES[id].shots.reduce((n, s) => n + (shotSeconds(s) / (s.slow ?? 1)), 0);
-    if (short) assert.ok(real >= 2 && real <= 6, `${id}: ${real.toFixed(1)} s`);
+    if (cutIn) assert.ok(real >= 2 && real <= 6, `${id}: ${real.toFixed(1)} s`);
+    else if (reveal) assert.ok(secs >= 5 && secs <= 14, `${id}: ${secs.toFixed(1)} s`);
     else if (oath) assert.ok(secs >= 8 && secs <= 12, `${id}: ${secs.toFixed(1)} s`);
     else assert.ok(secs >= 10 && secs <= 40, `${id}: ${secs.toFixed(1)} s`);
     for (const s of SCENES[id].shots) for (const l of s.lines ?? []) assert.ok(l.text.length <= 100, `${id}: ${l.text}`);
@@ -309,7 +311,7 @@ test('the castle, the tower and the firsts each have their scene', () => {
   for (const site of [...BUILDING_IDS, 'chapel']) assert.equal(dueScene(m, { kind: 'castle', site }), `castle:${site}`);
   for (const floor of [10, 25, 50]) assert.equal(dueScene(m, { kind: 'spire', floor }), `spire:${floor}`);
   assert.equal(dueScene(m, { kind: 'spire', floor: 11 }), null);
-  const firsts: Moment['kind'][] = ['firstLoss', 'duchess', 'mythic', 'firstSummon', 'elite', 'ascension', 'dailyBoss'];
+  const firsts: Moment['kind'][] = ['firstLoss', 'duchess', 'mythic', 'elite', 'ascension', 'dailyBoss'];
   for (const kind of firsts) {
     const id = dueScene(m, { kind } as Moment);
     assert.ok(id, kind);
@@ -367,7 +369,7 @@ test('a scene’s music is one of the audio worker’s tracks; the heralds have 
   for (const id of SCENE_ORDER) {
     const m = SCENES[id].music;
     if (m) assert.ok((SCENE_TRACKS as readonly string[]).includes(m), `${id}: ${m}`);
-    if (SCENES[id].short) assert.equal(m, undefined, `${id}: the fight's own music goes on`);
+    if (SCENES[id].again) assert.equal(m, undefined, `${id}: the fight's own music goes on`);
   }
   assert.deepEqual(['gorvak', 'thornWarden', 'malphas', 'hrungar', 'vorgrath', 'karnok'].map((id) => SCENES[id].music), ['gorvak', 'herald2', 'herald3', 'herald4', 'herald5', 'herald6']);
 });
@@ -410,4 +412,57 @@ test('every set of five has its Last Oath: the fuller scene the first time, the 
     markSeen(m, cut!);
     assert.equal(dueScene(m, { kind: 'comboCut', set: c.id }), cut, 'the short one every time');
   }
+});
+
+test('every hero earned in play has its own short reveal, due the moment it joins and only once', () => {
+  for (const c of CONTENT_HEROES) {
+    const id = `earned:${c.kind}`;
+    assert.ok(SCENES[id]?.short, `${c.kind} has a reveal`);
+    const m = newMeta(1);
+    assert.equal(dueScene(m, { kind: 'earned', hero: c.kind }), id);
+    assert.equal(dueScene(m, { kind: 'earned', hero: c.kind === 'sage' ? 'tyrant' : 'sage' }) === id, false, 'only for its own hero');
+    markSeen(m, id);
+    assert.equal(dueScene(m, { kind: 'earned', hero: c.kind }), null);
+  }
+  assert.equal(dueScene(newMeta(1), { kind: 'starter' }), 'opening', 'the earlier moments are as they were');
+});
+
+test('the silhouette steps aside and the hero steps into the light in the same place (the hide act)', () => {
+  const sc = SCENES['earned:werewolf'];
+  const before = actorsAt(sc, { shot: 0, beat: 0, t: 2, shotT: 2 });
+  assert.ok(before.figure.visible && !before.hero.visible);
+  const after = actorsAt(sc, { shot: 1, beat: 0, t: 0.5, shotT: 0.5 });
+  assert.ok(!after.figure.visible && after.hero.visible);
+  assert.equal(after.hero.x, sc.cast.hero.x);
+});
+
+test('the summoning cinematic is about three seconds, is not listed or marked seen, and ends on the hero', () => {
+  const sc = summonScene('knight', 'Knight');
+  const secs = sceneSeconds(sc);
+  assert.ok(secs >= 2 && secs <= 4, `${secs}`);
+  assert.equal(SCENE_ORDER.includes(sc.id), false);
+  assert.equal(SCENES[sc.id], undefined);
+  const end = actorsAt(sc, { shot: 1, beat: 0, t: 1, shotT: 1 });
+  assert.ok(end.hero.visible && !end.figure.visible);
+  assert.equal(sc.shots.filter((s) => s.fx?.includes('flash')).length, 1, 'one flash, once');
+  assert.equal(castOf(sc, { party: [] }).hero.kind, 'knight');
+});
+
+test('the opening plays before the starter pick with a fixed trio, and each scene can name its music', () => {
+  const o = SCENES.opening;
+  assert.equal(o.trio?.length, 3);
+  const cast = castOf(o, { party: [...o.trio!] });
+  for (const id of ['front', 'striker', 'back']) assert.ok(cast[id].kind && o.trio!.includes(cast[id].kind!), id);
+  assert.ok(Object.values(o.cast).some((m) => m.role === 'duchess'), 'Duchess keeps her beat');
+  assert.equal(dueScene(newMeta(1), { kind: 'starter' }), 'opening', 'due with no heroes picked');
+  assert.equal(o.music, 'opening');
+  assert.equal(SCENES.gorvak.music, 'gorvak');
+});
+
+test('the Cinematics setting is on by default and kept when saved', async () => {
+  const { DEFAULTS, parseSettings } = await import('../src/settings');
+  assert.equal(DEFAULTS.cinematics, true);
+  assert.equal(parseSettings(null).cinematics, true);
+  assert.equal(parseSettings('{"cinematics":false}').cinematics, false);
+  assert.equal(parseSettings('{"cinematics":1}').cinematics, true);
 });

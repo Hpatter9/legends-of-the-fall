@@ -61,6 +61,7 @@ export type Act = (
   | { who: string; face: Facing }
   | { who: string; pose: Pose }
   | { who: string; look: 0 | 1 | 2 }
+  | { who: string; hide: true }
 ) & { line?: number };
 
 /** `shake` and `flash` happen once as the shot begins (a flash is one pulse of at most half an alpha for about 120 ms; a
@@ -103,7 +104,7 @@ export interface Shot {
  *  this map is about to be fought. `calVictory`: the Calamity's last herald has fallen. `armyClear`: an army cleared for
  *  the first time. `awaken` / `earned`: a hero awakened, or joined by a milestone. `combo`: a five-unit combo's mega ultimate
  *  fires. `firstLoss`. `duchess`: she turns up in a fight. `castle`: a build is raised. `spire`: the endless tower's floor.
- *  `bossForm`: a boss changes form mid-fight. `mythic`: Mythic opened on an army. `firstSummon`, `elite`, `ascension`,
+ *  `bossForm`: a boss changes form mid-fight. `mythic`: Mythic opened on an army. `summon` (a pull in the hall: made by `summonScene`, never marked seen), `elite`, `ascension`,
  *  `dailyBoss`: the first of each. */
 export type Moment =
   | { kind: 'starter' }
@@ -120,7 +121,7 @@ export type Moment =
   | { kind: 'spire'; floor: number }
   | { kind: 'bossForm'; boss: string }
   | { kind: 'mythic' }
-  | { kind: 'firstSummon' }
+  | { kind: 'summon' }
   | { kind: 'elite' }
   | { kind: 'ascension' }
   | { kind: 'dailyBoss' };
@@ -139,6 +140,8 @@ export interface Scene {
   moment: Moment;
   /** A scene made once for many (every hero, army, building ...): the Scenes list folds the ones not yet seen into one line. */
   family?: string;
+  /** Heroes that stand in for the party when the scene comes before the player has one (the opening, before the starter pick). */
+  trio?: readonly string[];
   /** The scene's score (an id `render/sound.ts` `playScene` knows: `opening`, `gorvak`, `herald2` to `herald6`, `triumph`, `comic`, `solemn`, `spire`); none leaves the music as it is. */
   music?: string;
   /** A sting as the scene begins (a cue of `render/soundRules.ts`): a boss arriving, or a victory. */
