@@ -11,10 +11,10 @@ and about six months or more for a daily player to own all 45.
   (`Meta.unlock`, kept apart from the rank shards in `Meta.shards`); it joins at rank 0 when it has `unlockNeed` of them.
   A hero **owned** gets a rank shard, exactly as a repeat did (then awakening, talents, then `OVERFLOW_CROWNS`).
 - **Shards needed rise with the heroes owned** (`unlockNeed(owned)`, owned = pullable heroes, the starter's three
-  count): `NEED_FIRST` 2 for the first, `NEED_LAST` 60 for the last, on a curve (`t^1.6`). The bar shows the need now,
+  count): `NEED_FIRST` 2 for the first, `NEED_LAST` 60 for the last (option A), on a curve (`t^1.6`). The bar shows the need now,
   so it can grow by a shard or two when another hero joins.
-- **The price rises with the heroes owned** (`priceMult`): 1x with three owned up to `PRICE_LAST_MULT` 60x with every
-  pullable hero (a pull 100 to 5280 crowns; ten pulls 900 to 47510). Why: crown income is about 400 on day 1 and
+- **The price rises with the heroes owned** (`priceMult`): 1x with three owned up to `PRICE_LAST_MULT` 250x with every
+  pullable hero (a pull 100 to about 21000 crowns). Why: crown income is about 400 on day 1 and
   15-20k a day by month 4 (the armies' replays pay by tier), so a flat price gates nothing late and everything early.
   Income itself is untouched, so the castle, gear, spells and talents are not slowed (they cost about 13k crowns in
   all).
@@ -129,3 +129,40 @@ unlock pulls by `p.unlock`, not `p.isNew`), `armyStars.test.ts` (a chest's hero 
 - Content heroes get rank shards (not unlock shards) from pulls and chests once owned, or they could never rank up.
 - Pull prices now depend on the roster (the buttons show the price; `pullCost(count, meta)`).
 - The pace model's milestone days and the income are guesses; change the constants in `tools/unlockPace.ts`.
+
+
+## Correction, and the three options (the owner decides)
+
+**The pace tables above were from a model that charged every pull twice** (the tool paid for a pull and `recruit` paid again),
+so they were too slow. Fixed; option A is re-tuned to the same pace: `PRICE_LAST_MULT` is now 250 (was 60), so the thresholds
+and price table above are out of date for price (the shards table is unchanged). The three options below are all in the code,
+switched by `UNLOCK_MODE` in `unlockRules.ts` (`setUnlockMode` in tools and tests; the default is `rising`). The owner chose
+"shards" and "content heroes" but not "costlier pulls", so B and C keep the price flat at 100 / 900.
+
+| | A: rising price (default) | B: daily limit | C: fading odds |
+| --- | --- | --- | --- |
+| Price of a pull | 100 up to ~21000 with the roster | flat 100 / 900 | flat 100 / 900 |
+| Limit | none | 10 pulls a day (`m.pullDay`) | none |
+| Shards for the last hero | 60 | 150 | 100 |
+| Pity | 3 dry pulls | 3 dry pulls | 3, plus 6 for each hero owned beyond three |
+| Odds | begun heroes likelier (x6 per shard) | same | same, and each hero owned is likelier (`1 + 2(owned-3)^2.2`), so new heroes turn up less and less |
+| Feels like | crowns are a real cost: late pulls are a big purchase | a daily ritual, like the auto tickets; crowns pile up | pulls are cheap but mostly land on heroes you have (rank shards): crowns stay useful for ranks, awakening and talents |
+
+Median day reached (30 seeds), typical player (13 army runs a day); light = 6, heavy = 20 in brackets:
+
+| Heroes | A | B | C |
+| --- | --- | --- | --- |
+| 5 | 1 (1, 1) | 1 (1, 1) | 1 (1, 1) |
+| 10 | 8 (8, 6) | 8 (9, 8) | 10 (13, 8) |
+| 20 | 34 (43, 27) | 43 (43, 43) | 40 (46, 35) |
+| 30 | 75 (84, 70) | 89 (93, 91) | 75 (84, 70) |
+| 40 | 140 (153, 127) | 150 (151, 149) | 125 (141, 112) |
+| 45 | 186 (186, 186) | 186 (186, 186) | 186 (186, 186) |
+| every pullable hero | 157 (172, 146) | 158 (158, 157) | 144 (165, 130) |
+
+Heroes owned on days 1 / 7 / 30 / 60 / 90 (typical): A 6, 9, 19, 26, 33; B 5, 9, 17, 22, 30; C 5, 7, 17, 26, 34.
+
+Reading it: B is the same for every player (the limit, not play, sets the pace), so it is the fairest to a light player and
+the least rewarding to a heavy one; its early game is a little slower (5 heroes on day 1 may need the second session).
+C and A respond to how much a player earns. C's first week is the slowest (7 heroes on day 7), because odds fade early too.
+The 45th hero is always the Tyrant (tower floor 40) in the model, on day 186: the end is set by the content milestones.
