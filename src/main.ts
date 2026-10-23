@@ -1,4 +1,4 @@
-// Legends of the Fall: the phone page. The board is drawn with Pixi; the bench, the buttons and the banners are plain
+// Legends of the Last Keep: the phone page. The board is drawn with Pixi; the bench, the buttons and the banners are plain
 // page elements over it. Before the fight the heroes are dragged (or tapped, then a tile tapped) from the bench onto
 // the blue tiles; then the fight plays itself, a fixed tick at a time.
 
