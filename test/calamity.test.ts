@@ -275,7 +275,11 @@ test('there is no merging in a calamity: three of a kind stay three, and the tow
 test('a calamity fight follows the party: a lone hero meets two foes, ten heroes meet stronger ones', () => {
   assert.equal(fitBand(['a', 'b', 'c', 'd', 'e'], 1, false).length, 2);
   assert.equal(fitBand(['a', 'b', 'c', 'd', 'e'], 3, false).length, 4);
-  assert.equal(fitBand(['a', 'b', 'c', 'd', 'e'], 8, false).length, 5);
+  assert.equal(fitBand(['a', 'b', 'c', 'd', 'e'], 4, false).length, 5);
+  // (past the band's five, it comes round again without its leader: ten heroes meet eleven foes, a boss twelve)
+  assert.deepEqual(fitBand(['a', 'b', 'c', 'd', 'e'], 7, false), ['a', 'b', 'c', 'd', 'e', 'b', 'c', 'd']);
+  assert.equal(fitBand(['a', 'b', 'c', 'd', 'e'], 10, false).length, 11);
+  assert.equal(fitBand(['boss', 'a', 'b', 'c', 'd'], 10, true).length, 12);
   assert.equal(fitBand(['boss', 'a', 'b', 'c', 'd'], 1, true)[0], 'boss');
   assert.equal(squadFoeMult(5), 1);
   assert.ok(squadFoeMult(10) > squadFoeMult(7));
@@ -609,7 +613,7 @@ test('a run\'s heroes level past 20, up to the cap of 30, and a hire still joins
   assert.equal(hireXp(run), Math.floor(xpFor(25) * 0.7));
 });
 
-test('a calamity pays its heroes more XP than the spire does, and its level 15 unlocks the ultimates', () => {
+test('a calamity pays its heroes more XP than the spire does, and its level 30 unlocks the ultimates', () => {
   assert.ok(CALAMITY_XP > CLIMB_XP);
   const run = calamityRun(32, startedMeta(2), 'tyrant');
   const b = playNode((enterNode(run, choices(run)[0].id), run));
@@ -620,9 +624,9 @@ test('a calamity pays its heroes more XP than the spire does, and its level 15 u
   const h = run.roster[0];
   h.xp = xpFor(ULT_LEVEL - 1);
   const field = startStage(run);
-  assert.equal(ultimateOf(addUnit(field, h.kind, 1, 8, localBoost(h))), undefined, 'locked at in-run 14');
+  assert.equal(ultimateOf(addUnit(field, h.kind, 1, 8, localBoost(h))), undefined, 'locked one level below');
   h.xp = xpFor(ULT_LEVEL);
-  assert.equal(ultimateOf(addUnit(field, h.kind, 2, 8, localBoost(h)))?.name, KITS[h.kind].ultimate!.name, 'unlocked at in-run 15');
+  assert.equal(ultimateOf(addUnit(field, h.kind, 2, 8, localBoost(h)))?.name, KITS[h.kind].ultimate!.name, 'unlocked at the ultimates\' level');
 });
 
 test('a full Calamity clear leaves the starting hero well past level 20 (the bot, three seeds)', () => {

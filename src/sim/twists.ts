@@ -6,7 +6,7 @@
 //
 // Pure rules: no Pixi, no DOM, no clock. Randomness is only the map's side stream and the board tweaks' own.
 
-import { boardOk, D, DEPLOY_ROWS, tileAt, W, type Board } from './board';
+import { boardOk, DEPLOY_ROWS, tileAt, type Board } from './board';
 import { mixSeed, Rng } from './rng';
 
 export type Tone = 'curse' | 'blessing' | 'mixed';
@@ -85,14 +85,14 @@ export function rollTwist(seed: number, act: number, node: number, kind: string)
 }
 
 /** The deploy rows' outer tiles that a narrow pass fills with boulders (the back row's four outer tiles, the next row's two). */
-const NARROW: readonly (readonly [number, number])[] = [[0, D - 1], [1, D - 1], [W - 2, D - 1], [W - 1, D - 1], [0, D - 2], [W - 1, D - 2]];
+const narrowTiles = (w: number, d: number): readonly (readonly [number, number])[] => [[0, d - 1], [1, d - 1], [w - 2, d - 1], [w - 1, d - 1], [0, d - 2], [w - 1, d - 2]];
 
 /** Change a fight's board for its twist: lava cracks in the middle ground, boulders in a narrow pass. Boulders stay only where everyone can still get round them. */
 export function twistBoard(b: Board, fx: TwistFx, seed: number): void {
   if (fx.lava) {
     const rng = new Rng(mixSeed(seed, 0x1a7a));
     const spots: number[] = [];
-    for (let v = DEPLOY_ROWS; v < D - DEPLOY_ROWS; v++) for (let u = 0; u < b.w; u++) if (!tileAt(b, u, v)!.rock) spots.push(v * b.w + u);
+    for (let v = DEPLOY_ROWS; v < b.d - DEPLOY_ROWS; v++) for (let u = 0; u < b.w; u++) if (!tileAt(b, u, v)!.rock) spots.push(v * b.w + u);
     for (let i = 0; i < fx.lava && spots.length; i++) {
       const tile = b.tiles[spots.splice(rng.int(0, spots.length - 1), 1)[0]];
       tile.ground = 'lava';
@@ -100,7 +100,7 @@ export function twistBoard(b: Board, fx: TwistFx, seed: number): void {
     }
   }
   if (fx.narrow) {
-    for (const [u, v] of NARROW) {
+    for (const [u, v] of narrowTiles(b.w, b.d)) {
       const tile = tileAt(b, u, v);
       if (!tile || tile.rock) continue;
       const was = { ground: tile.ground, bush: tile.bush };

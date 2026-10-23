@@ -104,3 +104,29 @@ test('chewing is a one-pixel bob, only while she grazes or nibbles', () => {
   assert.equal(chewBob(g, 100, false), 0);
   assert.ok(NIBBLE_MS > 1000);
 });
+
+test('a visit comes to about one fight in four or five, and always has its times in range', async () => {
+  const { rollVisit, VISIT_ARRIVE_MS, VISIT_STAY_MS } = await import('../src/render/duchessRules');
+  const rng = new Rng(77);
+  let n = 0;
+  for (let i = 0; i < 2000; i++) {
+    const v = rollVisit(() => rng.next());
+    if (!v) continue;
+    n++;
+    assert.ok(v.arrive >= VISIT_ARRIVE_MS[0] && v.arrive <= VISIT_ARRIVE_MS[1]);
+    assert.ok(v.stay >= VISIT_STAY_MS[0] && v.stay <= VISIT_STAY_MS[1]);
+  }
+  assert.ok(n > 2000 * 0.17 && n < 2000 * 0.27, `${n} visits in 2000 fights`);
+});
+
+test('a visit: away, walks in, stays, walks out, away', async () => {
+  const { visitAt, VISIT_WALK_MS } = await import('../src/render/duchessRules');
+  const v = { arrive: 5000, stay: 30000 };
+  assert.equal(visitAt(null, 9000).phase, 'away');
+  assert.equal(visitAt(v, 4999).phase, 'away');
+  assert.deepEqual(visitAt(v, 5000 + VISIT_WALK_MS / 2), { phase: 'in', k: 0.5 });
+  assert.equal(visitAt(v, 5000 + VISIT_WALK_MS + 100).phase, 'here');
+  const outAt = 5000 + VISIT_WALK_MS + 30000;
+  assert.deepEqual(visitAt(v, outAt + VISIT_WALK_MS / 2), { phase: 'out', k: 0.5 });
+  assert.equal(visitAt(v, outAt + VISIT_WALK_MS).phase, 'away');
+});

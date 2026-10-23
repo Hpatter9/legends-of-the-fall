@@ -121,7 +121,7 @@ export const SKILL_FX: Record<string, SkillFx> = {
   'Astral Convergence': { cast: { sheet: 'lightNova', scale: 2.8, tint: 0xffe27a }, hit: { sheet: 'goldBurst', scale: 1.1 } },
   'Demon Form': { cast: { sheet: 'darkCircle', scale: 2.4, tint: 0xff4a4a } },
   'Reign of Terror': { cast: { sheet: 'darkCircle', scale: 2.8, tint: 0xb06aff }, hit: { sheet: 'darkSlash', scale: 1.1, tint: 0xb06aff } },
-  // the other heroes' ultimates (unlock at level 15)
+  // the other heroes' ultimates (unlock at level 30)
   'Last Bastion': { cast: { sheet: 'earthShield', scale: 2.6 } },
   'Mass Muster': { cast: { sheet: 'iceShield', scale: 2.4, tint: 0xe8d8a0 } },
   'Divine Aegis': { cast: { sheet: 'lightCircle', scale: 2.6, tint: 0xffe27a }, hit: { sheet: 'lightNova', scale: 1 } },

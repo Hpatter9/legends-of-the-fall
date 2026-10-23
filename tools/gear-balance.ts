@@ -3,7 +3,7 @@
 // hero); table 2 is the lift of each of the 60 types on its own (worn Mythic, level 10, by every hero), so an item that
 // breaks the balance stands out. Run with `npm run gear-balance` (`-- --games 300` for quicker and noisier).
 
-import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
+import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { fight, place, startBattle, type Battle, type Stage } from '../src/sim/battle';
 import { FIELD_BANDS } from '../src/sim/foes';
 import { mixSeed, Rng } from '../src/sim/rng';
@@ -26,7 +26,7 @@ function won(seed: number, team: string[], equip: (kind: string) => EquipStats |
   const b: Battle = startBattle(seed, band, fieldBoost(STAGE));
   const rng = new Rng(mixSeed(seed, 0xba1a));
   const spots: [number, number][] = [];
-  for (let v = D - DEPLOY_ROWS; v < D; v++) for (let u = 0; u < b.board.w; u++) if (standable(tileAt(b.board, u, v))) spots.push([u, v]);
+  for (let v = b.board.d - DEPLOY_ROWS; v < b.board.d; v++) for (let u = 0; u < b.board.w; u++) if (standable(tileAt(b.board, u, v))) spots.push([u, v]);
   for (let i = spots.length - 1; i > 0; i--) {
     const j = rng.int(0, i);
     [spots[i], spots[j]] = [spots[j], spots[i]];

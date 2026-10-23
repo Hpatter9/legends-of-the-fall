@@ -14,12 +14,14 @@ import { mixSeed, Rng } from './rng';
 import { FOE_BANDS } from './foes';
 import { killXp } from './levels';
 import { enterPhase, PHASE2 } from './bossPhases';
-import { afterBlow, CHARGE_MAX, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, rollCrit, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
+import { afterBlow, CHARGE_MAX, echoSkill, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, rollCrit, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellState } from './spells';
 import type { SetHooks } from './relicSets';
 import { kindsOf, traitEffects, type TraitEffects } from './traits';
 import { fxHurt, fxKill, fxRevive, fxStart, hidden } from './equipFx';
 import { mergeEffects } from './relics';
+import { applyTierMods } from './tierSkills';
+import { landCombo, startCombo, tickCombo, type ComboState } from './combos';
 import type { EquipStats } from './equipment';
 import { SPLASH_SHARE, UNITS, type Shot, type Side, type UnitDef } from './units';
 
@@ -133,7 +135,7 @@ export interface Unit {
 
 interface Pending {
   at: number;
-  kind: 'release' | 'land' | 'rain' | 'meteor';
+  kind: 'release' | 'land' | 'rain' | 'meteor' | 'echo' | 'combo';
   by: number;
   to: number;
   dmg: number;
@@ -173,6 +175,14 @@ export type BattleEvent =
   /** A war banner goes up (Samurai Commander), for `ms`. */
   | { kind: 'banner'; by: number; ms: number }
   | { kind: 'haste'; to: number; ms: number }
+  /** A ring of force goes out from a fighter (a tier skill's rider, a combo's blast), `reach` tiles wide. */
+  | { kind: 'burst'; by: number; reach: number; tone: 'tier' | 'combo' }
+  /** A combo's five begin their move (`combos.ts`): it lands `landMs` later. */
+  | { kind: 'comboCast'; id: string; name: string; ms: number; landMs: number; by: number[] }
+  /** The combo's move lands. */
+  | { kind: 'comboLand'; id: string }
+  /** A hero is promoted (merged up to `grade`): the page plays it (`promote` in the page's fx). */
+  | { kind: 'promote'; to: number; grade: number }
   /** A boss changes form (`bossPhases.ts`): the fight is held for `ms` while the page plays it. */
   | { kind: 'phase'; by: number; phase: 2; line: string; ms: number }
   | { kind: 'end'; won: boolean };
@@ -216,6 +226,8 @@ export interface Battle {
   pause?: number;
   /** Every hero's healing is multiplied by this (a calamity ascension). */
   heroHeal?: number;
+  /** The five-hero combo this fight has, when the placed heroes make one (`combos.ts`). */
+  combo?: ComboState;
 }
 
 export const defOf = (u: Unit): UnitDef => UNITS[u.def];
@@ -263,6 +275,8 @@ export interface Stage {
   relics?: { team: TraitEffects; first?: number; revive?: boolean; set?: SetHooks };
   /** The land the fight is on (`areaFor` in run.ts); the highlands when unset. */
   area?: Area;
+  /** The board's size in tiles, for a board made from the seed (a calamity's fights are on a bigger one); the usual `W` x `D` when unset. */
+  size?: { w: number; d: number };
   /** The board to fight on, ready made (an army's section of its long map, `chain.ts`); the seed's own when unset. It is copied. */
   board?: Board;
   /** The floor's twist (the tower's, `twists.ts`); none when unset. */
@@ -274,7 +288,7 @@ export const apart = (a: At, b: At) => Math.abs(a.u - b.u) + Math.abs(a.v - b.v)
 export const tileOf = (b: Battle, a: At) => tileAt(b.board, a.u, a.v)!;
 export const unitAt = (b: Battle, u: number, v: number): Unit | undefined => b.units.find((x) => x.alive && x.u === u && x.v === v);
 /** Whether a tile is on the heroes' rows. */
-export const isDeployTile = (v: number) => v >= D - DEPLOY_ROWS;
+export const isDeployTile = (v: number, depth = D) => v >= depth - DEPLOY_ROWS;
 
 /** The way from one tile toward another, as a facing (the longer axis; along v when even). */
 export function wayTo(a: At, b: At): number {
@@ -316,7 +330,7 @@ export function canStrike(board: Board, def: UnitDef, from: At, to: At): boolean
 
 /** A fresh fight on the seed's board: the foes of `band` (a band's name in `FOE_BANDS`, or the foes' ids themselves) in their rows, no heroes placed yet. */
 export function startBattle(seed: number, band: string | readonly string[] = 'skeletons', stage: Stage = {}): Battle {
-  const board = stage.board ? cloneBoard(stage.board) : makeBoard(seed, stage.area);
+  const board = stage.board ? cloneBoard(stage.board) : makeBoard(seed, stage.area, stage.size?.w, stage.size?.d);
   const tw = stage.twist;
   if (tw) twistBoard(board, tw, seed);
   const b: Battle = { seed, board, units: [], phase: 'deploy', t: 0, rng: mixSeed(seed, 0xf167), pending: [], skillRng: mixSeed(seed, 0x5c111), zones: [], nextId: 1, spells: freshSpells(tw?.mana ? (stage.mana ?? 1) * tw.mana : stage.mana) };
@@ -362,10 +376,10 @@ function ambush(b: Battle): void {
   const who = [...foes.slice(1)].reverse().find((x) => !UNITS[x.def].shot) ?? foes[foes.length - 1];
   if (!who || foes.length < 2) return;
   const free: number[] = [];
-  for (let u = 0; u < b.board.w; u++) if (standable(tileAt(b.board, u, D - 1)) && !unitAt(b, u, D - 1)) free.push(u);
+  for (let u = 0; u < b.board.w; u++) if (standable(tileAt(b.board, u, b.board.d - 1)) && !unitAt(b, u, b.board.d - 1)) free.push(u);
   if (!free.length) return;
   who.u = free[new Rng(mixSeed(b.seed, 0xa3b5)).int(0, free.length - 1)];
-  who.v = D - 1;
+  who.v = b.board.d - 1;
   who.facing = 3;
 }
 
@@ -387,7 +401,11 @@ export function addUnit(b: Battle, defId: string, u: number, v: number, boost: B
   if (boost.phase && PHASE2[defId]) unit.phase = { at: boost.phase, done: false, ...(boost.surge ? { surge: boost.surge } : {}) };
   if (boost.shield) unit.shield = { hp: Math.round(hp * boost.shield), until: 1e9 };
   if (boost.size && boost.size !== 1) unit.size = boost.size;
-  if (boost.grade && boost.grade > 1) unit.grade = boost.grade;
+  if (boost.grade && boost.grade > 1) {
+    unit.grade = boost.grade;
+    // (a hero merged up casts its tier skill: `tierSkills.ts`)
+    if (def.side === 'hero') applyTierMods(unit, boost.grade);
+  }
   if (boost.level && boost.level > 1) unit.level = boost.level;
   if (boost.awaken) unit.awaken = boost.awaken;
   if (tag !== undefined) unit.tag = tag;
@@ -401,7 +419,7 @@ export function addUnit(b: Battle, defId: string, u: number, v: number, boost: B
 /** Whether a hero may be put on a tile: the fight hasn't begun, it's on the heroes' rows, and it's free ground. */
 export function canPlace(b: Battle, defId: string, u: number, v: number, tag?: number): boolean {
   if (b.phase !== 'deploy' || UNITS[defId]?.side !== 'hero') return false;
-  if (!isDeployTile(v) || !standable(tileAt(b.board, u, v))) return false;
+  if (!isDeployTile(v, b.board.d) || !standable(tileAt(b.board, u, v))) return false;
   const there = unitAt(b, u, v);
   return !there || (tag === undefined ? there.def === defId : there.tag === tag);
 }
@@ -435,6 +453,7 @@ export function fight(b: Battle): boolean {
   if (b.phase !== 'deploy' || !heroesPlaced(b) || !boardOk(b.board)) return false;
   b.phase = 'fight';
   applyTraits(b);
+  startCombo(b);
   return true;
 }
 
@@ -491,6 +510,7 @@ export function stepBattle(b: Battle): BattleEvent[] {
   tickStatus(b, out);
   for (const me of b.units) if (me.alive && me.busyUntil <= b.t) decide(b, me, rng, out);
   b.rng = rng.state;
+  tickCombo(b, out);
   for (const u of b.units) if (u.alive && u.phase && !u.phase.done && u.hp <= u.maxHp * u.phase.at) enterPhase(b, u, out);
   const heroes = b.units.some((x) => x.alive && x.side === 'hero' && !defOf(x).summon);
   const foes = b.units.some((x) => x.alive && x.side === 'foe');
@@ -507,6 +527,8 @@ function settle(b: Battle, p: Pending, out: BattleEvent[]): void {
   const to = b.units.find((x) => x.id === p.to)!;
   const def = defOf(by);
   if (p.kind === 'rain' || p.kind === 'meteor') return landArea(b, p.kind, by, p.u!, p.v!, p.dmg, out);
+  if (p.kind === 'combo') return landCombo(b, out);
+  if (p.kind === 'echo') return by.alive ? echoSkill(b, by, p.dmg, out) : undefined;
   if (p.kind === 'release') {
     // the shot leaves the bow (or the hand); it lands a moment later wherever the target is
     if (!by.alive) return;
