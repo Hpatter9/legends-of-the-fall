@@ -29,8 +29,10 @@ export interface Army {
   name: string;
   /** One line for the army's card. */
   blurb: string;
-  /** The land its waves are fought in. */
+  /** The land of its first wave (and its card's backdrop); `lands` is every land its waves are fought in. */
   area: Area;
+  /** One or two lands that its waves alternate between (wave 1 on the first), each fitting its troops; missing is `area` alone (the daily's). */
+  lands?: readonly Area[];
   waves: readonly Wave[];
   /** The foes' hp and attack at wave 1, as a share of their stats in `foes.ts`, and the share they gain each wave after. */
   start: number;
@@ -74,7 +76,8 @@ export const ARMIES: readonly Army[] = [
     id: 'orcs',
     name: 'Orc Warband',
     blurb: 'Grunts, archers and brutes behind a warlord.',
-    area: 'highlands',
+    area: 'warcamp',
+    lands: ['warcamp', 'highlands'],
     waves: waves(ramp(['orcGrunt', 'orcGrunt', 'orcArcher', 'orcBrute', 'orcGrunt', 'orcArcher', 'orcBrute', 'orcGrunt'], 13), { 8: ['orcChieftain', 'orcGrunt', 'orcGrunt', 'orcArcher'], 15: ['orcWarlord', 'orcGrunt', 'orcArcher', 'orcGrunt', 'orcBrute', 'orcBrute'] }),
     start: 0.5,
     growth: 0.176,
@@ -87,7 +90,8 @@ export const ARMIES: readonly Army[] = [
     id: 'undead',
     name: 'Undead Legion',
     blurb: 'Skeleton warriors, spearmen and archers, led by a lich.',
-    area: 'dungeon',
+    area: 'graveyard',
+    lands: ['graveyard', 'dungeon'],
     waves: waves(ramp(['skeleton', 'skeleton', 'boneVolley', 'spearman', 'skeleton', 'spearman', 'boneVolley', 'spearman'], 13), { 8: ['boneCaptain', 'skeleton', 'spearman', 'boneVolley'], 15: ['lichKing', 'skeleton', 'spearman', 'spearman', 'boneVolley', 'boneVolley'] }),
     start: 0.7,
     growth: 0.17,
@@ -100,7 +104,8 @@ export const ARMIES: readonly Army[] = [
     id: 'beasts',
     name: 'Beast Packs',
     blurb: 'Black, red and white werewolves, fast and hungry.',
-    area: 'snow',
+    area: 'plains',
+    lands: ['plains', 'autumn'],
     waves: waves(ramp(['packBlack', 'packRed', 'packWhite', 'packBlack', 'packRed', 'packWhite', 'packBlack'], 13), { 8: ['alphaWolf', 'packBlack', 'packRed', 'packWhite'], 15: ['boarKing', 'packBlack', 'packRed', 'packWhite', 'packBlack', 'packWhite'] }),
     start: 0.85,
     growth: 0.15,
@@ -114,6 +119,7 @@ export const ARMIES: readonly Army[] = [
     name: 'The Wildwood',
     blurb: 'Satyrs pipe the grove into a frenzy; three forest lords guard it.',
     area: 'forest',
+    lands: ['forest', 'swamp'],
     waves: waves(ramp(['groveSatyr1', 'groveSatyr2', 'groveSatyr3', 'groveSatyr1', 'groveSatyr2'], 12), {
         5: ['forestBoss1', 'groveSatyr1', 'groveSatyr2', 'groveSatyr3'],
         10: ['forestBoss2', 'groveSatyr3', 'groveSatyr1', 'groveSatyr2', 'groveSatyr3'],
@@ -130,7 +136,8 @@ export const ARMIES: readonly Army[] = [
     id: 'labyrinth',
     name: 'The Labyrinth',
     blurb: 'Minotaurs charge and gorgons turn heroes to stone.',
-    area: 'dungeon',
+    area: 'temple',
+    lands: ['temple', 'ruins'],
     waves: waves(ramp(['mazeMino1', 'mazeMino2', 'mazeGorgon1', 'mazeMino3', 'mazeGorgon2', 'mazeMino1', 'mazeGorgon3', 'mazeMino2'], 13), { 8: ['gorgonQueen', 'mazeMino1', 'mazeMino2', 'mazeGorgon3'], 15: ['minotaurChampion', 'mazeMino1', 'mazeGorgon1', 'mazeMino2', 'mazeGorgon2', 'mazeMino3'] }),
     start: 1.38,
     growth: 0.128,
@@ -144,6 +151,7 @@ export const ARMIES: readonly Army[] = [
     name: 'Ogre Clans',
     blurb: 'Ogres and orc brutes, a shaman king and a horned giant.',
     area: 'highlands',
+    lands: ['highlands', 'snow'],
     waves: waves(ramp(['clanOgre', 'clanBrute', 'clanBrute', 'clanOgre', 'clanOgre', 'clanBrute', 'clanOgre'], 13), { 8: ['shamanKing', 'clanBrute', 'clanOgre', 'clanBrute'], 15: ['hornedOgre', 'clanOgre', 'clanBrute', 'clanOgre', 'clanBrute', 'clanOgre'] }),
     start: 1.55,
     growth: 0.124,
@@ -157,6 +165,7 @@ export const ARMIES: readonly Army[] = [
     name: 'Infernal Host',
     blurb: 'Imps and demons of the pit, a devil and a demon lord.',
     area: 'volcano',
+    lands: ['volcano', 'desert'],
     waves: waves(ramp(['hellImp', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon'], 13), { 8: ['devilLeader', 'hellImp', 'hellDemon', 'hellImp'], 15: ['demonLord', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon', 'hellImp'] }),
     start: 1.64,
     growth: 0.13,
@@ -169,7 +178,8 @@ export const ARMIES: readonly Army[] = [
     id: 'yokai',
     name: 'Yokai Night Parade',
     blurb: 'Fox spirits, crows and tengu monks of the night parade, led by a nine-tailed fox and the Oni King.',
-    area: 'forest',
+    area: 'shrine',
+    lands: ['shrine', 'forest'],
     waves: waves(ramp(['yokaiFox', 'yokaiCrow', 'yokaiMonk', 'yokaiWitch', 'yokaiSeer', 'yokaiFox', 'yokaiMonk', 'yokaiCrow', 'yokaiWitch'], 13), { 8: ['nineTails', 'yokaiFox', 'yokaiWitch', 'yokaiCrow'], 15: ['oniKing', 'yokaiMonk', 'yokaiWitch', 'yokaiSeer', 'yokaiFox', 'yokaiCrow'] }),
     start: 1.68,
     growth: 0.127,
@@ -182,7 +192,8 @@ export const ARMIES: readonly Army[] = [
     id: 'golems',
     name: 'Golem Forge',
     blurb: 'Stone, iron, crystal and magma golems, a sapphire colossus and the Forge Titan.',
-    area: 'desert',
+    area: 'forge',
+    lands: ['forge', 'crystal'],
     waves: waves(ramp(['stoneGolem', 'ironGolem', 'crystalGolem', 'magmaGolem', 'stoneGolem', 'ironGolem', 'magmaGolem'], 13), { 8: ['sapphireColossus', 'stoneGolem', 'crystalGolem', 'ironGolem'], 15: ['forgeTitan', 'ironGolem', 'magmaGolem', 'crystalGolem', 'stoneGolem', 'magmaGolem'] }),
     start: 1.7,
     growth: 0.124,
@@ -192,6 +203,11 @@ export const ARMIES: readonly Army[] = [
     clear: 1800,
   },
 ];
+
+/** The land wave n of an army is fought on: its lands in turn, the first on wave 1. */
+export const landOf = (a: Army, n: number): Area => (a.lands ?? [a.area])[(n - 1) % (a.lands?.length ?? 1)];
+/** Every land an army's waves are fought in. */
+export const landsOf = (a: Army): readonly Area[] => a.lands ?? [a.area];
 
 export const armyById = (id: string): Army | undefined => ARMIES.find((a) => a.id === id);
 export const armyIndex = (id: string): number => ARMIES.findIndex((a) => a.id === id);
@@ -213,7 +229,7 @@ export function waveBoost(a: Army, n: number, tier = 0): Stage {
     const def = FOES[w.foes[0]];
     boss = { size: w.boss === 'final' ? 1.5 : 1.3, hp: want.hp / def.hp, atk: want.atk / def.atk, ...(w.boss === 'final' ? { phase: t.phaseAt ?? PHASE_AT, ...(t.surge ? { surge: t.surge } : {}) } : {}) };
   }
-  return { foes: { hp: k * t.hp, atk: k * t.atk, ...(t.speed !== 1 ? { speed: t.speed } : {}) }, boss, area: a.area };
+  return { foes: { hp: k * t.hp, atk: k * t.atk, ...(t.speed !== 1 ? { speed: t.speed } : {}) }, boss, area: landOf(a, n) };
 }
 
 /** The foes of wave n on a tier: the wave's own band, then the tier's escorts, copies of the wave's escorts in turn (a boss is never copied, so a boss with no escorts stays alone). */

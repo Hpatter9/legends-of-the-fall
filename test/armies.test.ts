@@ -4,6 +4,7 @@ import {
   ARMIES,
   ARMY_WAVES,
   armyById,
+  landsOf,
   armyCleared,
   armyIsNew,
   armyUnlocked,
@@ -293,7 +294,9 @@ test('an army run fights its own waves, with the boss, its size and the land of 
     assert.equal(isBossRun(run), !!boss);
     if (boss) assert.ok(boss.size! > 1);
   }
-  assert.deepEqual([...lands], ['dungeon']);
+  // (waves alternate between the army's own two lands, the first on wave 1)
+  assert.deepEqual([...lands], ['graveyard', 'dungeon']);
+  assert.deepEqual([...lands], [...landsOf(armyById('undead')!)]);
 });
 
 test('winning waves moves on, the last boss wins the army and ends the run', () => {
