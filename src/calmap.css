@@ -1,7 +1,7 @@
 /* ===== The Calamity's map (`calMap.ts`): an isometric land in a scroll box, a soft fog over it, rings on the lit spots, the portal and the party's leader.
    Inlined after awaken.css by build.mjs. Nothing here blinks: the rings are still, the fog only fades once when it lifts, the portal turns slowly.
    Text is 12px body or display and never bold. Upright phones only (393x852, 360x780, 412x915). ===== */
-.cmScroll { background: #0a0c10; scrollbar-width: none; image-rendering: auto; }
+.cmScroll { background: var(--s0); scrollbar-width: none; image-rendering: auto; }
 .cmScroll::-webkit-scrollbar { display: none; }
 .cmLand { position: relative; margin: 0 auto; overflow: hidden; }
 .cmGround, .cmFog { position: absolute; left: 0; top: 0; }
@@ -13,23 +13,39 @@
 .cmHit:disabled { opacity: 1; filter: none; pointer-events: none; }
 .cmHit:active { transform: none; }
 .cmRing { position: absolute; border-radius: 50%; box-sizing: border-box; pointer-events: none; }
-.cmSpot.open .cmRing { border: 2px solid rgba(255, 226, 140, 0.95); background: rgba(255, 214, 120, 0.16); box-shadow: 0 0 10px 2px rgba(255, 200, 90, 0.6), inset 0 0 12px rgba(255, 200, 90, 0.4); }
-.cmSpot.open.side .cmRing { border-color: rgba(150, 232, 255, 0.95); background: rgba(130, 220, 255, 0.16); box-shadow: 0 0 10px 2px rgba(110, 200, 255, 0.6), inset 0 0 12px rgba(110, 200, 255, 0.4); }
-.cmSpot.picked .cmRing { border-width: 3px; background: rgba(255, 226, 140, 0.34); box-shadow: 0 0 14px 4px rgba(255, 214, 110, 0.85), inset 0 0 14px rgba(255, 214, 110, 0.6); }
-.cmSpot.picked.side .cmRing { background: rgba(130, 220, 255, 0.34); box-shadow: 0 0 14px 4px rgba(120, 214, 255, 0.85), inset 0 0 14px rgba(120, 214, 255, 0.6); }
-.cmSpot.here .cmRing { border: 2px solid rgba(170, 240, 140, 0.8); }
-.cmTick { position: absolute; width: 12px; height: 12px; background: #3f9a34; border: 2px solid #0b070b; box-sizing: border-box; pointer-events: none; }
-.cmTick::after { content: ''; position: absolute; left: 2px; top: -1px; width: 3px; height: 6px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(40deg); }
+.cmSpot.open .cmRing { border: 2px solid rgb(var(--e8-rgb) / 0.95); background: rgb(var(--e8-rgb) / 0.16); box-shadow: 0 0 10px 2px rgb(var(--e7-rgb) / 0.6), inset 0 0 12px rgb(var(--e7-rgb) / 0.4); }
+.cmSpot.open.side .cmRing { border-color: rgb(var(--b5-rgb) / 0.95); background: rgb(var(--b4-rgb) / 0.16); box-shadow: 0 0 10px 2px rgb(var(--b4-rgb) / 0.6), inset 0 0 12px rgb(var(--b4-rgb) / 0.4); }
+.cmSpot.picked .cmRing { border-width: 3px; background: rgb(var(--e8-rgb) / 0.34); box-shadow: 0 0 14px 4px rgb(var(--e8-rgb) / 0.85), inset 0 0 14px rgb(var(--e8-rgb) / 0.6); }
+.cmSpot.picked.side .cmRing { background: rgb(var(--b4-rgb) / 0.34); box-shadow: 0 0 14px 4px rgb(var(--b4-rgb) / 0.85), inset 0 0 14px rgb(var(--b4-rgb) / 0.6); }
+.cmSpot.here .cmRing { border: 2px solid rgb(var(--g5-rgb) / 0.8); }
+.cmTick { position: absolute; width: 12px; height: 12px; background: var(--g2); border: 2px solid var(--s0); box-sizing: border-box; pointer-events: none; }
+.cmTick::after { content: ''; position: absolute; left: 2px; top: -1px; width: 3px; height: 6px; border: solid var(--white); border-width: 0 2px 2px 0; transform: rotate(40deg); }
 .cmBadge { position: absolute; pointer-events: none; }
 .cmWalker { position: absolute; left: 0; top: 0; z-index: 4; pointer-events: none; image-rendering: pixelated; will-change: transform; }
 .cmName { position: sticky; top: 8px; z-index: 6; height: 0; pointer-events: none; display: flex; flex-direction: column; align-items: flex-start; padding-left: 8px; }
-.cmName small, .cmName b { display: block; padding: 0 8px; background: rgba(14, 9, 7, 0.82); border-left: 3px solid var(--gold); font: 400 12px/1.5 var(--body); color: var(--dim); }
+.cmName small, .cmName b { display: block; padding: 0 8px; background: rgb(var(--s0-rgb) / 0.82); border-left: 3px solid var(--gold); font: 400 12px/1.5 var(--body); color: var(--dim); }
 .cmName b { font: 400 12px/1.5 var(--display); color: var(--gold-hi); text-shadow: var(--outline); border-top: 0; }
 /* the portal: sixteen 64px frames in a strip, stepped slowly (`--pu` is the css pixels in a scene pixel; the strip is 1024 scene pixels long) */
 .calPortal { position: absolute; z-index: 3; pointer-events: none; image-rendering: pixelated; background-repeat: no-repeat; background-image: var(--calPortal); background-size: calc(var(--pu, 1) * 1024px) calc(var(--pu, 1) * 64px); animation: calPortalTurn 1.8s steps(16) infinite; }
-.calPortal::before { content: ''; position: absolute; left: -40%; top: -40%; width: 180%; height: 180%; border-radius: 50%; background: radial-gradient(rgba(150, 110, 255, 0.28), rgba(110, 80, 220, 0.1) 50%, transparent 70%); z-index: -1; }
+.calPortal::before { content: ''; position: absolute; left: -40%; top: -40%; width: 180%; height: 180%; border-radius: 50%; background: radial-gradient(rgb(var(--p4-rgb) / 0.28), rgb(var(--b2-rgb) / 0.1) 50%, transparent 70%); z-index: -1; }
 @keyframes calPortalTurn { to { background-position-x: calc(var(--pu, 1) * -1024px); } }
 @media (prefers-reduced-motion: reduce) { .calPortal { animation: none; background-position-x: calc(var(--pu, 1) * -384px); } }
 /* the camp's small Calamity board (under the portal): its title and its one line both fit */
 .hmCalamity b, .hmCalamity small { flex: none; }
 .hmCalamity small { line-height: 1.1; max-height: 2.4em; overflow: hidden; }
+
+/* ===== The void look (the owner: "more like an interdimensional space"): the islands and bridges sit in a sky of stars with a moon and a drifting nebula behind them. =====
+   The sky, nebula and moon are the packs' moon and cloudscape pictures; they move at their own pace as the map scrolls (`calMap.ts` parallax) and the nebula drifts sideways
+   very slowly, no flashing: nothing here pulses hard. The bridges' glow breathes softly (its opacity eases between two values over five seconds). */
+.cmScroll { background: var(--s0); }
+.cmLand { background: var(--s0); }
+.cmSky, .cmNeb, .cmPlanet, .cmGlow { position: absolute; left: 0; pointer-events: none; image-rendering: pixelated; }
+.cmSky { right: 0; background-repeat: repeat, no-repeat; will-change: transform; }
+.cmNeb { -webkit-mask-image: linear-gradient(transparent, var(--black) 25%, var(--black) 75%, transparent); mask-image: linear-gradient(transparent, var(--black) 25%, var(--black) 75%, transparent); left: 0; width: 200%; top: 0; background-repeat: repeat-x; opacity: 0.3; will-change: transform; animation: cmDrift 360s linear infinite; mix-blend-mode: screen; }
+.cmPlanet { top: 0; opacity: 0.85; will-change: transform; }
+.cmGlow { top: 0; opacity: 0.65; animation: cmBreathe 6s ease-in-out infinite alternate; mix-blend-mode: screen; }
+.cmSwirl { opacity: 0.55; mix-blend-mode: screen; animation-duration: 4.8s; }
+@keyframes cmDrift { to { background-position-x: calc(var(--drift, 576px) * -1); } }
+@keyframes cmBreathe { from { opacity: 0.55; } to { opacity: 0.95; } }
+@media (prefers-reduced-motion: reduce) { .cmNeb, .cmGlow { animation: none; } }
+.cmGround { z-index: 0; }

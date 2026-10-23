@@ -192,3 +192,14 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
 - **The camp's places** (`src/art/camp/tower.png`, `tower_locked.png`, `board.png`, `tools/camp/places.py`): the Tower is the Knights watchtower already used by the castle
   (`src/art/castle/watchtower.png`), its locked picture that drained of colour with a chain and padlock drawn on it; the Daily board is the Fae ribbon signpost of the same
   isometric kits (`hpatter9/little-town`), halved by a 2x2 box average.
+
+- **Stone and iron UI kit** (`src/art/ui/` frames, buttons, ribbons, chips, flag, `wood.png`, `page.png`; drawn by `tools/ui/styles.py`, which replaced `tools/ui/frames.py`'s brown and gold kit): the `wood.png` (bars) and `page.png` (menu pages, panel fill) textures are the centre tiles of two **DawnLike** brick sets by DragonDePlatino (`Objects/Floor.png`, CC-BY 4.0; palette by DawnBringer), their few colours moved by brightness rank onto the slate ramp, with no resampling. The frames are drawn natively by the script.
+## The Calamity's void (`src/art/calmap/`, `tools/calmap/prep.py`)
+
+- The sky behind the islands: the stars (`stars.png`, the bright pixels of the first sky) and the four moons (`planet_white/tan/red/blue.png`) are cut from the Craftpix **Free Moon Pixel Game
+  Backgrounds** pack; the six nebulae (`nebula_0..5.png`) are its sibling, the Craftpix **Free Seamless Pixel Art Cloudscape for Game Projects** (background 1, the two cloud layers), turned to a
+  colour for each realm (hue shifts only). Both from the private assets repository (`hpatter9/chronos-assets`).
+- The rock hanging under each island is the Undead Tileset's rock face already credited above (`src/art/ground/rock.png`), multiplied by each realm's colour in code.
+- The islands' ground and props are single pieces of Chronos Settlement's isometric kits as before; the realms add the Fae mushroom-patch and meadow tiles, crystal rocks and glow bush, the Dwarves'
+  crystals, and the Machines' iron-plate and grate tiles, iron tree, coil stack, oil drums and arc lamp (the Rift's ground is the Liches' cracked earth turned violet). The great rift behind the last lair
+  and the portal are the PVFX Foundry rift (CC0), as before.

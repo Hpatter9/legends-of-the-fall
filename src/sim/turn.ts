@@ -30,6 +30,19 @@ export function unturnTile(rot: Rot, a: number, b: number): [number, number] {
 /** A footprint's width (along U) and depth (along V). */
 export const footDims = (rot: Rot): [number, number] => (rot % 2 ? [D, W] : [W, D]);
 
+/** Whether a section lying `rot` with its footprint's corner at (ou, ov) against the host's (which lies `hostRot`) is further
+ *  from the screen than the host, so it is drawn behind the host's tiles and fighters. Footprints never overlap, so a
+ *  section lies wholly to one side of the host's along U, along V, or both: along one axis only, that side says (-U or -V is
+ *  further off); along both, the same sign on each says, and opposite signs (straight left or right of the host on the
+ *  screen, never over it) go by U. */
+export function liesBehind(rot: Rot, ou: number, ov: number, hostRot: Rot): boolean {
+  const [w, d] = footDims(rot);
+  const [hw, hd] = footDims(hostRot);
+  const u = ou + w <= 0 ? -1 : ou >= hw ? 1 : 0;
+  const v = ov + d <= 0 ? -1 : ov >= hd ? 1 : 0;
+  return (u || v) < 0;
+}
+
 /** Where a step in the board's own direction (du, dv) goes in the world, turned. */
 export function turnDir(rot: Rot, du: number, dv: number): [number, number] {
   const [a, b] = turnTile(rot, du, dv);
