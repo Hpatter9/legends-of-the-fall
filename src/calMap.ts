@@ -1,8 +1,9 @@
-// The Calamity's map screen (`calmap.css`): a local isometric land for each of the six maps, drawn in the camp's way (scene pixels times a whole
-// number of device pixels, nearest neighbour). The land (`sim/calLand.ts`: spots, roads, trees) is baked once into one canvas, ground and
-// landmarks together; what moves is only the fog (a soft dark layer with holes where the party has seen, lifting along the road when a spot is
-// cleared), the portal (a CSS-stepped strip), and the squad's leader, who stands at the spot the party is at and walks the road to the next.
-// It only draws and reports taps (`onSpot`): the run is changed by the tower view through the sim's own functions. Math.random is fine here.
+// The Calamity's map screen (`calmap.css`): each of the six maps is a realm of the void (the owner: "more like an interdimensional space"). Every spot is a small isometric island
+// of that realm's ground with rock hanging under it, joined by bridges of light (stepping slabs along the roads of `sim/calLand.ts`), in a drifting sky of stars, a moon and a nebula
+// (the packs' moon and cloudscape pictures, in CSS layers behind). Drawn in the camp's way: scene pixels times a whole number of device pixels, nearest neighbour. The islands, bridges and
+// landmarks are baked once into canvases; what moves is only the void's slow drift, the bridges' breathing glow, the mist (a mask that lifts softly along a bridge when a spot is cleared),
+// the portal and the squad's leader, who stands at the spot the party is at and walks the bridges to the next. It only draws and reports taps (`onSpot`): the run is changed by the
+// tower view through the sim's own functions. Math.random is fine here.
 
 import type { Meta } from './sim/meta';
 import type { Run } from './sim/run';
@@ -13,9 +14,22 @@ import { loadImage } from './render/loadImage';
 import { heroRig, lookKey } from './render/awakenRig';
 import { shrinkRig, type Small } from './render/smallRig';
 import { hash } from './render/campSpots';
+import { drawSlab, drawUnderside, REALMS } from './render/calRealm';
 import { twistBadge } from './twistView';
 import atlasUrl from './art/calmap/atlas.png';
 import portalUrl from './art/calmap/portal.png';
+import starsUrl from './art/calmap/stars.png';
+import rockUrl from './art/ground/rock.png';
+import planetWhite from './art/calmap/planet_white.png';
+import planetTan from './art/calmap/planet_tan.png';
+import planetRed from './art/calmap/planet_red.png';
+import planetBlue from './art/calmap/planet_blue.png';
+import neb0 from './art/calmap/nebula_0.png';
+import neb1 from './art/calmap/nebula_1.png';
+import neb2 from './art/calmap/nebula_2.png';
+import neb3 from './art/calmap/nebula_3.png';
+import neb4 from './art/calmap/nebula_4.png';
+import neb5 from './art/calmap/nebula_5.png';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -25,13 +39,26 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 };
 const reduced = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
-/** The lands' names, one for each map, and the fog's colour over each. */
-export const LAND_NAMES: readonly string[] = ['The Ashen Road', 'The Thornwood', 'The Burning Sands', 'The Black Summit', 'The Cinder Waste', 'The Hollow Heart'];
-const FOG_COLOURS: readonly string[] = ['13, 20, 32', '9, 20, 16', '28, 18, 12', '14, 22, 36', '22, 12, 12', '18, 13, 24'];
-const BG_COLOURS: readonly string[] = ['#3f6a2c', '#2d4a24', '#a8793a', '#9aa8bc', '#3a2a22', '#4a4650'];
+/** The realms' names, one for each map. */
+export const LAND_NAMES: readonly string[] = REALMS.map((r) => r.name);
+const PLANETS = { white: planetWhite, tan: planetTan, red: planetRed, blue: planetBlue };
+const NEBULAE = [neb0, neb1, neb2, neb3, neb4, neb5];
 
-let art: Promise<HTMLImageElement> | null = null;
-const loadAtlas = (): Promise<HTMLImageElement> => (art ??= loadImage(atlasUrl));
+interface Assets {
+  atlas: HTMLImageElement;
+  rock: ImageData;
+}
+let art: Promise<Assets> | null = null;
+const loadAtlas = (): Promise<Assets> =>
+  (art ??= (async () => {
+    const [atlas, rock] = await Promise.all([loadImage(atlasUrl), loadImage(rockUrl)]);
+    const c = document.createElement('canvas');
+    c.width = rock.width;
+    c.height = rock.height;
+    const g = c.getContext('2d', { willReadFrequently: true })!;
+    g.drawImage(rock, 0, 0);
+    return { atlas, rock: g.getImageData(0, 0, rock.width, rock.height) };
+  })());
 
 /** The fog already lifted from each map, so a spot newly seen lifts it softly (by run and map). */
 const seenFog = new Map<string, Set<string>>();
@@ -51,11 +78,11 @@ interface Geo {
 
 /** How far a foot line is below the centre of its ground diamond, as a share of the tile's height (the camp's fire stands 16 of 52 up). */
 const FOOT = 0.31;
-/** The fog's pixels are this many scene pixels across: it is soft, and cheap to redraw while it lifts. */
+/** The mist's pixels are this many scene pixels across: it is soft, and cheap to redraw while it lifts. */
 const FOG_PX = 4;
-/** The size of the fog's holes round a spot and along a road, in scene pixels. */
-const HOLE_SPOT = 78;
-const HOLE_ROAD = 46;
+/** The mist's clear patches round an island (across, up, down: the landmark above and the rock below) and along a bridge, in scene pixels. */
+const HOLE_SPOT = { rx: 74, up: 96, down: 84 };
+const HOLE_ROAD = 34;
 /** Milliseconds a road cell takes to clear, and the stagger between cells (the fog rolls back along the road), then the spot at its end. */
 const LIFT_MS = 520;
 const LIFT_STEP = 70;
@@ -77,6 +104,9 @@ interface Lift {
   x: number;
   y: number;
   r: number;
+  /** An island's patch reaches this far up (its landmark) and down (its rock). */
+  up?: number;
+  down?: number;
   /** When it starts to clear (ms from the start of the lift) and how long it takes; 0 delay and no `dur` for one already clear. */
   delay: number;
 }
@@ -93,8 +123,17 @@ export class CalMap {
   /** The scroll box, in the tower view's own classes so the page keeps its scroll rules. */
   readonly root = el('div', 'rtScroll cmScroll');
   private land = el('div', 'cmLand');
+  /** The void behind the islands: the sky with its stars, a nebula that drifts, a moon, and (the last map) the rift swirling behind the lair. */
+  private sky = el('div', 'cmSky');
+  private nebula = el('div', 'cmNeb');
+  private planet = el('img', 'cmPlanet');
+  private swirl = el('div', 'calPortal cmSwirl');
+  /** What the party sees of the islands and bridges: the baked pictures under the mist's mask. */
   private ground = el('canvas', 'cmGround');
-  private fog = el('canvas', 'cmFog');
+  private glow = el('canvas', 'cmGlow');
+  private bakedGround = document.createElement('canvas');
+  private bakedGlow = document.createElement('canvas');
+  private mask = document.createElement('canvas');
   private marks = el('div', 'cmMarks');
   private name = el('div', 'cmName');
   private portal = el('div', 'calPortal');
@@ -104,7 +143,7 @@ export class CalMap {
   private key = '';
   private geo: Geo | null = null;
   private picked = -1;
-  private atlas: HTMLImageElement | null = null;
+  private atlas: Assets | null = null;
   private hero: { cut: string; small: Small } | null = null;
   private active = false;
   private raf = 0;
@@ -120,9 +159,18 @@ export class CalMap {
 
   constructor(private hooks: CalMapHooks) {
     this.portal.style.setProperty('--calPortal', `url(${portalUrl})`);
-    this.land.append(this.ground, this.fog, this.marks, this.portal, this.walker);
+    this.swirl.style.setProperty('--calPortal', `url(${portalUrl})`);
+    this.swirl.hidden = true;
+    this.land.append(this.sky, this.nebula, this.planet, this.ground, this.glow, this.swirl, this.marks, this.portal, this.walker);
     this.root.append(this.name, this.land);
-    this.root.addEventListener('scroll', () => (this.top = this.root.scrollTop), { passive: true });
+    this.root.addEventListener(
+      'scroll',
+      () => {
+        this.top = this.root.scrollTop;
+        this.parallax();
+      },
+      { passive: true },
+    );
     // (a tap while the leader walks: arrive at once)
     this.root.addEventListener('pointerdown', () => this.skip());
   }
@@ -163,22 +211,23 @@ export class CalMap {
       const { th, tw } = art;
       const aMax = this.model.aMax;
       const y0 = 70 - (this.model.aMin * th) / 2;
-      const H = Math.ceil(y0 + (aMax * th) / 2 + 40);
+      const H = Math.ceil(y0 + (aMax * th) / 2 + 60);
       this.geo = { W, H, tw, th, unit, k, x0: W / 2, y0 };
       this.land.style.width = `${W * unit}px`;
       this.land.style.height = `${H * unit}px`;
       this.land.style.setProperty('--cmU', String(unit));
-      this.land.dataset.land = String(Math.min(Math.max(t.act, 1), LAND_ART.length));
-      for (const c of [this.ground]) {
+      this.land.dataset.land = String(land);
+      for (const c of [this.ground, this.glow, this.bakedGround, this.bakedGlow]) {
         c.width = W;
         c.height = H;
+      }
+      for (const c of [this.ground, this.glow]) {
         c.style.width = `${W * unit}px`;
         c.style.height = `${H * unit}px`;
       }
-      this.fog.width = Math.ceil(W / FOG_PX);
-      this.fog.height = Math.ceil(H / FOG_PX);
-      this.fog.style.width = `${W * unit}px`;
-      this.fog.style.height = `${H * unit}px`;
+      this.mask.width = Math.ceil(W / FOG_PX);
+      this.mask.height = Math.ceil(H / FOG_PX);
+      this.dress(land - 1, H, unit);
       this.walk = null;
       this.stand = this.standId();
       this.keepTop = false;
@@ -193,9 +242,40 @@ export class CalMap {
       if (!this.geo) return;
       this.root.scrollTop = this.keepTop ? this.top : this.cameraFor(this.pos.y);
       this.keepTop = true;
+      this.parallax();
     });
     this.startLoop();
     return this.root;
+  }
+
+  /** The void's layers for realm `n`: the sky's colours, the stars over it, the nebula and the moon (sized and placed by `parallax`). */
+  private dress(n: number, H: number, unit: number): void {
+    const r = REALMS[n];
+    const u = unit;
+    this.sky.style.cssText = `height:${H * 1.5 * u}px;top:${-H * 0.5 * u}px;background-image:url(${starsUrl}),linear-gradient(${r.sky[1]},${r.sky[0]} 28%,${r.sky[0]} 72%,${r.sky[1]});background-size:${576 * u}px ${324 * u}px,100% 100%`;
+    this.nebula.style.cssText = `height:${Math.round(324 * u)}px;background-image:url(${NEBULAE[r.nebula]});background-size:${576 * u}px ${324 * u}px;--drift:${576 * u}px`;
+    this.planet.src = PLANETS[r.planet];
+    this.planet.style.width = `${Math.round((this.planet.naturalWidth || 90) * 0.4) * u}px`;
+    this.planet.style.setProperty('--cmU', String(u));
+  }
+
+  /** The void moves slower than the land as the map scrolls (the sky at half the pace, the nebula and the moon a little less), so the party seems to travel through it. */
+  private parallax(): void {
+    const g = this.geo;
+    if (!g) return;
+    const r = REALMS[(Number(this.land.dataset.land) || 1) - 1];
+    const u = g.unit;
+    const top = this.root.scrollTop;
+    const view = this.root.clientHeight || 560;
+    const smax = Math.max(0, g.H * u - view);
+    this.sky.style.transform = `translate3d(0, ${Math.round(top * 0.5)}px, 0)`;
+    // (the nebula and the moon are placed so that, at the foot of the map, they hang in the upper part of the screen)
+    const nebBase = smax * 0.4 + view * 0.08;
+    this.nebula.style.transform = `translate3d(0, ${Math.round(nebBase + top * 0.6)}px, 0)`;
+    const pw = (this.planet.naturalWidth ? this.planet.naturalWidth : 90) * 0.4 * u;
+    this.planet.style.width = `${pw}px`;
+    const base = view * r.planetAt[1] * 0.9;
+    this.planet.style.transform = `translate3d(${Math.round(g.W * u * r.planetAt[0] - pw / 2)}px, ${Math.round(base + top * 0.92)}px, 0)`;
   }
 
   /** Leave the map (its loop stops). */
@@ -301,6 +381,16 @@ export class CalMap {
     const done = new Set([...t.path, ...(t.sideDone ?? [])]);
     this.paintMarks(model, fog.spots, open, done);
     this.placePortal();
+    // (the heart of the rift: a great rift turns behind the lair once the lair is in sight)
+    const boss = model.spots.find((x) => x.kind === 'boss');
+    const rift = (Number(this.land.dataset.land) || 1) === REALMS.length && !!boss && fog.spots.has(boss.id);
+    this.swirl.hidden = !rift;
+    if (rift && boss) {
+      const u = g.unit;
+      const size = 64 * 5;
+      this.swirl.style.cssText = `left:${(this.ax(boss) - size / 2) * u}px;top:${(this.xy(boss).y - size / 2 - 30) * u}px;width:${size * u}px;height:${size * u}px;--pu:${u * 5}`;
+      this.swirl.style.setProperty('--calPortal', `url(${portalUrl})`);
+    }
     if (this.atlas) this.bake(this.atlas, model, done);
     this.setFog(model, fog);
     // (the leader: where it stands now; a side spot cleared walks it back to the road)
@@ -317,61 +407,139 @@ export class CalMap {
     this.drawWalker();
   }
 
-  private bake(im: HTMLImageElement, model: Land, done: Set<number>): void {
+  /** The cells of the island a spot stands on: its own tile (a small island with rock hanging under it); the portal's a plus of five; a lair's a wide diamond. */
+  private islandOf(s: LandSpot): Cell[] {
+    const c = { i: s.i, j: s.j };
+    if (s.id === START_ID) return [c, { i: c.i + 1, j: c.j }, { i: c.i, j: c.j + 1 }, { i: c.i - 1, j: c.j }, { i: c.i, j: c.j - 1 }];
+    if (s.kind === 'boss') {
+      const out: Cell[] = [];
+      for (let di = -2; di <= 2; di++) for (let dj = -2; dj <= 2; dj++) if (Math.abs(di) + Math.abs(dj) <= 3) out.push({ i: c.i + di, j: c.j + dj });
+      return out;
+    }
+    return [c];
+  }
+
+  private bake(assets: Assets, model: Land, done: Set<number>): void {
+    const im = assets.atlas;
     const g = this.geo!;
     const art = this.artOf();
-    const c = this.ground.getContext('2d')!;
-    c.imageSmoothingEnabled = false;
-    c.setTransform(1, 0, 0, 1, 0, 0);
-    c.fillStyle = BG_COLOURS[(Number(this.land.dataset.land) || 1) - 1];
-    c.fillRect(0, 0, g.W, g.H);
-    const blit = (name: string, cx: number, footY: number, flip = false) => {
+    const realm = REALMS[(Number(this.land.dataset.land) || 1) - 1];
+    const c = this.bakedGround.getContext('2d')!;
+    const gl = this.bakedGlow.getContext('2d')!;
+    for (const x of [c, gl]) {
+      x.setTransform(1, 0, 0, 1, 0, 0);
+      x.clearRect(0, 0, g.W, g.H);
+      x.imageSmoothingEnabled = false;
+    }
+    const tileOf = (cell: Cell): { name: string; flip: boolean } => ({ name: art.ground[hash(cell.i, cell.j) < 0.35 && art.ground.length > 1 ? 1 : 0], flip: hash(cell.i + 7, cell.j * 3) < 0.5 });
+    const blit = (name: string, cx: number, footY: number, flip = false, alpha = 1) => {
       const r = RECTS[name];
       if (!r) return;
       const [sx, sy, w, h] = r;
       const x = Math.round(cx - w / 2);
       const y = Math.round(footY - h);
+      c.globalAlpha = alpha;
       if (flip) {
         c.setTransform(-1, 0, 0, 1, x + w, 0);
         c.drawImage(im, sx, sy, w, h, 0, y, w, h);
         c.setTransform(1, 0, 0, 1, 0, 0);
       } else c.drawImage(im, sx, sy, w, h, x, y, w, h);
+      c.globalAlpha = 1;
     };
-    const roadCells = new Set<string>();
-    for (const r of model.roads) for (const cell of r.cells) roadCells.add(`${cell.i},${cell.j}`);
-    // (the ground: every cell of the screen's lattice, the road's cells in the road's tile; the far ones first)
-    const aLo = Math.floor((-g.y0 * 2) / g.th) - 2;
-    const aHi = Math.ceil(((g.H - g.y0) * 2) / g.th) + 2;
-    const bMax = Math.ceil(g.W / g.tw) + 2;
-    for (let a = aLo; a <= aHi; a++) {
-      for (let b = -bMax; b <= bMax; b++) {
-        if ((a + b) & 1) continue;
-        const cell = { i: (a + b) / 2, j: (a - b) / 2 };
-        const p = this.xy(cell);
-        const isRoad = roadCells.has(`${cell.i},${cell.j}`);
-        const pick = isRoad ? art.road : art.ground[hash(cell.i, cell.j) < 0.34 && art.ground.length > 1 ? 1 : 0];
-        const flip = !isRoad && hash(cell.i + 7, cell.j * 3) < 0.5;
-        const r = RECTS[pick];
-        const [sx, sy, w, h] = r;
-        const x = Math.round(p.x - w / 2);
-        const y = Math.round(p.y - g.th / 2);
-        if (flip) {
-          c.setTransform(-1, 0, 0, 1, x + w, 0);
-          c.drawImage(im, sx, sy, w, h, 0, y, w, h);
-          c.setTransform(1, 0, 0, 1, 0, 0);
-        } else c.drawImage(im, sx, sy, w, h, x, y, w, h);
-      }
-    }
-    // (the things standing on it, by their foot lines)
+    const key = (cell: Cell) => `${cell.i},${cell.j}`;
+    // (islands: every spot's cells; bridges: the road's cells that are on no island)
+    const islands = model.spots.map((s) => ({ s, cells: this.islandOf(s) }));
+    const onIsland = new Set<string>();
+    for (const isl of islands) for (const cell of isl.cells) onIsland.add(key(cell));
+    const bridge = new Set<string>();
+    for (const r of model.roads) for (const cell of r.cells) if (!onIsland.has(key(cell))) bridge.add(key(cell));
     const foot = Math.round(g.th * FOOT);
     const list: { y: number; x: number; paint: () => void }[] = [];
+    // (a stepping slab for each cell of a bridge, and its glow)
+    for (const k of bridge) {
+      const [i, j] = k.split(',').map(Number);
+      const p = this.xy({ i, j });
+      list.push({
+        y: p.y,
+        x: p.x,
+        paint: () => {
+          drawSlab(c, p.x, p.y, Math.round(g.tw * 0.52), Math.round(g.th * 0.52), realm.bridge, hash(i * 3, j));
+          const rg = gl.createRadialGradient(p.x, p.y + 3, 0, p.x, p.y + 3, g.tw * 0.62);
+          rg.addColorStop(0, `rgba(${realm.bridge.glow}, 0.34)`);
+          rg.addColorStop(1, `rgba(${realm.bridge.glow}, 0)`);
+          gl.globalCompositeOperation = 'lighter';
+          gl.fillStyle = rg;
+          gl.fillRect(p.x - g.tw, p.y - g.tw * 0.6, g.tw * 2, g.tw * 1.2);
+          gl.globalCompositeOperation = 'source-over';
+        },
+      });
+    }
+    // (an island: the rock hanging under it, then its tiles back to front, a glow under it)
+    const thick = (RECTS[art.ground[0]]?.[3] ?? g.th + 8) - g.th;
+    for (const { s, cells } of islands) {
+      const centres = cells.map((cell) => this.xy(cell));
+      const top = this.xy(s).y;
+      list.push({
+        y: top - 2,
+        x: this.xy(s).x,
+        paint: () => {
+          drawUnderside(c, assets.rock, centres, g.tw, g.th, thick, realm.rock, Math.round(s.id * 7 + 13));
+          const order = cells.map((cell, n) => ({ cell, p: centres[n] })).sort((a, b) => a.p.y - b.p.y || a.p.x - b.p.x);
+          for (const { cell, p } of order) {
+            const t = tileOf(cell);
+            const [sx, sy, w, h] = RECTS[t.name];
+            const x = Math.round(p.x - w / 2);
+            const y = Math.round(p.y - g.th / 2);
+            if (t.flip) {
+              c.setTransform(-1, 0, 0, 1, x + w, 0);
+              c.drawImage(im, sx, sy, w, h, 0, y, w, h);
+              c.setTransform(1, 0, 0, 1, 0, 0);
+            } else c.drawImage(im, sx, sy, w, h, x, y, w, h);
+          }
+          // (the glow under it, in the bridges' colour, faint)
+          let xs = 0;
+          let ys = 0;
+          for (const p of centres) {
+            xs += p.x;
+            ys = Math.max(ys, p.y);
+          }
+          const cx = xs / centres.length;
+          const rg = gl.createRadialGradient(cx, ys + 30, 0, cx, ys + 30, 70 + cells.length * 5);
+          rg.addColorStop(0, `rgba(${realm.bridge.glow}, 0.22)`);
+          rg.addColorStop(1, `rgba(${realm.bridge.glow}, 0)`);
+          gl.globalCompositeOperation = 'lighter';
+          gl.fillStyle = rg;
+          gl.save();
+          gl.translate(cx, ys + 30);
+          gl.scale(1, 0.6);
+          gl.translate(-cx, -(ys + 30));
+          gl.fillRect(cx - 200, ys - 160, 400, 400);
+          gl.restore();
+          gl.globalCompositeOperation = 'source-over';
+        },
+      });
+      // (a prop on the front cell of an ordinary island: a tree, a bush or a rock of the realm)
+      if (s.id !== START_ID && s.kind !== 'boss' && hash(s.id * 5 + 3, g.W) < 0.8) {
+        const role = (['tree', 'bush', 'rock'] as const)[Math.floor(hash(s.id, 11) * 3)];
+        const set = art[role];
+        const front = centres[0];
+        const dx = (hash(s.id, 5) < 0.5 ? -1 : 1) * 34;
+        list.push({ y: front.y + foot + 14, x: front.x + dx, paint: () => blit(set[s.id % set.length], front.x + dx, front.y + foot + 14, hash(s.id, 9) < 0.5) });
+      }
+    }
+    // (bits of rock drifting in the void, here and there, clear of the islands and the bridges)
+    const near = (cell: Cell, d: number) => {
+      for (let di = -d; di <= d; di++) for (let dj = -d; dj <= d; dj++) if (onIsland.has(`${cell.i + di},${cell.j + dj}`) || bridge.has(`${cell.i + di},${cell.j + dj}`)) return true;
+      return false;
+    };
     for (const d of model.decor) {
-      const set = art[d.role];
+      if (d.role !== 'rock' || near(d, 2) || hash(d.i * 3, d.j * 5) > 0.45) continue;
+      const set = art.rock;
       const name = set[d.v % set.length];
       const p = this.xy(d);
-      list.push({ y: p.y + foot, x: p.x, paint: () => blit(name, p.x, p.y + foot, d.flip) });
+      list.push({ y: p.y + foot, x: p.x, paint: () => blit(name, p.x, p.y + foot, d.flip, 0.85) });
     }
-    const t = this.run.tower!;
+    // (the landmarks, by their foot lines)
     for (const s of model.spots) {
       const p = this.xy(s);
       const y = p.y + foot;
@@ -382,26 +550,28 @@ export class CalMap {
       list.push({ y: y + lift, x, paint: () => blit(m.name, x, y + lift) });
       if (m.flag) list.push({ y: y - 6, x: x - FLAG_DX, paint: () => blit(m.flag!, x - FLAG_DX, y - 6) });
     }
-    void t;
     list.sort((p, q) => p.y - q.y || p.x - q.x);
     for (const e of list) e.paint();
+    this.compose();
   }
 
-  /** The fog: the holes it has, and a soft lift of those just opened. */
+  /** The mist: a mask that is clear over the islands and bridges the party has seen (a patch round each, soft at its edge), and a soft lift of those just opened. */
   private setFog(model: Land, fog: { spots: Set<number>; roads: Set<string> }): void {
     const t = this.run.tower!;
-    const g = this.geo!;
     const key = `${this.run.seed}:${t.act}`;
     const items: Lift[] = [];
     const seen = seenFog.get(key);
     const now = new Set<string>();
     const fresh: Lift[] = [];
+    const bridgeCells = new Set<string>();
+    for (const s of model.spots) for (const c of this.islandOf(s)) bridgeCells.add(`${c.i},${c.j}`);
     for (const r of model.roads) {
       const rk = `${r.from}>${r.to}`;
       if (!fog.roads.has(rk)) continue;
       const isNew = !!seen && !seen.has(`r:${rk}`);
       now.add(`r:${rk}`);
       r.cells.forEach((cell, i) => {
+        if (bridgeCells.has(`${cell.i},${cell.j}`)) return;
         const p = this.xy(cell);
         const it = { key: `${rk}:${i}`, x: p.x, y: p.y, r: HOLE_ROAD, delay: isNew ? i * LIFT_STEP : 0 };
         items.push(it);
@@ -415,13 +585,12 @@ export class CalMap {
       now.add(sk);
       const p = this.xy(s);
       const road = model.roads.find((r) => r.to === s.id && fog.roads.has(`${r.from}>${r.to}`));
-      const it = { key: sk, x: this.ax(s), y: p.y, r: HOLE_SPOT, delay: isNew ? (road ? road.cells.length * LIFT_STEP : 0) : 0 };
+      const it = { key: sk, x: this.ax(s), y: p.y, r: HOLE_SPOT.rx, up: Math.max(HOLE_SPOT.up, this.bodyOf(s).h + 20), down: HOLE_SPOT.down, delay: isNew ? (road ? road.cells.length * LIFT_STEP : 0) : 0 };
       items.push(it);
       if (isNew) fresh.push(it);
     }
     seenFog.set(key, now);
     this.fogItems = items;
-    void g;
     if (fresh.length && !reduced()) this.lifts = { items: fresh, t0: performance.now() };
     else this.lifts = null;
     this.drawFog(performance.now());
@@ -430,35 +599,60 @@ export class CalMap {
   private drawFog(now: number): void {
     const g = this.geo;
     if (!g) return;
-    const c = this.fog.getContext('2d')!;
-    const colour = FOG_COLOURS[(Number(this.land.dataset.land) || 1) - 1];
-    c.globalCompositeOperation = 'source-over';
-    c.clearRect(0, 0, this.fog.width, this.fog.height);
-    c.fillStyle = `rgba(${colour}, 0.995)`;
-    c.fillRect(0, 0, this.fog.width, this.fog.height);
-    c.globalCompositeOperation = 'destination-out';
+    const c = this.mask.getContext('2d')!;
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.clearRect(0, 0, this.mask.width, this.mask.height);
     const lift = this.lifts;
     const own = lift ? new Map(lift.items.map((it) => [it.key, it])) : null;
     for (const it of this.fogItems) {
       let p = 1;
       if (own?.has(it.key)) p = Math.max(0, Math.min(1, (now - lift!.t0 - it.delay) / LIFT_MS));
       if (p <= 0) continue;
-      // (an ease out: the fog gives way quickly, then settles)
+      // (a soft fade in: ease out)
       const e = 1 - (1 - p) * (1 - p);
+      const isIsland = it.r === HOLE_SPOT.rx;
+      const rx = (it.r / FOG_PX) * (isIsland ? 1 : 1);
+      const up = (isIsland ? it.up ?? HOLE_SPOT.up : it.r) / FOG_PX;
+      const down = (isIsland ? it.down ?? HOLE_SPOT.down : it.r) / FOG_PX;
       const x = it.x / FOG_PX;
       const y = it.y / FOG_PX;
-      const r = (it.r * e) / FOG_PX;
-      const rg = c.createRadialGradient(x, y, 0, x, y, r);
-      rg.addColorStop(0, 'rgba(0, 0, 0, 1)');
-      rg.addColorStop(0.55, 'rgba(0, 0, 0, 0.92)');
-      rg.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      // (an island's patch is taller above (the landmark) and below (the rock) than it is wide: a unit disc stretched)
+      const ry = (up + down) / 2;
+      const cy = y + (down - up) / 2;
+      c.save();
+      c.translate(x, cy);
+      c.scale(1, ry / rx);
+      const r = rx * e;
+      const rg = c.createRadialGradient(0, 0, 0, 0, 0, r);
+      rg.addColorStop(0, 'rgba(255, 255, 255, 1)');
+      rg.addColorStop(0.62, 'rgba(255, 255, 255, 1)');
+      rg.addColorStop(1, 'rgba(255, 255, 255, 0)');
       c.fillStyle = rg;
       c.beginPath();
-      c.arc(x, y, r, 0, Math.PI * 2);
+      c.arc(0, 0, r, 0, Math.PI * 2);
       c.fill();
+      c.restore();
     }
-    c.globalCompositeOperation = 'source-over';
+    this.compose();
     if (lift && lift.items.every((it) => now - lift.t0 - it.delay >= LIFT_MS)) this.lifts = null;
+  }
+
+  /** What is seen: the baked islands, bridges and their glow, kept only where the mask is clear. */
+  private compose(): void {
+    const g = this.geo;
+    if (!g) return;
+    for (const [view, baked] of [[this.ground, this.bakedGround], [this.glow, this.bakedGlow]] as const) {
+      const c = view.getContext('2d')!;
+      c.globalCompositeOperation = 'source-over';
+      c.clearRect(0, 0, g.W, g.H);
+      c.imageSmoothingEnabled = false;
+      c.drawImage(baked, 0, 0);
+      c.globalCompositeOperation = 'destination-in';
+      c.imageSmoothingEnabled = true;
+      c.drawImage(this.mask, 0, 0, g.W, g.H);
+      c.globalCompositeOperation = 'source-over';
+      c.imageSmoothingEnabled = false;
+    }
   }
 
   /** The buttons and rings over the lit spots (the land under the fog has none). */

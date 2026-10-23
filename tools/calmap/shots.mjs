@@ -28,6 +28,10 @@ const scenes = {
     await page.waitForTimeout(120);
   } },
   'later': later(4, 14),
+  'm2': later(2, 12),
+  'm3': later(3, 13),
+  'm5': later(5, 15),
+  'm6': later(6, 16),
   'boss': () => { const r = S.fresh(15); return S.standing(r, 6, S.beforeBoss(r, 6)); },
 };
 // the whole land of each map with the fog off (to look at the art): land-1 .. land-6
@@ -50,9 +54,9 @@ for (const [w, h] of sizes) {
     if (spec?.after) await spec.after(page);
     if (name.startsWith('land-')) {
       // (the baked ground and its landmarks, straight from the canvas: the whole land, no fog)
-      const data = await page.evaluate(() => document.querySelector('.cmGround').toDataURL('image/png'));
+      const data = await page.evaluate(() => window.__game.towerView.cal.bakedGround.toDataURL('image/png'));
       writeFileSync(`out/shots/${name}${suffix}.png`, Buffer.from(data.split(',')[1], 'base64'));
-    } else await page.screenshot({ path: `docs/samples/calamity-map-${name}${suffix}.png` });
+    } else await page.screenshot({ path: `docs/samples/calamity-void-${name}${suffix}.png` });
     await ctx.close();
   }
 }

@@ -14,14 +14,15 @@ ISO = '/home/user/hpatter9/little-town/src/renderer/art/iso/kits/'
 RIFT = '/home/user/chronos-assets/pvfx-foundry-thirteen-spritesheets/effects/rift-portal/grid/'
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
 
-# The six lands: ground tiles (the first sets the lattice), the road tile, then props by role.
+# The six realms of the void (the owner: "more like an interdimensional space"): each spot an island of one realm's ground, with props by role. `hue` turns the
+# realm's pictures (degrees) where the kits have no piece of that colour. The first ground tile sets the lattice.
 LANDS = [
-    dict(id='fields', ground=['knights/grass_tile'], road='settlers/dirt_tile', tree=['knights/oak_tree', 'knights/pine_tree'], bush=['knights/bush', 'knights/hay_bales'], rock=['knights/rocks'], lair='orcs/skull_gate'),
-    dict(id='forest', ground=['druids/moss_grass_tile', 'druids/forest_floor_tile'], road='druids/stone_path_tile', tree=['druids/great_oak', 'druids/birch_tree'], bush=['druids/berry_bush', 'druids/mushroom_lantern'], rock=['druids/mossy_rocks'], lair='druids/tree_gate'),
-    dict(id='desert', ground=['nomads/dry_grass_tile'], road='nomads/dust_tile', tree=['nomads/acacia_tree'], bush=['nomads/dead_shrub', 'nomads/tumbleweed'], rock=['nomads/red_rocks', 'nomads/red_rocks_small'], lair='bloodcourt/crypt'),
-    dict(id='snow', ground=['moonpack/snow_tile'], road='moonpack/dirt_tile', tree=['moonpack/snowy_pine', 'moonpack/small_pine'], bush=['moonpack/snowy_bush', 'moonpack/bare_tree'], rock=['moonpack/boulders', 'moonpack/rocks_a', 'moonpack/rocks_b'], lair='moonpack/cave_den'),
-    dict(id='ash', ground=['orcs/scorched_tile', 'orcs/bone_tile'], road='orcs/mud_tile', tree=['orcs/burnt_tree', 'orcs/gnarled_tree'], bush=['orcs/thorn_bush'], rock=['orcs/dark_rocks', 'orcs/dark_rocks_b'], lair='bloodcourt/gatehouse'),
-    dict(id='ruins', ground=['liches/cracked_earth_tile', 'liches/dead_grass_tile'], road='liches/cobble_tile', tree=['liches/dead_oak', 'liches/dead_pine'], bush=['liches/thorn_bush', 'bloodcourt/gravestones'], rock=['liches/rocks', 'liches/skull_pile'], lair='liches/gatehouse'),
+    dict(id='meadow', ground=['knights/grass_tile'], tree=['knights/oak_tree', 'knights/pine_tree'], bush=['knights/bush', 'knights/hay_bales'], rock=['knights/rocks'], lair='orcs/skull_gate'),
+    dict(id='crystal', ground=['fae/mushroom_patch_tile', 'fae/meadow_tile'], tree=['fae/crystal_rocks', 'dwarves/crystals'], bush=['fae/glow_bush'], rock=['dwarves/crystals', 'fae/crystal_rocks'], lair='fae/flower_arch_gate'),
+    dict(id='infernal', ground=['orcs/scorched_tile', 'orcs/bone_tile'], tree=['orcs/burnt_tree', 'orcs/gnarled_tree'], bush=['orcs/thorn_bush', 'bloodcourt/brazier'], rock=['orcs/dark_rocks', 'orcs/dark_rocks_b'], lair='bloodcourt/crypt'),
+    dict(id='frozen', ground=['moonpack/snow_tile'], tree=['moonpack/snowy_pine', 'moonpack/small_pine'], bush=['moonpack/snowy_bush'], rock=['moonpack/boulders', 'moonpack/rocks_a', 'moonpack/rocks_b'], lair='moonpack/cave_den'),
+    dict(id='clockwork', ground=['machines/iron_plate_tile', 'machines/grate_tile'], tree=['machines/iron_tree', 'machines/coil_stack'], bush=['machines/oil_drums', 'machines/arc_lamp'], rock=['machines/oil_drums'], lair='machines/generator'),
+    dict(id='rift', ground=['liches/cracked_earth_tile'], tree=['liches/dead_oak', 'dwarves/crystals'], bush=['liches/witch_fire', 'liches/skull_pile'], rock=['dwarves/crystals', 'liches/rocks'], lair='liches/gatehouse', hue=250),
 ]
 # The landmarks every land shares: one for each kind of spot.
 MARKS = {
@@ -30,6 +31,17 @@ MARKS = {
     'side_treasure': 'dwarves/ore_cart', 'campfire': 'knights/campfire', 'mystery': 'fae/shrine', 'start': 'druids/stone_circle',
 }
 SPENT = ['shop', 'recruit', 'recruit_b', 'recruit_c', 'recruit_flag', 'treasure', 'side_treasure', 'mystery']
+
+
+def hue_shift(im, deg, sat=1.0):
+    """Turn every colour of a picture round the wheel by `deg` degrees (the alpha is kept)."""
+    import colorsys
+    a = np.array(im.convert('RGBA'))
+    hsv = np.array(Image.fromarray(a[..., :3]).convert('HSV')).astype(float)
+    hsv[..., 0] = (hsv[..., 0] + deg / 360 * 255) % 255
+    hsv[..., 1] = np.clip(hsv[..., 1] * sat, 0, 255)
+    rgb = np.array(Image.fromarray(hsv.astype(np.uint8), 'HSV').convert('RGB'))
+    return Image.fromarray(np.dstack([rgb, a[..., 3]]))
 
 
 def half(im):
@@ -82,17 +94,17 @@ def burnt_out(im):
 sprites = {}   # name -> image
 meta = {'lands': [], 'marks': {}}
 for n, land in enumerate(LANDS):
-    entry = {'id': land['id'], 'ground': [], 'road': None, 'tree': [], 'bush': [], 'rock': [], 'lair': None}
+    entry = {'id': land['id'], 'ground': [], 'tree': [], 'bush': [], 'rock': [], 'lair': None}
+    deg = land.get('hue', 0)
+    tint = (lambda im: hue_shift(im, deg)) if deg else (lambda im: im)
     for k, p in enumerate(land['ground']):
         name = f'g{n}_{k}'
-        sprites[name] = load(p, trim=False)
+        sprites[name] = tint(load(p, trim=False))
         entry['ground'].append(name)
-    sprites[f'r{n}'] = load(land['road'], trim=False)
-    entry['road'] = f'r{n}'
     for role in ('tree', 'bush', 'rock'):
         for k, p in enumerate(land[role]):
             name = f'{role[0]}{n}_{k}'
-            sprites[name] = load(p)
+            sprites[name] = tint(load(p)) if role == 'rock' else load(p)
             entry[role].append(name)
     sprites[f'l{n}'] = load(land['lair'])
     entry['lair'] = f'l{n}'
@@ -157,6 +169,32 @@ for i, f in enumerate(frames):
     strip.alpha_composite(f, (i * 64, 0))
 strip.save(os.path.join(out, 'portal.png'), optimize=True)
 
+# ---- the void behind the islands (the moon, cloudscape and star pictures of the packs, in src/art/calmap/) ----
+MOON = '/home/user/chronos-assets/craftpix-net-942044-free-moon-pixel-game-backgrounds/'
+CLOUD = '/home/user/chronos-assets/assets/craftpix-net-227064-free-seamless-pixel-art-cloudscape-for-game-projects/'
+out_dir = os.path.join(ROOT, 'src', 'art', 'calmap')
+# the stars: the bright pixels of the first moon set's sky, on their own (the sky's gradient is drawn by the page, a colour for each realm)
+sky = np.array(Image.open(MOON + '1 background/1.png').convert('RGBA')).astype(float)
+lum = sky[..., 0] * 0.3 + sky[..., 1] * 0.59 + sky[..., 2] * 0.11
+mask = lum > 70
+stars = np.zeros(sky.shape, np.uint8)
+stars[mask] = np.clip(sky[mask] * 1.15, 0, 255).astype(np.uint8)
+stars[..., 3] = np.where(mask, 255, 0)
+Image.fromarray(stars).save(os.path.join(out_dir, 'stars.png'), optimize=True)
+# the moons, one to a colour (white, tan, red, pale blue), cropped
+for name, path in {'white': '1 background/2.png', 'tan': '2 background/2.png', 'red': '3 background/2.png', 'blue': '4 background/2.png'}.items():
+    im = Image.open(MOON + path).convert('RGBA')
+    im.crop(im.getchannel('A').getbbox()).save(os.path.join(out_dir, f'planet_{name}.png'), optimize=True)
+# the nebulae: the cloudscape's two blue cloud layers, turned to each realm's colour (hue degrees from blue), horizontally seamless as drawn
+c3 = Image.open(CLOUD + 'background 1/3.png').convert('RGBA')
+c4 = Image.open(CLOUD + 'background 1/4.png').convert('RGBA')
+cloud = Image.new('RGBA', c3.size, (0, 0, 0, 0))
+cloud.alpha_composite(c3)
+cloud.alpha_composite(c4)
+for n, deg in enumerate([40, 100, 150, 0, 270, 200]):
+    quant = hue_shift(cloud, deg)
+    quant.save(os.path.join(out_dir, f'nebula_{n}.png'), optimize=True)
+
 ts = ['// The Calamity map\'s art: where each picture sits in src/art/calmap/atlas.png ([x, y, w, h]), and each land\'s pieces.',
       '// GENERATED by tools/calmap/prep.py: do not edit by hand.', '',
       f'export const ATLAS_SIZE: [number, number] = [{W}, {H}];',
@@ -166,7 +204,7 @@ for k in sorted(rects):
 ts.append('};')
 ts.append('')
 ts.append('/** A land\'s pieces by role (names in `RECTS`), and its lattice: a ground tile `tw` across, its top face `th` down. */')
-ts.append('export interface LandArt { id: string; tw: number; th: number; ground: string[]; road: string; tree: string[]; bush: string[]; rock: string[]; lair: string }')
+ts.append('export interface LandArt { id: string; tw: number; th: number; ground: string[]; tree: string[]; bush: string[]; rock: string[]; lair: string }')
 ts.append('export const LAND_ART: LandArt[] = ' + json.dumps(meta['lands'], indent=2) + ';')
 ts.append('')
 ts.append('export const PORTAL_FRAMES = 16;')
@@ -174,6 +212,6 @@ with open(os.path.join(ROOT, 'src', 'render', 'calArt.ts'), 'w') as f:
     f.write('\n'.join(ts) + '\n')
 print('atlas', W, H, 'sprites', len(sprites), 'bytes', os.path.getsize(os.path.join(out, 'atlas.png')), 'portal', os.path.getsize(os.path.join(out, 'portal.png')))
 for e in meta['lands']:
-    print(e['id'], e['tw'], e['th'], {k: sprites[k].size for k in e['ground'] + [e['road'], e['lair']]})
+    print(e['id'], e['tw'], e['th'], {k: sprites[k].size for k in e['ground'] + [e['lair']]})
 for k in MARKS:
     print(k, sprites[k].size)
