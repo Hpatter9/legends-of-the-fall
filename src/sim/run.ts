@@ -7,8 +7,8 @@ import { startBattle, type Battle, type Boost, type Stage } from './battle';
 import { AREAS, type Area } from './board';
 import { buildChain, type Section } from './chain';
 import { BOSS_BANDS, FIELD_BANDS } from './foes';
-import { armyById, armyIndex, waveBoost, type Army } from './armies';
-import { bonusGold, heroBoost, manaRate, moveRate, newCastle, type Castle } from './castle';
+import { armyById, armyIndex, waveBoost, waveFoes, type Army } from './armies';
+import { bonusGold, foeAnswer, heroBoost, manaRate, moveRate, newCastle, type Castle } from './castle';
 import { rankMult } from './meta';
 import { lastingBoost } from './levels';
 import { starGold } from './stars';
@@ -362,13 +362,15 @@ export function startStage(run: Run): Battle {
   const base = node ? node.stage : army ? waveBoost(army, run.stage, tierOfRun(run)) : stageBoost(run.stage);
   const castle = heroBoost(run.castle);
   const foes = run.buff?.foes ?? 1;
+  // (the spire and the Calamity: the foes answer the castle's hp and attack, the one lasting power that reaches those runs)
+  const ans = run.local ? foeAnswer(run.castle) : undefined;
   const { atk, hp, mana, first, revive, gold: _gold, set, ...team } = rl;
   const section = chainOf(run)?.[run.stage - 1];
-  return startBattle(boardSeedOf(run, run.stage), node ? node.band : army ? army.waves[run.stage - 1].foes : bandFor(run.stage), {
+  return startBattle(boardSeedOf(run, run.stage), node ? node.band : army ? waveFoes(army, run.stage, tierOfRun(run)) : bandFor(run.stage), {
     ...base,
     area: run.area ?? base.area ?? areaFor(run.stage),
     board: section?.board,
-    foes: { hp: base.foes!.hp! * foes, atk: base.foes!.atk! * foes, speed: base.foes!.speed },
+    foes: { hp: base.foes!.hp! * foes * (ans?.hp ?? 1), atk: base.foes!.atk! * foes * (ans?.atk ?? 1), speed: base.foes!.speed },
     heroes: { hp: castle.hp! * (hp ?? 1) * (run.buff?.hp ?? 1), atk: castle.atk! * (atk ?? 1) * (run.buff?.atk ?? 1) },
     mana: manaRate(run.castle) * (mana ?? 1),
     move: moveRate(run.castle),

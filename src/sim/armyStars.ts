@@ -33,7 +33,7 @@ export interface StarRule {
 export function armyRules(a: Army, tier: number, run?: Run): StarRule[] {
   const t = run?.tally;
   const won = !!run?.cleared;
-  if (tier === TIERS.length - 1) return [{ text: 'Flawless: no hero lost in any boss fight', earned: won && !!t && (t.bossFell ?? t.bossLost) === 0 }];
+  if (TIERS[tier].stars === 1) return [{ text: 'Flawless: no hero lost in any boss fight', earned: won && !!t && (t.bossFell ?? t.bossLost) === 0 }];
   return [
     { text: `Clear ${a.name}`, earned: won },
     { text: 'No hero lost in the last boss fight', earned: won && !!t && t.bossLost === 0 },
@@ -75,8 +75,8 @@ export function settleArmyRun(m: Meta, run: Run): StarResult | null {
   return { tier, rules, fresh, gained: fresh.length, total: starsOf(rec), chests: grantChests(m, a, rec, tier), firstClear };
 }
 
-/** The star milestone whose chest size an army's first clear of each tier pays: Normal bronze, Hard and Elite silver, Legendary gold. */
-export const FIRST_CLEAR_CHEST: readonly number[] = [3, 5, 5, 10];
+/** The star milestone whose chest size an army's first clear of each tier pays: Normal bronze, Hard and Elite silver, Legendary and Mythic gold. */
+export const FIRST_CLEAR_CHEST: readonly number[] = [3, 5, 5, 10, 10];
 
 /** The seed of a first-clear chest: the save's seed, the army and the tier (a side stream of its own, so every other chest rolls as before). */
 export const firstClearSeed = (seed: number, a: Army, tier: number): number => mixSeed(seed, FIRST_SALT, armyIndex(a.id) + 1, tier);

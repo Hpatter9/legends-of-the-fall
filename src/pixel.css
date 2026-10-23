@@ -326,7 +326,7 @@ body .sbSlot { min-height: 44px; }
 .asStat { font-size: 13px; color: var(--ink); }
 .asHint { margin: 0; font-size: 11px; color: var(--dim); }
 .asTiers { display: flex; gap: 4px; }
-.asTier { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 0; min-height: 40px; padding: 2px 0; font-size: 13px; color: var(--ink); background: var(--s6); border: 2px solid var(--s1); border-radius: 0; box-shadow: inset 0 -3px 0 rgb(var(--black-rgb) / 0.35); }
+.asTier { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 0; min-height: 40px; padding: 2px 0; font-size: 11px; letter-spacing: -0.2px; color: var(--ink); background: var(--s6); border: 2px solid var(--s1); border-radius: 0; box-shadow: inset 0 -3px 0 rgb(var(--black-rgb) / 0.35); }
 .asTier small { font-size: 10px; font-weight: normal; color: var(--dim); }
 .asTier.on { background: linear-gradient(var(--e4), var(--e1)); border-color: var(--gold-hi); box-shadow: inset 0 -3px 0 rgb(var(--black-rgb) / 0.3), 0 0 0 2px var(--s0); }
 .asTier.shut { filter: grayscale(1) brightness(0.55); }

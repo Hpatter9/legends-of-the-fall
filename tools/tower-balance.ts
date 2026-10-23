@@ -1,7 +1,7 @@
 // The endless tower's balance: a greedy player climbs the map (`playTower`) with parties at several levels and the report says how
 // far each gets. `npm run balance -- --tower` runs it through tools/balance.mjs's bundle; `--attempts n` sets the climbs per row.
 
-import { newCastle } from '../src/sim/castle';
+import { BUILDINGS, CASTLE_ANSWER, maxLevel, newCastle, type BuildingId } from '../src/sim/castle';
 import { ACT_ROWS } from '../src/sim/tower';
 import { CAL_MAPS, CAL_SCALE } from '../src/sim/calamity';
 import { startedMeta } from '../src/sim/meta';
@@ -16,15 +16,24 @@ const arg = (name: string, fallback: number): number => {
   return i >= 0 && Number(process.argv[i + 1]) > 0 ? Number(process.argv[i + 1]) : fallback;
 };
 
+/** The castle the tower and Calamity tables play with: none, or with `--castle maxed` every building at its top (a player at the level cap). */
+// (`--answer 0.6` tries another share of the castle's hp and attack that the foes answer with; a tuning run, nothing is written)
+if (process.argv.includes('--answer')) CASTLE_ANSWER.share = Number(process.argv[process.argv.indexOf('--answer') + 1]);
+const castleFor = (): ReturnType<typeof newCastle> => {
+  const c = newCastle();
+  if (process.argv.includes('--castle') && process.argv[process.argv.indexOf('--castle') + 1] === 'maxed') for (const id of Object.keys(BUILDINGS) as BuildingId[]) c[id] = maxLevel(id);
+  return c;
+};
+
 export function towerTable(): void {
   const attempts = arg('--attempts', 30);
-  console.log(`\nTower climb: ${attempts} greedy climbs (the starting five, all back at level 1 with nothing worn, no castle); the floors cleared, and the share of climbs that felled each act's boss (floor ${ACT_ROWS}, ${ACT_ROWS * 2}, ...)`);
+  console.log(`\nTower climb: ${attempts} greedy climbs (the starting five, all back at level 1 with nothing worn, ${process.argv.includes('--castle') ? 'a castle at its top' : 'no castle'}); the floors cleared, and the share of climbs that felled each act's boss (floor ${ACT_ROWS}, ${ACT_ROWS * 2}, ...)`);
   console.log('median  mean  min  max   boss1  boss2  boss3');
   const floors: number[] = [];
   const past = [0, 0, 0];
   let lv = 0;
   for (let a = 0; a < attempts; a++) {
-    const r = playTower(startedMeta(a + 1), mixSeed(a + 1, 0x70c1), HEROES, newCastle(), 80);
+    const r = playTower(startedMeta(a + 1), mixSeed(a + 1, 0x70c1), HEROES, castleFor(), 80);
     floors.push(r.floors);
     lv += r.level;
     for (let k = 0; k < 3; k++) if (r.bosses > k) past[k]++;
@@ -65,7 +74,7 @@ export function calamityTable(): void {
   const ends: number[] = [];
   const fullEnds: number[] = [];
   for (let a = 0; a < attempts; a++) {
-    const r = playCalamity(startedMeta(a + 1), mixSeed(a + 1, 0xca1), HEROES[a % HEROES.length], newCastle(), asc);
+    const r = playCalamity(startedMeta(a + 1), mixSeed(a + 1, 0xca1), HEROES[a % HEROES.length], castleFor(), asc);
     maps.push(r.maps);
     floors.push(r.floors);
     heroes += r.heroes;
