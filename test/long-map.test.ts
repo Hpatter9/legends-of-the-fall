@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { boardOk, canStep, CLIMB_MAX, D, DEPLOY_ROWS, DIRS, standable, tileAt, W } from '../src/sim/board';
 import { boardTileAt, buildChain, contactPairs, footprint, frameOf, layRoad, MIN_CONTACT, seam, transferFormation, walkAcross, worldOf, type Section } from '../src/sim/chain';
-import { footDims, turnDir, turnTile, unturnTile, type Rot } from '../src/sim/turn';
+import { footDims, liesBehind, turnDir, turnTile, unturnTile, type Rot } from '../src/sim/turn';
 import { armyRun, chainOf, startStage } from '../src/sim/run';
 import { ARMIES } from '../src/sim/armies';
 import { mixSeed } from '../src/sim/rng';
@@ -287,4 +287,27 @@ test('a walk step lasts a hero\'s own pace, within bounds', () => {
   assert.equal(stepMs(100), 230);
   assert.equal(stepMs(10000), 420);
   assert.ok(stepMs(700) > 230 && stepMs(700) < 420);
+});
+
+test('a finished section further from the screen than the host is drawn behind it, a nearer one in front', () => {
+  // (beside the host's footprint on each side: -U and -V are further off, +U and +V nearer)
+  for (const r of ROTS) {
+    const [w, d] = footDims(r);
+    const [hw, hd] = footDims(0);
+    assert.equal(liesBehind(r, -w, 0, 0), true);
+    assert.equal(liesBehind(r, 0, -d, 0), true);
+    assert.equal(liesBehind(r, hw, 0, 0), false);
+    assert.equal(liesBehind(r, 0, hd, 0), false);
+  }
+  // (on real roads, of any two sections exactly one lies behind the other, as each sees it)
+  for (let seed = 1; seed <= 100; seed++) {
+    const sections = road(seed);
+    for (const host of sections)
+      for (const s of sections) {
+        if (s === host) continue;
+        const a = liesBehind(s.rot, s.origin.u - host.origin.u, s.origin.v - host.origin.v, host.rot);
+        const b = liesBehind(host.rot, host.origin.u - s.origin.u, host.origin.v - s.origin.v, s.rot);
+        assert.notEqual(a, b, `seed ${seed}`);
+      }
+  }
 });

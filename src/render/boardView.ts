@@ -7,7 +7,7 @@ import { Container, Graphics, Sprite, Texture, type Renderer } from 'pixi.js';
 import { tileAt, type Area, type Board, type Tile } from '../sim/board';
 import { loadImage } from './loadImage';
 import { depthIn, FOOT, HH, project, rawAt, TH, TW, type Frame } from './iso';
-import type { Rot } from '../sim/turn';
+import { footDims, liesBehind, type Rot } from '../sim/turn';
 import { AREA_URLS, BUSH_URLS, GROUND_URLS } from './areaArt';
 
 /** From this height up, a tile's top is stony. */
@@ -33,8 +33,10 @@ const LIP: Record<Area, [string, string]> = {
 
 /** The lip of a boss arena's tiles. */
 const BOSS_LIP = '#c9a24a';
-/** Where the baked sections sit among the host's tiles and the fighters: in front of all of them (the old road lies nearer the screen), under the effects. */
+/** Where the baked sections sit among the host's tiles and the fighters: those nearer the screen than the host in front of
+ *  all of them, under the effects; those further off (the road can turn back up the screen) behind all of them. */
 const SCENERY_Z = 5000;
+const SCENERY_BACK_Z = -100000;
 
 /** The rim drawn round each kind of ground. */
 const RIM = { water: 'rgba(120,190,255,0.9)', ice: 'rgba(210,245,255,0.95)', lava: 'rgba(255,150,40,0.95)', tall: 'rgba(30,70,20,0.6)' };
@@ -109,8 +111,10 @@ export class BoardView {
   private built: Built | null = null;
   /** Layers that outlive a rebuild (the effects': `build` must not destroy them, or nothing in a fight would show). */
   readonly keep: Container[] = [];
-  /** The finished sections behind the fight, each one sprite, drawn in front of the fight's own tiles (they lie nearer the screen). */
+  /** The finished sections, each one sprite: those nearer the screen than the host drawn in front of the fight's own tiles,
+   *  those further off (`sceneryBack`) behind them, so a section the road turned back past never covers the fighters. */
   readonly scenery = new Container();
+  readonly sceneryBack = new Container();
   private sceneryOf = new Map<Board, Sprite>();
   private baked = new Map<Board, Baked>();
   private toBake: Scene[] = [];
@@ -124,7 +128,9 @@ export class BoardView {
   constructor() {
     this.root.sortableChildren = true;
     this.scenery.zIndex = SCENERY_Z;
-    this.keep.push(this.scenery);
+    this.sceneryBack.zIndex = SCENERY_BACK_Z;
+    this.scenery.sortableChildren = this.sceneryBack.sortableChildren = true;
+    this.keep.push(this.sceneryBack, this.scenery);
   }
 
   /** Build the board's columns (again, for a new board). `keepOld` leaves everything on the stage (the section handed to `demote`, the fighters walking off it) and only adds the new columns. */
@@ -251,8 +257,12 @@ export class BoardView {
     if (!sp) {
       sp = new Sprite(b.tex);
       this.sceneryOf.set(s.board, sp);
-      this.scenery.addChild(sp);
     }
+    // (a section further off than the host goes behind it, any other in front; among themselves, by their middles' depth)
+    const [w, d] = footDims(s.rot);
+    const layer = liesBehind(s.rot, s.ou, s.ov, this.rot) ? this.sceneryBack : this.scenery;
+    if (sp.parent !== layer) layer.addChild(sp);
+    sp.zIndex = (s.ou + s.ov) * 2 + w + d;
     const [ox, oy] = rawAt(s.ou, s.ov, 0);
     sp.position.set(ox + b.x, oy + b.y);
   }
