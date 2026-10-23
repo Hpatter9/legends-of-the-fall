@@ -44,7 +44,7 @@
 .cmNeb { -webkit-mask-image: linear-gradient(transparent, #000 25%, #000 75%, transparent); mask-image: linear-gradient(transparent, #000 25%, #000 75%, transparent); left: 0; width: 200%; top: 0; background-repeat: repeat-x; opacity: 0.3; will-change: transform; animation: cmDrift 360s linear infinite; mix-blend-mode: screen; }
 .cmPlanet { top: 0; opacity: 0.85; will-change: transform; }
 .cmGlow { top: 0; opacity: 0.65; animation: cmBreathe 6s ease-in-out infinite alternate; mix-blend-mode: screen; }
-.cmSwirl { z-index: 1; opacity: 0.5; mix-blend-mode: screen; animation-duration: 3.6s; }
+.cmSwirl { opacity: 0.55; mix-blend-mode: screen; animation-duration: 4.8s; }
 @keyframes cmDrift { to { background-position-x: calc(var(--drift, 576px) * -1); } }
 @keyframes cmBreathe { from { opacity: 0.55; } to { opacity: 0.95; } }
 @media (prefers-reduced-motion: reduce) { .cmNeb, .cmGlow { animation: none; } }

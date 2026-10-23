@@ -161,7 +161,7 @@ export class CalMap {
     this.portal.style.setProperty('--calPortal', `url(${portalUrl})`);
     this.swirl.style.setProperty('--calPortal', `url(${portalUrl})`);
     this.swirl.hidden = true;
-    this.land.append(this.sky, this.nebula, this.planet, this.ground, this.glow, this.swirl, this.marks, this.portal, this.walker);
+    this.land.append(this.sky, this.nebula, this.planet, this.swirl, this.ground, this.glow, this.marks, this.portal, this.walker);
     this.root.append(this.name, this.land);
     this.root.addEventListener(
       'scroll',
@@ -387,8 +387,8 @@ export class CalMap {
     this.swirl.hidden = !rift;
     if (rift && boss) {
       const u = g.unit;
-      const size = 64 * 5;
-      this.swirl.style.cssText = `left:${(this.ax(boss) - size / 2) * u}px;top:${(this.xy(boss).y - size / 2 - 30) * u}px;width:${size * u}px;height:${size * u}px;--pu:${u * 5}`;
+      const size = 64 * 4;
+      this.swirl.style.cssText = `left:${(this.ax(boss) - size / 2) * u}px;top:${(this.xy(boss).y - size / 2 - 30) * u}px;width:${size * u}px;height:${size * u}px;--pu:${u * 4}`;
       this.swirl.style.setProperty('--calPortal', `url(${portalUrl})`);
     }
     if (this.atlas) this.bake(this.atlas, model, done);

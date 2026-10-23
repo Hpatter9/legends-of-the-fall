@@ -27,11 +27,12 @@ const scenes = {
     await page.evaluate(() => document.querySelector('.rtGo').click());
     await page.waitForTimeout(120);
   } },
-  'later': later(4, 14),
-  'm2': later(2, 12),
-  'm3': later(3, 13),
-  'm5': later(5, 15),
-  'm6': later(6, 16),
+  'map1': later(1, 11),
+  'map2': later(2, 12),
+  'map3': later(3, 13),
+  'map4': later(4, 14),
+  'map5': later(5, 15),
+  'map6': later(6, 16),
   'boss': () => { const r = S.fresh(15); return S.standing(r, 6, S.beforeBoss(r, 6)); },
 };
 // the whole land of each map with the fog off (to look at the art): land-1 .. land-6
