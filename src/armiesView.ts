@@ -1,7 +1,7 @@
 // The Armies screen (opened by the Battle tab's big button) and the "A new army marches" moment. The screen is a swipeable
 // carousel, one army a card, each card filling the page between the top bar and the tab bar: a cinematic scene of the army
 // (its land's backdrop, its troops in ranks and its boss large at the back, with a lighting mood and a slow parallax),
-// and below it the army's 10-star track with its chests, the difficulty picks, the conditions, the rewards and the Fight!
+// and below it the army's 11-star track with its chests, the difficulty picks, the conditions, the rewards and the Fight!
 // button. A locked army shows its scene as a silhouette. The rules are in `src/sim/armies.ts`, `armyStars.ts` and
 // `tiers.ts`; this only draws them.
 
@@ -353,7 +353,7 @@ function card(a: Army, i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLElem
       picks.append(b);
     });
     info.append(picks);
-    // the 10-star track, with a chest under the 3rd, 5th and 10th star
+    // the 11-star track, with a chest under the 3rd, 5th and 10th star
     const track = el('div', 'asStars');
     const chests = chestsOf(m, a);
     for (let s = 1; s <= ARMY_STARS; s++) {
@@ -364,7 +364,7 @@ function card(a: Army, i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLElem
       const ch = chests.find((c) => c.at === s);
       if (ch) {
         // (earned chests wait in the stash on the Battle tab: the card only marks the milestone as earned)
-        const pic = el('div', `asChest ${ch.kind} ${ch.state}${s === ARMY_STARS ? ' end' : ''}`);
+        const pic = el('div', `asChest ${ch.kind} ${ch.state}${s === MILESTONES[MILESTONES.length - 1] ? ' end' : ''}`);
         pic.setAttribute('aria-label', `${CHEST_NAME[ch.kind]}, ${ch.state === 'earned' ? (ch.waiting ? 'earned, in your stash' : 'earned') : `at ${ch.at} stars`}`);
         pic.append(chestPicture(ch.kind, 1).root, el('small', '', ch.state === 'earned' ? '✓' : `${ch.at}★`));
         col.append(pic);
@@ -386,7 +386,7 @@ function card(a: Army, i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLElem
     const pay = el('div', 'asPay');
     pay.append(tierDone ? 'Cleared ✓ · ' : 'First clear ', tierDone ? '' : crowns(firstClearTotal(a, tier)), tierDone ? 'Replay ' : ' · Replay ', crowns(replayTotal(a, tier)));
     info.append(pay);
-    if (tier > 0) info.append(el('p', 'asHint', `Foes ×${t.hp} hp, ×${t.atk} attack, ×${t.speed} speed · crowns ×${t.pay} · XP ×${t.xp}`));
+    if (tier > 0) info.append(el('p', 'asHint', `Foes ×${t.hp} hp, ×${t.atk} attack, ×${t.speed} speed${t.extra ? `, ${t.extra} more in every wave` : ''}${t.phaseAt ? ', a boss that turns sooner and hits harder' : ''} · crowns ×${t.pay} · XP ×${t.xp}`));
     if (hooks.running && !hooks.running.army) {
       const cont = el('button', 'small asCont', `Continue ${hooks.running.label}`);
       cont.addEventListener('click', () => hooks.onContinue());

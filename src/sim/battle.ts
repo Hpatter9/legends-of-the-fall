@@ -126,7 +126,7 @@ export interface Unit {
   /** All healing it receives is multiplied by this (a holy-ground twist); absent is x1. */
   healMult?: number;
   /** A boss that changes form (`bossPhases.ts`): the share of its health it does so at, and whether it has. */
-  phase?: { at: number; done: boolean };
+  phase?: { at: number; done: boolean; surge?: number };
   /** The kit it fights with after changing form (instead of its kind's). */
   kit?: Kit;
 }
@@ -245,6 +245,8 @@ export interface Boost {
   carry?: number;
   /** A boss that changes form at this share of its health (`bossPhases.ts`); none when unset. */
   phase?: number;
+  /** A boss's second form hits this much harder again (a harder army tier). */
+  surge?: number;
   /** A boss starts the fight behind a shield of this share of its health. */
   shield?: number;
 }
@@ -327,7 +329,7 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
       for (let u = 0; u < board.w; u++) if (standable(tileAt(board, u, v)) && !unitAt(b, u, v)) free.push(u);
       if (!free.length) continue;
       const boss = n === 0 ? stage.boss : undefined;
-      addUnit(b, id, rng.pick(free), v, { hp: (foes?.hp ?? 1) * (boss?.hp ?? 1), atk: (foes?.atk ?? 1) * (boss?.atk ?? 1), size: boss?.size, phase: boss?.phase, shield: boss?.shield });
+      addUnit(b, id, rng.pick(free), v, { hp: (foes?.hp ?? 1) * (boss?.hp ?? 1), atk: (foes?.atk ?? 1) * (boss?.atk ?? 1), size: boss?.size, phase: boss?.phase, surge: boss?.surge, shield: boss?.shield });
       break;
     }
   });
@@ -363,7 +365,7 @@ export function addUnit(b: Battle, defId: string, u: number, v: number, boost: B
   }
   const heal = (b.twist?.heal ?? 1) * (def.side === 'hero' ? b.heroHeal ?? 1 : 1);
   if (heal !== 1) unit.healMult = heal;
-  if (boost.phase && PHASE2[defId]) unit.phase = { at: boost.phase, done: false };
+  if (boost.phase && PHASE2[defId]) unit.phase = { at: boost.phase, done: false, ...(boost.surge ? { surge: boost.surge } : {}) };
   if (boost.shield) unit.shield = { hp: Math.round(hp * boost.shield), until: 1e9 };
   if (boost.size && boost.size !== 1) unit.size = boost.size;
   if (boost.grade && boost.grade > 1) unit.grade = boost.grade;

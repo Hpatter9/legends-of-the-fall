@@ -25,12 +25,48 @@ function cleared(army: string, tier: number, tally: { ms: number; lost: number; 
 }
 const perfect = { ms: 1000, lost: 0, bossLost: 0 };
 
-test('the tiers hold 3, 3, 3 and 1 stars: ten in all, numbered in order', () => {
-  assert.deepEqual(TIERS.map((t) => t.stars), [3, 3, 3, 1]);
-  assert.equal(ARMY_STARS, 10);
-  assert.deepEqual([0, 1, 2, 3].map(tierRange), [[1, 3], [4, 6], [7, 9], [10, 10]]);
-  assert.deepEqual(TIERS.map((t) => t.need), [0, 3, 6, 9]);
+test('the tiers hold 3, 3, 3, 1 and 1 stars: eleven in all, numbered in order', () => {
+  assert.deepEqual(TIERS.map((t) => t.stars), [3, 3, 3, 1, 1]);
+  assert.equal(ARMY_STARS, 11);
+  assert.deepEqual([0, 1, 2, 3, 4].map(tierRange), [[1, 3], [4, 6], [7, 9], [10, 10], [11, 11]]);
+  assert.deepEqual(TIERS.map((t) => t.need), [0, 3, 6, 9, 10]);
+  assert.deepEqual(TIERS.map((t) => t.name), ['Normal', 'Hard', 'Elite', 'Legendary', 'Mythic']);
+  // (the chests stay at 3, 5 and 10 stars: the Mythic star adds no chest of its own, its first clear pays one)
   assert.deepEqual(MILESTONES, [3, 5, 10]);
+});
+
+test('Mythic opens after the Legendary star, and both stars are flawless-clear stars', () => {
+  const m = startedMeta(1);
+  const a = ARMIES[0];
+  m.armies.orcs = { best: 15, won: 15, clears: 1, stars: {}, met: { 0: 7, 1: 7, 2: 7 } };
+  assert.equal(tierOpen(m, a, 3), true);
+  assert.equal(tierOpen(m, a, 4), false);
+  m.armies.orcs.met![3] = 1;
+  assert.equal(armyStars(m, a).got, 10);
+  assert.equal(tierOpen(m, a, 4), true);
+  for (const t of [3, 4]) {
+    assert.equal(armyRules(a, t).length, 1);
+    assert.ok(armyRules(a, t)[0].text.startsWith('Flawless'));
+  }
+  assert.equal(armyRules(a, 2).length, 3);
+});
+
+test('a save from before Mythic stays valid: its stars, tiers and first-clear marks are kept', () => {
+  const m = startedMeta(1);
+  const s = store();
+  const old = { ...m, armies: { orcs: { best: 15, won: 15, clears: 1, stars: {}, met: { 0: 7, 1: 7, 2: 7, 3: 1 }, hard: { 1: { won: 15, clears: 2 }, 2: { won: 15, clears: 1 }, 3: { won: 15, clears: 1 } }, first: 15, chests: [3, 5, 10] } } };
+  s.setItem('legends.meta', JSON.stringify(old));
+  const loaded = loadMeta(1, s);
+  const a = armyById('orcs')!;
+  assert.equal(armyStars(loaded, a).got, 10);
+  assert.equal(armyStars(loaded, a).max, 11);
+  assert.equal(loaded.armies.orcs.first, 15);
+  assert.equal(tierOpen(loaded, a, 4), true);
+  // (a first clear of Mythic still pays its chest, once, and the old ones are not paid again)
+  const res = settleArmyRun(loaded, cleared('orcs', 4, perfect))!;
+  assert.equal(res.firstClear, FIRST_CLEAR_CHEST[4]);
+  assert.equal(res.total, 11);
+  assert.equal(loaded.stash.filter((c) => c.first).length, 1);
 });
 
 test('each tier opens when the stars before it are all won', () => {
@@ -287,7 +323,7 @@ test('the foes get tougher by tier: hp, attack and speed', () => {
   let lastAtk = base.atk!;
   let lastSpeed = 1;
   assert.equal(base.speed, undefined);
-  for (const t of [1, 2, 3]) {
+  for (const t of [1, 2, 3, 4]) {
     const f = waveBoost(a, 3, t).foes!;
     assert.ok(f.hp! > lastHp && f.atk! > lastAtk && f.speed! > lastSpeed, `tier ${t}`);
     assert.ok(Math.abs(f.hp! / base.hp! - TIERS[t].hp) < 1e-9);
@@ -416,7 +452,7 @@ test('the army card total counts the army stars (and the top bar sums them)', ()
   m.armies.orcs = { best: 8, won: 8, clears: 1, stars: {}, met: { 0: 7, 3: 1 } };
   m.armies.undead = { best: 8, won: 8, clears: 1, stars: {}, met: { 0: 1 } };
   assert.equal(ARMIES.reduce((n, a) => n + armyStars(m, a).got, 0), 5);
-  assert.equal(armyStars(m, ARMIES[0]).max, 10);
+  assert.equal(armyStars(m, ARMIES[0]).max, 11);
 });
 
 test('a save from the earlier chest format keeps its unopened chests, none twice, none lost', () => {
@@ -446,7 +482,7 @@ test('the cart shows the best chest waiting: the highest milestone, then the har
   assert.equal(bestChest([{ army: 'undead', at: 5, tier: 0 }, { army: 'orcs', at: 5, tier: 0 }]), 0);
 });
 
-test('the first clear of an army on each tier pays a chest, once: Normal bronze, Hard and Elite silver, Legendary gold', () => {
+test('the first clear of an army on each tier pays a chest, once: Normal bronze, Hard and Elite silver, Legendary and Mythic gold', () => {
   const m = startedMeta(9);
   const sizes: string[] = [];
   TIERS.forEach((_, tier) => {
@@ -456,10 +492,10 @@ test('the first clear of an army on each tier pays a chest, once: Normal bronze,
     // (clearing it again pays no second one)
     assert.equal(settleArmyRun(m, cleared('orcs', tier, perfect))!.firstClear, 0);
   });
-  assert.deepEqual(sizes, ['bronze', 'silver', 'silver', 'gold']);
+  assert.deepEqual(sizes, ['bronze', 'silver', 'silver', 'gold', 'gold']);
   const first = m.stash.filter((c) => c.first);
-  assert.deepEqual(first.map((c) => c.tier), [0, 1, 2, 3]);
-  assert.equal(new Set(first.map((c) => c.seed)).size, 4);
+  assert.deepEqual(first.map((c) => c.tier), [0, 1, 2, 3, 4]);
+  assert.equal(new Set(first.map((c) => c.seed)).size, 5);
   // (a chest of another army is separate; a lost run pays nothing)
   assert.equal(settleArmyRun(m, cleared('undead', 0, perfect))!.firstClear, 3);
   const lost = armyRun(1, 'orcs', undefined, undefined, 0);
