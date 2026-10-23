@@ -25,6 +25,9 @@ import { isBoss } from './sim/foes';
 import { awakenedOf } from './sim/awaken';
 import { earn, loadMeta, needsStarter, pickStarter, heroRank, recordStars, saveMeta, type Meta } from './sim/meta';
 import { chooseStarter } from './starter';
+import { ScenePlayer } from './render/sceneView';
+import { dueScene, markSeen } from './sim/sceneRules';
+import type { Moment } from './sim/sceneScripts';
 import { xpRate } from './sim/castle';
 import { heroStats } from './sim/talents';
 import { powerOf, powerText } from './sim/power';
@@ -149,6 +152,8 @@ class Game {
   private introduced = new Set<string>();
   /** The auto-replay going on, if any (`sim/autoReplay.ts`); it plays the waves and starts the next runs from the frame loop, so a hidden tab (no frames) pauses it. */
   private auto: AutoReplay | null = null;
+  /** The cinematics (`render/sceneView.ts`): each plays once at its moment, and the codex's Scenes list plays a seen one again. */
+  private scenes = new ScenePlayer();
   /** The heart just spent on a retry (its fade plays once), or -1. */
   private heartLost = -1;
   /** Real milliseconds until the auto-replay's next step (the pause after the heroes are placed, and after a fight). */
@@ -181,6 +186,8 @@ class Game {
       if (seed) pickStarter(this.meta, 0);
       else await chooseStarter(this.meta);
       saveMeta(this.meta);
+      // (the opening cinematic: the heroes just picked, and what they are up against; a test page with a seed has none)
+      if (!seed) await this.playDue({ kind: 'starter' });
     }
     // (a tower run saved by an older version sat in the ordinary slot: it moves to the tower's own)
     adoptOldTower();
@@ -236,6 +243,7 @@ class Game {
         return kind === 'calamity' ? `Map ${r.tower?.act ?? 1}/${CAL_MAPS} · continue` : `Floor ${r.stage} · continue`;
       },
       onScene: () => this.syncScene(),
+      onWatchScene: (id) => void this.playScene(id),
     });
     this.towerView = new TowerView({
       meta: () => this.meta,
@@ -319,7 +327,29 @@ class Game {
     this.syncSprites(true);
     this.layout();
     this.refresh();
-    this.startIntro();
+    // (a Calamity's first boss has its cinematic before the boss's own card)
+    const due = this.run.mode?.kind === 'calamity' && this.run.tower && isBossRun(this.run) ? dueScene(this.meta, { kind: 'calBoss', map: this.run.tower.act }) : null;
+    if (due) void this.playDue({ kind: 'calBoss', map: this.run.tower!.act }).then(() => this.startIntro());
+    else this.startIntro();
+  }
+
+  /** The heroes that play a cinematic: the party, and the hero a Calamity run began with. */
+  private players(): { party: string[]; lead?: string } {
+    return { party: this.meta.party, lead: this.run?.mode?.kind === 'calamity' ? this.run.roster[0]?.kind : undefined };
+  }
+
+  /** The cinematic due at a moment, if the save has not seen it: marked seen as it begins (a closed page does not bring it back), then played. */
+  private async playDue(moment: Moment): Promise<void> {
+    const id = dueScene(this.meta, moment);
+    if (!id) return;
+    markSeen(this.meta, id);
+    saveMeta(this.meta);
+    await this.scenes.play(id, this.players());
+  }
+
+  /** Play a cinematic by id (the Scenes list, and previews: `__game.playScene('opening')`). */
+  playScene(id: string): Promise<unknown> {
+    return this.scenes.play(id, this.players());
   }
 
   /** The long map behind this wave's section (an army run's; any other run has none). Finished waves are baked, with no animation: this is also how a run resumed from a save comes up. */

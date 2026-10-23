@@ -60,6 +60,8 @@ export interface HomeHooks {
   slotInfo?(kind: 'tower' | 'calamity'): string | null;
   /** The home screen's tab, or the armies, changed (or it was left): the ambience follows (`spot`). */
   onScene?(): void;
+  /** Play a cinematic again (the codex's Scenes list). */
+  onWatchScene?(id: string): void;
 }
 
 type Tab = 'recruit' | 'heroes' | 'battle' | 'castle' | 'spells';
@@ -548,7 +550,7 @@ export class Home {
         draw(b);
         b.scrollTop = keep;
         this.refresh();
-      });
+      }, undefined, (id) => this.hooks.onWatchScene?.(id));
     this.openSub('Codex', draw, false);
     $('hmSub').classList.add('codex');
   }
