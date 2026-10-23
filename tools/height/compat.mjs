@@ -41,6 +41,9 @@ const playOut = async (page, label) => {
 };
 // the old build: a new save, a pack, a run begun
 const old = await open(8141);
+// (a new save opens with a cutscene: Skip is one tap)
+await old.waitForSelector('.csSkip, .stPack', { timeout: 30000 });
+await old.click('.csSkip', { timeout: 15000 }).catch(() => {});
 await old.waitForSelector('.stPack', { timeout: 30000 });
 await old.click('.stPack:nth-child(1)');
 await old.click('.stGo');
@@ -58,6 +61,9 @@ console.log('old save loaded; game up:', await next.evaluate(() => typeof window
 await playOut(next, 'old save');
 // the new build: a fresh save too
 const fresh = await open(8142);
+// (a new save opens with a cutscene: Skip is one tap)
+await fresh.waitForSelector('.csSkip, .stPack', { timeout: 30000 });
+await fresh.click('.csSkip', { timeout: 15000 }).catch(() => {});
 await fresh.waitForSelector('.stPack', { timeout: 30000 });
 await fresh.click('.stPack:nth-child(3)');
 await fresh.click('.stGo');

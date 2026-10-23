@@ -27,6 +27,9 @@ for (const [w, h] of sizes) {
   await page.evaluate(() => localStorage.clear());
   await page.goto('http://localhost:8134/');
   await page.waitForTimeout(2200);
+  // (a new save opens with a cutscene: Skip is one tap)
+  await page.waitForSelector('.csSkip, .stPack', { timeout: 30000 });
+  await page.click('.csSkip', { timeout: 15000 }).catch(() => {});
   await page.waitForSelector('.stPack', { timeout: 30000 });
   await page.click('.stPack:nth-child(2)');
   await page.click('.stGo');

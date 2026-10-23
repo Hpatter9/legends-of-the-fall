@@ -18,12 +18,12 @@ weights per land; `Board.layout` says which was laid, and `Stage.layout` can ask
 |---|---|---|
 | Rolling land (`classic`) | The old board: hills, 2 or 3 platforms with a staircase, pits | all (weight 5) |
 | Open plain | Low, level ground (heights 0 and 1), a few boulders: for contrast | snow |
-| The river | One or two rows of deep water across the middle (a lake of lava on a volcano), banks a level, two or three crossings: a bridge, or a ford of shallows | highlands, forest |
+| The river | One or two rows of deep water across the middle (a lake of lava on a volcano or at a forge), banks a level, two or three crossings: a bridge, or a ford of shallows | highlands, forest |
 | The hill | A pyramid hill in the middle, up to 6, flat topped half the time, one side a 3-level cliff | highlands |
 | The pass | Ridges (to 4, ramped at both ends) close in on a way 2 or 3 wide through the middle, bending a tile | desert, forest, dungeon |
 | The ruined fort | A ring of broken wall (`wall`) round a courtyard a level or two up, two gates and some crumbled gaps | dungeon |
-| The islands | A sea (deep water; a lake of lava on a volcano) with two islands joined by a causeway a level lower, a spit or two, stepping-stone shallows | volcano, snow |
-| The ring | A pit (a lake of lava on a volcano) at the foot of a raised rim of 3 or 4, with steps down on one or two sides | volcano, snow, dungeon |
+| The islands | A sea (deep water; a lake of lava on a volcano or at a forge) with two islands joined by a causeway a level lower, a spit or two, stepping-stone shallows | volcano, snow, swamp |
+| The ring | A pit (a lake of lava on a volcano or at a forge) at the foot of a raised rim of 3 or 4, with steps down on one or two sides | volcano, snow, dungeon |
 | The ravine | Two plateaus (3 or 4 up) with a ravine between (floor 0, some shallows) and one bridge across, flush with both tops | desert |
 
 - **Every template keeps `boardOk`** (every standable tile reachable from the heroes' rows by a fighter that climbs one level, so both
@@ -58,8 +58,8 @@ weights per land; `Board.layout` says which was laid, and `Stage.layout` can ask
   shooter (-0.2 a blade), a shrine -2 for a fighter more than 40% hurt (-0.3 otherwise), ice +0.3; used when choosing where to strike from
   and when stepping up to a perch. A fighter more than 40% hurt with nobody in reach walks to a shrine within 5 steps of cost. Walking costs
   already routed round lava and shallows; deep water and walls are not walkable at all.
-- **Weather hook**: `Stage.weather = { fog?: number }` is copied to `Battle.weather`, and `strikeDef` takes `fog` tiles off every shooter's range
-  (the same as the twist's fog, which adds). `claude/map-lands` can set it from the land's weather; nothing sets it yet.
+- **Weather**: `claude/map-lands` made the weather data of the board (`weatherOf(board)`, `weather.ts`). A **foggy** fight takes `FOG_RANGE` (1) tile off every shooter's range
+  (`Battle.fog`, read by `strikeDef`, added to the twist's fog). Fog is about one fight in ten (lands differ), and both sides shoot a tile less far.
 - **Codex**: the Terrain tab lists every ground and every battlefield shape with a tooltip line, the numbers read from the constants
   (`sim/terrainInfo.ts`), so the page cannot drift from the rules.
 - **Twists**: lava cracks now pick a tile that can be stood on (not a wall, deep water, a bridge, a shrine or lava already).
