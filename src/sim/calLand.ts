@@ -72,7 +72,7 @@ const LAND_SALT = 0x1a4d;
 const DECOR_SALT = 0xdec0;
 const SIDE_SALT = 0x51de;
 /** The `a` steps between two rows of the map, and the start's below the first row. */
-const ROW_A = 5;
+const ROW_A = 8;
 const START_A = 5;
 /** The widest the decoration reaches (in `b`): a phone shows about plus or minus 5. */
 const DECOR_B = 9;
