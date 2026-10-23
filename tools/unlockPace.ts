@@ -11,7 +11,8 @@ import { grantContent, CONTENT_HEROES } from '../src/sim/contentHeroes';
 import { newMeta, pickStarter, pullCost, recruit, stageCrowns, type Meta } from '../src/sim/meta';
 import { ALL_HEROES } from '../src/sim/units';
 import { ownedWeight, PULL_HEROES, unlockNeed } from '../src/sim/unlockRules';
-import { mixSeed } from '../src/sim/rng';
+import { mixSeed, Rng } from '../src/sim/rng';
+import { dailyChestSeed, dailyCrowns, DAILY_WAVES } from '../src/sim/daily';
 import { MAP_CROWNS } from '../src/sim/tower';
 import { BUILDINGS } from '../src/sim/castle';
 import { FOE_ENTRIES } from '../src/sim/codex';
@@ -32,8 +33,9 @@ const CASTLE_TOTAL = Object.values(BUILDINGS).reduce((n, b) => n + b.costs.reduc
 // ---- the player ----
 /** The army runs a day on the best tier cleared: ten auto-replays and three by hand. */
 const FARM_RUNS = arg('--runs', 13);
-/** The daily challenge pays about this a day (a dozen stages at 3 stars). */
-const DAILY_CROWNS = 300;
+/** The daily challenge (`daily.ts`): the player clears it this share of days (the greedy player's 69% with the hearts, `npm run daily-rate`; a stronger player later does better, so this is a floor), and a fall comes at about wave 8. A clear pays the waves' crowns and a daily chest (about one bonus star in two), a fall the waves' crowns before it. */
+const DAILY_CLEAR = 0.7;
+const DAILY_FALL_WAVES = 7;
 /** A tower climb a day: floors reached grow from `TOWER_START` with the days, at `TOWER_GROWTH` floors a day, to a ceiling. */
 const TOWER_START = 6;
 const TOWER_GROWTH = 0.18;
@@ -78,7 +80,10 @@ function simulate(seed: number): Report {
   let pullable = Infinity;
   const by: Record<number, number> = {};
   for (let day = 1; day <= DAYS; day++) {
-    let today = DAILY_CROWNS;
+    // the daily: a clear pays its ten waves and puts a daily chest in the stash; a fall pays the waves before it
+    const clears = new Rng(mixSeed(seed, 0xda1c, day)).chance(DAILY_CLEAR);
+    let today = dailyCrowns(clears ? DAILY_WAVES : DAILY_FALL_WAVES);
+    if (clears) m.stash.push({ army: 'daily', at: 3, tier: 0, seed: dailyChestSeed(m.seed, 20260000 + day), daily: 20260000 + day, bonus: new Rng(mixSeed(seed, 0xda1d, day)).int(0, 2) });
     // the armies' first clears and their chests
     ARMIES.forEach((a, i) => {
       if (NORMAL_DAY[i] === day) {

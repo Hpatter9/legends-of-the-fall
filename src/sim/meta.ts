@@ -5,6 +5,7 @@
 
 import { newCastle, readCastle, readChapel, readWorks, spellBudget, type Castle, type Works } from './castle';
 import { newLoadout, readLoadout, STARTER_SPELLS, type Loadout } from './spells';
+import { DAILY_WAVES } from './daily';
 import { Rng } from './rng';
 import { ALL_HEROES, HEROES } from './units';
 import { readStarter, starterPacks, type Starter } from './starter';
@@ -72,7 +73,7 @@ export interface Meta {
   tower: number;
   /** A calamity's record: the most maps cleared in one run, and the runs cleared whole (none before the first calamity). */
   calamity?: { best: number; clears: number; /** The highest ascension level cleared whole (`ascension.ts`); none before the first clear after it came. */ asc?: number };
-  /** The daily challenge per date (yyyymmdd): the best score counted and the plays (the first counts). */
+  /** The daily challenge per date (yyyymmdd): the plays (the first counts) and how the counted run went: cleared, the furthest wave, the bonus stars. */
   daily: Record<string, DailyEntry>;
   /** The bosses beaten (`foes.ts`, by id). */
   bosses: string[];
@@ -115,13 +116,25 @@ export interface StashChest {
   seed: number;
   /** Paid by an endless tower run (a run pays several of one milestone; an army's is given once). */
   tower?: boolean;
+  /** A daily chest: the date (yyyymmdd) of the daily that paid it, and the bonus stars (0 to 2) of the clear. `army` is 'daily'. */
+  daily?: number;
+  bonus?: number;
   /** Paid for an army's first clear on a tier (one per army and tier, told apart by its seed; `at` only sets the chest's size). */
   first?: boolean;
 }
 
 export interface DailyEntry {
+  /** The score the older saves kept (waves cleared x 100 plus stars x 10); still written, nothing reads it for a goal. */
   best: number;
   plays: number;
+  /** The counted run cleared the boss of the day. Missing is not (and for a save from before the fixed daily). */
+  cleared?: boolean;
+  /** The furthest wave the counted run fought (of `DAILY_WAVES`). */
+  wave?: number;
+  /** The counted run has ended (so a record that is not cleared is a fall, not a run going on). */
+  over?: boolean;
+  /** The bonus stars of the clear (0 to 2), which added to the daily chest. */
+  stars?: number;
 }
 
 export interface Pull {
@@ -234,7 +247,14 @@ function readDaily(raw: unknown): Record<string, DailyEntry> {
   if (raw && typeof raw === 'object')
     for (const [k, e] of Object.entries(raw)) {
       const d = e as Partial<DailyEntry> | null;
-      if (/^\d{8}$/.test(k) && d && typeof d.best === 'number' && typeof d.plays === 'number') out[k] = { best: Math.max(0, d.best | 0), plays: Math.max(0, d.plays | 0) };
+      if (/^\d{8}$/.test(k) && d && typeof d.best === 'number' && typeof d.plays === 'number') {
+        const entry: DailyEntry = { best: Math.max(0, d.best | 0), plays: Math.max(0, d.plays | 0) };
+        if (d.cleared === true) entry.cleared = true;
+        if (typeof d.wave === 'number' && d.wave >= 1) entry.wave = Math.min(DAILY_WAVES, d.wave | 0);
+        if (d.over === true) entry.over = true;
+        if (typeof d.stars === 'number' && d.stars >= 1) entry.stars = Math.min(2, d.stars | 0);
+        out[k] = entry;
+      }
     }
   return out;
 }

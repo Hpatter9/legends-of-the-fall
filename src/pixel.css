@@ -365,6 +365,7 @@ body .sbSlot { min-height: 44px; }
 .chestRays { position: absolute; left: 50%; top: calc(8vh + 125px); width: 520px; height: 520px; margin: -260px 0 0 -260px; opacity: 0; background: repeating-conic-gradient(from 0deg, rgb(var(--e8-rgb) / 0.5) 0 7deg, rgb(var(--e8-rgb) / 0) 7deg 20deg); -webkit-mask: radial-gradient(circle, var(--black) 8%, transparent 68%); mask: radial-gradient(circle, var(--black) 8%, transparent 68%); animation: asSpin 14s linear infinite; }
 .chestGlow { position: absolute; left: 50%; top: calc(8vh + 125px); width: 300px; height: 300px; margin: -150px 0 0 -150px; opacity: 0; background: radial-gradient(circle, rgb(var(--e9-rgb) / 0.95), rgb(var(--e6-rgb) / 0.35) 45%, transparent 70%); }
 .chestShow.silver .chestGlow { background: radial-gradient(circle, rgb(var(--b6-rgb) / 0.95), rgb(var(--b4-rgb) / 0.35) 45%, transparent 70%); }
+.chestShow.daily .chestGlow { background: radial-gradient(circle, rgb(var(--p5-rgb) / 0.95), rgb(var(--p3-rgb) / 0.35) 45%, transparent 70%); }
 .chestShow.lit .chestRays { opacity: 1; transition: opacity 0.4s steps(4); }
 .chestShow.lit .chestGlow { animation: asFlash 0.7s steps(7) both; opacity: 0.6; }
 @keyframes asSpin { to { transform: rotate(360deg); } }
@@ -417,6 +418,7 @@ body .sbSlot { min-height: 44px; }
 .csChest small { font-size: 12px; font-weight: bold; text-shadow: 0 1px 0 var(--black); }
 .csChest .chestPic { filter: drop-shadow(0 0 5px var(--e7)); }
 .csChest.silver .chestPic { filter: drop-shadow(0 0 5px var(--b6)); }
+.csChest.daily .chestPic { filter: drop-shadow(0 0 5px var(--p4)); }
 .csCount { align-self: stretch; text-align: center; font: bold 13px var(--display); font-style: normal; color: var(--btn-ink); background: var(--gold-hi); }
 @media (prefers-reduced-motion: reduce) { .csChest { animation: none; } }
 

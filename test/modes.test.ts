@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { isBoss } from '../src/sim/foes';
 import { bandFor, finish, isBossStage, loadRun, newRun, saveRun, startStage, START_GOLD, stageBoost } from '../src/sim/run';
 import { AREAS } from '../src/sim/board';
-import { dailyArea, dailyInProgress, dailyLine, dailyRun, dailyScore, dailySeed, dateKey, modeNote, settleRun, startDaily, towerLine, towerOpen, towerRun, TOWER_UNLOCK } from '../src/sim/modes';
+import { dailyBossName } from '../src/sim/daily';
+import { dailyArea, dailyInProgress, dailyLine, dailyRun, dailyScore, dailySeed, dateKey, modeNote, settleDaily, settleRun, startDaily, towerLine, towerOpen, towerRun, TOWER_UNLOCK } from '../src/sim/modes';
 import { loadMeta, startedMeta, saveMeta, setParty } from '../src/sim/meta';
 import { HEROES } from '../src/sim/units';
 import { levelOfKind, xpFor } from '../src/sim/levels';
@@ -45,7 +46,7 @@ test('a daily run has no castle upgrades and its summons draw from the starting 
   assert.equal(run.mode?.kind, 'daily');
 });
 
-test('the first play of a date counts; a replay is practice and does not change the best', () => {
+test('the first play of a date counts; a replay is practice and pays and records nothing', () => {
   const m = startedMeta(1);
   const first = startDaily(m, 20261021);
   assert.equal(first.mode?.kind === 'daily' && first.mode.practice, false);
@@ -54,33 +55,37 @@ test('the first play of a date counts; a replay is practice and does not change 
   assert.equal(again.mode?.kind === 'daily' && again.mode.practice, true);
   assert.equal(m.daily['20261021'].plays, 2);
 
-  // the practice run loses on stage 3: its score is shown, not kept
+  // the practice run wins wave 1 and then falls on wave 3: its note says so, and nothing is kept or paid
+  const crowns = m.crowns;
+  finish(again, true, 3);
+  assert.deepEqual(settleDaily(m, again, { won: true, stage: 1 }), { counted: false, crowns: 0, cleared: false, chest: false, bonus: 0 });
   again.stage = 3;
-  again.over = true;
+  finish(again, false);
+  settleDaily(m, again, { won: false, stage: 3 });
   settleRun(m, again, { won: false, stage: 3, stars: 0 });
+  assert.equal(m.crowns, crowns);
+  assert.equal(m.daily['20261021'].wave, undefined);
   assert.equal(m.daily['20261021'].best, 0);
-  assert.match(modeNote(again), /practice, not counted/);
+  assert.match(modeNote(again), /wave 3\/10 \(practice, no reward\)/);
 
-  // the counted one keeps its best, and only the best
+  // the counted one keeps its furthest wave, and its fall
   first.stage = 4;
-  first.stars = 2;
-  first.over = true;
-  settleRun(m, first, { won: false, stage: 4, stars: 0 });
-  assert.equal(dailyScore(first), 3 * 100 + 2 * 10);
-  assert.equal(m.daily['20261021'].best, 320);
-  const lower = dailyRun(20261021);
-  lower.stage = 2;
-  lower.over = true;
-  settleRun(m, lower, { won: false, stage: 2, stars: 0 });
-  assert.equal(m.daily['20261021'].best, 320, 'a lower score does not replace the best');
+  finish(first, false, 0);
+  settleDaily(m, first, { won: false, stage: 4 });
+  assert.equal(m.daily['20261021'].wave, 4);
+  assert.equal(m.daily['20261021'].over, true);
+  assert.equal(m.daily['20261021'].cleared, undefined);
+  assert.equal(m.daily['20261021'].best, 300, 'the old score is still kept: three waves cleared');
 });
 
-test('a daily score is the stages cleared x 100 plus the stars x 10', () => {
+test('the old daily score (waves cleared x 100 plus stars x 10) is still kept in the record', () => {
   const run = dailyRun(20261021);
   assert.equal(dailyScore(run), 0);
   run.stage = 6;
   run.stars = 7;
   assert.equal(dailyScore(run), 5 * 100 + 70);
+  run.cleared = true;
+  assert.equal(dailyScore(run), 10 * 100 + 70, 'a cleared daily has all ten waves');
 });
 
 test('a daily run in progress is resumed on the same date only', () => {
@@ -90,7 +95,23 @@ test('a daily run in progress is resumed on the same date only', () => {
   run.over = true;
   assert.equal(dailyInProgress(run, 20261021), null);
   assert.equal(dailyInProgress(newRun(3), 20261021), null);
-  assert.match(dailyLine(startedMeta(1), 20261021), /one run today/);
+});
+
+test('the camp line names the boss of the day and how the day stands', () => {
+  const m = startedMeta(1);
+  const boss = dailyBossName(20261021);
+  assert.equal(dailyLine(m, 20261021), `Today: ${boss} · not tried`);
+  startDaily(m, 20261021);
+  assert.equal(dailyLine(m, 20261021), `Today: ${boss} · wave 1/10`, 'a run going on');
+  m.daily['20261021'].wave = 6;
+  assert.equal(dailyLine(m, 20261021), `Today: ${boss} · wave 6/10`);
+  m.daily['20261021'].over = true;
+  assert.equal(dailyLine(m, 20261021), `Today: ${boss} · fell at 6/10`);
+  m.daily['20261021'].cleared = true;
+  assert.equal(dailyLine(m, 20261021), `Today: ${boss} · cleared ✓`);
+  // a record from before the fixed daily (a score, no wave) reads as a fall
+  m.daily['20261020'] = { best: 480, plays: 1 };
+  assert.match(dailyLine(m, 20261020), /fell at 5\/10/);
 });
 
 test('the endless tower opens once a run has fought stage 10, or the first army is beaten, and not before', () => {
@@ -172,13 +193,13 @@ test('the modes survive a save and a load, and bad entries are dropped', () => {
   const m = startedMeta(4);
   m.bestStage = 14;
   m.tower = 6;
-  m.daily = { '20261021': { best: 880, plays: 2 } };
+  m.daily = { '20261021': { best: 880, plays: 2, cleared: true, wave: 10, over: true, stars: 2 } };
   m.bosses = ['orcWarlord', 'notABoss'];
   saveMeta(m, s);
   const back = loadMeta(1, s);
   assert.equal(back.bestStage, 14);
   assert.equal(back.tower, 6);
-  assert.deepEqual(back.daily, { '20261021': { best: 880, plays: 2 } });
+  assert.deepEqual(back.daily, { '20261021': { best: 880, plays: 2, cleared: true, wave: 10, over: true, stars: 2 } });
   assert.deepEqual(back.bosses, ['orcWarlord']);
 
   const raw = { seed: 3, crowns: 5, unlocked: [...HEROES], pulls: 0, dry: 0, shards: {}, stars: {}, xp: {}, daily: { junk: { best: 1, plays: 1 }, '20261021': { best: 'x', plays: 1 } }, tower: -3 };
