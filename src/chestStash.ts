@@ -17,6 +17,7 @@ import { ICONS, icon } from './menuArt';
 import chestBronze from './art/ui/chest-bronze.png';
 import chestSilver from './art/ui/chest-silver.png';
 import chestGold from './art/ui/chest-gold.png';
+import chestDaily from './art/ui/chest-daily.png';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -34,10 +35,10 @@ export function drawChestStash(host: HTMLElement, m: Meta, onChange: () => void)
   const i = bestChest(m.stash);
   const c = m.stash[i];
   const army = armyById(c.army);
-  const kind = chestKind(c.at);
+  const kind: ChestKind = c.daily !== undefined ? 'daily' : chestKind(c.at);
   const b = el('button', `csChest ${kind}`);
-  b.setAttribute('aria-label', `${CHEST_NAME[kind]} from the ${army?.name ?? 'army'}${c.first ? ` (first ${tierOf(c.tier).name} clear)` : ''}${m.stash.length > 1 ? `, ${m.stash.length} chests waiting` : ''}: tap to open`);
-  b.append(chestPicture(kind, 1).root, el('small', '', c.first ? `${tierOf(c.tier).name}` : `${c.at}★`));
+  b.setAttribute('aria-label', `${CHEST_NAME[kind]}${c.daily !== undefined ? '' : ` from the ${army?.name ?? 'army'}`}${c.first ? ` (first ${tierOf(c.tier).name} clear)` : ''}${m.stash.length > 1 ? `, ${m.stash.length} chests waiting` : ''}: tap to open`);
+  b.append(chestPicture(kind, 1).root, el('small', '', c.daily !== undefined ? 'Daily' : c.first ? `${tierOf(c.tier).name}` : `${c.at}★`));
   b.addEventListener('click', () => {
     const loot = openChest(m, i);
     if (!loot) return;
@@ -48,11 +49,11 @@ export function drawChestStash(host: HTMLElement, m: Meta, onChange: () => void)
   if (m.stash.length > 1) host.append(el('i', 'csCount', `×${m.stash.length}`));
 }
 
-/** The chest sprite (Craftpix platformer tileset, tinted bronze, silver and gold): two frames side by side, closed then open with its treasure showing. */
+/** The chest sprite (Craftpix platformer tileset, tinted bronze, silver and gold; the daily chest's wood is tinted violet): two frames side by side, closed then open with its treasure showing. */
 const CHEST_W = 42;
 const CHEST_H = 39;
-const CHESTS: Record<ChestKind, string> = { bronze: chestBronze, silver: chestSilver, gold: chestGold };
-export const CHEST_NAME: Record<ChestKind, string> = { bronze: 'Bronze chest', silver: 'Silver chest', gold: 'Gold chest' };
+const CHESTS: Record<ChestKind, string> = { bronze: chestBronze, silver: chestSilver, gold: chestGold, daily: chestDaily };
+export const CHEST_NAME: Record<ChestKind, string> = { bronze: 'Bronze chest', silver: 'Silver chest', gold: 'Gold chest', daily: 'Daily chest' };
 
 /** A chest picture at a whole-number scale: the closed frame, and the open frame (shown when the root has the class `burst`). */
 export function chestPicture(kind: ChestKind, scale: number): { root: HTMLElement } {

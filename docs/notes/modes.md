@@ -22,3 +22,5 @@ Three things reached from the home screen, beside an ordinary run.
 - **Saves**: `Meta` gains `bestStage`, `tower`, `daily`, `bosses`, `achievements`; `loadMeta` defaults them, so old saves
   load. `Run` gains `mode`, `area` and `stars`, all optional.
 - Tests: `test/modes.test.ts`, `test/achievements.test.ts`.
+
+> **Changed:** the daily is no longer endless: it is a fixed ten waves that end in a boss of the day, with a daily chest for a clear. See `docs/notes/daily-goal.md`; the daily paragraph above (played until defeat, scored by stages) is the old rule.

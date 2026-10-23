@@ -29,8 +29,9 @@ import { levelOfKind, xpFor } from '../src/sim/levels';
 import { timeTarget } from '../src/sim/armyStars';
 import { loadMeta, startedMeta, saveMeta } from '../src/sim/meta';
 import { BOSS_TITLES, titleOf } from '../src/render/bossTitles';
-import { armyOfRun, armyRun, bandFor, finish, gradeBoost, isBossRun, loadRun, newRun, saveRun, startStage } from '../src/sim/run';
+import { armyOfRun, armyRun, bandFor, finish, gradeBoost, isBossRun, loadRun, newRun, saveRun, startStage, waveArmyOf } from '../src/sim/run';
 import { dailyRun, towerRun } from '../src/sim/modes';
+import { dailyBoss, DAILY_WAVES } from '../src/sim/daily';
 import { HEROES, UNITS } from '../src/sim/units';
 import { playArmy, savedAt } from '../tools/autoplay';
 import { readyBattle } from './helpers';
@@ -269,11 +270,13 @@ test('the daily challenge and the tower keep their own foe mixes', () => {
   const tower = towerRun(3, startedMeta(1));
   tower.stage = 5;
   assert.ok(startStage(tower).units.some((u) => u.def === 'orcWarlord'));
+  // (the daily is a fixed ten waves that end in the boss of the day, not the endless stages: its last wave holds that boss)
   const daily = dailyRun(20260101);
-  daily.stage = 10;
-  assert.ok(startStage(daily).units.some((u) => u.def === 'forestBoss1'));
+  daily.stage = DAILY_WAVES;
+  assert.ok(startStage(daily).units.some((u) => u.def === dailyBoss(20260101)));
   assert.equal(armyOfRun(tower), undefined);
-  assert.equal(armyOfRun(daily), undefined);
+  assert.equal(armyOfRun(daily), undefined, 'the daily is no army of the list: it keeps no army record');
+  assert.equal(waveArmyOf(daily)?.waves.length, DAILY_WAVES);
 });
 
 test('an army run fights its own waves, with the boss, its size and the land of its army', () => {

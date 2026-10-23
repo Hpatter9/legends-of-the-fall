@@ -8,6 +8,7 @@ import { AREAS, type Area } from './board';
 import { buildChain, type Section } from './chain';
 import { BOSS_BANDS, FIELD_BANDS } from './foes';
 import { armyById, armyIndex, waveBoost, type Army } from './armies';
+import { dailyArmy } from './daily';
 import { bonusGold, heroBoost, manaRate, moveRate, newCastle, type Castle } from './castle';
 import { rankMult } from './meta';
 import { lastingBoost } from './levels';
@@ -108,7 +109,7 @@ export interface Run {
   area?: Area;
   /** Stars won across the run (the daily challenge's score counts them). */
   stars?: number;
-  /** An army run's last boss has fallen (the run is over, and won). */
+  /** An army run's last boss has fallen, or a daily's boss of the day (the run is over, and won). */
   cleared?: boolean;
   /** The heroes level, and wear only what they find, within this run (a tower climb or a calamity): the meta's levels, gear and talents do not count (`climb.ts`). */
   local?: boolean;
@@ -155,7 +156,7 @@ export function keepCharges(run: Run, b: Battle): void {
 
 /** Add a finished fight to an army run's tally: its time, the heroes that fell (summoned helpers do not count), and whether this was the last boss. */
 export function noteFight(run: Run, b: Battle): void {
-  const army = armyOfRun(run);
+  const army = waveArmyOf(run);
   if (!army) return;
   const fell = b.units.filter((u) => u.side === 'hero' && !u.alive && !UNITS[u.def].summon).length;
   const t = (run.tally ??= { ms: 0, lost: 0, bossLost: 0 });
@@ -166,14 +167,16 @@ export function noteFight(run: Run, b: Battle): void {
 }
 /** The army a run is fighting, if it is an army run. */
 export const armyOfRun = (run: Run): Army | undefined => (run.mode?.kind === 'army' ? armyById(run.mode.army) : undefined);
+/** The fixed run of waves a run is fighting: an army's, or a date's daily (`daily.ts`, an army in shape that is in no list and keeps no army record). */
+export const waveArmyOf = (run: Run): Army | undefined => (run.mode?.kind === 'daily' ? dailyArmy(run.mode.date) : armyOfRun(run));
 /** Whether stage n of the run (its current one by default) has a boss. */
 export const isBossRun = (run: Run, stage = run.stage): boolean => {
   if (run.tower) return run.tower.cur?.kind === 'boss';
-  const a = armyOfRun(run);
+  const a = waveArmyOf(run);
   return a ? !!a.waves[stage - 1]?.boss : isBossStage(stage);
 };
 /** How many waves the run's army has (0 for any other run). */
-export const wavesOf = (run: Run): number => armyOfRun(run)?.waves.length ?? 0;
+export const wavesOf = (run: Run): number => waveArmyOf(run)?.waves.length ?? 0;
 
 /** How many heroes the run fields: five, or ten in a calamity. */
 export const squadLimit = (run: Run): number => (run.mode?.kind === 'calamity' ? CALAMITY_SQUAD : SQUAD);
@@ -340,7 +343,7 @@ export const boardSeedOf = (run: Run, stage: number): number => mixSeed(run.seed
 const chains = new Map<string, Section[]>();
 /** An army run's long map: one section for each wave, joined edge to edge (`chain.ts`). Worked out from the run's seed alone, so a saved run rebuilds it; null for any other run. */
 export function chainOf(run: Run): Section[] | null {
-  const army = armyOfRun(run);
+  const army = waveArmyOf(run);
   if (!army) return null;
   const area = run.area ?? army.area ?? areaFor(1);
   const key = `${run.seed}:${army.id}:${area}`;
@@ -356,7 +359,7 @@ export function chainOf(run: Run): Section[] | null {
 /** A fresh fight for the run's current stage (a different board each stage; an army's is its section of the long map). */
 export function startStage(run: Run): Battle {
   const rl = relicEffects(run.relics);
-  const army = armyOfRun(run);
+  const army = waveArmyOf(run);
   // (a floor of the tower brings its own band and strength, fixed when the node was entered)
   const node = run.tower?.cur?.fight;
   const base = node ? node.stage : army ? waveBoost(army, run.stage, tierOfRun(run)) : stageBoost(run.stage);
@@ -383,21 +386,21 @@ export function finish(run: Run, won: boolean, stars = 0): void {
   run.stars = (run.stars ?? 0) + stars;
   if (won) {
     const boss = isBossRun(run);
-    const army = armyOfRun(run);
+    const army = waveArmyOf(run);
     const bonus = (relicEffects(run.relics).gold ?? 0) + (run.buff?.gold ?? 0);
     const pay = reward(run.stage) + starGold(stars) + bonus;
     run.gold += pay;
     noteGold(run, 'earned', pay);
     // a prize for a cursed path, and a sure piece of gear from a boss (one tier up, from its own stream)
     const prizes: Gear[] = run.buff?.gear ? [run.buff.gear] : [];
-    if (boss) prizes.push(dropGear(new Rng(mixSeed(run.seed, 0x6ea2, run.stage)), (run.nextGear = (run.nextGear ?? 1) + 1) - 1, run.stage + (army ? GEAR_STAGES * armyIndex(army.id) : 0), 1));
+    if (boss) prizes.push(dropGear(new Rng(mixSeed(run.seed, 0x6ea2, run.stage)), (run.nextGear = (run.nextGear ?? 1) + 1) - 1, run.stage + (army ? GEAR_STAGES * Math.max(0, armyIndex(army.id)) : 0), 1));
     for (const g of prizes) {
       (run.items ??= []).push(g);
       run.found.push(`${g.name} (${g.slot}, ${gearText(g)})`);
     }
     if (run.buff?.gold) run.found.push(`${run.buff.gold} gold from the cursed path`);
     if (army && run.stage >= army.waves.length) {
-      // (the army's last boss has fallen: the run is won and over)
+      // (the army's last boss has fallen, or the day's: the run is won and over)
       run.cleared = true;
       run.over = true;
       run.event = undefined;
