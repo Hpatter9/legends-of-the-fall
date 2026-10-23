@@ -159,6 +159,7 @@
   .trait.class { border-style: dashed; }
   .trait.on { color: var(--s1); background: var(--gold); border-color: var(--gold); font-weight: bold; }
   .trait.picked { outline: 2px solid var(--b4); }
+  .trait .thead { display: flex; align-items: center; gap: 6px; }
   .trait small { display: block; font-size: 9px; font-weight: normal; line-height: 1.1; opacity: 0.8; white-space: nowrap; }
   .trait.wake { animation: traitWake 0.9s ease-out 1; }
   #traitHint.wake { color: var(--gold); animation: traitHintWake 0.9s ease-out 1; }
@@ -665,15 +666,20 @@
   .ptSlot small { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
   #ptHint { margin: 0; font-size: 12px; color: var(--dim); text-align: center; }
   #ptHint.full { color: var(--e8); }
-  #ptTraits { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--dim); }
+  #ptTraits { display: flex; flex-direction: column; gap: 3px; max-height: 108px; overflow-y: auto; touch-action: pan-y; font: 400 12px/14px var(--body); letter-spacing: 0; color: var(--text-dim); }
   #ptTraits:empty { display: none; }
-  .ptTrait.on { color: var(--e9); }
-  .ptTrait b { margin-right: 6px; font-weight: bold; }
+  .ptTrait { display: flex; align-items: center; gap: 6px; min-height: 26px; padding: 1px 6px 1px 3px; opacity: 0.6; }
+  .ptTrait.on { opacity: 1; color: var(--e9); background: rgb(var(--e8-rgb) / 0.1); }
+  .ptTrait b { flex: none; width: 68px; font-weight: 400; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ptTrait .pips { flex: none; width: 40px; letter-spacing: 1px; color: var(--accent); }
+  .ptTrait .fx { flex: 1; min-width: 0; }
+  .ptCard.faded { opacity: 0.35; }
+  .ptCard.hit { outline: 2px solid var(--b4); outline-offset: -2px; }
   #ptGrid { flex: 1; min-height: 0; overflow-y: auto; touch-action: pan-y; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; align-content: start; }
   .ptCard { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
   .ptCard.picked { outline: 3px solid var(--e8); outline-offset: -3px; }
   .ptCard.locked { filter: grayscale(1) brightness(0.4); opacity: 0.6; }
-  .ptCard .ptTags { font-size: 9px; color: var(--dim); }
+  .ptCard .ptTags { display: flex; gap: 4px; justify-content: center; min-height: 24px; padding-top: 2px; }
   .ptInfo { position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; line-height: 18px; border-radius: 50%; font: bold italic 12px/18px Georgia, serif; text-align: center; color: var(--gold); background: rgb(var(--black-rgb) / 0.55); }
   #ptGo { width: 100%; padding: 12px; font-size: 18px; }
   #ptSheet { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; padding: 12px; background: rgb(var(--s0-rgb) / 0.75); animation: fade 0.2s ease-out; }
