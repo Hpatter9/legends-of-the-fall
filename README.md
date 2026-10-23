@@ -1,4 +1,4 @@
-# Legends of the Fall
+# Legends of the Last Keep
 
 A King God Castle style auto-battler on an FF Tactics height grid, made for the phone (a web app you can add to the
 home screen). Place your heroes, press **Fight!**, and watch them fight on their own.

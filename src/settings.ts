@@ -107,13 +107,13 @@ function draw(): void {
   const s = current;
   const body = $('settingsBody');
   body.replaceChildren(
-    volumeRow('Music', 'music', s.music),
+    volumeRow('Music', 'music', s.music, 'Off turns the music and the ambience off and keeps the effects'),
     volumeRow('Effects', 'effects', s.effects),
     speedRow(s.speed),
     toggleRow('Screen shake', 'Shakes, and flashes white on a crit or a big kill', 'shake', s.shake),
     toggleRow('Damage numbers', 'The numbers that pop up when a fighter is hit', 'numbers', s.numbers),
     toggleRow('Battery saver', 'Caps the frame rate at 30', 'saver', s.saver),
-    toggleRow('Keep screen awake', 'The screen stays on during a fight', 'awake', s.awake),
+    toggleRow('Keep screen awake', 'The screen stays on while the game is open', 'awake', s.awake),
     toggleRow('Hero quips', 'Heroes (and now and then Duchess) say the odd word in a small speech bubble', 'quips', s.quips),
     resetTipsRow(),
     startOverRow(),
@@ -137,8 +137,8 @@ function row(title: string, hint: string): [HTMLElement, HTMLElement] {
   return [r, text];
 }
 
-function volumeRow(title: string, key: 'music' | 'effects', value: number): HTMLElement {
-  const [r] = row(title, value === 0 ? 'Off' : `${value}%`);
+function volumeRow(title: string, key: 'music' | 'effects', value: number, offHint = 'Off'): HTMLElement {
+  const [r] = row(title, value === 0 ? offHint : `${value}%`);
   const slider = document.createElement('input');
   slider.type = 'range';
   slider.min = '0';
@@ -148,7 +148,7 @@ function volumeRow(title: string, key: 'music' | 'effects', value: number): HTML
   slider.setAttribute('aria-label', `${title} volume`);
   const readout = r.querySelector('em')!;
   slider.addEventListener('input', () => {
-    readout.textContent = slider.value === '0' ? 'Off' : `${slider.value}%`;
+    readout.textContent = slider.value === '0' ? offHint : `${slider.value}%`;
   });
   slider.addEventListener('change', () => setSetting(key, Number(slider.value)));
   r.append(slider);
@@ -156,7 +156,7 @@ function volumeRow(title: string, key: 'music' | 'effects', value: number): HTML
 }
 
 function speedRow(value: 1 | 2): HTMLElement {
-  const [r] = row('Fight speed', 'The speed a new fight starts at (× 2 in the fight still toggles)');
+  const [r] = row('Fight speed', 'The speed a fight starts at (the speed button in the fight changes it, and is remembered)');
   const pair = document.createElement('div');
   pair.className = 'pair';
   for (const n of [1, 2] as const) {

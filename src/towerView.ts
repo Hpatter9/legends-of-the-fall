@@ -9,7 +9,7 @@ import { saveMeta, type Meta } from './sim/meta';
 import { hpShare } from './sim/health';
 import { ELITE_BY_ID, eliteAt } from './sim/elites';
 import {
-  buy, chestLine, choices, clearNode, enterNode, finishMystery, setGoing, floorOf, hasRoom, hire, inBattle, localTrainXp, NODE_NAMES, openTreasure, REST_HEAL, rest, mapProgress, moveTo, rowsIn, spotFloor, takeXp, train, trainXp, type MapNode, type NodeKind, type ShopItem, type TowerSummary,
+  buy, chestLine, choices, clearNode, enterNode, finishMystery, setGoing, floorOf, hasRoom, hire, hireClosed, inBattle, localTrainXp, NODE_NAMES, openTreasure, REST_HEAL, rest, mapProgress, moveTo, rowsIn, spotFloor, takeXp, train, trainXp, type MapNode, type NodeKind, type ShopItem, type TowerSummary,
 } from './sim/tower';
 import { SIDE_BASE, sideSpots, START_ID } from './sim/calLand';
 import { sideEliteAt } from './sim/elites';
@@ -768,9 +768,11 @@ export class TowerView {
       const pic = portrait(def.sheet, 40);
       pic.classList.add('rtShopPic');
       const words = el('span');
-      words.append(el('b', '', h.hired ? `${def.name} · hired` : def.name), el('small', '', def.role));
-      row.append(pic, words, el('em', '', h.hired ? '' : String(h.cost)));
-      row.disabled = !!h.hired || run.gold < h.cost || !hasRoom(run);
+      // (a hero is hired once a run: one the party has since got elsewhere is closed here)
+      const had = !h.hired && hireClosed(run, h.kind);
+      words.append(el('b', '', h.hired ? `${def.name} · hired` : had ? `${def.name} · in the party` : def.name), el('small', '', def.role));
+      row.append(pic, words, el('em', '', h.hired || had ? '' : String(h.cost)));
+      row.disabled = !!h.hired || had || run.gold < h.cost || !hasRoom(run);
       row.addEventListener('click', () => {
         const line = hire(run, i);
         if (line === null) return;
@@ -800,7 +802,7 @@ export class TowerView {
     const words = el('span');
     words.append(el('b', '', it.sold ? `${it.label} · sold` : it.label), el('small', '', it.text));
     row.append(pic, words, el('em', '', it.sold ? '' : String(it.cost)));
-    row.disabled = it.sold || run.gold < it.cost || (it.kind === 'hero' && !hasRoom(run));
+    row.disabled = it.sold || run.gold < it.cost || (it.kind === 'hero' && (!hasRoom(run) || hireClosed(run, it.ref!)));
     row.addEventListener('click', () => {
       const line = buy(run, i);
       if (line === null) return;

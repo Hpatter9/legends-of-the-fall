@@ -5,6 +5,7 @@
 
 import { startBattle, type Battle, type Boost, type Stage } from './battle';
 import { AREAS, type Area } from './board';
+import { CAL_CASTLE_EXTRA } from './calamity';
 import { buildChain, type Section } from './chain';
 import { BOSS_BANDS, FIELD_BANDS } from './foes';
 import { armyById, armyIndex, waveBoost, waveFoes, type Army } from './armies';
@@ -56,6 +57,8 @@ export interface Owned {
   paid?: number;
   /** The gear worn, one piece a slot; it stays for the run (a merge or a recycle hands it back to the pack). */
   gear?: Partial<Record<Slot, Gear>>;
+  /** A Calamity hero whose grade came from its level (`promoteByLevel`): it multiplies by `CAL_TIER.mult` a tier, not a merge's `GRADE_MULT`. */
+  tiered?: boolean;
   /** Run-level XP of a hero in a run that levels its own heroes (`Run.local`; `climb.ts`). */
   xp?: number;
   /** Lasting bumps from a training ground, added to the hero's multipliers. */
@@ -366,7 +369,8 @@ export function startStage(run: Run): Battle {
   const castle = heroBoost(run.castle);
   const foes = run.buff?.foes ?? 1;
   // (the spire and the Calamity: the foes answer the castle's hp and attack, the one lasting power that reaches those runs; the daily's answer the squad's lasting power, `dailyScale`)
-  const ans = run.local ? foeAnswer(run.castle) : run.mode?.kind === 'daily' && run.mode.scale ? { hp: run.mode.scale, atk: run.mode.scale } : undefined;
+  const calAns = run.mode?.kind === 'calamity' ? heroBoost(run.castle) : undefined;
+  const ans = run.local ? (calAns ? { hp: foeAnswer(run.castle).hp! * calAns.hp! ** CAL_CASTLE_EXTRA, atk: foeAnswer(run.castle).atk! * calAns.atk! ** CAL_CASTLE_EXTRA } : foeAnswer(run.castle)) : run.mode?.kind === 'daily' && run.mode.scale ? { hp: run.mode.scale, atk: run.mode.scale } : undefined;
   const { atk, hp, mana, first, revive, gold: _gold, set, ...team } = rl;
   const section = chainOf(run)?.[run.stage - 1];
   return startBattle(boardSeedOf(run, run.stage), node ? node.band : army ? waveFoes(army, run.stage, tierOfRun(run)) : bandFor(run.stage), {

@@ -14,11 +14,11 @@ const boss = (id: string, base: UnitDef, name: string, role: string, tweak: Part
 
 export const CAL_BOSS_FOES: Record<string, UnitDef> = {
   calBoss1: boss('calBoss1', FOES.orcWarlord, 'Gorvak the Ashen', 'Enrages as he falls', { hp: 2400, atk: 66 }),
-  calBoss2: boss('calBoss2', FOES.forestBoss1, 'The Thorn Warden', 'Enrages, and raises a shield wall', { hp: 3708, atk: 80 }),
-  calBoss3: boss('calBoss3', FOES.demonLord, 'Malphas', 'Enrages, shielded, calls imps, mends', { hp: 2964, atk: 70 }),
-  calBoss4: boss('calBoss4', FOES.hornedOgre, 'Hrungar the Mountain', 'Shoves the line, cannot be shoved', { hp: 3575, atk: 60 }),
+  calBoss2: boss('calBoss2', FOES.forestBoss1, 'The Thorn Warden', 'Enrages, and raises a shield wall', { hp: 3893, atk: 82 }),
+  calBoss3: boss('calBoss3', FOES.demonLord, 'Malphas', 'Enrages, shielded, calls imps, mends', { hp: 3409, atk: 75 }),
+  calBoss4: boss('calBoss4', FOES.hornedOgre, 'Hrungar the Mountain', 'Shoves the line, cannot be shoved', { hp: 3933, atk: 63 }),
   calBoss5: boss('calBoss5', FOES.devilLeader, 'Vorgrath the Hellbringer', 'Poisons, and drinks what it deals', { hp: 2623, atk: 50 }),
-  calBoss6: boss('calBoss6', FOES.boarKing, 'Karnok the Calamity', 'All of it, and a charge besides', { scale: 0.62, hp: 1398, atk: 31 }),
+  calBoss6: boss('calBoss6', FOES.boarKing, 'Karnok the Calamity', 'All of it, and a charge besides', { scale: 0.62, hp: 1328, atk: 30 }),
 };
 
 /** The intro card's title line under each boss's name. */

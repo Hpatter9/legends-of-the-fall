@@ -33,11 +33,8 @@ Code borrowed from Chronos Settlement (`hpatter9/little-town`): the seeded rando
 board's relief, step and sight rules (`src/sim/board.ts`), the blow and reach rules (`src/sim/battle.ts`), the
 isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle juice rules.
 
-- **The music** (`src/audio/town.ogg`, `battle.ogg`, `boss.ogg`): the Tiny RPG Music tracks `tiny-rpg-town.ogg` (between
-  fights), `Battle Encounter.ogg` (fights) and `BossBattle.ogg` (boss stages), copied from the private assets repository
-  (`hpatter9/chronos-assets`, `TinyRPGMusic/`). The pack's licence file names Luis Zuno (@ansimuz) as its creator and
-  allows use and redistribution in personal and commercial projects, with credit appreciated but not required.
-- **The sound effects** are synthesised in `src/render/sound.ts` with the Web Audio API; no files were copied for them.
+- **The music** is synthesised: three loops written as notes in `src/render/musicScore.ts` and rendered in the page by `src/render/musicBake.ts`. No files were copied for it. (Before 0.134 the game played the Tiny RPG Music tracks by Luis Zuno (@ansimuz) from `hpatter9/chronos-assets`; they are gone from the build but remain in the git history.)
+- **The sound effects** are synthesised in `src/render/audioProcessors.ts` with the Web Audio API; no files were copied for them.
 
 ## Areas (`src/art/areas/`, cut by `tools/areas-prep.py`)
 
