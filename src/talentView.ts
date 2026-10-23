@@ -8,7 +8,7 @@ import { saveMeta, type Meta } from './sim/meta';
 import { UNITS } from './sim/units';
 import { KITS } from './sim/abilities';
 import {
-  FULL_TREE_POINTS, MAX_SHARD_POINTS, SHARD_POINT_COST, TIER_COST, TREES, boughtOf, buyPoint, canBuyPoint, costOf, learn, nodeOf, picksOf, pointsEarned, pointsFree, pointsSpent, respec, respecCost, shardsToSpend,
+  DEEP_TREE_POINTS, FULL_TREE_POINTS, MAX_SHARD_POINTS, SHARD_POINT_COST, TIER_COST, TIER_LEVEL, TREES, boughtOf, buyPoint, canBuyPoint, costOf, learn, nodeOf, picksOf, pointsEarned, pointsFree, pointsSpent, respec, respecCost, shardsToSpend,
   whyNot, type TalentNode,
 } from './sim/talents';
 import { EQUIP_ICONS } from './equipArt';
@@ -26,8 +26,8 @@ const button = (text: string, cls = ''): HTMLButtonElement => {
 };
 
 /** Where each node sits in the tree, in percent across and in px down (`talents.css` sizes the box to match). */
-export const ROW_Y: readonly number[] = [0, 34, 138, 242];
-const X_BY_TIER: Record<number, number[]> = { 1: [12.5, 37.5, 62.5, 87.5], 2: [30, 70], 3: [30, 70] };
+export const ROW_Y: readonly number[] = [0, 34, 138, 242, 346, 450, 554, 658];
+const X_BY_TIER: Record<number, number[]> = { 1: [12.5, 37.5, 62.5, 87.5], 2: [30, 70], 3: [30, 70], 4: [30, 70], 5: [30, 70], 6: [30, 70], 7: [30, 70] };
 export const nodeX = (n: TalentNode): number => X_BY_TIER[n.tier][Number(n.id.slice(-1).charCodeAt(0)) - 97];
 
 export type NodeState = 'taken' | 'available' | 'locked' | 'ruled';
@@ -69,11 +69,11 @@ export function drawTalents(meta: Meta, kind: string, changed: () => void = () =
     panel.replaceChildren(el('h4', '', 'Talents'));
     const taken = picksOf(meta, kind).map((id) => nodeOf(kind, id)).filter((n): n is TalentNode => !!n);
     const free = pointsFree(meta, kind);
-    panel.append(el('p', 'tSum', `${free} point${free === 1 ? '' : 's'} to spend · ${taken.length} learned · ${pointsSpent(meta, kind)} of ${FULL_TREE_POINTS} points used`));
+    panel.append(el('p', 'tSum', `${free} point${free === 1 ? '' : 's'} to spend · ${taken.length} learned · ${pointsSpent(meta, kind)} of ${FULL_TREE_POINTS + DEEP_TREE_POINTS} points used`));
     const row = el('div', 'tChips');
     for (const n of taken) row.append(nodeTile(n, 'taken'));
     if (taken.length) panel.append(row);
-    else panel.append(el('p', 'tSum dim', 'None yet. A hero earns a point every 3 levels, and spare shards buy more.'));
+    else panel.append(el('p', 'tSum dim', 'None yet. A hero earns a point every 3 levels, one more at each level milestone from 40, and spare shards buy more.'));
     const open = button('Open talents', free > 0 ? 'primary' : '');
     open.addEventListener('click', () => {
       sel = undefined;
@@ -87,12 +87,12 @@ export function drawTalents(meta: Meta, kind: string, changed: () => void = () =
     const free = pointsFree(meta, kind);
     const head = el('div', 'tHead');
     head.append(el('h4', '', `${UNITS[kind].name} · Talents`), el('b', 'tPoints', `${free} / ${pointsEarned(meta, kind)}`));
-    panel.append(head, el('small', 'tSub', 'Points free of points earned. Learn two of the first row to open the second, and one of the second to open the third.'));
+    panel.append(head, el('small', 'tSub', 'Points free of points earned. Learn two of the first row to open the second, and one of a row to open the next. The last four rows open at levels 40, 60, 80 and 100.'));
 
     // the tree: lines under the tiles
     const box = el('div', 'tTree');
     const w = 100;
-    const h = ROW_Y[3] + 60;
+    const h = ROW_Y[7] + 60;
     const ns = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(ns, 'svg');
     svg.setAttribute('class', 'tLines');
@@ -128,7 +128,7 @@ export function drawTalents(meta: Meta, kind: string, changed: () => void = () =
       });
       box.append(tile);
     }
-    for (const [i, label] of ['Stats', 'Choose one', 'Choose one'].entries()) {
+    for (const [i, label] of ['Stats', 'Choose one', 'Choose one', ...[4, 5, 6, 7].map((t) => `Choose one · level ${TIER_LEVEL[t]}`)].entries()) {
       const tag = el('small', 'tRow', label);
       tag.style.top = `${ROW_Y[i + 1] - 15}px`;
       box.append(tag);
@@ -143,9 +143,9 @@ export function drawTalents(meta: Meta, kind: string, changed: () => void = () =
       const title = el('div', 'tTitle');
       title.append(nodeTile(n, state), el('b', '', n.name), el('small', '', `Tier ${n.tier} · ${costOf(n)} point${costOf(n) > 1 ? 's' : ''}`));
       card.append(title, el('p', '', n.text));
-      if (n.tier === 2 || n.tier === 3) {
+      if (n.tier === 2 || n.tier === 4) {
         const skill = KITS[kind]?.skill;
-        if (n.tier === 2 && skill) card.append(el('small', 'dim', `Changes ${skill.name}.`));
+        if (skill) card.append(el('small', 'dim', `Changes ${skill.name}.`));
       }
       if (state === 'taken') card.append(el('small', 'tGood', 'Learned.'));
       else if (state === 'available') {
