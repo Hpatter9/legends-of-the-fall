@@ -73,6 +73,8 @@ export interface Meta {
   tower: number;
   /** A calamity's record: the most maps cleared in one run, and the runs cleared whole (none before the first calamity). */
   calamity?: { best: number; clears: number; /** The highest ascension level cleared whole (`ascension.ts`); none before the first clear after it came. */ asc?: number };
+  /** The ascension levels a Calamity has been cleared at, each a title (`calReward.ts`); none before the first clear after it came. */
+  calTitles?: number[];
   /** The daily challenge per date (yyyymmdd): the plays (the first counts) and how the counted run went: cleared, the furthest wave, the bonus stars. */
   daily: Record<string, DailyEntry>;
   /** The bosses beaten (`foes.ts`, by id). */

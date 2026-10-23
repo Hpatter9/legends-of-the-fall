@@ -72,7 +72,7 @@ const LAND_SALT = 0x1a4d;
 const DECOR_SALT = 0xdec0;
 const SIDE_SALT = 0x51de;
 /** The `a` steps between two rows of the map, and the start's below the first row. */
-const ROW_A = 8;
+const ROW_A = 11;
 const START_A = 5;
 /** The widest the decoration reaches (in `b`): a phone shows about plus or minus 5. */
 const DECOR_B = 9;
@@ -85,7 +85,7 @@ const bOf = (c: Cell): number => c.i - c.j;
 const keyOf = (c: Cell): string => `${c.i},${c.j}`;
 
 /** Where a row's nodes stand across the land, by how many there are. */
-const SLOTS: Record<number, number[]> = { 1: [0], 2: [-2, 2], 3: [-2, 0, 2], 4: [-3, -1, 1, 3] };
+const SLOTS: Record<number, number[]> = { 1: [0], 2: [-3, 3], 3: [-2, 0, 2], 4: [-3, -1, 1, 3] };
 /** How far each of them stands below the row's line, in `a` (the middle of three rides higher, the four alternate), so the sprites do not crowd. */
 const STAGGER: Record<number, number[]> = { 1: [0], 2: [0, 0], 3: [1, -1, 1], 4: [1, -1, 1, -1] };
 
@@ -151,7 +151,7 @@ export function landOf(seed: number, act: number, nodes: readonly MapNode[], sid
     here.forEach((node, k) => {
       const boss = node.kind === 'boss';
       const wander = boss || n >= 3 ? 0 : rng.pick([-1, 0, 0, 1]);
-      place(node.id, node.kind, r, aOfRow(r) + (boss ? 0 : stag[Math.min(k, 3)] ?? 0), boss ? 0 : (slots[Math.min(k, slots.length - 1)] ?? 0) + wander);
+      place(node.id, node.kind, r, aOfRow(r) + (boss ? 0 : stag[Math.min(k, 3)] ?? 0), boss ? 0 : Math.max(-3, Math.min(3, (slots[Math.min(k, slots.length - 1)] ?? 0) + wander)));
     });
   }
   place(START_ID, 'start', -1, aOfRow(-1) + START_A - ROW_A + 2, 0);
@@ -171,7 +171,7 @@ export function landOf(seed: number, act: number, nodes: readonly MapNode[], sid
     const from = byId.get(s.from);
     if (!from) continue;
     const found: { a: number; b: number; d: number }[] = [];
-    for (let a = aOf(from) - 5; a <= aOf(from) + 5; a++) {
+    for (let a = aOf(from) - 7; a <= aOf(from) + 7; a++) {
       for (let b = -SIDE_B; b <= SIDE_B; b++) {
         if ((a + b) & 1) continue;
         const c = cellOf(a, b);
@@ -179,7 +179,7 @@ export function landOf(seed: number, act: number, nodes: readonly MapNode[], sid
         const away = (t: Cell) => Math.hypot((bOf(t) - bOf(c)) * 45, (aOf(t) - aOf(c)) * 26);
         if (onRoad.has(keyOf(c)) || spots.some((t) => away(t) < 82)) continue;
         const d = away(from);
-        if (d >= 90 && d <= 280) found.push({ a, b, d });
+        if (d >= 90 && d <= 340) found.push({ a, b, d });
       }
     }
     // (the nearest wins; the stream breaks a tie)

@@ -186,7 +186,7 @@ test('a calamity starts with one hero at level 1, the squad limit is ten, and th
   assert.equal(calamityRun(7, m, 'nobody').roster[0].kind, m.party[0], 'a kind not owned falls back to the party');
 });
 
-test('a calamity map is connected, ends at its boss, and every path crosses a recruit camp', () => {
+test('a calamity map is connected, ends at its boss, and holds exactly one campfire and one recruit spot', () => {
   for (let seed = 1; seed <= 150; seed++) {
     for (let act = 1; act <= CAL_MAPS; act++) {
       const rows = CAL_ROWS[act - 1];
@@ -196,19 +196,16 @@ test('a calamity map is connected, ends at its boss, and every path crosses a re
       assert.equal(boss.length, 1);
       assert.equal(boss[0].row, rows - 1);
       assert.equal(Math.max(...map.map((n) => n.row)), rows - 1);
-      // every path from the first floor passes a recruit camp
-      const walk = (id: number, seen: boolean): boolean => {
-        const n = map[id];
-        const camp = seen || n.kind === 'recruit';
-        return n.next.length ? n.next.every((to) => walk(to, camp)) : camp;
-      };
-      for (const f of map.filter((n) => n.row === 0)) assert.ok(walk(f.id, false), `seed ${seed} act ${act}: a camp on every path`);
+      assert.equal(map.filter((n) => n.kind === 'campfire').length, 1, `seed ${seed} map ${act}: one campfire`);
+      assert.equal(map.filter((n) => n.kind === 'recruit').length, 1, `seed ${seed} map ${act}: one recruit spot`);
+      assert.equal(map.find((n) => n.kind === 'campfire')!.row, rows - 2, 'the campfire is the floor before the boss');
+      assert.equal(map.find((n) => n.kind === 'recruit')!.row, 2, 'the recruit spot is on the third floor');
       assert.ok(!map.some((n) => n.kind === 'recruit' && n.twist), 'a camp carries no twist');
     }
   }
 });
 
-test('a calamity run asks for the heroes it meets: recruit camps stock a different kind of each, and hiring costs gold and joins the squad', () => {
+test('a calamity run asks for the heroes it meets: the recruit spot offers three different kinds, free, and one joins the squad', () => {
   const m = richMeta();
   const run = calamityRun(11, m, 'knight');
   reachNode(run, 'recruit');
@@ -216,16 +213,14 @@ test('a calamity run asks for the heroes it meets: recruit camps stock a differe
   assert.equal(hires.length, HIRE_OFFERS);
   assert.equal(new Set(hires.map((h) => h.kind)).size, HIRE_OFFERS);
   assert.ok(hires.every((h) => h.kind !== 'knight'), 'a kind already in the party is not offered while others remain');
-  assert.equal(hires[0].cost, hireCost(run.stage));
-  // too poor
-  run.gold = hires[0].cost - 1;
-  assert.equal(hire(run, 0), null);
-  run.gold = hires[0].cost + 5;
-  assert.match(hire(run, 0)!, /joins the party/);
-  assert.equal(run.gold, 5);
+  assert.ok(hires.every((h) => h.cost === 0), 'the choice is free');
+  const gold = run.gold;
+  assert.match(hire(run, 1)!, /joins the party/);
+  assert.equal(run.gold, gold, 'no gold is paid');
   assert.equal(run.roster.length, 2);
   assert.equal(run.squad.length, 2, 'it takes a place in the squad');
-  assert.equal(hire(run, 0), null, 'hired once');
+  assert.equal(hire(run, 0), null, 'one hero only: the other two are passed over');
+  assert.equal(hire(run, 1), null, 'hired once');
   // the stock is fixed when the node is entered: a reload offers the same
   const back = JSON.parse(JSON.stringify(run)) as Run;
   assert.deepEqual(back.tower!.cur!.hires, run.tower!.cur!.hires);
