@@ -37,6 +37,6 @@ No attack clip needed a re-roll. Samples: `art-cleanup-anim-{a,b,c,d}.png` (befo
 
 ## Cost
 
-Balance 2377.75 at the start (not the 3190 of the brief), 1807.75 after: **570 generations used**: foes 12 + 3 bases and ~200 for their clips, the strong walk and hurt retakes
-for 12 foes (54), 16 heroes x 2 takes x 2 clips (about 190), satyrs about 80 (the numbers are balance readings, which lag a little). Above the floor of 1,200 about 600 remain.
+Balance 2377.75 at the start (not the 3190 of the brief), 1769.75 after: **about 608 generations used**: foes 12 + 3 bases and ~200 for their clips, the strong walk and hurt retakes
+for 12 foes (54), 16 heroes x 2 takes x 2 clips (about 190), satyrs about 80 (the numbers are balance readings, which lag a little). Above the floor of 1,200 about 570 remain.
 Clips cost about 2 generations at 8 frames, far under the 11 once estimated.
