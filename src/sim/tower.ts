@@ -22,7 +22,7 @@ import { mixSeed, Rng } from './rng';
 import { addTwists, TWISTS } from './twists';
 import { BOSS, FOE_START, reward, squadLimit, summonCost, type Run } from './run';
 import { UNITS } from './units';
-import { CAL_BOARD, CAL_OPENING, CAL_SCALE, calBossBoost, fitBand, squadFoeMult } from './calamity';
+import { CAL_BOARD, CAL_MAPS, CAL_OPENING, CAL_SCALE, calBossBoost, fitBand, squadFoeMult } from './calamity';
 import { calBossBand } from './calamityBosses';
 import { ascChests, ascCrowns, ascOf, ascRules, ascCleared } from './ascension';
 import { CALAMITY_XP, CLIMB_XP, calXpShare, fightXpByHero, gainRunXp, heroLevel, hireable, hireHero, ownsKind, promoteByLevel, type Promotion } from './climb';
@@ -521,7 +521,9 @@ function plainSpec(run: Run, kind: NodeKind, floor: number, nodeId?: number): Fi
   // (the first floors of the first map are gentler: `CAL_OPENING`)
   const ease = kind === 'boss' ? 1 : CAL_OPENING[floor - 1] ?? 1;
   const bite = run.tower!.act > 1 ? 1 + CAL_SCALE.atkBias : 1;
-  spec.stage.foes = { ...spec.stage.foes, hp: spec.stage.foes!.hp! * more * rules.foeHp * ease, atk: spec.stage.foes!.atk! * more * rules.foeAtk * ease * bite };
+  // (the last map's fights are harder still: `CAL_SCALE.final`)
+  const last = run.tower!.act >= CAL_MAPS && kind !== 'boss' ? 1 + CAL_SCALE.final : 1;
+  spec.stage.foes = { ...spec.stage.foes, hp: spec.stage.foes!.hp! * more * rules.foeHp * ease * last, atk: spec.stage.foes!.atk! * more * rules.foeAtk * ease * bite * last };
   if (rules.heal !== 1) spec.stage.heal = rules.heal;
   return spec;
 }

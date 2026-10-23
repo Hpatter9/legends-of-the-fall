@@ -83,3 +83,42 @@ effect and a DawnLike icon (`tools/relic-icons.py`, credited):
 They are plain numbers (no new battle hooks), so a set needs nothing from the battle. `setBonus` and `relicEffects` now also fold `reach`,
 `first` and `gold` from a set. The new pieces come from the same places as the others (shops, chests, events, elites, bosses); the pool is
 larger, so a run completes a set less often.
+
+## Balance: what moved and the numbers
+These notes make the Calamity **easier** (the economy: a free hero a map, so the gold goes to relics, gear and heals; the hubs; the detour's gear),
+so the foe scale was re-tuned on top of `claude/cal-roster`'s (merged first). 300 runs, `npm run balance -- --no-tables --calamity --attempts 300`
+(share felling each map's boss):
+
+| | map 1 | 2 | 3 | 4 | 5 | 6 |
+| --- | --- | --- | --- | --- | --- | --- |
+| target | 89 | 81 | 61 | 43 | 32 | 16 |
+| `cal-roster` alone (their note) | 90 | 82 | 66 | 49 | 34 | 12 |
+| these changes, nothing re-tuned | 93 | 89 | 81 | 72 | 63 | 57 |
+| **final** | **91** | **81** | **60** | **44** | **32** | **15** |
+
+The starter's level after each boss, median: 10 / 19 / 21 / 24 / 27 / 30; heroes held 8.2 (mean); the full-clear share 15%. The knobs, all in
+`CAL_SCALE` (`calamity.ts`): `start` 0.425 to **0.435**, `step` 0.55 to **0.63**, `bossStep` 0.05 to **0.06**, and one new knob **`final` 0.2**: the last
+map's ordinary fights (not its boss) have 20% more hp and attack. The boss of map 6 is a small unit (1,328 hp), and the run is decided by the fights
+before it, so a boss multiplier moved nothing; `final` is what brings the last map to 15%. `perHero`, `atkBias` and `CAL_CASTLE_EXTRA` are
+`cal-roster`'s, unchanged. The tower (`--tower`) is as it was (12 median, 13.3 mean; bosses 10 / 3 / 3%): the new relics are in its pool too.
+
+How the pieces were told apart (150 to 200 runs each): the free recruit alone changes little; one campfire and one recruit with the other nodes
+turned into fights gave 96% on map 1 (more fights, more XP and gold), turned into mysteries gave a lot of relics and gear, and folding the nodes
+away (the hubs) kept the map's power where it was; the detour's reward and the island spacing change almost nothing.
+
+## Checks
+`npm run typecheck`, `npm test` (972 pass), `npm run web`. Screenshots at 393x852, 360x780 and 412x915 in `docs/samples/cal-map-*.png`:
+`start` (the islands apart), `detour`, `recruit`, `recruit-chosen`, `shop`, `shop-again` (the back-tracking fix), `recap`, `next-map`, `victory`,
+`victory-end`. `tools/calmap/cal-map-check.mjs`: an old save (made by the version before: three recruit camps and three campfires) and a new
+save both start, each plays a full fight, no page errors.
+
+## For the owner to decide
+1. **"Option C" for the shards**: I took it to be the hero-shard rules in `hero-shards.md` (unlock shards for a hero not owned, rank shards for one
+   owned, drawn by the same odds as a pull). Say if "option C" meant something else.
+2. **Ascension 2** is now "hire in shops costs 40% more" (the second recruit camp is gone).
+3. **The cosmetic**: the game has no cosmetic system (skins, frames), so the finish pays a **title** and a gear piece on a rarity frame, and no cosmetic.
+4. **The map is a hub map**: every path passes the one recruit spot (third floor) and the one campfire (before the boss). If you want the camp to be
+   off the main road (optional), say so; it would need a branch with a dead end.
+5. **The detour mini-boss pays more** (double gold and gear) so there is a reason to take it; XP stays a quarter, and there is no healing after.
+6. **`final` 0.2** on the last map's fights, to keep the last map the hardest.
+7. **Relic sets are plain numbers**, so there are no new battle effects; the three-piece bonuses are modest (a few percent), like the old sets'.
