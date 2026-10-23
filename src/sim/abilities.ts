@@ -1526,10 +1526,17 @@ KITS.forgeTitan = {
 };
 
 // Every other hero's ultimate (`ultimates.ts`), unlocked at `ULT_LEVEL`; the first eight's are retuned there.
-for (const [kind, ult] of Object.entries(heroUltimates((kind) => KITS[kind].ultimate))) KITS[kind].ultimate = ult;
+const OWN_ULTIMATES = new Map<string, Skill>(Object.entries(KITS).filter(([, k]) => k.ultimate).map(([kind, k]) => [kind, k.ultimate!]));
+const GATED = new Map<Skill, Skill>();
+for (const [kind, ult] of Object.entries(heroUltimates((kind) => KITS[kind].ultimate))) {
+  if (OWN_ULTIMATES.get(kind) && ult.unlock) GATED.set(ult, OWN_ULTIMATES.get(kind)!);
+  KITS[kind].ultimate = ult;
+}
 
 // The named elites of the tower (`elites.ts`) borrow the foes' skills and heroes' skills too.
 Object.assign(KITS, eliteKits(KITS), calBossKits(KITS));
+// (a foe that shares one of the first eight's kits, such as the elites Sethra and Kuro, keeps the ultimate as it was: only the hero's copy waits for its level)
+for (const [name, k] of Object.entries(KITS)) if (k.ultimate && GATED.has(k.ultimate) && OWN_ULTIMATES.get(name) !== GATED.get(k.ultimate)) KITS[name] = { ...k, ultimate: GATED.get(k.ultimate) };
 
 export const kitOf = (u: Unit): Kit | undefined => u.kit ?? KITS[u.def];
 

@@ -135,7 +135,7 @@ export const ARMIES: readonly Army[] = [
     start: 1.38,
     growth: 0.128,
     mid: { hp: 1700, atk: 46 },
-    last: { hp: 2125, atk: 55 },
+    last: { hp: 2420, atk: 61 },
     pay: 2.21,
     clear: 600,
   },

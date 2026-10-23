@@ -1,32 +1,32 @@
 # Ultimates for every hero
 
-Every hero has an ultimate now (all 45; `KITS[kind].ultimate`). Eight heroes have had theirs from the start and keep them as they
-were below level 15 (Kitsune, Karasu Tengu, Yamabushi Tengu, Gorgon, Samurai Commander, Great Sage, Demon Swordsman, Tyrant); the other 37 have a
-new one, **unlocked when the hero fights at level 15**.
+Every hero has an ultimate now (all 45; `KITS[kind].ultimate`), **unlocked when the hero fights at level 15**. Eight heroes (Kitsune, Karasu Tengu,
+Yamabushi Tengu, Gorgon, Samurai Commander, Great Sage, Demon Swordsman, Tyrant) wrote theirs first and had it from level 1; since `balance-pass.md` they
+wait for level 15 like the other 37.
 
 ## The rules
 
 - **Level.** A fight carries the level a hero fights at: `Boost.level`, set by `gradeBoost` (a hero kind's *lasting* level, 1 to 30)
-  and by `localBoost` (the spire's and Calamity's *in-run* level, capped at 20). `addUnit` stores it on `Unit.level` (absent is 1).
+  and by `localBoost` (the spire's and Calamity's *in-run* level, capped at 30 since `balance-pass.md`). `addUnit` stores it on `Unit.level` (absent is 1).
   An ultimate with an `unlock` level (`ULT_LEVEL` = 15 for the 37 new ones) does not charge, does not show its meter and does not go
   off below it (`ultimateOf(unit)` is the one place that decides; `tryCast`, `gain`, `ultimateReady` and the unit's bars read it).
-  The first eight have no `unlock`, so they fight as they did. In the spire and Calamity the in-run level counts, so the new ones
+  All 45 carry `unlock: ULT_LEVEL` (the first eight's are gated copies, made in `heroUltimates`). In the spire and Calamity the in-run level counts, so they
   unlock at in-run level 15 there.
 - **Foes never take a hero's ultimate.** `ultimateOf` returns nothing for a foe whose ultimate has an `unlock`, so a boss whose
   second phase borrows a hero's skill by name (`bossPhases.ts`: Boar King and the Minotaur's skill, forest boss 3 and the Satyr's)
-  does not borrow the ultimate too; the bosses are as they were.
+  does not borrow the ultimate too; the bosses are as they were. The foes that share one of the first eight's kits (the Gorgon Queen,
+  Nine-Tails, the elites Sethra and Kuro) keep the ungated original (`abilities.ts`, `GATED`), so they fight with it from the start as before; a test holds it.
 - **Charge.** As before: the ultimate fills at `ULT_RATE` (0.45) of the skill's rate, on its own meter (`charge2`), and goes before
   the skill when full. From level 15 up each ultimate also has a `tuned` pair (`Skill.tuned`, set in `ultimates.ts` `TUNE`): `rate` (its meter speed, times
   `ULT_RATE`) and `power` (times the caster's attack while it casts, and what its stuns, guards and heals are worth), the two balance knobs. Below
-  level 15 (the first eight heroes only, since the rest are locked) an ultimate is as written.
+  level 15 every ultimate is locked.
 - **Talents.** `ultPow` and `ultRate` (`talents.ts`) read the unlocked ultimate of whatever hero has them, so they work for the new
   ultimates too; only the Karasu, Yamabushi and Gorgon trees use them. The general nodes reach the new ultimates the way they reach
   every skill: `pow` lifts the attack while it casts (damage, healing, what is called up), `dur` lengthens stuns, guards, hastes,
   curses and decoys (the engines read `durOf`), `reach` lengthens reach, `extra` adds one more salvo, blink, shot, charge, hook or
   summoned fighter. That is the right size of change: a node that says "Shield Wall lasts longer" also lengthens Mass Muster for the
   Peasant, which a player would expect of a hero's whole kit. No tree names a new ultimate, and none needed to.
-- **Hero sheet.** The sheet lists the ultimate under the skill; below its level it is dimmed and ends "Unlocks at level 15." (the
-  first eight show no such line).
+- **Hero sheet.** The sheet lists the ultimate under the skill; below its level it is dimmed and ends "Unlocks at level 15." (all 45).
 
 ## How they are built (`src/sim/ultimates.ts`)
 
@@ -50,7 +50,7 @@ brim, a harvest that feeds on its kills, a line of fire, hooks, decoys, raising 
 
 ## All 45
 
-Starred (*) are the first eight's, from `abilities.ts`; they are always the hero's own, and are tuned from level 15 like the rest. *Meter* and
+Starred (*) are the first eight's, from `abilities.ts`; they unlock at level 15 and are tuned like the rest. *Meter* and
 *Power* are the tuned numbers (`TUNE` in `ultimates.ts`, read from level 15 up): the meter's speed as a multiple of `ULT_RATE`, and the strength
 as a multiple of the caster's attack while it casts (a stun, guard, shield or drink scales with it too: by its square root for how long, and
 directly for how much; a talent's `pow` and `ultPow` add to it).
@@ -158,8 +158,11 @@ At levels 20 and 30 (informational, not held by a test, and noisier than the tab
 
 ## Tests
 
-`test/ultimates.test.ts`: every hero has an ultimate (45, all different); the first eight have no `unlock` and the other 37 unlock at 15, locked at 14 and at level 1;
+`test/ultimates.test.ts`: every hero has an ultimate (45, all different); all 45 unlock at 15, locked at 14 and at level 1; the foes that borrow the first eight's kits keep theirs;
 a locked ultimate neither charges nor casts, an unlocked one does both; the level reaches the fight (`gradeBoost`, and `localBoost` capped at the in-run 20);
 the tuned meter applies from 15 and not below; every one of the 37 fires in a fight; a fight with them is deterministic; every ultimate has a cast effect; and a boss whose
 second phase borrows a hero's skill (Boar King, the grove boss) does not borrow its ultimate. `test/hero-balance-ultimates.test.ts`: the level-15 balance above.
 `test/talents.test.ts`: the capstone check is for the first eight (whose trees were written around an ultimate). `test/more-heroes.test.ts`: every second-wave hero has one.
+
+
+**Gated, and the Labyrinth and Calamity retuned:** see `balance-pass.md`.

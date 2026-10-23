@@ -64,7 +64,7 @@ export const UNITS: Record<string, UnitDef> = {
   wanderer: { id: 'wanderer', name: 'Wanderer', side: 'hero', sheet: 'wanderer_mage', scale: 0.64, hp: 150, atk: 15, def: 3, range: 3, moveMs: 700, atkMs: 1500, jump: 2, shot: 'fire', role: 'Heals the weakest ally' },
   kitsune: { id: 'kitsune', name: 'Kitsune', side: 'hero', sheet: 'kitsune', scale: 0.54, hp: 190, atk: 20, def: 5, range: 1, moveMs: 480, atkMs: 800, jump: 3, role: 'Charms a foe to fight for her' },
   karasu: { id: 'karasu', name: 'Karasu Tengu', side: 'hero', sheet: 'karasu_tengu', scale: 0.48, hp: 200, atk: 30, def: 4, range: 1, moveMs: 420, atkMs: 900, jump: 9, flies: true, role: 'Flies; dives on shooters' },
-  yamabushi: { id: 'yamabushi', name: 'Yamabushi Tengu', side: 'hero', sheet: 'yamabushi_tengu', scale: 0.64, hp: 250, atk: 17, def: 9, range: 1, moveMs: 760, atkMs: 1200, jump: 2, role: 'Wind that shoves foes off ledges' },
+  yamabushi: { id: 'yamabushi', name: 'Yamabushi Tengu', side: 'hero', sheet: 'yamabushi_tengu', scale: 0.64, hp: 262, atk: 17, def: 9, range: 1, moveMs: 760, atkMs: 1200, jump: 2, role: 'Wind that shoves foes off ledges' },
   werewolf: { id: 'werewolf', name: 'Werewolf', side: 'hero', sheet: 'werewolf_white', scale: 1.05, hp: 210, atk: 24, def: 5, range: 1, moveMs: 340, atkMs: 800, jump: 3, role: 'Quicker with each kill; bites back the blood', forms: ['werewolf_white', 'werewolf_white', 'werewolf_black'] },
   minotaur: { id: 'minotaur', name: 'Minotaur', side: 'hero', sheet: 'minotaur_3', scale: 0.65, hp: 280, atk: 22, def: 9, range: 1, moveMs: 800, atkMs: 1300, jump: 2, role: 'Charges a foe, knocks it back and stuns it', forms: ['minotaur_3', 'minotaur_3', 'minotaur_2'] },
   satyr: { id: 'satyr', name: 'Satyr', side: 'hero', sheet: 'satyr_2', scale: 0.57, hp: 265, atk: 24, def: 5, range: 1, moveMs: 560, atkMs: 1000, jump: 3, role: 'Pipes that hasten the allies near him', forms: ['satyr_2', 'satyr_2', 'satyr_3'] },
@@ -103,8 +103,8 @@ export const UNITS: Record<string, UnitDef> = {
   juggernaut: { id: 'juggernaut', name: 'Juggernaut', side: 'hero', sheet: 'hero_juggernaut', scale: 0.51, hp: 335, atk: 19, def: 9, range: 1, moveMs: 950, atkMs: 1500, jump: 1, role: 'A walking wall; its quake stuns all near' },
 
   sage: { id: 'sage', name: 'Great Sage', side: 'hero', sheet: 'hero_sage', scale: 0.77, hp: 185, atk: 29, def: 3, range: 4, moveMs: 700, atkMs: 1600, jump: 2, shot: 'fire', role: 'Calls stars on three crowds; fills his friends\' skill meters' },
-  demonSwordsman: { id: 'demonSwordsman', name: 'Demon Swordsman', side: 'hero', sheet: 'hero_demon_swordsman', scale: 0.74, hp: 200, atk: 22, def: 7, range: 1, moveMs: 560, atkMs: 950, jump: 3, role: 'Drinks what he cuts; the demon takes him' },
-  tyrant: { id: 'tyrant', name: 'Tyrant', side: 'hero', sheet: 'hero_tyrant', scale: 0.67, hp: 230, atk: 20, def: 6, range: 2, moveMs: 800, atkMs: 1250, jump: 2, role: 'Passes judgement; his reign breaks and rallies', },
+  demonSwordsman: { id: 'demonSwordsman', name: 'Demon Swordsman', side: 'hero', sheet: 'hero_demon_swordsman', scale: 0.74, hp: 208, atk: 22, def: 7, range: 1, moveMs: 560, atkMs: 950, jump: 3, role: 'Drinks what he cuts; the demon takes him' },
+  tyrant: { id: 'tyrant', name: 'Tyrant', side: 'hero', sheet: 'hero_tyrant', scale: 0.67, hp: 242, atk: 20, def: 6, range: 2, moveMs: 800, atkMs: 1250, jump: 2, role: 'Passes judgement; his reign breaks and rallies', },
 
   // called up by Beastmaster
   wolf: { id: 'wolf', name: 'Dire Wolf', side: 'hero', sheet: 'werewolf_red', scale: 0.6, hp: 120, atk: 14, def: 2, range: 1, moveMs: 360, atkMs: 700, jump: 3, summon: true, role: 'A wolf called by the Beastmaster' },
