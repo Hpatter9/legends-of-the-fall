@@ -111,8 +111,9 @@ export function grantChests(m: Meta, a: Army, rec: ArmyRecord, tier = 0): number
 
 // ---- the chests ---------------------------------------------------------------------------------------------------------
 
-export type ChestKind = 'bronze' | 'silver' | 'gold';
-export const chestKind = (at: number): ChestKind => (at >= 10 ? 'gold' : at >= 5 ? 'silver' : 'bronze');
+/** The daily chest has a look of its own (`chestStash.ts`), whatever its size. */
+export type ChestKind = 'bronze' | 'silver' | 'gold' | 'daily';
+export const chestKind = (at: number): 'bronze' | 'silver' | 'gold' => (at >= 10 ? 'gold' : at >= 5 ? 'silver' : 'bronze');
 const CHEST_STEP = (at: number): number => (at >= 10 ? 3 : at >= 5 ? 2 : 1);
 
 export interface ChestState {
@@ -192,6 +193,34 @@ export function rollChest(seed: number, a: Army, at: number, tier = 0): { crowns
   return { crowns, shards, recruits, gear: rollGear(rng, at, idx) };
 }
 
+// ---- the daily chest ----------------------------------------------------------------------------------------------------
+
+/** Crowns the daily chest pays before its draw, and each bonus star's addition. */
+export const DAILY_CHEST_CROWNS = 240;
+export const DAILY_BONUS_CROWNS = 60;
+/** The chance the daily chest holds a piece of equipment (bronze quality; silver once both bonus stars are won), and what each bonus star adds. */
+export const DAILY_GEAR_CHANCE = 0.45;
+export const DAILY_GEAR_STAR = 0.15;
+/** The chance of a hero draw (unlock shards for a hero not owned, rank shards for one owned) in the daily chest. */
+export const DAILY_HERO_CHANCE = 0.3;
+/** The army-list place the daily chest's equipment rolls its item level at (the early armies' own). */
+const DAILY_GEAR_ARMY = 1;
+
+/**
+ * What a daily chest holds, drawn from its seed alone: crowns (more for each bonus star), 3 hero shards (one more per bonus star),
+ * now and then a hero draw, and a chance of equipment. Same shape as `rollChest`, so opening it goes through the same shard rules
+ * (`lootOf`: unlock shards for a hero not owned, rank shards for one owned, a content hero not owned swapped for another).
+ */
+export function rollDailyChest(seed: number, bonus: number): ReturnType<typeof rollChest> {
+  const rng = new Rng(seed);
+  const crowns = roundTo((DAILY_CHEST_CROWNS + DAILY_BONUS_CROWNS * bonus) * rng.range(0.85, 1.15), 10);
+  const shards = Array.from({ length: 3 + bonus }, () => rng.pick(ALL_HEROES));
+  const recruits = rng.chance(DAILY_HERO_CHANCE) ? [{ kind: rng.pick(ALL_HEROES), prize: false }] : [];
+  // (the equipment takes the stream last, as in every chest)
+  const gear: GearDrop[] = rng.chance(DAILY_GEAR_CHANCE + DAILY_GEAR_STAR * bonus) ? [{ item: rollEquipment(rng, { quality: bonus >= 2 ? 'silver' : 'bronze', armyIndex: DAILY_GEAR_ARMY, milestone: bonus >= 1 }) }] : [];
+  return { crowns, shards, recruits, gear };
+}
+
 /** The chest of the stash at `index`, rolled (null when there is none). */
 export function peekChest(m: Meta, index: number): Loot | null {
   const c = m.stash[index];
@@ -199,8 +228,8 @@ export function peekChest(m: Meta, index: number): Loot | null {
 }
 
 function lootOf(m: Meta, c: StashChest, apply: boolean): Loot {
-  const a = armyById(c.army)!;
-  const roll = rollChest(c.seed, a, c.at, c.tier);
+  const daily = c.daily !== undefined;
+  const roll = daily ? rollDailyChest(c.seed, c.bonus ?? 0) : rollChest(c.seed, armyById(c.army)!, c.at, c.tier);
   const items: LootItem[] = [{ type: 'crowns', text: `${roll.crowns} crowns` }];
   if (apply) m.crowns += roll.crowns;
   // (a content hero the roll lands on, not owned yet, is swapped for another by a side stream: those join on a milestone only)
@@ -229,13 +258,13 @@ function lootOf(m: Meta, c: StashChest, apply: boolean): Loot {
     if (apply) grantEquipment(m, g.item);
     items.push({ type: 'gear', text: `${itemName(g.item)} (${RARITY_NAMES[g.item.rarity]}, Lv ${g.item.level})`, ref: g.item.base, rarity: g.item.rarity, equip: g.item, prize: g.item.rarity >= 5 });
   }
-  return { at: c.at, kind: chestKind(c.at), army: c.army, items };
+  return { at: c.at, kind: daily ? 'daily' : chestKind(c.at), army: c.army, items };
 }
 
 /** Open the stash's chest at `index`: it leaves the stash and its rewards go into the meta, once. Null when there is no such chest. */
 export function openChest(m: Meta, index: number): Loot | null {
   const c = m.stash[index];
-  if (!c || !armyById(c.army)) return null;
+  if (!c || (c.daily === undefined && !armyById(c.army))) return null;
   m.stash.splice(index, 1);
   return lootOf(m, c, true);
 }
@@ -248,11 +277,13 @@ export function readStash(raw: unknown, rawArmies: unknown, seed: number): Stash
   const out: StashChest[] = [];
   const add = (c: StashChest) => {
     // (a tower chest is one of several a run pays, told apart by its seed; an army's milestone is given once)
-    if (!out.some((x) => (c.tower || x.tower || c.first || x.first ? !!x.tower === !!c.tower && !!x.first === !!c.first && x.seed === c.seed : x.army === c.army && x.at === c.at))) out.push(c);
+    if (!out.some((x) => (c.daily || x.daily ? x.daily === c.daily : c.tower || x.tower || c.first || x.first ? !!x.tower === !!c.tower && !!x.first === !!c.first && x.seed === c.seed : x.army === c.army && x.at === c.at))) out.push(c);
   };
   if (Array.isArray(raw))
     for (const c of raw as Partial<StashChest>[]) {
-      if (c && typeof c.army === 'string' && armyById(c.army) && MILESTONES.includes(c.at as number) && typeof c.seed === 'number') add({ army: c.army, at: c.at as number, tier: Math.max(0, Math.min(TIERS.length - 1, (c.tier ?? 0) | 0)), seed: c.seed >>> 0, ...(c.tower === true ? { tower: true } : {}), ...(c.first === true ? { first: true } : {}) });
+      // (a daily chest names its date and has no army)
+      if (c && c.army === 'daily' && /^\d{8}$/.test(String(c.daily)) && typeof c.seed === 'number') add({ army: 'daily', at: 3, tier: 0, seed: c.seed >>> 0, daily: c.daily as number, bonus: Math.max(0, Math.min(2, (c.bonus ?? 0) | 0)) });
+      else if (c && typeof c.army === 'string' && armyById(c.army) && MILESTONES.includes(c.at as number) && typeof c.seed === 'number') add({ army: c.army, at: c.at as number, tier: Math.max(0, Math.min(TIERS.length - 1, (c.tier ?? 0) | 0)), seed: c.seed >>> 0, ...(c.tower === true ? { tower: true } : {}), ...(c.first === true ? { first: true } : {}) });
     }
   // (the earlier format: a record with its given chests and the opened ones)
   if (rawArmies && typeof rawArmies === 'object')
@@ -266,8 +297,9 @@ export function readStash(raw: unknown, rawArmies: unknown, seed: number): Stash
 
 /** Which chest in the stash the camp's cart shows (and a tap opens): the highest milestone (10 before 5 before 3), then the
  *  hardest tier, then the later army; the first of equals. -1 for an empty stash. */
-export function bestChest(stash: readonly { army: string; at: number; tier: number }[]): number {
-  const rank = (c: { army: string; at: number; tier: number }) => c.at * 1000 + c.tier * 100 + Math.max(0, armyIndex(c.army));
+export function bestChest(stash: readonly { army: string; at: number; tier: number; daily?: number }[]): number {
+  // (a daily chest ranks with a silver one)
+  const rank = (c: { army: string; at: number; tier: number; daily?: number }) => (c.daily !== undefined ? 5 : c.at) * 1000 + c.tier * 100 + Math.max(0, armyIndex(c.army));
   let best = stash.length ? 0 : -1;
   stash.forEach((c, k) => {
     if (rank(c) > rank(stash[best])) best = k;
