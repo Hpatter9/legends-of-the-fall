@@ -5,7 +5,8 @@
 // the gacha. Drawn in the room's own pixels times a whole-number scale, nearest neighbour, only while the tab is showing.
 
 import { ALL_HEROES, UNITS } from './sim/units';
-import { NEW_PITY, pullCost, type Meta, type Pull } from './sim/meta';
+import { pullCost, type Meta, type Pull } from './sim/meta';
+import { pityLine } from './gacha';
 import { heroRig } from './render/awakenRig';
 import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
@@ -211,10 +212,9 @@ export class SummoningHall {
       b.replaceChildren(`Summon ×${n}`, el('small', '', `${pullCost(n)} crowns`));
       b.disabled = busy || meta.crowns < pullCost(n);
     }
-    // (every hero is as likely as any other; a long run of repeats ends in a hero not yet owned)
-    const line = el('b', '', 'Every hero is as likely as any other');
-    const left = Math.max(1, NEW_PITY - (meta.sinceNew ?? 0));
-    const odds = el('i', 'odds', have >= ALL_HEROES.length ? 'You have every hero: a repeat gives a shard' : `A new hero is sure within ${left} pull${left === 1 ? '' : 's'}`);
+    // (a pull is shards of one hero; the line names the hero nearest to joining)
+    const line = el('b', '', 'Shards of one hero a pull');
+    const odds = el('i', 'odds', pityLine(meta));
     this.scroll.replaceChildren(line, odds);
   }
 

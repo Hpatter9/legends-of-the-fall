@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DUPLICATE_SHARDS, earn, loadMeta, startedMeta, newMeta, NEW_PITY, pullCost, pullOnce, PULL10_COST, PULL_COST, recruit, runCrowns, saveMeta, stageCrowns } from '../src/sim/meta';
+import { earn, loadMeta, startedMeta, newMeta, pullCost, pullOnce, PULL10_COST, PULL_COST, recruit, runCrowns, saveMeta, stageCrowns } from '../src/sim/meta';
 import { newRun, summon } from '../src/sim/run';
 import { ALL_HEROES, HEROES } from '../src/sim/units';
 
@@ -52,49 +52,6 @@ test('every hero is as likely as any other in a pull (no tiers, no rates)', () =
   // (45 heroes, 45000 pulls: about 1000 each, and 4 standard deviations is about 125)
   assert.equal(seen.size, ALL_HEROES.length);
   for (const [k, n] of seen) assert.ok(Math.abs(n - 1000) < 130, `${k} came up ${n} times`);
-});
-
-test('the fair helper: a long run of repeats ends in a hero not yet owned, and never a repeat while one is left', () => {
-  const m = startedMeta(3);
-  // (all but two heroes owned, so a plain pull is a repeat 43 times in 45)
-  const missing = ['tyrant', 'sage'];
-  m.unlocked = ALL_HEROES.filter((k) => !missing.includes(k));
-  let dry = 0;
-  let longest = 0;
-  while (missing.some((k) => !m.unlocked.includes(k))) {
-    const p = pullOnce(m);
-    dry = p.isNew ? 0 : dry + 1;
-    longest = Math.max(longest, dry);
-    assert.ok(dry < NEW_PITY, `${dry} repeats in a row`);
-  }
-  assert.ok(longest >= 0);
-  // (with every hero owned the helper has nothing to give: a pull is a plain draw and a shard)
-  const p = pullOnce(m);
-  assert.equal(p.isNew, false);
-  assert.equal(p.shards, DUPLICATE_SHARDS);
-  // (a counter at the limit gives a new hero on the very next pull)
-  const n = startedMeta(4);
-  n.sinceNew = NEW_PITY - 1;
-  assert.equal(pullOnce(n).isNew, true);
-  assert.equal(n.sinceNew, 0);
-});
-
-test('a new kind unlocks; a duplicate gives a shard of it', () => {
-  const m = startedMeta(4);
-  const first = pullOnce(m);
-  assert.equal(first.isNew, !(HEROES as readonly string[]).includes(first.kind));
-  assert.ok(m.unlocked.includes(first.kind));
-  let dup = null;
-  for (let i = 0; i < 200 && !dup; i++) {
-    const c = m.crowns;
-    const p = pullOnce(m);
-    if (!p.isNew) dup = { p, c };
-  }
-  assert.ok(dup);
-  assert.equal(dup.p.shards, DUPLICATE_SHARDS);
-  assert.equal(m.crowns, dup.c);
-  assert.ok(m.shards[dup.p.kind] >= DUPLICATE_SHARDS);
-  assert.equal(new Set(m.unlocked).size, m.unlocked.length);
 });
 
 test('run summons draw only unlocked kinds', () => {

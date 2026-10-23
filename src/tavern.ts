@@ -110,9 +110,14 @@ export class Tavern {
   private grip: { x: number; y: number } | null = null;
   private watch: ResizeObserver;
 
-  constructor(private onPick: (kind: string) => void) {
+  constructor(
+    private onPick: (kind: string) => void,
+    onRoster: () => void,
+  ) {
     this.scroll.append(this.canvas);
-    this.root.append(this.scroll, this.count);
+    const roster = el('button', 'tvRoster', 'Roster');
+    roster.addEventListener('click', onRoster);
+    this.root.append(this.scroll, this.count, roster);
     this.ctx.imageSmoothingEnabled = false;
     onSettings((s) => (this.saver = s.saver));
     window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));

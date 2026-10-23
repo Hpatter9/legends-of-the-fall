@@ -5,6 +5,7 @@
 
 import { mixSeed, Rng } from './rng';
 import { ALL_HEROES } from './units';
+import { isContent } from './unlockRules';
 
 export type StarterClass = 'front' | 'striker' | 'shooter' | 'caster' | 'support';
 
@@ -30,8 +31,8 @@ export interface Starter {
   pick: number | null;
 }
 
-/** The hero kinds of a class, in the order the roster lists them. */
-const ofClass = (c: StarterClass): string[] => ALL_HEROES.filter((k) => CLASS_OF[k] === c);
+/** The hero kinds of a class a pack can offer, in the order the roster lists them (the heroes earned by content are not offered). */
+const ofClass = (c: StarterClass): string[] => ALL_HEROES.filter((k) => CLASS_OF[k] === c && !isContent(k));
 
 /** `items` shuffled by `rng` (a copy). */
 function shuffled<T>(rng: Rng, items: readonly T[]): T[] {

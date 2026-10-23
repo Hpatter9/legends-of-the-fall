@@ -13,6 +13,8 @@ import { mixSeed, Rng } from './rng';
 import { armyOfRun, tierOfRun, type Run } from './run';
 import { MILESTONES, RUN_STARS, TIERS } from './tiers';
 import { ALL_HEROES, UNITS } from './units';
+import { giveShards, swapContent } from './unlock';
+import { CHEST_HERO_SHARDS, CHEST_PRIZE_SHARDS } from './unlockRules';
 
 // ---- the conditions -----------------------------------------------------------------------------------------------------
 
@@ -201,21 +203,27 @@ function lootOf(m: Meta, c: StashChest, apply: boolean): Loot {
   const roll = rollChest(c.seed, a, c.at, c.tier);
   const items: LootItem[] = [{ type: 'crowns', text: `${roll.crowns} crowns` }];
   if (apply) m.crowns += roll.crowns;
+  // (a content hero the roll lands on, not owned yet, is swapped for another by a side stream: those join on a milestone only)
   const shards = new Map<string, number>();
-  for (const k of roll.shards) shards.set(k, (shards.get(k) ?? 0) + 1);
+  roll.shards.forEach((k, i) => {
+    const kind = swapContent(m, k, c.seed, i);
+    shards.set(kind, (shards.get(kind) ?? 0) + 1);
+  });
   for (const [kind, n] of shards) {
-    if (apply) m.shards[kind] = (m.shards[kind] ?? 0) + n;
-    items.push({ type: 'shards', text: `${n} ${UNITS[kind].name} shard${n > 1 ? 's' : ''}`, ref: kind });
+    // (shards of a hero not owned count towards joining; of one owned, towards its rank)
+    const owned = m.unlocked.includes(kind);
+    const g = apply ? giveShards(m, kind, n) : null;
+    const text = owned ? `${n} ${UNITS[kind].name} shard${n > 1 ? 's' : ''}` : `${n} ${UNITS[kind].name} unlock shard${n > 1 ? 's' : ''}`;
+    items.push({ type: 'shards', text: g?.joined ? `${UNITS[kind].name} joins you` : text, ref: kind });
   }
-  for (const r of roll.recruits) {
-    // (a hero not yet owned is recruited; one owned pays shards instead)
-    const isNew = !m.unlocked.includes(r.kind);
-    if (apply) {
-      if (isNew) m.unlocked.push(r.kind);
-      else m.shards[r.kind] = (m.shards[r.kind] ?? 0) + 2;
-    }
-    items.push({ type: 'hero', text: isNew ? `${UNITS[r.kind].name} joins you` : `${UNITS[r.kind].name}: 2 shards (already yours)`, ref: r.kind, prize: r.prize });
-  }
+  roll.recruits.forEach((r, i) => {
+    // (a hero draw gives unlock shards of a hero not owned, or 2 rank shards of one owned)
+    const kind = swapContent(m, r.kind, c.seed, 100 + i);
+    const owned = m.unlocked.includes(kind);
+    const n = owned ? 2 : r.prize ? CHEST_PRIZE_SHARDS : CHEST_HERO_SHARDS;
+    const g = apply ? giveShards(m, kind, n) : null;
+    items.push({ type: 'hero', text: g?.joined ? `${UNITS[kind].name} joins you` : owned ? `${UNITS[kind].name}: 2 shards (already yours)` : `${UNITS[kind].name}: ${n} unlock shards`, ref: kind, prize: r.prize });
+  });
   // (equipment: last, as it was drawn last; granted once, when the chest is opened)
   for (const g of roll.gear) {
     if (apply) grantEquipment(m, g.item);

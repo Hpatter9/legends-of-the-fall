@@ -16,6 +16,9 @@ import { TREES } from './sim/talents';
 import { blowsPerSecond, kindPower, powerText, rateText, tilesPerSecond } from './sim/power';
 import { heroStats } from './sim/talents';
 import { sprite } from './render/sheets';
+import { CONTENT_HEROES, lockInfo } from './sim/contentHeroes';
+import { haveOf, toCollect } from './sim/unlock';
+import { portrait } from './render/sheets';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -71,7 +74,19 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
   if (!open) spr.canvas.style.filter = 'brightness(0.15) grayscale(1)';
   pic.append(spr.canvas);
   const title = el('div');
-  title.append(el('h3', '', open ? def.name : '???'), el('em', '', `${open ? `${CLASS_NAMES[CLASS_OF[kind]]} · ${def.role}` : 'not yet recruited'}`));
+  const lock = lockInfo(meta, kind);
+  title.append(el('h3', '', open || lock?.named ? def.name : '???'), el('em', '', open ? `${CLASS_NAMES[CLASS_OF[kind]]} · ${def.role}` : lock?.named ? `${CLASS_NAMES[CLASS_OF[kind]]} · locked` : 'not yet recruited'));
+  // (a hero not owned says how to get it: a milestone to reach, or shards to gather, with a bar where there is a count)
+  if (lock) {
+    title.append(el('span', 'lv', lock.line));
+    if (lock.need) {
+      const bar = el('div', 'xpbar');
+      const fill = el('span');
+      fill.style.width = `${Math.min(1, lock.now / lock.need) * 100}%`;
+      bar.append(fill);
+      title.append(bar, el('span', 'lv', `${lock.now} / ${lock.need}`));
+    }
+  }
   const x = xpBar(meta, kind);
   if (open) {
     const shards = meta.shards[kind] ?? 0;
@@ -132,4 +147,54 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
   let n = 0;
   const timer = setInterval(() => spr.tick(++n), 140);
   return () => clearInterval(timer);
+}
+
+/** The roster page of the Heroes tab: the heroes owned in a grid, then the ones earned in play with the line "Joins when you …" and their progress, then the ones being collected by shards with their bars. A tap on a hero opens its sheet. */
+export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) => void, close: () => void): void {
+  box.className = 'hsheet';
+  box.replaceChildren();
+  const have = ALL_HEROES.filter((k) => meta.unlocked.includes(k));
+  const earned = CONTENT_HEROES.filter((c) => meta.unlocked.includes(c.kind)).length;
+  const head = el('div');
+  head.append(el('h3', '', 'Roster'), el('em', '', `${have.length} of ${ALL_HEROES.length} heroes · ${earned} of ${CONTENT_HEROES.length} earned in play`));
+  box.append(head);
+  const grid = el('div', 'rosGrid');
+  for (const kind of have) {
+    const card = el('button', 'hcard');
+    card.append(portrait(UNITS[kind].sheet, 56), el('b', '', UNITS[kind].name), el('span', 'stars', starsOf(meta, kind)));
+    card.addEventListener('click', () => pick(kind));
+    grid.append(card);
+  }
+  box.append(grid);
+  const row = (kind: string): HTMLElement => {
+    const lock = lockInfo(meta, kind)!;
+    const r = el('button', 'rosRow');
+    const text = el('span', 'rosText');
+    text.append(el('b', '', lock.named ? UNITS[kind].name : '???'), el('span', 'lv', lock.line));
+    if (lock.need) {
+      const bar = el('div', 'xpbar');
+      const fill = el('span');
+      fill.style.width = `${Math.min(1, lock.now / lock.need) * 100}%`;
+      bar.append(fill);
+      text.append(bar, el('span', 'lv', `${lock.now} / ${lock.need}`));
+    }
+    const pic = portrait(UNITS[kind].sheet, 48);
+    pic.classList.add('dim');
+    r.append(pic, text);
+    r.addEventListener('click', () => pick(kind));
+    return r;
+  };
+  const section = (title: string, kinds: string[], note = ''): void => {
+    if (!kinds.length && !note) return;
+    box.append(el('h3', 'rosHead', title));
+    for (const k of kinds) box.append(row(k));
+    if (note) box.append(el('p', 'hint', note));
+  };
+  section('Earned in play', CONTENT_HEROES.filter((c) => !meta.unlocked.includes(c.kind)).map((c) => c.kind));
+  const begun = toCollect(meta).filter((k) => haveOf(meta, k) > 0).sort((a, b) => haveOf(meta, b) - haveOf(meta, a));
+  const rest = toCollect(meta).length - begun.length;
+  section('Gathering shards', begun, rest ? `${rest} more to find: pulls and chests give their shards.` : '');
+  const done = el('button', 'primary', 'Close');
+  done.addEventListener('click', close);
+  box.append(done);
 }
