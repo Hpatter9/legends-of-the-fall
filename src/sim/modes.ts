@@ -20,6 +20,7 @@ import { HEROES } from './units';
 import type { Meta } from './meta';
 import { mapFor, newTower } from './tower';
 import { noteFoes } from './codex';
+import { noteCombos } from './combos';
 
 /** The stage the endless tower opens at (reached in any run), or once the first army has been beaten. */
 export const TOWER_UNLOCK = 10;
@@ -192,6 +193,8 @@ export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: numbe
   if (run.mode?.kind === 'tower') m.tower = Math.max(m.tower, floorsCleared(run));
   // (the codex notes the foes this fight met and felled)
   if (fight.battle) noteFoes(m, fight.battle);
+  // (and a combo that went off is seen, for the codex)
+  if (fight.battle) noteCombos(m, fight.battle);
   return checkAchievements({ battle: fight.battle, won: fight.won, stage: fight.stage, stars: fight.stars, run, meta: m });
 }
 
