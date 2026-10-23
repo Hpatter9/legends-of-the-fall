@@ -1,7 +1,7 @@
 {
   "name": "legends-of-the-fall",
   "productName": "Legends of the Fall",
-  "version": "0.125.0",
+  "version": "0.126.0",
   "private": true,
   "description": "A King God Castle style auto-battler on an FF Tactics height grid.",
   "scripts": {
@@ -13,6 +13,7 @@
     "gear-balance": "node tools/gear-balance.mjs",
     "talent-balance": "node tools/talent-balance.mjs",
     "unlock-pace": "node tools/unlockPace.mjs",
+    "daily-rate": "node tools/dailyRate.mjs",
     "level-pace": "node tools/levelPace.mjs"
   },
   "license": "UNLICENSED",
