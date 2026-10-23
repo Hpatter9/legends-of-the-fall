@@ -219,7 +219,7 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   crystals, and the Machines' iron-plate and grate tiles, iron tree, coil stack, oil drums and arc lamp (the Rift's ground is the Liches' cracked earth turned violet). The great rift behind the last lair
   and the portal are the PVFX Foundry rift (CC0), as before.
 
-## Duchess the goat (`src/art/duchess/goat.png`)
+## Duchess the goat (`src/art/duchess/goat.png`; `goat-half.png` is the same sheet cut to half size for the tavern)
 
 Duchess is the town's goat from Chronos Settlement (`hpatter9/little-town`), and now of the camp, the tavern and the battlefield too. Her sheet
 is the one Chronos's cutscenes use (three steps walking left, three walking right), copied as it is. It is **whtdragon**'s RPG Maker MV white goat

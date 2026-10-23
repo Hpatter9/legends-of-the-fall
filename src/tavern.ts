@@ -12,7 +12,7 @@ import type { Meta } from './sim/meta';
 import { heroRig } from './render/awakenRig';
 import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
-import { goatSheet } from './duchess';
+import { goatHalfSheet } from './duchess';
 import { goatSays } from './quips';
 import { chewBob, FRAME, goatFrame, hopLift, newGoat, stepGoat, tapGoat, type Goat } from './render/duchessRules';
 import { CEIL_H, DOORWAYS, figureHeight, FLOOR_PAD, GLOWS, PROPS, ROOM_H, ROOM_NAMES, ROOM_W, ROOMS, RUGS, SCENE_W, SPOTS, WALL_H, type Spot } from './render/tavernSpots';
@@ -527,7 +527,7 @@ export class Tavern {
 
   private stepGoat(dt: number): void {
     if (!this.goatArt) {
-      void goatSheet().then((im) => (this.goatArt = im));
+      void goatHalfSheet().then((im) => (this.goatArt = im));
       return;
     }
     const p = Tavern.GOAT;
@@ -542,10 +542,11 @@ export class Tavern {
     const x = Math.round(goat.x);
     const foot = Tavern.GOAT.y;
     g.fillStyle = 'rgba(8, 3, 1, 0.38)';
-    g.fillRect(x - 10, foot, 20, 2);
-    g.fillRect(x - 7, foot - 1, 14, 1);
-    const lift = Math.round(hopLift(goat, this.now));
-    g.drawImage(this.goatArt!, goatFrame(goat) * FRAME, 0, FRAME, FRAME, x - FRAME / 2, foot - FRAME - lift - chewBob(goat, this.now, this.reduced), FRAME, FRAME);
+    g.fillRect(x - 6, foot, 12, 1);
+    // (the half-size sheet: she stands about half a hero's height in the hall)
+    const f = FRAME / 2;
+    const lift = Math.round(hopLift(goat, this.now) / 2);
+    g.drawImage(this.goatArt!, goatFrame(goat) * f, 0, f, f, x - f / 2, foot - f - lift - chewBob(goat, this.now, this.reduced), f, f);
   }
 
   /** The room names and edge arrows under the picture: which room the view is on, and which ways there is more to see. */
@@ -713,8 +714,8 @@ export class Tavern {
     const rx = this.camX + (e.clientX - box.left) / this.scale;
     const ry = this.camY + (e.clientY - box.top) / this.scale;
     // (Duchess first: a tap on her few pixels is hers, and she hops)
-    if (this.goat && this.goatArt && Math.abs(rx - this.goat.x) < 16 && ry > Tavern.GOAT.y - 30 && ry < Tavern.GOAT.y + 6) {
-      if (tapGoat(this.goat, this.now)) goatSays('tap', { x: e.clientX, y: box.top + (Tavern.GOAT.y - 38 - this.camY) * this.scale });
+    if (this.goat && this.goatArt && Math.abs(rx - this.goat.x) < 12 && ry > Tavern.GOAT.y - 20 && ry < Tavern.GOAT.y + 6) {
+      if (tapGoat(this.goat, this.now)) goatSays('tap', { x: e.clientX, y: box.top + (Tavern.GOAT.y - 24 - this.camY) * this.scale });
       return;
     }
     // (generous: the hero whose body is nearest the finger wins, within a reach a little wider and taller than the body, so a

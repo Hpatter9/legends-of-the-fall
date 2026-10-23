@@ -19,11 +19,3 @@ New animations, drawn in each hero's own style:
 The spots in `tavernSpots.ts` would gain a kind (`seat`, `bar`, `darts`, `brawl`) so heroes pair up where the props
 are. The cost to estimate first: frames per hero per action times 45 heroes, so it may start with shared props
 (tankards, darts) and a few poses each.
-
-## Character and humour (what is left)
-
-Duchess, the hero quips and the funny text are in (`docs/notes/humour.md`). Still open:
-
-- Duchess herself on the loading screen (only a joke tip is there now), and in recaps as a picture.
-- A smaller Duchess in the tavern (she is as tall as a hero there).
-- Foes' staffing jokes in the codex's lore lines; quips and grumbles during auto-replay runs.

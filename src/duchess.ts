@@ -7,6 +7,7 @@ import { loadImage } from './render/loadImage';
 import { chewBob, FRAME, goatFrame, hopLift, newGoat, stepGoat, tapGoat, type Goat } from './render/duchessRules';
 import { goatSays, type GoatKind } from './quips';
 import goatUrl from './art/duchess/goat.png';
+import goatHalfUrl from './art/duchess/goat-half.png';
 
 const CSS = `
 .duchess { position: fixed; z-index: 3; width: 48px; height: 48px; touch-action: manipulation; image-rendering: pixelated; cursor: pointer; -webkit-tap-highlight-color: transparent; }
@@ -19,6 +20,10 @@ let loading: Promise<HTMLImageElement> | null = null;
 export function goatSheet(): Promise<HTMLImageElement> {
   return (loading ??= loadImage(goatUrl).then((im) => (sheet = im)));
 }
+/** Her sheet cut to half size (24-pixel frames), for the tavern, where the room is drawn at twice size and the full sheet made
+ *  her as tall as a hero. */
+let halfLoading: Promise<HTMLImageElement> | null = null;
+export const goatHalfSheet = (): Promise<HTMLImageElement> => (halfLoading ??= loadImage(goatHalfUrl));
 
 export interface GoatSpot {
   /** Where her feet stand on the page: left edge (CSS px) of her box, and the bottom edge. */
