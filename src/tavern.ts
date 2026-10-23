@@ -12,6 +12,9 @@ import type { Meta } from './sim/meta';
 import { heroRig } from './render/awakenRig';
 import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
+import { goatHalfSheet } from './duchess';
+import { goatSays } from './quips';
+import { chewBob, FRAME, goatFrame, hopLift, newGoat, stepGoat, tapGoat, type Goat } from './render/duchessRules';
 import { CEIL_H, DOORWAYS, figureHeight, FLOOR_PAD, GLOWS, PROPS, ROOM_H, ROOM_NAMES, ROOM_W, ROOMS, RUGS, SCENE_W, SPOTS, WALL_H, type Spot } from './render/tavernSpots';
 import wallUrl from './art/tavern/wall.png';
 import wallHearthUrl from './art/tavern/wall_hearth.png';
@@ -122,6 +125,9 @@ export class Tavern {
   private still: HTMLCanvasElement | null = null;
   private glows = new Map<string, HTMLCanvasElement>();
   private actors = new Map<string, Actor>();
+  /** Duchess, who wanders the hearth hall's floor (`render/duchessRules.ts`). */
+  private goat: Goat | null = null;
+  private goatArt: HTMLImageElement | null = null;
   /** Room pixels to a screen pixel (a whole number), the size of the view in screen pixels, and where it looks (room pixels). */
   private scale = 2;
   private viewW = 0;
@@ -511,8 +517,36 @@ export class Tavern {
       this.think(a, this.now);
       this.step(a, dt, this.now);
     }
+    this.stepGoat(dt);
     this.draw();
     this.hint();
+  }
+
+  /** Duchess's patch: the floor in front of the hearth, between the round tables. */
+  private static GOAT = { y: 254, min: ROOM_W + 100, max: ROOM_W + 290 };
+
+  private stepGoat(dt: number): void {
+    if (!this.goatArt) {
+      void goatHalfSheet().then((im) => (this.goatArt = im));
+      return;
+    }
+    const p = Tavern.GOAT;
+    this.goat ??= { ...newGoat((p.min + p.max) / 2, this.now), face: -1 };
+    stepGoat(this.goat, dt, this.now, { min: p.min, max: p.max, friends: [] }, Math.random, this.reduced);
+  }
+
+  /** Duchess, with a shadow under her feet. */
+  private duchess(): void {
+    const g = this.ctx;
+    const goat = this.goat!;
+    const x = Math.round(goat.x);
+    const foot = Tavern.GOAT.y;
+    g.fillStyle = 'rgba(8, 3, 1, 0.38)';
+    g.fillRect(x - 6, foot, 12, 1);
+    // (the half-size sheet: she stands about half a hero's height in the hall)
+    const f = FRAME / 2;
+    const lift = Math.round(hopLift(goat, this.now) / 2);
+    g.drawImage(this.goatArt!, goatFrame(goat) * f, 0, f, f, x - f / 2, foot - f - lift - chewBob(goat, this.now, this.reduced), f, f);
   }
 
   /** The room names and edge arrows under the picture: which room the view is on, and which ways there is more to see. */
@@ -562,6 +596,7 @@ export class Tavern {
       if (spot.seat !== 'none' && (!actor || Math.abs(actor.x - spot.x) > 3)) list.push({ depth: spot.depth - 0.5, paint: () => this.seat(a, spot) });
       if (actor) list.push({ depth: spot.depth, paint: () => this.hero(actor) });
     }
+    if (this.goat && this.goatArt && Tavern.GOAT.min - 30 < right && Tavern.GOAT.max + 30 > left) list.push({ depth: Tavern.GOAT.y, paint: () => this.duchess() });
     list.sort((p, q) => p.depth - q.depth);
     for (const e of list) e.paint();
     // (the fire and the lamps flicker, each a little out of step)
@@ -678,6 +713,11 @@ export class Tavern {
     const box = this.canvas.getBoundingClientRect();
     const rx = this.camX + (e.clientX - box.left) / this.scale;
     const ry = this.camY + (e.clientY - box.top) / this.scale;
+    // (Duchess first: a tap on her few pixels is hers, and she hops)
+    if (this.goat && this.goatArt && Math.abs(rx - this.goat.x) < 12 && ry > Tavern.GOAT.y - 20 && ry < Tavern.GOAT.y + 6) {
+      if (tapGoat(this.goat, this.now)) goatSays('tap', { x: e.clientX, y: box.top + (Tavern.GOAT.y - 24 - this.camY) * this.scale });
+      return;
+    }
     // (generous: the hero whose body is nearest the finger wins, within a reach a little wider and taller than the body, so a
     // thumb that lands beside a hero, or on the seat they sit on, still picks them; on a tie the one in front wins)
     let best: { kind: string; d: number; depth: number } | null = null;
