@@ -446,7 +446,7 @@ function timeStop(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 /** The eight heroes whose ultimates are in `abilities.ts`: they are retuned here with the rest. */
 const FIRST_EIGHT = ['kitsune', 'karasu', 'yamabushi', 'gorgon', 'samuraiCommander', 'sage', 'demonSwordsman', 'tyrant'];
 
-/** Each hero's ultimate balance from level 15 up, tuned so every hero sits within the band of the roster average: `rate` (how fast the meter fills, times `ULT_RATE`) and
+/** Each hero's ultimate balance from level 30 up, tuned so every hero sits within the band of the roster average: `rate` (how fast the meter fills, times `ULT_RATE`) and
  *  `power` (times the caster's attack while it casts; a stun, guard, shield or heal scales with it too). `test/hero-balance-ultimates.test.ts` holds it, and
  *  `test/hero-balance.test.ts` holds the low levels, where the first eight heroes' ultimates are as written. */
 const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
@@ -584,7 +584,7 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
       bless(b, me, out, { haste: 6000, hot: { amount: 1.0, ms: 6000 }, charge: 30, song: 6000 });
       return true;
     }),
-    beastmaster: ult('Hunt of the Pack', 'Four dire wolves answer his call at once', 800, 'attack2', (b, me) => summon(b, me, 'wolf', 4)),
+    beastmaster: ult('Hunt of the Pack', 'Four wolves answer his call at once', 800, 'attack2', (b, me) => summon(b, me, 'wolf', 4)),
     druid: ult('Heart of the Grove', 'Two treants rise at her side and every ally is healed', 900, 'attack2', (b, me, out) => {
       if (!summon(b, me, 'treant', 2)) return false;
       bless(b, me, out, { heal: 4 });
