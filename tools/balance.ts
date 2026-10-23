@@ -373,9 +373,13 @@ function bestParty(meta: Meta): string[] {
   return [...meta.unlocked].sort((a, b) => score(b) - score(a) || a.localeCompare(b)).slice(0, 5);
 }
 
+/** Whether the castle is still shut to the climb: fewer than five armies cleared (the star unlock, `modeUnlock.ts`). */
+const castleShut = (meta: Meta): boolean => !process.argv.includes('--castle-open') && ARMIES.filter((a) => (meta.armies[a.id]?.clears ?? 0) > 0).length < 5;
+
 /** Spends the crowns: the castle's share on upgrades (the lowest of the five buildings first), the rest on recruits. */
 function spendCrowns(meta: Meta): void {
-  let castleBudget = Math.floor(meta.crowns * CASTLE_SHARE);
+  // (the castle is shut until 10 army stars: about two a cleared army, so after the fifth; `--castle-open` plays it open from the start, as before)
+  let castleBudget = castleShut(meta) ? 0 : Math.floor(meta.crowns * CASTLE_SHARE);
   for (;;) {
     const id = [...SPEND].sort((a, b) => meta.castle[a] - meta.castle[b])[0];
     const cost = nextCost(meta.castle, id);

@@ -3,7 +3,7 @@
 // Only reads the meta and the codex rules (`sim/codex.ts`); the Claim buttons call back to the home screen, which pays and saves.
 
 import { KITS, type Kit } from './sim/abilities';
-import { COLLECTIONS, COLLECTION_NAMES, FOE_ENTRIES, gotOf, heroKnown, isMet, killsOf, milestoneClaimed, milestoneReached, milestonesOf, progressLine, tipsOf, totalOf, whereMet, type Collection, type FoeEntry } from './sim/codex';
+import { codexWaiting, COLLECTIONS, COLLECTION_NAMES, crownsClaimed, crownsTotal, crownsWaiting, FOE_ENTRIES, gotOf, heroKnown, isMet, killsOf, milestoneClaimed, milestoneReached, milestonesOf, progressLine, tipsOf, totalOf, whereMet, type Collection, type FoeEntry } from './sim/codex';
 import { FOE_LORE, HERO_STORY } from './sim/codexLore';
 import { ALL_HEROES, UNITS } from './sim/units';
 import { lockInfo } from './sim/contentHeroes';
@@ -188,18 +188,30 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
     fill.style.width = `${(got / total) * 100}%`;
     bar.append(fill);
     block.append(bar);
-    const pips = el('div', 'cxPips');
+    // (the rewards, one row each: what it pays, what it takes, and whether it is taken, ready or still to earn)
+    block.append(el('p', 'cxPays', `Each entry counts towards a reward; none pays alone. Paid ${crownsClaimed(m, c)} of ${crownsTotal(c)} crowns.`));
+    const list = el('div', 'cxRewards');
     for (const ms of milestonesOf(c)) {
       const done = milestoneClaimed(m, ms);
       const ready = milestoneReached(m, ms) && !done;
-      const pip = el('button', `cxPip${done ? ' done' : ready ? ' ready' : ''}`);
-      pip.disabled = !ready;
-      pip.append(el('small', '', `${ms.percent}%`), el('b', '', done ? '✓' : ready ? `Claim +${ms.crowns}` : `${ms.need}`));
-      if (ready) pip.addEventListener('click', () => claim(ms.id));
-      pips.append(pip);
+      const row = el('div', `cxReward${done ? ' done' : ready ? ' ready' : ''}`);
+      row.append(el('span', 'cxWhat', `${ms.percent}%: ${ms.need} ${c === 'bestiary' ? 'foes' : 'heroes'}`), el('span', 'cxPay', `+${ms.crowns} crowns`));
+      if (ready) {
+        const go = el('button', 'primary', 'Claim');
+        go.addEventListener('click', () => claim(ms.id));
+        row.append(go);
+      } else row.append(el('span', 'cxState', done ? 'Claimed ✓' : `${ms.need - got} to go`));
+      list.append(row);
     }
-    block.append(pips);
+    block.append(list);
     head.append(block);
+  }
+  // (one button takes everything that waits)
+  const waiting = codexWaiting(m);
+  if (waiting.length) {
+    const all = el('button', 'primary cxClaimAll', `Claim rewards: +${crownsWaiting(m)} crowns`);
+    all.addEventListener('click', () => waiting.forEach((ms) => claim(ms.id)));
+    head.prepend(all);
   }
   body.append(head);
 

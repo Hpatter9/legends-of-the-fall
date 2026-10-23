@@ -8,6 +8,7 @@ import { dailyArea, dailyInProgress, dailyLine, dailyRun, dailyScore, dailySeed,
 import { loadMeta, startedMeta, saveMeta, setParty } from '../src/sim/meta';
 import { HEROES } from '../src/sim/units';
 import { levelOfKind, xpFor } from '../src/sim/levels';
+import { totalStars } from '../src/sim/armies';
 
 const store = () => {
   const s: Record<string, string> = {};
@@ -114,18 +115,20 @@ test('the camp line names the boss of the day and how the day stands', () => {
   assert.match(dailyLine(m, 20261020), /fell at 5\/10/);
 });
 
-test('the endless tower opens once a run has fought stage 10, or the first army is beaten, and not before', () => {
+test('the endless tower opens at 15 army stars (or for a save that had climbed it), and not before', () => {
   const m = startedMeta(1);
   assert.equal(towerOpen(m), false);
-  assert.match(towerLine(m), /beat the Orc Warband/);
-  m.bestStage = TOWER_UNLOCK - 1;
-  assert.equal(towerOpen(m), false);
-  const run = newRun(5);
-  run.stage = 10;
-  finish(run, false);
-  settleRun(m, run, { won: false, stage: 10, stars: 0 });
+  assert.match(towerLine(m), /opens at 15 stars/);
+  m.armies.orcs = { best: 15, won: 15, clears: 1, stars: {}, met: { 0: 7, 1: 7, 2: 7, 3: 1, 4: 1 } };
+  m.armies.undead = { best: 15, won: 15, clears: 1, stars: {}, met: { 0: 7, 1: 1 } };
+  assert.equal(totalStars(m), 15);
   assert.equal(towerOpen(m), true);
-  assert.equal(m.bestStage, 10);
+  m.armies.undead.met = { 0: 7 };
+  assert.equal(towerOpen(m), false);
+  // (a stage 10 run no longer opens it: the stars do; a save that had played it keeps it, `opened`)
+  m.opened = ['tower'];
+  assert.equal(towerOpen(m), true);
+  assert.ok(TOWER_UNLOCK > 0);
 });
 
 test('tower floors climb with the stage scaling, and every fifth floor is a boss', () => {
@@ -144,6 +147,7 @@ test('tower floors climb with the stage scaling, and every fifth floor is a boss
 test('the tower has no events, pays gold as a run does, and keeps its best floor', () => {
   const m = startedMeta(1);
   m.bestStage = 12;
+  m.opened = ['tower'];
   const run = towerRun(7, m);
   assert.deepEqual(run.mode, { kind: 'tower' });
   assert.deepEqual(run.pool, m.party);
@@ -219,4 +223,36 @@ test('a daily run and a tower run save and load with their mode', () => {
   assert.deepEqual(back?.mode, { kind: 'daily', date: 20261021, practice: false });
   assert.equal(back?.stars, 4);
   assert.equal(back?.area, run.area);
+});
+
+test('the castle and the Calamity open at 10 and 21 army stars, and a save that had played them keeps them', async () => {
+  const { modeOpen, MODE_NEED, grandfather, starsToGo } = await import('../src/sim/modeUnlock');
+  const m = startedMeta(1);
+  assert.deepEqual(MODE_NEED, { castle: 10, tower: 15, calamity: 21 });
+  assert.equal(modeOpen(m, 'castle'), false);
+  assert.equal(starsToGo(m, 'castle'), 10);
+  m.armies.orcs = { best: 15, won: 15, clears: 1, stars: {}, met: { 0: 7, 1: 7, 2: 7, 3: 1 } };
+  assert.equal(totalStars(m), 10);
+  assert.equal(modeOpen(m, 'castle'), true);
+  assert.equal(modeOpen(m, 'calamity'), false);
+  // (an old save: a building begun, a tower floor climbed, a calamity tried; an army whose predecessor was cleared)
+  const old = startedMeta(2);
+  old.castle.barracks = 1;
+  old.tower = 3;
+  old.calamity = { best: 2, clears: 0 };
+  old.armies.orcs = { best: 15, won: 15, clears: 1, stars: {} };
+  assert.deepEqual(grandfather(old).sort(), ['calamity', 'castle', 'tower', 'undead']);
+  assert.deepEqual(grandfather(startedMeta(3)), []);
+});
+
+test('a save from before the star unlocks reads its opened list from what it had played, and keeps it', () => {
+  const s = store();
+  const m = startedMeta(4);
+  m.castle.armoury = 2;
+  m.tower = 1;
+  saveMeta(m, s);
+  const raw = JSON.parse(s.getItem('legends.meta')!);
+  delete raw.opened;
+  const back = loadMeta(1, { getItem: () => JSON.stringify(raw) });
+  assert.deepEqual([...back.opened!].sort(), ['castle', 'tower']);
 });

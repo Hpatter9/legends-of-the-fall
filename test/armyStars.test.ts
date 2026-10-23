@@ -32,7 +32,7 @@ test('the tiers hold 3, 3, 3, 1 and 1 stars: eleven in all, numbered in order', 
   assert.deepEqual(TIERS.map((t) => t.need), [0, 3, 6, 9, 10]);
   assert.deepEqual(TIERS.map((t) => t.name), ['Normal', 'Hard', 'Elite', 'Legendary', 'Mythic']);
   // (the chests stay at 3, 5 and 10 stars: the Mythic star adds no chest of its own, its first clear pays one)
-  assert.deepEqual(MILESTONES, [3, 5, 10]);
+  assert.deepEqual(MILESTONES, [3, 5, 10, 11]);
 });
 
 test('Mythic opens after the Legendary star, and both stars are flawless-clear stars', () => {
@@ -83,7 +83,7 @@ test('each tier opens when the stars before it are all won', () => {
   m.armies.orcs.met = { 0: 7, 1: 3 };
   assert.equal(tierOpen(m, a, 2), false);
   // (a locked army opens no tier)
-  assert.equal(tierOpen(m, ARMIES[2], 0), false);
+  assert.equal(tierOpen(m, ARMIES[8], 0), false);
 });
 
 test('a run earns at most three stars, whatever the tier', () => {
@@ -142,7 +142,7 @@ test('stars are the best ever per tier: a replay adds only the new ones', () => 
 test('a milestone puts a chest in the stash once; opening removes it and pays its rewards once', () => {
   const m = startedMeta(1);
   const a = armyById('orcs')!;
-  assert.deepEqual(chestsOf(m, a).map((c) => c.state), ['locked', 'locked', 'locked']);
+  assert.deepEqual(chestsOf(m, a).map((c) => c.state), ['locked', 'locked', 'locked', 'locked']);
   assert.equal(m.stash.length, 0);
   // (this one is about the star milestones: the first-clear chests are marked paid so they stay out of the stash)
   m.armies.orcs = { waves: a.waves.length, best: 0, won: 0, clears: 0, stars: {}, first: 0b1111 };
@@ -159,7 +159,7 @@ test('a milestone puts a chest in the stash once; opening removes it and pays it
   const r3 = settleArmyRun(m, cleared('orcs', 1, perfect))!;
   assert.deepEqual(r3.chests, [5]);
   assert.deepEqual(m.stash.map((c) => [c.at, c.tier]), [[3, 0], [5, 1]]);
-  assert.deepEqual(chestsOf(m, a).map((c) => [c.state, c.waiting]), [['earned', true], ['earned', true], ['locked', false]]);
+  assert.deepEqual(chestsOf(m, a).map((c) => [c.state, c.waiting]), [['earned', true], ['earned', true], ['locked', false], ['locked', false]]);
   // opening the second first: only it leaves, and the first's contents do not change
   const peek = peekChest(m, 0)!;
   const crowns = m.crowns;
@@ -168,7 +168,7 @@ test('a milestone puts a chest in the stash once; opening removes it and pays it
   assert.ok(m.crowns > crowns);
   assert.deepEqual(m.stash.map((c) => c.at), [3]);
   assert.deepEqual(peekChest(m, 0), peek);
-  assert.deepEqual(chestsOf(m, a).map((c) => [c.state, c.waiting]), [['earned', true], ['earned', false], ['locked', false]]);
+  assert.deepEqual(chestsOf(m, a).map((c) => [c.state, c.waiting]), [['earned', true], ['earned', false], ['locked', false], ['locked', false]]);
   // (nothing there any more: no second payment)
   assert.equal(openChest(m, 1), null);
   const after = m.crowns;
@@ -326,7 +326,8 @@ test('the foes get tougher by tier: hp, attack and speed', () => {
   for (const t of [1, 2, 3, 4]) {
     const f = waveBoost(a, 3, t).foes!;
     assert.ok(f.hp! > lastHp && f.atk! > lastAtk && f.speed! > lastSpeed, `tier ${t}`);
-    assert.ok(Math.abs(f.hp! / base.hp! - TIERS[t].hp) < 1e-9);
+    // (the harder tiers scale from the army's `tierStart`, which is Normal's `start` unless the army's Normal curve of levels has moved it)
+    assert.ok(Math.abs(f.hp! / base.hp! - (TIERS[t].hp * (a.tierStart ?? a.start)) / a.start) < 1e-9);
     [lastHp, lastAtk, lastSpeed] = [f.hp!, f.atk!, f.speed!];
   }
   // Normal is unchanged
@@ -371,12 +372,12 @@ test('a harder tier pays more crowns, and keeps its own firsts and clears', () =
   assert.equal(hard.replay, false);
   assert.ok(hard.crowns > normal.crowns);
   assert.equal(settleWave(m, 'orcs', 1, true, 0, 1).replay, true);
-  // only the first Normal clear opens the next army
+  // a clear opens nothing by itself now (the army stars do: `armyUnlocked`), and a Hard clear counts apart from Normal's
   const m2 = startedMeta(2);
   const last = a.waves.length;
   assert.equal(settleWave(m2, 'orcs', last, true, 0, 1).unlocked, undefined);
   assert.equal(recordOf(m2, 'orcs').clears, 0);
-  assert.equal(settleWave(m2, 'orcs', last, true, 0, 0).unlocked?.id, 'undead');
+  assert.equal(settleWave(m2, 'orcs', last, true, 0, 0).unlocked, undefined);
   assert.equal(recordOf(m2, 'orcs').hard?.['1'].clears, 1);
 });
 
@@ -425,7 +426,7 @@ test('saves from before the 10 stars: a beaten army has its Normal clear star, n
   saveMeta(m, s);
   const a = loadMeta(1, s);
   assert.equal(armyStars(a, armyById('orcs')!).got, 2);
-  assert.deepEqual(chestsOf(a, armyById('orcs')!).map((c) => c.state), ['locked', 'locked', 'locked']);
+  assert.deepEqual(chestsOf(a, armyById('orcs')!).map((c) => c.state), ['locked', 'locked', 'locked', 'locked']);
   saveMeta(a, s);
   const b = loadMeta(1, s);
   assert.deepEqual(b.armies, a.armies);
@@ -525,4 +526,31 @@ test('a save from before the first-clear chests gives none back-dated, and a new
   assert.equal(settleArmyRun(a, cleared('orcs', 0, perfect))!.firstClear, 0);
   assert.equal(settleArmyRun(a, cleared('orcs', 1, perfect))!.firstClear, 0);
   assert.equal(settleArmyRun(a, cleared('orcs', 2, perfect))!.firstClear, 5);
+});
+
+test('the 11th (Mythic) star gives the best chest the armies give, once, and the lower chests are as they were', () => {
+  const a = armyById('golems')!;
+  const m = startedMeta(3);
+  m.armies.golems = { best: 15, won: 15, clears: 1, stars: {}, met: { 0: 7, 1: 7, 2: 7, 3: 1 } };
+  grantChests(m, a, m.armies.golems);
+  assert.deepEqual(m.stash.map((c) => c.at), [3, 5, 10]);
+  // (the tenth star paid its chest; the eleventh pays one more, however often it is settled)
+  m.armies.golems.met = { 0: 7, 1: 7, 2: 7, 3: 1, 4: 1 };
+  assert.deepEqual(grantChests(m, a, m.armies.golems), [11]);
+  assert.deepEqual(grantChests(m, a, m.armies.golems), []);
+  assert.deepEqual(m.stash.map((c) => c.at), [3, 5, 10, 11]);
+  assert.equal(chestKind(11), 'mythic');
+  assert.equal(bestChest(m.stash), 3);
+  // (it pays more than the gold chest: crowns, shards, two prize heroes and two pieces of gear, from its own seed)
+  const gold = rollChest(chestSeed(m.seed, a, 10), a, 10);
+  const mythic = rollChest(chestSeed(m.seed, a, 11), a, 11);
+  assert.ok(mythic.crowns > gold.crowns);
+  assert.ok(mythic.shards.length > gold.shards.length);
+  assert.equal(mythic.recruits.filter((r) => r.prize).length, 2);
+  assert.equal(mythic.gear.length, 2);
+  assert.equal(gold.gear.length, 1);
+  // (opened once: it leaves the stash and a second open finds nothing)
+  const loot = openChest(m, 3)!;
+  assert.equal(loot.kind, 'mythic');
+  assert.deepEqual(m.stash.map((c) => c.at), [3, 5, 10]);
 });

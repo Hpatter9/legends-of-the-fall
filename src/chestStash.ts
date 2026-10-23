@@ -52,8 +52,8 @@ export function drawChestStash(host: HTMLElement, m: Meta, onChange: () => void)
 /** The chest sprite (Craftpix platformer tileset, tinted bronze, silver and gold; the daily chest's wood is tinted violet): two frames side by side, closed then open with its treasure showing. */
 const CHEST_W = 42;
 const CHEST_H = 39;
-const CHESTS: Record<ChestKind, string> = { bronze: chestBronze, silver: chestSilver, gold: chestGold, daily: chestDaily };
-export const CHEST_NAME: Record<ChestKind, string> = { bronze: 'Bronze chest', silver: 'Silver chest', gold: 'Gold chest', daily: 'Daily chest' };
+const CHESTS: Record<ChestKind, string> = { bronze: chestBronze, silver: chestSilver, gold: chestGold, mythic: chestGold, daily: chestDaily };
+export const CHEST_NAME: Record<ChestKind, string> = { bronze: 'Bronze chest', silver: 'Silver chest', gold: 'Gold chest', mythic: 'Mythic chest', daily: 'Daily chest' };
 
 /** A chest picture at a whole-number scale: the closed frame, and the open frame (shown when the root has the class `burst`). */
 export function chestPicture(kind: ChestKind, scale: number): { root: HTMLElement } {
