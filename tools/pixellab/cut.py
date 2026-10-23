@@ -1,6 +1,6 @@
 # Cuts PixelLab animation frames into the game's sheet layout. Only crops and pads (no resampling); alpha is
 # made hard (0 or 255) and lone stray pixels are dropped.
-import sys,os,json;sys.path.insert(0,os.path.dirname(__file__))
+import sys,os,json,re;sys.path.insert(0,os.path.dirname(__file__))
 from PIL import Image
 from collections import deque
 W=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))+'/w/'
@@ -39,7 +39,7 @@ def cut(i,rows):
         os.makedirs(W+'anim',exist_ok=True);Image.open(W+'pick_%s.png'%i).save(W+'anim/%s_idle_0.png'%i)
     for r in rows:
         fs=[]
-        have=len([f for f in os.listdir(W+'anim') if f.startswith('%s_%s_'%(i,r))])
+        have=len([f for f in os.listdir(W+'anim') if re.fullmatch('%s_%s_[0-9]+\\.png'%(i,r),f)])
         for k in pick(r,have):
             im,n=clean(Image.open(W+'anim/%s_%s_%d.png'%(i,r,k)));rem+=n;fs.append(im)
         frames[r]=fs
@@ -64,4 +64,4 @@ def cut(i,rows):
     return sheet,entry,rem
 if __name__=='__main__':
     i=sys.argv[1];rows=sys.argv[2].split(',')
-    s,e,rem=cut(i,rows);s.save(W+'out_%s.png'%i);print(json.dumps(e),rem)
+    s,e,rem=cut(i,rows);s.save(W+'out_%s.png'%i);json.dump(e,open(W+'out_%s.json'%i,'w'));print(json.dumps(e),rem)

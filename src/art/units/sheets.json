@@ -2583,5 +2583,51 @@
   "figure": 75,
   "facesRight": true,
   "lies": true
+ },
+ "hero_wolf_bard": {
+  "w": 72,
+  "h": 70,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "walk": 5,
+   "attack": 5,
+   "idle": 4,
+   "hurt": 4,
+   "dead": 5,
+   "attack2": 5
+  },
+  "figure": 67,
+  "facesRight": true,
+  "lies": true
+ },
+ "hero_dragoon": {
+  "w": 100,
+  "h": 94,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 5,
+   "attack": 5,
+   "idle": 4,
+   "hurt": 4,
+   "dead": 5
+  },
+  "figure": 90,
+  "facesRight": true,
+  "lies": true
  }
 }
