@@ -32,7 +32,7 @@ the void** instead of countryside. Everything else is as it was: the graph, the 
 6. **The Heart of the Rift**: violet cracked-earth islands, dead oaks and crystals; black-violet sky; magenta bridges; the great rift behind the lair.
 
 ## Layout
-Row spacing grew from 5 to 6 cells (`ROW_A`) so that islands stand apart; positions only, no rule changed. Row and lane slots, the side-spot search and the roads are as before. Landmarks still
+Row spacing grew from 5 to 8 cells (`ROW_A`) so that every island stands alone with its hanging root clear of the next (islands are larger rather than shrunk: radius 46 to 72 by landmark, the island set a little forward under its landmark so a palisade or tent sits on the ground; each ground tile is drawn slightly oversize so its neighbours overlap the seams, which are softer but still faintly visible); positions only, no rule changed. Row and lane slots, the side-spot search and the roads are as before. Landmarks still
 never stand nearer the scene's edge than their picture allows (`CalMap.ax`).
 
 Shots: `tools/calmap/shots.mjs` (`docs/samples/calamity-void-*.png`: fresh, fork, side, side-elite, walk, boss, map1 to map6, and fresh and fork at 360).

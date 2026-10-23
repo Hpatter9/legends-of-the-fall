@@ -494,17 +494,17 @@ export class CalMap {
     if (hit) return hit;
     const m = this.markOf(s, false);
     const half = (m.l + m.r) / 2;
-    let rx = s.id === START_ID ? 82 : s.kind === 'boss' ? Math.max(76, Math.min(124, half * 0.85 + 16)) : Math.max(40, Math.min(66, half * 0.8 + 10));
+    let rx = s.id === START_ID ? 82 : s.kind === 'boss' ? Math.max(76, Math.min(124, half * 0.85 + 16)) : Math.max(46, Math.min(72, half * 0.9 + 16));
     // (islands apart: the ellipses' halves, in the lattice's own squash, must not meet)
     const p = this.xy(s);
     for (const o of this.model!.spots) {
       if (o.id === s.id) continue;
       const q = this.xy(o);
       const d = Math.hypot(q.x - p.x, (q.y - p.y) / 0.56);
-      rx = Math.min(rx, Math.max(34, d * 0.5 - 3));
+      rx = Math.min(rx, Math.max(40, d * 0.5 - 6));
     }
     const ry = rx * 0.56;
-    const spec = { cx: this.ax(s), cy: p.y + 8, rx, ry, depth: Math.max(44, Math.min(118, rx * 1.15 + 14)), seed: s.id * 977 + 31, realm: (Number(this.land.dataset.land) || 1) - 1 };
+    const spec = { cx: this.ax(s), cy: p.y + 15, rx, ry, depth: Math.max(44, Math.min(118, rx * 1.15 + 14)), seed: s.id * 977 + 31, realm: (Number(this.land.dataset.land) || 1) - 1 };
     this.isleCache.set(s.id, spec);
     return spec;
   }
@@ -595,13 +595,16 @@ export class CalMap {
                 const py = oy + (a * g.th) / 2;
                 const t = tileOf(cell);
                 const [sx, sy, w, h] = RECTS[t.name];
-                const x = Math.round(px - w / 2);
-                const y = Math.round(py - g.th / 2);
+                // (each tile a little larger than its cell, so the ones beside it overlap its edge and the seams between them close)
+                const W2 = w + 4;
+                const H2 = h + 3;
+                const x = Math.round(px - W2 / 2);
+                const y = Math.round(py - g.th / 2 - 1);
                 if (t.flip) {
-                  tg.setTransform(-1, 0, 0, 1, x + w, 0);
-                  tg.drawImage(im, sx, sy, w, h, 0, y, w, h);
+                  tg.setTransform(-1, 0, 0, 1, x + W2, 0);
+                  tg.drawImage(im, sx, sy, w, h, 0, y, W2, H2);
                   tg.setTransform(1, 0, 0, 1, 0, 0);
-                } else tg.drawImage(im, sx, sy, w, h, x, y, w, h);
+                } else tg.drawImage(im, sx, sy, w, h, x, y, W2, H2);
               }
             }
           });
