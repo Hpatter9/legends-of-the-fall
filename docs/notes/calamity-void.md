@@ -7,10 +7,12 @@ the void** instead of countryside. Everything else is as it was: the graph, the 
 - **The void** (CSS layers behind the canvases, bundled): a sky gradient per realm with the packs' **stars** over it, a **moon** (the Moon pack's four: tan, white, red, pale blue) and a **nebula**
   (the Cloudscape pack's cloud layers, recoloured per realm). Each moves at its own pace as the map scrolls (the sky at half, the nebula at 0.6, the moon almost with the screen), so the party seems
   to travel through it; the nebula also drifts sideways, one slow turn in six minutes. Nothing flashes or pulses hard.
-- **Islands**: every spot is a one-tile island of its realm's ground with rock hanging under it (`drawUnderside`: the Undead Tileset's rock face, multiplied by the realm's colour, jagged, darker with
-  depth, lit from the upper left, an occasional stalactite). The portal's island is a plus of five tiles, the lair's a wide island of nineteen, a hidden side spot is a small island off a short side bridge.
-  An ordinary island carries a tree, bush or rock of its realm beside the landmark; bits of rock drift in the void between. The landmarks are as before (foe camp, stall, tents, chest, campfire,
-  shrine, elite drum, lairs).
+- **Islands** (`CalMap.isleOf`, `render/calRealm.ts` `drawIsland`): each spot is a natural floating isle, not a cube. Its top is the realm's iso ground cut to an **irregular rounded outline** (an ellipse whose radius
+  wobbles with four seeded waves, so every island has its own silhouette, deterministically) with a lit rim and a lip of earth; under it hangs a **tapering craggy root** of the Undead Tileset's rock face
+  (narrowing to a point, with two seeded prongs, no straight sides) hung with what the realm grows: roots and leaves (meadow), crystals (crystal, rift), glowing cracks (infernal, rift), icicles (frozen),
+  chains (clockwork). Size follows the landmark (tents, foe camps and the shop get more room than a chest or shrine); the portal's and the lair's islands are bigger; a radius is capped so neighbours never touch.
+  Small rim props (bush, rock), a faint realm-coloured glow beneath, and now and then a drifting fragment of rock (`drawChunk`) near an island, all baked and still. The ring, tap target and mist patch follow
+  the island. No pack had a ready floating-island sprite, so the islands are built from the packs' rock and ground pictures in code.
 - **Bridges**: one line of **small stones** from island to island, placed evenly (about every 30px) along the straight line between the two islands' centres, clear of the islands by 46px
   (`CalMap.stones`), never filling the road's cells. Each stone (`drawStone`) is a floating rune tile 22px across, dim and tinted to the realm (a dark body, a muted top, one faint rune pixel pair), with a
   small soft glow under it and a thin beam of light through the line on a second canvas that breathes (opacity easing between 0.55 and 0.95 over six seconds). The islands stay the brightest things.
