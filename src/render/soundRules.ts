@@ -207,6 +207,8 @@ export function cuesFor(b: Battle, e: BattleEvent): Cued[] {
     }
     case 'dodge':
       return [{ cue: 'miss' }];
+    case 'boom':
+      return [{ cue: 'fireBoom', gain: 0.9 }];
     case 'hit': {
       const by = unit(e.by);
       const to = unit(e.to);

@@ -344,10 +344,7 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   const b: Battle = { seed, board, units: [], phase: 'deploy', t: 0, rng: mixSeed(seed, 0xf167), pending: [], skillRng: mixSeed(seed, 0x5c111), zones: [], nextId: 1, spells: freshSpells(tw?.mana ? (stage.mana ?? 1) * tw.mana : stage.mana) };
   if (tw) b.twist = tw;
   if (stage.weather) b.weather = stage.weather;
-  const barrels: number[] = [];
-  board.tiles.forEach((t, i) => t.barrel && barrels.push(i));
-  if (barrels.length) b.barrels = barrels;
-  if (board.tiles.some((t) => t.ground === 'shrine' || t.ground === 'lava')) b.groundFx = true;
+  noteTerrain(b);
   if (stage.heroes) b.heroBoost = stage.heroes;
   if (tw?.heroAtk) b.heroBoost = { ...b.heroBoost, atk: (b.heroBoost?.atk ?? 1) * tw.heroAtk };
   // (the foes' boost with the twist's share in it)
@@ -381,6 +378,16 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   });
   if (tw?.ambush) ambush(b);
   return b;
+}
+
+/** Note what the board holds that acts during the fight: the powder barrels standing, and ground that acts each second (a shrine, lava). Called when a fight starts; a test that changes the board's tiles calls it again. */
+export function noteTerrain(b: Battle): void {
+  const barrels: number[] = [];
+  b.board.tiles.forEach((t, i) => t.barrel && barrels.push(i));
+  if (barrels.length) b.barrels = barrels;
+  else delete b.barrels;
+  if (b.board.tiles.some((t) => t.ground === 'shrine' || t.ground === 'lava')) b.groundFx = true;
+  else delete b.groundFx;
 }
 
 /** An ambush: the band's last plain fighter (not the leader) stands among the heroes' back row instead. */

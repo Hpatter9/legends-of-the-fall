@@ -92,7 +92,8 @@ export function twistBoard(b: Board, fx: TwistFx, seed: number): void {
   if (fx.lava) {
     const rng = new Rng(mixSeed(seed, 0x1a7a));
     const spots: number[] = [];
-    for (let v = DEPLOY_ROWS; v < b.d - DEPLOY_ROWS; v++) for (let u = 0; u < b.w; u++) {
+    for (let v = DEPLOY_ROWS; v < b.d - DEPLOY_ROWS; v++)
+      for (let u = 0; u < b.w; u++) {
         // (not on a boulder, a wall, a barrel or water too deep to stand in, nor a bridge, a shrine or lava that is there already)
         const t = tileAt(b, u, v)!;
         if (standable(t) && !t.bridge && t.ground !== 'shrine' && t.ground !== 'lava') spots.push(v * b.w + u);

@@ -244,7 +244,8 @@ export class Fx {
           // (a whoosh of wind across the one that dodged)
           this.particles.spawn({ frames: VFX.dashWhite, x: to.x, y: to.y - to.tall * 0.5, scale: 1.1, frameMs: 40, alpha: 0.8, add: true });
         }
-      } else if (e.kind === 'dash' || e.kind === 'blink') this.streak(b, e);
+      } else if (e.kind === 'boom') this.boom(b, e.u, e.v);
+      else if (e.kind === 'dash' || e.kind === 'blink') this.streak(b, e);
       else if (e.kind === 'phase') this.phaseShock(e.by);
       else if (e.kind === 'area') this.area(b, e);
       else if (e.kind === 'spell') this.spell(b, e);
@@ -822,6 +823,16 @@ export class Fx {
         return t < e.ms;
       },
     });
+  }
+
+  /** A powder barrel goes off: a burst of fire and a ring of smoke on its tile, a shake (once, no loop). */
+  private boom(b: Battle, u: number, v: number): void {
+    const p = this.particles;
+    const [cx, cy] = this.tilePos(b, u, v);
+    this.anim(magic.fireExplosion, cx, cy - 10, 2, 60).alpha = 0.85;
+    play(p, 'fire-wave', cx, cy, { scale: 2.6, frameMs: 70, add: false, alpha: 0.6 });
+    for (let i = 0; i < bits(3, p.density); i++) p.spawn({ frames: PACK['fire-smoke'], x: cx + jitter(14), y: cy - 8 + jitter(6), scale: 1.2, life: 900, delay: i * 60, vy: -0.03, grow: 0.0006, alpha: 0.6 });
+    this.trauma = Math.min(1, this.trauma + 0.35);
   }
 
   /** The meteor lands: a big explosion with a flash, a ring of fire, rubble and smoke, a crater that stays and cools, and a hard shake. */

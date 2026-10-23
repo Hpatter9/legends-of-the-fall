@@ -31,3 +31,6 @@
 .cxList { margin: 0; padding-left: 16px; font-size: 12px; line-height: 1.3; }
 #hmSub.codex .cxHead, #hmSub.codex .cxTabs, #hmSub.codex .cxGrid { flex: none; }
 .ctBar .ctChips { flex-wrap: wrap; }
+
+.cxChip { flex: none; width: 20px; height: 20px; border: 2px solid var(--s8); box-sizing: border-box; }
+.cxSub { display: block; margin: 8px 0 0; font: 400 12px/1.5 var(--display); font-weight: 400; color: var(--gold-hi); }

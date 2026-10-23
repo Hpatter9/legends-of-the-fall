@@ -329,7 +329,6 @@ function laySpecials(b: Board, area: Area): void {
     const t = free();
     if (!t) continue;
     t.barrel = true;
-    delete t.bush;
     if (!boardOk(b)) delete t.barrel;
   }
 }
