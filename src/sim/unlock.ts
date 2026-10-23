@@ -5,7 +5,7 @@
 import { mixSeed, Rng } from './rng';
 import { OVERFLOW_CROWNS, SHARD_CAP } from './awakenRules';
 import type { Meta } from './meta';
-import { DUPLICATE_SHARDS, isContent, PITY_PULLS, PULL_HEROES, STICKY, unlockNeed } from './unlockRules';
+import { cfg, DUPLICATE_SHARDS, isContent, pityAt, PULL_HEROES, unlockNeed } from './unlockRules';
 
 export { DUPLICATE_SHARDS };
 
@@ -85,10 +85,12 @@ export function swapContent(m: Meta, kind: string, seed: number, i: number): str
 
 /** The kind a pull draws: any pullable hero (one begun is likelier, by `STICKY` for each shard held), or an owned content hero for its rank shards; every `PITY_PULLS` pulls without unlock shards, the hero closest to joining. */
 export function drawKind(m: Meta, rng: Rng): { kind: string; pity: boolean } {
-  const near = (m.unlockDry ?? 0) + 1 >= PITY_PULLS ? closest(m, Rng.from(m.seed, PITY_SALT, m.pulls)) : undefined;
+  const near = (m.unlockDry ?? 0) + 1 >= pityAt(ownedCount(m)) ? closest(m, Rng.from(m.seed, PITY_SALT, m.pulls)) : undefined;
   if (near) return { kind: near, pity: true };
   const pool = [...PULL_HEROES, ...m.unlocked.filter(isContent)];
-  const weight = (k: string) => 1 + (owns(m, k) ? 0 : STICKY * haveOf(m, k));
+  // (`fading`: each hero owned beyond the starter's three makes a hero owned likelier, so fewer pulls are new shards)
+  const own = 1 + cfg().ownedBoost * Math.max(0, ownedCount(m) - 3) ** cfg().ownedPow;
+  const weight = (k: string) => (owns(m, k) ? own : 1 + cfg().sticky * haveOf(m, k));
   let r = rng.next() * pool.reduce((s, k) => s + weight(k), 0);
   for (const k of pool) {
     r -= weight(k);

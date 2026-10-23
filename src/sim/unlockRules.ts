@@ -16,7 +16,7 @@ export const NEED_LAST = 60;
 const OWNED_FIRST = 3;
 export const unlockNeed = (owned: number): number => {
   const t = Math.max(0, Math.min(1, (owned - OWNED_FIRST) / (PULL_HEROES.length - 1 - OWNED_FIRST)));
-  return Math.round(NEED_FIRST + (NEED_LAST - NEED_FIRST) * t ** 1.6);
+  return Math.round(NEED_FIRST + (cfg().needLast - NEED_FIRST) * t ** 1.6);
 };
 
 /** A hero already begun is this much likelier (per unlock shard held) to turn up in a pull than one not begun, so bars fill rather than all creeping. */
@@ -30,8 +30,41 @@ export const CHEST_HERO_SHARDS = 2;
 export const CHEST_PRIZE_SHARDS = 5;
 
 /** A pull costs more as the roster grows: the price is multiplied by 1 with the starter's three owned, rising to this with every pullable hero owned (crowns come in far faster late in the game than early, so a flat price would gate nothing). */
-export const PRICE_LAST_MULT = 60;
+export const PRICE_LAST_MULT = 250;
 export const priceMult = (owned: number): number => {
   const t = Math.max(0, Math.min(1, (owned - OWNED_FIRST) / (PULL_HEROES.length - OWNED_FIRST)));
-  return PRICE_LAST_MULT ** t;
+  return cfg().priceLast ** t;
 };
+
+// ---- the three ways to make unlocking slow (the owner picks one; `rising` is the default) ----
+
+/** `rising`: the price of a pull rises with the roster. `daily`: the price stays flat and only `dailyPulls` pulls are allowed a day. `fading`: the price stays flat and the chance a pull is a hero not owned falls as the roster grows. */
+export type UnlockMode = 'rising' | 'daily' | 'fading';
+interface ModeCfg {
+  /** Shards the last hero needs. */
+  needLast: number;
+  /** The price multiplier with every pullable hero owned. */
+  priceLast: number;
+  /** Pulls without unlock shards before the pity, with the starter's three owned, and how many more for each pullable hero owned beyond them. */
+  pity: number;
+  pityGrow: number;
+  /** How much likelier a hero begun is, per shard held. */
+  sticky: number;
+  /** How much likelier each hero owned is to be drawn (rank shards), for each pullable hero beyond the starter's three owned. */
+  ownedBoost: number;
+  /** The power of that count (1 is a straight rise; 2 makes the late pulls far likelier to land on heroes owned). */
+  ownedPow: number;
+  /** Pulls a day (0 for no limit). */
+  dailyPulls: number;
+}
+export const MODES: Record<UnlockMode, ModeCfg> = {
+  rising: { needLast: NEED_LAST, priceLast: PRICE_LAST_MULT, pity: PITY_PULLS, pityGrow: 0, sticky: STICKY, ownedBoost: 0, ownedPow: 1, dailyPulls: 0 },
+  daily: { needLast: 150, priceLast: 1, pity: PITY_PULLS, pityGrow: 0, sticky: STICKY, ownedBoost: 0, ownedPow: 1, dailyPulls: 10 },
+  fading: { needLast: 100, priceLast: 1, pity: 3, pityGrow: 6, sticky: STICKY, ownedBoost: 2, ownedPow: 2.2, dailyPulls: 0 },
+};
+let mode: UnlockMode = 'rising';
+export const unlockMode = (): UnlockMode => mode;
+export const setUnlockMode = (m: UnlockMode): void => void (mode = m);
+export const cfg = (): ModeCfg => MODES[mode];
+/** Pulls without unlock shards before the pity, for a roster with `owned` pullable heroes. */
+export const pityAt = (owned: number): number => Math.round(cfg().pity + cfg().pityGrow * Math.max(0, owned - OWNED_FIRST));

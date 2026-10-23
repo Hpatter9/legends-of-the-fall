@@ -10,7 +10,7 @@ import { chestSeed, firstClearSeed, FIRST_CLEAR_CHEST, openChest } from '../src/
 import { grantContent, CONTENT_HEROES } from '../src/sim/contentHeroes';
 import { newMeta, pickStarter, pullCost, recruit, stageCrowns, type Meta } from '../src/sim/meta';
 import { ALL_HEROES } from '../src/sim/units';
-import { PULL_HEROES, unlockNeed } from '../src/sim/unlockRules';
+import { MODES, PULL_HEROES, setUnlockMode, unlockMode, unlockNeed, type UnlockMode } from '../src/sim/unlockRules';
 import { mixSeed } from '../src/sim/rng';
 import { MAP_CROWNS } from '../src/sim/tower';
 import { BUILDINGS } from '../src/sim/castle';
@@ -21,6 +21,11 @@ const arg = (name: string, fallback: number): number => {
   const i = process.argv.indexOf(name);
   return i >= 0 && Number(process.argv[i + 1]) > 0 ? Number(process.argv[i + 1]) : fallback;
 };
+const modeArg = process.argv[process.argv.indexOf('--mode') + 1] as UnlockMode;
+if (process.argv.includes('--mode')) setUnlockMode(modeArg);
+// (--set needLast=80,priceLast=100 changes the mode's numbers for one run, to tune them)
+const setArg = process.argv[process.argv.indexOf('--set') + 1];
+if (process.argv.includes('--set')) for (const kv of setArg.split(',')) Object.assign(MODES[unlockMode()], { [kv.split('=')[0]]: Number(kv.split('=')[1]) });
 const SEEDS = arg('--seeds', 20);
 const DAYS = arg('--days', 365);
 /** The share of crowns that goes to pulls once the castle is built (the rest buys other things: spells, rebuilds, rerolls). */
@@ -137,10 +142,10 @@ function simulate(seed: number): Report {
       const n = left >= pullCost(10, m) ? 10 : left >= pullCost(1, m) ? 1 : 0;
       if (!n) break;
       const cost = pullCost(n, m);
-      recruit(m, n);
-      left -= cost;
-      m.crowns -= cost;
-      pulls += n;
+      const got = recruit(m, n, day) ?? (n === 10 ? recruit(m, 1, day) : null);
+      if (!got) break;
+      left -= got.length === 10 ? cost : pullCost(1, m) * got.length;
+      pulls += got.length;
     }
     for (const k of grantContent(m)) at[k] = at[k] ?? day;
     if (CHECKS.includes(day)) by[day] = m.unlocked.length;
@@ -155,7 +160,7 @@ function simulate(seed: number): Report {
 const reports = Array.from({ length: SEEDS }, (_, i) => simulate(i * 7919 + 13));
 const mean = (xs: number[]) => xs.reduce((n, x) => n + x, 0) / xs.length;
 const med = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
-console.log(`Unlock pace for a daily player (${SEEDS} seeds, ${DAYS} days; ${Math.round(PULL_SHARE * 100)}% of crowns to pulls after the castle; ${FOE_ENTRIES.length} bestiary entries, ${ACHIEVEMENTS.length} achievements)`);
+console.log(`Mode ${unlockMode()}: ${JSON.stringify(MODES[unlockMode()])}\nUnlock pace for a daily player (${SEEDS} seeds, ${DAYS} days; ${Math.round(PULL_SHARE * 100)}% of crowns to pulls after the castle; ${FOE_ENTRIES.length} bestiary entries, ${ACHIEVEMENTS.length} achievements)`);
 console.log(`Crowns earned: ${Math.round(mean(reports.map((r) => r.crowns)))} in ${DAYS} days; pulls made: ${Math.round(mean(reports.map((r) => r.pulls)))}`);
 console.log('\nheroes  day reached (median, earliest, latest)');
 for (const n of MARKS) {

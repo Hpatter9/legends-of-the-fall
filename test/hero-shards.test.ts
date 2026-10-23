@@ -8,6 +8,8 @@ import { ARMIES, armyById } from '../src/sim/armies';
 import { chestSeed, openChest, peekChest, rollChest } from '../src/sim/armyStars';
 import { ALL_HEROES, HEROES } from '../src/sim/units';
 import { starterPacks } from '../src/sim/starter';
+import { pullsLeft } from '../src/sim/meta';
+import { MODES, setUnlockMode, unlockMode, pityAt } from '../src/sim/unlockRules';
 
 const store = () => {
   const data: Record<string, string> = {};
@@ -306,4 +308,76 @@ test('a hero not owned says how to get it: a milestone line and progress, or its
   giveShards(m, kind, 1);
   const begun = lockInfo(m, kind)!;
   assert.deepEqual([begun.now, begun.need, begun.named], [1, needOf(m), true]);
+});
+
+/** Run `f` in a mode, then put the default back. */
+const inMode = (mode: Parameters<typeof setUnlockMode>[0], f: () => void) => {
+  setUnlockMode(mode);
+  try {
+    f();
+  } finally {
+    setUnlockMode('rising');
+  }
+};
+
+test('the default is the rising price; the other modes keep the price flat', () => {
+  assert.equal(unlockMode(), 'rising');
+  const rich = fresh(40);
+  rich.unlocked = [...PULL_HEROES];
+  const rising = pullCost(1, rich);
+  assert.ok(rising > 20 * PULL_COST);
+  for (const mode of ['daily', 'fading'] as const)
+    inMode(mode, () => {
+      assert.equal(MODES[mode].priceLast, 1);
+      assert.equal(pullCost(1, rich), PULL_COST);
+      assert.equal(pullCost(10, rich), 900);
+    });
+});
+
+test('the daily mode allows a set number of pulls a day, then none until the next date', () => {
+  inMode('daily', () => {
+    const limit = MODES.daily.dailyPulls;
+    const m = fresh(41);
+    m.crowns = 100000;
+    assert.equal(pullsLeft(m, 20260101), limit);
+    assert.ok(recruit(m, 10, 20260101));
+    assert.equal(pullsLeft(m, 20260101), limit - 10);
+    assert.equal(recruit(m, 10, 20260101), null, 'ten more would pass the limit');
+    assert.equal(m.crowns, 100000 - 900, 'a refused pull costs nothing');
+    // (the rest of the day by singles, then nothing)
+    for (let i = 0; i < limit - 10; i++) assert.ok(recruit(m, 1, 20260101));
+    assert.equal(recruit(m, 1, 20260101), null);
+    assert.ok(recruit(m, 1, 20260102), 'a new date has its pulls again');
+    // (the count survives a save)
+    const s = store();
+    saveMeta(m, s);
+    assert.equal(pullsLeft(loadMeta(1, s), 20260102), limit - 1);
+  });
+  // (the other modes have no limit)
+  const m = fresh(42);
+  m.crowns = 100000;
+  for (let i = 0; i < 30; i++) assert.ok(recruit(m, 1, 20260101));
+});
+
+test('the fading mode: a pull is a new hero less and less often as the roster grows, and the pity waits longer', () => {
+  inMode('fading', () => {
+    const share = (owned: number) => {
+      const m = fresh(43);
+      m.unlocked = [...PULL_HEROES.slice(0, owned)];
+      let fresh_ = 0;
+      const N = 2000;
+      for (let i = 0; i < N; i++) {
+        const copy = JSON.parse(JSON.stringify(m)) as Meta;
+        copy.pulls = i;
+        copy.unlockDry = 0;
+        if (pullOnce(copy).unlock) fresh_++;
+      }
+      return fresh_ / N;
+    };
+    const early = share(6);
+    const late = share(28);
+    assert.ok(early > 0.7, `${early}`);
+    assert.ok(late < 0.25 && late < early / 3, `${late}`);
+    assert.ok(pityAt(30) > pityAt(5) + 100);
+  });
 });
