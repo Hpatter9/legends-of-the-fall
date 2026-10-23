@@ -20,3 +20,13 @@ button:disabled, button.primary:disabled, .hmBig:disabled { color: var(--off-ink
 /* the result's line sits on the board's sky: a slate plate behind it keeps it readable */
 #summary { background: rgb(var(--s1-rgb) / 0.82); box-shadow: 0 0 0 2px var(--s7); padding: 6px 10px; color: var(--text); }
 #summary b, #summary em { color: var(--accent-hi); }
+
+/* The lives (an army's retries) beside the gold: the DawnLike heart at twice its size, grey once spent; the one just spent
+   shrinks and fades once (no flashing). */
+#lives { display: flex; gap: 2px; align-items: center; }
+#lives[hidden] { display: none; }
+#lives img { width: 32px; height: 32px; image-rendering: pixelated; }
+#lives img.spent { filter: grayscale(1) brightness(0.55); opacity: 0.6; }
+#lives img.lost { animation: heartLost 0.6s ease-out both; }
+@keyframes heartLost { from { filter: none; opacity: 1; transform: scale(1.25); } to { filter: grayscale(1) brightness(0.55); opacity: 0.6; transform: none; } }
+@media (prefers-reduced-motion: reduce) { #lives img.lost { animation: none; } }

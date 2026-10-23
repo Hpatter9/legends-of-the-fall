@@ -7,7 +7,7 @@ import { D, standable, tileAt } from './sim/board';
 import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
 import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
 // (`saveSlot` as `saveRun`: a tower or calamity run is saved in its own slot, any other in the ordinary one)
-import { adoptOldTower, armyOfRun, armyRun, benchFull, boostOf, canRetry, chainOf, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryGold, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, type Owned, type Run } from './sim/run';
+import { adoptOldTower, armyOfRun, armyRun, benchFull, boostOf, canRetry, chainOf, MAX_RETRIES, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryGold, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, type Owned, type Run } from './sim/run';
 import { climbXpView, heroLevel, localBoost } from './sim/climb';
 import { calamityRun } from './sim/modes';
 import { CAL_MAPS } from './sim/calamity';
@@ -66,6 +66,7 @@ import { bindDuck, bindMute, play, playEvents, setAct, setScene, setup, startFig
 import { sceneOf } from './render/audioRules';
 import { colLeft, viewH, viewW } from './viewport';
 import { onSettings, openSettings, settings } from './settings';
+import heartUrl from './art/rogue/heart.png';
 
 TextureSource.defaultOptions.scaleMode = 'nearest';
 
@@ -148,6 +149,8 @@ class Game {
   private introduced = new Set<string>();
   /** The auto-replay going on, if any (`sim/autoReplay.ts`); it plays the waves and starts the next runs from the frame loop, so a hidden tab (no frames) pauses it. */
   private auto: AutoReplay | null = null;
+  /** The heart just spent on a retry (its fade plays once), or -1. */
+  private heartLost = -1;
   /** Real milliseconds until the auto-replay's next step (the pause after the heroes are placed, and after a fight). */
   private autoWait = 0;
   /** What the auto-replay does when the wait is over, after the fight it just settled: the next wave, a new run, or the end. */
@@ -1274,16 +1277,41 @@ class Game {
     if (this.run.event) this.events.openEvent(this.run, () => (saveRun(this.run), this.refresh()));
   }
 
-  /** Retry the wave just lost: the same stage, a hire's worth of gold to spend, one retry used. The failed go still counts in the run's figures. */
+  /** Retry the wave just lost: the same stage, a hire's worth of gold to spend, one retry (a heart) used. The failed go still counts in the run's figures. */
   private retry(): void {
     if (!this.pendingLoss || !canRetry(this.run)) return;
     this.noteRecap({}, [], false, false);
+    // (the heart about to go fades out once, on the next draw of the lives)
+    this.heartLost = retriesLeft(this.run) - 1;
     const gold = retryWave(this.run)!;
     this.pendingLoss = false;
     play('coinRecycle');
     saveRun(this.run);
     this.newBattle();
     flyUp(`+${gold} gold`, $('gold'));
+  }
+
+  /** The lives at the top (an army's retries, `MAX_RETRIES` hearts): full while left, grey once spent. Only runs that can retry
+   *  show them (not the tower or the calamity, which fail their own way). */
+  private drawLives(run: Run): void {
+    const box = $('lives');
+    box.hidden = !!run.tower;
+    if (box.hidden) return;
+    const left = retriesLeft(run);
+    const key = `${left}:${this.heartLost}`;
+    if (box.dataset.key === key) return;
+    box.dataset.key = key;
+    box.replaceChildren();
+    box.title = `${left} ${left === 1 ? 'life' : 'lives'} left`;
+    box.setAttribute('aria-label', box.title);
+    for (let i = 0; i < MAX_RETRIES; i++) {
+      const img = document.createElement('img');
+      img.src = heartUrl;
+      img.alt = '';
+      img.className = i < left ? 'full' : i === this.heartLost ? 'spent lost' : 'spent';
+      box.append(img);
+    }
+    this.heartLost = -1;
   }
 
   /** Add the fight just ended (stats, time, pay) to the run's recap. */
@@ -1705,6 +1733,7 @@ class Game {
     $('status').textContent =
       b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : benchFull(run) ? `${stage} · bench full: recycle a hero to hire` : n ? `${stage} · ${n} of ${squadLimit(run)} placed` : `${stage} · drag heroes onto the blue tiles`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
     $('gold').textContent = `${run.gold} gold`;
+    this.drawLives(run);
     const buy = $('summon') as HTMLButtonElement;
     // (a calamity hires the heroes it meets, at the recruit camps and shops: no random summons)
     buy.hidden = run.mode?.kind === 'calamity';
@@ -1723,8 +1752,8 @@ class Game {
       const left = retriesLeft(run);
       $('banner').textContent = 'Defeat';
       $('banner').className = 'lost';
-      $('summary').textContent = `Your party fell on ${stage}. Retry it with +${retryGold(run)} gold to spend, or give up and end the run.`;
-      $('retry').textContent = `Retry wave · ${left} left`;
+      $('summary').textContent = `Your party fell on ${stage}. Spend a heart to try again with +${retryGold(run)} gold, enough for one more hero, or give up and end the run.`;
+      $('retry').textContent = `Use a heart · ${left} left`;
       $('next').textContent = 'Give up';
     } else if (!result.hidden) {
       const left = b.units.filter((x) => x.alive && x.side === 'hero' && !UNITS[x.def].summon).length;
