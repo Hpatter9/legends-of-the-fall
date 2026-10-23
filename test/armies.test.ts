@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   ARMIES,
+  ARMY_NEED,
   ARMY_WAVES,
   armyById,
   armyCleared,
@@ -18,6 +19,7 @@ import {
   replayOf,
   replayTotal,
   settleWave,
+  totalStars,
   waveBoost,
   waveCrowns,
 } from '../src/sim/armies';
@@ -26,10 +28,11 @@ import { fight, place, playOut, stepBattle, type BattleEvent } from '../src/sim/
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { BOSS_IDS, FOE_BANDS, isBoss } from '../src/sim/foes';
 import { levelOfKind, xpFor } from '../src/sim/levels';
+import { ARMY_STARS, TIERS } from '../src/sim/tiers';
 import { timeTarget } from '../src/sim/armyStars';
 import { loadMeta, startedMeta, saveMeta } from '../src/sim/meta';
 import { BOSS_TITLES, titleOf } from '../src/render/bossTitles';
-import { armyOfRun, armyRun, bandFor, finish, gradeBoost, isBossRun, loadRun, newRun, saveRun, startStage, waveArmyOf } from '../src/sim/run';
+import { ARMY_START_GOLD, armyOfRun, armyRun, bandFor, finish, gradeBoost, isBossRun, loadRun, newRun, saveRun, startStage, waveArmyOf } from '../src/sim/run';
 import { dailyRun, towerRun } from '../src/sim/modes';
 import { dailyBoss, DAILY_WAVES } from '../src/sim/daily';
 import { HEROES, UNITS } from '../src/sim/units';
@@ -96,21 +99,40 @@ test('the foes of an army get tougher each wave, and each army starts tougher th
   }
 });
 
-test('only the first army is open on a fresh save, and each opens when the one before has fallen', () => {
+/** Give an army this many stars (the conditions of its tiers in order, Normal's first). */
+function giveStars(m: ReturnType<typeof startedMeta>, id: string, n: number): void {
+  const rec = (m.armies[id] ??= { waves: ARMY_WAVES, best: 0, won: 0, clears: 0, stars: {} });
+  rec.met = {};
+  let left = n;
+  TIERS.forEach((t, i) => {
+    const k = Math.min(left, t.stars);
+    if (k > 0) rec.met![String(i)] = (1 << k) - 1;
+    left -= k;
+  });
+}
+
+test('only the first army is open on a fresh save, and each opens at its number of stars, not by a clear alone', () => {
   const m = startedMeta(1);
   assert.deepEqual(ARMIES.filter((a) => armyUnlocked(m, a.id)).map((a) => a.id), ['orcs']);
-  for (const [i, a] of ARMIES.entries()) {
-    // (winning the army's waves but not its last boss opens nothing)
-    for (let n = 1; n < a.waves.length; n++) settleWave(m, a.id, n, true, 0);
-    assert.equal(armyCleared(m, a.id), false, a.id);
-    assert.equal(ARMIES.filter((x) => armyUnlocked(m, x.id)).length, i + 1, `before ${a.id}'s boss`);
-    const pay = settleWave(m, a.id, a.waves.length, true, 0);
-    assert.equal(armyCleared(m, a.id), true, a.id);
-    assert.equal(pay.firstClear, true);
-    assert.equal(pay.unlocked?.id, ARMIES[i + 1]?.id, a.id);
-    assert.equal(ARMIES.filter((x) => armyUnlocked(m, x.id)).length, Math.min(ARMIES.length, i + 2), `after ${a.id}'s boss`);
+  // (clearing an army's last boss with no stars won opens nothing)
+  const a0 = ARMIES[0];
+  for (let n = 1; n <= a0.waves.length; n++) settleWave(m, a0.id, n, true, 0);
+  assert.equal(armyCleared(m, a0.id), true);
+  assert.equal(armyUnlocked(m, 'undead'), false);
+  // (the stars open them in order, the curve in `ARMY_NEED`)
+  for (let stars = 0; stars <= ARMY_STARS * 2; stars++) {
+    giveStars(m, 'orcs', Math.min(stars, ARMY_STARS));
+    if (stars > ARMY_STARS) giveStars(m, 'undead', stars - ARMY_STARS);
+    ARMIES.forEach((a, i) => assert.equal(armyUnlocked(m, a.id), i === 0 || totalStars(m) >= 2 * i, `${a.id} at ${totalStars(m)} stars`));
   }
-  assert.equal(clearedCount(m), ARMIES.length);
+  assert.deepEqual(ARMY_NEED, ARMIES.map((_, i) => 2 * i));
+});
+
+test('a save that had an army open keeps it, whatever its stars', () => {
+  const m = startedMeta(1);
+  m.opened = ['wildwood'];
+  assert.equal(armyUnlocked(m, 'wildwood'), true);
+  assert.equal(armyUnlocked(m, 'labyrinth'), false);
 });
 
 test('a fight lost sends the army back to wave 1 and costs nothing the heroes have earned', () => {
@@ -130,11 +152,12 @@ test('a fight lost sends the army back to wave 1 and costs nothing the heroes ha
   assert.equal(armyUnlocked(m, 'undead'), false);
   assert.equal(m.crowns, 55);
   assert.equal(levelOfKind(m, 'knight'), 6);
-  // (and the next attempt is a new run, from wave 1 with the starting gold and two heroes)
+  // (and the next attempt is a new run, from wave 1 with the army's starting gold and no hero: two hires)
   const again = armyRun(4, 'orcs', HEROES);
   assert.equal(again.stage, 1);
   assert.equal(again.over, false);
-  assert.equal(again.roster.length, 2);
+  assert.equal(again.roster.length, 0);
+  assert.equal(again.gold, ARMY_START_GOLD);
   assert.equal(armyOfRun(again)!.id, 'orcs');
 });
 
@@ -199,8 +222,7 @@ test('a newly opened army glows until its card has been seen', () => {
   const m = startedMeta(5);
   assert.equal(armyIsNew(m, 'orcs'), false);
   assert.equal(armyIsNew(m, 'undead'), false);
-  const a = armyById('orcs')!;
-  for (let n = 1; n <= a.waves.length; n++) settleWave(m, a.id, n, true, 0);
+  giveStars(m, 'orcs', 2);
   assert.equal(armyIsNew(m, 'undead'), true);
   assert.equal(markSeen(m), true);
   assert.equal(armyIsNew(m, 'undead'), false);

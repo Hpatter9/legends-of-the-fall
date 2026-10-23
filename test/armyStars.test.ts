@@ -83,7 +83,7 @@ test('each tier opens when the stars before it are all won', () => {
   m.armies.orcs.met = { 0: 7, 1: 3 };
   assert.equal(tierOpen(m, a, 2), false);
   // (a locked army opens no tier)
-  assert.equal(tierOpen(m, ARMIES[2], 0), false);
+  assert.equal(tierOpen(m, ARMIES[8], 0), false);
 });
 
 test('a run earns at most three stars, whatever the tier', () => {
@@ -371,12 +371,12 @@ test('a harder tier pays more crowns, and keeps its own firsts and clears', () =
   assert.equal(hard.replay, false);
   assert.ok(hard.crowns > normal.crowns);
   assert.equal(settleWave(m, 'orcs', 1, true, 0, 1).replay, true);
-  // only the first Normal clear opens the next army
+  // a clear opens nothing by itself now (the army stars do: `armyUnlocked`), and a Hard clear counts apart from Normal's
   const m2 = startedMeta(2);
   const last = a.waves.length;
   assert.equal(settleWave(m2, 'orcs', last, true, 0, 1).unlocked, undefined);
   assert.equal(recordOf(m2, 'orcs').clears, 0);
-  assert.equal(settleWave(m2, 'orcs', last, true, 0, 0).unlocked?.id, 'undead');
+  assert.equal(settleWave(m2, 'orcs', last, true, 0, 0).unlocked, undefined);
   assert.equal(recordOf(m2, 'orcs').hard?.['1'].clears, 1);
 });
 

@@ -14,7 +14,8 @@ import { gradeBoost, waveArmyOf, bandFor, isBossRun, isBossStage, recruit, START
 import { bonusGold } from './castle';
 import { ascRules, ascUnlocked } from './ascension';
 import { CAL_MAPS, CAL_ROWS, CAL_SCALE, CAL_START_GOLD } from './calamity';
-import { armyCleared, armyUnlocked, ARMIES } from './armies';
+import { armyUnlocked, ARMIES } from './armies';
+import { modeOpen, MODE_NEED, opensAt } from './modeUnlock';
 import { HEROES } from './units';
 import type { Meta } from './meta';
 import { mapFor, newTower } from './tower';
@@ -172,7 +173,7 @@ export function calamityRun(seed: number, m: Meta, hero: string, ascension = 0):
   return run;
 }
 
-export const towerOpen = (m: Meta): boolean => m.bestStage >= TOWER_UNLOCK || armyCleared(m, ARMIES[0].id);
+export const towerOpen = (m: Meta): boolean => modeOpen(m, 'tower');
 
 /** Floors cleared in the tower by a run (the stage it is on, less one). */
 export const floorsCleared = (run: Run): number => run.stage - 1;
@@ -209,7 +210,7 @@ export function dailyStatus(m: Meta, date: number): string {
 export const dailyLine = (m: Meta, date: number): string => `Today: ${dailyBossName(date)} · ${dailyStatus(m, date)}`;
 
 /** The home screen's line for the endless tower button. */
-export const towerLine = (m: Meta): string => (towerOpen(m) ? `Endless tower · best floor ${m.tower}` : 'Endless tower · beat the Orc Warband');
+export const towerLine = (m: Meta): string => (towerOpen(m) ? `Endless tower · best floor ${m.tower}` : `Endless tower · ${opensAt(MODE_NEED.tower).toLowerCase()}`);
 
 /** A line on the result screen for a daily run that has ended ("" for any other run). */
 export function modeNote(run: Run): string {

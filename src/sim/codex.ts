@@ -135,6 +135,11 @@ export const milestoneReady = (m: Meta, ms: Milestone): boolean => milestoneReac
 /** The milestones whose crowns are waiting. */
 export const codexWaiting = (m: Meta): Milestone[] => ALL_MILESTONES.filter((ms) => milestoneReady(m, ms));
 
+/** The crowns every milestone of a collection pays in all, those taken, and those waiting to be taken. */
+export const crownsTotal = (c: Collection): number => milestonesOf(c).reduce((n, ms) => n + ms.crowns, 0);
+export const crownsClaimed = (m: Meta, c: Collection): number => milestonesOf(c).filter((ms) => milestoneClaimed(m, ms)).reduce((n, ms) => n + ms.crowns, 0);
+export const crownsWaiting = (m: Meta): number => codexWaiting(m).reduce((n, ms) => n + ms.crowns, 0);
+
 /** Take a reached milestone's crowns. Returns the crowns paid (0 when it isn't reached, is unknown, or was claimed already). */
 export function claimCodex(m: Meta, id: string): number {
   const ms = ALL_MILESTONES.find((x) => x.id === id);

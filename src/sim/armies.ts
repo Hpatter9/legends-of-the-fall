@@ -266,10 +266,19 @@ export interface ArmyRecord {
 const blank = (): ArmyRecord => ({ waves: ARMY_WAVES, best: 0, won: 0, clears: 0, stars: {} });
 export const recordOf = (m: Meta, id: string): ArmyRecord => m.armies[id] ?? blank();
 export const armyCleared = (m: Meta, id: string): boolean => recordOf(m, id).clears > 0;
-/** An army is open when it is the first or the one before it has been beaten. */
+/**
+ * The army stars (all tiers, all armies) each army opens at: the first is open from the start, the rest two stars further on each. A player
+ * who clears each Normal army with its clear star and one more (as today's pace) is never held back; the harder tiers' stars count too.
+ */
+export const ARMY_NEED: readonly number[] = ARMIES.map((_, i) => 2 * i);
+/** The stars an army opens at. */
+export const armyNeed = (id: string): number => ARMY_NEED[Math.max(0, armyIndex(id))];
+/** Every star won over all the armies. */
+export const totalStars = (m: Meta): number => ARMIES.reduce((n, a) => n + armyStars(m, a).got, 0);
+/** An army is open when the stars won so far reach its number, or a save already had it open (`Meta.opened`, set once for a save from before the stars). */
 export function armyUnlocked(m: Meta, id: string): boolean {
   const i = armyIndex(id);
-  return i === 0 || (i > 0 && armyCleared(m, ARMIES[i - 1].id));
+  return i === 0 || (i > 0 && (totalStars(m) >= ARMY_NEED[i] || !!m.opened?.includes(id)));
 }
 /** The armies beaten so far. */
 export const clearedCount = (m: Meta): number => ARMIES.filter((a) => armyCleared(m, a.id)).length;
@@ -301,7 +310,7 @@ export interface ArmyPay {
   replay: boolean;
   /** This win beat the army's last boss for the first time. */
   firstClear: boolean;
-  /** The army this first clear opened. */
+  /** The army this fight's stars opened (set by the page once the run's stars are settled). */
   unlocked?: Army;
 }
 
@@ -330,8 +339,8 @@ export function settleWave(m: Meta, id: string, n: number, won: boolean, stars: 
     mine.clears++;
   }
   m.crowns += crowns;
-  // (only the first Normal clear opens the next army)
-  return { crowns, replay, firstClear, unlocked: firstClear && !tier ? nextArmy(a) : undefined };
+  // (the stars open the next army, and they are settled after the wave: the page asks `armyUnlocked` again then)
+  return { crowns, replay, firstClear };
 }
 
 /** How many waves each army had before all of them were made 15: a saved record without `waves` counts in these. */

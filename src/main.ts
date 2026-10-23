@@ -16,6 +16,7 @@ import { noteFightStats, notePayout, recapOf } from './sim/runRecap';
 import { showRecap } from './recapView';
 import { ARMIES, armyById, armyUnlocked, settleWave, type ArmyPay } from './sim/armies';
 import { drawRunStars, showUnlock } from './armiesView';
+import { modeOpen } from './sim/modeUnlock';
 import { spellIconHtml } from './spellIcons';
 import { settleArmyRun, type StarResult } from './sim/armyStars';
 import { tierOf } from './sim/tiers';
@@ -1206,6 +1207,8 @@ class Game {
 
   /** The tower or the calamity from the home screen: its saved run carries on where it stood; with none, a new one begins (the calamity asks for its hero first). */
   private openMode(kind: 'tower' | 'calamity'): void {
+    // (a shut mode has a disabled button; a run begun before it shut is still let in)
+    if (!modeOpen(this.meta, kind) && !loadSlot(kind)) return;
     const saved = loadSlot(kind);
     if (saved) return this.resumeSlot(saved);
     if (kind === 'tower') return this.startTower(towerRun(clockSeed(), this.meta));
@@ -1833,6 +1836,7 @@ class Game {
       else finish(run, won, rating.stars);
       this.gain = run.gold - before;
       if (won && fixed && !run.cleared && !run.over && !this.auto) this.startWalk(stage);
+      const openBefore = army ? ARMIES.filter((a) => armyUnlocked(this.meta, a.id)).map((a) => a.id) : [];
       // (an army pays by wave, and its last boss a clear; any other run pays as it always did)
       this.pay = army ? settleWave(this.meta, army.id, stage, won, rating.stars) : null;
       // (a daily pays by wave and its boss a chest; a practice run pays nothing)
@@ -1843,6 +1847,8 @@ class Game {
       if (won && !army && !daily && run.mode?.kind !== 'calamity') recordStars(this.meta, stage, rating.stars);
       const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b });
       this.runStars = settleArmyRun(this.meta, run);
+      // (the stars this run won may have opened an army: its banner rises when the run's result is left)
+      if (this.pay) this.pay.unlocked = ARMIES.find((a) => !openBefore.includes(a.id) && armyUnlocked(this.meta, a.id));
       // (a milestone this fight reached may bring in a hero)
       toastJoined(grantContent(this.meta));
       // (a run that levels its own heroes taught them in `finishTower`; the lasting XP is not touched)
@@ -1886,12 +1892,13 @@ class Game {
       toastAchievements(earned);
     }
     document.body.dataset.phase = b.phase;
+    document.body.dataset.roster = run.roster.length ? 'some' : 'none';
     const army = armyOfRun(run);
     const fixed = waveArmyOf(run);
     const kind = run.tower?.cur?.kind;
     const stage = `${fixed ? `Wave ${run.stage}/${fixed.waves.length}` : run.mode?.kind === 'calamity' ? `Map ${run.tower!.act} · ${mapProgress(run.tower!).done} of ${mapProgress(run.tower!).total} cleared` : run.tower ? `Floor ${run.stage}` : `Stage ${run.stage}`}${kind === 'elite' ? ' · Elite' : isBossRun(run) ? ' · Boss' : ''}`;
     $('status').textContent =
-      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : benchFull(run) ? `${stage} · bench full: recycle a hero to hire` : n ? `${stage} · ${n} of ${squadLimit(run)} placed` : `${stage} · drag heroes onto the blue tiles`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
+      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : benchFull(run) ? `${stage} · bench full: recycle a hero to hire` : n ? `${stage} · ${n} of ${squadLimit(run)} placed` : run.roster.length ? `${stage} · drag heroes onto the blue tiles` : `${stage} · no heroes yet: hire two`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
     $('gold').textContent = `${run.gold} gold`;
     this.drawLives(run);
     const buy = $('summon') as HTMLButtonElement;

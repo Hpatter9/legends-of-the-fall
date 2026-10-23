@@ -23,6 +23,7 @@ import { drawCodex, stopCodex } from './codexView';
 import { claimCodex, codexWaiting, gotOf, totalOf } from './sim/codex';
 import { todayKey } from './modes';
 import { openSettings } from './settings';
+import { modeOpen, MODE_NEED, opensAt, progressLine } from './sim/modeUnlock';
 import { resetTipsButton, tips } from './tips';
 import { ICONS, icon } from './menuArt';
 import { drawHeroSheet, drawRoster, strongest } from './menuHeroes';
@@ -95,6 +96,7 @@ export class Home {
   private hall: SummoningHall;
   private library = new Library(() => this.show('castle'));
   private castleBar = el('div', 'ctBar');
+  private castleShut = el('div', 'ctShut');
   private cardOpen = false;
 
   constructor(
@@ -135,7 +137,7 @@ export class Home {
     // (the heroes page is the tavern: it draws once and keeps its place while you switch tabs)
     this.pages.get('heroes')!.append(this.tavern.root);
     // (the castle page is the courtyard, with its shortcut buttons on top)
-    this.pages.get('castle')!.append(this.castleBar, this.castle.root);
+    this.pages.get('castle')!.append(this.castleBar, this.castle.root, this.castleShut);
     // (the battle page keeps the camp behind its own content)
     this.pages.get('battle')!.append(this.camp.root);
     $('hmTrophy').addEventListener('click', () => this.openAchievements());
@@ -203,7 +205,7 @@ export class Home {
     then();
   }
 
-  private show(tab: Tab): void {
+  show(tab: Tab): void {
     this.tab = tab;
     // (the tab bar stays under the armies: a tap on it leaves them)
     if ($('hmSub').classList.contains('armies')) this.closeSub();
@@ -256,7 +258,7 @@ export class Home {
     if (this.tab === 'spells') this.library.start();
     else this.library.stop();
     // (the courtyard moves only while it is showing, and not under a building card)
-    if (this.tab === 'castle' && !this.cardOpen) this.castle.start();
+    if (this.tab === 'castle' && !this.cardOpen && modeOpen(m, 'castle')) this.castle.start();
     else this.castle.stop();
   }
 
@@ -328,13 +330,16 @@ export class Home {
     // (the Tower: shut, dimmed and chained, until the first army is beaten; a climb begun stays open whatever the unlock says)
     const climbing = this.hooks.slotInfo?.('tower');
     const towerUp = towerOpen(m) || !!climbing;
-    const towerLine2 = climbing ?? (towerOpen(m) ? (m.tower ? `best ${m.tower}` : 'not climbed yet') : `opens after ${ARMIES[0].name.split(' ')[0]}s`);
-    const tower = place('hmTower', towerUp ? '' : 'locked', 'Tower', towerLine2, `Endless tower: ${towerLine2}`, () => this.go(this.hooks.onTower));
+    const towerLine2 = climbing ?? (towerOpen(m) ? (m.tower ? `best ${m.tower}` : 'not climbed yet') : opensAt(MODE_NEED.tower));
+    const tower = place('hmTower', towerUp ? '' : 'locked', 'Tower', towerLine2, `Endless tower: ${towerLine2}${towerUp ? '' : `, ${progressLine(m, MODE_NEED.tower)}`}`, () => this.go(this.hooks.onTower));
     tower.disabled = !towerUp;
     // (the Calamity: the portal; the plate carries the saved run or the best)
     const going = this.hooks.slotInfo?.('calamity');
-    const calLine = going ?? (m.calamity?.best ? `best ${m.calamity.best} of ${CAL_MAPS}` : 'one hero');
-    const calamity = place('hmCalamity', '', 'Calamity', calLine, `The Calamity portal: ${calLine}`, () => this.go(this.hooks.onCalamity));
+    const calUp = modeOpen(m, 'calamity') || !!going;
+    const calLine = going ?? (!calUp ? opensAt(MODE_NEED.calamity) : m.calamity?.best ? `best ${m.calamity.best} of ${CAL_MAPS}` : 'one hero');
+    const calamity = place('hmCalamity', calUp ? '' : 'locked', 'Calamity', calLine, `The Calamity portal: ${calLine}${calUp ? '' : `, ${progressLine(m, MODE_NEED.calamity)}`}`, () => this.go(this.hooks.onCalamity));
+    calamity.disabled = !calUp;
+    this.camp.calamitySlot.classList.toggle('shut', !calUp);
     this.camp.dailySlot.replaceChildren(daily);
     this.camp.towerSlot.replaceChildren(tower);
     this.camp.calamitySlot.querySelector('.cpPlace')?.remove();
@@ -361,16 +366,20 @@ export class Home {
     ach.append(icon(ICONS.trophy), el('b', '', 'Achievements'), el('small', '', `${got}/${ACHIEVEMENTS.length}`));
     if (m.achievements.length > seenCount() || unclaimed(m).length) ach.append(el('i', 'badge'));
     ach.addEventListener('click', () => this.openAchievements());
-    const set = el('button', 'ctChip');
-    set.append(el('span', 'gearIcon', '⚙'), el('b', '', 'Settings'));
-    set.addEventListener('click', () => openSettings());
     // (the codex sits by the achievements: both are the records of the castle's library of deeds; its badge shows a milestone to claim)
     const cdx = el('button', 'ctChip');
     cdx.append(icon(ICONS.spells), el('b', '', 'Codex'), el('small', '', `${gotOf(m, 'bestiary') + gotOf(m, 'heroes')}/${totalOf('bestiary') + totalOf('heroes')}`));
     if (codexWaiting(m).length) cdx.append(el('i', 'badge'));
     cdx.addEventListener('click', () => this.openCodex());
-    row.append(ach, cdx, set, resetTipsButton());
+    row.append(ach, cdx, resetTipsButton());
     bar.append(row, el('div', 'ctHelp', 'tap a building to upgrade it · drag to look round'));
+    // (the buildings open at 10 army stars: until then the courtyard is a locked gate, with the stars still to win)
+    const up = modeOpen(m, 'castle');
+    this.castle.root.hidden = !up;
+    this.castleShut.hidden = up;
+    if (!up) {
+      this.castleShut.replaceChildren(el('b', '', 'The castle is shut'), el('p', '', `${opensAt(MODE_NEED.castle)} · ${progressLine(m, MODE_NEED.castle)}`), el('small', '', 'Win stars on the armies to open the gate.'));
+    }
   }
 
   /** A building's upgrade card (over the courtyard): what it gives now and next, its cost, and the Build button. */
@@ -544,7 +553,7 @@ export class Home {
   }
 
   /** The codex page; a Claim takes a milestone's crowns, saves, and draws the page again. */
-  private openCodex(): void {
+  openCodex(): void {
     const draw = (b: HTMLElement) =>
       drawCodex(b, this.meta, (id) => {
         if (!claimCodex(this.meta, id)) return;
