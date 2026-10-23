@@ -41,3 +41,7 @@ button:disabled, button.primary:disabled, .hmBig:disabled { color: var(--off-ink
 .trait.on small { color: var(--btn-ink); }
 #traitHint { font: 400 12px/16px var(--body); letter-spacing: 0; text-shadow: none; color: var(--text-dim); min-height: 16px; padding: 2px 0; }
 #traitHint.wake { color: var(--accent); }
+/* Orange buttons with dark writing: no text shadow. The light drop under the dark letters smeared them into a blur on the phone
+   (the owner's note); the flat ink on the orange reads cleanly. */
+button.primary, .hmBig, .hmBattle, .hmBattle *, .hmTab.hero, .hmTab.hero *, .setting .toggle.on, .setting .pair button.on,
+.asTier.on, .asCounts button.on, .rcXpRow span.up, .rcHero > b small { text-shadow: none; }
