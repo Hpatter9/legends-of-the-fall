@@ -39,6 +39,8 @@ export interface Achievement {
 const heroesIn = (b: Battle | undefined) => (b?.units ?? []).filter((u) => u.side === 'hero' && !UNITS[u.def].summon);
 const sumStars = (m: Meta) => Object.values(m.stars).reduce((n, s) => n + s, 0);
 const dailiesCleared = (m: Meta) => Object.values(m.daily).filter((e) => e.cleared).length;
+/** The highest lasting level of any hero. */
+const bestLevel = (m: Meta) => Math.max(1, ...ALL_HEROES.map((k) => levelOfKind(m, k)));
 
 export const ACHIEVEMENTS: readonly Achievement[] = [
   { id: 'firstWin', name: 'First Blood', text: 'Win a stage.', crowns: 5, earned: (c) => c.won },
@@ -66,6 +68,17 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
   { id: 'threeStar', name: 'Three-Star Hero', text: 'Merge a hero to three stars.', crowns: 15, earned: (c) => c.run.roster.some((h) => h.grade >= 3) },
   { id: 'relics5', name: 'Relic Hoarder', text: 'Collect five relics in one run.', crowns: 15, earned: (c) => (c.run.relics?.length ?? 0) >= 5 },
   { id: 'level10', name: 'Veteran', text: 'Bring a hero to level 10.', crowns: 20, earned: (c) => ALL_HEROES.some((k) => levelOfKind(c.meta, k) >= 10) },
+  // (the deep levels: the best level of any hero, with a meter towards the goal)
+  ...([[30, 'level30', 'Hardened Champion', 30], [50, 'level50', 'Legend in the Making', 60], [100, 'level100', 'Centurion', 200]] as const).map(
+    ([need, id, name, crowns]): Achievement => ({
+      id,
+      name,
+      text: `Bring a hero to level ${need}.`,
+      crowns,
+      earned: (c) => bestLevel(c.meta) >= need,
+      meter: (m) => ({ now: Math.min(need, bestLevel(m)), need }),
+    }),
+  ),
   {
     id: 'allHeroes',
     name: 'Full Roster',

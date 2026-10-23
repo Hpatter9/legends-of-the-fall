@@ -33,3 +33,5 @@ next run.
   win it, and the curve and the per-level gains set how fast the second and third runs catch up.
 - Tests: `test/levels.test.ts`, and `test/progression.test.ts` (a fresh team at level 1 loses the first boss; the same team
   at the levels a few runs give usually wins it).
+
+**Update (level 100):** the lasting level now goes on to 100 (a run's own levels still stop at 30). The curve up to 30 above is unchanged; see `level-100.md`.

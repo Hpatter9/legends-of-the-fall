@@ -16,18 +16,18 @@ import { FALLEN, healParty } from './health';
 import { drawEvent, TOWER_EVENT_KINDS } from './events';
 import type { Meta } from './meta';
 import { drawOffer, eliteAt, eliteFight, OFFER_SIZE, sideEliteAt } from './elites';
-import { SIDE_BASE, sideSpots, type SideSpot } from './calLand';
+import { neighboursOf, openSet, routeBetween, SIDE_BASE, sideSpots, START_ID, type SideSpot } from './calLand';
 import { ALL_RELIC_IDS, RELICS, relicEffects } from './relics';
 import { mixSeed, Rng } from './rng';
 import { addTwists, TWISTS } from './twists';
 import { BOSS, FOE_START, reward, squadLimit, summonCost, type Run } from './run';
 import { UNITS } from './units';
-import { calBossBoost, fitBand, squadFoeMult } from './calamity';
+import { CAL_OPENING, calBossBoost, fitBand, squadFoeMult } from './calamity';
 import { calBossBand } from './calamityBosses';
 import { ascChests, ascCrowns, ascOf, ascRules, ascCleared } from './ascension';
-import { CALAMITY_XP, CLIMB_XP, fightXpByHero, gainRunXp, hireHero } from './climb';
+import { CALAMITY_XP, CLIMB_XP, fightXpByHero, gainRunXp, heroLevel, hireHero } from './climb';
 import { xpRate } from './castle';
-import { levelOf as levelOfXp, RUN_MAX_LEVEL, type LevelUp } from './levels';
+import { type LevelUp } from './levels';
 
 /** Floors in an act: the path floors, then the boss on the last. */
 export const ACT_ROWS = 13;
@@ -157,6 +157,12 @@ export interface TowerState {
   path: number[];
   /** The hidden side spots taken or skipped on this act's map (by id, `calLand.ts`); a calamity's. */
   sideDone?: number[];
+  /** Where a calamity's party stands, any spot of the map (a side spot's id, the portal -1); `at` when not set. */
+  here?: number;
+  /** The shops a calamity's map has opened, by node id, with what is left in them: a shop stays open to visit again. */
+  shops?: Record<string, ShopItem[]>;
+  /** The spots the calamity has cleared in all, over its maps (the summary's count). */
+  spots?: number;
   /** A calamity's spot the party is walking to (saved when the walk begins, so a game closed mid-walk reopens with the leader there and the spot not yet entered; cleared when it is entered). */
   going?: number;
   /** The relics an elite offers, until one is taken (`takeRelic` in `elites.ts`). */
@@ -354,15 +360,62 @@ export const mapFor = (run: Run, act: number): MapNode[] => (run.tower?.maps ? c
 export function choices(run: Run): MapNode[] {
   const t = run.tower;
   if (!t || t.cur || run.over) return [];
+  // (a calamity's map is walked freely: any spot a bridge leads to from a cleared one, in either direction, and not cleared yet)
+  if (t.maps) {
+    const sides = sideSpots(run.seed, t.act, t.map);
+    const out = new Set<number>();
+    for (const id of openSet(t)) for (const to of neighboursOf(t.map, sides, id)) if (to >= 0 && to < SIDE_BASE && !t.path.includes(to)) out.add(to);
+    return [...out].sort((a, b) => a - b).map((id) => t.map[id]);
+  }
   if (t.at < 0) return t.map.filter((n) => n.row === t.row);
   return t.map[t.at].next.map((id) => t.map[id]);
+}
+
+/** The spot a calamity's party stands at: where it last cleared or walked to, the node in play, or the portal. */
+export const hereOf = (t: Pick<TowerState, 'here' | 'at' | 'cur'>): number => t.cur?.id ?? t.here ?? t.at;
+
+/** How many of a calamity map's spots (the boss's lair apart) the party has cleared, and how many there are. */
+export function mapProgress(t: Pick<TowerState, 'map' | 'path'>): { done: number; total: number } {
+  const spots = t.map.filter((n) => n.kind !== 'boss');
+  return { done: spots.filter((n) => t.path.includes(n.id)).length, total: spots.length };
+}
+
+/** The floor a spot of a calamity's map counts as, for the foes' strength, the pay and the shops: its row, running on through the maps; a hidden spot is one floor past the node it hangs from. */
+export function spotFloor(run: Run, id: number): number {
+  const t = run.tower!;
+  if (id >= SIDE_BASE) {
+    const from = sideSpots(run.seed, t.act, t.map).find((s) => s.id === id)?.from;
+    return floorOf(t.act, (from !== undefined ? t.map[from].row : t.row) + 1, t);
+  }
+  return floorOf(t.act, t.map[id]?.row ?? t.row, t);
+}
+
+/** The party walks to a spot it has cleared (or the portal): free and safe. False when there is no such cleared spot, or none to walk by. */
+export function moveTo(run: Run, id: number): boolean {
+  const t = run.tower;
+  if (!t?.maps || t.cur || run.over) return false;
+  const open = openSet(t);
+  if (!open.has(id)) return false;
+  t.here = id;
+  if (id >= 0 && id < SIDE_BASE) t.at = id;
+  else if (id === START_ID) t.at = -1;
+  t.going = undefined;
+  return true;
+}
+
+/** The ways a spot can be walked to from where the party stands (a calamity's): the spots in order, or null when it can't be reached (not revealed). */
+export function routeTo(run: Run, id: number): number[] | null {
+  const t = run.tower;
+  if (!t?.maps) return null;
+  const sides = sideSpots(run.seed, t.act, t.map);
+  return routeBetween(t.map, sides, openSet(t), hereOf(t), id);
 }
 
 /** The party sets out for a spot of the calamity's map (one it may pick now); false when it may not. Saved with the run, so reopening carries on at that spot. */
 export function setGoing(run: Run, id: number): boolean {
   const t = run.tower;
   if (!t?.maps || t.cur) return false;
-  if (!choices(run).some((n) => n.id === id) && !sideChoices(run).some((s) => s.id === id)) return false;
+  if (!choices(run).some((n) => n.id === id) && !sideChoices(run).some((s) => s.id === id) && !(t.path.includes(id) && t.map[id]?.kind === 'shop')) return false;
   t.going = id;
   return true;
 }
@@ -370,8 +423,9 @@ export function setGoing(run: Run, id: number): boolean {
 /** The hidden side spots the party may take now: those hanging from the node it stands at, not yet taken (a calamity's; none while a node is in play). They are optional: the road's own choices stay as they are. */
 export function sideChoices(run: Run): SideSpot[] {
   const t = run.tower;
-  if (!t?.maps || t.cur || run.over || t.at < 0) return [];
-  return sideSpots(run.seed, t.act, t.map).filter((s) => s.from === t.at && !t.sideDone?.includes(s.id));
+  if (!t?.maps || t.cur || run.over) return [];
+  // (shown once the node it hangs from is cleared, and taken whenever the party likes: it is optional, and never lost)
+  return sideSpots(run.seed, t.act, t.map).filter((s) => t.path.includes(s.from) && !t.sideDone?.includes(s.id));
 }
 
 /* ------------------------------------------------------------------ the fights */
@@ -409,7 +463,9 @@ function plainSpec(run: Run, kind: NodeKind, floor: number, nodeId?: number): Fi
   const more = squadFoeMult(run.roster.length);
   const rules = ascRules(ascOf(run));
   spec.band = fitBand(spec.band, run.roster.length, kind === 'boss');
-  spec.stage.foes = { ...spec.stage.foes, hp: spec.stage.foes!.hp! * more * rules.foeHp, atk: spec.stage.foes!.atk! * more * rules.foeAtk };
+  // (the first floors of the first map are gentler: `CAL_OPENING`)
+  const ease = kind === 'boss' ? 1 : CAL_OPENING[floor - 1] ?? 1;
+  spec.stage.foes = { ...spec.stage.foes, hp: spec.stage.foes!.hp! * more * rules.foeHp * ease, atk: spec.stage.foes!.atk! * more * rules.foeAtk * ease };
   if (rules.heal !== 1) spec.stage.heal = rules.heal;
   return spec;
 }
@@ -504,15 +560,19 @@ function stockChest(run: Run, floor: number): Treasure {
 export function enterNode(run: Run, id: number): boolean {
   const t = run.tower;
   const side = id >= SIDE_BASE ? sideChoices(run).find((s) => s.id === id) : undefined;
-  const node = side ? { id, kind: side.kind as NodeKind, twist: undefined } : choices(run).find((n) => n.id === id);
+  // (a cleared shop of a calamity can be entered again)
+  const again = t?.maps && !t.cur && !run.over && t.path.includes(id) && t.map[id]?.kind === 'shop' ? t.map[id] : undefined;
+  const node = side ? { id, kind: side.kind as NodeKind, twist: undefined } : again ?? choices(run).find((n) => n.id === id);
   if (!t || !node) return false;
+  // (a calamity's spots are fought at their own floor, wherever the party has been: its row, running on through the maps)
+  if (t.maps) run.stage = spotFloor(run, id);
   const floor = run.stage;
   t.lastBoss = undefined;
   const cur: Current = { id, kind: node.kind };
   if (side) cur.side = true;
   t.going = undefined;
   if (node.kind === 'fight' || node.kind === 'elite' || node.kind === 'boss') cur.fight = fightSpec(run, node.kind, floor, node.twist, id);
-  if (node.kind === 'shop') cur.shop = stockShop(run, floor);
+  if (node.kind === 'shop') cur.shop = t.shops?.[id] ?? stockShop(run, floor);
   if (node.kind === 'recruit') cur.hires = stockHires(run, floor);
   if (node.kind === 'treasure') cur.chest = stockChest(run, floor);
   // (a hidden hoard is gold alone: the side spots are small rewards, so the road's own stay what they were)
@@ -530,17 +590,25 @@ export function clearNode(run: Run): void {
   const t = run.tower;
   const cur = t?.cur;
   if (!t || !cur) return;
-  if (cur.side) {
-    // (a hidden side spot is done: the party is back on the road where it stood, on the same floor, and the road's choices are as they were)
+  if (cur.shop && t.maps) (t.shops ??= {})[String(cur.id)] = cur.shop;
+  if (t.maps && cur.side) {
+    // (a hidden side spot is done: it stays cleared, and the party stands there)
     (t.sideDone ??= []).push(cur.id);
+    t.here = cur.id;
+    t.spots = (t.spots ?? 0) + 1;
     t.cur = undefined;
     run.event = undefined;
     return;
   }
-  t.path.push(cur.id);
+  const first = !t.path.includes(cur.id);
+  if (first) t.path.push(cur.id);
   t.cur = undefined;
   run.event = undefined;
-  run.stage++;
+  if (t.maps) {
+    // (a calamity is not climbed floor by floor: a spot cleared stays cleared, and the party stands on it; a visit to a shop already cleared is not a new spot)
+    t.here = cur.id;
+    if (first) t.spots = (t.spots ?? 0) + 1;
+  } else run.stage++;
   if (cur.kind === 'boss' && t.maps && t.act >= t.maps) {
     // (the last map's boss: a calamity is cleared)
     t.bosses++;
@@ -556,9 +624,13 @@ export function clearNode(run: Run): void {
     t.row = 0;
     t.path = [];
     t.sideDone = undefined;
+    t.shops = undefined;
+    t.here = undefined;
+    t.going = undefined;
+    if (t.maps) run.stage = floorOf(t.act, 0, t);
   } else {
     t.at = cur.id;
-    t.row++;
+    if (!t.maps) t.row++;
   }
 }
 
@@ -591,7 +663,7 @@ export const FIGHT_GEAR = 0.3;
 function teachFight(run: Run, b: Battle): void {
   const t = run.tower!;
   const gains = fightXpByHero(b, xpRate(run.castle) * (t.cur?.side ? 0.25 : 1), run.mode?.kind === 'calamity' ? CALAMITY_XP : CLIMB_XP);
-  const before = new Map(run.roster.map((h) => [h.id, levelOfXp(h.xp ?? 0, RUN_MAX_LEVEL)] as const));
+  const before = new Map(run.roster.map((h) => [h.id, heroLevel(h)] as const));
   const ups = new Map(gainRunXp(run, gains).map((u: LevelUp & { id: number }) => [u.id, u] as const));
   t.gains = Object.entries(gains).map(([id, xp]) => {
     const h = run.roster.find((x) => x.id === Number(id));
@@ -804,7 +876,7 @@ function settleCalamity(m: Meta, run: Run): TowerSummary {
   m.calamity = { ...best, best: Math.max(best.best, maps), clears: best.clears + (run.cleared ? 1 : 0) };
   if (run.cleared) m.calamity.asc = Math.max(cleared, level);
   else if (best.asc !== undefined) m.calamity.asc = best.asc;
-  t.summary = { floors: Math.max(0, run.stage - 1), act: Math.min(t.act, t.maps ?? t.act), crowns: t.crowns + bonus, ...c, gear: [], relics: run.relics?.length ?? 0, heroes: run.roster.length, newBest: maps > best.best, maps, cleared: !!run.cleared, abandoned: t.abandoned, ...(level ? { ascension: level } : {}) };
+  t.summary = { floors: t.spots ?? Math.max(0, run.stage - 1), act: Math.min(t.act, t.maps ?? t.act), crowns: t.crowns + bonus, ...c, gear: [], relics: run.relics?.length ?? 0, heroes: run.roster.length, newBest: maps > best.best, maps, cleared: !!run.cleared, abandoned: t.abandoned, ...(level ? { ascension: level } : {}) };
   return t.summary;
 }
 

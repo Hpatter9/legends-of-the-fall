@@ -14,19 +14,24 @@
 
 import type { Ability, Kind, Trig } from './equipBases';
 import { addStats, capStats, emptyStats, equipStats, STAT_KEYS, type EquipStats, type StatKey } from './equipment';
-import { levelOfKind } from './levels';
+import { levelOfKind, milestonePoints } from './levels';
 import type { Meta } from './meta';
 import { awakenSpent } from './awakenRules';
 import { awakenStats } from './awaken';
 import { ALL_HEROES } from './units';
+import { deepNodes } from './talentsDeep';
 
-/** One point for every this many levels (3, 6, 9, 12, 15 and 18). */
+/** One point for every this many levels (3, 6, 9, ... 99), and one more at each deep milestone (levels 40 to 100: `levelPoints`). */
 export const LEVEL_POINT_EVERY = 3;
 /** Shards of a kind that buy one point, and how many points shards can buy. */
 export const SHARD_POINT_COST = 3;
 export const MAX_SHARD_POINTS = 3;
 /** What a node costs, by tier. */
-export const TIER_COST: readonly number[] = [0, 1, 2, 3];
+export const TIER_COST: readonly number[] = [0, 1, 2, 3, 5, 7, 8, 9];
+/** The lasting level a tier opens at (the deep rows, `talentsDeep.ts`; the first three open from the start). */
+export const TIER_LEVEL: readonly number[] = [0, 1, 1, 1, 40, 60, 80, 100];
+/** The tiers of a full tree: three to start with and four deep rows. */
+export const TALENT_TIERS = 7;
 /** Tier-1 nodes that must be taken before tier 2 opens. */
 export const TIER2_NEEDS = 2;
 /** A respec costs this much, and this much more for each point spent. */
@@ -58,7 +63,7 @@ export const TAL_KEYS: Readonly<Record<string, string>> = {
 export interface TalentNode {
   /** `<kind>:<tier><letter>`; the letter is the node's place in its row. */
   id: string;
-  tier: 1 | 2 | 3;
+  tier: 1 | 2 | 3 | 4 | 5 | 6 | 7;
   name: string;
   /** What it does, in plain words. */
   text: string;
@@ -667,13 +672,17 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
   ),
 };
 
+// ---- the deep rows (tiers 4 to 7), added to every tree ----
+for (const [kind, t] of Object.entries(TREES)) t.nodes.push(...deepNodes(kind, t.nodes.filter((n) => n.tier === 2), ALL_HEROES.indexOf(kind), ab, statText));
+
 // ---- lookups ----
 export const treeOf = (kind: string): TalentTree | undefined => TREES[kind];
 export const nodeOf = (kind: string, id: string): TalentNode | undefined => TREES[kind]?.nodes.find((n) => n.id === id);
 /** A node's cost in points. */
+const ROW_NAMES = ['', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth'];
 export const costOf = (n: TalentNode): number => TIER_COST[n.tier];
 /** The nodes of a tier, in order. */
-export const tierNodes = (kind: string, tier: 1 | 2 | 3): TalentNode[] => TREES[kind]?.nodes.filter((n) => n.tier === tier) ?? [];
+export const tierNodes = (kind: string, tier: TalentNode['tier']): TalentNode[] => TREES[kind]?.nodes.filter((n) => n.tier === tier) ?? [];
 
 // ---- a kind's talents in the meta ----
 export interface KindTalents {
@@ -685,7 +694,7 @@ export interface KindTalents {
 
 const own = (m: Meta, kind: string): KindTalents | undefined => m.talents?.[kind];
 export const picksOf = (m: Meta, kind: string): string[] => own(m, kind)?.picks ?? [];
-export const levelPoints = (level: number): number => Math.floor(level / LEVEL_POINT_EVERY);
+export const levelPoints = (level: number): number => Math.floor(level / LEVEL_POINT_EVERY) + milestonePoints(level);
 export const boughtOf = (m: Meta, kind: string): number => own(m, kind)?.bought ?? 0;
 /** Every point a kind has earned: from its level, plus those bought with shards. */
 export const pointsEarned = (m: Meta, kind: string): number => levelPoints(levelOfKind(m, kind)) + boughtOf(m, kind);
@@ -711,8 +720,9 @@ export function whyNot(m: Meta, kind: string, id: string): string | null {
   if (picks.includes(id)) return 'Already learned';
   const taken = (tier: number) => picks.filter((p) => nodeOf(kind, p)?.tier === tier);
   if (node.tier > 1 && taken(node.tier).length) return 'You chose the other one of this pair';
+  if (levelOfKind(m, kind) < TIER_LEVEL[node.tier]) return `Opens at level ${TIER_LEVEL[node.tier]}`;
   if (node.tier === 2 && taken(1).length < TIER2_NEEDS) return `Learn ${TIER2_NEEDS} of the first row first`;
-  if (node.tier === 3 && !taken(2).length) return 'Learn a node of the second row first';
+  if (node.tier >= 3 && !taken(node.tier - 1).length) return `Learn a node of the ${ROW_NAMES[node.tier - 1]} row first`;
   if (pointsFree(m, kind) < costOf(node)) return `Needs ${costOf(node)} point${costOf(node) > 1 ? 's' : ''}`;
   return null;
 }
@@ -792,3 +802,5 @@ export function readTalents(raw: unknown, m: Meta): Record<string, KindTalents> 
 
 /** The points a full tree takes: all four first-row nodes, and one each of the two pairs. */
 export const FULL_TREE_POINTS = 4 * TIER_COST[1] + TIER_COST[2] + TIER_COST[3];
+/** The points the four deep rows take: one node of each. */
+export const DEEP_TREE_POINTS = TIER_COST[4] + TIER_COST[5] + TIER_COST[6] + TIER_COST[7];

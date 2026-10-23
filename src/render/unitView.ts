@@ -14,6 +14,8 @@ import { VFX } from './vfxArt';
 import { PACK } from './fxSheets';
 import { deathKind, maxStatuses, statusesOf, STATUS_LOOKS } from './fxRules';
 import { settings } from '../settings';
+import { badgeOf } from '../sim/levels';
+import { AURA_COLOURS, auraHalo, auraRings } from './levelLook';
 
 /** The sheet rows beyond `Anim`: the skills' casts (a sheet without one plays its plain attack). */
 type Row = Anim | 'attack2' | 'defend';
@@ -83,6 +85,8 @@ export class UnitSprite {
   private ky = 0;
   private flash = 0;
   private glow = new Graphics();
+  /** The rings (and, higher up, the halo) of a deep level milestone, drawn once. */
+  private aura = new Graphics();
   /** Four flat-coloured copies of the body, a pixel out each way: a rim behind the sprite. */
   private rim = new Container();
   private sparks = new Graphics();
@@ -126,6 +130,13 @@ export class UnitSprite {
       if (tone.length) this.body.filters = tone;
     }
     this.shadow.ellipse(0, 0, 13, 5).fill({ color: 0x000000, alpha: 0.32 });
+    // a hero past a deep milestone (lasting level 40 and up) stands in steady rings of the badge's colour
+    const tier = unit.side === 'hero' ? badgeOf(unit.level ?? 1) : 0;
+    if (tier) {
+      const col = AURA_COLOURS[tier];
+      for (let i = 0; i < auraRings(tier); i++) this.aura.ellipse(0, 0, 15 + i * 4, 6.5 + i * 1.7).stroke({ color: col, width: 1.5, alpha: 0.85 - i * 0.2 });
+      if (auraHalo(tier)) for (let i = 3; i >= 1; i--) this.aura.ellipse(0, -this.tall * 0.4, (10 + i * 5) / size, (this.tall * (0.28 + i * 0.12)) / size).fill({ color: col, alpha: 0.07 });
+    }
     this.body.anchor.set(0.5, 1);
     this.shield.anchor.set(0.5);
     this.shield.visible = false;
@@ -134,7 +145,7 @@ export class UnitSprite {
     this.pillar.anchor.set(0.5, 1);
     this.pillar.visible = false;
     this.pillar.blendMode = 'add';
-    this.root.addChild(this.shadow, this.glow, this.pillar, this.shield, this.rim, this.body, this.sparks, this.stars, this.bar, this.badge);
+    this.root.addChild(this.shadow, this.aura, this.glow, this.pillar, this.shield, this.rim, this.body, this.sparks, this.stars, this.bar, this.badge);
   }
 
   /** Draw it at the time `t` of the fight (ms), on the board. */
