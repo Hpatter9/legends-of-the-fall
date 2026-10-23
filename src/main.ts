@@ -3,7 +3,7 @@
 // the blue tiles; then the fight plays itself, a fixed tick at a time.
 
 import { Application, Container, Sprite, TextureSource } from 'pixi.js';
-import { D, standable, tileAt } from './sim/board';
+import { standable, tileAt } from './sim/board';
 import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
 import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
 // (`saveSlot` as `saveRun`: a tower or calamity run is saved in its own slot, any other in the ordinary one)
@@ -572,13 +572,14 @@ class Game {
 
   /** The first free standable tile on the heroes' rows, front row first. */
   private freeTile(): [number, number] | null {
-    for (let v = 0; v < D; v++)
-      for (let u = 0; u < this.b.board.w; u++) if (isDeployTile(v) && standable(tileAt(this.b.board, u, v)) && !unitAt(this.b, u, v)) return [u, v];
+    for (let v = 0; v < this.b.board.d; v++)
+      for (let u = 0; u < this.b.board.w; u++) if (isDeployTile(v, this.b.board.d) && standable(tileAt(this.b.board, u, v)) && !unitAt(this.b, u, v)) return [u, v];
     return null;
   }
 
   private begin(): void {
     if (!fight(this.b)) return;
+    this.evolved = new Set();
     this.endIntro();
     newQuipScene();
     foeGrumbles(this.b.units.filter((u) => u.side === 'foe' && !UNITS[u.def].summon).length, (i) => this.anchorOfFoe(i));
@@ -846,7 +847,7 @@ class Game {
       let sy = 0;
       let n = 0;
       for (let v = 0; v < b.d; v++)
-        if (isDeployTile(v)) {
+        if (isDeployTile(v, b.d)) {
           const [x, y] = at(Math.floor(b.w / 2), v, tileAt(b, Math.floor(b.w / 2), v)?.h ?? 0);
           sx += x;
           sy += y;
@@ -958,10 +959,10 @@ class Game {
     let x1 = -Infinity;
     let y0 = Infinity;
     let y1 = -Infinity;
-    for (let v = 0; v < D; v++)
+    for (let v = 0; v < b.d; v++)
       for (let u = 0; u < b.w; u++) {
         const t = tileAt(b, u, v);
-        if (!isDeployTile(v) || !t || !standable(t)) continue;
+        if (!isDeployTile(v, b.d) || !t || !standable(t)) continue;
         const [x, y] = at(u, v, t.h);
         x0 = Math.min(x0, x - TW / 2);
         x1 = Math.max(x1, x + TW / 2);
@@ -1895,6 +1896,12 @@ class Game {
       this.bossDown = !!run.tower && run.tower.cur?.kind === 'boss' && won;
       if (run.tower) finishTower(run, b, won, rating.stars);
       else finish(run, won, rating.stars);
+      // (a Calamity hero whose level earned it a tier gets the moment a merge's promotion does: the chime, and the flash when it next stands on the board)
+      const rose = run.tower?.promoted ?? [];
+      if (rose.length) {
+        this.evolved = new Set(rose.map((p) => p.id));
+        play('merge');
+      }
       this.gain = run.gold - before;
       if (won && fixed && !run.cleared && !run.over && !this.auto) this.startWalk(stage);
       // (an army pays by wave, and its last boss a clear; any other run pays as it always did)
@@ -2088,16 +2095,16 @@ class Game {
     }
     if (b.phase !== 'deploy') return;
     const who = this.chosen;
-    for (let v = 0; v < D; v++)
+    for (let v = 0; v < b.board.d; v++)
       for (let u = 0; u < b.board.w; u++) {
-        if (!isDeployTile(v) || !standable(tileAt(b.board, u, v))) continue;
+        if (!isDeployTile(v, b.board.d) || !standable(tileAt(b.board, u, v))) continue;
         const here = unitAt(b, u, v);
         const ok = who ? this.canPut(who, [u, v]) : !here;
         if (this.hover && this.hover[0] === u && this.hover[1] === v) this.boardView.mark(u, v, who && ok ? 'hover' : 'bad');
         else if (here && who && String(here.tag) === who) this.boardView.mark(u, v, 'chosen');
         else if (ok) this.boardView.mark(u, v, 'deploy');
       }
-    if (this.hover && !isDeployTile(this.hover[1])) this.boardView.mark(this.hover[0], this.hover[1], 'bad');
+    if (this.hover && !isDeployTile(this.hover[1], b.board.d)) this.boardView.mark(this.hover[0], this.hover[1], 'bad');
   }
 }
 
