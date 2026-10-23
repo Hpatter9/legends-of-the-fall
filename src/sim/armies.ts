@@ -29,6 +29,8 @@ export interface Army {
   name: string;
   /** One line for the army's card. */
   blurb: string;
+  /** The hero level Normal is meant for: about 2 to 4 tries with a party at this level, one try about ten levels above, and out of reach of a level-1 party (`docs/notes/difficulty.md`). */
+  level: number;
   /** The land of its first wave (and its card's backdrop); `lands` is every land its waves are fought in. */
   area: Area;
   /** One or two lands that its waves alternate between (wave 1 on the first), each fitting its troops; missing is `area` alone (the daily's). */
@@ -37,6 +39,8 @@ export interface Army {
   /** The foes' hp and attack at wave 1, as a share of their stats in `foes.ts`, and the share they gain each wave after. */
   start: number;
   growth: number;
+  /** The `start` the harder tiers scale from (they were tuned on it, so Normal's curve of levels can move without moving them). */
+  tierStart?: number;
   /** The hp and attack a boss has at wave 1's strength (the wave's multiplier then applies, as to every foe): the army's mid-bosses, and its last. These set the walls of the campaign, whatever the boss's own stats in `foes.ts`. */
   mid: BossStats;
   last: BossStats;
@@ -74,12 +78,14 @@ function ramp(pattern: readonly string[], count: number): Wave[] {
 export const ARMIES: readonly Army[] = [
   {
     id: 'orcs',
+    level: 1,
     name: 'Orc Warband',
     blurb: 'Grunts, archers and brutes behind a warlord.',
     area: 'warcamp',
     lands: ['warcamp', 'highlands'],
     waves: waves(ramp(['orcGrunt', 'orcGrunt', 'orcArcher', 'orcBrute', 'orcGrunt', 'orcArcher', 'orcBrute', 'orcGrunt'], 13), { 8: ['orcChieftain', 'orcGrunt', 'orcGrunt', 'orcArcher'], 15: ['orcWarlord', 'orcGrunt', 'orcArcher', 'orcGrunt', 'orcBrute', 'orcBrute'] }),
     start: 0.5,
+    tierStart: 0.5,
     growth: 0.176,
     mid: { hp: 1500, atk: 50 },
     last: { hp: 2630, atk: 74 },
@@ -88,12 +94,14 @@ export const ARMIES: readonly Army[] = [
   },
   {
     id: 'undead',
+    level: 5,
     name: 'Undead Legion',
     blurb: 'Skeleton warriors, spearmen and archers, led by a lich.',
     area: 'graveyard',
     lands: ['graveyard', 'dungeon'],
     waves: waves(ramp(['skeleton', 'skeleton', 'boneVolley', 'spearman', 'skeleton', 'spearman', 'boneVolley', 'spearman'], 13), { 8: ['boneCaptain', 'skeleton', 'spearman', 'boneVolley'], 15: ['lichKing', 'skeleton', 'spearman', 'spearman', 'boneVolley', 'boneVolley'] }),
-    start: 0.7,
+    start: 0.72,
+    tierStart: 0.7,
     growth: 0.17,
     mid: { hp: 1800, atk: 56 },
     last: { hp: 2080, atk: 63 },
@@ -102,12 +110,14 @@ export const ARMIES: readonly Army[] = [
   },
   {
     id: 'beasts',
+    level: 8,
     name: 'Beast Packs',
     blurb: 'Black, red and white werewolves, fast and hungry.',
     area: 'plains',
     lands: ['plains', 'autumn'],
     waves: waves(ramp(['packBlack', 'packRed', 'packWhite', 'packBlack', 'packRed', 'packWhite', 'packBlack'], 13), { 8: ['alphaWolf', 'packBlack', 'packRed', 'packWhite'], 15: ['boarKing', 'packBlack', 'packRed', 'packWhite', 'packBlack', 'packWhite'] }),
-    start: 0.85,
+    start: 0.8,
+    tierStart: 0.85,
     growth: 0.15,
     mid: { hp: 2000, atk: 60 },
     last: { hp: 2750, atk: 72 },
@@ -116,6 +126,7 @@ export const ARMIES: readonly Army[] = [
   },
   {
     id: 'wildwood',
+    level: 12,
     name: 'The Wildwood',
     blurb: 'Satyrs pipe the grove into a frenzy; three forest lords guard it.',
     area: 'forest',
@@ -125,7 +136,8 @@ export const ARMIES: readonly Army[] = [
         10: ['forestBoss2', 'groveSatyr3', 'groveSatyr1', 'groveSatyr2', 'groveSatyr3'],
         15: ['forestBoss3', 'groveSatyr1', 'groveSatyr2', 'groveSatyr3', 'groveSatyr1', 'groveSatyr2'],
       }),
-    start: 1.15,
+    start: 1.05,
+    tierStart: 1.15,
     growth: 0.136,
     mid: { hp: 2400, atk: 60 },
     last: { hp: 2330, atk: 64 },
@@ -134,12 +146,14 @@ export const ARMIES: readonly Army[] = [
   },
   {
     id: 'labyrinth',
+    level: 16,
     name: 'The Labyrinth',
     blurb: 'Minotaurs charge and gorgons turn heroes to stone.',
     area: 'temple',
     lands: ['temple', 'ruins'],
     waves: waves(ramp(['mazeMino1', 'mazeMino2', 'mazeGorgon1', 'mazeMino3', 'mazeGorgon2', 'mazeMino1', 'mazeGorgon3', 'mazeMino2'], 13), { 8: ['gorgonQueen', 'mazeMino1', 'mazeMino2', 'mazeGorgon3'], 15: ['minotaurChampion', 'mazeMino1', 'mazeGorgon1', 'mazeMino2', 'mazeGorgon2', 'mazeMino3'] }),
-    start: 1.38,
+    start: 1.15,
+    tierStart: 1.38,
     growth: 0.128,
     mid: { hp: 1700, atk: 46 },
     last: { hp: 2420, atk: 61 },
@@ -148,12 +162,14 @@ export const ARMIES: readonly Army[] = [
   },
   {
     id: 'ogres',
+    level: 20,
     name: 'Ogre Clans',
     blurb: 'Ogres and orc brutes, a shaman king and a horned giant.',
     area: 'highlands',
     lands: ['highlands', 'snow'],
     waves: waves(ramp(['clanOgre', 'clanBrute', 'clanBrute', 'clanOgre', 'clanOgre', 'clanBrute', 'clanOgre'], 13), { 8: ['shamanKing', 'clanBrute', 'clanOgre', 'clanBrute'], 15: ['hornedOgre', 'clanOgre', 'clanBrute', 'clanOgre', 'clanBrute', 'clanOgre'] }),
-    start: 1.55,
+    start: 1.57,
+    tierStart: 1.55,
     growth: 0.124,
     mid: { hp: 1800, atk: 48 },
     last: { hp: 2200, atk: 48 },
@@ -162,12 +178,14 @@ export const ARMIES: readonly Army[] = [
   },
   {
     id: 'infernal',
+    level: 24,
     name: 'Infernal Host',
     blurb: 'Imps and demons of the pit, a devil and a demon lord.',
     area: 'volcano',
     lands: ['volcano', 'desert'],
     waves: waves(ramp(['hellImp', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon'], 13), { 8: ['devilLeader', 'hellImp', 'hellDemon', 'hellImp'], 15: ['demonLord', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon', 'hellImp'] }),
-    start: 1.64,
+    start: 1.78,
+    tierStart: 1.64,
     growth: 0.13,
     mid: { hp: 2000, atk: 50 },
     last: { hp: 1840, atk: 41 },
@@ -176,12 +194,14 @@ export const ARMIES: readonly Army[] = [
   },
   {
     id: 'yokai',
+    level: 28,
     name: 'Yokai Night Parade',
     blurb: 'Fox spirits, crows and tengu monks of the night parade, led by a nine-tailed fox and the Oni King.',
     area: 'shrine',
     lands: ['shrine', 'forest'],
     waves: waves(ramp(['yokaiFox', 'yokaiCrow', 'yokaiMonk', 'yokaiWitch', 'yokaiSeer', 'yokaiFox', 'yokaiMonk', 'yokaiCrow', 'yokaiWitch'], 13), { 8: ['nineTails', 'yokaiFox', 'yokaiWitch', 'yokaiCrow'], 15: ['oniKing', 'yokaiMonk', 'yokaiWitch', 'yokaiSeer', 'yokaiFox', 'yokaiCrow'] }),
-    start: 1.68,
+    start: 1.8,
+    tierStart: 1.55,
     growth: 0.127,
     mid: { hp: 2200, atk: 52 },
     last: { hp: 2500, atk: 50 },
@@ -190,12 +210,14 @@ export const ARMIES: readonly Army[] = [
   },
   {
     id: 'golems',
+    level: 32,
     name: 'Golem Forge',
     blurb: 'Stone, iron, crystal and magma golems, a sapphire colossus and the Forge Titan.',
     area: 'forge',
     lands: ['forge', 'crystal'],
     waves: waves(ramp(['stoneGolem', 'ironGolem', 'crystalGolem', 'magmaGolem', 'stoneGolem', 'ironGolem', 'magmaGolem'], 13), { 8: ['sapphireColossus', 'stoneGolem', 'crystalGolem', 'ironGolem'], 15: ['forgeTitan', 'ironGolem', 'magmaGolem', 'crystalGolem', 'stoneGolem', 'magmaGolem'] }),
-    start: 1.7,
+    start: 2.2,
+    tierStart: 1.7,
     growth: 0.124,
     mid: { hp: 1800, atk: 56 },
     last: { hp: 2040, atk: 55 },
@@ -221,7 +243,7 @@ export const bossesOf = (a: Army): { wave: number; id: string }[] => a.waves.fla
 /** How the foes of wave n of an army are boosted (n from 1), on a difficulty tier (Normal by default): hp, attack and speed. */
 export function waveBoost(a: Army, n: number, tier = 0): Stage {
   const t = tierOf(tier);
-  const k = a.start * (1 + a.growth * (n - 1));
+  const k = (tier > 0 ? a.tierStart ?? a.start : a.start) * (1 + a.growth * (n - 1));
   const w = a.waves[n - 1];
   let boss: Boost | undefined;
   if (w?.boss) {
@@ -282,10 +304,19 @@ export interface ArmyRecord {
 const blank = (): ArmyRecord => ({ waves: ARMY_WAVES, best: 0, won: 0, clears: 0, stars: {} });
 export const recordOf = (m: Meta, id: string): ArmyRecord => m.armies[id] ?? blank();
 export const armyCleared = (m: Meta, id: string): boolean => recordOf(m, id).clears > 0;
-/** An army is open when it is the first or the one before it has been beaten. */
+/**
+ * The army stars (all tiers, all armies) each army opens at: the first is open from the start, the rest two stars further on each. A player
+ * who clears each Normal army with its clear star and one more (as today's pace) is never held back; the harder tiers' stars count too.
+ */
+export const ARMY_NEED: readonly number[] = ARMIES.map((_, i) => 2 * i);
+/** The stars an army opens at. */
+export const armyNeed = (id: string): number => ARMY_NEED[Math.max(0, armyIndex(id))];
+/** Every star won over all the armies. */
+export const totalStars = (m: Meta): number => ARMIES.reduce((n, a) => n + armyStars(m, a).got, 0);
+/** An army is open when the stars won so far reach its number, or a save already had it open (`Meta.opened`, set once for a save from before the stars). */
 export function armyUnlocked(m: Meta, id: string): boolean {
   const i = armyIndex(id);
-  return i === 0 || (i > 0 && armyCleared(m, ARMIES[i - 1].id));
+  return i === 0 || (i > 0 && (totalStars(m) >= ARMY_NEED[i] || !!m.opened?.includes(id)));
 }
 /** The armies beaten so far. */
 export const clearedCount = (m: Meta): number => ARMIES.filter((a) => armyCleared(m, a.id)).length;
@@ -317,7 +348,7 @@ export interface ArmyPay {
   replay: boolean;
   /** This win beat the army's last boss for the first time. */
   firstClear: boolean;
-  /** The army this first clear opened. */
+  /** The army this fight's stars opened (set by the page once the run's stars are settled). */
   unlocked?: Army;
 }
 
@@ -346,8 +377,8 @@ export function settleWave(m: Meta, id: string, n: number, won: boolean, stars: 
     mine.clears++;
   }
   m.crowns += crowns;
-  // (only the first Normal clear opens the next army)
-  return { crowns, replay, firstClear, unlocked: firstClear && !tier ? nextArmy(a) : undefined };
+  // (the stars open the next army, and they are settled after the wave: the page asks `armyUnlocked` again then)
+  return { crowns, replay, firstClear };
 }
 
 /** How many waves each army had before all of them were made 15: a saved record without `waves` counts in these. */

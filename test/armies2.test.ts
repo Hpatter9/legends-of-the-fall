@@ -21,10 +21,15 @@ test('the Yokai Night Parade follows the Infernal Host and the Golem Forge the Y
   assert.equal(nextArmy(armyById('yokai')!)!.id, 'golems');
   assert.equal(bossOf(armyById('infernal')!), 'demonLord');
   const m = startedMeta(1);
+  // (the armies open at 14 and 16 stars: 11 on the Orc Warband over all its tiers, three on the Undead Legion, then three on the Yokai)
   for (const a of ARMIES.slice(0, 7)) for (let n = 1; n <= a.waves.length; n++) settleWave(m, a.id, n, true, 0);
+  assert.equal(armyUnlocked(m, 'yokai'), false);
+  m.armies.orcs.met = { 0: 7, 1: 7, 2: 7, 3: 1, 4: 1 };
+  m.armies.undead.met = { 0: 7 };
   assert.equal(armyUnlocked(m, 'yokai'), true);
   assert.equal(armyUnlocked(m, 'golems'), false);
   for (let n = 1; n <= 15; n++) settleWave(m, 'yokai', n, true, 0);
+  m.armies.yokai.met = { 0: 7 };
   assert.equal(armyUnlocked(m, 'golems'), true);
   for (const a of NEW) {
     assert.equal(a.waves.length, 15);

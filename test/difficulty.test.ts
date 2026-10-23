@@ -87,9 +87,10 @@ test('Mythic’s last boss changes form earlier and hits harder in its second fo
   assert.equal(boss(3).phase!.surge, undefined);
 });
 
-test('Normal at level 1 keeps its feel: the first army falls in a try or two, the Labyrinth takes a few', () => {
+test('Normal at level 1: the first army falls in a try or two, and each army after it takes more (the Ogres and later are out of reach)', () => {
   assert.ok(meanTries('orcs', 0, 1, false) <= 2);
-  assert.ok(meanTries('labyrinth', 0, 1, false) >= 2);
+  assert.ok(meanTries('beasts', 0, 1, false) >= 2);
+  for (const army of ['ogres', 'infernal', 'golems']) assert.ok(meanTries(army, 0, 1, false) >= 8, army);
 });
 
 test('Hard is not a first-try clear at level 1, and Elite not at level 15 (no talents or with)', () => {
