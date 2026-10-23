@@ -290,6 +290,12 @@ export class Home {
     if (has) {
       const cont = el('button', 'hmLink hmSide hmCont');
       cont.append(el('b', '', 'Continue'), el('small', '', army && info ? `wave ${info.stage}/${army.waves.length}` : info ? info.label.replace(/^tower · /, '') : 'run'));
+      // (the run's gold shows here, beside its stage: the only place in camp it matters)
+      if (info) {
+        const gold = el('small', 'hmContGold');
+        gold.append(icon(ICONS.gold), String(info.gold));
+        cont.append(gold);
+      }
       cont.addEventListener('click', () => this.go(this.hooks.onContinue));
       go.append(cont);
     } else go.append(el('span', 'hmSpacer'));

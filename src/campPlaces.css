@@ -14,6 +14,8 @@
 .hmLink.hmSide { min-height: 0; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 0 2px; font: 400 12px/1.1 var(--display); font-weight: 400; color: var(--gold-hi); }
 .hmLink.hmSide b { font: 400 12px/1.1 var(--display); font-weight: 400; color: var(--gold-hi); }
 .hmLink.hmSide small { font: 400 12px/1.1 var(--body); color: var(--dim); }
+.hmLink.hmSide .hmContGold { display: flex; align-items: center; gap: 2px; color: var(--gold-hi); }
+.hmLink.hmSide .hmContGold img { width: 16px; height: 16px; image-rendering: pixelated; }
 /* the places: a tap box over the picture and its plate */
 .cpPlace { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0; border: 0; border-image: none; border-radius: 0; background: none; box-shadow: none; filter: none; opacity: 1; -webkit-tap-highlight-color: transparent; }
 .cpPlace:active { transform: none; }
