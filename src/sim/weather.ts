@@ -25,7 +25,8 @@ export const LAND_WEATHER: Record<Area, Partial<Record<Weather, number>>> = {
   temple: { clear: 4, rain: 2, fog: 2, leaves: 1 },
   crystal: { clear: 6, fog: 2 },
   forge: { clear: 2, embers: 5, ash: 1 },
-  shrine: { clear: 2, night: 6, leaves: 2, fog: 1 },
+  // (the Moonlit Shrine is always at night: the owner's call)
+  shrine: { night: 1 },
   warcamp: { clear: 3, ash: 2, rain: 2, night: 3, fog: 1 },
   oasis: { clear: 8, night: 1 },
 };

@@ -65,9 +65,15 @@ test('the spire draws its land from all of them, never the same one for two bloc
   assert.equal(seen.size, AREAS.length);
 });
 
-test('every land\'s weathers are known, include clear unless the land is of fire, and are rolled by the board\'s seed', () => {
+test('every land\'s weathers are known, include clear unless the land is of fire (the Shrine is always night), and are rolled by the board\'s seed', () => {
   for (const area of AREAS) {
     const table = LAND_WEATHER[area];
+    // (the Moonlit Shrine is always at night, the owner's call: its only weather)
+    if (area === 'shrine') {
+      assert.deepEqual(Object.keys(table), ['night']);
+      for (let seed = 1; seed <= 50; seed++) assert.equal(weatherFor(seed, area), 'night');
+      continue;
+    }
     const keys = Object.keys(table);
     assert.ok(keys.length >= 2, area);
     for (const k of keys) assert.ok((WEATHERS as readonly string[]).includes(k), `${area} ${k}`);
