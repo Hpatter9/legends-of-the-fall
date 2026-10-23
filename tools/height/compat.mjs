@@ -41,8 +41,10 @@ const playOut = async (page, label) => {
 };
 // the old build: a new save, a pack, a run begun
 const old = await open(8141);
+await old.waitForSelector('.stPack', { timeout: 30000 });
 await old.click('.stPack:nth-child(1)');
 await old.click('.stGo');
+await old.waitForFunction(() => window.__game, null, { timeout: 30000 });
 await old.waitForTimeout(1500);
 await old.evaluate(() => { for (const x of document.querySelectorAll('#tip button')) if (x.id === 'tipSkip') x.click(); });
 await old.evaluate(() => { const g = window.__game; document.getElementById('home').hidden = true; for (let k = 0; k < 3; k++) document.getElementById('summon').click(); document.getElementById('auto').click(); });
@@ -55,8 +57,11 @@ console.log('old save loaded; game up:', await next.evaluate(() => typeof window
 await playOut(next, 'old save');
 // the new build: a fresh save too
 const fresh = await open(8142);
+await fresh.waitForSelector('.stPack', { timeout: 30000 });
 await fresh.click('.stPack:nth-child(3)');
 await fresh.click('.stGo');
+await fresh.getByText('Skip', { exact: true }).click({ timeout: 15000 }).catch(() => {});
+await fresh.waitForFunction(() => window.__game, null, { timeout: 30000 });
 await fresh.waitForTimeout(1500);
 await playOut(fresh, 'new save');
 console.log('page errors:', errors);

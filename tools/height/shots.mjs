@@ -26,8 +26,12 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   await page.goto('http://localhost:8133/');
   await page.waitForTimeout(2200);
   // a new save: the second starter pack (it has the Archer), then the tips skipped
+  await page.waitForSelector('.stPack', { timeout: 30000 });
   await page.click('.stPack:nth-child(2)');
   await page.click('.stGo');
+  // (the opening cutscene: skipped)
+  await page.getByText('Skip', { exact: true }).click({ timeout: 15000 }).catch(() => {});
+  await page.waitForFunction(() => window.__game, null, { timeout: 30000 });
   await page.waitForTimeout(1500);
   await page.evaluate(() => { for (const b of document.querySelectorAll('#tip button')) if (b.id === 'tipSkip') b.click(); });
   // a board per area: a run on a stage of that area, the squad set out by the Auto button

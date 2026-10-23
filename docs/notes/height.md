@@ -64,7 +64,7 @@ All in `battle.ts` `decide`, for both sides:
   fighters the highest tile of their front row (`startBattle`).
 - **Auto** (`autoplay.ts` `tileScore`): a shooter's tile is worth 1.3 a level (was 0.7), a fighter's 0.4 (was 0.35).
 - Cost: a walking fighter does one `walkFrom` (a 63-tile search) per step, as before; a fighter in reach does one more only when a
-  higher tile lies within two steps. A 10-tick-a-second fight of 20 units is not noticeably slower (see below).
+  higher tile lies within two steps. Measured over 150 fights of the `mixed` band (about 300 ticks each): 21 microseconds a tick, against 14 before; a tick has 100 ms.
 
 ## Balance, before and after
 
