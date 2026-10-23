@@ -6,8 +6,11 @@ import json,sys
 from PIL import Image
 D='src/art/units/'
 d=json.load(open(D+'sheets.json'))
+only=sys.argv[1:]   # names given: just those sheets (the foes remade in docs/notes/art-cleanup.md)
 for k,e in d.items():
-    if not(k.startswith('cls_') or k.startswith('hk_') or k.startswith('hero_') or k in('lich_king','oni_king')) or e.get('lies'):continue
+    if only and k not in only:continue
+    if not only and not(k.startswith('cls_') or k.startswith('hk_') or k.startswith('hero_') or k in('lich_king','oni_king')):continue
+    if e.get('lies'):continue
     im=Image.open(D+k+'.png').convert('RGBA');w,h=e['w'],e['h'];rows=e['rows'];per=e['perRow']
     cell=lambda r,i:im.crop((i*w,rows.index(r)*h,(i+1)*w,(rows.index(r)+1)*h))
     idle=cell('idle',0);b=idle.getbbox();cx=(b[0]+b[2])/2
