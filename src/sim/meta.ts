@@ -33,8 +33,8 @@ export const RANK_SHARDS: readonly number[] = [1, 3, 6, 10];
 export const MAX_RANK = RANK_SHARDS.length;
 /** Heroes in a party: the deck the summons draw from, and the run's starting heroes (fewer while fewer are unlocked). */
 export const PARTY_SIZE = 5;
-/** Hp and attack grow by this for each rank a hero kind has. */
-export const RANK_MULT = 1.05;
+/** Hp and attack grow by this for each rank a hero kind has (1.05 until ranking up became the player's choice: see `docs/notes/hero-progress.md`). */
+export const RANK_MULT = 1.08;
 const SALT = 0x6ac4a;
 
 export interface Meta {
@@ -92,6 +92,8 @@ export interface Meta {
   equipped?: Record<string, Partial<Record<EquipSlot, number>>>;
   /** The next equipment id. */
   nextItem?: number;
+  /** The rank the player has taken for each hero kind (`rankUp.ts`): shards earn a rank, a tap on "Rank up" takes it. Missing means every earned rank counts (the tests' and tools' saves); a save from before is read with the ranks it had. */
+  ranked?: Record<string, number>;
   /** The steps each hero kind has awakened above its top rank, 1 or 2 (`awaken.ts`; missing is none). */
   awakened?: Record<string, number>;
   /** The talents each hero kind has taken and the points it bought with shards (`talents.ts`; missing is none). */
@@ -157,12 +159,13 @@ export interface Pull {
 }
 
 /** A brand-new save: no hero yet, only the three starter packs to pick from (`pickStarter`). */
-export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [], party: [], starter: { packs: starterPacks(seed), pick: null }, pulls: 0, sinceNew: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], achievements: [], claimed: [], stash: [] });
+export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [], party: [], starter: { packs: starterPacks(seed), pick: null }, pulls: 0, sinceNew: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], achievements: [], claimed: [], stash: [], ranked: {} });
 
 /** A save past the pick with the old starting five unlocked and in the party: what the saves from before the pick have, and what the tests and tools play with. */
 export function startedMeta(seed: number): Meta {
   const m = newMeta(seed);
   delete m.starter;
+  delete m.ranked; // (every earned rank counts, so the tests and tools need no tap)
   m.unlocked = [...HEROES];
   m.party = [...HEROES];
   return m;
@@ -180,10 +183,12 @@ export function pickStarter(m: Meta, index: number): boolean {
   m.party = [...pack];
   return true;
 }
-/** The rank a hero kind has from its shards (0 to MAX_RANK). */
+/** The rank a hero kind's shards have earned (0 to MAX_RANK): the one it may take with "Rank up" (`rankUp.ts`). */
 export const rankOf = (m: Meta, kind: string): number => RANK_SHARDS.filter((need) => (m.shards[kind] ?? 0) >= need).length;
-/** A hero's whole rank: the shard rank (0 to 4) and one for each step it has awakened (`awaken.ts`; 5 and 6). */
-export const heroRank = (m: Meta, kind: string): number => rankOf(m, kind) + (m.awakened?.[kind] ?? 0);
+/** The rank a hero kind has taken (0 to `rankOf`): what its stats, stars and look follow. */
+export const takenRank = (m: Meta, kind: string): number => (m.ranked ? Math.min(m.ranked[kind] ?? 0, rankOf(m, kind)) : rankOf(m, kind));
+/** A hero's whole rank: the rank taken (0 to 4) and one for each step it has awakened (`awaken.ts`; 5 and 6). */
+export const heroRank = (m: Meta, kind: string): number => takenRank(m, kind) + (m.awakened?.[kind] ?? 0);
 /** Hp and attack multiplier a rank gives (the ranks above `MAX_RANK` are awakened steps, `AWAKEN_MULT` each). */
 export const rankMult = (rank: number): number => RANK_MULT ** Math.min(rank, MAX_RANK) * AWAKEN_MULT ** Math.max(0, rank - MAX_RANK);
 /** Crowns a won stage pays. */
@@ -206,6 +211,18 @@ function readUnlock(raw: unknown, unlocked: readonly string[]): Record<string, n
   const out: Record<string, number> = {};
   if (raw && typeof raw === 'object')
     for (const [k, n] of Object.entries(raw)) if (PULL_HEROES.includes(k) && !unlocked.includes(k) && typeof n === 'number' && n >= 1) out[k] = Math.floor(n);
+  return out;
+}
+
+/** Saved ranks that are sane: a hero kind and a rank its shards have earned. A save with none (from before) takes the ranks it has. */
+function readRanked(raw: unknown, m: Meta): Record<string, number> {
+  const out: Record<string, number> = {};
+  const had = !!raw && typeof raw === 'object';
+  for (const k of ALL_HEROES) {
+    const earned = rankOf(m, k);
+    const n = had ? (raw as Record<string, unknown>)[k] : earned;
+    if (typeof n === 'number' && n >= 1) out[k] = Math.min(earned, Math.floor(n), MAX_RANK);
+  }
   return out;
 }
 
@@ -339,6 +356,8 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.equipment = readEquipment(m.equipment);
       m.equipped = readEquipped(m.equipped, m.equipment);
       m.nextItem = Math.max((m.nextItem ?? 1) | 0, 1, ...m.equipment.map((x) => x.id + 1));
+      // (saves from before ranking up was a choice keep the ranks they had; the shards beyond them wait for the player's tap)
+      m.ranked = readRanked(m.ranked, m);
       // (saves from before awakening have none)
       m.awakened = readAwakened(m.awakened, m.shards);
       if (!Object.keys(m.awakened).length) delete m.awakened;
