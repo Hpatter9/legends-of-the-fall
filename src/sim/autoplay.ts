@@ -3,7 +3,7 @@
 // and arranges the heroes on the deploy rows. Everything here is pure and deterministic (no random numbers, no DOM): the
 // same run and the same board always give the same formation.
 
-import { D, DEPLOY_ROWS, standable, tileAt, type Board } from './board';
+import { DEPLOY_ROWS, standable, tileAt, type Board } from './board';
 import { place, unplace, type Battle, type Boost } from './battle';
 import { chooseOption, leaveEvent, type EventOption } from './events';
 import { levelOfKind } from './levels';
@@ -77,7 +77,7 @@ export function autoRound(run: Run, meta: Meta, gear = true): void {
 /** The tiles the heroes may stand on, as `[u, v]`. Boulders are out; water and lava are left for last (`avoidTile`). */
 export function deployTiles(board: Board): [number, number][] {
   const out: [number, number][] = [];
-  for (let v = D - DEPLOY_ROWS; v < D; v++) for (let u = 0; u < board.w; u++) if (standable(tileAt(board, u, v))) out.push([u, v]);
+  for (let v = board.d - DEPLOY_ROWS; v < board.d; v++) for (let u = 0; u < board.w; u++) if (standable(tileAt(board, u, v))) out.push([u, v]);
   return out;
 }
 
@@ -90,7 +90,7 @@ const avoidTile = (board: Board, u: number, v: number): boolean => {
 /** How good a tile is for a hero: the row for its role, high ground, tall growth (it hides a shooter's line), and a pull to the middle. */
 function tileScore(board: Board, u: number, v: number, back: boolean): number {
   const t = tileAt(board, u, v)!;
-  const row = v - (D - DEPLOY_ROWS); // 0 is the front row
+  const row = v - (board.d - DEPLOY_ROWS); // 0 is the front row
   let s = back ? [0, 1.5, 3][row] : [3, 1.2, 0][row];
   s += t.h * (back ? 1.3 : 0.4);
   if (t.ground === 'tall') s -= back ? 3 : 1;

@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import { ARMIES, armyById, waveBoost, waveFoes } from '../src/sim/armies';
 import { PHASE_AT } from '../src/sim/bossPhases';
 import { BUILDINGS, CASTLE_ANSWER, foeAnswer, heroBoost, maxLevel, newCastle, type BuildingId } from '../src/sim/castle';
+import { CAL_CASTLE_EXTRA } from '../src/sim/calamity';
 import { levelOfKind } from '../src/sim/levels';
 import { heroRank, startedMeta, type Meta } from '../src/sim/meta';
 import { mixSeed } from '../src/sim/rng';
@@ -126,7 +127,9 @@ test('the foes of the spire and the Calamity answer the castle’s hp and attack
     const built = startedMeta(5);
     built.castle = { ...maxed };
     const ratio = foeHp(built, kind) / foeHp(bare, kind);
-    assert.ok(Math.abs(ratio - a.hp!) < 0.03, `${kind}: foes ${ratio.toFixed(3)}x for a castle at its top`);
+    // (the Calamity's foes answer a little more: its heroes also gain tiers, `CAL_CASTLE_EXTRA`)
+    const want = kind === 'calamity' ? a.hp! * h.hp! ** CAL_CASTLE_EXTRA : a.hp!;
+    assert.ok(Math.abs(ratio - want) < 0.03, `${kind}: foes ${ratio.toFixed(3)}x for a castle at its top`);
   }
   // (an army run is not local: its foes are the tier's alone)
   const army = startedMeta(5);

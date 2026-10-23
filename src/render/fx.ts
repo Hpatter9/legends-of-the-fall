@@ -3,7 +3,7 @@
 // so a faster fight is faster here too.
 
 import { Container, Graphics, Rectangle, Sprite, Text, Texture } from 'pixi.js';
-import { D, tileAt, type Board } from '../sim/board';
+import { tileAt, type Board } from '../sim/board';
 import { defOf, type Battle, type BattleEvent, type Unit } from '../sim/battle';
 import { isBoss } from '../sim/foes';
 import { kitOf } from '../sim/abilities';
@@ -870,7 +870,7 @@ export class Fx {
           }
     // (a lance runs the whole column: a pillar of light on every other tile of it, from the far end in)
     if (e.id === 'lance')
-      for (let dv = 0, row = 0; dv < D; dv++)
+      for (let dv = 0, row = 0; dv < b.board.d; dv++)
         if (tileAt(b.board, e.u, dv)) {
           const [tx, ty] = this.tilePos(b, e.u, dv);
           play(this.particles, 'light-pillar', tx, ty, { scale: 2, frameMs: 70, delay: row++ * 40 });
