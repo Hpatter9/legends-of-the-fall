@@ -434,7 +434,7 @@ export const saveSlot = (run: Run, store: Pick<Storage, 'setItem'> = localStorag
 export function loadSlot(kind: SlotKind, store: Pick<Storage, 'getItem'> = localStorage): Run | null {
   try {
     const r = JSON.parse(store.getItem(SLOT_KEYS[kind]) ?? 'null') as Run | null;
-    return r && Array.isArray(r.roster) && typeof r.gold === 'number' && r.mode?.kind === kind && !r.over ? r : null;
+    return r && Array.isArray(r.roster) && typeof r.gold === 'number' && r.mode?.kind === kind && !r.over && runFits(r) ? r : null;
   } catch {
     return null;
   }
@@ -449,11 +449,17 @@ export function adoptOldTower(store: Pick<Storage, 'getItem' | 'setItem' | 'remo
   store.removeItem(KEY);
   return true;
 }
+/** Whether a saved run can still be played: a run of fixed waves (an army's, or the daily's ten) must not stand past its last
+ *  wave. An endless daily saved by an older version could be on stage 14 of what is now ten waves, and starting it broke. */
+export const runFits = (r: Run): boolean => {
+  const army = waveArmyOf(r);
+  return !army || (r.stage >= 1 && r.stage <= army.waves.length);
+};
 export const saveRun = (run: Run, store: Pick<Storage, 'setItem'> = localStorage) => store.setItem(KEY, JSON.stringify(run));
 export function loadRun(store: Pick<Storage, 'getItem'> = localStorage): Run | null {
   try {
     const r = JSON.parse(store.getItem(KEY) ?? 'null') as Run | null;
-    return r && Array.isArray(r.roster) && typeof r.gold === 'number' ? r : null;
+    return r && Array.isArray(r.roster) && typeof r.gold === 'number' && runFits(r) ? r : null;
   } catch {
     return null;
   }

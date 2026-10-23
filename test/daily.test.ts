@@ -4,7 +4,7 @@ import { dailyArmy, dailyBoss, dailyBossName, dailyChestSeed, dailyCrowns, daily
 import { dailyBonus, dailyLine, dailyRun, settleDaily, settleRun, startDaily, DAILY_TIME_MS } from '../src/sim/modes';
 import { bestChest, openChest, peekChest, readStash, rollDailyChest, DAILY_BONUS_CROWNS, DAILY_CHEST_CROWNS } from '../src/sim/armyStars';
 import { bossOf } from '../src/sim/armies';
-import { canRetry, chainOf, finish, isBossRun, noteFight, retryWave, startStage, waveArmyOf, MAX_RETRIES } from '../src/sim/run';
+import { canRetry, loadRun, saveRun, chainOf, finish, isBossRun, noteFight, retryWave, startStage, waveArmyOf, MAX_RETRIES } from '../src/sim/run';
 import { isBoss } from '../src/sim/foes';
 import { loadMeta, saveMeta, startedMeta } from '../src/sim/meta';
 import { isContent } from '../src/sim/unlockRules';
@@ -243,4 +243,15 @@ test('a greedy player with a fresh save clears the daily most days but not all (
   for (const [i, date] of dates.entries()) if (playDaily(startedMeta(i + 1), date, true).cleared) cleared++;
   const rate = cleared / dates.length;
   assert.ok(rate >= 0.5 && rate <= 0.85, `clear rate ${Math.round(rate * 100)}%`);
+});
+
+test('a daily saved by an older version past the tenth wave is dropped on load, not started (it broke the page)', () => {
+  const m = startedMeta(3);
+  const run = startDaily(m, 20261021);
+  const store = new Map<string, string>();
+  const io = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v) };
+  saveRun({ ...run, stage: DAILY_WAVES + 4, best: DAILY_WAVES + 4 }, io);
+  assert.equal(loadRun(io), null);
+  saveRun({ ...run, stage: 3 }, io);
+  assert.equal(loadRun(io)?.stage, 3);
 });
