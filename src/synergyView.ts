@@ -47,6 +47,8 @@ body:not([data-phase='fight']) #comboBar, body:not([data-phase='fight']) #comboL
 #comboBar.full .cbFill { background: var(--accent-hi); }
 #comboBar.dim { border-color: var(--s7); }
 #comboBar.dim .cbFill { background: var(--s9); }
+/* (while the five cast, their banner has the left edge to itself) */
+#comboBar.casting { visibility: hidden; }
 #comboBar.went { animation: cbWent 0.12s steps(2, end) 1; }
 @keyframes cbWent { from { background: var(--s11); } to { background: var(--s1); } }
 @media (prefers-reduced-motion: reduce) { #comboBar.went { animation: none; } }
@@ -167,7 +169,10 @@ export function updateCombo(state: ComboState | undefined): void {
   bar.classList.toggle('full', state.charge >= COMBO_NEED || state.landAt !== undefined);
   bar.classList.toggle('dim', state.broken);
   pips.forEach((p, i) => p.classList.toggle('off', i >= state.ids.length - state.fallen));
-  if (state.fired > shownFired) {
+  // (hidden while the five cast, and one short blink as it comes back emptied)
+  const casting = state.landAt !== undefined;
+  bar.classList.toggle('casting', casting);
+  if (state.fired > shownFired && !casting) {
     shownFired = state.fired;
     bar.classList.remove('went');
     void bar.offsetWidth;

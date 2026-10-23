@@ -761,8 +761,8 @@ export class Fx {
     this.push(cx, cy - 20, 1.25, e.ms + 500);
     this.trauma = Math.max(this.trauma, 0.3);
     const colour = toneColour(combo.tone);
-    this.label(COMBO_NAME, cx, cy - 96, colour, 12, 1500, true);
-    this.label(combo.move, cx, cy - 72, 0xfff2a0, 24, 1700, true);
+    this.label(COMBO_NAME, cx, cy - 96, colour, 12, e.landMs + 100, true);
+    this.label(combo.move, cx, cy - 72, 0xfff2a0, 24, e.landMs + 200, true);
   }
 
   /** The move lands: a nova and rings from the middle of the five, a strike on every foe, a white blink, a hard shake, a beat of slow motion and a freeze frame. */
