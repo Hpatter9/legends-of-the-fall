@@ -62,7 +62,8 @@ import { ChainView } from './render/chainView';
 import { against, frameOf, transferFormation } from './sim/chain';
 import { traitBadge } from './traitBadge';
 import { closestTrait, countTraits, kindsOf, nextTierLine, traitsOf, TRAITS } from './sim/traits';
-import { placeSynergies, startSynergies } from './synergyView';
+import { placeSynergies, startSynergies, updateCombo } from './synergyView';
+import { noteCombos } from './sim/combos';
 import { UnitSprite } from './render/unitView';
 import { flyUp, recyclePuff, summonBurst } from './render/uiFx';
 import { Fx, loadFx } from './render/fx';
@@ -577,7 +578,7 @@ class Game {
     foeGrumbles(this.b.units.filter((u) => u.side === 'foe' && !UNITS[u.def].summon).length, (i) => this.anchorOfFoe(i));
     this.stats = startStats(this.b.units);
     startFight(isBossRun(this.run));
-    startSynergies(countTraits(kindsOf(this.b.units)));
+    startSynergies(countTraits(kindsOf(this.b.units)), this.b.combo);
     keepAwake(true);
     this.chosen = null;
     this.boardView.clearMarks();
@@ -639,7 +640,18 @@ class Game {
         // (a fighter a skill called up mid-fight has no sprite yet: make it, with its entrance)
         if (b.units.length !== this.sprites.size) this.syncSprites();
         playEvents(b, events, this.speed);
-        for (const e of events) if (e.kind === 'phase') this.startPhase(e);
+        for (const e of events) {
+          if (e.kind === 'phase') this.startPhase(e);
+          // (a promotion the sim made: a hero's tier by level; the page's own merge calls `promoteHero` too)
+          else if (e.kind === 'promote') this.promoteHero(e.to, e.grade);
+        }
+        // (a combo: the bar follows it; once its move has gone off, the codex knows it; the camera leans in when the effects ask)
+        if (b.combo) {
+          updateCombo(b.combo);
+          if (events.some((e) => e.kind === 'comboCast')) noteCombos(this.meta, b);
+        }
+        const push = this.fx.takePush();
+        if (push) this.push = { ...push, left: push.ms };
         // (Duchess has a view on a big blow)
         if (events.some((e) => e.kind === 'hit' && e.heavy && e.dmg >= 90)) this.goat.react('bigHit');
         if (events.some((e) => e.kind === 'hit')) this.refreshBench();
@@ -678,7 +690,7 @@ class Game {
     this.boardView.pump();
     // (the camera eases to where it is sent, unless a finger is holding the board)
     if (this.phaseBoss && (!b.pause || b.phase !== 'fight')) this.endPhase();
-    if (b.phase === 'fight' && !this.intro) this.phaseBoss ? this.pushOnPhase() : this.follow();
+    if (b.phase === 'fight' && !this.intro) this.phaseBoss ? this.pushOnPhase() : (this.follow(), this.leanIn(dt));
     if (!this.drag?.pan) {
       const f = b.phase === 'fight' && !this.intro;
       this.cx = f ? easeTo(this.cx, this.tx, dt, EASE_MOVE_MS) : this.cx + (this.tx - this.cx) * Math.min(1, dt / 220);
@@ -687,6 +699,23 @@ class Game {
       this.clampCam();
     }
     this.place();
+  }
+
+  /** A short camera push the effects asked for (an ultimate, a combo, a tier 3 promotion): the point, how much closer, and the ms left. */
+  private push: { x: number; y: number; zoom: number; ms: number; left: number } | null = null;
+
+  /** While a push lasts the camera leans in on its point (the fight camera's view is back when it ends); a manual pan pauses it as it does the follow. */
+  private leanIn(dt: number): void {
+    const p = this.push;
+    if (!p) return;
+    p.left -= dt;
+    if (p.left <= 0 || performance.now() < this.pausedUntil) {
+      this.push = null;
+      return;
+    }
+    this.tx = p.x;
+    this.ty = p.y;
+    this.tzoom = Math.min(this.tzoom * p.zoom, Math.max(this.minZoom(), 3 / this.scale));
   }
 
   /** The boss changing form, while the fight is held: the banner is up and the camera is on it. */
@@ -723,6 +752,22 @@ class Game {
     $('phaseBanner').hidden = true;
   }
 
+  /** Promote a fighter to `grade` with the whole show (the page's merge after a hire does this, and the sim's `promote` event; the Calamity's tier by level calls it too). A sprite drawn as a lower grade is made again as the new one first. */
+  promoteHero(unitId: number, grade: number): void {
+    const u = this.b.units.find((x) => x.id === unitId);
+    const old = this.sprites.get(unitId);
+    if (!u || !old) return;
+    if (old.shownGrade < grade) {
+      u.grade = grade;
+      old.root.destroy({ children: true });
+      const s = new UnitSprite(u);
+      this.sprites.set(unitId, s);
+      this.boardView.root.addChild(s.root);
+      s.update(this.b.board, performance.now(), this.b.phase !== 'deploy');
+    }
+    this.fx.promote(unitId, grade, this.b.phase !== 'fight');
+  }
+
   /** The roster ids a merge has just made (they flash on the bench and, if placed, on the board). */
   private evolved = new Set<number>();
 
@@ -742,7 +787,11 @@ class Game {
       if (!this.sprites.has(u.id)) {
         const s = new UnitSprite(u);
         this.sprites.set(u.id, s);
-        if (u.tag !== undefined && this.evolved.has(u.tag)) s.evolve();
+        // (a merge's hero rises in light: the same promotion a sim `promote` event plays)
+        if (u.tag !== undefined && this.evolved.has(u.tag)) {
+          s.update(this.b.board, performance.now(), this.b.phase !== 'deploy');
+          this.fx.promote(u.id, u.grade ?? 1, this.b.phase !== 'fight');
+        }
         this.boardView.root.addChild(s.root);
         // (a hero set down on a tile puffs its dust)
         if (u.side === 'hero' && this.b.phase === 'deploy') this.fx.landing(this.b, u.u, u.v);

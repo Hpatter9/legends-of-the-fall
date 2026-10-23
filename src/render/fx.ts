@@ -19,6 +19,9 @@ import { Particles } from './particles';
 import { loadVfxArt, VFX } from './vfxArt';
 import { loadPackArt, PACK } from './fxSheets';
 import { bossEntrance, deathBurst, impactBurst, play, setBoneArt, windUp } from './combatFx';
+import { comboGather, comboStrike, promoteBurst, ringOut, toneColour, type Spot } from './spectacle';
+import { comboById, COMBO_NAME } from '../sim/combos';
+import { tierSkillOf } from '../sim/tierSkills';
 import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, impactElement, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, SPELL_TOUCH, type Missile } from './fxRules';
 import { particleBudget, slashOf } from './vfxRules';
 import { placeLabel } from './labelRules';
@@ -141,6 +144,8 @@ export class Fx {
   private slowLeft = 0;
   /** Ms of hit-stop left (a crit or a killing blow freezes the fight for a moment). */
   private stopLeft = 0;
+  /** A camera push the page is asked to make (an ultimate, a combo, a tier 3 promotion): where, how much closer, and for how long; `takePush` hands it over once. */
+  private pushReq: { x: number; y: number; zoom: number; ms: number } | null = null;
   /** Reduced motion asked for by the device: no shake, flash, dim or hit-stop. */
   private reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
   /** Battles whose bosses have made their entrance. */
@@ -171,6 +176,7 @@ export class Fx {
     this.flashLeft = 0;
     this.slowLeft = 0;
     this.stopLeft = 0;
+    this.pushReq = null;
     this.dimLeft = 0;
     this.dimLayer.visible = false;
     this.gusts.clear();
@@ -185,6 +191,23 @@ export class Fx {
   /** Whether the screen is to stay still: shake off in the settings, or reduced motion on the device. */
   private calm(): boolean {
     return this.reduced || !settings().shake;
+  }
+
+  /** The page's next camera push, if one was asked for (and it takes it: the request is made once). */
+  takePush(): { x: number; y: number; zoom: number; ms: number } | null {
+    const p = this.pushReq;
+    this.pushReq = null;
+    return p;
+  }
+
+  /** Ask for a short camera push on a point (a share closer for `ms`), unless the screen is to stay still. */
+  private push(x: number, y: number, zoom: number, ms: number): void {
+    if (!this.calm()) this.pushReq = { x, y, zoom, ms };
+  }
+
+  /** A brief slow-motion beat, unless the screen is to stay still. */
+  private slowMo(ms: number): void {
+    if (!this.calm()) this.slowLeft = Math.max(this.slowLeft, ms);
   }
 
   /** The world dims for `ms` behind the effects (an ultimate's cast), unless the screen is to stay still. */
@@ -246,6 +269,9 @@ export class Fx {
         }
       } else if (e.kind === 'dash' || e.kind === 'blink') this.streak(b, e);
       else if (e.kind === 'phase') this.phaseShock(e.by);
+      else if (e.kind === 'comboCast') this.comboCast(e);
+      else if (e.kind === 'comboLand') this.comboLand(b, e);
+      else if (e.kind === 'burst') this.burst(e);
       else if (e.kind === 'area') this.area(b, e);
       else if (e.kind === 'spell') this.spell(b, e);
       else if (e.kind === 'spellfx') this.spellFx(e);
@@ -617,8 +643,9 @@ export class Fx {
   }
 
   /** A line of text that rises and fades. */
-  private label(text: string, x: number, y: number, fill: number, size: number, life = 900): { txt: Text; cut: () => void } {
-    const txt = new Text({ text, style: { fontFamily: "'Alegreya Sans', 'Trebuchet MS', sans-serif", fontWeight: 'bold', fontSize: size + 2, fill, stroke: { color: 0x1a1008, width: 3 } }, resolution: 3 });
+  private label(text: string, x: number, y: number, fill: number, size: number, life = 900, plain = false): { txt: Text; cut: () => void } {
+    // (a `plain` label is the new banners': the exact size given, a multiple of 12, in the regular weight)
+    const txt = new Text({ text, style: { fontFamily: "'Alegreya Sans', 'Trebuchet MS', sans-serif", fontWeight: plain ? 'normal' : 'bold', fontSize: plain ? size : size + 2, fill, stroke: { color: 0x1a1008, width: 3 } }, resolution: 3 });
     txt.anchor.set(0.5, 1);
     // (lifted above every label still showing, the fading ones too, so two never overprint)
     this.shownLabels = this.shownLabels.filter((o) => !o.destroyed);
@@ -670,6 +697,8 @@ export class Fx {
       this.trauma = Math.max(this.trauma, 0.5);
       this.flash(0.3, 100);
       this.dim(0.45, ms + 900);
+      // (the camera leans in on the caster for the cast, and the moment of the nova lands in a beat of slow motion and a freeze frame)
+      this.push(by.x, by.y - by.tall * 0.5, 1.2, ms + 600);
       // (the wind-up ends in a nova and a ring of the element, with a second flash and a hard shake)
       const [x, y] = [by.x, by.y];
       this.later(ms, () => {
@@ -683,7 +712,13 @@ export class Fx {
             play(this.particles, 'lightning-strike', x + jitter(46), y - 4 + jitter(16), { scale: 1.6, frameMs: 55, delay: i * 90, tint: 0xa8e4ff, alpha: 0.85 });
         this.flash(0.35, 110);
         this.trauma = Math.min(1, this.trauma + 0.45);
+        play(this.particles, packKey(el, 'pillar'), x, y - by.tall * 0.6, { scale: 3.2, frameMs: 80, alpha: 0.7, tint });
+        this.slowMo(450);
+        if (!this.calm()) this.stopLeft = Math.max(this.stopLeft, 70);
       });
+    } else if (by.unit.side === 'hero') {
+      // (an ordinary hero skill ends in a ring of its element, a little bigger than the cast's circle)
+      this.later(ms, () => play(this.particles, packKey(el, 'wave'), by.x, by.y, { scale: 2.4, frameMs: 70, alpha: 0.55 }));
     } else if (boss) {
       this.trauma = Math.max(this.trauma, 0.4);
       this.later(ms, () => play(this.particles, packKey(el, 'wave'), by.x, by.y, { scale: 3, frameMs: 90 }));
@@ -696,6 +731,72 @@ export class Fx {
         if (ULT_TINT[el] !== undefined) sp.tint = ULT_TINT[el]!;
       }
     } else this.anim(impact, by.x, by.y - 4, 1.6, 40);
+  }
+
+  /** A tier skill's ring goes out from its caster, in the element of its skill. */
+  private burst(e: Extract<BattleEvent, { kind: 'burst' }>): void {
+    if (e.tone !== 'tier') return;
+    const by = this.sprites.get(e.by);
+    if (!by) return;
+    ringOut(this.particles, skillElement(kitOf(by.unit)?.skill.name ?? ''), by.x, by.y, e.reach);
+    this.trauma = Math.max(this.trauma, 0.15);
+  }
+
+  /** Where the fighters of these ids are drawn (those with a sprite). */
+  private spotsOf(ids: readonly number[]): Spot[] {
+    return ids.flatMap((id) => this.sprites.get(id) ?? []).map((s) => ({ x: s.x, y: s.y, tall: s.tall }));
+  }
+
+  /** A combo's five begin their move: the world dims, the camera leans in on the five, they gather in a ring of runes and motes, and the move's name is written over them. */
+  private comboCast(e: Extract<BattleEvent, { kind: 'comboCast' }>): void {
+    const combo = comboById(e.id);
+    const spots = this.spotsOf(e.by);
+    if (!combo || !spots.length) return;
+    const cx = spots.reduce((n, s) => n + s.x, 0) / spots.length;
+    const cy = spots.reduce((n, s) => n + s.y, 0) / spots.length;
+    comboGather(this.particles, combo.tone, spots, e.ms);
+    this.dim(0.55, e.ms + 700);
+    this.push(cx, cy - 20, 1.25, e.ms + 500);
+    this.trauma = Math.max(this.trauma, 0.3);
+    const colour = toneColour(combo.tone);
+    this.label(COMBO_NAME, cx, cy - 96, colour, 12, 1500, true);
+    this.label(combo.move, cx, cy - 72, 0xfff2a0, 24, 1700, true);
+  }
+
+  /** The move lands: a nova and rings from the middle of the five, a strike on every foe, a white blink, a hard shake, a beat of slow motion and a freeze frame. */
+  private comboLand(b: Battle, e: Extract<BattleEvent, { kind: 'comboLand' }>): void {
+    const combo = comboById(e.id);
+    const s = b.combo;
+    if (!combo || !s) return;
+    const five = this.spotsOf(s.ids);
+    const foes = this.spotsOf(b.units.filter((u) => u.side === 'foe' && u.alive).map((u) => u.id));
+    if (!five.length) return;
+    const centre = { x: five.reduce((n, p) => n + p.x, 0) / five.length, y: five.reduce((n, p) => n + p.y, 0) / five.length };
+    comboStrike(this.particles, combo.tone, centre, foes);
+    this.flash(0.35, 110);
+    this.trauma = Math.min(1, this.trauma + 0.6);
+    this.slowMo(550);
+    if (!this.calm()) this.stopLeft = Math.max(this.stopLeft, 90);
+  }
+
+  /** A hero is promoted to `grade` (2 or 3): the one call both ways in take, the page's merge after a hire and a sim `promote` event (the Calamity's tier by level). The hero rises in light and scales up a beat; tier 3 adds a pillar of light, a nova, a flash, a short slow-motion, a camera push and a banner with its name and its new skill's. */
+  promote(unitId: number, grade: number, quiet = false): void {
+    const sp = this.sprites.get(unitId);
+    if (!sp || grade < 2) return;
+    sp.promote(grade);
+    promoteBurst(this.particles, grade, sp.x, sp.y, sp.tall);
+    const def = defOf(sp.unit);
+    const skill = tierSkillOf(sp.unit.def, grade);
+    this.label(`${def.name} · Tier ${grade}`, sp.x, sp.y - sp.tall - 30, grade > 2 ? 0xffe27a : 0xdce8ff, grade > 2 ? 24 : 12, grade > 2 ? 2200 : 1500, true);
+    if (skill) this.label(skill.name, sp.x, sp.y - sp.tall - 12, 0xfff2a0, 12, grade > 2 ? 2200 : 1500, true);
+    this.trauma = Math.max(this.trauma, grade > 2 ? 0.35 : 0.12);
+    if (grade < 3) return;
+    this.flash(0.35, 110);
+    this.dim(0.35, 1000);
+    // (between fights the clock and the camera are not the fight's: a quiet promotion leaves them be)
+    if (quiet) return;
+    this.slowMo(500);
+    this.push(sp.x, sp.y - sp.tall * 0.5, 1.3, 1100);
   }
 
   /** The world position of a tile's top. */

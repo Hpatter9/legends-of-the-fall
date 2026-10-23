@@ -242,6 +242,30 @@ export function applyTierMods(unit: Unit, grade: number): void {
   unit.eq = eq;
 }
 
+/** Take a grade's modifiers back out of a hero's talents (the inverse of `applyTierMods`). */
+function removeTierMods(unit: Unit, grade: number): void {
+  const mods = tierSkillOf(unit.def, grade)?.mods;
+  if (!mods || !unit.eq?.tal) return;
+  const eq = { ...unit.eq, tal: { ...unit.eq.tal } };
+  for (const [k, v] of Object.entries(mods)) eq.tal[k] = (eq.tal[k] ?? 0) - v;
+  unit.eq = eq;
+}
+
+/**
+ * Promote a hero to a higher grade in the middle of a fight (the Calamity's tier by level calls this): its tier skill changes at once, and a
+ * `promote` event goes out for the page to play (the pillar of light, the banner, the camera push). Its stats are not touched here: whoever promotes
+ * it sets them, as `gradeBoost` does for a hero placed at that grade. Returns false when there is nothing to do (not a hero, or not a higher grade).
+ */
+export function promoteUnit(unit: Unit, grade: number, out: BattleEvent[]): boolean {
+  const from = unit.grade ?? 1;
+  if (unit.side !== 'hero' || grade <= from || grade > 3) return false;
+  removeTierMods(unit, from);
+  unit.grade = grade;
+  applyTierMods(unit, grade);
+  out.push({ kind: 'promote', to: unit.id, grade });
+  return true;
+}
+
 /** The riders of a hero's tier skill: called when its skill has gone off. `recast` runs the skill again at a share of its strength (the echo). */
 export function runRiders(b: Battle, me: Unit, out: BattleEvent[], schedule: (ms: number, share: number) => void): void {
   const riders = tierSkillOf(me.def, me.grade)?.riders;

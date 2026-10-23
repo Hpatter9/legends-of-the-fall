@@ -42,14 +42,14 @@ test('a merged hero takes its tier skill\'s modifiers into its talents, without 
   assert.equal(plain.eq, undefined);
 });
 
-test('a tier 3 Beastmaster calls up three wolves at a cast, one of them a dire wolf', () => {
+test('a tier 3 Beastmaster calls a wolf and a great dire wolf at a cast', () => {
   const { b, me } = arena('beastmaster', 3);
   fight(b);
   me.charge = CHARGE_MAX;
   const out: BattleEvent[] = [];
   assert.ok(tryCast(b, me, out));
   const mine = b.units.filter((x) => x.alive && x.owner === me.id);
-  assert.equal(mine.filter((x) => x.def === 'wolf').length, 2);
+  assert.equal(mine.filter((x) => x.def === 'wolf').length, 1);
   assert.equal(mine.filter((x) => x.def === 'direWolf').length, 1);
   assert.equal(UNITS.wolf.sheet, 'wolf_grey');
 });
@@ -111,4 +111,22 @@ test('the tier skills are deterministic: the same fight twice gives the same res
 
 test('every hero\'s kit exists for its tier skill', () => {
   for (const k of ALL_HEROES) assert.ok(KITS[k], k);
+});
+
+test('promoting a hero in a fight swaps its tier skill and sends a promote event; a lower or equal grade does nothing', async () => {
+  const { promoteUnit } = await import('../src/sim/tierSkills');
+  const b = startBattle(7, 'skeletons');
+  const a = addUnit(b, 'archer', 3, 8, gradeBoost(2, 0, 1));
+  assert.equal(a.eq!.tal!.extra, 1);
+  const out: BattleEvent[] = [];
+  assert.equal(promoteUnit(a, 2, out), false);
+  assert.equal(promoteUnit(a, 3, out), true);
+  assert.equal(a.grade, 3);
+  assert.equal(a.eq!.tal!.extra, 2, 'tier 3\'s two extras replace tier 2\'s one');
+  assert.deepEqual(out, [{ kind: 'promote', to: a.id, grade: 3 }]);
+  const plain = addUnit(b, 'archer', 4, 8, {});
+  assert.equal(promoteUnit(plain, 2, []), true);
+  assert.equal(plain.eq!.tal!.extra, 1);
+  const foe = b.units.find((x) => x.side === 'foe')!;
+  assert.equal(promoteUnit(foe, 3, []), false, 'a foe is never promoted');
 });
