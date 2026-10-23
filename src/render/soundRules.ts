@@ -6,6 +6,7 @@
 import type { Battle, BattleEvent, Unit } from '../sim/battle';
 import { defOf } from '../sim/battle';
 import { kitOf } from '../sim/abilities';
+import type { Shot } from '../sim/units';
 import { BIG_FOE_HP } from './skillFx';
 import { SPELL_ELEMENT, deathKind, impactElement, missileOf, skillElement, type Element } from './fxRules';
 
@@ -178,9 +179,9 @@ const SWING: Record<Weight, Cue> = { light: 'swingLight', sword: 'swingSword', h
 const HIT: Record<Weight, Cue> = { light: 'hitLight', sword: 'hitSword', heavy: 'hitHeavy', spear: 'hitSpear', fist: 'hitFist', bone: 'hitBone' };
 const DEATH = { bones: 'deathBones', burn: 'deathBurn', thud: 'deathThud', stone: 'deathStone', blood: 'deathBlood', light: 'deathLight' } as const;
 
-/** The sound a shot makes as it leaves, from its kind and shooter. */
-function leaving(unit: Unit): Cued[] {
-  const shot = defOf(unit).shot!;
+/** The sound a shot makes as it leaves, from its kind and shooter. The kind is the event's own: a melee hero's ultimate can
+ *  throw one too (the Queen Dragoon's), and a hero with no shot of its own broke the sound and froze the fight. */
+function leaving(unit: Unit, shot: Shot): Cued[] {
   const m = missileOf(shot, defOf(unit).name);
   if (m.look === 'arrow') return [{ cue: 'bow' }, { cue: 'arrowFly', delay: 40 }];
   if (m.look === 'bone') return [{ cue: 'throwBone' }];
@@ -198,7 +199,7 @@ export function cuesFor(b: Battle, e: BattleEvent): Cued[] {
     }
     case 'shot': {
       const by = unit(e.by);
-      return by ? leaving(by) : [];
+      return by ? leaving(by, e.shot) : [];
     }
     case 'dodge':
       return [{ cue: 'miss' }];

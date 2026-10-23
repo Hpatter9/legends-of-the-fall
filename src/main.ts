@@ -296,7 +296,15 @@ class Game {
     this.newBattle();
     // (the game opens on the castle, unless a seed is given in the address)
     if (!seed) this.home.open();
-    this.app.ticker.add((tk) => this.frame(tk.deltaMS));
+    // (a fault in one frame's drawing or sound is logged and the next frame goes on: Pixi's ticker stops for good when a
+    // listener throws, which froze fights mid-way)
+    this.app.ticker.add((tk) => {
+      try {
+        this.frame(tk.deltaMS);
+      } catch (err) {
+        console.error(err);
+      }
+    });
     // (battery saver caps the frame rate at 30)
     onSettings((s) => (this.app.ticker.maxFPS = s.saver ? 30 : 0));
     window.addEventListener('resize', () => this.layout());
