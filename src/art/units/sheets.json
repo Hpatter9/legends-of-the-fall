@@ -369,9 +369,9 @@
   "facesRight": true
  },
  "satyr_1": {
-  "w": 130,
-  "h": 78,
-  "perRow": 12,
+  "w": 72,
+  "h": 68,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -380,19 +380,20 @@
    "dead"
   ],
   "counts": {
-   "walk": 12,
-   "attack": 4,
-   "idle": 7,
-   "hurt": 4,
-   "dead": 4
+   "walk": 8,
+   "attack": 5,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5
   },
-  "figure": 74,
-  "facesRight": true
+  "figure": 65,
+  "facesRight": true,
+  "lies": true
  },
  "satyr_2": {
-  "w": 136,
-  "h": 92,
-  "perRow": 12,
+  "w": 80,
+  "h": 71,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -401,19 +402,20 @@
    "dead"
   ],
   "counts": {
-   "walk": 12,
-   "attack": 8,
-   "idle": 7,
-   "hurt": 4,
-   "dead": 4
+   "walk": 8,
+   "attack": 5,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5
   },
-  "figure": 88,
-  "facesRight": true
+  "figure": 66,
+  "facesRight": true,
+  "lies": true
  },
  "satyr_3": {
-  "w": 106,
-  "h": 79,
-  "perRow": 12,
+  "w": 88,
+  "h": 67,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -422,14 +424,15 @@
    "dead"
   ],
   "counts": {
-   "walk": 12,
-   "attack": 9,
-   "idle": 6,
-   "hurt": 4,
-   "dead": 4
+   "walk": 8,
+   "attack": 5,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5
   },
-  "figure": 75,
-  "facesRight": true
+  "figure": 66,
+  "facesRight": true,
+  "lies": true
  },
  "knight_2": {
   "w": 172,
@@ -1779,7 +1782,7 @@
  "hero_wolf_bard": {
   "w": 72,
   "h": 70,
-  "perRow": 5,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -1789,10 +1792,10 @@
    "attack2"
   ],
   "counts": {
-   "walk": 5,
+   "walk": 8,
    "attack": 5,
    "idle": 4,
-   "hurt": 4,
+   "hurt": 3,
    "dead": 5,
    "attack2": 5
   },
@@ -1802,8 +1805,8 @@
  },
  "hero_dragoon": {
   "w": 100,
-  "h": 94,
-  "perRow": 5,
+  "h": 98,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -1812,10 +1815,10 @@
    "dead"
   ],
   "counts": {
-   "walk": 5,
+   "walk": 8,
    "attack": 5,
    "idle": 4,
-   "hurt": 4,
+   "hurt": 3,
    "dead": 5
   },
   "figure": 90,
@@ -1825,7 +1828,7 @@
  "hero_mercenary": {
   "w": 72,
   "h": 69,
-  "perRow": 5,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -1834,10 +1837,10 @@
    "dead"
   ],
   "counts": {
-   "walk": 5,
+   "walk": 8,
    "attack": 5,
    "idle": 4,
-   "hurt": 4,
+   "hurt": 3,
    "dead": 5
   },
   "figure": 67,
@@ -1846,8 +1849,8 @@
  },
  "hero_beastmaster": {
   "w": 70,
-  "h": 68,
-  "perRow": 5,
+  "h": 71,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -1857,10 +1860,10 @@
    "attack2"
   ],
   "counts": {
-   "walk": 5,
+   "walk": 8,
    "attack": 5,
    "idle": 4,
-   "hurt": 4,
+   "hurt": 3,
    "dead": 5,
    "attack2": 5
   },
@@ -1870,8 +1873,8 @@
  },
  "hero_time_witch": {
   "w": 74,
-  "h": 70,
-  "perRow": 5,
+  "h": 74,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -1881,10 +1884,10 @@
    "attack2"
   ],
   "counts": {
-   "walk": 5,
+   "walk": 8,
    "attack": 5,
    "idle": 4,
-   "hurt": 4,
+   "hurt": 3,
    "dead": 5,
    "attack2": 5
   },
@@ -1894,8 +1897,8 @@
  },
  "hero_priestess": {
   "w": 76,
-  "h": 69,
-  "perRow": 5,
+  "h": 73,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -1905,10 +1908,10 @@
    "attack2"
   ],
   "counts": {
-   "walk": 5,
+   "walk": 8,
    "attack": 5,
    "idle": 4,
-   "hurt": 4,
+   "hurt": 3,
    "dead": 5,
    "attack2": 5
   },
@@ -1918,8 +1921,8 @@
  },
  "hero_sage": {
   "w": 76,
-  "h": 67,
-  "perRow": 5,
+  "h": 81,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -1929,10 +1932,10 @@
    "attack2"
   ],
   "counts": {
-   "walk": 5,
+   "walk": 8,
    "attack": 5,
    "idle": 4,
-   "hurt": 4,
+   "hurt": 3,
    "dead": 5,
    "attack2": 5
   },
@@ -1942,8 +1945,8 @@
  },
  "hero_demon_swordsman": {
   "w": 92,
-  "h": 68,
-  "perRow": 5,
+  "h": 71,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -1952,10 +1955,10 @@
    "dead"
   ],
   "counts": {
-   "walk": 5,
+   "walk": 8,
    "attack": 5,
    "idle": 4,
-   "hurt": 4,
+   "hurt": 3,
    "dead": 5
   },
   "figure": 68,
@@ -1965,7 +1968,7 @@
  "hero_buccaneer": {
   "w": 76,
   "h": 66,
-  "perRow": 5,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -1974,10 +1977,10 @@
    "dead"
   ],
   "counts": {
-   "walk": 5,
+   "walk": 8,
    "attack": 5,
    "idle": 4,
-   "hurt": 4,
+   "hurt": 3,
    "dead": 5
   },
   "figure": 64,
@@ -1987,7 +1990,7 @@
  "hero_dread_pirate": {
   "w": 72,
   "h": 69,
-  "perRow": 5,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -1997,10 +2000,10 @@
    "attack2"
   ],
   "counts": {
-   "walk": 5,
+   "walk": 8,
    "attack": 5,
    "idle": 4,
-   "hurt": 4,
+   "hurt": 3,
    "dead": 5,
    "attack2": 5
   },
@@ -2010,8 +2013,8 @@
  },
  "hero_kraken_mate": {
   "w": 106,
-  "h": 93,
-  "perRow": 5,
+  "h": 96,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -2021,10 +2024,10 @@
    "attack2"
   ],
   "counts": {
-   "walk": 5,
+   "walk": 8,
    "attack": 5,
    "idle": 4,
-   "hurt": 4,
+   "hurt": 3,
    "dead": 5,
    "attack2": 5
   },
@@ -2034,8 +2037,8 @@
  },
  "hero_lancer": {
   "w": 140,
-  "h": 118,
-  "perRow": 5,
+  "h": 123,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -2044,10 +2047,10 @@
    "dead"
   ],
   "counts": {
-   "walk": 5,
+   "walk": 8,
    "attack": 5,
    "idle": 4,
-   "hurt": 4,
+   "hurt": 3,
    "dead": 5
   },
   "figure": 117,
@@ -2057,7 +2060,7 @@
  "hero_mummy": {
   "w": 72,
   "h": 68,
-  "perRow": 5,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -2067,10 +2070,10 @@
    "attack2"
   ],
   "counts": {
-   "walk": 5,
+   "walk": 8,
    "attack": 5,
    "idle": 4,
-   "hurt": 4,
+   "hurt": 3,
    "dead": 5,
    "attack2": 5
   },
@@ -2081,7 +2084,7 @@
  "hero_juggernaut": {
   "w": 128,
   "h": 120,
-  "perRow": 5,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -2091,10 +2094,10 @@
    "attack2"
   ],
   "counts": {
-   "walk": 5,
+   "walk": 8,
    "attack": 5,
    "idle": 4,
-   "hurt": 4,
+   "hurt": 3,
    "dead": 5,
    "attack2": 5
   },
@@ -2104,8 +2107,8 @@
  },
  "hero_tyrant": {
   "w": 100,
-  "h": 96,
-  "perRow": 5,
+  "h": 99,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -2115,10 +2118,10 @@
    "attack2"
   ],
   "counts": {
-   "walk": 5,
+   "walk": 8,
    "attack": 5,
    "idle": 4,
-   "hurt": 4,
+   "hurt": 3,
    "dead": 5,
    "attack2": 5
   },
@@ -2128,8 +2131,8 @@
  },
  "hero_shambler": {
   "w": 80,
-  "h": 69,
-  "perRow": 5,
+  "h": 79,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -2138,10 +2141,10 @@
    "dead"
   ],
   "counts": {
-   "walk": 5,
+   "walk": 8,
    "attack": 5,
    "idle": 4,
-   "hurt": 4,
+   "hurt": 3,
    "dead": 5
   },
   "figure": 66,
