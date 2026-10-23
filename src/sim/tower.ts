@@ -25,7 +25,7 @@ import { UNITS } from './units';
 import { calBossBoost, fitBand, squadFoeMult } from './calamity';
 import { calBossBand } from './calamityBosses';
 import { ascChests, ascCrowns, ascOf, ascRules, ascCleared } from './ascension';
-import { fightXpByHero, gainRunXp, hireHero } from './climb';
+import { CALAMITY_XP, CLIMB_XP, fightXpByHero, gainRunXp, hireHero } from './climb';
 import { xpRate } from './castle';
 import { levelOf as levelOfXp, RUN_MAX_LEVEL, type LevelUp } from './levels';
 
@@ -590,7 +590,7 @@ export const FIGHT_GEAR = 0.3;
 /** A won fight teaches the run's heroes: their XP (by hero) goes onto them, and `t.gains` keeps what each got for the result screen. */
 function teachFight(run: Run, b: Battle): void {
   const t = run.tower!;
-  const gains = fightXpByHero(b, xpRate(run.castle) * (t.cur?.side ? 0.25 : 1));
+  const gains = fightXpByHero(b, xpRate(run.castle) * (t.cur?.side ? 0.25 : 1), run.mode?.kind === 'calamity' ? CALAMITY_XP : CLIMB_XP);
   const before = new Map(run.roster.map((h) => [h.id, levelOfXp(h.xp ?? 0, RUN_MAX_LEVEL)] as const));
   const ups = new Map(gainRunXp(run, gains).map((u: LevelUp & { id: number }) => [u.id, u] as const));
   t.gains = Object.entries(gains).map(([id, xp]) => {

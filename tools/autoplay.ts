@@ -166,10 +166,15 @@ export function playCalamity(meta: Meta, seed: number, hero: string, castle: Cas
 
 /** The node kind and act of the fight the last climb lost (for tuning). */
 export let lostAt = '';
+/** The starting hero's level after each boss of the last calamity (index 0 is map 1's), and at its end (for tuning). */
+export let starterLevels: number[] = [];
+export let starterEnd = 1;
 
 function playClimb(meta: Meta, run: Run, maxFloors: number): { floors: number; bosses: number; act: number; level: number } {
   lostAt = '';
+  starterLevels = [];
   const calamity = run.mode?.kind === 'calamity';
+  const starter = run.roster[0];
   while (!run.over && run.stage <= maxFloors) {
     // (the tower's greedy player summons while the gold lasts; a calamity hires instead)
     while (!calamity && summon(run)) {
@@ -184,8 +189,10 @@ function playClimb(meta: Meta, run: Run, maxFloors: number): { floors: number; b
       const b = fightNode(meta, run);
       const ok = b.phase === 'won';
       if (!ok) lostAt = `${cur.kind}${run.tower!.act}`;
+      if (ok && calamity && cur.kind === 'boss') starterLevels.push(-1);
       if (!run.local) gainXp(meta, fightXp(b, xpRate(run.castle ?? newCastle())));
       finishTower(run, b, ok, ratingOf(b, cur.kind === 'boss').stars);
+      if (starterLevels.length && starterLevels[starterLevels.length - 1] === -1) starterLevels[starterLevels.length - 1] = heroLevel(starter);
       // (an elite offers three relics: the greedy player takes the first, a piece of a set it has begun when there is one)
       if (run.tower!.offer) takeRelic(run, run.tower!.offer[0]);
     };
@@ -216,5 +223,6 @@ function playClimb(meta: Meta, run: Run, maxFloors: number): { floors: number; b
       if (run.tower!.cur?.fight) fightIt();
     }
   }
+  starterEnd = heroLevel(starter);
   return { floors: run.stage - 1, bosses: run.tower!.bosses, act: run.tower!.act, level: run.roster.reduce((n, h) => n + heroLevel(h), 0) / run.roster.length };
 }

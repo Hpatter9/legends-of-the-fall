@@ -1,6 +1,6 @@
 // The heroes' ultimates (docs/notes/ultimates.md). Eight heroes (Kitsune, Karasu Tengu, Yamabushi Tengu, Gorgon, Samurai Commander,
-// Great Sage, Demon Swordsman, Tyrant) have had theirs from the start, in `abilities.ts`; this file gives every other hero its own,
-// unlocked when the hero fights at `ULT_LEVEL` (a kind's lasting level, or the in-run level in the spire and Calamity).
+// Great Sage, Demon Swordsman, Tyrant) wrote theirs first, in `abilities.ts`; this file gives every other hero its own and gates all
+// forty-five, each unlocked when the hero fights at `ULT_LEVEL` (a kind's lasting level, or the in-run level in the spire and Calamity).
 //
 // Each ultimate is a thin config on one of a few engines, built from the skills' own helpers (`abilities.ts` exports them):
 //   sky      salvos on separate crowds (volleys, meteors, shells)       smite    a burst round the caster (stun, slow, curse, pull)
@@ -591,8 +591,8 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
       return true;
     }),
   };
-  // the first eight heroes' ultimates are copied (a foe's own copy of one, such as the Gorgon Queen's, stays as it was) and all forty-five take their balance
-  for (const kind of FIRST_EIGHT) all[kind] = { ...first(kind)! };
+  // the first eight heroes' ultimates are copied and gated at `ULT_LEVEL` like the rest (a foe's own copy of one, such as the Gorgon Queen's, stays as it was) and all forty-five take their balance
+  for (const kind of FIRST_EIGHT) all[kind] = { ...first(kind)!, unlock: ULT_LEVEL };
   for (const [kind, t] of Object.entries(TUNE)) all[kind].tuned = t;
   return all;
 }
