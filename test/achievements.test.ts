@@ -120,22 +120,26 @@ test('fifty stars in all, across the stages', () => {
   assert.equal(earned('stars50', ctx({ meta })), true);
 });
 
-test('a daily score of 1000', () => {
+test('five dailies cleared (the old 1000-point score is gone: the daily has a goal now)', () => {
   const meta = startedMeta(1);
-  meta.daily = { '20261021': { best: 990, plays: 1 } };
-  assert.equal(earned('daily1000', ctx({ meta })), false);
-  meta.daily['20261021'].best = 1000;
+  meta.daily = { '20261017': { best: 990, plays: 1, wave: 10, over: true } };
+  assert.equal(earned('daily1000', ctx({ meta })), false, 'a high old score and a fall clear nothing');
+  for (const d of ['20261018', '20261019', '20261020', '20261021']) meta.daily[d] = { best: 1000, plays: 1, cleared: true };
+  assert.equal(earned('daily1000', ctx({ meta })), false, 'four cleared');
+  assert.deepEqual(ACHIEVEMENTS.find((x) => x.id === 'daily1000')!.meter!(meta), { now: 4, need: 5 });
+  meta.daily['20261022'] = { best: 1000, plays: 1, cleared: true };
   assert.equal(earned('daily1000', ctx({ meta })), true);
 });
 
-test('finishing a daily challenge, counted or not', () => {
+test('clearing a daily challenge: a fall, or a practice run, does not count; a counted clear does', () => {
   const run = dailyRun(20261021);
-  assert.equal(earned('daily', ctx({ run })), false);
+  const meta = startedMeta(1);
   run.over = true;
-  assert.equal(earned('daily', ctx({ run })), true);
-  const plain = newRun(4);
-  plain.over = true;
-  assert.equal(earned('daily', ctx({ run: plain })), false);
+  assert.equal(earned('daily', ctx({ run, meta })), false, 'a run that ended without the boss falling');
+  meta.daily['20261021'] = { best: 0, plays: 1, over: true, wave: 6 };
+  assert.equal(earned('daily', ctx({ run, meta })), false, 'fell at wave 6');
+  meta.daily['20261021'].cleared = true;
+  assert.equal(earned('daily', ctx({ run, meta })), true);
 });
 
 test('the tower: a floor, and twenty floors', () => {

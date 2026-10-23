@@ -38,7 +38,7 @@ export interface Achievement {
 /** The heroes that fought in a finished fight: every hero placed (alive or fallen). */
 const heroesIn = (b: Battle | undefined) => (b?.units ?? []).filter((u) => u.side === 'hero' && !UNITS[u.def].summon);
 const sumStars = (m: Meta) => Object.values(m.stars).reduce((n, s) => n + s, 0);
-const bestDaily = (m: Meta) => Math.max(0, ...Object.values(m.daily).map((e) => e.best));
+const dailiesCleared = (m: Meta) => Object.values(m.daily).filter((e) => e.cleared).length;
 
 export const ACHIEVEMENTS: readonly Achievement[] = [
   { id: 'firstWin', name: 'First Blood', text: 'Win a stage.', crowns: 5, earned: (c) => c.won },
@@ -93,17 +93,17 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
   {
     id: 'daily1000',
     name: 'Daily Champion',
-    text: 'Score 1000 in a daily challenge.',
+    text: 'Clear 5 daily challenges.',
     crowns: 25,
-    earned: (c) => bestDaily(c.meta) >= 1000,
-    meter: (m) => ({ now: Math.min(1000, bestDaily(m)), need: 1000 }),
+    earned: (c) => dailiesCleared(c.meta) >= 5,
+    meter: (m) => ({ now: Math.min(5, dailiesCleared(m)), need: 5 }),
   },
   {
     id: 'daily',
     name: 'Daily Devotee',
-    text: 'Finish a daily challenge.',
+    text: 'Clear a daily challenge.',
     crowns: 10,
-    earned: (c) => c.run.mode?.kind === 'daily' && c.run.over,
+    earned: (c) => dailiesCleared(c.meta) >= 1,
   },
   { id: 'tower1', name: 'Up the Tower', text: 'Clear a floor of the endless tower.', crowns: 10, earned: (c) => c.meta.tower >= 1 },
   {

@@ -7,7 +7,7 @@ import { D, standable, tileAt } from './sim/board';
 import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
 import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
 // (`saveSlot` as `saveRun`: a tower or calamity run is saved in its own slot, any other in the ordinary one)
-import { adoptOldTower, armyOfRun, armyRun, benchFull, boostOf, canRetry, chainOf, MAX_RETRIES, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryGold, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, type Owned, type Run } from './sim/run';
+import { adoptOldTower, armyOfRun, armyRun, benchFull, boostOf, canRetry, chainOf, MAX_RETRIES, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryGold, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, waveArmyOf, type Owned, type Run } from './sim/run';
 import { climbXpView, heroLevel, localBoost } from './sim/climb';
 import { calamityRun } from './sim/modes';
 import { CAL_MAPS } from './sim/calamity';
@@ -40,7 +40,10 @@ import { abandonTower, finishTower, migrateTower, settleTower } from './sim/towe
 import { hpShare } from './sim/health';
 import { Home } from './home';
 import { Party } from './party';
-import { dailyInProgress, modeNote, settleRun, startDaily, towerRun } from './sim/modes';
+import { dailyBonus, dailyCleared, dailyInProgress, modeNote, settleDaily, settleRun, startDaily, towerRun, type DailyPay } from './sim/modes';
+import { dailyBossName, dailyCrowns, DAILY_WAVES } from './sim/daily';
+import { showDailyStart } from './dailyView';
+import { chestPicture } from './chestStash';
 import { toastAchievements, toastJoined } from './achievementsView';
 import { grantContent } from './sim/contentHeroes';
 import { clockSeed, todayKey } from './modes';
@@ -129,6 +132,8 @@ class Game {
   private pendingLoss = false;
   /** What an army's last settled fight paid (null for any other run). */
   private pay: ArmyPay | null = null;
+  /** What a daily's last settled fight paid (null for any other run). */
+  private dailyPay: DailyPay | null = null;
   /** Gold the last win paid (for the result screen). */
   private gain = 0;
   /** Where each hero (by roster id) was placed, so the next stage puts them back. */
@@ -205,7 +210,7 @@ class Game {
         const r = loadRun();
         if (!r || r.over) return null;
         const army = armyOfRun(r);
-        const label = army ? `${army.name} · wave ${r.stage}/${army.waves.length}` : r.mode?.kind === 'daily' ? 'daily challenge' : r.mode?.kind === 'tower' ? `tower · act ${r.tower?.act ?? 1}, floor ${r.stage}` : `stage ${r.stage}`;
+        const label = army ? `${army.name} · wave ${r.stage}/${army.waves.length}` : r.mode?.kind === 'daily' ? `daily · wave ${r.stage}/${DAILY_WAVES}` : r.mode?.kind === 'tower' ? `tower · act ${r.tower?.act ?? 1}, floor ${r.stage}` : `stage ${r.stage}`;
         return { stage: r.stage, gold: r.gold, army: army?.id, label };
       },
       onContinue: () => this.resume(),
@@ -226,7 +231,8 @@ class Game {
       onSummon: (n, play) => this.gacha.summon(n, play),
       onDaily: () => {
         if (dailyInProgress(loadRun(), todayKey())) return this.resume();
-        this.startRun(startDaily(this.meta, todayKey()));
+        // (the start card names the boss and the land; a tap on Fight! starts the run, the first of the date counting)
+        showDailyStart(this.meta, todayKey(), () => this.startRun(startDaily(this.meta, todayKey())), () => this.home.open());
       },
       onTower: () => this.openMode('tower'),
       onCalamity: () => this.openMode('calamity'),
@@ -312,7 +318,7 @@ class Game {
     // (an auto-replay keeps the speed it is at from wave to wave)
     this.setSpeed(this.auto ? this.speed : settings().speed);
     this.fx.clear();
-    this.boardView.build(this.b.board, { boss: !!armyOfRun(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
+    this.boardView.build(this.b.board, { boss: !!waveArmyOf(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
     this.syncChain();
     setBackdrop(this.b.board.area);
     showTwistBanner(this.run.tower?.cur?.fight?.twist);
@@ -1261,6 +1267,10 @@ class Game {
   /** The result screen's way on, once any recap has been seen. */
   private afterResult(): void {
     // (an army's last boss has fallen: the next army's unlock moment, if it opened one, then the armies)
+    if (this.run.cleared && this.run.mode?.kind === 'daily') {
+      $('result').hidden = true;
+      return this.home.open(this.dailyPay?.counted ? 'Daily cleared! The daily chest is waiting by the camp fire.' : 'Daily cleared in practice.');
+    }
     if (this.run.cleared && !this.run.tower) return this.armyWon();
     // (the tower: a lost run shows its summary, a won floor goes back to the map)
     if (this.run.tower) {
@@ -1322,12 +1332,31 @@ class Game {
     notePayout(this.run, gains, ups, settled ? this.crownGain : 0, this.run.cleared ? this.runStars?.chests.length ?? 0 : 0);
   }
 
+  /** The daily chest on the result card: its picture, where it went, and the bonus stars it earned (nothing for any other fight, or a daily not yet cleared). */
+  private drawDailyResult(run: Run): void {
+    const box = $('dayResult');
+    const pay = this.dailyPay;
+    box.hidden = !(run.mode?.kind === 'daily' && run.cleared);
+    box.replaceChildren();
+    if (box.hidden) return;
+    const stars = dailyBonus(run);
+    const note = document.createElement('span');
+    note.textContent = !pay?.counted ? 'Practice: no chest this time' : `Daily chest in your stash · ${stars.map((r) => `${r.earned ? '★' : '☆'} ${r.text}`).join(' · ')}`;
+    if (pay?.counted) box.append(chestPicture('daily', 2).root);
+    box.append(note);
+  }
+
   /** The full recap of the run that has ended, then the way on (the home screen, or the armies). */
   private showRunRecap(): void {
     const run = this.run;
     const army = armyOfRun(run);
     const won = !!run.cleared;
-    const head = won
+    const daily = run.mode?.kind === 'daily' ? run.mode.date : 0;
+    const head = daily
+      ? won
+        ? { title: 'Daily cleared!', tone: 'won' as const, line: `The ${dailyBossName(daily)} has fallen in ${run.recap?.fights ?? 0} fights` }
+        : { title: `Daily over · wave ${run.best}/${DAILY_WAVES}`, tone: 'lost' as const, line: `The ${dailyBossName(daily)} was not reached: ${dailyCleared(run)} waves cleared` }
+      : won
       ? { title: 'Army defeated!', tone: 'won' as const, line: `${army?.name ?? 'The run'} cleared in ${run.recap?.fights ?? 0} fights` }
       : { title: 'Run over', tone: 'lost' as const, line: army ? `The ${army.name} held at wave ${run.best} of ${army.waves.length}` : `Fell at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} hires` };
     showRecap($('recap'), recapOf(run), head, () => this.afterResult());
@@ -1338,7 +1367,7 @@ class Game {
     const r = this.run;
     const army = armyOfRun(r);
     $('result').hidden = true;
-    this.home.open(army ? `The ${army.name} stopped you at wave ${r.best}/${army.waves.length}. Heroes keep their levels: go again.` : `The run ended at stage ${r.best}: +${this.crownGain} crowns earned`);
+    this.home.open(r.mode?.kind === 'daily' ? `Daily over at wave ${r.best}/${DAILY_WAVES}. Tomorrow's boss waits.` : army ? `The ${army.name} stopped you at wave ${r.best}/${army.waves.length}. Heroes keep their levels: go again.` : `The run ended at stage ${r.best}: +${this.crownGain} crowns earned`);
   }
 
   /** An army's last boss has fallen: if that opens the next army, its banner rises first ("A new army marches"), then the armies screen. */
@@ -1675,6 +1704,8 @@ class Game {
       const won = b.phase === 'won';
       const stage = run.stage;
       const army = armyOfRun(run);
+      const fixed = waveArmyOf(run);
+      const daily = run.mode?.kind === 'daily';
       const rating = ratingOf(b, isBossRun(run));
       const before = run.gold;
       noteFight(run, b);
@@ -1684,13 +1715,15 @@ class Game {
       if (run.tower) finishTower(run, b, won, rating.stars);
       else finish(run, won, rating.stars);
       this.gain = run.gold - before;
-      if (won && army && !run.cleared && !run.over && !this.auto) this.startWalk(stage);
+      if (won && fixed && !run.cleared && !run.over && !this.auto) this.startWalk(stage);
       // (an army pays by wave, and its last boss a clear; any other run pays as it always did)
       this.pay = army ? settleWave(this.meta, army.id, stage, won, rating.stars) : null;
-      this.crownGain = this.pay ? this.pay.crowns : earn(this.meta, stage, won, rating.stars);
+      // (a daily pays by wave and its boss a chest; a practice run pays nothing)
+      this.dailyPay = daily ? settleDaily(this.meta, run, { won, stage }) : null;
+      this.crownGain = this.pay ? this.pay.crowns : this.dailyPay ? this.dailyPay.crowns : earn(this.meta, stage, won, rating.stars);
       if (run.tower) run.tower.crowns += this.crownGain;
       if (run.tower && run.over) settleTower(this.meta, run);
-      if (won && !army && run.mode?.kind !== 'calamity') recordStars(this.meta, stage, rating.stars);
+      if (won && !army && !daily && run.mode?.kind !== 'calamity') recordStars(this.meta, stage, rating.stars);
       const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b });
       this.runStars = settleArmyRun(this.meta, run);
       // (a milestone this fight reached may bring in a hero)
@@ -1728,8 +1761,9 @@ class Game {
     }
     document.body.dataset.phase = b.phase;
     const army = armyOfRun(run);
+    const fixed = waveArmyOf(run);
     const kind = run.tower?.cur?.kind;
-    const stage = `${army ? `Wave ${run.stage}/${army.waves.length}` : run.mode?.kind === 'calamity' ? `Map ${run.tower!.act} · Floor ${run.stage}` : run.tower ? `Floor ${run.stage}` : `Stage ${run.stage}`}${kind === 'elite' ? ' · Elite' : isBossRun(run) ? ' · Boss' : ''}`;
+    const stage = `${fixed ? `Wave ${run.stage}/${fixed.waves.length}` : run.mode?.kind === 'calamity' ? `Map ${run.tower!.act} · Floor ${run.stage}` : run.tower ? `Floor ${run.stage}` : `Stage ${run.stage}`}${kind === 'elite' ? ' · Elite' : isBossRun(run) ? ' · Boss' : ''}`;
     $('status').textContent =
       b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : benchFull(run) ? `${stage} · bench full: recycle a hero to hire` : n ? `${stage} · ${n} of ${squadLimit(run)} placed` : `${stage} · drag heroes onto the blue tiles`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
     $('gold').textContent = `${run.gold} gold`;
@@ -1758,19 +1792,24 @@ class Game {
     } else if (!result.hidden) {
       const left = b.units.filter((x) => x.alive && x.side === 'hero' && !UNITS[x.def].summon).length;
       const cal = run.mode?.kind === 'calamity';
-      $('banner').textContent = run.cleared ? (cal ? 'Calamity ended!' : 'Army defeated!') : this.bossDown ? `${cal ? 'Map' : 'Act'} ${run.tower!.act - 1} cleared!` : b.phase === 'won' ? (run.tower ? 'Floor cleared!' : 'Victory!') : 'Defeat';
+      const daily = run.mode?.kind === 'daily';
+      const practice = run.mode?.kind === 'daily' && run.mode.practice;
+      $('banner').textContent = daily && run.cleared ? 'Daily cleared!' : daily && run.over ? `Daily over · wave ${run.best}/${DAILY_WAVES}` : run.cleared ? (cal ? 'Calamity ended!' : 'Army defeated!') : this.bossDown ? `${cal ? 'Map' : 'Act'} ${run.tower!.act - 1} cleared!` : b.phase === 'won' ? (run.tower ? 'Floor cleared!' : 'Victory!') : 'Defeat';
       $('banner').className = b.phase;
-      const share = this.pay?.replay ? ' (a replay pays a share)' : '';
+      const share = this.pay?.replay ? ' (a replay pays a share)' : practice ? ' (practice)' : '';
       const clear = this.pay?.firstClear ? ' · first clear!' : '';
       $('summary').textContent =
         b.phase === 'won'
           ? `${run.tower ? `Floor ${run.stage - 1} done · ` : ''}${left} of ${heroesPlaced(b)} heroes standing · +${this.gain} gold · +${this.crownGain} crowns${share}${clear} · ${clock(b.t)}${run.found?.length ? ` · found: ${run.found.join(', ')}` : ''}`
-          : run.tower
+          : daily
+            ? `The ${dailyBossName(run.mode?.kind === 'daily' ? run.mode.date : 0)} holds at wave ${run.best} of ${DAILY_WAVES} · ${dailyCleared(run)} waves cleared · ${practice ? 'practice, no reward' : `+${dailyCrowns(dailyCleared(run))} crowns`}`
+            : run.tower
             ? `The ${cal ? 'calamity' : 'climb'} ends on floor ${run.stage}, ${cal ? 'map' : 'act'} ${run.tower.act} · ${run.stage - 1} floors cleared · +${this.crownGain} crowns`
             : army
             ? `The ${army.name} holds at wave ${run.best} of ${army.waves.length}. It starts again from wave 1; your heroes keep their levels.`
             : `The run ends at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} summons · +${this.crownGain} crowns${modeNote(run)}`;
-      $('next').textContent = run.over && !run.tower ? 'Run recap' : run.cleared && run.tower ? 'See the summary' : b.phase === 'won' ? (army ? `Next wave (${run.stage})` : run.tower ? 'To the map' : `Next stage (${run.stage})`) : run.tower ? 'See the summary' : 'Home';
+      this.drawDailyResult(run);
+      $('next').textContent = run.over && !run.tower ? 'Run recap' : run.cleared && run.tower ? 'See the summary' : b.phase === 'won' ? (fixed ? `Next wave (${run.stage})` : run.tower ? 'To the map' : `Next stage (${run.stage})`) : run.tower ? 'See the summary' : 'Home';
     }
     this.refreshAuto();
     if (b.phase === 'deploy' && !this.auto) tips.atDeploy(n, run.stage, () => this.deployBox());

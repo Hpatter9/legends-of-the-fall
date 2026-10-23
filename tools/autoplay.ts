@@ -11,7 +11,7 @@ import { newCastle, xpRate, type Castle } from '../src/sim/castle';
 import { startedMeta, heroRank, type Meta } from '../src/sim/meta';
 import { awakenStats } from '../src/sim/awaken';
 import { armyById } from '../src/sim/armies';
-import { armyRun, boostOf, finish, isBossRun, noteFight, squadLimit, startStage, summon, tierOfRun, type Run } from '../src/sim/run';
+import { armyRun, boostOf, canRetry, finish, isBossRun, noteFight, retryWave, squadLimit, startStage, summon, tierOfRun, type Run } from '../src/sim/run';
 import { heroLevel, localBoost } from '../src/sim/climb';
 import { armyRules } from '../src/sim/armyStars';
 import { ratingOf } from '../src/sim/stars';
@@ -19,7 +19,7 @@ import { autoDeploy, autoRound, dressSquad, strengthOf } from '../src/sim/autopl
 import { UNITS } from '../src/sim/units';
 import { takeRelic } from '../src/sim/elites';
 import { buy, hire, choices, sideChoices, clearNode, enterNode, finishMystery, finishTower, openTreasure, rest, takeXp, train, type MapNode, type NodeKind } from '../src/sim/tower';
-import { calamityRun, towerRun } from '../src/sim/modes';
+import { calamityRun, dailyBonus, dailyRun, towerRun } from '../src/sim/modes';
 import { squadHealth } from '../src/sim/health';
 
 export { strengthOf };
@@ -54,6 +54,33 @@ export function playArmy(meta: Meta, armyId: string, seed: number, party: readon
   }
   const cleared = !!run.cleared && won === army.waves.length;
   return { won, cleared, stars: cleared ? armyRules(army, tierOfRun(run), run).filter((r) => r.earned).length : 0 };
+}
+
+/**
+ * A date's daily as a greedy player: the starting five and the day's gold, summoning and fielding as `playArmy` does, with the two hearts
+ * spent (when `hearts`) on a lost wave: the wave is tried again with the retry's gold, hired at once. Returns the waves won, whether the boss
+ * of the day fell, the hearts used and the bonus stars of the clear.
+ */
+export function playDaily(meta: Meta, date: number, hearts = true, gear = true): { won: number; cleared: boolean; hearts: number; bonus: number; stars: boolean[]; ms: number; lost: number; bossFell: number; bossLost: number } {
+  const run: Run = dailyRun(date);
+  let won = 0;
+  while (!run.over) {
+    autoRound(run, meta, gear);
+    const b = startStage(run);
+    autoDeploy(b, run, meta);
+    fight(b);
+    playOut(b);
+    const ok = b.phase === 'won';
+    if (!ok && hearts && canRetry(run)) {
+      retryWave(run);
+      continue;
+    }
+    if (ok) won = run.stage;
+    noteFight(run, b);
+    finish(run, ok, ratingOf(b, isBossRun(run)).stars);
+    gainXp(meta, fightXp(b, xpRate(newCastle())));
+  }
+  return { won, cleared: !!run.cleared, hearts: run.retries ?? 0, bonus: dailyBonus(run).filter((r) => r.earned).length, stars: dailyBonus(run).map((r) => r.earned), ms: run.tally?.ms ?? 0, lost: run.tally?.lost ?? 0, bossFell: run.tally?.bossFell ?? 0, bossLost: run.tally?.bossLost ?? 0 };
 }
 
 /** An army's last wave (its final boss) alone, as a greedy player with a party at the level of `meta`: whether it was won. The waves before it are walked over (their foes made frail), so the gold they pay and the heroes it buys are the campaign's. For tuning the final bosses. */

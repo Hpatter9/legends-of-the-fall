@@ -1,0 +1,22 @@
+/* the daily challenge's start card: slate panels, ember and ice accents; sizes 12 and 24, no bold */
+.dayCard { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 16px; text-align: center; background: var(--overlay); overflow: hidden auto; }
+.dayHead { display: flex; flex-direction: column; align-items: center; gap: 0; }
+.dayTitle { font: 400 24px/1.2 var(--display); color: var(--accent-hi); text-shadow: 0 2px 0 var(--s2); }
+.dayDate { font: 400 12px/1.2 var(--body); color: var(--text-dim); }
+.dayFace { width: min(144px, calc(36 * var(--vw))); height: min(144px, calc(36 * var(--vw))); image-rendering: pixelated; border: 4px solid var(--edge-hi); background: radial-gradient(var(--s6), var(--s1)); }
+.dayBoss { display: flex; flex-direction: column; align-items: center; }
+.dayBoss small { font: 400 12px/1.2 var(--body); color: var(--text-dim); }
+.dayBoss span { font: 400 24px/1.2 var(--display); color: var(--text); text-shadow: var(--outline); }
+.dayFacts { list-style: none; margin: 0; padding: 8px 12px; width: min(320px, calc(86 * var(--vw))); box-sizing: border-box; display: flex; flex-direction: column; gap: 2px; background: var(--panel-bg); border: 2px solid var(--edge-lo); }
+.dayFacts li { display: flex; justify-content: space-between; gap: 12px; font: 400 12px/1.4 var(--body); }
+.dayFacts li span { color: var(--text-dim); }
+.dayFacts li b { font-weight: 400; color: var(--text); text-align: right; }
+.dayPrize { display: flex; align-items: center; gap: 12px; width: min(320px, calc(86 * var(--vw))); box-sizing: border-box; padding: 8px 12px; text-align: left; font: 400 12px/1.4 var(--body); color: var(--text); background: rgb(var(--p0-rgb) / 0.7); border: 2px solid var(--p2); }
+.dayPrize .chestPic { flex: none; filter: drop-shadow(0 0 5px var(--p4)); }
+.dayStatus { font: 400 12px/1.2 var(--body); color: var(--text-dim); }
+.dayBtns { display: flex; gap: 12px; }
+.dayBtns button { min-width: 120px; }
+/* the result card's daily chest */
+.dayResult { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 4px; font: 400 12px/1.4 var(--body); color: var(--text); }
+.dayResult .chestPic { flex: none; filter: drop-shadow(0 0 5px var(--p4)); }
+.dayResult[hidden] { display: none; }

@@ -308,16 +308,17 @@ export class Home {
       b.addEventListener('click', onTap);
       return b;
     };
-    // (the Daily board: a new daily wears the red dot; a done one a green check)
+    // (the Daily board: a new daily wears the red dot; a cleared one a green check; the plate names the boss of the day and how it went)
     const today = m.daily[String(todayKey())];
-    const dailyLineText = today ? 'done today' : dailyLine(m, todayKey()).replace('Daily challenge · ', '');
-    const daily = place('hmDaily', today ? 'daily done' : 'daily', 'Daily', dailyLineText, `Daily challenge: ${dailyLineText}`, () => this.go(this.hooks.onDaily));
-    if (today) {
+    const cleared = !!today?.cleared;
+    const dailyLineText = dailyLine(m, todayKey());
+    const daily = place('hmDaily', cleared ? 'daily done' : 'daily', 'Daily', dailyLineText, `Daily challenge. ${dailyLineText}`, () => this.go(this.hooks.onDaily));
+    if (cleared) {
       const tick = el('i', 'dailyDone');
       tick.setAttribute('role', 'img');
-      tick.setAttribute('aria-label', 'Done today');
+      tick.setAttribute('aria-label', 'Cleared today');
       daily.append(tick);
-    } else daily.append(el('i', 'badge'));
+    } else if (!today?.plays) daily.append(el('i', 'badge'));
     // (the Tower: shut, dimmed and chained, until the first army is beaten; a climb begun stays open whatever the unlock says)
     const climbing = this.hooks.slotInfo?.('tower');
     const towerUp = towerOpen(m) || !!climbing;
