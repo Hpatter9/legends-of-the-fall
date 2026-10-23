@@ -50,13 +50,13 @@ for (const size of sizes) {
   }
   // 2. a hero joining: a bar one shard from full, a single pull of it is made, the card glows
   {
-    const m = { ...meta, unlock: { ...meta.unlock, cleric: 3 }, crowns: 2000 };
+    const m = { ...meta, unlock: { ...meta.unlock, cleric: 5 }, crowns: 2000 };
     const { ctx, page } = await open(size, m);
     await page.waitForTimeout(1500);
     await page.evaluate(() => {
       const g = window.__game;
       g.gacha.open();
-      const got = [{ kind: 'cleric', isNew: true, shards: 0, unlock: 1, have: 4, need: 4 }];
+      const got = [{ kind: 'cleric', isNew: true, shards: 0, unlock: 1, have: 6, need: 6 }];
       g.gacha.reveal(got);
     });
     await page.waitForTimeout(2200);

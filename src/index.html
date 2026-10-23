@@ -295,11 +295,12 @@
   #gacha .pulls button small { display: block; font-size: 12px; font-weight: normal; }
   #rates, #pity { font-size: 11px; color: var(--dim); text-align: center; }
   #reveal { flex: none; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; min-height: 96px; }
-  .flip { position: relative; aspect-ratio: 3 / 4; perspective: 600px; }
+  .flip { position: relative; aspect-ratio: 3 / 4.6; perspective: 600px; }
   .flip .back, .flip .face { position: absolute; inset: 0; border-radius: 8px; border: 2px solid var(--edge); backface-visibility: hidden; transition: transform 0.5s; }
   .flip .back { background: repeating-linear-gradient(45deg, var(--s7), var(--s7) 6px, var(--e1) 6px, var(--e1) 12px); }
   .flip .face { background: var(--s3); transform: rotateY(180deg); display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 2px; text-align: center; font-size: 10px; }
-  .flip .face canvas { width: 100%; image-rendering: pixelated; }
+  .flip .face canvas { width: 66%; image-rendering: pixelated; }
+  .flip .face em { white-space: nowrap; }
   .flip .face em { font-style: normal; color: var(--gold); font-weight: bold; }
   .flip .face .xpbar { flex: none; width: 88%; margin: 2px 0; }
   .flip.up .back { transform: rotateY(-180deg); }

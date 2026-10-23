@@ -5,34 +5,29 @@ and about six months or more for a daily player to own all 45.
 
 ## The rules
 
-- **Starter heroes** are owned outright (the three of the pack). Nothing else changes about the pick, except that a pack
-  never offers a hero earned by content.
-- **A pull is one shard of one hero** (`pullOnce`, `unlock.ts`). A hero **not owned** gets an *unlock shard*
-  (`Meta.unlock`, kept apart from the rank shards in `Meta.shards`); it joins at rank 0 when it has `unlockNeed` of them.
-  A hero **owned** gets a rank shard, exactly as a repeat did (then awakening, talents, then `OVERFLOW_CROWNS`).
-- **Shards needed rise with the heroes owned** (`unlockNeed(owned)`, owned = pullable heroes, the starter's three
-  count): `NEED_FIRST` 2 for the first, `NEED_LAST` 60 for the last (option A), on a curve (`t^1.6`). The bar shows the need now,
-  so it can grow by a shard or two when another hero joins.
-- **The price rises with the heroes owned** (`priceMult`): 1x with three owned up to `PRICE_LAST_MULT` 250x with every
-  pullable hero (a pull 100 to about 21000 crowns). Why: crown income is about 400 on day 1 and
-  15-20k a day by month 4 (the armies' replays pay by tier), so a flat price gates nothing late and everything early.
-  Income itself is untouched, so the castle, gear, spells and talents are not slowed (they cost about 13k crowns in
-  all).
-- **Who a pull gives** (`drawKind`): any pullable hero, but one already begun is likelier (`STICKY` 6: weight
-  `1 + 6 x shards held`), so bars fill instead of 30 bars creeping. An owned content hero is in the draw too, for its
-  rank shards only.
-- **The pity** (`PITY_PULLS` 3): after 3 pulls in a row that gave no unlock shards, the next one is shards of the hero
-  closest to joining (most shards; a tie by a side stream, `PITY_SALT`). Late in the game, when most pulls land on
-  heroes already owned, this keeps a steady trickle of progress. It replaces `NEW_PITY`. `Meta.unlockDry` counts it
-  (the old `sinceNew` is kept in the save but no longer used).
-- **Chests** (`armyStars.ts`, `lootOf`): the shards a chest rolls and its hero draw are unlock shards for a hero not owned
-  (a plain draw `CHEST_HERO_SHARDS` 2, a gold chest's prize `CHEST_PRIZE_SHARDS` 5), rank shards for one owned (2, as
-  before). No chest recruits a whole hero any more. `rollChest` is unchanged (so every chest rolls what it did); a
-  content hero it lands on that is not owned is swapped for a pullable one by a side stream of the chest's seed
-  (`swapContent`).
-- **Saves**: `Meta.unlock` and `Meta.unlockDry` are optional. Heroes owned stay owned and nothing is taken away;
-  an old save plays on under the new rules for the heroes it lacks (and pays the price for its roster size). On load
-  a content hero whose milestone the save has already reached joins (`grantContent`), and one already owned stays.
+- **Starter heroes** are owned outright (the three of the pack). A pack never offers a hero earned by content.
+- **A pull is one shard of one hero** (`pullOnce`, `unlock.ts`), at the flat price of 100 crowns (900 for ten). A hero **not owned**
+  gets an *unlock shard* (`Meta.unlock`, kept apart from the rank shards in `Meta.shards`); it joins at rank 0 when it has
+  `unlockNeed` of them. A hero **owned** gets a rank shard, exactly as a repeat did (then awakening, talents, then `OVERFLOW_CROWNS`).
+- **Shards needed rise with the heroes owned** (`unlockNeed(owned)`, owned = pullable heroes, the starter's three count): `NEED_FIRST`
+  2 for the first, `NEED_LAST` 100 for the last, on a curve (`t^1.6`). The bar shows the need now, so it can grow when another hero joins.
+- **The odds fade** (`drawKind`, `ownedWeight`): each hero owned beyond the starter's three makes every hero owned likelier to be drawn
+  (weight `1 + OWNED_BOOST x (owned-3)^OWNED_POW`, 2 and 2.2). So new heroes turn up less and less as the roster grows, and most late
+  pulls are rank shards: crowns stay useful for ranks, awakening and talents. Why not a price: crown income is about 400 on day 1
+  and 15-20k a day by month 4 (the armies' replays pay by tier), so any flat price gates nothing late; the odds do. The price is
+  never touched, so the castle, gear, spells and talents are not slowed (they cost about 13k crowns in all).
+- **Begun heroes are likelier** (`STICKY` 6: weight `1 + 6 x shards held`), so bars fill instead of 30 bars creeping.
+- **The pity** (`PITY_PULLS` 3, `PITY_GROW` 6): after `3 + 6 x (owned-3)` pulls in a row that gave no unlock shards, the next one is
+  shards of the hero closest to joining (most shards; a tie by a side stream, `PITY_SALT`). Early it is 3 pulls, so the first heroes
+  come fast; late it is long, so it is only a floor. It replaces `NEW_PITY`. `Meta.unlockDry` counts it (the old `sinceNew` is kept in the
+  save but no longer used).
+- **Chests** (`armyStars.ts`, `lootOf`): the shards a chest rolls and its hero draw are unlock shards for a hero not owned (a plain
+  draw `CHEST_HERO_SHARDS` 2, a gold chest's prize `CHEST_PRIZE_SHARDS` 5), rank shards for one owned (2, as before). No chest
+  recruits a whole hero any more. `rollChest` is unchanged (so every chest rolls what it did); a content hero it lands on that is not
+  owned is swapped for a pullable one by a side stream of the chest's seed (`swapContent`).
+- **Saves**: `Meta.unlock` and `Meta.unlockDry` are optional. Heroes owned stay owned and nothing is taken away; an old save plays on
+  under the new rules for the heroes it lacks. On load a content hero whose milestone the save has already reached joins
+  (`grantContent`), and one already owned stays.
 
 ## Heroes earned by content (`contentHeroes.ts`)
 
@@ -65,104 +60,64 @@ settles and when a save loads; a toast says "<Hero> joins you".
 
 ## The pace (`npm run unlock-pace`, `tools/unlockPace.ts`)
 
-A model of a daily player of 30 to 45 minutes: the daily challenge (300 crowns), 13 army runs a day (10 auto and 3 by
-hand) on the best tier cleared, one tower climb a day (6 floors growing to 45), the first-clear and star chests (opened
-with the real `openChest`), a calamity a week from day 70 (a level higher every 4 weeks), about 900 crowns of
-achievements and codex, and the milestones at a plausible pace (Normal clears on days 1, 4, 8, 13, 19, 26, 34, 43, 53;
-Hard clears from day 12 to 112, Elite from day 40 to 190). It plays the real rules on a real Meta. Pulls use 90% of the
-crowns once the castle is paid (30% of income goes to it while it is unbuilt, 13k in all). Every number is a constant
-in the tool.
+A model of a daily player of 30 to 45 minutes: the daily challenge (300 crowns), 13 army runs a day (10 auto and 3 by hand) on the best
+tier cleared, one tower climb a day (6 floors growing to 45), the first-clear and star chests (opened with the real `openChest`), a
+calamity a week from day 70 (a level higher every 4 weeks), about 900 crowns of achievements and codex, and the milestones at a plausible
+pace (Normal clears on days 1, 4, 8, 13, 19, 26, 34, 43, 53; Hard clears from day 12 to 112, Elite from day 40 to 190). It plays the real
+rules on a real Meta. Pulls use 90% of the crowns once the castle is paid (30% of income goes to it while it is unbuilt, 13k in all).
+Every number is a constant in the tool. (An earlier version of the tool charged each pull twice; the numbers here are from the fixed one.)
 
-Median of 30 seeds, 13 runs a day:
+Day reached, median of 30 seeds. Typical is 13 army runs a day; light is 6, heavy is 20.
 
-| Heroes | Day reached |
-| --- | --- |
-| 5 | 1 (the first session) |
-| 10 | 8 (8 to 12) |
-| 15 | 23 |
-| 20 | 40 |
-| 30 | 77 |
-| 40 | 132 |
-| 45 | 186 |
+| Heroes | Typical | Light | Heavy |
+| --- | --- | --- | --- |
+| 5 | 1 (the first session) | 1 | 1 |
+| 10 | 10 (8 to 14) | 13 | 8 |
+| 20 | 40 | 46 | 35 |
+| 30 | 75 | 84 | 70 |
+| 40 | 125 | 141 | 112 |
+| 45 | 186 | 186 | 186 |
 
-Heroes owned on day 1/3/7/14/30/60/90/120/150/180: 6, 7, 8, 12, 17, 25, 33, 38, 42, 44 (all 45 on day 186).
-Every pullable hero (35) is owned by day 148; the last content hero (the Tyrant, tower floor 40) comes on day 186, so
-the content milestones set the end, the shards the middle.
+Heroes owned on day 1 / 3 / 7 / 14 / 30 / 60 / 90 / 120 / 150 / 180 (typical): 5, 6, 7, 11, 17, 26, 34, 39, 42, 44 (all 45 on day 186).
+Light: 5, -, 7, -, 14, 23, 31. Heavy: 6, -, 8, -, 18, 27, 35. Every pullable hero (35) is owned by day 144 for a typical player (165 light,
+130 heavy); the last content hero (the Tyrant, tower floor 40) comes on day 186 in the model, so the content milestones set the end
+and the shards the middle.
 
-Sensitivity: a light player (6 runs a day) reaches 10 on day 12, 20 on day 46, 30 on day 87, 40 on day 150, 45 on day 186
-(pullable done on day 166). A heavy one (20 runs a day) reaches 10 on day 8, 20 on day 34, 30 on day 72, 40 on day 120
-(pullable done on day 134); the content heroes still end it on day 186 in the model, so reaching the milestones sooner
-(a faster tower climb) is what shortens it.
+Thresholds and base odds by roster size (the odds are those of a pull being an unowned hero's shard before the begun-hero and pity
+effects, which lift them early):
 
-Thresholds and prices by roster size:
-
-| Pullable owned | Shards for the next | Price of 1 / 10 pulls |
+| Pullable owned | Shards for the next | Base odds of a new-hero shard |
 | --- | --- | --- |
-| 3 | 2 | 100 / 900 |
-| 5 | 3 | 130 / 1160 |
-| 8 | 5 | 190 / 1710 |
-| 10 | 7 | 240 / 2200 |
-| 14 | 13 | 410 / 3680 |
-| 18 | 20 | 680 / 6130 |
-| 22 | 29 | 1140 / 10230 |
-| 26 | 38 | 1900 / 17070 |
-| 30 | 48 | 3160 / 28480 |
-| 34 | 60 | 5280 / 47510 |
+| 3 | 2 | 91% |
+| 5 | 3 | 37% |
+| 6 | 4 | 17% |
+| 8 | 7 | 4.6% |
+| 10 | 11 | 1.7% |
+| 14 | 21 | 0.4% |
+| 18 | 33 | 0.1% |
 
-The first session: a new save has about 900 crowns of the first clear, the daily and the chests; with `STICKY` 6 the
-first two heroes (2 shards each) come in a median of 7 pulls (90% within 10), so five heroes are there in the first session.
+Late pulls are almost all rank shards, so the pity (every 3 + 6 x (owned-3) dry pulls) and the begun-hero weight carry the last
+heroes. A typical player makes a great many pulls late in the model (hundreds a day): crowns are plentiful, and the odds, not the
+crowns, are the gate.
+
+The first session: a new save has about 900 crowns of the first clear, the daily and the chests; with `STICKY` 6 the first two heroes
+(2 shards each) come in a median of 7 pulls (90% within 10), so five heroes are there in the first session.
 
 ## Tests (`test/hero-shards.test.ts`)
 
-Thresholds and price curves; a bar filling and the hero joining at rank 0; pulls (unlock shards or rank shards, never a
-content hero, a first session reaching five); the pity; the content milestones, each once; chest shards and the content
+Thresholds; a bar filling and the hero joining at rank 0; pulls (unlock shards or rank shards, never a content hero, a first session
+reaching five); the flat price; the fading odds and the growing pity; the content milestones, each once; chest shards and the content
 swap; an old save keeping its heroes (and mending a bad `unlock`); determinism; the lock line.
 
-Tests changed because they encoded the old "a pull unlocks a hero at once / `NEW_PITY`" rule: `meta.test.ts` (the pull costs now
-follow the roster; the "fair helper" and "a new kind unlocks" tests are replaced by `hero-shards.test.ts`), `shards.test.ts`
-(the first test: a pull of a hero not owned gives unlock shards), `awaken.test.ts` ("a repeat always has a use" skips
-unlock pulls by `p.unlock`, not `p.isNew`), `armyStars.test.ts` (a chest's hero draw gives shards, not a whole hero),
-`starter.test.ts` (packs offer every pullable hero and no content hero).
+Tests changed because they encoded the old "a pull unlocks a hero at once / `NEW_PITY`" rule: `meta.test.ts` (the "fair helper" and
+"a new kind unlocks" tests are replaced by `hero-shards.test.ts`), `shards.test.ts` (a pull of a hero not owned gives unlock shards; and
+a hero at the shard cap pays crowns, which the fading odds now make common), `awaken.test.ts` ("a repeat always has a use" skips unlock
+pulls by `p.unlock`, not `p.isNew`), `armyStars.test.ts` (a chest's hero draw gives shards, not a whole hero), `starter.test.ts` (packs
+offer every pullable hero and no content hero).
 
 ## Open points
 
 - Content heroes get rank shards (not unlock shards) from pulls and chests once owned, or they could never rank up.
-- Pull prices now depend on the roster (the buttons show the price; `pullCost(count, meta)`).
+- With a flat price and fading odds, a late player can pull hundreds of times a day (the model does); the recruit page has only ×1 and ×10.
 - The pace model's milestone days and the income are guesses; change the constants in `tools/unlockPace.ts`.
-
-
-## Correction, and the three options (the owner decides)
-
-**The pace tables above were from a model that charged every pull twice** (the tool paid for a pull and `recruit` paid again),
-so they were too slow. Fixed; option A is re-tuned to the same pace: `PRICE_LAST_MULT` is now 250 (was 60), so the thresholds
-and price table above are out of date for price (the shards table is unchanged). The three options below are all in the code,
-switched by `UNLOCK_MODE` in `unlockRules.ts` (`setUnlockMode` in tools and tests; the default is `rising`). The owner chose
-"shards" and "content heroes" but not "costlier pulls", so B and C keep the price flat at 100 / 900.
-
-| | A: rising price (default) | B: daily limit | C: fading odds |
-| --- | --- | --- | --- |
-| Price of a pull | 100 up to ~21000 with the roster | flat 100 / 900 | flat 100 / 900 |
-| Limit | none | 10 pulls a day (`m.pullDay`) | none |
-| Shards for the last hero | 60 | 150 | 100 |
-| Pity | 3 dry pulls | 3 dry pulls | 3, plus 6 for each hero owned beyond three |
-| Odds | begun heroes likelier (x6 per shard) | same | same, and each hero owned is likelier (`1 + 2(owned-3)^2.2`), so new heroes turn up less and less |
-| Feels like | crowns are a real cost: late pulls are a big purchase | a daily ritual, like the auto tickets; crowns pile up | pulls are cheap but mostly land on heroes you have (rank shards): crowns stay useful for ranks, awakening and talents |
-
-Median day reached (30 seeds), typical player (13 army runs a day); light = 6, heavy = 20 in brackets:
-
-| Heroes | A | B | C |
-| --- | --- | --- | --- |
-| 5 | 1 (1, 1) | 1 (1, 1) | 1 (1, 1) |
-| 10 | 8 (8, 6) | 8 (9, 8) | 10 (13, 8) |
-| 20 | 34 (43, 27) | 43 (43, 43) | 40 (46, 35) |
-| 30 | 75 (84, 70) | 89 (93, 91) | 75 (84, 70) |
-| 40 | 140 (153, 127) | 150 (151, 149) | 125 (141, 112) |
-| 45 | 186 (186, 186) | 186 (186, 186) | 186 (186, 186) |
-| every pullable hero | 157 (172, 146) | 158 (158, 157) | 144 (165, 130) |
-
-Heroes owned on days 1 / 7 / 30 / 60 / 90 (typical): A 6, 9, 19, 26, 33; B 5, 9, 17, 22, 30; C 5, 7, 17, 26, 34.
-
-Reading it: B is the same for every player (the limit, not play, sets the pace), so it is the fairest to a light player and
-the least rewarding to a heavy one; its early game is a little slower (5 heroes on day 1 may need the second session).
-C and A respond to how much a player earns. C's first week is the slowest (7 heroes on day 7), because odds fade early too.
-The 45th hero is always the Tyrant (tower floor 40) in the model, on day 186: the end is set by the content milestones.
+- The owner chose this rule (fading odds, flat price) over a rising price and a daily limit.
