@@ -836,9 +836,9 @@
   "lies": true
  },
  "forest_boss_1": {
-  "w": 126,
+  "w": 128,
   "h": 125,
-  "perRow": 5,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -847,10 +847,10 @@
    "dead"
   ],
   "counts": {
-   "walk": 5,
+   "walk": 8,
    "attack": 5,
    "idle": 4,
-   "hurt": 4,
+   "hurt": 3,
    "dead": 5
   },
   "figure": 121,
@@ -858,9 +858,9 @@
   "lies": true
  },
  "forest_boss_2": {
-  "w": 66,
-  "h": 47,
-  "perRow": 6,
+  "w": 142,
+  "h": 127,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -869,19 +869,20 @@
    "dead"
   ],
   "counts": {
-   "walk": 6,
-   "attack": 6,
+   "walk": 8,
+   "attack": 5,
    "idle": 4,
-   "hurt": 4,
-   "dead": 6
+   "hurt": 3,
+   "dead": 5
   },
-  "figure": 44,
-  "facesRight": false
+  "figure": 115,
+  "facesRight": true,
+  "lies": true
  },
  "forest_boss_3": {
-  "w": 56,
-  "h": 39,
-  "perRow": 6,
+  "w": 140,
+  "h": 127,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -890,19 +891,20 @@
    "dead"
   ],
   "counts": {
-   "walk": 6,
-   "attack": 6,
+   "walk": 8,
+   "attack": 5,
    "idle": 4,
-   "hurt": 4,
-   "dead": 4
+   "hurt": 3,
+   "dead": 5
   },
-  "figure": 36,
-  "facesRight": false
+  "figure": 121,
+  "facesRight": true,
+  "lies": true
  },
  "boar_king": {
-  "w": 138,
-  "h": 108,
-  "perRow": 10,
+  "w": 134,
+  "h": 124,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -911,19 +913,20 @@
    "dead"
   ],
   "counts": {
-   "walk": 10,
-   "attack": 10,
-   "idle": 8,
-   "hurt": 5,
-   "dead": 10
+   "walk": 8,
+   "attack": 5,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5
   },
-  "figure": 85,
-  "facesRight": false
+  "figure": 118,
+  "facesRight": true,
+  "lies": true
  },
  "devil_leader": {
-  "w": 142,
-  "h": 106,
-  "perRow": 10,
+  "w": 138,
+  "h": 118,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -932,19 +935,20 @@
    "dead"
   ],
   "counts": {
-   "walk": 10,
-   "attack": 10,
-   "idle": 8,
-   "hurt": 5,
-   "dead": 10
+   "walk": 8,
+   "attack": 5,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5
   },
-  "figure": 94,
-  "facesRight": false
+  "figure": 111,
+  "facesRight": true,
+  "lies": true
  },
  "shaman_king": {
-  "w": 144,
-  "h": 108,
-  "perRow": 10,
+  "w": 134,
+  "h": 122,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -953,14 +957,15 @@
    "dead"
   ],
   "counts": {
-   "walk": 10,
-   "attack": 10,
-   "idle": 8,
-   "hurt": 5,
-   "dead": 10
+   "walk": 8,
+   "attack": 5,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5
   },
-  "figure": 92,
-  "facesRight": false
+  "figure": 121,
+  "facesRight": true,
+  "lies": true
  },
  "cls_paladin_1": {
   "w": 76,
@@ -1534,8 +1539,8 @@
  },
  "golem_stone": {
   "w": 132,
-  "h": 125,
-  "perRow": 5,
+  "h": 127,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -1544,10 +1549,10 @@
    "dead"
   ],
   "counts": {
-   "walk": 5,
+   "walk": 8,
    "attack": 5,
    "idle": 4,
-   "hurt": 4,
+   "hurt": 3,
    "dead": 5
   },
   "figure": 110,
@@ -1555,9 +1560,9 @@
   "lies": true
  },
  "golem_crystal": {
-  "w": 96,
-  "h": 120,
-  "perRow": 6,
+  "w": 136,
+  "h": 122,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -1566,20 +1571,20 @@
    "dead"
   ],
   "counts": {
-   "walk": 6,
+   "walk": 8,
    "attack": 5,
    "idle": 4,
-   "hurt": 2,
+   "hurt": 3,
    "dead": 5
   },
-  "figure": 91,
+  "figure": 112,
   "facesRight": true,
   "lies": true
  },
  "golem_iron": {
-  "w": 96,
-  "h": 120,
-  "perRow": 6,
+  "w": 128,
+  "h": 121,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -1588,20 +1593,20 @@
    "dead"
   ],
   "counts": {
-   "walk": 6,
+   "walk": 8,
    "attack": 5,
    "idle": 4,
-   "hurt": 2,
+   "hurt": 3,
    "dead": 5
   },
-  "figure": 87,
+  "figure": 117,
   "facesRight": true,
   "lies": true
  },
  "golem_magma": {
-  "w": 96,
-  "h": 120,
-  "perRow": 6,
+  "w": 134,
+  "h": 121,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -1610,20 +1615,20 @@
    "dead"
   ],
   "counts": {
-   "walk": 6,
+   "walk": 8,
    "attack": 5,
    "idle": 4,
-   "hurt": 2,
+   "hurt": 3,
    "dead": 5
   },
-  "figure": 85,
+  "figure": 118,
   "facesRight": true,
   "lies": true
  },
  "golem_sapphire": {
-  "w": 96,
-  "h": 120,
-  "perRow": 6,
+  "w": 128,
+  "h": 128,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -1632,20 +1637,20 @@
    "dead"
   ],
   "counts": {
-   "walk": 6,
+   "walk": 8,
    "attack": 5,
    "idle": 4,
-   "hurt": 2,
+   "hurt": 3,
    "dead": 5
   },
-  "figure": 89,
+  "figure": 124,
   "facesRight": true,
   "lies": true
  },
  "golem_forge": {
-  "w": 96,
-  "h": 120,
-  "perRow": 6,
+  "w": 130,
+  "h": 128,
+  "perRow": 8,
   "rows": [
    "walk",
    "attack",
@@ -1654,13 +1659,13 @@
    "dead"
   ],
   "counts": {
-   "walk": 6,
+   "walk": 8,
    "attack": 5,
    "idle": 4,
-   "hurt": 2,
+   "hurt": 3,
    "dead": 5
   },
-  "figure": 92,
+  "figure": 125,
   "facesRight": true,
   "lies": true
  },

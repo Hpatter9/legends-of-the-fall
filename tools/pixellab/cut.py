@@ -9,7 +9,7 @@ def pick(r,n):
     if r=='idle':return list(range(min(n,4)))
     if r=='walk':return list(range(min(n,8)))
     if r in('attack','attack2'):return list(range(min(n,6)))
-    if r=='hurt':return list(range(min(n,4)))
+    if r=='hurt':return [1,3,5] if n>=6 else list(range(min(n,4)))   # the page shows 3 hurt frames, so a 6-frame flinch is sampled
     if r=='dead':return list(range(1,min(n,7)))
 ORDER=['walk','attack','idle','hurt','dead','attack2']
 def clean(im):
