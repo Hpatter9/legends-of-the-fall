@@ -163,8 +163,9 @@ function replay(count: number, level: number, armyIndex = 0) {
   const m = startedMeta(9);
   for (const k of HEROES) m.xp[k] = xpFor(level);
   const army = ARMIES[armyIndex];
-  // (every army up to this one has been beaten, so this one is open)
+  // (every army up to this one has been beaten, and the save had them open, so this one is open)
   for (const x of ARMIES.slice(0, armyIndex + 1)) m.armies[x.id] = { best: x.waves.length, won: x.waves.length, clears: 1, stars: {} };
+  m.opened = ARMIES.slice(0, armyIndex + 1).map((x) => x.id);
   const a = startAuto(m, army.id, 0, count)!;
   let seed = 100;
   let run = armyRun(seed, army.id, m.party, m.castle);

@@ -29,3 +29,5 @@
 /* the red "new" dot and the green check sit on the Daily board's picture (still, nothing blinks) */
 .cpPlace i.badge { position: absolute; left: calc(50% + 14px); top: 0; right: auto; }
 .cpPlace i.dailyDone { position: absolute; left: calc(50% + 8px); top: -4px; width: 24px; height: 24px; box-sizing: border-box; display: block; border: 2px solid var(--white); background: var(--g2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 7' shape-rendering='crispEdges'%3E%3Cpath fill='%23fff' d='M7 0h2v1H7zM6 1h2v1H6zM5 2h2v1H5zM0 3h2v1H0zM4 3h2v1H4zM1 4h4v1H1zM2 5h2v1H2z'/%3E%3C/svg%3E") center / 18px 14px no-repeat; image-rendering: pixelated; box-shadow: 0 2px 0 var(--g0); }
+/* the Calamity's portal while it is shut: grey, and still (one frame of the turn) */
+.cpPortalSlot.shut .calPortal { filter: grayscale(1) brightness(0.55); animation: none; background-position-x: calc(var(--pu, 1) * -384px); }

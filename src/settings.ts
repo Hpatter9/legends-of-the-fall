@@ -26,9 +26,11 @@ export interface Settings {
   quips: boolean;
   /** Whether cinematics play by themselves (the opening, a boss's arrival, a hero earned, the summoning). Off, they never start, but the codex's Scenes list can still play a seen one. */
   cinematics: boolean;
+  /** Whether the short summoning cinematic plays before the hall's show on a pull (the owner's ask: it can be turned off on its own). */
+  summonScene: boolean;
 }
 
-export const DEFAULTS: Settings = { music: 100, effects: 100, speed: 1, shake: true, numbers: true, saver: false, awake: true, quips: true, cinematics: true };
+export const DEFAULTS: Settings = { music: 100, effects: 100, speed: 1, shake: true, numbers: true, saver: false, awake: true, quips: true, cinematics: true, summonScene: true };
 
 /** The settings from what was saved (`raw`, the stored text or null): anything missing or wrong falls back to the default. */
 export function parseSettings(raw: string | null): Settings {
@@ -51,6 +53,7 @@ export function parseSettings(raw: string | null): Settings {
     awake: flag(saved.awake, DEFAULTS.awake),
     quips: flag(saved.quips, DEFAULTS.quips),
     cinematics: flag(saved.cinematics, DEFAULTS.cinematics),
+    summonScene: flag(saved.summonScene, DEFAULTS.summonScene),
   };
 }
 
@@ -119,6 +122,7 @@ function draw(): void {
     toggleRow('Keep screen awake', 'The screen stays on while the game is open', 'awake', s.awake),
     toggleRow('Hero quips', 'Heroes (and now and then Duchess) say the odd word in a small speech bubble', 'quips', s.quips),
     toggleRow('Cinematics', 'Short scenes at big moments. Off, none play by themselves; the Scenes list in the codex still plays them', 'cinematics', s.cinematics),
+    toggleRow('Summoning scene', 'The short scene before the summoning show on each pull', 'summonScene', s.summonScene),
     resetTipsRow(),
     startOverRow(),
   );
@@ -178,7 +182,7 @@ function speedRow(value: 1 | 2): HTMLElement {
   return r;
 }
 
-function toggleRow(title: string, hint: string, key: 'shake' | 'numbers' | 'saver' | 'awake' | 'quips' | 'cinematics', value: boolean): HTMLElement {
+function toggleRow(title: string, hint: string, key: 'shake' | 'numbers' | 'saver' | 'awake' | 'quips' | 'cinematics' | 'summonScene', value: boolean): HTMLElement {
   const [r] = row(title, hint);
   const b = document.createElement('button');
   b.className = value ? 'toggle on' : 'toggle';

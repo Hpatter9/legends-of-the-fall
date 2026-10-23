@@ -54,6 +54,7 @@ export function dailyArmy(date: number): Army {
     id: `daily${date}`,
     name: `Daily: ${UNITS[bossOf(host)].name}`,
     blurb: `Ten waves ending in the ${UNITS[bossOf(host)].name}.`,
+    level: 1,
     area: dailyArea(date),
     waves,
     start: DAILY_START,

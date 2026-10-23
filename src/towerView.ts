@@ -9,7 +9,7 @@ import { saveMeta, type Meta } from './sim/meta';
 import { hpShare } from './sim/health';
 import { ELITE_BY_ID, eliteAt } from './sim/elites';
 import {
-  buy, chestLine, choices, clearNode, enterNode, finishMystery, setGoing, floorOf, hasRoom, hire, hireClosed, inBattle, localTrainXp, NODE_NAMES, openTreasure, REST_HEAL, rest, mapProgress, moveTo, rowsIn, spotFloor, takeXp, train, trainXp, type MapNode, type NodeKind, type ShopItem, type TowerSummary,
+  buy, chestLine, choices, clearNode, enterNode, finishMystery, setGoing, floorOf, hasRoom, hire, hireClosed, inBattle, leaveOpen, localTrainXp, NODE_NAMES, openTreasure, REST_HEAL, rest, mapProgress, moveTo, rowsIn, takeXp, train, trainXp, type MapNode, type NodeKind, type ShopItem, type TowerSummary,
 } from './sim/tower';
 import { SIDE_BASE, sideSpots, START_ID } from './sim/calLand';
 import { sideEliteAt } from './sim/elites';
@@ -23,7 +23,8 @@ import { gearIcon, iconImg, relicIcon } from './render/items';
 import { portrait } from './render/sheets';
 import { play } from './render/sound';
 import { chestPicture } from './chestStash';
-import { eliteInfo, relicButton, relicChoice, relicPopup } from './towerElites';
+import { detourInfo, eliteInfo, relicButton, relicChoice, relicPopup } from './towerElites';
+import { mapRecapCard, victoryCard } from './calClear';
 import { ICONS, icon } from './menuArt';
 import swords from './art/rogue/swords.png';
 import skull from './art/rogue/skull.png';
@@ -72,6 +73,15 @@ export const NODE_INFO: Record<NodeKind, { icon: string; text: string }> = {
   boss: { icon: crown, text: 'The act boss. A wall; drops gear and a relic and heals half.' },
   recruit: { icon: recruitIcon, text: 'Heroes for hire. Pay gold, and one joins the party.' },
 };
+
+/** What the Calamity's spots are, in a line (the map is cleared in any order: it has spots, not floors). */
+const CAL_INFO: Partial<Record<NodeKind, string>> = {
+  boss: "The map's boss. Its fall opens the next map. Drops gear and a relic.",
+  campfire: "The map's one campfire: rest, or train a hero.",
+  recruit: "The map's one recruit spot: one free hero out of three.",
+  shop: 'Heroes, relics, gear and healing. Come back with more gold.',
+};
+const calInfo = (kind: NodeKind): string => CAL_INFO[kind] ?? NODE_INFO[kind].text;
 
 /** The acts whose intro card has been shown this session (by run and act), so it plays once as an act starts. */
 const introSeen = new Set<string>();
@@ -165,6 +175,7 @@ export class TowerView {
     if (this.calamity && !cur && run.tower?.going !== undefined) this.pickSpot(run.tower.going);
     if (cur && !cur.fight) this.resumeNode();
     else if (run.tower?.offer) this.offerCard();
+    else if (this.calamity && run.tower?.mapDone && !run.over) this.recapCard();
   }
 
   close(): void {
@@ -395,7 +406,7 @@ export class TowerView {
       this.lastTapped = n.id;
       this.picked = open.has(n.id) ? n.id : -1;
       const elite = n.kind === 'elite' ? eliteAt(this.run.seed, t.act, t.map, n.id) : undefined;
-      if (elite) this.sayNode(eliteInfo(elite, floorOf(t.act, n.row, t)));
+      if (elite) this.sayNode(eliteInfo(elite, `Floor ${floorOf(t.act, n.row, t)}`));
       else this.say(`Floor ${floorOf(t.act, n.row, t)} · ${NODE_NAMES[n.kind]}: ${NODE_INFO[n.kind].text}${twistLine(n.twist)}`);
       this.markPicked();
     });
@@ -523,11 +534,14 @@ export class TowerView {
   private say(text: string): void {
     const s = this.root.querySelector('.rtSay');
     if (s) s.textContent = text;
+    this.root.querySelector('.rtFoot')?.classList.remove('info');
   }
 
   /** The same line, with an element in it (an elite's portrait and name). */
   private sayNode(node: HTMLElement): void {
     this.root.querySelector('.rtSay')?.replaceChildren(node);
+    // (a portrait and three lines want the whole width: the button goes under them)
+    this.root.querySelector('.rtFoot')?.classList.add('info');
   }
 
   /** The picked node is lit and the Climb button wakes, without redrawing the map. */
@@ -562,21 +576,20 @@ export class TowerView {
     // (a twist is revealed once as its spot is first tapped)
     if (node?.twist && id !== this.lastTapped) playTwist(node.twist);
     this.lastTapped = id;
-    const floor = id === START_ID ? run.stage : spotFloor(run, id);
     if (!this.cal!.openIds().has(id)) {
       // (a spot already cleared, or the portal: nothing to do there, only to walk back to)
-      this.say(id === START_ID ? 'The portal you came through. Walk back to it.' : `${id >= SIDE_BASE ? 'The hidden spot' : NODE_NAMES[t.map[id].kind]} is cleared. Walk back to it.`);
+      this.say(id === START_ID ? 'The portal you came through. Walk back to it.' : `${id >= SIDE_BASE ? 'The detour' : NODE_NAMES[t.map[id].kind]} is cleared. Walk back to it.`);
       this.markPicked();
       return;
     }
     if (id >= SIDE_BASE) {
       const side = this.kindOf(id);
-      if (side === 'elite') this.sayNode(eliteInfo(sideEliteAt(run.seed, t.act, t.map, id - SIDE_BASE), floor));
-      else this.say('A hidden hoard off the road: gold, and a relic or gear. Optional: you come straight back to the road.');
+      if (side === 'elite') this.sayNode(detourInfo(sideEliteAt(run.seed, t.act, t.map, id - SIDE_BASE), `Map ${t.act}`));
+      else this.say('Detour hoard: a hidden stash, no fight. Pays gold only.');
     } else {
       const elite = node!.kind === 'elite' ? eliteAt(run.seed, t.act, t.map, id) : undefined;
-      if (elite) this.sayNode(eliteInfo(elite, floor));
-      else this.say(`${NODE_NAMES[node!.kind]}${t.path.includes(id) ? ' (cleared: open again)' : ''}: ${NODE_INFO[node!.kind].text}${twistLine(node!.twist)}`);
+      if (elite) this.sayNode(eliteInfo(elite, `Map ${t.act}`));
+      else this.say(`${NODE_NAMES[node!.kind]}${t.path.includes(id) ? ' (cleared: open again)' : ''}: ${calInfo(node!.kind)}${twistLine(node!.twist)}`);
     }
     this.markPicked();
   }
@@ -591,7 +604,7 @@ export class TowerView {
     const side = this.picked >= SIDE_BASE;
     if (!this.cal!.openIds().has(this.picked)) return void (go.textContent = 'Walk there');
     if (this.run.tower!.path.includes(this.picked)) return void (go.textContent = `Visit the ${NODE_NAMES[kind].toLowerCase()} again`);
-    go.textContent = kind === 'fight' || kind === 'elite' || kind === 'boss' ? (side ? 'Take the detour!' : 'To battle!') : kind === 'recruit' ? 'Meet the recruits' : side ? 'Take the detour' : `Go to the ${NODE_NAMES[kind].toLowerCase()}`;
+    go.textContent = kind === 'fight' || kind === 'elite' || kind === 'boss' ? (side ? 'Detour fight!' : 'To battle!') : kind === 'recruit' ? 'Meet the recruits' : side ? 'Open the hoard' : `Go to the ${NODE_NAMES[kind].toLowerCase()}`;
   }
 
   private go(): void {
@@ -706,6 +719,21 @@ export class TowerView {
     return card;
   }
 
+  /** The recap of the map just cleared: what it paid and what it held. Shown once, over the new map. */
+  private recapCard(): void {
+    const run = this.run;
+    const t = run.tower!;
+    const done = t.mapDone;
+    if (!done) return;
+    const card = this.cardShell(`Map ${done.map} cleared`, 'boss');
+    mapRecapCard(card, done, () => {
+      t.mapDone = undefined;
+      saveSlot(run);
+      this.card?.remove();
+      this.card = null;
+    });
+  }
+
   /** The relics an elite paid: choose one (the offer is kept in the run, so leaving and coming back finds it). */
   private offerCard(): void {
     const run = this.run;
@@ -740,8 +768,15 @@ export class TowerView {
     const stock = run.tower!.cur!.shop!;
     const card = this.cardShell('The shop', 'shop');
     card.append(el('p', 'rtLead', 'A peddler lays out a blanket of wares under a lantern.'), this.goldLine(), this.partyBars());
+    // (what a shop sells, by kind: heroes, relics, gear and healing)
     const list = el('div', 'rtShop');
-    stock.forEach((it, i) => list.append(this.shopRow(it, i)));
+    const groups: [string, ShopItem['kind'][]][] = [['Heroes for hire', ['hero']], ['Relics', ['relic']], ['Gear', ['gear']], ['Healing', ['heal', 'elixir']]];
+    for (const [name, kinds] of groups) {
+      const rows = stock.map((it, i) => ({ it, i })).filter((x) => kinds.includes(x.it.kind));
+      if (!rows.length) continue;
+      list.append(el('h3', 'rtShopHead', name));
+      for (const { it, i } of rows) list.append(this.shopRow(it, i));
+    }
     card.append(list);
     if (this.note) card.append(el('p', 'rtNote', this.note));
     const out = el('button', 'primary', 'Leave the shop');
@@ -754,12 +789,13 @@ export class TowerView {
 
   private note = '';
 
-  /** The heroes for hire at a recruit node: a row for each, with its price; the squad's room is shown. */
+  /** The recruit spot: three heroes, one free choice. Choosing one closes the offer; leaving without one keeps the spot open to come back to. */
   private recruitCard(): void {
     const run = this.run;
     const hires = run.tower!.cur!.hires ?? [];
+    const taken = hires.some((h) => h.hired);
     const card = this.cardShell('Heroes for hire', 'recruit');
-    card.append(el('p', 'rtLead', 'Sellswords wait by the road, each with a price and a tale. Pay, and one joins the party.'), this.goldLine(), this.partyBars());
+    card.append(el('p', 'rtLead', taken ? 'A sellsword takes the road with you.' : 'Three sellswords wait by the road. Choose one: they join the party free.'), this.partyBars());
     card.append(el('p', 'rtNote', `${run.roster.length} of ${squadLimit(run)} places filled`));
     const list = el('div', 'rtShop');
     hires.forEach((h, i) => {
@@ -768,11 +804,11 @@ export class TowerView {
       const pic = portrait(def.sheet, 40);
       pic.classList.add('rtShopPic');
       const words = el('span');
-      // (a hero is hired once a run: one the party has since got elsewhere is closed here)
+      // (a hero is taken once a run: one the party has since got elsewhere is closed here)
       const had = !h.hired && hireClosed(run, h.kind);
-      words.append(el('b', '', h.hired ? `${def.name} · hired` : had ? `${def.name} · in the party` : def.name), el('small', '', def.role));
-      row.append(pic, words, el('em', '', h.hired || had ? '' : String(h.cost)));
-      row.disabled = !!h.hired || had || run.gold < h.cost || !hasRoom(run);
+      words.append(el('b', '', h.hired ? `${def.name} · joined` : had ? `${def.name} · in the party` : def.name), el('small', '', def.role));
+      row.append(pic, words, el('em', 'free', h.hired || had ? '' : 'Free'));
+      row.disabled = taken || had || !hasRoom(run);
       row.addEventListener('click', () => {
         const line = hire(run, i);
         if (line === null) return;
@@ -784,11 +820,18 @@ export class TowerView {
       list.append(row);
     });
     card.append(list);
+    if (!hasRoom(run) && !taken) card.append(el('p', 'rtNote', 'The squad is full: no room for another hero.'));
     if (this.note) card.append(el('p', 'rtNote', this.note));
-    const out = el('button', 'primary', 'Move on');
+    const out = el('button', 'primary', taken ? 'Move on' : 'Not now: keep the offer');
     out.addEventListener('click', () => {
       this.note = '';
-      this.leave();
+      if (taken) return this.leave();
+      // (nobody chosen: the spot stays open, and the party comes back to it when it likes)
+      leaveOpen(run);
+      saveSlot(run);
+      this.card?.remove();
+      this.card = null;
+      this.draw(true);
     });
     card.append(out);
   }
@@ -903,8 +946,19 @@ export class TowerView {
     document.body.classList.add('towerUp');
     this.root.replaceChildren();
     const wrap = el('div', 'rtCardWrap solo');
-    const card = el('div', 'rtCard summary');
     const cal = s.maps !== undefined;
+    // (a Calamity cleared whole has a victory screen of its own: the finishing reward, shown in full)
+    if (cal && s.cleared && s.clear) {
+      const card = el('div', 'rtCard victory');
+      victoryCard(card, s, () => {
+        this.close();
+        then();
+      });
+      wrap.append(card);
+      this.root.append(wrap);
+      return;
+    }
+    const card = el('div', 'rtCard summary');
     card.append(
       el('h2', '', cal ? (s.cleared ? 'The calamity is ended!' : 'The calamity goes on') : s.abandoned ? 'The climb is over' : 'The climb ends'),
       el('p', 'rtLead', cal ? (s.cleared ? `All ${CAL_MAPS} maps are cleared: the calamity falls.` : s.abandoned ? `The party turns back in map ${Math.min(s.act, CAL_MAPS)}, ${s.floors} spots cleared.` : `The party falls in map ${Math.min(s.act, CAL_MAPS)}, ${s.floors} spots cleared.`) : s.abandoned ? `The heroes turn back on floor ${run.stage}, in act ${s.act}.` : `The heroes fall on floor ${run.stage}, in act ${s.act}.`),

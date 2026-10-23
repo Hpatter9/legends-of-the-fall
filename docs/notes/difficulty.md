@@ -6,6 +6,39 @@ numbers are all from the same bot as `docs/notes/level-100.md` (`npm run balance
 Paladin, Archer, Warlock, Cleric) at the level shown, a maxed castle, gear dressed, a fresh save for each try, at most 25 tries; "with talents"
 means every talent row the level opens (the points are the level's own). Full tables for all nine armies are in `difficulty-tables.md`.
 
+## Normal climbs army by army (the owner's rule, 0.141)
+
+"I want the armies to be harder as they unlock. The first army is low level and easy, the next one requires more levels to beat and so on. Level 1 units can't beat normal on any but the first army."
+
+Each army now names the hero level Normal is meant for (`Army.level`, shown on the armies screen and on the war table as "Lv N"): **1, 5, 8, 12, 16, 20, 24, 28, 32**. The pace: level 10 is day 2, 20 is day 7 and 30 is day 23 (`npm run level-pace`), and the armies open at 0, 2, 4 ... 16 army stars (`ARMY_NEED`), about two stars an army, so a player meets an army about when it has reached its level.
+
+**How it was tuned.** `start` of each army was searched (bisection, 24 saves a step) so that the recruits' party at the army's level, with the castle a climb has by then (none until the fifth army: the castle opens at 10 stars; then 6, 13, 18 and 22 levels over the five buildings the climb spends on) and gear dressed, takes about 3 tries. The result stays close to the old numbers for the early armies (a castle-less player was already the measure), and it lifts the late ones: `start` is now 0.5, 0.72, 0.8, 1.05, 1.15, 1.57, 1.78, 1.8, 2.2 (it was 0.5, 0.7, 0.85, 1.15, 1.38, 1.55, 1.64, 1.68, 1.7). `growth` is as it was.
+
+**The harder tiers did not move.** They scale from `Army.tierStart` (the old `start`; the Yokai's is 1.55, a little easier than before, so Mythic holds at level 100 with talents), so every band above (Hard to Mythic) keeps its calibration, and only Normal's curve of levels changed. The Normal-to-Hard ratio is therefore a little smaller on the early armies than the 1.75 of the table (`tierStart` against `start`).
+
+Mean tries to clear Normal (30 fresh saves a cell, at most 25 tries, the recruits' party, gear dressed; `XP` carries between tries, so a party that fails gets stronger):
+
+| Army (rec. level) | Lv 1 | 10 | 20 | 30 | 45 | 60 | 80 | 100 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Orc Warband (1) | 2.4 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 |
+| Undead Legion (5) | 6.2 | 1.9 | 1.2 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 |
+| Beast Packs (8) | 13.5 | 1.5 | 1.2 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 |
+| The Wildwood (12) | 25 | 4.5 | 2.2 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 |
+| The Labyrinth (16) | 25 | 3.7 | 2.3 | 1.1 | 1.0 | 1.0 | 1.0 | 1.0 |
+| Ogre Clans (20) | 25 | 6.8 | 2.9 | 1.2 | 1.2 | 1.0 | 1.0 | 1.0 |
+| Infernal Host (24) | 25 | 12.8 | 5.2 | 1.3 | 1.1 | 1.0 | 1.0 | 1.0 |
+| Yokai Night Parade (28) | 25 | 17.6 | 12.2 | 2.8 | 1.6 | 1.3 | 1.1 | 1.0 |
+| Golem Forge (32) | 25 | 19.7 | 16.0 | 3.5 | 1.6 | 1.4 | 1.1 | 1.0 |
+
+(25 means no save cleared it in 25 tries.) The same table with the *maxed* castle that `--deep` plays (`npm run balance -- --no-tables --deep --tiers-at 0 --levels 1,10,20,30,45,60,80,100`) is easier on the early armies, since the castle is not open there: Orcs 1.0 at level 1, Undead 1.5, Beasts 2.3, Wildwood 3.2, Labyrinth 3.1, Ogres 10.1, Infernal 18.3, Yokai 21.8 (63% cleared), Golems 24.4 (13%); at level 10 they are 1.0, 1.0, 1.0, 1.1, 1.1, 1.6, 2.6, 7.2, 11.5, and from level 30 1.0 to 1.9.
+
+- **Level 1 against the first army:** about 2 to 3 tries (the climb: 2.8; no castle).
+- **Level 1 against the others:** a single try at level 1 clears none of them (Undead 2% of tries, every other army 0%, 60 saves). Allowing 25 tries with XP carried, the Undead (6 tries) and the Beasts (13 tries) still fall in the end, because a party that fails gains levels; the Wildwood and later do not.
+- **At the recommended level:** 2 to 4 tries (the climb, with a real castle and recruits, on the code merged with the new lands and the tier skills, 120 saves: Orcs 2.8, Undead 3.5, Beasts 1.9, Wildwood 3.2, Labyrinth 2.5, Ogres 2.3, Infernal 2.1, Yokai 2.3, Golems 2.8; the bisection on the merged code gave the same `start`s to within 0.05).
+- **First-try:** from about 10 to 25 levels above (Undead and Beasts by 20, the Wildwood to Ogres by 30, the Yokai and Golems by 45).
+- **Tiers on top** (maxed castle, no talents, 8 saves): Hard at level 45 is 1.0 to 3.1 tries; Elite at 65 runs from 1.0 (early armies) to 25 on the Infernal Host, 12 at 85; Legendary needs 85 to 100 and stays 13 to 25 on the late armies at 100; Mythic is out of reach without talents on every army but the first two or three. With every talent row, Mythic at level 100 takes 3.6 (Infernal), 3.4 (Golems) and 3.2 (Yokai) tries.
+- **Other modes:** the daily has its own army (`dailyArmy`, with `DAILY_START`), the Calamity and the spire do not read an army's `start`: they do not move.
+
 ## The target
 
 Where a hero level is reached (`npm run level-pace`: the favourite is level 30 on day 4, 45 about day 43, 65 about day 95, 85 about day 133,

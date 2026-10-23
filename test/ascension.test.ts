@@ -1,3 +1,4 @@
+import { clearCrowns } from '../src/sim/calReward';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ascChests, ascCleared, ascCrowns, ascOf, ascReward, ascRules, ascUnlocked, ASC_MAX, ASC_TEXT } from '../src/sim/ascension';
@@ -24,7 +25,7 @@ function clearedTo(done: number): Meta {
 test('each level adds one rule on top of the ones before; level 0 changes nothing', () => {
   assert.equal(ASC_TEXT.length, ASC_MAX);
   const none = ascRules(0);
-  assert.deepEqual(none, { foeHp: 1, foeAtk: 1, fewerCamps: false, phaseAt: 0.5, elites: 1, shops: 1, heal: 1, startGold: 0, bossCurse: false, bossShield: 0 });
+  assert.deepEqual(none, { foeHp: 1, foeAtk: 1, hires: 1, phaseAt: 0.5, elites: 1, shops: 1, heal: 1, startGold: 0, bossCurse: false, bossShield: 0 });
   let was = JSON.stringify(none);
   for (let n = 1; n <= ASC_MAX; n++) {
     const now = ascRules(n);
@@ -99,21 +100,17 @@ test('foes are tougher, deterministic, and only in an ascended calamity', () => 
   assert.deepEqual(hpAt(5), hpAt(5), 'the same seed, the same fight');
 });
 
-test('level 2 drops the second recruit camp from the longer maps; level 4 doubles the elites; level 8 curses every boss floor', () => {
-  const camps = (nodes: ReturnType<typeof calamityMap>) => nodes.filter((n) => n.kind === 'recruit').length;
-  let lost = 0;
-  for (let seed = 1; seed <= 12; seed++) {
-    for (let act = 2; act <= CAL_MAPS; act++) {
-      const rows = 7 + (act > 3 ? 1 : 0);
-      const base = calamityMap(seed, act, rows, 0);
-      const cut = calamityMap(seed, act, rows, 2);
-      assert.ok(camps(cut) <= camps(base), `seed ${seed} map ${act}`);
-      lost += camps(base) - camps(cut);
-      // the first camp (floor 3) is on every path still
-      assert.ok(cut.filter((n) => n.row === 2).every((n) => n.kind === 'recruit'));
-    }
-  }
-  assert.ok(lost > 0, 'some maps lost a camp');
+test('level 2 makes a shop hero 40% dearer; level 4 doubles the elites; level 8 curses every boss floor', () => {
+  const m = clearedTo(9);
+  const heroCost = (level: number) => {
+    const run = calamityRun(6, m, 'knight', level);
+    reach(run, 'shop');
+    return run.tower!.cur!.shop!.find((i) => i.kind === 'hero')!.cost;
+  };
+  assert.equal(heroCost(2), Math.round(heroCost(1) * 1.4));
+  assert.equal(ascRules(1).hires, 1);
+  // (the recruit spot's free choice is not touched)
+  assert.ok(calamityMap(5, 2, 7, 2).filter((n) => n.kind === 'recruit').length === 1);
   const elites = (asc: number) => {
     let n = 0;
     for (let seed = 1; seed <= 40; seed++) for (let act = 1; act <= CAL_MAPS; act++) n += calamityMap(seed, act, 8, asc).filter((x) => x.kind === 'elite').length;
@@ -181,7 +178,8 @@ test('level 5 makes shops dearer, and level 6 halves every healing', () => {
   const base = shop(4);
   const dear = shop(5);
   assert.equal(base.length, dear.length);
-  base.forEach((it, i) => assert.equal(dear[i].cost, Math.round(it.cost * 1.25), it.label));
+  // (a hero's price is rounded once for the hires rule and once for the shops, so it may differ by one)
+  base.forEach((it, i) => assert.ok(Math.abs(dear[i].cost - Math.round(it.cost * 1.25)) <= (it.kind === 'hero' ? 1 : 0), it.label));
   assert.match(shop(6).find((i) => i.kind === 'heal')!.text, /20%/);
   // healing: a campfire's rest, a win's mending, a draught
   const heal = (level: number) => {
@@ -225,14 +223,14 @@ test('a full clear opens the next level and pays more; a loss pays by the maps a
   const m0 = startedMeta(1);
   const all0 = MAP_CROWNS.reduce((n, c) => n + c, 0);
   const r0 = finish(m0, 0, CAL_MAPS, true);
-  assert.equal(r0.paid, all0);
+  assert.equal(r0.paid, all0 + clearCrowns(0));
   assert.equal(r0.chests, 1);
   assert.equal(m0.calamity!.asc, 0, 'a level 0 clear opens level 1');
   assert.equal(ascUnlocked(m0), 1);
   // level 5: more crowns, more chests, the next level opens
   const m5 = clearedTo(4);
   const r5 = finish(m5, 5, CAL_MAPS, true);
-  assert.equal(r5.paid, Math.round(all0 * ascCrowns(5)));
+  assert.equal(r5.paid, Math.round(all0 * ascCrowns(5)) + clearCrowns(5));
   assert.equal(r5.chests, ascChests(5));
   assert.ok(r5.chests > r0.chests && r5.paid > r0.paid);
   assert.equal(m5.calamity!.asc, 5);

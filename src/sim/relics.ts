@@ -70,7 +70,7 @@ export function relicEffects(ids: readonly string[] = []): RelicEffects {
   // (the sets: two of one give a small bonus, three a strong one)
   const { fx, hooks } = setBonus([...new Set(ids)]);
   for (const k of ['atk', 'hp', 'mana', 'charge', 'speed'] as const) if (fx[k]) out[k] = (out[k] ?? 1) * fx[k]!;
-  for (const k of ['guard', 'dodge', 'crit'] as const) if (fx[k]) out[k] = (out[k] ?? 0) + fx[k]!;
+  for (const k of ['guard', 'dodge', 'crit', 'reach', 'first', 'gold'] as const) if (fx[k]) out[k] = (out[k] ?? 0) + fx[k]!;
   if (Object.keys(hooks).length) out.set = hooks;
   return out;
 }

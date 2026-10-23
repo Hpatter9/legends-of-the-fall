@@ -532,3 +532,7 @@ body.auto #buttons { display: none; }
 .sbCard .spIcon, .sbSlot .spIcon, .spell .spIcon { zoom: 0.5; margin-right: 4px; vertical-align: middle; }
 body .sbCard .top { align-items: center; }
 .spell .spIcon { display: block; margin: 0 auto; }
+
+/* the Mythic star's chest: the gold chest turned violet, with a violet glow (the best chest the armies give) */
+.asChest.mythic .chestPic, .csChest.mythic .chestPic { filter: hue-rotate(250deg) saturate(1.4) drop-shadow(0 0 5px var(--p4)); }
+.chestShow.mythic .chestPic { filter: hue-rotate(250deg) saturate(1.4) drop-shadow(0 0 14px var(--p4)); }

@@ -117,6 +117,7 @@
   /* (while deploying, a hero already on the field leaves the bench; drag it off the board onto the panel to bring it back) */
   body[data-phase='deploy'] .card.placed { display: none; }
   body[data-phase='deploy'] #bench:not(:has(.card:not(.placed)))::before { content: 'Every hero is on the field'; grid-column: 1 / -1; padding: 10px 0; text-align: center; font-size: 12px; color: var(--dim); }
+  body[data-phase='deploy'][data-roster='none'] #bench:not(#x)::before { content: 'No heroes yet: tap Hire for your first two'; }
   .card.chosen { border-color: var(--gold); box-shadow: 0 0 10px var(--gold); }
   .card .recycle {
     display: none; position: absolute; left: 2px; right: 2px; bottom: 2px; z-index: 2; padding: 3px 0; font: 700 10px/1 var(--body, sans-serif);
@@ -432,6 +433,11 @@
   .ctChip small { font-size: 10px; font-weight: 400; color: var(--dim); }
   .ctChip .gearIcon { font-size: 16px; line-height: 18px; }
   .ctChip .badge { position: absolute; right: -4px; top: -4px; }
+  .ctShut { flex: 1; background: var(--s2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; text-align: center; color: var(--s11); }
+  .ctShut[hidden] { display: none; }
+  .ctShut b { font-weight: 400; font-size: 24px; color: var(--gold-hi); }
+  .ctShut p { margin: 0; font-size: 12px; color: var(--ink); }
+  .ctShut small { font-size: 12px; color: var(--dim); }
   .ctHelp { font-size: 10px; color: var(--dim); text-align: right; }
   @media (max-width: 560px) { .ctHelp { display: none; } .ctChip b { font-size: 11px; } }
   .bcard .bhead { display: flex; gap: 12px; align-items: flex-end; }

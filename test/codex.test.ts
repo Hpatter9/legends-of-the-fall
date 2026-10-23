@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { startBattle } from '../src/sim/battle';
-import { FOE_ENTRIES, claimCodex, codexWaiting, entryOfDef, gotOf, isMet, killsOf, milestonesOf, noteFoes, progressLine, readCodex, tipsOf, totalOf, whereMet, kitOfEntry } from '../src/sim/codex';
+import { crownsClaimed, crownsTotal, crownsWaiting, FOE_ENTRIES, claimCodex, codexWaiting, entryOfDef, gotOf, isMet, killsOf, milestonesOf, noteFoes, progressLine, readCodex, tipsOf, totalOf, whereMet, kitOfEntry } from '../src/sim/codex';
 import { FOE_LORE, HERO_STORY } from '../src/sim/codexLore';
 import { loadMeta, saveMeta, startedMeta } from '../src/sim/meta';
 import { settleRun } from '../src/sim/modes';
@@ -156,4 +156,14 @@ test('a claimed milestone stays claimed through a save', () => {
   const back = loadMeta(1, s as never);
   assert.equal(codexWaiting(back).filter((x) => x.collection === 'heroes').length, 0);
   assert.equal(claimCodex(back, 'heroes100'), 0);
+});
+
+test('the rewards add up: what each collection pays in all, what is taken and what waits', () => {
+  const m = startedMeta(1);
+  assert.equal(crownsTotal('bestiary'), 10 + 20 + 35 + 60);
+  assert.equal(crownsTotal('heroes'), 15 + 30 + 50 + 80);
+  assert.equal(crownsClaimed(m, 'bestiary'), 0);
+  assert.equal(crownsWaiting(m), 0);
+  m.codexClaimed = ['bestiary25'];
+  assert.equal(crownsClaimed(m, 'bestiary'), 10);
 });

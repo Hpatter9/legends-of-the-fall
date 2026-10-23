@@ -16,6 +16,7 @@ import { noteFightStats, notePayout, recapOf } from './sim/runRecap';
 import { showRecap } from './recapView';
 import { ARMIES, armyById, armyUnlocked, settleWave, type ArmyPay } from './sim/armies';
 import { drawRunStars, showUnlock } from './armiesView';
+import { modeOpen } from './sim/modeUnlock';
 import { spellIconHtml } from './spellIcons';
 import { settleArmyRun, type StarResult } from './sim/armyStars';
 import { TIERS, tierOf } from './sim/tiers';
@@ -480,7 +481,7 @@ class Game {
   /** The summoning cinematic for a pull: the hero it brought (a new one first) steps into the circle's light. True when a tap skipped it, which skips the hall's show too. It never holds up a pull: a tap anywhere ends it. */
   private async summonCinematic(got: Pull[]): Promise<boolean> {
     const pick = got.find((p) => p.isNew) ?? got[0];
-    if (!pick || !settings().cinematics) return false;
+    if (!pick || !settings().cinematics || !settings().summonScene) return false;
     return (await this.scenes.play(summonScene(pick.kind, UNITS[pick.kind].name), this.players(), true)) === 'skipped';
   }
 
@@ -1384,6 +1385,8 @@ class Game {
 
   /** The tower or the calamity from the home screen: its saved run carries on where it stood; with none, a new one begins (the calamity asks for its hero first). */
   private openMode(kind: 'tower' | 'calamity'): void {
+    // (a shut mode has a disabled button; a run begun before it shut is still let in)
+    if (!modeOpen(this.meta, kind) && !loadSlot(kind)) return;
     const saved = loadSlot(kind);
     if (saved) return this.resumeSlot(saved);
     if (kind === 'tower') return this.startTower(towerRun(clockSeed(), this.meta));
@@ -2073,6 +2076,7 @@ class Game {
       }
       this.gain = run.gold - before;
       if (won && fixed && !run.cleared && !run.over && !this.auto) this.startWalk(stage);
+      const openBefore = army ? ARMIES.filter((a) => armyUnlocked(this.meta, a.id)).map((a) => a.id) : [];
       // (an army pays by wave, and its last boss a clear; any other run pays as it always did)
       this.pay = army ? settleWave(this.meta, army.id, stage, won, rating.stars) : null;
       // (a daily pays by wave and its boss a chest; a practice run pays nothing)
@@ -2083,6 +2087,8 @@ class Game {
       if (won && !army && !daily && run.mode?.kind !== 'calamity') recordStars(this.meta, stage, rating.stars);
       const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b });
       this.runStars = settleArmyRun(this.meta, run);
+      // (the stars this run won may have opened an army: its banner rises when the run's result is left)
+      if (this.pay) this.pay.unlocked = ARMIES.find((a) => !openBefore.includes(a.id) && armyUnlocked(this.meta, a.id));
       // (a milestone this fight reached may bring in a hero)
       const joined = grantContent(this.meta);
       toastJoined(joined);
@@ -2131,6 +2137,7 @@ class Game {
       toastAchievements(earned);
     }
     document.body.dataset.phase = b.phase;
+    document.body.dataset.roster = run.roster.length ? 'some' : 'none';
     const army = armyOfRun(run);
     const fixed = waveArmyOf(run);
     const kind = run.tower?.cur?.kind;
@@ -2139,7 +2146,7 @@ class Game {
     const combo = b.phase === 'deploy' ? comboOf(b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def)) : undefined;
     const deployCombo = combo ? ` · ${COMBO_NAME}: ${combo.name}` : '';
     $('status').textContent =
-      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : benchFull(run) ? `${stage} · bench full: recycle a hero to hire` : n ? `${stage} · ${n} of ${squadLimit(run)} placed${deployCombo}` : `${stage} · drag heroes onto the blue tiles`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
+      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : benchFull(run) ? `${stage} · bench full: recycle a hero to hire` : n ? `${stage} · ${n} of ${squadLimit(run)} placed${deployCombo}` : run.roster.length ? `${stage} · drag heroes onto the blue tiles` : `${stage} · no heroes yet: hire two`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
     $('gold').textContent = `${run.gold} gold`;
     this.drawLives(run);
     const buy = $('summon') as HTMLButtonElement;
@@ -2169,7 +2176,7 @@ class Game {
       const cal = run.mode?.kind === 'calamity';
       const daily = run.mode?.kind === 'daily';
       const practice = run.mode?.kind === 'daily' && run.mode.practice;
-      $('banner').textContent = daily && run.cleared ? 'Daily cleared!' : daily && run.over ? 'Daily over' : run.cleared ? (cal ? 'Calamity ended!' : 'Army defeated!') : this.bossDown ? `${cal ? 'Map' : 'Act'} ${run.tower!.act - 1} cleared!` : b.phase === 'won' ? (run.tower ? 'Floor cleared!' : 'Victory!') : 'Defeat';
+      $('banner').textContent = daily && run.cleared ? 'Daily cleared!' : daily && run.over ? 'Daily over' : run.cleared ? (cal ? 'Calamity ended!' : 'Army defeated!') : this.bossDown ? `${cal ? 'Map' : 'Act'} ${run.tower!.act - 1} cleared!` : b.phase === 'won' ? (run.tower ? (cal ? 'Spot cleared!' : 'Floor cleared!') : 'Victory!') : 'Defeat';
       $('banner').className = `${b.phase}${daily ? ' daily' : ''}`;
       // (a daily's fall names the wave under its heading: "Daily over · wave 6/10")
       if (daily && run.over && !run.cleared) $('banner').append(Object.assign(document.createElement('small'), { textContent: `wave ${run.best}/${DAILY_WAVES}` }));
@@ -2177,7 +2184,7 @@ class Game {
       const clear = this.pay?.firstClear ? ' · first clear!' : '';
       $('summary').textContent =
         b.phase === 'won'
-          ? `${run.tower ? `Floor ${run.stage - 1} done · ` : ''}${left} of ${heroesPlaced(b)} heroes standing · +${this.gain} gold · +${this.crownGain} crowns${share}${clear} · ${clock(b.t)}${run.found?.length ? ` · found: ${run.found.join(', ')}` : ''}`
+          ? `${run.tower && !cal ? `Floor ${run.stage - 1} done · ` : ''}${left} of ${heroesPlaced(b)} heroes standing · +${this.gain} gold · +${this.crownGain} crowns${share}${clear} · ${clock(b.t)}${run.found?.length ? ` · found: ${run.found.join(', ')}` : ''}`
           : daily
             ? `The ${dailyBossName(run.mode?.kind === 'daily' ? run.mode.date : 0)} holds at wave ${run.best} of ${DAILY_WAVES} · ${dailyCleared(run)} waves cleared · ${practice ? 'practice, no reward' : `+${dailyCrowns(dailyCleared(run))} crowns`}`
           : run.tower

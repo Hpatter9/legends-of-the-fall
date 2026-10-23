@@ -151,7 +151,7 @@ body.towerUp #version { z-index: 7; }
 .rtStats { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; background: rgb(var(--black-rgb) / 0.35); border: 2px solid var(--s1); }
 .rtStats div { display: flex; justify-content: space-between; font-size: 14px; color: var(--dim); }
 .rtStats b { color: var(--ink); }
-.rtBest { margin: 0; text-align: center; font: 700 16px var(--display); color: var(--gold-hi); animation: rtGlowText 1s steps(2) infinite; }
+.rtBest { margin: 0; text-align: center; font: 400 16px var(--display); color: var(--gold-hi); }
 @keyframes rtGlowText { 50% { color: var(--white); text-shadow: 0 0 8px var(--gold); } }
 .rtRewards { display: flex; justify-content: center; gap: 14px; }
 .rtReward { display: flex; flex-direction: column; align-items: center; gap: 2px; }

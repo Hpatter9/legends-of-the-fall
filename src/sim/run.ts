@@ -130,16 +130,19 @@ export interface Run {
 export type RunMode = { kind: 'army'; army: string; tier?: number } | { kind: 'daily'; date: number; practice: boolean; scale?: number } | { kind: 'tower' } | { kind: 'calamity'; ascension?: number };
 
 /** A new run drawing from `party` (the hero kinds its summons and starting heroes come from). */
-export function newRun(seed: number, party: readonly string[] = HEROES, castle: Castle = newCastle()): Run {
-  const run: Run = { seed, gold: START_GOLD + bonusGold(castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...party], castle: { ...castle } };
-  // two grade-1 heroes, drawn from the same stream as every summon but free
-  for (let i = 0; i < 2; i++) run.squad.push(add(run, draw(run), SUMMON_BASE).id);
+export function newRun(seed: number, party: readonly string[] = HEROES, castle: Castle = newCastle(), free = 2, gold = START_GOLD): Run {
+  const run: Run = { seed, gold: gold + bonusGold(castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...party], castle: { ...castle } };
+  // (an ordinary run gets) two grade-1 heroes, drawn from the same stream as every summon but free
+  for (let i = 0; i < free; i++) run.squad.push(add(run, draw(run), SUMMON_BASE).id);
   return run;
 }
 
-/** A run that fights an army: from wave 1, with the party and castle as they stand. */
+/** An army run's starting gold: exactly the first two hires (`summonCost` at 0 and 1 summons), and no hero to start with (`docs/notes/menus-unlocks.md`). */
+export const ARMY_START_GOLD = SUMMON_BASE + (SUMMON_BASE + SUMMON_STEP);
+
+/** A run that fights an army: from wave 1, with the party and castle as they stand, no hero on the bench and the gold for two hires. */
 export function armyRun(seed: number, army: string, party: readonly string[] = HEROES, castle: Castle = newCastle(), tier = 0): Run {
-  const run = newRun(seed, party, castle);
+  const run = newRun(seed, party, castle, 0, ARMY_START_GOLD);
   run.mode = tier > 0 ? { kind: 'army', army, tier } : { kind: 'army', army };
   return run;
 }

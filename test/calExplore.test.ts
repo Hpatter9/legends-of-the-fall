@@ -25,12 +25,13 @@ const clear = (r: Run, id: number): void => {
   clearNode(r);
 };
 const ids = (r: Run) => choices(r).map((n) => n.id);
-/** A seed and the first-floor-reachable node of its first map that forks (two ways on). */
+/** A seed and a node of its first map, near the start, that forks (two ways on). */
 function forky(): { r: Run; fork: number } {
   for (let seed = 1; seed < 400; seed++) {
     const r = run(seed);
     const t = r.tower!;
-    const n = t.map.find((x) => x.row === 1 && x.next.length >= 2 && t.map.some((p) => p.row === 0 && p.next.includes(x.id)));
+    // (every path passes the recruit camp now, so the first fork is the camp, or a node past it)
+    const n = t.map.find((x) => x.row >= 1 && x.row <= 3 && x.next.length >= 2 && t.map.some((p) => p.next.includes(x.id)));
     if (n) return { r, fork: n.id };
   }
   throw new Error('no fork');

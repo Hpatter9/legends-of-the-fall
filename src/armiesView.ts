@@ -5,7 +5,8 @@
 // button. A locked army shows its scene as a silhouette. The rules are in `src/sim/armies.ts`, `armyStars.ts` and
 // `tiers.ts`; this only draws them.
 
-import { ARMIES, armyCleared, armyIsNew, armyStars, armyUnlocked, bossOf, bossesOf, firstClearTotal, landsOf, recordOf, replayTotal, tierOpen, tierStars, type Army } from './sim/armies';
+import { progressLine } from './sim/modeUnlock';
+import { ARMIES, armyCleared, armyNeed, armyIsNew, armyStars, armyUnlocked, bossOf, bossesOf, firstClearTotal, landsOf, recordOf, replayTotal, tierOpen, tierStars, type Army } from './sim/armies';
 import { AUTO_COUNTS, AUTO_TICKETS, canAutoReplay, ticketsLeft } from './sim/autoReplay';
 import { todayKey } from './modes';
 import { armyRules, chestKind, chestsOf, type StarResult } from './sim/armyStars';
@@ -37,8 +38,8 @@ export interface ArmiesHooks {
   running: { army?: string; stage: number; label: string } | null;
 }
 
-/** The boss's name that opens the army after `a` (shown on the locked card): its last boss. */
-export const unlockLine = (prev: Army): string => `Defeat the ${UNITS[bossOf(prev)].name} to unlock`;
+/** The locked card's line: the stars the army opens at. */
+export const unlockLine = (a: Army): string => `Opens at ${armyNeed(a.id)} stars`;
 
 // ---- the scenes -------------------------------------------------------------------------------------------------------
 
@@ -311,7 +312,7 @@ const crowns = (n: number): HTMLElement => {
 /** What the Auto toggle was last set to (it is kept while the cards are redrawn). */
 const autoPick = { on: false, count: 3 as number };
 
-function card(a: Army, i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLElement; figures: Figure[] } {
+function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLElement; figures: Figure[] } {
   const open = armyUnlocked(m, a.id);
   const rec = recordOf(m, a.id);
   const done = armyCleared(m, a.id);
@@ -326,7 +327,7 @@ function card(a: Army, i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLElem
   if (fresh) scene.append(el('i', 'armyNew', 'NEW'));
   if (!open) {
     const lock = el('div', 'asLock');
-    lock.append(el('b', '', unlockLine(ARMIES[i - 1])), el('small', '', `${a.waves.length} waves · ${landsOf(a).map((l) => AREA_NAMES[l]).join(' and ')}`));
+    lock.append(el('b', '', unlockLine(a)), el('small', '', `${progressLine(m, armyNeed(a.id))} · ${a.waves.length} waves · ${landsOf(a).map((l) => AREA_NAMES[l]).join(' and ')}`));
     scene.append(lock);
   }
   const info = el('div', `asInfo${open ? '' : ' shut'}`);
@@ -339,7 +340,7 @@ function card(a: Army, i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLElem
   const draw = (): void => {
     info.replaceChildren();
     const bosses = bossesOf(a);
-    info.append(el('p', 'asBlurb', a.blurb), el('p', 'asMeta', `${a.waves.length} waves · led by ${open ? `the ${boss.name}` : 'a hidden boss'}${bosses.length > 2 ? ` · ${bosses.length} bosses` : ''}${open ? ` · best wave ${Math.min(rec.best, a.waves.length)}` : ''}`));
+    info.append(el('p', 'asBlurb', a.blurb), el('p', 'asMeta', `${a.waves.length} waves · led by ${open ? `the ${boss.name}` : 'a hidden boss'}${bosses.length > 2 ? ` · ${bosses.length} bosses` : ''}${open ? ` · best wave ${Math.min(rec.best, a.waves.length)}` : ''}`), el('p', 'asMeta', `Recommended: Lv ${a.level} (Normal)`));
     // the tier picks
     const picks = el('div', 'asTiers');
     TIERS.forEach((t, ti) => {
@@ -353,7 +354,7 @@ function card(a: Army, i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLElem
       picks.append(b);
     });
     info.append(picks);
-    // the 11-star track, with a chest under the 3rd, 5th and 10th star
+    // the 11-star track, with a chest under the 3rd, 5th, 10th and 11th star
     const track = el('div', 'asStars');
     const chests = chestsOf(m, a);
     for (let s = 1; s <= ARMY_STARS; s++) {
