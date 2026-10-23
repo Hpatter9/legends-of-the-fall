@@ -9,9 +9,11 @@ import { ABILITIES, emptyStats, equipItem, grantEquipment, type EquipStats } fro
 import { loadMeta, startedMeta, saveMeta } from '../src/sim/meta';
 import { xpFor, levelOfKind } from '../src/sim/levels';
 import { ALL_HEROES, UNITS } from '../src/sim/units';
+import { DEEP_KITS } from '../src/sim/talentsDeep';
+import { KITS } from '../src/sim/abilities';
 import {
-  FULL_TREE_POINTS, LEVEL_POINT_EVERY, MAX_SHARD_POINTS, RESPEC_BASE, RESPEC_PER_POINT, SHARD_POINT_COST, TAL_KEYS, TALENT_ABILITIES, TREES, boughtOf, buyPoint, canBuyPoint, canLearn, heroStats, learn,
-  levelPoints, nodeOf, picksOf, pointsEarned, pointsFree, pointsSpent, respec, respecCost, talentStats, tierNodes, whyNot,
+  DEEP_TREE_POINTS, FULL_TREE_POINTS, TIER_COST, TIER_LEVEL, LEVEL_POINT_EVERY, MAX_SHARD_POINTS, RESPEC_BASE, RESPEC_PER_POINT, SHARD_POINT_COST, TAL_KEYS, TALENT_ABILITIES, TREES, boughtOf, buyPoint, canBuyPoint, canLearn, heroStats, learn,
+  levelPoints, nodeOf, picksOf, readTalents, pointsEarned, pointsFree, pointsSpent, respec, respecCost, talentStats, tierNodes, whyNot,
 } from '../src/sim/talents';
 import { EQUIP_ICONS } from '../src/equipArt';
 
@@ -34,15 +36,15 @@ function takeAll(kind: string) {
 
 // ---- the trees ----
 
-test('every hero has a tree of eight nodes in three tiers, with icons, words and known modifiers', () => {
+test('every hero has a tree of sixteen nodes in seven tiers (three old rows, four deep), with icons, words and known modifiers', () => {
   const known = new Set(Object.keys(TAL_KEYS));
   const used = new Set<string>();
   for (const kind of ALL_HEROES) {
     const t = TREES[kind];
     assert.ok(t, kind);
-    assert.deepEqual([1, 2, 3].map((tier) => tierNodes(kind, tier as 1 | 2 | 3).length), [4, 2, 2], kind);
-    assert.equal(new Set(t.nodes.map((n) => n.id)).size, 8);
-    assert.equal(new Set(t.nodes.map((n) => n.name)).size, 8, `${kind} names`);
+    assert.deepEqual([1, 2, 3, 4, 5, 6, 7].map((tier) => tierNodes(kind, tier as 1 | 2 | 3).length), [4, 2, 2, 2, 2, 2, 2], kind);
+    assert.equal(new Set(t.nodes.map((n) => n.id)).size, 16);
+    assert.equal(new Set(t.nodes.map((n) => n.name)).size, 16, `${kind} names`);
     for (const n of t.nodes) {
       assert.ok(n.id.startsWith(`${kind}:`));
       assert.ok(n.name.length > 2 && n.text.length > 5, n.id);
@@ -58,8 +60,10 @@ test('every hero has a tree of eight nodes in three tiers, with icons, words and
       }
     }
     // (the stat nodes are small)
-    const sum = (k: 'hp' | 'atk') => t.nodes.reduce((s, n) => s + (n.stats?.[k] ?? 0), 0);
+    const sum = (k: 'hp' | 'atk', from = 1, to = 3) => t.nodes.filter((n) => n.tier >= from && n.tier <= to).reduce((s, n) => s + (n.stats?.[k] ?? 0), 0);
     assert.ok(sum('hp') <= 0.2 && sum('atk') <= 0.2, kind);
+    // (the deep rows are bigger, and still small beside the 60% a hundred levels give: one of each pair at most, so under half in all)
+    assert.ok(sum('hp', 4, 7) <= 0.5 && sum('atk', 4, 7) <= 0.5, `${kind} deep rows`);
   }
   assert.equal(TALENT_ABILITIES.nope, undefined);
   // (every modifier key is used by some tree)
@@ -511,5 +515,92 @@ test('a full tree is a modest boost', () => {
     const s = heroStats(takeAll(kind), kind)!;
     assert.ok(s.hp + s.atk <= 0.3, `${kind} ${s.hp} ${s.atk}`);
     assert.ok(s.atkSpeed <= 0.3 && s.crit <= 0.3 && s.dodge <= 0.3, kind);
+  }
+});
+
+// ---- the deep rows (levels 40 to 100) ----
+
+test('the deep rows open by level, in turn, and cost what they say', () => {
+  assert.deepEqual([4, 5, 6, 7].map((t) => TIER_LEVEL[t]), [40, 60, 80, 100]);
+  assert.equal(DEEP_TREE_POINTS, TIER_COST[4] + TIER_COST[5] + TIER_COST[6] + TIER_COST[7]);
+  // (the points: one per 3 levels, and one more at each of 40, 50 ... 100)
+  assert.deepEqual([39, 40, 60, 99, 100].map(levelPoints), [13, 14, 23, 39, 40]);
+  const kind = 'knight';
+  for (const level of [39, 40]) {
+    const m = metaAt(kind, level, 9);
+    while (buyPoint(m, kind));
+    for (const t of [1, 2, 3] as const) for (const n of tierNodes(kind, t)) learn(m, kind, n.id);
+    const gate = whyNot(m, kind, 'knight:4a');
+    if (level < 40) assert.match(gate!, /level 40/);
+    else assert.equal(gate, null);
+  }
+  // a row opens only after a node of the row before it
+  const m = metaAt(kind, 100, 9);
+  while (buyPoint(m, kind));
+  assert.match(whyNot(m, kind, 'knight:5a')!, /fourth row/);
+  for (const t of [1, 2, 3] as const) for (const n of tierNodes(kind, t)) learn(m, kind, n.id);
+  assert.match(whyNot(m, kind, 'knight:5a')!, /fourth row/);
+  assert.ok(learn(m, kind, 'knight:4b'));
+  assert.equal(learn(m, kind, 'knight:4a'), false, 'one of a pair');
+  assert.ok(learn(m, kind, 'knight:5a') && learn(m, kind, 'knight:6b') && learn(m, kind, 'knight:7a'));
+  assert.equal(pointsSpent(m, kind), FULL_TREE_POINTS + DEEP_TREE_POINTS);
+  assert.ok(pointsFree(m, kind) >= 0, 'a level-100 hero can take the whole tree');
+});
+
+test('a level-60 hero cannot take the level-80 row, and a respec gives the deep points back', () => {
+  const m = metaAt('samurai', 60, 9);
+  while (buyPoint(m, 'samurai'));
+  for (const n of tierNodes('samurai', 1)) learn(m, 'samurai', n.id);
+  for (const t of [2, 3, 4, 5] as const) learn(m, 'samurai', tierNodes('samurai', t)[0].id);
+  assert.match(whyNot(m, 'samurai', 'samurai:6a')!, /level 80/);
+  assert.ok(picksOf(m, 'samurai').includes('samurai:5a'));
+  m.crowns = 5000;
+  const spent = pointsSpent(m, 'samurai');
+  assert.ok(spent > FULL_TREE_POINTS);
+  assert.ok(respec(m, 'samurai'));
+  assert.equal(picksOf(m, 'samurai').length, 0);
+  assert.equal(pointsFree(m, 'samurai'), pointsEarned(m, 'samurai'));
+});
+
+test('a damaged save keeps a deep node only for a hero of the level', () => {
+  const m = metaAt('knight', 30, 0);
+  const raw = { knight: { picks: ['knight:1a', 'knight:1b', 'knight:2a', 'knight:3a', 'knight:4a'], bought: 0 } };
+  assert.deepEqual(readTalents(raw, m).knight.picks, ['knight:1a', 'knight:1b', 'knight:2a', 'knight:3a']);
+  m.xp.knight = xpFor(45);
+  assert.deepEqual(readTalents(raw, m).knight.picks, raw.knight.picks);
+});
+
+test('the deep rows use only the effects the fight knows, and every hero is fitted to its own kit', () => {
+  const known = new Set(Object.keys(TAL_KEYS));
+  for (const kind of ALL_HEROES) {
+    const kit = DEEP_KITS[kind];
+    assert.ok(kit, kind);
+    assert.equal(kit.skill, KITS[kind].skill.name, `${kind} skill name`);
+    assert.equal(kit.ult, KITS[kind].ultimate?.name, `${kind} ultimate name`);
+    const deep = TREES[kind].nodes.filter((n) => n.tier >= 4);
+    assert.equal(deep.length, 8, kind);
+    for (const n of deep) {
+      for (const k of Object.keys(n.tal ?? {})) assert.ok(known.has(k), `${n.id} ${k}`);
+      for (const id of n.abilities ?? []) assert.ok(TALENT_ABILITIES[id], `${n.id} ${id}`);
+      assert.ok(n.text.length > 10 && !/\b(he|she|his|her|him)\b/i.test(n.text), `${n.id} words: ${n.text}`);
+    }
+    // (the first deep row speaks of the hero's own skill and ultimate)
+    assert.ok(deep.some((n) => n.text.includes(kit.skill) || n.text.includes('kill frenzy')), `${kind} skill row`);
+    assert.ok(deep.some((n) => n.text.includes(kit.ult)), `${kind} ultimate row`);
+  }
+});
+
+test('a hero with the whole deep tree fights, deterministically, and is stronger than one without', () => {
+  const full = (kind: string) => {
+    const m = metaAt(kind, 100, 9);
+    while (buyPoint(m, kind));
+    for (const t of [1, 2, 3, 4, 5, 6, 7] as const) for (const n of tierNodes(kind, t)) learn(m, kind, n.id);
+    return m;
+  };
+  for (const kind of ALL_HEROES) {
+    const m = full(kind);
+    assert.ok(picksOf(m, kind).some((id) => nodeOf(kind, id)!.tier === 7), kind);
+    const stats = talentStats(m, kind);
+    assert.ok(stats, kind);
   }
 });

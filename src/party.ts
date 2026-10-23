@@ -6,6 +6,7 @@
 import { ALL_HEROES, UNITS } from './sim/units';
 import { partySlots, saveMeta, setParty, type Meta } from './sim/meta';
 import { progressOf, xpOf } from './sim/levels';
+import { levelBadge } from './levelBadge';
 import { countTraits, TRAITS, traitsOf } from './sim/traits';
 import { portrait } from './render/sheets';
 import { lockInfo } from './sim/contentHeroes';
@@ -167,7 +168,7 @@ export class Party {
       card.append(el('b', '', open || lock?.named ? def.name : '???'));
       if (open) {
         const p = progressOf(xpOf(m, kind));
-        card.append(el('span', 'stars', starsOf(m, kind)), el('span', 'lv', `Lv ${p.level}`), el('span', 'pw', `Power ${powerText(kindPower(m, kind))}`), el('span', 'ptTags', traitsOf(kind).map((t) => TRAITS[t].short).join(' · ')));
+        card.append(el('span', 'stars', starsOf(m, kind)), levelBadge(p.level), el('span', 'pw', `Power ${powerText(kindPower(m, kind))}`), el('span', 'ptTags', traitsOf(kind).map((t) => TRAITS[t].short).join(' · ')));
       } else {
         card.append(el('span', 'lv', lock!.short));
         if (lock!.need) {

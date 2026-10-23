@@ -115,3 +115,5 @@ the Yamabushi is +5.7 first row and +18.0 at most, the Warlock +9.8 and +18.9. E
 
 Equip best (above) scores by tier and power together (rarity scales every stat and the ability, `itemScore`) rather than tier alone, and never
 takes a piece another hero wears unless that toggle is on.
+
+**Update (level 100):** every tree has four deeper rows (levels 40, 60, 80, 100) and a level gives one more point at each deep milestone; see `level-100.md`.

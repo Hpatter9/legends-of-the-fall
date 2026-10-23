@@ -4,14 +4,14 @@
 // XP goes into, the save's meta, as the page does.
 
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
-import { fight, place, playOut, type Battle } from '../src/sim/battle';
+import { fight, place, playOut, type Battle, type Boost } from '../src/sim/battle';
 import { chooseOption, leaveEvent } from '../src/sim/events';
 import { fightXp, gainXp, levelOfKind, xpFor } from '../src/sim/levels';
 import { newCastle, xpRate, type Castle } from '../src/sim/castle';
 import { startedMeta, heroRank, type Meta } from '../src/sim/meta';
 import { awakenStats } from '../src/sim/awaken';
 import { armyById } from '../src/sim/armies';
-import { armyRun, boostOf, finish, isBossRun, noteFight, squadLimit, startStage, summon, tierOfRun, type Run } from '../src/sim/run';
+import { armyRun, boostOf, finish, isBossRun, noteFight, squadLimit, startStage, summon, tierOfRun, type Owned, type Run } from '../src/sim/run';
 import { heroLevel, localBoost } from '../src/sim/climb';
 import { armyRules } from '../src/sim/armyStars';
 import { ratingOf } from '../src/sim/stars';
@@ -36,14 +36,14 @@ export function frontSpots(b: Battle): [number, number][] {
  * One attempt at an army from wave 1, as a greedy player: returns the waves won and whether the army fell. Gains XP into `meta`.
  * With `castle` the run takes its buildings (and the library's share of XP); `gear` dresses the squad with the pieces the run finds.
  */
-export function playArmy(meta: Meta, armyId: string, seed: number, party: readonly string[], castle: Castle = newCastle(), gear = false, tier = 0): { won: number; cleared: boolean; stars: number } {
+export function playArmy(meta: Meta, armyId: string, seed: number, party: readonly string[], castle: Castle = newCastle(), gear = false, tier = 0, boostFor?: (h: Owned) => Boost): { won: number; cleared: boolean; stars: number } {
   const army = armyById(armyId)!;
   const run: Run = armyRun(seed, armyId, party, castle, tier);
   let won = 0;
   while (!run.over) {
     autoRound(run, meta, gear);
     const b = startStage(run);
-    autoDeploy(b, run, meta);
+    autoDeploy(b, run, meta, boostFor);
     fight(b);
     playOut(b);
     const ok = b.phase === 'won';
