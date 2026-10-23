@@ -45,3 +45,10 @@ exploration is many more fights (about 80 spots in a run against about 30 nodes)
   - re-tune: `CAL_SCALE` start 0.265 to 0.40, growth 0.06 to 0.05, step 0.33 to 0.43; `CALAMITY_XP` 15 to 9; boss hp and attack 2400/66, 3708/80, 2964/70, 3575/60, 2623/50, 1398/31 (maps 3 and 6 down, 1, 2 and 5 up).
   - the full-clear starter's median is above the 22 to 25 asked for (27; its mean is 25): a clear is a selection of the strongest runs. Lowering `CALAMITY_XP` further moved the shares more than the level.
 - The spire (`--tower`) is unchanged.
+
+## The opening, and the final numbers (after the director's review)
+- **A gentler opening** (`CAL_OPENING` 0.6 / 0.75 / 0.9 on floors 1 to 3): a lone level-1 hero is not lost in the first fight (0 of 300 seeds at ascension 0; 7 of 300 at ascension 10, from 3 of 20). The strength is put
+  back by `CAL_SCALE` (start 0.425, growth 0.05, step 0.381) and `CALAMITY_XP` 10. The ascension test is back on its original seed (3).
+- **The bot never gives a hero away** (it passes over a mystery's "offer a hero"): with about 80 spots a run it met many more mysteries and could lose its starter, which made a full clear look like a level-5 starter.
+- **Final** (300 runs): **88 / 84 / 62 / 45 / 35 / 14 %** (target 85 / 81 / 63 / 44 / 35 / 15); starter's level at the end median 22, mean 20.8 over all runs, cleared whole (42 runs) median 28, mean 26.3.
+- The army climb (`--climb --saves 240`, mean tries) is unchanged: 2.7 / 2.4 / 2.1 / 3.2 / **3.6** (the Labyrinth) / 1.8 / 1.6 / 1.7 / 1.3; the spire (`--tower`) 12 median, 13.1 mean (13.2 before), bosses 7 / 3 / 3 %.
