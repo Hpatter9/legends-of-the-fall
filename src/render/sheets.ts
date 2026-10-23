@@ -267,8 +267,16 @@ export function portrait(sheet: string, size: number, grade = 1): HTMLCanvasElem
   g.imageSmoothingEnabled = false;
   const idle = l.rows.indexOf('idle');
   // (the top of the figure down to its feet, a square around the middle)
-  const side = Math.min(l.figure + 6, l.h);
-  const sx = Math.max(0, l.w / 2 - side / 2);
+  let side = Math.min(l.figure + 6, l.h);
+  let mid = l.w / 2;
+  // (a long, low figure, a Werewolf say, is wider than it is tall, and would be cut at the sides: the square grows to take
+  //  it in and centres on it. A wide weapon's sweep is not the figure: past a third wider than tall it is left cropped)
+  const box = idleBounds(sheet);
+  if (box && box.w + 2 > side && box.w + 2 <= Math.min(l.h, side * 1.3)) {
+    side = box.w + 2;
+    mid = box.x + box.w / 2;
+  }
+  const sx = Math.min(Math.max(0, mid - side / 2), l.w - side);
   // (a higher grade is richer in colour, and tinted gold at the top)
   if (grade > 1 && 'filter' in g) g.filter = grade > 2 ? 'saturate(1.5) contrast(1.08) sepia(0.25)' : 'saturate(1.3) contrast(1.04)';
   g.drawImage(img, sx, idle * l.h + l.h - side, side, side, 0, 0, size, size);

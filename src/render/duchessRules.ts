@@ -136,3 +136,37 @@ export function chewBob(g: Goat, now: number, reduced: boolean): number {
   if (reduced || (g.mode !== 'graze' && g.mode !== 'nibble')) return 0;
   return Math.floor(now / 420) % 2;
 }
+
+/* ---- her visits to the fight: she is not in every one; she wanders in now and then, stays a while, and wanders off ---- */
+
+/** The chance that a fight has a visit from her: about one in four or five. */
+export const VISIT_CHANCE = 0.22;
+/** How long she takes to amble in from the edge, and out again (ms). */
+export const VISIT_WALK_MS = 3200;
+/** How long she waits before she wanders in (ms), and how long she then stays (ms). */
+export const VISIT_ARRIVE_MS: readonly [number, number] = [2000, 14000];
+export const VISIT_STAY_MS: readonly [number, number] = [22000, 50000];
+
+export interface Visit {
+  /** When she begins to wander in, how long she stays once in, counted from the fight's set-up (ms). */
+  arrive: number;
+  stay: number;
+}
+
+/** Whether this fight has a visit from her, and its times. `rand` is the renderer's own (she is not in the sim, and no fight's course depends on her). */
+export function rollVisit(rand: () => number): Visit | null {
+  if (rand() >= VISIT_CHANCE) return null;
+  const between = ([lo, hi]: readonly [number, number]) => Math.round(lo + rand() * (hi - lo));
+  return { arrive: between(VISIT_ARRIVE_MS), stay: between(VISIT_STAY_MS) };
+}
+
+/** Where she is in a visit at `t` ms: away, walking in (`k` 0 to 1 of the way), here, or walking out (`k` 1 to 0). */
+export function visitAt(v: Visit | null, t: number): { phase: 'away' | 'in' | 'here' | 'out'; k: number } {
+  if (!v || t < v.arrive) return { phase: 'away', k: 0 };
+  const inEnd = v.arrive + VISIT_WALK_MS;
+  if (t < inEnd) return { phase: 'in', k: (t - v.arrive) / VISIT_WALK_MS };
+  const outAt = inEnd + v.stay;
+  if (t < outAt) return { phase: 'here', k: 1 };
+  if (t < outAt + VISIT_WALK_MS) return { phase: 'out', k: 1 - (t - outAt) / VISIT_WALK_MS };
+  return { phase: 'away', k: 0 };
+}

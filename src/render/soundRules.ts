@@ -34,7 +34,9 @@ export type Cue =
   // the tower: footsteps on the stairs, a twist's reveal (dark or bright), an elite's sting, a relic set's chime (two pieces, three)
   | 'steps' | 'twistCurse' | 'twistBlessing' | 'eliteSting' | 'setChime2' | 'setChime3'
   // the menus: coins from a recycle and from a claim, a lucky hire's sparkle, an auto-replay's start, stop and finish
-  | 'coinRecycle' | 'coinClaim' | 'sparkle' | 'autoStart' | 'autoStop' | 'autoDone';
+  | 'coinRecycle' | 'coinClaim' | 'sparkle' | 'autoStart' | 'autoStop' | 'autoDone'
+  // the cinematics' stings, for any scene to reuse: a boss arriving, and a victory
+  | 'sceneBoss' | 'sceneVictory';
 
 /** How a sound mixes. `gap`: least ms (real time) between two of it. `ms`: how long it rings, which is how long it holds
  *  its voices. `weight`: voices it uses. `prio`: 0 may be dropped first when the mix is full, 3 always plays. `gain`: its
@@ -65,6 +67,8 @@ export const CUES: Record<Cue, CueSpec> = {
   twistCurse: c(400, 900, 2, 2),
   twistBlessing: c(400, 900, 2, 2),
   eliteSting: c(0, 1400, 3, 3),
+  sceneBoss: c(0, 3000, 2, 2),
+  sceneVictory: c(0, 3000, 2, 2),
   setChime2: c(0, 1200, 3, 2),
   setChime3: c(0, 1800, 4, 3),
   coinRecycle: c(100, 600, 2, 1),

@@ -120,6 +120,9 @@ export function easeRelief(b: Board, limit = CLIMB_MAX): void {
   }
 }
 
+/** How many times the usual board's area (`W` x `D`) a board covers. */
+export const areaScale = (b: Pick<Board, 'w' | 'd'>): number => (b.w * b.d) / (W * D);
+
 /** Whether a fighter can stand on the tile at all. */
 export const standable = (t: Tile | null): t is Tile => !!t && !t.rock;
 
@@ -188,10 +191,10 @@ function layGround(b: Board, area: Area): void {
   for (const kind of ['water', 'ice', 'lava', 'tall'] as const) {
     const range = TERRAIN[area][kind];
     if (!range) continue;
-    const patches = rng.int(range[0], range[1]);
-    const rows = kind === 'lava' ? [DEPLOY_ROWS, D - 1 - DEPLOY_ROWS] : [0, D - 1];
+    const patches = rng.int(range[0], range[1]) + Math.round(areaScale(b) - 1);
+    const rows = kind === 'lava' ? [DEPLOY_ROWS, b.d - 1 - DEPLOY_ROWS] : [0, b.d - 1];
     for (let i = 0; i < patches; i++) {
-      let at = { u: rng.int(0, W - 1), v: rng.int(rows[0], rows[1]) };
+      let at = { u: rng.int(0, b.w - 1), v: rng.int(rows[0], rows[1]) };
       for (let n = rng.int(1, 3); n > 0; n--) {
         const t = tileAt(b, at.u, at.v);
         if (t && !t.rock && !t.ground) {
@@ -230,8 +233,8 @@ function stairs(b: Board, from: At, dir: readonly [number, number], level: numbe
 function setBlock(b: Board, rng: Rng, up: boolean, size: [number, number], cliff: number, rows: [number, number], used: Set<number>): boolean {
   const [bw, bd] = size;
   // (the board's border stays plain hills, so a section joined to another meets it on gentle ground)
-  const u0 = rng.int(1, W - 1 - bw);
-  const v0 = rng.int(Math.max(1, rows[0]), Math.min(D - 1 - bd, rows[1] - bd + 1));
+  const u0 = rng.int(1, b.w - 1 - bw);
+  const v0 = rng.int(Math.max(1, rows[0]), Math.min(b.d - 1 - bd, rows[1] - bd + 1));
   const block: number[] = [];
   const ring: number[] = [];
   for (let v = v0 - 1; v <= v0 + bd; v++)
@@ -239,13 +242,13 @@ function setBlock(b: Board, rng: Rng, up: boolean, size: [number, number], cliff
       const t = tileAt(b, u, v);
       if (!t) continue;
       const inside = u >= u0 && u < u0 + bw && v >= v0 && v < v0 + bd;
-      if (used.has(v * W + u)) return false;
-      (inside ? block : ring).push(v * W + u);
+      if (used.has(v * b.w + u)) return false;
+      (inside ? block : ring).push(v * b.w + u);
     }
   if (block.length !== bw * bd) return false;
   const rim = ring.filter((i) => {
-    const u = i % W;
-    const v = Math.floor(i / W);
+    const u = i % b.w;
+    const v = Math.floor(i / b.w);
     return (u >= u0 && u < u0 + bw) || (v >= v0 && v < v0 + bd);
   });
   const heights = rim.map((i) => b.tiles[i].h);
@@ -271,16 +274,18 @@ function setBlock(b: Board, rng: Rng, up: boolean, size: [number, number], cliff
 }
 
 /** The board for a seed: rolling land, platforms, ledges and pits set into it, a few boulders in the middle ground, bushes for looks, and the area's ground. */
-export function makeBoard(seed: number, area: Area = 'highlands'): Board {
+export function makeBoard(seed: number, area: Area = 'highlands', w = W, d = D): Board {
   const rng = new Rng(mixSeed(seed, 0xb0a7d));
   const tiles: Tile[] = [];
-  for (let v = 0; v < D; v++)
-    for (let u = 0; u < W; u++) {
+  for (let v = 0; v < d; v++)
+    for (let u = 0; u < w; u++) {
       // (the land rolls more in the middle ground; the two sides' rows stand a little flatter)
       const n = relief(seed, u + 11, v + 7);
       tiles.push({ h: Math.max(0, Math.min(HILL_TOP, Math.round(n * (HILL_TOP + 1.4) - 0.6))), deco: rng.int(0, 999) });
     }
-  const b: Board = { seed, area, w: W, d: D, tiles };
+  const b: Board = { seed, area, w, d, tiles };
+  // (a bigger board lays more platforms, pits and boulders, in step with its area; the usual size lays exactly what it always did)
+  const extra = Math.round(areaScale(b) - 1);
   // (the hills are no steeper than a ramp, so every tile can be walked to)
   easeRelief(b, RAMP);
   const hills = b.tiles.map((t) => t.h);
@@ -288,22 +293,22 @@ export function makeBoard(seed: number, area: Area = 'highlands'): Board {
   const feat = new Rng(mixSeed(seed, 0xf3a7));
   const used = new Set<number>();
   const sizes: [number, number][] = [[2, 2], [3, 2], [2, 3], [3, 3], [1, 2], [2, 1]];
-  const platforms = feat.int(2, 3);
+  const platforms = feat.int(2, 3) + extra;
   for (let i = 0; i < platforms; i++)
     for (let tries = 0; tries < 6; tries++) {
-      if (setBlock(b, feat, true, feat.pick(sizes), feat.int(2, 4), [1, D - 2], used)) break;
+      if (setBlock(b, feat, true, feat.pick(sizes), feat.int(2, 4), [1, d - 2], used)) break;
     }
-  const pits = feat.int(1, 2);
+  const pits = feat.int(1, 2) + extra;
   for (let i = 0; i < pits; i++)
     for (let tries = 0; tries < 6; tries++) {
-      if (setBlock(b, feat, false, feat.pick([[1, 1], [1, 2], [2, 1], [2, 2]] as [number, number][]), feat.int(2, 3), [DEPLOY_ROWS - 1, D - 1 - DEPLOY_ROWS + 1], used)) break;
+      if (setBlock(b, feat, false, feat.pick([[1, 1], [1, 2], [2, 1], [2, 2]] as [number, number][]), feat.int(2, 3), [DEPLOY_ROWS - 1, d - 1 - DEPLOY_ROWS + 1], used)) break;
     }
   // (a board that somehow cannot be walked is left as plain hills)
   if (!boardOk(b)) b.tiles.forEach((t, i) => (t.h = hills[i]));
   // boulders in the middle ground, kept only if everyone can still get round them
-  const rocks = rng.int(1, 3);
+  const rocks = rng.int(1, 3) + extra * 2;
   for (let i = 0; i < rocks; i++) {
-    const t = tileAt(b, rng.int(0, W - 1), rng.int(DEPLOY_ROWS, D - 1 - DEPLOY_ROWS));
+    const t = tileAt(b, rng.int(0, w - 1), rng.int(DEPLOY_ROWS, d - 1 - DEPLOY_ROWS));
     if (!t || t.rock) continue;
     t.rock = true;
     if (!boardOk(b)) t.rock = false;

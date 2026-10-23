@@ -2,7 +2,7 @@
 // table 1 (hero value) and `test/hero-balance.test.ts` holds every hero to the roster average. Every fight is seeded, so the
 // same numbers come out again on the same code.
 
-import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
+import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { fight, place, startBattle, stepBattle, type Battle, type Stage } from '../src/sim/battle';
 import { FIELD_BANDS } from '../src/sim/foes';
 import { gradeBoost, stageBoost } from '../src/sim/run';
@@ -25,7 +25,7 @@ export function pickTeam(rng: Rng): string[] {
 /** The deploy tiles (the heroes' rows), shuffled by the side stream `rng`, so a team lands at random. */
 export function deploySpots(b: Battle, rng: Rng): [number, number][] {
   const spots: [number, number][] = [];
-  for (let v = D - DEPLOY_ROWS; v < D; v++) for (let u = 0; u < b.board.w; u++) if (standable(tileAt(b.board, u, v))) spots.push([u, v]);
+  for (let v = b.board.d - DEPLOY_ROWS; v < b.board.d; v++) for (let u = 0; u < b.board.w; u++) if (standable(tileAt(b.board, u, v))) spots.push([u, v]);
   for (let i = spots.length - 1; i > 0; i--) {
     const j = rng.int(0, i);
     [spots[i], spots[j]] = [spots[j], spots[i]];

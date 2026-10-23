@@ -191,7 +191,7 @@ test('the music player crossfades tracks, colours them by tension and act, and k
   const { MusicPlayer } = await import('../src/render/audioProcessors');
   try {
     const ctx = new FakeContext();
-    const music = new MusicPlayer(ctx as unknown as AudioContext);
+    const music = new MusicPlayer(ctx as unknown as AudioContext, async () => ({ pad: null, bass: null, lead: null, drums: null }));
     const cutoff = () => (music.params.cutoff.audioParam as unknown as { target?: number }).target;
     const perc = () => (music.params.perc.audioParam as unknown as { target?: number }).target;
     music.setTrack('town');
@@ -199,6 +199,7 @@ test('the music player crossfades tracks, colours them by tension and act, and k
     assert.equal(cutoff(), OPEN_HZ);
     // a fight: the battle track, closed at first, opening as the tension climbs
     music.setTrack('battle');
+    await new Promise((r) => setTimeout(r, 5));
     const closed = cutoff()!;
     assert.ok(closed < OPEN_HZ);
     music.setTension(0.4);
@@ -220,6 +221,7 @@ test('the music player crossfades tracks, colours them by tension and act, and k
     // the fight ends: back to the town, tension spent
     music.setTension(0);
     music.setTrack('town');
+    await new Promise((r) => setTimeout(r, 5));
     assert.equal(perc(), 0);
     // a tower act: the drone starts, and the act's ceiling holds the music down
     const quiet = FakeContext.made.length;

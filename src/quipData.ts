@@ -8,7 +8,7 @@ export type HeroQuips = Record<QuipKind, string>;
 
 export const HERO_QUIPS: Record<string, HeroQuips> = {
   knight: { hired: 'Sworn to the line, and to a reasonable lunch hour.', placed: 'I shall stand here. Do ask the enemy to come to me.', won: 'The line held. I never doubted it. A little.', lost: 'The line... bent. Purely as a matter of geometry.' },
-  samurai: { hired: 'One blade, one bow, and no small talk.', placed: 'I have chosen my tile. It is a fine tile.', won: 'Quietly done. Quietly pleased.', lost: 'A poor day. I shall think on it, loudly, later.' },
+  samurai: { hired: 'One blade, and no small talk.', placed: 'I have chosen my tile. It is a fine tile.', won: 'Quietly done. Quietly pleased.', lost: 'A poor day. I shall think on it, loudly, later.' },
   kunoichi: { hired: 'You will not see me arrive. Too late, you already have.', placed: 'Roofs would be better. This will do.', won: 'Was I even here? Yes. Pay me.', lost: 'That was never in my plan. I shall blame the plan.' },
   archer: { hired: 'I can hit a pigeon at forty paces. The pigeons know.', placed: 'High ground, please. Arrows like a view.', won: 'Every shot a good one. Several, anyway.', lost: 'I ran out of arrows. And excuses.' },
   wizard: { hired: 'Fire is a very good argument. I shall make it often.', placed: 'Stand back. Further. Further than that.', won: 'Somebody check the grass. For smouldering.', lost: 'Mild setback. Several things are on fire, mostly me.' },
@@ -51,7 +51,7 @@ export const HERO_QUIPS: Record<string, HeroQuips> = {
   juggernaut: { hired: 'I am not fast. I am not subtle. I am here.', placed: 'Do mind your toes. I do not.', won: 'The ground will remember this. Eventually.', lost: 'Fell over. It takes a while. Please be patient.' },
   sage: { hired: 'I have read everything. Ask me anything. Not that.', placed: 'The stars suggest here. The stars are rarely wrong.', won: 'Predicted, naturally. By me, in a footnote.', lost: 'An error. A tiny one. Perhaps in the footnote.' },
   demonSwordsman: { hired: 'The blade is hungry. Do ignore the muttering.', placed: 'Quiet, you. We have guests.', won: 'Fed. For now. It has stopped sulking.', lost: 'The demon is sulking. So am I. Let us not discuss it.' },
-  tyrant: { hired: 'Kneel. Or sit. Sitting is permitted. Today.', placed: 'This tile is hereby mine. Do not argue.', won: 'Justice has been done. Mine. Do applaud.', lost: 'I shall have someone executed. Possibly a goat.' },
+  tyrant: { hired: 'Kneel. Or sit. Sitting is permitted. Today.', placed: 'This tile is hereby mine. Do not argue.', won: 'Justice has been done. Mine. Do applaud.', lost: 'I shall have someone sent to bed without supper. Possibly a goat.' },
 };
 
 /** Banter between two heroes sharing a trait: the first line is said by one, the second by the other. Keyed by trait id. */
@@ -102,11 +102,11 @@ export const LOADING_TIPS: readonly string[] = [
   'Tip: high ground hits harder. Duchess has been telling everyone, for years. Nobody listens to the goat.',
   'Tip: blows from behind hit hardest. Politeness is for the front.',
   'Tip: three of the same hero merge into a stronger one. Do not try this with goats.',
-  'Tip: skills fire on their own when the gold bar fills. Heroes love a bar. Duchess loves the bar tent.',
+  'Tip: skills fire on their own when the gold bar fills. Heroes love a full bar. Duchess prefers a full trough.',
   'Tip: recycle heroes you do not need. They are told it is a promotion.',
   'Tip: the foes are always short-staffed. They will tell you, at length, when you meet them.',
   'Tip: Duchess ate the map. Navigation is now by instinct.',
-  'Tip: a hero in a good mood fights a little better. A hero with a snack fights even better. Allegedly.',
+  'Tip: spells run on the king\'s mana, not gold. The mana fills as the fight goes on. Duchess has asked to be paid in it.',
   'Tip: a fight lost is a lesson learned. A fight lost twice is a lesson, and a stern note.',
   'Tip: stars are earned by clearing armies. Duchess is still counting hers, and has eaten two.',
 ];
@@ -118,7 +118,7 @@ export const FOE_GRUMBLES: readonly string[] = [
   'I was told this was a holiday posting.',
   'Another one. No one asked us. Nobody ever asks us.',
   'I have not had a day off since the last war.',
-  'We were three more last week. They quit.',
+  'There were three more of us last week. They quit.',
   'My contract says "a bit of light skulking."',
   'Can we not do this before lunch? There are, apparently, no lunches.',
   'I want to speak to whoever is in charge. Oh, it is him. Never mind.',
@@ -134,7 +134,7 @@ export const RECAP_WIN: readonly string[] = [
 ];
 export const RECAP_LOSS: readonly string[] = [
   'Duchess has seen worse. She has eaten worse.',
-  'There is always another go. The foes are already tired, for one.',
+  'There is always another go. The foes are tired already, for one.',
   'A learning experience. Frankly, a bit of a long one.',
   'The heroes would like it noted that the foes cheated. They did not. It was noted anyway.',
 ];
@@ -160,7 +160,7 @@ export const AWARD_JOKES: Record<string, string> = {
   perfect: 'The stars wish to be paid in apples.',
   stage10: 'Ten! The foes are short-staffed by now.',
   stage20: 'The foes have asked for a union meeting.',
-  stage30: 'Thirty. The foes have started hiring goats.',
+  stage30: 'Thirty. The foes have started hiring temps.',
   yokaiOnly: 'No humans. Strictly a coincidence. A strict one.',
   threeStar: 'Three of a kind. It is not poker. It is a bit like poker.',
   relics5: 'Your pockets clink. Your heroes asked you to stop.',
@@ -171,7 +171,7 @@ export const AWARD_JOKES: Record<string, string> = {
   allHeroes: 'The tavern is, frankly, full. The goat has a stool.',
   bosses: 'The bosses are not, strictly, allowed to be upset.',
   stars50: 'Stars, collected. Dusting, not included.',
-  daily1000: 'A thousand. Do not ask what it is for.',
+  daily1000: 'Five dailies cleared. The foes have started setting an alarm for you.',
   daily: 'Same time tomorrow? The foes are free.',
   tower1: 'Up the stairs, round and round. Mind the goat.',
   tower20: 'Twenty floors. The lift is still not in.',

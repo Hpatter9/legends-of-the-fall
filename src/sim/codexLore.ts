@@ -19,7 +19,7 @@ export const FOE_LORE: Record<string, string> = {
   imp: 'A scrap of spite with a pitchfork for a grin. Imps never come alone, for no one imp has ever had the nerve.',
   demon: 'Wings of old leather and a temper to match. He drops on the weakest of your line and does not stop to ask names.',
   ogre: 'He has a club, and he has had a bad day. The two facts are related, and neither will improve.',
-  orcWarlord: 'Stood on a hill of broken shields to take the title. He has been waiting for someone to try and take it back.',
+  orcWarlord: 'Stood on a hill of broken shields to take the title. He has been waiting for someone to try to take it back.',
   demonLord: 'He does not need to fight. He has only to lift a hand, and the imps come pouring out of the dark.',
   hornedOgre: 'An ogre grown old enough to grow horns, and mean enough to use them. The ground shakes when he sweeps.',
   forestBoss1: 'Thorn and root and a very long memory. The wood grew around him, and he is not about to move.',
