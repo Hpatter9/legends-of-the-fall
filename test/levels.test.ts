@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addUnit, hurt, place, playOut, fight, startBattle } from '../src/sim/battle';
-import { DIM_SHARE, fightXp, gainXp, killXp, lastingBoost, LATE_SHARE, LATE_XP, levelBoost, levelGain, levelOf, levelOfKind, LATE_LEVEL, MAX_LEVEL, MILESTONES, progressOf, RUN_MAX_LEVEL, XP_TAKE_PART, xpFor, xpOf } from '../src/sim/levels';
+import { DIM_SHARE, fightXp, gainXp, killXp, lastingBoost, LATE_SHARE, LATE_XP, levelBoost, levelGain, levelOf, levelOfKind, MAX_LEVEL, MILESTONES, progressOf, RUN_MAX_LEVEL, XP_TAKE_PART, xpFor, xpOf } from '../src/sim/levels';
 import { loadMeta, startedMeta } from '../src/sim/meta';
 import { gradeBoost } from '../src/sim/run';
 import { HEROES, UNITS } from '../src/sim/units';
@@ -98,18 +98,17 @@ test('level ups add to the kind\'s stats, and the gains are reported', () => {
   assert.deepEqual(levelGain(1, 4), { hp: 66, atk: 54 });
   assert.deepEqual(levelBoost(1), { hp: 1, atk: 1 });
   // (levels past 12 count a quarter: level 20 is 11 full steps and 8 quarter steps, 13 in all)
-  assert.ok(Math.abs(levelBoost(LATE_LEVEL).hp - (1 + 0.22 * 13)) < 1e-9);
-  assert.ok(Math.abs(levelBoost(LATE_LEVEL).atk - (1 + 0.18 * 13)) < 1e-9);
+  assert.ok(Math.abs(levelBoost(RUN_MAX_LEVEL).hp - (1 + 0.22 * 13)) < 1e-9);
+  assert.ok(Math.abs(levelBoost(RUN_MAX_LEVEL).atk - (1 + 0.18 * 13)) < 1e-9);
   assert.ok(Math.abs(levelBoost(12).hp - (1 + 0.22 * 11)) < 1e-9, 'level 12 is still a full step');
   assert.ok(Math.abs(levelBoost(13).hp - levelBoost(12).hp - 0.22 * DIM_SHARE) < 1e-9, 'level 13 adds a quarter');
 });
 
 test('lasting levels are the in-run levels up to 20, then pay more and cost more XP', () => {
-  for (let lv = 1; lv <= LATE_LEVEL; lv++) assert.deepEqual(lastingBoost(lv), levelBoost(lv), `level ${lv}`);
+  for (let lv = 1; lv <= RUN_MAX_LEVEL; lv++) assert.deepEqual(lastingBoost(lv), levelBoost(lv), `level ${lv}`);
   assert.equal(MAX_LEVEL, 30);
-  // (a run's own levels stop at the same 30, however much XP)
-  assert.equal(RUN_MAX_LEVEL, MAX_LEVEL);
-  assert.equal(levelOf(1e9, RUN_MAX_LEVEL), 30);
+  // (a run's own levels stop at 20, however much XP: the spire and Calamity are not thrown off)
+  assert.equal(levelOf(1e9, RUN_MAX_LEVEL), RUN_MAX_LEVEL);
   assert.equal(levelOf(1e9), MAX_LEVEL);
   // (below 20 the XP curve is the old one; past it each level costs LATE_XP times as much)
   assert.equal(xpFor(20), 30 * 19 * 20);
@@ -119,7 +118,7 @@ test('lasting levels are the in-run levels up to 20, then pay more and cost more
   assert.ok(Math.abs(lastingBoost(21).hp - lastingBoost(20).hp - 0.22 * LATE_SHARE) < 1e-9);
   assert.ok(LATE_SHARE > DIM_SHARE, 'the late levels pay more than the ones before them');
   for (const m of MILESTONES) {
-    assert.ok(m.level > LATE_LEVEL && m.level <= MAX_LEVEL);
+    assert.ok(m.level > RUN_MAX_LEVEL && m.level <= MAX_LEVEL);
     const step = lastingBoost(m.level).hp - lastingBoost(m.level - 1).hp;
     assert.ok(Math.abs(step - (0.22 * LATE_SHARE + m.hp)) < 1e-9, `level ${m.level} adds its milestone`);
   }

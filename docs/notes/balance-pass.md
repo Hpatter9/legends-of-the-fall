@@ -1,6 +1,6 @@
-# Balance pass: all 45 ultimates at level 15, a tougher Labyrinth, Calamity heroes past level 20
+# Balance pass: all 45 ultimates at level 15, a tougher Labyrinth
 
-Three owner decisions, all measured with the repo's tools (`npm run balance`, `tools/heroSweep.ts`) before and after. Fixed seeds throughout; the climb tool's own noise is about 0.15 tries, the Calamity's about 2 to 3 points a map.
+Two owner decisions (a third, Calamity heroes past level 20 and its re-tune, was dropped from this pass: the Calamity map is changing, and another worker takes it), all measured with the repo's tools (`npm run balance`, `tools/heroSweep.ts`) before and after. Fixed seeds throughout; the climb tool's own noise is about 0.15 tries, the Calamity's about 2 to 3 points a map.
 
 ## 1. The first eight ultimates wait for level 15 too
 
@@ -45,38 +45,10 @@ Mean tries, `npm run balance -- --no-tables --climb --saves 240` (the same saves
 
 (0.116.0 measures 2.4 here, not the 2.9 of `ultimates.md`: later changes since then; the owner's 3.4 to 3.6 is the target. The later three armies read 0.1 lower because the party now carries a little more XP out of the Labyrinth; all within the tool's noise.) The trial points that fixed the number (hp / atk, tries): 2125 / 55 = 2.4, 2250 / 57 = 2.7, 2330 / 59 = 3.0, 2400 / 60 = 3.3, 2440 / 61 = 3.7, 2470 / 62 = 3.9, 2550 / 66 = 4.9. It is steep: 100 hp is about a try.
 
-## 3. Calamity heroes past level 20
+## Tools left for the Calamity work
 
-- **Cap.** `RUN_MAX_LEVEL` 20 to 30 (= `MAX_LEVEL`). The curve's knee, which `xpFor` and `lastingBoost` had read from `RUN_MAX_LEVEL`, is now its own `LATE_LEVEL` = 20, so lasting levels and their XP costs are exactly as before (saves stay compatible; XP is never rewritten). An in-run level past 20 costs four times the plain curve, as the lasting ones do, and adds the plain diminishing step (`levelBoost`), so past 20 the gain is mostly the ultimates and a little hp and attack.
-- **XP.** New `CALAMITY_XP` = 15 in `climb.ts` (the spire's `CLIMB_XP` stays 4); `teachFight` picks by the run's mode. So the spire's levels are unchanged. Hires still join at 70% of the roster's mean XP (`HIRE_CATCH_UP`, untouched); a test holds it.
-- **Ultimates at in-run 15** work as before (`localBoost` sets `Boost.level`); the starting hero now reaches 15 after map 2 (median 15 at the end of it), the hires a little after.
-- **Compensation** (the foes, not the XP): `CAL_SCALE.start` 0.2 to 0.265, `step` 0.3 to 0.33, and the bosses' hp / atk (`calamityBosses.ts`): map 2 3100 / 73 to 3224 / 74; map 3 3250 / 72 to 3900 / 79; map 4 3250 / 57 to 3575 / 60; map 5 2760 / 51 to 2429 / 48; map 6 1900 / 36 to 1520 / 32 (map 1 stays 2000 / 60). Faster levelling made the first maps too easy and the last too hard; a flat scale up and the bosses reshaped fixed both.
-
-Share of runs felling each map's boss (`--no-tables --calamity --attempts 600`, greedy bot, no castle):
-
-| | map 1 | map 2 | map 3 | map 4 | map 5 | map 6 (clear) | heroes held | hero level at end (mean) |
-|---|---|---|---|---|---|---|---|---|
-| the note | 85 | 81 | 63 | 44 | 35 | 15 | 7.8 | 9.6 |
-| before (this base) | 87 | 83 | 61 | 42 | 32 | 16 | 8.1 | 9.0 |
-| after | 84 | 83 | 65 | 45 | 35 | 16 | 8.1 | 16.9 |
-
-Within 3 points of the note on every map (the run-to-run noise is about that; at 300 attempts the same code reads 84 / 83 / 64 / 45 / 35 / 14).
-
-**The starting hero's level after each boss** (median / mean, over the runs that got that far):
-
-| | map 1 | map 2 | map 3 | map 4 | map 5 | map 6 |
-|---|---|---|---|---|---|---|
-| before | 6 / 4.9 | 7 / 7.5 | 9 / 9.9 | 12 / 12.9 | 14 / 14.1 | 17 / 15.8 |
-| after | 12 / 10.2 | 15 / 15.0 | 20 / 18.4 | 21 / 21.6 | 23 / 23.1 | 25 / 24.2 |
-
-At the end of a run (win or lose): median 10 (max 20) before, **median 20 (max 30)** after. Over the full clears (93 of 600): median 17, mean 15.8, max 20 before; **median 25, mean 24.2, max 30** after.
-
-- **The spire** (`--tower --levels 3,8,14 --attempts 60`): identical before and after (median 12 floors, mean 14.4, min 2, max 77; bosses 10% / 7% / 5%; mean hero level 3.6 to 3.7), because its XP rate is unchanged and its heroes seldom reach 20. Only its cap rose to 30.
-- Tests: `test/ultimates.test.ts` (all 45 gated; foes keep theirs; in-run cap 30, ultimate at 15), `test/calamity.test.ts` (levelling past 20 and the cap, the 70% hire, `CALAMITY_XP`, a full clear ends above 20), `test/levels.test.ts` (`RUN_MAX_LEVEL` = 30, the knee `LATE_LEVEL` = 20).
-- Tools: `tools/tower-balance.ts` prints the starting hero's level by map and at the end, and takes `--cal start=..,growth=..,step=..` (try another foe scale for one run); `--bossk` was already there.
+`tools/tower-balance.ts` prints the starting hero's level by map and at the end, and takes `--cal start=..,growth=..,step=..` (try another foe scale for one run). My exploratory numbers for that dropped part (not shipped): with `CLIMB_XP` 15 for Calamity heroes, start 0.265, step 0.33 and the bosses reshaped (hp 3224 / 3900 / 3575 / 2429 / 1520 on maps 2 to 6), the shares held at 84 / 83 / 65 / 45 / 35 / 16 and a full clear ended with the starter at a median of 25.
 
 ## Not sure of
 
-- Whether the owner wants the spire's XP raised too (kept as it was).
 - The level-1 gating nudges were deliberately small (three hp changes); level 15's largest lift grew from 3.3 to 3.6 because of them, inside the ±4 test.
-- A hero's level-15 ultimate in the Calamity arrives earlier than "map 3 or 4" for the starter (after map 2) with `CALAMITY_XP` 15; the hires, joining at 70% of the mean, reach it a map later.

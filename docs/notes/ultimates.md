@@ -7,7 +7,7 @@ wait for level 15 like the other 37.
 ## The rules
 
 - **Level.** A fight carries the level a hero fights at: `Boost.level`, set by `gradeBoost` (a hero kind's *lasting* level, 1 to 30)
-  and by `localBoost` (the spire's and Calamity's *in-run* level, capped at 30 since `balance-pass.md`). `addUnit` stores it on `Unit.level` (absent is 1).
+  and by `localBoost` (the spire's and Calamity's *in-run* level, capped at 20). `addUnit` stores it on `Unit.level` (absent is 1).
   An ultimate with an `unlock` level (`ULT_LEVEL` = 15 for the 37 new ones) does not charge, does not show its meter and does not go
   off below it (`ultimateOf(unit)` is the one place that decides; `tryCast`, `gain`, `ultimateReady` and the unit's bars read it).
   All 45 carry `unlock: ULT_LEVEL` (the first eight's are gated copies, made in `heroUltimates`). In the spire and Calamity the in-run level counts, so they
@@ -165,4 +165,4 @@ second phase borrows a hero's skill (Boar King, the grove boss) does not borrow 
 `test/talents.test.ts`: the capstone check is for the first eight (whose trees were written around an ultimate). `test/more-heroes.test.ts`: every second-wave hero has one.
 
 
-**Gated, and the Labyrinth and Calamity retuned:** see `balance-pass.md`.
+**Gated, and the Labyrinth retuned:** see `balance-pass.md`.

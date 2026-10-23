@@ -9,13 +9,11 @@ import { KITS } from '../src/sim/abilities';
 import { BOSS_IDS, isBoss } from '../src/sim/foes';
 import { titleOf } from '../src/render/bossTitles';
 import { CAL_MAPS, CAL_ROWS, CAL_SCALE, calBossBoost, fitBand, squadFoeMult } from '../src/sim/calamity';
-import { CALAMITY_XP, CLIMB_XP, climbXpView, fightXpByHero, gainRunXp, heroLevel, hireHero, hireXp, localBoost } from '../src/sim/climb';
-import { levelBoost, RUN_MAX_LEVEL, xpFor } from '../src/sim/levels';
-import { ULT_LEVEL, ultimateOf } from '../src/sim/abilities';
-import { addUnit } from '../src/sim/battle';
+import { climbXpView, gainRunXp, heroLevel, hireHero, hireXp, localBoost } from '../src/sim/climb';
+import { levelBoost, xpFor } from '../src/sim/levels';
 import { abandonTower, buy, calamityMap, choices, clearNode, enterNode, finishTower, fightSpec, foeScale, floorOf, hasRoom, hire, HIRE_OFFERS, hireCost, mapFor, MAP_CROWNS, rowsIn, settleTower, train, type MapNode } from '../src/sim/tower';
 import { hpShare } from '../src/sim/health';
-import { frontSpots, playCalamity, playTower, starterEnd } from '../tools/autoplay';
+import { frontSpots, playCalamity, playTower } from '../tools/autoplay';
 import { HEROES, UNITS } from '../src/sim/units';
 import { mixSeed } from '../src/sim/rng';
 
@@ -597,44 +595,4 @@ test('each calamity boss has its own name, title and kit, and the mechanics stac
   assert.ok(!p(3).ignite && p(4).ignite && p(4).leech, 'poison from map 5');
   assert.ok(p(5).frenzy && p(5).ignite && p(5).block && p(5).rage && KITS[CAL_BOSSES[5]].ultimate, 'the last has all of it, and a charge');
   assert.ok(calBossBoost(6).size > calBossBoost(1).size);
-});
-
-test('a run\'s heroes level past 20, up to the cap of 30, and a hire still joins at 70% of the roster\'s mean XP', () => {
-  assert.equal(RUN_MAX_LEVEL, 30);
-  const run = calamityRun(31, startedMeta(1), 'knight');
-  const h = run.roster[0];
-  assert.deepEqual(gainRunXp(run, { [h.id]: xpFor(24) }), [{ id: h.id, kind: h.kind, from: 1, to: 24 }]);
-  assert.equal(heroLevel(h), 24);
-  assert.ok(localBoost(h).hp! > levelBoost(20).hp!, 'the levels past 20 still add');
-  gainRunXp(run, { [h.id]: 1e9 });
-  assert.equal(heroLevel(h), 30, 'and the cap is 30');
-  assert.equal(localBoost(h).level, 30);
-  h.xp = xpFor(25);
-  assert.equal(hireXp(run), Math.floor(xpFor(25) * 0.7));
-});
-
-test('a calamity pays its heroes more XP than the spire does, and its level 15 unlocks the ultimates', () => {
-  assert.ok(CALAMITY_XP > CLIMB_XP);
-  const run = calamityRun(32, startedMeta(2), 'tyrant');
-  const b = playNode((enterNode(run, choices(run)[0].id), run));
-  const id = run.roster[0].id;
-  const spire = fightXpByHero(b)[id];
-  const cal = fightXpByHero(b, 1, CALAMITY_XP)[id];
-  assert.ok(spire > 0 && Math.abs(cal / spire - CALAMITY_XP / CLIMB_XP) < 0.1);
-  const h = run.roster[0];
-  h.xp = xpFor(ULT_LEVEL - 1);
-  const field = startStage(run);
-  assert.equal(ultimateOf(addUnit(field, h.kind, 1, 8, localBoost(h))), undefined, 'locked at in-run 14');
-  h.xp = xpFor(ULT_LEVEL);
-  assert.equal(ultimateOf(addUnit(field, h.kind, 2, 8, localBoost(h)))?.name, KITS[h.kind].ultimate!.name, 'unlocked at in-run 15');
-});
-
-test('a full Calamity clear leaves the starting hero well past level 20 (the bot, three seeds)', () => {
-  const ends: number[] = [];
-  for (let a = 1; a <= 40 && ends.length < 3; a++) {
-    const r = playCalamity(startedMeta(a), mixSeed(a, 0xca1), HEROES[a % HEROES.length]);
-    if (r.cleared) ends.push(starterEnd);
-  }
-  assert.ok(ends.length >= 1, 'some seeds clear it');
-  assert.ok(ends.every((l) => l > 20), `ended at ${ends.join(', ')}`);
 });
