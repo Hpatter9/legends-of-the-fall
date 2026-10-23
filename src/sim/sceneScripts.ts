@@ -109,6 +109,10 @@ export interface Scene {
   shots: Shot[];
   /** A reveal rather than a chapter: a few seconds, not twenty to forty. */
   short?: true;
+  /** The score that plays under it, by the id `sound.ts`'s `playScene` knows (`opening`, `gorvak`, `triumph` ...); none leaves the music as it is. Put back when the scene ends or is skipped. */
+  music?: string;
+  /** Heroes that stand in for the party when the scene comes before the player has one (the opening, before the starter pick). */
+  trio?: readonly string[];
 }
 
 /** How long a line stays up: a beat to read it (seconds), so a scene plays through on its own; a tap moves on sooner. */
@@ -131,6 +135,9 @@ const close = (on: string | string[], zoom = 1.5): Cam => ({ on, zoom });
 
 /* ------------------------------------------------------------ the scenes */
 
+/** The heroes that play the opening, which comes before the starter pick (the player has none yet): a fixed trio. */
+export const OPENING_TRIO: readonly string[] = ['knight', 'samurai', 'archer'];
+
 export const SCENES: Record<string, Scene> = {
   // ---------------------------------------------------------------- the opening: after a new save has picked its heroes
   opening: {
@@ -138,6 +145,8 @@ export const SCENES: Record<string, Scene> = {
     title: 'The Road Begins',
     blurb: 'Your first three heroes, and the Calamity that wants a word.',
     moment: { kind: 'starter' },
+    music: 'opening',
+    trio: OPENING_TRIO,
     cast: {
       front: { role: 'party:0', x: 262, facing: 'right', hidden: true },
       striker: { role: 'party:1', x: 228, facing: 'right', hidden: true },
@@ -188,6 +197,7 @@ export const SCENES: Record<string, Scene> = {
     title: 'The Ashen Road',
     blurb: 'Gorvak the Ashen, the Calamity’s first herald, keeps a very firm roadblock.',
     moment: { kind: 'calBoss', map: 1 },
+    music: 'gorvak',
     cast: {
       hero: { role: 'hero', x: 285, facing: 'right', hidden: true },
       gorvak: { role: 'unit:calBoss1', x: 395, facing: 'left', hidden: true, scale: 1.5 },
@@ -258,6 +268,7 @@ function earnedScene(kind: string, e: { look: Area; why: string; says: string })
     blurb: 'A hero earned in play, not pulled.',
     moment: { kind: 'earned', hero: kind },
     short: true,
+    music: 'triumph',
     cast: {
       figure: { role: `unit:${kind}`, x: 330, facing: 'left', hidden: true, shade: true },
       hero: { role: `unit:${kind}`, x: 330, facing: 'left', hidden: true },

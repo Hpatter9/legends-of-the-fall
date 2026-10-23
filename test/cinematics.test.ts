@@ -257,3 +257,22 @@ test('the summoning cinematic is about three seconds, is not listed or marked se
   assert.equal(sc.shots.filter((s) => s.fx?.includes('flash')).length, 1, 'one flash, once');
   assert.equal(castOf(sc, { party: [] }).hero.kind, 'knight');
 });
+
+test('the opening plays before the starter pick with a fixed trio, and each scene can name its music', () => {
+  const o = SCENES.opening;
+  assert.equal(o.trio?.length, 3);
+  const cast = castOf(o, { party: [...o.trio!] });
+  for (const id of ['front', 'striker', 'back']) assert.ok(cast[id].kind && o.trio!.includes(cast[id].kind!), id);
+  assert.ok(Object.values(o.cast).some((m) => m.role === 'duchess'), 'Duchess keeps her beat');
+  assert.equal(dueScene(newMeta(1), { kind: 'starter' }), 'opening', 'due with no heroes picked');
+  assert.equal(o.music, 'opening');
+  assert.equal(SCENES.gorvak.music, 'gorvak');
+});
+
+test('the Cinematics setting is on by default and kept when saved', async () => {
+  const { DEFAULTS, parseSettings } = await import('../src/settings');
+  assert.equal(DEFAULTS.cinematics, true);
+  assert.equal(parseSettings(null).cinematics, true);
+  assert.equal(parseSettings('{"cinematics":false}').cinematics, false);
+  assert.equal(parseSettings('{"cinematics":1}').cinematics, true);
+});

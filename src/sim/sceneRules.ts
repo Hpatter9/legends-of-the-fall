@@ -69,7 +69,7 @@ export const namesOf = (cast: Record<string, Cast>): Record<string, string> => O
 
 /** Where a scene comes up, for the Scenes list when it has not been seen. */
 export const momentText = (m: Moment): string =>
-  m.kind === 'starter' ? 'A new save, once its first heroes are picked.' : m.kind === 'calBoss' ? `The Calamity's map ${m.map} boss, as the fight is set up.` : m.kind === 'earned' ? 'A hero earned in play, the moment it joins.' : 'Every pull in the summoning hall.';
+  m.kind === 'starter' ? 'A new save, before its first heroes are picked.' : m.kind === 'calBoss' ? `The Calamity's map ${m.map} boss, as the fight is set up.` : m.kind === 'earned' ? 'A hero earned in play, the moment it joins.' : 'Every pull in the summoning hall.';
 
 /** The scenes the list shows, in order: each with whether it has been seen (an unseen one stays a mystery). */
 export const sceneList = (m: Meta): { id: string; title: string; text: string; seen: boolean }[] =>

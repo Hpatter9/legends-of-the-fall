@@ -27,7 +27,7 @@ import { earn, loadMeta, needsStarter, pickStarter, heroRank, recordStars, saveM
 import { chooseStarter } from './starter';
 import { ScenePlayer } from './render/sceneView';
 import { dueScene, markSeen } from './sim/sceneRules';
-import { summonScene, type Moment } from './sim/sceneScripts';
+import { SCENES, summonScene, type Moment } from './sim/sceneScripts';
 import { xpRate } from './sim/castle';
 import { heroStats } from './sim/talents';
 import { powerOf, powerText } from './sim/power';
@@ -219,11 +219,11 @@ class Game {
     initQuips(this.meta.seed);
     // (a new save, or one after Start over, picks its first three heroes before anything else; an address with a seed is a test page and takes the first pack)
     if (needsStarter(this.meta)) {
+      // (the opening cinematic comes first, before the pick: the player has no heroes yet, so a fixed trio plays it; a test page with a seed has none)
+      if (!seed) await this.playDue({ kind: 'starter' }, { party: [...(SCENES.opening.trio ?? [])] });
       if (seed) pickStarter(this.meta, 0);
       else await chooseStarter(this.meta);
       saveMeta(this.meta);
-      // (the opening cinematic: the heroes just picked, and what they are up against; a test page with a seed has none)
-      if (!seed) await this.playDue({ kind: 'starter' });
     }
     // (a tower run saved by an older version sat in the ordinary slot: it moves to the tower's own)
     adoptOldTower();
@@ -392,18 +392,19 @@ class Game {
   }
 
   /** The cinematic due at a moment, if the save has not seen it: marked seen as it begins (a closed page does not bring it back), then played. */
-  private async playDue(moment: Moment): Promise<void> {
+  private async playDue(moment: Moment, players = this.players()): Promise<void> {
     const id = dueScene(this.meta, moment);
     if (!id) return;
+    // (with the Cinematics setting off it is still marked seen, so the Scenes list can play it; it just does not start by itself)
     markSeen(this.meta, id);
     saveMeta(this.meta);
-    await this.scenes.play(id, this.players());
+    if (settings().cinematics) await this.scenes.play(id, players);
   }
 
   /** The summoning cinematic for a pull: the hero it brought (a new one first) steps into the circle's light. True when a tap skipped it, which skips the hall's show too. It never holds up a pull: a tap anywhere ends it. */
   private async summonCinematic(got: Pull[]): Promise<boolean> {
     const pick = got.find((p) => p.isNew) ?? got[0];
-    if (!pick) return false;
+    if (!pick || !settings().cinematics) return false;
     return (await this.scenes.play(summonScene(pick.kind, UNITS[pick.kind].name), this.players(), true)) === 'skipped';
   }
 

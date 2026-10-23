@@ -23,3 +23,9 @@ The ten content heroes each have a short reveal (`earned:<kind>` in `sceneScript
 2. The cinematic plays on every pull. A setting to turn it off is easy to add.
 3. The earned reveals play after the result's recap, not over the fight.
 4. The first summon cinematic uses the dungeon backdrop (no hall backdrop in the cutscene player).
+
+## Cinematics: the director's follow-up
+- **The opening plays before the starter pick**, cast with a fixed trio (`OPENING_TRIO`: Knight, Samurai, Archer; Duchess keeps her beat), then the pick follows (`main.ts`).
+- **Setting "Cinematics"** (on by default, `settings.ts`). Off, no scene starts by itself (opening, boss arrival, earned reveals, the summoning), but each is still marked seen, so the codex's Scenes list can play it. Every scene keeps its Skip button (64x44 at top right; checked at 360 wide: `docs/samples/hero-progress-opening-360.png`).
+- **Music hook:** `Scene.music` names a score; `ScenePlayer` calls `sound.ts`'s `playScene(id)` when the scene starts and `endScene()` when it ends or is skipped. `playScene`/`endScene` are already on main (audio, 0.136.0), so no stub was needed. Set so far: opening `opening`, Gorvak `gorvak`, earned reveals `triumph`; the summoning has none (the hall has its own sounds).
+- Check: `node tools/ui/hero-progress-cine.mjs`.
