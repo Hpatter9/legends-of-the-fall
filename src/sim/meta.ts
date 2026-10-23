@@ -22,6 +22,7 @@ import { readTickets } from './autoReplay';
 import { drawKind, giveShards } from './unlock';
 import { DUPLICATE_SHARDS, PULL_HEROES } from './unlockRules';
 import { grantContent } from './contentHeroes';
+import { readScenes } from './sceneRules';
 
 export const PULL_COST = 100;
 export const PULL10_COST = 900;
@@ -101,6 +102,8 @@ export interface Meta {
   autoTickets?: { day: number; used: number };
   /** Chests earned from the armies' star milestones and not yet opened, oldest first (`armyStars.ts`). */
   stash: StashChest[];
+  /** The cinematics seen (`sceneRules.ts`, by id): each plays once at its moment, and the codex's Scenes list plays a seen one again. Saves from before have none. */
+  scenes?: string[];
 }
 
 /** An earned, unopened chest: where it came from, and the seed its contents are rolled from (fixed when it was earned). */
@@ -346,6 +349,9 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       // (saves from before the auto tickets have none: a full day's worth)
       m.autoTickets = readTickets(m.autoTickets);
       if (!m.autoTickets) delete m.autoTickets;
+      // (saves from before the cinematics have none; one that had picked its heroes counts the opening as seen)
+      m.scenes = readScenes(m.scenes, !needsStarter(m));
+      if (!m.scenes.length) delete m.scenes;
       // (a content hero whose milestone a save from before has already reached joins now)
       if (!needsStarter(m)) grantContent(m);
       return m;
