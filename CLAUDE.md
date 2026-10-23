@@ -42,6 +42,7 @@ Chronos later, so keep its conventions.
 - `src/sim/starter.ts` / `src/starter.ts`: the starter pick (three packs of three heroes for a new save). Heroes have no rarity; every hero is as strong as any other (`docs/notes/no-rarity.md`).
 - `src/sim/unlock.ts` / `unlockRules.ts` / `contentHeroes.ts`: heroes are collected by shards (`Meta.unlock`) or, for ten of them, earned by a milestone (`docs/notes/hero-shards.md`; `npm run unlock-pace` models the pace).
 - `src/sim/units.ts`: `UNITS` (the five heroes; the foes come from `foes.ts`), `HEROES`. `src/sim/foes.ts`: `FOES`, `FOE_BANDS`.
+- `src/sim/ultimates.ts`: every hero's ultimate (the eight old ones are in `abilities.ts`; the other 37 unlock at level 15; `docs/notes/ultimates.md`).
 - `src/sim/battle.ts`: deploying (`canPlace`, `place`, `unplace`), `fight`, `stepBattle` (100 ms ticks), the AI,
   `blowMult`, `shotReach`, `canStrike`.
 - `src/sim/path.ts`: `walkFrom` (cheapest walks round the others), `firstStep`.

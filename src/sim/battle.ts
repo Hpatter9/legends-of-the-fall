@@ -104,6 +104,8 @@ export interface Unit {
   size?: number;
   /** A hero's grade above the first (2 or 3); absent is 1. Only the look reads it. */
   grade?: number;
+  /** The level the hero fights at; absent is 1. An ultimate with an `unlock` level waits for it. */
+  level?: number;
   /** The steps a hero has awakened (1 or 2); absent is none. Only the look reads it (the passive runs through `equip`). */
   awaken?: number;
   /** What the hero's permanent equipment adds (`equipment.ts`); absent when it wears none. */
@@ -228,6 +230,8 @@ export interface Boost {
   size?: number;
   /** A hero's grade (1 to 3), for how it is drawn. */
   grade?: number;
+  /** The level the hero fights at (a kind's lasting level, or the spire's and Calamity's in-run level): it unlocks the hero's ultimate (`abilities.ts`). Unset is level 1. */
+  level?: number;
   /** A hero's awakened steps (1 or 2), for how it is drawn. */
   awaken?: number;
   /** The hero's permanent equipment (`equipment.ts`): hp and attack go into its stats, the rest are read by the fight's hooks. */
@@ -363,6 +367,7 @@ export function addUnit(b: Battle, defId: string, u: number, v: number, boost: B
   if (boost.shield) unit.shield = { hp: Math.round(hp * boost.shield), until: 1e9 };
   if (boost.size && boost.size !== 1) unit.size = boost.size;
   if (boost.grade && boost.grade > 1) unit.grade = boost.grade;
+  if (boost.level && boost.level > 1) unit.level = boost.level;
   if (boost.awaken) unit.awaken = boost.awaken;
   if (tag !== undefined) unit.tag = tag;
   // (a hero's skill keeps the charge it built up in the run's last wave)

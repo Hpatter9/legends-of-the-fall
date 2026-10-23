@@ -38,7 +38,7 @@ test('twenty heroes join, each with a kit, a tree, traits, a tavern spot and a s
     assert.ok(ALL_HEROES.includes(id), id);
     const d = UNITS[id];
     assert.equal(d.side, 'hero');
-    assert.equal(['sage', 'demonSwordsman', 'tyrant'].includes(id), !!KITS[id].ultimate, `${id} ultimate`);
+    assert.ok(KITS[id].ultimate, `${id} ultimate`);
     assert.ok(KITS[id].skill.name && KITS[id].passive.name, id);
     for (const s of [KITS[id].skill, KITS[id].ultimate]) if (s) assert.ok(SKILL_FX[s.name] && SKILL_ELEMENT[s.name], s.name);
     assert.equal(TREES[id]?.nodes.length, 8, `${id} tree`);
@@ -103,7 +103,7 @@ test('every new hero\'s skill fires in a fight when its charge is full', () => {
   }
 });
 
-test('every Mythic\'s ultimate fires when its meter is full', () => {
+test('the Great Sage\'s, Demon Swordsman\'s and Tyrant\'s ultimates fire when their meters are full', () => {
   for (const id of ['sage', 'demonSwordsman', 'tyrant']) {
     const b = arena();
     const me = spawn(b, id, 3, 6);

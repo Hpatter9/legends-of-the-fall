@@ -28,7 +28,7 @@ export function localBoost(h: Owned): Boost {
   const k = GRADE_MULT ** (h.grade - 1);
   const lv = levelBoost(heroLevel(h));
   const g = gearBoost(h.gear);
-  return { hp: k * lv.hp * g.hp! + (h.bump?.hp ?? 0), atk: k * lv.atk * g.atk! + (h.bump?.atk ?? 0), grade: h.grade, ...(h.charge ? { charge: h.charge } : {}), ...(h.charge2 ? { charge2: h.charge2 } : {}) };
+  return { hp: k * lv.hp * g.hp! + (h.bump?.hp ?? 0), atk: k * lv.atk * g.atk! + (h.bump?.atk ?? 0), grade: h.grade, level: heroLevel(h), ...(h.charge ? { charge: h.charge } : {}), ...(h.charge2 ? { charge2: h.charge2 } : {}) };
 }
 
 /** The XP each hero (by roster id) earned in a finished fight: the same pay as `fightXp`, but kept for the hero, not its kind. `rate` is the castle's Library. */

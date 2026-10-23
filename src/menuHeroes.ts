@@ -128,7 +128,11 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     if (kit)
       for (const [label, a] of [['Skill', kit.skill], ...(kit.ultimate ? [['Ultimate', kit.ultimate] as const] : []), ['Passive', kit.passive]] as const) {
         const p = el('p');
+        // (an ultimate waits for its level: it shows, dimmed, with the level it unlocks at)
+        const locked = label === 'Ultimate' && 'unlock' in a && !!a.unlock && x.level < a.unlock;
+        if (locked) p.classList.add('locked');
         p.append(el('i', '', `${label} · ${a.name}: `), a.text);
+        if (locked) p.append(el('span', 'ultLock', ` Unlocks at level ${(a as { unlock: number }).unlock}.`));
         box.append(p);
       }
     box.append(drawAwaken(meta, kind, redraw));
