@@ -204,6 +204,7 @@ class Run {
     const hud = this.hud;
     hud.show(true);
     if (this.scene.music) playScene(this.scene.music);
+    if (this.scene.sting) play(this.scene.sting);
     hud.line(null, '', '', false);
     hud.caption(null, 0);
     const tapped = (): void => this.tap();

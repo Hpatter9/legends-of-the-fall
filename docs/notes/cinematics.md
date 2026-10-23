@@ -148,7 +148,7 @@ What the new shapes are:
 ### Music
 
 Each scene has a `music` (the audio worker's scores, `musicScore.ts`): a herald its own (`gorvak`, `herald2` to `herald6`), and
-the rest a shared mood (`triumph` for the last stands, the Calamity's end and the heroes earned; `comic` for the funny firsts and the
+the rest a shared mood (`triumph` for the last stands, the Calamity's end, the heroes earned, Mythic and Ascension 1 (stings: `sceneBoss` on a herald, `sceneVictory` on the Calamity's end and the last stands); `comic` for the funny firsts and the
 castle; `solemn` for awakenings and Mythic; `spire` for the tower). The player calls `playScene` as a scene begins and
 `endScene` as it ends. A cut-in has none: the fight's music goes on. If `hero-progress` adds its own `music` field and call
 site, keep one of the two.

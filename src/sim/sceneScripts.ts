@@ -116,13 +116,15 @@ const PILOTS: Record<string, Scene> = {
 /** The score each scene plays under (the audio worker's tracks, `musicScore.ts`): a herald its own, the rest a shared mood. A cut-in has none: the fight's music goes on. */
 const MUSIC: Record<string, string> = {
   opening: 'opening', gorvak: 'gorvak', thornWarden: 'herald2', malphas: 'herald3', hrungar: 'herald4', vorgrath: 'herald5', karnok: 'herald6',
-  calamityEnds: 'triumph', firstLoss: 'comic', eliteMet: 'comic', ascensionOne: 'gorvak', dailyBoss: 'comic', mythicOpens: 'solemn', firstSummon: 'comic', duchessInFight: 'comic',
+  calamityEnds: 'triumph', firstLoss: 'comic', eliteMet: 'spire', ascensionOne: 'triumph', dailyBoss: 'spire', mythicOpens: 'triumph', firstSummon: 'comic', duchessInFight: 'comic',
 };
+const STING: Record<string, Scene['sting']> = { gorvak: 'sceneBoss', thornWarden: 'sceneBoss', malphas: 'sceneBoss', hrungar: 'sceneBoss', vorgrath: 'sceneBoss', karnok: 'sceneBoss', calamityEnds: 'sceneVictory' };
 const FAMILY_MUSIC: Record<string, string> = { clear: 'triumph', awaken: 'solemn', earned: 'triumph', castle: 'comic', spire: 'spire' };
 
 const ALL: Scene[] = [...Object.values(PILOTS), ...EVENT_SCENES, ...FAMILY_SCENES].map((c) => {
   const music = c.music ?? MUSIC[c.id] ?? (c.family ? FAMILY_MUSIC[c.family] : undefined);
-  return music ? { ...c, music } : c;
+  const sting = c.sting ?? (STING[c.id] ?? (c.family === 'clear' ? 'sceneVictory' : undefined));
+  return { ...c, ...(music ? { music } : {}), ...(sting ? { sting } : {}) };
 });
 
 export const SCENES: Record<string, Scene> = Object.fromEntries(ALL.map((c) => [c.id, c]));

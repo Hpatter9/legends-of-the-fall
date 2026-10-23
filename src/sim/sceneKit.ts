@@ -138,6 +138,8 @@ export interface Scene {
   family?: string;
   /** The scene's score (an id `render/sound.ts` `playScene` knows: `opening`, `gorvak`, `herald2` to `herald6`, `triumph`, `comic`, `solemn`, `spire`); none leaves the music as it is. */
   music?: string;
+  /** A sting as the scene begins (a cue of `render/soundRules.ts`): a boss arriving, or a victory. */
+  sting?: 'sceneBoss' | 'sceneVictory';
   /** A cut-in of a few seconds, not a scene (it need not reach 10 s). */
   short?: boolean;
   /** Plays every time its moment comes, not once (a boss changing form); the Scenes list still plays it again. */
