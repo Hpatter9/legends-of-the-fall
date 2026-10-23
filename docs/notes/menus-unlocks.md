@@ -35,6 +35,30 @@ The stars counted are every star won over every army and tier (`totalStars` in `
 
 Extra gold barely moves it: the first wave of the Orcs is won 100% of the time with two hired heroes at level 1 (Undead's first wave is 61% at level 1, 100% before; a fresh save cannot reach it until it has 2 stars). The climb tool spends its crowns on the castle from the start, which a save can no longer do before 10 stars, so these are the easy side of the true pace.
 
+## Normal a little harder (director's ask)
+
+Only the Ogre Clans (`start` 1.55 to 1.6, `growth` 0.124 to 0.134) and the Infernal Host (1.64 to 1.66, 0.13 to 0.145) changed; the tier multipliers did not. The early armies are exactly as before, so level-1 starts feel as they did. A bigger push on the Wildwood or the Labyrinth made the whole climb worse (the Wildwood 3.6 to 6.0 tries, the Labyrinth 4.0 to 5.5), so they stayed. The Yokai and the Golems were already 4.7 and 3.3 tries at level 15.
+
+Mean tries to clear on Normal (`npm run balance -- --no-tables --deep --tiers-at 0 --levels 1,15,30 --attempts 30`; the recruits' party, maxed castle, no start hero), before the change and after:
+
+| Army | Lv 1 | Lv 15 | Lv 30 |
+| --- | --- | --- | --- |
+| Orc Warband | 1.1 | 1.0 | 1.0 |
+| Undead Legion | 1.7 | 1.0 | 1.0 |
+| Beast Packs | 2.8 | 1.0 | 1.0 |
+| The Wildwood | 4.4 | 1.0 | 1.0 |
+| The Labyrinth | 8.5 | 1.8 | 1.0 |
+| Ogre Clans | 10.5 to 12.9 | 1.3 to 1.7 | 1.0 |
+| Infernal Host | 15.6 to 17.6 | 1.7 to 2.7 | 1.1 |
+| Yokai Night Parade | 17.0 | 4.7 | 1.3 |
+| Golem Forge | 15.1 | 3.3 | 1.2 |
+
+Late armies are a test at 15 (1.7 to 4.7 tries) and first-try from about 30. The realistic climb after the change: Orcs 2.9, Undead 2.9, Beasts 2.3, Wildwood 3.6, Labyrinth 4.0, Ogres 2.9, Infernal 2.6, Yokai 2.0, Golems 1.4.
+
+## A chest for the Mythic star
+
+`MILESTONES` is now 3, 5, 10 and 11 stars. The 11th star (Mythic's flawless clear) pays the best chest the armies give, kind `mythic` (the gold chest's picture turned violet in CSS, no new art): about twice a gold chest's crowns (2400 base), one more shard, two prize heroes (the gold chest has one) and two pieces of gold-quality gear (the second drawn after the first, so the gold chest's own roll is unchanged). Each milestone is given once per army (`rec.chests`), so settling the star again pays nothing; the Mythic first clear's gold chest is a separate award (it comes with any clear, the star only with a flawless one). It sits under the 11th star on the armies screen's track. A save that already has 11 stars gets the chest when it next settles a run. Test: `test/armyStars.test.ts`.
+
 ## Codex rewards
 
 The codex page lists every reward row: the share of the collection, how many entries it takes, the crowns it pays, and its state (Claimed, "n to go", or a Claim button). Under each collection: "Each entry counts towards a reward; none pays alone. Paid x of y crowns." A "Claim rewards: +N crowns" button sits on top when any wait. The Codex chip on the Castle page already wears a badge then.

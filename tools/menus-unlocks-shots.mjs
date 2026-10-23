@@ -56,6 +56,9 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   await page.evaluate(() => window.__game.home.openArmies());
   await page.waitForTimeout(500);
   await shot('armies-16-stars');
+  await page.evaluate(() => window.__game.home.openArmies('orcs'));
+  await page.waitForTimeout(500);
+  await shot('armies-chest-track');
   await tab('castle');
   await page.waitForTimeout(500);
   await shot('castle-open');

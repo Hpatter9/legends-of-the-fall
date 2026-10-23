@@ -354,7 +354,7 @@ function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLEle
       picks.append(b);
     });
     info.append(picks);
-    // the 11-star track, with a chest under the 3rd, 5th and 10th star
+    // the 11-star track, with a chest under the 3rd, 5th, 10th and 11th star
     const track = el('div', 'asStars');
     const chests = chestsOf(m, a);
     for (let s = 1; s <= ARMY_STARS; s++) {
