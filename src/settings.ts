@@ -24,9 +24,11 @@ export interface Settings {
   awake: boolean;
   /** Whether heroes pipe up in small speech bubbles (hired, placed, a win or a loss, a bit of banter). */
   quips: boolean;
+  /** Whether cinematics play by themselves (the opening, a boss's arrival, a hero earned, the summoning). Off, they never start, but the codex's Scenes list can still play a seen one. */
+  cinematics: boolean;
 }
 
-export const DEFAULTS: Settings = { music: 100, effects: 100, speed: 1, shake: true, numbers: true, saver: false, awake: true, quips: true };
+export const DEFAULTS: Settings = { music: 100, effects: 100, speed: 1, shake: true, numbers: true, saver: false, awake: true, quips: true, cinematics: true };
 
 /** The settings from what was saved (`raw`, the stored text or null): anything missing or wrong falls back to the default. */
 export function parseSettings(raw: string | null): Settings {
@@ -48,6 +50,7 @@ export function parseSettings(raw: string | null): Settings {
     saver: flag(saved.saver, DEFAULTS.saver),
     awake: flag(saved.awake, DEFAULTS.awake),
     quips: flag(saved.quips, DEFAULTS.quips),
+    cinematics: flag(saved.cinematics, DEFAULTS.cinematics),
   };
 }
 
@@ -115,6 +118,7 @@ function draw(): void {
     toggleRow('Battery saver', 'Caps the frame rate at 30', 'saver', s.saver),
     toggleRow('Keep screen awake', 'The screen stays on while the game is open', 'awake', s.awake),
     toggleRow('Hero quips', 'Heroes (and now and then Duchess) say the odd word in a small speech bubble', 'quips', s.quips),
+    toggleRow('Cinematics', 'Short scenes at big moments. Off, none play by themselves; the Scenes list in the codex still plays them', 'cinematics', s.cinematics),
     resetTipsRow(),
     startOverRow(),
   );
@@ -174,7 +178,7 @@ function speedRow(value: 1 | 2): HTMLElement {
   return r;
 }
 
-function toggleRow(title: string, hint: string, key: 'shake' | 'numbers' | 'saver' | 'awake' | 'quips', value: boolean): HTMLElement {
+function toggleRow(title: string, hint: string, key: 'shake' | 'numbers' | 'saver' | 'awake' | 'quips' | 'cinematics', value: boolean): HTMLElement {
   const [r] = row(title, hint);
   const b = document.createElement('button');
   b.className = value ? 'toggle on' : 'toggle';

@@ -41,6 +41,7 @@ Chronos later, so keep its conventions.
 ## Layout
 
 - `src/sim/board.ts`: the grid (7 across, 9 deep), heights (hills, platforms with a staircase, pits; `docs/notes/height.md`), `canStep` (each unit's own `jump`), `sightClear`, `makeBoard(seed)`.
+- `src/sim/lands.ts` / `weather.ts`: the seventeen lands (`AREAS`; `CLASSIC_AREAS` are the first six), which land each army's waves and the spire use, and each fight's weather (`weatherOf(board)`, looks only; `docs/notes/map-lands.md`).
 - `src/sim/starter.ts` / `src/starter.ts`: the starter pick (three packs of three heroes for a new save). Heroes have no rarity; every hero is as strong as any other (`docs/notes/no-rarity.md`).
 - `src/sim/unlock.ts` / `unlockRules.ts` / `contentHeroes.ts`: heroes are collected by shards (`Meta.unlock`) or, for ten of them, earned by a milestone (`docs/notes/hero-shards.md`; `npm run unlock-pace` models the pace).
 - `src/sim/daily.ts`: the daily's shape (ten waves, the boss of the day, `dailyArmy`), with `modes.ts` (`settleDaily`, `dailyLine`) and `docs/notes/daily-goal.md`.

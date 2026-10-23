@@ -6,7 +6,7 @@
 // `tiers.ts`; this only draws them.
 
 import { progressLine } from './sim/modeUnlock';
-import { ARMIES, armyCleared, armyNeed, armyIsNew, armyStars, armyUnlocked, bossOf, bossesOf, firstClearTotal, recordOf, replayTotal, tierOpen, tierStars, type Army } from './sim/armies';
+import { ARMIES, armyCleared, armyNeed, armyIsNew, armyStars, armyUnlocked, bossOf, bossesOf, firstClearTotal, landsOf, recordOf, replayTotal, tierOpen, tierStars, type Army } from './sim/armies';
 import { AUTO_COUNTS, AUTO_TICKETS, canAutoReplay, ticketsLeft } from './sim/autoReplay';
 import { todayKey } from './modes';
 import { armyRules, chestKind, chestsOf, type StarResult } from './sim/armyStars';
@@ -327,7 +327,7 @@ function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLEle
   if (fresh) scene.append(el('i', 'armyNew', 'NEW'));
   if (!open) {
     const lock = el('div', 'asLock');
-    lock.append(el('b', '', unlockLine(a)), el('small', '', `${progressLine(m, armyNeed(a.id))} · ${a.waves.length} waves · ${AREA_NAMES[a.area]}`));
+    lock.append(el('b', '', unlockLine(a)), el('small', '', `${progressLine(m, armyNeed(a.id))} · ${a.waves.length} waves · ${landsOf(a).map((l) => AREA_NAMES[l]).join(' and ')}`));
     scene.append(lock);
   }
   const info = el('div', `asInfo${open ? '' : ' shut'}`);

@@ -4,11 +4,11 @@
 // fight ends the run. Pure rules: no Pixi, no DOM; the summon draws from a side stream of the run's seed.
 
 import { startBattle, type Battle, type Boost, type Stage } from './battle';
-import { AREAS, type Area } from './board';
+import { CLASSIC_AREAS, type Area } from './board';
 import { CAL_CASTLE_EXTRA } from './calamity';
 import { buildChain, type Section } from './chain';
 import { BOSS_BANDS, FIELD_BANDS } from './foes';
-import { armyById, armyIndex, waveBoost, waveFoes, type Army } from './armies';
+import { armyById, armyIndex, landOf, landsOf, waveBoost, waveFoes, type Army } from './armies';
 import { dailyArmy } from './daily';
 import { bonusGold, foeAnswer, heroBoost, manaRate, moveRate, newCastle, type Castle } from './castle';
 import { rankMult } from './meta';
@@ -334,7 +334,7 @@ export const bandFor = (stage: number) => {
 };
 /** The land stage n is fought in: each area for `AREA_STAGES` stages in turn, then round again. */
 export const AREA_STAGES = 5;
-export const areaFor = (stage: number): Area => AREAS[Math.floor((stage - 1) / AREA_STAGES) % AREAS.length];
+export const areaFor = (stage: number): Area => CLASSIC_AREAS[Math.floor((stage - 1) / AREA_STAGES) % CLASSIC_AREAS.length];
 /** How the foes of stage n are boosted. */
 export function stageBoost(stage: number): Stage {
   const k = FOE_START * (1 + STAGE_GROWTH * (stage - 1));
@@ -351,8 +351,9 @@ const chains = new Map<string, Section[]>();
 export function chainOf(run: Run): Section[] | null {
   const army = waveArmyOf(run);
   if (!army) return null;
-  const area = run.area ?? army.area ?? areaFor(1);
-  const key = `${run.seed}:${army.id}:${area}`;
+  // (a run with no land of its own fights each wave on its army's: `landOf`)
+  const area = run.area ?? ((n: number) => landOf(army, n));
+  const key = `${run.seed}:${army.id}:${run.area ?? landsOf(army).join()}`;
   let c = chains.get(key);
   if (!c) {
     c = buildChain(run.seed, army.waves.length, area, (n) => boardSeedOf(run, n), (n) => !!army.waves[n - 1].boss);
