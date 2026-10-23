@@ -104,26 +104,67 @@ the real flows (new save, Skip, reload; Calamity map 1's boss, the card after th
 Strips are in `docs/samples/cinematics/`. (Use `--use-angle=swiftshader` for headless Chromium, as the scripts do: the
 `--use-gl` flags the older shot scripts use leave a band under the bars unpainted in a screenshot.)
 
-## Moments that could get a scene (pick what you like)
+## The scenes built (the owner: "Let's add all those cinematics")
 
-Each is a table entry and a call at its moment; the pitch is the joke or the beat.
+Every scene is data in `sim/sceneEvents.ts` (the ones that come once, each its own) or `sim/sceneFamilies.ts` (one shape filled
+from a table: the armies, the heroes, the buildings, the floors, the bosses), with `sceneKit.ts` holding the types and
+shorthands, and `sceneScripts.ts` the two pilots and the `SCENES` table. A scene has a `moment` (a `Moment`, with a key:
+`momentKey`), and `dueScene(meta, moment)` finds the one waiting. The page queues it with `queueScene(moment)` in `main.ts`:
+they play one after another, and **the fight is held** (the renderer stops feeding the sim; the sim is untouched, so the fight
+plays out the same) while one is queued or playing.
 
-| Moment | Pitch |
-| --- | --- |
-| **First army cleared** (the Orc Warlord falls) | The orcs hold a meeting about who is going to tell the Warlord's mother. The heroes wait politely. |
-| **Each Calamity boss, maps 2 to 6** | Their entrances, one a map, each with its staffing problem. The Thorn Warden (the bramble that remembers every axe) does not say a word and everyone feels judged; Malphas has an imp on a clipboard; Hrungar is shoved in the first shot, once, to see; Vorgrath's last flame is a candle he is protecting from a draught. |
-| **The Calamity's end** (Karnok, map 6, falls) | The big one: the final herald down, the sky un-reddens, the heroes realise nobody wrote the next bit. Ends with the king being thanked and a meteor, just in case. |
-| **A hero awakened** | A short beat on that hero alone: the light, the new look, a line in character (each hero already has a `HERO_STORY`). One scene shape, filled per hero. |
-| **A hero's first unlock** (shards or a milestone) | The hero walks in, the others make room, someone asks about the sandwiches. Three shots, the hero's story line as the caption. |
-| **A tower milestone** (the tower opens at floor 10; floors 25 and 50) | The tower builds itself a taller hat. The first time up: "It was shorter from outside." |
-| **The daily's boss** | A newsreader's voice over the day's foe: "Today's calamity is brought to you by..." Once per day, skippable forever. |
-| **The first summon** (the hall) | The summoner looks at the circle, the circle looks back; the first hero steps out and asks if it is the right room. |
-| **A castle upgrade** (the Chapel, the first Library) | The builders finishing a wall, a roof, a long argument about the roof. |
-| **A boss's second form** | Three seconds, not thirty: a cut-in on the boss as it changes (the phase banner already holds the fight; this would dress it). |
-| **First elite met** | The elite introduces itself like a bad stand-up act. |
-| **First loss** | The heroes regroup at the castle; the king is blamed, politely. Seen once, then never. |
-| **Ascension 1 opens** | The Calamity, offended it was beaten, comes back with "more health" and a new hat. |
-| **Each army's first boss** (nine) | A cold open of the army's own: the Undead's Lich King on hold with the afterlife, the Ogres' arguing about lunch. |
+| Scene | Moment, and where `main.ts` triggers it | Length | State |
+| --- | --- | --- | --- |
+| The Road Begins, The Ashen Road | pilots (0.131.0) | 37 s, 38 s | wired |
+| **Heralds**: The Bramble That Remembers, Item One: The Entrance, The Wall That Walks, The Last Flame, The End of All Roads | `calBoss` map 2 to 6, at the fight's set-up (`setupMoments`), before the boss's card | 32 to 39 s | wired |
+| **The Calamity ends**: Nobody Wrote the Next Bit | `calVictory`: the fight that clears a Calamity, before the summary | 39 s | wired to the fight's end; **needs wiring to `cal-map`'s victory screen** (call `queueScene({ kind: 'calVictory' })` where the screen opens, and drop mine from the fight's end) |
+| **The armies' last stands** (nine: `clear:<army>`) | `armyClear`: an army's first clear (`pay.firstClear`) | 26 to 28 s | wired |
+| **Awakening** (45: `awaken:<hero>`) | `awaken`: the hero's first awakening step (`awakenView.onAwakened`) | 12 to 16 s | wired |
+| **A hero earned** (ten: `earned:<hero>`) | `earned`: each hero `grantContent` brings in after a fight | 20 to 23 s | wired for the fight; **the hero-earned reveal of `hero-progress`** should call `queueScene({ kind: 'earned', hero })` and the fight's call go |
+| **Five as One** (combo mega ultimate cut-in) | `combo`: `Game.playComboMega()` | 3 s | **waiting on `hero-skills`**: call `playComboMega()` the first time the mega ultimate fires |
+| **It Was the Placing** (first loss) | `firstLoss`: the first fight lost | 38 s | wired |
+| **She Was Not on the List** (Duchess in a fight) | `duchess`: `Game.duchessTurnsUp()` | 18 s | **waiting on `battle-ui`**: call `duchessTurnsUp()` when she turns up |
+| **The castle going up** (seven: `castle:<site>`) | `castle`: the first time each building (and the chapel) is raised (`Home` hook `onBuilt`) | 20 to 22 s | wired |
+| **Spire milestones** (`spire:10`, `25`, `50`) | `spire`: the tower's fight at that floor is set up | 17 to 18 s | wired |
+| **A boss changing form** (fifteen: `form:<boss>`) | `bossForm`: each time (`startPhase`), the fight held; one tap Skip | 3 to 4 s | wired |
+| **The Hardest Setting Known to Boars** (Mythic) | `mythic`: an army run on the Mythic tier is set up | 28 s | wired |
+| **The Right Room?** (first summon) | `firstSummon`: before the hall's show on the first summon | 25 s | wired; **drop it if `hero-progress`'s summon cinematic covers the first summon** (the Moment stays, so nothing else changes) |
+| **A Bad Stand-Up Act** (first elite) | `elite`: the first elite fight's set-up | 27 s | wired |
+| **More Health, and a New Hat** (Ascension 1) | `ascension`: the first fight of an Ascension 1 Calamity | 28 s | wired |
+| **Brought To You By** (the daily's first boss) | `dailyBoss`: the daily's boss wave's set-up | 27 s | wired |
+
+What the new shapes are:
+
+- **A cut-in** (`short: true`): the boss changing form, and the combo. A scene of 2 to 6 seconds, not 10 to 40. The form cut-in
+  has `again: true` (it plays every time the boss changes; the Scenes list can still replay it). It is two shots: a beat on the
+  boss at **half pace** (`Shot.slow`: the clock runs at that share; reduced motion plays it at normal pace), then its words, which a test holds equal to the boss's phase
+  banner line (`PHASE2`). The page holds the fight while it plays.
+- **A family** (`Scene.family`): the Scenes list shows each seen scene with Watch, and folds the unseen ones into one line
+  ("Awakenings: ... (44 to find)"), so 100 scenes do not make a list of 100 mysteries.
+- **The awakened look** (`CastMember.look`, the act `{ who, look: 1 }`): a hero is drawn from its sheet and, when the light
+  comes, in the tone `awakenLook.ts` gives it (a Pixi colour matrix of the same hue turn, colour and finish the menus use).
+- **A scene never blocks the game**: a scene that cannot start counts as skipped, and the fight resumes.
+
+### Cinematics off
+
+`scenesOn()` reads `settings().cinematics !== false`, so the switch `hero-progress` adds drops straight in; until then it is
+always on (and off in an auto-replay).
+
+### Samples
+
+`docs/samples/scenes-<id>.png` is a strip of every frame of one scene (the fixed ones); `scenes-awaken.png`, `-clear`,
+`-earned`, `-castle`, `-spire` and `-form` are a sheet of the family, one frame of each scene. All at 393x852; made with
+`node tools/cinematics/shots.mjs` (frames of every scene by `__game.sceneFrames`) and `python3 tools/cinematics/sheets.py`.
+
+### Decisions the owner may want to change (the sensible default was taken)
+
+1. **The castle scene plays once for each building** (seven), not on every level; every level would be a scene every few
+   minutes of building. Say if "a new castle level" should mean something else.
+2. **A boss's form cut-in plays every time**, as asked, about four seconds with one-tap Skip.
+3. **Awakening plays for the first step only** (the second awakening is the same look, brighter).
+4. **The first loss plays after any fight lost**, a run's or the daily's, once.
+5. **Ascension 1's scene** plays on the first fight of an Ascension 1 run, whichever map.
+6. **The spire** here is the endless tower (`mode: tower`).
 
 ## Decisions for the owner
 

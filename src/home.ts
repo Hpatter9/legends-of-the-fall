@@ -63,6 +63,8 @@ export interface HomeHooks {
   onScene?(): void;
   /** Play a cinematic again (the codex's Scenes list). */
   onWatchScene?(id: string): void;
+  /** A build was raised (the castle's cinematic): the building, or `chapel`. */
+  onBuilt?(site: BuildSite): void;
 }
 
 type Tab = 'recruit' | 'heroes' | 'battle' | 'castle' | 'spells';
@@ -150,8 +152,10 @@ export class Home {
   private tickWorks(): void {
     const m = this.meta;
     if (!m.works) return;
-    if (settleWorks(m, Date.now())) {
+    const raised = settleWorks(m, Date.now());
+    if (raised) {
       saveMeta(m);
+      this.hooks.onBuilt?.(raised);
       this.refresh();
       // (an open card redraws with the new level)
       if (this.cardOpen && this.cardFor) this.cardFor === 'chapel' ? this.openChapel() : this.openBuilding(this.cardFor);
@@ -215,7 +219,11 @@ export class Home {
     if (!this.isOpen) return;
     const m = this.meta;
     // (a build that finished while the game was away stands now)
-    if (settleWorks(m, Date.now())) saveMeta(m);
+    const raised = settleWorks(m, Date.now());
+    if (raised) {
+      saveMeta(m);
+      this.hooks.onBuilt?.(raised);
+    }
     // top bar (the run's gold stays in the run: the owner's call)
     $('hmCrowns').replaceChildren(icon(ICONS.crowns), el('b', '', String(m.crowns)));
     const stars = ARMIES.reduce((n, a) => n + armyStars(m, a).got, 0);

@@ -18,7 +18,7 @@ import { ARMIES, armyById, armyUnlocked, settleWave, type ArmyPay } from './sim/
 import { drawRunStars, showUnlock } from './armiesView';
 import { spellIconHtml } from './spellIcons';
 import { settleArmyRun, type StarResult } from './sim/armyStars';
-import { tierOf } from './sim/tiers';
+import { TIERS, tierOf } from './sim/tiers';
 import { formOf, UNITS } from './sim/units';
 import { ELITE_BY_ID } from './sim/elites';
 import { isBoss } from './sim/foes';
@@ -27,7 +27,9 @@ import { earn, loadMeta, needsStarter, pickStarter, heroRank, recordStars, saveM
 import { chooseStarter } from './starter';
 import { ScenePlayer } from './render/sceneView';
 import { dueScene, markSeen } from './sim/sceneRules';
-import type { Moment } from './sim/sceneScripts';
+import { onAwakened } from './awakenView';
+import { SCENES, SCENE_ORDER, type Moment } from './sim/sceneScripts';
+import { previewFrames } from './render/sceneClock';
 import { xpRate } from './sim/castle';
 import { heroStats } from './sim/talents';
 import { powerOf, powerText } from './sim/power';
@@ -260,7 +262,8 @@ class Game {
           this.home.open();
         }),
       onRecruit: () => this.gacha.open(),
-      onSummon: (n, play) => this.gacha.summon(n, play),
+      // (the first summon has its cinematic before the hall's own show)
+      onSummon: (n, play) => this.gacha.summon(n, (got) => this.queueScene({ kind: 'firstSummon' }).then(() => play(got))),
       onDaily: () => {
         if (dailyInProgress(loadRun(), todayKey())) return this.resume();
         // (the start card names the boss and the land; a tap on Fight! starts the run, the first of the date counting)
@@ -275,6 +278,7 @@ class Game {
       },
       onScene: () => this.syncScene(),
       onWatchScene: (id) => void this.playScene(id),
+      onBuilt: (site) => void this.queueScene({ kind: 'castle', site }),
     });
     this.towerView = new TowerView({
       meta: () => this.meta,
@@ -328,6 +332,10 @@ class Game {
     new MutationObserver(() => this.syncScene()).observe($('towerMap'), { attributes: true, attributeFilter: ['hidden'] });
     $('loading').remove();
     (window as unknown as { __game: Game }).__game = this;
+    // (a hero's first awakening has its cinematic)
+    onAwakened((kind, step) => {
+      if (step === 1) void this.queueScene({ kind: 'awaken', hero: kind });
+    });
   }
 
   /* -------------------------------------------------------------- the fight */
@@ -367,10 +375,56 @@ class Game {
     this.syncSprites(true);
     this.layout();
     this.refresh();
-    // (a Calamity's first boss has its cinematic before the boss's own card)
-    const due = this.run.mode?.kind === 'calamity' && this.run.tower && isBossRun(this.run) ? dueScene(this.meta, { kind: 'calBoss', map: this.run.tower.act }) : null;
-    if (due) void this.playDue({ kind: 'calBoss', map: this.run.tower!.act }).then(() => this.startIntro());
+    // (a fight's cinematics come before the boss's own card: a Calamity's herald, a first elite, the tower's milestones ...)
+    const due = this.setupMoments().filter((m) => this.scenesOn() && dueScene(this.meta, m));
+    if (due.length) void Promise.all(due.map((m) => this.queueScene(m))).then(() => this.startIntro());
     else this.startIntro();
+  }
+
+  /** The moments that bring a cinematic as this fight is set up, in the order they play. */
+  private setupMoments(): Moment[] {
+    const run = this.run;
+    const out: Moment[] = [];
+    const mode = run.mode?.kind;
+    if (mode === 'calamity' && run.tower) {
+      if (isBossRun(run)) out.push({ kind: 'calBoss', map: run.tower.act });
+      if ((run.mode as { ascension?: number }).ascension === 1) out.push({ kind: 'ascension' });
+    }
+    if (mode === 'tower' && [10, 25, 50].includes(run.stage)) out.push({ kind: 'spire', floor: run.stage });
+    if (mode === 'army' && tierOfRun(run) >= TIERS.length - 1) out.push({ kind: 'mythic' });
+    if (mode === 'daily' && isBossRun(run)) out.push({ kind: 'dailyBoss' });
+    if (run.tower?.cur?.fight?.elite) out.push({ kind: 'elite' });
+    return out;
+  }
+
+  /** Whether cinematics play now: not in an auto-replay, and not switched off (the Settings switch, once it exists). */
+  private scenesOn(): boolean {
+    return !this.auto && (settings() as { cinematics?: boolean }).cinematics !== false;
+  }
+
+  /** How many cinematics are queued or playing: the fight is held for them (the renderer waits; the simulation is not touched, so it plays out the same). */
+  private sceneHold = 0;
+  private sceneChain: Promise<void> = Promise.resolve();
+
+  /** Queue the cinematic due at a moment, if there is one: they play one after another, and the returned promise is done when this one is. */
+  private queueScene(moment: Moment): Promise<void> {
+    if (!this.scenesOn() || !dueScene(this.meta, moment)) return this.sceneChain;
+    this.sceneHold++;
+    this.sceneChain = this.sceneChain
+      .then(() => this.playDue(moment))
+      .catch(() => undefined)
+      .then(() => void this.sceneHold--);
+    return this.sceneChain;
+  }
+
+  /** The first time a five-unit combo's mega ultimate fires: the cut-in. (Waiting for the combo work to land: it calls this at the moment.) */
+  playComboMega(): Promise<void> {
+    return this.queueScene({ kind: 'combo' });
+  }
+
+  /** The first time Duchess turns up in a fight. (Waiting for her random arrival to land: it calls this.) */
+  duchessTurnsUp(): Promise<void> {
+    return this.queueScene({ kind: 'duchess' });
   }
 
   /** The heroes that play a cinematic: the party, and the hero a Calamity run began with. */
@@ -385,6 +439,15 @@ class Game {
     markSeen(this.meta, id);
     saveMeta(this.meta);
     await this.scenes.play(id, this.players());
+  }
+
+  /** Every cinematic's id, and the frames of one worth a screenshot (previews: `tools/cinematics/shots.mjs`). */
+  sceneIds(): string[] {
+    return [...SCENE_ORDER];
+  }
+
+  sceneFrames(id: string): [number, number, number][] {
+    return previewFrames(SCENES[id]);
   }
 
   /** Play a cinematic by id (the Scenes list, and previews: `__game.playScene('opening')`). */
@@ -628,10 +691,12 @@ class Game {
       return;
     }
     if (this.auto) this.autoTick(dt);
-    if (b.phase === 'fight') {
+    if (b.phase === 'fight' && this.sceneHold > 0) {
+      // (a cinematic is up: the fight is held where it is)
+    } else if (b.phase === 'fight') {
       // (a boss's fall slows the fight for a beat: `timeScale`)
       this.acc += Math.min(dt, 250) * this.speed * this.fx.timeScale();
-      while (this.acc >= TICK_MS && b.phase === 'fight') {
+      while (this.acc >= TICK_MS && b.phase === 'fight' && this.sceneHold === 0) {
         this.acc -= TICK_MS;
         const events = stepBattle(b);
         tally(this.stats, events, b.units);
@@ -697,6 +762,8 @@ class Game {
   private startPhase(e: Extract<BattleEvent, { kind: 'phase' }>): void {
     const boss = this.b.units.find((u) => u.id === e.by);
     if (!boss) return;
+    // (the boss's cut-in: the fight is held while it plays, brief and skippable)
+    void this.queueScene({ kind: 'bossForm', boss: boss.def });
     this.phaseBoss = boss;
     this.phaseZoom = Math.min(this.tzoom * 1.4, 3 / this.scale);
     const banner = $('phaseBanner');
@@ -1844,7 +1911,13 @@ class Game {
       const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b });
       this.runStars = settleArmyRun(this.meta, run);
       // (a milestone this fight reached may bring in a hero)
-      toastJoined(grantContent(this.meta));
+      const joined = grantContent(this.meta);
+      toastJoined(joined);
+      // (the fight's cinematics, one after another: an army's last stand, the Calamity's end, a first loss, the heroes earned)
+      if (army && this.pay?.firstClear) void this.queueScene({ kind: 'armyClear', army: army.id });
+      if (won && run.cleared && run.mode?.kind === 'calamity') void this.queueScene({ kind: 'calVictory' });
+      if (!won) void this.queueScene({ kind: 'firstLoss' });
+      for (const hero of joined) void this.queueScene({ kind: 'earned', hero });
       // (a run that levels its own heroes taught them in `finishTower`; the lasting XP is not touched)
       const own = run.local ? climbXpView(run) : null;
       const gains = own ? own.gains : fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp);

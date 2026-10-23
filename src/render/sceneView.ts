@@ -6,7 +6,7 @@
 // on; Skip ends it at once. The picture lives on its own small Pixi canvas, made when a scene starts and dropped when it
 // ends, so nothing costs anything the rest of the time. It never touches a battle.
 
-import { Application, Container, Graphics, Rectangle, Sprite, TilingSprite, Texture } from 'pixi.js';
+import { Application, ColorMatrixFilter, Container, Graphics, Rectangle, Sprite, TilingSprite, Texture } from 'pixi.js';
 import { FEET, fillLine, STAGE_H, STAGE_W, SCENES, type Scene, type SceneCue, type Shot } from '../sim/sceneScripts';
 import { castOf, namesOf, type Cast, type Players } from '../sim/sceneRules';
 import { UNITS } from '../sim/units';
@@ -16,6 +16,7 @@ import { facesRightOf, framesOf, figureOf, type Anim } from './sheets';
 import { actorsAt, cameraAt, keepInside, lineNow, lineStart, lookAt, next, scaleOf, shotLength, start, tick, TYPE_RATE, typedChars, type ActorNow, type Cursor } from './sceneClock';
 import { play } from './sound';
 import { goatSheet } from '../duchess';
+import { toneOf } from './awakenLook';
 import { FRAME as GOAT_FRAME } from './duchessRules';
 import { settings } from '../settings';
 import type { Area } from '../sim/board';
@@ -38,6 +39,16 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   if (text) e.textContent = text;
   return e;
 };
+
+/** The awakened tone of a hero as a colour matrix (the same hue turn, richer colour and finish the menus use). */
+function lookMatrix(kind: string, step: number): ColorMatrixFilter {
+  const t = toneOf(kind, step);
+  const f = new ColorMatrixFilter();
+  if (t.hue) f.hue(t.hue, false);
+  f.saturate((t.saturate - 1) * 1.5, true);
+  if (t.brightness !== 1) f.brightness(t.brightness, true);
+  return f;
+}
 
 const reduced = (): boolean => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 /** Whether the screen is to stay still: shake off in the settings, or reduced motion on the device (the fight's own rule). */
@@ -116,6 +127,8 @@ class Hud {
 interface Figure {
   box: Container;
   body: Sprite;
+  /** The awakened look drawn now. */
+  look?: number;
 }
 
 export class ScenePlayer {
@@ -306,7 +319,9 @@ class Run {
     if (!this.ended) return;
     this.now = now;
     const scene = this.scene;
-    const moved = tick(this.cursor, scene, this.frozen ? 0 : Math.min(dt, 0.1));
+    // (a slow-motion beat runs the clock at its own share of the pace; reduced motion plays it at the normal one)
+    const rate = reduced() ? 1 : (scene.shots[this.cursor.shot]?.slow ?? 1);
+    const moved = tick(this.cursor, scene, this.frozen ? 0 : Math.min(dt, 0.1) * rate);
     if (!moved) return this.finish('done');
     this.cursor = moved;
     const c = this.cursor;
@@ -390,6 +405,11 @@ class Run {
       const k = def.scale * (m.scale ?? 1);
       f.body.scale.set(k * dir, k);
       f.body.tint = m.shade ? 0x000000 : 0xffffff;
+      // (the awakened look: the tone `awakenLook.ts` gives the hero, as a colour matrix)
+      if (f.look !== a.look) {
+        f.look = a.look;
+        f.body.filters = a.look ? [lookMatrix(kind, a.look)] : [];
+      }
       const bob = speaking === id && a.pose !== 'down' && !reduced() ? Math.round(Math.sin(this.now / 160)) : 0;
       f.body.y = -bob;
       f.box.position.set(Math.round(a.x), FEET);

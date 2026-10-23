@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FEET, fillLine, lineSeconds, sceneSeconds, SCENES, SCENE_ORDER, STAGE_H, STAGE_W, type Scene } from '../src/sim/sceneScripts';
+import { FEET, fillLine, holdOf, lineSeconds, sceneSeconds, SCENES, SCENE_ORDER, STAGE_H, STAGE_W, type Scene } from '../src/sim/sceneScripts';
 import { castOf, dueScene, kindOf, markSeen, namesOf, readScenes, seenScene } from '../src/sim/sceneRules';
 import { actorsAt, beats, BASE_SCALE, cameraAt, keepInside, lineNow, lineStart, lookAt, next, scaleOf, shotLength, start, tick, typedChars, TYPE_RATE } from '../src/render/sceneClock';
 import { loadMeta, newMeta, pickStarter, saveMeta } from '../src/sim/meta';
@@ -11,6 +11,8 @@ const store = () => {
   const data: Record<string, string> = {};
   return { setItem: (k: string, v: string) => void (data[k] = v), getItem: (k: string) => data[k] ?? null, data };
 };
+
+const shotSeconds = (s: Scene['shots'][number]): number => (s.lines?.reduce((n, l) => n + lineSeconds(l.text), 0) ?? 0) + holdOf(s);
 
 /** A tiny scene for the clock: one actor walks in, then a line, then a hold. */
 const mini: Scene = {
@@ -25,10 +27,14 @@ const mini: Scene = {
   ],
 };
 
-test('every scene is 20 to 40 seconds as played untouched, with brief lines', () => {
+test('every scene is 10 to 40 seconds as played untouched (a cut-in 2 to 6), with brief lines', () => {
   for (const id of SCENE_ORDER) {
     const secs = sceneSeconds(SCENES[id]);
-    assert.ok(secs >= 20 && secs <= 40, `${id}: ${secs.toFixed(1)} s`);
+    const short = !!SCENES[id].short;
+    // (a slowed shot takes longer than its beats: the cut-in's real length counts it)
+    const real = SCENES[id].shots.reduce((n, s) => n + (shotSeconds(s) / (s.slow ?? 1)), 0);
+    if (short) assert.ok(real >= 2 && real <= 6, `${id}: ${real.toFixed(1)} s`);
+    else assert.ok(secs >= 10 && secs <= 40, `${id}: ${secs.toFixed(1)} s`);
     for (const s of SCENES[id].shots) for (const l of s.lines ?? []) assert.ok(l.text.length <= 100, `${id}: ${l.text}`);
   }
 });
@@ -171,11 +177,14 @@ test('who plays: the party fills the party roles, the hero is the run\'s lead, f
   assert.deepEqual(castOf(withGoat, players).goat, { kind: null, name: 'Duchess' });
 });
 
-test('both pilots cast Duchess and she gets a line, as an actor with no fighter to draw', () => {
+test('every scene that casts Duchess gives her a line, as an actor with no fighter to draw; the pilots cast her', () => {
   for (const id of SCENE_ORDER) {
     const sc = SCENES[id];
     const goat = Object.entries(sc.cast).find(([, m]) => m.role === 'duchess');
-    assert.ok(goat, id);
+    if (!goat) {
+      assert.ok(!['opening', 'gorvak'].includes(id), id);
+      continue;
+    }
     assert.ok(sc.shots.some((s) => s.lines?.some((l) => l.who === goat[0] && l.text === 'Mehh.')), id);
     assert.equal(castOf(sc, { party: ['knight', 'samurai', 'archer'] })[goat[0]].kind, null);
   }
@@ -186,7 +195,8 @@ test('the opening is due for a new save that has picked, once; the first Calamit
   pickStarter(m, 0);
   assert.equal(dueScene(m, { kind: 'starter' }), 'opening');
   assert.equal(dueScene(m, { kind: 'calBoss', map: 1 }), 'gorvak');
-  assert.equal(dueScene(m, { kind: 'calBoss', map: 2 }), null, 'only the first boss has a scene so far');
+  assert.equal(dueScene(m, { kind: 'calBoss', map: 2 }), 'thornWarden', 'each map has its own herald');
+  assert.equal(dueScene(m, { kind: 'calBoss', map: 7 }), null, 'there are six');
   markSeen(m, 'opening');
   assert.equal(seenScene(m, 'opening'), true);
   assert.equal(dueScene(m, { kind: 'starter' }), null, 'once');
@@ -220,4 +230,131 @@ test('seen scenes are saved and read back; an old save that had picked its heroe
   // (junk is dropped)
   assert.deepEqual(readScenes(['gorvak', 'gorvak', 7, 'nope'], true), ['gorvak']);
   assert.deepEqual(readScenes('x', false), []);
+});
+
+/* ------------------------------------------------------------ the rest of the scenes */
+
+import { ARMIES, bossOf } from '../src/sim/armies';
+import { ALL_HEROES } from '../src/sim/units';
+import { CONTENT_HEROES } from '../src/sim/contentHeroes';
+import { PHASE2 } from '../src/sim/bossPhases';
+import { BUILDING_IDS } from '../src/sim/castle';
+import { momentKey, type Moment } from '../src/sim/sceneScripts';
+import { momentText, sceneList } from '../src/sim/sceneRules';
+import { FAMILY_NAMES } from '../src/sim/sceneFamilies';
+
+const picked = () => {
+  const m = newMeta(21);
+  pickStarter(m, 0);
+  return m;
+};
+
+test('each Calamity map has its herald, and the Calamity’s end has its own scene', () => {
+  const m = picked();
+  const ids = [1, 2, 3, 4, 5, 6].map((map) => dueScene(m, { kind: 'calBoss', map }));
+  assert.equal(new Set(ids).size, 6);
+  assert.ok(ids.every((id) => id));
+  assert.equal(dueScene(m, { kind: 'calVictory' }), 'calamityEnds');
+  // (each herald is its own boss, drawn from its fighter)
+  ids.forEach((id, i) => assert.ok(Object.values(SCENES[id!].cast).some((c) => c.role === `unit:calBoss${i + 1}`)));
+});
+
+test('every army has a first-clear scene with its own boss, and it is due once', () => {
+  const m = picked();
+  for (const a of ARMIES) {
+    const id = dueScene(m, { kind: 'armyClear', army: a.id });
+    assert.equal(id, `clear:${a.id}`);
+    assert.equal(SCENES[id!].cast.boss.role, `unit:${bossOf(a)}`, a.id);
+    assert.equal(SCENES[id!].shots[0].look, a.area, a.id);
+  }
+  markSeen(m, 'clear:orcs');
+  assert.equal(dueScene(m, { kind: 'armyClear', army: 'orcs' }), null);
+  assert.equal(dueScene(m, { kind: 'armyClear', army: 'undead' }), 'clear:undead', 'another army is unaffected');
+});
+
+test('every hero has an awakening scene (their own sheet, their new look), and the ten content heroes an arrival', () => {
+  const m = picked();
+  for (const k of ALL_HEROES) {
+    const id = dueScene(m, { kind: 'awaken', hero: k });
+    assert.equal(id, `awaken:${k}`);
+    const sc = SCENES[id!];
+    assert.equal(sc.cast.hero.role, `unit:${k}`);
+    // (the new look is switched on in the scene, once the light comes)
+    assert.ok(sc.shots.some((s) => s.acts?.some((a) => 'look' in a && a.look === 1)), k);
+  }
+  assert.equal(ALL_HEROES.filter((k) => dueScene(m, { kind: 'awaken', hero: k })).length, 45);
+  for (const c of CONTENT_HEROES) assert.equal(dueScene(m, { kind: 'earned', hero: c.kind }), `earned:${c.kind}`);
+  assert.equal(dueScene(m, { kind: 'earned', hero: 'knight' }), null, 'a hero not earned by play has no arrival');
+});
+
+test('a boss changing form: a short cut-in with a slow beat, whose words are the boss’s own, and it plays every time', () => {
+  const m = picked();
+  for (const [boss, kit] of Object.entries(PHASE2)) {
+    const id = dueScene(m, { kind: 'bossForm', boss });
+    assert.equal(id, `form:${boss}`);
+    const sc = SCENES[id!];
+    assert.ok(sc.short && sc.again);
+    assert.ok(sc.shots.some((s) => s.slow && s.slow < 1), 'a slow-motion beat');
+    assert.equal(sc.shots.flatMap((s) => s.lines ?? []).map((l) => l.text).join(), kit.line, `${boss} says what its phase banner says`);
+    markSeen(m, id!);
+    assert.equal(dueScene(m, { kind: 'bossForm', boss }), id, 'seen, and due again');
+  }
+  assert.equal(dueScene(m, { kind: 'bossForm', boss: 'orcGrunt' }), null);
+});
+
+test('the castle, the tower and the firsts each have their scene', () => {
+  const m = picked();
+  for (const site of [...BUILDING_IDS, 'chapel']) assert.equal(dueScene(m, { kind: 'castle', site }), `castle:${site}`);
+  for (const floor of [10, 25, 50]) assert.equal(dueScene(m, { kind: 'spire', floor }), `spire:${floor}`);
+  assert.equal(dueScene(m, { kind: 'spire', floor: 11 }), null);
+  const firsts: Moment['kind'][] = ['combo', 'firstLoss', 'duchess', 'mythic', 'firstSummon', 'elite', 'ascension', 'dailyBoss'];
+  for (const kind of firsts) {
+    const id = dueScene(m, { kind } as Moment);
+    assert.ok(id, kind);
+    markSeen(m, id!);
+    assert.equal(dueScene(m, { kind } as Moment), null, `${kind} plays once`);
+  }
+});
+
+test('no two scenes share a moment, every moment has words for the list, and the cut-ins and families are marked', () => {
+  const seen = new Map<string, string>();
+  for (const id of SCENE_ORDER) {
+    const key = momentKey(SCENES[id].moment);
+    assert.ok(!seen.has(key), `${id} and ${seen.get(key)} both come at ${key}`);
+    seen.set(key, id);
+    assert.ok(momentText(SCENES[id].moment).length > 5);
+    const f = SCENES[id].family;
+    if (f) assert.ok(FAMILY_NAMES[f], f);
+    if (SCENES[id].again) assert.ok(SCENES[id].short, `${id}: only a cut-in repeats`);
+  }
+});
+
+test('the Scenes list shows a seen scene, hides an unseen one, and folds a family’s unseen scenes into one line', () => {
+  const m = picked();
+  const all = sceneList(m);
+  assert.ok(all.every((r) => !r.seen || r.title !== '???'));
+  assert.equal(all.filter((r) => r.more).length, Object.keys(FAMILY_NAMES).length, 'one folded line a family');
+  assert.ok(all.length < 40, 'the list is short');
+  markSeen(m, 'awaken:knight');
+  markSeen(m, 'karnok');
+  const after = sceneList(m);
+  assert.ok(after.find((r) => r.id === 'awaken:knight')?.seen);
+  assert.ok(after.find((r) => r.id === 'karnok')?.seen);
+  const folded = after.find((r) => r.more && /Awakenings/.test(r.text));
+  assert.equal(folded?.more, 44);
+  assert.equal(after.some((r) => r.id === 'awaken:knight' && r.more), false);
+});
+
+test('the awakened look is switched on by an act, held after it, and the slow beat is a share of the pace', () => {
+  const sc = SCENES['awaken:knight'];
+  const before = actorsAt(sc, start()).hero;
+  assert.equal(before.look, 0);
+  const later = actorsAt(sc, { shot: 1, beat: 0, t: 0.1, shotT: 0.1 }).hero;
+  assert.equal(later.look, 1);
+  assert.equal(actorsAt(sc, { shot: 2, beat: 0, t: 0.1, shotT: 0.1 }).hero.look, 1, 'it stays');
+  for (const id of SCENE_ORDER) for (const s of SCENES[id].shots) if (s.slow !== undefined) assert.ok(s.slow > 0 && s.slow <= 1);
+});
+
+test('no scene flashes more than once a shot or loops a blink; the flash-free ones keep the rules for cut-ins', () => {
+  for (const id of SCENE_ORDER) for (const s of SCENES[id].shots) assert.ok((s.fx ?? []).filter((f) => f === 'flash').length <= 1, id);
 });

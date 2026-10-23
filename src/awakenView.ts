@@ -33,6 +33,12 @@ export function playAwakenShow(pic: HTMLElement, step: number): void {
 }
 
 /** The panel for a hero kind. `changed` is told after a step is taken (so the sheet can draw again, with the show). */
+/** Told after a hero takes a step of awakening (the page plays its cinematic): the kind and the step reached. */
+let awakened: ((kind: string, step: number) => void) | null = null;
+export const onAwakened = (f: (kind: string, step: number) => void): void => {
+  awakened = f;
+};
+
 export function drawAwaken(meta: Meta, kind: string, changed: (step: number) => void): HTMLElement {
   const panel = el('div', 'awPanel');
   const done = awakenedOf(meta, kind);
@@ -66,6 +72,7 @@ export function drawAwaken(meta: Meta, kind: string, changed: (step: number) => 
       const step = awaken(meta, kind);
       if (!step) return;
       saveMeta(meta);
+      awakened?.(kind, step);
       changed(step);
     });
     panel.append(bar, go);
