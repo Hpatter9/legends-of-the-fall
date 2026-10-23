@@ -44,7 +44,7 @@ for (const [w, h] of sizes) {
       await page.reload();
       await page.waitForTimeout(2000);
       await page.evaluate(() => document.getElementById('tipSkip')?.click());
-      await page.evaluate(() => { for (const b of document.querySelectorAll('.hmCalamity')) b.click(); });
+      await page.evaluate(() => { document.getElementById('hmCalamity').click(); });
       await page.waitForTimeout(1800);
     }
     if (spec?.after) await spec.after(page);

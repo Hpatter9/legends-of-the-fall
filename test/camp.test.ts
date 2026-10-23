@@ -48,7 +48,7 @@ test('the fire, the table, the cart and the notice boards are on screen and clea
       assert.ok(b.y + b.h < c.fire.y - 40, 'places stand above the fire');
     }
     const { tower, daily, calamity } = c.places;
-    assert.ok(tower.plate.x + tower.plate.w < calamity.plate.x && calamity.plate.x + calamity.plate.w < daily.plate.x, 'the three plates do not touch');
+    assert.ok(tower.plate.x + tower.plate.w + 8 <= calamity.plate.x && calamity.plate.x + calamity.plate.w + 8 <= daily.plate.x, 'the three plates stand at least 8px apart');
   }
 });
 

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { startedMeta } from '../src/sim/meta';
 import { calamityRun } from '../src/sim/modes';
 import { CAL_ROWS } from '../src/sim/calamity';
-import { calamityMap, choices, clearNode, enterNode, floorOf, mapFor, openTreasure, setGoing, sideChoices } from '../src/sim/tower';
+import { calamityMap, choices, makeMap, clearNode, enterNode, floorOf, mapFor, openTreasure, setGoing, sideChoices } from '../src/sim/tower';
 import { fogOf, landOf, roadBetween, SIDE_BASE, sideSpots, START_ID } from '../src/sim/calLand';
 import { loadSlot, saveSlot, type Run } from '../src/sim/run';
 
@@ -282,4 +282,20 @@ test('closed between maps: it reopens on the next map, at its start, with only t
   assert.deepEqual(v.spots, [START_ID, ...back.tower!.map.filter((n) => n.row === 0).map((n) => n.id)].sort((a, b) => a - b));
   assert.deepEqual(v.sideDone, []);
   assert.deepEqual(v, view(r));
+});
+
+test('a calamity map starts at one spot or two: the first floor never lights more than two (the endless tower\'s maps keep their wider start)', () => {
+  for (let seed = 1; seed <= 80; seed++)
+    for (let act = 1; act <= CAL_ROWS.length; act++) {
+      const nodes = calamityMap(seed, act, CAL_ROWS[act - 1], 0);
+      const first = nodes.filter((n) => n.row === 0);
+      assert.ok(first.length >= 1 && first.length <= 2, `seed ${seed} map ${act}: ${first.length} first-floor spots`);
+      // (every node is still reached from a start, and every path ends at the boss)
+      const reach = new Set(first.map((n) => n.id));
+      for (const n of nodes) if (reach.has(n.id)) for (const to of n.next) reach.add(to);
+      assert.equal(reach.size, nodes.length);
+    }
+  let wide = 0;
+  for (let seed = 1; seed <= 80; seed++) if (makeMap(seed, 1).filter((n) => n.row === 0).length > 2) wide++;
+  assert.ok(wide > 0, 'the tower still starts from three or four spots on some maps');
 });
