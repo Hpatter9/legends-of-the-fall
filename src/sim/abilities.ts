@@ -12,6 +12,7 @@ import { calBossKits } from './calamityBosses';
 import { Rng } from './rng';
 import { fxBlow, fxStruck, fxTick, hidden } from './equipFx';
 import { heroUltimates } from './ultimates';
+import { runRiders } from './tierSkills';
 
 /** A skill fires at this much charge. */
 export const CHARGE_MAX = 100;
@@ -20,7 +21,7 @@ export const BRITTLE_MULT = 1.3;
 /** An ultimate gathers charge at this share of its first skill's rate. */
 export const ULT_RATE = 0.45;
 /** The level a hero fights at to have an ultimate that carries `unlock: ULT_LEVEL` (a kind's lasting level; in the spire and Calamity, the in-run level). */
-export const ULT_LEVEL = 15;
+export const ULT_LEVEL = 30;
 
 /** Damage over time: `dmg` every `every` ms for `ms`. */
 export interface Dot {
@@ -769,7 +770,7 @@ function benediction(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 
 /** Druid: a treant rises beside her (one at a time) and fights for her side. */
 const callTreant = (b: Battle, me: Unit) => callSummon(b, me, 'treant', tal(me, 'extra'));
-/** Beastmaster: dire wolves (two at a time) come at his call. */
+/** Beastmaster: wolves (two at a time) come at his call. */
 const callWolves = (b: Battle, me: Unit) => callSummon(b, me, 'wolf', 1 + tal(me, 'extra'));
 /** A fighter of `kind` rises on the free tile beside the caster that is nearest the nearest foe, unless more than `more` of its kind stand already. */
 function callSummon(b: Battle, me: Unit, kind: string, more: number): boolean {
@@ -1364,7 +1365,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Catchy Tune', text: 'Every 3.5s the ally with the least skill charge near him gains 16', tune: { every: 3500, charge: 16 } },
   },
   beastmaster: {
-    skill: { name: 'Call of the Wild', text: 'Two dire wolves answer his call and fight for him', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 700, anim: 'attack2', cast: callWolves },
+    skill: { name: 'Call of the Wild', text: 'A wolf answers his call and fights for him (two at most stand at once)', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 700, anim: 'attack2', cast: callWolves },
     passive: { name: 'Whip Crack', text: 'His blows slow the foe for 1.5s', slow: 1500 },
   },
   kraken: {
@@ -1585,7 +1586,19 @@ function began(b: Battle, me: Unit, s: Skill, out: BattleEvent[]): boolean {
   me.swing = undefined;
   me.busyUntil = b.t + s.castMs;
   out.push({ kind: 'skill', by: me.id, name: s.name, ms: s.castMs });
+  // (a hero merged up adds its tier skill's riders to the ordinary skill; the ultimate is the same at every grade)
+  if (me.grade && s === kitOf(me)?.skill)
+    runRiders(b, me, out, (ms, share) => b.pending.push({ at: b.t + ms, kind: 'echo', by: me.id, to: me.id, dmg: share, heavy: false }));
   return true;
+}
+
+/** A tier skill's echo: the hero's skill goes off again at `share` of its strength (nothing happens if it has nothing to hit, or the hero has fallen). It is not a cast: no charge, no busy time, and no riders of its own. */
+export function echoSkill(b: Battle, me: Unit, share: number, out: BattleEvent[]): void {
+  const s = kitOf(me)?.skill;
+  if (!s || !me.alive) return;
+  const at = out.length;
+  out.push({ kind: 'skill', by: me.id, name: s.name, ms: s.castMs });
+  if (!powered(b, me, s, share - 1, out)) out.splice(at, 1);
 }
 
 /** A fighter's ultimate, once it is its own: a hero's waits for the level its `unlock` names, and a foe never takes one that has an `unlock` (it is a hero's alone, so a boss that borrows a hero's skill does not borrow the ultimate). */

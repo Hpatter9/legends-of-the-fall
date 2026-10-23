@@ -3,6 +3,7 @@
 
 import { ALL_HEROES, UNITS } from './sim/units';
 import { KITS } from './sim/abilities';
+import { TIER_SKILLS } from './sim/tierSkills';
 import { traitsOf, TRAITS } from './sim/traits';
 import { MAX_RANK, RANK_SHARDS, heroRank, rankMult, rankOf, type Meta } from './sim/meta';
 import { AWAKEN_SHARDS, awakenedOf, awakenPlan } from './sim/awaken';
@@ -134,7 +135,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     };
     box.append(power, stat);
     if (kit)
-      for (const [label, a] of [['Skill', kit.skill], ...(kit.ultimate ? [['Ultimate', kit.ultimate] as const] : []), ['Passive', kit.passive]] as const) {
+      for (const [label, a] of [['Skill', kit.skill], ...(TIER_SKILLS[kind] ? ([['Tier 2', TIER_SKILLS[kind][0]], ['Tier 3', TIER_SKILLS[kind][1]]] as const) : []), ...(kit.ultimate ? [['Ultimate', kit.ultimate] as const] : []), ['Passive', kit.passive]] as const) {
         const p = el('p');
         // (an ultimate waits for its level: it shows, dimmed, with the level it unlocks at)
         const locked = label === 'Ultimate' && 'unlock' in a && !!a.unlock && x.level < a.unlock;

@@ -6,6 +6,7 @@
 //   npm run balance -- --games 800     fewer fights, quicker and noisier
 //   npm run balance -- --hero-stage 1  play the hero table at another stage (default 5)
 //   npm run balance -- --heroes-only --hero-level 100 --hero-stage 60   the same with every hero at a level (pick a stage where the average team wins about half)
+//   npm run balance -- --heroes-only --hero-grade 3 --hero-stage 14   the same with every hero merged up (grade 2 or 3: the tier skills, `tierSkills.ts`)
 //   npm run balance -- --saves 200     fresh saves in the whole-run table (default 400)
 //   npm run balance -- --heroes-only  only the hero value table (table 1); --json file.json also writes each hero's win rate and lift; --seed-offset n plays other fights
 //   npm run balance -- --runs-only     only the whole-run table (quicker when tuning the levels)
@@ -55,6 +56,7 @@ const SAVES = arg('--saves', 400);
 const HERO_STAGE = arg('--hero-stage', 5);
 /** The level every hero fights at in the hero table (`--hero-level 60`; a stage that suits it is picked with `--hero-stage`). */
 const HERO_LEVEL = arg('--hero-level', 1);
+const HERO_GRADE = arg('--hero-grade', 1);
 const RUNS_ONLY = process.argv.includes('--runs-only');
 const ARMIES_ONLY = process.argv.includes('--armies-only');
 const HEROES_ONLY = process.argv.includes('--heroes-only');
@@ -83,7 +85,7 @@ function heroValue(): void {
   for (let g = 0; g < GAMES; g++) {
     const seed = g + 1 + SEED_OFFSET;
     const team = pickTeam(new Rng(mixSeed(seed, 0x7ea4)));
-    const r = play(seed, BANDS[g % BANDS.length], fieldBoost(HERO_STAGE), team, 1, HERO_LEVEL);
+    const r = play(seed, BANDS[g % BANDS.length], fieldBoost(HERO_STAGE), team, HERO_GRADE, HERO_LEVEL);
     for (const h of ALL_HEROES) {
       const t = tally.get(h)!;
       if (team.includes(h)) {
@@ -101,7 +103,7 @@ function heroValue(): void {
   const withRates = ALL_HEROES.map((h) => pct(tally.get(h)!.inW, tally.get(h)!.inN));
   const average = withRates.reduce((a, b) => a + b, 0) / withRates.length;
 
-  console.log(`\n1. HERO VALUE  (${GAMES} random five-hero teams, six bands in turn, stage ${HERO_STAGE} foes, every hero at level ${HERO_LEVEL})\n`);
+  console.log(`\n1. HERO VALUE  (${GAMES} random five-hero teams, six bands in turn, stage ${HERO_STAGE} foes, every hero at level ${HERO_LEVEL}, grade ${HERO_GRADE})\n`);
   console.log(
     [pad('hero', 16), rpad('with %', 8), rpad('without %', 11), rpad('value', 8), rpad('vs avg', 8), rpad('dealt', 8), rpad('taken', 8)].join(''),
   );
