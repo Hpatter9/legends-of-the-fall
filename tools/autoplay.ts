@@ -235,7 +235,11 @@ function playClimb(meta: Meta, run: Run, maxFloors: number): { floors: number; b
       openTreasure(run);
       clearNode(run);
     } else {
-      while (run.event) if (chooseOption(run, 0) === null) leaveEvent(run);
+      // (the first option, but the greedy player never gives a hero away: an offering is passed over)
+      while (run.event) {
+        const i = run.event.options.findIndex((o) => !(o.effect.t === 'mystery' && o.effect.act.k === 'sacrifice'));
+        if (chooseOption(run, Math.max(0, i)) === null) leaveEvent(run);
+      }
       finishMystery(run);
       // (a mimic's chest turns into a fight; a trainer's lesson goes into the meta)
       const xp = takeXp(run);

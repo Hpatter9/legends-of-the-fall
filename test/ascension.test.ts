@@ -265,9 +265,8 @@ test('a meta saved with the new field loads and an old one without it does too',
 });
 
 test('the greedy player plays an ascended calamity through (the level changes the climb, not the rules of play)', () => {
-  // (seed 2: a lone level-1 hero can lose the very first fight on an unlucky seed, as in seeds 3, 4 and 7 under the free map's foe scale; this one plays on)
-  const plain = playCalamity(startedMeta(2), 2, HEROES[0], newCastle(), 0);
-  const hard = playCalamity(startedMeta(2), 2, HEROES[0], newCastle(), 10);
+  const plain = playCalamity(startedMeta(3), 3, HEROES[0], newCastle(), 0);
+  const hard = playCalamity(startedMeta(3), 3, HEROES[0], newCastle(), 10);
   assert.ok(plain.floors >= 1 && hard.floors >= 1);
   assert.ok(hard.maps <= plain.maps + 1);
 });

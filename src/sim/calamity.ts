@@ -13,7 +13,7 @@ export const calBossBoost = (map: number, phaseAt = 0.5, shield = 0): { size: nu
 export const CAL_ROWS: readonly number[] = [6, 7, 7, 8, 8, 8];
 export const CAL_MAPS = CAL_ROWS.length;
 /** Foes' hp and attack on a floor are `start` x (1 + `growth` x (floor - 1)), the floors running on through the maps. Each hero past the fifth makes them `perHero` stronger (more heroes would otherwise make every fight easy), and each map after the first adds `step` of itself on top. */
-export const CAL_SCALE = { start: 0.4, growth: 0.05, perHero: 0.15, step: 0.43, bossHp: 1, bossStep: 0.05 };
+export const CAL_SCALE = { start: 0.42, growth: 0.05, perHero: 0.15, step: 0.38, bossHp: 1, bossStep: 0.05 };
 /** The gold a calamity starts with. */
 export const CAL_START_GOLD = 40;
 /** The foes' extra strength for the heroes on the roster beyond five. */
@@ -23,3 +23,6 @@ export const squadFoeMult = (heroes: number): number => 1 + CAL_SCALE.perHero * 
 export function fitBand(band: readonly string[], heroes: number, boss: boolean): string[] {
   return band.slice(0, Math.max(boss ? 3 : 2, Math.min(band.length, heroes + (boss ? 2 : 1))));
 }
+
+/** The opening of a calamity is gentler: its first floors' foes are this share of their strength (floor 1, 2, 3...), so a lone level-1 hero is not lost in the very first fight. The strength is put back in the later floors (`CAL_SCALE`). */
+export const CAL_OPENING: readonly number[] = [0.5, 0.65, 0.8];

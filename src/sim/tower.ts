@@ -22,7 +22,7 @@ import { mixSeed, Rng } from './rng';
 import { addTwists, TWISTS } from './twists';
 import { BOSS, FOE_START, reward, squadLimit, summonCost, type Run } from './run';
 import { UNITS } from './units';
-import { calBossBoost, fitBand, squadFoeMult } from './calamity';
+import { CAL_OPENING, calBossBoost, fitBand, squadFoeMult } from './calamity';
 import { calBossBand } from './calamityBosses';
 import { ascChests, ascCrowns, ascOf, ascRules, ascCleared } from './ascension';
 import { CALAMITY_XP, CLIMB_XP, fightXpByHero, gainRunXp, heroLevel, hireHero } from './climb';
@@ -463,7 +463,9 @@ function plainSpec(run: Run, kind: NodeKind, floor: number, nodeId?: number): Fi
   const more = squadFoeMult(run.roster.length);
   const rules = ascRules(ascOf(run));
   spec.band = fitBand(spec.band, run.roster.length, kind === 'boss');
-  spec.stage.foes = { ...spec.stage.foes, hp: spec.stage.foes!.hp! * more * rules.foeHp, atk: spec.stage.foes!.atk! * more * rules.foeAtk };
+  // (the first floors of the first map are gentler: `CAL_OPENING`)
+  const ease = kind === 'boss' ? 1 : CAL_OPENING[floor - 1] ?? 1;
+  spec.stage.foes = { ...spec.stage.foes, hp: spec.stage.foes!.hp! * more * rules.foeHp * ease, atk: spec.stage.foes!.atk! * more * rules.foeAtk * ease };
   if (rules.heal !== 1) spec.stage.heal = rules.heal;
   return spec;
 }
