@@ -116,6 +116,10 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   (`/create-image-pixflux`, side view, final pixel size; see `tools/tavern/README.md`), trimmed, and the floor turned and
   darkened. No asset-pack tiles are used here: the packs' village, glassblower and dungeon tilesets are all top-down, and
   the room is a side view. The heroes in it are the Craftpix sheets already credited above.
+- **The hearth hall and the games room** (`wall_hearth.png`, `wall_back.png`, `arch.png`, `bench.png`, `stage.png`): generated
+  the same way with PixelLab `/create-image-pixflux` (the two walls at 384x176, cropped to their wall: 128 rows; the doorway frame at 56x128;
+  the bench and the bard's stage trimmed to their pixels). The bar room's wall is the old `wall.png` without its top 48 rows. Nothing is
+  scaled; `tools/tavern/hall.py` does the cuts, `docs/notes/tavern-hall.md` lists the prompts.
 
 ## Art generated with PixelLab
 

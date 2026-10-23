@@ -1,5 +1,7 @@
 > Hero rarity was removed later (see `no-rarity.md`): where this note gives a hero a tier, rarity frame or tier bonus, that no longer applies.
 
+> The tavern is now three rooms wide and pans sideways: see `tavern-hall.md`. Where this note gives the room's size, scale or panning, that note wins.
+
 # The tavern (Heroes tab) and no recruiting mid-run
 
 ## The tavern
