@@ -29,8 +29,8 @@ function ctx(over: Partial<AchievementCtx> = {}): AchievementCtx {
 
 const earned = (id: string, c: AchievementCtx) => achievementById(id)!.earned(c);
 
-test('there are 15 to 20 achievements, each with its own id, a name and crowns', () => {
-  assert.ok(ACHIEVEMENTS.length >= 15 && ACHIEVEMENTS.length <= 20, `${ACHIEVEMENTS.length} achievements`);
+test('there are 15 to 25 achievements, each with its own id, a name and crowns', () => {
+  assert.ok(ACHIEVEMENTS.length >= 15 && ACHIEVEMENTS.length <= 25, `${ACHIEVEMENTS.length} achievements`);
   assert.equal(new Set(ACHIEVEMENTS.map((a) => a.id)).size, ACHIEVEMENTS.length);
   for (const a of ACHIEVEMENTS) {
     assert.ok(a.name && a.text, a.id);
@@ -93,6 +93,23 @@ test('a hero at level 10', () => {
   assert.equal(earned('level10', ctx({ meta })), false);
   meta.xp.samurai = xpFor(10);
   assert.equal(earned('level10', ctx({ meta })), true);
+});
+
+test('the deep level goals: 30, 50 and 100, with a meter', () => {
+  const meta = startedMeta(1);
+  for (const [id, lv] of [['level30', 30], ['level50', 50], ['level100', 100]] as const) {
+    meta.xp.samurai = xpFor(lv) - 1;
+    assert.equal(earned(id, ctx({ meta })), false, id);
+    meta.xp.samurai = xpFor(lv);
+    assert.equal(earned(id, ctx({ meta })), true, id);
+    assert.deepEqual(ACHIEVEMENTS.find((a) => a.id === id)!.meter!(meta), { now: lv, need: lv });
+  }
+  meta.xp.samurai = xpFor(47);
+  assert.deepEqual(ACHIEVEMENTS.find((a) => a.id === 'level50')!.meter!(meta), { now: 47, need: 50 });
+  // (any hero counts: the best level is the one that is read)
+  meta.xp.samurai = 0;
+  meta.xp.knight = xpFor(100);
+  assert.equal(earned('level100', ctx({ meta })), true);
 });
 
 test('every hero unlocked', () => {

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addUnit, hurt, place, playOut, fight, startBattle } from '../src/sim/battle';
-import { DIM_SHARE, fightXp, gainXp, killXp, lastingBoost, LATE_SHARE, LATE_XP, levelBoost, levelGain, levelOf, levelOfKind, LATE_LEVEL, MAX_LEVEL, MILESTONES, progressOf, RUN_MAX_LEVEL, XP_TAKE_PART, xpFor, xpOf } from '../src/sim/levels';
+import { BADGE_LEVELS, badgeOf, DEEP_SHARE, DIM_SHARE, fightXp, gainXp, killXp, lastingBoost, LATE_SHARE, LATE_XP, levelBoost, levelGain, levelOf, levelOfKind, LATE_LEVEL, MAX_LEVEL, MILESTONES, milestonePoints, OLD_MAX_LEVEL, progressOf, RUN_MAX_LEVEL, XP_TAKE_PART, xpFor, xpOf } from '../src/sim/levels';
 import { loadMeta, startedMeta } from '../src/sim/meta';
 import { gradeBoost } from '../src/sim/run';
 import { HEROES, UNITS } from '../src/sim/units';
@@ -76,7 +76,8 @@ test('the XP curve rises, and a level is read from the XP it takes', () => {
   assert.equal(xpFor(1), 0);
   assert.equal(xpFor(2), 60);
   let step = 0;
-  for (let lv = 1; lv < MAX_LEVEL; lv++) {
+  // (the old curve, up to 30: each level costs more than the one before. Past 30 the first few are eased in, and the pace tests below cover them)
+  for (let lv = 1; lv < OLD_MAX_LEVEL; lv++) {
     const s = xpFor(lv + 1) - xpFor(lv);
     assert.ok(s > step, `level ${lv} to ${lv + 1} costs more`);
     step = s;
@@ -106,22 +107,26 @@ test('level ups add to the kind\'s stats, and the gains are reported', () => {
 
 test('lasting levels are the in-run levels up to 20, then pay more and cost more XP', () => {
   for (let lv = 1; lv <= LATE_LEVEL; lv++) assert.deepEqual(lastingBoost(lv), levelBoost(lv), `level ${lv}`);
-  assert.equal(MAX_LEVEL, 30);
-  // (a run's own levels stop at the same 30, however much XP)
-  assert.equal(RUN_MAX_LEVEL, MAX_LEVEL);
+  assert.equal(MAX_LEVEL, 100);
+  assert.equal(OLD_MAX_LEVEL, 30);
+  // (a run's own levels still stop at 30, however much XP; only a hero kind's lasting level goes on to 100)
+  assert.equal(RUN_MAX_LEVEL, 30);
   assert.equal(levelOf(1e9, RUN_MAX_LEVEL), 30);
   assert.equal(levelOf(1e9), MAX_LEVEL);
   // (below 20 the XP curve is the old one; past it each level costs LATE_XP times as much)
   assert.equal(xpFor(20), 30 * 19 * 20);
   assert.equal(xpFor(21) - xpFor(20), LATE_XP * 60 * 20);
-  for (let lv = 21; lv < MAX_LEVEL; lv++) assert.ok(xpFor(lv + 1) - xpFor(lv) > xpFor(lv) - xpFor(lv - 1), `level ${lv + 1} costs more than ${lv}`);
+  for (let lv = 21; lv < OLD_MAX_LEVEL; lv++) assert.ok(xpFor(lv + 1) - xpFor(lv) > xpFor(lv) - xpFor(lv - 1), `level ${lv + 1} costs more than ${lv}`);
   // (each level past 20 adds LATE_SHARE of a full step, and the milestones add a lump)
   assert.ok(Math.abs(lastingBoost(21).hp - lastingBoost(20).hp - 0.22 * LATE_SHARE) < 1e-9);
   assert.ok(LATE_SHARE > DIM_SHARE, 'the late levels pay more than the ones before them');
   for (const m of MILESTONES) {
     assert.ok(m.level > LATE_LEVEL && m.level <= MAX_LEVEL);
     const step = lastingBoost(m.level).hp - lastingBoost(m.level - 1).hp;
-    assert.ok(Math.abs(step - (0.22 * LATE_SHARE + m.hp)) < 1e-9, `level ${m.level} adds its milestone`);
+    const share = m.level <= OLD_MAX_LEVEL ? LATE_SHARE : DEEP_SHARE;
+    assert.ok(Math.abs(step - (0.22 * share + m.hp)) < 1e-9, `level ${m.level} adds its milestone`);
+    const atk = lastingBoost(m.level).atk - lastingBoost(m.level - 1).atk;
+    assert.ok(Math.abs(atk - (0.18 * share + m.atk)) < 1e-9, `level ${m.level} adds its attack milestone`);
   }
   for (let lv = 2; lv <= MAX_LEVEL; lv++) assert.ok(lastingBoost(lv).hp > lastingBoost(lv - 1).hp && lastingBoost(lv).atk > lastingBoost(lv - 1).atk);
   // (the level-up chips: a lasting level reads the lasting gains, a run's own level the in-run ones)
@@ -154,4 +159,60 @@ test('old saves load with no XP, and bad XP is dropped', () => {
   const junk = loadMeta(3, store(JSON.stringify({ ...old, xp: { knight: 50.7, nope: 9, archer: -3, mage: 'a' } })));
   assert.deepEqual(junk.xp, { knight: 50 });
   assert.equal(xpOf(junk, 'archer'), 0);
+});
+
+// ---- level 100 (docs/notes/level-100.md) ----
+
+test('levels 1 to 30 keep their XP totals, past 30 the curve is steeper and every level costs something', () => {
+  // (the totals every save was made with: a level read from the XP stays the same)
+  assert.deepEqual([2, 5, 10, 20, 25, 30].map(xpFor), [60, 600, 2700, 11400, 37800, 70200]);
+  for (const xp of [0, 59, 60, 2699, 11399, 11400, 37799, 37800, 70199, 70200]) assert.equal(levelOf(xp), levelOf(xp, 30));
+  assert.equal(levelOf(70200), 30);
+  assert.equal(levelOf(xpFor(31) - 1), 30);
+  assert.equal(levelOf(xpFor(31)), 31);
+  // (past 30 the levels are eased in, then each costs more than the one before)
+  for (let lv = 31; lv < MAX_LEVEL; lv++) assert.ok(xpFor(lv + 1) > xpFor(lv), `level ${lv + 1} costs XP`);
+  for (let lv = 37; lv < MAX_LEVEL; lv++) assert.ok(xpFor(lv + 1) - xpFor(lv) > xpFor(lv) - xpFor(lv - 1), `level ${lv + 1} costs more than ${lv}`);
+  assert.ok(xpFor(31) - xpFor(30) > 2 * (xpFor(30) - xpFor(29)), 'the first deep level is a step up');
+  assert.ok(xpFor(31) - xpFor(30) < 20 * (xpFor(30) - xpFor(29)), 'but not a wall');
+  // (the pace model, `npm run level-pace`, fits these: about two months to 50 and six to 100)
+  assert.ok(xpFor(50) > 30 * xpFor(30) / 2 && xpFor(100) > 5 * xpFor(50));
+  assert.deepEqual(progressOf(xpFor(MAX_LEVEL)), { level: 100, into: 0, need: 0 });
+  assert.equal(progressOf(xpFor(47) + 5).level, 47);
+  assert.equal(progressOf(xpFor(47) + 5).into, 5);
+  assert.equal(levelOf(1e12), 100);
+});
+
+test('the deep milestones: a lump of hp and attack, a talent point and a badge each, at 40 to 100', () => {
+  assert.deepEqual(BADGE_LEVELS, [40, 50, 60, 70, 80, 90, 100]);
+  assert.deepEqual([1, 30, 39, 40, 49, 50, 99, 100].map(badgeOf), [0, 0, 0, 1, 1, 2, 6, 7]);
+  assert.deepEqual([39, 40, 60, 100].map(milestonePoints), [0, 1, 3, 7]);
+  // (every deep milestone is bigger than the one before, and each level in between adds only DEEP_SHARE of a step)
+  const deep = MILESTONES.filter((m) => m.level > OLD_MAX_LEVEL);
+  assert.equal(deep.length, 7);
+  for (let i = 1; i < deep.length; i++) assert.ok(deep[i].hp > deep[i - 1].hp && deep[i].atk > deep[i - 1].atk);
+  assert.ok(Math.abs(lastingBoost(41).hp - lastingBoost(40).hp - 0.22 * DEEP_SHARE) < 1e-9);
+  assert.ok(Math.abs(lastingBoost(41).atk - lastingBoost(40).atk - 0.18 * DEEP_SHARE) < 1e-9);
+  // (levels up to 30 are exactly as before)
+  assert.ok(Math.abs(lastingBoost(30).hp - (1 + 0.22 * (13 + 0.3 * 10) + 0.15 + 0.25)) < 1e-9);
+  assert.ok(Math.abs(lastingBoost(30).atk - (1 + 0.18 * (13 + 0.3 * 10) + 0.12 + 0.2)) < 1e-9);
+});
+
+test('a level-100 hero has about 50 to 70 percent more hp and attack than a level-30 one', () => {
+  for (const k of ['hp', 'atk'] as const) {
+    const more = lastingBoost(100)[k] / lastingBoost(30)[k] - 1;
+    assert.ok(more >= 0.5 && more <= 0.7, `${k} ${more}`);
+    // (a level-47 hero is part of the way)
+    const part = lastingBoost(47)[k] / lastingBoost(30)[k] - 1;
+    assert.ok(part > 0.02 && part < more / 2, `${k} at 47: ${part}`);
+  }
+  assert.deepEqual(levelGain(99, 100), { hp: Math.round((lastingBoost(100).hp - lastingBoost(99).hp) * 100), atk: Math.round((lastingBoost(100).atk - lastingBoost(99).atk) * 100) });
+});
+
+test('a run\'s own levels stay at 30: the spire and the Calamity do not see level 100', () => {
+  assert.equal(RUN_MAX_LEVEL, 30);
+  assert.equal(levelOf(xpFor(80), RUN_MAX_LEVEL), 30);
+  assert.equal(levelOfKind(Object.assign(startedMeta(1), { xp: { knight: xpFor(80) } }), 'knight'), 80);
+  // (and the in-run boost has not changed: level 30 of it is the old figure)
+  assert.ok(Math.abs(levelBoost(30).hp - (1 + 0.22 * (11 + 0.25 * 18))) < 1e-9);
 });

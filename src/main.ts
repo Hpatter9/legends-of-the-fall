@@ -29,6 +29,7 @@ import { xpRate } from './sim/castle';
 import { heroStats } from './sim/talents';
 import { powerOf, powerText } from './sim/power';
 import { fightXp, gainXp, levelGain, levelOfKind, progressOf, xpOf, type LevelUp } from './sim/levels';
+import { levelBadge } from './levelBadge';
 import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
 import { autoDeploy, autoRound, gearCount, pickSquad } from './sim/autoplay';
 import { afterFight, maxSpeed, spendTicket, startAuto, stopAuto, type AutoReplay } from './sim/autoReplay';
@@ -1190,9 +1191,7 @@ class Game {
       // (the hero's face, with its level on a badge at the corner)
       const face = document.createElement('div');
       face.className = 'xpFace';
-      const lv = document.createElement('small');
-      lv.className = 'xpLv';
-      lv.textContent = `Lv ${progressOf(from[kind]).level}`;
+      let lv = levelBadge(progressOf(from[kind]).level, 'xpLv');
       // (the look it fought in: the highest grade of the kind that stood in the fight, in that grade's form, framed whole)
       const grade = this.b.units.reduce((g, u) => (u.side === 'hero' && u.def === kind && u.owner === undefined ? Math.max(g, u.grade ?? 1) : g), 1);
       face.className = `xpFace g${grade}`;
@@ -1200,7 +1199,7 @@ class Game {
       const name = document.createElement('b');
       name.textContent = UNITS[kind].name;
       const gain = document.createElement('em');
-      gain.textContent = `+${xp} XP`;
+      gain.textContent = `+${xp.toLocaleString('en-GB')} XP`;
       const bar = document.createElement('i');
       const fill = document.createElement('span');
       bar.append(fill);
@@ -1220,7 +1219,9 @@ class Game {
         const stamp = document.createElement('span');
         stamp.className = 'xpStamp';
         stamp.textContent = 'Level up!';
-        lv.textContent = `Lv ${up.to}`;
+        const grown = levelBadge(up.to, 'xpLv');
+        lv.replaceWith(grown);
+        lv = grown;
         const chips = [`+${gained.hp}% HP`, `+${gained.atk}% Atk`].map((t, n) => {
           const c = document.createElement('span');
           c.textContent = t;
@@ -1552,9 +1553,7 @@ class Game {
         m.dataset.trait = t;
         marks.append(m);
       }
-      const lv = document.createElement('span');
-      lv.className = 'lv';
-      lv.textContent = `Lv ${this.levelOf(h)}`;
+      const lv = levelBadge(this.levelOf(h), 'corner');
       const sell = document.createElement('button');
       sell.className = 'recycle';
       const value = recycleValue(this.run);
@@ -1581,7 +1580,7 @@ class Game {
       const pw = document.createElement('span');
       pw.className = 'pw';
       pw.textContent = `Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;
-      card.append(portrait(formOf(def, h.grade), 96, h.grade), stars, name, lv, pw, marks, bar);
+      card.append(portrait(formOf(def, h.grade), 96, h.grade), stars, name, pw, marks, bar, lv);
       // (the last hero cannot be recycled)
       if (this.run.roster.length > 1) card.append(sell);
       card.title = `${def.role} · Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;

@@ -10,6 +10,7 @@ import { drawAwaken, gems, playAwakenShow } from './awakenView';
 import { lookFilter, lookSheet, stepOfRank } from './render/awakenLook';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { lastingBoost, progressOf, xpOf } from './sim/levels';
+import { compactXp, levelBadge } from './levelBadge';
 import { drawEquipment } from './equipView';
 import { drawTalents } from './talentView';
 import { TREES } from './sim/talents';
@@ -30,13 +31,20 @@ export const stars = (rank: number) => '★'.repeat(rank) + '☆'.repeat(MAX_RAN
 /** A hero's stars and, after them, its awakening gems. */
 export const starsOf = (meta: Meta, kind: string): string => `${stars(rankOf(meta, kind))} ${gems(awakenedOf(meta, kind))}`;
 
+/** The level line of the sheet: the badge, then the XP to the next level. */
+function levelLine(level: number, text: string): HTMLElement {
+  const line = el('span', 'lv');
+  line.append(levelBadge(level), text);
+  return line;
+}
+
 function xpBar(meta: Meta, kind: string): { level: number; bar: HTMLElement; text: string } {
   const p = progressOf(xpOf(meta, kind));
   const bar = el('div', 'xpbar');
   const fill = el('span');
   fill.style.width = `${p.need ? (p.into / p.need) * 100 : 100}%`;
   bar.append(fill);
-  return { level: p.level, bar, text: p.need ? `${p.into} / ${p.need} XP` : 'max level' };
+  return { level: p.level, bar, text: p.need ? `${compactXp(p.into)} / ${compactXp(p.need)} XP` : 'max level' };
 }
 
 /** The strongest unlocked heroes (level, then rank), best first. */
@@ -92,7 +100,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     const shards = meta.shards[kind] ?? 0;
     const plan = awakenPlan(meta, kind);
     const next = rank < MAX_RANK ? `${shards} / ${RANK_SHARDS[rank]} shards to rank ${rank + 1}` : plan.step ? (plan.can ? 'ready to awaken' : `${shards} / ${AWAKEN_SHARDS[plan.step - 1]} shards to awaken`) : 'fully awakened';
-    title.append(el('span', 'stars', starsOf(meta, kind)), el('span', 'lv', `Level ${x.level} · ${x.text}`), x.bar, el('span', 'lv', next));
+    title.append(el('span', 'stars', starsOf(meta, kind)), levelLine(x.level, x.text), x.bar, el('span', 'lv', next));
     const marks = traitsOf(kind).map((t) => TRAITS[t].name).join(' · ');
     if (marks) title.append(el('em', '', marks));
   }
@@ -161,7 +169,7 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
   const grid = el('div', 'rosGrid');
   for (const kind of have) {
     const card = el('button', 'hcard');
-    card.append(portrait(UNITS[kind].sheet, 56), el('b', '', UNITS[kind].name), el('span', 'stars', starsOf(meta, kind)));
+    card.append(portrait(UNITS[kind].sheet, 56), el('b', '', UNITS[kind].name), el('span', 'stars', starsOf(meta, kind)), levelBadge(progressOf(xpOf(meta, kind)).level, 'corner'));
     card.addEventListener('click', () => pick(kind));
     grid.append(card);
   }

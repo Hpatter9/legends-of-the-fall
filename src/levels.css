@@ -1,0 +1,14 @@
+/* ===== Level badges (`levelBadge.ts`): "Lv 47" in a frame that grows with the deep milestones, 40 to 100. Stone and Iron tokens only; steady
+   colours, 12px, no bold. b0 is the plain badge. ===== */
+.lvb { display: inline-block; box-sizing: border-box; padding: 0 5px; font: 400 12px/18px var(--body); letter-spacing: 0.5px; white-space: nowrap; color: var(--s15); background: var(--s5); border: 2px solid var(--s9); }
+.lvb.b1 { color: var(--s15); background: var(--s6); border-color: var(--s13); }
+.lvb.b2 { color: var(--b6); background: var(--b1); border-color: var(--b4); }
+.lvb.b3 { color: var(--e9); background: var(--e1); border-color: var(--e4); }
+.lvb.b4 { color: var(--s0); background: var(--s14); border-color: var(--s15); box-shadow: 0 0 0 2px var(--s9); }
+.lvb.b5 { color: var(--s0); background: var(--e8); border-color: var(--e10); box-shadow: 0 0 0 2px var(--e4); }
+.lvb.b6 { color: var(--r8); background: var(--r2); border-color: var(--r6); box-shadow: 0 0 0 2px var(--r0); }
+.lvb.b7 { color: var(--p6); background: var(--p1); border-color: var(--p4); box-shadow: 0 0 0 2px var(--p0), 0 0 0 4px var(--p3); }
+/* on a portrait: in the corner, over the picture */
+.hcard .lvb.corner, .card .lvb.corner { position: absolute; top: 2px; right: 2px; }
+/* the hero sheet's head: the badge sits beside the level words */
+.hhead .lvb { vertical-align: middle; margin-right: 6px; }

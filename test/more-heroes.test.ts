@@ -42,7 +42,7 @@ test('twenty heroes join, each with a kit, a tree, traits, a tavern spot and a s
     assert.ok(KITS[id].ultimate, `${id} ultimate`);
     assert.ok(KITS[id].skill.name && KITS[id].passive.name, id);
     for (const s of [KITS[id].skill, KITS[id].ultimate]) if (s) assert.ok(SKILL_FX[s.name] && SKILL_ELEMENT[s.name], s.name);
-    assert.equal(TREES[id]?.nodes.length, 8, `${id} tree`);
+    assert.equal(TREES[id]?.nodes.length, 16, `${id} tree`);
     const [o, c] = HERO_TRAITS[id];
     assert.equal(TRAITS[o].kind, 'origin');
     assert.equal(TRAITS[c].kind, 'class');
