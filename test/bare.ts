@@ -14,5 +14,7 @@ export function bareBoard(b: Battle): Battle {
   }
   delete b.barrels;
   delete b.groundFx;
+  // (a step takes its kind's own time, not the usual board's share of it)
+  delete b.walk;
   return b;
 }
