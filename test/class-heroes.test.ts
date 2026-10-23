@@ -38,7 +38,8 @@ test('the eight class heroes are registered, drawn at a sensible size, with a fo
     assert.ok(SKILL_FX[KITS[id].skill.name], id);
     for (const f of d.forms!) assert.ok((layout as Record<string, unknown>)[f], f);
     const fig = (layout as Record<string, { figure: number }>)[d.sheet].figure * d.scale;
-    assert.ok(fig > 40 && fig < 52, `${id} ${fig}`);
+    // (heroes stand in one of three height bands: small 42, medium 50, large 60; see docs/notes/hero-art.md)
+    assert.ok([42, 50, 60].some((b) => Math.abs(fig - b) <= 4), `${id} ${fig}`);
   }
   assert.equal(ALL_HEROES.length, new Set(ALL_HEROES).size);
 });

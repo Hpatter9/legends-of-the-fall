@@ -81,3 +81,57 @@ further afterwards, but that was another worker's use of the same account.
 - Samples: `docs/samples/lich-treant.png` (new rows at 1:1 and 3x), `lich-treant-fight-lich.png` and `lich-treant-fight-treant.png` (393x852,
   from `tools/lich-treant/shots.mjs`).
 - Cost: generations 706.75 before, 489.75 after (217 used: 2 bases of 4 candidates, 15 clips including the dropped takes).
+
+
+# Hero art remake (hero-art)
+
+One look for the whole roster: sixteen heroes were redrawn with PixelLab in the Craftpix side-view style (realistic proportions, soft
+shading, a thin dark outline, 64-90 px figures facing right), so the party reads as one cast. Names, kits, stats and balance are
+unchanged; only `sheet`, `forms` and `scale` in `src/sim/units.ts` moved. The simulation is untouched.
+
+## Which heroes
+
+- The 14 asked for: Mercenary, Wolf Bard, Beastmaster, Time Witch, High Priestess, Queen Dragoon, Great Sage, Demon Swordsman
+  (were Pixel Champions chibis), Buccaneer, Dread Pirate, Kraken Mate (pirate-pack chibis), Lancer, Mummy, Juggernaut.
+- Also remade after a lineup (`docs/samples/hero-art-lineup-before.png`): **Tyrant** (a thin, odd, gradient-shaded sprite, the one that
+  clashed most) and **Shambler** (a cartoon zombie with a thin outline; its three zombie looks are now one).
+- Kept: **Reaper**. It is a dark hooded shape that sits well beside the Warlock and the Lich, so no redraw.
+- Each is now one sheet, `src/art/units/hero_<name>.png`, with no per-grade looks (`forms` removed): the grade tint and glow in the
+  portrait and the awakened recolours still show the grade. The old `pc_*`, `pirate_*`, `squidman`, `horde_2`, `hk_tyrant`,
+  `hk_juggernaut`, `hk_mummy` and `hk_zombie*` sheets are deleted (no foe used them).
+
+## How
+
+`tools/pixellab/heroes/`: `spec.py` (prompts; style references are first frames of the game's Craftpix sheets), `gen.py` (base
+candidates, clips, takes, previews), `contact.py` (contact sheet of candidates), `cut.py` / `finish.py` (sheet + sheets.json entry,
+and `lie.py` for the lying last death frame), `bands.py` (sheets and heights into `units.ts`), `lineup.py` and `shots.mjs`.
+Per hero: one base call (9 candidates, one picked by eye), then walk, attack, idle, hurt and dead clips (plus a cast clip for the hero
+whose kit casts `attack2`). Clips of the same prompt were rerun with another seed where the first take barely moved (Wolf Bard,
+Queen Dragoon). Weak or glitchy frames (a yellow flash on a few attack frames) were avoided by taking another seed's clip, not
+by editing pixels. Dragoon's attack row is the lance-thrust clip (its `attack2` falls back to it). `hurt`/`attack2` fall back as before where a row is absent.
+
+## Heights
+
+The heroes were almost all drawn at the same 46 px, which read as "no bands". `bands.py` sets each `scale` so the figure's body
+(without a thin weapon tip) stands **small 42, medium 50 or large 60** world px: small are the quick light fighters (Kunoichi, Ninja
+Monk, Wanderer, Kitsune, Peasant, Lightning Mage, Karasu), large are the bruisers and big bodies (Barbarian, Minotaur, Werewolf,
+Samurai Commander, Yamabushi, Tyrant, Juggernaut, Lancer, Queen Dragoon, Siege Bot, Kraken Mate), everyone else medium. Hitboxes and
+stats do not use `scale`. Tests: `test/hero-art.test.ts`; the two older size checks (`class-heroes`, `new-heroes`) now assert the bands
+rather than the single 40-52 window.
+
+## Outline, shadow, palette
+
+The new figures carry the same dark outline as the class heroes; the drop shadow is the renderer's, the same for all. I left the
+palettes alone: the new heroes use muted, slightly dark colours that match the Craftpix sheets, and the few bright originals (Peasant, Kitsune,
+the robots) are the Craftpix art the owner wants kept, so a recolour would be a redraw by another name.
+
+## Checked
+
+Before and after lineups at in-game scale: `docs/samples/hero-art-lineup-before.png`, `-after.png`; the prototype beside Knight, Samurai
+and Paladin: `hero-art-proto.png`. In battle at 393x852: `hero-art-fight-{a,b,c}-393.png`, `hero-art-fight2-*`, deploys `hero-art-deploy-*`;
+the party list and a hero sheet: `hero-art-party-393.png`, `hero-art-sheet-wolfbard-393.png`; the tavern, hall, castle and camp:
+`hero-art-home-<n>-393.png`. Offline: the sheets are bundled into `game.js` as data URLs, so `FILES` did not change.
+
+## Cost
+
+About 1,030 generations of the plan's 4,212 (3,186 left): base calls 15 each, clips about 11 each, plus a few retakes.
