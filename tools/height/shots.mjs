@@ -73,11 +73,26 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   await page.waitForTimeout(700);
   await shot('perch');
   // a fight in progress, played on until a blow from high ground has landed (its number carries the green arrow)
-  await page.evaluate(() => { document.getElementById('fight')?.click(); });
-  for (let i = 0; i < 30; i++) {
-    await page.waitForTimeout(500);
-    if (await page.evaluate(() => window.__game.b.phase !== 'fight')) break;
+  await page.evaluate(() => {
+    const fx = window.__game.fx;
+    const show = fx.show.bind(fx);
+    fx.show = (b, events) => {
+      if (events.some((e) => e.kind === 'hit' && e.high)) window.__high = performance.now();
+      return show(b, events);
+    };
+    document.getElementById('fight')?.click();
+  });
+  let tagged = false;
+  for (let i = 0; i < 300; i++) {
+    await page.waitForTimeout(100);
+    const [phase, at] = await page.evaluate(() => [window.__game.b.phase, window.__high ? performance.now() - window.__high : -1]);
+    if (!tagged && at >= 0 && at < 250) {
+      await shot('tag');
+      tagged = true;
+    }
+    if (phase !== 'fight') break;
   }
+  console.log('high-ground tag captured:', tagged);
   await shot('fight');
   // the hero sheet, with Jump beside Range and Walk
   await page.evaluate(() => { window.__game.home.open(); });

@@ -17,7 +17,7 @@ chest for clearing it.
   the walk across and the mid-boss gear drop are all the armies' own code. `armyOfRun` still means a real army only, so a daily keeps
   no army record, no army stars and no auto-replay.
 - **Kept as it was**: the starting five, the starting gold, no castle, the day's land (`dailyArea`), hiring, events, the two
-  hearts (retries; `docs/notes/lives.md`). The foes are the daily's own strength: `DAILY_START` 0.57 at wave 1 and +15.5% a wave.
+  hearts (retries; `docs/notes/lives.md`). The foes are the daily's own strength: `DAILY_START` 0.56 at wave 1 (0.57 before the height pass: `docs/notes/height.md`) and +15.5% a wave.
 - A daily's wins no longer count towards the endless climb's furthest stage (`bestStage`) or its per-stage stars: its ten waves are
   its own.
 
