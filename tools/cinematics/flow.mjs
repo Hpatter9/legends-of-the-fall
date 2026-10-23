@@ -53,12 +53,12 @@ const toBoss = async () => {
     const t = g.run.tower;
     const boss = t.map.find((n) => n.kind === 'boss');
     const down = t.map.filter((n) => n.next.includes(boss.id))[0];
-    t.at = down.id; t.row = boss.row; t.path = [];
+    t.at = down.id; t.row = boss.row; t.path = [down.id];
     g.towerView.open(g.run);
     window.__bossId = boss.id;
   });
   await page.waitForTimeout(800);
-  await page.evaluate(() => { const v = window.__game.towerView; v.pickSpot(window.__bossId); v.go(); });
+  await page.evaluate(() => { window.__game.towerView.goTo(window.__bossId); });
   await page.waitForTimeout(6000);
 };
 await toBoss();

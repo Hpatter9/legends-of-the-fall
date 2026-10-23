@@ -29,14 +29,14 @@ gorvak: {
   id, title, blurb,                     // the Scenes list's name and line
   moment: { kind: 'calBoss', map: 1 },  // when it comes (`sceneRules.ts` `dueScene`)
   cast: {                               // who stands in it, by actor id
-    hero:   { role: 'hero', x: 270, facing: 'right', hidden: true },
-    gorvak: { role: 'unit:calBoss1', x: 385, facing: 'left', hidden: true, scale: 1.5 },
+    hero:   { role: 'hero', x: 285, facing: 'right', hidden: true },
+    gorvak: { role: 'unit:calBoss1', x: 395, facing: 'left', hidden: true, scale: 1.5 },
   },
   shots: [{
     look: 'volcano',                        // an area's painted backdrop (kept from the shot before if left out)
     cam: { on: ['hero', 'gorvak'], zoom: 1 },   // on an actor, a few, or a point; zoom 1 / 1.5 / 2
     to:  { x: 320 },                        // optional: drift to here over the shot
-    acts: [{ who: 'gorvak', enter: 385, from: 540 }, { who: 'hero', pose: 'strike', line: 2 }],
+    acts: [{ who: 'gorvak', enter: 395, from: 550 }, { who: 'hero', pose: 'strike', line: 2 }],
     fx: ['fadeIn', 'darken', 'rumble'],     // shake / flash (one-shot), fades, a pall, a glow, a faint rumble
     cue: 'boom',                            // a sound as the shot begins
     caption: 'The first herald',
