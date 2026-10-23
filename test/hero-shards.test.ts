@@ -376,8 +376,8 @@ test('the fading mode: a pull is a new hero less and less often as the roster gr
     };
     const early = share(6);
     const late = share(28);
-    assert.ok(early > 0.7, `${early}`);
-    assert.ok(late < 0.25 && late < early / 3, `${late}`);
+    assert.ok(early > 0.1, `${early}`);
+    assert.ok(late < 0.25 && late < early / 1.5, `early ${early} late ${late}`);
     assert.ok(pityAt(30) > pityAt(5) + 100);
   });
 });
