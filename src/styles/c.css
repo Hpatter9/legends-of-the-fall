@@ -1,0 +1,25 @@
+/* C. Parchment and ink: storybook pages, inked borders, wax-seal red, leather bars and buttons. The brightest. Parchment holds dark ink, so
+   everything that sits on paper takes its own --ink, --dim and --gold-hi (the old tokens, redefined for that part of the page only). */
+body[data-style='c'] {
+  --ink: #f8ecd4; --dim: #e4cfa8; --edge: #a88850; --gold: #c8901e; --gold-hi: #f6e2c0; --gold-lo: #8a6c3a; --red: #a3281f; --ember: #c8501e; --deep: #2b1a0e;
+  --page-bg: #e4d2a4; --panel-fill: #ecdcb4; --panel-ink: #2b1a0e; --panel-hi: #8a1812; --btn-ink: #fbf0d8; --btn-glow: rgba(40, 8, 4, 0.55); --off-ink: #4a3e2c; --lost-ink: #f6d0c4;
+  --bar-ink: #f8ecd4; --rib-ink: #fbf0d8; --rib-shadow: #2b0a06; --band-1: #a3281f; --band-2: #7a1a12; --band-edge: #c8483a; --well: #b89c68; --tier-bg: #c9a96a;
+  --sky-ink: #1f4a8a; --bright: #2b1a0e; --on-1: #b3261e; --on-2: #7a1a12; --shade: rgba(120, 84, 40, 0.18);
+}
+/* the paper: dark ink, a red where the gold was */
+body[data-style='c'] :is(.hmPanel, .hsheet, .evcard, :where(#tip), .hcard, .hrow, .brow, .setting, .hmBuild, .hmNote, .hmCard, .chip, .ptSlot, .ptCard, :where(#stars) .star, :where(#armyStars, #fightStats), :where(#xp) .xprow, .toast, :where(#collection) .hero, :where(#relics) .relic,
+  .evcard .row, .evcard .opt, .evcard .slot, .evcard .pick, .sbCard, .sbSlot, .card, .spell, .trait, .asInfo, :where(#hmSub, #settings, #gacha, #spellbook, #party, #recap), .rcSheet, .asumCard) {
+  --ink: #2b1a0e; --dim: #4a3622; --passive-ink: #5a2a9a; --got-ink: #7a4a00; --gold-hi: #8a1812; --gold: #6a4208; --gold-lo: #6a4a2a; --red: #a3281f; --deep: #2b1a0e; color: var(--ink);
+}
+/* leather and wax on the paper: light thread-coloured type again */
+body[data-style='c'] :where(button, .hmTab, #hmTop, #hmTabs, #panel, .hmBanner, #hmSub h2, #settings h2, #gacha h2, #spellbook h2, #party h2, #banner, .rcSheet h3, .asRib) {
+  --ink: #f8ecd4; --dim: #e4cfa8; --gold-hi: #f6e2c0; --gold: #f2c25a; --deep: #2b1a0e;
+}
+body[data-style='c'] :is(.trait.on, .asTier.on) { --ink: #f8ecd4; --dim: #e4cfa8; color: #f8ecd4; }
+body[data-style='c'] :is(.hmTab.on) { color: #2b1a0e; text-shadow: none; }
+body[data-style='c'] :is(.hmCard, .hmNote) { color: #2b1a0e; text-shadow: none; }
+body[data-style='c'] :is(.hmLink, .hmCard, .hmBuild, .hmNote, .trait:not(.on), .card, .spell, .chip) { color: #2b1a0e; text-shadow: none; }
+body[data-style='c'] .hmLink { --ink: #2b1a0e; }
+/* the castle's labels: little cream cards, not stitched leather (the stitching ran through their small type) */
+body[data-style='c'] .ctTag { border-width: 6px; border-image: var(--u-card) 3 fill / 6px stretch; --ink: #2b1a0e; --dim: #4a3622; --gold-hi: #8a1812; color: #2b1a0e; text-shadow: none; padding: 0 3px; }
+body[data-style='c'] .ctTag.ready { border-image-source: var(--u-card-r4); }

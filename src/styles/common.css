@@ -1,0 +1,33 @@
+/* ===== UI styles (the mockups): the rules every style shares. Each style (a.css to d.css) sets the tokens below on body[data-style='x'];
+   swap.css (generated) swaps the frame pictures. Nothing here applies with no data-style, so today's look is unchanged.
+   Tokens: --page-bg (menu page colour under its texture), --panel-fill (the same under a panel's), --panel-ink, --btn-ink, --btn-glow,
+   --off-ink, --lost-ink, --bar-ink (text on the top and tab bars), --rib-ink, --rib-shadow, --band-1, --band-2 (heading bands),
+   --well (the empty part of a bar), plus the old --ink --dim --gold --gold-hi --gold-lo --red --ember --deep --edge. ===== */
+html:has(body[data-style]) { background: var(--page-bg); }
+body[data-style] { color: var(--ink); --panel-bg: var(--u-page) 0 0 / 32px 32px, var(--panel-fill); }
+body[data-style] #recap { background: var(--u-page) 0 0 / 32px 32px, var(--page-bg); }
+
+/* panels: the page's texture inside the frame (the frame's own middle is clear) */
+body[data-style] :is(.hmPanel, .hsheet, .evcard, #tip) { background: var(--u-page) 0 0 / 32px 32px, var(--panel-fill); background-clip: padding-box; color: var(--panel-ink, var(--ink)); }
+body[data-style] :is(#hmTop, #hmTabs, #panel) { color: var(--bar-ink, var(--ink)); }
+body[data-style] .hmTab { color: var(--bar-ink, var(--ink)); }
+body[data-style] .hmTab.hero { color: var(--btn-ink); }
+body[data-style] .hmBanner, body[data-style] :is(#hmSub, #settings, #gacha, #spellbook, #party) h2, body[data-style] .asRib b, body[data-style] .unlockRib b, body[data-style] #bossCard b { color: var(--rib-ink); text-shadow: 0 2px 0 var(--rib-shadow); }
+body[data-style] #banner { color: var(--rib-ink); text-shadow: 0 3px 0 var(--rib-shadow); }
+body[data-style] :is(.hmPanel h2, .evcard h2, .asumCard h2, .chestTitle) { color: var(--panel-hi, var(--gold-hi)); }
+body[data-style] .rcSheet h3 { background: linear-gradient(var(--band-1), var(--band-2)); border-top-color: var(--band-edge); border-bottom-color: var(--deep); color: var(--rib-ink); }
+body[data-style] :is(.rcFig b) { color: var(--panel-hi, var(--gold-hi)); }
+body[data-style] :is(.rcTitle.won) { color: var(--gold-hi); }
+body[data-style] :is(.rcTitle.lost) { color: var(--red); }
+body[data-style] :is(#mana i, .sbMeter i, #bossBar i, #xp .xprow i, #fightStats .cell i, #collection .bar, .xpbar, .rcBar i) { background: var(--well); }
+body[data-style] .armyNew, body[data-style] .csCount, body[data-style] .armyStarRow em { color: var(--btn-ink); background: var(--gold-hi); }
+body[data-style] :is(.asTier) { background: var(--tier-bg); border-color: var(--deep); }
+body[data-style] :is(.asTier.on, .asCounts button.on) { background: linear-gradient(var(--on-1), var(--on-2)); border-color: var(--gold-hi); }
+body[data-style] .asStar.on { color: var(--gold-hi); text-shadow: 0 2px 0 var(--deep); }
+body[data-style] .asRules, body[data-style] .asumRows { background: var(--shade); border-color: var(--edge); }
+body[data-style] button.danger, body[data-style] .setting button.danger { color: #fff3ee; }
+body[data-style] .toast { color: var(--panel-ink, var(--ink)); }
+/* a disabled button reads as off even where a later rule (button.primary) sets its own ink */
+body[data-style] :is(button:disabled, button.primary:disabled, .hmBig:disabled) { color: var(--off-ink); text-shadow: none; }
+/* the tabs that are not showing stay flat on the bar, as today (the generic button frame would box them in) */
+body[data-style] .hmTab:not(.hero):not(.on) { border-image: none; }

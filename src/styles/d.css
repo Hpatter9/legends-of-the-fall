@@ -1,0 +1,7 @@
+/* D. Royal arcane: deep navy and violet cloth, silver and cyan trim, magic-glow accents; the colours are Endesga 32. */
+body[data-style='d'] {
+  --ink: #e6ecfa; --dim: #aab8d6; --edge: #5a6988; --gold: #2ce8f5; --gold-hi: #b4f6fb; --gold-lo: #0e72ad; --red: #ff5a64; --ember: #b55088; --deep: #181425;
+  --page-bg: #181425; --panel-fill: #1f2238; --panel-ink: #e6ecfa; --panel-hi: #b4f6fb; --btn-ink: #040812; --btn-glow: rgba(255, 255, 255, 0.12); --scroll-bg: #262b44; --scroll-ink: #e6ecfa; --scroll-edge: #181425; --scroll-in: #5a6988; --off-ink: #8090b0; --lost-ink: #f0b0c0;
+  --bar-ink: #e6ecfa; --rib-ink: #f2eaff; --rib-shadow: #181425; --band-1: #68386c; --band-2: #4a2650; --band-edge: #b55088; --well: #101226; --tier-bg: #2e3558;
+  --on-1: #0099db; --on-2: #124e89; --shade: rgba(0, 0, 0, 0.4);
+}

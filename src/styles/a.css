@@ -1,0 +1,7 @@
+/* A. Refined wood and gold: today's walnut and gold, cleaner: a lighter honey-walnut, crisp double gold trim, no mud. */
+body[data-style='a'] {
+  --ink: #fbf1dc; --dim: #dcc9a6; --edge: #a8713f; --gold: #f4b73c; --gold-hi: #ffe9a0; --gold-lo: #cf8a1a; --red: #e65a42; --ember: #ff8a3c; --deep: #140a05;
+  --page-bg: #1d1009; --panel-fill: #2a1910; --panel-ink: #fbf1dc; --panel-hi: #ffe9a0; --btn-ink: #3a1a05; --btn-glow: rgba(255, 244, 190, 0.5); --off-ink: #a09484; --lost-ink: #f4bcac;
+  --bar-ink: #fbf1dc; --rib-ink: #fff4cc; --rib-shadow: #2a0a06; --band-1: #8a2a1c; --band-2: #5a1a10; --band-edge: #e65a42; --well: #140a05; --tier-bg: #3a2416;
+  --on-1: #d9923a; --on-2: #9a5a1c; --shade: rgba(0, 0, 0, 0.35);
+}

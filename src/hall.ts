@@ -40,7 +40,7 @@ const CSS = `
 .hlOdds { position: absolute; right: 10px; top: 8px; min-height: 36px; padding: 0 8px; font-size: 12px; }
 .hlLow { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 0 12px 10px; pointer-events: none; }
 .hlLow > * { pointer-events: auto; }
-.hlScroll { width: 100%; max-width: 360px; padding: 6px 10px 7px; text-align: center; color: #3a2210; background: #e6d2a0; box-shadow: 0 -2px 0 #3a2210, 0 2px 0 #3a2210, -2px 0 0 #3a2210, 2px 0 0 #3a2210, inset 0 0 0 2px #c4a468, 0 4px 0 2px rgba(0, 0, 0, 0.4); }
+.hlScroll { width: 100%; max-width: 360px; padding: 6px 10px 7px; text-align: center; color: var(--scroll-ink, #3a2210); background: var(--scroll-bg, #e6d2a0); box-shadow: 0 -2px 0 var(--scroll-edge, #3a2210), 0 2px 0 var(--scroll-edge, #3a2210), -2px 0 0 var(--scroll-edge, #3a2210), 2px 0 0 var(--scroll-edge, #3a2210), inset 0 0 0 2px var(--scroll-in, #c4a468), 0 4px 0 2px rgba(0, 0, 0, 0.4); }
 .hlScroll b { display: block; font: 700 12px var(--body); letter-spacing: 0.3px; }
 .hlScroll b em { font-style: normal; color: #7a2a1c; }
 .hlScroll .odds { display: block; margin-top: 3px; font: 400 10px var(--body); font-style: normal; }

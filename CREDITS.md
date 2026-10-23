@@ -176,3 +176,5 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
 - The Dire Wolf the Beastmaster calls is the Red Werewolf sheet of the Free Werewolf Sprite Sheets (Craftpix), already listed above.
 
 - **The loading screen** (`src/art/loading/`): the Knight's and the Demon Lord's attack rows, cut from the unit sheets above by `tools/loading-art.py`, with the slash (`src/art/fx/magic/moon_slash.png`) and the impact burst (`src/art/fx/impact.png`), all inlined into the page by `build.mjs`.
+
+- **UI style mockups** (`src/ui/styles/<a-d>/`, drawn by `tools/ui/styles.py`): the `wood.png` (bar) and `page.png` (menu page and panel fill) textures are the centre tiles of four **DawnLike** floor sets by DragonDePlatino (`Objects/Floor.png`, CC-BY 4.0; palette by DawnBringer), their few colours moved by brightness rank onto each style's own ramp, with no resampling. The frames, buttons, ribbons, chips and flags are drawn natively by the script. Style D's colours are the Endesga 32 palette by ENDESGA.

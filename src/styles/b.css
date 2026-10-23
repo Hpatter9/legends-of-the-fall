@@ -1,0 +1,7 @@
+/* B. Dark stone and iron: dungeon slate and brick, riveted iron, cold blue-grey with ember-orange accents. */
+body[data-style='b'] {
+  --ink: #e6edf4; --dim: #b4c2d0; --edge: #5d6b7c; --gold: #ec7a2c; --gold-hi: #ffb878; --gold-lo: #b8521a; --red: #f2634c; --ember: #ff8a3c; --deep: #0b0e12;
+  --page-bg: #11151b; --panel-fill: #1a2028; --panel-ink: #e6edf4; --panel-hi: #ffb878; --btn-ink: #080402; --btn-glow: rgba(255, 224, 190, 0.2); --scroll-bg: #2a323c; --scroll-ink: #e6edf4; --scroll-edge: #0b0e12; --scroll-in: #4d5a6a; --off-ink: #8c97a3; --lost-ink: #f4b8aa;
+  --bar-ink: #e6edf4; --rib-ink: #f2f6fa; --rib-shadow: #0b0e12; --band-1: #3c4755; --band-2: #27303a; --band-edge: #ec7a2c; --well: #0b0e12; --tier-bg: #27303a;
+  --on-1: #e8742a; --on-2: #a8481a; --shade: rgba(0, 0, 0, 0.4);
+}

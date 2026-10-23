@@ -7,7 +7,7 @@
 .cxPip { min-height: 0; height: auto; gap: 1px; letter-spacing: 0; line-height: 1.2; display: flex; flex-direction: column; align-items: center; padding: 3px 2px; font-size: 11px; line-height: 1.15; color: var(--dim); background: #2a170e; border: 2px solid #4a2c1c; border-radius: 6px; }
 .cxPip small { font-size: 10px; }
 .cxPip b { font-size: 11px; }
-.cxPip.ready { text-shadow: none; color: #1a0d07; background: linear-gradient(#ffd96a, #d99a2c); border-color: var(--gold-hi); }
+.cxPip.ready { text-shadow: none; color: var(--deep, #1a0d07); background: linear-gradient(#ffd96a, #d99a2c); border-color: var(--gold-hi); }
 .cxPip.done { color: #8ccf7a; border-color: #3f6a35; }
 .cxTabs { display: flex; gap: 4px; margin-top: 8px; position: sticky; top: 0; z-index: 1; background: rgba(24, 12, 8, 0.97); padding: 2px 0; }
 .cxTab { flex: 1; min-height: 0; padding: 6px 4px; font: 700 13px var(--display); color: var(--dim); background: #2a170e; border: 2px solid #4a2c1c; border-radius: 6px 6px 0 0; }
@@ -18,12 +18,12 @@
 .cxCard.elite { border-color: #7cc0ff; }
 .cxCard b { max-width: 100%; font: 700 11px/1.1 var(--body); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cxCard small { font-size: 10px; color: var(--dim); font-weight: 400; }
-.cxPort { width: 52px; height: 52px; image-rendering: pixelated; background: radial-gradient(#6b4a2c, #1c1008); border-radius: 6px; border: 2px solid #1a0d07; }
+.cxPort { width: 52px; height: 52px; image-rendering: pixelated; background: radial-gradient(#6b4a2c, #1c1008); border-radius: 6px; border: 2px solid var(--deep, #1a0d07); }
 .cxCard.dark .cxPort { filter: brightness(0); }
 .cxCard.dark b { color: var(--dim); }
 .cxOverlay { position: absolute; inset: 0; z-index: 6; display: flex; align-items: center; justify-content: center; padding: 12px; background: rgba(12, 6, 4, 0.78); }
 .cxSheet { max-height: 100%; }
-.cxPic { flex: none; position: relative; width: 132px; height: 132px; overflow: hidden; background: radial-gradient(#6b4a2c, #1c1008); border-radius: 10px; border: 2px solid #1a0d07; }
+.cxPic { flex: none; position: relative; width: 132px; height: 132px; overflow: hidden; background: radial-gradient(#6b4a2c, #1c1008); border-radius: 10px; border: 2px solid var(--deep, #1a0d07); }
 .cxPic canvas { position: absolute; left: 50%; bottom: 0; image-rendering: pixelated; }
 .cxLore { font-style: italic; color: var(--dim); }
 .cxLore.locked { text-align: center; padding: 8px 0; }

@@ -14,6 +14,7 @@ import { CAL_MAPS } from './sim/calamity';
 import { pickHero } from './calamityView';
 import { noteFightStats, notePayout, recapOf } from './sim/runRecap';
 import { showRecap } from './recapView';
+import { initStyle, setStyle } from './uiStyle';
 import { ARMIES, armyById, armyUnlocked, settleWave, type ArmyPay } from './sim/armies';
 import { drawRunStars, showUnlock } from './armiesView';
 import { spellIconHtml } from './spellIcons';
@@ -276,6 +277,11 @@ class Game {
     new MutationObserver(() => this.syncScene()).observe($('towerMap'), { attributes: true, attributeFilter: ['hidden'] });
     $('loading').remove();
     (window as unknown as { __game: Game }).__game = this;
+  }
+
+  /** The look of the page (the mockups): 'a' to 'd', or '' for today's. */
+  style(name: string): string {
+    return setStyle(name);
   }
 
   /* -------------------------------------------------------------- the fight */
@@ -1850,6 +1856,7 @@ function overBench(x: number, y: number): boolean {
   return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
 }
 
+initStyle();
 new Game().start().catch((err) => {
   $('loading').textContent = `Could not start: ${err}`;
 });

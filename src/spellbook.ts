@@ -19,13 +19,13 @@ const CSS = `
 .sbSlots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .sbSlot { min-height: 44px; padding: 6px; border: 1px dashed #5a3a22; border-radius: 6px; background: #2a1a10; color: inherit; font: inherit; font-size: 12px; }
 .sbSlot.on { border-style: solid; border-color: var(--gold, #f0c060); }
-.sbSlot em { display: block; font-style: normal; color: #7cc0ff; font-size: 11px; }
+.sbSlot em { display: block; font-style: normal; color: var(--sky-ink, #7cc0ff); font-size: 11px; }
 .sbCard { display: flex; flex-direction: column; gap: 3px; padding: 8px; border: 1px solid #5a3a22; border-radius: 6px; background: #2a1a10; font-size: 12px; }
 .sbCard.on { border-color: var(--gold, #f0c060); }
 .sbCard.locked { opacity: 0.8; }
 .sbCard .top { display: flex; align-items: baseline; gap: 8px; }
 .sbCard .top b { flex: 1; font-size: 14px; }
-.sbCard .stats { color: #7cc0ff; font-size: 11px; }
+.sbCard .stats { color: var(--sky-ink, #7cc0ff); font-size: 11px; }
 .sbCard .text { color: #cdb99a; }
 .sbCard button { align-self: flex-end; min-height: 36px; }
 .sbNote { min-height: 15px; font-size: 12px; text-align: center; color: #ff9a7a; }

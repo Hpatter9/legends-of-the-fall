@@ -66,6 +66,14 @@ for (const f of readdirSync('src/art/ui').filter((f) => f.endsWith('.png') && !f
   copyFileSync(`src/art/ui/${f}`, `${out}/ui/${f}`);
   UI_FILES.push(`ui/${f}`);
 }
+// (the mockup styles' frames and textures: ui/styles/<a-d>/<name>.png, kept offline like the rest)
+for (const k of readdirSync('src/ui/styles')) {
+  mkdirSync(`${out}/ui/styles/${k}`, { recursive: true });
+  for (const f of readdirSync(`src/ui/styles/${k}`).filter((f) => f.endsWith('.png'))) {
+    copyFileSync(`src/ui/styles/${k}/${f}`, `${out}/ui/styles/${k}/${f}`);
+    UI_FILES.push(`ui/styles/${k}/${f}`);
+  }
+}
 // (the music: played as files, so the service worker keeps them for offline too)
 const AUDIO = ['town.ogg', 'battle.ogg', 'boss.ogg'];
 for (const f of AUDIO) copyFileSync(`src/audio/${f}`, `${out}/${f}`);
@@ -73,7 +81,7 @@ for (const f of AUDIO) copyFileSync(`src/audio/${f}`, `${out}/${f}`);
 const dataUrl = (f) => `data:image/png;base64,${readFileSync(f).toString('base64')}`;
 const LOADING_ART = { __LD_KNIGHT__: 'src/art/loading/knight-attack.png', __LD_DEMON__: 'src/art/loading/demon-attack.png', __LD_SLASH__: 'src/art/fx/magic/moon_slash.png', __LD_IMPACT__: 'src/art/fx/impact.png' };
 const withLoadingArt = (html) => Object.entries(LOADING_ART).reduce((h, [k, f]) => h.replaceAll(k, () => dataUrl(f)), html);
-writeFileSync(`${out}/index.html`, withLoadingArt(readFileSync('src/index.html', 'utf8').replace('/*__PIXEL_CSS__*/', () => readFileSync('src/pixel.css', 'utf8') + readFileSync('src/equip.css', 'utf8') + readFileSync('src/rogue.css', 'utf8') + readFileSync('src/twists.css', 'utf8') + readFileSync('src/eliteSets.css', 'utf8') + readFileSync('src/talents.css', 'utf8') + readFileSync('src/codex.css', 'utf8') + readFileSync('src/awaken.css', 'utf8')).replace('__VERSION__', version)));
+writeFileSync(`${out}/index.html`, withLoadingArt(readFileSync('src/index.html', 'utf8').replace('/*__PIXEL_CSS__*/', () => readFileSync('src/pixel.css', 'utf8') + readFileSync('src/equip.css', 'utf8') + readFileSync('src/rogue.css', 'utf8') + readFileSync('src/twists.css', 'utf8') + readFileSync('src/eliteSets.css', 'utf8') + readFileSync('src/talents.css', 'utf8') + readFileSync('src/codex.css', 'utf8') + readFileSync('src/awaken.css', 'utf8') + ['swap', 'common', 'a', 'b', 'c', 'd'].map((n) => readFileSync(`src/styles/${n}.css`, 'utf8')).join('')).replace('__VERSION__', version)));
 writeFileSync(
   `${out}/manifest.webmanifest`,
   JSON.stringify(
