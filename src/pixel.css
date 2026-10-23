@@ -195,7 +195,7 @@ body .sbSlot { min-height: 44px; }
   height: 64px; display: flex; align-items: center; padding: 0 8px; border-style: solid; border-width: 0 48px; border-radius: 0; background: none; clip-path: none; filter: none; line-height: 64px;
   border-image: url(ui/ribbon.png) 0 12 fill / 0 48px stretch; font-size: clamp(24px, calc(8 * var(--vw)), 34px); animation: none;
 }
-#banner.lost { background: none; border-image-source: url(ui/ribbon-grey.png); color: var(--e9); text-shadow: 0 3px 0 var(--s3); }
+#banner.lost { background: none; border-image-source: url(ui/ribbon-grey.png); color: var(--danger-hi); text-shadow: 0 3px 0 var(--s3); }
 #banner.won { text-shadow: 0 3px 0 var(--s2); }
 #stars .star { animation: none; opacity: 1; }
 #stars .star > span { text-shadow: none; animation: none; }
@@ -508,7 +508,7 @@ body.auto #buttons { display: none; }
      hall, the library), and across the scenes' own art. The scenes have their own life (fire, embers, idling heroes). ===== */
 #leaves { display: none; }
 /* (Settings' Start over: a plain button in a warning red, steady) */
-.setting button.danger { flex: none; white-space: nowrap; color: var(--e10); background: var(--r1); border-image: none; border: 2px solid var(--r3); }
+.setting button.danger { flex: none; white-space: nowrap; color: var(--r8); background: var(--r1); border-image: none; border: 2px solid var(--r3); }
 
 /* ---- the camp's daily signboard once today's daily is done: a green pixel tile with a white check where the red badge was (steady, no animation) ---- */
 .cpPlankOld i.dailyDone {

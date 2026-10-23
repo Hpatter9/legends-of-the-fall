@@ -23,7 +23,7 @@
 .tNode.taken { border-color: var(--gold-hi); background: radial-gradient(var(--e2), var(--s3)); box-shadow: inset 0 0 0 2px var(--s0), 0 0 0 2px var(--gold-hi); }
 .tNode.taken .tCost { background: var(--g4); }
 .tNode.locked img { opacity: 0.3; filter: grayscale(1); } .tNode.locked { border-color: var(--s5); }
-.tNode.locked .tCost { background: var(--s8); color: var(--e7); }
+.tNode.locked .tCost { background: var(--s8); color: var(--text-dim); }
 .tNode.ruled { border-color: var(--s3); border-style: dashed; }
 .tNode.ruled img { opacity: 0.18; filter: grayscale(1); }
 .tNode.ruled::after { content: ''; position: absolute; inset: 4px; background: linear-gradient(to top right, transparent calc(50% - 2px), var(--r2) calc(50% - 2px), var(--r2) calc(50% + 2px), transparent calc(50% + 2px)); pointer-events: none; }
@@ -34,7 +34,7 @@
 .tTitle .tNode { position: static; transform: none; grid-row: 1 / 3; width: 40px; height: 40px; pointer-events: none; }
 .tTitle .tNode img { width: 32px; height: 32px; } .tTitle .tNode .tCost { display: none; }
 .tTitle b { font-size: 14px; color: var(--gold-hi); } .tTitle small { font-size: 10px; color: var(--dim); }
-.tGood { color: var(--g4); font-size: 11px; } .tBad { color: var(--e7); font-size: 11px; }
+.tGood { color: var(--g4); font-size: 11px; } .tBad { color: var(--danger-hi); font-size: 11px; }
 .tBar { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .tPanel button { min-height: 36px; font-size: 13px; }
 .tPanel .tNode { min-height: 0; }

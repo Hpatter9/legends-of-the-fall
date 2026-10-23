@@ -16,8 +16,8 @@
   @font-face { font-family: 'Alegreya Sans'; font-weight: 700; font-display: swap; src: url(fonts/alegreya-sans-latin-700-normal.woff2) format('woff2'); }
   @font-face { font-family: 'Press Start 2P'; font-weight: 400; font-display: swap; src: url(fonts/press-start-2p-latin-400-normal.woff2) format('woff2'); }
   :root {
-    --ink: var(--e10);
-    --dim: var(--e7);
+    --ink: var(--s15);
+    --dim: var(--s13);
     --wood: rgb(var(--s3-rgb) / 0.86);
     --edge: var(--s9);
     --gold: var(--e6);
@@ -452,7 +452,7 @@
   .hpower { display: flex; align-items: baseline; justify-content: center; gap: 8px; padding: 4px; margin-bottom: 4px; background: rgb(var(--black-rgb) / 0.35); border: 1px solid rgb(var(--e6-rgb) / 0.5); border-radius: 6px; }
   .hpower small { font-size: 12px; color: var(--dim); }
   .hpower b { font-size: 20px; color: var(--gold-hi, var(--e8)); }
-  .card .pw, .ptCard .pw { display: block; font-size: 9px; line-height: 1.1; color: var(--e7); }
+  .card .pw, .ptCard .pw { display: block; font-size: 9px; line-height: 1.1; color: var(--text-dim); }
   .hstats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; text-align: center; }
   /* (the speeds take the second row, two wide cells) */
   .hstats .hspeed { grid-column: span 2; }
@@ -760,10 +760,10 @@
   @media (prefers-reduced-motion: reduce) { #leaves { display: none; } button.primary::after, .hmBattle::after { animation: none; } }
 
   /* gear grades (heroes have none): 1 Common grey, 2 Rare blue, 3 Epic purple, 4 Legendary gold, 5 Mythic crimson. --rc is the grade's colour, which the equipment views use. */
-  :root { --r1: var(--s12); --r2: var(--b3); --r3: var(--p4); --r4: var(--e6); --r5: var(--r5); }
-  .r1 { --rc: var(--r1); } .r2 { --rc: var(--r2); } .r3 { --rc: var(--r3); } .r4 { --rc: var(--r4); } .r5 { --rc: var(--r5); }
+  :root { --rar1: var(--s12); --rar2: var(--b3); --rar3: var(--p4); --rar4: var(--e6); --rar5: var(--r5); }
+  .r1 { --rc: var(--rar1); } .r2 { --rc: var(--rar2); } .r3 { --rc: var(--rar3); } .r4 { --rc: var(--rar4); } .r5 { --rc: var(--rar5); }
   .card, .hcard, .hrow, .ptSlot { min-width: 0; box-sizing: border-box; } .hrow > :not(canvas) { min-width: 0; }
-  .rtag { font-style: normal; font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--e7); }
+  .rtag { font-style: normal; font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-dim); }
   /* the recruit reveal: the cards flip over one after another; a new hero's card has a steady gold glow (nothing flashes or trembles) */
   .flip.new .face { box-shadow: 0 0 14px 2px rgb(var(--e8-rgb) / 0.75); }
   .flip.new.up { z-index: 1; transform: scale(1.08); transition: transform 0.4s; }

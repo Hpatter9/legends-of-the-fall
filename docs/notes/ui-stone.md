@@ -38,3 +38,30 @@ Not touched, on purpose: the scene paintings and their labels' canvases (`camp.t
 ## Screens and tools
 `tools/ui/stone-shots.mjs <build> <prefix> [WxH]` takes 34 screens (loading, starter, five home tabs, codex, achievements, settings, party, armies, army card, hero sheet, awakening, equipment, talents, deploy, running, boss card, boss bar, result, recap, auto summary, event, tips, stash, chest, Calamity pick and map, tower, shop, daily, gacha). `tools/ui/stone-sheets.py` makes the overview sheets. Samples: `docs/samples/ui-stone-before-*.png` and `ui-stone-after-*.png` (393x852 and `-360x780`), `ui-stone-sheet-<home|heroes|fight|more>.png` (before | after) and `ui-stone-sheet-360-*.png`.
 Not captured: a boss's phase banner (it needs a calamity boss at its threshold; its CSS is tokenised like the boss card).
+
+## The audit and finish pass (`claude/ui-stone-2`)
+
+**Found and fixed**
+- The rarity tokens `--r1` to `--r5` shared names with the danger ramp, so common gear and card frames showed dark red and the Mythic token pointed at itself. The grade colours are now `--rar1` to `--rar5`.
+- `--ink` and `--dim` had been mapped to peach and orange (the old cream and tan). They are now `--s15` and `--s13`, so body and small text are slate-white and steel everywhere, not orange.
+- Notes, power labels and the locked or "bad" text that used the old tan now use `--text-dim` or `--danger-hi`; the defeat banner, the danger button and the starter and spellbook pages follow.
+- The gear-set and relic-set colours (`sim/gearSets.ts`, `sim/relicSets.ts`, shown in menus through `--sc` and `--set`) are now token strings (`var(--e6)` and so on).
+- The speech bubbles drawn on canvas over the camp and the tavern are slate plates read from the tokens (`src/render/tok.ts`), not brown and cream.
+- The `trim-l` and `trim-r` pictures are redrawn in the kit (they were still brown).
+- A runtime scan (`AUDIT=1 node tools/ui/stone-shots.mjs ...`) lists any visible element whose text, fill or border is still a warm brown or cream: none are left except the ember accent fills and the border colour under picture frames.
+
+**Counts.** The UI chrome's hard-coded colours were already moved onto tokens in the first pass (no numeric colour is left in any UI CSS or in the UI strings of `.ts` files). The counts a plain grep still finds are `var(--gold)`-style token uses (`--gold` now means ember; the name is kept so old rules work) and the art below.
+
+**Stayed art** (painted scenes, the board, the void and effects): `render/calRealm.ts` (51, the void realm), `camp.ts` (31, the scene, its fire and table), `render/boardView.ts` (29), `hall.ts` (27, the summoning room and its sparks), `castle.ts` (27, scaffolds, flags and glows), `tavern.ts` (15), `render/castleSpots.ts` (15), `render/backdrop.ts` (12), `render/uiFx.ts` (6, the pull reveal's sparkles), `library.ts` (5, the room's glow), `calMap.ts` (3, the land's fog), `render/sheets.ts` (2), and the falling leaves and the theme colour in `index.html` (11).
+
+**Screens checked (393x852 and 360x780; `docs/samples/ui-stone2-*.png`)**
+- Loading ✓, turn-upright ✓, version line ✓ (top bar of every shot), starter ✓, tips ✓
+- Home: Battle camp ✓, Heroes tavern ✓, Castle ✓ and building card ✓, Recruit hall ✓, Spells library ✓, stash cart ✓, chest opening ✓, daily ✓
+- Settings ✓ (top, bottom, "Start over" two-tap confirm ✓), achievements ✓, achievement toast ✓ (on the result), codex ✓ and detail ✓
+- Hero sheet ✓, awakening ✓, talents ✓, equipment ✓, equipment picker with compare ✓, gear sets ✓, party ✓
+- Armies ✓, army card ✓ (locked and open), unlock moment ✓, result ✓, army result ✓, recap ✓, auto-replay summary ✓, recycle confirm ✓
+- Fight: deploy HUD, spell bar, bench and synergy column ✓, running ✓, boss card ✓, boss bar ✓, twist banner ✓, long-map overview ✓
+- Tower: map ✓, elite info ✓, twist node ✓, shop ✓, campfire ✓, recruit node ✓, treasure ✓ and relic pick ✓, mystery ✓, event ✓, abandon confirm ✓, summary ✓
+- Calamity: pick and ascension ✓, map ✓
+- Gacha result ✓
+- Not shot: the boss phase banner (needs a boss at its threshold; its CSS is tokenised like the boss card), the mimic (a mystery that starts a fight; the fight HUD is shot), the relic popup from a header relic (same plate as the event card).
