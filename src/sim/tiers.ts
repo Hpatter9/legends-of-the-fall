@@ -35,8 +35,8 @@ export const TIERS: readonly Tier[] = [
 export const ARMY_STARS = TIERS.reduce((n, t) => n + t.stars, 0);
 /** The stars of a run, at most. */
 export const RUN_STARS = 3;
-/** Stars at which an army gives a chest. */
-export const MILESTONES: readonly number[] = [3, 5, 10];
+/** Stars at which an army gives a chest: bronze, silver, gold at the end of Legendary, and the best of them for the Mythic star. */
+export const MILESTONES: readonly number[] = [3, 5, 10, 11];
 
 export const tierOf = (i: number | undefined): Tier => TIERS[Math.max(0, Math.min(TIERS.length - 1, (i ?? 0) | 0))];
 /** The star numbers (1 to 11) a tier holds: Normal 1-3, Hard 4-6, Elite 7-9, Legendary 10, Mythic 11. */

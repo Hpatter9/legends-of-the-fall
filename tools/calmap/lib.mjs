@@ -14,7 +14,7 @@ export function serve(root = 'out/web', port = 8139) {
     r.end(readFileSync(p));
   }).listen(port);
 }
-export const launch = () => chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+export const launch = () => chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 /** A page at (w, h) with a rich started meta, on the home screen. */
 export async function openHome(browser, w, h, port = 8139, dpr = 2) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: dpr });

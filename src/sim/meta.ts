@@ -20,6 +20,7 @@ import { readAwakened } from './awaken';
 import { readCodex, readCodexClaimed, type CodexRecord } from './codex';
 import { readCombosSeen } from './combos';
 import { readTickets } from './autoReplay';
+import { grandfather } from './modeUnlock';
 import { drawKind, giveShards } from './unlock';
 import { DUPLICATE_SHARDS, PULL_HEROES } from './unlockRules';
 import { grantContent } from './contentHeroes';
@@ -74,6 +75,8 @@ export interface Meta {
   tower: number;
   /** A calamity's record: the most maps cleared in one run, and the runs cleared whole (none before the first calamity). */
   calamity?: { best: number; clears: number; /** The highest ascension level cleared whole (`ascension.ts`); none before the first clear after it came. */ asc?: number };
+  /** The ascension levels a Calamity has been cleared at, each a title (`calReward.ts`); none before the first clear after it came. */
+  calTitles?: number[];
   /** The daily challenge per date (yyyymmdd): the plays (the first counts) and how the counted run went: cleared, the furthest wave, the bonus stars. */
   daily: Record<string, DailyEntry>;
   /** The bosses beaten (`foes.ts`, by id). */
@@ -82,6 +85,8 @@ export interface Meta {
   armies: Record<string, ArmyRecord>;
   /** The armies whose open card the player has seen (a newly opened one glows until then). */
   armySeen: string[];
+  /** The armies and modes ('castle', 'tower', 'calamity') a save from before the star unlocks already had open: they stay open (`modeUnlock.ts`). Missing in a save from before; read once. */
+  opened?: string[];
   /** The achievements unlocked (`achievements.ts`, by id). */
   achievements: string[];
   /** The achievements whose crowns have been claimed (an older save's earned ones were paid at once, so they count as claimed). */
@@ -159,7 +164,7 @@ export interface Pull {
 }
 
 /** A brand-new save: no hero yet, only the three starter packs to pick from (`pickStarter`). */
-export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [], party: [], starter: { packs: starterPacks(seed), pick: null }, pulls: 0, sinceNew: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], achievements: [], claimed: [], stash: [], ranked: {} });
+export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [], party: [], starter: { packs: starterPacks(seed), pick: null }, pulls: 0, sinceNew: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], opened: [], achievements: [], claimed: [], stash: [], ranked: {} });
 
 /** A save past the pick with the old starting five unlocked and in the party: what the saves from before the pick have, and what the tests and tools play with. */
 export function startedMeta(seed: number): Meta {
@@ -365,6 +370,8 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.talents = readTalents(m.talents, m);
       // (saves from before the army chests have an empty stash; a chest given but not opened by an earlier format goes into it)
       m.stash = readStash(m.stash, rawArmies, m.seed);
+      // (a save from before the star unlocks keeps what it had open: the armies, the castle, the tower and the Calamity it had reached)
+      m.opened = Array.isArray(m.opened) ? m.opened.filter((x) => typeof x === 'string') : grandfather(m);
       // (saves from before the codex have none)
       m.codex = readCodex(m.codex);
       m.codexClaimed = readCodexClaimed(m.codexClaimed) ?? [];

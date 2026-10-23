@@ -238,6 +238,8 @@ export class CalMap {
       this.dress(land - 1, H, unit);
       this.walk = null;
       this.stand = this.standId();
+      // (a new map: the leader stands at this map's own start, not where the last map left it)
+      this.pos = this.standAt(this.stand);
       this.keepTop = false;
     }
     void loadAtlas().then((im) => {
@@ -930,6 +932,8 @@ export class CalMap {
 
   /** Set the leader walking a route of spots: along each bridge's stones, through the spots between. */
   private startWalk(route: number[], speed: number, done: () => void): void {
+    // (a route of one spot: the party already stands there, as at a shop it has just left and is visiting again. There is nothing to walk, and a walk of one point would never end)
+    if (route.length < 2) return done();
     const pts: { x: number; y: number }[] = [this.standAt(route[0])];
     for (let i = 1; i < route.length; i++) {
       const from = route[i - 1];

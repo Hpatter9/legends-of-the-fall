@@ -86,7 +86,7 @@ test('the fog: at first the start and the first floor, then a cleared spot shows
   let fork = -1;
   for (; fork < 0 && seed < 500; seed++) {
     const q = run(seed);
-    fork = q.tower!.map.find((n) => n.row === 1 && n.next.length >= 2)?.id ?? -1;
+    fork = q.tower!.map.find((n) => n.row >= 1 && n.row <= 3 && n.next.length >= 2)?.id ?? -1;
     if (fork >= 0) {
       stand(q, 1, fork);
       const fog = fogOf(q.tower!, []);

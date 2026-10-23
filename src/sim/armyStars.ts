@@ -112,9 +112,10 @@ export function grantChests(m: Meta, a: Army, rec: ArmyRecord, tier = 0): number
 // ---- the chests ---------------------------------------------------------------------------------------------------------
 
 /** The daily chest has a look of its own (`chestStash.ts`), whatever its size. */
-export type ChestKind = 'bronze' | 'silver' | 'gold' | 'daily';
-export const chestKind = (at: number): 'bronze' | 'silver' | 'gold' => (at >= 10 ? 'gold' : at >= 5 ? 'silver' : 'bronze');
-const CHEST_STEP = (at: number): number => (at >= 10 ? 3 : at >= 5 ? 2 : 1);
+export type ChestKind = 'bronze' | 'silver' | 'gold' | 'mythic' | 'daily';
+/** The Mythic star's chest is the best the armies give (a gold chest's picture, tinted); the rolls of a gold chest stand for its quality. */
+export const chestKind = (at: number): 'bronze' | 'silver' | 'gold' | 'mythic' => (at >= 11 ? 'mythic' : at >= 10 ? 'gold' : at >= 5 ? 'silver' : 'bronze');
+const CHEST_STEP = (at: number): number => (at >= 11 ? 4 : at >= 10 ? 3 : at >= 5 ? 2 : 1);
 
 export interface ChestState {
   at: number;
@@ -142,9 +143,13 @@ export const BRONZE_GEAR_CHANCE = 0.35;
  * chest are what they were before equipment existed. `at` is the star milestone (3, 5 or 10).
  */
 export function rollGear(rng: Rng, at: number, armyIdx: number): GearDrop[] {
-  const quality = chestKind(at);
-  if (quality === 'bronze' && !rng.chance(BRONZE_GEAR_CHANCE)) return [];
-  return [{ item: rollEquipment(rng, { quality, armyIndex: armyIdx, milestone: at >= 10 }) }];
+  const kind = chestKind(at);
+  if (kind === 'bronze' && !rng.chance(BRONZE_GEAR_CHANCE)) return [];
+  const quality = kind === 'mythic' ? 'gold' : kind;
+  const out = [{ item: rollEquipment(rng, { quality, armyIndex: armyIdx, milestone: at >= 11 ? 3 : at >= 10 }) }];
+  // (the Mythic chest holds a second piece, drawn after the first, so the gold chest's own roll is as it was)
+  if (kind === 'mythic') out.push({ item: rollEquipment(rng, { quality, armyIndex: armyIdx, milestone: 3 }) });
+  return out;
 }
 
 export interface LootItem {
@@ -175,7 +180,7 @@ const roundTo = (n: number, k: number): number => Math.round(n / k) * k;
 export const chestSeed = (seed: number, a: Army, at: number): number => mixSeed(seed, SALT, armyIndex(a.id) + 1, at);
 
 /** The crowns a chest pays before its draw: the milestone's base, rising with the army's place in the list and the tier. */
-export const chestCrowns = (at: number, armyIdx: number, tier = 0): number => roundTo(({ 3: 150, 5: 420, 10: 1300 } as Record<number, number>)[at] * (1 + 0.32 * armyIdx) * (1 + 0.15 * tier), 10);
+export const chestCrowns = (at: number, armyIdx: number, tier = 0): number => roundTo(({ 3: 150, 5: 420, 10: 1300, 11: 2400 } as Record<number, number>)[at] * (1 + 0.32 * armyIdx) * (1 + 0.15 * tier), 10);
 
 /** What a chest holds, drawn from its seed without touching the meta: the same chest always rolls the same. */
 export function rollChest(seed: number, a: Army, at: number, tier = 0): { crowns: number; shards: string[]; recruits: { kind: string; prize: boolean }[]; gear: GearDrop[] } {
@@ -186,10 +191,11 @@ export function rollChest(seed: number, a: Army, at: number, tier = 0): { crowns
   const shards = Array.from({ length: 1 + step + (at >= 10 ? 1 : 0) }, () => rng.pick(ALL_HEROES));
   const recruits: { kind: string; prize: boolean }[] = [];
   if (step === 2 && rng.chance(0.3 + 0.04 * idx + 0.05 * tier)) recruits.push({ kind: rng.pick(ALL_HEROES), prize: false });
-  if (step === 3) {
-    // the 10-star chest always holds a hero (any of them, as likely as another)
+  if (step >= 3) {
+    // the 10-star chest always holds a hero (any of them, as likely as another); the 11-star chest a second
     recruits.push({ kind: rng.pick(ALL_HEROES), prize: true });
   }
+  if (step >= 4) recruits.push({ kind: rng.pick(ALL_HEROES), prize: true });
   return { crowns, shards, recruits, gear: rollGear(rng, at, idx) };
 }
 
