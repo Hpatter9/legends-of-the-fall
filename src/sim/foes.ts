@@ -43,7 +43,7 @@ const CHAMPION = { side: 'foe', hp: 4200, atk: 90, def: 12, range: 1, moveMs: 80
 
 // The Yokai Night Parade and the Golem Forge (`armies.ts`): fox spirits, crows and a tengu monk, and slow stone, iron and crystal golems.
 const YOKAI = { side: 'foe', hp: 220, atk: 24, def: 4, range: 1, moveMs: 480, atkMs: 800, jump: 3 } as const;
-const GOLEM = { side: 'foe', hp: 460, atk: 28, def: 9, range: 1, moveMs: 1000, atkMs: 1500, jump: 1 } as const;
+const GOLEM = { side: 'foe', hp: 460, atk: 28, def: 9, range: 1, moveMs: 1000, atkMs: 1500, jump: 2 } as const;
 
 export const FOES: Record<string, UnitDef> = {
   wolfBlack: { ...WOLF, id: 'wolfBlack', name: 'Black Werewolf', sheet: 'werewolf_black', scale: 0.81 },
@@ -115,7 +115,7 @@ export const FOES: Record<string, UnitDef> = {
   crystalGolem: { ...GOLEM, id: 'crystalGolem', name: 'Crystal Golem', sheet: 'golem_crystal', scale: 0.45, hp: 340, atk: 26, def: 7, moveMs: 900, atkMs: 1300, role: 'Shards that hold heroes still' },
   magmaGolem: { ...GOLEM, id: 'magmaGolem', name: 'Magma Golem', sheet: 'golem_magma', scale: 0.4, hp: 400, atk: 32, def: 6, moveMs: 950, role: 'Molten blows, bursts of magma' },
   sapphireColossus: { ...MID, id: 'sapphireColossus', name: 'Sapphire Colossus', sheet: 'golem_sapphire', scale: 0.61, hp: 1800, atk: 50, def: 12, moveMs: 950, atkMs: 1400, role: 'Crystal armour, shard storms' },
-  forgeTitan: { side: 'foe', id: 'forgeTitan', name: 'Forge Titan', sheet: 'golem_forge', scale: 0.62, hp: 4200, atk: 85, def: 14, range: 1, moveMs: 1000, atkMs: 1500, jump: 1, role: 'Hammers the line, furnace blasts' },
+  forgeTitan: { side: 'foe', id: 'forgeTitan', name: 'Forge Titan', sheet: 'golem_forge', scale: 0.62, hp: 4200, atk: 85, def: 14, range: 1, moveMs: 1000, atkMs: 1500, jump: 2, role: 'Hammers the line, furnace blasts' },
   boarKing: { ...BOAR_KING, id: 'boarKing', name: 'Boar King', sheet: 'boar_king', scale: 0.51, hp: 6800, atk: 110 },
   devilLeader: { ...DEVIL_LEADER, id: 'devilLeader', name: 'Devil Leader', sheet: 'devil_leader', scale: 0.54, hp: 7600, atk: 120 },
   shamanKing: { ...SHAMAN_KING, id: 'shamanKing', name: 'Shaman King', sheet: 'shaman_king', scale: 0.5, hp: 8400, atk: 130 },

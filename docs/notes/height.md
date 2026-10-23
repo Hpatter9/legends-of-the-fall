@@ -33,7 +33,7 @@ page shows the stat and marks a blow from above.
 
 - Every unit has had a `jump` since the start; it now means something. `canStep(from, to, jump)`: climb at most `jump`, drop at most
   `jump + DROP_EXTRA` (1), as in FF Tactics; fliers (`jump >= FLY_JUMP`) ignore heights. Before, every jump was clamped to 2.
-- Jumps: heavy 1 (Juggernaut, Treant, and the foes' ogres, golems and the Forge Titan), most 2, agile 3 (Werewolf, Satyr,
+- Jumps: heavy 1 (Juggernaut, Treant, and the foes' ogres; golems stay at 2, as at 1 the Golem Forge fell a third easier on the tiers), most 2, agile 3 (Werewolf, Satyr,
   Kunoichi's old 3...), the two quickest **4** (Kunoichi, Ninja Monk), fliers go over anything (Karasu, Reaper, Queen Dragoon, demons).
 - Melee reach across a gap uses it: a blade reaches up as far as the fighter jumps and down as far as it could drop (`canStrike`).
 - The hero sheet (and the codex) shows **Jump** beside Attack speed and Walk ("Flies" for a flier). Power (`powerOf`) counts it
@@ -132,10 +132,25 @@ other when the drum beats, and on some boards they walk apart first.
 
 ## For the owner
 
-- The foe jump 1 on ogres, golems and the Forge Titan, and the 4 for Kunoichi and Ninja Monk, are my reading of "heavy" and
+- The foe jump 1 on the ogres, and the 4 for Kunoichi and Ninja Monk, are my reading of "heavy" and
   "agile"; they are one number each in `foes.ts` / `units.ts`.
 - 15% a level and 3% guard are the "felt but not dominant" point I found; the numbers are `HEIGHT_BLOW`, `HIGH_GUARD` and
   `HIGH_REACH` at the top of `battle.ts`.
 - `CAL_SCALE.step`, `DAILY_START` and twelve heroes' hp moved to hold the balance; the armies needed nothing.
 - The screenshots are in `docs/samples/height-*.png` (`tools/height/shots.mjs`; `tools/height/compat.mjs` plays an old save
   and a new one to the end).
+
+## After merging the difficulty work (0.132.0)
+
+Rechecked with `docs/notes/difficulty.md`'s command (`--deep --levels 1,15,30,45,60,80,100 --attempts 8 --tiers-at 1,2,3,4`, with and
+without `--talents`) on origin/main and on this branch, and the spire and Calamity with `--castle maxed`. Eight saves a cell is noisy
+(one try-count can swing by half); read it by band.
+
+- **Mythic at level 100 with talents** (the tier's target, 3.0 to 3.8 on the last armies): Infernal 3.0 / Yokai 3.4 / Golem 3.8 on main, 2.1 / 4.4 / 3.8 here
+  (mean 3.4 both). Hard, Elite and Legendary entries with talents are inside the same bands (Elite at 45: Infernal 14.6 / Yokai 6.8 / Golem 5.0 on main,
+  6.0 / 7.4 / 4.1 here; Legendary at 60 or so: 14.1 / 8.9 / 11.4 on main, 8.6 / 7.6 / 4.8 here, a little easier).
+- **Without talents** the party is a little easier on the stairs: Elite at 100 on the four late armies 6.5 / 8.5 / 12.3 / 11.0 on main, 4.0 / 4.4 / 9.3 / 5.0 here.
+  Most of the gap in the Golem Forge was my jump 1 on golems (they could not climb to the heroes' perches); at jump 2 it reads 14.8 / 6.0 (Hard 30 / 45) and 8.6 (Elite 100)
+  against main's 16.5 / 14.5 / 11.0 and 5.6 / 4.7 / 1.1 at jump 1 (16 saves). The golems are back at 2. I did not move the `TIERS` multipliers.
+- **Spire, castle at its top** (`--tower --levels 3,8,14,30 --attempts 60 --castle maxed`): median 12 floors; mean 21.9 and bosses 38 / 20 / 8% on main, 20.4 and 33 / 15 / 10% here.
+- **Calamity, castle at its top** (`--attempts 200`), maps 1 to 6: 96 / 95 / 71 / 51 / 44 / 14% on main, 95 / 92 / 68 / 50 / 37 / 20% here (the noise of 200 runs is 3 or 4 points).
