@@ -94,7 +94,7 @@ export function drawEvent(run: Run, stage: number, kinds: readonly EventKind[] =
   switch (kind) {
     case 'shrine':
       return {
-        kind, stage, title: 'A quiet shrine', text: 'Incense curls over the stones. The heroes kneel for a moment.',
+        kind, stage, title: 'A quiet shrine', text: 'Incense curls over the stones. The heroes kneel for a moment. A goat eats some of the incense.',
         options: [
           { label: 'Pray for health', text: `+${SHRINE_HP * 100}% hp in the next fight`, cost: 0, effect: { t: 'buff', hp: 1 + SHRINE_HP } },
           { label: 'Pray for fury', text: `+${SHRINE_ATK * 100}% attack in the next fight`, cost: 0, effect: { t: 'buff', atk: 1 + SHRINE_ATK } },
@@ -105,7 +105,7 @@ export function drawEvent(run: Run, stage: number, kinds: readonly EventKind[] =
       const second = relics.length ? pick(rng, relics) : '';
       const g = dropGear(rng, gearId(run), stage);
       return {
-        kind, stage, title: 'A travelling merchant', text: 'A cart creaks out of the mist, hung with trinkets.',
+        kind, stage, title: 'A travelling merchant', text: 'A cart creaks out of the mist, hung with trinkets. The merchant says everything is a bargain. He says it to the goat, too.',
         options: [
           second ? relicOption(second, 70 + 4 * stage) : { label: 'A sack of coin', text: 'Nothing else to sell.', cost: 0, effect: { t: 'gold', n: 20 } },
           gearOption(g, 28 * g.tier + 2 * stage),
@@ -118,7 +118,7 @@ export function drawEvent(run: Run, stage: number, kinds: readonly EventKind[] =
       const id = relics.length ? pick(rng, relics) : '';
       const effect: Effect = roll === 0 && id ? { t: 'relic', id } : roll === 1 ? { t: 'gear', gear: dropGear(rng, gearId(run), stage) } : { t: 'gold', n: 50 + 8 * stage };
       return {
-        kind, stage, title: 'A mystery chest', text: 'It sits in the road, locked by nothing but luck.',
+        kind, stage, title: 'A mystery chest', text: 'It sits in the road, locked by nothing but luck. Someone has already licked it.',
         options: [{ label: 'Open it', text: 'A relic, gear or gold.', cost: 0, effect }, leave()],
       };
     }
@@ -126,7 +126,7 @@ export function drawEvent(run: Run, stage: number, kinds: readonly EventKind[] =
       const gear = dropGear(rng, gearId(run), stage, 1);
       const gold = 40 + 8 * stage;
       return {
-        kind, stage, title: 'A cursed path', text: 'The way ahead is dark. Whatever waits there guards something good.',
+        kind, stage, title: 'A cursed path', text: 'The way ahead is dark. Whatever waits there guards something good, and is probably short of staff.',
         options: [
           { label: 'Take the path', text: `foes +${CURSE_FOES * 100}% hp and attack next fight; win for +${gold} gold and a ${gear.name}`, cost: 0, effect: { t: 'curse', foes: 1 + CURSE_FOES, gold, gear } },
           { label: 'Turn back', text: 'Take the safe road.', cost: 0, effect: { t: 'leave' } },
@@ -135,21 +135,21 @@ export function drawEvent(run: Run, stage: number, kinds: readonly EventKind[] =
     }
     case 'spring':
       return {
-        kind, stage, title: 'A healing spring', text: 'Clear water wells up between mossy stones. The heroes rest beside it.',
+        kind, stage, title: 'A healing spring', text: 'Clear water wells up between mossy stones. The heroes rest beside it. Duchess drinks first, as is her right.',
         options: [{ label: 'Drink deep', text: `heals every hero ${SPRING_HEAL * 100}% of its hp`, cost: 0, effect: { t: 'heal', frac: SPRING_HEAL } }, leave()],
       };
     case 'gambler': {
       const stake = 30 + 2 * stage;
       const win = rng.chance(0.5);
       return {
-        kind, stage, title: 'A dicing goblin', text: 'A goblin rattles a cup of bones. "Double or nothing, heroes?"',
+        kind, stage, title: 'A dicing goblin', text: 'A goblin rattles a cup of bones. "Double or nothing, heroes?" He is not allowed to say "nothing" quite so cheerfully.',
         options: [{ label: 'Roll the bones', text: `stake ${stake} gold: a coin flip for ${stake * 2 + 10} gold`, cost: stake, effect: { t: 'gamble', win, n: stake * 2 + 10 } }, leave()],
       };
     }
     case 'altar': {
       const id = relics.length ? pick(rng, relics) : '';
       return {
-        kind, stage, title: 'A blood altar', text: 'A cracked altar hums. It wants something of the heroes, and offers something back.',
+        kind, stage, title: 'A blood altar', text: 'A cracked altar hums. It wants something of the heroes, and offers something back. Please read the small print on the side.',
         options: [id ? { label: `Give blood for the ${RELICS[id].name}`, text: `every hero loses ${ALTAR_COST * 100}% of its hp; ${RELICS[id].text}`, cost: 0, effect: { t: 'altar', frac: ALTAR_COST, id } } : { label: 'A sack of coin', text: 'The altar has nothing else to give.', cost: 0, effect: { t: 'gold', n: 25 } }, leave()],
       };
     }
@@ -160,7 +160,7 @@ export function drawEvent(run: Run, stage: number, kinds: readonly EventKind[] =
       const b = ids.length > 1 ? pick(rng, ids.filter((x) => x !== a)) : a;
       const name = (id: number) => UNITS[run.roster.find((h) => h.id === id)?.kind ?? '']?.name ?? '';
       return {
-        kind, stage, title: 'A training ground', text: 'A weathered master offers lessons, for a fee.',
+        kind, stage, title: 'A training ground', text: 'A weathered master offers lessons, for a fee. The fee is not in the lessons.',
         options: [
           { label: `Drill the ${name(a)}`, text: `+${TRAIN_ATK * 100}% attack for good`, cost: price, effect: { t: 'train', hero: a, atk: TRAIN_ATK } },
           { label: `Toughen the ${name(b)}`, text: `+${TRAIN_HP * 100}% hp for good`, cost: price, effect: { t: 'train', hero: b, hp: TRAIN_HP } },

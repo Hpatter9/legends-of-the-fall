@@ -1,6 +1,7 @@
 // The achievements page (from the home screen) and the toast that pops up when one is earned. Only reads the meta and
 // the achievement list; the rules are in `src/sim/achievements.ts`.
 
+import { AWARD_JOKES } from './quipData';
 import { ACHIEVEMENTS, claimable, unclaimed, type Achievement } from './sim/achievements';
 import type { Meta } from './sim/meta';
 import { UNITS } from './sim/units';
@@ -36,6 +37,8 @@ function row(a: Achievement, m: Meta, claim: (ids: string[]) => void): HTMLEleme
   const what = document.createElement('em');
   what.textContent = `${a.text} · ${a.crowns} crowns`;
   text.append(name, what);
+  const joke = AWARD_JOKES[a.id];
+  if (joke) text.append(Object.assign(document.createElement('small'), { className: 'achJoke', textContent: joke }));
   const meter = a.meter?.(m);
   if (meter && !done) {
     const bar = document.createElement('div');

@@ -22,9 +22,11 @@ export interface Settings {
   saver: boolean;
   /** Keep the screen on during a fight. */
   awake: boolean;
+  /** Whether heroes pipe up in small speech bubbles (hired, placed, a win or a loss, a bit of banter). */
+  quips: boolean;
 }
 
-export const DEFAULTS: Settings = { music: 100, effects: 100, speed: 1, shake: true, numbers: true, saver: false, awake: true };
+export const DEFAULTS: Settings = { music: 100, effects: 100, speed: 1, shake: true, numbers: true, saver: false, awake: true, quips: true };
 
 /** The settings from what was saved (`raw`, the stored text or null): anything missing or wrong falls back to the default. */
 export function parseSettings(raw: string | null): Settings {
@@ -45,6 +47,7 @@ export function parseSettings(raw: string | null): Settings {
     numbers: flag(saved.numbers, DEFAULTS.numbers),
     saver: flag(saved.saver, DEFAULTS.saver),
     awake: flag(saved.awake, DEFAULTS.awake),
+    quips: flag(saved.quips, DEFAULTS.quips),
   };
 }
 
@@ -111,6 +114,7 @@ function draw(): void {
     toggleRow('Damage numbers', 'The numbers that pop up when a fighter is hit', 'numbers', s.numbers),
     toggleRow('Battery saver', 'Caps the frame rate at 30', 'saver', s.saver),
     toggleRow('Keep screen awake', 'The screen stays on during a fight', 'awake', s.awake),
+    toggleRow('Hero quips', 'Heroes (and now and then Duchess) say the odd word in a small speech bubble', 'quips', s.quips),
     resetTipsRow(),
     startOverRow(),
   );
@@ -170,7 +174,7 @@ function speedRow(value: 1 | 2): HTMLElement {
   return r;
 }
 
-function toggleRow(title: string, hint: string, key: 'shake' | 'numbers' | 'saver' | 'awake', value: boolean): HTMLElement {
+function toggleRow(title: string, hint: string, key: 'shake' | 'numbers' | 'saver' | 'awake' | 'quips', value: boolean): HTMLElement {
   const [r] = row(title, hint);
   const b = document.createElement('button');
   b.className = value ? 'toggle on' : 'toggle';

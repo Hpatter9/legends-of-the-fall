@@ -575,6 +575,10 @@
     position: fixed; z-index: 6; width: min(280px, calc(calc(100 * var(--vw)) - 24px)); padding: 10px 12px; background: var(--wood);
     border: 2px solid var(--gold); border-radius: 10px; box-shadow: 0 4px 14px rgb(var(--black-rgb) / 0.6); font-size: 14px; line-height: 1.3;
   }
+  #joke { max-width: 320px; margin: -2px auto 0; font: 400 12px/1.35 var(--body); color: var(--s13); text-align: center; }
+  #joke[hidden] { display: none; }
+  .achJoke { display: block; margin-top: 2px; font: 400 12px/1.3 var(--body); color: var(--s11); }
+  .rcJoke { margin: 0 auto 6px; max-width: 320px; font: 400 12px/1.35 var(--body); color: var(--s13); text-align: center; }
   #tip[hidden] { display: none; }
   #tip p { margin: 0 0 8px; }
   #tip .tipRow { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
@@ -646,6 +650,7 @@
   .ldTitle small { display: block; margin-top: 8px; font-size: 20px; letter-spacing: 8px; color: var(--gold); text-shadow: 0 2px 0 var(--s2), 2px 0 0 var(--s2), -2px 0 0 var(--s2), 0 -2px 0 var(--s2); }
   .ldLine { left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom) + 12%); margin: 0; text-align: center; font: 900 16px Georgia, 'Times New Roman', serif; letter-spacing: 4px; text-transform: uppercase; color: var(--ink); text-shadow: 0 2px 0 var(--black); }
   .ldBar { left: 50%; bottom: calc(env(safe-area-inset-bottom) + 8%); width: 160px; height: 8px; margin-left: -80px; background: var(--s1); border: 2px solid var(--s7); box-sizing: content-box; overflow: hidden; }
+  .ldTip { left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom) + 14px); margin: 0 auto; max-width: 320px; padding: 0 16px; text-align: center; font: 400 12px/1.3 var(--body); color: var(--s13); text-shadow: 0 1px 0 var(--black); }
   .ldBar i { position: absolute; top: 0; left: 0; width: 40px; height: 100%; background: var(--gold); animation: ldMarch 1.6s steps(16) infinite; }
   @keyframes ldMarch { from { translate: -40px 0; } to { translate: 160px 0; } }
   @media (min-width: 700px) { #loading { --s: 3; } .ldTitle { font-size: 56px; } }
@@ -810,6 +815,7 @@
 <div id="result" hidden>
   <div id="banner"></div>
   <div id="summary"></div>
+  <div id="joke" hidden></div>
   <div id="stars" hidden></div>
   <div id="armyStars" hidden></div>
   <div id="xp" hidden></div>
@@ -868,7 +874,7 @@
   </div>
   <div class="ldVig"></div>
   <h1 class="ldTitle">Legends<small>of the Fall</small></h1>
-  <p class="ldLine">Loading&hellip;</p><div class="ldBar"><i></i></div>
+  <p class="ldLine">Loading&hellip;</p><div class="ldBar"><i></i></div><p class="ldTip"></p>
 </div>
 <div id="turnUp"><b>Turn your phone upright</b><span>Legends of the Fall is played upright.</span></div>
 <div id="version">Version __VERSION__</div>
