@@ -151,3 +151,16 @@ test('the daily’s foes scale with the squad’s lasting power: a fresh save me
   assert.ok(Math.abs(foeHp(k) / foeHp(1) - k) < 0.05);
   assert.equal((startDaily(late, 20260303).mode as { scale?: number }).scale, k);
 });
+
+test('a saved Mythic run loads (runFits reads the waves, not the tier), and one past its last wave does not', async () => {
+  const { loadRun, saveRun } = await import('../src/sim/run');
+  const data: Record<string, string> = {};
+  const store = { getItem: (k: string) => data[k] ?? null, setItem: (k: string, v: string) => void (data[k] = v) };
+  const run = armyRun(1, 'golems', undefined, undefined, 4);
+  run.stage = armyById('golems')!.waves.length;
+  saveRun(run, store);
+  assert.equal(loadRun(store)?.mode?.kind === 'army' && loadRun(store)?.mode?.tier, 4);
+  run.stage++;
+  saveRun(run, store);
+  assert.equal(loadRun(store), null);
+});
