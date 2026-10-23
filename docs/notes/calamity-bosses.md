@@ -17,7 +17,7 @@ Each full Calamity clear opens the next ascension level, up to 10. A level adds 
 | Level | Rule |
 | --- | --- |
 | 1 | foes have 20% more health |
-| 2 | the longer maps lose their second recruit camp (the floor-3 camp stays, so a map is never without one) |
+| 2 | heroes for hire in the shops cost 40% more (it was "the longer maps lose their second recruit camp"; a map now has the one recruit spot, `docs/notes/cal-map.md`) |
 | 3 | bosses change form at 65% health, not 50% |
 | 4 | elites turn up twice as often (weight x2 on a map) |
 | 5 | shops charge 25% more |

@@ -47,6 +47,31 @@ export const SET_RELICS: Record<string, Relic> = {
   viperFang: { id: 'viperFang', name: 'Viper Fang', text: '+6% crit chance for every hero', effects: { crit: 0.06 } },
   wolfFang: { id: 'wolfFang', name: 'Wolf Fang', text: '+5% attack for every hero', effects: { atk: 1.05 } },
   beastHarness: { id: 'beastHarness', name: 'Beast Harness', text: 'heroes act and walk 5% faster', effects: { speed: 1.05 } },
+  // (the six Calamity sets: every piece is new, so a set is begun, not finished, by the old relics)
+  thunderHorn: { id: 'thunderHorn', name: 'Thunder Horn', text: 'heroes act and walk 5% faster', effects: { speed: 1.05 } },
+  cloudTreads: { id: 'cloudTreads', name: 'Cloud Treads', text: 'heroes slip 4% of blows', effects: { dodge: 0.04 } },
+  thunderPendant: { id: 'thunderPendant', name: 'Thunder Pendant', text: 'skills charge 10% faster', effects: { charge: 1.1 } },
+  tempestRing: { id: 'tempestRing', name: 'Tempest Ring', text: '+5% crit chance for every hero', effects: { crit: 0.05 } },
+  graniteHeart: { id: 'graniteHeart', name: 'Granite Heart', text: '+7% hp for every hero', effects: { hp: 1.07 } },
+  mossAmulet: { id: 'mossAmulet', name: 'Moss Amulet', text: '+4% hp for every hero, and they take 2% less damage', effects: { hp: 1.04, guard: 0.02 } },
+  stoneGauntlet: { id: 'stoneGauntlet', name: 'Stone Gauntlet', text: 'heroes take 5% less damage', effects: { guard: 0.05 } },
+  earthenBell: { id: 'earthenBell', name: 'Earthen Bell', text: '+5% hp for every hero', effects: { hp: 1.05 } },
+  bloodVial: { id: 'bloodVial', name: 'Blood Vial', text: '+6% attack for every hero', effects: { atk: 1.06 } },
+  bloodstoneRing: { id: 'bloodstoneRing', name: 'Bloodstone Ring', text: '+5% crit chance for every hero', effects: { crit: 0.05 } },
+  reaverHelm: { id: 'reaverHelm', name: 'Reaver Helm', text: '+5% attack for every hero', effects: { atk: 1.05 } },
+  rubyLocket: { id: 'rubyLocket', name: 'Ruby Locket', text: '+4% attack and +3% crit chance for every hero', effects: { atk: 1.04, crit: 0.03 } },
+  starChart: { id: 'starChart', name: 'Star Chart', text: "the king's mana fills 12% faster", effects: { mana: 1.12 } },
+  cometShard: { id: 'cometShard', name: 'Comet Shard', text: 'skills charge 10% faster', effects: { charge: 1.1 } },
+  moonLantern: { id: 'moonLantern', name: 'Moon Lantern', text: 'shooters reach further from high ground', effects: { reach: 0.2 } },
+  astralCirclet: { id: 'astralCirclet', name: 'Astral Circlet', text: "the king's mana fills 8% faster, and skills charge 6% faster", effects: { mana: 1.08, charge: 1.06 } },
+  coinHoard: { id: 'coinHoard', name: 'Coin Hoard', text: '+8 gold for every win', effects: { gold: 8 } },
+  gildedIngot: { id: 'gildedIngot', name: 'Gilded Ingot', text: '+10 gold for every win', effects: { gold: 10 } },
+  jewelCrown: { id: 'jewelCrown', name: 'Jewelled Crown', text: '+6 gold for every win, and +4% hp for every hero', effects: { gold: 6, hp: 1.04 } },
+  goldBand: { id: 'goldBand', name: 'Gold Band', text: '+6 gold for every win, and +3% attack for every hero', effects: { gold: 6, atk: 1.03 } },
+  riftShard: { id: 'riftShard', name: 'Rift Shard', text: '+6% attack for every hero', effects: { atk: 1.06 } },
+  voidSigil: { id: 'voidSigil', name: 'Void Sigil', text: 'skills charge 10% faster', effects: { charge: 1.1 } },
+  doomHelm: { id: 'doomHelm', name: 'Doom Helm', text: 'heroes take 4% less damage, and the foes wait half a second', effects: { guard: 0.04, first: 500 } },
+  lastLight: { id: 'lastLight', name: 'Last Light', text: '+5% hp for every hero, and the foes wait half a second', effects: { hp: 1.05, first: 500 } },
 };
 
 export const SETS: Record<string, RelicSet> = {
@@ -81,6 +106,45 @@ export const SETS: Record<string, RelicSet> = {
     three: { text: '+2% attack and 1% faster still', fx: { atk: 1.02, speed: 1.01 } },
   },
 };
+// (six sets for the Calamity: each one a theme, its two pieces a small bonus and its three a strong one)
+Object.assign(SETS, {
+  storm: {
+    id: 'storm', name: 'Storm', colour: 'var(--b2)',
+    relics: ['thunderHorn', 'cloudTreads', 'thunderPendant', 'tempestRing'],
+    two: { text: 'heroes act and walk 3% faster', fx: { speed: 1.03 } },
+    three: { text: 'skills charge 15% faster, and +3% crit chance', fx: { charge: 1.15, crit: 0.03 } },
+  },
+  earth: {
+    id: 'earth', name: 'Earth', colour: 'var(--g2)',
+    relics: ['graniteHeart', 'mossAmulet', 'stoneGauntlet', 'earthenBell'],
+    two: { text: '+3% hp', fx: { hp: 1.03 } },
+    three: { text: 'heroes take 4% less damage, and +4% hp', fx: { guard: 0.04, hp: 1.04 } },
+  },
+  blood: {
+    id: 'blood', name: 'Blood', colour: 'var(--r4)',
+    relics: ['bloodVial', 'bloodstoneRing', 'reaverHelm', 'rubyLocket'],
+    two: { text: '+3% attack', fx: { atk: 1.03 } },
+    three: { text: '+4% attack and +4% crit chance', fx: { atk: 1.04, crit: 0.04 } },
+  },
+  star: {
+    id: 'star', name: 'Star', colour: 'var(--b6)',
+    relics: ['starChart', 'cometShard', 'moonLantern', 'astralCirclet'],
+    two: { text: "the king's mana fills 8% faster", fx: { mana: 1.08 } },
+    three: { text: "skills charge 12% faster, and the king's mana 10%", fx: { charge: 1.12, mana: 1.1 } },
+  },
+  fortune: {
+    id: 'fortune', name: 'Fortune', colour: 'var(--e9)',
+    relics: ['coinHoard', 'gildedIngot', 'jewelCrown', 'goldBand'],
+    two: { text: '+6 gold for every win', fx: { gold: 6 } },
+    three: { text: '+10 gold for every win, and +3% hp', fx: { gold: 10, hp: 1.03 } },
+  },
+  rift: {
+    id: 'rift', name: 'Rift', colour: 'var(--p2)',
+    relics: ['riftShard', 'voidSigil', 'doomHelm', 'lastLight'],
+    two: { text: 'the foes wait a third of a second at the start', fx: { first: 300 } },
+    three: { text: 'the foes wait half a second more, and +3% attack', fx: { first: 500, atk: 1.03 } },
+  },
+} satisfies Record<string, RelicSet>);
 export const SET_IDS = Object.keys(SETS);
 
 /** The set a relic belongs to, if any. */
@@ -102,7 +166,7 @@ export function setBonus(owned: readonly string[] = []): { fx: RelicEffects; hoo
       const f = tier.fx;
       if (f) {
         for (const k of ['atk', 'hp', 'speed', 'charge', 'mana'] as const) if (f[k]) fx[k] = (fx[k] ?? 1) * f[k]!;
-        for (const k of ['guard', 'dodge', 'crit'] as const) if (f[k]) fx[k] = (fx[k] ?? 0) + f[k]!;
+        for (const k of ['guard', 'dodge', 'crit', 'reach', 'first', 'gold'] as const) if (f[k]) fx[k] = (fx[k] ?? 0) + f[k]!;
       }
       Object.assign(hooks, tier.hooks);
     }

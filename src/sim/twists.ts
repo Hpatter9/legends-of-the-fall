@@ -61,7 +61,7 @@ export const TWISTS: Record<string, Twist> = Object.fromEntries(
     t('gale', 'Gale', 'blessing', 'A wild wind: everyone jumps 1 higher.', { jump: 1 }),
     t('bloodmoon', 'Blood moon', 'mixed', 'The foes hit 25% harder, and drop double gold.', { foeAtk: 1.25, gold: 2 }),
     t('narrow', 'Narrow pass', 'curse', 'Boulders crowd the heroes\' rows: fewer tiles to stand on.', { narrow: true }),
-    t('treasure', 'Treasure floor', 'blessing', 'Coin lies about the place: +50% gold for the win.', { gold: 1.5 }),
+    t('treasure', 'Treasure ground', 'blessing', 'Coin lies about the place: +50% gold for the win.', { gold: 1.5 }),
     t('haste', 'Haste', 'mixed', 'The air hums: everyone acts 15% faster.', { pace: 1.15 }),
     t('frost', 'Frost', 'mixed', 'A bitter cold: everyone walks 25% slower.', { chill: 0.75 }),
     t('mana', 'Mana surge', 'blessing', "Power pools in the stones: the king's mana fills 50% faster.", { mana: 1.5 }),
