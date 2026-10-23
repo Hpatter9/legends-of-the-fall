@@ -25,3 +25,6 @@ neither), rings a guarded fighter, tints a burning or bleeding one, and draws th
 **Balance.** Hero hp was cut by a quarter to make room for the kits, with small stat tweaks to set them apart (knight
 slower and tougher, kunoichi faster and lighter). With `readyBattle` the heroes win 29 of 40 fights (26 before).
 Tests: `test/abilities.test.ts`.
+
+**Ultimates.** Every hero also has an ultimate, a second and bigger skill on its own meter, unlocked at level 15 (the first eight heroes' are always
+their own): see `ultimates.md`.

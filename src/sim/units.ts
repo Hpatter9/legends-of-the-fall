@@ -54,12 +54,12 @@ export const UNITS: Record<string, UnitDef> = {
   ...CAL_BOSS_FOES,
   knight: { id: 'knight', name: 'Knight', side: 'hero', sheet: 'knight_1', scale: 0.74, hp: 270, atk: 11, def: 10, range: 1, moveMs: 760, atkMs: 1100, jump: 2, role: 'Holds the line', forms: ['knight_1', 'knight_2', 'knight_3'] },
   samurai: { id: 'samurai', name: 'Samurai', side: 'hero', sheet: 'samurai', scale: 0.72, hp: 200, atk: 28, def: 6, range: 1, moveMs: 600, atkMs: 1000, jump: 2, role: 'Heavy blade', forms: ['samurai', 'samurai', 'samurai_commander'] },
-  kunoichi: { id: 'kunoichi', name: 'Kunoichi', side: 'hero', sheet: 'kunoichi', scale: 0.74, hp: 195, atk: 19, def: 4, range: 1, moveMs: 420, atkMs: 550, jump: 3, role: 'Quick, climbs well' },
+  kunoichi: { id: 'kunoichi', name: 'Kunoichi', side: 'hero', sheet: 'kunoichi', scale: 0.74, hp: 190, atk: 19, def: 5, range: 1, moveMs: 420, atkMs: 550, jump: 3, role: 'Quick, climbs well' },
   archer: { id: 'archer', name: 'Archer', side: 'hero', sheet: 'samurai_archer', scale: 0.6, hp: 180, atk: 29, def: 3, range: 4, moveMs: 650, atkMs: 1300, jump: 2, shot: 'arrow', heightReach: 1.4, role: 'Long shots, twice as far from high' },
   wizard: { id: 'wizard', name: 'Fire Wizard', side: 'hero', sheet: 'fire_wizard', scale: 0.79, hp: 145, atk: 33, def: 2, range: 3, moveMs: 700, atkMs: 1700, jump: 2, shot: 'fire', splash: true, role: 'Fire that spreads' },
 
   ninjaMonk: { id: 'ninjaMonk', name: 'Ninja Monk', side: 'hero', sheet: 'ninja_monk', scale: 0.65, hp: 250, atk: 16, def: 6, range: 1, moveMs: 480, atkMs: 650, jump: 3, role: 'Bare-handed combos' },
-  peasant: { id: 'peasant', name: 'Peasant', side: 'hero', sheet: 'ninja_peasant', scale: 0.68, hp: 315, atk: 18, def: 6, range: 2, moveMs: 650, atkMs: 1100, jump: 2, role: 'Spear militia, tougher in a crowd' },
+  peasant: { id: 'peasant', name: 'Peasant', side: 'hero', sheet: 'ninja_peasant', scale: 0.68, hp: 306, atk: 17, def: 6, range: 2, moveMs: 650, atkMs: 1100, jump: 2, role: 'Spear militia, tougher in a crowd' },
   lightningMage: { id: 'lightningMage', name: 'Lightning Mage', side: 'hero', sheet: 'lightning_mage', scale: 0.73, hp: 160, atk: 37, def: 2, range: 3, moveMs: 700, atkMs: 1500, jump: 2, shot: 'bolt', role: 'Lightning that jumps between foes' },
   wanderer: { id: 'wanderer', name: 'Wanderer', side: 'hero', sheet: 'wanderer_mage', scale: 0.7, hp: 150, atk: 15, def: 3, range: 3, moveMs: 700, atkMs: 1500, jump: 2, shot: 'fire', role: 'Heals the weakest ally' },
   kitsune: { id: 'kitsune', name: 'Kitsune', side: 'hero', sheet: 'kitsune', scale: 0.59, hp: 190, atk: 20, def: 5, range: 1, moveMs: 480, atkMs: 800, jump: 3, role: 'Charms a foe to fight for her' },
@@ -76,8 +76,8 @@ export const UNITS: Record<string, UnitDef> = {
   druid: { id: 'druid', name: 'Druid', side: 'hero', sheet: 'cls_druid_1', scale: 0.71, hp: 225, atk: 19, def: 3, range: 3, moveMs: 700, atkMs: 1500, jump: 2, shot: 'leaf', role: 'Calls a treant; thorns hurt attackers', forms: ['cls_druid_1', 'cls_druid_2', 'cls_druid_3'] },
   barbarian: { id: 'barbarian', name: 'Barbarian', side: 'hero', sheet: 'cls_barbarian_1', scale: 0.72, hp: 240, atk: 21, def: 3, range: 1, moveMs: 600, atkMs: 1000, jump: 2, role: 'Hits harder the more hurt he is', forms: ['cls_barbarian_1', 'cls_barbarian_2', 'cls_barbarian_3'] },
   ranger: { id: 'ranger', name: 'Ranger', side: 'hero', sheet: 'cls_ranger_1', scale: 0.7, hp: 185, atk: 27, def: 3, range: 5, moveMs: 650, atkMs: 1400, jump: 2, shot: 'arrow', role: 'Lays snare traps; deadly from afar', forms: ['cls_ranger_1', 'cls_ranger_2', 'cls_ranger_3'] },
-  warlock: { id: 'warlock', name: 'Warlock', side: 'hero', sheet: 'cls_warlock_1', scale: 0.71, hp: 185, atk: 27, def: 2, range: 3, moveMs: 700, atkMs: 1500, jump: 2, shot: 'curse', role: 'Curses that burn and feed him', forms: ['cls_warlock_1', 'cls_warlock_2', 'cls_warlock_3'] },
-  illusionist: { id: 'illusionist', name: 'Illusionist', side: 'hero', sheet: 'cls_illusionist_1', scale: 0.71, hp: 180, atk: 18, def: 3, range: 1, moveMs: 480, atkMs: 750, jump: 3, role: 'Leaves decoys and slips away', forms: ['cls_illusionist_1', 'cls_illusionist_2', 'cls_illusionist_3'] },
+  warlock: { id: 'warlock', name: 'Warlock', side: 'hero', sheet: 'cls_warlock_1', scale: 0.71, hp: 182, atk: 27, def: 2, range: 3, moveMs: 700, atkMs: 1500, jump: 2, shot: 'curse', role: 'Curses that burn and feed him', forms: ['cls_warlock_1', 'cls_warlock_2', 'cls_warlock_3'] },
+  illusionist: { id: 'illusionist', name: 'Illusionist', side: 'hero', sheet: 'cls_illusionist_1', scale: 0.71, hp: 172, atk: 18, def: 4, range: 1, moveMs: 480, atkMs: 750, jump: 3, role: 'Leaves decoys and slips away', forms: ['cls_illusionist_1', 'cls_illusionist_2', 'cls_illusionist_3'] },
   gunslinger: { id: 'gunslinger', name: 'Gunslinger', side: 'hero', sheet: 'cls_gunslinger_1', scale: 0.7, hp: 135, atk: 40, def: 2, range: 6, moveMs: 700, atkMs: 2400, jump: 2, shot: 'bullet', heightReach: 0.7, role: 'Slow, piercing shots from very far', forms: ['cls_gunslinger_1', 'cls_gunslinger_2', 'cls_gunslinger_3'] },
 
   // the second wave of heroes (docs/notes/more-heroes.md)
@@ -87,18 +87,18 @@ export const UNITS: Record<string, UnitDef> = {
   mummy: { id: 'mummy', name: 'Mummy', side: 'hero', sheet: 'hk_mummy', scale: 0.62, hp: 285, atk: 19, def: 7, range: 1, moveMs: 800, atkMs: 1200, jump: 2, role: 'Wraps foes in bandages that slow them', },
   buccaneer: { id: 'buccaneer', name: 'Buccaneer', side: 'hero', sheet: 'pirate_leader', scale: 0.55, hp: 225, atk: 24, def: 5, range: 1, moveMs: 560, atkMs: 850, jump: 3, role: 'Hooks a shooter in and cuts it down' },
 
-  wolfBard: { id: 'wolfBard', name: 'Wolf Bard', side: 'hero', sheet: 'pc_ouzo_1', scale: 1, hp: 235, atk: 22, def: 3, range: 3, moveMs: 700, atkMs: 1500, jump: 2, shot: 'holy', role: 'A dirge that slows foes; his tune charges his friends', forms: ['pc_ouzo_1', 'pc_ouzo_2', 'pc_ouzo_3'] },
-  beastmaster: { id: 'beastmaster', name: 'Beastmaster', side: 'hero', sheet: 'pc_ley_1', scale: 1, hp: 195, atk: 17, def: 4, range: 1, moveMs: 620, atkMs: 900, jump: 2, role: 'Calls dire wolves; his whip slows foes', forms: ['pc_ley_1', 'pc_ley_2', 'pc_ley_3'] },
+  wolfBard: { id: 'wolfBard', name: 'Wolf Bard', side: 'hero', sheet: 'pc_ouzo_1', scale: 1, hp: 231, atk: 22, def: 3, range: 3, moveMs: 700, atkMs: 1500, jump: 2, shot: 'holy', role: 'A dirge that slows foes; his tune charges his friends', forms: ['pc_ouzo_1', 'pc_ouzo_2', 'pc_ouzo_3'] },
+  beastmaster: { id: 'beastmaster', name: 'Beastmaster', side: 'hero', sheet: 'pc_ley_1', scale: 1, hp: 184, atk: 16, def: 4, range: 1, moveMs: 620, atkMs: 900, jump: 2, role: 'Calls dire wolves; his whip slows foes', forms: ['pc_ley_1', 'pc_ley_2', 'pc_ley_3'] },
   kraken: { id: 'kraken', name: 'Kraken Mate', side: 'hero', sheet: 'squidman', scale: 0.55, hp: 275, atk: 19, def: 6, range: 1, moveMs: 700, atkMs: 1100, jump: 2, role: 'An undertow that drags foes in close' },
   lancer: { id: 'lancer', name: 'Lancer', side: 'hero', sheet: 'horde_2', scale: 0.8, hp: 230, atk: 24, def: 5, range: 1, moveMs: 380, atkMs: 900, jump: 3, role: 'Charges down a line, then rides faster' },
-  reaper: { id: 'reaper', name: 'Reaper', side: 'hero', sheet: 'hk_ghost', scale: 0.6, hp: 180, atk: 27, def: 2, range: 1, moveMs: 420, atkMs: 800, jump: 9, flies: true, role: 'Flies; reaps the nearly dead' },
+  reaper: { id: 'reaper', name: 'Reaper', side: 'hero', sheet: 'hk_ghost', scale: 0.6, hp: 175, atk: 26, def: 3, range: 1, moveMs: 420, atkMs: 800, jump: 9, flies: true, role: 'Flies; reaps the nearly dead' },
 
-  timeWitch: { id: 'timeWitch', name: 'Time Witch', side: 'hero', sheet: 'pc_hex_1', scale: 1, hp: 190, atk: 28, def: 2, range: 3, moveMs: 700, atkMs: 1500, jump: 2, shot: 'bolt', role: 'Slows the foes and hastens her friends', forms: ['pc_hex_1', 'pc_hex_2', 'pc_hex_3'] },
+  timeWitch: { id: 'timeWitch', name: 'Time Witch', side: 'hero', sheet: 'pc_hex_1', scale: 1, hp: 188, atk: 28, def: 2, range: 3, moveMs: 700, atkMs: 1500, jump: 2, shot: 'bolt', role: 'Slows the foes and hastens her friends', forms: ['pc_hex_1', 'pc_hex_2', 'pc_hex_3'] },
   arcBlade: { id: 'arcBlade', name: 'Arc Blade', side: 'hero', sheet: 'robot_swordsman', scale: 0.7, hp: 205, atk: 24, def: 4, range: 1, moveMs: 400, atkMs: 750, jump: 3, role: 'Blinks into a crowd and discharges' },
   dreadPirate: { id: 'dreadPirate', name: 'Dread Pirate', side: 'hero', sheet: 'pirate_zombie', scale: 0.58, hp: 255, atk: 21, def: 7, range: 1, moveMs: 780, atkMs: 1200, jump: 2, role: 'Broadsides a crowd; rises once from death' },
   siegeBot: { id: 'siegeBot', name: 'Siege Bot', side: 'hero', sheet: 'robot_destroyer', scale: 0.65, hp: 200, atk: 33, def: 6, range: 5, moveMs: 900, atkMs: 2200, jump: 2, shot: 'bullet', heightReach: 0.7, role: 'Slow shells that burst on a crowd' },
 
-  priestess: { id: 'priestess', name: 'High Priestess', side: 'hero', sheet: 'pc_linail_1', scale: 1, hp: 225, atk: 18, def: 4, range: 3, moveMs: 700, atkMs: 1400, jump: 2, shot: 'holy', role: 'Mends the worst hurt; a halo shields those near', forms: ['pc_linail_1', 'pc_linail_2', 'pc_linail_3'] },
+  priestess: { id: 'priestess', name: 'High Priestess', side: 'hero', sheet: 'pc_linail_1', scale: 1, hp: 215, atk: 17, def: 5, range: 3, moveMs: 700, atkMs: 1400, jump: 2, shot: 'holy', role: 'Mends the worst hurt; a halo shields those near', forms: ['pc_linail_1', 'pc_linail_2', 'pc_linail_3'] },
   dragoon: { id: 'dragoon', name: 'Queen Dragoon', side: 'hero', sheet: 'pc_wyvera_1', scale: 1, hp: 220, atk: 24, def: 6, range: 1, moveMs: 420, atkMs: 900, jump: 9, flies: true, role: 'Flies; breathes fire down a line', forms: ['pc_wyvera_1', 'pc_wyvera_2', 'pc_wyvera_3'] },
   juggernaut: { id: 'juggernaut', name: 'Juggernaut', side: 'hero', sheet: 'hk_juggernaut', scale: 0.5, hp: 335, atk: 19, def: 9, range: 1, moveMs: 950, atkMs: 1500, jump: 1, role: 'A walking wall; its quake stuns all near' },
 

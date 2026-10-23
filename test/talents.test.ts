@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { apart, fight, place, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
-import { afterBlow, KITS, onKill, onStrike, rageOf, tal } from '../src/sim/abilities';
+import { afterBlow, onKill, onStrike, rageOf, tal } from '../src/sim/abilities';
 import { firedCount } from '../src/sim/equipFx';
 import { ABILITIES, emptyStats, equipItem, grantEquipment, type EquipStats } from '../src/sim/equipment';
 import { loadMeta, startedMeta, saveMeta } from '../src/sim/meta';
@@ -67,10 +67,13 @@ test('every hero has a tree of eight nodes in three tiers, with icons, words and
   assert.equal(FULL_TREE_POINTS, 9);
 });
 
-test('a skill-changing node in each tier-2 pair, and the capstones of the heroes with an ultimate reach it', () => {
+// (the first eight heroes' trees were written around their ultimates; the rest of the roster's ultimates, unlocked at level 15,
+// take the general nodes: `pow`, `dur`, `reach` and `extra` reach them, as they reach every skill)
+const FIRST_EIGHT = ['kitsune', 'karasu', 'yamabushi', 'gorgon', 'samuraiCommander', 'sage', 'demonSwordsman', 'tyrant'];
+test('a skill-changing node in each tier-2 pair, and the capstones of the heroes with an ultimate of their own reach it', () => {
   for (const kind of ALL_HEROES) {
     for (const n of tierNodes(kind, 2)) assert.ok(n.tal, `${n.id} changes the skill`);
-    if (KITS[kind].ultimate) assert.ok(tierNodes(kind, 3).some((n) => n.tal?.ultRate || n.tal?.ultPow || n.tal?.dur), `${kind} capstone`);
+    if (FIRST_EIGHT.includes(kind)) assert.ok(tierNodes(kind, 3).some((n) => n.tal?.ultRate || n.tal?.ultPow || n.tal?.dur), `${kind} capstone`);
   }
 });
 

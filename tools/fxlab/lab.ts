@@ -24,6 +24,10 @@ interface Setup {
   charged?: boolean;
   foesCharged?: boolean;
   grade?: number;
+  /** The level the heroes fight at (15 unless set: where every hero has its ultimate). */
+  level?: number;
+  /** Every hero but the first starts with this share of its health (to show a healing ultimate). */
+  wound?: number;
 }
 
 const lab = {
@@ -31,10 +35,11 @@ const lab = {
   setup(s: Setup): void {
     const g = game();
     const b: Battle = startBattle(s.seed ?? 7, s.band, { boss: s.boss });
-    s.heroes.forEach((id) => {
+    s.heroes.forEach((id, i) => {
       let at: [number, number] = [3, 6];
       search: for (let v = 6; v < 9; v++) for (const u of [3, 2, 4, 1, 5, 0, 6]) if (isDeployTile(v) && standable(tileAt(b.board, u, v)) && !unitAt(b, u, v)) { at = [u, v]; break search; }
-      const u = addUnit(b, id, at[0], at[1], { atk: s.power, grade: s.grade });
+      const u = addUnit(b, id, at[0], at[1], { atk: s.power, grade: s.grade, level: s.level ?? 15 });
+      if (s.wound && i > 0) u.hp = Math.round(u.maxHp * s.wound);
       if (s.charged) {
         u.charge = CHARGE_MAX;
         u.charge2 = CHARGE_MAX;
