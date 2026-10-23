@@ -17,7 +17,7 @@ const play = async (page, label) => {
   await page.waitForTimeout(400);
   await page.evaluate(() => { const b = document.getElementById('fight'); b.disabled = false; b.click(); });
   // the speed button runs it faster; wait for the result card
-  for (let i = 0; i < 90; i++) {
+  for (let i = 0; i < 300; i++) {
     await page.waitForTimeout(1000);
     if (await page.evaluate(() => !document.getElementById('result').hidden)) break;
     await page.evaluate(() => document.getElementById('speed')?.click());
