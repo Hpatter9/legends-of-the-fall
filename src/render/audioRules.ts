@@ -6,6 +6,7 @@ import type { Battle, BattleEvent } from '../sim/battle';
 import { D, W } from '../sim/board';
 import { at } from './iso';
 import type { Cue } from './soundRules';
+import { CALM_TRACKS, type Track } from './musicScore';
 
 /* ------------------------------------------------------------------ stereo */
 
@@ -104,7 +105,7 @@ export class DuckCounter {
 
 /* ------------------------------------------------------------------ adaptive music */
 
-export type Track = 'town' | 'battle' | 'boss';
+export type { Track };
 
 /** The music's tempo goes up to this much quicker (a share) as the fight's tension climbs: unchanged from before. */
 export const TENSION_RATE = 0.08;
@@ -114,17 +115,17 @@ export const TENSION_SWELL = 0.33;
 export const TENSION_CLOSED = 0.55;
 
 /** The level multiplier a track's swell takes at tension `t` (the town's does not swell). */
-export const swellOf = (track: Track, t: number): number => (track === 'town' ? 1 : 1 + TENSION_SWELL * clamp01(t));
+export const swellOf = (track: Track, t: number): number => (CALM_TRACKS.has(track) ? 1 : 1 + TENSION_SWELL * clamp01(t));
 
 /** The tempo multiplier at tension `t`, with the act's own (the tension's part never passes `1 + TENSION_RATE`). */
 export const rateOf = (track: Track, t: number, act: number | null): number =>
-  (colourOf(act)?.rate ?? 1) * (track === 'town' ? 1 : 1 + TENSION_RATE * clamp01(t));
+  (colourOf(act)?.rate ?? 1) * (CALM_TRACKS.has(track) ? 1 : 1 + TENSION_RATE * clamp01(t));
 
 /** The music's low-pass (Hz): the act's ceiling, and on a battle track opening from `TENSION_CLOSED` of it to all of it
  *  as tension climbs (exponentially, so the opening sounds even). */
 export function cutoffOf(track: Track, t: number, act: number | null): number {
   const top = colourOf(act)?.cutoff ?? OPEN_HZ;
-  if (track === 'town') return top;
+  if (CALM_TRACKS.has(track)) return top;
   return top * TENSION_CLOSED ** (1 - clamp01(t));
 }
 

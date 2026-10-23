@@ -98,7 +98,7 @@ export function drawMystery(run: Run, stage: number, kind: EventKind, rng: Rng):
       return card('A black altar', 'A slab of black glass drinks the torchlight. Something under it is hungry, and generous.', [
         relic && ids.length > 1
           ? act(`Offer the ${nameOf(run, hero)}`, `the hero is lost for good; you gain ${gift}`, 0, { k: 'sacrifice', hero, relic })
-          : act('Leave an offering', 'The altar has no use for gold, but takes it: +20 gold back from the dust.', 0, { k: 'gold', n: 20 }),
+          : act('Leave an offering', 'The altar has no use for coin. You find 20 gold in the dust, and leave a polite note.', 0, { k: 'gold', n: 20 }),
         leave(),
       ]);
     }
@@ -139,7 +139,7 @@ export function drawMystery(run: Run, stage: number, kind: EventKind, rng: Rng):
       const g = ups.length ? pick(rng, ups) : gear.length ? pick(rng, gear) : undefined;
       if (!g) {
         const fresh = dropGear(rng, gearId(run), stage);
-        return card('An abandoned forge', 'The coals are still warm. You have nothing to work, but there is iron on the anvil.', [act(`Hammer out a ${fresh.name}`, `${fresh.slot}: ${gearText(fresh)}`, 20 + 2 * stage, { k: 'newGear', gear: fresh }), leave()]);
+        return card('An abandoned forge', 'The coals are still warm. You have no gear to work on, but there is iron on the anvil.', [act(`Hammer out a ${fresh.name}`, `${fresh.slot}: ${gearText(fresh)}`, 20 + 2 * stage, { k: 'newGear', gear: fresh }), leave()]);
       }
       const melt = 15 * g.tier + stage;
       const options: EventOption[] = [];

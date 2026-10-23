@@ -53,7 +53,7 @@ import { grantContent } from './sim/contentHeroes';
 import { clockSeed, todayKey } from './modes';
 import { tips, type Box } from './tips';
 import { CHARGE_MAX, kitOf } from './sim/abilities';
-import { keepAwake } from './render/awake';
+import { startAwake } from './render/awake';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, type SpellId } from './sim/spells';
 import { bindSpellbook } from './spellbook';
 import { setBackdrop, panBackdrop } from './render/backdrop';
@@ -578,7 +578,6 @@ class Game {
     this.stats = startStats(this.b.units);
     startFight(isBossRun(this.run));
     startSynergies(countTraits(kindsOf(this.b.units)));
-    keepAwake(true);
     this.chosen = null;
     this.boardView.clearMarks();
     this.refreshBossBar();
@@ -989,6 +988,7 @@ class Game {
     window.addEventListener('pointerup', (e) => this.dragEnd(e));
     window.addEventListener('pointercancel', () => this.endDrag());
     setup();
+    startAwake();
     bindMute($('mute'));
     // (the music dips under menus, sheets, the boss card and the event cards while they show)
     for (const id of ['settings', 'hmSheet', 'hmSub', 'ptSheet', 'autoSum']) bindDuck($(id), 'sheet');
@@ -1083,7 +1083,6 @@ class Game {
     this.auto = a;
     this.autoNext = null;
     play('autoStart');
-    keepAwake(true);
     this.autoPrep();
   }
 
@@ -1140,8 +1139,6 @@ class Game {
     play(why === 'done' ? 'autoDone' : 'autoStop');
     this.auto = null;
     this.autoNext = null;
-    // (a fight still going keeps its screen lock until it ends)
-    if (this.b.phase !== 'fight') keepAwake(false);
     this.refreshAuto();
     const army = armyById(a.army)!;
     const card = $('autoSum');
@@ -1816,8 +1813,6 @@ class Game {
     if (ready && b.phase === 'lost' && !this.settled && !this.auto && canRetry(run)) this.pendingLoss = true;
     if (ready && !this.settled && !this.pendingLoss) {
       this.settled = true;
-      // (an auto-replay keeps the screen awake from fight to fight)
-      if (!this.auto) keepAwake(false);
       const won = b.phase === 'won';
       const stage = run.stage;
       const army = armyOfRun(run);
