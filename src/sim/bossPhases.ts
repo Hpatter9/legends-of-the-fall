@@ -115,7 +115,7 @@ export function enterPhase(b: Battle, me: Unit, out: BattleEvent[]): void {
   const k = PHASE2[me.def];
   if (!k) return;
   b.pause = PHASE_PAUSE_MS;
-  me.power = (me.power ?? 1) * k.atk;
+  me.power = (me.power ?? 1) * k.atk * (p.surge ?? 1);
   if (k.heal) me.hp = Math.min(me.maxHp, me.hp + Math.round(me.maxHp * k.heal));
   if (k.shield) me.shield = { hp: Math.round(me.maxHp * k.shield) + (me.shield?.hp ?? 0), until: b.t + SHIELD_MS };
   if (k.haste) me.hasteUntil = b.t + k.haste;

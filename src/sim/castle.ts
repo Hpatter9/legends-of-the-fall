@@ -142,6 +142,16 @@ export function readCastle(raw: unknown): Castle {
 export const bonusGold = (c: Castle = newCastle()) => GOLD_PER_LEVEL * c.treasury;
 /** The boost every hero fights with (hp and attack multipliers). */
 export const heroBoost = (c: Castle = newCastle()): Boost => ({ hp: 1 + HP_PER_LEVEL * c.barracks, atk: 1 + ATK_PER_LEVEL * c.armoury });
+/**
+ * The castle's hp and attack are the one lasting power that gets into the spire and the Calamity (they start every hero at level 1, with nothing worn and no
+ * talents), so their foes answer it: they are multiplied by the castle's own boost to the power `share`. At 1 a built castle changes nothing there but the
+ * mana, the stable and the spell budget; below 1 it still helps (`docs/notes/difficulty.md`).
+ */
+export const CASTLE_ANSWER = { share: 1.2 };
+export function foeAnswer(c: Castle = newCastle()): Boost {
+  const h = heroBoost(c);
+  return { hp: h.hp! ** CASTLE_ANSWER.share, atk: h.atk! ** CASTLE_ANSWER.share };
+}
 /** How much faster than usual the king's mana fills. */
 export const manaRate = (c: Castle = newCastle()) => 1 + MANA_PER_LEVEL * c.mageTower;
 

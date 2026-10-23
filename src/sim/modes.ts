@@ -9,7 +9,8 @@ import { checkAchievements, type Achievement } from './achievements';
 import type { Battle } from './battle';
 import { dailyArea, dailySeed, dateKey } from './dailySeed';
 import { dailyBossName, dailyChestSeed, dailyWaveCrowns, DAILY_WAVES } from './daily';
-import { waveArmyOf, bandFor, isBossRun, isBossStage, recruit, START_GOLD, SUMMON_BASE, type Run } from './run';
+import { kindPower, powerOf } from './power';
+import { gradeBoost, waveArmyOf, bandFor, isBossRun, isBossStage, recruit, START_GOLD, SUMMON_BASE, type Run } from './run';
 import { bonusGold } from './castle';
 import { ascRules, ascUnlocked } from './ascension';
 import { CAL_MAPS, CAL_ROWS, CAL_SCALE, CAL_START_GOLD } from './calamity';
@@ -27,7 +28,7 @@ export const SCORE_STAR = 10;
 export { dailyArea, dailySeed, dateKey };
 
 /** A date's daily run: the starting five in the squad, the starting gold, no castle upgrades, and the day's land. */
-export function dailyRun(date: number, practice = false): Run {
+export function dailyRun(date: number, practice = false, scale = 1): Run {
   const run: Run = {
     seed: dailySeed(date),
     gold: START_GOLD,
@@ -40,7 +41,7 @@ export function dailyRun(date: number, practice = false): Run {
     best: 1,
     pool: [...HEROES],
     area: dailyArea(date),
-    mode: { kind: 'daily', date, practice },
+    mode: { kind: 'daily', date, practice, ...(scale > 1 ? { scale } : {}) },
     stars: 0,
   };
   for (const kind of HEROES) {
@@ -50,13 +51,25 @@ export function dailyRun(date: number, practice = false): Run {
   return run;
 }
 
+/**
+ * How much the daily's foes are scaled up for a save: the starting five's lasting power (level, rank, equipment, talents: `kindPower`) over what a fresh
+ * save's is, as a mean, so a late save meets foes as strong as its heroes are and clears the daily about as often as a new one (1 for a fresh save, never less).
+ * The daily is tuned for a fresh save (`docs/notes/daily-goal.md`); levels past that would otherwise make it trivial (`docs/notes/difficulty.md`).
+ */
+/** The share of the power ratio the foes answer with (below 1: a hero's power is not all won in a fight, and the daily is short). */
+export const DAILY_ANSWER = { share: 0.75 };
+export function dailyScale(m: Meta): number {
+  const ratio = HEROES.reduce((n, k) => n + kindPower(m, k) / powerOf(k, gradeBoost(1, 0, 1)), 0) / HEROES.length;
+  return Math.max(1, Math.round(ratio ** DAILY_ANSWER.share * 100) / 100);
+}
+
 /** Start a date's daily run. The first play of the date counts; a later one is practice. Records the play in the meta. */
 export function startDaily(m: Meta, date: number): Run {
   const key = String(date);
   const entry = (m.daily[key] ??= { best: 0, plays: 0 });
   const practice = entry.plays > 0;
   entry.plays++;
-  return dailyRun(date, practice);
+  return dailyRun(date, practice, dailyScale(m));
 }
 
 /** The daily run saved for a date, if it is still going (so Daily resumes it rather than starting over). */
