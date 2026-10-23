@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { boardOk, canStep, CLIMB_MAX, D, DEPLOY_ROWS, DIRS, standable, tileAt, W } from '../src/sim/board';
 import { boardTileAt, buildChain, contactPairs, footprint, frameOf, layRoad, MIN_CONTACT, seam, transferFormation, walkAcross, worldOf, type Section } from '../src/sim/chain';
 import { footDims, liesBehind, turnDir, turnTile, unturnTile, type Rot } from '../src/sim/turn';
-import { armyRun, chainOf, startStage } from '../src/sim/run';
+import { armyRun, chainOf, newRun, startStage } from '../src/sim/run';
 import { ARMIES } from '../src/sim/armies';
 import { mixSeed } from '../src/sim/rng';
 import { dropDelay, dropEnd, dropPose, FALL_MS, FALL_PX, stepMs } from '../src/render/dropRules';
@@ -244,11 +244,14 @@ test('an army run fights each wave on its section of the long map, in the board\
   assert.deepEqual(c.map((s) => s.boss), army.waves.map((w) => !!w.boss));
 });
 
-test('only armies have a long map', () => {
+test('only armies and the fixed daily have a long map', () => {
   const run = armyRun(1, ARMIES[0].id);
   assert.ok(chainOf(run));
   run.mode = { kind: 'daily', date: 20260101, practice: false };
+  assert.equal(chainOf(run)?.length, 10, 'the daily has a section for each of its ten waves');
+  run.mode = { kind: 'tower' };
   assert.equal(chainOf(run), null);
+  assert.equal(chainOf(newRun(1)), null);
 });
 
 test('columns fall one row after another from the joined edge, each lands once and nothing flashes', () => {

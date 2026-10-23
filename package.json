@@ -13,6 +13,7 @@
     "gear-balance": "node tools/gear-balance.mjs",
     "talent-balance": "node tools/talent-balance.mjs",
     "unlock-pace": "node tools/unlockPace.mjs",
+    "daily-rate": "node tools/dailyRate.mjs",
     "level-pace": "node tools/levelPace.mjs"
   },
   "license": "UNLICENSED",
