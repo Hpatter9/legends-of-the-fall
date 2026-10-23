@@ -43,7 +43,7 @@
 .tBox { display: flex; flex-direction: column; gap: 12px; box-sizing: border-box; width: min(100%, 360px); padding: 12px; background: var(--s3); border: 2px solid var(--gold-hi); box-shadow: inset 0 0 0 2px var(--s0), 0 0 0 2px var(--s0); }
 .tBox p { margin: 0; font: 400 12px/1.6 var(--body); color: var(--white); }
 .tBox small { font: 400 12px/1.4 var(--body); color: var(--dim); } .tBox small.tGood { color: var(--g4); } .tBox small.tBad { color: var(--danger-hi); }
-.tBox .tTitle { grid-template-columns: 64px 1fr; column-gap: 12px; }
+.tBox .tTitle { grid-template-columns: 76px 1fr; column-gap: 12px; }
 .tBox .tTitle b { font: 400 12px var(--display); color: var(--gold-hi); }
 .tBig { grid-row: 1 / 3; width: 64px; height: 64px; image-rendering: pixelated; padding: 4px; box-sizing: content-box; background: radial-gradient(var(--e2), var(--s3)); border: 2px solid var(--gold-hi); }
 .tBtns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; } .tBtns button { min-height: 48px; font-size: 12px; }

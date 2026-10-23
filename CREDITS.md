@@ -225,3 +225,5 @@ Duchess is the town's goat from Chronos Settlement (`hpatter9/little-town`), and
 is the one Chronos's cutscenes use (three steps walking left, three walking right), copied as it is. It is **whtdragon**'s RPG Maker MV white goat
 (`animals/goats.png`). The pack folder has no licence file: check whtdragon's posted terms of use before any public release (the same note as
 Chronos's CREDITS.md).
+
+- The **talent glyphs** (`src/art/talent/*.png`, 37 icons at 32x32: heart, sword, armour, eye, boot, cross, pickaxe and the rest) are generated with PixelLab (`tools/pixellab/talents/gen.py`, `/create-image-pixflux` with the game's warm palette as the colour reference, as `tools/ui/genicons.py` does), used as they came. See `docs/notes/hero-progress.md`.
