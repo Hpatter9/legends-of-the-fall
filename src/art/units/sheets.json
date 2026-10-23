@@ -2150,5 +2150,49 @@
   "figure": 66,
   "facesRight": true,
   "lies": true
+ },
+ "wolf_grey": {
+  "w": 96,
+  "h": 96,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 4,
+   "idle": 2,
+   "hurt": 1,
+   "dead": 2
+  },
+  "figure": 62,
+  "facesRight": true,
+  "lies": true
+ },
+ "wolf_black": {
+  "w": 96,
+  "h": 96,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 4,
+   "idle": 2,
+   "hurt": 1,
+   "dead": 2
+  },
+  "figure": 62,
+  "facesRight": true,
+  "lies": true
  }
 }

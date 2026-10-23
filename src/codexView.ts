@@ -13,6 +13,8 @@ import type { Meta } from './sim/meta';
 import { sceneList } from './sim/sceneRules';
 import { LAYOUT_LIST, TERRAIN_INFO } from './sim/terrainInfo';
 import { portrait, sprite, figureOf } from './render/sheets';
+import { TIER_SKILLS } from './sim/tierSkills';
+import { COMBOS, COMBO_NAME } from './sim/combos';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -24,7 +26,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 const CLASS_LABEL: Record<FoeEntry['class'], string> = { common: 'Foe', boss: 'Boss', elite: 'Tower elite', calamity: 'Calamity herald' };
 
 /** The page's state that outlives a redraw: the tab it was on. */
-let tabNow: Collection | 'scenes' | 'terrain' = 'bestiary';
+let tabNow: Collection | 'scenes' | 'combos' | 'terrain' = 'bestiary';
 
 /** A speed word for a step time. */
 const paceOf = (ms: number): string => (ms >= 900 ? 'Slow' : ms >= 650 ? 'Steady' : ms >= 450 ? 'Quick' : 'Very quick');
@@ -63,17 +65,24 @@ function stat(box: HTMLElement, rows: readonly (readonly [string, string])[]): v
   box.append(g);
 }
 
-function kitLines(box: HTMLElement, kit: Kit | undefined): void {
+/** A kit's lines (a hero's too lists its tier 2 and tier 3 skills, and the level its ultimate unlocks at). */
+function kitLines(box: HTMLElement, kit: Kit | undefined, hero?: string): void {
   if (!kit) return;
-  const rows: [string, { name: string; text: string }][] = [['Skill', kit.skill]];
-  if (kit.ultimate) rows.push(['Ultimate', kit.ultimate]);
+  const rows: [string, { name: string; text: string }, number?][] = [['Skill', kit.skill]];
+  const tiers = hero ? TIER_SKILLS[hero] : undefined;
+  if (tiers) rows.push(['Tier 2', tiers[0]], ['Tier 3', tiers[1]]);
+  if (kit.ultimate) rows.push(['Ultimate', kit.ultimate, hero ? kit.ultimate.unlock : undefined]);
   rows.push(['Passive', kit.passive]);
-  for (const [label, a] of rows) {
+  for (const [label, a, unlock] of rows) {
     const p = el('p');
     p.append(el('i', '', `${label} · ${a.name}: `), a.text);
+    if (unlock) p.append(el('span', 'ultLock', ` Unlocks at level ${unlock}.`));
     box.append(p);
   }
 }
+
+/** Whether the combo has been seen in a fight. */
+const comboSeen = (m: Meta, id: string): boolean => (m.combosSeen ?? []).includes(id);
 
 const section = (box: HTMLElement, title: string, lines: readonly string[]): void => {
   box.append(el('h4', 'cxH', title));
@@ -126,7 +135,9 @@ function openHero(root: HTMLElement, m: Meta, kind: string): void {
   } else {
     box.append(el('p', 'cxLore', HERO_STORY[kind]));
     stat(box, [['HP', String(def.hp)], ['Attack', String(def.atk)], ['Defence', String(def.def)], ['Range', String(def.range)], ['Walk', paceOf(def.moveMs)], ['Jump', def.flies ? 'Flies' : String(def.jump)], ['Blows', paceOf(def.atkMs * 0.8)]]);
-    kitLines(box, KITS[kind]);
+    kitLines(box, KITS[kind], kind);
+    const mine = COMBOS.filter((c) => c.heroes.includes(kind));
+    if (mine.length) section(box, `${COMBO_NAME} (five heroes together)`, mine.map((c) => (comboSeen(m, c.id) ? `${c.name}: ${c.heroes.map((k) => UNITS[k].name).join(', ')}` : `${c.name}: not yet seen`)));
   }
   box.append(closeButton(close));
 }
@@ -197,8 +208,8 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
   const grid = el('div', 'cxGrid');
   const fill = () => {
     grid.replaceChildren();
-    grid.classList.toggle('scList', tabNow === 'scenes' || tabNow === 'terrain');
-    grid.classList.toggle('cxGrid', tabNow !== 'scenes' && tabNow !== 'terrain');
+    grid.classList.toggle('scList', tabNow === 'scenes' || tabNow === 'combos' || tabNow === 'terrain');
+    grid.classList.toggle('cxGrid', tabNow !== 'scenes' && tabNow !== 'combos' && tabNow !== 'terrain');
     if (tabNow === 'terrain') {
       // (the ground a battlefield can have, then the shapes it can take: what each does, always shown)
       for (const t of TERRAIN_INFO) {
@@ -215,6 +226,17 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
         const row = el('div', 'scRow');
         const text = el('div');
         text.append(el('b', '', l.name), el('small', '', l.tip));
+        row.append(text);
+        grid.append(row);
+      }
+    } else if (tabNow === 'combos') {
+      // (a combo is listed once it has been seen in a fight; until then a locked row gives the first hero as a hint)
+      for (const c of COMBOS) {
+        const seen = comboSeen(m, c.id);
+        const row = el('div', `scRow${seen ? '' : ' locked'}`);
+        const text = el('div');
+        if (seen) text.append(el('b', '', `${c.name}: ${c.move}`), el('small', '', `${c.heroes.map((k) => UNITS[k].name).join(', ')}. ${c.text}.`));
+        else text.append(el('b', '', '???'), el('small', '', `Five heroes who belong together, one of them the ${UNITS[c.heroes[0]].name}. Fight with all five to see what they do.`));
         row.append(text);
         grid.append(row);
       }
@@ -251,9 +273,9 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
       }
     }
   };
-  const buttons = new Map<Collection | 'scenes' | 'terrain', HTMLButtonElement>();
-  for (const c of [...COLLECTIONS, 'scenes' as const, 'terrain' as const]) {
-    const t = el('button', `cxTab${c === tabNow ? ' on' : ''}`, c === 'scenes' ? 'Scenes' : c === 'terrain' ? 'Terrain' : COLLECTION_NAMES[c]);
+  const buttons = new Map<Collection | 'scenes' | 'combos' | 'terrain', HTMLButtonElement>();
+  for (const c of [...COLLECTIONS, 'combos' as const, 'scenes' as const, 'terrain' as const]) {
+    const t = el('button', `cxTab${c === tabNow ? ' on' : ''}`, c === 'scenes' ? 'Scenes' : c === 'terrain' ? 'Terrain' : c === 'combos' ? `${COMBO_NAME}s` : COLLECTION_NAMES[c]);
     t.addEventListener('click', () => {
       tabNow = c;
       for (const [k, b] of buttons) b.classList.toggle('on', k === c);

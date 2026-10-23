@@ -3,8 +3,11 @@
 
 import { ALL_HEROES, UNITS } from './sim/units';
 import { KITS } from './sim/abilities';
+import { TIER_SKILLS } from './sim/tierSkills';
 import { traitsOf, TRAITS } from './sim/traits';
-import { MAX_RANK, RANK_SHARDS, heroRank, rankMult, rankOf, type Meta } from './sim/meta';
+import { MAX_RANK, RANK_SHARDS, heroRank, rankMult, rankOf, takenRank, type Meta } from './sim/meta';
+import { readyToRise } from './sim/rankUp';
+import { openRankUp, type Taken } from './rankUpView';
 import { AWAKEN_SHARDS, awakenedOf, awakenPlan } from './sim/awaken';
 import { drawAwaken, gems, playAwakenShow } from './awakenView';
 import { lookFilter, lookSheet, stepOfRank } from './render/awakenLook';
@@ -29,7 +32,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 };
 export const stars = (rank: number) => '★'.repeat(rank) + '☆'.repeat(MAX_RANK - rank);
 /** A hero's stars and, after them, its awakening gems. */
-export const starsOf = (meta: Meta, kind: string): string => `${stars(rankOf(meta, kind))} ${gems(awakenedOf(meta, kind))}`;
+export const starsOf = (meta: Meta, kind: string): string => `${stars(takenRank(meta, kind))} ${gems(awakenedOf(meta, kind))}`;
 
 /** The level line of the sheet: the badge, then the XP to the next level. */
 function levelLine(level: number, text: string): HTMLElement {
@@ -49,7 +52,7 @@ function xpBar(meta: Meta, kind: string): { level: number; bar: HTMLElement; tex
 
 /** The strongest unlocked heroes (level, then rank), best first. */
 export function strongest(meta: Meta, n: number): string[] {
-  const score = (k: string) => progressOf(xpOf(meta, k)).level * 100 + rankOf(meta, k) * 10;
+  const score = (k: string) => progressOf(xpOf(meta, k)).level * 100 + takenRank(meta, k) * 10;
   return ALL_HEROES.filter((k) => meta.unlocked.includes(k)).sort((a, b) => score(b) - score(a)).slice(0, n);
 }
 
@@ -57,16 +60,16 @@ export function strongest(meta: Meta, n: number): string[] {
 export function drawHeroSheet(box: HTMLElement, meta: Meta, kind: string, close: () => void): () => void {
   let stop = paintSheet(box, meta, kind, close, again);
   // (an awakening draws the sheet again, with the show on the new look)
-  function again(step: number): void {
+  function again(taken?: Taken): void {
     stop();
-    stop = paintSheet(box, meta, kind, close, again, step);
+    stop = paintSheet(box, meta, kind, close, again, taken);
   }
   return () => stop();
 }
 
-function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => void, redraw: (step: number) => void, show = 0): () => void {
+function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => void, redraw: (taken?: Taken) => void, show?: Taken): () => void {
   const def = UNITS[kind];
-  const rank = rankOf(meta, kind);
+  const rank = takenRank(meta, kind);
   const open = meta.unlocked.includes(kind);
   const kit = KITS[kind];
   box.className = 'hsheet';
@@ -99,8 +102,16 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
   if (open) {
     const shards = meta.shards[kind] ?? 0;
     const plan = awakenPlan(meta, kind);
-    const next = rank < MAX_RANK ? `${shards} / ${RANK_SHARDS[rank]} shards to rank ${rank + 1}` : plan.step ? (plan.can ? 'ready to awaken' : `${shards} / ${AWAKEN_SHARDS[plan.step - 1]} shards to awaken`) : 'fully awakened';
+    const waiting = rankOf(meta, kind) > rank;
+    const next = waiting ? `${shards} shards: rank ${rank + 1} is earned` : rank < MAX_RANK ? `${shards} / ${RANK_SHARDS[rank]} shards to rank ${rank + 1}` : plan.step ? (plan.can ? 'ready to awaken' : `${shards} / ${AWAKEN_SHARDS[plan.step - 1]} shards to awaken`) : 'fully awakened';
     title.append(el('span', 'stars', starsOf(meta, kind)), levelLine(x.level, x.text), x.bar, el('span', 'lv', next));
+    // (a rank earned, or an awakening paid for, waits for the player's tap)
+    if (readyToRise(meta, kind)) {
+      const badge = el('button', 'rankBadge', 'Rank up');
+      badge.type = 'button';
+      badge.addEventListener('click', () => openRankUp(meta, kind, redraw));
+      title.append(badge);
+    }
     const marks = traitsOf(kind).map((t) => TRAITS[t].name).join(' · ');
     if (marks) title.append(el('em', '', marks));
   }
@@ -134,7 +145,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     };
     box.append(power, stat);
     if (kit)
-      for (const [label, a] of [['Skill', kit.skill], ...(kit.ultimate ? [['Ultimate', kit.ultimate] as const] : []), ['Passive', kit.passive]] as const) {
+      for (const [label, a] of [['Skill', kit.skill], ...(TIER_SKILLS[kind] ? ([['Tier 2', TIER_SKILLS[kind][0]], ['Tier 3', TIER_SKILLS[kind][1]]] as const) : []), ...(kit.ultimate ? [['Ultimate', kit.ultimate] as const] : []), ['Passive', kit.passive]] as const) {
         const p = el('p');
         // (an ultimate waits for its level: it shows, dimmed, with the level it unlocks at)
         const locked = label === 'Ultimate' && 'unlock' in a && !!a.unlock && x.level < a.unlock;
@@ -148,7 +159,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     box.append(drawEquipment(meta, kind, repower));
     box.append(el('p', 'hint', 'Equipment is kept for good. Gear found in a run lasts that run only.'));
   }
-  if (show) playAwakenShow(pic, show);
+  if (show) playAwakenShow(pic, show.what === 'awaken' ? show.n : 1, show.what === 'rank' ? `Rank ${show.n}` : undefined);
   const done = el('button', 'primary', 'Close');
   done.addEventListener('click', close);
   box.append(done);
@@ -170,6 +181,7 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
   for (const kind of have) {
     const card = el('button', 'hcard');
     card.append(portrait(UNITS[kind].sheet, 56), el('b', '', UNITS[kind].name), el('span', 'stars', starsOf(meta, kind)), levelBadge(progressOf(xpOf(meta, kind)).level));
+    if (readyToRise(meta, kind)) card.append(el('small', 'rankTag', 'Rank up'));
     card.addEventListener('click', () => pick(kind));
     grid.append(card);
   }

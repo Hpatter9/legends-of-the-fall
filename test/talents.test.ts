@@ -71,7 +71,7 @@ test('every hero has a tree of sixteen nodes in seven tiers (three old rows, fou
   assert.equal(FULL_TREE_POINTS, 9);
 });
 
-// (the first eight heroes' trees were written around their ultimates; the rest of the roster's ultimates, unlocked at level 15,
+// (the first eight heroes' trees were written around their ultimates; the rest of the roster's ultimates, unlocked at level 30,
 // take the general nodes: `pow`, `dur`, `reach` and `extra` reach them, as they reach every skill)
 const FIRST_EIGHT = ['kitsune', 'karasu', 'yamabushi', 'gorgon', 'samuraiCommander', 'sage', 'demonSwordsman', 'tyrant'];
 test('a skill-changing node in each tier-2 pair, and the capstones of the heroes with an ultimate of their own reach it', () => {

@@ -16,5 +16,6 @@ export function bareBoard(b: Battle): Battle {
   delete b.groundFx;
   // (a step takes its kind's own time, not the usual board's share of it)
   delete b.walk;
+  delete b.fog;
   return b;
 }

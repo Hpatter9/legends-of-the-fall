@@ -237,12 +237,13 @@ export function joinBoard(prev: Section, next: Section): void {
 }
 
 /** The road of `waves` sections for a run: wave n's board is `makeBoard(boardSeed(n), area)`, laid on the road and joined to the one before. */
-export function buildChain(seed: number, waves: number, area: Area, boardSeed: (wave: number) => number, boss: (wave: number) => boolean): Section[] {
+export function buildChain(seed: number, waves: number, area: Area | ((wave: number) => Area), boardSeed: (wave: number) => number, boss: (wave: number) => boolean): Section[] {
   const road = layRoad(seed, waves);
   const out: Section[] = [];
   for (let n = 1; n <= waves; n++) {
     const q = road[n - 1];
-    const s: Section = { wave: n, board: makeBoard(boardSeed(n), area), rot: q.rot, origin: { u: q.ou, v: q.ov }, join: q.join, boss: boss(n) };
+    const land = typeof area === 'function' ? area(n) : area;
+    const s: Section = { wave: n, board: makeBoard(boardSeed(n), land), rot: q.rot, origin: { u: q.ou, v: q.ov }, join: q.join, boss: boss(n) };
     // (the first section meets no other, but a later one may be laid against it: its border is smoothed too)
     const settle = () => {
       if (n > 1) joinBoard(out[n - 2], s);
@@ -251,7 +252,7 @@ export function buildChain(seed: number, waves: number, area: Area, boardSeed: (
     settle();
     // (a shape the join or the smoothing cuts apart, a bridge or gate left without its far side, is laid the old way instead)
     if (!boardOk(s.board)) {
-      s.board = makeBoard(boardSeed(n), area, W, D, 'classic');
+      s.board = makeBoard(boardSeed(n), land, W, D, 'classic');
       settle();
     }
     out.push(s);

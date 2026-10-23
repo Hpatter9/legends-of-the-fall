@@ -35,9 +35,11 @@ export const TOP = 6;
 /** The highest the rolling land stands before platforms are set into it. */
 export const HILL_TOP = 4;
 
-/** The lands a run passes through, in turn (`areaFor` in run.ts picks by stage). */
-export const AREAS = ['highlands', 'forest', 'snow', 'desert', 'volcano', 'dungeon'] as const;
+/** Every land a fight can be on: the first six are the climb's and the Calamity's (new lands are added at the end, so a seed's boards on the old ones stay as they were). */
+export const AREAS = ['highlands', 'forest', 'snow', 'desert', 'volcano', 'dungeon', 'plains', 'autumn', 'swamp', 'graveyard', 'ruins', 'temple', 'crystal', 'forge', 'shrine', 'warcamp', 'oasis'] as const;
 export type Area = (typeof AREAS)[number];
+/** The six lands a run passes through, in turn (`areaFor` in run.ts picks by stage) and the Calamity's maps keep. */
+export const CLASSIC_AREAS: readonly Area[] = AREAS.slice(0, 6);
 
 /** What can cover a tile: shallows slow a walker, deep water stops all but fliers, ice speeds one (and may slide it on), lava slows and burns one,
  *  tall growth hides a tile from shots and gives a little dodge, a shrine heals whoever stands on it. */
@@ -67,6 +69,17 @@ const TERRAIN: Record<Area, Partial<Record<Ground, [number, number]>>> = {
   desert: { water: [1, 1], tall: [0, 1] },
   volcano: { lava: [1, 2], tall: [0, 1] },
   dungeon: { water: [1, 2], tall: [1, 2] },
+  plains: { water: [0, 1], tall: [1, 2] },
+  autumn: { water: [0, 1], tall: [1, 2] },
+  swamp: { water: [2, 3], tall: [1, 2] },
+  graveyard: { water: [0, 1], tall: [1, 2] },
+  ruins: { water: [0, 1], tall: [0, 1] },
+  temple: { water: [0, 1], tall: [1, 2] },
+  crystal: { ice: [1, 2], water: [0, 1] },
+  forge: { lava: [1, 2], tall: [0, 1] },
+  shrine: { water: [1, 1], tall: [1, 2] },
+  warcamp: { water: [0, 1], tall: [0, 1] },
+  oasis: { water: [2, 3], tall: [1, 2] },
 };
 /** How many shrines and powder barrels each area lays in the middle ground (min, max). Nothing for an area not named. */
 const SPECIALS: Partial<Record<Area, { shrine: [number, number]; barrel: [number, number] }>> = {
@@ -76,7 +89,20 @@ const SPECIALS: Partial<Record<Area, { shrine: [number, number]; barrel: [number
   desert: { shrine: [0, 1], barrel: [0, 1] },
   volcano: { shrine: [0, 0], barrel: [1, 3] },
   dungeon: { shrine: [0, 1], barrel: [1, 2] },
+  plains: { shrine: [0, 1], barrel: [0, 2] },
+  autumn: { shrine: [0, 1], barrel: [0, 1] },
+  swamp: { shrine: [0, 0], barrel: [0, 0] },
+  graveyard: { shrine: [0, 1], barrel: [0, 1] },
+  ruins: { shrine: [0, 1], barrel: [0, 2] },
+  temple: { shrine: [1, 1], barrel: [0, 0] },
+  crystal: { shrine: [0, 1], barrel: [0, 0] },
+  forge: { shrine: [0, 0], barrel: [1, 3] },
+  shrine: { shrine: [1, 1], barrel: [0, 0] },
+  warcamp: { shrine: [0, 0], barrel: [1, 3] },
+  oasis: { shrine: [0, 1], barrel: [0, 0] },
 };
+/** The lands whose lakes (deep water, to the rules) are drawn as molten rock, and whose rings have a lava pit. */
+export const LAVA_LANDS: readonly Area[] = ['volcano', 'forge'];
 
 export interface Tile {
   /** Height in whole steps. */

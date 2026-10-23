@@ -88,7 +88,7 @@ export const UNITS: Record<string, UnitDef> = {
   buccaneer: { id: 'buccaneer', name: 'Buccaneer', side: 'hero', sheet: 'hero_buccaneer', scale: 0.78, hp: 207, atk: 24, def: 5, range: 1, moveMs: 560, atkMs: 850, jump: 3, role: 'Hooks a shooter in and cuts it down' },
 
   wolfBard: { id: 'wolfBard', name: 'Wolf Bard', side: 'hero', sheet: 'hero_wolf_bard', scale: 0.75, hp: 247, atk: 22, def: 3, range: 3, moveMs: 700, atkMs: 1500, jump: 2, shot: 'holy', role: 'A dirge that slows foes; his tune charges his friends' },
-  beastmaster: { id: 'beastmaster', name: 'Beastmaster', side: 'hero', sheet: 'hero_beastmaster', scale: 0.77, hp: 182, atk: 16, def: 4, range: 1, moveMs: 620, atkMs: 900, jump: 2, role: 'Calls dire wolves; his whip slows foes' },
+  beastmaster: { id: 'beastmaster', name: 'Beastmaster', side: 'hero', sheet: 'hero_beastmaster', scale: 0.77, hp: 182, atk: 16, def: 4, range: 1, moveMs: 620, atkMs: 900, jump: 2, role: 'Calls wolves; his whip slows foes' },
   kraken: { id: 'kraken', name: 'Kraken Mate', side: 'hero', sheet: 'hero_kraken_mate', scale: 0.66, hp: 297, atk: 19, def: 6, range: 1, moveMs: 700, atkMs: 1100, jump: 2, role: 'An undertow that drags foes in close' },
   lancer: { id: 'lancer', name: 'Lancer', side: 'hero', sheet: 'hero_lancer', scale: 0.51, hp: 209, atk: 24, def: 5, range: 1, moveMs: 380, atkMs: 900, jump: 3, role: 'Charges down a line, then rides faster' },
   reaper: { id: 'reaper', name: 'Reaper', side: 'hero', sheet: 'hk_ghost', scale: 0.61, hp: 168, atk: 26, def: 3, range: 1, moveMs: 420, atkMs: 800, jump: 9, flies: true, role: 'Flies; reaps the nearly dead' },
@@ -107,7 +107,8 @@ export const UNITS: Record<string, UnitDef> = {
   tyrant: { id: 'tyrant', name: 'Tyrant', side: 'hero', sheet: 'hero_tyrant', scale: 0.67, hp: 262, atk: 20, def: 6, range: 2, moveMs: 800, atkMs: 1250, jump: 2, role: 'Passes judgement; his reign breaks and rallies', },
 
   // called up by Beastmaster
-  wolf: { id: 'wolf', name: 'Dire Wolf', side: 'hero', sheet: 'werewolf_red', scale: 0.6, hp: 120, atk: 14, def: 2, range: 1, moveMs: 360, atkMs: 700, jump: 3, summon: true, role: 'A wolf called by the Beastmaster' },
+  wolf: { id: 'wolf', name: 'Wolf', side: 'hero', sheet: 'wolf_grey', scale: 0.55, hp: 120, atk: 14, def: 2, range: 1, moveMs: 360, atkMs: 700, jump: 3, summon: true, role: 'A wolf called by the Beastmaster', forms: ['wolf_grey', 'wolf_grey', 'wolf_black'] },
+  direWolf: { id: 'direWolf', name: 'Dire Wolf', side: 'hero', sheet: 'wolf_black', scale: 0.85, hp: 190, atk: 18, def: 3, range: 1, moveMs: 380, atkMs: 760, jump: 3, summon: true, role: 'A great black wolf, called by a tier 3 Beastmaster' },
 
   // called up by skills (not heroes to place)
   treant: { id: 'treant', name: 'Treant', side: 'hero', sheet: 'cls_treant', scale: 0.5, hp: 330, atk: 16, def: 8, range: 1, moveMs: 900, atkMs: 1300, jump: 1, summon: true, role: 'A tree called by the Druid (it grows with her grade)', forms: ['cls_treant', 'cls_treant_2', 'cls_treant_3'] },

@@ -279,6 +279,15 @@ export function cuesFor(b: Battle, e: BattleEvent): Cued[] {
       return [{ cue: 'horn' }];
     case 'haste':
       return [];
+    // (a combo: the five gather with the big sting, and the move lands with a boom and thunder; a tier skill's ring is a soft swell; a promotion chimes)
+    case 'comboCast':
+      return [{ cue: 'ultimate' }];
+    case 'comboLand':
+      return [{ cue: 'fireBoom', gain: 1.2 }, { cue: 'thunder', delay: 80, gain: 0.9 }];
+    case 'burst':
+      return e.tone === 'tier' ? [{ cue: 'shieldHum', gain: 0.5 }] : [];
+    case 'promote':
+      return e.grade > 2 ? [{ cue: 'merge' }, { cue: 'holyChime', delay: 120 }, { cue: 'sparkle', delay: 260 }] : [{ cue: 'merge' }];
     case 'end':
       return [{ cue: e.won ? 'victory' : 'defeat' }];
     default:

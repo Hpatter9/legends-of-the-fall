@@ -189,14 +189,22 @@ test('a barrel beside another sets it off too, in a chain; a blast alone does no
   assert.deepEqual(b.barrels, [2 * W + 6]);
 });
 
-test('weather: fog shortens every shooter\'s range, and is read from the fight\'s own weather', () => {
-  const plain = startBattle(5, 'skeletons');
-  const fogged = startBattle(5, 'skeletons', { weather: { fog: 2 } });
-  const archer = addUnit(plain, 'archer', 3, D - 1);
-  const mist = addUnit(fogged, 'archer', 3, D - 1);
-  assert.equal(strikeDef(fogged, mist).range, strikeDef(plain, archer).range - 2);
-  const knight = addUnit(fogged, 'knight', 2, D - 1);
-  assert.equal(strikeDef(fogged, knight).range, UNITS.knight.range, 'a blade is not shortened');
+test('weather: a foggy fight shortens every shooter\'s range a tile (the weather is the board\'s own data, `weather.ts`), and a blade\'s not at all', async () => {
+  const { weatherOf } = await import('../src/sim/weather');
+  const { FOG_RANGE } = await import('../src/sim/battle');
+  const seeds = Array.from({ length: 200 }, (_, i) => i + 1);
+  const foggy = seeds.find((s) => weatherOf({ seed: s, area: 'highlands' }) === 'fog')!;
+  const clear = seeds.find((s) => weatherOf({ seed: s, area: 'highlands' }) === 'clear')!;
+  assert.ok(foggy && clear);
+  const mist = startBattle(foggy, 'skeletons');
+  const plain = startBattle(clear, 'skeletons');
+  assert.equal(mist.fog, FOG_RANGE);
+  assert.equal(plain.fog, undefined);
+  const a = addUnit(mist, 'archer', 3, D - 1);
+  const b = addUnit(plain, 'archer', 3, D - 1);
+  assert.equal(strikeDef(mist, a).range, strikeDef(plain, b).range - FOG_RANGE);
+  const knight = addUnit(mist, 'knight', 2, D - 1);
+  assert.equal(strikeDef(mist, knight).range, UNITS.knight.range, 'a blade is not shortened');
 });
 
 test('a badly hurt fighter with nobody to strike walks to a shrine close by, and a healthy one does not', () => {

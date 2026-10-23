@@ -23,11 +23,11 @@ import { formOf, UNITS } from './sim/units';
 import { ELITE_BY_ID } from './sim/elites';
 import { isBoss } from './sim/foes';
 import { awakenedOf } from './sim/awaken';
-import { earn, loadMeta, needsStarter, pickStarter, heroRank, recordStars, saveMeta, type Meta } from './sim/meta';
+import { earn, loadMeta, needsStarter, pickStarter, heroRank, recordStars, saveMeta, type Meta, type Pull } from './sim/meta';
 import { chooseStarter } from './starter';
 import { ScenePlayer } from './render/sceneView';
 import { dueScene, markSeen } from './sim/sceneRules';
-import type { Moment } from './sim/sceneScripts';
+import { SCENES, summonScene, type Moment } from './sim/sceneScripts';
 import { xpRate } from './sim/castle';
 import { heroStats } from './sim/talents';
 import { powerOf, powerText } from './sim/power';
@@ -52,17 +52,20 @@ import { toastAchievements, toastJoined } from './achievementsView';
 import { grantContent } from './sim/contentHeroes';
 import { clockSeed, todayKey } from './modes';
 import { tips, type Box } from './tips';
-import { CHARGE_MAX, kitOf } from './sim/abilities';
+import { CHARGE_MAX, kitOf, ULT_LEVEL } from './sim/abilities';
 import { startAwake } from './render/awake';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, type SpellId } from './sim/spells';
 import { bindSpellbook } from './spellbook';
 import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
+import { WeatherView } from './render/weatherView';
+import { weatherOf, type Weather } from './sim/weather';
 import { ChainView } from './render/chainView';
 import { against, frameOf, transferFormation } from './sim/chain';
 import { traitBadge } from './traitBadge';
 import { closestTrait, countTraits, kindsOf, nextTierLine, traitsOf, TRAITS } from './sim/traits';
-import { placeSynergies, startSynergies } from './synergyView';
+import { placeSynergies, startSynergies, updateCombo } from './synergyView';
+import { COMBO_NAME, comboOf, noteCombos } from './sim/combos';
 import { UnitSprite } from './render/unitView';
 import { flyUp, recyclePuff, summonBurst } from './render/uiFx';
 import { Fx, loadFx } from './render/fx';
@@ -126,6 +129,7 @@ class Game {
   private app = new Application();
   private world = new Container();
   private boardView = new BoardView();
+  private weather = new WeatherView();
   /** The long map of an army run: the finished sections behind the fight, and the walk from one wave to the next. */
   private chain!: ChainView;
   /** The units (of the finished fight) that are walking to the next section: their own sprites stay hidden meanwhile. */
@@ -203,7 +207,7 @@ class Game {
     const fonts = Promise.all(['900 16px "Cinzel Decorative"', '700 16px "Alegreya Sans"', '16px "Press Start 2P"'].map((f) => document.fonts.load(f))).catch(() => {});
     await Promise.all([loadSheets(), loadBoardArt(), loadFx(), Promise.race([fonts, new Promise((ok) => setTimeout(ok, 2500))])]);
     this.world.sortableChildren = true;
-    this.boardView.keep.push(this.fx.dimLayer, this.fx.root);
+    this.boardView.keep.push(this.fx.dimLayer, this.fx.root, this.weather.lights);
     this.boardView.root.addChild(...this.boardView.keep);
     this.world.addChild(this.boardView.root);
     this.boardView.renderer = this.app.renderer;
@@ -211,7 +215,7 @@ class Game {
     this.ghost.anchor.set(0.5, 1);
     this.ghost.alpha = 0.85;
     this.ghost.visible = false;
-    this.app.stage.addChild(this.world, this.ghost, this.fx.flashLayer);
+    this.app.stage.addChild(this.world, this.weather.root, this.ghost, this.fx.flashLayer);
     const query = new URLSearchParams(location.search);
     const seed = Number(query.get('seed'));
     this.meta = loadMeta((Date.now() % 100000) + 1);
@@ -219,18 +223,20 @@ class Game {
     initQuips(this.meta.seed);
     // (a new save, or one after Start over, picks its first three heroes before anything else; an address with a seed is a test page and takes the first pack)
     if (needsStarter(this.meta)) {
+      // (the opening cinematic comes first, before the pick: the player has no heroes yet, so a fixed trio plays it; a test page with a seed has none)
+      if (!seed) await this.playDue({ kind: 'starter' }, { party: [...(SCENES.opening.trio ?? [])] });
       if (seed) pickStarter(this.meta, 0);
       else await chooseStarter(this.meta);
       saveMeta(this.meta);
-      // (the opening cinematic: the heroes just picked, and what they are up against; a test page with a seed has none)
-      if (!seed) await this.playDue({ kind: 'starter' });
     }
     // (a tower run saved by an older version sat in the ordinary slot: it moves to the tower's own)
     adoptOldTower();
     // (a fresh page with no saved run shows the first army's board behind the home screen)
     this.run = (!seed && loadRun()) || armyRun(seed || (Date.now() % 100000) + 1, ARMIES[0].id, this.meta.party, this.meta.castle);
     this.syncPool();
-    this.gacha = new Gacha(this.meta, () => {
+    this.gacha = new Gacha(
+      this.meta,
+      () => {
       this.syncPool();
       // (a pull can earn an achievement too)
       toastAchievements(settleRun(this.meta, this.run, { won: false, stage: this.run.stage, stars: 0 }));
@@ -238,7 +244,10 @@ class Game {
       saveRun(this.run);
       this.refresh();
       this.home.refresh();
-    });
+    },
+    // (a pull from the card reveal runs the hall's show again, like one from the hall)
+    (n) => this.home.summon(n),
+    );
     this.home = new Home(this.meta, {
       hasRun: () => {
         const r = loadRun();
@@ -266,7 +275,8 @@ class Game {
           this.home.open();
         }),
       onRecruit: () => this.gacha.open(),
-      onSummon: (n, play) => this.gacha.summon(n, play),
+      // (a pull plays the summoning cinematic first, every time: a tap on it skips the hall's show too, and goes straight to the cards)
+      onSummon: (n, play) => this.gacha.summon(n, async (got) => play(got, await this.summonCinematic(got))),
       onDaily: () => {
         if (dailyInProgress(loadRun(), todayKey())) return this.resume();
         // (the start card names the boss and the land; a tap on Fight! starts the run, the first of the date counting)
@@ -370,6 +380,8 @@ class Game {
     this.boardView.build(this.b.board, { boss: !!waveArmyOf(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
     this.syncChain();
     setBackdrop(this.b.board.area);
+    this.weather.resize(this.app.screen.width, this.app.screen.height);
+    this.weather.set(weatherOf(this.b.board), this.b.board.area, this.boardView.litSpots());
     showTwistBanner(this.run.tower?.cur?.fight?.twist);
     this.syncSprites(true);
     this.layout();
@@ -386,12 +398,31 @@ class Game {
   }
 
   /** The cinematic due at a moment, if the save has not seen it: marked seen as it begins (a closed page does not bring it back), then played. */
-  private async playDue(moment: Moment): Promise<void> {
+  private async playDue(moment: Moment, players = this.players()): Promise<void> {
     const id = dueScene(this.meta, moment);
     if (!id) return;
+    // (with the Cinematics setting off it is still marked seen, so the Scenes list can play it; it just does not start by itself)
     markSeen(this.meta, id);
     saveMeta(this.meta);
-    await this.scenes.play(id, this.players());
+    if (settings().cinematics) await this.scenes.play(id, players);
+  }
+
+  /** The summoning cinematic for a pull: the hero it brought (a new one first) steps into the circle's light. True when a tap skipped it, which skips the hall's show too. It never holds up a pull: a tap anywhere ends it. */
+  private async summonCinematic(got: Pull[]): Promise<boolean> {
+    const pick = got.find((p) => p.isNew) ?? got[0];
+    if (!pick || !settings().cinematics || !settings().summonScene) return false;
+    return (await this.scenes.play(summonScene(pick.kind, UNITS[pick.kind].name), this.players(), true)) === 'skipped';
+  }
+
+  /** The heroes earned in play since the last result was closed: each has its reveal, once, before the game goes on. */
+  private earned: string[] = [];
+  private async revealEarned(): Promise<void> {
+    for (const kind of this.earned.splice(0)) await this.playDue({ kind: 'earned', hero: kind });
+  }
+
+  /** Show a weather on this board whatever the fight rolled (for previews and the screenshots: `__game.previewWeather('rain')`). */
+  previewWeather(w: Weather): void {
+    this.weather.set(w, this.b.board.area, this.boardView.litSpots());
   }
 
   /** Play a cinematic by id (the Scenes list, and previews: `__game.playScene('opening')`). */
@@ -585,7 +616,7 @@ class Game {
     foeGrumbles(this.b.units.filter((u) => u.side === 'foe' && !UNITS[u.def].summon).length, (i) => this.anchorOfFoe(i));
     this.stats = startStats(this.b.units);
     startFight(isBossRun(this.run));
-    startSynergies(countTraits(kindsOf(this.b.units)));
+    startSynergies(countTraits(kindsOf(this.b.units)), this.b.combo);
     this.chosen = null;
     this.boardView.clearMarks();
     this.refreshBossBar();
@@ -647,7 +678,18 @@ class Game {
         // (a fighter a skill called up mid-fight has no sprite yet: make it, with its entrance)
         if (b.units.length !== this.sprites.size) this.syncSprites();
         playEvents(b, events, this.speed);
-        for (const e of events) if (e.kind === 'phase') this.startPhase(e);
+        for (const e of events) {
+          if (e.kind === 'phase') this.startPhase(e);
+          // (a promotion the sim made: a hero's tier by level; the page's own merge calls `promoteHero` too)
+          else if (e.kind === 'promote') this.promoteHero(e.to, e.grade);
+        }
+        // (a combo: the bar follows it; once its move has gone off, the codex knows it; the camera leans in when the effects ask)
+        if (b.combo) {
+          updateCombo(b.combo);
+          if (events.some((e) => e.kind === 'comboCast')) noteCombos(this.meta, b);
+        }
+        const push = this.fx.takePush();
+        if (push) this.push = { ...push, left: push.ms };
         // (Duchess has a view on a big blow)
         if (events.some((e) => e.kind === 'hit' && e.heavy && e.dmg >= 90)) this.goat.react('bigHit');
         if (events.some((e) => e.kind === 'hit' || e.kind === 'heal')) this.refreshBench();
@@ -684,9 +726,10 @@ class Game {
     }
     if (this.survey) this.standBack(dt);
     this.boardView.pump();
+    this.weather.step(dt);
     // (the camera eases to where it is sent, unless a finger is holding the board)
     if (this.phaseBoss && (!b.pause || b.phase !== 'fight')) this.endPhase();
-    if (b.phase === 'fight' && !this.intro) this.phaseBoss ? this.pushOnPhase() : this.follow();
+    if (b.phase === 'fight' && !this.intro) this.phaseBoss ? this.pushOnPhase() : (this.follow(), this.leanIn(dt));
     if (!this.drag?.pan) {
       const f = b.phase === 'fight' && !this.intro;
       this.cx = f ? easeTo(this.cx, this.tx, dt, EASE_MOVE_MS) : this.cx + (this.tx - this.cx) * Math.min(1, dt / 220);
@@ -695,6 +738,23 @@ class Game {
       this.clampCam();
     }
     this.place();
+  }
+
+  /** A short camera push the effects asked for (an ultimate, a combo, a tier 3 promotion): the point, how much closer, and the ms left. */
+  private push: { x: number; y: number; zoom: number; ms: number; left: number } | null = null;
+
+  /** While a push lasts the camera leans in on its point (the fight camera's view is back when it ends); a manual pan pauses it as it does the follow. */
+  private leanIn(dt: number): void {
+    const p = this.push;
+    if (!p) return;
+    p.left -= dt;
+    if (p.left <= 0 || performance.now() < this.pausedUntil) {
+      this.push = null;
+      return;
+    }
+    this.tx = p.x;
+    this.ty = p.y;
+    this.tzoom = Math.min(this.tzoom * p.zoom, Math.max(this.minZoom(), 3 / this.scale));
   }
 
   /** The boss changing form, while the fight is held: the banner is up and the camera is on it. */
@@ -731,6 +791,22 @@ class Game {
     $('phaseBanner').hidden = true;
   }
 
+  /** Promote a fighter to `grade` with the whole show (the page's merge after a hire does this, and the sim's `promote` event; the Calamity's tier by level calls it too). A sprite drawn as a lower grade is made again as the new one first. */
+  promoteHero(unitId: number, grade: number): void {
+    const u = this.b.units.find((x) => x.id === unitId);
+    const old = this.sprites.get(unitId);
+    if (!u || !old) return;
+    if (old.shownGrade < grade) {
+      u.grade = grade;
+      old.root.destroy({ children: true });
+      const s = new UnitSprite(u);
+      this.sprites.set(unitId, s);
+      this.boardView.root.addChild(s.root);
+      s.update(this.b.board, performance.now(), this.b.phase !== 'deploy');
+    }
+    this.fx.promote(unitId, grade, this.b.phase !== 'fight');
+  }
+
   /** The roster ids a merge has just made (they flash on the bench and, if placed, on the board). */
   private evolved = new Set<number>();
 
@@ -750,7 +826,11 @@ class Game {
       if (!this.sprites.has(u.id)) {
         const s = new UnitSprite(u);
         this.sprites.set(u.id, s);
-        if (u.tag !== undefined && this.evolved.has(u.tag)) s.evolve();
+        // (a merge's hero rises in light: the same promotion a sim `promote` event plays)
+        if (u.tag !== undefined && this.evolved.has(u.tag)) {
+          s.update(this.b.board, performance.now(), this.b.phase !== 'deploy');
+          this.fx.promote(u.id, u.grade ?? 1, this.b.phase !== 'fight');
+        }
         this.boardView.root.addChild(s.root);
         // (a hero set down on a tile puffs its dust)
         if (u.side === 'hero' && this.b.phase === 'deploy') this.fx.landing(this.b, u.u, u.v);
@@ -800,6 +880,7 @@ class Game {
   /** Fit the board into the room the bench and the top bar leave: it is zoomed in and panned. */
   private layout(): void {
     this.fx.fitScreen(viewW(), viewH());
+    this.weather.resize(this.app.screen.width, this.app.screen.height);
     const top = $('top').getBoundingClientRect();
     const panel = $('panel').getBoundingClientRect();
     const bar = $('bossBar');
@@ -1344,7 +1425,8 @@ class Game {
         const grown = levelBadge(up.to, 'xpLv');
         lv.replaceWith(grown);
         lv = grown;
-        const chips = [`+${gained.hp}% HP`, `+${gained.atk}% Atk`].map((t, n) => {
+        // (reaching the ultimates' level says so)
+        const chips = [`+${gained.hp}% HP`, `+${gained.atk}% Atk`, ...(up.from < ULT_LEVEL && up.to >= ULT_LEVEL ? ['Ultimate unlocked'] : [])].map((t, n) => {
           const c = document.createElement('span');
           c.textContent = t;
           c.style.animationDelay = `${0.25 + n * 0.15}s`;
@@ -1493,7 +1575,7 @@ class Game {
       ? { title: 'Army defeated!', tone: 'won' as const, line: `${army?.name ?? 'The run'} cleared in ${run.recap?.fights ?? 0} fights` }
       : { title: 'Run over', tone: 'lost' as const, line: army ? `The ${army.name} held at wave ${run.best} of ${army.waves.length}` : `Fell at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} hires` };
     const joke = Rng.from(run.seed, won ? 0x7e1 : 0x7e2).pick(won ? RECAP_WIN : RECAP_LOSS);
-    showRecap($('recap'), recapOf(run), { ...head, joke }, () => this.afterResult());
+    showRecap($('recap'), recapOf(run), { ...head, joke }, () => void this.revealEarned().then(() => this.afterResult()));
   }
 
   /** A run has ended: back to the main screen, showing what it earned. */
@@ -1916,7 +1998,9 @@ class Game {
       const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b });
       this.runStars = settleArmyRun(this.meta, run);
       // (a milestone this fight reached may bring in a hero)
-      toastJoined(grantContent(this.meta));
+      const joined = grantContent(this.meta);
+      toastJoined(joined);
+      this.earned.push(...joined);
       // (a run that levels its own heroes taught them in `finishTower`; the lasting XP is not touched)
       const own = run.local ? climbXpView(run) : null;
       const gains = own ? own.gains : fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp);
@@ -1962,8 +2046,11 @@ class Game {
     const fixed = waveArmyOf(run);
     const kind = run.tower?.cur?.kind;
     const stage = `${fixed ? `Wave ${run.stage}/${fixed.waves.length}` : run.mode?.kind === 'calamity' ? `Map ${run.tower!.act} · ${mapProgress(run.tower!).done} of ${mapProgress(run.tower!).total} cleared` : run.tower ? `Floor ${run.stage}` : `Stage ${run.stage}`}${kind === 'elite' ? ' · Elite' : isBossRun(run) ? ' · Boss' : ''}`;
+    // (the five of a combo placed: the deploy line says so, so a player finds the combos by trying)
+    const combo = b.phase === 'deploy' ? comboOf(b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def)) : undefined;
+    const deployCombo = combo ? ` · ${COMBO_NAME}: ${combo.name}` : '';
     $('status').textContent =
-      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : benchFull(run) ? `${stage} · bench full: recycle a hero to hire` : n ? `${stage} · ${n} of ${squadLimit(run)} placed` : `${stage} · drag heroes onto the blue tiles`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
+      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : benchFull(run) ? `${stage} · bench full: recycle a hero to hire` : n ? `${stage} · ${n} of ${squadLimit(run)} placed${deployCombo}` : `${stage} · drag heroes onto the blue tiles`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
     $('gold').textContent = `${run.gold} gold`;
     this.drawLives(run);
     const buy = $('summon') as HTMLButtonElement;

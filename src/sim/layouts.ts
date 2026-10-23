@@ -7,7 +7,7 @@
 // the old way (`classic`: rolling land with platforms and pits). Pure rules: no Pixi, no DOM, and its own side stream of
 // the seed (`0x1a70`), so nothing else on the board moves with it.
 
-import { boardOk, DEPLOY_ROWS, RAMP, solid, standable, tileAt, TOP, type Area, type Board, type Ground, type Tile } from './board';
+import { boardOk, DEPLOY_ROWS, LAVA_LANDS, RAMP, solid, standable, tileAt, TOP, type Area, type Board, type Ground, type Tile } from './board';
 import { mixSeed, Rng } from './rng';
 
 export const LAYOUT_IDS = ['classic', 'plain', 'river', 'hill', 'pass', 'fort', 'islands', 'ring', 'plateaus'] as const;
@@ -36,6 +36,17 @@ const BY_AREA: Partial<Record<Area, Weights>> = {
   desert: { pass: 3, plateaus: 3, fort: 2, river: 0.7, islands: 0.5 },
   volcano: { islands: 2.5, ring: 2.5, pass: 2, river: 2, fort: 0.5, plain: 0.5 },
   dungeon: { fort: 3, ring: 2, pass: 2, river: 1.5, plateaus: 1, hill: 0.5, plain: 0.3 },
+  plains: { river: 2, hill: 2.5, plain: 2.5 },
+  autumn: { river: 2.5, pass: 2, hill: 2 },
+  swamp: { river: 3, islands: 3, plain: 0.5, hill: 1, pass: 1 },
+  graveyard: { fort: 2.5, ring: 2, hill: 1.5, plain: 0.7 },
+  ruins: { fort: 4, pass: 2, ring: 2, plain: 0.5 },
+  temple: { fort: 2.5, ring: 2.5, plateaus: 2, plain: 0.5 },
+  crystal: { pass: 2, ring: 2, plateaus: 2.5, islands: 1.5 },
+  forge: { fort: 2.5, ring: 2.5, pass: 2, river: 2, islands: 1.5, plain: 0.3 },
+  shrine: { ring: 3, hill: 2, fort: 2, plain: 0.5 },
+  warcamp: { fort: 3, plain: 2, hill: 2, river: 1 },
+  oasis: { river: 3, islands: 2, plateaus: 2, plain: 1.5 },
 };
 
 /** The layout for a seed on a land (a side stream of the seed, so it is the same whatever else changes). */
@@ -74,7 +85,7 @@ function put(p: Plan, u: number, v: number, patch: Partial<Tile>): void {
 
 const clampH = (h: number): number => Math.max(0, Math.min(TOP, Math.round(h)));
 
-/** What fills a river or a sea: deep water (the page draws it as a lake of lava on a volcano; it is as impassable, and as safe to stand beside, as water). */
+/** What fills a river or a sea: deep water (the page draws it as a lake of lava on a volcano or at a forge; it is as impassable, and as safe to stand beside, as water). */
 const fluidOf = (_area: Area): Ground => 'deep';
 
 /** Ease the board's heights to a ramp round the tiles a template pinned. A loose tile keeps its own (rolling) height as far as it can: no more than a ramp
@@ -154,7 +165,7 @@ function river(p: Plan): void {
   const cross = spread(rng, 0, b.w - 1, b.w >= 9 ? 3 : 2, 3);
   cross.forEach((u, n) => {
     // (the first crossing is always a bridge; the others are a ford, shallows to wade, one time in three, unless the river is a lake of lava)
-    const ford = n > 0 && p.area !== 'volcano' && rng.chance(0.35);
+    const ford = n > 0 && !LAVA_LANDS.includes(p.area) && rng.chance(0.35);
     for (let k = 0; k < thick; k++) {
       const t: Partial<Tile> = { h: bank };
       if (ford) t.ground = 'water';
@@ -288,7 +299,7 @@ function ring(p: Plan): void {
   const pu = Math.floor((b.w - pw) / 2);
   const pv = Math.floor((p.m0 + p.m1 - ph + 1) / 2);
   const rim = rng.int(3, 4);
-  const floor = p.area === 'volcano' ? ({ ground: 'lava' } as Partial<Tile>) : {};
+  const floor = LAVA_LANDS.includes(p.area) ? ({ ground: 'lava' } as Partial<Tile>) : {};
   const spots = [
     [rng.int(pu, pu + pw - 1), pv - 1],
     [rng.int(pu, pu + pw - 1), pv + ph],
@@ -334,7 +345,7 @@ function plateaus(p: Plan): void {
     for (let u = 0; u < b.w; u++) {
       if (u >= left && u < left + gap) {
         const bridge = v === bridgeRow;
-        put(p, u, v, bridge ? { h: top, bridge: true } : { h: 0, ...(rng.chance(0.4) && p.area !== 'volcano' ? { ground: 'water' as Ground } : {}) });
+        put(p, u, v, bridge ? { h: top, bridge: true } : { h: 0, ...(rng.chance(0.4) && !LAVA_LANDS.includes(p.area) ? { ground: 'water' as Ground } : {}) });
       } else put(p, u, v, { h });
     }
   }

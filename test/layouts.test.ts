@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { AREAS, boardOk, BASE_AREA, D, DEPLOY_ROWS, DIRS, FLY_JUMP, canStep, makeBoard, standable, tileAt, W, type Area, type Board } from '../src/sim/board';
+import { AREAS, CLASSIC_AREAS, boardOk, BASE_AREA, D, DEPLOY_ROWS, DIRS, FLY_JUMP, canStep, makeBoard, standable, tileAt, W, type Area, type Board } from '../src/sim/board';
 import { applyLayout, LAYOUT_IDS, LAYOUT_INFO, layoutFor, type LayoutId } from '../src/sim/layouts';
 import { buildChain } from '../src/sim/chain';
 import { fight, place, startBattle, stepBattle } from '../src/sim/battle';
@@ -21,9 +21,9 @@ test('the usual board is 8 across and 11 deep, and a Calamity board is still 10 
 });
 
 test('rolling land at the old 7 x 9 size is the old land: heights, boulders, ground and bushes unchanged', () => {
-  // (the hash is of the boards of 0.139.0: 40 seeds in each of the six areas; shrines and barrels, new, are left out)
+  // (the hash is of the boards of 0.139.0: 40 seeds in each of the six first lands; shrines and barrels, new, are left out)
   let h = 0x811c9dc5;
-  for (const area of AREAS)
+  for (const area of CLASSIC_AREAS)
     for (let seed = 1; seed <= 40; seed++) {
       const b = makeBoard(seed * 7919, area, 7, 9, 'classic');
       const s = JSON.stringify(b.tiles.map((t) => [t.h, t.rock ? 1 : 0, t.ground === 'shrine' ? '' : t.ground ?? '', t.bush ? 1 : 0, t.deco]));

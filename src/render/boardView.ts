@@ -4,12 +4,13 @@
 // `column`).
 
 import { Container, Graphics, Sprite, Texture, type Renderer } from 'pixi.js';
-import { tileAt, type Area, type Board, type Tile } from '../sim/board';
+import { LAVA_LANDS, tileAt, type Area, type Board, type Tile } from '../sim/board';
 import { loadImage } from './loadImage';
 import { depthIn, FOOT, HH, project, rawAt, TH, TW, type Frame } from './iso';
 import { footDims, liesBehind, type Rot } from '../sim/turn';
 import { AREA_URLS, BUSH_URLS, GROUND_URLS } from './areaArt';
 import { TERRAIN_URLS } from './terrainArt';
+import { LIT_PROPS } from './weatherRules';
 
 /** From this height up, a tile's top is stony. */
 const STONY = 3;
@@ -30,6 +31,17 @@ const LIP: Record<Area, [string, string]> = {
   desert: ['#d9b878', '#e2c690'],
   volcano: ['#4a3430', '#6a5450'],
   dungeon: ['#585874', '#7c7c98'],
+  plains: ['#6ea23c', '#a4ac84'],
+  autumn: ['#b0641e', '#a08a74'],
+  swamp: ['#2c5a40', '#667a68'],
+  graveyard: ['#3c4a42', '#6e7690'],
+  ruins: ['#948462', '#a8a08c'],
+  temple: ['#3a7a48', '#d2c28e'],
+  crystal: ['#3c3c92', '#7c8cd0'],
+  forge: ['#463630', '#807672'],
+  shrine: ['#4a3678', '#8c80a6'],
+  warcamp: ['#6e6230', '#8c7258'],
+  oasis: ['#64aa50', '#e4cc9a'],
 };
 
 /** The lip of a boss arena's tiles. */
@@ -350,6 +362,20 @@ export class BoardView {
     return { tiles, marks, tex, barrels };
   }
 
+  /** Where the board's lit props stand (world px; a lantern, a torch, a forge fire), for night's glows (`weatherView.ts`). */
+  litSpots(): [number, number][] {
+    const b = this.board;
+    const lit = b && LIT_PROPS[b.area];
+    if (!b || !lit) return [];
+    const n = AREA_URLS[b.area].boulders.length;
+    const f = { rot: this.rot, ou: 0, ov: 0 };
+    const out: [number, number][] = [];
+    b.tiles.forEach((t, i) => {
+      if (t.rock && lit.includes(t.deco % n)) out.push(project(f, i % b.w, Math.floor(i / b.w), t.h));
+    });
+    return out;
+  }
+
   /** Light a tile (or clear it). */
   mark(u: number, v: number, kind: Mark): void {
     const b = this.board;
@@ -448,7 +474,7 @@ export class BoardView {
       const b = TH / (2 * SRC);
       g.imageSmoothingEnabled = true;
       g.setTransform(a, b, -a, b, TW / 2, 0);
-      const lie = t.bridge ? art.planks : t.ground === 'deep' ? (area === 'volcano' ? art.lava : art.water) : t.ground && t.ground !== 'tall' && t.ground !== 'shrine' ? art[t.ground] : null;
+      const lie = t.bridge ? art.planks : t.ground === 'deep' ? (LAVA_LANDS.includes(area) ? art.lava : art.water) : t.ground && t.ground !== 'tall' && t.ground !== 'shrine' ? art[t.ground] : null;
       // (planks are pixel art: not smoothed)
       if (t.bridge) g.imageSmoothingEnabled = false;
       g.drawImage(lie ?? (stony ? set.high : set.tops[(t.deco + u + v) % set.tops.length]), 0, 0, SRC, SRC);
@@ -491,9 +517,9 @@ export class BoardView {
       g.fillRect(0, 0, TW, TH);
     } else if (t.ground === 'deep') {
       // (deep water: the shallows' texture, darkened, with a few long ripples; on a volcano a lake of lava, darkened to a crust)
-      g.fillStyle = area === 'volcano' ? 'rgba(30,6,0,0.4)' : 'rgba(6,22,66,0.5)';
+      g.fillStyle = LAVA_LANDS.includes(area) ? 'rgba(30,6,0,0.4)' : 'rgba(6,22,66,0.5)';
       g.fillRect(0, 0, TW, TH);
-      g.strokeStyle = area === 'volcano' ? 'rgba(255,170,80,0.45)' : 'rgba(160,200,255,0.4)';
+      g.strokeStyle = LAVA_LANDS.includes(area) ? 'rgba(255,170,80,0.45)' : 'rgba(160,200,255,0.4)';
       for (const [x, y] of [[TW * 0.4, TH * 0.4], [TW * 0.62, TH * 0.62]]) {
         g.beginPath();
         g.moveTo(x - 7, y);
@@ -513,7 +539,7 @@ export class BoardView {
       g.stroke();
     }
     g.restore();
-    g.strokeStyle = t.bridge ? BRIDGE_RIM : t.ground === 'deep' && area === 'volcano' ? 'rgba(255,120,30,0.95)' : t.ground ? RIM[t.ground] : boss ? 'rgba(255,226,140,0.75)' : 'rgba(20,14,8,0.35)';
+    g.strokeStyle = t.bridge ? BRIDGE_RIM : t.ground === 'deep' && LAVA_LANDS.includes(area) ? 'rgba(255,120,30,0.95)' : t.ground ? RIM[t.ground] : boss ? 'rgba(255,226,140,0.75)' : 'rgba(20,14,8,0.35)';
     g.lineWidth = t.bridge || (t.ground && t.ground !== 'tall') ? 2 : 1;
     g.beginPath();
     g.moveTo(TW / 2, 0.5);
