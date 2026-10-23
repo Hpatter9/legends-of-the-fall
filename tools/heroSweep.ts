@@ -42,12 +42,12 @@ export interface Played {
 
 /**
  * One fight: the foes of `band` (boosted by `foes`) against `team`, placed at random on the heroes' rows, every hero at
- * `grade` (1 = plain, 2 = merged once). The placing draws from a side stream of the seed, so it is the same every time.
+ * `grade` (1 = plain, 2 = merged once) and `level` (a hero's ultimate unlocks at `ULT_LEVEL`). The placing draws from a side stream of the seed, so it is the same every time.
  */
-export function play(seed: number, band: string, foes: Stage, team: string[], grade = 1): Played {
+export function play(seed: number, band: string, foes: Stage, team: string[], grade = 1, level = 1): Played {
   const b = startBattle(seed, band, foes);
   const spots = deploySpots(b, new Rng(mixSeed(seed, 0xba1a)));
-  team.forEach((id, i) => place(b, id, spots[i][0], spots[i][1], undefined, gradeBoost(grade, 0, 1)));
+  team.forEach((id, i) => place(b, id, spots[i][0], spots[i][1], undefined, gradeBoost(grade, 0, level)));
   const out: Played = { won: false, dealt: new Map(), taken: new Map() };
   // (the events name fighters by id; a fighter can be added mid-fight, so look each one up as it comes)
   const unitOf = (id: number) => b.units.find((x) => x.id === id)!;
@@ -65,19 +65,25 @@ export function play(seed: number, band: string, foes: Stage, team: string[], gr
   return out;
 }
 
-/** Each hero's win rate (percent) in the random teams it was in, over `games` fights at `stage`, and its lift over the roster average. */
-export function heroLifts(games: number, stage: number, seedOffset = 0): { kind: string; win: number; lift: number }[] {
+/** How many of the random teams (over `games` fights at `stage`, from seed `seedOffset` + 1) each hero was in, and how many of those won. */
+export function heroTally(games: number, stage: number, seedOffset = 0, level = 1): { inN: Map<string, number>; inW: Map<string, number> } {
   const inN = new Map<string, number>(ALL_HEROES.map((h) => [h, 0]));
   const inW = new Map<string, number>(ALL_HEROES.map((h) => [h, 0]));
   for (let g = 0; g < games; g++) {
     const seed = g + 1 + seedOffset;
     const team = pickTeam(new Rng(mixSeed(seed, 0x7ea4)));
-    const won = play(seed, FIELD_BANDS[g % FIELD_BANDS.length], fieldBoost(stage), team).won;
+    const won = play(seed, FIELD_BANDS[g % FIELD_BANDS.length], fieldBoost(stage), team, 1, level).won;
     for (const h of team) {
       inN.set(h, inN.get(h)! + 1);
       if (won) inW.set(h, inW.get(h)! + 1);
     }
   }
+  return { inN, inW };
+}
+
+/** Each hero's win rate (percent) in the random teams it was in, over `games` fights at `stage` (every hero at `level`), and its lift over the roster average. */
+export function heroLifts(games: number, stage: number, seedOffset = 0, level = 1): { kind: string; win: number; lift: number }[] {
+  const { inN, inW } = heroTally(games, stage, seedOffset, level);
   const win = ALL_HEROES.map((h) => (100 * inW.get(h)!) / Math.max(1, inN.get(h)!));
   const average = win.reduce((a, b) => a + b, 0) / win.length;
   return ALL_HEROES.map((kind, i) => ({ kind, win: win[i], lift: win[i] - average }));
