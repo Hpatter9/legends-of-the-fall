@@ -143,6 +143,8 @@ export class CalMap {
   private walker = el('canvas', 'cmWalker');
   private run!: Run;
   private model: Land | null = null;
+  private stoneKey: Land | null = null;
+  private stoneCache = new Map<string, { x: number; y: number }[]>();
   private key = '';
   private geo: Geo | null = null;
   private picked = -1;
@@ -409,23 +411,73 @@ export class CalMap {
     this.drawWalker();
   }
 
-  /** The small stones of the bridge between two spots: evenly spaced along the straight line between their islands' centres, clear of the islands (one line of stones, never a trail across the cells). */
+  /** The small stones of the bridge between two spots: a single file, evenly spaced along the line between their islands' centres, clear of the islands. The line is straight, but bends once (away from the island) where it would pass over another island. */
   private stones(a: number, b: number): { x: number; y: number }[] {
+    if (!this.model) return [];
+    if (this.stoneKey !== this.model) {
+      // (every bridge laid once, in order; a stone that would stand beside a stone already laid (two bridges leaving an island at close angles) is left out, so the track stays one stone wide)
+      this.stoneKey = this.model;
+      this.stoneCache.clear();
+      const placed: { x: number; y: number }[] = [];
+      for (const r of this.model.roads) {
+        const mine = this.lay(r.from, r.to).filter((q) => !placed.some((o) => Math.hypot(o.x - q.x, (o.y - q.y) * 1.6) < STONE_GAP * 0.8));
+        placed.push(...mine);
+        this.stoneCache.set(`${r.from}>${r.to}`, mine);
+      }
+    }
+    return this.stoneCache.get(`${a}>${b}`) ?? [];
+  }
+
+  private lay(a: number, b: number): { x: number; y: number }[] {
     const A = this.spot(a);
     const B = this.spot(b);
-    if (!A || !B) return [];
+    if (!A || !B || !this.model) return [];
     const p = this.xy(A);
     const q = this.xy(B);
-    const len = Math.hypot(q.x - p.x, q.y - p.y);
-    // (clear of each island by 44 pixels along the line, a stone about every 30)
+    let path = [p, q];
+    // (another island close to the straight line: one turn, round the far side of it)
+    for (const o of this.model.spots) {
+      if (o.id === a || o.id === b) continue;
+      const c = this.xy(o);
+      const dx = q.x - p.x;
+      const dy = q.y - p.y;
+      const len2 = dx * dx + dy * dy || 1;
+      const t = ((c.x - p.x) * dx + (c.y - p.y) * dy) / len2;
+      if (t < 0.12 || t > 0.88) continue;
+      const nx = p.x + dx * t;
+      const ny = p.y + dy * t;
+      const off = Math.hypot((c.x - nx) * 1, (c.y - ny) * 1.7);
+      if (off > 64) continue;
+      // (the turn: the nearest point on the line pushed to the side the island is not on)
+      const side = (c.x - nx) * -dy + (c.y - ny) * dx > 0 ? -1 : 1;
+      const l = Math.sqrt(len2);
+      const push = 70 - off + 20;
+      path = [p, { x: nx + (-dy / l) * push * side, y: ny + (dx / l) * push * side }, q];
+      break;
+    }
+    // (stones along the path, from STONE_CLEAR beyond the first island's middle to STONE_CLEAR short of the second's)
+    const segs: number[] = [];
+    let len = 0;
+    for (let i = 1; i < path.length; i++) {
+      segs.push(Math.hypot(path[i].x - path[i - 1].x, path[i].y - path[i - 1].y));
+      len += segs[i - 1];
+    }
     const span = len - 2 * STONE_CLEAR;
-    if (span < 8) return [{ x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 }];
+    const at = (d: number) => {
+      let rest = d;
+      for (let i = 0; i < segs.length; i++) {
+        if (rest <= segs[i] || i === segs.length - 1) {
+          const f = Math.min(1, rest / segs[i]);
+          return { x: path[i].x + (path[i + 1].x - path[i].x) * f, y: path[i].y + (path[i + 1].y - path[i].y) * f };
+        }
+        rest -= segs[i];
+      }
+      return path[path.length - 1];
+    };
+    if (span < 8) return [at(len / 2)];
     const n = Math.max(1, Math.round(span / STONE_GAP));
     const out: { x: number; y: number }[] = [];
-    for (let i = 0; i <= n; i++) {
-      const t = (STONE_CLEAR + (span * i) / n) / len;
-      out.push({ x: p.x + (q.x - p.x) * t, y: p.y + (q.y - p.y) * t });
-    }
+    for (let i = 0; i <= n; i++) out.push(at(STONE_CLEAR + (span * i) / n));
     return out;
   }
 
@@ -492,6 +544,7 @@ export class CalMap {
           gl.lineWidth = 2;
           gl.beginPath();
           gl.moveTo(pa.x, pa.y);
+          for (const q of pts) gl.lineTo(q.x, q.y);
           gl.lineTo(pb.x, pb.y);
           gl.stroke();
           gl.globalCompositeOperation = 'source-over';
@@ -819,7 +872,10 @@ export class CalMap {
 
   /** Set the leader walking the straight bridge from one spot to another. */
   private startWalk(from: number, to: number, speed: number, done: () => void): void {
-    const pts: { x: number; y: number }[] = [this.standAt(from), this.standAt(to)];
+    // (along the bridge's stones, the leader's feet a little below their line)
+    const there = this.model!.roads.some((r) => r.from === from && r.to === to);
+    const way = there ? this.stones(from, to) : [...this.stones(to, from)].reverse();
+    const pts: { x: number; y: number }[] = [this.standAt(from), ...way.map((q) => ({ x: q.x, y: q.y + 16 })), this.standAt(to)];
     let total = 0;
     for (let i = 1; i < pts.length; i++) total += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
     const dur = reduced() ? 1 : Math.max(WALK_MIN * speed, Math.min(WALK_MAX, (total / WALK_SPEED) * 1000));
