@@ -14,7 +14,7 @@ import { loadImage } from './render/loadImage';
 import { heroRig, lookKey } from './render/awakenRig';
 import { shrinkRig, type Small } from './render/smallRig';
 import { hash } from './render/campSpots';
-import { drawSlab, drawUnderside, REALMS } from './render/calRealm';
+import { drawStone, drawUnderside, REALMS } from './render/calRealm';
 import { twistBadge } from './twistView';
 import atlasUrl from './art/calmap/atlas.png';
 import portalUrl from './art/calmap/portal.png';
@@ -82,7 +82,10 @@ const FOOT = 0.31;
 const FOG_PX = 4;
 /** The mist's clear patches round an island (across, up, down: the landmark above and the rock below) and along a bridge, in scene pixels. */
 const HOLE_SPOT = { rx: 74, up: 96, down: 84 };
-const HOLE_ROAD = 34;
+const HOLE_ROAD = 30;
+/** A bridge's stones: how far clear of an island's middle the first stands, and the gap between two. */
+const STONE_CLEAR = 46;
+const STONE_GAP = 30;
 /** Milliseconds a road cell takes to clear, and the stagger between cells (the fog rolls back along the road), then the spot at its end. */
 const LIFT_MS = 520;
 const LIFT_STEP = 70;
@@ -397,14 +400,33 @@ export class CalMap {
     const to = this.standId();
     if (!this.walk) {
       if (to !== this.stand && this.stand >= 100 && this.spot(this.stand) && roadBetween(model, to, this.stand)) {
-        const back = [...roadBetween(model, to, this.stand)!].reverse();
-        this.startWalk(back, this.stand, to, 0.7, () => undefined);
+        this.startWalk(this.stand, to, 0.7, () => undefined);
       } else if (to !== this.stand) {
         this.stand = to;
         this.pos = this.standAt(to);
       } else if (!this.pos.x) this.pos = this.standAt(to);
     }
     this.drawWalker();
+  }
+
+  /** The small stones of the bridge between two spots: evenly spaced along the straight line between their islands' centres, clear of the islands (one line of stones, never a trail across the cells). */
+  private stones(a: number, b: number): { x: number; y: number }[] {
+    const A = this.spot(a);
+    const B = this.spot(b);
+    if (!A || !B) return [];
+    const p = this.xy(A);
+    const q = this.xy(B);
+    const len = Math.hypot(q.x - p.x, q.y - p.y);
+    // (clear of each island by 44 pixels along the line, a stone about every 30)
+    const span = len - 2 * STONE_CLEAR;
+    if (span < 8) return [{ x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 }];
+    const n = Math.max(1, Math.round(span / STONE_GAP));
+    const out: { x: number; y: number }[] = [];
+    for (let i = 0; i <= n; i++) {
+      const t = (STONE_CLEAR + (span * i) / n) / len;
+      out.push({ x: p.x + (q.x - p.x) * t, y: p.y + (q.y - p.y) * t });
+    }
+    return out;
   }
 
   /** The cells of the island a spot stands on: its own tile (a small island with rock hanging under it); the portal's a plus of five; a lair's a wide diamond. */
@@ -451,28 +473,46 @@ export class CalMap {
     const islands = model.spots.map((s) => ({ s, cells: this.islandOf(s) }));
     const onIsland = new Set<string>();
     for (const isl of islands) for (const cell of isl.cells) onIsland.add(key(cell));
-    const bridge = new Set<string>();
-    for (const r of model.roads) for (const cell of r.cells) if (!onIsland.has(key(cell))) bridge.add(key(cell));
     const foot = Math.round(g.th * FOOT);
     const list: { y: number; x: number; paint: () => void }[] = [];
-    // (a stepping slab for each cell of a bridge, and its glow)
-    for (const k of bridge) {
-      const [i, j] = k.split(',').map(Number);
-      const p = this.xy({ i, j });
+    // (a bridge: one line of small stones from island to island, a thin beam of light through them, a soft glow under each)
+    for (const r of model.roads) {
+      const pts = this.stones(r.from, r.to);
+      const A = this.spot(r.from);
+      const B = this.spot(r.to);
+      if (!A || !B) continue;
+      const pa = this.xy(A);
+      const pb = this.xy(B);
       list.push({
-        y: p.y,
-        x: p.x,
+        y: Math.min(pa.y, pb.y) - 1,
+        x: pa.x,
         paint: () => {
-          drawSlab(c, p.x, p.y, Math.round(g.tw * 0.52), Math.round(g.th * 0.52), realm.bridge, hash(i * 3, j));
-          const rg = gl.createRadialGradient(p.x, p.y + 3, 0, p.x, p.y + 3, g.tw * 0.62);
-          rg.addColorStop(0, `rgba(${realm.bridge.glow}, 0.34)`);
-          rg.addColorStop(1, `rgba(${realm.bridge.glow}, 0)`);
           gl.globalCompositeOperation = 'lighter';
-          gl.fillStyle = rg;
-          gl.fillRect(p.x - g.tw, p.y - g.tw * 0.6, g.tw * 2, g.tw * 1.2);
+          gl.strokeStyle = `rgba(${realm.bridge.glow}, 0.16)`;
+          gl.lineWidth = 2;
+          gl.beginPath();
+          gl.moveTo(pa.x, pa.y);
+          gl.lineTo(pb.x, pb.y);
+          gl.stroke();
           gl.globalCompositeOperation = 'source-over';
         },
       });
+      pts.forEach((p, n) =>
+        list.push({
+          y: p.y,
+          x: p.x,
+          paint: () => {
+            drawStone(c, p.x, p.y, realm.bridge, hash(Math.round(p.x), Math.round(p.y) + n));
+            const rg = gl.createRadialGradient(p.x, p.y + 2, 0, p.x, p.y + 2, 24);
+            rg.addColorStop(0, `rgba(${realm.bridge.glow}, 0.3)`);
+            rg.addColorStop(1, `rgba(${realm.bridge.glow}, 0)`);
+            gl.globalCompositeOperation = 'lighter';
+            gl.fillStyle = rg;
+            gl.fillRect(p.x - 26, p.y - 24, 52, 52);
+            gl.globalCompositeOperation = 'source-over';
+          },
+        }),
+      );
     }
     // (an island: the rock hanging under it, then its tiles back to front, a glow under it)
     const thick = (RECTS[art.ground[0]]?.[3] ?? g.th + 8) - g.th;
@@ -528,9 +568,11 @@ export class CalMap {
       }
     }
     // (bits of rock drifting in the void, here and there, clear of the islands and the bridges)
+    const allStones = model.roads.flatMap((r) => this.stones(r.from, r.to));
     const near = (cell: Cell, d: number) => {
-      for (let di = -d; di <= d; di++) for (let dj = -d; dj <= d; dj++) if (onIsland.has(`${cell.i + di},${cell.j + dj}`) || bridge.has(`${cell.i + di},${cell.j + dj}`)) return true;
-      return false;
+      const p = this.xy(cell);
+      for (let di = -d; di <= d; di++) for (let dj = -d; dj <= d; dj++) if (onIsland.has(`${cell.i + di},${cell.j + dj}`)) return true;
+      return allStones.some((q) => Math.hypot(q.x - p.x, (q.y - p.y) * 1.6) < 70);
     };
     for (const d of model.decor) {
       if (d.role !== 'rock' || near(d, 2) || hash(d.i * 3, d.j * 5) > 0.45) continue;
@@ -563,16 +605,12 @@ export class CalMap {
     const seen = seenFog.get(key);
     const now = new Set<string>();
     const fresh: Lift[] = [];
-    const bridgeCells = new Set<string>();
-    for (const s of model.spots) for (const c of this.islandOf(s)) bridgeCells.add(`${c.i},${c.j}`);
     for (const r of model.roads) {
       const rk = `${r.from}>${r.to}`;
       if (!fog.roads.has(rk)) continue;
       const isNew = !!seen && !seen.has(`r:${rk}`);
       now.add(`r:${rk}`);
-      r.cells.forEach((cell, i) => {
-        if (bridgeCells.has(`${cell.i},${cell.j}`)) return;
-        const p = this.xy(cell);
+      this.stones(r.from, r.to).forEach((p, i) => {
         const it = { key: `${rk}:${i}`, x: p.x, y: p.y, r: HOLE_ROAD, delay: isNew ? i * LIFT_STEP : 0 };
         items.push(it);
         if (isNew) fresh.push(it);
@@ -774,13 +812,14 @@ export class CalMap {
   walkTo(id: number, done: () => void): void {
     const model = this.model;
     const from = this.stand;
-    const cells = model && roadBetween(model, from, id);
+    const cells = model && (roadBetween(model, from, id) ?? roadBetween(model, id, from));
     if (!model || !cells || !this.geo) return done();
-    this.startWalk(cells, from, id, 1, done);
+    this.startWalk(from, id, 1, done);
   }
 
-  private startWalk(cells: Cell[], from: number, to: number, speed: number, done: () => void): void {
-    const pts: { x: number; y: number }[] = [this.standAt(from), ...cells.slice(1, -1).map((c) => ({ ...this.xy(c), y: this.xy(c).y + this.geo!.th * FOOT })), this.standAt(to)];
+  /** Set the leader walking the straight bridge from one spot to another. */
+  private startWalk(from: number, to: number, speed: number, done: () => void): void {
+    const pts: { x: number; y: number }[] = [this.standAt(from), this.standAt(to)];
     let total = 0;
     for (let i = 1; i < pts.length; i++) total += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
     const dur = reduced() ? 1 : Math.max(WALK_MIN * speed, Math.min(WALK_MAX, (total / WALK_SPEED) * 1000));

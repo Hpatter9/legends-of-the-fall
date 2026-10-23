@@ -11,8 +11,10 @@ the void** instead of countryside. Everything else is as it was: the graph, the 
   depth, lit from the upper left, an occasional stalactite). The portal's island is a plus of five tiles, the lair's a wide island of nineteen, a hidden side spot is a small island off a short side bridge.
   An ordinary island carries a tree, bush or rock of its realm beside the landmark; bits of rock drift in the void between. The landmarks are as before (foe camp, stall, tents, chest, campfire,
   shrine, elite drum, lairs).
-- **Bridges**: each road cell that is on no island is a small stepping slab of light (`drawSlab`, the realm's colour, a lit top, a thin underside) with a soft glow under it on a second canvas that
-  breathes (its opacity eases between 0.55 and 0.95 over six seconds). At a fork two bridges leave the island. The leader walks them.
+- **Bridges**: one line of **small stones** from island to island, placed evenly (about every 30px) along the straight line between the two islands' centres, clear of the islands by 46px
+  (`CalMap.stones`), never filling the road's cells. Each stone (`drawStone`) is a floating rune tile 22px across, dim and tinted to the realm (a dark body, a muted top, one faint rune pixel pair), with a
+  small soft glow under it and a thin beam of light through the line on a second canvas that breathes (opacity easing between 0.55 and 0.95 over six seconds). The islands stay the brightest things.
+  A fork is two such lines leaving the island, a side spot one short line. The leader walks the same straight line, and the mist lifts along it stone by stone.
 - **Mist**: the old fog is now a **mask**: islands and bridges the party has not seen are simply not there (the starfield stays everywhere); a lit island or bridge fades in through a soft patch,
   along the bridge cell by cell, then the island. One fade, no blinking.
 - **The rift** (map 6): once the lair is in sight, a great rift (the PVFX portal, four times its size, screen-blended, turning once in 4.8s) swirls behind its island.

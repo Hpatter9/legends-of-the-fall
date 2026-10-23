@@ -33,13 +33,26 @@ export function diamondRows(c: CanvasRenderingContext2D, cx: number, cy: number,
   }
 }
 
-/** A stepping slab of light: a small diamond, lit on top and at its rim, with a thin dark underside. */
-export function drawSlab(c: CanvasRenderingContext2D, cx: number, cy: number, w: number, h: number, b: Realm['bridge'], shade: number): void {
-  const thick = 3;
-  diamondRows(c, cx, cy + thick, w, h, (r, n) => (r > n * 0.4 ? b.under : 'rgba(0,0,0,0)'));
-  diamondRows(c, cx, cy, w, h, () => b.mid);
-  diamondRows(c, cx, cy, w - 6, h - 3, (r, n) => (r < n * 0.5 ? b.top : b.mid));
-  diamondRows(c, cx, cy, Math.max(6, w - 18), Math.max(3, h - 9), () => (shade > 0.5 ? b.rim : b.top));
+const mix = (a: string, b: string, t: number): string => {
+  const p = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const [x, y] = [p(a), p(b)];
+  return `rgb(${x.map((v, i) => Math.round(v + (y[i] - v) * t)).join(',')})`;
+};
+
+/** One stone of a bridge: a small floating rune tile, a diamond about 22 across, dim and tinted to the realm (a dark body, a muted lit top and one faint rune pixel pair), so the islands stay the brightest things. */
+export function drawStone(c: CanvasRenderingContext2D, cx: number, cy: number, b: Realm['bridge'], shade: number): void {
+  const w = 22;
+  const h = 12;
+  diamondRows(c, cx, cy + 3, w, h, (r, n) => (r > n * 0.4 ? b.under : 'rgba(0,0,0,0)'));
+  diamondRows(c, cx, cy, w, h, () => b.under);
+  const top = mix(b.under, b.mid, 0.5);
+  const lit = mix(b.under, b.mid, 0.7);
+  diamondRows(c, cx, cy, w - 4, h - 3, (r, n) => (r < n * 0.5 ? lit : top));
+  // (a rune: two lit pixels, the realm's own light)
+  c.fillStyle = b.top;
+  c.globalAlpha = 0.7;
+  c.fillRect(Math.round(cx) - 1, Math.round(cy) - 1 + (shade > 0.5 ? 0 : 1), 2, 1);
+  c.globalAlpha = 1;
 }
 
 /**
