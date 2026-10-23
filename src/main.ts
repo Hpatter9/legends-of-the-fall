@@ -1559,7 +1559,13 @@ class Game {
     if (this.run.tower) {
       $('result').hidden = true;
       saveRun(this.run);
-      if (this.run.over) return this.towerView.showSummary(this.run, this.run.tower.summary ?? settleTower(this.meta, this.run)!, () => this.home.open(`${this.run.mode?.kind === 'calamity' ? (this.run.cleared ? 'The calamity is ended' : 'The calamity ended') : 'The climb ended'} ${this.run.mode?.kind === 'calamity' ? `in map ${Math.min(this.run.tower!.act, CAL_MAPS)}` : `on floor ${this.run.stage}`}: +${this.run.tower!.summary?.crowns ?? this.run.tower!.crowns} crowns earned`));
+      if (this.run.over) {
+        const show = (): void => this.towerView.showSummary(this.run, this.run.tower?.summary ?? settleTower(this.meta, this.run)!, () => this.home.open(`${this.run.mode?.kind === 'calamity' ? (this.run.cleared ? 'The calamity is ended' : 'The calamity ended') : 'The climb ended'} ${this.run.mode?.kind === 'calamity' ? `in map ${Math.min(this.run.tower!.act, CAL_MAPS)}` : `on floor ${this.run.stage}`}: +${this.run.tower!.summary?.crowns ?? this.run.tower!.crowns} crowns earned`));
+        // (a Calamity cleared whole has its ending cinematic first, then the victory card)
+        if (this.run.cleared && this.run.mode?.kind === 'calamity') void this.queueScene({ kind: 'calVictory' }).then(show);
+        else show();
+        return;
+      }
       return this.towerView.open(this.run);
     }
     // (a lost run goes back to the main screen, with its summary)
@@ -2092,9 +2098,8 @@ class Game {
       // (a milestone this fight reached may bring in a hero)
       const joined = grantContent(this.meta);
       toastJoined(joined);
-      // (the fight's cinematics, one after another: an army's last stand, the Calamity's end; a hero earned has its own reveal)
+      // (the fight's cinematics, one after another: an army's last stand, a hero earned has its own reveal; the Calamity's end plays before its victory card)
       if (army && this.pay?.firstClear) void this.queueScene({ kind: 'armyClear', army: army.id });
-      if (won && run.cleared && run.mode?.kind === 'calamity') void this.queueScene({ kind: 'calVictory' });
       this.earned.push(...joined);
       // (a run that levels its own heroes taught them in `finishTower`; the lasting XP is not touched)
       const own = run.local ? climbXpView(run) : null;

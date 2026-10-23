@@ -117,7 +117,7 @@ plays out the same) while one is queued or playing.
 | --- | --- | --- | --- |
 | The Road Begins, The Ashen Road | pilots (0.131.0) | 37 s, 38 s | wired |
 | **Heralds**: The Bramble That Remembers, Item One: The Entrance, The Wall That Walks, The Last Flame, The End of All Roads | `calBoss` map 2 to 6, at the fight's set-up (`setupMoments`), before the boss's card | 32 to 39 s | wired |
-| **The Calamity ends**: Nobody Wrote the Next Bit | `calVictory`: the fight that clears a Calamity, before the summary | 39 s | wired to the fight's end; **needs wiring to `cal-map`'s victory screen** (call `queueScene({ kind: 'calVictory' })` where the screen opens, and drop mine from the fight's end) |
+| **The Calamity ends**: Nobody Wrote the Next Bit | `calVictory`: the fight that clears a Calamity, before the summary | 39 s | wired: plays as the summary is opened, right before `cal-map`'s victory card |
 | **The armies' last stands** (nine: `clear:<army>`) | `armyClear`: an army's first clear (`pay.firstClear`) | 26 to 28 s | wired |
 | **Awakening** (45: `awaken:<hero>`) | `awaken`: the hero's first awakening step (`awakenView.onAwakened`) | 12 to 16 s | wired |
 | **A hero earned** (ten: `earned:<hero>`) | `earned`: `hero-progress`'s reveal (theirs, on main): `revealEarned` after a result | 5 to 14 s | wired (theirs; my duplicate dropped) |
