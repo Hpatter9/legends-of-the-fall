@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addUnit, hurt, place, playOut, fight, startBattle } from '../src/sim/battle';
-import { BADGE_LEVELS, badgeOf, DEEP_SHARE, DIM_SHARE, fightXp, gainXp, killXp, lastingBoost, LATE_SHARE, LATE_XP, levelBoost, levelGain, levelOf, levelOfKind, LATE_LEVEL, MAX_LEVEL, MILESTONES, milestonePoints, OLD_MAX_LEVEL, progressOf, RUN_MAX_LEVEL, XP_TAKE_PART, xpFor, xpOf } from '../src/sim/levels';
+import { AURA_COLOURS, auraHalo, auraRings } from '../src/render/levelLook';
+import { BADGE_LEVELS, BADGE_NAMES, badgeOf, DEEP_SHARE, DIM_SHARE, fightXp, gainXp, killXp, lastingBoost, LATE_SHARE, LATE_XP, levelBoost, levelGain, levelOf, levelOfKind, LATE_LEVEL, MAX_LEVEL, MILESTONES, milestonePoints, OLD_MAX_LEVEL, progressOf, RUN_MAX_LEVEL, XP_TAKE_PART, xpFor, xpOf } from '../src/sim/levels';
 import { loadMeta, startedMeta } from '../src/sim/meta';
 import { gradeBoost } from '../src/sim/run';
 import { HEROES, UNITS } from '../src/sim/units';
@@ -215,4 +216,20 @@ test('a run\'s own levels stay at 30: the spire and the Calamity do not see leve
   assert.equal(levelOfKind(Object.assign(startedMeta(1), { xp: { knight: xpFor(80) } }), 'knight'), 80);
   // (and the in-run boost has not changed: level 30 of it is the old figure)
   assert.ok(Math.abs(levelBoost(30).hp - (1 + 0.22 * (11 + 0.25 * 18))) < 1e-9);
+});
+
+test('every badge tier has a name and a steady aura of its own colour: none below level 40, more rings and a halo higher up', () => {
+  assert.equal(BADGE_NAMES.length, BADGE_LEVELS.length + 1);
+  assert.equal(AURA_COLOURS.length, BADGE_LEVELS.length + 1);
+  assert.equal(new Set(AURA_COLOURS.slice(1)).size, BADGE_LEVELS.length, 'a colour for each tier');
+  assert.equal(auraRings(badgeOf(39)), 0);
+  assert.equal(auraHalo(badgeOf(39)), false);
+  let rings = 0;
+  for (let tier = 1; tier <= BADGE_LEVELS.length; tier++) {
+    assert.ok(auraRings(tier) >= rings && auraRings(tier) >= 1, `tier ${tier}`);
+    rings = auraRings(tier);
+  }
+  assert.equal(auraRings(7), 3);
+  assert.equal(auraHalo(4), false);
+  assert.equal(auraHalo(5), true);
 });

@@ -169,7 +169,7 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
   const grid = el('div', 'rosGrid');
   for (const kind of have) {
     const card = el('button', 'hcard');
-    card.append(portrait(UNITS[kind].sheet, 56), el('b', '', UNITS[kind].name), el('span', 'stars', starsOf(meta, kind)), levelBadge(progressOf(xpOf(meta, kind)).level, 'corner'));
+    card.append(portrait(UNITS[kind].sheet, 56), el('b', '', UNITS[kind].name), el('span', 'stars', starsOf(meta, kind)), levelBadge(progressOf(xpOf(meta, kind)).level));
     card.addEventListener('click', () => pick(kind));
     grid.append(card);
   }

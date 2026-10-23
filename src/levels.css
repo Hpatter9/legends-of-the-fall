@@ -8,7 +8,8 @@
 .lvb.b5 { color: var(--s0); background: var(--e8); border-color: var(--e10); box-shadow: 0 0 0 2px var(--e4); }
 .lvb.b6 { color: var(--r8); background: var(--r2); border-color: var(--r6); box-shadow: 0 0 0 2px var(--r0); }
 .lvb.b7 { color: var(--p6); background: var(--p1); border-color: var(--p4); box-shadow: 0 0 0 2px var(--p0), 0 0 0 4px var(--p3); }
-/* on a portrait: in the corner, over the picture */
-.hcard .lvb.corner, .card .lvb.corner { position: absolute; top: 2px; right: 2px; }
+/* on a card: a pill under the name (the bench's is tighter, to fit five across) */
+.hcard .lvb { margin-top: 2px; }
+#bench .card .lvb { display: block; margin: 2px auto 0; padding: 0 2px; letter-spacing: 0; line-height: 16px; border-width: 2px; }
 /* the hero sheet's head: the badge sits beside the level words */
 .hhead .lvb { vertical-align: middle; margin-right: 6px; }

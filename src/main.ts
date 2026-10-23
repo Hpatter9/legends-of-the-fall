@@ -1553,7 +1553,7 @@ class Game {
         m.dataset.trait = t;
         marks.append(m);
       }
-      const lv = levelBadge(this.levelOf(h), 'corner');
+      const lv = levelBadge(this.levelOf(h));
       const sell = document.createElement('button');
       sell.className = 'recycle';
       const value = recycleValue(this.run);
@@ -1580,7 +1580,7 @@ class Game {
       const pw = document.createElement('span');
       pw.className = 'pw';
       pw.textContent = `Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;
-      card.append(portrait(formOf(def, h.grade), 96, h.grade), stars, name, pw, marks, bar, lv);
+      card.append(portrait(formOf(def, h.grade), 96, h.grade), stars, name, lv, pw, marks, bar);
       // (the last hero cannot be recycled)
       if (this.run.roster.length > 1) card.append(sell);
       card.title = `${def.role} · Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;
