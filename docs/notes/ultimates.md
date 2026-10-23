@@ -136,9 +136,10 @@ at level 15), and nine heroes' stats were trimmed a little, only where an ultima
 27 to 26, Time Witch hp 190 to 188, High Priestess hp 225 to 215 and attack 18 to 17; and +1 defence for Kunoichi, Illusionist, Reaper and High Priestess, which gives
 level 1 back what the trim took (defence matters there) and leaves level 15 alone.
 
-**How often they fire.** At level 15 and stage 27 a fight lasts about 25s and a team of five casts about 0.4 ultimates in it (one in every two or three fights); a hero's
-own ranges from one in two fights (Yamabushi) to one in thirty (Archer, Ranger, Gunslinger); the long fights of the armies' last waves and bosses see more. Only so much
-can be asked of them: the late armies' power (`late-power.md`) is already won back by levels, so the ultimates' total weight is set by that, not by how big they look.
+**How often they fire.** At level 15 and stage 27 a fight lasts about 25s and a team of five casts about 0.4 ultimates in it (one in every two or three fights). A hero's own
+ranges from one fight in two (Yamabushi) and one in three (Samurai) to one in thirty (Knight, Siege Bot, Paladin, Kraken Mate), a typical one is about one in fifteen; the long fights
+of the armies' last waves and bosses see more. Only so much can be asked of them: the late armies' power (`late-power.md`) is already won back by levels, so how much the
+ultimates may weigh in all is set by that, not by how big they look.
 
 **The late armies** (`npm run balance -- --no-tables --climb --saves 240`, mean tries, the merged base 0.101.0 without and with the ultimates; the tool's own noise is about 0.15):
 
