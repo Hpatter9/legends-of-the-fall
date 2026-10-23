@@ -26,12 +26,15 @@ export interface RecapHead {
   tone: 'won' | 'lost';
   /** One line under it: where the run got to. */
   line: string;
+  /** A dry aside under it (the facts stay in `line`). */
+  joke?: string;
 }
 
 export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, onClose: () => void): void {
   root.replaceChildren();
   const sheet = el('div', 'rcSheet');
   sheet.append(el('div', `rcTitle ${head.tone}`, head.title), el('p', 'rcLine', head.line));
+  if (head.joke) sheet.append(el('p', 'rcJoke', head.joke));
 
   // the headline figures
   const grid = el('div', 'rcGrid');
