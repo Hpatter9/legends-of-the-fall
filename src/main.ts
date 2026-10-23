@@ -23,11 +23,11 @@ import { formOf, UNITS } from './sim/units';
 import { ELITE_BY_ID } from './sim/elites';
 import { isBoss } from './sim/foes';
 import { awakenedOf } from './sim/awaken';
-import { earn, loadMeta, needsStarter, pickStarter, heroRank, recordStars, saveMeta, type Meta } from './sim/meta';
+import { earn, loadMeta, needsStarter, pickStarter, heroRank, recordStars, saveMeta, type Meta, type Pull } from './sim/meta';
 import { chooseStarter } from './starter';
 import { ScenePlayer } from './render/sceneView';
 import { dueScene, markSeen } from './sim/sceneRules';
-import type { Moment } from './sim/sceneScripts';
+import { summonScene, type Moment } from './sim/sceneScripts';
 import { xpRate } from './sim/castle';
 import { heroStats } from './sim/talents';
 import { powerOf, powerText } from './sim/power';
@@ -224,7 +224,9 @@ class Game {
     // (a fresh page with no saved run shows the first army's board behind the home screen)
     this.run = (!seed && loadRun()) || armyRun(seed || (Date.now() % 100000) + 1, ARMIES[0].id, this.meta.party, this.meta.castle);
     this.syncPool();
-    this.gacha = new Gacha(this.meta, () => {
+    this.gacha = new Gacha(
+      this.meta,
+      () => {
       this.syncPool();
       // (a pull can earn an achievement too)
       toastAchievements(settleRun(this.meta, this.run, { won: false, stage: this.run.stage, stars: 0 }));
@@ -232,7 +234,10 @@ class Game {
       saveRun(this.run);
       this.refresh();
       this.home.refresh();
-    });
+    },
+    // (a pull from the card reveal runs the hall's show again, like one from the hall)
+    (n) => this.home.summon(n),
+    );
     this.home = new Home(this.meta, {
       hasRun: () => {
         const r = loadRun();
@@ -260,7 +265,8 @@ class Game {
           this.home.open();
         }),
       onRecruit: () => this.gacha.open(),
-      onSummon: (n, play) => this.gacha.summon(n, play),
+      // (a pull plays the summoning cinematic first, every time: a tap on it skips the hall's show too, and goes straight to the cards)
+      onSummon: (n, play) => this.gacha.summon(n, async (got) => play(got, await this.summonCinematic(got))),
       onDaily: () => {
         if (dailyInProgress(loadRun(), todayKey())) return this.resume();
         // (the start card names the boss and the land; a tap on Fight! starts the run, the first of the date counting)
@@ -385,6 +391,19 @@ class Game {
     markSeen(this.meta, id);
     saveMeta(this.meta);
     await this.scenes.play(id, this.players());
+  }
+
+  /** The summoning cinematic for a pull: the hero it brought (a new one first) steps into the circle's light. True when a tap skipped it, which skips the hall's show too. It never holds up a pull: a tap anywhere ends it. */
+  private async summonCinematic(got: Pull[]): Promise<boolean> {
+    const pick = got.find((p) => p.isNew) ?? got[0];
+    if (!pick) return false;
+    return (await this.scenes.play(summonScene(pick.kind, UNITS[pick.kind].name), this.players(), true)) === 'skipped';
+  }
+
+  /** The heroes earned in play since the last result was closed: each has its reveal, once, before the game goes on. */
+  private earned: string[] = [];
+  private async revealEarned(): Promise<void> {
+    for (const kind of this.earned.splice(0)) await this.playDue({ kind: 'earned', hero: kind });
   }
 
   /** Play a cinematic by id (the Scenes list, and previews: `__game.playScene('opening')`). */
@@ -1477,7 +1496,7 @@ class Game {
       ? { title: 'Army defeated!', tone: 'won' as const, line: `${army?.name ?? 'The run'} cleared in ${run.recap?.fights ?? 0} fights` }
       : { title: 'Run over', tone: 'lost' as const, line: army ? `The ${army.name} held at wave ${run.best} of ${army.waves.length}` : `Fell at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} hires` };
     const joke = Rng.from(run.seed, won ? 0x7e1 : 0x7e2).pick(won ? RECAP_WIN : RECAP_LOSS);
-    showRecap($('recap'), recapOf(run), { ...head, joke }, () => this.afterResult());
+    showRecap($('recap'), recapOf(run), { ...head, joke }, () => void this.revealEarned().then(() => this.afterResult()));
   }
 
   /** A run has ended: back to the main screen, showing what it earned. */
@@ -1844,7 +1863,9 @@ class Game {
       const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b });
       this.runStars = settleArmyRun(this.meta, run);
       // (a milestone this fight reached may bring in a hero)
-      toastJoined(grantContent(this.meta));
+      const joined = grantContent(this.meta);
+      toastJoined(joined);
+      this.earned.push(...joined);
       // (a run that levels its own heroes taught them in `finishTower`; the lasting XP is not touched)
       const own = run.local ? climbXpView(run) : null;
       const gains = own ? own.gains : fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp);

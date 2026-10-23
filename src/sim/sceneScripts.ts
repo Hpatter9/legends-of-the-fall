@@ -11,6 +11,7 @@
 // further back, and the king (the player), who places everyone and then only watches.
 
 import type { Area } from './board';
+import { UNITS } from './units';
 
 /** The stage, in art px: a backdrop layer's size. The actors' feet stand on `FEET`. */
 export const STAGE_W = 576;
@@ -58,6 +59,7 @@ export type Act = (
   | { who: string; exit: Facing }
   | { who: string; face: Facing }
   | { who: string; pose: Pose }
+  | { who: string; hide: true }
 ) & { line?: number };
 
 /** `shake` and `flash` happen once as the shot begins (a flash is one pulse of at most half an alpha for about 120 ms; a
@@ -93,8 +95,9 @@ export interface Shot {
 }
 
 /** When a scene comes up. `starter`: a new save has just picked its first heroes. `calBoss`: a Calamity's boss floor of
- *  this map is about to be fought. */
-export type Moment = { kind: 'starter' } | { kind: 'calBoss'; map: number };
+ *  this map is about to be fought. `earned`: a hero earned in play (`contentHeroes.ts`) has just joined. `summon`: a pull
+ *  in the summoning hall (it plays every time, is never marked seen, and is made by `summonScene`, not listed). */
+export type Moment = { kind: 'starter' } | { kind: 'calBoss'; map: number } | { kind: 'earned'; hero: string } | { kind: 'summon' };
 
 export interface Scene {
   id: string;
@@ -104,6 +107,8 @@ export interface Scene {
   moment: Moment;
   cast: Record<string, CastMember>;
   shots: Shot[];
+  /** A reveal rather than a chapter: a few seconds, not twenty to forty. */
+  short?: true;
 }
 
 /** How long a line stays up: a beat to read it (seconds), so a scene plays through on its own; a tap moves on sooner. */
@@ -229,5 +234,61 @@ export const SCENES: Record<string, Scene> = {
   },
 };
 
+/* ------------------------------------------------------------ a hero earned in play */
+
+/** The ten heroes earned by a milestone (`contentHeroes.ts`): the land the reveal stands in, what the narrator says of the milestone, and the hero's first words. */
+const EARNED: Readonly<Record<string, { look: Area; why: string; says: string }>> = {
+  werewolf: { look: 'forest', why: 'The Beast Packs have gone quiet. One did not run away: it came to see who had done it.', says: 'Not bad, for a pair of two-legs.' },
+  reaper: { look: 'dungeon', why: 'The Undead Legion marched for a thousand years. Someone has to do the paperwork.', says: 'Your legion was due. I have merely come to collect.' },
+  demonSwordsman: { look: 'volcano', why: 'The Infernal Host was very sure of itself. It was one swordsman short of being right.', says: 'I have left my old employers. The pension was dreadful.' },
+  samuraiCommander: { look: 'highlands', why: 'The Night Parade has gone home. Its commander has not: he has had an idea.', says: 'A fine battle. I shall take the banner. You may keep the field.' },
+  juggernaut: { look: 'dungeon', why: 'The Forge went cold. One golem stayed warm, mostly out of habit.', says: 'Forge quiet now. I carry.' },
+  dreadPirate: { look: 'snow', why: 'Twenty floors up the tower, a ship’s crew came out of the stairwell.', says: 'Do not ask how we got a ship up the tower.' },
+  tyrant: { look: 'dungeon', why: 'Forty floors up, the lights were on. So was a throne.', says: 'You climbed. I admire that. Now do stop hovering.' },
+  timeWitch: { look: 'desert', why: 'The Calamity is over. Somebody noticed, and arrived a little late, and also a little early.', says: 'Do not worry. I have already seen how this ends.' },
+  dragoon: { look: 'volcano', why: 'A Calamity at ascension three. Something with scales noticed the heat and came to compare.', says: 'Hot enough. Shall we go and bother something bigger?' },
+  sage: { look: 'forest', why: 'Half the foes of the bestiary, met and noted. The notes were read by someone who disagrees.', says: 'Fascinating. You have the monsters in the wrong order.' },
+};
+
+/** The reveal of a hero earned in play: a silhouette comes on in the dark, then the hero steps into the light (one flash, once). A few seconds. */
+function earnedScene(kind: string, e: { look: Area; why: string; says: string }): Scene {
+  return {
+    id: `earned:${kind}`,
+    title: `${UNITS[kind].name} joins`,
+    blurb: 'A hero earned in play, not pulled.',
+    moment: { kind: 'earned', hero: kind },
+    short: true,
+    cast: {
+      figure: { role: `unit:${kind}`, x: 330, facing: 'left', hidden: true, shade: true },
+      hero: { role: `unit:${kind}`, x: 330, facing: 'left', hidden: true },
+    },
+    shots: [
+      { look: e.look, cam: wide(300, 205), to: wide(315, 208), fx: ['fadeIn', 'darken'], caption: 'A new hero', acts: [{ who: 'figure', enter: 330, from: 520 }], lines: [tell(e.why)] },
+      { cam: close('hero', 1.5), acts: [{ who: 'figure', hide: true }, { who: 'hero', enter: 330, from: 330 }], fx: ['flash', 'glow'], cue: 'eliteSting', lines: [say('hero', e.says), tell('{hero} joins you.')] },
+    ],
+  };
+}
+
+/** The summoning cinematic, for the hero a pull brought (the new one first): the circle answers in the dark, a flash, and the hero stands in it. About three seconds; a tap ends it (`ScenePlayer.play`'s `quick`). */
+export function summonScene(kind: string, name: string): Scene {
+  return {
+    id: 'summon',
+    title: 'The Summoning',
+    blurb: 'The circle answers.',
+    moment: { kind: 'summon' },
+    short: true,
+    cast: {
+      figure: { role: `unit:${kind}`, x: 288, facing: 'right', hidden: true, shade: true },
+      hero: { role: `unit:${kind}`, x: 288, facing: 'right', hidden: true },
+    },
+    shots: [
+      { look: 'dungeon', cam: wide(288, 205), to: wide(288, 210), fx: ['darken', 'glow'], caption: 'The circle answers', acts: [{ who: 'figure', enter: 288, from: 288 }], hold: 1.3 },
+      { cam: close('hero', 1.5), acts: [{ who: 'figure', hide: true }, { who: 'hero', enter: 288, from: 288 }], fx: ['flash', 'glow'], cue: 'eliteSting', caption: name, hold: 1.5 },
+    ],
+  };
+}
+
+for (const [kind, e] of Object.entries(EARNED)) SCENES[`earned:${kind}`] = earnedScene(kind, e);
+
 /** Every scene in the order the Scenes list shows them. */
-export const SCENE_ORDER: readonly string[] = ['opening', 'gorvak'];
+export const SCENE_ORDER: readonly string[] = ['opening', 'gorvak', ...Object.keys(EARNED).map((k) => `earned:${k}`)];

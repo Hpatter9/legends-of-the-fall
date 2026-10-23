@@ -2,10 +2,11 @@
 // new look and the hero's own passive), and the button that takes the next one. Reads and changes the meta only through
 // `awaken.ts`. `playAwakenShow` is the one-shot burst on the hero's picture when a step is taken.
 
-import { AWAKEN_COSTS, AWAKEN_MULT, AWAKEN_SHARDS, MAX_AWAKEN, PASSIVES, PASSIVE_STRENGTH, awaken, awakenPlan, awakenedOf } from './sim/awaken';
+import { AWAKEN_COSTS, AWAKEN_MULT, AWAKEN_SHARDS, MAX_AWAKEN, PASSIVES, PASSIVE_STRENGTH, awakenPlan, awakenedOf } from './sim/awaken';
 import { ABILITIES } from './sim/equipBases';
 import { describeAbility } from './sim/equipment';
-import { MAX_RANK, rankOf, saveMeta, type Meta } from './sim/meta';
+import { MAX_RANK, takenRank, type Meta } from './sim/meta';
+import { openRankUp, type Taken } from './rankUpView';
 import { isRecoloured } from './render/awakenLook';
 import { play } from './render/sound';
 
@@ -21,9 +22,9 @@ const ROMAN = ['', 'I', 'II'];
 export const gems = (steps: number): string => '◆'.repeat(steps) + '◇'.repeat(MAX_AWAKEN - steps);
 
 /** A one-shot burst on a picture: a ring, a flash and the word "Awakened", gone when it ends (still, with reduced motion). */
-export function playAwakenShow(pic: HTMLElement, step: number): void {
+export function playAwakenShow(pic: HTMLElement, step: number, label?: string): void {
   const show = el('div', `awakeShow s${step}`);
-  show.append(el('i', 'ring'), el('i', 'ring r2'), el('b', '', step >= MAX_AWAKEN ? 'Fully awakened' : 'Awakened'));
+  show.append(el('i', 'ring'), el('i', 'ring r2'), el('b', '', label ?? (step >= MAX_AWAKEN ? 'Fully awakened' : 'Awakened')));
   pic.append(show);
   show.addEventListener('animationend', (e) => {
     if ((e.target as HTMLElement).tagName === 'B') show.remove();
@@ -33,13 +34,13 @@ export function playAwakenShow(pic: HTMLElement, step: number): void {
 }
 
 /** The panel for a hero kind. `changed` is told after a step is taken (so the sheet can draw again, with the show). */
-export function drawAwaken(meta: Meta, kind: string, changed: (step: number) => void): HTMLElement {
+export function drawAwaken(meta: Meta, kind: string, changed: (taken: Taken) => void): HTMLElement {
   const panel = el('div', 'awPanel');
   const done = awakenedOf(meta, kind);
   const plan = awakenPlan(meta, kind);
   const passive = PASSIVES[kind];
   panel.append(el('h4', '', `Awakening  ${gems(done)}`));
-  if (rankOf(meta, kind) < MAX_RANK) panel.append(el('p', 'awNote', `Awakening opens at the top rank (${MAX_RANK} stars). Further shards then raise the hero twice more.`));
+  if (takenRank(meta, kind) < MAX_RANK) panel.append(el('p', 'awNote', `Awakening opens at the top rank (${MAX_RANK} stars). Further shards then raise the hero twice more.`));
   for (let step = 1; step <= MAX_AWAKEN; step++) {
     const row = el('div', `awStep${step <= done ? ' got' : step === done + 1 ? ' next' : ''}`);
     const head = el('div', 'awHead');
@@ -62,12 +63,8 @@ export function drawAwaken(meta: Meta, kind: string, changed: (step: number) => 
     const go = el('button', 'primary', plan.can ? `Awaken · uses ${plan.cost} shards` : `${plan.have} / ${plan.need} shards`);
     go.type = 'button';
     go.disabled = !plan.can;
-    go.addEventListener('click', () => {
-      const step = awaken(meta, kind);
-      if (!step) return;
-      saveMeta(meta);
-      changed(step);
-    });
+    // (the card shows the look and the stats before and after; the step is taken there)
+    go.addEventListener('click', () => openRankUp(meta, kind, changed));
     panel.append(bar, go);
   } else panel.append(el('small', 'awNote', 'Fully awakened. Repeat pulls of this hero pay crowns once its shards have nothing left to buy.'));
   return panel;
