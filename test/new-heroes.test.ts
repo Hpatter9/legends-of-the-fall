@@ -35,7 +35,8 @@ test('the seven new heroes are registered with kits, rarities and sensible scale
     assert.equal(d.side, 'hero');
     assert.ok(KITS[id].skill.name && KITS[id].passive.name, id);
     const fig = (layout as Record<string, { figure: number }>)[d.sheet].figure * d.scale;
-    assert.ok(fig > 40 && fig < 52, `${id} ${fig}`);
+    // (heroes stand in one of three height bands: small 42, medium 50, large 60; see docs/notes/hero-art.md)
+    assert.ok([42, 50, 60].some((b) => Math.abs(fig - b) <= 4), `${id} ${fig}`);
   }
 });
 

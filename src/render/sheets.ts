@@ -84,44 +84,26 @@ import golemIron from '../art/units/golem_iron.png';
 import golemMagma from '../art/units/golem_magma.png';
 import golemSapphire from '../art/units/golem_sapphire.png';
 import golemForge from '../art/units/golem_forge.png';
-import pcOuzo1 from '../art/units/pc_ouzo_1.png';
-import pcOuzo2 from '../art/units/pc_ouzo_2.png';
-import pcOuzo3 from '../art/units/pc_ouzo_3.png';
-import pcLey1 from '../art/units/pc_ley_1.png';
-import pcLey2 from '../art/units/pc_ley_2.png';
-import pcLey3 from '../art/units/pc_ley_3.png';
-import pcLinail1 from '../art/units/pc_linail_1.png';
-import pcLinail2 from '../art/units/pc_linail_2.png';
-import pcLinail3 from '../art/units/pc_linail_3.png';
-import pcHex1 from '../art/units/pc_hex_1.png';
-import pcHex2 from '../art/units/pc_hex_2.png';
-import pcHex3 from '../art/units/pc_hex_3.png';
-import pcOratio1 from '../art/units/pc_oratio_1.png';
-import pcOratio2 from '../art/units/pc_oratio_2.png';
-import pcOratio3 from '../art/units/pc_oratio_3.png';
-import pcWyvera1 from '../art/units/pc_wyvera_1.png';
-import pcWyvera2 from '../art/units/pc_wyvera_2.png';
-import pcWyvera3 from '../art/units/pc_wyvera_3.png';
-import pcPrime1 from '../art/units/pc_prime_1.png';
-import pcPrime2 from '../art/units/pc_prime_2.png';
-import pcPrime3 from '../art/units/pc_prime_3.png';
-import pcGlenys1 from '../art/units/pc_glenys_1.png';
-import pcGlenys2 from '../art/units/pc_glenys_2.png';
-import pcGlenys3 from '../art/units/pc_glenys_3.png';
 import robotDestroyer from '../art/units/robot_destroyer.png';
 import robotInfantry from '../art/units/robot_infantry.png';
 import robotSwordsman from '../art/units/robot_swordsman.png';
-import pirateLeader from '../art/units/pirate_leader.png';
-import pirateZombie from '../art/units/pirate_zombie.png';
-import squidman from '../art/units/squidman.png';
-import horde2 from '../art/units/horde_2.png';
-import hkTyrant from '../art/units/hk_tyrant.png';
-import hkJuggernaut from '../art/units/hk_juggernaut.png';
 import hkGhost from '../art/units/hk_ghost.png';
-import hkMummy from '../art/units/hk_mummy.png';
-import hkZombie from '../art/units/hk_zombie.png';
-import hkZombieBare from '../art/units/hk_zombie_bare.png';
-import hkZombieBrute from '../art/units/hk_zombie_brute.png';
+import heroMercenary from '../art/units/hero_mercenary.png';
+import heroWolfBard from '../art/units/hero_wolf_bard.png';
+import heroBeastmaster from '../art/units/hero_beastmaster.png';
+import heroTimeWitch from '../art/units/hero_time_witch.png';
+import heroPriestess from '../art/units/hero_priestess.png';
+import heroDragoon from '../art/units/hero_dragoon.png';
+import heroSage from '../art/units/hero_sage.png';
+import heroDemonSwordsman from '../art/units/hero_demon_swordsman.png';
+import heroBuccaneer from '../art/units/hero_buccaneer.png';
+import heroDreadPirate from '../art/units/hero_dread_pirate.png';
+import heroKrakenMate from '../art/units/hero_kraken_mate.png';
+import heroLancer from '../art/units/hero_lancer.png';
+import heroMummy from '../art/units/hero_mummy.png';
+import heroJuggernaut from '../art/units/hero_juggernaut.png';
+import heroTyrant from '../art/units/hero_tyrant.png';
+import heroShambler from '../art/units/hero_shambler.png';
 
 export type Anim = 'idle' | 'walk' | 'attack' | 'hurt' | 'dead';
 
@@ -217,44 +199,26 @@ const URLS: Record<string, string> = {
   cls_treant: clsTreant,
   cls_treant_2: clsTreant2,
   cls_treant_3: clsTreant3,
-  pc_ouzo_1: pcOuzo1,
-  pc_ouzo_2: pcOuzo2,
-  pc_ouzo_3: pcOuzo3,
-  pc_ley_1: pcLey1,
-  pc_ley_2: pcLey2,
-  pc_ley_3: pcLey3,
-  pc_linail_1: pcLinail1,
-  pc_linail_2: pcLinail2,
-  pc_linail_3: pcLinail3,
-  pc_hex_1: pcHex1,
-  pc_hex_2: pcHex2,
-  pc_hex_3: pcHex3,
-  pc_oratio_1: pcOratio1,
-  pc_oratio_2: pcOratio2,
-  pc_oratio_3: pcOratio3,
-  pc_wyvera_1: pcWyvera1,
-  pc_wyvera_2: pcWyvera2,
-  pc_wyvera_3: pcWyvera3,
-  pc_prime_1: pcPrime1,
-  pc_prime_2: pcPrime2,
-  pc_prime_3: pcPrime3,
-  pc_glenys_1: pcGlenys1,
-  pc_glenys_2: pcGlenys2,
-  pc_glenys_3: pcGlenys3,
   robot_destroyer: robotDestroyer,
   robot_infantry: robotInfantry,
   robot_swordsman: robotSwordsman,
-  pirate_leader: pirateLeader,
-  pirate_zombie: pirateZombie,
-  squidman: squidman,
-  horde_2: horde2,
-  hk_tyrant: hkTyrant,
-  hk_juggernaut: hkJuggernaut,
   hk_ghost: hkGhost,
-  hk_mummy: hkMummy,
-  hk_zombie: hkZombie,
-  hk_zombie_bare: hkZombieBare,
-  hk_zombie_brute: hkZombieBrute,
+  hero_mercenary: heroMercenary,
+  hero_wolf_bard: heroWolfBard,
+  hero_beastmaster: heroBeastmaster,
+  hero_time_witch: heroTimeWitch,
+  hero_priestess: heroPriestess,
+  hero_dragoon: heroDragoon,
+  hero_sage: heroSage,
+  hero_demon_swordsman: heroDemonSwordsman,
+  hero_buccaneer: heroBuccaneer,
+  hero_dread_pirate: heroDreadPirate,
+  hero_kraken_mate: heroKrakenMate,
+  hero_lancer: heroLancer,
+  hero_mummy: heroMummy,
+  hero_juggernaut: heroJuggernaut,
+  hero_tyrant: heroTyrant,
+  hero_shambler: heroShambler,
 };
 
 const LAYOUT = layout as Record<string, Layout>;

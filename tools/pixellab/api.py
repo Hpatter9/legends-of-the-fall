@@ -1,5 +1,5 @@
 # Tiny PixelLab helpers: style references from the game's Craftpix sheets, job submit (job id saved first) and poll.
-import base64,io,json,os,subprocess,time,urllib.request
+import base64,io,json,os,subprocess,time,urllib.request,urllib.error
 from PIL import Image
 API='https://api.pixellab.ai/v2'
 def b64(im):
@@ -11,7 +11,12 @@ def ref(sheet,row,canvas):
     c=Image.new('RGBA',(canvas,canvas));c.paste(f,((canvas-f.width)//2,canvas-f.height));return c
 def post(path,body,save):
     req=urllib.request.Request(API+path,json.dumps(body).encode(),{'Content-Type':'application/json'})
-    r=json.load(urllib.request.urlopen(req,timeout=120));open(save,'w').write(json.dumps(r));return r
+    for wait in(5,15,30,60,120,240,None):   # the service caps concurrent jobs (HTTP 429): wait and try again
+        try:r=json.load(urllib.request.urlopen(req,timeout=120));break
+        except urllib.error.HTTPError as e:
+            if e.code!=429 or wait is None:raise
+            time.sleep(wait)
+    open(save,'w').write(json.dumps(r));return r
 def poll(job,timeout=900):
     t=time.time()
     while time.time()-t<timeout:
