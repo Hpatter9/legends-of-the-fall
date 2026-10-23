@@ -98,7 +98,7 @@ function openFoe(root: HTMLElement, m: Meta, e: FoeEntry): void {
     box.append(el('p', 'cxLore', 'A shape in the dark. Meet it in battle and it is yours to read.'));
   } else {
     box.append(el('p', 'cxLore', FOE_LORE[e.id]));
-    stat(box, [['HP', String(def.hp)], ['Attack', String(def.atk)], ['Defence', String(def.def)], ['Range', String(def.range)], ['Walk', paceOf(def.moveMs)], ['Blows', paceOf(def.atkMs * 0.8)]]);
+    stat(box, [['HP', String(def.hp)], ['Attack', String(def.atk)], ['Defence', String(def.def)], ['Range', String(def.range)], ['Walk', paceOf(def.moveMs)], ['Jump', def.flies ? 'Flies' : String(def.jump)], ['Blows', paceOf(def.atkMs * 0.8)]]);
     box.append(el('p', 'hint', 'Base stats: foes grow stronger the deeper you go.'));
     kitLines(box, KITS[e.defs[0]]);
     section(box, 'Weaknesses and tips', tipsOf(def, KITS[e.defs[0]]));
@@ -124,7 +124,7 @@ function openHero(root: HTMLElement, m: Meta, kind: string): void {
     box.append(el('p', 'cxLore locked', `🔒 Their story is locked. ${lockInfo(m, kind)!.line}.`));
   } else {
     box.append(el('p', 'cxLore', HERO_STORY[kind]));
-    stat(box, [['HP', String(def.hp)], ['Attack', String(def.atk)], ['Defence', String(def.def)], ['Range', String(def.range)], ['Walk', paceOf(def.moveMs)], ['Blows', paceOf(def.atkMs * 0.8)]]);
+    stat(box, [['HP', String(def.hp)], ['Attack', String(def.atk)], ['Defence', String(def.def)], ['Range', String(def.range)], ['Walk', paceOf(def.moveMs)], ['Jump', def.flies ? 'Flies' : String(def.jump)], ['Blows', paceOf(def.atkMs * 0.8)]]);
     kitLines(box, KITS[kind]);
   }
   box.append(closeButton(close));

@@ -6,7 +6,7 @@
 //
 // Pure rules: no Pixi, no DOM. The renderer reads the battle and the events each tick returns.
 
-import { boardOk, D, DEPLOY_ROWS, GROUND_COST, LAVA_BURN, makeBoard, sightClear, standable, tileAt, type Area, type At, type Board } from './board';
+import { boardOk, CLIMB_COST, D, DEPLOY_ROWS, DROP_EXTRA, GROUND_COST, LAVA_BURN, makeBoard, sightClear, standable, tileAt, type Area, type At, type Board } from './board';
 import { cloneBoard } from './chain';
 import { twistBoard, type TwistFx } from './twists';
 import { firstStep, walkFrom } from './path';
@@ -151,7 +151,7 @@ export type HitSrc = 'blow' | 'skill' | 'dot';
 export type BattleEvent =
   | { kind: 'swing'; by: number; to: number }
   | { kind: 'shot'; by: number; to: number; shot: Shot; ms: number }
-  | { kind: 'hit'; by: number; to: number; dmg: number; heavy: boolean; splash: boolean; killed: boolean; src: HitSrc }
+  | { kind: 'hit'; by: number; to: number; dmg: number; heavy: boolean; splash: boolean; killed: boolean; src: HitSrc; high?: boolean }
   | { kind: 'skill'; by: number; name: string; ms: number }
   | { kind: 'dash'; by: number; from: At; to: At }
   | { kind: 'blink'; by: number; from: At; to: At }
@@ -284,23 +284,34 @@ export function wayTo(a: At, b: At): number {
   return dv > 0 ? 1 : 3;
 }
 
-/** A blow's multiplier from height and angle: +10% a step above (to three), and from behind x1.5, the side x1.25. */
+/** What each level of height is worth to a blow: +15% a level above the target, -15% a level below (to three either way). */
+export const HEIGHT_BLOW = 0.15;
+/** A defender on higher ground also guards a little: this much less damage per level above the attacker (to three). */
+export const HIGH_GUARD = 0.03;
+/** How many extra tiles of reach a shooter gets per level above its target (a hero's own `heightReach` replaces it). */
+export const HIGH_REACH = 0.9;
+
+/** A blow's multiplier from height and angle: +15% a level above (to three), and from behind x1.5, the side x1.25. */
 export function blowMult(hFrom: number, hTo: number, way: number, toFacing: number): number {
   const angle = way === toFacing ? 1.5 : (way + 2) % 4 === toFacing ? 1 : 1.25;
-  return angle * (1 + 0.1 * Math.max(-3, Math.min(3, hFrom - hTo)));
+  return angle * (1 + HEIGHT_BLOW * Math.max(-3, Math.min(3, hFrom - hTo)));
 }
 
-/** How far a shooter reaches: its range, and more from high ground. */
-export const shotReach = (range: number, hFrom: number, hTo: number, perStep = 0.7) => range + Math.floor(Math.max(0, hFrom - hTo) * perStep);
+/** What a defender's footing takes off a blow: 3% a level it stands above the attacker (to three). */
+export const guardMult = (hFrom: number, hTo: number): number => 1 - HIGH_GUARD * Math.max(0, Math.min(3, hTo - hFrom));
 
-/** Whether a fighter of kind `def` standing at `from` can strike a foe at `to`. */
+/** How far a shooter reaches: its range, and more from high ground. */
+export const shotReach = (range: number, hFrom: number, hTo: number, perStep = HIGH_REACH) => range + Math.floor(Math.max(0, hFrom - hTo) * perStep);
+
+/** Whether a fighter of kind `def` standing at `from` can strike a foe at `to`. A blade reaches up as far as the fighter
+ *  jumps, and down as far as it could drop. */
 export function canStrike(board: Board, def: UnitDef, from: At, to: At): boolean {
   const d = apart(from, to);
   if (d < 1) return false;
   const hf = tileAt(board, from.u, from.v)!.h;
   const ht = tileAt(board, to.u, to.v)!.h;
   if (def.shot) return d <= shotReach(def.range, hf, ht, def.heightReach) && sightClear(board, from, to);
-  return d <= def.range && Math.abs(hf - ht) <= def.jump;
+  return d <= def.range && ht - hf <= def.jump && hf - ht <= def.jump + DROP_EXTRA;
 }
 
 /** A fresh fight on the seed's board: the foes of `band` (a band's name in `FOE_BANDS`, or the foes' ids themselves) in their rows, no heroes placed yet. */
@@ -319,19 +330,27 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   if (stage.foes?.speed && stage.foes.speed !== 1) b.foeSpeed = stage.foes.speed;
   if (stage.relics) b.relics = stage.relics;
   if (stage.heal && stage.heal !== 1) b.heroHeal = stage.heal;
-  // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed
+  // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed; each takes the
+  // higher ground its row offers, and a shooter will take a perch in a row nearer the front for it
   const rng = new Rng(mixSeed(seed, 0xf0e5));
   (typeof band === 'string' ? FOE_BANDS[band] : band).forEach((id, n) => {
     const def = UNITS[id];
     const rows = def.shot ? [0, 1, 2] : [DEPLOY_ROWS - 1, DEPLOY_ROWS - 2, 0];
+    const spots: { u: number; v: number; score: number }[] = [];
     for (const v of rows) {
-      const free: number[] = [];
-      for (let u = 0; u < board.w; u++) if (standable(tileAt(board, u, v)) && !unitAt(b, u, v)) free.push(u);
-      if (!free.length) continue;
-      const boss = n === 0 ? stage.boss : undefined;
-      addUnit(b, id, rng.pick(free), v, { hp: (foes?.hp ?? 1) * (boss?.hp ?? 1), atk: (foes?.atk ?? 1) * (boss?.atk ?? 1), size: boss?.size, phase: boss?.phase, surge: boss?.surge, shield: boss?.shield });
-      break;
+      for (let u = 0; u < board.w; u++) {
+        const t = tileAt(board, u, v);
+        if (!standable(t) || unitAt(b, u, v)) continue;
+        // (a shooter weighs a level of height over a row; a fighter keeps to its front row, and takes its highest tile)
+        spots.push({ u, v, score: def.shot ? t.h * 1.3 + [3, 1.5, 0][v] : (rows.length - rows.indexOf(v)) * 10 + t.h });
+      }
+      if (!def.shot && spots.length) break;
     }
+    if (!spots.length) return;
+    const top = Math.max(...spots.map((x) => x.score));
+    const at = rng.pick(spots.filter((x) => x.score === top));
+    const boss = n === 0 ? stage.boss : undefined;
+    addUnit(b, id, at.u, at.v, { hp: (foes?.hp ?? 1) * (boss?.hp ?? 1), atk: (foes?.atk ?? 1) * (boss?.atk ?? 1), size: boss?.size, phase: boss?.phase, surge: boss?.surge, shield: boss?.shield });
   });
   if (tw?.ambush) ambush(b);
   return b;
@@ -449,7 +468,7 @@ export function strikeDef(b: Battle, me: Unit): UnitDef {
   const fog = def.shot ? b.twist?.fog ?? 0 : 0;
   const jump = b.twist?.jump ?? 0;
   if (!extra && !fog && !jump && !(reach && def.shot)) return def;
-  return { ...def, range: Math.max(1, def.range + extra - fog), ...(jump ? { jump: def.jump + jump } : {}), ...(reach && def.shot ? { heightReach: (def.heightReach ?? 0.7) + reach } : {}) };
+  return { ...def, range: Math.max(1, def.range + extra - fog), ...(jump ? { jump: def.jump + jump } : {}), ...(reach && def.shot ? { heightReach: (def.heightReach ?? HIGH_REACH) + reach } : {}) };
 }
 
 /** One tick of the fight. Returns what happened, for the renderer to show. */
@@ -544,11 +563,59 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
     to.step = undefined;
     to.swing = undefined;
   }
-  out.push({ kind: 'hit', by: by.id, to: to.id, dmg, heavy, splash, killed, src });
+  // (a blow struck from higher ground than its target's is tagged, for the page to mark)
+  const high = src === 'blow' && !splash && tileOf(b, by).h > tileOf(b, to).h;
+  out.push({ kind: 'hit', by: by.id, to: to.id, dmg, heavy, splash, killed, src, ...(high ? { high } : {}) });
   if (killed) {
     onKill(b, by, out);
     fxKill(b, by, to, out);
   }
+}
+
+/** What a level of height over the foe is worth to a fighter, in steps of walking: a shooter's blows and reach both grow with it. */
+const PERCH_SHOOTER = 1.6;
+const PERCH_MELEE = 1.2;
+/** The most extra walking a fighter does, past the nearest tile it could strike from, for the sake of better footing. */
+const PERCH_DETOUR = 4;
+/** What a shooter adds to a tile's cost for each brute that could reach it in two steps. */
+const MENACE_COST = 0.6;
+/** The most a fighter walks (cost) to step up to higher ground when it could already strike. */
+const PERCH_HOP = 3;
+
+/** What standing at height `h` is worth against a foe at `hf`, in steps of walking (the blow's bonus is felt to three levels either way). */
+const perchValue = (def: UnitDef, h: number, hf: number): number => (def.shot ? PERCH_SHOOTER : PERCH_MELEE) * Math.max(-3, Math.min(3, h - hf));
+
+/** The tile a fighter that could already strike `target` first steps to, to strike from higher ground: one a step or two
+ *  away that stands over where it is and still holds the target (a fighter never goes down, so it comes to rest). The tile's
+ *  index, or -1 to stay and strike. */
+function perchFor(b: Battle, me: Unit, def: UnitDef, target: Unit): number {
+  const board = b.board;
+  const here = tileOf(b, me).h;
+  // (a quick look first: nothing higher within two steps, nothing to do)
+  let higher = false;
+  for (let dv = -2; dv <= 2 && !higher; dv++)
+    for (let du = -2; du <= 2; du++) {
+      if (Math.abs(du) + Math.abs(dv) > 2) continue;
+      const t = tileAt(board, me.u + du, me.v + dv);
+      if (t && standable(t) && t.h > here) higher = true;
+    }
+  if (!higher) return -1;
+  const blocked = new Set<number>();
+  for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * board.w + x.u);
+  const walk = walkFrom(board, me, def.jump, blocked);
+  const ht = tileOf(b, target).h;
+  const now = perchValue(def, here, ht);
+  let goal = -1;
+  let best = 0;
+  for (let i = 0; i < walk.cost.length; i++) {
+    const cost = walk.cost[i];
+    if (cost === 0 || cost > PERCH_HOP || board.tiles[i].h <= here) continue;
+    const gain = perchValue(def, board.tiles[i].h, ht) - now - cost;
+    if (gain <= best || !canStrike(board, def, { u: i % board.w, v: Math.floor(i / board.w) }, target)) continue;
+    best = gain;
+    goal = i;
+  }
+  return goal >= 0 ? firstStep(walk, goal)! : -1;
 }
 
 function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
@@ -569,23 +636,34 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   }
   me.cast = undefined;
   if (tryCast(b, me, out)) return;
-  // strike the weakest foe in reach
+  // strike the weakest foe in reach (first stepping up to higher ground a step or two away, if it holds the target too)
   const inReach = foes.filter((f) => canStrike(b.board, def, me, f)).sort((x, y) => x.hp - y.hp || apart(me, x) - apart(me, y) || x.id - y.id);
-  if (inReach.length) return swing(b, me, inReach[0], rng, out);
+  if (inReach.length) {
+    const up = perchFor(b, me, def, inReach[0]);
+    return up >= 0 ? stepTo(b, me, up, out) : swing(b, me, inReach[0], rng, out);
+  }
   // else walk toward the nearest foe it can get a blow at
   const blocked = new Set<number>();
   for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * b.board.w + x.u);
   const walk = walkFrom(b.board, me, def.jump, blocked);
   const byDistance = [...foes].sort((x, y) => apart(me, x) - apart(me, y) || x.id - y.id);
+  const menace = def.shot ? foes.filter((x) => !defOf(x).shot && defOf(x).range <= 2) : [];
   for (const f of byDistance) {
+    const hf = tileOf(b, f).h;
+    // (the way costs steps; high ground over the foe takes off the cost of getting there, a shooter's tile under a brute's club adds to it)
+    const spots: number[] = [];
+    let nearest = Infinity;
+    for (let i = 0; i < walk.cost.length; i++) {
+      if (walk.cost[i] === Infinity || walk.cost[i] === 0 || !canStrike(b.board, def, { u: i % b.board.w, v: Math.floor(i / b.board.w) }, f)) continue;
+      spots.push(i);
+      nearest = Math.min(nearest, walk.cost[i]);
+    }
     let goal = -1;
     let best = Infinity;
-    for (let i = 0; i < walk.cost.length; i++) {
-      if (walk.cost[i] === Infinity || walk.cost[i] === 0) continue;
-      const at = { u: i % b.board.w, v: Math.floor(i / b.board.w) };
-      if (!canStrike(b.board, def, at, f)) continue;
-      // (cheapest first; high ground breaks ties)
-      const score = walk.cost[i] - b.board.tiles[i].h * 0.1;
+    for (const i of spots) {
+      if (walk.cost[i] > nearest + PERCH_DETOUR) continue;
+      let score = walk.cost[i] - perchValue(def, b.board.tiles[i].h, hf);
+      for (const m of menace) if (apart({ u: i % b.board.w, v: Math.floor(i / b.board.w) }, m) <= 2) score += MENACE_COST;
       if (score < best) {
         best = score;
         goal = i;
@@ -605,7 +683,7 @@ function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[]): voi
   const def = defOf(me);
   const way = wayTo(me, to);
   me.facing = way;
-  const mult = blowMult(tileOf(b, me).h, tileOf(b, to).h, way, to.facing);
+  const mult = blowMult(tileOf(b, me).h, tileOf(b, to).h, way, to.facing) * guardMult(tileOf(b, me).h, tileOf(b, to).h);
   const crit = rollCrit(b, me);
   const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - Math.max(0, defenceOf(to) - pierceOf(me))) * mult * crit * preyOf(me, to) * farOf(me, to) * finishOf(me, to) * rng.range(0.9, 1.1)));
   const quick = speedOf(b, me) * frenzyOf(b, me) * (1 + (me.eq?.atkSpeed ?? 0));
@@ -623,7 +701,7 @@ function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void {
   const from = tileOf(b, me);
   const to = tileOf(b, next);
   // (a sure-footed fighter climbs at no extra cost)
-  const cost = def.flies ? 1 : 1 + (sureFooted(me) ? 0 : Math.max(0, to.h - from.h)) + (to.ground ? GROUND_COST[to.ground] : 0);
+  const cost = def.flies ? 1 : 1 + (sureFooted(me) ? 0 : Math.max(0, to.h - from.h) * CLIMB_COST) + (to.ground ? GROUND_COST[to.ground] : 0);
   const ms = Math.round((def.moveMs * cost) / (speedOf(b, me) * (1 + (me.eq?.moveSpeed ?? 0)) * (me.side === 'hero' ? b.heroMove ?? 1 : 1) * (b.twist?.chill ?? 1)));
   me.step = { u: me.u, v: me.v, h: from.h, at: b.t, ms };
   me.facing = wayTo(me, next);

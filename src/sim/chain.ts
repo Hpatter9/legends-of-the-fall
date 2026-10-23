@@ -10,7 +10,7 @@
 // A new section goes on the side of the one before: straight on (its foes' side), or either flank, never back over the edge the
 // road came in by, and never on top of an earlier section. Its heroes' edge (its board's v = D - 1 row) lies against that side.
 
-import { CLIMB_MAX, D, DEPLOY_ROWS, DIRS, makeBoard, standable, TOP, W, tileAt, type Area, type Board, type Tile } from './board';
+import { boardOk, CLIMB_MAX, D, DEPLOY_ROWS, DIRS, makeBoard, RAMP, standable, TOP, W, tileAt, type Area, type Board, type Tile } from './board';
 import { walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
 import { footDims, turnDir, turnTile, unturnTile, type Rot } from './turn';
@@ -134,8 +134,8 @@ export function boardTileAt(s: Pick<Section, 'rot' | 'origin' | 'board'>, U: num
   return u >= 0 && v >= 0 && u < s.board.w && v < s.board.d ? [u, v] : null;
 }
 
-/** Ease the board's heights so no neighbours are more than `CLIMB_MAX` apart, never moving a pinned tile. */
-function easePinned(b: Board, pinned: ReadonlySet<number>): void {
+/** Ease the board's heights so no neighbours are more than `limit` apart, never moving a pinned tile. */
+function easePinned(b: Board, pinned: ReadonlySet<number>, limit = CLIMB_MAX): void {
   for (let pass = 0; pass < 12; pass++) {
     let moved = false;
     for (let v = 0; v < b.d; v++)
@@ -147,14 +147,37 @@ function easePinned(b: Board, pinned: ReadonlySet<number>): void {
           const a = b.tiles[i];
           const j = (v + dv) * b.w + u + du;
           const d = a.h - n.h;
-          if (Math.abs(d) <= CLIMB_MAX) continue;
+          if (Math.abs(d) <= limit) continue;
           // (the tile that gives way is the free one; of two free tiles, the higher is lowered)
           const lowerA = pinned.has(j) || (!pinned.has(i) && d > 0);
-          if (lowerA) a.h = n.h + Math.sign(d) * CLIMB_MAX;
-          else n.h = a.h - Math.sign(d) * CLIMB_MAX;
+          if (lowerA) a.h = n.h + Math.sign(d) * limit;
+          else n.h = a.h - Math.sign(d) * limit;
           moved = true;
         }
       }
+    if (!moved) break;
+  }
+}
+
+/** Smooth the board's border (the ring of its outer tiles) to no more than a ramp between neighbours, never moving a pinned tile, so a section laid against this one meets gentle ground on whichever side it joins. */
+function smoothRing(b: Board, pinned: ReadonlySet<number>): void {
+  const ring: number[] = [];
+  for (let u = 0; u < W; u++) ring.push(u);
+  for (let v = 1; v < D; v++) ring.push(v * W + W - 1);
+  for (let u = W - 2; u >= 0; u--) ring.push((D - 1) * W + u);
+  for (let v = D - 2; v >= 1; v--) ring.push(v * W);
+  for (let pass = 0; pass < 20; pass++) {
+    let moved = false;
+    for (let k = 0; k < ring.length; k++) {
+      const i = ring[k];
+      const j = ring[(k + 1) % ring.length];
+      const d = b.tiles[i].h - b.tiles[j].h;
+      if (Math.abs(d) <= RAMP) continue;
+      const lowerI = pinned.has(j) || (!pinned.has(i) && d > 0);
+      if (lowerI) b.tiles[i].h = b.tiles[j].h + Math.sign(d) * RAMP;
+      else b.tiles[j].h = b.tiles[i].h - Math.sign(d) * RAMP;
+      moved = true;
+    }
     if (!moved) break;
   }
 }
@@ -188,23 +211,26 @@ export function joinBoard(prev: Section, next: Section): void {
     delete t.ground;
     const p = meets.get(u);
     if (!p) continue;
-    // (a tile that meets another stands within `JOIN_STEP` of it, and within a climb of the edge tile beside it, which the first clamp can leave out of reach)
+    // (a tile that meets another stands within `JOIN_STEP` of it, and within a ramp of the edge tile beside it, which the first clamp can leave out of reach)
     const meet = prev.board.tiles[p[1] * prev.board.w + p[0]].h;
     let lo = Math.max(0, meet - JOIN_STEP);
     let hi = Math.min(TOP, meet + JOIN_STEP);
     if (last >= 0) {
-      lo = Math.max(lo, last - CLIMB_MAX);
-      hi = Math.min(hi, last + CLIMB_MAX);
+      lo = Math.max(lo, last - RAMP);
+      hi = Math.min(hi, last + RAMP);
     }
     h[u] = last = Math.min(hi, Math.max(lo, t.h));
     if (first < 0) first = u;
     end = u;
   }
   // (the tiles of the edge that meet nothing follow their neighbours' heights, outwards from the ones that do)
-  for (let u = end + 1; u < W; u++) h[u] = Math.min(h[u - 1] + CLIMB_MAX, Math.max(h[u - 1] - CLIMB_MAX, b.tiles[(D - 1) * W + u].h));
-  for (let u = first - 1; u >= 0; u--) h[u] = Math.min(h[u + 1] + CLIMB_MAX, Math.max(h[u + 1] - CLIMB_MAX, b.tiles[(D - 1) * W + u].h));
+  for (let u = end + 1; u < W; u++) h[u] = Math.min(h[u - 1] + RAMP, Math.max(h[u - 1] - RAMP, b.tiles[(D - 1) * W + u].h));
+  for (let u = first - 1; u >= 0; u--) h[u] = Math.min(h[u + 1] + RAMP, Math.max(h[u + 1] - RAMP, b.tiles[(D - 1) * W + u].h));
   if (first >= 0) for (let u = 0; u < W; u++) b.tiles[(D - 1) * W + u].h = h[u];
+  smoothRing(b, new Set(edge));
   easePinned(b, new Set(edge));
+  // (the edge's new heights can cut a staircase off: then the land inside is eased to ramps instead, platforms and all)
+  if (!boardOk(b)) easePinned(b, new Set(edge), RAMP);
 }
 
 /** The road of `waves` sections for a run: wave n's board is `makeBoard(boardSeed(n), area)`, laid on the road and joined to the one before. */

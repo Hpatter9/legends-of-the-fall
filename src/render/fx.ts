@@ -327,7 +327,7 @@ export class Fx {
         } else this.anim(impact, hx, hy, 0.9 * spark, 45);
         if (this.particles.rate(0.7)) this.puffAt(to.x, to.y - to.tall * 0.3, target.side === 'hero' ? 'white' : 'blood', 0.8 + spark * 0.2);
         this.flesh(target, hx, hy, e.dmg / target.maxHp);
-        this.number(e.dmg, to.x, to.y - to.tall - 10, e.heavy, target.side === 'hero');
+        this.number(e.dmg, to.x, to.y - to.tall - 10, e.heavy, target.side === 'hero', e.high);
         this.trauma = Math.min(1, this.trauma + traumaFor(e.dmg / target.maxHp, e.killed) * 0.5);
         // (the struck is knocked a little away along the blow, and a crit or a killing blow stops the fight for a moment)
         const share = e.dmg / target.maxHp;
@@ -977,7 +977,7 @@ export class Fx {
   /** The damage numbers still rising over each spot, so a new one over the same fighter starts above the last, not on it. */
   private stacks = new Map<string, { at: number; n: number }>();
 
-  private number(n: number, x: number, y: number, heavy: boolean, onHero: boolean): void {
+  private number(n: number, x: number, y: number, heavy: boolean, onHero: boolean, high = false): void {
     if (!settings().numbers) return;
     // (numbers over the same fighter within half a second step up a row each, and to alternate sides, so they never sit on each other)
     const key = `${Math.round(x / 16)},${Math.round(y / 16)}`;
@@ -992,6 +992,14 @@ export class Fx {
       resolution: 3,
     });
     txt.anchor.set(0.5, 1);
+    // (a blow from higher ground carries a small green arrow up beside its number)
+    if (high) {
+      const sz = heavy ? 5 : 4;
+      const arrow = new Graphics();
+      arrow.poly([0, -sz * 2, sz, 0, -sz, 0]).fill(0x9be37a).stroke({ color: 0x1a1008, width: 1 });
+      arrow.position.set(txt.width / 2 + sz + 2, -txt.height / 2 + sz);
+      txt.addChild(arrow);
+    }
     txt.position.set(Math.round(x + (k % 2 ? 9 : -9) * Math.sign(k)), Math.round(y - k * 13));
     this.root.addChild(txt);
     let t = 0;

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
-import { blowMult, canPlace, canStrike, fight, place, playOut, shotReach, startBattle, stepBattle, TIME_LIMIT_MS, unplace } from '../src/sim/battle';
+import { blowMult, canPlace, canStrike, fight, guardMult, place, playOut, shotReach, startBattle, stepBattle, TIME_LIMIT_MS, unplace } from '../src/sim/battle';
 import { UNITS } from '../src/sim/units';
 import { readyBattle } from './helpers';
 
@@ -80,11 +80,22 @@ test('two fighters never stand on one tile', () => {
 
 test('high ground and blows from behind hit harder', () => {
   assert.equal(blowMult(0, 0, 1, 3), 1, 'level, from the front');
-  assert.ok(Math.abs(blowMult(2, 0, 1, 3) - 1.2) < 1e-9, 'two steps above');
-  assert.ok(Math.abs(blowMult(0, 2, 1, 3) - 0.8) < 1e-9, 'two steps below');
+  assert.ok(Math.abs(blowMult(2, 0, 1, 3) - 1.3) < 1e-9, 'two steps above');
+  assert.ok(Math.abs(blowMult(0, 2, 1, 3) - 0.7) < 1e-9, 'two steps below');
   assert.ok(Math.abs(blowMult(0, 0, 1, 1) - 1.5) < 1e-9, 'from behind');
   assert.ok(Math.abs(blowMult(0, 0, 0, 1) - 1.25) < 1e-9, 'from the side');
-  assert.ok(Math.abs(blowMult(5, 0, 1, 3) - 1.3) < 1e-9, 'height counts to three steps');
+  assert.ok(Math.abs(blowMult(5, 0, 1, 3) - 1.45) < 1e-9, 'height counts to three steps');
+});
+
+test('the height bonus at each difference from -3 to +3, and the guard of the high ground', () => {
+  const want = [0.55, 0.7, 0.85, 1, 1.15, 1.3, 1.45];
+  for (let d = -3; d <= 3; d++) assert.ok(Math.abs(blowMult(d + 3, 3, 1, 3) - want[d + 3]) < 1e-9, `height ${d}`);
+  assert.ok(Math.abs(blowMult(9, 0, 1, 3) - 1.45) < 1e-9, 'capped above');
+  assert.ok(Math.abs(blowMult(0, 9, 1, 3) - 0.55) < 1e-9, 'capped below');
+  assert.equal(guardMult(0, 0), 1);
+  assert.equal(guardMult(2, 0), 1, 'no guard from standing lower');
+  assert.ok(Math.abs(guardMult(0, 2) - 0.94) < 1e-9);
+  assert.ok(Math.abs(guardMult(0, 9) - 0.91) < 1e-9, 'the guard stops at three levels');
 });
 
 test('a shooter reaches further from high ground; a sword cannot reach up a cliff', () => {

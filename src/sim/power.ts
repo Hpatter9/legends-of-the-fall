@@ -26,7 +26,7 @@ export function powerOf(kind: string, boost: Boost = {}): number {
   const tough = hp * (1 + (def.def + (eq?.def ?? 0)) / DEF_REF) / (1 - Math.min(0.6, eq?.dodge ?? 0)) * (1 + 30 * (eq?.regen ?? 0)) * (1 + 0.1 * (eq?.resist ?? 0));
   const harm =
     def.atk * (boost.atk ?? 1) * (1 + (eq?.atk ?? 0)) * (1000 / def.atkMs) * (1 + (eq?.atkSpeed ?? 0)) * (1 + (eq?.crit ?? 0)) * (def.splash ? 1.25 : 1) * (1 + 0.1 * (def.range - 1 + (eq?.range ?? 0)));
-  const extra = (1 + 0.5 * (eq?.charge ?? 0)) * (1 + 0.15 * (eq?.moveSpeed ?? 0)) * (1 + 0.05 * (eq?.abilities.length ?? 0)) * (1 + 0.03 * Object.keys(eq?.tal ?? {}).length);
+  const extra = (1 + 0.5 * (eq?.charge ?? 0)) * (1 + 0.15 * (eq?.moveSpeed ?? 0)) * (1 + 0.05 * (eq?.abilities.length ?? 0)) * (1 + 0.03 * Object.keys(eq?.tal ?? {}).length) * (1 + 0.02 * (Math.min(def.jump, 4) - 2));
   return Math.round(Math.sqrt(tough * harm) * extra * POWER_SCALE);
 }
 
@@ -40,6 +40,8 @@ export const kindPower = (m: Meta, kind: string): number => {
 export const blowsPerSecond = (kind: string, equip?: { atkSpeed: number }): number => (UNITS[kind] ? (1000 / UNITS[kind].atkMs) * (1 + (equip?.atkSpeed ?? 0)) : 0);
 /** How many level tiles a hero of `kind` walks a second, with its equipment's and talents' move speed. */
 export const tilesPerSecond = (kind: string, equip?: { moveSpeed: number }): number => (UNITS[kind] ? (1000 / UNITS[kind].moveMs) * (1 + (equip?.moveSpeed ?? 0)) : 0);
+/** A fighter's jump for the page: how many levels it climbs in a step ("Flies" for a flier, which climbs any). */
+export const jumpText = (kind: string): string => (UNITS[kind] ? (UNITS[kind].flies ? 'Flies' : String(UNITS[kind].jump)) : '');
 /** A rate for the page, to two figures: "0.91/s", "1.2/s". */
 export const rateText = (r: number): string => `${r >= 1 ? r.toFixed(1) : r.toFixed(2)}/s`;
 
