@@ -30,21 +30,18 @@ The owner: "For the calamity map, I should be able to go to all the spots on the
   portal and easing onto it.
 - Summary and battle labels say "spots cleared", not floors.
 
-## Levels (`levels.ts`, `climb.ts`)
-- **In-run cap 20 to 30** (`RUN_LEVEL_CAP`; `heroLevel` uses `runLevelOf`). The curve is the plain one to level 20; each level past it costs `RUN_LATE_XP` = 3 times what the plain curve asks (a lasting level costs 4 times), so
-  a thorough run reaches the low twenties and a perfect one more. `RUN_MAX_LEVEL` (20) still sets where the lasting curve and the run curve turn. Hires still join at 70% of the roster's mean XP. In-run level 15 unlocks a hero's
-  ultimate, which now happens mid-run. Run XP rates are unchanged (`CLIMB_XP` 4).
-- **The spire shares these rules**: its heroes may now pass level 20 too. It rarely gets there (see below); tower balance is as it was within noise.
+## Levels
+Not redone here: the in-run cap 30 (`RUN_MAX_LEVEL`, `LATE_LEVEL` 20 for lasting levels) and the Calamity's own XP rate (`CALAMITY_XP`) came from the balance pass (`balance-pass.md`). The one change: **`CALAMITY_XP` 15 to 9**, because free
+exploration is many more fights (about 80 spots in a run against about 30 nodes) and the starter would otherwise end a full clear near level 28 to 30.
 
 ## The bot and the balance (`tools/autoplay.ts`, `tools/tower-balance.ts`)
 - **Policy** (`explore`): clear every spot it can reach, the best-wanted first (fires and shops when hurt, recruits while there is room, a hoard always, a mini-boss while the squad is hale); take a hidden spot as it shows
-  (a hoard always, a mini-boss above 70% health); look in again at a cleared shop with 70 gold or more; **only then the boss**. So it clears each map in full, the risk-free "thorough" player. (`explore.limit` caps the spots
-  cleared per map for tuning.)
-- **Re-tune** to hold the share felling each map's boss (300 runs, `npm run balance -- --no-tables --calamity --attempts 300`):
-  - before (the one-climb rules): 86 / 81 / 63 / 45 / 35 / 18 %; the starter's level after each boss, median 5 / 7 / 9 / 13 / 15 / 18, max 7 / 13 / 18 / 20 / 20 / 20.
-  - with free exploration and nothing else changed: 99% on every map (a full clear in nearly every run).
-  - re-tuned: `CAL_SCALE` start 0.2 to 0.32, growth 0.06 to 0.07, step 0.3 to 0.28 and the bosses' hp (2060, 3100, 3030, 4150, 3490, 2100; attack to match): 
-  - **after: 87 / 83 / 64 / 44 / 32 / 17 %** (300 runs; the target 85 / 81 / 63 / 44 / 35 / 15, every map within 3); the starter's level after each boss, median **6 / 10 / 14 / 18 / 20 / 23**, max **10 / 19 / 22 / 26 / 30 / 30**
-    (the median is of the runs that felled it; a full clear ends at about 23). The greedy bot clears about 80 spots in a run (median).
-  - the spire (`--tower`, 30 climbs): 12 floors median, 13.2 mean, bosses 7 / 3 / 3 %, the same before and after.
-  - XP was not slowed; the foes and bosses were made harder to answer the extra fights, levels and ultimates.
+  (a hoard always, a mini-boss above 70% health); look in again at a cleared shop with 70 gold or more; **only then the boss**. So it clears each map in full, the thorough player. (`explore.limit` caps the spots cleared per map.)
+- **Tables** (300 runs, `npm run balance -- --no-tables --calamity --attempts 300`; share felling each map's boss / the starter's median level after each boss):
+  - before (the balance pass, one climb): 84 / 83 / 65 / 45 / 35 / 16 %; levels 12 / 15 / 20 / 21 / 23 / 25.
+  - free exploration, nothing re-tuned: 97 % on every map; levels 11 / 17 / 20 / 23 / 25 / 28 (median at the end 28).
+  - **re-tuned: 85 / 83 / 61 / 43 / 35 / 15 %** (target 85 / 81 / 63 / 44 / 35 / 15); starter's level after each boss, median **10 / 16 / 20 / 22 / 24 / 27**; at the end, median 22, mean 19.6 over all runs; cleared whole
+    (46 runs) median 27, mean 24.9, max 30.
+  - re-tune: `CAL_SCALE` start 0.265 to 0.40, growth 0.06 to 0.05, step 0.33 to 0.43; `CALAMITY_XP` 15 to 9; boss hp and attack 2400/66, 3708/80, 2964/70, 3575/60, 2623/50, 1398/31 (maps 3 and 6 down, 1, 2 and 5 up).
+  - the full-clear starter's median is above the 22 to 25 asked for (27; its mean is 25): a clear is a selection of the strongest runs. Lowering `CALAMITY_XP` further moved the shares more than the level.
+- The spire (`--tower`) is unchanged.
