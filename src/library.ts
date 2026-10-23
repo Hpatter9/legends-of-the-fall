@@ -23,33 +23,33 @@ async function loadArt(): Promise<Record<string, HTMLImageElement>> {
 }
 
 const CSS = `
-.lbWrap { position: absolute; inset: 0; overflow: hidden; background: #140c10; }
+.lbWrap { position: absolute; inset: 0; overflow: hidden; background: var(--s1); }
 .lbRoom { position: absolute; top: 0; image-rendering: pixelated; }
 .lbPanel { position: absolute; left: 0; right: 0; bottom: 0; overflow-y: auto; overflow-x: hidden; touch-action: pan-y; overscroll-behavior: contain; padding: 0 12px 14px; scrollbar-width: none; }
 .lbPanel::-webkit-scrollbar { display: none; }
-.lbPage { position: relative; max-width: 440px; margin: 0 auto; padding: 8px 10px 12px; color: #3a2210; background: #e8d6a6; box-shadow: 0 -2px 0 #3a2210, 0 2px 0 #3a2210, -2px 0 0 #3a2210, 2px 0 0 #3a2210, inset 0 0 0 2px #c8a868, inset 0 0 0 4px #e8d6a6, inset 0 0 0 5px #b89858; }
-.lbHead { position: sticky; top: -1px; z-index: 1; display: flex; align-items: baseline; gap: 8px; padding: 2px 0 6px; margin-bottom: 4px; background: #e8d6a6; border-bottom: 2px solid #b89858; }
-.lbHead h2 { margin: 0; flex: 1; font: 700 20px var(--display); color: #7a2a1c; letter-spacing: 1px; text-shadow: 0 1px 0 #f6e8c0; }
-.lbHead span { font: 700 13px var(--body); color: #5a3a10; }
-.lbPage .sbMeter { color: #3a2210; font-size: 13px; }
-.lbPage .sbMeter i { height: 12px; background: #c8b078; border: 2px solid #3a2210; border-radius: 0; }
-.lbPage .sbMeter i span { background: #c8782a; }
-.lbPage .sbMeter.full i span { background: #a82a1c; }
-.lbPage .sbSlot { background: #f4e6bc; border: 2px dashed #a0804a; border-radius: 0; color: #3a2210; font-family: var(--body); }
-.lbPage .sbSlot.on { border: 2px solid #7a2a1c; }
+.lbPage { position: relative; max-width: 440px; margin: 0 auto; padding: 8px 10px 12px; color: var(--text); background: var(--s4); box-shadow: 0 -2px 0 var(--s1), 0 2px 0 var(--s1), -2px 0 0 var(--s1), 2px 0 0 var(--s1), inset 0 0 0 2px var(--s10), inset 0 0 0 4px var(--s4), inset 0 0 0 5px var(--s7); }
+.lbHead { position: sticky; top: -1px; z-index: 1; display: flex; align-items: baseline; gap: 8px; padding: 2px 0 6px; margin-bottom: 4px; background: var(--s4); border-bottom: 2px solid var(--s7); }
+.lbHead h2 { margin: 0; flex: 1; font: 700 20px var(--display); color: var(--accent-hi); letter-spacing: 1px; text-shadow: 0 2px 0 var(--black); }
+.lbHead span { font: 700 13px var(--body); color: var(--text-dim); }
+.lbPage .sbMeter { color: var(--text); font-size: 13px; }
+.lbPage .sbMeter i { height: 12px; background: var(--s1); border: 2px solid var(--s7); border-radius: 0; }
+.lbPage .sbMeter i span { background: var(--accent); }
+.lbPage .sbMeter.full i span { background: var(--danger); }
+.lbPage .sbSlot { background: var(--s5); border: 2px dashed var(--s10); border-radius: 0; color: var(--text); font-family: var(--body); }
+.lbPage .sbSlot.on { border: 2px solid var(--accent); }
 .lbPage .sbSlot { padding: 4px; }
 .lbPage .sbSlot em { font-size: 10px; }
-.lbPage .sbSlot em, .lbPage .sbCard .stats { color: #2a4f8a; }
-.lbPage .sbCard { background: #f4e6bc; border: 2px solid #a0804a; border-radius: 0; font-size: 13px; }
-.lbPage .sbCard.on { border-color: #7a2a1c; box-shadow: inset 0 0 0 2px #e8c878; }
-.lbPage .sbCard.locked { opacity: 1; background: #d8c690; border-style: dashed; color: #5a4a30; }
-.lbPage .sbCard .text { color: #5a4020; }
-.lbPage .sbNote { color: #a82a1c; }
-.lbDim { position: absolute; inset: 0; background: rgba(8, 4, 10, 0.68); pointer-events: none; }
+.lbPage .sbSlot em, .lbPage .sbCard .stats { color: var(--mana); }
+.lbPage .sbCard { background: var(--s5); border: 2px solid var(--s9); border-radius: 0; font-size: 13px; }
+.lbPage .sbCard.on { border-color: var(--accent); box-shadow: inset 0 0 0 2px var(--accent-lo); }
+.lbPage .sbCard.locked { opacity: 1; background: var(--s3); border-style: dashed; color: var(--text-faint); }
+.lbPage .sbCard .text { color: var(--text-dim); }
+.lbPage .sbNote { color: var(--danger-hi); }
+.lbDim { position: absolute; inset: 0; background: rgb(var(--s1-rgb) / 0.68); pointer-events: none; }
 .lbLock { text-align: center; padding: 14px 14px 16px; }
-.lbLock h2 { margin: 0 0 6px; font: 700 20px var(--display); color: #7a2a1c; letter-spacing: 1px; text-shadow: 0 1px 0 #f6e8c0; }
-.lbLock p { margin: 0 0 12px; font: 400 14px/1.35 var(--body); color: #3a2210; }
-.lbLock .lbGo { min-height: 40px; padding: 0 16px; font: 700 14px var(--body); color: #f6e8c0; background: #7a2a1c; border: 2px solid #3a2210; border-radius: 0; cursor: pointer; }
+.lbLock h2 { margin: 0 0 6px; font: 700 20px var(--display); color: var(--accent-hi); letter-spacing: 1px; text-shadow: 0 2px 0 var(--black); }
+.lbLock p { margin: 0 0 12px; font: 400 14px/1.35 var(--body); color: var(--text); }
+.lbLock .lbGo { min-height: 40px; padding: 0 16px; font: 700 14px var(--body); color: var(--btn-ink); background: var(--accent); border: 2px solid var(--s1); border-radius: 0; cursor: pointer; }
 `;
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {

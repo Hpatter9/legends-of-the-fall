@@ -193,6 +193,7 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   (`src/art/castle/watchtower.png`), its locked picture that drained of colour with a chain and padlock drawn on it; the Daily board is the Fae ribbon signpost of the same
   isometric kits (`hpatter9/little-town`), halved by a 2x2 box average.
 
+- **Stone and iron UI kit** (`src/art/ui/` frames, buttons, ribbons, chips, flag, `wood.png`, `page.png`; drawn by `tools/ui/styles.py`, which replaced `tools/ui/frames.py`'s brown and gold kit): the `wood.png` (bars) and `page.png` (menu pages, panel fill) textures are the centre tiles of two **DawnLike** brick sets by DragonDePlatino (`Objects/Floor.png`, CC-BY 4.0; palette by DawnBringer), their few colours moved by brightness rank onto the slate ramp, with no resampling. The frames are drawn natively by the script.
 ## The Calamity's void (`src/art/calmap/`, `tools/calmap/prep.py`)
 
 - The sky behind the islands: the stars (`stars.png`, the bright pixels of the first sky) and the four moons (`planet_white/tan/red/blue.png`) are cut from the Craftpix **Free Moon Pixel Game
