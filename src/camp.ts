@@ -13,6 +13,9 @@ import { canvasOf, ROWS, shrinkRig, type Small } from './render/smallRig';
 import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
 import { EMOTE_NAMES, EMOTES } from './tavern';
+import { goatSheet } from './duchess';
+import { goatSays } from './quips';
+import { chewBob, FRAME, goatFrame, hopLift, newGoat, stepGoat, tapGoat, type Goat } from './render/duchessRules';
 import { campLayout, PLACE, groundCells, starsFor, TABLE, type Camp, type Piece } from './render/campSpots';
 import portalUrl from './art/calmap/portal.png';
 import gateUrl from './art/camp/gate.png';
@@ -151,6 +154,10 @@ export class CampScene {
   private down: { x: number; y: number; t: number } | null = null;
   private watch: ResizeObserver;
   private bubbles = new Map<string, HTMLCanvasElement>();
+  /** Duchess, who wanders the camp, nibbles at the heroes and hops when tapped (`render/duchessRules.ts`). */
+  private goat: Goat | null = null;
+  private goatArt: HTMLImageElement | null = null;
+  private goatWas = '';
 
   constructor(
     private onPick: (kind: string) => void,
@@ -571,8 +578,42 @@ export class CampScene {
       this.think(a, this.now);
       this.step(a, dt, this.now);
     }
+    this.stepGoat(dt);
     this.burn(dt);
     this.draw();
+  }
+
+  /** Where Duchess's ground is: a strip across the front of the camp (her feet's line, and the ends), kept clear of the buttons. */
+  private goatGround(camp: Camp): { y: number; min: number; max: number } {
+    const y = Math.min(camp.fire.y + 66, camp.buttonTop - 14);
+    return { y, min: Math.max(FRAME / 2, camp.cx - 40), max: Math.min(camp.w - FRAME / 2, camp.cx + 110) };
+  }
+
+  private stepGoat(dt: number): void {
+    const camp = this.camp;
+    if (!camp) return;
+    if (!this.goatArt) {
+      void goatSheet().then((im) => (this.goatArt = im));
+      return;
+    }
+    const ground = this.goatGround(camp);
+    this.goat ??= { ...newGoat(camp.cx - 70, this.now), face: 1 };
+    // (heroes' feet along her strip: she may go and nibble one)
+    const friends = [...this.actors.values()].map((a) => a.x);
+    stepGoat(this.goat, dt, this.now, { min: ground.min, max: ground.max, friends }, Math.random, this.reduced);
+    // (a nibble starts: now and then she says so)
+    if (this.goat.mode === 'nibble' && this.goatWas !== 'nibble') this.goatSpeak('nibble');
+    this.goatWas = this.goat.mode;
+  }
+
+  /** Duchess's bubble, over her head. */
+  private goatSpeak(kind: 'tap' | 'nibble'): void {
+    const camp = this.camp;
+    const goat = this.goat;
+    if (!camp || !goat) return;
+    const box = this.canvas.getBoundingClientRect();
+    const g = this.goatGround(camp);
+    goatSays(kind, { x: box.left + goat.x * this.unit, y: box.top + (g.y - 34) * this.unit });
   }
 
   /** Sparks lift off the fire and drift up and out, cooling from yellow to orange to dark. */
@@ -622,6 +663,7 @@ export class CampScene {
       list.push({ depth: camp.table.y, paint: () => g.drawImage(t, Math.round(camp.table.x - t.width / 2), Math.round(camp.table.y - t.height)) });
     }
     for (const actor of this.actors.values()) list.push({ depth: actor.spot.y, paint: () => this.hero(g, actor) });
+    if (this.goat && this.goatArt) list.push({ depth: this.goatGround(camp).y, paint: () => this.duchess(g, camp) });
     list.sort((p, q) => p.depth - q.depth);
     for (const e of list) e.paint();
     this.sparksDraw(g);
@@ -709,6 +751,18 @@ export class CampScene {
     } else g.drawImage(small.c, i * small.fw, row * small.fh, small.fw, small.fh, fx - Math.round(small.fw / 2), dy, small.fw, small.fh);
   }
 
+  /** Duchess herself: a shadow, then her frame (the sheet is 48-pixel frames, her feet at the bottom). */
+  private duchess(g: CanvasRenderingContext2D, camp: Camp): void {
+    const goat = this.goat!;
+    const foot = this.goatGround(camp).y;
+    const x = Math.round(goat.x);
+    g.fillStyle = 'rgba(8, 3, 1, 0.4)';
+    g.fillRect(x - 10, foot - 1, 20, 2);
+    g.fillRect(x - 7, foot - 2, 14, 1);
+    const lift = Math.round(hopLift(goat, this.now));
+    g.drawImage(this.goatArt!, goatFrame(goat) * FRAME, 0, FRAME, FRAME, x - FRAME / 2, foot - FRAME - lift - chewBob(goat, this.now, this.reduced), FRAME, FRAME);
+  }
+
   /** The speech bubbles, each drawn once into a small canvas (the tavern's emotes). */
   private bubbleArt(name: string): HTMLCanvasElement {
     let c = this.bubbles.get(name);
@@ -747,6 +801,14 @@ export class CampScene {
     const box = this.canvas.getBoundingClientRect();
     const rx = (e.clientX - box.left) / this.unit;
     const ry = (e.clientY - box.top) / this.unit;
+    // (Duchess first: a tap on her few pixels is hers, and she hops)
+    if (this.goat && this.goatArt) {
+      const foot = this.goatGround(camp).y;
+      if (Math.abs(rx - this.goat.x) < 16 && ry > foot - 30 && ry < foot + 6) {
+        if (tapGoat(this.goat, this.now)) this.goatSpeak('tap');
+        return;
+      }
+    }
     // (generous: the hero whose body is nearest the finger wins, within a reach a little wider and taller than the body)
     let best: { kind: string; d: number; y: number } | null = null;
     for (const a of this.actors.values()) {

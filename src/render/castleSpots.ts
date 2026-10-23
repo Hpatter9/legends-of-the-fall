@@ -616,12 +616,12 @@ export function effectText(id: BuildingId, level: number): string {
 }
 
 export const BLURB: Record<BuildingId, string> = {
-  treasury: 'Gold in the vault: every run starts richer.',
-  barracks: 'Beds and a training yard: your heroes are tougher.',
-  armoury: 'Smiths and weapon racks: your heroes hit harder.',
-  mageTower: 'The king\'s own spires: mana comes quicker and spells hit harder.',
-  stable: 'Horses and a farrier: your heroes cover the ground quicker.',
-  library: 'Shelves of old campaigns: every hero learns more from every fight.',
+  treasury: 'Gold in the vault: every run starts richer. Nobody tell the goat where the key is.',
+  barracks: 'Beds and a training yard: your heroes are tougher. The beds are, reportedly, a bit short.',
+  armoury: 'Smiths and weapon racks: your heroes hit harder. The smiths ask that you stop returning them bent.',
+  mageTower: 'The king\'s own spires: mana comes quicker and spells hit harder. Mind the pigeons.',
+  stable: 'Horses and a farrier: your heroes cover the ground quicker. The horses have opinions on pay.',
+  library: 'Shelves of old campaigns: every hero learns more from every fight. Duchess has eaten the index.',
 };
 
 export const NAME_OF = (id: BuildingId): string => BUILDINGS[id].name;
