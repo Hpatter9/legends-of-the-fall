@@ -7,7 +7,7 @@ import { D, standable, tileAt } from './sim/board';
 import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
 import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
 // (`saveSlot` as `saveRun`: a tower or calamity run is saved in its own slot, any other in the ordinary one)
-import { adoptOldTower, armyOfRun, armyRun, benchFull, boostOf, canRetry, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryGold, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, type Owned, type Run } from './sim/run';
+import { adoptOldTower, armyOfRun, armyRun, benchFull, boostOf, canRetry, chainOf, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryGold, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, type Owned, type Run } from './sim/run';
 import { climbXpView, heroLevel, localBoost } from './sim/climb';
 import { calamityRun } from './sim/modes';
 import { CAL_MAPS } from './sim/calamity';
@@ -31,7 +31,7 @@ import { powerOf, powerText } from './sim/power';
 import { fightXp, gainXp, levelGain, levelOfKind, progressOf, xpOf, type LevelUp } from './sim/levels';
 import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
 import { autoDeploy, autoRound, gearCount, pickSquad } from './sim/autoplay';
-import { afterFight, maxSpeed, startAuto, stopAuto, type AutoReplay } from './sim/autoReplay';
+import { afterFight, maxSpeed, spendTicket, startAuto, stopAuto, type AutoReplay } from './sim/autoReplay';
 import { Gacha } from './gacha';
 import { Events } from './events';
 import { TowerView } from './towerView';
@@ -50,15 +50,17 @@ import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, type SpellId } fr
 import { bindSpellbook } from './spellbook';
 import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
+import { ChainView } from './render/chainView';
+import { against, frameOf, transferFormation } from './sim/chain';
 import { closestTrait, countTraits, kindsOf, nextTierLine, traitsOf, TRAITS } from './sim/traits';
 import { placeSynergies, startSynergies } from './synergyView';
 import { UnitSprite } from './render/unitView';
 import { flyUp, recyclePuff, summonBurst } from './render/uiFx';
 import { Fx, loadFx } from './render/fx';
-import { framesOf, loadSheets, portrait, sheetInfo } from './render/sheets';
+import { framesOf, loadSheets, portrait, sheetInfo, wholeFigure } from './render/sheets';
 import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, framing, PAUSE_MS, settle, viewFor, type View } from './render/cameraRules';
 import { titleOf } from './render/bossTitles';
-import { at, FOOT, HH, TH, TW } from './render/iso';
+import { at, depth, FOOT, HH, rawAt, setFrame, TH, TW } from './render/iso';
 import { bindDuck, bindMute, play, playEvents, setAct, setScene, setup, startFight } from './render/sound';
 import { sceneOf } from './render/audioRules';
 import { colLeft, viewH, viewW } from './viewport';
@@ -98,6 +100,10 @@ class Game {
   private app = new Application();
   private world = new Container();
   private boardView = new BoardView();
+  /** The long map of an army run: the finished sections behind the fight, and the walk from one wave to the next. */
+  private chain!: ChainView;
+  /** The units (of the finished fight) that are walking to the next section: their own sprites stay hidden meanwhile. */
+  private walking = new Set<number>();
   private sprites = new Map<number, UnitSprite>();
   private fx = new Fx(this.sprites);
   private ghost = new Sprite();
@@ -156,6 +162,8 @@ class Game {
     this.boardView.keep.push(this.fx.dimLayer, this.fx.root);
     this.boardView.root.addChild(...this.boardView.keep);
     this.world.addChild(this.boardView.root);
+    this.boardView.renderer = this.app.renderer;
+    this.chain = new ChainView(this.boardView, this.fx, this.boardView.root);
     this.ghost.anchor.set(0.5, 1);
     this.ghost.alpha = 0.85;
     this.ghost.visible = false;
@@ -274,7 +282,13 @@ class Game {
 
   /** A fresh fight for the run's stage, with the squad back where it stood (or on the first free tiles). */
   private newBattle(): void {
+    // (a walk to the new section still going is over: the heroes are placed where it was taking them)
+    this.chain.finish();
+    this.walking.clear();
     this.b = startStage(this.run);
+    // (an army's section may lie turned on the long map: everything is drawn and tapped through its frame)
+    const section = chainOf(this.run)?.[this.run.stage - 1];
+    setFrame(section ? frameOf(section, section) : undefined);
     this.settled = false;
     this.endWait = 0;
     this.pendingLoss = false;
@@ -294,13 +308,64 @@ class Game {
     // (an auto-replay keeps the speed it is at from wave to wave)
     this.setSpeed(this.auto ? this.speed : settings().speed);
     this.fx.clear();
-    this.boardView.build(this.b.board);
+    this.boardView.build(this.b.board, { boss: !!armyOfRun(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
+    this.syncChain();
     setBackdrop(this.b.board.area);
     showTwistBanner(this.run.tower?.cur?.fight?.twist);
     this.syncSprites(true);
     this.layout();
     this.refresh();
     this.startIntro();
+  }
+
+  /** The long map behind this wave's section (an army run's; any other run has none). Finished waves are baked, with no animation: this is also how a run resumed from a save comes up. */
+  private syncChain(): void {
+    const c = chainOf(this.run);
+    if (c && this.run.stage <= c.length) this.chain.sync(c, this.run.stage - 1);
+    else this.chain.clear();
+  }
+
+  /** A wave of an army is won: the next section's columns fall onto the edge of this one, and the heroes still standing walk across into their formation, while the recap is up. */
+  private startWalk(wave: number): void {
+    const c = chainOf(this.run);
+    if (!c || wave >= c.length || this.run.stage !== wave + 1) return;
+    const next = c[wave];
+    const heroes = this.b.units.filter((u) => u.side === 'hero' && u.alive && !UNITS[u.def].summon && u.tag !== undefined);
+    // (the whole squad's formation moves over, so the fallen keep their places for the next fight)
+    const spots = this.run.squad.flatMap((id) => {
+      const at = this.placed.get(String(id));
+      return at ? [{ id: String(id), u: at[0], v: at[1] }] : [];
+    });
+    const goals = transferFormation(next.board, spots);
+    for (const [id, at] of goals) this.placed.set(id, at);
+    const walkers = heroes.flatMap((unit) => {
+      const goal = goals.get(String(unit.tag));
+      return goal ? [{ unit, goal }] : [];
+    });
+    this.walking = new Set(walkers.map((w) => w.unit.id));
+    // (the finished fight's fallen are still drawn, where the old section lies against the new one)
+    setFrame(frameOf(c[wave - 1], next));
+    // (and the camera stays on the same ground, which has moved in the world against the new section)
+    const lie = against(c[wave - 1], next);
+    const [dx, dy] = rawAt(lie.u, lie.v, 0);
+    this.cx += dx;
+    this.cy += dy;
+    this.tx += dx;
+    this.ty += dy;
+    this.held = null;
+    this.bbox = { x0: this.bbox.x0 + dx, x1: this.bbox.x1 + dx, y0: this.bbox.y0 + dy, y1: this.bbox.y1 + dy };
+    document.body.dataset.move = '1';
+    this.chain.begin(c, wave - 1, walkers, () => delete document.body.dataset.move);
+    this.survey = false;
+  }
+
+  /** Whether the camera is standing back to see the whole map. */
+  private survey = false;
+
+  /** Stand the camera back to see the whole road so far (or come back to the wave). */
+  overview(on = true): void {
+    this.survey = on;
+    if (!on) this.focus();
   }
 
   /** A boss stage's first time: the screen dims, the boss's portrait slides in, its name on a ribbon slams down with its title, and the camera glides to it. Once per stage (a restart of the same fight does not replay it). */
@@ -315,19 +380,34 @@ class Game {
     const card = $('bossCard');
     const def = UNITS[boss.def];
     card.classList.toggle('elite', !!elite);
-    card.querySelector('b')!.textContent = (elite ? elite.name : def.name).toUpperCase();
+    const name = (elite ? elite.name : def.name).toUpperCase();
+    const nameEl = card.querySelector('b')!;
+    nameEl.textContent = name;
+    // (the name's size, a multiple of 12, the largest whose longest word fits the ribbon and that takes two lines at most (three at 24px); the
+    // face's glyphs are two thirds of the size wide, plus the letter spacing, and the ribbon's ends take 148px)
+    const room = Math.min(viewW(), 640) - 12 - 148;
+    const fits = (px: number) => {
+      const per = (px * 2) / 3 + (px >= 36 ? 4 : 2);
+      const cols = Math.floor(room / per);
+      const words = name.split(' ');
+      if (words.some((w) => w.length > cols)) return false;
+      let lines = 1;
+      let used = 0;
+      for (const w of words) {
+        if (used && used + 1 + w.length > cols) (lines++, (used = w.length));
+        else used += (used ? 1 : 0) + w.length;
+      }
+      return lines <= (px <= 24 ? 3 : 2);
+    };
+    const px = [48, 36, 24].find(fits) ?? 12;
+    nameEl.style.fontSize = `${px}px`;
+    nameEl.style.letterSpacing = `${px >= 36 ? 4 : 2}px`;
     card.querySelector('span')!.textContent = elite ? elite.epithet : titleOf(boss.def);
-    // (the portrait is cropped from the sheet and scaled up by a whole number, so its pixels stay square)
+    // (the whole figure, weapons and all, at a whole-number scale: up to 80% of the width and 38% of the height, so nothing is cut)
     const info = sheetInfo(def.sheet);
-    const side = info ? Math.min(info.figure + 6, info.h) : 64;
-    // (about 48% of the width; at least once over, at most 90% of the width)
-    const want = viewW() * 0.48;
-    const n = Math.max(1, Math.min(Math.round(want / side), Math.floor((viewW() * 0.9) / side)));
     const old = card.querySelector('canvas')!;
-    const face = portrait(def.sheet, side * n);
-    // (the sheets face right; a boss that faces left looks the other way)
-    face.style.width = face.style.height = `${side * n}px`;
-    if (info && !info.facesRight) face.style.transform = 'scaleX(-1)';
+    // (the sheets face right; a boss that faces left looks the other way, mirrored in the drawing so the slide-in keeps it)
+    const face = wholeFigure(def.sheet, viewW() * 0.8, viewH() * 0.38, !!info && !info.facesRight);
     old.replaceWith(face);
     card.classList.remove('out');
     card.hidden = false;
@@ -470,7 +550,22 @@ class Game {
     if (this.intro) this.stepIntro(dt);
     this.refreshBossBar();
     const t = b.phase === 'deploy' ? performance.now() : b.phase === 'fight' ? b.t - TICK_MS + this.acc : b.t + this.acc;
-    for (const s of this.sprites.values()) s.update(b.board, t, b.phase !== 'deploy');
+    for (const [id, s] of this.sprites) {
+      if (this.walking.has(id)) s.root.visible = false;
+      else s.update(b.board, t, b.phase !== 'deploy');
+    }
+    if (this.chain.active) {
+      this.chain.step(dt);
+      const f = this.chain.focus();
+      if (f) {
+        this.tx = f.x;
+        this.ty = f.y;
+      }
+      this.tzoom = 1;
+      this.zoom = easeTo(this.zoom, 1, dt, EASE_ZOOM_MS);
+    }
+    if (this.survey) this.standBack(dt);
+    this.boardView.pump();
     // (the camera eases to where it is sent, unless a finger is holding the board)
     if (this.phaseBoss && (!b.pause || b.phase !== 'fight')) this.endPhase();
     if (b.phase === 'fight' && !this.intro) this.phaseBoss ? this.pushOnPhase() : this.follow();
@@ -657,9 +752,25 @@ class Game {
     this.place();
   }
 
+  /** What the camera may reach: the fight's board, and any road behind it to look back along. */
+  private reachBox(): { x0: number; x1: number; y0: number; y1: number } {
+    const b = this.bbox;
+    const c = this.chain?.box();
+    return c ? { x0: Math.min(b.x0, c.x0), x1: Math.max(b.x1, c.x1), y0: Math.min(b.y0, c.y0), y1: Math.max(b.y1, c.y1) } : b;
+  }
+
+  /** The camera stands back over the whole road (a view for looking along it). */
+  private standBack(dt: number): void {
+    const r = this.reachBox();
+    this.tx = (r.x0 + r.x1) / 2;
+    this.ty = (r.y0 + r.y1) / 2;
+    this.tzoom = Math.min(1, this.area.w / (r.x1 - r.x0 + 40) / this.scale, this.area.h / (r.y1 - r.y0 + 40) / this.scale);
+    this.zoom = easeTo(this.zoom, this.tzoom, dt, EASE_ZOOM_MS);
+  }
+
   /** Keep the camera over the board: no scrolling past its edge, and a board that fits stays centred. */
   private clampCam(): void {
-    const { x0, x1, y0, y1 } = this.bbox;
+    const { x0, x1, y0, y1 } = this.reachBox();
     const hw = this.area.w / 2 / (this.scale * this.zoom);
     const hh = this.area.h / 2 / (this.scale * this.zoom);
     const lim = (c: number, lo: number, hi: number, half: number, slack = 0) =>
@@ -685,7 +796,7 @@ class Game {
     panBackdrop(fx, fy);
     // (the labels may use the board's room on the screen, in world px)
     const w = this.world;
-    this.fx.view = { x0: (0 - w.x) / k + 4, x1: (viewW() - w.x) / k - 4, y0: (this.area.y - w.y) / k + 4, y1: (this.area.y + this.area.h - w.y) / k };
+    this.boardView.cull(this.fx.view = { x0: (0 - w.x) / k + 4, x1: (viewW() - w.x) / k - 4, y0: (this.area.y - w.y) / k + 4, y1: (this.area.y + this.area.h - w.y) / k });
   }
 
   /** The tile under a point on the screen (the nearest column's top or side). */
@@ -693,20 +804,23 @@ class Game {
     const b = this.b.board;
     const wx = (sx - colLeft() - this.world.x) / this.world.scale.x;
     const wy = (sy - this.world.y) / this.world.scale.y;
-    // (front to back: a column in front hides the tops behind it)
-    for (let d = b.w + b.d - 2; d >= 0; d--)
+    // (the nearest column under the point wins: a column in front hides the tops behind it)
+    let best: [number, number] | null = null;
+    let nearest = -Infinity;
+    for (let v = 0; v < b.d; v++)
       for (let u = 0; u < b.w; u++) {
-        const v = d - u;
-        const t = tileAt(b, u, v);
-        if (!t) continue;
+        const t = tileAt(b, u, v)!;
         const [x, y] = at(u, v, t.h);
         const dx = Math.abs(wx - x) / (TW / 2);
         if (dx > 1) continue;
-        if (dx + Math.abs(wy - y) / (TH / 2) <= 1) return [u, v];
-        // (the column's sides, below its top's left and right edges)
-        if (wy > y && wy < y + TH / 2 * (1 - dx) + t.h * HH + FOOT) return [u, v];
+        // (the top, or the column's sides below its top's left and right edges)
+        const hit = dx + Math.abs(wy - y) / (TH / 2) <= 1 || (wy > y && wy < y + (TH / 2) * (1 - dx) + t.h * HH + FOOT);
+        if (hit && depth(u, v) > nearest) {
+          nearest = depth(u, v);
+          best = [u, v];
+        }
       }
-    return null;
+    return best;
   }
 
   /** The placed hero under a point on the screen. */
@@ -852,8 +966,9 @@ class Game {
 
   /** Starts an auto-replay of the army just begun (the run is on wave 1 already). Only cleared armies and tiers take it. */
   private beginAuto(army: string, tier: number, count: number): void {
-    const a = startAuto(this.meta, army, tier, count);
-    if (!a) return;
+    const a = startAuto(this.meta, army, tier, count, todayKey());
+    if (!a || !spendTicket(this.meta, todayKey())) return;
+    saveMeta(this.meta);
     this.auto = a;
     this.autoNext = null;
     play('autoStart');
@@ -885,6 +1000,9 @@ class Game {
     if (next === 'wave') {
       this.autoPrep();
     } else if (next === 'run') {
+      // (each run spends a day's auto ticket; a new day mid-replay refills them)
+      if (!spendTicket(this.meta, todayKey())) return void this.endAuto('tickets');
+      saveMeta(this.meta);
       this.startRun(armyRun(clockSeed(), a.army, this.meta.party, this.meta.castle, a.tier));
       this.autoPrep();
     } else this.endAuto(a.ended ?? 'done');
@@ -904,7 +1022,7 @@ class Game {
   }
 
   /** The replay is over (the count ran out, a run was lost, or Stop was tapped): the banner goes and the summary card shows the totals. */
-  private endAuto(why: 'done' | 'loss' | 'stopped'): void {
+  private endAuto(why: 'done' | 'loss' | 'stopped' | 'tickets'): void {
     const a = this.auto;
     if (!a) return;
     if (why === 'stopped') stopAuto(a);
@@ -922,7 +1040,9 @@ class Game {
         ? `${a.totals.runs} of ${a.count} runs of the ${army.name} cleared`
         : why === 'loss'
           ? `The ${army.name} held at wave ${a.lostAt}. ${a.totals.runs} of ${a.count} runs cleared first`
-          : `You stopped it. ${a.totals.runs} of ${a.count} runs cleared`;
+          : why === 'tickets'
+            ? `No auto runs left today. ${a.totals.runs} of ${a.count} runs cleared`
+            : `You stopped it. ${a.totals.runs} of ${a.count} runs cleared`;
     const rows = card.querySelector('.asumRows')!;
     rows.replaceChildren();
     for (const [label, n] of [['Crowns', a.totals.crowns], ['XP', a.totals.xp], ['Chests', a.totals.chests], ['Gear found', a.totals.gear]] as const) {
@@ -1535,6 +1655,7 @@ class Game {
       if (run.tower) finishTower(run, b, won, rating.stars);
       else finish(run, won, rating.stars);
       this.gain = run.gold - before;
+      if (won && army && !run.cleared && !run.over && !this.auto) this.startWalk(stage);
       // (an army pays by wave, and its last boss a clear; any other run pays as it always did)
       this.pay = army ? settleWave(this.meta, army.id, stage, won, rating.stars) : null;
       this.crownGain = this.pay ? this.pay.crowns : earn(this.meta, stage, won, rating.stars);

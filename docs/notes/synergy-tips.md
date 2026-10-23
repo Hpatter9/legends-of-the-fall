@@ -18,3 +18,10 @@ retry, autoReplay. Each has a finder that returns its element only when it is on
 first time the player can really see the system. They wait until the first tip has been seen, and "Skip tutorial" marks them all
 seen. Existing players have none of the new ids stored, so each shows once after this update. Tests: `suggest`, `synergy-lines`, `tips`.
 Screenshots: `docs/samples/synergy-tips-*.png` (`tools/synergy/shots.mjs`).
+
+### Crisp synergy text (owner's note: "odd, almost hard to read")
+
+The fight's synergy row, banner and list were sized for the old font: 10, 11 and 13px, plus bold. In Press Start Text (drawn
+at two-thirds) those come out at 6.7, 7.3 and 8.7px, off the font's 8px grid, and the faked bold smeared them. Every synergy
+size is now 12px, which draws at exactly 8px. The text is normal weight, and the banner has a 1px four-way outline in place of
+the drop shadow (`src/synergyView.ts`).

@@ -78,6 +78,12 @@ export function eliteAt(seed: number, act: number, map: readonly MapNode[], id: 
   return order[rank % order.length];
 }
 
+/** The elite of a calamity map's `index`th hidden side spot: the next after those its elite nodes take (the tier's four, round again when they run out). */
+export function sideEliteAt(seed: number, act: number, map: readonly MapNode[], index: number): Elite {
+  const order = eliteOrder(seed, act);
+  return order[(map.filter((n) => n.kind === 'elite').length + index) % order.length];
+}
+
 /** The fight an elite brings: the elite and its escort, `k` the floor's strength (as every foe's), `mult` the elite band's extra. */
 export function eliteFight(e: Elite, k: number, mult: number, area: Area): { band: string[]; stage: Stage; elite: string } {
   return { band: [e.def, ...e.escort], stage: { foes: { hp: k * mult, atk: k * mult }, boss: e.boost, area }, elite: e.id };

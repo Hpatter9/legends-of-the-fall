@@ -1,7 +1,7 @@
 # Calamity
 
 A King God Castle style mode on the tower's machinery (`src/sim/calamity.ts`, `tower.ts`, `modes.ts` `calamityRun`,
-`towerView.ts`, `calamityView.ts`). Home screen: a "Calamity" pill under Party (open from the start).
+`towerView.ts`, `calamityView.ts`). Home screen: a portal in the war camp with a small board under it (open from the start). **The map is no longer the tower's look: it is a local isometric land with fog and hidden side spots, see `calamity-map.md`.**
 
 - **Start**: pick one owned hero (level 1). The run's `local` rules apply (see tower-reset.md); 40 gold.
 - **Maps**: 6 maps of 6, 7, 7, 8, 8 and 8 floors (`CAL_ROWS`), each ending in a boss of its own (`calamityBosses.ts`); each map has its own
@@ -28,4 +28,4 @@ A King God Castle style mode on the tower's machinery (`src/sim/calamity.ts`, `t
 **Balance** (`npm run balance -- --no-tables --calamity --attempts 100`, greedy bot, no castle; share of runs felling each map's boss): 86% / 78% / 64% / 44% / 36% / 16%, so a full clear is 16%. 7.8 heroes held and level 9.6 on average at the end. The ramp is steered by the boss stats (hp 3000, 3800, 4200, 3800, 3400, 2800; `calamityBosses.ts`) and the escorts as much as by the foe scale: a stacked kit made maps 4 and 5 walls until their hp and attack came down. `lostAt` in `tools/autoplay.ts` says which node a climb died at. A human should do better.
 Tests: `test/calamity.test.ts` (hiring, cap, no merge, map progression, pay, save and reload). Shots: `docs/samples/calamity-*.png`.
 
-**Ascension and boss phases** (`docs/notes/calamity-bosses.md`): each full clear opens a harder level (to 10) with one more lasting rule and a better reward, picked on the start screen (`meta.calamity.asc`, `run.mode.ascension`); the Calamity's bosses and the armies' final bosses change form at half health (`bossPhases.ts`). The boss stats above were lowered to match (hp 2280, 3270, 3350, 3210, 2780, 1700); the rates stay 86 / 80 / 64 / 45 / 33 / 14.
+**Ascension and boss phases** (`docs/notes/calamity-bosses.md`): each full clear opens a harder level (to 10) with one more lasting rule and a better reward, picked on the start screen (`meta.calamity.asc`, `run.mode.ascension`); the Calamity's bosses and the armies' final bosses change form at half health (`bossPhases.ts`). The boss stats above were lowered to match (hp 2280, 3270, 3350, 3210, 2780, 1700); the rates stay 86 / 80 / 64 / 45 / 33 / 14. The map's start was later capped at one or two spots (`calamity-map.md`) and the bosses' hp retuned to hold the rates (2000, 3100, 3250, 3250, 2760, 1900: 85 / 81 / 63 / 44 / 35 / 15).

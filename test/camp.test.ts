@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { BOARD, BUTTON_ZONE, campLayout, groundCells, SIZES, starsFor, TABLE } from '../src/render/campSpots';
+import { BUTTON_ZONE, campLayout, groundCells, PLACE, SIZES, starsFor, TABLE } from '../src/render/campSpots';
 
-// the Battle page's area on the three phones (css pixels; a scene pixel is about one)
-const PHONES: [number, number][] = [[393, 688], [360, 616], [412, 751]];
+// the war camp's scene on the three phones (css pixels; a scene pixel is about one): the Battle page's area less the bottom bar (100px)
+const PHONES: [number, number][] = [[393, 588], [360, 516], [412, 651]];
 
 test('every camp picture is the size the plan says', () => {
   for (const [name, [w, h]] of Object.entries(SIZES)) {
@@ -40,11 +40,15 @@ test('the fire, the table, the cart and the notice boards are on screen and clea
     // (the stash's mount sits over the cart, inside the frame)
     const s = c.stash;
     assert.ok(s.x >= 0 && s.x + s.w < c.cx && s.y > 0 && s.y + s.h <= c.cart.y);
-    for (const b of [c.boards.daily, c.boards.tower]) {
-      assert.ok(b.x >= 0 && b.x + b.w <= w && b.w === BOARD.w && b.y > 0);
-      assert.ok(b.y + b.h + BOARD.post < c.fire.y - 40, 'boards stand above the camp');
+    for (const p of [c.places.tower, c.places.daily, c.places.calamity]) {
+      const b = p.plate;
+      assert.ok(b.x >= 0 && b.x + b.w <= w && b.w === PLACE.plate.w && b.y > 0, 'a plate is on the screen');
+      assert.ok(p.box.x >= 0 && p.box.x + p.box.w <= w && p.box.y >= 0, 'the tap box is on the screen');
+      assert.ok(p.box.w >= 96 && p.box.h >= 96, 'a generous tap box');
+      assert.ok(b.y + b.h < c.fire.y - 40, 'places stand above the fire');
     }
-    assert.ok(c.boards.tower.x + BOARD.w < c.boards.daily.x, 'the boards do not touch');
+    const { tower, daily, calamity } = c.places;
+    assert.ok(tower.plate.x + tower.plate.w + 8 <= calamity.plate.x && calamity.plate.x + calamity.plate.w + 8 <= daily.plate.x, 'the three plates stand at least 8px apart');
   }
 });
 

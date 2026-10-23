@@ -8,6 +8,26 @@ import type { Meta } from './meta';
 /** The run counts on offer. */
 export const AUTO_COUNTS = [1, 3, 5, 10] as const;
 
+/** Auto runs a day (the owner's ask: unlimited auto-replay was free crowns). Each auto run spends one when it starts, and
+ * they refill when the phone's date changes. Fighting an army by hand is never limited. */
+export const AUTO_TICKETS = 10;
+
+/** The auto runs left on a date (yyyymmdd): all of them on a new day, or on a save from before the tickets. */
+export const ticketsLeft = (m: Meta, date: number): number => (m.autoTickets?.day === date ? Math.max(0, AUTO_TICKETS - m.autoTickets.used) : AUTO_TICKETS);
+
+/** Spends one auto run of a date's; false (and nothing spent) when none are left. */
+export function spendTicket(m: Meta, date: number): boolean {
+  if (ticketsLeft(m, date) < 1) return false;
+  m.autoTickets = { day: date, used: m.autoTickets?.day === date ? m.autoTickets.used + 1 : 1 };
+  return true;
+}
+
+/** Saved tickets that are sane, or none (a fresh day's worth). */
+export function readTickets(t: unknown): Meta['autoTickets'] {
+  const o = t as { day?: unknown; used?: unknown } | null;
+  return o && typeof o === 'object' && typeof o.day === 'number' && typeof o.used === 'number' ? { day: o.day | 0, used: Math.max(0, o.used | 0) } : undefined;
+}
+
 /** Whether an army's tier has been cleared before (Normal's clears are on the record itself, a harder tier's under `hard`). */
 export function tierCleared(m: Meta, armyId: string, tier: number): boolean {
   const rec = recordOf(m, armyId);
@@ -29,7 +49,7 @@ export interface AutoTotals {
   gear: number;
 }
 
-export type AutoEnd = 'done' | 'loss' | 'stopped';
+export type AutoEnd = 'done' | 'loss' | 'stopped' | 'tickets';
 
 export interface AutoReplay {
   army: string;
@@ -45,9 +65,11 @@ export interface AutoReplay {
   lostAt?: number;
 }
 
-/** Begins an auto-replay, or null when the army or tier is not one already cleared (or the count is not on offer). */
-export function startAuto(m: Meta, armyId: string, tier: number, count: number): AutoReplay | null {
+/** Begins an auto-replay, or null when the army or tier is not one already cleared, the count is not on offer, or (given a
+ * date) more runs are asked for than the day has tickets left. The page spends a ticket as each run starts (`spendTicket`). */
+export function startAuto(m: Meta, armyId: string, tier: number, count: number, date?: number): AutoReplay | null {
   if (!canAutoReplay(m, armyId, tier) || !(AUTO_COUNTS as readonly number[]).includes(count)) return null;
+  if (date !== undefined && count > ticketsLeft(m, date)) return null;
   return { army: armyId, tier, count, run: 1, totals: { runs: 0, crowns: 0, xp: 0, chests: 0, gear: 0 } };
 }
 

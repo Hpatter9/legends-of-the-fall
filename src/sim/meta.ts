@@ -17,6 +17,7 @@ import { readTalents, type KindTalents } from './talents';
 import { AWAKEN_MULT, OVERFLOW_CROWNS, SHARD_CAP } from './awakenRules';
 import { readAwakened } from './awaken';
 import { readCodex, readCodexClaimed, type CodexRecord } from './codex';
+import { readTickets } from './autoReplay';
 
 export const PULL_COST = 100;
 export const PULL10_COST = 900;
@@ -91,6 +92,8 @@ export interface Meta {
   /** The codex: the foe kinds met and the kills per kind (`codex.ts`; saves from before have none), and the milestone rewards claimed. */
   codex?: CodexRecord;
   codexClaimed?: string[];
+  /** The auto runs spent on a date (yyyymmdd; `autoReplay.ts`, `AUTO_TICKETS` a day). Saves from before have none. */
+  autoTickets?: { day: number; used: number };
   /** Chests earned from the armies' star milestones and not yet opened, oldest first (`armyStars.ts`). */
   stash: StashChest[];
 }
@@ -303,6 +306,9 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       // (saves from before the codex have none)
       m.codex = readCodex(m.codex);
       m.codexClaimed = readCodexClaimed(m.codexClaimed) ?? [];
+      // (saves from before the auto tickets have none: a full day's worth)
+      m.autoTickets = readTickets(m.autoTickets);
+      if (!m.autoTickets) delete m.autoTickets;
       return m;
     }
   } catch {

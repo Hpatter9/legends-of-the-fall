@@ -18,7 +18,7 @@ import { ratingOf } from '../src/sim/stars';
 import { autoDeploy, autoRound, dressSquad, strengthOf } from '../src/sim/autoplay';
 import { UNITS } from '../src/sim/units';
 import { takeRelic } from '../src/sim/elites';
-import { buy, hire, choices, clearNode, enterNode, finishMystery, finishTower, openTreasure, rest, takeXp, train, type MapNode, type NodeKind } from '../src/sim/tower';
+import { buy, hire, choices, sideChoices, clearNode, enterNode, finishMystery, finishTower, openTreasure, rest, takeXp, train, type MapNode, type NodeKind } from '../src/sim/tower';
 import { calamityRun, towerRun } from '../src/sim/modes';
 import { squadHealth } from '../src/sim/health';
 
@@ -176,7 +176,9 @@ function playClimb(meta: Meta, run: Run, maxFloors: number): { floors: number; b
       // (summons while the gold lasts, but keeps a purse for the shop when a fire is near)
     }
     const pick = [...choices(run)].sort((a, b) => wantOf(run, b) - wantOf(run, a) || a.id - b.id)[0];
-    enterNode(run, pick.id);
+    // (a hidden side spot of a calamity's map is taken when it is there: a hoard always, a mini-boss while the squad is hale)
+    const side = calamity ? sideChoices(run).find((s) => s.kind === 'treasure' || squadHealth(run) > 0.7) : undefined;
+    enterNode(run, side ? side.id : pick.id);
     const cur = run.tower!.cur!;
     const fightIt = () => {
       const b = fightNode(meta, run);

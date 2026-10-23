@@ -3,10 +3,11 @@
 // Fields tileset's own. The column sprite is drawn as in Chronos's raid board (tacticsView.ts
 // `column`).
 
-import { Container, Graphics, Sprite, Texture } from 'pixi.js';
+import { Container, Graphics, Sprite, Texture, type Renderer } from 'pixi.js';
 import { tileAt, type Area, type Board, type Tile } from '../sim/board';
 import { loadImage } from './loadImage';
-import { at, depth, FOOT, HH, TH, TW } from './iso';
+import { depthIn, FOOT, HH, project, rawAt, TH, TW, type Frame } from './iso';
+import { footDims, liesBehind, type Rot } from '../sim/turn';
 import { AREA_URLS, BUSH_URLS, GROUND_URLS } from './areaArt';
 
 /** From this height up, a tile's top is stony. */
@@ -29,6 +30,13 @@ const LIP: Record<Area, [string, string]> = {
   volcano: ['#4a3430', '#6a5450'],
   dungeon: ['#585874', '#7c7c98'],
 };
+
+/** The lip of a boss arena's tiles. */
+const BOSS_LIP = '#c9a24a';
+/** Where the baked sections sit among the host's tiles and the fighters: those nearer the screen than the host in front of
+ *  all of them, under the effects; those further off (the road can turn back up the screen) behind all of them. */
+const SCENERY_Z = 5000;
+const SCENERY_BACK_Z = -100000;
 
 /** The rim drawn round each kind of ground. */
 const RIM = { water: 'rgba(120,190,255,0.9)', ice: 'rgba(210,245,255,0.95)', lava: 'rgba(255,150,40,0.95)', tall: 'rgba(30,70,20,0.6)' };
@@ -67,36 +75,218 @@ export async function loadBoardArt(): Promise<void> {
   art = { areas, water, ice, lava, bushes };
 }
 
+/** One section's tiles, built: a container for each tile (in row order), the marks over them, and the column textures made for them. */
+interface Built {
+  tiles: Container[];
+  marks: Graphics[];
+  tex: Texture[];
+}
+/** A finished section baked into one texture, and where its top left lies against the section's own origin. */
+interface Baked {
+  tex: Texture;
+  x: number;
+  y: number;
+}
+/** What a section looks like beyond its board: a boss arena is drawn on flagstones with a gilded lip and a deeper plinth. */
+export interface Look {
+  boss?: boolean;
+}
+/** A section of the long map as the view needs it. */
+export interface Scene {
+  board: Board;
+  look: Look;
+  /** How many quarter turns it lies, and where its footprint's corner lies against the host's, in world tiles. */
+  rot: Rot;
+  ou: number;
+  ov: number;
+}
+
+/** The most baked sections kept at once (a long map is fifteen). */
+const BAKED_MAX = 20;
+
 export class BoardView {
   readonly root = new Container();
   private marks: Graphics[] = [];
   private board: Board | null = null;
+  private built: Built | null = null;
   /** Layers that outlive a rebuild (the effects': `build` must not destroy them, or nothing in a fight would show). */
   readonly keep: Container[] = [];
+  /** The finished sections, each one sprite: those nearer the screen than the host drawn in front of the fight's own tiles,
+   *  those further off (`sceneryBack`) behind them, so a section the road turned back past never covers the fighters. */
+  readonly scenery = new Container();
+  readonly sceneryBack = new Container();
+  private sceneryOf = new Map<Board, Sprite>();
+  private baked = new Map<Board, Baked>();
+  private toBake: Scene[] = [];
+  /** The section just fought, kept as live tiles while the heroes walk off it. */
+  private old: (Built & { rot: Rot; ou: number; ov: number; section: Board }) | null = null;
+  /** How the host section lies. */
+  private rot: Rot = 0;
+  /** The renderer, for baking (set by the page). */
+  renderer: Renderer | null = null;
 
   constructor() {
     this.root.sortableChildren = true;
+    this.scenery.zIndex = SCENERY_Z;
+    this.sceneryBack.zIndex = SCENERY_BACK_Z;
+    this.scenery.sortableChildren = this.sceneryBack.sortableChildren = true;
+    this.keep.push(this.sceneryBack, this.scenery);
   }
 
-  /** Build the board's columns (again, for a new board). */
-  build(b: Board): void {
+  /** Build the board's columns (again, for a new board). `keepOld` leaves everything on the stage (the section handed to `demote`, the fighters walking off it) and only adds the new columns. */
+  build(b: Board, look: Look = {}, rot: Rot = 0, keepOld = false): void {
     this.board = b;
-    for (const c of this.root.removeChildren()) if (!this.keep.includes(c)) c.destroy({ children: true });
-    this.root.addChild(...this.keep);
-    this.marks = [];
+    this.rot = rot;
+    if (!keepOld) {
+      for (const c of this.root.removeChildren()) if (!this.keep.includes(c)) c.destroy({ children: true });
+      this.dropOld();
+      this.root.addChild(...this.keep);
+    }
+    this.freeBuilt();
+    this.built = this.section(b, look, { rot, ou: 0, ov: 0 });
+    this.marks = this.built.marks;
+    this.root.addChild(...this.built.tiles);
+  }
+
+  /** The host is now behind the one to come (`section` is its board in the chain): its live tiles stay on show where they lie against the new host. */
+  demote(section: Board, ou: number, ov: number): void {
+    if (!this.built || !this.board) return;
+    this.dropOld();
+    const [ox, oy] = rawAt(ou, ov, 0);
+    const f = { rot: this.rot, ou, ov };
+    this.built.tiles.forEach((t, i) => {
+      t.position.set(ox, oy);
+      t.zIndex = depthIn(f, i % this.board!.w, Math.floor(i / this.board!.w));
+    });
+    this.old = { ...this.built, rot: this.rot, ou, ov, section };
+    for (const g of this.old.marks) g.clear();
+    this.built = null;
+  }
+
+  /** The old section has done: it goes to the scenery as one sprite (`look` as it was drawn). */
+  retire(look: Look): void {
+    const o = this.old;
+    if (!o) return;
+    const scene = { board: o.section, look, rot: o.rot, ou: o.ou, ov: o.ov };
+    for (const t of o.tiles) t.destroy({ children: true });
+    for (const x of o.tex) x.destroy(true);
+    this.old = null;
+    this.bake(scene);
+    this.place(scene);
+  }
+
+  private dropOld(): void {
+    if (!this.old) return;
+    for (const t of this.old.tiles) if (!t.destroyed) t.destroy({ children: true });
+    for (const x of this.old.tex) x.destroy(true);
+    this.old = null;
+  }
+
+  private freeBuilt(): void {
+    if (!this.built) return;
+    for (const x of this.built.tex) x.destroy(true);
+    this.built = null;
+  }
+
+  /** A tile of the host falls: `dy` px above where it lies (up is negative), `alpha` how much of it shows. */
+  lift(i: number, dy: number, alpha: number): void {
+    const t = this.built?.tiles[i];
+    if (!t) return;
+    t.y = dy;
+    t.alpha = alpha;
+    t.visible = alpha > 0;
+  }
+
+  /** Show the finished sections behind the fight (those of `scenes`, each against the host), baking what is not baked yet, a section a frame (`pump`). Those no longer wanted go. */
+  setScenery(scenes: Scene[]): void {
+    const want = new Set(scenes.map((s) => s.board));
+    for (const [b, sp] of this.sceneryOf)
+      if (!want.has(b)) {
+        sp.destroy();
+        this.sceneryOf.delete(b);
+      }
+    this.toBake = [];
+    for (const s of scenes) {
+      if (this.baked.has(s.board)) this.place(s);
+      else this.toBake.push(s);
+    }
+  }
+
+  /** Bake one waiting section (called each frame, so a long map comes up a section a frame). */
+  pump(): void {
+    const s = this.toBake.shift();
+    if (!s || !art) return;
+    this.bake(s);
+    this.place(s);
+  }
+
+  /** Hide the baked sections that lie off the screen (`view`, in world px). */
+  cull(view: { x0: number; x1: number; y0: number; y1: number }): void {
+    for (const sp of this.sceneryOf.values()) {
+      const x = sp.x;
+      const y = sp.y;
+      sp.visible = x < view.x1 && x + sp.width > view.x0 && y < view.y1 && y + sp.height > view.y0;
+    }
+  }
+
+  private bake(s: Scene): void {
+    if (this.baked.has(s.board) || !this.renderer) return;
+    const built = this.section(s.board, s.look, { rot: s.rot, ou: 0, ov: 0 });
+    const c = new Container();
+    c.sortableChildren = true;
+    c.addChild(...built.tiles);
+    const bounds = c.getLocalBounds();
+    const tex = this.renderer.generateTexture({ target: c, resolution: 1 });
+    c.destroy({ children: true });
+    for (const x of built.tex) x.destroy(true);
+    this.baked.set(s.board, { tex, x: bounds.minX, y: bounds.minY });
+    // (the oldest are let go once there are too many)
+    while (this.baked.size > BAKED_MAX) {
+      const [old, b] = this.baked.entries().next().value!;
+      this.sceneryOf.get(old)?.destroy();
+      this.sceneryOf.delete(old);
+      b.tex.destroy(true);
+      this.baked.delete(old);
+    }
+  }
+
+  private place(s: Scene): void {
+    const b = this.baked.get(s.board);
+    if (!b) return;
+    let sp = this.sceneryOf.get(s.board);
+    if (!sp) {
+      sp = new Sprite(b.tex);
+      this.sceneryOf.set(s.board, sp);
+    }
+    // (a section further off than the host goes behind it, any other in front; among themselves, by their middles' depth)
+    const [w, d] = footDims(s.rot);
+    const layer = liesBehind(s.rot, s.ou, s.ov, this.rot) ? this.sceneryBack : this.scenery;
+    if (sp.parent !== layer) layer.addChild(sp);
+    sp.zIndex = (s.ou + s.ov) * 2 + w + d;
+    const [ox, oy] = rawAt(s.ou, s.ov, 0);
+    sp.position.set(ox + b.x, oy + b.y);
+  }
+
+  /** The tiles of a board, laid as the frame says (turned, and its footprint's corner some tiles from the origin). */
+  private section(b: Board, look: Look, f: Frame): Built {
+    const tiles: Container[] = [];
+    const marks: Graphics[] = [];
+    const tex: Texture[] = [];
     for (let v = 0; v < b.d; v++)
       for (let u = 0; u < b.w; u++) {
         const t = tileAt(b, u, v)!;
-        const [x, y] = at(u, v, t.h);
+        const [x, y] = project(f, u, v, t.h);
         const tile = new Container();
-        tile.zIndex = depth(u, v);
-        const col = new Sprite(this.column(t, u, v, b.area));
+        tile.zIndex = depthIn(f, u, v);
+        const ct = this.column(t, u, v, b.area, !!look.boss);
+        tex.push(ct);
+        const col = new Sprite(ct);
         col.position.set(x - TW / 2, y - TH / 2);
         tile.addChild(col);
         const mark = new Graphics();
         mark.position.set(x, y);
         tile.addChild(mark);
-        this.marks.push(mark);
+        marks.push(mark);
         const set = art?.areas[b.area];
         if (t.rock && set) {
           const tex = set.boulders[t.deco % set.boulders.length];
@@ -123,8 +313,9 @@ export class BoardView {
           s.position.set(x + ((t.deco >> 3) % 2 ? 12 : -12), y - 5);
           tile.addChild(s);
         }
-        this.root.addChild(tile);
+        tiles.push(tile);
       }
+    return { tiles, marks, tex };
   }
 
   /** Light a tile (or clear it). */
@@ -145,16 +336,18 @@ export class BoardView {
   }
 
   /** One tile's column: its top laid on the diamond, its two sides down to the foot. */
-  private column(t: Tile, u: number, v: number, area: Area): Texture {
+  private column(t: Tile, u: number, v: number, area: Area, boss = false): Texture {
     const set = art?.areas[area];
-    const deep = t.h * HH + FOOT;
+    // (a boss arena stands on a plinth one step deeper)
+    const deep = t.h * HH + FOOT + (boss ? HH : 0);
     const c = document.createElement('canvas');
     c.width = TW;
     c.height = TH + deep;
     const g = c.getContext('2d')!;
     g.imageSmoothingEnabled = false;
-    const stony = t.h >= STONY;
-    const lip = LIP[area][stony ? 1 : 0];
+    // (a boss arena is all flagstone, with a gilded lip)
+    const stony = t.h >= STONY || boss;
+    const lip = boss ? BOSS_LIP : LIP[area][stony ? 1 : 0];
     const face = (pts: [number, number][], fill: string | CanvasPattern) => {
       g.fillStyle = fill;
       g.beginPath();
@@ -254,7 +447,7 @@ export class BoardView {
       g.fillRect(0, 0, TW, TH);
     }
     g.restore();
-    g.strokeStyle = t.ground ? RIM[t.ground] : 'rgba(20,14,8,0.35)';
+    g.strokeStyle = t.ground ? RIM[t.ground] : boss ? 'rgba(255,226,140,0.75)' : 'rgba(20,14,8,0.35)';
     g.lineWidth = t.ground && t.ground !== 'tall' ? 2 : 1;
     g.beginPath();
     g.moveTo(TW / 2, 0.5);

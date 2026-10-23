@@ -7,28 +7,28 @@ import { spellIconHtml } from './spellIcons';
 import { budgetOf, equipBlock, equipSpell, LOADOUT_SIZE, powerOf, SPELLS, SPELL_IDS, unequipSpell, unlockSpell, type SpellId, type SpellMeta } from './sim/spells';
 
 const CSS = `
-#spellbook { position: fixed; inset: 0; z-index: 8; display: flex; flex-direction: column; gap: 10px; padding: calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 10px); background: rgba(24, 12, 8, 0.97); overflow-y: auto; touch-action: pan-y; color: #f3e6d0; }
+#spellbook { position: fixed; inset: 0; z-index: 8; display: flex; flex-direction: column; gap: 10px; padding: calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 10px); background: rgb(var(--s1-rgb) / 0.97); overflow-y: auto; touch-action: pan-y; color: var(--e10); }
 #spellbook[hidden] { display: none; }
 #spellbook header { display: flex; align-items: center; gap: 10px; }
-#spellbook h2 { margin: 0; flex: 1; font-size: 20px; color: var(--gold, #f0c060); }
+#spellbook h2 { margin: 0; flex: 1; font-size: 20px; color: var(--gold, var(--e7)); }
 .sbBody { display: flex; flex-direction: column; gap: 8px; max-width: 480px; width: 100%; margin: 0 auto; }
 .sbMeter { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-.sbMeter i { flex: 1; height: 10px; background: #2a1a10; border: 1px solid #5a3a22; border-radius: 5px; overflow: hidden; }
-.sbMeter i span { display: block; height: 100%; background: linear-gradient(#ffd27a, #d6903a); }
-.sbMeter.full i span { background: linear-gradient(#ff9a7a, #d6523a); }
+.sbMeter i { flex: 1; height: 10px; background: var(--s3); border: 1px solid var(--s7); border-radius: 5px; overflow: hidden; }
+.sbMeter i span { display: block; height: 100%; background: linear-gradient(var(--e8), var(--e5)); }
+.sbMeter.full i span { background: linear-gradient(var(--e8), var(--r4)); }
 .sbSlots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-.sbSlot { min-height: 44px; padding: 6px; border: 1px dashed #5a3a22; border-radius: 6px; background: #2a1a10; color: inherit; font: inherit; font-size: 12px; }
-.sbSlot.on { border-style: solid; border-color: var(--gold, #f0c060); }
-.sbSlot em { display: block; font-style: normal; color: #7cc0ff; font-size: 11px; }
-.sbCard { display: flex; flex-direction: column; gap: 3px; padding: 8px; border: 1px solid #5a3a22; border-radius: 6px; background: #2a1a10; font-size: 12px; }
-.sbCard.on { border-color: var(--gold, #f0c060); }
+.sbSlot { min-height: 44px; padding: 6px; border: 1px dashed var(--s7); border-radius: 6px; background: var(--s3); color: inherit; font: inherit; font-size: 12px; }
+.sbSlot.on { border-style: solid; border-color: var(--gold, var(--e7)); }
+.sbSlot em { display: block; font-style: normal; color: var(--b4); font-size: 11px; }
+.sbCard { display: flex; flex-direction: column; gap: 3px; padding: 8px; border: 1px solid var(--s7); border-radius: 6px; background: var(--s3); font-size: 12px; }
+.sbCard.on { border-color: var(--gold, var(--e7)); }
 .sbCard.locked { opacity: 0.8; }
 .sbCard .top { display: flex; align-items: baseline; gap: 8px; }
 .sbCard .top b { flex: 1; font-size: 14px; }
-.sbCard .stats { color: #7cc0ff; font-size: 11px; }
-.sbCard .text { color: #cdb99a; }
+.sbCard .stats { color: var(--b4); font-size: 11px; }
+.sbCard .text { color: var(--e7); }
 .sbCard button { align-self: flex-end; min-height: 36px; }
-.sbNote { min-height: 15px; font-size: 12px; text-align: center; color: #ff9a7a; }
+.sbNote { min-height: 15px; font-size: 12px; text-align: center; color: var(--e8); }
 `;
 
 let meta: SpellMeta | null = null;

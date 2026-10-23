@@ -9,8 +9,11 @@ import { saveMeta, type Meta } from './sim/meta';
 import { hpShare } from './sim/health';
 import { ELITE_BY_ID, eliteAt } from './sim/elites';
 import {
-  buy, chestLine, choices, clearNode, enterNode, finishMystery, floorOf, hasRoom, hire, inBattle, localTrainXp, NODE_NAMES, openTreasure, REST_HEAL, rest, rowsIn, takeXp, train, trainXp, type MapNode, type NodeKind, type ShopItem, type TowerSummary,
+  buy, chestLine, choices, clearNode, enterNode, finishMystery, setGoing, floorOf, hasRoom, hire, inBattle, localTrainXp, NODE_NAMES, openTreasure, REST_HEAL, rest, rowsIn, takeXp, train, trainXp, type MapNode, type NodeKind, type ShopItem, type TowerSummary,
 } from './sim/tower';
+import { SIDE_BASE, sideSpots } from './sim/calLand';
+import { sideEliteAt } from './sim/elites';
+import { CalMap } from './calMap';
 import { saveSlot, squadLimit, type Run } from './sim/run';
 import { heroLevel } from './sim/climb';
 import { CAL_MAPS } from './sim/calamity';
@@ -74,6 +77,28 @@ export const NODE_INFO: Record<NodeKind, { icon: string; text: string }> = {
 const introSeen = new Set<string>();
 const reduced = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
+/** The first-time line (until a spot has been picked once on this device) tells the player to tap a lit spot. */
+const HINT_KEY = 'lotf-cal-hint';
+const hinted = (): boolean => {
+  try {
+    return localStorage.getItem(HINT_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+const seenHint = (): void => {
+  try {
+    localStorage.setItem(HINT_KEY, '1');
+  } catch {
+    /* no storage: the line shows again */
+  }
+};
+const calHint = (run: Run): string => {
+  const t = run.tower!;
+  const first = !hinted() && t.act === 1 && t.path.length === 0;
+  return first ? 'Tap a lit spot on the road to go there. The fog lifts as you clear it.' : 'Tap a lit spot to go there.';
+};
+
 export class TowerView {
   private root = el('div');
   private run!: Run;
@@ -87,6 +112,9 @@ export class TowerView {
   private introFrame = 0;
   /** The node tapped last, so tapping the same twisted one again does not repeat its reveal. */
   private lastTapped = -1;
+  /** The calamity's land (`calMap.ts`), made when a calamity's map is first drawn, and the width it was laid for. */
+  private cal: CalMap | null = null;
+  private calW = 0;
 
   /** The look of the run's current act or map. */
   private look(): ActLook {
@@ -104,7 +132,12 @@ export class TowerView {
     document.body.append(this.root);
     // (the map's stairs are laid in pixels, so they are laid again if the page changes width)
     window.addEventListener('resize', () => {
-      if (!this.isOpen || !this.run?.tower || this.moving || this.mapWidth() === this.lay.W) return;
+      if (!this.isOpen || !this.run?.tower || this.moving) return;
+      if (this.calamity) {
+        if (this.mapWidth() !== this.calW && !this.card) this.draw();
+        return;
+      }
+      if (this.mapWidth() === this.lay.W) return;
       this.draw();
     });
   }
@@ -128,11 +161,14 @@ export class TowerView {
     this.collectXp();
     this.draw(true);
     const cur = run.tower?.cur;
+    // (a calamity closed mid-walk: the spot it was going to is lit as chosen, the leader there)
+    if (this.calamity && !cur && run.tower?.going !== undefined) this.pickSpot(run.tower.going);
     if (cur && !cur.fight) this.resumeNode();
     else if (run.tower?.offer) this.offerCard();
   }
 
   close(): void {
+    this.cal?.release();
     this.endIntro();
     this.root.hidden = true;
     this.root.replaceChildren();
@@ -148,11 +184,14 @@ export class TowerView {
     this.root.replaceChildren(this.header(), this.mapBox(), this.footer());
     const sc = this.root.querySelector<HTMLElement>('.rtScroll')!;
     // (the map keeps its place while it is redrawn; on opening it scrolls to the row now being picked)
-    requestAnimationFrame(() => {
-      if (!scrollToNow && keep !== undefined) sc.scrollTop = keep;
-      else sc.scrollTop = Math.max(0, (t.at < 0 ? this.lay.start().y : this.lay.rowY(t.row)) - sc.clientHeight * 0.62);
-    });
-    if (!this.card) this.maybeIntro();
+    // (a calamity's land keeps its own camera)
+    if (!this.calamity) {
+      requestAnimationFrame(() => {
+        if (!scrollToNow && keep !== undefined) sc.scrollTop = keep;
+        else sc.scrollTop = Math.max(0, (t.at < 0 ? this.lay.start().y : this.lay.rowY(t.row)) - sc.clientHeight * 0.62);
+      });
+      if (!this.card) this.maybeIntro();
+    }
   }
 
   private header(): HTMLElement {
@@ -228,6 +267,11 @@ export class TowerView {
   private mapBox(): HTMLElement {
     const run = this.run;
     const t = run.tower!;
+    if (this.calamity) {
+      const cal = (this.cal ??= new CalMap({ meta: () => this.hooks.meta(), onSpot: (id) => this.pickSpot(id) }));
+      this.calW = this.mapWidth();
+      return cal.mount(run, this.calW, this.picked);
+    }
     const lay = (this.lay = new Layout(this.mapWidth(), rowsIn(t, t.act)));
     const scroll = el('div', `rtScroll look${this.look().look}`);
     this.root.style.setProperty('--rtBrick', `url(${BRICKS[this.look().look]})`);
@@ -452,7 +496,7 @@ export class TowerView {
   private footer(): HTMLElement {
     const foot = el('footer', 'rtFoot');
     const say = el('p', 'rtSay', this.defaultSay());
-    const go = el('button', 'primary rtGo', 'Climb');
+    const go = el('button', 'primary rtGo', this.calamity ? 'Travel' : 'Climb');
     go.disabled = this.picked < 0;
     go.addEventListener('click', () => this.go());
     foot.append(say, go);
@@ -460,6 +504,7 @@ export class TowerView {
   }
 
   private defaultSay(): string {
+    if (this.calamity) return calHint(this.run);
     const n = choices(this.run).length;
     return n ? 'Pick a glowing node to climb to.' : 'Nothing to pick.';
   }
@@ -477,6 +522,7 @@ export class TowerView {
 
   /** The picked node is lit and the Climb button wakes, without redrawing the map. */
   private markPicked(): void {
+    if (this.calamity) return this.markSpot();
     const nodes = this.root.querySelectorAll<HTMLElement>('.rtNode');
     const map = this.run.tower!.map;
     nodes.forEach((b, i) => b.classList.toggle('picked', map[i].id === this.picked));
@@ -488,11 +534,71 @@ export class TowerView {
     }
   }
 
+  /** The kind of a spot of the calamity's land: a map node's, or a hidden side spot's. */
+  private kindOf(id: number): NodeKind {
+    const run = this.run;
+    return id >= SIDE_BASE ? (sideSpots(run.seed, run.tower!.act, run.tower!.map).find((s) => s.id === id)?.kind ?? 'treasure') : run.tower!.map[id].kind;
+  }
+
+  /** A lit spot of the calamity's land was tapped: it is chosen, and the line under the map says what it is. */
+  private pickSpot(id: number): void {
+    const run = this.run;
+    const t = run.tower!;
+    if (this.moving || this.cal?.walking || !this.cal?.openIds().has(id)) return;
+    this.picked = id;
+    seenHint();
+    const node = id < SIDE_BASE ? t.map[id] : undefined;
+    // (a twist is revealed once as its spot is first tapped)
+    if (node?.twist && id !== this.lastTapped) playTwist(node.twist);
+    this.lastTapped = id;
+    const floor = run.stage;
+    if (id >= SIDE_BASE) {
+      const side = this.kindOf(id);
+      if (side === 'elite') this.sayNode(eliteInfo(sideEliteAt(run.seed, t.act, t.map, id - SIDE_BASE), floor));
+      else this.say('A hidden hoard off the road: gold, and a relic or gear. Optional: you come straight back to the road.');
+    } else {
+      const elite = node!.kind === 'elite' ? eliteAt(run.seed, t.act, t.map, id) : undefined;
+      if (elite) this.sayNode(eliteInfo(elite, floor));
+      else this.say(`Floor ${floor} · ${NODE_NAMES[node!.kind]}: ${NODE_INFO[node!.kind].text}${twistLine(node!.twist)}`);
+    }
+    this.markPicked();
+  }
+
+  private markSpot(): void {
+    this.cal?.setPicked(this.picked);
+    const go = this.root.querySelector<HTMLButtonElement>('.rtGo');
+    if (!go) return;
+    go.disabled = this.picked < 0;
+    if (this.picked < 0) return void (go.textContent = 'Travel');
+    const kind = this.kindOf(this.picked);
+    const side = this.picked >= SIDE_BASE;
+    go.textContent = kind === 'fight' || kind === 'elite' || kind === 'boss' ? (side ? 'Take the detour!' : 'To battle!') : kind === 'recruit' ? 'Meet the recruits' : side ? 'Take the detour' : `Go to the ${NODE_NAMES[kind].toLowerCase()}`;
+  }
+
   private go(): void {
     const run = this.run;
-    if (this.picked < 0 || this.moving || !choices(run).some((n) => n.id === this.picked)) return;
+    const calamity = this.calamity;
+    if (this.picked < 0 || this.moving) return;
+    if (calamity ? !this.cal?.openIds().has(this.picked) : !choices(run).some((n) => n.id === this.picked)) return;
     const id = this.picked;
-    this.climbTo(id, () => {
+    const way = (arrive: () => void) => {
+      if (!calamity) return this.climbTo(id, arrive);
+      // (the squad's leader walks the road to the spot, the camera with it; a tap skips it. The walk is saved as begun: closed mid-walk, the game reopens with the leader at the spot and its fight not yet started)
+      const t = run.tower!;
+      if (t.going !== undefined && t.going !== id) {
+        t.going = undefined;
+        this.cal!.restand();
+      }
+      setGoing(run, id);
+      saveSlot(run);
+      this.moving = true;
+      play('steps');
+      this.cal!.walkTo(id, () => {
+        this.moving = false;
+        arrive();
+      });
+    };
+    way(() => {
       if (!enterNode(run, id)) return this.draw();
       play('summon');
       saveSlot(run);

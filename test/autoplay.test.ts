@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ARMIES, armyCleared, settleWave } from '../src/sim/armies';
-import { AUTO_COUNTS, afterFight, canAutoReplay, maxSpeed, startAuto, stopAuto, tierCleared } from '../src/sim/autoReplay';
+import { AUTO_COUNTS, AUTO_TICKETS, afterFight, canAutoReplay, maxSpeed, readTickets, spendTicket, startAuto, stopAuto, ticketsLeft, tierCleared } from '../src/sim/autoReplay';
 import { autoDeploy, autoEvent, autoFormation, autoRound, gearCount, isBackline } from '../src/sim/autoplay';
 import { canPlace, fight, playOut, startBattle } from '../src/sim/battle';
 import { D, DEPLOY_ROWS, makeBoard, standable, tileAt, type Board } from '../src/sim/board';
@@ -206,4 +206,30 @@ test('settling a wave still pays when it is a replay (the totals count the pay)'
   const first = settleWave(m, id, 1, true, 3);
   const again = settleWave(m, id, 1, true, 3);
   assert.ok(first.crowns > again.crowns && again.crowns > 0);
+});
+
+test('auto runs are limited to AUTO_TICKETS a day, refilled on a new date', () => {
+  const m = startedMeta(5);
+  const day = 20261022;
+  assert.equal(ticketsLeft(m, day), AUTO_TICKETS, 'a save from before the tickets has a full day');
+  for (let i = 0; i < AUTO_TICKETS; i++) assert.ok(spendTicket(m, day));
+  assert.equal(ticketsLeft(m, day), 0);
+  assert.equal(spendTicket(m, day), false, 'none left: nothing spent');
+  assert.equal(m.autoTickets!.used, AUTO_TICKETS);
+  assert.equal(ticketsLeft(m, day + 1), AUTO_TICKETS, 'the next day refills');
+  assert.ok(spendTicket(m, day + 1));
+  assert.equal(ticketsLeft(m, day + 1), AUTO_TICKETS - 1);
+  assert.deepEqual(readTickets({ day: 3, used: 'x' }), undefined);
+  assert.deepEqual(readTickets({ day: 3, used: -2 }), { day: 3, used: 0 });
+});
+
+test('an auto-replay cannot ask for more runs than the day has left', () => {
+  const m = startedMeta(5);
+  const first = ARMIES[0];
+  m.armies[first.id] = { best: 8, won: 8, clears: 1, stars: {} };
+  const day = 20261022;
+  assert.ok(startAuto(m, first.id, 0, 10, day));
+  for (let i = 0; i < 8; i++) spendTicket(m, day);
+  assert.equal(startAuto(m, first.id, 0, 3, day), null, 'two left');
+  assert.ok(startAuto(m, first.id, 0, 1, day));
 });

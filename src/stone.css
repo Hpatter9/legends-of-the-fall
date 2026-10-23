@@ -1,0 +1,22 @@
+/* ===== Stone and iron: the rules the tokens alone can't carry. Loaded last, so it wins over pixel.css and the screens' own CSS. ===== */
+html { background: var(--page); }
+/* panels: the slate page texture inside the iron frame (the frame's own middle is clear) */
+.hmPanel, .hsheet, .evcard, #tip { background: var(--panel-bg); background-clip: padding-box; }
+/* ribbons and headings: pale ink on iron, with a black edge */
+.hmBanner, #hmSub h2, #settings h2, #gacha h2, body #spellbook h2, #party h2, .asRib b, .unlockRib b, #bossCard b, #banner { color: var(--text); text-shadow: 0 2px 0 var(--black); }
+.hmBanner b, .hmBanner span { color: inherit; }
+.rcSheet h3 { background: linear-gradient(var(--s8), var(--s6)); border-top-color: var(--accent); border-bottom-color: var(--s1); color: var(--text); }
+.rcTitle.won, #banner.won { color: var(--accent-hi); }
+.rcTitle.lost { color: var(--danger); }
+/* wells under the bars */
+#mana i, .sbMeter i, #bossBar i, #xp .xprow i, #fightStats .cell i, #collection .bar, .xpbar, .rcBar i { background: var(--s1); }
+.asTier { background: var(--s6); border-color: var(--s1); }
+.asTier.on, .asCounts button.on { background: linear-gradient(var(--e5), var(--e3)); border-color: var(--accent-hi); color: var(--btn-ink); }
+/* a button that is off, whatever later rule sets its ink */
+button:disabled, button.primary:disabled, .hmBig:disabled { color: var(--off-ink); text-shadow: none; }
+/* the tabs that are not showing stay flat on the bar */
+.hmTab { color: var(--text); }
+.hmTab.hero { color: var(--btn-ink); }
+/* the result's line sits on the board's sky: a slate plate behind it keeps it readable */
+#summary { background: rgb(var(--s1-rgb) / 0.82); box-shadow: 0 0 0 2px var(--s7); padding: 6px 10px; color: var(--text); }
+#summary b, #summary em { color: var(--accent-hi); }

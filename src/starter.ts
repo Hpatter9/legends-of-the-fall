@@ -10,26 +10,26 @@ import { portrait } from './render/sheets';
 
 const CSS = `
 #starter { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; gap: 10px; box-sizing: border-box; padding: 14px 14px 12px;
-  background: radial-gradient(ellipse at 50% 0%, #4a2c1c, #1c1410 70%); color: #f3e6c8; overflow-y: auto; image-rendering: pixelated; }
+  background: radial-gradient(ellipse at 50% 0%, var(--s6), var(--s2) 70%); color: var(--e10); overflow-y: auto; image-rendering: pixelated; }
 #starter[hidden] { display: none; }
-#starter h1 { margin: 6px 0 0; font: 900 17px var(--display); letter-spacing: 1px; text-align: center; color: var(--gold-hi, #ffe27a); text-shadow: 0 2px 0 #000; }
-#starter .stSub { margin: 0; font: 400 11px/1.5 var(--body); text-align: center; color: #d8c8a8; max-width: 330px; }
+#starter h1 { margin: 6px 0 0; font: 900 17px var(--display); letter-spacing: 1px; text-align: center; color: var(--gold-hi, var(--e8)); text-shadow: 0 2px 0 var(--black); }
+#starter .stSub { margin: 0; font: 400 11px/1.5 var(--body); text-align: center; color: var(--s13); max-width: 330px; }
 #starter .stPacks { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 380px; flex: 1 1 auto; }
 #starter .stPack { position: relative; display: flex; flex-direction: column; gap: 4px; box-sizing: border-box; padding: 2px 4px 4px; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
   border-style: solid; border-width: 6px; border-radius: 0; background: none; border-image: url(ui/card.png) 3 fill / 6px stretch; }
-#starter .stPack:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+#starter .stPack:focus-visible { outline: 2px solid var(--white); outline-offset: 2px; }
 #starter .stPack.on { border-image-source: url(ui/card-r4.png); }
-#starter .stHead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 2px 2px 0; font: 700 12px var(--display); color: var(--gold-hi, #ffe27a); text-shadow: 0 2px 0 #000; }
-#starter .stHead i { font-style: normal; font-size: 10px; color: #8a7c6c; }
-#starter .stPack.on .stHead i { color: #7cf07c; }
+#starter .stHead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 2px 2px 0; font: 700 12px var(--display); color: var(--gold-hi, var(--e8)); text-shadow: 0 2px 0 var(--black); }
+#starter .stHead i { font-style: normal; font-size: 10px; color: var(--s11); }
+#starter .stPack.on .stHead i { color: var(--g5); }
 #starter .stHero { display: flex; align-items: center; gap: 8px; min-width: 0; }
-#starter .stHero canvas { flex: none; width: 52px; height: 52px; background: radial-gradient(#6b4a2c, #1c1008); border: 2px solid #1a0d07; image-rendering: pixelated; }
+#starter .stHero canvas { flex: none; width: 52px; height: 52px; background: radial-gradient(var(--s8), var(--s1)); border: 2px solid var(--s1); image-rendering: pixelated; }
 #starter .stHero div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-#starter .stHero b { font: 700 12px var(--display); color: #fff; text-shadow: 0 2px 0 #000; overflow-wrap: anywhere; }
-#starter .stHero b em { margin-left: 6px; font: 400 9px var(--body); font-style: normal; letter-spacing: 0.5px; text-transform: uppercase; color: #ffd24a; white-space: nowrap; }
-#starter .stHero span { font: 400 10px/1.35 var(--body); color: #d8c8a8; overflow-wrap: anywhere; }
+#starter .stHero b { font: 700 12px var(--display); color: var(--white); text-shadow: 0 2px 0 var(--black); overflow-wrap: anywhere; }
+#starter .stHero b em { margin-left: 6px; font: 400 9px var(--body); font-style: normal; letter-spacing: 0.5px; text-transform: uppercase; color: var(--e6); white-space: nowrap; }
+#starter .stHero span { font: 400 10px/1.35 var(--body); color: var(--s13); overflow-wrap: anywhere; }
 #starter .stGo { width: 100%; max-width: 380px; flex: none; }
-#starter .stNote { margin: 0; font: 400 9px/1.4 var(--body); text-align: center; color: #a89878; }
+#starter .stNote { margin: 0; font: 400 9px/1.4 var(--body); text-align: center; color: var(--e5); }
 @media (max-height: 800px) { #starter { gap: 6px; padding-top: 10px; } #starter .stPacks { gap: 7px; } #starter .stHero canvas { width: 44px; height: 44px; } }
 `;
 

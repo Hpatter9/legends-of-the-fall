@@ -8,11 +8,16 @@ import type { Meta } from './sim/meta';
 import { heroRig, lookKey } from './render/awakenRig';
 import type { Army } from './sim/armies';
 import { sheetInfo } from './render/sheets';
+import { canvasOf, ROWS, shrinkRig, type Small } from './render/smallRig';
 import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
 import { EMOTE_NAMES, EMOTES } from './tavern';
-import { BOARD, campLayout, groundCells, starsFor, TABLE, type Camp, type Piece } from './render/campSpots';
+import { campLayout, PLACE, groundCells, starsFor, TABLE, type Camp, type Piece } from './render/campSpots';
+import portalUrl from './art/calmap/portal.png';
 import gateUrl from './art/camp/gate.png';
+import towerUrl from './art/camp/tower.png';
+import towerLockedUrl from './art/camp/tower_locked.png';
+import boardUrl from './art/camp/board.png';
 import tent1Url from './art/camp/tent1.png';
 import tent2Url from './art/camp/tent2.png';
 import standardUrl from './art/camp/standard.png';
@@ -37,7 +42,7 @@ import rocksUrl from './art/castle/rocks.png';
 import grassUrl from './art/castle/grass_tile.png';
 
 const ART: Record<string, string> = {
-  gate: gateUrl, tent1: tent1Url, tent2: tent2Url, standard: standardUrl, skins: skinsUrl, torch: torchUrl, dirt_tile: dirtUrl,
+  gate: gateUrl, tower: towerUrl, tower_locked: towerLockedUrl, board: boardUrl, tent1: tent1Url, tent2: tent2Url, standard: standardUrl, skins: skinsUrl, torch: torchUrl, dirt_tile: dirtUrl,
   sky: skyUrl, cloud1: cloud1Url, cloud2: cloud2Url, night: nightUrl,
   wall: wallUrl, campfire: campfireUrl, rack: rackUrl, barrels: barrelsUrl, crates: cratesUrl, cart: cartUrl, woodpile: woodpileUrl, hay: hayUrl, pine: pineUrl, bush: bushUrl, rocks: rocksUrl, grass_tile: grassUrl,
 };
@@ -58,80 +63,6 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 };
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 const chance = (p: number) => Math.random() < p;
-const canvasOf = (w: number, h: number): HTMLCanvasElement => {
-  const c = el('canvas');
-  c.width = w;
-  c.height = h;
-  return c;
-};
-
-// ---- heroes: the idle, walk and attack rows shrunk by a whole number so a hero is about 52 scene pixels tall ----
-
-/** How tall a hero's figure is drawn, near enough, in scene pixels (the sheet is shrunk by the whole number that comes closest). */
-const HERO_PX = 52;
-interface Small {
-  c: HTMLCanvasElement;
-  fw: number;
-  fh: number;
-  counts: Record<string, number>;
-  rows: string[];
-  facesRight: boolean;
-  figure: number;
-}
-const ROWS = ['idle', 'walk', 'attack'];
-
-function shrinkRig(rig: NonNullable<ReturnType<typeof sheetInfo>>, px = HERO_PX): Small {
-  const n = Math.max(1, Math.round(rig.figure / px));
-  // (a tiny figure is drawn twice as big instead, a whole number again)
-  const up = n === 1 && rig.figure < px * 0.7 ? 2 : 1;
-  const fw = Math.floor(rig.w / n);
-  const fh = Math.floor(rig.h / n);
-  const rows = ROWS.map((r) => (rig.rows.includes(r) ? r : 'idle'));
-  const counts = rows.map((r) => rig.counts[r] ?? 1);
-  const src = canvasOf(rig.img.width, rig.img.height);
-  const sg = src.getContext('2d', { willReadFrequently: true })!;
-  sg.drawImage(rig.img, 0, 0);
-  const out = canvasOf(fw * up * Math.max(...counts), fh * up * ROWS.length);
-  const og = out.getContext('2d')!;
-  rows.forEach((r, ri) => {
-    const row = rig.rows.indexOf(r);
-    for (let i = 0; i < counts[ri]; i++) {
-      const data = sg.getImageData(i * rig.w, row * rig.h, rig.w, rig.h).data;
-      const dst = og.createImageData(fw, fh);
-      for (let oy = 0; oy < fh; oy++)
-        for (let ox = 0; ox < fw; ox++) {
-          let a = 0;
-          let rr = 0;
-          let gg = 0;
-          let bb = 0;
-          for (let y = 0; y < n; y++)
-            for (let x = 0; x < n; x++) {
-              const k = ((oy * n + y) * rig.w + ox * n + x) * 4;
-              const al = data[k + 3];
-              a += al;
-              rr += data[k] * al;
-              gg += data[k + 1] * al;
-              bb += data[k + 2] * al;
-            }
-          const o = (oy * fw + ox) * 4;
-          if (a >= 255 * n * n * 0.5) {
-            dst.data[o] = rr / a;
-            dst.data[o + 1] = gg / a;
-            dst.data[o + 2] = bb / a;
-            dst.data[o + 3] = 255;
-          }
-        }
-      if (up === 1) og.putImageData(dst, i * fw, ri * fh);
-      else {
-        const tmp = canvasOf(fw, fh);
-        tmp.getContext('2d')!.putImageData(dst, 0, 0);
-        og.imageSmoothingEnabled = false;
-        og.drawImage(tmp, 0, 0, fw, fh, i * fw * up, ri * fh * up, fw * up, fh * up);
-      }
-    }
-  });
-  return { c: out, fw: fw * up, fh: fh * up, counts: Object.fromEntries(ROWS.map((r, i) => [r, counts[i]])), rows: ROWS, facesRight: rig.facesRight, figure: Math.round((rig.figure * up) / n) };
-}
 
 type Mood = 'idle' | 'out' | 'pause' | 'back' | 'flourish';
 
@@ -184,9 +115,13 @@ export class CampScene {
   readonly root = el('div', 'cpWrap');
   /** Where the chest stash module mounts: a box over the cart's bed on the left of the scene (placed and sized by this scene; the stash fills it). */
   readonly stashMount = el('div', 'cpStash');
-  /** The two notice boards' slots: the page hangs its Daily and Tower cards in these (each is the board's box). */
+  /** The three places' tap boxes (picture and name plate together): the page puts a button in each. The portal turns in the Calamity's. */
   readonly dailySlot = el('div', 'cpSlot');
   readonly towerSlot = el('div', 'cpSlot');
+  readonly calamitySlot = el('div', 'cpSlot cpPortalSlot');
+  private portalFx = el('div', 'calPortal');
+  /** The Tower is shut (not open yet): its picture is the dimmed, chained one. */
+  private towerLocked = false;
   /** The table's plate: the next army's name and boss; a tap opens the party. */
   private plate = el('button', 'cpPlate');
   private canvas = el('canvas', 'cpRoom');
@@ -221,7 +156,9 @@ export class CampScene {
     private onParty: () => void,
   ) {
     this.plate.addEventListener('click', () => this.onParty());
-    this.root.append(this.canvas, this.stashMount, this.dailySlot, this.towerSlot, this.plate);
+    this.portalFx.style.setProperty('--calPortal', `url(${portalUrl})`);
+    this.calamitySlot.append(this.portalFx);
+    this.root.append(this.canvas, this.stashMount, this.dailySlot, this.towerSlot, this.calamitySlot, this.plate);
     this.ctx.imageSmoothingEnabled = false;
     onSettings((s) => (this.saver = s.saver));
     window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
@@ -238,8 +175,12 @@ export class CampScene {
   }
 
   /** Show the party (hero kinds, the best first) at their ranks, and the next army on the table. Keeps the heroes already there as they are. */
-  update(meta: Meta, party: string[], next: CampArmy | null): void {
+  update(meta: Meta, party: string[], next: CampArmy | null, towerLocked = false): void {
     this.meta = meta;
+    if (towerLocked !== this.towerLocked) {
+      this.towerLocked = towerLocked;
+      if (art && this.camp) this.front = this.paintFront(art, this.camp);
+    }
     this.party = party;
     for (const k of [...this.actors.keys()]) if (!party.includes(k)) this.actors.delete(k);
     const changed = next?.army.id !== this.next?.army.id || next?.boss !== this.next?.boss;
@@ -331,7 +272,7 @@ export class CampScene {
     this.canvas.style.left = `${(bw - w * this.unit) / 2}px`;
     this.ctx.imageSmoothingEnabled = false;
     this.paintBack(art, camp);
-    this.paintFront(art, camp);
+    this.front = this.paintFront(art, camp);
     this.dusk = this.paintDusk(camp);
     this.glow = this.paintGlow(camp);
     this.flame = this.cutFlame(art);
@@ -355,8 +296,14 @@ export class CampScene {
     const u = this.unit;
     const box = (e: HTMLElement, r: { x: number; y: number; w: number; h: number }) => Object.assign(e.style, this.at(r.x, r.y), { width: `${r.w * u}px`, height: `${r.h * u}px` });
     box(this.stashMount, camp.stash);
-    box(this.dailySlot, camp.boards.daily);
-    box(this.towerSlot, camp.boards.tower);
+    box(this.dailySlot, camp.places.daily.box);
+    box(this.towerSlot, camp.places.tower.box);
+    box(this.calamitySlot, camp.places.calamity.box);
+    // (the portal's picture sits at the top of its tap box; `--pu` is the css pixels in a scene pixel)
+    const pu = this.unit;
+    this.calamitySlot.style.setProperty('--pu', String(pu));
+    Object.assign(this.portalFx.style, { left: `${((camp.places.calamity.box.w - PLACE.portal) / 2) * pu}px`, top: '0px', width: `${PLACE.portal * pu}px`, height: `${PLACE.portal * pu}px` });
+    for (const e of [this.dailySlot, this.towerSlot, this.calamitySlot]) e.style.setProperty('--plateH', `${PLACE.plate.h * pu}px`);
     this.layPlate();
   }
 
@@ -393,8 +340,8 @@ export class CampScene {
     this.back = c;
   }
 
-  /** The ground, the wall, the gate and the boards' posts: everything that is behind the fire and never moves (the sky shows through above). */
-  private paintFront(a: Art, camp: Camp): void {
+  /** The ground, the wall, the gate, the Tower and the Daily board: everything that is behind the fire and never moves (the sky shows through above). */
+  private paintFront(a: Art, camp: Camp): HTMLCanvasElement {
     const c = canvasOf(camp.w, camp.h);
     const g = c.getContext('2d')!;
     g.imageSmoothingEnabled = false;
@@ -416,25 +363,10 @@ export class CampScene {
     const wall = [...camp.wall].sort((p, q) => p.y - q.y || Math.abs(q.x - camp.cx) - Math.abs(p.x - camp.cx));
     for (const p of wall) this.piece(g, a, p);
     this.piece(g, a, { sprite: 'gate', x: camp.cx, y: camp.gateY });
-    for (const b of [camp.boards.daily, camp.boards.tower]) this.posts(g, b.x, b.y + b.h);
-    this.front = c;
-  }
-
-  /** Two wooden posts under a notice board, from its bottom edge down to the ground. */
-  private posts(g: CanvasRenderingContext2D, x: number, top: number): void {
-    const foot = top + BOARD.post;
-    g.fillStyle = 'rgba(8, 3, 1, 0.35)';
-    g.fillRect(x + 2, foot - 1, BOARD.w - 4, 3);
-    for (const px of [x + 8, x + BOARD.w - 14]) {
-      g.fillStyle = '#2a160a';
-      g.fillRect(px, top - 2, 6, BOARD.post + 2);
-      g.fillStyle = '#7a5230';
-      g.fillRect(px + 1, top - 2, 3, BOARD.post + 1);
-      g.fillStyle = '#a87a46';
-      g.fillRect(px + 1, top - 2, 1, BOARD.post + 1);
-      g.fillStyle = '#4a4036';
-      g.fillRect(px - 1, foot - 3, 8, 3);
-    }
+    // (the Tower and the Daily board stand on the ground at the camp's edges; the portal is the page's)
+    this.piece(g, a, { sprite: this.towerLocked ? 'tower_locked' : 'tower', x: camp.places.tower.x, y: camp.places.tower.foot });
+    this.piece(g, a, { sprite: 'board', x: camp.places.daily.x, y: camp.places.daily.foot });
+    return c;
   }
 
   private piece(g: CanvasRenderingContext2D, a: Art, p: Piece): void {

@@ -7,6 +7,7 @@
 // Pure rules: no Pixi, no DOM. The renderer reads the battle and the events each tick returns.
 
 import { boardOk, D, DEPLOY_ROWS, GROUND_COST, LAVA_BURN, makeBoard, sightClear, standable, tileAt, type Area, type At, type Board } from './board';
+import { cloneBoard } from './chain';
 import { twistBoard, type TwistFx } from './twists';
 import { firstStep, walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
@@ -260,6 +261,8 @@ export interface Stage {
   relics?: { team: TraitEffects; first?: number; revive?: boolean; set?: SetHooks };
   /** The land the fight is on (`areaFor` in run.ts); the highlands when unset. */
   area?: Area;
+  /** The board to fight on, ready made (an army's section of its long map, `chain.ts`); the seed's own when unset. It is copied. */
+  board?: Board;
   /** The floor's twist (the tower's, `twists.ts`); none when unset. */
   twist?: TwistFx;
   /** Every hero's healing is multiplied by this (a calamity ascension). */
@@ -300,7 +303,7 @@ export function canStrike(board: Board, def: UnitDef, from: At, to: At): boolean
 
 /** A fresh fight on the seed's board: the foes of `band` (a band's name in `FOE_BANDS`, or the foes' ids themselves) in their rows, no heroes placed yet. */
 export function startBattle(seed: number, band: string | readonly string[] = 'skeletons', stage: Stage = {}): Battle {
-  const board = makeBoard(seed, stage.area);
+  const board = stage.board ? cloneBoard(stage.board) : makeBoard(seed, stage.area);
   const tw = stage.twist;
   if (tw) twistBoard(board, tw, seed);
   const b: Battle = { seed, board, units: [], phase: 'deploy', t: 0, rng: mixSeed(seed, 0xf167), pending: [], skillRng: mixSeed(seed, 0x5c111), zones: [], nextId: 1, spells: freshSpells(tw?.mana ? (stage.mana ?? 1) * tw.mana : stage.mana) };

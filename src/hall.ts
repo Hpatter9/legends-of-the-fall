@@ -35,14 +35,14 @@ const CSS = `
 .hm-recruit, .hm-spells { padding: 0; overflow: hidden; }
 .hlWrap { position: absolute; inset: 0; overflow: hidden; background: #140c1c; }
 .hlRoom { position: absolute; top: 0; image-rendering: pixelated; }
-.hlCount { position: absolute; left: 8px; top: 8px; padding: 3px 9px 4px; font: 700 12px var(--body); letter-spacing: 0.5px; color: var(--gold-hi); text-shadow: 0 1px 0 #000; background: rgba(20, 10, 30, 0.85); box-shadow: 0 0 0 2px #6a4a9a, 0 0 0 4px #1a0d2a; pointer-events: none; }
-.hlCount small { display: block; font-size: 9px; font-weight: 400; letter-spacing: 0; color: #b9a8d8; }
+.hlCount { position: absolute; left: 8px; top: 8px; padding: 3px 9px 4px; font: 700 12px var(--body); letter-spacing: 0.5px; color: var(--gold-hi); text-shadow: 0 1px 0 var(--black); background: rgb(var(--s2-rgb) / 0.85); box-shadow: 0 0 0 2px var(--p2), 0 0 0 4px var(--p0); pointer-events: none; }
+.hlCount small { display: block; font-size: 9px; font-weight: 400; letter-spacing: 0; color: var(--p4); }
 .hlOdds { position: absolute; right: 10px; top: 8px; min-height: 36px; padding: 0 8px; font-size: 12px; }
 .hlLow { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 0 12px 10px; pointer-events: none; }
 .hlLow > * { pointer-events: auto; }
-.hlScroll { width: 100%; max-width: 360px; padding: 6px 10px 7px; text-align: center; color: #3a2210; background: #e6d2a0; box-shadow: 0 -2px 0 #3a2210, 0 2px 0 #3a2210, -2px 0 0 #3a2210, 2px 0 0 #3a2210, inset 0 0 0 2px #c4a468, 0 4px 0 2px rgba(0, 0, 0, 0.4); }
+.hlScroll { width: 100%; max-width: 360px; padding: 6px 10px 7px; text-align: center; color: var(--text); background: var(--s4); box-shadow: 0 -2px 0 var(--s1), 0 2px 0 var(--s1), -2px 0 0 var(--s1), 2px 0 0 var(--s1), inset 0 0 0 2px var(--s10), 0 4px 0 2px rgb(var(--black-rgb) / 0.4); }
 .hlScroll b { display: block; font: 700 12px var(--body); letter-spacing: 0.3px; }
-.hlScroll b em { font-style: normal; color: #7a2a1c; }
+.hlScroll b em { font-style: normal; color: var(--accent-hi); }
 .hlScroll .odds { display: block; margin-top: 3px; font: 400 10px var(--body); font-style: normal; }
 .hlBar { display: flex; gap: 10px; width: 100%; max-width: 360px; }
 .hlBar button { flex: 1; font-size: 15px; line-height: 1.15; padding: 4px 0; }
@@ -50,12 +50,12 @@ const CSS = `
 .hlSkip { position: absolute; inset: 0; z-index: 6; display: none; touch-action: manipulation; }
 .hlSkip.on { display: block; }
 .hlOver { position: absolute; left: 0; right: 0; top: 52px; z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; text-align: center; }
-.hlRibbon { width: 100%; padding: 5px 0 6px; font: 700 24px var(--display); letter-spacing: 6px; text-indent: 6px; color: #2a1404; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5); background: linear-gradient(#ffe9a0, #f0b44a 55%, #c27a1c); box-shadow: 0 -3px 0 #3a2210, 0 3px 0 #3a2210, 0 0 22px rgba(255, 200, 80, 0.7); }
-.hlBanner { padding: 2px 10px 3px; font: 700 13px var(--display); letter-spacing: 3px; text-indent: 3px; color: #0e2a0e; background: #7cf07c; box-shadow: 0 0 0 2px #1a3a1a, 0 0 14px rgba(124, 240, 124, 0.7); }
-.hlCard { padding: 4px 14px 5px; background: rgba(14, 6, 24, 0.82); box-shadow: 0 0 0 2px #b9a8d8, 0 0 0 4px #140a20; }
-.hlCard b { display: block; font: 700 18px var(--display); color: #fff; text-shadow: 0 1px 0 #000; }
-.hlCard em { display: block; font: 400 11px var(--body); font-style: normal; color: #d8c8f0; }
-.hlCard small { display: block; margin-top: 2px; font: 700 12px var(--body); color: #7cf07c; }
+.hlRibbon { width: 100%; padding: 5px 0 6px; font: 700 24px var(--display); letter-spacing: 6px; text-indent: 6px; color: var(--btn-ink); text-shadow: 0 1px 0 rgb(var(--white-rgb) / 0.5); background: linear-gradient(var(--e9), var(--e6) 55%, var(--e3)); box-shadow: 0 -3px 0 var(--s3), 0 3px 0 var(--s3), 0 0 22px rgb(var(--e7-rgb) / 0.7); }
+.hlBanner { padding: 2px 10px 3px; font: 700 13px var(--display); letter-spacing: 3px; text-indent: 3px; color: var(--g0); background: var(--g5); box-shadow: 0 0 0 2px var(--g0), 0 0 14px rgb(var(--g5-rgb) / 0.7); }
+.hlCard { padding: 4px 14px 5px; background: rgb(var(--s1-rgb) / 0.82); box-shadow: 0 0 0 2px var(--p4), 0 0 0 4px var(--s2); }
+.hlCard b { display: block; font: 700 18px var(--display); color: var(--white); text-shadow: 0 1px 0 var(--black); }
+.hlCard em { display: block; font: 400 11px var(--body); font-style: normal; color: var(--p5); }
+.hlCard small { display: block; margin-top: 2px; font: 700 12px var(--body); color: var(--g5); }
 `;
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
