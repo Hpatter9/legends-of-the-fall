@@ -12,7 +12,7 @@ import { XP_PER_DAMAGE, XP_PER_HEALING, XP_TAKE_PART, XP_WIN, levelBoost, levelO
 /** What a hero's run-level XP is worth on top of the lasting rate: the climb is tuned on this. */
 export const CLIMB_XP = 4;
 /** The same for a Calamity: its heroes level much faster than the spire's, so a full clear ends with the starting hero well past level 20 (`docs/notes/balance-pass.md`). */
-export const CALAMITY_XP = 15;
+export const CALAMITY_XP = 10;
 /** A hired hero joins with this share of the roster's mean XP, so it is not left a level-1 passenger behind a levelled squad. */
 export const HIRE_CATCH_UP = 0.7;
 
