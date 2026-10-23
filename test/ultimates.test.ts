@@ -8,7 +8,7 @@ import { enterPhase } from '../src/sim/bossPhases';
 import { ALL_HEROES } from '../src/sim/units';
 import { gradeBoost } from '../src/sim/run';
 
-// The eight heroes that have had an ultimate from the start (their kits' identity); every other hero's is unlocked at level 15.
+// The eight heroes that have had an ultimate from the start (their kits' identity); every other hero's is unlocked at level 30.
 const FIRST_EIGHT = ['demonSwordsman', 'gorgon', 'karasu', 'kitsune', 'sage', 'samuraiCommander', 'tyrant', 'yamabushi'];
 const OTHERS = ALL_HEROES.filter((k) => !FIRST_EIGHT.includes(k));
 
@@ -44,9 +44,9 @@ test('every hero has an ultimate, and it charges slower than the skill', () => {
   assert.equal(ultimateReady(u), false);
 });
 
-test('all 45 ultimates unlock at level 15, the first eight\'s too', () => {
+test('all 45 ultimates unlock at level 30, the first eight\'s too', () => {
   for (const k of ALL_HEROES) assert.equal(KITS[k].ultimate!.unlock, ULT_LEVEL, k);
-  assert.equal(ULT_LEVEL, 15);
+  assert.equal(ULT_LEVEL, 30);
   const b = arena();
   const first = addUnit(b, 'kitsune', 1, 8);
   assert.equal(ultimateOf(first), undefined, 'a level 1 Kitsune has no ultimate yet');

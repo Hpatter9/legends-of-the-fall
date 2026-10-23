@@ -18,6 +18,7 @@ import { readTalents, type KindTalents } from './talents';
 import { AWAKEN_MULT } from './awakenRules';
 import { readAwakened } from './awaken';
 import { readCodex, readCodexClaimed, type CodexRecord } from './codex';
+import { readCombosSeen } from './combos';
 import { readTickets } from './autoReplay';
 import { drawKind, giveShards } from './unlock';
 import { DUPLICATE_SHARDS, PULL_HEROES } from './unlockRules';
@@ -98,6 +99,8 @@ export interface Meta {
   /** The codex: the foe kinds met and the kills per kind (`codex.ts`; saves from before have none), and the milestone rewards claimed. */
   codex?: CodexRecord;
   codexClaimed?: string[];
+  /** The five-hero combos seen in a fight (`combos.ts`; the codex lists a combo once it has been seen). Saves from before have none. */
+  combosSeen?: string[];
   /** The auto runs spent on a date (yyyymmdd; `autoReplay.ts`, `AUTO_TICKETS` a day). Saves from before have none. */
   autoTickets?: { day: number; used: number };
   /** Chests earned from the armies' star milestones and not yet opened, oldest first (`armyStars.ts`). */
@@ -346,6 +349,8 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       // (saves from before the codex have none)
       m.codex = readCodex(m.codex);
       m.codexClaimed = readCodexClaimed(m.codexClaimed) ?? [];
+      // (saves from before the combos have none seen)
+      m.combosSeen = readCombosSeen(m.combosSeen);
       // (saves from before the auto tickets have none: a full day's worth)
       m.autoTickets = readTickets(m.autoTickets);
       if (!m.autoTickets) delete m.autoTickets;

@@ -99,7 +99,7 @@ export const HERO_STORY: Record<string, string> = {
   mummy: 'Wrapped in a hundred years of linen and a grudge. His bandages cling to the foe, and the foe finds it hard to run.',
   buccaneer: 'She hooks a shooter in with a grin and cuts it down before the grin fades. She has never lost a hat to a foe.',
   wolfBard: 'A dirge for the foes and a drumbeat for his friends. The wolves howl along, and nobody has the heart to tell him it is flat.',
-  beastmaster: 'The wolves came when she whistled, and have never left. A whip to slow the foe, and two dire wolves to finish him.',
+  beastmaster: 'The wolves came when she whistled, and have never left. A whip to slow the foe, and two wolves to finish him.',
   kraken: 'He sailed with the kraken and was spat out when it grew tired of him. The undertow follows him on dry land, and drags foes in close.',
   lancer: 'A charge, a lance and a good horse, and the horse is a far better listener than the king. Once he has thundered through the line, he rides faster for it.',
   reaper: 'Death is a trade like any other, and she keeps to the late shift. Anything that is nearly dead belongs to her.',

@@ -12,6 +12,8 @@ import wizard from '../art/units/fire_wizard.png';
 import skeleton from '../art/units/skeleton_warrior.png';
 import spearman from '../art/units/skeleton_spearman.png';
 import boneArcher from '../art/units/skeleton_archer.png';
+import wolfGrey from '../art/units/wolf_grey.png';
+import wolfBlack from '../art/units/wolf_black.png';
 import werewolfBlack from '../art/units/werewolf_black.png';
 import werewolfRed from '../art/units/werewolf_red.png';
 import werewolfWhite from '../art/units/werewolf_white.png';
@@ -130,6 +132,8 @@ const URLS: Record<string, string> = {
   skeleton_warrior: skeleton,
   skeleton_spearman: spearman,
   skeleton_archer: boneArcher,
+  wolf_grey: wolfGrey,
+  wolf_black: wolfBlack,
   werewolf_black: werewolfBlack,
   werewolf_red: werewolfRed,
   werewolf_white: werewolfWhite,
