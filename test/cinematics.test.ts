@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FEET, fillLine, holdOf, lineSeconds, sceneSeconds, SCENES, SCENE_ORDER, STAGE_H, STAGE_W, type Scene } from '../src/sim/sceneScripts';
+import { FEET, fillLine, holdOf, lineLen, lineSeconds, sceneSeconds, SCENES, SCENE_ORDER, STAGE_H, STAGE_W, type Scene } from '../src/sim/sceneScripts';
 import { castOf, dueScene, kindOf, markSeen, namesOf, readScenes, seenScene } from '../src/sim/sceneRules';
 import { actorsAt, beats, BASE_SCALE, cameraAt, keepInside, lineNow, lineStart, lookAt, next, scaleOf, shotLength, start, tick, typedChars, TYPE_RATE } from '../src/render/sceneClock';
 import { loadMeta, newMeta, pickStarter, saveMeta } from '../src/sim/meta';
@@ -12,7 +12,7 @@ const store = () => {
   return { setItem: (k: string, v: string) => void (data[k] = v), getItem: (k: string) => data[k] ?? null, data };
 };
 
-const shotSeconds = (s: Scene['shots'][number]): number => (s.lines?.reduce((n, l) => n + lineSeconds(l.text), 0) ?? 0) + holdOf(s);
+const shotSeconds = (s: Scene['shots'][number]): number => (s.lines?.reduce((n, l) => n + lineLen(l), 0) ?? 0) + holdOf(s);
 
 /** A tiny scene for the clock: one actor walks in, then a line, then a hold. */
 const mini: Scene = {
@@ -31,9 +31,11 @@ test('every scene is 10 to 40 seconds as played untouched (a cut-in 2 to 6), wit
   for (const id of SCENE_ORDER) {
     const secs = sceneSeconds(SCENES[id]);
     const short = !!SCENES[id].short;
+    const oath = SCENES[id].family === 'oath';
     // (a slowed shot takes longer than its beats: the cut-in's real length counts it)
     const real = SCENES[id].shots.reduce((n, s) => n + (shotSeconds(s) / (s.slow ?? 1)), 0);
     if (short) assert.ok(real >= 2 && real <= 6, `${id}: ${real.toFixed(1)} s`);
+    else if (oath) assert.ok(secs >= 8 && secs <= 12, `${id}: ${secs.toFixed(1)} s`);
     else assert.ok(secs >= 10 && secs <= 40, `${id}: ${secs.toFixed(1)} s`);
     for (const s of SCENES[id].shots) for (const l of s.lines ?? []) assert.ok(l.text.length <= 100, `${id}: ${l.text}`);
   }
@@ -307,7 +309,7 @@ test('the castle, the tower and the firsts each have their scene', () => {
   for (const site of [...BUILDING_IDS, 'chapel']) assert.equal(dueScene(m, { kind: 'castle', site }), `castle:${site}`);
   for (const floor of [10, 25, 50]) assert.equal(dueScene(m, { kind: 'spire', floor }), `spire:${floor}`);
   assert.equal(dueScene(m, { kind: 'spire', floor: 11 }), null);
-  const firsts: Moment['kind'][] = ['combo', 'firstLoss', 'duchess', 'mythic', 'firstSummon', 'elite', 'ascension', 'dailyBoss'];
+  const firsts: Moment['kind'][] = ['firstLoss', 'duchess', 'mythic', 'firstSummon', 'elite', 'ascension', 'dailyBoss'];
   for (const kind of firsts) {
     const id = dueScene(m, { kind } as Moment);
     assert.ok(id, kind);
@@ -381,5 +383,31 @@ test('the preview frames name a real moment of each shot, for the screenshot str
       assert.ok(sc.shots[shot], id);
       assert.ok(beat < beats(sc.shots[shot]).length && sec >= 0 && sec <= beats(sc.shots[shot])[beat], `${id} ${shot}/${beat}/${sec}`);
     }
+  }
+});
+
+import { COMBOS } from '../src/sim/combos';
+import { OATH_SETS } from '../src/sim/sceneFamilies';
+
+test('every set of five has its Last Oath: the fuller scene the first time, the short one after, with a line from each of the five', () => {
+  assert.deepEqual(OATH_SETS.map((o) => [o.set, o.name]), COMBOS.map((c) => [c.id, c.name]));
+  const m = picked();
+  for (const c of COMBOS) {
+    const full = dueScene(m, { kind: 'combo', set: c.id });
+    assert.equal(full, `oath:${c.id}`);
+    const speakers = SCENES[full!].shots.flatMap((s) => s.lines ?? []).map((l) => l.who);
+    assert.deepEqual(speakers, ['a', 'b', 'c', 'd', 'e'], 'a line from each of the five');
+    const cut = dueScene(m, { kind: 'comboCut', set: c.id });
+    assert.equal(cut, `oathcut:${c.id}`);
+    assert.ok(SCENES[cut!].short && SCENES[cut!].again);
+    const secs = SCENES[cut!].shots.reduce((n, s) => n + shotSeconds(s), 0);
+    assert.ok(secs >= 2.5 && secs <= 4, `${c.id}: ${secs}`);
+    // (played with the five who cast it, in the set's order)
+    const cast = castOf(SCENES[full!], { party: [...c.heroes] });
+    assert.deepEqual(['a', 'b', 'c', 'd', 'e'].map((k) => cast[k].kind), [...c.heroes]);
+    markSeen(m, full!);
+    assert.equal(dueScene(m, { kind: 'combo', set: c.id }), null, 'the fuller one plays once');
+    markSeen(m, cut!);
+    assert.equal(dueScene(m, { kind: 'comboCut', set: c.id }), cut, 'the short one every time');
   }
 });

@@ -429,9 +429,12 @@ class Game {
     return this.sceneChain;
   }
 
-  /** The first time a five-unit combo's mega ultimate fires: the cut-in, with the five who cast it. */
-  playComboMega(five?: readonly string[]): Promise<void> {
-    return this.queueScene({ kind: 'combo' }, five);
+  /** A set's Last Oath goes off: its fuller cut-in the first time, a short one after, with the five who cast it. */
+  playComboMega(setId: string): Promise<void> {
+    const set = comboById(setId);
+    if (!set) return this.sceneChain;
+    const first = dueScene(this.meta, { kind: 'combo', set: setId });
+    return this.queueScene(first ? { kind: 'combo', set: setId } : { kind: 'comboCut', set: setId }, set.heroes);
   }
 
   /** The first time Duchess turns up in a fight (her visit begins: `PageGoat.onArrive`). */
@@ -464,7 +467,10 @@ class Game {
 
   /** Play a cinematic by id (the Scenes list, and previews: `__game.playScene('opening')`). */
   playScene(id: string): Promise<unknown> {
-    return this.scenes.play(id, this.players());
+    // (a Last Oath is played by its set's five, however it is started)
+    const mo = SCENES[id]?.moment;
+    const five = mo && (mo.kind === 'combo' || mo.kind === 'comboCut') ? comboById(mo.set)?.heroes : undefined;
+    return this.scenes.play(id, five ? { ...this.players(), party: [...five] } : this.players());
   }
 
   /** The long map behind this wave's section (an army run's; any other run has none). Finished waves are baked, with no animation: this is also how a run resumed from a save comes up. */
@@ -727,8 +733,8 @@ class Game {
           const cast = events.find((e) => e.kind === 'comboCast');
           if (cast) {
             noteCombos(this.meta, b);
-            // (and the first time, its five get their cut-in: the fight is held while it plays)
-            void this.playComboMega(comboById(b.combo.id)?.heroes);
+            // (and the Last Oath's cut-in, the fuller one the first time each set fires: the fight is held while it plays)
+            void this.playComboMega(b.combo.id);
           }
         }
         const push = this.fx.takePush();

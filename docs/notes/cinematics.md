@@ -121,7 +121,7 @@ plays out the same) while one is queued or playing.
 | **The armies' last stands** (nine: `clear:<army>`) | `armyClear`: an army's first clear (`pay.firstClear`) | 26 to 28 s | wired |
 | **Awakening** (45: `awaken:<hero>`) | `awaken`: the hero's first awakening step (`awakenView.onAwakened`) | 12 to 16 s | wired |
 | **A hero earned** (ten: `earned:<hero>`) | `earned`: each hero `grantContent` brings in after a fight | 20 to 23 s | wired for the fight; **the hero-earned reveal of `hero-progress`** should call `queueScene({ kind: 'earned', hero })` and the fight's call go |
-| **Five as One** (combo mega ultimate cut-in) | `combo`: `Game.playComboMega()` | 3 s | wired to `hero-skills`' combo (the `comboCast` event, with the five who cast it) |
+| **The Last Oath** (eight sets: `oath:<set>` the first time, ~10 s with a line from each of the five, and `oathcut:<set>` every time after, ~3 s) | `combo` / `comboCut`: the combo's `comboCast` event, played by the set's five (`Game.playComboMega(setId)`) | 10 s / 3 s | wired; the fight is held while it plays, one-tap Skip, off with the Cinematics switch (`scenesOn`) |
 | **It Was the Placing** (first loss) | `firstLoss`: the first fight lost, as its result comes up (with a retry waiting or not) | 38 s | wired |
 | **She Was Not on the List** (Duchess in a fight) | `duchess`: her first visit to a fight (`PageGoat.onArrive` as she walks in) | 18 s | wired (to `battle-ui`'s random visit, on main in 0.137.0) |
 | **The castle going up** (seven: `castle:<site>`) | `castle`: the first time each building (and the chapel) is raised (`Home` hook `onBuilt`) | 20 to 22 s | wired |
@@ -152,6 +152,10 @@ the rest a shared mood (`triumph` for the last stands, the Calamity's end, the h
 castle; `solemn` for awakenings and Mythic; `spire` for the tower). The player calls `playScene` as a scene begins and
 `endScene` as it ends. A cut-in has none: the fight's music goes on. If `hero-progress` adds its own `music` field and call
 site, keep one of the two.
+
+The Last Oath cut-in uses the pilot's black bars (no slide-in: the overlay is black already) and a one-shot flash in the short version; the
+full one has the `triumph` score, both the `sceneBoss` sting. Samples: `scenes-oath_holyOrder.png` (first), `scenes-oathcut_holyOrder.png`
+(short), `scenes-oath_dreadCourt.png`.
 
 ### Cinematics off
 

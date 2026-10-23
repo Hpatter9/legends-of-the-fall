@@ -83,7 +83,9 @@ export function momentText(mo: Moment): string {
     case 'earned':
       return 'A hero joins by a milestone.';
     case 'combo':
-      return "A five-unit combo's mega ultimate, the first time it fires.";
+      return 'A set of five fires its Last Oath for the first time.';
+    case 'comboCut':
+      return 'A set of five fires its Last Oath.';
     case 'firstLoss':
       return 'Your first defeat.';
     case 'duchess':

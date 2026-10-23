@@ -77,6 +77,8 @@ export interface Line {
   text: string;
   /** Shouted (the box is brighter) or whispered (dimmer). */
   tone?: 'shout' | 'whisper';
+  /** Seconds it stays up, where the usual beat to read it (`lineSeconds`) is too long (an oath in a quick cut-in). */
+  secs?: number;
 }
 
 export interface Shot {
@@ -110,7 +112,8 @@ export type Moment =
   | { kind: 'armyClear'; army: string }
   | { kind: 'awaken'; hero: string }
   | { kind: 'earned'; hero: string }
-  | { kind: 'combo' }
+  | { kind: 'combo'; set: string }
+  | { kind: 'comboCut'; set: string }
   | { kind: 'firstLoss' }
   | { kind: 'duchess' }
   | { kind: 'castle'; site: string }
@@ -125,7 +128,7 @@ export type Moment =
 /** A moment's key: its kind and what it is about (the map, the army, the hero ...). */
 export const momentKey = (m: Moment): string => {
   const o = m as Record<string, unknown>;
-  return [m.kind, o.map ?? o.army ?? o.hero ?? o.site ?? o.floor ?? o.boss ?? ''].join(':');
+  return [m.kind, o.map ?? o.army ?? o.hero ?? o.set ?? o.site ?? o.floor ?? o.boss ?? ''].join(':');
 };
 
 export interface Scene {
@@ -151,9 +154,11 @@ export interface Scene {
 /** How long a line stays up: a beat to read it (seconds), so a scene plays through on its own; a tap moves on sooner. */
 export const lineSeconds = (text: string): number => Math.min(9, 1.6 + text.length * 0.05);
 /** A shot's hold (seconds after its lines; a shot with no lines holds 2.5 s at least). */
+/** How long a line stays up: its own `secs`, else the beat to read it. */
+export const lineLen = (l: Line): number => l.secs ?? lineSeconds(l.text);
 export const holdOf = (s: Shot): number => s.hold ?? (s.lines?.length ? 0 : 2.5);
 /** A whole scene's length (seconds), as played untouched (the lines are filled with names that are not counted). */
-export const sceneSeconds = (c: Scene): number => c.shots.reduce((n, s) => n + (s.lines?.reduce((m, l) => m + lineSeconds(l.text), 0) ?? 0) + holdOf(s), 0);
+export const sceneSeconds = (c: Scene): number => c.shots.reduce((n, s) => n + (s.lines?.reduce((m, l) => m + lineLen(l), 0) ?? 0) + holdOf(s), 0);
 
 /** A line with its `{actor}` names filled in (one left unknown stays as written). */
 export const fillLine = (text: string, names: Readonly<Record<string, string>>): string => text.replace(/\{(\w+)\}/g, (all, k: string) => names[k] ?? all);

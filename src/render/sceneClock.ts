@@ -4,7 +4,7 @@
 // toward its `to` over the shot, eased) and every actor: where they stand, which way they face, their pose, whether they
 // are walking, replaying the acts of every shot so far (a walk takes its time, and is cut short if the shot ends first).
 
-import { FEET, holdOf, lineSeconds, STAGE_H, STAGE_W, type Act, type Cam, type Facing, type Pose, type Scene, type Shot } from '../sim/sceneScripts';
+import { FEET, holdOf, lineLen, STAGE_H, STAGE_W, type Act, type Cam, type Facing, type Pose, type Scene, type Shot } from '../sim/sceneScripts';
 
 export interface Cursor {
   shot: number;
@@ -19,7 +19,7 @@ export const start = (): Cursor => ({ shot: 0, beat: 0, t: 0, shotT: 0 });
 
 /** Each beat's length in a shot: its lines, then its hold (if any). */
 export function beats(s: Shot): number[] {
-  const out = (s.lines ?? []).map((l) => lineSeconds(l.text));
+  const out = (s.lines ?? []).map(lineLen);
   const h = holdOf(s);
   if (h > 0) out.push(h);
   return out.length ? out : [2.5];

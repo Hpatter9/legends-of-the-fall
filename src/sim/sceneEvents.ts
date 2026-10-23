@@ -557,29 +557,4 @@ export const EVENT_SCENES: Scene[] = [
       },
     ],
   },
-  {
-    id: 'comboMega',
-    title: 'Five as One',
-    blurb: 'A five-unit combo’s mega ultimate, the first time.',
-    moment: { kind: 'combo' },
-    short: true,
-    cast: {
-      a: { role: 'party:0', x: 220, facing: 'right' },
-      b: { role: 'party:1', x: 250, facing: 'right' },
-      c: { role: 'party:2', x: 280, facing: 'right' },
-      d: { role: 'party:3', x: 310, facing: 'right' },
-      e: { role: 'party:4', x: 340, facing: 'right' },
-    },
-    shots: [
-      {
-        look: 'highlands',
-        cam: wide(280, 205, 1.5),
-        fx: ['darken', 'glow', 'flash'],
-        cue: 'boom',
-        acts: [{ who: 'a', pose: 'cast' }, { who: 'b', pose: 'cast' }, { who: 'c', pose: 'cast' }, { who: 'd', pose: 'cast' }, { who: 'e', pose: 'cast' }],
-        caption: 'Mega ultimate',
-        lines: [say('c', 'All together, then!', 'shout')],
-      },
-    ],
-  },
 ];
