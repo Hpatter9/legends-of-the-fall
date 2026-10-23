@@ -66,14 +66,12 @@ for (const f of readdirSync('src/art/ui').filter((f) => f.endsWith('.png') && !f
   copyFileSync(`src/art/ui/${f}`, `${out}/ui/${f}`);
   UI_FILES.push(`ui/${f}`);
 }
-// (the music: played as files, so the service worker keeps them for offline too)
-const AUDIO = ['town.ogg', 'battle.ogg', 'boss.ogg'];
-for (const f of AUDIO) copyFileSync(`src/audio/${f}`, `${out}/${f}`);
+// (the music is synthesised and baked in the page (src/render/musicBake.ts): no audio files to cache)
 // (the loading screen's fighters and bursts go into the page as data URLs, so it shows before game.js has downloaded)
 const dataUrl = (f) => `data:image/png;base64,${readFileSync(f).toString('base64')}`;
 const LOADING_ART = { __LD_KNIGHT__: 'src/art/loading/knight-attack.png', __LD_DEMON__: 'src/art/loading/demon-attack.png', __LD_SLASH__: 'src/art/fx/magic/moon_slash.png', __LD_IMPACT__: 'src/art/fx/impact.png' };
 const withLoadingArt = (html) => Object.entries(LOADING_ART).reduce((h, [k, f]) => h.replaceAll(k, () => dataUrl(f)), html);
-writeFileSync(`${out}/index.html`, withLoadingArt(readFileSync('src/index.html', 'utf8').replace('/*__PIXEL_CSS__*/', () => readFileSync('src/tokens.css', 'utf8') + readFileSync('src/pixel.css', 'utf8') + readFileSync('src/equip.css', 'utf8') + readFileSync('src/rogue.css', 'utf8') + readFileSync('src/twists.css', 'utf8') + readFileSync('src/eliteSets.css', 'utf8') + readFileSync('src/talents.css', 'utf8') + readFileSync('src/codex.css', 'utf8') + readFileSync('src/awaken.css', 'utf8') + readFileSync('src/calmap.css', 'utf8') + readFileSync('src/campPlaces.css', 'utf8') + readFileSync('src/daily.css', 'utf8') + readFileSync('src/cinematics.css', 'utf8') + readFileSync('src/stone.css', 'utf8') + readFileSync('src/levels.css', 'utf8')).replace('__VERSION__', version)));
+writeFileSync(`${out}/index.html`, withLoadingArt(readFileSync('src/index.html', 'utf8').replace('/*__PIXEL_CSS__*/', () => readFileSync('src/tokens.css', 'utf8') + readFileSync('src/pixel.css', 'utf8') + readFileSync('src/equip.css', 'utf8') + readFileSync('src/rogue.css', 'utf8') + readFileSync('src/twists.css', 'utf8') + readFileSync('src/eliteSets.css', 'utf8') + readFileSync('src/talents.css', 'utf8') + readFileSync('src/codex.css', 'utf8') + readFileSync('src/awaken.css', 'utf8') + readFileSync('src/calmap.css', 'utf8') + readFileSync('src/campPlaces.css', 'utf8') + readFileSync('src/daily.css', 'utf8') + readFileSync('src/cinematics.css', 'utf8') + readFileSync('src/stone.css', 'utf8') + readFileSync('src/levels.css', 'utf8') + readFileSync('src/battleUi.css', 'utf8')).replace('__VERSION__', version)));
 writeFileSync(
   `${out}/manifest.webmanifest`,
   JSON.stringify(
@@ -98,7 +96,7 @@ writeFileSync(
 writeFileSync(
   `${out}/sw.js`,
   `const CACHE = 'legends-${version}';
-const FILES = ['.', 'index.html', 'game.js', 'bg1.png', 'bg2.png', 'bg3.png', 'bg4.png', 'bg5.png', ${AREA_BGS.map((f) => `'${f}'`).join(', ')}, 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', ${AUDIO.map((f) => `'${f}'`).join(', ')}, ${FONTS.map(([, f]) => `'fonts/${f}'`).join(', ')}, ${UI_FILES.map((f) => `'${f}'`).join(', ')}];
+const FILES = ['.', 'index.html', 'game.js', 'bg1.png', 'bg2.png', 'bg3.png', 'bg4.png', 'bg5.png', ${AREA_BGS.map((f) => `'${f}'`).join(', ')}, 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', ${FONTS.map(([, f]) => `'fonts/${f}'`).join(', ')}, ${UI_FILES.map((f) => `'${f}'`).join(', ')}];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k))))); self.clients.claim(); });
 // (network first, but a connection that hangs, like a plane's, gives up after a few seconds and the saved copy is used;

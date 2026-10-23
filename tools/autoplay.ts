@@ -3,7 +3,7 @@
 // behind, on high ground; see `src/sim/autoplay.ts`, which the Auto button and the auto-replay share) and plays an army's waves from wave 1 until a fight is lost or the last boss falls. Hero levels come from, and
 // XP goes into, the save's meta, as the page does.
 
-import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
+import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { fight, place, playOut, type Battle, type Boost } from '../src/sim/battle';
 import { chooseOption, leaveEvent } from '../src/sim/events';
 import { fightXp, gainXp, levelOfKind, xpFor } from '../src/sim/levels';
@@ -27,7 +27,7 @@ export { strengthOf };
 /** The deploy tiles front row first, the middle of a row first: where the tower climb's greedy player puts the heroes that hold the line. */
 export function frontSpots(b: Battle): [number, number][] {
   const spots: [number, number][] = [];
-  for (let v = D - DEPLOY_ROWS; v < D; v++) for (let u = 0; u < b.board.w; u++) if (standable(tileAt(b.board, u, v))) spots.push([u, v]);
+  for (let v = b.board.d - DEPLOY_ROWS; v < b.board.d; v++) for (let u = 0; u < b.board.w; u++) if (standable(tileAt(b.board, u, v))) spots.push([u, v]);
   const mid = (b.board.w - 1) / 2;
   return spots.sort((a, c) => a[1] - c[1] || Math.abs(a[0] - mid) - Math.abs(c[0] - mid) || a[0] - c[0]);
 }
@@ -109,9 +109,23 @@ export function savedAt(level: number, party: readonly string[], seed: number): 
 }
 
 
+/** One fight of a climb, as the balance tool wants it: the map, the heroes that fought, the mean share of their hp the fight took (a fallen hero is a whole one), the heroes that fell, the squad's mean hp share at the end, and whether it was won. */
+export interface FightLog {
+  map: number;
+  kind: string;
+  heroes: number;
+  lost: number;
+  fell: number;
+  left: number;
+  won: boolean;
+}
+/** The fights of every climb played since the log was last emptied (the balance tool reads and empties it). */
+export const fightLog: FightLog[] = [];
+
 /** Fields the five strongest of the run's roster (fighters in front, shooters behind) and plays the node's battle out. Returns the battle. */
 function fightNode(meta: Meta, run: Run): Battle {
   const squad = [...run.roster].sort((a, b) => strengthOf(meta, b, run) - strengthOf(meta, a, run)).slice(0, squadLimit(run));
+  const before = squad.map((h) => run.tower!.hp[String(h.id)] ?? 1);
   run.squad = squad.map((h) => h.id);
   dressSquad(run);
   const b = startStage(run);
@@ -120,6 +134,19 @@ function fightNode(meta: Meta, run: Run): Battle {
   order.forEach((h, i) => place(b, h.kind, spots[i][0], spots[i][1], h.id, { ...(run.local ? localBoost(h) : boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), awakenStats(meta, h.kind))), carry: run.tower!.hp[String(h.id)] }));
   fight(b);
   playOut(b);
+  const ends = squad.map((h) => {
+    const u = b.units.find((x) => x.side === 'hero' && x.tag === h.id);
+    return u && u.alive ? u.hp / u.maxHp : 0;
+  });
+  fightLog.push({
+    map: run.tower!.act,
+    kind: run.tower!.cur?.kind ?? 'fight',
+    heroes: squad.length,
+    lost: ends.reduce((n, e, i) => n + Math.max(0, before[i] - e), 0) / squad.length,
+    fell: ends.filter((e) => e === 0).length,
+    left: ends.reduce((n, e) => n + e, 0) / squad.length,
+    won: b.phase === 'won',
+  });
   return b;
 }
 
@@ -196,6 +223,8 @@ export let lostAt = '';
 /** The starting hero's level after each boss of the last calamity (index 0 is map 1's), and at its end (for tuning). */
 export let starterLevels: number[] = [];
 export let starterEnd = 1;
+/** After each boss of the last calamity: the share of the roster at tier 2 or more, and at tier 3 (for tuning `CAL_TIER_LEVELS`), and the starting hero's tier. */
+export let tierShares: { t2: number; t3: number; starter: number }[] = [];
 
 /**
  * The greedy explorer's policy on a calamity's free map: clear every spot it can reach, the best-wanted first (fires and shops when hurt, recruits while there is room, a hoard
@@ -207,6 +236,7 @@ export const explore = { visitShops: true, limit: Infinity };
 function playClimb(meta: Meta, run: Run, maxFloors: number): { floors: number; bosses: number; act: number; level: number } {
   lostAt = '';
   starterLevels = [];
+  tierShares = [];
   const calamity = run.mode?.kind === 'calamity';
   const starter = run.roster[0];
   const again = new Set<string>();
@@ -239,7 +269,11 @@ function playClimb(meta: Meta, run: Run, maxFloors: number): { floors: number; b
       if (ok && calamity && cur.kind === 'boss') starterLevels.push(-1);
       if (!run.local) gainXp(meta, fightXp(b, xpRate(run.castle ?? newCastle())));
       finishTower(run, b, ok, ratingOf(b, cur.kind === 'boss').stars);
-      if (starterLevels.length && starterLevels[starterLevels.length - 1] === -1) starterLevels[starterLevels.length - 1] = heroLevel(starter);
+      if (starterLevels.length && starterLevels[starterLevels.length - 1] === -1) {
+        starterLevels[starterLevels.length - 1] = heroLevel(starter);
+        const n = run.roster.length;
+        tierShares.push({ t2: run.roster.filter((h) => h.grade >= 2).length / n, t3: run.roster.filter((h) => h.grade >= 3).length / n, starter: starter.grade });
+      }
       // (an elite offers three relics: the greedy player takes the first, a piece of a set it has begun when there is one)
       if (run.tower!.offer) takeRelic(run, run.tower!.offer[0]);
     };

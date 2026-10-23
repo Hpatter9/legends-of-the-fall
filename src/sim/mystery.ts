@@ -24,7 +24,7 @@ import { GREAT_RELIC_IDS, RELIC_IDS, RELICS } from './relics';
 import { hpShare, healParty, hurtParty } from './health';
 import { HEROES, UNITS } from './units';
 import { squadLimit, type Run } from './run';
-import { gainKindXp, hireHero } from './climb';
+import { gainKindXp, hireable, hireHero } from './climb';
 import type { EventCard, EventKind, EventOption } from './events';
 
 /** What taking one of these options does. */
@@ -98,7 +98,7 @@ export function drawMystery(run: Run, stage: number, kind: EventKind, rng: Rng):
       return card('A black altar', 'A slab of black glass drinks the torchlight. Something under it is hungry, and generous.', [
         relic && ids.length > 1
           ? act(`Offer the ${nameOf(run, hero)}`, `the hero is lost for good; you gain ${gift}`, 0, { k: 'sacrifice', hero, relic })
-          : act('Leave an offering', 'The altar has no use for gold, but takes it: +20 gold back from the dust.', 0, { k: 'gold', n: 20 }),
+          : act('Leave an offering', 'The altar has no use for coin. You find 20 gold in the dust, and leave a polite note.', 0, { k: 'gold', n: 20 }),
         leave(),
       ]);
     }
@@ -115,8 +115,9 @@ export function drawMystery(run: Run, stage: number, kind: EventKind, rng: Rng):
       ]);
     }
     case 'prisoner': {
-      const pool = run.pool?.length ? run.pool : HEROES;
-      const who = pick(rng, pool);
+      const pool = run.mode?.kind === 'calamity' ? hireable(run) : run.pool?.length ? run.pool : HEROES;
+      // (a calamity has no hero twice: with all 45 on the roster, the cage holds nobody new, and the prisoner is a purse only)
+      const who = pick(rng, pool.length ? pool : HEROES);
       const gold = 45 + 7 * stage;
       return card('A prisoner in irons', `A ${UNITS[who].name} hangs in a rusty cage, guards dozing nearby. "Let me out and I'm yours. Or take my purse and go."`, [
         act('Free the prisoner', `a ${UNITS[who].name} joins you, free; the guards wake and every hero loses ${pct(FREE_HURT)} hp`, 0, { k: 'free', kind: who, hurt: FREE_HURT }),
@@ -139,7 +140,7 @@ export function drawMystery(run: Run, stage: number, kind: EventKind, rng: Rng):
       const g = ups.length ? pick(rng, ups) : gear.length ? pick(rng, gear) : undefined;
       if (!g) {
         const fresh = dropGear(rng, gearId(run), stage);
-        return card('An abandoned forge', 'The coals are still warm. You have nothing to work, but there is iron on the anvil.', [act(`Hammer out a ${fresh.name}`, `${fresh.slot}: ${gearText(fresh)}`, 20 + 2 * stage, { k: 'newGear', gear: fresh }), leave()]);
+        return card('An abandoned forge', 'The coals are still warm. You have no gear to work on, but there is iron on the anvil.', [act(`Hammer out a ${fresh.name}`, `${fresh.slot}: ${gearText(fresh)}`, 20 + 2 * stage, { k: 'newGear', gear: fresh }), leave()]);
       }
       const melt = 15 * g.tier + stage;
       const options: EventOption[] = [];

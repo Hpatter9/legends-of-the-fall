@@ -1,4 +1,6 @@
-# Legends of the Fall
+# Legends of the Last Keep
+
+(The game was called Legends of the Fall until 0.134.0; the repo, the web address and the save keys (`legends.*`) keep the old name, so existing saves and the installed app carry on.)
 
 A King God Castle style auto-battler: place five heroes on the near rows of an FF Tactics style height grid, then
 they fight a band of foes on their own in real time. Played as a phone web app (a PWA on GitHub Pages).

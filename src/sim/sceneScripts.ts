@@ -65,7 +65,7 @@ const PILOTS: Record<string, Scene> = {
   gorvak: {
     id: 'gorvak',
     title: 'The Ashen Road',
-    blurb: 'Gorvak the Ashen, the Calamity’s first herald, keeps a tidy toll road.',
+    blurb: 'Gorvak the Ashen, the Calamity’s first herald, keeps a very firm roadblock.',
     moment: { kind: 'calBoss', map: 1 },
     cast: {
       hero: { role: 'hero', x: 285, facing: 'right', hidden: true },
@@ -107,7 +107,7 @@ const PILOTS: Record<string, Scene> = {
         acts: [{ who: 'gorvak', pose: 'strike' }],
         fx: ['flash', 'shake'],
         cue: 'slam',
-        lines: [say('gorvak', 'THEN I SHALL BURN THEM MYSELF.', 'shout'), tell('Behold the first herald. His ribbon is on its way.')],
+        lines: [say('gorvak', 'THEN I SHALL BURN YOU MYSELF.', 'shout'), tell('Behold the first herald. He has not had a day off since the war.')],
       },
     ],
   },
