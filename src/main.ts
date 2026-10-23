@@ -73,7 +73,7 @@ import { at, depth, FOOT, HH, rawAt, setFrame, TH, TW } from './render/iso';
 import { bindDuck, bindMute, play, playEvents, setAct, setScene, setup, startFight } from './render/sound';
 import { sceneOf } from './render/audioRules';
 import { colLeft, viewH, viewW } from './viewport';
-import { onSettings, openSettings, settings } from './settings';
+import { onSettings, openSettings, setSetting, settings } from './settings';
 import { PageGoat } from './duchess';
 import { Rng } from './sim/rng';
 import { endingQuip, foeGrumbles, heroSays, initQuips, newQuipScene } from './quips';
@@ -168,11 +168,17 @@ class Game {
   private chosen: string | null = null;
   private drag: Drag | null = null;
   private hover: [number, number] | null = null;
-  private speed: 1 | 2 | 3 = 1;
+  /** The fight speed: kept from wave to wave and fight to fight, and the last choice is remembered in the settings. */
+  private speed: 1 | 2 | 3 = settings().speed;
   private acc = 0;
   private scale = 1;
-  /** The spell card chosen, waiting for a tile. */
+  /** The spell card chosen, waiting for a tile (armed by a tap, or held in a drag). */
   private spell: SpellId | null = null;
+  /** A spell card pressed and maybe being dragged onto the grid: let go over the grid to cast, over the panel to cancel. */
+  private spellDrag: { id: SpellId; x: number; y: number; moved: boolean } | null = null;
+  /** A drag just ended on the card it began on: the click that follows is not a tap. */
+  private spellDragged = false;
+  private spellGhost = document.createElement('div');
   /** The fight's numbers for each hero, tallied as the ticks come in. */
   private stats: FightStats = [];
   /** A boss's title card: how long it has been on, and the boss it is about. */
@@ -357,8 +363,9 @@ class Game {
     this.chosen = null;
     this.spell = null;
     this.buildSpells();
-    // (an auto-replay keeps the speed it is at from wave to wave)
-    this.setSpeed(this.auto ? this.speed : settings().speed);
+    this.goat.newFight();
+    // (the speed picked stays on from wave to wave)
+    this.setSpeed(this.speed);
     this.fx.clear();
     this.boardView.build(this.b.board, { boss: !!waveArmyOf(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
     this.syncChain();
@@ -641,7 +648,7 @@ class Game {
         for (const e of events) if (e.kind === 'phase') this.startPhase(e);
         // (Duchess has a view on a big blow)
         if (events.some((e) => e.kind === 'hit' && e.heavy && e.dmg >= 90)) this.goat.react('bigHit');
-        if (events.some((e) => e.kind === 'hit')) this.refreshBench();
+        if (events.some((e) => e.kind === 'hit' || e.kind === 'heal')) this.refreshBench();
         if (b.phase !== 'fight') this.refresh();
       }
       this.fx.step(Math.min(dt, 250) * this.speed);
@@ -987,6 +994,12 @@ class Game {
     window.addEventListener('pointermove', (e) => this.dragMove(e));
     window.addEventListener('pointerup', (e) => this.dragEnd(e));
     window.addEventListener('pointercancel', () => this.endDrag());
+    this.spellGhost.id = 'spellGhost';
+    this.spellGhost.hidden = true;
+    document.body.append(this.spellGhost);
+    window.addEventListener('pointermove', (e) => this.spellMove(e));
+    window.addEventListener('pointerup', (e) => this.spellRelease(e, true));
+    window.addEventListener('pointercancel', (e) => this.spellRelease(e, false));
     setup();
     startAwake();
     bindMute($('mute'));
@@ -1038,7 +1051,11 @@ class Game {
       ),
     );
     $('bossCard').addEventListener('click', () => this.endIntro());
-    $('speed').addEventListener('click', () => this.setSpeed(this.speed >= this.fastest() ? 1 : ((this.speed + 1) as 2 | 3)));
+    $('speed').addEventListener('click', () => {
+      this.setSpeed(this.speed >= this.fastest() ? 1 : ((this.speed + 1) as 2 | 3));
+      // (the last choice is remembered; ×3 is only for tiers already cleared, so the setting keeps ×2 at most)
+      setSetting('speed', Math.min(this.speed, 2) as 1 | 2);
+    });
     $('auto').addEventListener('click', () => this.autoArrange(true));
     $('autoStop').addEventListener('click', () => this.endAuto('stopped'));
     $('asumOk').addEventListener('click', () => this.closeAutoSummary());
@@ -1750,7 +1767,13 @@ class Game {
       card.dataset.id = id;
       card.title = sp.text;
       card.innerHTML = `${spellIconHtml(id)}<b>${sp.name}</b><em>${sp.cost} mana</em><span class="cool"></span>`;
+      // (press and drag onto the grid to cast: the tiles it would hit show as the finger moves; a tap arms it as before)
+      card.addEventListener('pointerdown', (e) => {
+        if (this.b.phase !== 'fight' || sp.target === 'all' || !canAfford(this.b, id)) return;
+        this.spellDrag = { id, x: e.clientX, y: e.clientY, moved: false };
+      });
       card.addEventListener('click', () => {
+        if (this.spellDragged) return void (this.spellDragged = false);
         if (this.b.phase !== 'fight') return;
         // (a spell that goes everywhere needs no tile: it is cast at once)
         if (sp.target === 'all') castSpell(this.b, id, 0, 0);
@@ -1761,6 +1784,52 @@ class Game {
       });
       cards.append(card);
     }
+  }
+
+  /** The tile a spell dragged to (x, y) would land on: the finger is over the grid (not the panel), the tile a little above it so it can be seen. */
+  private spellTile(x: number, y: number): [number, number] | null {
+    if (y >= $('panel').getBoundingClientRect().top) return null;
+    return this.tileAtScreen(x, y - 24);
+  }
+
+  private spellMove(e: PointerEvent): void {
+    const d = this.spellDrag;
+    if (!d) return;
+    if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 8) return;
+    if (this.b.phase !== 'fight' || !canAfford(this.b, d.id)) return this.endSpellDrag();
+    if (!d.moved) {
+      d.moved = true;
+      this.spell = d.id;
+      this.spellGhost.innerHTML = spellIconHtml(d.id);
+    }
+    this.spellGhost.hidden = false;
+    this.spellGhost.style.left = `${e.clientX}px`;
+    this.spellGhost.style.top = `${e.clientY - 40}px`;
+    this.hover = this.spellTile(e.clientX, e.clientY);
+    this.markTiles();
+    this.refreshSpells();
+  }
+
+  /** The finger lifts: over the grid the spell is cast on the tiles shown; anywhere else (back on the panel) it is cancelled. */
+  private spellRelease(e: PointerEvent, ok: boolean): void {
+    const d = this.spellDrag;
+    if (!d) return;
+    if (d.moved) {
+      const tile = ok ? this.spellTile(e.clientX, e.clientY) : null;
+      if (tile && this.b.phase === 'fight') castSpell(this.b, d.id, ...tile);
+      this.spell = null;
+      this.hover = null;
+      this.spellDragged = true;
+      setTimeout(() => (this.spellDragged = false), 0);
+      this.markTiles();
+      this.refreshSpells();
+    }
+    this.endSpellDrag();
+  }
+
+  private endSpellDrag(): void {
+    this.spellDrag = null;
+    this.spellGhost.hidden = true;
   }
 
   /** While a spell is chosen, the finger or pointer shows the 3x3 it would hit. */
@@ -1786,7 +1855,7 @@ class Game {
     if (b.spells.mana >= 3) tips.offer('mana', $('spells'));
     const full = b.units.find((u) => u.side === 'hero' && u.alive && u.charge >= (kitOf(u)?.skill.need ?? CHARGE_MAX));
     if (full) tips.offer('skill', () => this.spriteBox(full.id));
-    $('spellHint').textContent = this.spell ? `${SPELLS[this.spell].text}: tap a tile (tap the card again to cancel)` : '';
+    $('spellHint').textContent = this.spell ? (this.spellDrag?.moved ? `${SPELLS[this.spell].text}: let go over the grid to cast, or back on the cards to cancel` : `${SPELLS[this.spell].text}: tap a tile, or drag a card onto the grid (tap the card again to cancel)`) : '';
     if (dropped) this.markTiles();
   }
 

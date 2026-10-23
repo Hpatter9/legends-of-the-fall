@@ -1,0 +1,24 @@
+/* The battle screen (docs/notes/battle-ui.md): in a fight the bench shrinks to a slim strip of small portraits with
+   hp bars, so the field has the room; it comes back at the deploy. */
+body[data-phase='fight'] #benchWrap { margin-top: 2px; }
+body[data-phase='fight'] #bench { display: flex; flex-wrap: nowrap; gap: 3px; justify-content: center; overflow-x: auto; overflow-y: hidden; }
+body[data-phase='fight'] #bench .card { flex: 0 0 32px; width: 32px; padding: 0 0 1px; border-width: 2px; border-image: none; border: 2px solid var(--s8); box-sizing: border-box; }
+body[data-phase='fight'] #bench .card canvas { width: 24px; max-width: 24px; margin: 1px auto 0; }
+body[data-phase='fight'] #bench .card b,
+body[data-phase='fight'] #bench .card em,
+body[data-phase='fight'] #bench .card .lv,
+body[data-phase='fight'] #bench .card .lvb,
+body[data-phase='fight'] #bench .card::before,
+body[data-phase='fight'] #bench .card::after,
+body[data-phase='fight'] #bench .card .pw,
+body[data-phase='fight'] #bench .card small,
+body[data-phase='fight'] #bench .card .recycle { display: none; }
+body[data-phase='fight'] #bench .card i { height: 4px; margin: 1px 1px 0; }
+body[data-phase='fight'] #bench .card.g2 { box-shadow: none; border-color: var(--b5); }
+body[data-phase='fight'] #bench .card.g3 { box-shadow: none; border-color: var(--e6); }
+
+/* A spell card is dragged onto the grid to cast it: the card takes the touch whole, and its icon follows the finger. */
+.spell { touch-action: none; }
+#spellGhost { position: fixed; z-index: 20; pointer-events: none; transform: translate(-50%, -50%); }
+#spellGhost[hidden] { display: none; }
+#spellGhost .spIcon { zoom: 0.5; }
