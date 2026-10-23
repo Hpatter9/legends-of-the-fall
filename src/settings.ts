@@ -156,7 +156,7 @@ function volumeRow(title: string, key: 'music' | 'effects', value: number): HTML
 }
 
 function speedRow(value: 1 | 2): HTMLElement {
-  const [r] = row('Fight speed', 'The speed a new fight starts at (× 2 in the fight still toggles)');
+  const [r] = row('Fight speed', 'The speed a fight starts at (the speed button in the fight changes it, and is remembered)');
   const pair = document.createElement('div');
   pair.className = 'pair';
   for (const n of [1, 2] as const) {
