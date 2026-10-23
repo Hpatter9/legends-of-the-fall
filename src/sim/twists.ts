@@ -6,7 +6,7 @@
 //
 // Pure rules: no Pixi, no DOM, no clock. Randomness is only the map's side stream and the board tweaks' own.
 
-import { boardOk, DEPLOY_ROWS, tileAt, type Board } from './board';
+import { boardOk, DEPLOY_ROWS, standable, tileAt, type Board } from './board';
 import { mixSeed, Rng } from './rng';
 
 export type Tone = 'curse' | 'blessing' | 'mixed';
@@ -92,7 +92,11 @@ export function twistBoard(b: Board, fx: TwistFx, seed: number): void {
   if (fx.lava) {
     const rng = new Rng(mixSeed(seed, 0x1a7a));
     const spots: number[] = [];
-    for (let v = DEPLOY_ROWS; v < b.d - DEPLOY_ROWS; v++) for (let u = 0; u < b.w; u++) if (!tileAt(b, u, v)!.rock) spots.push(v * b.w + u);
+    for (let v = DEPLOY_ROWS; v < b.d - DEPLOY_ROWS; v++) for (let u = 0; u < b.w; u++) {
+        // (not on a boulder, a wall, a barrel or water too deep to stand in, nor a bridge, a shrine or lava that is there already)
+        const t = tileAt(b, u, v)!;
+        if (standable(t) && !t.bridge && t.ground !== 'shrine' && t.ground !== 'lava') spots.push(v * b.w + u);
+      }
     for (let i = 0; i < fx.lava && spots.length; i++) {
       const tile = b.tiles[spots.splice(rng.int(0, spots.length - 1), 1)[0]];
       tile.ground = 'lava';

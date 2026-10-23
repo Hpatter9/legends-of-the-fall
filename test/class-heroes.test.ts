@@ -1,3 +1,4 @@
+import { bareBoard } from './bare';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addUnit, defOf, fight, place, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
@@ -12,7 +13,7 @@ const CLASSES = ['paladin', 'cleric', 'druid', 'barbarian', 'ranger', 'warlock',
 
 function arena(): Battle {
   const b = startBattle(3);
-  for (const t of b.board.tiles) (t.h = 0), (t.rock = false);
+  bareBoard(b);
   b.units = [];
   b.phase = 'fight';
   return b;

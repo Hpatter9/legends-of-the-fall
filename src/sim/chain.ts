@@ -209,6 +209,9 @@ export function joinBoard(prev: Section, next: Section): void {
     edge.push((D - 1) * W + u);
     delete t.rock;
     delete t.ground;
+    delete t.wall;
+    delete t.barrel;
+    delete t.bridge;
     const p = meets.get(u);
     if (!p) continue;
     // (a tile that meets another stands within `JOIN_STEP` of it, and within a ramp of the edge tile beside it, which the first clamp can leave out of reach)
@@ -240,7 +243,17 @@ export function buildChain(seed: number, waves: number, area: Area, boardSeed: (
   for (let n = 1; n <= waves; n++) {
     const q = road[n - 1];
     const s: Section = { wave: n, board: makeBoard(boardSeed(n), area), rot: q.rot, origin: { u: q.ou, v: q.ov }, join: q.join, boss: boss(n) };
-    if (n > 1) joinBoard(out[n - 2], s);
+    // (the first section meets no other, but a later one may be laid against it: its border is smoothed too)
+    const settle = () => {
+      if (n > 1) joinBoard(out[n - 2], s);
+      else smoothRing(s.board, new Set());
+    };
+    settle();
+    // (a shape the join or the smoothing cuts apart, a bridge or gate left without its far side, is laid the old way instead)
+    if (!boardOk(s.board)) {
+      s.board = makeBoard(boardSeed(n), area, W, D, 'classic');
+      settle();
+    }
     out.push(s);
   }
   return out;

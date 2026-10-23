@@ -6,15 +6,16 @@
 //
 // Pure rules: no Pixi, no DOM. The renderer reads the battle and the events each tick returns.
 
-import { boardOk, CLIMB_COST, D, DEPLOY_ROWS, DROP_EXTRA, GROUND_COST, LAVA_BURN, makeBoard, sightClear, standable, tileAt, type Area, type At, type Board } from './board';
+import { BARREL_BLAST, boardOk, CLIMB_COST, D, DEPLOY_ROWS, DROP_EXTRA, GROUND_COST, LAVA_BURN, LAVA_STAND, makeBoard, SHRINE_HEAL, sightClear, standable, TALL_DODGE, tileAt, type Area, type At, type Board, type Tile } from './board';
 import { cloneBoard } from './chain';
+import type { LayoutId } from './layouts';
 import { twistBoard, type TwistFx } from './twists';
 import { firstStep, walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
 import { FOE_BANDS } from './foes';
 import { killXp } from './levels';
 import { enterPhase, PHASE2 } from './bossPhases';
-import { afterBlow, CHARGE_MAX, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, rollCrit, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
+import { afterBlow, CHARGE_MAX, mendUnit, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, rollCrit, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellState } from './spells';
 import type { SetHooks } from './relicSets';
 import { kindsOf, traitEffects, type TraitEffects } from './traits';
@@ -24,6 +25,8 @@ import type { EquipStats } from './equipment';
 import { SPLASH_SHARE, UNITS, type Shot, type Side, type UnitDef } from './units';
 
 export const TICK_MS = 100;
+/** The chance a walker who steps onto ice slides a tile further. */
+export const ICE_SLIDE = 0.5;
 /** A fight still going after this long is lost (the foes held). */
 export const TIME_LIMIT_MS = 120_000;
 /** How long a fighter with nothing it can do waits before looking again. */
@@ -160,6 +163,8 @@ export type BattleEvent =
   | { kind: 'zone'; u: number; v: number; ms: number }
   | { kind: 'trap'; u: number; v: number; ms: number }
   | { kind: 'dodge'; to: number }
+  /** A powder barrel goes off at this tile (the barrel is gone after). */
+  | { kind: 'boom'; u: number; v: number }
   | { kind: 'spell'; id: SpellId; u: number; v: number }
   /** A spell touches this fighter (the renderer plays the spell's sheet on it). */
   | { kind: 'spellfx'; id: SpellId; to: number }
@@ -216,6 +221,17 @@ export interface Battle {
   pause?: number;
   /** Every hero's healing is multiplied by this (a calamity ascension). */
   heroHeal?: number;
+  /** The weather over the field (`Stage.weather`). */
+  weather?: Weather;
+  /** The tiles (by index) where a powder barrel still stands. */
+  barrels?: number[];
+  /** Whether the board has ground that acts each second (a shrine, lava). */
+  groundFx?: boolean;
+}
+
+/** What the weather does to a fight: fog shortens every shooter's range by this many tiles. (The look of the weather is the page's; this is what the sim reads.) */
+export interface Weather {
+  fog?: number;
 }
 
 export const defOf = (u: Unit): UnitDef => UNITS[u.def];
@@ -271,6 +287,10 @@ export interface Stage {
   twist?: TwistFx;
   /** Every hero's healing is multiplied by this (a calamity ascension). */
   heal?: number;
+  /** The weather over the field; none when unset. */
+  weather?: Weather;
+  /** A layout to lay the land in (`layouts.ts`), instead of the seed's own pick; ignored when `board` is given. */
+  layout?: LayoutId;
 }
 export const apart = (a: At, b: At) => Math.abs(a.u - b.u) + Math.abs(a.v - b.v);
 export const tileOf = (b: Battle, a: At) => tileAt(b.board, a.u, a.v)!;
@@ -318,11 +338,16 @@ export function canStrike(board: Board, def: UnitDef, from: At, to: At): boolean
 
 /** A fresh fight on the seed's board: the foes of `band` (a band's name in `FOE_BANDS`, or the foes' ids themselves) in their rows, no heroes placed yet. */
 export function startBattle(seed: number, band: string | readonly string[] = 'skeletons', stage: Stage = {}): Battle {
-  const board = stage.board ? cloneBoard(stage.board) : makeBoard(seed, stage.area, stage.size?.w, stage.size?.d);
+  const board = stage.board ? cloneBoard(stage.board) : makeBoard(seed, stage.area, stage.size?.w, stage.size?.d, stage.layout);
   const tw = stage.twist;
   if (tw) twistBoard(board, tw, seed);
   const b: Battle = { seed, board, units: [], phase: 'deploy', t: 0, rng: mixSeed(seed, 0xf167), pending: [], skillRng: mixSeed(seed, 0x5c111), zones: [], nextId: 1, spells: freshSpells(tw?.mana ? (stage.mana ?? 1) * tw.mana : stage.mana) };
   if (tw) b.twist = tw;
+  if (stage.weather) b.weather = stage.weather;
+  const barrels: number[] = [];
+  board.tiles.forEach((t, i) => t.barrel && barrels.push(i));
+  if (barrels.length) b.barrels = barrels;
+  if (board.tiles.some((t) => t.ground === 'shrine' || t.ground === 'lava')) b.groundFx = true;
   if (stage.heroes) b.heroBoost = stage.heroes;
   if (tw?.heroAtk) b.heroBoost = { ...b.heroBoost, atk: (b.heroBoost?.atk ?? 1) * tw.heroAtk };
   // (the foes' boost with the twist's share in it)
@@ -467,7 +492,7 @@ export function strikeDef(b: Battle, me: Unit): UnitDef {
   const reach = me.side === 'hero' ? b.traits?.reach : undefined;
   const extra = me.eq?.range ?? 0;
   // (twists: fog shortens a shooter's range, a gale lifts every jump)
-  const fog = def.shot ? b.twist?.fog ?? 0 : 0;
+  const fog = def.shot ? (b.twist?.fog ?? 0) + (b.weather?.fog ?? 0) : 0;
   const jump = b.twist?.jump ?? 0;
   if (!extra && !fog && !jump && !(reach && def.shot)) return def;
   return { ...def, range: Math.max(1, def.range + extra - fog), ...(jump ? { jump: def.jump + jump } : {}), ...(reach && def.shot ? { heightReach: (def.heightReach ?? HIGH_REACH) + reach } : {}) };
@@ -491,6 +516,7 @@ export function stepBattle(b: Battle): BattleEvent[] {
   b.pending.sort((x, y) => x.at - y.at);
   while (b.pending.length && b.pending[0].at <= b.t) settle(b, b.pending.shift()!, out);
   tickStatus(b, out);
+  if (b.groundFx && b.t % 1000 === 0) groundTick(b, out);
   for (const me of b.units) if (me.alive && me.busyUntil <= b.t) decide(b, me, rng, out);
   b.rng = rng.state;
   for (const u of b.units) if (u.alive && u.phase && !u.phase.done && u.hp <= u.maxHp * u.phase.at) enterPhase(b, u, out);
@@ -519,6 +545,11 @@ function settle(b: Battle, p: Pending, out: BattleEvent[]): void {
   }
   // (a sword falls with its wielder; a shot already flying still lands)
   if (!def.shot && !by.alive) return;
+  // (a fighter in tall growth is a little hard to hit: its own hash of the moment, so no stream moves)
+  if (tileOf(b, to).ground === 'tall' && (mixSeed(b.seed, 0xd0d6, p.at, by.id, to.id) >>> 0) / 4294967296 < TALL_DODGE) {
+    out.push({ kind: 'dodge', to: to.id });
+    return;
+  }
   hurt(b, by, to, p.dmg, p.heavy, false, out);
   afterBlow(b, by, to, !!p.crit, p.dmg, out);
   if (def.splash)
@@ -572,6 +603,32 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
     onKill(b, by, out);
     fxKill(b, by, to, out);
   }
+  // (a blow beside a powder barrel sets it off)
+  if (b.barrels && src !== 'dot') for (const i of b.barrels.filter((i) => Math.max(Math.abs((i % b.board.w) - to.u), Math.abs(Math.floor(i / b.board.w) - to.v)) <= 1)) blast(b, i, out);
+}
+
+/** A powder barrel goes off: it is gone, whoever is within a tile of it loses `BARREL_BLAST` of their hp, and a barrel beside it goes too. */
+function blast(b: Battle, i: number, out: BattleEvent[]): void {
+  const at = b.barrels?.indexOf(i) ?? -1;
+  if (at < 0) return;
+  b.barrels!.splice(at, 1);
+  const w = b.board.w;
+  const u = i % w;
+  const v = Math.floor(i / w);
+  delete b.board.tiles[i].barrel;
+  out.push({ kind: 'boom', u, v });
+  for (const x of b.units) if (x.alive && Math.max(Math.abs(x.u - u), Math.abs(x.v - v)) <= 1) hurt(b, x, x, Math.max(1, Math.round(x.maxHp * BARREL_BLAST)), false, true, out, 'dot');
+  for (const j of [...(b.barrels ?? [])]) if (Math.max(Math.abs((j % w) - u), Math.abs(Math.floor(j / w) - v)) <= 1) blast(b, j, out);
+}
+
+/** Once a second: a shrine mends whoever stands on it, lava burns whoever stands in it (a flier above passes unharmed). */
+function groundTick(b: Battle, out: BattleEvent[]): void {
+  for (const x of b.units) {
+    if (!x.alive) continue;
+    const g = tileOf(b, x).ground;
+    if (g === 'shrine') mendUnit(x, x.maxHp * SHRINE_HEAL, out);
+    else if (g === 'lava' && !defOf(x).flies) hurt(b, x, x, Math.max(1, Math.round(x.maxHp * LAVA_STAND)), false, false, out, 'dot');
+  }
 }
 
 /** What a level of height over the foe is worth to a fighter, in steps of walking: a shooter's blows and reach both grow with it. */
@@ -581,6 +638,8 @@ const PERCH_MELEE = 1.2;
 const PERCH_DETOUR = 4;
 /** What a shooter adds to a tile's cost for each brute that could reach it in two steps. */
 const MENACE_COST = 0.6;
+/** The most a hurt fighter walks (cost) to reach a shrine. */
+const SHRINE_RUN = 5;
 /** The most a fighter walks (cost) to step up to higher ground when it could already strike. */
 const PERCH_HOP = 3;
 
@@ -590,6 +649,15 @@ const perchValue = (def: UnitDef, h: number, hf: number): number => (def.shot ? 
 /** The tile a fighter that could already strike `target` first steps to, to strike from higher ground: one a step or two
  *  away that stands over where it is and still holds the target (a fighter never goes down, so it comes to rest). The tile's
  *  index, or -1 to stay and strike. */
+/** What the ground under a tile is worth to a fighter standing on it, in steps of walking (below zero is good): lava burns a walker, tall growth hides a shooter, a shrine mends a hurt fighter, ice may slide it off. */
+function groundScore(def: UnitDef, wound: number, g: Tile['ground']): number {
+  if (g === 'lava') return def.flies ? 0 : 3;
+  if (g === 'tall') return def.shot ? -0.6 : -0.2;
+  if (g === 'shrine') return wound > 0.4 ? -2 : -0.3;
+  if (g === 'ice') return def.flies ? 0 : 0.3;
+  return 0;
+}
+
 function perchFor(b: Battle, me: Unit, def: UnitDef, target: Unit): number {
   const board = b.board;
   const here = tileOf(b, me).h;
@@ -606,13 +674,14 @@ function perchFor(b: Battle, me: Unit, def: UnitDef, target: Unit): number {
   for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * board.w + x.u);
   const walk = walkFrom(board, me, def.jump, blocked);
   const ht = tileOf(b, target).h;
-  const now = perchValue(def, here, ht);
+  const wound = 1 - me.hp / me.maxHp;
+  const now = perchValue(def, here, ht) + groundScore(def, wound, tileOf(b, me).ground);
   let goal = -1;
   let best = 0;
   for (let i = 0; i < walk.cost.length; i++) {
     const cost = walk.cost[i];
     if (cost === 0 || cost > PERCH_HOP || board.tiles[i].h <= here) continue;
-    const gain = perchValue(def, board.tiles[i].h, ht) - now - cost;
+    const gain = perchValue(def, board.tiles[i].h, ht) + groundScore(def, wound, board.tiles[i].ground) - now - cost;
     if (gain <= best || !canStrike(board, def, { u: i % board.w, v: Math.floor(i / board.w) }, target)) continue;
     best = gain;
     goal = i;
@@ -648,6 +717,13 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   const blocked = new Set<number>();
   for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * b.board.w + x.u);
   const walk = walkFrom(b.board, me, def.jump, blocked);
+  const wound = 1 - me.hp / me.maxHp;
+  // a badly hurt fighter with nobody to strike makes for a shrine close by
+  if (wound > 0.4 && b.groundFx) {
+    let shrine = -1;
+    for (let i = 0; i < walk.cost.length; i++) if (b.board.tiles[i].ground === 'shrine' && walk.cost[i] > 0 && walk.cost[i] <= SHRINE_RUN && (shrine < 0 || walk.cost[i] < walk.cost[shrine])) shrine = i;
+    if (shrine >= 0) return stepTo(b, me, firstStep(walk, shrine)!, out);
+  }
   const byDistance = [...foes].sort((x, y) => apart(me, x) - apart(me, y) || x.id - y.id);
   const menace = def.shot ? foes.filter((x) => !defOf(x).shot && defOf(x).range <= 2) : [];
   for (const f of byDistance) {
@@ -664,7 +740,7 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
     let best = Infinity;
     for (const i of spots) {
       if (walk.cost[i] > nearest + PERCH_DETOUR) continue;
-      let score = walk.cost[i] - perchValue(def, b.board.tiles[i].h, hf);
+      let score = walk.cost[i] - perchValue(def, b.board.tiles[i].h, hf) + groundScore(def, wound, b.board.tiles[i].ground);
       for (const m of menace) if (apart({ u: i % b.board.w, v: Math.floor(i / b.board.w) }, m) <= 2) score += MENACE_COST;
       if (score < best) {
         best = score;
@@ -699,11 +775,21 @@ function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[]): voi
 
 function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void {
   const def = defOf(me);
-  const next = { u: i % b.board.w, v: Math.floor(i / b.board.w) };
+  let next = { u: i % b.board.w, v: Math.floor(i / b.board.w) };
   const from = tileOf(b, me);
-  const to = tileOf(b, next);
+  let to = tileOf(b, next);
   // (a sure-footed fighter climbs at no extra cost)
-  const cost = def.flies ? 1 : 1 + (sureFooted(me) ? 0 : Math.max(0, to.h - from.h) * CLIMB_COST) + (to.ground ? GROUND_COST[to.ground] : 0);
+  let cost = def.flies ? 1 : 1 + (sureFooted(me) ? 0 : Math.max(0, to.h - from.h) * CLIMB_COST) + (to.ground ? GROUND_COST[to.ground] : 0);
+  // (ice: a walker who steps onto it may slide one tile on, if that tile is free and no higher, and not lava; a hash of the moment says, so no stream moves)
+  if (to.ground === 'ice' && !def.flies && (mixSeed(b.seed, 0x1ce, b.t, me.id) >>> 0) / 4294967296 < ICE_SLIDE) {
+    const on = { u: next.u + next.u - me.u, v: next.v + next.v - me.v };
+    const t2 = tileAt(b.board, on.u, on.v);
+    if (standable(t2) && !unitAt(b, on.u, on.v) && t2.h <= to.h && t2.ground !== 'lava') {
+      next = on;
+      to = t2;
+      cost += 0.5;
+    }
+  }
   const ms = Math.round((def.moveMs * cost) / (speedOf(b, me) * (1 + (me.eq?.moveSpeed ?? 0)) * (me.side === 'hero' ? b.heroMove ?? 1 : 1) * (b.twist?.chill ?? 1)));
   me.step = { u: me.u, v: me.v, h: from.h, at: b.t, ms };
   me.facing = wayTo(me, next);

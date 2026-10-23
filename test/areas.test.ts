@@ -8,10 +8,11 @@ import { walkFrom } from '../src/sim/path';
 const flat = (extra: Partial<Tile> = {}): Tile => ({ h: 0, deco: 0, ...extra });
 /** A board with every tile level and bare. */
 const bare = () => {
-  const b = makeBoard(1);
+  const b = makeBoard(1, 'highlands', W, D, 'classic');
   for (const t of b.tiles) {
     t.h = 0;
-    t.rock = false;
+    delete t.rock;
+    delete t.barrel;
     delete t.ground;
     delete t.bush;
   }
@@ -43,9 +44,10 @@ test('every area makes a valid board, the same each time for a seed', () => {
 });
 
 test('the land and boulders are the same in every area; the ground is laid on top', () => {
-  const base = makeBoard(9);
+  // (the rolling land: a shape laid over it, and the area's odds of one, are the layouts' business, `layouts.test.ts`)
+  const base = makeBoard(9, 'highlands', W, D, 'classic');
   for (const area of AREAS) {
-    const b = makeBoard(9, area);
+    const b = makeBoard(9, area, W, D, 'classic');
     assert.deepEqual(b.tiles.map((t) => [t.h, !!t.rock]), base.tiles.map((t) => [t.h, !!t.rock]));
   }
 });
