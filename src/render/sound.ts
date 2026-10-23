@@ -102,7 +102,7 @@ export function setup(): void {
   // (for the tests and the owner: `window.__audioDebug()` says what the engine is doing)
   const w = window as unknown as { __audioDebug?: () => unknown; __audioApi?: unknown };
   w.__audioDebug = debugState;
-  w.__audioApi = { setAct, setMusic, setTension, duck, setScene, probe, bake: bakeTrack, renderCue };
+  w.__audioApi = { setAct, setMusic, setTension, duck, setScene, playScene, endScene, probe, bake: bakeTrack, renderCue };
 }
 
 /** Lets the game's sound mix with whatever else the phone is playing (a music app), and never take the audio focus: the
@@ -230,9 +230,33 @@ export function setTension(t: number): void {
   engine?.music.setTension(t);
 }
 
-/** Crossfades to a track: the town's, the battle's or the boss's. */
-export function setMusic(track: Track): void {
-  engine?.music.setTrack(track);
+/** The cinematics' music: a scene's id to the track it plays (a scene with no score of its own has none). */
+const SCENE_TRACK: Record<string, Track> = { opening: 'opening', gorvak: 'gorvak' };
+/** What was playing before a scene's music took over, so `endScene` can put it back. */
+let beforeScene: Track | null = null;
+
+/** Crossfades to a track: the town's, the battle's or the boss's; or a scene's, as `'scene:opening'` (see `playScene`). */
+export function setMusic(track: Track | `scene:${string}`): void {
+  if (track.startsWith('scene:')) return playScene(track.slice(6));
+  beforeScene = null;
+  engine?.music.setTrack(track as Track);
+}
+
+/** Starts a cinematic's music (`opening`, `gorvak`) by the scene's id; an id with no score leaves the music as it is. It loops until
+ *  `endScene`. The scenes' stings are cues: `play('sceneBoss')` for a boss arriving, `play('sceneVictory')` for a victory. */
+export function playScene(id: string): void {
+  const track = SCENE_TRACK[id];
+  if (!track || !engine) return;
+  if (beforeScene === null && engine.music.current && !(engine.music.current in { opening: 1, gorvak: 1 })) beforeScene = engine.music.current;
+  engine.music.setTrack(track);
+}
+
+/** The scene is over: the music it replaced comes back (the town's if nothing was playing). */
+export function endScene(): void {
+  if (!engine) return;
+  const back = beforeScene ?? 'town';
+  beforeScene = null;
+  engine.music.setTrack(back);
 }
 
 /** The tower act the music takes its colour from (a filter, a pace and a drone), or null outside the tower. */

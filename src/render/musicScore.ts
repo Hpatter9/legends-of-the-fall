@@ -3,7 +3,9 @@
 // the fight's tension. This file is pure data and rules (no Web Audio, no DOM, no randomness), so the tests can read it.
 // Times are in beats; a loop is eight bars of four beats.
 
-export type Track = 'town' | 'battle' | 'boss';
+export type Track = 'town' | 'battle' | 'boss' | 'opening' | 'gorvak';
+/** The tracks that do not follow a fight's tension: the town's and the cinematics'. */
+export const CALM_TRACKS: ReadonlySet<Track> = new Set<Track>(['town', 'opening', 'gorvak']);
 export type Stem = 'pad' | 'bass' | 'lead' | 'drums';
 export const STEMS: readonly Stem[] = ['pad', 'bass', 'lead', 'drums'];
 
@@ -174,7 +176,43 @@ const BOSS: Score = {
   ],
 };
 
-export const SCORES: Record<Track, Score> = { town: TOWN, battle: BATTLE, boss: BOSS };
+/* ------------------------------------------------------------------ the cinematics */
+
+/** The opening scene: A minor, slow, a held drone and a lone bell line that waits between its notes; no drums, so it is quiet under the talk. */
+const OPENING_CHORDS: Chord[] = [m(33), m(33), M(41), M(36), m(33), M(43), M(41), M(40)];
+const OPENING: Score = {
+  bpm: 62,
+  beats: BEATS,
+  pad: pads(OPENING_CHORDS, 24, 0.55),
+  bass: OPENING_CHORDS.map((c, bar) => ({ t: bar * 4, d: 4, midi: c.root, v: 0.9 })),
+  lead: tune(
+    [
+      [2, 2, 81], [6, 2, 76], [10, 1.5, 77], [12, 1, 79], [14, 2, 76],
+      [18, 2, 81], [22, 1, 83], [23, 1, 81], [26, 2, 77], [30, 2, 76],
+    ],
+    0.8,
+  ),
+  drums: [],
+};
+
+/** Gorvak the Ashen: C minor, a slow heavy march: low toms on the beat, a kick, a lumbering bass and a sour two-note stab. */
+const GORVAK_CHORDS: Chord[] = [m(36), m(36), M(32), m(36), m(36), M(34), M(32), M(31)];
+const GORVAK: Score = {
+  bpm: 88,
+  beats: BEATS,
+  pad: pads(GORVAK_CHORDS, 24, 0.55),
+  bass: GORVAK_CHORDS.flatMap((c, bar) => [0, 1.5, 2, 3.5].map((b) => ({ t: bar * 4 + b, d: b % 2 ? 0.4 : 1.2, midi: c.root, v: b === 0 ? 1 : 0.7 }))),
+  lead: GORVAK_CHORDS.flatMap((c, bar) => (bar % 2 === 1 ? [{ t: bar * 4 + 3, d: 0.5, midi: c.root + 36, v: 0.8 }, { t: bar * 4 + 3.5, d: 0.5, midi: c.root + 37, v: 0.8 }] : [])),
+  drums: Array.from({ length: BARS }, (_, bar) => [
+    { t: bar * 4, kind: 'kick' as const, v: 1 },
+    { t: bar * 4, kind: 'tom' as const, v: 0.8, pitch: -4 },
+    { t: bar * 4 + 2, kind: 'tom' as const, v: 0.7, pitch: -7 },
+    { t: bar * 4 + 3, kind: 'snare' as const, v: 0.5 },
+    ...(bar === 0 || bar === 4 ? [{ t: bar * 4, kind: 'crash' as const, v: 0.6 }] : []),
+  ]).flat(),
+};
+
+export const SCORES: Record<Track, Score> = { town: TOWN, battle: BATTLE, boss: BOSS, opening: OPENING, gorvak: GORVAK };
 
 /* ------------------------------------------------------------------ the mix */
 
@@ -185,19 +223,21 @@ const smooth = (x: number): number => clamp01(x) * clamp01(x) * (3 - 2 * clamp01
  *  bass, brings the lead in as the sides thin out and the drums with it; the boss never drops its drums. */
 export function stemLevels(track: Track, t: number): Record<Stem, number> {
   const x = clamp01(t);
-  if (track === 'town') return { pad: 1, bass: 0.9, lead: 1, drums: 0 };
+  if (CALM_TRACKS.has(track)) return { pad: 1, bass: 0.9, lead: 1, drums: track === 'gorvak' ? 1 : 0 };
   if (track === 'battle') return { pad: 1 - 0.3 * x, bass: 0.85 + 0.15 * x, lead: 0.35 + 0.65 * smooth(x), drums: 0.45 + 0.55 * smooth(x) };
   return { pad: 1 - 0.2 * x, bass: 1, lead: 0.7 + 0.3 * x, drums: 0.85 + 0.15 * x };
 }
 
 /** The loudness (RMS, 0 to 1) each track is baked to with every stem at full level; `MUSIC_LEVEL` in `sound.ts` sits on top. */
-export const TRACK_RMS: Record<Track, number> = { town: 0.1, battle: 0.24, boss: 0.26 };
+export const TRACK_RMS: Record<Track, number> = { town: 0.1, battle: 0.24, boss: 0.26, opening: 0.1, gorvak: 0.2 };
 
 /** How much each stem is trimmed in the bake so they sit in balance (measured: the drums and bass baked far louder than the pads). */
 export const STEM_TRIM: Record<Track, Record<Stem, number>> = {
   town: { pad: 1.5, bass: 0.6, lead: 1, drums: 1 },
   battle: { pad: 2.4, bass: 0.75, lead: 1, drums: 0.5 },
   boss: { pad: 2.4, bass: 0.75, lead: 1.5, drums: 0.45 },
+  opening: { pad: 1.5, bass: 0.6, lead: 1, drums: 1 },
+  gorvak: { pad: 2.4, bass: 0.75, lead: 1.2, drums: 0.5 },
 };
 
 /** A small deterministic stream (for the baked noise): the same every time, so the music is the same on every phone. */

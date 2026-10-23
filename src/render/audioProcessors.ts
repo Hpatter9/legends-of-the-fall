@@ -7,7 +7,7 @@ import { AudioProcessor, type SchedulableParam } from '@audiorective/core';
 import { Limiter } from '@audiorective/effects';
 import type { Cue } from './soundRules';
 import { bakeTrack, type Baked } from './musicBake';
-import { STEMS, stemLevels, type Stem } from './musicScore';
+import { CALM_TRACKS, STEMS, stemLevels, type Stem } from './musicScore';
 import { DUCK_GAIN, DUCK_HZ, OPEN_HZ, colourOf, cutoffOf, percActive, percLevel, rateOf, swellOf, type Track } from './audioRules';
 
 /** The longest a crossfade takes to settle (seconds). */
@@ -609,6 +609,24 @@ export const SOUNDS: Record<Cue, (s: Voices, t: number) => void> = {
     s.hiss(t + 0.2, 0.4, 7000, 'highpass', 0.04);
   },
   // an elite stirs: a low brassy fifth, a clang and a rising rush
+  // a boss arrives: a low drone and a falling, dissonant pair under three slow hits
+  sceneBoss: (s, t) => {
+    s.note(t, 55, 2.4, 0.4, 'sawtooth', 40);
+    s.pad(t, 110, 2.2, 0.16, 'sawtooth', 700);
+    s.pad(t, 116.5, 2.2, 0.12, 'sawtooth', 700);
+    [0, 0.5, 1.0].forEach((d, i) => {
+      s.note(t + d, 90 - i * 12, 0.5, 0.4, 'sine', 40);
+      s.hiss(t + d, 0.3, 300, 'lowpass', 0.22);
+    });
+    s.ring(t + 1.0, 466, 1.6, 0.06);
+  },
+  // a victory: a rising fanfare of triangles into a held, bright chord
+  sceneVictory: (s, t) => {
+    [392, 523, 659, 784].forEach((f, i) => s.note(t + i * 0.16, f, 0.3, 0.14, 'sawtooth'));
+    [523, 659, 784, 1047].forEach((f) => s.note(t + 0.7, f, 1.8, 0.1, 'triangle'));
+    s.ring(t + 0.7, 2093, 1.6, 0.05);
+    s.hiss(t + 0.7, 0.9, 6500, 'highpass', 0.04);
+  },
   eliteSting: (s, t) => {
     s.note(t, 82, 1, 0.22, 'sawtooth', 65);
     s.note(t, 123, 1, 0.12, 'sawtooth', 98);
@@ -849,7 +867,7 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swel
     const tc = snap ? 0.3 : 0.6;
     this.params.cutoff.setTargetAtTime(cutoffOf(track, this.tension, this.act), t, tc);
     this.params.swell.setTargetAtTime(swellOf(track, this.tension), t, tc);
-    const hot = track === 'town' ? 0 : this.tension;
+    const hot = CALM_TRACKS.has(track) ? 0 : this.tension;
     this.params.perc.setTargetAtTime(percLevel(hot) * RUMBLE_SCALE, t, 0.8);
     const loop = this.loops.get(track);
     if (loop) {
@@ -978,7 +996,7 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swel
     this.rumbleStopping = true;
     setTimeout(() => {
       this.rumbleStopping = false;
-      if (this.rumble && !percActive(this.current === 'town' ? 0 : this.tension)) {
+      if (this.rumble && !percActive(this.current && CALM_TRACKS.has(this.current) ? 0 : this.tension)) {
         this.rumble.stop();
         this.rumble = null;
       }

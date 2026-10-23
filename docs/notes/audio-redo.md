@@ -91,3 +91,16 @@ events, and the tower and Calamity blurbs.
   keep them as an option, say so.
 - iOS "ambient" follows the silent switch; the alternative (`playback`) would not mix, so I kept ambient.
 - Music volume Off is the "music off, effects on" setting; I did not add a second switch.
+
+## Cinematic music (the owner's addition, via the director)
+
+- Two scene scores, in `musicScore.ts` like the other tracks (baked, looping, no tension): `opening` (A minor, 62 bpm, a held drone and a
+  lone bell line, no drums, quiet under the talk) and `gorvak` (C minor, 88 bpm, a slow heavy march of toms, kick and a sour two-note stab).
+- Two stings, as ordinary cues (so they work from any scene): `play('sceneBoss')` (a boss arrives) and `play('sceneVictory')` (a victory).
+- API in `sound.ts`: `setMusic('scene:opening')` or `playScene('opening')` starts a scene's loop (an id with no score is ignored);
+  `endScene()` puts back whatever was playing (the town's if nothing). `setMusic` of a normal track clears the memory. Scene ids with
+  scores: `opening`, `gorvak`. Adding one is a `SCORES` entry, `TRACK_RMS`/`STEM_TRIM` entries and a line in `SCENE_TRACK`.
+- Nothing loaded by URL, so `FILES` is unchanged. Checked in Chromium: opening, gorvak, an unknown id (ignored), end (back to town);
+  WAVs in `docs/samples/audio/` (`music-opening.wav`, `music-gorvak.wav`, `cue-sceneBoss.wav`, `cue-sceneVictory.wav`).
+- The scene player's call site (the hero-progress worker's `music` field) is not mine; it should call `playScene(id)` when a scene
+  starts and `endScene()` when it ends.

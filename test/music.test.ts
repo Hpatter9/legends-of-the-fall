@@ -4,7 +4,7 @@ import { SCORES, STEMS, TRACK_RMS, loopSeconds, noiseStream, stemLevels } from '
 import { BAKE_RATE, bakeTrack, rms, type OfflineMaker } from '../src/render/musicBake';
 import { FakeContext, installFakeAudio } from './audioFake';
 
-const TRACKS = ['town', 'battle', 'boss'] as const;
+const TRACKS = ['town', 'battle', 'boss', 'opening', 'gorvak'] as const;
 
 test('every track is eight bars, its notes fit the loop and its stems are in sensible ranges', () => {
   for (const track of TRACKS) {
@@ -19,9 +19,10 @@ test('every track is eight bars, its notes fit the loop and its stems are in sen
       }
     }
     for (const h of s.drums) assert.ok(h.t >= 0 && h.t < s.beats && h.v > 0 && h.v <= 1, `${track} drum hit`);
-    assert.ok(loopSeconds(s) > 10 && loopSeconds(s) < 30, `${track} loop is ${loopSeconds(s)} s`);
+    assert.ok(loopSeconds(s) > 10 && loopSeconds(s) < 35, `${track} loop is ${loopSeconds(s)} s`);
   }
   assert.equal(SCORES.town.drums.length, 0, 'the town has no drums');
+  assert.deepEqual(Object.keys(SCORES).sort(), [...TRACKS].sort(), 'every track is checked here');
   assert.ok(SCORES.battle.drums.length > 0 && SCORES.boss.drums.length > 0);
 });
 
