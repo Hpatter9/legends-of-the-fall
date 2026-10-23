@@ -211,9 +211,18 @@ export function waveBoost(a: Army, n: number, tier = 0): Stage {
   if (w?.boss) {
     const want = w.boss === 'final' ? a.last : a.mid;
     const def = FOES[w.foes[0]];
-    boss = { size: w.boss === 'final' ? 1.5 : 1.3, hp: want.hp / def.hp, atk: want.atk / def.atk, ...(w.boss === 'final' ? { phase: PHASE_AT } : {}) };
+    boss = { size: w.boss === 'final' ? 1.5 : 1.3, hp: want.hp / def.hp, atk: want.atk / def.atk, ...(w.boss === 'final' ? { phase: t.phaseAt ?? PHASE_AT, ...(t.surge ? { surge: t.surge } : {}) } : {}) };
   }
   return { foes: { hp: k * t.hp, atk: k * t.atk, ...(t.speed !== 1 ? { speed: t.speed } : {}) }, boss, area: a.area };
+}
+
+/** The foes of wave n on a tier: the wave's own band, then the tier's escorts, copies of the wave's escorts in turn (a boss is never copied, so a boss with no escorts stays alone). */
+export function waveFoes(a: Army, n: number, tier = 0): readonly string[] {
+  const w = a.waves[n - 1];
+  const extra = tierOf(tier).extra ?? 0;
+  if (!w || !extra) return w?.foes ?? [];
+  const pool = w.boss ? w.foes.slice(1) : w.foes;
+  return pool.length ? [...w.foes, ...Array.from({ length: extra }, (_, i) => pool[i % pool.length])] : w.foes;
 }
 
 // ---- rewards -----------------------------------------------------------------------------------------------------------

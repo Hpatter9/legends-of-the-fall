@@ -10,6 +10,7 @@ import { lockInfo } from './sim/contentHeroes';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { TRAITS, traitsOf } from './sim/traits';
 import type { Meta } from './sim/meta';
+import { sceneList } from './sim/sceneRules';
 import { portrait, sprite, figureOf } from './render/sheets';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -22,7 +23,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 const CLASS_LABEL: Record<FoeEntry['class'], string> = { common: 'Foe', boss: 'Boss', elite: 'Tower elite', calamity: 'Calamity herald' };
 
 /** The page's state that outlives a redraw: the tab it was on. */
-let tabNow: Collection = 'bestiary';
+let tabNow: Collection | 'scenes' = 'bestiary';
 
 /** A speed word for a step time. */
 const paceOf = (ms: number): string => (ms >= 900 ? 'Slow' : ms >= 650 ? 'Steady' : ms >= 450 ? 'Quick' : 'Very quick');
@@ -160,8 +161,9 @@ const closeButton = (close: () => void): HTMLButtonElement => {
 /**
  * The Codex page: the progress with its milestone rewards, the two tabs, and the grid. `claim` is called with a milestone's id when
  * its Claim is tapped (the home screen pays, saves, and draws the page again). `root` is the sub-page's box (the sheet opens over it).
+ * The third tab lists the cinematics (seen ones can be watched again with `watch`).
  */
-export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => void, root: HTMLElement = body.parentElement ?? body): void {
+export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => void, root: HTMLElement = body.parentElement ?? body, watch?: (sceneId: string) => void): void {
   stopAll();
   root.querySelector('.cxOverlay')?.remove();
   const head = el('div', 'cxHead');
@@ -194,7 +196,22 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
   const grid = el('div', 'cxGrid');
   const fill = () => {
     grid.replaceChildren();
-    if (tabNow === 'bestiary') {
+    grid.classList.toggle('scList', tabNow === 'scenes');
+    grid.classList.toggle('cxGrid', tabNow !== 'scenes');
+    if (tabNow === 'scenes') {
+      for (const sc of sceneList(m)) {
+        const row = el('div', `scRow${sc.seen ? '' : ' locked'}`);
+        const text = el('div');
+        text.append(el('b', '', sc.title), el('small', '', sc.text));
+        row.append(text);
+        if (sc.seen && watch) {
+          const b = el('button', '', 'Watch');
+          b.addEventListener('click', () => watch(sc.id));
+          row.append(b);
+        }
+        grid.append(row);
+      }
+    } else if (tabNow === 'bestiary') {
       for (const e of FOE_ENTRIES) {
         const met = isMet(m, e);
         const def = UNITS[e.defs[0]];
@@ -214,9 +231,9 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
       }
     }
   };
-  const buttons = new Map<Collection, HTMLButtonElement>();
-  for (const c of COLLECTIONS) {
-    const t = el('button', `cxTab${c === tabNow ? ' on' : ''}`, COLLECTION_NAMES[c]);
+  const buttons = new Map<Collection | 'scenes', HTMLButtonElement>();
+  for (const c of [...COLLECTIONS, 'scenes' as const]) {
+    const t = el('button', `cxTab${c === tabNow ? ' on' : ''}`, c === 'scenes' ? 'Scenes' : COLLECTION_NAMES[c]);
     t.addEventListener('click', () => {
       tabNow = c;
       for (const [k, b] of buttons) b.classList.toggle('on', k === c);

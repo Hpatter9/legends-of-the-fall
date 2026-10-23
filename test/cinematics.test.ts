@@ -1,0 +1,223 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { FEET, fillLine, lineSeconds, sceneSeconds, SCENES, SCENE_ORDER, STAGE_H, STAGE_W, type Scene } from '../src/sim/sceneScripts';
+import { castOf, dueScene, kindOf, markSeen, namesOf, readScenes, seenScene } from '../src/sim/sceneRules';
+import { actorsAt, beats, BASE_SCALE, cameraAt, keepInside, lineNow, lineStart, lookAt, next, scaleOf, shotLength, start, tick, typedChars, TYPE_RATE } from '../src/render/sceneClock';
+import { loadMeta, newMeta, pickStarter, saveMeta } from '../src/sim/meta';
+import { UNITS } from '../src/sim/units';
+import { AREAS } from '../src/sim/board';
+
+const store = () => {
+  const data: Record<string, string> = {};
+  return { setItem: (k: string, v: string) => void (data[k] = v), getItem: (k: string) => data[k] ?? null, data };
+};
+
+/** A tiny scene for the clock: one actor walks in, then a line, then a hold. */
+const mini: Scene = {
+  id: 'mini',
+  title: 'Mini',
+  blurb: '',
+  moment: { kind: 'starter' },
+  cast: { a: { role: 'hero', x: 200, facing: 'right', hidden: true }, b: { role: 'unit:orcGrunt', x: 400, facing: 'left' } },
+  shots: [
+    { cam: { x: 100 }, to: { x: 300, zoom: 2 }, acts: [{ who: 'a', enter: 200, from: 'left' }], lines: [{ who: 'a', text: 'Hello there.' }, { who: 'b', text: 'Hm.' }], hold: 1 },
+    { look: 'volcano', cam: { on: ['a', 'b'] }, acts: [{ who: 'a', pose: 'strike' }, { who: 'b', exit: 'right', line: 1 }], lines: [{ who: 'a', text: 'Bye.' }, { who: 'a', text: 'Bye again.' }] },
+  ],
+};
+
+test('every scene is 20 to 40 seconds as played untouched, with brief lines', () => {
+  for (const id of SCENE_ORDER) {
+    const secs = sceneSeconds(SCENES[id]);
+    assert.ok(secs >= 20 && secs <= 40, `${id}: ${secs.toFixed(1)} s`);
+    for (const s of SCENES[id].shots) for (const l of s.lines ?? []) assert.ok(l.text.length <= 100, `${id}: ${l.text}`);
+  }
+});
+
+test('the scenes are well formed: known actors, lines, areas, cues, effects within the rules', () => {
+  assert.deepEqual([...SCENE_ORDER].sort(), Object.keys(SCENES).sort());
+  for (const id of SCENE_ORDER) {
+    const sc = SCENES[id];
+    assert.equal(sc.id, id);
+    const actors = new Set(Object.keys(sc.cast));
+    for (const m of Object.values(sc.cast)) {
+      assert.ok(m.x >= -50 && m.x <= STAGE_W + 50);
+      if (m.role.startsWith('unit:')) assert.ok(UNITS[m.role.slice(5)], m.role);
+    }
+    for (const s of sc.shots) {
+      if (s.look) assert.ok((AREAS as readonly string[]).includes(s.look), s.look);
+      for (const a of s.acts ?? []) assert.ok(actors.has(a.who), a.who);
+      for (const l of s.lines ?? []) assert.ok(l.who === 'narrator' || actors.has(l.who), l.who);
+      for (const w of [s.cam.on, s.to?.on].flat()) if (w) assert.ok(actors.has(w), w);
+      // (every `{name}` in a line is an actor)
+      for (const l of s.lines ?? []) for (const m of l.text.matchAll(/\{(\w+)\}/g)) assert.ok(actors.has(m[1]), m[1]);
+      // (no looping blink: the only flashing effect is the one-shot `flash`, and a shot has at most one)
+      assert.ok((s.fx ?? []).filter((f) => f === 'flash').length <= 1);
+    }
+    assert.ok(sc.shots[0].look, 'the first shot sets the backdrop');
+  }
+});
+
+test('line time grows with its length, within bounds; a line types out at a steady rate, or whole when still', () => {
+  assert.ok(lineSeconds('Hi.') < lineSeconds('A much longer line than the first one is.'));
+  assert.equal(lineSeconds('x'.repeat(500)), 9);
+  assert.equal(typedChars('abcdef', 0), 0);
+  assert.equal(typedChars('abcdef', 2 / TYPE_RATE), 2);
+  assert.equal(typedChars('abcdef', 99), 6);
+  assert.equal(typedChars('abcdef', 0, true), 6);
+  assert.equal(fillLine('{a} meets {b} and {z}', { a: 'Knight', b: 'Orc' }), 'Knight meets Orc and {z}');
+});
+
+test('beats: a line each, then the hold; a shot with nothing in it holds 2.5 s', () => {
+  assert.equal(beats(mini.shots[0]).length, 3);
+  assert.equal(beats(mini.shots[0])[2], 1);
+  assert.deepEqual(beats({ cam: {} }), [2.5]);
+  assert.equal(lineStart(mini.shots[0], 1), beats(mini.shots[0])[0]);
+  assert.equal(shotLength(mini.shots[0]), beats(mini.shots[0]).reduce((n, v) => n + v, 0));
+});
+
+test('the clock runs through every beat and shot to the end, and a tap moves straight on', () => {
+  let c = start();
+  const seen: string[] = [];
+  for (let i = 0; i < 4000; i++) {
+    const l = lineNow(c, mini);
+    if (l && seen[seen.length - 1] !== l.text) seen.push(l.text);
+    const n = tick(c, mini, 0.05);
+    if (!n) break;
+    c = n;
+  }
+  assert.deepEqual(seen, ['Hello there.', 'Hm.', 'Bye.', 'Bye again.']);
+  assert.equal(tick({ shot: 1, beat: 1, t: 0, shotT: 0 }, mini, 99), null);
+  // (a tap from the first line is the second; from the hold the next shot; from the last beat the end)
+  assert.deepEqual(next(start(), mini), { shot: 0, beat: 1, t: 0, shotT: beats(mini.shots[0])[0] });
+  assert.deepEqual(next({ shot: 0, beat: 2, t: 0, shotT: 0 }, mini), { shot: 1, beat: 0, t: 0, shotT: 0 });
+  assert.equal(next({ shot: 1, beat: 1, t: 0, shotT: 0 }, mini), null);
+  assert.equal(lineNow({ shot: 0, beat: 2, t: 0, shotT: 0 }, mini), null, 'no line in a hold');
+});
+
+test('actors: one who is hidden comes on walking, stops where cast, and one leaves when its line comes', () => {
+  const at = (shot: number, shotT: number, beat = 0) => actorsAt(mini, { shot, beat, t: 0, shotT });
+  assert.equal(at(0, 0).a.visible, true, 'the act begins at once');
+  assert.equal(at(0, 0).a.x, -50);
+  const mid = at(0, 1).a;
+  assert.ok(mid.x > -50 && mid.x < 200 && mid.walking && mid.facing === 'right');
+  const there = at(0, 6).a;
+  assert.equal(there.x, 200);
+  assert.equal(there.walking, false);
+  assert.equal(at(1, 0).a.pose, 'strike');
+  assert.equal(at(0, 6).a.pose, 'idle');
+  // (b waits for the second line of the second shot, then walks off the right and is gone)
+  assert.equal(at(1, 0).b.x, 400);
+  assert.equal(at(1, 0).b.visible, true);
+  const after = at(1, lineStart(mini.shots[1], 1) + 30, 1);
+  assert.equal(after.b.visible, false);
+});
+
+test('an actor can come on from an x just out of the picture, as well as from a side', () => {
+  const near: Scene = { ...mini, shots: [{ cam: {}, acts: [{ who: 'a', enter: 200, from: 120 }], lines: [{ who: 'a', text: 'Here I am, finally arrived.' }] }] };
+  const at = (t: number) => actorsAt(near, { shot: 0, beat: 0, t, shotT: t }).a;
+  assert.equal(at(0).x, 120);
+  assert.ok(at(0.5).x > 120 && at(0.5).x < 200 && at(0.5).walking);
+  assert.equal(at(3).x, 200);
+});
+
+test('the camera drifts from its start to its `to` over the shot, eased, following actors; the zoom is drawn at whole scales', () => {
+  const cam = (shotT: number) => cameraAt(mini, { shot: 0, beat: 0, t: 0, shotT });
+  assert.equal(cam(0).x, 100);
+  assert.equal(cam(0).zoom, 1);
+  const len = shotLength(mini.shots[0]);
+  assert.ok(Math.abs(cam(len).x - 300) < 1e-9 && cam(len).zoom === 2);
+  assert.ok(cam(len / 2).x > 100 && cam(len / 2).x < 300);
+  // (on two actors: the middle between them)
+  const two = cameraAt(mini, { shot: 1, beat: 0, t: 0, shotT: 0 });
+  assert.equal(two.x, 300, 'between the two (a at 200, b at 400)');
+  for (let z = 1; z <= 2.01; z += 0.013) assert.ok(Number.isInteger(scaleOf(z)) && scaleOf(z) >= BASE_SCALE);
+  assert.equal(scaleOf(1), 2);
+  assert.equal(scaleOf(1.5), 3);
+  assert.equal(scaleOf(2), 4);
+  assert.equal(scaleOf(1, 3), 3, 'never below what makes the stage cover the picture');
+});
+
+test('the camera is kept inside the stage', () => {
+  const k = 2;
+  const c = keepInside({ x: -300, y: 9999 }, k, 393, 412);
+  assert.equal(c.x, 393 / 2 / k);
+  assert.equal(c.y, STAGE_H - 412 / 2 / k);
+  assert.deepEqual(keepInside({ x: 288, y: 190 }, 2, 393, 412), { x: 288, y: 190 });
+  assert.ok(FEET < STAGE_H);
+});
+
+test('the backdrop of a shot is its own, else the last one set', () => {
+  assert.equal(lookAt(mini, 0), 'highlands');
+  assert.equal(lookAt(mini, 1), 'volcano');
+  assert.equal(lookAt(SCENES.opening, 2), 'highlands');
+});
+
+test('who plays: the party fills the party roles, the hero is the run\'s lead, foes are by id, the goat has no art yet', () => {
+  const players = { party: ['knight', 'samurai', 'archer'], lead: 'wizard' };
+  assert.equal(kindOf('party:0', players), 'knight');
+  assert.equal(kindOf('party:2', players), 'archer');
+  assert.equal(kindOf('party:3', players), null);
+  assert.equal(kindOf('hero', players), 'wizard');
+  assert.equal(kindOf('hero', { party: ['samurai'] }), 'samurai');
+  assert.equal(kindOf('unit:calBoss1', players), 'calBoss1');
+  assert.equal(kindOf('unit:noSuchFoe', players), null);
+  assert.equal(kindOf('duchess', players), null);
+  const cast = castOf(SCENES.opening, players);
+  assert.equal(cast.front.name, 'Knight');
+  assert.equal(cast.herald.name, UNITS.calBoss1.name);
+  assert.equal(namesOf(cast).back, 'Archer');
+  // (a scene that casts her plays on: she has no kind to draw, and her own name)
+  const withGoat: Scene = { ...mini, cast: { ...mini.cast, goat: { role: 'duchess', x: 100, facing: 'right' } } };
+  assert.deepEqual(castOf(withGoat, players).goat, { kind: null, name: 'Duchess' });
+});
+
+test('both pilots cast Duchess and she gets a line, as an actor with no fighter to draw', () => {
+  for (const id of SCENE_ORDER) {
+    const sc = SCENES[id];
+    const goat = Object.entries(sc.cast).find(([, m]) => m.role === 'duchess');
+    assert.ok(goat, id);
+    assert.ok(sc.shots.some((s) => s.lines?.some((l) => l.who === goat[0] && l.text === 'Mehh.')), id);
+    assert.equal(castOf(sc, { party: ['knight', 'samurai', 'archer'] })[goat[0]].kind, null);
+  }
+});
+
+test('the opening is due for a new save that has picked, once; the first Calamity boss on map 1 only', () => {
+  const m = newMeta(12);
+  pickStarter(m, 0);
+  assert.equal(dueScene(m, { kind: 'starter' }), 'opening');
+  assert.equal(dueScene(m, { kind: 'calBoss', map: 1 }), 'gorvak');
+  assert.equal(dueScene(m, { kind: 'calBoss', map: 2 }), null, 'only the first boss has a scene so far');
+  markSeen(m, 'opening');
+  assert.equal(seenScene(m, 'opening'), true);
+  assert.equal(dueScene(m, { kind: 'starter' }), null, 'once');
+  assert.equal(dueScene(m, { kind: 'calBoss', map: 1 }), 'gorvak', 'the other is still waiting');
+  markSeen(m, 'gorvak');
+  markSeen(m, 'gorvak');
+  markSeen(m, 'noSuchScene');
+  assert.deepEqual(m.scenes, ['opening', 'gorvak']);
+  assert.equal(dueScene(m, { kind: 'calBoss', map: 1 }), null);
+});
+
+test('seen scenes are saved and read back; an old save that had picked its heroes has seen the opening; a new one has not', () => {
+  const s = store();
+  const m = newMeta(3);
+  saveMeta(m, s as unknown as Storage);
+  assert.equal(loadMeta(1, s).scenes, undefined, 'a new save waiting for its pick has seen nothing');
+  pickStarter(m, 1);
+  markSeen(m, 'gorvak');
+  saveMeta(m, s as unknown as Storage);
+  assert.deepEqual(loadMeta(1, s).scenes, ['gorvak']);
+  // (a save written before the cinematics: no `scenes`, heroes picked)
+  const old = JSON.parse(s.data[Object.keys(s.data)[0]]);
+  delete old.scenes;
+  const t = store();
+  t.setItem(Object.keys(s.data)[0], JSON.stringify(old));
+  assert.deepEqual(loadMeta(1, t).scenes, ['opening']);
+  // (and one from before the starter pick at all)
+  delete old.starter;
+  t.setItem(Object.keys(s.data)[0], JSON.stringify(old));
+  assert.deepEqual(loadMeta(1, t).scenes, ['opening']);
+  // (junk is dropped)
+  assert.deepEqual(readScenes(['gorvak', 'gorvak', 7, 'nope'], true), ['gorvak']);
+  assert.deepEqual(readScenes('x', false), []);
+});

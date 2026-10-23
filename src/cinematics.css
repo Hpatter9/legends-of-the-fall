@@ -1,0 +1,26 @@
+/* ===== Cinematics (`render/sceneView.ts`, `codexView.ts`): the film's bars with a caption and subtitles over a small canvas; the Scenes list in the codex. Nothing loops. ===== */
+#cutscene { position: fixed; top: 0; bottom: 0; left: max(0px, calc((100vw - 480px) / 2)); width: min(100vw, 480px); z-index: 45; background: var(--black); cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: manipulation; -webkit-tap-highlight-color: transparent; image-rendering: pixelated; }
+#cutscene[hidden] { display: none; }
+.csStage { position: absolute; inset: 0; }
+.csStage canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+.csBar { position: absolute; left: 0; right: 0; background: var(--black); box-sizing: border-box; }
+.csTop { top: 0; }
+.csSkip { position: absolute; right: 10px; top: calc(env(safe-area-inset-top) + 8px); min-width: 64px; min-height: 44px; margin: 0; font: 400 12px var(--display); font-weight: 400; letter-spacing: 0; }
+.csCaption { position: absolute; left: 0; right: 0; padding: 0 16px; text-align: center; font: 400 12px/1.6 var(--display); font-weight: 400; letter-spacing: 1px; color: var(--accent-hi); text-shadow: 0 2px 0 var(--black); pointer-events: none; opacity: 0; }
+.csFoot { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px calc(env(safe-area-inset-bottom) + 12px); overflow: hidden; }
+.csWho { font: 400 12px/1.2 var(--display); font-weight: 400; letter-spacing: 1px; color: var(--accent-hi); text-shadow: 0 2px 0 var(--s0); }
+.csWho[hidden] { display: none; }
+.csText { font: 400 12px/1.8 var(--body); font-weight: 400; color: var(--text); text-shadow: 0 2px 0 var(--s0); overflow-wrap: anywhere; }
+.csText[data-tone="narrator"] { color: var(--text-dim); font-style: normal; }
+.csText[data-tone="shout"] { color: var(--e9); }
+.csText[data-tone="whisper"] { color: var(--text-faint); }
+.csMore { align-self: flex-end; font: 400 12px var(--display); color: var(--accent); }
+.csMore[hidden] { display: none; }
+/* the Scenes list in the codex: a row a scene, its blurb, and Watch once it has been seen */
+.scList { display: flex; flex-direction: column; gap: 6px; padding-bottom: 16px; }
+.scRow { display: flex; align-items: center; gap: 8px; padding: 8px; background: linear-gradient(var(--s5), var(--s3)); border: 2px solid var(--edge); border-radius: 8px; }
+.scRow.locked { opacity: 0.7; }
+.scRow > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.scRow b { font: 400 12px/1.4 var(--display); font-weight: 400; color: var(--gold-hi); }
+.scRow small { font: 400 12px/1.5 var(--body); font-weight: 400; color: var(--dim); overflow-wrap: anywhere; }
+.scRow button { flex: none; min-width: 72px; min-height: 40px; margin: 0; font: 400 12px var(--display); font-weight: 400; }
