@@ -65,7 +65,7 @@ import { against, frameOf, transferFormation } from './sim/chain';
 import { traitBadge } from './traitBadge';
 import { closestTrait, countTraits, kindsOf, nextTierLine, traitsOf, TRAITS } from './sim/traits';
 import { placeSynergies, startSynergies, updateCombo } from './synergyView';
-import { COMBO_NAME, comboOf, noteCombos } from './sim/combos';
+import { COMBO_NAME, comboById, comboOf, noteCombos } from './sim/combos';
 import { UnitSprite } from './render/unitView';
 import { flyUp, recyclePuff, summonBurst } from './render/uiFx';
 import { Fx, loadFx } from './render/fx';
@@ -419,19 +419,19 @@ class Game {
   private sceneChain: Promise<void> = Promise.resolve();
 
   /** Queue the cinematic due at a moment, if there is one: they play one after another, and the returned promise is done when this one is. */
-  private queueScene(moment: Moment): Promise<void> {
+  private queueScene(moment: Moment, party?: readonly string[]): Promise<void> {
     if (!this.scenesOn() || !dueScene(this.meta, moment)) return this.sceneChain;
     this.sceneHold++;
     this.sceneChain = this.sceneChain
-      .then(() => this.playDue(moment))
+      .then(() => this.playDue(moment, party))
       .catch(() => undefined)
       .then(() => void this.sceneHold--);
     return this.sceneChain;
   }
 
-  /** The first time a five-unit combo's mega ultimate fires: the cut-in. (Waiting for the combo work to land: it calls this at the moment.) */
-  playComboMega(): Promise<void> {
-    return this.queueScene({ kind: 'combo' });
+  /** The first time a five-unit combo's mega ultimate fires: the cut-in, with the five who cast it. */
+  playComboMega(five?: readonly string[]): Promise<void> {
+    return this.queueScene({ kind: 'combo' }, five);
   }
 
   /** The first time Duchess turns up in a fight (her visit begins: `PageGoat.onArrive`). */
@@ -445,12 +445,12 @@ class Game {
   }
 
   /** The cinematic due at a moment, if the save has not seen it: marked seen as it begins (a closed page does not bring it back), then played. */
-  private async playDue(moment: Moment): Promise<void> {
+  private async playDue(moment: Moment, party?: readonly string[]): Promise<void> {
     const id = dueScene(this.meta, moment);
     if (!id) return;
     markSeen(this.meta, id);
     saveMeta(this.meta);
-    await this.scenes.play(id, this.players());
+    await this.scenes.play(id, party ? { ...this.players(), party: [...party] } : this.players());
   }
 
   /** Every cinematic's id, and the frames of one worth a screenshot (previews: `tools/cinematics/shots.mjs`). */
@@ -724,7 +724,12 @@ class Game {
         // (a combo: the bar follows it; once its move has gone off, the codex knows it; the camera leans in when the effects ask)
         if (b.combo) {
           updateCombo(b.combo);
-          if (events.some((e) => e.kind === 'comboCast')) noteCombos(this.meta, b);
+          const cast = events.find((e) => e.kind === 'comboCast');
+          if (cast) {
+            noteCombos(this.meta, b);
+            // (and the first time, its five get their cut-in: the fight is held while it plays)
+            void this.playComboMega(comboById(b.combo.id)?.heroes);
+          }
         }
         const push = this.fx.takePush();
         if (push) this.push = { ...push, left: push.ms };

@@ -121,7 +121,7 @@ plays out the same) while one is queued or playing.
 | **The armies' last stands** (nine: `clear:<army>`) | `armyClear`: an army's first clear (`pay.firstClear`) | 26 to 28 s | wired |
 | **Awakening** (45: `awaken:<hero>`) | `awaken`: the hero's first awakening step (`awakenView.onAwakened`) | 12 to 16 s | wired |
 | **A hero earned** (ten: `earned:<hero>`) | `earned`: each hero `grantContent` brings in after a fight | 20 to 23 s | wired for the fight; **the hero-earned reveal of `hero-progress`** should call `queueScene({ kind: 'earned', hero })` and the fight's call go |
-| **Five as One** (combo mega ultimate cut-in) | `combo`: `Game.playComboMega()` | 3 s | **waiting on `hero-skills`**: call `playComboMega()` the first time the mega ultimate fires |
+| **Five as One** (combo mega ultimate cut-in) | `combo`: `Game.playComboMega()` | 3 s | wired to `hero-skills`' combo (the `comboCast` event, with the five who cast it) |
 | **It Was the Placing** (first loss) | `firstLoss`: the first fight lost, as its result comes up (with a retry waiting or not) | 38 s | wired |
 | **She Was Not on the List** (Duchess in a fight) | `duchess`: her first visit to a fight (`PageGoat.onArrive` as she walks in) | 18 s | wired (to `battle-ui`'s random visit, on main in 0.137.0) |
 | **The castle going up** (seven: `castle:<site>`) | `castle`: the first time each building (and the chapel) is raised (`Home` hook `onBuilt`) | 20 to 22 s | wired |
@@ -157,6 +157,12 @@ site, keep one of the two.
 
 `scenesOn()` reads `settings().cinematics !== false`, so the switch `hero-progress` adds drops straight in; until then it is
 always on (and off in an auto-replay).
+
+### Checked in the real page
+
+`tools/cinematics/flow2.mjs`: a new save plays its opening and Skip ends it; an old save (no scenes list) starts with none; a boss
+changes form, its cut-in plays, **the fight's clock does not move while it is up** and goes on after Skip; the lost fight brings the
+first-loss scene as its result comes up; no page errors. `flow3.mjs`: the Holy Order's five fill the bar and the combo's cut-in plays.
 
 ### Samples
 
