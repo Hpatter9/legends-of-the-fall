@@ -63,7 +63,7 @@ test('each layout has its own shape', () => {
       const s = seed * 131;
       const at = (id: LayoutId) => makeBoard(s, area, W, D, id);
       const wet = (t: Board['tiles'][number]) => t.ground === 'deep' || t.ground === 'lava';
-      // a river: a row or two of deep water (lava on a volcano) right across the middle, with at least one bridge or ford over it
+      // a river: a row or two of deep water (a lake of lava on a volcano) right across the middle, with at least one bridge or ford over it
       const river = at('river');
       assert.equal(river.layout, 'river');
       assert.ok(count(middle(river), wet) >= W / 2, `river ${area} ${s}`);

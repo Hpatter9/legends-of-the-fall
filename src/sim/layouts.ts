@@ -74,8 +74,8 @@ function put(p: Plan, u: number, v: number, patch: Partial<Tile>): void {
 
 const clampH = (h: number): number => Math.max(0, Math.min(TOP, Math.round(h)));
 
-/** What fills a river or a sea: lava on a volcano, deep water elsewhere. */
-const fluidOf = (area: Area): Ground => (area === 'volcano' ? 'lava' : 'deep');
+/** What fills a river or a sea: deep water (the page draws it as a lake of lava on a volcano; it is as impassable, and as safe to stand beside, as water). */
+const fluidOf = (_area: Area): Ground => 'deep';
 
 /** Ease the board's heights to a ramp round the tiles a template pinned. A loose tile keeps its own (rolling) height as far as it can: no more than a ramp
  *  above the lowest the pinned tiles allow it (their height plus the walk to them) and no less than a ramp below the highest. Solid tiles and deep water do not count. */
@@ -153,7 +153,7 @@ function river(p: Plan): void {
   }
   const cross = spread(rng, 0, b.w - 1, b.w >= 9 ? 3 : 2, 3);
   cross.forEach((u, n) => {
-    // (the first crossing is always a bridge; the others are a ford, shallows to wade, one time in three, unless the river is lava)
+    // (the first crossing is always a bridge; the others are a ford, shallows to wade, one time in three, unless the river is a lake of lava)
     const ford = n > 0 && p.area !== 'volcano' && rng.chance(0.35);
     for (let k = 0; k < thick; k++) {
       const t: Partial<Tile> = { h: bank };

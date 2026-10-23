@@ -18,12 +18,12 @@ weights per land; `Board.layout` says which was laid, and `Stage.layout` can ask
 |---|---|---|
 | Rolling land (`classic`) | The old board: hills, 2 or 3 platforms with a staircase, pits | all (weight 5) |
 | Open plain | Low, level ground (heights 0 and 1), a few boulders: for contrast | snow |
-| The river | One or two rows of deep water across the middle (lava on a volcano), banks a level, two or three crossings: a bridge, or a ford of shallows | highlands, forest |
+| The river | One or two rows of deep water across the middle (a lake of lava on a volcano), banks a level, two or three crossings: a bridge, or a ford of shallows | highlands, forest |
 | The hill | A pyramid hill in the middle, up to 6, flat topped half the time, one side a 3-level cliff | highlands |
 | The pass | Ridges (to 4, ramped at both ends) close in on a way 2 or 3 wide through the middle, bending a tile | desert, forest, dungeon |
 | The ruined fort | A ring of broken wall (`wall`) round a courtyard a level or two up, two gates and some crumbled gaps | dungeon |
-| The islands | A sea (deep water; lava on a volcano) with two islands joined by a causeway a level lower, a spit or two, stepping-stone shallows | volcano, snow |
-| The ring | A pit (lava on a volcano) at the foot of a raised rim of 3 or 4, with steps down on one or two sides | volcano, snow, dungeon |
+| The islands | A sea (deep water; a lake of lava on a volcano) with two islands joined by a causeway a level lower, a spit or two, stepping-stone shallows | volcano, snow |
+| The ring | A pit (a lake of lava on a volcano) at the foot of a raised rim of 3 or 4, with steps down on one or two sides | volcano, snow, dungeon |
 | The ravine | Two plateaus (3 or 4 up) with a ravine between (floor 0, some shallows) and one bridge across, flush with both tops | desert |
 
 - **Every template keeps `boardOk`** (every standable tile reachable from the heroes' rows by a fighter that climbs one level, so both

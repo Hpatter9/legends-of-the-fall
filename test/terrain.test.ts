@@ -228,3 +228,19 @@ test('the codex explains every ground, with the rules\' own numbers, and every b
   assert.equal(LAYOUT_LIST.length, 9);
   for (const t of [...TERRAIN_INFO, ...LAYOUT_LIST]) assert.ok(t.name.length > 0 && t.tip.length > 10);
 });
+
+test('on the usual board a step takes `USUAL_WALK` of its time, so the two sides meet about as soon as on the old, shorter one; a Calamity board keeps the full time', async () => {
+  const { USUAL_WALK } = await import('../src/sim/battle');
+  assert.equal(startBattle(3).walk, USUAL_WALK);
+  assert.equal(startBattle(3, 'skeletons', { size: { w: 10, d: 13 } }).walk, undefined);
+  const step = (walk: number | undefined): number => {
+    const b = arena();
+    if (walk !== undefined) b.walk = walk;
+    const me = addUnit(b, 'knight', 3, 8);
+    addUnit(b, 'skeleton', 3, 0).busyUntil = 1e9;
+    stepBattle(b);
+    return me.step!.ms;
+  };
+  assert.equal(step(undefined), UNITS.knight.moveMs);
+  assert.equal(step(USUAL_WALK), Math.round(UNITS.knight.moveMs * USUAL_WALK));
+});

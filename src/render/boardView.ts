@@ -448,7 +448,7 @@ export class BoardView {
       const b = TH / (2 * SRC);
       g.imageSmoothingEnabled = true;
       g.setTransform(a, b, -a, b, TW / 2, 0);
-      const lie = t.bridge ? art.planks : t.ground === 'deep' ? art.water : t.ground && t.ground !== 'tall' && t.ground !== 'shrine' ? art[t.ground] : null;
+      const lie = t.bridge ? art.planks : t.ground === 'deep' ? (area === 'volcano' ? art.lava : art.water) : t.ground && t.ground !== 'tall' && t.ground !== 'shrine' ? art[t.ground] : null;
       // (planks are pixel art: not smoothed)
       if (t.bridge) g.imageSmoothingEnabled = false;
       g.drawImage(lie ?? (stony ? set.high : set.tops[(t.deco + u + v) % set.tops.length]), 0, 0, SRC, SRC);
@@ -490,10 +490,10 @@ export class BoardView {
       g.fillStyle = 'rgba(0,20,0,0.16)';
       g.fillRect(0, 0, TW, TH);
     } else if (t.ground === 'deep') {
-      // (deep water: the shallows' texture, darkened, with a few long ripples)
-      g.fillStyle = 'rgba(6,22,66,0.5)';
+      // (deep water: the shallows' texture, darkened, with a few long ripples; on a volcano a lake of lava, darkened to a crust)
+      g.fillStyle = area === 'volcano' ? 'rgba(30,6,0,0.4)' : 'rgba(6,22,66,0.5)';
       g.fillRect(0, 0, TW, TH);
-      g.strokeStyle = 'rgba(160,200,255,0.4)';
+      g.strokeStyle = area === 'volcano' ? 'rgba(255,170,80,0.45)' : 'rgba(160,200,255,0.4)';
       for (const [x, y] of [[TW * 0.4, TH * 0.4], [TW * 0.62, TH * 0.62]]) {
         g.beginPath();
         g.moveTo(x - 7, y);
@@ -513,7 +513,7 @@ export class BoardView {
       g.stroke();
     }
     g.restore();
-    g.strokeStyle = t.bridge ? BRIDGE_RIM : t.ground ? RIM[t.ground] : boss ? 'rgba(255,226,140,0.75)' : 'rgba(20,14,8,0.35)';
+    g.strokeStyle = t.bridge ? BRIDGE_RIM : t.ground === 'deep' && area === 'volcano' ? 'rgba(255,120,30,0.95)' : t.ground ? RIM[t.ground] : boss ? 'rgba(255,226,140,0.75)' : 'rgba(20,14,8,0.35)';
     g.lineWidth = t.bridge || (t.ground && t.ground !== 'tall') ? 2 : 1;
     g.beginPath();
     g.moveTo(TW / 2, 0.5);

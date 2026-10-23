@@ -18,7 +18,7 @@ const pct = (n: number): string => `${Math.round(n * 100)}%`;
 
 export const TERRAIN_INFO: readonly TerrainInfo[] = [
   { id: 'water', name: 'Shallow water', tip: 'Slows a walker: a step into it takes twice as long. Fliers do not mind.', swatch: '#6fb0ee' },
-  { id: 'deep', name: 'Deep water', tip: 'Cannot be crossed on foot. Only fliers go over it. Cross by a bridge or a ford.', swatch: '#1f3f8a' },
+  { id: 'deep', name: 'Deep water', tip: 'Cannot be crossed on foot (on a volcano it is a lake of lava). Only fliers go over it. Cross by a bridge or a ford.', swatch: '#1f3f8a' },
   { id: 'lava', name: 'Lava', tip: `Burns whoever steps onto it for ${pct(LAVA_BURN)} of their health, and ${pct(LAVA_STAND)} a second while they stand in it. Fliers pass over.`, swatch: '#ee6a1e' },
   { id: 'tall', name: 'Tall grass', tip: `Hides a fighter from shots across it, and ${pct(TALL_DODGE)} of the blows on a fighter in it miss.`, swatch: '#3c7a30' },
   { id: 'wall', name: 'Ruined wall', tip: 'Nobody can stand on it, and it stops shots, even from a level above. Go round by a gap.', swatch: '#6a6a74' },
