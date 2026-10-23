@@ -182,6 +182,7 @@ export function tipsOf(def: UnitDef, kit: Kit | undefined): string[] {
   else if (def.moveMs <= 420) t.push('Very quick: it will be on your back line before the front has moved. Keep a guard there.');
   if (def.flies) t.push('Flies: it ignores heights, so a ledge will not shield your line.');
   else if (def.jump >= 3) t.push('Leaps ledges: high ground alone will not hold it off.');
+  else if (def.jump <= 1) t.push('Heavy-footed: it cannot climb a ledge, so a high perch keeps it off your shooters.');
   if (def.range >= 3 || def.shot) t.push('Shoots from afar: a quick hero can reach it, or answer it from higher ground.');
   if (def.def >= 10) t.push('Heavily armoured: a few strong blows beat many weak ones.');
   else if (def.def <= 3) t.push('Brittle: any hero cuts it down quickly.');

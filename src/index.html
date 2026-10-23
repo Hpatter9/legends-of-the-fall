@@ -475,9 +475,10 @@
   .hpower small { font-size: 12px; color: var(--dim); }
   .hpower b { font-size: 20px; color: var(--gold-hi, var(--e8)); }
   .card .pw, .ptCard .pw { display: block; font-size: 9px; line-height: 1.1; color: var(--text-dim); }
-  .hstats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; text-align: center; }
-  /* (the speeds take the second row, two wide cells) */
-  .hstats .hspeed { grid-column: span 2; }
+  .hstats { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 4px; text-align: center; }
+  .hstats div { grid-column: span 3; }
+  /* (attack speed, walk and jump take the second row, three wide cells) */
+  .hstats .hspeed { grid-column: span 4; }
   .hstats div { padding: 4px 2px; background: rgb(var(--black-rgb) / 0.35); border-radius: 6px; }
   .hstats b { display: block; font-size: 16px; color: var(--gold); }
   .hstats small { font-size: 10px; color: var(--dim); }

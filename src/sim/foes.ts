@@ -14,7 +14,7 @@ const SATYR = { side: 'foe', hp: 320, atk: 25, def: 6, range: 1, moveMs: 600, at
 const ORC = { side: 'foe', hp: 280, atk: 26, def: 5, range: 1, moveMs: 600, atkMs: 1000, jump: 2, role: 'Cheap and in numbers' } as const;
 const IMP = { side: 'foe', hp: 200, atk: 22, def: 2, range: 1, moveMs: 380, atkMs: 700, jump: 3, role: 'Small and quick' } as const;
 const DEMON = { side: 'foe', hp: 410, atk: 32, def: 6, range: 1, moveMs: 650, atkMs: 1100, jump: 2, flies: true, role: 'Flies, hits hard' } as const;
-const OGRE = { side: 'foe', hp: 480, atk: 30, def: 8, range: 1, moveMs: 1000, atkMs: 1500, jump: 2, role: 'Huge club, slow' } as const;
+const OGRE = { side: 'foe', hp: 480, atk: 30, def: 8, range: 1, moveMs: 1000, atkMs: 1500, jump: 1, role: 'Huge club, slow' } as const;
 
 // The bosses: much more hp, and each one's own look and skill (its kit, in `abilities.ts`). A forest boss has none.
 // The bosses are the walls of a run: the first (stage 5, the orc warlord) is six times the hp and three times the attack of
@@ -22,7 +22,7 @@ const OGRE = { side: 'foe', hp: 480, atk: 30, def: 8, range: 1, moveMs: 1000, at
 // `docs/notes/balance.md`), so a run stops at each one for a few runs after the one before.
 const WARLORD = { side: 'foe', hp: 2280, atk: 78, def: 10, range: 1, moveMs: 800, atkMs: 1200, jump: 2, role: 'Orc chief, ground slam' } as const;
 const DEMON_LORD = { side: 'foe', hp: 350, atk: 22, def: 9, range: 1, moveMs: 700, atkMs: 1200, jump: 2, flies: true, role: 'Calls imps to his side' } as const;
-const HORNED_OGRE = { side: 'foe', hp: 700, atk: 28, def: 10, range: 1, moveMs: 1000, atkMs: 1500, jump: 2, role: 'Horns, sweeping blows' } as const;
+const HORNED_OGRE = { side: 'foe', hp: 700, atk: 28, def: 10, range: 1, moveMs: 1000, atkMs: 1500, jump: 1, role: 'Horns, sweeping blows' } as const;
 const FOREST = { side: 'foe', hp: 600, atk: 25, def: 8, range: 1, moveMs: 600, atkMs: 1000, jump: 2, role: 'Forest brute' } as const;
 const BOAR_KING = { side: 'foe', hp: 380, atk: 22, def: 10, range: 1, moveMs: 700, atkMs: 1200, jump: 2, role: 'Charges through the line' } as const;
 const DEVIL_LEADER = { side: 'foe', hp: 420, atk: 24, def: 9, range: 1, moveMs: 700, atkMs: 1200, jump: 2, role: 'Hurls hellfire' } as const;
@@ -35,7 +35,7 @@ const PACK = { side: 'foe', hp: 250, atk: 24, def: 4, range: 1, moveMs: 360, atk
 const GROVE = { side: 'foe', hp: 320, atk: 25, def: 6, range: 1, moveMs: 600, atkMs: 1100, jump: 2, role: 'Pipes the pack faster' } as const;
 const MAZE_MINO = { side: 'foe', hp: 440, atk: 27, def: 9, range: 1, moveMs: 900, atkMs: 1400, jump: 2, role: 'Charges down a line' } as const;
 const MAZE_GORGON = { side: 'foe', hp: 300, atk: 26, def: 5, range: 4, moveMs: 700, atkMs: 1500, jump: 2, shot: 'bone', role: 'Stiffens the strongest foe' } as const;
-const CLAN_OGRE = { side: 'foe', hp: 480, atk: 30, def: 8, range: 1, moveMs: 1000, atkMs: 1500, jump: 2, role: 'Shoves heroes back' } as const;
+const CLAN_OGRE = { side: 'foe', hp: 480, atk: 30, def: 8, range: 1, moveMs: 1000, atkMs: 1500, jump: 1, role: 'Shoves heroes back' } as const;
 const HELL_IMP = { side: 'foe', hp: 200, atk: 22, def: 2, range: 1, moveMs: 380, atkMs: 700, jump: 3, role: 'Small, quick, sets alight' } as const;
 const MID = { side: 'foe', hp: 1500, atk: 46, def: 9, range: 1, moveMs: 750, atkMs: 1200, jump: 2 } as const;
 const LICH_KING = { side: 'foe', hp: 2600, atk: 60, def: 8, range: 3, moveMs: 800, atkMs: 1500, jump: 2, shot: 'curse', role: 'Raises the dead, freezes the living' } as const;

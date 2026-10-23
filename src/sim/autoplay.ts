@@ -92,7 +92,7 @@ function tileScore(board: Board, u: number, v: number, back: boolean): number {
   const t = tileAt(board, u, v)!;
   const row = v - (D - DEPLOY_ROWS); // 0 is the front row
   let s = back ? [0, 1.5, 3][row] : [3, 1.2, 0][row];
-  s += t.h * (back ? 0.7 : 0.35);
+  s += t.h * (back ? 1.3 : 0.4);
   if (t.ground === 'tall') s -= back ? 3 : 1;
   if (t.ground === 'ice') s -= 0.3;
   s -= Math.abs(u - (board.w - 1) / 2) * 0.05;

@@ -1,8 +1,10 @@
 // The battlefield: a small FF Tactics style grid of tiles, each standing some whole steps high. `u` runs across the
 // board and `v` runs from the foes' edge (v = 0) to the heroes' edge (v = D - 1). The land rolls by a smooth noise of
-// the seed, no step between neighbours is taller than a foot can climb (`CLIMB_MAX`), and a few boulders stand in the
-// middle ground. The same seed always makes the same board. Adapted from Chronos's raid board (tactics.ts `relief`,
-// tacticsTerrain.ts `canStep`, `easeRelief`, `sightClear`).
+// the seed (hills no steeper than a ramp), with raised platforms, ledges and pits set into it: a platform's or a pit's
+// faces are cliffs of two to four levels, and one side of each has a staircase, so every tile can be reached by a
+// walker that climbs a single level (`boardOk`) while a good jumper can take the cliff itself (`canStep`). A few
+// boulders stand in the middle ground. The same seed always makes the same board. Adapted from Chronos's raid board
+// (tactics.ts `relief`, tacticsTerrain.ts `canStep`, `easeRelief`, `sightClear`).
 
 import { mixSeed, Rng } from './rng';
 
@@ -12,12 +14,18 @@ export const W = 7;
 export const D = 9;
 /** How many rows at each end belong to a side when the fight starts. */
 export const DEPLOY_ROWS = 3;
-/** The most steps a foot can climb in one tile: a taller face is a cliff, both ways. */
-export const CLIMB_MAX = 2;
+/** The tallest face any board makes between neighbours (the best walking jumper climbs it; a flier goes over anything). */
+export const CLIMB_MAX = 4;
+/** The gentle slope of a ramp or stair: a step every walker, even a jump-1 one, can take. */
+export const RAMP = 1;
+/** A drop may be this much further than a climb (as in FF Tactics: a fighter jumps `jump` up and `jump + DROP_EXTRA` down). */
+export const DROP_EXTRA = 1;
 /** What each step climbed costs besides the tile itself. */
 export const CLIMB_COST = 1;
-/** The highest the rolling land stands. */
-export const TOP = 4;
+/** The highest a platform stands. */
+export const TOP = 6;
+/** The highest the rolling land stands before platforms are set into it. */
+export const HILL_TOP = 4;
 
 /** The lands a run passes through, in turn (`areaFor` in run.ts picks by stage). */
 export const AREAS = ['highlands', 'forest', 'snow', 'desert', 'volcano', 'dungeon'] as const;
@@ -91,8 +99,8 @@ function relief(seed: number, x: number, y: number): number {
   return a * (1 - sy) + b * sy;
 }
 
-/** Lower the higher of any two neighbours more than `CLIMB_MAX` apart, until none are. */
-export function easeRelief(b: Board): void {
+/** Lower the higher of any two neighbours more than `limit` apart, until none are. */
+export function easeRelief(b: Board, limit = CLIMB_MAX): void {
   for (let pass = 0; pass < 8; pass++) {
     let moved = false;
     for (let v = 0; v < b.d; v++)
@@ -102,9 +110,9 @@ export function easeRelief(b: Board): void {
           const n = tileAt(b, u + du, v + dv);
           if (!n) continue;
           const d = a.h - n.h;
-          if (Math.abs(d) <= CLIMB_MAX) continue;
-          if (d > 0) a.h = n.h + CLIMB_MAX;
-          else n.h = a.h + CLIMB_MAX;
+          if (Math.abs(d) <= limit) continue;
+          if (d > 0) a.h = n.h + limit;
+          else n.h = a.h + limit;
           moved = true;
         }
       }
@@ -118,14 +126,14 @@ export const standable = (t: Tile | null): t is Tile => !!t && !t.rock;
 /** A jump this high is flight: no height stops it. */
 export const FLY_JUMP = 9;
 
-/** What a step from one tile to the next costs a fighter who can jump `jump`, or null if it's a cliff (too high to
- *  climb, or too far to drop). Each step climbed costs `CLIMB_COST` more. */
+/** What a step from one tile to the next costs a fighter who can jump `jump`, or null if it's a cliff: more than `jump`
+ *  to climb, or more than `jump + DROP_EXTRA` to drop. Each step climbed costs `CLIMB_COST` more. */
 export function canStep(from: Tile, to: Tile, jump: number): number | null {
   if (!standable(to)) return null;
   const rise = to.h - from.h;
   // (a flier, with a jump of FLY_JUMP, goes over any height at the cost of a level step)
   if (jump >= FLY_JUMP) return 1;
-  if (Math.abs(rise) > Math.min(jump, CLIMB_MAX)) return null;
+  if (rise > jump || -rise > jump + DROP_EXTRA) return null;
   return 1 + (rise > 0 ? rise * CLIMB_COST : 0) + (to.ground ? GROUND_COST[to.ground] : 0);
 }
 
@@ -149,7 +157,8 @@ export function sightClear(b: Board, a: At, z: At): boolean {
   return true;
 }
 
-/** Whether every standable tile on the heroes' rows can walk (jumping 2) to the foes' rows, and back. */
+/** Whether every standable tile can be walked to from the heroes' rows by a fighter who climbs a single level (`RAMP`),
+ *  and so by any other: nobody is walled into a pocket, and no deploy tile or perch can be reached only by a jumper. */
 export function boardOk(b: Board): boolean {
   const seen = new Set<number>();
   const start = b.tiles.findIndex((t, i) => standable(t) && Math.floor(i / b.w) === b.d - 1);
@@ -163,7 +172,7 @@ export function boardOk(b: Board): boolean {
     for (const [du, dv] of DIRS) {
       const n = tileAt(b, u + du, v + dv);
       const j = (v + dv) * b.w + u + du;
-      if (!n || seen.has(j) || canStep(b.tiles[i], n, 2) === null) continue;
+      if (!n || seen.has(j) || canStep(b.tiles[i], n, RAMP) === null) continue;
       seen.add(j);
       queue.push(j);
     }
@@ -197,7 +206,71 @@ function layGround(b: Board, area: Area): void {
   }
 }
 
-/** The board for a seed: rolling land, a few boulders in the middle ground, bushes for looks, and the area's ground. */
+/** The staircase from a block of tiles outwards in direction `dir` from the edge tile `from`: each step climbs (or, for a
+ *  pit, falls) one level, until it meets the land. Returns the tiles to set and their heights, or null if it runs off
+ *  the board or over `used` before it meets the land. `top` is true for a platform (the stairs come down). */
+function stairs(b: Board, from: At, dir: readonly [number, number], level: number, top: boolean, used: ReadonlySet<number>): [number, number][] | null {
+  const out: [number, number][] = [];
+  for (let k = 1; k <= 6; k++) {
+    const u = from.u + dir[0] * k;
+    const v = from.v + dir[1] * k;
+    const t = tileAt(b, u, v);
+    if (!t || used.has(v * b.w + u)) return null;
+    const step = top ? level - k : level + k;
+    const meets = top ? step <= t.h : step >= t.h;
+    // (the last stair is the land itself, left as it is, unless the stair is a level off it)
+    out.push([v * b.w + u, meets ? t.h : step]);
+    if (meets) return out;
+  }
+  return null;
+}
+
+/** Set a platform (`up`) or a pit into the land: a block of tiles `size` across, `cliff` levels above or below the lowest (or
+ *  highest) land round it, with a staircase down one side. Returns whether it was laid (nothing changes if not). */
+function setBlock(b: Board, rng: Rng, up: boolean, size: [number, number], cliff: number, rows: [number, number], used: Set<number>): boolean {
+  const [bw, bd] = size;
+  // (the board's border stays plain hills, so a section joined to another meets it on gentle ground)
+  const u0 = rng.int(1, W - 1 - bw);
+  const v0 = rng.int(Math.max(1, rows[0]), Math.min(D - 1 - bd, rows[1] - bd + 1));
+  const block: number[] = [];
+  const ring: number[] = [];
+  for (let v = v0 - 1; v <= v0 + bd; v++)
+    for (let u = u0 - 1; u <= u0 + bw; u++) {
+      const t = tileAt(b, u, v);
+      if (!t) continue;
+      const inside = u >= u0 && u < u0 + bw && v >= v0 && v < v0 + bd;
+      if (used.has(v * W + u)) return false;
+      (inside ? block : ring).push(v * W + u);
+    }
+  if (block.length !== bw * bd) return false;
+  const rim = ring.filter((i) => {
+    const u = i % W;
+    const v = Math.floor(i / W);
+    return (u >= u0 && u < u0 + bw) || (v >= v0 && v < v0 + bd);
+  });
+  const heights = rim.map((i) => b.tiles[i].h);
+  const level = up ? Math.min(TOP, Math.min(...heights) + cliff) : Math.max(0, Math.max(...heights) - cliff);
+  // (a platform must stand above the land round it, a pit below it, or it is not worth setting)
+  if (up ? level <= Math.max(...heights) - 1 : level >= Math.min(...heights) + 1) return false;
+  if (up ? level - Math.min(...heights) > CLIMB_MAX : Math.max(...heights) - level > CLIMB_MAX) return false;
+  // a staircase down one side, from a tile of the block's edge chosen by the stream
+  const start = rng.int(0, 3);
+  for (let n = 0; n < 4; n++) {
+    const dir = DIRS[(start + n) % 4];
+    const along = dir[0] !== 0 ? rng.int(0, bd - 1) : rng.int(0, bw - 1);
+    const from = dir[0] > 0 ? { u: u0 + bw - 1, v: v0 + along } : dir[0] < 0 ? { u: u0, v: v0 + along } : dir[1] > 0 ? { u: u0 + along, v: v0 + bd - 1 } : { u: u0 + along, v: v0 };
+    const flight = stairs(b, from, dir, level, up, new Set([...used, ...block]));
+    if (!flight) continue;
+    for (const i of block) b.tiles[i].h = level;
+    for (const [i, h] of flight) b.tiles[i].h = h;
+    for (const i of block) used.add(i);
+    for (const [i] of flight) used.add(i);
+    return true;
+  }
+  return false;
+}
+
+/** The board for a seed: rolling land, platforms, ledges and pits set into it, a few boulders in the middle ground, bushes for looks, and the area's ground. */
 export function makeBoard(seed: number, area: Area = 'highlands'): Board {
   const rng = new Rng(mixSeed(seed, 0xb0a7d));
   const tiles: Tile[] = [];
@@ -205,10 +278,28 @@ export function makeBoard(seed: number, area: Area = 'highlands'): Board {
     for (let u = 0; u < W; u++) {
       // (the land rolls more in the middle ground; the two sides' rows stand a little flatter)
       const n = relief(seed, u + 11, v + 7);
-      tiles.push({ h: Math.max(0, Math.min(TOP, Math.round(n * (TOP + 1.4) - 0.6))), deco: rng.int(0, 999) });
+      tiles.push({ h: Math.max(0, Math.min(HILL_TOP, Math.round(n * (HILL_TOP + 1.4) - 0.6))), deco: rng.int(0, 999) });
     }
   const b: Board = { seed, area, w: W, d: D, tiles };
-  easeRelief(b);
+  // (the hills are no steeper than a ramp, so every tile can be walked to)
+  easeRelief(b, RAMP);
+  const hills = b.tiles.map((t) => t.h);
+  // platforms (two or three of them, a staircase down one side each) and pits, from a side stream of the seed
+  const feat = new Rng(mixSeed(seed, 0xf3a7));
+  const used = new Set<number>();
+  const sizes: [number, number][] = [[2, 2], [3, 2], [2, 3], [3, 3], [1, 2], [2, 1]];
+  const platforms = feat.int(2, 3);
+  for (let i = 0; i < platforms; i++)
+    for (let tries = 0; tries < 6; tries++) {
+      if (setBlock(b, feat, true, feat.pick(sizes), feat.int(2, 4), [1, D - 2], used)) break;
+    }
+  const pits = feat.int(1, 2);
+  for (let i = 0; i < pits; i++)
+    for (let tries = 0; tries < 6; tries++) {
+      if (setBlock(b, feat, false, feat.pick([[1, 1], [1, 2], [2, 1], [2, 2]] as [number, number][]), feat.int(2, 3), [DEPLOY_ROWS - 1, D - 1 - DEPLOY_ROWS + 1], used)) break;
+    }
+  // (a board that somehow cannot be walked is left as plain hills)
+  if (!boardOk(b)) b.tiles.forEach((t, i) => (t.h = hills[i]));
   // boulders in the middle ground, kept only if everyone can still get round them
   const rocks = rng.int(1, 3);
   for (let i = 0; i < rocks; i++) {

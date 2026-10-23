@@ -14,7 +14,7 @@ import { compactXp, levelBadge } from './levelBadge';
 import { drawEquipment } from './equipView';
 import { drawTalents } from './talentView';
 import { TREES } from './sim/talents';
-import { blowsPerSecond, kindPower, powerText, rateText, tilesPerSecond } from './sim/power';
+import { blowsPerSecond, jumpText, kindPower, powerText, rateText, tilesPerSecond } from './sim/power';
 import { heroStats } from './sim/talents';
 import { sprite } from './render/sheets';
 import { CONTENT_HEROES, lockInfo } from './sim/contentHeroes';
@@ -117,7 +117,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     }
     // (how often it swings and how fast it walks, with what its equipment and talents add; they follow an equip or a talent learned)
     const speeds: [HTMLElement, () => string][] = [];
-    for (const [name, rate] of [['Attack speed', () => rateText(blowsPerSecond(kind, heroStats(meta, kind)))], ['Walk', () => rateText(tilesPerSecond(kind, heroStats(meta, kind)))]] as const) {
+    for (const [name, rate] of [['Attack speed', () => rateText(blowsPerSecond(kind, heroStats(meta, kind)))], ['Walk', () => rateText(tilesPerSecond(kind, heroStats(meta, kind)))], ['Jump', () => jumpText(kind)]] as const) {
       const cell = el('div', 'hspeed');
       const v = el('b', '', rate());
       cell.append(v, el('small', '', name));
