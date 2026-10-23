@@ -93,6 +93,10 @@ export class UnitSprite {
   private burstAt = -1;
   private readonly grade: number;
   private readonly sheet: string;
+  /** What its root is scaled to when it stands still, and when and how big (0.25 steps) its promotion's pop began. */
+  private baseSize = 1;
+  private popAt = -1;
+  private popBy = 0;
   /** Where it was last drawn (world pixels): for effects to aim at. */
   x = 0;
   y = 0;
@@ -107,6 +111,7 @@ export class UnitSprite {
     const size = (unit.size ?? 1) * (this.grade > 2 ? GRADE3_SIZE : 1);
     this.tall = figureOf(this.sheet) * def.scale * size;
     this.root.scale.set(size);
+    this.baseSize = size;
     if (this.grade > 1 || awake) {
       // a halo of stacked ellipses behind the body (silver-blue, then gold), drawn once, and a rim of the body's own shape
       const col = awake ? GLOW[awake] : this.grade > 2 ? 0xffc83a : 0x9cc8ff;
@@ -245,6 +250,8 @@ export class UnitSprite {
     this.drawBar(u.alive, t);
     this.drawSparks(u.alive);
     this.drawPillar(u.alive);
+    if (this.popAt >= 0) this.root.scale.set(this.baseSize * this.popScale());
+    else if (this.root.scale.x !== this.baseSize) this.root.scale.set(this.baseSize);
   }
 
   /** A blow pushes it a little way along (dx, dy), and it eases back. */
@@ -318,6 +325,26 @@ export class UnitSprite {
   /** The evolve flash and burst (called when a merge makes this hero). */
   evolve(): void {
     this.burstAt = Date.now();
+  }
+
+  /** The grade this sprite is drawn as (a promotion to a higher one needs a new sprite). */
+  get shownGrade(): number {
+    return this.grade;
+  }
+
+  /** A promotion's beat: the hero scales up and settles back over about half a second (in quarter steps, so its pixels stay even), and the evolve burst plays. Tier 3 rises higher. */
+  promote(grade: number): void {
+    this.burstAt = this.popAt = Date.now();
+    this.popBy = grade > 2 ? 0.5 : 0.25;
+  }
+
+  /** The pop's scale now: up fast over 120 ms, held a beat, then back in steps over the next 400. */
+  private popScale(): number {
+    if (this.popAt < 0) return 1;
+    const el = Date.now() - this.popAt;
+    if (el > 560) return (this.popAt = -1), 1;
+    const k = el < 120 ? el / 120 : el < 240 ? 1 : 1 - (el - 240) / 320;
+    return 1 + Math.round(this.popBy * k * 4) / 4;
   }
 
   /** Grade 3's rising sparkles, and the evolve burst's ring and flare. All cheap strokes, redrawn only while shown. */
