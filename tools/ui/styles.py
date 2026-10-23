@@ -142,6 +142,7 @@ def build(key, P):
     save('chip-on', box(6, 6, [P['deep'], P['chipon'][0]], P['chipon'][1])[0])
     save('ribbon', ribbon(P)); save('ribbon-grey', ribbon(P, True))
     save('trim-t', trim(P)); save('trim-b', trim(P).transpose(Image.FLIP_TOP_BOTTOM))
+    save('trim-l', trim(P).transpose(Image.ROTATE_90)); save('trim-r', trim(P).transpose(Image.ROTATE_270))
     save('flag', flag(P)); save('cardback', cardback(P))
     save('wood', tile(*P['bar']))      # the bars (top bar, tab bar, bottom panel), shown at 2x
     save('page', tile(*P['pagetex']))  # the menu pages and the panels' fill, shown at 2x
