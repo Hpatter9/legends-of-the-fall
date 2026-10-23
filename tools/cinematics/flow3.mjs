@@ -52,7 +52,7 @@ await page.waitForTimeout(1200);
 const t2 = await page.evaluate(() => window.__game.b.t);
 console.log('combo cut-in up', await up(), '; fight held', t1 === t2, `(${t1} -> ${t2})`);
 await page.screenshot({ path: 'out/flow3-combo.png' });
-await page.waitForTimeout(4500);
+await page.waitForTimeout(11000);
 console.log('after it ends: up', await up(), '; fight goes on', (await page.evaluate(() => window.__game.b.t)) > t2, '; seen', await page.evaluate(() => JSON.stringify(JSON.parse(localStorage.getItem('legends.meta')).scenes)));
 console.log('page errors:', errors);
 await browser.close();

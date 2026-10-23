@@ -120,7 +120,7 @@ plays out the same) while one is queued or playing.
 | **The Calamity ends**: Nobody Wrote the Next Bit | `calVictory`: the fight that clears a Calamity, before the summary | 39 s | wired to the fight's end; **needs wiring to `cal-map`'s victory screen** (call `queueScene({ kind: 'calVictory' })` where the screen opens, and drop mine from the fight's end) |
 | **The armies' last stands** (nine: `clear:<army>`) | `armyClear`: an army's first clear (`pay.firstClear`) | 26 to 28 s | wired |
 | **Awakening** (45: `awaken:<hero>`) | `awaken`: the hero's first awakening step (`awakenView.onAwakened`) | 12 to 16 s | wired |
-| **A hero earned** (ten: `earned:<hero>`) | `earned`: each hero `grantContent` brings in after a fight | 20 to 23 s | wired for the fight; **the hero-earned reveal of `hero-progress`** should call `queueScene({ kind: 'earned', hero })` and the fight's call go |
+| **A hero earned** (ten: `earned:<hero>`) | `earned`: `hero-progress`'s reveal (theirs, on main): `revealEarned` after a result | 5 to 14 s | wired (theirs; my duplicate dropped) |
 | **The Last Oath** (eight sets: `oath:<set>` the first time, ~10 s with a line from each of the five, and `oathcut:<set>` every time after, ~3 s) | `combo` / `comboCut`: the combo's `comboCast` event, played by the set's five (`Game.playComboMega(setId)`) | 10 s / 3 s | wired; the fight is held while it plays, one-tap Skip, off with the Cinematics switch (`scenesOn`) |
 | **It Was the Placing** (first loss) | `firstLoss`: the first fight lost, as its result comes up (with a retry waiting or not) | 38 s | wired |
 | **She Was Not on the List** (Duchess in a fight) | `duchess`: her first visit to a fight (`PageGoat.onArrive` as she walks in) | 18 s | wired (to `battle-ui`'s random visit, on main in 0.137.0) |
@@ -128,7 +128,7 @@ plays out the same) while one is queued or playing.
 | **Spire milestones** (`spire:10`, `25`, `50`) | `spire`: the tower's fight at that floor is set up | 17 to 18 s | wired |
 | **A boss changing form** (fifteen: `form:<boss>`) | `bossForm`: each time (`startPhase`), the fight held; one tap Skip | 3 to 4 s | wired |
 | **The Hardest Setting Known to Boars** (Mythic) | `mythic`: an army run on the Mythic tier is set up | 28 s | wired |
-| **The Right Room?** (first summon) | `firstSummon`: before the hall's show on the first summon | 25 s | wired; **drop it if `hero-progress`'s summon cinematic covers the first summon** (the Moment stays, so nothing else changes) |
+| The summoning cinematic | `hero-progress`'s `summonScene`, every pull | 3 s | theirs; my first-summon scene was dropped as it covers it |
 | **A Bad Stand-Up Act** (first elite) | `elite`: the first elite fight's set-up | 27 s | wired |
 | **More Health, and a New Hat** (Ascension 1) | `ascension`: the first fight of an Ascension 1 Calamity | 28 s | wired |
 | **Brought To You By** (the daily's first boss) | `dailyBoss`: the daily's boss wave's set-up | 27 s | wired |
@@ -159,8 +159,8 @@ full one has the `triumph` score, both the `sceneBoss` sting. Samples: `scenes-o
 
 ### Cinematics off
 
-`scenesOn()` reads `settings().cinematics !== false`, so the switch `hero-progress` adds drops straight in; until then it is
-always on (and off in an auto-replay).
+`scenesOn()` reads `settings().cinematics` (the switch `hero-progress` added), and is off in an auto-replay; with it off, a scene is
+still marked seen as its moment passes (so the Scenes list can play it), and only the in-battle effect shows.
 
 ### Checked in the real page
 
