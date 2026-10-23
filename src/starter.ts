@@ -7,6 +7,7 @@ import { UNITS } from './sim/units';
 import { pickStarter, saveMeta, type Meta } from './sim/meta';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { portrait } from './render/sheets';
+import { heroSays } from './quips';
 
 const CSS = `
 #starter { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; gap: 10px; box-sizing: border-box; padding: 14px 14px 12px;
@@ -82,6 +83,11 @@ export function chooseStarter(meta: Meta): Promise<void> {
       });
       go.disabled = false;
       go.textContent = 'Start with this pack';
+      // (one of the pack says hello)
+      heroSays(pack[Math.floor(Math.random() * pack.length)], 'hired', () => {
+        const r = card.getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + 24 };
+      });
     };
     card.addEventListener('click', take);
     card.addEventListener('keydown', (e) => {

@@ -60,6 +60,7 @@ import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
 import { ChainView } from './render/chainView';
 import { against, frameOf, transferFormation } from './sim/chain';
+import { traitBadge } from './traitBadge';
 import { closestTrait, countTraits, kindsOf, nextTierLine, traitsOf, TRAITS } from './sim/traits';
 import { placeSynergies, startSynergies } from './synergyView';
 import { UnitSprite } from './render/unitView';
@@ -73,6 +74,11 @@ import { bindDuck, bindMute, play, playEvents, setAct, setScene, setup, startFig
 import { sceneOf } from './render/audioRules';
 import { colLeft, viewH, viewW } from './viewport';
 import { onSettings, openSettings, settings } from './settings';
+import { PageGoat } from './duchess';
+import { Rng } from './sim/rng';
+import { endingQuip, foeGrumbles, heroSays, initQuips, newQuipScene } from './quips';
+import { LOADING_TIPS, RECAP_LOSS, RECAP_WIN, RESULT_LOSS, RESULT_WIN } from './quipData';
+import type { Anchor } from './quipView';
 import heartUrl from './art/rogue/heart.png';
 
 TextureSource.defaultOptions.scaleMode = 'nearest';
@@ -93,7 +99,18 @@ const STAT_LABELS: Record<(typeof STAT_KEYS)[number], string> = { dealt: 'Dealt'
 /** The spells that hurt foes (their 3x3 shows red). */
 const HURTING = new Set<SpellId>(['meteor', 'smite', 'chain', 'poison', 'frost']);
 
+// (the loading screen's tip: one of the jokes, while the page gets ready)
+const loadTip = document.querySelector('.ldTip');
+if (loadTip) loadTip.textContent = LOADING_TIPS[Math.floor(Math.random() * LOADING_TIPS.length)];
+
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+
+/** The middle of the top edge of a page element, for a speech bubble to point at. */
+const rectAnchor = (e: Element | null): Anchor | null => {
+  if (!e) return null;
+  const r = e.getBoundingClientRect();
+  return { x: r.left + r.width / 2, y: r.top };
+};
 
 interface Drag {
   id: string;
@@ -114,6 +131,12 @@ class Game {
   /** The units (of the finished fight) that are walking to the next section: their own sprites stay hidden meanwhile. */
   private walking = new Set<number>();
   private sprites = new Map<number, UnitSprite>();
+  /** Duchess, watching the fight from just above the panel, at the board's edge. */
+  private goat = new PageGoat(() => {
+    const panel = document.getElementById('panel');
+    if (!panel || panel.hidden) return null;
+    return { left: 8, bottom: panel.getBoundingClientRect().top + 4, face: 1 };
+  });
   private fx = new Fx(this.sprites);
   private ghost = new Sprite();
   private b!: Battle;
@@ -187,6 +210,7 @@ class Game {
     const seed = Number(query.get('seed'));
     this.meta = loadMeta((Date.now() % 100000) + 1);
     saveMeta(this.meta);
+    initQuips(this.meta.seed);
     // (a new save, or one after Start over, picks its first three heroes before anything else; an address with a seed is a test page and takes the first pack)
     if (needsStarter(this.meta)) {
       if (seed) pickStarter(this.meta, 0);
@@ -283,6 +307,7 @@ class Game {
       this.syncAct();
       this.syncScene();
       this.app.stage.renderable = !this.homeUp;
+      this.goat.show(!this.homeUp);
       // (a board that is not in a fight stops its ticker under the home screen; coming back starts it again)
       if (!this.homeUp) this.app.ticker.start();
       else if (this.b.phase !== 'fight') this.app.ticker.stop();
@@ -417,6 +442,7 @@ class Game {
     const boss = this.b.units.find((u) => u.side === 'foe' && (isBoss(u.def) || (elite && u.def === elite.def)));
     if (!boss || this.introduced.has(key)) return;
     this.introduced.add(key);
+    this.goat.react('boss');
     this.intro = { t: 0, boss, slammed: false };
     const card = $('bossCard');
     const def = UNITS[boss.def];
@@ -539,6 +565,8 @@ class Game {
   private begin(): void {
     if (!fight(this.b)) return;
     this.endIntro();
+    newQuipScene();
+    foeGrumbles(this.b.units.filter((u) => u.side === 'foe' && !UNITS[u.def].summon).length, (i) => this.anchorOfFoe(i));
     this.stats = startStats(this.b.units);
     startFight(isBossRun(this.run));
     startSynergies(countTraits(kindsOf(this.b.units)));
@@ -548,6 +576,37 @@ class Game {
     this.refreshBossBar();
     this.layout();
     this.refresh();
+  }
+
+  /** Where to point a speech bubble at a hero of this kind on the board: above the head of one of their sprites (page pixels), or null. */
+  private anchorOfKind(kind: string): Anchor | null {
+    const u = this.b.units.find((x) => x.side === 'hero' && x.def === kind && x.owner === undefined);
+    const s = u && this.sprites.get(u.id);
+    if (!s || !s.root.visible || this.homeUp) return null;
+    const box = s.root.getBounds();
+    const r = this.app.canvas.getBoundingClientRect();
+    const k = r.width / this.app.screen.width;
+    return { x: r.left + ((box.minX + box.maxX) / 2) * k, y: r.top + box.minY * k };
+  }
+
+  /** The result's dry line under the numbers (picked from the run's seed, so a given fight always says the same thing). */
+  private showJoke(won: boolean): void {
+    const line = Rng.from(this.run.seed, this.run.stage, won ? 1 : 2, 0x7e3).pick(won ? RESULT_WIN : RESULT_LOSS);
+    const e = $('joke');
+    e.textContent = line;
+    e.hidden = false;
+  }
+
+  /** Where to point a speech bubble at the `i`th living foe (by its order in the fight), or null. */
+  private anchorOfFoe(i: number): Anchor | null {
+    const foes = this.b.units.filter((x) => x.side === 'foe' && x.alive && !UNITS[x.def].summon);
+    const u = foes[i % Math.max(1, foes.length)];
+    const s = u && this.sprites.get(u.id);
+    if (!s || !s.root.visible || this.homeUp) return null;
+    const box = s.root.getBounds();
+    const r = this.app.canvas.getBoundingClientRect();
+    const k = r.width / this.app.screen.width;
+    return { x: r.left + ((box.minX + box.maxX) / 2) * k, y: r.top + box.minY * k };
   }
 
   /** The home screen is up over the board (nothing of the board is seen, so a board not in a fight is left alone). */
@@ -573,6 +632,8 @@ class Game {
         if (b.units.length !== this.sprites.size) this.syncSprites();
         playEvents(b, events, this.speed);
         for (const e of events) if (e.kind === 'phase') this.startPhase(e);
+        // (Duchess has a view on a big blow)
+        if (events.some((e) => e.kind === 'hit' && e.heavy && e.dmg >= 90)) this.goat.react('bigHit');
         if (events.some((e) => e.kind === 'hit')) this.refreshBench();
         if (b.phase !== 'fight') this.refresh();
       }
@@ -941,6 +1002,7 @@ class Game {
       this.refresh();
       const card = got ? $('bench').querySelector<HTMLElement>(`[data-id="${got.id}"]`) : null;
       if (card) summonBurst(card);
+      if (got) heroSays(got.kind, 'hired', () => rectAnchor(card));
     });
     $('homeBtn').addEventListener('click', () => this.home.open());
     $('retry').addEventListener('click', () => this.retry());
@@ -1406,7 +1468,8 @@ class Game {
       : won
       ? { title: 'Army defeated!', tone: 'won' as const, line: `${army?.name ?? 'The run'} cleared in ${run.recap?.fights ?? 0} fights` }
       : { title: 'Run over', tone: 'lost' as const, line: army ? `The ${army.name} held at wave ${run.best} of ${army.waves.length}` : `Fell at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} hires` };
-    showRecap($('recap'), recapOf(run), head, () => this.afterResult());
+    const joke = Rng.from(run.seed, won ? 0x7e1 : 0x7e2).pick(won ? RECAP_WIN : RECAP_LOSS);
+    showRecap($('recap'), recapOf(run), { ...head, joke }, () => this.afterResult());
   }
 
   /** A run has ended: back to the main screen, showing what it earned. */
@@ -1528,6 +1591,7 @@ class Game {
     this.placed.set(id, tile);
     saveRun(this.run);
     this.syncSprites();
+    heroSays(h.kind, 'placed', () => this.anchorOfKind(h.kind));
   }
 
   /** After a summon: heroes merged away leave the board, and the merged hero takes the place of one of them (if it's in
@@ -1782,6 +1846,11 @@ class Game {
       const ups = own ? own.ups : gainXp(this.meta, { ...gains, ...bench });
       this.benchNote = Object.keys(bench).length ? { each: Object.values(bench)[0], ups: ups.filter((u) => u.kind in bench) } : null;
       this.noteRecap(gains, ups.filter((u) => !(u.kind in bench)), won);
+      if (!this.auto) {
+        const fought = b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def);
+        endingQuip(fought, won, (k) => this.anchorOfKind(k));
+        if (!won) this.goat.react('wipe');
+      }
       if (this.auto) {
         // (no result screen to show: the fight's pay goes into the replay's totals)
         this.showStars(null);
@@ -1836,6 +1905,7 @@ class Game {
       $('banner').textContent = 'Defeat';
       $('banner').className = 'lost';
       $('summary').textContent = `Your party fell on ${stage}. Spend a heart to try again with +${retryGold(run)} gold, enough for one more hero, or give up and end the run.`;
+      this.showJoke(false);
       $('retry').textContent = `Use a heart · ${left} left`;
       $('next').textContent = 'Give up';
     } else if (!result.hidden) {
@@ -1859,6 +1929,7 @@ class Game {
             : army
             ? `The ${army.name} holds at wave ${run.best} of ${army.waves.length}. It starts again from wave 1; your heroes keep their levels.`
             : `The run ends at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} summons · +${this.crownGain} crowns${modeNote(run)}`;
+      this.showJoke(b.phase === 'won');
       this.drawDailyResult(run);
       $('next').textContent = run.over && !run.tower ? 'Run recap' : run.cleared && run.tower ? 'See the summary' : b.phase === 'won' ? (fixed ? `Next wave (${run.stage})` : run.tower ? 'To the map' : `Next stage (${run.stage})`) : run.tower ? 'See the summary' : 'Home';
     }
@@ -1892,7 +1963,10 @@ class Game {
       pill.className = `trait ${c.trait.kind}${c.active ? ' on' : ''}${lit ? ' wake' : ''}${this.traitPick === c.trait.id ? ' picked' : ''}`;
       // (the chip says the count and what the next tier gives; a trait at its top tier shows just the count)
       const next = c.trait.tiers[c.tier + 1];
-      pill.textContent = `${c.trait.name} ${c.count}/${c.goal}`;
+      const head = document.createElement('span');
+      head.className = 'thead';
+      head.append(traitBadge(c.trait.id, { small: true }), document.createTextNode(`${c.trait.name} ${c.count}/${c.goal}`));
+      pill.append(head);
       if (next) {
         const fx = document.createElement('small');
         fx.textContent = next.text;

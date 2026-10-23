@@ -2,6 +2,7 @@
 // fight's length ("3 Samurai"). Tapping it lists what each one does. Nothing plays at the fight's start (the owner's ask: the
 // list is a tap away), and nothing loops. Its elements and styles are made here the first time they are used.
 
+import { traitBadge } from './traitBadge';
 import { activeTier, nextTierLine, type TraitCount } from './sim/traits';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -16,7 +17,7 @@ const CSS = `
 #synCol { position: fixed; left: 6px; z-index: 2; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 0; margin: 0; min-height: 0; width: auto; background: none; border: 0; border-radius: 0; box-shadow: none; clip-path: none; color: var(--ink, var(--e10)); font: 400 12px/1 var(--body, monospace); letter-spacing: 0; text-shadow: none; }
 #synCol[hidden] { display: none; }
 body:not([data-phase='fight']) #synCol, body:not([data-phase='fight']) #synList { display: none; }
-#synCol .sy { display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px 0 0; box-sizing: border-box; background: var(--s1); border: 2px solid var(--s8); box-shadow: 0 2px 0 rgb(var(--black-rgb) / 0.6); white-space: nowrap; }
+#synCol .sy { display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px 0 2px; box-sizing: border-box; background: var(--s1); border: 2px solid var(--s8); box-shadow: 0 2px 0 rgb(var(--black-rgb) / 0.6); white-space: nowrap; }
 #synCol .sy i { display: block; width: 20px; height: 20px; font-style: normal; line-height: 20px; text-align: center; background: var(--s8); color: var(--white); }
 #synCol .sy.class i { background: var(--b1); }
 #synCol .sy.top { border-color: var(--gold, var(--e6)); }
@@ -73,7 +74,7 @@ export function startSynergies(counts: readonly TraitCount[]): void {
   for (const c of on) {
     const full = c.tier === c.trait.tiers.length - 1;
     const plate = el('span', `sy ${c.trait.kind}${full ? ' top' : ''}`);
-    plate.append(el('i', '', String(c.count)), document.createTextNode(c.trait.name));
+    plate.append(traitBadge(c.trait.id, { small: true }), document.createTextNode(`${c.trait.name} ${c.count}`));
     col!.append(plate);
   }
   list!.replaceChildren(
