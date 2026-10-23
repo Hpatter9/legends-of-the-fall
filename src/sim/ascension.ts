@@ -11,8 +11,8 @@ export interface AscRules {
   /** Foes' hp and attack are multiplied by these. */
   foeHp: number;
   foeAtk: number;
-  /** The longer maps lose their second recruit camp. */
-  fewerCamps: boolean;
+  /** What a hero for hire in a shop costs, as a multiple (the recruit spot's free choice is not changed). */
+  hires: number;
   /** The share of its health at which a boss changes form. */
   phaseAt: number;
   /** The weight of elites on a map, as a multiple of the usual. */
@@ -32,13 +32,13 @@ export interface AscRules {
 /** The rule each level adds, in words. Index 0 is level 1. */
 export const ASC_TEXT: readonly string[] = [
   'Foes have 20% more health.',
-  'The longer maps lose their second recruit camp.',
+  'Heroes for hire in the shops cost 40% more.',
   'Bosses change form sooner: at 65% health.',
   'Elites turn up twice as often.',
   'Shops charge 25% more.',
   'All healing is halved.',
   'You begin with 15 less gold.',
-  'Every boss floor carries a curse.',
+  'Every boss fight carries a curse.',
   'Foes hit 15% harder.',
   'Bosses begin the fight behind a shield.',
 ];
@@ -49,7 +49,7 @@ export function ascRules(level: number): AscRules {
   return {
     foeHp: n >= 1 ? 1.2 : 1,
     foeAtk: n >= 9 ? 1.15 : 1,
-    fewerCamps: n >= 2,
+    hires: n >= 2 ? 1.4 : 1,
     phaseAt: n >= 3 ? 0.65 : 0.5,
     elites: n >= 4 ? 2 : 1,
     shops: n >= 5 ? 1.25 : 1,
@@ -81,5 +81,5 @@ export const ascUnlocked = (m: Pick<Meta, 'calamity'>): number => Math.min(ASC_M
 /** A line for the reward a level pays. */
 export function ascReward(level: number): string {
   const chests = ascChests(level);
-  return `Clear: crowns x${ascCrowns(level).toFixed(1)}, ${chests === 1 ? 'a gold chest' : `${chests} gold chests`}`;
+  return `Clear: crowns x${ascCrowns(level).toFixed(1)}, ${chests === 1 ? 'a gold chest' : `${chests} gold chests`}, hero shards, ${level >= 6 ? 'a Mythic' : 'a Legendary'} piece of gear and a title`;
 }

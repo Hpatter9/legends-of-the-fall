@@ -5,6 +5,7 @@
 //
 //   node tools/unlockPace.mjs [--seeds 20] [--share 0.9] [--days 365]
 
+import { payClear } from '../src/sim/calReward';
 import { ARMIES, armyFoes, replayTotal, firstClearTotal } from '../src/sim/armies';
 import { chestSeed, firstClearSeed, FIRST_CLEAR_CHEST, openChest } from '../src/sim/armyStars';
 import { grantContent, CONTENT_HEROES } from '../src/sim/contentHeroes';
@@ -123,6 +124,8 @@ function simulate(seed: number): Report {
       today += MAP_CROWNS.reduce((n, c) => n + c, 0) * (1 + 0.2 * Math.max(0, asc));
       m.calamity = { best: 6, clears: 1 + Math.floor((day - CALAMITY_DAY) / 7), asc };
       m.stash.push({ army: ARMIES[Math.min(ARMIES.length - 1, Math.floor(day / 12))].id, at: 10, tier: 0, seed: mixSeed(seed, 0xca1c, day), tower: true });
+      // (the finishing reward: crowns, shards, a title; `calReward.ts`)
+      payClear(m, mixSeed(seed, 0xca1d, day), asc, Math.min(ARMIES.length - 1, Math.floor(day / 12)));
     }
     if (day <= 150) today += EXTRA_CROWNS / 150;
     m.crowns += Math.round(today);

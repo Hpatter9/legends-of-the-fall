@@ -1,6 +1,7 @@
 // The small screens of the calamity and the tower's start-over: the choice of a starting hero, and a plain yes/no box. The map, the
 // shops and the recruit camps are the tower's own view (`towerView.ts`). Like it, this only reads the meta and calls back.
 
+import { bestTitle } from './sim/calReward';
 import type { Meta } from './sim/meta';
 import { CAL_MAPS } from './sim/calamity';
 import { ascCleared, ascReward, ascUnlocked, ASC_MAX, ASC_TEXT } from './sim/ascension';
@@ -70,7 +71,7 @@ export function pickHero(meta: Meta, onPick: (kind: string, ascension: number) =
     if (!level) rules.append(el('li', 'none', 'The calamity as it was.'));
     reward.textContent = level ? ascReward(level) : '';
     const done = ascCleared(meta);
-    best.textContent = done >= 0 ? `Best cleared: Ascension ${done}${open < ASC_MAX && level === open ? ' · clear this to open the next' : ''}` : 'Clear the calamity to open Ascension 1';
+    best.textContent = done >= 0 ? `Best cleared: Ascension ${done}${open < ASC_MAX && level === open ? ' · clear this to open the next' : ''}${bestTitle(meta) ? ` · Title: ${bestTitle(meta)}` : ''}` : 'Clear the calamity to open Ascension 1';
   };
   less.addEventListener('click', () => {
     level = Math.max(0, level - 1);

@@ -1,3 +1,4 @@
+import { readdirSync } from 'node:fs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fight, place, playOut, stepBattle } from '../src/sim/battle';
@@ -147,8 +148,8 @@ test('the offer is the same from the same run, and leans to a set already begun'
   assert.deepEqual(drawOffer(all, 3), [], 'nothing left, nothing offered');
 });
 
-test('the sets: five of three or four relics each, every relic in one set at most, with art', () => {
-  assert.ok(SET_IDS.length >= 4 && SET_IDS.length <= 6);
+test('the sets: eleven of three or four relics each, every relic in one set at most', () => {
+  assert.equal(SET_IDS.length, 11, 'the five tower sets and the six Calamity sets');
   const seen = new Set<string>();
   for (const id of SET_IDS) {
     const s = SETS[id];
@@ -177,7 +178,8 @@ test('set bonuses switch on at two and three pieces', () => {
     assert.ok(Object.keys(three.hooks).length + Object.keys(three.fx).length > Object.keys(two.fx).length, `${id}: three give more`);
     assert.equal(own(a).set, undefined);
     assert.equal(own(a, b).set, undefined);
-    assert.ok(own(a, b, c).set || id === 'beast', `${id}: three switch the fight hook on`);
+    // (a set whose three bonus is plain numbers has no fight hook)
+    assert.equal(!!own(a, b, c).set, Object.keys(three.hooks).length > 0, `${id}: three switch its hook on, if it has one`);
     // (a repeat is not a second piece)
     assert.deepEqual(setBonus([a, a, a]), none);
   }
@@ -253,4 +255,25 @@ test('no set pieces, no change: a run plays out exactly as before', () => {
   assert.equal(play(['luckyCoin']), play(undefined));
   assert.equal(play([]), play(undefined));
   assert.equal(startStage((() => { const r = newRun(9); r.relics = ['luckyCoin']; return r; })()).relics, undefined);
+});
+
+test('fifty relics in all, each with an effect, a name and an icon, and every set a theme with a two and a three bonus', () => {
+  const all = Object.keys(RELICS);
+  assert.equal(all.length, 50);
+  assert.equal(new Set(all.map((id) => RELICS[id].name)).size, 50, 'no two relics share a name');
+  const art = new Set(readdirSync('src/art/items').map((f) => f.replace(/\.png$/, '')));
+  const snake = (id: string) => id.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
+  for (const id of all) {
+    const r = RELICS[id];
+    assert.ok(r.name && r.text && Object.keys(r.effects).length, `${id}: a name, a line and an effect`);
+    assert.ok(art.has(snake(id)), `${id}: an icon (${snake(id)}.png)`);
+  }
+  for (const id of SET_IDS) {
+    assert.ok(SETS[id].two.text && SETS[id].three.text, `${id}: both bonuses are described`);
+    assert.equal(SETS[id].relics.length, 4);
+  }
+  // (the new pieces' numbers reach the fight: gold, the foes' wait and reach are folded in with the set)
+  assert.equal(relicEffects(['coinHoard', 'gildedIngot']).gold, 8 + 10 + 6);
+  assert.equal(relicEffects(['riftShard', 'voidSigil']).first, 300);
+  assert.equal(relicEffects(['riftShard', 'voidSigil', 'doomHelm']).first, 500 + 300 + 500);
 });

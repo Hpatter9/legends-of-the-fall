@@ -34,12 +34,28 @@ export function elitePortrait(e: Elite, want = 48): HTMLCanvasElement {
   return face;
 }
 
-/** The line under the map when an elite node is tapped: its portrait, title, trait and what it pays. */
-export function eliteInfo(e: Elite, floor: number): HTMLElement {
+/** The line under the map when an elite node is tapped: its portrait, title, trait and what it pays. `place` is where it stands ("Floor 5" in the tower, "Map 2" in the Calamity). */
+export function eliteInfo(e: Elite, place: string): HTMLElement {
   const box = el('span', 'elInfo');
   const words = el('span', 'elWords');
-  words.append(el('b', '', e.name), el('small', '', `Floor ${floor} · Elite: ${e.trait}`), el('small', 'elPay', `Pays a choice of ${OFFER_SIZE} relics and double gold`));
+  words.append(el('b', '', e.name), el('small', '', `${place} · Elite: ${e.trait}`), el('small', 'elPay', `Pays a choice of ${OFFER_SIZE} relics and double gold`));
   box.append(elitePortrait(e, 40), words);
+  return box;
+}
+
+/**
+ * The line under the map when a Calamity's detour fight is tapped (the hidden mini-boss off the road): what it is, why to take it, what it pays, and the price.
+ * It pays what `finishTower` pays a detour: double gold and a good piece of gear, no relic, no healing after, and a quarter of the XP.
+ */
+export function detourInfo(e: Elite, place: string): HTMLElement {
+  const box = el('span', 'elInfo detour');
+  const words = el('span', 'elWords');
+  words.append(el('b', '', e.name), el('small', '', `${place} · Detour fight, optional`), el('small', 'elPay', 'Pays double gold and gear'), el('small', 'elCost', 'No relic, and no healing after'));
+  const face = elitePortrait(e, 40);
+  // (the crop window is set by the stylesheet; the face keeps the inline size of its whole-number scale, which the window overrides)
+  face.style.removeProperty('width');
+  face.style.removeProperty('height');
+  box.append(face, words);
   return box;
 }
 

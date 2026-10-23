@@ -52,3 +52,6 @@ exploration is many more fights (about 80 spots in a run against about 30 nodes)
 - **The bot never gives a hero away** (it passes over a mystery's "offer a hero"): with about 80 spots a run it met many more mysteries and could lose its starter, which made a full clear look like a level-5 starter.
 - **Final** (300 runs): **88 / 84 / 62 / 45 / 35 / 14 %** (target 85 / 81 / 63 / 44 / 35 / 15); starter's level at the end median 22, mean 20.8 over all runs, cleared whole (42 runs) median 28, mean 26.3.
 - The army climb (`--climb --saves 240`, mean tries) is unchanged: 2.7 / 2.4 / 2.1 / 3.2 / **3.6** (the Labyrinth) / 1.8 / 1.6 / 1.7 / 1.3; the spire (`--tower`) 12 median, 13.1 mean (13.2 before), bosses 7 / 3 / 3 %.
+
+## Since then
+`docs/notes/cal-map.md` changed some of the above: one campfire and one recruit spot a map (every path passes each), the recruit spot's free choice, the detour's pay, the map recap, the finishing reward and the new relic sets.

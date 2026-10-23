@@ -120,6 +120,7 @@ export function takeRelic(run: Run, id: string): string | null {
   const t = run.tower;
   if (!t?.offer?.includes(id)) return null;
   (run.relics ??= []).push(id);
+  t.recap?.relics.push(id);
   t.offer = undefined;
   const set = setOf(id);
   return `the ${RELICS[id].name}${set ? ` (${SETS[set.id].name} ${setCount(set, run.relics)}/${set.relics.length})` : ''}`;

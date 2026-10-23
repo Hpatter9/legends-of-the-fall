@@ -58,3 +58,59 @@
 .cmSpot.done.again .cmRing { border: 2px solid rgb(var(--g4-rgb) / 0.8); background: rgb(var(--g4-rgb) / 0.1); }
 .cmSpot.picked.done .cmRing, .cmSpot.picked.start .cmRing { border: 2px solid rgb(var(--b4-rgb) / 0.9); background: rgb(var(--b4-rgb) / 0.18); }
 .cmSpot.start .cmRing { border: 0; }
+
+/* ---- the Calamity's recap and victory screens (calClear.ts), the shop's headings and the detour line ---- */
+/* (text in 12px steps, never bold; each part fades in once, none loops) */
+.rtCard.ccCard { gap: 12px; padding: 12px; }
+.ccCard h2 { font: 400 24px/28px var(--display); color: var(--gold-hi); text-shadow: var(--outline); }
+.ccCard h3 { margin: 0; font: 400 12px/16px var(--body); color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
+.ccLead { margin: 0; text-align: center; color: var(--dim); font: 400 12px/16px var(--body); }
+.ccStats { display: flex; flex-direction: column; gap: 4px; padding: 8px; background: rgb(var(--black-rgb) / 0.35); border: 2px solid var(--s1); }
+.ccRow { display: flex; justify-content: space-between; gap: 8px; font: 400 12px/16px var(--body); color: var(--dim); }
+.ccRow b { font-weight: 400; color: var(--ink); text-align: right; }
+.ccGroup { display: flex; flex-direction: column; gap: 4px; }
+.ccList { display: flex; flex-wrap: wrap; gap: 4px; }
+.ccChip { display: flex; align-items: center; gap: 4px; padding: 4px 8px; background: rgb(var(--black-rgb) / 0.35); border: 2px solid var(--s8); }
+.ccChip img { width: 24px; height: 24px; image-rendering: pixelated; }
+.ccChip small, .ccLine { font: 400 12px/16px var(--body); color: var(--ink); }
+.ccLine { padding: 4px 8px; background: rgb(var(--black-rgb) / 0.35); border: 2px solid var(--s8); }
+.ccIn { opacity: 0; animation: ccIn 0.3s ease-out forwards; }
+@keyframes ccIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.rtCard.ccVictory { position: relative; overflow-x: hidden; }
+.ccTitle { text-align: center; }
+.ccBadge { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px; background: rgb(var(--black-rgb) / 0.45); border: 3px solid var(--gold-hi); box-shadow: 0 0 0 2px var(--s1), inset 0 0 12px rgb(var(--e6-rgb) / 0.35); }
+.ccBadge small { font: 400 12px/16px var(--body); color: var(--dim); }
+.ccBadge b { font: 400 24px/28px var(--display); font-weight: 400; color: var(--gold-hi); text-shadow: var(--outline); }
+.ccCrowns { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.ccCrowns .ico { width: 24px; height: 24px; }
+.ccCrowns b { font: 400 24px/28px var(--display); font-weight: 400; color: var(--ink); text-shadow: var(--outline); }
+.ccCrowns small { font: 400 12px/16px var(--body); color: var(--dim); }
+.ccGear { display: flex; align-items: center; gap: 8px; padding: 8px; background: rgb(var(--black-rgb) / 0.35); border: 2px solid var(--s8); }
+.ccGear span { display: flex; flex-direction: column; min-width: 0; }
+.ccGear b { font: 400 12px/16px var(--body); font-weight: 400; color: var(--ink); }
+.ccGear small { font: 400 12px/16px var(--body); color: var(--e8); }
+.ccShard { display: flex; align-items: center; gap: 8px; width: 100%; padding: 4px 8px; background: rgb(var(--black-rgb) / 0.35); border: 2px solid var(--s8); }
+.ccShard b { flex: 1; font: 400 12px/16px var(--body); font-weight: 400; color: var(--ink); }
+.ccShard em { font: 400 12px/16px var(--body); font-style: normal; color: var(--g5); }
+.ccChests { display: flex; align-items: center; gap: 8px; }
+.ccChests b { font: 400 12px/16px var(--body); font-weight: 400; color: var(--gold-hi); }
+.ccChests small { font: 400 12px/16px var(--body); color: var(--dim); }
+.ccChests .chestShut { display: block; } .ccChests .chestOpen { display: none; }
+/* the one-shot burst of sparks: they fly out once and fade; and a faint light, once, about 120 ms */
+.ccBurst { position: absolute; left: 50%; top: 40px; width: 0; height: 0; pointer-events: none; }
+.ccBurst i { position: absolute; left: -3px; top: -3px; width: 6px; height: 6px; background: var(--gold-hi); opacity: 0; }
+.ccBurst.go i { animation: ccSpark 0.9s ease-out forwards; }
+@keyframes ccSpark { 0% { opacity: 1; transform: rotate(var(--a)) translateX(0); } 100% { opacity: 0; transform: rotate(var(--a)) translateX(var(--d)); } }
+.ccFlash { position: absolute; inset: 0; pointer-events: none; background: var(--white); opacity: 0; animation: ccFlash 0.12s ease-out forwards; }
+@keyframes ccFlash { 0% { opacity: 0.4; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ccIn, .ccBurst.go i, .ccFlash { animation: none; opacity: 1; } .ccBurst, .ccFlash { display: none; } }
+.rtShopHead { margin: 4px 0 0; font: 400 12px/16px var(--body); color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
+.elInfo.detour .elCost { color: var(--r6); }
+.rtSay .elWords { flex: 1; }
+.rtItem em.free::before { display: none; }
+.ccList .ccStats, .ccList .ccGear { width: 100%; }
+/* (a big elite's portrait is cropped to a face-sized window, at its whole-number scale, so the words beside it keep their room) */
+.elInfo.detour .elFace { width: 48px; height: 64px; object-fit: none; object-position: 50% 18%; flex: none; }
+.rtFoot.info { flex-wrap: wrap; }
+.rtFoot.info .rtSay { flex: 1 1 100%; }
+.rtFoot.info .rtGo { flex: 1 1 100%; }

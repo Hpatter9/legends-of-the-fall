@@ -188,14 +188,17 @@ export function chooseOption(run: Run, i: number): string | null {
     case 'relic':
       if (!run.relics) run.relics = [];
       if (!run.relics.includes(fx.id)) run.relics.push(fx.id);
+      run.tower?.recap?.relics.push(fx.id);
       line = `Found the ${RELICS[fx.id].name}: ${RELICS[fx.id].text}.`;
       break;
     case 'gear':
       (run.items ??= []).push(fx.gear);
+      run.tower?.recap?.gear.push(fx.gear.name);
       line = `Got the ${fx.gear.name} (${fx.gear.slot}, ${gearText(fx.gear)}).`;
       break;
     case 'gold':
       run.gold += fx.n;
+      if (run.tower?.recap) run.tower.recap.gold += fx.n;
       line = `Found ${fx.n} gold.`;
       break;
     case 'curse':
@@ -215,6 +218,7 @@ export function chooseOption(run: Run, i: number): string | null {
     case 'gamble':
       if (fx.win) {
         run.gold += fx.n;
+        if (run.tower?.recap) run.tower.recap.gold += fx.n;
         line = `The bones fall your way: +${fx.n} gold.`;
       } else line = 'The bones fall against you. The goblin grins and the coin is gone.';
       break;
@@ -222,6 +226,7 @@ export function chooseOption(run: Run, i: number): string | null {
       hurtParty(run, fx.frac);
       if (!run.relics) run.relics = [];
       if (!run.relics.includes(fx.id)) run.relics.push(fx.id);
+      run.tower?.recap?.relics.push(fx.id);
       line = `The altar drinks deep and gives the ${RELICS[fx.id].name}.`;
       break;
     case 'mystery':
