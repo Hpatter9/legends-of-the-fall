@@ -45,25 +45,25 @@ export const unlockLine = (prev: Army): string => `Defeat the ${UNITS[bossOf(pre
 type Mood = 'embers' | 'souls' | 'snow' | 'leaves' | 'fog' | 'sparks' | 'lanterns' | 'dust';
 /** The light of each army's scene: drifting particles and a colour laid over the land. */
 const MOODS: Record<string, { moods: Mood[]; tint: string }> = {
-  orcs: { moods: ['embers', 'dust'], tint: 'rgba(255, 130, 50, 0.16)' },
-  undead: { moods: ['fog', 'souls'], tint: 'rgba(60, 200, 190, 0.18)' },
-  beasts: { moods: ['snow', 'fog'], tint: 'rgba(150, 190, 255, 0.14)' },
-  wildwood: { moods: ['leaves', 'fog'], tint: 'rgba(80, 200, 90, 0.14)' },
-  labyrinth: { moods: ['fog', 'dust'], tint: 'rgba(150, 90, 220, 0.18)' },
-  ogres: { moods: ['dust', 'embers'], tint: 'rgba(220, 150, 70, 0.14)' },
-  infernal: { moods: ['embers', 'embers'], tint: 'rgba(255, 50, 20, 0.22)' },
-  yokai: { moods: ['lanterns', 'souls'], tint: 'rgba(200, 80, 200, 0.18)' },
-  golems: { moods: ['sparks', 'dust'], tint: 'rgba(255, 190, 80, 0.16)' },
+  orcs: { moods: ['embers', 'dust'], tint: 'rgb(var(--e6-rgb) / 0.16)' },
+  undead: { moods: ['fog', 'souls'], tint: 'rgb(var(--b2-rgb) / 0.18)' },
+  beasts: { moods: ['snow', 'fog'], tint: 'rgb(var(--b5-rgb) / 0.14)' },
+  wildwood: { moods: ['leaves', 'fog'], tint: 'rgb(var(--g3-rgb) / 0.14)' },
+  labyrinth: { moods: ['fog', 'dust'], tint: 'rgb(var(--p3-rgb) / 0.18)' },
+  ogres: { moods: ['dust', 'embers'], tint: 'rgb(var(--e5-rgb) / 0.14)' },
+  infernal: { moods: ['embers', 'embers'], tint: 'rgb(var(--r4-rgb) / 0.22)' },
+  yokai: { moods: ['lanterns', 'souls'], tint: 'rgb(var(--p3-rgb) / 0.18)' },
+  golems: { moods: ['sparks', 'dust'], tint: 'rgb(var(--e7-rgb) / 0.16)' },
 };
 const PARTICLE: Record<Mood, { colours: string[]; size: [number, number]; n: number; fall: boolean; time: [number, number] }> = {
-  embers: { colours: ['#ff9a3a', '#ffd05a', '#ff5a2a'], size: [3, 6], n: 16, fall: false, time: [5, 9] },
-  souls: { colours: ['#8af0e0', '#b8fff0', '#5ad0d8'], size: [4, 8], n: 12, fall: false, time: [7, 12] },
-  snow: { colours: ['#ffffff', '#dfeaff'], size: [3, 6], n: 24, fall: true, time: [5, 9] },
-  leaves: { colours: ['#7cc04a', '#c8a03a', '#4a8a30'], size: [4, 7], n: 14, fall: true, time: [7, 12] },
+  embers: { colours: ['var(--e6)', 'var(--e7)', 'var(--e5)'], size: [3, 6], n: 16, fall: false, time: [5, 9] },
+  souls: { colours: ['var(--b4)', 'var(--g6)', 'var(--b3)'], size: [4, 8], n: 12, fall: false, time: [7, 12] },
+  snow: { colours: ['var(--white)', 'var(--b6)'], size: [3, 6], n: 24, fall: true, time: [5, 9] },
+  leaves: { colours: ['var(--g3)', 'var(--e4)', 'var(--g2)'], size: [4, 7], n: 14, fall: true, time: [7, 12] },
   fog: { colours: [], size: [0, 0], n: 3, fall: false, time: [26, 40] },
-  sparks: { colours: ['#ffe48a', '#ffb03a', '#ffffff'], size: [3, 5], n: 16, fall: false, time: [3, 6] },
-  lanterns: { colours: ['#ff7ab8', '#ffb0d8', '#c890ff'], size: [5, 8], n: 10, fall: false, time: [9, 14] },
-  dust: { colours: ['#d8c098', '#b89868'], size: [3, 5], n: 14, fall: false, time: [8, 13] },
+  sparks: { colours: ['var(--e8)', 'var(--e6)', 'var(--white)'], size: [3, 5], n: 16, fall: false, time: [3, 6] },
+  lanterns: { colours: ['var(--p4)', 'var(--p5)', 'var(--p4)'], size: [5, 8], n: 10, fall: false, time: [9, 14] },
+  dust: { colours: ['var(--s13)', 'var(--e5)'], size: [3, 5], n: 14, fall: false, time: [8, 13] },
 };
 
 /** A small deterministic stream for the scene's look (the same each visit). */
@@ -167,7 +167,7 @@ function buildScene(a: Army, locked: boolean): { root: HTMLElement; figures: Fig
   slots.forEach(([x, y], i) => stand(crew[i % crew.length], x, y, scaleFor(crew[i % crew.length], TROOP_PX, 4), i));
   root.append(crowd);
   // (the lighting: a colour over the land, drifting particles, and a vignette)
-  const mood = MOODS[a.id] ?? { moods: [], tint: 'rgba(0,0,0,0)' };
+  const mood = MOODS[a.id] ?? { moods: [], tint: 'rgb(var(--black-rgb) / 0)' };
   const tint = el('div', 'asTint');
   tint.style.background = mood.tint;
   const air = el('div', 'asAir');

@@ -13,20 +13,20 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 
 // (solid plates and plain light-on-dark text with no outline or shadow: the pixel face reads crisply only on a flat ground)
 const CSS = `
-#synCol { position: fixed; left: 6px; z-index: 2; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 0; margin: 0; min-height: 0; width: auto; background: none; border: 0; border-radius: 0; box-shadow: none; clip-path: none; color: var(--ink, #f4e6c8); font: 400 12px/1 var(--body, monospace); letter-spacing: 0; text-shadow: none; }
+#synCol { position: fixed; left: 6px; z-index: 2; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 0; margin: 0; min-height: 0; width: auto; background: none; border: 0; border-radius: 0; box-shadow: none; clip-path: none; color: var(--ink, var(--e10)); font: 400 12px/1 var(--body, monospace); letter-spacing: 0; text-shadow: none; }
 #synCol[hidden] { display: none; }
 body:not([data-phase='fight']) #synCol, body:not([data-phase='fight']) #synList { display: none; }
-#synCol .sy { display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px 0 0; box-sizing: border-box; background: #140c10; border: 2px solid #6b4128; box-shadow: 0 2px 0 rgba(0, 0, 0, 0.6); white-space: nowrap; }
-#synCol .sy i { display: block; width: 20px; height: 20px; font-style: normal; line-height: 20px; text-align: center; background: #6b4128; color: #fff; }
-#synCol .sy.class i { background: #2f4a6b; }
-#synCol .sy.top { border-color: var(--gold, #f0b44a); }
-#synCol .sy.top i { background: var(--gold, #f0b44a); color: #1a1008; }
-#synCol .sy.class.top { border-color: #8ec5ff; }
-#synCol .sy.class.top i { background: #8ec5ff; color: #0c1828; }
-#synList { position: fixed; z-index: 4; padding: 8px 10px; box-sizing: border-box; background: #140c10; border: 2px solid var(--gold, #f0b44a); box-shadow: 0 2px 0 #000; color: var(--ink, #f4e6c8); font: 400 12px/1.5 var(--body, monospace); letter-spacing: 0; text-shadow: none; display: flex; flex-direction: column; gap: 8px; }
+#synCol .sy { display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px 0 0; box-sizing: border-box; background: var(--s1); border: 2px solid var(--s8); box-shadow: 0 2px 0 rgb(var(--black-rgb) / 0.6); white-space: nowrap; }
+#synCol .sy i { display: block; width: 20px; height: 20px; font-style: normal; line-height: 20px; text-align: center; background: var(--s8); color: var(--white); }
+#synCol .sy.class i { background: var(--b1); }
+#synCol .sy.top { border-color: var(--gold, var(--e6)); }
+#synCol .sy.top i { background: var(--gold, var(--e6)); color: var(--s1); }
+#synCol .sy.class.top { border-color: var(--b5); }
+#synCol .sy.class.top i { background: var(--b5); color: var(--b0); }
+#synList { position: fixed; z-index: 4; padding: 8px 10px; box-sizing: border-box; background: var(--s1); border: 2px solid var(--gold, var(--e6)); box-shadow: 0 2px 0 var(--black); color: var(--ink, var(--e10)); font: 400 12px/1.5 var(--body, monospace); letter-spacing: 0; text-shadow: none; display: flex; flex-direction: column; gap: 8px; }
 #synList[hidden] { display: none; }
-#synList b { font-weight: normal; color: var(--gold, #f0b44a); }
-#synList small { display: block; color: var(--dim, #b8a888); font-size: 12px; }
+#synList b { font-weight: normal; color: var(--gold, var(--e6)); }
+#synList small { display: block; color: var(--dim, var(--e6)); font-size: 12px; }
 `;
 
 let col: HTMLElement | null = null;

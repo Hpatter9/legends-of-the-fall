@@ -73,7 +73,7 @@ for (const f of AUDIO) copyFileSync(`src/audio/${f}`, `${out}/${f}`);
 const dataUrl = (f) => `data:image/png;base64,${readFileSync(f).toString('base64')}`;
 const LOADING_ART = { __LD_KNIGHT__: 'src/art/loading/knight-attack.png', __LD_DEMON__: 'src/art/loading/demon-attack.png', __LD_SLASH__: 'src/art/fx/magic/moon_slash.png', __LD_IMPACT__: 'src/art/fx/impact.png' };
 const withLoadingArt = (html) => Object.entries(LOADING_ART).reduce((h, [k, f]) => h.replaceAll(k, () => dataUrl(f)), html);
-writeFileSync(`${out}/index.html`, withLoadingArt(readFileSync('src/index.html', 'utf8').replace('/*__PIXEL_CSS__*/', () => readFileSync('src/pixel.css', 'utf8') + readFileSync('src/equip.css', 'utf8') + readFileSync('src/rogue.css', 'utf8') + readFileSync('src/twists.css', 'utf8') + readFileSync('src/eliteSets.css', 'utf8') + readFileSync('src/talents.css', 'utf8') + readFileSync('src/codex.css', 'utf8') + readFileSync('src/awaken.css', 'utf8') + readFileSync('src/calmap.css', 'utf8') + readFileSync('src/campPlaces.css', 'utf8')).replace('__VERSION__', version)));
+writeFileSync(`${out}/index.html`, withLoadingArt(readFileSync('src/index.html', 'utf8').replace('/*__PIXEL_CSS__*/', () => readFileSync('src/tokens.css', 'utf8') + readFileSync('src/pixel.css', 'utf8') + readFileSync('src/equip.css', 'utf8') + readFileSync('src/rogue.css', 'utf8') + readFileSync('src/twists.css', 'utf8') + readFileSync('src/eliteSets.css', 'utf8') + readFileSync('src/talents.css', 'utf8') + readFileSync('src/codex.css', 'utf8') + readFileSync('src/awaken.css', 'utf8') + readFileSync('src/calmap.css', 'utf8') + readFileSync('src/campPlaces.css', 'utf8') + readFileSync('src/stone.css', 'utf8')).replace('__VERSION__', version)));
 writeFileSync(
   `${out}/manifest.webmanifest`,
   JSON.stringify(
@@ -83,8 +83,8 @@ writeFileSync(
       start_url: '.',
       display: 'standalone',
       orientation: 'portrait',
-      background_color: '#1c1410',
-      theme_color: '#3a2218',
+      background_color: '#11151b',
+      theme_color: '#171c23',
       icons: [
         { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
         { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
