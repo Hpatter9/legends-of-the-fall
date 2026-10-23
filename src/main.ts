@@ -58,6 +58,8 @@ import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, type SpellId } fr
 import { bindSpellbook } from './spellbook';
 import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
+import { WeatherView } from './render/weatherView';
+import { weatherOf, type Weather } from './sim/weather';
 import { ChainView } from './render/chainView';
 import { against, frameOf, transferFormation } from './sim/chain';
 import { traitBadge } from './traitBadge';
@@ -126,6 +128,7 @@ class Game {
   private app = new Application();
   private world = new Container();
   private boardView = new BoardView();
+  private weather = new WeatherView();
   /** The long map of an army run: the finished sections behind the fight, and the walk from one wave to the next. */
   private chain!: ChainView;
   /** The units (of the finished fight) that are walking to the next section: their own sprites stay hidden meanwhile. */
@@ -203,7 +206,7 @@ class Game {
     const fonts = Promise.all(['900 16px "Cinzel Decorative"', '700 16px "Alegreya Sans"', '16px "Press Start 2P"'].map((f) => document.fonts.load(f))).catch(() => {});
     await Promise.all([loadSheets(), loadBoardArt(), loadFx(), Promise.race([fonts, new Promise((ok) => setTimeout(ok, 2500))])]);
     this.world.sortableChildren = true;
-    this.boardView.keep.push(this.fx.dimLayer, this.fx.root);
+    this.boardView.keep.push(this.fx.dimLayer, this.fx.root, this.weather.lights);
     this.boardView.root.addChild(...this.boardView.keep);
     this.world.addChild(this.boardView.root);
     this.boardView.renderer = this.app.renderer;
@@ -211,7 +214,7 @@ class Game {
     this.ghost.anchor.set(0.5, 1);
     this.ghost.alpha = 0.85;
     this.ghost.visible = false;
-    this.app.stage.addChild(this.world, this.ghost, this.fx.flashLayer);
+    this.app.stage.addChild(this.world, this.weather.root, this.ghost, this.fx.flashLayer);
     const query = new URLSearchParams(location.search);
     const seed = Number(query.get('seed'));
     this.meta = loadMeta((Date.now() % 100000) + 1);
@@ -370,6 +373,8 @@ class Game {
     this.boardView.build(this.b.board, { boss: !!waveArmyOf(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
     this.syncChain();
     setBackdrop(this.b.board.area);
+    this.weather.resize(this.app.screen.width, this.app.screen.height);
+    this.weather.set(weatherOf(this.b.board), this.b.board.area, this.boardView.litSpots());
     showTwistBanner(this.run.tower?.cur?.fight?.twist);
     this.syncSprites(true);
     this.layout();
@@ -392,6 +397,11 @@ class Game {
     markSeen(this.meta, id);
     saveMeta(this.meta);
     await this.scenes.play(id, this.players());
+  }
+
+  /** Show a weather on this board whatever the fight rolled (for previews and the screenshots: `__game.previewWeather('rain')`). */
+  previewWeather(w: Weather): void {
+    this.weather.set(w, this.b.board.area, this.boardView.litSpots());
   }
 
   /** Play a cinematic by id (the Scenes list, and previews: `__game.playScene('opening')`). */
@@ -683,6 +693,7 @@ class Game {
     }
     if (this.survey) this.standBack(dt);
     this.boardView.pump();
+    this.weather.step(dt);
     // (the camera eases to where it is sent, unless a finger is holding the board)
     if (this.phaseBoss && (!b.pause || b.phase !== 'fight')) this.endPhase();
     if (b.phase === 'fight' && !this.intro) this.phaseBoss ? this.pushOnPhase() : this.follow();
@@ -799,6 +810,7 @@ class Game {
   /** Fit the board into the room the bench and the top bar leave: it is zoomed in and panned. */
   private layout(): void {
     this.fx.fitScreen(viewW(), viewH());
+    this.weather.resize(this.app.screen.width, this.app.screen.height);
     const top = $('top').getBoundingClientRect();
     const panel = $('panel').getBoundingClientRect();
     const bar = $('bossBar');
