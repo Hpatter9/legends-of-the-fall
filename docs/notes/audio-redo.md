@@ -104,3 +104,27 @@ events, and the tower and Calamity blurbs.
   WAVs in `docs/samples/audio/` (`music-opening.wav`, `music-gorvak.wav`, `cue-sceneBoss.wav`, `cue-sceneVictory.wav`).
 - The scene player's call site (the hero-progress worker's `music` field) is not mine; it should call `playScene(id)` when a scene
   starts and `endScene()` when it ends.
+
+## More scene music (second batch)
+
+Nine more baked loops, so every cinematic can have a score. Scene ids for `playScene(id)` / `setMusic('scene:<id>')`
+(all in `SCENE_TRACKS`, `musicScore.ts`; ids with no score are ignored):
+
+| Id (aliases) | Use | Sound |
+|---|---|---|
+| `opening` | the opening | A minor, 62 bpm, drone and a lone bell, no drums |
+| `gorvak` (`calBoss1`) | herald 1, Gorvak | C minor, 88 bpm, slow heavy march of toms |
+| `herald2` (`calBoss2`) | herald 2, the bramble | A phrygian, 76 bpm, creeping, thorny off-beat stabs |
+| `herald3` (`calBoss3`) | herald 3, the demon lord | B minor, 126 bpm, crowded gallop and arpeggios |
+| `herald4` (`calBoss4`) | herald 4, the wall | F minor, 66 bpm, a kick on every step |
+| `herald5` (`calBoss5`) | herald 5, the last flame | G minor, 108 bpm, a burning drive |
+| `herald6` (`calBoss6`) | herald 6, the end of all roads | E minor, 116 bpm, grand, gallop with toms |
+| `triumph` (`victory`) | Calamity victory, army clears, hero earned, Ascension, Mythic | C major, 104 bpm, bright fanfare, light kit |
+| `comic` | first loss, first combo, Duchess, castle level | F major, 124 bpm, bouncing staccato bass, a skipping tune, hats |
+| `solemn` (`awakening`) | awakening, boss cut-in, quiet moments | D minor, 56 bpm, bell tune over a held pad, no drums |
+| `spire` (`spireClimb`) | spire milestones, first elite, first daily boss | D major, 98 bpm, rising arpeggios, light kit |
+
+Stings: `play('sceneBoss')` (boss arrives), `play('sceneVictory')`. End any scene with `endScene()`.
+Each loop bakes in about a second the first time (the player waits for it, the old music plays on). Scene tracks are kept baked only
+while they play, so the cache does not grow. WAVs of every loop are in `docs/samples/audio/`. Pairing of moods to scenes above is
+my suggestion; the scene data decides.
