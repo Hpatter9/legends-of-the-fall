@@ -14,6 +14,7 @@ const scenes = {
   'run': { meta: S.meta({}), run: S.run('undead', 4) },
   'locked': { meta: S.meta({ locked: true }) },
   'daily-done': { meta: S.meta({ dailyDone: true, best: 12 }) },
+  'climbs': { meta: S.meta({}), slots: { 'legends.calamity': S.calamitySave(), 'legends.tower': S.towerSave() } },
 };
 for (const [w, h] of sizes) {
   for (const [name, sc] of Object.entries(scenes)) {
@@ -21,12 +22,13 @@ for (const [w, h] of sizes) {
     const page = await ctx.newPage();
     page.on('pageerror', (e) => console.log('PAGE ERROR', e.message));
     await page.goto('http://localhost:8139/?x=' + Math.random());
-    await page.evaluate(([m, r]) => {
+    await page.evaluate(([m, r, slots]) => {
       localStorage.clear();
       localStorage.setItem('legends.meta', JSON.stringify(m));
       localStorage.setItem('lotf-tips-off', '1');
       if (r) localStorage.setItem('legends.run', JSON.stringify(r));
-    }, [sc.meta, sc.run ?? null]);
+      for (const [k, v] of Object.entries(slots ?? {})) localStorage.setItem(k, JSON.stringify(v));
+    }, [sc.meta, sc.run ?? null, sc.slots ?? null]);
     await page.goto('http://localhost:8139/');
     await page.waitForTimeout(2200);
     await page.evaluate(() => document.getElementById('tipSkip')?.click());

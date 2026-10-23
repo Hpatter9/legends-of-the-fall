@@ -47,7 +47,7 @@ for (const [w, h] of [[393, 852], [360, 780]]) {
     await page.waitForTimeout(600);
   }
   // the calamity
-  await page.evaluate(() => { for (const b of document.querySelectorAll('.hmCalamity')) b.click(); });
+  await page.evaluate(() => { document.getElementById('hmCalamity').click(); });
   await page.waitForTimeout(600);
   await shot('calamity-pick');
   await page.evaluate(() => { for (const b of document.querySelectorAll('.cvHero')) if (b.dataset.kind === 'samurai') b.click(); });

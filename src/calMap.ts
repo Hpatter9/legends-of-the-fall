@@ -54,8 +54,8 @@ const FOOT = 0.31;
 /** The fog's pixels are this many scene pixels across: it is soft, and cheap to redraw while it lifts. */
 const FOG_PX = 4;
 /** The size of the fog's holes round a spot and along a road, in scene pixels. */
-const HOLE_SPOT = 92;
-const HOLE_ROAD = 58;
+const HOLE_SPOT = 78;
+const HOLE_ROAD = 46;
 /** Milliseconds a road cell takes to clear, and the stagger between cells (the fog rolls back along the road), then the spot at its end. */
 const LIFT_MS = 520;
 const LIFT_STEP = 70;
@@ -63,6 +63,8 @@ const LIFT_STEP = 70;
 const WALK_SPEED = 210;
 const WALK_MIN = 520;
 const WALK_MAX = 1500;
+/** How far left of a recruit tent its standard stands. */
+const FLAG_DX = 40;
 
 export interface CalMapHooks {
   meta(): Meta;
@@ -128,7 +130,16 @@ export class CalMap {
   /** The spot the party stands at: the node in play, the one cleared last, or the portal. */
   private standId(): number {
     const t = this.run.tower!;
-    return t.cur?.id ?? (t.at < 0 ? START_ID : t.at);
+    // (a walk begun and not finished when the game closed: the leader is at the spot it was going to, which is not yet entered)
+    const going = t.cur ? undefined : t.going !== undefined && this.openIds().has(t.going) ? t.going : undefined;
+    return t.cur?.id ?? going ?? (t.at < 0 ? START_ID : t.at);
+  }
+
+  /** Put the leader back at the spot the party really stands at (it had set out for another, and the player chose a different one). */
+  restand(): void {
+    this.walk = null;
+    this.stand = this.standId();
+    this.pos = this.standAt(this.stand);
   }
 
   /** Show the land of the run's map (the box is in the page already when this is called: `width` is its width in css pixels). `picked` is the spot lit as chosen. */
@@ -219,6 +230,39 @@ export class CalMap {
     return { x: g.x0 + ((c.i - c.j) * g.tw) / 2, y: g.y0 + ((c.i + c.j) * g.th) / 2 };
   }
 
+  /** The landmark's picture of a spot, by its kind (a recruit camp's tent varies from camp to camp), and how far it reaches left and right of its middle. */
+  private markOf(s: LandSpot, spent: boolean): { name: string; flag?: string; l: number; r: number } {
+    const art = this.artOf();
+    const w = (n: string) => RECTS[n]?.[2] ?? 60;
+    const sp = spent ? '_spent' : '';
+    const one = (name: string) => ({ name, l: w(name) / 2, r: w(name) / 2 });
+    if (s.id === START_ID) return one('start');
+    if (s.side) return s.kind === 'elite' ? one(spent ? 'elite_spent' : 'side_elite') : one(`side_treasure${sp}`);
+    switch (s.kind) {
+      case 'boss':
+        return one(art.lair);
+      case 'fight':
+        return one(spent ? 'fight_spent' : 'fight');
+      case 'elite':
+        return one(spent ? 'elite_spent' : 'elite');
+      case 'recruit': {
+        const tent = ['recruit', 'recruit_b', 'recruit_c'][s.id % 3];
+        return { name: `${tent}${sp}`, flag: `recruit_flag${sp}`, l: Math.max(w(tent) / 2, FLAG_DX + w('recruit_flag') / 2), r: w(tent) / 2 };
+      }
+      default:
+        return one(`${s.kind}${sp}`);
+    }
+  }
+
+  /** Where a spot's landmark stands across the land: over its cell, but no further out than the scene's edge lets its picture show whole. */
+  private ax(s: LandSpot, spent = false): number {
+    const g = this.geo!;
+    const x = this.xy(s).x;
+    if (s.id === START_ID) return x;
+    const { l, r } = this.markOf(s, spent);
+    return Math.max(l + 3, Math.min(g.W - r - 3, x));
+  }
+
   private spot(id: number): LandSpot | undefined {
     return this.model?.spots.find((s) => s.id === id);
   }
@@ -229,7 +273,8 @@ export class CalMap {
     if (!s) return { x: this.geo!.W / 2, y: this.geo!.H - 60 };
     const p = this.xy(s);
     const g = this.geo!;
-    return id === START_ID ? { x: p.x - 36, y: p.y + g.th * FOOT + 14 } : { x: p.x + 30, y: p.y + g.th * FOOT + 12 };
+    const x = this.ax(s, this.run.tower!.path.includes(id));
+    return id === START_ID ? { x: x - 36, y: p.y + g.th * FOOT + 14 } : { x: x + 30, y: p.y + g.th * FOOT + 12 };
   }
 
   private cameraFor(sceneY: number): number {
@@ -331,20 +376,11 @@ export class CalMap {
       const p = this.xy(s);
       const y = p.y + foot;
       const spent = done.has(s.id);
-      const mark = (name: string, dx = 0, dy = 0) => list.push({ y: y + dy, x: p.x + dx, paint: () => blit(name, p.x + dx, y + dy) });
-      if (s.id === START_ID) mark('start', 0, 14);
-      else if (s.side) mark(s.kind === 'elite' ? (spent ? 'elite_spent' : 'side_elite') : spent ? 'side_treasure_spent' : 'side_treasure');
-      else if (s.kind === 'boss') mark(art.lair, 0, 8);
-      else if (s.kind === 'fight') mark(spent ? 'fight_spent' : 'fight');
-      else if (s.kind === 'elite') mark(spent ? 'elite_spent' : 'elite');
-      else if (s.kind === 'shop') mark(spent ? 'shop_spent' : 'shop');
-      else if (s.kind === 'treasure') mark(spent ? 'treasure_spent' : 'treasure');
-      else if (s.kind === 'campfire') mark(spent ? 'campfire_spent' : 'campfire');
-      else if (s.kind === 'mystery') mark(spent ? 'mystery_spent' : 'mystery');
-      else if (s.kind === 'recruit') {
-        mark(spent ? 'recruit_spent' : 'recruit');
-        mark(spent ? 'recruit_flag_spent' : 'recruit_flag', -46, -6);
-      }
+      const m = this.markOf(s, spent);
+      const x = this.ax(s, spent);
+      const lift = s.id === START_ID ? 14 : s.kind === 'boss' ? 8 : 0;
+      list.push({ y: y + lift, x, paint: () => blit(m.name, x, y + lift) });
+      if (m.flag) list.push({ y: y - 6, x: x - FLAG_DX, paint: () => blit(m.flag!, x - FLAG_DX, y - 6) });
     }
     void t;
     list.sort((p, q) => p.y - q.y || p.x - q.x);
@@ -379,7 +415,7 @@ export class CalMap {
       now.add(sk);
       const p = this.xy(s);
       const road = model.roads.find((r) => r.to === s.id && fog.roads.has(`${r.from}>${r.to}`));
-      const it = { key: sk, x: p.x, y: p.y, r: HOLE_SPOT, delay: isNew ? (road ? road.cells.length * LIFT_STEP : 0) : 0 };
+      const it = { key: sk, x: this.ax(s), y: p.y, r: HOLE_SPOT, delay: isNew ? (road ? road.cells.length * LIFT_STEP : 0) : 0 };
       items.push(it);
       if (isNew) fresh.push(it);
     }
@@ -434,7 +470,7 @@ export class CalMap {
     const here = this.standId();
     for (const s of model.spots) {
       if (s.id === START_ID || !lit.has(s.id)) continue;
-      const p = this.xy(s);
+      const p = { x: this.ax(s, done.has(s.id)), y: this.xy(s).y };
       const isOpen = open.has(s.id);
       const isDone = done.has(s.id);
       const state = isDone ? 'done' : isOpen ? 'open' : t.cur?.id === s.id ? 'here' : 'passed';
@@ -443,11 +479,12 @@ export class CalMap {
       const ring = el('i', 'cmRing');
       ring.style.cssText = `left:${(p.x - g.tw / 2) * u}px;top:${(p.y - g.th / 2) * u}px;width:${g.tw * u}px;height:${g.th * u}px`;
       // (the button covers the landmark: its picture's size, at least a thumb wide)
-      const body = this.bodyOf(s);
+      const body = this.bodyOf(s, done.has(s.id));
       const b = el('button', 'cmHit');
       const w = Math.max(48, body.w) * u;
       const h = Math.max(48, body.h) * u;
-      b.style.cssText = `left:${(p.x - Math.max(48, body.w) / 2) * u}px;top:${(p.y + g.th * FOOT - Math.max(48, body.h)) * u}px;width:${w}px;height:${h}px`;
+      const mk = this.markOf(s, done.has(s.id));
+      b.style.cssText = `left:${(p.x - mk.l - Math.max(0, (48 - body.w) / 2)) * u}px;top:${(p.y + g.th * FOOT - Math.max(48, body.h)) * u}px;width:${w}px;height:${h}px`;
       const label = s.side ? (s.kind === 'elite' ? 'Hidden mini-boss' : 'Hidden hoard') : `${s.kind}`;
       b.setAttribute('aria-label', `${label}${isOpen ? ', lit: tap to choose' : isDone ? ', done' : ''}`);
       b.disabled = !isOpen;
@@ -475,13 +512,12 @@ export class CalMap {
     void here;
   }
 
-  /** The size of the picture a spot's landmark is drawn with. */
-  private bodyOf(s: LandSpot): { w: number; h: number } {
-    const art = this.artOf();
-    const name =
-      s.side ? (s.kind === 'elite' ? 'side_elite' : 'side_treasure') : s.kind === 'boss' ? art.lair : s.kind === 'recruit' ? 'recruit' : s.kind === 'start' ? 'start' : s.kind;
-    const r = RECTS[name] ?? [0, 0, 60, 60];
-    return { w: r[2], h: r[3] };
+  /** The size of the picture a spot's landmark is drawn with (a recruit camp's tent and its standard together). */
+  private bodyOf(s: LandSpot, spent = false): { w: number; h: number } {
+    const m = this.markOf(s, spent);
+    const r = RECTS[m.name] ?? [0, 0, 60, 60];
+    const f = m.flag ? RECTS[m.flag] : undefined;
+    return { w: m.l + m.r, h: Math.max(r[3], f?.[3] ?? 0) };
   }
 
   private placePortal(): void {

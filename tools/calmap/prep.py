@@ -16,20 +16,20 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
 
 # The six lands: ground tiles (the first sets the lattice), the road tile, then props by role.
 LANDS = [
-    dict(id='fields', ground=['knights/grass_tile'], road='knights/dirt_tile', tree=['knights/oak_tree', 'knights/pine_tree'], bush=['knights/bush', 'knights/hay_bales'], rock=['knights/rocks'], lair='orcs/skull_gate'),
+    dict(id='fields', ground=['knights/grass_tile'], road='settlers/dirt_tile', tree=['knights/oak_tree', 'knights/pine_tree'], bush=['knights/bush', 'knights/hay_bales'], rock=['knights/rocks'], lair='orcs/skull_gate'),
     dict(id='forest', ground=['druids/moss_grass_tile', 'druids/forest_floor_tile'], road='druids/stone_path_tile', tree=['druids/great_oak', 'druids/birch_tree'], bush=['druids/berry_bush', 'druids/mushroom_lantern'], rock=['druids/mossy_rocks'], lair='druids/tree_gate'),
-    dict(id='desert', ground=['nomads/dry_grass_tile', 'nomads/dust_tile'], road='dwarves/flagstone_tile', tree=['nomads/acacia_tree'], bush=['nomads/dead_shrub', 'nomads/tumbleweed'], rock=['nomads/red_rocks', 'nomads/red_rocks_small'], lair='bloodcourt/crypt'),
-    dict(id='snow', ground=['moonpack/snow_tile', 'moonpack/pine_floor_tile'], road='dwarves/stone_floor_tile', tree=['moonpack/snowy_pine', 'moonpack/small_pine'], bush=['moonpack/snowy_bush', 'moonpack/bare_tree'], rock=['moonpack/boulders', 'moonpack/rocks_a', 'moonpack/rocks_b'], lair='moonpack/cave_den'),
-    dict(id='ash', ground=['orcs/scorched_tile', 'orcs/bone_tile'], road='dwarves/rocky_tile', tree=['orcs/burnt_tree', 'orcs/gnarled_tree'], bush=['orcs/thorn_bush'], rock=['orcs/dark_rocks', 'orcs/dark_rocks_b'], lair='bloodcourt/gatehouse'),
+    dict(id='desert', ground=['nomads/dry_grass_tile'], road='nomads/dust_tile', tree=['nomads/acacia_tree'], bush=['nomads/dead_shrub', 'nomads/tumbleweed'], rock=['nomads/red_rocks', 'nomads/red_rocks_small'], lair='bloodcourt/crypt'),
+    dict(id='snow', ground=['moonpack/snow_tile'], road='moonpack/dirt_tile', tree=['moonpack/snowy_pine', 'moonpack/small_pine'], bush=['moonpack/snowy_bush', 'moonpack/bare_tree'], rock=['moonpack/boulders', 'moonpack/rocks_a', 'moonpack/rocks_b'], lair='moonpack/cave_den'),
+    dict(id='ash', ground=['orcs/scorched_tile', 'orcs/bone_tile'], road='orcs/mud_tile', tree=['orcs/burnt_tree', 'orcs/gnarled_tree'], bush=['orcs/thorn_bush'], rock=['orcs/dark_rocks', 'orcs/dark_rocks_b'], lair='bloodcourt/gatehouse'),
     dict(id='ruins', ground=['liches/cracked_earth_tile', 'liches/dead_grass_tile'], road='liches/cobble_tile', tree=['liches/dead_oak', 'liches/dead_pine'], bush=['liches/thorn_bush', 'bloodcourt/gravestones'], rock=['liches/rocks', 'liches/skull_pile'], lair='liches/gatehouse'),
 ]
 # The landmarks every land shares: one for each kind of spot.
 MARKS = {
-    'fight': 'orcs/weapon_stall', 'fight_spent': 'orcs/hide_roof', 'elite': 'orcs/war_drum', 'elite_spent': 'liches/skull_pile',
-    'shop': 'knights/market_stall', 'recruit': 'nomads/canvas_roof', 'recruit_flag': 'nomads/standard', 'treasure': 'nomads/chests',
-    'side_treasure': 'orcs/loot_chests', 'campfire': 'knights/campfire', 'mystery': 'fae/shrine', 'start': 'druids/stone_circle',
+    'fight_spent': 'orcs/hide_roof', 'elite': 'orcs/war_drum', 'elite_spent': 'liches/skull_pile',
+    'shop': 'knights/market_stall', 'recruit': 'nomads/canvas_roof', 'recruit_b': 'nomads/felt_roof', 'recruit_flag': 'nomads/standard', 'treasure': 'nomads/chests',
+    'side_treasure': 'dwarves/ore_cart', 'campfire': 'knights/campfire', 'mystery': 'fae/shrine', 'start': 'druids/stone_circle',
 }
-SPENT = ['shop', 'recruit', 'recruit_flag', 'treasure', 'side_treasure', 'mystery']
+SPENT = ['shop', 'recruit', 'recruit_b', 'recruit_c', 'recruit_flag', 'treasure', 'side_treasure', 'mystery']
 
 
 def half(im):
@@ -103,15 +103,29 @@ for n, land in enumerate(LANDS):
     meta['lands'].append(entry)
 for k, p in MARKS.items():
     sprites[k] = load(p)
-# (the hidden mini-boss's camp: a skull banner over a meat pile, narrower than the elite's war drum)
-_b, _m = load('orcs/spear_signpost'), load('orcs/meat_pile')
-_c = Image.new('RGBA', (_m.width + _b.width - 14, max(_b.height, _m.height)), (0, 0, 0, 0))
-_c.alpha_composite(_m, (_b.width - 14, _c.height - _m.height))
-_c.alpha_composite(_b, (0, _c.height - _b.height))
-sprites['side_elite'] = _c
+def stack(parts, w=None):
+    """Pictures side by side on one ground line: [(image, dx, dy)] with dx from the left; dy lifts a piece."""
+    W = max(dx + im.width for im, dx, dy in parts)
+    H = max(im.height + dy for im, dx, dy in parts)
+    c = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    for im, dx, dy in parts:
+        c.alpha_composite(im, (dx, H - im.height - dy))
+    return c
+
+# (a foe camp for a plain fight: a palisade corner with a skull-and-spear banner at its foot)
+_w, _b = load('orcs/spiked_wall_corner'), load('orcs/spear_signpost')
+sprites['fight'] = stack([(_w, 20, 0), (_b, 0, 0)])
+# (the hidden mini-boss's camp: an antler-and-skull banner over a bone fence)
+_f, _s = load('moonpack/bone_fence'), load('moonpack/skull_signpost')
+sprites['side_elite'] = stack([(_f, 28, 0), (_s, 0, 0)])
+# (a third tent for the recruit camps, the striped one turned to greens)
+_t = np.array(load('nomads/canvas_roof')).astype(float)
+_t[..., [0, 1, 2]] = _t[..., [1, 2, 0]]
+sprites['recruit_c'] = Image.fromarray(_t.clip(0, 255).astype(np.uint8))
 for k in SPENT:
     sprites[k + '_spent'] = drain(sprites[k])
 sprites['campfire_spent'] = burnt_out(sprites['campfire'])
+sprites['fight_spent'] = drain(sprites['fight_spent'], 0.75, 0.5)
 meta['marks'] = {k: k for k in list(MARKS) + [s + '_spent' for s in SPENT] + ['campfire_spent']}
 
 # shelf-pack, tallest first, a clear pixel between pieces

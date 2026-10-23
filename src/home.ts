@@ -326,7 +326,7 @@ export class Home {
     tower.disabled = !towerUp;
     // (the Calamity: the portal; the plate carries the saved run or the best)
     const going = this.hooks.slotInfo?.('calamity');
-    const calLine = going ?? (m.calamity?.best ? `best ${m.calamity.best} of ${CAL_MAPS} maps` : 'one hero, a climb');
+    const calLine = going ?? (m.calamity?.best ? `best ${m.calamity.best} of ${CAL_MAPS}` : 'one hero');
     const calamity = place('hmCalamity', '', 'Calamity', calLine, `The Calamity portal: ${calLine}`, () => this.go(this.hooks.onCalamity));
     this.camp.dailySlot.replaceChildren(daily);
     this.camp.towerSlot.replaceChildren(tower);

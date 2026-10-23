@@ -157,6 +157,8 @@ export interface TowerState {
   path: number[];
   /** The hidden side spots taken or skipped on this act's map (by id, `calLand.ts`); a calamity's. */
   sideDone?: number[];
+  /** A calamity's spot the party is walking to (saved when the walk begins, so a game closed mid-walk reopens with the leader there and the spot not yet entered; cleared when it is entered). */
+  going?: number;
   /** The relics an elite offers, until one is taken (`takeRelic` in `elites.ts`). */
   offer?: string[];
   /** The elite that paid the offer (for the card's words). */
@@ -203,8 +205,12 @@ const KIND_WEIGHTS: Record<string, number> = { fight: 44, mystery: 22, elite: 13
 const TREASURE_ROW = 5;
 
 /** An act's map, from the seed: `PATHS` paths walked up through `LANES` lanes (no two ever cross twice), every one ending at the boss. `rows` is its floors (a calamity's maps have fewer). */
-export function makeMap(seed: number, act: number, twists = true, rows = ACT_ROWS, chestRow = TREASURE_ROW): MapNode[] {
-  const rng = new Rng(mixSeed(seed, 0x70ad, act));
+export function makeMap(seed: number, act: number, twists = true, rows = ACT_ROWS, chestRow = TREASURE_ROW, twoStarts = false, attempt = 0): MapNode[] {
+  return buildMap(seed, act, twists, rows, chestRow, twoStarts, attempt);
+}
+
+function buildMap(seed: number, act: number, twists: boolean, rows: number, chestRow: number, twoStarts: boolean, attempt: number): MapNode[] {
+  const rng = new Rng(attempt ? mixSeed(seed, 0x70ad, act, attempt) : mixSeed(seed, 0x70ad, act));
   const last = rows - 1;
   const treasureRow = Math.min(chestRow, last - 2);
   const grid = new Map<number, Set<number>>();
@@ -219,7 +225,8 @@ export function makeMap(seed: number, act: number, twists = true, rows = ACT_ROW
   const lanes = Array.from({ length: LANES }, (_, i) => i);
   const starts = [rng.pick(lanes)];
   starts.push(rng.pick(lanes.filter((l) => l !== starts[0])));
-  for (let i = 2; i < PATHS; i++) starts.push(rng.pick(lanes));
+  // (a calamity's map starts at one spot or two, the owner's "a starting spot and one to go to": the other paths set out from those two)
+  for (let i = 2; i < (twoStarts ? PATHS + 2 : PATHS); i++) starts.push(twoStarts ? rng.pick(starts.slice(0, 2)) : rng.pick(lanes));
   for (const start of starts) {
     let lane = start;
     if (!grid.has(key(0, lane))) grid.set(key(0, lane), new Set());
@@ -284,9 +291,20 @@ const CAL_WEIGHTS: Record<string, number> = { fight: 50, mystery: 14, elite: 9, 
  * the floor before the boss is a campfire. Every map has a shop and a chest. Its own side stream; the twists come last.
  */
 export function calamityMap(seed: number, act: number, rows: number, asc = 0): MapNode[] {
+  // (a map that sets out from two spots can come out narrow, with no floor to hold a mini-boss that can be skipped: the draw is repeated, on its own salts, until it has one, and a shop and a chest)
+  for (let attempt = 0; ; attempt++) {
+    const nodes = calamityOnce(seed, act, rows, asc, attempt);
+    // (no floor wider than four spots: the land has room for four across)
+    const narrow = nodes.every((n) => nodes.filter((m) => m.row === n.row).length <= 4);
+    const ok = narrow && nodes.some((n) => n.kind === 'elite' && nodes.filter((m) => m.row === n.row).length >= 2) && nodes.some((n) => n.kind === 'shop') && nodes.some((n) => n.kind === 'treasure');
+    if (attempt >= 80 || ok) return nodes;
+  }
+}
+
+function calamityOnce(seed: number, act: number, rows: number, asc: number, attempt: number): MapNode[] {
   const rules = ascRules(asc);
-  const nodes = makeMap(seed, act, false, rows);
-  const rng = new Rng(mixSeed(seed, 0xca1a, act));
+  const nodes = makeMap(seed, act, false, rows, undefined, true, attempt);
+  const rng = new Rng(attempt ? mixSeed(seed, 0xca1a, act, attempt) : mixSeed(seed, 0xca1a, act));
   const last = rows - 1;
   const parents = (n: MapNode) => nodes.filter((p) => p.next.includes(n.id));
   for (const n of nodes) {
@@ -318,7 +336,9 @@ export function calamityMap(seed: number, act: number, rows: number, asc = 0): M
     const spare = (n: MapNode) => (n.kind !== 'shop' && n.kind !== 'treasure') || nodes.filter((m) => m.kind === n.kind).length > 1;
     const company = (n: MapNode) => nodes.filter((m) => m.row === n.row).length >= 2;
     const late = between.filter((n) => company(n) && spare(n));
-    const pool = optional.length ? optional : late.length ? late : nodes.filter((n) => n.row === 1 && company(n));
+    // (a narrow map, its paths merged: a later camp on a floor with company will do, there being a camp on every path already)
+    const camps = nodes.filter((n) => n.row > 2 && n.row < last - 1 && company(n));
+    const pool = optional.length ? optional : late.length ? late : camps.length ? camps : nodes.filter((n) => n.row === 1 && company(n));
     if (pool.length) rng.pick(pool).kind = 'elite';
   }
   addTwists(nodes, seed, act);
@@ -336,6 +356,15 @@ export function choices(run: Run): MapNode[] {
   if (!t || t.cur || run.over) return [];
   if (t.at < 0) return t.map.filter((n) => n.row === t.row);
   return t.map[t.at].next.map((id) => t.map[id]);
+}
+
+/** The party sets out for a spot of the calamity's map (one it may pick now); false when it may not. Saved with the run, so reopening carries on at that spot. */
+export function setGoing(run: Run, id: number): boolean {
+  const t = run.tower;
+  if (!t?.maps || t.cur) return false;
+  if (!choices(run).some((n) => n.id === id) && !sideChoices(run).some((s) => s.id === id)) return false;
+  t.going = id;
+  return true;
 }
 
 /** The hidden side spots the party may take now: those hanging from the node it stands at, not yet taken (a calamity's; none while a node is in play). They are optional: the road's own choices stay as they are. */
@@ -481,6 +510,7 @@ export function enterNode(run: Run, id: number): boolean {
   t.lastBoss = undefined;
   const cur: Current = { id, kind: node.kind };
   if (side) cur.side = true;
+  t.going = undefined;
   if (node.kind === 'fight' || node.kind === 'elite' || node.kind === 'boss') cur.fight = fightSpec(run, node.kind, floor, node.twist, id);
   if (node.kind === 'shop') cur.shop = stockShop(run, floor);
   if (node.kind === 'recruit') cur.hires = stockHires(run, floor);
@@ -560,7 +590,7 @@ export const FIGHT_GEAR = 0.3;
 /** A won fight teaches the run's heroes: their XP (by hero) goes onto them, and `t.gains` keeps what each got for the result screen. */
 function teachFight(run: Run, b: Battle): void {
   const t = run.tower!;
-  const gains = fightXpByHero(b, xpRate(run.castle) * (t.cur?.side ? 0.5 : 1));
+  const gains = fightXpByHero(b, xpRate(run.castle) * (t.cur?.side ? 0.25 : 1));
   const before = new Map(run.roster.map((h) => [h.id, levelOfXp(h.xp ?? 0, RUN_MAX_LEVEL)] as const));
   const ups = new Map(gainRunXp(run, gains).map((u: LevelUp & { id: number }) => [u.id, u] as const));
   t.gains = Object.entries(gains).map(([id, xp]) => {
