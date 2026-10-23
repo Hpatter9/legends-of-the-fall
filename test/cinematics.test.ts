@@ -358,3 +358,28 @@ test('the awakened look is switched on by an act, held after it, and the slow be
 test('no scene flashes more than once a shot or loops a blink; the flash-free ones keep the rules for cut-ins', () => {
   for (const id of SCENE_ORDER) for (const s of SCENES[id].shots) assert.ok((s.fx ?? []).filter((f) => f === 'flash').length <= 1, id);
 });
+
+import { SCENE_TRACKS } from '../src/render/musicScore';
+
+test('a scene’s music is one of the audio worker’s tracks; the heralds have their own, and a cut-in has none', () => {
+  for (const id of SCENE_ORDER) {
+    const m = SCENES[id].music;
+    if (m) assert.ok((SCENE_TRACKS as readonly string[]).includes(m), `${id}: ${m}`);
+    if (SCENES[id].short) assert.equal(m, undefined, `${id}: the fight's own music goes on`);
+  }
+  assert.deepEqual(['gorvak', 'thornWarden', 'malphas', 'hrungar', 'vorgrath', 'karnok'].map((id) => SCENES[id].music), ['gorvak', 'herald2', 'herald3', 'herald4', 'herald5', 'herald6']);
+});
+
+import { previewFrames } from '../src/render/sceneClock';
+
+test('the preview frames name a real moment of each shot, for the screenshot strips', () => {
+  for (const id of SCENE_ORDER) {
+    const sc = SCENES[id];
+    const frames = previewFrames(sc);
+    assert.ok(frames.length >= sc.shots.length, id);
+    for (const [shot, beat, sec] of frames) {
+      assert.ok(sc.shots[shot], id);
+      assert.ok(beat < beats(sc.shots[shot]).length && sec >= 0 && sec <= beats(sc.shots[shot])[beat], `${id} ${shot}/${beat}/${sec}`);
+    }
+  }
+});

@@ -159,6 +159,8 @@ class Game {
   private endWait = 0;
   /** A wave was lost and the player is choosing between a retry and giving up: nothing is settled yet. */
   private pendingLoss = false;
+  /** This fight's loss has had its cinematic asked for (once a fight: `refresh` runs often). */
+  private lossScened = false;
   /** What an army's last settled fight paid (null for any other run). */
   private pay: ArmyPay | null = null;
   /** What a daily's last settled fight paid (null for any other run). */
@@ -339,6 +341,7 @@ class Game {
     $('loading').remove();
     (window as unknown as { __game: Game }).__game = this;
     // (a hero's first awakening has its cinematic)
+    this.goat.onArrive = () => void this.duchessTurnsUp();
     onAwakened((kind, step) => {
       if (step === 1) void this.queueScene({ kind: 'awaken', hero: kind });
     });
@@ -358,6 +361,7 @@ class Game {
     this.settled = false;
     this.endWait = 0;
     this.pendingLoss = false;
+    this.lossScened = false;
     for (const id of [...this.run.squad]) {
       const h = heroOf(this.run, id);
       if (!h) continue;
@@ -429,7 +433,7 @@ class Game {
     return this.queueScene({ kind: 'combo' });
   }
 
-  /** The first time Duchess turns up in a fight. (Waiting for her random arrival to land: it calls this.) */
+  /** The first time Duchess turns up in a fight (her visit begins: `PageGoat.onArrive`). */
   duchessTurnsUp(): Promise<void> {
     return this.queueScene({ kind: 'duchess' });
   }
@@ -1948,6 +1952,11 @@ class Game {
     const ready = ended && (!!this.auto || this.endWait >= END_WAIT_MS);
     // (a wave lost with retries left waits for the player's choice before it is settled into the run)
     if (ready && b.phase === 'lost' && !this.settled && !this.auto && canRetry(run)) this.pendingLoss = true;
+    // (the first defeat has its cinematic as the result comes up, with a retry waiting or not)
+    if (ready && b.phase === 'lost' && !this.lossScened && !this.auto) {
+      this.lossScened = true;
+      void this.queueScene({ kind: 'firstLoss' });
+    }
     if (ready && !this.settled && !this.pendingLoss) {
       this.settled = true;
       const won = b.phase === 'won';
@@ -1987,7 +1996,6 @@ class Game {
       // (the fight's cinematics, one after another: an army's last stand, the Calamity's end, a first loss, the heroes earned)
       if (army && this.pay?.firstClear) void this.queueScene({ kind: 'armyClear', army: army.id });
       if (won && run.cleared && run.mode?.kind === 'calamity') void this.queueScene({ kind: 'calVictory' });
-      if (!won) void this.queueScene({ kind: 'firstLoss' });
       for (const hero of joined) void this.queueScene({ kind: 'earned', hero });
       // (a run that levels its own heroes taught them in `finishTower`; the lasting XP is not touched)
       const own = run.local ? climbXpView(run) : null;

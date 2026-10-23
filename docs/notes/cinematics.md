@@ -122,8 +122,8 @@ plays out the same) while one is queued or playing.
 | **Awakening** (45: `awaken:<hero>`) | `awaken`: the hero's first awakening step (`awakenView.onAwakened`) | 12 to 16 s | wired |
 | **A hero earned** (ten: `earned:<hero>`) | `earned`: each hero `grantContent` brings in after a fight | 20 to 23 s | wired for the fight; **the hero-earned reveal of `hero-progress`** should call `queueScene({ kind: 'earned', hero })` and the fight's call go |
 | **Five as One** (combo mega ultimate cut-in) | `combo`: `Game.playComboMega()` | 3 s | **waiting on `hero-skills`**: call `playComboMega()` the first time the mega ultimate fires |
-| **It Was the Placing** (first loss) | `firstLoss`: the first fight lost | 38 s | wired |
-| **She Was Not on the List** (Duchess in a fight) | `duchess`: `Game.duchessTurnsUp()` | 18 s | **waiting on `battle-ui`**: call `duchessTurnsUp()` when she turns up |
+| **It Was the Placing** (first loss) | `firstLoss`: the first fight lost, as its result comes up (with a retry waiting or not) | 38 s | wired |
+| **She Was Not on the List** (Duchess in a fight) | `duchess`: her first visit to a fight (`PageGoat.onArrive` as she walks in) | 18 s | wired (to `battle-ui`'s random visit, on main in 0.137.0) |
 | **The castle going up** (seven: `castle:<site>`) | `castle`: the first time each building (and the chapel) is raised (`Home` hook `onBuilt`) | 20 to 22 s | wired |
 | **Spire milestones** (`spire:10`, `25`, `50`) | `spire`: the tower's fight at that floor is set up | 17 to 18 s | wired |
 | **A boss changing form** (fifteen: `form:<boss>`) | `bossForm`: each time (`startPhase`), the fight held; one tap Skip | 3 to 4 s | wired |
@@ -144,6 +144,14 @@ What the new shapes are:
 - **The awakened look** (`CastMember.look`, the act `{ who, look: 1 }`): a hero is drawn from its sheet and, when the light
   comes, in the tone `awakenLook.ts` gives it (a Pixi colour matrix of the same hue turn, colour and finish the menus use).
 - **A scene never blocks the game**: a scene that cannot start counts as skipped, and the fight resumes.
+
+### Music
+
+Each scene has a `music` (the audio worker's scores, `musicScore.ts`): a herald its own (`gorvak`, `herald2` to `herald6`), and
+the rest a shared mood (`triumph` for the last stands, the Calamity's end and the heroes earned; `comic` for the funny firsts and the
+castle; `solemn` for awakenings and Mythic; `spire` for the tower). The player calls `playScene` as a scene begins and
+`endScene` as it ends. A cut-in has none: the fight's music goes on. If `hero-progress` adds its own `music` field and call
+site, keep one of the two.
 
 ### Cinematics off
 

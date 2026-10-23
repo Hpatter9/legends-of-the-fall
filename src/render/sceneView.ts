@@ -14,7 +14,7 @@ import { backdropFiles } from './backdrop';
 import { loadImage } from './loadImage';
 import { facesRightOf, framesOf, figureOf, type Anim } from './sheets';
 import { actorsAt, cameraAt, keepInside, lineNow, lineStart, lookAt, next, scaleOf, shotLength, start, tick, TYPE_RATE, typedChars, type ActorNow, type Cursor } from './sceneClock';
-import { play } from './sound';
+import { endScene, play, playScene } from './sound';
 import { goatSheet } from '../duchess';
 import { toneOf } from './awakenLook';
 import { FRAME as GOAT_FRAME } from './duchessRules';
@@ -203,6 +203,7 @@ class Run {
   async go(): Promise<Ending> {
     const hud = this.hud;
     hud.show(true);
+    if (this.scene.music) playScene(this.scene.music);
     hud.line(null, '', '', false);
     hud.caption(null, 0);
     const tapped = (): void => this.tap();
@@ -242,6 +243,7 @@ class Run {
         /* (it never got as far as a renderer) */
       }
       hud.show(false);
+      if (this.scene.music) endScene();
     }
     return result;
   }

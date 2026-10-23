@@ -67,7 +67,7 @@ const t2 = await page.evaluate(() => window.__game.b.t);
 console.log('boss form: cut-in up', await up(), '; fight clock held', t1 === t2, `(${t1} -> ${t2})`, '; seen', (await seen())?.includes('form:orcWarlord'));
 await page.screenshot({ path: 'out/flow2-form.png' });
 await page.click('.csSkip');
-await page.waitForTimeout(1500);
+await page.waitForTimeout(4000);
 const t3 = await page.evaluate(() => window.__game.b.t);
 console.log('after Skip: cut-in up', await up(), '; fight goes on', t3 > t2, `(${t3})`);
 
@@ -75,8 +75,15 @@ console.log('after Skip: cut-in up', await up(), '; fight goes on', t3 > t2, `($
 await page.evaluate(() => window.__game.setSpeed?.(2));
 await page.waitForFunction(() => window.__game.b.phase !== 'fight', null, { timeout: 150000 }).catch(() => console.log('fight did not end in time'));
 await page.waitForTimeout(3000);
+console.log('debug', await page.evaluate(() => { const g = window.__game; return JSON.stringify({ hold: g.sceneHold, settled: g.settled, pending: g.pendingLoss, auto: g.auto, phase: g.b.phase }); }));
 console.log('fight over:', await page.evaluate(() => window.__game.b.phase), '; scene up', await up(), '; seen', await seen());
 await page.screenshot({ path: 'out/flow2-end.png' });
+// (a wave lost with retries left waits for the player: giving up settles it, and the first-loss scene comes up)
+await page.evaluate(() => document.getElementById('next').click());
+await page.waitForTimeout(3500);
+console.log('debug2', await page.evaluate(() => { const g = window.__game; return JSON.stringify({ hold: g.sceneHold, settled: g.settled, pending: g.pendingLoss, over: g.run.over }); }));
+console.log('after giving up: scene up', await up(), '; seen', await seen());
+await page.screenshot({ path: 'out/flow2-loss.png' });
 if (await up()) await page.click('.csSkip');
 await page.waitForTimeout(500);
 console.log('page errors:', errors);
