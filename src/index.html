@@ -215,13 +215,13 @@
   #xp .xprow .xpFace { grid-row: span 3; position: relative; width: 60px; height: 60px; display: grid; place-items: center; background: rgb(var(--black-rgb) / 0.4); border: 2px solid var(--s8); }
   #xp .xprow .xpFace.g2 { border-color: var(--b5); } #xp .xprow .xpFace.g3 { border-color: var(--e6); background: rgb(var(--s1-rgb) / 0.6); }
   #xp .xprow .xpFace canvas { width: 56px; height: 56px; image-rendering: pixelated; display: block; }
-  #xp .xprow .xpLv { position: absolute; right: -6px; bottom: -6px; padding: 1px 3px; font-family: var(--pixel); font-size: 8px; color: var(--white); background: var(--s5); border: 1px solid var(--gold-lo); }
+  #xp .xprow .xpLv { position: absolute; right: -10px; bottom: -8px; }
   #xp .xprow i, #xp .xprow p { grid-column: 2 / span 2; }
   #xp .xprow p { display: flex; flex-wrap: wrap; gap: 4px; }
   #xp .xprow p span { padding: 1px 5px; font-family: var(--pixel); font-size: 8px; color: var(--btn-ink); background: linear-gradient(var(--e8), var(--e5)); border: 1px solid var(--e10); box-shadow: 0 1px 0 var(--black); animation: xpChip 0.3s steps(3) both; }
   #xp .xprow.up { border-color: var(--e7); box-shadow: 0 0 0 2px var(--deep), 0 0 12px rgb(var(--e7-rgb) / 0.55); overflow: hidden; }
   #xp .xprow.up .xpFace { border-color: var(--e7); }
-  #xp .xprow.up .xpLv { color: var(--btn-ink); background: var(--e7); animation: xpBump 0.45s steps(4) both; }
+  #xp .xprow.up .xpLv { animation: xpBump 0.45s steps(4) both; }
   #xp .xprow.up::after { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 40%; pointer-events: none; background: linear-gradient(100deg, transparent, rgb(var(--e10-rgb) / 0.45), transparent); transform: translateX(-120%); animation: xpShine 0.7s ease-out 0.1s forwards; }
   #xp .xprow .xpStamp { display: inline-block; margin-left: 8px; vertical-align: 2px; padding: 2px 5px; font-family: var(--pixel); font-size: 8px; color: var(--white); background: var(--r3); border: 2px solid var(--e7); box-shadow: 0 2px 0 var(--black); transform: rotate(-6deg); animation: xpStamp 0.4s steps(4) both; }
   #xp .xprow .xpWash { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgb(var(--e8-rgb) / 0.55), rgb(var(--e7-rgb) / 0.35) 60%, rgb(var(--e7-rgb) / 0.1)); transform-origin: 30px 50%; transform: scaleX(0); animation: xpWash 0.9s ease-out forwards; }

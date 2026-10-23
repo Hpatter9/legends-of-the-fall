@@ -6,6 +6,7 @@
 import { ALL_HEROES, UNITS } from './sim/units';
 import { partySlots, saveMeta, setParty, type Meta } from './sim/meta';
 import { progressOf, xpOf } from './sim/levels';
+import { levelBadge } from './levelBadge';
 import { countTraits, traitsOf } from './sim/traits';
 import { traitBadge } from './traitBadge';
 import { pipsOf, raisedBy } from './traitHelp';
@@ -194,7 +195,7 @@ export class Party {
         const tags = el('span', 'ptTags');
         const up = this.picked.length < slots ? raisedBy(this.picked, kind) : [];
         for (const t of traitsOf(kind)) tags.append(this.badge(t, up.includes(t)));
-        card.append(el('span', 'stars', starsOf(m, kind)), el('span', 'lv', `Lv ${p.level}`), el('span', 'pw', `Power ${powerText(kindPower(m, kind))}`), tags);
+        card.append(el('span', 'stars', starsOf(m, kind)), levelBadge(p.level), el('span', 'pw', `Power ${powerText(kindPower(m, kind))}`), tags);
       } else {
         card.append(el('span', 'lv', lock!.short));
         if (lock!.need) {
