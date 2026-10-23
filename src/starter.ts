@@ -10,7 +10,7 @@ import { portrait } from './render/sheets';
 
 const CSS = `
 #starter { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; gap: 10px; box-sizing: border-box; padding: 14px 14px 12px;
-  background: radial-gradient(ellipse at 50% 0%, var(--s6), var(--s2) 70%); color: var(--e10); overflow-y: auto; image-rendering: pixelated; }
+  background: radial-gradient(ellipse at 50% 0%, var(--s6), var(--s2) 70%); color: var(--text); overflow-y: auto; image-rendering: pixelated; }
 #starter[hidden] { display: none; }
 #starter h1 { margin: 6px 0 0; font: 900 17px var(--display); letter-spacing: 1px; text-align: center; color: var(--gold-hi, var(--e8)); text-shadow: 0 2px 0 var(--black); }
 #starter .stSub { margin: 0; font: 400 11px/1.5 var(--body); text-align: center; color: var(--s13); max-width: 330px; }

@@ -51,31 +51,31 @@ export const SET_RELICS: Record<string, Relic> = {
 
 export const SETS: Record<string, RelicSet> = {
   fire: {
-    id: 'fire', name: 'Fire', colour: '#e8683a',
+    id: 'fire', name: 'Fire', colour: 'var(--e6)',
     relics: ['phoenix', 'warDrum', 'emberRuby', 'dragonScale'],
     two: { text: '+2% crit chance', fx: { crit: 0.02 } },
     three: { text: "heroes' blows set foes burning", hooks: { burn: 0.03 } },
   },
   frost: {
-    id: 'frost', name: 'Frost', colour: '#6fc3f0',
+    id: 'frost', name: 'Frost', colour: 'var(--b4)',
     relics: ['ironShield', 'hourglass', 'frostSapphire', 'winterCloak'],
     two: { text: 'heroes take 2% less damage', fx: { guard: 0.02 } },
     three: { text: 'the first blow on each foe chills it', hooks: { chill: 1000 } },
   },
   holy: {
-    id: 'holy', name: 'Holy', colour: '#f4d35e',
+    id: 'holy', name: 'Holy', colour: 'var(--e8)',
     relics: ['banner', 'scholarScroll', 'holyChalice', 'saintMedal'],
     two: { text: '+2% hp', fx: { hp: 1.02 } },
     three: { text: 'heroes heal 0.5% of their hp a second', hooks: { regen: 0.005 } },
   },
   shadow: {
-    id: 'shadow', name: 'Shadow', colour: '#a77be0',
+    id: 'shadow', name: 'Shadow', colour: 'var(--p4)',
     relics: ['featherCharm', 'hawkEye', 'shadowCloak', 'viperFang'],
     two: { text: 'heroes slip 2% of blows', fx: { dodge: 0.02 } },
     three: { text: "+2% crit chance, and heroes' crits make foes bleed", fx: { crit: 0.02 }, hooks: { bleed: 0.02 } },
   },
   beast: {
-    id: 'beast', name: 'Beast', colour: '#7bc96f',
+    id: 'beast', name: 'Beast', colour: 'var(--g4)',
     relics: ['whetstone', 'swiftBoots', 'wolfFang', 'beastHarness'],
     two: { text: 'heroes act and walk 2% faster', fx: { speed: 1.02 } },
     three: { text: '+2% attack and 1% faster still', fx: { atk: 1.02, speed: 1.01 } },

@@ -7,7 +7,7 @@ import { spellIconHtml } from './spellIcons';
 import { budgetOf, equipBlock, equipSpell, LOADOUT_SIZE, powerOf, SPELLS, SPELL_IDS, unequipSpell, unlockSpell, type SpellId, type SpellMeta } from './sim/spells';
 
 const CSS = `
-#spellbook { position: fixed; inset: 0; z-index: 8; display: flex; flex-direction: column; gap: 10px; padding: calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 10px); background: rgb(var(--s1-rgb) / 0.97); overflow-y: auto; touch-action: pan-y; color: var(--e10); }
+#spellbook { position: fixed; inset: 0; z-index: 8; display: flex; flex-direction: column; gap: 10px; padding: calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 10px); background: rgb(var(--s1-rgb) / 0.97); overflow-y: auto; touch-action: pan-y; color: var(--text); }
 #spellbook[hidden] { display: none; }
 #spellbook header { display: flex; align-items: center; gap: 10px; }
 #spellbook h2 { margin: 0; flex: 1; font-size: 20px; color: var(--gold, var(--e7)); }
@@ -26,7 +26,7 @@ const CSS = `
 .sbCard .top { display: flex; align-items: baseline; gap: 8px; }
 .sbCard .top b { flex: 1; font-size: 14px; }
 .sbCard .stats { color: var(--b4); font-size: 11px; }
-.sbCard .text { color: var(--e7); }
+.sbCard .text { color: var(--text-dim); }
 .sbCard button { align-self: flex-end; min-height: 36px; }
 .sbNote { min-height: 15px; font-size: 12px; text-align: center; color: var(--e8); }
 `;

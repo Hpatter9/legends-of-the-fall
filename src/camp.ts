@@ -4,6 +4,7 @@
 // signposts (`dailySlot`, `towerSlot`). One canvas drawn in scene pixels times a whole-number scale (nearest neighbour). It only
 // draws (Math.random is fine here: nothing that is played depends on it) and runs only while the tab is showing.
 
+import { tok } from './render/tok';
 import type { Meta } from './sim/meta';
 import { heroRig, lookKey } from './render/awakenRig';
 import type { Army } from './sim/armies';
@@ -715,11 +716,11 @@ export class CampScene {
     const e = EMOTES[name];
     c = canvasOf(13, 15);
     const g = c.getContext('2d')!;
-    g.fillStyle = '#3a2218';
+    g.fillStyle = tok('--s1', '#0b0e12');
     g.fillRect(1, 0, 11, 13);
     g.fillRect(0, 1, 13, 11);
     g.fillRect(5, 13, 3, 2);
-    g.fillStyle = '#f6ecd2';
+    g.fillStyle = tok('--s14', '#cfd9e3');
     g.fillRect(1, 1, 11, 11);
     g.fillRect(5, 13, 2, 1);
     e.rows.forEach((row, ry) =>

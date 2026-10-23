@@ -13,6 +13,10 @@ GROUPS = {
   'fight': ['fight-deploy', 'fight-running', 'boss-card', 'boss-bar', 'result', 'recap', 'auto-summary'],
   'more': ['event', 'tips', 'stash', 'chest', 'calamity-pick', 'calamity-map', 'tower', 'shop', 'daily', 'gacha', 'loading'],
 }
+import re
+for a in sys.argv:
+    if a.startswith('--groups='):
+        GROUPS = {g.split(':')[0]: g.split(':')[1].split(',') for g in a[9:].split(';')}
 def load(p):
     try: return Image.open(p).convert('RGB')
     except Exception: return None

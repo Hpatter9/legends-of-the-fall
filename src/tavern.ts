@@ -4,6 +4,7 @@
 // hum, nod off, stroll a few steps and back, now and then a flourish. It only draws (Math.random is fine here: nothing
 // that is played depends on it) and runs only while the tab is showing.
 
+import { tok } from './render/tok';
 import { ALL_HEROES, UNITS } from './sim/units';
 import type { Meta } from './sim/meta';
 import { heroRig } from './render/awakenRig';
@@ -441,11 +442,11 @@ export class Tavern {
     c.height = 15 * s;
     const g = c.getContext('2d')!;
     // (drawn with its top left at 0, 0: the speech box is 13 across, the tail below it points at the speaker, 6 across from the left)
-    g.fillStyle = '#3a2218';
+    g.fillStyle = tok('--s1', '#0b0e12');
     g.fillRect(s, 0, 11 * s, 13 * s);
     g.fillRect(0, s, 13 * s, 11 * s);
     g.fillRect(5 * s, 13 * s, 3 * s, 2 * s);
-    g.fillStyle = '#f6ecd2';
+    g.fillStyle = tok('--s14', '#cfd9e3');
     g.fillRect(s, s, 11 * s, 11 * s);
     g.fillRect(5 * s, 13 * s, 2 * s, s);
     e.rows.forEach((row, ry) =>

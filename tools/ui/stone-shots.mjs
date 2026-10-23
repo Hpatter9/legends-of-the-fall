@@ -16,7 +16,7 @@ const extra = { crowns: 1850, armySeen: ['orcs', 'undead', 'beasts'], castle: { 
 const AUDIT = process.env.AUDIT;
 const failed = [];
 async function open(opts = {}) {
-  const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1, hasTouch: true });
+  const ctx = await browser.newContext({ viewport: opts.size ? { width: opts.size[0], height: opts.size[1] } : { width: W, height: H }, deviceScaleFactor: 1, hasTouch: true });
   const page = await ctx.newPage();
   page.on('pageerror', (e) => console.log('PAGE ERROR', e.message));
   if (!opts.fresh) await page.addInitScript(saveScript(), [HEROES.slice(0, 22), { ...extra, ...(opts.extra ?? {}) }]);
@@ -45,8 +45,27 @@ async function shot(page, name) {
       }
       return out;
     });
-    mkdirSync('/tmp/claude-0/s/audit2', { recursive: true });
-    writeFileSync(`/tmp/claude-0/s/audit2/${prefix}-${name}${tag}.json`, JSON.stringify(boxes));
+    // (a scan for the old brown and cream: any visible element whose own text, background or border colour is a warm brown or a cream)
+    const old = await ev(page, () => {
+      const rgb = (c) => { const m = /rgba?\((\d+), (\d+), (\d+)(?:, ([\d.]+))?/.exec(c); return m ? [+m[1], +m[2], +m[3], m[4] === undefined ? 1 : +m[4]] : null; };
+      const hsl = ([r, g, b]) => { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn; if (!d) return [0, 0, l]; const s = d / (1 - Math.abs(2 * l - 1)); const h = mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return [h * 60, s, l]; };
+      const warm = (c) => { const v = rgb(c); if (!v || v[3] < 0.3) return false; const [h, s, l] = hsl(v); return (h >= 14 && h <= 50 && s >= 0.25 && s <= 0.75 && l >= 0.08 && l <= 0.5) || (h >= 28 && h <= 55 && l >= 0.8 && s >= 0.2); };
+      const out = new Set();
+      for (const el of document.body.querySelectorAll('*')) {
+        const cs = getComputedStyle(el), r = el.getBoundingClientRect();
+        if (cs.display === 'none' || cs.visibility === 'hidden' || r.width < 4 || r.height < 4 || r.bottom < 0 || r.top > innerHeight) continue;
+        const own = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
+        const bad = [];
+        if (own && warm(cs.color)) bad.push('color ' + cs.color);
+        if (warm(cs.backgroundColor)) bad.push('bg ' + cs.backgroundColor);
+        if (cs.borderTopWidth !== '0px' && cs.borderTopStyle !== 'none' && warm(cs.borderTopColor)) bad.push('border ' + cs.borderTopColor);
+        if (bad.length) out.add(`${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''}${typeof el.className === 'string' && el.className ? '.' + el.className.trim().split(/\s+/).join('.') : ''}: ${bad.join('; ')}`);
+      }
+      return [...out];
+    });
+    if (old.length) writeFileSync(`/tmp/claude-0/-home-user/00efe0aa-d1b9-5266-bb61-c6b22731de46/scratchpad/audit2/old-${prefix}-${name}${tag}.txt`, old.join('\n'));
+    mkdirSync('/tmp/claude-0/-home-user/00efe0aa-d1b9-5266-bb61-c6b22731de46/scratchpad/audit2', { recursive: true });
+    writeFileSync(`/tmp/claude-0/-home-user/00efe0aa-d1b9-5266-bb61-c6b22731de46/scratchpad/audit2/${prefix}-${name}${tag}.json`, JSON.stringify(boxes));
   }
 }
 const group = async (label, fn, opts) => {
@@ -160,6 +179,72 @@ await group('gacha', async (page) => {
   await ev(page, () => document.querySelector('.hmPage.hm-recruit button.primary, .hlBar button.primary')?.click());
   await page.waitForTimeout(6500); await shot(page, 'gacha');
 });
+
+// ---- the second pass: every other screen, overlay and confirm ----
+const towerOpen = async (page) => {
+  await home(page);
+  await ev(page, () => { const b = [...document.querySelectorAll('#home button, #home .hmCard')].find((x) => /Tower/.test(x.textContent)); b?.click(); });
+  await page.waitForTimeout(2000);
+};
+// a row-0 node turned into `kind` (with a twist if asked), picked, and its card or info shown
+const node = async (page, kind, twist, go = true) => {
+  await ev(page, ([k, t]) => { const g = window.__game; for (const n of g.run.tower.map) if (n.row === 0) { n.kind = k; if (t) n.twist = t; } g.towerView.open(g.run); }, [kind, twist]);
+  await page.waitForTimeout(500);
+  await ev(page, () => { const g = window.__game; const i = g.run.tower.map.findIndex((n) => n.row === 0); document.querySelectorAll('.rtNode')[i].click(); });
+  await page.waitForTimeout(300);
+};
+await group('tower-nodes', async (page) => {
+  await towerOpen(page);
+  await node(page, 'elite'); await shot(page, 'tower-elite');
+  await node(page, 'fight', 'lava'); await shot(page, 'tower-twist');
+  await ev(page, () => document.querySelector('.rtGo')?.click()); await page.waitForTimeout(3500); await shot(page, 'twist-banner');
+});
+for (const [name, kind] of [['campfire', 'campfire'], ['recruit-node', 'recruit'], ['treasure', 'treasure'], ['mystery', 'mystery']]) {
+  await group(name, async (page) => {
+    await towerOpen(page); await node(page, kind);
+    await ev(page, () => document.querySelector('.rtGo')?.click()); await page.waitForTimeout(1200); await shot(page, name);
+    if (kind === 'treasure') { await ev(page, () => [...document.querySelectorAll('.rtCard button, #towerMap button')].find((b) => /open|take|chest/i.test(b.textContent))?.click()); await page.waitForTimeout(900); await shot(page, 'relic-pick'); }
+  });
+}
+await group('tower-confirm', async (page) => {
+  await towerOpen(page);
+  await ev(page, () => document.querySelector('.rtLink')?.click()); await page.waitForTimeout(500); await shot(page, 'confirm-abandon');
+  await ev(page, () => [...document.querySelectorAll('.asumCard button, .cfCard button, button')].reverse().find((b) => /Abandon|Yes|End/i.test(b.textContent))?.click()); await page.waitForTimeout(1500); await shot(page, 'tower-summary');
+});
+await group('equip2', async (page) => {
+  await home(page); await tab(page, 'heroes');
+  await ev(page, () => window.__game.home.openSheet('knight')); await page.waitForTimeout(600);
+  await ev(page, () => document.querySelector('.eqPanel')?.scrollIntoView({ block: 'start' })); await page.waitForTimeout(300);
+  await ev(page, () => document.querySelector('.eqSlot')?.click()); await page.waitForTimeout(700); await shot(page, 'equip-picker');
+  await ev(page, () => [...document.querySelectorAll('#hmSheetBox button')].find((b) => /All sets/i.test(b.textContent))?.click()); await page.waitForTimeout(700); await shot(page, 'gear-sets');
+}, { extra: { equipment: [{ id: 1, base: 'ironSword', rarity: 1, level: 1 }, { id: 2, base: 'runedBlade', rarity: 3, level: 4 }, { id: 3, base: 'leatherJerkin', rarity: 2, level: 2 }, { id: 4, base: 'luckyCharm', rarity: 1, level: 1 }], nextItem: 5, equipped: { knight: { weapon: 1 } } } });
+await group('codex2', async (page) => {
+  await home(page); await tab(page, 'castle');
+  await ev(page, () => [...document.querySelectorAll('#hmPages button')].find((b) => /Codex/.test(b.textContent))?.click()); await page.waitForTimeout(700);
+  await ev(page, () => document.querySelector('.cxCard:not(.locked)')?.click()); await page.waitForTimeout(700); await shot(page, 'codex-detail');
+}, { extra: { codex: { met: ['skeleton', 'spearman', 'orcGrunt', 'wolfBlack'], kills: { skeleton: 12, spearman: 7, orcGrunt: 20, wolfBlack: 3 } }, codexClaimed: [] } });
+await group('settings2', async (page) => {
+  await home(page); await ev(page, () => document.getElementById('hmGear').click()); await page.waitForTimeout(600);
+  await ev(page, () => { const b = document.getElementById('settingsBody'); b.scrollTop = b.scrollHeight; }); await shot(page, 'settings-bottom');
+  await ev(page, () => [...document.querySelectorAll('#settings button')].find((b) => /Start over/i.test(b.textContent))?.click()); await page.waitForTimeout(500); await shot(page, 'settings-confirm');
+});
+await group('city', async (page) => {
+  await home(page); await tab(page, 'castle');
+  await ev(page, () => document.querySelector('.ctTag:not(.place)')?.click()); await page.waitForTimeout(700); await shot(page, 'building-card');
+});
+await group('confirm-retry', async (page) => {
+  await ev(page, () => { document.getElementById('askText').textContent = 'Recycle the Samurai for 12 gold?'; document.getElementById('ask').hidden = false; }); await shot(page, 'confirm-recycle');
+  await ev(page, () => { document.getElementById('ask').hidden = true; window.__game.overview?.(true); }); await page.waitForTimeout(1200); await shot(page, 'overview');
+});
+await group('unlock', async (page) => {
+  await ev(page, () => { const g = window.__game; const r = JSON.parse(JSON.stringify(g.run)); Object.assign(r, { mode: { kind: 'army', army: 'orcs', tier: 0 }, stage: 15, over: false, cleared: false, gold: 500, event: undefined, tally: { ms: 150000, lost: 0, bossLost: 0 } }); document.getElementById('home').hidden = true; g.startRun(r); });
+  await page.waitForTimeout(800); await ev(page, () => { const g = window.__game; document.getElementById('bossCard')?.click(); for (const hh of g.run.roster.slice(0, 5)) { if (g.b.units.some((u) => u.tag === hh.id)) continue; const t = g.freeTile(); if (t) g.put(String(hh.id), t); } document.getElementById('fight').click(); g.setSpeed?.(3); });
+  await page.waitForTimeout(1200); await ev(page, () => { const g = window.__game; for (const u of g.b.units) if (u.side === 'foe') { u.alive = false; u.hp = 0; } });
+  await page.waitForTimeout(6500); await shot(page, 'army-result');
+  await ev(page, () => document.getElementById('next')?.click()); await page.waitForTimeout(2500); await shot(page, 'unlock');
+  await ev(page, () => document.querySelector('#recap button')?.click()); await page.waitForTimeout(2800); await shot(page, 'unlock-moment');
+}, { extra: { armies: { orcs: { best: 7, won: 7, clears: 0, stars: {}, met: { 0: 7 } } } } });
+await group('turnup', async (page) => { await page.waitForTimeout(500); await ev(page, () => document.getElementById('turnUp')?.removeAttribute('hidden')); await shot(page, 'turn-upright'); }, { size: [852, 393] });
 await group('tips', async (page) => { await page.waitForTimeout(500); await shot(page, 'tips'); }, { tips: true, wait: 2800 });
 console.log(failed.length ? 'NOT TAKEN:\n' + failed.join('\n') : 'all taken');
 await browser.close(); srv.close();
