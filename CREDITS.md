@@ -222,3 +222,14 @@ Duchess is the town's goat from Chronos Settlement (`hpatter9/little-town`), and
 is the one Chronos's cutscenes use (three steps walking left, three walking right), copied as it is. It is **whtdragon**'s RPG Maker MV white goat
 (`animals/goats.png`). The pack folder has no licence file: check whtdragon's posted terms of use before any public release (the same note as
 Chronos's CREDITS.md).
+
+## The Beastmaster's wolves (`src/art/units/wolf_grey.png`, `wolf_black.png`; `tools/wolf/compose-wolf.py`)
+
+The wolf (and the black dire wolf) are the grey and black wolves of **whtdragon**'s RPG Maker MV animals pack (`animals/wolfdog.png`, from the private assets repository `hpatter9/chronos-assets`), the
+right-facing row of three walking frames, scaled up 2x with nearest-neighbour. The script builds the game's rows from them (a step cycle, a lunge made of the stride shifted forward, an idle, a hurt
+frame brightened, and a dead frame rolled onto its side). The pack folder has no licence file: the same note as Duchess the goat, which comes from the same pack: check whtdragon's posted terms of use before any public release.
+
+## The combo and promotion effects (`src/render/spectacle.ts`)
+
+No new art: the five-hero combos' gathering and strike, a tier skill's ring and a promotion's pillar of light are the **5000 Pixel Effects** strips by blueberry already credited above
+(`src/art/fx/pack`: the circle, gather, sparkle, pillar, nova, wave, strike and explosion strips of eight elements), drawn through the existing particle pool.
