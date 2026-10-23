@@ -82,11 +82,12 @@ and gold are still worth having; the extra 0.2 pays for those (at 1.0 a full cas
 
 The unlocked hero pool (a bigger pool to hire from) is a small, bounded lasting benefit and I left it.
 
-**The daily** (another worker is rebuilding it on `claude/daily-goal`; report only). It is not local: it fights at the lasting level, rank, gear
-and talents, with no castle. Its foes rise by a straight line per stage and it is endless, so it cannot be trivial, but depth tracks power: the same
-greedy bot (6 days each) reaches stage 4.8 at level 1, 30.7 at level 30, 45.7 at level 60 with talents and 85.8 at level 100 with talents
-(one run hit the bot's 120-stage stop). So a level-100 player scores about 18 times a new one: the score shows depth, not challenge. If the owner
-wants a daily that is the same test for everyone, the way is the spire's: make it `local` (levels from the run). That is the daily worker's call.
+**The daily** (the daily-goal worker's, merged as 0.126.0; report only, not edited). It is now ten fixed waves ending in the boss of the day, at
+a strength of its own tuned for a fresh save, and it is not `local`: the squad fights at the lasting level, rank, gear and talents from the
+meta (`daily-goal.md` says so). Measured with the same greedy bot on 24 different days: a level-1 save clears it 11 times in 24 (9.6 of the
+10 waves reached), and **every save from level 30 up clears it, 24 in 24, with or without talents, to level 100**. So the daily is
+trivial for anyone past the first day or two. The fix is the one the daily note already names: make it a flat-power run (levels from the
+run, as the spire and the Calamity do: `run.local`, `localBoost`), or scale its foes with the squad's level. That is the daily worker's call.
 
 **Elites and bosses.** The elites and mid-bosses of an army are scaled by the tier like every foe, so they follow it. The spire's elites and
 bosses are in the spire's foes above, scaled by the castle answer. The Calamity's bosses are fixed stats (`calamityBosses.ts`) with the same answer.
@@ -208,5 +209,5 @@ is conservative. I did not change the XP curve.
 2. **Normal is trivial from level 15** on most armies (it was before). I kept it: its level-1 feel is the brief's, and the way up is Hard.
 3. **The castle answer** (1.2) puts a full castle just below the no-castle difficulty in the spire and Calamity. Higher makes a half-built castle a
    handicap there; lower leaves a full castle easier.
-4. **The daily** rewards level without bound (above): make it local if it should be an equal test.
+4. **The daily is trivial from level 30** (above): make it `local` (flat power) or scale its foes by the squad's level if it should stay a test.
 5. **No chest for the Mythic star** (only its first-clear gold chest): a fourth milestone chest at 11 stars is a one-line change to `MILESTONES` if wanted.
