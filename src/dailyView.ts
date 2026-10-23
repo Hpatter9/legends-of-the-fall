@@ -51,7 +51,7 @@ export function showDailyStart(m: Meta, date: number, go: () => void, back: () =
   const prize = el('div', 'dayPrize');
   const chest = chestPicture('daily', 2).root;
   chest.classList.add('dayChest');
-  prize.append(chest, el('span', '', played ? 'Practice: no reward this time' : 'Clear it for a daily chest: crowns, hero shards, maybe gear. No heart spent and a quick win add to it.'));
+  prize.append(chest, el('span', '', played ? 'Practice: no reward this time' : 'Clear it for a daily chest: crowns, hero shards, maybe gear. A win with no heart spent, or a quick one, adds a bonus star to it.'));
   const status = el('div', 'dayStatus', `Today: ${dailyStatus(m, date)}`);
   const row = el('div', 'dayBtns');
   const fight = el('button', 'primary', played ? 'Practice' : 'Fight!');

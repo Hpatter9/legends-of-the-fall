@@ -105,7 +105,7 @@ export class FakeAudio {
 /** Defines the Web Audio constructors the processors use as globals (Node has none). Returns how to take them away again. */
 export function installFakeAudio(): () => void {
   const g = globalThis as unknown as Record<string, unknown>;
-  const names = ['GainNode', 'BiquadFilterNode', 'OscillatorNode', 'AudioBufferSourceNode', 'ConstantSourceNode', 'StereoPannerNode', 'DynamicsCompressorNode', 'ChannelMergerNode', 'ChannelSplitterNode', 'DelayNode'];
+  const names = ['GainNode', 'BiquadFilterNode', 'OscillatorNode', 'AudioBufferSourceNode', 'ConstantSourceNode', 'StereoPannerNode', 'DynamicsCompressorNode', 'ChannelMergerNode', 'ChannelSplitterNode', 'DelayNode', 'ConvolverNode'];
   const old = new Map(names.map((n) => [n, g[n]]));
   for (const n of names) g[n] = FakeNode;
   const param = g.AudioParam;

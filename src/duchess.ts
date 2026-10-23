@@ -4,7 +4,7 @@
 // She never takes a tap except on her own few pixels, and a tap makes her hop once with her "Mehh.". It only draws.
 
 import { loadImage } from './render/loadImage';
-import { chewBob, FRAME, goatFrame, hopLift, newGoat, stepGoat, tapGoat, type Goat } from './render/duchessRules';
+import { chewBob, FRAME, goatFrame, GOAT_SPEED, hopLift, newGoat, rollVisit, stepGoat, tapGoat, visitAt, VISIT_WALK_MS, type Goat, type Visit } from './render/duchessRules';
 import { goatSays, type GoatKind } from './quips';
 import goatUrl from './art/duchess/goat.png';
 import goatHalfUrl from './art/duchess/goat-half.png';
@@ -43,6 +43,10 @@ export class PageGoat {
   private t0 = performance.now();
   private reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   private rand = () => Math.random();
+  /** The visit this fight has in store (null: she stays away), and when the fight was set up. `visits` off: she is always there (the tavern's, the camp's). */
+  private plan: Visit | null = null;
+  private planned = false;
+  private planAt = 0;
 
   constructor(private place: () => GoatSpot | null) {
     if (!document.getElementById('duchessStyle')) {
@@ -67,8 +71,25 @@ export class PageGoat {
     });
   }
 
+  /** A fight is set up: she visits one in four or five, wanders in a few seconds on, stays a while and wanders off (`render/duchessRules.ts`). */
+  newFight(): void {
+    this.planned = true;
+    this.plan = rollVisit(this.rand);
+    this.planAt = performance.now();
+    this.t0 = performance.now();
+    this.g = newGoat(FRAME / 2);
+    this.g.face = 1;
+  }
+
+  /** Whether she is on the page just now (not away, not still to arrive). */
+  private present(): boolean {
+    return !this.planned || visitAt(this.plan, performance.now() - this.planAt).phase !== 'away';
+  }
+
   /** Show her (and run her), or put her away (her loop stops while she is hidden). */
   show(on: boolean): void {
+    // (coming up from the home screen starts a visit's clock afresh, so it is not spent behind it)
+    if (on && this.root.hidden && this.planned) this.planAt = performance.now();
     this.root.hidden = !on;
     if (!on) {
       cancelAnimationFrame(this.raf);
@@ -89,7 +110,7 @@ export class PageGoat {
 
   /** Something happened (a big hit, a boss, a wipe): she looks up, and now and then says so. */
   react(kind: GoatKind): void {
-    if (this.root.hidden) return;
+    if (this.root.hidden || !this.present()) return;
     const r = this.root.getBoundingClientRect();
     goatSays(kind, { x: r.left + r.width / 2, y: r.top + 12 });
   }
@@ -97,14 +118,28 @@ export class PageGoat {
   private frame(t: number): void {
     this.raf = requestAnimationFrame((n) => this.frame(n));
     const spot = this.place();
-    this.root.style.visibility = spot ? 'visible' : 'hidden';
-    if (!spot) return;
-    this.root.style.left = `${spot.left}px`;
+    const visit = this.planned ? visitAt(this.plan, performance.now() - this.planAt) : { phase: 'here' as const, k: 1 };
+    this.root.style.visibility = spot && visit.phase !== 'away' ? 'visible' : 'hidden';
+    if (!spot || visit.phase === 'away') return;
+    // (walking in or out she slides along the page's edge, a whole pixel at a time, her legs going)
+    const walking = visit.phase === 'in' || visit.phase === 'out';
+    const slide = walking ? Math.round(-(spot.left + 48) * (1 - visit.k)) : 0;
+    this.root.style.left = `${spot.left + slide}px`;
     this.root.style.top = `${spot.bottom - 48}px`;
     const now = t - this.t0;
     // (she stays by her spot: she turns now and then, chews, and hops when asked; a hop ends by itself)
-    stepGoat(this.g, 16, now, { min: FRAME / 2, max: FRAME / 2, friends: [] }, this.rand, this.reduced);
-    if (this.g.mode === 'graze') this.g.face = spot.face;
+    if (walking) {
+      this.g.mode = 'walk';
+      this.g.face = visit.phase === 'in' ? 1 : -1;
+      this.g.steps += GOAT_SPEED * 0.016 * ((spot.left + 48) / ((VISIT_WALK_MS / 1000) * GOAT_SPEED));
+    } else {
+      if (this.g.mode === 'walk') {
+        this.g.mode = 'graze';
+        this.g.at = now + 1500;
+      }
+      stepGoat(this.g, 16, now, { min: FRAME / 2, max: FRAME / 2, friends: [] }, this.rand, this.reduced);
+      if (this.g.mode === 'graze') this.g.face = spot.face;
+    }
     const lift = Math.round(hopLift(this.g, now));
     const ctx = this.canvas.getContext('2d')!;
     ctx.clearRect(0, 0, FRAME, FRAME);

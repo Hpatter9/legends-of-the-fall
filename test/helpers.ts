@@ -1,6 +1,6 @@
 // Shared helpers for the tests.
 
-import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
+import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { place, startBattle, type Battle, type Stage } from '../src/sim/battle';
 import { HEROES } from '../src/sim/units';
 
@@ -8,7 +8,7 @@ import { HEROES } from '../src/sim/units';
 export function readyBattle(seed: number, band?: string | readonly string[], stage?: Stage): Battle {
   const b = startBattle(seed, band, stage);
   const spots: [number, number][] = [];
-  for (let v = D - DEPLOY_ROWS; v < D; v++) for (let u = 0; u < b.board.w; u++) if (standable(tileAt(b.board, u, v))) spots.push([u, v]);
+  for (let v = b.board.d - DEPLOY_ROWS; v < b.board.d; v++) for (let u = 0; u < b.board.w; u++) if (standable(tileAt(b.board, u, v))) spots.push([u, v]);
   // (spread across the front row, then the rows behind)
   HEROES.forEach((id, i) => place(b, id, ...spots[(i * 3) % spots.length]));
   return b;

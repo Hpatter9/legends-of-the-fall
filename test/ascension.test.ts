@@ -201,7 +201,7 @@ test('level 5 makes shops dearer, and level 6 halves every healing', () => {
   reach(run, 'fight');
   const bt = startStage(run);
   assert.equal(bt.heroHeal, 0.5);
-  place(bt, 'knight', 3, 8);
+  place(bt, 'knight', 3, bt.board.d - 1);
   assert.equal(bt.units.find((u) => u.side === 'hero')!.healMult, 0.5);
   assert.equal(bt.units.find((u) => u.side === 'foe')!.healMult, undefined);
   const hero = bt.units.find((u) => u.side === 'hero')!;

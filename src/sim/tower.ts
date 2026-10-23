@@ -22,10 +22,10 @@ import { mixSeed, Rng } from './rng';
 import { addTwists, TWISTS } from './twists';
 import { BOSS, FOE_START, reward, squadLimit, summonCost, type Run } from './run';
 import { UNITS } from './units';
-import { CAL_OPENING, calBossBoost, fitBand, squadFoeMult } from './calamity';
+import { CAL_BOARD, CAL_OPENING, CAL_SCALE, calBossBoost, fitBand, squadFoeMult } from './calamity';
 import { calBossBand } from './calamityBosses';
 import { ascChests, ascCrowns, ascOf, ascRules, ascCleared } from './ascension';
-import { CALAMITY_XP, CLIMB_XP, fightXpByHero, gainRunXp, heroLevel, hireHero } from './climb';
+import { CALAMITY_XP, CLIMB_XP, calXpShare, fightXpByHero, gainRunXp, heroLevel, hireable, hireHero, ownsKind, promoteByLevel, type Promotion } from './climb';
 import { xpRate } from './castle';
 import { type LevelUp } from './levels';
 
@@ -186,6 +186,8 @@ export interface TowerState {
   abandoned?: boolean;
   /** What the last fight taught the run's heroes (a run that levels its own heroes; the result screen shows it). */
   gains?: { id: number; kind: string; xp: number; from: number; to: number }[];
+  /** The heroes a Calamity's last fight (or fire) moved up a tier (`promoteByLevel`): the page gives each the same promotion moment as a merge. Cleared by the next fight's result. */
+  promoted?: Promotion[];
   /** The tower record when the run began. */
   prevBest: number;
   summary?: TowerSummary;
@@ -463,9 +465,12 @@ function plainSpec(run: Run, kind: NodeKind, floor: number, nodeId?: number): Fi
   const more = squadFoeMult(run.roster.length);
   const rules = ascRules(ascOf(run));
   spec.band = fitBand(spec.band, run.roster.length, kind === 'boss');
+  // (and the fight is on a bigger board)
+  spec.stage.size = CAL_BOARD;
   // (the first floors of the first map are gentler: `CAL_OPENING`)
   const ease = kind === 'boss' ? 1 : CAL_OPENING[floor - 1] ?? 1;
-  spec.stage.foes = { ...spec.stage.foes, hp: spec.stage.foes!.hp! * more * rules.foeHp * ease, atk: spec.stage.foes!.atk! * more * rules.foeAtk * ease };
+  const bite = run.tower!.act > 1 ? 1 + CAL_SCALE.atkBias : 1;
+  spec.stage.foes = { ...spec.stage.foes, hp: spec.stage.foes!.hp! * more * rules.foeHp * ease, atk: spec.stage.foes!.atk! * more * rules.foeAtk * ease * bite };
   if (rules.heal !== 1) spec.stage.heal = rules.heal;
   return spec;
 }
@@ -503,9 +508,10 @@ function stockShop(run: Run, floor: number): ShopItem[] {
   }
   const g = dropGear(rng, gearId(run), floor);
   items.push({ kind: 'gear', label: g.name, text: `${g.slot}: ${gearText(g)}`, cost: 24 * g.tier + 2 * floor, gear: g });
-  const pool = run.pool?.length ? run.pool : Object.keys(UNITS).filter((k) => UNITS[k].side === 'hero');
-  const kind = rng.pick(pool);
-  items.push({ kind: 'hero', label: UNITS[kind].name, text: run.mode?.kind === 'calamity' ? 'for hire, joins the party' : 'joins the party, grade 1', cost: run.mode?.kind === 'calamity' ? hireCost(floor) : summonCost(run) + 10, ref: kind });
+  // (a calamity's shop offers a hero it does not have yet, of any of the 45; the usual one a hero of the party)
+  const pool = hireable(run);
+  const kind = pool.length ? rng.pick(pool) : undefined;
+  if (kind) items.push({ kind: 'hero', label: UNITS[kind].name, text: run.mode?.kind === 'calamity' ? 'for hire, joins the party' : 'joins the party, grade 1', cost: run.mode?.kind === 'calamity' ? hireCost(floor) : summonCost(run) + 10, ref: kind });
   items.push({ kind: 'heal', label: 'Healing draught', text: `heals every hero ${DRAUGHT_HEAL * 100}% of its hp`, cost: 20 + floor });
   items.push({ kind: 'elixir', label: 'Elixir', text: 'heals every hero fully, the fallen too', cost: 55 + 2 * floor });
   // (a high calamity ascension: dearer shops, and a draught that heals half as much)
@@ -520,26 +526,34 @@ export const hireCost = (floor: number): number => 45 + 7 * floor;
 /** Heroes a recruit node offers. */
 export const HIRE_OFFERS = 3;
 
-/** The heroes for hire on a floor, from the run's pool: kinds the run does not have yet first, each a different kind. */
+/** The heroes for hire on a floor: each a different kind, none the run already has (a hero is hired once a run). They are drawn from all 45, the ones the player has not unlocked too, so every camp is a chance to try one; to keep it fair
+ *  and the player's own collection worth having, the first of the three is always a hero the player owns (while one is left), and the others are drawn from every kind at the same odds. Heroes have no rarity, so a stranger is no stronger. */
 function stockHires(run: Run, floor: number): Hire[] {
   const rng = new Rng(mixSeed(run.seed, 0xca11, floor));
-  const pool = (run.pool?.length ? run.pool : Object.keys(UNITS).filter((k) => UNITS[k].side === 'hero')).filter((k) => UNITS[k]);
-  const fresh = pool.filter((k) => !run.roster.some((h) => h.kind === k));
-  const from = fresh.length >= HIRE_OFFERS ? fresh : pool;
-  const left = [...from];
+  const left = hireable(run);
+  const mine = left.filter((k) => run.pool?.includes(k));
   const out: Hire[] = [];
-  while (out.length < HIRE_OFFERS && left.length) out.push({ kind: left.splice(rng.int(0, left.length - 1), 1)[0], cost: hireCost(floor) });
+  const take = (from: string[]): void => {
+    const k = from[rng.int(0, from.length - 1)];
+    left.splice(left.indexOf(k), 1);
+    out.push({ kind: k, cost: hireCost(floor) });
+  };
+  if (run.mode?.kind === 'calamity' && mine.length) take(mine);
+  while (out.length < HIRE_OFFERS && left.length) take(left);
   return out;
 }
 
 /** Whether the run has room for another hero (a calamity owns at most its squad limit). */
 export const hasRoom = (run: Run): boolean => run.mode?.kind !== 'calamity' || run.roster.length < squadLimit(run);
 
+/** Whether the hero of this kind cannot be hired now: a Calamity hires each kind once, so one already on the roster is closed. */
+export const hireClosed = (run: Run, kind: string): boolean => run.mode?.kind === 'calamity' && ownsKind(run, kind);
+
 /** Hire hero `i` at the recruit node. Returns a line, or null when it can't be done (too poor, no room, already hired). */
 export function hire(run: Run, i: number): string | null {
   const cur = run.tower?.cur;
   const h = cur?.hires?.[i];
-  if (cur?.kind !== 'recruit' || !h || h.hired || run.gold < h.cost || !hasRoom(run)) return null;
+  if (cur?.kind !== 'recruit' || !h || h.hired || run.gold < h.cost || !hasRoom(run) || hireClosed(run, h.kind)) return null;
   run.gold -= h.cost;
   h.hired = true;
   hireHero(run, h.kind, h.cost);
@@ -572,6 +586,7 @@ export function enterNode(run: Run, id: number): boolean {
   if (side) cur.side = true;
   t.going = undefined;
   if (node.kind === 'fight' || node.kind === 'elite' || node.kind === 'boss') cur.fight = fightSpec(run, node.kind, floor, node.twist, id);
+  if (t.maps && (node.kind === 'fight' || node.kind === 'elite' || node.kind === 'boss')) levelTiers(run);
   if (node.kind === 'shop') cur.shop = t.shops?.[id] ?? stockShop(run, floor);
   if (node.kind === 'recruit') cur.hires = stockHires(run, floor);
   if (node.kind === 'treasure') cur.chest = stockChest(run, floor);
@@ -659,12 +674,22 @@ export function takeXp(run: Run): Record<string, number> | null {
 /** The chance a plain fight of a run that levels its own heroes drops a piece of gear. */
 export const FIGHT_GEAR = 0.3;
 
+/** Move the Calamity heroes whose level has earned a tier up it, and note them in `t.promoted` for the page. */
+export function levelTiers(run: Run): void {
+  const t = run.tower;
+  const ups = promoteByLevel(run);
+  if (t && ups.length) t.promoted = [...(t.promoted ?? []), ...ups];
+}
+
 /** A won fight teaches the run's heroes: their XP (by hero) goes onto them, and `t.gains` keeps what each got for the result screen. */
 function teachFight(run: Run, b: Battle): void {
   const t = run.tower!;
-  const gains = fightXpByHero(b, xpRate(run.castle) * (t.cur?.side ? 0.25 : 1), run.mode?.kind === 'calamity' ? CALAMITY_XP : CLIMB_XP);
+  const cal = run.mode?.kind === 'calamity';
+  const gains = fightXpByHero(b, xpRate(run.castle) * (t.cur?.side ? 0.25 : 1) * (cal ? calXpShare(b.units.filter((u) => u.side === 'foe' && !u.owner).length) : 1), cal ? CALAMITY_XP : CLIMB_XP);
   const before = new Map(run.roster.map((h) => [h.id, heroLevel(h)] as const));
   const ups = new Map(gainRunXp(run, gains).map((u: LevelUp & { id: number }) => [u.id, u] as const));
+  // (a calamity's heroes rise a tier at the levels set in `CAL_TIER`: the stand-in for a merge's promotion)
+  levelTiers(run);
   t.gains = Object.entries(gains).map(([id, xp]) => {
     const h = run.roster.find((x) => x.id === Number(id));
     return { id: Number(id), kind: h?.kind ?? '', xp, from: before.get(Number(id)) ?? 1, to: ups.get(Number(id))?.to ?? before.get(Number(id)) ?? 1 };
@@ -681,6 +706,7 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
   const kind = t.cur?.kind ?? 'fight';
   const floor = run.stage;
   t.gains = undefined;
+  t.promoted = undefined;
   run.best = Math.max(run.best, floor);
   run.found = [];
   run.stars = (run.stars ?? 0) + stars;
@@ -765,6 +791,7 @@ export function train(run: Run, heroId: number): { kind: string; xp: number } | 
     const n = localTrainXp(run.stage);
     h.xp = (h.xp ?? 0) + n;
     cur.camp = `The ${UNITS[h.kind].name} trains by the fire: +${n} XP.`;
+    levelTiers(run);
     return { kind: h.kind, xp: 0 };
   }
   const xp = trainXp(run.stage);
@@ -776,7 +803,7 @@ export function train(run: Run, heroId: number): { kind: string; xp: number } | 
 export function buy(run: Run, i: number): string | null {
   const cur = run.tower?.cur;
   const it = cur?.shop?.[i];
-  if (cur?.kind !== 'shop' || !it || it.sold || run.gold < it.cost || (it.kind === 'hero' && !hasRoom(run))) return null;
+  if (cur?.kind !== 'shop' || !it || it.sold || run.gold < it.cost || (it.kind === 'hero' && (!hasRoom(run) || hireClosed(run, it.ref!)))) return null;
   run.gold -= it.cost;
   it.sold = true;
   switch (it.kind) {
