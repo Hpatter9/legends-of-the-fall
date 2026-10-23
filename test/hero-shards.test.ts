@@ -2,14 +2,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadMeta, newMeta, pickStarter, pullCost, pullOnce, PULL_COST, recruit, startedMeta, saveMeta, type Meta } from '../src/sim/meta';
 import { closest, giveShards, haveOf, needOf, ownedCount, swapContent, toCollect } from '../src/sim/unlock';
-import { CONTENT_KINDS, CHEST_HERO_SHARDS, isContent, NEED_FIRST, NEED_LAST, PITY_PULLS, PULL_HEROES, unlockNeed, priceMult, PRICE_LAST_MULT } from '../src/sim/unlockRules';
+import { CONTENT_KINDS, CHEST_HERO_SHARDS, isContent, NEED_FIRST, NEED_LAST, PITY_PULLS, PULL_HEROES, unlockNeed } from '../src/sim/unlockRules';
 import { CONTENT_HEROES, contentOf, grantContent, lockInfo } from '../src/sim/contentHeroes';
 import { ARMIES, armyById } from '../src/sim/armies';
 import { chestSeed, openChest, peekChest, rollChest } from '../src/sim/armyStars';
 import { ALL_HEROES, HEROES } from '../src/sim/units';
 import { starterPacks } from '../src/sim/starter';
-import { pullsLeft } from '../src/sim/meta';
-import { MODES, setUnlockMode, unlockMode, pityAt } from '../src/sim/unlockRules';
+import { OWNED_BOOST, ownedWeight, pityAt } from '../src/sim/unlockRules';
 
 const store = () => {
   const data: Record<string, string> = {};
@@ -40,20 +39,10 @@ test('the shards a new hero needs rise with the heroes owned: few at first, many
     assert.ok(unlockNeed(n) >= last, `${n}`);
     last = unlockNeed(n);
   }
-  assert.ok(unlockNeed(4) <= 3 && unlockNeed(10) <= 10 && unlockNeed(30) >= 30);
+  assert.ok(unlockNeed(4) <= 3 && unlockNeed(10) <= 12 && unlockNeed(30) >= 50);
   const m = fresh(1);
   assert.equal(ownedCount(m), 3);
   assert.equal(needOf(m), NEED_FIRST);
-});
-
-test('the price of a pull rises with the roster, from the base price', () => {
-  assert.equal(priceMult(3), 1);
-  assert.ok(Math.abs(priceMult(PULL_HEROES.length) - PRICE_LAST_MULT) < 1e-9);
-  const m = fresh(2);
-  assert.equal(pullCost(1, m), PULL_COST);
-  const richer = startedMeta(2);
-  richer.unlocked = [...PULL_HEROES];
-  assert.ok(pullCost(1, richer) > 20 * PULL_COST);
 });
 
 test('shards of a hero not owned fill its bar, and it joins at rank 0 when the bar is full', () => {
@@ -129,10 +118,11 @@ test('the pity: after PITY_PULLS pulls without unlock shards, the pull is shards
   let dry = 0;
   let pities = 0;
   for (let i = 0; i < 300 && toCollect(m).length; i++) {
+    const wait = pityAt(ownedCount(m));
     const p = pullOnce(m);
     if (p.unlock) dry = 0;
     else dry++;
-    assert.ok(dry < PITY_PULLS, `${dry} pulls without unlock shards in a row`);
+    assert.ok(dry < wait, `${dry} pulls without unlock shards in a row`);
     if (p.pity) {
       pities++;
       assert.ok(p.unlock! >= 1);
@@ -147,7 +137,7 @@ test('the pity: after PITY_PULLS pulls without unlock shards, the pull is shards
   const n = fresh(7);
   const target = toCollect(n)[4];
   n.unlock = { [target]: 1 };
-  n.unlockDry = PITY_PULLS - 1;
+  n.unlockDry = pityAt(ownedCount(n)) - 1;
   const p = pullOnce(n);
   assert.equal(p.kind, target);
   assert.equal(p.pity, true);
@@ -271,7 +261,6 @@ test('an old save keeps every hero it owns, and one that has met a milestone get
   assert.deepEqual(back.unlock, {});
   // (and the rest carry on under the new rules: the next hero costs by the heroes owned)
   assert.equal(needOf(back), unlockNeed(ownedCount(back)));
-  assert.ok(pullCost(1, back) > PULL_COST);
   // (a save with the older pity fields reads, and a bad unlock record is mended)
   const raw = JSON.parse(s.data['legends.meta']);
   raw.sinceNew = 7;
@@ -310,74 +299,38 @@ test('a hero not owned says how to get it: a milestone line and progress, or its
   assert.deepEqual([begun.now, begun.need, begun.named], [1, needOf(m), true]);
 });
 
-/** Run `f` in a mode, then put the default back. */
-const inMode = (mode: Parameters<typeof setUnlockMode>[0], f: () => void) => {
-  setUnlockMode(mode);
-  try {
-    f();
-  } finally {
-    setUnlockMode('rising');
-  }
-};
-
-test('the default is the rising price; the other modes keep the price flat', () => {
-  assert.equal(unlockMode(), 'rising');
+test('a pull costs the same whatever the roster: the price is flat', () => {
   const rich = fresh(40);
   rich.unlocked = [...PULL_HEROES];
-  const rising = pullCost(1, rich);
-  assert.ok(rising > 20 * PULL_COST);
-  for (const mode of ['daily', 'fading'] as const)
-    inMode(mode, () => {
-      assert.equal(MODES[mode].priceLast, 1);
-      assert.equal(pullCost(1, rich), PULL_COST);
-      assert.equal(pullCost(10, rich), 900);
-    });
+  rich.crowns = 100000;
+  recruit(rich, 10);
+  assert.equal(rich.crowns, 100000 - 900);
+  recruit(rich, 1);
+  assert.equal(rich.crowns, 100000 - 900 - PULL_COST);
+  assert.equal(pullCost(1), PULL_COST);
 });
 
-test('the daily mode allows a set number of pulls a day, then none until the next date', () => {
-  inMode('daily', () => {
-    const limit = MODES.daily.dailyPulls;
-    const m = fresh(41);
-    m.crowns = 100000;
-    assert.equal(pullsLeft(m, 20260101), limit);
-    assert.ok(recruit(m, 10, 20260101));
-    assert.equal(pullsLeft(m, 20260101), limit - 10);
-    assert.equal(recruit(m, 10, 20260101), null, 'ten more would pass the limit');
-    assert.equal(m.crowns, 100000 - 900, 'a refused pull costs nothing');
-    // (the rest of the day by singles, then nothing)
-    for (let i = 0; i < limit - 10; i++) assert.ok(recruit(m, 1, 20260101));
-    assert.equal(recruit(m, 1, 20260101), null);
-    assert.ok(recruit(m, 1, 20260102), 'a new date has its pulls again');
-    // (the count survives a save)
-    const s = store();
-    saveMeta(m, s);
-    assert.equal(pullsLeft(loadMeta(1, s), 20260102), limit - 1);
-  });
-  // (the other modes have no limit)
-  const m = fresh(42);
-  m.crowns = 100000;
-  for (let i = 0; i < 30; i++) assert.ok(recruit(m, 1, 20260101));
-});
-
-test('the fading mode: a pull is a new hero less and less often as the roster grows, and the pity waits longer', () => {
-  inMode('fading', () => {
-    const share = (owned: number) => {
-      const m = fresh(43);
-      m.unlocked = [...PULL_HEROES.slice(0, owned)];
-      let fresh_ = 0;
-      const N = 2000;
-      for (let i = 0; i < N; i++) {
-        const copy = JSON.parse(JSON.stringify(m)) as Meta;
-        copy.pulls = i;
-        copy.unlockDry = 0;
-        if (pullOnce(copy).unlock) fresh_++;
-      }
-      return fresh_ / N;
-    };
-    const early = share(6);
-    const late = share(28);
-    assert.ok(early > 0.1, `${early}`);
-    assert.ok(late < 0.25 && late < early / 1.5, `early ${early} late ${late}`);
-    assert.ok(pityAt(30) > pityAt(5) + 100);
-  });
+test('the odds fade: a pull is a new hero less and less often as the roster grows, and the pity waits longer', () => {
+  assert.equal(ownedWeight(3), 1, 'with the starter alone, every hero is as likely as any other');
+  assert.ok(ownedWeight(30) > 100 * ownedWeight(6));
+  assert.ok(OWNED_BOOST > 0);
+  const share = (owned: number) => {
+    const m = fresh(43);
+    m.unlocked = [...PULL_HEROES.slice(0, owned)];
+    let fresh_ = 0;
+    const N = 2000;
+    for (let i = 0; i < N; i++) {
+      const copy = JSON.parse(JSON.stringify(m)) as Meta;
+      copy.pulls = i;
+      copy.unlockDry = 0;
+      if (pullOnce(copy).unlock) fresh_++;
+    }
+    return fresh_ / N;
+  };
+  const early = share(6);
+  const late = share(28);
+  assert.ok(early > 0.1, `${early}`);
+  assert.ok(late < 0.25 && late < early / 1.5, `early ${early} late ${late}`);
+  assert.ok(pityAt(30) > pityAt(5) + 100);
+  assert.equal(pityAt(3), PITY_PULLS);
 });

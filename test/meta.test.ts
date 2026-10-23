@@ -20,12 +20,10 @@ test('pull costs: ten is cheaper than ten singles, and a poor player gets nothin
   assert.equal(pullCost(10), PULL10_COST);
   assert.ok(PULL10_COST < 10 * PULL_COST);
   const m = startedMeta(2);
-  m.crowns = pullCost(1, m) - 1;
+  m.crowns = PULL_COST - 1;
   assert.equal(recruit(m, 1), null);
-  assert.equal(m.crowns, pullCost(1, m) - 1);
-  // (the price rises with the heroes owned: the base price is for the starter's three)
-  assert.ok(pullCost(1, m) > PULL_COST && pullCost(10, m) < 10 * pullCost(1, m));
-  m.crowns = pullCost(10, m) + 5;
+  assert.equal(m.crowns, PULL_COST - 1);
+  m.crowns = PULL10_COST + 5;
   const got = recruit(m, 10)!;
   assert.equal(got.length, 10);
   assert.equal(m.pulls, 10);

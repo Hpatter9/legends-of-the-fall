@@ -5,7 +5,7 @@
 import { mixSeed, Rng } from './rng';
 import { OVERFLOW_CROWNS, SHARD_CAP } from './awakenRules';
 import type { Meta } from './meta';
-import { cfg, DUPLICATE_SHARDS, isContent, pityAt, PULL_HEROES, unlockNeed } from './unlockRules';
+import { DUPLICATE_SHARDS, isContent, ownedWeight, pityAt, PULL_HEROES, STICKY, unlockNeed } from './unlockRules';
 
 export { DUPLICATE_SHARDS };
 
@@ -88,9 +88,8 @@ export function drawKind(m: Meta, rng: Rng): { kind: string; pity: boolean } {
   const near = (m.unlockDry ?? 0) + 1 >= pityAt(ownedCount(m)) ? closest(m, Rng.from(m.seed, PITY_SALT, m.pulls)) : undefined;
   if (near) return { kind: near, pity: true };
   const pool = [...PULL_HEROES, ...m.unlocked.filter(isContent)];
-  // (`fading`: each hero owned beyond the starter's three makes a hero owned likelier, so fewer pulls are new shards)
-  const own = 1 + cfg().ownedBoost * Math.max(0, ownedCount(m) - 3) ** cfg().ownedPow;
-  const weight = (k: string) => (owns(m, k) ? own : 1 + cfg().sticky * haveOf(m, k));
+  const own = ownedWeight(ownedCount(m));
+  const weight = (k: string) => (owns(m, k) ? own : 1 + STICKY * haveOf(m, k));
   let r = rng.next() * pool.reduce((s, k) => s + weight(k), 0);
   for (const k of pool) {
     r -= weight(k);

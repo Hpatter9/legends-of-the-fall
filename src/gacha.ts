@@ -3,10 +3,9 @@
 
 import { ALL_HEROES, UNITS } from './sim/units';
 import { awakenedOf, AWAKEN_SHARDS } from './sim/awaken';
-import { MAX_RANK, pullCost, pullsLeft, RANK_MULT, RANK_SHARDS, rankOf, recruit, saveMeta, type Meta, type Pull } from './sim/meta';
-import { todayKey } from './modes';
+import { MAX_RANK, pullCost, RANK_MULT, RANK_SHARDS, rankOf, recruit, saveMeta, type Meta, type Pull } from './sim/meta';
 import { closest, haveOf, needOf, ownedCount } from './sim/unlock';
-import { cfg, isContent, pityAt, unlockMode } from './sim/unlockRules';
+import { isContent, pityAt } from './sim/unlockRules';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { portrait } from './render/sheets';
 
@@ -42,9 +41,9 @@ export class Gacha {
     for (const [id, n] of [['pull1', 1], ['pull10', 10]] as const) {
       const b = $(id) as HTMLButtonElement;
       const price = document.createElement('small');
-      price.textContent = `${pullCost(n, m)} crowns`;
+      price.textContent = `${pullCost(n)} crowns`;
       b.replaceChildren(`Pull ${n}`, price);
-      b.disabled = this.busy || m.crowns < pullCost(n, m) || pullsLeft(m, todayKey()) < n;
+      b.disabled = this.busy || m.crowns < pullCost(n);
     }
     $('pity').textContent = pityLine(m);
     const list = $('collection');
@@ -93,7 +92,7 @@ export class Gacha {
   /** A pull started from the summoning hall: the pull is made at once (so it is saved whatever happens), the hall plays it, then the usual reveal opens. */
   summon(count: 1 | 10, play: (got: Pull[]) => Promise<void>): void {
     if (this.busy) return;
-    const got = recruit(this.meta, count, todayKey());
+    const got = recruit(this.meta, count);
     if (!got) return;
     saveMeta(this.meta);
     this.busy = true;
@@ -105,7 +104,7 @@ export class Gacha {
   }
 
   private pull(count: 1 | 10): void {
-    const got = recruit(this.meta, count, todayKey());
+    const got = recruit(this.meta, count);
     if (!got) return;
     saveMeta(this.meta);
     this.busy = true;
@@ -200,12 +199,10 @@ export function pityLine(m: Meta): string {
   const near = closest(m);
   if (!near) return 'You have every hero you can recruit';
   const left = Math.max(1, pityAt(ownedCount(m)) - (m.unlockDry ?? 0));
-  const today = pullsLeft(m, todayKey());
-  return `Nearest: ${UNITS[near].name} ${haveOf(m, near)}/${needOf(m)} · its shards are sure within ${left} pull${left === 1 ? '' : 's'}${Number.isFinite(today) ? ` · ${today} pull${today === 1 ? '' : 's'} left today` : ''}`;
+  return `Nearest: ${UNITS[near].name} ${haveOf(m, near)}/${needOf(m)} · its shards are sure within ${left} pull${left === 1 ? '' : 's'}`;
 }
 
-/** The recruit page's short rule: what a pull is, and what slows unlocking (the price, the day's limit, or the fading chance, by the mode). */
+/** The recruit page's short rule: what a pull is, and why new heroes turn up less as the roster grows. */
 export function ratesText(): string {
-  const slow = { rising: 'The price rises as your roster grows.', daily: `You may pull ${cfg().dailyPulls} times a day.`, fading: 'The more heroes you have, the more pulls land on them (for rank) rather than on a new one.' }[unlockMode()];
-  return `A pull gives a shard of one hero. A new hero joins when its bar fills; one you have gains rank (+${Math.round((RANK_MULT - 1) * 100)}% hp and attack a rank, up to ${MAX_RANK}, then awakening). ${slow} Ten heroes are earned in play, never pulled: see the Heroes tab.`;
+  return `A pull gives a shard of one hero. A new hero joins when its bar fills; one you have gains rank (+${Math.round((RANK_MULT - 1) * 100)}% hp and attack a rank, up to ${MAX_RANK}, then awakening). The more heroes you have, the more pulls land on them rather than on a new one. Ten heroes are earned in play, never pulled: see the Heroes tab.`;
 }

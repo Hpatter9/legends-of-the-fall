@@ -235,7 +235,7 @@ export class Home {
       return c !== null && m.crowns >= c;
     });
     this.tabBtns.get('castle')!.classList.toggle('new', affordable || canBuildChapel(m) || fresh);
-    this.tabBtns.get('recruit')!.classList.toggle('new', m.crowns >= pullCost(1, m));
+    this.tabBtns.get('recruit')!.classList.toggle('new', m.crowns >= pullCost(1));
     this.tabBtns.get('battle')!.classList.toggle('new', !m.daily[String(todayKey())] || ARMIES.some((a) => armyIsNew(m, a.id)));
     this.drawBattle();
     this.tavern.update(m);

@@ -10,7 +10,7 @@ import { chestSeed, firstClearSeed, FIRST_CLEAR_CHEST, openChest } from '../src/
 import { grantContent, CONTENT_HEROES } from '../src/sim/contentHeroes';
 import { newMeta, pickStarter, pullCost, recruit, stageCrowns, type Meta } from '../src/sim/meta';
 import { ALL_HEROES } from '../src/sim/units';
-import { MODES, PULL_HEROES, setUnlockMode, unlockMode, unlockNeed, type UnlockMode } from '../src/sim/unlockRules';
+import { ownedWeight, PULL_HEROES, unlockNeed } from '../src/sim/unlockRules';
 import { mixSeed } from '../src/sim/rng';
 import { MAP_CROWNS } from '../src/sim/tower';
 import { BUILDINGS } from '../src/sim/castle';
@@ -21,11 +21,6 @@ const arg = (name: string, fallback: number): number => {
   const i = process.argv.indexOf(name);
   return i >= 0 && Number(process.argv[i + 1]) > 0 ? Number(process.argv[i + 1]) : fallback;
 };
-const modeArg = process.argv[process.argv.indexOf('--mode') + 1] as UnlockMode;
-if (process.argv.includes('--mode')) setUnlockMode(modeArg);
-// (--set needLast=80,priceLast=100 changes the mode's numbers for one run, to tune them)
-const setArg = process.argv[process.argv.indexOf('--set') + 1];
-if (process.argv.includes('--set')) for (const kv of setArg.split(',')) Object.assign(MODES[unlockMode()], { [kv.split('=')[0]]: Number(kv.split('=')[1]) });
 const SEEDS = arg('--seeds', 20);
 const DAYS = arg('--days', 365);
 /** The share of crowns that goes to pulls once the castle is built (the rest buys other things: spells, rebuilds, rerolls). */
@@ -139,12 +134,11 @@ function simulate(seed: number): Report {
     // (the owner's first session: the day-one crowns are all spent at once)
     // (ten at a time while the budget allows, then singles; the price follows the roster)
     for (;;) {
-      const n = left >= pullCost(10, m) ? 10 : left >= pullCost(1, m) ? 1 : 0;
+      const n = left >= pullCost(10) ? 10 : left >= pullCost(1) ? 1 : 0;
       if (!n) break;
-      const cost = pullCost(n, m);
-      const got = recruit(m, n, day) ?? (n === 10 ? recruit(m, 1, day) : null);
+      const got = recruit(m, n) ?? (n === 10 ? recruit(m, 1) : null);
       if (!got) break;
-      left -= got.length === 10 ? cost : pullCost(1, m) * got.length;
+      left -= got.length === 10 ? pullCost(10) : pullCost(1) * got.length;
       pulls += got.length;
     }
     for (const k of grantContent(m)) at[k] = at[k] ?? day;
@@ -160,7 +154,7 @@ function simulate(seed: number): Report {
 const reports = Array.from({ length: SEEDS }, (_, i) => simulate(i * 7919 + 13));
 const mean = (xs: number[]) => xs.reduce((n, x) => n + x, 0) / xs.length;
 const med = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
-console.log(`Mode ${unlockMode()}: ${JSON.stringify(MODES[unlockMode()])}\nUnlock pace for a daily player (${SEEDS} seeds, ${DAYS} days; ${Math.round(PULL_SHARE * 100)}% of crowns to pulls after the castle; ${FOE_ENTRIES.length} bestiary entries, ${ACHIEVEMENTS.length} achievements)`);
+console.log(`Unlock pace for a daily player (${SEEDS} seeds, ${DAYS} days; ${Math.round(PULL_SHARE * 100)}% of crowns to pulls after the castle; ${FOE_ENTRIES.length} bestiary entries, ${ACHIEVEMENTS.length} achievements)`);
 console.log(`Crowns earned: ${Math.round(mean(reports.map((r) => r.crowns)))} in ${DAYS} days; pulls made: ${Math.round(mean(reports.map((r) => r.pulls)))}`);
 console.log('\nheroes  day reached (median, earliest, latest)');
 for (const n of MARKS) {
@@ -176,6 +170,6 @@ for (const c of CONTENT_HEROES) {
   const ds = reports.map((r) => r.at[c.kind] ?? Infinity);
   console.log(`${c.kind.padEnd(20)}  ${Number.isFinite(med(ds)) ? med(ds) : `>${DAYS}`}`);
 }
-console.log('\nowned (pullable)  shards to unlock the next  price of 1 / 10 pulls');
-for (const n of [3, 4, 5, 6, 8, 10, 14, 18, 22, 26, 30, 34]) console.log(`${String(n).padStart(8)}  ${String(unlockNeed(n)).padStart(8)}  ${String(pullCost(1, { unlocked: PULL_HEROES.slice(0, n) })).padStart(18)} / ${pullCost(10, { unlocked: PULL_HEROES.slice(0, n) })}`);
+console.log('\nowned (pullable)  shards to unlock the next  odds that a pull is a new hero shard (nothing begun)');
+for (const n of [3, 4, 5, 6, 8, 10, 14, 18, 22, 26, 30, 34]) console.log(`${String(n).padStart(8)}  ${String(unlockNeed(n)).padStart(8)}  ${(((PULL_HEROES.length - n) / (PULL_HEROES.length - n + n * ownedWeight(n))) * 100).toFixed(1).padStart(8)}%`);
 void ALL_HEROES;

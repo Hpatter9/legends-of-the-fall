@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { place, startBattle } from '../src/sim/battle';
 import { loadMeta, MAX_RANK, startedMeta, pullOnce, rankMult, rankOf, RANK_MULT, saveMeta } from '../src/sim/meta';
+import { OVERFLOW_CROWNS, SHARD_CAP } from '../src/sim/awakenRules';
 import { gradeBoost } from '../src/sim/run';
 import { ALL_HEROES, HEROES, UNITS } from '../src/sim/units';
 
@@ -17,9 +18,11 @@ test('a pull of a hero owned gives a rank shard of it, not crowns; of a hero not
       assert.ok(p.unlock! >= 1);
       assert.equal(m.shards[p.kind] ?? 0, 0);
     } else {
-      seen.push(p.kind);
-      assert.equal(p.shards, 1);
-      assert.equal(m.crowns, crowns);
+      // (a hero already at the shard cap pays crowns instead: the fading odds send many pulls to the heroes owned)
+      const capped = (m.shards[p.kind] ?? 0) >= SHARD_CAP && p.shards === 0;
+      if (!capped) seen.push(p.kind);
+      assert.equal(p.shards, capped ? 0 : 1);
+      assert.equal(m.crowns, capped ? crowns + OVERFLOW_CROWNS : crowns);
     }
   }
   for (const kind of new Set(seen)) assert.equal(m.shards[kind], seen.filter((k) => k === kind).length);

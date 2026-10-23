@@ -19,7 +19,7 @@ import { readAwakened } from './awaken';
 import { readCodex, readCodexClaimed, type CodexRecord } from './codex';
 import { readTickets } from './autoReplay';
 import { drawKind, giveShards } from './unlock';
-import { cfg, DUPLICATE_SHARDS, priceMult, PULL_HEROES } from './unlockRules';
+import { DUPLICATE_SHARDS, PULL_HEROES } from './unlockRules';
 import { grantContent } from './contentHeroes';
 
 export const PULL_COST = 100;
@@ -49,8 +49,6 @@ export interface Meta {
   unlock?: Record<string, number>;
   /** Pulls in a row that gave no unlock shards (at `PITY_PULLS` the next one goes to the hero closest to joining). */
   unlockDry?: number;
-  /** The pulls made on a date, for the `daily` mode's limit (`pullsLeft`). */
-  pullDay?: { day: number; used: number };
   /** The starter pick: the three packs offered to a new save, and which was taken (null until then). Saves from before the pick have none. */
   starter?: Starter;
   /** The castle's upgrades (see `castle.ts`). */
@@ -245,11 +243,7 @@ function readStars(raw: unknown): Record<string, number> {
   return out;
 }
 
-/** What 1 or 10 pulls cost: the base price (`PULL_COST`, `PULL10_COST`) times `priceMult` of the heroes owned (the base price without a save). */
-export const pullCost = (count: 1 | 10, m?: Pick<Meta, 'unlocked'>): number => {
-  const base = count === 10 ? PULL10_COST : PULL_COST;
-  return m ? Math.round((base * priceMult(PULL_HEROES.filter((k) => m.unlocked.includes(k)).length)) / 10) * 10 : base;
-};
+export const pullCost = (count: 1 | 10) => (count === 10 ? PULL10_COST : PULL_COST);
 
 /** One pull (no payment): shards of one hero. A hero not yet owned gets unlock shards (it joins when they fill its bar); one owned gets rank shards. Every `PITY_PULLS` pulls without unlock shards, the pull is the hero closest to joining. */
 export function pullOnce(m: Meta): Pull {
@@ -265,19 +259,10 @@ export function pullOnce(m: Meta): Pull {
   return out;
 }
 
-/** Pulls still allowed on a date (yyyymmdd) in the `daily` mode (a very large number when the mode has no limit). */
-export function pullsLeft(m: Pick<Meta, 'pullDay'>, date: number): number {
-  const limit = cfg().dailyPulls;
-  if (!limit) return Infinity;
-  return m.pullDay?.day === date ? Math.max(0, limit - m.pullDay.used) : limit;
-}
-
-/** Pay for and make 1 or 10 pulls. Null when too poor, or (in the `daily` mode, with a `date`) when the day's pulls are used up. */
-export function recruit(m: Meta, count: 1 | 10, date?: number): Pull[] | null {
-  const cost = pullCost(count, m);
+/** Pay for and make 1 or 10 pulls. Null when too poor. */
+export function recruit(m: Meta, count: 1 | 10): Pull[] | null {
+  const cost = pullCost(count);
   if (m.crowns < cost) return null;
-  if (date !== undefined && pullsLeft(m, date) < count) return null;
-  if (date !== undefined && cfg().dailyPulls) m.pullDay = { day: date, used: (m.pullDay?.day === date ? m.pullDay.used : 0) + count };
   m.crowns -= cost;
   return Array.from({ length: count }, () => pullOnce(m));
 }
@@ -299,8 +284,6 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.sinceNew = Math.max(0, (m.sinceNew ?? 0) | 0);
       m.unlock = readUnlock(m.unlock, m.unlocked);
       m.unlockDry = Math.max(0, (m.unlockDry ?? 0) | 0);
-      m.pullDay = m.pullDay && typeof m.pullDay.day === 'number' && typeof m.pullDay.used === 'number' ? { day: m.pullDay.day | 0, used: Math.max(0, m.pullDay.used | 0) } : undefined;
-      if (!m.pullDay) delete m.pullDay;
       m.castle = readCastle(m.castle);
       m.spellbook = readLoadout(m.spellbook, spellBudget(m.castle));
       m.chapel = readChapel(m.chapel, m.castle, m.spellbook, STARTER_SPELLS);
