@@ -27,6 +27,8 @@ import { SPLASH_SHARE, UNITS, type Shot, type Side, type UnitDef } from './units
 export const TICK_MS = 100;
 /** The chance a walker who steps onto ice slides a tile further. */
 export const ICE_SLIDE = 0.5;
+/** The usual board gained two rows between the armies (a gap of 5 where 3 was); everyone's steps take this share of their time on it, so the two sides still meet about as soon as they did. */
+export const USUAL_WALK = 0.75;
 /** A fight still going after this long is lost (the foes held). */
 export const TIME_LIMIT_MS = 120_000;
 /** How long a fighter with nothing it can do waits before looking again. */
@@ -223,6 +225,8 @@ export interface Battle {
   heroHeal?: number;
   /** The weather over the field (`Stage.weather`). */
   weather?: Weather;
+  /** How long a step takes, as a share of its usual time: the usual board is bigger than the old one, so a stride is quicker (`USUAL_WALK`); a Calamity's board has its own balance and keeps 1. */
+  walk?: number;
   /** The tiles (by index) where a powder barrel still stands. */
   barrels?: number[];
   /** Whether the board has ground that acts each second (a shrine, lava). */
@@ -345,6 +349,7 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   if (tw) b.twist = tw;
   if (stage.weather) b.weather = stage.weather;
   noteTerrain(b);
+  if (!stage.size) b.walk = USUAL_WALK;
   if (stage.heroes) b.heroBoost = stage.heroes;
   if (tw?.heroAtk) b.heroBoost = { ...b.heroBoost, atk: (b.heroBoost?.atk ?? 1) * tw.heroAtk };
   // (the foes' boost with the twist's share in it)
@@ -797,7 +802,7 @@ function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void {
       cost += 0.5;
     }
   }
-  const ms = Math.round((def.moveMs * cost) / (speedOf(b, me) * (1 + (me.eq?.moveSpeed ?? 0)) * (me.side === 'hero' ? b.heroMove ?? 1 : 1) * (b.twist?.chill ?? 1)));
+  const ms = Math.round((def.moveMs * cost) / (speedOf(b, me) * (1 + (me.eq?.moveSpeed ?? 0)) * (me.side === 'hero' ? b.heroMove ?? 1 : 1) * (b.twist?.chill ?? 1)) * (b.walk ?? 1));
   me.step = { u: me.u, v: me.v, h: from.h, at: b.t, ms };
   me.facing = wayTo(me, next);
   me.u = next.u;

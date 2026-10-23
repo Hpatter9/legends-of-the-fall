@@ -22,7 +22,7 @@ export const CAL_START_GOLD = 40;
 /** The foes' extra strength for the heroes on the roster beyond five. */
 export const squadFoeMult = (heroes: number): number => 1 + CAL_SCALE.perHero * Math.max(0, Math.min(heroes, CALAMITY_SQUAD) - 5);
 
-/** A calamity's fights are on a board about twice the usual area (`W` x `D` is 7 x 9; the deploy rows are the same three at each end), so the ten heroes and the foes they meet have room. */
+/** A calamity's fights are on a bigger board than the usual one (10 x 13 against `W` x `D`, 8 x 11, and twice the old 7 x 9; the deploy rows are the same three at each end), so the ten heroes and the foes they meet have room. */
 export const CAL_BOARD = { w: 10, d: 13 };
 /** The most foes a fight meets (a boss and its escort included). */
 export const CAL_FOES_MAX = 13;

@@ -44,6 +44,7 @@ const old = await open(8141);
 await old.waitForSelector('.stPack', { timeout: 30000 });
 await old.click('.stPack:nth-child(1)');
 await old.click('.stGo');
+await old.getByText('Skip', { exact: true }).click({ timeout: 15000 }).catch(() => {});
 await old.waitForFunction(() => window.__game, null, { timeout: 30000 });
 await old.waitForTimeout(1500);
 await old.evaluate(() => { for (const x of document.querySelectorAll('#tip button')) if (x.id === 'tipSkip') x.click(); });
