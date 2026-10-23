@@ -495,3 +495,13 @@ test('records saved when the armies were shorter map onto the fifteen waves: a c
   assert.equal(armyCleared(m, 'orcs'), true);
   assert.equal(armyUnlocked(m, 'undead'), true);
 });
+
+test('each army names the hero level Normal is meant for: rising army by army, the first at level 1', () => {
+  assert.equal(ARMIES[0].level, 1);
+  for (let i = 1; i < ARMIES.length; i++) {
+    assert.ok(ARMIES[i].level > ARMIES[i - 1].level, ARMIES[i].id);
+    assert.ok(ARMIES[i].start > ARMIES[i - 1].start, ARMIES[i].id);
+  }
+  // (a level-1 party of the starting five, no castle, does not clear any army after the first in one try)
+  for (const a of ARMIES.slice(2)) assert.ok(clearRate(a.id, 1) <= 0.1, `${a.id} at level 1`);
+});

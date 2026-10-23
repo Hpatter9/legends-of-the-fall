@@ -279,7 +279,7 @@ export class Home {
     const fr = el('div', 'hmFront');
     if (this.note) fr.append(el('div', 'hmNote', this.note));
     // (the run's wave is shown once, on Continue: the ribbon names the army alone, or the next army when no run is going)
-    fr.append(el('div', 'hmBanner', info ? (army ? army.name : `${next.name}`) : `${next.name} · next`));
+    fr.append(el('div', 'hmBanner', info ? (army ? `${army.name} · Lv ${army.level}` : `${next.name}`) : `${next.name} · next · Lv ${next.level}`));
     const go = el('div', 'hmGo');
     const has = this.hooks.hasRun();
     const party2 = el('button', 'hmLink hmSide', 'Party');

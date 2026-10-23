@@ -340,7 +340,7 @@ function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLEle
   const draw = (): void => {
     info.replaceChildren();
     const bosses = bossesOf(a);
-    info.append(el('p', 'asBlurb', a.blurb), el('p', 'asMeta', `${a.waves.length} waves · led by ${open ? `the ${boss.name}` : 'a hidden boss'}${bosses.length > 2 ? ` · ${bosses.length} bosses` : ''}${open ? ` · best wave ${Math.min(rec.best, a.waves.length)}` : ''}`));
+    info.append(el('p', 'asBlurb', a.blurb), el('p', 'asMeta', `${a.waves.length} waves · led by ${open ? `the ${boss.name}` : 'a hidden boss'}${bosses.length > 2 ? ` · ${bosses.length} bosses` : ''}${open ? ` · best wave ${Math.min(rec.best, a.waves.length)}` : ''}`), el('p', 'asMeta', `Recommended: Lv ${a.level} (Normal)`));
     // the tier picks
     const picks = el('div', 'asTiers');
     TIERS.forEach((t, ti) => {

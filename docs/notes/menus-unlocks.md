@@ -35,25 +35,9 @@ The stars counted are every star won over every army and tier (`totalStars` in `
 
 Extra gold barely moves it: the first wave of the Orcs is won 100% of the time with two hired heroes at level 1 (Undead's first wave is 61% at level 1, 100% before; a fresh save cannot reach it until it has 2 stars). The climb tool spends its crowns on the castle from the start, which a save can no longer do before 10 stars, so these are the easy side of the true pace.
 
-## Normal a little harder (director's ask)
+## Normal army by army
 
-Only the Ogre Clans (`start` 1.55 to 1.6, `growth` 0.124 to 0.134) and the Infernal Host (1.64 to 1.66, 0.13 to 0.145) changed; the tier multipliers did not. The early armies are exactly as before, so level-1 starts feel as they did. A bigger push on the Wildwood or the Labyrinth made the whole climb worse (the Wildwood 3.6 to 6.0 tries, the Labyrinth 4.0 to 5.5), so they stayed. The Yokai and the Golems were already 4.7 and 3.3 tries at level 15.
-
-Mean tries to clear on Normal (`npm run balance -- --no-tables --deep --tiers-at 0 --levels 1,15,30 --attempts 30`; the recruits' party, maxed castle, no start hero), before the change and after:
-
-| Army | Lv 1 | Lv 15 | Lv 30 |
-| --- | --- | --- | --- |
-| Orc Warband | 1.1 | 1.0 | 1.0 |
-| Undead Legion | 1.7 | 1.0 | 1.0 |
-| Beast Packs | 2.8 | 1.0 | 1.0 |
-| The Wildwood | 4.4 | 1.0 | 1.0 |
-| The Labyrinth | 8.5 | 1.8 | 1.0 |
-| Ogre Clans | 10.5 to 12.9 | 1.3 to 1.7 | 1.0 |
-| Infernal Host | 15.6 to 17.6 | 1.7 to 2.7 | 1.1 |
-| Yokai Night Parade | 17.0 | 4.7 | 1.3 |
-| Golem Forge | 15.1 | 3.3 | 1.2 |
-
-Late armies are a test at 15 (1.7 to 4.7 tries) and first-try from about 30. The realistic climb after the change: Orcs 2.9, Undead 2.9, Beasts 2.3, Wildwood 3.6, Labyrinth 4.0, Ogres 2.9, Infernal 2.6, Yokai 2.0, Golems 1.4.
+Superseded the earlier "a little harder" tweak (Ogres and Infernal): see `docs/notes/difficulty.md`, "Normal climbs army by army" (a recommended level per army, shown as "Recommended: Lv N" on the armies screen and "Lv N" on the war table; `start` retuned; the harder tiers keep their old `tierStart`). The climb tool now keeps the castle shut until five armies are cleared (`--castle-open` plays it open from the start).
 
 ## A chest for the Mythic star
 

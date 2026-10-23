@@ -326,7 +326,8 @@ test('the foes get tougher by tier: hp, attack and speed', () => {
   for (const t of [1, 2, 3, 4]) {
     const f = waveBoost(a, 3, t).foes!;
     assert.ok(f.hp! > lastHp && f.atk! > lastAtk && f.speed! > lastSpeed, `tier ${t}`);
-    assert.ok(Math.abs(f.hp! / base.hp! - TIERS[t].hp) < 1e-9);
+    // (the harder tiers scale from the army's `tierStart`, which is Normal's `start` unless the army's Normal curve of levels has moved it)
+    assert.ok(Math.abs(f.hp! / base.hp! - (TIERS[t].hp * (a.tierStart ?? a.start)) / a.start) < 1e-9);
     [lastHp, lastAtk, lastSpeed] = [f.hp!, f.atk!, f.speed!];
   }
   // Normal is unchanged
