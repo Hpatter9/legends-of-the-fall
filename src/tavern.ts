@@ -1,8 +1,10 @@
-// The Heroes tab's picture: a side-view tavern with every unlocked hero idling at a spot of their own (tavernSpots.ts);
-// a locked hero's spot stays an empty seat, so the room fills as you recruit. One canvas, drawn in the room's own pixels
-// times a whole-number scale (nearest neighbour, so it stays crisp). Heroes wander through random idles: turn round, sip,
-// hum, nod off, stroll a few steps and back, now and then a flourish. It only draws (Math.random is fine here: nothing
-// that is played depends on it) and runs only while the tab is showing.
+// The Heroes tab's picture: a side-view tavern three rooms wide (the bar room, the hearth hall and the games room, joined by
+// doorways) with every unlocked hero idling at a spot of their own (tavernSpots.ts); a locked hero's spot stays an empty seat,
+// so the rooms fill as you recruit. The rooms are baked once into one big picture (walls, floors, rugs, doorways) and each frame
+// only blits the part on the screen, then draws the furniture and the heroes near it. The view pans sideways by a drag, with
+// a little momentum, or by a tap on a room's name. Heroes wander through random idles: turn round, sip, hum, nod off, stroll a
+// few steps and back, now and then a flourish. It only draws (Math.random is fine here: nothing that is played depends on it)
+// and runs only while the tab is showing.
 
 import { tok } from './render/tok';
 import { ALL_HEROES, UNITS } from './sim/units';
@@ -10,29 +12,39 @@ import type { Meta } from './sim/meta';
 import { heroRig } from './render/awakenRig';
 import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
-import { PROPS, ROOM_H, ROOM_W, RUG, SPOTS, WALL_H, type Spot } from './render/tavernSpots';
+import { CEIL_H, DOORWAYS, figureHeight, FLOOR_PAD, GLOWS, PROPS, ROOM_H, ROOM_NAMES, ROOM_W, ROOMS, RUGS, SCENE_W, SPOTS, WALL_H, type Spot } from './render/tavernSpots';
 import wallUrl from './art/tavern/wall.png';
+import wallHearthUrl from './art/tavern/wall_hearth.png';
+import wallBackUrl from './art/tavern/wall_back.png';
+import archUrl from './art/tavern/arch.png';
 import floorUrl from './art/tavern/floor.png';
 import rugUrl from './art/tavern/rug.png';
 import barUrl from './art/tavern/bar.png';
 import stoolUrl from './art/tavern/stool.png';
 import chairUrl from './art/tavern/chair.png';
+import benchUrl from './art/tavern/bench.png';
 import tableUrl from './art/tavern/table.png';
 import longtableUrl from './art/tavern/longtable.png';
 import barrelsUrl from './art/tavern/barrels.png';
 import cratesUrl from './art/tavern/crates.png';
+import stageUrl from './art/tavern/stage.png';
 
 const ART: Record<string, string> = {
   wall: wallUrl,
+  wallHearth: wallHearthUrl,
+  wallBack: wallBackUrl,
+  arch: archUrl,
   floor: floorUrl,
   rug: rugUrl,
   bar: barUrl,
   stool: stoolUrl,
   chair: chairUrl,
+  bench: benchUrl,
   table: tableUrl,
   longtable: longtableUrl,
   barrels: barrelsUrl,
   crates: cratesUrl,
+  stage: stageUrl,
 };
 let art: Record<string, HTMLImageElement> | null = null;
 async function loadArt(): Promise<Record<string, HTMLImageElement>> {
@@ -41,6 +53,11 @@ async function loadArt(): Promise<Record<string, HTMLImageElement>> {
   await Promise.all(Object.entries(ART).map(async ([k, url]) => (got[k] = await loadImage(url))));
   return (art = got);
 }
+
+/** Where the doorway's opening is inside the arch picture (across from its left edge, and from the top down). */
+const ARCH_IN = { x0: 12, x1: 44, y0: 23 };
+/** The view keeps its place for the session. */
+const CAM_KEY = 'lotf.tavern.cam';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -90,16 +107,31 @@ interface Actor {
   phase: number;
 }
 
+
+const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+
 export class Tavern {
   readonly root = el('div', 'tvWrap');
-  private scroll = el('div', 'tvScroll');
   private canvas = el('canvas', 'tvRoom');
   private count = el('div', 'tvCount');
+  private nav = el('div', 'tvNav');
+  private edgeL = el('div', 'tvEdge tvEdgeL');
+  private edgeR = el('div', 'tvEdge tvEdgeR');
+  private roomBtns: HTMLButtonElement[] = [];
   private ctx = this.canvas.getContext('2d')!;
   private still: HTMLCanvasElement | null = null;
-  private glow: HTMLCanvasElement | null = null;
+  private glows = new Map<string, HTMLCanvasElement>();
   private actors = new Map<string, Actor>();
+  /** Room pixels to a screen pixel (a whole number), the size of the view in screen pixels, and where it looks (room pixels). */
   private scale = 2;
+  private viewW = 0;
+  private viewH = 0;
+  private camX = 0;
+  private camY = 0;
+  private placed = false;
+  /** Momentum after a swipe (room pixels per ms) and a glide to a room (a tap on its name). */
+  private vel = 0;
+  private glide: { from: number; to: number; t0: number; dur: number } | null = null;
   private raf = 0;
   private last = 0;
   private now = 0;
@@ -107,54 +139,104 @@ export class Tavern {
   private reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   private saver = settings().saver;
   private down: { x: number; y: number; t: number } | null = null;
-  private grip: { x: number; y: number } | null = null;
+  private drag = false;
+  private grip: { x: number; t: number }[] = [];
+  private lastRoom = -1;
   private watch: ResizeObserver;
 
   constructor(
     private onPick: (kind: string) => void,
     onRoster: () => void,
   ) {
-    this.scroll.append(this.canvas);
     const roster = el('button', 'tvRoster', 'Roster');
     roster.addEventListener('click', onRoster);
-    this.root.append(this.scroll, this.count, roster);
+    ROOM_NAMES.forEach((r, i) => {
+      if (i) this.nav.append(el('span', 'tvDot', '·'));
+      const b = el('button', 'tvRoom1', r.name);
+      b.addEventListener('click', () => this.goTo(r.focus));
+      this.roomBtns.push(b);
+      this.nav.append(b);
+    });
+    this.root.append(this.canvas, this.count, roster, this.edgeL, this.edgeR, this.nav);
     this.ctx.imageSmoothingEnabled = false;
     onSettings((s) => (this.saver = s.saver));
     window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
-    // (a drag pans the room by hand, both ways, with a finger or the mouse; a short still press is a tap)
+    // (a drag pans the view sideways with a finger or the mouse, and lets go with a little momentum; a short still press is a tap,
+    // so a pan never picks a hero)
     this.canvas.addEventListener('pointerdown', (e) => {
       this.down = { x: e.clientX, y: e.clientY, t: performance.now() };
-      this.grip = { x: e.clientX, y: e.clientY };
+      this.drag = false;
+      this.grip = [{ x: e.clientX, t: performance.now() }];
+      this.vel = 0;
+      this.glide = null;
       this.canvas.setPointerCapture?.(e.pointerId);
     });
     this.canvas.addEventListener('pointermove', (e) => {
-      if (!this.down || !this.grip) return;
-      this.scroll.scrollLeft -= e.clientX - this.grip.x;
-      this.scroll.scrollTop -= e.clientY - this.grip.y;
-      this.grip = { x: e.clientX, y: e.clientY };
-    });
-    this.canvas.addEventListener('pointercancel', () => (this.down = this.grip = null));
-    this.canvas.addEventListener('pointerup', (e) => {
       const d = this.down;
-      this.down = this.grip = null;
-      if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 14 && performance.now() - d.t < 700) this.tap(e);
+      if (!d) return;
+      if (!this.drag && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 10) {
+        this.drag = true;
+        this.grip = [{ x: e.clientX, t: performance.now() }];
+      }
+      if (!this.drag) return;
+      const prev = this.grip[this.grip.length - 1];
+      this.camX = this.clampX(this.camX - (e.clientX - prev.x) / this.scale);
+      const t = performance.now();
+      this.grip.push({ x: e.clientX, t });
+      while (this.grip.length > 2 && t - this.grip[0].t > 100) this.grip.shift();
     });
+    this.canvas.addEventListener('pointercancel', () => this.release(null));
+    this.canvas.addEventListener('pointerup', (e) => this.release(e));
+    // (the wheel and a trackpad's sideways swipe pan too)
+    this.canvas.addEventListener(
+      'wheel',
+      (e) => {
+        e.preventDefault();
+        this.glide = null;
+        this.camX = this.clampX(this.camX + (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) / this.scale);
+        this.remember();
+      },
+      { passive: false },
+    );
     this.watch = new ResizeObserver(() => this.fit());
     this.watch.observe(this.root);
     document.addEventListener('visibilitychange', () => (document.hidden ? this.halt() : this.running && this.start()));
   }
 
+  /** The finger or the mouse lets go: a tap, or the end of a pan (which carries on a little). */
+  private release(e: PointerEvent | null): void {
+    const d = this.down;
+    const wasDrag = this.drag;
+    this.down = null;
+    this.drag = false;
+    if (!d || !e) return;
+    const t = performance.now();
+    if (!wasDrag) {
+      if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 14 && t - d.t < 700) this.tap(e);
+      return;
+    }
+    // (the speed over the last tenth of a second, as room pixels a millisecond; a finger that stopped before it lifted leaves none)
+    const first = this.grip[0];
+    const dt = t - first.t;
+    const v = dt > 0 && t - this.grip[this.grip.length - 1].t < 80 ? (-(e.clientX - first.x) / this.scale) / Math.max(dt, 30) : 0;
+    this.vel = this.reduced ? 0 : clamp(v, -1.6, 1.6);
+    if (Math.abs(this.vel) < 0.02) {
+      this.vel = 0;
+      this.remember();
+    }
+  }
+
   /** Show these heroes (the meta's unlocked ones, at their ranks). Keeps the ones already there as they are. */
   update(meta: Meta): void {
     const have = ALL_HEROES.filter((k) => meta.unlocked.includes(k));
-    this.count.replaceChildren(`${have.length} of ${ALL_HEROES.length} heroes`, el('small', '', `${meta.equipment?.length ?? 0} equipment`), el('small', '', 'tap a hero · drag to look round'));
+    this.count.replaceChildren(`${have.length} of ${ALL_HEROES.length} heroes`, el('small', '', `${meta.equipment?.length ?? 0} equipment`), el('small', '', 'tap a hero · swipe to look'));
     for (const k of [...this.actors.keys()]) if (!have.includes(k)) this.actors.delete(k);
     for (const kind of have) {
       const def = UNITS[kind];
       const rig = heroRig(meta, kind);
       const spot = SPOTS[kind];
       if (!rig || !spot) continue;
-      const k = Math.min(54, Math.max(34, rig.figure * def.scale * 0.9)) / rig.figure;
+      const k = figureHeight(rig.figure, def.scale) / rig.figure;
       const a = this.actors.get(kind);
       if (a) {
         a.rig = rig;
@@ -195,6 +277,7 @@ export class Tavern {
   stop(): void {
     this.running = false;
     this.halt();
+    this.remember();
   }
 
   private halt(): void {
@@ -202,72 +285,141 @@ export class Tavern {
     this.raf = 0;
   }
 
-  /** Pick the whole-number scale and size the canvas; the room pans inside its frame when it is bigger than the screen. */
-  private fit(): void {
-    const h = this.root.clientHeight;
-    if (!h || !art) return;
-    // (the room is drawn a size bigger so the floor and the heroes fill the page, and it pans both ways)
-    const s = 3;
-    if (s === this.scale && this.still && this.canvas.width === ROOM_W * s) return;
-    this.scale = s;
-    this.canvas.width = ROOM_W * s;
-    this.canvas.height = ROOM_H * s;
-    this.canvas.style.width = `${ROOM_W * s}px`;
-    this.canvas.style.height = `${ROOM_H * s}px`;
-    this.ctx.imageSmoothingEnabled = false;
-    this.still = this.paintStill(art, s);
-    this.glow = this.paintGlow(s);
-    // (the middle of the room; the floor, where the heroes are, in view)
-    requestAnimationFrame(() => {
-      this.scroll.scrollLeft = (this.scroll.scrollWidth - this.scroll.clientWidth) / 2;
-      this.scroll.scrollTop = this.scroll.scrollHeight;
-    });
+  // ---- the view ----
+
+  private clampX(x: number): number {
+    return clamp(x, 0, Math.max(0, SCENE_W - this.viewW / this.scale));
   }
 
-  /** The part that never changes: wall, floor with its shade, rug and the lamp light. */
+  /** The camera that centres the view on this spot across the scene. */
+  private centreOn(x: number): number {
+    return this.clampX(x - this.viewW / this.scale / 2);
+  }
+
+  /** Glide to a room (a jump when motion is reduced). */
+  private goTo(focus: number): void {
+    const to = this.centreOn(focus);
+    this.vel = 0;
+    if (this.reduced) {
+      this.camX = to;
+      this.glide = null;
+      this.remember();
+    } else this.glide = { from: this.camX, to, t0: this.now, dur: clamp(Math.abs(to - this.camX) * 2.2, 260, 700) };
+  }
+
+  /** Keep the view's place for the session. */
+  private remember(): void {
+    if (!this.placed) return;
+    try {
+      sessionStorage.setItem(CAM_KEY, String(Math.round(this.camX)));
+    } catch {
+      /* (no storage here: the view opens on the bar room each time) */
+    }
+  }
+
+  private saved(): number | null {
+    try {
+      const v = Number(sessionStorage.getItem(CAM_KEY));
+      return sessionStorage.getItem(CAM_KEY) !== null && Number.isFinite(v) ? v : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Size the canvas to the page, pick the whole-number scale, and bake the rooms when the scale changes. */
+  private fit(): void {
+    const w = this.root.clientWidth;
+    const h = this.root.clientHeight;
+    if (!w || !h || !art) return;
+    // (two screen pixels to a room pixel on a phone, which fits the rooms' height; three where the page is tall enough for it)
+    const s = h >= ROOM_H * 3 ? 3 : 2;
+    if (w !== this.viewW || h !== this.viewH) {
+      const keep = this.placed ? this.camX + this.viewW / this.scale / 2 : 0;
+      this.viewW = w;
+      this.viewH = h;
+      this.canvas.width = w;
+      this.canvas.height = h;
+      this.ctx.imageSmoothingEnabled = false;
+      if (this.placed) this.camX = this.centreOn(keep);
+    }
+    if (s !== this.scale || !this.still) {
+      const keep = this.placed ? this.camX + this.viewW / this.scale / 2 : 0;
+      this.scale = s;
+      this.still = this.paintStill(art, s);
+      this.glows.clear();
+      if (this.placed) this.camX = this.centreOn(keep);
+    }
+    // (the view sits on the floor: the bottom of the rooms, and the strip of floor under the front row where the room names sit, at the bottom of the page; a taller page shows more dark ceiling)
+    this.camY = Math.max(-CEIL_H, ROOM_H + FLOOR_PAD - h / s);
+    if (!this.placed) {
+      this.placed = true;
+      const was = this.saved();
+      this.camX = was === null ? this.centreOn(ROOM_NAMES[0].focus) : this.clampX(was);
+    } else this.camX = this.clampX(this.camX);
+  }
+
+  /** The part that never changes: ceiling, the three walls with their doorways, the floor with its shade and the rugs. */
   private paintStill(a: Record<string, HTMLImageElement>, s: number): HTMLCanvasElement {
     const c = el('canvas');
-    c.width = ROOM_W * s;
-    c.height = ROOM_H * s;
+    c.width = SCENE_W * s;
+    c.height = (ROOM_H + FLOOR_PAD + CEIL_H) * s;
     const g = c.getContext('2d')!;
     g.imageSmoothingEnabled = false;
-    g.fillStyle = '#1a0f0a';
-    g.fillRect(0, 0, c.width, c.height);
-    g.drawImage(a.wall, 0, 0, ROOM_W * s, WALL_H * s);
+    // (everything below is in room pixels, with the top of the walls at 0 and the ceiling above it)
+    g.setTransform(s, 0, 0, s, 0, CEIL_H * s);
+    g.fillStyle = '#120a06';
+    g.fillRect(0, -CEIL_H, SCENE_W, ROOM_H + FLOOR_PAD + CEIL_H);
+    [a.wall, a.wallHearth, a.wallBack].forEach((im, i) => g.drawImage(im, i * ROOM_W, WALL_H - im.height));
+    // (the ceiling is darker the higher it is: steps, not a smooth blend, to stay pixel art)
+    for (let i = 0; i < 6; i++) {
+      g.fillStyle = `rgba(10, 5, 2, ${0.5 - i * 0.08})`;
+      g.fillRect(0, i * 6, SCENE_W, 6);
+    }
     // (floorboards, laid across)
     const fw = a.floor.width;
     const fh = a.floor.height;
-    for (let x = 0; x < ROOM_W; x += fw) for (let y = WALL_H; y < ROOM_H; y += fh) g.drawImage(a.floor, x * s, y * s, fw * s, fh * s);
-    // (the floor is darker where the wall meets it: steps, not a smooth blend, to stay pixel art)
+    for (let x = 0; x < SCENE_W; x += fw) for (let y = WALL_H; y < ROOM_H + FLOOR_PAD; y += fh) g.drawImage(a.floor, 0, 0, fw, Math.min(fh, ROOM_H + FLOOR_PAD - y), x, y, fw, Math.min(fh, ROOM_H + FLOOR_PAD - y));
+    // (the floor is darker where the wall meets it)
     [0.5, 0.36, 0.24, 0.14, 0.06].forEach((al, i) => {
       g.fillStyle = `rgba(14, 6, 2, ${al})`;
-      g.fillRect(0, (WALL_H + i * 7) * s, ROOM_W * s, 7 * s);
+      g.fillRect(0, WALL_H + i * 7, SCENE_W, 7);
     });
-    g.drawImage(a.rug, (RUG.x - a.rug.width / 2) * s, (RUG.y - a.rug.height / 2) * s, a.rug.width * s, a.rug.height * s);
-    // (the room is darker at its edges)
-    const vg = g.createRadialGradient(c.width / 2, c.height * 0.62, c.height * 0.3, c.width / 2, c.height * 0.62, c.width * 0.62);
-    vg.addColorStop(0, 'rgba(0,0,0,0)');
-    vg.addColorStop(1, 'rgba(8,3,1,0.55)');
-    g.fillStyle = vg;
-    g.fillRect(0, 0, c.width, c.height);
+    for (const r of RUGS) g.drawImage(a.rug, Math.round(r.x - a.rug.width / 2), Math.round(r.y - a.rug.height / 2));
+    // (a doorway between each two rooms: dark through the opening, a little firelight on its floor, the timber frame over it)
+    for (const d of DOORWAYS) {
+      const ax = d - Math.round(a.arch.width / 2);
+      g.fillStyle = '#0a0503';
+      g.fillRect(ax + ARCH_IN.x0, ARCH_IN.y0, ARCH_IN.x1 - ARCH_IN.x0, WALL_H - ARCH_IN.y0);
+      [0.1, 0.18, 0.28].forEach((al, i) => {
+        g.fillStyle = `rgba(150, 80, 30, ${al})`;
+        g.fillRect(ax + ARCH_IN.x0, WALL_H - 3 * (i + 1), ARCH_IN.x1 - ARCH_IN.x0, 3);
+      });
+      g.drawImage(a.arch, ax, WALL_H - a.arch.height);
+    }
+    // (the two far ends of the building are darker)
+    [0.4, 0.28, 0.16, 0.08].forEach((al, i) => {
+      g.fillStyle = `rgba(8, 3, 1, ${al})`;
+      g.fillRect(i * 6, 0, 6, ROOM_H + FLOOR_PAD);
+      g.fillRect(SCENE_W - (i + 1) * 6, 0, 6, ROOM_H + FLOOR_PAD);
+    });
     return c;
   }
 
-  /** The firelight and lamp glow, drawn over everything and flickered by its opacity. */
-  private paintGlow(s: number): HTMLCanvasElement {
-    const c = el('canvas');
-    c.width = ROOM_W * s;
-    c.height = ROOM_H * s;
+  /** A soft round light, drawn once for each size and strength and then reused for every lamp that has it. */
+  private glowArt(r: number, al: number): HTMLCanvasElement {
+    const key = `${r}@${al}@${this.scale}`;
+    let c = this.glows.get(key);
+    if (c) return c;
+    const s = this.scale;
+    c = el('canvas');
+    c.width = c.height = Math.ceil(r * 2 * s);
     const g = c.getContext('2d')!;
-    const lamp = (x: number, y: number, r: number, al: number) => {
-      const rg = g.createRadialGradient(x * s, y * s, 0, x * s, y * s, r * s);
-      rg.addColorStop(0, `rgba(255, 170, 70, ${al})`);
-      rg.addColorStop(1, 'rgba(255, 140, 40, 0)');
-      g.fillStyle = rg;
-      g.fillRect(0, 0, c.width, c.height);
-    };
-    lamp(52, 160, 110, 0.3);
-    for (const x of [108, 143, 228, 277, 312, 361]) lamp(x, 70, 40, 0.16);
+    const rg = g.createRadialGradient(r * s, r * s, 0, r * s, r * s, r * s);
+    rg.addColorStop(0, `rgba(255, 170, 70, ${al})`);
+    rg.addColorStop(1, 'rgba(255, 140, 40, 0)');
+    g.fillStyle = rg;
+    g.fillRect(0, 0, c.width, c.height);
+    this.glows.set(key, c);
     return c;
   }
 
@@ -281,7 +433,7 @@ export class Tavern {
       else if (roll < 0.58) a.emote = { name: EMOTE_NAMES[Math.floor(Math.random() * EMOTE_NAMES.length)], until: now + rand(1800, 3000) };
       else if (!this.reduced && roll < 0.8) {
         const dir = chance(0.5) ? 1 : -1;
-        a.target = Math.max(14, Math.min(ROOM_W - 14, home + dir * rand(10, 26)));
+        a.target = clamp(home + dir * rand(10, 26), 14, SCENE_W - 14);
         a.face = a.target > a.x ? 1 : -1;
         a.mood = 'out';
         a.clock = 0;
@@ -324,6 +476,29 @@ export class Tavern {
     if (a.emote && now >= a.emote.until) a.emote = null;
   }
 
+  /** Move the view: a glide to a room, or the momentum of a swipe slowing down. */
+  private pan(dt: number): void {
+    if (this.drag) return;
+    if (this.glide) {
+      const gl = this.glide;
+      const u = clamp((this.now - gl.t0) / gl.dur, 0, 1);
+      this.camX = gl.from + (gl.to - gl.from) * (u * u * (3 - 2 * u));
+      if (u >= 1) {
+        this.glide = null;
+        this.remember();
+      }
+    } else if (this.vel) {
+      const before = this.camX;
+      this.camX = this.clampX(this.camX + this.vel * dt);
+      // (a gentle slow-down: a fiftieth of the speed is left after a second; an edge stops it dead)
+      this.vel *= Math.pow(0.02, dt / 1000);
+      if (this.camX === before || Math.abs(this.vel) < 0.02) {
+        this.vel = 0;
+        this.remember();
+      }
+    }
+  }
+
   private frame(t: number): void {
     this.raf = requestAnimationFrame((n) => this.frame(n));
     const gap = this.saver ? 33 : 0;
@@ -331,11 +506,26 @@ export class Tavern {
     const dt = Math.min(100, t - this.last);
     this.last = t;
     this.now += dt;
+    this.pan(dt);
     for (const a of this.actors.values()) {
       this.think(a, this.now);
       this.step(a, dt, this.now);
     }
     this.draw();
+    this.hint();
+  }
+
+  /** The room names and edge arrows under the picture: which room the view is on, and which ways there is more to see. */
+  private hint(): void {
+    const mid = this.camX + this.viewW / this.scale / 2;
+    const room = clamp(Math.floor(mid / ROOM_W), 0, ROOMS - 1);
+    if (room !== this.lastRoom) {
+      this.lastRoom = room;
+      this.roomBtns.forEach((b, i) => b.classList.toggle('on', i === room));
+    }
+    const max = Math.max(0, SCENE_W - this.viewW / this.scale);
+    this.edgeL.classList.toggle('on', this.camX > 6);
+    this.edgeR.classList.toggle('on', this.camX < max - 6);
   }
 
   // ---- drawing ----
@@ -346,47 +536,64 @@ export class Tavern {
     const a = art;
     if (!a || !this.still) return;
     g.globalAlpha = 1;
-    // (only the part of the room on the screen is repainted: the rest is out of sight, and the frame is a third of the room wide)
-    const vx = Math.max(0, Math.floor(this.scroll.scrollLeft));
-    const vy = Math.max(0, Math.floor(this.scroll.scrollTop));
-    const vw = Math.min(this.canvas.width - vx, this.scroll.clientWidth + 1) || this.canvas.width;
-    const vh = Math.min(this.canvas.height - vy, this.scroll.clientHeight + 1) || this.canvas.height;
-    g.drawImage(this.still, vx, vy, vw, vh, vx, vy, vw, vh);
+    // (the view is a whole number of screen pixels from the baked picture, so the pixels stay crisp)
+    const px = Math.round(this.camX * s);
+    const py = Math.round(this.camY * s);
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.fillStyle = '#120a06';
+    g.fillRect(0, 0, this.viewW, this.viewH);
+    const sy = py + CEIL_H * s;
+    g.drawImage(this.still, px, Math.max(0, sy), this.viewW, this.viewH, 0, Math.max(0, -sy), this.viewW, this.viewH);
+    // (from here on everything is in room pixels, moved by the view)
+    g.setTransform(s, 0, 0, s, -px, -py);
+    const left = this.camX - 110;
+    const right = this.camX + this.viewW / s + 110;
     const list: { depth: number; paint: () => void }[] = [];
     for (const p of PROPS) {
+      if (p.x < left || p.x > right) continue;
       const im = a[p.sprite];
-      list.push({ depth: p.y, paint: () => g.drawImage(im, Math.round(p.x - im.width / 2) * s, (p.y - im.height) * s, im.width * s, im.height * s) });
+      list.push({ depth: p.depth ?? p.y, paint: () => g.drawImage(im, Math.round(p.x - im.width / 2), p.y - im.height) });
     }
     for (const kind of ALL_HEROES) {
       const spot = SPOTS[kind];
+      if (spot.x < left || spot.x > right) continue;
       const actor = this.actors.get(kind);
       // (an empty seat: no one is recruited yet, or they have wandered off)
-      if (!actor || Math.abs(actor.x - spot.x) > 3) list.push({ depth: spot.depth - 0.5, paint: () => this.seat(a, spot) });
+      if (spot.seat !== 'none' && (!actor || Math.abs(actor.x - spot.x) > 3)) list.push({ depth: spot.depth - 0.5, paint: () => this.seat(a, spot) });
       if (actor) list.push({ depth: spot.depth, paint: () => this.hero(actor) });
     }
     list.sort((p, q) => p.depth - q.depth);
     for (const e of list) e.paint();
-    // (the fire flickers)
-    if (this.glow) {
-      g.globalCompositeOperation = 'lighter';
-      g.globalAlpha = 0.55 + 0.25 * Math.sin(this.now / 130) * Math.sin(this.now / 410 + 1) + 0.08 * Math.sin(this.now / 47);
-      g.drawImage(this.glow, vx, vy, vw, vh, vx, vy, vw, vh);
-      g.globalCompositeOperation = 'source-over';
-      g.globalAlpha = 1;
+    // (the fire and the lamps flicker, each a little out of step)
+    g.globalCompositeOperation = 'lighter';
+    const flick = 0.55 + 0.25 * Math.sin(this.now / 130) * Math.sin(this.now / 410 + 1) + 0.08 * Math.sin(this.now / 47);
+    for (const l of GLOWS) {
+      if (l.x + l.r < this.camX || l.x - l.r > this.camX + this.viewW / s) continue;
+      g.globalAlpha = clamp(flick + 0.1 * Math.sin(this.now / 300 + l.x), 0, 1);
+      const im = this.glowArt(l.r, l.al);
+      g.drawImage(im, Math.round(l.x - l.r), Math.round(l.y - l.r), im.width / s, im.height / s);
     }
+    g.globalCompositeOperation = 'source-over';
+    g.globalAlpha = 1;
+    g.setTransform(1, 0, 0, 1, 0, 0);
   }
 
   private seat(a: Record<string, HTMLImageElement>, spot: Spot): void {
     const g = this.ctx;
     const s = this.scale;
     const im = a[spot.seat];
-    const x = Math.round(spot.x - im.width / 2) * s;
-    const y = (spot.y + 1 - im.height) * s;
+    const x = Math.round(spot.x - im.width / 2);
+    const y = spot.y + 1 - im.height;
     if (spot.seat === 'chair' && spot.facing === -1) {
-      g.setTransform(-1, 0, 0, 1, x + im.width * s, y);
-      g.drawImage(im, 0, 0, im.width * s, im.height * s);
-      g.setTransform(1, 0, 0, 1, 0, 0);
-    } else g.drawImage(im, x, y, im.width * s, im.height * s);
+      g.transform(-1, 0, 0, 1, x + im.width, 0);
+      g.drawImage(im, 0, y);
+      this.reset(s);
+    } else g.drawImage(im, x, y);
+  }
+
+  /** Put the view's transform back after a mirrored drawing (the one the frame is in the middle of). */
+  private reset(s: number): void {
+    this.ctx.setTransform(s, 0, 0, s, -Math.round(this.camX * s), -Math.round(this.camY * s));
   }
 
   /** What row and frame a hero shows now. */
@@ -412,19 +619,18 @@ export class Tavern {
     // (a shadow under the feet)
     g.fillStyle = 'rgba(8, 3, 1, 0.38)';
     const sw = Math.round(rig.figure * k * 0.34);
-    g.fillRect((fx - sw) * s, fy * s, sw * 2 * s, 2 * s);
-    g.fillRect((fx - sw + 2) * s, (fy - 1) * s, (sw - 2) * 2 * s, s);
-    const dw = rig.w * k * s;
-    const dh = rig.h * k * s;
-    const dx = fx * s - dw / 2;
-    const dy = (fy - lift) * s - dh;
+    g.fillRect(fx - sw, fy, sw * 2, 2);
+    g.fillRect(fx - sw + 2, fy - 1, (sw - 2) * 2, 1);
+    const dw = rig.w * k;
+    const dh = rig.h * k;
+    const dy = fy - lift - dh;
     const flip = (a.face === 1) !== rig.facesRight;
     if (flip) {
       // (a mirrored transform set and put back by hand: save and restore are slow on a phone's canvas)
-      g.setTransform(-1, 0, 0, 1, fx * s, 0);
+      g.transform(-1, 0, 0, 1, fx, 0);
       g.drawImage(rig.img, i * rig.w, r * rig.h, rig.w, rig.h, -dw / 2, dy, dw, dh);
-      g.setTransform(1, 0, 0, 1, 0, 0);
-    } else g.drawImage(rig.img, i * rig.w, r * rig.h, rig.w, rig.h, dx, dy, dw, dh);
+      this.reset(s);
+    } else g.drawImage(rig.img, i * rig.w, r * rig.h, rig.w, rig.h, fx - dw / 2, dy, dw, dh);
     if (a.emote) this.bubble(a, fx, fy - Math.round(rig.figure * k) - 15);
   }
 
@@ -463,15 +669,15 @@ export class Tavern {
   private bubble(a: Actor, cx: number, top: number): void {
     // (it hops a pixel now and then)
     const y = top + (Math.floor(this.now / 380) % 2);
-    this.ctx.drawImage(this.bubbleArt(a.emote!.name), (cx - 6) * this.scale, y * this.scale);
+    this.ctx.drawImage(this.bubbleArt(a.emote!.name), cx - 6, y, 13, 15);
   }
 
   // ---- tapping ----
 
   private tap(e: PointerEvent): void {
     const box = this.canvas.getBoundingClientRect();
-    const rx = ((e.clientX - box.left) / box.width) * ROOM_W;
-    const ry = ((e.clientY - box.top) / box.height) * ROOM_H;
+    const rx = this.camX + (e.clientX - box.left) / this.scale;
+    const ry = this.camY + (e.clientY - box.top) / this.scale;
     // (generous: the hero whose body is nearest the finger wins, within a reach a little wider and taller than the body, so a
     // thumb that lands beside a hero, or on the seat they sit on, still picks them; on a tie the one in front wins)
     let best: { kind: string; d: number; depth: number } | null = null;
