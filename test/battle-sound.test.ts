@@ -1,6 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fight, stepBattle, type BattleEvent } from '../src/sim/battle';
+import { fight, place, startBattle, stepBattle, type BattleEvent } from '../src/sim/battle';
+import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
+import { ALL_HEROES } from '../src/sim/units';
+import { gradeBoost } from '../src/sim/run';
 import { CUES, Mixer, PITCH_JITTER, cuesFor, intensityOf, weightOf, type Cue } from '../src/render/soundRules';
 import { readyBattle } from './helpers';
 
@@ -84,4 +87,22 @@ test('tension climbs as a side thins out', () => {
   for (const u of b.units) if (u.side === 'foe') u.alive = false;
   b.units.find((u) => u.side === 'foe')!.alive = true;
   assert.ok(intensityOf(b) > 0.5);
+});
+
+test('every event of every hero\'s fights can be voiced (a melee hero\'s thrown shot froze the fight)', () => {
+  const spots = (b: ReturnType<typeof startBattle>): [number, number][] => {
+    const out: [number, number][] = [];
+    for (let v = D - DEPLOY_ROWS; v < D; v++) for (let u = 0; u < b.board.w; u++) if (standable(tileAt(b.board, u, v))) out.push([u, v]);
+    return out;
+  };
+  for (const level of [1, 20])
+    for (let g = 0; g < ALL_HEROES.length; g += 5)
+      for (let seed = 1; seed <= 3; seed++) {
+        const b = startBattle(seed * 97 + g);
+        const at = spots(b);
+        ALL_HEROES.slice(g, g + 5).forEach((id, i) => place(b, id, ...at[(i * 3) % at.length], undefined, gradeBoost(1, 0, level)));
+        fight(b);
+        for (let t = 0; t < 2500 && b.phase === 'fight'; t++)
+          for (const e of stepBattle(b)) assert.doesNotThrow(() => cuesFor(b, e), `${e.kind} by ${'by' in e ? b.units.find((u) => u.id === e.by)?.def : '-'} (level ${level})`);
+      }
 });
