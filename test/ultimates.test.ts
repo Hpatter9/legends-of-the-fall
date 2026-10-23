@@ -63,7 +63,7 @@ test('all 45 ultimates unlock at level 30, the first eight\'s too', () => {
   }
 });
 
-test('an ultimate\'s tuned meter speed applies from level 15 up, and below it the meter does not fill at all', () => {
+test('an ultimate\'s tuned meter speed applies from level 30 up, and below it the meter does not fill at all', () => {
   for (const k of ALL_HEROES) assert.ok(KITS[k].ultimate!.tuned, `${k} is tuned`);
   const b = arena();
   const low = addUnit(b, 'kitsune', 1, 8, gradeBoost(1, 0, ULT_LEVEL - 1));
@@ -71,8 +71,8 @@ test('an ultimate\'s tuned meter speed applies from level 15 up, and below it th
   addUnit(b, 'skeleton', 3, 2);
   run(b, 1000);
   assert.ok(low.charge > 0);
-  assert.ok(!low.charge2, 'below 15 the meter does not fill');
-  assert.ok(Math.abs((up.charge2 ?? 0) - up.charge * ULT_RATE * KITS.kitsune.ultimate!.tuned!.rate) < 1e-6, 'from 15 it fills at the tuned rate');
+  assert.ok(!low.charge2, 'below 30 the meter does not fill');
+  assert.ok(Math.abs((up.charge2 ?? 0) - up.charge * ULT_RATE * KITS.kitsune.ultimate!.tuned!.rate) < 1e-6, 'from 30 it fills at the tuned rate');
 });
 
 test('a locked ultimate neither charges nor casts, and the unlocked one does both', () => {
@@ -101,15 +101,15 @@ test('the level a hero fights at reaches the fight: its kind\'s lasting level, a
   assert.equal(addUnit(b, 'knight', 1, 8, gradeBoost(1, 0, 22)).level, 22);
   assert.equal(addUnit(b, 'knight', 2, 8, gradeBoost(1)).level, undefined);
   const at = (lv: number) => localBoost({ id: 1, kind: 'knight', grade: 1, xp: xpFor(lv) });
-  assert.equal(at(14).level, 14);
-  assert.equal(at(15).level, 15);
+  assert.equal(at(ULT_LEVEL - 1).level, ULT_LEVEL - 1);
+  assert.equal(at(ULT_LEVEL).level, ULT_LEVEL);
   assert.equal(localBoost({ id: 1, kind: 'knight', grade: 1, xp: xpFor(29) }).level, 29, 'in a run the level goes past 20');
   assert.equal(localBoost({ id: 1, kind: 'knight', grade: 1, xp: 1e9 }).level, RUN_MAX_LEVEL, 'and stops at 30');
-  assert.ok(ultimateOf(addUnit(b, 'cleric', 3, 8, at(15))));
-  assert.equal(ultimateOf(addUnit(b, 'cleric', 4, 8, at(14))), undefined);
+  assert.ok(ultimateOf(addUnit(b, 'cleric', 3, 8, at(ULT_LEVEL))));
+  assert.equal(ultimateOf(addUnit(b, 'cleric', 4, 8, at(ULT_LEVEL - 1))), undefined);
 });
 
-// A hero at level 15 beside a hurt knight, with skeletons coming at it: its ultimate, charged, goes off.
+// A hero at the ultimates' level beside a hurt knight, with skeletons coming at it: its ultimate, charged, goes off.
 const fires = (kind: string): string[] => {
   const b = arena();
   const me = addUnit(b, kind, 3, 8, gradeBoost(1, 0, ULT_LEVEL));
@@ -160,7 +160,7 @@ test('Feather Storm falls on a crowd for more than double', () => {
   me.charge2 = CHARGE_MAX;
   cast(b, me);
   run(b, 1200);
-  // (at level 15 the storm is tuned down to a share of the first-written blow, so it hurts every foe but not by more than double)
+  // (at the ultimates' level the storm is tuned down to a share of the first-written blow, so it hurts every foe but not by more than double)
   assert.ok(foes.every((f, i) => f.hp < hp[i]));
 });
 
@@ -255,12 +255,12 @@ test('foes that borrow the first eight\'s kits by name keep their ultimates', ()
   assert.ok(run(b, 3000).some((e) => e.kind === 'skill' && e.by === queen.id && e.name === KITS.gorgon.ultimate!.name));
 });
 
-test('a run\'s own heroes can level past 20, up to 30, and unlock their ultimates at 15', () => {
+test('a run\'s own heroes can level past 20, up to 30, and unlock their ultimates at 30', () => {
   assert.equal(RUN_MAX_LEVEL, 30);
   const at = (lv: number) => localBoost({ id: 1, kind: 'tyrant', grade: 1, xp: xpFor(lv) });
   const b = arena();
-  assert.equal(ultimateOf(addUnit(b, 'tyrant', 0, 8, at(14))), undefined);
-  assert.equal(ultimateOf(addUnit(b, 'tyrant', 1, 8, at(15)))?.name, 'Reign of Terror');
+  assert.equal(ultimateOf(addUnit(b, 'tyrant', 0, 8, at(ULT_LEVEL - 1))), undefined);
+  assert.equal(ultimateOf(addUnit(b, 'tyrant', 1, 8, at(ULT_LEVEL)))?.name, 'Reign of Terror');
   for (const lv of [21, 25, 30]) assert.equal(at(lv).level, lv);
   assert.ok(at(30).hp! > at(20).hp!, 'the levels past 20 still add hp');
 });

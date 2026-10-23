@@ -614,7 +614,7 @@ test('a run\'s heroes level past 20, up to the cap of 30, and a hire still joins
   assert.equal(hireXp(run), Math.floor(xpFor(25) * 0.7));
 });
 
-test('a calamity pays its heroes more XP than the spire does, and its level 15 unlocks the ultimates', () => {
+test('a calamity pays its heroes more XP than the spire does, and its level 30 unlocks the ultimates', () => {
   assert.ok(CALAMITY_XP > CLIMB_XP);
   const run = calamityRun(32, startedMeta(2), 'tyrant');
   const b = playNode((enterNode(run, choices(run)[0].id), run));
@@ -625,9 +625,9 @@ test('a calamity pays its heroes more XP than the spire does, and its level 15 u
   const h = run.roster[0];
   h.xp = xpFor(ULT_LEVEL - 1);
   const field = startStage(run);
-  assert.equal(ultimateOf(addUnit(field, h.kind, 1, 8, localBoost(h))), undefined, 'locked at in-run 14');
+  assert.equal(ultimateOf(addUnit(field, h.kind, 1, 8, localBoost(h))), undefined, 'locked one level below');
   h.xp = xpFor(ULT_LEVEL);
-  assert.equal(ultimateOf(addUnit(field, h.kind, 2, 8, localBoost(h)))?.name, KITS[h.kind].ultimate!.name, 'unlocked at in-run 15');
+  assert.equal(ultimateOf(addUnit(field, h.kind, 2, 8, localBoost(h)))?.name, KITS[h.kind].ultimate!.name, 'unlocked at the ultimates\' level');
 });
 
 test('a full Calamity clear leaves the starting hero well past level 20 (the bot, three seeds)', () => {

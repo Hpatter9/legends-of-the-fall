@@ -52,7 +52,7 @@ import { toastAchievements, toastJoined } from './achievementsView';
 import { grantContent } from './sim/contentHeroes';
 import { clockSeed, todayKey } from './modes';
 import { tips, type Box } from './tips';
-import { CHARGE_MAX, kitOf } from './sim/abilities';
+import { CHARGE_MAX, kitOf, ULT_LEVEL } from './sim/abilities';
 import { keepAwake } from './render/awake';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, type SpellId } from './sim/spells';
 import { bindSpellbook } from './spellbook';
@@ -1377,7 +1377,8 @@ class Game {
         const grown = levelBadge(up.to, 'xpLv');
         lv.replaceWith(grown);
         lv = grown;
-        const chips = [`+${gained.hp}% HP`, `+${gained.atk}% Atk`].map((t, n) => {
+        // (reaching the ultimates' level says so)
+        const chips = [`+${gained.hp}% HP`, `+${gained.atk}% Atk`, ...(up.from < ULT_LEVEL && up.to >= ULT_LEVEL ? ['Ultimate unlocked'] : [])].map((t, n) => {
           const c = document.createElement('span');
           c.textContent = t;
           c.style.animationDelay = `${0.25 + n * 0.15}s`;
