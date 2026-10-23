@@ -7,7 +7,7 @@
 import { BUILDING_IDS, BUILDINGS, buildMs, canBuildChapel, CHAPEL_COST, CHAPEL_MS, chapelBuilt, clockText, maxLevel, nextCost, settleWorks, startBuild, startChapel, worksLeft, type BuildingId, type BuildSite } from './sim/castle';
 import { CastleScene, lookPicture } from './castle';
 import { BLURB, effectText } from './render/castleSpots';
-import { PULL_COST, saveMeta, type Meta, type Pull } from './sim/meta';
+import { pullCost, saveMeta, type Meta, type Pull } from './sim/meta';
 import { dailyLine, towerOpen } from './sim/modes';
 import { CAL_MAPS } from './sim/calamity';
 import { ARMIES, armyById, armyCleared, armyIsNew, armyStars, armyUnlocked, bossOf, clearedCount, markSeen } from './sim/armies';
@@ -24,7 +24,7 @@ import { todayKey } from './modes';
 import { openSettings } from './settings';
 import { resetTipsButton, tips } from './tips';
 import { ICONS, icon } from './menuArt';
-import { drawHeroSheet, strongest } from './menuHeroes';
+import { drawHeroSheet, drawRoster, strongest } from './menuHeroes';
 import { Tavern } from './tavern';
 import { SummoningHall } from './hall';
 import { Library } from './library';
@@ -100,7 +100,7 @@ export class Home {
   ) {
     // (the Battle page is the war camp: tapping a hero opens their sheet, the war table opens the party)
     this.camp = new CampScene((kind) => this.openSheet(kind), () => this.go(this.hooks.onParty));
-    this.tavern = new Tavern((kind) => this.openSheet(kind));
+    this.tavern = new Tavern((kind) => this.openSheet(kind), () => this.openRoster());
     // (the tavern leads to the Heroes tab, the chapel to the Spells tab and the signpost to the battle screen; the six upgrades open their cards)
     this.hall = new SummoningHall({
       onSummon: (n) => {
@@ -235,7 +235,7 @@ export class Home {
       return c !== null && m.crowns >= c;
     });
     this.tabBtns.get('castle')!.classList.toggle('new', affordable || canBuildChapel(m) || fresh);
-    this.tabBtns.get('recruit')!.classList.toggle('new', m.crowns >= PULL_COST);
+    this.tabBtns.get('recruit')!.classList.toggle('new', m.crowns >= pullCost(1, m));
     this.tabBtns.get('battle')!.classList.toggle('new', !m.daily[String(todayKey())] || ARMIES.some((a) => armyIsNew(m, a.id)));
     this.drawBattle();
     this.tavern.update(m);
@@ -471,6 +471,15 @@ export class Home {
       wrap.append(hint);
     }
     return wrap;
+  }
+
+  /** The roster page: every hero, the locked ones with how to get them. */
+  private openRoster(): void {
+    this.closeSheet();
+    $('hmSheet').hidden = false;
+    this.tavern.stop();
+    this.camp.stop();
+    drawRoster($('hmSheetBox'), this.meta, (kind) => this.openSheet(kind), () => this.closeSheet());
   }
 
   private openSheet(kind: string): void {

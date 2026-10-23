@@ -14,17 +14,17 @@ import { readEquipment, readEquipped, type EquipSlot, type Equipment } from './e
 import { migrateArmies, readSeen, seenFor, type ArmyRecord } from './armies';
 import { readStash } from './armyStars';
 import { readTalents, type KindTalents } from './talents';
-import { AWAKEN_MULT, OVERFLOW_CROWNS, SHARD_CAP } from './awakenRules';
+import { AWAKEN_MULT } from './awakenRules';
 import { readAwakened } from './awaken';
 import { readCodex, readCodexClaimed, type CodexRecord } from './codex';
 import { readTickets } from './autoReplay';
+import { drawKind, giveShards } from './unlock';
+import { DUPLICATE_SHARDS, priceMult, PULL_HEROES } from './unlockRules';
+import { grantContent } from './contentHeroes';
 
 export const PULL_COST = 100;
 export const PULL10_COST = 900;
-/** Every hero is as likely as any other in a pull. After this many pulls in a row that gave one already owned, the next pull is a hero not yet owned (while any is left). */
-export const NEW_PITY = 12;
-/** Shards a repeat pull gives. */
-export const DUPLICATE_SHARDS = 1;
+export { DUPLICATE_SHARDS };
 /** Shards each rank needs in all: rank 1 at 1, rank 2 at 3, rank 3 at 6, rank 4 at 10. */
 export const RANK_SHARDS: readonly number[] = [1, 3, 6, 10];
 export const MAX_RANK = RANK_SHARDS.length;
@@ -43,8 +43,12 @@ export interface Meta {
   party: string[];
   /** Pulls so far (the draw follows it). */
   pulls: number;
-  /** Pulls since the last one that gave a new hero (saves from before start at none; their old `dry` and `dryMythic` counters are left in the save, unused). */
+  /** Pulls since the last one that gave a new hero (no longer used: kept so older saves read; see `unlockDry`). */
   sinceNew?: number;
+  /** Unlock shards held towards each hero not yet owned (`unlock.ts`; missing is none). A hero joins at `unlockNeed` of them, at rank 0. */
+  unlock?: Record<string, number>;
+  /** Pulls in a row that gave no unlock shards (at `PITY_PULLS` the next one goes to the hero closest to joining). */
+  unlockDry?: number;
   /** The starter pick: the three packs offered to a new save, and which was taken (null until then). Saves from before the pick have none. */
   starter?: Starter;
   /** The castle's upgrades (see `castle.ts`). */
@@ -119,10 +123,16 @@ export interface DailyEntry {
 
 export interface Pull {
   kind: string;
-  /** The kind was not unlocked before this pull. */
+  /** The hero joined with this pull (its unlock bar filled). */
   isNew: boolean;
-  /** Shards a duplicate gives (0 for a new kind, and for a repeat of a kind with nothing left to buy). */
+  /** Rank shards a hero already owned gets (0 for a hero not yet owned, and for one with nothing left to buy). */
   shards: number;
+  /** Unlock shards a hero not yet owned gets, and its bar after this pull (`have` of `need`); none for a hero owned. */
+  unlock?: number;
+  have?: number;
+  need?: number;
+  /** The pull was the pity's: the hero closest to joining. */
+  pity?: boolean;
   /** Crowns a repeat gives instead once the kind's shards have nothing left to buy (`SHARD_CAP`). */
   crowns?: number;
 }
@@ -170,6 +180,14 @@ export function setParty(m: Meta, kinds: readonly string[]): boolean {
   const ok = kinds.length === partySlots(m) && new Set(kinds).size === kinds.length && kinds.every((k) => m.unlocked.includes(k));
   if (ok) m.party = [...kinds];
   return ok;
+}
+
+/** Saved unlock shards that are sane: a hero kind to collect that is not owned yet, with a count. Anything else is dropped. */
+function readUnlock(raw: unknown, unlocked: readonly string[]): Record<string, number> {
+  const out: Record<string, number> = {};
+  if (raw && typeof raw === 'object')
+    for (const [k, n] of Object.entries(raw)) if (PULL_HEROES.includes(k) && !unlocked.includes(k) && typeof n === 'number' && n >= 1) out[k] = Math.floor(n);
+  return out;
 }
 
 /** Saved party that is sane: unlocked kinds, no repeats, at most five. Missing or empty means the first unlocked. */
@@ -225,28 +243,29 @@ function readStars(raw: unknown): Record<string, number> {
   return out;
 }
 
-export const pullCost = (count: 1 | 10) => (count === 10 ? PULL10_COST : PULL_COST);
+/** What 1 or 10 pulls cost: the base price (`PULL_COST`, `PULL10_COST`) times `priceMult` of the heroes owned (the base price without a save). */
+export const pullCost = (count: 1 | 10, m?: Pick<Meta, 'unlocked'>): number => {
+  const base = count === 10 ? PULL10_COST : PULL_COST;
+  return m ? Math.round((base * priceMult(PULL_HEROES.filter((k) => m.unlocked.includes(k)).length)) / 10) * 10 : base;
+};
 
-/** One pull (no payment): every hero is as likely as any other, and it unlocks the one drawn. After `NEW_PITY` pulls without a new hero, the pull is one not yet owned. */
+/** One pull (no payment): shards of one hero. A hero not yet owned gets unlock shards (it joins when they fill its bar); one owned gets rank shards. Every `PITY_PULLS` pulls without unlock shards, the pull is the hero closest to joining. */
 export function pullOnce(m: Meta): Pull {
   const rng = Rng.from(m.seed, SALT, m.pulls);
-  const unowned = ALL_HEROES.filter((k) => !m.unlocked.includes(k));
-  const kind = (m.sinceNew ?? 0) + 1 >= NEW_PITY && unowned.length ? rng.pick(unowned) : rng.pick(ALL_HEROES);
+  const { kind, pity } = drawKind(m, rng);
   m.pulls++;
-  const isNew = !m.unlocked.includes(kind);
-  m.sinceNew = isNew ? 0 : (m.sinceNew ?? 0) + 1;
-  let shards = 0;
-  let crowns = 0;
-  if (isNew) m.unlocked.push(kind);
-  // (a repeat always has a use: shards for the ranks, the awakening and the talents, then crowns once they are all bought)
-  else if ((m.shards[kind] ?? 0) >= SHARD_CAP) m.crowns += crowns = OVERFLOW_CROWNS;
-  else m.shards[kind] = (m.shards[kind] ?? 0) + (shards = DUPLICATE_SHARDS);
-  return crowns ? { kind, isNew, shards, crowns } : { kind, isNew, shards };
+  const g = giveShards(m, kind, DUPLICATE_SHARDS);
+  m.unlockDry = g.unlock ? 0 : (m.unlockDry ?? 0) + 1;
+  const out: Pull = { kind, isNew: g.joined, shards: g.rank };
+  if (g.unlock) Object.assign(out, { unlock: g.unlock, have: g.have, need: g.need });
+  if (pity) out.pity = true;
+  if (g.crowns) out.crowns = g.crowns;
+  return out;
 }
 
 /** Pay for and make 1 or 10 pulls. Null when too poor. */
 export function recruit(m: Meta, count: 1 | 10): Pull[] | null {
-  const cost = pullCost(count);
+  const cost = pullCost(count, m);
   if (m.crowns < cost) return null;
   m.crowns -= cost;
   return Array.from({ length: count }, () => pullOnce(m));
@@ -267,6 +286,8 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.party = readParty(m.party, m.unlocked);
       m.pulls = m.pulls | 0;
       m.sinceNew = Math.max(0, (m.sinceNew ?? 0) | 0);
+      m.unlock = readUnlock(m.unlock, m.unlocked);
+      m.unlockDry = Math.max(0, (m.unlockDry ?? 0) | 0);
       m.castle = readCastle(m.castle);
       m.spellbook = readLoadout(m.spellbook, spellBudget(m.castle));
       m.chapel = readChapel(m.chapel, m.castle, m.spellbook, STARTER_SPELLS);
@@ -309,6 +330,8 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       // (saves from before the auto tickets have none: a full day's worth)
       m.autoTickets = readTickets(m.autoTickets);
       if (!m.autoTickets) delete m.autoTickets;
+      // (a content hero whose milestone a save from before has already reached joins now)
+      if (!needsStarter(m)) grantContent(m);
       return m;
     }
   } catch {

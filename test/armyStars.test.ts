@@ -227,7 +227,7 @@ test('the 10-star chest always holds a hero, and every hero is as likely as any 
   for (const [k, n] of seen) assert.ok(n > 55 && n < 150, `${k} came up ${n} times`);
 });
 
-test('opening a chest pays crowns, shards and a recruit (or shards if owned)', () => {
+test('opening a chest pays crowns, shards and a hero draw (unlock shards, or rank shards if owned)', () => {
   const m = startedMeta(9);
   m.armies.golems = { best: 10, won: 10, clears: 1, stars: {}, met: { 0: 7, 1: 7, 2: 7, 3: 1 } };
   grantChests(m, armyById('golems')!, m.armies.golems);
@@ -238,9 +238,10 @@ test('opening a chest pays crowns, shards and a recruit (or shards if owned)', (
   assert.ok(m.crowns > before.crowns);
   const prize = loot.items.find((i) => i.type === 'hero')!;
   assert.ok(prize.prize);
-  assert.ok(m.unlocked.includes(prize.ref!));
-  assert.ok(m.unlocked.length > before.unlocked);
-  assert.ok(Object.values(m.shards).reduce((a, b) => a + b, 0) >= 1);
+  // (a hero not yet owned is not recruited whole: its unlock bar gains the draw's shards)
+  assert.ok(m.unlocked.length === before.unlocked || m.unlocked.length === before.unlocked + 1);
+  assert.ok(m.unlocked.includes(prize.ref!) || (m.unlock?.[prize.ref!] ?? 0) >= 1 || (m.shards[prize.ref!] ?? 0) >= 1);
+  assert.ok(Object.values(m.shards).reduce((a, b) => a + b, 0) + Object.values(m.unlock ?? {}).reduce((a, b) => a + b, 0) >= 1);
   // (a prize hero already owned pays shards instead)
   const owned = [...m.unlocked];
   const again = openChest(m, 0)!;

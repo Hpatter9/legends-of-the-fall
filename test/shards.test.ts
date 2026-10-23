@@ -5,14 +5,16 @@ import { loadMeta, MAX_RANK, startedMeta, pullOnce, rankMult, rankOf, RANK_MULT,
 import { gradeBoost } from '../src/sim/run';
 import { ALL_HEROES, HEROES, UNITS } from '../src/sim/units';
 
-test('a duplicate gives shards of its kind, not crowns; a new kind gives none', () => {
+test('a pull of a hero owned gives a rank shard of it, not crowns; of a hero not owned, unlock shards (see hero-shards.test.ts)', () => {
   const m = startedMeta(12);
   const seen: string[] = [];
   for (let i = 0; i < 300; i++) {
     const crowns = m.crowns;
+    const owned = [...m.unlocked];
     const p = pullOnce(m);
-    if (p.isNew) {
+    if (!owned.includes(p.kind)) {
       assert.equal(p.shards, 0);
+      assert.ok(p.unlock! >= 1);
       assert.equal(m.shards[p.kind] ?? 0, 0);
     } else {
       seen.push(p.kind);

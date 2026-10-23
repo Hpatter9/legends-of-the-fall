@@ -6,6 +6,7 @@ import { ALL_HEROES, HEROES } from '../src/sim/units';
 import { armyRun, boostOf, heroOf, startStage, SQUAD } from '../src/sim/run';
 import { fight, place, playOut } from '../src/sim/battle';
 import { ARMIES } from '../src/sim/armies';
+import { PULL_HEROES } from '../src/sim/unlockRules';
 
 const store = () => {
   const data: Record<string, string> = {};
@@ -45,10 +46,10 @@ test('three packs of three, all different heroes, a front-liner, a striker and a
   assert.ok(seenPacks.size > 250, 'different seeds offer different packs');
 });
 
-test('over many seeds every hero is offered now and then', () => {
+test('over many seeds every hero that can be pulled is offered now and then, and no hero earned by content is', () => {
   const offered = new Set<string>();
   for (let seed = 1; seed <= 400; seed++) for (const k of starterPacks(seed).flat()) offered.add(k);
-  assert.equal(offered.size, ALL_HEROES.length);
+  assert.deepEqual([...offered].sort(), [...PULL_HEROES].sort());
 });
 
 test('a brand-new save waits for the pick, with no hero and no party', () => {

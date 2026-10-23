@@ -3,7 +3,9 @@
 
 import { ALL_HEROES, UNITS } from './sim/units';
 import { awakenedOf, AWAKEN_SHARDS } from './sim/awaken';
-import { MAX_RANK, NEW_PITY, pullCost, RANK_MULT, RANK_SHARDS, rankOf, recruit, saveMeta, type Meta, type Pull } from './sim/meta';
+import { MAX_RANK, pullCost, RANK_MULT, RANK_SHARDS, rankOf, recruit, saveMeta, type Meta, type Pull } from './sim/meta';
+import { closest, haveOf, needOf } from './sim/unlock';
+import { isContent, PITY_PULLS } from './sim/unlockRules';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { portrait } from './render/sheets';
 
@@ -19,7 +21,7 @@ export class Gacha {
     $('pull1').addEventListener('click', () => this.pull(1));
     $('pull10').addEventListener('click', () => this.pull(10));
     $('gachaClose').addEventListener('click', () => this.close());
-    $('rates').textContent = `Every hero is as likely as any other. After ${NEW_PITY} pulls without a new hero, the next one is a hero you do not have yet. A repeat gives a shard; shards raise a hero's rank (+${Math.round((RANK_MULT - 1) * 100)}% hp and attack a rank, up to ${MAX_RANK}. Past that, extra shards awaken a hero twice; once everything is bought a repeat pays crowns).`;
+    $('rates').textContent = `A pull gives a shard of one hero. A new hero joins when its bar fills; one you have gains rank (+${Math.round((RANK_MULT - 1) * 100)}% hp and attack a rank, up to ${MAX_RANK}, then awakening). The price rises as your roster grows. Ten heroes are earned in play, never pulled: see the Heroes tab.`;
   }
 
   open(): void {
@@ -38,21 +40,26 @@ export class Gacha {
     $('crowns').textContent = `${m.crowns} crowns`;
     for (const [id, n] of [['pull1', 1], ['pull10', 10]] as const) {
       const b = $(id) as HTMLButtonElement;
-      b.textContent = `Pull ${n} · ${pullCost(n)}`;
-      b.disabled = this.busy || m.crowns < pullCost(n);
+      const price = document.createElement('small');
+      price.textContent = `${pullCost(n, m)} crowns`;
+      b.replaceChildren(`Pull ${n}`, price);
+      b.disabled = this.busy || m.crowns < pullCost(n, m);
     }
-    const left = Math.max(1, NEW_PITY - (m.sinceNew ?? 0));
-    $('pity').textContent = ALL_HEROES.every((k) => m.unlocked.includes(k)) ? 'You have every hero' : `A new hero is sure within ${left} pull${left === 1 ? '' : 's'}`;
+    $('pity').textContent = pityLine(m);
     const list = $('collection');
     list.replaceChildren();
     for (const kind of ALL_HEROES) {
       const def = UNITS[kind];
+      const owned = m.unlocked.includes(kind);
+      const begun = !owned && haveOf(m, kind) > 0;
       const cell = document.createElement('div');
-      cell.className = `hero${m.unlocked.includes(kind) ? '' : ' locked'}`;
+      cell.className = `hero${owned ? '' : ' locked'}`;
       const name = document.createElement('b');
-      name.textContent = m.unlocked.includes(kind) ? def.name : '???';
+      name.textContent = owned || begun ? def.name : '???';
       cell.append(portrait(def.sheet, 72), name);
-      if (m.unlocked.includes(kind)) cell.append(this.rankLine(kind));
+      if (owned) cell.append(this.rankLine(kind));
+      else if (begun) cell.append(unlockBar(m, kind));
+      else if (isContent(kind)) cell.append(small('Earned in play'));
       list.append(cell);
     }
   }
@@ -119,11 +126,15 @@ export class Gacha {
       const name = document.createElement('b');
       name.textContent = def.name;
       const tag = document.createElement('em');
-      tag.textContent = p.isNew ? 'NEW' : p.crowns ? `+${p.crowns} crowns` : `+${p.shards} shard`;
+      tag.textContent = p.isNew ? 'NEW' : p.unlock ? `${p.have}/${p.need}` : p.crowns ? `+${p.crowns} crowns` : `+${p.shards} shard`;
       const role = document.createElement('small');
       role.className = 'rtag';
       role.textContent = CLASS_NAMES[CLASS_OF[p.kind]];
-      face.append(portrait(def.sheet, 72), name, role, tag);
+      // (a hero not yet owned shows its bar filling: the pull's shard, as it stood after it)
+      face.append(portrait(def.sheet, 72), name);
+      if (p.unlock && p.need && !p.isNew) face.append(cardBar(p.have! / p.need));
+      else face.append(role);
+      face.append(tag);
       if (p.isNew) card.classList.add('new');
       const back = document.createElement('div');
       back.className = 'back';
@@ -143,4 +154,50 @@ export class Gacha {
       this.refresh();
     }, at);
   }
+}
+
+const small = (text: string): HTMLElement => {
+  const e = document.createElement('small');
+  e.className = 'rtag';
+  e.textContent = text;
+  return e;
+};
+
+/** A thin bar, `part` full (0 to 1). */
+function barOf(part: number): HTMLElement {
+  const bar = document.createElement('span');
+  bar.className = 'bar';
+  const fill = document.createElement('i');
+  fill.style.width = `${Math.min(1, part) * 100}%`;
+  bar.append(fill);
+  return bar;
+}
+
+/** The small bar on a pull's card (the stone look of the XP bar). */
+function cardBar(part: number): HTMLElement {
+  const bar = document.createElement('div');
+  bar.className = 'xpbar';
+  const fill = document.createElement('span');
+  fill.style.width = `${Math.min(1, part) * 100}%`;
+  bar.append(fill);
+  return bar;
+}
+
+/** A hero not yet owned: a bar of its unlock shards and "7/15". */
+export function unlockBar(m: Meta, kind: string): DocumentFragment {
+  const frag = document.createDocumentFragment();
+  const need = needOf(m);
+  const label = document.createElement('span');
+  label.className = 'rank';
+  label.textContent = `${haveOf(m, kind)}/${need}`;
+  frag.append(label, barOf(haveOf(m, kind) / need));
+  return frag;
+}
+
+/** The line above the cards: the hero nearest to joining, and when the next sure shard comes. */
+export function pityLine(m: Meta): string {
+  const near = closest(m);
+  if (!near) return 'You have every hero you can recruit';
+  const left = Math.max(1, PITY_PULLS - (m.unlockDry ?? 0));
+  return `Nearest: ${UNITS[near].name} ${haveOf(m, near)}/${needOf(m)} · its shards are sure within ${left} pull${left === 1 ? '' : 's'}`;
 }

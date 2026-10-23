@@ -6,6 +6,7 @@ import { KITS, type Kit } from './sim/abilities';
 import { COLLECTIONS, COLLECTION_NAMES, FOE_ENTRIES, gotOf, heroKnown, isMet, killsOf, milestoneClaimed, milestoneReached, milestonesOf, progressLine, tipsOf, totalOf, whereMet, type Collection, type FoeEntry } from './sim/codex';
 import { FOE_LORE, HERO_STORY } from './sim/codexLore';
 import { ALL_HEROES, UNITS } from './sim/units';
+import { lockInfo } from './sim/contentHeroes';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { TRAITS, traitsOf } from './sim/traits';
 import type { Meta } from './sim/meta';
@@ -119,7 +120,7 @@ function openHero(root: HTMLElement, m: Meta, kind: string): void {
   head.append(pic, title);
   box.append(head);
   if (!known) {
-    box.append(el('p', 'cxLore locked', '🔒 Their story is locked. Recruit this hero to read it.'));
+    box.append(el('p', 'cxLore locked', `🔒 Their story is locked. ${lockInfo(m, kind)!.line}.`));
   } else {
     box.append(el('p', 'cxLore', HERO_STORY[kind]));
     stat(box, [['HP', String(def.hp)], ['Attack', String(def.atk)], ['Defence', String(def.def)], ['Range', String(def.range)], ['Walk', paceOf(def.moveMs)], ['Blows', paceOf(def.atkMs * 0.8)]]);

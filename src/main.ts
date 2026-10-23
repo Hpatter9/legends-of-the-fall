@@ -41,7 +41,8 @@ import { hpShare } from './sim/health';
 import { Home } from './home';
 import { Party } from './party';
 import { dailyInProgress, modeNote, settleRun, startDaily, towerRun } from './sim/modes';
-import { toastAchievements } from './achievementsView';
+import { toastAchievements, toastJoined } from './achievementsView';
+import { grantContent } from './sim/contentHeroes';
 import { clockSeed, todayKey } from './modes';
 import { tips, type Box } from './tips';
 import { CHARGE_MAX, kitOf } from './sim/abilities';
@@ -1664,6 +1665,8 @@ class Game {
       if (won && !army && run.mode?.kind !== 'calamity') recordStars(this.meta, stage, rating.stars);
       const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b });
       this.runStars = settleArmyRun(this.meta, run);
+      // (a milestone this fight reached may bring in a hero)
+      toastJoined(grantContent(this.meta));
       // (a run that levels its own heroes taught them in `finishTower`; the lasting XP is not touched)
       const own = run.local ? climbXpView(run) : null;
       const gains = own ? own.gains : fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp);

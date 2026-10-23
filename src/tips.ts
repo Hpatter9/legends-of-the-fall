@@ -28,7 +28,7 @@ export const TIPS: Readonly<Record<TipId, TipDef>> = {
   mana: { text: 'Tap a spell card, then a tile, to cast.', page: 'game', during: 'fight' },
   skill: { text: 'Skills fire on their own when the gold bar fills.', page: 'game', during: 'fight' },
   summon: { text: 'Spend gold to Hire a hero. Three of the same hero merge into a stronger one.', page: 'game', during: 'deploy' },
-  crowns: { text: 'Recruit unlocks new heroes; the Castle gives lasting upgrades.', page: 'home' },
+  crowns: { text: 'Recruit gathers shards to unlock new heroes; the Castle gives lasting upgrades.', page: 'home' },
   calamity: { text: 'Calamity: climb the maps with one hero, and hire more at camps and shops. Each map ends in a boss.', page: 'home' },
   tower: { text: 'The Tower: pick your path floor by floor, with relics, shops and bosses. It never ends.', page: 'home' },
   talents: { text: 'Spend talent points here to change how this hero fights. Each hero has its own tree.', page: 'any' },
