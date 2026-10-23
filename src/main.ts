@@ -57,6 +57,7 @@ import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
 import { ChainView } from './render/chainView';
 import { against, frameOf, transferFormation } from './sim/chain';
+import { traitBadge } from './traitBadge';
 import { closestTrait, countTraits, kindsOf, nextTierLine, traitsOf, TRAITS } from './sim/traits';
 import { placeSynergies, startSynergies } from './synergyView';
 import { UnitSprite } from './render/unitView';
@@ -1862,7 +1863,10 @@ class Game {
       pill.className = `trait ${c.trait.kind}${c.active ? ' on' : ''}${lit ? ' wake' : ''}${this.traitPick === c.trait.id ? ' picked' : ''}`;
       // (the chip says the count and what the next tier gives; a trait at its top tier shows just the count)
       const next = c.trait.tiers[c.tier + 1];
-      pill.textContent = `${c.trait.name} ${c.count}/${c.goal}`;
+      const head = document.createElement('span');
+      head.className = 'thead';
+      head.append(traitBadge(c.trait.id, { small: true }), document.createTextNode(`${c.trait.name} ${c.count}/${c.goal}`));
+      pill.append(head);
       if (next) {
         const fx = document.createElement('small');
         fx.textContent = next.text;
