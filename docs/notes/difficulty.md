@@ -34,7 +34,7 @@ Mean tries to clear Normal (30 fresh saves a cell, at most 25 tries, the recruit
 
 - **Level 1 against the first army:** about 2 to 3 tries (the climb: 2.8; no castle).
 - **Level 1 against the others:** a single try at level 1 clears none of them (Undead 2% of tries, every other army 0%, 60 saves). Allowing 25 tries with XP carried, the Undead (6 tries) and the Beasts (13 tries) still fall in the end, because a party that fails gains levels; the Wildwood and later do not.
-- **At the recommended level:** 2 to 4 tries (the climb, with a real castle and recruits: Undead 3.8, Beasts 2.2, Wildwood 3.8, Labyrinth 3.2, Ogres 3.3, Infernal 2.9, Yokai 3.2, Golems 3.6, Orcs 2.8).
+- **At the recommended level:** 2 to 4 tries (the climb, with a real castle and recruits, on the code merged with the new lands and the tier skills, 120 saves: Orcs 2.8, Undead 3.5, Beasts 1.9, Wildwood 3.2, Labyrinth 2.5, Ogres 2.3, Infernal 2.1, Yokai 2.3, Golems 2.8; the bisection on the merged code gave the same `start`s to within 0.05).
 - **First-try:** from about 10 to 25 levels above (Undead and Beasts by 20, the Wildwood to Ogres by 30, the Yokai and Golems by 45).
 - **Tiers on top** (maxed castle, no talents, 8 saves): Hard at level 45 is 1.0 to 3.1 tries; Elite at 65 runs from 1.0 (early armies) to 25 on the Infernal Host, 12 at 85; Legendary needs 85 to 100 and stays 13 to 25 on the late armies at 100; Mythic is out of reach without talents on every army but the first two or three. With every talent row, Mythic at level 100 takes 3.6 (Infernal), 3.4 (Golems) and 3.2 (Yokai) tries.
 - **Other modes:** the daily has its own army (`dailyArmy`, with `DAILY_START`), the Calamity and the spire do not read an army's `start`: they do not move.
