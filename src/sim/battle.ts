@@ -263,6 +263,8 @@ export interface Stage {
   relics?: { team: TraitEffects; first?: number; revive?: boolean; set?: SetHooks };
   /** The land the fight is on (`areaFor` in run.ts); the highlands when unset. */
   area?: Area;
+  /** The board's size in tiles, for a board made from the seed (a calamity's fights are on a bigger one); the usual `W` x `D` when unset. */
+  size?: { w: number; d: number };
   /** The board to fight on, ready made (an army's section of its long map, `chain.ts`); the seed's own when unset. It is copied. */
   board?: Board;
   /** The floor's twist (the tower's, `twists.ts`); none when unset. */
@@ -274,7 +276,7 @@ export const apart = (a: At, b: At) => Math.abs(a.u - b.u) + Math.abs(a.v - b.v)
 export const tileOf = (b: Battle, a: At) => tileAt(b.board, a.u, a.v)!;
 export const unitAt = (b: Battle, u: number, v: number): Unit | undefined => b.units.find((x) => x.alive && x.u === u && x.v === v);
 /** Whether a tile is on the heroes' rows. */
-export const isDeployTile = (v: number) => v >= D - DEPLOY_ROWS;
+export const isDeployTile = (v: number, depth = D) => v >= depth - DEPLOY_ROWS;
 
 /** The way from one tile toward another, as a facing (the longer axis; along v when even). */
 export function wayTo(a: At, b: At): number {
@@ -316,7 +318,7 @@ export function canStrike(board: Board, def: UnitDef, from: At, to: At): boolean
 
 /** A fresh fight on the seed's board: the foes of `band` (a band's name in `FOE_BANDS`, or the foes' ids themselves) in their rows, no heroes placed yet. */
 export function startBattle(seed: number, band: string | readonly string[] = 'skeletons', stage: Stage = {}): Battle {
-  const board = stage.board ? cloneBoard(stage.board) : makeBoard(seed, stage.area);
+  const board = stage.board ? cloneBoard(stage.board) : makeBoard(seed, stage.area, stage.size?.w, stage.size?.d);
   const tw = stage.twist;
   if (tw) twistBoard(board, tw, seed);
   const b: Battle = { seed, board, units: [], phase: 'deploy', t: 0, rng: mixSeed(seed, 0xf167), pending: [], skillRng: mixSeed(seed, 0x5c111), zones: [], nextId: 1, spells: freshSpells(tw?.mana ? (stage.mana ?? 1) * tw.mana : stage.mana) };
@@ -362,10 +364,10 @@ function ambush(b: Battle): void {
   const who = [...foes.slice(1)].reverse().find((x) => !UNITS[x.def].shot) ?? foes[foes.length - 1];
   if (!who || foes.length < 2) return;
   const free: number[] = [];
-  for (let u = 0; u < b.board.w; u++) if (standable(tileAt(b.board, u, D - 1)) && !unitAt(b, u, D - 1)) free.push(u);
+  for (let u = 0; u < b.board.w; u++) if (standable(tileAt(b.board, u, b.board.d - 1)) && !unitAt(b, u, b.board.d - 1)) free.push(u);
   if (!free.length) return;
   who.u = free[new Rng(mixSeed(b.seed, 0xa3b5)).int(0, free.length - 1)];
-  who.v = D - 1;
+  who.v = b.board.d - 1;
   who.facing = 3;
 }
 
@@ -401,7 +403,7 @@ export function addUnit(b: Battle, defId: string, u: number, v: number, boost: B
 /** Whether a hero may be put on a tile: the fight hasn't begun, it's on the heroes' rows, and it's free ground. */
 export function canPlace(b: Battle, defId: string, u: number, v: number, tag?: number): boolean {
   if (b.phase !== 'deploy' || UNITS[defId]?.side !== 'hero') return false;
-  if (!isDeployTile(v) || !standable(tileAt(b.board, u, v))) return false;
+  if (!isDeployTile(v, b.board.d) || !standable(tileAt(b.board, u, v))) return false;
   const there = unitAt(b, u, v);
   return !there || (tag === undefined ? there.def === defId : there.tag === tag);
 }
