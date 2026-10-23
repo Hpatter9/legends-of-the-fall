@@ -159,7 +159,8 @@ test('a saved Mythic run loads (runFits reads the waves, not the tier), and one 
   const run = armyRun(1, 'golems', undefined, undefined, 4);
   run.stage = armyById('golems')!.waves.length;
   saveRun(run, store);
-  assert.equal(loadRun(store)?.mode?.kind === 'army' && loadRun(store)?.mode?.tier, 4);
+  const back = loadRun(store);
+  assert.deepEqual(back?.mode, { kind: 'army', army: 'golems', tier: 4 });
   run.stage++;
   saveRun(run, store);
   assert.equal(loadRun(store), null);
