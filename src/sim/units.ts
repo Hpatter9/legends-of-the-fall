@@ -54,11 +54,11 @@ export const UNITS: Record<string, UnitDef> = {
   ...CAL_BOSS_FOES,
   knight: { id: 'knight', name: 'Knight', side: 'hero', sheet: 'knight_1', scale: 0.78, hp: 270, atk: 11, def: 10, range: 1, moveMs: 760, atkMs: 1100, jump: 2, role: 'Holds the line', forms: ['knight_1', 'knight_2', 'knight_3'] },
   samurai: { id: 'samurai', name: 'Samurai', side: 'hero', sheet: 'samurai', scale: 0.72, hp: 200, atk: 28, def: 6, range: 1, moveMs: 600, atkMs: 1000, jump: 2, role: 'Heavy blade', forms: ['samurai', 'samurai', 'samurai_commander'] },
-  kunoichi: { id: 'kunoichi', name: 'Kunoichi', side: 'hero', sheet: 'kunoichi', scale: 0.66, hp: 190, atk: 19, def: 5, range: 1, moveMs: 420, atkMs: 550, jump: 3, role: 'Quick, climbs well' },
+  kunoichi: { id: 'kunoichi', name: 'Kunoichi', side: 'hero', sheet: 'kunoichi', scale: 0.66, hp: 190, atk: 19, def: 5, range: 1, moveMs: 420, atkMs: 550, jump: 4, role: 'Quick, climbs well' },
   archer: { id: 'archer', name: 'Archer', side: 'hero', sheet: 'samurai_archer', scale: 0.7, hp: 180, atk: 29, def: 3, range: 4, moveMs: 650, atkMs: 1300, jump: 2, shot: 'arrow', heightReach: 1.4, role: 'Long shots, twice as far from high' },
   wizard: { id: 'wizard', name: 'Fire Wizard', side: 'hero', sheet: 'fire_wizard', scale: 0.76, hp: 145, atk: 33, def: 2, range: 3, moveMs: 700, atkMs: 1700, jump: 2, shot: 'fire', splash: true, role: 'Fire that spreads' },
 
-  ninjaMonk: { id: 'ninjaMonk', name: 'Ninja Monk', side: 'hero', sheet: 'ninja_monk', scale: 0.59, hp: 250, atk: 16, def: 6, range: 1, moveMs: 480, atkMs: 650, jump: 3, role: 'Bare-handed combos' },
+  ninjaMonk: { id: 'ninjaMonk', name: 'Ninja Monk', side: 'hero', sheet: 'ninja_monk', scale: 0.59, hp: 250, atk: 16, def: 6, range: 1, moveMs: 480, atkMs: 650, jump: 4, role: 'Bare-handed combos' },
   peasant: { id: 'peasant', name: 'Peasant', side: 'hero', sheet: 'ninja_peasant', scale: 0.62, hp: 306, atk: 17, def: 6, range: 2, moveMs: 650, atkMs: 1100, jump: 2, role: 'Spear militia, tougher in a crowd' },
   lightningMage: { id: 'lightningMage', name: 'Lightning Mage', side: 'hero', sheet: 'lightning_mage', scale: 0.67, hp: 160, atk: 37, def: 2, range: 3, moveMs: 700, atkMs: 1500, jump: 2, shot: 'bolt', role: 'Lightning that jumps between foes' },
   wanderer: { id: 'wanderer', name: 'Wanderer', side: 'hero', sheet: 'wanderer_mage', scale: 0.64, hp: 150, atk: 15, def: 3, range: 3, moveMs: 700, atkMs: 1500, jump: 2, shot: 'fire', role: 'Heals the weakest ally' },

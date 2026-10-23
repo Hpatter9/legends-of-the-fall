@@ -14,7 +14,7 @@ const SATYR = { side: 'foe', hp: 320, atk: 25, def: 6, range: 1, moveMs: 600, at
 const ORC = { side: 'foe', hp: 280, atk: 26, def: 5, range: 1, moveMs: 600, atkMs: 1000, jump: 2, role: 'Cheap and in numbers' } as const;
 const IMP = { side: 'foe', hp: 200, atk: 22, def: 2, range: 1, moveMs: 380, atkMs: 700, jump: 3, role: 'Small and quick' } as const;
 const DEMON = { side: 'foe', hp: 410, atk: 32, def: 6, range: 1, moveMs: 650, atkMs: 1100, jump: 2, flies: true, role: 'Flies, hits hard' } as const;
-const OGRE = { side: 'foe', hp: 480, atk: 30, def: 8, range: 1, moveMs: 1000, atkMs: 1500, jump: 2, role: 'Huge club, slow' } as const;
+const OGRE = { side: 'foe', hp: 480, atk: 30, def: 8, range: 1, moveMs: 1000, atkMs: 1500, jump: 1, role: 'Huge club, slow' } as const;
 
 // The bosses: much more hp, and each one's own look and skill (its kit, in `abilities.ts`). A forest boss has none.
 // The bosses are the walls of a run: the first (stage 5, the orc warlord) is six times the hp and three times the attack of
@@ -22,7 +22,7 @@ const OGRE = { side: 'foe', hp: 480, atk: 30, def: 8, range: 1, moveMs: 1000, at
 // `docs/notes/balance.md`), so a run stops at each one for a few runs after the one before.
 const WARLORD = { side: 'foe', hp: 2280, atk: 78, def: 10, range: 1, moveMs: 800, atkMs: 1200, jump: 2, role: 'Orc chief, ground slam' } as const;
 const DEMON_LORD = { side: 'foe', hp: 350, atk: 22, def: 9, range: 1, moveMs: 700, atkMs: 1200, jump: 2, flies: true, role: 'Calls imps to his side' } as const;
-const HORNED_OGRE = { side: 'foe', hp: 700, atk: 28, def: 10, range: 1, moveMs: 1000, atkMs: 1500, jump: 2, role: 'Horns, sweeping blows' } as const;
+const HORNED_OGRE = { side: 'foe', hp: 700, atk: 28, def: 10, range: 1, moveMs: 1000, atkMs: 1500, jump: 1, role: 'Horns, sweeping blows' } as const;
 const FOREST = { side: 'foe', hp: 600, atk: 25, def: 8, range: 1, moveMs: 600, atkMs: 1000, jump: 2, role: 'Forest brute' } as const;
 const BOAR_KING = { side: 'foe', hp: 380, atk: 22, def: 10, range: 1, moveMs: 700, atkMs: 1200, jump: 2, role: 'Charges through the line' } as const;
 const DEVIL_LEADER = { side: 'foe', hp: 420, atk: 24, def: 9, range: 1, moveMs: 700, atkMs: 1200, jump: 2, role: 'Hurls hellfire' } as const;
@@ -35,7 +35,7 @@ const PACK = { side: 'foe', hp: 250, atk: 24, def: 4, range: 1, moveMs: 360, atk
 const GROVE = { side: 'foe', hp: 320, atk: 25, def: 6, range: 1, moveMs: 600, atkMs: 1100, jump: 2, role: 'Pipes the pack faster' } as const;
 const MAZE_MINO = { side: 'foe', hp: 440, atk: 27, def: 9, range: 1, moveMs: 900, atkMs: 1400, jump: 2, role: 'Charges down a line' } as const;
 const MAZE_GORGON = { side: 'foe', hp: 300, atk: 26, def: 5, range: 4, moveMs: 700, atkMs: 1500, jump: 2, shot: 'bone', role: 'Stiffens the strongest foe' } as const;
-const CLAN_OGRE = { side: 'foe', hp: 480, atk: 30, def: 8, range: 1, moveMs: 1000, atkMs: 1500, jump: 2, role: 'Shoves heroes back' } as const;
+const CLAN_OGRE = { side: 'foe', hp: 480, atk: 30, def: 8, range: 1, moveMs: 1000, atkMs: 1500, jump: 1, role: 'Shoves heroes back' } as const;
 const HELL_IMP = { side: 'foe', hp: 200, atk: 22, def: 2, range: 1, moveMs: 380, atkMs: 700, jump: 3, role: 'Small, quick, sets alight' } as const;
 const MID = { side: 'foe', hp: 1500, atk: 46, def: 9, range: 1, moveMs: 750, atkMs: 1200, jump: 2 } as const;
 const LICH_KING = { side: 'foe', hp: 2600, atk: 60, def: 8, range: 3, moveMs: 800, atkMs: 1500, jump: 2, shot: 'curse', role: 'Raises the dead, freezes the living' } as const;
@@ -43,7 +43,7 @@ const CHAMPION = { side: 'foe', hp: 4200, atk: 90, def: 12, range: 1, moveMs: 80
 
 // The Yokai Night Parade and the Golem Forge (`armies.ts`): fox spirits, crows and a tengu monk, and slow stone, iron and crystal golems.
 const YOKAI = { side: 'foe', hp: 220, atk: 24, def: 4, range: 1, moveMs: 480, atkMs: 800, jump: 3 } as const;
-const GOLEM = { side: 'foe', hp: 460, atk: 28, def: 9, range: 1, moveMs: 1000, atkMs: 1500, jump: 2 } as const;
+const GOLEM = { side: 'foe', hp: 460, atk: 28, def: 9, range: 1, moveMs: 1000, atkMs: 1500, jump: 1 } as const;
 
 export const FOES: Record<string, UnitDef> = {
   wolfBlack: { ...WOLF, id: 'wolfBlack', name: 'Black Werewolf', sheet: 'werewolf_black', scale: 0.81 },
@@ -115,7 +115,7 @@ export const FOES: Record<string, UnitDef> = {
   crystalGolem: { ...GOLEM, id: 'crystalGolem', name: 'Crystal Golem', sheet: 'golem_crystal', scale: 0.45, hp: 340, atk: 26, def: 7, moveMs: 900, atkMs: 1300, role: 'Shards that hold heroes still' },
   magmaGolem: { ...GOLEM, id: 'magmaGolem', name: 'Magma Golem', sheet: 'golem_magma', scale: 0.4, hp: 400, atk: 32, def: 6, moveMs: 950, role: 'Molten blows, bursts of magma' },
   sapphireColossus: { ...MID, id: 'sapphireColossus', name: 'Sapphire Colossus', sheet: 'golem_sapphire', scale: 0.61, hp: 1800, atk: 50, def: 12, moveMs: 950, atkMs: 1400, role: 'Crystal armour, shard storms' },
-  forgeTitan: { side: 'foe', id: 'forgeTitan', name: 'Forge Titan', sheet: 'golem_forge', scale: 0.62, hp: 4200, atk: 85, def: 14, range: 1, moveMs: 1000, atkMs: 1500, jump: 2, role: 'Hammers the line, furnace blasts' },
+  forgeTitan: { side: 'foe', id: 'forgeTitan', name: 'Forge Titan', sheet: 'golem_forge', scale: 0.62, hp: 4200, atk: 85, def: 14, range: 1, moveMs: 1000, atkMs: 1500, jump: 1, role: 'Hammers the line, furnace blasts' },
   boarKing: { ...BOAR_KING, id: 'boarKing', name: 'Boar King', sheet: 'boar_king', scale: 0.51, hp: 6800, atk: 110 },
   devilLeader: { ...DEVIL_LEADER, id: 'devilLeader', name: 'Devil Leader', sheet: 'devil_leader', scale: 0.54, hp: 7600, atk: 120 },
   shamanKing: { ...SHAMAN_KING, id: 'shamanKing', name: 'Shaman King', sheet: 'shaman_king', scale: 0.5, hp: 8400, atk: 130 },
