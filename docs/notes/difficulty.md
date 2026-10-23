@@ -82,12 +82,23 @@ and gold are still worth having; the extra 0.2 pays for those (at 1.0 a full cas
 
 The unlocked hero pool (a bigger pool to hire from) is a small, bounded lasting benefit and I left it.
 
-**The daily** (the daily-goal worker's, merged as 0.126.0; report only, not edited). It is now ten fixed waves ending in the boss of the day, at
-a strength of its own tuned for a fresh save, and it is not `local`: the squad fights at the lasting level, rank, gear and talents from the
-meta (`daily-goal.md` says so). Measured with the same greedy bot on 24 different days: a level-1 save clears it 11 times in 24 (9.6 of the
-10 waves reached), and **every save from level 30 up clears it, 24 in 24, with or without talents, to level 100**. So the daily is
-trivial for anyone past the first day or two. The fix is the one the daily note already names: make it a flat-power run (levels from the
-run, as the spire and the Calamity do: `run.local`, `localBoost`), or scale its foes with the squad's level. That is the daily worker's call.
+**The daily** (the daily-goal worker's, 0.126.0). It is ten fixed waves tuned for a fresh save, and it is not `local`: the squad fights at the lasting
+level, rank, gear and talents (`daily-goal.md` says so). Measured with the greedy bot on 24 different days, **it was a first-try clear for every save
+from level 30 up**. The director asked for scaling, so the daily's foes now answer the squad: `dailyScale` (`modes.ts`) is the starting five's mean
+`kindPower` over a fresh save's (1 for a fresh save, so nothing changes for a new player), raised to `DAILY_ANSWER.share` (0.75), and stored in the
+run's mode (`scale`, optional, so older saves are fine) for `startStage` to multiply into the foes' hp and attack. The share is below 1 because a hero's
+Power is not all won in a fight (at 1.0 nothing clears; at 0.7 a level-100 save clears 23 of 24). Clears in 24 days, with talents:
+
+| save | before | after | foe scale |
+|---|---|---|---|
+| fresh (level 1) | 11 | 11 | x1.0 |
+| level 30 | 24 | 10 | x3.5 |
+| level 60 | 24 | 18 | x4.5 |
+| level 100 | 24 | 21 | x6.3 |
+
+So it stays a test at every level, a little easier for a deep save than for a new one (88% against 46% on this bot, which clears less than
+the daily note's 69%). A flatter fit needs more than one exponent (Power over-counts the deep talents); if the owner wants it exact, the next step
+is a clear-rate lookup by level. A test pins the scale (`test/difficulty.test.ts`).
 
 **Elites and bosses.** The elites and mid-bosses of an army are scaled by the tier like every foe, so they follow it. The spire's elites and
 bosses are in the spire's foes above, scaled by the castle answer. The Calamity's bosses are fixed stats (`calamityBosses.ts`) with the same answer.
@@ -209,5 +220,5 @@ is conservative. I did not change the XP curve.
 2. **Normal is trivial from level 15** on most armies (it was before). I kept it: its level-1 feel is the brief's, and the way up is Hard.
 3. **The castle answer** (1.2) puts a full castle just below the no-castle difficulty in the spire and Calamity. Higher makes a half-built castle a
    handicap there; lower leaves a full castle easier.
-4. **The daily is trivial from level 30** (above): make it `local` (flat power) or scale its foes by the squad's level if it should stay a test.
+4. **The daily now scales with the squad** (above), to about 40 to 90% clears by level on the bot; say if you want it flatter or want a flat-power (`local`) daily instead.
 5. **No chest for the Mythic star** (only its first-clear gold chest): a fourth milestone chest at 11 stars is a one-line change to `MILESTONES` if wanted.

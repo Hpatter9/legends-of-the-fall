@@ -135,3 +135,19 @@ test('the foes of the spire and the Calamity answer the castle’s hp and attack
   const withCastle = startStage({ ...armyRun(5, 'orcs', undefined, army.castle) }).units.filter((u) => u.side === 'foe').reduce((n, u) => n + u.maxHp, 0);
   assert.equal(plain, withCastle);
 });
+
+test('the daily’s foes scale with the squad’s lasting power: a fresh save meets it as it was, a levelled one meets stronger foes', async () => {
+  const { dailyRun, dailyScale, startDaily } = await import('../src/sim/modes');
+  const { xpFor } = await import('../src/sim/levels');
+  const { HEROES } = await import('../src/sim/units');
+  const fresh = startedMeta(3);
+  assert.equal(dailyScale(fresh), 1);
+  assert.equal(startDaily(fresh, 20260301).mode!.kind === 'daily' && (startDaily(fresh, 20260302).mode as { scale?: number }).scale, undefined);
+  const late = startedMeta(3);
+  for (const k of HEROES) late.xp[k] = xpFor(100);
+  const k = dailyScale(late);
+  assert.ok(k > 3, `scale ${k}`);
+  const foeHp = (scale: number) => startStage(dailyRun(20260301, false, scale)).units.filter((u) => u.side === 'foe').reduce((n, u) => n + u.maxHp, 0);
+  assert.ok(Math.abs(foeHp(k) / foeHp(1) - k) < 0.05);
+  assert.equal((startDaily(late, 20260303).mode as { scale?: number }).scale, k);
+});

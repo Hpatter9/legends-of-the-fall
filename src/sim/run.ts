@@ -124,7 +124,7 @@ export interface Run {
 }
 
 /** A run that is not an ordinary one: an army's campaign (its stages are the army's waves), today's daily challenge (`practice` for a replay that does not count), or the endless tower. */
-export type RunMode = { kind: 'army'; army: string; tier?: number } | { kind: 'daily'; date: number; practice: boolean } | { kind: 'tower' } | { kind: 'calamity'; ascension?: number };
+export type RunMode = { kind: 'army'; army: string; tier?: number } | { kind: 'daily'; date: number; practice: boolean; scale?: number } | { kind: 'tower' } | { kind: 'calamity'; ascension?: number };
 
 /** A new run drawing from `party` (the hero kinds its summons and starting heroes come from). */
 export function newRun(seed: number, party: readonly string[] = HEROES, castle: Castle = newCastle()): Run {
@@ -365,8 +365,8 @@ export function startStage(run: Run): Battle {
   const base = node ? node.stage : army ? waveBoost(army, run.stage, tierOfRun(run)) : stageBoost(run.stage);
   const castle = heroBoost(run.castle);
   const foes = run.buff?.foes ?? 1;
-  // (the spire and the Calamity: the foes answer the castle's hp and attack, the one lasting power that reaches those runs)
-  const ans = run.local ? foeAnswer(run.castle) : undefined;
+  // (the spire and the Calamity: the foes answer the castle's hp and attack, the one lasting power that reaches those runs; the daily's answer the squad's lasting power, `dailyScale`)
+  const ans = run.local ? foeAnswer(run.castle) : run.mode?.kind === 'daily' && run.mode.scale ? { hp: run.mode.scale, atk: run.mode.scale } : undefined;
   const { atk, hp, mana, first, revive, gold: _gold, set, ...team } = rl;
   const section = chainOf(run)?.[run.stage - 1];
   return startBattle(boardSeedOf(run, run.stage), node ? node.band : army ? waveFoes(army, run.stage, tierOfRun(run)) : bandFor(run.stage), {
