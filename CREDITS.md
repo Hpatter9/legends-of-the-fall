@@ -127,6 +127,14 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   (`/generate-with-style-v2`), animated with `/animate-with-text-v3`. The frames were only cropped and padded into the
   sheets (no resizing; alpha made hard, lone stray pixels dropped). The prompts are in `tools/pixellab/spec.py`.
 
+- **Hero art remake** (`hero_<name>.png`): sixteen heroes were redrawn with **PixelLab** in the Craftpix look, replacing the Pixel
+  Champions chibis, the pirate-pack chibis and the Himeko-based Lancer, Mummy, Juggernaut, Tyrant and Shambler sheets (the old
+  sheets are gone): Mercenary, Wolf Bard, Beastmaster, Time Witch, High Priestess, Queen Dragoon, Great Sage, Demon
+  Swordsman, Buccaneer, Dread Pirate, Kraken Mate, Lancer, Mummy, Juggernaut, Tyrant and Shambler. Same method as the class heroes: a base figure
+  (`/generate-with-style-v2`, Craftpix Knight, Samurai, Fire Wizard, Minotaur and Samurai Commander frames as style references), then
+  walk, attack, idle, hurt, dead (and cast) clips with `/animate-with-text-v3`, cropped and padded only (native pixels, hard alpha), and a lying last
+  death frame by an exact 90-degree turn. Prompts and steps: `tools/pixellab/heroes/`; see `docs/notes/hero-art.md`.
+
 ## Castle courtyard (`src/art/castle/`)
 
 - Every building, wall, gate, prop and ground tile is a single piece of Chronos Settlement's isometric kits (`hpatter9/little-town`,
@@ -159,6 +167,8 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
 
 ## The second wave of heroes (`src/art/units/`, built by `tools/more-heroes/build_sheets.py`)
 
+- (**Superseded by the hero art remake above**: the Pixel Champions, pirate-pack and horse-rider heroes and the Himeko Juggernaut, Tyrant,
+  Mummy and zombies below are no longer in the game; the Robots and the Ghost (Reaper) are.)
 - **Pixel Champions v3** (Micro Edition, by Alex / @alexdraws; the pack folder has only its `ABOUT.jpg` and no licence file:
   check the author's terms before any public release): the Wolf Bard (Ouzo), Beastmaster (Ley), High Priestess (Linail),
   Time Witch (Hex), Mercenary (Oratio), Queen Dragoon (Wyvera), Great Sage (Prime) and Demon Swordsman (Glenys), three

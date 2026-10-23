@@ -28,6 +28,7 @@ elif cmd=='anim':
     seed=int(sys.argv[4]) if len(sys.argv)>4 else 7;n=int(sys.argv[5]) if len(sys.argv)>5 else 4
     img=Image.open(W+'pick_%s.png'%i).convert('RGBA')
     for k in sys.argv[3].split(','):
+        if os.path.exists(W+'job_%s_%s_s%d.json'%(i,k,seed)):continue   # already submitted: a rerun resumes
         body={'first_frame':{'type':'base64','base64':b64(img),'format':'png'},'action':h.get('anims',{}).get(k,ANIMS[k]),'frame_count':n,'no_background':True,'seed':seed}
         print(k,post('/animate-with-text-v3',body,W+'job_%s_%s_s%d.json'%(i,k,seed))['background_job_id'])
 elif cmd=='collect':

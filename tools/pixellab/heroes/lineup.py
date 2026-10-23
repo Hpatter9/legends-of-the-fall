@@ -5,7 +5,7 @@ import sys,re,json
 from PIL import Image,ImageDraw
 D='src/art/units/';L=json.load(open(D+'sheets.json'))
 U={m.group(1):(m.group(2),float(m.group(3))) for m in re.finditer(r"\n  (\w+): \{ id: '\w+', name: '[^']*', side: 'hero', sheet: '(\w+)', scale: ([\d.]+)",open('src/sim/units.ts').read())}
-out,zoom,per=sys.argv[1],float(sys.argv[2]),int(sys.argv[3]);items=sys.argv[4:] or list(U)
+out,zoom,per=sys.argv[1],float(sys.argv[2]),int(sys.argv[3]);items=sys.argv[4:] or [k for k in U if k not in('wolf','treant','decoy')]
 figs=[]
 for it in items:
     sh,sc=(it.split(':')[0],float(it.split(':')[1])) if ':' in it else U[it]

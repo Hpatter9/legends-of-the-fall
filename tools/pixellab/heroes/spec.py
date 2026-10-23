@@ -39,10 +39,15 @@ HEROES={
   desc=D('ancient mummy tightly wrapped in aged linen bandages with glowing yellow eyes, tattered wraps trailing, a gold collar, hunched')),
  'juggernaut':dict(canvas=128,refs=['minotaur_1','samurai_commander'],cast=True,
   desc=D('juggernaut, a huge hulking knight in heavy riveted iron plate with a tiny helmet and enormous gauntlet fists, bulky and towering, menacing, fills the canvas')),
+
+ 'tyrant':dict(canvas=96,refs=['knight_1','samurai_commander'],cast=True,
+  desc=D('tyrant king, a tall tyrannical warlord in black and gold heavy plate armour with a spiked iron crown and a long crimson cape, holding a long sceptre-spear')),
+ 'shambler':dict(canvas=80,refs=['knight_1','skeleton_warrior'],cast=False,
+  desc=D('shambler, a rotting shambling zombie with grey-green decayed skin, exposed ribs and torn dirty rags, arms hanging forward, vacant white eyes, hunched')),
 }
 ANIMS={'idle':'standing idle, breathing gently with a slight bob, staying in place, facing right',
- 'walk':'walking steadily to the right with clear steps, one leg then the other, body swaying, weapon carried',
- 'attack':'attacking with a strong swing or strike of the weapon to the right, then recovering',
- 'hurt':'flinching backwards in pain after being struck, recoiling, then straightening',
+ 'walk':'walking steadily to the right with big clear strides, legs clearly alternating, body bobbing and swaying, weapon carried',
+ 'attack':'attacking with a powerful swing or strike of the weapon to the right, lunging forward, then recovering, no magic effects',
+ 'hurt':'recoiling backwards sharply after being struck, staggering back with the head thrown back, then recovering',
  'dead':'dying: struck and knocked backwards, body toppling over backwards, falling onto the back and lying still on the ground',
- 'attack2':'casting a spell: raising the weapon forward to the right with magic glowing around it, then lowering it'}
+ 'attack2':'casting: thrusting the weapon forward to the right with a big gesture, leaning into it, then pulling back, no magic effects'}
