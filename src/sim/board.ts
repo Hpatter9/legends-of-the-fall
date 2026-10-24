@@ -6,12 +6,20 @@
 // boulders stand in the middle ground. The same seed always makes the same board. Adapted from Chronos's raid board
 // (tactics.ts `relief`, tacticsTerrain.ts `canStep`, `easeRelief`, `sightClear`).
 
+import { applyLayout, layoutFor, type LayoutId } from './layouts';
 import { mixSeed, Rng } from './rng';
 
+/** The usual board's size, in tiles across and deep (the foes' edge to the heroes'): the armies, the daily and the spire fight on it.
+ *  It was 7 x 9 until 0.140.0; the Calamity's fights are on a bigger one (`CAL_BOARD`). The build can set it (`--board 7x9`) to compare. */
+const SIZE = (typeof __BOARD__ === 'string' ? __BOARD__ : '8x11').split('x').map(Number);
+export const BOARD_W = SIZE[0];
+export const BOARD_D = SIZE[1];
 /** Tiles across. */
-export const W = 7;
+export const W = BOARD_W;
 /** Tiles deep, from the foes' edge to the heroes'. */
-export const D = 9;
+export const D = BOARD_D;
+/** The board `areaScale` counts from: the old 7 x 9 (a board of this area lays this many platforms, pits and boulders). */
+export const BASE_AREA = 7 * 9;
 /** How many rows at each end belong to a side when the fight starts. */
 export const DEPLOY_ROWS = 3;
 /** The tallest face any board makes between neighbours (the best walking jumper climbs it; a flier goes over anything). */
@@ -33,14 +41,25 @@ export type Area = (typeof AREAS)[number];
 /** The six lands a run passes through, in turn (`areaFor` in run.ts picks by stage) and the Calamity's maps keep. */
 export const CLASSIC_AREAS: readonly Area[] = AREAS.slice(0, 6);
 
-/** What can cover a tile: shallows slow a walker, ice speeds one, lava slows and burns one, tall growth hides a tile from shots. */
-export type Ground = 'water' | 'ice' | 'lava' | 'tall';
+/** What can cover a tile: shallows slow a walker, deep water stops all but fliers, ice speeds one (and may slide it on), lava slows and burns one,
+ *  tall growth hides a tile from shots and gives a little dodge, a shrine heals whoever stands on it. */
+export type Ground = 'water' | 'deep' | 'ice' | 'lava' | 'tall' | 'shrine';
 /** What stepping onto each costs besides the tile itself (ice is a faster step). */
-export const GROUND_COST: Record<Ground, number> = { water: 1, ice: -0.5, lava: 2, tall: 0 };
+export const GROUND_COST: Record<Ground, number> = { water: 1, deep: 0, ice: -0.5, lava: 2, tall: 0, shrine: 0 };
 /** The share of its hp a fighter loses each time a step ends on lava. */
 export const LAVA_BURN = 0.08;
+/** The share it loses each second it stands on lava. */
+export const LAVA_STAND = 0.04;
 /** How high tall growth stands for a shot's line (a shooter's eye is at 1.6 above its tile). */
 export const TALL_TOP = 1.7;
+/** How high a ruined wall stands for a shot's line (above a boulder, so a shooter a level up still cannot see over it). */
+export const WALL_TOP = 2.6;
+/** The chance a blow on a fighter in tall growth misses it. */
+export const TALL_DODGE = 0.12;
+/** The share of its hp a fighter on a shrine mends each second. */
+export const SHRINE_HEAL = 0.05;
+/** What a barrel's blast takes from each fighter within a tile of it (a share of the fighter's hp). */
+export const BARREL_BLAST = 0.12;
 
 /** How many patches of each ground an area lays (min, max), each patch of one to three tiles. */
 const TERRAIN: Record<Area, Partial<Record<Ground, [number, number]>>> = {
@@ -62,15 +81,43 @@ const TERRAIN: Record<Area, Partial<Record<Ground, [number, number]>>> = {
   warcamp: { water: [0, 1], tall: [0, 1] },
   oasis: { water: [2, 3], tall: [1, 2] },
 };
+/** How many shrines and powder barrels each area lays in the middle ground (min, max). Nothing for an area not named. */
+const SPECIALS: Partial<Record<Area, { shrine: [number, number]; barrel: [number, number] }>> = {
+  highlands: { shrine: [0, 1], barrel: [0, 2] },
+  forest: { shrine: [0, 1], barrel: [0, 1] },
+  snow: { shrine: [0, 1], barrel: [0, 0] },
+  desert: { shrine: [0, 1], barrel: [0, 1] },
+  volcano: { shrine: [0, 0], barrel: [1, 3] },
+  dungeon: { shrine: [0, 1], barrel: [1, 2] },
+  plains: { shrine: [0, 1], barrel: [0, 2] },
+  autumn: { shrine: [0, 1], barrel: [0, 1] },
+  swamp: { shrine: [0, 0], barrel: [0, 0] },
+  graveyard: { shrine: [0, 1], barrel: [0, 1] },
+  ruins: { shrine: [0, 1], barrel: [0, 2] },
+  temple: { shrine: [1, 1], barrel: [0, 0] },
+  crystal: { shrine: [0, 1], barrel: [0, 0] },
+  forge: { shrine: [0, 0], barrel: [1, 3] },
+  shrine: { shrine: [1, 1], barrel: [0, 0] },
+  warcamp: { shrine: [0, 0], barrel: [1, 3] },
+  oasis: { shrine: [0, 1], barrel: [0, 0] },
+};
+/** The lands whose lakes (deep water, to the rules) are drawn as molten rock, and whose rings have a lava pit. */
+export const LAVA_LANDS: readonly Area[] = ['volcano', 'forge'];
 
 export interface Tile {
   /** Height in whole steps. */
   h: number;
   /** A boulder stands here: nobody can stand on it, and it blocks low shots. */
   rock?: boolean;
+  /** A ruined wall stands here: nobody can stand on it, and it blocks shots (`WALL_TOP`). */
+  wall?: boolean;
+  /** A powder barrel stands here: nobody can stand on it; a blow on a fighter beside it sets it off (it is gone after). */
+  barrel?: boolean;
+  /** Planks over a gap (looks only: the tile is plain ground to the rules). */
+  bridge?: boolean;
   /** A bush grows here (only for looks). */
   bush?: boolean;
-  /** Shallows, ice, lava or tall growth covers the tile. */
+  /** Shallows, deep water, ice, lava, tall growth or a shrine covers the tile. */
   ground?: Ground;
   /** A small number for picking the tile's tufts and flowers. */
   deco: number;
@@ -82,6 +129,8 @@ export interface Board {
   w: number;
   d: number;
   tiles: Tile[];
+  /** The shape the land was laid in (`layouts.ts`); absent on a board made by hand. */
+  layout?: LayoutId;
 }
 
 export interface At {
@@ -134,10 +183,12 @@ export function easeRelief(b: Board, limit = CLIMB_MAX): void {
 }
 
 /** How many times the usual board's area (`W` x `D`) a board covers. */
-export const areaScale = (b: Pick<Board, 'w' | 'd'>): number => (b.w * b.d) / (W * D);
+export const areaScale = (b: Pick<Board, 'w' | 'd'>): number => (b.w * b.d) / BASE_AREA;
 
-/** Whether a fighter can stand on the tile at all. */
-export const standable = (t: Tile | null): t is Tile => !!t && !t.rock;
+/** Whether something solid stands on the tile (a boulder, a wall, a barrel): not even a flier passes it. */
+export const solid = (t: Tile | null): boolean => !t || !!t.rock || !!t.wall || !!t.barrel;
+/** Whether a fighter on foot can stand on the tile at all (deep water is only for fliers). */
+export const standable = (t: Tile | null): t is Tile => !solid(t) && t!.ground !== 'deep';
 
 /** A jump this high is flight: no height stops it. */
 export const FLY_JUMP = 9;
@@ -145,10 +196,10 @@ export const FLY_JUMP = 9;
 /** What a step from one tile to the next costs a fighter who can jump `jump`, or null if it's a cliff: more than `jump`
  *  to climb, or more than `jump + DROP_EXTRA` to drop. Each step climbed costs `CLIMB_COST` more. */
 export function canStep(from: Tile, to: Tile, jump: number): number | null {
+  // (a flier, with a jump of FLY_JUMP, goes over any height, and over deep water, at the cost of a level step)
+  if (jump >= FLY_JUMP) return solid(to) ? null : 1;
   if (!standable(to)) return null;
   const rise = to.h - from.h;
-  // (a flier, with a jump of FLY_JUMP, goes over any height at the cost of a level step)
-  if (jump >= FLY_JUMP) return 1;
   if (rise > jump || -rise > jump + DROP_EXTRA) return null;
   return 1 + (rise > 0 ? rise * CLIMB_COST : 0) + (to.ground ? GROUND_COST[to.ground] : 0);
 }
@@ -167,7 +218,7 @@ export function sightClear(b: Board, a: At, z: At): boolean {
     const f = i / n;
     const t = tileAt(b, Math.round(a.u + (z.u - a.u) * f), Math.round(a.v + (z.v - a.v) * f));
     if (!t) continue;
-    const top = t.h + (t.rock ? 1.6 : t.ground === 'tall' ? TALL_TOP : 0);
+    const top = t.h + (t.wall ? WALL_TOP : t.rock ? 1.6 : t.ground === 'tall' ? TALL_TOP : 0);
     if (top > eye + (mark - eye) * f + 1e-6) return false;
   }
   return true;
@@ -210,7 +261,7 @@ function layGround(b: Board, area: Area): void {
       let at = { u: rng.int(0, b.w - 1), v: rng.int(rows[0], rows[1]) };
       for (let n = rng.int(1, 3); n > 0; n--) {
         const t = tileAt(b, at.u, at.v);
-        if (t && !t.rock && !t.ground) {
+        if (standable(t) && !t.bridge && !t.ground) {
           t.ground = kind;
           delete t.bush;
         }
@@ -286,8 +337,30 @@ function setBlock(b: Board, rng: Rng, up: boolean, size: [number, number], cliff
   return false;
 }
 
-/** The board for a seed: rolling land, platforms, ledges and pits set into it, a few boulders in the middle ground, bushes for looks, and the area's ground. */
-export function makeBoard(seed: number, area: Area = 'highlands', w = W, d = D): Board {
+/** Lay the area's shrines and powder barrels in the middle ground, by a side stream of the seed. A barrel stands only where everyone can still get round it. */
+function laySpecials(b: Board, area: Area): void {
+  const cfg = SPECIALS[area];
+  if (!cfg) return;
+  const rng = new Rng(mixSeed(b.seed, 0x5b3c, AREAS.indexOf(area)));
+  const extra = Math.round(areaScale(b) - 1);
+  const free = (): Tile | null => {
+    const t = tileAt(b, rng.int(0, b.w - 1), rng.int(DEPLOY_ROWS, b.d - 1 - DEPLOY_ROWS));
+    return standable(t) && !t.ground && !t.bridge ? t : null;
+  };
+  for (let n = rng.int(cfg.shrine[0], cfg.shrine[1]); n > 0; n--) {
+    const t = free();
+    if (t) t.ground = 'shrine';
+  }
+  for (let n = rng.int(cfg.barrel[0], cfg.barrel[1]) + (cfg.barrel[1] ? extra : 0); n > 0; n--) {
+    const t = free();
+    if (!t) continue;
+    t.barrel = true;
+    if (!boardOk(b)) delete t.barrel;
+  }
+}
+
+/** The board for a seed: land rolled by the seed, laid in one of the shapes of `layouts.ts` (picked by the area and the seed, or told by `layout`), boulders in the middle ground, bushes for looks, the area's ground, and its shrines and barrels. */
+export function makeBoard(seed: number, area: Area = 'highlands', w = W, d = D, layout?: LayoutId): Board {
   const rng = new Rng(mixSeed(seed, 0xb0a7d));
   const tiles: Tile[] = [];
   for (let v = 0; v < d; v++)
@@ -297,36 +370,43 @@ export function makeBoard(seed: number, area: Area = 'highlands', w = W, d = D):
       tiles.push({ h: Math.max(0, Math.min(HILL_TOP, Math.round(n * (HILL_TOP + 1.4) - 0.6))), deco: rng.int(0, 999) });
     }
   const b: Board = { seed, area, w, d, tiles };
-  // (a bigger board lays more platforms, pits and boulders, in step with its area; the usual size lays exactly what it always did)
+  // (a bigger board lays more platforms, pits and boulders, in step with its area)
   const extra = Math.round(areaScale(b) - 1);
   // (the hills are no steeper than a ramp, so every tile can be walked to)
   easeRelief(b, RAMP);
   const hills = b.tiles.map((t) => t.h);
-  // platforms (two or three of them, a staircase down one side each) and pits, from a side stream of the seed
-  const feat = new Rng(mixSeed(seed, 0xf3a7));
-  const used = new Set<number>();
-  const sizes: [number, number][] = [[2, 2], [3, 2], [2, 3], [3, 3], [1, 2], [2, 1]];
-  const platforms = feat.int(2, 3) + extra;
-  for (let i = 0; i < platforms; i++)
-    for (let tries = 0; tries < 6; tries++) {
-      if (setBlock(b, feat, true, feat.pick(sizes), feat.int(2, 4), [1, d - 2], used)) break;
-    }
-  const pits = feat.int(1, 2) + extra;
-  for (let i = 0; i < pits; i++)
-    for (let tries = 0; tries < 6; tries++) {
-      if (setBlock(b, feat, false, feat.pick([[1, 1], [1, 2], [2, 1], [2, 2]] as [number, number][]), feat.int(2, 3), [DEPLOY_ROWS - 1, d - 1 - DEPLOY_ROWS + 1], used)) break;
-    }
-  // (a board that somehow cannot be walked is left as plain hills)
-  if (!boardOk(b)) b.tiles.forEach((t, i) => (t.h = hills[i]));
+  // a shape: a river, a hill, a canyon... (a shape that cannot be laid on this seed leaves the rolling land to go on as it was)
+  const want = layout ?? layoutFor(seed, area);
+  const shaped = want !== 'classic' && applyLayout(b, want);
+  b.layout = shaped ? want : 'classic';
+  if (!shaped) {
+    // platforms (two or three of them, a staircase down one side each) and pits, from a side stream of the seed
+    const feat = new Rng(mixSeed(seed, 0xf3a7));
+    const used = new Set<number>();
+    const sizes: [number, number][] = [[2, 2], [3, 2], [2, 3], [3, 3], [1, 2], [2, 1]];
+    const platforms = feat.int(2, 3) + extra;
+    for (let i = 0; i < platforms; i++)
+      for (let tries = 0; tries < 6; tries++) {
+        if (setBlock(b, feat, true, feat.pick(sizes), feat.int(2, 4), [1, d - 2], used)) break;
+      }
+    const pits = feat.int(1, 2) + extra;
+    for (let i = 0; i < pits; i++)
+      for (let tries = 0; tries < 6; tries++) {
+        if (setBlock(b, feat, false, feat.pick([[1, 1], [1, 2], [2, 1], [2, 2]] as [number, number][]), feat.int(2, 3), [DEPLOY_ROWS - 1, d - 1 - DEPLOY_ROWS + 1], used)) break;
+      }
+    // (a board that somehow cannot be walked is left as plain hills)
+    if (!boardOk(b)) b.tiles.forEach((t, i) => (t.h = hills[i]));
+  }
   // boulders in the middle ground, kept only if everyone can still get round them
   const rocks = rng.int(1, 3) + extra * 2;
   for (let i = 0; i < rocks; i++) {
     const t = tileAt(b, rng.int(0, w - 1), rng.int(DEPLOY_ROWS, d - 1 - DEPLOY_ROWS));
-    if (!t || t.rock) continue;
+    if (!t || !standable(t) || t.bridge || t.ground) continue;
     t.rock = true;
     if (!boardOk(b)) t.rock = false;
   }
-  for (const t of b.tiles) if (!t.rock && rng.chance(0.08)) t.bush = true;
+  for (const t of b.tiles) if (!solid(t) && t.ground !== 'deep' && rng.chance(0.08)) t.bush = true;
   layGround(b, area);
+  laySpecials(b, area);
   return b;
 }

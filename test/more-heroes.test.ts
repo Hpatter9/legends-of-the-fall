@@ -1,3 +1,4 @@
+import { bareBoard } from './bare';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
@@ -16,7 +17,7 @@ const LAYOUT = layout as Record<string, { w: number; h: number; rows: string[]; 
 
 function arena(): Battle {
   const b = startBattle(3);
-  for (const t of b.board.tiles) (t.h = 0), (t.rock = false);
+  bareBoard(b);
   b.units = [];
   b.phase = 'fight';
   return b;

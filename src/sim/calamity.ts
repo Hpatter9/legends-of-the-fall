@@ -13,7 +13,7 @@ export const calBossBoost = (map: number, phaseAt = 0.5, shield = 0): { size: nu
 export const CAL_ROWS: readonly number[] = [6, 7, 7, 8, 8, 8];
 export const CAL_MAPS = CAL_ROWS.length;
 /** Foes' hp and attack on a floor are `start` x (1 + `growth` x (floor - 1)), the floors running on through the maps. Each hero past the fifth makes them `perHero` stronger (more heroes would otherwise make every fight easy), and each map after the first adds `step` of itself on top. The last map's fights (not its boss) have `final` more of both, so the last map is the hardest. From the second map on the foes' attack (not their hp) is `atkBias` more, so the fights draw blood: the heroes end them hurt, as the bigger squads and tiers would otherwise let them walk through. */
-export const CAL_SCALE = { start: 0.435, growth: 0.05, perHero: 0.06, step: 0.63, bossHp: 1, bossStep: 0.06, atkBias: 0.35, final: 0.2 };
+export const CAL_SCALE = { start: 0.435, growth: 0.05, perHero: 0.06, step: 0.58, bossHp: 1, bossStep: 0.06, atkBias: 0.35, final: 0.33 };
 /** A built castle makes a Calamity's foes answer it by this much more power than the spire's (`CASTLE_ANSWER`): the castle's hp and attack boost, to the power `CASTLE_ANSWER.share` + this. A Calamity's heroes also gain tiers, so with the same answer a built castle would carry them through the middle maps. */
 export const CAL_CASTLE_EXTRA = 0.3;
 
@@ -22,7 +22,7 @@ export const CAL_START_GOLD = 40;
 /** The foes' extra strength for the heroes on the roster beyond five. */
 export const squadFoeMult = (heroes: number): number => 1 + CAL_SCALE.perHero * Math.max(0, Math.min(heroes, CALAMITY_SQUAD) - 5);
 
-/** A calamity's fights are on a board about twice the usual area (`W` x `D` is 7 x 9; the deploy rows are the same three at each end), so the ten heroes and the foes they meet have room. */
+/** A calamity's fights are on a bigger board than the usual one (10 x 13 against `W` x `D`, 8 x 11, and twice the old 7 x 9; the deploy rows are the same three at each end), so the ten heroes and the foes they meet have room. */
 export const CAL_BOARD = { w: 10, d: 13 };
 /** The most foes a fight meets (a boss and its escort included). */
 export const CAL_FOES_MAX = 13;
