@@ -7,7 +7,7 @@ import { standable, tileAt } from './sim/board';
 import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
 import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
 // (`saveSlot` as `saveRun`: a tower or calamity run is saved in its own slot, any other in the ordinary one)
-import { adoptOldTower, armyOfRun, armyRun, benchFull, boostOf, canRetry, chainOf, MAX_RETRIES, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryGold, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, waveArmyOf, type Owned, type Run } from './sim/run';
+import { adoptOldTower, armyOfRun, armyRun, benchFull, boostOf, canRetry, chainOf, fallOutcome, MAX_RETRIES, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, waveArmyOf, type Owned, type Run } from './sim/run';
 import { climbXpView, heroLevel, localBoost } from './sim/climb';
 import { calamityRun } from './sim/modes';
 import { CAL_MAPS } from './sim/calamity';
@@ -71,6 +71,7 @@ import { placeSynergies, startSynergies, updateCombo } from './synergyView';
 import { COMBO_NAME, comboById, comboOf, noteCombos } from './sim/combos';
 import { UnitSprite } from './render/unitView';
 import { flyUp, recyclePuff, summonBurst } from './render/uiFx';
+import { burnHeart, reducedMotion, reviveLine } from './reviveView';
 import { Fx, loadFx } from './render/fx';
 import { framesOf, loadSheets, portrait, sheetInfo, wholeFigure } from './render/sheets';
 import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, framing, PAUSE_MS, settle, viewFor, type View } from './render/cameraRules';
@@ -162,8 +163,10 @@ class Game {
   private settled = false;
   /** How long the fight has been over (ms): the recap waits `END_WAIT_MS` after the last kill, so the deaths play out. */
   private endWait = 0;
-  /** A wave was lost and the player is choosing between a retry and giving up: nothing is settled yet. */
-  private pendingLoss = false;
+  /** The heart-burn after a fall with hearts left: `t` real ms since it began, `swapped` once the wave is set out again, `started` once its fight is on (`fightAt`: when). Nothing is settled until it is over; no prompt. */
+  private revive: { t: number; swapped: boolean; started: boolean; fightAt: number; line?: { dismiss: () => void } } | null = null;
+  /** Set while the revive itself starts the wave again, so that `newBattle` keeps the revive going. */
+  private reviveRestart = false;
   /** This fight's loss has had its cinematic asked for (once a fight: `refresh` runs often). */
   private lossScened = false;
   /** What an army's last settled fight paid (null for any other run). */
@@ -198,8 +201,6 @@ class Game {
   private auto: AutoReplay | null = null;
   /** The cinematics (`render/sceneView.ts`): each plays once at its moment, and the codex's Scenes list plays a seen one again. */
   private scenes = new ScenePlayer();
-  /** The heart just spent on a retry (its fade plays once), or -1. */
-  private heartLost = -1;
   /** Real milliseconds until the auto-replay's next step (the pause after the heroes are placed, and after a fight). */
   private autoWait = 0;
   /** What the auto-replay does when the wait is over, after the fight it just settled: the next wave, a new run, or the end. */
@@ -369,7 +370,7 @@ class Game {
     setFrame(section ? frameOf(section, section) : undefined);
     this.settled = false;
     this.endWait = 0;
-    this.pendingLoss = false;
+    if (!this.reviveRestart) this.revive = null;
     this.lossScened = false;
     for (const id of [...this.run.squad]) {
       const h = heroOf(this.run, id);
@@ -629,7 +630,7 @@ class Game {
     const bar = $('bossBar');
     const boss = this.b.units.find((u) => u.side === 'foe' && (u.size ?? 1) > 1);
     const show = this.b.phase === 'fight' && !!boss?.alive;
-    bar.hidden = !show;
+    if (bar.hidden === show) bar.hidden = !show;
     if (!boss || !show) return;
     bar.querySelector('b')!.textContent = UNITS[boss.def].name;
     (bar.querySelector('span') as HTMLElement).style.width = `${(boss.hp / boss.maxHp) * 100}%`;
@@ -742,6 +743,7 @@ class Game {
         const events = stepBattle(b);
         tally(this.stats, events, b.units);
         this.fx.show(b, events);
+        for (const e of events) if (e.kind === 'boom') this.boardView.removeBarrel(e.u, e.v);
         // (a fighter a skill called up mid-fight has no sprite yet: make it, with its entrance)
         if (b.units.length !== this.sprites.size) this.syncSprites();
         playEvents(b, events, this.speed);
@@ -780,6 +782,7 @@ class Game {
       }
     }
     if (this.intro) this.stepIntro(dt);
+    this.stepRevive(dt);
     this.refreshBossBar();
     const t = b.phase === 'deploy' ? performance.now() : b.phase === 'fight' ? b.t - TICK_MS + this.acc : b.t + this.acc;
     for (const [id, s] of this.sprites) {
@@ -1183,14 +1186,9 @@ class Game {
       if (got) heroSays(got.kind, 'hired', () => rectAnchor(card));
     });
     $('homeBtn').addEventListener('click', () => this.home.open());
-    $('retry').addEventListener('click', () => this.retry());
+    // (a tap anywhere hurries the heart-burn: the wave starts at once, and the line goes)
+    document.addEventListener('pointerdown', () => this.skipRevive(), true);
     $('next').addEventListener('click', () => {
-      // (a wave lost with retries left: giving up settles it, and the run's recap follows)
-      if (this.pendingLoss) {
-        this.pendingLoss = false;
-        this.refresh();
-        return this.showRunRecap();
-      }
       if (this.run.over && !this.run.tower && !this.auto) return this.showRunRecap();
       this.afterResult();
     });
@@ -1568,28 +1566,68 @@ class Game {
     if (this.run.event) this.events.openEvent(this.run, () => (saveRun(this.run), this.refresh()));
   }
 
-  /** Retry the wave just lost: the same stage, a hire's worth of gold to spend, one retry (a heart) used. The failed go still counts in the run's figures. */
-  private retry(): void {
-    if (!this.pendingLoss || !canRetry(this.run)) return;
-    this.noteRecap({}, [], false, false);
-    // (the heart about to go fades out once, on the next draw of the lives)
-    this.heartLost = retriesLeft(this.run) - 1;
-    const gold = retryWave(this.run)!;
-    this.pendingLoss = false;
-    play('coinRecycle');
-    saveRun(this.run);
-    this.newBattle();
-    flyUp(`+${gold} gold`, $('gold'));
+  /** When the heart has burnt and the wave starts again, and when the whole moment ends (real ms; shorter with reduced motion). */
+  private reviveTimes(): { swap: number; end: number } {
+    return reducedMotion() ? { swap: 500, end: 1200 } : { swap: 1100, end: 2000 };
   }
 
-  /** The lives at the top (an army's retries, `MAX_RETRIES` hearts): full while left, grey once spent. Only runs that can retry
+  /** The party fell with a heart left: no card and no question. A heart burns, a line says so, and the wave starts again by itself. */
+  private beginRevive(): void {
+    this.revive = { t: 0, swapped: false, started: false, fightAt: 0, line: reviveLine('A heart burns. The party rises.', this.reviveTimes().end) };
+    play('sparkle');
+    this.drawLives(this.run);
+  }
+
+  /** A tap during the burn skips ahead to the wave starting again, and a tap after that to its fight (and sends the line away). */
+  private skipRevive(): void {
+    const r = this.revive;
+    if (!r) return;
+    if (!r.swapped) r.t = Math.max(r.t, this.reviveTimes().swap);
+    else {
+      r.fightAt = 0;
+      r.line?.dismiss();
+    }
+  }
+
+  /** The burn's clock: at its midpoint the heart is spent and the wave starts again with the retry's gold, the heroes rising in a pillar of light. */
+  private stepRevive(dt: number): void {
+    const r = this.revive;
+    if (!r) return;
+    r.t += dt;
+    const at = this.reviveTimes();
+    if (!r.swapped && r.t >= at.swap) {
+      r.swapped = true;
+      if (!canRetry(this.run)) return void (this.revive = null);
+      this.noteRecap({}, [], false, false);
+      // (the heart burning now stays grey from the next draw of the lives)
+      const gold = retryWave(this.run)!;
+      play('coinRecycle');
+      saveRun(this.run);
+      this.reviveRestart = true;
+      this.newBattle();
+      this.reviveRestart = false;
+      for (const u of this.b.units) if (u.side === 'hero') this.sprites.get(u.id)?.evolve();
+      flyUp(`+${gold} gold`, $('gold'));
+      // (the heroes stand where they stood, glowing; a beat later the fight is on, with no Fight! tap)
+      r.fightAt = r.t + (reducedMotion() ? 200 : 500);
+    }
+    if (r.swapped && !r.started && r.t >= r.fightAt) {
+      r.started = true;
+      if (this.b.phase === 'deploy') this.begin();
+    }
+    if (r.t >= at.end && r.started) this.revive = null;
+  }
+
+  /** The lives at the top (an army's and the daily's hearts, `MAX_RETRIES` of them): full while left, grey once spent, the next one burning during a revive. Only runs that can retry
    *  show them (not the tower or the calamity, which fail their own way). */
   private drawLives(run: Run): void {
     const box = $('lives');
     box.hidden = !!run.tower;
     if (box.hidden) return;
     const left = retriesLeft(run);
-    const key = `${left}:${this.heartLost}`;
+    // (a fall with a heart left: the last full heart burns until the wave starts again and spends it)
+    const burning = this.revive && !this.revive.swapped ? left - 1 : -1;
+    const key = `${left}:${burning}`;
     if (box.dataset.key === key) return;
     box.dataset.key = key;
     box.replaceChildren();
@@ -1599,10 +1637,15 @@ class Game {
       const img = document.createElement('img');
       img.src = heartUrl;
       img.alt = '';
-      img.className = i < left ? 'full' : i === this.heartLost ? 'spent lost' : 'spent';
-      box.append(img);
+      img.className = i < left ? 'full' : 'spent';
+      if (i === burning) {
+        const heart = document.createElement('span');
+        heart.className = 'heart';
+        heart.append(img);
+        box.append(heart);
+        burnHeart(heart, img, this.reviveTimes().swap);
+      } else box.append(img);
     }
-    this.heartLost = -1;
   }
 
   /** Add the fight just ended (stats, time, pay) to the run's recap. */
@@ -2044,14 +2087,14 @@ class Game {
     const n = heroesPlaced(b);
     const ended = b.phase === 'won' || b.phase === 'lost';
     const ready = ended && (!!this.auto || this.endWait >= END_WAIT_MS);
-    // (a wave lost with retries left waits for the player's choice before it is settled into the run)
-    if (ready && b.phase === 'lost' && !this.settled && !this.auto && canRetry(run)) this.pendingLoss = true;
-    // (the first defeat has its cinematic as the result comes up, with a retry waiting or not)
+    // (the first defeat has its cinematic as the loss shows, with a heart to burn or not)
     if (ready && b.phase === 'lost' && !this.lossScened && !this.auto) {
       this.lossScened = true;
       void this.queueScene({ kind: 'firstLoss' });
     }
-    if (ready && !this.settled && !this.pendingLoss) {
+    // (a wave lost with a heart left is not settled: a heart burns and the wave starts again by itself. With none left, or in a mode with none, the loss is settled and the run ends)
+    if (ready && b.phase === 'lost' && !this.settled && fallOutcome(run) === 'heart' && !this.revive) this.beginRevive();
+    if (ready && !this.settled && !this.revive) {
       this.settled = true;
       const won = b.phase === 'won';
       const stage = run.stage;
@@ -2156,19 +2199,8 @@ class Game {
     ($('fight') as HTMLButtonElement).disabled = b.phase !== 'deploy' || n === 0;
     $('clock').textContent = b.phase === 'deploy' ? '' : clock(b.t);
     const result = $('result');
-    result.hidden = !ready || this.towerView.isOpen || !!this.auto;
-    ($('retry') as HTMLButtonElement).hidden = !this.pendingLoss;
-    if (!result.hidden && this.pendingLoss) {
-      // (the party fell with retries left: replay the wave with a gold boost, or give up and end the run)
-      for (const id of ['stars', 'armyStars', 'xp', 'fightStats']) $(id).hidden = true;
-      const left = retriesLeft(run);
-      $('banner').textContent = 'Defeat';
-      $('banner').className = 'lost';
-      $('summary').textContent = `Your party fell on ${stage}. Spend a heart to try again with +${retryGold(run)} gold, enough for one more hero, or give up and end the run.`;
-      this.showJoke(false);
-      $('retry').textContent = `Use a heart · ${left} left`;
-      $('next').textContent = 'Give up';
-    } else if (!result.hidden) {
+    result.hidden = !ready || this.towerView.isOpen || !!this.auto || !!this.revive;
+    if (!result.hidden) {
       const left = b.units.filter((x) => x.alive && x.side === 'hero' && !UNITS[x.def].summon).length;
       const cal = run.mode?.kind === 'calamity';
       const daily = run.mode?.kind === 'daily';
@@ -2194,7 +2226,7 @@ class Game {
       $('next').textContent = run.over && !run.tower ? 'Run recap' : run.cleared && run.tower ? 'See the summary' : b.phase === 'won' ? (fixed ? `Next wave (${run.stage})` : run.tower ? 'To the map' : `Next stage (${run.stage})`) : run.tower ? 'See the summary' : 'Home';
     }
     this.refreshAuto();
-    if (b.phase === 'deploy' && !this.auto) tips.atDeploy(n, run.stage, () => this.deployBox());
+    if (b.phase === 'deploy' && !this.auto && !(this.revive && !this.revive.started)) tips.atDeploy(n, run.stage, () => this.deployBox());
     this.buildBench();
     this.markTiles();
     this.refreshBench();

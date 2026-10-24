@@ -4,11 +4,12 @@
 // `column`).
 
 import { Container, Graphics, Sprite, Texture, type Renderer } from 'pixi.js';
-import { tileAt, type Area, type Board, type Tile } from '../sim/board';
+import { LAVA_LANDS, tileAt, type Area, type Board, type Tile } from '../sim/board';
 import { loadImage } from './loadImage';
 import { depthIn, FOOT, HH, project, rawAt, TH, TW, type Frame } from './iso';
 import { footDims, liesBehind, type Rot } from '../sim/turn';
 import { AREA_URLS, BUSH_URLS, GROUND_URLS } from './areaArt';
+import { TERRAIN_URLS } from './terrainArt';
 import { LIT_PROPS } from './weatherRules';
 
 /** From this height up, a tile's top is stony. */
@@ -51,7 +52,9 @@ const SCENERY_Z = 5000;
 const SCENERY_BACK_Z = -100000;
 
 /** The rim drawn round each kind of ground. */
-const RIM = { water: 'rgba(120,190,255,0.9)', ice: 'rgba(210,245,255,0.95)', lava: 'rgba(255,150,40,0.95)', tall: 'rgba(30,70,20,0.6)' };
+const RIM = { water: 'rgba(120,190,255,0.9)', deep: 'rgba(40,90,180,0.95)', ice: 'rgba(210,245,255,0.95)', lava: 'rgba(255,150,40,0.95)', tall: 'rgba(30,70,20,0.6)', shrine: 'rgba(140,255,225,0.95)' };
+/** The rim round a bridge's planks. */
+const BRIDGE_RIM = 'rgba(44,26,12,0.9)';
 
 /** The ground textures' side (they are laid onto the diamond whole). */
 const SRC = 64;
@@ -69,6 +72,10 @@ interface Art {
   ice: HTMLImageElement;
   lava: HTMLImageElement;
   bushes: Texture[];
+  barrel: Texture;
+  walls: Texture[];
+  crystal: Texture;
+  planks: HTMLImageElement;
 }
 let art: Art | null = null;
 
@@ -84,7 +91,9 @@ export async function loadBoardArt(): Promise<void> {
   );
   const [water, ice, lava] = await Promise.all([loadImage(GROUND_URLS.water), loadImage(GROUND_URLS.ice), loadImage(GROUND_URLS.lava)]);
   const bushes = (await all(BUSH_URLS)).map((i) => Texture.from(i));
-  art = { areas, water, ice, lava, bushes };
+  const [barrel, crystal, planks] = await Promise.all([loadImage(TERRAIN_URLS.barrel), loadImage(TERRAIN_URLS.crystal), loadImage(TERRAIN_URLS.planks)]);
+  const walls = (await all(TERRAIN_URLS.walls)).map((i) => Texture.from(i));
+  art = { areas, water, ice, lava, bushes, barrel: Texture.from(barrel), walls, crystal: Texture.from(crystal), planks };
 }
 
 /** One section's tiles, built: a container for each tile (in row order), the marks over them, and the column textures made for them. */
@@ -92,6 +101,8 @@ interface Built {
   tiles: Container[];
   marks: Graphics[];
   tex: Texture[];
+  /** The powder barrels still standing (by tile index), so a blast can take one away. */
+  barrels: Map<number, Sprite>;
 }
 /** A finished section baked into one texture, and where its top left lies against the section's own origin. */
 interface Baked {
@@ -284,6 +295,7 @@ export class BoardView {
     const tiles: Container[] = [];
     const marks: Graphics[] = [];
     const tex: Texture[] = [];
+    const barrels = new Map<number, Sprite>();
     for (let v = 0; v < b.d; v++)
       for (let u = 0; u < b.w; u++) {
         const t = tileAt(b, u, v)!;
@@ -307,6 +319,26 @@ export class BoardView {
           r.scale.set(Math.min(56 / tex.width, 66 / tex.height));
           r.position.set(x, y);
           tile.addChild(r);
+        } else if (t.wall && art) {
+          // (a ruined wall: a piece of ruin, the three kinds by the tile's own number)
+          const w = art.walls[t.deco % art.walls.length];
+          const r = new Sprite(w);
+          r.anchor.set(0.5, 0.85);
+          r.position.set(x, y + 4);
+          tile.addChild(r);
+        } else if (t.barrel && art) {
+          const r = new Sprite(art.barrel);
+          r.anchor.set(0.5, 0.85);
+          r.scale.set(2);
+          r.position.set(x, y + 2);
+          tile.addChild(r);
+          barrels.set(v * b.w + u, r);
+        } else if (t.ground === 'shrine' && art) {
+          // (the shrine's crystal, a little behind the tile's middle)
+          const r = new Sprite(art.crystal);
+          r.anchor.set(0.5, 0.82);
+          r.position.set(x, y + 3);
+          tile.addChild(r);
         } else if (t.ground === 'tall' && set) {
           // (tall growth: a clump of tufts that stands in front of the tile's top, hiding it from shots)
           const urls = AREA_URLS[b.area];
@@ -327,7 +359,7 @@ export class BoardView {
         }
         tiles.push(tile);
       }
-    return { tiles, marks, tex };
+    return { tiles, marks, tex, barrels };
   }
 
   /** Where the board's lit props stand (world px; a lantern, a torch, a forge fire), for night's glows (`weatherView.ts`). */
@@ -355,6 +387,16 @@ export class BoardView {
     g.poly([0, -TH / 2 + 2, TW / 2 - 3, 0, 0, TH / 2 - 2, -TW / 2 + 3, 0])
       .fill({ color: col, alpha })
       .stroke({ color: col, alpha: Math.min(1, alpha * 2.2), width: 1.5 });
+  }
+
+  /** A powder barrel has gone off: its sprite goes. */
+  removeBarrel(u: number, v: number): void {
+    const b = this.board;
+    if (!b || !this.built) return;
+    const i = v * b.w + u;
+    this.built.barrels.get(i)?.destroy();
+    this.built.barrels.delete(i);
+    // (the tile's own column is the same without it)
   }
 
   clearMarks(): void {
@@ -432,7 +474,9 @@ export class BoardView {
       const b = TH / (2 * SRC);
       g.imageSmoothingEnabled = true;
       g.setTransform(a, b, -a, b, TW / 2, 0);
-      const lie = t.ground && t.ground !== 'tall' ? art[t.ground] : null;
+      const lie = t.bridge ? art.planks : t.ground === 'deep' ? (LAVA_LANDS.includes(area) ? art.lava : art.water) : t.ground && t.ground !== 'tall' && t.ground !== 'shrine' ? art[t.ground] : null;
+      // (planks are pixel art: not smoothed)
+      if (t.bridge) g.imageSmoothingEnabled = false;
       g.drawImage(lie ?? (stony ? set.high : set.tops[(t.deco + u + v) % set.tops.length]), 0, 0, SRC, SRC);
       g.setTransform(1, 0, 0, 1, 0, 0);
     } else {
@@ -471,10 +515,32 @@ export class BoardView {
     } else if (t.ground === 'tall') {
       g.fillStyle = 'rgba(0,20,0,0.16)';
       g.fillRect(0, 0, TW, TH);
+    } else if (t.ground === 'deep') {
+      // (deep water: the shallows' texture, darkened, with a few long ripples; on a volcano a lake of lava, darkened to a crust)
+      g.fillStyle = LAVA_LANDS.includes(area) ? 'rgba(30,6,0,0.4)' : 'rgba(6,22,66,0.5)';
+      g.fillRect(0, 0, TW, TH);
+      g.strokeStyle = LAVA_LANDS.includes(area) ? 'rgba(255,170,80,0.45)' : 'rgba(160,200,255,0.4)';
+      for (const [x, y] of [[TW * 0.4, TH * 0.4], [TW * 0.62, TH * 0.62]]) {
+        g.beginPath();
+        g.moveTo(x - 7, y);
+        g.quadraticCurveTo(x, y - 3, x + 7, y);
+        g.stroke();
+      }
+    } else if (t.ground === 'shrine') {
+      // (a soft teal glow on the stone, and a ring of runes round the crystal: still, no pulse)
+      const glow = g.createRadialGradient(TW / 2, TH / 2, 2, TW / 2, TH / 2, TW / 2.2);
+      glow.addColorStop(0, 'rgba(150,255,230,0.55)');
+      glow.addColorStop(1, 'rgba(60,200,180,0)');
+      g.fillStyle = glow;
+      g.fillRect(0, 0, TW, TH);
+      g.strokeStyle = 'rgba(190,255,240,0.85)';
+      g.beginPath();
+      g.ellipse(TW / 2, TH / 2, TW * 0.3, TH * 0.3, 0, 0, Math.PI * 2);
+      g.stroke();
     }
     g.restore();
-    g.strokeStyle = t.ground ? RIM[t.ground] : boss ? 'rgba(255,226,140,0.75)' : 'rgba(20,14,8,0.35)';
-    g.lineWidth = t.ground && t.ground !== 'tall' ? 2 : 1;
+    g.strokeStyle = t.bridge ? BRIDGE_RIM : t.ground === 'deep' && LAVA_LANDS.includes(area) ? 'rgba(255,120,30,0.95)' : t.ground ? RIM[t.ground] : boss ? 'rgba(255,226,140,0.75)' : 'rgba(20,14,8,0.35)';
+    g.lineWidth = t.bridge || (t.ground && t.ground !== 'tall') ? 2 : 1;
     g.beginPath();
     g.moveTo(TW / 2, 0.5);
     g.lineTo(TW - 0.5, TH / 2);

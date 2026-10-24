@@ -28,9 +28,24 @@ export const AREA_NAMES: Record<Area, string> = {
   plains: 'Meadows', autumn: 'Autumn Wood', swamp: 'Mire', graveyard: 'Graveyard', ruins: 'City Ruins', temple: 'Ancient Temple', crystal: 'Crystal Caves', forge: 'Forge', shrine: 'Moonlit Shrine', warcamp: 'War Camp', oasis: 'Oasis',
 };
 
+/** Pictures already asked for once: the first <img> to use one decodes it, the rest find it ready, so a rebuilt menu never shows an empty box. */
+const warm = new Map<string, HTMLImageElement>();
+
+/** Start decoding a picture now (the menu icons are warmed as the page loads). */
+export function warmIcon(url: string): void {
+  if (warm.has(url) || typeof Image === 'undefined') return;
+  const im = new Image();
+  im.decoding = 'sync';
+  im.src = url;
+  warm.set(url, im);
+}
+for (const u of [...Object.values(ICONS), ...Object.values(BUILDING_ICON)]) warmIcon(u);
+
 /** An icon as an <img> (pixel art, never smoothed). */
 export function icon(url: string, cls = 'ico'): HTMLImageElement {
+  warmIcon(url);
   const el = document.createElement('img');
+  el.decoding = 'sync';
   el.src = url;
   el.className = cls;
   el.alt = '';

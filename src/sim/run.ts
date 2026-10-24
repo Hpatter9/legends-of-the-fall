@@ -8,7 +8,7 @@ import { CLASSIC_AREAS, type Area } from './board';
 import { CAL_CASTLE_EXTRA } from './calamity';
 import { buildChain, type Section } from './chain';
 import { BOSS_BANDS, FIELD_BANDS } from './foes';
-import { armyById, armyIndex, landOf, landsOf, waveBoost, waveFoes, type Army } from './armies';
+import { armyById, armyIndex, landOf, waveBoost, waveFoes, type Army } from './armies';
 import { dailyArmy } from './daily';
 import { bonusGold, foeAnswer, heroBoost, manaRate, moveRate, newCastle, type Castle } from './castle';
 import { rankMult } from './meta';
@@ -275,8 +275,10 @@ export function recycle(run: Run, heroId: number): number | null {
 export const retriesLeft = (run: Run): number => Math.max(0, MAX_RETRIES - (run.retries ?? 0));
 /** The gold a retry pays to help the second go: one Hire at the price it stands at. */
 export const retryGold = (run: Run): number => summonCost(run);
-/** Whether a wave just lost may be tried again: the run is still going (a loss is settled by `finish` only once the player gives up), has retries left, and is not the tower (which has its own way of failing). */
+/** Whether a wave just lost may be tried again: the run is still going, has hearts (retries) left, and is not the tower or the calamity (which have their own way of failing). Armies and the daily lose hearts; with none left the loss is settled by `finish` and the run ends. */
 export const canRetry = (run: Run): boolean => !run.over && !run.tower && retriesLeft(run) > 0;
+/** What a fall brings: a heart burns and the same wave starts again on its own (`retryWave`), or the run ends (no heart left, or a mode with none). */
+export const fallOutcome = (run: Run): 'heart' | 'end' => (canRetry(run) ? 'heart' : 'end');
 /** Retry the wave: the same stage with the same buff, a `retryGold` boost to spend, one retry used. Returns the gold paid, or null when no retry may be had. */
 export function retryWave(run: Run): number | null {
   if (!canRetry(run)) return null;
@@ -351,9 +353,9 @@ const chains = new Map<string, Section[]>();
 export function chainOf(run: Run): Section[] | null {
   const army = waveArmyOf(run);
   if (!army) return null;
-  // (a run with no land of its own fights each wave on its army's: `landOf`)
-  const area = run.area ?? ((n: number) => landOf(army, n));
-  const key = `${run.seed}:${army.id}:${run.area ?? landsOf(army).join()}`;
+  // (a run with no land of its own fights every wave on the one land its seed picks from its army's: `landOf`)
+  const area = run.area ?? landOf(army, run.seed);
+  const key = `${run.seed}:${army.id}:${area}`;
   let c = chains.get(key);
   if (!c) {
     c = buildChain(run.seed, army.waves.length, area, (n) => boardSeedOf(run, n), (n) => !!army.waves[n - 1].boss);

@@ -8,7 +8,9 @@ import { copyFileSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSy
 import { execSync } from 'node:child_process';
 
 const serve = process.argv.includes('--serve');
-const out = 'out/web';
+// (`--board 7x9` builds with the old board size, to compare against the usual one)
+const boardArg = process.argv.indexOf('--board') >= 0 ? process.argv[process.argv.indexOf('--board') + 1] : null;
+const out = process.argv.indexOf('--out') >= 0 ? process.argv[process.argv.indexOf('--out') + 1] : 'out/web';
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
 let commit = 'dev';
 try {
@@ -32,7 +34,7 @@ const options = {
   sourcemap: true,
   logLevel: 'warning',
   loader: { '.png': 'dataurl' },
-  define: { __GAME_VERSION__: JSON.stringify(version) },
+  define: { __GAME_VERSION__: JSON.stringify(version), ...(boardArg ? { __BOARD__: JSON.stringify(boardArg) } : {}) },
 };
 
 copyFileSync('src/art/icon-192.png', `${out}/icon-192.png`);
@@ -69,7 +71,7 @@ for (const f of readdirSync('src/art/ui').filter((f) => f.endsWith('.png') && !f
 // (the music is synthesised and baked in the page (src/render/musicBake.ts): no audio files to cache)
 // (the loading screen's fighters and bursts go into the page as data URLs, so it shows before game.js has downloaded)
 const dataUrl = (f) => `data:image/png;base64,${readFileSync(f).toString('base64')}`;
-const LOADING_ART = { __LD_KNIGHT__: 'src/art/loading/knight-attack.png', __LD_DEMON__: 'src/art/loading/demon-attack.png', __LD_SLASH__: 'src/art/fx/magic/moon_slash.png', __LD_IMPACT__: 'src/art/fx/impact.png' };
+const LOADING_ART = { __LD_KNIGHT__: 'src/art/loading/knight-attack.png', __LD_DEMON__: 'src/art/loading/demon-attack.png' };
 const withLoadingArt = (html) => Object.entries(LOADING_ART).reduce((h, [k, f]) => h.replaceAll(k, () => dataUrl(f)), html);
 writeFileSync(`${out}/index.html`, withLoadingArt(readFileSync('src/index.html', 'utf8').replace('/*__PIXEL_CSS__*/', () => readFileSync('src/tokens.css', 'utf8') + readFileSync('src/pixel.css', 'utf8') + readFileSync('src/equip.css', 'utf8') + readFileSync('src/rogue.css', 'utf8') + readFileSync('src/twists.css', 'utf8') + readFileSync('src/eliteSets.css', 'utf8') + readFileSync('src/talents.css', 'utf8') + readFileSync('src/codex.css', 'utf8') + readFileSync('src/awaken.css', 'utf8') + readFileSync('src/calmap.css', 'utf8') + readFileSync('src/campPlaces.css', 'utf8') + readFileSync('src/daily.css', 'utf8') + readFileSync('src/cinematics.css', 'utf8') + readFileSync('src/stone.css', 'utf8') + readFileSync('src/levels.css', 'utf8') + readFileSync('src/battleUi.css', 'utf8')).replace('__VERSION__', version)));
 writeFileSync(

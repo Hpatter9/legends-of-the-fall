@@ -1,3 +1,4 @@
+import { bareBoard } from './bare';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { tileAt } from '../src/sim/board';
@@ -9,7 +10,7 @@ import { readyBattle } from './helpers';
 /** A flat, empty board mid-fight, for setting up one rule at a time. */
 function arena(): Battle {
   const b = startBattle(3);
-  for (const t of b.board.tiles) (t.h = 0), (t.rock = false);
+  bareBoard(b);
   b.units = [];
   b.phase = 'fight';
   return b;

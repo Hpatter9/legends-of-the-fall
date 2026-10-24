@@ -1,5 +1,5 @@
 // Which land a fight is on, beyond the climb's own six: the spire draws a land for each five floors from all of them, and an
-// army's waves alternate between its own one or two (`landOf` in armies.ts). Pure: no Pixi, no DOM, no clock; every draw is a
+// army's attempt is fought on one of its own one or two, picked once by the run's seed and kept for every wave (`landOf` in armies.ts). Pure: no Pixi, no DOM, no clock; every draw is a
 // side stream of the run's seed, so nothing else in a fight moves.
 
 import { AREAS, type Area } from './board';

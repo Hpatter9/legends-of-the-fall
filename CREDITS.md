@@ -30,6 +30,8 @@ the raw files), copied one sprite at a time from the private assets repository (
 - **Equipment icons** (`src/art/equip/`): 16x16 tiles cut one tile each from the same **DawnLike** tileset by DragonDePlatino (Items: LongWep, ShortWep, Ammo, Wand, Book, Scroll, Armor, Amulet, Ring, Boot, Glove, Hat, Music, Potion, Rock, Tool), by `tools/equip-icons.py`, for the hero equipment (CC-BY 4.0).
 - **Army chests** (`src/art/ui/chest-bronze.png`, `chest-silver.png`, `chest-gold.png`): the chest (closed and open frames) from the Craftpix **Free Platformer Game Tileset Pixel Art** pack (`chest.png`), cropped, with its iron bands tinted bronze, silver and gold by a script (hue shifts only). The **daily chest** (`src/art/ui/chest-daily.png`) is the silver chest with its wood hue-shifted to violet. The army scenes on the Armies screen use the foes' existing sprite sheets and the land backdrops, with no new art.
 
+- **Battlefield terrain** (`src/art/terrain/`, cut by `tools/map-layouts/terrain-art.py`, bundled into `game.js` as data URLs): the powder barrel from the Craftpix **Free 2D Top-Down Pixel Dungeon Asset Pack** (`Objects.png`); the ruined walls (`wall1..3.png`) from the Craftpix **Free Undead Tileset Top-Down Pixel Art** (`Objects_separately`, Ruin_shadow1_2 to 1_4); the shrine's crystal from the Craftpix **Free Top-Down Pixel Art Cave Objects** (Blue-green crystal); the bridge planks from the Craftpix **Free Bridges Top-Down Pixel Art Asset Pack** (`Bridges.png`). Deep water is the shallows' existing water texture (`src/art/areas/common/water.png`), darkened in the page.
+
 Code borrowed from Chronos Settlement (`hpatter9/little-town`): the seeded random numbers (`src/sim/rng.ts`), the
 board's relief, step and sight rules (`src/sim/board.ts`), the blow and reach rules (`src/sim/battle.ts`), the
 isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle juice rules.
@@ -103,6 +105,12 @@ All Craftpix, copied one sprite or layer at a time; no PixelLab. Ground tops and
   poison, earth, wind and blood each have orb, hit, explosion, slash, circle, rune, shield, status, gather, nova, cross,
   puff, smoke, sparkle, aura, vortex, pillar, strike, spikes, wave and flame strips; star, water and moon have orb, hit,
   explosion, slash and sparkle. Used by `src/render/fxSheets.ts`.
+
+- **The spell props** (`src/art/fx/props.png`): twelve 32x32 sprites (a crow feather, a gold coin, a music note, a roll of
+  bandage, a fist, a ghost, an anchor, a cannonball, a leaf, a paw print, a scythe and a banner) **generated with PixelLab**
+  (`/create-image-pixflux`, the game's warm palette; `tools/fxlab/genprops.py`, the chosen frames kept in `tools/fxlab/props/`),
+  thrown by the heroes' skills and ultimates (`src/render/signatures.ts`, `docs/notes/unique-spells.md`). Every other effect
+  in those looks is a strip of the Pixel Effects pack above.
 
 - **Fonts** (`out/web/fonts/`, copied by `build.mjs` from the `@fontsource` npm packages, all under the SIL Open Font
   Licence 1.1): **Cinzel Decorative** (Natanael Gama; titles, banners and big buttons), **Alegreya Sans** (Juan Pablo
@@ -247,3 +255,7 @@ No new art: the five-hero combos' gathering and strike, a tier skill's ring and 
 ## Talent icons
 
 - The **talent glyphs** (`src/art/talent/*.png`, 37 icons at 32x32: heart, sword, armour, eye, boot, cross, pickaxe and the rest) are generated with PixelLab (`tools/pixellab/talents/gen.py`, `/create-image-pixflux` with the game's warm palette as the colour reference, as `tools/ui/genicons.py` does), used as they came. See `docs/notes/hero-progress.md`.
+
+## Heart revive
+
+No new art: the burning heart's flame is the `flame_fire` strip (`src/art/fx/vfx/flame_fire.png`) from the **5000 Pixel Effects** pack by blueberry already credited above, played once over the heart (`src/reviveView.ts`); the heroes rise in the existing light pillar of a promotion.

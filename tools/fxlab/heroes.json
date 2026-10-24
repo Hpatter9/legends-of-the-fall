@@ -1,0 +1,272 @@
+{
+ "knight": {
+  "name": "Knight",
+  "skill": "Shield Wall",
+  "ult": "Last Bastion",
+  "heal": false
+ },
+ "samurai": {
+  "name": "Samurai",
+  "skill": "Iaido",
+  "ult": "Heaven-Splitting Cut",
+  "heal": false
+ },
+ "kunoichi": {
+  "name": "Kunoichi",
+  "skill": "Shadow Step",
+  "ult": "Shadow Dance",
+  "heal": false
+ },
+ "archer": {
+  "name": "Archer",
+  "skill": "Volley",
+  "ult": "Arrow Storm",
+  "heal": false
+ },
+ "wizard": {
+  "name": "Fire Wizard",
+  "skill": "Meteor",
+  "ult": "Armageddon",
+  "heal": false
+ },
+ "ninjaMonk": {
+  "name": "Ninja Monk",
+  "skill": "Thousand Fists",
+  "ult": "Hundred Fists",
+  "heal": false
+ },
+ "peasant": {
+  "name": "Peasant",
+  "skill": "Hold the Line",
+  "ult": "Mass Muster",
+  "heal": true
+ },
+ "lightningMage": {
+  "name": "Lightning Mage",
+  "skill": "Chain Lightning",
+  "ult": "Thunderstorm",
+  "heal": false
+ },
+ "wanderer": {
+  "name": "Wanderer",
+  "skill": "Sanctuary",
+  "ult": "Dawn Light",
+  "heal": true
+ },
+ "kitsune": {
+  "name": "Kitsune",
+  "skill": "Fox Charm",
+  "ult": "Nine-Tailed Dream",
+  "heal": false
+ },
+ "karasu": {
+  "name": "Karasu Tengu",
+  "skill": "Dive",
+  "ult": "Feather Storm",
+  "heal": false
+ },
+ "yamabushi": {
+  "name": "Yamabushi Tengu",
+  "skill": "Wind Gust",
+  "ult": "Tempest",
+  "heal": false
+ },
+ "paladin": {
+  "name": "Paladin",
+  "skill": "Holy Challenge",
+  "ult": "Divine Aegis",
+  "heal": true
+ },
+ "cleric": {
+  "name": "Cleric",
+  "skill": "Benediction",
+  "ult": "Divine Intervention",
+  "heal": true
+ },
+ "druid": {
+  "name": "Druid",
+  "skill": "Call Treant",
+  "ult": "Heart of the Grove",
+  "heal": true
+ },
+ "barbarian": {
+  "name": "Barbarian",
+  "skill": "Whirlwind",
+  "ult": "Bloodlust",
+  "heal": false
+ },
+ "ranger": {
+  "name": "Ranger",
+  "skill": "Snare Trap",
+  "ult": "Hunter's Net",
+  "heal": false
+ },
+ "warlock": {
+  "name": "Warlock",
+  "skill": "Hex",
+  "ult": "Soul Harvest",
+  "heal": false
+ },
+ "illusionist": {
+  "name": "Illusionist",
+  "skill": "Mirror Image",
+  "ult": "Hall of Mirrors",
+  "heal": false
+ },
+ "gunslinger": {
+  "name": "Gunslinger",
+  "skill": "Dead Eye",
+  "ult": "High Noon",
+  "heal": false
+ },
+ "shambler": {
+  "name": "Shambler",
+  "skill": "Rotting Touch",
+  "ult": "Plague Tide",
+  "heal": false
+ },
+ "rifleBot": {
+  "name": "Rifle Bot",
+  "skill": "Burst Fire",
+  "ult": "Overclock",
+  "heal": false
+ },
+ "mercenary": {
+  "name": "Mercenary",
+  "skill": "Bounty Hunt",
+  "ult": "Contract Killer",
+  "heal": false
+ },
+ "mummy": {
+  "name": "Mummy",
+  "skill": "Binding Wraps",
+  "ult": "Curse of the Pharaoh",
+  "heal": false
+ },
+ "buccaneer": {
+  "name": "Buccaneer",
+  "skill": "Grappling Hook",
+  "ult": "Keelhaul",
+  "heal": false
+ },
+ "wolfBard": {
+  "name": "Wolf Bard",
+  "skill": "Dirge",
+  "ult": "Battle Hymn",
+  "heal": true
+ },
+ "beastmaster": {
+  "name": "Beastmaster",
+  "skill": "Call of the Wild",
+  "ult": "Hunt of the Pack",
+  "heal": false
+ },
+ "kraken": {
+  "name": "Kraken Mate",
+  "skill": "Undertow",
+  "ult": "Maelstrom",
+  "heal": false
+ },
+ "lancer": {
+  "name": "Lancer",
+  "skill": "Lance Charge",
+  "ult": "Charge of the Knights",
+  "heal": false
+ },
+ "reaper": {
+  "name": "Reaper",
+  "skill": "Reap",
+  "ult": "Harvest of Souls",
+  "heal": false
+ },
+ "timeWitch": {
+  "name": "Time Witch",
+  "skill": "Temporal Surge",
+  "ult": "Time Stop",
+  "heal": true
+ },
+ "arcBlade": {
+  "name": "Arc Blade",
+  "skill": "Voltage Blink",
+  "ult": "Thunder Cascade",
+  "heal": false
+ },
+ "dreadPirate": {
+  "name": "Dread Pirate",
+  "skill": "Broadside",
+  "ult": "Ghost Fleet",
+  "heal": false
+ },
+ "siegeBot": {
+  "name": "Siege Bot",
+  "skill": "Shell Barrage",
+  "ult": "Orbital Strike",
+  "heal": false
+ },
+ "priestess": {
+  "name": "High Priestess",
+  "skill": "Holy Light",
+  "ult": "Resurrection",
+  "heal": true
+ },
+ "dragoon": {
+  "name": "Queen Dragoon",
+  "skill": "Dragon Breath",
+  "ult": "Inferno Breath",
+  "heal": false
+ },
+ "juggernaut": {
+  "name": "Juggernaut",
+  "skill": "Earthquake",
+  "ult": "Cataclysm",
+  "heal": false
+ },
+ "sage": {
+  "name": "Great Sage",
+  "skill": "Starfall",
+  "ult": "Astral Convergence",
+  "heal": false
+ },
+ "demonSwordsman": {
+  "name": "Demon Swordsman",
+  "skill": "Hellblade Sweep",
+  "ult": "Demon Form",
+  "heal": false
+ },
+ "tyrant": {
+  "name": "Tyrant",
+  "skill": "Judgement",
+  "ult": "Reign of Terror",
+  "heal": false
+ },
+ "werewolf": {
+  "name": "Werewolf",
+  "skill": "Ravage",
+  "ult": "Full Moon",
+  "heal": false
+ },
+ "minotaur": {
+  "name": "Minotaur",
+  "skill": "Gore Charge",
+  "ult": "Stampede",
+  "heal": false
+ },
+ "satyr": {
+  "name": "Satyr",
+  "skill": "Pipes of Pan",
+  "ult": "Bacchanal",
+  "heal": true
+ },
+ "gorgon": {
+  "name": "Gorgon",
+  "skill": "Petrifying Gaze",
+  "ult": "Stone Curse",
+  "heal": false
+ },
+ "samuraiCommander": {
+  "name": "Samurai Commander",
+  "skill": "War Banner",
+  "ult": "Rally Cry",
+  "heal": true
+ }
+}

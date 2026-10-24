@@ -197,8 +197,6 @@
   #stars .star em { grid-column: 2; font-size: 11px; font-style: normal; color: var(--gold); }
   #stars .star.on { color: var(--ink); }
   #stars .star.on > span { color: var(--gold); text-shadow: 0 0 10px rgb(var(--e7-rgb) / 0.6); }
-  #stars .star.on > span { animation: twinkle 1.6s ease-in-out 0.5s infinite; }
-  @keyframes twinkle { 50% { transform: scale(1.22) rotate(12deg); text-shadow: 0 0 16px rgb(var(--e8-rgb) / 0.9); } }
   #xp { display: flex; flex-direction: column; gap: 6px; width: min(300px, calc(86 * var(--vw))); }
   #xp[hidden] { display: none; }
   #xp .xprow { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 8px; padding: 6px 10px; background: var(--wood); border: 2px solid var(--edge); border-radius: 8px; color: var(--ink); }
@@ -328,7 +326,7 @@
   .chip img { width: 22px; height: 22px; }
   .round { position: relative; width: 36px; height: 36px; padding: 0; display: grid; place-items: center; border-radius: 50%; font-size: 20px; background: var(--s7); border: 2px solid var(--gold); }
   .round img { width: 22px; height: 22px; }
-  .round.new::after, i.badge { content: ''; position: absolute; top: -3px; right: -3px; width: 13px; height: 13px; background: var(--red); border: 2px solid var(--white); border-radius: 50%; animation: pulse 1.4s ease-in-out infinite; }
+  .round.new::after, i.badge { content: ''; position: absolute; top: -3px; right: -3px; width: 13px; height: 13px; background: var(--red); border: 2px solid var(--white); border-radius: 50%; }
   i.badge { display: block; }
   .hmTab:not(.new) i.badge { display: none; }
   #hmBest { flex: 1 1 100%; display: flex; justify-content: space-between; font-size: 11px; color: var(--dim); }
@@ -373,7 +371,7 @@
   .hmCard.lockedCard, .hmCard:disabled { filter: grayscale(1) brightness(0.65); border-color: var(--s10); opacity: 1; }
   .hmCard:active { transform: scale(0.95); }
   .hmGo { position: absolute; left: 0; right: 0; bottom: 16px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  .hmBattle { width: min(78%, 330px); padding: 14px 10px 12px; font: bold 38px/1 var(--display); letter-spacing: 2px; color: var(--btn-ink); background: linear-gradient(var(--e8), var(--e5) 60%, var(--e3)); border: 4px solid var(--e10); border-radius: 18px; text-shadow: 0 2px 0 #fff6; box-shadow: 0 6px 0 var(--e1), 0 0 24px rgb(var(--e6-rgb) / 0.7); animation: glow 2s ease-in-out infinite; }
+  .hmBattle { width: min(78%, 330px); padding: 14px 10px 12px; font: bold 38px/1 var(--display); letter-spacing: 2px; color: var(--btn-ink); background: linear-gradient(var(--e8), var(--e5) 60%, var(--e3)); border: 4px solid var(--e10); border-radius: 18px; text-shadow: 0 2px 0 #fff6; box-shadow: 0 6px 0 var(--e1), 0 0 24px rgb(var(--e6-rgb) / 0.7); }
   .hmBattle small { display: block; margin-top: 3px; font: bold 13px/1 var(--body); letter-spacing: 0; }
   .hmLink { padding: 4px 12px; font-size: 12px; background: rgb(var(--black-rgb) / 0.55); border-color: var(--edge); border-radius: 12px; }
   /* tabs */
@@ -384,7 +382,7 @@
   .hmTab.on img { filter: none drop-shadow(0 0 5px var(--gold)); transform: translateY(-2px) scale(1.12); }
   .hmTab:active { transform: scale(0.92); }
   .hmTab i.badge { top: 4px; right: 22%; }
-  .hmTab.hero { flex: 1.3; margin-top: -18px; min-height: 76px; padding-top: 8px; font-size: 13px; color: var(--btn-ink); background: radial-gradient(var(--e8), var(--e5) 70%); border: 3px solid var(--e10); border-radius: 50% 50% 12px 12px / 38% 38% 12px 12px; box-shadow: 0 0 18px rgb(var(--e6-rgb) / 0.7); animation: glow 2s ease-in-out infinite; }
+  .hmTab.hero { flex: 1.3; margin-top: -18px; min-height: 76px; padding-top: 8px; font-size: 13px; color: var(--btn-ink); background: radial-gradient(var(--e8), var(--e5) 70%); border: 3px solid var(--e10); border-radius: 50% 50% 12px 12px / 38% 38% 12px 12px; box-shadow: 0 0 18px rgb(var(--e6-rgb) / 0.7); }
   .hmTab.hero img { width: 38px; height: 38px; filter: drop-shadow(0 2px 0 #0006); }
   .hmTab.hero.on { color: var(--btn-ink); box-shadow: 0 0 26px rgb(var(--e7-rgb) / 1); }
   .hmTab.hero:not(.on) { filter: saturate(0.75) brightness(0.9); }
@@ -503,8 +501,6 @@
   @keyframes bob { 50% { transform: translateY(-4px); } }
   @keyframes bobT { 50% { translate: 0 -3px; } }
   @keyframes sway { 50% { transform: rotate(-1.2deg); } }
-  @keyframes pulse { 50% { transform: scale(1.25); } }
-  @keyframes glow { 50% { filter: brightness(1.12); box-shadow: 0 6px 0 var(--e1), 0 0 34px rgb(var(--e7-rgb) / 0.95); } }
   @keyframes pop { from { transform: scale(0.85); opacity: 0; } }
   @media (prefers-reduced-motion: reduce) { .hmBanner, .hmBattle, .hmTab.hero, .hmPanel img.big, .hmShow canvas { animation: none; } }
   #home:not([hidden]) ~ #version { z-index: 6; }
@@ -641,19 +637,6 @@
     90%, 100% { translate: 0 0; }
   }
   /* (the clash: where the two blades meet, a little right of the middle) */
-  .ldClash { position: absolute; z-index: 3; left: calc(50% + var(--s) * 14px); bottom: calc(var(--s) * 44px); width: 0; height: 0; }
-  .ldClash > * { position: absolute; opacity: 0; animation-duration: 2.8s; animation-iteration-count: infinite; animation-timing-function: step-end; }
-  .ldImp { left: -72px; top: -72px; width: 144px; height: 144px; background: url(__LD_IMPACT__) 0 0 / 1008px 144px no-repeat; animation-name: ldImpact; }
-  .ldImp.k { animation-delay: 0.6s; }
-  .ldImp.d { animation-delay: 1.9s; }
-  @keyframes ldImpact { 0% { opacity: 1; background-position-x: 0; } 1.5% { background-position-x: -144px; } 3% { background-position-x: -288px; } 4.5% { background-position-x: -432px; } 6% { background-position-x: -576px; } 7.5% { background-position-x: -720px; } 9% { background-position-x: -864px; } 10.5%, 100% { opacity: 0; } }
-  .ldCut { left: -150px; top: -86px; width: 128px; height: 128px; background: url(__LD_SLASH__) 0 0 / 768px 128px no-repeat; animation-name: ldSlash; animation-delay: 0.5s; }
-  @keyframes ldSlash { 0% { opacity: 1; background-position-x: 0; } 1.6% { background-position-x: -128px; } 3.2% { background-position-x: -256px; } 4.8% { background-position-x: -384px; } 6.4% { background-position-x: -512px; } 8% { background-position-x: -640px; } 9.6%, 100% { opacity: 0; } }
-  .ldSp { left: 0; top: 0; width: 0; height: 0; opacity: 1; animation: none; }
-  .ldSp i { position: absolute; left: -2px; top: -2px; width: 4px; height: 4px; background: var(--e8); opacity: 0; animation: ldSpark 2.8s steps(4) infinite; }
-  .ldSp.k i { animation-delay: 0.6s; }
-  .ldSp.d i { animation-delay: 1.9s; background: var(--e6); }
-  @keyframes ldSpark { 0% { opacity: 1; translate: 0 0; } 12% { opacity: 1; translate: var(--dx) var(--dy); } 12.1%, 100% { opacity: 0; translate: var(--dx) var(--dy); } }
   .ldTitle { left: 0; right: 0; top: calc(env(safe-area-inset-top) + 9%); margin: 0; text-align: center; font: 900 40px/1 Georgia, 'Times New Roman', serif; letter-spacing: 3px; text-transform: uppercase; color: var(--gold-hi); text-shadow: 0 3px 0 var(--e1), 0 6px 0 var(--s2), 3px 0 0 var(--s2), -3px 0 0 var(--s2), 0 -3px 0 var(--s2); }
   .ldTitle small { display: block; margin-top: 8px; font-size: 20px; letter-spacing: 8px; color: var(--gold); text-shadow: 0 2px 0 var(--s2), 2px 0 0 var(--s2), -2px 0 0 var(--s2), 0 -2px 0 var(--s2); }
   .ldLine { left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom) + 12%); margin: 0; text-align: center; font: 900 16px Georgia, 'Times New Roman', serif; letter-spacing: 4px; text-transform: uppercase; color: var(--ink); text-shadow: 0 2px 0 var(--black); }
@@ -662,7 +645,7 @@
   .ldBar i { position: absolute; top: 0; left: 0; width: 40px; height: 100%; background: var(--gold); animation: ldMarch 1.6s steps(16) infinite; }
   @keyframes ldMarch { from { translate: -40px 0; } to { translate: 160px 0; } }
   @media (min-width: 700px) { #loading { --s: 3; } .ldTitle { font-size: 56px; } }
-  @media (prefers-reduced-motion: reduce) { .ldK, .ldD, .ldEmbers i, .ldBar i, .ldClash > *, .ldSp i { animation: none; } .ldImp, .ldCut, .ldSp i { display: none; } }
+  @media (prefers-reduced-motion: reduce) { .ldK, .ldD, .ldEmbers i, .ldBar i { animation: none; } }
   #version { position: fixed; right: 6px; bottom: 2px; font-size: 10px; color: rgb(var(--white-rgb) / 0.5); text-shadow: 0 1px 0 var(--black); pointer-events: none; }
   #version { bottom: auto; top: calc(env(safe-area-inset-top) + 34px); }
   /* The party screen (src/party.ts): five slots, the traits they wake, the heroes to pick from, and the button to start */
@@ -707,10 +690,9 @@
     background: linear-gradient(var(--gold-hi), var(--e5) 55%, var(--e3)); border: 2px solid var(--e10); font-family: var(--display); font-weight: 900; font-size: 15px;
     box-shadow: inset 0 -3px 0 rgb(var(--e1-rgb) / 0.5), 0 3px 0 var(--e1), 0 0 14px rgb(var(--e6-rgb) / 0.45); }
   button.primary::after { content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%; pointer-events: none;
-    background: linear-gradient(100deg, transparent, rgb(var(--white-rgb) / 0.55), transparent); transform: skewX(-18deg); animation: shimmer 3.2s ease-in-out infinite; }
+    background: linear-gradient(100deg, transparent, rgb(var(--white-rgb) / 0.55), transparent); transform: skewX(-18deg); animation: none; }
   button.primary:disabled::after { animation: none; opacity: 0; }
   .setting .toggle.on, .setting .pair button.on { font-family: var(--body); font-size: 14px; }
-  @keyframes shimmer { 0%, 55% { left: -60%; } 100% { left: 130%; } }
 
   /* framed panels: a gold rim, a dark inner rim, parchment-dark wood, corner studs */
   :root { --panel-bg: linear-gradient(rgb(var(--e8-rgb) / 0.07), rgb(var(--black-rgb) / 0) 40%), linear-gradient(var(--s5), var(--s2));
@@ -747,8 +729,7 @@
   .card.chosen { box-shadow: 0 0 0 1px var(--gold-hi), 0 0 14px var(--ember); }
   .card b, .spell b, .hcard b, .hrow b, .brow b, .setting b, .evcard .opt b { font-family: var(--body); font-weight: 700; }
   .card b { font-size: 12px; } .spell { font-size: 13px; } .spell em, #mana b, .card em { font-family: var(--pixel); font-size: 8px; }
-  .spell.armed { border-color: var(--gold-hi); box-shadow: 0 0 0 1px var(--gold), 0 0 16px var(--ember); animation: armed 0.9s ease-in-out infinite alternate; }
-  @keyframes armed { to { box-shadow: 0 0 0 1px var(--gold), 0 0 24px var(--ember); } }
+  .spell.armed { border-color: var(--gold-hi); box-shadow: 0 0 0 1px var(--gold), 0 0 16px var(--ember); }
   #mana i { height: 12px; border: 2px solid var(--gold-lo); background: var(--s1); box-shadow: inset 0 2px 3px rgb(var(--black-rgb) / 0.7); }
   #mana i span { background: linear-gradient(var(--b5), var(--b2)); box-shadow: 0 0 8px rgb(var(--b4-rgb) / 0.7); }
   .trait { font-family: var(--body); font-size: 13px; border-color: var(--s8); }
@@ -761,7 +742,7 @@
   .hmBanner { font-weight: 900; background: linear-gradient(var(--r2), var(--r0)); border: 3px solid var(--gold-lo); border-radius: 4px 4px 22px 22px;
     box-shadow: 0 0 0 2px var(--deep), 0 4px 12px rgb(var(--black-rgb) / 0.6), inset 0 1px 0 rgb(var(--e8-rgb) / 0.4); color: var(--gold-hi); }
   .hmBattle { font-weight: 900; font-size: 32px; letter-spacing: 3px; position: relative; overflow: hidden; }
-  .hmBattle::after { content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 35%; background: linear-gradient(100deg, transparent, rgb(var(--white-rgb) / 0.6), transparent); transform: skewX(-18deg); animation: shimmer 3s ease-in-out infinite; }
+  .hmBattle::after { content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 35%; background: linear-gradient(100deg, transparent, rgb(var(--white-rgb) / 0.6), transparent); transform: skewX(-18deg); animation: none; }
   .hmBattle small, .hmBig small { font-family: var(--body); }
   .hmBig { font-family: var(--display); font-weight: 900; font-size: 20px; }
 
@@ -834,7 +815,7 @@
   <div id="dayResult" class="dayResult" hidden></div>
   <div id="xp" hidden></div>
   <div id="fightStats" hidden></div>
-  <div class="row"><button id="retry" class="primary" hidden>Retry wave</button><button id="next" class="primary">Next stage</button></div>
+  <div class="row"><button id="next" class="primary">Next stage</button></div>
 </div>
 <div id="recap" hidden></div>
 <div id="ask" hidden><div class="asumCard"><p id="askText"></p><div class="row"><button id="askNo">Keep</button><button id="askYes" class="primary">Recycle</button></div></div></div>
@@ -883,7 +864,6 @@
   <div class="ldEmbers"><i style="--x:6%;--t:11s;--d:-1s;--dx:12px"></i><i style="--x:15%;--t:9s;--d:-6s;--dx:-8px"></i><i style="--x:24%;--t:13s;--d:-3s;--dx:16px"></i><i style="--x:33%;--t:10s;--d:-8s;--dx:-12px"></i><i style="--x:41%;--t:12s;--d:-2s;--dx:8px"></i><i style="--x:52%;--t:9s;--d:-5s;--dx:-16px"></i><i style="--x:60%;--t:14s;--d:-9s;--dx:12px"></i><i style="--x:69%;--t:10s;--d:-4s;--dx:-8px"></i><i style="--x:78%;--t:12s;--d:-7s;--dx:16px"></i><i style="--x:86%;--t:11s;--d:-0s;--dx:-12px"></i><i style="--x:93%;--t:9s;--d:-2s;--dx:8px"></i><i style="--x:47%;--t:13s;--d:-10s;--dx:-4px"></i></div>
   <div class="ldFight">
     <div class="ldK"></div><div class="ldD"></div>
-    <div class="ldClash"><b class="ldCut"></b><b class="ldImp k"></b><b class="ldImp d"></b><span class="ldSp k"><i style="--dx:40px;--dy:-28px"></i><i style="--dx:-36px;--dy:-40px"></i><i style="--dx:56px;--dy:4px"></i><i style="--dx:-52px;--dy:-12px"></i><i style="--dx:20px;--dy:-60px"></i><i style="--dx:-20px;--dy:-64px"></i><i style="--dx:64px;--dy:-36px"></i><i style="--dx:-64px;--dy:-52px"></i><i style="--dx:32px;--dy:16px"></i><i style="--dx:-28px;--dy:20px"></i></span><span class="ldSp d"><i style="--dx:40px;--dy:-28px"></i><i style="--dx:-36px;--dy:-40px"></i><i style="--dx:56px;--dy:4px"></i><i style="--dx:-52px;--dy:-12px"></i><i style="--dx:20px;--dy:-60px"></i><i style="--dx:-20px;--dy:-64px"></i><i style="--dx:64px;--dy:-36px"></i><i style="--dx:-64px;--dy:-52px"></i><i style="--dx:32px;--dy:16px"></i><i style="--dx:-28px;--dy:20px"></i></span></div>
   </div>
   <div class="ldVig"></div>
   <h1 class="ldTitle">Legends<small>of the Last Keep</small></h1>

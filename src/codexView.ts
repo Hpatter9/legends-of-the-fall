@@ -11,6 +11,7 @@ import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { TRAITS, traitsOf } from './sim/traits';
 import type { Meta } from './sim/meta';
 import { sceneList } from './sim/sceneRules';
+import { LAYOUT_LIST, TERRAIN_INFO } from './sim/terrainInfo';
 import { portrait, sprite, figureOf } from './render/sheets';
 import { TIER_SKILLS } from './sim/tierSkills';
 import { COMBOS, COMBO_NAME } from './sim/combos';
@@ -25,7 +26,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 const CLASS_LABEL: Record<FoeEntry['class'], string> = { common: 'Foe', boss: 'Boss', elite: 'Tower elite', calamity: 'Calamity herald' };
 
 /** The page's state that outlives a redraw: the tab it was on. */
-let tabNow: Collection | 'scenes' | 'combos' = 'bestiary';
+let tabNow: Collection | 'scenes' | 'combos' | 'terrain' = 'bestiary';
 
 /** A speed word for a step time. */
 const paceOf = (ms: number): string => (ms >= 900 ? 'Slow' : ms >= 650 ? 'Steady' : ms >= 450 ? 'Quick' : 'Very quick');
@@ -219,9 +220,28 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
   const grid = el('div', 'cxGrid');
   const fill = () => {
     grid.replaceChildren();
-    grid.classList.toggle('scList', tabNow === 'scenes' || tabNow === 'combos');
-    grid.classList.toggle('cxGrid', tabNow !== 'scenes' && tabNow !== 'combos');
-    if (tabNow === 'combos') {
+    grid.classList.toggle('scList', tabNow === 'scenes' || tabNow === 'combos' || tabNow === 'terrain');
+    grid.classList.toggle('cxGrid', tabNow !== 'scenes' && tabNow !== 'combos' && tabNow !== 'terrain');
+    if (tabNow === 'terrain') {
+      // (the ground a battlefield can have, then the shapes it can take: what each does, always shown)
+      for (const t of TERRAIN_INFO) {
+        const row = el('div', 'scRow');
+        const chip = el('i', 'cxChip');
+        chip.style.background = t.swatch;
+        const text = el('div');
+        text.append(el('b', '', t.name), el('small', '', t.tip));
+        row.append(chip, text);
+        grid.append(row);
+      }
+      grid.append(el('small', 'cxSub', 'Battlefields'));
+      for (const l of LAYOUT_LIST) {
+        const row = el('div', 'scRow');
+        const text = el('div');
+        text.append(el('b', '', l.name), el('small', '', l.tip));
+        row.append(text);
+        grid.append(row);
+      }
+    } else if (tabNow === 'combos') {
       // (a combo is listed once it has been seen in a fight; until then a locked row gives the first hero as a hint)
       for (const c of COMBOS) {
         const seen = comboSeen(m, c.id);
@@ -265,9 +285,9 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
       }
     }
   };
-  const buttons = new Map<Collection | 'scenes' | 'combos', HTMLButtonElement>();
-  for (const c of [...COLLECTIONS, 'combos' as const, 'scenes' as const]) {
-    const t = el('button', `cxTab${c === tabNow ? ' on' : ''}`, c === 'scenes' ? 'Scenes' : c === 'combos' ? `${COMBO_NAME}s` : COLLECTION_NAMES[c]);
+  const buttons = new Map<Collection | 'scenes' | 'combos' | 'terrain', HTMLButtonElement>();
+  for (const c of [...COLLECTIONS, 'combos' as const, 'scenes' as const, 'terrain' as const]) {
+    const t = el('button', `cxTab${c === tabNow ? ' on' : ''}`, c === 'scenes' ? 'Scenes' : c === 'terrain' ? 'Terrain' : c === 'combos' ? `${COMBO_NAME}s` : COLLECTION_NAMES[c]);
     t.addEventListener('click', () => {
       tabNow = c;
       for (const [k, b] of buttons) b.classList.toggle('on', k === c);

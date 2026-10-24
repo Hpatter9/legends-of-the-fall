@@ -47,10 +47,9 @@ body.towerUp #version { z-index: 7; }
 .tbBanner { z-index: 1; opacity: 0.9; }
 .tbShade { position: absolute; inset: 0; z-index: 2; background: linear-gradient(rgb(var(--s0-rgb) / 0.15), rgb(var(--s0-rgb) / 0.42)); }
 .look1 .tbShade { background: linear-gradient(rgb(var(--s0-rgb) / 0.1), rgb(var(--s0-rgb) / 0.38)); }
-.tbTorch { position: absolute; width: 96px; height: 96px; z-index: 3; background-size: 576px 96px; background-repeat: no-repeat; image-rendering: pixelated; animation: tbFlame 0.9s steps(6) infinite; pointer-events: none; }
+.tbTorch { position: absolute; width: 96px; height: 96px; z-index: 3; background-size: 576px 96px; background-repeat: no-repeat; image-rendering: pixelated; pointer-events: none; }
 .tbTorch::before { content: ''; position: absolute; left: 8px; top: 8px; width: 80px; height: 80px; background: radial-gradient(rgb(var(--e6-rgb) / 0.34), rgb(var(--e6-rgb) / 0.12) 55%, transparent 70%); }
-.tbTorch.out { animation: none; opacity: 0.5; }
-@keyframes tbFlame { to { background-position: -576px 0; } }
+.tbTorch.out { opacity: 0.5; }
 .rtMap > .tbTorch { z-index: 1; }
 .rtLines { position: absolute; left: 0; top: 0; pointer-events: none; shape-rendering: crispEdges; z-index: 1; }
 .st .tread { fill: var(--s10); } .st .riser { fill: var(--p0); } .st .edge { fill: var(--s2); }
@@ -111,7 +110,7 @@ body.towerUp #version { z-index: 7; }
 .rtIntroText h2 { margin: 4px 0 6px; font: 700 30px var(--display); color: var(--gold-hi); text-shadow: 0 3px 0 var(--black), var(--outline); }
 .rtIntroText p { margin: 0 0 14px; font-size: 14px; color: var(--ink); text-shadow: 0 2px 0 var(--black); }
 .rtIntroText em { font-style: normal; font-size: 11px; color: var(--dim); text-shadow: 0 1px 0 var(--black); }
-@media (prefers-reduced-motion: reduce) { .tbTorch { animation: none; } .rtIntroText { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .rtIntroText { animation: none; } }
 .rtFoot { flex: none; display: flex; align-items: center; gap: 8px; padding: 6px 10px calc(env(safe-area-inset-bottom) + 8px); background: linear-gradient(rgb(var(--s1-rgb) / 0.55), rgb(var(--s1-rgb) / 0.75)), var(--rtBrick, none) 0 0 / 32px 32px, var(--s2); border-top: 3px solid var(--gold); box-shadow: 0 -3px 10px rgb(var(--black-rgb) / 0.6); position: relative; z-index: 3; }
 .rtSay { flex: 1; min-width: 0; margin: 0; font-size: 12px; line-height: 1.25; color: var(--ink); text-shadow: 0 1px 0 var(--black); min-height: 30px; display: flex; align-items: center; }
 .rtGo { flex: none; min-width: 124px; font-size: 14px; }
@@ -136,8 +135,7 @@ body.towerUp #version { z-index: 7; }
 .rtItem:disabled:not(.sold) em { color: var(--r6); }
 .rtShopPic, .rtShopIco { width: 40px; height: 40px; flex: none; image-rendering: pixelated; object-fit: contain; }
 .rtItem img.rtShopPic { width: 36px; height: 36px; }
-.rtFlame { align-self: center; width: 64px; height: 64px; image-rendering: pixelated; animation: rtFlicker 0.5s steps(2) infinite; }
-@keyframes rtFlicker { 0% { transform: scale(1, 1); } 50% { transform: scale(1.06, 0.94); filter: brightness(1.2); } }
+.rtFlame { align-self: center; width: 64px; height: 64px; image-rendering: pixelated; }
 .rtTrain { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
 .rtTrainHero { display: flex; flex-direction: column; align-items: center; gap: 0; min-height: 0; padding: 2px 0; font-weight: normal; }
 .rtTrainHero canvas { width: 40px; height: 40px; image-rendering: pixelated; }
@@ -152,7 +150,6 @@ body.towerUp #version { z-index: 7; }
 .rtStats div { display: flex; justify-content: space-between; font-size: 14px; color: var(--dim); }
 .rtStats b { color: var(--ink); }
 .rtBest { margin: 0; text-align: center; font: 400 16px var(--display); color: var(--gold-hi); }
-@keyframes rtGlowText { 50% { color: var(--white); text-shadow: 0 0 8px var(--gold); } }
 .rtRewards { display: flex; justify-content: center; gap: 14px; }
 .rtReward { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .rtReward .chestShut { display: block; } .rtReward .chestOpen { display: none; }
