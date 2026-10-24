@@ -195,6 +195,13 @@ export function startFight(boss: boolean, mood: { calamity?: boolean; level?: nu
   syncMusic();
 }
 
+/** A fight is left without an end (the Last Stand is left mid-wave): the place's music comes back. */
+export function endFight(): void {
+  fight = null;
+  setTension(0);
+  syncMusic();
+}
+
 /** Sounds for one tick's battle events (`speed` is the fight's: quieter at ×2), and the music going back to the town when
  *  the fight ends. Each is panned by where on the board it happens. Call after stepping the battle `b`. */
 export function playEvents(b: Battle, events: BattleEvent[], speed = 1): void {

@@ -1,0 +1,87 @@
+/* The Last Stand's page (src/standView.ts): sizes 12 and 24 only, never bold. Slate panels, ember and ice accents. */
+body[data-stand] #top, body[data-stand] #panel, body[data-stand] #twistBanner, body[data-stand] #bossBar, body[data-stand] #autoBar, body[data-stand] #phaseBanner, body[data-stand] #bossCard, body[data-stand] #result { display: none !important; }
+body[data-stand] #version { top: auto; bottom: 2px; }
+#stand { position: fixed; inset: 0; z-index: 3; pointer-events: none; font: 400 12px/1.25 var(--body); color: var(--text, var(--s15)); }
+#stand[hidden] { display: none; }
+#stand button { font: 400 12px/1.2 var(--body); min-height: 48px; pointer-events: auto; }
+#stand button:disabled { opacity: 0.45; }
+.stInput { position: absolute; inset: 0; pointer-events: auto; touch-action: none; }
+.stTop { position: absolute; left: 0; right: 0; top: 0; display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; gap: 8px; padding: calc(env(safe-area-inset-top) + 6px) 8px 8px; background: linear-gradient(rgb(var(--s2-rgb) / 0.92), rgb(var(--s2-rgb) / 0.6) 80%, rgb(var(--s2-rgb) / 0)); }
+.stTop > * { pointer-events: auto; }
+.stTop small { display: block; font-size: 12px; color: var(--dim); }
+.stLeave { min-height: 36px !important; padding: 4px 10px; }
+.stWave span, .stGold span { font: 400 24px/1 var(--display); color: var(--gold-hi); text-shadow: var(--outline); }
+.stWave em { font-style: normal; color: var(--red, #d04a38); margin-left: 6px; }
+.stWave span, .stWave em { display: inline-block; vertical-align: baseline; }
+.stKing i { display: block; height: 12px; background: var(--s1); border: 2px solid var(--s7); }
+.stKing i span { display: block; height: 100%; background: var(--g3); width: 100%; }
+.stKing.low i span { background: var(--r4); }
+.stKing.hit i { border-color: var(--r5); }
+.stKing b { font-weight: 400; font-size: 12px; text-shadow: var(--outline); }
+.stGold { text-align: right; }
+.stCount { position: absolute; left: 50%; top: calc(env(safe-area-inset-top) + 74px); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 16px 8px; min-width: 160px; text-align: center; background: rgb(var(--s3-rgb) / 0.88); border: 2px solid var(--s7); pointer-events: none; }
+.stCount[hidden] { display: none; }
+.stCount small { color: var(--dim); }
+.stCount b { font: 400 24px/1 var(--display); color: var(--gold-hi); text-shadow: var(--outline); font-variant-numeric: tabular-nums; }
+.stCount i { font-style: normal; max-width: 260px; }
+.stCount button { margin-top: 4px; min-width: 96px; }
+.stArrows { position: absolute; inset: 0; pointer-events: none; }
+.stArrow { position: absolute; left: 0; top: 0; width: 36px; height: 36px; color: var(--e6); filter: drop-shadow(0 2px 0 rgb(var(--black-rgb) / 0.7)); }
+.stArrow[hidden] { display: none; }
+.stInfo { position: absolute; left: 8px; right: 8px; top: calc(env(safe-area-inset-top) + 74px); padding: 6px 10px; text-align: center; background: rgb(var(--s3-rgb) / 0.9); border: 2px solid var(--g3); }
+.stInfo[hidden] { display: none; }
+.stBanner { position: absolute; left: 0; right: 0; top: 34%; display: flex; flex-direction: column; align-items: center; pointer-events: none; text-shadow: var(--outline); animation: stBanner 1.8s ease-out both; }
+.stBanner[hidden] { display: none; }
+.stBanner small { font-size: 12px; color: var(--s15); }
+.stBanner b { font: 400 24px/1.2 var(--display); color: var(--gold-hi); letter-spacing: 2px; }
+.stBanner.boss b { color: var(--r5); }
+@keyframes stBanner { 0% { transform: translateY(12px); opacity: 0; } 15% { transform: none; opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; } }
+.stBottom { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; gap: 6px; padding: 8px 8px calc(env(safe-area-inset-bottom) + 8px); background: linear-gradient(rgb(var(--s2-rgb) / 0), rgb(var(--s2-rgb) / 0.88) 24%); }
+.stBottom > * { pointer-events: auto; }
+.stSpells { display: flex; align-items: center; gap: 6px; }
+.stSpells[hidden] { display: none; }
+.stMana { flex: 1 1 64px; max-width: 96px; }
+.stMana i { display: block; height: 10px; background: var(--s1); border: 2px solid var(--s7); }
+.stMana i span { display: block; height: 100%; width: 0; background: var(--b3); }
+.stMana b { font-weight: 400; color: var(--b5); }
+.stCards { display: flex; gap: 6px; flex: 3 1 auto; }
+.stSpell { position: relative; flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 0; padding: 2px 4px; overflow: hidden; }
+.stSpell span { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.stSpell em { position: absolute; top: 1px; right: 4px; font-style: normal; color: var(--b4); }
+.stSpell .cool { position: absolute; left: 0; right: 0; bottom: 0; height: 0; background: rgb(var(--black-rgb) / 0.55); pointer-events: none; }
+.stSpell.dim { opacity: 0.45; }
+.stSpell.armed { border-color: var(--gold); box-shadow: 0 0 6px var(--e6); }
+.stOffer { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.stOffer[hidden] { display: none; }
+.stRelic { display: flex; flex-direction: column; align-items: flex-start; gap: 0; padding: 4px 6px; text-align: left; min-height: 64px !important; }
+.stRelic span { color: var(--gold-hi); }
+.stRelic small { font-size: 12px; line-height: 1.1; color: var(--dim); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.stRelic em { font-style: normal; color: var(--e8); margin-top: auto; }
+.stBar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.stBuy { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 6px 4px; min-height: 56px !important; }
+.stBuy em { font-style: normal; color: var(--e8); }
+.stStart { font: 400 24px/1.2 var(--display) !important; min-height: 56px !important; }
+.stStart[hidden] { display: none; }
+.stEnd, .stAsk { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgb(var(--s0-rgb) / 0.78); pointer-events: auto; }
+.stEnd[hidden], .stAsk[hidden] { display: none; }
+.stCard { width: min(340px, 100%); display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px; text-align: center; background: var(--panel-bg, var(--s3)); border: 2px solid var(--gold-lo); box-shadow: 0 0 0 2px var(--deep), 0 6px 18px rgb(var(--black-rgb) / 0.7); }
+.stCard h2 { margin: 0; font: 400 24px/1.2 var(--display); color: var(--r6); text-shadow: var(--outline); }
+.stCard p { margin: 0; }
+.stBig { font: 400 24px/1.2 var(--display); color: var(--gold-hi); }
+.stDim { color: var(--dim); }
+.stFacts { width: 100%; display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; background: rgb(var(--black-rgb) / 0.3); border: 2px solid var(--s7); }
+.stFacts div { display: flex; justify-content: space-between; gap: 12px; text-align: left; }
+.stFacts span { color: var(--dim); }
+.stFacts b { font-weight: 400; text-align: right; }
+.stRow { display: flex; gap: 8px; width: 100%; justify-content: center; }
+.stRow button { flex: 1 1 0; }
+.stSpell .spIcon { zoom: 0.5; display: block; margin: 0 auto; }
+.stSpell { min-height: 56px !important; padding: 2px 4px 4px; }
+.stSpeed { min-height: 36px !important; padding: 4px 10px; }
+.stLeft { display: flex; gap: 6px; }
+.stPick { z-index: 2; align-items: flex-start; overflow: auto; background: rgb(var(--s1-rgb) / 0.95); }
+.stPickCard { margin-top: calc(env(safe-area-inset-top) + 24px); }
+.stGrid { width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; max-height: 46vh; overflow: auto; }
+.stGrid button { display: flex; flex-direction: column; align-items: center; padding: 4px; min-height: 48px; }
+.stGrid button em { font-style: normal; color: var(--dim); }
+.stGrid button.on { border-color: var(--gold); background: linear-gradient(var(--e3), var(--e1)); }

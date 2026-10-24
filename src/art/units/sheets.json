@@ -2194,5 +2194,26 @@
   "figure": 62,
   "facesRight": true,
   "lies": true
+ },
+ "stand_king": {
+  "w": 92,
+  "h": 103,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 2,
+   "idle": 1,
+   "hurt": 1,
+   "dead": 1
+  },
+  "figure": 75,
+  "facesRight": true
  }
 }

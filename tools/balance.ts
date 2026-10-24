@@ -15,7 +15,7 @@
 //   npm run balance -- --attempts 40   attempts a cell plays in the armies' first table (default 30)
 //   npm run balance -- --no-tables --tiers --levels 8,14,20   table 5e: each army on each difficulty tier (recruits, maxed castle, gear)
 //   npm run balance -- --no-tables --deep --levels 30,40,60,100 --attempts 10 [--talents] [--tiers-at 2,3]   table 5f: mean tries to clear each army on the top tiers at deep hero levels
-//   npm run balance -- --no-tables --tower --levels 3,8,14 --attempts 30   the endless tower's map climbed by a greedy player (`tools/tower-balance.ts`)
+//   npm run balance -- --no-tables --stand --levels 1,10,20 --attempts 30   the Last Stand held by a greedy player (`tools/stand-balance.ts`; `--tower` is the same, the Tower's old name)
 //   npm run balance -- --no-tables --climb --saves 60   the realistic climb (recruits, castle, gear), table 5c; `--maxed` plays 5d, a full castle
 //
 // Four tables: each hero's value (its win rate in random five-hero teams with it, against the same teams without it),
@@ -34,7 +34,8 @@ import { awakenStats, awaken } from '../src/sim/awaken';
 import { ARMIES, armyById, settleWave } from '../src/sim/armies';
 import { TIERS } from '../src/sim/tiers';
 import { playArmy, savedAt } from './autoplay';
-import { calamityTable, towerTable } from './tower-balance';
+import { calamityTable } from './tower-balance';
+import { standTable } from './stand-balance';
 import { ratingOf } from '../src/sim/stars';
 import { mixSeed, Rng } from '../src/sim/rng';
 import { ALL_HEROES, HEROES, UNITS } from '../src/sim/units';
@@ -552,7 +553,7 @@ if (process.argv.includes('--no-tables')) {
   wholeRuns();
   armies();
 }
-if (process.argv.includes('--tower')) towerTable();
+if (process.argv.includes('--stand') || process.argv.includes('--tower')) standTable();
 if (process.argv.includes('--calamity')) calamityTable();
 if (process.argv.includes('--climb')) realClimb();
 if (process.argv.includes('--maxed')) maxedCastle();

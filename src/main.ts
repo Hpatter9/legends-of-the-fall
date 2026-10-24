@@ -7,7 +7,7 @@ import { standable, tileAt } from './sim/board';
 import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
 import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
 // (`saveSlot` as `saveRun`: a tower or calamity run is saved in its own slot, any other in the ordinary one)
-import { adoptOldTower, armyOfRun, armyRun, benchFull, boostOf, canRetry, chainOf, fallOutcome, MAX_RETRIES, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, waveArmyOf, type Owned, type Run } from './sim/run';
+import { armyOfRun, armyRun, benchFull, boostOf, canRetry, chainOf, fallOutcome, MAX_RETRIES, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, waveArmyOf, type Owned, type Run } from './sim/run';
 import { climbXpView, heroLevel, localBoost } from './sim/climb';
 import { calamityRun } from './sim/modes';
 import { CAL_MAPS } from './sim/calamity';
@@ -42,12 +42,14 @@ import { afterFight, maxSpeed, spendTicket, startAuto, stopAuto, type AutoReplay
 import { Gacha } from './gacha';
 import { Events } from './events';
 import { TowerView } from './towerView';
+import { StandView } from './standView';
+import { loadStand, migrateOldClimb } from './sim/stand';
 import { showTwistBanner } from './twistView';
 import { abandonTower, finishTower, mapProgress, migrateTower, settleTower } from './sim/tower';
 import { hpShare } from './sim/health';
 import { Home } from './home';
 import { Party } from './party';
-import { dailyBonus, dailyCleared, dailyInProgress, modeNote, settleDaily, settleRun, startDaily, towerRun, type DailyPay } from './sim/modes';
+import { dailyBonus, dailyCleared, dailyInProgress, modeNote, settleDaily, settleRun, startDaily, type DailyPay } from './sim/modes';
 import { dailyBossName, dailyCrowns, DAILY_WAVES } from './sim/daily';
 import { showDailyStart } from './dailyView';
 import { chestPicture } from './chestStash';
@@ -154,6 +156,9 @@ class Game {
   private gacha!: Gacha;
   private events = new Events();
   private towerView!: TowerView;
+  /** The Last Stand (`standView.ts`): while it is up the ordinary board is hidden and this page's own frame does nothing. */
+  private stand!: StandView;
+  private standOn = false;
   /** The fight just settled was a tower boss (for the banner). */
   private bossDown = false;
   private home!: Home;
@@ -236,8 +241,9 @@ class Game {
       else await chooseStarter(this.meta);
       saveMeta(this.meta);
     }
-    // (a tower run saved by an older version sat in the ordinary slot: it moves to the tower's own)
-    adoptOldTower();
+    // (a spire climb saved by an older version is closed and paid: the Tower is the Last Stand now)
+    const closed = migrateOldClimb(this.meta, localStorage);
+    if (closed) saveMeta(this.meta);
     // (a fresh page with no saved run shows the first army's board behind the home screen)
     this.run = (!seed && loadRun()) || armyRun(seed || (Date.now() % 100000) + 1, ARMIES[0].id, this.meta.party, this.meta.castle);
     this.syncPool();
@@ -288,9 +294,13 @@ class Game {
         // (the start card names the boss and the land; a tap on Fight! starts the run, the first of the date counting)
         showDailyStart(this.meta, todayKey(), () => this.startRun(startDaily(this.meta, todayKey())), () => this.home.open());
       },
-      onTower: () => this.openMode('tower'),
+      onTower: () => this.openStand(),
       onCalamity: () => this.openMode('calamity'),
       slotInfo: (kind) => {
+        if (kind === 'tower') {
+          const st = loadStand();
+          return st ? `Wave ${st.wave} · continue` : null;
+        }
         const r = loadSlot(kind);
         if (!r) return null;
         return kind === 'calamity' ? `Map ${r.tower?.act ?? 1}/${CAL_MAPS} · continue` : `Floor ${r.stage} · continue`;
@@ -310,6 +320,13 @@ class Game {
       onHome: () => this.home.open(),
       onAbandon: () => this.abandon(),
     });
+    this.stand = new StandView({
+      app: this.app,
+      meta: () => this.meta,
+      hideBoard: (hidden) => this.hideBoard(hidden),
+      onHome: () => this.home.open(),
+      moment: (m) => this.playDue(m),
+    });
     // (the map opening or closing changes the music)
     new MutationObserver(() => this.syncScene()).observe($('towerMap'), { attributes: true, attributeFilter: ['hidden'] });
     this.party = new Party(this.meta, () => this.home.open());
@@ -320,7 +337,7 @@ class Game {
     this.wire();
     this.newBattle();
     // (the game opens on the castle, unless a seed is given in the address)
-    if (!seed) this.home.open();
+    if (!seed) this.home.open(closed ?? undefined);
     // (a fault in one frame's drawing or sound is logged and the next frame goes on: Pixi's ticker stops for good when a
     // listener throws, which froze fights mid-way)
     this.app.ticker.add((tk) => {
@@ -729,9 +746,27 @@ class Game {
   /** The home screen is up over the board (nothing of the board is seen, so a board not in a fight is left alone). */
   private homeUp = false;
 
+  /** The Last Stand takes the canvas (the board of the ordinary fights is hidden and not drawn) or gives it back. */
+  private hideBoard(hidden: boolean): void {
+    this.standOn = hidden;
+    document.body.toggleAttribute('data-stand', hidden);
+    this.world.visible = !hidden;
+    this.weather.root.visible = !hidden;
+    this.ghost.visible = false;
+    this.app.stage.renderable = true;
+    if (hidden) this.app.ticker.start();
+  }
+
+  /** The Tower's place at the camp is the Last Stand: a saved run carries on, else a new one begins with the party. */
+  private openStand(): void {
+    if (!modeOpen(this.meta, 'tower') && !loadStand()) return;
+    void this.stand.open();
+  }
+
   private frame(dt: number): void {
     const b = this.b;
     tips.update();
+    if (this.standOn) return;
     if (this.homeUp && b.phase !== 'fight') {
       this.app.ticker.stop();
       return;
@@ -1378,12 +1413,11 @@ class Game {
   }
 
   /** The tower or the calamity from the home screen: its saved run carries on where it stood; with none, a new one begins (the calamity asks for its hero first). */
-  private openMode(kind: 'tower' | 'calamity'): void {
+  private openMode(kind: 'calamity'): void {
     // (a shut mode has a disabled button; a run begun before it shut is still let in)
     if (!modeOpen(this.meta, kind) && !loadSlot(kind)) return;
     const saved = loadSlot(kind);
     if (saved) return this.resumeSlot(saved);
-    if (kind === 'tower') return this.startTower(towerRun(clockSeed(), this.meta));
     pickHero(this.meta, (hero, ascension) => this.startTower(calamityRun(clockSeed(), this.meta, hero, ascension)), () => this.home.open());
   }
 
@@ -1414,13 +1448,6 @@ class Game {
     if (r && !r.over) this.run = r;
     this.syncPool();
     this.placed.clear();
-    // (a tower run is on its map, or at a battle it has picked; one saved before the map had none and gets one)
-    if (this.run.mode?.kind === 'tower') {
-      migrateTower(this.run, ARMIES.filter((a) => armyUnlocked(this.meta, a.id)).map((a) => a.id), this.meta.tower);
-      if (this.run.tower!.cur?.fight) this.newBattle();
-      else this.towerView.open(this.run);
-      return;
-    }
     this.newBattle();
     if (this.run.event) this.events.openEvent(this.run, () => saveRun(this.run));
   }

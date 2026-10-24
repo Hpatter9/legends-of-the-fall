@@ -36,7 +36,9 @@ export type Cue =
   // the menus: coins from a recycle and from a claim, a lucky hire's sparkle, an auto-replay's start, stop and finish
   | 'coinRecycle' | 'coinClaim' | 'sparkle' | 'autoStart' | 'autoStop' | 'autoDone'
   // the cinematics' stings, for any scene to reuse: a boss arriving, and a victory
-  | 'sceneBoss' | 'sceneVictory';
+  | 'sceneBoss' | 'sceneVictory'
+  // the Last Stand: a boss wave is coming, and the king takes a hit
+  | 'standBoss' | 'kingHit';
 
 /** How a sound mixes. `gap`: least ms (real time) between two of it. `ms`: how long it rings, which is how long it holds
  *  its voices. `weight`: voices it uses. `prio`: 0 may be dropped first when the mix is full, 3 always plays. `gain`: its
@@ -67,6 +69,8 @@ export const CUES: Record<Cue, CueSpec> = {
   twistCurse: c(400, 900, 2, 2),
   twistBlessing: c(400, 900, 2, 2),
   eliteSting: c(0, 1400, 3, 3),
+  standBoss: c(0, 1600, 3, 3),
+  kingHit: c(350, 500, 2, 2),
   sceneBoss: c(0, 3000, 2, 2),
   sceneVictory: c(0, 3000, 2, 2),
   setChime2: c(0, 1200, 3, 2),

@@ -93,7 +93,7 @@ export function momentText(mo: Moment): string {
     case 'castle':
       return 'A building of the castle is raised.';
     case 'spire':
-      return `The endless tower, at floor ${mo.floor}.`;
+      return `The Last Stand, at wave ${mo.floor}.`;
     case 'bossForm':
       return 'A boss changes form.';
     case 'mythic':

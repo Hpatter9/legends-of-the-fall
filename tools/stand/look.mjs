@@ -1,0 +1,13 @@
+import { serve, launch, boot, enter } from './lib.mjs';
+const [w, h, dpr, level, wave, secs, name] = [Number(process.argv[2] ?? 393), Number(process.argv[3] ?? 852), Number(process.argv[4] ?? 3), Number(process.argv[5] ?? 20), Number(process.argv[6] ?? 1), Number(process.argv[7] ?? 8), process.argv[8] ?? 'look'];
+const server = serve();
+const browser = await launch();
+const { page, errors } = await boot(browser, w, h, level, 8139, dpr);
+await enter(page);
+if (wave > 1) await page.evaluate(([wave, level]) => { const st = window.__game.stand; st.debugJump(wave, level); st.state.run.gold = 400; }, [wave, level]);
+await page.evaluate(() => document.querySelector('.stStart').click());
+await page.waitForTimeout(secs * 1000);
+await page.screenshot({ path: `out/shots/${name}.png` });
+console.log('errors', errors);
+await browser.close();
+server.close();
