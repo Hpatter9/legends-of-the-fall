@@ -113,12 +113,12 @@ export const SIGNATURES: Record<string, Signature> = {
   // ---- the archer: arrows
   Volley: sig(
     [s('inward', 'wind-sparkle', { n: 6, r: 30 })],
-    [s('beam', 'arrow', { n: 6, r: 150, z: 1.1, f: 45 }), s('pop', 'wind-hit', { z: 1, d: 260 })],
+    [s('beam', 'arrow', { n: 6, r: 150, z: 2, f: 45 }), s('pop', 'wind-hit', { z: 1, d: 260 })],
     [s('pop', 'wind-explosion', { z: 0.9 })],
   ),
   'Arrow Storm': sig(
     [s('dome', 'wind-aura', { z: 2.4, a: 0.7 }), s('spiral', 'wind-sparkle', { n: 10, r: 18 })],
-    [s('rain', 'wind-strike', { n: 12, z: 1.6, t: 0xffe27a, l: 'wind-hit' }), s('rain', 'arrow', { n: 16, z: 1.2, l: 'wind-hit' }), s('ring', 'wind-wave', { z: 4 })],
+    [s('rain', 'wind-strike', { n: 12, z: 1.6, t: 0xffe27a, l: 'wind-hit' }), s('rain', 'arrow', { n: 16, z: 2.2, l: 'wind-hit' }), s('ring', 'wind-wave', { z: 4 })],
     [s('pop', 'wind-hit', { z: 1.2, t: 0xffe27a })],
   ),
   // ---- the fire wizard: fire from the sky
@@ -135,7 +135,7 @@ export const SIGNATURES: Record<string, Signature> = {
   // ---- the ninja monk: fists
   'Thousand Fists': sig(
     [s('orbit', 'light-sparkle', { n: 6, r: 16 })],
-    [s('barrage', 'light-hit', { n: 12, z: 0.9, r: 16, f: 40 })],
+    [s('barrage', 'fist', { n: 12, z: 0.7, r: 18, f: 40 }), s('barrage', 'light-hit', { n: 12, z: 0.9, r: 16, f: 40, d: 40 })],
     [s('pop', 'light-hit', { z: 1, f: 40 })],
   ),
   'Hundred Fists': sig(
@@ -195,7 +195,7 @@ export const SIGNATURES: Record<string, Signature> = {
   ),
   'Feather Storm': sig(
     [s('spiral', 'dark-puff', { n: 12, r: 26, t: 0x403048, a: 0.9 })],
-    [s('spray', 'dark-puff', { n: 24, z: 0.8, t: 0x403048, r: 130 }), s('spray', 'blood-sparkle', { n: 14, z: 0.9 }), s('ripple', 'wind-wave', { n: 3, z: 4 })],
+    [s('spray', 'feather', { n: 22, z: 0.8, r: 150 }), s('spray', 'dark-puff', { n: 14, z: 0.8, t: 0x403048, r: 110 }), s('spray', 'blood-sparkle', { n: 14, z: 0.9 }), s('ripple', 'wind-wave', { n: 3, z: 4 })],
     [s('pop', 'dark-puff', { z: 1.2, t: 0x403048 })],
   ),
   // ---- the yamabushi: gusts
@@ -239,7 +239,7 @@ export const SIGNATURES: Record<string, Signature> = {
   ),
   'Heart of the Grove': sig(
     [s('ring', 'forest-rune', { z: 3, loop: true, a: 0.5 }), s('dome', 'forest-aura', { z: 2.4, a: 0.6 })],
-    [s('pillars', 'forest-pillar', { n: 8, r: 80, z: 2.2, a: 0.8 }), s('spiral', 'forest-sparkle', { n: 16, r: 30, on: 'allies' }), s('ripple', 'forest-wave', { n: 3, z: 4.4 })],
+    [s('pillars', 'forest-pillar', { n: 8, r: 80, z: 2.2, a: 0.8 }), s('spiral', 'leaf', { n: 10, r: 34, z: 0.6, on: 'allies' }), s('spiral', 'forest-sparkle', { n: 16, r: 30, on: 'allies' }), s('ripple', 'forest-wave', { n: 3, z: 4.4 })],
     [s('pop', 'forest-explosion', { z: 1.3 })],
   ),
   // ---- the barbarian: blood
@@ -322,18 +322,18 @@ export const SIGNATURES: Record<string, Signature> = {
   // ---- the mercenary: a mark, then a contract
   'Bounty Hunt': sig(
     [s('inward', 'blood-sparkle', { n: 5, r: 22 })],
-    [s('drop', 'blood-cross', { on: 'foes', z: 2.2, l: 'blood-hit', a: 0.9 }), s('dash', 'dustGold', { n: 6, r: 70 })],
+    [s('drop', 'blood-cross', { on: 'foes', z: 2.2, l: 'blood-hit', a: 0.9 }), s('spray', 'coin', { n: 6, z: 0.6, r: 90 })],
     [s('pop', 'blood-cross', { z: 1.2, a: 0.9 })],
   ),
   'Contract Killer': sig(
     [s('ring', 'blood-rune', { z: 2.6, loop: true, t: 0xffd24a, a: 0.5 })],
-    [s('barrage', 'star-explosion', { n: 16, z: 1.3, r: 30, f: 45, t: 0xffd24a }), s('drop', 'blood-slash', { on: 'foes', z: 2.4, t: 0xffd24a, l: 'star-hit' }), s('ripple', 'blood-wave', { n: 2, z: 4, t: 0xffd24a })],
+    [s('barrage', 'coin', { n: 14, z: 0.8, r: 34 }), s('barrage', 'star-explosion', { n: 16, z: 1.3, r: 30, f: 45, t: 0xffd24a }), s('drop', 'blood-slash', { on: 'foes', z: 2.4, t: 0xffd24a, l: 'star-hit' }), s('ripple', 'blood-wave', { n: 2, z: 4, t: 0xffd24a })],
     [s('pop', 'star-hit', { z: 1.4, t: 0xffd24a })],
   ),
   // ---- the mummy: bandages, then a curse of sand
   'Binding Wraps': sig(
     [s('inward', 'earth-puff', { n: 5, r: 26, t: 0xe8d8a0 })],
-    [s('spiral', 'wind-sparkle', { n: 12, r: 22, on: 'foes', t: 0xe8d8a0, z: 1 }), s('ring', 'earth-rune', { on: 'foes', z: 1.6, t: 0xe8d8a0 })],
+    [s('spiral', 'bandage', { n: 9, r: 22, on: 'foes', z: 0.55 }), s('spiral', 'wind-sparkle', { n: 12, r: 22, on: 'foes', t: 0xe8d8a0, z: 1 }), s('ring', 'earth-rune', { on: 'foes', z: 1.6, t: 0xe8d8a0 })],
     [s('pop', 'earth-puff', { z: 1.2, t: 0xe8d8a0 })],
   ),
   'Curse of the Pharaoh': sig(
@@ -349,13 +349,13 @@ export const SIGNATURES: Record<string, Signature> = {
   ),
   Keelhaul: sig(
     [s('ring', 'water-orb', { z: 2.4, loop: true, a: 0.5 })],
-    [s('rain', 'water-explosion', { n: 12, z: 1.8, l: 'water-hit', a: 0.9 }), s('ripple', 'ice-wave', { n: 3, z: 4.2, t: 0x5ab8d8 }), s('spray', 'water-sparkle', { n: 14 })],
+    [s('rain', 'anchor', { n: 7, z: 1, l: 'water-hit' }), s('rain', 'water-explosion', { n: 12, z: 1.8, l: 'water-hit', a: 0.9 }), s('ripple', 'ice-wave', { n: 3, z: 4.2, t: 0x5ab8d8 }), s('spray', 'water-sparkle', { n: 14 })],
     [s('pop', 'water-explosion', { z: 1.3 })],
   ),
   // ---- the wolf bard: a dirge, then a hymn
   Dirge: sig(
     [s('orbit', 'ice-sparkle', { n: 8, r: 20, t: 0x9ad0ff })],
-    [s('orbit', 'ice-sparkle', { n: 12, r: 44, z: 1.1, t: 0x9ad0ff }), s('ring', 'ice-circle', { z: 3, a: 0.7 })],
+    [s('orbit', 'ice-sparkle', { n: 12, r: 44, z: 1.1, t: 0x9ad0ff }), s('orbit', 'note', { n: 6, r: 56, z: 0.7, t: 0x9ad0ff }), s('ring', 'ice-circle', { z: 3, a: 0.7 })],
     [s('pop', 'ice-status', { z: 1.2 })],
   ),
   'Battle Hymn': sig(
@@ -366,12 +366,12 @@ export const SIGNATURES: Record<string, Signature> = {
   // ---- the beastmaster: the wild
   'Call of the Wild': sig(
     [s('inward', 'forest-gather', { n: 6, r: 28, t: 0xffb07a })],
-    [s('pillars', 'forest-circle', { n: 3, r: 44, z: 1.8, t: 0xffb07a, a: 0.85 }), s('ring', 'earth-wave', { z: 2.6, t: 0xffb07a })],
+    [s('pillars', 'forest-circle', { n: 3, r: 44, z: 1.8, t: 0xffb07a, a: 0.85 }), s('fan', 'paw', { n: 5, z: 0.7, r: 3.1 }), s('ring', 'earth-wave', { z: 2.6, t: 0xffb07a })],
     [s('pop', 'forest-slash', { z: 1.4, t: 0xffb07a })],
   ),
   'Hunt of the Pack': sig(
     [s('ring', 'forest-rune', { z: 2.8, loop: true, t: 0xffb07a, a: 0.5 })],
-    [s('beam', 'forest-slash', { n: 7, r: 190, z: 1.6, t: 0xffb07a, f: 40 }), s('fan', 'forest-aura', { n: 5, z: 1.6, r: 1.6, t: 0xffb07a, a: 0.7 }), s('ripple', 'forest-wave', { n: 2, z: 4, t: 0xffb07a })],
+    [s('beam', 'paw', { n: 7, r: 190, z: 0.9 }), s('beam', 'forest-slash', { n: 7, r: 190, z: 1.6, t: 0xffb07a, f: 40 }), s('fan', 'forest-aura', { n: 5, z: 1.6, r: 1.6, t: 0xffb07a, a: 0.7 }), s('ripple', 'forest-wave', { n: 2, z: 4, t: 0xffb07a })],
     [s('pop', 'forest-slash', { z: 1.6, t: 0xffb07a, f: 40 })],
   ),
   // ---- the kraken mate: the pull of the sea
@@ -399,12 +399,12 @@ export const SIGNATURES: Record<string, Signature> = {
   // ---- the reaper: the scythe
   Reap: sig(
     [s('inward', 'dark-sparkle', { n: 5, r: 24, t: 0x6a70ff })],
-    [s('sweep', 'water-slash', { n: 6, z: 2, r: 30, t: 0x6a70ff, f: 45 }), s('ring', 'dark-wave', { z: 2.8, t: 0x6a70ff })],
+    [s('sweep', 'scythe', { n: 5, z: 1.1, r: 32 }), s('sweep', 'water-slash', { n: 6, z: 2, r: 30, t: 0x6a70ff, f: 45 }), s('ring', 'dark-wave', { z: 2.8, t: 0x6a70ff })],
     [s('pop', 'water-hit', { z: 1.3, t: 0x6a70ff })],
   ),
   'Harvest of Souls': sig(
     [s('ring', 'dark-rune', { z: 3, loop: true, t: 0x6a70ff, a: 0.5 })],
-    [s('draw', 'ice-orb', { n: 9, z: 1.2, t: 0x8ab0ff, a: 0.9 }), s('pillar', 'dark-pillar', { z: 2.4, t: 0x6a70ff, a: 0.6 }), s('ripple', 'dark-wave', { n: 2, z: 4.4, t: 0x6a70ff })],
+    [s('draw', 'skull', { n: 9, z: 0.7 }), s('draw', 'ice-orb', { n: 9, z: 1.2, t: 0x8ab0ff, a: 0.9 }), s('pillar', 'dark-pillar', { z: 2.4, t: 0x6a70ff, a: 0.6 }), s('ripple', 'dark-wave', { n: 2, z: 4.4, t: 0x6a70ff })],
     [s('pop', 'ice-orb', { z: 1.2, t: 0x8ab0ff })],
   ),
   // ---- the time witch: pink time
@@ -432,7 +432,7 @@ export const SIGNATURES: Record<string, Signature> = {
   // ---- the dread pirate: cannon fire, and a ghost fleet
   Broadside: sig(
     [s('inward', 'fire-smoke', { n: 3, r: 26, z: 0.8 })],
-    [s('fan', 'fire-smoke', { n: 5, z: 1.6, r: 2.2, a: 0.9 }), s('barrage', 'fire-explosion', { n: 6, z: 1, r: 40, on: 'foes', d: 160, t: 0x9ad0b0 })],
+    [s('fan', 'cannonball', { n: 5, z: 0.8, r: 2.2 }), s('fan', 'fire-smoke', { n: 5, z: 1.6, r: 2.2, a: 0.9 }), s('barrage', 'fire-explosion', { n: 6, z: 1, r: 40, on: 'foes', d: 160, t: 0x9ad0b0 })],
     [s('pop', 'fire-explosion', { z: 1.2, t: 0x9ad0b0 })],
   ),
   'Ghost Fleet': sig(
@@ -542,7 +542,7 @@ export const SIGNATURES: Record<string, Signature> = {
   // ---- the satyr: pipes and revelry
   'Pipes of Pan': sig(
     [s('orbit', 'forest-sparkle', { n: 6, r: 18, t: 0xffd27a })],
-    [s('spiral', 'forest-sparkle', { n: 12, r: 26, z: 1, on: 'allies', t: 0xffd27a }), s('ring', 'forest-nova', { z: 2.6, t: 0xffd27a })],
+    [s('spiral', 'note', { n: 8, r: 26, z: 0.7, on: 'allies' }), s('spiral', 'forest-sparkle', { n: 12, r: 26, z: 1, on: 'allies', t: 0xffd27a }), s('ring', 'forest-nova', { z: 2.6, t: 0xffd27a })],
     [s('pop', 'forest-sparkle', { z: 1.2, on: 'allies', t: 0xffd27a })],
   ),
   Bacchanal: sig(
@@ -564,7 +564,7 @@ export const SIGNATURES: Record<string, Signature> = {
   // ---- the samurai commander: banners
   'War Banner': sig(
     [s('inward', 'light-sparkle', { n: 5, r: 24, t: 0xffd24a })],
-    [s('dome', 'light-aura', { z: 2.4, t: 0xffd24a, a: 0.85, on: 'allies' }), s('ring', 'light-wave', { z: 2.8, t: 0xffd24a })],
+    [s('barrier', 'banner', { n: 3, r: 34, z: 0.9, on: 'allies' }), s('dome', 'light-aura', { z: 2.4, t: 0xffd24a, a: 0.85, on: 'allies' }), s('ring', 'light-wave', { z: 2.8, t: 0xffd24a })],
     [s('pop', 'light-aura', { z: 1.3, on: 'allies', t: 0xffd24a })],
   ),
   'Rally Cry': sig(
@@ -651,3 +651,6 @@ export const leadOf = (name: string): Step | undefined => SIGNATURES[name]?.cast
 
 /** The strips a step may name that are not in the atlas: the arrow sprite and two Vfx strips (`vfxArt.ts`). */
 export const SPECIAL_STRIPS: readonly string[] = ['arrow', 'pinkHeart', 'dustGold'];
+
+/** The props, in the order of `src/art/fx/props.png` (generated with PixelLab, `tools/fxlab/genprops.py`). */
+export const PROPS: readonly string[] = ['feather', 'coin', 'note', 'bandage', 'fist', 'skull', 'anchor', 'cannonball', 'leaf', 'paw', 'scythe', 'banner'];

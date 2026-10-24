@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { KITS } from '../src/sim/abilities';
 import { UNITS } from '../src/sim/units';
 import { TIER_SKILLS } from '../src/sim/tierSkills';
-import { SIGNATURES, SPECIAL_STRIPS, tierRing, type Step } from '../src/render/signatures';
+import { PROPS, SIGNATURES, SPECIAL_STRIPS, tierRing, type Step } from '../src/render/signatures';
 
 const atlas = JSON.parse(readFileSync('src/art/fx/pack/atlas.json', 'utf8')) as Record<string, number[]>;
 const vfx = readFileSync('src/render/vfxArt.ts', 'utf8');
@@ -31,7 +31,7 @@ test('every hero skill and ultimate, and every foe skill, has a look of its own'
 test('every strip a signature names exists', () => {
   for (const [name, sig] of Object.entries(SIGNATURES))
     for (const st of all(sig)) {
-      const ok = atlas[st.k] || (SPECIAL_STRIPS.includes(st.k) && (st.k === 'arrow' || vfx.includes(`${st.k},`)));
+      const ok = atlas[st.k] || PROPS.includes(st.k) || (SPECIAL_STRIPS.includes(st.k) && (st.k === 'arrow' || vfx.includes(`${st.k},`)));
       assert.ok(ok, `${name} names a strip that is not there: ${st.k}`);
       if (st.l) assert.ok(atlas[st.l], `${name} lands in ${st.l}, not in the atlas`);
     }
@@ -104,6 +104,13 @@ test('a tier ring is the lead of its hero\'s skill', () => {
     assert.equal(ring[0].k, SIGNATURES[k.skill.name].cast[0].k);
     assert.equal(tierRing(k.skill.name, 192, false).length, 1);
   }
+});
+
+test('the props are all in the picture', () => {
+  const png = readFileSync('src/art/fx/props.png');
+  // (a PNG's header says its width: one 32 px frame a prop)
+  assert.equal(png.readUInt32BE(16), PROPS.length * 32);
+  assert.equal(png.readUInt32BE(20), 32);
 });
 
 test('sizes and counts are sane (a phone has to draw them)', () => {

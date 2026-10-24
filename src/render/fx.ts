@@ -22,7 +22,7 @@ import { bossEntrance, deathBurst, impactBurst, play, setBoneArt, windUp } from 
 import { comboGather, comboStrike, promoteBurst, ringOut, toneColour, type Spot } from './spectacle';
 import { comboById, COMBO_NAME } from '../sim/combos';
 import { SIGNATURES, tierRing } from './signatures';
-import { playSteps, setSignatureSprite, type Pt, type Scene } from './signatureFx';
+import { loadProps, playSteps, setSignatureSprite, type Pt, type Scene } from './signatureFx';
 import { tierSkillOf } from '../sim/tierSkills';
 import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, impactElement, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, SPELL_TOUCH, type Missile } from './fxRules';
 import { particleBudget, slashOf } from './vfxRules';
@@ -107,6 +107,7 @@ export async function loadFx(): Promise<void> {
   magic = Object.fromEntries(keys.map((k, i) => [k, strips[i]])) as Record<MagicKey, Strip>;
   await loadVfxArt();
   await loadPackArt();
+  await loadProps();
 }
 
 /** A small random offset (the renderer's own, not the sim's). */
@@ -351,7 +352,7 @@ export class Fx {
         if (signature) {
           // (a hero's skill has a look of its own: no shared burst on top)
           const spot = { x: hx, y: to.y, tall: to.tall };
-          playSteps(signature, { p: this.particles, self: spot, foes: [spot], allies: [spot], dir: { x: 0, y: 1 }, ms: 0 });
+          playSteps(signature, { p: this.particles, self: spot, foes: [spot], allies: [spot], dir: { x: 0, y: 1 }, ms: 0, size: kitOf(by)?.ultimate?.name === castName ? 1.25 : 1 });
         } else if (skillFx) {
           this.effect(skillFx, hx, hy);
           // (and a burst of the skill's own element on top)
@@ -706,10 +707,10 @@ export class Fx {
     this.skillStack.push(this.label(name, by.x, by.y - by.tall - 20, ultimate ? 0xfff2a0 : boss ? 0xff9a8a : 0xffe27a, ultimate || boss ? 15 : 13, 1200));
     this.casting.set(byId, name);
     const signature = SIGNATURES[name];
-    if (signature) playSteps(signature.wind, this.sceneOf(by, ms));
+    if (signature) playSteps(signature.wind, this.sceneOf(by, ms, ultimate ? 1.45 : 1.15));
     else windUp(this.particles, el, by.x, by.y, ms, by.tall, ultimate || boss);
     const cast = signature ? undefined : SKILL_FX[name]?.cast;
-    if (signature) this.later(ms, () => playSteps(signature.cast, this.sceneOf(this.sprites.get(byId) ?? by, ms)));
+    if (signature) this.later(ms, () => playSteps(signature.cast, this.sceneOf(this.sprites.get(byId) ?? by, ms, ultimate ? 1.45 : 1.15)));
     if (ultimate) {
       this.trauma = Math.max(this.trauma, 0.5);
       this.flash(0.3, 100);
@@ -753,7 +754,7 @@ export class Fx {
   }
 
   /** Where the caster, the foes nearest it and its friends are drawn, for a signature to be played against. */
-  private sceneOf(by: UnitSprite, ms: number): Scene {
+  private sceneOf(by: UnitSprite, ms: number, size = 1.15): Scene {
     const near: Pt[] = [];
     const friends: Pt[] = [];
     for (const s of this.sprites.values()) {
@@ -772,7 +773,7 @@ export class Fx {
       const len = Math.hypot(vx, vy) || 1;
       [dx, dy] = [vx / len, vy / len];
     }
-    return { p: this.particles, self: { x: by.x, y: by.y, tall: by.tall }, foes: near, allies: friends, dir: { x: dx, y: dy }, ms };
+    return { p: this.particles, self: { x: by.x, y: by.y, tall: by.tall }, foes: near, allies: friends, dir: { x: dx, y: dy }, ms, size };
   }
 
   /** A tier skill's ring goes out from its caster, in the element of its skill. */
@@ -782,7 +783,7 @@ export class Fx {
     if (!by) return;
     const skillName = kitOf(by.unit)?.skill.name ?? '';
     // (a hero's tier ring is its skill's own look again; a foe's is the element's wave)
-    if (SIGNATURES[skillName]) playSteps(tierRing(skillName, e.reach * 64, (by.unit.grade ?? 1) > 2), this.sceneOf(by, 600));
+    if (SIGNATURES[skillName]) playSteps(tierRing(skillName, e.reach * 64, (by.unit.grade ?? 1) > 2), this.sceneOf(by, 600, 1));
     else ringOut(this.particles, skillElement(skillName), by.x, by.y, e.reach);
     this.trauma = Math.max(this.trauma, 0.15);
   }

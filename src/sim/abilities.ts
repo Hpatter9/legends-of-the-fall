@@ -1369,7 +1369,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Whip Crack', text: 'His blows slow the foe for 1.5s', slow: 1500 },
   },
   kraken: {
-    skill: { name: 'Undertow', text: 'Every foe within 4 tiles is hurt, slowed for 2s and dragged a tile closer', need: CHARGE_MAX, dealt: 5, taken: 6, perSec: 2, castMs: 600, anim: 'attack', cast: undertow },
+    skill: { name: 'Undertow', text: 'Every foe within 4 tiles is hurt, slowed for 2s and dragged a tile closer', need: CHARGE_MAX, dealt: 5, taken: 6, perSec: 2, castMs: 600, anim: 'attack2', cast: undertow },
     passive: { name: 'Barnacled Hide', text: 'Blows from the front lose a fifth', block: 0.2 },
   },
   lancer: {

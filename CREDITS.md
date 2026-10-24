@@ -104,6 +104,12 @@ All Craftpix, copied one sprite or layer at a time; no PixelLab. Ground tops and
   puff, smoke, sparkle, aura, vortex, pillar, strike, spikes, wave and flame strips; star, water and moon have orb, hit,
   explosion, slash and sparkle. Used by `src/render/fxSheets.ts`.
 
+- **The spell props** (`src/art/fx/props.png`): twelve 32x32 sprites (a crow feather, a gold coin, a music note, a roll of
+  bandage, a fist, a ghost, an anchor, a cannonball, a leaf, a paw print, a scythe and a banner) **generated with PixelLab**
+  (`/create-image-pixflux`, the game's warm palette; `tools/fxlab/genprops.py`, the chosen frames kept in `tools/fxlab/props/`),
+  thrown by the heroes' skills and ultimates (`src/render/signatures.ts`, `docs/notes/unique-spells.md`). Every other effect
+  in those looks is a strip of the Pixel Effects pack above.
+
 - **Fonts** (`out/web/fonts/`, copied by `build.mjs` from the `@fontsource` npm packages, all under the SIL Open Font
   Licence 1.1): **Cinzel Decorative** (Natanael Gama; titles, banners and big buttons), **Alegreya Sans** (Juan Pablo
   del Peral, Huerta Tipográfica; body text) and **Press Start 2P** (CodeMan38; counters and damage numbers).

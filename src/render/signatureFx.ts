@@ -2,12 +2,14 @@
 // thinned by the battery saver, and costs no allocation beyond the pool). Nothing here reads or changes the battle: `fx.ts` hands
 // over where the caster, the foes and the allies are drawn, and the steps fall where those are.
 
-import type { Texture } from 'pixi.js';
+import { Rectangle, Texture } from 'pixi.js';
+import { loadImage } from './loadImage';
+import propsUrl from '../art/fx/props.png';
 import type { Burst, Particles } from './particles';
 import { PACK } from './fxSheets';
 import { VFX, type VfxKey } from './vfxArt';
 import { bits } from './fxRules';
-import type { On, Step } from './signatures';
+import { PROPS, type On, type Step } from './signatures';
 
 /** A fighter's place on the screen (world pixels, the feet; `tall` is how tall it is drawn). */
 export interface Pt {
@@ -28,11 +30,19 @@ export interface Scene {
   dir: { x: number; y: number };
   /** The length of the cast in ms (what a `loop` or a dome lasts). */
   ms: number;
+  /** How much bigger than the steps say to draw everything: an ultimate is the biggest. */
+  size: number;
 }
 
 /** The two single sprites a step can name (given by `fx.ts` once loaded). */
 const SPRITES: Record<string, Texture[]> = {};
 export const setSignatureSprite = (name: string, t: Texture) => void (SPRITES[name] = [t]);
+
+/** The prop sprites (a feather, a coin, a note...: `src/art/fx/props.png`, one 32 px frame each, made with PixelLab), cut once. */
+export async function loadProps(): Promise<void> {
+  const base = Texture.from(await loadImage(propsUrl));
+  PROPS.forEach((name, i) => (SPRITES[name] = [new Texture({ source: base.source, frame: new Rectangle(i * 32, 0, 32, 32) })]));
+}
 
 /** The frames a step names: an atlas strip, a Vfx strip or a sprite (nothing when not loaded). */
 export function framesOf(k: string): Texture[] | undefined {
@@ -54,7 +64,9 @@ const body = (t: Pt) => t.y - t.tall * 0.5;
 
 /** One run of a strip, with the step's size, tint, opacity and speed. */
 function put(sc: Scene, st: Step, frames: Texture[], x: number, y: number, o: Partial<Burst> = {}): void {
-  sc.p.spawn({ frames, x, y, scale: st.z ?? 1, frameMs: st.f ?? 70, alpha: st.a ?? 0.9, tint: st.t, add: true, prio: true, delay: st.d, ...o });
+  // (a prop is a solid sprite, drawn plainly and tumbling; the strips glow)
+  const prop = PROPS.includes(st.k);
+  sc.p.spawn({ frames, x, y, scale: (st.z ?? 1) * sc.size, frameMs: st.f ?? 70, alpha: st.a ?? (prop ? 1 : 0.9), tint: st.t, add: !prop, prio: true, delay: st.d, ...(prop && !o.rotation ? { spin: jit(0.012) } : {}), ...o });
 }
 
 /** A delay for the `i`th of a run (the step's own wait added). */

@@ -515,7 +515,7 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
     juggernaut: ult('Cataclysm', 'The ground splits: every foe within 6 tiles is hurt hard and held still for 2s', 900, 'attack', (b, me, out) =>
       smite(b, me, out, { reach: 6, mult: 2.2, stun: 2000 })),
     minotaur: ult('Stampede', 'Up to three charges in a row, each at the weakest foe in line, shoving and stunning', 600, 'attack2', stampede),
-    kraken: ult('Maelstrom', 'A whirlpool drags every foe within 6 tiles toward him, hurts and slows it', 800, 'attack', (b, me, out) =>
+    kraken: ult('Maelstrom', 'A whirlpool drags every foe within 6 tiles toward him, hurts and slows it', 800, 'attack2', (b, me, out) =>
       smite(b, me, out, { reach: 6, mult: 1.8, slow: 4000, stun: 800, pull: true })),
     mummy: ult('Curse of the Pharaoh', 'Every foe within 5 tiles is cursed and slowed for 6s, and the Mummy is shielded', 800, 'attack2', (b, me, out) =>
       smite(b, me, out, { reach: 5, mult: 0.8, slow: 6000, curse: { ms: 6000, dot: 0.5 }, shield: 0.3 })),
