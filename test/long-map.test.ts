@@ -108,7 +108,8 @@ test('the road never overlaps itself, never turns back on the edge it came in by
   }
   // (every way of lying turns up, and a 15-section road fits in about five sections' width)
   assert.equal(dirs.size, 4);
-  assert.ok(widest <= 48, `the road reached ${widest} tiles across`);
+  // (48 tiles was for sections 9 deep: the same reach in sections' depths)
+  assert.ok(widest <= Math.round((48 / 9) * D), `the road reached ${widest} tiles across`);
 });
 
 test('every joined edge meets enough of the section before, within a step, with a way across', () => {
@@ -194,11 +195,11 @@ test('the seam board holds both sections, tile for tile', () => {
 test('the formation moves over to the same tiles of the new section', () => {
   const c = road(5, 3);
   const spots = [
-    { id: '1', u: 1, v: 8 },
-    { id: '2', u: 3, v: 7 },
-    { id: '3', u: 5, v: 6 },
-    { id: '4', u: 2, v: 6 },
-    { id: '5', u: 4, v: 8 },
+    { id: '1', u: 1, v: D - 1 },
+    { id: '2', u: 3, v: D - 2 },
+    { id: '3', u: 5, v: D - 3 },
+    { id: '4', u: 2, v: D - 3 },
+    { id: '5', u: 4, v: D - 1 },
   ];
   const got = transferFormation(c[1].board, spots);
   for (const s of spots) assert.deepEqual(got.get(s.id), [s.u, s.v]);
@@ -208,11 +209,11 @@ test('a formation tile that is not free is replaced by the nearest free deploy t
   const c = road(5, 3);
   const b = c[1].board;
   // (a boulder under hero 1's tile, and two heroes asking for the same one)
-  tileAt(b, 1, 8)!.rock = true;
+  tileAt(b, 1, D - 1)!.rock = true;
   const got = transferFormation(b, [
-    { id: '1', u: 1, v: 8 },
-    { id: '2', u: 3, v: 7 },
-    { id: '3', u: 3, v: 7 },
+    { id: '1', u: 1, v: D - 1 },
+    { id: '2', u: 3, v: D - 2 },
+    { id: '3', u: 3, v: D - 2 },
   ]);
   assert.equal(got.size, 3);
   const keys = [...got.values()].map(([u, v]) => `${u},${v}`);
@@ -221,7 +222,7 @@ test('a formation tile that is not free is replaced by the nearest free deploy t
     assert.ok(v >= D - DEPLOY_ROWS);
     assert.ok(standable(tileAt(b, u, v)));
   }
-  assert.deepEqual(got.get('2'), [3, 7]);
+  assert.deepEqual(got.get('2'), [3, D - 2]);
 });
 
 test('an army run fights each wave on its section of the long map, in the board\'s own coordinates', () => {

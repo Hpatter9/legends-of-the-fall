@@ -567,7 +567,7 @@ class Game {
     const bar = $('bossBar');
     const boss = this.b.units.find((u) => u.side === 'foe' && (u.size ?? 1) > 1);
     const show = this.b.phase === 'fight' && !!boss?.alive;
-    bar.hidden = !show;
+    if (bar.hidden === show) bar.hidden = !show;
     if (!boss || !show) return;
     bar.querySelector('b')!.textContent = UNITS[boss.def].name;
     (bar.querySelector('span') as HTMLElement).style.width = `${(boss.hp / boss.maxHp) * 100}%`;
@@ -679,6 +679,7 @@ class Game {
         const events = stepBattle(b);
         tally(this.stats, events, b.units);
         this.fx.show(b, events);
+        for (const e of events) if (e.kind === 'boom') this.boardView.removeBarrel(e.u, e.v);
         // (a fighter a skill called up mid-fight has no sprite yet: make it, with its entrance)
         if (b.units.length !== this.sprites.size) this.syncSprites();
         playEvents(b, events, this.speed);
