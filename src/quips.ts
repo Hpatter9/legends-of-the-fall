@@ -6,7 +6,7 @@
 import { settings } from './settings';
 import { UNITS } from './sim/units';
 import { Rng, mixSeed } from './sim/rng';
-import { DUCHESS_LINES, type QuipKind } from './quipData';
+import { DUCHESS_LINES, type KingKind, type QuipKind } from './quipData';
 import { QuipBox } from './render/quipRules';
 import { showBanter, showQuip, type Anchor } from './quipView';
 
@@ -45,6 +45,13 @@ export function foeGrumbles(foes: number, at: (i: number) => Anchor | null): voi
   if (text && a) showQuip(a, text, { who: 'A foe' });
 }
 
+/** A heart has brought the party back: one of the `heroes` says so. `at(hero)` says where each is on the page. */
+export function revivedQuip(heroes: readonly string[], at: (hero: string) => Anchor | null): void {
+  const q = box.revive(heroes, now());
+  const a = q && at(q.hero);
+  if (q && a) showQuip(a, q.text, { who: UNITS[q.hero]?.name });
+}
+
 /** A fight ends: one of the `heroes` has a word, or two trade banter. `at(hero)` says where each is on the page. */
 export function endingQuip(heroes: readonly string[], won: boolean, at: (hero: string) => Anchor | null): void {
   const q = box.ending(heroes, won, now());
@@ -55,6 +62,20 @@ export function endingQuip(heroes: readonly string[], won: boolean, at: (hero: s
     const a = first.at();
     if (a) showQuip(a, first.text, { who: first.who });
   }
+}
+
+/** The king speaks in the Last Stand (a wave starting, a boss wave, a hit on him, his health low, a wave cleared, his fall), over `at()`. */
+export function kingSays(kind: KingKind, at: () => Anchor | null): void {
+  const text = box.king(kind, now());
+  const a = text && at();
+  if (text && a) showQuip(a, text, { who: 'The king' });
+}
+
+/** A foe at the edge of the field grumbles as a Last Stand wave comes in (one a wave, likelier on a boss wave), over `at()`. */
+export function standFoeGrumbles(boss: boolean, at: () => Anchor | null): void {
+  const text = box.standFoe(boss, now());
+  const a = text && at();
+  if (text && a) showQuip(a, text, { who: 'A foe' });
 }
 
 export type GoatKind = keyof Pick<typeof DUCHESS_LINES, 'tap' | 'nibble' | 'bigHit' | 'boss' | 'wipe'>;
