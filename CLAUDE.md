@@ -48,7 +48,7 @@ Chronos later, so keep its conventions.
 - `src/sim/daily.ts`: the daily's shape (ten waves, the boss of the day, `dailyArmy`), with `modes.ts` (`settleDaily`, `dailyLine`) and `docs/notes/daily-goal.md`.
 - `src/sim/units.ts`: `UNITS` (the five heroes; the foes come from `foes.ts`), `HEROES`. `src/sim/foes.ts`: `FOES`, `FOE_BANDS`.
 - `src/sim/tiers.ts`: the five army tiers (Normal, Hard, Elite, Legendary, Mythic); which hero level each is for, and how the spire and Calamity answer the castle, is in `docs/notes/difficulty.md` (`npm run balance -- --no-tables --deep ... [--talents]` measures it).
-- `src/sim/ultimates.ts`: every hero's ultimate (the eight old ones are in `abilities.ts`; the other 37 unlock at level 15; `docs/notes/ultimates.md`).
+- `src/sim/ultimates.ts`: every hero's ultimate (the eight old ones are in `abilities.ts`, the other 37 here; each unlocks at `ULT_LEVEL`, level 30; `docs/notes/ultimates.md`).
 - `src/sim/battle.ts`: deploying (`canPlace`, `place`, `unplace`), `fight`, `stepBattle` (100 ms ticks), the AI,
   `blowMult`, `shotReach`, `canStrike`.
 - `src/sim/path.ts`: `walkFrom` (cheapest walks round the others), `firstStep`.

@@ -20,8 +20,9 @@ The owner's ask: more character and life, humour, "maybe even bringing Duchess o
 
 ## Hero quips
 
-- `src/quipData.ts`: four lines for each of the 45 heroes (hired or picked, first placed, won, lost), in their own voice,
-  and banter lines for 25 traits (two heroes sharing a trait trade a line at the end of a fight).
+- `src/quipData.ts`: three lines for each of eight moments for each of the 45 heroes (hired or picked, first placed, won, lost, level
+  gained, ultimate cast, revived, close call), in their own voice, and five pairs of banter lines for 25 traits (two heroes sharing a trait
+  trade a line at the end of a fight). Rewritten by a writer since: `docs/notes/new-lines.md`.
 - `src/render/quipRules.ts` (pure, `test/quips.test.ts`): `QuipBox` rate-limits them: at most one bubble per 5 s, five per
   scene, a hero's "first placed" once per scene, a win or loss may speak inside the gap, and each moment has a chance
   (0.5 to 0.9). Picks come from a side stream of the save's seed (`mixSeed(seed, 0x71b5)`), never the fight's stream.
