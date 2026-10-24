@@ -247,3 +247,7 @@ No new art: the five-hero combos' gathering and strike, a tier skill's ring and 
 ## Talent icons
 
 - The **talent glyphs** (`src/art/talent/*.png`, 37 icons at 32x32: heart, sword, armour, eye, boot, cross, pickaxe and the rest) are generated with PixelLab (`tools/pixellab/talents/gen.py`, `/create-image-pixflux` with the game's warm palette as the colour reference, as `tools/ui/genicons.py` does), used as they came. See `docs/notes/hero-progress.md`.
+
+## Heart revive
+
+No new art: the burning heart's flame is the `flame_fire` strip (`src/art/fx/vfx/flame_fire.png`) from the **5000 Pixel Effects** pack by blueberry already credited above, played once over the heart (`src/reviveView.ts`); the heroes rise in the existing light pillar of a promotion.
