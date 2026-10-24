@@ -103,7 +103,7 @@ export class UnitSprite {
   /** How tall it's drawn. */
   tall = 40;
 
-  constructor(readonly unit: Unit) {
+  constructor(public unit: Unit) {
     const def = defOf(unit);
     this.grade = unit.side === 'hero' ? (unit.grade ?? 1) : 1;
     const awake = unit.side === 'hero' ? (unit.awaken ?? 0) : 0;
@@ -254,6 +254,17 @@ export class UnitSprite {
     else if (this.root.scale.x !== this.baseSize) this.root.scale.set(this.baseSize);
   }
 
+  /** Use this sprite for another fighter of the same kind and size (a crowd's foes are drawn from a pool, so a wave of fifty makes no new sprites). */
+  rebind(unit: Unit): void {
+    this.unit = unit;
+    this.barKey = '';
+    this.kx = this.ky = this.flash = 0;
+    this.popAt = this.burstAt = -1;
+    this.root.alpha = 1;
+    this.root.visible = true;
+    this.bar.clear();
+  }
+
   /** A blow pushes it a little way along (dx, dy), and it eases back. */
   nudge(dx: number, dy: number): void {
     this.kx = dx;
@@ -377,13 +388,21 @@ export class UnitSprite {
     }
   }
 
+  /** What the health bar last showed (a fighter with no skill meter, which is most of a crowd's foes, redraws it only when this changes). */
+  private barKey = '';
+
   private drawBar(alive: boolean, t: number): void {
     const u = this.unit;
     const g = this.bar;
+    const share = u.hp / u.maxHp;
+    if (!kitOf(u)) {
+      const key = alive ? `${Math.round(share * BAR_W)}${u.side === 'hero' && share <= 0.35 ? 'l' : ''}` : '';
+      if (key === this.barKey) return;
+      this.barKey = key;
+    }
     g.clear();
     if (!alive) return;
     const top = -this.tall - 8;
-    const share = u.hp / u.maxHp;
     g.rect(-BAR_W / 2 - 1, top - 1, BAR_W + 2, 5).fill({ color: 0x1a1410, alpha: 0.85 });
     g.rect(-BAR_W / 2, top, BAR_W * share, 3).fill(u.side === 'hero' ? (share > 0.35 ? 0x5fd35f : 0xe0c040) : 0xe04a3a);
 

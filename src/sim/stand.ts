@@ -64,7 +64,7 @@ export const ENRAGE_STEP = 1.1;
 export const CLEAR_HEAL = 0.35;
 export const RISE_SHARE = 0.5;
 /** Dead foes are dropped from the battle's list this long (ms) after they fall (the page has shown them by then). */
-export const CORPSE_MS = 1500;
+export const CORPSE_MS = 2600;
 
 /** Gold for a kill, and for clearing wave `n`. */
 export const killGold = (n: number): number => 2 + Math.floor(n / 3);

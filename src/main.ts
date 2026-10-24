@@ -40,6 +40,8 @@ import { afterFight, maxSpeed, spendTicket, startAuto, stopAuto, type AutoReplay
 import { Gacha } from './gacha';
 import { Events } from './events';
 import { TowerView } from './towerView';
+import { StandView } from './standView';
+import { loadStand } from './sim/stand';
 import { showTwistBanner } from './twistView';
 import { abandonTower, finishTower, mapProgress, migrateTower, settleTower } from './sim/tower';
 import { hpShare } from './sim/health';
@@ -150,6 +152,9 @@ class Game {
   private gacha!: Gacha;
   private events = new Events();
   private towerView!: TowerView;
+  /** The Last Stand (`standView.ts`): while it is up the ordinary board is hidden and this page's own frame does nothing. */
+  private stand!: StandView;
+  private standOn = false;
   /** The fight just settled was a tower boss (for the banner). */
   private bossDown = false;
   private home!: Home;
@@ -283,9 +288,13 @@ class Game {
         // (the start card names the boss and the land; a tap on Fight! starts the run, the first of the date counting)
         showDailyStart(this.meta, todayKey(), () => this.startRun(startDaily(this.meta, todayKey())), () => this.home.open());
       },
-      onTower: () => this.openMode('tower'),
+      onTower: () => this.openStand(),
       onCalamity: () => this.openMode('calamity'),
       slotInfo: (kind) => {
+        if (kind === 'tower') {
+          const st = loadStand();
+          return st ? `Wave ${st.wave} · continue` : null;
+        }
         const r = loadSlot(kind);
         if (!r) return null;
         return kind === 'calamity' ? `Map ${r.tower?.act ?? 1}/${CAL_MAPS} · continue` : `Floor ${r.stage} · continue`;
@@ -303,6 +312,12 @@ class Game {
       onPack: () => this.events.openPack(this.run, true, () => saveRun(this.run)),
       onHome: () => this.home.open(),
       onAbandon: () => this.abandon(),
+    });
+    this.stand = new StandView({
+      app: this.app,
+      meta: () => this.meta,
+      hideBoard: (hidden) => this.hideBoard(hidden),
+      onHome: () => this.home.open(),
     });
     this.party = new Party(this.meta, () => this.home.open());
     bindSpellbook(this.meta, () => {
@@ -659,9 +674,27 @@ class Game {
   /** The home screen is up over the board (nothing of the board is seen, so a board not in a fight is left alone). */
   private homeUp = false;
 
+  /** The Last Stand takes the canvas (the board of the ordinary fights is hidden and not drawn) or gives it back. */
+  private hideBoard(hidden: boolean): void {
+    this.standOn = hidden;
+    document.body.toggleAttribute('data-stand', hidden);
+    this.world.visible = !hidden;
+    this.weather.root.visible = !hidden;
+    this.ghost.visible = false;
+    this.app.stage.renderable = true;
+    if (hidden) this.app.ticker.start();
+  }
+
+  /** The Tower's place at the camp is the Last Stand: a saved run carries on, else a new one begins with the party. */
+  private openStand(): void {
+    if (!modeOpen(this.meta, 'tower') && !loadStand()) return;
+    void this.stand.open();
+  }
+
   private frame(dt: number): void {
     const b = this.b;
     tips.update();
+    if (this.standOn) return;
     if (this.homeUp && b.phase !== 'fight') {
       this.app.ticker.stop();
       return;

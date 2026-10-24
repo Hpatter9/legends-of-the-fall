@@ -160,6 +160,23 @@ export class BoardView {
     this.root.addChild(...this.built.tiles);
   }
 
+  /** A whole board baked into one sprite, for a big field (the Last Stand's 24 x 24 is 576 columns): drawn once, with the boulders and growth in it, and then it is a single quad each frame. The sprite is at the world's origin, behind everything (`zIndex`). */
+  bakeField(b: Board, look: Look = {}): Sprite {
+    const built = this.section(b, look, { rot: 0, ou: 0, ov: 0 });
+    const c = new Container();
+    c.sortableChildren = true;
+    c.addChild(...built.tiles);
+    const bounds = c.getLocalBounds();
+    const tex = this.renderer ? this.renderer.generateTexture({ target: c, resolution: 1 }) : Texture.EMPTY;
+    c.destroy({ children: true });
+    for (const x of built.tex) x.destroy(true);
+    const sp = new Sprite(tex);
+    sp.position.set(bounds.minX, bounds.minY);
+    sp.zIndex = -1e6;
+    this.board = b;
+    return sp;
+  }
+
   /** The host is now behind the one to come (`section` is its board in the chain): its live tiles stay on show where they lie against the new host. */
   demote(section: Board, ou: number, ov: number): void {
     if (!this.built || !this.board) return;

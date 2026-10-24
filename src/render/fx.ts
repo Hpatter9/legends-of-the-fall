@@ -803,6 +803,15 @@ export class Fx {
     this.push(sp.x, sp.y - sp.tall * 0.5, 1.3, 1100);
   }
 
+  /** A hero gains a level in the middle of a fight (the Last Stand): a one-shot burst of light round it, a small pop, and "Lv N" over its head. */
+  levelUp(unitId: number, level: number): void {
+    const sp = this.sprites.get(unitId);
+    if (!sp) return;
+    sp.promote(2);
+    promoteBurst(this.particles, 2, sp.x, sp.y, sp.tall);
+    this.label(`Lv ${level}`, sp.x, sp.y - sp.tall - 14, 0xfff2a0, 12, 1300, true);
+  }
+
   /** The world position of a tile's top. */
   private tilePos(b: Battle, u: number, v: number): [number, number] {
     return at(u, v, tileAt(b.board, u, v)?.h ?? 0);
