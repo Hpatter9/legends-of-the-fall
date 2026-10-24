@@ -86,9 +86,10 @@ import { colLeft, viewH, viewW } from './viewport';
 import { onSettings, openSettings, setSetting, settings } from './settings';
 import { PageGoat } from './duchess';
 import { Rng } from './sim/rng';
-import { endingQuip, foeGrumbles, heroSays, initQuips, newQuipScene } from './quips';
+import { endingQuip, foeGrumbles, heroSays, initQuips, newQuipScene, revivedQuip } from './quips';
+import { closeCalls, ultimatesCast } from './render/quipRules';
 import { LOADING_TIPS, RECAP_LOSS, RECAP_WIN, RESULT_LOSS, RESULT_WIN } from './quipData';
-import type { Anchor } from './quipView';
+import { hideQuip, type Anchor } from './quipView';
 import heartUrl from './art/rogue/heart.png';
 
 TextureSource.defaultOptions.scaleMode = 'nearest';
@@ -465,6 +466,7 @@ class Game {
   playComboMega(setId: string): Promise<void> {
     const set = comboById(setId);
     if (!set) return this.sceneChain;
+    hideQuip();
     const first = dueScene(this.meta, { kind: 'combo', set: setId });
     return this.queueScene(first ? { kind: 'combo', set: setId } : { kind: 'comboCut', set: setId }, set.heroes);
   }
@@ -700,7 +702,8 @@ class Game {
     this.evolved = new Set();
     this.endIntro();
     newQuipScene();
-    foeGrumbles(this.b.units.filter((u) => u.side === 'foe' && !UNITS[u.def].summon).length, (i) => this.anchorOfFoe(i));
+    // (a wave started again by a heart has a hero's line instead of a foe's)
+    if (!this.revive) foeGrumbles(this.b.units.filter((u) => u.side === 'foe' && !UNITS[u.def].summon).length, (i) => this.anchorOfFoe(i));
     this.stats = startStats(this.b.units);
     // (the music: a boss, a Calamity fight, or one of three battle tracks by how hard the fight runs)
     startFight(isBossRun(this.run), { calamity: this.run.mode?.kind === 'calamity', level: fightLevel(this.run.stage, { elite: this.run.tower?.cur?.kind === 'elite', waves: waveArmyOf(this.run)?.waves.length }) });
@@ -721,6 +724,13 @@ class Game {
     const r = this.app.canvas.getBoundingClientRect();
     const k = r.width / this.app.screen.width;
     return { x: r.left + ((box.minX + box.maxX) / 2) * k, y: r.top + box.minY * k };
+  }
+
+  /** The heroes' lines in a fight: one casting an ultimate (now and then), one falling under a quarter of their health (once each). Not while a Last Oath is going off or its cut-in is up. */
+  private sayMoments(events: BattleEvent[]): void {
+    if (this.sceneHold > 0 || events.some((e) => e.kind === 'comboCast')) return;
+    for (const k of ultimatesCast(this.b, events)) heroSays(k, 'ultimate', () => this.anchorOfKind(k));
+    for (const u of closeCalls(this.b, events)) heroSays(u.def, 'lowHp', () => this.anchorOfKind(u.def));
   }
 
   /** The result's dry line under the numbers (picked from the run's seed, so a given fight always says the same thing). */
@@ -801,6 +811,7 @@ class Game {
             void this.playComboMega(b.combo.id);
           }
         }
+        if (!this.auto) this.sayMoments(events);
         const push = this.fx.takePush();
         if (push) this.push = { ...push, left: push.ms };
         // (Duchess has a view on a big blow)
@@ -1644,7 +1655,11 @@ class Game {
     }
     if (r.swapped && !r.started && r.t >= r.fightAt) {
       r.started = true;
-      if (this.b.phase === 'deploy') this.begin();
+      if (this.b.phase === 'deploy') {
+        this.begin();
+        // (the party is back on its feet: one of them says so)
+        if (!this.auto) revivedQuip(this.b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def), (k) => this.anchorOfKind(k));
+      }
     }
     if (r.t >= at.end && r.started) this.revive = null;
   }

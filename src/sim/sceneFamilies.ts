@@ -3,7 +3,6 @@
 // army, hero or building is a row, not a script. Pure data; it imports only the kit, the fighters' table and the lore
 // (not the armies or the battle, which load this file's way round).
 
-import { HERO_STORY } from './codexLore';
 import { say, tell, wide, close, type Scene, type Shot } from './sceneKit';
 import type { Area } from './board';
 import { ALL_HEROES, UNITS } from './units';
@@ -14,6 +13,10 @@ interface ArmyClear {
   army: string;
   name: string;
   area: Area;
+  /** The scene's title and blurb, and its first shot's caption when "<name> cleared" is too long for it. */
+  title: string;
+  blurb: string;
+  cap?: string;
   /** The army's last boss, and one of its escort (fighter ids). */
   boss: string;
   escort: string;
@@ -28,82 +31,100 @@ interface ArmyClear {
 const CLEARS: ArmyClear[] = [
   {
     army: 'orcs', name: 'Orc Warband', area: 'warcamp', boss: 'orcWarlord', escort: 'orcGrunt',
-    setup: 'The Orc Warlord went down on one knee, which is the orcish for “a setback”.',
-    last: 'THIS IS NOT THE END. WRITE THAT DOWN.',
-    remark: 'Who has the pen, boss?',
-    gloat: ['He will need a bigger pen.', 'Shall we tell his mother, or will the grunts?'],
-    tail: 'The orcs held a meeting about who would tell the Warlord’s mother. The heroes waited politely.',
+    title: 'Orc Warband: Routed',
+    blurb: 'The Orc Warlord takes a knee to catch his breath and lodge an administrative complaint.',
+    setup: 'The Orc Warlord dropped onto one knee, the traditional tribal gesture meaning \'mild setback\'.',
+    last: 'THIS ENGAGEMENT IS VOID! TAKE DOWN THAT STATEMENT IN THE CHRONICLES!',
+    remark: 'Who has the quill, boss? Someone took it to draw on the wall.',
+    gloat: ['He will require a remarkably large scroll to list all the grievances.', 'Shall we inform his dear mother, or will the surviving grunts draft the letter?'],
+    tail: 'The remaining orcs held a brief symposium on maternal correspondence. The heroes waited politely.',
   },
   {
     army: 'undead', name: 'Undead Legion', area: 'graveyard', boss: 'lichKing', escort: 'skeleton',
-    setup: 'The Lich King fell apart with great dignity, and then a little more.',
-    last: 'DEATH IS NOT THE END. ...HOLD ON, I AM ON HOLD WITH THE AFTERLIFE.',
-    remark: 'Press one for “defeated”, my liege.',
-    gloat: ['I always thought he sounded busy.', 'Is it rude to hang up on a skeleton?'],
-    tail: 'The legion filed away in good order. Several kept their appointments with the afterlife.',
+    title: 'Undead Legion: Taking a Number',
+    blurb: 'The Lich King falls apart with poise, and joins the queue for reincarnation.',
+    setup: 'The Lich King collapsed into a tidy pile of bleached calcium with immense theatrical dignity.',
+    last: 'DEATH IS MERELY A PAUSE! ...HOLD ON, I AM FOURTH IN THE QUEUE FOR REINCARNATION.',
+    remark: 'Please take a number, your majesty.',
+    gloat: ['I always assumed the underworld ran more smoothly.', 'Is it bad form to leave a skeleton waiting in the queue?'],
+    tail: 'The bony cohort filed quietly back into their crypts. Several noted their upcoming appointments.',
   },
   {
     army: 'beasts', name: 'Beast Packs', area: 'plains', boss: 'boarKing', escort: 'wolfWhite',
-    setup: 'The Boar King does not kneel. He was simply examining the ground very closely.',
-    last: 'A BOAR KING NEVER FALLS. HE ONLY... INSPECTS.',
-    remark: 'The pack would like a word about the inspection.',
-    gloat: ['Good boy. Stay.', 'He is a very large boar to be so sorry for himself.'],
-    tail: 'The pack drifted off across the snow, looking over their shoulders, a bit embarrassed.',
+    title: 'Beast Packs: Dispersed',
+    blurb: 'The Boar King examines the clover very closely, insisting he was never actually felled.',
+    setup: 'The Boar King does not fall. He merely undertook an urgent, horizontal inspection of the moss.',
+    last: 'A MONARCH OF THE TUSK NEVER FALLS! HE MERELY... INSPECTS THE SOIL!',
+    remark: 'The pack has several pressing concerns about the inspection, sire.',
+    gloat: ['Sit. Lie down. Good boar. Stay right there until morning.', 'He is an exceptionally bulky pig to look so deeply heartbroken over a skirmish.'],
+    tail: 'The pack drifted off across the heather, casting rather embarrassed glances over their shoulders.',
   },
   {
     army: 'wildwood', name: 'The Wildwood', area: 'forest', boss: 'forestBoss3', escort: 'groveSatyr1',
-    setup: 'The Grove Spearlord leant on his spear, which was not what it was for.',
-    last: 'THE GROVE WILL HAVE WORDS WITH YOU.',
-    remark: 'The grove is out. Can I take a message?',
-    gloat: ['Tell the grove we left a note.', 'It was a very nice grove, though.'],
-    tail: 'Somewhere in the wood, a tree took it personally. The rest of the leaves rustled in agreement.',
+    title: 'The Wildwood: Trimmed',
+    blurb: 'The Spearlord leans heavily upon his shaft, which was not designed for structural support.',
+    setup: 'The Grove Spearlord leaned heavily upon his ash lance, bending it in an undignified arch.',
+    last: 'THE SACRED TIMBER WILL HEAR OF THIS INDIGNITY!',
+    remark: 'The sacred timber is away at a canopy meeting. May I take a message?',
+    gloat: ['Inform the grove we pinned a polite eviction notice to the nearest birch.', 'It truly was an exceptionally picturesque thicket before we trampled it.'],
+    tail: 'Deep within the grove, an ancient elder tree took offence. The leaves rustled in bitter agreement.',
   },
   {
     army: 'labyrinth', name: 'The Labyrinth', area: 'temple', boss: 'minotaurChampion', escort: 'mazeMino1',
-    setup: 'The Minotaur Champion sat down heavily at the centre of his labyrinth.',
-    last: 'THE MAZE... YOU WALKED STRAIGHT THROUGH IT.',
-    remark: 'We did put up a sign, boss. It said “this way”.',
-    gloat: ['It did say “this way”.', 'We did not like to be rude and go the other.'],
-    tail: 'The maze was handed a new sign. It reads: “Under new management, mostly lost”.',
+    title: 'The Labyrinth: Solved',
+    blurb: 'The Minotaur Champion takes a seat in the centre of his puzzle, thoroughly outmanoeuvred.',
+    setup: 'The Minotaur Champion sat heavily upon the flagstones of his puzzle, puffing through his nose.',
+    last: 'THE LABYRINTH... YOU SIMPLY WALKED STRAIGHT DOWN THE CORRIDOR!',
+    remark: 'We did put up several helpful arrows, boss. For the travellers.',
+    gloat: ['The wooden arrows did say \'This Way to the Minotaur\', to be fair.', 'We felt it would have been terribly rude to wander into the dead ends on purpose.'],
+    tail: 'The maze was gifted a brand-new sign: \'Under New Management, Currently Strolling in Circles\'.',
   },
   {
     army: 'ogres', name: 'Ogre Clans', area: 'highlands', boss: 'hornedOgre', escort: 'clanOgre',
-    setup: 'The Horned Ogre swayed once, like a mountain thinking about it, and sat.',
-    last: 'THE MOUNTAIN DOES NOT... WHAT IS FOR LUNCH?',
-    remark: 'It is soup, boss. We argued about it earlier.',
-    gloat: ['I vote we call lunch a draw.', 'The soup was a bit of a distraction.'],
-    tail: 'The ogres broke for lunch. It lasted until quite late in the afternoon.',
+    title: 'Ogre Clans: Luncheon',
+    blurb: 'The Horned Ogre sways like a collapsing haystack and calls a recess for broth.',
+    setup: 'The Horned Ogre wobbled twice, pondered the merits of standing, and chose to sit with a thud.',
+    last: 'THE CRAG DOES NOT CRUMBLE... WAIT, WHO BROUGHT THE COLD PIES?',
+    remark: 'It is mutton broth today, chief. We had a rather heated shouting match about it.',
+    gloat: ['I propose we declare an armistice in the interest of personal nourishment.', 'The smell of mutton broth was remarkably distracting throughout the second phase.'],
+    tail: 'The ogres adjourned for luncheon. The deliberations extended well into the following Thursday.',
   },
   {
     army: 'infernal', name: 'Infernal Host', area: 'volcano', boss: 'demonLord', escort: 'hellImp',
-    setup: 'The Demon Lord was beaten, and was the sort of beaten that has a contract.',
-    last: 'I SHALL BE BACK. I HAVE IT IN WRITING.',
-    remark: 'The small print says Thursday, my lord.',
-    gloat: ['Terms and conditions apply.', 'He always did read the footnotes.'],
-    tail: 'The imps filed an appeal. It was stamped, signed and thrown in the lava.',
+    title: 'Infernal Host: Appealed',
+    blurb: 'The Demon Lord is vanquished, but relies on a technical loophole in the small print.',
+    setup: 'The Demon Lord was soundly thrashed, but the sort of thrashed that arrives with a receipt.',
+    last: 'THIS SETBACK IS TEMPORARY! MY CONTRACT COVERS THREE SEPARATE RESURRECTIONS!',
+    remark: 'Paragraph nine says the guarantee excludes damage by righteous paladins, sire.',
+    gloat: ['Always consult a certified notary before signing contracts in brimstone.', 'He always seemed far too fond of reading the microscopic annotations.'],
+    tail: 'The imps lodged a formal appeal. It was stamped, countersigned, and cast into the molten basalt.',
   },
   {
     army: 'yokai', name: 'Yokai Night Parade', area: 'shrine', boss: 'oniKing', escort: 'yokaiFox',
-    setup: 'The Oni King lifted his drum, hit it once, and nothing happened.',
-    last: 'THE THUNDER DRUM... HAS LOST ITS STICKS.',
-    remark: 'We lent them to the tengu, my king.',
-    gloat: ['A drum is only as good as its sticks.', 'The parade was lovely, and now it is over.'],
-    tail: 'The night parade packed up its lanterns and went home by the long way, singing a little.',
+    title: 'Night Parade: Concluded',
+    blurb: 'The Oni King strikes his sacred thunder drum once, discovering an absence of mallets.',
+    setup: 'The Oni King hoisted his great thunder drum, struck it with flourish, and produced only a squeak.',
+    last: 'THE CELESTIAL DRUM... HAS BEEN DEPRIVED OF ITS SACRED MALLETS!',
+    remark: 'We loaned them to the tengu scouts to crack walnuts, your majesty.',
+    gloat: ['A musical instrument is only as fearsome as its percussive accessories.', 'The lanterns were delightfully festive, but the performance has definitely drawn to a close.'],
+    tail: 'The midnight parade packed its paper lanterns and set off down the mountain path, humming softly.',
   },
   {
     army: 'golems', name: 'Golem Forge', area: 'forge', boss: 'forgeTitan', escort: 'stoneGolem',
-    setup: 'The Forge Titan stood up very slowly, then stopped, as a kettle does.',
-    last: 'FORGE... COOLING. PLEASE DO NOT TOUCH. IT IS STILL HOT.',
-    remark: 'He means it, he is quite warm.',
-    gloat: ['We will let it cool, then.', 'Mind the sparks. Mind the floor, also.'],
-    tail: 'The golems stood very still. It was hard to say whether this was grief or a power cut.',
+    title: 'Golem Forge: Cooling',
+    blurb: 'The Forge Titan halts with a heavy groan, resembling a kettle cooling on the range.',
+    setup: 'The Forge Titan seized up with a grinding screech, then came to a gentle halt like an iron stove.',
+    last: 'FORGE... COOLING. PLEASE DO NOT TOUCH. STILL HOT.',
+    remark: 'He is quite serious, you know. You will blister your leather gauntlets.',
+    gloat: ['We shall allow the ironwork to reach a sensible room temperature, then.', 'Watch the molten cinder on the grass. And mind your boot soles, everyone.'],
+    tail: 'The stone sentinels stood frozen. It was unclear whether this was grief or the fire going out.',
   },
 ];
 
 const clearScene = (c: ArmyClear): Scene => ({
   id: `clear:${c.army}`,
-  title: `${c.name}: The Last Stand`,
-  blurb: `The first time the ${c.name} fall, with their boss’s last words and the heroes’ reply.`,
+  title: c.title,
+  blurb: c.blurb,
   moment: { kind: 'armyClear', army: c.army },
   family: 'clear',
   cast: {
@@ -118,7 +139,7 @@ const clearScene = (c: ArmyClear): Scene => ({
       look: c.area,
       cam: close(['hero', 'boss'], 1),
       fx: ['fadeIn', 'darken'],
-      caption: `${c.name} cleared`,
+      caption: c.cap ?? `${c.name} cleared`,
       acts: [{ who: 'hero', enter: 280, from: 200 }, { who: 'mate', enter: 240, from: 160 }, { who: 'boss', pose: 'hurt' }],
       lines: [tell(c.setup), say('boss', c.last, 'shout')],
     },
@@ -145,22 +166,53 @@ const clearScene = (c: ArmyClear): Scene => ({
 
 /* ------------------------------------------------------------ a hero awakened */
 
-/** What the awakened one says: one pool, handed round by the hero's place in the roster so no two neighbours repeat. */
-const AWAKE_QUIPS = [
-  'I feel taller. I may be wrong about that.',
-  'Is it meant to be this bright?',
-  'I think my hair has done something.',
-  'Was that the light, or was that me?',
-  'I have a feeling I should say something grand.',
-  'The same as before, but with more drama.',
-  'Does anyone have a mirror? Asking for a friend.',
-  'That tickled.',
-];
-
-/** A hero's story trimmed to its first sentence, for a line (the whole story is too long to read in a scene). */
-const firstSentence = (kind: string): string => {
-  const first = (HERO_STORY[kind] ?? '').split(/(?<=[.!?])\s/)[0] ?? '';
-  return first.length >= 20 && first.length <= 100 ? first : '{hero} has a story. It is a good one, and it is not short.';
+/** What each hero says as they awaken: the narrator's line about them, then their own words. */
+const AWAKE_LINES: Readonly<Record<string, readonly [string, string]>> = {
+  knight: ['Sir Aldric held the outer gate for forty winters without questioning the king.', 'I feel three inches taller, and my pauldron seems to have doubled in acreage.'],
+  samurai: ['He crossed the eastern strait bearing a single cold katana and a sacred vow.', 'The blade hums with cold fire. I shall attempt not to smile; it ruins my mystique.'],
+  kunoichi: ['Moonlit slates and a whisper of wind are all she requires to work.', 'Now with forty percent more theatrical smoke and thirty percent less visibility.'],
+  archer: ['He tracked quarry through the frozen passes where one high arrow outmatches three.', 'I believe I can now strike a copper farthing balanced on a badger\'s ear.'],
+  wizard: ['His maiden spark flattened a barn; his second demolished the royal aviary.', 'Splendid! The flames are now violet, which usually denotes severe collateral damage.'],
+  peasant: ['A rusty pitchfork, iron resolve, and twelve neighbours who all chose today.', 'Look at that! My pitchfork\'s got three shiny prongs and zero rust!'],
+  ninjaMonk: ['He swore a solemn oath against cold steel, then swore an equal vow to triumph.', 'My fists are legally classified as battering rams now. Very tranquil.'],
+  wanderer: ['She strolled off the king\'s highway at dusk and declined to name her birthplace.', 'A pleasant tingling in the fingertips. And my boots have stopped leaking.'],
+  lightningMage: ['Thunderheads dog his wanderings, and neither storm nor scholar knows who leads.', 'Stand back! I am currently emitting enough static to power a small loom!'],
+  kitsune: ['A cunning vixen spirit who learned kindness, and then learned to exploit it.', 'Ten out of ten for illumination, though it has made my fur dreadfully poofy.'],
+  karasu: ['A winged spirit of the mountain crags, slow to wrath and delighted to dive.', 'Caw! Wingspan expanded, talons freshly whetted, ready to plunge!'],
+  yamabushi: ['He meditated in a gale so biting it chiselled stone contours into his marrow.', 'The mountain breath roars in my lungs. Hold tightly to your headgear, lads.'],
+  werewolf: ['The maiden full moon was forgiving; the second tore his breeches to rags.', 'A magnificent tingling behind the ears! Who wants to go for a brisk rampage?!'],
+  minotaur: ['He navigated the labyrinth by the simple expedient of demolishing the masonry.', 'Horns are pointier! Forehead feels even more suitable for demolition!'],
+  satyr: ['He pipes at rustic nuptials, and at border skirmishes when the coin is heavier.', 'A fresh set of brass reeds! Prepare yourselves for an ear-splitting jig!'],
+  gorgon: ['She keeps her veil secure in town, unveiling only when pressed by rudeness.', 'The serpents are positively glowing. Do please avert your tender eyes, darlings.'],
+  samuraiCommander: ['He defended a stone span with a hundred stalwarts against a thousand.', 'A taller staff! A stiffer weave! The regiment will rally in spotless order!'],
+  paladin: ['He took the sacred mantle amidst the carnage and has fought the carnage since.', 'Radiant righteousness achieved! You may wish to don smoked spectacles!'],
+  cleric: ['She asks no foolish questions of the wounded, inquiring only regarding tea.', 'The celestial light is lovely, but who is going to scrub the scorched floor?'],
+  druid: ['The gnarled oaks obey her command whenever she remembers to ask politely.', 'Roots deepening, briars sharpening! Even the dandelion greens look ferocious!'],
+  barbarian: ['He battles as though every fresh laceration were an affectionate promise.', 'AXE IS HEAVIER! VEINS ARE WIDER! VOCABULARY UNCHANGED!'],
+  ranger: ['She conceals her spring snares in the dark and looses her shafts at daybreak.', 'Snares reset with tempered steel. Mind where you place your clumsy boots.'],
+  warlock: ['He signed an eldritch document without bothering to read the fine print.', 'Clause nine unlocked! My patron sends his regards and a slightly hotter curse.'],
+  illusionist: ['There is a phantom before you, another behind, and a third slipping off.', 'Now you see three of me, all exquisitely coiffed and equally lethal.'],
+  gunslinger: ['A deliberate trigger pull, extraordinary reach, and not a grain wasted.', 'Rifling tightened, hammer polished. First one to blink gets ventilated.'],
+  shambler: ['He cannot recall the details of his passing, and feels no urge to investigate.', 'Hrrngh. Fresh stitching on the elbow. Hrrngh. Very sprightly.'],
+  rifleBot: ['Assembled for an ancient crusade that ended before its boiler was stoked.', 'NEW COGS FITTED. FIRING SPEED: INDISCREET.'],
+  mercenary: ['He takes up arms for coin, though he harbours rigid professional standards.', 'My rates just doubled. You get what you pay for, majesty.'],
+  mummy: ['Swaddled in three centuries of dry linen and an unresolved personal grudge.', 'Re-wound in finest ceremonial damask. Do try not to snag the trailing edge.'],
+  buccaneer: ['She snags a backline shooter with a wink and cuts him down before it fades.', 'Shinier cutlass, wider hat, and double the swashbuckling swagger!'],
+  wolfBard: ['A mournful dirge for the dying and a brisk jig for his companions.', 'A mournful minor key with seventy percent more baritone resonance! Awoo!'],
+  beastmaster: ['The grey timber wolves answered her copper whistle and never departed.', 'The pack smells the blood of heroes. Heel, boys, until the horn sounds.'],
+  kraken: ['He sailed with the great beast until it grew weary and coughed him ashore.', 'The abyssal depths surge within me! Anyone fancy a salt-water bath?'],
+  lancer: ['A levelled spear, iron stirrups, and a destrier that ignores the king.', 'Spurs polished to a blinding glare! Clear the lane, you rabble on foot!'],
+  reaper: ['Death is an administrative trade like any other, and she works the late watch.', 'The ledgers have been checked. Several names have moved up the queue.'],
+  timeWitch: ['She cradles an unseen hourglass whose sands run backward on command.', 'I already enjoyed this promotion three minutes ago. Still quite nice, though.'],
+  arcBlade: ['A clockwork champion built to blink into the press and discharge a thunderbolt.', 'Coils humming fit to split an oak! Mind the metal!'],
+  dreadPirate: ['Drowned twice over, and bored to tears by the clammy repetition.', 'Risen with a fresh broadside in the spectral cannons! Anchors aweigh!'],
+  siegeBot: ['Constructed to level granite curtain walls with mechanical indifference.', 'MORTAR BORE INCREASED BY FOUR INCHES. DAMAGE ASSURED.'],
+  priestess: ['The radiant halo is functional; she knits deep hurts and raises bastions.', 'The aura expands! Stand within the golden circle and be preserved.'],
+  dragoon: ['The wyvern queen sports her own iron diadem and never loses her stirrups.', 'Barnaby has sprouted crimson scales! Clear the skies or be roasted medium!'],
+  juggernaut: ['A castle rampart that grew weary of stationary life and learned to march.', 'Mortar reinforced with enchanted lime. I am now officially a mountain range.'],
+  sage: ['He contemplated the heavens so long the constellations began taking notes.', 'The cosmos has yielded another footnote! Highly destructive, and cited.'],
+  demonSwordsman: ['He drinks what he cleaves, and the fiend bound in the iron drinks him.', 'The blade is howling with glee. Do ignore the ominous reddish vapour.'],
+  tyrant: ['He governs by iron decree, shattering the insolent and rallying the ranks.', 'My imperial authority is officially doubled! Kneel with greater enthusiasm!'],
 };
 
 const AWAKE_AREAS: Area[] = ['highlands', 'forest', 'snow', 'desert', 'volcano', 'dungeon'];
@@ -168,7 +220,7 @@ const AWAKE_AREAS: Area[] = ['highlands', 'forest', 'snow', 'desert', 'volcano',
 const awakenScene = (kind: string, i: number): Scene => ({
   id: `awaken:${kind}`,
   title: `${UNITS[kind].name}: Awakening`,
-  blurb: 'A hero’s awakening: the light, the new look, and a word in character.',
+  blurb: 'A hero awakens: radiant light, a heightened presence and a dry observation.',
   moment: { kind: 'awaken', hero: kind },
   family: 'awaken',
   cast: {
@@ -182,20 +234,20 @@ const awakenScene = (kind: string, i: number): Scene => ({
       fx: ['fadeIn', 'darken'],
       caption: 'Awakening',
       acts: [{ who: 'hero', enter: 285, from: 215 }],
-      lines: [tell(firstSentence(kind))],
+      lines: [tell(AWAKE_LINES[kind][0])],
     },
     {
       cam: close('hero', 2),
       fx: ['glow', 'flash'],
       cue: 'boom',
       acts: [{ who: 'hero', look: 1 }, { who: 'hero', pose: 'cast' }],
-      lines: [say('hero', AWAKE_QUIPS[i % AWAKE_QUIPS.length])],
+      lines: [say('hero', AWAKE_LINES[kind][1])],
     },
     {
       cam: close(['hero', 'duchess'], 1.5),
       fx: ['glow'],
       acts: [{ who: 'hero', look: 1 }, { who: 'duchess', enter: 215, from: 130 }],
-      lines: [tell('{hero} is awakened. The new look is not for the faint-hearted.'), say('duchess', 'Mehh.')],
+      lines: [tell('{hero} has awakened. The heightened splendour is quite blinding.'), say('duchess', 'Mehh.')],
     },
   ],
 });
@@ -205,23 +257,96 @@ const awakenScene = (kind: string, i: number): Scene => ({
 interface Build {
   site: string;
   name: string;
+  /** The scene's title, blurb and caption. */
+  title: string;
+  blurb: string;
+  cap: string;
+  /** The narrator on the finished building, and the mason's remark. */
+  built: string;
+  done: string;
+  /** The roof argument: the sawyer, the mason, the sawyer. */
+  roof: [string, string, string];
+  /** The closing line, before Duchess. */
   joke: string;
 }
 
 const BUILDS: Build[] = [
-  { site: 'treasury', name: 'Treasury', joke: 'The coins were counted twice. It came to more the second time.' },
-  { site: 'barracks', name: 'Barracks', joke: 'There is room for everyone, so long as everyone is friendly.' },
-  { site: 'armoury', name: 'Armoury', joke: 'Every hook is labelled. The labels are on a hook.' },
-  { site: 'mageTower', name: 'Mage Tower', joke: 'It came out taller than the plans. The stairs take the blame.' },
-  { site: 'stable', name: 'Stable', joke: 'Duchess has inspected it, and found it to be an acceptable stable.' },
-  { site: 'library', name: 'Library', joke: 'Silence, please. That is a request, not a rule.' },
-  { site: 'chapel', name: 'Chapel', joke: 'A very small bell, but a sincere one.' },
+  {
+    site: 'treasury', name: 'Treasury',
+    title: 'The Vault Arises',
+    blurb: 'The master builders complete the Treasury and enter into an intricate debate concerning the rafters.',
+    cap: 'Treasury built',
+    built: 'Following an immense quantity of percussive carpentry, the Treasury finally stood upright.',
+    done: 'Right then, that is the royal strongbox completed to the plans.',
+    roof: ['The ridge beam has a noticeable fourteen-degree list to port.', 'It is not a flaw, it is an architectural flourish representing fiscal agility.', 'It is an architectural funnel directing rainwater straight into the sovereign\'s coin bags.'],
+    joke: 'The crowns were counted three times. The total grew by forty pence on the third attempt.',
+  },
+  {
+    site: 'barracks', name: 'Barracks',
+    title: 'The Bunks Arranged',
+    blurb: 'The builders complete the Barracks and begin an exhaustive inquest regarding the timber quality.',
+    cap: 'Barracks raised',
+    built: 'After three solid weeks of energetic sawing, the new barracks was declared habitable.',
+    done: 'There we are! Bunks for thirty heroes, provided they sleep on their sides.',
+    roof: ['You have constructed the front door three inches narrower than the knight\'s shoulders.', 'It encourages graceful posture and discourages unannounced loitering.', 'It ensures the barbarian will inevitably remove the entire jamb with his hip.'],
+    joke: 'Sufficient lodging exists for everyone, provided none of the occupants harbour conflicting grudges.',
+  },
+  {
+    site: 'armoury', name: 'Armoury',
+    title: 'The Racks Assembled',
+    blurb: 'The builders finish the Armoury and immediately disagree on the structural integrity of the roof.',
+    cap: 'Armoury built',
+    built: 'With a final deafening salvo of mallet blows, the new armoury annex was proudly erected.',
+    done: 'Behold! Every halberd, broadsword, and buckler now possesses an assigned peg.',
+    roof: ['The western rafter groans whenever a brisk westerly breeze touches the shingles.', 'That is the natural flexibility of seasoned highland pine, you uncultured apprentice.', 'That is the sound of eighty square yards of slate preparing to descend upon the claymores.'],
+    joke: 'Every peg has been meticulously labelled. Unfortunately, the labels were hung upon a single hook.',
+  },
+  {
+    site: 'mageTower', name: 'Mage Tower',
+    title: 'The Spire Completed',
+    blurb: 'The craftsmen complete the Mage Tower and wonder why the stairs spiral counter-clockwise.',
+    cap: 'Tower raised',
+    built: 'After the scaffolding collapsed twice, the arcane spire finally reached the clouds.',
+    done: 'That is the wizard\'s aerie finished. Try not to touch the glowing masonry.',
+    roof: ['The pinnacle appears to be three yards further east than the foundations.', 'It leans into the astral prevailing winds! It is deeply sophisticated engineering!', 'It looks like an exceptionally confused stone parsnip trying to climb into the sky.'],
+    joke: 'The spire stands considerably taller than the blueprints indicated. The masonry blamed the clouds.',
+  },
+  {
+    site: 'stable', name: 'Stable',
+    title: 'The Stalls Partitioned',
+    blurb: 'The carpenters finish the Stable, and Duchess conducts a rigorous architectural inspection.',
+    cap: 'Stable built',
+    built: 'Following substantial excavation of old manure, the expanded stables were pronounced complete.',
+    done: 'Stalls for six heavy chargers and adequate loft space for thirty bales of sweet meadow hay.',
+    roof: ['The manger partition has been installed back to front.', 'The horses will simply have to learn to turn their heads the other direction while chewing.', 'The horses will chew through your pine divider before midday tomorrow.'],
+    joke: 'Duchess completed an exhaustive walk-through and formally approved the quality of the latch timber.',
+  },
+  {
+    site: 'library', name: 'Library',
+    title: 'The Shelves Plumbed',
+    blurb: 'The stonemasons finish the Library and immediately dispute how much noise is permitted.',
+    cap: 'Library raised',
+    built: 'With the final oak shelves dovetailed into place, the Great Library welcomed the royal tomes.',
+    done: 'A sanctuary of profound learning, perfectly plumb and reasonably dust-resistant.',
+    roof: ['The skylight is situated directly above the ancient illuminated manuscripts.', 'Natural illumination is paramount for close scholarly perusal!', 'The first autumn downpour will reduce the royal history to soggy blue porridge.'],
+    joke: 'Strict silence is politely requested throughout the archives. The recommendation is utterly ignored.',
+  },
+  {
+    site: 'chapel', name: 'Chapel',
+    title: 'The Belfry Mounted',
+    blurb: 'The master builders complete the Chapel and critique the acoustics of the new chime.',
+    cap: 'Chapel raised',
+    built: 'After careful placement of the stained glass, the castle chapel stood consecrated and serene.',
+    done: 'That is the sanctuary complete. Pews are sanded smooth, with minimal splinters.',
+    roof: ['The bellrope hangs directly across the central aisle at eye level.', 'It ensures the congregation remains alert and appropriately humble during the entrance hymn.', 'It ensures the paladin will bang his head every Sunday morning without fail.'],
+    joke: 'A modest brass bell has been suspended. Its tone is small, but remarkably persistent.',
+  },
 ];
 
 const buildScene = (b: Build): Scene => ({
   id: `castle:${b.site}`,
-  title: `The ${b.name} Goes Up`,
-  blurb: `The builders finish the ${b.name}, and begin a long argument about the roof.`,
+  title: b.title,
+  blurb: b.blurb,
   moment: { kind: 'castle', site: b.site },
   family: 'castle',
   cast: {
@@ -234,13 +359,13 @@ const buildScene = (b: Build): Scene => ({
       look: 'highlands',
       cam: wide(290, 205),
       fx: ['fadeIn'],
-      caption: `${b.name} raised`,
+      caption: b.cap,
       acts: [{ who: 'mason', enter: 250, from: 150 }, { who: 'sawyer', enter: 310, from: 440 }],
-      lines: [tell(`After a great deal of hammering, the ${b.name} stood.`), say('mason', `That is the ${b.name} done.`)],
+      lines: [tell(b.built), say('mason', b.done)],
     },
     {
       cam: close(['mason', 'sawyer'], 1.5),
-      lines: [say('sawyer', 'The roof is crooked.'), say('mason', 'It is a statement.'), say('sawyer', 'It is a very leaky statement.')],
+      lines: [say('sawyer', b.roof[0]), say('mason', b.roof[1]), say('sawyer', b.roof[2])],
     },
     {
       cam: close(['sawyer', 'duchess'], 1.5),
@@ -252,16 +377,16 @@ const buildScene = (b: Build): Scene => ({
 
 /* ------------------------------------------------------------ the endless tower */
 
-const SPIRES: { floor: number; title: string; lines: [string, string, string] }[] = [
-  { floor: 10, title: 'It Was Shorter From Outside', lines: ['The tower opens its tenth floor, and it is a good deal taller on the inside.', 'It was shorter from outside.', 'Everything is, from outside.'] },
-  { floor: 25, title: 'A Taller Hat', lines: ['Twenty-five floors, and the tower has built itself a taller hat.', 'I thought we were nearly at the top.', 'The top has been moved. It sends its regrets.'] },
-  { floor: 50, title: 'The Stairs Wave', lines: ['Fifty floors. The stairs have started to wave at people.', 'I do not think the stairs should be doing that.', 'It is only being friendly. I think.'] },
+const SPIRES: { floor: number; title: string; blurb: string; lines: [string, string, string] }[] = [
+  { floor: 10, title: 'Deceptive Facades', blurb: 'The endless spire reveals its tenth floor, proving considerably roomier than the architecture suggested.', lines: ['The spire reveals its tenth landing. The interior is alarmingly larger than the exterior.', 'I could have sworn the entire tower was only twenty feet wide from the garden path.', 'Everything appears deceptively compact from the outside, my friend. Especially your tactical plans.'] },
+  { floor: 25, title: 'The Floating Summit', blurb: 'Twenty-five storeys climbed, and the pinnacle appears to have acquired an extra storey.', lines: ['Twenty-five floors ascended, yet the upper parapet appears to have grown an additional terrace.', 'I was under the distinct impression we were approaching the ornamental weather vane.', 'The weather vane has been relocated three storeys higher. It sends its warmest personal apologies.'] },
+  { floor: 50, title: 'The Spiralling Masonry', blurb: 'Fifty landings conquered, and the steps appear to be developing a cheerful personality of their own.', lines: ['Fifty storeys behind you. The spiral steps have begun undulating with alarming enthusiasm.', 'I am fairly certain the fourth step from the landing just attempted to shake my hand.', 'It is merely attempting to be hospitable, friend. Do try to return the courtesy.'] },
 ];
 
 const spireScene = (f: (typeof SPIRES)[number]): Scene => ({
   id: `spire:${f.floor}`,
   title: `Floor ${f.floor}: ${f.title}`,
-  blurb: `The Last Stand, at wave ${f.floor}.`,
+  blurb: f.blurb,
   moment: { kind: 'spire', floor: f.floor },
   family: 'spire',
   cast: {
@@ -286,7 +411,7 @@ const spireScene = (f: (typeof SPIRES)[number]): Scene => ({
     {
       cam: close(['mate', 'duchess'], 1.5),
       acts: [{ who: 'duchess', enter: 190, from: 100 }],
-      lines: [say('duchess', 'Mehh.'), tell('The goat had, as ever, been up this far before.')],
+      lines: [say('duchess', 'Mehh.'), tell('The goat had, as with all previous storeys, arrived twenty minutes ahead of the vanguard.')],
     },
   ],
 });
@@ -301,21 +426,21 @@ interface Form {
 }
 
 const FORMS: Form[] = [
-  { boss: 'orcWarlord', area: 'warcamp', line: 'WAAAGH! Burn it all down!' },
-  { boss: 'lichKing', area: 'graveyard', line: 'Rise, my legion, and take them!' },
-  { boss: 'boarKing', area: 'plains', line: 'Out of my way, little ones!' },
-  { boss: 'forestBoss3', area: 'forest', line: 'The grove answers me!' },
-  { boss: 'minotaurChampion', area: 'temple', line: 'The maze closes. There is no way out.' },
-  { boss: 'hornedOgre', area: 'highlands', line: 'The mountain does not fall!' },
-  { boss: 'demonLord', area: 'volcano', line: 'Burn, all of you!' },
-  { boss: 'oniKing', area: 'shrine', line: 'Hear the thunder drum!' },
-  { boss: 'forgeTitan', area: 'forge', line: 'The forge runs white-hot!' },
-  { boss: 'calBoss1', area: 'volcano', line: 'The ashes remember!' },
-  { boss: 'calBoss2', area: 'forest', line: 'The thorns bloom!' },
-  { boss: 'calBoss3', area: 'dungeon', line: 'Come, my court!' },
-  { boss: 'calBoss4', area: 'snow', line: 'The mountain walks!' },
-  { boss: 'calBoss5', area: 'desert', line: 'Let the last flame take you!' },
-  { boss: 'calBoss6', area: 'volcano', line: 'There is no end but me.' },
+  { boss: 'orcWarlord', area: 'warcamp', line: 'WAAAGH! ENOUGH SKULKING! BRING DOWN THE PALISADE!' },
+  { boss: 'lichKing', area: 'graveyard', line: 'Rise, my shattered retainers! Rest is forbidden!' },
+  { boss: 'boarKing', area: 'plains', line: 'OUT OF MY WAY, TWO-LEGGED ACORNS!' },
+  { boss: 'forestBoss3', area: 'forest', line: 'The ancient timber awakes! Taste the briar\'s edge!' },
+  { boss: 'minotaurChampion', area: 'temple', line: 'The labyrinth shuts behind you! All exits are bricked!' },
+  { boss: 'hornedOgre', area: 'highlands', line: 'THE CRAG DOES NOT CRUMBLE! TASTE THE BOULDER!' },
+  { boss: 'demonLord', area: 'volcano', line: 'Burn, impudent mortals! Clause nine is invoked!' },
+  { boss: 'oniKing', area: 'shrine', line: 'HEAR THE ROAR OF THE MIDNIGHT THUNDER DRUM!' },
+  { boss: 'forgeTitan', area: 'forge', line: 'THE FURNACE RUNS WHITE-HOT! HAMMERS DESCEND!' },
+  { boss: 'calBoss1', area: 'volcano', line: 'THE EMBERS FLARE! BURN TO ASH AND SLAG!' },
+  { boss: 'calBoss2', area: 'forest', line: 'THE BRIAR AWAKES! THORNS BURST FROM THE MOSS!' },
+  { boss: 'calBoss3', area: 'dungeon', line: 'ASSEMBLE, MY LEGIONS! THE COURT IS CONVENED!' },
+  { boss: 'calBoss4', area: 'snow', line: 'THE CRAG STRIDES FORWARD! BRACE FOR IMPACT!' },
+  { boss: 'calBoss5', area: 'desert', line: 'FEAST UPON THE WRATH OF THE FINAL CINDER!' },
+  { boss: 'calBoss6', area: 'volcano', line: 'THERE IS NO HORIZON BEYOND MY STRIDE!' },
 ];
 
 /** The beat before a boss's new form, slowed to half pace, then its words. About three seconds all told; the page holds the fight meanwhile. */
@@ -324,7 +449,7 @@ const SLOW_BEAT = 0.7;
 const formScene = (f: Form): Scene => ({
   id: `form:${f.boss}`,
   title: `${UNITS[f.boss].name}: Second Form`,
-  blurb: 'A boss changes form, a few seconds in slow motion.',
+  blurb: 'A formidable boss assumes its second phase with explosive slow-motion fury.',
   moment: { kind: 'bossForm', boss: f.boss },
   family: 'form',
   short: true,
@@ -343,20 +468,39 @@ interface Oath {
   set: string;
   name: string;
   area: Area;
+  /** The caption of the first shot, and the full scene's blurb. */
+  cap: string;
+  blurb: string;
   /** One line from each of the five, in the order of the set's heroes, and one the five say together. */
   oaths: [string, string, string, string, string];
   shared: string;
 }
 
 const OATHS: Oath[] = [
-  { set: 'holyOrder', name: 'The Holy Order', area: 'highlands', oaths: ['I hold the line. Again.', 'I swear, and I mean it.', 'I swear, but gently.', 'The light keeps its word.', 'I was only passing. Fine.'], shared: 'By the light, together.' },
-  { set: 'arcaneCouncil', name: 'The Arcane Council', area: 'dungeon', oaths: ['I swear. Nothing is on fire.', 'I swear, with a bang.', 'I swear. It is footnoted.', 'I swear. Terms apply.', 'I swore this already. Soon.'], shared: 'By star and storm, as one.' },
-  { set: 'shadowClan', name: 'The Shadow Clan', area: 'forest', oaths: ['My blade, my word.', 'You will not see me swear.', 'I swear. No weapon needed.', 'Caw. That means yes.', 'I swear, for the usual fee.'], shared: 'Unseen, unbroken, together.' },
-  { set: 'fleet', name: 'The Black Fleet', area: 'snow', oaths: ['Yo ho. I swear it.', 'I swear on my best hat.', 'Aye, by the tide.', 'OATH. LOADED.', 'I swear. Quickly, mind.'], shared: 'One fleet, one flag.' },
-  { set: 'wildHunt', name: 'The Wild Hunt', area: 'forest', oaths: ['The pack swears with me.', 'Awoo. Yes. That is an oath.', 'I swear by root and rain.', 'I swear. Quietly.', 'I swear, and here is a verse.'], shared: 'One pack, one hunt.' },
-  { set: 'nightParade', name: 'The Night Parade', area: 'forest', oaths: ['I swear. Mostly.', 'I swear on the mountain.', 'Look me in the eye. I swear.', 'I swear. Pass the wine.', 'I swear. Or do I?'], shared: 'One parade, a hundred spirits.' },
-  { set: 'ironVanguard', name: 'The Iron Vanguard', area: 'highlands', oaths: ['I swear. I do not stop.', 'I swear. Also, charge.', 'I swear, point first.', 'I SWEAR LOUDLY.', 'I command it. We swear.'], shared: 'Shoulder to shoulder, forward.' },
-  { set: 'dreadCourt', name: 'The Dread Court', area: 'dungeon', oaths: ['I swear. I rule the oath.', 'I swear. It is on the list.', 'I swear. Hell is overstaffed.', 'Uhhhh.', 'I swore this long ago.'], shared: 'The court is in session.' },
+  { set: 'holyOrder', name: 'The Holy Order', area: 'highlands', cap: 'Holy Order · Oath', blurb: 'The five holy champions unleash their ultimate covenant, each swearing in solemn unison.',
+    oaths: ['I stand before the breach once more. Mind the shield.', 'I swear upon the altar, and I mean every syllable.', 'I swear to mend the fallen, though I do it with a sigh.', 'The celestial light endures! Stand in its warmth!', 'I was merely strolling past. Very well, let us scrap.'],
+    shared: 'By sacred radiance and stout shield, we stand as one!' },
+  { set: 'arcaneCouncil', name: 'The Arcane Council', area: 'dungeon', cap: 'Arcane · Last Oath', blurb: 'The Arcane Council invoke their grand synthesis, with appropriately volatile results.',
+    oaths: ['I swear upon the flame! Nothing is currently melting!', 'I swear with a thunderclap! Rubber soles on, everyone!', 'I swear by the stars! The sums have been checked twice!', 'I swear upon the dark contract! Terms and conditions apply!', 'I swore this identical oath next Tuesday! Keep up!'],
+    shared: 'By star, storm, and eldritch fire, the cosmos bends!' },
+  { set: 'shadowClan', name: 'The Shadow Clan', area: 'forest', cap: 'Shadow Clan · Oath', blurb: 'The Shadow Clan strike from the mist, swearing their silent covenant.',
+    oaths: ['My cold steel bears witness. Silence falls.', 'You will neither see me arrive nor hear me swear.', 'I take this solemn pledge. No blades required.', 'Caw! That signifies hearty feathered agreement!', 'I swear upon the contract, provided the fee is paid.'],
+    shared: 'Unseen in darkness, unbroken in resolve, we strike together!' },
+  { set: 'fleet', name: 'The Black Fleet', area: 'snow', cap: 'Black Fleet · Oath', blurb: 'The buccaneers and sea-dogs declare their sovereign covenant on dry land.',
+    oaths: ['Yo ho, you landlubbers! The tide answers our call!', 'I swear upon the plume of my finest feathered tricorn!', 'Aye! By the salt spray and the roaring undertow!', 'OATH LOADED. BROADSIDE PRIMED.', 'I swear! Make it snappy, the tide waits for no man!'],
+    shared: 'One flag, one broadside, and no quarter given!' },
+  { set: 'wildHunt', name: 'The Wild Hunt', area: 'forest', cap: 'Wild Hunt · Oath', blurb: 'The wild beasts and wardens howl their ancestral promise to the moon.',
+    oaths: ['The timber pack roars beside me! The hunt begins!', 'Awoooo! Indeed, that constitutes a binding oath!', 'I swear by ancient roots and the bitter winter frost!', 'I swear upon the hunter\'s notch. Steady and quiet.', 'I swear, and here is a jaunty four-part ballad to prove it!'],
+    shared: 'One pack, one fang, one relentless pursuit across the heather!' },
+  { set: 'nightParade', name: 'The Night Parade', area: 'forest', cap: 'Night Parade · Oath', blurb: 'The mountain spirits and yokai assemble under glowing lanterns to unleash their pact.',
+    oaths: ['I swear upon nine velvet tails. Mischief is guaranteed.', 'I swear upon the crags! Mind the descending gale!', 'Look me in the eye. I swear, and stone endures.', 'I swear upon the sacred flutes! Pass the rice wine!', 'I swear! Or perhaps I am a charming illusion? Guess!'],
+    shared: 'A hundred lanterns, a thousand spirits, one midnight parade!' },
+  { set: 'ironVanguard', name: 'The Iron Vanguard', area: 'highlands', cap: 'Vanguard · Oath', blurb: 'The heavy bulwarks plant their shields and swear an immovable oath of iron.',
+    oaths: ['I swear upon the granite! Nothing budges this line!', 'I swear upon my horns! Straight through the centre!', 'Couched and ready! Point first into the fray!', 'I SWEAR AT AN ALARMINGLY DEAFENING VOLUME!', 'By imperial decree, the line holds! Forward, dogs!'],
+    shared: 'Shoulder to iron shoulder, we break the oncoming storm!' },
+  { set: 'dreadCourt', name: 'The Dread Court', area: 'dungeon', cap: 'Dread Court · Oath', blurb: 'The tyrants and denizens of the crypt swear their final, binding court verdict.',
+    oaths: ['I swear! The sentence is passed without appeal!', 'I swear! The harvest is long overdue on this field!', 'I swear! Purgatory is shockingly overbooked today!', 'Hrrngh. Sworn upon my spare tibia. Hrrngh.', 'I swore this covenant three dynasties ago. Still applies.'],
+    shared: 'The court convenes, the ledgers open, and the sentence falls!' },
 ];
 
 /** The five, in a line-up: the cast of both versions (the page fills them with the five who cast the move). */
@@ -368,12 +512,12 @@ const OATH_SECS = 1.8;
 const oathScene = (o: Oath): Scene => ({
   id: `oath:${o.set}`,
   title: `${o.name}: Last Oath`,
-  blurb: `The first time ${o.name} fire their Last Oath, each of the five swears.`,
+  blurb: o.blurb,
   moment: { kind: 'combo', set: o.set },
   family: 'oath',
   cast: lineUp(),
   shots: [
-    { look: o.area, cam: wide(280, 205, 1), fx: ['fadeIn', 'darken'], caption: `${o.name} · Last Oath`, cue: 'boom', hold: 1.2 },
+    { look: o.area, cam: wide(280, 205, 1), fx: ['fadeIn', 'darken'], caption: o.cap, cue: 'boom', hold: 1.2 },
     ...FIVE.map((k, i): Shot => ({
       cam: close(k, 1.5),
       acts: [{ who: k, pose: 'cast' }],
@@ -386,14 +530,14 @@ const oathScene = (o: Oath): Scene => ({
 const oathCut = (o: Oath): Scene => ({
   id: `oathcut:${o.set}`,
   title: `${o.name}: Last Oath (short)`,
-  blurb: `${o.name} fire their Last Oath: a few seconds, every time.`,
+  blurb: 'The five swear their Last Oath as one, in a few seconds.',
   moment: { kind: 'comboCut', set: o.set },
   family: 'oathcut',
   short: true,
   again: true,
   cast: lineUp(),
   shots: [
-    { look: o.area, cam: wide(280, 205, 1), fx: ['darken'], caption: `${o.name} · Last Oath`, hold: 1.2 },
+    { look: o.area, cam: wide(280, 205, 1), fx: ['darken'], caption: o.cap, hold: 1.2 },
     { cam: wide(280, 205, 1), to: wide(280, 200, 1.5), acts: FIVE.map((k) => ({ who: k, pose: 'cast' as const })), fx: ['flash', 'glow'], lines: [{ who: 'c', text: o.shared, secs: OATH_SECS }] },
   ],
 });

@@ -14,6 +14,9 @@ import {
   saveStand, settleStand, setupFromMeta, snapshot, startFirstWave, startStand, stepStand, waveSpec, weakestHero, type Stand, type StandNote, type StandSummary,
 } from './sim/stand';
 import { canPost, EDGES, FIELD, KING_AT, ringOf, type Edge } from './sim/standField';
+import { heroSays, kingSays, newQuipScene, standFoeGrumbles } from './quips';
+import { hideQuip, type Anchor } from './quipView';
+import { closeCalls, KING_LOW_HP, ultimatesCast } from './render/quipRules';
 import { saveMeta, type Meta } from './sim/meta';
 import { UNITS } from './sim/units';
 import { levelOfKind } from './sim/levels';
@@ -55,6 +58,8 @@ const SCALE_MAX = 2;
 /** The foes round the king that the camera frames (tiles), and how much room it leaves round them (world px). */
 const FRAME_RING = 7;
 const FRAME_PAD = 56;
+/** How long after a wave begins that a foe grumbles (battle ms): the king's line has gone, and the first foes are in. */
+const GRUMBLE_AFTER_MS = 5200;
 /** How long a wave's banner stays (ms). */
 const BANNER_MS = 1800;
 
@@ -329,6 +334,7 @@ export class StandView {
 
   /** Go back to the home screen (the run, if still going, stays saved at its last break). */
   private leave(): void {
+    hideQuip();
     this.active = false;
     this.track = '';
     endFight();
@@ -718,6 +724,8 @@ export class StandView {
         if (s.b.units.length !== this.sprites.size) this.syncSprites();
         playEvents(s.b, events, 1);
         this.takeNotes(events);
+        this.sayMoments(events);
+        this.grumbleDue();
       }
       if (guard >= 4) this.acc = 0;
       this.perf.sim += performance.now() - ts;
@@ -765,6 +773,11 @@ export class StandView {
     for (const n of s.notes.splice(0) as StandNote[]) {
       if (n.kind === 'wave') {
         this.showBanner(n.n, n.boss);
+        // (a new wave is a new scene for the talking: the king speaks first, and a foe from an edge a few seconds on)
+        newQuipScene();
+        kingSays(n.boss ? 'bossWave' : 'waveStart', () => this.anchorOf(s.king.id));
+        this.grumbleAt = s.b.t + GRUMBLE_AFTER_MS;
+        this.grumbleBoss = n.boss;
         this.music(n.n, n.boss);
         if (n.boss) play('standBoss');
         this.picked = null;
@@ -777,22 +790,69 @@ export class StandView {
           void this.host.moment({ kind: 'spire', floor: n.n }).finally(() => (this.hold = false));
         }
         play('victory');
+        kingSays('waveCleared', () => this.anchorOf(s.king.id));
         this.refreshBar(true);
         this.drawMarks();
       } else if (n.kind === 'levelup') {
         this.fx.levelUp(n.unit, n.level);
         play('levelUp');
+        const kind = s.b.units.find((u) => u.id === n.unit)?.def;
+        if (kind) heroSays(kind, 'levelUp', () => this.anchorOf(n.unit));
       } else if (n.kind === 'kingHit') {
         if (this.frameN - this.lastKingHit > 12) {
           play('kingHit');
           this.lastKingHit = this.frameN;
         }
         this.kingHurt = 1;
-      } else if (n.kind === 'over') this.finish();
+        // (a few words from the king, thinly spread: a hit now and then, and once his health is low)
+        if (s.king.hp > 0 && s.king.hp < s.king.maxHp * KING_LOW_HP) kingSays('lowHp', () => this.anchorOf(s.king.id));
+        else kingSays('hurt', () => this.anchorOf(s.king.id));
+      } else if (n.kind === 'over') {
+        kingSays('fallen', () => this.anchorOf(s.king.id));
+        this.finish();
+      }
     }
   }
   private lastKingHit = -99;
   private kingHurt = 0;
+  /** When (battle ms) a foe at an edge grumbles about the wave that has begun, and whether it is a boss wave; null when none waits. */
+  private grumbleAt: number | null = null;
+  private grumbleBoss = false;
+
+  /** Where to point a speech bubble at a fighter: above its head, in page pixels, or null if it is not on show. */
+  private anchorOf(id: number): Anchor | null {
+    const sp = this.sprites.get(id);
+    if (!sp || !sp.root.visible) return null;
+    const box = sp.root.getBounds();
+    const r = this.host.app.canvas.getBoundingClientRect();
+    const k = r.width / this.host.app.screen.width;
+    return { x: r.left + ((box.minX + box.maxX) / 2) * k, y: r.top + box.minY * k };
+  }
+
+  /** The heroes' lines in a wave: one casting an ultimate (now and then), one falling under a quarter of their health (once each). The king speaks for himself. */
+  private sayMoments(events: BattleEvent[]): void {
+    const s = this.s!;
+    const speaker = (kind: string): Unit | undefined => s.b.units.find((u) => u.side === 'hero' && u.def === kind && u.owner === undefined && u.id !== s.king.id);
+    for (const k of ultimatesCast(s.b, events)) heroSays(k, 'ultimate', () => (speaker(k) ? this.anchorOf(speaker(k)!.id) : null));
+    for (const u of closeCalls(s.b, events, s.king.id)) heroSays(u.def, 'lowHp', () => this.anchorOf(u.id));
+  }
+
+  /** A foe grumbles when its time comes: the one farthest from the king that is on show (so one near an edge), once a wave. */
+  private grumbleDue(): void {
+    const s = this.s!;
+    if (this.grumbleAt === null || s.b.t < this.grumbleAt) return;
+    this.grumbleAt = null;
+    standFoeGrumbles(this.grumbleBoss, () => {
+      const view = this.fx.view;
+      const foes = s.b.units.filter((u) => u.alive && u.side === 'foe' && !UNITS[u.def].summon && this.sprites.get(u.id)?.root.visible);
+      const onShow = foes.filter((u) => {
+        const sp = this.sprites.get(u.id)!;
+        return sp.x > view.x0 + 24 && sp.x < view.x1 - 24 && sp.y > view.y0 + 48 && sp.y < view.y1 - 8;
+      });
+      const far = [...onShow].sort((a, b) => ringOf(b) - ringOf(a) || a.id - b.id)[0];
+      return far ? this.anchorOf(far.id) : null;
+    });
+  }
 
   /** The battle music for a wave: a boss wave has the boss track, else one of the three by how deep the run is (`fightTrack`); the track changes only when the wave's would be another. */
   private hold = false;

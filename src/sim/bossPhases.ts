@@ -46,22 +46,22 @@ const burn = { kind: 'burn' as const, dmg: 4, every: 500, ms: 2500 };
 /** The second form of each boss, by fighter id: the nine armies' last bosses, then the calamity's six. */
 export const PHASE2: Record<string, PhaseKit> = {
   // the armies' final bosses
-  orcWarlord: { line: 'WAAAGH! Burn it all down!', atk: 1.25, adds: { kind: 'orcGrunt', n: 2 }, haste: 5000 },
-  lichKing: { line: 'Rise, my legion, and take them!', atk: 1.15, shield: 0.12, primed: true, passive: { leech: 0.25 } },
-  boarKing: { line: 'Out of my way, little ones!', atk: 1.3, skill: 'minotaur', haste: 7000, passive: { frenzy: { per: 0.2, ms: 4000, max: 3 } } },
-  forestBoss3: { line: 'The grove answers me!', atk: 1.2, adds: { kind: 'groveSatyr3', n: 2 }, skill: 'satyr' },
-  minotaurChampion: { line: 'The maze closes. There is no way out.', atk: 1.3, teleport: true, skill: 'boarKing', passive: { finish: { under: 0.6, mult: 1.3 } } },
-  hornedOgre: { line: 'The mountain does not fall!', atk: 1.2, heal: 0.08, shield: 0.15, ultimate: 'orcWarlord', passive: { steady: true, block: 0.3 } },
-  demonLord: { line: 'Burn, all of you!', atk: 1.2, adds: { kind: 'imp', n: 2 }, skill: 'devilLeader' },
-  oniKing: { line: 'Hear the thunder drum!', atk: 1.2, skill: 'yokaiSeer', primed: true, haste: 5000 },
-  forgeTitan: { line: 'The forge runs white-hot!', atk: 1.25, shield: 0.1, skill: 'crystalGolem', passive: { ignite: burn } },
+  orcWarlord: { line: 'WAAAGH! ENOUGH SKULKING! BRING DOWN THE PALISADE!', atk: 1.25, adds: { kind: 'orcGrunt', n: 2 }, haste: 5000 },
+  lichKing: { line: 'Rise, my shattered retainers! Rest is forbidden!', atk: 1.15, shield: 0.12, primed: true, passive: { leech: 0.25 } },
+  boarKing: { line: 'OUT OF MY WAY, TWO-LEGGED ACORNS!', atk: 1.3, skill: 'minotaur', haste: 7000, passive: { frenzy: { per: 0.2, ms: 4000, max: 3 } } },
+  forestBoss3: { line: 'The ancient timber awakes! Taste the briar\'s edge!', atk: 1.2, adds: { kind: 'groveSatyr3', n: 2 }, skill: 'satyr' },
+  minotaurChampion: { line: 'The labyrinth shuts behind you! All exits are bricked!', atk: 1.3, teleport: true, skill: 'boarKing', passive: { finish: { under: 0.6, mult: 1.3 } } },
+  hornedOgre: { line: 'THE CRAG DOES NOT CRUMBLE! TASTE THE BOULDER!', atk: 1.2, heal: 0.08, shield: 0.15, ultimate: 'orcWarlord', passive: { steady: true, block: 0.3 } },
+  demonLord: { line: 'Burn, impudent mortals! Clause nine is invoked!', atk: 1.2, adds: { kind: 'imp', n: 2 }, skill: 'devilLeader' },
+  oniKing: { line: 'HEAR THE ROAR OF THE MIDNIGHT THUNDER DRUM!', atk: 1.2, skill: 'yokaiSeer', primed: true, haste: 5000 },
+  forgeTitan: { line: 'THE FURNACE RUNS WHITE-HOT! HAMMERS DESCEND!', atk: 1.25, shield: 0.1, skill: 'crystalGolem', passive: { ignite: burn } },
   // the calamity's bosses
-  calBoss1: { line: 'The ashes remember!', atk: 1.2, adds: { kind: 'orcGrunt', n: 2 } },
-  calBoss2: { line: 'The thorns bloom!', atk: 1.15, shield: 0.15, ultimate: 'orcWarlord' },
-  calBoss3: { line: 'Come, my court!', atk: 1.15, adds: { kind: 'imp', n: 2 }, skill: 'devilLeader' },
-  calBoss4: { line: 'The mountain walks!', atk: 1.2, teleport: true, primed: true },
-  calBoss5: { line: 'Let the last flame take you!', atk: 1.2, heal: 0.1, haste: 5000, skill: 'boarKing', passive: { ignite: burn } },
-  calBoss6: { line: 'There is no end but me.', atk: 1.25, adds: { kind: 'orcBrute', n: 2 }, shield: 0.1, haste: 6000, teleport: true },
+  calBoss1: { line: 'THE EMBERS FLARE! BURN TO ASH AND SLAG!', atk: 1.2, adds: { kind: 'orcGrunt', n: 2 } },
+  calBoss2: { line: 'THE BRIAR AWAKES! THORNS BURST FROM THE MOSS!', atk: 1.15, shield: 0.15, ultimate: 'orcWarlord' },
+  calBoss3: { line: 'ASSEMBLE, MY LEGIONS! THE COURT IS CONVENED!', atk: 1.15, adds: { kind: 'imp', n: 2 }, skill: 'devilLeader' },
+  calBoss4: { line: 'THE CRAG STRIDES FORWARD! BRACE FOR IMPACT!', atk: 1.2, teleport: true, primed: true },
+  calBoss5: { line: 'FEAST UPON THE WRATH OF THE FINAL CINDER!', atk: 1.2, heal: 0.1, haste: 5000, skill: 'boarKing', passive: { ignite: burn } },
+  calBoss6: { line: 'THERE IS NO HORIZON BEYOND MY STRIDE!', atk: 1.25, adds: { kind: 'orcBrute', n: 2 }, shield: 0.1, haste: 6000, teleport: true },
 };
 
 /** Whether this fighter will change form (armed at the start of the fight, and not yet changed). */
