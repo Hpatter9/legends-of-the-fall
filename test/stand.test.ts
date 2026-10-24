@@ -173,6 +173,7 @@ test('a hero is posted where it was placed, within a leash of a few tiles', () =
   startFirstWave(s);
   const posts = new Map(s.b.units.filter((u) => u.side === 'hero' && u.tag !== undefined).map((u) => [u.id, { ...s.run.heroes.find((h) => h.id === u.tag)!.post! }]));
   let worst = 0;
+  const out = new Map<number, number>();
   for (let i = 0; i < 30000 && s.phase !== 'over' && s.run.wave < 18; i++) {
     stepStand(s);
     s.notes.length = 0;
@@ -181,8 +182,10 @@ test('a hero is posted where it was placed, within a leash of a few tiles', () =
       if (!post || !u.alive) continue;
       const d = apart(u, { u: post[0], v: post[1] });
       worst = Math.max(worst, d);
-      // (even a skill that leaps or dives stops short of the leash)
-      assert.ok(d <= u.post!.leash, `${u.def} was ${d} from its post (leash ${u.post!.leash}) at ${s.b.t}`);
+      // (even a skill that leaps or dives stops short of the leash; only a foe's blow that shoves a hero can put it a tile past, and it walks straight back, or fights where it stands if foes shut the way)
+      const ticks = d > u.post!.leash ? (out.get(u.id) ?? 0) + 1 : 0;
+      out.set(u.id, ticks);
+      assert.ok(d <= u.post!.leash + 1 && ticks <= 120, `${u.def} was ${d} from its post (leash ${u.post!.leash}) for ${ticks} ticks at ${s.b.t}`);
     }
   }
   assert.ok(worst >= 1, 'the heroes did move to fight (the leash is used)');

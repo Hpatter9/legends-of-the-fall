@@ -22,12 +22,19 @@ test('every land has its art: ground, props, tall growth and backdrop layers on 
   }
 });
 
-test('every army fights on one or two lands that alternate by wave, the first on wave 1', () => {
+test('an army has one or two lands, the first its own; an attempt takes one of them for every wave, picked by its seed', () => {
   for (const a of ARMIES) {
     const lands = landsOf(a);
     assert.ok(lands.length >= 1 && lands.length <= 2, a.id);
     assert.equal(a.area, lands[0], a.id);
-    for (let n = 1; n <= a.waves.length; n++) assert.equal(landOf(a, n), lands[(n - 1) % lands.length]);
+    const taken = new Set<Area>();
+    for (let seed = 1; seed <= 60; seed++) {
+      const land = landOf(a, seed);
+      assert.ok(lands.includes(land), a.id);
+      assert.equal(land, landOf(a, seed), 'the same seed, the same land');
+      taken.add(land);
+    }
+    assert.deepEqual([...taken].sort(), [...lands].sort(), `${a.id}: both its lands turn up over the attempts`);
   }
   const want: Record<string, Area[]> = {
     orcs: ['warcamp', 'highlands'],
@@ -43,10 +50,16 @@ test('every army fights on one or two lands that alternate by wave, the first on
   for (const a of ARMIES) assert.deepEqual([...landsOf(a)], want[a.id], a.id);
 });
 
-test('an army run lays each wave of its long map on that wave\'s land', () => {
-  const run = armyRun(21, 'orcs', HEROES);
-  const chain = chainOf(run)!;
-  assert.deepEqual(chain.slice(0, 4).map((s) => s.board.area), ['warcamp', 'highlands', 'warcamp', 'highlands']);
+test('an army run lays every wave of its long map on the one land its seed picked: the map does not change in the one long battle', () => {
+  for (let seed = 1; seed <= 12; seed++) {
+    const run = armyRun(seed, 'orcs', HEROES);
+    const chain = chainOf(run)!;
+    const areas = new Set(chain.map((s) => s.board.area));
+    assert.equal(areas.size, 1, `seed ${seed}`);
+    assert.equal(chain[0].board.area, landOf(ARMIES[0], run.seed));
+    // (and the weather is rolled by each section's own board, as it was)
+    assert.ok(chain.every((s) => WEATHERS.includes(weatherOf(s.board))));
+  }
 });
 
 test('the spire draws its land from all of them, never the same one for two blocks running, and the same each time', () => {

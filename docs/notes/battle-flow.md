@@ -38,3 +38,5 @@ score) and the XP and levels. Parts fade in once; nothing loops. The tower keeps
 Gold "earned" counts wave pay, recycling and retry gold; events and merchants that edit gold directly are not counted.
 
 Screenshots: `docs/samples/battle-flow-*.png`, made by `tools/audit/battle-flow.mjs`.
+
+> Superseded: there is no "Give up" or "Use a heart" card any more; see `heart-revive.md`.

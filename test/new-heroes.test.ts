@@ -1,3 +1,4 @@
+import { bareBoard } from './bare';
 import { starterPacks } from '../src/sim/starter';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -11,7 +12,7 @@ const NEW = ['ninjaMonk', 'peasant', 'lightningMage', 'wanderer', 'kitsune', 'ka
 
 function arena(): Battle {
   const b = startBattle(3);
-  for (const t of b.board.tiles) (t.h = 0), (t.rock = false);
+  bareBoard(b);
   b.units = [];
   b.phase = 'fight';
   return b;

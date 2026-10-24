@@ -12,3 +12,5 @@ current hire price in `src/sim/run.ts`; see `battle-flow.md`); this shows it.
   Styles in `src/stone.css`.
 - The defeat card now reads "Spend a heart to try again with +N gold, enough for one more hero, or give up", and its button
   "Use a heart · N left".
+
+> Superseded: there is no "Give up" or "Use a heart" card any more; see `heart-revive.md`.

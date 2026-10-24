@@ -181,11 +181,16 @@ export class UnitSprite {
       frame = Math.min(n - 1, Math.floor(((t - swing.at) / swing.ms) * n));
     }
     const cast = u.cast;
+    let lift = 0;
     const guarded = u.alive && u.guardUntil !== undefined && t < u.guardUntil;
     if (fighting && u.alive && cast && t >= cast.at && t < cast.at + cast.ms) {
-      row = hasRow(this.sheet, cast.anim) ? cast.anim : 'attack';
+      const own = hasRow(this.sheet, cast.anim);
+      row = own ? cast.anim : 'attack';
       const n = rowFrames(this.sheet, row).length;
-      frame = Math.min(n - 1, Math.floor(((t - cast.at) / cast.ms) * n));
+      const p = Math.min(1, (t - cast.at) / cast.ms);
+      // (a sheet with no cast row of its own gathers itself on the first frames, rising a little, and strikes the rest as the skill goes off)
+      frame = Math.min(n - 1, Math.floor((own ? p : p < 0.7 ? (p / 0.7) * 0.35 : 0.35 + ((p - 0.7) / 0.3) * 0.65) * n));
+      lift = own ? 0 : Math.sin(Math.PI * Math.min(1, p / 0.8)) * 3;
     } else if (guarded && anim === 'idle' && hasRow(this.sheet, 'defend')) {
       // (a raised guard holds the last frame of the defend row)
       row = 'defend';
@@ -214,8 +219,8 @@ export class UnitSprite {
     this.body.scale.set(def.scale * dx, def.scale);
     // a flyer hovers: its body bobs above a smaller shadow on the ground
     const bob = def.flies && u.alive ? Math.sin(t / 260) * 2 - 12 : 0;
-    this.body.y = bob;
-    this.rim.y = bob;
+    this.body.y = bob - lift;
+    this.rim.y = bob - lift;
     this.shadow.scale.set(def.flies ? 0.6 : 1);
     this.shadow.alpha = def.flies ? 0.5 : 1;
     for (const r of this.rim.children as Sprite[]) {

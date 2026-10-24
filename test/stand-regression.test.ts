@@ -1,5 +1,5 @@
 // The Last Stand has its own mode flag in the battle's AI (`Battle.stand`); an ordinary fight must play out exactly as it
-// did before the flag existed. These fights were played on the code as it stood before the Last Stand, and their outcomes
+// did before the flag existed. These fights were played on the code as it stood before the Last Stand (re-pinned on main 0.150.0, which had changed the AI and the board), and their outcomes
 // are pinned here: the same seeds must give the same fights.
 
 import { test } from 'node:test';
@@ -30,6 +30,6 @@ test('ordinary fights play out as they did before the Last Stand', () => {
 });
 
 const PINNED: string[] = [
-  'won 9000 5/0 2827676398', 'won 23100 3/0 3997753814', 'won 56700 1/0 2558263071', 'lost 14700 0/4 1089780622', 'lost 11200 0/5 1932228148', 'won 15000 5/0 1727904812',
-  'lost 18000 0/2 179061072', 'lost 14500 0/4 3346064319', 'won 15600 5/0 960754763', 'lost 6900 0/5 3224742780', 'lost 32100 0/2 516039348', 'lost 10800 0/5 1133770814',
+  'won 10600 5/0 996110585', 'won 25700 4/0 2485893986', 'lost 27200 0/2 414567573', 'lost 15000 0/4 2353451962', 'lost 13200 0/4 1364333675', 'won 14600 5/0 1727904812',
+  'lost 14500 0/4 2770344949', 'lost 10300 0/5 2210275373', 'won 16800 4/0 3360215049', 'lost 13500 0/5 3032919189', 'lost 25000 0/4 771804136', 'lost 11800 0/5 501935144',
 ];

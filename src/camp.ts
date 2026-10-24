@@ -408,7 +408,7 @@ export class CampScene {
     return c;
   }
 
-  /** The firelight: warm orange over the ground and the faces, drawn additively and flickered by its opacity. */
+  /** The firelight: warm orange over the ground and the faces, drawn additively at a steady opacity (no flicker). */
   private paintGlow(camp: Camp): HTMLCanvasElement {
     const c = canvasOf(camp.w, camp.h);
     const g = c.getContext('2d')!;
@@ -671,7 +671,7 @@ export class CampScene {
     g.drawImage(this.dusk, 0, 0);
     g.globalCompositeOperation = 'lighter';
     if (this.glow) {
-      g.globalAlpha = this.reduced ? 0.8 : 0.72 + 0.2 * Math.sin(this.now / 130) * Math.sin(this.now / 410 + 1) + 0.06 * Math.sin(this.now / 47);
+      g.globalAlpha = 0.8;
       g.drawImage(this.glow, 0, 0);
     }
     g.globalCompositeOperation = 'source-over';
@@ -685,7 +685,7 @@ export class CampScene {
     const fall = this.reduced ? 1 : Math.min(1, (this.now - this.shown) / 9000);
     for (const s of starsFor(camp)) {
       if (s.at > fall) continue;
-      const tw = this.reduced ? 1 : 0.55 + 0.45 * Math.sin(this.now / 700 + s.phase);
+      const tw = 1;
       g.fillStyle = `rgba(255, 244, 214, ${0.35 + 0.65 * tw})`;
       g.fillRect(s.x, s.y, 1, 1);
       if (s.big && tw > 0.6) {
@@ -696,7 +696,7 @@ export class CampScene {
     }
   }
 
-  /** The campfire: its logs, then its flame waving row by row and breathing taller and shorter. */
+  /** The campfire: its logs, then its flame leaning slowly side to side (no flicker: the height holds still). */
   private fire(g: CanvasRenderingContext2D, camp: Camp): void {
     const f = this.flame;
     if (!f) return;
@@ -704,11 +704,10 @@ export class CampScene {
     const y = Math.round(camp.fire.y - f.h);
     g.drawImage(f.base, x, y);
     const t = this.reduced ? 0 : this.now;
-    const breathe = this.reduced ? 0 : Math.round(Math.sin(t / 150) * 0.8 + Math.sin(t / 61) * 0.6);
     for (let row = 0; row < f.h; row++) {
       const lean = (f.h - row) / f.h;
-      const dx = this.reduced ? 0 : Math.round(Math.sin(t / 170 + row * 0.55) * 2 * lean);
-      g.drawImage(f.layer, 0, row, f.w, 1, x + dx, y + row - (row < f.h / 2 ? breathe : 0), f.w, 1);
+      const dx = this.reduced ? 0 : Math.round(Math.sin(t / 700 + row * 0.2) * 1.5 * lean);
+      g.drawImage(f.layer, 0, row, f.w, 1, x + dx, y + row, f.w, 1);
     }
   }
 

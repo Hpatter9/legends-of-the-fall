@@ -56,7 +56,8 @@ function easePlaza(b: Board, limit: number): void {
 
 /** The field for a seed on a land: the land of `makeBoard` at 24 x 24 with a plaza cleared and the keep built in the middle. */
 export function standBoard(seed: number, area: Area = standArea(seed)): Board {
-  const b = makeBoard(seed, area, FIELD, FIELD);
+  // ('classic': the rolling land with its platforms and pits; a river or a canyon would cut the field in two)
+  const b = makeBoard(seed, area, FIELD, FIELD, 'classic');
   const land = b.tiles.map((t) => t.h);
   for (let v = 0; v < b.d; v++)
     for (let u = 0; u < b.w; u++) {
@@ -65,7 +66,9 @@ export function standBoard(seed: number, area: Area = standArea(seed)): Board {
       if (r <= PLAZA) {
         // (no boulder, lava or tall growth where the heroes will stand; shallows and ice may stay out beyond the keep's own ring)
         delete t.rock;
-        if (t.ground === 'lava' || t.ground === 'tall' || r <= 4) delete t.ground;
+        delete t.wall;
+        delete t.barrel;
+        if (t.ground === 'lava' || t.ground === 'tall' || t.ground === 'deep' || t.ground === 'shrine' || r <= 4) delete t.ground;
         if (r <= 4) delete t.bush;
       }
       if (r < STEPS.length) t.h = STEPS[r];
@@ -81,6 +84,13 @@ export function standBoard(seed: number, area: Area = standArea(seed)): Board {
       }
     }
   easePlaza(b, RAMP);
+  // (the land's walls, barrels and deep pools are only kept where they leave every tile a way in)
+  if (!boardOk(b))
+    for (const t of b.tiles) {
+      delete t.wall;
+      delete t.barrel;
+      if (t.ground === 'deep') delete t.ground;
+    }
   // (a seed whose field cannot be walked from one side to the other is left as plain land round the keep)
   if (!boardOk(b)) {
     b.tiles.forEach((t, i) => (t.h = land[i]));

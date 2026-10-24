@@ -22,6 +22,8 @@ interface Setup {
   /** Every hero's attack multiplier (to see deaths sooner), and whether skills and ultimates start charged. */
   power?: number;
   charged?: boolean;
+  /** Charge only the skill, or only the ultimate (the ultimate goes first when both are full). */
+  charge?: 'skill' | 'ult';
   foesCharged?: boolean;
   grade?: number;
   /** The level the heroes fight at (15 unless set: where every hero has its ultimate). */
@@ -40,9 +42,9 @@ const lab = {
       search: for (let v = 6; v < 9; v++) for (const u of [3, 2, 4, 1, 5, 0, 6]) if (isDeployTile(v) && standable(tileAt(b.board, u, v)) && !unitAt(b, u, v)) { at = [u, v]; break search; }
       const u = addUnit(b, id, at[0], at[1], { atk: s.power, grade: s.grade, level: s.level ?? 15 });
       if (s.wound && i > 0) u.hp = Math.round(u.maxHp * s.wound);
-      if (s.charged) {
-        u.charge = CHARGE_MAX;
-        u.charge2 = CHARGE_MAX;
+      if (s.charged || (s.charge && i === 0)) {
+        u.charge = s.charge === 'ult' ? 0 : CHARGE_MAX;
+        u.charge2 = s.charge === 'skill' ? 0 : CHARGE_MAX;
       }
     });
     if (s.foesCharged)
@@ -90,6 +92,21 @@ const lab = {
     g.zoom = z;
     g.tx = g.cx = x;
     g.ty = g.cy = y;
+    g.clampCam();
+    g.place();
+  },
+  /** Zoom to `z` on the middle of the line from the hero `id` to the nearest foe still standing (so a skill and what it strikes are both in the frame). */
+  lookBetween(z: number, id: string): void {
+    const g = game();
+    const all = [...g.sprites.values()].filter((sp: any) => sp.unit.alive);
+    const me = all.find((sp: any) => sp.unit.def === id);
+    const foes = all.filter((sp: any) => sp.unit.side === 'foe');
+    if (!me || !foes.length) return lab.look(z);
+    foes.sort((a: any, b: any) => Math.hypot(a.x - me.x, a.y - me.y) - Math.hypot(b.x - me.x, b.y - me.y));
+    const f = foes[0];
+    g.zoom = z;
+    g.tx = g.cx = (me.x + f.x) / 2;
+    g.ty = g.cy = (me.y + f.y) / 2 - 20;
     g.clampCam();
     g.place();
   },

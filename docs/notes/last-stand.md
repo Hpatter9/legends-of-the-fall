@@ -119,17 +119,17 @@ the weakest hero, and heals the king under 55%. Wave the king fell in:
 
 | Hero level | Median | Mean | Min | Max |
 | --- | --- | --- | --- | --- |
-| 1 | 6 | 5.6 | 5 | 6 |
-| 10 | 16 | 16.3 | 13 | 19 |
-| 20 | 20 | 20.9 | 15 | 34 |
-| 30 | 31 | 32.6 | 20 | 55 |
-| 40 | 40 | 33.5 | 20 | 46 |
-| 60 | 40 | 35.5 | 20 | 64 |
-| 80 | 40 | 36.3 | 20 | 50 |
-| 100 | 40 | 39.9 | 23 | 67 |
+| 1 | 5 | 5.3 | 5 | 6 |
+| 10 | 15 | 15.9 | 13 | 19 |
+| 20 | 21 | 21.2 | 14 | 32 |
+| 30 | 30 | 29.8 | 20 | 40 |
+| 40 | 32 | 32.0 | 20 | 46 |
+| 60 | 33 | 34.3 | 20 | 62 |
+| 80 | 40 | 39.0 | 20 | 75 |
+| 100 | 40 | 40.8 | 27 | 85 |
 
-Targets: level 1 about 5-8 (6), level 30 about 20 (31: a little high, the milestone levels are strong), maxed 40 or more (median 40, mean
-about 40). Boss waves are the walls (the maxed medians sit on the wave-40 boss). The levers are `WAVE_GROWTH` (0.21), `WAVE_STEP` (2),
+Targets: level 1 about 5-8 (6), level 30 about 20 (30: a little high, the milestone levels are strong), maxed 40 or more (median 40, mean
+about 40). Boss waves are the walls (the maxed medians sit on the wave-40 boss). The table is from the code merged with main 0.150. The levers are `WAVE_GROWTH` (0.21), `WAVE_STEP` (2),
 `bossShare` and the prices. No run lasts for ever: a wave left alone is enraged after 75 s, and the longest run here ended in the 60s-70s.
 
 ### Performance
@@ -232,3 +232,9 @@ drawing is on the GPU on a phone; this machine cannot measure that, so a real-ph
   and the three relics on offer (a new offer each wave). Two buttons and three chips: about a quarter of the screen at 393x852.
 - **Re-aimed balance:** see the table above (eight heroes are much stronger than five; `WAVE_GROWTH` rose from 0.12 to 0.21 and `WAVE_STEP` from 1.5 to 2).
 - The camera now never zooms out past about eight tiles across a phone (`SCALE_MIN`), framing the king, the heroes and the foes within 7 tiles.
+
+## After merging main 0.150
+
+- The field uses `makeBoard(..., 'classic')`: the new river and canyon layouts, deep water, walls and barrels would cut a 24x24 field; the plaza round the keep is cleared of walls, barrels and deep pools, and any left that would block a way in are removed.
+- A hero in the Last Stand never slides on ice (the slide could carry it a tile past its leash). A hero shoved past its leash by a foe walks back, or fights where it stands if foes shut the way.
+- The ordinary fights' pinned outcomes were re-pinned on main 0.150 (computed on a clean checkout of origin/main, not on this branch): the flag changes none of them.
