@@ -18,32 +18,39 @@ they keep `tierStart`, so their bands do not move. (The simulation reads `tierGr
 | army (rec. level) | start (was) | growth (was) |
 | --- | --- | --- |
 | Orc Warband (1) | 0.5 (0.5) | 0.176 (0.176) |
-| Undead Legion (8) | 1.46 (0.72) | 0.05 (0.17) |
-| Beast Packs (15) | 1.65 (0.8) | 0.05 (0.15) |
-| The Wildwood (22) | 1.82 (1.05) | 0.05 (0.136) |
-| The Labyrinth (30) | 2.23 (1.15) | 0.05 (0.128) |
+| Undead Legion (8) | 1.47 (0.72) | 0.05 (0.17) |
+| Beast Packs (15) | 1.59 (0.8) | 0.05 (0.15) |
+| The Wildwood (22) | 1.76 (1.05) | 0.05 (0.136) |
+| The Labyrinth (30) | 2.37 (1.15) | 0.05 (0.128) |
 | Ogre Clans (38) | 2.76 (1.57) | 0.05 (0.124) |
-| Infernal Host (46) | 3.33 (1.78) | 0.05 (0.13) |
+| Infernal Host (46) | 3.08 (1.78) | 0.05 (0.13) |
 | Yokai Night Parade (54) | 3.4 (1.8) | 0.05 (0.127) |
-| Golem Forge (62) | 4.11 (2.2) | 0.05 (0.124) |
+| Golem Forge (62) | 4.06 (2.2) | 0.05 (0.124) |
 
 ### Mean tries to clear Normal (24 saves a cell; 26 means no save cleared it in 25 tries; party as above)
 
 | Army (rec. level) | Lv 1 | 10 | 20 | 30 | 45 | 60 | 80 | 100 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Orc Warband (1) | 2.1 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 |
-| Undead Legion (8) | 26 | 1.7 | 1.1 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 |
-| Beast Packs (15) | 26 | 7.4 | 2.0 | 1.1 | 1.0 | 1.0 | 1.0 | 1.0 |
-| The Wildwood (22) | 26 | 14.0 | 4.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 |
-| The Labyrinth (30) | 26 | 26 | 18.8 | 2.2 | 1.2 | 1.0 | 1.0 | 1.0 |
-| Ogre Clans (38) | 26 | 26 | 20.5 | 3.8 | 2.4 | 1.5 | 1.1 | 1.0 |
-| Infernal Host (46) | 26 | 26 | 26 | 8.0 | 2.9 | 1.6 | 1.0 | 1.0 |
-| Yokai Night Parade (54) | 26 | 26 | 25.0 | 13.5 | 5.6 | 2.0 | 1.3 | 1.2 |
-| Golem Forge (62) | 26 | 26 | 26 | 21.5 | 8.7 | 2.9 | 1.5 | 1.2 |
+| Orc Warband (1) | 2.2 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 |
+| Undead Legion (8) | 26 | 1.4 | 1.1 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 |
+| Beast Packs (15) | 26 | 6.6 | 1.7 | 1.1 | 1.0 | 1.0 | 1.0 | 1.0 |
+| The Wildwood (22) | 26 | 11.5 | 3.3 | 1.2 | 1.1 | 1.0 | 1.0 | 1.0 |
+| The Labyrinth (30) | 26 | 26 | 23.2 | 2.8 | 1.8 | 1.3 | 1.1 | 1.0 |
+| Ogre Clans (38) | 26 | 26 | 24.5 | 3.9 | 2.7 | 1.8 | 1.2 | 1.1 |
+| Infernal Host (46) | 26 | 26 | 25.4 | 6.1 | 3.0 | 1.5 | 1.0 | 1.0 |
+| Yokai Night Parade (54) | 26 | 26 | 26 | 8.9 | 4.1 | 2.6 | 1.6 | 1.0 |
+| Golem Forge (62) | 26 | 26 | 26 | 20.8 | 8.0 | 2.8 | 1.8 | 1.3 |
 
-At the recommended level (32 saves): 2.1, 2.9, 2.5, 2.8, 2.6, 2.6, 2.9, 3.1, 2.8 tries (2 to 3.5). Below it, about 70% of the level: 8 to 20 tries;
+At the recommended level (32 saves): 2.2, 2.7, 2.8, 2.7, 2.8, 2.7, 2.8, 2.6, 2.8 tries (2 to 3.5). Below it, about 70% of the level: 8 to 20 tries;
 about half: a wall (Undead at level 4 takes 17, Beasts at 4 never; Labyrinth at 19 takes 21; Golems at 40 take 12, at 33 21). **Level 1 clears the
 first army only**, with XP carried (every other army: no save in 25 tries), pinned by a test (`test/armies.test.ts`).
+
+### On the merged code (0.148.0: 8x11 boards, layouts, `USUAL_WALK`, hp nudges)
+
+The bigger boards moved the climb a little (Infernal harder, Yokai easier, Beasts at level 20 under the old test's 30% one-try floor), so `start` was
+bisected again on the merged code (the table above is the merged one). Hard (16 saves, same party and castle) at level 30 / 45 / 60: Undead 1.8 / 1.4 / 1.2, Beasts 5.6 / 2.8 / 1.5,
+Wildwood 21.1 / 13.9 / 4.3, Labyrinth 25.6 / 24.8 / 9.9, Ogres 19.9 / 13.0 / 2.9, Infernal 23.9 / 19.9 / 5.3, Yokai 13.8 / 6.3 / 3.1, Golems 24.1 / 18.5 / 6.9: above Normal everywhere.
+The Hard figures in the next section are from before the merge.
 
 ### Hard to Mythic keep their calibration, with one change
 
