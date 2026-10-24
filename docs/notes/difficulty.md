@@ -8,6 +8,8 @@ means every talent row the level opens (the points are the level's own). Full ta
 
 ## Normal climbs army by army (the owner's rule, 0.141)
 
+> Superseded by `docs/notes/army-curve.md` (0.147): the levels are now 1, 8, 15, 22, 30, 38, 46, 54, 62, with a flatter Normal `growth`; the tables below are the old curve.
+
 "I want the armies to be harder as they unlock. The first army is low level and easy, the next one requires more levels to beat and so on. Level 1 units can't beat normal on any but the first army."
 
 Each army now names the hero level Normal is meant for (`Army.level`, shown on the armies screen and on the war table as "Lv N"): **1, 5, 8, 12, 16, 20, 24, 28, 32**. The pace: level 10 is day 2, 20 is day 7 and 30 is day 23 (`npm run level-pace`), and the armies open at 0, 2, 4 ... 16 army stars (`ARMY_NEED`), about two stars an army, so a player meets an army about when it has reached its level.
