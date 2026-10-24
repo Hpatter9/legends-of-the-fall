@@ -248,6 +248,8 @@ function trial(baseId: string, seed: number, tweak: Partial<EquipStats> = {}): {
   if (trig === 'death') eq.hp = -0.85;
   if (trig === 'kill' || trig === 'hit' || trig === 'nth' || trig === 'crit') eq.atk += 1.5;
   const b = startBattle(seed, 'skeletons', trig === 'low' || trig === 'death' ? { foes: { atk: 1.6 } } : {});
+  // (the steps take each kind's own time: these trials are of the gear, not of the usual board's pace)
+  delete b.walk;
   const spots: [number, number][] = [];
   for (let u = 0; u < b.board.w; u++) if (standable(tileAt(b.board, u, D - DEPLOY_ROWS))) spots.push([u, D - DEPLOY_ROWS]);
   // (the hero and an ally on two tiles side by side)

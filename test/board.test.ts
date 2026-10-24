@@ -56,11 +56,11 @@ test('a ridge between two low tiles blocks the shot', () => {
   assert.ok(!sightClear(b, { u: 0, v: 0 }, { u: 0, v: 4 }));
 });
 
-test('boards have real height: several levels, tall faces, and a way up by stairs', () => {
+test('rolling land has real height: several levels, tall faces, and a way up by stairs', () => {
   let tall = 0;
   let steep = 0;
   for (let seed = 1; seed <= 120; seed++) {
-    const b = makeBoard(seed);
+    const b = makeBoard(seed, 'highlands', W, D, 'classic');
     assert.ok(new Set(b.tiles.map((t) => t.h)).size >= 3, `seed ${seed} has ${new Set(b.tiles.map((t) => t.h)).size} levels`);
     let face = 0;
     for (let v = 0; v < D; v++)
@@ -103,7 +103,7 @@ test('a good jumper can take a cliff a short one has to go round', () => {
   // (some board has a face of 3 or 4 that a jump of 2 cannot climb but a jump of 4 can)
   let found = 0;
   for (let seed = 1; seed <= 40; seed++) {
-    const b = makeBoard(seed);
+    const b = makeBoard(seed, 'highlands', W, D, 'classic');
     for (let i = 0; i < b.tiles.length; i++)
       for (const [du, dv] of DIRS) {
         const n = tileAt(b, (i % W) + du, Math.floor(i / W) + dv);
