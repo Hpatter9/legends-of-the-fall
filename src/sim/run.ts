@@ -275,8 +275,10 @@ export function recycle(run: Run, heroId: number): number | null {
 export const retriesLeft = (run: Run): number => Math.max(0, MAX_RETRIES - (run.retries ?? 0));
 /** The gold a retry pays to help the second go: one Hire at the price it stands at. */
 export const retryGold = (run: Run): number => summonCost(run);
-/** Whether a wave just lost may be tried again: the run is still going (a loss is settled by `finish` only once the player gives up), has retries left, and is not the tower (which has its own way of failing). */
+/** Whether a wave just lost may be tried again: the run is still going, has hearts (retries) left, and is not the tower or the calamity (which have their own way of failing). Armies and the daily lose hearts; with none left the loss is settled by `finish` and the run ends. */
 export const canRetry = (run: Run): boolean => !run.over && !run.tower && retriesLeft(run) > 0;
+/** What a fall brings: a heart burns and the same wave starts again on its own (`retryWave`), or the run ends (no heart left, or a mode with none). */
+export const fallOutcome = (run: Run): 'heart' | 'end' => (canRetry(run) ? 'heart' : 'end');
 /** Retry the wave: the same stage with the same buff, a `retryGold` boost to spend, one retry used. Returns the gold paid, or null when no retry may be had. */
 export function retryWave(run: Run): number | null {
   if (!canRetry(run)) return null;
