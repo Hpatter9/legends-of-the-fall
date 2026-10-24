@@ -1405,7 +1405,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Dragon Scales', text: 'Takes a quarter less from shots', scales: 0.25 },
   },
   juggernaut: {
-    skill: { name: 'Earthquake', text: 'Every foe within 3 tiles is hurt and held still for 1.2s', need: CHARGE_MAX, dealt: 4, taken: 7, perSec: 2, castMs: 700, anim: 'attack', cast: quake },
+    skill: { name: 'Earthquake', text: 'Every foe within 3 tiles is hurt and held still for 1.2s', need: CHARGE_MAX, dealt: 4, taken: 7, perSec: 2, castMs: 700, anim: 'attack2', cast: quake },
     passive: { name: 'Living Rampart', text: 'Blows from the front lose a third, and he cannot be knocked back', block: 0.33, steady: true },
   },
   sage: {
@@ -1504,7 +1504,7 @@ KITS.nineTails = {
   passive: { name: 'Spirit Drain', text: 'Heals for a fifth of the damage its blows deal', leech: 0.2 },
 };
 KITS.oniKing = {
-  skill: { name: 'Kanabo Smash', text: 'Smashes a 3x3 of tiles, hurting the heroes on it', need: CHARGE_MAX, dealt: 4, taken: 4, perSec: 3, castMs: 700, anim: 'attack', cast: groundSlam },
+  skill: { name: 'Kanabo Smash', text: 'Smashes a 3x3 of tiles, hurting the heroes on it', need: CHARGE_MAX, dealt: 4, taken: 4, perSec: 3, castMs: 700, anim: 'attack2', cast: groundSlam },
   ultimate: { name: 'Thunder Drum', text: 'A roar that hurts every hero within 4 tiles, shoves them back and stuns them for 1.5s', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 800, anim: 'attack2', cast: tempest },
   passive: { name: 'Demon Fury', text: 'Attack grows by up to 60% as its health falls, and it cannot be knocked back', rage: 0.6, steady: true },
 };

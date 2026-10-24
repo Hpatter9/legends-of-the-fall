@@ -11,7 +11,7 @@ import { SPELLS } from '../sim/spells';
 import type { Shot } from '../sim/units';
 import { settings } from '../settings';
 import { loadImage } from './loadImage';
-import { at, TH, TW } from './iso';
+import { at, facesRight, TH, TW } from './iso';
 import { fadeTrauma, popScale, shakeOf, traumaFor } from './juiceRules';
 import { BIG_FOE_HP, SKILL_FX, SPELL_FX, SPELL_GLOW, SPELL_WORD, type Effect, type MagicKey } from './skillFx';
 import type { UnitSprite } from './unitView';
@@ -21,6 +21,8 @@ import { loadPackArt, PACK } from './fxSheets';
 import { bossEntrance, deathBurst, impactBurst, play, setBoneArt, windUp } from './combatFx';
 import { comboGather, comboStrike, promoteBurst, ringOut, toneColour, type Spot } from './spectacle';
 import { comboById, COMBO_NAME } from '../sim/combos';
+import { SIGNATURES, tierRing } from './signatures';
+import { playSteps, setSignatureSprite, type Pt, type Scene } from './signatureFx';
 import { tierSkillOf } from '../sim/tierSkills';
 import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, impactElement, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, SPELL_TOUCH, type Missile } from './fxRules';
 import { particleBudget, slashOf } from './vfxRules';
@@ -99,6 +101,7 @@ export async function loadFx(): Promise<void> {
   arrow = Texture.from(await loadImage(arrowUrl));
   bone = Texture.from(await loadImage(boneUrl));
   setBoneArt(bone);
+  setSignatureSprite('arrow', arrow);
   const keys = Object.keys(MAGIC) as MagicKey[];
   const strips = await Promise.all(keys.map((k) => strip(MAGIC[k], 32)));
   magic = Object.fromEntries(keys.map((k, i) => [k, strips[i]])) as Record<MagicKey, Strip>;
@@ -133,6 +136,8 @@ export class Fx {
   view = { x0: -1e6, x1: 1e6, y0: -1e6, y1: 1e6 };
   /** The skill names showing, oldest first, each with a way to fade it out early (at most three at a time). */
   private skillStack: { txt: Text; cut: () => void }[] = [];
+  /** The skill each caster last cast (its blows' hits read it: a skill or its ultimate). */
+  private casting = new Map<number, string>();
   /** The small puffs, sparks and trails (pooled, capped). */
   readonly particles = new Particles();
   /** The world dimmed behind the effects for an ultimate (a layer under `root`, sized by `dim`'s peak and time). */
@@ -331,7 +336,9 @@ export class Fx {
           continue;
         }
         // (a skill's blow has its own sheet; a crit or a big kill adds a burst, a white flash and a harder shake)
-        const skillFx = e.src === 'skill' ? SKILL_FX[kitOf(by)?.skill.name ?? '']?.hit : undefined;
+        const castName = e.src === 'skill' ? this.casting.get(e.by) ?? kitOf(by)?.skill.name ?? '' : '';
+        const signature = SIGNATURES[castName]?.hit;
+        const skillFx = e.src === 'skill' && !signature ? SKILL_FX[castName]?.hit : undefined;
         // (the spark grows with the blow: a scratch is small, a half-health blow fills the struck)
         const spark = Math.min(2, 0.6 + (e.dmg / target.maxHp) * 3);
         // (a raised guard turns the blow aside: a bright block, and the word)
@@ -341,7 +348,11 @@ export class Fx {
         }
         const hx = to.x;
         const hy = to.y - to.tall * 0.45;
-        if (skillFx) {
+        if (signature) {
+          // (a hero's skill has a look of its own: no shared burst on top)
+          const spot = { x: hx, y: to.y, tall: to.tall };
+          playSteps(signature, { p: this.particles, self: spot, foes: [spot], allies: [spot], dir: { x: 0, y: 1 }, ms: 0 });
+        } else if (skillFx) {
           this.effect(skillFx, hx, hy);
           // (and a burst of the skill's own element on top)
           impactBurst(this.particles, skillElement(kitOf(by)?.skill.name ?? ''), hx, hy, 0.8, e.splash);
@@ -693,8 +704,12 @@ export class Fx {
     this.skillStack = this.skillStack.filter((l) => !l.txt.destroyed);
     while (this.skillStack.length >= 3) this.skillStack.shift()!.cut();
     this.skillStack.push(this.label(name, by.x, by.y - by.tall - 20, ultimate ? 0xfff2a0 : boss ? 0xff9a8a : 0xffe27a, ultimate || boss ? 15 : 13, 1200));
-    windUp(this.particles, el, by.x, by.y, ms, by.tall, ultimate || boss);
-    const cast = SKILL_FX[name]?.cast;
+    this.casting.set(byId, name);
+    const signature = SIGNATURES[name];
+    if (signature) playSteps(signature.wind, this.sceneOf(by, ms));
+    else windUp(this.particles, el, by.x, by.y, ms, by.tall, ultimate || boss);
+    const cast = signature ? undefined : SKILL_FX[name]?.cast;
+    if (signature) this.later(ms, () => playSteps(signature.cast, this.sceneOf(this.sprites.get(byId) ?? by, ms)));
     if (ultimate) {
       this.trauma = Math.max(this.trauma, 0.5);
       this.flash(0.3, 100);
@@ -704,26 +719,28 @@ export class Fx {
       // (the wind-up ends in a nova and a ring of the element, with a second flash and a hard shake)
       const [x, y] = [by.x, by.y];
       this.later(ms, () => {
-        // (thin layers in the element's colour, so the nova reads as a nova and does not saturate)
+        // (thin layers in the element's colour, so the nova reads as a nova and does not saturate; a hero with a look of its own plays that instead)
         const tint = ULT_TINT[el];
-        play(this.particles, packKey(el, 'nova'), x, y - by.tall * 0.4, { scale: 3, frameMs: 80, alpha: 0.6, tint });
-        play(this.particles, packKey(el, 'wave'), x, y, { scale: 4, frameMs: 90, add: false, alpha: 0.7, tint });
-        // (a storm of wind has lightning in it: bolts crack down round the caster)
-        if (el === 'wind')
-          for (let i = 0; i < bits(5, this.particles.density); i++)
-            play(this.particles, 'lightning-strike', x + jitter(46), y - 4 + jitter(16), { scale: 1.6, frameMs: 55, delay: i * 90, tint: 0xa8e4ff, alpha: 0.85 });
+        if (!signature) {
+          play(this.particles, packKey(el, 'nova'), x, y - by.tall * 0.4, { scale: 3, frameMs: 80, alpha: 0.6, tint });
+          play(this.particles, packKey(el, 'wave'), x, y, { scale: 4, frameMs: 90, add: false, alpha: 0.7, tint });
+          // (a storm of wind has lightning in it: bolts crack down round the caster)
+          if (el === 'wind')
+            for (let i = 0; i < bits(5, this.particles.density); i++)
+              play(this.particles, 'lightning-strike', x + jitter(46), y - 4 + jitter(16), { scale: 1.6, frameMs: 55, delay: i * 90, tint: 0xa8e4ff, alpha: 0.85 });
+        }
         this.flash(0.35, 110);
         this.trauma = Math.min(1, this.trauma + 0.45);
-        play(this.particles, packKey(el, 'pillar'), x, y - by.tall * 0.6, { scale: 3.2, frameMs: 80, alpha: 0.7, tint });
+        if (!signature) play(this.particles, packKey(el, 'pillar'), x, y - by.tall * 0.6, { scale: 3.2, frameMs: 80, alpha: 0.7, tint });
         this.slowMo(450);
         if (!this.calm()) this.stopLeft = Math.max(this.stopLeft, 70);
       });
-    } else if (by.unit.side === 'hero') {
+    } else if (by.unit.side === 'hero' && !signature) {
       // (an ordinary hero skill ends in a ring of its element, a little bigger than the cast's circle)
       this.later(ms, () => play(this.particles, packKey(el, 'wave'), by.x, by.y, { scale: 2.4, frameMs: 70, alpha: 0.55 }));
     } else if (boss) {
       this.trauma = Math.max(this.trauma, 0.4);
-      this.later(ms, () => play(this.particles, packKey(el, 'wave'), by.x, by.y, { scale: 3, frameMs: 90 }));
+      if (!signature) this.later(ms, () => play(this.particles, packKey(el, 'wave'), by.x, by.y, { scale: 3, frameMs: 90 }));
     }
     if (cast) {
       const sp = this.effect(cast, by.x, by.y - 4);
@@ -732,7 +749,30 @@ export class Fx {
         sp.alpha = 0.6;
         if (ULT_TINT[el] !== undefined) sp.tint = ULT_TINT[el]!;
       }
-    } else this.anim(impact, by.x, by.y - 4, 1.6, 40);
+    } else if (!signature) this.anim(impact, by.x, by.y - 4, 1.6, 40);
+  }
+
+  /** Where the caster, the foes nearest it and its friends are drawn, for a signature to be played against. */
+  private sceneOf(by: UnitSprite, ms: number): Scene {
+    const near: Pt[] = [];
+    const friends: Pt[] = [];
+    for (const s of this.sprites.values()) {
+      if (s === by || !s.unit.alive) continue;
+      (s.unit.side === by.unit.side ? friends : near).push({ x: s.x, y: s.y, tall: s.tall });
+    }
+    const dist = (a: Pt) => (a.x - by.x) ** 2 + (a.y - by.y) ** 2;
+    near.sort((a, b) => dist(a) - dist(b));
+    friends.sort((a, b) => dist(a) - dist(b));
+    near.length = Math.min(near.length, 6);
+    friends.length = Math.min(friends.length, 6);
+    let dx = facesRight(by.unit.facing) ? 1 : -1;
+    let dy = 0.25;
+    if (near.length) {
+      const [vx, vy] = [near[0].x - by.x, near[0].y - by.y];
+      const len = Math.hypot(vx, vy) || 1;
+      [dx, dy] = [vx / len, vy / len];
+    }
+    return { p: this.particles, self: { x: by.x, y: by.y, tall: by.tall }, foes: near, allies: friends, dir: { x: dx, y: dy }, ms };
   }
 
   /** A tier skill's ring goes out from its caster, in the element of its skill. */
@@ -740,7 +780,10 @@ export class Fx {
     if (e.tone !== 'tier') return;
     const by = this.sprites.get(e.by);
     if (!by) return;
-    ringOut(this.particles, skillElement(kitOf(by.unit)?.skill.name ?? ''), by.x, by.y, e.reach);
+    const skillName = kitOf(by.unit)?.skill.name ?? '';
+    // (a hero's tier ring is its skill's own look again; a foe's is the element's wave)
+    if (SIGNATURES[skillName]) playSteps(tierRing(skillName, e.reach * 64, (by.unit.grade ?? 1) > 2), this.sceneOf(by, 600));
+    else ringOut(this.particles, skillElement(skillName), by.x, by.y, e.reach);
     this.trauma = Math.max(this.trauma, 0.15);
   }
 
