@@ -56,6 +56,7 @@ export function grantContent(m: Meta): string[] {
   for (const c of CONTENT_HEROES) {
     if (m.unlocked.includes(c.kind) || !c.met(m)) continue;
     m.unlocked.push(c.kind);
+    delete m.unlock?.[c.kind];
     joined.push(c.kind);
   }
   return joined;

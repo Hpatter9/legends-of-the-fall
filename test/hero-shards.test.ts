@@ -334,3 +334,41 @@ test('the odds fade: a pull is a new hero less and less often as the roster grow
   assert.ok(pityAt(30) > pityAt(5) + 100);
   assert.equal(pityAt(3), PITY_PULLS);
 });
+
+test('unlock shards are spent when a hero joins: no bar, no rank shards, no stale count anywhere', () => {
+  for (const seed of [1, 2, 3, 4]) {
+    const m = fresh(seed);
+    let joins = 0;
+    for (let i = 0; i < 400 && joins < 6; i++) {
+      const was = m.unlocked.length;
+      const need = needOf(m);
+      const p = pullOnce(m);
+      if (m.unlocked.length === was) continue;
+      joins++;
+      assert.equal(p.isNew, true);
+      assert.equal(p.have, need);
+      assert.equal(m.unlock?.[p.kind], undefined, 'the entry is gone');
+      assert.equal(haveOf(m, p.kind), 0);
+      assert.equal(m.shards[p.kind] ?? 0, 0, 'none carried over as rank shards');
+    }
+    assert.ok(joins >= 4);
+  }
+  // a gift larger than the bar needs does not carry the rest over either
+  const m = fresh(9);
+  const kind = toCollect(m)[0];
+  const g = giveShards(m, kind, 50);
+  assert.equal(g.joined, true);
+  assert.equal(m.shards[kind] ?? 0, 0);
+  assert.equal(m.unlock?.[kind], undefined);
+});
+
+test('a stale unlock count for a hero already owned is dropped on load and never shown', () => {
+  const m = fresh(5);
+  const kind = m.unlocked[0];
+  m.unlock = { ...m.unlock, [kind]: 7 };
+  assert.equal(haveOf(m, kind), 0);
+  const s = store();
+  saveMeta(m, s);
+  const back = loadMeta(1, { getItem: (k: string) => s.data[k] ?? null } as Storage);
+  assert.equal(back.unlock?.[kind], undefined);
+});
