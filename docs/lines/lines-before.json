@@ -1,0 +1,6348 @@
+{
+  "heroes_context": {
+    "knight": {
+      "name": "Knight",
+      "role": "Holds the line",
+      "ranged": false,
+      "traits": [
+        "knightly",
+        "guardian"
+      ],
+      "story": "Sir Aldric kept the gate for forty winters and never once asked why. They say a blow that falls on his shield falls on the whole castle."
+    },
+    "samurai": {
+      "name": "Samurai",
+      "role": "Heavy blade",
+      "ranged": false,
+      "traits": [
+        "samurai",
+        "blade"
+      ],
+      "story": "He crossed the sea with a single blade and a single promise. He has not told anyone what the promise was, and no one has dared to ask."
+    },
+    "kunoichi": {
+      "name": "Kunoichi",
+      "role": "Quick, climbs well",
+      "ranged": false,
+      "traits": [
+        "samurai",
+        "trickster"
+      ],
+      "story": "Moonlight and a rooftop are all she needs. She was already behind you when you thought to turn around."
+    },
+    "archer": {
+      "name": "Archer",
+      "role": "Long shots, twice as far from high",
+      "ranged": true,
+      "traits": [
+        "samurai",
+        "marksman"
+      ],
+      "story": "He was a hunter in the high passes, where a shot from a crag is worth three from the plain. He has never missed a deer, and no one has ever seen him miss a foe."
+    },
+    "wizard": {
+      "name": "Fire Wizard",
+      "role": "Fire that spreads",
+      "ranged": true,
+      "traits": [
+        "mystic",
+        "caster"
+      ],
+      "story": "His first fire burnt down a barn, and his second burnt down the next. Now he points it at things that deserve it, and the barns are safe."
+    },
+    "ninjaMonk": {
+      "name": "Ninja Monk",
+      "role": "Bare-handed combos",
+      "ranged": false,
+      "traits": [
+        "samurai",
+        "blade"
+      ],
+      "story": "He took a vow to carry no weapon, then took a vow to win. His fists are the compromise."
+    },
+    "peasant": {
+      "name": "Peasant",
+      "role": "Spear militia, tougher in a crowd",
+      "ranged": true,
+      "traits": [
+        "knightly",
+        "guardian"
+      ],
+      "story": "Pitchfork, spear, and a dozen neighbours who all picked the same morning to be brave. In a crowd, a peasant is worth three soldiers."
+    },
+    "lightningMage": {
+      "name": "Lightning Mage",
+      "role": "Lightning that jumps between foes",
+      "ranged": true,
+      "traits": [
+        "mystic",
+        "marksman"
+      ],
+      "story": "Storms follow him from town to town, and he is not sure which of them started it. His bolts leap from foe to foe, and so does his laugh."
+    },
+    "wanderer": {
+      "name": "Wanderer",
+      "role": "Heals the weakest ally",
+      "ranged": true,
+      "traits": [
+        "mystic",
+        "caster"
+      ],
+      "story": "She came out of the road one evening and has never said from where. Wherever she has walked, the hurt get up again."
+    },
+    "kitsune": {
+      "name": "Kitsune",
+      "role": "Charms a foe to fight for her",
+      "ranged": false,
+      "traits": [
+        "yokai",
+        "trickster"
+      ],
+      "story": "A fox who learned to be kind to people, and then learned to be clever about it. A foe she charms will fight for her until the song ends."
+    },
+    "karasu": {
+      "name": "Karasu Tengu",
+      "role": "Flies; dives on shooters",
+      "ranged": false,
+      "traits": [
+        "yokai",
+        "trickster"
+      ],
+      "story": "A crow-spirit of the high crags, quick to forgive and quicker to dive. Archers on the far side of the field are his favourite game."
+    },
+    "yamabushi": {
+      "name": "Yamabushi Tengu",
+      "role": "Wind that shoves foes off ledges",
+      "ranged": false,
+      "traits": [
+        "yokai",
+        "guardian"
+      ],
+      "story": "He meditated in a wind so cold it carved the shape of the mountain into his bones. Now the wind goes where he points."
+    },
+    "werewolf": {
+      "name": "Werewolf",
+      "role": "Quicker with each kill; bites back the blood",
+      "ranged": false,
+      "traits": [
+        "wild",
+        "beast"
+      ],
+      "story": "The first moon was kind to him; the second was not. He has kept the strength and given up the apology."
+    },
+    "minotaur": {
+      "name": "Minotaur",
+      "role": "Charges a foe, knocks it back and stuns it",
+      "ranged": false,
+      "traits": [
+        "knightly",
+        "beast"
+      ],
+      "story": "He found the maze's way out by walking through a wall. He has been taking the direct route ever since."
+    },
+    "satyr": {
+      "name": "Satyr",
+      "role": "Pipes that hasten the allies near him",
+      "ranged": false,
+      "traits": [
+        "arcane",
+        "beast"
+      ],
+      "story": "He plays at weddings, and at wars when the pay is better. His tune makes tired legs forget that they are tired."
+    },
+    "gorgon": {
+      "name": "Gorgon",
+      "role": "Petrifying gaze that stuns from afar",
+      "ranged": true,
+      "traits": [
+        "yokai",
+        "beast"
+      ],
+      "story": "She wears a veil in town, and takes it off for a good reason. Foes who meet her gaze find that they have important business standing still."
+    },
+    "samuraiCommander": {
+      "name": "Samurai Commander",
+      "role": "War banner lifts the blows of those near",
+      "ranged": false,
+      "traits": [
+        "knightly",
+        "blade"
+      ],
+      "story": "He once held a bridge with a hundred men against a thousand. The banner he carries is the same one, mended in nine places."
+    },
+    "paladin": {
+      "name": "Paladin",
+      "role": "Draws foes in; heals when he blocks",
+      "ranged": false,
+      "traits": [
+        "holy",
+        "guardian"
+      ],
+      "story": "He swore his oath on a battlefield, and has been fighting the battlefield ever since. Foes are drawn to his shield, and he heals as he holds."
+    },
+    "cleric": {
+      "name": "Cleric",
+      "role": "Heals over time and cleanses",
+      "ranged": true,
+      "traits": [
+        "holy",
+        "warden"
+      ],
+      "story": "She asks no questions of the wounded, only whether they would like some tea. Her prayers mend wounds slowly, and mend them to stay."
+    },
+    "druid": {
+      "name": "Druid",
+      "role": "Calls a treant; thorns hurt attackers",
+      "ranged": true,
+      "traits": [
+        "wild",
+        "warden"
+      ],
+      "story": "The oaks will do her bidding if she asks politely. A treant at her side is a wall that grows back."
+    },
+    "barbarian": {
+      "name": "Barbarian",
+      "role": "Hits harder the more hurt he is",
+      "ranged": false,
+      "traits": [
+        "wild",
+        "blade"
+      ],
+      "story": "He fights as if every scar were a promise. The more the foe takes from him, the more he gives back."
+    },
+    "ranger": {
+      "name": "Ranger",
+      "role": "Lays snare traps; deadly from afar",
+      "ranged": true,
+      "traits": [
+        "frontier",
+        "marksman"
+      ],
+      "story": "She sets her snares in the dark and her arrows in the light. By the time the foe has noticed either, it is too late for both."
+    },
+    "warlock": {
+      "name": "Warlock",
+      "role": "Curses that burn and feed him",
+      "ranged": true,
+      "traits": [
+        "arcane",
+        "caster"
+      ],
+      "story": "He signed something once without reading it. His curses burn his foes and, by the terms of the bargain, feed him."
+    },
+    "illusionist": {
+      "name": "Illusionist",
+      "role": "Leaves decoys and slips away",
+      "ranged": false,
+      "traits": [
+        "arcane",
+        "trickster"
+      ],
+      "story": "There is a woman standing there, and another one behind you, and a third who just left. Only one of them is real, and she is not telling."
+    },
+    "gunslinger": {
+      "name": "Gunslinger",
+      "role": "Slow, piercing shots from very far",
+      "ranged": true,
+      "traits": [
+        "frontier",
+        "marksman"
+      ],
+      "story": "A slow shot, a long reach, and not a single wasted bullet. She reloads in the time it takes to say a prayer."
+    },
+    "shambler": {
+      "name": "Shambler",
+      "role": "Slow and rotting; its touch festers and it mends itself",
+      "ranged": false,
+      "traits": [
+        "undead",
+        "warden"
+      ],
+      "story": "He does not remember how he died, and has never felt the need to ask. His touch festers, and he keeps coming back to a mended state."
+    },
+    "rifleBot": {
+      "name": "Rifle Bot",
+      "role": "Rapid bursts; deadly from afar",
+      "ranged": true,
+      "traits": [
+        "machine",
+        "gunner"
+      ],
+      "story": "Built for a war that ended before it was switched on. It fires in bursts, counts every round, and has never once complained."
+    },
+    "mercenary": {
+      "name": "Mercenary",
+      "role": "Hunts the strongest foe for a bounty",
+      "ranged": false,
+      "traits": [
+        "frontier",
+        "assassin"
+      ],
+      "story": "He fights for coin, but he has strong views about whom. The strongest foe on the field carries the best bounty, and he always goes for it."
+    },
+    "mummy": {
+      "name": "Mummy",
+      "role": "Wraps foes in bandages that slow them",
+      "ranged": false,
+      "traits": [
+        "undead",
+        "warden"
+      ],
+      "story": "Wrapped in a hundred years of linen and a grudge. His bandages cling to the foe, and the foe finds it hard to run."
+    },
+    "buccaneer": {
+      "name": "Buccaneer",
+      "role": "Hooks a shooter in and cuts it down",
+      "ranged": false,
+      "traits": [
+        "pirate",
+        "assassin"
+      ],
+      "story": "She hooks a shooter in with a grin and cuts it down before the grin fades. She has never lost a hat to a foe."
+    },
+    "wolfBard": {
+      "name": "Wolf Bard",
+      "role": "A dirge that slows foes; his tune charges his friends",
+      "ranged": true,
+      "traits": [
+        "wild",
+        "support"
+      ],
+      "story": "A dirge for the foes and a drumbeat for his friends. The wolves howl along, and nobody has the heart to tell him it is flat."
+    },
+    "beastmaster": {
+      "name": "Beastmaster",
+      "role": "Calls wolves; his whip slows foes",
+      "ranged": false,
+      "traits": [
+        "frontier",
+        "support"
+      ],
+      "story": "The wolves came when she whistled, and have never left. A whip to slow the foe, and two wolves to finish him."
+    },
+    "kraken": {
+      "name": "Kraken Mate",
+      "role": "An undertow that drags foes in close",
+      "ranged": false,
+      "traits": [
+        "pirate",
+        "bulwark"
+      ],
+      "story": "He sailed with the kraken and was spat out when it grew tired of him. The undertow follows him on dry land, and drags foes in close."
+    },
+    "lancer": {
+      "name": "Lancer",
+      "role": "Charges down a line, then rides faster",
+      "ranged": false,
+      "traits": [
+        "royal",
+        "vanguard"
+      ],
+      "story": "A charge, a lance and a good horse, and the horse is a far better listener than the king. Once he has thundered through the line, he rides faster for it."
+    },
+    "reaper": {
+      "name": "Reaper",
+      "role": "Flies; reaps the nearly dead",
+      "ranged": false,
+      "traits": [
+        "undead",
+        "assassin"
+      ],
+      "story": "Death is a trade like any other, and she keeps to the late shift. Anything that is nearly dead belongs to her."
+    },
+    "timeWitch": {
+      "name": "Time Witch",
+      "role": "Slows the foes and hastens her friends",
+      "ranged": true,
+      "traits": [
+        "arcane",
+        "arcanist"
+      ],
+      "story": "She holds an hourglass the foes cannot see. Their moments drag, and her friends' fly."
+    },
+    "arcBlade": {
+      "name": "Arc Blade",
+      "role": "Blinks into a crowd and discharges",
+      "ranged": false,
+      "traits": [
+        "machine",
+        "assassin"
+      ],
+      "story": "A swordsman built to blink into a crowd and discharge. There is a clean smell of ozone after he has passed."
+    },
+    "dreadPirate": {
+      "name": "Dread Pirate",
+      "role": "Broadsides a crowd; rises once from death",
+      "ranged": false,
+      "traits": [
+        "undead",
+        "vanguard"
+      ],
+      "story": "Drowned twice, and bored of it. The broadside he leaves in a crowd is the least of his tricks; he rises again from the dead."
+    },
+    "siegeBot": {
+      "name": "Siege Bot",
+      "role": "Slow shells that burst on a crowd",
+      "ranged": true,
+      "traits": [
+        "machine",
+        "gunner"
+      ],
+      "story": "It was built to flatten walls. It makes do with foes, and its slow shells burst on a crowd with the patience of a clock."
+    },
+    "priestess": {
+      "name": "High Priestess",
+      "role": "Mends the worst hurt; a halo shields those near",
+      "ranged": true,
+      "traits": [
+        "holy",
+        "support"
+      ],
+      "story": "The halo is not for show. She mends the worst hurt of her friends, and shields those who stand near."
+    },
+    "dragoon": {
+      "name": "Queen Dragoon",
+      "role": "Flies; breathes fire down a line",
+      "ranged": false,
+      "traits": [
+        "royal",
+        "vanguard"
+      ],
+      "story": "The queen of the wyverns wears a crown of her own, and has never once fallen off. She flies, and breathes fire down a line."
+    },
+    "juggernaut": {
+      "name": "Juggernaut",
+      "role": "A walking wall; its quake stuns all near",
+      "ranged": false,
+      "traits": [
+        "machine",
+        "bulwark"
+      ],
+      "story": "A wall that learned to walk. When it stamps, everything near it stops to think about its life."
+    },
+    "sage": {
+      "name": "Great Sage",
+      "role": "Calls stars on three crowds; fills his friends' skill meters",
+      "ranged": true,
+      "traits": [
+        "mystic",
+        "arcanist"
+      ],
+      "story": "He has read the stars so long they have started to read back. He calls them down on three crowds at once, and tops up his friends' skill meters while he is at it."
+    },
+    "demonSwordsman": {
+      "name": "Demon Swordsman",
+      "role": "Drinks what he cuts; the demon takes him",
+      "ranged": false,
+      "traits": [
+        "royal",
+        "vanguard"
+      ],
+      "story": "He drinks what he cuts, and the demon in his blade drinks him. The longer the fight, the thinner the line between them."
+    },
+    "tyrant": {
+      "name": "Tyrant",
+      "role": "Passes judgement; his reign breaks and rallies",
+      "ranged": true,
+      "traits": [
+        "royal",
+        "caster"
+      ],
+      "story": "He reigns in judgement, and his reign breaks the guilty and rallies the loyal. He has never lost a case."
+    }
+  },
+  "hero_quips": {
+    "knight": {
+      "hired": "Sworn to the line, and to a reasonable lunch hour.",
+      "placed": "I shall stand here. Do ask the enemy to come to me.",
+      "won": "The line held. I never doubted it. A little.",
+      "lost": "The line... bent. Purely as a matter of geometry."
+    },
+    "samurai": {
+      "hired": "One blade, and no small talk.",
+      "placed": "I have chosen my tile. It is a fine tile.",
+      "won": "Quietly done. Quietly pleased.",
+      "lost": "A poor day. I shall think on it, loudly, later."
+    },
+    "kunoichi": {
+      "hired": "You will not see me arrive. Too late, you already have.",
+      "placed": "Roofs would be better. This will do.",
+      "won": "Was I even here? Yes. Pay me.",
+      "lost": "That was never in my plan. I shall blame the plan."
+    },
+    "archer": {
+      "hired": "I can hit a pigeon at forty paces. The pigeons know.",
+      "placed": "High ground, please. Arrows like a view.",
+      "won": "Every shot a good one. Several, anyway.",
+      "lost": "I ran out of arrows. And excuses."
+    },
+    "wizard": {
+      "hired": "Fire is a very good argument. I shall make it often.",
+      "placed": "Stand back. Further. Further than that.",
+      "won": "Somebody check the grass. For smouldering.",
+      "lost": "Mild setback. Several things are on fire, mostly me."
+    },
+    "ninjaMonk": {
+      "hired": "My hands are enough. My feet are better.",
+      "placed": "Breathe in. Breathe out. Hit.",
+      "won": "Be calm. Be smug. But calm.",
+      "lost": "The way is long. Today it was also bruising."
+    },
+    "peasant": {
+      "hired": "Oh! Me? I only came about the pitchfork.",
+      "placed": "Right then. Stand here and look brave. Got it.",
+      "won": "We did it! Can I tell my mum?",
+      "lost": "Well. At least the crops are doing well."
+    },
+    "lightningMage": {
+      "hired": "Static is my love language.",
+      "placed": "Anyone wearing metal, I am sorry in advance.",
+      "won": "Shocking. Truly. I am sorry.",
+      "lost": "I felt a certain... lack of spark."
+    },
+    "wanderer": {
+      "hired": "I was only passing through. Fine. For a while.",
+      "placed": "I shall mend whoever looks most hurt. Or most dramatic.",
+      "won": "Everyone is mostly in one piece. Hurrah for mostly.",
+      "lost": "I walk on. It is, after all, what I do."
+    },
+    "kitsune": {
+      "hired": "You hired me, you think. How kind to let you think so.",
+      "placed": "Do try to keep up. Nine tails, one rule: no.",
+      "won": "Charming. In the proper, tail-flicking sense.",
+      "lost": "I let them win. Yes. Entirely on purpose."
+    },
+    "karasu": {
+      "hired": "I have been watching you for some time. Hello.",
+      "placed": "Air is nicer than ground. I shall be above it all.",
+      "won": "From up here you looked rather good.",
+      "lost": "I fell? No. I descended with feeling."
+    },
+    "yamabushi": {
+      "hired": "The mountain sends its regards, and a stiff breeze.",
+      "placed": "A little wind. Mind the ledges.",
+      "won": "The wind carried it. As it does.",
+      "lost": "Even the wind has days like this."
+    },
+    "werewolf": {
+      "hired": "Please do not mention the moon. It makes me jumpy.",
+      "placed": "I am calm. I am calm. Is that squeaking a squirrel?",
+      "won": "Good game. Please leave the bones.",
+      "lost": "I got a bit... distracted. By a squirrel."
+    },
+    "minotaur": {
+      "hired": "I am very good at corridors. Lead on.",
+      "placed": "Left, right, left. Charge. Easy.",
+      "won": "Straight through. I like a straight line.",
+      "lost": "It was a maze. It is always a maze."
+    },
+    "satyr": {
+      "hired": "A job and a party! You are my favourite already.",
+      "placed": "Keep the tune going. The tune is important.",
+      "won": "Another round on the house, I think!",
+      "lost": "Right, so, nobody tell the others I tripped."
+    },
+    "gorgon": {
+      "hired": "Do please look me in the eye. Go on. I insist.",
+      "placed": "Hair is behaving today. For a given value of behaving.",
+      "won": "They stood so still. Such good listeners.",
+      "lost": "No one looked. Honestly. It is very rude."
+    },
+    "samuraiCommander": {
+      "hired": "I bring a banner, a plan and a very firm handshake.",
+      "placed": "Hold the banner high. It is not for show. It is a bit for show.",
+      "won": "A fine day for the banner. Note it down.",
+      "lost": "The plan failed. The banner is blameless."
+    },
+    "paladin": {
+      "hired": "Light be with us. And snacks, if available.",
+      "placed": "Let them come at me. I shall be very noble about it.",
+      "won": "Justice, served. With no sauce.",
+      "lost": "A test of faith. A rather long one."
+    },
+    "cleric": {
+      "hired": "I do the mending. You do the getting hurt. Lovely.",
+      "placed": "Everyone stay within shouting distance, please.",
+      "won": "Nobody died. I shall allow a small hum.",
+      "lost": "I shall pray. And then lie down."
+    },
+    "druid": {
+      "hired": "The trees say you are acceptable. They said it rudely.",
+      "placed": "This tile is lovely. Mind the acorns.",
+      "won": "The forest approves. Mostly. It sulks, sometimes.",
+      "lost": "A bad season. Spring will come. It has a duty."
+    },
+    "barbarian": {
+      "hired": "Pay me in meat. And gold. Mostly meat.",
+      "placed": "Where is the fighting? I can hear it, nearly.",
+      "won": "More! Is there more? Oh. Well. A nap, then.",
+      "lost": "Ow. Not that I mind. Ow."
+    },
+    "ranger": {
+      "hired": "I set traps and I keep quiet. Mind where you stand.",
+      "placed": "Do not step there. No. There. Oh, never mind.",
+      "won": "They walked right into it. They always do.",
+      "lost": "Someone sprang my trap. I shall find out who. It was me."
+    },
+    "warlock": {
+      "hired": "We shall get on so well. Provided you read the contract.",
+      "placed": "A little curse here, a little curse there.",
+      "won": "The pact is... satisfied. For now.",
+      "lost": "Terms were not met. I intend to complain upstairs."
+    },
+    "illusionist": {
+      "hired": "I am delighted to be here. Which one, you ask?",
+      "placed": "There are three of me. One is real. Mostly.",
+      "won": "Applause is optional. I took it anyway.",
+      "lost": "That was a trick, surely. It was not mine."
+    },
+    "gunslinger": {
+      "hired": "Name your target. Mind the ringing in your ears.",
+      "placed": "One shot. I like to make it count, and to say so.",
+      "won": "Holster it. Fine work. Quite.",
+      "lost": "Missed. I shall blame the wind. And the sun."
+    },
+    "shambler": {
+      "hired": "Hrrngh. ...Pleased to meet you. Hrrngh.",
+      "placed": "Hrrngh. Mind the arm. It does drop off.",
+      "won": "Hrrngh. Good. Hrrngh. Brains optional.",
+      "lost": "Hrrngh. I shall reattach and carry on."
+    },
+    "rifleBot": {
+      "hired": "BEEP. Unit ready. Please do not feed it water.",
+      "placed": "DEPLOYING. SCANNING FOR RUDE PEOPLE.",
+      "won": "TARGETS: REDUCED. MORALE: ADEQUATE.",
+      "lost": "ERROR. TOO MUCH HIT. REBOOTING."
+    },
+    "mercenary": {
+      "hired": "I do not choose a side. I choose a fee.",
+      "placed": "Where is the biggest one? Point me at it.",
+      "won": "The bounty is mine. The invoice is in the post.",
+      "lost": "I was not paid enough for that. Or at all."
+    },
+    "mummy": {
+      "hired": "Four thousand years of experience. No references.",
+      "placed": "Bandages tight. Dignity, mostly intact.",
+      "won": "It was a good dig. I mean fight.",
+      "lost": "I shall go and lie down in a very old box."
+    },
+    "buccaneer": {
+      "hired": "A fine crew! A fine hat! Only the pay is lacking.",
+      "placed": "Hook ready. Port side, if there is a port.",
+      "won": "Plunder! Of a sort. Of a very small sort.",
+      "lost": "Abandon ship! ...Wait, we are on land."
+    },
+    "wolfBard": {
+      "hired": "I know a song about this. It is a long one.",
+      "placed": "A little dirge to set the mood. Or the pace.",
+      "won": "I shall make a ballad of it. A short one. Fine, long.",
+      "lost": "This verse is about losing. Hum along."
+    },
+    "beastmaster": {
+      "hired": "The wolves like you. I would take that as a compliment.",
+      "placed": "Sit. Stay. Good boy. Not you, sir.",
+      "won": "Good wolves. Biscuits all round.",
+      "lost": "Not the wolves' fault. It was the leash. Mine."
+    },
+    "kraken": {
+      "hired": "Sea legs, tentacles and a very firm grip.",
+      "placed": "Not a drop of water in sight. I shall improvise.",
+      "won": "Down in one. Like a good pint.",
+      "lost": "Dragged under. Which, to be fair, is my line."
+    },
+    "lancer": {
+      "hired": "On a good horse I can charge a mountain. On foot, a hill.",
+      "placed": "Clear the lane, please. I shall be quick.",
+      "won": "A clean pass. The horse nods. The horse is not here.",
+      "lost": "I bent the lance. And my pride. And a nearby fence."
+    },
+    "reaper": {
+      "hired": "Do not worry. I am only here to help. Eventually.",
+      "placed": "Hovering is a very good use of one's time.",
+      "won": "I only collected what was due. Gently.",
+      "lost": "Even I take a day off. This is it."
+    },
+    "timeWitch": {
+      "hired": "I knew you would hire me. Last Tuesday.",
+      "placed": "Take your time. I have all of it, and then some.",
+      "won": "Right on time. Of course. I saw to it.",
+      "lost": "I shall try that again. Back a minute. No, two."
+    },
+    "arcBlade": {
+      "hired": "Blink and you will miss me. Please do blink.",
+      "placed": "Charging. Charging. Charged. Hello.",
+      "won": "Sparks everywhere. Mind the carpet.",
+      "lost": "A short circuit. A short, humiliating circuit."
+    },
+    "dreadPirate": {
+      "hired": "Men have crossed oceans to avoid me. You hired me. Brave.",
+      "placed": "Broadsides to the left! ...What do you mean, no ship?",
+      "won": "The seas are ours. Never mind the seas. The field.",
+      "lost": "I have been dead before. It was dull. This is not."
+    },
+    "siegeBot": {
+      "hired": "LOADING. LOADING. LOADED. LOADING AGAIN.",
+      "placed": "SHELLS: PLENTIFUL. TACT: NOT INCLUDED.",
+      "won": "RUBBLE ACHIEVED. SATISFACTION: HIGH.",
+      "lost": "TOO MUCH WALL AFTER ALL. SORRY."
+    },
+    "priestess": {
+      "hired": "May grace walk with you. And the occasional miracle.",
+      "placed": "A little light for the room. Thank you for standing in it.",
+      "won": "The light provides. I merely carry it. Gracefully.",
+      "lost": "Grace is patient. I am working on it."
+    },
+    "dragoon": {
+      "hired": "A queen of the sky, at your service. Mind the heels.",
+      "placed": "High above, if you please. Fire on the left.",
+      "won": "A queenly finish. Take notes.",
+      "lost": "It was windy. Do not look at me like that."
+    },
+    "juggernaut": {
+      "hired": "I am not fast. I am not subtle. I am here.",
+      "placed": "Do mind your toes. I do not.",
+      "won": "The ground will remember this. Eventually.",
+      "lost": "Fell over. It takes a while. Please be patient."
+    },
+    "sage": {
+      "hired": "I have read everything. Ask me anything. Not that.",
+      "placed": "The stars suggest here. The stars are rarely wrong.",
+      "won": "Predicted, naturally. By me, in a footnote.",
+      "lost": "An error. A tiny one. Perhaps in the footnote."
+    },
+    "demonSwordsman": {
+      "hired": "The blade is hungry. Do ignore the muttering.",
+      "placed": "Quiet, you. We have guests.",
+      "won": "Fed. For now. It has stopped sulking.",
+      "lost": "The demon is sulking. So am I. Let us not discuss it."
+    },
+    "tyrant": {
+      "hired": "Kneel. Or sit. Sitting is permitted. Today.",
+      "placed": "This tile is hereby mine. Do not argue.",
+      "won": "Justice has been done. Mine. Do applaud.",
+      "lost": "I shall have someone sent to bed without supper. Possibly a goat."
+    }
+  },
+  "banter": {
+    "samurai": [
+      [
+        "Honour first.",
+        "Lunch first. Then honour."
+      ]
+    ],
+    "mystic": [
+      [
+        "Did you feel that? A disturbance in the weave.",
+        "That was lunch, I am afraid."
+      ]
+    ],
+    "yokai": [
+      [
+        "Do you hear the old songs?",
+        "I hear mostly your stomach."
+      ]
+    ],
+    "knightly": [
+      [
+        "Shield up, friend.",
+        "Shield up, friend. And do straighten your plume."
+      ]
+    ],
+    "guardian": [
+      [
+        "I have your back.",
+        "Please move it. I need the space."
+      ]
+    ],
+    "blade": [
+      [
+        "Mine is sharper.",
+        "Mine has a longer name."
+      ]
+    ],
+    "marksman": [
+      [
+        "Three tiles left. Two up.",
+        "I know. I already shot it. Keep up."
+      ]
+    ],
+    "caster": [
+      [
+        "Careful with that one.",
+        "I am always careful. The grass disagrees."
+      ]
+    ],
+    "holy": [
+      [
+        "Blessings upon the line.",
+        "And upon the snacks."
+      ]
+    ],
+    "wild": [
+      [
+        "Smell that? Rain, and trouble.",
+        "Rain, trouble, and your socks."
+      ]
+    ],
+    "arcane": [
+      [
+        "The charm is subtle.",
+        "The charm is on fire."
+      ]
+    ],
+    "frontier": [
+      [
+        "Quiet out here.",
+        "Too quiet. Say it. Go on."
+      ]
+    ],
+    "warden": [
+      [
+        "I will keep watch.",
+        "You said that last time and fell asleep."
+      ]
+    ],
+    "trickster": [
+      [
+        "Which of us is the real one?",
+        "Neither. We agreed. Do keep up."
+      ]
+    ],
+    "beast": [
+      [
+        "Did you hear that growl?",
+        "That was me. I am hungry."
+      ]
+    ],
+    "undead": [
+      [
+        "I feel rather... rested.",
+        "Do you? I am quite stiff. Years of it."
+      ]
+    ],
+    "machine": [
+      [
+        "SYSTEM CHECK: OK.",
+        "SYSTEM CHECK: THAT WAS RUDE. BUT OK."
+      ]
+    ],
+    "royal": [
+      [
+        "A crown is a heavy thing.",
+        "So is the hat. Hush."
+      ]
+    ],
+    "pirate": [
+      [
+        "Where be the loot?",
+        "Where be the sea? That is my question."
+      ]
+    ],
+    "gunner": [
+      [
+        "Reloading.",
+        "Do take your time. I shall wait. Loudly."
+      ]
+    ],
+    "assassin": [
+      [
+        "I was here first.",
+        "No you were not. I was here quieter."
+      ]
+    ],
+    "support": [
+      [
+        "Everyone well?",
+        "Better now you ask. Do carry on."
+      ]
+    ],
+    "vanguard": [
+      [
+        "I will go first.",
+        "Of course you will. After me."
+      ]
+    ],
+    "arcanist": [
+      [
+        "The theory is sound.",
+        "The theory is on fire."
+      ]
+    ],
+    "bulwark": [
+      [
+        "I stand fast.",
+        "I stand fastest. Somewhat."
+      ]
+    ]
+  },
+  "duchess": {
+    "tap": [
+      "Mehh.",
+      "Mehh.",
+      "Mehh!",
+      "Mehh. (Rude.)"
+    ],
+    "nibble": [
+      "Nom.",
+      "Nom nom.",
+      "Mehh. (Tasty.)",
+      "Nom. Pardon me."
+    ],
+    "bigHit": [
+      "Mehh!",
+      "MEHH!"
+    ],
+    "boss": [
+      "Meh... meh... mehhh.",
+      "Mehh?!"
+    ],
+    "wipe": [
+      "Mehh...",
+      "Meh. Sorry."
+    ],
+    "ate": [
+      "a map",
+      "a boot",
+      "the quartermaster's list",
+      "a spare bowstring",
+      "half a banner",
+      "a very important letter",
+      "a bar of soap (she regrets it)",
+      "the peace treaty"
+    ]
+  },
+  "loading_tips": [
+    "Tip: high ground hits harder. Duchess has been telling everyone, for years. Nobody listens to the goat.",
+    "Tip: blows from behind hit hardest. Politeness is for the front.",
+    "Tip: three of the same hero merge into a stronger one. Do not try this with goats.",
+    "Tip: skills fire on their own when the gold bar fills. Heroes love a full bar. Duchess prefers a full trough.",
+    "Tip: recycle heroes you do not need. They are told it is a promotion.",
+    "Tip: the foes are always short-staffed. They will tell you, at length, when you meet them.",
+    "Tip: Duchess ate the map. Navigation is now by instinct.",
+    "Tip: spells run on the king's mana, not gold. The mana fills as the fight goes on. Duchess has asked to be paid in it.",
+    "Tip: a fight lost is a lesson learned. A fight lost twice is a lesson, and a stern note.",
+    "Tip: stars are earned by clearing armies. Duchess is still counting hers, and has eaten two."
+  ],
+  "foe_grumbles": [
+    "Management says we are \"fully staffed.\" There are four of us.",
+    "The pay is dreadful. The hat is worse.",
+    "I was told this was a holiday posting.",
+    "Another one. No one asked us. Nobody ever asks us.",
+    "I have not had a day off since the last war.",
+    "There were three more of us last week. They quit.",
+    "My contract says \"a bit of light skulking.\"",
+    "Can we not do this before lunch? There are, apparently, no lunches.",
+    "I want to speak to whoever is in charge. Oh, it is him. Never mind.",
+    "We are a warband. It says so on the door. The door is also gone."
+  ],
+  "recap_win": [
+    "The foes are filing a complaint. It has been ignored.",
+    "Duchess watched all of it. She is, for once, impressed.",
+    "A fine day. The tavern has already heard three versions.",
+    "The rest of the world has been told. Mostly by Duchess."
+  ],
+  "recap_loss": [
+    "Duchess has seen worse. She has eaten worse.",
+    "There is always another go. The foes are tired already, for one.",
+    "A learning experience. Frankly, a bit of a long one.",
+    "The heroes would like it noted that the foes cheated. They did not. It was noted anyway."
+  ],
+  "result_win": [
+    "The foes will be missed. By their employers, mostly.",
+    "Good work. Do wipe your boots.",
+    "Cheers all round. Duchess had a nibble of the winning flag.",
+    "Standing, mostly. That is how it is counted."
+  ],
+  "result_loss": [
+    "Everyone is in a heap, and no one is to blame. The heap blames itself.",
+    "It is only a setback. A very large, embarrassing setback.",
+    "Heroes fall. Goats, notably, do not.",
+    "You may now say you meant to do that."
+  ],
+  "award_jokes": {
+    "firstWin": "Duchess ate the first bit of the flag.",
+    "flawless": "Nobody fell over, not even on purpose.",
+    "perfect": "The stars wish to be paid in apples.",
+    "stage10": "Ten! The foes are short-staffed by now.",
+    "stage20": "The foes have asked for a union meeting.",
+    "stage30": "Thirty. The foes have started hiring temps.",
+    "yokaiOnly": "No humans. Strictly a coincidence. A strict one.",
+    "threeStar": "Three of a kind. It is not poker. It is a bit like poker.",
+    "relics5": "Your pockets clink. Your heroes asked you to stop.",
+    "level10": "Ten levels of wisdom, and still no tea.",
+    "level30": "Thirty levels. The hat has grown with them.",
+    "level50": "Fifty. The tavern has named a stool after them.",
+    "level100": "A hundred levels. Duchess remains unimpressed.",
+    "allHeroes": "The tavern is, frankly, full. The goat has a stool.",
+    "bosses": "The bosses are not, strictly, allowed to be upset.",
+    "stars50": "Stars, collected. Dusting, not included.",
+    "daily1000": "Five dailies cleared. The foes have started setting an alarm for you.",
+    "daily": "Same time tomorrow? The foes are free.",
+    "tower1": "Up the stairs, round and round. Mind the goat.",
+    "tower20": "Twenty floors. The lift is still not in.",
+    "recruiter": "You have hired heroes. Duchess was not consulted."
+  },
+  "hero_story": {
+    "knight": "Sir Aldric kept the gate for forty winters and never once asked why. They say a blow that falls on his shield falls on the whole castle.",
+    "samurai": "He crossed the sea with a single blade and a single promise. He has not told anyone what the promise was, and no one has dared to ask.",
+    "kunoichi": "Moonlight and a rooftop are all she needs. She was already behind you when you thought to turn around.",
+    "archer": "He was a hunter in the high passes, where a shot from a crag is worth three from the plain. He has never missed a deer, and no one has ever seen him miss a foe.",
+    "wizard": "His first fire burnt down a barn, and his second burnt down the next. Now he points it at things that deserve it, and the barns are safe.",
+    "peasant": "Pitchfork, spear, and a dozen neighbours who all picked the same morning to be brave. In a crowd, a peasant is worth three soldiers.",
+    "ninjaMonk": "He took a vow to carry no weapon, then took a vow to win. His fists are the compromise.",
+    "wanderer": "She came out of the road one evening and has never said from where. Wherever she has walked, the hurt get up again.",
+    "lightningMage": "Storms follow him from town to town, and he is not sure which of them started it. His bolts leap from foe to foe, and so does his laugh.",
+    "kitsune": "A fox who learned to be kind to people, and then learned to be clever about it. A foe she charms will fight for her until the song ends.",
+    "karasu": "A crow-spirit of the high crags, quick to forgive and quicker to dive. Archers on the far side of the field are his favourite game.",
+    "yamabushi": "He meditated in a wind so cold it carved the shape of the mountain into his bones. Now the wind goes where he points.",
+    "werewolf": "The first moon was kind to him; the second was not. He has kept the strength and given up the apology.",
+    "minotaur": "He found the maze's way out by walking through a wall. He has been taking the direct route ever since.",
+    "satyr": "He plays at weddings, and at wars when the pay is better. His tune makes tired legs forget that they are tired.",
+    "gorgon": "She wears a veil in town, and takes it off for a good reason. Foes who meet her gaze find that they have important business standing still.",
+    "samuraiCommander": "He once held a bridge with a hundred men against a thousand. The banner he carries is the same one, mended in nine places.",
+    "paladin": "He swore his oath on a battlefield, and has been fighting the battlefield ever since. Foes are drawn to his shield, and he heals as he holds.",
+    "cleric": "She asks no questions of the wounded, only whether they would like some tea. Her prayers mend wounds slowly, and mend them to stay.",
+    "druid": "The oaks will do her bidding if she asks politely. A treant at her side is a wall that grows back.",
+    "barbarian": "He fights as if every scar were a promise. The more the foe takes from him, the more he gives back.",
+    "ranger": "She sets her snares in the dark and her arrows in the light. By the time the foe has noticed either, it is too late for both.",
+    "warlock": "He signed something once without reading it. His curses burn his foes and, by the terms of the bargain, feed him.",
+    "illusionist": "There is a woman standing there, and another one behind you, and a third who just left. Only one of them is real, and she is not telling.",
+    "gunslinger": "A slow shot, a long reach, and not a single wasted bullet. She reloads in the time it takes to say a prayer.",
+    "shambler": "He does not remember how he died, and has never felt the need to ask. His touch festers, and he keeps coming back to a mended state.",
+    "rifleBot": "Built for a war that ended before it was switched on. It fires in bursts, counts every round, and has never once complained.",
+    "mercenary": "He fights for coin, but he has strong views about whom. The strongest foe on the field carries the best bounty, and he always goes for it.",
+    "mummy": "Wrapped in a hundred years of linen and a grudge. His bandages cling to the foe, and the foe finds it hard to run.",
+    "buccaneer": "She hooks a shooter in with a grin and cuts it down before the grin fades. She has never lost a hat to a foe.",
+    "wolfBard": "A dirge for the foes and a drumbeat for his friends. The wolves howl along, and nobody has the heart to tell him it is flat.",
+    "beastmaster": "The wolves came when she whistled, and have never left. A whip to slow the foe, and two wolves to finish him.",
+    "kraken": "He sailed with the kraken and was spat out when it grew tired of him. The undertow follows him on dry land, and drags foes in close.",
+    "lancer": "A charge, a lance and a good horse, and the horse is a far better listener than the king. Once he has thundered through the line, he rides faster for it.",
+    "reaper": "Death is a trade like any other, and she keeps to the late shift. Anything that is nearly dead belongs to her.",
+    "timeWitch": "She holds an hourglass the foes cannot see. Their moments drag, and her friends' fly.",
+    "arcBlade": "A swordsman built to blink into a crowd and discharge. There is a clean smell of ozone after he has passed.",
+    "dreadPirate": "Drowned twice, and bored of it. The broadside he leaves in a crowd is the least of his tricks; he rises again from the dead.",
+    "siegeBot": "It was built to flatten walls. It makes do with foes, and its slow shells burst on a crowd with the patience of a clock.",
+    "priestess": "The halo is not for show. She mends the worst hurt of her friends, and shields those who stand near.",
+    "dragoon": "The queen of the wyverns wears a crown of her own, and has never once fallen off. She flies, and breathes fire down a line.",
+    "juggernaut": "A wall that learned to walk. When it stamps, everything near it stops to think about its life.",
+    "sage": "He has read the stars so long they have started to read back. He calls them down on three crowds at once, and tops up his friends' skill meters while he is at it.",
+    "demonSwordsman": "He drinks what he cuts, and the demon in his blade drinks him. The longer the fight, the thinner the line between them.",
+    "tyrant": "He reigns in judgement, and his reign breaks the guilty and rallies the loyal. He has never lost a case."
+  },
+  "foe_lore": {
+    "skeleton": "Sworn to a king no one remembers, he still holds his shield up for the blow that never came.",
+    "spearman": "The long reach of an old oath. He stands two tiles off and still believes he is on guard duty.",
+    "boneArcher": "Whatever he once hunted is long gone, so he shoots at you. His aim has not suffered for being dead.",
+    "boneVolley": "A marksman of the barrow-guard. The rattle of his bow is the last thing a scout hears.",
+    "wolfBlack": "The oldest of the pack, black as a moonless road. He hunts alone when the others are afraid, which is never.",
+    "wolfRed": "Red from the muzzle to the shoulder, and not all of it his own. Quick to bite, quicker to bolt.",
+    "wolfWhite": "Pale as frost and lighter on his feet than his cousins. By the time you see him, he has already seen you.",
+    "minotaur1": "The maze hides its keeper well. When he charges, the walls are the only thing that slows him.",
+    "gorgon1": "Her stare is a fine thing to hear about by the fire. Her bone-tipped bolts are a worse thing to meet.",
+    "satyr1": "A merry sort, until the pipes stop. He fights the way he dances: low, quick and never in the same place twice.",
+    "groveSatyr1": "The grove-folk pipe to the pack, and the pack runs faster for it. Silence the piper and the dance falls apart.",
+    "orcGrunt": "Cheap, loud and everywhere. A warband is built on grunts, and wins by having more of them than you have arrows.",
+    "orcArcher": "Crooked bow, crooked grin. He stays at the back of the warband and lets the grunts take the credit.",
+    "orcBrute": "Too big for the armour that was made for him, and too stubborn to notice. Each blow comes slowly, and lands.",
+    "imp": "A scrap of spite with a pitchfork for a grin. Imps never come alone, for no one imp has ever had the nerve.",
+    "demon": "Wings of old leather and a temper to match. He drops on the weakest of your line and does not stop to ask names.",
+    "ogre": "He has a club, and he has had a bad day. The two facts are related, and neither will improve.",
+    "orcWarlord": "Stood on a hill of broken shields to take the title. He has been waiting for someone to try to take it back.",
+    "demonLord": "He does not need to fight. He has only to lift a hand, and the imps come pouring out of the dark.",
+    "hornedOgre": "An ogre grown old enough to grow horns, and mean enough to use them. The ground shakes when he sweeps.",
+    "forestBoss1": "Thorn and root and a very long memory. The wood grew around him, and he is not about to move.",
+    "forestBoss2": "A raider of the green paths, quick as a hawk through the branches. Nothing in the wood goes unseen by him.",
+    "forestBoss3": "The spear is older than the grove it guards. Its master can reach you long before you can reach him.",
+    "orcChieftain": "He carries the warband's banner and its grudges. Where the banner stands, the grunts forget to be afraid.",
+    "boneCaptain": "The captain of a company that never marched home. His banner is a rag, and his dead follow it all the same.",
+    "alphaWolf": "The pack follows him because it must. He picks out the wounded first, and he is never wrong.",
+    "gorgonQueen": "Her gaze is the last thing many a hero has felt: a slow cold, and then the stillness of stone.",
+    "lichKing": "Dead for a thousand years and busy every one of them. He raises the fallen, and he freezes the living, for company.",
+    "minotaurChampion": "The labyrinth's own champion. He gores, he charges, and he shrugs off what hurts anyone smaller.",
+    "yokaiFox": "A little fox who is never quite where you struck. Strike twice, and you have struck a decoy twice.",
+    "yokaiWitch": "She curses the toughest of you, because the strongest pay the most. Her smile is part of the spell.",
+    "yokaiCrow": "He falls from the cloud on whoever stands furthest back, and is gone before the arrows are nocked.",
+    "yokaiSeer": "A crow who sees too much. One look at the strongest of you, and that hero fights on his side.",
+    "yokaiMonk": "The mountain wind answers his call. Heroes who stand at the edge of a ledge do not stand there for long.",
+    "nineTails": "Nine tails, nine centuries, and one great fondness for tricks. Her foxfire turns heroes against each other.",
+    "oniKing": "The night parade bows to him. One roar, and the line gives ground; one blow, and it breaks.",
+    "stoneGolem": "Cut from a hillside and told to guard it. He has done so ever since, and the hill is quite safe.",
+    "ironGolem": "Plated head to foot and slow to the point of insult. He draws the heroes in, and the heroes' blades glance off.",
+    "crystalGolem": "A heart of cut crystal, and shards that spin out of him to hold heroes still. Pretty, and no friend of yours.",
+    "magmaGolem": "Still warm from the forge, and getting warmer. His blows are molten, and the floor remembers where he walked.",
+    "sapphireColossus": "Blue as a deep lake and as hard to crack. When the shards storm out of him, no one stands in the open.",
+    "forgeTitan": "He was the forge's first hammer, and its last. Every blow rings like an anvil, and the furnace in his chest answers.",
+    "boarKing": "He does not stop for walls, and he does not stop for you. The line is only a thing that stands between him and the other side.",
+    "devilLeader": "He leads the infernal host from the front, and hurls hellfire at anything that is not already burning.",
+    "shamanKing": "Bolts from afar and wards for his own. The shaman king knows that a fight is won from behind the line.",
+    "eliteGorrak": "The warband's breaker of bones. The more it hurts him, the happier he gets.",
+    "eliteYsolde": "The pack follows her howl. Each kill makes her quicker, and she has had plenty of practice.",
+    "eliteHollow": "An oath outlived its keeper. He walks the road in a plate of rust and holds the front with a patient, empty shrug.",
+    "eliteSethra": "Look away, or be a statue. The arrows of her enemies glance from her scales, and her gaze does not miss.",
+    "eliteBrakka": "The maze let him out, and he has not forgiven it. The weaker you look, the harder he hits.",
+    "eliteCindra": "Where she walks, the floor burns. Her blows leave a little fire behind, to be getting on with.",
+    "eliteVexor": "Never fights alone. When his own are gone, he whistles, and more come.",
+    "eliteThrum": "Older than the road, and in no hurry to be anywhere else. He shoves the line back and takes the front blows without a wince.",
+    "eliteNyssa": "Her touch rots the strong. What she takes from you, she drinks, and the stronger the hero, the sweeter.",
+    "eliteWarden": "Nothing passes unasked, and he has never heard an answer he liked. Plated and steady; do not try to shove him.",
+    "eliteKuro": "He falls on archers from the cloud, and he has never once been caught on the ground.",
+    "eliteSilenus": "Every dance ends in a fall. His pipes hasten the pack, and the pack does not tire.",
+    "calBoss1": "First of the Calamity's heralds, grey with ash from a fire that has not gone out. He grows fiercer as he is hurt.",
+    "calBoss2": "The bramble that remembers every axe. A wall of thorns stands before him, and he mends nothing, because he rarely needs to.",
+    "calBoss3": "He who calls the hordes. His court of imps never runs short, and he mends as fast as you can cut.",
+    "calBoss4": "The wall that walks. He shoves the line back, and no one has ever shoved him.",
+    "calBoss5": "Bringer of the last flame. What he poisons he drinks, and he grows stronger on your ruin.",
+    "calBoss6": "The end of all roads. Everything the other heralds had, and a charge to finish the job."
+  },
+  "scenes": {
+    "opening": {
+      "title": "The Road Begins",
+      "blurb": "Your first three heroes, and the Calamity that wants a word.",
+      "cast": {
+        "front": "party:0",
+        "striker": "party:1",
+        "back": "party:2",
+        "duchess": "duchess",
+        "herald": "unit:calBoss1"
+      },
+      "shots": [
+        {
+          "caption": "Long ago, and not far",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "Beyond the last road, something very old woke up in a temper."
+            },
+            {
+              "who": "narrator",
+              "text": "It is called the Calamity. It did not choose the name."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "front",
+              "text": "Right. Who is standing at the front?"
+            },
+            {
+              "who": "striker",
+              "text": "You are. You are already standing there."
+            }
+          ]
+        },
+        {
+          "caption": "You",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The king places them. That is you."
+            },
+            {
+              "who": "narrator",
+              "text": "After that they get on with it. You may cheer, or drop a meteor."
+            },
+            {
+              "who": "front",
+              "text": "Cheering is optional. The meteors are not."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "back",
+              "text": "I should like to stand further back."
+            },
+            {
+              "who": "narrator",
+              "text": "The first of six heralds was already on the road."
+            }
+          ]
+        }
+      ]
+    },
+    "gorvak": {
+      "title": "The Ashen Road",
+      "blurb": "Gorvak the Ashen, the Calamity’s first herald, keeps a very firm roadblock.",
+      "cast": {
+        "hero": "hero",
+        "gorvak": "unit:calBoss1",
+        "grunt": "unit:orcGrunt",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "The first herald",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The road out of the green land runs through ash, and something sits in the middle of it."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "gorvak",
+              "text": "HALT. NONE PASS THE ASHEN ROAD."
+            },
+            {
+              "who": "hero",
+              "text": "Is there a way round?"
+            },
+            {
+              "who": "gorvak",
+              "text": "THERE IS. I AM ALSO STANDING ON IT."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "grunt",
+              "text": "You did ask us to watch the other roads, boss."
+            },
+            {
+              "who": "gorvak",
+              "text": "AND?"
+            },
+            {
+              "who": "grunt",
+              "text": "We were a grunt short."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            },
+            {
+              "who": "gorvak",
+              "text": "THAT IS A GOAT."
+            },
+            {
+              "who": "grunt",
+              "text": "She is covering the other roads, boss."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "gorvak",
+              "text": "THEN I SHALL BURN YOU MYSELF."
+            },
+            {
+              "who": "narrator",
+              "text": "Behold the first herald. He has not had a day off since the war."
+            }
+          ]
+        }
+      ]
+    },
+    "thornWarden": {
+      "title": "The Bramble That Remembers",
+      "blurb": "The Thorn Warden says nothing, at length, and everyone feels judged.",
+      "cast": {
+        "hero": "hero",
+        "warden": "unit:calBoss2",
+        "satyr": "unit:satyr1",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "The second herald",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The second map is all hedge. It is the sort of hedge that has been waiting."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The Thorn Warden does not speak. He is very loud about it."
+            },
+            {
+              "who": "hero",
+              "text": "Does he talk?"
+            },
+            {
+              "who": "satyr",
+              "text": "He did, once. In the year of the long frost."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "satyr",
+              "text": "He says he remembers your axe."
+            },
+            {
+              "who": "hero",
+              "text": "I have not got an axe."
+            },
+            {
+              "who": "satyr",
+              "text": "He says he remembers it anyway."
+            },
+            {
+              "who": "hero",
+              "text": "I feel I am being marked down for something."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The Warden raised one branch, and the whole hedge sighed."
+            },
+            {
+              "who": "narrator",
+              "text": "Behold the second herald. His ribbon is on its way."
+            }
+          ]
+        }
+      ]
+    },
+    "malphas": {
+      "title": "Item One: The Entrance",
+      "blurb": "Malphas calls the hordes. The hordes have sent an imp with a clipboard.",
+      "cast": {
+        "hero": "hero",
+        "malphas": "unit:calBoss3",
+        "imp": "unit:imp",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "The third herald",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "Beneath the hedge there is a court. It has torches, a throne and a very long agenda."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "malphas",
+              "text": "I AM MALPHAS. I CALL THE HORDES."
+            },
+            {
+              "who": "imp",
+              "text": "Item one, my lord: the entrance."
+            },
+            {
+              "who": "malphas",
+              "text": "WHAT ABOUT IT?"
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "imp",
+              "text": "Item two: the other entrance."
+            },
+            {
+              "who": "malphas",
+              "text": "WHERE ARE THE HORDES?"
+            },
+            {
+              "who": "imp",
+              "text": "In a meeting, my lord. About the hordes."
+            },
+            {
+              "who": "malphas",
+              "text": "HOW MANY OF US ARE THERE?"
+            },
+            {
+              "who": "imp",
+              "text": "One imp. The clipboard is on loan."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            },
+            {
+              "who": "malphas",
+              "text": "DO NOT WRITE THAT DOWN."
+            },
+            {
+              "who": "narrator",
+              "text": "Behold the third herald. His ribbon is on its way."
+            }
+          ]
+        }
+      ]
+    },
+    "hrungar": {
+      "title": "The Wall That Walks",
+      "blurb": "Hrungar the Mountain is shoved, once, to see.",
+      "cast": {
+        "hero": "hero",
+        "hrungar": "unit:calBoss4",
+        "ogre": "unit:ogre",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "The fourth herald",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The mountain pass is blocked. It is a very good block. It is wearing armour."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "I shall just give you a small shove."
+            },
+            {
+              "who": "hrungar",
+              "text": "THAT WAS A SHOVE?"
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hrungar",
+              "text": "IN FOUR HUNDRED YEARS, NO ONE HAS MOVED ME."
+            },
+            {
+              "who": "ogre",
+              "text": "You were moved once, boss. By the avalanche."
+            },
+            {
+              "who": "hrungar",
+              "text": "THAT WAS A DIFFERENT KIND OF SHOVE."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "Hrungar cannot be shoved. Everyone has now checked."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            },
+            {
+              "who": "narrator",
+              "text": "Behold the fourth herald. His ribbon is on its way."
+            }
+          ]
+        }
+      ]
+    },
+    "vorgrath": {
+      "title": "The Last Flame",
+      "blurb": "Vorgrath the Hellbringer guards the last flame of the world, which is a candle, from a draught.",
+      "cast": {
+        "hero": "hero",
+        "vorgrath": "unit:calBoss5",
+        "bones": "unit:skeleton",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "The fifth herald",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The fifth map is ash and heat. Somewhere in it, a very small light is being looked after."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "vorgrath",
+              "text": "BEHOLD THE LAST FLAME OF THE WORLD."
+            },
+            {
+              "who": "hero",
+              "text": "That is a candle."
+            },
+            {
+              "who": "vorgrath",
+              "text": "IT IS A VERY IMPORTANT CANDLE."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "vorgrath",
+              "text": "SOMEONE SHUT THAT DOOR."
+            },
+            {
+              "who": "bones",
+              "text": "There is no door, my lord."
+            },
+            {
+              "who": "vorgrath",
+              "text": "THEN THERE IS A DRAUGHT FROM SOMEWHERE ELSE."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            },
+            {
+              "who": "bones",
+              "text": "She is blowing on it, my lord."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "vorgrath",
+              "text": "NOW I AM CROSS, AND THE CANDLE IS OUT."
+            },
+            {
+              "who": "narrator",
+              "text": "Behold the fifth herald. His ribbon is on its way."
+            }
+          ]
+        }
+      ]
+    },
+    "karnok": {
+      "title": "The End of All Roads",
+      "blurb": "Karnok the Calamity is the end of all roads, including the one to the shops.",
+      "cast": {
+        "hero": "hero",
+        "karnok": "unit:calBoss6",
+        "grunt": "unit:orcGrunt",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "The last herald",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The sixth map is the end of the world, give or take. The sky has gone the colour of a bruise."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "karnok",
+              "text": "I AM KARNOK. I AM THE END OF ALL ROADS."
+            },
+            {
+              "who": "hero",
+              "text": "Which roads?"
+            },
+            {
+              "who": "karnok",
+              "text": "ALL OF THEM."
+            },
+            {
+              "who": "hero",
+              "text": "Even the one to the shops?"
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "karnok",
+              "text": "...I SHALL CHECK."
+            },
+            {
+              "who": "grunt",
+              "text": "The other five heralds are in the break room, boss."
+            },
+            {
+              "who": "karnok",
+              "text": "WHY?"
+            },
+            {
+              "who": "grunt",
+              "text": "They said they would wait for the ribbons."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "karnok",
+              "text": "THEN I SHALL END THEM ALL MYSELF."
+            },
+            {
+              "who": "narrator",
+              "text": "Behold the last herald. His ribbon is on its way."
+            }
+          ]
+        }
+      ]
+    },
+    "calamityEnds": {
+      "title": "Nobody Wrote the Next Bit",
+      "blurb": "Karnok falls, the sky goes back to blue, and the heroes find that nobody planned past this point.",
+      "cast": {
+        "hero": "hero",
+        "second": "party:1",
+        "karnok": "unit:calBoss6",
+        "grunt": "unit:orcGrunt",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "The last blow",
+          "lines": [
+            {
+              "who": "karnok",
+              "text": "THE END OF ALL ROADS... IS EARLIER THAN PLANNED."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The last herald fell like a very large wardrobe: slowly, then all at once."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The sky went from red to a perfectly ordinary blue. A bird started up, tentatively."
+            },
+            {
+              "who": "second",
+              "text": "Is that it?"
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "What do we do now?"
+            },
+            {
+              "who": "second",
+              "text": "I had not got further than this bit."
+            },
+            {
+              "who": "grunt",
+              "text": "Is there any work going? The heralds have left."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The king was thanked for placing everyone and then only watching."
+            },
+            {
+              "who": "narrator",
+              "text": "Just in case, a meteor was dropped on the road."
+            }
+          ]
+        }
+      ]
+    },
+    "firstLoss": {
+      "title": "It Was the Placing",
+      "blurb": "The first defeat, and a very polite discussion about whose fault it was.",
+      "cast": {
+        "front": "party:0",
+        "mid": "party:1",
+        "back": "party:2",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Back at the castle",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "Every great army has a first bad afternoon."
+            },
+            {
+              "who": "narrator",
+              "text": "This was the heroes’ first. They took it with dignity, and several plasters."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "front",
+              "text": "No one is to say it was the placing."
+            },
+            {
+              "who": "mid",
+              "text": "It was a little the placing."
+            },
+            {
+              "who": "back",
+              "text": "I should have liked to stand further back. I was told there was no further back."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The king, who had placed everyone and then only watched, was blamed. Politely."
+            },
+            {
+              "who": "mid",
+              "text": "Do try the left a little more, next time."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "Tomorrow, they said, would be a fine day for it. The goat did not look convinced."
+            }
+          ]
+        }
+      ]
+    },
+    "eliteMet": {
+      "title": "A Bad Stand-Up Act",
+      "blurb": "An elite introduces itself, rather as a comedian does, to a room that did not come to see it.",
+      "cast": {
+        "hero": "hero",
+        "elite": "unit:eliteGorrak",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "An elite",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "Some foes are tougher than the rest, and want you to know about it."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "elite",
+              "text": "Good evening! Is this thing on?"
+            },
+            {
+              "who": "hero",
+              "text": "I think you are meant to be hostile."
+            },
+            {
+              "who": "elite",
+              "text": "I am hostile! I am very hostile! Try the veal!"
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "elite",
+              "text": "Tough crowd. Tough crowd. A goat! Lovely."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            },
+            {
+              "who": "elite",
+              "text": "Oh, now she is heckling."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "elite",
+              "text": "Right. Time. Let me show you my act."
+            }
+          ]
+        }
+      ]
+    },
+    "ascensionOne": {
+      "title": "More Health, and a New Hat",
+      "blurb": "The Calamity, offended at having been beaten, comes back with a new hat.",
+      "cast": {
+        "hero": "hero",
+        "gorvak": "unit:calBoss1",
+        "grunt": "unit:orcGrunt"
+      },
+      "shots": [
+        {
+          "caption": "Ascension I",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The Calamity does not take defeat well. It took it away to think about it."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "gorvak",
+              "text": "I AM BACK."
+            },
+            {
+              "who": "hero",
+              "text": "You look different."
+            },
+            {
+              "who": "gorvak",
+              "text": "I HAVE MORE HEALTH."
+            },
+            {
+              "who": "hero",
+              "text": "And the hat?"
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "grunt",
+              "text": "It was in the sale, boss."
+            },
+            {
+              "who": "gorvak",
+              "text": "I LIKE THE HAT."
+            },
+            {
+              "who": "grunt",
+              "text": "We all like the hat, boss. Please do not make us say so again."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "gorvak",
+              "text": "THIS TIME, I AM ALSO TALLER."
+            }
+          ]
+        }
+      ]
+    },
+    "dailyBoss": {
+      "title": "Brought to You By",
+      "blurb": "The day’s boss, introduced by a newsreader who has also been told to do the weather.",
+      "cast": {
+        "hero": "hero",
+        "boss": "unit:boarKing",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "The daily boss",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "Good evening. Today’s calamity is brought to you by a very large boar."
+            },
+            {
+              "who": "narrator",
+              "text": "There will be some rain later. It is the boar’s."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "boss",
+              "text": "IS THIS THE RIGHT DAY?"
+            },
+            {
+              "who": "hero",
+              "text": "It is today."
+            },
+            {
+              "who": "boss",
+              "text": "I WAS TOLD IT WAS TUESDAY."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "He comes round every day. He is very good at it, and he has a mug."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "boss",
+              "text": "NOW PLEASE EXCUSE ME. I HAVE AN APPOINTMENT."
+            }
+          ]
+        }
+      ]
+    },
+    "mythicOpens": {
+      "title": "The Hardest Setting Known to Boars",
+      "blurb": "An army opens on Mythic, and its warlord is on his best behaviour.",
+      "cast": {
+        "hero": "hero",
+        "warlord": "unit:orcWarlord",
+        "grunt": "unit:orcGrunt"
+      },
+      "shots": [
+        {
+          "caption": "Mythic",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "There are tiers above Legendary. They are not written on any map. They are simply felt."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "warlord",
+              "text": "I HAVE TAKEN A LOT OF ADVICE."
+            },
+            {
+              "who": "hero",
+              "text": "It shows."
+            },
+            {
+              "who": "warlord",
+              "text": "I HAVE BEEN TRAINING."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "grunt",
+              "text": "He has been training in the dark, so as not to be disturbed."
+            },
+            {
+              "who": "warlord",
+              "text": "AND I HAVE A SECOND HAT."
+            },
+            {
+              "who": "grunt",
+              "text": "He means a helmet. We do not correct him."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "warlord",
+              "text": "FEAR THE MYTHIC WARBAND!"
+            }
+          ]
+        }
+      ]
+    },
+    "duchessInFight": {
+      "title": "She Was Not on the List",
+      "blurb": "Duchess turns up in a fight, uninvited, and everyone is too polite to say.",
+      "cast": {
+        "hero": "hero",
+        "foe": "unit:orcGrunt",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Mid-fight",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "Halfway through the fight, something walked between them."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "foe",
+              "text": "Is that a goat?"
+            },
+            {
+              "who": "hero",
+              "text": "It is Duchess."
+            },
+            {
+              "who": "foe",
+              "text": "Is she on your side or on ours?"
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "She is on her own side. Today it was the winning one."
+            }
+          ]
+        }
+      ]
+    },
+    "clear:orcs": {
+      "title": "Orc Warband: The Last Stand",
+      "blurb": "The first time the Orc Warband fall, with their boss’s last words and the heroes’ reply.",
+      "cast": {
+        "boss": "unit:orcWarlord",
+        "escort": "unit:orcGrunt",
+        "hero": "party:0",
+        "mate": "party:1",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Orc Warband cleared",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The Orc Warlord went down on one knee, which is the orcish for “a setback”."
+            },
+            {
+              "who": "boss",
+              "text": "THIS IS NOT THE END. WRITE THAT DOWN."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "escort",
+              "text": "Who has the pen, boss?"
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "He will need a bigger pen."
+            },
+            {
+              "who": "mate",
+              "text": "Shall we tell his mother, or will the grunts?"
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The orcs held a meeting about who would tell the Warlord’s mother. The heroes waited politely."
+            }
+          ]
+        }
+      ]
+    },
+    "clear:undead": {
+      "title": "Undead Legion: The Last Stand",
+      "blurb": "The first time the Undead Legion fall, with their boss’s last words and the heroes’ reply.",
+      "cast": {
+        "boss": "unit:lichKing",
+        "escort": "unit:skeleton",
+        "hero": "party:0",
+        "mate": "party:1",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Undead Legion cleared",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The Lich King fell apart with great dignity, and then a little more."
+            },
+            {
+              "who": "boss",
+              "text": "DEATH IS NOT THE END. ...HOLD ON, I AM ON HOLD WITH THE AFTERLIFE."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "escort",
+              "text": "Press one for “defeated”, my liege."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "I always thought he sounded busy."
+            },
+            {
+              "who": "mate",
+              "text": "Is it rude to hang up on a skeleton?"
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The legion filed away in good order. Several kept their appointments with the afterlife."
+            }
+          ]
+        }
+      ]
+    },
+    "clear:beasts": {
+      "title": "Beast Packs: The Last Stand",
+      "blurb": "The first time the Beast Packs fall, with their boss’s last words and the heroes’ reply.",
+      "cast": {
+        "boss": "unit:boarKing",
+        "escort": "unit:wolfWhite",
+        "hero": "party:0",
+        "mate": "party:1",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Beast Packs cleared",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The Boar King does not kneel. He was simply examining the ground very closely."
+            },
+            {
+              "who": "boss",
+              "text": "A BOAR KING NEVER FALLS. HE ONLY... INSPECTS."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "escort",
+              "text": "The pack would like a word about the inspection."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Good boy. Stay."
+            },
+            {
+              "who": "mate",
+              "text": "He is a very large boar to be so sorry for himself."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The pack drifted off across the snow, looking over their shoulders, a bit embarrassed."
+            }
+          ]
+        }
+      ]
+    },
+    "clear:wildwood": {
+      "title": "The Wildwood: The Last Stand",
+      "blurb": "The first time the The Wildwood fall, with their boss’s last words and the heroes’ reply.",
+      "cast": {
+        "boss": "unit:forestBoss3",
+        "escort": "unit:groveSatyr1",
+        "hero": "party:0",
+        "mate": "party:1",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "The Wildwood cleared",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The Grove Spearlord leant on his spear, which was not what it was for."
+            },
+            {
+              "who": "boss",
+              "text": "THE GROVE WILL HAVE WORDS WITH YOU."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "escort",
+              "text": "The grove is out. Can I take a message?"
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Tell the grove we left a note."
+            },
+            {
+              "who": "mate",
+              "text": "It was a very nice grove, though."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "Somewhere in the wood, a tree took it personally. The rest of the leaves rustled in agreement."
+            }
+          ]
+        }
+      ]
+    },
+    "clear:labyrinth": {
+      "title": "The Labyrinth: The Last Stand",
+      "blurb": "The first time the The Labyrinth fall, with their boss’s last words and the heroes’ reply.",
+      "cast": {
+        "boss": "unit:minotaurChampion",
+        "escort": "unit:mazeMino1",
+        "hero": "party:0",
+        "mate": "party:1",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "The Labyrinth cleared",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The Minotaur Champion sat down heavily at the centre of his labyrinth."
+            },
+            {
+              "who": "boss",
+              "text": "THE MAZE... YOU WALKED STRAIGHT THROUGH IT."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "escort",
+              "text": "We did put up a sign, boss. It said “this way”."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "It did say “this way”."
+            },
+            {
+              "who": "mate",
+              "text": "We did not like to be rude and go the other."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The maze was handed a new sign. It reads: “Under new management, mostly lost”."
+            }
+          ]
+        }
+      ]
+    },
+    "clear:ogres": {
+      "title": "Ogre Clans: The Last Stand",
+      "blurb": "The first time the Ogre Clans fall, with their boss’s last words and the heroes’ reply.",
+      "cast": {
+        "boss": "unit:hornedOgre",
+        "escort": "unit:clanOgre",
+        "hero": "party:0",
+        "mate": "party:1",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Ogre Clans cleared",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The Horned Ogre swayed once, like a mountain thinking about it, and sat."
+            },
+            {
+              "who": "boss",
+              "text": "THE MOUNTAIN DOES NOT... WHAT IS FOR LUNCH?"
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "escort",
+              "text": "It is soup, boss. We argued about it earlier."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "I vote we call lunch a draw."
+            },
+            {
+              "who": "mate",
+              "text": "The soup was a bit of a distraction."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The ogres broke for lunch. It lasted until quite late in the afternoon."
+            }
+          ]
+        }
+      ]
+    },
+    "clear:infernal": {
+      "title": "Infernal Host: The Last Stand",
+      "blurb": "The first time the Infernal Host fall, with their boss’s last words and the heroes’ reply.",
+      "cast": {
+        "boss": "unit:demonLord",
+        "escort": "unit:hellImp",
+        "hero": "party:0",
+        "mate": "party:1",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Infernal Host cleared",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The Demon Lord was beaten, and was the sort of beaten that has a contract."
+            },
+            {
+              "who": "boss",
+              "text": "I SHALL BE BACK. I HAVE IT IN WRITING."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "escort",
+              "text": "The small print says Thursday, my lord."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Terms and conditions apply."
+            },
+            {
+              "who": "mate",
+              "text": "He always did read the footnotes."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The imps filed an appeal. It was stamped, signed and thrown in the lava."
+            }
+          ]
+        }
+      ]
+    },
+    "clear:yokai": {
+      "title": "Yokai Night Parade: The Last Stand",
+      "blurb": "The first time the Yokai Night Parade fall, with their boss’s last words and the heroes’ reply.",
+      "cast": {
+        "boss": "unit:oniKing",
+        "escort": "unit:yokaiFox",
+        "hero": "party:0",
+        "mate": "party:1",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Yokai Night Parade cleared",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The Oni King lifted his drum, hit it once, and nothing happened."
+            },
+            {
+              "who": "boss",
+              "text": "THE THUNDER DRUM... HAS LOST ITS STICKS."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "escort",
+              "text": "We lent them to the tengu, my king."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "A drum is only as good as its sticks."
+            },
+            {
+              "who": "mate",
+              "text": "The parade was lovely, and now it is over."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The night parade packed up its lanterns and went home by the long way, singing a little."
+            }
+          ]
+        }
+      ]
+    },
+    "clear:golems": {
+      "title": "Golem Forge: The Last Stand",
+      "blurb": "The first time the Golem Forge fall, with their boss’s last words and the heroes’ reply.",
+      "cast": {
+        "boss": "unit:forgeTitan",
+        "escort": "unit:stoneGolem",
+        "hero": "party:0",
+        "mate": "party:1",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Golem Forge cleared",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The Forge Titan stood up very slowly, then stopped, as a kettle does."
+            },
+            {
+              "who": "boss",
+              "text": "FORGE... COOLING. PLEASE DO NOT TOUCH. IT IS STILL HOT."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "escort",
+              "text": "He means it, he is quite warm."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "We will let it cool, then."
+            },
+            {
+              "who": "mate",
+              "text": "Mind the sparks. Mind the floor, also."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The golems stood very still. It was hard to say whether this was grief or a power cut."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:knight": {
+      "title": "Knight: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:knight",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "Sir Aldric kept the gate for forty winters and never once asked why."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "I feel taller. I may be wrong about that."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:samurai": {
+      "title": "Samurai: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:samurai",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "He crossed the sea with a single blade and a single promise."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Is it meant to be this bright?"
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:kunoichi": {
+      "title": "Kunoichi: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:kunoichi",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "Moonlight and a rooftop are all she needs."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "I think my hair has done something."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:archer": {
+      "title": "Archer: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:archer",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "He was a hunter in the high passes, where a shot from a crag is worth three from the plain."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Was that the light, or was that me?"
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:wizard": {
+      "title": "Fire Wizard: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:wizard",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "His first fire burnt down a barn, and his second burnt down the next."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "I have a feeling I should say something grand."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:peasant": {
+      "title": "Peasant: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:peasant",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "Pitchfork, spear, and a dozen neighbours who all picked the same morning to be brave."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "The same as before, but with more drama."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:ninjaMonk": {
+      "title": "Ninja Monk: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:ninjaMonk",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "He took a vow to carry no weapon, then took a vow to win."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Does anyone have a mirror? Asking for a friend."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:wanderer": {
+      "title": "Wanderer: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:wanderer",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "She came out of the road one evening and has never said from where."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "That tickled."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:lightningMage": {
+      "title": "Lightning Mage: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:lightningMage",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "Storms follow him from town to town, and he is not sure which of them started it."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "I feel taller. I may be wrong about that."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:kitsune": {
+      "title": "Kitsune: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:kitsune",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "A fox who learned to be kind to people, and then learned to be clever about it."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Is it meant to be this bright?"
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:karasu": {
+      "title": "Karasu Tengu: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:karasu",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "A crow-spirit of the high crags, quick to forgive and quicker to dive."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "I think my hair has done something."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:yamabushi": {
+      "title": "Yamabushi Tengu: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:yamabushi",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "He meditated in a wind so cold it carved the shape of the mountain into his bones."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Was that the light, or was that me?"
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:werewolf": {
+      "title": "Werewolf: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:werewolf",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The first moon was kind to him; the second was not."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "I have a feeling I should say something grand."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:minotaur": {
+      "title": "Minotaur: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:minotaur",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "He found the maze's way out by walking through a wall."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "The same as before, but with more drama."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:satyr": {
+      "title": "Satyr: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:satyr",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "He plays at weddings, and at wars when the pay is better."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Does anyone have a mirror? Asking for a friend."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:gorgon": {
+      "title": "Gorgon: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:gorgon",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "She wears a veil in town, and takes it off for a good reason."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "That tickled."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:samuraiCommander": {
+      "title": "Samurai Commander: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:samuraiCommander",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "He once held a bridge with a hundred men against a thousand."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "I feel taller. I may be wrong about that."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:paladin": {
+      "title": "Paladin: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:paladin",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "He swore his oath on a battlefield, and has been fighting the battlefield ever since."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Is it meant to be this bright?"
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:cleric": {
+      "title": "Cleric: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:cleric",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "She asks no questions of the wounded, only whether they would like some tea."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "I think my hair has done something."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:druid": {
+      "title": "Druid: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:druid",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The oaks will do her bidding if she asks politely."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Was that the light, or was that me?"
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:barbarian": {
+      "title": "Barbarian: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:barbarian",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "He fights as if every scar were a promise."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "I have a feeling I should say something grand."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:ranger": {
+      "title": "Ranger: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:ranger",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "She sets her snares in the dark and her arrows in the light."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "The same as before, but with more drama."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:warlock": {
+      "title": "Warlock: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:warlock",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "He signed something once without reading it."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Does anyone have a mirror? Asking for a friend."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:illusionist": {
+      "title": "Illusionist: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:illusionist",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "There is a woman standing there, and another one behind you, and a third who just left."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "That tickled."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:gunslinger": {
+      "title": "Gunslinger: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:gunslinger",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "A slow shot, a long reach, and not a single wasted bullet."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "I feel taller. I may be wrong about that."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:shambler": {
+      "title": "Shambler: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:shambler",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "He does not remember how he died, and has never felt the need to ask."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Is it meant to be this bright?"
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:rifleBot": {
+      "title": "Rifle Bot: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:rifleBot",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "Built for a war that ended before it was switched on."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "I think my hair has done something."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:mercenary": {
+      "title": "Mercenary: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:mercenary",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "He fights for coin, but he has strong views about whom."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Was that the light, or was that me?"
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:mummy": {
+      "title": "Mummy: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:mummy",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "Wrapped in a hundred years of linen and a grudge."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "I have a feeling I should say something grand."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:buccaneer": {
+      "title": "Buccaneer: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:buccaneer",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "She hooks a shooter in with a grin and cuts it down before the grin fades."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "The same as before, but with more drama."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:wolfBard": {
+      "title": "Wolf Bard: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:wolfBard",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "A dirge for the foes and a drumbeat for his friends."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Does anyone have a mirror? Asking for a friend."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:beastmaster": {
+      "title": "Beastmaster: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:beastmaster",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The wolves came when she whistled, and have never left."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "That tickled."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:kraken": {
+      "title": "Kraken Mate: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:kraken",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "He sailed with the kraken and was spat out when it grew tired of him."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "I feel taller. I may be wrong about that."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:lancer": {
+      "title": "Lancer: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:lancer",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "A charge, a lance and a good horse, and the horse is a far better listener than the king."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Is it meant to be this bright?"
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:reaper": {
+      "title": "Reaper: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:reaper",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "Death is a trade like any other, and she keeps to the late shift."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "I think my hair has done something."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:timeWitch": {
+      "title": "Time Witch: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:timeWitch",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "She holds an hourglass the foes cannot see."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Was that the light, or was that me?"
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:arcBlade": {
+      "title": "Arc Blade: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:arcBlade",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "A swordsman built to blink into a crowd and discharge."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "I have a feeling I should say something grand."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:dreadPirate": {
+      "title": "Dread Pirate: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:dreadPirate",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "Drowned twice, and bored of it."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "The same as before, but with more drama."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:siegeBot": {
+      "title": "Siege Bot: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:siegeBot",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "It was built to flatten walls."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Does anyone have a mirror? Asking for a friend."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:priestess": {
+      "title": "High Priestess: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:priestess",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The halo is not for show."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "That tickled."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:dragoon": {
+      "title": "Queen Dragoon: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:dragoon",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The queen of the wyverns wears a crown of her own, and has never once fallen off."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "I feel taller. I may be wrong about that."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:juggernaut": {
+      "title": "Juggernaut: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:juggernaut",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "A wall that learned to walk."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Is it meant to be this bright?"
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:sage": {
+      "title": "Great Sage: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:sage",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "He has read the stars so long they have started to read back."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "I think my hair has done something."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:demonSwordsman": {
+      "title": "Demon Swordsman: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:demonSwordsman",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "He drinks what he cuts, and the demon in his blade drinks him."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Was that the light, or was that me?"
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "awaken:tyrant": {
+      "title": "Tyrant: Awakening",
+      "blurb": "A hero’s awakening: the light, the new look, and a word in character.",
+      "cast": {
+        "hero": "unit:tyrant",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Awakening",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "He reigns in judgement, and his reign breaks the guilty and rallies the loyal."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "I have a feeling I should say something grand."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "{hero} is awakened. The new look is not for the faint-hearted."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "castle:treasury": {
+      "title": "The Treasury Goes Up",
+      "blurb": "The builders finish the Treasury, and begin a long argument about the roof.",
+      "cast": {
+        "mason": "unit:peasant",
+        "sawyer": "unit:peasant",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Treasury raised",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "After a great deal of hammering, the Treasury stood."
+            },
+            {
+              "who": "mason",
+              "text": "That is the Treasury done."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "sawyer",
+              "text": "The roof is crooked."
+            },
+            {
+              "who": "mason",
+              "text": "It is a statement."
+            },
+            {
+              "who": "sawyer",
+              "text": "It is a very leaky statement."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The coins were counted twice. It came to more the second time."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "castle:barracks": {
+      "title": "The Barracks Goes Up",
+      "blurb": "The builders finish the Barracks, and begin a long argument about the roof.",
+      "cast": {
+        "mason": "unit:peasant",
+        "sawyer": "unit:peasant",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Barracks raised",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "After a great deal of hammering, the Barracks stood."
+            },
+            {
+              "who": "mason",
+              "text": "That is the Barracks done."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "sawyer",
+              "text": "The roof is crooked."
+            },
+            {
+              "who": "mason",
+              "text": "It is a statement."
+            },
+            {
+              "who": "sawyer",
+              "text": "It is a very leaky statement."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "There is room for everyone, so long as everyone is friendly."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "castle:armoury": {
+      "title": "The Armoury Goes Up",
+      "blurb": "The builders finish the Armoury, and begin a long argument about the roof.",
+      "cast": {
+        "mason": "unit:peasant",
+        "sawyer": "unit:peasant",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Armoury raised",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "After a great deal of hammering, the Armoury stood."
+            },
+            {
+              "who": "mason",
+              "text": "That is the Armoury done."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "sawyer",
+              "text": "The roof is crooked."
+            },
+            {
+              "who": "mason",
+              "text": "It is a statement."
+            },
+            {
+              "who": "sawyer",
+              "text": "It is a very leaky statement."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "Every hook is labelled. The labels are on a hook."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "castle:mageTower": {
+      "title": "The Mage Tower Goes Up",
+      "blurb": "The builders finish the Mage Tower, and begin a long argument about the roof.",
+      "cast": {
+        "mason": "unit:peasant",
+        "sawyer": "unit:peasant",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Mage Tower raised",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "After a great deal of hammering, the Mage Tower stood."
+            },
+            {
+              "who": "mason",
+              "text": "That is the Mage Tower done."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "sawyer",
+              "text": "The roof is crooked."
+            },
+            {
+              "who": "mason",
+              "text": "It is a statement."
+            },
+            {
+              "who": "sawyer",
+              "text": "It is a very leaky statement."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "It came out taller than the plans. The stairs take the blame."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "castle:stable": {
+      "title": "The Stable Goes Up",
+      "blurb": "The builders finish the Stable, and begin a long argument about the roof.",
+      "cast": {
+        "mason": "unit:peasant",
+        "sawyer": "unit:peasant",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Stable raised",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "After a great deal of hammering, the Stable stood."
+            },
+            {
+              "who": "mason",
+              "text": "That is the Stable done."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "sawyer",
+              "text": "The roof is crooked."
+            },
+            {
+              "who": "mason",
+              "text": "It is a statement."
+            },
+            {
+              "who": "sawyer",
+              "text": "It is a very leaky statement."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "Duchess has inspected it, and found it to be an acceptable stable."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "castle:library": {
+      "title": "The Library Goes Up",
+      "blurb": "The builders finish the Library, and begin a long argument about the roof.",
+      "cast": {
+        "mason": "unit:peasant",
+        "sawyer": "unit:peasant",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Library raised",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "After a great deal of hammering, the Library stood."
+            },
+            {
+              "who": "mason",
+              "text": "That is the Library done."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "sawyer",
+              "text": "The roof is crooked."
+            },
+            {
+              "who": "mason",
+              "text": "It is a statement."
+            },
+            {
+              "who": "sawyer",
+              "text": "It is a very leaky statement."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "Silence, please. That is a request, not a rule."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "castle:chapel": {
+      "title": "The Chapel Goes Up",
+      "blurb": "The builders finish the Chapel, and begin a long argument about the roof.",
+      "cast": {
+        "mason": "unit:peasant",
+        "sawyer": "unit:peasant",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Chapel raised",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "After a great deal of hammering, the Chapel stood."
+            },
+            {
+              "who": "mason",
+              "text": "That is the Chapel done."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "sawyer",
+              "text": "The roof is crooked."
+            },
+            {
+              "who": "mason",
+              "text": "It is a statement."
+            },
+            {
+              "who": "sawyer",
+              "text": "It is a very leaky statement."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "A very small bell, but a sincere one."
+            },
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            }
+          ]
+        }
+      ]
+    },
+    "spire:10": {
+      "title": "Floor 10: It Was Shorter From Outside",
+      "blurb": "The endless tower, at floor 10.",
+      "cast": {
+        "hero": "hero",
+        "mate": "party:1",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Floor 10",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The tower opens its tenth floor, and it is a good deal taller on the inside."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "It was shorter from outside."
+            },
+            {
+              "who": "mate",
+              "text": "Everything is, from outside."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            },
+            {
+              "who": "narrator",
+              "text": "The goat had, as ever, been up this far before."
+            }
+          ]
+        }
+      ]
+    },
+    "spire:25": {
+      "title": "Floor 25: A Taller Hat",
+      "blurb": "The endless tower, at floor 25.",
+      "cast": {
+        "hero": "hero",
+        "mate": "party:1",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Floor 25",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "Twenty-five floors, and the tower has built itself a taller hat."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "I thought we were nearly at the top."
+            },
+            {
+              "who": "mate",
+              "text": "The top has been moved. It sends its regrets."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            },
+            {
+              "who": "narrator",
+              "text": "The goat had, as ever, been up this far before."
+            }
+          ]
+        }
+      ]
+    },
+    "spire:50": {
+      "title": "Floor 50: The Stairs Wave",
+      "blurb": "The endless tower, at floor 50.",
+      "cast": {
+        "hero": "hero",
+        "mate": "party:1",
+        "duchess": "duchess"
+      },
+      "shots": [
+        {
+          "caption": "Floor 50",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "Fifty floors. The stairs have started to wave at people."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "I do not think the stairs should be doing that."
+            },
+            {
+              "who": "mate",
+              "text": "It is only being friendly. I think."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "duchess",
+              "text": "Mehh."
+            },
+            {
+              "who": "narrator",
+              "text": "The goat had, as ever, been up this far before."
+            }
+          ]
+        }
+      ]
+    },
+    "form:orcWarlord": {
+      "title": "Orc Warlord: Second Form",
+      "blurb": "A boss changes form, a few seconds in slow motion.",
+      "cast": {
+        "boss": "unit:orcWarlord"
+      },
+      "shots": [
+        {
+          "caption": null,
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "boss",
+              "text": "WAAAGH! Burn it all down!"
+            }
+          ]
+        }
+      ]
+    },
+    "form:lichKing": {
+      "title": "Lich King: Second Form",
+      "blurb": "A boss changes form, a few seconds in slow motion.",
+      "cast": {
+        "boss": "unit:lichKing"
+      },
+      "shots": [
+        {
+          "caption": null,
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "boss",
+              "text": "Rise, my legion, and take them!"
+            }
+          ]
+        }
+      ]
+    },
+    "form:boarKing": {
+      "title": "Boar King: Second Form",
+      "blurb": "A boss changes form, a few seconds in slow motion.",
+      "cast": {
+        "boss": "unit:boarKing"
+      },
+      "shots": [
+        {
+          "caption": null,
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "boss",
+              "text": "Out of my way, little ones!"
+            }
+          ]
+        }
+      ]
+    },
+    "form:forestBoss3": {
+      "title": "Grove Spearlord: Second Form",
+      "blurb": "A boss changes form, a few seconds in slow motion.",
+      "cast": {
+        "boss": "unit:forestBoss3"
+      },
+      "shots": [
+        {
+          "caption": null,
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "boss",
+              "text": "The grove answers me!"
+            }
+          ]
+        }
+      ]
+    },
+    "form:minotaurChampion": {
+      "title": "Minotaur Champion: Second Form",
+      "blurb": "A boss changes form, a few seconds in slow motion.",
+      "cast": {
+        "boss": "unit:minotaurChampion"
+      },
+      "shots": [
+        {
+          "caption": null,
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "boss",
+              "text": "The maze closes. There is no way out."
+            }
+          ]
+        }
+      ]
+    },
+    "form:hornedOgre": {
+      "title": "Horned Ogre: Second Form",
+      "blurb": "A boss changes form, a few seconds in slow motion.",
+      "cast": {
+        "boss": "unit:hornedOgre"
+      },
+      "shots": [
+        {
+          "caption": null,
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "boss",
+              "text": "The mountain does not fall!"
+            }
+          ]
+        }
+      ]
+    },
+    "form:demonLord": {
+      "title": "Demon Lord: Second Form",
+      "blurb": "A boss changes form, a few seconds in slow motion.",
+      "cast": {
+        "boss": "unit:demonLord"
+      },
+      "shots": [
+        {
+          "caption": null,
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "boss",
+              "text": "Burn, all of you!"
+            }
+          ]
+        }
+      ]
+    },
+    "form:oniKing": {
+      "title": "Oni King: Second Form",
+      "blurb": "A boss changes form, a few seconds in slow motion.",
+      "cast": {
+        "boss": "unit:oniKing"
+      },
+      "shots": [
+        {
+          "caption": null,
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "boss",
+              "text": "Hear the thunder drum!"
+            }
+          ]
+        }
+      ]
+    },
+    "form:forgeTitan": {
+      "title": "Forge Titan: Second Form",
+      "blurb": "A boss changes form, a few seconds in slow motion.",
+      "cast": {
+        "boss": "unit:forgeTitan"
+      },
+      "shots": [
+        {
+          "caption": null,
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "boss",
+              "text": "The forge runs white-hot!"
+            }
+          ]
+        }
+      ]
+    },
+    "form:calBoss1": {
+      "title": "Gorvak the Ashen: Second Form",
+      "blurb": "A boss changes form, a few seconds in slow motion.",
+      "cast": {
+        "boss": "unit:calBoss1"
+      },
+      "shots": [
+        {
+          "caption": null,
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "boss",
+              "text": "The ashes remember!"
+            }
+          ]
+        }
+      ]
+    },
+    "form:calBoss2": {
+      "title": "The Thorn Warden: Second Form",
+      "blurb": "A boss changes form, a few seconds in slow motion.",
+      "cast": {
+        "boss": "unit:calBoss2"
+      },
+      "shots": [
+        {
+          "caption": null,
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "boss",
+              "text": "The thorns bloom!"
+            }
+          ]
+        }
+      ]
+    },
+    "form:calBoss3": {
+      "title": "Malphas: Second Form",
+      "blurb": "A boss changes form, a few seconds in slow motion.",
+      "cast": {
+        "boss": "unit:calBoss3"
+      },
+      "shots": [
+        {
+          "caption": null,
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "boss",
+              "text": "Come, my court!"
+            }
+          ]
+        }
+      ]
+    },
+    "form:calBoss4": {
+      "title": "Hrungar the Mountain: Second Form",
+      "blurb": "A boss changes form, a few seconds in slow motion.",
+      "cast": {
+        "boss": "unit:calBoss4"
+      },
+      "shots": [
+        {
+          "caption": null,
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "boss",
+              "text": "The mountain walks!"
+            }
+          ]
+        }
+      ]
+    },
+    "form:calBoss5": {
+      "title": "Vorgrath the Hellbringer: Second Form",
+      "blurb": "A boss changes form, a few seconds in slow motion.",
+      "cast": {
+        "boss": "unit:calBoss5"
+      },
+      "shots": [
+        {
+          "caption": null,
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "boss",
+              "text": "Let the last flame take you!"
+            }
+          ]
+        }
+      ]
+    },
+    "form:calBoss6": {
+      "title": "Karnok the Calamity: Second Form",
+      "blurb": "A boss changes form, a few seconds in slow motion.",
+      "cast": {
+        "boss": "unit:calBoss6"
+      },
+      "shots": [
+        {
+          "caption": null,
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "boss",
+              "text": "There is no end but me."
+            }
+          ]
+        }
+      ]
+    },
+    "oath:holyOrder": {
+      "title": "The Holy Order: Last Oath",
+      "blurb": "The first time The Holy Order fire their Last Oath, each of the five swears.",
+      "cast": {
+        "a": "party:0",
+        "b": "party:1",
+        "c": "party:2",
+        "d": "party:3",
+        "e": "party:4"
+      },
+      "shots": [
+        {
+          "caption": "The Holy Order · Last Oath",
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "a",
+              "text": "I hold the line. Again."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "b",
+              "text": "I swear, and I mean it."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "c",
+              "text": "I swear, but gently."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "d",
+              "text": "The light keeps its word."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "e",
+              "text": "I was only passing. Fine."
+            }
+          ]
+        }
+      ]
+    },
+    "oath:arcaneCouncil": {
+      "title": "The Arcane Council: Last Oath",
+      "blurb": "The first time The Arcane Council fire their Last Oath, each of the five swears.",
+      "cast": {
+        "a": "party:0",
+        "b": "party:1",
+        "c": "party:2",
+        "d": "party:3",
+        "e": "party:4"
+      },
+      "shots": [
+        {
+          "caption": "The Arcane Council · Last Oath",
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "a",
+              "text": "I swear. Nothing is on fire."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "b",
+              "text": "I swear, with a bang."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "c",
+              "text": "I swear. It is footnoted."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "d",
+              "text": "I swear. Terms apply."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "e",
+              "text": "I swore this already. Soon."
+            }
+          ]
+        }
+      ]
+    },
+    "oath:shadowClan": {
+      "title": "The Shadow Clan: Last Oath",
+      "blurb": "The first time The Shadow Clan fire their Last Oath, each of the five swears.",
+      "cast": {
+        "a": "party:0",
+        "b": "party:1",
+        "c": "party:2",
+        "d": "party:3",
+        "e": "party:4"
+      },
+      "shots": [
+        {
+          "caption": "The Shadow Clan · Last Oath",
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "a",
+              "text": "My blade, my word."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "b",
+              "text": "You will not see me swear."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "c",
+              "text": "I swear. No weapon needed."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "d",
+              "text": "Caw. That means yes."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "e",
+              "text": "I swear, for the usual fee."
+            }
+          ]
+        }
+      ]
+    },
+    "oath:fleet": {
+      "title": "The Black Fleet: Last Oath",
+      "blurb": "The first time The Black Fleet fire their Last Oath, each of the five swears.",
+      "cast": {
+        "a": "party:0",
+        "b": "party:1",
+        "c": "party:2",
+        "d": "party:3",
+        "e": "party:4"
+      },
+      "shots": [
+        {
+          "caption": "The Black Fleet · Last Oath",
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "a",
+              "text": "Yo ho. I swear it."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "b",
+              "text": "I swear on my best hat."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "c",
+              "text": "Aye, by the tide."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "d",
+              "text": "OATH. LOADED."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "e",
+              "text": "I swear. Quickly, mind."
+            }
+          ]
+        }
+      ]
+    },
+    "oath:wildHunt": {
+      "title": "The Wild Hunt: Last Oath",
+      "blurb": "The first time The Wild Hunt fire their Last Oath, each of the five swears.",
+      "cast": {
+        "a": "party:0",
+        "b": "party:1",
+        "c": "party:2",
+        "d": "party:3",
+        "e": "party:4"
+      },
+      "shots": [
+        {
+          "caption": "The Wild Hunt · Last Oath",
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "a",
+              "text": "The pack swears with me."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "b",
+              "text": "Awoo. Yes. That is an oath."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "c",
+              "text": "I swear by root and rain."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "d",
+              "text": "I swear. Quietly."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "e",
+              "text": "I swear, and here is a verse."
+            }
+          ]
+        }
+      ]
+    },
+    "oath:nightParade": {
+      "title": "The Night Parade: Last Oath",
+      "blurb": "The first time The Night Parade fire their Last Oath, each of the five swears.",
+      "cast": {
+        "a": "party:0",
+        "b": "party:1",
+        "c": "party:2",
+        "d": "party:3",
+        "e": "party:4"
+      },
+      "shots": [
+        {
+          "caption": "The Night Parade · Last Oath",
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "a",
+              "text": "I swear. Mostly."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "b",
+              "text": "I swear on the mountain."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "c",
+              "text": "Look me in the eye. I swear."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "d",
+              "text": "I swear. Pass the wine."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "e",
+              "text": "I swear. Or do I?"
+            }
+          ]
+        }
+      ]
+    },
+    "oath:ironVanguard": {
+      "title": "The Iron Vanguard: Last Oath",
+      "blurb": "The first time The Iron Vanguard fire their Last Oath, each of the five swears.",
+      "cast": {
+        "a": "party:0",
+        "b": "party:1",
+        "c": "party:2",
+        "d": "party:3",
+        "e": "party:4"
+      },
+      "shots": [
+        {
+          "caption": "The Iron Vanguard · Last Oath",
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "a",
+              "text": "I swear. I do not stop."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "b",
+              "text": "I swear. Also, charge."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "c",
+              "text": "I swear, point first."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "d",
+              "text": "I SWEAR LOUDLY."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "e",
+              "text": "I command it. We swear."
+            }
+          ]
+        }
+      ]
+    },
+    "oath:dreadCourt": {
+      "title": "The Dread Court: Last Oath",
+      "blurb": "The first time The Dread Court fire their Last Oath, each of the five swears.",
+      "cast": {
+        "a": "party:0",
+        "b": "party:1",
+        "c": "party:2",
+        "d": "party:3",
+        "e": "party:4"
+      },
+      "shots": [
+        {
+          "caption": "The Dread Court · Last Oath",
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "a",
+              "text": "I swear. I rule the oath."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "b",
+              "text": "I swear. It is on the list."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "c",
+              "text": "I swear. Hell is overstaffed."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "d",
+              "text": "Uhhhh."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "e",
+              "text": "I swore this long ago."
+            }
+          ]
+        }
+      ]
+    },
+    "oathcut:holyOrder": {
+      "title": "The Holy Order: Last Oath (short)",
+      "blurb": "The Holy Order fire their Last Oath: a few seconds, every time.",
+      "cast": {
+        "a": "party:0",
+        "b": "party:1",
+        "c": "party:2",
+        "d": "party:3",
+        "e": "party:4"
+      },
+      "shots": [
+        {
+          "caption": "The Holy Order · Last Oath",
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "c",
+              "text": "By the light, together."
+            }
+          ]
+        }
+      ]
+    },
+    "oathcut:arcaneCouncil": {
+      "title": "The Arcane Council: Last Oath (short)",
+      "blurb": "The Arcane Council fire their Last Oath: a few seconds, every time.",
+      "cast": {
+        "a": "party:0",
+        "b": "party:1",
+        "c": "party:2",
+        "d": "party:3",
+        "e": "party:4"
+      },
+      "shots": [
+        {
+          "caption": "The Arcane Council · Last Oath",
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "c",
+              "text": "By star and storm, as one."
+            }
+          ]
+        }
+      ]
+    },
+    "oathcut:shadowClan": {
+      "title": "The Shadow Clan: Last Oath (short)",
+      "blurb": "The Shadow Clan fire their Last Oath: a few seconds, every time.",
+      "cast": {
+        "a": "party:0",
+        "b": "party:1",
+        "c": "party:2",
+        "d": "party:3",
+        "e": "party:4"
+      },
+      "shots": [
+        {
+          "caption": "The Shadow Clan · Last Oath",
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "c",
+              "text": "Unseen, unbroken, together."
+            }
+          ]
+        }
+      ]
+    },
+    "oathcut:fleet": {
+      "title": "The Black Fleet: Last Oath (short)",
+      "blurb": "The Black Fleet fire their Last Oath: a few seconds, every time.",
+      "cast": {
+        "a": "party:0",
+        "b": "party:1",
+        "c": "party:2",
+        "d": "party:3",
+        "e": "party:4"
+      },
+      "shots": [
+        {
+          "caption": "The Black Fleet · Last Oath",
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "c",
+              "text": "One fleet, one flag."
+            }
+          ]
+        }
+      ]
+    },
+    "oathcut:wildHunt": {
+      "title": "The Wild Hunt: Last Oath (short)",
+      "blurb": "The Wild Hunt fire their Last Oath: a few seconds, every time.",
+      "cast": {
+        "a": "party:0",
+        "b": "party:1",
+        "c": "party:2",
+        "d": "party:3",
+        "e": "party:4"
+      },
+      "shots": [
+        {
+          "caption": "The Wild Hunt · Last Oath",
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "c",
+              "text": "One pack, one hunt."
+            }
+          ]
+        }
+      ]
+    },
+    "oathcut:nightParade": {
+      "title": "The Night Parade: Last Oath (short)",
+      "blurb": "The Night Parade fire their Last Oath: a few seconds, every time.",
+      "cast": {
+        "a": "party:0",
+        "b": "party:1",
+        "c": "party:2",
+        "d": "party:3",
+        "e": "party:4"
+      },
+      "shots": [
+        {
+          "caption": "The Night Parade · Last Oath",
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "c",
+              "text": "One parade, a hundred spirits."
+            }
+          ]
+        }
+      ]
+    },
+    "oathcut:ironVanguard": {
+      "title": "The Iron Vanguard: Last Oath (short)",
+      "blurb": "The Iron Vanguard fire their Last Oath: a few seconds, every time.",
+      "cast": {
+        "a": "party:0",
+        "b": "party:1",
+        "c": "party:2",
+        "d": "party:3",
+        "e": "party:4"
+      },
+      "shots": [
+        {
+          "caption": "The Iron Vanguard · Last Oath",
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "c",
+              "text": "Shoulder to shoulder, forward."
+            }
+          ]
+        }
+      ]
+    },
+    "oathcut:dreadCourt": {
+      "title": "The Dread Court: Last Oath (short)",
+      "blurb": "The Dread Court fire their Last Oath: a few seconds, every time.",
+      "cast": {
+        "a": "party:0",
+        "b": "party:1",
+        "c": "party:2",
+        "d": "party:3",
+        "e": "party:4"
+      },
+      "shots": [
+        {
+          "caption": "The Dread Court · Last Oath",
+          "lines": []
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "c",
+              "text": "The court is in session."
+            }
+          ]
+        }
+      ]
+    },
+    "earned:werewolf": {
+      "title": "Werewolf joins",
+      "blurb": "A hero earned in play, not pulled.",
+      "cast": {
+        "figure": "unit:werewolf",
+        "hero": "unit:werewolf"
+      },
+      "shots": [
+        {
+          "caption": "A new hero",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The Beast Packs have gone quiet. One did not run away: it came to see who had done it."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Not bad, for a pair of two-legs."
+            },
+            {
+              "who": "narrator",
+              "text": "{hero} joins you."
+            }
+          ]
+        }
+      ]
+    },
+    "earned:reaper": {
+      "title": "Reaper joins",
+      "blurb": "A hero earned in play, not pulled.",
+      "cast": {
+        "figure": "unit:reaper",
+        "hero": "unit:reaper"
+      },
+      "shots": [
+        {
+          "caption": "A new hero",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The Undead Legion marched for a thousand years. Someone has to do the paperwork."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Your legion was due. I have merely come to collect."
+            },
+            {
+              "who": "narrator",
+              "text": "{hero} joins you."
+            }
+          ]
+        }
+      ]
+    },
+    "earned:demonSwordsman": {
+      "title": "Demon Swordsman joins",
+      "blurb": "A hero earned in play, not pulled.",
+      "cast": {
+        "figure": "unit:demonSwordsman",
+        "hero": "unit:demonSwordsman"
+      },
+      "shots": [
+        {
+          "caption": "A new hero",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The Infernal Host was very sure of itself. It was one swordsman short of being right."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "I have left my old employers. The pension was dreadful."
+            },
+            {
+              "who": "narrator",
+              "text": "{hero} joins you."
+            }
+          ]
+        }
+      ]
+    },
+    "earned:samuraiCommander": {
+      "title": "Samurai Commander joins",
+      "blurb": "A hero earned in play, not pulled.",
+      "cast": {
+        "figure": "unit:samuraiCommander",
+        "hero": "unit:samuraiCommander"
+      },
+      "shots": [
+        {
+          "caption": "A new hero",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The Night Parade has gone home. Its commander has not: he has had an idea."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "A fine battle. I shall take the banner. You may keep the field."
+            },
+            {
+              "who": "narrator",
+              "text": "{hero} joins you."
+            }
+          ]
+        }
+      ]
+    },
+    "earned:juggernaut": {
+      "title": "Juggernaut joins",
+      "blurb": "A hero earned in play, not pulled.",
+      "cast": {
+        "figure": "unit:juggernaut",
+        "hero": "unit:juggernaut"
+      },
+      "shots": [
+        {
+          "caption": "A new hero",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The Forge went cold. One golem stayed warm, mostly out of habit."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Forge quiet now. I carry."
+            },
+            {
+              "who": "narrator",
+              "text": "{hero} joins you."
+            }
+          ]
+        }
+      ]
+    },
+    "earned:dreadPirate": {
+      "title": "Dread Pirate joins",
+      "blurb": "A hero earned in play, not pulled.",
+      "cast": {
+        "figure": "unit:dreadPirate",
+        "hero": "unit:dreadPirate"
+      },
+      "shots": [
+        {
+          "caption": "A new hero",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "Twenty floors up the tower, a ship’s crew came out of the stairwell."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Do not ask how we got a ship up the tower."
+            },
+            {
+              "who": "narrator",
+              "text": "{hero} joins you."
+            }
+          ]
+        }
+      ]
+    },
+    "earned:tyrant": {
+      "title": "Tyrant joins",
+      "blurb": "A hero earned in play, not pulled.",
+      "cast": {
+        "figure": "unit:tyrant",
+        "hero": "unit:tyrant"
+      },
+      "shots": [
+        {
+          "caption": "A new hero",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "Forty floors up, the lights were on. So was a throne."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "You climbed. I admire that. Now do stop hovering."
+            },
+            {
+              "who": "narrator",
+              "text": "{hero} joins you."
+            }
+          ]
+        }
+      ]
+    },
+    "earned:timeWitch": {
+      "title": "Time Witch joins",
+      "blurb": "A hero earned in play, not pulled.",
+      "cast": {
+        "figure": "unit:timeWitch",
+        "hero": "unit:timeWitch"
+      },
+      "shots": [
+        {
+          "caption": "A new hero",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "The Calamity is over. Somebody noticed, and arrived a little late, and also a little early."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Do not worry. I have already seen how this ends."
+            },
+            {
+              "who": "narrator",
+              "text": "{hero} joins you."
+            }
+          ]
+        }
+      ]
+    },
+    "earned:dragoon": {
+      "title": "Queen Dragoon joins",
+      "blurb": "A hero earned in play, not pulled.",
+      "cast": {
+        "figure": "unit:dragoon",
+        "hero": "unit:dragoon"
+      },
+      "shots": [
+        {
+          "caption": "A new hero",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "A Calamity at ascension three. Something with scales noticed the heat and came to compare."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Hot enough. Shall we go and bother something bigger?"
+            },
+            {
+              "who": "narrator",
+              "text": "{hero} joins you."
+            }
+          ]
+        }
+      ]
+    },
+    "earned:sage": {
+      "title": "Great Sage joins",
+      "blurb": "A hero earned in play, not pulled.",
+      "cast": {
+        "figure": "unit:sage",
+        "hero": "unit:sage"
+      },
+      "shots": [
+        {
+          "caption": "A new hero",
+          "lines": [
+            {
+              "who": "narrator",
+              "text": "Half the foes of the bestiary, met and noted. The notes were read by someone who disagrees."
+            }
+          ]
+        },
+        {
+          "caption": null,
+          "lines": [
+            {
+              "who": "hero",
+              "text": "Fascinating. You have the monsters in the wrong order."
+            },
+            {
+              "who": "narrator",
+              "text": "{hero} joins you."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
