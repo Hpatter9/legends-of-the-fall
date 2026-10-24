@@ -565,7 +565,7 @@ class Game {
     const bar = $('bossBar');
     const boss = this.b.units.find((u) => u.side === 'foe' && (u.size ?? 1) > 1);
     const show = this.b.phase === 'fight' && !!boss?.alive;
-    bar.hidden = !show;
+    if (bar.hidden === show) bar.hidden = !show;
     if (!boss || !show) return;
     bar.querySelector('b')!.textContent = UNITS[boss.def].name;
     (bar.querySelector('span') as HTMLElement).style.width = `${(boss.hp / boss.maxHp) * 100}%`;

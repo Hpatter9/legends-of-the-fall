@@ -212,7 +212,6 @@ body .sbSlot { min-height: 44px; }
   width: 14px; height: 14px; border-radius: 0; border: 2px solid var(--white); animation: none;
   clip-path: polygon(2px 0, calc(100% - 2px) 0, 100% 2px, 100% calc(100% - 2px), calc(100% - 2px) 100%, 2px 100%, 0 calc(100% - 2px), 0 2px);
 }
-@keyframes pxBlink { 50% { opacity: 0.55; } }
 .hmTab { min-height: 66px; padding: 2px 2px 0; border: 6px solid transparent; border-radius: 0; font-size: 12px; background: none; box-shadow: none; text-shadow: 0 2px 0 var(--black); transition: none; }
 .hmTab img { width: 32px; height: 32px; filter: brightness(0.62) saturate(0.7); transition: none; }
 .hmTab.on { color: var(--gold-hi); background: none; box-shadow: none; border-image: url(ui/card-r4.png) 3 fill / 6px stretch; }
@@ -244,7 +243,6 @@ body .sbSlot { min-height: 44px; }
 }
 
 /* ---- the Armies screen: a card an army, with its boss's face; a locked one greyed with the boss that opens it ---- */
-@keyframes pxArmyGlow { 0%, 100% { filter: none; } 50% { filter: brightness(1.28) drop-shadow(0 0 6px var(--gold-hi)); } }
 .armyCrowns { display: inline-flex; align-items: center; gap: 2px; font-weight: bold; color: var(--ink); }
 .armyCrowns img { width: 16px; height: 16px; }
 .armyNew { position: absolute; top: -6px; right: -4px; padding: 1px 6px; font: bold 11px var(--display); font-style: normal; color: var(--btn-ink); background: var(--gold-hi); box-shadow: 0 2px 0 var(--black); }
