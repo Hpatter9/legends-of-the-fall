@@ -318,23 +318,35 @@ test('chests drop permanent hero equipment: silver and gold always, bronze somet
 
 test('the foes get tougher by tier: hp, attack and speed', () => {
   const a = armyById('undead')!;
-  const base = waveBoost(a, 3, 0).foes!;
+  const W = 15; // (the last wave: Normal's curve is flat from the second army on, so the harder tiers' early waves can sit under it, the last wave never)
+  const base = waveBoost(a, W, 0).foes!;
   let lastHp = base.hp!;
   let lastAtk = base.atk!;
   let lastSpeed = 1;
   assert.equal(base.speed, undefined);
   for (const t of [1, 2, 3, 4]) {
-    const f = waveBoost(a, 3, t).foes!;
+    const f = waveBoost(a, W, t).foes!;
     assert.ok(f.hp! > lastHp && f.atk! > lastAtk && f.speed! > lastSpeed, `tier ${t}`);
-    // (the harder tiers scale from the army's `tierStart`, which is Normal's `start` unless the army's Normal curve of levels has moved it)
-    assert.ok(Math.abs(f.hp! / base.hp! - (TIERS[t].hp * (a.tierStart ?? a.start)) / a.start) < 1e-9);
+    // (the harder tiers scale from the army's `tierStart` and `tierGrowth`, which are Normal's `start` and `growth` unless the army's Normal curve of levels has moved them)
+    const k = (start: number, growth: number) => start * (1 + growth * (W - 1));
+    assert.ok(Math.abs(f.hp! / base.hp! - (TIERS[t].hp * k(a.tierStart ?? a.start, a.tierGrowth ?? a.growth)) / k(a.start, a.growth)) < 1e-9);
     [lastHp, lastAtk, lastSpeed] = [f.hp!, f.atk!, f.speed!];
   }
   // Normal is unchanged
   assert.deepEqual(waveBoost(a, 3), waveBoost(a, 3, 0));
+  // every army: each tier's last wave is stronger than the one below it, in hp and attack
+  for (const army of ARMIES) {
+    let prev = waveBoost(army, W, 0).foes!;
+    for (const t of [1, 2, 3, 4]) {
+      const f = waveBoost(army, W, t).foes!;
+      assert.ok(f.hp! > prev.hp! && f.atk! > prev.atk!, `${army.id} tier ${t}`);
+      prev = f;
+    }
+  }
   // in a fight: stronger foes with more hp, and quicker on their feet
   const run = (tier: number) => {
     const r = armyRun(3, 'undead', undefined, undefined, tier);
+    r.stage = W;
     return startStage(r);
   };
   const n = run(0);
