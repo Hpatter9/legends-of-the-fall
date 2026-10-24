@@ -8,7 +8,7 @@ means every talent row the level opens (the points are the level's own). Full ta
 
 ## Normal climbs army by army (the owner's rule, 0.141)
 
-> Superseded by `docs/notes/army-curve.md` (0.147): the levels are now 1, 8, 15, 22, 30, 38, 46, 54, 62, with a flatter Normal `growth`; the tables below are the old curve.
+> Superseded by `docs/notes/army-curve.md` (0.147): the levels are now 1, 8, 15, 22, 30, 38, 40, 46, 52, with a flatter Normal `growth`; the tables below are the old curve.
 
 "I want the armies to be harder as they unlock. The first army is low level and easy, the next one requires more levels to beat and so on. Level 1 units can't beat normal on any but the first army."
 

@@ -7,7 +7,7 @@ import type { Meta } from './meta';
 export type ModeKey = 'castle' | 'tower' | 'calamity';
 
 /** The army stars each mode opens at. */
-export const MODE_NEED: Readonly<Record<ModeKey, number>> = { castle: 10, tower: 15, calamity: 21 };
+export const MODE_NEED: Readonly<Record<ModeKey, number>> = { castle: 10, tower: 12, calamity: 16 };
 
 /** Whether a mode is open: the stars reach its number, or the save held it open from before the stars. */
 export const modeOpen = (m: Meta, k: ModeKey): boolean => totalStars(m) >= MODE_NEED[k] || !!m.opened?.includes(k);
@@ -15,10 +15,10 @@ export const modeOpen = (m: Meta, k: ModeKey): boolean => totalStars(m) >= MODE_
 /** The stars still to win before a mode opens (0 when it is open). */
 export const starsToGo = (m: Meta, k: ModeKey): number => (modeOpen(m, k) ? 0 : MODE_NEED[k] - totalStars(m));
 
-/** The plate's words for a shut mode: "Opens at 15 stars". */
+/** The plate's words for a shut mode: "Opens at 12 stars". */
 export const opensAt = (n: number): string => `Opens at ${n} stars`;
 
-/** The same with the player's progress: "7/15 stars". */
+/** The same with the player's progress: "7/12 stars". */
 export const progressLine = (m: Meta, need: number): string => `${Math.min(need, totalStars(m))}/${need} stars`;
 
 /**
