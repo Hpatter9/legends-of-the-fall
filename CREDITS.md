@@ -34,7 +34,7 @@ Code borrowed from Chronos Settlement (`hpatter9/little-town`): the seeded rando
 board's relief, step and sight rules (`src/sim/board.ts`), the blow and reach rules (`src/sim/battle.ts`), the
 isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle juice rules.
 
-- **The music** is synthesised: three loops written as notes in `src/render/musicScore.ts` and rendered in the page by `src/render/musicBake.ts`. No files were copied for it. (Before 0.134 the game played the Tiny RPG Music tracks by Luis Zuno (@ansimuz) from `hpatter9/chronos-assets`; they are gone from the build but remain in the git history.)
+- **The music** is original, written as notes and synthesised: the 23 files in `src/audio/` (`.opus`, about 5.9 MB) were rendered offline by `tools/epic-music/` (a small synthesiser of pipe organ, harpsichord, string sections, choir, brass, distorted guitar, drum kit, timpani and piano, with a generated hall reverb and a master compressor and limiter) and encoded with libopus. No samples, recordings or third-party music went into them, so there is nothing to credit beyond that. The older three synthesised loops (`src/render/musicScore.ts`, rendered in the page by `src/render/musicBake.ts`) remain as a fallback if a browser cannot decode the files. (Before 0.134 the game played the Tiny RPG Music tracks by Luis Zuno (@ansimuz) from `hpatter9/chronos-assets`; they are gone from the build but remain in the git history.)
 - **The sound effects** are synthesised in `src/render/audioProcessors.ts` with the Web Audio API; no files were copied for them.
 
 ## Areas (`src/art/areas/`, cut by `tools/areas-prep.py`)

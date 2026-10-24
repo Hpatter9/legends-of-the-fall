@@ -6,9 +6,10 @@
 import { AudioProcessor, type SchedulableParam } from '@audiorective/core';
 import { Limiter } from '@audiorective/effects';
 import type { Cue } from './soundRules';
-import { bakeTrack, type Baked } from './musicBake';
-import { CALM_TRACKS, SCENE_TRACKS, STEMS, stemLevels, type Stem } from './musicScore';
-import { DUCK_GAIN, DUCK_HZ, OPEN_HZ, colourOf, cutoffOf, percActive, percLevel, rateOf, swellOf, type Track } from './audioRules';
+import { EPIC_INFO, bakeTrack, type Baked } from './musicBake';
+import { CALM_TRACKS, SCENE_TRACKS, STEMS, stemLevels, type Stem, type Track } from './musicScore';
+import { DUCK_GAIN, DUCK_HZ, OPEN_HZ, colourOf, cutoffOf, percActive, percLevel, rateOf, swellOf } from './audioRules';
+import { SYNTH_OF, epicOf, loadEpic, loadSting, type MusicId, type StingId } from './epicMusic';
 
 /** The longest a crossfade takes to settle (seconds). */
 export const FADE_S = 1.2;
@@ -696,13 +697,37 @@ interface Loop {
   stems: Partial<Record<Stem, { src: AudioBufferSourceNode; gain: GainNode }>>;
 }
 
+/** A track's sound: its epic file (`epicMusic.ts`) if it can be played, else the old synthesised one baked in the page. */
+export async function bakeMusic(id: MusicId): Promise<Baked> {
+  if (epicOf(id)) {
+    try {
+      return await loadEpic(id);
+    } catch {
+      /* (no file, or a browser that cannot decode it: the synth plays instead) */
+    }
+  }
+  return bakeTrack(SYNTH_OF[id]);
+}
+
+/** The most tracks kept decoded or baked at once (the one playing, the one fading out and one waiting). */
+const KEEP_BAKED = 3;
+
 /** The music: three baked tracks (`musicBake.ts`; played as buffers, so no media element takes the phone's audio focus)
  *  crossfaded into one low-pass that opens with the fight's tension and closes to the tower act's ceiling, with each track's
  *  stems (pad, bass, lead, drums) mixed by the tension, a swell, a quiet synthesised rumble that fades in when the fight
  *  runs hot, and a drone under the tracks for the tower's acts. Everything leaves through `output`, to the mixer's music bus. */
 export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swell: SchedulableParam; perc: SchedulableParam }> {
-  private readonly baked = new Map<Track, Promise<Baked>>();
-  private readonly loops = new Map<Track, Loop>();
+  private readonly baked = new Map<MusicId, Promise<Baked>>();
+  private readonly loops = new Map<MusicId, Loop>();
+  /** The tracks whose sound came from an epic file: they take no colour from the fight's tension or the tower's act. */
+  private readonly epic = new Set<MusicId>();
+  private readonly stingBufs = new Map<StingId, Promise<AudioBuffer>>();
+  /** A sting is sounding: the music waits (`current` is what it will go back to) until `stingTimer` lets it. */
+  private holding = false;
+  private stingTimer: ReturnType<typeof setTimeout> | null = null;
+  /** The sting now sounding, so a new fight can cut it short. */
+  private stingNow: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
+  private droneAct: number | null = null;
   private readonly out: GainNode;
   private readonly lowpass: BiquadFilterNode;
   private readonly percOut: GainNode;
@@ -714,14 +739,15 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swel
   /** Whether the music plays at all (the Music volume is not Off): when not, nothing is baked or sounding. */
   private enabled = true;
   /** The track playing (or the last that was, while the page is hushed), the fight's tension and the tower act. */
-  current: Track | null = null;
+  current: MusicId | null = null;
   tension = 0;
   act: number | null = null;
 
   /** `bake` makes a track's stems; the page's is the offline renderer, a test's can be a stand-in. */
   constructor(
     private readonly ac: BaseAudioContext,
-    private readonly bake: (track: Track) => Promise<Baked> = (t) => bakeTrack(t),
+    private readonly bake: (track: MusicId) => Promise<Baked> = bakeMusic,
+    private readonly loadStingBuffer: (id: StingId) => Promise<AudioBuffer> = loadSting,
   ) {
     const out = new GainNode(ac, { gain: 1 });
     const lowpass = new BiquadFilterNode(ac, { type: 'lowpass', frequency: OPEN_HZ, Q: 0.6 });
@@ -749,19 +775,45 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swel
   }
 
   /** A track's stems, baked the first time they are asked for (and kept: about 7 MB a track). */
-  private stems(track: Track): Promise<Baked> {
+  private stems(track: MusicId): Promise<Baked> {
     let p = this.baked.get(track);
     if (!p) {
       p = this.bake(track);
       // (a bake that fails is forgotten, so the next ask tries again)
       p.catch(() => this.baked.delete(track));
+      p.then((b) => {
+        if (EPIC_INFO.has(b)) this.epic.add(track);
+      }, () => {});
       this.baked.set(track, p);
     }
     return p;
   }
 
+  /** Lets go of the oldest decoded tracks beyond `KEEP_BAKED`, never the ones playing, wanted or fading. */
+  private trimBaked(): void {
+    for (const id of [...this.baked.keys()]) {
+      if (this.baked.size <= KEEP_BAKED) break;
+      if (id !== this.current && !this.loops.has(id)) this.baked.delete(id);
+    }
+  }
+
+  /** Whether the track now playing (or wanted) came from an epic file. */
+  private get epicNow(): boolean {
+    return this.current !== null && this.epic.has(this.current);
+  }
+
+  /** The synth track whose rules (calm or fighting) colour the current track: an epic one is calm and takes no act. */
+  private get rules(): Track {
+    return this.current && !this.epic.has(this.current) ? SYNTH_OF[this.current] : 'town';
+  }
+
+  /** The tower act that colours the music: none under an epic track. */
+  private get colourAct(): number | null {
+    return this.epicNow ? null : this.act;
+  }
+
   /** Bakes a track ahead of its being needed (the battle's, once the town is playing), when the music is on. */
-  warm(track: Track): void {
+  warm(track: MusicId): void {
     if (this.enabled) void this.stems(track).catch(() => {});
   }
 
@@ -779,7 +831,7 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swel
   }
 
   /** Starts a track's stems together on a new loop, fading in from nothing (null if it is already sounding). */
-  private begin(track: Track, baked: Baked): void {
+  private begin(track: MusicId, baked: Baked): void {
     if (this.loops.has(track)) return;
     const ac = this.ac;
     const t = ac.currentTime + 0.05;
@@ -788,13 +840,20 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swel
     fade.gain.setTargetAtTime(1, t, FADE_S / 3);
     fade.connect(this.lowpass);
     const loop: Loop = { fade, stems: {} };
-    const levels = stemLevels(track, this.tension);
-    const rate = rateOf(track, this.tension, this.act);
+    const info = EPIC_INFO.get(baked);
+    const rules = info ? 'town' : SYNTH_OF[track];
+    const levels = stemLevels(rules, this.tension);
+    const rate = rateOf(rules, this.tension, info ? null : this.act);
     for (const stem of STEMS) {
       const buffer = baked[stem];
       if (!buffer) continue;
       const gain = new GainNode(ac, { gain: levels[stem] });
       const src = new AudioBufferSourceNode(ac, { buffer, loop: true, playbackRate: rate });
+      // (an epic file loops a window of itself: see `LOOP_START`)
+      if (info) {
+        src.loopStart = info.loop[0];
+        src.loopEnd = info.loop[1];
+      }
       src.connect(gain).connect(fade);
       src.start(t);
       loop.stems[stem] = { src, gain };
@@ -803,7 +862,7 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swel
   }
 
   /** Fades a loop out over the crossfade and lets its sources go. */
-  private release(track: Track, seconds = FADE_S): void {
+  private release(track: MusicId, seconds = FADE_S): void {
     const loop = this.loops.get(track);
     if (!loop) return;
     this.loops.delete(track);
@@ -824,27 +883,98 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swel
   }
 
   /** Fades the old track out and the new one in, and starts the new one from the top (once it is baked: the first time a
-   *  track is wanted it is a moment, and the old track plays on meanwhile). */
-  setTrack(track: Track): void {
+   *  track is wanted it is a moment, and the old track plays on meanwhile). During a sting the new track waits for it. */
+  setTrack(track: MusicId): void {
     if (track === this.current) return;
     const prev = this.current;
     this.current = track;
     this.applyColour(true);
-    if (!this.enabled) return;
+    this.startDrone();
+    if (!this.enabled || this.holding) return;
+    this.play(track, prev);
+  }
+
+  private play(track: MusicId, prev: MusicId | null): void {
     void this.stems(track).then(
       (baked) => {
         // (the wanted track may have changed while it baked)
-        if (this.current !== track || !this.enabled) return;
+        if (this.current !== track || !this.enabled || this.holding) return;
         if (prev && prev !== track) this.release(prev);
         // (a scene's track is kept only while it plays: the many short scores would otherwise pile up in memory)
         for (const t of SCENE_TRACKS) if (t !== track && t !== prev) this.baked.delete(t);
+        this.trimBaked();
         this.begin(track, baked);
         this.applyColour(true);
+        this.startDrone();
       },
       () => {
         /* (no offline rendering here: the game plays on in silence) */
       },
     );
+  }
+
+  /** Plays a sting once over the music: the loop under it fades out, any track asked for meanwhile waits, and the music
+   *  comes back (the current track, from its top) when the sting's notes have finished, a little before its tail does. */
+  sting(id: StingId, tailSeconds = 6): void {
+    if (!this.enabled) return;
+    let p = this.stingBufs.get(id);
+    if (!p) {
+      p = this.loadStingBuffer(id);
+      p.catch(() => this.stingBufs.delete(id));
+      this.stingBufs.set(id, p);
+    }
+    void p.then(
+      (buf) => {
+        if (!this.enabled) return;
+        const ac = this.ac;
+        for (const track of [...this.loops.keys()]) this.release(track, 0.5);
+        this.holding = true;
+        this.stopSting(false);
+        const src = new AudioBufferSourceNode(ac, { buffer: buf });
+        const g = new GainNode(ac, { gain: 1 });
+        src.connect(g).connect(this.out);
+        src.start(ac.currentTime + 0.03);
+        const now = { src, gain: g };
+        this.stingNow = now;
+        src.onended = () => {
+          g.disconnect();
+          if (this.stingNow === now) this.stingNow = null;
+        };
+        this.holding = true;
+        this.stingTimer = setTimeout(() => {
+          this.stingTimer = null;
+          this.holding = false;
+          if (this.current && this.enabled) this.play(this.current, null);
+        }, Math.max(1500, (buf.duration - tailSeconds) * 1000));
+      },
+      () => {
+        /* (no sting file: the game goes on without one) */
+      },
+    );
+  }
+
+  /** A fight has begun: any sting still sounding fades out and the music is let back at once. */
+  stopSting(resume = true): void {
+    if (this.stingTimer) clearTimeout(this.stingTimer);
+    this.stingTimer = null;
+    const now = this.stingNow;
+    this.stingNow = null;
+    if (now) {
+      const t = this.ac.currentTime;
+      now.gain.gain.cancelScheduledValues(t);
+      now.gain.gain.setTargetAtTime(0, t, 0.15);
+      setTimeout(() => {
+        try {
+          now.src.stop();
+        } catch {
+          /* (already stopped) */
+        }
+      }, 800);
+    }
+    if (this.holding) {
+      this.holding = false;
+      if (resume && this.current && this.enabled) this.play(this.current, null);
+    }
   }
 
   /** The fight's tension (0 to 1). */
@@ -865,16 +995,18 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swel
   private applyColour(snap: boolean): void {
     const track = this.current;
     if (!track) return;
+    const rules = this.rules;
+    const act = this.colourAct;
     const t = this.ac.currentTime;
     const tc = snap ? 0.3 : 0.6;
-    this.params.cutoff.setTargetAtTime(cutoffOf(track, this.tension, this.act), t, tc);
-    this.params.swell.setTargetAtTime(swellOf(track, this.tension), t, tc);
-    const hot = CALM_TRACKS.has(track) ? 0 : this.tension;
+    this.params.cutoff.setTargetAtTime(cutoffOf(rules, this.tension, act), t, tc);
+    this.params.swell.setTargetAtTime(swellOf(rules, this.tension), t, tc);
+    const hot = CALM_TRACKS.has(rules) ? 0 : this.tension;
     this.params.perc.setTargetAtTime(percLevel(hot) * RUMBLE_SCALE, t, 0.8);
     const loop = this.loops.get(track);
     if (loop) {
-      const levels = stemLevels(track, this.tension);
-      const rate = rateOf(track, this.tension, this.act);
+      const levels = stemLevels(rules, this.tension);
+      const rate = rateOf(rules, this.tension, act);
       for (const [stem, part] of Object.entries(loop.stems)) {
         part.gain.gain.setTargetAtTime(levels[stem as Stem], t, tc);
         part.src.playbackRate.setTargetAtTime(rate, t, 1);
@@ -894,6 +1026,9 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swel
 
   /** Starts the current act's drone (fading in over the old one's fade-out), or just lets the old one go for no act. */
   private startDrone(): void {
+    // (nothing changes when the act the drone is for has not: an epic track has no drone)
+    if (this.colourAct === this.droneAct && (this.drone || this.colourAct === null)) return;
+    this.droneAct = this.colourAct;
     const old = this.drone;
     this.drone = null;
     if (old) {
@@ -902,7 +1037,7 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swel
       old.fade.gain.setTargetAtTime(0, t, FADE_S / 3);
       setTimeout(old.stop, FADE_S * 1000 * 1.5);
     }
-    const colour = colourOf(this.act);
+    const colour = colourOf(this.colourAct);
     if (colour) this.drone = this.makeDrone(colour.drone);
   }
 
@@ -998,7 +1133,7 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swel
     this.rumbleStopping = true;
     setTimeout(() => {
       this.rumbleStopping = false;
-      if (this.rumble && !percActive(this.current && CALM_TRACKS.has(this.current) ? 0 : this.tension)) {
+      if (this.rumble && !percActive(CALM_TRACKS.has(this.rules) ? 0 : this.tension)) {
         this.rumble.stop();
         this.rumble = null;
       }
@@ -1006,6 +1141,7 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swel
   }
 
   destroy(): void {
+    if (this.stingTimer) clearTimeout(this.stingTimer);
     this.rumble?.stop();
     this.drone?.stop();
     for (const track of [...this.loops.keys()]) this.release(track, 0.01);
