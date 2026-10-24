@@ -76,6 +76,7 @@ import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, framing, PAUSE_MS, settle, viewFor,
 import { titleOf } from './render/bossTitles';
 import { at, depth, FOOT, HH, rawAt, setFrame, TH, TW } from './render/iso';
 import { bindDuck, bindMute, play, playEvents, setAct, setScene, setup, startFight } from './render/sound';
+import { fightLevel, type MapKind } from './render/epicMusic';
 import { sceneOf } from './render/audioRules';
 import { colLeft, viewH, viewW } from './viewport';
 import { onSettings, openSettings, setSetting, settings } from './settings';
@@ -305,6 +306,8 @@ class Game {
       onHome: () => this.home.open(),
       onAbandon: () => this.abandon(),
     });
+    // (the map opening or closing changes the music)
+    new MutationObserver(() => this.syncScene()).observe($('towerMap'), { attributes: true, attributeFilter: ['hidden'] });
     this.party = new Party(this.meta, () => this.home.open());
     bindSpellbook(this.meta, () => {
       saveMeta(this.meta);
@@ -617,7 +620,8 @@ class Game {
     newQuipScene();
     foeGrumbles(this.b.units.filter((u) => u.side === 'foe' && !UNITS[u.def].summon).length, (i) => this.anchorOfFoe(i));
     this.stats = startStats(this.b.units);
-    startFight(isBossRun(this.run));
+    // (the music: a boss, a Calamity fight, or one of three battle tracks by how hard the fight runs)
+    startFight(isBossRun(this.run), { calamity: this.run.mode?.kind === 'calamity', level: fightLevel(this.run.stage, { elite: this.run.tower?.cur?.kind === 'elite', waves: waveArmyOf(this.run)?.waves.length }) });
     startSynergies(countTraits(kindsOf(this.b.units)), this.b.combo);
     this.chosen = null;
     this.boardView.clearMarks();
@@ -1996,7 +2000,9 @@ class Game {
 
   /** The ambience bed: the home tab or the armies while the home screen is up, else the tower's act (its map and fights) or the field. */
   private syncScene(): void {
-    setScene(sceneOf(this.home?.spot ?? null, this.run?.tower?.act ?? null));
+    // (an open map is the tower's or the Calamity's: the music takes its tune from that)
+    const map: MapKind = this.towerView?.isOpen ? (this.run?.mode?.kind === 'calamity' ? 'calamity' : 'tower') : null;
+    setScene(sceneOf(this.home?.spot ?? null, this.run?.tower?.act ?? null), map);
   }
 
   private refresh(): void {

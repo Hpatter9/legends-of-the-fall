@@ -15,9 +15,10 @@ import type { Battle, BattleEvent } from '../sim/battle';
 import { onSettings, settings } from '../settings';
 import { BusMixer, CueSynth, MusicPlayer, type BusName } from './audioProcessors';
 import { AmbientBeds } from './audioBeds';
-import { DuckCounter, panOfEvent, type PlannedCue, type Scene, type Track } from './audioRules';
+import { DuckCounter, panOfEvent, type PlannedCue, type Scene } from './audioRules';
+import { TRACK_OF_PLACE, fightTrack, placeOf, type FightMood, type MapKind, type MusicId, type Place, type StingId } from './epicMusic';
 import { bakeTrack } from './musicBake';
-import { SCENE_TRACKS } from './musicScore';
+import { SCENE_TRACKS, type Track } from './musicScore';
 import { Mixer, cuesFor, intensityOf, type Cue } from './soundRules';
 
 const MUSIC_LEVEL = 0.22;
@@ -52,6 +53,10 @@ const ducks = new DuckCounter();
 /** The act and scene asked for before the audio was unlocked. */
 let wantAct: number | null = null;
 let wantScene: Scene | null = null;
+/** Where the player is, as the music hears it (`placeOf`), the fight in progress (if any) and whether a cinematic's own score is playing. */
+let place: Place = 'camp';
+let fight: FightMood | null = null;
+let sceneMusic = false;
 
 function readMuted(): boolean {
   try {
@@ -82,8 +87,8 @@ function unlock(): void {
   }
   if (engine.core.context.state !== 'running') void engine.core.start();
   if (!engine.music.current) {
-    setMusic('town');
-    // (the fight's track is baked while the town's plays, so a fight's music starts at once)
+    syncMusic();
+    // (the fight's track is decoded while the camp's plays, so a fight's music starts at once)
     setTimeout(() => engine?.music.warm('battle'), 4000);
   }
 }
@@ -103,7 +108,7 @@ export function setup(): void {
   // (for the tests and the owner: `window.__audioDebug()` says what the engine is doing)
   const w = window as unknown as { __audioDebug?: () => unknown; __audioApi?: unknown };
   w.__audioDebug = debugState;
-  w.__audioApi = { setAct, setMusic, setTension, duck, setScene, playScene, endScene, probe, bake: bakeTrack, renderCue };
+  w.__audioApi = { setAct, setMusic, playSting, setTension, duck, setScene, playScene, endScene, probe, bake: bakeTrack, renderCue };
 }
 
 /** Lets the game's sound mix with whatever else the phone is playing (a music app), and never take the audio focus: the
@@ -171,11 +176,23 @@ export function bindMute(button: HTMLElement): void {
   });
 }
 
-/** A fight has begun: the boss track on a boss stage, the battle track otherwise. */
-export function startFight(boss: boolean): void {
+/** The track the place or the fight asks for. */
+const wantedTrack = (): MusicId => (fight ? fightTrack(fight) : TRACK_OF_PLACE[place]);
+
+/** Puts the music on the track the place or the fight wants (unless a cinematic's own score is playing). */
+function syncMusic(): void {
+  if (sceneMusic) return;
+  engine?.music.setTrack(wantedTrack());
+}
+
+/** A fight has begun: the boss track on a boss stage, the Calamity's on a Calamity fight, else one of the three battle tracks by
+ *  how hard the fight runs (`fightLevel` in `epicMusic.ts`). */
+export function startFight(boss: boolean, mood: { calamity?: boolean; level?: number } = {}): void {
   mixer.reset();
   setTension(0);
-  setMusic(boss ? 'boss' : 'battle');
+  fight = { boss, calamity: !!mood.calamity, level: mood.level ?? 0 };
+  engine?.music.stopSting();
+  syncMusic();
 }
 
 /** Sounds for one tick's battle events (`speed` is the fight's: quieter at ×2), and the music going back to the town when
@@ -189,7 +206,10 @@ export function playEvents(b: Battle, events: BattleEvent[], speed = 1): void {
     }
     if (e.kind === 'end') {
       setTension(0);
-      setMusic('town');
+      fight = null;
+      // (a victory or a defeat sting rings over the fading battle, and the place's music comes back after it)
+      playSting(e.won ? 'victory' : 'defeat');
+      syncMusic();
     }
   }
   // (the music's pace follows how thin the sides have got, checked about twice a second)
@@ -238,14 +258,17 @@ const SCENE_TRACK: Record<string, Track> = {
   calBoss1: 'gorvak', calBoss2: 'herald2', calBoss3: 'herald3', calBoss4: 'herald4', calBoss5: 'herald5', calBoss6: 'herald6',
   awakening: 'solemn', victory: 'triumph', spireClimb: 'spire',
 };
-/** What was playing before a scene's music took over, so `endScene` can put it back. */
-let beforeScene: Track | null = null;
+/** Plays a victory or defeat sting once over the music, which comes back after it. */
+export function playSting(id: StingId): void {
+  engine?.music.sting(id);
+}
 
-/** Crossfades to a track: the town's, the battle's or the boss's; or a scene's, as `'scene:opening'` (see `playScene`). */
-export function setMusic(track: Track | `scene:${string}`): void {
+/** Crossfades to a track (for the owner and the tests: the page's own music follows the place and the fight); or a scene's, as
+ *  `'scene:opening'` (see `playScene`). */
+export function setMusic(track: MusicId | `scene:${string}`): void {
   if (track.startsWith('scene:')) return playScene(track.slice(6));
-  beforeScene = null;
-  engine?.music.setTrack(track as Track);
+  sceneMusic = false;
+  engine?.music.setTrack(track as MusicId);
 }
 
 /** Starts a cinematic's music by the scene's id (`opening`, `gorvak`, `herald2` to `herald6`, `triumph`, `comic`, `solemn`, `spire`, or a Calamity foe id `calBoss1` to `calBoss6`, or the aliases `awakening`, `victory`, `spireClimb`); an id with no score leaves the music as it is. It loops until
@@ -253,16 +276,15 @@ export function setMusic(track: Track | `scene:${string}`): void {
 export function playScene(id: string): void {
   const track = SCENE_TRACK[id];
   if (!track || !engine) return;
-  if (beforeScene === null && engine.music.current && !(SCENE_TRACKS as readonly string[]).includes(engine.music.current)) beforeScene = engine.music.current;
+  sceneMusic = true;
+  engine.music.stopSting();
   engine.music.setTrack(track);
 }
 
-/** The scene is over: the music it replaced comes back (the town's if nothing was playing). */
+/** The scene is over: the music of the place and the fight comes back. */
 export function endScene(): void {
-  if (!engine) return;
-  const back = beforeScene ?? 'town';
-  beforeScene = null;
-  engine.music.setTrack(back);
+  sceneMusic = false;
+  syncMusic();
 }
 
 /** The tower act the music takes its colour from (a filter, a pace and a drone), or null outside the tower. */
@@ -273,9 +295,12 @@ export function setAct(act: number | null): void {
 
 /** The place the player is in, for the ambience bed under the music (null for none): it crossfades over about 1.5 s, and
  *  the same bed again changes nothing. See `sceneOf` in `audioRules.ts` for what each screen asks for. */
-export function setScene(scene: Scene | null): void {
+export function setScene(scene: Scene | null, map: MapKind = null): void {
   wantScene = scene;
   engine?.beds.setScene(scene);
+  // (the music follows too: the camp's or the tavern's, the tower's or the Calamity's map, or the deployment)
+  place = placeOf(scene, map);
+  syncMusic();
 }
 
 /** Holds the music and the ambience down, about -8 dB with a low-pass, or lets it up again. Counted by reason: the
@@ -308,6 +333,8 @@ function debugState(): unknown {
     state: ctx.state,
     muted,
     track: music.current,
+    place,
+    fight,
     tension: music.tension,
     act: music.act,
     scene: engine.beds.scene,
