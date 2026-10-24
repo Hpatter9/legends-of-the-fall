@@ -1,3 +1,4 @@
+import { bareBoard } from './bare';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
@@ -103,7 +104,7 @@ test('a shooter reaches further from high ground; a sword cannot reach up a clif
   assert.equal(shotReach(4, 3, 0), 6);
   assert.equal(shotReach(4, 0, 3), 4);
   const b = startBattle(3);
-  for (const t of b.board.tiles) (t.h = 0), (t.rock = false);
+  bareBoard(b);
   const archer = UNITS.archer;
   assert.ok(!canStrike(b.board, archer, { u: 0, v: 8 }, { u: 0, v: 3 }));
   tileAt(b.board, 0, 8)!.h = 2;

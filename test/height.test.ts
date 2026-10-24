@@ -1,6 +1,7 @@
+import { bareBoard } from './bare';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { tileAt } from '../src/sim/board';
+import { D, tileAt } from '../src/sim/board';
 import { addUnit, place, startBattle, stepBattle, unitAt, type Battle } from '../src/sim/battle';
 import { jumpText, powerOf } from '../src/sim/power';
 import { ALL_HEROES, UNITS } from '../src/sim/units';
@@ -8,11 +9,7 @@ import { ALL_HEROES, UNITS } from '../src/sim/units';
 /** A flat board with a single, frozen skeleton at (u, v) and nobody else, ready for a hero to be placed. */
 function arena(foeAt: [number, number]): Battle {
   const b = startBattle(5, 'skeletons');
-  for (const t of b.board.tiles) {
-    t.h = 0;
-    delete t.rock;
-    delete t.ground;
-  }
+  bareBoard(b);
   b.units = b.units.filter((x) => x.side === 'foe').slice(0, 1);
   const foe = b.units[0];
   foe.u = foeAt[0];
@@ -85,6 +82,6 @@ test('a better jumper is worth a little more power', () => {
 test('every hero places and fights with a jump (a smoke test of the whole roster)', () => {
   for (const id of ALL_HEROES) {
     const b = startBattle(11, 'skeletons');
-    assert.ok(place(b, id, 3, 7), id);
+    assert.ok(place(b, id, 3, D - 2), id);
   }
 });

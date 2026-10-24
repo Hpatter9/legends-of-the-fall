@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { boardOk, AREAS, D, DEPLOY_ROWS, makeBoard, standable, tileAt, W } from '../src/sim/board';
+import { boardOk, AREAS, BASE_AREA, D, DEPLOY_ROWS, makeBoard, standable, tileAt, W } from '../src/sim/board';
 import { canPlace, place, startBattle } from '../src/sim/battle';
 import { CAL_BOARD, CAL_FOES_MAX, CAL_TIER, fitBand, tierOfLevel } from '../src/sim/calamity';
 import { gainRunXp, heroLevel, hireable, hireHero, localBoost, promoteByLevel } from '../src/sim/climb';
@@ -161,7 +161,9 @@ test('a Calamity fight is on a bigger board with a band that fills it; the usual
   const b = startStage(run);
   assert.equal(b.board.w, CAL_BOARD.w);
   assert.equal(b.board.d, CAL_BOARD.d);
-  assert.ok(CAL_BOARD.w * CAL_BOARD.d >= 1.8 * W * D && CAL_BOARD.w * CAL_BOARD.d <= 2.3 * W * D, 'about twice the area');
+  // (twice the old 7 x 9 board, and bigger than the usual 8 x 11 one)
+  assert.ok(CAL_BOARD.w * CAL_BOARD.d >= 1.8 * BASE_AREA && CAL_BOARD.w * CAL_BOARD.d <= 2.3 * BASE_AREA, 'about twice the old area');
+  assert.ok(CAL_BOARD.w * CAL_BOARD.d > W * D && CAL_BOARD.d > D);
   assert.equal(b.units.filter((u) => u.side === 'foe').length, 11, 'ten heroes meet eleven foes');
   assert.ok(b.units.every((u) => standable(tileAt(b.board, u.u, u.v))));
   // the heroes' rows are the last three of the deeper board
@@ -169,7 +171,7 @@ test('a Calamity fight is on a bigger board with a band that fills it; the usual
   const free = Array.from({ length: b.board.w }, (_, u) => u).find((u) => standable(tileAt(b.board, u, lastRow)))!;
   assert.equal(canPlace(b, 'knight', free, lastRow), true);
   assert.equal(canPlace(b, 'knight', free, CAL_BOARD.d - DEPLOY_ROWS - 1), false);
-  assert.equal(canPlace(b, 'knight', free, D - 1), false, 'the old last row is now the middle ground');
+  assert.equal(canPlace(b, 'knight', free, CAL_BOARD.d - DEPLOY_ROWS - 1), false, 'the row above the heroes\' rows is the middle ground');
   // an army fight is the usual size
   const plain = startBattle(9, 'skeletons');
   assert.equal(plain.board.w, W);

@@ -675,6 +675,7 @@ class Game {
         const events = stepBattle(b);
         tally(this.stats, events, b.units);
         this.fx.show(b, events);
+        for (const e of events) if (e.kind === 'boom') this.boardView.removeBarrel(e.u, e.v);
         // (a fighter a skill called up mid-fight has no sprite yet: make it, with its entrance)
         if (b.units.length !== this.sprites.size) this.syncSprites();
         playEvents(b, events, this.speed);

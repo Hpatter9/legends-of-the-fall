@@ -8,7 +8,7 @@ import { CLASSIC_AREAS, type Area } from './board';
 import { CAL_CASTLE_EXTRA } from './calamity';
 import { buildChain, type Section } from './chain';
 import { BOSS_BANDS, FIELD_BANDS } from './foes';
-import { armyById, armyIndex, landOf, landsOf, waveBoost, waveFoes, type Army } from './armies';
+import { armyById, armyIndex, landOf, waveBoost, waveFoes, type Army } from './armies';
 import { dailyArmy } from './daily';
 import { bonusGold, foeAnswer, heroBoost, manaRate, moveRate, newCastle, type Castle } from './castle';
 import { rankMult } from './meta';
@@ -351,9 +351,9 @@ const chains = new Map<string, Section[]>();
 export function chainOf(run: Run): Section[] | null {
   const army = waveArmyOf(run);
   if (!army) return null;
-  // (a run with no land of its own fights each wave on its army's: `landOf`)
-  const area = run.area ?? ((n: number) => landOf(army, n));
-  const key = `${run.seed}:${army.id}:${run.area ?? landsOf(army).join()}`;
+  // (a run with no land of its own fights every wave on the one land its seed picks from its army's: `landOf`)
+  const area = run.area ?? landOf(army, run.seed);
+  const key = `${run.seed}:${army.id}:${area}`;
   let c = chains.get(key);
   if (!c) {
     c = buildChain(run.seed, army.waves.length, area, (n) => boardSeedOf(run, n), (n) => !!army.waves[n - 1].boss);
