@@ -30,7 +30,7 @@ export const TIPS: Readonly<Record<TipId, TipDef>> = {
   summon: { text: 'Spend gold to Hire a hero. Three of the same hero merge into a stronger one.', page: 'game', during: 'deploy' },
   crowns: { text: 'Recruit gathers shards to unlock new heroes. Army stars open the Castle, the Last Stand and the Calamity.', page: 'home' },
   calamity: { text: 'Calamity: climb the maps with one hero, and hire more at camps and shops. Each map ends in a boss.', page: 'home' },
-  tower: { text: 'The Last Stand: guard the king on his keep as wave after wave comes in from every side. It never ends.', page: 'home' },
+  tower: { text: 'Last Stand: guard the king on his keep as wave after wave comes in from every side. It never ends.', page: 'home' },
   talents: { text: 'Spend talent points here to change how this hero fights. Each hero has its own tree.', page: 'any' },
   castle: { text: 'Each build takes real time, and the builders do one at a time. It carries on while the game is closed.', page: 'home' },
   spellbook: { text: 'The Chapel holds the king\'s spells. Pick three, within the power budget, to cast in a fight.', page: 'home' },

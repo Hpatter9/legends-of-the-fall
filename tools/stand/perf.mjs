@@ -14,8 +14,6 @@ await page.evaluate(([wave, level]) => {
   s.run.gold = 100000;
   window.__game.stand.s.run.gold = 100000;
 }, [wave, level]);
-// ten heroes: five more hired
-for (let i = 0; i < 5; i++) await page.evaluate(() => document.querySelector('.stBuy.hire').click());
 await page.evaluate(() => document.querySelector('.stStart').click());
 await page.waitForTimeout(9000);
 await page.evaluate(() => Object.assign(window.__game.stand.perf, { frames: 0, sim: 0, sprites: 0, total: 0, worst: 0 }));

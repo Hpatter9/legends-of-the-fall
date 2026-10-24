@@ -1,7 +1,7 @@
 // The Last Stand: an endless battle on a big square field (`standField.ts`). The king stands on his keep in the middle, the
 // heroes guard posts round him (`standAi.ts`), and wave after wave of foes comes in from the edges, bigger each time. Every
-// fifth wave is a boss. Between waves there is a short break (`BREAK_MS`) to spend gold: hire a hero, level one up, buy a
-// relic, heal the king. The heroes also level up by themselves, in the fight, from kills and wave clears. The run ends when
+// fifth wave is a boss. Between waves there is a short break (`BREAK_MS`) to spend gold: level a hero up, buy a
+// relic, heal the king (at any time, the break is a breather). The heroes also level up by themselves, in the fight, from kills and wave clears. The run ends when
 // the king falls; its score is the best wave reached (`Meta.stand`).
 //
 // One `Battle` lasts the whole run (with `Battle.stand` set): the foes are added to it a few at a time, the dead are dropped
@@ -10,8 +10,9 @@
 
 import { startBattle, addUnit, stepBattle, TICK_MS, creditOf, type Battle, type BattleEvent, type Boost, type Unit } from './battle';
 import { tileAt, standable, type Area, type At } from './board';
-import { canPost, edgeTiles, EDGES, guardSpot, KING_AT, standArea, standBoard, type Edge } from './standField';
+import { canPost, edgeTiles, EDGES, KING_AT, ringPlan, standArea, standBoard, type Edge, type Role } from './standField';
 import { isTank, KING_DEF, leashOf } from './standAi';
+import { CLASS_OF } from './starter';
 import { BOSS_BANDS, FIELD_BANDS, FOE_BANDS, isBoss } from './foes';
 import { armyById, ARMIES, armyIndex, armyUnlocked } from './armies';
 import { mixSeed, Rng } from './rng';
@@ -35,19 +36,18 @@ import { UNITS } from './units';
 export const BREAK_MS = 5000;
 /** The most foes on the field at once; what a wave would add past it is paid in strength instead. */
 export const FIELD_CAP = 48;
-/** Heroes on the field at most, and on the bench. */
-export const FIELD_HEROES = 10;
-export const BENCH_HEROES = 4;
+/** Heroes in the party: eight, all on the field from the start (no hiring, no bench). */
+export const FIELD_HEROES = 8;
 /** The king's health. */
 export const KING_HP = 1000;
 /** The share of the king's health a heal gives back. */
 export const KING_HEAL = 0.4;
 /** Foes' hp and attack at wave 1 (a share of their stats in `foes.ts`), and the share they gain each wave after. */
 export const WAVE_START = FOE_START;
-export const WAVE_GROWTH = 0.12;
+export const WAVE_GROWTH = 0.21;
 /** A wave's size: foes at wave 1 and the foes each wave adds. */
 export const WAVE_BASE = 4;
-export const WAVE_STEP = 1.5;
+export const WAVE_STEP = 2;
 /** Every `BOSS_EVERY`th wave is a boss wave; the band changes every `BAND_WAVES` waves. */
 export const BOSS_EVERY = 5;
 export const BAND_WAVES = 3;
@@ -72,8 +72,7 @@ export const killGold = (n: number): number => 2 + Math.floor(n / 3);
 export const clearGold = (n: number): number => 12 + 4 * n;
 export const BOSS_GOLD = 10;
 export const START_GOLD = 60;
-/** What the four buys cost. */
-export const hireCost = (hires: number): number => 45 + 15 * hires;
+/** What the buys cost. */
 export const levelCost = (lv: number): number => 18 + 8 * lv;
 export const relicCost = (owned: number, wave: number): number => 60 + 12 * owned + 3 * wave;
 export const healCost = (wave: number): number => 25 + 3 * wave;
@@ -114,7 +113,6 @@ export interface StandRun {
   nextId: number;
   relics: string[];
   offer: string[];
-  hires: number;
   /** The king's health as a share of the whole. */
   king: number;
   kills: number;
@@ -164,8 +162,6 @@ export interface StandSetup {
   /** A hero kind's hp and attack and the rest of its boost (its lasting level, rank, equipment). */
   boost(kind: string): Boost;
   castle: Castle;
-  /** The kinds a hire draws from. */
-  pool: readonly string[];
 }
 
 export interface Stand {
@@ -263,13 +259,12 @@ export function setupFromMeta(m: Meta): StandSetup {
       ...(awakenedOf(m, kind) ? { awaken: awakenedOf(m, kind) } : {}),
     }),
     castle: m.castle,
-    pool: m.unlocked,
   };
 }
 
 /** A new run for a party (the hero kinds of a save's party). */
 export function newStandRun(seed: number, party: readonly string[], armies: readonly string[] = [], prevBest = 0): StandRun {
-  const run: StandRun = { v: 1, seed, area: standArea(seed), armies: [...armies], wave: 1, gold: START_GOLD, heroes: [], nextId: 1, relics: [], offer: [], hires: 0, king: 1, kills: 0, earned: 0, prevBest, over: false, best: 1 };
+  const run: StandRun = { v: 1, seed, area: standArea(seed), armies: [...armies], wave: 1, gold: START_GOLD, heroes: [], nextId: 1, relics: [], offer: [], king: 1, kills: 0, earned: 0, prevBest, over: false, best: 1 };
   for (const kind of party) run.heroes.push({ id: run.nextId++, kind, lv: 0, xp: 0, post: null });
   return run;
 }
@@ -283,6 +278,9 @@ function boostFor(s: Stand, h: StandHero): Boost {
 
 const heroUnits = (s: Stand): Unit[] => s.b.units.filter((u) => u.side === 'hero' && u.tag !== undefined && u.alive);
 const unitOfHero = (s: Stand, id: number): Unit | undefined => s.b.units.find((u) => u.side === 'hero' && u.tag === id);
+
+/** Where a kind stands in the ring: tanks out front, shooters and healers near the king, the rest between. */
+export const roleOfKind = (kind: string): Role => (UNITS[kind] && isTank(UNITS[kind]) ? 'tank' : UNITS[kind]?.shot || (UNITS[kind]?.range ?? 1) >= 3 || CLASS_OF[kind] === 'support' || CLASS_OF[kind] === 'caster' ? 'inner' : 'mid');
 
 /** The battle, the king and the run's heroes: a run from a save (the heroes whole; those with a post on it, the rest to be placed). */
 export function startStand(run: StandRun, setup: StandSetup): Stand {
@@ -303,28 +301,19 @@ export function startStand(run: StandRun, setup: StandSetup): Stand {
   king.hp = Math.max(1, Math.round(king.maxHp * run.king));
   b.stand = { king: king.id, at: { ...KING_AT }, fields: {} };
   const s: Stand = { run, setup, b, phase: 'deploy', king, queue: [], waveAt: 0, breakLeft: 0, rageAt: 0, notes: [], traitHp: 1, traitAtk: 1, relicHp: hp ?? 1, relicAtk: atk ?? 1, baseMana: mana, kingGrace: 0 };
-  // (the heroes with a post stand on it; a new run's heroes are placed round the keep, front-liners first)
-  const taken: At[] = [];
-  for (const h of run.heroes) if (h.post) taken.push({ u: h.post[0], v: h.post[1] });
-  const order = [...run.heroes].sort((x, y) => Number(!!y.post) - Number(!!x.post) || Number(isShooter(x.kind)) - Number(isShooter(y.kind)) || x.id - y.id);
-  for (const h of order) {
-    if (!h.post && heroUnitsCount(s) < FIELD_HEROES) {
-      const at = guardSpot(b.board, taken, isShooter(h.kind));
-      if (at) {
-        h.post = [at.u, at.v];
-        taken.push(at);
-      }
-    }
-    if (h.post) addHeroUnit(s, h);
+  // (the heroes with a post stand on it; a new run's eight are set out in a ring round the keep: `ringPlan`)
+  const fresh = run.heroes.filter((h) => !h.post);
+  if (fresh.length) {
+    const plan = ringPlan(b.board, fresh.map((h) => h.kind), roleOfKind, run.heroes.filter((h) => h.post).map((h) => ({ u: h.post![0], v: h.post![1] })));
+    fresh.forEach((h, i) => (h.post = plan[i] ? [plan[i].u, plan[i].v] : null));
   }
+  for (const h of run.heroes) if (h.post) addHeroUnit(s, h);
   syncTraits(s);
   syncMana(s);
   if (!run.offer.length) run.offer = drawOffer(run, run.wave);
   return s;
 }
 
-const isShooter = (kind: string): boolean => !!UNITS[kind]?.shot || UNITS[kind]?.range >= 3;
-const heroUnitsCount = (s: Stand): number => s.run.heroes.filter((h) => h.post).length;
 
 function addHeroUnit(s: Stand, h: StandHero): Unit {
   const [u, v] = h.post!;
@@ -366,7 +355,6 @@ export function postHero(s: Stand, id: number, u: number, v: number): boolean {
   const h = s.run.heroes.find((x) => x.id === id);
   if (!h || s.phase === 'over' || !canPost(s.b.board, u, v)) return false;
   if (s.b.units.some((x) => x.alive && x.u === u && x.v === v && x.tag !== id)) return false;
-  if (!h.post && heroUnitsCount(s) >= FIELD_HEROES) return false;
   const was = h.post;
   h.post = [u, v];
   const unit = unitOfHero(s, id);
@@ -383,18 +371,6 @@ export function postHero(s: Stand, id: number, u: number, v: number): boolean {
     syncMana(s);
   }
   return !was || was[0] !== u || was[1] !== v || true;
-}
-
-/** Take a hero off the field to the bench (its tile is free again). Only before the fight, or in a break. */
-export function benchHero(s: Stand, id: number): boolean {
-  const h = s.run.heroes.find((x) => x.id === id);
-  if (!h?.post || s.phase === 'wave' || s.phase === 'over' || s.run.heroes.filter((x) => x.post).length <= 1) return false;
-  const i = s.b.units.findIndex((u) => u.side === 'hero' && u.tag === id);
-  if (i >= 0) s.b.units.splice(i, 1);
-  h.post = null;
-  syncTraits(s);
-  syncMana(s);
-  return true;
 }
 
 /* ------------------------------------------------------------------ levels and XP */
@@ -620,34 +596,6 @@ function endRun(s: Stand, events: BattleEvent[]): BattleEvent[] {
 /** Why a buy is refused now, if it is. */
 export type Refusal = 'over' | 'gold' | 'full' | 'none';
 
-/** Hire a hero: a kind drawn from the pool, to the nearest free guard spot (or the bench when the field is full). Returns the hero, or null (`hireBlock` says why). */
-export function hire(s: Stand): StandHero | null {
-  if (hireBlock(s)) return null;
-  const run = s.run;
-  run.gold -= hireCost(run.hires);
-  const pool = s.setup.pool.length ? s.setup.pool : ['knight'];
-  const kind = pool[new Rng(mixSeed(run.seed, 0x57a8, run.nextId)).int(0, pool.length - 1)];
-  // (a hire joins at the level the heroes have reached on the average, so it is not a passenger)
-  const heroes = run.heroes;
-  const avg = heroes.length ? Math.floor(heroes.reduce((n, h) => n + h.lv, 0) / heroes.length) : 0;
-  const h: StandHero = { id: run.nextId++, kind, lv: Math.floor(avg * 0.7), xp: 0, post: null };
-  run.hires++;
-  run.heroes.push(h);
-  if (heroUnitsCount(s) < FIELD_HEROES) {
-    const taken = run.heroes.filter((x) => x.post).map((x) => ({ u: x.post![0], v: x.post![1] }));
-    const at = guardSpot(s.b.board, taken, isShooter(kind));
-    if (at) postHero(s, h.id, at.u, at.v);
-  }
-  return h;
-}
-
-export function hireBlock(s: Stand): Refusal | null {
-  if (s.phase === 'over') return 'over';
-  if (s.run.gold < hireCost(s.run.hires)) return 'gold';
-  if (s.run.heroes.length >= FIELD_HEROES + BENCH_HEROES) return 'full';
-  return null;
-}
-
 /** The hero a level-up goes to when none is named: the lowest level on the field (the lowest id of equals). */
 export const weakestHero = (s: Stand): StandHero | undefined => [...s.run.heroes].filter((h) => h.post).sort((x, y) => x.lv - y.lv || x.id - y.id)[0];
 
@@ -804,4 +752,12 @@ export function migrateOldClimb(m: Meta, store: Pick<Storage, 'getItem' | 'remov
     note ??= 'The old tower climb has been closed. The Tower is now the Last Stand.';
   }
   return note;
+}
+
+/** The eight heroes of a run from a save: the ones chosen (kept, in order), then the strongest owned (by level) that are left. Fewer if fewer are owned. */
+export function pickEight(m: Meta, chosen: readonly string[] = m.party): string[] {
+  const out = [...new Set(chosen)].filter((k) => m.unlocked.includes(k)).slice(0, FIELD_HEROES);
+  const rest = m.unlocked.filter((k) => !out.includes(k) && !UNITS[k]?.summon).sort((x, y) => levelOfKind(m, y) - levelOfKind(m, x));
+  while (out.length < FIELD_HEROES && rest.length) out.push(rest.shift()!);
+  return out;
 }

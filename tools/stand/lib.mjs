@@ -41,4 +41,10 @@ async function bootDpr(browser, w, h, port, dpr) {
 export async function enter(page) {
   await page.evaluate(() => document.getElementById('hmTower').click());
   await page.waitForTimeout(1200);
+  // (the choice of the eight: the party is filled up by Auto fill and taken)
+  if (await page.evaluate(() => !!document.querySelector('.stPick:not([hidden])'))) {
+    await page.evaluate(() => [...document.querySelectorAll('.stPick button')].find((b) => b.textContent === 'Auto fill')?.click());
+    await page.evaluate(() => document.querySelector('.stPick .primary').click());
+    await page.waitForTimeout(800);
+  }
 }

@@ -12,14 +12,15 @@ import { tryCast } from './abilities';
 import { hidden } from './equipFx';
 import type { Rng } from './rng';
 import type { UnitDef } from './units';
+import { CLASS_OF } from './starter';
 
 /** The id of the king's kind in `UNITS`. */
 export const KING_DEF = 'standKing';
 
 /** How far (in tiles) a hero may stray from its post: a shooter stays close, a fighter a little further, a tank furthest. */
 export const LEASH_SHOOTER = 1;
-export const LEASH_MELEE = 3;
-export const LEASH_TANK = 4;
+export const LEASH_MELEE = 4;
+export const LEASH_TANK = 5;
 /** A fighter this hard to hurt (and close-ranged) is a tank. */
 export const TANK_DEF = 8;
 /** How long a hero or foe with nothing to do waits before looking again. */
@@ -28,7 +29,7 @@ const IDLE_MS = 200;
 /** Whether a kind is a tank: it strikes in melee and is hard to hurt. */
 export const isTank = (def: UnitDef): boolean => !def.shot && def.range <= 1 && def.def >= TANK_DEF;
 /** A kind's leash. */
-export const leashOf = (def: UnitDef): number => (def.shot || def.range >= 3 ? LEASH_SHOOTER : isTank(def) ? LEASH_TANK : LEASH_MELEE);
+export const leashOf = (def: UnitDef): number => (def.shot || def.range >= 3 || CLASS_OF[def.id] === 'support' ? LEASH_SHOOTER : isTank(def) ? LEASH_TANK : LEASH_MELEE);
 
 /** The post a hero guards: where it stands when it is first asked what to do, unless the Last Stand set it. */
 export function postOf(me: Unit, def: UnitDef): NonNullable<Unit['post']> {

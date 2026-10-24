@@ -1,9 +1,9 @@
-# The Last Stand
+# Last Stand
 
-The Last Stand replaces the endless Tower (the spire climb). It was too like the Calamity: both were a map of fights. The
+Last Stand replaces the endless Tower (the spire climb). It was too like the Calamity: both were a map of fights. The
 Last Stand is one endless battle on a big square field. A king stands on a raised keep in the middle; the foes come in from
 all four edges, wave after wave, bigger each time; the run ends when the king falls. The camp's Tower spot keeps its
-building art and its unlock (15 stars); it is now called **The Last Stand** (the camp's plate says "Last Stand") and shows
+building art and its unlock (15 stars); it is now called **Last Stand** (the camp's plate says "Last Stand") and shows
 the best wave.
 
 Status: **built** (plan first, results after it).
@@ -113,6 +113,76 @@ A level-1 run of about 5 waves pays about 150 crowns, about the old tower's medi
 
 ### Balance
 
+`npm run stand-balance` (or `npm run balance -- --no-tables --stand`): 30 greedy runs a row, eight heroes (knight, paladin, samurai,
+kunoichi, archer, ranger, wizard, cleric) all at the level, nothing worn, no castle; the greedy player buys the first relic offered, levels
+the weakest hero, and heals the king under 55%. Wave the king fell in:
+
+| Hero level | Median | Mean | Min | Max |
+| --- | --- | --- | --- | --- |
+| 1 | 6 | 5.6 | 5 | 6 |
+| 10 | 16 | 16.3 | 13 | 19 |
+| 20 | 20 | 20.9 | 15 | 34 |
+| 30 | 31 | 32.6 | 20 | 55 |
+| 40 | 40 | 33.5 | 20 | 46 |
+| 60 | 40 | 35.5 | 20 | 64 |
+| 80 | 40 | 36.3 | 20 | 50 |
+| 100 | 40 | 39.9 | 23 | 67 |
+
+Targets: level 1 about 5-8 (6), level 30 about 20 (31: a little high, the milestone levels are strong), maxed 40 or more (median 40, mean
+about 40). Boss waves are the walls (the maxed medians sit on the wave-40 boss). The levers are `WAVE_GROWTH` (0.21), `WAVE_STEP` (2),
+`bossShare` and the prices. No run lasts for ever: a wave left alone is enraged after 75 s, and the longest run here ended in the 60s-70s.
+
+### Performance
+
+A wave-30 field is about 50 foes and 5 to 10 heroes. The field is drawn as one baked texture (`BoardView.bakeField`), not 576
+containers. Foe sprites are pooled and reused; health bars are drawn only for hurt or near-the-king foes; the flow field is
+built once; the heroes' leashed walks search only the tiles near the post; dead foes are dropped from the unit list after
+1.5 s; nothing allocates per frame in the page's loop. Numbers are in the section "Performance" below.
+
+### Order of work
+
+1. The plan, and the pinned outcomes of ordinary fights (this note, `test/stand-regression.test.ts`).
+2. The sim: field, flag in `battle.ts`, AI, waves, shop, XP, rewards, save, with tests.
+3. The balance runner and its table.
+4. The page.
+5. The spire's removal, the migration, the camp's rename.
+6. Screenshots (`docs/samples/last-stand-*.png`), the performance numbers, this note's tables.
+
+## What was built, and what differs from the plan
+
+- Everything in the plan table exists. The page draws into the page's own Pixi canvas (not a second one): the ordinary board is hidden
+  while the Stand is up (`body[data-stand]`, `Game.hideBoard`). Pan is one finger, pinch is two; the camera frames the king, the heroes
+  and the foes within 10 tiles and eases out as a wave grows. Zoom is in whole device pixels (`n / devicePixelRatio`: 1/3, 2/3, 1,
+  4/3, 5/3 on a 3x phone; 1 on a 1x screen). Heroes move by tapping one then a tile, or by dragging it, in the deploy phase, in a break or
+  mid-wave (its post moves and it walks there).
+- **Skills and the leash.** A hero's skill is cast as if no foe outside its zone existed, and a dash or blink that would end past the
+  leash stops on the last tile of its way inside it (`castInZone`). The test holds every hero on the field to its leash every tick.
+- **Fallen heroes** rise at their posts at the next wave clear (half hp); the others mend 35%. The king is not healed by it.
+- **Pooling and cost.** Foe sprites are reused by kind and size (`UnitSprite.rebind`); health bars of units with no skill meter redraw only
+  when they change; sprites far off the screen are hidden and looked at every eighth frame; the field is one baked texture
+  (`BoardView.bakeField`); corpses are dropped from the unit list unless something still points at them.
+- **Sound.** New cues `standBoss` (a boss wave begins) and `kingHit` (throttled); the rest is the usual fight sound.
+- **King's sprite**: composed from the packs (see CREDITS).
+- **Start**: the party and meta levels as the armies use them (rank, level, equipment, talents); run levels come on top.
+
+### The old tower
+
+Gone from the game: the Tower's entry, its saved climb (`legends.tower` and the very old ordinary-slot case are closed on load by
+`migrateOldClimb`, which pays the climb's chests and equipment once and shows a line on the home screen), `tools/tower-balance`'s tower
+table, the camp's "Tower" name (now "Last Stand", best wave on its plate; unlock still 15 stars). `legends.stand` is the new save (in
+`SAVE_KEYS`; `legends.tower` stays there for old saves). The tower achievements now count Last Stand waves too.
+**Kept, because the Calamity and its tests run on them:** `run.tower`, `tower.ts` (maps, elites, twists, mystery, healing, `settleTower`),
+`TowerView` (the Calamity's map), and `towerRun` (a run-with-tower-state used by many Calamity-side tests as a fixture; no page starts it
+now). I did not rewrite those ~100 test uses; say if you want `towerRun` folded into a test helper.
+
+### Pay (compared with the old tower)
+
+Crowns: the sum of `stageCrowns(w)` for each wave cleared plus `runCrowns(best)` at the end: the old tower's per-floor pay with waves
+for floors. Chests: bronze every 8 waves, silver every 13, gold every 39 (the old act boss rhythm); equipment chance `gearChance`.
+A level-1 run of about 5 waves pays about 150 crowns, about the old tower's median.
+
+### Balance
+
 `npm run stand-balance` (or `npm run balance -- --no-tables --stand`): 30 greedy runs a row, the starting five at the level, nothing
 worn, no castle; the greedy player hires up to seven heroes, buys the first relic offered, levels the weakest, heals the king under 55%.
 Wave the king fell in:
@@ -148,3 +218,17 @@ drawing is on the GPU on a phone; this machine cannot measure that, so a real-ph
 - The mode's name ("The Last Stand") is mine; the camp plate reads "Last Stand".
 - A run is saved at each break, not mid-wave: closing the page mid-wave resumes at the start of that wave.
 - Flicker: the heroes' full skill meter still pulses as in ordinary fights (the flicker worker's area).
+
+## The owner's refinement (eight heroes, no hiring)
+
+- **Name:** "Last Stand", no "The", everywhere in the game's text.
+- **Eight heroes from the start, none to manage.** A screen before the run picks the eight from the owned heroes (the party first, `Auto
+  fill` takes the strongest left by level; `pickEight`). `ringPlan` sets them out round the keep: tanks out front, one to a side; fighters
+  on the diagonals; shooters, casters and healers on the keep's steps near the king. They may be moved before wave 1 (tap a hero, then a
+  tile) and, if wanted, later; nobody has to be. **No hiring and no bench** (`hire` is gone).
+- **Support each other.** Leashes are a little longer for fighters (4) and tanks (5); shooters and healers (class `support`) keep 1, so
+  they stay with the ring they were set in; a foe striking an ally inside a hero's zone is engaged by it. The leash is still strict, so no hero runs off into the horde.
+- **Buying any time:** the bar is always up and works in the fight as in the break: level up (the weakest hero, or the one tapped), heal the king,
+  and the three relics on offer (a new offer each wave). Two buttons and three chips: about a quarter of the screen at 393x852.
+- **Re-aimed balance:** see the table above (eight heroes are much stronger than five; `WAVE_GROWTH` rose from 0.12 to 0.21 and `WAVE_STEP` from 1.5 to 2).
+- The camera now never zooms out past about eight tiles across a phone (`SCALE_MIN`), framing the king, the heroes and the foes within 7 tiles.

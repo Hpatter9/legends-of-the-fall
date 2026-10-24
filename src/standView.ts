@@ -10,12 +10,13 @@ import { TICK_MS, type BattleEvent, type Unit } from './sim/battle';
 import { ARMIES, armyUnlocked } from './sim/armies';
 import { castSpell, canAfford, cooldownLeft, MANA_MAX, SPELLS, type SpellId } from './sim/spells';
 import {
-  buyLevel, buyRelic, dropStand, foesAlive, goNow, healCost, healKing, hire, hireBlock, hireCost, levelBlock, levelCost, loadStand, newStandRun, offerCost, postHero, relicLine,
+  buyLevel, buyRelic, dropStand, foesAlive, goNow, healCost, healKing, levelBlock, levelCost, loadStand, newStandRun, offerCost, pickEight, postHero, relicLine,
   saveStand, settleStand, setupFromMeta, snapshot, startFirstWave, startStand, stepStand, waveSpec, weakestHero, type Stand, type StandNote, type StandSummary,
 } from './sim/stand';
 import { canPost, EDGES, FIELD, KING_AT, ringOf, type Edge } from './sim/standField';
 import { saveMeta, type Meta } from './sim/meta';
 import { UNITS } from './sim/units';
+import { levelOfKind } from './sim/levels';
 import { RELICS } from './sim/relics';
 import { BoardView } from './render/boardView';
 import { Fx } from './render/fx';
@@ -45,11 +46,11 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   return e;
 };
 
-/** The most the camera may be zoomed, in CSS px per world px: from a little under a third (the whole field nearly fits a phone) to two. */
-const SCALE_MIN = 0.3;
+/** The most the camera may be zoomed, in CSS px per world px: from a little under a third (about eight tiles across a phone at the least) to two. */
+const SCALE_MIN = 0.6;
 const SCALE_MAX = 2;
 /** The foes round the king that the camera frames (tiles), and how much room it leaves round them (world px). */
-const FRAME_RING = 10;
+const FRAME_RING = 7;
 const FRAME_PAD = 56;
 /** How long a wave's banner stays (ms). */
 const BANNER_MS = 1800;
@@ -183,7 +184,6 @@ export class StandView {
       return b;
     };
     bar.append(
-      btn('hire', 'Hire a hero', () => this.buy(() => !!hire(this.s!))),
       btn('level', 'Level up', () => this.buy(() => buyLevel(this.s!, this.picked ?? undefined) !== null)),
       btn('heal', 'Heal the king', () => this.buy(() => healKing(this.s!) !== null)),
     );
@@ -194,9 +194,11 @@ export class StandView {
     end.hidden = true;
     const ask = el('div', 'stAsk');
     ask.hidden = true;
-    root.append(this.input, top, count, arrows, info, banner, bottom, end, ask);
+    const pick = el('div', 'stAsk stPick');
+    pick.hidden = true;
+    root.append(this.input, top, count, arrows, info, banner, bottom, end, ask, pick);
     document.body.append(root);
-    this.parts = { leave, speed, wave, king, gold, count, go, arrows, info, banner, bottom, spells, mana, cards, offer, bar, start, end, ask };
+    this.parts = { leave, speed, wave, king, gold, count, go, arrows, info, banner, bottom, spells, mana, cards, offer, bar, start, end, ask, pick };
     this.wireInput();
   }
 
@@ -237,8 +239,59 @@ export class StandView {
     this.init();
     const m = this.host.meta();
     const saved = loadStand();
-    const run = saved ?? newStandRun(clockSeed(), m.party, ARMIES.filter((a) => armyUnlocked(m, a.id)).map((a) => a.id), m.stand ?? 0);
-    this.start(run);
+    if (saved) return this.start(saved);
+    this.pick(pickEight(m), m);
+  }
+
+  /** The choice of the eight: the owned heroes in a grid (tap to pick or drop), Auto fill for the strongest left, and on to the keep. */
+  private pick(chosen: string[], m: Meta): void {
+    this.active = true;
+    this.root.hidden = false;
+    this.host.hideBoard(true);
+    const box = this.parts.pick;
+    box.replaceChildren();
+    const card = el('div', 'stCard stPickCard');
+    card.append(el('h2', '', 'Last Stand'), el('p', 'stDim', 'Eight heroes hold the keep: pick them, or let the game fill the party. Once the first wave begins nobody needs moving.'));
+    const grid = el('div', 'stGrid');
+    const count = el('p', 'stBig');
+    const go = el('button', 'primary', 'To the keep');
+    const draw = () => {
+      grid.replaceChildren();
+      for (const kind of [...m.unlocked].sort((x, y) => levelOfKind(m, y) - levelOfKind(m, x))) {
+        if (UNITS[kind]?.summon) continue;
+        const b = el('button', chosen.includes(kind) ? 'on' : '');
+        b.append(el('span', '', UNITS[kind].name), el('em', '', `Lv ${levelOfKind(m, kind)}`));
+        b.addEventListener('click', () => {
+          const i = chosen.indexOf(kind);
+          if (i >= 0) chosen.splice(i, 1);
+          else if (chosen.length < 8) chosen.push(kind);
+          draw();
+        });
+        grid.append(b);
+      }
+      count.textContent = `${chosen.length} of ${Math.min(8, m.unlocked.length)}`;
+      (go as HTMLButtonElement).disabled = !chosen.length;
+    };
+    const auto = el('button', '', 'Auto fill');
+    auto.addEventListener('click', () => {
+      chosen.splice(0, chosen.length, ...pickEight(m, chosen));
+      draw();
+    });
+    const home = el('button', '', 'Back');
+    home.addEventListener('click', () => {
+      box.hidden = true;
+      this.leave();
+    });
+    go.addEventListener('click', () => {
+      box.hidden = true;
+      this.start(newStandRun(clockSeed(), chosen, ARMIES.filter((a) => armyUnlocked(m, a.id)).map((a) => a.id), m.stand ?? 0));
+    });
+    const row = el('div', 'stRow');
+    row.append(home, auto, go);
+    card.append(count, grid, row);
+    box.append(card);
+    box.hidden = false;
+    draw();
   }
 
   /** Lay a run out and show it. */
@@ -807,7 +860,7 @@ export class StandView {
     } else if (s.phase === 'deploy') {
       this.text('count', p.count.querySelector('b'), `Wave ${run.wave}`);
       const spec = waveSpec(run.seed, run.armies, run.wave);
-      this.text('next', p.count.querySelector('i'), `${spec.foes.length} foes from the ${spec.edges.join(', ')}. Drag a hero to move its post.`);
+      this.text('next', p.count.querySelector('i'), `${spec.foes.length} foes from the ${spec.edges.join(', ')}. Tap a hero, then a tile, to move its post.`);
       (p.count.querySelector('small') as HTMLElement).textContent = 'First up';
       this.arrows(spec.edges);
     } else this.arrows([]);
@@ -850,15 +903,11 @@ export class StandView {
     const run = s.run;
     const bar = this.parts.bar;
     const over = s.phase === 'over';
-    const hireB = bar.querySelector('.hire') as HTMLButtonElement;
     const lvlB = bar.querySelector('.level') as HTMLButtonElement;
     const healB = bar.querySelector('.heal') as HTMLButtonElement;
-    const sig = [run.gold, run.hires, s.phase, run.offer.join(), this.picked, s.king.hp, run.heroes.map((h) => h.lv).join(), run.wave].join('|');
+    const sig = [run.gold, s.phase, run.offer.join(), this.picked, s.king.hp, run.heroes.map((h) => h.lv).join(), run.wave].join('|');
     if (!force && this.shown.get('bar') === sig) return;
     this.shown.set('bar', sig);
-    const hb = hireBlock(s);
-    hireB.disabled = over || hb !== null;
-    hireB.querySelector('em')!.textContent = hb === 'full' ? 'full' : `${hireCost(run.hires)} gold`;
     const target = this.picked !== null ? run.heroes.find((h) => h.id === this.picked) : weakestHero(s);
     lvlB.disabled = over || levelBlock(s, target?.id) !== null;
     lvlB.querySelector('span')!.textContent = this.picked !== null && target ? `Level up ${UNITS[target.kind].name}` : 'Level up';

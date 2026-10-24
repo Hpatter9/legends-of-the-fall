@@ -7,7 +7,12 @@ for (const [w, h] of SIZES) {
   const jump = (page, wave, level, gold = 400) => page.evaluate(([wave, level, gold]) => { const st = window.__game.stand; st.debugJump(wave, level); st.state.run.gold = gold; }, [wave, level, gold]);
   const begin = (page) => page.evaluate(() => document.querySelector('.stStart').click());
   const fresh = async (level) => { const b = await boot(browser, w, h, level, 8139, 3); await enter(b.page); return b; };
-  let b = await fresh(30);
+  let b = await boot(browser, w, h, 30, 8139, 3);
+  await b.page.evaluate(() => document.getElementById('hmTower').click());
+  await b.page.waitForTimeout(1200);
+  await b.page.screenshot({ path: out('pick', w, h) });
+  await b.ctx.close();
+  b = await fresh(30);
   await b.page.screenshot({ path: out('deploy', w, h) });
   await jump(b.page, 3, 5);
   await begin(b.page);
@@ -16,8 +21,7 @@ for (const [w, h] of SIZES) {
   await b.ctx.close();
   b = await fresh(60);
   await jump(b.page, 25, 25, 3000);
-  for (let i = 0; i < 5; i++) await b.page.evaluate(() => document.querySelector('.stBuy.hire').click());
-  await begin(b.page);
+    await begin(b.page);
   await b.page.waitForTimeout(9000);
   await b.page.screenshot({ path: out('wave25', w, h) });
   await b.ctx.close();

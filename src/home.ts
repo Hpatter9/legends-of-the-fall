@@ -336,7 +336,7 @@ export class Home {
     const climbing = this.hooks.slotInfo?.('tower');
     const towerUp = towerOpen(m) || !!climbing;
     const towerLine2 = climbing ?? (towerOpen(m) ? (m.stand ? `best wave ${m.stand}` : 'not tried yet') : opensAt(MODE_NEED.tower));
-    const tower = place('hmTower', towerUp ? '' : 'locked', 'Last Stand', towerLine2, `The Last Stand: ${towerLine2}${towerUp ? '' : `, ${progressLine(m, MODE_NEED.tower)}`}`, () => this.go(this.hooks.onTower));
+    const tower = place('hmTower', towerUp ? '' : 'locked', 'Last Stand', towerLine2, `Last Stand: ${towerLine2}${towerUp ? '' : `, ${progressLine(m, MODE_NEED.tower)}`}`, () => this.go(this.hooks.onTower));
     tower.disabled = !towerUp;
     // (the Calamity: the portal; the plate carries the saved run or the best)
     const going = this.hooks.slotInfo?.('calamity');

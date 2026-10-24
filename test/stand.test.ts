@@ -6,23 +6,24 @@ import assert from 'node:assert/strict';
 import { boardOk, canStep, tileAt, standable } from '../src/sim/board';
 import { addUnit, apart } from '../src/sim/battle';
 import { flowField, leashOf, isTank, KING_DEF } from '../src/sim/standAi';
-import { canPost, edgeTiles, EDGES, FIELD, guardSpot, KING_AT, KEEP_TOP, ringOf, standBoard } from '../src/sim/standField';
+import { canPost, edgeTiles, EDGES, FIELD, KING_AT, KEEP_TOP, ringOf, standBoard } from '../src/sim/standField';
 import {
-  BENCH_HEROES, BOSS_EVERY, BREAK_MS, buyLevel, buyRelic, CLEAR_HEAL, clearGold, clearedOf, FIELD_CAP, FIELD_HEROES, foesAlive, goNow, healCost, healKing, hire, hireBlock, hireCost, isBossWave, killGold, levelCost,
+  BOSS_EVERY, BREAK_MS, buyLevel, buyRelic, CLEAR_HEAL, clearGold, clearedOf, FIELD_CAP, FIELD_HEROES, foesAlive, goNow, healCost, healKing, isBossWave, pickEight, roleOfKind, killGold, levelCost,
   loadStand, newStandRun, offerCost, postHero, rawCount, saveStand, settleStand, snapshot, startFirstWave, startStand, stepStand, strength, waveSpec, xpNeed, type Stand, type StandSetup,
 } from '../src/sim/stand';
 import { gradeBoost } from '../src/sim/run';
 import { newCastle } from '../src/sim/castle';
 import { newMeta, startedMeta } from '../src/sim/meta';
-import { ALL_HEROES, HEROES, UNITS } from '../src/sim/units';
+import { HEROES, UNITS } from '../src/sim/units';
 import { ARMIES } from '../src/sim/armies';
 import { TICK_MS } from '../src/sim/battle';
 import { towerRun } from '../src/sim/modes';
 import { migrateOldClimb } from '../src/sim/stand';
 
-const setupAt = (level: number): StandSetup => ({ boost: () => gradeBoost(1, 0, level), castle: newCastle(), pool: ALL_HEROES });
+const setupAt = (level: number): StandSetup => ({ boost: () => gradeBoost(1, 0, level), castle: newCastle(), });
 const armies = ARMIES.map((a) => a.id);
-const fresh = (seed = 5, level = 20): Stand => startStand(newStandRun(seed, HEROES, armies), setupAt(level));
+const EIGHT = ['knight', 'paladin', 'samurai', 'kunoichi', 'archer', 'ranger', 'wizard', 'cleric'];
+const fresh = (seed = 5, level = 20): Stand => startStand(newStandRun(seed, EIGHT, armies), setupAt(level));
 /** Step until the phase is `phase` (or give up after `max` ticks). */
 function until(s: Stand, phase: Stand['phase'], max = 20000): void {
   for (let i = 0; i < max && s.phase !== phase && s.phase !== 'over'; i++) stepStand(s);
@@ -70,17 +71,37 @@ test('every edge can walk to the king, by any walker that climbs a single level'
   }
 });
 
-test('the guard spots are free, near the keep and spread out', () => {
-  const b = standBoard(6);
-  const taken: { u: number; v: number }[] = [];
-  for (let i = 0; i < 10; i++) {
-    const at = guardSpot(b, taken, i % 2 === 0)!;
-    assert.ok(at && canPost(b, at.u, at.v));
-    assert.ok(!taken.some((t) => t.u === at.u && t.v === at.v));
-    taken.push(at);
-  }
-  assert.ok(!canPost(b, KING_AT.u, KING_AT.v), 'nobody is posted on the king');
-  assert.ok(!canPost(b, 0, 0), 'nor at the far edge');
+test('eight heroes are set round the keep: tanks out front on the sides, shooters and healers near the king', () => {
+  const s = fresh(6, 20);
+  const heroes = s.b.units.filter((u) => u.tag !== undefined);
+  assert.equal(heroes.length, 8);
+  const tiles = new Set(heroes.map((u) => `${u.u},${u.v}`));
+  assert.equal(tiles.size, 8, 'no two on one tile');
+  for (const u of heroes) assert.ok(canPost(s.b.board, u.u, u.v));
+  const ring = (kinds: string[]) => heroes.filter((u) => kinds.includes(u.def)).map((u) => ringOf(u));
+  assert.ok(Math.min(...ring(['knight', 'paladin'])) >= 3, 'the tanks stand out');
+  assert.ok(Math.max(...ring(['archer', 'ranger', 'wizard', 'cleric'])) <= 3, 'the shooters and healers stay in');
+  assert.equal(roleOfKind('knight'), 'tank');
+  assert.equal(roleOfKind('cleric'), 'inner');
+  // the sides: the heroes are spread over all four quarters of the keep
+  const quarter = new Set(heroes.map((u) => `${Math.sign(u.u - KING_AT.u)}${Math.sign(u.v - KING_AT.v)}`));
+  assert.ok(quarter.size >= 4, `quarters ${[...quarter]}`);
+  assert.ok(!canPost(s.b.board, KING_AT.u, KING_AT.v), 'nobody is posted on the king');
+  assert.ok(!canPost(s.b.board, 0, 0), 'nor at the far edge');
+});
+
+test('the eight come from the party, filled with the strongest owned, and there is nothing to hire', () => {
+  const m = startedMeta(4);
+  m.unlocked = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard', 'paladin', 'cleric', 'ranger', 'druid', 'warlock'];
+  m.xp = { druid: 5000, warlock: 9000 };
+  m.party = ['knight', 'archer'];
+  const eight = pickEight(m);
+  assert.equal(eight.length, 8);
+  assert.deepEqual(eight.slice(0, 2), ['knight', 'archer']);
+  assert.ok(eight.includes('warlock') && eight.includes('druid'), 'the highest levels fill the party');
+  assert.equal(new Set(eight).size, 8);
+  assert.equal(pickEight({ ...m, unlocked: ['knight', 'samurai'] }, ['knight']).length, 2);
+  assert.ok(!('hire' in require('../src/sim/stand')), 'no hiring in the Last Stand');
 });
 
 /* ------------------------------------------------------------------ the waves */
@@ -175,9 +196,11 @@ test('a hero that is out of its zone walks back to its post', () => {
   // (shove it off: a spell or a knock can move a hero; with no foe about it goes home)
   s.queue.length = 0;
   for (const u of s.b.units) if (u.side === 'foe') u.alive = false;
-  knight.u += 2;
+  const spot = [[2, 0], [-2, 0], [0, 2], [0, -2]].map(([du, dv]) => ({ u: knight.u + du, v: knight.v + dv })).find((t) => canPost(s.b.board, t.u, t.v) && !s.b.units.some((x) => x.alive && x.u === t.u && x.v === t.v) && apart(t, home) === 2 && Math.abs(tileAt(s.b.board, t.u, t.v)!.h - tileAt(s.b.board, home.u, home.v)!.h) <= 1)!;
+  knight.u = spot.u;
+  knight.v = spot.v;
   knight.busyUntil = 0;
-  for (let i = 0; i < 100; i++) stepStand(s);
+  for (let i = 0; i < 35; i++) stepStand(s);
   assert.equal(apart(knight, home), 0, 'back on its post');
 });
 
@@ -188,9 +211,9 @@ test('a tank goes for the foe nearest the king; the others for the weakest', () 
   for (const u of s.b.units) if (u.side === 'foe') u.alive = false;
   const knight = s.b.units.find((u) => u.def === 'knight')!;
   assert.ok(knight.post!.tank, 'the knight is a tank');
-  const towards = { u: knight.u + (knight.u < KING_AT.u ? 1 : -1), v: knight.v };
-  const away = { u: knight.u + (knight.u < KING_AT.u ? -1 : 1), v: knight.v };
-  assert.ok(apart(towards, KING_AT) < apart(away, KING_AT));
+  const free = (t: { u: number; v: number }) => canPost(s.b.board, t.u, t.v) && !s.b.units.some((x) => x.alive && x.u === t.u && x.v === t.v);
+  const pair = [[1, 0], [0, 1]].map(([du, dv]) => [{ u: knight.u + du, v: knight.v + dv }, { u: knight.u - du, v: knight.v - dv }]).find(([a, b]) => free(a) && free(b) && apart(a, KING_AT) !== apart(b, KING_AT))!;
+  const [towards, away] = apart(pair[0], KING_AT) < apart(pair[1], KING_AT) ? pair : [pair[1], pair[0]];
   const mk = (at: { u: number; v: number }, hp: number) => {
     const f = addUnit(s.b, 'skeleton', at.u, at.v, {});
     f.hp = hp;
@@ -300,20 +323,11 @@ test('kills pay gold by the wave, and XP levels the heroes in the fight, at once
   assert.ok(xpNeed(3) > xpNeed(1));
 });
 
-test('hiring, levelling, relics and healing the king each cost gold and take effect', () => {
+test('levelling, relics and healing the king cost gold, at any time, and take effect', () => {
   const s = fresh(5, 20);
   startFirstWave(s);
   until(s, 'break');
   s.run.gold = 5000;
-  // hire: a hero joins the field (the nearest free guard spot), at the price, and the next costs more
-  const n = s.run.heroes.length;
-  const price = hireCost(s.run.hires);
-  const h = hire(s)!;
-  assert.ok(h && s.run.heroes.length === n + 1);
-  assert.equal(s.run.gold, 5000 - price);
-  assert.ok(h.post, 'it went straight to a guard spot');
-  assert.ok(s.b.units.some((u) => u.tag === h.id && u.alive), 'and stands on the field');
-  assert.ok(hireCost(s.run.hires) > price);
   // level up: the weakest hero gains one, and its hp and attack rise
   const weak = s.run.heroes.filter((x) => x.post).sort((a, b) => a.lv - b.lv || a.id - b.id)[0];
   const unit = s.b.units.find((u) => u.tag === weak.id)!;
@@ -342,8 +356,6 @@ test('hiring, levelling, relics and healing the king each cost gold and take eff
   assert.equal(s.run.gold, g3 - healCost(s.run.wave));
   // not enough gold
   s.run.gold = 0;
-  assert.equal(hireBlock(s), 'gold');
-  assert.equal(hire(s), null);
   assert.equal(buyLevel(s), null);
   assert.equal(buyRelic(s, 0), null);
   s.king.hp = 10;
@@ -351,16 +363,10 @@ test('hiring, levelling, relics and healing the king each cost gold and take eff
   assert.ok(s.king.hp === 10);
 });
 
-test('the field holds ten heroes; more wait on the bench, and a bench hero can be posted when there is room', () => {
+test('a hero can be moved before the first wave by tapping it, then a tile', () => {
   const s = fresh(5, 20);
-  s.run.gold = 100000;
-  for (let i = 0; i < FIELD_HEROES + BENCH_HEROES - HEROES.length; i++) assert.ok(hire(s), `hire ${i}`);
-  assert.equal(s.run.heroes.filter((h) => h.post).length, FIELD_HEROES);
-  assert.equal(s.run.heroes.length, FIELD_HEROES + BENCH_HEROES);
-  assert.equal(hireBlock(s), 'full');
-  // before the first wave, the heroes may be moved: tap a hero, tap a tile
   const h = s.run.heroes[0];
-  const taken = new Set(s.run.heroes.filter((x) => x.post).map((x) => `${x.post![0]},${x.post![1]}`));
+  const taken = new Set(s.run.heroes.map((x) => `${x.post![0]},${x.post![1]}`));
   let free: [number, number] | null = null;
   for (let v = 0; v < FIELD && !free; v++) for (let u = 0; u < FIELD && !free; u++) if (canPost(s.b.board, u, v) && !taken.has(`${u},${v}`)) free = [u, v];
   assert.ok(postHero(s, h.id, free![0], free![1]));
@@ -369,6 +375,7 @@ test('the field holds ten heroes; more wait on the bench, and a bench hero can b
   assert.deepEqual([unit.u, unit.v], free, 'before the fight it stands on the new tile at once');
   assert.ok(!postHero(s, h.id, KING_AT.u, KING_AT.v), 'not on the king');
   assert.ok(!postHero(s, s.run.heroes.at(-1)!.id, free![0], free![1]), 'not on a taken tile');
+  assert.equal(FIELD_HEROES, 8);
 });
 
 test('the king is a unit of his kind that never moves or strikes', () => {
@@ -422,7 +429,6 @@ test('a run is saved at a break and builds again from the record', () => {
   startFirstWave(s);
   until(s, 'break');
   s.run.gold = 999;
-  hire(s);
   const store = new Map<string, string>();
   const mem = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v), removeItem: (k: string) => void store.delete(k) };
   saveStand(snapshot(s), mem);

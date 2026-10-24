@@ -111,28 +111,33 @@ export function edgeTiles(b: Board, edge: Edge): At[] {
 /** The middle of an edge, as a point on the board's floor (tile coordinates, for the page's arrows). */
 export const edgeMid = (edge: Edge): At => (edge === 'north' ? { u: FIELD / 2, v: 0 } : edge === 'south' ? { u: FIELD / 2, v: FIELD - 1 } : edge === 'west' ? { u: 0, v: FIELD / 2 } : { u: FIELD - 1, v: FIELD / 2 });
 
+/** A kind's job in the ring: a tank stands out front, a shooter or a healer nearer the king, the rest between. */
+export type Role = 'tank' | 'inner' | 'mid';
+
 /**
- * The tile a new hero goes to: free, near the keep and as far from the heroes already posted as it can be. A hero that shoots
- * likes the keep's own top (high ground, close to the king); a fighter likes the steps and the ground below them. `taken` are the tiles in use.
+ * Where a party stands round the keep, in the order given: tanks out front, one to a side (the four compass points of the field,
+ * four tiles from the king), fighters between them on the diagonals, shooters and healers on the keep's steps and top near the king.
+ * `taken` are tiles already in use. Each slot falls back to the nearest free post to it, so a boulder or a pool never leaves a hero out.
  */
-export function guardSpot(b: Board, taken: readonly At[], shooter: boolean): At | null {
-  const want = shooter ? [1, 2, 3, 4, 5, 6] : [3, 2, 4, 5, 1, 6];
-  let fallback: At | null = null;
-  for (const ring of want) {
-    let best: At | null = null;
-    let bestGap = -1;
-    for (let v = KING_AT.v - ring; v <= KING_AT.v + ring; v++)
-      for (let u = KING_AT.u - ring; u <= KING_AT.u + ring; u++) {
-        if (ringOf({ u, v }) !== ring || !canPost(b, u, v) || taken.some((t) => t.u === u && t.v === v)) continue;
-        // (the tile furthest from every post taken so far; a tie goes to the lower row then column, so it is the same every time)
-        const gap = taken.length ? Math.min(...taken.map((t) => Math.abs(t.u - u) + Math.abs(t.v - v))) : 99;
-        if (gap > bestGap) {
-          bestGap = gap;
-          best = { u, v };
-        }
-      }
-    if (best && bestGap >= 2) return best;
-    fallback ??= best;
-  }
-  return fallback;
+export function ringPlan(b: Board, kinds: readonly string[], roleOf: (kind: string) => Role, taken: readonly At[] = []): At[] {
+  const SIDES: [number, number][] = [[0, -4], [4, 0], [0, 4], [-4, 0]];
+  const DIAG: [number, number][] = [[3, -3], [3, 3], [-3, 3], [-3, -3]];
+  const INNER: [number, number][] = [[1, -1], [-1, 1], [1, 1], [-1, -1], [2, 0], [-2, 0], [0, 2], [0, -2]];
+  const used = [...taken];
+  const free = (at: At) => canPost(b, at.u, at.v) && !used.some((t) => t.u === at.u && t.v === at.v);
+  const nearest = (want: At): At | null => {
+    for (let r = 0; r <= 6; r++)
+      for (let dv = -r; dv <= r; dv++)
+        for (let du = -r; du <= r; du++) if (Math.max(Math.abs(du), Math.abs(dv)) === r && free({ u: want.u + du, v: want.v + dv })) return { u: want.u + du, v: want.v + dv };
+    return null;
+  };
+  const counts = { tank: 0, mid: 0, inner: 0 };
+  return kinds.map((k) => {
+    const role = roleOf(k);
+    const n = counts[role]++;
+    const [du, dv] = role === 'tank' ? SIDES[n % 4] : role === 'mid' ? (n < 4 ? DIAG[n] : SIDES[(n + 1) % 4].map((x) => Math.round(x * 0.75)) as [number, number]) : INNER[n % INNER.length];
+    const at = nearest({ u: KING_AT.u + du, v: KING_AT.v + dv });
+    if (at) used.push(at);
+    return at as At;
+  });
 }

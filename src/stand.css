@@ -57,7 +57,7 @@ body[data-stand] #version { top: auto; bottom: 2px; }
 .stRelic span { color: var(--gold-hi); }
 .stRelic small { font-size: 12px; line-height: 1.1; color: var(--dim); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .stRelic em { font-style: normal; color: var(--e8); margin-top: auto; }
-.stBar { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.stBar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
 .stBuy { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 6px 4px; min-height: 56px !important; }
 .stBuy em { font-style: normal; color: var(--e8); }
 .stStart { font: 400 24px/1.2 var(--display) !important; min-height: 56px !important; }
@@ -79,3 +79,9 @@ body[data-stand] #version { top: auto; bottom: 2px; }
 .stSpell { min-height: 56px !important; padding: 2px 4px 4px; }
 .stSpeed { min-height: 36px !important; padding: 4px 10px; }
 .stLeft { display: flex; gap: 6px; }
+.stPick { z-index: 2; align-items: flex-start; overflow: auto; background: rgb(var(--s1-rgb) / 0.95); }
+.stPickCard { margin-top: calc(env(safe-area-inset-top) + 24px); }
+.stGrid { width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; max-height: 46vh; overflow: auto; }
+.stGrid button { display: flex; flex-direction: column; align-items: center; padding: 4px; min-height: 48px; }
+.stGrid button em { font-style: normal; color: var(--dim); }
+.stGrid button.on { border-color: var(--gold); background: linear-gradient(var(--e3), var(--e1)); }
