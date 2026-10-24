@@ -6,7 +6,7 @@
 // on; Skip ends it at once. The picture lives on its own small Pixi canvas, made when a scene starts and dropped when it
 // ends, so nothing costs anything the rest of the time. It never touches a battle.
 
-import { Application, Container, Graphics, Rectangle, Sprite, TilingSprite, Texture } from 'pixi.js';
+import { Application, ColorMatrixFilter, Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js';
 import { FEET, fillLine, STAGE_H, STAGE_W, SCENES, type Scene, type SceneCue, type Shot } from '../sim/sceneScripts';
 import { castOf, namesOf, type Cast, type Players } from '../sim/sceneRules';
 import { UNITS } from '../sim/units';
@@ -16,6 +16,7 @@ import { facesRightOf, framesOf, figureOf, type Anim } from './sheets';
 import { actorsAt, cameraAt, keepInside, lineNow, lineStart, lookAt, next, scaleOf, shotLength, start, tick, TYPE_RATE, typedChars, type ActorNow, type Cursor } from './sceneClock';
 import { endScene, play, playScene } from './sound';
 import { goatSheet } from '../duchess';
+import { toneOf } from './awakenLook';
 import { FRAME as GOAT_FRAME } from './duchessRules';
 import { settings } from '../settings';
 import type { Area } from '../sim/board';
@@ -37,6 +38,22 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   if (cls) e.className = cls;
   if (text) e.textContent = text;
   return e;
+};
+
+/** The awakened tone of a hero as a colour matrix (the same hue turn, richer colour and finish the menus use). */
+function lookMatrix(kind: string, step: number): ColorMatrixFilter {
+  const t = toneOf(kind, step);
+  const f = new ColorMatrixFilter();
+  if (t.hue) f.hue(t.hue, false);
+  f.saturate((t.saturate - 1) * 1.5, true);
+  if (t.brightness !== 1) f.brightness(t.brightness, true);
+  return f;
+}
+
+/** The colour of each land's sky (the top of its first layer), laid under the layers. */
+const SKY: Record<Area, number> = {
+  highlands: 0xcfc7df, forest: 0x249fde, snow: 0x6b99bc, desert: 0xe9f6fa, volcano: 0x0a0406, dungeon: 0x212a36, plains: 0x3784c4, autumn: 0xd8efff, swamp: 0x336249,
+  graveyard: 0x77935c, ruins: 0xc6aa93, temple: 0x98bdc3, crystal: 0x80acae, forge: 0x040204, shrine: 0x000520, warcamp: 0x351c17, oasis: 0x98bdc3,
 };
 
 const reduced = (): boolean => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -116,6 +133,8 @@ class Hud {
 interface Figure {
   box: Container;
   body: Sprite;
+  /** The awakened look drawn now. */
+  look?: number;
 }
 
 export class ScenePlayer {
@@ -155,7 +174,9 @@ class Run {
   private readonly actors = new Container();
   private readonly veil = new Graphics();
   private readonly figures = new Map<string, Figure>();
-  private photo: TilingSprite[] = [];
+  private photo: Container[] = [];
+  /** The sky's own colour, under the layers: a layer late to load or lost shows sky, never a blank or white band. */
+  private readonly sky = new Graphics();
   private cursor: Cursor = start();
   private readonly cast: Record<string, Cast>;
   private readonly names: Record<string, string>;
@@ -205,6 +226,7 @@ class Run {
       // (the stage first: a canvas as big as the column, black until the backdrop has loaded)
       await this.app.init({ resizeTo: hud.host, backgroundColor: 0x000000, antialias: false, roundPixels: true, autoDensity: true, resolution: Math.min(3, devicePixelRatio || 1) });
       hud.host.append(this.app.canvas);
+      this.back.addChild(this.sky);
       this.world.addChild(this.back, this.actors);
       this.app.stage.addChild(this.world, this.veil);
       this.layout();
@@ -217,6 +239,7 @@ class Run {
         playScene(this.scene.music);
         scored = true;
       }
+      if (this.scene.sting) play(this.scene.sting);
       // (the backdrops of every shot are loaded up front, so a cut never shows an empty stage)
       this.loadLooks().catch(() => undefined);
       const ending = new Promise<Ending>((ok) => (this.ended = ok));
@@ -274,16 +297,27 @@ class Run {
   private setLook(area: Area): void {
     if (this.look === area) return;
     this.look = area;
-    for (const l of this.photo) l.destroy();
+    for (const l of this.photo) l.destroy({ children: true });
     this.photo = [];
-    Promise.all(backdropFiles(area).map(textureOf))
+    this.sky.clear().rect(-STAGE_W, -STAGE_H, STAGE_W * 3, STAGE_H * 3).fill({ color: SKY[area] });
+    // (a layer that fails to load is left out, and one that is slow is waited for: the stage shows the sky colour meanwhile)
+    Promise.all(backdropFiles(area).map((u) => textureOf(u).catch(() => null)))
       .then((tex) => {
         if (this.look !== area) return;
-        this.photo = tex.map((t) => {
-          const l = new TilingSprite({ texture: t, width: STAGE_W * 3, height: STAGE_H });
-          l.x = -STAGE_W;
-          return l;
-        });
+        this.photo = tex
+          .filter((t): t is Texture => !!t && t.width > 1 && t.height > 1)
+          .map((t) => {
+            // (four copies side by side, bottom-anchored: no tiling, so nothing wraps upward and nothing needs a repeating texture)
+            const l = new Container();
+            for (let k = 0; k < 4; k++) {
+              const s = new Sprite(t);
+              s.x = k * STAGE_W;
+              s.y = STAGE_H - t.height;
+              l.addChild(s);
+            }
+            l.x = -2 * STAGE_W;
+            return l;
+          });
         this.back.addChild(...this.photo);
       })
       .catch(() => undefined);
@@ -315,7 +349,9 @@ class Run {
     if (!this.ended) return;
     this.now = now;
     const scene = this.scene;
-    const moved = tick(this.cursor, scene, this.frozen ? 0 : Math.min(dt, 0.1));
+    // (a slow-motion beat runs the clock at its own share of the pace; reduced motion plays it at the normal one)
+    const rate = reduced() ? 1 : (scene.shots[this.cursor.shot]?.slow ?? 1);
+    const moved = tick(this.cursor, scene, this.frozen ? 0 : Math.min(dt, 0.1) * rate);
     if (!moved) return this.finish('done');
     this.cursor = moved;
     const c = this.cursor;
@@ -348,7 +384,7 @@ class Run {
     this.world.pivot.set(Math.round(mid.x), Math.round(mid.y));
     this.world.position.set(Math.round(this.w / 2) + sx, Math.round(this.bandTop + this.bandH / 2) + sy);
     // (the layers drift at their own pace as the camera pans: far ones slower)
-    this.photo.forEach((l, i) => (l.tilePosition.x = Math.round(mid.x * (1 - (i + 1) / this.photo.length) * 0.5)));
+    this.photo.forEach((l, i) => (l.x = -2 * STAGE_W + ((Math.round(mid.x * (1 - (i + 1) / this.photo.length) * 0.5) % STAGE_W) + STAGE_W) % STAGE_W));
     this.drawActors(actors, c);
     this.drawVeil(shot, c.shotT);
     // the words
@@ -399,6 +435,11 @@ class Run {
       const k = def.scale * (m.scale ?? 1);
       f.body.scale.set(k * dir, k);
       f.body.tint = m.shade ? 0x000000 : 0xffffff;
+      // (the awakened look: the tone `awakenLook.ts` gives the hero, as a colour matrix)
+      if (f.look !== a.look) {
+        f.look = a.look;
+        f.body.filters = a.look ? [lookMatrix(kind, a.look)] : [];
+      }
       const bob = speaking === id && a.pose !== 'down' && !reduced() ? Math.round(Math.sin(this.now / 160)) : 0;
       f.body.y = -bob;
       f.box.position.set(Math.round(a.x), FEET);

@@ -16,7 +16,7 @@ The ten content heroes each have a short reveal (`earned:<kind>` in `sceneScript
 
 ## Summons
 - The show reran only for pulls started in the hall; a pull from the card reveal screen skipped it, and the hall had to be woken again after each show. Now `SummoningHall.play` wakes the hall itself, and the reveal's own pull buttons close it and run the same path (`Home.summon`). Checked: three pulls in a row, one from the reveal, each with cinematic and show.
-- **Summoning cinematic** (`summonScene` in `sceneScripts.ts`, played by the cutscene player with `quick`): about 2.5 s, the circle answers in the dark, one flash, the hero (a new one first) stands in it. It plays before the hall's show on every pull, is never marked seen, and **one tap anywhere skips it and the show**, going straight to the cards.
+- **Summoning cinematic**: cut by the owner's call (see `cinematics.md`); a pull goes straight to the hall's show and the cards.
 
 ## For the owner
 1. RANK_MULT 1.08 (1.10 would make top rank x1.46); say if you want it different.

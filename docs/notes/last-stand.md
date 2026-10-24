@@ -238,3 +238,9 @@ drawing is on the GPU on a phone; this machine cannot measure that, so a real-ph
 - The field uses `makeBoard(..., 'classic')`: the new river and canyon layouts, deep water, walls and barrels would cut a 24x24 field; the plaza round the keep is cleared of walls, barrels and deep pools, and any left that would block a way in are removed.
 - A hero in the Last Stand never slides on ice (the slide could carry it a tile past its leash). A hero shoved past its leash by a foe walks back, or fights where it stands if foes shut the way.
 - The ordinary fights' pinned outcomes were re-pinned on main 0.150 (computed on a clean checkout of origin/main, not on this branch): the flag changes none of them.
+
+## After merging main 0.153
+
+- **Music:** the Last Stand uses `fightTrack` and `fightLevel` (`epicMusic.ts`): the boss track on a boss wave, else one of the three battle tracks by depth (waves 1-9, 10-24, 25 up); the track changes only when a wave asks for another. Leaving mid-wave calls `endFight()` (new in `sound.ts`) so the place's music returns.
+- **Scenes:** the tower's talking scenes (the `spire` moments at 10, 25 and 50) now fire from the Last Stand's waves 10, 25 and 50, in the break after the wave, and the run waits while one plays. `eliteMet` and the other elite scenes belong to the Calamity's elites and are left as they are.
+- Screenshots use `--use-angle=swiftshader` (`tools/stand/lib.mjs`).

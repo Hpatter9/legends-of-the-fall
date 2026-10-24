@@ -15,6 +15,10 @@ const TAIL_S = 2.5;
 /** The baked stems of a track: one looping buffer each (the drums' is null for a track with none). */
 export type Baked = Record<Stem, AudioBuffer | null>;
 
+/** What a track played from an epic file adds to its `Baked` (`epicMusic.ts`): the window of the buffer that loops, in seconds. Such a
+ *  track is one stem, mixed by nothing, and is left uncoloured by the tower's acts and by the fight's tension. */
+export const EPIC_INFO = new WeakMap<Baked, { loop: [number, number] }>();
+
 /** Makes an offline context (the browser's; a test hands in something else). */
 export type OfflineMaker = (channels: number, length: number, rate: number) => OfflineAudioContext;
 

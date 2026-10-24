@@ -4,7 +4,7 @@
 // toward its `to` over the shot, eased) and every actor: where they stand, which way they face, their pose, whether they
 // are walking, replaying the acts of every shot so far (a walk takes its time, and is cut short if the shot ends first).
 
-import { FEET, holdOf, lineSeconds, STAGE_H, STAGE_W, type Act, type Cam, type Facing, type Pose, type Scene, type Shot } from '../sim/sceneScripts';
+import { FEET, holdOf, lineLen, STAGE_H, STAGE_W, type Act, type Cam, type Facing, type Pose, type Scene, type Shot } from '../sim/sceneScripts';
 
 export interface Cursor {
   shot: number;
@@ -19,7 +19,7 @@ export const start = (): Cursor => ({ shot: 0, beat: 0, t: 0, shotT: 0 });
 
 /** Each beat's length in a shot: its lines, then its hold (if any). */
 export function beats(s: Shot): number[] {
-  const out = (s.lines ?? []).map((l) => lineSeconds(l.text));
+  const out = (s.lines ?? []).map(lineLen);
   const h = holdOf(s);
   if (h > 0) out.push(h);
   return out.length ? out : [2.5];
@@ -81,6 +81,8 @@ export interface ActorNow {
   walking: boolean;
   /** Seconds walked so far in this walk (for the walk's frames). */
   walked: number;
+  /** The awakened look it wears now (0 plain). */
+  look: 0 | 1 | 2;
 }
 
 /** How fast actors walk (stage px a second), and where those coming on or going off start and end. */
@@ -92,7 +94,7 @@ const LASTING: Pose[] = ['down'];
 /** Every actor at a point in the scene. */
 export function actorsAt(script: Scene, c: Cursor): Record<string, ActorNow> {
   const out: Record<string, ActorNow> = {};
-  for (const [id, m] of Object.entries(script.cast)) out[id] = { x: m.x, facing: m.facing, pose: 'idle', visible: !m.hidden, walking: false, walked: 0 };
+  for (const [id, m] of Object.entries(script.cast)) out[id] = { x: m.x, facing: m.facing, pose: 'idle', visible: !m.hidden, walking: false, walked: 0, look: m.look ?? 0 };
   for (let i = 0; i <= c.shot && i < script.shots.length; i++) {
     const s = script.shots[i];
     const now = i === c.shot;
@@ -105,7 +107,8 @@ export function actorsAt(script: Scene, c: Cursor): Record<string, ActorNow> {
       // (an act waiting for a line has not begun until it is spoken)
       const at = actStart(s, act);
       if (now && c.shotT < at) continue;
-      if ('face' in act) a.facing = act.face;
+      if ('look' in act) a.look = act.look;
+      else if ('face' in act) a.facing = act.face;
       else if ('pose' in act) a.pose = act.pose;
       else if ('hide' in act) a.visible = false;
       else {
@@ -172,4 +175,22 @@ export function keepInside(cam: { x: number; y: number }, k: number, w: number, 
     x: hw * 2 >= STAGE_W ? STAGE_W / 2 : Math.max(hw, Math.min(STAGE_W - hw, cam.x)),
     y: hh * 2 >= STAGE_H ? STAGE_H / 2 : Math.max(hh, Math.min(STAGE_H - hh, cam.y)),
   };
+}
+
+/* ------------------------------------------------------------ previews */
+
+/** The frames worth a look in a scene, as (shot, beat, seconds in): each shot's first line once typed, and its last when it has more, or a shot with no lines a beat in. For screenshot strips (`__game.sceneFrames(id)`). */
+export function previewFrames(script: Scene): [number, number, number][] {
+  const out: [number, number, number][] = [];
+  script.shots.forEach((s, i) => {
+    const b = beats(s);
+    const lines = s.lines ?? [];
+    const at = (beat: number): [number, number, number] => {
+      const typed = lines[beat] ? lines[beat].text.length / TYPE_RATE + 0.5 : 0.8;
+      return [i, beat, Math.min(typed, b[beat] * 0.95)];
+    };
+    out.push(at(0));
+    if (lines.length > 1) out.push(at(lines.length - 1));
+  });
+  return out;
 }

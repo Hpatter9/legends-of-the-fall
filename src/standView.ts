@@ -10,7 +10,7 @@ import { TICK_MS, type BattleEvent, type Unit } from './sim/battle';
 import { ARMIES, armyUnlocked } from './sim/armies';
 import { castSpell, canAfford, cooldownLeft, MANA_MAX, SPELLS, type SpellId } from './sim/spells';
 import {
-  buyLevel, buyRelic, dropStand, foesAlive, goNow, healCost, healKing, levelBlock, levelCost, loadStand, newStandRun, offerCost, pickEight, postHero, relicLine,
+  isBossWave, buyLevel, buyRelic, dropStand, foesAlive, goNow, healCost, healKing, levelBlock, levelCost, loadStand, newStandRun, offerCost, pickEight, postHero, relicLine,
   saveStand, settleStand, setupFromMeta, snapshot, startFirstWave, startStand, stepStand, waveSpec, weakestHero, type Stand, type StandNote, type StandSummary,
 } from './sim/stand';
 import { canPost, EDGES, FIELD, KING_AT, ringOf, type Edge } from './sim/standField';
@@ -24,7 +24,8 @@ import { UnitSprite } from './render/unitView';
 import { setBackdrop, panBackdrop } from './render/backdrop';
 import { at, depth, setFrame, HH, TH, TW } from './render/iso';
 import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, PAUSE_MS } from './render/cameraRules';
-import { play, playEvents, setAct, startFight } from './render/sound';
+import { endFight, play, playEvents, setAct, startFight } from './render/sound';
+import { fightLevel, fightTrack } from './render/epicMusic';
 import { colLeft, viewH, viewW } from './viewport';
 import { spellIconHtml } from './spellIcons';
 import { clockSeed } from './modes';
@@ -37,6 +38,8 @@ export interface StandHost {
   /** The ordinary board's drawing is hidden (true) or shown again (false) while the Last Stand is up. */
   hideBoard(hidden: boolean): void;
   onHome(): void;
+  /** Play a cinematic due at a moment (the run waits while it plays). */
+  moment(m: { kind: 'spire'; floor: number }): Promise<void>;
 }
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -226,7 +229,7 @@ export class StandView {
   private begin(): void {
     const s = this.s;
     if (!s || !startFirstWave(s)) return;
-    startFight(false);
+    this.music(s.run.wave, isBossWave(s.run.wave));
     this.picked = null;
     this.drawMarks();
     this.refreshBar(true);
@@ -305,6 +308,7 @@ export class StandView {
     this.spell = null;
     this.banner.left = 0;
     this.shown.clear();
+    this.track = '';
     this.active = true;
     this.host.hideBoard(true);
     this.world.visible = true;
@@ -326,6 +330,8 @@ export class StandView {
   /** Go back to the home screen (the run, if still going, stays saved at its last break). */
   private leave(): void {
     this.active = false;
+    this.track = '';
+    endFight();
     this.root.hidden = true;
     this.world.visible = false;
     this.parts.ask.hidden = true;
@@ -700,7 +706,7 @@ export class StandView {
     if (!s) return;
     this.frameN++;
     const t0 = performance.now();
-    const fighting = s.phase === 'wave' || s.phase === 'break';
+    const fighting = (s.phase === 'wave' || s.phase === 'break') && !this.hold;
     if (fighting) {
       this.acc += Math.min(dt, 250) * this.speed * this.fx.timeScale();
       let guard = 0;
@@ -759,11 +765,17 @@ export class StandView {
     for (const n of s.notes.splice(0) as StandNote[]) {
       if (n.kind === 'wave') {
         this.showBanner(n.n, n.boss);
+        this.music(n.n, n.boss);
         if (n.boss) play('standBoss');
         this.picked = null;
         this.drawMarks();
       } else if (n.kind === 'clear') {
         this.save();
+        // (the old tower's talking scenes belong to the Last Stand's deep waves now: they play in the break after the wave, and the run waits)
+        if ([10, 25, 50].includes(n.n)) {
+          this.hold = true;
+          void this.host.moment({ kind: 'spire', floor: n.n }).finally(() => (this.hold = false));
+        }
         play('victory');
         this.refreshBar(true);
         this.drawMarks();
@@ -781,6 +793,17 @@ export class StandView {
   }
   private lastKingHit = -99;
   private kingHurt = 0;
+
+  /** The battle music for a wave: a boss wave has the boss track, else one of the three by how deep the run is (`fightTrack`); the track changes only when the wave's would be another. */
+  private hold = false;
+  private track = '';
+  private music(wave: number, boss: boolean): void {
+    const mood = { boss, calamity: false, level: fightLevel(wave) };
+    const want = fightTrack(mood);
+    if (want === this.track) return;
+    this.track = want;
+    startFight(boss, { level: mood.level });
+  }
 
   private showBanner(n: number, boss: boolean): void {
     const b = this.parts.banner;

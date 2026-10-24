@@ -1,6 +1,10 @@
 // Shared set-up for the Last Stand's shot scripts: serves out/web, boots a save with the Tower's place open, and walks into the Stand.
-import { serve, launch, boot as bootPage } from '../battle-ui/lib.mjs';
-export { serve, launch };
+import { serve, boot as bootPage } from '../battle-ui/lib.mjs';
+import { createRequire } from 'node:module';
+const { chromium } = createRequire('/opt/node-tools/node_modules/')('playwright');
+export { serve };
+/** Headless Chromium on software GL (`--use-angle=swiftshader`: the older `--use-gl` leaves bands unpainted). */
+export const launch = () => chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1243/chrome-linux64/chrome', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 export const SIZES = [[393, 852], [360, 780], [412, 915]];
 const PARTY = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard', 'paladin', 'cleric', 'ranger'];
 /** A page on a save whose Tower place is open (and whose heroes sit at `level`); `fresh` clears the Stand's own save. */

@@ -1,144 +1,21 @@
-// The cinematics' scripts (the owner's ask: "Let's explore adding some cinematics"; docs/notes/cinematics.md). A scene is
-// data, borrowed from Chronos Settlement's cutscenes: a cast (heroes and foes drawn from their own sheets), and shots
-// played in order. A shot sets the backdrop (one of the areas' painted ones), the camera (on an actor or a point, how
-// close, and where it drifts to over the shot), what the actors do (walk, enter, leave, turn, strike, fall), the effects
-// (a one-shot shake or flash, fades, a pall, a rumble) and the lines spoken, each by an actor or the narrator. A shot
-// with no lines holds for `hold` seconds. The clock is `render/sceneClock.ts`, the player `render/sceneView.ts`, when a
-// scene is queued `sceneRules.ts`. Pure data: no Pixi, no DOM, no randomness.
-//
-// The voice: wry and warm, in British spelling. The Calamity is the end of the world; the heroes take it about as
-// seriously as a delayed train. Running gags to keep: the villains' staffing problems, heroes who would rather stand
-// further back, and the king (the player), who places everyone and then only watches.
+// The cinematics' scripts (the owner's ask: "Let's explore adding some cinematics"; docs/notes/cinematics.md). The types, the
+// timing and the shorthands are in `sceneKit.ts`; this file holds the two pilots and gathers every other scene into
+// `SCENES` (the heralds, the endings and firsts in `sceneEvents.ts`; the scenes made once for many heroes, armies and
+// buildings in `sceneFamilies.ts`). Pure data: no Pixi, no DOM, no randomness.
 
+import { close, say, tell, wide, type Scene } from './sceneKit';
 import type { Area } from './board';
 import { UNITS } from './units';
+import { EVENT_SCENES } from './sceneEvents';
+import { FAMILY_SCENES } from './sceneFamilies';
 
-/** The stage, in art px: a backdrop layer's size. The actors' feet stand on `FEET`. */
-export const STAGE_W = 576;
-export const STAGE_H = 324;
-export const FEET = 262;
+export * from './sceneKit';
 
-export type Facing = 'left' | 'right';
-/** `down`: fallen and staying down; `talk`: stands as idle, breathing as they speak (every speaker does that anyway). */
-export type Pose = 'idle' | 'strike' | 'cast' | 'hurt' | 'down';
-
-/** Who an actor is, filled in when the scene is played: `party:<i>`, the i-th hero of the player's party; `hero`, the hero
- *  the run began with (the party's first when there is no run); `unit:<id>`, a fighter by its id in `UNITS` (a foe, or a
- *  hero kind); `duchess`, the goat (drawn from her own sheet, `art/duchess/goat.png`, standing or
- *  walking: she has no fighter, so `castOf` gives her none). */
-export type Role = `party:${number}` | 'hero' | `unit:${string}` | 'duchess';
-
-export interface CastMember {
-  role: Role;
-  x: number;
-  facing: Facing;
-  /** Off the stage until an act brings them on. */
-  hidden?: boolean;
-  /** Drawn this much bigger (a herald looming). */
-  scale?: number;
-  /** A black silhouette (seen against the light, or not yet introduced). */
-  shade?: boolean;
-}
-
-/** Where the camera looks: at a stage point, or on an actor (their middle) or between a few. `zoom` is a multiple of
- *  the base size (1 wide, 1.5 close, 2 very close); the picture is only ever drawn at a whole-number scale, so a drift
- *  from one zoom to another steps up a whole size at its midpoint rather than blurring the pixels. */
-export interface Cam {
-  on?: string | string[];
-  x?: number;
-  y?: number;
-  zoom?: number;
-}
-
-/** What an actor does in a shot: walk to x, come on to x (from a side of the stage, or from an x just out of the picture),
- *  go off a side, turn, take a pose. Any act can wait
- *  for a line (`line`: it starts as that line of the shot is spoken). */
-export type Act = (
-  | { who: string; walk: number }
-  | { who: string; enter: number; from: Facing | number }
-  | { who: string; exit: Facing }
-  | { who: string; face: Facing }
-  | { who: string; pose: Pose }
-  | { who: string; hide: true }
-) & { line?: number };
-
-/** `shake` and `flash` happen once as the shot begins (a flash is one pulse of at most half an alpha for about 120 ms; a
- *  shake follows the shake setting and reduced motion, as the fight's does); `rumble` is a faint steady tremble; `darken`
- *  and `glow` tint the picture; `fadeIn` and `fadeOut` are to and from black. Nothing loops. */
-export type Fx = 'shake' | 'flash' | 'fadeIn' | 'fadeOut' | 'darken' | 'rumble' | 'glow';
-/** A sound as the shot begins (a cue of `render/soundRules.ts`). */
-export type SceneCue = 'boom' | 'slam' | 'eliteSting' | 'earthRumble' | 'steps';
-
-export interface Line {
-  /** An actor's id in the cast, or `narrator`. */
-  who: string;
-  /** May hold `{actor id}`: that actor's name. */
-  text: string;
-  /** Shouted (the box is brighter) or whispered (dimmer). */
-  tone?: 'shout' | 'whisper';
-}
-
-export interface Shot {
-  /** The backdrop: an area's painted layers; kept from the shot before if left out. */
-  look?: Area;
-  cam: Cam;
-  /** Where the camera drifts to over the shot (a pan, a push in, a pull out). */
-  to?: Cam;
-  acts?: Act[];
-  fx?: Fx[];
-  cue?: SceneCue;
-  /** A chapter card over the shot's first moments. */
-  caption?: string;
-  lines?: Line[];
-  /** Seconds for a shot without lines (or a pause after them). */
-  hold?: number;
-}
-
-/** When a scene comes up. `starter`: a new save has just picked its first heroes. `calBoss`: a Calamity's boss floor of
- *  this map is about to be fought. `earned`: a hero earned in play (`contentHeroes.ts`) has just joined. `summon`: a pull
- *  in the summoning hall (it plays every time, is never marked seen, and is made by `summonScene`, not listed). */
-export type Moment = { kind: 'starter' } | { kind: 'calBoss'; map: number } | { kind: 'earned'; hero: string } | { kind: 'summon' };
-
-export interface Scene {
-  id: string;
-  title: string;
-  /** One line for the Scenes list. */
-  blurb: string;
-  moment: Moment;
-  cast: Record<string, CastMember>;
-  shots: Shot[];
-  /** A reveal rather than a chapter: a few seconds, not twenty to forty. */
-  short?: true;
-  /** The score that plays under it, by the id `sound.ts`'s `playScene` knows (`opening`, `gorvak`, `triumph` ...); none leaves the music as it is. Put back when the scene ends or is skipped. */
-  music?: string;
-  /** Heroes that stand in for the party when the scene comes before the player has one (the opening, before the starter pick). */
-  trio?: readonly string[];
-}
-
-/** How long a line stays up: a beat to read it (seconds), so a scene plays through on its own; a tap moves on sooner. */
-export const lineSeconds = (text: string): number => Math.min(9, 1.6 + text.length * 0.05);
-/** A shot's hold (seconds after its lines; a shot with no lines holds 2.5 s at least). */
-export const holdOf = (s: Shot): number => s.hold ?? (s.lines?.length ? 0 : 2.5);
-/** A whole scene's length (seconds), as played untouched (the lines are filled with names that are not counted). */
-export const sceneSeconds = (c: Scene): number => c.shots.reduce((n, s) => n + (s.lines?.reduce((m, l) => m + lineSeconds(l.text), 0) ?? 0) + holdOf(s), 0);
-
-/** A line with its `{actor}` names filled in (one left unknown stays as written). */
-export const fillLine = (text: string, names: Readonly<Record<string, string>>): string => text.replace(/\{(\w+)\}/g, (all, k: string) => names[k] ?? all);
-
-/* ------------------------------------------------------------ shorthands */
-
-const say = (who: string, text: string, tone?: Line['tone']): Line => ({ who, text, ...(tone ? { tone } : {}) });
-const tell = (text: string): Line => ({ who: 'narrator', text });
-/** A wide shot round x, and a close one on someone or a pair. */
-const wide = (x: number, y = 200, zoom = 1): Cam => ({ x, y, zoom });
-const close = (on: string | string[], zoom = 1.5): Cam => ({ on, zoom });
-
-/* ------------------------------------------------------------ the scenes */
 
 /** The heroes that play the opening, which comes before the starter pick (the player has none yet): a fixed trio. */
 export const OPENING_TRIO: readonly string[] = ['knight', 'samurai', 'archer'];
 
-export const SCENES: Record<string, Scene> = {
+const PILOTS: Record<string, Scene> = {
   // ---------------------------------------------------------------- the opening: after a new save has picked its heroes
   opening: {
     id: 'opening',
@@ -269,6 +146,7 @@ function earnedScene(kind: string, e: { look: Area; why: string; says: string })
     moment: { kind: 'earned', hero: kind },
     short: true,
     music: 'triumph',
+    family: 'earned',
     cast: {
       figure: { role: `unit:${kind}`, x: 330, facing: 'left', hidden: true, shade: true },
       hero: { role: `unit:${kind}`, x: 330, facing: 'left', hidden: true },
@@ -280,26 +158,24 @@ function earnedScene(kind: string, e: { look: Area; why: string; says: string })
   };
 }
 
-/** The summoning cinematic, for the hero a pull brought (the new one first): the circle answers in the dark, a flash, and the hero stands in it. About three seconds; a tap ends it (`ScenePlayer.play`'s `quick`). */
-export function summonScene(kind: string, name: string): Scene {
-  return {
-    id: 'summon',
-    title: 'The Summoning',
-    blurb: 'The circle answers.',
-    moment: { kind: 'summon' },
-    short: true,
-    cast: {
-      figure: { role: `unit:${kind}`, x: 288, facing: 'right', hidden: true, shade: true },
-      hero: { role: `unit:${kind}`, x: 288, facing: 'right', hidden: true },
-    },
-    shots: [
-      { look: 'dungeon', cam: wide(288, 205), to: wide(288, 210), fx: ['darken', 'glow'], caption: 'The circle answers', acts: [{ who: 'figure', enter: 288, from: 288 }], hold: 1.3 },
-      { cam: close('hero', 1.5), acts: [{ who: 'figure', hide: true }, { who: 'hero', enter: 288, from: 288 }], fx: ['flash', 'glow'], cue: 'eliteSting', caption: name, hold: 1.5 },
-    ],
-  };
-}
+/** The scenes of the heroes earned in play, in the roster's order. */
+const EARNED_SCENES: Scene[] = Object.entries(EARNED).map(([k, e]) => earnedScene(k, e));
 
-for (const [kind, e] of Object.entries(EARNED)) SCENES[`earned:${kind}`] = earnedScene(kind, e);
+/** The score each scene plays under (the audio worker's tracks, `musicScore.ts`): a herald its own, the rest a shared mood. A cut-in has none: the fight's music goes on. */
+const MUSIC: Record<string, string> = {
+  opening: 'opening', gorvak: 'gorvak', thornWarden: 'herald2', malphas: 'herald3', hrungar: 'herald4', vorgrath: 'herald5', karnok: 'herald6',
+  calamityEnds: 'triumph', firstLoss: 'comic', eliteMet: 'spire', ascensionOne: 'triumph', dailyBoss: 'spire', mythicOpens: 'triumph', duchessInFight: 'comic',
+};
+const STING: Record<string, Scene['sting']> = { gorvak: 'sceneBoss', thornWarden: 'sceneBoss', malphas: 'sceneBoss', hrungar: 'sceneBoss', vorgrath: 'sceneBoss', karnok: 'sceneBoss', calamityEnds: 'sceneVictory' };
+const FAMILY_MUSIC: Record<string, string> = { oath: 'triumph', clear: 'triumph', awaken: 'solemn', earned: 'triumph', castle: 'comic', spire: 'spire' };
+
+const ALL: Scene[] = [...Object.values(PILOTS), ...EVENT_SCENES, ...FAMILY_SCENES, ...EARNED_SCENES].map((c) => {
+  const music = c.music ?? MUSIC[c.id] ?? (c.family ? FAMILY_MUSIC[c.family] : undefined);
+  const sting = c.sting ?? (STING[c.id] ?? (c.family === 'clear' ? 'sceneVictory' : c.family === 'oath' || c.family === 'oathcut' ? 'sceneBoss' : undefined));
+  return { ...c, ...(music ? { music } : {}), ...(sting ? { sting } : {}) };
+});
+
+export const SCENES: Record<string, Scene> = Object.fromEntries(ALL.map((c) => [c.id, c]));
 
 /** Every scene in the order the Scenes list shows them. */
-export const SCENE_ORDER: readonly string[] = ['opening', 'gorvak', ...Object.keys(EARNED).map((k) => `earned:${k}`)];
+export const SCENE_ORDER: readonly string[] = ALL.map((c) => c.id);
