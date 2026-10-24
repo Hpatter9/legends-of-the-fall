@@ -73,6 +73,7 @@ import clsIllusionist3 from '../art/units/cls_illusionist_3.png';
 import clsGunslinger1 from '../art/units/cls_gunslinger_1.png';
 import clsGunslinger2 from '../art/units/cls_gunslinger_2.png';
 import clsGunslinger3 from '../art/units/cls_gunslinger_3.png';
+import standKing from '../art/units/stand_king.png';
 import clsTreant from '../art/units/cls_treant.png';
 import clsTreant2 from '../art/units/cls_treant_2.png';
 import clsTreant3 from '../art/units/cls_treant_3.png';
@@ -200,6 +201,7 @@ const URLS: Record<string, string> = {
   cls_gunslinger_1: clsGunslinger1,
   cls_gunslinger_2: clsGunslinger2,
   cls_gunslinger_3: clsGunslinger3,
+  stand_king: standKing,
   cls_treant: clsTreant,
   cls_treant_2: clsTreant2,
   cls_treant_3: clsTreant3,

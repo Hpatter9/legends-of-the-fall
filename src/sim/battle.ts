@@ -11,6 +11,7 @@ import { cloneBoard } from './chain';
 import { twistBoard, type TwistFx } from './twists';
 import { firstStep, walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
+import { standDecide } from './standAi';
 import { FOE_BANDS } from './foes';
 import { killXp } from './levels';
 import { enterPhase, PHASE2 } from './bossPhases';
@@ -29,7 +30,7 @@ export const TICK_MS = 100;
 /** A fight still going after this long is lost (the foes held). */
 export const TIME_LIMIT_MS = 120_000;
 /** How long a fighter with nothing it can do waits before looking again. */
-const WAIT_MS = 300;
+export const WAIT_MS = 300;
 
 export type Phase = 'deploy' | 'fight' | 'won' | 'lost';
 
@@ -131,6 +132,16 @@ export interface Unit {
   phase?: { at: number; done: boolean; surge?: number };
   /** The kit it fights with after changing form (instead of its kind's). */
   kit?: Kit;
+  /** A hero of the Last Stand: the tile it guards, how far (in tiles) it may stray from it, and whether it is a tank that goes for the foes heading for the king (`standAi.ts`). */
+  post?: { u: number; v: number; leash: number; tank: boolean };
+}
+
+/** What the Last Stand adds to a battle (`stand.ts`, `standAi.ts`): the king's unit, where he stands, and the flow fields the foes walk by. Absent in every other fight. */
+export interface StandMode {
+  king: number;
+  at: At;
+  /** The cost to reach the king from every tile, for each jump a fighter has (made when first asked for). */
+  fields: Record<number, number[]>;
 }
 
 interface Pending {
@@ -228,6 +239,8 @@ export interface Battle {
   heroHeal?: number;
   /** The five-hero combo this fight has, when the placed heroes make one (`combos.ts`). */
   combo?: ComboState;
+  /** Set only in the Last Stand: the heroes guard posts, the foes go for the king, and the fight ends with his fall. */
+  stand?: StandMode;
 }
 
 export const defOf = (u: Unit): UnitDef => UNITS[u.def];
@@ -512,6 +525,15 @@ export function stepBattle(b: Battle): BattleEvent[] {
   b.rng = rng.state;
   tickCombo(b, out);
   for (const u of b.units) if (u.alive && u.phase && !u.phase.done && u.hp <= u.maxHp * u.phase.at) enterPhase(b, u, out);
+  // (the Last Stand goes on until the king falls)
+  if (b.stand) {
+    if (!b.units.some((x) => x.id === b.stand!.king && x.alive)) {
+      b.phase = 'lost';
+      b.pending = [];
+      out.push({ kind: 'end', won: false });
+    }
+    return out;
+  }
   const heroes = b.units.some((x) => x.alive && x.side === 'hero' && !defOf(x).summon);
   const foes = b.units.some((x) => x.alive && x.side === 'foe');
   if (!heroes || !foes || b.t >= TIME_LIMIT_MS) {
@@ -641,6 +663,8 @@ function perchFor(b: Battle, me: Unit, def: UnitDef, target: Unit): number {
 }
 
 function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
+  // (the Last Stand has its own mind for heroes and foes; every other fight goes on below as it always did)
+  if (b.stand && standDecide(b, me, rng, out)) return;
   const def = strikeDef(b, me);
   me.step = undefined;
   let foes = b.units.filter((x) => x.alive && x.side !== me.side && !hidden(b, x));
@@ -701,7 +725,7 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   me.busyUntil = b.t + WAIT_MS;
 }
 
-function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[]): void {
+export function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[]): void {
   const def = defOf(me);
   const way = wayTo(me, to);
   me.facing = way;
@@ -717,7 +741,7 @@ function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[]): voi
   out.push({ kind: 'swing', by: me.id, to: to.id });
 }
 
-function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void {
+export function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void {
   const def = defOf(me);
   const next = { u: i % b.board.w, v: Math.floor(i / b.board.w) };
   const from = tileOf(b, me);
