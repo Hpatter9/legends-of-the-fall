@@ -599,12 +599,12 @@ export class Tavern {
     if (this.goat && this.goatArt && Tavern.GOAT.min - 30 < right && Tavern.GOAT.max + 30 > left) list.push({ depth: Tavern.GOAT.y, paint: () => this.duchess() });
     list.sort((p, q) => p.depth - q.depth);
     for (const e of list) e.paint();
-    // (the fire and the lamps flicker, each a little out of step)
+    // (the fire and the lamps burn steadily: no flicker)
     g.globalCompositeOperation = 'lighter';
-    const flick = 0.55 + 0.25 * Math.sin(this.now / 130) * Math.sin(this.now / 410 + 1) + 0.08 * Math.sin(this.now / 47);
+    const flick = 0.55;
     for (const l of GLOWS) {
       if (l.x + l.r < this.camX || l.x - l.r > this.camX + this.viewW / s) continue;
-      g.globalAlpha = clamp(flick + 0.1 * Math.sin(this.now / 300 + l.x), 0, 1);
+      g.globalAlpha = clamp(flick, 0, 1);
       const im = this.glowArt(l.r, l.al);
       g.drawImage(im, Math.round(l.x - l.r), Math.round(l.y - l.r), im.width / s, im.height / s);
     }

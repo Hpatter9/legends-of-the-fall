@@ -894,7 +894,7 @@ export class Fx {
       step: (dt) => {
         t += dt;
         g.clear();
-        const pulse = 0.16 + 0.1 * Math.sin(t / 90);
+        const pulse = 0.2;
         for (const [x, y] of tiles) g.poly([x, y - TH / 2, x + TW / 2, y, x, y + TH / 2, x - TW / 2, y]).fill({ color, alpha: pulse }).stroke({ color, width: 1.5, alpha: 0.7 });
         for (const a of arrows) {
           const f = (t - a.at) / 260;
@@ -998,7 +998,7 @@ export class Fx {
           this.particles.spawn({ frames: PACK['poison-smoke'], x: px + jitter(12), y: py - 4, scale: 1.1, life: 900, vy: -0.02, grow: 0.0005, alpha: 0.6, add: true });
           if (this.particles.rate(0.5)) this.particles.spawn({ frames: PACK['poison-status'], x: px + jitter(12), y: py - 10, scale: 1, life: 700, vy: -0.03, add: true });
         }
-        const alpha = e.id === 'poison' ? 0.22 + 0.1 * Math.sin(t / 250) : 0.35 * (1 - t / ms);
+        const alpha = e.id === 'poison' ? 0.27 : 0.35 * (1 - t / ms);
         for (let du = -1; du <= 1; du++)
           for (let dv = -1; dv <= 1; dv++) {
             if (!tileAt(b.board, e.u + du, e.v + dv)) continue;
@@ -1072,7 +1072,7 @@ export class Fx {
       step: (dt) => {
         t += dt;
         const live = b.traps?.some((tr) => tr.u === u && tr.v === v);
-        view.alpha = 0.6 + 0.3 * Math.sin(t / 250);
+        view.alpha = 0.75;
         if (!live && t > 200) this.anim(magic.earthBurst, x, y - 6, 1.3, 50);
         return live === true || t <= 200 ? t < ms : false;
       },
