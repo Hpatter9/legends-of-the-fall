@@ -78,7 +78,48 @@ Screenshots at 393 x 852, the same stage and save: `docs/samples/map-layouts-siz
 mid fight; `tools/map-layouts/compare.mjs`). The camera does the same on both: it frames the heroes' rows when deploying and follows the fighters
 in the fight, at the same zoom, so the sprites are the same size and as readable; the 8 x 11 board is simply more field to look along.
 
-BALANCE_PLACEHOLDER
+## Balance, before and after
+
+"Before" is origin/main at 0.146.0 unchanged, "after" this branch merged with it. Fixed seeds; the tools of `docs/notes/balance.md` (Calamity 300 runs, spire
+100 climbs `--levels 3,8,14`, daily 336 dates, heroes 12000 games, armies `--climb --saves 120`).
+
+What moved fights, and what was done about it:
+- **Longer approach, more room for shooters.** The two extra rows put five empty rows between the armies (three before): shooters got free fire and the
+  front-liners lost value. `USUAL_WALK` 0.75 (a step takes three quarters of its time on the usual board; the Calamity's board keeps 1) put the average win rate back
+  (51.7% against 52.1% before, at stage 5 level 1).
+- **Hero parity** needed hp nudges (before them: Knight -5.2 / -5.6, Ranger +5.1, Beastmaster, High Priestess, Buccaneer, Lancer beyond 4 points, spread 9.6 and 10.7):
+  Knight 285 to 300, Samurai 200 to 210, Wolf Bard 222 to 247, Rifle Bot 138 to 154, Great Sage 185 to 204, Demon Swordsman 208 to 220, Paladin 255 to 273,
+  Kraken Mate 275 to 297, Peasant 306 to 321, Mummy 285 to 299, Shambler 295 to 310, Yamabushi Tengu 262 to 275, Dread Pirate 255 to 263, Mercenary 198 to 206,
+  Lightning Mage 160 to 166, Fire Wizard 145 to 149; down: Lancer 230 to 209, Beastmaster 200 to 182, Buccaneer 225 to 207, Ranger 185 to 165, Wanderer 150 to 141,
+  Druid 225 to 214, Satyr 265 to 254, Reaper 175 to 168, Kitsune 190 to 182, High Priestess 215 to 209.
+- **Calamity**: `CAL_SCALE.step` 0.63 to **0.58** and `final` 0.2 to **0.33** (the layouts and the 10 x 13 board's barrels cost it a few points on the middle maps; the lava
+  seas cost it most, so they are impassable lakes now rather than walkable fire).
+- **Daily**: `DAILY_START` 0.56 to **0.57**.
+- The spire and the armies needed nothing.
+
+| | Before (0.146.0) | After |
+|---|---|---|
+| Calamity, share felling each boss, maps 1 to 6 (target 91 / 81 / 60 / 44 / 32 / 15) | 91 / 81 / 60 / 44 / 32 / 15 | 90 / 81 / 56 / 45 / 40 / 20 |
+| Calamity, hp lost an ordinary fight (target about 12 / 15 / 21 / 22 / 22 / 28 %) | 13 / 12 / 17 / 22 / 22 / 28 | 14 / 12 / 15 / 21 / 18 / 28 |
+| Spire (median / mean floors, bosses 1 to 3) | 12 / 14.5, 15 / 8 / 4% | 12 / 15.5, 17 / 9 / 6% |
+| Daily, with hearts / no hearts | 73% / 56% | 71% / 56% |
+| Hero parity, stage 5 level 1: spread, beyond 4 points | 4.8, none | 5.7, none |
+| Hero parity, stage 27 level 15: spread, beyond 4 points | 10.1, Samurai, Lightning Mage, Samurai Commander | 8.2, Samurai Commander |
+
+Armies, tries to clear on Normal (`--climb --saves 120`; noise about 0.4), before then after: Orc Warband 2.8 / 2.9, Undead Legion 3.5 / 3.1, Beast Packs 1.9 / 2.2,
+Wildwood 3.2 / 3.4, Labyrinth 2.5 / 2.4, Ogre Clans 2.3 / 2.3, Infernal Host 2.1 / 2.6, Yokai Night Parade 2.3 / 2.0, Golem Forge 2.8 / 3.0. Nothing moved beyond the noise; the
+`start` values are untouched. The Calamity's late maps are a little easier than the target and its middle maps' hp loss a little lighter: the shares are within about 8 points
+of it on every map (300 runs is 3 or 4 points of noise); the knobs that remain are `step` (steep: 0.01 moves the late maps ten points) and `final`.
+
+Cost: a fight tick took 29 microseconds on 8 x 11 against 18 to 21 on 7 x 9 (150 mixed fights, the same machine under load): the board has 40% more tiles, and the terrain adds
+nothing measurable. A tick has 100 ms.
+
+## One land for an army's whole attempt
+
+The owner: "The map doesn't need to change during an army battle since it's one long battle." `landOf(army, seed)` (armies.ts) now picks one of the army's lands once, by the
+run's seed (`mixSeed(seed, 0x1a4d)`), and every wave of the attempt is fought on it; the long map is built on that one land (`chainOf`), so the weather rolled by each section's
+board follows the land only. Changed: armies only (`armies.ts`, `run.ts`, `lands.ts`'s comment, `test/lands.test.ts`, `test/armies.test.ts`). The daily has no `lands`, and the spire
+and Calamity do not use `landOf`: unchanged.
 
 ## Tests
 
@@ -90,4 +131,14 @@ blast and chain, the weather hook, a hurt fighter's walk to a shrine, the codex'
 
 ## For the owner
 
-DECISIONS_PLACEHOLDER
+- **8 x 11** is the director's recommendation; at 393 x 852 the sprites are the same size on both (the camera's zoom is the same), so readability is as it was. See
+  `docs/samples/map-layouts-size-7x9-*` against `map-layouts-size-8x11-*`. The cost is `USUAL_WALK` (everyone walks a quarter quicker on it) and the hp nudges above: say if you
+  would rather keep 7 x 9 (`BOARD` default in `board.ts`, `node build.mjs --board 7x9` to see it) or 8 x 9.
+- **Odds**: rolling land (the old board) is about a quarter of fights, the other eight shapes share the rest, leaning to the land (river for highlands and the Oasis, forts for the
+  Dungeon and the Ruins, passes for the Desert...). The weights are in `BASE` and `BY_AREA`.
+- **Barrels and shrines hurt and heal both sides** (any fighter beside a barrel, any on a shrine); the AI makes for a shrine when badly hurt but does not aim at barrels.
+- **Lava seas are impassable** (drawn as lava on the Volcano and the Forge, but to the rules deep water): walkable lava seas cost the Calamity too many points. Small walkable lava
+  patches stay, and burn 4% a second as well as 8% a step.
+- **Fog** takes one tile off every shooter's range (about one fight in ten).
+- The tests that stood on a bare field now strip the new terrain too (`test/bare.ts`); the equipment trials and long-map tests count in the board's own size. No test was loosened.
+- The Codex has a fifth tab, Terrain, with a line for each ground and battlefield shape.
