@@ -13,7 +13,7 @@ export function serve(root = 'out/web', port = 8139) {
     r.end(readFileSync(p));
   }).listen(port);
 }
-export const launch = () => chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1243/chrome-linux64/chrome', args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+export const launch = () => chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 export async function boot(browser, w, h, port = 8139, meta = null) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1, hasTouch: true });
   const page = await ctx.newPage();
