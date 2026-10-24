@@ -17,8 +17,8 @@ export const owns = (m: Meta, kind: string): boolean => m.unlocked.includes(kind
 export const ownedCount = (m: Meta): number => PULL_HEROES.filter((k) => owns(m, k)).length;
 /** The shards a hero not owned needs to join now. */
 export const needOf = (m: Meta): number => unlockNeed(ownedCount(m));
-/** Unlock shards held towards a hero not yet owned. */
-export const haveOf = (m: Meta, kind: string): number => m.unlock?.[kind] ?? 0;
+/** Unlock shards held towards a hero not yet owned (none once it has joined: they are spent on joining, and a hero owned never shows a bar). */
+export const haveOf = (m: Meta, kind: string): number => (owns(m, kind) ? 0 : m.unlock?.[kind] ?? 0);
 /** The heroes still to collect by shards. */
 export const toCollect = (m: Meta): string[] => PULL_HEROES.filter((k) => !owns(m, k));
 

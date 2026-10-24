@@ -508,3 +508,17 @@ test('each army names the hero level Normal is meant for: rising army by army, t
   // (a level-1 party of the starting five, no castle, does not clear any army after the first in one try)
   for (const a of ARMIES.slice(2)) assert.ok(clearRate(a.id, 1) <= 0.1, `${a.id} at level 1`);
 });
+
+test('the steeper curve: a steeper level an army, and a level-1 party cannot grind through any army but the first, XP carried between tries', () => {
+  assert.deepEqual(ARMIES.map((a) => a.level), [1, 8, 15, 22, 30, 38, 40, 46, 52]);
+  for (let i = 1; i < ARMIES.length; i++) {
+    // (from the second army Normal is flat across its waves, so a party that falls early earns little XP; the harder tiers keep their own curve)
+    assert.ok(ARMIES[i].growth <= 0.05 && (ARMIES[i].tierGrowth ?? ARMIES[i].growth) >= ARMIES[i].growth, ARMIES[i].id);
+  }
+  for (const a of ARMIES.slice(1)) {
+    const meta = savedAt(1, HEROES, 3);
+    let cleared = false;
+    for (let t = 0; t < 25 && !cleared; t++) cleared = playArmy(meta, a.id, 700 + t, HEROES).cleared;
+    assert.equal(cleared, false, `${a.id} at level 1 after 25 tries`);
+  }
+});

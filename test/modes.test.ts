@@ -115,15 +115,16 @@ test('the camp line names the boss of the day and how the day stands', () => {
   assert.match(dailyLine(m, 20261020), /fell at 5\/10/);
 });
 
-test('the endless tower opens at 15 army stars (or for a save that had climbed it), and not before', () => {
+test('the endless tower opens at 12 army stars (or for a save that had climbed it), and not before', () => {
   const m = startedMeta(1);
   assert.equal(towerOpen(m), false);
-  assert.match(towerLine(m), /opens at 15 stars/);
+  assert.match(towerLine(m), /opens at 12 stars/);
   m.armies.orcs = { best: 15, won: 15, clears: 1, stars: {}, met: { 0: 7, 1: 7, 2: 7, 3: 1, 4: 1 } };
-  m.armies.undead = { best: 15, won: 15, clears: 1, stars: {}, met: { 0: 7, 1: 1 } };
-  assert.equal(totalStars(m), 15);
+  m.armies.undead = { best: 15, won: 15, clears: 1, stars: {}, met: { 0: 1 } };
+  assert.equal(totalStars(m), 12);
   assert.equal(towerOpen(m), true);
-  m.armies.undead.met = { 0: 7 };
+  m.armies.undead.met = { 0: 0 };
+  assert.equal(totalStars(m), 11);
   assert.equal(towerOpen(m), false);
   // (a stage 10 run no longer opens it: the stars do; a save that had played it keeps it, `opened`)
   m.opened = ['tower'];
@@ -225,10 +226,10 @@ test('a daily run and a tower run save and load with their mode', () => {
   assert.equal(back?.area, run.area);
 });
 
-test('the castle and the Calamity open at 10 and 21 army stars, and a save that had played them keeps them', async () => {
+test('the castle and the Calamity open at 10 and 16 army stars, and a save that had played them keeps them', async () => {
   const { modeOpen, MODE_NEED, grandfather, starsToGo } = await import('../src/sim/modeUnlock');
   const m = startedMeta(1);
-  assert.deepEqual(MODE_NEED, { castle: 10, tower: 15, calamity: 21 });
+  assert.deepEqual(MODE_NEED, { castle: 10, tower: 12, calamity: 16 });
   assert.equal(modeOpen(m, 'castle'), false);
   assert.equal(starsToGo(m, 'castle'), 10);
   m.armies.orcs = { best: 15, won: 15, clears: 1, stars: {}, met: { 0: 7, 1: 7, 2: 7, 3: 1 } };

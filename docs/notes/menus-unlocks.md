@@ -7,8 +7,8 @@ The stars counted are every star won over every army and tier (`totalStars` in `
 | Opens | At stars |
 | --- | --- |
 | Castle (the buildings) | 10 |
-| Tower | 15 |
-| Calamity | 21 |
+| Tower | 12 |
+| Calamity | 16 |
 | Army n (the first is open from the start) | 2 x n: 2, 4, 6, 8, 10, 12, 14, 16 |
 
 - Rules: `src/sim/modeUnlock.ts` (`MODE_NEED`, `modeOpen`) and `ARMY_NEED` / `armyUnlocked` in `armies.ts`.
