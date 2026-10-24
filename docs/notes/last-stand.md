@@ -3,7 +3,7 @@
 Last Stand replaces the endless Tower (the spire climb). It was too like the Calamity: both were a map of fights. The
 Last Stand is one endless battle on a big square field. A king stands on a raised keep in the middle; the foes come in from
 all four edges, wave after wave, bigger each time; the run ends when the king falls. The camp's Tower spot keeps its
-building art and its unlock (15 stars); it is now called **Last Stand** (the camp's plate says "Last Stand") and shows
+building art and its unlock (the stars `MODE_NEED.tower` asks for, read from `modeUnlock.ts`, never written into the Last Stand's code); it is now called **Last Stand** (the camp's plate says "Last Stand") and shows
 the best wave.
 
 Status: **built** (plan first, results after it).
@@ -99,7 +99,7 @@ built once; the heroes' leashed walks search only the tiles near the post; dead 
 
 Gone from the game: the Tower's entry, its saved climb (`legends.tower` and the very old ordinary-slot case are closed on load by
 `migrateOldClimb`, which pays the climb's chests and equipment once and shows a line on the home screen), `tools/tower-balance`'s tower
-table, the camp's "Tower" name (now "Last Stand", best wave on its plate; unlock still 15 stars). `legends.stand` is the new save (in
+table, the camp's "Tower" name (now "Last Stand", best wave on its plate; the unlock is still `MODE_NEED.tower`). `legends.stand` is the new save (in
 `SAVE_KEYS`; `legends.tower` stays there for old saves). The tower achievements now count Last Stand waves too.
 **Kept, because the Calamity and its tests run on them:** `run.tower`, `tower.ts` (maps, elites, twists, mystery, healing, `settleTower`),
 `TowerView` (the Calamity's map), and `towerRun` (a run-with-tower-state used by many Calamity-side tests as a fixture; no page starts it
@@ -169,7 +169,7 @@ built once; the heroes' leashed walks search only the tiles near the post; dead 
 
 Gone from the game: the Tower's entry, its saved climb (`legends.tower` and the very old ordinary-slot case are closed on load by
 `migrateOldClimb`, which pays the climb's chests and equipment once and shows a line on the home screen), `tools/tower-balance`'s tower
-table, the camp's "Tower" name (now "Last Stand", best wave on its plate; unlock still 15 stars). `legends.stand` is the new save (in
+table, the camp's "Tower" name (now "Last Stand", best wave on its plate; the unlock is still `MODE_NEED.tower`). `legends.stand` is the new save (in
 `SAVE_KEYS`; `legends.tower` stays there for old saves). The tower achievements now count Last Stand waves too.
 **Kept, because the Calamity and its tests run on them:** `run.tower`, `tower.ts` (maps, elites, twists, mystery, healing, `settleTower`),
 `TowerView` (the Calamity's map), and `towerRun` (a run-with-tower-state used by many Calamity-side tests as a fixture; no page starts it
