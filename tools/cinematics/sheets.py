@@ -6,7 +6,7 @@ from PIL import Image
 
 raw, out = sys.argv[1:3]
 os.makedirs(out, exist_ok=True)
-FAMILIES = {'awaken': 1, 'clear': 2, 'earned': 1, 'castle': 1, 'spire': 1, 'form': 1}
+FAMILIES = {'awaken': 2, 'clear': 2, 'earned': 1, 'castle': 1, 'spire': 1, 'form': 1}
 pat = re.compile(r'^(.+)-(\d+)\.png$')
 scenes = {}
 for f in glob.glob(f'{raw}/*.png'):

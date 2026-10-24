@@ -169,6 +169,16 @@ The owner: "The summon cinematic isn't even close to a cinematic." It is cut: a 
 Settings row are removed; an old save's settings with a `summonScene` field are read without it (a test holds that). The talking scenes
 and the Last Oath cut-ins stay. The `quick` argument of `ScenePlayer.play` (a tap ends the scene) is left, unused.
 
+### The backdrop (a white band, reported on the spire)
+
+A white band across the sky of the Duchess scene was reported mid-fight on a phone; it could not be reproduced (the same scene mid-fight
+at 393x852, 360x780 and 412x915, and at device pixel ratio 3, drew whole). The player's backdrop is hardened all the same: the layers
+are plain sprites, four side by side and anchored to the bottom (no `TilingSprite`, so nothing tiles upward or needs a repeating
+texture), laid over a fill of the land's own sky colour (`SKY` in `sceneView.ts`), and a layer that fails to load or is empty is left
+out rather than drawn. `tools/cinematics/blank.py` scans frames for a flat white (or long flat black) band; run over every scene at the
+three sizes (1527 frames, `shots.mjs --every`) it finds none. `flow5.mjs` plays a scene mid-fight and checks the fight's clock is held
+while it is up and runs again after Skip, at all three sizes.
+
 ### Checked in the real page
 
 `tools/cinematics/flow2.mjs`: a new save plays its opening and Skip ends it; an old save (no scenes list) starts with none; a boss

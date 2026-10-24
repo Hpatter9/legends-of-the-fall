@@ -1,11 +1,12 @@
 // Frames of the pilot cinematics, upright, by seeking the player to a line of each shot (`__game.scenes.seek`):
-//   node tools/cinematics/shots.mjs [web dir] [out dir] [--all-sizes] [--only=id,id]
+//   node tools/cinematics/shots.mjs [web dir] [out dir] [--all-sizes] [--size=360] [--every] [--only=id,id]
 // Writes <out>/<scene>-<n>[-<w>].png, one per frame (needs Playwright, as the other shot scripts). tools/cinematics/strip.py
 // lays a scene's frames side by side.
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
 import { readFileSync, existsSync, mkdirSync } from 'node:fs';
 const { chromium } = createRequire('/opt/node-tools/node_modules/')('playwright');
+const PORT = Number(process.env.PORT ?? 8141);
 const [root = 'out/web', out = 'out/scenes-raw'] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 mkdirSync(out, { recursive: true });
 const types = { html: 'text/html', js: 'text/javascript', png: 'image/png', woff2: 'font/woff2', json: 'application/json', webmanifest: 'application/json', ogg: 'audio/ogg', css: 'text/css' };
@@ -14,7 +15,7 @@ const srv = createServer((q, r) => {
   if (!existsSync(p)) { r.writeHead(404); return r.end(); }
   r.writeHead(200, { 'content-type': types[p.split('.').pop()] ?? 'application/octet-stream' });
   r.end(readFileSync(p));
-}).listen(8141);
+}).listen(PORT);
 // (the flags: another GL path leaves a band under the bars unpainted in headless Chromium)
 // (every scene's frames come from the page: `__game.sceneFrames(id)` gives (shot, beat, seconds in) for each shot's lines once typed)
 // By default every scene at 393x852; `--all-sizes` also takes the sample scenes at 360x780 and 412x915.
@@ -23,16 +24,19 @@ const only = process.argv.filter((a) => a.startsWith('--only=')).map((a) => a.sl
 const SAMPLE = ['opening', 'gorvak', 'karnok', 'calamityEnds', 'awaken:knight', 'form:calBoss1', 'clear:orcs'];
 const safe = (id) => id.replace(/[^\w-]/g, '_');
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-for (const [w, h] of allSizes ? [[393, 852], [360, 780], [412, 915]] : [[393, 852]]) {
+const SIZES = [[393, 852], [360, 780], [412, 915]];
+const only1 = process.argv.filter((a) => a.startsWith('--size=')).map((a) => Number(a.slice(7)))[0];
+const every = process.argv.includes('--every');
+for (const [w, h] of only1 ? SIZES.filter(([x]) => x === only1) : allSizes ? SIZES : [SIZES[0]]) {
   const suffix = w === 393 ? '' : `-${w}`;
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   page.on('pageerror', (e) => console.log('PAGE ERROR', e.message));
   page.on('console', (m) => m.type() === 'error' && console.log('CONSOLE', m.text()));
-  await page.goto('http://localhost:8141/?seed=7');
+  await page.goto(`http://localhost:${PORT}/?seed=7`);
   await page.evaluate(() => localStorage.setItem('lotf-tips-off', '1'));
   await page.waitForTimeout(2500);
-  const ids = (only ?? (await page.evaluate(() => window.__game.sceneIds()))).filter((id) => w === 393 || SAMPLE.includes(id));
+  const ids = (only ?? (await page.evaluate(() => window.__game.sceneIds()))).filter((id) => every || w === 393 || SAMPLE.includes(id));
   for (const id of ids) {
     const frames = await page.evaluate((id) => window.__game.sceneFrames(id), id);
     await page.evaluate((id) => void window.__game.playScene(id), id);

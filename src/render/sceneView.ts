@@ -6,7 +6,7 @@
 // on; Skip ends it at once. The picture lives on its own small Pixi canvas, made when a scene starts and dropped when it
 // ends, so nothing costs anything the rest of the time. It never touches a battle.
 
-import { Application, ColorMatrixFilter, Container, Graphics, Rectangle, Sprite, TilingSprite, Texture } from 'pixi.js';
+import { Application, ColorMatrixFilter, Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js';
 import { FEET, fillLine, STAGE_H, STAGE_W, SCENES, type Scene, type SceneCue, type Shot } from '../sim/sceneScripts';
 import { castOf, namesOf, type Cast, type Players } from '../sim/sceneRules';
 import { UNITS } from '../sim/units';
@@ -49,6 +49,12 @@ function lookMatrix(kind: string, step: number): ColorMatrixFilter {
   if (t.brightness !== 1) f.brightness(t.brightness, true);
   return f;
 }
+
+/** The colour of each land's sky (the top of its first layer), laid under the layers. */
+const SKY: Record<Area, number> = {
+  highlands: 0xcfc7df, forest: 0x249fde, snow: 0x6b99bc, desert: 0xe9f6fa, volcano: 0x0a0406, dungeon: 0x212a36, plains: 0x3784c4, autumn: 0xd8efff, swamp: 0x336249,
+  graveyard: 0x77935c, ruins: 0xc6aa93, temple: 0x98bdc3, crystal: 0x80acae, forge: 0x040204, shrine: 0x000520, warcamp: 0x351c17, oasis: 0x98bdc3,
+};
 
 const reduced = (): boolean => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 /** Whether the screen is to stay still: shake off in the settings, or reduced motion on the device (the fight's own rule). */
@@ -168,7 +174,9 @@ class Run {
   private readonly actors = new Container();
   private readonly veil = new Graphics();
   private readonly figures = new Map<string, Figure>();
-  private photo: TilingSprite[] = [];
+  private photo: Container[] = [];
+  /** The sky's own colour, under the layers: a layer late to load or lost shows sky, never a blank or white band. */
+  private readonly sky = new Graphics();
   private cursor: Cursor = start();
   private readonly cast: Record<string, Cast>;
   private readonly names: Record<string, string>;
@@ -218,6 +226,7 @@ class Run {
       // (the stage first: a canvas as big as the column, black until the backdrop has loaded)
       await this.app.init({ resizeTo: hud.host, backgroundColor: 0x000000, antialias: false, roundPixels: true, autoDensity: true, resolution: Math.min(3, devicePixelRatio || 1) });
       hud.host.append(this.app.canvas);
+      this.back.addChild(this.sky);
       this.world.addChild(this.back, this.actors);
       this.app.stage.addChild(this.world, this.veil);
       this.layout();
@@ -288,16 +297,27 @@ class Run {
   private setLook(area: Area): void {
     if (this.look === area) return;
     this.look = area;
-    for (const l of this.photo) l.destroy();
+    for (const l of this.photo) l.destroy({ children: true });
     this.photo = [];
-    Promise.all(backdropFiles(area).map(textureOf))
+    this.sky.clear().rect(-STAGE_W, -STAGE_H, STAGE_W * 3, STAGE_H * 3).fill({ color: SKY[area] });
+    // (a layer that fails to load is left out, and one that is slow is waited for: the stage shows the sky colour meanwhile)
+    Promise.all(backdropFiles(area).map((u) => textureOf(u).catch(() => null)))
       .then((tex) => {
         if (this.look !== area) return;
-        this.photo = tex.map((t) => {
-          const l = new TilingSprite({ texture: t, width: STAGE_W * 3, height: STAGE_H });
-          l.x = -STAGE_W;
-          return l;
-        });
+        this.photo = tex
+          .filter((t): t is Texture => !!t && t.width > 1 && t.height > 1)
+          .map((t) => {
+            // (four copies side by side, bottom-anchored: no tiling, so nothing wraps upward and nothing needs a repeating texture)
+            const l = new Container();
+            for (let k = 0; k < 4; k++) {
+              const s = new Sprite(t);
+              s.x = k * STAGE_W;
+              s.y = STAGE_H - t.height;
+              l.addChild(s);
+            }
+            l.x = -2 * STAGE_W;
+            return l;
+          });
         this.back.addChild(...this.photo);
       })
       .catch(() => undefined);
@@ -364,7 +384,7 @@ class Run {
     this.world.pivot.set(Math.round(mid.x), Math.round(mid.y));
     this.world.position.set(Math.round(this.w / 2) + sx, Math.round(this.bandTop + this.bandH / 2) + sy);
     // (the layers drift at their own pace as the camera pans: far ones slower)
-    this.photo.forEach((l, i) => (l.tilePosition.x = Math.round(mid.x * (1 - (i + 1) / this.photo.length) * 0.5)));
+    this.photo.forEach((l, i) => (l.x = -2 * STAGE_W + ((Math.round(mid.x * (1 - (i + 1) / this.photo.length) * 0.5) % STAGE_W) + STAGE_W) % STAGE_W));
     this.drawActors(actors, c);
     this.drawVeil(shot, c.shotT);
     // the words
