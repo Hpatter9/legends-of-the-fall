@@ -47,6 +47,8 @@ const SPECS = [
   hk('cls_gunslinger_1', MELEE, ['Template_Male_Tan.png', 'Gun_01_Vest_Male.png', 'Pistol_02_Flintlock_Male.png']),
   hk('cls_gunslinger_2', MELEE, ['Template_Male_Tan.png', 'Gun_03_Gear_Male.png', 'Helm/Helm_Gunslinger_Male.png', 'Gun_03_Arquebus_Male.png']),
   hk('cls_gunslinger_3', MELEE, ['Template_Male_Tan.png', 'Gun_06_Royal_Male.png', 'Helm/Helm_MusketeerHat_Male.png', 'Gun_06_ShoulderCannon_Male.png']),
+  // the Last Stand's king: a lordly plate, a crown and a broad sword on the plain male body (`docs/notes/last-stand.md`)
+  hk('stand_king', MELEE, ['Template_Male.png', 'Plate_06_Lordly_Male.png', 'Plate_06_Lordly_Male_Top.png', 'Helm/Helm_Crown_Male.png', 'Sword_02_Broad_Male.png']),
   // the Druid's treant: one still picture from the golems pack (it stands and sways in the game)
   { id: 'cls_treant', still: 'Golems and elementals (pack by batareya)/21.png' },
 ];
