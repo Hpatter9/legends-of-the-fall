@@ -21,4 +21,4 @@
   `startStage` passes `Stage.heroes` (hp/atk multipliers, applied in `addUnit` to heroes only) and `Stage.mana`
   (`SpellState.rate`, used by `fillMana`). A fight with no castle plays out as before.
 - Left out: the War Table (a sixth slot), since the squad size of five is used across the run and the page.
-- Art: `src/art/home/castle.png`, credited in `CREDITS.md`. Tests: `test/castle.test.ts`.
+- Art: the old `src/art/home/castle.png` was deleted as unused. Tests: `test/castle.test.ts`.
