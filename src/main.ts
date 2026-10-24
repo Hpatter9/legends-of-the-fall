@@ -161,8 +161,8 @@ class Game {
   private settled = false;
   /** How long the fight has been over (ms): the recap waits `END_WAIT_MS` after the last kill, so the deaths play out. */
   private endWait = 0;
-  /** The heart-burn after a fall with hearts left: `t` real ms since it began, `swapped` once the wave has started again. Nothing is settled until it is over; no prompt. */
-  private revive: { t: number; swapped: boolean; line?: { dismiss: () => void } } | null = null;
+  /** The heart-burn after a fall with hearts left: `t` real ms since it began, `swapped` once the wave is set out again, `started` once its fight is on (`fightAt`: when). Nothing is settled until it is over; no prompt. */
+  private revive: { t: number; swapped: boolean; started: boolean; fightAt: number; line?: { dismiss: () => void } } | null = null;
   /** Set while the revive itself starts the wave again, so that `newBattle` keeps the revive going. */
   private reviveRestart = false;
   /** What an army's last settled fight paid (null for any other run). */
@@ -1492,17 +1492,20 @@ class Game {
 
   /** The party fell with a heart left: no card and no question. A heart burns, a line says so, and the wave starts again by itself. */
   private beginRevive(): void {
-    this.revive = { t: 0, swapped: false, line: reviveLine('A heart burns. The party rises.', this.reviveTimes().end) };
+    this.revive = { t: 0, swapped: false, started: false, fightAt: 0, line: reviveLine('A heart burns. The party rises.', this.reviveTimes().end) };
     play('sparkle');
     this.drawLives(this.run);
   }
 
-  /** A tap during the burn skips ahead to the wave starting again (and a tap after it sends the line away). */
+  /** A tap during the burn skips ahead to the wave starting again, and a tap after that to its fight (and sends the line away). */
   private skipRevive(): void {
     const r = this.revive;
     if (!r) return;
     if (!r.swapped) r.t = Math.max(r.t, this.reviveTimes().swap);
-    else r.line?.dismiss();
+    else {
+      r.fightAt = 0;
+      r.line?.dismiss();
+    }
   }
 
   /** The burn's clock: at its midpoint the heart is spent and the wave starts again with the retry's gold, the heroes rising in a pillar of light. */
@@ -1524,8 +1527,14 @@ class Game {
       this.reviveRestart = false;
       for (const u of this.b.units) if (u.side === 'hero') this.sprites.get(u.id)?.evolve();
       flyUp(`+${gold} gold`, $('gold'));
+      // (the heroes stand where they stood, glowing; a beat later the fight is on, with no Fight! tap)
+      r.fightAt = r.t + (reducedMotion() ? 200 : 500);
     }
-    if (r.t >= at.end) this.revive = null;
+    if (r.swapped && !r.started && r.t >= r.fightAt) {
+      r.started = true;
+      if (this.b.phase === 'deploy') this.begin();
+    }
+    if (r.t >= at.end && r.started) this.revive = null;
   }
 
   /** The lives at the top (an army's and the daily's hearts, `MAX_RETRIES` of them): full while left, grey once spent, the next one burning during a revive. Only runs that can retry
@@ -1998,7 +2007,7 @@ class Game {
     const ended = b.phase === 'won' || b.phase === 'lost';
     const ready = ended && (!!this.auto || this.endWait >= END_WAIT_MS);
     // (a wave lost with a heart left is not settled: a heart burns and the wave starts again by itself. With none left, or in a mode with none, the loss is settled and the run ends)
-    if (ready && b.phase === 'lost' && !this.settled && !this.auto && fallOutcome(run) === 'heart' && !this.revive) this.beginRevive();
+    if (ready && b.phase === 'lost' && !this.settled && fallOutcome(run) === 'heart' && !this.revive) this.beginRevive();
     if (ready && !this.settled && !this.revive) {
       this.settled = true;
       const won = b.phase === 'won';
@@ -2129,7 +2138,7 @@ class Game {
       $('next').textContent = run.over && !run.tower ? 'Run recap' : run.cleared && run.tower ? 'See the summary' : b.phase === 'won' ? (fixed ? `Next wave (${run.stage})` : run.tower ? 'To the map' : `Next stage (${run.stage})`) : run.tower ? 'See the summary' : 'Home';
     }
     this.refreshAuto();
-    if (b.phase === 'deploy' && !this.auto) tips.atDeploy(n, run.stage, () => this.deployBox());
+    if (b.phase === 'deploy' && !this.auto && !(this.revive && !this.revive.started)) tips.atDeploy(n, run.stage, () => this.deployBox());
     this.buildBench();
     this.markTiles();
     this.refreshBench();
