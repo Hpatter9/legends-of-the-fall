@@ -256,7 +256,7 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
       for (const sc of sceneList(m)) {
         const row = el('div', `scRow${sc.seen ? '' : ' locked'}`);
         const text = el('div');
-        text.append(el('b', '', sc.title), el('small', '', sc.text));
+        text.append(el('b', '', sc.title), el('small', '', sc.more ? `${sc.text} (${sc.more} to find)` : sc.text));
         row.append(text);
         if (sc.seen && watch) {
           const b = el('button', '', 'Watch');

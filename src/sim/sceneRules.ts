@@ -5,7 +5,8 @@
 // greeted with a new save's opening). Pure rules: no Pixi, no DOM.
 
 import type { Meta } from './meta';
-import { SCENES, SCENE_ORDER, type CastMember, type Moment, type Scene } from './sceneScripts';
+import { momentKey, SCENES, SCENE_ORDER, type CastMember, type Moment, type Scene } from './sceneScripts';
+import { FAMILY_NAMES } from './sceneFamilies';
 import { UNITS } from './units';
 
 /** The scenes seen, from what was saved: only known ids, each once. A save with no list that has picked its heroes has seen the opening. */
@@ -21,13 +22,12 @@ export function markSeen(m: Meta, id: string): void {
   if (SCENES[id] && !seenScene(m, id)) (m.scenes ??= []).push(id);
 }
 
-const same = (a: Moment, b: Moment): boolean => a.kind === b.kind && (a.kind !== 'calBoss' || a.map === (b as { map: number }).map) && (a.kind !== 'earned' || a.hero === (b as { hero: string }).hero);
-
-/** The scene waiting at a moment, if there is one the save has not seen. */
+/** The scene waiting at a moment: one the save has not seen, or one that plays every time (a boss changing form). */
 export function dueScene(m: Meta, moment: Moment): string | null {
+  const key = momentKey(moment);
   for (const id of SCENE_ORDER) {
     const s = SCENES[id];
-    if (same(s.moment, moment) && !seenScene(m, id)) return id;
+    if (momentKey(s.moment) === key && (s.again || !seenScene(m, id))) return id;
   }
   return null;
 }
@@ -68,13 +68,72 @@ export function castOf(scene: Scene, p: Players): Record<string, Cast> {
 export const namesOf = (cast: Record<string, Cast>): Record<string, string> => Object.fromEntries(Object.entries(cast).map(([id, c]) => [id, c.name]));
 
 /** Where a scene comes up, for the Scenes list when it has not been seen. */
-export const momentText = (m: Moment): string =>
-  m.kind === 'starter' ? 'A new save, before its first heroes are picked.' : m.kind === 'calBoss' ? `The Calamity's map ${m.map} boss, as the fight is set up.` : m.kind === 'earned' ? 'A hero earned in play, the moment it joins.' : 'Every pull in the summoning hall.';
+export function momentText(mo: Moment): string {
+  switch (mo.kind) {
+    case 'starter':
+      return 'A new save, before its first heroes are picked.';
+    case 'calBoss':
+      return `The Calamity's map ${mo.map} boss, as the fight is set up.`;
+    case 'calVictory':
+      return "The Calamity's last herald falls.";
+    case 'armyClear':
+      return 'The first time an army is cleared.';
+    case 'awaken':
+      return 'A hero awakens.';
+    case 'earned':
+      return 'A hero earned in play, the moment it joins.';
+    case 'combo':
+      return 'A set of five fires its Last Oath for the first time.';
+    case 'comboCut':
+      return 'A set of five fires its Last Oath.';
+    case 'firstLoss':
+      return 'Your first defeat.';
+    case 'duchess':
+      return 'Duchess turns up in a fight.';
+    case 'castle':
+      return 'A building of the castle is raised.';
+    case 'spire':
+      return `The endless tower, at floor ${mo.floor}.`;
+    case 'bossForm':
+      return 'A boss changes form.';
+    case 'mythic':
+      return 'An army opened on Mythic.';
+    case 'elite':
+      return 'The first elite you meet.';
+    case 'ascension':
+      return 'The first Ascension.';
+    case 'dailyBoss':
+      return "The first daily's boss.";
+  }
+}
 
-/** The scenes the list shows, in order: each with whether it has been seen (an unseen one stays a mystery). */
-export const sceneList = (m: Meta): { id: string; title: string; text: string; seen: boolean }[] =>
-  SCENE_ORDER.map((id) => {
+export interface SceneRow {
+  id: string;
+  title: string;
+  text: string;
+  seen: boolean;
+  /** For a line that stands for the scenes of a family not yet seen: how many. */
+  more?: number;
+}
+
+/** The scenes the list shows, in order: each seen one with Watch, each lone unseen one a mystery, and a family's unseen ones folded into one line saying how many are left. */
+export function sceneList(m: Meta): SceneRow[] {
+  const rows: SceneRow[] = [];
+  const folded = new Map<string, SceneRow>();
+  for (const id of SCENE_ORDER) {
     const s = SCENES[id];
     const seen = seenScene(m, id);
-    return { id, title: seen ? s.title : '???', text: seen ? s.blurb : momentText(s.moment), seen };
-  });
+    if (seen) rows.push({ id, title: s.title, text: s.blurb, seen });
+    else if (!s.family) rows.push({ id, title: '???', text: momentText(s.moment), seen });
+    else {
+      let row = folded.get(s.family);
+      if (!row) {
+        row = { id, title: '???', text: `${FAMILY_NAMES[s.family] ?? s.family}: ${momentText(s.moment)}`, seen: false, more: 0 };
+        folded.set(s.family, row);
+        rows.push(row);
+      }
+      row.more = (row.more ?? 0) + 1;
+    }
+  }
+  return rows;
+}

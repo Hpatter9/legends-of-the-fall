@@ -33,6 +33,12 @@ export function playAwakenShow(pic: HTMLElement, step: number, label?: string): 
   play('levelUp');
 }
 
+/** Told after a hero takes a step of awakening (the page plays its cinematic): the kind and the step reached. */
+let awakened: ((kind: string, step: number) => void) | null = null;
+export const onAwakened = (f: (kind: string, step: number) => void): void => {
+  awakened = f;
+};
+
 /** The panel for a hero kind. `changed` is told after a step is taken (so the sheet can draw again, with the show). */
 export function drawAwaken(meta: Meta, kind: string, changed: (taken: Taken) => void): HTMLElement {
   const panel = el('div', 'awPanel');
@@ -64,7 +70,12 @@ export function drawAwaken(meta: Meta, kind: string, changed: (taken: Taken) => 
     go.type = 'button';
     go.disabled = !plan.can;
     // (the card shows the look and the stats before and after; the step is taken there)
-    go.addEventListener('click', () => openRankUp(meta, kind, changed));
+    go.addEventListener('click', () =>
+      openRankUp(meta, kind, (t) => {
+        if (t.what === 'awaken') awakened?.(kind, t.n);
+        changed(t);
+      }),
+    );
     panel.append(bar, go);
   } else panel.append(el('small', 'awNote', 'Fully awakened. Repeat pulls of this hero pay crowns once its shards have nothing left to buy.'));
   return panel;

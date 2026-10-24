@@ -24,3 +24,5 @@
 .scRow b { font: 400 12px/1.4 var(--display); font-weight: 400; color: var(--gold-hi); }
 .scRow small { font: 400 12px/1.5 var(--body); font-weight: 400; color: var(--dim); overflow-wrap: anywhere; }
 .scRow button { flex: none; min-width: 72px; min-height: 40px; margin: 0; font: 400 12px var(--display); font-weight: 400; }
+/* (the heroes' and Duchess's passing remarks wait while a scene is up: they would float over the film) */
+body:has(#cutscene:not([hidden])) #quip { display: none !important; }

@@ -47,6 +47,9 @@ export class PageGoat {
   private plan: Visit | null = null;
   private planned = false;
   private planAt = 0;
+  /** Told once a fight, as her visit begins and she starts to walk in (the cinematic of her first turning up). */
+  onArrive?: () => void;
+  private arrived = false;
 
   constructor(private place: () => GoatSpot | null) {
     if (!document.getElementById('duchessStyle')) {
@@ -74,6 +77,7 @@ export class PageGoat {
   /** A fight is set up: she visits one in four or five, wanders in a few seconds on, stays a while and wanders off (`render/duchessRules.ts`). */
   newFight(): void {
     this.planned = true;
+    this.arrived = false;
     this.plan = rollVisit(this.rand);
     this.planAt = performance.now();
     this.t0 = performance.now();
@@ -121,6 +125,10 @@ export class PageGoat {
     const visit = this.planned ? visitAt(this.plan, performance.now() - this.planAt) : { phase: 'here' as const, k: 1 };
     this.root.style.visibility = spot && visit.phase !== 'away' ? 'visible' : 'hidden';
     if (!spot || visit.phase === 'away') return;
+    if (this.planned && !this.arrived) {
+      this.arrived = true;
+      this.onArrive?.();
+    }
     // (walking in or out she slides along the page's edge, a whole pixel at a time, her legs going)
     const walking = visit.phase === 'in' || visit.phase === 'out';
     const slide = walking ? Math.round(-(spot.left + 48) * (1 - visit.k)) : 0;
