@@ -570,8 +570,8 @@ export class SummoningHall {
         depth: b.y,
         paint: () => {
           g.drawImage(a.brazier, Math.round(b.x - a.brazier.width / 2) * s, (b.y - a.brazier.height) * s, a.brazier.width * s, a.brazier.height * s);
-          // (the flame is the pack's six-frame 16-pixel fire, one frame every 110 ms; the two braziers are out of step)
-          const f = Math.floor(this.now / 110 + i * 3) % 6;
+          // (the flame is one steady frame of the pack's six-frame 16-pixel fire; the two braziers differ so they do not look cloned, and nothing flickers)
+          const f = 1 + i * 2;
           g.drawImage(a.flame, f * 16, 0, 16, 16, Math.round(b.x - 8) * s, (b.y - a.brazier.height - 8) * s, 16 * s, 16 * s);
         },
       }),
@@ -603,10 +603,10 @@ export class SummoningHall {
       g.fillRect(0, 0, W, H);
     }
 
-    // the circle's glow: a slow pulse at rest, ramping up while it charges (gold in the grand show)
+    // the circle's glow: steady at rest, ramping up while it charges (gold in the grand show)
     const charged = c;
     g.globalCompositeOperation = 'lighter';
-    const breathe = 0.5 + 0.5 * Math.sin(this.now / 600);
+    const breathe = 0.5;
     const grow = grand ? 1.6 : 1;
     g.fillStyle = `rgba(${grand ? ACCENT.rgb : '150, 90, 255'}, ${0.1 + 0.08 * breathe + 0.3 * charged})`;
     this.ellipse(circle.x, circle.y, 30 + Math.round(4 * charged * grow), 14 + Math.round(2 * charged * grow));
@@ -750,16 +750,16 @@ export class SummoningHall {
     }
     g.globalAlpha = 1;
 
-    // the braziers flicker, and the crystals breathe; in the grand show they flare gold
+    // the braziers and crystals glow steadily; in the grand show they flare gold
     if (this.glow) {
       g.globalCompositeOperation = 'lighter';
-      g.globalAlpha = 0.6 + 0.22 * Math.sin(this.now / 130) * Math.sin(this.now / 410 + 1) + 0.08 * Math.sin(this.now / 47);
+      g.globalAlpha = 0.6;
       g.drawImage(this.glow, 0, 0);
       const tint = grand ? this.glowTint : null;
       if (tint && show) {
         const build = Math.min(1, t / show.tl.charge);
         const after = t < show.tl.beam ? 1 : Math.max(0, 1 - (t - show.tl.beam) / 800);
-        g.globalAlpha = Math.min(1, 0.9 * build * after * (0.9 + 0.1 * Math.sin(this.now / 700)));
+        g.globalAlpha = Math.min(1, 0.9 * build * after * 0.9);
         g.drawImage(tint, 0, 0);
       }
       g.globalCompositeOperation = 'source-over';
@@ -813,7 +813,7 @@ export class SummoningHall {
       g.save();
       g.globalCompositeOperation = 'lighter';
       const rg = g.createRadialGradient(x * s, mid, 0, x * s, mid, rad);
-      const al = 0.4 * e * o.alpha * (0.9 + 0.1 * Math.sin(this.now / 800));
+      const al = 0.4 * e * o.alpha * 0.9;
       rg.addColorStop(0, `rgba(${ACCENT.rgb}, ${al})`);
       rg.addColorStop(1, `rgba(${ACCENT.rgb}, 0)`);
       g.fillStyle = rg;

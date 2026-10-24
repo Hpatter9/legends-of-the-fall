@@ -869,13 +869,13 @@ export class CastleScene {
     }
   }
 
-  /** The tower's window light, the forge's glow, the gold's shine and the lanterns, pulsing, added over the picture. */
+  /** The tower's window light, the forge's glow, the gold's shine and the lanterns, steady, added over the picture. */
   private glows(): void {
     const g = this.ctx;
     const s = this.scale;
     if (!this.glow) return;
     g.globalCompositeOperation = 'lighter';
-    const pulse = this.reduced ? 0.6 : 0.55 + 0.25 * Math.sin(this.now / 480) + 0.08 * Math.sin(this.now / 130);
+    const pulse = 0.6;
     const spot = (cx: number, cy: number, size: number, al: number, tint: string) => {
       g.globalAlpha = Math.max(0, Math.min(1, al * pulse));
       g.drawImage(this.tinted(tint), (cx - size / 2) * s, (cy - size / 2) * s, size * s, size * s);
@@ -943,7 +943,7 @@ export class CastleScene {
         g.fillRect(x * s, (y - r) * s, s, (2 * r + 1) * s);
         continue;
       }
-      g.globalAlpha = m.kind === 'smoke' ? 0.75 * (1 - t) : m.kind === 'rune' ? 0.9 * (1 - t) * (0.6 + 0.4 * Math.sin(m.age / 90)) : 0.85 * (1 - t);
+      g.globalAlpha = m.kind === 'smoke' ? 0.75 * (1 - t) : m.kind === 'rune' ? 0.7 * (1 - t) : 0.85 * (1 - t);
       g.fillStyle = m.color;
       const size = Math.max(1, Math.round(m.size + m.grow * t));
       g.fillRect(Math.round(m.x - size / 2) * s, Math.round(m.y - size / 2) * s, size * s, size * s);

@@ -316,9 +316,9 @@ test('an army run fights its own waves, with the boss, its size and the land of 
     assert.equal(isBossRun(run), !!boss);
     if (boss) assert.ok(boss.size! > 1);
   }
-  // (waves alternate between the army's own two lands, the first on wave 1)
-  assert.deepEqual([...lands], ['graveyard', 'dungeon']);
-  assert.deepEqual([...lands], [...landsOf(armyById('undead')!)]);
+  // (every wave of the attempt is on the one land, one of the army's own: the map does not change in one long battle)
+  assert.equal(lands.size, 1);
+  assert.ok(landsOf(armyById('undead')!).includes([...lands][0] as never));
 });
 
 test('winning waves moves on, the last boss wins the army and ends the run', () => {

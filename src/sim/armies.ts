@@ -9,6 +9,7 @@ import type { Area } from './board';
 import { FOES, isBoss } from './foes';
 import { PHASE_AT } from './bossPhases';
 import type { Meta } from './meta';
+import { mixSeed } from './rng';
 import { starCrowns } from './stars';
 import { ARMY_STARS, MILESTONES, tierOf, TIERS } from './tiers';
 
@@ -33,7 +34,7 @@ export interface Army {
   level: number;
   /** The land of its first wave (and its card's backdrop); `lands` is every land its waves are fought in. */
   area: Area;
-  /** One or two lands that its waves alternate between (wave 1 on the first), each fitting its troops; missing is `area` alone (the daily's). */
+  /** One or two lands that an attempt is fought on (one of them, for all its waves), each fitting its troops; missing is `area` alone (the daily's). */
   lands?: readonly Area[];
   waves: readonly Wave[];
   /** The foes' hp and attack at wave 1, as a share of their stats in `foes.ts`, and the share they gain each wave after. */
@@ -236,9 +237,12 @@ export const ARMIES: readonly Army[] = [
   },
 ];
 
-/** The land wave n of an army is fought on: its lands in turn, the first on wave 1. */
-export const landOf = (a: Army, n: number): Area => (a.lands ?? [a.area])[(n - 1) % (a.lands?.length ?? 1)];
-/** Every land an army's waves are fought in. */
+/** The land an attempt at an army is fought on, every wave of it (the army is one long battle, so its map does not change): one of the army's lands, picked once by the attempt's seed. */
+export const landOf = (a: Army, seed: number): Area => {
+  const lands = a.lands ?? [a.area];
+  return lands[mixSeed(seed, 0x1a4d) % lands.length];
+};
+/** Every land an army's attempts may be fought in (each attempt takes one). */
 export const landsOf = (a: Army): readonly Area[] => a.lands ?? [a.area];
 
 export const armyById = (id: string): Army | undefined => ARMIES.find((a) => a.id === id);
@@ -261,7 +265,7 @@ export function waveBoost(a: Army, n: number, tier = 0): Stage {
     const def = FOES[w.foes[0]];
     boss = { size: w.boss === 'final' ? 1.5 : 1.3, hp: want.hp / def.hp, atk: want.atk / def.atk, ...(w.boss === 'final' ? { phase: t.phaseAt ?? PHASE_AT, ...(t.surge ? { surge: t.surge } : {}) } : {}) };
   }
-  return { foes: { hp: k * t.hp, atk: k * t.atk, ...(t.speed !== 1 ? { speed: t.speed } : {}) }, boss, area: landOf(a, n) };
+  return { foes: { hp: k * t.hp, atk: k * t.atk, ...(t.speed !== 1 ? { speed: t.speed } : {}) }, boss, area: a.area };
 }
 
 /** The foes of wave n on a tier: the wave's own band, then the tier's escorts, copies of the wave's escorts in turn (a boss is never copied, so a boss with no escorts stays alone). */
