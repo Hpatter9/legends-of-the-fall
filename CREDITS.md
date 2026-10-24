@@ -247,3 +247,5 @@ No new art: the five-hero combos' gathering and strike, a tier skill's ring and 
 ## Talent icons
 
 - The **talent glyphs** (`src/art/talent/*.png`, 37 icons at 32x32: heart, sword, armour, eye, boot, cross, pickaxe and the rest) are generated with PixelLab (`tools/pixellab/talents/gen.py`, `/create-image-pixflux` with the game's warm palette as the colour reference, as `tools/ui/genicons.py` does), used as they came. See `docs/notes/hero-progress.md`.
+
+- **The Last Stand's king** (`src/art/units/stand_king.png`): layered from the Himeko Sutori character pack in `chronos-assets` (plain male body, Plate 06 Lordly armour and its top layer, the Crown helm, a Broad Sword), cut by `tools/compose-class-heroes.cjs stand_king` as the class heroes once were.

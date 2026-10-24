@@ -17,6 +17,8 @@ import { newMeta, startedMeta } from '../src/sim/meta';
 import { ALL_HEROES, HEROES, UNITS } from '../src/sim/units';
 import { ARMIES } from '../src/sim/armies';
 import { TICK_MS } from '../src/sim/battle';
+import { towerRun } from '../src/sim/modes';
+import { migrateOldClimb } from '../src/sim/stand';
 
 const setupAt = (level: number): StandSetup => ({ boost: () => gradeBoost(1, 0, level), castle: newCastle(), pool: ALL_HEROES });
 const armies = ARMIES.map((a) => a.id);
@@ -472,4 +474,24 @@ test('a wave that goes on too long is enraged, so no run lasts for ever', () => 
 
 test('a new save has a best wave of nothing', () => {
   assert.equal(newMeta(1).stand ?? 0, 0);
+});
+
+test('an old spire climb in a save is closed, paid once and dropped', () => {
+  const m = startedMeta(2);
+  const old = towerRun(5, m);
+  old.stage = 17;
+  old.best = 17;
+  const store = new Map<string, string>([['legends.tower', JSON.stringify(old)]]);
+  const mem = { getItem: (k: string) => store.get(k) ?? null, removeItem: (k: string) => void store.delete(k) };
+  const note = migrateOldClimb(m, mem)!;
+  assert.match(note, /Last Stand/);
+  assert.equal(store.has('legends.tower'), false);
+  assert.ok(m.stash.length >= 2, 'sixteen floors earned their chests');
+  assert.equal(migrateOldClimb(m, mem), null, 'nothing is left to pay');
+  // a very old save kept it in the ordinary slot; junk is simply left alone
+  store.set('legends.run', JSON.stringify(towerRun(6, m)));
+  assert.ok(migrateOldClimb(m, mem));
+  assert.equal(store.has('legends.run'), false);
+  store.set('legends.tower', 'junk');
+  assert.equal(migrateOldClimb(m, mem), null);
 });

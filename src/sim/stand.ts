@@ -24,7 +24,8 @@ import { heroBoost, manaRate, moveRate, type Castle } from './castle';
 import { stageCrowns, runCrowns, heroRank, type Meta, type StashChest } from './meta';
 import { heroStats } from './talents';
 import { awakenedOf } from './awaken';
-import { chestsFor, gearChance } from './tower';
+import { chestsFor, gearChance, settleTower } from './tower';
+import type { Run } from './run';
 import { grantEquipment, rollEquipment, itemName } from './equipment';
 import { UNITS } from './units';
 
@@ -43,7 +44,7 @@ export const KING_HP = 1000;
 export const KING_HEAL = 0.4;
 /** Foes' hp and attack at wave 1 (a share of their stats in `foes.ts`), and the share they gain each wave after. */
 export const WAVE_START = FOE_START;
-export const WAVE_GROWTH = 0.1;
+export const WAVE_GROWTH = 0.12;
 /** A wave's size: foes at wave 1 and the foes each wave adds. */
 export const WAVE_BASE = 4;
 export const WAVE_STEP = 1.5;
@@ -773,3 +774,34 @@ export function loadStand(store: Pick<Storage, 'getItem'> = localStorage): Stand
 
 /** The start of a break is the place a run is saved: its battle is built again from the record, the wave still to come. */
 export const canSave = (s: Stand): boolean => s.phase === 'break' || s.phase === 'deploy';
+
+/**
+ * The old spire climb is gone. A climb still saved (in the Tower's slot, or in the ordinary one by a very old save) is dropped, and what it had
+ * earned is paid once as the old end of a run was (`settleTower`: its chests and equipment; its crowns were paid fight by fight). Returns a line
+ * for the page to show, or null when there was none. Anything unreadable is dropped with a plain note.
+ */
+export function migrateOldClimb(m: Meta, store: Pick<Storage, 'getItem' | 'removeItem'>): string | null {
+  let note: string | null = null;
+  for (const key of ['legends.tower', 'legends.run']) {
+    let run: Run | null = null;
+    try {
+      run = JSON.parse(store.getItem(key) ?? 'null') as Run | null;
+    } catch {
+      run = null;
+    }
+    if (!run || run.mode?.kind !== 'tower') continue;
+    store.removeItem(key);
+    const floors = Math.max(0, (run.stage ?? 1) - 1);
+    try {
+      run.over = true;
+      if (run.tower) {
+        const sum = settleTower(m, run);
+        note = `The old tower climb has been closed: its ${floors} floors paid ${sum ? `${sum.bronze + sum.silver + sum.gold} chests and ${sum.gear.length} pieces of equipment` : 'nothing more'}. The Tower is now the Last Stand.`;
+      }
+    } catch {
+      /* (a record that cannot be settled pays nothing) */
+    }
+    note ??= 'The old tower climb has been closed. The Tower is now the Last Stand.';
+  }
+  return note;
+}

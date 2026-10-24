@@ -6,7 +6,7 @@ all four edges, wave after wave, bigger each time; the run ends when the king fa
 building art and its unlock (15 stars); it is now called **The Last Stand** (the camp's plate says "Last Stand") and shows
 the best wave.
 
-Status: **plan** (this section is the plan; the "What was built" section below is filled in as each step lands).
+Status: **built** (plan first, results after it).
 
 ## Plan
 
@@ -77,3 +77,74 @@ built once; the heroes' leashed walks search only the tiles near the post; dead 
 4. The page.
 5. The spire's removal, the migration, the camp's rename.
 6. Screenshots (`docs/samples/last-stand-*.png`), the performance numbers, this note's tables.
+
+## What was built, and what differs from the plan
+
+- Everything in the plan table exists. The page draws into the page's own Pixi canvas (not a second one): the ordinary board is hidden
+  while the Stand is up (`body[data-stand]`, `Game.hideBoard`). Pan is one finger, pinch is two; the camera frames the king, the heroes
+  and the foes within 10 tiles and eases out as a wave grows. Zoom is in whole device pixels (`n / devicePixelRatio`: 1/3, 2/3, 1,
+  4/3, 5/3 on a 3x phone; 1 on a 1x screen). Heroes move by tapping one then a tile, or by dragging it, in the deploy phase, in a break or
+  mid-wave (its post moves and it walks there).
+- **Skills and the leash.** A hero's skill is cast as if no foe outside its zone existed, and a dash or blink that would end past the
+  leash stops on the last tile of its way inside it (`castInZone`). The test holds every hero on the field to its leash every tick.
+- **Fallen heroes** rise at their posts at the next wave clear (half hp); the others mend 35%. The king is not healed by it.
+- **Pooling and cost.** Foe sprites are reused by kind and size (`UnitSprite.rebind`); health bars of units with no skill meter redraw only
+  when they change; sprites far off the screen are hidden and looked at every eighth frame; the field is one baked texture
+  (`BoardView.bakeField`); corpses are dropped from the unit list unless something still points at them.
+- **Sound.** New cues `standBoss` (a boss wave begins) and `kingHit` (throttled); the rest is the usual fight sound.
+- **King's sprite**: composed from the packs (see CREDITS).
+- **Start**: the party and meta levels as the armies use them (rank, level, equipment, talents); run levels come on top.
+
+### The old tower
+
+Gone from the game: the Tower's entry, its saved climb (`legends.tower` and the very old ordinary-slot case are closed on load by
+`migrateOldClimb`, which pays the climb's chests and equipment once and shows a line on the home screen), `tools/tower-balance`'s tower
+table, the camp's "Tower" name (now "Last Stand", best wave on its plate; unlock still 15 stars). `legends.stand` is the new save (in
+`SAVE_KEYS`; `legends.tower` stays there for old saves). The tower achievements now count Last Stand waves too.
+**Kept, because the Calamity and its tests run on them:** `run.tower`, `tower.ts` (maps, elites, twists, mystery, healing, `settleTower`),
+`TowerView` (the Calamity's map), and `towerRun` (a run-with-tower-state used by many Calamity-side tests as a fixture; no page starts it
+now). I did not rewrite those ~100 test uses; say if you want `towerRun` folded into a test helper.
+
+### Pay (compared with the old tower)
+
+Crowns: the sum of `stageCrowns(w)` for each wave cleared plus `runCrowns(best)` at the end: the old tower's per-floor pay with waves
+for floors. Chests: bronze every 8 waves, silver every 13, gold every 39 (the old act boss rhythm); equipment chance `gearChance`.
+A level-1 run of about 5 waves pays about 150 crowns, about the old tower's median.
+
+### Balance
+
+`npm run stand-balance` (or `npm run balance -- --no-tables --stand`): 30 greedy runs a row, the starting five at the level, nothing
+worn, no castle; the greedy player hires up to seven heroes, buys the first relic offered, levels the weakest, heals the king under 55%.
+Wave the king fell in:
+
+| Hero level | Median | Mean | Min | Max |
+| --- | --- | --- | --- | --- |
+| 1 | 6 | 5.6 | 3 | 8 |
+| 10 | 15 | 16.6 | 13 | 21 |
+| 20 | 21 | 20.7 | 15 | 27 |
+| 30 | 27 | 31.4 | 15 | 77 |
+| 40 | 26 | 28.6 | 15 | 50 |
+| 60 | 32 | 33.9 | 20 | 75 |
+| 80 | 40 | 41.3 | 20 | 70 |
+| 100 | 40 | 46.5 | 24 | 78 |
+
+Targets: level 1 about 5-8 (6), level 30 about 20 (27, a little high), maxed 40+ (40-46). Boss waves are the walls (medians sit at 15,
+20, 30, 40). The levers are `WAVE_GROWTH` (0.12), `WAVE_STEP`, `bossShare` and the prices. No run lasts for ever: a wave left alone is
+enraged after 75 s, and the longest run of 240 here ended at wave 78.
+
+### Performance
+
+`node tools/stand/perf.mjs 30 60` (wave 30, ten heroes, about 45 foes at once, headless Chromium with software GL, 393x852): the page's own
+JavaScript per frame averages 0.9 ms (sim 0.13 ms, sprites 0.14 ms), worst 6 ms; the sim runs 0.03 ms a tick in the balance runner. The
+drawing is on the GPU on a phone; this machine cannot measure that, so a real-phone check is still owed.
+
+### Screenshots
+
+`docs/samples/last-stand-{deploy,wave3,wave25,boss-banner,boss,break,end}-{393x852,360x780,412x915}.png`, from `tools/stand/shots.mjs`
+(`tools/stand/touch.mjs` checks the touch, `look.mjs` takes one view).
+
+### Open points for the owner
+
+- The mode's name ("The Last Stand") is mine; the camp plate reads "Last Stand".
+- A run is saved at each break, not mid-wave: closing the page mid-wave resumes at the start of that wave.
+- Flicker: the heroes' full skill meter still pulses as in ordinary fights (the flicker worker's area).

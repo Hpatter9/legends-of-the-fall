@@ -7,7 +7,7 @@ import { standable, tileAt } from './sim/board';
 import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
 import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
 // (`saveSlot` as `saveRun`: a tower or calamity run is saved in its own slot, any other in the ordinary one)
-import { adoptOldTower, armyOfRun, armyRun, benchFull, boostOf, canRetry, chainOf, MAX_RETRIES, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryGold, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, waveArmyOf, type Owned, type Run } from './sim/run';
+import { armyOfRun, armyRun, benchFull, boostOf, canRetry, chainOf, MAX_RETRIES, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryGold, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, waveArmyOf, type Owned, type Run } from './sim/run';
 import { climbXpView, heroLevel, localBoost } from './sim/climb';
 import { calamityRun } from './sim/modes';
 import { CAL_MAPS } from './sim/calamity';
@@ -41,13 +41,13 @@ import { Gacha } from './gacha';
 import { Events } from './events';
 import { TowerView } from './towerView';
 import { StandView } from './standView';
-import { loadStand } from './sim/stand';
+import { loadStand, migrateOldClimb } from './sim/stand';
 import { showTwistBanner } from './twistView';
 import { abandonTower, finishTower, mapProgress, migrateTower, settleTower } from './sim/tower';
 import { hpShare } from './sim/health';
 import { Home } from './home';
 import { Party } from './party';
-import { dailyBonus, dailyCleared, dailyInProgress, modeNote, settleDaily, settleRun, startDaily, towerRun, type DailyPay } from './sim/modes';
+import { dailyBonus, dailyCleared, dailyInProgress, modeNote, settleDaily, settleRun, startDaily, type DailyPay } from './sim/modes';
 import { dailyBossName, dailyCrowns, DAILY_WAVES } from './sim/daily';
 import { showDailyStart } from './dailyView';
 import { chestPicture } from './chestStash';
@@ -235,8 +235,9 @@ class Game {
       else await chooseStarter(this.meta);
       saveMeta(this.meta);
     }
-    // (a tower run saved by an older version sat in the ordinary slot: it moves to the tower's own)
-    adoptOldTower();
+    // (a spire climb saved by an older version is closed and paid: the Tower is the Last Stand now)
+    const closed = migrateOldClimb(this.meta, localStorage);
+    if (closed) saveMeta(this.meta);
     // (a fresh page with no saved run shows the first army's board behind the home screen)
     this.run = (!seed && loadRun()) || armyRun(seed || (Date.now() % 100000) + 1, ARMIES[0].id, this.meta.party, this.meta.castle);
     this.syncPool();
@@ -327,7 +328,7 @@ class Game {
     this.wire();
     this.newBattle();
     // (the game opens on the castle, unless a seed is given in the address)
-    if (!seed) this.home.open();
+    if (!seed) this.home.open(closed ?? undefined);
     // (a fault in one frame's drawing or sound is logged and the next frame goes on: Pixi's ticker stops for good when a
     // listener throws, which froze fights mid-way)
     this.app.ticker.add((tk) => {
@@ -1335,12 +1336,11 @@ class Game {
   }
 
   /** The tower or the calamity from the home screen: its saved run carries on where it stood; with none, a new one begins (the calamity asks for its hero first). */
-  private openMode(kind: 'tower' | 'calamity'): void {
+  private openMode(kind: 'calamity'): void {
     // (a shut mode has a disabled button; a run begun before it shut is still let in)
     if (!modeOpen(this.meta, kind) && !loadSlot(kind)) return;
     const saved = loadSlot(kind);
     if (saved) return this.resumeSlot(saved);
-    if (kind === 'tower') return this.startTower(towerRun(clockSeed(), this.meta));
     pickHero(this.meta, (hero, ascension) => this.startTower(calamityRun(clockSeed(), this.meta, hero, ascension)), () => this.home.open());
   }
 
@@ -1371,13 +1371,6 @@ class Game {
     if (r && !r.over) this.run = r;
     this.syncPool();
     this.placed.clear();
-    // (a tower run is on its map, or at a battle it has picked; one saved before the map had none and gets one)
-    if (this.run.mode?.kind === 'tower') {
-      migrateTower(this.run, ARMIES.filter((a) => armyUnlocked(this.meta, a.id)).map((a) => a.id), this.meta.tower);
-      if (this.run.tower!.cur?.fight) this.newBattle();
-      else this.towerView.open(this.run);
-      return;
-    }
     this.newBattle();
     if (this.run.event) this.events.openEvent(this.run, () => saveRun(this.run));
   }
