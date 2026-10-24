@@ -104,7 +104,7 @@ export interface Shot {
  *  this map is about to be fought. `calVictory`: the Calamity's last herald has fallen. `armyClear`: an army cleared for
  *  the first time. `awaken` / `earned`: a hero awakened, or joined by a milestone. `combo`: a five-unit combo's mega ultimate
  *  fires. `firstLoss`. `duchess`: she turns up in a fight. `castle`: a build is raised. `spire`: the endless tower's floor.
- *  `bossForm`: a boss changes form mid-fight. `mythic`: Mythic opened on an army. `summon` (a pull in the hall: made by `summonScene`, never marked seen), `elite`, `ascension`,
+ *  `bossForm`: a boss changes form mid-fight. `mythic`: Mythic opened on an army. `elite`, `ascension`,
  *  `dailyBoss`: the first of each. */
 export type Moment =
   | { kind: 'starter' }
@@ -121,7 +121,6 @@ export type Moment =
   | { kind: 'spire'; floor: number }
   | { kind: 'bossForm'; boss: string }
   | { kind: 'mythic' }
-  | { kind: 'summon' }
   | { kind: 'elite' }
   | { kind: 'ascension' }
   | { kind: 'dailyBoss' };

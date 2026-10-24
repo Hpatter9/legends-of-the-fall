@@ -98,8 +98,6 @@ export function momentText(mo: Moment): string {
       return 'A boss changes form.';
     case 'mythic':
       return 'An army opened on Mythic.';
-    case 'summon':
-      return 'Every pull in the summoning hall.';
     case 'elite':
       return 'The first elite you meet.';
     case 'ascension':

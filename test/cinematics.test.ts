@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FEET, fillLine, holdOf, lineLen, lineSeconds, sceneSeconds, SCENES, SCENE_ORDER, STAGE_H, STAGE_W, summonScene, type Scene } from '../src/sim/sceneScripts';
+import { FEET, fillLine, holdOf, lineLen, lineSeconds, sceneSeconds, SCENES, SCENE_ORDER, STAGE_H, STAGE_W, type Scene } from '../src/sim/sceneScripts';
 import { castOf, dueScene, kindOf, markSeen, namesOf, readScenes, seenScene } from '../src/sim/sceneRules';
 import { actorsAt, beats, BASE_SCALE, cameraAt, keepInside, lineNow, lineStart, lookAt, next, scaleOf, shotLength, start, tick, typedChars, TYPE_RATE } from '../src/render/sceneClock';
 import { loadMeta, newMeta, pickStarter, saveMeta } from '../src/sim/meta';
@@ -436,18 +436,6 @@ test('the silhouette steps aside and the hero steps into the light in the same p
   assert.equal(after.hero.x, sc.cast.hero.x);
 });
 
-test('the summoning cinematic is about three seconds, is not listed or marked seen, and ends on the hero', () => {
-  const sc = summonScene('knight', 'Knight');
-  const secs = sceneSeconds(sc);
-  assert.ok(secs >= 2 && secs <= 4, `${secs}`);
-  assert.equal(SCENE_ORDER.includes(sc.id), false);
-  assert.equal(SCENES[sc.id], undefined);
-  const end = actorsAt(sc, { shot: 1, beat: 0, t: 1, shotT: 1 });
-  assert.ok(end.hero.visible && !end.figure.visible);
-  assert.equal(sc.shots.filter((s) => s.fx?.includes('flash')).length, 1, 'one flash, once');
-  assert.equal(castOf(sc, { party: [] }).hero.kind, 'knight');
-});
-
 test('the opening plays before the starter pick with a fixed trio, and each scene can name its music', () => {
   const o = SCENES.opening;
   assert.equal(o.trio?.length, 3);
@@ -465,4 +453,13 @@ test('the Cinematics setting is on by default and kept when saved', async () => 
   assert.equal(parseSettings(null).cinematics, true);
   assert.equal(parseSettings('{"cinematics":false}').cinematics, false);
   assert.equal(parseSettings('{"cinematics":1}').cinematics, true);
+});
+
+test('an old saved settings object with the summoning-scene switch is read without it, and nothing crashes', async () => {
+  const { DEFAULTS, parseSettings } = await import('../src/settings');
+  const s = parseSettings('{"summonScene":false,"cinematics":true,"music":40}');
+  assert.equal('summonScene' in s, false, 'the retired switch is ignored');
+  assert.equal(s.music, 40);
+  assert.equal(s.cinematics, true);
+  assert.equal('summonScene' in DEFAULTS, false);
 });

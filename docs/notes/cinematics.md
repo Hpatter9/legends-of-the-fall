@@ -1,4 +1,4 @@
-# Cinematics (exploration, with two pilot scenes)
+# Cinematics (the pilots, and every scene since)
 
 The owner's ask: "Let's explore adding some cinematics." This note is the proposal: what the player sees, how a scene is
 written, what is built, and a list of the other moments that could get one, so the owner can pick what comes next.
@@ -117,18 +117,17 @@ plays out the same) while one is queued or playing.
 | --- | --- | --- | --- |
 | The Road Begins, The Ashen Road | pilots (0.131.0) | 37 s, 38 s | wired |
 | **Heralds**: The Bramble That Remembers, Item One: The Entrance, The Wall That Walks, The Last Flame, The End of All Roads | `calBoss` map 2 to 6, at the fight's set-up (`setupMoments`), before the boss's card | 32 to 39 s | wired |
-| **The Calamity ends**: Nobody Wrote the Next Bit | `calVictory`: the fight that clears a Calamity, before the summary | 39 s | wired: plays as the summary is opened, right before `cal-map`'s victory card |
+| **The Calamity ends**: Nobody Wrote the Next Bit | `calVictory`: a cleared Calamity's summary is opened, before the victory card | 39 s | wired |
 | **The armies' last stands** (nine: `clear:<army>`) | `armyClear`: an army's first clear (`pay.firstClear`) | 26 to 28 s | wired |
 | **Awakening** (45: `awaken:<hero>`) | `awaken`: the hero's first awakening step (`awakenView.onAwakened`) | 12 to 16 s | wired |
-| **A hero earned** (ten: `earned:<hero>`) | `earned`: `hero-progress`'s reveal (theirs, on main): `revealEarned` after a result | 5 to 14 s | wired (theirs; my duplicate dropped) |
+| **A hero earned** (ten: `earned:<hero>`) | `earned`: `hero-progress`'s reveal (theirs, on main): `revealEarned` after a result | 5 to 14 s | wired |
 | **The Last Oath** (eight sets: `oath:<set>` the first time, ~10 s with a line from each of the five, and `oathcut:<set>` every time after, ~3 s) | `combo` / `comboCut`: the combo's `comboCast` event, played by the set's five (`Game.playComboMega(setId)`) | 10 s / 3 s | wired; the fight is held while it plays, one-tap Skip, off with the Cinematics switch (`scenesOn`) |
 | **It Was the Placing** (first loss) | `firstLoss`: the first fight lost, as its result comes up (with a retry waiting or not) | 38 s | wired |
-| **She Was Not on the List** (Duchess in a fight) | `duchess`: her first visit to a fight (`PageGoat.onArrive` as she walks in) | 18 s | wired (to `battle-ui`'s random visit, on main in 0.137.0) |
+| **She Was Not on the List** (Duchess in a fight) | `duchess`: her first visit to a fight (`PageGoat.onArrive` as she walks in) | 18 s | wired |
 | **The castle going up** (seven: `castle:<site>`) | `castle`: the first time each building (and the chapel) is raised (`Home` hook `onBuilt`) | 20 to 22 s | wired |
 | **Spire milestones** (`spire:10`, `25`, `50`) | `spire`: the tower's fight at that floor is set up | 17 to 18 s | wired |
 | **A boss changing form** (fifteen: `form:<boss>`) | `bossForm`: each time (`startPhase`), the fight held; one tap Skip | 3 to 4 s | wired |
 | **The Hardest Setting Known to Boars** (Mythic) | `mythic`: an army run on the Mythic tier is set up | 28 s | wired |
-| The summoning cinematic | `hero-progress`'s `summonScene`, every pull | 3 s | theirs; my first-summon scene was dropped as it covers it |
 | **A Bad Stand-Up Act** (first elite) | `elite`: the first elite fight's set-up | 27 s | wired |
 | **More Health, and a New Hat** (Ascension 1) | `ascension`: the first fight of an Ascension 1 Calamity | 28 s | wired |
 | **Brought To You By** (the daily's first boss) | `dailyBoss`: the daily's boss wave's set-up | 27 s | wired |
@@ -147,11 +146,12 @@ What the new shapes are:
 
 ### Music
 
-Each scene has a `music` (the audio worker's scores, `musicScore.ts`): a herald its own (`gorvak`, `herald2` to `herald6`), and
-the rest a shared mood (`triumph` for the last stands, the Calamity's end, the heroes earned, Mythic and Ascension 1 (stings: `sceneBoss` on a herald, `sceneVictory` on the Calamity's end and the last stands); `comic` for the funny firsts and the
-castle; `solemn` for awakenings and Mythic; `spire` for the tower). The player calls `playScene` as a scene begins and
-`endScene` as it ends. A cut-in has none: the fight's music goes on. If `hero-progress` adds its own `music` field and call
-site, keep one of the two.
+Each scene has a `music` (the audio worker's scores, `musicScore.ts`), played by the scene player through `playScene` as a scene
+begins and put back with `endScene` as it ends or is skipped. A herald has its own (`gorvak`, `herald2` to `herald6`); the rest a shared
+mood: `triumph` (the last stands, the Calamity's end, the heroes earned, Mythic, Ascension 1, the Last Oath), `comic` (the funny firsts,
+the castle), `solemn` (awakenings), `spire` (the tower, the first elite, the daily's boss). Stings: `sceneBoss` on a herald and a Last
+Oath, `sceneVictory` on the Calamity's end and the last stands. A short cut-in (a boss changing form, the short Last Oath) has no score:
+the fight's music goes on.
 
 The Last Oath cut-in uses the pilot's black bars (no slide-in: the overlay is black already) and a one-shot flash in the short version; the
 full one has the `triumph` score, both the `sceneBoss` sting. Samples: `scenes-oath_holyOrder.png` (first), `scenes-oathcut_holyOrder.png`
@@ -159,8 +159,15 @@ full one has the `triumph` score, both the `sceneBoss` sting. Samples: `scenes-o
 
 ### Cinematics off
 
-`scenesOn()` reads `settings().cinematics` (the switch `hero-progress` added), and is off in an auto-replay; with it off, a scene is
-still marked seen as its moment passes (so the Scenes list can play it), and only the in-battle effect shows.
+`scenesOn()` reads `settings().cinematics` (the Settings switch), and is off in an auto-replay; with it off, a scene is
+still marked seen as its moment passes (so the Scenes list can play it), and only the in-battle effect shows. **Every scene ends with one tap on Skip** (top right; Escape too); a tap elsewhere moves on a line.
+
+### The summoning cinematic is gone
+
+The owner: "The summon cinematic isn't even close to a cinematic." It is cut: a pull goes straight to the hall's own show (`hall.ts`,
+`summonRules.ts`, the card reveal) as it did before. The `summonScene` function, its moment, its test and the "Summoning scene"
+Settings row are removed; an old save's settings with a `summonScene` field are read without it (a test holds that). The talking scenes
+and the Last Oath cut-ins stay. The `quick` argument of `ScenePlayer.play` (a tap ends the scene) is left, unused.
 
 ### Checked in the real page
 
@@ -183,16 +190,3 @@ first-loss scene as its result comes up; no page errors. `flow3.mjs`: the Holy O
 4. **The first loss plays after any fight lost**, a run's or the daily's, once.
 5. **Ascension 1's scene** plays on the first fight of an Ascension 1 run, whichever map.
 6. **The spire** here is the endless tower (`mode: tower`).
-
-## Decisions for the owner
-
-1. **Where the opening plays**: it is after the starter pick now (so the three heroes are the player's own). Before the pick
-   it could show a fixed trio instead, and give the pick a reason. Which?
-2. **A "never show cinematics" setting?** Skip is one tap each time, and a scene plays once, so none was added. A switch in
-   Settings is a few lines if they annoy.
-3. **Sound.** A scene has only a cue or two as a shot begins (a boom, a rumble). A short music sting or a bed per scene
-   (`audio-beds.md`) would help a lot, but is a bigger ask.
-4. **Humour and Duchess.** The voice here is the Chronos voice at a small scale, and Duchess is in both pilots. Say which
-   other scenes she should wander through.
-5. **Which scenes next**, from the table above. The cheapest wins for the effect are the Calamity's other bosses and the
-   hero awakening (one shape, 45 heroes).

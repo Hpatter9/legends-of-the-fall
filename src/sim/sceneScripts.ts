@@ -158,25 +158,6 @@ function earnedScene(kind: string, e: { look: Area; why: string; says: string })
   };
 }
 
-/** The summoning cinematic, for the hero a pull brought (the new one first): the circle answers in the dark, a flash, and the hero stands in it. About three seconds; a tap ends it (`ScenePlayer.play`'s `quick`). */
-export function summonScene(kind: string, name: string): Scene {
-  return {
-    id: 'summon',
-    title: 'The Summoning',
-    blurb: 'The circle answers.',
-    moment: { kind: 'summon' },
-    short: true,
-    cast: {
-      figure: { role: `unit:${kind}`, x: 288, facing: 'right', hidden: true, shade: true },
-      hero: { role: `unit:${kind}`, x: 288, facing: 'right', hidden: true },
-    },
-    shots: [
-      { look: 'dungeon', cam: wide(288, 205), to: wide(288, 210), fx: ['darken', 'glow'], caption: 'The circle answers', acts: [{ who: 'figure', enter: 288, from: 288 }], hold: 1.3 },
-      { cam: close('hero', 1.5), acts: [{ who: 'figure', hide: true }, { who: 'hero', enter: 288, from: 288 }], fx: ['flash', 'glow'], cue: 'eliteSting', caption: name, hold: 1.5 },
-    ],
-  };
-}
-
 /** The scenes of the heroes earned in play, in the roster's order. */
 const EARNED_SCENES: Scene[] = Object.entries(EARNED).map(([k, e]) => earnedScene(k, e));
 

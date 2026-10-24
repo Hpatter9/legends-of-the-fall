@@ -24,12 +24,12 @@ import { formOf, UNITS } from './sim/units';
 import { ELITE_BY_ID } from './sim/elites';
 import { isBoss } from './sim/foes';
 import { awakenedOf } from './sim/awaken';
-import { earn, loadMeta, needsStarter, pickStarter, heroRank, recordStars, saveMeta, type Meta, type Pull } from './sim/meta';
+import { earn, loadMeta, needsStarter, pickStarter, heroRank, recordStars, saveMeta, type Meta } from './sim/meta';
 import { chooseStarter } from './starter';
 import { ScenePlayer } from './render/sceneView';
 import { dueScene, markSeen } from './sim/sceneRules';
 import { onAwakened } from './awakenView';
-import { SCENES, SCENE_ORDER, summonScene, type Moment } from './sim/sceneScripts';
+import { SCENES, SCENE_ORDER, type Moment } from './sim/sceneScripts';
 import { previewFrames } from './render/sceneClock';
 import { xpRate } from './sim/castle';
 import { heroStats } from './sim/talents';
@@ -280,8 +280,7 @@ class Game {
           this.home.open();
         }),
       onRecruit: () => this.gacha.open(),
-      // (a pull plays the summoning cinematic first, every time: a tap on it skips the hall's show too, and goes straight to the cards)
-      onSummon: (n, play) => this.gacha.summon(n, async (got) => play(got, await this.summonCinematic(got))),
+      onSummon: (n, play) => this.gacha.summon(n, (got) => play(got)),
       onDaily: () => {
         if (dailyInProgress(loadRun(), todayKey())) return this.resume();
         // (the start card names the boss and the land; a tap on Fight! starts the run, the first of the date counting)
@@ -476,13 +475,6 @@ class Game {
 
   sceneFrames(id: string): [number, number, number][] {
     return previewFrames(SCENES[id]);
-  }
-
-  /** The summoning cinematic for a pull: the hero it brought (a new one first) steps into the circle's light. True when a tap skipped it, which skips the hall's show too. It never holds up a pull: a tap anywhere ends it. */
-  private async summonCinematic(got: Pull[]): Promise<boolean> {
-    const pick = got.find((p) => p.isNew) ?? got[0];
-    if (!pick || !settings().cinematics || !settings().summonScene) return false;
-    return (await this.scenes.play(summonScene(pick.kind, UNITS[pick.kind].name), this.players(), true)) === 'skipped';
   }
 
   /** The heroes earned in play since the last result was closed: each has its reveal, once, before the game goes on. */
