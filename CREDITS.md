@@ -18,7 +18,7 @@ the raw files), copied one sprite at a time from the private assets repository (
 - **The backdrop** (`src/art/backdrop/m1_1..5.png`): the Free Mountain Backgrounds pixel pack, set m1 (sky, clouds,
   peak, far hills, near hills), moved in layers as the board is panned. The app icon is from the Free Autumn Pixel
   Backgrounds (background 1).
-- **Effects** (`src/art/fx/impact.png`, `hit_fire.png`, `blast.png`): the hit sparks, fire hit and blast from the
+- **Effects** (`src/art/fx/impact.png`, `hit_fire.png`): the hit sparks and fire hit from the
   **Super Pixel Effects Gigapack (Free Version)** by unTied Games, as Chronos Settlement cut them
   (`src/renderer/art/effects/`).
 - **Item icons** (`src/art/items/`): single 16x16 tiles cut from the **DawnLike** tileset by DragonDePlatino (Items: Armor, Amulet, Boot, Hat, LongWep, Ring, Shield), for relics and gear.
@@ -71,13 +71,10 @@ All Craftpix, copied one sprite or layer at a time; no PixelLab. Ground tops and
 
 - The Paladin, Cleric, Druid, Barbarian, Ranger, Warlock, Illusionist and Gunslinger (three looks each, one per grade) are
   **generated with PixelLab** (see below). The Himeko Sutori layered sheets they replace are gone, so
-  `tools/compose-class-heroes.cjs` no longer makes the `cls_*` hero sheets.
+  `tools/compose-class-heroes.cjs` no longer makes the `cls_*` hero sheets (it now makes only the Last Stand's king).
 - The **Golem Forge** army's golems (`golem_stone/iron/crystal/magma/sapphire/forge.png`) are figures 6, 18, 20, 27, 32 and 15 of the same **Golems and elementals** pack by batareya (no licence file in the pack folder: check the author's terms before any public release). The pack has only still figures, so `tools/golems/cut.py` moves each by whole pixels for the walk, attack, idle, hurt and dead rows, with a last lying frame made by an exact 90-degree turn; nothing is resampled. The **Yokai Night Parade** troops and the Nine-Tailed Fox use the Kitsune, Karasu Tengu and Yamabushi Tengu sheets (Free Yokai Character Sprites, Craftpix) listed above.
 - The **foes remade for the art cleanup** (`forest_boss_1-3`, `boar_king`, `devil_leader`, `shaman_king`, `golem_*`, `satyr_1-3`) and the new **walk and hurt rows of the 16 remade heroes** are generated the same way (PixelLab: bases from Craftpix style references, `/animate-with-text-v3` clips, native pixels, hard alpha, lying last death frame by `lie.py`). Tools: `tools/pixellab/foes/` and `tools/pixellab/heroes/polish.py`; see `docs/notes/art-cleanup.md`.
 - The Druid's treant (`cls_treant.png`) is one picture from the **Golems and elementals** pack by batareya (the pack folder has no licence file: check the author's terms before any public release).
-
-- **The home screen** (`src/art/home/castle.png`): the Fantasy 2D Battlegrounds pixel pack (Craftpix), Battleground 2
-  (Bright), `Battleground2.png`, scaled to half size.
 
 ## Magic effects (the spells, the skills and the crits)
 
