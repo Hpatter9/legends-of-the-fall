@@ -2,12 +2,11 @@
 // far each gets. `npm run balance -- --tower` runs it through tools/balance.mjs's bundle; `--attempts n` sets the climbs per row.
 
 import { BUILDINGS, CASTLE_ANSWER, maxLevel, newCastle, type BuildingId } from '../src/sim/castle';
-import { ACT_ROWS } from '../src/sim/tower';
 import { CAL_MAPS, CAL_SCALE, CAL_TIER } from '../src/sim/calamity';
 import { startedMeta } from '../src/sim/meta';
 import { HEROES } from '../src/sim/units';
 import { mixSeed } from '../src/sim/rng';
-import { explore, fightLog, playCalamity, playTower, starterEnd, starterLevels, tierShares } from './autoplay';
+import { explore, fightLog, playCalamity, starterEnd, starterLevels, tierShares } from './autoplay';
 import { CAL_BOSSES } from '../src/sim/calamityBosses';
 import { UNITS } from '../src/sim/units';
 
@@ -25,26 +24,6 @@ const castleFor = (): ReturnType<typeof newCastle> => {
   if (which === 'maxed' || which === 'half') for (const id of Object.keys(BUILDINGS) as BuildingId[]) c[id] = which === 'half' ? Math.floor(maxLevel(id) / 2) : maxLevel(id);
   return c;
 };
-
-export function towerTable(): void {
-  const attempts = arg('--attempts', 30);
-  console.log(`\nTower climb: ${attempts} greedy climbs (the starting five, all back at level 1 with nothing worn, ${process.argv.includes('--castle') ? 'a castle at its top' : 'no castle'}); the floors cleared, and the share of climbs that felled each act's boss (floor ${ACT_ROWS}, ${ACT_ROWS * 2}, ...)`);
-  console.log('median  mean  min  max   boss1  boss2  boss3');
-  const floors: number[] = [];
-  const past = [0, 0, 0];
-  let lv = 0;
-  for (let a = 0; a < attempts; a++) {
-    const r = playTower(startedMeta(a + 1), mixSeed(a + 1, 0x70c1), HEROES, castleFor(), 80);
-    floors.push(r.floors);
-    lv += r.level;
-    for (let k = 0; k < 3; k++) if (r.bosses > k) past[k]++;
-  }
-  floors.sort((x, y) => x - y);
-  const mean = floors.reduce((n, x) => n + x, 0) / floors.length;
-  const pct = (n: number) => `${((100 * n) / attempts).toFixed(0)}%`.padStart(5);
-  console.log(`(mean hero level at the end: ${(lv / attempts).toFixed(1)})`);
-  console.log(`${String(floors[Math.floor(floors.length / 2)]).padStart(6)} ${mean.toFixed(1).padStart(5)} ${String(floors[0]).padStart(4)} ${String(floors[floors.length - 1]).padStart(4)}  ${pct(past[0])}  ${pct(past[1])}  ${pct(past[2])}`);
-}
 
 /** Calamity: a greedy player per starting hero kind and seed; the maps cleared (each a boss), full clears, and the heroes held at the end. */
 export function calamityTable(): void {

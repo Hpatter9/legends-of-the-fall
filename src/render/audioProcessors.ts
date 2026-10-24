@@ -635,6 +635,21 @@ export const SOUNDS: Record<Cue, (s: Voices, t: number) => void> = {
     s.note(t, 55, 0.9, 0.3, 'sine', 32);
     s.hiss(t, 0.6, 300, 'bandpass', 0.12, 2400);
   },
+  // a boss wave is coming: two low horn notes a fifth apart, a slow drum under them and a cold ring
+  standBoss: (s, t) => {
+    s.note(t, 73, 1.4, 0.2, 'sawtooth', 62);
+    s.note(t + 0.35, 110, 1.2, 0.18, 'sawtooth', 92);
+    s.note(t, 49, 1.1, 0.3, 'sine', 30);
+    s.note(t + 0.7, 55, 0.8, 0.26, 'sine', 33);
+    s.ring(t + 0.35, 330, 1, 0.05);
+    s.hiss(t, 0.5, 260, 'lowpass', 0.14);
+  },
+  // the king is struck: a dull thud and a short ring of mail
+  kingHit: (s, t) => {
+    s.note(t, 96, 0.3, 0.3, 'sine', 50);
+    s.ring(t + 0.01, 523, 0.35, 0.06);
+    s.hiss(t, 0.18, 1800, 'bandpass', 0.1, 1400);
+  },
   // a relic set: a two-piece's open chord, and a three-piece's fuller one with a rising run and a shimmer
   setChime2: (s, t) => {
     [523, 784, 1047].forEach((f) => s.ring(t, f, 1, 0.07));

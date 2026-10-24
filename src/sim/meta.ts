@@ -71,8 +71,10 @@ export interface Meta {
   xp: Record<string, number>;
   /** The furthest stage fought in any run (the endless tower opens at 10). */
   bestStage: number;
-  /** The most floors cleared in the endless tower. */
+  /** The most floors cleared in the endless tower (the old climb, kept as the record it was). */
   tower: number;
+  /** The best wave reached in the Last Stand, the mode that took the tower's place at the camp (`stand.ts`). Missing in a save from before; 0. */
+  stand?: number;
   /** A calamity's record: the most maps cleared in one run, and the runs cleared whole (none before the first calamity). */
   calamity?: { best: number; clears: number; /** The highest ascension level cleared whole (`ascension.ts`); none before the first clear after it came. */ asc?: number };
   /** The ascension levels a Calamity has been cleared at, each a title (`calReward.ts`); none before the first clear after it came. */
@@ -347,6 +349,7 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       // (saves from before the modes and achievements have none)
       m.bestStage = Math.max(1, m.bestStage | 0);
       m.tower = Math.max(0, m.tower | 0);
+      m.stand = Math.max(0, (m.stand ?? 0) | 0);
       m.daily = readDaily(m.daily);
       m.bosses = Array.isArray(m.bosses) ? m.bosses.filter((b) => BOSS_IDS.includes(b)) : [];
       // (saves from before the armies have their furthest stage mapped onto them, and the armies it opens are not new)

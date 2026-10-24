@@ -261,7 +261,7 @@ const SPIRES: { floor: number; title: string; lines: [string, string, string] }[
 const spireScene = (f: (typeof SPIRES)[number]): Scene => ({
   id: `spire:${f.floor}`,
   title: `Floor ${f.floor}: ${f.title}`,
-  blurb: `The endless tower, at floor ${f.floor}.`,
+  blurb: `The Last Stand, at wave ${f.floor}.`,
   moment: { kind: 'spire', floor: f.floor },
   family: 'spire',
   cast: {

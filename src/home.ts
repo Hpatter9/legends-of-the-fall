@@ -340,11 +340,11 @@ export class Home {
       tick.setAttribute('aria-label', 'Cleared today');
       daily.append(tick);
     } else if (!today?.plays) daily.append(el('i', 'badge'));
-    // (the Tower: shut, dimmed and chained, until the first army is beaten; a climb begun stays open whatever the unlock says)
+    // (the Last Stand, on the Tower's old place: shut, dimmed and chained, until the stars open it; a run begun stays open whatever the unlock says)
     const climbing = this.hooks.slotInfo?.('tower');
     const towerUp = towerOpen(m) || !!climbing;
-    const towerLine2 = climbing ?? (towerOpen(m) ? (m.tower ? `best ${m.tower}` : 'not climbed yet') : opensAt(MODE_NEED.tower));
-    const tower = place('hmTower', towerUp ? '' : 'locked', 'Tower', towerLine2, `Endless tower: ${towerLine2}${towerUp ? '' : `, ${progressLine(m, MODE_NEED.tower)}`}`, () => this.go(this.hooks.onTower));
+    const towerLine2 = climbing ?? (towerOpen(m) ? (m.stand ? `best wave ${m.stand}` : 'not tried yet') : opensAt(MODE_NEED.tower));
+    const tower = place('hmTower', towerUp ? '' : 'locked', 'Last Stand', towerLine2, `Last Stand: ${towerLine2}${towerUp ? '' : `, ${progressLine(m, MODE_NEED.tower)}`}`, () => this.go(this.hooks.onTower));
     tower.disabled = !towerUp;
     // (the Calamity: the portal; the plate carries the saved run or the best)
     const going = this.hooks.slotInfo?.('calamity');
