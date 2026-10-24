@@ -37,7 +37,7 @@ export const TIPS: Readonly<Record<TipId, TipDef>> = {
   stash: { text: 'Chests from army stars wait on the cart. Tap one to open it.', page: 'home' },
   equipment: { text: 'Equip best puts the strongest spare gear on this hero. Chests drop more.', page: 'any' },
   recycle: { text: 'Drag a hero you do not need onto Recycle to turn it back into gold.', page: 'game', during: 'deploy' },
-  retry: { text: 'Your party fell. Retry the wave with bonus gold, or give up and end the run.', page: 'result' },
+  retry: { text: 'Hearts: when your party falls, a heart burns and the wave starts again with bonus gold. With none left, the run ends.', page: 'game' },
   autoReplay: { text: 'Switch Auto on to repeat a cleared army by itself, for as many runs as you set.', page: 'home' },
 };
 

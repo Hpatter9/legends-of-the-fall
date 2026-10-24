@@ -31,6 +31,6 @@ export const SYSTEM_FINDERS: Partial<Record<TipId, () => HTMLElement | null>> = 
   stash: () => onShow(q('.csStash:not(.empty) button')),
   equipment: () => onShow(byText('.eqAuto button', 'Equip best')),
   recycle: () => (document.body.dataset.phase === 'deploy' && (q('#bench')?.children.length ?? 0) > 1 ? onShow(q('#bench')) : null),
-  retry: () => onShow(q('#retry')),
+  retry: () => onShow(q('#lives:not([hidden])')),
   autoReplay: () => onShow(q('.asAuto')),
 };
