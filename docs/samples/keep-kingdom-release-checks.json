@@ -1,0 +1,60 @@
+[
+  {
+    "width": 360,
+    "height": 780,
+    "boards": [
+      "8x11",
+      "10x13"
+    ],
+    "combat": true,
+    "offlineReload": true,
+    "areaFit": [
+      "forest"
+    ],
+    "errors": []
+  },
+  {
+    "width": 393,
+    "height": 852,
+    "boards": [
+      "8x11",
+      "10x13"
+    ],
+    "combat": true,
+    "offlineReload": true,
+    "areaFit": [
+      "highlands",
+      "forest",
+      "snow",
+      "desert",
+      "volcano",
+      "dungeon",
+      "plains",
+      "autumn",
+      "swamp",
+      "graveyard",
+      "ruins",
+      "temple",
+      "crystal",
+      "forge",
+      "shrine",
+      "warcamp",
+      "oasis"
+    ],
+    "errors": []
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "boards": [
+      "8x11",
+      "10x13"
+    ],
+    "combat": true,
+    "offlineReload": true,
+    "areaFit": [
+      "forest"
+    ],
+    "errors": []
+  }
+]

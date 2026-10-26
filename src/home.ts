@@ -213,10 +213,12 @@ export class Home {
   }
 
   show(tab: Tab): void {
+    if (!$('hmSheet').hidden) this.closeSheet();
     this.tab = tab;
     // (the tab bar stays under the armies: a tap on it leaves them)
     if ($('hmSub').classList.contains('armies')) this.closeSub();
     this.refresh();
+    if (tab === 'heroes') this.openRoster();
   }
 
   /** Redraw the page that is showing (after crowns or unlocks change elsewhere). */
@@ -508,15 +510,19 @@ export class Home {
     $('hmSheet').hidden = false;
     this.tavern.stop();
     this.camp.stop();
-    drawRoster($('hmSheetBox'), this.meta, (kind) => this.openSheet(kind), () => this.closeSheet());
+    drawRoster($('hmSheetBox'), this.meta, (kind) => this.openSheet(kind, true), () => this.closeSheet());
   }
 
-  private openSheet(kind: string): void {
+  private openSheet(kind: string, fromRoster = false, tab = 'overview'): void {
     this.closeSheet();
     $('hmSheet').hidden = false;
     this.tavern.stop();
     this.camp.stop();
-    this.stopSheet = drawHeroSheet($('hmSheetBox'), this.meta, kind, () => this.closeSheet());
+    this.stopSheet = drawHeroSheet(
+      $('hmSheetBox'), this.meta, kind,
+      () => fromRoster ? this.openRoster() : this.closeSheet(),
+      (next, nextTab) => this.openSheet(next, fromRoster, nextTab), tab,
+    );
   }
 
   private closeSheet(): void {

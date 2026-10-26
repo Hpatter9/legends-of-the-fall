@@ -46,6 +46,7 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 - **Completion criteria:** reproduce failures first; minimally fix post-hit effects and environmental credit; cover cancelled/dead/shielded hits and genuine kills; run typecheck, tests and web build; open an unmerged PR and report in #121.
 
 - **Validation:** typecheck passed; full `npm test` passed (104 test files); final 19 focused regressions and `npm test -- sim-001` passed; web build and diff checks passed.
+- **Integration:** current main UI release retained unchanged; typecheck, focused tests and web build also passed against 0.159.0.
 - **Handoff:** `docs/notes/sim-001.md`; genuine combat credit and participation/victory XP retained; no implementation blockers. Director reviews shield rider interpretation and handles merge/versioning.
 
 ## Ready queue

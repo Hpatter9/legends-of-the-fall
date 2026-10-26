@@ -1,0 +1,148 @@
+/* Keep & Kingdom: shared stone surfaces, brass accents and green actions.
+   Loaded after the legacy skins. All pictures and fonts are existing offline assets. */
+:root {
+  --kk-bg: #141611; --kk-panel: #24261f; --kk-raised: #303229;
+  --kk-rim: #75664a; --kk-gold: #dbc18b; --kk-text: #f1ead9; --kk-muted: #c0b8a4;
+  --ink: var(--kk-text); --dim: var(--kk-muted); --text: var(--kk-text); --text-dim: var(--kk-muted);
+  --gold: var(--kk-gold); --gold-hi: #f1d9a5; --gold-lo: #756039;
+  --accent: var(--kk-gold); --accent-hi: #f1d9a5; --edge: var(--kk-rim);
+  --display: Georgia, 'Times New Roman', serif;
+  --body: 'Alegreya Sans', 'Trebuchet MS', sans-serif;
+  --panel-bg: linear-gradient(#24261ff2, #171a16f2), url(ui/page.png) 0 0 / 32px 32px;
+  --frame: inset 0 0 0 1px #e2c79012, 0 8px 24px #0006;
+}
+html, body { background: var(--kk-bg); color: var(--kk-text); }
+body, button, input { font-family: var(--body); }
+button { border-image: none; border: 1px solid var(--kk-rim); border-radius: 5px; min-height: 44px; padding: 7px 10px; background: linear-gradient(#35372e, #23261f); color: var(--kk-text); text-shadow: none; box-shadow: inset 0 1px #ffffff0d, 0 2px 4px #0003; }
+button:active:not(:disabled) { border-image: none; background: #414333; transform: translateY(1px); padding: 7px 10px; }
+button.primary, .hmBig, .hmBattle, .setting .toggle.on, .setting .pair button.on {
+  border-image: none; border: 1px solid #bba472; border-radius: 5px; background: linear-gradient(#3b6248, #233f30);
+  padding: 9px 12px; color: #fff4da; text-shadow: none; font-family: var(--body); box-shadow: inset 0 1px #e8d9a52b, 0 3px 9px #0004;
+}
+button.primary:active:not(:disabled), .hmBig:active, .hmBattle:active { border-image: none; background: #36583f; }
+button.primary::after, .hmBattle::after { content: none; }
+button:disabled, button.primary:disabled { border-image: none; opacity: .5; color: #c5c0b0; }
+button:focus-visible, input:focus-visible { outline: 2px solid #efd39a; outline-offset: 3px; }
+.small, #mute, #gear, #speed, .round, #buttons button:not(#fight) { border-image: none; border-width: 1px; min-height: 40px; padding: 5px 7px; }
+.small:active:not(:disabled), #mute:active, #gear:active, #speed:active, .round:active, #buttons button:not(#fight):active:not(:disabled) { border-image: none; padding: 5px 7px; }
+#top, #hmTop { background: linear-gradient(#191c17fa, #22261ef0); border-image: none; border-bottom: 1px solid var(--kk-rim); }
+#top { display: grid; grid-template-columns: auto minmax(0, 1fr) auto repeat(3, 40px); grid-template-areas: 'lives gold clock mute gear speed' 'status status status status status status'; gap: 4px; padding-left: 8px; padding-right: 8px; }
+#top #lives { grid-area: lives; }
+#top #gold { grid-area: gold; margin: 0; font: 700 16px var(--body); }
+#top #clock { grid-area: clock; font: 700 16px var(--body); }
+#top #mute { grid-area: mute; }
+#top #gear { grid-area: gear; }
+#top #speed { grid-area: speed; }
+#top #status { grid-area: status; min-width: 0; padding-right: 135px; font: 13px/1.3 var(--body); }
+#panel { background: var(--panel-bg); border-image: none; border-top: 1px solid var(--kk-rim); box-shadow: 0 -6px 20px #0005; }
+#version { color: #d1c4a6; font: 11px var(--body); text-shadow: 0 1px 3px #000; }
+.hmPanel, .hsheet, .evcard, #tip, .hmNote, .toast {
+  border-image: none; border: 1px solid var(--kk-rim); border-radius: 7px;
+  background: var(--panel-bg); color: var(--kk-text); box-shadow: var(--frame); outline: none;
+}
+.hsheet, .evcard { padding: 12px; }
+.hmCard, .hmLink, .hmBuild, .setting, .hcard, .hrow, .brow, .ptSlot, .card {
+  border-image: none; border: 1px solid #696048; border-radius: 5px; background: linear-gradient(#303329f5, #20241cf5); color: var(--kk-text);
+}
+.hmCard.lockedCard, .hmCard:disabled { border-image: none; }
+.hmPanel h2, #hmSub h2, #party h2, #settings h2, #gacha h2, body #spellbook h2 { font-family: var(--display); color: var(--kk-gold); text-shadow: none; }
+#hmSub, #settings, #gacha, #party, body #spellbook { background: var(--panel-bg); }
+#hmSub h2, #party h2, #settings h2, #gacha h2, body #spellbook h2 {
+  border-image: none; border: none; clip-path: none; background: none; filter: none; padding: 4px 0; margin: 0 auto 0 0;
+}
+#hmSub header, #settings header, #party header, #gacha header { align-items: center; gap: 8px; min-height: 48px; }
+#hmTabs { background: #191d17; border-image: none; border-top: 1px solid var(--kk-rim); box-shadow: 0 -3px 15px #0006; align-items: stretch; gap: 2px; padding-top: 3px; }
+.hmTab, .hmTab.hero, .hmTab.hero.on { flex: 1; margin: 0; min-height: 58px; padding: 5px 2px; border-image: none; border: none; border-radius: 3px; background: transparent; box-shadow: none; color: var(--kk-muted); font: 700 12px var(--body); text-shadow: none; }
+.hmTab.on, .hmTab.hero.on { border-image: none; color: var(--kk-gold); background: linear-gradient(#d5b5781a, transparent); box-shadow: inset 0 2px var(--kk-gold); }
+.hmTab:active, .hmTab.hero:active { border-image: none; }
+.hmTab.hero:not(.on) { filter: none; }
+.hmTab img, .hmTab.hero img { width: 26px; height: 26px; transform: none; }
+.hmTab.on img, .hmTab.hero.on img { transform: none; filter: none; }
+.hmTab.hero::before, .hmTab.hero::after { content: none; }
+.hmBanner { border-image: none; border: 1px solid var(--kk-rim); border-radius: 4px; background: #21251eeb; color: var(--kk-gold); animation: none; }
+.hmBattle { font-size: 30px; min-height: 60px; }
+.hmBattle small { color: #e8dfc8; }
+.card b, .ptCard b, .ptSlot b { letter-spacing: 0; }
+.card.placed, .ptCard.picked { border-color: var(--kk-gold); outline-color: var(--kk-gold); }
+#buttons { gap: 5px; }
+#fight { min-height: 46px; }
+#result { background: #10140fe6; }
+.hstats b, .hrow span { font-family: var(--body); font-weight: 700; }
+.xpbar span { background: linear-gradient(#83a77a, #4f7956); }
+#hmSheet { padding: calc(env(safe-area-inset-top) + 10px) 10px calc(env(safe-area-inset-bottom) + 10px); background: #10140fe8; }
+#hmSheet:has(.heroDetail), #hmSheet:has(.heroRoster) { bottom: calc(64px + env(safe-area-inset-bottom)); padding-bottom: 6px; }
+.hsheet { touch-action: pan-y; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #887753 #20241c; }
+.heroDetail, .heroRoster { width: min(440px, 100%); min-height: 0; max-height: 100%; padding: 14px; gap: 12px; }
+.heroDetail > *, .heroRoster > * { flex-shrink: 0; }
+.heroToolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.heroToolbar > span, .rosterEyebrow { color: var(--kk-gold); font: 700 11px var(--body); letter-spacing: .14em; }
+.heroBack { padding: 4px 10px; min-height: 40px; background: none; }
+.heroStrip { display: flex; gap: 7px; overflow-x: auto; padding: 3px 2px 7px; scroll-snap-type: x proximity; scrollbar-width: thin; touch-action: pan-x; }
+.heroStrip button { flex: 0 0 76px; min-width: 0; padding: 4px 2px; display: flex; flex-direction: column; align-items: center; gap: 3px; scroll-snap-align: center; }
+.heroStrip button.selected { border-color: #e4c888; background: linear-gradient(#4b4830, #292f22); box-shadow: inset 0 0 0 1px #d8b97650; }
+.heroStrip small { width: 100%; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.heroStrip canvas { image-rendering: pixelated; }
+.heroDetail .hhead { padding: 12px; gap: 12px; background: linear-gradient(90deg, #20251bf2, #292b1ce6), url(ui/page.png); border: 1px solid #75664a; border-radius: 5px; }
+.heroDetail .hpic { width: 88px; height: 100px; background: radial-gradient(#54543a, #1a211a); border: 1px solid #82704b; }
+.heroDetail .hhead h3 { font: 700 26px var(--display); color: var(--kk-text); }
+.heroDetail .hhead em, .heroDetail .hhead .lv { font: 13px/1.3 var(--body); color: var(--kk-muted); }
+.heroDetail .stars { color: var(--kk-gold); }
+.heroTabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 3px; background: #131811; border: 1px solid #685b40; border-radius: 5px; }
+.heroTabs button { min-width: 0; min-height: 42px; padding: 5px 2px; font-size: 14px; border-color: transparent; background: none; box-shadow: none; }
+.heroTabs button[aria-selected='true'] { border-color: #bda16c; background: linear-gradient(#365a40, #253f2e); color: #fff3d6; }
+.heroTabPanel { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.heroTabPanel[hidden], .heroRoster [hidden] { display: none; }
+.heroDetail .hstats { gap: 5px; }
+.heroDetail .hstats div { padding: 7px 2px; background: #151a13; border: 1px solid #4b4d39; border-radius: 3px; }
+.heroDetail .hstats b { font: 700 20px var(--body); color: var(--kk-text); }
+.heroDetail .hstats small { font-size: 12px; }
+.heroDetail p { font-size: 15px; line-height: 1.45; }
+.heroDetail p i { color: var(--kk-gold); font-weight: 700; }
+.heroDetail .hint { font-size: 13px; line-height: 1.4; }
+.heroDetail .hpower { padding: 8px; margin: 0; border-color: #6e6243; background: #151a13; }
+.heroDetail .hpower b { font: 700 24px var(--body); color: var(--kk-gold); }
+.heroDetail .eqPanel { padding: 0; gap: 12px; border: 0; background: none; }
+.heroDetail .eqPanel h4 { font: 700 18px var(--display); color: var(--kk-gold); }
+.heroDetail .eqSlots { gap: 7px; }
+.heroDetail .eqSlot { gap: 6px; padding: 7px 3px; border-color: #7d6c49; background: linear-gradient(#36382a, #1b2119); }
+.eqSlotLabel { font-size: 13px; color: var(--kk-gold); }
+.heroDetail .eqSlot small { font-size: 12px; color: var(--kk-text); }
+.eqSlotLevel { font-size: 12px; color: var(--kk-muted); }
+.heroDetail .eqIcon { border-width: 1px; border-radius: 3px; background: #151b12; box-shadow: inset 0 0 14px #0005; }
+.heroDetail .eqIcon.big { width: 64px; height: 64px; }
+.heroDetail .eqAuto { gap: 7px; }
+.heroDetail .eqAuto > .primary { grid-column: 1 / -1; }
+.heroDetail .eqAuto > .eqTake { grid-column: auto; }
+.heroDetail .eqPanel button { min-height: 44px; font-size: 15px; }
+.heroDetail .eqSum, .heroDetail .eqDim { font-size: 13px; line-height: 1.4; color: var(--kk-muted); }
+.heroDetail .eqRow, .heroDetail .eqSet { padding: 10px; border-width: 1px; border-radius: 4px; background: #181e16; }
+.heroDetail .eqHead b { font-size: 16px; }
+.heroDetail .eqHead small, .heroDetail .eqSetHead small, .heroDetail .eqTier, .heroDetail .eqSetPieces, .heroDetail .eqSetHint { font-size: 13px; }
+.heroDetail .eqStat, .heroDetail .eqAffix, .heroDetail .eqSuit, .heroDetail .eqSetHead b { font-size: 14px; }
+.heroDetail .eqList { max-height: none; overflow: visible; }
+.rosterHeading h3 { margin: 5px 0; font: 700 29px var(--display); color: var(--kk-text); }
+.rosterHeading em { font: 14px var(--body); color: var(--kk-muted); }
+.rosterSearch { display: flex; flex-direction: column; gap: 5px; font-size: 13px; color: var(--kk-gold); }
+.rosterSearch input { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #75664a; border-radius: 4px; background: #151b12; color: var(--kk-text); font: 16px var(--body); user-select: text; }
+.rosterSearch input::placeholder { color: #a8a28f; }
+.rosterResult { margin: 0; font-size: 14px; color: var(--kk-muted); }
+.rosterResult:empty { display: none; }
+.heroRoster .rosGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.heroRoster .hcard { gap: 5px; padding: 9px 3px; }
+.heroRoster .hcard b { font: 700 14px var(--body); color: var(--kk-text); }
+.heroRoster .hcard .stars { letter-spacing: 0; font-size: 11px; }
+.heroRoster .rosHead { margin: 12px 0 0; font: 700 20px var(--display); color: var(--kk-gold); }
+.heroRoster .rosRow { padding: 9px; background: #24291e; border-image: none; border: 1px solid #5e5d43; border-radius: 4px; }
+.heroRoster .rosText { font-size: 14px; }
+.heroRoster .rosText .lv { font-size: 13px; }
+.heroRoster > button.primary, .heroDetail > button.primary { margin-top: 4px; min-height: 44px; }
+@media (max-width: 375px) {
+  .heroDetail, .heroRoster { padding: 10px; gap: 10px; }
+  .heroDetail .hhead { padding: 9px; gap: 9px; }
+  .heroDetail .hhead h3 { font-size: 23px; }
+  .heroTabs button { font-size: 13px; }
+  #buttons button:not(#fight) { padding-left: 3px; padding-right: 3px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hsheet, .evcard, .hmBanner, button, .hmTab { animation: none; transition: none; }
+}

@@ -57,23 +57,48 @@ export function strongest(meta: Meta, n: number): string[] {
 }
 
 /** Fill the detail sheet for a hero; returns a function that stops its idle animation. */
-export function drawHeroSheet(box: HTMLElement, meta: Meta, kind: string, close: () => void): () => void {
-  let stop = paintSheet(box, meta, kind, close, again);
+export function drawHeroSheet(box: HTMLElement, meta: Meta, kind: string, close: () => void, onPick?: (kind: string, tab: string) => void, initialTab = 'overview'): () => void {
+  const state = { tab: initialTab, onPick };
+  let stop = paintSheet(box, meta, kind, close, again, state);
   // (an awakening draws the sheet again, with the show on the new look)
   function again(taken?: Taken): void {
     stop();
-    stop = paintSheet(box, meta, kind, close, again, taken);
+    stop = paintSheet(box, meta, kind, close, again, state, taken);
   }
   return () => stop();
 }
 
-function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => void, redraw: (taken?: Taken) => void, show?: Taken): () => void {
+function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => void, redraw: (taken?: Taken) => void, state: { tab: string; onPick?: (kind: string, tab: string) => void }, show?: Taken): () => void {
   const def = UNITS[kind];
   const rank = takenRank(meta, kind);
   const open = meta.unlocked.includes(kind);
   const kit = KITS[kind];
-  box.className = 'hsheet';
+  box.className = 'hsheet heroDetail';
   box.replaceChildren();
+  const bar = el('div', 'heroToolbar');
+  const back = el('button', 'heroBack', '‹ Back');
+  back.type = 'button';
+  back.addEventListener('click', close);
+  bar.append(back, el('span', '', 'YOUR COMPANY'));
+  box.append(bar);
+  if (state.onPick) {
+    const strip = el('nav', 'heroStrip');
+    strip.setAttribute('aria-label', 'Choose a hero');
+    for (const other of ALL_HEROES.filter((k) => meta.unlocked.includes(k))) {
+      const button = el('button', other === kind ? 'selected' : '');
+      button.type = 'button';
+      button.setAttribute('aria-current', other === kind ? 'true' : 'false');
+      button.append(portrait(UNITS[other].sheet, 48), el('small', '', UNITS[other].name));
+      button.addEventListener('click', () => state.onPick?.(other, state.tab));
+      strip.append(button);
+    }
+    box.append(strip);
+    // Keep the selected hero in view without scrolling the whole detail sheet.
+    requestAnimationFrame(() => {
+      const selected = strip.querySelector<HTMLElement>('.selected');
+      if (selected) strip.scrollLeft = selected.offsetLeft - strip.offsetLeft - (strip.clientWidth - selected.offsetWidth) / 2;
+    });
+  }
   const head = el('div', 'hhead');
   const pic = el('div', 'hpic');
   // (an awakened hero wears its awakened look: the pack's variant, or a recolour of its top form)
@@ -118,6 +143,50 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
   head.append(pic, title);
   box.append(head);
   if (open) {
+    const tabs = el('div', 'heroTabs');
+    tabs.setAttribute('role', 'tablist');
+    tabs.setAttribute('aria-label', 'Hero details');
+    const panels = ['overview', 'progression', 'equipment'].map((id) => {
+      const panel = el('section', 'heroTabPanel');
+      panel.id = `hero-${id}`;
+      panel.setAttribute('role', 'tabpanel');
+      panel.setAttribute('aria-labelledby', `hero-tab-${id}`);
+      panel.tabIndex = 0;
+      return panel;
+    });
+    const buttons = ['Overview', 'Progression', 'Equipment'].map((label, i) => {
+      const id = ['overview', 'progression', 'equipment'][i];
+      const button = el('button', '', label);
+      button.type = 'button';
+      button.id = `hero-tab-${id}`;
+      button.setAttribute('role', 'tab');
+      button.setAttribute('aria-controls', panels[i].id);
+      button.addEventListener('click', () => select(i));
+      button.addEventListener('keydown', (event) => {
+        let next = i;
+        if (event.key === 'ArrowRight') next = (i + 1) % panels.length;
+        else if (event.key === 'ArrowLeft') next = (i + panels.length - 1) % panels.length;
+        else if (event.key === 'Home') next = 0;
+        else if (event.key === 'End') next = panels.length - 1;
+        else return;
+        event.preventDefault();
+        select(next);
+        buttons[next].focus();
+      });
+      tabs.append(button);
+      return button;
+    });
+    function select(index: number): void {
+      state.tab = ['overview', 'progression', 'equipment'][index];
+      buttons.forEach((button, i) => {
+        button.setAttribute('aria-selected', String(i === index));
+        button.tabIndex = i === index ? 0 : -1;
+        panels[i].hidden = i !== index;
+      });
+    }
+    select(Math.max(0, ['overview', 'progression', 'equipment'].indexOf(state.tab)));
+    const [overview, progression, equipment] = panels;
+    box.append(tabs, ...panels);
     const b = lastingBoost(x.level);
     const m = rankMult(full);
     const stat = el('div', 'hstats');
@@ -143,7 +212,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
       pv.textContent = powerText(kindPower(meta, kind));
       for (const [v, rate] of speeds) v.textContent = rate();
     };
-    box.append(power, stat);
+    overview.append(power, stat);
     if (kit)
       for (const [label, a] of [['Skill', kit.skill], ...(TIER_SKILLS[kind] ? ([['Tier 2', TIER_SKILLS[kind][0]], ['Tier 3', TIER_SKILLS[kind][1]]] as const) : []), ...(kit.ultimate ? [['Ultimate', kit.ultimate] as const] : []), ['Passive', kit.passive]] as const) {
         const p = el('p');
@@ -152,15 +221,15 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
         if (locked) p.classList.add('locked');
         p.append(el('i', '', `${label} · ${a.name}: `), a.text);
         if (locked) p.append(el('span', 'ultLock', ` Unlocks at level ${(a as { unlock: number }).unlock}.`));
-        box.append(p);
+        overview.append(p);
       }
-    box.append(drawAwaken(meta, kind, redraw));
-    if (TREES[kind]) box.append(drawTalents(meta, kind, repower));
-    box.append(drawEquipment(meta, kind, repower));
-    box.append(el('p', 'hint', 'Equipment is kept for good. Gear found in a run lasts that run only.'));
+    progression.append(drawAwaken(meta, kind, redraw));
+    if (TREES[kind]) progression.append(drawTalents(meta, kind, repower));
+    equipment.append(drawEquipment(meta, kind, repower));
+    equipment.append(el('p', 'hint', 'Equipment is kept for good. Gear found in a run lasts that run only.'));
   }
   if (show) playAwakenShow(pic, show.what === 'awaken' ? show.n : 1, show.what === 'rank' ? `Rank ${show.n}` : undefined);
-  const done = el('button', 'primary', 'Close');
+  const done = el('button', 'primary', 'Back');
   done.addEventListener('click', close);
   box.append(done);
   let n = 0;
@@ -170,19 +239,36 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
 
 /** The roster page of the Heroes tab: the heroes owned in a grid, then the ones earned in play with the line "Joins when you …" and their progress, then the ones being collected by shards with their bars. A tap on a hero opens its sheet. */
 export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) => void, close: () => void): void {
-  box.className = 'hsheet';
+  box.className = 'hsheet heroRoster';
   box.replaceChildren();
   const have = ALL_HEROES.filter((k) => meta.unlocked.includes(k));
   const earned = CONTENT_HEROES.filter((c) => meta.unlocked.includes(c.kind)).length;
   const head = el('div');
-  head.append(el('h3', '', 'Roster'), el('em', '', `${have.length} of ${ALL_HEROES.length} heroes · ${earned} of ${CONTENT_HEROES.length} earned in play`));
+  head.className = 'rosterHeading';
+  head.append(el('small', 'rosterEyebrow', 'THE LAST KEEP'), el('h3', '', 'Your company'), el('em', '', `${have.length} of ${ALL_HEROES.length} heroes · ${earned} of ${CONTENT_HEROES.length} earned in play`));
   box.append(head);
+  const label = el('label', 'rosterSearch');
+  label.append(el('span', '', 'Find a hero'));
+  const search = el('input');
+  search.type = 'search';
+  search.placeholder = 'Name or class…';
+  search.autocomplete = 'off';
+  label.append(search);
+  box.append(label);
+  const searchable: { element: HTMLElement; text: string }[] = [];
+  const remember = (element: HTMLElement, kind: string, named = true) => {
+    searchable.push({ element, text: named ? `${UNITS[kind].name} ${CLASS_NAMES[CLASS_OF[kind]]}`.toLowerCase() : '' });
+  };
+  const result = el('p', 'rosterResult');
+  result.setAttribute('role', 'status');
+  box.append(result);
   const grid = el('div', 'rosGrid');
   for (const kind of have) {
     const card = el('button', 'hcard');
     card.append(portrait(UNITS[kind].sheet, 56), el('b', '', UNITS[kind].name), el('span', 'stars', starsOf(meta, kind)), levelBadge(progressOf(xpOf(meta, kind)).level));
     if (readyToRise(meta, kind)) card.append(el('small', 'rankTag', 'Rank up'));
     card.addEventListener('click', () => pick(kind));
+    remember(card, kind);
     grid.append(card);
   }
   box.append(grid);
@@ -202,6 +288,7 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
     pic.classList.add('dim');
     r.append(pic, text);
     r.addEventListener('click', () => pick(kind));
+    remember(r, kind, lock.named);
     return r;
   };
   const section = (title: string, kinds: string[], note = ''): void => {
@@ -214,7 +301,16 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
   const begun = toCollect(meta).filter((k) => haveOf(meta, k) > 0).sort((a, b) => haveOf(meta, b) - haveOf(meta, a));
   const rest = toCollect(meta).length - begun.length;
   section('Gathering shards', begun, rest ? `${rest} more to find: pulls and chests give their shards.` : '');
-  const done = el('button', 'primary', 'Close');
+  search.addEventListener('input', () => {
+    const query = search.value.trim().toLowerCase();
+    let shown = 0;
+    for (const row of searchable) {
+      row.element.hidden = !!query && !row.text.includes(query);
+      if (!row.element.hidden) shown++;
+    }
+    result.textContent = query ? `${shown} ${shown === 1 ? 'hero' : 'heroes'} found` : '';
+  });
+  const done = el('button', 'primary', 'Visit tavern');
   done.addEventListener('click', close);
   box.append(done);
 }
