@@ -2,6 +2,12 @@
 
 Read [CLAUDE.md](CLAUDE.md) before starting work. It contains the shared project rules, architecture, commands, and safeguards for both Codex and Claude. Follow those rules alongside these coordination instructions. Read any more specific instructions in the directories you change.
 
+## Owner's collaboration preferences
+
+- At the start of each new task, ask concise questions to confirm the intended outcome and scope. Reuse answers already given for the current task.
+- For visual work, show a visual proposal and confirm the direction before substantial implementation. Show real browser screenshots when available; distinguish concepts from the implemented game.
+- Preserve a handoff when a worker finishes and leave it idle until needed. Flag completed app chats for the owner to archive; do not claim to archive or restore chats without that capability.
+
 ## Starting a task
 
 - Read [docs/TASKS.md](docs/TASKS.md) and the notes relevant to the task.
@@ -22,7 +28,7 @@ Workers must not delegate further without explicit authorisation. Return the cha
 
 ## Concurrent UI work
 
-The existing Codex UI chat owns the interface task recorded in docs/TASKS.md. Until its exact file list is known, treat page layout, CSS, view modules, input, and renderer changes as reserved. Coordinate a handoff before touching overlapping files.
+Use docs/TASKS.md as the source of current ownership and reserved scope. The earlier UI chat handed UI-001 to the manager and stopped; completed tasks do not retain a file reservation. Coordinate a handoff before touching files owned by an active task.
 
 Separate worktrees prevent local overwrites, but do not prevent merge conflicts. Shared files and shared task-board edits should be coordinated through the manager. Do not reset, rebase, clean, or overwrite another chat's work.
 
@@ -35,3 +41,4 @@ For documentation-only changes, inspect the diff, links, and consistency; report
 Write a short handoff in docs/notes/<topic>.md and update the task board with results and remaining blockers. Do not repeatedly scan the entire repository or run expensive balance sweeps without a task-specific reason.
 
 Workers do not bump the version. The director handles the version at merge time as described in CLAUDE.md. Do not merge or deploy unless the owner requests it.
+

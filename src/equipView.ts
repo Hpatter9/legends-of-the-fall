@@ -117,7 +117,9 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
       const it = wornIn(meta, kind, slot);
       const b = el('button', 'eqSlot');
       b.type = 'button';
-      b.append(itemIcon(it, slot), el('small', '', it ? itemName(it) : SLOT_NAMES[slot]));
+      b.setAttribute('aria-label', `${SLOT_NAMES[slot]}: ${it ? itemName(it) : 'empty'}. Choose equipment`);
+      b.append(el('span', 'eqSlotLabel', SLOT_NAMES[slot]), itemIcon(it, slot), el('small', '', it ? itemName(it) : 'Empty slot'));
+      if (it) b.append(el('span', 'eqSlotLevel', `Lv ${it.level}`));
       b.addEventListener('click', () => picker(slot));
       slots.append(b);
     }
