@@ -25,3 +25,9 @@ Added a second CSS override block for the Keep hub, navigation tabs, party/hero 
 ### Review required
 
 The existing stylesheet is large and contains older ornate selectors. Verify the final CSS cascade on actual rendered screens before merging, especially `#hmTabs`, `.hmTab`, `#hmSub`, `.hmPanel`, `.setting`, and the portrait layouts. The changes have not been built or visually tested in a browser in this environment. Follow up with a CSS consolidation after approval.
+
+## Phase 3 — deployment and combat HUD
+
+The deployment action row now uses four compact secondary actions with the existing Fight button spanning the next row. The bench has a smaller height cap on short viewports, and the active battle speed, mana and result surfaces use the Tactical Command palette. Existing button IDs and event handlers were preserved.
+
+**Validation is still pending:** run the required typecheck, tests and web build and inspect both 8×11 and 10×13 boards at all required portrait sizes. Check that a two-row action area does not obstruct placement tiles or cause camera-fit regressions. No browser or build execution has been performed as part of this phase.
