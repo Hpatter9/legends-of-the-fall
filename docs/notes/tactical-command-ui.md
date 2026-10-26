@@ -1,53 +1,28 @@
-# Tactical Command UI rollout
+# Keep & Kingdom UI
 
-## Direction
+Hero management now uses the owner's chosen stone, brass and green direction. The Heroes destination opens a searchable company roster. A hero opens a detail sheet with a horizontal hero selector and Overview, Progression and Equipment tabs; switching heroes keeps the selected tab, and Back returns to the roster when entered from it. Visit tavern retains access to the animated tavern. All five existing main destinations remain available below hero sheets.
 
-Modern tactical RPG: dark navy surfaces, blue primary actions, readable hero cards and restrained gold accents. Keep the isometric board prominent and reuse the existing art packs.
+Equipment keeps its three existing slots: weapon, armour and trinket. Each slot now names its category, worn item and level, with an accessible picker label. Existing comparison, equip/unequip, salvage, equip-best, equip-all, transfer policy, set bonuses and combine actions remain. Locked heroes retain their unlock requirements. Rank-up, awakening and talents remain accessible through the header and Progression tab.
 
-## Phase 1 — shared skin
+`src/keepKingdom.css` provides the shared surfaces and controls and is inlined by `build.mjs` after the legacy CSS. It replaces the earlier inline navy styling block. The battle toolbar uses a compact grid so the speed control stays with the other controls on a narrow phone. Existing art and local fonts are reused; no new network resources or service-worker entries are needed. Simulation rules, save formats and save keys are unchanged. Workers have not bumped the version; the director handles that at merge time.
 
-`src/index.html` adds a presentation-only override block for the existing battle HUD and common controls. No game state, simulation, save keys, or interaction handlers have been changed. The CSS is appended after existing rules so that existing markup and handlers remain intact.
+## Validation
 
-## Remaining work
+- `npm run typecheck`: passed.
+- `npm test`: all 103 test files passed; no tests skipped or loosened.
+- `npm run web`: passed.
+- `tools/keep-kingdom-checks.mjs`: passed at 360×780, 393×852 and 412×915. Covers search, locked hero details, hero switching, tab keyboard navigation, equip/unequip, comparison visibility, combining, gear sets, main destinations, horizontal bounds, navigation clearance and persisted equipment after reload.
+- `tools/keep-kingdom-release-checks.mjs`: passed at all three portrait sizes, with no browser errors. Covers both board sizes, active combat, control fit, a result screen, all 17 land fits at the middle size, service-worker installation and offline reload. This is smoke coverage, not a playthrough of every mode and progression state.
 
-- Audit and unify the home, lands, modes, heroes, codex and settings views without removing features.
-- Check placement touch interactions and viewport fit for normal and Calamity boards.
-- Verify 360×780, 393×852 and 412×915 upright viewports.
-- Run `npm run typecheck`, `npm test`, and `npm run web` in a checked-out workspace. These commands have **not** been run for this commit.
-- Confirm the offline service worker still precaches all resources; this phase introduces no external resources.
-
-Do not merge until visual review and validation are complete.
-
-## Phase 2 — shared secondary-screen skin
-
-Added a second CSS override block for the Keep hub, navigation tabs, party/hero surfaces, recruitment, settings and shared dialogs. This is a visual-only pass; existing DOM IDs, event handlers and game logic remain intact.
-
-### Review required
-
-The existing stylesheet is large and contains older ornate selectors. Verify the final CSS cascade on actual rendered screens before merging, especially `#hmTabs`, `.hmTab`, `#hmSub`, `.hmPanel`, `.setting`, and the portrait layouts. The changes have not been built or visually tested in a browser in this environment. Follow up with a CSS consolidation after approval.
-
-## Phase 3 — deployment and combat HUD
-
-The deployment action row now uses four compact secondary actions with the existing Fight button spanning the next row. The bench has a smaller height cap on short viewports, and the active battle speed, mana and result surfaces use the Tactical Command palette. Existing button IDs and event handlers were preserved.
-
-**Validation is still pending:** run the required typecheck, tests and web build and inspect both 8×11 and 10×13 boards at all required portrait sizes. Check that a two-row action area does not obstruct placement tiles or cause camera-fit regressions. No browser or build execution has been performed as part of this phase.
-
-## Phase 4 — progression and overlays
-
-The final CSS presentation pass aligns existing primary buttons in the hub, submenus, party, settings, recruitment and result screens; removes ornamental button sheen from those primary actions; adds narrow-phone spacing adjustments and reduced-motion treatment. No new UI workflows were invented.
-
-## Release gate
-
-**Not yet validated or ready to merge.** The GitHub connector permits editing repository files but does not execute the local build or browser. Run the following in a checked-out workspace:
+To reproduce browser checks, serve `out/web` at `http://localhost:8000` and install Playwright with Chromium as a developer tool. Use `PLAYWRIGHT_MODULE` to point to it if it is not on the normal module path; `PLAYWRIGHT_BROWSERS_PATH` may select its browser installation. Then run:
 
 ```bash
-npm install
-npm run typecheck
-npm test
-npm run web
-npm run dev
+node tools/keep-kingdom-checks.mjs
+node tools/keep-kingdom-release-checks.mjs
 ```
 
-Visually inspect 360×780, 393×852 and 412×915 in portrait. Test the entire navigation, hero roster and progression, all 17 lands, all battle modes, recruitment, settings, modal stacking, deploy/recall gestures, active battle HUD, rewards, both board sizes, save migration, deterministic `?seed=123`, and offline operation after first load. Verify that CSS overrides do not collide with dynamic inline styles or hide interactive elements.
+Outputs go to `out/ui-checks` and `out/ui-release`; these are ignored build artifacts. Selected real browser screenshots: [roster](../samples/keep-kingdom-roster-393x852.png), [equipment](../samples/keep-kingdom-equipment-393x852.png), [deployment](../samples/keep-kingdom-deploy-393x852.png), and [combat](../samples/keep-kingdom-fight-393x852.png). Machine-readable results are in [hero checks](../samples/keep-kingdom-checks.json) and [release checks](../samples/keep-kingdom-release-checks.json). Screenshot inventory is test data, not a change to the player's starting items.
 
-The current branch is a **CSS styling pass**, not a verified complete rebuild of every screen. Follow-up work may be necessary after screenshot review, especially for layouts requiring structural changes. Do not merge before completing this gate.
+## Review
+
+Keep PR #118 draft until the owner approves the actual visuals. Device-specific touch behaviour and a full manual pass through every mode, overlay and progression state remain acceptance work; headless browser checks cannot establish those. Do not merge or deploy without the owner's request.
