@@ -963,6 +963,53 @@
     body[data-phase='deploy'] #buttons #fight { min-height:45px; }
   }
 
+
+  /* Tactical Command final presentation pass: progression, overlays and responsive polish. */
+  #hmPages, #hmSubBody, #settingsBody, #ptGrid {
+    scrollbar-width:thin; scrollbar-color:#49647d transparent;
+  }
+  #hmPages button, #hmSub button, #party button, #settings button, #gacha button {
+    text-shadow:none;
+  }
+  #hmPages button.primary, #hmSub button.primary, #party button.primary,
+  #settings button.primary, #gacha button.primary, #result button.primary {
+    background:linear-gradient(180deg,#3277ad,#174c7b);
+    color:#fff; border:1px solid #8ccbf3;
+    box-shadow:inset 0 1px rgb(255 255 255 / .16),0 3px 10px rgb(0 0 0 / .28);
+    font-family:var(--body); font-weight:700; letter-spacing:.02em;
+  }
+  #hmPages button.primary::after, #hmSub button.primary::after,
+  #party button.primary::after, #settings button.primary::after,
+  #gacha button.primary::after, #result button.primary::after {
+    content:none;
+  }
+  #hmSub header, #party header, #settings header, #gacha header {
+    gap:8px; min-height:52px;
+  }
+  #hmSub header button, #party header button, #settings header button, #gacha header button {
+    min-height:40px;
+  }
+  #hmSheet, #ptSheet, #ask, #autoSum {
+    backdrop-filter:blur(4px);
+  }
+  #tip {
+    background:linear-gradient(180deg,#253b51,#142333);
+    border-color:#70b5e5;
+  }
+  #version {
+    font-family:var(--body); font-size:10px;
+    text-shadow:0 1px 3px #0c121c;
+  }
+  @media (max-width:375px) {
+    #top { column-gap:5px; padding-left:7px; padding-right:7px; }
+    #top h1 { font-size:12px; }
+    #hmSub header, #party header, #settings header, #gacha header { gap:4px; }
+  }
+  @media (prefers-reduced-motion:reduce) {
+    #result, #tip, .toast { animation:none !important; }
+    button:active:not(:disabled) { transform:none; }
+  }
+
 </style>
 </head>
 <body data-phase="deploy">
