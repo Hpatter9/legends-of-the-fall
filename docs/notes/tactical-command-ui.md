@@ -17,3 +17,11 @@ Modern tactical RPG: dark navy surfaces, blue primary actions, readable hero car
 - Confirm the offline service worker still precaches all resources; this phase introduces no external resources.
 
 Do not merge until visual review and validation are complete.
+
+## Phase 2 — shared secondary-screen skin
+
+Added a second CSS override block for the Keep hub, navigation tabs, party/hero surfaces, recruitment, settings and shared dialogs. This is a visual-only pass; existing DOM IDs, event handlers and game logic remain intact.
+
+### Review required
+
+The existing stylesheet is large and contains older ornate selectors. Verify the final CSS cascade on actual rendered screens before merging, especially `#hmTabs`, `.hmTab`, `#hmSub`, `.hmPanel`, `.setting`, and the portrait layouts. The changes have not been built or visually tested in a browser in this environment. Follow up with a CSS consolidation after approval.
