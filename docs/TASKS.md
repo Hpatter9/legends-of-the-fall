@@ -9,19 +9,40 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
-| ID | Task | Status | Owner | Branch/worktree | Scope | Done when |
-| --- | --- | --- | --- | --- | --- | --- |
-| UI-001 | Existing interface work | In progress, reported by owner | Existing Codex app UI chat | Unknown; needs handoff from that chat | Exact files unknown. Reserve page layout, CSS, view modules, input, and renderer changes until confirmed. | UI chat supplies its scope, completion criteria, changed files, validation results, and branch/PR. |
-| SETUP-001 | Shared Codex instructions and task board | Ready for owner review once the setup PR is open | Manager chat | codex/manager-setup | AGENTS.md, docs/TASKS.md, docs/notes/manager-setup.md | Instructions point to CLAUDE.md; UI ownership is recorded; documentation is checked and a reviewable PR is opened. |
+SIM-001 is ready for Game Director review in PR #122. UI-001 was accepted by the owner for merge.
+
+## UI-001 manager takeover — 2026-10-26
+
+The owner stopped the previous UI chat and transferred the intact branch and PR to this manager. The owner chose Keep & Kingdom (stone, brass, green), authorised layout/navigation redesign, and prioritised hero roster and equipment after comparing two visual concepts. Ask clarifying questions at the start of future tasks and provide visual proposals for visual work.
+
+Checkout and dependency installation now work in the manager environment. Earlier proxy errors were overcome with sandboxed network access; the dependency cache was moved to a writable workspace directory. The hero roster/equipment redesign and shared theme are implemented. Typecheck and web build pass; all 103 test files pass. Browser hero/equipment checks and combat/offline smoke checks pass at all three portrait sizes. All 17 land fits were checked at 393×852. See [implementation and validation](notes/tactical-command-ui.md). The director integrated the manager setup from main, resolved overlapping coordination files, and bumped the working-branch version to 0.158.0 under the merge-time rule. The owner approved the actual visuals and requested the merge. Release version: 0.159.0. A full manual pass across modes and progression states remains a documented follow-up; automated smoke checks are not an exhaustive playthrough. The following is the earlier handoff, retained as history.
+
+## Earlier UI-001 handoff — 2026-10-26
+
+Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. This is a recorded handoff, not a new validation run.
+
+- **Changes in reported session:** none; inspected PR and instructions.
+- **Blocker:** clone failed because the UI environment could not connect to its network proxy; retry was interrupted. Cause and recovery remain unverified.
+- **Checks:** typecheck, tests, web build, and browser checks have not run.
+- **Next work:** obtain a checkout on the existing branch; audit and complete the UI; inspect 393×852, 360×780, and 412×915 portrait sizes; check deployment, battles, hero management, navigation, overlays, save loading, and offline play; fix failures and rerun checks.
+- **Release gate:** update the UI notes, board handoff, and PR with actual results. Keep PR #118 draft until validation and visual review are complete. Its reservation remains in place while blocked.
+- **Reference:** [recorded handoff](notes/ui-coordination-handoff.md).
+
+## Completed work
+
+| ID | Task | Result | Reference |
+| --- | --- | --- | --- |
+| UI-001 | Keep & Kingdom hero roster, equipment and shared styling | Done; owner accepted the result and authorised merge, release 0.159.0 | [PR #118](https://github.com/Hpatter9/legends-of-the-fall/pull/118), [validation and screenshots](notes/tactical-command-ui.md) |
+| SETUP-001 | Shared Codex instructions and task board | Done; merged at owner's request, version 0.157.0 | [PR #119](https://github.com/Hpatter9/legends-of-the-fall/pull/119), [setup note](notes/manager-setup.md) |
 
 ## SIM-001 implementation assignment
 
 - **ID / title:** SIM-001 — effective hits and environmental kill credit (#121).
 - **Status:** ready for Game Director review; not merged.
 - **Owner:** Codex implementation chat.
-- **Branch / worktree / PR:** `codex/sim-001`, `/workspace/legends-of-the-fall`; PR linked in [issue #121](https://github.com/Hpatter9/legends-of-the-fall/issues/121).
+- **Branch / worktree / PR:** `codex/sim-001`, `/workspace/legends-of-the-fall`; [PR #122](https://github.com/Hpatter9/legends-of-the-fall/pull/122).
 - **Allowed scope:** simulation damage settlement, pure combat statistics, regression tests, this board and `docs/notes/sim-001.md`.
-- **Reserved:** UI-001 keeps all existing ownership; exact UI file list remains unknown. No UI, input, renderer, charm targeting or RNG isolation changes.
+- **Reserved:** UI-001's completed work and ownership history are preserved; no UI changes in SIM-001. No UI, input, renderer, charm targeting or RNG isolation changes.
 - **Completion criteria:** reproduce failures first; minimally fix post-hit effects and environmental credit; cover cancelled/dead/shielded hits and genuine kills; run typecheck, tests and web build; open an unmerged PR and report in #121.
 
 - **Validation:** typecheck passed; full `npm test` passed (104 test files); final 19 focused regressions and `npm test -- sim-001` passed; web build and diff checks passed.
@@ -46,7 +67,7 @@ No additional development tasks have been assigned. Do not invent feature work o
 
 ## Handoff for the existing UI chat
 
-Read AGENTS.md and CLAUDE.md. Continue your assigned interface work on your own branch/worktree. Include your branch, changed or reserved files, intended outcome, and checks in your next handoff so the manager can update UI-001. Do not overwrite unrelated work.
+The earlier UI chat stopped work and handed ownership to the manager. UI-001 is accepted and can be archived by the owner. Do not resume that branch without a new assignment. The manager cannot archive app chats directly.
 
 ## Returning work to Claude or Codex
 
