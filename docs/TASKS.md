@@ -9,15 +9,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
-| ID | Task | Status | Owner | Branch/worktree | Scope | Done when |
-| --- | --- | --- | --- | --- | --- | --- |
-| UI-001 | Tactical Command interface overhaul | Ready for owner visual review; PR remains draft | Manager chat (ownership transferred by owner) | ui/tactical-command-overhaul; [draft PR #118](https://github.com/Hpatter9/legends-of-the-fall/pull/118); checkout available in manager environment | Hero roster and equipment first; shared Keep & Kingdom styling, hero detail navigation, build CSS integration, UI checks, and handoff notes. Preserve simulation, saves, and offline support. | Obtain checkout, audit and complete UI, pass required checks and portrait/functional review, document results, and submit for owner review. |
+None assigned. UI-001 was accepted by the owner for merge.
 
 ## UI-001 manager takeover — 2026-10-26
 
 The owner stopped the previous UI chat and transferred the intact branch and PR to this manager. The owner chose Keep & Kingdom (stone, brass, green), authorised layout/navigation redesign, and prioritised hero roster and equipment after comparing two visual concepts. Ask clarifying questions at the start of future tasks and provide visual proposals for visual work.
 
-Checkout and dependency installation now work in the manager environment. Earlier proxy errors were overcome with sandboxed network access; the dependency cache was moved to a writable workspace directory. The hero roster/equipment redesign and shared theme are implemented. Typecheck and web build pass; all 103 test files pass. Browser hero/equipment checks and combat/offline smoke checks pass at all three portrait sizes. All 17 land fits were checked at 393×852. See [implementation and validation](notes/tactical-command-ui.md). The director integrated the manager setup from main, resolved overlapping coordination files, and bumped the working-branch version to 0.158.0 under the merge-time rule. Owner visual approval and full manual acceptance through every mode/progression state remain outstanding. The following is the earlier handoff, retained as history.
+Checkout and dependency installation now work in the manager environment. Earlier proxy errors were overcome with sandboxed network access; the dependency cache was moved to a writable workspace directory. The hero roster/equipment redesign and shared theme are implemented. Typecheck and web build pass; all 103 test files pass. Browser hero/equipment checks and combat/offline smoke checks pass at all three portrait sizes. All 17 land fits were checked at 393×852. See [implementation and validation](notes/tactical-command-ui.md). The director integrated the manager setup from main, resolved overlapping coordination files, and bumped the working-branch version to 0.158.0 under the merge-time rule. The owner approved the actual visuals and requested the merge. Release version: 0.159.0. A full manual pass across modes and progression states remains a documented follow-up; automated smoke checks are not an exhaustive playthrough. The following is the earlier handoff, retained as history.
 
 ## Earlier UI-001 handoff — 2026-10-26
 
@@ -34,6 +32,7 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 | ID | Task | Result | Reference |
 | --- | --- | --- | --- |
+| UI-001 | Keep & Kingdom hero roster, equipment and shared styling | Done; owner accepted the result and authorised merge, release 0.159.0 | [PR #118](https://github.com/Hpatter9/legends-of-the-fall/pull/118), [validation and screenshots](notes/tactical-command-ui.md) |
 | SETUP-001 | Shared Codex instructions and task board | Done; merged at owner's request, version 0.157.0 | [PR #119](https://github.com/Hpatter9/legends-of-the-fall/pull/119), [setup note](notes/manager-setup.md) |
 
 ## Ready queue
@@ -55,7 +54,7 @@ No additional development tasks have been assigned. Do not invent feature work o
 
 ## Handoff for the existing UI chat
 
-Read AGENTS.md and CLAUDE.md. Continue your assigned interface work on your own branch/worktree. Include your branch, changed or reserved files, intended outcome, and checks in your next handoff so the manager can update UI-001. Do not overwrite unrelated work.
+The earlier UI chat stopped work and handed ownership to the manager. UI-001 is accepted and can be archived by the owner. Do not resume that branch without a new assignment. The manager cannot archive app chats directly.
 
 ## Returning work to Claude or Codex
 

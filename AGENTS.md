@@ -28,7 +28,7 @@ Workers must not delegate further without explicit authorisation. Return the cha
 
 ## Concurrent UI work
 
-The existing Codex UI chat owns the interface task recorded in docs/TASKS.md. Until its exact file list is known, treat page layout, CSS, view modules, input, and renderer changes as reserved. Coordinate a handoff before touching overlapping files.
+Use docs/TASKS.md as the source of current ownership and reserved scope. The earlier UI chat handed UI-001 to the manager and stopped; completed tasks do not retain a file reservation. Coordinate a handoff before touching files owned by an active task.
 
 Separate worktrees prevent local overwrites, but do not prevent merge conflicts. Shared files and shared task-board edits should be coordinated through the manager. Do not reset, rebase, clean, or overwrite another chat's work.
 

@@ -4,7 +4,7 @@ Hero management now uses the owner's chosen stone, brass and green direction. Th
 
 Equipment keeps its three existing slots: weapon, armour and trinket. Each slot now names its category, worn item and level, with an accessible picker label. Existing comparison, equip/unequip, salvage, equip-best, equip-all, transfer policy, set bonuses and combine actions remain. Locked heroes retain their unlock requirements. Rank-up, awakening and talents remain accessible through the header and Progression tab.
 
-`src/keepKingdom.css` provides the shared surfaces and controls and is inlined by `build.mjs` after the legacy CSS. It replaces the earlier inline navy styling block. The battle toolbar uses a compact grid so the speed control stays with the other controls on a narrow phone. Existing art and local fonts are reused; no new network resources or service-worker entries are needed. Simulation rules, save formats and save keys are unchanged. The director integrated the manager setup from main into the UI branch, resolving the overlapping instruction and task-board additions. Following the merge-time version rule, package.json and root lockfile metadata are 0.158.0. The UI itself has not been merged into main.
+`src/keepKingdom.css` provides the shared surfaces and controls and is inlined by `build.mjs` after the legacy CSS. It replaces the earlier inline navy styling block. The battle toolbar uses a compact grid so the speed control stays with the other controls on a narrow phone. Existing art and local fonts are reused; no new network resources or service-worker entries are needed. Simulation rules, save formats and save keys are unchanged. The director integrated the manager setup from main into the UI branch, resolving the overlapping instruction and task-board additions. Following the merge-time version rule, package.json and root lockfile metadata are 0.158.0. The owner subsequently approved the visuals and requested merge. The director prepared release 0.159.0 in package.json and root lockfile metadata for that merge.
 
 ## Validation
 
@@ -25,4 +25,4 @@ Outputs go to `out/ui-checks` and `out/ui-release`; these are ignored build arti
 
 ## Review
 
-Keep PR #118 draft until the owner approves the actual visuals. Device-specific touch behaviour and a full manual pass through every mode, overlay and progression state remain acceptance work; headless browser checks cannot establish those. Do not merge or deploy without the owner's request.
+The owner approved the actual visuals and explicitly requested merging PR #118. Device-specific touch behaviour and a full manual pass through every mode, overlay and progression state remain documented follow-up work; headless browser checks cannot establish those. The main-branch Pages workflow builds and publishes after merge.
