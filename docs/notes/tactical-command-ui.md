@@ -4,7 +4,7 @@ Hero management now uses the owner's chosen stone, brass and green direction. Th
 
 Equipment keeps its three existing slots: weapon, armour and trinket. Each slot now names its category, worn item and level, with an accessible picker label. Existing comparison, equip/unequip, salvage, equip-best, equip-all, transfer policy, set bonuses and combine actions remain. Locked heroes retain their unlock requirements. Rank-up, awakening and talents remain accessible through the header and Progression tab.
 
-`src/keepKingdom.css` provides the shared surfaces and controls and is inlined by `build.mjs` after the legacy CSS. It replaces the earlier inline navy styling block. The battle toolbar uses a compact grid so the speed control stays with the other controls on a narrow phone. Existing art and local fonts are reused; no new network resources or service-worker entries are needed. Simulation rules, save formats and save keys are unchanged. Workers have not bumped the version; the director handles that at merge time.
+`src/keepKingdom.css` provides the shared surfaces and controls and is inlined by `build.mjs` after the legacy CSS. It replaces the earlier inline navy styling block. The battle toolbar uses a compact grid so the speed control stays with the other controls on a narrow phone. Existing art and local fonts are reused; no new network resources or service-worker entries are needed. Simulation rules, save formats and save keys are unchanged. The director integrated the manager setup from main into the UI branch, resolving the overlapping instruction and task-board additions. Following the merge-time version rule, package.json and root lockfile metadata are 0.158.0. The UI itself has not been merged into main.
 
 ## Validation
 
