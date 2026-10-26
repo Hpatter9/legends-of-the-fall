@@ -21,8 +21,8 @@ export function turnTile(rot: Rot, u: number, v: number, w = W, d = D): [number,
 export function unturnTile(rot: Rot, a: number, b: number, w = W, d = D): [number, number] {
   switch (rot) {
     case 0: return [a, b];
-    case 1: return [b, D - 1 - a];
-    case 2: return [W - 1 - a, d - 1 - b];
+    case 1: return [b, d - 1 - a];
+    case 2: return [w - 1 - a, d - 1 - b];
     default: return [w - 1 - b, a];
   }
 }
@@ -35,11 +35,11 @@ export const footDims = (rot: Rot, w = W, d = D): [number, number] => (rot % 2 ?
  *  section lies wholly to one side of the host's along U, along V, or both: along one axis only, that side says (-U or -V is
  *  further off); along both, the same sign on each says, and opposite signs (straight left or right of the host on the
  *  screen, never over it) go by U. */
-export function liesBehind(rot: Rot, ou: number, ov: number, hostRot: Rot): boolean {
-  const [w, d] = footDims(rot);
-  const [hw, hd] = footDims(hostRot);
-  const u = ou + w <= 0 ? -1 : ou >= hw ? 1 : 0;
-  const v = ov + d <= 0 ? -1 : ov >= hd ? 1 : 0;
+export function liesBehind(rot: Rot, ou: number, ov: number, hostRot: Rot, w = W, d = D, hw = w, hd = d): boolean {
+  const [fw, fd] = footDims(rot, w, d);
+  const [hfw, hfd] = footDims(hostRot, hw, hd);
+  const u = ou + fw <= 0 ? -1 : ou >= hfw ? 1 : 0;
+  const v = ov + fd <= 0 ? -1 : ov >= hfd ? 1 : 0;
   return (u || v) < 0;
 }
 

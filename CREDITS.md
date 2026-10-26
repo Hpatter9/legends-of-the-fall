@@ -258,3 +258,5 @@ No new art: the five-hero combos' gathering and strike, a tier skill's ring and 
 ## Heart revive
 
 No new art: the burning heart's flame is the `flame_fire` strip (`src/art/fx/vfx/flame_fire.png`) from the **5000 Pixel Effects** pack by blueberry already credited above, played once over the heart (`src/reviveView.ts`); the heroes rise in the existing light pillar of a promotion.
+
+The Grand Scenario prototype reuses the already credited camp gate and Knights watchtower sprites as scenic destination compounds, on the existing area tile/rock art. No new art pack files are introduced.

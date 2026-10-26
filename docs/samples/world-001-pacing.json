@@ -1,0 +1,101 @@
+{
+  "note": "12 representative unboosted knight+archer vs skeleton+boneArcher simulations; same seeds, default rules; not balance tuning or mobile FPS.",
+  "results": [
+    {
+      "theme": "standard",
+      "seed": 7,
+      "firstContactMs": 2500,
+      "battleMs": 31500,
+      "outcome": "lost",
+      "hostCpuMs": 20.94
+    },
+    {
+      "theme": "standard",
+      "seed": 19,
+      "firstContactMs": 2500,
+      "battleMs": 45400,
+      "outcome": "won",
+      "hostCpuMs": 16.72
+    },
+    {
+      "theme": "standard",
+      "seed": 97,
+      "firstContactMs": 3200,
+      "battleMs": 25800,
+      "outcome": "lost",
+      "hostCpuMs": 41.59
+    },
+    {
+      "theme": "mountain",
+      "seed": 7,
+      "firstContactMs": 4700,
+      "battleMs": 41000,
+      "outcome": "lost",
+      "hostCpuMs": 37.25
+    },
+    {
+      "theme": "mountain",
+      "seed": 19,
+      "firstContactMs": 4100,
+      "battleMs": 27200,
+      "outcome": "won",
+      "hostCpuMs": 57.71
+    },
+    {
+      "theme": "mountain",
+      "seed": 97,
+      "firstContactMs": 4200,
+      "battleMs": 27100,
+      "outcome": "won",
+      "hostCpuMs": 21.28
+    },
+    {
+      "theme": "temple",
+      "seed": 7,
+      "firstContactMs": 4500,
+      "battleMs": 29400,
+      "outcome": "won",
+      "hostCpuMs": 47.34
+    },
+    {
+      "theme": "temple",
+      "seed": 19,
+      "firstContactMs": 3600,
+      "battleMs": 28100,
+      "outcome": "won",
+      "hostCpuMs": 7.56
+    },
+    {
+      "theme": "temple",
+      "seed": 97,
+      "firstContactMs": 4500,
+      "battleMs": 27600,
+      "outcome": "won",
+      "hostCpuMs": 9.28
+    },
+    {
+      "theme": "necropolis",
+      "seed": 7,
+      "firstContactMs": 4500,
+      "battleMs": 24000,
+      "outcome": "won",
+      "hostCpuMs": 15.44
+    },
+    {
+      "theme": "necropolis",
+      "seed": 19,
+      "firstContactMs": 4100,
+      "battleMs": 24300,
+      "outcome": "lost",
+      "hostCpuMs": 10.13
+    },
+    {
+      "theme": "necropolis",
+      "seed": 97,
+      "firstContactMs": 4500,
+      "battleMs": 32300,
+      "outcome": "lost",
+      "hostCpuMs": 11.84
+    }
+  ]
+}

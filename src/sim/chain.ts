@@ -1,12 +1,12 @@
-// The long map of an army run: the waves are sections of one winding road. Each section is a board of its own, seven
-// across by nine deep, so a fight, its pathing and its balance are those of a single board. The fight stays in the board's
+// The long map of an army run: the waves are sections of one winding road. Each section is a board of its own, dimensioned
+// by its own board, so a fight, its pathing and its balance are those of a single board. The fight stays in the board's
 // own coordinates (`u` across, `v` from the foes' edge at 0 to the heroes' edge at D - 1); the road lays each section in the
 // world turned a quarter turn at a time (`turn.ts`), so the heroes deploy on the edge they came in by and fight along the
 // road, whichever way the road runs. Pure rules (no Pixi, no DOM): the renderer draws the chain and walks the heroes over
 // it, but the sim only ever fights on one section.
 //
 // The world is a grid of tiles (U runs down to the right on the screen, V down to the left). A section's `origin` is the
-// corner of its footprint (a 7x9 rectangle, 9x7 when turned a quarter), and its tile (u, v) lies at `origin + turnTile(rot, u, v)`.
+// corner of its footprint (width × depth, swapped when turned a quarter), and its tile (u, v) lies at `origin + turnTile(rot, u, v)`.
 // A new section goes on the side of the one before: straight on (its foes' side), or either flank, never back over the edge the
 // road came in by, and never on top of an earlier section. Its heroes' edge (its board's v = D - 1 row) lies against that side.
 
@@ -46,17 +46,20 @@ export interface Place {
   ov: number;
   join: Join | null;
 }
+export interface SectionSize { w: number; d: number }
+const STANDARD: SectionSize = { w: W, d: D };
+
 interface Rect {
   x0: number;
   y0: number;
   x1: number;
   y1: number;
 }
-const rectOf = (p: Place): Rect => {
-  const [w, d] = footDims(p.rot);
+const rectOf = (p: Place, size: SectionSize = STANDARD): Rect => {
+  const [w, d] = footDims(p.rot, size.w, size.d);
   return { x0: p.ou, y0: p.ov, x1: p.ou + w, y1: p.ov + d };
 };
-export const footprint = (s: Section): Rect => rectOf({ rot: s.rot, ou: s.origin.u, ov: s.origin.v, join: s.join });
+export const footprint = (s: Section): Rect => rectOf({ rot: s.rot, ou: s.origin.u, ov: s.origin.v, join: s.join }, s.board);
 const overlaps = (a: Rect, b: Rect) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
 
 /** The quarter turn that puts a board's heroes' edge against a side whose outward normal is `n` (the board's back, +v, then points at the section before). */
@@ -69,19 +72,19 @@ function rotFacing(n: [number, number]): Rot {
 }
 
 /** Every place the section after `prev` can go: each side but the one the road came in by, each way of sliding along it that keeps `MIN_CONTACT` tiles together. */
-export function placesAfter(prev: Place): Place[] {
+export function placesAfter(prev: Place, size: SectionSize = STANDARD): Place[] {
   const back = turnDir(prev.rot, 0, 1);
-  const p = rectOf(prev);
+  const p = rectOf(prev, size);
   const out: Place[] = [];
   for (const join of JOINS) {
     const n = SIDE[join];
     if (n[0] === back[0] && n[1] === back[1]) continue;
     const rot = rotFacing(n);
-    const [w, d] = footDims(rot);
+    const [w, d] = footDims(rot, size.w, size.d);
     // (the new section's heroes' edge is seven tiles; it slides along the side so that at least five touch)
     const alongX = n[1] !== 0;
     const len = alongX ? p.x1 - p.x0 : p.y1 - p.y0;
-    for (let t = -(W - MIN_CONTACT); t <= len - MIN_CONTACT; t++) {
+    for (let t = -(size.w - MIN_CONTACT); t <= len - MIN_CONTACT; t++) {
       const ou = n[0] > 0 ? p.x1 : n[0] < 0 ? p.x0 - w : p.x0 + t;
       const ov = n[1] > 0 ? p.y1 : n[1] < 0 ? p.y0 - d : p.y0 + t;
       out.push({ rot, ou, ov, join });
@@ -91,13 +94,13 @@ export function placesAfter(prev: Place): Place[] {
 }
 
 /** The road's places for `n` sections: the first as always (not turned, the heroes in the southwest), each after chosen by the seed among those that fit, leaning to a compact road, with a step back (never needed in practice) if a choice paints the road into a corner. */
-export function layRoad(seed: number, n: number): Place[] {
+export function layRoad(seed: number, n: number, size: SectionSize = STANDARD): Place[] {
   const road: Place[] = [{ rot: 0, ou: 0, ov: 0, join: null }];
   let budget = 20000;
   const bounds = (list: Place[]) => {
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (const q of list) {
-      const r = rectOf(q);
+      const r = rectOf(q, size);
       x0 = Math.min(x0, r.x0); y0 = Math.min(y0, r.y0); x1 = Math.max(x1, r.x1); y1 = Math.max(y1, r.y1);
     }
     return (x1 - x0) + (y1 - y0) + 2 * Math.max(x1 - x0, y1 - y0);
@@ -107,7 +110,7 @@ export function layRoad(seed: number, n: number): Place[] {
     if (budget-- <= 0) return false;
     const rng = new Rng(mixSeed(seed, 0xc4a1, road.length + 1));
     const prev = road[road.length - 1];
-    const fits = placesAfter(prev).filter((c) => road.every((q) => !overlaps(rectOf(c), rectOf(q))));
+    const fits = placesAfter(prev, size).filter((c) => road.every((q) => !overlaps(rectOf(c, size), rectOf(q, size))));
     // (a lean to the compact, softened by the seed so the road does not always curl the same way; a straight run of three is a little dearer)
     const run = road.length >= 3 && road[road.length - 1].join === road[road.length - 2].join && road[road.length - 2].join === road[road.length - 3].join;
     const scored = fits.map((c) => ({ c, s: bounds([...road, c]) + rng.next() * 16 + (run && c.join === prev.join ? 4 : 0) })).sort((a, b) => a.s - b.s);
@@ -123,14 +126,14 @@ export function layRoad(seed: number, n: number): Place[] {
 }
 
 /** The world tile of board tile (u, v) of a section. */
-export function worldOf(s: Pick<Section, 'rot' | 'origin'>, u: number, v: number): [number, number] {
-  const [a, b] = turnTile(s.rot, u, v);
+export function worldOf(s: Pick<Section, 'rot' | 'origin'> & { board?: SectionSize }, u: number, v: number): [number, number] {
+  const [a, b] = turnTile(s.rot, u, v, s.board?.w, s.board?.d);
   return [a + s.origin.u, b + s.origin.v];
 }
 
 /** The board tile of a section at a world tile, or null if the section does not cover it. */
 export function boardTileAt(s: Pick<Section, 'rot' | 'origin' | 'board'>, U: number, V: number): [number, number] | null {
-  const [u, v] = unturnTile(s.rot, U - s.origin.u, V - s.origin.v);
+  const [u, v] = unturnTile(s.rot, U - s.origin.u, V - s.origin.v, s.board.w, s.board.d);
   return u >= 0 && v >= 0 && u < s.board.w && v < s.board.d ? [u, v] : null;
 }
 
@@ -162,10 +165,10 @@ function easePinned(b: Board, pinned: ReadonlySet<number>, limit = CLIMB_MAX): v
 /** Smooth the board's border (the ring of its outer tiles) to no more than a ramp between neighbours, never moving a pinned tile, so a section laid against this one meets gentle ground on whichever side it joins. */
 function smoothRing(b: Board, pinned: ReadonlySet<number>): void {
   const ring: number[] = [];
-  for (let u = 0; u < W; u++) ring.push(u);
-  for (let v = 1; v < D; v++) ring.push(v * W + W - 1);
-  for (let u = W - 2; u >= 0; u--) ring.push((D - 1) * W + u);
-  for (let v = D - 2; v >= 1; v--) ring.push(v * W);
+  for (let u = 0; u < b.w; u++) ring.push(u);
+  for (let v = 1; v < b.d; v++) ring.push(v * b.w + b.w - 1);
+  for (let u = b.w - 2; u >= 0; u--) ring.push((b.d - 1) * b.w + u);
+  for (let v = b.d - 2; v >= 1; v--) ring.push(v * b.w);
   for (let pass = 0; pass < 20; pass++) {
     let moved = false;
     for (let k = 0; k < ring.length; k++) {
@@ -186,10 +189,10 @@ function smoothRing(b: Board, pinned: ReadonlySet<number>): void {
 export function contactPairs(prev: Section, next: Section): { n: [number, number]; p: [number, number] }[] {
   const [bu, bv] = turnDir(next.rot, 0, 1);
   const out: { n: [number, number]; p: [number, number] }[] = [];
-  for (let u = 0; u < W; u++) {
-    const [U, V] = worldOf(next, u, D - 1);
+  for (let u = 0; u < next.board.w; u++) {
+    const [U, V] = worldOf(next, u, next.board.d - 1);
     const p = boardTileAt(prev, U + bu, V + bv);
-    if (p) out.push({ n: [u, D - 1], p });
+    if (p) out.push({ n: [u, next.board.d - 1], p });
   }
   return out;
 }
@@ -200,13 +203,13 @@ export function joinBoard(prev: Section, next: Section): void {
   const pairs = contactPairs(prev, next);
   const meets = new Map(pairs.map((q) => [q.n[0], q.p]));
   const edge: number[] = [];
-  const h: number[] = new Array(W).fill(-1);
+  const h: number[] = new Array(b.w).fill(-1);
   let last = -1;
   let first = -1;
   let end = -1;
-  for (let u = 0; u < W; u++) {
-    const t = b.tiles[(D - 1) * W + u];
-    edge.push((D - 1) * W + u);
+  for (let u = 0; u < b.w; u++) {
+    const t = b.tiles[(b.d - 1) * b.w + u];
+    edge.push((b.d - 1) * b.w + u);
     delete t.rock;
     delete t.ground;
     delete t.wall;
@@ -227,9 +230,9 @@ export function joinBoard(prev: Section, next: Section): void {
     end = u;
   }
   // (the tiles of the edge that meet nothing follow their neighbours' heights, outwards from the ones that do)
-  for (let u = end + 1; u < W; u++) h[u] = Math.min(h[u - 1] + RAMP, Math.max(h[u - 1] - RAMP, b.tiles[(D - 1) * W + u].h));
-  for (let u = first - 1; u >= 0; u--) h[u] = Math.min(h[u + 1] + RAMP, Math.max(h[u + 1] - RAMP, b.tiles[(D - 1) * W + u].h));
-  if (first >= 0) for (let u = 0; u < W; u++) b.tiles[(D - 1) * W + u].h = h[u];
+  for (let u = end + 1; u < b.w; u++) h[u] = Math.min(h[u - 1] + RAMP, Math.max(h[u - 1] - RAMP, b.tiles[(b.d - 1) * b.w + u].h));
+  for (let u = first - 1; u >= 0; u--) h[u] = Math.min(h[u + 1] + RAMP, Math.max(h[u + 1] - RAMP, b.tiles[(b.d - 1) * b.w + u].h));
+  if (first >= 0) for (let u = 0; u < b.w; u++) b.tiles[(b.d - 1) * b.w + u].h = h[u];
   smoothRing(b, new Set(edge));
   easePinned(b, new Set(edge));
   // (the edge's new heights can cut a staircase off: then the land inside is eased to ramps instead, platforms and all)
@@ -237,13 +240,13 @@ export function joinBoard(prev: Section, next: Section): void {
 }
 
 /** The road of `waves` sections for a run: wave n's board is `makeBoard(boardSeed(n), area)`, laid on the road and joined to the one before. */
-export function buildChain(seed: number, waves: number, area: Area | ((wave: number) => Area), boardSeed: (wave: number) => number, boss: (wave: number) => boolean): Section[] {
-  const road = layRoad(seed, waves);
+export function buildChain(seed: number, waves: number, area: Area | ((wave: number) => Area), boardSeed: (wave: number) => number, boss: (wave: number) => boolean, size: SectionSize = STANDARD): Section[] {
+  const road = layRoad(seed, waves, size);
   const out: Section[] = [];
   for (let n = 1; n <= waves; n++) {
     const q = road[n - 1];
     const land = typeof area === 'function' ? area(n) : area;
-    const s: Section = { wave: n, board: makeBoard(boardSeed(n), land), rot: q.rot, origin: { u: q.ou, v: q.ov }, join: q.join, boss: boss(n) };
+    const s: Section = { wave: n, board: makeBoard(boardSeed(n), land, size.w, size.d), rot: q.rot, origin: { u: q.ou, v: q.ov }, join: q.join, boss: boss(n) };
     // (the first section meets no other, but a later one may be laid against it: its border is smoothed too)
     const settle = () => {
       if (n > 1) joinBoard(out[n - 2], s);
@@ -252,7 +255,7 @@ export function buildChain(seed: number, waves: number, area: Area | ((wave: num
     settle();
     // (a shape the join or the smoothing cuts apart, a bridge or gate left without its far side, is laid the old way instead)
     if (!boardOk(s.board)) {
-      s.board = makeBoard(boardSeed(n), land, W, D, 'classic');
+      s.board = makeBoard(boardSeed(n), land, size.w, size.d, 'classic');
       settle();
     }
     out.push(s);
@@ -267,7 +270,7 @@ export const cloneBoard = (b: Board): Board => ({ ...b, tiles: b.tiles.map((t) =
 export const against = (of: Section, host: Section): { u: number; v: number } => ({ u: of.origin.u - host.origin.u, v: of.origin.v - host.origin.v });
 
 /** The frame (`render/iso.ts`) a section is drawn in with `host` at the origin. */
-export const frameOf = (s: Section, host: Section): { rot: Rot; ou: number; ov: number } => ({ rot: s.rot, ou: s.origin.u - host.origin.u, ov: s.origin.v - host.origin.v });
+export const frameOf = (s: Section, host: Section): { rot: Rot; ou: number; ov: number; w?: number; d?: number } => ({ rot: s.rot, ou: s.origin.u - host.origin.u, ov: s.origin.v - host.origin.v, ...(s.board.w === W && s.board.d === D ? {} : { w: s.board.w, d: s.board.d }) });
 
 // ---- the heroes' walk --------------------------------------------------------------------------------------------------
 
@@ -282,7 +285,7 @@ export interface Spot {
 export function transferFormation(next: Board, formation: readonly Spot[]): Map<string, [number, number]> {
   const out = new Map<string, [number, number]>();
   const taken = new Set<number>();
-  const free = (u: number, v: number) => v >= D - DEPLOY_ROWS && standable(tileAt(next, u, v)) && !taken.has(v * next.w + u);
+  const free = (u: number, v: number) => v >= next.d - DEPLOY_ROWS && standable(tileAt(next, u, v)) && !taken.has(v * next.w + u);
   const ordered = [...formation].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   // (those whose own tile is free keep it first, so a displaced hero never takes another's place)
   const rest: Spot[] = [];
@@ -295,7 +298,7 @@ export function transferFormation(next: Board, formation: readonly Spot[]): Map<
   for (const h of rest) {
     let best: [number, number] | null = null;
     let bestD = Infinity;
-    for (let v = D - DEPLOY_ROWS; v < D; v++)
+    for (let v = next.d - DEPLOY_ROWS; v < next.d; v++)
       for (let u = 0; u < next.w; u++) {
         if (!free(u, v)) continue;
         const d = Math.abs(u - h.u) + Math.abs(v - h.v);

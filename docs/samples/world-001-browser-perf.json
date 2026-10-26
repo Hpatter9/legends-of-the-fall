@@ -1,0 +1,57 @@
+{
+  "conditions": "Sequential contexts in one Chromium process, 393x852 DPR1, SwiftShader software GL, seed7 wave14 idle deployment with two hired heroes. Late-wave fixture reconstructs terrain; no claim of full preceding playthrough. Cold frame sample first4seconds then wait for queue drain; warm sample2seconds. Pixel estimates exclude live-board textures, assets and browser overhead. Host measurements, not mobile device FPS.",
+  "results": [
+    {
+      "theme": "standard",
+      "synchronousSetupMs": 99.30000000074506,
+      "w": 8,
+      "d": 11,
+      "coldObservationMs": 4418.3,
+      "coldFrames": {
+        "samples": 12,
+        "meanMs": 348.36,
+        "medianMs": 366.7,
+        "p95Ms": 683.3,
+        "worstMs": 683.3
+      },
+      "warmFrames": {
+        "samples": 18,
+        "meanMs": 113.48,
+        "medianMs": 83.4,
+        "p95Ms": 366.7,
+        "worstMs": 366.7
+      },
+      "bakedSections": 13,
+      "estimatedBakedPixelBytes": 10654592,
+      "heroes": 2,
+      "stage": 14,
+      "pageErrors": []
+    },
+    {
+      "theme": "mountain",
+      "synchronousSetupMs": 140.2999999988824,
+      "w": 12,
+      "d": 16,
+      "coldObservationMs": 4425.1,
+      "coldFrames": {
+        "samples": 21,
+        "meanMs": 192.44,
+        "medianMs": 100,
+        "p95Ms": 150,
+        "worstMs": 2033.3
+      },
+      "warmFrames": {
+        "samples": 22,
+        "meanMs": 91.32,
+        "medianMs": 100,
+        "p95Ms": 150,
+        "worstMs": 199.9
+      },
+      "bakedSections": 1,
+      "estimatedBakedPixelBytes": 517888,
+      "heroes": 2,
+      "stage": 14,
+      "pageErrors": []
+    }
+  ]
+}

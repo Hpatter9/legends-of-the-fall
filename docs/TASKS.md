@@ -37,7 +37,7 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 ## Ready queue
 
-No additional development tasks have been assigned. Do not invent feature work or start broad refactors. The next task should come from the owner's goal or a specifically authorised investigation.
+WORLD-001 continues as the owner-approved priority. Prototype review precedes wider rollout; SIM-001 remains separate in PR #122.
 
 ## Task template
 
@@ -64,3 +64,13 @@ Give the next chat the task ID, branch or PR, relevant docs/notes file, checks a
 
 Mark a task ready for review after implementation and validation. Mark it done only after the owner merges or explicitly accepts the result. Retain a short completed entry with its PR and handoff note.
 
+
+## WORLD-001 — Grand Scenario prototype
+
+- **Status:** prototype implementation complete for director review; wider WORLD-001 vision remains open in #123. No merge or deployment.
+- **Owner:** dedicated WORLD-001 implementation worker; Game Director reviews.
+- **Branch/worktree:** `codex/world-001`, `/workspace/world-001`.
+- **Scope:** dimension-aware 12×16 chain/projection/drop/transfer; opt-in mountain, persistent lake shoreline and cemetery plans; late scenic destination and bounded reveal camera; lazy large-section scenery; regression coverage, browser scripts and handoff.
+- **Isolation:** standard modes, existing save keys, UI-001 and SIM-001 damage/statistics files preserved. No version bump.
+- **Validation:** typecheck/web passed; full suite 105 files passed (501.25s); seeded connectivity and portrait results in `docs/notes/world-001.md`.
+- **Remaining:** authored multi-direction routes, richer art/terrain composition and real-device performance; draft prototype review only.
