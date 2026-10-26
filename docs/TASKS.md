@@ -14,6 +14,19 @@ The manager maintains the integrated board. Workers propose their task updates i
 | UI-001 | Existing interface work | In progress, reported by owner | Existing Codex app UI chat | Unknown; needs handoff from that chat | Exact files unknown. Reserve page layout, CSS, view modules, input, and renderer changes until confirmed. | UI chat supplies its scope, completion criteria, changed files, validation results, and branch/PR. |
 | SETUP-001 | Shared Codex instructions and task board | Ready for owner review once the setup PR is open | Manager chat | codex/manager-setup | AGENTS.md, docs/TASKS.md, docs/notes/manager-setup.md | Instructions point to CLAUDE.md; UI ownership is recorded; documentation is checked and a reviewable PR is opened. |
 
+## SIM-001 implementation assignment
+
+- **ID / title:** SIM-001 — effective hits and environmental kill credit (#121).
+- **Status:** ready for Game Director review; not merged.
+- **Owner:** Codex implementation chat.
+- **Branch / worktree / PR:** `codex/sim-001`, `/workspace/legends-of-the-fall`; PR linked in [issue #121](https://github.com/Hpatter9/legends-of-the-fall/issues/121).
+- **Allowed scope:** simulation damage settlement, pure combat statistics, regression tests, this board and `docs/notes/sim-001.md`.
+- **Reserved:** UI-001 keeps all existing ownership; exact UI file list remains unknown. No UI, input, renderer, charm targeting or RNG isolation changes.
+- **Completion criteria:** reproduce failures first; minimally fix post-hit effects and environmental credit; cover cancelled/dead/shielded hits and genuine kills; run typecheck, tests and web build; open an unmerged PR and report in #121.
+
+- **Validation:** typecheck passed; full `npm test` passed (104 test files); final 19 focused regressions and `npm test -- sim-001` passed; web build and diff checks passed.
+- **Handoff:** `docs/notes/sim-001.md`; genuine combat credit and participation/victory XP retained; no implementation blockers. Director reviews shield rider interpretation and handles merge/versioning.
+
 ## Ready queue
 
 No additional development tasks have been assigned. Do not invent feature work or start broad refactors. The next task should come from the owner's goal or a specifically authorised investigation.
