@@ -845,6 +845,69 @@
     #buttons button { padding-left:6px; padding-right:6px; }
   }
 
+
+  /* Tactical Command phase 2: unify hub, menus, sheets and secondary screens. */
+  :root {
+    --panel-bg:linear-gradient(180deg,#253b51,#142333);
+    --frame:0 0 0 1px #49647d,0 8px 22px rgb(0 0 0 / .34);
+  }
+  #home, #party, #settings, #gacha, #recap, #result {
+    color:var(--tc-text);
+  }
+  #home { background:linear-gradient(180deg,rgb(12 18 28 / .12),rgb(12 18 28 / .66)); }
+  #hmTop, #hmTabs, #hmSub header, #party header, #settings header, #gacha header {
+    background:rgb(12 18 28 / .94);
+    border-color:#405971;
+    color:var(--tc-text);
+  }
+  .hmPanel, .hsheet, .evcard, #tip, .hmNote, .toast {
+    background:var(--panel-bg);
+    border:1px solid #49647d;
+    border-radius:12px;
+    outline:none;
+    box-shadow:var(--frame);
+    color:var(--tc-text);
+  }
+  .hmPanel h2, .evcard h2, #hmSub h2, #settings h2, #gacha h2, body #spellbook h2 {
+    font-family:var(--body);
+    font-weight:700;
+    letter-spacing:.025em;
+    color:var(--tc-text);
+    text-shadow:none;
+  }
+  #hmSub h2, #settings h2, #gacha h2, body #spellbook h2 {
+    background:none; border:0; clip-path:none; filter:none;
+    padding:5px 0; margin:0 auto 0 0;
+  }
+  .hmTab, #hmTabs button {
+    color:#bfd0df; text-shadow:none;
+    border-color:transparent;
+  }
+  .hmTab.on, .hmTab.active, #hmTabs button.on, #hmTabs button.active {
+    color:#f3d79c; border-color:#70b5e5;
+  }
+  .hmCard, .hmLink, .hmBuild, .ptCard, .ptSlot, .setting {
+    border-color:#45617a;
+    border-radius:10px;
+    color:var(--tc-text);
+  }
+  .hmGo, #ptGo, #next {
+    background:linear-gradient(180deg,#3277ad,#174c7b);
+    border-color:#8ccbf3; color:white;
+  }
+  #party header, #settings header, #gacha header { border-bottom:1px solid #405971; }
+  #hmSub, #hmSheet, #ptSheet { color:var(--tc-text); }
+  #settingsBody, #hmSubBody { scrollbar-color:#49647d #142333; }
+  .setting .toggle.on, .setting .pair button.on {
+    background:linear-gradient(180deg,#3277ad,#174c7b);
+    border:1px solid #8ccbf3; color:white;
+    font-family:var(--body); font-size:14px; text-shadow:none;
+    box-shadow:inset 0 1px rgb(255 255 255 / .15);
+  }
+  @media (prefers-reduced-motion:reduce) {
+    button, .card, .hmPanel, .hmTab { transition:none !important; }
+  }
+
 </style>
 </head>
 <body data-phase="deploy">
