@@ -908,6 +908,61 @@
     button, .card, .hmPanel, .hmTab { transition:none !important; }
   }
 
+
+  /* Tactical Command phase 3: compact, touch-safe deployment and battle HUD. */
+  #panel { isolation:isolate; }
+  body[data-phase='deploy'] #panel {
+    padding-top:7px; row-gap:6px;
+  }
+  body[data-phase='deploy'] #benchWrap {
+    border-radius:10px;
+    background:rgb(12 18 28 / .35);
+    padding:4px;
+  }
+  body[data-phase='deploy'] #bench { max-height:min(172px, 24dvh); }
+  body[data-phase='deploy'] #buttons {
+    display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:5px;
+  }
+  body[data-phase='deploy'] #buttons button:not(#fight) {
+    min-width:0; min-height:42px;
+    padding:7px 2px; font-size:12px;
+  }
+  body[data-phase='deploy'] #buttons #fight {
+    grid-column:1 / -1;
+    min-height:49px; font-size:19px; letter-spacing:.05em;
+  }
+  body[data-phase='fight'] #top {
+    border-bottom-color:rgb(112 181 229 / .45);
+  }
+  body[data-phase='fight'] #speed {
+    border-color:var(--tc-blue); color:#d9efff;
+  }
+  body[data-phase='fight'] #spells {
+    border-top:1px solid rgb(112 181 229 / .25);
+    padding-top:6px;
+  }
+  #mana i {
+    background:#101e2d; border-color:#45617a;
+  }
+  #mana i span { background:linear-gradient(90deg,#3277ad,#70b5e5); }
+  #result {
+    background:rgb(8 14 24 / .82);
+    backdrop-filter:blur(5px);
+  }
+  #result > .row {
+    background:linear-gradient(transparent,rgb(12 18 28 / .96) 38%);
+  }
+  #result #next { min-height:48px; }
+  @media (max-height:800px) {
+    body[data-phase='deploy'] #bench { max-height:min(132px, 19dvh); }
+    body[data-phase='deploy'] #panel { row-gap:4px; }
+  }
+  @media (max-width:375px) {
+    body[data-phase='deploy'] #buttons button:not(#fight) { font-size:11px; }
+    body[data-phase='deploy'] #buttons #fight { min-height:45px; }
+  }
+
 </style>
 </head>
 <body data-phase="deploy">
