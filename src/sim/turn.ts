@@ -8,27 +8,27 @@ import { D, W } from './board';
 export type Rot = 0 | 1 | 2 | 3;
 
 /** The world tile (within the section's footprint) of the board tile (u, v) when the board is turned `rot` quarter turns. */
-export function turnTile(rot: Rot, u: number, v: number): [number, number] {
+export function turnTile(rot: Rot, u: number, v: number, w = W, d = D): [number, number] {
   switch (rot) {
     case 0: return [u, v];
-    case 1: return [D - 1 - v, u];
-    case 2: return [W - 1 - u, D - 1 - v];
-    default: return [v, W - 1 - u];
+    case 1: return [d - 1 - v, u];
+    case 2: return [w - 1 - u, d - 1 - v];
+    default: return [v, w - 1 - u];
   }
 }
 
 /** The board tile of the footprint tile (a, b) of a board turned `rot`: the inverse of `turnTile` (outside the board for a tile it does not cover). */
-export function unturnTile(rot: Rot, a: number, b: number): [number, number] {
+export function unturnTile(rot: Rot, a: number, b: number, w = W, d = D): [number, number] {
   switch (rot) {
     case 0: return [a, b];
     case 1: return [b, D - 1 - a];
-    case 2: return [W - 1 - a, D - 1 - b];
-    default: return [W - 1 - b, a];
+    case 2: return [W - 1 - a, d - 1 - b];
+    default: return [w - 1 - b, a];
   }
 }
 
 /** A footprint's width (along U) and depth (along V). */
-export const footDims = (rot: Rot): [number, number] => (rot % 2 ? [D, W] : [W, D]);
+export const footDims = (rot: Rot, w = W, d = D): [number, number] => (rot % 2 ? [d, w] : [w, d]);
 
 /** Whether a section lying `rot` with its footprint's corner at (ou, ov) against the host's (which lies `hostRot`) is further
  *  from the screen than the host, so it is drawn behind the host's tiles and fighters. Footprints never overlap, so a
