@@ -788,6 +788,63 @@
   .flip.new .face { box-shadow: 0 0 14px 2px rgb(var(--e8-rgb) / 0.75); }
   .flip.new.up { z-index: 1; transform: scale(1.08); transition: transform 0.4s; }
 /*__PIXEL_CSS__*/
+
+  /* Tactical Command: presentation-only skin. Existing controls and game logic stay intact. */
+  :root {
+    --tc-bg:#0c121c; --tc-panel:#1d2b3d; --tc-raised:#304963;
+    --tc-blue:#70b5e5; --tc-gold:#e3c27c; --tc-text:#e7edf7;
+  }
+  html, body { background:var(--tc-bg); color:var(--tc-text); }
+  body { font-family:var(--body); }
+  button {
+    border:1px solid #49647d; border-radius:10px;
+    background:linear-gradient(180deg,#304963,#1b2b3e);
+    color:var(--tc-text); text-shadow:none;
+    box-shadow:0 2px 8px rgb(0 0 0 / .22);
+    min-height:38px;
+  }
+  button:focus-visible, .card:focus-visible { outline:2px solid var(--tc-blue); outline-offset:2px; }
+  button.primary {
+    background:linear-gradient(180deg,#3277ad,#174c7b);
+    border:1px solid #8ccbf3; color:#fff;
+    box-shadow:inset 0 1px rgb(255 255 255 / .2),0 3px 12px rgb(0 0 0 / .3);
+  }
+  button:disabled { opacity:.42; box-shadow:none; }
+  #top {
+    background:linear-gradient(180deg,rgb(12 18 28 / .98),rgb(20 34 49 / .93) 75%,rgb(20 34 49 / .12));
+    border-bottom:1px solid rgb(112 181 229 / .25);
+  }
+  #top h1 { color:var(--tc-gold); letter-spacing:.035em; }
+  #status { color:#bfd0df; }
+  #panel {
+    background:linear-gradient(180deg,rgb(29 43 61 / .97),rgb(12 18 28 / .99));
+    border-top:1px solid #526e87; box-shadow:0 -8px 26px rgb(0 0 0 / .25);
+  }
+  #bench { gap:5px; }
+  .card {
+    background:linear-gradient(180deg,#30465c,#182535);
+    border:1px solid #49647d; border-radius:9px;
+    box-shadow:inset 0 1px rgb(255 255 255 / .08);
+  }
+  .card b { color:#e7edf7; }
+  .card.placed { border-color:var(--tc-blue); box-shadow:0 0 0 1px rgb(112 181 229 / .35); }
+  #buttons { gap:5px; }
+  #fight { border-color:#a6d7f5; }
+  #result, #recap, #gacha, #settings, #party {
+    color:var(--tc-text);
+  }
+  #home, #hmSub, #hmSheet, #party, #settings, #gacha {
+    --ink:var(--tc-text); --edge:#49647d; --gold:var(--tc-gold);
+  }
+  #hmTabs { border-top:1px solid #49647d; }
+  #version { color:#a6bbce; }
+  @media (max-width:375px) {
+    #panel { gap:5px; padding-left:5px; padding-right:5px; }
+    #bench { gap:3px; }
+    .card b { font-size:10px; }
+    #buttons button { padding-left:6px; padding-right:6px; }
+  }
+
 </style>
 </head>
 <body data-phase="deploy">
