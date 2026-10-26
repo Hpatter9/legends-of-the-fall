@@ -11,8 +11,24 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 | ID | Task | Status | Owner | Branch/worktree | Scope | Done when |
 | --- | --- | --- | --- | --- | --- | --- |
-| UI-001 | Existing interface work | In progress, reported by owner | Existing Codex app UI chat | Unknown; needs handoff from that chat | Exact files unknown. Reserve page layout, CSS, view modules, input, and renderer changes until confirmed. | UI chat supplies its scope, completion criteria, changed files, validation results, and branch/PR. |
-| SETUP-001 | Shared Codex instructions and task board | Ready for owner review once the setup PR is open | Manager chat | codex/manager-setup | AGENTS.md, docs/TASKS.md, docs/notes/manager-setup.md | Instructions point to CLAUDE.md; UI ownership is recorded; documentation is checked and a reviewable PR is opened. |
+| UI-001 | Tactical Command interface overhaul | Blocked: checkout/network access; not ready for review | Existing Codex app UI chat | ui/tactical-command-overhaul; [draft PR #118](https://github.com/Hpatter9/legends-of-the-fall/pull/118); no local checkout reported | Current PR: src/index.html and docs/notes/tactical-command-ui.md. Reserve related page layout, CSS, UI views, input, and renderer work; additional files unknown. | Obtain checkout, audit and complete UI, pass required checks and portrait/functional review, document results, and submit for owner review. |
+
+## UI-001 handoff — 2026-10-26
+
+Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. This is a recorded handoff, not a new validation run.
+
+- **Changes in reported session:** none; inspected PR and instructions.
+- **Blocker:** clone failed because the UI environment could not connect to its network proxy; retry was interrupted. Cause and recovery remain unverified.
+- **Checks:** typecheck, tests, web build, and browser checks have not run.
+- **Next work:** obtain a checkout on the existing branch; audit and complete the UI; inspect 393×852, 360×780, and 412×915 portrait sizes; check deployment, battles, hero management, navigation, overlays, save loading, and offline play; fix failures and rerun checks.
+- **Release gate:** update the UI notes, board handoff, and PR with actual results. Keep PR #118 draft until validation and visual review are complete. Its reservation remains in place while blocked.
+- **Reference:** [recorded handoff](notes/ui-coordination-handoff.md).
+
+## Completed work
+
+| ID | Task | Result | Reference |
+| --- | --- | --- | --- |
+| SETUP-001 | Shared Codex instructions and task board | Done; merged at owner's request, version 0.157.0 | [PR #119](https://github.com/Hpatter9/legends-of-the-fall/pull/119), [setup note](notes/manager-setup.md) |
 
 ## Ready queue
 
