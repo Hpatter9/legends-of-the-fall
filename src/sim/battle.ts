@@ -215,6 +215,8 @@ export interface Battle {
   phase: Phase;
   /** Time into the fight (ms). */
   t: number;
+  /** A heart grants more time when a fight has timed out, without rewinding its clock. */
+  timeLimit?: number;
   /** The fight's own random stream (its state). */
   rng: number;
   pending: Pending[];
@@ -504,6 +506,25 @@ export function fight(b: Battle): boolean {
   return true;
 }
 
+/** Raise the fallen party in the same fight. Enemies, charges and spent abilities stay as they were. */
+export function reviveParty(b: Battle): boolean {
+  if (b.phase !== 'lost' || !heroesPlaced(b)) return false;
+  for (const u of b.units) {
+    if (u.side !== 'hero' || defOf(u).summon || u.alive) continue;
+    u.alive = true;
+    u.hp = u.maxHp;
+    u.diedAt = undefined;
+    u.step = undefined;
+    u.swing = undefined;
+    u.cast = undefined;
+    u.hurtAt = undefined;
+    u.busyUntil = b.t;
+  }
+  if (b.t >= (b.timeLimit ?? TIME_LIMIT_MS)) b.timeLimit = b.t + TIME_LIMIT_MS;
+  b.phase = 'fight';
+  return true;
+}
+
 /** Fix the placed heroes' trait bonuses: attack and health now, the rest read by the hooks as the fight goes. */
 function applyTraits(b: Battle): void {
   const fx = mergeEffects(traitEffects(kindsOf(b.units)), b.relics?.team ?? {});
@@ -571,7 +592,7 @@ export function stepBattle(b: Battle): BattleEvent[] {
   }
   const heroes = b.units.some((x) => x.alive && x.side === 'hero' && !defOf(x).summon);
   const foes = b.units.some((x) => x.alive && x.side === 'foe');
-  if (!heroes || !foes || b.t >= TIME_LIMIT_MS) {
+  if (!heroes || !foes || b.t >= (b.timeLimit ?? TIME_LIMIT_MS)) {
     b.phase = heroes && !foes ? 'won' : 'lost';
     b.pending = [];
     out.push({ kind: 'end', won: b.phase === 'won' });

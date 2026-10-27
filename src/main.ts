@@ -4,7 +4,7 @@
 
 import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { standable, tileAt } from './sim/board';
-import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
+import { canPlace, fight, reviveParty, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
 import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
 // (`saveSlot` as `saveRun`: a tower or calamity run is saved in its own slot, any other in the ordinary one)
 import { armyOfRun, armyRun, benchFull, boostOf, canRetry, chainOf, fallOutcome, MAX_RETRIES, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, waveArmyOf, type Owned, type Run } from './sim/run';
@@ -170,10 +170,8 @@ class Game {
   private settled = false;
   /** How long the fight has been over (ms): the recap waits `END_WAIT_MS` after the last kill, so the deaths play out. */
   private endWait = 0;
-  /** The heart-burn after a fall with hearts left: `t` real ms since it began, `swapped` once the wave is set out again, `started` once its fight is on (`fightAt`: when). Nothing is settled until it is over; no prompt. */
+  /** The heart-burn after a fall with hearts left: `t` real ms since it began, `swapped` once the fallen heroes rise, `started` once its fight is on (`fightAt`: when). Nothing is settled until it is over; no prompt. */
   private revive: { t: number; swapped: boolean; started: boolean; fightAt: number; line?: { dismiss: () => void } } | null = null;
-  /** Set while the revive itself starts the wave again, so that `newBattle` keeps the revive going. */
-  private reviveRestart = false;
   /** This fight's loss has had its cinematic asked for (once a fight: `refresh` runs often). */
   private lossScened = false;
   /** What an army's last settled fight paid (null for any other run). */
@@ -391,7 +389,7 @@ class Game {
     setFrame(section ? frameOf(section, section) : undefined);
     this.settled = false;
     this.endWait = 0;
-    if (!this.reviveRestart) this.revive = null;
+    this.revive = null;
     this.lossScened = false;
     for (const id of [...this.run.squad]) {
       const h = heroOf(this.run, id);
@@ -702,8 +700,8 @@ class Game {
     this.evolved = new Set();
     this.endIntro();
     newQuipScene();
-    // (a wave started again by a heart has a hero's line instead of a foe's)
-    if (!this.revive) foeGrumbles(this.b.units.filter((u) => u.side === 'foe' && !UNITS[u.def].summon).length, (i) => this.anchorOfFoe(i));
+    // (the opening grumble belongs to a new fight)
+    foeGrumbles(this.b.units.filter((u) => u.side === 'foe' && !UNITS[u.def].summon).length, (i) => this.anchorOfFoe(i));
     this.stats = startStats(this.b.units);
     // (the music: a boss, a Calamity fight, or one of three battle tracks by how hard the fight runs)
     startFight(isBossRun(this.run), { calamity: this.run.mode?.kind === 'calamity', level: fightLevel(this.run.stage, { elite: this.run.tower?.cur?.kind === 'elite', waves: waveArmyOf(this.run)?.waves.length }) });
@@ -782,7 +780,7 @@ class Game {
       return;
     }
     if (this.auto) this.autoTick(dt);
-    if (b.phase === 'fight' && this.sceneHold > 0) {
+    if (b.phase === 'fight' && (this.sceneHold > 0 || (this.revive && !this.revive.started))) {
       // (a cinematic is up: the fight is held where it is)
     } else if (b.phase === 'fight') {
       // (a boss's fall slows the fight for a beat: `timeScale`)
@@ -1608,12 +1606,12 @@ class Game {
     if (this.run.event) this.events.openEvent(this.run, () => (saveRun(this.run), this.refresh()));
   }
 
-  /** When the heart has burnt and the wave starts again, and when the whole moment ends (real ms; shorter with reduced motion). */
+  /** When the heart has burnt and the fight resumes, and when the whole moment ends (real ms; shorter with reduced motion). */
   private reviveTimes(): { swap: number; end: number } {
     return reducedMotion() ? { swap: 500, end: 1200 } : { swap: 1100, end: 2000 };
   }
 
-  /** The party fell with a heart left: no card and no question. A heart burns, a line says so, and the wave starts again by itself. */
+  /** The party fell with a heart left: no card and no question. A heart burns, a line says so, and the fight resumes by itself. */
   private beginRevive(): void {
     this.revive = { t: 0, swapped: false, started: false, fightAt: 0, line: reviveLine('A heart burns. The party rises.', this.reviveTimes().end) };
     play('sparkle');
@@ -1631,7 +1629,7 @@ class Game {
     }
   }
 
-  /** The burn's clock: at its midpoint the heart is spent and the wave starts again with the retry's gold, the heroes rising in a pillar of light. */
+  /** The burn's clock: at its midpoint the heart is spent and the fight resumes with the retry's gold, the heroes rising in a pillar of light. */
   private stepRevive(dt: number): void {
     const r = this.revive;
     if (!r) return;
@@ -1640,14 +1638,13 @@ class Game {
     if (!r.swapped && r.t >= at.swap) {
       r.swapped = true;
       if (!canRetry(this.run)) return void (this.revive = null);
-      this.noteRecap({}, [], false, false);
       // (the heart burning now stays grey from the next draw of the lives)
       const gold = retryWave(this.run)!;
       play('coinRecycle');
       saveRun(this.run);
-      this.reviveRestart = true;
-      this.newBattle();
-      this.reviveRestart = false;
+      reviveParty(this.b);
+      this.acc = 0;
+      this.endWait = 0;
       for (const u of this.b.units) if (u.side === 'hero') this.sprites.get(u.id)?.evolve();
       flyUp(`+${gold} gold`, $('gold'));
       // (the heroes stand where they stood, glowing; a beat later the fight is on, with no Fight! tap)
@@ -1655,8 +1652,10 @@ class Game {
     }
     if (r.swapped && !r.started && r.t >= r.fightAt) {
       r.started = true;
-      if (this.b.phase === 'deploy') {
-        this.begin();
+      if (this.b.phase === 'fight') {
+        this.acc = 0;
+        startFight(isBossRun(this.run), { calamity: this.run.mode?.kind === 'calamity', level: fightLevel(this.run.stage, { elite: this.run.tower?.cur?.kind === 'elite', waves: waveArmyOf(this.run)?.waves.length }) });
+        this.refresh();
         // (the party is back on its feet: one of them says so)
         if (!this.auto) revivedQuip(this.b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def), (k) => this.anchorOfKind(k));
       }
@@ -1671,7 +1670,7 @@ class Game {
     box.hidden = !!run.tower;
     if (box.hidden) return;
     const left = retriesLeft(run);
-    // (a fall with a heart left: the last full heart burns until the wave starts again and spends it)
+    // (a fall with a heart left: the last full heart burns until the fight resumes and spends it)
     const burning = this.revive && !this.revive.swapped ? left - 1 : -1;
     const key = `${left}:${burning}`;
     if (box.dataset.key === key) return;
@@ -2140,7 +2139,7 @@ class Game {
       this.lossScened = true;
       void this.queueScene({ kind: 'firstLoss' });
     }
-    // (a wave lost with a heart left is not settled: a heart burns and the wave starts again by itself. With none left, or in a mode with none, the loss is settled and the run ends)
+    // (a wave lost with a heart left is not settled: a heart burns and the fight resumes by itself. With none left, or in a mode with none, the loss is settled and the run ends)
     if (ready && b.phase === 'lost' && !this.settled && fallOutcome(run) === 'heart' && !this.revive) this.beginRevive();
     if (ready && !this.settled && !this.revive) {
       this.settled = true;
