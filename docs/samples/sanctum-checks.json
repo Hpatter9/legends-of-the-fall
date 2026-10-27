@@ -1,0 +1,92 @@
+[
+  {
+    "width": 360,
+    "height": 780,
+    "fit": {
+      "width": 360,
+      "height": 634.75,
+      "overflow": false,
+      "altarY": 427.18875,
+      "controlsTop": 544,
+      "headBottom": 168.25,
+      "buttons": [
+        {
+          "left": 14,
+          "right": 175,
+          "bottom": 708,
+          "height": 54
+        },
+        {
+          "left": 185,
+          "right": 346,
+          "bottom": 708,
+          "height": 54
+        }
+      ]
+    },
+    "singlePull": "passed"
+  },
+  {
+    "width": 393,
+    "height": 852,
+    "fit": {
+      "width": 393,
+      "height": 706.75,
+      "overflow": false,
+      "altarY": 466.42875000000004,
+      "controlsTop": 596,
+      "headBottom": 181.25,
+      "buttons": [
+        {
+          "left": 14,
+          "right": 191.5,
+          "bottom": 776,
+          "height": 59
+        },
+        {
+          "left": 201.5,
+          "right": 379,
+          "bottom": 776,
+          "height": 59
+        }
+      ]
+    },
+    "singlePull": "passed"
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "fit": {
+      "width": 412,
+      "height": 769.75,
+      "overflow": false,
+      "altarY": 500.76375,
+      "controlsTop": 659,
+      "headBottom": 182.25,
+      "buttons": [
+        {
+          "left": 14,
+          "right": 201,
+          "bottom": 839,
+          "height": 59
+        },
+        {
+          "left": 211,
+          "right": 398,
+          "bottom": 839,
+          "height": 59
+        }
+      ]
+    },
+    "singlePull": "passed"
+  },
+  {
+    "tenPull": "passed",
+    "fullRitual": "passed",
+    "keyboard": "passed",
+    "reducedMotion": "passed",
+    "lowFunds": "passed",
+    "offlineReload": "passed",
+    "pageErrors": []
+  }
+]

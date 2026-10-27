@@ -1,29 +1,20 @@
-// The Recruit tab's picture: a summoning hall seen from the side like the tavern, with a glowing circle on the floor, arcane
-// pillars, braziers, banners (they are in the wall picture) and a robed summoner. The pull buttons and the odds
-// plaques sit over it. A pull is played here first (the circle charges and flares, a beam rises, the heroes step out of it) and
-// then the page opens the usual card reveal. It only draws: it reads the Meta, never changes it, and the pull itself is done by
-// the gacha. Drawn in the room's own pixels times a whole-number scale, nearest neighbour, only while the tab is showing.
+// The royal arcane sanctum: a painted chamber with live ritual light and hero arrivals.
+// Artwork and controls only; recruiting and saving remain in the gacha.
 
 import { ALL_HEROES, UNITS } from './sim/units';
 import { pullCost, type Meta, type Pull } from './sim/meta';
 import { pityLine } from './gacha';
+import { closest, haveOf, needOf } from './sim/unlock';
 import { heroRig } from './render/awakenRig';
 import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
-import { beamKind, fanSpots, hallLayout, MIN_H, ROOM_W, WALL_H, type BeamKind, type HallLayout, type Timeline } from './render/hallSpots';
+import { beamKind, fanSpots, hallLayout, MIN_H, ROOM_W, type BeamKind, type HallLayout, type Timeline } from './render/hallSpots';
 import { cardAt, dimAt, shakeAt, showcaseAt, summonPlan, type ShowPlan } from './render/summonRules';
 import { duck, hushSummon, play as playSfx } from './render/sound';
-import wallUrl from './art/hall/wall.png';
-import floorUrl from './art/hall/floor.png';
-import circleUrl from './art/hall/circle.png';
-import pillarUrl from './art/hall/pillar.png';
-import brazierUrl from './art/hall/brazier.png';
-import summoner1Url from './art/hall/summoner1.png';
-import summoner2Url from './art/hall/summoner2.png';
-import flameUrl from './art/hall/fx_fire-flame.png';
+import sanctumUrl from './art/hall/sanctum.png';
 import lightPillarUrl from './art/hall/fx_light-pillar.png';
 
-const ART: Record<string, string> = { wall: wallUrl, floor: floorUrl, circle: circleUrl, pillar: pillarUrl, brazier: brazierUrl, summoner1: summoner1Url, summoner2: summoner2Url, flame: flameUrl, lightPillar: lightPillarUrl };
+const ART: Record<string, string> = { sanctum: sanctumUrl, lightPillar: lightPillarUrl };
 let art: Record<string, HTMLImageElement> | null = null;
 async function loadArt(): Promise<Record<string, HTMLImageElement>> {
   if (art) return art;
@@ -36,27 +27,74 @@ const CSS = `
 .hm-recruit, .hm-spells { padding: 0; overflow: hidden; }
 .hlWrap { position: absolute; inset: 0; overflow: hidden; background: #140c1c; }
 .hlRoom { position: absolute; top: 0; image-rendering: pixelated; }
-.hlCount { position: absolute; left: 8px; top: 8px; padding: 3px 9px 4px; font: 700 12px var(--body); letter-spacing: 0.5px; color: var(--gold-hi); text-shadow: 0 1px 0 var(--black); background: rgb(var(--s2-rgb) / 0.85); box-shadow: 0 0 0 2px var(--p2), 0 0 0 4px var(--p0); pointer-events: none; }
-.hlCount small { display: block; font-size: 9px; font-weight: 400; letter-spacing: 0; color: var(--p4); }
-.hlOdds { position: absolute; right: 10px; top: 8px; min-height: 36px; padding: 0 8px; font-size: 12px; }
-.hlLow { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 0 12px 10px; pointer-events: none; }
+.hlHead { position: absolute; top: 10px; left: 14px; right: 14px; text-align: center; }
+.hlTitle { position: relative; margin: 0 8px; padding: 9px 3px; font: 900 clamp(16px, 4.5vw, 21px) var(--display); letter-spacing: 1px; color: #ffdf95; text-shadow: 0 2px #080e0d; background: linear-gradient(110deg, #10251e, #204b36 50%, #10251e); border: 2px solid #d3a34d; outline: 2px solid #21190e; box-shadow: inset 0 0 0 2px #614721, 0 4px 12px #000b; }
+.hlTitle::before, .hlTitle::after { content: '◆'; position: absolute; top: 50%; transform: translateY(-50%); color: #ffdb86; font-size: 18px; text-shadow: 0 0 8px #d9a745; }
+.hlTitle::before { left: -12px; } .hlTitle::after { right: -12px; }
+.hlHead::before { content: '◆'; display: block; position: absolute; left: calc(50% - 9px); top: -12px; z-index: 1; color: #b1efc6; font-size: 19px; text-shadow: -2px 0 #b28a45, 2px 0 #b28a45, 0 -2px #b28a45, 0 2px #b28a45; }
+.hlLedger { display: flex; align-items: center; justify-content: space-between; margin: 7px 16px 0; padding: 3px 8px; background: #0b1719eb; border: 1px solid #9a773d; box-shadow: 0 2px 5px #000a; }
+.hlCount { color: #f4d993; font: 700 12px var(--body); }
+.hlOdds { min-height: 32px; padding: 4px 6px; font: 700 12px var(--body); color: #e8e1cc; background: transparent; border: 0; box-shadow: none; }
+.hlLow { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 9px; padding: 0 14px 12px; background: linear-gradient(transparent, #080e10cc 40%); pointer-events: none; }
 .hlLow > * { pointer-events: auto; }
-.hlScroll { width: 100%; max-width: 360px; padding: 6px 10px 7px; text-align: center; color: var(--text); background: var(--s4); box-shadow: 0 -2px 0 var(--s1), 0 2px 0 var(--s1), -2px 0 0 var(--s1), 2px 0 0 var(--s1), inset 0 0 0 2px var(--s10), 0 4px 0 2px rgb(var(--black-rgb) / 0.4); }
-.hlScroll b { display: block; font: 700 12px var(--body); letter-spacing: 0.3px; }
-.hlScroll b em { font-style: normal; color: var(--accent-hi); }
-.hlScroll .odds { display: block; margin-top: 3px; font: 400 10px var(--body); font-style: normal; }
-.hlBar { display: flex; gap: 10px; width: 100%; max-width: 360px; }
-.hlBar button { flex: 1; font-size: 15px; line-height: 1.15; padding: 4px 0; }
-.hlBar button small { display: block; font-size: 11px; font-weight: 400; }
+.hlScroll { position: relative; width: 100%; max-width: 390px; padding: 10px 12px; text-align: center; color: #ece6d4; background: linear-gradient(110deg, #0c171c, #15292b, #0b161b); border: 2px solid #b28a45; box-shadow: inset 0 0 0 2px #3d3323, 0 0 0 2px #16150f, 0 4px 8px #0009; }
+.hlScroll::before { content: '◆'; position: absolute; top: -12px; left: calc(50% - 9px); color: #92edbd; text-shadow: -2px 0 #b28a45, 2px 0 #b28a45, 0 -2px #b28a45, 0 2px #b28a45; }
+.hlScroll b { display: block; font: 900 17px var(--display); letter-spacing: 2px; color: #f4d993; }
+.hlScroll .hlHint { display: block; margin: 3px 0 7px; font: 12px var(--body); color: #ccd6cf; }
+.hlProgressLabel { display: flex; justify-content: space-between; gap: 8px; font: 700 12px var(--body); }
+.hlProgress { height: 7px; margin: 5px 0; padding: 1px; background: #060e13; border: 1px solid #756a46; }
+.hlProgress i { display: block; height: 100%; background: linear-gradient(#c1f3b4, #409b6c); box-shadow: 0 0 6px #77c99566; }
+.hlScroll .odds { display: block; font: 10px/1.3 var(--body); color: #bfc9be; }
+.hlBar { display: flex; gap: 10px; width: 100%; max-width: 390px; }
+.hlBar button { flex: 1; min-height: 59px; padding: 7px 3px; font: 900 17px var(--display); color: #ffe3a2; border: 2px solid #d0a452; border-radius: 3px; background: linear-gradient(135deg, #684b2b, #382a1d); box-shadow: inset 0 0 0 2px #846638, inset 0 0 0 4px #2e251c, 0 3px 0 #080e10; }
+.hlBar button.primary { background: linear-gradient(135deg, #286846, #103e30); box-shadow: inset 0 0 0 2px #a38b43, inset 0 0 0 4px #173c2b, 0 3px 0 #080e10; }
+.hlBar button:disabled { filter: saturate(0.35); color: #b5b6a6; opacity: 0.72; }
+.hlBar button:not(:disabled):active { transform: translateY(2px); }
+.hlBar button small { display: block; margin-top: 3px; font: 700 12px var(--body); }
+.hlWrap button:focus-visible { outline: 3px solid #c2ffe0; outline-offset: 3px; }
+.hlWrap.isCasting .hlHead, .hlWrap.isCasting .hlLow { visibility: hidden; }
+@media (max-height: 800px) { .hlHead { top: 7px; } .hlTitle { padding: 6px 2px; } .hlLedger { margin-top: 5px; } .hlScroll { padding: 7px 10px; } .hlScroll .hlHint { margin: 2px 0 5px; } .hlLow { gap: 7px; padding-bottom: 8px; } .hlBar button { min-height: 54px; font-size: 15px; } }
 .hlSkip { position: absolute; inset: 0; z-index: 6; display: none; touch-action: manipulation; }
 .hlSkip.on { display: block; }
-.hlOver { position: absolute; left: 0; right: 0; top: 52px; z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; text-align: center; }
+.hlOver { position: absolute; left: 14px; right: 14px; top: 26px; z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; text-align: center; }
 .hlRibbon { width: 100%; padding: 5px 0 6px; font: 700 24px var(--display); letter-spacing: 6px; text-indent: 6px; color: var(--btn-ink); text-shadow: 0 1px 0 rgb(var(--white-rgb) / 0.5); background: linear-gradient(var(--e9), var(--e6) 55%, var(--e3)); box-shadow: 0 -3px 0 var(--s3), 0 3px 0 var(--s3), 0 0 22px rgb(var(--e7-rgb) / 0.7); }
-.hlBanner { padding: 2px 10px 3px; font: 700 13px var(--display); letter-spacing: 3px; text-indent: 3px; color: var(--g0); background: var(--g5); box-shadow: 0 0 0 2px var(--g0), 0 0 14px rgb(var(--g5-rgb) / 0.7); }
-.hlCard { padding: 4px 14px 5px; background: rgb(var(--s1-rgb) / 0.82); box-shadow: 0 0 0 2px var(--p4), 0 0 0 4px var(--s2); }
+.hlBanner { padding: 2px 10px 3px; font: 700 13px var(--display); letter-spacing: 3px; text-indent: 3px; background: #174a35; border: 2px solid #d3a34d; color: #ffe3a2; box-shadow: 0 0 0 2px var(--g0), 0 0 14px rgb(var(--g5-rgb) / 0.7); }
+.hlCard { padding: 4px 14px 5px; background: #0b211ced; border: 2px solid #b28a45; box-shadow: 0 0 0 2px var(--p4), 0 0 0 4px var(--s2); }
 .hlCard b { display: block; font: 700 18px var(--display); color: var(--white); text-shadow: 0 1px 0 var(--black); }
 .hlCard em { display: block; font: 400 11px var(--body); font-style: normal; color: var(--p5); }
 .hlCard small { display: block; margin-top: 2px; font: 700 12px var(--body); color: var(--g5); }
+#gacha:not([hidden]) ~ #version { display: none; }
+#gacha #reveal:empty { display: none; }
+#gacha summary { padding: 10px 8px; color: #e7ce95; font: 700 14px var(--body); cursor: pointer; border-bottom: 1px solid #6b5c35; }
+#gacha details[open] summary { margin-bottom: 10px; }
+#gacha { background: linear-gradient(#07110fe8, #07110ff5), url("${sanctumUrl}") center / cover; color: #e8e5d4; }
+#gacha h2 { background: linear-gradient(#214b36, #10251e); border-color: #c79a4c; font-size: 19px; }
+#gacha header { border-color: #b28a45; flex-wrap: wrap; gap: 8px; }
+#gacha #crowns { font: 700 12px var(--body); color: #efd18d; }
+#gacha button { border: 2px solid #b28a45; background: linear-gradient(#244e3a, #122b22); color: #ffe3a2; }
+#gacha .pulls button { min-height: 52px; font-family: var(--display); }
+#gacha #rates { color: #c3cec5; font: 12px/1.45 var(--body); }
+#gacha #pity { padding: 8px 10px; background: #10251ecc; border: 1px solid #8e733e; font: 13px/1.35 var(--body); }
+#gacha #reveal:not(:empty) { padding: 12px 6px; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 8px; }
+#gacha #reveal.single { grid-template-columns: minmax(0, 260px); justify-content: center; }
+#gacha .flip { min-height: 160px; height: auto; aspect-ratio: 0.68; cursor: pointer; }
+#gacha .flip .back, #gacha .flip .face { border: 2px solid #cba45d; border-radius: 3px; box-shadow: inset 0 0 0 3px #4e432a, 0 3px 7px #0008; }
+#gacha .flip .back { background: radial-gradient(ellipse, #28563e, #091e17 70%); }
+#gacha .flip .back::after { position: absolute; inset: 0; display: grid; place-items: center; content: '◆'; color: #e4bd6b; font: 40px var(--display); }
+#gacha .flip .face { background: radial-gradient(ellipse at 50% 35%, #315d45, #0c211c 70%); padding: 10px 4px; color: #f8dca0; }
+#gacha .flip .face canvas { margin: auto 0; max-width: 100%; height: auto; image-rendering: pixelated; }
+#gacha .flip .face b { white-space: normal; font: 700 13px var(--display); line-height: 1.2; }
+#gacha .flip .face em { color: #b7f2c5; font: 700 12px var(--body); }
+#gacha .flip.new .face { border-color: #f7d57d; box-shadow: inset 0 0 0 3px #72602d, 0 0 15px #d9af4b55; }
+#gacha .flip.new.up { transform: none; }
+#gacha #reveal.single .flip { min-height: 280px; aspect-ratio: 0.85; }
+#gacha #reveal.single .face { padding: 20px 12px; }
+#gacha #reveal.single canvas { width: 160px; }
+#gacha #reveal.single .face b { font-size: 22px; }
+#gacha #collection { gap: 8px; }
+#gacha #collection .hero { border: 1px solid #8c7442; border-radius: 2px; background: linear-gradient(#1c3028e8, #0a1816); padding: 6px 2px; }
+@media (prefers-reduced-motion: reduce) { #gacha .flip, #gacha .flip .face, #gacha .flip .back { transition: none; } }
+
 `;
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -69,7 +107,7 @@ const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
 /** The beam's two colours (the outer haze, the bright core) by kind. */
 const BEAM: Record<BeamKind, [string, string]> = {
-  star: ['#4a9cff', '#d6ecff'],
+  star: ['#4fc78d', '#ddffe9'],
   light: ['#f0b44a', '#fff6cc'],
 };
 
@@ -135,7 +173,7 @@ interface Show {
 export interface HallHooks {
   /** A pull button was pressed. */
   onSummon(count: 1 | 10): void;
-  /** The "Odds and heroes" button: opens the collection screen. */
+  /** The collection control opens the heroes and summon rules. */
   onCollection(): void;
 }
 
@@ -175,13 +213,18 @@ export class SummoningHall {
       st.textContent = CSS;
       document.head.append(st);
     }
-    const odds = el('button', 'small hlOdds', 'Odds · heroes');
+    const head = el('div', 'hlHead');
+    const title = el('h2', 'hlTitle', 'Summoning Sanctum');
+    const ledger = el('div', 'hlLedger');
+    const odds = el('button', 'small hlOdds', 'View heroes →');
+    ledger.append(this.count, odds);
+    head.append(title, ledger);
     odds.addEventListener('click', () => this.hooks.onCollection());
     const bar = el('div', 'hlBar');
     bar.append(this.pull1, this.pull10);
     const low = el('div', 'hlLow');
     low.append(this.scroll, bar);
-    this.root.append(this.canvas, this.count, odds, low, this.over, this.skipPad);
+    this.root.append(this.canvas, head, low, this.over, this.skipPad);
     // (a tap anywhere skips the show straight to the result)
     this.skipPad.addEventListener('pointerdown', (e) => {
       e.preventDefault();
@@ -206,16 +249,30 @@ export class SummoningHall {
   update(meta: Meta): void {
     this.meta = meta;
     const have = ALL_HEROES.filter((k) => meta.unlocked.includes(k)).length;
-    this.count.replaceChildren(`${have} of ${ALL_HEROES.length} heroes`, el('small', '', 'the summoning hall'));
+    this.count.textContent = `${have} / ${ALL_HEROES.length} Heroes`;
     const busy = !!this.show;
     for (const [b, n] of [[this.pull1, 1], [this.pull10, 10]] as const) {
-      b.replaceChildren(`Summon ×${n}`, el('small', '', `${pullCost(n)} crowns`));
+      b.replaceChildren(`Summon ×${n}`, el('small', '', `♛ ${pullCost(n)} crowns`));
       b.disabled = busy || meta.crowns < pullCost(n);
     }
-    // (a pull is shards of one hero; the line names the hero nearest to joining)
-    const line = el('b', '', 'Shards of one hero a pull');
-    const odds = el('i', 'odds', pityLine(meta));
-    this.scroll.replaceChildren(line, odds);
+    const line = el('b', '', 'Hero shards');
+    const hint = el('span', 'hlHint', 'Each summon brings a hero closer');
+    const near = closest(meta);
+    const progress = el('div', 'hlProgress');
+    const fill = el('i');
+    const haveShards = near ? haveOf(meta, near) : 0;
+    const need = needOf(meta);
+    fill.style.width = `${near ? Math.min(100, haveShards / need * 100) : 100}%`;
+    progress.append(fill);
+    const label = el('div', 'hlProgressLabel');
+    label.append(el('span', '', near ? `Nearest: ${UNITS[near].name}` : 'All summon heroes recruited'), el('span', '', near ? `${haveShards} / ${need}` : 'Complete'));
+    progress.setAttribute('role', 'progressbar');
+    progress.setAttribute('aria-label', near ? `${UNITS[near].name} recruitment` : 'Recruitment complete');
+    progress.setAttribute('aria-valuemin', '0');
+    progress.setAttribute('aria-valuemax', `${near ? need : 1}`);
+    progress.setAttribute('aria-valuenow', `${near ? haveShards : 1}`);
+    this.scroll.replaceChildren(line, hint, label, progress, el('span', 'odds', pityLine(meta)));
+
   }
 
   /** Play a pull in the hall: resolves when the heroes have stepped out and it is time for the card reveal. It plays every time (the hall is woken first if a page change or an earlier pull stopped it); `skip` (a tap on the summoning cinematic) goes straight to the reveal. */
@@ -255,6 +312,7 @@ export class SummoningHall {
     await new Promise<void>((resolve) => {
       this.show = { t0: this.now, plan, tl, arrivals, resolve, got, cueI: 0, burst: false, cardKey: '' };
       this.skipPad.classList.add('on');
+      this.root.classList.add('isCasting');
       duck(true, 'summon');
       // (the arrivals are drawn in the order of the pull, so the heroes appear one after another)
     });
@@ -292,6 +350,7 @@ export class SummoningHall {
     if (cut) hushSummon();
     duck(false, 'summon');
     this.skipPad.classList.remove('on');
+    this.root.classList.remove('isCasting');
     this.over.replaceChildren();
     this.bits = [];
     this.setShake(0, 0);
@@ -303,9 +362,11 @@ export class SummoningHall {
     const w = this.root.clientWidth;
     const h = this.root.clientHeight;
     if (!w || !h || !art) return;
-    const s = Math.max(2, Math.min(3, Math.floor(w / ROOM_W)));
+    const s = w / ROOM_W;
     const lay = hallLayout(Math.floor(h / s));
-    if (s === this.scale && this.still && this.canvas.height === lay.h * s && this.lay.h === lay.h) {
+    // Match the altar platform in the approved chamber artwork.
+    lay.circle = { x: Math.round(ROOM_W * 0.54), y: Math.round(lay.h * 0.545) };
+    if (s === this.scale && this.still && this.canvas.height === Math.floor(lay.h * s) && this.lay.h === lay.h) {
       this.canvas.style.left = `${Math.round((w - ROOM_W * s) / 2)}px`;
       return;
     }
@@ -322,44 +383,19 @@ export class SummoningHall {
     this.glowTint = this.paintGlow(s, '255, 190, 60');
   }
 
-  /** The part that never changes: the wall, the floor with its shade and the circle's base. */
+  /** The approved chamber, priest and altar, painted once for this viewport. */
   private paintStill(a: Record<string, HTMLImageElement>, s: number): HTMLCanvasElement {
-    const { h, circle } = this.lay;
     const c = el('canvas');
     c.width = ROOM_W * s;
-    c.height = h * s;
+    c.height = this.lay.h * s;
     const g = c.getContext('2d')!;
     g.imageSmoothingEnabled = false;
-    g.fillStyle = '#140c1c';
-    g.fillRect(0, 0, c.width, c.height);
-    g.drawImage(a.wall, 0, 0, a.wall.width * s, a.wall.height * s);
-    const fw = a.floor.width;
-    const fh = a.floor.height;
-    for (let x = 0; x < ROOM_W; x += fw) for (let y = WALL_H; y < h; y += fh) g.drawImage(a.floor, x * s, y * s, fw * s, fh * s);
-    // (the floor is darker where the wall meets it: steps, not a smooth blend, to stay pixel art)
-    [0.55, 0.4, 0.28, 0.18, 0.1, 0.04].forEach((al, i) => {
-      g.fillStyle = `rgba(10, 4, 20, ${al})`;
-      g.fillRect(0, (WALL_H + i * 6) * s, ROOM_W * s, 6 * s);
-    });
-    g.fillStyle = 'rgba(10, 4, 20, 0.32)';
-    g.fillRect(0, WALL_H * s, ROOM_W * s, (h - WALL_H) * s);
-    // (the floor fades to black towards the bottom, where the buttons sit)
-    const fade = g.createLinearGradient(0, (h - 90) * s, 0, h * s);
-    fade.addColorStop(0, 'rgba(10, 4, 20, 0)');
-    fade.addColorStop(1, 'rgba(10, 4, 20, 0.7)');
-    g.fillStyle = fade;
-    g.fillRect(0, (h - 90) * s, ROOM_W * s, 90 * s);
-    const ci = a.circle;
-    g.drawImage(ci, Math.round(circle.x - ci.width / 2) * s, Math.round(circle.y - ci.height / 2) * s, ci.width * s, ci.height * s);
-    const vg = g.createRadialGradient(c.width / 2, c.height * 0.4, c.height * 0.3, c.width / 2, c.height * 0.4, c.width * 0.85);
-    vg.addColorStop(0, 'rgba(0,0,0,0)');
-    vg.addColorStop(1, 'rgba(8,2,16,0.5)');
-    g.fillStyle = vg;
-    g.fillRect(0, 0, c.width, c.height);
+    g.drawImage(a.sanctum, 0, 0, c.width, c.height);
+
     return c;
   }
 
-  /** The brazier light and the crystals' glow, drawn over everything and flickered by opacity. */
+  /** Soft brazier and crystal light; brightness stays steady at rest. */
   private paintGlow(s: number, tint?: string): HTMLCanvasElement {
     const { h, braziers, pillars } = this.lay;
     const c = el('canvas');
@@ -374,7 +410,7 @@ export class SummoningHall {
       g.fillRect(0, 0, c.width, c.height);
     };
     for (const b of braziers) lamp(b.x, b.y - 38, tint ? 64 : 46, tint ?? '255, 150, 60', tint ? 0.6 : 0.34);
-    for (const p of pillars) lamp(p.x, p.y - 56, tint ? 44 : 30, tint ?? '170, 100, 255', tint ? 0.45 : 0.22);
+    for (const p of pillars) lamp(p.x, p.y - 56, tint ? 44 : 30, tint ?? '65, 205, 139', tint ? 0.45 : 0.22);
     return c;
   }
 
@@ -428,7 +464,7 @@ export class SummoningHall {
         if (n < 1 && Math.random() > n) break;
         const a = rand(0, Math.PI * 2);
         const r = Math.sqrt(Math.random());
-        const col = grand ? (Math.random() < 0.5 ? ACCENT.main : ACCENT.core) : Math.random() < 0.5 ? '#ffd86a' : '#c88aff';
+        const col = grand ? (Math.random() < 0.5 ? ACCENT.main : ACCENT.core) : Math.random() < 0.5 ? '#ffd86a' : '#8cebb6';
         this.sparks.push({ x: cx + Math.cos(a) * 34 * r, y: cy + Math.sin(a) * 16 * r, vy: rand(14, 34), life: 0, max: rand(700, 1500), col });
       }
     }
@@ -551,7 +587,7 @@ export class SummoningHall {
     const s = this.scale;
     const a = art;
     if (!a || !this.still) return;
-    const { circle, pillars, braziers, summoner } = this.lay;
+    const { circle } = this.lay;
     const { c, t } = this.charge();
     const show = this.show;
     const plan = show?.plan ?? null;
@@ -562,38 +598,17 @@ export class SummoningHall {
     g.globalAlpha = 1;
     g.drawImage(this.still, 0, 0);
 
-    // the props and the summoner first, so the darkness can fall over them and the lights stay bright over it
-    const props: { depth: number; paint: () => void }[] = [];
-    for (const p of pillars) props.push({ depth: p.y, paint: () => g.drawImage(a.pillar, Math.round(p.x - a.pillar.width / 2) * s, (p.y - a.pillar.height) * s, a.pillar.width * s, a.pillar.height * s) });
-    braziers.forEach((b, i) =>
-      props.push({
-        depth: b.y,
-        paint: () => {
-          g.drawImage(a.brazier, Math.round(b.x - a.brazier.width / 2) * s, (b.y - a.brazier.height) * s, a.brazier.width * s, a.brazier.height * s);
-          // (the flame is one steady frame of the pack's six-frame 16-pixel fire; the two braziers differ so they do not look cloned, and nothing flickers)
-          const f = 1 + i * 2;
-          g.drawImage(a.flame, f * 16, 0, 16, 16, Math.round(b.x - 8) * s, (b.y - a.brazier.height - 8) * s, 16 * s, 16 * s);
-        },
-      }),
-    );
-    props.push({
-      depth: summoner.y,
-      paint: () => {
-        const casting = show && t > 80 && t < show.tl.beam + 200;
-        const im = casting ? a.summoner2 : a.summoner1;
-        const bob = casting ? Math.round(Math.sin(this.now / 90)) : Math.sin(this.now / 700) > 0.4 ? 1 : 0;
-        g.fillStyle = 'rgba(8, 3, 16, 0.4)';
-        g.fillRect((summoner.x - 11) * s, (summoner.y - 1) * s, 22 * s, 2 * s);
-        // (the summoner faces the circle: the picture looks left, so it is turned)
-        g.save();
-        g.translate(Math.round(summoner.x) * s, 0);
-        g.scale(-1, 1);
-        g.drawImage(im, -Math.round(im.width / 2) * s, (summoner.y - im.height - bob) * s, im.width * s, im.height * s);
-        g.restore();
-      },
-    });
-    props.sort((p, q) => p.depth - q.depth);
-    for (const e of props) e.paint();
+    // A casting trail joins the priest's outstretched hand to the live altar light.
+    if (show && c > 0 && !this.reduced) {
+      g.save();
+      g.strokeStyle = `rgba(155, 255, 201, ${0.35 + c * 0.45})`;
+      g.lineWidth = s;
+      g.beginPath();
+      g.moveTo(W * 0.30, H * 0.48);
+      g.bezierCurveTo(W * 0.38, H * 0.43, W * 0.46, H * 0.52, circle.x * s, circle.y * s);
+      g.stroke();
+      g.restore();
+    }
 
     // the darkness (a grand show darkens the hall as it builds; a showcase dims it a little too)
     let dim = plan ? dimAt(plan, t) : 0;
@@ -608,7 +623,7 @@ export class SummoningHall {
     g.globalCompositeOperation = 'lighter';
     const breathe = 0.5;
     const grow = grand ? 1.6 : 1;
-    g.fillStyle = `rgba(${grand ? ACCENT.rgb : '150, 90, 255'}, ${0.1 + 0.08 * breathe + 0.3 * charged})`;
+    g.fillStyle = `rgba(${grand ? ACCENT.rgb : '65, 205, 139'}, ${0.1 + 0.08 * breathe + 0.3 * charged})`;
     this.ellipse(circle.x, circle.y, 30 + Math.round(4 * charged * grow), 14 + Math.round(2 * charged * grow));
     g.fillStyle = `rgba(255, 220, 130, ${0.06 + 0.04 * breathe + 0.35 * charged})`;
     this.ellipse(circle.x, circle.y, 14 + Math.round(6 * charged * grow), 6 + Math.round(3 * charged * grow));

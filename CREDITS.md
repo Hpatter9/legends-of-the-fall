@@ -262,3 +262,5 @@ No new art: the burning heart's flame is the `flame_fire` strip (`src/art/fx/vfx
 ## Company card brass frame
 
 - `src/art/ui/hero-brass-frame.png`: generated with OpenAI image generation for the approved Keep & Kingdom character card concept. Class emblems reuse the existing talent icons; character art and forest scenery reuse the packs credited above.
+
+- `src/art/hall/sanctum.png`: original generated artwork created for the owner-approved Royal Arcane Summoning Sanctum concept (OpenAI image generation, October 2026). Chamber, ceremonial summoner and griffin altar; no third-party asset dependency.

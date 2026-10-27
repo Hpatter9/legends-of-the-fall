@@ -9,7 +9,9 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
-None assigned. UI-002 accepted by the owner for version 0.162.0 and GitHub merge; HEART-001 and DIALOGUE-001 are retained as released work.
+- **UI-003 / Summoning Sanctum:** ready for review; owner: Codex; branch `design/summoning-sanctum`, worktree `/workspace/legends-of-the-fall`; PR unknown. Owner approved ornate chamber concept and implementation. Scope: summon hall renderer, controls, reveal styling, supporting artwork/credits, browser checks and handoff. Preserve summon rules, saves and costs. Complete when approved chamber, summoner and altar are implemented, three portrait sizes inspected, typecheck/tests/build pass and offline assets verified. Implemented approved chamber/priest/altar and summon/results presentation. Typecheck/build passed; full 103-file test set passed, subsequent two relevant files passed; browser checks passed at all three portrait sizes including full ritual, ten pulls, low funds, keyboard, reduced motion and offline reload. See [handoff](notes/summoning-sanctum.md). No merge or deployment. No other active reservations.
+
+UI-002 accepted by the owner for version 0.162.0 and GitHub merge; HEART-001 and DIALOGUE-001 are retained as released work.
 
 ## UI-001 manager takeover — 2026-10-26
 

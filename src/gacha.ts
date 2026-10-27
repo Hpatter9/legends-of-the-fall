@@ -29,6 +29,9 @@ export class Gacha {
   open(): void {
     $('gacha').hidden = false;
     $('reveal').replaceChildren();
+    $('gacha').querySelector('h2')!.textContent = 'Summoning Sanctum';
+    $('gachaClose').textContent = 'Close';
+    ($('collectionPanel') as HTMLDetailsElement).open = true;
     this.refresh();
   }
 
@@ -44,7 +47,7 @@ export class Gacha {
       const b = $(id) as HTMLButtonElement;
       const price = document.createElement('small');
       price.textContent = `${pullCost(n)} crowns`;
-      b.replaceChildren(`Pull ${n}`, price);
+      b.replaceChildren(`Summon ×${n}`, price);
       b.disabled = this.busy || m.crowns < pullCost(n);
     }
     $('pity').textContent = pityLine(m);
@@ -123,18 +126,30 @@ export class Gacha {
   /** The pulls as face-down cards that flip over one after another, the repeats first and the new heroes last (a new hero's card glows steadily and is held a beat longer). A tap on a card turns it at once. */
   private reveal(got: Pull[]): void {
     const box = $('reveal');
+    $('gacha').scrollTop = 0;
+    $('gacha').querySelector('h2')!.textContent = 'Summon results';
+    $('gachaClose').textContent = 'Continue';
+    ($('collectionPanel') as HTMLDetailsElement).open = false;
+    ($('summonRules') as HTMLDetailsElement).open = false;
     box.replaceChildren();
+    box.classList.toggle('single', got.length === 1);
     const cards: HTMLElement[] = [];
     got.forEach((p) => {
       const def = UNITS[p.kind];
       const card = document.createElement('div');
       card.className = 'flip';
+      card.tabIndex = 0;
+      card.setAttribute('role', 'button');
+      card.setAttribute('aria-label', 'Reveal summon');
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); }
+      });
       const face = document.createElement('div');
       face.className = 'face';
       const name = document.createElement('b');
       name.textContent = def.name;
       const tag = document.createElement('em');
-      tag.textContent = p.isNew ? 'NEW' : p.unlock ? `${p.have}/${p.need}` : p.crowns ? `+${p.crowns} crowns` : `+${p.shards} shard`;
+      tag.textContent = p.isNew ? 'NEW HERO' : p.unlock ? `${p.have}/${p.need}` : p.crowns ? `+${p.crowns} crowns` : `+${p.shards} shard`;
       const role = document.createElement('small');
       role.className = 'rtag';
       role.textContent = CLASS_NAMES[CLASS_OF[p.kind]];
@@ -147,7 +162,10 @@ export class Gacha {
       const back = document.createElement('div');
       back.className = 'back';
       card.append(back, face);
-      card.addEventListener('click', () => card.classList.add('up'));
+      card.addEventListener('click', () => {
+        card.classList.add('up');
+        card.setAttribute('aria-label', `${def.name}: ${tag.textContent}`);
+      });
       box.append(card);
       cards.push(card);
     });
