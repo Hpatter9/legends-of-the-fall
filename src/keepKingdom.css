@@ -215,7 +215,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid #efd39a; outline-
   .heroRoster .hcard:hover { transform: translateY(-3px); box-shadow: 0 0 0 1px #d9b878, 0 5px 14px #000b; }
 }
 .heroRoster .hcard:active:not(:disabled) { padding: 10px 8px 25px; background: #151c18 url(ui/hero-brass-frame.png) center / 100% 100% no-repeat; transform: translateY(1px); }
-@keyframes heroCardEmbers { from { opacity: .35; transform: translateY(3px); } to { opacity: .85; transform: translateY(-4px); } }
+@keyframes heroCardEmbers { from { transform: translateY(3px); } to { transform: translateY(-4px); } }
 @media (max-width: 375px) {
   .heroRoster .rosGrid { column-gap: 8px; }
   .heroRoster .hcard, .heroRoster .hcard:active:not(:disabled) { padding-left: 7px; padding-right: 7px; }

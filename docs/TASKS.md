@@ -9,13 +9,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
-- **UI-002 / Character card flair implementation:** in progress; owner: Codex manager.
+- **UI-002 / Character card flair implementation:** ready for review; owner: Codex manager.
 - **Branch / worktree:** `design/character-card-flair-mockup` / `/workspace/legends-of-the-fall`.
 - **Authorisation:** owner approved the visual concept and requested implementation.
 - **Scope:** roster character card markup/styles, last-viewed hero state, decorative assets/credits, targeted browser checks and documentation. No simulation changes.
 - **Completion:** match the approved brass frame/class banner concept; preserve search, rank/awakening/level indicators, hero navigation and offline use; inspect all three portrait sizes.
-- **Validation:** pending typecheck, tests, build and browser checks.
-- **Handoff:** [proposal and implementation note](notes/character-card-flair.md).
+- **Validation:** typecheck and web build passed; all 103 test files passed across split runs; final real-browser card checks passed at 360×780, 393×852 and 412×915. No-flicker regression fixed without changing tests; interrupted test bundles restored and affected files rerun. Screenshots and full validation details are in the handoff note.
+- **Handoff:** implementation commit `ca163a9b`, with final correction/validation in the follow-up commit; [implementation note and screenshots](notes/character-card-flair.md). No merge, deployment or version bump.
 
 ## UI-001 manager takeover — 2026-10-26
 
