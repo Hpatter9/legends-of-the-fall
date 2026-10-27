@@ -101,6 +101,7 @@ export class Home {
   private castleBar = el('div', 'ctBar');
   private castleShut = el('div', 'ctShut');
   private cardOpen = false;
+  private lastViewedHero?: string;
 
   constructor(
     private meta: Meta,
@@ -510,10 +511,11 @@ export class Home {
     $('hmSheet').hidden = false;
     this.tavern.stop();
     this.camp.stop();
-    drawRoster($('hmSheetBox'), this.meta, (kind) => this.openSheet(kind, true), () => this.closeSheet());
+    drawRoster($('hmSheetBox'), this.meta, (kind) => this.openSheet(kind, true), () => this.closeSheet(), this.lastViewedHero);
   }
 
   private openSheet(kind: string, fromRoster = false, tab = 'overview'): void {
+    if (this.meta.unlocked.includes(kind)) this.lastViewedHero = kind;
     this.closeSheet();
     $('hmSheet').hidden = false;
     this.tavern.stop();

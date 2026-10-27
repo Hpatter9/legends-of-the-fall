@@ -23,6 +23,20 @@ import { sprite } from './render/sheets';
 import { CONTENT_HEROES, lockInfo } from './sim/contentHeroes';
 import { haveOf, toCollect } from './sim/unlock';
 import { portrait } from './render/sheets';
+import swordIcon from './art/talent/sword.png';
+import shieldIcon from './art/talent/shield.png';
+import flameIcon from './art/talent/blast.png';
+import targetIcon from './art/talent/target.png';
+import haloIcon from './art/talent/halo.png';
+
+// Presentation names only: the underlying starter classes and hero rules stay the same.
+const CARD_CLASSES = {
+  front: { name: 'Guardian', icon: shieldIcon },
+  striker: { name: 'Fighter', icon: swordIcon },
+  caster: { name: 'Mage', icon: flameIcon },
+  shooter: { name: 'Shooter', icon: targetIcon },
+  support: { name: 'Support', icon: haloIcon },
+};
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -238,7 +252,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
 }
 
 /** The roster page of the Heroes tab: the heroes owned in a grid, then the ones earned in play with the line "Joins when you …" and their progress, then the ones being collected by shards with their bars. A tap on a hero opens its sheet. */
-export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) => void, close: () => void): void {
+export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) => void, close: () => void, lastViewed?: string): void {
   box.className = 'hsheet heroRoster';
   box.replaceChildren();
   const have = ALL_HEROES.filter((k) => meta.unlocked.includes(k));
@@ -257,7 +271,7 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
   box.append(label);
   const searchable: { element: HTMLElement; text: string }[] = [];
   const remember = (element: HTMLElement, kind: string, named = true) => {
-    searchable.push({ element, text: named ? `${UNITS[kind].name} ${CLASS_NAMES[CLASS_OF[kind]]}`.toLowerCase() : '' });
+    searchable.push({ element, text: named ? `${UNITS[kind].name} ${CLASS_NAMES[CLASS_OF[kind]]} ${CARD_CLASSES[CLASS_OF[kind]].name}`.toLowerCase() : '' });
   };
   const result = el('p', 'rosterResult');
   result.setAttribute('role', 'status');
@@ -265,7 +279,34 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
   const grid = el('div', 'rosGrid');
   for (const kind of have) {
     const card = el('button', 'hcard');
-    card.append(portrait(UNITS[kind].sheet, 56), el('b', '', UNITS[kind].name), el('span', 'stars', starsOf(meta, kind)), levelBadge(progressOf(xpOf(meta, kind)).level));
+    card.type = 'button';
+    card.dataset.kind = kind;
+    card.dataset.class = CLASS_OF[kind];
+    const cls = CARD_CLASSES[CLASS_OF[kind]];
+    const banner = el('span', 'heroClassBanner');
+    const icon = el('img');
+    icon.src = cls.icon;
+    icon.alt = '';
+    banner.append(icon, el('span', '', cls.name));
+    const scene = el('span', 'heroCardScene');
+    scene.setAttribute('aria-hidden', 'true');
+    // Reuse the awakened look when one is owned, just as the detail sheet does.
+    const full = heroRank(meta, kind);
+    const step = stepOfRank(full);
+    const figure = portrait(step ? lookSheet(kind, full, 3) : UNITS[kind].sheet, 160);
+    if (step) figure.style.filter = lookFilter(kind, step);
+    scene.append(el('span', 'heroCardHalo'), figure, el('span', 'heroCardMotes'));
+    const level = progressOf(xpOf(meta, kind)).level;
+    const ribbon = el('span', 'heroLevelRibbon');
+    ribbon.append(levelBadge(level));
+    card.append(banner, scene, el('b', 'heroCardName', UNITS[kind].name), el('span', 'stars', starsOf(meta, kind)), ribbon);
+    if (kind === lastViewed) {
+      card.classList.add('lastViewed');
+      const seal = el('span', 'heroCardSeal', '✓');
+      seal.setAttribute('aria-hidden', 'true');
+      card.append(seal);
+      card.setAttribute('aria-description', 'Last viewed hero');
+    }
     if (readyToRise(meta, kind)) card.append(el('small', 'rankTag', 'Rank up'));
     card.addEventListener('click', () => pick(kind));
     remember(card, kind);
