@@ -9,7 +9,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
-None assigned. UI-001 was accepted by the owner for merge.
+**FX-001 — Combat animation polish** (implemented; full regression validation in progress). Owner: Codex manager. Branch: `feat/combat-animation-polish`, worktree: `/workspace/legends-of-the-fall`; PR: unknown. Scope: renderer animation/effects, focused validation tools, tests and handoff. Direction: owner's approved effects concept; reuse credited pixel-art packs. Complete when attacks, dashes, casting and level-ups show stronger timing and motion, with unchanged simulation/save/offline behaviour, required checks and portrait review. No active file reservations overlap. Typecheck, web build, seven focused test files, all three portrait browser cases, reduced motion and battery saver passed. Full regression suite still running. Handoff: [combat animation polish](notes/combat-animation-polish.md).
 
 ## UI-001 manager takeover — 2026-10-26
 
