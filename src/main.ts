@@ -280,7 +280,7 @@ class Game {
         this.party.open('start', () => {
           this.startRun(armyRun(clockSeed(), id, this.meta.party, this.meta.castle, tier));
           if (auto) this.beginAuto(id, tier, auto);
-        }),
+        }, `${armyById(id)?.name ?? 'Army expedition'} · ${TIERS[tier]?.name ?? 'Normal'}`),
       onParty: () =>
         this.party.open('edit', () => {
           // (a run going on draws from the new party from now on)

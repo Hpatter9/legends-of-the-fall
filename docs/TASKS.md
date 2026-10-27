@@ -9,7 +9,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
-None assigned. UI-001 was accepted by the owner for merge.
+UI-002 is implementing the owner-approved Balanced party builder. UI-001 remains complete; Keep/home presentation is reserved from change in UI-002.
 
 ## UI-001 manager takeover — 2026-10-26
 
@@ -37,7 +37,7 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 ## Ready queue
 
-No additional development tasks have been assigned. Do not invent feature work or start broad refactors. The next task should come from the owner's goal or a specifically authorised investigation.
+UI-002 is assigned below. No additional ready development work is assigned here.
 
 ## Task template
 
@@ -64,3 +64,13 @@ Give the next chat the task ID, branch or PR, relevant docs/notes file, checks a
 
 Mark a task ready for review after implementation and validation. Mark it done only after the owner merges or explicitly accepts the result. Retain a short completed entry with its PR and handoff note.
 
+
+
+## UI-002 — Balanced party builder
+
+- **Issue / approved direction:** #125; owner selected concept A, with Keep unchanged.
+- **Owner / branch:** dedicated party-builder worker, `codex/ui-002-party-builder`, `/workspace/ui-002-party-builder`; director reviews.
+- **Status:** implementation and required checks complete; ready for director review in an unmerged PR linked from issue #125.
+- **Scope:** party UI, scoped style/markup, narrow optional expedition label, browser checks/screenshots and handoff. No sim/save-rule/economy changes.
+- **Done when:** selection/cancel/save/slot limits/details/traits remain correct, all required checks and portrait review pass, unmerged PR opened and reviewed.
+- **Validation / handoff:** typecheck/web/diff checks passed; full suite 103 files passed (347.04s); party interactions, existing hero/equipment smoke at all three portrait sizes, real Army Start and offline editor passed. `docs/notes/ui-002-party-builder.md`. Keep, SIM-001 and WORLD-001 remain isolated. No worker version bump, main push, merge or deployment.

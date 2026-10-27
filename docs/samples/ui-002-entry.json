@@ -1,0 +1,32 @@
+{
+  "viewport": {
+    "width": 393,
+    "height": 852
+  },
+  "actualArmyEntry": true,
+  "context": "Orc Warband · Normal",
+  "entry": {
+    "mode": {
+      "kind": "army",
+      "army": "orcs"
+    },
+    "stage": 1,
+    "phase": "deploy",
+    "w": 8,
+    "d": 11,
+    "party": [
+      "yamabushi",
+      "beastmaster",
+      "gunslinger"
+    ]
+  },
+  "offlineEditor": true,
+  "offline": {
+    "controlled": true,
+    "columns": 3,
+    "overflow": false,
+    "footerVisible": true,
+    "count": "3 / 3"
+  },
+  "pageErrors": []
+}

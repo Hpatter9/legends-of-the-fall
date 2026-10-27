@@ -847,14 +847,16 @@
   </div>
   <div id="hmSheet" hidden><div id="hmSheetBox"></div></div>
 </div>
-<div id="party" hidden>
-  <header><button id="ptBack">Back</button><h2>Party</h2><button id="ptSuggest" title="Pick a party that wakes good synergies">Suggest</button></header>
-  <div id="ptSlots"></div>
-  <p id="ptHint"></p>
-  <div id="ptTraits"></div>
-  <div id="ptGrid"></div>
-  <button id="ptGo" class="primary">Start run</button>
-  <div id="ptSheet" hidden><div id="ptSheetBox"></div></div>
+<div id="party" hidden role="dialog" aria-modal="true" aria-labelledby="ptTitle">
+  <header><button id="ptBack" aria-label="Back without saving party">‹</button><div><h2 id="ptTitle">Your company</h2><p>Choose heroes you can hire this run</p></div></header>
+  <div id="ptContext"></div>
+  <section class="ptSelection" aria-labelledby="ptSelectedTitle"><div class="ptHeading"><h3 id="ptSelectedTitle">Selected heroes</h3><span id="ptCount"></span></div><div id="ptSlots"></div></section>
+  <section class="ptOverview" aria-label="Party overview"><div><h3>Role coverage</h3><div id="ptRoles"></div></div><div class="ptTraitPanel"><h3 id="ptTraitTitle">Traits</h3><div id="ptTraits"></div></div><p id="ptTraitHint"></p></section>
+  <button id="ptSuggest" title="Pick a party that wakes good synergies">✦ Suggest party</button>
+  <section class="ptBrowse" aria-labelledby="ptBrowseTitle"><div class="ptHeading"><h3 id="ptBrowseTitle">Choose heroes</h3><span id="ptResults" role="status" aria-live="polite"></span></div><label class="ptSearchLabel"><span class="sr-only">Search heroes</span><input id="ptSearch" type="search" placeholder="Search heroes…" autocomplete="off"></label><div id="ptFilters" aria-label="Filter heroes by role"></div></section>
+  <div id="ptGrid" aria-label="Hero roster"></div>
+  <footer><p id="ptHint" role="status" aria-live="polite"></p><button id="ptGo" class="primary">Start run</button></footer>
+  <div id="ptSheet" hidden role="dialog" aria-modal="true" aria-label="Hero details"><div id="ptSheetBox"></div></div>
 </div>
 <div id="settings" hidden>
   <header><h2>Settings</h2><button id="settingsClose">Close</button></header>

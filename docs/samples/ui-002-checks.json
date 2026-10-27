@@ -1,0 +1,56 @@
+[
+  {
+    "width": 360,
+    "height": 780,
+    "bounds": {
+      "overflow": false,
+      "gridHeight": 280.25,
+      "footerBottom": 774,
+      "columns": 3
+    },
+    "searchAndCaret": true,
+    "roles": true,
+    "selectionLimits": true,
+    "cancelAndSave": true,
+    "traitsAndDetails": true,
+    "longPress": true,
+    "smallParty": true,
+    "pageErrors": []
+  },
+  {
+    "width": 393,
+    "height": 852,
+    "bounds": {
+      "overflow": false,
+      "gridHeight": 311.25,
+      "footerBottom": 842,
+      "columns": 3
+    },
+    "searchAndCaret": true,
+    "roles": true,
+    "selectionLimits": true,
+    "cancelAndSave": true,
+    "traitsAndDetails": true,
+    "longPress": true,
+    "smallParty": true,
+    "pageErrors": []
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "bounds": {
+      "overflow": false,
+      "gridHeight": 374.25,
+      "footerBottom": 905,
+      "columns": 3
+    },
+    "searchAndCaret": true,
+    "roles": true,
+    "selectionLimits": true,
+    "cancelAndSave": true,
+    "traitsAndDetails": true,
+    "longPress": true,
+    "smallParty": true,
+    "pageErrors": []
+  }
+]

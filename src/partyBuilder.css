@@ -1,0 +1,84 @@
+/* Balanced party editor. Every selector is scoped so the Keep and shared hero pages retain their existing appearance. */
+#party { background: var(--panel-bg); gap: 7px; padding: calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 10px); color: var(--kk-text); font-family: var(--body); }
+#party *, #party *::before, #party *::after { box-sizing: border-box; }
+#party > header { flex: none; min-height: 46px; gap: 10px; border-image: none; border-bottom: 1px solid var(--kk-rim); padding-bottom: 6px; }
+#party > header > div { min-width: 0; }
+#party h2 { font: 700 23px/1.1 var(--display); text-transform: uppercase; letter-spacing: .02em; }
+#party > header p { margin: 3px 0 0; color: var(--kk-muted); font-size: 12px; }
+#party #ptBack { width: 44px; height: 44px; flex: none; padding: 0; font: 30px/1 var(--body); border: 1px solid var(--kk-rim); }
+#party h3 { margin: 0; font: 700 15px/1.2 var(--display); color: var(--kk-text); }
+#party #ptContext { flex: none; padding: 7px 10px; min-height: 30px; border: 1px solid var(--kk-rim); background: #121812a8; color: var(--kk-gold); font-size: 13px; }
+#party .ptHeading { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 6px; }
+#party .ptHeading > span { font: 12px var(--body); color: var(--kk-muted); }
+#party .ptSelection { flex: none; }
+#party #ptSlots { display: grid; grid-template-columns: repeat(var(--party-slots, 5), minmax(0, 1fr)); gap: 6px; }
+#party .ptSlot { min-height: 74px; min-width: 0; padding: 3px 2px; gap: 2px; border: 1px solid #698b45; border-radius: 4px; background: linear-gradient(145deg, #365533, #18281e); box-shadow: inset 0 0 0 1px #a2c46e55; overflow: hidden; border-image: none; }
+#party .ptSlot canvas { width: min(100%, 48px); height: auto; aspect-ratio: 1; }
+#party .ptSlot small { white-space: normal; text-overflow: clip; min-height: 24px; max-height: 26px; display: grid; align-items: center; font: 11px/12px var(--body); color: var(--kk-text); }
+#party .ptSlot.empty { background: #171e16; border: 1px dashed #6e7157; box-shadow: none; color: var(--kk-muted); }
+#party .ptSlot.empty > span { font-size: 26px; }
+#party .ptSlot.empty small { font-size: 9px; }
+#party .ptRemove { position: absolute; right: 0; top: 0; background: #142216e6; border-left: 1px solid #779659; border-bottom: 1px solid #779659; color: #f4f1d9; width: 18px; height: 18px; font: 18px/16px var(--body); }
+#party .ptOverview { flex: none; display: grid; grid-template-columns: 45% minmax(0, 1fr); gap: 5px 10px; border-block: 1px solid #696a4b66; padding: 7px 0 5px; }
+#party .ptOverview h3 { font: 12px var(--body); color: var(--kk-muted); margin-bottom: 4px; }
+#party #ptRoles { display: flex; gap: 4px; }
+#party .ptRole { display: flex; flex: 1; flex-direction: column; text-align: center; gap: 2px; color: #a39f89; font: 10px var(--body); }
+#party .ptRole b { align-self: center; border: 1px solid #626149; border-radius: 4px; width: 25px; line-height: 23px; background: #27291f; font: 700 16px/23px var(--body); }
+#party .ptRole.present b { border-color: #6a8e4d; color: #d2e8b5; background: #28402a; }
+#party .ptTraitPanel { min-width: 0; }
+#party #ptTraits { display: flex; flex-direction: row; max-height: none; overflow-x: auto; overflow-y: hidden; gap: 5px; scrollbar-width: thin; min-height: 32px; }
+#party .ptTrait { flex: none; opacity: .7; min-height: 32px; padding: 4px 6px; gap: 4px; border: 1px solid #64614c; border-radius: 4px; background: #1c231b; display: inline-flex; font: 11px var(--body); white-space: nowrap; color: var(--kk-text); }
+#party .ptTrait.on { opacity: 1; border-color: #9a8755; background: #303729; }
+#party .ptTrait[aria-pressed="true"] { outline: 2px solid #b5c984; outline-offset: -2px; }
+#party #ptTraitHint { grid-column: 1 / -1; margin: 0; font: 10px/1.25 var(--body); color: var(--kk-muted); max-height: 26px; overflow-y: auto; }
+#party #ptSuggest { flex: none; margin: 0; min-height: 36px; padding: 5px; border: 1px solid var(--kk-gold); font: 700 14px var(--body); }
+#party .ptBrowse { flex: none; }
+#party .ptSearchLabel { display: block; }
+#party #ptSearch { display: block; width: 100%; height: 36px; padding: 6px 10px; font: 14px var(--body); border: 1px solid #747566; border-radius: 4px; color: var(--kk-text); background: #151c18; }
+#party .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+#party #ptFilters { display: flex; gap: 4px; margin-top: 6px; }
+#party #ptFilters button { flex: 1; min-width: 0; padding: 5px 2px; min-height: 32px; border-radius: 12px; border: 1px solid #747466; font: 11px var(--body); white-space: nowrap; }
+#party #ptFilters [aria-pressed="true"] { color: #f3f4df; border-color: #92b761; background: linear-gradient(#466a35, #294423); }
+#party #ptGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: max-content; gap: 7px; padding: 2px 3px 5px; margin: 0 -3px; overflow-y: auto; scrollbar-width: thin; }
+#party .ptCard { position: relative; min-width: 0; min-height: 140px; border-image: none; align-self: start; border: 1px solid #797152; border-radius: 5px; overflow: hidden; background: #151d17; }
+#party .ptCard.picked { border: 2px solid #86bf61; outline: none; box-shadow: 0 0 0 1px #6d984288; }
+#party .ptCard.hit { outline: 2px solid #c5b770; outline-offset: -3px; }
+#party .ptCard.faded { opacity: .5; }
+#party .ptCard.locked { opacity: .7; filter: none; }
+#party .ptSelect { display: flex; flex-direction: column; align-items: center; width: 100%; min-height: 0; padding: 0 0 5px; gap: 3px; background: transparent; border: 0; border-image: none; border-radius: 0; box-shadow: none; font-weight: normal; }
+#party .ptPortrait { width: 100%; height: clamp(80px, 24vw, 104px); aspect-ratio: auto; flex: none; display: grid; place-items: end center; position: relative; overflow: hidden; background: radial-gradient(ellipse at bottom, #63734588, #263d38 75%); }
+#party .ptPortrait.role-back { background: radial-gradient(ellipse at bottom, #50779088, #233644 75%); }
+#party .ptPortrait.role-striker { background: radial-gradient(ellipse at bottom, #986b4b88, #4a302d 75%); }
+#party .ptPortrait.role-support { background: radial-gradient(ellipse at bottom, #9a8c4a88, #4d4630 75%); }
+#party .ptPortrait canvas { display: block; width: auto; height: 100%; max-width: 100%; image-rendering: pixelated; }
+#party .locked .ptPortrait canvas { filter: grayscale(1) brightness(.55); }
+#party .ptCheck { position: absolute; top: 0; right: 0; width: 23px; height: 23px; border-bottom-left-radius: 4px; background: #304c2a; color: #d6f1b3; border: 1px solid #83ad5e; font: 700 18px/21px var(--body); }
+#party .ptName { max-width: 100%; min-height: 16px; padding: 0 3px; color: var(--kk-text); font: 700 13px/1.15 var(--body); overflow-wrap: anywhere; }
+#party .ptCard .lvb { font: 11px/1.2 var(--body); background: transparent; border: 0; padding: 0; color: var(--kk-muted); }
+#party .ptLock { padding: 0 4px; font: 10px/1.2 var(--body); color: #c6bea2; }
+#party .ptInfo { position: absolute; top: 3px; left: 3px; right: auto; bottom: auto; width: 44px; height: 44px; padding: 0; font: italic 15px/44px Georgia, serif; background: transparent; color: var(--kk-gold); border: 0; border-radius: 50%; box-shadow: none; z-index: 1; }
+#party .ptRaises { position: absolute; left: 3px; bottom: 3px; color: #e4d892; font: 9px var(--body); pointer-events: none; }
+#party .ptEmpty { grid-column: 1 / -1; min-height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; font: 13px var(--body); color: var(--kk-muted); }
+#party .ptMuted { font: 11px var(--body); color: var(--kk-muted); }
+#party > footer { flex: none; display: flex; align-items: center; gap: 10px; padding-top: 7px; border-top: 1px solid var(--kk-rim); }
+#party #ptHint { flex: 1; margin: 0; text-align: left; font: 12px/1.25 var(--body); color: var(--kk-muted); }
+#party #ptHint.full { color: #ead092; }
+#party #ptGo { width: 52%; flex: none; min-height: 46px; padding: 8px; font: 700 18px var(--display); border: 1px solid #8cab5d; }
+#party #ptGo:disabled { opacity: .5; }
+#party button:focus-visible, #party input:focus-visible { outline: 2px solid #d9cc94; outline-offset: 2px; }
+#party #ptSheet { position: fixed; background: #0b100be8; padding: 12px; }
+#party #ptSheetBox { width: min(440px, 100%); max-height: 100%; overflow-y: auto; }
+@media (max-height: 800px) {
+  #party { gap: 5px; padding-top: calc(env(safe-area-inset-top) + 6px); padding-bottom: calc(env(safe-area-inset-bottom) + 6px); }
+  #party h2 { font-size: 21px; }
+  #party .ptSlot { min-height: 66px; }
+  #party .ptSlot canvas { max-width: 42px; }
+  #party .ptOverview { padding: 5px 0 4px; gap: 3px 8px; }
+  #party #ptTraitHint { max-height: 13px; }
+  #party .ptHeading { margin-bottom: 4px; }
+  #party #ptSuggest { min-height: 32px; }
+}
+#party #ptTraitHint.is-focused { max-height: 64px; font-size: 12px; line-height: 1.25; color: var(--kk-text); }
+#party .ptInfo::before { content: ''; position: absolute; inset: 10px; z-index: -1; border: 1px solid #817e5d; border-radius: 50%; background: #1e281ee8; }
+/* A deployment tutorial waits visually behind this modal instead of obscuring its selection controls. */
+body:has(#party:not([hidden])) #tip { visibility: hidden; pointer-events: none; }

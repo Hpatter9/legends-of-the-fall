@@ -1,0 +1,20 @@
+[
+  {
+    "width": 360,
+    "height": 780,
+    "checks": "roster search; locked hero; hero switching; tab keyboard; equip/unequip; combine; sets; navigation; bounds; save reload",
+    "errors": []
+  },
+  {
+    "width": 393,
+    "height": 852,
+    "checks": "roster search; locked hero; hero switching; tab keyboard; equip/unequip; combine; sets; navigation; bounds; save reload",
+    "errors": []
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "checks": "roster search; locked hero; hero switching; tab keyboard; equip/unequip; combine; sets; navigation; bounds; save reload",
+    "errors": []
+  }
+]
