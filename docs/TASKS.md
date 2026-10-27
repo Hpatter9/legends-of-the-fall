@@ -7,7 +7,17 @@ This is the shared handoff board for Codex and Claude. It records known assignme
 
 The manager maintains the integrated board. Workers propose their task updates in their own branches and return them in their handoff. Keep one owner per task; reconcile board changes when integrating work.
 
+## Current owner requirements
+
+- Intentional flashy effects are allowed. “No flashing” refers to textures disappearing or glitching off and on, not deliberate visual effects.
+- Run tests for the changed behaviour and affected callers. Full suites and unrelated balance sweeps are not required; retain typecheck/build and affected portrait checks for implementation work. Documentation-only updates require diff, link and consistency review.
+
 ## Active work
+
+**UI-005 / Party war council** — owner accepted the implementation and authorised version bump and merge as 0.166.0. Typecheck/build and 20 affected tests passed; three portrait sizes, all 45 heroes, draft/save, search/filters, starter/empty states, reduced motion and static texture checks validated. Selected portrait row subsequently simplified into a compact, numbered company roll at the owner’s request; tap-to-remove and hold-for-details retained. Initial banner-row concept rejected. Direction: five selected units in action poses fighting a creature horde, with elaborate ornament and deliberate spell effects. Owner: Codex. Branch: `design/party-war-council`, worktree `/workspace/legends-of-the-fall`; [PR #134](https://github.com/Hpatter9/legends-of-the-fall/pull/134). Scope: party picker (`src/party.ts`, `src/partyScene.ts`, party markup in `src/index.html` and styles in `src/keepKingdom.css`), related screenshots and notes; preserve simulation, save format and existing hero dossiers. Goal: ornate, exciting party selection with useful role coverage and synergy guidance. Completion: owner approves concept, implementation passes typecheck, affected tests and build and 393×852, 360×780, 412×915 review. Intentional glows and flourishes are allowed; disappearing textures or glitchy on/off flashing are defects. Implementation uses existing attack sprites, horde sprites, effect strips, brass frame and cached scenery; no simulation or save changes. See [implementation and validation](notes/party-war-council.md).
+
+
+UI-003 accepted by the owner for release 0.164.0 and GitHub merge. Implementation, portrait validation and release integration checks passed on `design/hero-detail-dossier`; submission through a pull request to main is authorised. FX-001, UI-002, HEART-001 and DIALOGUE-001 remain intact. See [handoff](notes/hero-detail-dossier.md).
 
 UI-004 (Summoning Sanctum) is accepted by the owner for release 0.165.0 and GitHub merge. Owner: Codex; branch `design/summoning-sanctum`, worktree `/workspace/legends-of-the-fall`; PR pending. Scope: ornate chamber, new-hero celebrations, quiet shard tarot cards, supporting artwork, release metadata and validation. Main 0.164.0 is integrated, preserving the released combat and hero dossier work. Typecheck, release build, 16 targeted tests and the three-size result browser suite passed; ready for the authorised PR merge. See [handoff](notes/summoning-sanctum.md).
 
@@ -34,6 +44,7 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 | ID | Task | Result | Reference |
 | --- | --- | --- | --- |
+| UI-005 | Cinematic party war council and compact company roll | Owner accepted and authorised release 0.166.0 and merge; typecheck/build, 20 affected tests, all three portrait sizes and all 45 hero tableaux passed on the integrated release | [PR #134](https://github.com/Hpatter9/legends-of-the-fall/pull/134), [handoff](notes/party-war-council.md) |
 | UI-004 | Ornate summoning sanctum and differentiated hero/shard reveals | Owner accepted and authorised release 0.165.0 and merge; implementation, full suite and portrait/offline checks passed; release integration checks passed | [Handoff](notes/summoning-sanctum.md), branch `design/summoning-sanctum` |
 | UI-003 | Ornate hero dossiers and animated portrait scenery | Owner accepted the implementation and authorised release 0.164.0 and GitHub merge; all 103 tests and three portrait sizes validated | [Handoff](notes/hero-detail-dossier.md), branch `design/hero-detail-dossier` |
 | FX-001 | Combat animation polish | Done; owner accepted effects and authorised release 0.163.0 and GitHub merge; 104 implementation test files, 10 integration test files, typecheck, build and five browser cases passed | [PR #131](https://github.com/Hpatter9/legends-of-the-fall/pull/131), [handoff](notes/combat-animation-polish.md) |

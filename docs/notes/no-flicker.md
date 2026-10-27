@@ -1,6 +1,8 @@
 # No flicker
 
-The owner's rule: no flashing. No looping blink, pulse or strobe; a full-screen flash is one-shot, at most 0.5 alpha, about 120 ms. A slow sway or drift that never changes brightness is fine.
+Owner clarification, 2026-10-27: intentional flashy effects, glows, pulses and flourishes are allowed. The ‘no flashing’ request concerns textures disappearing completely or flashing off and on in a glitchy way. It is not a blanket prohibition on brightness animation. Preserve reduced-motion support.
+
+The implementation history below records the earlier, broader interpretation. Its steady-light choices and flash limits describe that implementation, not current requirements for every new effect.
 
 ## What was found, and what was done
 
@@ -41,4 +43,4 @@ A DOM mutation probe (4 s idle per screen) found no menu rebuilding on a timer; 
 
 ## Guard
 
-`test/no-flicker.test.ts` fails if any looping css animation changes opacity, filter, shadow or colour, or if a camp, tavern, castle or hall light level is set from a sine.
+`test/no-flicker.test.ts` currently enforces the earlier, broader interpretation: it rejects looping CSS changes to opacity, filter, shadow or colour, and sine-driven canvas light levels. That legacy guard does not distinguish intentional effects from texture defects. When changing an affected effect, update its coverage to the clarified requirement and verify texture stability in the browser; do not treat an intentional glow or pulse as a defect solely because it changes brightness. No renderer or test implementation is changed by this documentation update.
