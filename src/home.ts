@@ -195,7 +195,7 @@ export class Home {
     return !$('hmSub').hidden && $('hmSub').classList.contains('armies') ? 'armies' : this.tab;
   }
 
-  /** A pull from the hall, or again from the card reveal: the gacha pulls and keeps the result; the cinematic and the hall play it (every time), then the usual card reveal opens over the page. */
+  /** The gacha saves the pull, the hall celebrates a new ally (shards go straight to cards), then results open. */
   summon(n: 1 | 10): void {
     if (this.hooks.onSummon) this.hooks.onSummon(n, (got, skip) => this.hall.play(got, skip).then(() => this.hall.stop()));
     else this.hooks.onRecruit();

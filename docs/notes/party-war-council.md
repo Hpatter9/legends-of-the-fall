@@ -1,6 +1,6 @@
 # Party war council
 
-UI-004, owner Codex, branch `design/party-war-council`. The owner approved the cinematic direction and authorised implementation. Implementation is ready for visual review; no merge or deployment is authorised.
+UI-005, owner Codex, branch `design/party-war-council`. The owner approved the cinematic direction and authorised implementation. The owner accepted the implementation and authorised the version bump and merge.
 
 ## Implemented
 
@@ -32,3 +32,9 @@ Intentional flashy effects are allowed; ‘no flashing’ means textures disappe
 The owner found the selected portrait row redundant beneath the scene and authorised a simpler or more ornate treatment at our discretion. Replaced the portrait mini-cards with one compact brass-lined company roll: numbered diamond seals, hero names, small remove marks, and matching empty recruitment places. Existing tap-to-remove and hold-for-details controls are retained. The row is about 29px shorter, giving reinforcements more room without shrinking touch targets below its 53px height. No new art, rules or saved fields.
 
 Refinement validation: typecheck and web build passed; all eight party tests passed. The browser check now asserts the company roll has no duplicate canvases and that holding a selected name opens details without removing it. Updated screenshots cover all three required portrait sizes.
+
+## Release 0.166.0
+
+The owner requested the version bump and merge. Implementation was preserved in `60043cc2`. Main 0.165.0 adds the Summoning Sanctum; it is integrated with all incoming runtime changes retained. Only `docs/TASKS.md` needed conflict resolution; both handoffs are retained. The party task is now UI-005 because incoming main uses UI-004 for the sanctum. Earlier proposal references to UI-004 describe the pre-integration assignment.
+
+Package and root lockfile versions are bumped to 0.166.0 for this release. Release integration validation and GitHub merge are in progress.

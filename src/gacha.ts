@@ -8,11 +8,15 @@ import { closest, haveOf, needOf, ownedCount } from './sim/unlock';
 import { isContent, pityAt } from './sim/unlockRules';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { portrait } from './render/sheets';
+import { play as playSfx } from './render/sound';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
 export class Gacha {
   private busy = false;
+  private revealTimers: number[] = [];
+  private revealCards: HTMLElement[] = [];
+  private revealingAll = false;
   /** `onClose` runs when the screen is shut (the run's draw pool follows the unlocks). */
   constructor(
     private meta: Meta,
@@ -24,15 +28,28 @@ export class Gacha {
     $('pull10').addEventListener('click', () => this.pull(10));
     $('gachaClose').addEventListener('click', () => this.close());
     $('rates').textContent = ratesText();
+    $('revealAll').addEventListener('click', () => {
+      this.revealingAll = true;
+      this.revealCards.forEach(card => card.click());
+      this.revealingAll = false;
+      this.revealCards.find(card => card.classList.contains('new'))?.scrollIntoView({ block: 'center', behavior: 'auto' });
+    });
   }
 
   open(): void {
+    this.clearReveal();
     $('gacha').hidden = false;
+    $('gacha').classList.remove('hasResults');
+    $('resultIntro').hidden = true;
     $('reveal').replaceChildren();
+    $('gacha').querySelector('h2')!.textContent = 'Summoning Sanctum';
+    $('gachaClose').textContent = 'Return to sanctum';
+    ($('collectionPanel') as HTMLDetailsElement).open = true;
     this.refresh();
   }
 
   close(): void {
+    this.clearReveal();
     $('gacha').hidden = true;
     this.onClose();
   }
@@ -44,7 +61,7 @@ export class Gacha {
       const b = $(id) as HTMLButtonElement;
       const price = document.createElement('small');
       price.textContent = `${pullCost(n)} crowns`;
-      b.replaceChildren(`Pull ${n}`, price);
+      b.replaceChildren(`Summon ×${n}`, price);
       b.disabled = this.busy || m.crowns < pullCost(n);
     }
     $('pity').textContent = pityLine(m);
@@ -120,47 +137,127 @@ export class Gacha {
     this.reveal(got);
   }
 
-  /** The pulls as face-down cards that flip over one after another, the repeats first and the new heroes last (a new hero's card glows steadily and is held a beat longer). A tap on a card turns it at once. */
+  /** Stop old reveal timers before leaving or showing another batch. Pulls are already saved. */
+  private clearReveal(): void {
+    this.revealTimers.forEach(timer => window.clearTimeout(timer));
+    this.revealTimers = [];
+    this.revealCards = [];
+    this.busy = false;
+  }
+
+  /** The ceremonial seals open repeats first and new heroes last; each reward keeps its own saved shard count. */
   private reveal(got: Pull[]): void {
+    this.clearReveal();
+    this.busy = true;
     const box = $('reveal');
+    $('gacha').classList.add('hasResults');
+    $('gacha').querySelector('.gachaBody')!.scrollTop = 0;
+    $('gacha').querySelector('h2')!.textContent = got.some(p => p.isNew) ? 'A new ally answers' : 'The cards reveal';
+    $('gachaClose').textContent = 'Continue';
+    $('resultIntro').hidden = false;
+    $('resultSummary').textContent = got.length === 1 ? 'Tap the seal to reveal your reward' : `${got.length} summons · tap a seal to reveal`;
+    $('revealAll').hidden = got.length === 1;
+    ($('collectionPanel') as HTMLDetailsElement).open = false;
+    ($('summonRules') as HTMLDetailsElement).open = false;
     box.replaceChildren();
-    const cards: HTMLElement[] = [];
+    box.classList.toggle('single', got.length === 1);
+    let revealed = 0;
+    let celebrated = false;
     got.forEach((p) => {
       const def = UNITS[p.kind];
       const card = document.createElement('div');
-      card.className = 'flip';
+      card.className = `flip${p.isNew ? ' new' : ' tarot'}${def.name.length > 14 ? ' longName' : ''}`;
+      card.dataset.kind = p.kind;
+      card.tabIndex = 0;
+      card.setAttribute('role', 'button');
+      card.setAttribute('aria-label', 'Reveal summon');
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); }
+      });
       const face = document.createElement('div');
       face.className = 'face';
+      const seal = document.createElement('span');
+      seal.className = 'resultSeal';
+      seal.textContent = p.isNew ? 'New hero' : p.crowns ? 'Crowns' : p.unlock ? 'Hero shards' : 'Rank shards';
+      const scene = document.createElement('div');
+      scene.className = 'summonPortrait';
+      scene.append(portrait(def.sheet, got.length === 1 ? 192 : 112));
+      const caption = document.createElement('div');
+      caption.className = 'summonCaption';
       const name = document.createElement('b');
       name.textContent = def.name;
+      const role = small(CLASS_NAMES[CLASS_OF[p.kind]]);
+      caption.append(name, role);
+      const reward = document.createElement('div');
+      reward.className = 'resultReward';
       const tag = document.createElement('em');
-      tag.textContent = p.isNew ? 'NEW' : p.unlock ? `${p.have}/${p.need}` : p.crowns ? `+${p.crowns} crowns` : `+${p.shards} shard`;
-      const role = document.createElement('small');
-      role.className = 'rtag';
-      role.textContent = CLASS_NAMES[CLASS_OF[p.kind]];
-      // (a hero not yet owned shows its bar filling: the pull's shard, as it stood after it)
-      face.append(portrait(def.sheet, 72), name);
-      if (p.unlock && p.need && !p.isNew) face.append(cardBar(p.have! / p.need));
-      else face.append(role);
-      face.append(tag);
-      if (p.isNew) card.classList.add('new');
+      const shardCount = p.unlock ?? p.shards;
+      tag.textContent = p.isNew ? 'Joined your company' : p.crowns ? `+${p.crowns} crowns` : `+${shardCount} shard${shardCount === 1 ? '' : 's'}`;
+      reward.append(tag);
+      if (p.unlock && p.need && !p.isNew) {
+        const label = small(`${p.have} / ${p.need} to recruit`);
+        label.className = 'resultProgressLabel';
+        const bar = cardBar(p.have! / p.need);
+        bar.setAttribute('role', 'progressbar');
+        bar.setAttribute('aria-label', `${def.name} recruitment`);
+        bar.setAttribute('aria-valuemin', '0');
+        bar.setAttribute('aria-valuemax', `${p.need}`);
+        bar.setAttribute('aria-valuenow', `${p.have}`);
+        reward.append(bar, label);
+      }
+      if (got.length === 1) {
+        const description = small(def.role);
+        description.className = 'resultDescription';
+        reward.append(description);
+      }
+      if (p.isNew) {
+        const celebration = document.createElement('div');
+        celebration.className = 'summonCelebration';
+        celebration.setAttribute('aria-hidden', 'true');
+        face.append(celebration);
+      }
+      face.append(seal, scene, caption, reward);
       const back = document.createElement('div');
       back.className = 'back';
+      const sigil = document.createElement('span');
+      sigil.textContent = '◆';
+      const invitation = small('Tap to reveal');
+      back.append(sigil, invitation);
       card.append(back, face);
-      card.addEventListener('click', () => card.classList.add('up'));
+      card.addEventListener('click', () => {
+        if (card.classList.contains('up')) return;
+        card.classList.add('up');
+        if (p.isNew) {
+          if (!celebrated) playSfx('stingSummon');
+          celebrated = true;
+          if (got.length > 1 && !this.revealingAll) card.scrollIntoView({ block: 'center', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+        }
+        card.setAttribute('aria-label', `${def.name}: ${tag.textContent}${p.unlock && p.need && !p.isNew ? `, ${p.have} of ${p.need} to recruit` : ''}`);
+        revealed++;
+        if (revealed < got.length) {
+          $('resultSummary').textContent = `${revealed} / ${got.length} rewards revealed`;
+          return;
+        }
+        this.revealTimers.forEach(timer => window.clearTimeout(timer));
+        this.revealTimers = [];
+        this.busy = false;
+        $('revealAll').hidden = true;
+        const fresh = got.filter(pull => pull.isNew).length;
+        $('resultSummary').textContent = got.length === 1
+          ? p.isNew ? 'A new ally joins your company' : p.unlock ? 'Another step towards a new ally' : p.crowns ? 'A tribute for your kingdom' : 'Your company grows stronger'
+          : `${got.length} rewards revealed${fresh ? ` · ${fresh} new ${fresh === 1 ? 'ally' : 'allies'}` : ''}`;
+        this.refresh();
+      });
       box.append(card);
-      cards.push(card);
+      this.revealCards.push(card);
     });
     const order = got.map((_, i) => i).sort((x, y) => Number(got[x].isNew) - Number(got[y].isNew) || x - y);
-    let at = 350;
+    let at = 220;
     for (const i of order) {
-      setTimeout(() => cards[i].click(), at);
-      at += got[i].isNew ? 420 : 260;
+      this.revealTimers.push(window.setTimeout(() => this.revealCards[i]?.click(), at));
+      at += got[i].isNew ? 900 : 160;
     }
-    setTimeout(() => {
-      this.busy = false;
-      this.refresh();
-    }, at);
+    this.refresh();
   }
 }
 
