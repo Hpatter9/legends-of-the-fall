@@ -9,7 +9,11 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
-None assigned. UI-002 accepted by the owner for version 0.162.0 and GitHub merge; HEART-001 and DIALOGUE-001 are retained as released work.
+**UI-003 — Hero detail dossier** · Owner: current Codex chat · Branch: `design/hero-detail-dossier` · Status: ready for review, including the owner-requested animated portrait interior; all 103 tests and all three portrait browser checks passed.
+
+Scope: hero detail presentation in `src/menuHeroes.ts`, scoped CSS, existing assets, focused browser checks and documentation. Goal: ornate, exciting Overview, Progression, Equipment and Skills views consistent with Keep & Kingdom. No simulation or save changes. Completion: approved direction implemented, typecheck/tests/build passed and checked at 360×780, 393×852, 412×915. Validation: typecheck and web build passed; all 103 test files passed; browser checks passed at all three portrait sizes. PR: not created. No active file reservations conflict. See [proposal handoff](notes/hero-detail-dossier.md).
+
+UI-002 accepted by the owner for version 0.162.0 and GitHub merge; HEART-001 and DIALOGUE-001 are retained as released work.
 
 ## UI-001 manager takeover — 2026-10-26
 

@@ -1,0 +1,35 @@
+[
+  {
+    "width": 360,
+    "height": 780,
+    "fit": {
+      "width": 338,
+      "scroll": 338,
+      "nameFits": true
+    },
+    "errors": [],
+    "checks": "all four panels; equip and unequip; talent tree; locked hero; skills lock; keyboard wrap; skills shortcut; hero switch retains tab; class styling; long name; reduced motion; back navigation"
+  },
+  {
+    "width": 393,
+    "height": 852,
+    "fit": {
+      "width": 371,
+      "scroll": 371,
+      "nameFits": true
+    },
+    "errors": [],
+    "checks": "all four panels; equip and unequip; talent tree; locked hero; skills lock; keyboard wrap; skills shortcut; hero switch retains tab; class styling; long name; reduced motion; back navigation"
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "fit": {
+      "width": 390,
+      "scroll": 390,
+      "nameFits": true
+    },
+    "errors": [],
+    "checks": "all four panels; equip and unequip; talent tree; locked hero; skills lock; keyboard wrap; skills shortcut; hero switch retains tab; class styling; long name; reduced motion; back navigation"
+  }
+]
