@@ -227,3 +227,122 @@ button:focus-visible, input:focus-visible { outline: 2px solid #efd39a; outline-
 @media (prefers-reduced-motion: reduce) {
   .heroRoster .hcard, .heroCardMotes { animation: none !important; transition: none; }
 }
+
+/* Hero dossiers: the company's brass frame, forest art and class emblems, all cached offline. */
+.heroDetail { --card-colour: #284869; --card-light: #92b7dc; --card-dark: #101d32; }
+.heroDetail[data-class='front'] { --card-colour: #435b32; --card-light: #d8ce80; --card-dark: #192715; }
+.heroDetail[data-class='caster'] { --card-colour: #702a20; --card-light: #e78a54; --card-dark: #301613; }
+.heroDetail[data-class='shooter'] { --card-colour: #355c51; --card-light: #9cccb2; --card-dark: #142c27; }
+.heroDetail[data-class='support'] { --card-colour: #55466b; --card-light: #c7b4e0; --card-dark: #241d35; }
+.heroDetail .hhead {
+  position: relative; isolation: isolate; display: flex; flex-direction: column; gap: 0; padding: 20px 23px 38px;
+  border: 0; border-radius: 12px; background: #101711 url(ui/hero-brass-frame.png) center / 100% 100% no-repeat;
+  box-shadow: 0 6px 15px #0007;
+}
+.heroDetail .hpic {
+  width: 100%; height: 172px; border: 0; border-radius: 70px 70px 0 0; overflow: hidden;
+  background: radial-gradient(ellipse at 50% 50%, transparent, #101711 85%), linear-gradient(#12201755, #101711dd), url(areas/forest/bg3.png) center / cover;
+}
+.heroDetail .hpic::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, var(--card-colour), transparent 72%); opacity: .8; }
+.heroDetail .hpic .heroCardHalo { width: 138px; height: 138px; top: 7px; border-radius: 50% 50% 5px 5px; box-shadow: inset 0 0 0 6px #0003, inset 0 0 0 7px #e8ddb72b, 0 0 30px var(--card-dark); }
+.heroDetail .hpic canvas { bottom: 9px; z-index: 1; image-rendering: pixelated; }
+.dossierClass { position: absolute; z-index: 2; left: 50%; bottom: 0; transform: translateX(-50%); display: flex; align-items: center; gap: 7px; padding: 4px 18px; border: 1px solid #a18a56; background: linear-gradient(var(--card-colour), var(--card-dark)); color: #fff0cc; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+.dossierClass img { width: 18px; height: 18px; image-rendering: pixelated; }
+.heroDetail .hhead .dossierIdentity { width: 100%; flex: none; align-items: center; gap: 4px; padding-top: 9px; text-align: center; }
+.heroDetail .hhead h3 { max-width: 100%; font: 700 28px/1.1 var(--display); overflow-wrap: anywhere; text-shadow: 0 2px 5px #000; }
+.heroDetail .hhead .stars { letter-spacing: .1em; font-size: 16px; }
+.heroDetail .hhead .xpbar { width: min(240px, 100%); height: 7px; border: 1px solid #88744d; background: #090f0c; border-radius: 5px; overflow: hidden; }
+.heroDetail .hhead .xpbar span { background: linear-gradient(90deg, #3b714f, #a1c386); box-shadow: inset 0 1px #fff5; }
+.heroDetail .heroStrip button { flex-basis: 63px; background: linear-gradient(#2d3428, #101910); border-color: #6e6243; }
+.heroDetail .heroStrip button.selected { border-color: #e5c988; box-shadow: inset 0 0 0 1px #d8b97650, 0 0 12px #dec37c22; }
+.heroDetail .heroTabs { position: sticky; top: 0; z-index: 5; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border-radius: 3px; padding: 2px; border-color: #998050; background: #101710; }
+.heroDetail .heroTabs button { min-height: 44px; font-size: 13px; border-radius: 2px; }
+.heroDetail .heroTabs button[aria-selected='true'] { background: linear-gradient(#6a5734, #302d1d); border-color: #c5a66a; box-shadow: inset 0 0 0 2px #0e170e, inset 0 0 14px #e7bd4f1c; }
+.dossierHeading { text-align: center; padding: 3px 0; }
+.dossierHeading h4 { margin: 0 0 4px; color: var(--kk-gold); font: 700 21px/1.2 var(--display); }
+.dossierHeading small { color: var(--kk-muted); font: 14px/1.35 var(--body); }
+.heroDetail .hpower, .dossierProfile, .dossierAbility, .heroDetail .awPanel, .heroDetail .tPanel {
+  position: relative; padding: 14px; border: 1px solid #998050; border-radius: 3px;
+  background: linear-gradient(135deg, #303727b0, #101810ed), url(ui/page.png);
+  box-shadow: inset 0 0 0 3px #11170f, inset 0 0 0 4px #a78c4930, 0 4px 10px #0004;
+}
+.heroDetail .hpower { display: grid; grid-template-columns: 46px auto; justify-content: center; align-items: center; column-gap: 14px; row-gap: 0; }
+.heroDetail .hpower > img { width: 44px; height: 44px; grid-row: span 2; image-rendering: pixelated; filter: drop-shadow(0 2px 4px #000); }
+.heroDetail .hpower small { letter-spacing: .08em; text-transform: uppercase; font-size: 12px; }
+.heroDetail .hpower b { font: 700 34px/1.1 var(--display); }
+.heroDetail .hstats { gap: 7px; }
+.heroDetail .hstats div { padding: 10px 2px; border-color: #8a764b; background: linear-gradient(145deg, #303725, #101910); border-radius: 3px; box-shadow: inset 0 0 0 2px #0c120d; }
+.heroDetail .hstats img { width: 24px; height: 24px; image-rendering: pixelated; margin-bottom: 4px; }
+.heroDetail .hstats .hspeed { border-color: #51553d; padding: 8px 2px; }
+.heroDetail .hstats .hspeed b { font-size: 17px; }
+.dossierProfile { display: flex; flex-direction: column; gap: 12px; }
+.dossierTraits { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.dossierTraits span { padding: 4px 10px; border: 1px solid #75664a; border-radius: 20px; color: #d8d5b7; font-size: 13px; background: #172418; }
+.dossierSkillsLink { width: 100%; color: var(--kk-gold); background: #172318; }
+.dossierRanks { display: grid; grid-template-columns: repeat(4, 1fr); margin: 0; padding: 10px 0; list-style: none; }
+.dossierRanks li { position: relative; display: flex; align-items: center; flex-direction: column; gap: 7px; color: #aba38c; }
+.dossierRanks li::before { content: ''; position: absolute; left: -50%; right: 50%; top: 17px; height: 2px; background: #686342; }
+.dossierRanks li:first-child::before { display: none; }
+.dossierRanks b { position: relative; display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid #716a50; background: #182018; border-radius: 50%; font-size: 23px; }
+.dossierRanks .reached b { color: #ffe3a0; background: radial-gradient(#537145, #182d21); border-color: #d9bc73; box-shadow: 0 0 12px #ebc75e26; }
+.dossierRanks [aria-current] b { outline: 1px solid #c3ad73; outline-offset: 3px; }
+.dossierRanks small { font-size: 12px; }
+.heroDetail .awPanel, .heroDetail .tPanel { gap: 12px; }
+.heroDetail .awPanel h4, .heroDetail .tPanel h4 { font: 700 19px var(--display); color: var(--kk-gold); }
+.heroDetail .awStep { padding: 12px; gap: 7px; border: 1px solid #69634d; background: linear-gradient(120deg, #272432, #141c16); border-radius: 3px; }
+.heroDetail .awStep.next { border-color: #a68aba; box-shadow: inset 3px 0 #9272a6; }
+.heroDetail .awStep.got { border-color: #cbb477; background: linear-gradient(120deg, #3a3523, #141c16); }
+.heroDetail .awHead { flex-wrap: wrap; gap: 4px; }
+.heroDetail .awHead b { font-size: 16px; }
+.heroDetail .awHead small, .heroDetail .awGives, .heroDetail .awNote, .heroDetail .tSum, .heroDetail .tSub { font: 14px/1.4 var(--body); }
+.heroDetail .awStep p.awPassive { font: 14px/1.45 var(--body); color: #d3bce5; }
+.heroDetail .awPanel button, .heroDetail .tPanel button:not(.tNode) { min-height: 44px; font-size: 14px; }
+.heroDetail .eqSlot { padding: 14px 3px 10px; gap: 9px; border-color: #b09960; box-shadow: inset 0 0 0 2px #101910, 0 3px 8px #0005; background: radial-gradient(ellipse at 50% 40%, #43513a, #141e16 80%); }
+.heroDetail .eqIcon.big { width: 60px; height: 60px; box-shadow: inset 0 0 14px #0008, 0 0 12px #d8c17312; }
+.heroDetail .eqPanel .eqSlotLabel { font: 700 14px var(--display); }
+.heroDetail .eqSum { border: 1px solid #615b40; background: #151f16; padding: 10px; border-radius: 3px; }
+.dossierAbility { display: grid; grid-template-columns: 42px minmax(0, 1fr); align-items: start; gap: 12px; }
+.dossierAbility > img { width: 42px; height: 42px; padding: 5px; image-rendering: pixelated; background: radial-gradient(var(--card-colour), var(--card-dark)); border: 1px solid #b49c65; border-radius: 3px; }
+.dossierAbilityLabel { display: inline-block; font-size: 11px; line-height: 1.4; letter-spacing: .08em; text-transform: uppercase; color: #b7d1b2; }
+.dossierAbility h5 { margin: 3px 0 6px; color: #f2dfb4; font: 700 18px/1.2 var(--display); }
+.heroDetail .dossierAbility p { margin: 0; font: 15px/1.45 var(--body); color: #d6d2bf; }
+.heroDetail .dossierAbility.locked { opacity: 1; border-color: #685f49; }
+.dossierAbility.locked > img { filter: grayscale(.85); opacity: .65; }
+.dossierAbility[data-type='ultimate'] { background: linear-gradient(120deg, #3c3024, #141b15); }
+.dossierAbility .ultLock { display: block; margin-top: 8px; color: #dfbe8d; font: 13px/1.4 var(--body); }
+.heroDetail .heroTabPanel { scroll-margin-top: 10px; }
+@media (max-width: 375px) {
+  .heroDetail .hhead { padding: 18px 22px 36px; }
+  .heroDetail .heroTabs button { font-size: 12px; }
+  .heroDetail .hhead h3 { font-size: 25px; }
+  .dossierAbility { gap: 9px; padding: 12px; grid-template-columns: 36px minmax(0, 1fr); }
+  .dossierAbility > img { width: 36px; height: 36px; }
+}
+
+
+/* Slow magical currents stay inside the brass surround and behind the hero's details. */
+.dossierAtmosphere {
+  position: absolute; z-index: 0; inset: 7% 8% 11%; overflow: hidden; pointer-events: none; border-radius: 34% 34% 5px 5px;
+  background: radial-gradient(ellipse at 50% 22%, color-mix(in srgb, var(--card-light) 45%, transparent), transparent 65%),
+    linear-gradient(0deg, var(--card-dark), transparent 75%), url(areas/forest/bg3.png) center / auto 100%;
+}
+.dossierAtmosphere::before {
+  content: ''; position: absolute; width: 200%; height: 160%; left: -50%; top: -55%;
+  background: repeating-conic-gradient(from 10deg, transparent 0deg 28deg, color-mix(in srgb, var(--card-light) 28%, transparent) 35deg, transparent 48deg 70deg);
+  animation: dossierCurrents 38s linear infinite; opacity: .75;
+}
+.dossierAtmosphere::after {
+  content: ''; position: absolute; inset: -30px 0;
+  background: radial-gradient(circle at 12% 22%, #ffe9a8 0 1px, transparent 2px), radial-gradient(circle at 81% 15%, var(--card-light) 0 1.5px, transparent 3px),
+    radial-gradient(circle at 28% 43%, var(--card-light) 0 1px, transparent 2px), radial-gradient(circle at 92% 56%, #ffe9a8 0 1px, transparent 2px),
+    radial-gradient(circle at 8% 70%, var(--card-light) 0 1.5px, transparent 3px), radial-gradient(circle at 71% 84%, #ffe9a8 0 1px, transparent 2px);
+  animation: dossierDrift 12s ease-in-out infinite alternate; opacity: .85;
+}
+.heroDetail .hhead .hpic { z-index: 1; background: radial-gradient(ellipse at 50% 40%, transparent 30%, color-mix(in srgb, var(--card-dark) 45%, transparent)); }
+.heroDetail .hhead .dossierIdentity { position: relative; z-index: 1; border-radius: 8px; background: radial-gradient(ellipse, #0b140fe8, #0b140f99 65%, transparent); text-shadow: 0 1px 3px #000; }
+.heroDetail .hpic::before { background: radial-gradient(ellipse at 50% 45%, color-mix(in srgb, var(--card-colour) 65%, transparent), transparent 75%); }
+@keyframes dossierCurrents { to { transform: rotate(360deg); } }
+@keyframes dossierDrift { from { transform: translateY(12px); } to { transform: translateY(-22px); } }
+@media (prefers-reduced-motion: reduce) {
+  .dossierAtmosphere::before, .dossierAtmosphere::after { animation: none; }
+}

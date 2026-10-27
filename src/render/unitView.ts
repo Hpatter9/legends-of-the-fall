@@ -16,6 +16,7 @@ import { deathKind, maxStatuses, statusesOf, STATUS_LOOKS } from './fxRules';
 import { settings } from '../settings';
 import { badgeOf } from '../sim/levels';
 import { AURA_COLOURS, auraHalo, auraRings } from './levelLook';
+import { attackMotion } from './motionRules';
 
 /** The sheet rows beyond `Anim`: the skills' casts (a sheet without one plays its plain attack). */
 type Row = Anim | 'attack2' | 'defend';
@@ -97,6 +98,7 @@ export class UnitSprite {
   private baseSize = 1;
   private popAt = -1;
   private popBy = 0;
+  private reduced = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
   /** Where it was last drawn (world pixels): for effects to aim at. */
   x = 0;
   y = 0;
@@ -220,6 +222,13 @@ export class UnitSprite {
     // a flyer hovers: its body bobs above a smaller shadow on the ground
     const bob = def.flies && u.alive ? Math.sin(t / 260) * 2 - 12 : 0;
     this.body.y = bob - lift;
+    // Keep the feet planted while the torso draws back, strikes and settles.
+    const motion = fighting && u.alive && !(cast && t < cast.at + cast.ms) && swing && t >= swing.at && t < swing.at + swing.ms && !this.reduced?.matches
+      ? attackMotion((t - swing.at) / swing.ms) : { offset: 0, stretch: 0 };
+    this.body.x = (facesRight(u.facing) ? 1 : -1) * motion.offset;
+    this.body.scale.x *= 1 + motion.stretch;
+    this.body.scale.y *= 1 - motion.stretch * 0.5;
+    this.rim.x = this.body.x;
     this.rim.y = bob - lift;
     this.shadow.scale.set(def.flies ? 0.6 : 1);
     this.shadow.alpha = def.flies ? 0.5 : 1;
@@ -274,6 +283,15 @@ export class UnitSprite {
   nudge(dx: number, dy: number): void {
     this.kx = dx;
     this.ky = dy;
+  }
+
+  /** Copy the current pose for a short-lived dash silhouette; shares the loaded texture. */
+  afterimage(): Sprite {
+    const sp = new Sprite(this.body.texture);
+    sp.anchor.copyFrom(this.body.anchor);
+    sp.scale.set(this.body.scale.x * this.root.scale.x, this.body.scale.y * this.root.scale.y);
+    sp.tint = 0x82d9ed;
+    return sp;
   }
 
   /** The loops that stay on it while a status lasts (frost bubbles, flames, a shield's bubble, wind, auras), and the stars of a stun. */

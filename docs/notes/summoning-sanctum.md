@@ -1,6 +1,6 @@
 # Summoning Sanctum
 
-UI-003 implements the owner's approved ornate Royal Arcane concept on branch `design/summoning-sanctum` in `/workspace/legends-of-the-fall`. The chamber now has gilded gothic vaults, emerald stained glass, guardian statues, embroidered banners and candlelight. Its ceremonial summoner wears green and ivory, and the rebuilt stepped altar has griffin guardians, brass astrolabe rings and emerald crystals.
+UI-004 implements the owner's approved ornate Royal Arcane concept on branch `design/summoning-sanctum` in `/workspace/legends-of-the-fall`. The chamber now has gilded gothic vaults, emerald stained glass, guardian statues, embroidered banners and candlelight. Its ceremonial summoner wears green and ivory, and the rebuilt stepped altar has griffin guardians, brass astrolabe rings and emerald crystals.
 
 The original generated chamber artwork is bundled into game.js as a data URL, including when reused behind the result screen. The existing service-worker game.js cache therefore includes the artwork without an extra network resource. Credits are in CREDITS.md. The priest, architecture and altar are one static scene; the live casting trail, orbiting runes, sparks, beam and hero arrivals are rendered over it. The priest and brass apparatus are not separate animated sprites.
 
@@ -58,3 +58,10 @@ Tarot cards reuse the already credited, offline-cached company brass frame, with
 Validation includes the four reward states and mixed batches at all three portrait sizes, explicit tarot/stage classification, shard ritual bypass, multiple new-ally spotlights, all-shard batches, early close, keyboard, Reveal all, reduced motion and offline frame loading. The sanctuary flow check now accepts direct tarot results for real shard pulls and explicitly verifies a guaranteed-new-hero ritual as a presentation fixture. Final results are recorded in the two browser-check JSON files. The linked result screenshots above are regenerated for this distinction.
 
 Final validation for the tarot refinement: `npm run typecheck` and `npm run web` passed. The full 103-file `npm test` run completed with 1,103 individual tests passed, zero failures, cancellations or skips. Both real-browser scripts passed; the dedicated result checks also cover multiple new-hero spotlights and all-shard batches. Browser errors: none. The branch is ready for owner review; no merge or deployment performed.
+
+
+## Release 0.165.0
+
+The owner requested the version bump and merge. Main had advanced to 0.164.0 with combat animation polish and the hero dossier; those changes are preserved by integrating main. Only the task board conflicted. The concurrent hero dossier already used UI-003, so this task is reconciled to UI-004 without changing the released task's identity. Package and root lockfile versions are bumped to 0.165.0.
+
+Release scope: validation of the integrated build, push the release branch and merge through a GitHub pull request. The existing main-branch Pages workflow then builds, tests and publishes the game. Earlier no-merge/no-deployment notes describe the review stage and are superseded by the owner's release authorisation.
