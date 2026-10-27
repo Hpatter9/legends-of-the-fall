@@ -4,13 +4,17 @@ import type { Element, Family } from './fxRules';
 export type Form = typeof FORMS[number];
 export const FORMS = ['slash', 'orb', 'fire', 'smoke', 'bolt', 'ice', 'shield', 'rune', 'heal', 'poison', 'dark', 'spark', 'stone', 'wind', 'blood', 'pillar',
   'arrow', 'bone', 'heart', 'cross', 'ripple', 'splash', 'sparks', 'dust', 'dash', 'soul', 'fireRing', 'vines', 'beam', 'snare', 'nova', 'electric'] as const;
-export const PALETTE: Record<Element, number> = {
+export type PaintedElement = Element | 'moon' | 'star' | 'water';
+export const PALETTE: Record<PaintedElement, number> = {
+  moon: 0xcdd5ff, star: 0xffdf9a, water: 0x68deed,
   fire: 0xffa448, ice: 0x8cddff, lightning: 0x77cfff, light: 0xffdf91, dark: 0xbb70ff,
   forest: 0x92eb99, poison: 0xc57bed, earth: 0xcfa36d, wind: 0xc4ecf5, blood: 0xf65563,
 };
 
 /** Native silhouettes give each element an identity beyond a change of colour. */
-export function formOf(el: Element, family: Family): Form {
+export function formOf(element: PaintedElement, family: Family): Form {
+  if (element === 'water' && ['orb', 'hit', 'explosion', 'puff', 'spikes'].includes(family)) return 'splash';
+  const el = element === 'moon' || element === 'star' ? 'light' : element === 'water' ? 'ice' : element;
   switch (family) {
     case 'orb': return el === 'fire' ? 'orb' : el === 'ice' ? 'ice' : el === 'lightning' ? 'electric' : el === 'forest' ? 'heal' : el === 'poison' ? 'poison' : el === 'earth' ? 'stone' : el === 'dark' ? 'soul' : 'spark';
     case 'slash': return el === 'dark' ? 'dark' : 'slash';

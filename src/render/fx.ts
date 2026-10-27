@@ -7,12 +7,15 @@ import { tileAt, type Board } from '../sim/board';
 import { defOf, type Battle, type BattleEvent, type Unit } from '../sim/battle';
 import { isBoss } from '../sim/foes';
 import { kitOf } from '../sim/abilities';
+import { abilityHeading } from './abilityLooks';
+import { abilityFrames, loadAbilityArt } from './abilityArt';
+import { SPELL_SIGNATURES } from './spellSignatures';
 import { SPELLS } from '../sim/spells';
 import type { Shot } from '../sim/units';
 import { settings } from '../settings';
 import { at, facesRight, TH, TW } from './iso';
 import { fadeTrauma, popScale, shakeOf, traumaFor } from './juiceRules';
-import { BIG_FOE_HP, SKILL_FX, SPELL_FX, SPELL_GLOW, SPELL_WORD, type Effect, type MagicKey } from './skillFx';
+import { BIG_FOE_HP, SKILL_FX, SPELL_GLOW, SPELL_WORD, type Effect, type MagicKey } from './skillFx';
 import type { UnitSprite } from './unitView';
 import { Particles } from './particles';
 import { loadVfxArt, VFX } from './vfxArt';
@@ -23,7 +26,7 @@ import { comboById, COMBO_NAME } from '../sim/combos';
 import { SIGNATURES, tierRing } from './signatures';
 import { loadProps, playSteps, setSignatureSprite, type Pt, type Scene } from './signatureFx';
 import { tierSkillOf } from '../sim/tierSkills';
-import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, impactElement, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, SPELL_TOUCH, type Missile } from './fxRules';
+import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, impactElement, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, type Missile } from './fxRules';
 import { particleBudget, slashOf } from './vfxRules';
 import { placeLabel } from './labelRules';
 import { loadPaintedArt, paintedStrip, paintSprite } from './cinematicArt';
@@ -64,7 +67,7 @@ export async function loadFx(): Promise<void> {
   await loadVfxArt();
   await loadPackArt();
   magic.pinkHeart = { frames: VFX.pinkHeart };
-  await loadProps();
+  await Promise.all([loadProps(), loadAbilityArt()]);
 }
 
 /** A small random offset (the renderer's own, not the sim's). */
@@ -220,6 +223,7 @@ export class Fx {
     this.particles.cap = budget.cap;
     this.particles.calm = this.calm();
     this.enter(b);
+    let royalSky: 'meteor' | 'starfall' | undefined;
     for (const e of events) {
       if (e.kind === 'shot') this.shot(e.by, e.to, e.shot, e.ms);
       else if (e.kind === 'skill') this.skillName(e.by, e.name, e.ms);
@@ -237,8 +241,12 @@ export class Fx {
       else if (e.kind === 'comboCast') this.comboCast(e);
       else if (e.kind === 'comboLand') this.comboLand(b, e);
       else if (e.kind === 'burst') this.burst(e);
-      else if (e.kind === 'area') this.area(b, e);
-      else if (e.kind === 'spell') this.spell(b, e);
+      else if (e.kind === 'area') this.area(b, e, royalSky);
+      else if (e.kind === 'spell') {
+        if (e.id === 'meteor' || e.id === 'starfall') royalSky = e.id;
+        const recipients = new Set(events.filter((touch): touch is Extract<BattleEvent, { kind: 'spellfx' }> => touch.kind === 'spellfx' && touch.id === e.id).map(touch => touch.to));
+        this.spell(b, e, recipients);
+      }
       else if (e.kind === 'spellfx') this.spellFx(e);
       else if (e.kind === 'heal') {
         const to = this.sprites.get(e.to);
@@ -280,9 +288,12 @@ export class Fx {
         const by = b.units.find((x) => x.id === e.by);
         const target = b.units.find((x) => x.id === e.to);
         if (!to || !target) continue;
-        // (no `by` is the king's meteor)
+        // Royal hits already have an individual spellfx or meteor landing. Poison ticks keep their own toxic motif.
         if (!by) {
-          this.anim(magic.fireExplosion, to.x, to.y - to.tall * 0.45, 1.6, 70);
+          if (e.src === 'dot') {
+            const frames = abilityFrames('spell:poison', 'puff');
+            if (frames) this.particles.spawn({ frames, art: 'spell:poison', x: to.x, y: to.y - to.tall * 0.45, scale: 0.9, life: 300, alpha: 0.65 });
+          }
           this.number(e.dmg, to.x, to.y - to.tall - 10, e.heavy, false);
           if (e.killed) this.death(target, to.x, to.y - to.tall * 0.3);
           continue;
@@ -898,7 +909,7 @@ export class Fx {
   }
 
   /** A 3x3 of tiles marked as a volley or meteor comes down on it after `ms`. */
-  private area(b: Battle, e: Extract<BattleEvent, { kind: 'area' }>): void {
+  private area(b: Battle, e: Extract<BattleEvent, { kind: 'area' }>, royalSky?: 'meteor' | 'starfall'): void {
     const meteor = e.id === 'meteor';
     const color = meteor ? 0xff5a2a : 0xffe27a;
     const view = new Container();
@@ -921,12 +932,13 @@ export class Fx {
           view.addChild(sp);
           return { sp, x: tx + (Math.random() * 30 - 15), y: ty + (Math.random() * 12 - 6), at: Math.random() * Math.max(1, e.ms - 260), landed: false };
         });
-    const orbFrames = PACK['fire-orb'];
+    const skyArt = e.by === 0 ? `spell:${royalSky ?? 'meteor'}` : `skill:${this.casting.get(e.by) ?? 'Meteor'}`;
+    const orbFrames = abilityFrames(skyArt, 'orb') ?? PACK['fire-orb'];
     const ball = new Sprite(orbFrames[0]);
     ball.anchor.set(0.5);
     ball.scale.set(3);
     ball.blendMode = 'normal';
-    ball.rotation = Math.atan2(360, -150);
+    ball.rotation = Math.atan2(360, -150) - abilityHeading(skyArt);
     let landed = false;
     let trailAt = 0;
     ball.visible = false;
@@ -964,7 +976,7 @@ export class Fx {
           }
           if (f >= 1 && !landed) {
             landed = true;
-            this.meteorLanding(cx, cy);
+            this.meteorLanding(cx, cy, skyArt);
           }
         }
         return t < e.ms;
@@ -983,10 +995,11 @@ export class Fx {
   }
 
   /** The meteor lands: a big explosion with a flash, a ring of fire, rubble and smoke, a crater that stays and cools, and a hard shake. */
-  private meteorLanding(cx: number, cy: number): void {
+  private meteorLanding(cx: number, cy: number, art: string): void {
     const p = this.particles;
     // (layers kept apart and thinned so the blast stays orange instead of clipping to white)
-    this.anim(magic.fireExplosion, cx, cy - 12, 3.5, 70).alpha = 0.85;
+    const frames = abilityFrames(art, 'explosion');
+    if (frames) this.particles.spawn({ frames, art, x: cx, y: cy - 12, scale: 3.5, frameMs: 70, alpha: 0.9, prio: true });
     play(p, 'fire-wave', cx, cy, { scale: 4.5, frameMs: 80, add: false, alpha: 0.7 });
     for (let i = 0; i < bits(8, p.density); i++)
       p.spawn({ frames: PACK['earth-puff'], x: cx + jitter(14), y: cy - 6, scale: 0.6, life: 800, vx: jitter(0.12), vy: -0.16 - Math.random() * 0.1, gravity: 0.0006, spin: jitter(0.014), prio: true });
@@ -1010,10 +1023,18 @@ export class Fx {
   }
 
   /** A spell goes off: the 3x3 lit for a moment (a poison cloud's for as long as it lingers), and, for the ones that go everywhere, nothing here (the `spellfx` events light each fighter). */
-  private spell(b: Battle, e: Extract<BattleEvent, { kind: 'spell' }>): void {
+  private spell(b: Battle, e: Extract<BattleEvent, { kind: 'spell' }>, recipients?: ReadonlySet<number>): void {
     // (a meteor, and the shower of them, are drawn by their own `area` events)
     if (e.id === 'meteor' || e.id === 'starfall') return;
-    // (the spell's own circle, nova or pillar at the tapped tile; an everywhere spell has none, only the shake of a quake)
+    // The individual release leads the spell. The tactical tile fill and small elemental supports stay underneath.
+    const [px, py] = this.tilePos(b, e.u, e.v);
+    const near = [...this.sprites.values()].filter(s => recipients?.size ? recipients.has(s.unit.id) : s.unit.alive && (SPELLS[e.id].target === 'all' || (Math.abs(s.unit.u - e.u) <= 1 && Math.abs(s.unit.v - e.v) <= 1)));
+    const points = (side: 'hero' | 'foe') => near.filter(s => s.unit.side === side).slice(0, 6).map(s => ({ x: s.x, y: s.y, tall: s.tall }));
+    const allies = points('hero'), foes = points('foe');
+    const centre = SPELLS[e.id].target === 'all' && near.length
+      ? { x: near.reduce((n, s) => n + s.x, 0) / near.length, y: near.reduce((n, s) => n + s.y, 0) / near.length }
+      : { x: px, y: py };
+    playSteps(SPELL_SIGNATURES[e.id].cast, { p: this.particles, self: { ...centre, tall: 40 }, foes, allies, dir: { x: 0, y: -1 }, ms: 700, size: 1 });
     if (e.id === 'quake') this.trauma = Math.max(this.trauma, 0.7);
     if (SPELLS[e.id].target === 'all') return;
     const [cx, cy] = this.tilePos(b, e.u, e.v);
@@ -1061,19 +1082,14 @@ export class Fx {
         return t < ms;
       },
     });
-    if (e.id === 'poison') {
-      const [x, y] = this.tilePos(b, e.u, e.v);
-      this.effect(SPELL_FX.poison, x, y - 10);
-    }
   }
 
   /** A spell touches a fighter: its sheet plays on them (and Haste says so). */
   private spellFx(e: Extract<BattleEvent, { kind: 'spellfx' }>): void {
     const s = this.sprites.get(e.to);
     if (!s || e.id === 'meteor') return;
-    this.effect(SPELL_FX[e.id], s.x, s.y - s.tall * 0.45);
-    const touch = SPELL_TOUCH[e.id];
-    if (touch) play(this.particles, touch.key, s.x, s.y - s.tall * touch.at - 2, { scale: Math.max(0.8, (s.tall * touch.size) / 32), frameMs: 70 });
+    const spot = { x: s.x, y: s.y, tall: s.tall };
+    playSteps(SPELL_SIGNATURES[e.id].hit, { p: this.particles, self: spot, foes: [spot], allies: [spot], dir: { x: 0, y: -1 }, ms: 500, size: 1 });
     if (e.id === 'haste') this.label('Haste', s.x, s.y - s.tall - 20, SPELL_GLOW.haste.color, 12, 900);
     if (e.id === 'rally') this.label('Rally', s.x, s.y - s.tall - 20, SPELL_GLOW.rally.color, 12, 900);
     if (e.id === 'shield') this.label('Shield', s.x, s.y - s.tall - 20, SPELL_GLOW.shield.color, 12, 900);

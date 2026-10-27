@@ -3,7 +3,8 @@
 
 import type { Texture } from 'pixi.js';
 import atlasMeta from '../art/fx/pack/atlas.json';
-import type { Element, Family, PackKey } from './fxRules';
+import type { Family, PackKey } from './fxRules';
+import type { PaintedElement } from './cinematicRules';
 import { loadPaintedArt, paintedStrip } from './cinematicArt';
 
 /** Each strip's frames by name (empty until `loadPackArt` has run). Strips outside the atlas give no frames. */
@@ -15,7 +16,7 @@ export const PACK_NAMES = Object.keys(atlasMeta);
 export async function loadPackArt(): Promise<void> {
   await loadPaintedArt();
   for (const name of PACK_NAMES) {
-    const [element, family] = name.split('-') as [Element, Family];
+    const [element, family] = name.split('-') as [PaintedElement, Family];
     PACK[name as PackKey] = paintedStrip(element, family);
   }
 }

@@ -4,7 +4,7 @@ import { Rectangle, Sprite, Texture } from 'pixi.js';
 import { loadImage } from './loadImage';
 import atlasUrl from '../art/fx/cinematic/painted-atlas.png';
 import accentsUrl from '../art/fx/cinematic/accents-atlas.png';
-import { FORMS, PALETTE, formOf, paintedPose, type Form } from './cinematicRules';
+import { FORMS, PALETTE, formOf, paintedPose, type Form, type PaintedElement } from './cinematicRules';
 import type { Element, Family } from './fxRules';
 
 interface Material { family: Family }
@@ -23,7 +23,7 @@ const native: Partial<Record<Form, Element>> = { slash: 'wind', orb: 'fire', fir
   arrow: 'wind', bone: 'earth', heart: 'light', cross: 'forest', ripple: 'ice', splash: 'ice', sparks: 'light', dust: 'earth', dash: 'wind', soul: 'dark', fireRing: 'fire', vines: 'forest', beam: 'light', snare: 'earth', nova: 'dark', electric: 'lightning' };
 
 /** Keep native painted colour; other elements receive a luminance-preserving palette, with pale hot cores. */
-function surface(form: Form, el: Element): Texture {
+function surface(form: Form, el: PaintedElement): Texture {
   const key = `${form}/${el}`;
   const existing = sources.get(key);
   if (existing) return existing;
@@ -62,24 +62,29 @@ function surface(form: Form, el: Element): Texture {
   return tex;
 }
 
-export function paintedStrip(el: Element, family: Family, form = formOf(el, family)): Texture[] {
+export function paintedStrip(el: PaintedElement, family: Family, form = formOf(el, family)): Texture[] {
   const key = `${el}-${family}/${form}`;
   const existing = strips.get(key);
   if (existing) return existing;
   const base = surface(form, el);
-  const texture = new Texture({ source: base.source, frame: new Rectangle(0, 0, 128, 128), orig: new Rectangle(0, 0, 32, 32) });
-  materials.set(texture, { family });
-  // The lifetime still follows the old six-frame strips. Motion is continuous, sampled on the fight clock.
-  const frames = Array<Texture>(6).fill(texture);
+  const frames = materialFrames(base, family);
   strips.set(key, frames);
   return frames;
+}
+
+/** Register a shared source with a logical 32px frame and continuous material motion. */
+export function materialFrames(base: Texture, family: Family): Texture[] {
+  base.source.style.scaleMode = 'linear';
+  const texture = new Texture({ source: base.source, frame: new Rectangle(0, 0, base.source.width, base.source.height), orig: new Rectangle(0, 0, 32, 32) });
+  materials.set(texture, { family });
+  return Array<Texture>(6).fill(texture);
 }
 
 /** Return false for ordinary fighter/prop textures, which retain their own animation and blending. */
 export function paintSprite(sp: Sprite, elapsed: number, life: number, scale: number, rotation: number, alpha: number, loop: boolean, calm: boolean): boolean {
   const material = materials.get(sp.texture);
   if (!material) return false;
-  const pose = paintedPose(material.family, elapsed / life, elapsed, loop, calm);
+  const pose = paintedPose(material.family, elapsed / Math.max(1, life), elapsed, loop, calm);
   sp.scale.set(scale * pose.x, scale * pose.y);
   sp.rotation = rotation + pose.turn;
   sp.alpha = alpha * pose.alpha;

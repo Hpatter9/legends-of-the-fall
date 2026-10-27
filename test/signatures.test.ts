@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { KITS } from '../src/sim/abilities';
+import { abilitySource } from '../src/render/abilityLooks';
 import { VFX_LOOKS } from '../src/render/cinematicRules';
 import { UNITS } from '../src/sim/units';
 import { TIER_SKILLS } from '../src/sim/tierSkills';
@@ -62,7 +63,7 @@ test('no foe leads with a hero\'s strip', () => {
 
 test('no two heroes\' casts share a layer (the same shape in the same strip and colour)', () => {
   const names = [...new Set(heroSkills().map((h) => h.name))];
-  const keys = (n: string) => new Set(SIGNATURES[n].cast.map((s) => `${s.s}:${s.k}:${s.t ?? 0}`));
+  const keys = (n: string) => new Set(SIGNATURES[n].cast.map((s) => s.art ? `${s.s}:art:${abilitySource(s.art)}` : `${s.s}:${s.k}:${s.t ?? 0}`));
   const bad: string[] = [];
   for (let i = 0; i < names.length; i++)
     for (let j = i + 1; j < names.length; j++) {
@@ -75,7 +76,7 @@ test('no two heroes\' casts share a layer (the same shape in the same strip and 
 
 test('no foe look is a copy of a hero\'s', () => {
   const hero = new Set(heroSkills().map((h) => h.name));
-  const keys = (n: string) => new Set(SIGNATURES[n].cast.map((s) => `${s.s}:${s.k}:${s.t ?? 0}`));
+  const keys = (n: string) => new Set(SIGNATURES[n].cast.map((s) => s.art ? `${s.s}:art:${abilitySource(s.art)}` : `${s.s}:${s.k}:${s.t ?? 0}`));
   const bad: string[] = [];
   for (const f of Object.keys(SIGNATURES).filter((n) => !hero.has(n)))
     for (const h of hero) {

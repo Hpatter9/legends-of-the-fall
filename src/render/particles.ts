@@ -7,6 +7,8 @@ import { paintSprite } from './cinematicArt';
 
 export interface Burst {
   frames: Texture[];
+  /** The individual ability source, retained for material audits and comparison galleries. */
+  art?: string;
   x: number;
   y: number;
   /** Size on screen (the sheet's frames are 32px). */
@@ -29,6 +31,8 @@ export interface Burst {
   /** Spin, in radians per ms. */
   spin?: number;
   rotation?: number;
+  stretchX?: number;
+  stretchY?: number;
   tint?: number;
   alpha?: number;
   add?: boolean;
@@ -77,6 +81,8 @@ export class Particles {
     sp.texture = b.frames[0];
     sp.scale.set(b.scale ?? 1);
     paintSprite(sp, 0, b.life ?? b.frames.length * (b.frameMs ?? 70), b.scale ?? 1, b.rotation ?? 0, b.alpha ?? 1, b.loop ?? false, this.calm);
+    sp.scale.x *= b.stretchX ?? 1;
+    sp.scale.y *= b.stretchY ?? 1;
     this.root.addChild(sp);
     const frameMs = b.frameMs ?? 70;
     this.live.push({ sp, b, scale: b.scale ?? 1, t: -(b.delay ?? 0), vy: b.vy ?? 0, frames: b.frames.length, span: b.life ?? b.frames.length * frameMs });
@@ -108,6 +114,8 @@ export class Particles {
       const left = 1 - p.t / p.span;
       sp.alpha = (b.alpha ?? 1) * Math.min(1, left * 3);
       paintSprite(sp, p.t, p.span, p.scale, (b.rotation ?? 0) + (this.calm ? 0 : (b.spin ?? 0) * p.t), b.alpha ?? 1, b.loop ?? false, this.calm);
+      sp.scale.x *= b.stretchX ?? 1;
+      sp.scale.y *= b.stretchY ?? 1;
     }
     this.live = keep;
   }

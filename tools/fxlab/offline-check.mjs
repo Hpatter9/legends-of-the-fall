@@ -21,9 +21,15 @@ try {
   const report = await page.evaluate(() => {
     const g = window.__game;
     const before = JSON.stringify(g.b);
-    const sp = g.fx.effect({ sheet: 'fireExplosion', scale: 2 }, 0, 0);
+    const caster = [...g.sprites.keys()][0];
+    g.fx.show(g.b, [{ kind: 'skill', by: caster, name: 'Meteor', ms: 100 }]);
     g.fx.step(100);
-    return { offline: !navigator.onLine, artPixels: sp.texture.source.width, alpha: sp.alpha, simulationUnchanged: before === JSON.stringify(g.b) };
+    const sp = g.fx.particles.live.find(p => p.b.art === 'skill:Meteor')?.sp;
+    if (!sp) throw Error('Individual skill artwork missing offline');
+    g.fx.show(g.b, [{ kind: 'spellfx', id: 'heal', to: caster }]);
+    const royal = g.fx.particles.live.find(p => p.b.art === 'spell:heal');
+    if (!royal) throw Error('Individual king spell artwork missing offline');
+    return { offline: !navigator.onLine, artPixels: sp.texture.source.width, alpha: sp.alpha, individualArt: ['skill:Meteor', 'spell:heal'], simulationUnchanged: before === JSON.stringify(g.b) };
   });
   assert.ok(report.offline && report.simulationUnchanged && report.alpha > 0);
   assert.equal(report.artPixels, 128);
