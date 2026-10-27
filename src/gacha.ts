@@ -8,6 +8,7 @@ import { closest, haveOf, needOf, ownedCount } from './sim/unlock';
 import { isContent, pityAt } from './sim/unlockRules';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { portrait } from './render/sheets';
+import { play as playSfx } from './render/sound';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -15,6 +16,7 @@ export class Gacha {
   private busy = false;
   private revealTimers: number[] = [];
   private revealCards: HTMLElement[] = [];
+  private revealingAll = false;
   /** `onClose` runs when the screen is shut (the run's draw pool follows the unlocks). */
   constructor(
     private meta: Meta,
@@ -26,7 +28,12 @@ export class Gacha {
     $('pull10').addEventListener('click', () => this.pull(10));
     $('gachaClose').addEventListener('click', () => this.close());
     $('rates').textContent = ratesText();
-    $('revealAll').addEventListener('click', () => this.revealCards.forEach(card => card.click()));
+    $('revealAll').addEventListener('click', () => {
+      this.revealingAll = true;
+      this.revealCards.forEach(card => card.click());
+      this.revealingAll = false;
+      this.revealCards.find(card => card.classList.contains('new'))?.scrollIntoView({ block: 'center', behavior: 'auto' });
+    });
   }
 
   open(): void {
@@ -145,7 +152,7 @@ export class Gacha {
     const box = $('reveal');
     $('gacha').classList.add('hasResults');
     $('gacha').querySelector('.gachaBody')!.scrollTop = 0;
-    $('gacha').querySelector('h2')!.textContent = got.length === 1 ? 'The summoning answers' : 'Your summoned company';
+    $('gacha').querySelector('h2')!.textContent = got.some(p => p.isNew) ? 'A new ally answers' : 'The cards reveal';
     $('gachaClose').textContent = 'Continue';
     $('resultIntro').hidden = false;
     $('resultSummary').textContent = got.length === 1 ? 'Tap the seal to reveal your reward' : `${got.length} summons · tap a seal to reveal`;
@@ -155,10 +162,11 @@ export class Gacha {
     box.replaceChildren();
     box.classList.toggle('single', got.length === 1);
     let revealed = 0;
+    let celebrated = false;
     got.forEach((p) => {
       const def = UNITS[p.kind];
       const card = document.createElement('div');
-      card.className = `flip${p.isNew ? ' new' : ''}${def.name.length > 14 ? ' longName' : ''}`;
+      card.className = `flip${p.isNew ? ' new' : ' tarot'}${def.name.length > 14 ? ' longName' : ''}`;
       card.dataset.kind = p.kind;
       card.tabIndex = 0;
       card.setAttribute('role', 'button');
@@ -202,6 +210,12 @@ export class Gacha {
         description.className = 'resultDescription';
         reward.append(description);
       }
+      if (p.isNew) {
+        const celebration = document.createElement('div');
+        celebration.className = 'summonCelebration';
+        celebration.setAttribute('aria-hidden', 'true');
+        face.append(celebration);
+      }
       face.append(seal, scene, caption, reward);
       const back = document.createElement('div');
       back.className = 'back';
@@ -213,6 +227,11 @@ export class Gacha {
       card.addEventListener('click', () => {
         if (card.classList.contains('up')) return;
         card.classList.add('up');
+        if (p.isNew) {
+          if (!celebrated) playSfx('stingSummon');
+          celebrated = true;
+          if (got.length > 1 && !this.revealingAll) card.scrollIntoView({ block: 'center', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+        }
         card.setAttribute('aria-label', `${def.name}: ${tag.textContent}${p.unlock && p.need && !p.isNew ? `, ${p.have} of ${p.need} to recruit` : ''}`);
         revealed++;
         if (revealed < got.length) {
@@ -233,10 +252,10 @@ export class Gacha {
       this.revealCards.push(card);
     });
     const order = got.map((_, i) => i).sort((x, y) => Number(got[x].isNew) - Number(got[y].isNew) || x - y);
-    let at = 350;
+    let at = 220;
     for (const i of order) {
       this.revealTimers.push(window.setTimeout(() => this.revealCards[i]?.click(), at));
-      at += got[i].isNew ? 420 : 260;
+      at += got[i].isNew ? 900 : 160;
     }
     this.refresh();
   }

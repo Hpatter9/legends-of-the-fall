@@ -24,7 +24,8 @@
         }
       ]
     },
-    "singlePull": "passed"
+    "singlePull": "passed",
+    "ritual": false
   },
   {
     "width": 393,
@@ -51,7 +52,8 @@
         }
       ]
     },
-    "singlePull": "passed"
+    "singlePull": "passed",
+    "ritual": false
   },
   {
     "width": 412,
@@ -78,7 +80,8 @@
         }
       ]
     },
-    "singlePull": "passed"
+    "singlePull": "passed",
+    "ritual": false
   },
   {
     "tenPull": "passed",

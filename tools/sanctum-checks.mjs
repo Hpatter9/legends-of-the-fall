@@ -36,11 +36,14 @@ try {
     assert.ok(!fit.overflow && fit.altarY < fit.controlsTop && fit.altarY > fit.headBottom);
     assert.ok(fit.buttons.every(b => b.left >= 0 && b.right <= width && b.bottom <= height && b.height >= 44));
     await page.locator('.hlBar button').first().click();
-    await page.waitForSelector('.hlSkip.on');
-    assert.ok(await page.locator('.hlWrap').evaluate(e => e.classList.contains('isCasting')));
-    await page.waitForTimeout(450);
-    await page.screenshot({ path: `${output}/sanctum-ritual-${width}x${height}.png` });
-    await page.locator('.hlSkip').click();
+    await page.waitForFunction(() => document.querySelector('.hlSkip.on') || !document.getElementById('gacha').hidden);
+    const ritual = await page.locator('.hlSkip').evaluate(e => e.classList.contains('on'));
+    if (ritual) {
+      assert.ok(await page.locator('.hlWrap').evaluate(e => e.classList.contains('isCasting')));
+      await page.waitForTimeout(450);
+      await page.screenshot({ path: `${output}/sanctum-ritual-${width}x${height}.png` });
+      await page.locator('.hlSkip').click();
+    }
     await page.waitForSelector('#gacha:not([hidden])');
     await page.waitForFunction(() => document.querySelector('#reveal .flip.up'));
     await page.waitForTimeout(650);
@@ -48,12 +51,12 @@ try {
     assert.equal(await page.locator('#reveal.single .flip').count(), 1);
     await page.locator('#gachaClose').click();
     await page.waitForFunction(() => !document.querySelector('.hlWrap').classList.contains('isCasting'));
-    results.push({ width, height, fit, singlePull: 'passed' });
+    results.push({ width, height, fit, singlePull: 'passed', ritual });
   }
   // Ten-pull, repeat ritual, keyboard reveal, low funds and reduced motion.
   await page.locator('.hlBar button').last().click();
-  await page.waitForSelector('.hlSkip.on');
-  await page.locator('.hlSkip').click();
+  await page.waitForFunction(() => document.querySelector('.hlSkip.on') || !document.getElementById('gacha').hidden);
+  if (await page.locator('.hlSkip').evaluate(e => e.classList.contains('on'))) await page.locator('.hlSkip').click();
   await page.waitForSelector('#gacha:not([hidden])');
   assert.equal(await page.locator('#reveal .flip').count(), 10);
   await page.locator('#reveal .flip').last().focus();
@@ -62,15 +65,13 @@ try {
   await page.waitForFunction(() => !document.querySelector('#pull1').disabled);
   await page.screenshot({ path: `${output}/sanctum-ten-pull.png` });
   await page.locator('#gachaClose').click();
-  await page.locator('.hlBar button').first().click();
-  await page.waitForSelector('#gacha:not([hidden])', { timeout: 15000 });
-  await page.waitForFunction(() => !document.querySelector('#pull1').disabled);
-  await page.locator('#gachaClose').click();
+  // Presentation fixture: a guaranteed new ally must still play the full ritual.
+  await page.evaluate(() => { void window.__hall.play([{ kind: 'warlock', isNew: true, shards: 0 }]); });
+  await page.waitForSelector('.hlSkip.on');
+  await page.waitForFunction(() => !document.querySelector('.hlSkip').classList.contains('on'), null, { timeout: 15000 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.locator('.hlBar button').first().click();
-  await page.waitForSelector('#gacha:not([hidden])', { timeout: 15000 });
-  await page.waitForFunction(() => !document.querySelector('#pull1').disabled);
-  await page.locator('#gachaClose').click();
+  await page.evaluate(() => { void window.__hall.play([{ kind: 'warlock', isNew: true, shards: 0 }]); });
+  await page.waitForFunction(() => !document.querySelector('.hlSkip').classList.contains('on'), null, { timeout: 15000 });
   await page.evaluate(() => { window.__game.meta.crowns = 0; window.__game.home.show('recruit'); });
   assert.ok(await page.locator('.hlBar button').evaluateAll(bs => bs.every(b => b.disabled)));
   assert.equal(errors.length, 0, errors.join('\n'));

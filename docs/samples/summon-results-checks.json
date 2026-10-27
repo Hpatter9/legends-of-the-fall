@@ -26,7 +26,7 @@
         "height": 44
       },
       "nameHeight": 15,
-      "plaqueHeight": 42
+      "plaqueHeight": 37
     }
   },
   {
@@ -40,8 +40,8 @@
         "bottom": 720,
         "height": 44
       },
-      "nameHeight": 20,
-      "plaqueHeight": 42
+      "nameHeight": 18,
+      "plaqueHeight": 37
     }
   },
   {
@@ -55,8 +55,8 @@
         "bottom": 720,
         "height": 44
       },
-      "nameHeight": 20,
-      "plaqueHeight": 42
+      "nameHeight": 18,
+      "plaqueHeight": 37
     }
   },
   {
@@ -86,7 +86,7 @@
         "height": 48
       },
       "nameHeight": 15,
-      "plaqueHeight": 47
+      "plaqueHeight": 39
     }
   },
   {
@@ -100,8 +100,8 @@
         "bottom": 790,
         "height": 48
       },
-      "nameHeight": 20,
-      "plaqueHeight": 47
+      "nameHeight": 18,
+      "plaqueHeight": 39
     }
   },
   {
@@ -115,8 +115,8 @@
         "bottom": 790,
         "height": 48
       },
-      "nameHeight": 20,
-      "plaqueHeight": 47
+      "nameHeight": 18,
+      "plaqueHeight": 39
     }
   },
   {
@@ -146,7 +146,7 @@
         "height": 48
       },
       "nameHeight": 15,
-      "plaqueHeight": 51
+      "plaqueHeight": 39
     }
   },
   {
@@ -160,8 +160,8 @@
         "bottom": 853,
         "height": 48
       },
-      "nameHeight": 20,
-      "plaqueHeight": 51
+      "nameHeight": 18,
+      "plaqueHeight": 39
     }
   },
   {
@@ -175,8 +175,8 @@
         "bottom": 853,
         "height": 48
       },
-      "nameHeight": 20,
-      "plaqueHeight": 51
+      "nameHeight": 18,
+      "plaqueHeight": 39
     }
   },
   {
@@ -187,6 +187,10 @@
     "collection": "passed",
     "reducedMotion": "passed",
     "offlineFrame": "passed",
+    "shardRitualSkipped": "passed",
+    "newHeroCelebration": "passed",
+    "multipleNewSpotlights": "passed",
+    "allShardCards": "passed",
     "pageErrors": []
   }
 ]

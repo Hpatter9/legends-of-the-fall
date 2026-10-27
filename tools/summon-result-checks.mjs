@@ -29,6 +29,8 @@ try {
       await page.waitForTimeout(600);
       await page.locator('#reveal .flip').evaluate(e => e.blur());
       assert.equal(await page.locator('.resultReward em').textContent(), expected);
+      assert.equal(await page.locator('#reveal .tarot').count(), state === 'new' ? 0 : 1);
+      assert.equal(await page.locator('.summonCelebration').count(), state === 'new' ? 1 : 0);
       if (state === 'recruitment') {
         assert.equal(await page.locator('.resultProgressLabel').textContent(), '28 / 39 to recruit');
         assert.equal(await page.locator('.resultReward [role="progressbar"]').getAttribute('aria-valuenow'), '28');
@@ -50,6 +52,8 @@ try {
     await page.locator('#revealAll').click();
     await page.waitForTimeout(650);
     assert.equal(await page.locator('#reveal .up').count(), 10);
+    assert.equal(await page.locator('#reveal .tarot').count(), 9);
+    assert.equal(await page.locator('#reveal .new').count(), 1);
     assert.equal(await page.locator('#revealAll').isVisible(), false);
     assert.match(await page.locator('#resultSummary').textContent(), /10 rewards revealed · 1 new ally/);
     assert.ok(await page.locator('.summonCaption b').evaluateAll(names => names.every(n => n.scrollHeight <= n.parentElement.clientHeight + 2)), `Gallery names fit ${width}`);
@@ -71,10 +75,31 @@ try {
     assert.ok(await page.locator('#collection').isVisible());
     await page.locator('#gachaClose').click();
   }
+  // Every new ally in a mixed batch gets its own arrival, including the last one.
+  await show([newHero, { ...newHero, kind: 'paladin' }]);
+  await page.waitForFunction(() => document.querySelectorAll('#reveal .new.up').length === 2);
+  await page.waitForTimeout(900);
+  const lastSpotlight = await page.locator('#reveal .new').last().evaluate(e => {
+    const r = e.getBoundingClientRect(), body = e.closest('.gachaBody').getBoundingClientRect();
+    return r.top < body.bottom && r.bottom > body.top;
+  });
+  assert.ok(lastSpotlight, 'The last new ally receives a visible spotlight');
+  await show([rank, recruitment, crowns]);
+  await page.locator('#revealAll').click();
+  assert.equal(await page.locator('#reveal .tarot.up').count(), 3);
+  assert.equal(await page.locator('#reveal .new').count(), 0);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await show([newHero]);
   await page.waitForFunction(() => document.querySelector('#reveal .up'));
   assert.equal(await page.locator('#reveal .face').evaluate(e => getComputedStyle(e).transitionDuration), '0s');
+  assert.equal(await page.locator('.summonCelebration').evaluate(e => getComputedStyle(e).animationName), 'none');
+  // A shard-only pull skips the chamber ritual and immediately hands over to tarot cards.
+  await page.locator('#gachaClose').click();
+  const shardSkipped = await page.evaluate(async () => {
+    await window.__hall.play([{ kind: 'archer', isNew: false, shards: 1 }]);
+    return !document.querySelector('.hlSkip').classList.contains('on');
+  });
+  assert.ok(shardSkipped);
   await page.evaluate(async () => { await navigator.serviceWorker.ready; });
   await page.waitForFunction(async () => !!(await caches.match(new URL('ui/summon-reveal-frame.png', location.href).href)));
   await context.setOffline(true);
@@ -85,7 +110,7 @@ try {
   const loaded = await page.evaluate(async () => { const im = new Image(); im.src = 'ui/summon-reveal-frame.png'; await im.decode(); return im.naturalWidth; });
   assert.ok(loaded > 0);
   assert.deepEqual(errors, []);
-  results.push({ tenResults: 'passed', revealAll: 'passed', keyboard: 'passed', earlyClose: 'passed', collection: 'passed', reducedMotion: 'passed', offlineFrame: 'passed', pageErrors: errors });
+  results.push({ tenResults: 'passed', revealAll: 'passed', keyboard: 'passed', earlyClose: 'passed', collection: 'passed', reducedMotion: 'passed', offlineFrame: 'passed', shardRitualSkipped: 'passed', newHeroCelebration: 'passed', multipleNewSpotlights: 'passed', allShardCards: 'passed', pageErrors: errors });
   writeFileSync('docs/samples/summon-results-checks.json', JSON.stringify(results, null, 2));
   console.log('Summon result checks passed:', results.length);
 } finally { await browser.close(); }

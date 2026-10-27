@@ -127,8 +127,47 @@ const CSS = `
 #gacha #collection { gap: 8px; }
 #gacha #collection .hero { border: 1px solid #8c7442; border-radius: 2px; background: linear-gradient(#1c3028e8, #0a1816); padding: 6px 2px; }
 #gacha .flip:focus-visible, #gacha button:focus-visible, #gacha summary:focus-visible { outline: 2px solid #c1ffd1; outline-offset: 2px; }
+/* Shard rewards are quiet illustrated tarot cards; the griffin stage belongs to new allies. */
+#gacha #reveal .flip.tarot { aspect-ratio: .62; }
+#gacha #reveal .tarot .back, #gacha #reveal .tarot .face { inset: 0; border: 1px solid #9c8453; border-radius: 5px; overflow: hidden; box-shadow: inset 0 0 0 3px #101c18, inset 0 0 0 4px #71623f, 0 3px 7px #0007; }
+#gacha #reveal .tarot .face { background: #17221c url(ui/hero-brass-frame.png) center / 100% 100%; }
+#gacha #reveal .tarot .face::before { inset: 15% 9% 34%; border: 1px solid #a69771; background: linear-gradient(#d7ccab, #8b957c); }
+#gacha #reveal .tarot .face::after { display: none; }
+#gacha #reveal .tarot .back { background: repeating-linear-gradient(45deg, #25372c 0 3px, #203027 3px 6px); }
+#gacha #reveal .tarot .back::after { inset: 12px; background: none; border: 1px solid #8f8058; }
+#gacha #reveal .tarot .back > span { font-size: 30px; color: #bda97a; text-shadow: none; }
+#gacha #reveal .tarot .resultSeal { top: 5%; left: 9%; right: 9%; height: 8%; color: #d6c69e; font: 700 10px var(--body); letter-spacing: 1px; }
+#gacha #reveal .tarot .summonPortrait { inset: 18% 10% 35%; align-items: center; }
+#gacha #reveal .tarot .summonPortrait::before { display: none; }
+#gacha #reveal .tarot .summonPortrait canvas { width: 96%; max-height: 100%; object-fit: contain; filter: saturate(.65) drop-shadow(0 2px 1px #18291b55); }
+#gacha #reveal .tarot .summonCaption { bottom: 23%; left: 9%; right: 9%; height: 10%; }
+#gacha #reveal .tarot .summonCaption b { font-size: 12px; color: #ddcea8; }
+#gacha #reveal .tarot.longName .summonCaption b { font-size: 11px; }
+#gacha #reveal .tarot .resultReward { top: auto; bottom: 9%; left: 9%; right: 9%; padding: 3px 0 0; min-height: 0; height: 14%; background: none; border: none; border-top: 1px solid #8c795144; }
+#gacha #reveal .tarot .resultReward em { font-size: 12px; color: #c8d1b8; }
+#gacha #reveal .tarot .resultProgressLabel { font-size: 10px; }
+#gacha #reveal .tarot .resultReward .xpbar { margin: 4px auto 2px; height: 4px; border-width: 0; }
+#gacha #reveal .tarot .resultDescription { display: none; }
+#gacha #reveal.single:has(.tarot) { grid-template-columns: minmax(0, 252px); padding: 14px 0; }
+#gacha #reveal.single .tarot { height: min(48dvh, 390px); }
+#gacha #reveal.single .tarot .summonCaption b { font-size: 17px; }
+#gacha #reveal.single .tarot.longName .summonCaption b { font-size: 15px; }
+#gacha #reveal.single .tarot .resultSeal { font-size: 12px; }
+#gacha #reveal.single .tarot .resultReward em { font-size: 15px; }
+#gacha #reveal.single .tarot .resultProgressLabel { font-size: 12px; }
+#gacha #reveal .flip.new { grid-column: 1 / -1; width: min(100%, 310px); height: min(63dvh, 580px); aspect-ratio: auto; justify-self: center; }
+#gacha #reveal .new .resultSeal { font-size: 16px; }
+#gacha #reveal .new .summonCaption b { font-size: 19px; }
+#gacha #reveal .new.longName .summonCaption b { font-size: 15px; }
+#gacha #reveal .new .summonPortrait canvas { width: min(130%, 220px); }
+#gacha .summonCelebration { position: absolute; z-index: 0; inset: 18% 13% 20%; border-radius: 50%; background: repeating-conic-gradient(from 15deg, transparent 0deg 23deg, #e2c97525 24deg 27deg, transparent 28deg 30deg), radial-gradient(ellipse, #c9e09155, transparent 70%); pointer-events: none; }
+#gacha .new.up .summonCelebration { animation: summonCoronation 1.2s ease-out both; }
+#gacha .new.up .summonPortrait { animation: summonArrival .8s cubic-bezier(.18,.8,.25,1) both; }
+@keyframes summonCoronation { from { transform: scale(.4) rotate(-18deg); } to { transform: scale(1) rotate(0); } }
+@keyframes summonArrival { from { transform: translateY(28px) scale(.75); } to { transform: translateY(0) scale(1); } }
+
 @media (max-height: 800px) { #gacha .summonHeading > small { font-size: 9px; letter-spacing: 1px; } #gacha #gachaClose { min-height: 44px; margin-bottom: 6px; } #gacha .gachaActions { padding-top: 7px; } #gacha .summonHeading h2 { font-size: 18px; } }
-@media (prefers-reduced-motion: reduce) { #gacha .flip, #gacha .flip .face, #gacha .flip .back { transition: none; } }
+@media (prefers-reduced-motion: reduce) { #gacha .flip, #gacha .flip .face, #gacha .flip .back { transition: none; } #gacha .new.up .summonCelebration, #gacha .new.up .summonPortrait { animation: none; } }
 
 `;
 
@@ -312,7 +351,8 @@ export class SummoningHall {
 
   /** Play a pull in the hall: resolves when the heroes have stepped out and it is time for the card reveal. It plays every time (the hall is woken first if a page change or an earlier pull stopped it); `skip` (a tap on the summoning cinematic) goes straight to the reveal. */
   async play(got: Pull[], skip = false): Promise<void> {
-    if (skip) return;
+    // Only a newly recruited character warrants the chamber ritual.
+    if (skip || !got.some(p => p.isNew)) return;
     if (!this.show) await this.start();
     const a = art;
     const meta = this.meta;
