@@ -373,6 +373,14 @@ export class Fx {
         const byS = this.sprites.get(e.by);
         if (byS && !e.splash) {
           const way = Math.atan2(to.y - byS.y, to.x - byS.x);
+          // A brief fan carries the blow's direction without covering the target.
+          if (e.src === 'blow' && !defOf(by).shot) {
+            const count = bits(e.heavy ? 7 : 3, this.particles.density);
+            for (let i = 0; i < count; i++) {
+              const a = way + (i / Math.max(1, count - 1) - 0.5) * 1.7;
+              this.particles.spawn({ frames: PACK['light-sparkle'], x: hx, y: hy, scale: e.heavy ? 0.5 : 0.3, life: 200 + i * 20, vx: Math.cos(a) * 0.13, vy: Math.sin(a) * 0.09 - 0.025, gravity: 0.00025, grow: -0.0006, tint: e.heavy ? 0xffd474 : 0xbce8f1, alpha: 0.75, add: true });
+            }
+          }
           const n = nudgeOf(share);
           to.nudge(Math.cos(way) * n, Math.sin(way) * n * 0.5);
         }
@@ -854,6 +862,8 @@ export class Fx {
     if (!sp) return;
     sp.promote(2);
     promoteBurst(this.particles, 2, sp.x, sp.y, sp.tall);
+    play(this.particles, 'light-pillar', sp.x, sp.y - sp.tall * 0.6, { scale: sp.tall / 24, frameMs: 65, alpha: 0.4, add: false, tint: 0xffdc88 });
+    play(this.particles, 'light-wave', sp.x, sp.y, { scale: 2.2, frameMs: 55, alpha: 0.65, tint: 0xffdc88, delay: 100 });
     this.label(`Lv ${level}`, sp.x, sp.y - sp.tall - 14, 0xfff2a0, 12, 1300, true);
   }
 
@@ -891,6 +901,22 @@ export class Fx {
       return;
     }
     // (dust kicked up along the run, and a wind slash at its end)
+    if (by && !this.reduced) {
+      const count = settings().saver ? 2 : 4;
+      for (let i = 0; i < count; i++) {
+        const f = (i + 1) / (count + 1);
+        const ghost = by.afterimage();
+        ghost.position.set(x0 + (x1 - x0) * f, y0 + (y1 - y0) * f);
+        ghost.alpha = 0;
+        this.root.addChild(ghost);
+        let age = -i * 30;
+        this.items.push({ view: ghost, step: (dt) => {
+          age += dt;
+          ghost.alpha = age < 0 ? 0 : 0.32 * Math.max(0, 1 - age / 240);
+          return age < 240;
+        } });
+      }
+    }
     for (let i = 0; i <= 5; i++)
       this.particles.spawn({ frames: VFX.dustWhite, x: x0 + ((x1 - x0) * i) / 5, y: y0 + ((y1 - y0) * i) / 5, scale: 0.7, life: 420, delay: i * 25, vy: -0.02, grow: 0.0008, alpha: 0.8 });
     play(this.particles, 'wind-slash', x1, y1 - lift, { scale: 1.6, frameMs: 45, rotation: Math.atan2(y1 - y0, x1 - x0) });
