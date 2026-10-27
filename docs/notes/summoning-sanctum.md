@@ -24,3 +24,25 @@ To reproduce: build and serve `out/web` on port 8000, then run `node tools/sanct
 ## Handoff
 
 Ready for owner review; no merge, version bump or deployment performed. Changed scope: hall renderer/styles and artwork, gacha presentation/accessibility, result markup, credits, browser checks and coordination notes. No simulation changes. This chat can be archived by the owner once review and release handoff are complete.
+
+## Follow-up: ceremonial summon results
+
+The owner requested a fuller results redesign after the chamber implementation. This continues the previously approved ornate reveal direction. Both single and ten-summon results now use a dedicated transparent pixel-art frame with brass columns, emerald banners, a heraldic crest and griffin guardians. Game sprites stand on an emerald ritual circle against the chamber. The single reward has a large showcase and role description; the ten-result gallery uses two columns so each frame and reward remains readable.
+
+The screen has a ceremonial heading, a reward summary and a fixed footer with Continue and repeat-summon controls. Rules and collection stay available in the scrollable body. Cards distinguish newly recruited heroes, recruitment shards, rank shards and crown overflow. Recruitment labels use the pull's `unlock` value rather than its rank `shards` value, and retain the per-pull saved progress. Long hero names use smaller type to fit the ornamental plaque. These changes do not alter any reward rules or saved data.
+
+A Reveal all control completes a ten-result batch immediately. Enter/Space and automatic reveals remain supported. Reveal timers are cancelled when leaving or starting another batch, preventing an old reveal from affecting the next result. Repeat controls become available when all rewards are revealed. Continue remains available during the reveal because the rewards were already saved.
+
+The new frame is `src/art/ui/summon-reveal-frame.png`, credited in CREDITS.md. The build's existing UI-file copy and service-worker manifest include it automatically; real-browser offline image decoding was verified.
+
+Validation for this follow-up:
+
+- Typecheck and web build passed.
+- Full `npm test`: 103 test files passed, zero failures, cancellations or skips. After the final typography/reward-label refinements, both relevant no-flicker and summon-fx files passed again (14 individual assertions).
+- Existing `tools/sanctum-checks.mjs` passed with the redesigned screen: three phone sizes, actual single/ten summons, uninterrupted ritual, keyboard, low funds, reduced motion and offline reload.
+- Dedicated `tools/summon-result-checks.mjs` exercises controlled presentation fixtures for new heroes, recruitment shards, rank shards and crowns at 360×780, 393×852 and 412×915. It also verifies long-name fit, footer bounds, ten-result/reveal-all behaviour, early-close timer cancellation, returning to collection, reduced motion and cached frame decoding offline. Fixtures do not recruit heroes or change simulation rules. See [results](../samples/summon-results-checks.json).
+- The initial local server stopped responding after the interrupted tool call; restarted the local server with logs redirected to a file. This was a preview-server issue, not a game failure.
+
+Real screenshots of the follow-up: [new hero, 393×852](../samples/summon-results-new-393x852.png), [new hero, 360×780](../samples/summon-results-new-360x780.png), [new hero, 412×915](../samples/summon-results-new-412x915.png), [recruitment progress](../samples/summon-results-recruitment-360x780.png), [rank shards](../samples/summon-results-rank-393x852.png), [crowns](../samples/summon-results-crowns-393x852.png), [ten summons](../samples/summon-results-ten-top-393x852.png), [gallery lower section](../samples/summon-results-ten-bottom-393x852.png).
+
+Run either browser script with `GAME_URL=http://localhost:8010` to select another local preview port. The follow-up stays on `design/summoning-sanctum`; no version bump, merge or deployment is authorised by this implementation request.

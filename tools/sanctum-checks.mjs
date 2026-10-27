@@ -13,7 +13,7 @@ try {
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   await page.addInitScript(() => localStorage.setItem('legends.settings', JSON.stringify({ music: 0, effects: 0, cinematics: false, quips: false })));
-  await page.goto('http://localhost:8000/?seed=123');
+  await page.goto(`${process.env.GAME_URL || 'http://localhost:8000'}/?seed=123`);
   await page.waitForFunction(() => window.__game, null, { timeout: 90000 });
   await page.evaluate(async () => { await document.fonts.ready; });
   for (const [width, height] of [[360, 780], [393, 852], [412, 915]]) {
