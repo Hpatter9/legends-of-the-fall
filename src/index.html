@@ -848,12 +848,20 @@
   <div id="hmSheet" hidden><div id="hmSheetBox"></div></div>
 </div>
 <div id="party" hidden>
-  <header><button id="ptBack">Back</button><h2>Party</h2><button id="ptSuggest" title="Pick a party that wakes good synergies">Suggest</button></header>
-  <div id="ptSlots"></div>
-  <p id="ptHint"></p>
-  <div id="ptTraits"></div>
-  <div id="ptGrid"></div>
-  <button id="ptGo" class="primary">Start run</button>
+  <header><button id="ptBack" aria-label="Back without saving">‹ Back</button><div><small>THE LAST KEEP</small><h2>War Council</h2></div><button id="ptSuggest" title="Draft a party with complementary roles and synergies">Auto-pick</button></header>
+  <div id="ptBody">
+    <figure id="ptScene"><div class="ptBattlefield"><div class="ptRays"></div><div id="ptTableau"></div><div class="ptEmbers"><i></i><i></i><i></i><i></i><i></i><i></i></div></div><span class="ptPennant left" aria-hidden="true">⚔</span><span class="ptPennant right" aria-hidden="true">⚔</span><figcaption><span>YOUR COMPANY</span><b id="ptSceneTitle">Five heroes. One last stand.</b></figcaption></figure>
+    <div class="ptSection" id="ptCompanyHeading"><h3>Company roll</h3><span id="ptCount"></span></div>
+    <div id="ptSlots"></div>
+    <p id="ptHint" aria-live="polite"></p>
+    <div id="ptRoles" aria-label="Party role coverage"></div>
+    <details id="ptBonds"><summary><span>✦ Bonds of battle</span><b id="ptBondCount"></b></summary><div id="ptTraits"></div></details>
+    <div class="ptSection"><h3>Reinforcements</h3><span id="ptAvailable"></span></div>
+    <label class="ptSearch"><span class="srOnly">Search heroes</span><input id="ptSearch" type="search" placeholder="Find a hero…" autocomplete="off"></label>
+    <div id="ptFilters" aria-label="Filter heroes by role"></div>
+    <div id="ptGrid"></div><p id="ptNoResults" hidden>No heroes match. Try another name or role.</p>
+  </div>
+  <footer><small id="ptStatus"></small><button id="ptGo" class="primary">March to battle</button></footer>
   <div id="ptSheet" hidden><div id="ptSheetBox"></div></div>
 </div>
 <div id="settings" hidden>

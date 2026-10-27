@@ -1,5 +1,5 @@
-// The party screen: the hero kinds a run's summons draw from (the party is the deck). Five slots at the top (tap one to
-// take its hero out), the traits the party would wake, a grid of the unlocked heroes below (tap to add or take out; a
+// The party screen: a cinematic tableau of the draft, its removable hero selectors, role coverage and trait bonds.
+// The searchable hero grid below lets the player add or take out heroes from the summons pool (a
 // long press, or the small i, opens the hero's role and skill), and the locked heroes shaded at the end. A draft is kept
 // until Start or Done, which saves it through `setParty`; Back throws it away. The rules are in `src/sim/meta.ts`.
 
@@ -14,7 +14,8 @@ import { portrait } from './render/sheets';
 import { lockInfo } from './sim/contentHeroes';
 import { drawHeroSheet, starsOf } from './menuHeroes';
 import { kindPower, powerText } from './sim/power';
-import { ROLE_NAMES, roleOf, suggestParty } from './sim/suggest';
+import { partyTableau } from './partyScene';
+import { ROLE_NAMES, roleOf, suggestParty, type PartyRole } from './sim/suggest';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -31,6 +32,9 @@ export class Party {
   /** The draft: the kinds picked so far (saved only by Start or Done). */
   private picked: string[] = [];
   private note = '';
+  private filter: PartyRole | 'all' = 'all';
+  private search = '';
+  private sceneKey = '';
   private held = false;
   /** The trait picked to find its heroes in the grid (a tap on any badge), or none. */
   private focus?: string;
@@ -44,6 +48,10 @@ export class Party {
     $('ptBack').addEventListener('click', () => this.close(this.onBack));
     $('ptGo').addEventListener('click', () => this.confirm());
     $('ptSuggest').addEventListener('click', () => this.suggest());
+    $('ptSearch').addEventListener('input', () => {
+      this.search = $<HTMLInputElement>('ptSearch').value;
+      this.draw();
+    });
     $('ptSheet').addEventListener('click', (e) => e.target === $('ptSheet') && this.closeSheet());
     // (a tap anywhere but on a badge lets go of the picked trait)
     $('party').addEventListener('click', (e) => {
@@ -59,9 +67,13 @@ export class Party {
     this.note = '';
     this.focus = undefined;
     this.onDone = then;
-    $('ptGo').textContent = mode === 'start' ? 'Start run' : 'Done';
+    this.filter = 'all';
+    this.search = '';
+    $<HTMLInputElement>('ptSearch').value = '';
+    $('ptGo').textContent = mode === 'start' ? '⚔  March to battle' : 'Save company';
     $('party').hidden = false;
     this.draw();
+    $('ptBody').scrollTop = 0;
   }
 
   private get slots(): number {
@@ -152,11 +164,21 @@ export class Party {
     for (let i = 0; i < slots; i++) {
       const kind = this.picked[i];
       if (!kind) {
-        row.append(el('div', 'ptSlot empty', '+'));
+        const empty = el('div', 'ptSlot empty');
+        const number = el('span', 'ptSlotNumber', String(i + 1));
+        number.dataset.number = String(i + 1);
+        empty.append(number, el('small', '', 'Recruit +'));
+        row.append(empty);
         continue;
       }
       const b = el('button', 'ptSlot');
-      b.append(portrait(UNITS[kind].sheet, 48), el('small', '', UNITS[kind].name));
+      b.setAttribute('aria-label', `Remove ${UNITS[kind].name} from party`);
+      b.title = `Remove ${UNITS[kind].name} · hold for details`;
+      const remove = el('span', 'ptSlotRemove', '×');
+      remove.setAttribute('aria-hidden', 'true');
+      const number = el('span', 'ptSlotNumber', String(i + 1));
+      number.dataset.number = String(i + 1);
+      b.append(number, el('small', '', UNITS[kind].name), remove);
       b.addEventListener('click', () => (this.held ? (this.held = false) : this.toggle(kind)));
       this.holdTo(b, kind);
       row.append(b);
@@ -164,11 +186,43 @@ export class Party {
 
     // the hint, and the traits the party would wake (the same rule as a fight's team)
     const hint = $('ptHint');
-    hint.textContent = this.note || `${this.picked.length} of ${slots} chosen · tap a hero to add it, a slot to take it out`;
+    hint.textContent = this.note || (full ? 'Tap a chosen hero to remove · hold for details' : 'Choose a reinforcement to fill your company');
     hint.classList.toggle('full', !!this.note);
+    const counts = countTraits(this.picked);
+    const active = counts.filter((c) => c.active);
+    $('ptBondCount').textContent = `${active.length} active · ${counts.length - active.length} building`;
+    $('ptBonds').hidden = !counts.length;
+    $('ptStatus').textContent = full ? 'Ready · summons draw from this company' : `${slots - this.picked.length} more ${slots - this.picked.length === 1 ? 'hero' : 'heroes'} needed`;
+    $('ptSceneTitle').textContent = full ? `${slots === 5 ? 'Five' : slots} heroes. One last stand.` : this.picked.length ? 'A company worth fighting for.' : 'Your legend begins here.';
+    $('ptCount').textContent = `${this.picked.length} / ${slots} ready`;
+    $('ptAvailable').textContent = `${m.unlocked.length} available`;
+    const key = this.picked.join('|');
+    if (this.sceneKey !== key || !$('ptTableau').firstChild) {
+      $('ptTableau').replaceChildren(partyTableau(this.picked));
+      this.sceneKey = key;
+    }
+    const roles = $('ptRoles');
+    roles.replaceChildren();
+    for (const [id, name] of Object.entries(ROLE_NAMES)) {
+      const n = this.picked.filter((kind) => roleOf(kind) === id).length;
+      const chip = el('span', n ? 'covered' : '', `${n ? '◆' : '◇'} ${name} ${n}`);
+      roles.append(chip);
+    }
+    const filters = $('ptFilters');
+    filters.replaceChildren();
+    for (const [id, name] of [['all', 'All'], ...Object.entries(ROLE_NAMES)]) {
+      const button = el('button', '', name);
+      button.setAttribute('aria-pressed', String(this.filter === id));
+      button.addEventListener('click', () => {
+        this.filter = id as PartyRole | 'all';
+        this.draw();
+        $('ptFilters').querySelector<HTMLButtonElement>('[aria-pressed="true"]')?.focus({ preventScroll: true });
+      });
+      filters.append(button);
+    }
     const traits = $('ptTraits');
     traits.replaceChildren();
-    for (const c of countTraits(this.picked)) {
+    for (const c of counts) {
       const next = c.trait.tiers[Math.min(c.trait.tiers.length - 1, c.tier + 1)];
       const line = el('div', `ptTrait${c.active ? ' on' : ''}`);
       // (an active trait says what it gives now; one still asleep says what it would give)
@@ -183,11 +237,18 @@ export class Party {
     const order = [...ALL_HEROES].sort((a, b) => Number(m.unlocked.includes(b)) - Number(m.unlocked.includes(a)));
     for (const kind of order) {
       const def = UNITS[kind];
+      if (this.filter !== 'all' && roleOf(kind) !== this.filter) continue;
+      // Unknown locked names stay unknown, including through search.
+      const known = m.unlocked.includes(kind) || lockInfo(m, kind)?.named;
+      if (this.search.trim() && (!known || !def.name.toLocaleLowerCase().includes(this.search.trim().toLocaleLowerCase()))) continue;
       const open = m.unlocked.includes(kind);
       const on = this.picked.includes(kind);
       const hit = !!this.focus && traitsOf(kind).includes(this.focus);
       const card = el('button', `hcard ptCard${open ? '' : ' locked'}${on ? ' picked' : ''}${hit ? ' hit' : ''}${this.focus && !hit ? ' faded' : ''}`);
+      card.setAttribute('aria-pressed', String(on));
       card.append(portrait(def.sheet, 56));
+      if (on) card.append(el('span', 'ptPickedFlag', '◆ Chosen'));
+      if (open) card.append(el('span', 'ptCardRole', ROLE_NAMES[roleOf(kind)]));
       const lock = lockInfo(m, kind);
       card.append(el('b', '', open || lock?.named ? def.name : '???'));
       if (open) {
@@ -219,6 +280,7 @@ export class Party {
       grid.append(card);
     }
 
+    $('ptNoResults').hidden = !!grid.childElementCount;
     $<HTMLButtonElement>('ptGo').disabled = !full;
   }
 }
