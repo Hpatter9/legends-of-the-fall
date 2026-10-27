@@ -248,8 +248,8 @@ export class UnitSprite {
     this.root.zIndex = z;
     this.x = x;
     this.y = y;
-    // the fallen fade away
-    const dead = u.alive ? 0 : t - (u.diedAt ?? 0);
+    // Fallen heroes stay where they fell so a heart can raise them; foes fade away.
+    const dead = u.alive || (u.side === 'hero' && !def.summon) ? 0 : t - (u.diedAt ?? 0);
     this.root.alpha = dead > FADE_FROM ? Math.max(0, 1 - (dead - FADE_FROM) / FADE_MS) : 1;
     this.root.visible = this.root.alpha > 0;
     this.drawBar(u.alive, t);

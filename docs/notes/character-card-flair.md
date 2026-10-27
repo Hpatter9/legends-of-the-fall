@@ -27,4 +27,12 @@ To reproduce, serve `out/web` on port 8000 and run `node tools/character-card-ch
 
 ## Handoff
 
-Branch: `design/character-card-flair-mockup`; worktree: `/workspace/legends-of-the-fall`. Implementation is limited to roster markup/style, in-memory last-viewed state, artwork/credits, browser checks and these coordination notes. No simulation changes, merge, deployment or version bump. Ready for owner review with no technical blockers. The implementation was saved in `ca163a9b`; the follow-up commit records the steady-brightness correction and final validation. Owner acceptance of the implementation remains pending.
+Branch: `design/character-card-flair-mockup`; worktree: `/workspace/legends-of-the-fall`. Implementation is limited to roster markup/style, in-memory last-viewed state, artwork/credits, browser checks and these coordination notes. No simulation rules changed by the card work. The owner accepted the implementation and requested the version bump and GitHub merge. The implementation was saved in `ca163a9b`; the follow-up commit records the steady-brightness correction and final validation. The accepted task is complete and this chat is available for the owner to archive after release handoff.
+
+## Release 0.162.0
+
+The owner authorised the version bump and merge. Main had advanced to 0.161.0 with the dialogue reduction and heart-resume fix, so both are preserved by integrating main before preparing release 0.162.0. The only merge conflict was the task board; all completed-task entries are retained.
+
+Release scope: package and root lockfile version metadata, integration and handoff documentation, push the release branch and merge through a GitHub pull request. No direct push to main. The main-branch Pages workflow handles publication after merge.
+
+Integration validation: typecheck and release web build passed for 0.162.0. The heart-revive, quips, new-lines and no-flicker test files all passed (four files, no failures or skipped files). Prior card validation covers all 103 test files and browser checks at all three portrait sizes; incoming heart-resume work records its own full 103-file pass and portrait checks.

@@ -9,13 +9,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
-- **UI-002 / Character card flair implementation:** ready for review; owner: Codex manager.
-- **Branch / worktree:** `design/character-card-flair-mockup` / `/workspace/legends-of-the-fall`.
-- **Authorisation:** owner approved the visual concept and requested implementation.
-- **Scope:** roster character card markup/styles, last-viewed hero state, decorative assets/credits, targeted browser checks and documentation. No simulation changes.
-- **Completion:** match the approved brass frame/class banner concept; preserve search, rank/awakening/level indicators, hero navigation and offline use; inspect all three portrait sizes.
-- **Validation:** typecheck and web build passed; all 103 test files passed across split runs; final real-browser card checks passed at 360×780, 393×852 and 412×915. No-flicker regression fixed without changing tests; interrupted test bundles restored and affected files rerun. Screenshots and full validation details are in the handoff note.
-- **Handoff:** implementation commit `ca163a9b`, with final correction/validation in the follow-up commit; [implementation note and screenshots](notes/character-card-flair.md). No merge, deployment or version bump.
+None assigned. UI-002 accepted by the owner for version 0.162.0 and GitHub merge; HEART-001 and DIALOGUE-001 are retained as released work.
 
 ## UI-001 manager takeover — 2026-10-26
 
@@ -38,6 +32,9 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 | ID | Task | Result | Reference |
 | --- | --- | --- | --- |
+| UI-002 | Ornate company character cards | Done; owner accepted the implementation and authorised release 0.162.0 and GitHub merge; full test set and three portrait sizes validated | [Implementation and release handoff](notes/character-card-flair.md), branch `design/character-card-flair-mockup` |
+| HEART-001 | Hearts revive fallen heroes in the existing fight | Done; owner authorised merge into `work`, release 0.161.0; 103 test files, typecheck, build and portrait checks passed | [Handoff](notes/heart-resume.md) |
+| DIALOGUE-001 | Roughly 90% fewer fight conversation bubbles | Owner accepted and authorised merge, release 0.160.0; typecheck, build and dialogue tests pass; full suite stopped after 50 passes and 53 cancellations | [Handoff](notes/fight-bubbles.md), branch `reduce-fight-bubbles` |
 | UI-001 | Keep & Kingdom hero roster, equipment and shared styling | Done; owner accepted the result and authorised merge, release 0.159.0 | [PR #118](https://github.com/Hpatter9/legends-of-the-fall/pull/118), [validation and screenshots](notes/tactical-command-ui.md) |
 | SETUP-001 | Shared Codex instructions and task board | Done; merged at owner's request, version 0.157.0 | [PR #119](https://github.com/Hpatter9/legends-of-the-fall/pull/119), [setup note](notes/manager-setup.md) |
 
