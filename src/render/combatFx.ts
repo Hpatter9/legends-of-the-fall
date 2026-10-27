@@ -138,6 +138,15 @@ export function windUp(p: Particles, el: Element, x: number, y: number, ms: numb
     play(p, fam(el, 'pillar'), x, y - 20, { scale: 1.5, life: ms + 300, frameMs: Math.max(60, ms / 6), alpha: 0.3, add: false, delay: ms * 0.3, tint });
   }
   const n = bits(Math.round(ms / 160), p.density);
+  // Motes converge on the casting point, making the release feel earned.
+  const count = bits(ultimate ? 10 : 5, p.density);
+  for (let i = 0; i < count; i++) {
+    const a = (i / count) * Math.PI * 2;
+    const dx = Math.cos(a) * (ultimate ? 30 : 20);
+    const dy = Math.sin(a) * 14;
+    const life = Math.max(120, Math.min(360, ms));
+    p.spawn({ frames: PACK[fam(el, 'sparkle')], x: x + dx, y: y - tall * 0.5 + dy, vx: -dx / life, vy: -dy / life, scale: 0.45, life, delay: Math.max(0, ms - life), alpha: 0.7, add: true, tint: tint ?? GLOW[el] });
+  }
   for (let i = 0; i < n; i++)
     p.spawn({ frames: PACK[fam(el, 'sparkle')], x: x + jit(14), y: y - 2 + jit(3), scale: 0.6, life: 600, delay: (i * ms) / n, vy: -0.06, add: true, tint });
 }
