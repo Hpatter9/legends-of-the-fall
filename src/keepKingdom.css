@@ -146,3 +146,84 @@ button:focus-visible, input:focus-visible { outline: 2px solid #efd39a; outline-
 @media (prefers-reduced-motion: reduce) {
   .hsheet, .evcard, .hmBanner, button, .hmTab { animation: none; transition: none; }
 }
+
+/* The company cards: brass surrounds, cloth tabs and the game's own pixel fighters. */
+.heroRoster .rosGrid { column-gap: 10px; row-gap: 22px; padding: 2px 1px 15px; align-items: stretch; }
+.heroRoster .hcard {
+  --card-colour: #284869; --card-light: #92b7dc; --card-dark: #101d32;
+  position: relative; isolation: isolate; min-height: 236px; gap: 0; padding: 10px 8px 25px;
+  border: 0; border-radius: 12px; overflow: visible;
+  background: #151c18 url(ui/hero-brass-frame.png) center / 100% 100% no-repeat;
+  box-shadow: 0 5px 8px #0009; text-align: center;
+  transition: filter .18s, box-shadow .18s, transform .18s;
+}
+.heroRoster .hcard[data-class='caster'] { --card-colour: #702a20; --card-light: #e78a54; --card-dark: #301613; }
+.heroRoster .hcard[data-class='front'] { --card-colour: #435b32; --card-light: #d8ce80; --card-dark: #192715; }
+.heroRoster .hcard[data-class='shooter'] { --card-colour: #355c51; --card-light: #9cccb2; --card-dark: #142c27; }
+.heroRoster .hcard[data-class='support'] { --card-colour: #55466b; --card-light: #c7b4e0; --card-dark: #241d35; }
+.heroClassBanner {
+  position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; gap: 3px;
+  width: calc(100% + 2px); min-height: 29px; padding: 4px 1px 8px;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 85%, 0 100%);
+  background: linear-gradient(90deg, #0005, transparent 35%, #fff1 50%, transparent 70%, #0005), linear-gradient(var(--card-colour), var(--card-dark));
+  box-shadow: inset 0 2px #dcc38a, inset 0 3px #0009;
+  color: #f9ecd1; font: 700 10px/1.2 var(--body); text-transform: uppercase; letter-spacing: .04em;
+  filter: drop-shadow(0 3px 2px #0009);
+}
+.heroClassBanner img { width: 15px; height: 15px; object-fit: contain; image-rendering: pixelated; }
+.heroCardScene {
+  position: relative; display: flex; align-items: flex-end; justify-content: center; width: 100%; height: 115px;
+  overflow: hidden; margin-top: -4px; background: linear-gradient(0deg, #121b16, transparent 38%), linear-gradient(0deg, #111a16cc, #0f191caa), url(areas/forest/bg3.png) center / auto 100%;
+}
+.heroCardScene::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, var(--card-colour), transparent 76%); opacity: .9; }
+.heroCardHalo {
+  position: absolute; width: 80px; height: 80px; left: 50%; top: 9px; transform: translateX(-50%); border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--card-light) 50%, transparent);
+  background: repeating-conic-gradient(from 15deg, transparent 0deg 25deg, #e8ddb716 25deg 28deg, transparent 28deg 30deg), radial-gradient(circle, var(--card-colour), transparent 70%);
+  box-shadow: inset 0 0 0 5px #0002, inset 0 0 0 6px #e8ddb71a, 0 0 12px #0004;
+}
+.heroRoster .rosGrid .hcard .heroCardScene canvas {
+  position: relative; z-index: 1; flex: none; width: 112px; height: 112px; max-width: none;
+  border-radius: 0; background: transparent; image-rendering: pixelated;
+  filter: drop-shadow(0 4px 3px #000a);
+}
+.heroCardMotes { position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: .6;
+  background: radial-gradient(circle at 15% 75%, var(--card-light) 0 1px, transparent 2px), radial-gradient(circle at 86% 60%, var(--card-light) 0 1px, transparent 2px), radial-gradient(circle at 74% 23%, var(--card-light) 0 1px, transparent 2px);
+}
+.heroRoster .hcard[data-class='caster'] .heroCardMotes { animation: heroCardEmbers 3s ease-in-out infinite alternate; }
+.heroRoster .hcard .heroCardName {
+  display: flex; align-items: center; justify-content: center; width: 100%; min-height: 35px; margin: 0;
+  white-space: normal; overflow-wrap: anywhere; font: 700 14px/1.05 var(--display); text-shadow: 0 2px 2px #000;
+}
+.heroRoster .hcard .stars { display: block; margin: 3px -3px 0; font-size: 11px; line-height: 15px; white-space: nowrap; color: #d9bd7e; }
+.heroLevelRibbon {
+  position: absolute; z-index: 2; bottom: -11px; left: 50%; transform: translateX(-50%); min-width: 54px; padding: 5px 5px 11px;
+  background: linear-gradient(90deg, #0005, transparent 40%, #fff1 50%, transparent 70%, #0005), linear-gradient(var(--card-colour), var(--card-dark));
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 87%, 0 100%);
+  box-shadow: inset 0 2px #d4b47a, inset 0 3px #000c;
+}
+.heroRoster .heroLevelRibbon .lvb { margin: 0; padding: 0 3px; font-size: 12px; line-height: 19px; border-width: 1px; }
+.heroRoster .heroLevelRibbon .lvb.b0 { background: transparent; border-color: transparent; color: #f6e7c6; }
+.heroRoster .hcard.lastViewed { box-shadow: 0 0 0 1px #efcd85, 0 0 12px #e8ae5966, 0 5px 8px #0009; }
+.heroCardSeal {
+  position: absolute; z-index: 3; right: 8px; top: 45px; width: 22px; height: 22px; border: 2px solid #ffe5a6; border-radius: 50%;
+  background: #65491e; color: #fff3d2; font: 700 16px/19px var(--body); box-shadow: 0 0 9px #ffd27c9c;
+}
+.heroRoster .hcard .rankTag { position: absolute; z-index: 3; top: 104px; right: 5px; left: 5px; padding: 3px 0; font-size: 11px; color: #fff3ca; background: #332c18ed; border: 1px solid #d2b774; }
+.heroRoster .hcard:focus-visible { outline: 2px solid #ffe4ab; outline-offset: 3px; box-shadow: 0 0 14px #e8ae5977; }
+@media (hover: hover) {
+  .heroRoster .hcard:hover { transform: translateY(-3px); box-shadow: 0 0 0 1px #d9b878, 0 5px 14px #000b; }
+}
+.heroRoster .hcard:active:not(:disabled) { padding: 10px 8px 25px; background: #151c18 url(ui/hero-brass-frame.png) center / 100% 100% no-repeat; transform: translateY(1px); }
+@keyframes heroCardEmbers { from { transform: translateY(3px); } to { transform: translateY(-4px); } }
+@media (max-width: 375px) {
+  .heroRoster .rosGrid { column-gap: 8px; }
+  .heroRoster .hcard, .heroRoster .hcard:active:not(:disabled) { padding-left: 7px; padding-right: 7px; }
+  .heroClassBanner { font-size: 9px; letter-spacing: 0; gap: 2px; }
+  .heroClassBanner img { width: 13px; height: 13px; }
+  .heroRoster .hcard .heroCardName { font-size: 13px; }
+  .heroRoster .hcard .stars { font-size: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .heroRoster .hcard, .heroCardMotes { animation: none !important; transition: none; }
+}

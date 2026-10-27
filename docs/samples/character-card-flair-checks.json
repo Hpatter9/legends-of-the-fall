@@ -1,0 +1,95 @@
+[
+  {
+    "width": 360,
+    "height": 780,
+    "fit": {
+      "overflow": false,
+      "bottom": 708,
+      "navTop": 716,
+      "cards": [
+        {
+          "left": 22,
+          "right": 122,
+          "ribbonBottom": 440.25,
+          "nameClipped": false
+        },
+        {
+          "left": 130,
+          "right": 230,
+          "ribbonBottom": 440.25,
+          "nameClipped": false
+        },
+        {
+          "left": 238,
+          "right": 338,
+          "ribbonBottom": 440.25,
+          "nameClipped": false
+        }
+      ]
+    },
+    "errors": [],
+    "checks": "class search; last-viewed state; card and ribbon bounds; long names; all classes; reduced motion; keyboard focus"
+  },
+  {
+    "width": 393,
+    "height": 852,
+    "fit": {
+      "overflow": false,
+      "bottom": 780,
+      "navTop": 788,
+      "cards": [
+        {
+          "left": 26,
+          "right": 133,
+          "ribbonBottom": 448.25,
+          "nameClipped": false
+        },
+        {
+          "left": 143,
+          "right": 250,
+          "ribbonBottom": 448.25,
+          "nameClipped": false
+        },
+        {
+          "left": 260,
+          "right": 367,
+          "ribbonBottom": 448.25,
+          "nameClipped": false
+        }
+      ]
+    },
+    "errors": [],
+    "checks": "class search; last-viewed state; card and ribbon bounds; long names; all classes; reduced motion; keyboard focus"
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "fit": {
+      "overflow": false,
+      "bottom": 843,
+      "navTop": 851,
+      "cards": [
+        {
+          "left": 26,
+          "right": 139.328125,
+          "ribbonBottom": 448.25,
+          "nameClipped": false
+        },
+        {
+          "left": 149.328125,
+          "right": 262.65625,
+          "ribbonBottom": 448.25,
+          "nameClipped": false
+        },
+        {
+          "left": 272.65625,
+          "right": 386,
+          "ribbonBottom": 448.25,
+          "nameClipped": false
+        }
+      ]
+    },
+    "errors": [],
+    "checks": "class search; last-viewed state; card and ribbon bounds; long names; all classes; reduced motion; keyboard focus"
+  }
+]

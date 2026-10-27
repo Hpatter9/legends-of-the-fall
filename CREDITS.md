@@ -258,3 +258,7 @@ No new art: the five-hero combos' gathering and strike, a tier skill's ring and 
 ## Heart revive
 
 No new art: the burning heart's flame is the `flame_fire` strip (`src/art/fx/vfx/flame_fire.png`) from the **5000 Pixel Effects** pack by blueberry already credited above, played once over the heart (`src/reviveView.ts`); the heroes rise in the existing light pillar of a promotion.
+
+## Company card brass frame
+
+- `src/art/ui/hero-brass-frame.png`: generated with OpenAI image generation for the approved Keep & Kingdom character card concept. Class emblems reuse the existing talent icons; character art and forest scenery reuse the packs credited above.
