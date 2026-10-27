@@ -9,7 +9,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
-UI-003 accepted by the owner for release 0.164.0 and GitHub merge. Implementation and portrait validation passed; release integration in progress on `design/hero-detail-dossier`. FX-001, UI-002, HEART-001 and DIALOGUE-001 remain intact. See [handoff](notes/hero-detail-dossier.md).
+UI-003 accepted by the owner for release 0.164.0 and GitHub merge. Implementation, portrait validation and release integration checks passed on `design/hero-detail-dossier`; submission through a pull request to main is authorised. FX-001, UI-002, HEART-001 and DIALOGUE-001 remain intact. See [handoff](notes/hero-detail-dossier.md).
 
 ## UI-001 manager takeover — 2026-10-26
 

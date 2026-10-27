@@ -1,6 +1,6 @@
 # Hero detail dossier
 
-UI-003, branch `design/hero-detail-dossier`, owner: current Codex chat. Status: ready for review.
+UI-003, branch `design/hero-detail-dossier`, owner: current Codex chat. Status: owner accepted and authorised release 0.164.0 and GitHub merge.
 
 The owner approved the visual concept and requested implementation. Hero details now use the company roster’s antique brass surround, a larger animated pixel fighter in a class-coloured forest shrine, an engraved power panel, illustrated stat tiles and combat trait chips. Overview, Progression, Equipment and Skills are four distinct, keyboard-accessible tabs. Tabs stay visible while scrolling. Hero switching preserves the selected tab.
 
@@ -39,3 +39,12 @@ The owner requested a flashier, optionally moving background inside the gold tri
 Validation after the refinement: typecheck and web build passed; all 103 test files passed with zero failures, cancellations or skipped files. Updated browser checks passed at all three portrait sizes, confirming the animation advances, containment inside the frame, non-interception of controls, and both effects stopping with reduced motion, alongside the existing interaction checks. The initial animation assertion sampled before the browser rendered; capturing a starting frame before measuring resolved the check without changing the implementation. The old preview server also required replacement after the environment restart. `git diff --check` passed.
 
 Updated real browser screenshots: [360px](../samples/hero-atmosphere-360.png), [393px](../samples/hero-atmosphere-393.png), [412px](../samples/hero-atmosphere-412.png). [Browser results](../samples/hero-atmosphere-checks.json). Still uncommitted on `design/hero-detail-dossier`; no merge or deployment performed.
+
+
+## Release 0.164.0
+
+The owner accepted the animated portrait scenery and requested the version bump and merge. Implementation was saved in `004f9e6a`. Main had advanced to 0.163.0 with combat animation polish; it was integrated in `27953041`, preserving all incoming renderer changes and resolving only the task-board conflict. Package and root lockfile versions are now 0.164.0.
+
+Integration validation: typecheck and the release web build passed; incoming motion and no-flicker tests both passed. The complete 103-file suite and all three portrait browser checks passed on the final hero implementation before integration; the integration changed no hero UI source. No tests or assertions were skipped or loosened.
+
+The release is submitted through a pull request to main, as authorised. The main-branch Pages workflow builds, tests and publishes after merge. The earlier “uncommitted” and “no merge authorised” handoff entries above describe their earlier review stage and are superseded by this release authorisation.
