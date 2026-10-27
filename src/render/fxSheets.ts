@@ -1,11 +1,10 @@
-// The combat effects' strips, cut from one atlas (`src/art/fx/pack/atlas.png`, from the Pixel Effects pack by
-// `tools/fx-atlas.py`): `PACK['fire-orb']` is the frames of that strip. Loaded once by `loadPackArt`.
+// The combat effect names retain the pack's vocabulary, but now resolve to shared painted materials.
+// The old atlas metadata remains the name catalogue for signatures, rules and existing audits.
 
-import { Rectangle, Texture } from 'pixi.js';
-import { loadImage } from './loadImage';
-import atlasUrl from '../art/fx/pack/atlas.png';
+import type { Texture } from 'pixi.js';
 import atlasMeta from '../art/fx/pack/atlas.json';
-import type { PackKey } from './fxRules';
+import type { Element, Family, PackKey } from './fxRules';
+import { loadPaintedArt, paintedStrip } from './cinematicArt';
 
 /** Each strip's frames by name (empty until `loadPackArt` has run). Strips outside the atlas give no frames. */
 export const PACK = {} as Record<PackKey, Texture[]>;
@@ -14,8 +13,9 @@ export const PACK = {} as Record<PackKey, Texture[]>;
 export const PACK_NAMES = Object.keys(atlasMeta);
 
 export async function loadPackArt(): Promise<void> {
-  const base = Texture.from(await loadImage(atlasUrl));
-  const meta = atlasMeta as unknown as Record<string, [number, number, number]>;
-  for (const [name, [x, y, n]] of Object.entries(meta))
-    (PACK as Record<string, Texture[]>)[name] = Array.from({ length: n }, (_, i) => new Texture({ source: base.source, frame: new Rectangle(x + i * 32, y, 32, 32) }));
+  await loadPaintedArt();
+  for (const name of PACK_NAMES) {
+    const [element, family] = name.split('-') as [Element, Family];
+    PACK[name as PackKey] = paintedStrip(element, family);
+  }
 }

@@ -2,7 +2,7 @@
 // screen's shake (the rules for these are Chronos's battle/juiceRules.ts). Everything runs on the fight's own clock,
 // so a faster fight is faster here too.
 
-import { Container, Graphics, Rectangle, Sprite, Text, Texture } from 'pixi.js';
+import { Container, Graphics, Sprite, Text, type Texture } from 'pixi.js';
 import { tileAt, type Board } from '../sim/board';
 import { defOf, type Battle, type BattleEvent, type Unit } from '../sim/battle';
 import { isBoss } from '../sim/foes';
@@ -10,7 +10,6 @@ import { kitOf } from '../sim/abilities';
 import { SPELLS } from '../sim/spells';
 import type { Shot } from '../sim/units';
 import { settings } from '../settings';
-import { loadImage } from './loadImage';
 import { at, facesRight, TH, TW } from './iso';
 import { fadeTrauma, popScale, shakeOf, traumaFor } from './juiceRules';
 import { BIG_FOE_HP, SKILL_FX, SPELL_FX, SPELL_GLOW, SPELL_WORD, type Effect, type MagicKey } from './skillFx';
@@ -27,57 +26,18 @@ import { tierSkillOf } from '../sim/tierSkills';
 import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, impactElement, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, SPELL_TOUCH, type Missile } from './fxRules';
 import { particleBudget, slashOf } from './vfxRules';
 import { placeLabel } from './labelRules';
-import impactUrl from '../art/fx/impact.png';
-import fireUrl from '../art/fx/hit_fire.png';
-import arrowUrl from '../art/fx/arrow.png';
-import boneUrl from '../art/fx/bone_arrow.png';
-import bloodExplosionUrl from '../art/fx/magic/blood_explosion.png';
-import darkCircleUrl from '../art/fx/magic/dark_circle.png';
-import darkSlashUrl from '../art/fx/magic/dark_slash.png';
-import earthBurstUrl from '../art/fx/magic/earth_burst.png';
-import earthExplosionUrl from '../art/fx/magic/earth_explosion.png';
-import earthShieldUrl from '../art/fx/magic/earth_shield.png';
-import earthWaveUrl from '../art/fx/magic/earth_wave.png';
-import fireCircleUrl from '../art/fx/magic/fire_circle.png';
-import fireExplosionUrl from '../art/fx/magic/fire_explosion.png';
-import goldBurstUrl from '../art/fx/magic/gold_burst.png';
-import iceShieldUrl from '../art/fx/magic/ice_shield.png';
-import lightCircleUrl from '../art/fx/magic/light_circle.png';
-import lightGatherUrl from '../art/fx/magic/light_gather.png';
-import lightNovaUrl from '../art/fx/magic/light_nova.png';
-import lightningBurstUrl from '../art/fx/magic/lightning_burst.png';
-import lightningStrikeUrl from '../art/fx/magic/lightning_strike.png';
-import moonSlashUrl from '../art/fx/magic/moon_slash.png';
-import pinkHeartUrl from '../art/fx/magic/pink_heart.png';
-import whiteBurstUrl from '../art/fx/magic/white_burst.png';
-import windBurstUrl from '../art/fx/magic/wind_burst.png';
-import windVortexUrl from '../art/fx/magic/wind_vortex.png';
-import windWaveUrl from '../art/fx/magic/wind_wave.png';
+import { loadPaintedArt, paintedStrip, paintSprite } from './cinematicArt';
+import type { Element, Family } from './fxRules';
 
-/** The Pixel Effects sheets (32px frames), by the keys `skillFx.ts` uses. */
-const MAGIC: Record<MagicKey, string> = {
-  bloodExplosion: bloodExplosionUrl,
-  darkCircle: darkCircleUrl,
-  darkSlash: darkSlashUrl,
-  earthBurst: earthBurstUrl,
-  earthExplosion: earthExplosionUrl,
-  earthShield: earthShieldUrl,
-  earthWave: earthWaveUrl,
-  fireCircle: fireCircleUrl,
-  fireExplosion: fireExplosionUrl,
-  goldBurst: goldBurstUrl,
-  iceShield: iceShieldUrl,
-  lightCircle: lightCircleUrl,
-  lightGather: lightGatherUrl,
-  lightNova: lightNovaUrl,
-  lightningBurst: lightningBurstUrl,
-  lightningStrike: lightningStrikeUrl,
-  moonSlash: moonSlashUrl,
-  pinkHeart: pinkHeartUrl,
-  whiteBurst: whiteBurstUrl,
-  windBurst: windBurstUrl,
-  windVortex: windVortexUrl,
-  windWave: windWaveUrl,
+/** Shapes for the legacy named skill cues; their scale and release timing remain the skill's own. */
+const MAGIC: Record<MagicKey, readonly [Element, Family]> = {
+  bloodExplosion: ['blood', 'explosion'], darkCircle: ['dark', 'circle'], darkSlash: ['dark', 'slash'],
+  earthBurst: ['earth', 'hit'], earthExplosion: ['earth', 'explosion'], earthShield: ['light', 'shield'], earthWave: ['earth', 'wave'],
+  fireCircle: ['fire', 'circle'], fireExplosion: ['fire', 'explosion'], goldBurst: ['light', 'nova'],
+  iceShield: ['ice', 'shield'], lightCircle: ['light', 'circle'], lightGather: ['forest', 'gather'],
+  lightNova: ['light', 'nova'], lightningBurst: ['lightning', 'hit'], lightningStrike: ['lightning', 'strike'],
+  moonSlash: ['wind', 'slash'], pinkHeart: ['light', 'gather'], whiteBurst: ['wind', 'hit'],
+  windBurst: ['wind', 'hit'], windVortex: ['wind', 'vortex'], windWave: ['wind', 'wave'],
 };
 
 interface Strip {
@@ -90,23 +50,20 @@ let arrow: Texture;
 let bone: Texture;
 let magic: Record<MagicKey, Strip>;
 
-async function strip(url: string, size: number): Promise<Strip> {
-  const base = Texture.from(await loadImage(url));
-  const n = Math.floor(base.width / size);
-  return { frames: Array.from({ length: n }, (_, i) => new Texture({ source: base.source, frame: new Rectangle(i * size, 0, size, size) })) };
-}
-
 export async function loadFx(): Promise<void> {
-  [impact, fire] = await Promise.all([strip(impactUrl, 48), strip(fireUrl, 32)]);
-  arrow = Texture.from(await loadImage(arrowUrl));
-  bone = Texture.from(await loadImage(boneUrl));
+  await loadPaintedArt();
+  impact = { frames: paintedStrip('light', 'hit') };
+  fire = { frames: paintedStrip('fire', 'flame') };
+  arrow = paintedStrip('wind', 'orb', 'arrow')[0];
+  bone = paintedStrip('earth', 'orb', 'bone')[0];
   setBoneArt(bone);
   setSignatureSprite('arrow', arrow);
   const keys = Object.keys(MAGIC) as MagicKey[];
-  const strips = await Promise.all(keys.map((k) => strip(MAGIC[k], 32)));
+  const strips = keys.map(k => ({ frames: paintedStrip(...MAGIC[k]) }));
   magic = Object.fromEntries(keys.map((k, i) => [k, strips[i]])) as Record<MagicKey, Strip>;
   await loadVfxArt();
   await loadPackArt();
+  magic.pinkHeart = { frames: VFX.pinkHeart };
   await loadProps();
 }
 
@@ -261,6 +218,7 @@ export class Fx {
     const budget = particleBudget(settings().saver);
     this.particles.density = budget.density;
     this.particles.cap = budget.cap;
+    this.particles.calm = this.calm();
     this.enter(b);
     for (const e of events) {
       if (e.kind === 'shot') this.shot(e.by, e.to, e.shot, e.ms);
@@ -419,7 +377,7 @@ export class Fx {
       frames: VFX[slashOf(defOf(attacker).name)],
       x: to.x,
       y: to.y - to.tall * 0.5,
-      scale: 1.3,
+      scale: 2,
       frameMs: 45,
       rotation: Math.atan2(to.y - by.y, to.x - by.x),
       add: true,
@@ -620,6 +578,7 @@ export class Fx {
     const s = this.calm() ? 0 : shakeOf(this.trauma);
     this.shakeX = s ? (Math.random() * 2 - 1) * s : 0;
     this.shakeY = s ? (Math.random() * 2 - 1) * s : 0;
+    this.particles.calm = this.calm();
     this.particles.step(dt);
     this.slowLeft = Math.max(0, this.slowLeft - dt);
     this.stopLeft = Math.max(0, this.stopLeft - dt);
@@ -643,20 +602,23 @@ export class Fx {
     sp.blendMode = 'add';
     this.root.addChild(sp);
     let t = 0;
+    let peak: number | undefined;
     this.items.push({
       view: sp,
       step: (dt) => {
         t += dt;
+        peak ??= sp.alpha * 0.9;
         const f = Math.floor(t / frameMs);
         if (f >= s.frames.length) return false;
         sp.texture = s.frames[f];
+        paintSprite(sp, t, s.frames.length * frameMs, scale, 0, peak, false, this.calm());
         return true;
       },
     });
     return sp;
   }
 
-  /** One of the Pixel Effects sheets, played on a point (its own scale, speed and tint). */
+  /** A painted skill cue, played on a point with its own size, timing and tint. */
   private effect(e: Effect, x: number, y: number): Sprite {
     const sp = this.anim(magic[e.sheet], x, y, e.scale, e.frameMs ?? 70);
     if (e.tint !== undefined) sp.tint = e.tint;
@@ -963,7 +925,8 @@ export class Fx {
     const ball = new Sprite(orbFrames[0]);
     ball.anchor.set(0.5);
     ball.scale.set(3);
-    ball.blendMode = 'add';
+    ball.blendMode = 'normal';
+    ball.rotation = Math.atan2(360, -150);
     let landed = false;
     let trailAt = 0;
     ball.visible = false;
@@ -1149,10 +1112,10 @@ export class Fx {
 
   /** A snare on a tile: a dark ring that waits there (and goes out when it is sprung or runs down). */
   private trap(b: Battle, u: number, v: number, ms: number): void {
-    const view = new Graphics();
+    const view = new Sprite(paintedStrip('earth', 'rune', 'snare')[0]);
+    view.anchor.set(0.5);
+    view.scale.set(TW * 0.6 / 32);
     const [x, y] = this.tilePos(b, u, v);
-    view.ellipse(0, 0, TW * 0.22, TH * 0.22).stroke({ width: 2, color: 0xe8c860 });
-    view.ellipse(0, 0, TW * 0.12, TH * 0.12).fill({ color: 0x3a2a14, alpha: 0.8 });
     view.position.set(x, y);
     this.root.addChild(view);
     this.anim(magic.earthBurst, x, y - 6, 0.9, 60);
@@ -1289,7 +1252,7 @@ export class Fx {
     const sp = new Sprite(m.look === 'arrow' ? arrow : m.look === 'bone' ? bone : orb?.[0]);
     sp.anchor.set(0.5);
     sp.scale.set(m.scale);
-    if (orb) sp.blendMode = 'add';
+    if (orb) sp.blendMode = 'normal';
     const g = m.look === 'tracer' ? new Graphics() : undefined;
     if (g) g.blendMode = 'add';
     const view: Container = g ?? sp;
@@ -1320,7 +1283,8 @@ export class Fx {
           sp.position.set(x, y);
           if (orb) {
             sp.texture = orb[Math.floor(t / 70) % orb.length];
-            if (m.spin) sp.rotation += dt * 0.012;
+            paintSprite(sp, ms * 0.4, ms, m.scale, heading, 1, true, this.calm());
+            if (m.spin && !this.calm()) sp.rotation += t * 0.004;
           } else sp.rotation = m.spin ? t * 0.02 : heading;
         }
         // a trail behind it: puffs of its element, a faint glint behind an arrow

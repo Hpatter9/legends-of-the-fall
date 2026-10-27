@@ -11,6 +11,7 @@ import { facesRightOf, framesOf, figureOf, type Anim } from './sheets';
 import { CHARGE_MAX, kitOf, ultimateOf } from '../sim/abilities';
 import { at, depth, facesRight, HH } from './iso';
 import { VFX } from './vfxArt';
+import { paintSprite } from './cinematicArt';
 import { PACK } from './fxSheets';
 import { deathKind, maxStatuses, statusesOf, STATUS_LOOKS } from './fxRules';
 import { settings } from '../settings';
@@ -214,6 +215,7 @@ export class UnitSprite {
       this.shield.texture = ring[Math.floor(t / 90) % ring.length];
       this.shield.scale.set(this.tall / 26);
       this.shield.position.set(0, -this.tall * 0.45);
+      paintSprite(this.shield, 500, 1000, this.tall / 26, 0, 0.65, true, true);
     }
     this.drawBadge(u, t);
     // (most sheets face right, the forest and boss ones left; the board's +u runs down to the right, +v down to the left)
@@ -316,6 +318,8 @@ export class UnitSprite {
       sp.position.set(0, -this.tall * look.at);
       sp.alpha = look.alpha;
       sp.tint = look.tint ?? 0xffffff;
+      // Use a held material sample so a persistent status never fades out at a strip boundary.
+      paintSprite(sp, 500, 1000, (this.tall * look.size) / 32, 0, look.alpha, true, this.reduced?.matches ?? false);
     }
     const g = this.stars;
     g.clear();
@@ -343,6 +347,7 @@ export class UnitSprite {
     this.badge.texture = frames[Math.floor(t / 90) % frames.length];
     this.badge.scale.set(0.5);
     this.badge.position.set(-BAR_W / 2 - 8, -this.tall - 6);
+    paintSprite(this.badge, 500, 1000, 0.5, 0, 1, true, true);
   }
 
   /** The evolve's light pillar: it rises over the fighter on the burst, then thins out. */
@@ -354,6 +359,7 @@ export class UnitSprite {
     this.pillar.texture = frames[Math.min(frames.length - 1, Math.floor(burst * frames.length))];
     this.pillar.scale.set(this.tall / 26, (this.tall / 26) * 2.4);
     this.pillar.alpha = 1 - burst * 0.6;
+    paintSprite(this.pillar, burst * BURST_MS, BURST_MS, this.tall / 26, 0, 0.65, false, this.reduced?.matches ?? false);
   }
 
   /** The evolve flash and burst (called when a merge makes this hero). */

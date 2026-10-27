@@ -1,10 +1,10 @@
 // Which effect each hero or foe skill shows: the sheet it plays on the caster as it goes off (`cast`), and the one it
-// plays on each foe it strikes (`hit`). The sheets are the Pixel Effects pack's 32px strips (`src/art/fx/magic`), named
-// here by key; `fx.ts` loads them. Pure data: no Pixi, no DOM, so the tests can check that every skill has an entry.
+// plays on each foe it strikes (`hit`). These names now select painted materials through `fx.ts`; the old names
+// retain the skill vocabulary. Pure data: no Pixi, no DOM, so the tests can check that every skill has an entry.
 
 import type { SpellId } from '../sim/spells';
 
-/** The effect sheets in `src/art/fx/magic`. */
+/** The named skill cues resolved by `fx.ts`. */
 export type MagicKey =
   | 'bloodExplosion'
   | 'darkCircle'

@@ -1,5 +1,5 @@
 // The combat effects built from pooled particles: an element's impact, a fighter's death, a caster's wind-up and a boss's
-// entrance. Each is a handful of strips from the Pixel Effects atlas (`fxSheets.ts`) plus flying bits, thrown through
+// entrance. Each layers painted materials (`fxSheets.ts`) and flying bits, thrown through
 // `Particles` (so they are pooled, capped, and thinned by the battery saver's density). Nothing here reads or changes the
 // battle; `fx.ts` calls these as the sim's events arrive.
 
