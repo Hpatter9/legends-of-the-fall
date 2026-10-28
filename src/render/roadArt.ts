@@ -217,8 +217,6 @@ export function setPiece(kind: PieceKind, area: Area): Pic {
       return p('stoneCircle', 0.52);
     case 'foundry':
       return p('generator', 0.6);
-    case 'gate':
-      return p('gatehouse', 0.55);
     case 'shrine':
       return p('shrineFae', 0.75);
     case 'brazier':

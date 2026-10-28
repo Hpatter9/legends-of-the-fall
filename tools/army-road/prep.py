@@ -28,7 +28,7 @@ PIECES = {
     'burntTree': 'orcs/burnt_tree', 'deadOak': 'liches/dead_oak', 'ironTree': 'machines/iron_tree',
     # set pieces
     'mausoleum': 'liches/mausoleum', 'skullGate': 'orcs/skull_gate', 'warDrum': 'orcs/war_drum', 'caveDen': 'moonpack/cave_den', 'stoneCircle': 'druids/stone_circle',
-    'generator': 'machines/generator', 'scrapHeap': 'machines/scrap_heap', 'shrineFae': 'fae/shrine', 'gatehouse': 'liches/gatehouse',
+    'generator': 'machines/generator', 'scrapHeap': 'machines/scrap_heap', 'shrineFae': 'fae/shrine',
     # lights (they flicker)
     'skullTorch': 'orcs/skull_torch', 'torchPost': 'moonpack/torch_post', 'brazierRed': 'bloodcourt/brazier', 'brazier': 'dwarves/brazier', 'lanternPost': 'liches/lantern_post',
     'tasselLantern': 'nomads/tassel_lantern', 'lightLantern': 'fae/light_lantern_post', 'mushroomLantern': 'druids/mushroom_lantern', 'arcLamp': 'machines/arc_lamp',

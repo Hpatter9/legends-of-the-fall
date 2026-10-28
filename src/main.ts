@@ -916,6 +916,8 @@ class Game {
   private revealDestination(section = chainOf(this.run)?.[this.run.stage - 1]): void {
     const board = section?.board;
     if (this.auto || !this.scenesOn() || !board?.landmark) { this.destinationReveal = null; return; }
+    // (an army road's destination is its final arena: the camera looks it over when the arena itself is reached, not from the approach)
+    if (board.tiles.some((t) => t.scene) && !board.pieces?.length) { this.destinationReveal = null; return; }
     const key = `${this.run.seed}:${this.run.mode?.kind === 'army' ? this.run.mode.scenario : ''}`;
     if (this.destinationsSeen.has(key)) return;
     this.destinationsSeen.add(key);

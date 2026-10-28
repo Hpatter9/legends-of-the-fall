@@ -168,15 +168,15 @@ export const ARENAS: Record<string, Arena> = {
   orcs: { shape: 'round', ring: 'fence', ringW: 1, gap: 0, paved: false, inner: 'barrels', pieces: ['warGate', 'drum', 'tent', 'flag', 'campfire'], name: 'The war camp' },
   undead: { shape: 'square', ring: 'ruin', ringW: 1, gap: 0, paved: true, inner: 'graves', pieces: ['mausoleum', 'lamp', 'skulls'], name: 'The mausoleum court' },
   necropolis: { shape: 'square', ring: 'ruin', ringW: 1, gap: 0, paved: true, inner: 'graves', pieces: ['mausoleum', 'lamp', 'skulls'], name: 'The mausoleum court' },
-  infernal: { shape: 'round', ring: 'lava', ringW: 2, gap: 0, paved: true, inner: 'lavaRunnels', pieces: ['gate', 'brazier', 'brazier'], name: 'The ring of fire' },
+  infernal: { shape: 'round', ring: 'lava', ringW: 2, gap: 0, paved: true, inner: 'lavaRunnels', pieces: ['brazier', 'brazier', 'skulls'], name: 'The ring of fire' },
   wildwood: { shape: 'round', ring: 'wood', ringW: 1, gap: 0, paved: false, inner: 'shrine', pieces: ['arch', 'circle'], name: 'The grove circle' },
   golems: { shape: 'square', ring: 'crystal', ringW: 1, gap: 0, paved: true, inner: 'lavaRunnels', pieces: ['foundry', 'lamp'], name: 'The foundry floor' },
   yokai: { shape: 'square', ring: 'wood', ringW: 1, gap: 0, paved: true, inner: 'lanterns', pieces: ['shrine', 'lamp', 'lamp'], name: 'The shrine court' },
   beasts: { shape: 'round', ring: 'bones', ringW: 1, gap: 0, paved: false, inner: 'bones', pieces: ['den', 'skulls', 'skulls'], name: 'The bone ring' },
   ogres: { shape: 'round', ring: 'stones', ringW: 1, gap: 2, paved: false, inner: 'stone', pieces: ['circle', 'campfire'], name: 'The stone ring' },
-  mountain: { shape: 'round', ring: 'stones', ringW: 1, gap: 2, paved: false, inner: 'stone', pieces: ['gate'], name: 'The stone ring' },
-  labyrinth: { shape: 'square', ring: 'ruin', ringW: 1, gap: 0, paved: true, inner: 'maze', pieces: ['gate', 'lamp'], name: 'The maze heart' },
-  temple: { shape: 'square', ring: 'ruin', ringW: 1, gap: 0, paved: true, inner: 'maze', pieces: ['gate', 'lamp'], name: 'The maze heart' },
+  mountain: { shape: 'round', ring: 'stones', ringW: 1, gap: 2, paved: false, inner: 'stone', pieces: ['campfire'], name: 'The stone ring' },
+  labyrinth: { shape: 'square', ring: 'ruin', ringW: 1, gap: 0, paved: true, inner: 'maze', pieces: ['lamp', 'lamp'], name: 'The maze heart' },
+  temple: { shape: 'square', ring: 'ruin', ringW: 1, gap: 0, paved: true, inner: 'maze', pieces: ['lamp', 'lamp'], name: 'The maze heart' },
 };
 
 /** A boss's arena laid in a w x d section: which tiles are its floor, its ring, the road in (and on out, for a mid-boss), and what stands inside. */

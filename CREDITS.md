@@ -245,7 +245,7 @@ All Craftpix, copied one sprite or layer at a time; no PixelLab. Ground tops and
 ## The army road's scenery and arenas (WORLD-ROAD)
 
 - `src/art/road/atlas.png` (cut by `tools/army-road/prep.py`, listed in `src/render/roadAtlas.ts`): the arenas' rings and set pieces and the land
-  beside the road (the orcs' spiked wall and stake fence, the liches' bone wall, iron fence, mausoleum, gatehouse, dead oak and lantern post, the
+  beside the road (the orcs' spiked wall and stake fence, the liches' bone wall, iron fence, mausoleum, dead oak and lantern post, the
   dwarves' stone wall, braziers, crystals and rubble, the machines' iron wall, generator, iron tree, arc lamp and coil stack, the Moon Pack's bone
   fence, cave den, howling stone, snowy pine, torch post and fallen log, the druids' great oak, birch, standing stone, stone circle, hedge and
   mushroom lantern, the Fae's weeping willow, silver birch, shrine and lantern post, the Blood Court's gravestones and brazier, the nomads' tassel

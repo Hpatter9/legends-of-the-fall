@@ -141,7 +141,7 @@ export interface Tile {
 /** The kinds of land beside an army's road (`armyRoad.ts`), and of an arena's ring. */
 export type Scenery = 'wood' | 'rocks' | 'ruin' | 'water' | 'lava' | 'bones' | 'fence' | 'stones' | 'grave' | 'crystal';
 /** A set piece of an arena drawn on its scenery (looks only): the war camp's gate, the mausoleum, the den... */
-export type PieceKind = 'warGate' | 'drum' | 'tent' | 'flag' | 'mausoleum' | 'den' | 'arch' | 'circle' | 'foundry' | 'gate' | 'shrine' | 'brazier' | 'lamp' | 'campfire' | 'skulls';
+export type PieceKind = 'warGate' | 'drum' | 'tent' | 'flag' | 'mausoleum' | 'den' | 'arch' | 'circle' | 'foundry' | 'shrine' | 'brazier' | 'lamp' | 'campfire' | 'skulls';
 export interface Piece {
   u: number;
   v: number;

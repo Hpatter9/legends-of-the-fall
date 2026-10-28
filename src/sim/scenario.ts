@@ -559,14 +559,8 @@ export function planScenario(seed: number, theme: ScenarioId, waves: number, bos
   // The destination boss landmark anchors to the final boss arena section in world coordinates.
   const lastPlace = road[waves - 1];
   const lastSection = { rot: lastPlace.rot, origin: { u: lastPlace.ou, v: lastPlace.ov }, board: { w, d } };
-  // (beyond the final arena, on whichever side of it lies furthest up the screen (least U + V), clear of the road's other sections, so the
-  // compound stands behind the arena rather than over its back rows or in front of it)
-  const clear = ([U, V]: [number, number]) => road.slice(0, -1).every((q) => {
-    const r = rectOf(q);
-    return U < r.x0 - 6 || U >= r.x1 + 6 || V < r.y0 - 3 || V >= r.y1 + 3;
-  });
-  const sites = ([[Math.floor(w / 2), -5], [-6, Math.floor(d / 3)], [w + 5, Math.floor(d / 3)]] as const).map(([u, v]) => worldOf(lastSection, u, v));
-  const [destinationU, destinationV] = [...sites].sort((a, b) => +!clear(a) - +!clear(b) || a[0] + a[1] - (b[0] + b[1]))[0];
+  // (the final arena is the destination itself (WORLD-ROAD): its middle, where the camera's reveal looks when the arena is reached)
+  const [destinationU, destinationV] = worldOf(lastSection, Math.floor(w / 2), 6);
 
   for (let n = 1; n <= waves; n++) {
     const place = road[n - 1];

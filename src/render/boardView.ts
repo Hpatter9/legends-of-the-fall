@@ -577,7 +577,8 @@ export class BoardView {
       live.loops.push({ sp, frames, ph: fall.v % FALL_FRAMES, ms: 70 });
     }
     let landmark: Container | null = null;
-    if (b.landmark && b.landmarkAt && art) {
+    // (an army road draws no distant compound: the owner found the castle gate too angled for the grid; its final arena is the destination)
+    if (b.landmark && b.landmarkAt && art && !depth) {
       // Existing credited gate/tower sprites form a scenic compound beyond the far edge, never collision terrain.
       const base = tiles[Math.floor(b.w / 2)];
       const site = b.landmarkAt;

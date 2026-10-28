@@ -83,7 +83,7 @@ either side (`levelArena`: the middle of three bounds that each move at most a s
 | Ogres | The stone ring (round) | standing stones with gaps | a centre stone | stone circle, campfire |
 | Labyrinth | The maze heart (square, paved) | ruined walls | an inner wall broken in four places | gate, lamp |
 
-[Phase B: the compound is drawn again, behind the final arena, the owner's answer 5.] The old boss look (every tile flagstone with a gilded lip on a deeper plinth) is replaced: only paved arenas have flagstones.
+[Phase B: the owner later asked for the castle gate and tower to go (too angled for the grid): no compound is drawn on the army road; the final arena is the destination.] The old boss look (every tile flagstone with a gilded lip on a deeper plinth) is replaced: only paved arenas have flagstones.
 
 ## Renderer changes (`src/render/boardView.ts`, new `src/render/roadArt.ts`, `columnTextures.ts`)
 
@@ -157,7 +157,7 @@ arena with its hazard told ([orcs](../samples/army-road-after-orcs-mid-fight-clo
 [infernal](../samples/army-road-after-infernal-final-fight-close.png), [wildwood](../samples/army-road-after-wildwood-mid-fight-close.png),
 [beasts](../samples/army-road-after-beasts-final-fight-close.png), [labyrinth](../samples/army-road-after-labyrinth-final-fight-close.png),
 [yokai](../samples/army-road-after-yokai-final-fight-close.png), [golems](../samples/army-road-after-golems-final-fight-close.png),
-[ogres](../samples/army-road-after-ogres-final-fight-close.png)); the compound behind the final arena ([orcs](../samples/army-road-after-orcs-final.png), [undead](../samples/army-road-after-undead-final.png)); and at the other phone sizes ([360x780](../samples/army-road-after-360-sheet.png),
+[ogres](../samples/army-road-after-ogres-final-fight-close.png)); the final arenas, the destination, with no compound ([orcs](../samples/army-road-after-orcs-final-close.png), [undead](../samples/army-road-after-undead-final-close.png), [beasts](../samples/army-road-after-beasts-final-close.png), [labyrinth](../samples/army-road-after-labyrinth-final-close.png), [infernal](../samples/army-road-after-infernal-final-close.png)); and at the other phone sizes ([360x780](../samples/army-road-after-360-sheet.png),
 [412x915](../samples/army-road-after-412-sheet.png)). Re-shoot: `node tools/army-road/shots.mjs army-road-after orcs:8:mid-fight-close
 orcs:2:fall-zoom ...` (`section`, `road`, `mid`/`final`, `fight`, `fall`, `close`/`zoom` in the label; `VIEW=360x780` for another size).
 
@@ -193,7 +193,7 @@ Patches of one kind take turns (each its own moment in the period); the periods 
 - **Rings and set pieces from the kits.** The arenas' rings are runs of wall at the tiles' own angle, each tile a segment laid along the ring and
   mirrored where the ring runs the other way: the orcs' spiked palisade, the undead's bone wall, the labyrinth's stone wall, the golems' iron wall,
   the beasts' bone fence, the ogres' standing stones, the yokai court's lanterns, the wildwood's great oaks and the yokai's willows. Set pieces: the
-  skull gate and war drum, the mausoleum, the cave den, the stone circle, the generator, the gatehouse, the Fae shrine, braziers, bonfires,
+  skull gate and war drum, the mausoleum, the cave den, the stone circle, the generator, the Fae shrine, braziers, bonfires,
   lanterns. They are single pieces of Chronos's isometric kits (the same kits as the Calamity map's), so they match the board's angle; cut into
   `src/art/road/atlas.png` by `tools/army-road/prep.py`.
 - **Flair.** Trees by land (great oaks and birches in the forest, willows at the shrine, snowy pines, burnt and dead trees, iron trees by the forge),
@@ -211,7 +211,7 @@ Patches of one kind take turns (each its own moment in the period); the periods 
 - **Phone care.** Everything moving is a sprite made once with the board: each frame only moves, re-tints or re-frames it (no allocation). With
   reduced motion the land is still (the tells are a steady mark); on a battery saver the land moves every other frame. Only the live sections
   move; the baked ones stay still pictures.
-- The distant compound stands **behind** the final arena (owner's answer 5), five tiles beyond its back edge, instead of over its back rows.
+- **No castle compound.** The owner first kept the distant gate-and-tower compound (answer 5), then asked for it to go: the castle gate is too angled for the grid. No compound is drawn on the army road, at the approach or the final arena, and the gatehouse set pieces (the infernal ring's, the maze heart's and the mountain theme's) are gone too, with nothing off-angle in their place: the infernal ring has braziers and skulls, the maze heart two lamps. The destination is the final arena itself: `landmarkAt` now marks its middle, and the camera's reveal looks the arena over when it is reached (not from the approach).
 - The way into each arena is seven tiles wide where the heroes come in (it was five), narrowing to five at the arena's mouth.
 
 ### Balance (`node tools/curve/run.mjs cell <army>:<level>`)
