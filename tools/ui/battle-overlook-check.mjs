@@ -26,6 +26,9 @@ try {
     });
     await page.waitForFunction(() => window.__game.home.camp.bossRig && window.__game.home.camp.goatArt);
     await page.waitForTimeout(150);
+    // Complete the tutorial through its own handler so it removes tipLit before no-op DOM checks.
+    await page.locator('#tipSkip').evaluate((button) => button.click());
+    assert.equal(await page.locator('.tipLit').count(), 0);
     assert.equal(await page.locator('#hmCalamity').isDisabled(), true);
     assert.equal(await page.locator('#hmTower').isDisabled(), true);
     await page.screenshot({ path: `docs/samples/battle-overlook-locked-${width}.png` });
@@ -60,7 +63,14 @@ try {
     assert.equal(await page.locator('#hmTower').isDisabled(), false);
     await page.screenshot({ path: `docs/samples/battle-overlook-${width}.png` });
     await page.locator('#hmCalamity').click();
-    assert.ok(await page.locator('.cvPick').isVisible());
+    await page.locator('#cutscene .csSkip').waitFor({ state: 'visible' });
+    await page.locator('#cutscene .csSkip').click();
+    await page.locator('.cvPick').waitFor({ state: 'visible' });
+    assert.ok(await page.evaluate(() => window.__game.meta.scenes.includes('calamityOpens')));
+    await page.locator('.cvPick').getByRole('button', { name: 'Back', exact: true }).click();
+    await page.locator('#hmCalamity').click();
+    await page.locator('.cvPick').waitFor({ state: 'visible' });
+    assert.equal(await page.locator('#cutscene .csSkip').isVisible(), false);
     await page.locator('.cvPick').getByRole('button', { name: 'Back', exact: true }).click();
     await page.locator('#hmTower').click();
     assert.ok(await page.locator('.stPickCard').isVisible());
@@ -124,6 +134,23 @@ try {
     assert.equal(await page.evaluate(() => window.__game.home.camp.raf), 0);
     await page.locator('.hmTab').nth(2).click();
     await page.waitForFunction(() => window.__game.home.camp.raf > 0);
+    // A normal subsequent launch keeps the new-army ribbon quiet and the scene ready.
+    await page.goto(url);
+    await page.waitForFunction(() => !!window.__game && window.__game.home.isOpen && !!window.__game.home.camp.back);
+    await page.evaluate(() => { document.getElementById('tip').hidden = true; });
+    assert.equal(await page.locator('.hm-battle .hmBanner').count(), 0);
+    assert.ok(await page.evaluate(() => {
+      const scene = document.querySelector('.cpWrap').getBoundingClientRect();
+      const bar = document.querySelector('.hm-battle .hmFront').getBoundingClientRect();
+      return Math.abs(scene.bottom - bar.top) < 1;
+    }), 'scene and command bar meet without an overlap or gap');
+    assert.ok(await page.evaluate(() => {
+      const selectors = ['#hmBattle', '#hmDaily', '#hmTower', '#hmCalamity', '#hmCrowns img', '#hmStones img'];
+      const nodes = selectors.map((s) => document.querySelector(s));
+      window.__game.home.refresh();
+      return nodes.every((e, i) => e && e === document.querySelector(selectors[i]));
+    }), 'unchanged controls and resource pictures survive a refresh');
+    await page.screenshot({ path: `docs/samples/battle-overlook-return-${width}.png` });
     assert.deepEqual(errors, []);
     console.log(`PASS ${width}x${height}: controls, locked/open Calamity, nine distinct camps, reduced motion, saver, hero taps and tab lifecycle`);
     await context.close();

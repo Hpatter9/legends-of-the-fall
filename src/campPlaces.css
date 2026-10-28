@@ -62,8 +62,9 @@
 .hm-battle .cpStash:has(.csChest) { border-radius: 4px; background: #12191dbb; }
 .hm-battle .cpStash .csChest { width: 48px; min-height: 48px; }
 .hm-battle .cpStash .csCount { position: absolute; right: -2px; top: -4px; font-size: 11px; padding: 1px 3px; background: #15201c; }
-.hm-battle .hmFront { height: 110px; padding: 5px 12px 3px; gap: 4px; border-top: 1px solid #9c8351; background: linear-gradient(#202724, #11191c); box-shadow: 0 -4px 16px #0c121a99; }
-.hm-battle { --hmBar: 110px; }
+.hm-battle .hmFront { height: var(--hmBar); padding: 5px 12px 3px; gap: 4px; border-top: 1px solid #9c8351; background: linear-gradient(#202724, #11191c); box-shadow: 0 -4px 16px #0c121a99; }
+.hmPage.hm-battle { --hmBar: 110px; }
+.hmPage.hm-battle:not(:has(.hmBanner)) { --hmBar: 88px; }
 .hm-battle .hmBanner { height: 20px; line-height: 20px; border: 0; padding: 0 6px; background: none; font: 400 12px/20px var(--body); letter-spacing: 0.7px; box-shadow: none; }
 .hm-battle .hmGo { grid-template-columns: 1fr 1fr; grid-template-rows: 48px 24px; gap: 3px 10px; }
 .hm-battle .hmBattle { grid-column: 1 / -1; grid-row: 1; min-height: 48px; border: 1px solid #c5a567; border-image: none; border-radius: 3px; font: 700 17px/1.2 var(--display); letter-spacing: 0.8px; text-transform: uppercase; background: linear-gradient(110deg, #233c2b, #3c6141 50%, #233c2b); box-shadow: inset 0 0 0 3px #142b24, inset 0 0 0 4px #b5a16a60, 0 2px 5px #0008; color: #f4e3b3; }

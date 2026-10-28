@@ -14,6 +14,8 @@ import { CAL_MAPS } from './sim/calamity';
 import { pickHero } from './calamityView';
 import { noteFightStats, notePayout, recapOf } from './sim/runRecap';
 import { showRecap } from './recapView';
+import { campArtReady } from './camp';
+import { comebackTips, type ComebackGo } from './sim/comeback';
 import { ARMIES, armyById, armyUnlocked, settleWave, type ArmyPay } from './sim/armies';
 import { drawRunStars, showUnlock } from './armiesView';
 import { modeOpen } from './sim/modeUnlock';
@@ -27,7 +29,7 @@ import { awakenedOf } from './sim/awaken';
 import { earn, loadMeta, needsStarter, pickStarter, heroRank, recordStars, saveMeta, type Meta } from './sim/meta';
 import { chooseStarter } from './starter';
 import { ScenePlayer } from './render/sceneView';
-import { dueScene, markSeen } from './sim/sceneRules';
+import { cardDue, cardKey, dueScene, lossMoments, markCard, markSeen } from './sim/sceneRules';
 import { onAwakened } from './awakenView';
 import { SCENES, SCENE_ORDER, type Moment } from './sim/sceneScripts';
 import { previewFrames } from './render/sceneClock';
@@ -381,6 +383,8 @@ class Game {
     sync();
     // (the tower's map comes and goes without the home screen changing: the ambience follows it too)
     new MutationObserver(() => this.syncScene()).observe($('towerMap'), { attributes: true, attributeFilter: ['hidden'] });
+    // (the camp's pictures are in before the loading screen goes, so the first look at the home screen is never an empty field; a slow load gives up after a moment)
+    if (this.home.isOpen) await Promise.race([campArtReady().then(() => new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok)))), new Promise((ok) => setTimeout(ok, 2500))]).catch(() => undefined);
     $('loading').remove();
     (window as unknown as { __game: Game }).__game = this;
     // (a hero's first awakening has its cinematic)
@@ -585,7 +589,7 @@ class Game {
     if (!on) this.focus();
   }
 
-  /** A boss stage's first time: the screen dims, the boss's portrait slides in, its name on a ribbon slams down with its title, and the camera glides to it. Once per stage (a restart of the same fight does not replay it). */
+  /** A boss's first meeting: the screen dims, the boss's portrait slides in, its name on a ribbon slams down with its title, and the camera glides to it. Once a save for each boss (`cardDue`): a new run, a restart or a new day does not replay it. */
   private startIntro(): void {
     const key = `${this.run.seed}:${this.run.stage}`;
     // (a boss, or the named elite of an elite node, gets the card)
@@ -593,6 +597,11 @@ class Game {
     const boss = this.b.units.find((u) => u.side === 'foe' && (isBoss(u.def) || (elite && u.def === elite.def)));
     if (!boss || this.introduced.has(key)) return;
     this.introduced.add(key);
+    // (a boss's card plays once a save, the first time that boss is met: not again on a new run, a retry or a new day)
+    const card0 = cardKey(boss.def, elite?.id);
+    if (!cardDue(this.meta, card0)) return;
+    markCard(this.meta, card0);
+    saveMeta(this.meta);
     this.goat.react('boss');
     this.intro = { t: 0, boss, slammed: false };
     const card = $('bossCard');
@@ -1506,6 +1515,8 @@ class Game {
   private openMode(kind: 'calamity'): void {
     // (a shut mode has a disabled button; a run begun before it shut is still let in)
     if (!modeOpen(this.meta, kind) && !loadSlot(kind)) return;
+    // (the Calamity's reveal, if it has not played yet (cinematics were off as it opened, or the save opened it before the reveal existed), comes first)
+    if (dueScene(this.meta, { kind: 'calOpen' }) && this.scenesOn()) return void this.queueScene({ kind: 'calOpen' }).then(() => this.openMode(kind));
     const saved = loadSlot(kind);
     if (saved) return this.resumeSlot(saved);
     pickHero(this.meta, (hero, ascension) => this.startTower(calamityRun(clockSeed(), this.meta, hero, ascension)), () => this.home.open());
@@ -1826,7 +1837,9 @@ class Game {
       ? { title: 'Army defeated!', tone: 'won' as const, line: `${army?.name ?? 'The run'} cleared in ${run.recap?.fights ?? 0} fights` }
       : { title: 'Run over', tone: 'lost' as const, line: army ? `The ${army.name} held at wave ${run.best} of ${army.waves.length}` : `Fell at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} hires` };
     const joke = Rng.from(run.seed, won ? 0x7e1 : 0x7e2).pick(won ? RECAP_WIN : RECAP_LOSS);
-    showRecap($('recap'), recapOf(run), { ...head, joke }, () => void this.revealEarned().then(() => this.afterResult()));
+    // (a real defeat, no heart left: a few pointers on how to come back stronger, each with its way there once the recap is left)
+    const advice = !won && !this.auto ? { tips: comebackTips(this.meta, { army: army?.id, tier: army ? tierOfRun(run) : 0, party: this.meta.party }), onGo: (go: ComebackGo) => void this.revealEarned().then(() => (this.afterResult(), this.home.goTo(go))) } : undefined;
+    showRecap($('recap'), recapOf(run), { ...head, joke }, () => void this.revealEarned().then(() => this.afterResult()), advice);
   }
 
   /** A run has ended: back to the main screen, showing what it earned. */
@@ -2216,10 +2229,12 @@ class Game {
     const n = heroesPlaced(b);
     const ended = b.phase === 'won' || b.phase === 'lost';
     const ready = ended && (!!this.auto || this.endWait >= END_WAIT_MS);
-    // (the first defeat has its cinematic as the loss shows, with a heart to burn or not)
-    if (ready && b.phase === 'lost' && !this.lossScened && !this.auto) {
-      this.lossScened = true;
-      void this.queueScene({ kind: 'firstLoss' });
+    // (the first defeat has its cinematic as the loss shows, but only a real one: a fall a heart revives is not a defeat)
+    // (checked before a heart burns: with one left the moments are none, and the check waits for the next fall)
+    if (ready && b.phase === 'lost' && !this.lossScened && !this.auto && !this.revive) {
+      const moments = lossMoments(fallOutcome(run));
+      if (moments.length) this.lossScened = true;
+      for (const m of moments) void this.queueScene(m);
     }
     // (a wave lost with a heart left is not settled: a heart burns and the fight resumes by itself. With none left, or in a mode with none, the loss is settled and the run ends)
     if (ready && b.phase === 'lost' && !this.settled && fallOutcome(run) === 'heart' && !this.revive) this.beginRevive();
@@ -2264,6 +2279,8 @@ class Game {
       toastJoined(joined);
       // (the fight's cinematics, one after another: an army's last stand, a hero earned has its own reveal; the Calamity's end plays before its victory card)
       if (army && this.pay?.firstClear) void this.queueScene({ kind: 'armyClear', army: army.id });
+      // (the stars this fight won may have opened the Calamity: its reveal, the portal, plays once, the moment it opens)
+      if (modeOpen(this.meta, 'calamity')) void this.queueScene({ kind: 'calOpen' });
       this.earned.push(...joined);
       // (a run that levels its own heroes taught them in `finishTower`; the lasting XP is not touched)
       const own = run.local ? climbXpView(run) : null;

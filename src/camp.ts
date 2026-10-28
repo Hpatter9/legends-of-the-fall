@@ -26,11 +26,21 @@ import arcaneCampUrl from './art/camp/camp-arcane.png';
 const ART: Record<string, string> = { overlook: overlookUrl, campfire: campfireUrl, war: warCampUrl, wild: wildCampUrl, arcane: arcaneCampUrl };
 type Art = Record<string, HTMLImageElement>;
 let art: Art | null = null;
-async function loadArt(): Promise<Art> {
-  if (art) return art;
-  const got: Art = {};
-  await Promise.all(Object.entries(ART).map(async ([k, url]) => (got[k] = await loadImage(url))));
-  return (art = got);
+let artLoading: Promise<Art> | null = null;
+/** The camp's pictures, loaded and decoded (the page waits for them behind its loading screen, so the camp never opens empty). */
+export const campArtReady = (): Promise<unknown> => loadArt();
+function loadArt(): Promise<Art> {
+  if (art) return Promise.resolve(art);
+  if (artLoading) return artLoading;
+  artLoading = (async () => {
+    const got: Art = {};
+    await Promise.all(Object.entries(ART).map(async ([k, url]) => (got[k] = await loadImage(url))));
+    return (art = got);
+  })().catch((error: unknown) => {
+    artLoading = null;
+    throw error;
+  });
+  return artLoading;
 }
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
