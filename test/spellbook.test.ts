@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { newCastle, spellBudget, SPELL_BUDGET } from '../src/sim/castle';
 import { loadMeta, startedMeta, saveMeta } from '../src/sim/meta';
-import { budgetOf, equipBlock, equipSpell, LOADOUT_SIZE, powerOf, readLoadout, SPELLS, SPELL_IDS, STARTER_SPELLS, unequipSpell, unlockSpell } from '../src/sim/spells';
+import { budgetOf, equipBlock, equipSpell, LOADOUT_SIZE, powerOf, readLoadout, SPELLS, SPELL_IDS, STARTER_SPELLS, unequipSpell } from '../src/sim/spells';
+import * as spells from '../src/sim/spells';
 
 const store = () => {
   const raw: Record<string, string> = {};
@@ -59,23 +60,15 @@ test('the Mage Tower raises the budget at levels 2 and 4', () => {
   assert.equal(equipBlock(m, 'heal'), null);
 });
 
-test('unlocking costs crowns once, and only with enough', () => {
-  const m = startedMeta(1);
-  assert.equal(unlockSpell(m, 'shield'), false);
-  m.crowns = SPELLS.shield.price + 5;
-  assert.ok(unlockSpell(m, 'shield'));
-  assert.equal(m.crowns, 5);
-  assert.ok(m.spellbook.owned.includes('shield'));
-  assert.equal(unlockSpell(m, 'shield'), false);
-  assert.equal(m.crowns, 5);
-  assert.equal(unlockSpell(m, 'heal'), false);
+test('spells are not bought with crowns: there is no price and no way to buy one', () => {
+  assert.equal('unlockSpell' in spells, false);
+  for (const id of SPELL_IDS) assert.equal('price' in SPELLS[id], false, id);
 });
 
 test('the spellbook is saved and loaded', () => {
   const s = store();
   const m = startedMeta(3);
-  m.crowns = 500;
-  unlockSpell(m, 'shield');
+  m.spellbook.owned.push('shield');
   unequipSpell(m, 'meteor');
   equipSpell(m, 'shield');
   saveMeta(m, s);
