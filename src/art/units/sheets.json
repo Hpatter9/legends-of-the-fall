@@ -2263,5 +2263,27 @@
   "figure": 100,
   "facesRight": true,
   "lies": true
+ },
+ "duchess_goat": {
+  "w": 96,
+  "h": 96,
+  "perRow": 4,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 4,
+   "idle": 2,
+   "hurt": 1,
+   "dead": 2
+  },
+  "figure": 72,
+  "facesRight": true,
+  "lies": true
  }
 }

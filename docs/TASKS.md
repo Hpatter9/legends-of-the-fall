@@ -25,6 +25,17 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Validation:** see the handoff's "Checks run for phase B".
 - **Handoff:** [notes](notes/army-road.md), [phase B sheet](samples/army-road-after-sheet.png), [phase A mock-ups](samples/army-road-mock-sheet.png).
 
+### DUCHESS-FIGHTS — Duchess joins a fight
+
+- **Goal:** the owner's ask: one fight in 1000, Duchess the court goat joins on the player's side as a level-100 goat (a real fighter), a short prompt says so, and a cinematic plays the first time only.
+- **Status:** phase A (proposal, rough prototype, mock-ups) ready for the owner's answers; phase B waits on them.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/duchess-fights`, `/home/user/duchess-fights` (from main 0.189.0); PR none.
+- **Allowed files or systems:** new `src/sim/duchessFight.ts`, `src/duchessFightView.ts`, `src/art/units/duchess_goat.png`, `tools/duchess/`, `test/duchess-fights.test.ts`; small hooks in `src/sim/battle.ts` (`Stage.duchess`, `Battle.duchess`, the `duchess` event, `startBattle`, `fight`), `src/sim/run.ts` (`startStage`'s wish), `src/sim/units.ts` (`UNITS.duchess`), `src/render/sheets.ts`, `src/art/units/sheets.json`, `src/duchess.ts` (`stayAway` only), `src/main.ts`; phase B: `achievements.ts`, `quipData.ts`, `docs/lines/new-lines.json`, the scene files if the cinematic moves, `CREDITS.md`. Not Duchess's tap, trinkets or hats (the other AI's), not `render/duchessRules.ts`, not the Last Stand.
+- **Completion criteria:** the roll on the fight's seed only (fights without her unchanged); she joins at level 100 per the owner's answers on declining, modes, strength and the cinematic; her kit tested; her sheet from pack art, credited; the card and her lines; `?duchess=1` for testing; typecheck, `npm test -- duchess-fights` and the affected tests, web build, 393x852, 360x780 and 412x915.
+- **Validation (phase A):** typecheck passed; `npm test -- duchess-fights` 6 of 6; `npm run web` built; `tools/duchess/mock.mjs` at 393x852, 360x780 and 412x915 with no page errors.
+- **Handoff:** [proposal](notes/duchess-fights.md); [mock-up sheet](samples/duchess-fights-mock-sheet.png).
+
 ### AWAKEN-002 — Class auras for awakened heroes
 
 - **Goal:** the owner's ask: drop the awakened recolour; an awakened hero wears an aura at step 1 (rank 5) and a stronger, bigger one at step 2 (rank 6), its style set by the hero's class trait (not the origin), wherever an awakened hero is drawn.

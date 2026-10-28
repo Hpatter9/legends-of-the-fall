@@ -289,6 +289,10 @@ is the one Chronos's cutscenes use (three steps walking left, three walking righ
 (`animals/goats.png`). The pack folder has no licence file: check whtdragon's posted terms of use before any public release (the same note as
 Chronos's CREDITS.md).
 
+Her fighting sheet (`src/art/units/duchess_goat.png`, for the rare fight she joins: `tools/duchess/compose-duchess.py`) is the same white goat's right-facing
+row of three walking frames from that pack, scaled up 2x with nearest-neighbour, with the game's rows built from them as the wolves' are: a step cycle, a headbutt
+(the stride frames tilted about her hooves), an idle, a hurt frame brightened, and a dead frame rolled onto its back.
+
 ## The Beastmaster's wolves (`src/art/units/wolf_grey.png`, `wolf_black.png`; `tools/wolf/compose-wolf.py`)
 
 The wolf (and the black dire wolf) are the grey and black wolves of **whtdragon**'s RPG Maker MV animals pack (`animals/wolfdog.png`, from the private assets repository `hpatter9/chronos-assets`), the
