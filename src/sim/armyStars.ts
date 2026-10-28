@@ -7,6 +7,7 @@
 // Pixi, no DOM.
 
 import { dailyStarsMax } from './dailyThemes';
+import { chestOres, grantOres, ORES, sumOres, type OreDrop } from './awakenMats';
 import { ARMIES, armyById, armyIndex, recordOf, type Army, type ArmyRecord } from './armies';
 import { grantEquipment, itemName, RARITY_NAMES, rollEquipment, type NewEquipment } from './equipment';
 import { type Meta, type StashChest } from './meta';
@@ -156,7 +157,7 @@ export function rollGear(rng: Rng, at: number, armyIdx: number): GearDrop[] {
 }
 
 export interface LootItem {
-  type: 'crowns' | 'stones' | 'gear' | 'tomes' | 'spell';
+  type: 'crowns' | 'stones' | 'gear' | 'tomes' | 'spell' | 'ores';
   /** A line for the reveal: "320 crowns", "3 summoning stones". */
   text: string;
   /** The equipment's base it is about. */
@@ -165,6 +166,8 @@ export interface LootItem {
   n?: number;
   /** The size of the XP tomes a tomes line holds (`tomes.ts`). */
   size?: TomeSize;
+  /** The class trait of the rift ores a line holds (`awakenMats.ts`). */
+  trait?: string;
   /** The spell a scroll teaches (`spellSources.ts`). */
   spell?: SpellId;
   /** A piece of equipment this reward is (for its icon and frame). */
@@ -286,6 +289,12 @@ function lootOf(m: Meta, c: StashChest, apply: boolean): Loot {
     if (apply && !m.spellbook.owned.includes(scroll)) m.spellbook.owned.push(scroll);
     items.push({ type: 'spell', text: scrollWords(scroll), spell: scroll, prize: true });
   }
+  // (now and then a gold or Mythic chest holds a few rift ores of its army's kinds: from a side stream of its seed)
+  const ores = daily ? null : chestOres(c.seed, chestKind(c.at), c.army);
+  if (ores) {
+    if (apply) grantOres(m, [ores]);
+    items.push({ type: 'ores', text: `${ores.n} ${ORES[ores.trait].name}`, n: ores.n, trait: ores.trait });
+  }
   // (equipment: last, as it was drawn last; granted once, when the chest is opened)
   for (const g of roll.gear) {
     if (apply) grantEquipment(m, g.item);
@@ -310,9 +319,12 @@ export interface LootSummary {
   tomes: TomeCounts;
   spells: LootItem[];
   gear: LootItem[];
+  /** Rift ores, the same kinds added together. */
+  ores: OreDrop[];
 }
 export function sumLoot(loots: readonly Loot[]): LootSummary {
-  const out: LootSummary = { chests: loots.length, crowns: 0, stones: 0, tomes: {}, spells: [], gear: [] };
+  const out: LootSummary = { chests: loots.length, crowns: 0, stones: 0, tomes: {}, spells: [], gear: [], ores: [] };
+  const ores: OreDrop[] = [];
   for (const l of loots)
     for (const it of l.items) {
       if (it.type === 'crowns') out.crowns += it.n ?? 0;
@@ -320,7 +332,9 @@ export function sumLoot(loots: readonly Loot[]): LootSummary {
       else if (it.type === 'tomes' && it.size) out.tomes = addTomes(out.tomes, { [it.size]: it.n ?? 0 });
       else if (it.type === 'spell') out.spells.push(it);
       else if (it.type === 'gear') out.gear.push(it);
+      else if (it.type === 'ores' && it.trait) ores.push({ trait: it.trait, n: it.n ?? 0 });
     }
+  out.ores = sumOres(ores);
   // (a stable sort: pieces of the same rarity and level stay in the order their chests were opened)
   out.gear.sort((a, b) => (b.rarity ?? 0) - (a.rarity ?? 0) || (b.equip?.level ?? 0) - (a.equip?.level ?? 0));
   return out;

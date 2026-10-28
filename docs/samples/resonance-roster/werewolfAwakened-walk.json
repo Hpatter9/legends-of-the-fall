@@ -1,0 +1,214 @@
+{
+  "id": "werewolfAwakened",
+  "frames": [
+    {
+      "row": "frontA",
+      "col": 0,
+      "box": [
+        38,
+        46,
+        276,
+        308
+      ],
+      "width": 87,
+      "height": 96,
+      "left": 85
+    },
+    {
+      "row": "frontA",
+      "col": 1,
+      "box": [
+        335,
+        45,
+        577,
+        307
+      ],
+      "width": 89,
+      "height": 96,
+      "left": 79
+    },
+    {
+      "row": "frontA",
+      "col": 2,
+      "box": [
+        647,
+        50,
+        890,
+        307
+      ],
+      "width": 89,
+      "height": 94,
+      "left": 78
+    },
+    {
+      "row": "frontA",
+      "col": 3,
+      "box": [
+        960,
+        50,
+        1204,
+        307
+      ],
+      "width": 89,
+      "height": 94,
+      "left": 78
+    },
+    {
+      "row": "frontB",
+      "col": 0,
+      "box": [
+        35,
+        339,
+        285,
+        601
+      ],
+      "width": 92,
+      "height": 96,
+      "left": 84
+    },
+    {
+      "row": "frontB",
+      "col": 1,
+      "box": [
+        333,
+        340,
+        587,
+        598
+      ],
+      "width": 93,
+      "height": 95,
+      "left": 78
+    },
+    {
+      "row": "frontB",
+      "col": 2,
+      "box": [
+        643,
+        346,
+        900,
+        600
+      ],
+      "width": 94,
+      "height": 93,
+      "left": 77
+    },
+    {
+      "row": "frontB",
+      "col": 3,
+      "box": [
+        959,
+        348,
+        1211,
+        601
+      ],
+      "width": 92,
+      "height": 93,
+      "left": 78
+    },
+    {
+      "row": "rearA",
+      "col": 0,
+      "box": [
+        38,
+        648,
+        297,
+        898
+      ],
+      "width": 95,
+      "height": 92,
+      "left": 85
+    },
+    {
+      "row": "rearA",
+      "col": 1,
+      "box": [
+        347,
+        647,
+        596,
+        897
+      ],
+      "width": 91,
+      "height": 92,
+      "left": 83
+    },
+    {
+      "row": "rearA",
+      "col": 2,
+      "box": [
+        654,
+        644,
+        907,
+        902
+      ],
+      "width": 93,
+      "height": 95,
+      "left": 81
+    },
+    {
+      "row": "rearA",
+      "col": 3,
+      "box": [
+        963,
+        644,
+        1215,
+        898
+      ],
+      "width": 92,
+      "height": 93,
+      "left": 79
+    },
+    {
+      "row": "rearB",
+      "col": 0,
+      "box": [
+        36,
+        937,
+        296,
+        1192
+      ],
+      "width": 95,
+      "height": 93,
+      "left": 84
+    },
+    {
+      "row": "rearB",
+      "col": 1,
+      "box": [
+        339,
+        935,
+        594,
+        1193
+      ],
+      "width": 93,
+      "height": 95,
+      "left": 80
+    },
+    {
+      "row": "rearB",
+      "col": 2,
+      "box": [
+        649,
+        939,
+        909,
+        1192
+      ],
+      "width": 95,
+      "height": 93,
+      "left": 79
+    },
+    {
+      "row": "rearB",
+      "col": 3,
+      "box": [
+        957,
+        941,
+        1212,
+        1195
+      ],
+      "width": 93,
+      "height": 93,
+      "left": 77
+    }
+  ],
+  "warnings": []
+}

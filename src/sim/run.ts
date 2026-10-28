@@ -3,6 +3,7 @@
 // the bench. Stage n meets a band of foes made tougher by n, and every fifth stage a boss (its own band, led by the boss). A win pays gold; a lost
 // fight ends the run. Pure rules: no Pixi, no DOM; the summon draws from a side stream of the run's seed.
 
+import { duchessModeOk, type DuchessWish } from './duchessFight';
 import { startBattle, type Battle, type Boost, type Stage } from './battle';
 import { CLASSIC_AREAS, type Area } from './board';
 import { CAL_CASTLE_EXTRA } from './calamity';
@@ -379,7 +380,9 @@ export function chainOf(run: Run): Section[] | null {
 }
 
 /** A fresh fight for the run's current stage (a different board each stage; an army's is its section of the long map). */
-export function startStage(run: Run): Battle {
+/** Make the fight for the run's stage. `duchess`: whether Duchess the goat may join (`duchessFight.ts`); the page passes 'roll', and every headless
+ *  caller (the tests, the balance tools) leaves it 'never', so their fights are as they were. A mode she stays out of never has her. */
+export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
   const rl = relicEffects(run.relics);
   const army = waveArmyOf(run);
   // (a floor of the tower brings its own band and strength, fixed when the node was entered)
@@ -405,6 +408,7 @@ export function startStage(run: Run): Battle {
     move: moveRate(run.castle),
     relics: Object.keys(team).length || first || revive || set ? { team, first, revive, set } : undefined,
     ...(theme ? { twist: themeFx(theme), featured: theme.trait } : {}),
+    duchess: duchessModeOk(run.mode) ? duchess : 'never',
   });
 }
 

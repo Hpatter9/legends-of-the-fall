@@ -1,6 +1,7 @@
 // The small screens of the calamity and the tower's start-over: the choice of a starting hero, and a plain yes/no box. The map, the
 // shops and the recruit camps are the tower's own view (`towerView.ts`). Like it, this only reads the meta and calls back.
 
+import { orePouch } from './oreView';
 import { bestTitle } from './sim/calReward';
 import type { Meta } from './sim/meta';
 import { CAL_MAPS } from './sim/calamity';
@@ -113,6 +114,8 @@ export function pickHero(meta: Meta, onPick: (kind: string, ascension: number) =
     el('h2', '', 'The Calamity'),
     el('p', 'cvLead', `Pick one hero, at level 1. Climb ${CAL_MAPS} short maps, hiring the heroes you meet (up to ten, none merge); every map ends in a boss, and optional mini-bosses guard the best rewards. Your party's levels and gear stay out of it.`),
     asc,
+    // (the rift ores held: the Calamity is where most of them are found; AWAKEN-MATS)
+    orePouch(meta),
     grid,
     note,
   );

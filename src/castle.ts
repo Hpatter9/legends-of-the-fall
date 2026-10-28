@@ -22,7 +22,20 @@ import { play } from './render/sound';
 import { effectText, type PlotId } from './render/castleSpots';
 import { goatSheet } from './duchess';
 import { goatSays } from './quips';
-import { chewBob, FRAME as GOAT_FRAME, goatFrame, hopLift, tapGoat, type Goat } from './render/duchessRules';
+import { showQuip } from './quipView';
+import { settings } from './settings';
+import {
+  chewBob,
+  drawDuchessCosmetic,
+  drawHaystack,
+  FRAME as GOAT_FRAME,
+  goatFrame,
+  hopLift,
+  rollDailyTreat,
+  tapNudgeGoat,
+  type Goat,
+} from './render/duchessRules';
+import { TrophyWallModal } from './trophyWall';
 
 // Bespoke Castle Throne Room background and Seated King sprite sheets
 import throneRoomUrl from './art/throne/throne_room.png';
@@ -272,6 +285,7 @@ export class CastleScene {
   private heroFlourishUntil = [0, 0, 0, 0];
   private kingDecreeUntil = 0;
   private reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  private trophyModal = new TrophyWallModal();
 
   // Duchess the goat wandering the Throne Room floor
   private goat: Goat | null = null;
@@ -331,7 +345,13 @@ export class CastleScene {
     toArmies.title = 'March to the Armies';
     toArmies.addEventListener('click', () => this.onPick('armies'));
 
-    quickNav.append(toTavern, toSpells, toArmies);
+    const toTrophies = el('button', 'ctPortalChip', '🏆 Trophies');
+    toTrophies.title = 'Defeated Boss Trophy Wall';
+    toTrophies.addEventListener('click', () => {
+      if (this.meta) this.trophyModal.open(this.meta);
+    });
+
+    quickNav.append(toTavern, toSpells, toArmies, toTrophies);
     sectionHeader.append(sectionTitle, quickNav);
 
     // 3. Chamber Grid (6 Sacred Chambers + High Chapel)
@@ -353,7 +373,7 @@ export class CastleScene {
 
     this.stage.append(this.scenicFrame, this.powerBanner, sectionHeader, this.grid);
     this.scroll.append(this.stage);
-    this.root.append(this.scroll);
+    this.root.append(this.scroll, this.trophyModal.root);
   }
 
   /** Interactive tap on the Throne Room scene: tap King for royal decree, Duchess to bleat & hop, or guards to salute! */
@@ -368,12 +388,27 @@ export class CastleScene {
       const gx = this.goat.x;
       const gy = 368;
       if (Math.hypot(cx - gx, cy - gy) < 42) {
-        if (tapGoat(this.goat, this.now)) {
+        const nudge = tapNudgeGoat(this.goat, this.now);
+        if (nudge.hopped) {
           play('sparkle');
+          try {
+            const raw = localStorage.getItem('legends.meta');
+            if (raw) {
+              const m = JSON.parse(raw);
+              m.duchessTaps = (m.duchessTaps ?? 0) + 1;
+              localStorage.setItem('legends.meta', JSON.stringify(m));
+            }
+          } catch {
+            /* ignore */
+          }
           const clientX = rect.left + (gx / this.canvas.width) * rect.width;
           const clientY = rect.top + ((gy - 38) / this.canvas.height) * rect.height;
-          goatSays('tap', { x: clientX, y: clientY });
-          this.triggerHallBurst(gx, gy - 20, '#ffffff', 'Duchess hops!');
+          if (nudge.nudgedFromNest) {
+            this.claimHaystackTreat(clientX, clientY, gx, gy);
+          } else {
+            goatSays('tap', { x: clientX, y: clientY });
+            this.triggerHallBurst(gx, gy - 20, '#ffffff', 'Duchess hops!');
+          }
           return;
         }
       }
@@ -389,7 +424,16 @@ export class CastleScene {
       return;
     }
 
-    // 3. Check nearest Royal Guard
+    // 3. Check Trophy Rack mounted on the wall
+    if (cx >= 590 && cx <= 710 && cy >= 190 && cy <= 300) {
+      if (this.meta) {
+        this.triggerHallBurst(655, 240, '#f59e0b', 'Boss Trophies!');
+        this.trophyModal.open(this.meta);
+        return;
+      }
+    }
+
+    // 4. Check nearest Royal Guard
     let nearestIdx = -1;
     let bestDist = 110;
     GUARD_SPOTS.forEach((spot, idx) => {
@@ -687,6 +731,13 @@ export class CastleScene {
     const groundMin = 180;
     const groundMax = 620;
     const friends = GUARD_SPOTS.map((s) => s.x);
+
+    // Duchess occasionally nests on the throne room haystack
+    if (g.mode !== 'nest' && g.mode !== 'hop' && Math.random() < 0.003) {
+      g.mode = 'nest';
+      g.x = 210;
+      g.at = this.now + 12000;
+    }
 
     // If hopping, let hop finish
     if (g.mode === 'hop') {
@@ -988,6 +1039,7 @@ export class CastleScene {
     });
 
     // 6. DUCHESS THE GOAT WANDERING THE THRONE ROOM FLOOR
+    drawHaystack(g, 210, 370, 2);
     if (this.goat && this.goatArt) {
       const gx = Math.round(this.goat.x);
       const gy = 370;
@@ -1005,6 +1057,7 @@ export class CastleScene {
       // Draw Duchess at 2x scale (48x48 -> 96x96)
       const gw = GOAT_FRAME * 2;
       const gh = GOAT_FRAME * 2;
+      const dy = Math.round(gy - gh - lift * 2 + bob * 2);
       g.drawImage(
         this.goatArt,
         fr * GOAT_FRAME,
@@ -1012,10 +1065,11 @@ export class CastleScene {
         GOAT_FRAME,
         GOAT_FRAME,
         Math.round(gx - gw / 2),
-        Math.round(gy - gh - lift * 2 + bob * 2),
+        dy,
         gw,
         gh,
       );
+      drawDuchessCosmetic(g, settings().duchessHat, Math.round(gx - gw / 2), dy, 2, this.goat.face, 0);
       g.restore();
     }
 
@@ -1069,5 +1123,44 @@ export class CastleScene {
       }
       g.restore();
     }
+  }
+
+  private claimHaystackTreat(clientX: number, clientY: number, gx: number, gy: number): void {
+    const today = new Date().getFullYear() * 10000 + (new Date().getMonth() + 1) * 100 + new Date().getDate();
+    let claimed = false;
+    let meta: Meta | null = null;
+    try {
+      const raw = localStorage.getItem('legends.meta');
+      if (raw) {
+        meta = JSON.parse(raw);
+        if (meta && meta.duchessTreat === today) claimed = true;
+      }
+    } catch {
+      /* ignore */
+    }
+
+    if (claimed) {
+      showQuip({ x: clientX, y: clientY }, 'Duchess hops off her hay! (Already found today’s treat)', { who: 'Duchess', goat: true, hold: 2200 });
+      this.triggerHallBurst(gx, gy - 20, '#ffffff', 'Duchess hops!');
+      return;
+    }
+
+    const treat = rollDailyTreat();
+    if (meta) {
+      meta.duchessHay = true;
+      meta.duchessTreat = today;
+      if (treat.kind === 'stones') {
+        meta.stones = (meta.stones ?? 0) + treat.amount;
+      } else if (treat.kind === 'crowns') {
+        meta.crowns = (meta.crowns ?? 0) + treat.amount;
+      }
+      try {
+        localStorage.setItem('legends.meta', JSON.stringify(meta));
+      } catch {
+        /* ignore */
+      }
+    }
+    this.triggerHallBurst(gx, gy - 20, '#ffd13b', treat.kind === 'stones' ? '+Stones!' : treat.kind === 'crowns' ? '+Gold!' : 'Duchess Lore!');
+    showQuip({ x: clientX, y: clientY }, treat.message, { who: 'Duchess', goat: true, hold: 3200 });
   }
 }

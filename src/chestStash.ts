@@ -3,6 +3,8 @@
 // small module so the home screen can mount it anywhere: `drawChestStash(host, meta, onChange)` fills a host element, and
 // `showChest` is the opening moment. The rules (what is in a chest, opening it once) are in `src/sim/armyStars.ts`.
 
+import { ORE_ICON } from './oreView';
+import { ORES } from './sim/awakenMats';
 import { itemIcon } from './equipView';
 import { EQUIP_BASES } from './sim/equipment';
 import { bestChest, chestKind, openAll, openChest, sumLoot, type ChestKind, type Loot, type LootItem } from './sim/armyStars';
@@ -89,6 +91,7 @@ function lootIcon(it: LootItem): HTMLElement {
   if (it.type === 'crowns') return icon(ICONS.crowns, 'lootIco');
   if (it.type === 'stones') return icon(ICONS.stones, 'lootIco');
   if (it.type === 'tomes') return icon(TOME_ICON[it.size ?? 'small'], 'lootIco');
+  if (it.type === 'ores') return icon(ORE_ICON[it.trait ?? ''] ?? '', 'lootIco');
   if (it.type === 'spell' && it.spell) return spellIcon(it.spell);
   if (it.type === 'gear' && it.equip) return itemIcon({ ...it.equip, id: 0 }, EQUIP_BASES[it.equip.base].slot, 'small');
   if (it.type === 'gear') return icon(gearIcon(it.ref ?? 'weapon', 1), 'lootIco');
@@ -202,6 +205,7 @@ export function showChestSummary(loots: readonly Loot[], then: () => void): void
   tile(ICONS.crowns, sum.crowns, 'crowns');
   tile(ICONS.stones, sum.stones, sum.stones === 1 ? 'stone' : 'stones');
   for (const size of TOME_SIZES) if (sum.tomes[size]) tile(TOME_ICON[size], sum.tomes[size]!, `${size} tome${sum.tomes[size] === 1 ? '' : 's'}`);
+  for (const d of sum.ores) tile(ORE_ICON[d.trait], d.n, ORES[d.trait].name);
   const gearHead = el('div', 'allGearHead', `${sum.spells.length ? `Spells learnt: ${sum.spells.length} · ` : ''}${sum.gear.length ? `Gear won: ${sum.gear.length}, the best first` : 'No gear this time'}`);
   const list = el('div', 'chestLoot allGear');
   for (const it of sum.spells) {

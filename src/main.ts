@@ -21,6 +21,8 @@ import { drawRunStars, showUnlock } from './armiesView';
 import { modeOpen } from './sim/modeUnlock';
 import { spellIconHtml } from './spellIcons';
 import { settleArmyRun, type StarResult } from './sim/armyStars';
+import { settleArmyOres, type ArmyOres } from './sim/awakenMats';
+import { drawOreGain } from './oreView';
 import { TIERS, tierOf } from './sim/tiers';
 import { formOf, UNITS } from './sim/units';
 import { ELITE_BY_ID } from './sim/elites';
@@ -77,6 +79,7 @@ import { isScenario } from './sim/scenario';
 import { traitBadge } from './traitBadge';
 import { closestTrait, countTraits, kindsOf, nextTierLine, traitsOf, TRAITS } from './sim/traits';
 import { placeSynergies, startSynergies, updateCombo } from './synergyView';
+import { duoCombosOf } from './sim/duoCombos';
 import { COMBO_NAME, comboById, comboOf, noteCombos } from './sim/combos';
 import { UnitSprite } from './render/unitView';
 import { flyUp, recyclePuff, summonBurst } from './render/uiFx';
@@ -92,11 +95,15 @@ import { sceneOf } from './render/audioRules';
 import { colLeft, viewH, viewW } from './viewport';
 import { onSettings, openSettings, setSetting, settings } from './settings';
 import { PageGoat } from './duchess';
+import { duchessFightSays, hideDuchessCard, showDuchessCard } from './duchessFightView';
+import type { DuchessWish } from './sim/duchessFight';
 import { Rng } from './sim/rng';
 import { endingQuip, foeGrumbles, heroSays, initQuips, newQuipScene, revivedQuip } from './quips';
 import { closeCalls, ultimatesCast } from './render/quipRules';
 import { LOADING_TIPS, RECAP_LOSS, RECAP_WIN, RESULT_LOSS, RESULT_WIN } from './quipData';
-import { hideQuip, type Anchor } from './quipView';
+import { hideQuip, showQuip, type Anchor } from './quipView';
+import type { LuckyBleatEffect } from './render/duchessRules';
+import { bleatCabbage, bleatStartle } from './sim/duchessBleat';
 import heartUrl from './art/rogue/heart.png';
 
 TextureSource.defaultOptions.scaleMode = 'nearest';
@@ -398,7 +405,7 @@ class Game {
     $('loading').remove();
     (window as unknown as { __game: Game }).__game = this;
     // (a hero's first awakening has its cinematic)
-    this.goat.onArrive = () => void this.duchessTurnsUp();
+    this.goat.onLuckyBleat = (effect) => this.handleDuchessLuckyBleat(effect);
     onAwakened((kind, step) => {
       if (step === 1) void this.queueScene({ kind: 'awaken', hero: kind });
     });
@@ -411,7 +418,9 @@ class Game {
     // (a walk to the new section still going is over: the heroes are placed where it was taking them)
     this.chain.finish();
     this.walking.clear();
-    this.b = startStage(this.run);
+    // (Duchess the goat may join one fight in a thousand: the test page's `?duchess=1` always brings her, `duchessFight.ts`)
+    this.b = startStage(this.run, this.duchessWish());
+    hideDuchessCard();
     // (an army's section may lie turned on the long map: everything is drawn and tapped through its frame)
     const section = chainOf(this.run)?.[this.run.stage - 1];
     setFrame(section ? frameOf(section, section) : undefined);
@@ -433,6 +442,8 @@ class Game {
     this.spell = null;
     this.buildSpells();
     this.goat.newFight();
+    // (a fight she fights in: she is on the board, not at the page's edge)
+    if (this.b.duchess) this.goat.stayAway();
     // (the speed picked stays on from wave to wave)
     this.setSpeed(this.speed);
     this.fx.clear();
@@ -451,6 +462,12 @@ class Game {
     const due = this.setupMoments().filter((m) => this.scenesOn() && dueScene(this.meta, m));
     if (due.length) void Promise.all(due.map((m) => this.queueScene(m))).then(() => this.startIntro());
     else this.startIntro();
+  }
+
+  /** Whether this page's fights may bring Duchess: rolled on the seed, or always (never) on the test page's `?duchess=1` (`?duchess=0`). */
+  private duchessWish(): DuchessWish {
+    const q = new URLSearchParams(location.search).get('duchess');
+    return q === '1' ? 'always' : q === '0' ? 'never' : 'roll';
   }
 
   /** The moments that bring a cinematic as this fight is set up, in the order they play. */
@@ -499,9 +516,26 @@ class Game {
     return this.queueScene(first ? { kind: 'combo', set: setId } : { kind: 'comboCut', set: setId }, set.heroes);
   }
 
-  /** The first time Duchess turns up in a fight (her visit begins: `PageGoat.onArrive`). */
-  duchessTurnsUp(): Promise<void> {
-    return this.queueScene({ kind: 'duchess' });
+  /** Tactical Lucky Bleat effect triggered once per battle when Duchess is tapped during combat. */
+  private handleDuchessLuckyBleat(effect: LuckyBleatEffect): void {
+    if (!this.b || this.b.phase !== 'fight') return;
+    this.meta.duchessLucky = true;
+    saveMeta(this.meta);
+    if (effect.kind === 'startle') {
+      const target = bleatStartle(this.b, effect.durationMs);
+      if (!target) return;
+      const sb = this.spriteBox(target.id);
+      const anchor: Anchor = sb ? { x: sb.x + sb.w / 2, y: sb.y } : { x: 48, y: 320 };
+      showQuip(anchor, effect.text, { who: UNITS[target.def]?.name ?? 'Foe', hold: 2000 });
+    } else if (effect.kind === 'cabbage') {
+      const b = this.b;
+      const tile = bleatCabbage(b, effect.healPercent);
+      this.fx.cabbage(b, tile[0], tile[1]);
+      const panel = document.getElementById('panel');
+      const r = panel?.getBoundingClientRect();
+      const anchor: Anchor = r ? { x: 32, y: r.top - 20 } : { x: 32, y: 320 };
+      showQuip(anchor, 'Duchess kicked a cabbage! (Heals 10% max HP)', { who: 'Duchess', goat: true, hold: 2200 });
+    }
   }
 
   /** The heroes that play a cinematic: the party, and the hero a Calamity run began with. */
@@ -747,7 +781,7 @@ class Game {
     this.stats = startStats(this.b.units);
     // (the music: a boss, a Calamity fight, or one of three battle tracks by how hard the fight runs)
     startFight(isBossRun(this.run), { calamity: this.run.mode?.kind === 'calamity', level: fightLevel(this.run.stage, { elite: this.run.tower?.cur?.kind === 'elite', waves: waveArmyOf(this.run)?.waves.length }) });
-    startSynergies(countTraits(kindsOf(this.b.units)), this.b.combo);
+    startSynergies(countTraits(kindsOf(this.b.units)), this.b.combo, duoCombosOf(kindsOf(this.b.units)));
     this.chosen = null;
     this.boardView.clearMarks();
     this.refreshBossBar();
@@ -838,6 +872,9 @@ class Game {
         // (a fighter a skill called up mid-fight has no sprite yet: make it, with its entrance)
         if (b.units.length !== this.sprites.size) this.syncSprites();
         playEvents(b, events, this.speed);
+        // (Duchess has wandered on: the first time, her cinematic (not in an auto-replay), then her card; and her bubbles as she fights)
+        if (events.some((e) => e.kind === 'duchess')) void this.queueScene({ kind: 'duchessJoins' }).then(() => showDuchessCard(() => $('panel').getBoundingClientRect().top));
+        if (this.b.duchess) duchessFightSays(b, events, () => this.anchorOfKind('duchess'));
         for (const e of events) {
           if (e.kind === 'phase') this.startPhase(e);
           // (a promotion the sim made: a hero's tier by level; the page's own merge calls `promoteHero` too)
@@ -856,8 +893,9 @@ class Game {
         if (!this.auto) this.sayMoments(events);
         const push = this.fx.takePush();
         if (push) this.push = { ...push, left: push.ms };
-        // (Duchess has a view on a big blow)
+        // (Duchess has a view on a big blow or victory fanfare)
         if (events.some((e) => e.kind === 'hit' && e.heavy && e.dmg >= 90)) this.goat.react('bigHit');
+        if (events.some((e) => e.kind === 'end' && e.won)) this.goat.victory();
         if (events.some((e) => e.kind === 'hit' || e.kind === 'heal')) this.refreshBench();
         if (b.phase !== 'fight') this.refresh();
       }
@@ -878,10 +916,11 @@ class Game {
     if (this.intro) this.stepIntro(dt);
     this.stepRevive(dt);
     this.refreshBossBar();
+    const isWon = b.phase === 'won' || (b.phase !== 'fight' && b.phase !== 'deploy' && !b.units.some((u) => u.side === 'foe' && u.alive));
     const t = b.phase === 'deploy' ? performance.now() : b.phase === 'fight' ? b.t - TICK_MS + this.acc : b.t + this.acc;
     for (const [id, s] of this.sprites) {
       if (this.walking.has(id)) s.root.visible = false;
-      else s.update(b.board, t, b.phase !== 'deploy');
+      else s.update(b.board, t, b.phase !== 'deploy', isWon, this.endWait);
     }
     if (this.chain.active) {
       this.chain.step(dt);
@@ -1477,7 +1516,7 @@ class Game {
             : `You stopped it. ${a.totals.runs} of ${a.count} runs cleared`;
     const rows = card.querySelector('.asumRows')!;
     rows.replaceChildren();
-    for (const [label, n] of [['Crowns', a.totals.crowns], ['XP', a.totals.xp], ['Chests', a.totals.chests], ['Gear found', a.totals.gear]] as const) {
+    for (const [label, n] of [['Crowns', a.totals.crowns], ['XP', a.totals.xp], ['Chests', a.totals.chests], ['Gear found', a.totals.gear], ...(a.totals.ores ? [['Rift ores', a.totals.ores] as const] : [])] as const) {
       rows.append(Object.assign(document.createElement('span'), { textContent: label }), Object.assign(document.createElement('b'), { textContent: String(n) }));
     }
     $('asumOk').textContent = why === 'stopped' ? 'Back to the board' : 'To the armies';
@@ -1498,6 +1537,8 @@ class Game {
   /** Begin a run (any mode's) and its first fight. */
   /** The army-run stars the last cleared army run earned (for the result screen). */
   private runStars: StarResult | null = null;
+  /** The rift ores the last army fight paid (`awakenMats.ts`), for the result screen. */
+  private oreGain: ArmyOres | null = null;
 
   private startRun(run: Run): void {
     this.run = run;
@@ -2287,6 +2328,8 @@ class Game {
       if (won && !army && !daily && run.mode?.kind !== 'calamity') recordStars(this.meta, stage, rating.stars);
       const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b });
       this.runStars = settleArmyRun(this.meta, run);
+      // (an army's boss waves now and then drop rift ores of its kinds, and a tier's first clear always: `awakenMats.ts`)
+      this.oreGain = army ? settleArmyOres(this.meta, army.id, army.waves[stage - 1]?.boss, tierOfRun(run), won, !!this.runStars?.firstClear, run.seed, stage) : null;
       // (the stars this run won may have opened an army: its banner rises when the run's result is left)
       if (this.pay) this.pay.unlocked = ARMIES.find((a) => !openBefore.includes(a.id) && armyUnlocked(this.meta, a.id));
       // (a milestone this fight reached may bring in a hero)
@@ -2316,7 +2359,7 @@ class Game {
       if (this.auto) {
         // (no result screen to show: the fight's pay goes into the replay's totals)
         this.showStars(null);
-        for (const id of ['armyStars', 'xp', 'fightStats']) $(id).hidden = true;
+        for (const id of ['armyStars', 'oreDrop', 'xp', 'fightStats']) $(id).hidden = true;
         const over = run.cleared || !won;
         this.autoNext = afterFight(this.auto, {
           won,
@@ -2326,11 +2369,13 @@ class Game {
           xp: Object.values(gains).reduce((n, x) => n + x, 0),
           chests: run.cleared ? (this.runStars?.chests.length ?? 0) + (this.runStars?.firstClear ? 1 : 0) : 0,
           gear: over ? gearCount(run) : 0,
+          ores: this.oreGain?.drops.reduce((n, d) => n + d.n, 0) ?? 0,
         });
         this.autoWait = 900;
       } else {
         this.showStars(won ? rating : null);
         drawRunStars($('armyStars'), army && run.cleared ? this.runStars : null, army ? tierOf(tierOfRun(run)).name : '');
+        drawOreGain($('oreDrop'), this.oreGain);
         this.showStats();
         this.showXp(gains, from, ups, !own);
         this.showBench();

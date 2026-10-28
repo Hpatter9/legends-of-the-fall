@@ -36,7 +36,7 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   await page.waitForTimeout(1200);
   await page.evaluate(() => { window.__game.endIntro(); window.__game.begin(); });
   await page.waitForTimeout(3500);
-  for (const id of ['duchessInFight']) {
+  for (const id of ['duchessJoins']) {
     const t0 = await page.evaluate(() => window.__game.b.t);
     await page.evaluate((id) => void window.__game.playScene(id), id);
     await page.waitForTimeout(2500);

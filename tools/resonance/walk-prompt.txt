@@ -1,0 +1,14 @@
+Create ONLY an articulated WALK CYCLE for the EXACT pixel hero in reference1. Reference2 is an eight-frame walking POSE GUIDE, not the design: follow its alternating leg placement and weight shifts. Reference3 shows the matching rear design. Preserve the crisp richly shaded JRPG pixel style, large expressive head, compact body, costume, weapon and species of reference1. Transparent PNG, NO words, labels, arrows, grid, shadows, backdrop or effects.
+SQUARE atlas, FOUR columns and FOUR rows, sixteen equal square cells. Each entire figure about175px tall inside a256px cell, same scale and baseline y225, 25px transparent gutters. No neighbour touches.
+TOP TWO ROWS: eight consecutive FRONT-RIGHT walk phases, row1 then row2 left to right. Face visible, heading lower-right toward viewer.
+BOTTOM TWO ROWS: eight consecutive BACK-RIGHT phases, row3 then row4 left to right. Back of head/armour visible, heading away upper-right.
+In EACH eight-frame cycle:
+1 LEFT heel contacts forward, RIGHT toe pushes behind.
+2 weight lowers onto LEFT while RIGHT starts lifting.
+3 LEFT supports under pelvis, RIGHT leg passes forward.
+4 LEFT toe supports, RIGHT heel extends forward.
+5 RIGHT heel contacts forward, LEFT toe pushes behind: reverse the leg arrangement of1.
+6 weight lowers onto RIGHT, LEFT lifts: reverse of2.
+7 RIGHT supports under pelvis, LEFT passes forward: reverse of3.
+8 RIGHT toe supports, LEFT heel extends: reverse of4.
+Frames5-8 MUST put the OPPOSITE leg forward from1-4. Visible hip and knee articulation, low natural knee lift, one planted foot in passing poses, steady weapon and torso, subtle grounded weight shift. Calm WALK, not running, jumping, bouncing or shuffling one leg. Eight distinct progressive leg silhouettes that loop coherently from8 to1. Correct contact, passing and opposite footfalls are the highest priority.

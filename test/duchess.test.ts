@@ -1,7 +1,30 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Rng } from '../src/sim/rng';
-import { chewBob, FRAME, goatFrame, GOAT_SPEED, HOP_MS, HOP_PX, hopLift, newGoat, NIBBLE_MS, stepGoat, tapGoat, type Ground } from '../src/render/duchessRules';
+import {
+  chewBob,
+  DUCHESS_COSMETICS,
+  DUCHESS_LORE_SNIPPETS,
+  FRAME,
+  goatFrame,
+  GOAT_SPEED,
+  HOP_MS,
+  HOP_PX,
+  hopLift,
+  newDuchessBattleState,
+  newGoat,
+  NIBBLE_MS,
+  resetDuchessBattle,
+  rollDailyTreat,
+  stepGoat,
+  tapGoat,
+  tapNudgeGoat,
+  triggerLuckyBleat,
+  type Ground,
+} from '../src/render/duchessRules';
+import { startStage } from '../src/sim/run';
+import { newRun } from '../src/sim/run';
+import { stepBattle } from '../src/sim/battle';
 
 const ground: Ground = { min: 40, max: 240, friends: [100, 180] };
 
@@ -129,4 +152,126 @@ test('a visit: away, walks in, stays, walks out, away', async () => {
   const outAt = 5000 + VISIT_WALK_MS + 30000;
   assert.deepEqual(visitAt(v, outAt + VISIT_WALK_MS / 2), { phase: 'out', k: 0.5 });
   assert.equal(visitAt(v, outAt + VISIT_WALK_MS).phase, 'away');
+});
+
+test('In-Battle Lucky Bleat: once-per-battle tactical state machine', () => {
+  const state = newDuchessBattleState();
+  assert.equal(state.luckyBleatUsed, false);
+
+  // First trigger with rand < 0.5 returns startle effect
+  const effect1 = triggerLuckyBleat(state, () => 0.2);
+  assert.ok(effect1);
+  assert.equal(effect1.kind, 'startle');
+  if (effect1.kind === 'startle') {
+    assert.equal(effect1.durationMs, 400);
+    assert.equal(effect1.text, 'Startled by livestock');
+  }
+  assert.equal(state.luckyBleatUsed, true);
+
+  // Second trigger in the same battle is strictly blocked (once per battle)
+  assert.equal(triggerLuckyBleat(state, () => 0.8), null);
+  assert.equal(triggerLuckyBleat(state, () => 0.1), null);
+
+  // Resetting fight re-enables lucky bleat
+  resetDuchessBattle(state);
+  assert.equal(state.luckyBleatUsed, false);
+
+  // Trigger with rand >= 0.5 returns cabbage heal effect
+  const effect2 = triggerLuckyBleat(state, () => 0.7);
+  assert.ok(effect2);
+  assert.equal(effect2.kind, 'cabbage');
+  if (effect2.kind === 'cabbage') {
+    assert.equal(effect2.healPercent, 0.1);
+  }
+  assert.equal(state.luckyBleatUsed, true);
+
+  // Duchess can still hop and bleat on tap even after lucky bleat is spent
+  const g = newGoat(100);
+  assert.ok(tapGoat(g, 1000));
+  assert.equal(g.mode, 'hop');
+});
+
+test('Camp / Castle Haystack Trinket: nesting and nudge mechanics', () => {
+  const g = newGoat(100);
+  // Normal tap when not nesting
+  const nudge1 = tapNudgeGoat(g, 1000);
+  assert.equal(nudge1.hopped, true);
+  assert.equal(nudge1.nudgedFromNest, false);
+  assert.equal(g.mode, 'hop');
+
+  // Second tap while still hopping is ignored
+  const nudge2 = tapNudgeGoat(g, 1100);
+  assert.equal(nudge2.hopped, false);
+
+  // Duchess nests on a haystack
+  g.mode = 'nest';
+  g.x = 80;
+  const nudge3 = tapNudgeGoat(g, 3000);
+  assert.equal(nudge3.hopped, true);
+  assert.equal(nudge3.nudgedFromNest, true);
+  assert.equal(g.mode, 'hop');
+  assert.equal(g.then, 'graze');
+  assert.ok(g.to !== 80, 'nudged to an adjacent spot');
+});
+
+test('Daily Haystack Treat: rewards stones, crowns, or lore', () => {
+  const kinds = new Set<string>();
+  for (let i = 0; i < 200; i++) {
+    const treat = rollDailyTreat(() => (i % 10) / 10);
+    kinds.add(treat.kind);
+    if (treat.kind === 'stones') {
+      assert.ok(treat.amount >= 1 && treat.amount <= 2);
+    } else if (treat.kind === 'crowns') {
+      assert.ok(treat.amount >= 15 && treat.amount <= 35);
+    } else if (treat.kind === 'lore') {
+      assert.ok(DUCHESS_LORE_SNIPPETS.includes(treat.snippet));
+    }
+    assert.ok(treat.message.length > 0);
+  }
+  assert.ok(kinds.has('stones'));
+  assert.ok(kinds.has('crowns'));
+  assert.ok(kinds.has('lore'));
+});
+
+test('Duchess Unlockable Hats & Costumes: milestones and unlock rules', () => {
+  const none = DUCHESS_COSMETICS.find((c) => c.id === 'none')!;
+  const crown = DUCHESS_COSMETICS.find((c) => c.id === 'crown')!;
+  const wizard = DUCHESS_COSMETICS.find((c) => c.id === 'wizard')!;
+  const quiver = DUCHESS_COSMETICS.find((c) => c.id === 'quiver')!;
+
+  // None is always unlocked
+  assert.ok(none.unlocked());
+  assert.ok(none.unlocked({}));
+
+  // Tiny Tin Crown: unlocks at 5 taps
+  assert.equal(crown.unlocked({ duchessTaps: 4 }), false);
+  assert.equal(crown.unlocked({ duchessTaps: 5 }), true);
+  assert.equal(crown.unlocked({ duchessTaps: 12 }), true);
+
+  // Wizard Hat: unlocks via Lucky Bleat in battle
+  assert.equal(wizard.unlocked({ duchessLucky: false }), false);
+  assert.equal(wizard.unlocked({ duchessLucky: true }), true);
+
+  // Archery Quiver: unlocks via daily haystack treat
+  assert.equal(quiver.unlocked({ duchessHay: false }), false);
+  assert.equal(quiver.unlocked({ duchessHay: true }), true);
+});
+
+test('Cabbage tactical effect: heals the first unit walking over it for 10% max HP', () => {
+  const run = newRun(42);
+  const b = startStage(run);
+  b.phase = 'fight';
+  const unit = b.units.find((u) => u.alive)!;
+  unit.hp = Math.floor(unit.maxHp * 0.5); // wounded
+  const startingHp = unit.hp;
+
+  // Place cabbage on unit's tile
+  b.cabbages = [{ u: unit.u, v: unit.v, healPercent: 0.1 }];
+  const events = stepBattle(b);
+
+  const healEvent = events.find((e) => e.kind === 'heal' && e.to === unit.id);
+  assert.ok(healEvent, 'heal event fired');
+  const expectedHeal = Math.max(1, Math.round(unit.maxHp * 0.1));
+  assert.equal(unit.hp, startingHp + expectedHeal);
+  assert.equal(b.cabbages, undefined, 'cabbage was consumed on walking over');
 });

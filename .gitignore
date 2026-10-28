@@ -2,3 +2,8 @@ node_modules/
 out/
 tools/w/
 __pycache__/
+
+# Generation intermediates stay in the art workspace; ship the packed sheets.
+tools/resonance/source/roster/
+tools/resonance/source/turning/
+tools/resonance/source/walk/
