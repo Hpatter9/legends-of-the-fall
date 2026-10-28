@@ -41,13 +41,13 @@ export const RELICS: Record<string, Relic> = {
   featherCharm: { id: 'featherCharm', name: 'Feather Charm', text: 'heroes slip 6% of blows', effects: { dodge: 0.06 } },
   hawkEye: { id: 'hawkEye', name: 'Hawk Eye', text: '+8% crit chance for every hero', effects: { crit: 0.08 } },
   swiftBoots: { id: 'swiftBoots', name: 'Swift Boots', text: 'heroes act and walk 6% faster', effects: { speed: 1.06 } },
-  scholarScroll: { id: 'scholarScroll', name: "Scholar's Scroll", text: 'skills charge 20% faster', effects: { charge: 1.2 } },
+  scholarScroll: { id: 'scholarScroll', name: "Scholar's Scroll", text: 'pools refill 20% faster', effects: { charge: 1.2 } },
   spyglass: { id: 'spyglass', name: 'Spyglass', text: 'shooters reach further from high ground', effects: { reach: 0.3 } },
   // (the legendary ones: from the tower's cursed altar only, so the ordinary draws are as they were)
   sunCrown: { id: 'sunCrown', name: 'Sun Crown', text: 'LEGENDARY: +14% attack and +14% hp for every hero', effects: { atk: 1.14, hp: 1.14 }, great: true },
   dragonHeart: { id: 'dragonHeart', name: 'Dragon Heart', text: 'LEGENDARY: +12% hp, and heroes take 12% less damage', effects: { hp: 1.12, guard: 0.12 }, great: true },
   stormRing: { id: 'stormRing', name: 'Storm Ring', text: 'LEGENDARY: heroes act and walk 14% faster, +10% crit', effects: { speed: 1.14, crit: 0.1 }, great: true },
-  voidLens: { id: 'voidLens', name: 'Void Lens', text: "LEGENDARY: skills charge 40% faster, and the king's mana fills 40% faster", effects: { charge: 1.4, mana: 1.4 }, great: true },
+  voidLens: { id: 'voidLens', name: 'Void Lens', text: "LEGENDARY: pools refill 40% faster, and the king's mana fills 40% faster", effects: { charge: 1.4, mana: 1.4 }, great: true },
 };
 /** The ordinary relics (what events and old runs draw from), before the sets' own. */
 export const RELIC_IDS = Object.keys(RELICS).filter((id) => !RELICS[id].great);

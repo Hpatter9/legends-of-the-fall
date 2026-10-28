@@ -13,6 +13,7 @@
 // each other, and the constants and helpers it reads are only safe to read once both have loaded.
 
 import { sightClear, standable, tileAt, type At } from './board';
+import { setLook } from './kits/effects';
 import { addUnit, atkOf, canStrike, defOf, hurt, strikeDef, tileOf, unitAt, wayTo, type Battle, type BattleEvent, type Unit } from './battle';
 import {
   BANNER_MULT,
@@ -35,6 +36,7 @@ import {
   kitOf,
   lineFoes,
   mendUnit,
+  roll,
   near3x3,
   net,
   reachOf,
@@ -85,6 +87,8 @@ interface Sky {
   repeat?: boolean;
   /** A second blow on each spot this many ms after, for this share of the first. */
   echo?: { gap: number; share: number };
+  /** Each salvo sets off the powder barrels where it lands. */
+  barrels?: boolean;
 }
 function sky(b: Battle, me: Unit, out: BattleEvent[], o: Sky): boolean {
   const aimed: Unit[] = [];
@@ -96,7 +100,7 @@ function sky(b: Battle, me: Unit, out: BattleEvent[], o: Sky): boolean {
     aimed.push(aim);
     const ms = o.ms + i * o.gap;
     const id = o.kind === 'meteor' ? 'meteor' : 'volley';
-    b.pending.push({ at: b.t + ms, kind: o.kind, by: me.id, to: aim.id, dmg: atkOf(me) * o.mult, heavy: o.kind === 'meteor', u: aim.u, v: aim.v });
+    b.pending.push({ at: b.t + ms, kind: o.kind, by: me.id, to: aim.id, dmg: atkOf(me) * o.mult, heavy: o.kind === 'meteor', u: aim.u, v: aim.v, ...(o.barrels ? { barrels: true } : {}) });
     out.push({ kind: 'area', by: me.id, id, u: aim.u, v: aim.v, ms });
     if (o.echo) {
       b.pending.push({ at: b.t + ms + o.echo.gap, kind: o.kind, by: me.id, to: aim.id, dmg: atkOf(me) * o.mult * o.echo.share, heavy: o.kind === 'meteor', u: aim.u, v: aim.v });
@@ -312,6 +316,9 @@ function fullMoon(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!f || !foesOf(b, me).some((x) => apart(me, x) <= 7)) return false;
   me.frenzy = { n: f.max + 2 + tal(me, 'frenzyMax'), until: b.t + dur(me, 7000) };
   mendUnit(me, me.maxHp * share(0.25), out);
+  // (both his forms at once while the moon is up: the Hunter's speed and bleed, the Brute's hide and splash)
+  (me.kx ??= {}).moon = b.t + dur(me, 7000);
+  setLook(me, 'werewolf_black', out);
   out.push({ kind: 'frenzy', by: me.id, n: me.frenzy.n });
   return true;
 }
@@ -337,6 +344,8 @@ function stampede(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 function harvest(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const near = foesOf(b, me).filter((f) => apart(me, f) <= reachOf(me, 5));
   if (!near.length) return false;
+  // (each foe it kills rises as a wraith for him for 5s)
+  (me.kx ??= {}).harvest = b.t + 100;
   let kills = 0;
   for (const f of near) {
     const doomed = f.hp < f.maxHp * 0.35;
@@ -389,7 +398,9 @@ function keelhaul(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     f.v = to.v;
     me.facing = wayTo(me, f);
     out.push({ kind: 'arc', from: me.id, to: f.id });
-    hurt(b, me, f, net(atkOf(me) * 2.4, f), true, false, out, 'skill');
+    // (each cut is a die from the skill stream: x1 to x3)
+    const die = 1 + Math.floor(roll(b) * 6);
+    hurt(b, me, f, net(atkOf(me) * (1 + (die - 1) * 0.4), f), die >= 4, false, out, 'skill');
     if (f.alive) stun(b, f, dur(me, 1500));
     hooked++;
   }
@@ -450,51 +461,51 @@ const FIRST_EIGHT = ['kitsune', 'karasu', 'yamabushi', 'gorgon', 'samuraiCommand
  *  `power` (times the caster's attack while it casts; a stun, guard, shield or heal scales with it too). `test/hero-balance-ultimates.test.ts` holds it, and
  *  `test/hero-balance.test.ts` holds the low levels, where the first eight heroes' ultimates are as written. */
 const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
-  knight: { rate: 0.68, power: 0.25 },
-  samurai: { rate: 1.76, power: 1.24 },
-  kunoichi: { rate: 0.95, power: 0.08 },
-  archer: { rate: 1.02, power: 0.07 },
-  wizard: { rate: 1.27, power: 0.89 },
-  peasant: { rate: 0.73, power: 0.05 },
-  ninjaMonk: { rate: 0.77, power: 0.07 },
-  wanderer: { rate: 0.97, power: 0.07 },
-  lightningMage: { rate: 1.1, power: 0.07 },
-  kitsune: { rate: 1.02, power: 0.07 },
-  karasu: { rate: 1.35, power: 0.07 },
-  yamabushi: { rate: 1.31, power: 1.42 },
-  werewolf: { rate: 1.1, power: 0.07 },
-  minotaur: { rate: 1.11, power: 0.92 },
-  satyr: { rate: 0.9, power: 0.1 },
-  gorgon: { rate: 0.96, power: 0.07 },
-  samuraiCommander: { rate: 1.54, power: 1.05 },
-  paladin: { rate: 0.74, power: 0.07 },
-  cleric: { rate: 0.81, power: 0.07 },
-  druid: { rate: 1.02, power: 0.07 },
-  barbarian: { rate: 0.96, power: 0.07 },
-  ranger: { rate: 1.0, power: 0.07 },
-  warlock: { rate: 0.9, power: 0.05 },
-  illusionist: { rate: 1.0, power: 0.05 },
-  gunslinger: { rate: 0.98, power: 0.07 },
-  shambler: { rate: 0.74, power: 0.07 },
-  rifleBot: { rate: 1.01, power: 0.13 },
-  mercenary: { rate: 1.24, power: 0.07 },
-  mummy: { rate: 0.85, power: 0.07 },
-  buccaneer: { rate: 1.26, power: 0.07 },
-  wolfBard: { rate: 0.96, power: 0.05 },
-  beastmaster: { rate: 1.09, power: 0.05 },
-  kraken: { rate: 0.84, power: 0.07 },
-  lancer: { rate: 1.11, power: 0.07 },
-  reaper: { rate: 1.38, power: 0.09 },
-  timeWitch: { rate: 0.88, power: 0.05 },
-  arcBlade: { rate: 1.1, power: 0.07 },
-  dreadPirate: { rate: 0.93, power: 0.07 },
-  siegeBot: { rate: 0.89, power: 0.5 },
-  priestess: { rate: 0.84, power: 0.05 },
-  dragoon: { rate: 1.11, power: 0.07 },
-  juggernaut: { rate: 0.89, power: 0.97 },
-  sage: { rate: 1.15, power: 0.13 },
-  demonSwordsman: { rate: 1.31, power: 1.05 },
-  tyrant: { rate: 0.98, power: 0.89 },
+  knight: { rate: 1.86, power: 0.5 },
+  samurai: { rate: 0.84, power: 1.24 },
+  kunoichi: { rate: 0.36, power: 0.5 },
+  archer: { rate: 0.77, power: 0.5 },
+  wizard: { rate: 0.7, power: 0.89 },
+  peasant: { rate: 1.95, power: 0.5 },
+  ninjaMonk: { rate: 0.96, power: 0.5 },
+  wanderer: { rate: 0.58, power: 0.5 },
+  lightningMage: { rate: 0.72, power: 0.5 },
+  kitsune: { rate: 0.66, power: 0.5 },
+  karasu: { rate: 0.34, power: 0.5 },
+  yamabushi: { rate: 1.4, power: 1.42 },
+  werewolf: { rate: 0.61, power: 0.5 },
+  minotaur: { rate: 1.41, power: 0.92 },
+  satyr: { rate: 0.67, power: 0.5 },
+  gorgon: { rate: 1.06, power: 0.5 },
+  samuraiCommander: { rate: 0.85, power: 1.05 },
+  paladin: { rate: 1.53, power: 0.5 },
+  cleric: { rate: 0.76, power: 0.5 },
+  druid: { rate: 1.15, power: 0.5 },
+  barbarian: { rate: 0.84, power: 0.5 },
+  ranger: { rate: 0.8, power: 0.5 },
+  warlock: { rate: 0.72, power: 0.5 },
+  illusionist: { rate: 1.15, power: 0.5 },
+  gunslinger: { rate: 0.73, power: 0.5 },
+  shambler: { rate: 1.53, power: 0.5 },
+  rifleBot: { rate: 0.76, power: 0.5 },
+  mercenary: { rate: 0.31, power: 0.5 },
+  mummy: { rate: 1.7, power: 0.5 },
+  buccaneer: { rate: 0.76, power: 0.5 },
+  wolfBard: { rate: 1.04, power: 0.5 },
+  beastmaster: { rate: 0.93, power: 0.5 },
+  kraken: { rate: 1.62, power: 0.5 },
+  lancer: { rate: 0.56, power: 0.5 },
+  reaper: { rate: 0.55, power: 0.5 },
+  timeWitch: { rate: 0.97, power: 0.5 },
+  arcBlade: { rate: 0.41, power: 0.5 },
+  dreadPirate: { rate: 1.4, power: 0.5 },
+  siegeBot: { rate: 1.18, power: 0.5 },
+  priestess: { rate: 0.87, power: 0.5 },
+  dragoon: { rate: 0.69, power: 0.5 },
+  juggernaut: { rate: 1.87, power: 0.97 },
+  sage: { rate: 0.95, power: 0.5 },
+  demonSwordsman: { rate: 0.79, power: 1.05 },
+  tyrant: { rate: 1.18, power: 0.89 },
 };
 
 /** Every hero's ultimate: the first eight's (as `first` gives them) and the rest's, which unlock at `ULT_LEVEL`; `abilities.ts` puts them in its kits. */
@@ -517,8 +528,17 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
     minotaur: ult('Stampede', 'Up to three charges in a row, each at the weakest foe in line, shoving and stunning', 600, 'attack2', stampede),
     kraken: ult('Maelstrom', 'A whirlpool drags every foe within 6 tiles toward him, hurts and slows it', 800, 'attack2', (b, me, out) =>
       smite(b, me, out, { reach: 6, mult: 1.8, slow: 4000, stun: 800, pull: true })),
-    mummy: ult('Curse of the Pharaoh', 'Every foe within 5 tiles is cursed and slowed for 6s, and the Mummy is shielded', 800, 'attack2', (b, me, out) =>
-      smite(b, me, out, { reach: 5, mult: 0.8, slow: 6000, curse: { ms: 6000, dot: 0.5 }, shield: 0.3 })),
+    mummy: ult('Curse of the Pharaoh', 'Every foe within 5 tiles is cursed and slowed for 6s, the Mummy is shielded, and the two strongest foes are his puppets for 2s', 800, 'attack2', (b, me, out) => {
+      if (!smite(b, me, out, { reach: 5, mult: 0.8, slow: 6000, curse: { ms: 6000, dot: 0.5 }, shield: 0.3 })) return false;
+      const foes = foesOf(b, me);
+      if (foes.length > 2)
+        for (const f of foes.filter((x) => apart(me, x) <= 5).sort(strongest).slice(0, 2)) {
+          f.charmUntil = b.t + dur(me, 2000);
+          f.taunt = undefined;
+          out.push({ kind: 'arc', from: me.id, to: f.id });
+        }
+      return true;
+    }),
     shambler: ult('Plague Tide', 'A wave of rot leaves every foe within 5 tiles cursed for 7s; he drinks from them', 800, 'attack2', (b, me, out) =>
       smite(b, me, out, { reach: 5, mult: 0.7, curse: { ms: 7000, dot: 0.6 }, drink: { each: 0.05, cap: 0.3 } })),
     // ---- the blades ----
@@ -527,13 +547,13 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
     mercenary: ult('Contract Killer', 'Slips beside the three hardest-hitting foes in turn and cuts each hard', 600, 'attack2', (b, me, out) => blinks(b, me, out, 3, 2.1, strongest)),
     ninjaMonk: ult('Hundred Fists', 'Five blows on each of the three nearest foes, and each is stunned for 1.2s', 700, 'attack2', (b, me, out) => fists(b, me, out, 3, 5, 0.65, 1200)),
     barbarian: ult('Bloodlust', 'A whirl of blows round him; he drinks a third of what they deal and runs fast for 5s', 700, 'attack2', bloodlust),
-    werewolf: ult('Full Moon', 'His frenzy fills to the brim for 7s and a quarter of his health comes back', 700, 'attack2', fullMoon),
+    werewolf: ult('Full Moon', 'His frenzy fills to the brim and he is both his forms at once for 7s, and a quarter of his health comes back', 700, 'attack2', fullMoon),
     lancer: ult('Charge of the Knights', 'A long charge for a huge blow, and the riders near him gallop faster for 4s', 700, 'attack2', knightsCharge),
-    reaper: ult('Harvest of Souls', 'Every foe within 5 tiles is cut; those under a third of their health are reaped for far more, and each kill feeds him', 800, 'attack2', harvest),
+    reaper: ult('Harvest of Souls', 'Every foe within 5 tiles is cut; those under a third of their health are reaped for far more, each kill feeds him and rises as a wraith for 5s', 800, 'attack2', harvest),
     dragoon: ult('Inferno Breath', 'Fire down the longest line of foes, up to 8 tiles, burning each for 5s', 800, 'attack2', infernoBreath),
     arcBlade: ult('Thunder Cascade', 'Lightning leaps to every foe within 6 tiles, hurting and stunning each for 1.4s', 700, 'attack2', (b, me, out) =>
       smite(b, me, out, { reach: 6, mult: 1.9, stun: 1400, arcs: true })),
-    buccaneer: ult('Keelhaul', 'Hooks the three nearest shooters (or foes) in beside him, cuts each hard and holds it 1.5s', 700, 'attack2', keelhaul),
+    buccaneer: ult('Keelhaul', 'Hooks the three nearest shooters (or foes) in beside him; each cut is a roll of the die (x1 to x3), and each is held 1.5s', 700, 'attack2', keelhaul),
     // ---- the guile ----
     illusionist: ult('Hall of Mirrors', 'Four decoys appear round her and every foe within 6 tiles turns on them for 4.5s', 800, 'attack2', hallOfMirrors),
     warlock: ult('Soul Harvest', 'Every foe within 7 tiles is cursed and burns for 6s; he drinks from each', 800, 'attack2', (b, me, out) =>
@@ -558,8 +578,8 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
       return true;
     }),
     siegeBot: ult('Orbital Strike', 'A great shell on the thickest crowd, and a second on the same spot a moment after', 900, 'attack', orbital),
-    dreadPirate: ult('Ghost Fleet', 'Three broadsides from the ghost fleet fall on separate crowds', 800, 'attack2', (b, me, out) =>
-      sky(b, me, out, { n: 3, reach: 8, mult: 2.4, ms: 800, kind: 'rain', gap: 200, repeat: true })),
+    dreadPirate: ult('Ghost Fleet', 'Three broadsides from the ghost fleet fall on separate crowds and set off the powder barrels there', 800, 'attack2', (b, me, out) =>
+      sky(b, me, out, { n: 3, reach: 8, mult: 2.4, ms: 800, kind: 'rain', gap: 200, repeat: true, barrels: true })),
     timeWitch: ult('Time Stop', 'Every foe within 8 tiles is stopped where it stands for 2.6s, while her friends are hastened for 5s', 900, 'attack2', timeStop),
     // ---- the healers and callers ----
     cleric: ult('Divine Intervention', 'Every ally is cleansed, healed, shielded and mended over 5s', 900, 'attack2', (b, me, out) => {

@@ -13,6 +13,8 @@ import { Rng } from './rng';
 import { fxBlow, fxStruck, fxTick, hidden } from './equipFx';
 import { heroUltimates } from './ultimates';
 import { runRiders } from './tierSkills';
+import { addRes, castHero, CHARGE_TO_POOL, heroKitOf, poolOf, poolOnDealt, poolOnTaken, resMax, tickPool, ultOnDamage } from './heroKits';
+import { kitStrike, kitTick } from './kits/effects';
 
 /** A skill fires at this much charge. */
 export const CHARGE_MAX = 100;
@@ -39,6 +41,8 @@ export interface Trap {
   by: number;
   until: number;
   dmg: number;
+  /** How long it holds whoever springs it (a snare's `ROOT_MS` when unset). */
+  hold?: number;
 }
 
 /** Heal over time (the Cleric's blessing): `amount` every `every` ms until `until`. */
@@ -59,6 +63,8 @@ export interface Zone {
   until: number;
   next: number;
   dmg: number;
+  /** Caltrops, not fire (the Ranger's Spike Field): it also slows whoever stands in it this long. */
+  slow?: number;
 }
 
 export interface Passive {
@@ -323,6 +329,8 @@ export function mendUnit(u: Unit, amount: number, out: BattleEvent[], by: Unit =
   if (n <= 0 || !u.alive) return;
   u.hp += n;
   by.healed = (by.healed ?? 0) + n;
+  // (healing a friend fills the healer's ultimate as damage dealt does)
+  if (by !== u) ultOnDamage(by, n, false);
   out.push({ kind: 'heal', to: u.id, amount: n, by: by.id });
 }
 
@@ -1182,7 +1190,10 @@ function astralConvergence(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const team = b.units.filter((a) => a.alive && a.side === me.side);
   if (!team.some((a) => a !== me) || !foesOf(b, me).length) return false;
   for (const a of team) {
-    gain(a, CONVERGE_CHARGE);
+    // (a hero with a pool has it filled by half; anything else has its skill meter lifted)
+    const pool = poolOf(a);
+    if (pool) addRes(a, resMax(pool) * 0.5);
+    else gain(a, CONVERGE_CHARGE);
     a.shield = { hp: Math.round(a.maxHp * CONVERGE_SHIELD), until: b.t + durOf(me, 4000) };
     out.push({ kind: 'heal', to: a.id, amount: 0, by: me.id });
   }
@@ -1410,7 +1421,7 @@ export const KITS: Record<string, Kit> = {
   },
   sage: {
     skill: { name: 'Starfall', text: 'Stars fall on up to three separate crowds a moment after the call', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 800, anim: 'attack2', cast: starfall },
-    ultimate: { name: 'Astral Convergence', text: 'Every ally\'s skill meter jumps by 50 and a starlit shield forms round it for 4s', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 800, anim: 'attack2', cast: astralConvergence },
+    ultimate: { name: 'Astral Convergence', text: 'Every ally\'s pool fills by half and a starlit shield forms round it for 4s', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 800, anim: 'attack2', cast: astralConvergence },
     passive: { name: 'Arcane Insight', text: 'His blows ignore 4 defence', pierce: 4 },
   },
   demonSwordsman: {
@@ -1543,6 +1554,9 @@ export const kitOf = (u: Unit): Kit | undefined => u.kit ?? KITS[u.def];
 
 /** A free hero whose charge is full lets its skill go, if there is something to use it on. */
 export function tryCast(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  // (a placed hero casts from its own kit: its pool, two skills and the ultimate by tap or Auto, `heroKits.ts`)
+  const hk = heroKitOf(me);
+  if (hk) return castHero(b, me, hk, out);
   const k = kitOf(me);
   if (!k) return false;
   // (a full ultimate goes first; if it has nothing to hit, the ordinary skill may still go)
@@ -1557,7 +1571,7 @@ export function tryCast(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 }
 
 /** Cast a skill with the caster's `pow` talent (and `more`, an ultimate's) lifting its attack while it runs: the blows, the volleys and meteors, the healing and what is called up all take it. */
-function powered(b: Battle, me: Unit, s: Skill, more: number, out: BattleEvent[]): boolean {
+export function powered(b: Battle, me: Unit, s: Skill, more: number, out: BattleEvent[]): boolean {
   const k = 1 + tal(me, 'pow') + more;
   if (k === 1) return s.cast(b, me, out);
   me.power = (me.power ?? 1) * k;
@@ -1571,16 +1585,19 @@ function powered(b: Battle, me: Unit, s: Skill, more: number, out: BattleEvent[]
 let castK = 1;
 export const castPower = (): number => castK;
 
-function began(b: Battle, me: Unit, s: Skill, out: BattleEvent[]): boolean {
+/** A skill has gone off: the caster is busy casting it, and a talent's cast effects fire (for a hero with a kit, the heal, shield and haste only on
+ *  skill 2 and the ultimate, so cheap, frequent skills do not double their worth; its charge back is paid as a share of the cost, in `heroKits.ts`). */
+export function began(b: Battle, me: Unit, s: Skill, out: BattleEvent[], slot: 'skill' | 'skill2' | 'ult' = 'skill'): boolean {
   const t = me.eq?.tal;
-  if (t) {
+  const kitted = !!heroKitOf(me);
+  if (t && (!kitted || slot !== 'skill')) {
     if (t.castHeal) mendUnit(me, me.maxHp * t.castHeal, out);
     if (t.castShield) me.shield = { hp: Math.round(me.maxHp * t.castShield), until: b.t + 3000 };
     if (t.castHaste) {
       me.hasteUntil = Math.max(me.hasteUntil ?? 0, b.t + t.castHaste);
       out.push({ kind: 'haste', to: me.id, ms: t.castHaste });
     }
-    if (t.refund) gain(me, t.refund);
+    if (t.refund && !kitted) gain(me, t.refund);
   }
   me.cast = { at: b.t, ms: s.castMs, anim: s.anim };
   me.swing = undefined;
@@ -1610,7 +1627,7 @@ export const ultimateOf = (u: Unit): Skill | undefined => {
 };
 
 /** The balance knobs of a hero's ultimate, once it fights at `ULT_LEVEL` or more (none for a foe, or a hero below it). */
-const ultTune = (u: Unit, s: Skill): Skill['tuned'] => (u.side === 'hero' && (u.level ?? 1) >= ULT_LEVEL ? s.tuned : undefined);
+export const ultTune = (u: Unit, s: Skill): Skill['tuned'] => (u.side === 'hero' && (u.level ?? 1) >= ULT_LEVEL ? s.tuned : undefined);
 
 /** Whether a hero's ultimate is full. */
 export const ultimateReady = (u: Unit): boolean => !!ultimateOf(u) && (u.charge2 ?? 0) >= ultimateOf(u)!.need;
@@ -1619,6 +1636,9 @@ export const ultimateReady = (u: Unit): boolean => !!ultimateOf(u) && (u.charge2
 export const gain = (u: Unit, n: number, skillOnly = false) => {
   const k = u.alive ? kitOf(u) : undefined;
   if (!k) return;
+  // (a hero with a kit has a pool, not a charge meter: charge given to it is a share of its pool, `CHARGE_TO_POOL`; its ultimate fills from the fight, not from gifts)
+  const pool = poolOf(u);
+  if (pool) return addRes(u, (n * CHARGE_TO_POOL * resMax(pool)) / CHARGE_MAX);
   u.charge = Math.min(CHARGE_MAX, u.charge + n);
   if (!skillOnly && ultimateOf(u)) u.charge2 = Math.min(CHARGE_MAX, (u.charge2 ?? 0) + n * ULT_RATE * (ultTune(u, ultimateOf(u)!)?.rate ?? 1) * (1 + tal(u, 'ultRate')));
 };
@@ -1631,9 +1651,14 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
   const dodge = (kit?.passive.dodge ?? 0) + (team?.dodge ?? 0) + (to.eq?.dodge ?? 0);
   if (blow && dodge && roll(b) < dodge) {
     out.push({ kind: 'dodge', to: to.id });
-    gain(to, (kit?.skill.taken ?? 0) * 0.5);
+    if (poolOf(to)) poolOnTaken(b, to, true);
+    else gain(to, (kit?.skill.taken ?? 0) * 0.5);
     return null;
   }
+  // (what the hero kits leave on fighters: a parry, a guise, smoke, marks, a standard, a song, a vow...; null when the blow is turned aside)
+  const kitted = kitStrike(b, by, to, dmg, src, splash, out);
+  if (kitted === null) return null;
+  dmg = kitted;
   const block = (kit?.passive.block ?? 0) + tal(to, 'block');
   if (blow && block && (wayTo(by, to) + 2) % 4 === to.facing) {
     const turned = dmg * block;
@@ -1655,8 +1680,12 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
   if (team?.guard) dmg *= 1 - team.guard;
   if (src === 'dot' && to.eq?.resist) dmg *= 1 - to.eq.resist;
   if (src !== 'dot') {
-    if (blow && !splash) gain(by, kitOf(by)?.skill.dealt ?? 0);
-    gain(to, kit?.skill.taken ?? 0);
+    if (blow && !splash) {
+      if (poolOf(by)) poolOnDealt(by);
+      else gain(by, kitOf(by)?.skill.dealt ?? 0);
+    }
+    if (poolOf(to)) poolOnTaken(b, to);
+    else gain(to, kit?.skill.taken ?? 0);
   }
   const left = Math.max(1, Math.round(dmg));
   // (a talent's rider on a skill: what it hits is slowed or held)
@@ -1749,7 +1778,8 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
   for (const u of b.units) {
     if (!u.alive) continue;
     const k = kitOf(u);
-    if (k) gain(u, ((k.skill.perSec * 100) / 1000) * (u.side === 'hero' ? (b.traits?.charge ?? 1) * (1 + (u.eq?.charge ?? 0)) : 1));
+    if (poolOf(u)) tickPool(b, u, 100);
+    else if (k) gain(u, ((k.skill.perSec * 100) / 1000) * (u.side === 'hero' ? (b.traits?.charge ?? 1) * (1 + (u.eq?.charge ?? 0)) : 1));
     if (u.form && b.t >= u.form.until) {
       u.power = (u.power ?? 1) / FORM_MULT;
       u.form = undefined;
@@ -1807,10 +1837,15 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
     while (z.next <= b.t && z.next <= z.until) {
       z.next += BURN_EVERY;
       const by = b.units.find((x) => x.id === z.by)!;
-      for (const f of b.units) if (f.alive && f.side !== z.side && near3x3(f, z)) hurt(b, by, f, z.dmg, false, false, out, 'dot');
+      for (const f of b.units)
+        if (f.alive && f.side !== z.side && near3x3(f, z)) {
+          hurt(b, by, f, z.dmg, false, false, out, 'dot');
+          if (z.slow && f.alive) slowFor(b, f, z.slow);
+        }
     }
   }
   b.zones = b.zones.filter((z) => z.until > b.t);
+  kitTick(b, out);
   // snares: the first foe standing on one springs it
   if (b.traps?.length) {
     for (const tr of b.traps) {
@@ -1820,8 +1855,8 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
       const layer = b.units.find((x) => x.id === tr.by)!;
       hurt(b, layer, f, net(tr.dmg, f), true, false, out, 'skill');
       if (f.alive) {
-        f.busyUntil = Math.max(f.busyUntil, b.t + durOf(layer, ROOT_MS));
-        f.stunUntil = b.t + durOf(layer, ROOT_MS);
+        f.busyUntil = Math.max(f.busyUntil, b.t + durOf(layer, tr.hold ?? ROOT_MS));
+        f.stunUntil = b.t + durOf(layer, tr.hold ?? ROOT_MS);
       }
     }
     b.traps = b.traps.filter((tr) => tr.until > b.t);

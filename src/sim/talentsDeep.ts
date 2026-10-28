@@ -165,7 +165,7 @@ export function deepNodes(kind: string, second: readonly TalentNode[], index: nu
       ];
       row7 = [
         { name: 'Unbound', icon: 'maul', text: 'Attack grows by up to 50% more as the health falls, and +15% attack and +10% hp.', stats: { atk: 0.15, hp: 0.1 }, tal: { rage: 0.5 } },
-        { name: 'Soul Furnace', icon: 'emberrobe', text: 'Each kill heals the hero 10% of its health and gives back 50 charge.', abilities: [ab(id('furnace'), 'Soul Furnace', 'kill', 'heal', { v: 0.1 }), ab(id('furnace2'), 'Soul Furnace', 'kill', 'charge', { v: 50 })] },
+        { name: 'Soul Furnace', icon: 'emberrobe', text: 'Each kill heals the hero 10% of its health and gives back 25% of the pool.', abilities: [ab(id('furnace'), 'Soul Furnace', 'kill', 'heal', { v: 0.1 }), ab(id('furnace2'), 'Soul Furnace', 'kill', 'charge', { v: 50 })] },
       ];
       break;
     case 'marksman':
@@ -179,21 +179,21 @@ export function deepNodes(kind: string, second: readonly TalentNode[], index: nu
       ];
       row7 = [
         { name: 'Perfect Aim', icon: 'longbow', text: '', stats: { crit: 0.12, atk: 0.12 } },
-        { name: 'Rain of Ruin', icon: 'blunderbuss', text: 'The skill makes one more of what it makes and is 30% stronger, and +10% skill charge.', stats: { charge: 0.1 }, tal: { extra: 1, pow: 0.3 } },
+        { name: 'Rain of Ruin', icon: 'blunderbuss', text: 'The skill makes one more of what it makes and is 30% stronger, and +10% pool refill.', stats: { charge: 0.1 }, tal: { extra: 1, pow: 0.3 } },
       ];
       break;
     case 'archmage':
       row5 = [
-        { name: 'Arcane Surge', icon: 'wand', text: 'The skill is 25% stronger, and +20% skill charge.', stats: { charge: 0.2 }, tal: { pow: 0.25 } },
+        { name: 'Arcane Surge', icon: 'wand', text: 'The skill is 25% stronger, and +20% pool refill.', stats: { charge: 0.2 }, tal: { pow: 0.25 } },
         { name: 'Spell Echo', icon: 'sapphire', text: '35% of the blows burst: half again on the foes beside the target.', abilities: [ab(id('echo'), 'Spell Echo', 'hit', 'splash', { p: 0.35, v: 0.5 })] },
       ];
       row6 = [
-        { name: 'Mana Well', icon: 'vial', text: 'Each kill feeds the king 6 mana and gives back 25 charge.', abilities: [ab(id('well'), 'Mana Well', 'kill', 'mana', { v: 6 }), ab(id('well2'), 'Mana Well', 'kill', 'charge', { v: 25 })] },
+        { name: 'Mana Well', icon: 'vial', text: 'Each kill feeds the king 6 mana and gives back 12% of the pool.', abilities: [ab(id('well'), 'Mana Well', 'kill', 'mana', { v: 6 }), ab(id('well2'), 'Mana Well', 'kill', 'charge', { v: 25 })] },
         { name: 'Withering Word', icon: 'amulet', text: '30% of the blows lay a curse that eats at the foe.', abilities: [ab(id('wither'), 'Withering Word', 'hit', 'curse', { p: 0.3, v: 0.3 })] },
       ];
       row7 = [
         { name: "Archmage's Will", icon: 'idol', text: `${ult} is 50% stronger and charges 50% faster.`, tal: { ultPow: 0.5, ultRate: 0.5 } },
-        { name: 'Spellstorm', icon: 'stormstaff', text: 'The skill makes one more of what it makes and is 35% stronger, and +15% skill charge.', stats: { charge: 0.15 }, tal: { extra: 1, pow: 0.35 } },
+        { name: 'Spellstorm', icon: 'stormstaff', text: 'The skill makes one more of what it makes and is 35% stronger, and +15% pool refill.', stats: { charge: 0.15 }, tal: { extra: 1, pow: 0.35 } },
       ];
       break;
     case 'healer':
@@ -221,7 +221,7 @@ export function deepNodes(kind: string, second: readonly TalentNode[], index: nu
         { name: 'Quickening', icon: 'boots', text: 'Every 9s the hero is hasted for 3s.', abilities: [ab(id('quicken'), 'Quickening', 'tick', 'haste', { n: 9, w: 3, show: true })] },
       ];
       row7 = [
-        { name: 'Anthem', icon: 'lyre', text: `${ult} charges 50% faster and the skill lasts 50% longer, and +15% skill charge.`, stats: { charge: 0.15 }, tal: { ultRate: 0.5, dur: 0.5 } },
+        { name: 'Anthem', icon: 'lyre', text: `${ult} charges 50% faster and the skill lasts 50% longer, and +15% pool refill.`, stats: { charge: 0.15 }, tal: { ultRate: 0.5, dur: 0.5 } },
         { name: 'Grand Banner', icon: 'pendant', text: 'Every 10s, allies within 3 tiles hit a quarter harder for 5s, and +8% attack.', stats: { atk: 0.08 }, abilities: [ab(id('banner'), 'Grand Banner', 'tick', 'rally', { n: 10, w: 5, show: true })] },
       ];
   }

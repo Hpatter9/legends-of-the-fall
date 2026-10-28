@@ -40,6 +40,8 @@ export interface UnitDef {
   forms?: readonly string[];
   /** A fighter a skill calls up (a treant, a decoy): it fights for its side but isn't one of the placed heroes. */
   summon?: boolean;
+  /** It stands where it is put and never walks (a planted standard). */
+  still?: boolean;
 }
 
 /** The sheet a hero is drawn from at a grade (1 to 3). */
@@ -112,6 +114,9 @@ export const UNITS: Record<string, UnitDef> = {
 
   // called up by skills (not heroes to place)
   treant: { id: 'treant', name: 'Treant', side: 'hero', sheet: 'cls_treant', scale: 0.5, hp: 330, atk: 16, def: 8, range: 1, moveMs: 900, atkMs: 1300, jump: 1, summon: true, role: 'A tree called by the Druid (it grows with her grade)', forms: ['cls_treant', 'cls_treant_2', 'cls_treant_3'] },
+  // called up by the hero kits (COMBAT-002): a fallen foe risen for the Reaper (drawn in the foe's own sheet, ghostly), and the Samurai Commander's standard
+  wraith: { id: 'wraith', name: 'Wraith', side: 'hero', sheet: 'hk_ghost', scale: 0.61, hp: 100, atk: 10, def: 2, range: 1, moveMs: 480, atkMs: 900, jump: 9, flies: true, summon: true, role: 'A fallen foe, risen to fight for the Reaper a while' },
+  standard: { id: 'standard', name: 'Standard', side: 'hero', sheet: 'samurai_commander', scale: 0.67, hp: 60, atk: 0, def: 6, range: 1, moveMs: 1000, atkMs: 1500, jump: 1, summon: true, still: true, role: 'The Samurai Commander\'s standard: friends near it fight harder' },
   decoy: { id: 'decoy', name: 'Decoy', side: 'hero', sheet: 'cls_illusionist_1', scale: 0.71, hp: 80, atk: 5, def: 0, range: 1, moveMs: 700, atkMs: 1200, jump: 2, summon: true, role: 'A mirage that draws blows' },
 
   skeleton: { id: 'skeleton', name: 'Skeleton', side: 'foe', sheet: 'skeleton_warrior', scale: 0.79, hp: 320, atk: 26, def: 7, range: 1, moveMs: 650, atkMs: 1100, jump: 2, role: 'Sword and shield' },

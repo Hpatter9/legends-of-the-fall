@@ -221,6 +221,8 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
   s.mana -= spell.cost;
   s.ready[id] = b.t + spell.cooldownMs;
   s.events.push({ kind: 'spell', id, u, v });
+  // (kept in the fight's log with the heroes' ultimates, so a recorded fight replays whole: `orders.ts`)
+  (b.log ??= []).push({ t: b.t, kind: 'spell', id, u, v });
   const ev = s.events;
   const fx = (to: Unit) => ev.push({ kind: 'spellfx', id, to: to.id });
   switch (id) {
