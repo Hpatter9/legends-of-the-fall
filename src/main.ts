@@ -98,7 +98,9 @@ import { Rng } from './sim/rng';
 import { endingQuip, foeGrumbles, heroSays, initQuips, newQuipScene, revivedQuip } from './quips';
 import { closeCalls, ultimatesCast } from './render/quipRules';
 import { LOADING_TIPS, RECAP_LOSS, RECAP_WIN, RESULT_LOSS, RESULT_WIN } from './quipData';
-import { hideQuip, type Anchor } from './quipView';
+import { hideQuip, showQuip, type Anchor } from './quipView';
+import type { LuckyBleatEffect } from './render/duchessRules';
+import { bleatCabbage, bleatStartle } from './sim/duchessBleat';
 import heartUrl from './art/rogue/heart.png';
 
 TextureSource.defaultOptions.scaleMode = 'nearest';
@@ -401,6 +403,7 @@ class Game {
     (window as unknown as { __game: Game }).__game = this;
     // (a hero's first awakening has its cinematic)
     this.goat.onArrive = () => void this.duchessTurnsUp();
+    this.goat.onLuckyBleat = (effect) => this.handleDuchessLuckyBleat(effect);
     onAwakened((kind, step) => {
       if (step === 1) void this.queueScene({ kind: 'awaken', hero: kind });
     });
@@ -503,6 +506,28 @@ class Game {
   /** The first time Duchess turns up in a fight (her visit begins: `PageGoat.onArrive`). */
   duchessTurnsUp(): Promise<void> {
     return this.queueScene({ kind: 'duchess' });
+  }
+
+  /** Tactical Lucky Bleat effect triggered once per battle when Duchess is tapped during combat. */
+  private handleDuchessLuckyBleat(effect: LuckyBleatEffect): void {
+    if (!this.b || this.b.phase !== 'fight') return;
+    this.meta.duchessLucky = true;
+    saveMeta(this.meta);
+    if (effect.kind === 'startle') {
+      const target = bleatStartle(this.b, effect.durationMs);
+      if (!target) return;
+      const sb = this.spriteBox(target.id);
+      const anchor: Anchor = sb ? { x: sb.x + sb.w / 2, y: sb.y } : { x: 48, y: 320 };
+      showQuip(anchor, effect.text, { who: UNITS[target.def]?.name ?? 'Foe', hold: 2000 });
+    } else if (effect.kind === 'cabbage') {
+      const b = this.b;
+      const tile = bleatCabbage(b, effect.healPercent);
+      this.fx.cabbage(b, tile[0], tile[1]);
+      const panel = document.getElementById('panel');
+      const r = panel?.getBoundingClientRect();
+      const anchor: Anchor = r ? { x: 32, y: r.top - 20 } : { x: 32, y: 320 };
+      showQuip(anchor, 'Duchess kicked a cabbage! (Heals 10% max HP)', { who: 'Duchess', goat: true, hold: 2200 });
+    }
   }
 
   /** The heroes that play a cinematic: the party, and the hero a Calamity run began with. */
@@ -857,8 +882,9 @@ class Game {
         if (!this.auto) this.sayMoments(events);
         const push = this.fx.takePush();
         if (push) this.push = { ...push, left: push.ms };
-        // (Duchess has a view on a big blow)
+        // (Duchess has a view on a big blow or victory fanfare)
         if (events.some((e) => e.kind === 'hit' && e.heavy && e.dmg >= 90)) this.goat.react('bigHit');
+        if (events.some((e) => e.kind === 'end' && e.won)) this.goat.victory();
         if (events.some((e) => e.kind === 'hit' || e.kind === 'heal')) this.refreshBench();
         if (b.phase !== 'fight') this.refresh();
       }
@@ -879,10 +905,11 @@ class Game {
     if (this.intro) this.stepIntro(dt);
     this.stepRevive(dt);
     this.refreshBossBar();
+    const isWon = b.phase === 'won' || (b.phase !== 'fight' && b.phase !== 'deploy' && !b.units.some((u) => u.side === 'foe' && u.alive));
     const t = b.phase === 'deploy' ? performance.now() : b.phase === 'fight' ? b.t - TICK_MS + this.acc : b.t + this.acc;
     for (const [id, s] of this.sprites) {
       if (this.walking.has(id)) s.root.visible = false;
-      else s.update(b.board, t, b.phase !== 'deploy');
+      else s.update(b.board, t, b.phase !== 'deploy', isWon, this.endWait);
     }
     if (this.chain.active) {
       this.chain.step(dt);

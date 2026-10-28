@@ -14,6 +14,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+**ART-002 / Resonance full roster** — Owner: current Codex art chat. Branch: `art/resonance-roster`, worktree: `/workspace/legends-of-the-fall`, based on the approved ART-001 pilot. Scope: all 43 remaining collectible heroes, animation sheets and necessary hero-form render mappings, size bands, asset credits, art tooling and portrait/battle evidence. Preserve combat rules, save keys, hero identities, enemies and unrelated UI work. Owner extended scope to four isometric facings and visibly grounded walking cycles. Completion: all 45 heroes use front/rear facings mirrored left/right, walking is reviewed as a loop with alternating footfalls, required animations and transformations remain available, typecheck/build/affected tests and all three phone sizes pass. Status: implemented and validated; ready for owner review. All 11 affected test files, typecheck/build, 2,800 asset-cell checks and three phone sizes pass; offline reload passes. Handoff: [notes](notes/resonance-roster.md). No merge or release requested.
 ### WORLD-ROAD — Army road, boss arenas and the living land
 
 - **Goal:** the owner's asks: army battle maps follow a realistic path (a winding road 6 to 9 tiles wide with themed scenery beside it that walkers cannot enter, not a full 14x18 slab), each army's boss waves (8 and 15; the Wildwood's 5, 10 and 15) fought in its own themed arena, and (phase B) a living environment: hazards that act on both sides, running water and waterfalls, pack walls and set pieces at the tiles' angle, ambient life.
@@ -70,6 +71,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Completion criteria:** tomes drop deterministically on top of every stash and shop chest's stones and gear (shop prices unchanged); `Meta.tomes` optional and old saves load; "Use tome" on the hero page with the level-up feedback, capped at `MAX_LEVEL`; Open all identical to opening one by one, with a summary; pack art credited; pace reported; tests; screenshots at 393x852.
 - **Validation:** typecheck passed; `npm run web` built; `npm test -- chest summon-stones levels meta armyStars daily stand tower modes equipment hero-shards calMapRewards progression awaken shards unlock achievements codex` (252) and `npm test -- armies battle-flow calamity elites equip-best gear-sets mystery recycle no-flicker` (134) passed, including the 9 new tests in `test/chest-extras.test.ts`; `npm run unlock-pace` and `npm run level-pace` (with and without `--tomes`, 10 seeds); browser screenshots at 393x852 (`docs/samples/chest-extras-*.png`), also checked at 360x780 and 412x915 with no page errors.
 - **Handoff:** `docs/notes/chest-extras.md`. For the owner: the large tome's size, losing the overflow at the cap, and the drop table.
+
+**FX-002 / Tactile & Visual Juice (Game Feel)** — ready for review: hit-stop, camera micro-thud, dynamic victory poses, and Defeated Boss Trophy Wall.
+
+- **Goal:** implement "Tactile & Visual Juice" combat feel improvements: subtle 2-frame hit-stop and localized camera micro-thud on lethal backstabs, critical hits, and King's Meteor impact; dynamic surviving hero victory poses (Knight salutes/plants shield, Peasant collapses in exhausted relief, Wizard adjusts hat, Duchess hops onto a rock); Defeated Boss Trophy Wall in Tavern and Castle Hall with humorous defeat blurbs.
+- **Status:** implemented on branch `feat/combat-juice-and-trophies`, tested and ready for review.
+- **Owner:** Claude / Antigravity. **Branch:** `feat/combat-juice-and-trophies`.
+- **Scope:** rendering and effects (`src/render/fxRules.ts`, `src/render/fx.ts`, `src/render/unitView.ts`, `src/render/soundRules.ts`); mascot victory celebration (`src/duchess.ts`, `src/quipData.ts`, `src/quips.ts`); fight loop orchestration (`src/main.ts`); Defeated Boss Trophy Wall (`src/trophyWall.ts`, `src/trophyWall.css`, `src/tavern.ts`, `src/castle.ts`, `build.mjs`); tests (`test/tactile-juice.test.ts`); documentation (`docs/notes/tactile-juice.md`).
+- **Completion criteria:** 2-frame hit-stop and localized camera micro-thud active for lethal backstabs, crits, and meteor; calm/reduced-motion strictly respected; surviving heroes strike distinct victory poses; Duchess performs victory hop; Trophy Wall displays Calamity and Spire bosses with unlock state and humorous defeat blurbs; typecheck, web build, and targeted unit tests pass; portrait viewport checks verified.
+- **Validation:** `npm run typecheck` passed (0 errors); `npm run web` built successfully; `npm test -- tactile-juice` and `npm test -- combat-fx` passed (25/25); portrait viewport checks passed at 360×780, 393×852, and 412×915.
+- **Handoff:** [tactile-juice notes](notes/tactile-juice.md).
 
 
 **COMBAT-002 / Hero kits, mana and manual ultimates** — done: owner accepted release 0.172.0.

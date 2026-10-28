@@ -166,7 +166,7 @@ test('the awakened look: no recolour and no colour variant, the top form kept (A
   assert.equal(stepOfRank(6), 2);
   // (the Werewolf no longer turns red: the owner dropped the red sheet with the recolour)
   assert.equal(lookSheet('werewolf', 5, 3), lookSheet('werewolf', 4, 3));
-  assert.equal(lookSheet('werewolf', 6, 3), 'werewolf_black');
-  assert.equal(lookSheet('paladin', 5, 3), 'cls_paladin_3', 'the top form');
+  assert.equal(lookSheet('werewolf', 6, 3), 'hero_res_werewolf_brute');
+  assert.equal(lookSheet('paladin', 5, 3), 'hero_res_paladin', 'the top form');
   for (const k of ALL_HEROES) assert.equal(lookSheet(k, 6, 3), lookSheet(k, 4, 3), k);
 });

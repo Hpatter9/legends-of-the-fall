@@ -1,0 +1,501 @@
+/* ===== Defeated Boss Trophy Wall (trophyWall.ts) ===== */
+
+.twOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(10, 8, 6, 0.85);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.twCard {
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  background: #1c1510 linear-gradient(180deg, #2a1f18 0%, #17110c 100%);
+  border: 4px solid #5a3e26;
+  border-radius: 8px;
+  box-shadow: 0 0 0 2px #100b07, 0 16px 36px rgba(0, 0, 0, 0.85), inset 0 2px 4px rgba(255, 220, 160, 0.15);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Header */
+.twHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  border-bottom: 2px solid #3d2919;
+  background: #201710;
+  position: relative;
+}
+
+.twTitleBox {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.twCrest {
+  font-size: 20px;
+  margin-bottom: 2px;
+}
+
+.twTitle {
+  margin: 0;
+  font-family: 'Cinzel Decorative', 'Pixelify Sans', serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #ffde99;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.twSub {
+  margin: 0;
+  font-family: 'Alegreya Sans', sans-serif;
+  font-size: 12px;
+  color: #a89178;
+}
+
+.twCloseBtn {
+  background: #3a2517;
+  border: 1px solid #7c5837;
+  color: #eed6b6;
+  font-size: 16px;
+  font-weight: bold;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.twCloseBtn:hover, .twCloseBtn:focus-visible {
+  background: #5c3c26;
+  color: #fff;
+  transform: scale(1.05);
+}
+
+/* Filter Chips */
+.twFilters {
+  display: flex;
+  gap: 6px;
+  padding: 10px 14px;
+  background: #150f0b;
+  border-bottom: 1px solid #2d1d12;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.twFilters::-webkit-scrollbar {
+  display: none;
+}
+
+.twFilterChip {
+  background: #231912;
+  border: 1px solid #483120;
+  color: #bfa58c;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-family: 'Alegreya Sans', sans-serif;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.twFilterChip:hover {
+  background: #36251b;
+  color: #eed6b6;
+}
+
+.twFilterChip.active {
+  background: #603e22;
+  border-color: #d4a364;
+  color: #fff;
+  font-weight: bold;
+  box-shadow: 0 0 8px rgba(212, 163, 100, 0.3);
+}
+
+/* Rack Frame & Plaque Grid */
+.twRackFrame {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 12px;
+  background: radial-gradient(circle at 50% 20%, #221812 0%, #120c08 100%);
+  scrollbar-width: thin;
+  scrollbar-color: #5a3e26 #1a120c;
+}
+
+.twGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+}
+
+/* Individual Wooden Trophy Plaque */
+.twPlaque {
+  background: #241a13 linear-gradient(180deg, #322319 0%, #1e150f 100%);
+  border: 2px solid #553a23;
+  border-radius: 6px;
+  padding: 10px 8px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 230, 180, 0.12);
+  transition: transform 0.15s ease, border-color 0.15s, box-shadow 0.15s;
+  user-select: none;
+  min-height: 140px;
+  box-sizing: border-box;
+}
+
+.twPlaque:hover, .twPlaque:focus-visible {
+  transform: translateY(-2px);
+  border-color: #e5a755;
+  box-shadow: 0 8px 14px rgba(0, 0, 0, 0.65), 0 0 12px rgba(229, 167, 85, 0.25);
+  outline: none;
+}
+
+.twPlaque.locked {
+  opacity: 0.65;
+  background: #17110c;
+  border-color: #38271a;
+  filter: grayscale(0.6);
+}
+
+.twPlaque.locked:hover {
+  opacity: 0.85;
+  border-color: #6d4b32;
+}
+
+/* Rivets on corners */
+.twRivet {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #d4a364;
+  border-radius: 50%;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.8);
+}
+.twRivet.tl { top: 4px; left: 4px; }
+.twRivet.tr { top: 4px; right: 4px; }
+.twRivet.bl { bottom: 4px; left: 4px; }
+.twRivet.br { bottom: 4px; right: 4px; }
+
+/* Caricature Token Medallion */
+.twMedallion {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #120c08;
+  border: 2px solid #7c5837;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7), inset 0 2px 4px rgba(0, 0, 0, 0.8);
+  font-size: 24px;
+}
+
+.twPlaque.unlocked .twMedallion {
+  background: radial-gradient(circle, #382417 0%, #140d08 100%);
+}
+
+.twNameplate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+}
+
+.twBossName {
+  margin: 0;
+  font-family: 'Cinzel Decorative', 'Pixelify Sans', serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #eed6b6;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.twBossTitle {
+  font-family: 'Alegreya Sans', sans-serif;
+  font-size: 10px;
+  color: #9c836a;
+  line-height: 1.2;
+  margin: 2px 0 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.twStamp {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  padding: 3px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.2px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.twStamp.mounted {
+  background: #1b381e;
+  border: 1px solid #34d399;
+  color: #6ee7b7;
+}
+
+.twStamp.loose {
+  background: #3b1f1f;
+  border: 1px solid #f87171;
+  color: #fca5a5;
+}
+
+/* Footer */
+.twFooter {
+  padding: 10px 14px;
+  background: #150f0b;
+  border-top: 1px solid #2d1d12;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.twHint {
+  font-family: 'Alegreya Sans', sans-serif;
+  font-size: 11px;
+  color: #8f7761;
+}
+
+/* Detail Popup / Defeat Blurb Card */
+.twDetailOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 7, 5, 0.88);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1000;
+  animation: twFadeIn 0.15s ease-out;
+}
+
+@keyframes twFadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.twDetailBox {
+  background: #251b14 linear-gradient(180deg, #2f2118 0%, #1b120c 100%);
+  border: 3px solid #805737;
+  border-top: 5px solid #d4a364;
+  border-radius: 8px;
+  padding: 16px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.85);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.twDetailClose {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #3d2719;
+  border: 1px solid #7c5837;
+  color: #eed6b6;
+  font-size: 14px;
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.twDetailClose:hover {
+  background: #5e3b25;
+  color: #fff;
+}
+
+.twDetailTop {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.twDetailBadge {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #140d09;
+  border: 3px solid #8c603b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7);
+  flex-shrink: 0;
+}
+
+.twDetailTitles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.twDetailName {
+  margin: 0;
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 15px;
+  color: #ffde99;
+}
+
+.twDetailTitle {
+  font-family: 'Alegreya Sans', sans-serif;
+  font-size: 12px;
+  color: #b59e87;
+  margin-bottom: 4px;
+}
+
+.twDetailBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.twQuote {
+  margin: 0;
+  padding: 10px 14px;
+  background: #19120c;
+  border-left: 3px solid #d4a364;
+  border-radius: 4px;
+  font-family: 'Cinzel Decorative', 'Alegreya Sans', serif;
+  font-size: 13px;
+  font-style: italic;
+  line-height: 1.45;
+  color: #ffe6ba;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.twLoreHead {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #c99e69;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+.twLoreText {
+  margin: 0;
+  font-family: 'Alegreya Sans', sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #c4b09b;
+}
+
+.twLockedMsg {
+  margin: 0;
+  font-family: 'Alegreya Sans', sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #a89178;
+  font-style: italic;
+  padding: 12px;
+  background: #160f0a;
+  border-radius: 4px;
+}
+
+/* Tavern Trophies Button */
+.tvTrophies {
+  position: absolute;
+  right: 82px;
+  top: 8px;
+  min-height: 36px;
+  padding: 3px 10px 4px;
+  font: 700 12px var(--body, 'Alegreya Sans', sans-serif);
+  color: var(--gold-hi, #f6d167);
+  background: rgb(var(--s1-rgb, 40 28 20) / 0.88);
+  border: 2px solid var(--gold-lo, #9e7938);
+  border-radius: 8px;
+  cursor: pointer;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  transition: transform 0.1s, background 0.15s;
+}
+
+.tvTrophies:hover {
+  background: rgb(var(--s1-rgb, 50 36 26) / 0.95);
+  transform: scale(1.03);
+}
+
+@media (max-width: 420px) {
+  .tvTrophies {
+    right: 76px;
+    padding: 3px 8px 4px;
+    font-size: 11px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .twPlaque, .twDetailOverlay, .twCloseBtn, .twFilterChip {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+/* Portrait Viewport responsiveness */
+@media (max-width: 420px) {
+  .twCard {
+    max-height: 94vh;
+  }
+  .twGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .twPlaque {
+    padding: 8px 6px;
+    min-height: 125px;
+  }
+  .twMedallion {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+  .twBossName {
+    font-size: 10px;
+  }
+  .twBossTitle {
+    font-size: 9px;
+  }
+}

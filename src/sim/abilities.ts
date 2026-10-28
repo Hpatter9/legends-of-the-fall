@@ -1886,6 +1886,21 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
     }
     b.traps = b.traps.filter((tr) => tr.until > b.t);
   }
+  // cabbages kicked by Duchess: the first unit walking over it is healed for 10% max HP
+  if (b.cabbages?.length) {
+    const kept: typeof b.cabbages = [];
+    for (const c of b.cabbages) {
+      const walker = b.units.find((x) => x.alive && x.u === c.u && x.v === c.v);
+      if (walker) {
+        const healAmt = Math.max(1, Math.round(walker.maxHp * (c.healPercent ?? 0.1)));
+        walker.hp = Math.min(walker.maxHp, walker.hp + healAmt);
+        out.push({ kind: 'heal', to: walker.id, amount: healAmt });
+      } else {
+        kept.push(c);
+      }
+    }
+    b.cabbages = kept.length ? kept : undefined;
+  }
 }
 
 /** What `ultimates.ts` builds the heroes' ultimates from: the skills' own engines and rules. */
