@@ -77,6 +77,6 @@ export function drawAwaken(meta: Meta, kind: string, changed: (taken: Taken) => 
       }),
     );
     panel.append(bar, go);
-  } else panel.append(el('small', 'awNote', 'Fully awakened. Repeat pulls of this hero pay crowns once its shards have nothing left to buy.'));
+  } else panel.append(el('small', 'awNote', 'Fully awakened. More shards of this hero pay crowns once they have nothing left to buy.'));
   return panel;
 }

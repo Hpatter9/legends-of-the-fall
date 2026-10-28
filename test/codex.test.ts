@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { startBattle } from '../src/sim/battle';
-import { crownsClaimed, crownsTotal, crownsWaiting, FOE_ENTRIES, claimCodex, codexWaiting, entryOfDef, gotOf, isMet, killsOf, milestonesOf, noteFoes, progressLine, readCodex, tipsOf, totalOf, whereMet, kitOfEntry } from '../src/sim/codex';
+import { claimEntries, CODEX_STONES, discoveredKeys, ENTRY_STONES, entriesWaiting, foeKey, heroKey, crownsClaimed, crownsTotal, crownsWaiting, FOE_ENTRIES, stonesClaimed, stonesTotal, stonesWaiting, claimCodex, codexWaiting, entryOfDef, gotOf, isMet, killsOf, milestonesOf, noteFoes, progressLine, readCodex, tipsOf, totalOf, whereMet, kitOfEntry } from '../src/sim/codex';
 import { FOE_LORE, HERO_STORY } from '../src/sim/codexLore';
 import { loadMeta, saveMeta, startedMeta } from '../src/sim/meta';
 import { settleRun } from '../src/sim/modes';
@@ -166,4 +166,79 @@ test('the rewards add up: what each collection pays in all, what is taken and wh
   assert.equal(crownsWaiting(m), 0);
   m.codexClaimed = ['bestiary25'];
   assert.equal(crownsClaimed(m, 'bestiary'), 10);
+});
+
+test('a codex reward pays a summoning stone beside its crowns, once, and an old claim is not paid again', () => {
+  assert.equal(CODEX_STONES, 1);
+  for (const ms of [...milestonesOf('bestiary'), ...milestonesOf('heroes')]) assert.equal(ms.stones, 1, ms.id);
+  assert.equal(stonesTotal('bestiary'), 4);
+  assert.equal(stonesTotal('heroes'), 4);
+  const m = startedMeta(1);
+  m.unlocked = ALL_HEROES.slice(0, Math.ceil(totalOf('heroes') / 2));
+  assert.equal(stonesWaiting(m), 2);
+  const stones = m.stones ?? 0;
+  claimCodex(m, 'heroes25');
+  assert.equal(m.stones, stones + 1);
+  assert.equal(stonesClaimed(m, 'heroes'), 1);
+  assert.equal(claimCodex(m, 'heroes25'), 0);
+  assert.equal(m.stones, stones + 1, 'not twice');
+  // (a save that claimed milestones before the stones keeps its stones as they are: those claims pay nothing more)
+  const old = { ...startedMeta(2), unlocked: [...ALL_HEROES], codexClaimed: milestonesOf('heroes').map((x) => x.id), stones: 4 } as Record<string, unknown>;
+  const back = loadMeta(1, { getItem: () => JSON.stringify(old) } as never);
+  for (const ms of milestonesOf('heroes')) assert.equal(claimCodex(back, ms.id), 0);
+  assert.equal(back.stones, 4);
+  assert.equal(stonesWaiting(back), 0);
+});
+
+test('each codex entry pays a stone the first time it is discovered, once, on the claim', () => {
+  assert.equal(ENTRY_STONES, 1);
+  const m = startedMeta(1);
+  m.codexPaid = discoveredKeys(m);
+  assert.equal(claimEntries(m), 0, 'nothing new, nothing paid');
+  const stones = m.stones ?? 0;
+  // (two foes met in a fight, and a hero joins)
+  const [a, b] = FOE_ENTRIES.filter((e) => e.class === 'common' && !isMet(m, e));
+  noteFoes(m, { units: [{ side: 'foe', def: a.defs[0], alive: false }, { side: 'foe', def: b.defs[0], alive: true }, { side: 'foe', def: a.defs[0], alive: false }] } as never);
+  const hero = ALL_HEROES.find((k) => !m.unlocked.includes(k))!;
+  m.unlocked.push(hero);
+  assert.deepEqual(entriesWaiting(m).sort(), [foeKey(a), foeKey(b), heroKey(hero)].sort());
+  assert.equal(m.stones ?? 0, stones, 'nothing is paid until it is claimed');
+  assert.equal(claimEntries(m), 3);
+  assert.equal(m.stones, stones + 3);
+  assert.equal(claimEntries(m), 0, 'not twice');
+  // (meeting them again pays nothing, and the claims stay through a save)
+  noteFoes(m, { units: [{ side: 'foe', def: a.defs[0], alive: false }] } as never);
+  assert.equal(entriesWaiting(m).length, 0);
+  const s = store();
+  saveMeta(m, s as never);
+  const back = loadMeta(1, s as never);
+  assert.equal(claimEntries(back), 0);
+  assert.equal(back.stones, stones + 3);
+});
+
+test('an old save is not paid for the entries it had already discovered, only for those it discovers from now on', () => {
+  const met = FOE_ENTRIES.slice(0, 20);
+  const old = { ...startedMeta(2), unlocked: ALL_HEROES.slice(0, 12), codex: { met: met.map((e) => e.defs[0]), kills: {} }, stones: 4 } as Record<string, unknown>;
+  delete old.codexPaid;
+  const back = loadMeta(1, { getItem: () => JSON.stringify(old) } as never);
+  assert.ok((back.codexPaid ?? []).length >= 32);
+  assert.equal(entriesWaiting(back).length, 0);
+  assert.equal(claimEntries(back), 0);
+  assert.equal(back.stones, 4);
+  const next = FOE_ENTRIES.find((e) => !isMet(back, e))!;
+  (back.codex ??= { met: [], kills: {} }).met.push(next.defs[0]);
+  assert.deepEqual(entriesWaiting(back), [foeKey(next)]);
+  assert.equal(claimEntries(back), 1);
+  assert.equal(back.stones, 5);
+});
+
+test('the entry stones are deterministic: the same discoveries pay the same, whatever the order', () => {
+  const run = (order: number[]) => {
+    const m = startedMeta(3);
+    m.codexPaid = discoveredKeys(m);
+    for (const i of order) noteFoes(m, { units: [{ side: 'foe', def: FOE_ENTRIES[i].defs[0], alive: false }] } as never);
+    return { paid: claimEntries(m), keys: [...(m.codexPaid ?? [])].sort(), stones: m.stones };
+  };
+  assert.deepEqual(run([3, 7, 11, 3]), run([11, 3, 7]));
+  assert.deepEqual(run([3, 7, 11]), run([3, 7, 11]));
 });

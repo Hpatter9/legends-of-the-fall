@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { earn, loadMeta, startedMeta, newMeta, pullCost, pullOnce, PULL10_COST, PULL_COST, recruit, runCrowns, saveMeta, stageCrowns } from '../src/sim/meta';
+import { earn, loadMeta, startedMeta, newMeta, stoneCost, pullOnce, useStones, runCrowns, saveMeta, stageCrowns } from '../src/sim/meta';
 import { newRun, summon } from '../src/sim/run';
 import { ALL_HEROES, HEROES } from '../src/sim/units';
 
@@ -15,19 +15,21 @@ test('a played save has its heroes unlocked, and crowns are earned', () => {
   assert.equal(m.crowns, stageCrowns(3) + runCrowns(5));
 });
 
-test('pull costs: ten is cheaper than ten singles, and a poor player gets nothing', () => {
-  assert.equal(pullCost(1), PULL_COST);
-  assert.equal(pullCost(10), PULL10_COST);
-  assert.ok(PULL10_COST < 10 * PULL_COST);
+test('a pull costs stones, never crowns: one each, and a player without stones gets nothing', () => {
+  assert.equal(stoneCost(1), 1);
+  assert.equal(stoneCost(10), 10);
   const m = startedMeta(2);
-  m.crowns = PULL_COST - 1;
-  assert.equal(recruit(m, 1), null);
-  assert.equal(m.crowns, PULL_COST - 1);
-  m.crowns = PULL10_COST + 5;
-  const got = recruit(m, 10)!;
+  m.crowns = 1e6;
+  assert.equal(useStones(m, 1), null, 'crowns buy no pull');
+  m.stones = 9;
+  assert.equal(useStones(m, 10), null);
+  assert.equal(m.stones, 9);
+  m.stones = 15;
+  const got = useStones(m, 10, { lucky: false })!;
   assert.equal(got.length, 10);
   assert.equal(m.pulls, 10);
-  assert.equal(m.crowns, 5);
+  assert.equal(m.stones, 5);
+  assert.equal(m.crowns, 1e6, 'the crowns are untouched');
   assert.equal(got.reduce((n, p) => n + p.shards, 0), Object.values(m.shards).reduce((n, s) => n + s, 0));
 });
 

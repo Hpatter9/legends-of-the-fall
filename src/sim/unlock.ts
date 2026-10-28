@@ -1,8 +1,8 @@
 // Collecting heroes by shards. A hero not yet owned is gathered shard by shard (`Meta.unlock`, apart from the rank shards in
-// `Meta.shards`) and joins, at rank 0, once it has `unlockNeed` of them; a hero owned takes rank shards as before. Pulls and
-// chests give shards through `giveShards`; the pull's draw is `drawKind`. Pure rules: no Pixi, no DOM.
+// `Meta.shards`) and joins, at rank 0, once it has `unlockNeed` of them; a hero owned takes rank shards as before. Using a
+// summoning stone is the only way to a shard (`pullOnce` in `meta.ts`, through `giveShards`); the pull's draw is `drawKind`. Pure rules: no Pixi, no DOM.
 
-import { mixSeed, Rng } from './rng';
+import { Rng } from './rng';
 import { OVERFLOW_CROWNS, SHARD_CAP } from './awakenRules';
 import type { Meta } from './meta';
 import { DUPLICATE_SHARDS, isContent, ownedWeight, pityAt, PULL_HEROES, STICKY, unlockNeed } from './unlockRules';
@@ -10,7 +10,6 @@ import { DUPLICATE_SHARDS, isContent, ownedWeight, pityAt, PULL_HEROES, STICKY, 
 export { DUPLICATE_SHARDS };
 
 const PITY_SALT = 0x9a17e;
-const REPLACE_SALT = 0x5b57;
 
 export const owns = (m: Meta, kind: string): boolean => m.unlocked.includes(kind);
 /** How many pullable heroes the save owns (the number the shards needed rise with). */
@@ -75,12 +74,6 @@ export function giveShards(m: Meta, kind: string, n: number): Given {
     (m.unlock ??= {})[kind] = have;
   }
   return out;
-}
-
-/** A hero a chest rolled that cannot be given as it is (a content hero not owned): another pullable hero, drawn from a side stream of the chest's seed. */
-export function swapContent(m: Meta, kind: string, seed: number, i: number): string {
-  if (!isContent(kind) || owns(m, kind)) return kind;
-  return Rng.from(mixSeed(seed, REPLACE_SALT, i)).pick(PULL_HEROES);
 }
 
 /** The kind a pull draws: any pullable hero (one begun is likelier, by `STICKY` for each shard held), or an owned content hero for its rank shards; every `PITY_PULLS` pulls without unlock shards, the hero closest to joining. */

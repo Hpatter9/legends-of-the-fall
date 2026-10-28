@@ -84,5 +84,5 @@ export function lockInfo(m: Meta, kind: string): LockInfo | null {
   const need = needOf(m);
   return have
     ? { line: `${have} of ${need} shards: pull it at the Recruit tab`, now: have, need, named: true, short: `${have}/${need} shards` }
-    : { line: 'Not recruited yet: its shards come from pulls and chests', now: 0, need, named: false, short: 'Not recruited' };
+    : { line: 'Not recruited yet: its shards come from summoning stones', now: 0, need, named: false, short: 'Not recruited' };
 }

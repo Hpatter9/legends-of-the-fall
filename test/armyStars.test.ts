@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { ARMIES, armyById, armyStars, migrateArmies, recordOf, settleWave, tierOpen, tierStars, waveBoost, firstClearTotal, replayTotal } from '../src/sim/armies';
 import { FIRST_CLEAR_CHEST, chestKind, armyRules, bestChest, chestCrowns, chestSeed, chestsOf, grantChests, openChest, peekChest, rollChest, settleArmyRun, timeTarget } from '../src/sim/armyStars';
 import { ARMY_STARS, MILESTONES, RUN_STARS, TIERS, tierRange } from '../src/sim/tiers';
+import { CHEST_STONES } from '../src/sim/unlockRules';
 import { ALL_HEROES, UNITS } from '../src/sim/units';
 import { loadMeta, startedMeta, saveMeta } from '../src/sim/meta';
 import { armyRun, noteFight, startStage, tierOfRun, type Run } from '../src/sim/run';
@@ -263,26 +264,27 @@ test('the 10-star chest always holds a hero, and every hero is as likely as any 
   for (const [k, n] of seen) assert.ok(n > 55 && n < 150, `${k} came up ${n} times`);
 });
 
-test('opening a chest pays crowns, shards and a hero draw (unlock shards, or rank shards if owned)', () => {
+test('opening a chest pays crowns and summoning stones (by its size), and no hero shard directly', () => {
   const m = startedMeta(9);
   m.armies.golems = { best: 10, won: 10, clears: 1, stars: {}, met: { 0: 7, 1: 7, 2: 7, 3: 1 } };
   grantChests(m, armyById('golems')!, m.armies.golems);
   assert.deepEqual(m.stash.map((c) => c.at), [3, 5, 10]);
-  const before = { crowns: m.crowns, unlocked: m.unlocked.length };
+  const before = { crowns: m.crowns, stones: m.stones ?? 0, unlocked: [...m.unlocked], shards: { ...m.shards }, unlock: { ...(m.unlock ?? {}) } };
   const loot = openChest(m, 2)!;
   assert.equal(loot.kind, 'gold');
   assert.ok(m.crowns > before.crowns);
-  const prize = loot.items.find((i) => i.type === 'hero')!;
-  assert.ok(prize.prize);
-  // (a hero not yet owned is not recruited whole: its unlock bar gains the draw's shards)
-  assert.ok(m.unlocked.length === before.unlocked || m.unlocked.length === before.unlocked + 1);
-  assert.ok(m.unlocked.includes(prize.ref!) || (m.unlock?.[prize.ref!] ?? 0) >= 1 || (m.shards[prize.ref!] ?? 0) >= 1);
-  assert.ok(Object.values(m.shards).reduce((a, b) => a + b, 0) + Object.values(m.unlock ?? {}).reduce((a, b) => a + b, 0) >= 1);
-  // (a prize hero already owned pays shards instead)
-  const owned = [...m.unlocked];
-  const again = openChest(m, 0)!;
-  assert.ok(again.items.some((i) => i.type === 'crowns'));
-  assert.ok(owned.every((k) => m.unlocked.includes(k)));
+  const stones = loot.items.filter((i) => i.type === 'stones').reduce((n, i) => n + (i.n ?? 0), 0);
+  assert.equal(stones, CHEST_STONES[10]);
+  assert.equal((m.stones ?? 0) - before.stones, stones);
+  // (stones are not tied to a hero: nothing joins and no shard is given until one is used)
+  assert.deepEqual(m.unlocked, before.unlocked);
+  assert.deepEqual(m.shards, before.shards);
+  assert.deepEqual(m.unlock ?? {}, before.unlock);
+  assert.equal(loot.items.some((i) => (i.type as string) === 'shards' || (i.type as string) === 'hero'), false);
+  // (the smaller chests hold fewer)
+  const again = openChest(m, 1)!;
+  assert.equal(again.items.filter((i) => i.type === 'stones').reduce((n, i) => n + (i.n ?? 0), 0), CHEST_STONES[5]);
+  assert.ok(CHEST_STONES[3] <= CHEST_STONES[5] && CHEST_STONES[5] < CHEST_STONES[10] && CHEST_STONES[10] < CHEST_STONES[11]);
 });
 
 test('chests drop permanent hero equipment: silver and gold always, bronze sometimes, once, and the same every time', () => {

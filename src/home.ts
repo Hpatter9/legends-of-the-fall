@@ -7,7 +7,8 @@
 import { BUILDING_IDS, BUILDINGS, buildMs, canBuildChapel, CHAPEL_COST, CHAPEL_MS, chapelBuilt, clockText, maxLevel, nextCost, settleWorks, startBuild, startChapel, worksLeft, type BuildingId, type BuildSite } from './sim/castle';
 import { CastleScene, lookPicture } from './castle';
 import { BLURB, effectText } from './render/castleSpots';
-import { pullCost, saveMeta, type Meta, type Pull } from './sim/meta';
+import { saveMeta, stonesOf, type Meta, type Pull } from './sim/meta';
+import { openShop } from './shopView';
 import { dailyBossName } from './sim/daily';
 import { dailyLine, dailyStatus, towerOpen } from './sim/modes';
 import { CAL_MAPS } from './sim/calamity';
@@ -19,8 +20,8 @@ import { UNITS } from './sim/units';
 import { drawArmies } from './armiesView';
 import { drawChestStash } from './chestStash';
 import { drawAchievements } from './achievementsView';
-import { drawCodex, stopCodex } from './codexView';
-import { claimCodex, codexWaiting, gotOf, totalOf } from './sim/codex';
+import { drawCodex, ENTRIES_CLAIM, stopCodex } from './codexView';
+import { claimCodex, claimEntries, codexAnyWaiting, gotOf, totalOf } from './sim/codex';
 import { todayKey } from './modes';
 import { openSettings } from './settings';
 import { modeOpen, MODE_NEED, opensAt, progressLine } from './sim/modeUnlock';
@@ -113,6 +114,7 @@ export class Home {
     // (the tavern leads to the Heroes tab, the chapel to the Spells tab and the signpost to the battle screen; the six upgrades open their cards)
     this.hall = new SummoningHall({
       onSummon: (n) => this.summon(n),
+      onShop: () => openShop(this.meta, () => this.refresh()),
       onCollection: () => {
         this.hall.stop();
         this.hooks.onRecruit();
@@ -252,6 +254,7 @@ export class Home {
     }
     // top bar (the run's gold stays in the run: the owner's call)
     $('hmCrowns').replaceChildren(icon(ICONS.crowns), el('b', '', String(m.crowns)));
+    $('hmStones').replaceChildren(icon(ICONS.stones), el('b', '', String(stonesOf(m))));
     const stars = ARMIES.reduce((n, a) => n + armyStars(m, a).got, 0);
     $('hmBest').textContent = `Armies ${clearedCount(m)}/${ARMIES.length} · ★ ${stars}`;
     const fresh = m.achievements.length > seenCount() || unclaimed(m).length > 0;
@@ -269,7 +272,7 @@ export class Home {
       return c !== null && m.crowns >= c;
     });
     this.tabBtns.get('castle')!.classList.toggle('new', affordable || canBuildChapel(m) || fresh);
-    this.tabBtns.get('recruit')!.classList.toggle('new', m.crowns >= pullCost(1));
+    this.tabBtns.get('recruit')!.classList.toggle('new', stonesOf(m) > 0);
     // (a rank earned, or an awakening paid for, waits for the player's tap on the Heroes tab)
     this.tabBtns.get('heroes')!.classList.toggle('new', readyKinds(m, m.unlocked).length > 0);
     this.tabBtns.get('battle')!.classList.toggle('new', !m.daily[String(todayKey())] || ARMIES.some((a) => armyIsNew(m, a.id)));
@@ -403,7 +406,7 @@ export class Home {
     // (the codex sits by the achievements: both are the records of the castle's library of deeds; its badge shows a milestone to claim)
     const cdx = el('button', 'ctChip');
     cdx.append(icon(ICONS.spells), el('b', '', 'Codex'), el('small', '', `${gotOf(m, 'bestiary') + gotOf(m, 'heroes')}/${totalOf('bestiary') + totalOf('heroes')}`));
-    if (codexWaiting(m).length) cdx.append(el('i', 'badge'));
+    if (codexAnyWaiting(m)) cdx.append(el('i', 'badge'));
     cdx.addEventListener('click', () => this.openCodex());
     const levelBtn = el('button', 'ctChip');
     levelBtn.append(el('b', '', '🏰 Build Town'));
@@ -614,7 +617,7 @@ export class Home {
     if (markSeen(this.meta)) saveMeta(this.meta);
   }
 
-  /** The achievements page; a Claim takes the crowns, saves, and draws the page again. */
+  /** The achievements page; a Claim takes the crowns and stones, saves, and draws the page again. */
   private openAchievements(): void {
     const draw = (b: HTMLElement) =>
       drawAchievements(b, this.meta, (ids) => {
@@ -629,11 +632,11 @@ export class Home {
     this.openSub('Achievements', draw);
   }
 
-  /** The codex page; a Claim takes a milestone's crowns, saves, and draws the page again. */
+  /** The codex page; a Claim takes a milestone's crowns and stone (or the new entries' stones), saves, and draws the page again. */
   openCodex(): void {
     const draw = (b: HTMLElement) =>
       drawCodex(b, this.meta, (id) => {
-        if (!claimCodex(this.meta, id)) return;
+        if (!(id === ENTRIES_CLAIM ? claimEntries(this.meta) : claimCodex(this.meta, id))) return;
         saveMeta(this.meta);
         play('coinClaim');
         const keep = b.scrollTop;

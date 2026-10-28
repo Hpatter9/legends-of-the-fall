@@ -3,7 +3,7 @@
 
 import { ALL_HEROES, UNITS } from './sim/units';
 import { awakenedOf, AWAKEN_SHARDS } from './sim/awaken';
-import { MAX_RANK, pullCost, RANK_MULT, RANK_SHARDS, rankOf, recruit, saveMeta, takenRank, type Meta, type Pull } from './sim/meta';
+import { LUCKY_ODDS, MAX_RANK, RANK_MULT, RANK_SHARDS, rankOf, saveMeta, stoneCost, stonesOf, takenRank, useStones, type Meta, type Pull } from './sim/meta';
 import { closest, haveOf, needOf, ownedCount } from './sim/unlock';
 import { isContent, pityAt } from './sim/unlockRules';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
@@ -11,6 +11,9 @@ import { portrait } from './render/sheets';
 import { play as playSfx } from './render/sound';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+
+/** The debug hook for the lucky roll: a page (or a screenshot script) sets `window.__forceLucky = true` to make the next summons lucky. The sim's own odds are untouched. */
+const forced = (): { lucky?: boolean } => ((window as unknown as { __forceLucky?: boolean }).__forceLucky ? { lucky: true } : {});
 
 export class Gacha {
   private busy = false;
@@ -56,13 +59,13 @@ export class Gacha {
 
   private refresh(): void {
     const m = this.meta;
-    $('crowns').textContent = `${m.crowns} crowns`;
+    $('crowns').textContent = `${stonesOf(m)} stone${stonesOf(m) === 1 ? '' : 's'}`;
     for (const [id, n] of [['pull1', 1], ['pull10', 10]] as const) {
       const b = $(id) as HTMLButtonElement;
       const price = document.createElement('small');
-      price.textContent = `${pullCost(n)} crowns`;
-      b.replaceChildren(`Summon ×${n}`, price);
-      b.disabled = this.busy || m.crowns < pullCost(n);
+      price.textContent = `${stonesOf(m)} held`;
+      b.replaceChildren(`Use ${stoneCost(n)} stone${n === 1 ? '' : 's'}`, price);
+      b.disabled = this.busy || stonesOf(m) < stoneCost(n);
     }
     $('pity').textContent = pityLine(m);
     const list = $('collection');
@@ -111,7 +114,7 @@ export class Gacha {
   /** A pull started from the summoning hall: the pull is made at once (so it is saved whatever happens), the hall plays it, then the usual reveal opens. */
   summon(count: 1 | 10, play: (got: Pull[]) => Promise<void>): void {
     if (this.busy) return;
-    const got = recruit(this.meta, count);
+    const got = useStones(this.meta, count, forced());
     if (!got) return;
     saveMeta(this.meta);
     this.busy = true;
@@ -124,12 +127,12 @@ export class Gacha {
 
   private pull(count: 1 | 10): void {
     if (this.again) {
-      if (this.busy || this.meta.crowns < pullCost(count)) return;
+      if (this.busy || stonesOf(this.meta) < stoneCost(count)) return;
       $('gacha').hidden = true;
       this.again(count);
       return;
     }
-    const got = recruit(this.meta, count);
+    const got = useStones(this.meta, count, forced());
     if (!got) return;
     saveMeta(this.meta);
     this.busy = true;
@@ -166,7 +169,7 @@ export class Gacha {
     got.forEach((p) => {
       const def = UNITS[p.kind];
       const card = document.createElement('div');
-      card.className = `flip${p.isNew ? ' new' : ' tarot'}${def.name.length > 14 ? ' longName' : ''}`;
+      card.className = `flip${p.isNew ? ' new' : ' tarot'}${p.lucky ? ' lucky' : ''}${def.name.length > 14 ? ' longName' : ''}`;
       card.dataset.kind = p.kind;
       card.tabIndex = 0;
       card.setAttribute('role', 'button');
@@ -178,7 +181,7 @@ export class Gacha {
       face.className = 'face';
       const seal = document.createElement('span');
       seal.className = 'resultSeal';
-      seal.textContent = p.isNew ? 'New hero' : p.crowns ? 'Crowns' : p.unlock ? 'Hero shards' : 'Rank shards';
+      seal.textContent = p.lucky ? 'Lucky summon' : p.isNew ? 'New hero' : p.crowns ? 'Crowns' : p.unlock ? 'Hero shards' : 'Rank shards';
       const scene = document.createElement('div');
       scene.className = 'summonPortrait';
       scene.append(portrait(def.sheet, got.length === 1 ? 192 : 112));
@@ -192,7 +195,7 @@ export class Gacha {
       reward.className = 'resultReward';
       const tag = document.createElement('em');
       const shardCount = p.unlock ?? p.shards;
-      tag.textContent = p.isNew ? 'Joined your company' : p.crowns ? `+${p.crowns} crowns` : `+${shardCount} shard${shardCount === 1 ? '' : 's'}`;
+      tag.textContent = p.lucky && p.isNew ? 'Called to your company at once' : p.isNew ? 'Joined your company' : p.crowns ? `+${p.crowns} crowns` : `+${shardCount} shard${shardCount === 1 ? '' : 's'}`;
       reward.append(tag);
       if (p.unlock && p.need && !p.isNew) {
         const label = small(`${p.have} / ${p.need} to recruit`);
@@ -209,6 +212,13 @@ export class Gacha {
         const description = small(def.role);
         description.className = 'resultDescription';
         reward.append(description);
+      }
+      if (p.lucky) {
+        // (one burst of gold when the card turns, played once: no loop)
+        const burst = document.createElement('div');
+        burst.className = 'luckyBurst';
+        burst.setAttribute('aria-hidden', 'true');
+        face.append(burst);
       }
       if (p.isNew) {
         const celebration = document.createElement('div');
@@ -227,7 +237,7 @@ export class Gacha {
       card.addEventListener('click', () => {
         if (card.classList.contains('up')) return;
         card.classList.add('up');
-        if (p.isNew) {
+        if (p.isNew || p.lucky) {
           if (!celebrated) playSfx('stingSummon');
           celebrated = true;
           if (got.length > 1 && !this.revealingAll) card.scrollIntoView({ block: 'center', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
@@ -244,7 +254,7 @@ export class Gacha {
         $('revealAll').hidden = true;
         const fresh = got.filter(pull => pull.isNew).length;
         $('resultSummary').textContent = got.length === 1
-          ? p.isNew ? 'A new ally joins your company' : p.unlock ? 'Another step towards a new ally' : p.crowns ? 'A tribute for your kingdom' : 'Your company grows stronger'
+          ? p.lucky && p.isNew ? 'Lucky! A whole hero answers the call' : p.lucky ? 'Lucky! A great store of rank shards' : p.isNew ? 'A new ally joins your company' : p.unlock ? 'Another step towards a new ally' : p.crowns ? 'A tribute for your kingdom' : 'Your company grows stronger'
           : `${got.length} rewards revealed${fresh ? ` · ${fresh} new ${fresh === 1 ? 'ally' : 'allies'}` : ''}`;
         this.refresh();
       });
@@ -304,10 +314,13 @@ export function pityLine(m: Meta): string {
   const near = closest(m);
   if (!near) return 'You have every hero you can recruit';
   const left = Math.max(1, pityAt(ownedCount(m)) - (m.unlockDry ?? 0));
-  return `Nearest: ${UNITS[near].name} ${haveOf(m, near)}/${needOf(m)} · its shards are sure within ${left} pull${left === 1 ? '' : 's'}`;
+  return `Nearest: ${UNITS[near].name} ${haveOf(m, near)}/${needOf(m)} · its shards are sure within ${left} stone${left === 1 ? '' : 's'}`;
 }
 
-/** The recruit page's short rule: what a pull is, and why new heroes turn up less as the roster grows. */
+/** The recruit page's short rule: what a stone is, the lucky chance, and why new heroes turn up less as the roster grows. */
 export function ratesText(): string {
-  return `A pull gives a shard of one hero. A new hero joins when its bar fills; one you have earns rank (+${Math.round((RANK_MULT - 1) * 100)}% hp and attack a rank, up to ${MAX_RANK}, then awakening): tap Rank up on its sheet to take it. The more heroes you have, the more pulls land on them rather than on a new one. Ten heroes are earned in play, never pulled: see the Heroes tab.`;
+  return `Each summoning stone you use gives one shard of one hero. A new hero joins when its bar fills; one you have earns rank (+${Math.round((RANK_MULT - 1) * 100)}% hp and attack a rank, up to ${MAX_RANK}, then awakening): tap Rank up on its sheet to take it. One stone in ${LUCKY_ODDS} is a lucky summon: a whole hero you do not have joins at once. The more heroes you have, the more stones land on them rather than on a new one. Stones come in chests: buy them in the chest shop with crowns, or win them from armies, the daily, the Last Stand and the Calamity. Ten heroes are earned in play, never summoned: see the Heroes tab.`;
 }
+
+/** The plain line under the summon buttons. */
+export const luckyLine = (): string => `1 in ${LUCKY_ODDS} stones is a lucky summon: a whole new hero at once`;

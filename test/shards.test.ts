@@ -12,7 +12,7 @@ test('a pull of a hero owned gives a rank shard of it, not crowns; of a hero not
   for (let i = 0; i < 300; i++) {
     const crowns = m.crowns;
     const owned = [...m.unlocked];
-    const p = pullOnce(m);
+    const p = pullOnce(m, { lucky: false });
     if (!owned.includes(p.kind)) {
       assert.equal(p.shards, 0);
       assert.ok(p.unlock! >= 1);

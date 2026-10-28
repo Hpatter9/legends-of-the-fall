@@ -1,5 +1,5 @@
 // The Calamity's two big screens (`calmap.css`): the recap of a map that has just been cleared (the rewards it paid and the events it held),
-// and the victory screen of a Calamity cleared whole (the finishing reward: crowns, hero shards, a Legendary piece of gear, a title).
+// and the victory screen of a Calamity cleared whole (the finishing reward: crowns, summoning stones, a Legendary piece of gear, a title).
 // Both fill a card the tower view has made. They only read the run and the summary; nothing here changes the game.
 
 import { itemIcon } from './equipView';
@@ -9,10 +9,8 @@ import { CAL_MAPS } from './sim/calamity';
 import { EQUIP_BASES, RARITY_NAMES, type Equipment } from './sim/equipment';
 import { RELICS } from './sim/relics';
 import type { MapRecap, TowerSummary } from './sim/tower';
-import { UNITS } from './sim/units';
 import { ICONS, icon } from './menuArt';
 import { iconImg, relicIcon } from './render/items';
-import { portrait } from './render/sheets';
 import { play } from './render/sound';
 import { calamityLook } from './towerTheme';
 
@@ -125,18 +123,10 @@ export function victoryCard(card: HTMLElement, s: TowerSummary, onDone: () => vo
   gw.append(el('b', '', c.gear.name), el('small', '', `${RARITY_NAMES[c.gear.rarity]} · Lv ${c.gear.level}`));
   gear.append(itemIcon(gearItem, EQUIP_BASES[c.gear.base]?.slot ?? 'weapon'), gw);
   rewards.push(group('A piece of gear', [gear]));
-  // the shards
-  rewards.push(
-    group(
-      'Hero shards',
-      c.shards.map((sh) => {
-        const def = UNITS[sh.kind];
-        const r = el('div', 'ccShard');
-        r.append(portrait(def.sheet, 40), el('b', '', def.name), el('em', '', sh.joined ? 'joins you!' : `+${sh.n}`));
-        return r;
-      }),
-    ),
-  );
+  // the stones
+  const stones = el('div', 'ccShard');
+  stones.append(icon(ICONS.stones, 'lootIco'), el('b', '', 'Summoning stones'), el('em', '', `+${c.stones}`));
+  rewards.push(group('Stones', [stones]));
   // the chests
   if (s.gold) {
     const one = el('div', 'ccChests');
