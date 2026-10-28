@@ -51,6 +51,54 @@ import art48 from '../art/units/hero_res_treant2.png';
 import art49 from '../art/units/hero_res_treant3.png';
 import art50 from '../art/units/hero_soldier_back.png';
 import art51 from '../art/units/hero_samurai_archer_back.png';
+import art52 from '../art/units/hero_res_samurai_back.png';
+import art53 from '../art/units/hero_res_kunoichi_back.png';
+import art54 from '../art/units/hero_res_wizard_back.png';
+import art55 from '../art/units/hero_res_paladin_back.png';
+import art56 from '../art/units/hero_res_cleric_back.png';
+import art57 from '../art/units/hero_res_minotaur_back.png';
+import art58 from '../art/units/hero_res_peasant_back.png';
+import art59 from '../art/units/hero_res_ninja_monk_back.png';
+import art60 from '../art/units/hero_res_wanderer_back.png';
+import art61 from '../art/units/hero_res_lightning_mage_back.png';
+import art62 from '../art/units/hero_res_kitsune_back.png';
+import art63 from '../art/units/hero_res_karasu_back.png';
+import art64 from '../art/units/hero_res_yamabushi_back.png';
+import art65 from '../art/units/hero_res_werewolf_back.png';
+import art66 from '../art/units/hero_res_satyr_back.png';
+import art67 from '../art/units/hero_res_gorgon_back.png';
+import art68 from '../art/units/hero_res_samurai_commander_back.png';
+import art69 from '../art/units/hero_res_druid_back.png';
+import art70 from '../art/units/hero_res_barbarian_back.png';
+import art71 from '../art/units/hero_res_ranger_back.png';
+import art72 from '../art/units/hero_res_warlock_back.png';
+import art73 from '../art/units/hero_res_illusionist_back.png';
+import art74 from '../art/units/hero_res_gunslinger_back.png';
+import art75 from '../art/units/hero_res_shambler_back.png';
+import art76 from '../art/units/hero_res_rifle_bot_back.png';
+import art77 from '../art/units/hero_res_mercenary_back.png';
+import art78 from '../art/units/hero_res_mummy_back.png';
+import art79 from '../art/units/hero_res_buccaneer_back.png';
+import art80 from '../art/units/hero_res_wolf_bard_back.png';
+import art81 from '../art/units/hero_res_beastmaster_back.png';
+import art82 from '../art/units/hero_res_kraken_back.png';
+import art83 from '../art/units/hero_res_lancer_back.png';
+import art84 from '../art/units/hero_res_reaper_back.png';
+import art85 from '../art/units/hero_res_time_witch_back.png';
+import art86 from '../art/units/hero_res_arc_blade_back.png';
+import art87 from '../art/units/hero_res_dread_pirate_back.png';
+import art88 from '../art/units/hero_res_siege_bot_back.png';
+import art89 from '../art/units/hero_res_priestess_back.png';
+import art90 from '../art/units/hero_res_dragoon_back.png';
+import art91 from '../art/units/hero_res_juggernaut_back.png';
+import art92 from '../art/units/hero_res_sage_back.png';
+import art93 from '../art/units/hero_res_demon_swordsman_back.png';
+import art94 from '../art/units/hero_res_tyrant_back.png';
+import art95 from '../art/units/hero_res_werewolf_brute_back.png';
+import art96 from '../art/units/hero_res_werewolf_awakened_back.png';
+import art97 from '../art/units/hero_res_treant_back.png';
+import art98 from '../art/units/hero_res_treant2_back.png';
+import art99 from '../art/units/hero_res_treant3_back.png';
 
 export const RESONANCE_URLS: Record<string, string> = {
   hero_soldier: art0,
@@ -105,4 +153,52 @@ export const RESONANCE_URLS: Record<string, string> = {
   hero_res_treant3: art49,
   hero_soldier_back: art50,
   hero_samurai_archer_back: art51,
+  hero_res_samurai_back: art52,
+  hero_res_kunoichi_back: art53,
+  hero_res_wizard_back: art54,
+  hero_res_paladin_back: art55,
+  hero_res_cleric_back: art56,
+  hero_res_minotaur_back: art57,
+  hero_res_peasant_back: art58,
+  hero_res_ninja_monk_back: art59,
+  hero_res_wanderer_back: art60,
+  hero_res_lightning_mage_back: art61,
+  hero_res_kitsune_back: art62,
+  hero_res_karasu_back: art63,
+  hero_res_yamabushi_back: art64,
+  hero_res_werewolf_back: art65,
+  hero_res_satyr_back: art66,
+  hero_res_gorgon_back: art67,
+  hero_res_samurai_commander_back: art68,
+  hero_res_druid_back: art69,
+  hero_res_barbarian_back: art70,
+  hero_res_ranger_back: art71,
+  hero_res_warlock_back: art72,
+  hero_res_illusionist_back: art73,
+  hero_res_gunslinger_back: art74,
+  hero_res_shambler_back: art75,
+  hero_res_rifle_bot_back: art76,
+  hero_res_mercenary_back: art77,
+  hero_res_mummy_back: art78,
+  hero_res_buccaneer_back: art79,
+  hero_res_wolf_bard_back: art80,
+  hero_res_beastmaster_back: art81,
+  hero_res_kraken_back: art82,
+  hero_res_lancer_back: art83,
+  hero_res_reaper_back: art84,
+  hero_res_time_witch_back: art85,
+  hero_res_arc_blade_back: art86,
+  hero_res_dread_pirate_back: art87,
+  hero_res_siege_bot_back: art88,
+  hero_res_priestess_back: art89,
+  hero_res_dragoon_back: art90,
+  hero_res_juggernaut_back: art91,
+  hero_res_sage_back: art92,
+  hero_res_demon_swordsman_back: art93,
+  hero_res_tyrant_back: art94,
+  hero_res_werewolf_brute_back: art95,
+  hero_res_werewolf_awakened_back: art96,
+  hero_res_treant_back: art97,
+  hero_res_treant2_back: art98,
+  hero_res_treant3_back: art99,
 };

@@ -1,4 +1,4 @@
-// Lossless alpha selection/cropping, followed by nearest-neighbour sampling.
+// Connected-component selection/cropping and nearest-neighbour sampling.
 // Connected figures are assigned as whole components, so a long staff may cross
 // a nominal row gutter without losing its tip or a boot.
 const fs = require('node:fs');
@@ -13,11 +13,12 @@ async function pack(spec, options = {}) {
   if (!fs.existsSync(input)) return null;
   const rows = options.rows ?? ['idle', 'walk', 'attack', 'hurt', 'dead', 'attack2'];
   const { data, info } = await sharp(input).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-  const cell = info.width / 4;
-  assert.ok(Number.isInteger(cell), spec.id);
-  assert.equal(info.height, rows.length * cell, spec.id);
+  const cell = info.width / 4, cellY = info.height / rows.length;
+  // Background removal may trim a few pixels off the outer transparent border,
+  // so the delivered image need not divide into whole-number grid dimensions.
+  assert.ok(cell > 0 && cellY > 0, spec.id);
   const labels = new Uint8Array(info.width * info.height), groups = Array.from({ length: rows.length * 4 }, () => []);
-  const report = { id: spec.id, frames: [], warnings: [] };
+  const report = { id: spec.id, frames: [], warnings: [] }, components = [];
   for (let y = 0; y < info.height; y++) for (let x = 0; x < info.width; x++) {
     const start = y * info.width + x;
     if (labels[start] || data[start * 4 + 3] < 128) continue;
@@ -35,15 +36,31 @@ async function pack(spec, options = {}) {
       }
     }
     if (points.length < 100) continue;
-    const row = Math.min(rows.length - 1, Math.floor(sumY / points.length / cell));
+    const row = Math.min(rows.length - 1, Math.floor(sumY / points.length / cellY));
     const col = Math.min(3, Math.floor(sumX / points.length / cell));
-    const merged = x1 - x0 > cell * 1.5 || y1 - y0 > cell * 1.5;
-    if (merged) report.warnings.push({ kind: 'touching', row: rows[row], box: [x0, y0, x1, y1] });
-    for (const p of points) {
-      const slot = merged ? Math.min(rows.length - 1, Math.floor(p / info.width / cell)) * 4 + Math.floor(p % info.width / cell) : row * 4 + col;
-      groups[slot].push(p);
-    }
+    components.push({ points, row, col, x0, y0, x1, y1 });
   }
+  const sizes = components.filter(c => c.points.length > 3000).map(c => c.points.length).sort((a, b) => a - b);
+  const typical = sizes[Math.floor(sizes.length / 2)] ?? 10000;
+  const assign = forcedRows => {
+    for (const group of groups) group.length = 0;
+    report.warnings.length = 0;
+    for (const c of components) {
+      // A long single weapon is not two figures. Area distinguishes it from a
+      // touching pair, while a missing cell triggers the conservative fallback.
+      const wide = c.x1 - c.x0 > cell * 1.5 || c.y1 - c.y0 > cellY * 1.5;
+      const forced = [...forcedRows].some(r => c.y1 >= r * cellY && c.y0 < (r + 1) * cellY);
+      const merged = wide && (c.points.length > typical * 1.45 || forced);
+      if (merged) report.warnings.push({ kind: 'touching', row: rows[c.row], box: [c.x0, c.y0, c.x1, c.y1] });
+      for (const p of c.points) {
+        const slot = merged ? Math.min(rows.length - 1, Math.floor(p / info.width / cellY)) * 4 + Math.floor(p % info.width / cell) : c.row * 4 + c.col;
+        groups[slot].push(p);
+      }
+    }
+  };
+  assign(new Set());
+  const missing = new Set(groups.flatMap((g, i) => g.length < 500 ? [Math.floor(i / 4)] : []));
+  if (missing.size) assign(missing);
   const frames = [];
   for (let i = 0; i < groups.length; i++) {
     const points = groups[i];

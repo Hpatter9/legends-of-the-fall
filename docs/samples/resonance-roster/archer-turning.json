@@ -1,15 +1,5 @@
 {
   "id": "archer",
-  "sheet": "hero_res_archer",
-  "bands": [
-    0,
-    270,
-    526,
-    786,
-    1046,
-    1254,
-    1536
-  ],
   "frames": [
     {
       "row": "idle",
@@ -68,12 +58,12 @@
       "col": 0,
       "box": [
         29,
-        8,
+        278,
         242,
-        255
+        522
       ],
       "width": 83,
-      "height": 96,
+      "height": 95,
       "left": 89
     },
     {
@@ -81,12 +71,12 @@
       "col": 1,
       "box": [
         294,
-        5,
+        275,
         496,
-        255
+        523
       ],
       "width": 79,
-      "height": 98,
+      "height": 97,
       "left": 93
     },
     {
@@ -94,12 +84,12 @@
       "col": 2,
       "box": [
         562,
-        5,
+        275,
         751,
-        255
+        523
       ],
       "width": 74,
-      "height": 98,
+      "height": 97,
       "left": 98
     },
     {
@@ -107,12 +97,12 @@
       "col": 3,
       "box": [
         824,
-        6,
+        276,
         1000,
-        255
+        523
       ],
       "width": 69,
-      "height": 97,
+      "height": 96,
       "left": 100
     },
     {
@@ -120,12 +110,12 @@
       "col": 0,
       "box": [
         38,
-        0,
+        522,
         263,
-        256
+        782
       ],
       "width": 88,
-      "height": 100,
+      "height": 102,
       "left": 93
     },
     {
@@ -133,12 +123,12 @@
       "col": 1,
       "box": [
         302,
-        0,
+        522,
         558,
-        256
+        782
       ],
       "width": 100,
-      "height": 100,
+      "height": 102,
       "left": 96
     },
     {
@@ -146,12 +136,12 @@
       "col": 2,
       "box": [
         555,
-        0,
+        522,
         813,
-        256
+        782
       ],
       "width": 101,
-      "height": 100,
+      "height": 102,
       "left": 95
     },
     {
@@ -159,12 +149,12 @@
       "col": 3,
       "box": [
         810,
-        0,
+        522,
         1019,
-        257
+        783
       ],
       "width": 82,
-      "height": 100,
+      "height": 102,
       "left": 95
     },
     {
@@ -172,9 +162,9 @@
       "col": 0,
       "box": [
         25,
-        0,
+        786,
         260,
-        249
+        1035
       ],
       "width": 92,
       "height": 97,
@@ -185,9 +175,9 @@
       "col": 1,
       "box": [
         296,
-        45,
+        831,
         522,
-        243
+        1029
       ],
       "width": 88,
       "height": 77,
@@ -198,9 +188,9 @@
       "col": 2,
       "box": [
         566,
-        47,
+        833,
         767,
-        245
+        1031
       ],
       "width": 79,
       "height": 77,
@@ -211,9 +201,9 @@
       "col": 3,
       "box": [
         824,
-        21,
+        807,
         1013,
-        257
+        1043
       ],
       "width": 74,
       "height": 92,
@@ -224,9 +214,9 @@
       "col": 0,
       "box": [
         23,
-        19,
+        1065,
         264,
-        206
+        1252
       ],
       "width": 94,
       "height": 73,
@@ -237,9 +227,9 @@
       "col": 1,
       "box": [
         288,
-        4,
+        1050,
         519,
-        188
+        1234
       ],
       "width": 90,
       "height": 72,
@@ -250,9 +240,9 @@
       "col": 2,
       "box": [
         530,
-        67,
+        1113,
         785,
-        193
+        1239
       ],
       "width": 100,
       "height": 49,
@@ -263,9 +253,9 @@
       "col": 3,
       "box": [
         790,
-        104,
+        1150,
         1017,
-        198
+        1244
       ],
       "width": 89,
       "height": 37,
@@ -276,9 +266,9 @@
       "col": 0,
       "box": [
         32,
-        3,
+        1257,
         258,
-        257
+        1511
       ],
       "width": 88,
       "height": 99,
@@ -289,9 +279,9 @@
       "col": 1,
       "box": [
         307,
-        1,
+        1255,
         513,
-        260
+        1514
       ],
       "width": 81,
       "height": 101,
@@ -302,12 +292,12 @@
       "col": 2,
       "box": [
         547,
-        0,
+        1252,
         760,
-        259
+        1513
       ],
       "width": 83,
-      "height": 101,
+      "height": 102,
       "left": 92
     },
     {
@@ -315,25 +305,14 @@
       "col": 3,
       "box": [
         813,
-        2,
+        1256,
         1006,
-        259
+        1513
       ],
       "width": 75,
       "height": 100,
       "left": 96
     }
   ],
-  "warnings": [
-    "walk 0: source reaches band edge",
-    "walk 1: source reaches band edge",
-    "walk 2: source reaches band edge",
-    "walk 3: source reaches band edge",
-    "attack 0: source reaches band edge",
-    "attack 1: source reaches band edge",
-    "attack 2: source reaches band edge",
-    "attack 3: source reaches band edge",
-    "hurt 0: source reaches band edge",
-    "frontWalk 2: source reaches band edge"
-  ]
+  "warnings": []
 }

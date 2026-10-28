@@ -21,7 +21,7 @@ export function partyTableau(kinds: readonly string[]): HTMLCanvasElement {
     const s = sheetInfo(sheet);
     if (!s) return;
     const row = s.rows.includes('attack') ? 'attack' : 'idle';
-    const n = Math.min(s.counts[row] - 1, Math.floor(s.counts[row] * .55) + frame % 2);
+    const n = Math.min(s.counts[row] - 1, Math.floor(s.counts[row] * .4) + frame % 2);
     const scale = height / s.figure;
     g.save();
     g.translate(x, feet);
