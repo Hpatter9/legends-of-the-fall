@@ -5,9 +5,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addUnit, apart, type Unit } from '../src/sim/battle';
 import { tileAt, standable } from '../src/sim/board';
-import { KING_AT, ringOf } from '../src/sim/standField';
+import { canPost, edgeTiles, EDGES, fieldOk, FIELD, KEEP_TOP, KING_AT, ringOf, standBoard } from '../src/sim/standField';
+import { breachTiles, hallOf, hallPlan, HALL_KINDS } from '../src/sim/standHalls';
 import {
-  buyLevel, HUNT_AT, levelBlock, loadStand, newStandRun, postHero, saveStand, snapshot, startFirstWave, startStand, stepStand, weakestHero, type Stand, type StandSetup,
+  autoPlace, buyLevel, HUNT_AT, swapPosts, waveEdges, levelBlock, loadStand, newStandRun, postHero, saveStand, snapshot, startFirstWave, startStand, stepStand, weakestHero, type Stand, type StandSetup,
 } from '../src/sim/stand';
 import { standSheet } from '../src/sim/standSheet';
 import { castSpell, fallenIn, SPELLS } from '../src/sim/spells';
@@ -225,4 +226,91 @@ test('the pause sheet lists each hero\'s level, health, pool, attack, defence, k
   const rows = standSheet(low).heroes;
   assert.ok(rows[0].fallen && rows[0].hp === 0);
   assert.ok(rows.every((r) => !r.skills[1].open && r.skills[1].opens === SKILL2_LEVEL && !r.ult?.open));
+});
+
+/* ------------------------------------------------------------------ the castle's rooms (phase B) */
+
+test('a run is fought in one of four rooms of the castle, from its seed, never the room of the run before', () => {
+  const seen = new Set<string>();
+  for (let seed = 1; seed <= 60; seed++) {
+    const k = hallOf(seed);
+    assert.equal(hallOf(seed), k, 'the same for a seed');
+    seen.add(k);
+    for (const prev of HALL_KINDS) assert.notEqual(hallOf(seed, prev), prev);
+    assert.notEqual(newStandRun(seed, EIGHT, armies, 0, k).hall, k, 'a new run is never in the room of the run before');
+  }
+  assert.deepEqual([...seen].sort(), [...HALL_KINDS].sort(), 'all four rooms come up');
+});
+
+test('every room: walls round the edge with two or three breaches (the only ways in), pillars and cover that never shut a tile off, the dais', () => {
+  for (const kind of HALL_KINDS)
+    for (const seed of [1, 2, 3, 5, 8, 13, 21, 34]) {
+      const b = standBoard(seed, undefined, kind);
+      const plan = hallPlan(seed, kind);
+      assert.ok(fieldOk(b), `${kind} ${seed}: every tile can be walked to`);
+      assert.ok(plan.breaches.length >= 2 && plan.breaches.length <= 3);
+      assert.equal(new Set(plan.breaches.map((x) => x.edge)).size, plan.breaches.length, 'one breach a wall');
+      const gaps = new Set(plan.breaches.flatMap((x) => breachTiles(x)).map((t) => `${t.u},${t.v}`));
+      for (let i = 0; i < FIELD; i++)
+        for (const t of [{ u: i, v: 0 }, { u: i, v: FIELD - 1 }, { u: 0, v: i }, { u: FIELD - 1, v: i }]) {
+          const tile = tileAt(b, t.u, t.v)!;
+          assert.equal(standable(tile), gaps.has(`${t.u},${t.v}`), `${kind} ${seed}: ${t.u},${t.v} is ${gaps.has(`${t.u},${t.v}`) ? 'a breach' : 'wall'}`);
+        }
+      for (const edge of EDGES) for (const t of edgeTiles(b, edge)) assert.ok(gaps.has(`${t.u},${t.v}`));
+      for (const p of plan.pillars) assert.ok(!standable(tileAt(b, p.u, p.v)) || !tileAt(b, p.u, p.v)!.wall, 'a pillar stands, unless it had to go');
+      assert.equal(tileAt(b, KING_AT.u, KING_AT.v)!.h, KEEP_TOP);
+      for (let v = KING_AT.v - 2; v <= KING_AT.v + 2; v++) for (let u = KING_AT.u - 2; u <= KING_AT.u + 2; u++) assert.equal(tileAt(b, u, v)!.h, KEEP_TOP, 'the 5x5 dais');
+      assert.ok(!canPost(b, KING_AT.u + 1, KING_AT.v) && !canPost(b, KING_AT.u, KING_AT.v - 1), 'the throne\'s tiles are the king\'s');
+      // (the waves come only by the breaches)
+      for (const n of [1, 6, 11, 16, 20]) for (const e of waveEdges(seed, n, kind)) assert.ok(plan.breaches.some((x) => x.edge === e));
+      assert.equal(new Set(b.tiles.map((t) => t.h)).size >= 3, true, 'height variety');
+    }
+});
+
+test('the foes of a wave come in only by the breaches, and the inner ring stands on the dais\'s edge', () => {
+  const s = fresh(11, 30);
+  const plan = hallPlan(s.run.seed, s.run.hall!);
+  const gaps = plan.breaches.flatMap((x) => breachTiles(x));
+  for (const u of heroes(s)) assert.ok(ringOf(u) >= 2, `${u.def} is off the throne's tiles`);
+  startFirstWave(s);
+  const firstAt = new Map<number, { u: number; v: number }>();
+  for (let i = 0; i < 200; i++) {
+    stepStand(s);
+    for (const f of s.b.units) if (f.side === 'foe' && !firstAt.has(f.id)) firstAt.set(f.id, { u: f.u, v: f.v });
+  }
+  assert.ok(firstAt.size > 0);
+  for (const p of firstAt.values()) assert.ok(gaps.some((g) => Math.abs(g.u - p.u) + Math.abs(g.v - p.v) <= 2), `a foe came in at ${p.u},${p.v}`);
+});
+
+test('the deploy tray: two heroes swap posts, and Auto-place sets the eight out by the ring plan again', () => {
+  const s = fresh(5, 20);
+  const [a, b] = [s.run.heroes[0], s.run.heroes[5]];
+  const [pa, pb] = [[...a.post!], [...b.post!]];
+  assert.ok(swapPosts(s, a.id, b.id));
+  assert.deepEqual(a.post, pb);
+  assert.deepEqual(b.post, pa);
+  const ua = heroes(s).find((u) => u.tag === a.id)!;
+  assert.deepEqual([ua.u, ua.v, ua.post!.u, ua.post!.v], [pb[0], pb[1], pb[0], pb[1]], 'it stands on its new post at once before the fight');
+  assert.ok(!swapPosts(s, a.id, a.id));
+  assert.ok(autoPlace(s));
+  assert.deepEqual(a.post, pa, 'Auto-place puts them back');
+  startFirstWave(s);
+  assert.ok(!autoPlace(s), 'only before the first wave');
+  // (a fallen hero cannot be swapped)
+  const u = heroes(s).find((x) => x.tag === b.id)!;
+  u.alive = false;
+  stepStand(s);
+  assert.ok(!swapPosts(s, a.id, b.id));
+});
+
+test('a run saved before the rooms (no hall) builds in its seed\'s room, and a saved post that is no post there is planned again', () => {
+  const run = newStandRun(9, EIGHT, armies);
+  delete run.hall;
+  run.heroes[0].post = [KING_AT.u, KING_AT.v - 1];
+  const s = startStand(run, setupAt(20));
+  assert.equal(s.b.board.tiles.length, FIELD * FIELD);
+  assert.deepEqual(s.b.board.tiles, standBoard(9, undefined, hallOf(9)).tiles);
+  const h = s.run.heroes[0];
+  assert.ok(h.post && canPost(s.b.board, h.post[0], h.post[1]), 'its post was planned again');
+  assert.equal(new Set(heroes(s).map((x) => `${x.u},${x.v}`)).size, 8);
 });

@@ -959,13 +959,13 @@ export class StandView {
     p.count.classList.toggle('deploy', s.phase === 'deploy');
     if (brk) {
       this.text('count', p.count.querySelector('b'), (Math.max(0, s.breakLeft) / 1000).toFixed(1));
-      const spec = waveSpec(run.seed, run.armies, run.wave);
+      const spec = waveSpec(run.seed, run.armies, run.wave, run.hall);
       this.text('next', p.count.querySelector('i'), `${spec.boss ? 'Boss wave · ' : ''}${spec.foes.length} foes from the ${spec.edges.join(', ')}`);
       (p.count.querySelector('small') as HTMLElement).textContent = 'Next wave in';
       this.arrows(spec.edges);
     } else if (s.phase === 'deploy') {
       this.text('count', p.count.querySelector('b'), `Wave ${run.wave}`);
-      const spec = waveSpec(run.seed, run.armies, run.wave);
+      const spec = waveSpec(run.seed, run.armies, run.wave, run.hall);
       this.text('next', p.count.querySelector('i'), `${spec.foes.length} foes from the ${spec.edges.join(', ')}. Tap a hero, then a tile, to move its post.`);
       (p.count.querySelector('small') as HTMLElement).textContent = 'First up';
       this.arrows(spec.edges);

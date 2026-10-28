@@ -11,7 +11,8 @@
 
 import { startBattle, addUnit, stepBattle, TICK_MS, creditOf, type Battle, type BattleEvent, type Boost, type Unit } from './battle';
 import { tileAt, standable, type Area, type At } from './board';
-import { canPost, edgeTiles, EDGES, KING_AT, ringPlan, standArea, standBoard, type Edge, type Role } from './standField';
+import { canPost, edgeTiles, KING_AT, ringPlan, standArea, standBoard, type Edge, type Role } from './standField';
+import { HALL_KINDS, hallOf, hallPlan, type HallKind } from './standHalls';
 import { isTank, KING_DEF, leashOf } from './standAi';
 import { CLASS_OF } from './starter';
 import { BOSS_BANDS, FIELD_BANDS, FOE_BANDS, isBoss } from './foes';
@@ -115,6 +116,8 @@ export interface StandRun {
   v: 1;
   seed: number;
   area: Area;
+  /** The room of the castle the run is fought in (`standHalls.ts`); absent in a run saved before the rooms, which takes the seed's. */
+  hall?: HallKind;
   /** The armies open when it began, whose foes join the waves later on. */
   armies: string[];
   /** The wave about to come (or being fought). */
@@ -232,18 +235,18 @@ function pools(armies: readonly string[], n: number): { main: string[]; second: 
   return { main: band(block), second: band(block + 1), army: n >= 10 ? army : [] };
 }
 
-/** Which edges wave `n` comes in by: one at first, two from wave 6, three from 11, all four from 16 (a boss wave from at least two). */
-export function waveEdges(seed: number, n: number): Edge[] {
+/** Which breaches wave `n` comes in by (the edges of the room's breaches): one at first, two from wave 6, three from 11 (a boss wave by one more), as many as the room has. */
+export function waveEdges(seed: number, n: number, hall: HallKind = hallOf(seed)): Edge[] {
   const rng = new Rng(mixSeed(seed, 0x57e0, n));
-  const want = Math.min(4, 1 + Math.floor((n - 1) / 5) + (isBossWave(n) ? 1 : 0));
-  const pool = [...EDGES];
+  const pool: Edge[] = hallPlan(seed, hall).breaches.map((b) => b.edge);
+  const want = Math.min(pool.length, 1 + Math.floor((n - 1) / 5) + (isBossWave(n) ? 1 : 0));
   const out: Edge[] = [];
   while (out.length < want) out.push(pool.splice(rng.int(0, pool.length - 1), 1)[0]);
   return out;
 }
 
 /** Wave `n` of a run: deterministic from the seed. */
-export function waveSpec(seed: number, armies: readonly string[], n: number): WaveSpec {
+export function waveSpec(seed: number, armies: readonly string[], n: number, hall?: HallKind): WaveSpec {
   const rng = new Rng(mixSeed(seed, 0x57e1, n));
   const raw = rawCount(n);
   const count = Math.min(FIELD_CAP, raw);
@@ -261,7 +264,7 @@ export function waveSpec(seed: number, armies: readonly string[], n: number): Wa
     const from = n >= 10 && p.army.length && roll < 0.2 ? p.army : n >= 13 && roll < 0.5 ? p.second : p.main;
     foes.push(from === p.main ? from[i++ % from.length] : from[rng.int(0, from.length - 1)]);
   }
-  return { n, boss, foes: foes.slice(0, Math.max(count, boss ? 5 : 0)), edges: waveEdges(seed, n), hp: k, atk: k, raw };
+  return { n, boss, foes: foes.slice(0, Math.max(count, boss ? 5 : 0)), edges: waveEdges(seed, n, hall), hp: k, atk: k, raw };
 }
 
 /* ------------------------------------------------------------------ building a run */
@@ -278,8 +281,9 @@ export function setupFromMeta(m: Meta): StandSetup {
 }
 
 /** A new run for a party (the hero kinds of a save's party). */
-export function newStandRun(seed: number, party: readonly string[], armies: readonly string[] = [], prevBest = 0): StandRun {
-  const run: StandRun = { v: 1, seed, area: standArea(seed), armies: [...armies], wave: 1, gold: START_GOLD, heroes: [], nextId: 1, relics: [], offer: [], king: 1, kills: 0, earned: 0, prevBest, over: false, best: 1 };
+export function newStandRun(seed: number, party: readonly string[], armies: readonly string[] = [], prevBest = 0, prevHall?: string | null): StandRun {
+  const hall = hallOf(seed, prevHall);
+  const run: StandRun = { v: 1, seed, area: standArea(seed, hall), hall, armies: [...armies], wave: 1, gold: START_GOLD, heroes: [], nextId: 1, relics: [], offer: [], king: 1, kills: 0, earned: 0, prevBest, over: false, best: 1 };
   for (const kind of party) run.heroes.push({ id: run.nextId++, kind, lv: 0, xp: 0, post: null });
   return run;
 }
@@ -307,7 +311,7 @@ export function startStand(run: StandRun, setup: StandSetup): Stand {
   const mana = manaRate(setup.castle) * (rl.mana ?? 1);
   const { atk, hp, mana: _m, first, revive, gold: _g, set, ...team } = rl;
   const b = startBattle(run.seed, [], {
-    board: standBoard(run.seed, run.area),
+    board: standBoard(run.seed, undefined, run.hall ?? hallOf(run.seed)),
     heroes: { hp: castle.hp! * (hp ?? 1), atk: castle.atk! * (atk ?? 1) },
     mana,
     move: moveRate(setup.castle),
@@ -319,8 +323,10 @@ export function startStand(run: StandRun, setup: StandSetup): Stand {
   king.hp = Math.max(1, Math.round(king.maxHp * run.king));
   b.stand = { king: king.id, at: { ...KING_AT }, fields: {} };
   const s: Stand = { run, setup, b, phase: 'deploy', king, queue: [], waveAt: 0, breakLeft: 0, rageAt: 0, notes: [], traitHp: 1, traitAtk: 1, relicHp: hp ?? 1, relicAtk: atk ?? 1, baseMana: mana, kingGrace: 0 };
-  // (the heroes with a post stand on it; a new run's eight are set out in a ring round the keep: `ringPlan`)
-  const fresh = run.heroes.filter((h) => !h.post);
+  // (the heroes with a post stand on it; a new run's eight are set out in a ring round the dais: `ringPlan`. A post saved before the rooms that
+  // is no post in this room (a pillar, cover, the throne) is planned again)
+  for (const h of run.heroes) if (h.post && !canPost(b.board, h.post[0], h.post[1])) h.post = null;
+  const fresh = run.heroes.filter((h) => !h.post && !h.fallen);
   if (fresh.length) {
     const plan = ringPlan(b.board, fresh.map((h) => h.kind), roleOfKind, run.heroes.filter((h) => h.post).map((h) => ({ u: h.post![0], v: h.post![1] })));
     fresh.forEach((h, i) => (h.post = plan[i] ? [plan[i].u, plan[i].v] : null));
@@ -392,6 +398,44 @@ export function postHero(s: Stand, id: number, u: number, v: number): boolean {
   return !was || was[0] !== u || was[1] !== v || true;
 }
 
+/** Trade two heroes' posts (the deploy tray's swap; in a fight they walk to their new posts). False when either is fallen, missing, or the run is over. */
+export function swapPosts(s: Stand, a: number, b: number): boolean {
+  const ha = s.run.heroes.find((x) => x.id === a);
+  const hb = s.run.heroes.find((x) => x.id === b);
+  if (!ha || !hb || a === b || !standing(ha) || !standing(hb) || s.phase === 'over') return false;
+  const [pa, pb] = [ha.post!, hb.post!];
+  ha.post = [...pb] as [number, number];
+  hb.post = [...pa] as [number, number];
+  for (const h of [ha, hb]) {
+    const unit = unitOfHero(s, h.id);
+    if (!unit?.post) continue;
+    unit.post = { ...unit.post, u: h.post![0], v: h.post![1] };
+    if (s.phase === 'deploy') {
+      unit.u = h.post![0];
+      unit.v = h.post![1];
+    }
+  }
+  return true;
+}
+
+/** Set every standing hero out again by the ring plan (the deploy tray's Auto-place). Only before the first wave. */
+export function autoPlace(s: Stand): boolean {
+  if (s.phase !== 'deploy') return false;
+  const heroes = s.run.heroes.filter(standing);
+  const plan = ringPlan(s.b.board, heroes.map((h) => h.kind), roleOfKind);
+  heroes.forEach((h, i) => {
+    if (!plan[i]) return;
+    h.post = [plan[i].u, plan[i].v];
+    const unit = unitOfHero(s, h.id);
+    if (unit?.post) {
+      unit.post = { ...unit.post, u: plan[i].u, v: plan[i].v };
+      unit.u = plan[i].u;
+      unit.v = plan[i].v;
+    }
+  });
+  return true;
+}
+
 /* ------------------------------------------------------------------ levels and XP */
 
 /** Give a hero a level now: its hp and attack rise, it is healed by what it gained. Returns the new level. */
@@ -426,7 +470,7 @@ const killXpOf = (foe: Unit): number => killXp({ def: foe.def, maxHp: UNITS[foe.
 /** Begin the next wave: its foes are queued, to come in by its edges over the first seconds. */
 function beginWave(s: Stand): void {
   const run = s.run;
-  const spec = waveSpec(run.seed, run.armies, run.wave);
+  const spec = waveSpec(run.seed, run.armies, run.wave, run.hall);
   const b = s.b;
   run.best = Math.max(run.best, run.wave);
   s.phase = 'wave';
@@ -450,9 +494,10 @@ function spawnTile(s: Stand, edge: Edge, rng: Rng): At | null {
   const tiles = edgeTiles(s.b.board, edge);
   for (let tries = 0; tries < 10 && tiles.length; tries++) {
     const at = tiles[rng.int(0, tiles.length - 1)];
-    // (a free tile, or one a step in from the edge)
-    const step = edge === 'north' ? { u: at.u, v: at.v + 1 } : edge === 'south' ? { u: at.u, v: at.v - 1 } : edge === 'west' ? { u: at.u + 1, v: at.v } : { u: at.u - 1, v: at.v };
-    for (const p of tries < 5 ? [at] : [at, step]) if (standable(tileAt(s.b.board, p.u, p.v)) && !s.b.units.some((x) => x.alive && x.u === p.u && x.v === p.v)) return p;
+    // (a free tile, or one or two steps in from the edge: a breach is narrow)
+    const [du, dv] = edge === 'north' ? [0, 1] : edge === 'south' ? [0, -1] : edge === 'west' ? [1, 0] : [-1, 0];
+    const steps = [at, { u: at.u + du, v: at.v + dv }, { u: at.u + 2 * du, v: at.v + 2 * dv }];
+    for (const p of tries < 4 ? steps.slice(0, 1) : tries < 7 ? steps.slice(0, 2) : steps) if (standable(tileAt(s.b.board, p.u, p.v)) && !s.b.units.some((x) => x.alive && x.u === p.u && x.v === p.v)) return p;
   }
   return null;
 }
@@ -745,7 +790,7 @@ export function loadStand(store: Pick<Storage, 'getItem'> = localStorage): Stand
   try {
     const r = JSON.parse(store.getItem(STAND_KEY) ?? 'null') as StandRun | null;
     const ok = r && r.v === 1 && !r.over && Number.isFinite(r.seed) && r.wave >= 1 && Array.isArray(r.heroes) && r.heroes.length > 0 && Array.isArray(r.relics);
-    return ok ? { ...r, offer: Array.isArray(r.offer) ? r.offer : [], armies: Array.isArray(r.armies) ? r.armies : [] } : null;
+    return ok ? { ...r, offer: Array.isArray(r.offer) ? r.offer : [], armies: Array.isArray(r.armies) ? r.armies : [], hall: (HALL_KINDS as readonly string[]).includes(r.hall as string) ? r.hall : undefined } : null;
   } catch {
     return null;
   }

@@ -3,10 +3,10 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { boardOk, canStep, tileAt, standable } from '../src/sim/board';
+import { canStep, tileAt, standable } from '../src/sim/board';
 import { addUnit, apart } from '../src/sim/battle';
 import { flowField, leashOf, isTank, KING_DEF } from '../src/sim/standAi';
-import { canPost, edgeTiles, EDGES, FIELD, KING_AT, KEEP_TOP, ringOf, standBoard } from '../src/sim/standField';
+import { canPost, edgeTiles, EDGES, fieldOk, FIELD, KING_AT, KEEP_TOP, ringOf, standBoard } from '../src/sim/standField';
 import {
   BOSS_EVERY, BREAK_MS, buyLevel, buyRelic, CLEAR_HEAL, clearGold, clearedOf, FIELD_CAP, FIELD_HEROES, foesAlive, goNow, healCost, healKing, isBossWave, pickEight, roleOfKind, killGold, levelCost,
   loadStand, newStandRun, offerCost, postHero, rawCount, saveStand, settleStand, snapshot, startFirstWave, startStand, stepStand, strength, waveCrowns, waveSpec, xpNeed, type Stand, type StandSetup,
@@ -34,16 +34,16 @@ function until(s: Stand, phase: Stand['phase'], max = 20000): void {
 
 /* ------------------------------------------------------------------ the field */
 
-test('the field is 24 x 24, the same for a seed, walkable, with the king on a raised keep', () => {
+test('the field is 24 x 24, the same for a seed, walkable, with the king on a raised dais', () => {
   for (const seed of [1, 2, 3, 7, 11, 42, 99, 123]) {
     const a = standBoard(seed);
     const b = standBoard(seed);
     assert.deepEqual(a.tiles, b.tiles, `seed ${seed} makes the same field`);
     assert.equal(a.w, FIELD);
     assert.equal(a.d, FIELD);
-    assert.ok(boardOk(a), `seed ${seed} can be walked`);
+    assert.ok(fieldOk(a), `seed ${seed} can be walked`);
     const king = tileAt(a, KING_AT.u, KING_AT.v)!;
-    assert.equal(king.h, KEEP_TOP, 'the king stands on the top of the keep');
+    assert.equal(king.h, KEEP_TOP, 'the king stands on the top of the dais');
     assert.ok(standable(king));
     // (every tile within the plaza is level enough to walk over: no step a one-step climber cannot take)
     for (let v = 0; v < a.d; v++)
@@ -62,15 +62,18 @@ test('the field has height variety', () => {
   assert.ok(heights.size >= 4, `heights ${[...heights]}`);
 });
 
-test('every edge can walk to the king, by any walker that climbs a single level', () => {
+test('every breach can walk to the king, by any walker that climbs a single level; the rest of the edge is wall (STAND-003)', () => {
   for (const seed of [3, 8, 21]) {
     const b = standBoard(seed);
     const field = flowField(b, KING_AT, 1);
+    let open = 0;
     for (const edge of EDGES) {
       const tiles = edgeTiles(b, edge);
-      assert.ok(tiles.length > 12, `${edge} has room to come in by`);
+      if (tiles.length) open++;
+      assert.ok(tiles.length === 0 || tiles.length >= 5, `${edge}: a breach is ${tiles.length} wide`);
       for (const t of tiles) assert.ok(field[t.v * b.w + t.u] < Infinity, `${edge} ${t.u},${t.v} reaches the king`);
     }
+    assert.ok(open >= 2 && open <= 3, `seed ${seed}: ${open} walls are breached`);
   }
 });
 
@@ -84,6 +87,7 @@ test('eight heroes are set round the keep: tanks out front on the sides, shooter
   const ring = (kinds: string[]) => heroes.filter((u) => kinds.includes(u.def)).map((u) => ringOf(u));
   assert.ok(Math.min(...ring(['knight', 'paladin'])) >= 3, 'the tanks stand out');
   assert.ok(Math.max(...ring(['archer', 'ranger', 'wizard', 'cleric'])) <= 3, 'the shooters and healers stay in');
+  assert.ok(Math.min(...heroes.map((u) => ringOf(u))) >= 2, 'nobody stands on the throne\'s own tiles (STAND-003)');
   assert.equal(roleOfKind('knight'), 'tank');
   assert.equal(roleOfKind('cleric'), 'inner');
   // the sides: the heroes are spread over all four quarters of the keep
