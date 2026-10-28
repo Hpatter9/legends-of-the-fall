@@ -2,7 +2,7 @@
 
 Owner: Codex. Branch: `design/battle-command-ui`. Worktree: `/workspace/legends-of-the-fall`.
 
-The owner rejected the initial subtle deployment restyle, requested excitement and flair, then authorised implementing a restrained version of the ornate battle concept. This pass targets deployment and live combat, with final owner visual acceptance pending.
+The owner rejected the initial subtle deployment restyle, requested excitement and flair, then authorised implementing a restrained version of the ornate battle concept. This pass targets deployment and live combat; the owner accepted it and requested merging.
 
 ## Implementation
 
@@ -27,3 +27,5 @@ Browser checks passed at all three sizes: no page errors or horizontal page over
 Owner accepted the live battle treatment and authorised merging on 2026-10-28. Integrated main 0.175.0, preserving manual ultimate rings/resource bars/Auto controls; release version 0.179.0. Release validation and PR merge recorded below.
 
 Release integration: main advanced to 0.178.0 while PR #143 was prepared. Integrated those changes, preserving XP tomes, chest actions and renderer updates; resolved only version conflicts. Final release is 0.179.0. Three-size live-browser spell and Auto checks passed; initial browser rerun was interrupted by a random cinematic, so the review helper now disables cinematics explicitly. Casting checks hold the simulation still and verify both mana spend and cooldown.
+
+Merged successfully through [PR #143](https://github.com/Hpatter9/legends-of-the-fall/pull/143), merge commit `587191f7`, version 0.179.0. Remaining battle screens continue in [UI-007](battle-reports.md).
