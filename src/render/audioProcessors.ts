@@ -133,6 +133,9 @@ export interface Voices {
   ring(t: number, f: number, d: number, v: number): void;
   click(t: number, v: number, f?: number): void;
   scatter(t: number, d: number, n: number, v: number, f: number, type?: BiquadFilterType): void;
+  thump(t: number, f: number, d: number, v: number, to?: number): void;
+  clang(t: number, f: number, d: number, v: number): void;
+  snap(t: number, v: number, f?: number): void;
 }
 
 /** What `CueSynth.play` needs to make a sound: how loud and how high, which bus, and where in the stereo field. */
@@ -294,401 +297,460 @@ export class CueSynth extends AudioProcessor implements Voices {
   scatter(t: number, d: number, n: number, v: number, f: number, type: BiquadFilterType = 'highpass'): void {
     for (let i = 0; i < n; i++) this.hiss(t + Math.random() * d, 0.03 + Math.random() * 0.03, f * (0.6 + Math.random() * 0.8), type, v * (0.5 + Math.random() * 0.5));
   }
+
+  /** A heavy sub-bass body thump / impact drop: rapid exponential frequency swoop for hits and explosions. */
+  thump(t: number, f: number, d: number, v: number, to = 28): void {
+    const c = this.context;
+    const o = c.createOscillator();
+    const g = c.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(f * this.pitch, t);
+    o.frequency.exponentialRampToValueAtTime(Math.max(18, to * this.pitch), t + d);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(v * this.voiceGain, t + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(g).connect(this.out);
+    o.start(t);
+    o.stop(t + d + 0.05);
+  }
+
+  /** Inharmonic metallic ring (for steel blades, clangs, shield blocks, armor): multiple dissonant resonant partials decaying naturally. */
+  clang(t: number, f: number, d: number, v: number): void {
+    const ratios = [1.0, 1.48, 2.14, 2.86];
+    const amps = [1.0, 0.65, 0.4, 0.25];
+    ratios.forEach((r, i) => {
+      this.note(t, f * r, d * (1 - i * 0.15), v * amps[i], 'sine');
+    });
+  }
+
+  /** A fast, crisp acoustic snap (for bow release, bone crack, gunshot crack, whip). */
+  snap(t: number, v: number, f = 3500): void {
+    this.hiss(t, 0.025, f, 'highpass', v * 1.2, f * 0.4, 2.5);
+    this.note(t, f * 0.4, 0.03, v * 0.6, 'triangle', f * 0.1);
+  }
 }
 
 /* -------------------------------------------------------------- the synthesised effects */
 
 export const SOUNDS: Record<Cue, (s: Voices, t: number) => void> = {
   // the page's own
-  tap: (s, t) => s.note(t, 1400, 0.03, 0.07, 'sine'),
+  tap: (s, t) => {
+    s.snap(t, 0.08, 2800);
+    s.note(t, 1400, 0.025, 0.06, 'sine', 700);
+  },
   summon: (s, t) => {
-    s.note(t, 880, 0.5, 0.14, 'sine');
-    s.note(t + 0.06, 1320, 0.45, 0.08, 'sine');
+    s.clang(t, 880, 0.6, 0.16);
+    s.clang(t + 0.08, 1320, 0.7, 0.14);
+    s.hiss(t, 0.4, 1800, 'bandpass', 0.12, 3800);
   },
   merge: (s, t) => {
-    [523, 659, 784].forEach((f, i) => s.note(t + i * 0.12, f, 0.2, 0.14));
-    s.note(t + 0.36, 1047, 0.6, 0.16);
+    [523, 659, 784].forEach((f, i) => s.clang(t + i * 0.1, f, 0.35, 0.16));
+    s.clang(t + 0.32, 1047, 0.85, 0.22);
+    s.ring(t + 0.32, 2093, 0.7, 0.08);
   },
-  // (a recycled hero's gold: two bright coin pings)
+  // (a recycled hero's gold: bright crisp coin chimes)
   coin: (s, t) => {
-    s.note(t, 1568, 0.08, 0.12, 'triangle');
-    s.note(t + 0.07, 2093, 0.3, 0.12, 'triangle');
+    s.clang(t, 2489, 0.18, 0.14);
+    s.clang(t + 0.06, 3322, 0.28, 0.15);
   },
   star: (s, t) => {
-    s.note(t, 988, 0.12, 0.14, 'triangle');
-    s.note(t + 0.07, 1319, 0.2, 0.14, 'triangle');
+    s.clang(t, 1319, 0.22, 0.16);
+    s.clang(t + 0.07, 1976, 0.35, 0.16);
+    s.ring(t + 0.07, 3951, 0.3, 0.06);
   },
-  levelUp: (s, t) => [659, 784, 988, 1319].forEach((f, i) => s.note(t + i * 0.09, f, i < 3 ? 0.14 : 0.5, 0.15, 'triangle')),
+  levelUp: (s, t) => {
+    [523, 659, 784, 1047].forEach((f, i) => {
+      s.note(t + i * 0.08, f, 0.2, 0.16, 'triangle');
+      s.clang(t + i * 0.08, f * 1.5, 0.3, 0.08);
+    });
+    s.clang(t + 0.34, 1568, 0.9, 0.2);
+    s.ring(t + 0.34, 3136, 0.8, 0.08);
+    s.thump(t + 0.34, 130, 0.3, 0.18, 50);
+  },
   boom: (s, t) => {
-    s.note(t, 70, 0.9, 0.45, 'sine', 30);
-    s.hiss(t, 0.5, 200, 'lowpass', 0.3);
+    s.thump(t, 85, 0.8, 0.55, 24);
+    s.hiss(t, 0.65, 350, 'lowpass', 0.42, 60);
+    s.scatter(t + 0.05, 0.4, 6, 0.14, 1800);
   },
-  // (a trumpet-ish fanfare, then a held chord; and a sinking line with a low drone)
   victory: (s, t) => {
-    [523, 659, 784].forEach((f, i) => s.note(t + i * 0.14, f, 0.2, 0.16, 'sawtooth'));
-    [523, 659, 784, 1047].forEach((f) => s.note(t + 0.45, f, 1.3, 0.1, 'triangle'));
-    s.ring(t + 0.45, 2093, 1.2, 0.05);
-    s.hiss(t + 0.45, 0.8, 6000, 'highpass', 0.05);
+    [523, 659, 784].forEach((f, i) => s.note(t + i * 0.14, f, 0.22, 0.18, 'sawtooth'));
+    [523, 659, 784, 1047].forEach((f) => s.note(t + 0.45, f, 1.4, 0.12, 'triangle'));
+    s.clang(t + 0.45, 2093, 1.2, 0.1);
+    s.hiss(t + 0.45, 0.8, 6000, 'highpass', 0.06);
   },
   defeat: (s, t) => {
-    [392, 349, 330].forEach((f, i) => s.note(t + i * 0.32, f, 0.34, 0.16, 'triangle'));
-    s.note(t + 0.96, 262, 1.4, 0.16, 'triangle');
-    s.note(t + 0.96, 65, 1.6, 0.22, 'sine');
+    [392, 349, 330].forEach((f, i) => s.note(t + i * 0.32, f, 0.35, 0.18, 'triangle'));
+    s.note(t + 0.96, 262, 1.5, 0.18, 'triangle');
+    s.thump(t + 0.96, 75, 1.6, 0.3, 24);
   },
-  skill: (s, t) => [523, 659, 784].forEach((f, i) => s.note(t + i * 0.08, f, 0.16, 0.13)),
+  skill: (s, t) => {
+    [523, 659, 784].forEach((f, i) => s.clang(t + i * 0.07, f, 0.22, 0.14));
+    s.hiss(t, 0.2, 2200, 'bandpass', 0.1, 4800);
+  },
   spell: (s, t) => {
-    s.note(t, 660, 0.3, 0.13, 'sine', 990);
-    s.note(t + 0.1, 1320, 0.25, 0.06, 'sine');
+    s.note(t, 550, 0.35, 0.16, 'sine', 1100);
+    s.clang(t + 0.08, 1650, 0.35, 0.12);
+    s.hiss(t, 0.25, 3000, 'highpass', 0.12, 1500);
   },
 
   // blows: the swing
-  swingLight: (s, t) => s.hiss(t, 0.09, 3000, 'bandpass', 0.1, 6500),
-  swingSword: (s, t) => s.hiss(t, 0.14, 1200, 'bandpass', 0.14, 4200),
+  swingLight: (s, t) => {
+    s.hiss(t, 0.08, 2400, 'bandpass', 0.15, 5500, 3);
+    s.note(t, 500, 0.06, 0.04, 'triangle', 900);
+  },
+  swingSword: (s, t) => {
+    s.hiss(t, 0.13, 900, 'bandpass', 0.22, 3600, 2.8);
+    s.note(t, 380, 0.08, 0.05, 'triangle', 750);
+  },
   swingHeavy: (s, t) => {
-    s.hiss(t, 0.28, 300, 'bandpass', 0.2, 1200);
-    s.note(t, 95, 0.2, 0.12, 'sine', 60);
+    s.hiss(t, 0.26, 260, 'bandpass', 0.28, 1400, 2);
+    s.thump(t, 85, 0.22, 0.24, 40);
   },
   swingSpear: (s, t) => {
-    s.hiss(t, 0.08, 2000, 'highpass', 0.1);
-    s.note(t, 900, 0.07, 0.04, 'sine', 1500);
+    s.hiss(t, 0.09, 1800, 'bandpass', 0.16, 4500, 3);
+    s.note(t, 750, 0.07, 0.05, 'sine', 1400);
   },
-  swingFist: (s, t) => s.hiss(t, 0.06, 1800, 'bandpass', 0.09, 900),
+  swingFist: (s, t) => {
+    s.hiss(t, 0.07, 1200, 'bandpass', 0.16, 600, 2);
+    s.thump(t, 120, 0.08, 0.15, 55);
+  },
+
   // and what it lands as
   hitLight: (s, t) => {
-    s.hiss(t, 0.04, 3500, 'highpass', 0.2);
-    s.note(t, 700, 0.08, 0.1, 'triangle', 400);
+    s.snap(t, 0.22, 3800);
+    s.thump(t, 280, 0.07, 0.18, 110);
   },
   hitSword: (s, t) => {
-    s.hiss(t, 0.05, 2500, 'highpass', 0.22);
-    s.ring(t, 1700, 0.12, 0.05);
-    s.note(t, 320, 0.1, 0.14, 'triangle', 200);
+    s.clang(t, 1420, 0.18, 0.2);
+    s.snap(t, 0.28, 4200);
+    s.thump(t, 160, 0.11, 0.26, 50);
   },
   hitHeavy: (s, t) => {
-    s.note(t, 120, 0.25, 0.34, 'sine', 45);
-    s.hiss(t, 0.18, 700, 'lowpass', 0.25);
-    s.click(t, 0.18, 1500);
+    s.thump(t, 105, 0.32, 0.48, 26);
+    s.hiss(t, 0.2, 550, 'lowpass', 0.35, 110);
+    s.click(t, 0.25, 1200);
   },
   hitBone: (s, t) => {
-    s.note(t, 820, 0.04, 0.1, 'square', 500);
-    s.note(t + 0.035, 560, 0.05, 0.08, 'square', 380);
-    s.hiss(t, 0.06, 2800, 'highpass', 0.14);
+    s.snap(t, 0.26, 3200);
+    s.clang(t, 950, 0.1, 0.16);
+    s.thump(t, 240, 0.08, 0.18, 80);
   },
   hitFist: (s, t) => {
-    s.note(t, 160, 0.14, 0.3, 'sine', 70);
-    s.hiss(t, 0.08, 900, 'lowpass', 0.2);
+    s.thump(t, 145, 0.16, 0.38, 45);
+    s.hiss(t, 0.1, 750, 'lowpass', 0.26, 180);
   },
   hitSpear: (s, t) => {
-    s.hiss(t, 0.06, 3000, 'highpass', 0.2);
-    s.note(t, 420, 0.1, 0.13, 'triangle', 190);
+    s.snap(t, 0.25, 4500);
+    s.clang(t, 1180, 0.14, 0.18);
+    s.thump(t, 200, 0.1, 0.22, 60);
   },
-  // a crit lands heavier: a low boom under the hit and a bright ring over it
   crit: (s, t) => {
-    s.note(t, 80, 0.4, 0.34, 'sine', 32);
-    s.ring(t, 2300, 0.28, 0.07);
-    s.hiss(t, 0.14, 4500, 'highpass', 0.16);
+    s.thump(t, 70, 0.48, 0.52, 22);
+    s.clang(t, 2150, 0.38, 0.26);
+    s.ring(t, 3400, 0.32, 0.14);
+    s.hiss(t, 0.18, 5500, 'highpass', 0.25);
   },
-  // a shield taking a blow: a clang
   block: (s, t) => {
-    s.ring(t, 1250, 0.3, 0.12);
-    s.ring(t, 1880, 0.2, 0.06);
-    s.hiss(t, 0.05, 3500, 'highpass', 0.2);
-    s.note(t, 240, 0.08, 0.14, 'triangle', 160);
+    s.clang(t, 920, 0.34, 0.28);
+    s.clang(t, 1540, 0.24, 0.18);
+    s.snap(t, 0.26, 4500);
+    s.thump(t, 170, 0.1, 0.22, 65);
   },
-  // a blow that missed: a soft whiff
-  miss: (s, t) => s.hiss(t, 0.13, 1500, 'bandpass', 0.07, 600),
+  miss: (s, t) => s.hiss(t, 0.14, 1200, 'bandpass', 0.1, 450, 2),
 
   // shots
   bow: (s, t) => {
-    s.note(t, 330, 0.14, 0.16, 'triangle', 150);
-    s.note(t, 660, 0.06, 0.05, 'sine', 300);
-    s.click(t, 0.1, 2000);
+    s.snap(t, 0.24, 3200);
+    s.note(t, 290, 0.13, 0.22, 'triangle', 120);
+    s.note(t, 580, 0.05, 0.08, 'sine', 240);
   },
-  arrowFly: (s, t) => s.hiss(t, 0.2, 2600, 'bandpass', 0.1, 900),
+  arrowFly: (s, t) => s.hiss(t, 0.22, 2200, 'bandpass', 0.14, 750, 3),
   arrowHit: (s, t) => {
-    s.note(t, 210, 0.07, 0.17, 'sine', 90);
-    s.click(t, 0.12, 2200);
+    s.snap(t, 0.28, 3600);
+    s.thump(t, 230, 0.08, 0.28, 65);
   },
   gun: (s, t) => {
-    s.hiss(t, 0.14, 3200, 'lowpass', 0.38, 400);
-    s.note(t, 150, 0.16, 0.32, 'sine', 40);
-    s.click(t, 0.25, 1200);
+    s.snap(t, 0.42, 4500);
+    s.thump(t, 130, 0.26, 0.48, 32);
+    s.hiss(t, 0.2, 2400, 'lowpass', 0.38, 300);
   },
-  // the spent shell tinkling on the ground
   shell: (s, t) => {
-    s.ring(t, 4200, 0.12, 0.05);
-    s.ring(t + 0.07, 3300, 0.1, 0.035);
+    s.clang(t, 4200, 0.14, 0.08);
+    s.clang(t + 0.08, 3400, 0.12, 0.06);
   },
   bulletHit: (s, t) => {
-    s.ring(t, 3100, 0.12, 0.05);
-    s.click(t, 0.15, 2500);
+    s.snap(t, 0.3, 4000);
+    s.clang(t, 2900, 0.14, 0.1);
+    s.thump(t, 180, 0.08, 0.22, 60);
   },
-  // a bone spun at the foe: a whirring swish
   throwBone: (s, t) => {
-    s.hiss(t, 0.2, 900, 'bandpass', 0.11, 2600);
-    s.note(t, 500, 0.18, 0.04, 'square', 800);
+    s.hiss(t, 0.2, 850, 'bandpass', 0.14, 2800, 2.5);
+    s.note(t, 480, 0.18, 0.05, 'square', 780);
   },
   boneClatter: (s, t) => {
-    for (let i = 0; i < 4; i++) {
-      const at = t + i * 0.045 + Math.random() * 0.02;
-      s.note(at, 700 + Math.random() * 500, 0.035, 0.08, 'square', 400);
-      s.click(at, 0.1, 2500);
+    for (let i = 0; i < 5; i++) {
+      const at = t + i * 0.04 + Math.random() * 0.02;
+      s.snap(at, 0.12, 3200 + Math.random() * 800);
+      s.clang(at, 850 + Math.random() * 400, 0.06, 0.08);
     }
   },
 
   // the elements
   fireWhoosh: (s, t) => {
-    s.hiss(t, 0.38, 350, 'bandpass', 0.22, 1300);
-    s.scatter(t + 0.05, 0.25, 4, 0.06, 2500);
+    s.hiss(t, 0.38, 380, 'bandpass', 0.26, 1600, 2);
+    s.scatter(t + 0.04, 0.28, 6, 0.08, 2800);
   },
   fireBoom: (s, t) => {
-    s.note(t, 95, 0.5, 0.4, 'sine', 32);
-    s.hiss(t, 0.45, 1000, 'lowpass', 0.3, 180);
-    s.click(t, 0.2, 1200);
+    s.thump(t, 85, 0.65, 0.58, 22);
+    s.hiss(t, 0.55, 850, 'lowpass', 0.45, 120);
+    s.scatter(t + 0.05, 0.35, 8, 0.15, 2600);
+    s.click(t, 0.28, 1200);
   },
   frostCrack: (s, t) => {
-    s.click(t, 0.2, 4000);
-    s.note(t, 2300, 0.09, 0.1, 'sine', 700);
-    s.hiss(t, 0.12, 5000, 'highpass', 0.1);
+    s.snap(t, 0.28, 4800);
+    s.clang(t, 2400, 0.14, 0.14);
+    s.note(t, 2100, 0.1, 0.12, 'sine', 600);
   },
   frostShatter: (s, t) => {
-    for (let i = 0; i < 5; i++) s.ring(t + i * 0.025 + Math.random() * 0.02, 2800 + Math.random() * 2600, 0.12, 0.045);
-    s.hiss(t, 0.2, 6000, 'highpass', 0.14);
+    for (let i = 0; i < 6; i++) s.ring(t + i * 0.022, 2600 + i * 400, 0.16, 0.055);
+    s.hiss(t, 0.22, 6500, 'highpass', 0.18);
+    s.snap(t, 0.25, 5200);
   },
   crackle: (s, t) => {
-    s.scatter(t, 0.25, 9, 0.17, 3500);
-    s.note(t, 140, 0.2, 0.07, 'sawtooth', 90);
+    s.scatter(t, 0.28, 12, 0.22, 4200);
+    s.note(t, 130, 0.22, 0.09, 'sawtooth', 80);
   },
   thunder: (s, t) => {
-    s.hiss(t, 0.9, 450, 'lowpass', 0.3, 70);
-    s.note(t, 58, 0.8, 0.3, 'sine', 32);
-    s.hiss(t + 0.25, 0.5, 300, 'lowpass', 0.14, 60);
+    s.snap(t, 0.4, 5200);
+    s.thump(t, 58, 1.1, 0.52, 20);
+    s.hiss(t, 1.1, 380, 'lowpass', 0.42, 55);
+    s.hiss(t + 0.22, 0.7, 240, 'lowpass', 0.26, 40);
   },
   holyChime: (s, t) => {
-    s.ring(t, 1319, 0.7, 0.07);
-    s.ring(t + 0.09, 1760, 0.7, 0.06);
-    s.ring(t + 0.18, 2349, 0.8, 0.05);
+    s.clang(t, 1047, 0.8, 0.12);
+    s.clang(t + 0.08, 1319, 0.8, 0.11);
+    s.clang(t + 0.16, 1568, 0.9, 0.1);
+    s.clang(t + 0.24, 2093, 1.1, 0.12);
+    s.ring(t + 0.24, 3136, 0.9, 0.06);
   },
-  // a low shadowy hum, two voices slightly apart so it beats
   shadowHum: (s, t) => {
-    s.note(t, 98, 0.65, 0.12, 'sawtooth', 87);
-    s.note(t, 103, 0.65, 0.09, 'sawtooth', 90);
-    s.hiss(t, 0.5, 300, 'lowpass', 0.07);
+    s.note(t, 87, 0.75, 0.16, 'sawtooth', 75);
+    s.note(t, 92, 0.75, 0.14, 'sawtooth', 80);
+    s.thump(t, 65, 0.75, 0.22, 35);
+    s.hiss(t, 0.6, 280, 'lowpass', 0.1);
   },
   poisonHiss: (s, t) => {
-    s.hiss(t, 0.4, 4500, 'highpass', 0.12, 2200);
-    for (let i = 0; i < 3; i++) s.note(t + 0.05 + i * 0.09, 280 + i * 70, 0.07, 0.05, 'sine', 560 + i * 70);
+    s.hiss(t, 0.45, 4800, 'highpass', 0.15, 2000, 2);
+    for (let i = 0; i < 4; i++) s.note(t + 0.04 + i * 0.08, 260 + i * 65, 0.08, 0.06, 'sine', 520 + i * 65);
   },
-  rustle: (s, t) => s.scatter(t, 0.3, 6, 0.1, 3200, 'bandpass'),
-  windGust: (s, t) => s.hiss(t, 0.45, 500, 'bandpass', 0.16, 2400),
+  rustle: (s, t) => s.scatter(t, 0.32, 8, 0.12, 3400, 'bandpass'),
+  windGust: (s, t) => s.hiss(t, 0.5, 450, 'bandpass', 0.2, 2200, 2),
   earthRumble: (s, t) => {
-    s.note(t, 52, 0.7, 0.3, 'sine', 30);
-    s.hiss(t, 0.6, 260, 'lowpass', 0.25, 90);
-    s.scatter(t + 0.1, 0.4, 4, 0.08, 700, 'lowpass');
+    s.thump(t, 48, 0.85, 0.42, 22);
+    s.hiss(t, 0.7, 240, 'lowpass', 0.32, 70);
+    s.scatter(t + 0.1, 0.5, 6, 0.1, 650, 'lowpass');
   },
-  // the meteor falling: a whistle that drops in pitch, with a rising rush under it
   meteorFall: (s, t) => {
-    s.note(t, 1900, 0.85, 0.07, 'sine', 260);
-    s.hiss(t, 0.85, 400, 'bandpass', 0.1, 1800);
+    s.note(t, 1800, 0.9, 0.09, 'sine', 220);
+    s.hiss(t, 0.9, 350, 'bandpass', 0.15, 1600, 2);
+    s.thump(t + 0.4, 90, 0.5, 0.3, 40);
   },
   arrowRain: (s, t) => {
-    s.hiss(t, 0.5, 3000, 'bandpass', 0.1, 1400);
-    s.scatter(t + 0.1, 0.5, 4, 0.08, 2600, 'bandpass');
+    s.hiss(t, 0.55, 2800, 'bandpass', 0.14, 1200, 2.5);
+    s.scatter(t + 0.08, 0.5, 8, 0.12, 2800, 'bandpass');
   },
 
   // help
-  heal: (s, t) => [1047, 1319, 1568, 2093].forEach((f, i) => s.ring(t + i * 0.05, f, 0.35, 0.04)),
+  heal: (s, t) => {
+    [1047, 1319, 1568, 2093].forEach((f, i) => s.clang(t + i * 0.05, f, 0.5, 0.08));
+    s.hiss(t, 0.35, 3200, 'bandpass', 0.08, 6400);
+  },
   shieldHum: (s, t) => {
-    s.note(t, 220, 0.55, 0.1, 'sine', 247);
-    s.note(t + 0.04, 330, 0.5, 0.07, 'sine', 370);
+    s.note(t, 220, 0.6, 0.14, 'sine', 247);
+    s.note(t + 0.04, 330, 0.55, 0.1, 'sine', 370);
+    s.clang(t, 880, 0.35, 0.12);
   },
   horn: (s, t) => {
-    s.note(t, 330, 0.5, 0.1, 'sawtooth', 349);
-    s.note(t, 495, 0.5, 0.06, 'sawtooth', 523);
-    s.hiss(t, 0.3, 1200, 'lowpass', 0.04);
+    s.note(t, 330, 0.55, 0.14, 'sawtooth', 349);
+    s.note(t, 495, 0.55, 0.09, 'sawtooth', 523);
+    s.thump(t, 110, 0.4, 0.22, 60);
+    s.hiss(t, 0.35, 1100, 'lowpass', 0.06);
   },
-  pipes: (s, t) => [784, 988, 880, 1175].forEach((f, i) => s.note(t + i * 0.11, f, 0.18, 0.07, 'triangle')),
+  pipes: (s, t) => [784, 988, 880, 1175].forEach((f, i) => s.note(t + i * 0.11, f, 0.2, 0.09, 'triangle')),
 
   // moves
-  dash: (s, t) => s.hiss(t, 0.22, 800, 'bandpass', 0.14, 3200),
+  dash: (s, t) => {
+    s.hiss(t, 0.2, 700, 'bandpass', 0.18, 3500, 3);
+    s.thump(t, 160, 0.12, 0.2, 50);
+  },
   blink: (s, t) => {
-    s.note(t, 1500, 0.09, 0.08, 'sine', 380);
-    s.ring(t + 0.06, 1900, 0.2, 0.05);
+    s.note(t, 1600, 0.09, 0.1, 'sine', 350);
+    s.clang(t + 0.05, 2100, 0.3, 0.1);
+    s.hiss(t, 0.15, 4500, 'highpass', 0.1);
   },
   trap: (s, t) => {
-    s.note(t, 520, 0.05, 0.14, 'square', 300);
-    s.ring(t, 1500, 0.2, 0.06);
-    s.click(t, 0.18, 2000);
+    s.snap(t, 0.3, 3800);
+    s.clang(t, 850, 0.25, 0.2);
+    s.thump(t, 140, 0.15, 0.26, 45);
   },
 
-  // a big sting for an ultimate: a deep hit, a rising chord, a rush and a cymbal wash
+  // big moments
   ultimate: (s, t) => {
-    s.note(t, 60, 1, 0.42, 'sine', 30);
-    [220, 277, 330].forEach((f) => s.note(t, f, 0.9, 0.09, 'sawtooth', f * 1.5));
-    s.hiss(t, 0.7, 200, 'bandpass', 0.2, 3500);
-    s.hiss(t + 0.35, 0.9, 6500, 'highpass', 0.12);
-    s.ring(t + 0.35, 1760, 0.9, 0.06);
+    s.thump(t, 65, 1.2, 0.65, 18);
+    [220, 277, 330, 440].forEach((f) => s.note(t, f, 1.0, 0.14, 'sawtooth', f * 1.5));
+    s.clang(t + 0.15, 1760, 1.1, 0.16);
+    s.hiss(t, 0.8, 280, 'bandpass', 0.32, 4500);
+    s.hiss(t + 0.3, 1.0, 7000, 'highpass', 0.18);
+    s.ring(t + 0.3, 2637, 1.0, 0.08);
   },
-  // the summoning hall: a choir-like swell as the circle charges, and the stinger as it flares
   riseSummon: (s, t) => {
-    [220, 277, 330, 440].forEach((f, i) => s.pad(t + i * 0.12, f, 2.2, 0.05, 'triangle', 1500, f * 1.5));
-    s.hiss(t, 2.2, 600, 'bandpass', 0.05, 3500, 4);
+    [220, 277, 330, 440].forEach((f, i) => s.pad(t + i * 0.12, f, 2.2, 0.07, 'triangle', 1600, f * 1.5));
+    s.hiss(t, 2.2, 550, 'bandpass', 0.08, 3800, 4);
+    s.thump(t + 1.2, 70, 0.9, 0.35, 30);
   },
   stingSummon: (s, t) => {
-    s.note(t, 80, 0.7, 0.3, 'sine', 36);
-    [392, 494, 587, 784].forEach((f) => s.pad(t, f, 1.6, 0.07, 'triangle', 2400));
-    s.ring(t, 2093, 1.4, 0.06);
-    s.hiss(t, 0.9, 6500, 'highpass', 0.08);
+    s.thump(t, 85, 0.85, 0.5, 26);
+    [392, 494, 587, 784].forEach((f) => s.pad(t, f, 1.8, 0.09, 'triangle', 2500));
+    s.clang(t, 2093, 1.5, 0.14);
+    s.hiss(t, 1.0, 6500, 'highpass', 0.12);
   },
-  // a ribbon slamming in
   slam: (s, t) => {
-    s.note(t, 100, 0.35, 0.4, 'sine', 40);
-    s.hiss(t, 0.25, 900, 'lowpass', 0.22);
+    s.thump(t, 95, 0.45, 0.6, 28);
+    s.snap(t, 0.35, 2200);
+    s.hiss(t, 0.3, 750, 'lowpass', 0.35);
   },
-  // a boss's skill: a low growl and rumble
   bossSkill: (s, t) => {
-    s.note(t, 72, 0.8, 0.22, 'sawtooth', 48);
-    s.note(t, 76, 0.8, 0.16, 'square', 50);
-    s.hiss(t, 0.7, 250, 'lowpass', 0.22, 80);
+    s.thump(t, 65, 0.9, 0.45, 22);
+    s.note(t, 72, 0.85, 0.28, 'sawtooth', 44);
+    s.note(t, 76, 0.85, 0.22, 'square', 46);
+    s.hiss(t, 0.75, 260, 'lowpass', 0.3, 70);
   },
 
-  // deaths, each in its own voice
+  // deaths
   deathBones: (s, t) => {
-    for (let i = 0; i < 7; i++) {
-      const at = t + i * 0.05 + Math.random() * 0.03;
-      s.note(at, 600 + Math.random() * 700, 0.04, 0.075, 'square', 350);
-      s.click(at, 0.09, 2200);
+    for (let i = 0; i < 8; i++) {
+      const at = t + i * 0.045 + Math.random() * 0.02;
+      s.snap(at, 0.14, 3000 + Math.random() * 900);
+      s.clang(at, 650 + Math.random() * 600, 0.05, 0.1);
     }
-    s.hiss(t, 0.3, 800, 'lowpass', 0.05);
+    s.hiss(t, 0.35, 750, 'lowpass', 0.08);
   },
-  // a demon burning away: a roar that cracks as it dies
   deathBurn: (s, t) => {
-    s.note(t, 130, 0.7, 0.18, 'sawtooth', 55);
-    s.hiss(t, 0.8, 900, 'bandpass', 0.2, 250, 2.5);
-    s.scatter(t + 0.1, 0.6, 8, 0.09, 2500);
+    s.note(t, 130, 0.8, 0.24, 'sawtooth', 48);
+    s.hiss(t, 0.85, 950, 'bandpass', 0.28, 200, 2.5);
+    s.scatter(t + 0.08, 0.65, 10, 0.14, 2600);
+    s.thump(t, 90, 0.4, 0.25, 35);
   },
-  // an ogre falling: a heavy thud, then the ground settling
   deathThud: (s, t) => {
-    s.note(t, 78, 0.5, 0.45, 'sine', 28);
-    s.hiss(t, 0.35, 350, 'lowpass', 0.3, 100);
-    s.note(t + 0.17, 62, 0.35, 0.22, 'sine', 30);
-    s.scatter(t + 0.12, 0.3, 4, 0.06, 600, 'lowpass');
+    s.thump(t, 75, 0.55, 0.58, 22);
+    s.hiss(t, 0.4, 320, 'lowpass', 0.4, 80);
+    s.note(t + 0.16, 58, 0.38, 0.28, 'sine', 26);
+    s.scatter(t + 0.12, 0.35, 5, 0.09, 550, 'lowpass');
   },
   deathStone: (s, t) => {
-    s.hiss(t, 0.5, 900, 'lowpass', 0.22, 200);
-    s.scatter(t, 0.45, 7, 0.14, 1400, 'bandpass');
-    s.note(t, 100, 0.3, 0.16, 'sine', 45);
+    s.thump(t, 90, 0.4, 0.4, 30);
+    s.snap(t, 0.35, 2400);
+    s.hiss(t, 0.55, 850, 'lowpass', 0.3, 160);
+    s.scatter(t, 0.5, 8, 0.18, 1300, 'bandpass');
   },
   deathBlood: (s, t) => {
-    s.note(t, 220, 0.45, 0.14, 'triangle', 60);
-    s.hiss(t, 0.28, 600, 'lowpass', 0.12);
+    s.thump(t, 160, 0.35, 0.28, 45);
+    s.snap(t, 0.25, 2800);
+    s.hiss(t, 0.3, 550, 'lowpass', 0.18);
   },
-  // a hero falling: a soft sinking chime
   deathLight: (s, t) => {
-    s.ring(t, 880, 0.5, 0.07);
-    s.ring(t + 0.12, 660, 0.6, 0.06);
-    s.note(t, 220, 0.5, 0.07, 'triangle', 110);
+    s.clang(t, 880, 0.6, 0.1);
+    s.clang(t + 0.12, 660, 0.7, 0.09);
+    s.note(t, 220, 0.55, 0.09, 'triangle', 95);
   },
 
-  // the tower: three soft footfalls up the stairs, stone and dust
+  // the tower
   steps: (s, t) =>
     [0, 0.16, 0.33].forEach((d, i) => {
-      s.note(t + d, 120 - i * 8, 0.08, 0.1, 'sine', 70);
-      s.hiss(t + d, 0.06, 900 + i * 120, 'lowpass', 0.09);
-      s.click(t + d, 0.03, 1800);
+      s.thump(t + d, 110 - i * 8, 0.09, 0.18, 45);
+      s.hiss(t + d, 0.07, 850 + i * 100, 'lowpass', 0.12);
+      s.click(t + d, 0.04, 1800);
     }),
-  // a curse: a sinking, beating low tone under a dull knell and a dry rasp
   twistCurse: (s, t) => {
-    s.note(t, 98, 0.9, 0.14, 'sawtooth', 70);
-    s.note(t, 104, 0.9, 0.1, 'sawtooth', 74);
-    s.ring(t + 0.05, 311, 0.8, 0.06);
-    s.hiss(t, 0.5, 700, 'lowpass', 0.08, 220);
+    s.thump(t, 85, 0.9, 0.25, 30);
+    s.note(t, 98, 0.9, 0.18, 'sawtooth', 65);
+    s.note(t, 104, 0.9, 0.14, 'sawtooth', 68);
+    s.clang(t + 0.05, 311, 0.9, 0.1);
+    s.hiss(t, 0.55, 650, 'lowpass', 0.12, 200);
   },
-  // a blessing: a bright rising run into a ringing top
   twistBlessing: (s, t) => {
-    [784, 988, 1319, 1568].forEach((f, i) => s.ring(t + i * 0.07, f, 0.6, 0.06));
-    s.ring(t + 0.28, 2349, 0.9, 0.04);
-    s.hiss(t + 0.2, 0.4, 7000, 'highpass', 0.04);
+    [784, 988, 1319, 1568].forEach((f, i) => s.clang(t + i * 0.07, f, 0.7, 0.09));
+    s.clang(t + 0.28, 2349, 1.0, 0.08);
+    s.hiss(t + 0.2, 0.45, 7000, 'highpass', 0.06);
   },
-  // an elite stirs: a low brassy fifth, a clang and a rising rush
-  // a boss arrives: a low drone and a falling, dissonant pair under three slow hits
   sceneBoss: (s, t) => {
-    s.note(t, 55, 2.4, 0.4, 'sawtooth', 40);
-    s.pad(t, 110, 2.2, 0.16, 'sawtooth', 700);
-    s.pad(t, 116.5, 2.2, 0.12, 'sawtooth', 700);
+    s.thump(t, 55, 2.4, 0.55, 24);
+    s.pad(t, 110, 2.2, 0.22, 'sawtooth', 750);
+    s.pad(t, 116.5, 2.2, 0.18, 'sawtooth', 750);
     [0, 0.5, 1.0].forEach((d, i) => {
-      s.note(t + d, 90 - i * 12, 0.5, 0.4, 'sine', 40);
-      s.hiss(t + d, 0.3, 300, 'lowpass', 0.22);
+      s.thump(t + d, 85 - i * 10, 0.55, 0.5, 30);
+      s.hiss(t + d, 0.35, 320, 'lowpass', 0.28);
     });
-    s.ring(t + 1.0, 466, 1.6, 0.06);
+    s.clang(t + 1.0, 466, 1.8, 0.12);
   },
-  // a victory: a rising fanfare of triangles into a held, bright chord
   sceneVictory: (s, t) => {
-    [392, 523, 659, 784].forEach((f, i) => s.note(t + i * 0.16, f, 0.3, 0.14, 'sawtooth'));
-    [523, 659, 784, 1047].forEach((f) => s.note(t + 0.7, f, 1.8, 0.1, 'triangle'));
-    s.ring(t + 0.7, 2093, 1.6, 0.05);
-    s.hiss(t + 0.7, 0.9, 6500, 'highpass', 0.04);
+    [392, 523, 659, 784].forEach((f, i) => s.note(t + i * 0.16, f, 0.32, 0.18, 'sawtooth'));
+    [523, 659, 784, 1047].forEach((f) => s.note(t + 0.7, f, 1.9, 0.14, 'triangle'));
+    s.clang(t + 0.7, 2093, 1.8, 0.1);
+    s.hiss(t + 0.7, 0.9, 6500, 'highpass', 0.06);
   },
   eliteSting: (s, t) => {
-    s.note(t, 82, 1, 0.22, 'sawtooth', 65);
-    s.note(t, 123, 1, 0.12, 'sawtooth', 98);
-    s.ring(t + 0.02, 440, 0.9, 0.08);
-    s.note(t, 55, 0.9, 0.3, 'sine', 32);
-    s.hiss(t, 0.6, 300, 'bandpass', 0.12, 2400);
+    s.thump(t, 55, 0.95, 0.45, 24);
+    s.note(t, 82, 1, 0.28, 'sawtooth', 60);
+    s.note(t, 123, 1, 0.18, 'sawtooth', 90);
+    s.clang(t + 0.02, 440, 1.0, 0.14);
+    s.hiss(t, 0.65, 320, 'bandpass', 0.18, 2600);
   },
-  // a boss wave is coming: two low horn notes a fifth apart, a slow drum under them and a cold ring
   standBoss: (s, t) => {
-    s.note(t, 73, 1.4, 0.2, 'sawtooth', 62);
-    s.note(t + 0.35, 110, 1.2, 0.18, 'sawtooth', 92);
-    s.note(t, 49, 1.1, 0.3, 'sine', 30);
-    s.note(t + 0.7, 55, 0.8, 0.26, 'sine', 33);
-    s.ring(t + 0.35, 330, 1, 0.05);
-    s.hiss(t, 0.5, 260, 'lowpass', 0.14);
+    s.thump(t, 49, 1.2, 0.42, 22);
+    s.note(t, 73, 1.4, 0.24, 'sawtooth', 58);
+    s.note(t + 0.35, 110, 1.2, 0.22, 'sawtooth', 85);
+    s.clang(t + 0.35, 330, 1.2, 0.1);
+    s.hiss(t, 0.55, 280, 'lowpass', 0.18);
   },
-  // the king is struck: a dull thud and a short ring of mail
   kingHit: (s, t) => {
-    s.note(t, 96, 0.3, 0.3, 'sine', 50);
-    s.ring(t + 0.01, 523, 0.35, 0.06);
-    s.hiss(t, 0.18, 1800, 'bandpass', 0.1, 1400);
-  },
-  // a relic set: a two-piece's open chord, and a three-piece's fuller one with a rising run and a shimmer
-  setChime2: (s, t) => {
-    [523, 784, 1047].forEach((f) => s.ring(t, f, 1, 0.07));
-    s.pad(t, 262, 1, 0.04, 'triangle', 1600);
-  },
-  setChime3: (s, t) => {
-    [523, 659, 784, 1047].forEach((f, i) => s.note(t + i * 0.09, f, 0.22, 0.12, 'sawtooth'));
-    [523, 659, 784, 1047].forEach((f) => s.pad(t + 0.36, f, 1.5, 0.07, 'triangle', 2600));
-    s.ring(t + 0.36, 2093, 1.4, 0.06);
-    s.ring(t + 0.36, 3136, 1.2, 0.04);
-    s.note(t + 0.36, 131, 1.3, 0.16, 'sine');
-    s.hiss(t + 0.4, 0.9, 6500, 'highpass', 0.07);
+    s.thump(t, 90, 0.35, 0.42, 35);
+    s.clang(t + 0.01, 523, 0.45, 0.12);
   },
 
-  // the menus: a recycle's coins tumble down, a claim's climb up with a ring
-  coinRecycle: (s, t) => [2093, 1760, 1568].forEach((f, i) => s.note(t + i * 0.06, f, 0.14, 0.1, 'triangle')),
+  // relics & menus
+  setChime2: (s, t) => {
+    [523, 659, 784].forEach((f, i) => s.clang(t + i * 0.09, f, 0.5, 0.14));
+    s.clang(t + 0.28, 1047, 0.7, 0.18);
+  },
+  setChime3: (s, t) => {
+    [523, 659, 784, 1047].forEach((f, i) => s.clang(t + i * 0.08, f, 0.6, 0.16));
+    s.clang(t + 0.32, 1319, 0.9, 0.22);
+    s.ring(t + 0.32, 2637, 0.8, 0.08);
+  },
+  coinRecycle: (s, t) => {
+    [2093, 1760, 1568, 1319].forEach((f, i) => s.clang(t + i * 0.06, f, 0.25, 0.12));
+  },
   coinClaim: (s, t) => {
-    [1319, 1568, 2093].forEach((f, i) => s.note(t + i * 0.07, f, 0.16, 0.11, 'triangle'));
-    s.ring(t + 0.21, 3136, 0.45, 0.05);
-    s.hiss(t + 0.2, 0.3, 7500, 'highpass', 0.03);
+    [1319, 1568, 2093, 2637, 3136].forEach((f, i) => s.clang(t + i * 0.06, f, 0.28, 0.12));
+    s.ring(t + 0.3, 4186, 0.5, 0.06);
   },
-  // a lucky hire: sparkles scattered high over the merge's chime
   sparkle: (s, t) => {
-    [2349, 3136, 2794, 3951, 3322].forEach((f, i) => s.ring(t + 0.18 + i * 0.06, f, 0.35, 0.035));
-    s.hiss(t + 0.2, 0.5, 8000, 'highpass', 0.03);
+    [2349, 3136, 2794, 3951, 3322].forEach((f, i) => s.ring(t + 0.15 + i * 0.05, f, 0.4, 0.05));
+    s.hiss(t + 0.18, 0.55, 8000, 'highpass', 0.04);
   },
-  // an auto-replay: a quick pair of ticks as it starts; a falling pair when it is stopped; a small resolving chord when it is done
   autoStart: (s, t) => {
-    s.click(t, 0.08, 2600);
-    s.note(t + 0.07, 880, 0.08, 0.08, 'square');
-    s.note(t + 0.14, 1175, 0.12, 0.08, 'square');
+    s.snap(t, 0.12, 3200);
+    s.note(t + 0.06, 880, 0.09, 0.1, 'square');
+    s.note(t + 0.12, 1175, 0.14, 0.1, 'square');
   },
   autoStop: (s, t) => {
-    s.note(t, 880, 0.12, 0.09, 'triangle');
-    s.note(t + 0.1, 587, 0.3, 0.1, 'triangle');
+    s.note(t, 880, 0.14, 0.12, 'triangle');
+    s.note(t + 0.09, 587, 0.35, 0.14, 'triangle');
   },
   autoDone: (s, t) => {
-    [523, 659, 784].forEach((f, i) => s.note(t + i * 0.1, f, 0.18, 0.1, 'triangle'));
-    [523, 784, 1047].forEach((f) => s.ring(t + 0.34, f, 0.7, 0.05));
+    [523, 659, 784].forEach((f, i) => s.clang(t + i * 0.09, f, 0.25, 0.12));
+    [523, 784, 1047].forEach((f) => s.clang(t + 0.3, f, 0.8, 0.1));
   },
 };
 /* -------------------------------------------------------------- the music */

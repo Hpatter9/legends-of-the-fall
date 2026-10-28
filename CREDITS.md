@@ -36,7 +36,22 @@ Code borrowed from Chronos Settlement (`hpatter9/little-town`): the seeded rando
 board's relief, step and sight rules (`src/sim/board.ts`), the blow and reach rules (`src/sim/battle.ts`), the
 isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle juice rules.
 
-- **The music** is original, written as notes and synthesised: the 23 files in `src/audio/` (`.opus`, about 5.9 MB) were rendered offline by `tools/epic-music/` (a small synthesiser of pipe organ, harpsichord, string sections, choir, brass, distorted guitar, drum kit, timpani and piano, with a generated hall reverb and a master compressor and limiter) and encoded with libopus. No samples, recordings or third-party music went into them, so there is nothing to credit beyond that. The older three synthesised loops (`src/render/musicScore.ts`, rendered in the page by `src/render/musicBake.ts`) remain as a fallback if a browser cannot decode the files. (Before 0.134 the game played the Tiny RPG Music tracks by Luis Zuno (@ansimuz) from `hpatter9/chronos-assets`; they are gone from the build but remain in the git history.)
+- **The music**:
+  - Battle tracks (`battle.opus`, `battle2.opus`, `battle3.opus`, `calbattle.opus`): **Boss Battle #2 [Symphonic Metal]**, **Boss Battle #6 [Metal Alternate]**, **Boss Battle #8 [Metal]**, and **Boss Battle #9 [Metal]** by **nene** from OpenGameArt.org (CC0 Public Domain; live drums, distorted guitars, orchestral brass, and violins).
+  - Boss battles (`boss.opus`): **Blackmoor Colossus** by **Matthew Pablo** (matthewpablo.com / OpenGameArt.org, CC-BY 3.0; colossal orchestral brass, driving drums, and dark fantasy choir).
+  - Stings: Victory (`victory.opus`) uses **Victory Fanfare** by **cynicmusic** (Alex Smith) / **Thalon** (OpenGameArt.org, CC0 Public Domain); Defeat (`defeat.opus`) uses **No Hope** by **Cleyton Kauffman** (OpenGameArt.org, CC0 Public Domain).
+  - Hubs & Exploration:
+    - Home screen (`camp.opus`): **Woodland Fantasy** by **Matthew Pablo** (matthewpablo.com / OpenGameArt.org, CC-BY 3.0; live violin, medieval ballad, acoustic fantasy atmosphere).
+    - Battle preparation (`deploy.opus`): **Briefing Theme** from *Unused Music* by **Alexandr Zhelanov** (OpenGameArt.org, CC-BY 4.0; tactical preparation and strategy suspense).
+    - Tavern (`tavern.opus`): **The Old Tower Inn** (OpenGameArt.org, CC0 Public Domain; medieval tavern lute, flute, and waltz).
+    - Dungeon exploration (`tower.opus`): **Crystal Cave & Mysterious Ambience** by **cynicmusic** (The Cynic Project / OpenGameArt.org, CC0 Public Domain; underground ambient exploration).
+    - Calamity map (`calmap.opus`): **Iron Wasteland** by **Alexandr Zhelanov** (OpenGameArt.org, CC-BY 4.0; dark post-apocalyptic suspense ambience).
+  - Heralds & Cinematics:
+    - Gorvak (`gorvak.opus`): **Battle March** (OpenGameArt.org, CC0 Public Domain; heavy war march).
+    - Calamity heralds (`herald2.opus` to `herald6.opus`): **Boss Battle #7 [Metal]** and **Boss Battle 10 [Metal]** by **nene** (OpenGameArt.org, CC0); **The Dark Amulet**, **Wasteland Showdown**, and **Tactical Pursuit** by **Matthew Pablo** (matthewpablo.com / OpenGameArt.org, CC-BY 3.0).
+    - Opening (`opening.opus`): **Spooky Waltz (Music Box)** by **Aureolus_Omicron** (OpenGameArt.org, CC0 Public Domain).
+    - Story scenes: **Medieval Victory Theme** (`triumph.opus`, CC0); **Emotional Piano Loop** by **Extenz** (`solemn.opus`, CC0); **Soliloquy** by **Matthew Pablo** (`spire.opus`, CC-BY 3.0); **Enchanted Festival** by **Matthew Pablo** (`comic.opus`, CC-BY 3.0).
+  - Each track is resampled to 24 kHz, seamlessly crossfaded, and encoded to Opus with a 1.5 s wrap tail. The older synthesised loops (`src/render/musicScore.ts`, rendered in the page by `src/render/musicBake.ts`) remain as a fallback if a browser cannot decode the files.
 - **The sound effects** are synthesised in `src/render/audioProcessors.ts` with the Web Audio API; no files were copied for them.
 
 ## Areas (`src/art/areas/`, cut by `tools/areas-prep.py`)

@@ -1,174 +1,188 @@
-// The Castle tab's picture: a town in the isometric view of Chronos's building kits (a plain stone wall and tower behind it, a lattice of grass and
-// cobble tiles, houses, forges, benches, and a fountain made for the game with PixelLab), drawn half size in the scene's own pixels, whole-number times bigger.
-// A paved town square with the fountain in the middle has the buildings round it, a lane runs out of the town to the bottom; each upgrade is a building on its
-// own plot that grows through four looks (castleSpots.ts): an empty plot, a small, a
-// bigger and a grand one. Flags wave on the wall towers, chimneys smoke, sparks fly at the forge, the tower's windows glow and shed runes, the gold
-// glints, and a few of your heroes (their sheets shrunk by a whole number so they stand about a door high) stroll the square and the paths. Tapping a building (or
-// its name tag) opens its upgrade card; a level bought plays a short build: scaffolding and dust, the new look with a flash, then sparkles. One
-// canvas, drawn with nearest neighbour and panned by native scroll when the screen is smaller than the scene. It only draws (Math.random is fine
-// here: nothing that is played depends on it) and runs only while the tab shows.
+// The Royal Citadel & Throne Room: an imposing, gilded High-Fantasy Great Hall where the King's
+// Royal Company stands honor guard amid glowing arcane sigils, roaring braziers, and the treasures
+// of your kingdom upgrades, above the 6 Sacred Citadel Chambers & High Chapel.
 
-import { BUILDING_IDS, CHAPEL_COST, chapelBuilt, canBuildChapel, clockText, maxLevel, nextCost, worksLeft, type BuildingId } from './sim/castle';
+import {
+  BUILDING_IDS,
+  CHAPEL_COST,
+  chapelBuilt,
+  canBuildChapel,
+  clockText,
+  maxLevel,
+  nextCost,
+  worksLeft,
+  type BuildingId,
+} from './sim/castle';
 import type { Meta } from './sim/meta';
-import { heroRig, lookKey } from './render/awakenRig';
-import { loadImage } from './render/loadImage';
-import { onSettings, settings } from './settings';
 import { strongest } from './menuHeroes';
-import { cellX, cellY, decorAt, GRASS, isPlaceId, pavingAt, layoutFor, LIGHTS, lookBox, lookFor, NAME_OF, viewFor, PLACE_IDS, PLACE_VENTS, PLACES, PLOT_IDS, stageOf, TILE_H, TILE_W, VENTS, walkTiles, YARD, type Layout, type Look, type PlotId } from './render/castleSpots';
-import anvil_stallUrl from './art/castle/anvil_stall.png';
-import atelierUrl from './art/castle/atelier.png';
-import bannerUrl from './art/castle/banner.png';
-import barracksUrl from './art/castle/barracks.png';
-import barrelsUrl from './art/castle/barrels.png';
-import basketsUrl from './art/castle/baskets.png';
-import benchUrl from './art/castle/bench.png';
-import berriesUrl from './art/castle/berries.png';
-import birchUrl from './art/castle/birch.png';
-import brazierUrl from './art/castle/brazier.png';
-import bushUrl from './art/castle/bush.png';
-import campfireUrl from './art/castle/campfire.png';
-import cartUrl from './art/castle/cart.png';
-import chapelUrl from './art/castle/chapel.png';
-import chestsUrl from './art/castle/chests.png';
-import churchUrl from './art/castle/church.png';
-import cobble_tileUrl from './art/castle/cobble_tile.png';
-import cottageUrl from './art/castle/cottage.png';
-import cratesUrl from './art/castle/crates.png';
-import crystalsUrl from './art/castle/crystals.png';
-import fieldUrl from './art/castle/field.png';
-import field2Url from './art/castle/field2.png';
-import flagstoneUrl from './art/castle/flagstone.png';
-import flowersUrl from './art/castle/flowers.png';
+import { sheetInfo } from './render/sheets';
+import { loadImage } from './render/loadImage';
+import { VFX, type VfxKey } from './render/vfxArt';
+import { UNITS } from './sim/units';
+import { roleOf } from './sim/suggest';
+import { play } from './render/sound';
+import { effectText, type PlotId } from './render/castleSpots';
+
+// High-res chamber & architectural sprites (bundled as data URLs by esbuild)
+import sanctumUrl from './art/hall/sanctum.png';
+import lightPillarUrl from './art/hall/fx_light-pillar.png';
+import rugUrl from './art/tavern/rug.png';
+import lecternUrl from './art/library/lectern.png';
+
+// Building architectural diorama sprites
+import greatHallUrl from './art/castle/great_hall.png';
 import forgeUrl from './art/castle/forge.png';
-import fountainUrl from './art/castle/fountain.png';
-import granaryUrl from './art/castle/granary.png';
-import grass_tileUrl from './art/castle/grass_tile.png';
-import greatUrl from './art/castle/great.png';
-import great_hallUrl from './art/castle/great_hall.png';
-import hayUrl from './art/castle/hay.png';
-import hedgeUrl from './art/castle/hedge.png';
-import herbUrl from './art/castle/herb.png';
-import lampUrl from './art/castle/lamp.png';
-import longhouseUrl from './art/castle/longhouse.png';
-import manorUrl from './art/castle/manor.png';
-import oakUrl from './art/castle/oak.png';
-import pineUrl from './art/castle/pine.png';
-import potsUrl from './art/castle/pots.png';
-import rackUrl from './art/castle/rack.png';
-import rocksUrl from './art/castle/rocks.png';
-import rosesUrl from './art/castle/roses.png';
-import shedUrl from './art/castle/shed.png';
-import shrineUrl from './art/castle/shrine.png';
-import signUrl from './art/castle/sign.png';
-import signpostUrl from './art/castle/signpost.png';
+import barracksUrl from './art/castle/barracks.png';
 import spiralUrl from './art/castle/spiral.png';
 import stableUrl from './art/castle/stable.png';
-import stallUrl from './art/castle/stall.png';
-import stall2Url from './art/castle/stall2.png';
-import stall3Url from './art/castle/stall3.png';
-import stockpileUrl from './art/castle/stockpile.png';
-import tavernUrl from './art/castle/tavern.png';
-import thatchUrl from './art/castle/thatch.png';
-import wallUrl from './art/castle/wall.png';
-import watchtowerUrl from './art/castle/watchtower.png';
-import wellUrl from './art/castle/well.png';
-import woodpileUrl from './art/castle/woodpile.png';
-import workshopUrl from './art/castle/workshop.png';
+import manorUrl from './art/castle/manor.png';
+import chapelUrl from './art/castle/chapel.png';
 
-const ART: Record<string, string> = {
-  anvil_stall: anvil_stallUrl,
-  atelier: atelierUrl,
-  banner: bannerUrl,
-  barracks: barracksUrl,
-  barrels: barrelsUrl,
-  baskets: basketsUrl,
-  bench: benchUrl,
-  berries: berriesUrl,
-  birch: birchUrl,
-  brazier: brazierUrl,
-  bush: bushUrl,
-  campfire: campfireUrl,
-  cart: cartUrl,
-  chapel: chapelUrl,
+// Hall props & treasures that appear as you upgrade your kingdom
+import chestsUrl from './art/castle/chests.png';
+import rackUrl from './art/castle/rack.png';
+import anvilUrl from './art/castle/anvil_stall.png';
+import bannerUrl from './art/castle/banner.png';
+import crystalsUrl from './art/castle/crystals.png';
+import brazierUrl from './art/castle/brazier.png';
+import shrineUrl from './art/castle/shrine.png';
+import goldChestUrl from './art/ui/chest-gold.png';
+
+// Sacred Relic emblems
+import crownUrl from './art/items/jewel_crown.png';
+import shieldUrl from './art/items/iron_shield.png';
+import helmUrl from './art/items/doom_helm.png';
+import sapphireUrl from './art/items/frost_sapphire.png';
+import bootsUrl from './art/items/cloud_treads.png';
+import tomeUrl from './art/items/hourglass.png';
+import chaliceUrl from './art/items/holy_chalice.png';
+
+const SCENE_ART_URLS = {
+  sanctum: sanctumUrl,
+  lightPillar: lightPillarUrl,
+  rug: rugUrl,
+  lectern: lecternUrl,
   chests: chestsUrl,
-  church: churchUrl,
-  cobble_tile: cobble_tileUrl,
-  cottage: cottageUrl,
-  crates: cratesUrl,
-  crystals: crystalsUrl,
-  field: fieldUrl,
-  field2: field2Url,
-  flagstone: flagstoneUrl,
-  flowers: flowersUrl,
-  forge: forgeUrl,
-  fountain: fountainUrl,
-  granary: granaryUrl,
-  grass_tile: grass_tileUrl,
-  great: greatUrl,
-  great_hall: great_hallUrl,
-  hay: hayUrl,
-  hedge: hedgeUrl,
-  herb: herbUrl,
-  lamp: lampUrl,
-  longhouse: longhouseUrl,
-  manor: manorUrl,
-  oak: oakUrl,
-  pine: pineUrl,
-  pots: potsUrl,
+  goldChest: goldChestUrl,
   rack: rackUrl,
-  rocks: rocksUrl,
-  roses: rosesUrl,
-  shed: shedUrl,
+  anvil: anvilUrl,
+  banner: bannerUrl,
+  crystals: crystalsUrl,
+  brazier: brazierUrl,
   shrine: shrineUrl,
-  sign: signUrl,
-  signpost: signpostUrl,
+  greatHall: greatHallUrl,
+  forge: forgeUrl,
+  barracks: barracksUrl,
   spiral: spiralUrl,
   stable: stableUrl,
-  stall: stallUrl,
-  stall2: stall2Url,
-  stall3: stall3Url,
-  stockpile: stockpileUrl,
-  tavern: tavernUrl,
-  thatch: thatchUrl,
-  wall: wallUrl,
-  watchtower: watchtowerUrl,
-  well: wellUrl,
-  woodpile: woodpileUrl,
-  workshop: workshopUrl,
-};
+  manor: manorUrl,
+  chapel: chapelUrl,
+} as const;
 
-let art: Record<string, HTMLImageElement> | null = null;
-async function loadArt(): Promise<Record<string, HTMLImageElement>> {
-  if (art) return art;
-  const got: Record<string, HTMLImageElement> = {};
-  await Promise.all(Object.entries(ART).map(async ([k, url]) => (got[k] = await loadImage(url))));
-  return (art = got);
+type SceneArtKey = keyof typeof SCENE_ART_URLS;
+let sceneArt: Record<SceneArtKey, HTMLImageElement> | null = null;
+async function ensureSceneArt(): Promise<Record<SceneArtKey, HTMLImageElement>> {
+  if (sceneArt) return sceneArt;
+  const loaded = {} as Record<SceneArtKey, HTMLImageElement>;
+  await Promise.all(
+    (Object.keys(SCENE_ART_URLS) as SceneArtKey[]).map(async (k) => {
+      loaded[k] = await loadImage(SCENE_ART_URLS[k]);
+    }),
+  );
+  return (sceneArt = loaded);
 }
 
-const picCache = new Map<string, string>();
-/** A building's look at a level as one picture (a data URL) for its card; empty until the courtyard has loaded its art. */
-export function lookPicture(id: PlotId, level: number): string {
-  if (!art) return '';
-  const stage = id === 'chapel' ? level : isPlace(id) ? 0 : stageOf(id, level);
-  const key = `${id}${stage}`;
-  let url = picCache.get(key);
-  if (url === undefined) {
-    const look = lookFor(id, stage);
-    const box = lookBox(look);
-    const c = el('canvas');
-    c.width = Math.ceil(box.w) + 2;
-    c.height = Math.ceil(box.h) + 12;
-    const g = c.getContext('2d')!;
-    g.imageSmoothingEnabled = false;
-    for (const p of look.parts) {
-      const im = art[p.sprite];
-      g.drawImage(im, Math.round(p.dx - im.width / 2 - box.x0) + 1, c.height - 6 + p.dy - im.height);
-    }
-    url = c.toDataURL();
-    picCache.set(key, url);
-  }
-  return url;
+export interface ChamberDef {
+  id: BuildingId | 'chapel';
+  name: string;
+  relicName: string;
+  edificeUrl: string;
+  icon: string;
+  glow: string;
+  statName: string;
+  perLevelShort: string;
+  lore: string;
 }
+
+export const CHAMBERS: ChamberDef[] = [
+  {
+    id: 'treasury',
+    name: 'High Treasury',
+    relicName: 'Crown of Minted Vaults',
+    edificeUrl: greatHallUrl,
+    icon: crownUrl,
+    glow: '#ffd700',
+    statName: 'Starting Run Gold',
+    perLevelShort: '+10 Gold / Lv',
+    lore: 'Overflowing royal vaults that fund every march with rich starting coin.',
+  },
+  {
+    id: 'armoury',
+    name: 'Royal Armoury',
+    relicName: 'Sunforge Aegis',
+    edificeUrl: forgeUrl,
+    icon: shieldUrl,
+    glow: '#ff8533',
+    statName: 'Hero Attack Power',
+    perLevelShort: '+5% ATK / Lv',
+    lore: 'Masterwork steel tempered in dragonfire. Permanently raises all hero attack power.',
+  },
+  {
+    id: 'barracks',
+    name: 'Grand Barracks',
+    relicName: 'Warhelm of Valor',
+    edificeUrl: barracksUrl,
+    icon: helmUrl,
+    glow: '#ff4d4d',
+    statName: 'Hero Max Vitality',
+    perLevelShort: '+6% HP / Lv',
+    lore: 'Rigorous royal drills and iron rations. Toughens every hero with lasting health.',
+  },
+  {
+    id: 'mageTower',
+    name: 'Arcane Spire',
+    relicName: 'Heart of the Leyline',
+    edificeUrl: spiralUrl,
+    icon: sapphireUrl,
+    glow: '#38bdf8',
+    statName: 'Mana & Spell Power',
+    perLevelShort: '+12% Mana / Lv',
+    lore: 'Converging astral rings that accelerate the King’s mana and expand spell budget.',
+  },
+  {
+    id: 'stable',
+    name: 'Royal Stables',
+    relicName: 'Windstrider Spurs',
+    edificeUrl: stableUrl,
+    icon: bootsUrl,
+    glow: '#4ade80',
+    statName: 'Tactical March Speed',
+    perLevelShort: '+4% Speed / Lv',
+    lore: 'Barded warhorses and wind-blessed tack. Heroes stride across the battlefield faster.',
+  },
+  {
+    id: 'library',
+    name: 'Archivist Spire',
+    relicName: 'Chronicle of Ages',
+    edificeUrl: manorUrl,
+    icon: tomeUrl,
+    glow: '#c084fc',
+    statName: 'Hero Combat XP',
+    perLevelShort: '+6% XP / Lv',
+    lore: 'Illuminated codices of ancient campaigns. Multiplies the XP heroes earn from every fight.',
+  },
+  {
+    id: 'chapel',
+    name: 'The High Chapel',
+    relicName: 'Chalice of Dawn',
+    edificeUrl: chapelUrl,
+    icon: chaliceUrl,
+    glow: '#fef08a',
+    statName: 'Royal Spellbook Sanctum',
+    perLevelShort: 'Unlocks Spells',
+    lore: 'The consecrated cathedral of the Keep. Opens the Spells tab to equip and study royal magic.',
+  },
+];
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] {
   const e = document.createElement(tag);
@@ -176,824 +190,778 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   if (text) e.textContent = text;
   return e;
 }
-const rand = (a: number, b: number) => a + Math.random() * (b - a);
-const chance = (p: number) => Math.random() < p;
 
-interface Rig {
-  img: HTMLImageElement;
-  w: number;
-  h: number;
-  rows: string[];
-  counts: Record<string, number>;
-  figure: number;
-  facesRight: boolean;
+export function lookPicture(id: PlotId, _level: number): string {
+  const match = CHAMBERS.find((c) => c.id === id);
+  return match ? match.edificeUrl : crownUrl;
 }
 
-/** A hero's idle and walk frames shrunk by a whole number (box average, then clear or solid), so they stay crisp pixel art beside the houses. */
-interface Small {
-  c: HTMLCanvasElement;
-  fw: number;
-  fh: number;
-  idle: number;
-  walk: number;
-  facesRight: boolean;
-}
-
-/** How tall a hero stands in the yard, about: a sheet is shrunk by the whole number that comes nearest. */
-const HERO_PX = 44;
-const heroShrink = (figure: number): number => Math.max(1, Math.round(figure / HERO_PX));
-
-function shrinkRig(rig: Rig): Small {
-  const n = heroShrink(rig.figure);
-  const fw = Math.floor(rig.w / n);
-  const fh = Math.floor(rig.h / n);
-  const rows = ['idle', 'walk'].map((r) => (rig.rows.includes(r) ? r : 'idle'));
-  const counts = rows.map((r) => rig.counts[r] ?? 1);
-  const src = el('canvas');
-  src.width = rig.img.width;
-  src.height = rig.img.height;
-  const sg = src.getContext('2d', { willReadFrequently: true })!;
-  sg.drawImage(rig.img, 0, 0);
-  const out = el('canvas');
-  out.width = fw * Math.max(...counts);
-  out.height = fh * 2;
-  const og = out.getContext('2d')!;
-  rows.forEach((r, ri) => {
-    const row = rig.rows.indexOf(r);
-    for (let i = 0; i < counts[ri]; i++) {
-      const data = sg.getImageData(i * rig.w, row * rig.h, rig.w, rig.h).data;
-      const dst = og.createImageData(fw, fh);
-      for (let oy = 0; oy < fh; oy++)
-        for (let ox = 0; ox < fw; ox++) {
-          let a = 0;
-          let rr = 0;
-          let gg = 0;
-          let bb = 0;
-          for (let y = 0; y < n; y++)
-            for (let x = 0; x < n; x++) {
-              const k = ((oy * n + y) * rig.w + ox * n + x) * 4;
-              const al = data[k + 3];
-              a += al;
-              rr += data[k] * al;
-              gg += data[k + 1] * al;
-              bb += data[k + 2] * al;
-            }
-          const o = (oy * fw + ox) * 4;
-          if (a >= 255 * n * n * 0.5) {
-            dst.data[o] = rr / a;
-            dst.data[o + 1] = gg / a;
-            dst.data[o + 2] = bb / a;
-            dst.data[o + 3] = 255;
-          }
-        }
-      og.putImageData(dst, i * fw, ri * fh);
-    }
-  });
-  return { c: out, fw, fh, idle: counts[0], walk: counts[1], facesRight: rig.facesRight };
-}
-
-type Mood = 'idle' | 'walk';
-
-interface Walker {
-  kind: string;
-  /** What the hero looked like when `small` was cut (`lookKey`). */
-  look: string;
-  small: Small;
-  x: number;
-  y: number;
-  /** The waypoint being walked to, and the tiles still to come after it. */
-  gx: number;
-  gy: number;
-  route: { u: number; v: number }[];
-  tile: { u: number; v: number };
-  face: 1 | -1;
-  mood: Mood;
-  at: number;
-  clock: number;
-  phase: number;
-}
-
-interface Mote {
+interface HallParticle {
   x: number;
   y: number;
   vx: number;
   vy: number;
-  age: number;
-  life: number;
   size: number;
   color: string;
-  grow: number;
-  kind: 'dust' | 'smoke' | 'spark' | 'rune' | 'glint' | 'drop';
+  alpha: number;
+  life: number;
+  maxLife: number;
+  kind: 'mote' | 'spark' | 'coin';
 }
 
-/** A level just bought: the old look shows behind scaffolding until `SWAP_MS`, then the new look and sparkles. */
-interface Build {
-  id: PlotId;
-  from: number;
-  to: number;
-  start: number;
+interface BurstEffect {
+  x: number;
+  y: number;
+  t0: number;
+  dur: number;
+  color: string;
+  label?: string;
 }
 
-/** The pictures with a flame: where it burns from the picture's foot, and its glow. */
-const GLOWING: Record<string, { dx: number; dy: number; size: number; al: number; tint: string }> = {
-  brazier: { dx: 0, dy: -72, size: 34, al: 0.55, tint: '#ff9a3c' },
-  lamp: { dx: 0, dy: -66, size: 26, al: 0.5, tint: '#ffcf70' },
-};
+const DEFAULT_GUARD = ['knight', 'archer', 'mage', 'cleric', 'samurai'];
 
-const isPlace = isPlaceId;
-
-const BUILD_MS = 1500;
-const SWAP_MS = 800;
+// 5 dramatic Honor Guard positions across the Throne Room dais (back-left, back-right, mid-left, mid-right, center champion)
+const GUARD_SPOTS = [
+  { x: 215, y: 268, height: 112, faceRight: true },
+  { x: 585, y: 268, height: 112, faceRight: false },
+  { x: 112, y: 332, height: 128, faceRight: true },
+  { x: 688, y: 332, height: 128, faceRight: false },
+  { x: 400, y: 348, height: 148, faceRight: true },
+];
 
 export class CastleScene {
-  readonly root = el('div', 'ctWrap');
-  private scroll = el('div', 'ctScroll');
-  private stage = el('div', 'ctStage');
-  private canvas = el('canvas', 'ctRoom');
-  private tags = el('div', 'ctTags');
-  private ctx = this.canvas.getContext('2d')!;
-  private still: HTMLCanvasElement | null = null;
-  private glow: HTMLCanvasElement | null = null;
-  private walkers = new Map<string, Walker>();
-  private motes: Mote[] = [];
-  private builds: Build[] = [];
-  private levels: Partial<Record<BuildingId, number>> = {};
-  /** Whether the Chapel stands (undefined until the first update, so loading a built one plays no build). */
-  private chapel: boolean | undefined;
-  private tagEls = new Map<PlotId, HTMLButtonElement>();
-  private scale = 1;
-  private lay: Layout = YARD;
-  /** Css pixels per scene pixel (the scale in device pixels over the device pixel ratio). */
-  private css = 1;
-  /** The canvas in scene pixels: the village in the middle, and grass all round it to fill the frame (`ox`, `oy` is where the village's corner sits). */
-  private view = { w: YARD.w, h: YARD.h, ox: 0, oy: 0 };
-  private raf = 0;
-  private last = 0;
-  private now = 0;
-  private nextSmoke = 0;
-  private nextSpark = 0;
-  private nextGlint = 0;
-  private nextDrop = 0;
-  private running = false;
-  private reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  private saver = settings().saver;
-  private down: { x: number; y: number; t: number } | null = null;
-  private watch: ResizeObserver;
+  readonly root = el('div', 'ctWrap ctCitadelWrap');
+  private scroll = el('div', 'ctScroll ctCitadelScroll');
+  private stage = el('div', 'ctCitadelStage');
 
-  constructor(private onPick: (id: PlotId) => void) {
-    this.stage.append(this.canvas, this.tags);
+  // Scenic Upper Royal Citadel Frame
+  private scenicFrame = el('figure', 'ctScenicFrame');
+  private scenicViewport = el('div', 'ctThroneScenic');
+  private canvas = el('canvas', 'ctHonorCanvas');
+  private ctx = this.canvas.getContext('2d')!;
+  private crestTitle = el('div', 'ctCrestTitle', 'ROYAL CITADEL');
+  private crestSub = el('div', 'ctCrestSub', 'Realm Power · Lv. 0');
+  private guardPlaque = el('figcaption', 'ctGuardPlaque');
+  private guardTitle = el('span', '', 'CHAMPIONS OF THE HIGH THRONE');
+  private guardNames = el('b', '', 'Royal Honor Guard');
+
+  // Kingdom Power Summary Strip
+  private powerBanner = el('div', 'ctPowerBanner');
+
+  // Chamber Grid
+  private grid = el('div', 'ctChamberGrid');
+  private chamberEls = new Map<BuildingId | 'chapel', HTMLElement>();
+
+  private raf = 0;
+  private running = false;
+  private now = 0;
+  private last = 0;
+  private meta: Meta | null = null;
+  private heroKinds: string[] = [...DEFAULT_GUARD];
+  private particles: HallParticle[] = [];
+  private bursts: BurstEffect[] = [];
+  private heroFlourishUntil = [0, 0, 0, 0, 0];
+  private reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  constructor(
+    private onPick: (id: PlotId) => void,
+    private onDirectUpgrade?: (id: BuildingId | 'chapel') => boolean,
+  ) {
+    this.buildLayout();
+    this.canvas.width = 800;
+    this.canvas.height = 420;
+    this.ctx.imageSmoothingEnabled = false;
+
+    window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
+    void ensureSceneArt().then(() => {
+      if (this.meta) this.paintGreatHall();
+    });
+  }
+
+  private buildLayout(): void {
+    // 1. Ceremonial Top Crest + Brass Frame Scene
+    const crest = el('div', 'ctRoyalCrest');
+    crest.append(this.crestTitle, this.crestSub);
+
+    const rays = el('div', 'ctRays');
+    const embers = el('div', 'ctEmbers');
+    for (let i = 0; i < 8; i++) embers.append(el('i'));
+
+    const pennantL = el('span', 'ctPennant left', '👑');
+    const pennantR = el('span', 'ctPennant right', '⚔️');
+
+    const tapHint = el('div', 'ctTapSaluteHint', '✨ Tap heroes to salute');
+
+    this.scenicViewport.append(rays, this.canvas, embers, tapHint);
+    this.guardPlaque.append(this.guardTitle, this.guardNames);
+    this.scenicFrame.append(crest, pennantL, pennantR, this.scenicViewport, this.guardPlaque);
+
+    // Interactive tap on the Throne Room canvas: heroes salute with golden light pillars!
+    this.scenicViewport.addEventListener('pointerdown', (e) => this.handleSceneTap(e));
+
+    // 2. Section Divider with Quick-access Portals (Tavern, Armies, Spellbook)
+    const sectionHeader = el('div', 'ctSectionHeader');
+    const sectionTitle = el('h3', '', 'SACRED CHAMBERS OF THE KEEP');
+    const quickNav = el('div', 'ctQuickPortals');
+
+    const toTavern = el('button', 'ctPortalChip', '🍺 Tavern');
+    toTavern.title = 'Visit the Heroes Tavern';
+    toTavern.addEventListener('click', () => this.onPick('tavern'));
+
+    const toSpells = el('button', 'ctPortalChip', '📖 Spells');
+    toSpells.title = 'Open the Royal Spellbook';
+    toSpells.addEventListener('click', () => this.onPick('chapel'));
+
+    const toArmies = el('button', 'ctPortalChip', '⚔️ March');
+    toArmies.title = 'March to the Armies';
+    toArmies.addEventListener('click', () => this.onPick('armies'));
+
+    quickNav.append(toTavern, toSpells, toArmies);
+    sectionHeader.append(sectionTitle, quickNav);
+
+    // 3. Chamber Grid (6 Sacred Chambers + High Chapel)
+    for (const c of CHAMBERS) {
+      const card = el('div', 'ctChamberCard');
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.dataset.id = c.id;
+      card.addEventListener('click', () => this.onPick(c.id));
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          this.onPick(c.id);
+        }
+      });
+      this.grid.append(card);
+      this.chamberEls.set(c.id, card);
+    }
+
+    this.stage.append(this.scenicFrame, this.powerBanner, sectionHeader, this.grid);
     this.scroll.append(this.stage);
     this.root.append(this.scroll);
-    this.ctx.imageSmoothingEnabled = false;
-    for (const id of PLOT_IDS) {
-      const b = el('button', 'ctTag');
-      b.addEventListener('click', () => this.onPick(id));
-      this.tags.append(b);
-      this.tagEls.set(id, b);
-    }
-    // (the places' tags say where they lead, and never change)
-    for (const id of PLACE_IDS) {
-      const tag = this.tagEls.get(id)!;
-      tag.className = 'ctTag place';
-      tag.replaceChildren(el('b', '', PLACES[id].name), el('span', '', `· ${PLACES[id].to}`));
-      tag.setAttribute('aria-label', `${PLACES[id].name} · ${PLACES[id].to}`);
-    }
-    onSettings((s) => (this.saver = s.saver));
-    window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
-    // (a short tap on a building opens it; the page scrolls up and down by itself when the village is taller than the frame, and the tags take their own taps)
-    this.canvas.addEventListener('pointerdown', (e) => (this.down = { x: e.clientX, y: e.clientY, t: performance.now() }));
-    this.canvas.addEventListener('pointerup', (e) => {
-      const d = this.down;
-      this.down = null;
-      if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 9 && performance.now() - d.t < 600) this.tap(e);
-    });
-    this.watch = new ResizeObserver(() => this.fit());
-    this.watch.observe(this.root);
-    document.addEventListener('visibilitychange', () => (document.hidden ? this.halt() : this.running && this.start()));
   }
 
-  /** Show the castle as the meta has it. A level that has risen since the last call plays its build (while the tab is showing). */
-  update(meta: Meta): void {
-    for (const id of BUILDING_IDS) {
-      const level = meta.castle[id];
-      const before = this.levels[id];
-      this.levels[id] = level;
-      if (before !== undefined && level > before && this.running && !this.reduced) {
-        this.builds = this.builds.filter((b) => b.id !== id);
-        this.builds.push({ id, from: stageOf(id, before), to: stageOf(id, level), start: this.now });
-        this.burst(id, 'dust', 26);
-      } else if (before !== undefined && level > before) this.burst(id, 'spark', 14);
-      const tag = this.tagEls.get(id)!;
-      const cost = nextCost(meta.castle, id);
-      // (while the builders are at it, the tag counts down instead)
-      const going = meta.works?.id === id ? clockText(worksLeft(meta, Date.now())) : null;
-      const ready = !going && !meta.works && cost !== null && meta.crowns >= cost;
-      // (rebuilt only when it changes, so a finger that is down on a tag is not pulled out from under)
-      const key = `${level}|${ready}|${cost === null}|${going}`;
-      if (tag.dataset.key === key) continue;
-      tag.dataset.key = key;
-      tag.className = `ctTag${ready ? ' ready' : ''}${cost === null ? ' full' : ''}${going ? ' going' : ''}`;
-      tag.replaceChildren(el('b', '', NAME_OF(id)), el('span', '', going ? `building ${going}` : level === 0 ? 'not built' : `${level}/${maxLevel(id)}`));
-      if (ready) tag.append(el('i', 'ctUp', '▲'));
-      tag.setAttribute('aria-label', `${NAME_OF(id)}, level ${level} of ${maxLevel(id)}${ready ? ', can upgrade' : ''}`);
-    }
-    this.updateChapel(meta);
-    // heroes: the strongest few that are unlocked stroll the road
-    const want = strongest(meta, 5);
-    for (const k of [...this.walkers.keys()]) if (!want.includes(k)) this.walkers.delete(k);
-    want.forEach((kind, i) => {
-      const rig = heroRig(meta, kind);
-      const look = lookKey(meta, kind);
-      if (!rig) return;
-      const w = this.walkers.get(kind);
-      if (w) {
-        // (a new form after a rank-up: re-cut only when the sheet changed)
-        if (w.look !== look || w.small.facesRight !== rig.facesRight || w.small.fh !== Math.floor(rig.h / heroShrink(rig.figure))) (w.small = shrinkRig(rig)), (w.look = look);
-        return;
+  /** Interactive tap on the Throne Room scene: triggers a hero attack flourish, sound, and golden particle burst! */
+  private handleSceneTap(e: PointerEvent): void {
+    const rect = this.canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const cx = ((e.clientX - rect.left) / rect.width) * this.canvas.width;
+    const cy = ((e.clientY - rect.top) / rect.height) * this.canvas.height;
+
+    // Find nearest hero spot or salute all if tapping the central altar/throne
+    let nearestIdx = -1;
+    let bestDist = 135;
+    GUARD_SPOTS.forEach((spot, idx) => {
+      const d = Math.hypot(cx - spot.x, cy - (spot.y - spot.height * 0.45));
+      if (d < bestDist) {
+        bestDist = d;
+        nearestIdx = idx;
       }
-      const wk: Walker = { kind, look, small: shrinkRig(rig), x: 0, y: 0, gx: 0, gy: 0, route: [], tile: { u: 0, v: 0 }, face: chance(0.5) ? 1 : -1, mood: 'idle', at: this.now + 300 * i + rand(300, 2500), clock: rand(0, 3000), phase: rand(0, 6) };
-      this.putOnRoad(wk);
-      this.walkers.set(kind, wk);
     });
-    this.layTags();
+
+    play('sparkle');
+    if (nearestIdx >= 0) {
+      this.heroFlourishUntil[nearestIdx] = this.now + 950;
+      const spot = GUARD_SPOTS[nearestIdx];
+      const kind = this.heroKinds[nearestIdx];
+      const unitName = UNITS[kind]?.name ?? 'Champion';
+      this.triggerHallBurst(spot.x, spot.y - 30, '#ffd700', `${unitName} Salutes!`);
+    } else {
+      // Grand Royal Salute from the whole company
+      for (let i = 0; i < 5; i++) this.heroFlourishUntil[i] = this.now + 900 + i * 120;
+      this.triggerHallBurst(400, 225, '#ffe066', 'For the King!');
+    }
   }
 
-  /** The Chapel's plot: an empty site with a "Chapel · 200" tag (glowing "build" once affordable) until bought; the build plays like an upgrade's. */
-  private updateChapel(meta: Meta): void {
+  /** Trigger a celebratory golden burst in the Great Hall canvas (used on tap and when upgrading a chamber). */
+  public triggerHallBurst(x: number, y: number, color = '#ffd700', label?: string): void {
+    this.bursts.push({ x, y, t0: this.now, dur: 1100, color, label });
+    if (this.reduced) return;
+    for (let i = 0; i < 36; i++) {
+      const ang = -Math.PI * 0.95 + Math.random() * Math.PI * 0.9;
+      const spd = 45 + Math.random() * 140;
+      this.particles.push({
+        x: x + (Math.random() - 0.5) * 24,
+        y: y + (Math.random() - 0.5) * 16,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd - 20,
+        size: Math.random() < 0.4 ? 4 : 3,
+        color: Math.random() < 0.5 ? color : '#fff8d6',
+        alpha: 1,
+        life: 0,
+        maxLife: 650 + Math.random() * 650,
+        kind: i % 3 === 0 ? 'coin' : 'spark',
+      });
+    }
+  }
+
+  /** Update the Citadel scene with current meta (levels, crowns, works, unlocked heroes). */
+  update(meta: Meta): void {
+    this.meta = meta;
+
+    // 1. Always assemble a full 5-Hero Royal Guard (player's strongest unlocked heroes, padded with iconic champions)
+    const topUnlocked = strongest(meta, 5);
+    const guard: string[] = [...topUnlocked];
+    for (const fallback of DEFAULT_GUARD) {
+      if (guard.length >= 5) break;
+      if (!guard.includes(fallback)) guard.push(fallback);
+    }
+    this.heroKinds = guard.slice(0, 5);
+
+    const names = this.heroKinds.map((k) => UNITS[k]?.name ?? k).join(' · ');
+    this.guardNames.textContent = names;
+
+    // 2. Compute total Citadel Tier & Kingdom Bonuses for the Royal Crest and Power Banner
+    const totalLevels = BUILDING_IDS.reduce((sum, id) => sum + (meta.castle[id] ?? 0), 0) + (chapelBuilt(meta) ? 1 : 0);
+    const maxTotalLevels = BUILDING_IDS.reduce((sum, id) => sum + maxLevel(id), 0) + 1;
+    this.crestSub.textContent = `Citadel Rank ${totalLevels} / ${maxTotalLevels} · ${meta.crowns.toLocaleString()} Crowns`;
+
+    this.renderPowerBanner(meta);
+
+    // 3. Render each ornate chamber card
+    for (const c of CHAMBERS) {
+      const card = this.chamberEls.get(c.id);
+      if (!card) continue;
+
+      if (c.id === 'chapel') {
+        this.renderChapelCard(card, c, meta);
+      } else {
+        this.renderBuildingCard(card, c, meta);
+      }
+    }
+
+    this.paintGreatHall();
+  }
+
+  private renderPowerBanner(meta: Meta): void {
+    const c = meta.castle;
+    const pills: { icon: string; label: string; val: string; active: boolean }[] = [
+      { icon: '🪙', label: 'Gold', val: `+${c.treasury * 10}`, active: c.treasury > 0 },
+      { icon: '⚔️', label: 'ATK', val: `+${c.armoury * 5}%`, active: c.armoury > 0 },
+      { icon: '❤️', label: 'HP', val: `+${c.barracks * 6}%`, active: c.barracks > 0 },
+      { icon: '💧', label: 'Mana', val: `+${c.mageTower * 12}%`, active: c.mageTower > 0 },
+      { icon: '🐎', label: 'Speed', val: `+${c.stable * 4}%`, active: c.stable > 0 },
+      { icon: '📜', label: 'XP', val: `+${c.library * 6}%`, active: c.library > 0 },
+    ];
+
+    this.powerBanner.replaceChildren();
+    for (const p of pills) {
+      const badge = el('div', `ctPowerPill${p.active ? ' active' : ''}`);
+      badge.append(el('span', 'ctPillIco', p.icon), el('b', '', p.val), el('small', '', p.label));
+      this.powerBanner.append(badge);
+    }
+  }
+
+  private renderBuildingCard(card: HTMLElement, c: ChamberDef, meta: Meta): void {
+    const id = c.id as BuildingId;
+    const level = meta.castle[id] ?? 0;
+    const max = maxLevel(id);
+    const cost = nextCost(meta.castle, id);
+    const going = meta.works?.id === id ? clockText(worksLeft(meta, Date.now())) : null;
+    const buildersBusyElsewhere = !!meta.works && meta.works.id !== id;
+    const ready = !going && !meta.works && cost !== null && meta.crowns >= cost;
+    const isMax = cost === null;
+
+    card.className = `ctChamberCard${ready ? ' ready' : ''}${isMax ? ' maxed' : ''}${going ? ' working' : ''}`;
+    card.style.setProperty('--chamber-glow', c.glow);
+
+    // Top Diorama Banner: Architectural Edifice + Floating Glowing Relic Medallion + Level Badge
+    const diorama = el('div', 'ctCardDiorama');
+    const edificeImg = el('img', 'ctEdificeImg');
+    edificeImg.src = c.edificeUrl;
+    edificeImg.alt = c.name;
+    edificeImg.draggable = false;
+
+    const relicBadge = el('div', 'ctRelicFrame');
+    const relicImg = el('img', 'ctRelicImg');
+    relicImg.src = c.icon;
+    relicImg.alt = c.relicName;
+    relicImg.draggable = false;
+    relicBadge.append(relicImg);
+
+    const lvPill = el('span', `ctLvPill${isMax ? ' max' : level > 0 ? ' built' : ''}`, isMax ? `MAX · Lv.${level}` : `Lv. ${level} / ${max}`);
+    diorama.append(edificeImg, relicBadge, lvPill);
+
+    // Title & Relic Name
+    const head = el('div', 'ctCardHead');
+    const titleBox = el('div', 'ctTitleBox');
+    const title = el('h4', 'ctCardTitle', c.name);
+    const relic = el('small', 'ctRelicSub', `◆ ${c.relicName}`);
+    titleBox.append(title, relic);
+    head.append(titleBox);
+
+    // Stat & Progress Pips
+    const body = el('div', 'ctCardBody');
+    const stat = el(
+      'div',
+      'ctStatLine',
+      level > 0 ? effectText(id, level) : `Unbuilt · Next: ${c.perLevelShort}`,
+    );
+    const pips = el('div', 'ctPips');
+    for (let i = 1; i <= max; i++) {
+      const pip = el('span', i <= level ? 'star on' : 'star off', i <= level ? '◆' : '◇');
+      pips.append(pip);
+    }
+    body.append(stat, pips);
+
+    // Ornate Action Button
+    const foot = el('div', 'ctCardFoot');
+    if (going) {
+      const tag = el('span', 'ctActionTag working');
+      tag.append('⚒️ Raising · ', el('span', 'worksLeft', going));
+      foot.append(tag);
+    } else if (isMax) {
+      const tag = el('span', 'ctActionTag maxed', '♛ GRAND MASTERWORK');
+      foot.append(tag);
+    } else {
+      const btn = el('button', `ctUpgradeBtn${ready ? ' canAfford' : ''}`);
+      const labelSpan = el('span', 'ctBtnLabel', buildersBusyElsewhere ? `Lv. ${level + 1} (Busy)` : `▲ Upgrade Lv. ${level + 1}`);
+      const costSpan = el('b', 'ctBtnCost', `${cost} 👑`);
+      btn.append(labelSpan, costSpan);
+
+      // Direct 1-tap upgrade when ready & handler provided; otherwise opens detailed dossier sheet
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (ready && this.onDirectUpgrade) {
+          const ok = this.onDirectUpgrade(id);
+          if (ok) {
+            play('levelUp');
+            this.triggerHallBurst(400, 230, c.glow, `${c.name} Upgrading!`);
+            for (let i = 0; i < 5; i++) this.heroFlourishUntil[i] = this.now + 850;
+            return;
+          }
+        }
+        this.onPick(id);
+      });
+      foot.append(btn);
+    }
+
+    card.replaceChildren(diorama, head, body, foot);
+  }
+
+  private renderChapelCard(card: HTMLElement, c: ChamberDef, meta: Meta): void {
     const built = chapelBuilt(meta);
-    const before = this.chapel;
-    this.chapel = built;
-    if (before === false && built && this.running && !this.reduced) {
-      this.builds = this.builds.filter((b) => b.id !== 'chapel');
-      this.builds.push({ id: 'chapel', from: 0, to: 1, start: this.now });
-      this.burst('chapel', 'dust', 26);
-    } else if (before === false && built) this.burst('chapel', 'spark', 14);
-    const tag = this.tagEls.get('chapel')!;
     const going = meta.works?.id === 'chapel' ? clockText(worksLeft(meta, Date.now())) : null;
     const ready = !going && !meta.works && canBuildChapel(meta);
-    const key = `${built}|${ready}|${going}`;
-    if (tag.dataset.key === key) return;
-    tag.dataset.key = key;
+
+    card.className = `ctChamberCard chapel${built ? ' built maxed' : ''}${ready ? ' ready' : ''}${going ? ' working' : ''}`;
+    card.style.setProperty('--chamber-glow', c.glow);
+
+    const diorama = el('div', 'ctCardDiorama chapelDiorama');
+    const edificeImg = el('img', 'ctEdificeImg');
+    edificeImg.src = c.edificeUrl;
+    edificeImg.alt = c.name;
+    edificeImg.draggable = false;
+
+    const relicBadge = el('div', 'ctRelicFrame');
+    const relicImg = el('img', 'ctRelicImg');
+    relicImg.src = c.icon;
+    relicImg.alt = c.relicName;
+    relicImg.draggable = false;
+    relicBadge.append(relicImg);
+
+    const lvPill = el('span', `ctLvPill${built ? ' max' : ''}`, built ? 'SANCTIFIED' : 'LOCKED SANCTUM');
+    diorama.append(edificeImg, relicBadge, lvPill);
+
+    const contentCol = el('div', 'ctChapelCol');
+    const head = el('div', 'ctCardHead');
+    const titleBox = el('div', 'ctTitleBox');
+    const title = el('h4', 'ctCardTitle', c.name);
+    const relic = el('small', 'ctRelicSub', `◆ ${c.relicName}`);
+    titleBox.append(title, relic);
+    head.append(titleBox);
+
+    const body = el('div', 'ctCardBody');
+    const stat = el(
+      'div',
+      'ctStatLine',
+      built
+        ? 'Active: Unlocks the King’s Spellbook & Divine Battle Cards'
+        : 'Consecrate the High Chapel to unlock the Spells tab and customize your battle spellbook.',
+    );
+    body.append(stat);
+
+    const foot = el('div', 'ctCardFoot');
     if (going) {
-      tag.className = 'ctTag going';
-      tag.replaceChildren(el('b', '', PLACES.chapel.name), el('span', '', `· building ${going}`));
-      tag.setAttribute('aria-label', `${PLACES.chapel.name}, being built, ${going} left`);
-      return;
+      const tag = el('span', 'ctActionTag working');
+      tag.append('⚒️ Sanctifying · ', el('span', 'worksLeft', going));
+      foot.append(tag);
+    } else if (built) {
+      const btn = el('button', 'ctUpgradeBtn canAfford');
+      btn.append(el('span', 'ctBtnLabel', '📖 Open Royal Spellbook'), el('b', 'ctBtnCost', 'ENTER →'));
+      foot.append(btn);
+    } else {
+      const btn = el('button', `ctUpgradeBtn${ready ? ' canAfford' : ''}`);
+      btn.append(el('span', 'ctBtnLabel', '⛪ Consecrate Sanctum'), el('b', 'ctBtnCost', `${CHAPEL_COST} 👑`));
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (ready && this.onDirectUpgrade) {
+          const ok = this.onDirectUpgrade('chapel');
+          if (ok) {
+            play('levelUp');
+            this.triggerHallBurst(400, 210, '#fef08a', 'High Chapel Sanctified!');
+            return;
+          }
+        }
+        this.onPick('chapel');
+      });
+      foot.append(btn);
     }
-    if (built) {
-      tag.className = 'ctTag place';
-      tag.replaceChildren(el('b', '', PLACES.chapel.name), el('span', '', `· ${PLACES.chapel.to}`));
-      tag.setAttribute('aria-label', `${PLACES.chapel.name} · ${PLACES.chapel.to}`);
-      return;
-    }
-    tag.className = `ctTag${ready ? ' ready' : ''}`;
-    tag.replaceChildren(el('b', '', PLACES.chapel.name), el('span', '', ready ? '· build' : `· ${CHAPEL_COST}`));
-    if (ready) tag.append(el('i', 'ctUp', '▲'));
-    tag.setAttribute('aria-label', `${PLACES.chapel.name}, not built, ${CHAPEL_COST} crowns${ready ? ', can build' : ''}`);
+
+    contentCol.append(head, body, foot);
+    card.replaceChildren(diorama, contentCol);
   }
 
-  /** Start drawing (the tab is showing). */
   start(): void {
     this.running = true;
     if (this.raf || document.hidden) return;
-    void loadArt().then(() => {
-      if (!this.running || this.raf) return;
-      this.fit();
-      this.last = performance.now();
-      this.raf = requestAnimationFrame((t) => this.frame(t));
-    });
+    this.last = performance.now();
+    this.raf = requestAnimationFrame((t) => this.loop(t));
   }
 
-  /** Stop drawing (another tab is showing, or a card is open over it). */
   stop(): void {
     this.running = false;
-    this.halt();
-  }
-
-  private halt(): void {
     cancelAnimationFrame(this.raf);
     this.raf = 0;
   }
 
-  /** Draw the village as a close-up at the one scale (`pickScale`: a whole number of device pixels per scene pixel, so it stays sharp at any pixel ratio), the
-   *  plaza's column in the middle of the frame and the back corner tower just under the top; the wall runs off both sides of the screen. The canvas is exactly the
-   *  frame (no scrolling): a taller phone shows more of the front lawn, a narrower one crops the outer edges. */
-  private fit(): void {
-    const h = this.root.clientHeight;
-    const w = this.root.clientWidth;
-    if (!h || !art) return;
-    const lay = layoutFor();
-    const dpr = window.devicePixelRatio || 1;
-    const { k, css, w: vw, h: vh, ox, oy } = viewFor(lay, w, h, dpr);
-    if (lay === this.lay && k === this.scale && css === this.css && this.still && this.view.w === vw && this.view.h === vh && this.view.ox === ox && this.view.oy === oy) return;
-    const changed = lay !== this.lay;
-    this.lay = lay;
-    this.scale = k;
-    this.css = css;
-    // (the backing store is in device pixels, k to a scene pixel; its css size is that over the pixel ratio, so one scene pixel is k whole device pixels)
-    this.view = { w: vw, h: vh, ox, oy };
-    this.canvas.width = vw * k;
-    this.canvas.height = vh * k;
-    for (const e of [this.canvas, this.stage]) {
-      e.style.width = `${vw * css}px`;
-      e.style.height = `${vh * css}px`;
-    }
-    this.ctx.imageSmoothingEnabled = false;
-    // (heroes stroll the road only as far down as the picture shows)
-    this.tiles = walkTiles(lay).filter((t) => cellY(lay.grid, t.u, t.v) + oy < vh - 20);
-    this.still = this.paintStill(art, k);
-    this.glow = this.paintGlow(k);
-    // (the heroes go back onto the new arrangement's road when it changes)
-    if (changed)
-      for (const wk of this.walkers.values()) {
-        this.putOnRoad(wk);
-      }
-    this.layTags();
-    this.scroll.scrollTop = 0;
-  }
-
-  /** The part that never changes: the ground (a lattice of grass tiles, cobbles where the roads and plaza are) with a few flowers laid by a fixed pattern. */
-  private paintStill(a: Record<string, HTMLImageElement>, s: number): HTMLCanvasElement {
-    const { grid } = this.lay;
-    const { w, h, ox, oy } = this.view;
-    const c = el('canvas');
-    c.width = w * s;
-    c.height = h * s;
-    const g = c.getContext('2d')!;
-    g.imageSmoothingEnabled = false;
-    g.fillStyle = GRASS;
-    g.fillRect(0, 0, c.width, c.height);
-    // (from here on the village's own coordinates)
-    g.translate(ox * s, oy * s);
-    const draw = (im: HTMLImageElement, x: number, y: number, mirror = false): void => {
-      if (mirror) {
-        g.save();
-        g.translate(x + im.width * s, y);
-        g.scale(-1, 1);
-        g.drawImage(im, 0, 0, im.width * s, im.height * s);
-        g.restore();
-      } else g.drawImage(im, x, y, im.width * s, im.height * s);
-    };
-    // (rows of tiles from the back to the front, each row half a tile along from the last, so a tile's rim is covered by the row in front)
-    const rows0 = Math.floor((-oy - grid.y) / (TILE_H / 2)) - 2;
-    const rows1 = Math.ceil((h - oy - grid.y) / (TILE_H / 2)) + 2;
-    const first = Math.floor((-ox - grid.x) / (TILE_W / 2)) - 2;
-    const decor: { x: number; y: number; im: HTMLImageElement; mirror: boolean }[] = [];
-    for (let r = rows0; r <= rows1; r++) {
-      const cy = grid.y + r * (TILE_H / 2);
-      for (let k = first; (k * TILE_W) / 2 + grid.x < w - ox + TILE_W; k++) {
-        if ((k - r) % 2 !== 0) continue;
-        const cx = grid.x + (k * TILE_W) / 2;
-        const u = (r + k) / 2;
-        const v = (r - k) / 2;
-        const paving = pavingAt(this.lay, u, v);
-        const tile = paving ? a[paving] : a.grass_tile;
-        // (every other grass tile is mirrored, so the lawn does not show its repeat)
-        draw(tile, Math.round(cx - tile.width / 2) * s, (cy - TILE_H / 2) * s, tile === a.grass_tile && (r * 7 + k * 3) % 5 < 2);
-        const d = decorAt(this.lay, u, v);
-        if (d) {
-          const im = a[d.sprite];
-          decor.push({ x: Math.round(cx - im.width / 2) * s, y: (cy + TILE_H / 2 - im.height) * s, im, mirror: d.mirror });
-        }
-      }
-    }
-    for (const d of decor) draw(d.im, d.x, d.y, d.mirror);
-    return c;
-  }
-
-  /** A soft round glow, white, tinted per use. */
-  private paintGlow(s: number): HTMLCanvasElement {
-    const c = el('canvas');
-    c.width = 64 * s;
-    c.height = 64 * s;
-    const g = c.getContext('2d')!;
-    const rg = g.createRadialGradient(32 * s, 32 * s, 0, 32 * s, 32 * s, 32 * s);
-    rg.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
-    rg.addColorStop(0.35, 'rgba(255, 255, 255, 0.35)');
-    rg.addColorStop(1, 'rgba(255, 255, 255, 0)');
-    g.fillStyle = rg;
-    g.fillRect(0, 0, c.width, c.height);
-    this.tints.clear();
-    return c;
-  }
-
-  /** Place the name tags over their buildings (percentages of the scene, so they follow its scale). */
-  private layTags(): void {
-    for (const id of PLOT_IDS) {
-      const tag = this.tagEls.get(id)!;
-      const p = this.lay.plots[id];
-      const box = lookBox(lookFor(id, this.stageNow(id)), p.flip);
-      tag.style.left = `${((this.view.ox + p.x + (box.x0 + box.x1) / 2 + (p.tagDx ?? 0)) / this.view.w) * 100}%`;
-      tag.style.top = `${((this.view.oy + (p.tagY ?? p.y - box.h - 4)) / this.view.h) * 100}%`;
-      // (a signpost below the bottom of a short screen has no tag to tap)
-      tag.hidden = this.view.oy + p.y > this.view.h - 6;
-    }
-  }
-
-  // ---- behaviour ----
-
-  private think(w: Walker, now: number): void {
-    if (w.mood !== 'idle' || now < w.at) return;
-    const roll = Math.random();
-    if (roll < 0.3) w.face = w.face === 1 ? -1 : 1;
-    else if (!this.reduced && roll < 0.95) {
-      const to = this.tiles[Math.floor(Math.random() * this.tiles.length)];
-      w.route = this.route(w.tile, to);
-      if (w.route.length) {
-        this.nextStop(w);
-        w.mood = 'walk';
-      }
-    }
-    w.at = now + rand(1500, 5000);
-  }
-
-  /** The tiles a hero may stroll on (the plaza's ring and the roads), for the arrangement showing. */
-  private tiles: { u: number; v: number }[] = walkTiles(YARD);
-
-  /** Stand a hero on a random paved tile. */
-  private putOnRoad(w: Walker): void {
-    const t = this.tiles[Math.floor(Math.random() * this.tiles.length)] ?? { u: 0, v: 0 };
-    w.tile = t;
-    w.x = w.gx = cellX(this.lay.grid, t.u, t.v);
-    w.y = w.gy = cellY(this.lay.grid, t.u, t.v) + 6;
-    w.route = [];
-    w.mood = 'idle';
-  }
-
-  /** The shortest way along the paved tiles from one to another, not counting the start. */
-  private route(from: { u: number; v: number }, to: { u: number; v: number }): { u: number; v: number }[] {
-    const key = (t: { u: number; v: number }) => `${t.u},${t.v}`;
-    const ok = new Set(this.tiles.map(key));
-    const prev = new Map<string, { u: number; v: number } | null>([[key(from), null]]);
-    const queue = [from];
-    for (let i = 0; i < queue.length; i++) {
-      const t = queue[i];
-      if (t.u === to.u && t.v === to.v) break;
-      for (const [du, dv] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-        const n = { u: t.u + du, v: t.v + dv };
-        if (ok.has(key(n)) && !prev.has(key(n))) {
-          prev.set(key(n), t);
-          queue.push(n);
-        }
-      }
-    }
-    if (!prev.has(key(to))) return [];
-    const path: { u: number; v: number }[] = [];
-    for (let t: { u: number; v: number } | null | undefined = to; t && key(t) !== key(from); t = prev.get(key(t))) path.unshift(t);
-    return path;
-  }
-
-  /** Aim at the next tile of a hero's route. */
-  private nextStop(w: Walker): void {
-    const t = w.route.shift()!;
-    w.tile = t;
-    w.gx = cellX(this.lay.grid, t.u, t.v);
-    w.gy = cellY(this.lay.grid, t.u, t.v) + 6;
-    if (Math.abs(w.gx - w.x) > 2) w.face = w.gx > w.x ? 1 : -1;
-  }
-
-  private step(w: Walker, dt: number, now: number): void {
-    w.clock += dt;
-    if (w.mood !== 'walk') return;
-    const dx = w.gx - w.x;
-    const dy = w.gy - w.y;
-    const dist = Math.hypot(dx, dy);
-    const move = 16 * (dt / 1000);
-    if (dist <= move) {
-      w.x = w.gx;
-      w.y = w.gy;
-      if (w.route.length) this.nextStop(w);
-      else {
-        w.mood = 'idle';
-        w.at = now + rand(1200, 4000);
-      }
-    } else {
-      w.x += (dx / dist) * move;
-      w.y += (dy / dist) * move;
-      if (Math.abs(dx) > 2) w.face = dx > 0 ? 1 : -1;
-    }
-  }
-
-  /** A bunch of motes at a building: dust round its foot, the build's puffs, or sparkles. */
-  private burst(id: PlotId, kind: 'dust' | 'spark', n: number): void {
-    const p = this.lay.plots[id];
-    const wide = 34;
-    for (let i = 0; i < n; i++) {
-      if (kind === 'dust') this.motes.push({ x: p.x + rand(-wide, wide), y: p.y - rand(0, 6), vx: rand(-14, 14), vy: rand(-18, -4), age: 0, life: rand(600, 1100), size: rand(2, 4), color: chance(0.5) ? '#d8c29a' : '#a58a62', grow: 5, kind });
-      else this.motes.push({ x: p.x + rand(-wide, wide), y: p.y - rand(10, 70), vx: rand(-6, 6), vy: rand(-22, -6), age: 0, life: rand(700, 1300), size: 2, color: chance(0.5) ? '#ffe48a' : '#ffffff', grow: 0, kind });
-    }
-  }
-
-  private frame(t: number): void {
-    this.raf = requestAnimationFrame((n) => this.frame(n));
-    const gap = this.saver ? 33 : 0;
-    if (t - this.last < gap) return;
+  private loop(t: number): void {
+    if (!this.running) return;
+    this.raf = requestAnimationFrame((n) => this.loop(n));
     const dt = Math.min(100, t - this.last);
     this.last = t;
     this.now += dt;
-    for (const w of this.walkers.values()) {
-      this.think(w, this.now);
-      this.step(w, dt, this.now);
-    }
-    this.builds = this.builds.filter((b) => this.now - b.start < BUILD_MS);
-    if (!this.reduced) this.emit();
-    for (const m of this.motes) {
-      m.age += dt;
-      m.x += (m.vx * dt) / 1000;
-      m.y += (m.vy * dt) / 1000;
-      if (m.kind === 'smoke') m.vx += (dt / 1000) * 0.8;
-      if (m.kind === 'spark') m.vy += (dt / 1000) * 30;
-      if (m.kind === 'drop') m.vy += (dt / 1000) * 90;
-    }
-    this.motes = this.motes.filter((m) => m.age < m.life);
-    this.draw();
+    this.stepParticles(dt);
+    this.paintGreatHall();
   }
 
-  /** The steady life: chimney smoke, sparks at the forge, runes round the tower and glints on the gold. */
-  private emit(): void {
-    if (this.motes.length > 160) return;
-    const puff = this.now >= this.nextSmoke;
-    if (puff) this.nextSmoke = this.now + rand(260, 460);
-    const spark = this.now >= this.nextSpark;
-    if (spark) this.nextSpark = this.now + rand(140, 320);
-    const glint = this.now >= this.nextGlint;
-    if (glint) this.nextGlint = this.now + rand(350, 800);
-    // the fountain: droplets falling from the top bowl down the two streams, and sparkles on the water of the basin (positions on the picture, 108 x 94)
-    const drop = this.now >= this.nextDrop;
-    if (drop) this.nextDrop = this.now + rand(60, 140);
-    const fountain = this.lay.props.find((p) => p.sprite === 'fountain');
-    if (fountain) {
-      const left = fountain.x - 54;
-      const top = fountain.y - 94;
-      if (drop) for (const sx of [41, 65]) if (chance(0.7)) this.motes.push({ x: left + sx + rand(-1, 1), y: top + rand(14, 26), vx: rand(-2, 2), vy: rand(4, 14), age: 0, life: rand(280, 420), size: 1, color: chance(0.5) ? '#d8ecff' : '#8fc4f0', grow: 0, kind: 'drop' });
-      if (glint && chance(0.8)) this.motes.push({ x: left + 54 + rand(-26, 26), y: top + 46 + rand(-8, 8), vx: 0, vy: 0, age: 0, life: 420, size: 3, color: '#e8f6ff', grow: 0, kind: 'glint' });
-    }
-    for (const id of PLOT_IDS) {
-      const p = this.lay.plots[id];
-      for (const v of isPlace(id) ? PLACE_VENTS[id] : VENTS[id][this.shown(id)] ?? []) {
-        const x = p.x + (p.flip ? -v.dx : v.dx);
-        const y = p.y + v.dy;
-        if (v.kind === 'smoke' && puff) this.motes.push({ x, y, vx: rand(-1, 3), vy: rand(-14, -8), age: 0, life: rand(2000, 3000), size: 3, color: '#d8d4cc', grow: 3, kind: 'smoke' });
-        else if (v.kind === 'rune' && puff && chance(0.7)) this.motes.push({ x: x + rand(-14, 14), y: y + rand(-26, 26), vx: rand(-2, 2), vy: rand(-9, -4), age: 0, life: rand(1400, 2400), size: 2, color: chance(0.5) ? '#7fe8ff' : '#c9a6ff', grow: 0, kind: 'rune' });
-        else if (v.kind === 'spark' && spark && chance(0.6)) this.motes.push({ x: x + rand(-3, 3), y, vx: rand(-14, 14), vy: rand(-34, -14), age: 0, life: rand(350, 700), size: 1, color: chance(0.5) ? '#ffb347' : '#fff0b0', grow: 0, kind: 'spark' });
-        else if (v.kind === 'glint' && glint && chance(0.35)) this.motes.push({ x: x + rand(-5, 5), y: y + rand(-4, 4), vx: 0, vy: 0, age: 0, life: 380, size: 3, color: '#fff6c0', grow: 0, kind: 'glint' });
+  private stepParticles(dt: number): void {
+    if (!this.reduced) {
+      // Ambient golden and emerald arcane motes rising from the Throne Room floor & braziers
+      if (this.particles.length < 48 && Math.random() < dt / 55) {
+        const fromBrazier = Math.random() < 0.45;
+        const bx = Math.random() < 0.5 ? 118 : 682;
+        const x = fromBrazier ? bx + (Math.random() - 0.5) * 18 : 120 + Math.random() * 560;
+        const y = fromBrazier ? 210 + (Math.random() - 0.5) * 10 : 280 + Math.random() * 110;
+        this.particles.push({
+          x,
+          y,
+          vx: (Math.random() - 0.5) * 14,
+          vy: -(16 + Math.random() * 28),
+          size: fromBrazier ? 3 : Math.random() < 0.35 ? 3 : 2,
+          color: fromBrazier
+            ? Math.random() < 0.5
+              ? '#ffae42'
+              : '#fff099'
+            : Math.random() < 0.65
+              ? '#ffd700'
+              : '#6ee7b7',
+          alpha: 0.9,
+          life: 0,
+          maxLife: 1200 + Math.random() * 1400,
+          kind: 'mote',
+        });
       }
     }
-  }
 
-  /** The look a building shows now (while it is being built, the old one until the swap). */
-  private shown(id: PlotId): number {
-    const b = this.builds.find((x) => x.id === id);
-    if (b) return this.now - b.start < SWAP_MS ? b.from : b.to;
-    return this.stageNow(id);
-  }
-
-  /** The look a plot has at its level (a place has only one). */
-  private stageNow(id: PlotId): number {
-    return id === 'chapel' ? (this.chapel ? 1 : 0) : isPlace(id) ? 0 : stageOf(id, this.levels[id] ?? 0);
-  }
-
-  // ---- drawing ----
-
-  private draw(): void {
-    const g = this.ctx;
-    const s = this.scale;
-    const a = art;
-    if (!a || !this.still) return;
-    g.globalAlpha = 1;
-    g.drawImage(this.still, 0, 0);
-    g.save();
-    g.translate(this.view.ox * s, this.view.oy * s);
-    const list: { depth: number; paint: () => void }[] = [];
-    const wallsOnly = (window as unknown as { __castleWallsOnly?: boolean }).__castleWallsOnly === true;
-    for (const p of this.lay.props) {
-      if (wallsOnly && p.sprite !== 'wall' && p.sprite !== 'watchtower') continue;
-      const im = a[p.sprite];
-      const x = Math.round(p.x - im.width / 2) * s;
-      const y = (p.y - im.height) * s;
-      const paint = () => {
-        g.save();
-        // (the last cell of a wall run is cut where its tower covers it: only the columns of the picture as drawn from `cut[0]` to `cut[1]` show)
-        if (p.cut) {
-          g.beginPath();
-          g.rect(x + p.cut[0] * s, y, (p.cut[1] - p.cut[0]) * s, im.height * s);
-          g.clip();
-        }
-        if (p.flip) {
-          g.translate(x + im.width * s, 0);
-          g.scale(-1, 1);
-          g.drawImage(im, 0, y, im.width * s, im.height * s);
-        } else g.drawImage(im, x, y, im.width * s, im.height * s);
-        g.restore();
-      };
-      list.push({ depth: p.depth ?? p.y, paint });
+    const k = dt / 1000;
+    for (const p of this.particles) {
+      p.life += dt;
+      p.x += p.vx * k;
+      p.y += p.vy * k;
+      if (p.kind !== 'mote') {
+        p.vy += 180 * k; // gravity on celebration sparks/coins
+      }
     }
-    if (!wallsOnly) for (const id of PLOT_IDS) list.push({ depth: this.lay.plots[id].y, paint: () => this.building(a, id) });
-    if (!wallsOnly) for (const w of this.walkers.values()) list.push({ depth: w.y, paint: () => this.hero(w) });
-    list.sort((p, q) => p.depth - q.depth);
-    for (const e of list) e.paint();
-    this.flags();
-    this.glows();
-    this.motesDraw();
+    this.particles = this.particles.filter((p) => p.life < p.maxLife);
+    this.bursts = this.bursts.filter((b) => this.now - b.t0 < b.dur);
+  }
+
+  /** Draw a Pixel Effects strip frame (from `VFX`) onto the 2D canvas. */
+  private drawVfx(key: VfxKey, x: number, y: number, size: number, frameOffset = 0, angle = 0, alpha = 0.9): void {
+    const frames = VFX[key];
+    if (!frames?.length) return;
+    const idx = Math.floor(this.now / 110 + frameOffset) % frames.length;
+    const tex = frames[idx];
+    const r = tex.frame;
+    const g = this.ctx;
+    g.save();
+    g.translate(x, y);
+    if (angle) g.rotate(angle);
+    g.globalAlpha = alpha;
+    g.globalCompositeOperation = 'screen';
+    g.drawImage(
+      tex.source.resource as CanvasImageSource,
+      r.x,
+      r.y,
+      r.width,
+      r.height,
+      -size / 2,
+      -size / 2,
+      size,
+      size,
+    );
     g.restore();
   }
 
-  private drawLook(a: Record<string, HTMLImageElement>, id: PlotId, look: Look, lift = 0): void {
+  /** Paint the full multi-layered Royal Citadel Throne Room scene on the 800×420 canvas. */
+  private paintGreatHall(): void {
     const g = this.ctx;
-    const s = this.scale;
-    const p = this.lay.plots[id];
-    for (const part of look.parts) {
-      const im = a[part.sprite];
-      const x = Math.round(p.x + (p.flip ? -part.dx : part.dx) - im.width / 2) * s;
-      if (p.flip) {
-        g.save();
-        g.translate(x + im.width * s, 0);
-        g.scale(-1, 1);
-        g.drawImage(im, 0, (p.y + part.dy - im.height + lift) * s, im.width * s, im.height * s);
-        g.restore();
-      } else g.drawImage(im, x, (p.y + part.dy - im.height + lift) * s, im.width * s, im.height * s);
-    }
-  }
+    const W = this.canvas.width;
+    const H = this.canvas.height;
+    g.clearRect(0, 0, W, H);
 
-  private building(a: Record<string, HTMLImageElement>, id: PlotId): void {
-    const stage = this.shown(id);
-    const b = this.builds.find((x) => x.id === id);
-    const age = b ? this.now - b.start : BUILD_MS;
-    // (a look that has just arrived settles three pixels, and the scaffolding comes down)
-    const pop = b && age >= SWAP_MS && age < SWAP_MS + 180 ? Math.round((1 - (age - SWAP_MS) / 180) * 3) : 0;
-    this.drawLook(a, id, lookFor(id, stage), pop);
-    if (b && age < SWAP_MS + 300) {
-      const o = lookBox(lookFor(id, b.from), this.lay.plots[id].flip);
-      const n = lookBox(lookFor(id, b.to), this.lay.plots[id].flip);
-      this.scaffold(id, Math.min(o.x0, n.x0), Math.max(o.x1, n.x1), Math.max(o.h, n.h), age < SWAP_MS ? 1 : 1 - (age - SWAP_MS) / 300);
-    }
-  }
+    const a = sceneArt;
+    const castle = this.meta?.castle;
 
-  /** Poles and planks round the footprint; they shrink away as the build finishes. */
-  private scaffold(id: PlotId, x0: number, x1: number, h: number, grow: number): void {
-    const g = this.ctx;
-    const s = this.scale;
-    const p = this.lay.plots[id];
-    const top = p.y - Math.round(h * grow) - 3;
-    const left = Math.round(p.x + x0) - 3;
-    const right = Math.round(p.x + x1) + 1;
-    g.fillStyle = '#4a2c14';
-    for (const x of [left, right]) g.fillRect(x * s, top * s, 2 * s, (p.y - top) * s);
-    g.fillStyle = '#b8863c';
-    for (let y = p.y - 14; y > top; y -= 16) g.fillRect(left * s, y * s, (right - left + 2) * s, 2 * s);
-    g.fillStyle = '#6b4128';
-    for (let y = p.y - 14; y > top + 14; y -= 16) {
-      g.fillRect((left + 2) * s, (y - 14) * s, s, 14 * s);
-      g.fillRect((right - 1) * s, (y - 14) * s, s, 14 * s);
+    // 1. ARCHITECTURAL BACKDROP: Painted Gothic Royal Sanctum (`sanctum.png` is 1024×1536)
+    if (a?.sanctum) {
+      // Crop the upper/middle vaulted gothic arches, stained glass rose windows, griffin altar & pillars
+      g.drawImage(a.sanctum, 0, 80, 1024, 620, 0, 0, W, H);
+    } else {
+      const fallbackBg = g.createLinearGradient(0, 0, 0, H);
+      fallbackBg.addColorStop(0, '#162820');
+      fallbackBg.addColorStop(1, '#0b130f');
+      g.fillStyle = fallbackBg;
+      g.fillRect(0, 0, W, H);
     }
-  }
 
-  /** Pennants on poles at the gate; the cloth ripples one pixel at a time. */
-  private flags(): void {
-    const g = this.ctx;
-    const s = this.scale;
-    for (const { x: px, y: py, dir } of this.lay.flags) {
-      g.fillStyle = '#2a1a0e';
-      g.fillRect(px * s, (py - 16) * s, s, 17 * s);
-      g.fillStyle = '#f0b44a';
-      g.fillRect((px - 1) * s, (py - 17) * s, 3 * s, s);
-      for (let i = 0; i < 12; i++) {
-        const wave = this.reduced ? 0 : Math.round(Math.sin(this.now / 180 + i * 0.6) * (0.4 + i * 0.12));
-        const hgt = Math.max(2, Math.round(6 * (1 - (i / 12) * 0.7)));
-        const x = px + dir * (1 + i);
-        g.fillStyle = '#c8302a';
-        g.fillRect(x * s - (dir === -1 ? s : 0), (py - 16 + wave) * s, s, hgt * s);
-        g.fillStyle = '#f0b44a';
-        g.fillRect(x * s - (dir === -1 ? s : 0), (py - 16 + wave) * s, s, s);
-      }
-    }
-  }
+    // Subtle atmospheric depth vignette so foreground props & heroes pop vividly
+    const floorGrad = g.createLinearGradient(0, H * 0.45, 0, H);
+    floorGrad.addColorStop(0, 'rgba(10, 18, 15, 0)');
+    floorGrad.addColorStop(0.7, 'rgba(12, 20, 16, 0.45)');
+    floorGrad.addColorStop(1, 'rgba(8, 13, 10, 0.82)');
+    g.fillStyle = floorGrad;
+    g.fillRect(0, 0, W, H);
 
-  /** The tower's window light, the forge's glow, the gold's shine and the lanterns, steady, added over the picture. */
-  private glows(): void {
-    const g = this.ctx;
-    const s = this.scale;
-    if (!this.glow) return;
-    g.globalCompositeOperation = 'lighter';
-    const pulse = 0.6;
-    const spot = (cx: number, cy: number, size: number, al: number, tint: string) => {
-      g.globalAlpha = Math.max(0, Math.min(1, al * pulse));
-      g.drawImage(this.tinted(tint), (cx - size / 2) * s, (cy - size / 2) * s, size * s, size * s);
-    };
-    for (const id of PLOT_IDS) {
-      const p = this.lay.plots[id];
-      const stage = this.shown(id);
-      for (const l of isPlace(id) ? [] : LIGHTS[id][stage] ?? []) spot(p.x + (p.flip ? -l.dx : l.dx), p.y + l.dy, l.size, l.al, l.tint);
-      for (const part of lookFor(id, stage).parts) {
-        const glow = GLOWING[part.sprite];
-        if (glow) spot(p.x + (p.flip ? -part.dx : part.dx) + glow.dx, p.y + part.dy + glow.dy, glow.size, glow.al, glow.tint);
-      }
-    }
-    for (const pr of this.lay.props) {
-      const glow = GLOWING[pr.sprite];
-      if (glow) spot(pr.x + glow.dx, pr.y + glow.dy, glow.size, glow.al, glow.tint);
-    }
-    // (a build in progress gives a warm flash as the new look arrives)
-    for (const b of this.builds) {
-      const age = this.now - b.start;
-      if (age > SWAP_MS - 100 && age < SWAP_MS + 450) {
-        const box = lookBox(lookFor(b.id, b.to), this.lay.plots[b.id].flip);
-        const p = this.lay.plots[b.id];
-        const sz = Math.max(box.w, box.h) + 30;
-        g.globalAlpha = 0.65 * (1 - (age - SWAP_MS + 100) / 550);
-        g.drawImage(this.tinted('#fff0b0'), (p.x + (box.x0 + box.x1) / 2 - sz / 2) * s, (p.y - box.h / 2 - sz / 2) * s, sz * s, sz * s);
-      }
-    }
-    g.globalCompositeOperation = 'source-over';
-    g.globalAlpha = 1;
-  }
-
-  private tints = new Map<string, HTMLCanvasElement>();
-  /** The glow in a colour (made once per colour and scale). */
-  private tinted(color: string): HTMLCanvasElement {
-    const key = `${color}|${this.scale}`;
-    let c = this.tints.get(key);
-    if (!c) {
-      c = el('canvas');
-      c.width = this.glow!.width;
-      c.height = this.glow!.height;
-      const g = c.getContext('2d')!;
-      g.drawImage(this.glow!, 0, 0);
-      g.globalCompositeOperation = 'source-in';
-      g.fillStyle = color;
-      g.fillRect(0, 0, c.width, c.height);
-      this.tints.set(key, c);
-    }
-    return c;
-  }
-
-  private motesDraw(): void {
-    const g = this.ctx;
-    const s = this.scale;
-    for (const m of this.motes) {
-      const t = m.age / m.life;
-      if (m.kind === 'glint') {
-        // (a little cross that twinkles)
-        g.globalAlpha = 1 - t;
-        g.fillStyle = m.color;
-        const x = Math.round(m.x);
-        const y = Math.round(m.y);
-        const r = t < 0.5 ? 2 : 1;
-        g.fillRect((x - r) * s, y * s, (2 * r + 1) * s, s);
-        g.fillRect(x * s, (y - r) * s, s, (2 * r + 1) * s);
-        continue;
-      }
-      g.globalAlpha = m.kind === 'smoke' ? 0.75 * (1 - t) : m.kind === 'rune' ? 0.7 * (1 - t) : 0.85 * (1 - t);
-      g.fillStyle = m.color;
-      const size = Math.max(1, Math.round(m.size + m.grow * t));
-      g.fillRect(Math.round(m.x - size / 2) * s, Math.round(m.y - size / 2) * s, size * s, size * s);
-    }
-    g.globalAlpha = 1;
-  }
-
-  private hero(w: Walker): void {
-    const g = this.ctx;
-    const s = this.scale;
-    const sm = w.small;
-    const walking = w.mood === 'walk';
-    const n = walking ? sm.walk : sm.idle;
-    const i = Math.floor((w.clock + w.phase * 977) / (walking ? 100 : 160)) % n;
-    const fx = Math.round(w.x);
-    const fy = Math.round(w.y);
-    g.fillStyle = 'rgba(30, 50, 10, 0.35)';
-    const sw = Math.max(5, Math.round(sm.fw * 0.18));
-    g.fillRect((fx - sw) * s, (fy - 1) * s, sw * 2 * s, 2 * s);
-    const flip = (w.face === 1) !== sm.facesRight;
-    const dy = (fy - sm.fh + 1) * s;
-    if (flip) {
+    // 2. ROYAL CRIMSON & GOLD RUNNER RUGS across the Throne Dais
+    if (a?.rug) {
       g.save();
-      g.translate(fx * s, 0);
-      g.scale(-1, 1);
-      g.drawImage(sm.c, i * sm.fw, (walking ? 1 : 0) * sm.fh, sm.fw, sm.fh, (-sm.fw * s) / 2, dy, sm.fw * s, sm.fh * s);
+      g.globalAlpha = 0.92;
+      g.drawImage(a.rug, Math.round(W / 2 - 150), 286, 300, 96);
       g.restore();
-    } else g.drawImage(sm.c, i * sm.fw, (walking ? 1 : 0) * sm.fh, sm.fw, sm.fh, fx * s - (sm.fw * s) / 2, dy, sm.fw * s, sm.fh * s);
-  }
-
-  // ---- tapping ----
-
-  /** A tap on a building opens it; false when it fell on empty ground. */
-  private tap(e: PointerEvent): boolean {
-    const box = this.canvas.getBoundingClientRect();
-    const rx = ((e.clientX - box.left) / box.width) * this.view.w - this.view.ox;
-    const ry = ((e.clientY - box.top) / box.height) * this.view.h - this.view.oy;
-    let best: { id: PlotId; depth: number } | null = null;
-    for (const id of PLOT_IDS) {
-      const p = this.lay.plots[id];
-      const b = lookBox(lookFor(id, this.stageNow(id)), p.flip);
-      // (an empty plot is small to hit, so every building has at least a generous patch of ground)
-      const cx = p.x + (b.x0 + b.x1) / 2;
-      const half = Math.max(b.w / 2, 24, 22 / this.css);
-      const tall = Math.max(b.h, 36, 40 / this.css);
-      if (rx < cx - half || rx > cx + half || ry < p.y - tall || ry > p.y + 6) continue;
-      if (!best || p.y > best.depth) best = { id, depth: p.y };
     }
-    if (best) this.onPick(best.id);
-    return !!best;
+
+    // 3. PULSING ARCANE RITUAL SIGIL & SUNBURST ON THE CENTRAL DAIS
+    const pulse = this.reduced ? 0.5 : 0.5 + 0.5 * Math.sin(this.now / 480);
+    g.save();
+    g.globalCompositeOperation = 'lighter';
+    const daisGlow = g.createRadialGradient(400, 275, 10, 400, 275, 185);
+    daisGlow.addColorStop(0, `rgba(255, 215, 90, ${0.22 + pulse * 0.1})`);
+    daisGlow.addColorStop(0.55, `rgba(74, 222, 128, ${0.1 + pulse * 0.06})`);
+    daisGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    g.fillStyle = daisGlow;
+    g.fillRect(180, 120, 440, 280);
+
+    // Orbiting golden rune motes around the central dais ring
+    const runeCount = 14;
+    const spin = this.reduced ? 0 : this.now / 2200;
+    g.fillStyle = 'rgba(255, 230, 140, 0.78)';
+    for (let i = 0; i < runeCount; i++) {
+      const ang = spin + (i * Math.PI * 2) / runeCount;
+      const rx = Math.round(400 + Math.cos(ang) * 128);
+      const ry = Math.round(315 + Math.sin(ang) * 34);
+      g.fillRect(rx - 2, ry - 2, 4, 4);
+    }
+    g.restore();
+
+    // 4. KINGDOM UPGRADE PROPS & TREASURES IN THE GREAT HALL
+    if (a) {
+      // Royal Banners flanking the hall pillars (Barracks)
+      const barracksLv = castle?.barracks ?? 1;
+      g.drawImage(a.banner, 52, 68, 44, 138);
+      g.drawImage(a.banner, W - 96, 68, 44, 138);
+      if (barracksLv >= 2) {
+        g.drawImage(a.banner, 165, 52, 38, 120);
+        g.drawImage(a.banner, W - 203, 52, 38, 120);
+      }
+
+      // Arcane Spire & Library props (Left Alcove: Glowing Mana Crystals & Golden Spell Lectern)
+      const mageLv = castle?.mageTower ?? 1;
+      const libLv = castle?.library ?? 1;
+      if (mageLv >= 1) {
+        g.drawImage(a.crystals, 30, 210, 68, 98);
+      }
+      if (libLv >= 1) {
+        g.drawImage(a.lectern, 142, 214, 62, 78);
+      }
+
+      // Armoury props (Right Alcove: Masterwork Weapon Rack & Sunforge Anvil)
+      const armouryLv = castle?.armoury ?? 1;
+      if (armouryLv >= 1) {
+        g.drawImage(a.rack, W - 220, 202, 96, 94);
+      }
+      if (armouryLv >= 2) {
+        g.drawImage(a.anvil, W - 102, 214, 78, 96);
+      }
+
+      // High Treasury props (Overflowing Treasure Chests & Golden Coffer flanking the Throne)
+      const treasuryLv = castle?.treasury ?? 1;
+      g.drawImage(a.chests, 255, 226, 88, 68);
+      g.drawImage(a.chests, W - 343, 226, 88, 68);
+      if (treasuryLv >= 2) {
+        g.drawImage(a.goldChest, 318, 244, 52, 52);
+        g.drawImage(a.goldChest, W - 370, 244, 52, 52);
+      }
+
+      // Standing Twin Stone Braziers with live animated VFX flames
+      g.drawImage(a.brazier, 92, 198, 52, 130);
+      g.drawImage(a.brazier, W - 144, 198, 52, 130);
+    }
+
+    // Live Brazier Fire & Warm Torchlight Halos
+    this.drawVfx('flameFire', 118, 190, 92, 0);
+    this.drawVfx('flameFire', W - 118, 190, 92, 3);
+    this.drawVfx('sparkleFire', 118, 165, 64, 1);
+    this.drawVfx('sparkleFire', W - 118, 165, 64, 4);
+
+    // 5. THE 5-HERO ROYAL HONOR GUARD
+    GUARD_SPOTS.forEach((spot, i) => {
+      const kind = this.heroKinds[i] ?? DEFAULT_GUARD[i];
+      const unit = UNITS[kind];
+      if (!unit) return;
+      const s = sheetInfo(unit.sheet);
+      if (!s) return;
+
+      const isCenter = i === 4;
+      const flourishing = this.now < this.heroFlourishUntil[i];
+      const role = roleOf(kind);
+
+      // Class-coloured radial light pool behind each hero
+      const auraColor = isCenter
+        ? '#ffd700'
+        : role === 'support'
+          ? '#fde047'
+          : unit.shot === 'fire'
+            ? '#fb923c'
+            : '#38bdf8';
+
+      g.save();
+      const halo = g.createRadialGradient(
+        spot.x,
+        spot.y - spot.height * 0.45,
+        6,
+        spot.x,
+        spot.y - spot.height * 0.45,
+        spot.height * 0.95,
+      );
+      halo.addColorStop(0, `${auraColor}66`);
+      halo.addColorStop(1, `${auraColor}00`);
+      g.fillStyle = halo;
+      g.fillRect(spot.x - spot.height, spot.y - spot.height * 1.4, spot.height * 2, spot.height * 1.8);
+      g.restore();
+
+      // Golden floor pedestal ring under each hero's feet
+      g.save();
+      g.fillStyle = 'rgba(0, 0, 0, 0.55)';
+      g.beginPath();
+      g.ellipse(spot.x, spot.y, isCenter ? 36 : 28, isCenter ? 12 : 9, 0, 0, Math.PI * 2);
+      g.fill();
+      g.strokeStyle = isCenter ? 'rgba(255, 215, 0, 0.75)' : 'rgba(218, 181, 102, 0.45)';
+      g.lineWidth = isCenter ? 2 : 1.5;
+      g.stroke();
+      g.restore();
+
+      // Background aura VFX on central Sovereign Champion or flourishing heroes
+      if (isCenter || flourishing) {
+        this.drawVfx('levelupGold', spot.x, spot.y - spot.height * 0.45, isCenter ? 190 : 150, i * 2, 0, 0.75);
+      }
+
+      // Choose animation row: attack flourish when tapped or periodic royal salute, otherwise animated idle
+      const periodicFlourish = !this.reduced && Math.floor((this.now + i * 1700) / 6500) % 5 === 0 && ((this.now + i * 1700) % 6500) < 750;
+      const useAttack = (flourishing || periodicFlourish) && s.rows.includes('attack');
+      const rowName = useAttack ? 'attack' : s.rows.includes('idle') ? 'idle' : s.rows[0];
+      const rowIdx = Math.max(0, s.rows.indexOf(rowName));
+      const frameCount = s.counts[rowName] ?? 1;
+      const frameSpeed = useAttack ? 105 : 155;
+      const frameIdx = this.reduced ? 0 : Math.floor((this.now + i * 310) / frameSpeed) % frameCount;
+      const breatheLift = !this.reduced && frameCount === 1 && Math.sin((this.now + i * 900) / 420) > 0.3 ? 2 : 0;
+
+      const scale = spot.height / s.figure;
+      const dw = Math.round(s.w * scale);
+      const dh = Math.round(s.h * scale);
+
+      g.save();
+      g.translate(spot.x, spot.y - breatheLift);
+      if (s.facesRight !== spot.faceRight) g.scale(-1, 1);
+      g.shadowColor = isCenter ? '#ffd700' : '#ffe4a0';
+      g.shadowBlur = isCenter ? 14 : 8;
+      g.drawImage(
+        s.img,
+        frameIdx * s.w,
+        rowIdx * s.h,
+        s.w,
+        s.h,
+        Math.round(-dw / 2),
+        Math.round(-dh + 8),
+        dw,
+        dh,
+      );
+      g.restore();
+
+      // Foreground weapon/spell flourish VFX
+      if (useAttack || flourishing) {
+        if (unit.shot === 'fire') {
+          this.drawVfx('flameFire', spot.x + (spot.faceRight ? 42 : -42), spot.y - spot.height * 0.6, 120, i);
+        } else if (role === 'front' || role === 'striker') {
+          this.drawVfx('slashLight', spot.x + (spot.faceRight ? 36 : -36), spot.y - spot.height * 0.5, 115, i, spot.faceRight ? -0.4 : 2.4);
+        } else {
+          this.drawVfx('sparkleLight', spot.x, spot.y - spot.height * 0.65, 110, i);
+        }
+      } else if (isCenter && !this.reduced) {
+        this.drawVfx('starGold', spot.x, spot.y - spot.height - 8, 68, 0, 0, 0.8);
+      }
+    });
+
+    // 6. CELEBRATION LIGHT PILLARS & FLOATING BANNERS (on tap or upgrade)
+    for (const b of this.bursts) {
+      const age = this.now - b.t0;
+      const p = Math.min(1, age / b.dur);
+      const alpha = p < 0.2 ? p / 0.2 : Math.max(0, 1 - (p - 0.2) / 0.8);
+
+      g.save();
+      g.globalCompositeOperation = 'lighter';
+      g.globalAlpha = alpha * 0.75;
+      if (a?.lightPillar) {
+        const pw = 130;
+        g.drawImage(a.lightPillar, 0, 0, 96, 160, b.x - pw / 2, 0, pw, b.y + 20);
+      } else {
+        const beamGrad = g.createLinearGradient(b.x - 45, 0, b.x + 45, 0);
+        beamGrad.addColorStop(0, 'rgba(255,215,0,0)');
+        beamGrad.addColorStop(0.5, b.color);
+        beamGrad.addColorStop(1, 'rgba(255,215,0,0)');
+        g.fillStyle = beamGrad;
+        g.fillRect(b.x - 45, 0, 90, b.y + 10);
+      }
+      g.restore();
+
+      if (b.label) {
+        g.save();
+        g.globalAlpha = alpha;
+        g.font = 'bold 20px Cinzel Decorative, Georgia, serif';
+        g.textAlign = 'center';
+        const ly = Math.round(b.y - 95 - p * 36);
+        g.fillStyle = '#09140e';
+        g.fillText(b.label, b.x + 2, ly + 2);
+        g.fillStyle = '#ffe89e';
+        g.fillText(b.label, b.x, ly);
+        g.restore();
+      }
+    }
+
+    // 7. AMBIENT & BURST PARTICLES (golden motes, coins, embers)
+    for (const pt of this.particles) {
+      const ratio = pt.life / pt.maxLife;
+      const alpha = ratio < 0.2 ? ratio / 0.2 : Math.max(0, 1 - (ratio - 0.2) / 0.8);
+      g.save();
+      g.globalAlpha = alpha * pt.alpha;
+      g.fillStyle = pt.color;
+      g.fillRect(Math.round(pt.x), Math.round(pt.y), pt.size, pt.size);
+      if (pt.kind === 'coin') {
+        g.fillStyle = '#fff9db';
+        g.fillRect(Math.round(pt.x) + 1, Math.round(pt.y) + 1, Math.max(1, pt.size - 2), Math.max(1, pt.size - 2));
+      }
+      g.restore();
+    }
   }
 }
-
