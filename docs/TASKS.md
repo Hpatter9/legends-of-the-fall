@@ -97,6 +97,7 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 | ID | Task | Result | Reference |
 | --- | --- | --- | --- |
+| UI-CASTLE-1 | Remove the corner relic emblems from the castle's building cards | Owner asked; released as 0.183.0; castle tests, build, fresh/old-save and Last Stand smoke passed | branch `claude/castle-card-corners`, screenshot `samples/castle-no-corner-emblems-393x852.png` |
 | SIM-001 | No phantom hit effects; no credit for terrain self-damage | Merged with main 0.181.0 (hero-kit after-blow effects also wait for a landed blow) and released as 0.182.0; full suite, build, fresh/old-save and Last Stand smoke passed | [PR #122](https://github.com/Hpatter9/legends-of-the-fall/pull/122), [handoff](notes/sim-001.md) |
 | FIX-177 | Unblock the publish after the winding maps | Owner asked; armies keep one land on the winding maps, three tests moved to the 14x18 army board, Undead Normal start 1.52; full suite 1220/1220, build, fresh/old-save and Last Stand smoke passed; release 0.180.0 (0.179.0 was also used by PR #143, merged just before) | [Note](notes/fix-177-tests.md), branch `claude/fix-177-tests` |
 | CHEST-001 | XP tomes and Open all | Owner accepted release 0.178.0; tomes 250/5,000/20,000 XP from every stash and shop chest, Open all equal to one-by-one; typecheck, build, fresh/old-save and Last Stand smoke passed; full suite 1216/1220, the 4 failures also fail on main 0.177.0 (winding battle maps), not from this change | [Handoff](notes/chest-extras.md), branch `claude/chest-extras` |
