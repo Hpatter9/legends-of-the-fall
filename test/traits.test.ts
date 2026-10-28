@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
-import { fight, place, startBattle, stepBattle, type Battle } from '../src/sim/battle';
-import { rollCrit } from '../src/sim/abilities';
+import { fight, hurt, place, startBattle, stepBattle, type Battle, type BattleEvent } from '../src/sim/battle';
+import { CHARGE_MAX, rollCrit, tryCast, ULT_LEVEL } from '../src/sim/abilities';
 import { speedOf } from '../src/sim/spells';
 import { ALL_HEROES, UNITS } from '../src/sim/units';
 import { countTraits, HERO_TRAITS, membersOf, TRAITS, traitEffects } from '../src/sim/traits';
@@ -90,4 +90,123 @@ test('Marksman lengthens a shooter\'s reach from height, and the traits are fixe
   const before = hero(m, 'archer').power;
   place(m, 'knight', 0, D - 1);
   assert.equal(hero(m, 'archer').power, before);
+});
+
+test('Duo-Combos: complementary hero pairs trigger synergies and harmonic resonances', () => {
+  const b = started(['knight', 'peasant']);
+  assert.ok(b.duoCombos && b.duoCombos.length > 0);
+  const duo = b.duoCombos.find((d) => d.def.id === 'knight_peasant')!;
+  assert.ok(duo);
+
+  const k = hero(b, 'knight');
+  const p = hero(b, 'peasant');
+  k.level = ULT_LEVEL;
+  k.charge2 = CHARGE_MAX;
+  p.level = ULT_LEVEL;
+  p.charge2 = CHARGE_MAX;
+
+  // Bring a foe into range for Knight's Last Bastion ultimate (reach 5)
+  const foe = b.units.find((u) => u.side === 'foe')!;
+  foe.u = k.u;
+  foe.v = k.v - 2;
+
+  // Knight activates ultimate -> triggers duo synergy
+  const out1: BattleEvent[] = [];
+  assert.ok(tryCast(b, k, out1));
+  const duoEvent1 = out1.find((e) => e.kind === 'duoCombo') as Extract<BattleEvent, { kind: 'duoCombo' }> | undefined;
+  assert.ok(duoEvent1);
+  assert.equal(duoEvent1.harmonic, false);
+  assert.ok(p.shield && p.shield.hp > 0, 'peasant receives squire shield');
+  assert.ok(k.banner !== undefined && (k.power ?? 1) > 1, 'knight receives rally');
+
+  // Peasant activates ultimate 500ms later (in close succession) -> triggers harmonic resonance!
+  b.t += 500;
+  const out2: BattleEvent[] = [];
+  assert.ok(tryCast(b, p, out2));
+  const duoEvent2 = out2.find((e) => e.kind === 'duoCombo') as Extract<BattleEvent, { kind: 'duoCombo' }> | undefined;
+  assert.ok(duoEvent2);
+  assert.equal(duoEvent2.harmonic, true);
+  assert.ok(duo.harmonicCount >= 1);
+});
+
+test('Archer + Lightning Mage Duo: electrified arrows chain lightning to nearby foes', () => {
+  const b = started(['archer', 'lightningMage']);
+  const archer = hero(b, 'archer');
+  const mage = hero(b, 'lightningMage');
+  assert.ok(mage);
+  archer.level = ULT_LEVEL;
+  archer.charge2 = CHARGE_MAX;
+
+  const out: BattleEvent[] = [];
+  assert.ok(tryCast(b, archer, out));
+  assert.ok(archer.electrifiedUntil && archer.electrifiedUntil > b.t);
+
+  // Position two foes close to each other
+  const foes = b.units.filter((u) => u.side === 'foe');
+  assert.ok(foes.length >= 2);
+  foes[0].u = 3; foes[0].v = 3;
+  foes[1].u = 3; foes[1].v = 4;
+
+  const hitOut: BattleEvent[] = [];
+  hurt(b, archer, foes[0], 50, false, false, hitOut);
+  // An electrified arrow triggers an arc to the second foe
+  assert.ok(archer.electrifiedUntil > b.t);
+});
+
+test('Trait Milestones: Tricksters leave decoy log on fatal blow; Yokai leave spirit wisps on dodge', () => {
+  // 1. Trickster milestone (2 tricksters: kunoichi + kitsune)
+  const bTr = started(['kunoichi', 'kitsune']);
+  assert.ok(bTr.traits?.tricksterLog);
+  const kunoichi = hero(bTr, 'kunoichi');
+  const foe = bTr.units.find((u) => u.side === 'foe')!;
+
+  const hurtOut: BattleEvent[] = [];
+  // Deal fatal damage to kunoichi via skill (which bypasses evasion dodge)
+  hurt(bTr, foe, kunoichi, kunoichi.hp + 500, true, false, hurtOut, 'skill');
+  assert.ok(kunoichi.alive, 'trickster survives fatal blow with decoy log substitution');
+  assert.ok(kunoichi.tricksterLogUsed);
+  assert.ok(hurtOut.some((e) => e.kind === 'decoyLog'));
+  assert.ok(bTr.units.some((u) => u.def === 'decoy'));
+
+  // 2. Yokai milestone (2 yokai: kitsune + karasu)
+  const bYo = started(['kitsune', 'karasu']);
+  assert.ok(bYo.traits?.yokaiWisp);
+  const karasu = hero(bYo, 'karasu');
+  const wispOut: BattleEvent[] = [];
+  // Simulate dodge trigger
+  const { spawnSpiritWisp } = require('../src/sim/abilities');
+  spawnSpiritWisp(bYo, karasu, wispOut);
+  assert.ok(bYo.traps && bYo.traps.some((t: any) => t.wisp && t.u === karasu.u && t.v === karasu.v));
+  assert.ok(wispOut.some((e) => e.kind === 'wisp'));
+});
+
+test('Duo-Combos and Trait Resonance battles execute strictly deterministically', () => {
+  const runBattle = (seed: number) => {
+    const b = startBattle(seed);
+    place(b, 'knight', 0, D - 1);
+    place(b, 'peasant', 1, D - 1);
+    place(b, 'archer', 2, D - 1);
+    place(b, 'lightningMage', 3, D - 1);
+    fight(b);
+    for (const u of b.units) {
+      if (u.side === 'hero') {
+        u.level = ULT_LEVEL;
+        u.charge2 = CHARGE_MAX;
+      }
+    }
+    const events: string[] = [];
+    for (let i = 0; i < 40 && b.phase === 'fight'; i++) {
+      const stepEvents = stepBattle(b);
+      for (const e of stepEvents) events.push(e.kind);
+    }
+    return {
+      events,
+      unitHps: b.units.map((u) => `${u.id}:${u.def}:${u.hp}:${u.alive}`),
+    };
+  };
+
+  const run1 = runBattle(42);
+  const run2 = runBattle(42);
+  assert.deepEqual(run1.events, run2.events);
+  assert.deepEqual(run1.unitHps, run2.unitHps);
 });

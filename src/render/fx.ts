@@ -23,6 +23,7 @@ import { Particles } from './particles';
 import { loadVfxArt, VFX } from './vfxArt';
 import { loadPackArt, PACK } from './fxSheets';
 import { bossEntrance, deathBurst, impactBurst, play, setBoneArt, windUp } from './combatFx';
+import { showDuoToast } from '../duoToast';
 import { comboGather, comboStrike, promoteBurst, ringOut, toneColour, type Spot } from './spectacle';
 import { comboById, COMBO_NAME } from '../sim/combos';
 import { tierRing } from './signatures';
@@ -301,6 +302,17 @@ export class Fx {
         else this.zone(b, e.u, e.v, e.ms);
       }
       else if (e.kind === 'trap') this.trap(b, e.u, e.v, e.ms);
+      else if (e.kind === 'duoCombo') this.duoCombo(e);
+      else if (e.kind === 'decoyLog') {
+        const by = this.sprites.get(e.by);
+        if (by) this.label('Substitution Log!', by.x, by.y - by.tall - 20, 0x85e3a8, 13, 1400, true);
+      }
+      else if (e.kind === 'wisp') {
+        this.trap(b, e.u, e.v, e.ms);
+        const [wx, wy] = this.tilePos(b, e.u, e.v);
+        this.label('Spirit Wisp', wx, wy - 12, 0x9be5ff, 11, 1200);
+        this.sparkles(wx, wy, 0x9be5ff);
+      }
       else if (e.kind === 'terrain') this.kitTerrain(b, e);
       else if (e.kind === 'mark') this.kitMark(e);
       else if (e.kind === 'hit') {
@@ -825,6 +837,30 @@ export class Fx {
     this.trauma = Math.min(1, this.trauma + 0.6);
     this.slowMo(550);
     if (!this.calm()) this.stopLeft = Math.max(this.stopLeft, 90);
+  }
+
+  /** A duo-combo triggers between complementary heroes: floating text, sparkles and battle toast. */
+  private duoCombo(e: Extract<BattleEvent, { kind: 'duoCombo' }>): void {
+    const sA = this.sprites.get(e.heroA);
+    const sB = this.sprites.get(e.heroB);
+    const col = e.harmonic ? 0xffd700 : 0xffe27a;
+    if (sA && sB) {
+      const cx = (sA.x + sB.x) / 2;
+      const cy = (sA.y + sB.y) / 2;
+      this.label(e.harmonic ? 'Harmonic Resonance!' : 'Duo-Combo!', cx, cy - 80, col, 14, 2000, true);
+      this.label(e.title, cx, cy - 60, 0xfff2a0, 16, 2200, true);
+      this.label(e.name, sA.x, sA.y - sA.tall - 20, col, 12, 1600, true);
+      this.label(e.name, sB.x, sB.y - sB.tall - 20, col, 12, 1600, true);
+      this.sparkles(sA.x, sA.y - sA.tall * 0.5, col);
+      this.sparkles(sB.x, sB.y - sB.tall * 0.5, col);
+    } else if (sA) {
+      this.label(e.title, sA.x, sA.y - sA.tall - 25, col, 14, 1800, true);
+      this.sparkles(sA.x, sA.y - sA.tall * 0.5, col);
+    } else if (sB) {
+      this.label(e.title, sB.x, sB.y - sB.tall - 25, col, 14, 1800, true);
+      this.sparkles(sB.x, sB.y - sB.tall * 0.5, col);
+    }
+    showDuoToast(e.banner, e.harmonic);
   }
 
   /** A hero is promoted to `grade` (2 or 3): the one call both ways in take, the page's merge after a hire and a sim `promote` event (the Calamity's tier by level). The hero rises in light and scales up a beat; tier 3 adds a pillar of light, a nova, a flash, a short slow-motion, a camera push and a banner with its name and its new skill's. */
