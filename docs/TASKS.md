@@ -25,6 +25,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Validation:** see the handoff's "Checks run for phase B".
 - **Handoff:** [notes](notes/army-road.md), [phase B sheet](samples/army-road-after-sheet.png), [phase A mock-ups](samples/army-road-mock-sheet.png).
 
+### CAL-VOID — The Calamity map, small and branching
+
+- **Goal:** the owner's ask: scrap the current Calamity map for a small void-dimension map with branching paths; design and mock-up first.
+- **Status:** phase A (proposal and mock-ups) done; waiting for the owner's answers (layout A, B or C; branching against backtracking; size; fog; recruit; detours; runs under way; tags).
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/cal-void`, `/home/user/cal-void`; PR none.
+- **Allowed files or systems:** phase A: `tools/cal-void/`, `docs/notes/cal-void.md`, `docs/samples/cal-void-mock-*.png`, this row. Phase B (once approved): the Calamity's map and choices in `src/sim/tower.ts`, new `src/sim/calShapes.ts` and `src/sim/calSpots.ts` (the open list of spot kinds), `src/sim/calLand.ts`, `src/sim/calamity.ts` (re-tune), `src/calMap.ts`, `src/render/calRealm.ts`, `src/towerView.ts` (the card registry call), new `src/calSpotCards.ts`, `src/calmap.css`, `tools/autoplay.ts`, `tools/calmap/`, the `cal*` tests, `CREDITS.md`. Not the spire's map, the peculiar encounters themselves (the other AI), the battle or the camp.
+- **Completion criteria:** the chosen layout on one screen with no scrolling at 393x852, 360x780 and 412x915; the route rule as answered, tested; spot kinds as a registry a new kind slots into (documented); old saves load; balance re-measured against today's boss shares; typecheck, affected tests, web build.
+- **Handoff:** [notes](notes/cal-void.md), [mock-up sheet](samples/cal-void-mock-sheet.png).
+
 ### AWAKEN-002 — Class auras for awakened heroes
 
 - **Goal:** the owner's ask: drop the awakened recolour; an awakened hero wears an aura at step 1 (rank 5) and a stronger, bigger one at step 2 (rank 6), its style set by the hero's class trait (not the origin), wherever an awakened hero is drawn.
