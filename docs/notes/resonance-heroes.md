@@ -34,6 +34,8 @@ The browser required execution outside the process sandbox because the sandbox b
 
 ## Accepted implementation integration
 
-Integrated current main `0f9990d9` (0.178.0), preserving its hero kits, role descriptions, winding battle maps, castle, menus and chest changes. Resolved the unit-definition conflict by retaining current main's complete definitions and changing only the two sheets/scales and Knight forms. Preserved both task-board histories. The new `hasSheet` renderer export remains intact.
+Integrated current main `587191f7` (0.179.0), preserving its hero kits, role descriptions, winding battle maps, castle, menus, chest changes and battle command HUD. Resolved the unit-definition conflict by retaining current main's complete definitions and changing only the two sheets/scales and Knight forms. Preserved both task-board histories. The new `hasSheet` renderer export remains intact.
 
-Typecheck, web build, `hero-art`, `awaken`, `class-heroes` and `hero-kits-looks` test files passed on the integrated tree. The portrait, deploy and combat evidence was refreshed against 0.178.0 at all three supported sizes, with zero page errors. The version remains 0.178.0 so the director can select the release number at merge time under CLAUDE.md. No deployment has been performed by this chat.
+Typecheck, web build, `hero-art`, `awaken`, `class-heroes` and `hero-kits-looks` test files passed on the integrated tree. The portrait, deploy and combat evidence was refreshed against 0.179.0 at all three supported sizes, with zero page errors. The version remains 0.179.0 so the director can select the release number at merge time under CLAUDE.md. No deployment has been performed by this chat.
+
+Pull request: [#144](https://github.com/Hpatter9/legends-of-the-fall/pull/144). The second integration brought in the newly released battle command HUD without conflicts; typecheck/build were repeated and phone checks refreshed for that HUD.
