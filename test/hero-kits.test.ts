@@ -45,8 +45,8 @@ test('a hero starts with part of its pool, or what it carried from the last wave
   const b = arena();
   const k = spawn(b, 'knight', 1, 1);
   const w = spawn(b, 'wizard', 2, 2);
-  assert.equal(resOf(k), RES.STAM_START);
-  assert.equal(resOf(w), RES.MANA_START);
+  assert.ok(Math.abs(resOf(k) - RES.STAM_START) < 1e-9);
+  assert.ok(Math.abs(resOf(w) - RES.MANA_START) < 1e-9);
   const carried = addUnit(b, 'wizard', 3, 3, { charge: 80 });
   assert.equal(carried.charge, 80, 'the carried share of the pool');
 });

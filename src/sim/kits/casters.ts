@@ -25,7 +25,7 @@ export function wildfire(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     for (const f of foes) {
       if (struck.has(f.id) || !f.alive || !near3x3(f, src)) continue;
       struck.add(f.id);
-      strike(b, me, f, 0.9, out);
+      strike(b, me, f, 1.2, out);
       if (f.alive) f.dot = { kind: 'burn', dmg: Math.max(1, Math.round(atkOf(me) * 0.12)), every: 500, ms: 3000, by: me.id, next: b.t + 500, until: b.t + ms(me, 3000) };
     }
   }
@@ -56,14 +56,14 @@ export function overload(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   return true;
 }
 
-/** Kitsune, Fox Guise: for 6s she takes the shape of the strongest foe within 7: its looks, its reach and shot, and its attack (up to 1.6 times hers); foes pick her last. */
+/** Kitsune, Fox Guise: for 5s she takes the shape of the strongest foe within 7: its looks, its reach and shot, and its attack (up to 1.4 times hers); foes pick her last. */
 export function foxGuise(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (me.kx?.guise && me.kx.guise.until > b.t) return false;
   const f = foesNear(b, me, 7).filter((x) => UNITS[x.def].side === 'foe').sort(strongest)[0];
   if (!f) return false;
-  const mult = Math.max(1, Math.min(1.6, atkOf(f) / atkOf(me)));
+  const mult = Math.max(1, Math.min(1.4, atkOf(f) / atkOf(me)));
   me.power = (me.power ?? 1) * mult;
-  kx(me).guise = { def: f.def, until: b.t + ms(me, 6000), mult };
+  kx(me).guise = { def: f.def, until: b.t + ms(me, 5000), mult };
   setLook(me, f.look ?? UNITS[f.def].sheet, out);
   return true;
 }
@@ -224,27 +224,27 @@ export function flaskToss(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 /** The Wanderer's draught is a heal when a friend is badly hurt. */
 export const flaskNeeded = (b: Battle, me: Unit) => alliesOf(b, me).some((a) => apart(a, me) <= 5 && a.hp < a.maxHp * 0.35);
 
-/** High Priestess, Guardian Angel: the friend most at risk (the most hurt with a foe within 2) is watched for 6s: the first blow that would fell it leaves it at 1 health and heals it 30%. */
+/** High Priestess, Guardian Angel: the friend most at risk (the most hurt with a foe within 2) is watched for 4s: the first blow that would fell it leaves it at 1 health and heals it 30%. */
 export function guardianAngel(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const foes = foesOf(b, me);
   const a = alliesOf(b, me)
     .filter((x) => x.owner === undefined && !UNITS[x.def].summon && x.hp < x.maxHp * 0.7 && !on(x.kx?.angel, b) && foes.some((f) => apart(f, x) <= 2))
     .sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp || x.id - y.id)[0];
   if (!a) return false;
-  kx(a).angel = b.t + ms(me, 6000);
-  mark(out, me, a, 'angel', ms(me, 6000));
+  kx(a).angel = b.t + ms(me, 4000);
+  mark(out, me, a, 'angel', ms(me, 4000));
   return true;
 }
 
-/** Druid, Treeform: for 8s she becomes a treant: half again her health, more defence, and the foes beside her must strike her; she heals 15% when she turns back. */
+/** Druid, Treeform: for 6s she becomes a treant: a third more health, more defence, and the foes beside her must strike her; she heals 15% when she turns back. */
 export function treeform(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (me.kx?.tree) return false;
   const near = foesNear(b, me, 2);
   if (!near.length) return false;
-  const added = Math.round(me.maxHp * 0.5);
+  const added = Math.round(me.maxHp / 3);
   me.maxHp += added;
   me.hp += added;
-  kx(me).tree = { until: b.t + ms(me, 8000), added };
+  kx(me).tree = { until: b.t + ms(me, 6000), added };
   for (const f of near) f.taunt = { to: me.id, until: b.t + ms(me, 3000) };
   setLook(me, formOf(UNITS.treant, me.grade ?? 1), out);
   return true;

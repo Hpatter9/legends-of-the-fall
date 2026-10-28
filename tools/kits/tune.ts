@@ -13,6 +13,9 @@ import { KITS } from '../../src/sim/abilities';
 import { HERO_KITS } from '../../src/sim/heroKits';
 import { fieldBoost, pickTeam, play } from '../heroSweep';
 
+/** Each ultimate's strength before the hero kits (0.170.0's `TUNE`): the floor the tuner keeps to. */
+const OLD_POWER: Record<string, number> = { knight: 0.25, samurai: 1.24, kunoichi: 0.08, archer: 0.07, wizard: 0.89, peasant: 0.05, ninjaMonk: 0.07, wanderer: 0.07, lightningMage: 0.07, kitsune: 0.07, karasu: 0.07, yamabushi: 1.42, werewolf: 0.07, minotaur: 0.92, satyr: 0.1, gorgon: 0.07, samuraiCommander: 1.05, paladin: 0.07, cleric: 0.07, druid: 0.07, barbarian: 0.07, ranger: 0.07, warlock: 0.05, illusionist: 0.05, gunslinger: 0.07, shambler: 0.07, rifleBot: 0.13, mercenary: 0.07, mummy: 0.07, buccaneer: 0.07, wolfBard: 0.05, beastmaster: 0.05, kraken: 0.07, lancer: 0.07, reaper: 0.09, timeWitch: 0.05, arcBlade: 0.07, dreadPirate: 0.07, siegeBot: 0.5, priestess: 0.05, dragoon: 0.07, juggernaut: 0.97, sage: 0.13, demonSwordsman: 1.05, tyrant: 0.89 };
+
 export interface Knobs { t1?: number; t2?: number; up?: number; ur?: number; c1?: number; c2?: number }
 export function applyKnobs(state: Record<string, Knobs>): void {
   for (const [h, k] of Object.entries(state)) {
@@ -69,24 +72,35 @@ if (args[0] === '--child') {
     console.log(`level ${level} stage ${stage}, ${n} fights: average ${avg.toFixed(1)}%, spread ${(Math.max(...win) - Math.min(...win)).toFixed(1)}, beyond 6: ${lifts.filter((x) => Math.abs(x.lift) > 6).map((x) => x.h).join(' ') || 'none'}, beyond 4: ${lifts.filter((x) => Math.abs(x.lift) > 4).length}`);
     console.log(lifts.map((x) => `${x.h} ${x.lift.toFixed(1)}`).join(', '));
     if (!process.argv.includes('--apply')) return;
-    const key: keyof Knobs = Number(level) >= 30 ? 'up' : Number(level) >= 10 ? 't2' : 't1';
+    const key: keyof Knobs = (process.env.KEY as keyof Knobs | undefined) ?? (Number(level) >= 30 ? 'up' : Number(level) >= 10 ? 't2' : 't1');
     const step = Number(process.env.STEP ?? 0.035);
     const prev: Record<string, number> = {};
+    // (with TARGET set, every hero is stepped toward that win rate rather than the roster's average: the roster's overall strength moves too)
+    const target = process.env.TARGET ? Number(process.env.TARGET) : undefined;
+    if (target !== undefined) for (const x of lifts) x.lift = x.lift + avg - target;
     for (const { h, lift } of lifts) {
       const k = (state[h] ??= {});
       const now = k[key] ?? (key === 'up' ? KITS[h].ultimate!.tuned!.power : key === 't1' ? HERO_KITS()[h].s1.tune : HERO_KITS()[h].s2.tune);
       prev[h] = now;
       // (a damped multiplicative step: a hero 4 points over the average loses about 13% of its strength)
-      const next = Math.max(0.1, Math.min(4, now * Math.exp(-step * Math.max(-8, Math.min(8, lift)))));
+      const next = Math.max(0.05, Math.min(3, now * Math.exp(-step * Math.max(-8, Math.min(8, lift)))));
       k[key] = Math.round(next * 1000) / 1000;
     }
     // (the step moves heroes against each other, not the roster as a whole: the knob's geometric mean is held where it was)
-    if (process.env.NORM !== '0') {
+    if (process.env.NORM !== '0' && target === undefined) {
       const before = lifts.map(({ h }) => Math.log(prev[h]));
       const after = lifts.map(({ h }) => Math.log(state[h][key]!));
       const drift = after.reduce((a, x) => a + x, 0) / after.length - before.reduce((a, x) => a + x, 0) / before.length;
       for (const { h } of lifts) state[h][key] = Math.round(state[h][key]! * Math.exp(-drift) * 1000) / 1000;
     }
+    // (an ultimate is never weaker than it was before the hero kits, the owner's call: a hero still too strong at that floor has its meter slowed instead)
+    if (key === 'up')
+      for (const { h, lift } of lifts) {
+        const k = state[h];
+        if (k.up! >= OLD_POWER[h]) continue;
+        k.up = OLD_POWER[h];
+        if (lift > 0) k.ur = Math.round((k.ur ?? KITS[h].ultimate!.tuned!.rate) * Math.exp(-step * Math.min(8, lift)) * 1000) / 1000;
+      }
     writeFileSync(file, JSON.stringify(state, null, 1));
   });
 }

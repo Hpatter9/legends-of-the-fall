@@ -56,7 +56,8 @@ export function martyrsVow(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   return true;
 }
 
-/** Juggernaut, Raise Rampart: the three tiles in front of him (toward the nearest foe) rise into a wall for 10s that foes must walk round. */
+/** Juggernaut, Raise Rampart: the three tiles in front of him (toward the nearest foe) rise into a wall for 10s that foes must walk round; the foes beside
+ *  it are struck and held a moment as the ground heaves. */
 export function raiseRampart(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const f = nearestFoe(b, me);
   if (!f || apart(me, f) > 5) return false;
@@ -65,9 +66,17 @@ export function raiseRampart(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const front = { u: me.u + du, v: me.v + dv };
   const side = DIR[(way + 1) % 4];
   let laid = 0;
-  for (const c of [front, { u: front.u + side[0], v: front.v + side[1] }, { u: front.u - side[0], v: front.v - side[1] }]) if (free(b, c) && layTerrain(b, c, 'rampart', ms(me, 10000), out)) laid++;
+  const line = [front, { u: front.u + side[0], v: front.v + side[1] }, { u: front.u - side[0], v: front.v - side[1] }];
+  for (const c of line) if (free(b, c) && layTerrain(b, c, 'rampart', ms(me, 10000), out)) laid++;
+  if (!laid) return false;
   me.facing = way;
-  return laid > 0;
+  // (the ground heaves as it rises: the foes beside the new wall are struck and thrown off their feet a moment)
+  for (const f of foesOf(b, me)) {
+    if (!line.some((c) => Math.abs(c.u - f.u) + Math.abs(c.v - f.v) === 1)) continue;
+    strike(b, me, f, 1.0, out);
+    if (f.alive) stun(b, f, ms(me, 1000));
+  }
+  return true;
 }
 
 /** Kraken Mate, Flood: the 3x3 round him turns to shallow water for 8s (it slows whoever walks it), and the foes in it are slowed 2s. */
@@ -115,9 +124,15 @@ export function puppetStrings(b: Battle, me: Unit, out: BattleEvent[]): boolean 
   return true;
 }
 
-/** Yamabushi Tengu, Turning Wind: for 4s, shots aimed at his friends within 2 are blown back at the shooter for half. Only with a shooter on the field. */
+/** Yamabushi Tengu, Turning Wind: the foes beside him are struck and shoved back, and for 4s shots aimed at his friends within 2 are blown back at the
+ *  shooter for half. Only with a shooter on the field. */
 export function turningWind(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!foesOf(b, me).some((f) => UNITS[f.def].shot && apart(f, me) <= 8)) return false;
+  // (the wind turns about him: the foes beside him are struck and shoved back a tile)
+  for (const f of foesNear(b, me, 1)) {
+    strike(b, me, f, 0.8, out);
+    if (f.alive && !kitOf(f)?.passive.steady) shove(b, f, me, 1);
+  }
   kx(me).reflect = b.t + ms(me, 4000);
   out.push({ kind: 'song', by: me.id, ms: ms(me, 4000) });
   return true;

@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
-import { addUnit, fight, place, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
+import { addUnit, fight, hurt, place, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
 import { CHARGE_MAX, ULT_LEVEL, ultimateOf } from '../src/sim/abilities';
 import { HERO_KITS, heroKitOf, SKILL2_LEVEL } from '../src/sim/heroKits';
 import { gradeBoost } from '../src/sim/run';
@@ -105,7 +105,8 @@ test('every hero fights with its whole kit open, and the fights are deterministi
     const k = HERO_KITS()[h];
     if (first.includes(k.s1.skill.name) && first.includes(k.s2.skill.name)) both++;
   }
-  assert.ok(both >= 35, `${both} of 45 heroes cast both skills`);
+  const missing = ALL_HEROES.filter((h) => !(first.includes(HERO_KITS()[h].s1.skill.name) && first.includes(HERO_KITS()[h].s2.skill.name)));
+  assert.ok(both >= 35, `${both} of 45 heroes cast both skills; not: ${missing.join(' ')} | ${first}`);
 });
 
 test('skill 2 is never cast below its level', () => {
@@ -115,4 +116,26 @@ test('skill 2 is never cast below its level', () => {
   fight(b);
   const second = new Set(ALL_HEROES.slice(0, 5).map((h) => HERO_KITS()[h].s2.skill.name));
   while (b.phase === 'fight') for (const e of stepBattle(b)) assert.ok(!(e.kind === 'skill' && second.has(e.name) && heroKitOf(b.units.find((u) => u.id === e.by)!)), e.kind === 'skill' ? e.name : '');
+});
+
+test('every readiness look names a real skill 2', async () => {
+  const { SKILL2_WHEN } = await import('../src/sim/kits/when');
+  const second = new Set(ALL_HEROES.map((h) => HERO_KITS()[h].s2.skill.name));
+  for (const name of Object.keys(SKILL2_WHEN)) assert.ok(second.has(name), name);
+});
+
+test('two vowed Paladins side by side do not pass one blow back and forth', () => {
+  const b = startBattle(7);
+  bareBoard(b);
+  b.units = [];
+  b.phase = 'fight';
+  b.kits = { vows: true };
+  const p1 = addUnit(b, 'paladin', 3, 6, { level: SKILL2_LEVEL });
+  const p2 = addUnit(b, 'paladin', 4, 6, { level: SKILL2_LEVEL });
+  const foe = addUnit(b, 'skeleton', 3, 5);
+  p1.kx = { vow: 1e9 };
+  p2.kx = { vow: 1e9 };
+  const out: BattleEvent[] = [];
+  hurt(b, foe, p1, 100, false, false, out, 'skill');
+  assert.ok(p1.hp < p1.maxHp && p2.hp < p2.maxHp, 'the blow is shared once');
 });

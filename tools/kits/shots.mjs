@@ -106,6 +106,21 @@ if (!only || only === 'bar')
     await ctx.close();
   }
 
+// reduced motion: the ready ring is still (the glow stays), a queued ring does not turn
+if (!only || only === 'reduced') {
+  const { ctx, page, errors } = await bootFight(393, 852, PARTY, 30);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await start(page);
+  await page.evaluate(() => { const u = window.__game.b.units.find((x) => x.def === 'werewolf'); u.charge2 = 100; });
+  await page.waitForTimeout(300);
+  await hold(page, true);
+  const still = await page.evaluate(() => { const r = document.querySelector('#heroBar .hb.ready .hbRing'); const t = document.querySelector('#heroBar .hb.ready'); return { ring: r && getComputedStyle(r).animationName, glow: t && getComputedStyle(t).boxShadow !== 'none' }; });
+  check('reduced motion: the ready ring is still and the glow stays', still.ring === 'none' && still.glow, JSON.stringify(still));
+  await page.screenshot({ path: out('reduced', 393) });
+  check('no page errors (reduced)', errors.length === 0, errors.join('|'));
+  await ctx.close();
+}
+
 // a locked bar: level 12 (skill 2 open, the ultimate not): "Lv 30" plates
 if (!only || only === 'locked') {
   const { ctx, page, errors } = await bootFight(393, 852, ['knight', 'samurai', 'archer', 'priestess', 'satyr'], 12);

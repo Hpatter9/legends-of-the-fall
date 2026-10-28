@@ -13,6 +13,7 @@ import type { Battle, BattleEvent, Unit } from './battle';
 import { CHARGE_MAX, kitOf, powered, began, tal, ultimateOf, ultTune, type Skill } from './abilities';
 import { UNITS } from './units';
 import { HERO_TABLE } from './kits/table';
+import { SKILL2_WHEN } from './kits/when';
 
 export type Pool = 'mana' | 'stamina';
 
@@ -45,9 +46,10 @@ export const RES = {
   /** The pace of every gain above (the refill and the gains from blows): the tuning pass's one knob for how often skills come round, so their
    *  strength and the old skills' cadence stay in step (the design's numbers are at 1). */
   PACE: 0.45,
-  /** Once skill 2 is open (level 10), the pool comes back this much faster: a hero that has learnt its second skill draws on a deeper well, so both
-   *  skills come round in a fight, each about as often as the one skill did. */
-  SKILL2_PACE: 1.4,
+  /** Once skill 2 is open (level 10), the pool comes back this much faster (mana, stamina): a hero that has learnt its second skill draws on a deeper
+   *  well, so both skills come round in a fight. */
+  SKILL2_PACE_MANA: 1.6,
+  SKILL2_PACE_STAM: 1.15,
 } as const;
 
 /** The level skill 2 opens at (skill 1 is open from level 1; the ultimate at `ULT_LEVEL`). */
@@ -138,21 +140,24 @@ export function startPool(u: Unit, carried?: number): void {
 /** A blow (or shot) this hero dealt landed. */
 export function poolOnDealt(u: Unit): void {
   const pool = poolOf(u);
-  if (pool) addRes(u, (pool === 'mana' ? RES.MANA_ON_BLOW : RES.STAM_ON_BLOW) * RES.PACE * (skill2Open(u) ? RES.SKILL2_PACE : 1));
+  if (pool) addRes(u, (pool === 'mana' ? RES.MANA_ON_BLOW : RES.STAM_ON_BLOW) * RES.PACE * skill2Pace(u, pool));
 }
 /** This hero was struck (a blow or a skill, not burning), or slipped a blow. */
 export function poolOnTaken(b: Battle, u: Unit, dodged = false): void {
   const pool = poolOf(u);
   if (!pool) return;
   if (!dodged) ks(u).hitAt = b.t;
-  if (pool === 'stamina') addRes(u, (dodged ? RES.STAM_ON_DODGE : RES.STAM_ON_HIT) * RES.PACE * (skill2Open(u) ? RES.SKILL2_PACE : 1));
+  if (pool === 'stamina') addRes(u, (dodged ? RES.STAM_ON_DODGE : RES.STAM_ON_HIT) * RES.PACE * skill2Pace(u, pool));
 }
+
+/** How much faster the pool comes back once skill 2 is open. */
+const skill2Pace = (u: Unit, pool: Pool): number => (skill2Open(u) ? (pool === 'mana' ? RES.SKILL2_PACE_MANA : RES.SKILL2_PACE_STAM) : 1);
 
 /** The pool's refill a second: the pool's own, faster for a mana hero left alone, none while a stamina hero is winded; times the team's and its gear's refill. */
 export function regenOf(b: Battle, u: Unit): number {
   const pool = poolOf(u);
   if (!pool) return 0;
-  const k = RES.PACE * (skill2Open(u) ? RES.SKILL2_PACE : 1) * (b.traits?.charge ?? 1) * (1 + (u.eq?.charge ?? 0));
+  const k = RES.PACE * skill2Pace(u, pool) * (b.traits?.charge ?? 1) * (1 + (u.eq?.charge ?? 0));
   const s = u.ks;
   if (pool === 'stamina') return s?.winded !== undefined && s.winded > b.t ? 0 : RES.STAM_REGEN * k;
   const focus = s?.hitAt === undefined || b.t - s.hitAt >= RES.FOCUS_MS ? RES.FOCUS_MULT : 1;
@@ -229,20 +234,22 @@ function fire(b: Battle, me: Unit, hk: HeroKit, n: 1 | 2, out: BattleEvent[]): b
   return began(b, me, slot.skill, out, n === 2 ? 'skill2' : 'skill');
 }
 
-/** Whether the hero should save skill 1's cost for skill 2: skill 2 is open and has lately had something to do, and either it is skill 2's turn (the
- *  two take turns: skill 1 was the last cast) or saving would see skill 2 cast within the hold. */
+/** Whether the hero should save skill 1's cost for skill 2. The two take turns: once skill 1 was the last cast, skill 1 waits for skill 2 while
+ *  skill 2 has something to do (its `SKILL2_WHEN` look, `kits/when.ts`, and it did not just find nothing). Otherwise skill 1 waits only when saving
+ *  would see skill 2 cast within the short hold. */
 function holding(b: Battle, me: Unit, hk: HeroKit): boolean {
   if (!skill2Open(me)) return false;
   const s = me.ks;
   if (s?.idle2 !== undefined && b.t - s.idle2 < RES.IDLE_MS) return false;
-  const at1 = s?.at1;
-  const at2 = s?.at2;
-  if (at1 !== undefined && (at2 === undefined || at1 > at2)) return true;
-  const gap = gapOf(hk.pool, hk.s2);
-  const hold = hk.pool === 'mana' ? RES.HOLD_MANA_MS : RES.HOLD_STAM_MS;
-  if (at2 !== undefined && b.t - at2 < gap - hold) return false;
+  const when = SKILL2_WHEN[hk.s2.skill.name];
+  if (when && !when(b, me)) return false;
   const need = costOf(me, hk.s2) - resOf(me, hk.pool);
   if (need <= 0) return false;
+  if (s?.at1 !== undefined && (s.at2 === undefined || s.at1 > s.at2)) return true;
+  const mana = hk.pool === 'mana';
+  const hold = mana ? RES.HOLD_MANA_MS : RES.HOLD_STAM_MS;
+  const at2 = s?.at2;
+  if (at2 !== undefined && b.t + hold < at2 + gapOf(hk.pool, hk.s2)) return false;
   const rate = Math.max(0.1, regenOf(b, me));
   return (need / rate) * 1000 <= hold;
 }

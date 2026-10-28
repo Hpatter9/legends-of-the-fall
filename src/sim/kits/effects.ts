@@ -90,13 +90,13 @@ export const KIT = {
   SMOKE_MISS: 0.5,
   PARRY_MULT: 1.5,
   PINNED_MULT: 1.25,
-  BOUNTY_MULT: 1.15,
+  BOUNTY_MULT: 1.25,
   CONDEMN_MULT: 1.2,
   STANDARD_GUARD: 0.1,
   STANDARD_ATK: 0.1,
   STANDARD_REACH: 2,
   SONG_REACH: 3,
-  SONG_SHARE: 0.1,
+  SONG_SHARE: 0.08,
   VOW_REACH: 3,
   VOW_SHARE: 0.5,
   BRUTE_GUARD: 0.25,
@@ -107,8 +107,8 @@ export const KIT = {
   MOMENTUM_STEP: 0.1,
   MOMENTUM_MAX: 5,
   CRIT_NEXT: 1.6,
-  FURY_QUICK: 1.4,
-  FURY_LEECH: 0.2,
+  FURY_QUICK: 1.3,
+  FURY_LEECH: 0.12,
   HUNTER_QUICK: 1.25,
   SIEGE_QUICK: 1.25,
   SIEGE_RANGE: 2,
@@ -123,6 +123,9 @@ function near(b: Battle, at: Unit, side: Unit['side'], reach: number, test: (x: 
   for (const x of b.units) if (x.alive && x.side === side && apart(x, at) <= reach && test(x)) return x;
   return undefined;
 }
+
+/** Whether a Paladin's vow is passing a wound on just now. */
+let redirecting = false;
 
 /** What the kits do to a blow or skill about to hurt: it may be turned aside (null) or changed. Called before guards and blocks. */
 export function kitStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow' | 'skill' | 'dot', splash: boolean, out: BattleEvent[]): number | null {
@@ -180,11 +183,17 @@ export function kitStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow
     if (dirge) dmg *= 1 - share(dirge);
   }
   // (the Paladin's vow: half of what a friend near him would take is his instead)
-  if (b.kits.vows && to.side === 'hero') {
+  // (a wound already taken over for a friend is not passed on again: two vowed Paladins do not hand one blow back and forth)
+  if (b.kits.vows && to.side === 'hero' && !redirecting) {
     const pal = near(b, to, 'hero', KIT.VOW_REACH, (x) => x !== to && on(x.kx?.vow, b));
     if (pal) {
       const half = dmg * KIT.VOW_SHARE;
-      hurt(b, by, pal, Math.max(1, Math.round(half)), false, true, out, 'skill');
+      redirecting = true;
+      try {
+        hurt(b, by, pal, Math.max(1, Math.round(half)), false, true, out, 'skill');
+      } finally {
+        redirecting = false;
+      }
       dmg -= half;
     }
   }

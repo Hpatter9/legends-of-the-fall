@@ -74,22 +74,25 @@ export function shift(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   return true;
 }
 
-/** Barbarian, Blood Fury (paid in blood too): for 5s his blows come 40% faster and drink a fifth of what they deal, and he cannot fall below 1 health. */
+/** Barbarian, Blood Fury (paid in blood too): for 4s his blows come 30% faster and drink an eighth of what they deal, and he cannot fall below 1 health. */
 export function bloodFury(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!foesNear(b, me, 2).length || (me.kx?.fury ?? 0) > b.t) return false;
-  kx(me).fury = b.t + ms(me, 5000);
+  kx(me).fury = b.t + ms(me, 4000);
   out.push({ kind: 'frenzy', by: me.id, n: 3 });
   return true;
 }
 
-/** Mercenary, Mark for Coin: the strongest foe within 7 is marked for 8s: every hero deals 15% more to it, and if it dies marked he heals a fifth and his stamina fills. */
+/** Mercenary, Mark for Coin: a thrown blade strikes the strongest foe within 7 and marks it for 10s: every hero deals a quarter more to it, and if it dies marked he heals a fifth and his stamina fills. */
 export function markForCoin(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const f = foesNear(b, me, 7)
     .filter((x) => !(x.kx?.bounty && x.kx.bounty.until > b.t))
     .sort(strongest)[0];
   if (!f) return false;
-  kx(f).bounty = { by: me.id, until: b.t + ms(me, 8000) };
-  mark(out, me, f, 'bounty', ms(me, 8000));
+  // (a thrown blade marks it)
+  out.push({ kind: 'shot', by: me.id, to: f.id, shot: 'arrow', ms: 120 + apart(me, f) * 40 });
+  strike(b, me, f, 1.0, out);
+  kx(f).bounty = { by: me.id, until: b.t + ms(me, 10000) };
+  mark(out, me, f, 'bounty', ms(me, 10000));
   return true;
 }
 
