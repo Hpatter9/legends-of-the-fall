@@ -134,3 +134,14 @@ and `-412`), and `awaken-mats-sheet.png`. The phase A mock-ups are `awaken-mats-
   added to the table's comments with no rule change.
 - The shop's chests hold no ores (crowns would buy ores); the daily chest none.
 - The model's Calamity dates are its own guesses; the Last Stand's ores are not modelled.
+
+## Checks run
+
+- `npm run typecheck`: passed. `npm run web`: built.
+- `npm test -- awaken-mats`: 13 of 13. `npm test -- rankUp awaken chest armyStars calMapRewards calamity stand meta autoReplay ascension`: 167 of 167.
+- Full `npm test`: 1290 of 1290 passed. Two existing tests now give their heroes ores, since awakening asks for them (the
+  owner's rule): `test/awaken.test.ts` (its shard tests) and `test/rankUp.test.ts` (the top rank before awakening).
+- `npm run unlock-pace -- --awaken --seeds 30 --days 540` (and `--calweek 2`): the pace table above. Without `--awaken` the
+  output is the same as main's (checked with a diff at 10 seeds).
+- `node tools/awaken/mats-shots.mjs`: the nine screens at 393x852, 360x780 and 412x915, no page errors; the army result
+  shot taken again with `ONLY=army-result` (the fight had not ended in time on the first pass at the two smaller sizes).
