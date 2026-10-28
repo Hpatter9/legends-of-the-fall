@@ -36,6 +36,10 @@ export const DECODE_RATE = 32000;
 /** A loop plays the window [LOOP_START, LOOP_START + length] of its file, which holds a second more than the loop: the music is
  *  periodic, so any window one loop long joins itself cleanly, however a decoder trims the file's ends. */
 export const LOOP_START = 0.1;
+/** The battle track's loop skips its quiet four-bar intro and opens on the combat downbeat. Its 66.98 s loop holds 48 bars of
+ *  1.3954 s, so the start sits exactly four bars after `LOOP_START`: the loop stays a whole number of bars and joins on the beat. */
+export const BATTLE_BAR = 66.9772 / 48;
+export const BATTLE_LOOP_START = LOOP_START + 4 * BATTLE_BAR;
 
 let decoder: OfflineAudioContext | null = null;
 async function decode(file: string): Promise<AudioBuffer> {
@@ -53,7 +57,8 @@ export async function loadEpic(id: MusicId): Promise<Baked> {
   const buf = await decode(e.file);
   if (buf.duration < e.seconds + LOOP_START + 0.2) throw new Error(`${e.file} is short`);
   const baked: Baked = { pad: buf, bass: null, lead: null, drums: null };
-  EPIC_INFO.set(baked, { loop: [LOOP_START, LOOP_START + e.seconds] });
+  const loopStart = id === 'battle' ? BATTLE_LOOP_START : LOOP_START;
+  EPIC_INFO.set(baked, { loop: [loopStart, LOOP_START + e.seconds] });
   return baked;
 }
 
@@ -69,11 +74,10 @@ export type Place = 'camp' | 'tavern' | 'deploy' | 'tower' | 'calmap';
 /** Which map is open over the game, if one is. */
 export type MapKind = 'tower' | 'calamity' | null;
 
-/** The place for a scene of the ambience and the open map: the home screen is the camp (the tavern tab, the tavern's tune); an
+/** The place for a scene of the ambience and the open map: the home screen is the camp across all its tabs; an
  *  open map is the tower's or the Calamity's; any other time on the game's board is the deployment. */
 export function placeOf(scene: Scene | null, map: MapKind): Place {
-  if (scene === 'tavern') return 'tavern';
-  if (scene === null || scene === 'camp' || scene === 'hall' || scene === 'castle' || scene === 'spells' || scene === 'armies') return 'camp';
+  if (scene === null || scene === 'camp' || scene === 'tavern' || scene === 'hall' || scene === 'castle' || scene === 'spells' || scene === 'armies') return 'camp';
   if (map) return map === 'calamity' ? 'calmap' : 'tower';
   return 'deploy';
 }

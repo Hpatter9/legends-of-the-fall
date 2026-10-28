@@ -5,7 +5,7 @@ import { EPIC_MANIFEST } from '../src/render/epicManifest';
 import { EPIC_INFO, type Baked } from '../src/render/musicBake';
 import { SCORES, SCENE_TRACKS } from '../src/render/musicScore';
 import { OPEN_HZ } from '../src/render/audioRules';
-import { LOOP_START, STING_IDS, SYNTH_OF, TRACK_OF_PLACE, epicOf, fightLevel, fightTrack, placeOf, type MusicId } from '../src/render/epicMusic';
+import { BATTLE_BAR, BATTLE_LOOP_START, LOOP_START, STING_IDS, SYNTH_OF, TRACK_OF_PLACE, epicOf, fightLevel, fightTrack, placeOf, type MusicId } from '../src/render/epicMusic';
 import { FakeContext, installFakeAudio } from './audioFake';
 
 const LOOPS = ['camp', 'deploy', 'battle', 'battle2', 'battle3', 'boss', 'tower', 'calmap', 'calbattle', 'tavern', ...SCENE_TRACKS] as const;
@@ -39,8 +39,7 @@ test('every track the player can be asked for has a file or a synth fallback, an
 
 test('the place and the fight choose the track', () => {
   assert.equal(placeOf(null, null), 'camp');
-  for (const s of ['camp', 'hall', 'castle', 'spells', 'armies'] as const) assert.equal(placeOf(s, null), 'camp');
-  assert.equal(placeOf('tavern', null), 'tavern');
+  for (const s of ['camp', 'hall', 'castle', 'spells', 'armies', 'tavern'] as const) assert.equal(placeOf(s, null), 'camp');
   assert.equal(placeOf('field', null), 'deploy');
   assert.equal(placeOf('tower2', null), 'deploy', 'a tower run deploying is a deployment');
   assert.equal(placeOf('tower1', 'tower'), 'tower');
@@ -134,4 +133,34 @@ test('a sting holds the music back, lets it return, and a new fight cuts it shor
   } finally {
     undo();
   }
+});
+
+test('the battle track skips its ambient intro to start at the combat downbeat', async () => {
+  const undo = installFakeAudio();
+  const { MusicPlayer } = await import('../src/render/audioProcessors');
+  try {
+    const ctx = new FakeContext();
+    const buf = ctx.createBuffer(2, 100) as unknown as AudioBuffer;
+    const b: Baked = { pad: buf, bass: null, lead: null, drums: null };
+    EPIC_INFO.set(b, { loop: [BATTLE_LOOP_START, LOOP_START + 66.9772] });
+    const music = new MusicPlayer(ctx as unknown as AudioContext, async () => b);
+    const before = FakeContext.made.length;
+    music.setTrack('battle');
+    await new Promise((r) => setTimeout(r, 10));
+    const sources = FakeContext.made.slice(before).filter((n) => n.loop);
+    assert.equal(sources.length, 1);
+    const src = sources[0] as unknown as { loopStart: number; loopEnd: number; started: boolean; startOffset: number };
+    assert.ok(src.started);
+    assert.equal(src.startOffset, BATTLE_LOOP_START);
+    assert.equal(src.loopStart, BATTLE_LOOP_START);
+    music.destroy();
+  } finally {
+    undo();
+  }
+});
+test('the battle loop, cut short of its intro, is still a whole number of bars, so it joins on the beat', () => {
+  assert.equal(BATTLE_BAR * 48, EPIC_MANIFEST.battle.seconds);
+  const bars = (LOOP_START + EPIC_MANIFEST.battle.seconds - BATTLE_LOOP_START) / BATTLE_BAR;
+  assert.ok(Math.abs(bars - Math.round(bars)) < 1e-6, `${bars} bars`);
+  assert.equal(Math.round(bars), 44);
 });

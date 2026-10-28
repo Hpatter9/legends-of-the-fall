@@ -2215,5 +2215,53 @@
   },
   "figure": 75,
   "facesRight": true
+ },
+ "hero_soldier": {
+  "w": 192,
+  "h": 128,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "attack",
+   "hurt",
+   "dead",
+   "defend"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 4,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "defend": 4
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true
+ },
+ "hero_samurai_archer": {
+  "w": 192,
+  "h": 128,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 4,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4
+  },
+  "figure": 100,
+  "facesRight": true,
+  "lies": true
  }
 }
