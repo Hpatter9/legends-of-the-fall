@@ -127,6 +127,14 @@ export interface Meta {
   stash: StashChest[];
   /** The cinematics seen (`sceneRules.ts`, by id): each plays once at its moment, and the codex's Scenes list plays a seen one again. Saves from before have none. */
   scenes?: string[];
+  /** Number of times Duchess has been tapped (unlocks Tiny Tin Crown at 5). */
+  duchessTaps?: number;
+  /** Whether Duchess's Lucky Bleat has been used in battle (unlocks Wizard Hat). */
+  duchessLucky?: boolean;
+  /** Whether Duchess's daily haystack treat has been found (unlocks Archery Quiver). */
+  duchessHay?: boolean;
+  /** Date (yyyymmdd) Duchess's haystack treat was last claimed. */
+  duchessTreat?: number;
   /** Whether the heroes' ultimates fire on their own in a fight (the hero bar's Auto switch, COMBAT-002); off (the player taps) when unset. Auto-replay always fires them. */
   ultAuto?: boolean;
   /** The bosses whose card (the slam-down ribbon as the fight begins) has been shown, by boss or `elite:<id>` (`sceneRules.ts` `cardKey`): once a save. Saves from before have none. */
@@ -443,6 +451,12 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       if (!m.scenes.length) delete m.scenes;
       // (saves from before the boss cards played once have none shown)
       m.bossCards = readCards(m.bossCards);
+      if (typeof m.duchessTaps === 'number' && Number.isFinite(m.duchessTaps)) m.duchessTaps = Math.max(0, m.duchessTaps | 0);
+      else delete m.duchessTaps;
+      m.duchessLucky = !!m.duchessLucky || undefined;
+      m.duchessHay = !!m.duchessHay || undefined;
+      if (typeof m.duchessTreat === 'number' && Number.isFinite(m.duchessTreat)) m.duchessTreat = m.duchessTreat | 0;
+      else delete m.duchessTreat;
       if (!m.bossCards.length) delete m.bossCards;
       // (a content hero whose milestone a save from before has already reached joins now)
       if (!needsStarter(m)) grantContent(m);

@@ -1243,6 +1243,41 @@ export class Fx {
     });
   }
 
+  /** A cabbage kicked onto a tile by Duchess: heals the first unit walking over it. */
+  cabbage(b: Battle, u: number, v: number): void {
+    const c = document.createElement('canvas');
+    c.width = 16;
+    c.height = 16;
+    const ctx = c.getContext('2d')!;
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = '#2f741d';
+    ctx.fillRect(4, 5, 8, 8);
+    ctx.fillStyle = '#59b83b';
+    ctx.fillRect(5, 4, 6, 8);
+    ctx.fillRect(4, 6, 8, 5);
+    ctx.fillStyle = '#a6eb86';
+    ctx.fillRect(6, 6, 4, 4);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(7, 7, 2, 2);
+
+    const view = Sprite.from(c);
+    view.anchor.set(0.5);
+    const [x, y] = this.tilePos(b, u, v);
+    view.position.set(x, y - 6);
+    this.root.addChild(view);
+    this.items.push({
+      view,
+      step: () => {
+        const live = b.cabbages?.some((item) => item.u === u && item.v === v);
+        if (!live) {
+          view.destroy();
+          return false;
+        }
+        return true;
+      },
+    });
+  }
+
   /** The damage numbers still rising over each spot, so a new one over the same fighter starts above the last, not on it. */
   private stacks = new Map<string, { at: number; n: number }>();
 

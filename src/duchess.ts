@@ -4,8 +4,29 @@
 // She never takes a tap except on her own few pixels, and a tap makes her hop once with her "Mehh.". It only draws.
 
 import { loadImage } from './render/loadImage';
-import { chewBob, FRAME, goatFrame, GOAT_SPEED, hopLift, newGoat, rollVisit, stepGoat, tapGoat, visitAt, VISIT_WALK_MS, type Goat, type Visit } from './render/duchessRules';
+import {
+  chewBob,
+  drawDuchessCosmetic,
+  FRAME,
+  goatFrame,
+  GOAT_SPEED,
+  hopLift,
+  newDuchessBattleState,
+  newGoat,
+  resetDuchessBattle,
+  rollVisit,
+  stepGoat,
+  tapGoat,
+  triggerLuckyBleat,
+  visitAt,
+  VISIT_WALK_MS,
+  type DuchessBattleState,
+  type Goat,
+  type LuckyBleatEffect,
+  type Visit,
+} from './render/duchessRules';
 import { goatSays, type GoatKind } from './quips';
+import { settings } from './settings';
 import goatUrl from './art/duchess/goat.png';
 import goatHalfUrl from './art/duchess/goat-half.png';
 
@@ -47,8 +68,11 @@ export class PageGoat {
   private plan: Visit | null = null;
   private planned = false;
   private planAt = 0;
+  private battleState: DuchessBattleState = newDuchessBattleState();
   /** Told once a fight, as her visit begins and she starts to walk in (the cinematic of her first turning up). */
   onArrive?: () => void;
+  /** Tactical effect fired on tap once per battle (startle or cabbage). */
+  onLuckyBleat?: (effect: LuckyBleatEffect) => void;
   private arrived = false;
 
   constructor(private place: () => GoatSpot | null) {
@@ -76,6 +100,7 @@ export class PageGoat {
 
   /** A fight is set up: she visits one in four or five, wanders in a few seconds on, stays a while and wanders off (`render/duchessRules.ts`). */
   newFight(): void {
+    resetDuchessBattle(this.battleState);
     this.planned = true;
     this.arrived = false;
     this.plan = rollVisit(this.rand);
@@ -105,9 +130,23 @@ export class PageGoat {
     });
   }
 
-  /** A tap: she hops once and says "Mehh.". */
+  /** A tap: she hops once, bleats, counts towards tap milestones, and applies her once-per-battle Lucky Bleat. */
   tap(): void {
     if (!tapGoat(this.g, performance.now() - this.t0)) return;
+    try {
+      const raw = localStorage.getItem('legends.meta');
+      if (raw) {
+        const m = JSON.parse(raw);
+        m.duchessTaps = (m.duchessTaps ?? 0) + 1;
+        localStorage.setItem('legends.meta', JSON.stringify(m));
+      }
+    } catch {
+      /* ignore */
+    }
+    if (this.onLuckyBleat) {
+      const effect = triggerLuckyBleat(this.battleState, this.rand);
+      if (effect) this.onLuckyBleat(effect);
+    }
     const r = this.root.getBoundingClientRect();
     goatSays('tap', { x: r.left + r.width / 2, y: r.top + 12 });
   }
@@ -149,9 +188,14 @@ export class PageGoat {
       if (this.g.mode === 'graze') this.g.face = spot.face;
     }
     const lift = Math.round(hopLift(this.g, now));
+    const bob = chewBob(this.g, now, this.reduced);
     const ctx = this.canvas.getContext('2d')!;
     ctx.clearRect(0, 0, FRAME, FRAME);
     ctx.imageSmoothingEnabled = false;
-    if (sheet) ctx.drawImage(sheet, goatFrame(this.g) * FRAME, 0, FRAME, FRAME, 0, -lift + chewBob(this.g, now, this.reduced), FRAME, FRAME);
+    const dy = -lift + bob;
+    if (sheet) {
+      ctx.drawImage(sheet, goatFrame(this.g) * FRAME, 0, FRAME, FRAME, 0, dy, FRAME, FRAME);
+      drawDuchessCosmetic(ctx, settings().duchessHat, 0, dy, 1, this.g.face, 0);
+    }
   }
 }

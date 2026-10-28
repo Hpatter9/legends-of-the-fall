@@ -148,6 +148,28 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
     earned: (c) => c.meta.pulls >= 10,
     meter: (m) => ({ now: Math.min(10, m.pulls), need: 10 }),
   },
+  {
+    id: 'duchessCrown',
+    name: 'Her Grace',
+    text: 'Tap Duchess 5 times to crown her with the Tiny Tin Crown.',
+    crowns: 10,
+    earned: (c) => (c.meta.duchessTaps ?? 0) >= 5,
+    meter: (m) => ({ now: Math.min(5, m.duchessTaps ?? 0), need: 5 }),
+  },
+  {
+    id: 'duchessTactician',
+    name: 'Livestock Tactician',
+    text: 'Trigger Duchess’s Lucky Bleat in battle to unlock the Wizard Hat.',
+    crowns: 10,
+    earned: (c) => !!c.meta.duchessLucky,
+  },
+  {
+    id: 'duchessHaystack',
+    name: 'Haystack Forager',
+    text: 'Uncover Duchess’s daily haystack treat to unlock the Archery Quiver.',
+    crowns: 10,
+    earned: (c) => !!c.meta.duchessHay,
+  },
 ];
 
 export const achievementById = (id: string): Achievement | undefined => ACHIEVEMENTS.find((a) => a.id === id);
