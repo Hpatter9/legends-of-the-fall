@@ -271,7 +271,7 @@ function reserve(b: Battle, me: Unit, hk: HeroKit, n: 1 | 2): boolean {
 export function castHero(b: Battle, me: Unit, hk: HeroKit, out: BattleEvent[]): boolean {
   const ult = ultimateOf(me);
   if (ult && (me.charge2 ?? 0) >= ult.need && (me.ultOrder !== undefined || b.autoUlt !== false)) {
-    if (powered(b, me, ult, tal(me, 'ultPow') + (ultTune(me, ult)?.power ?? 1) - 1, out)) {
+    if (powered(b, me, ult, (1 + tal(me, 'ultPow')) * (ultTune(me, ult)?.power ?? 1) - 1, out)) {
       me.charge2 = (me.charge2 ?? 0) - ult.need;
       delete me.ultOrder;
       return began(b, me, ult, out, 'ult');

@@ -1,10 +1,253 @@
-# Hero kits, mana and manual ultimates (COMBAT-002): the design
+# Hero kits, mana and manual ultimates (COMBAT-002)
 
-> **Phase 1, design only.** Nothing in `src/` has changed. This note is the proposal for the owner to approve, change or
-> turn down before any game code is written. The HUD mock-up is
-> [`docs/samples/hero-kits-hud-mock.png`](../samples/hero-kits-hud-mock.png) (393x852, painted over a real screenshot of
-> the current fight screen, [`hero-kits-hud-before.png`](../samples/hero-kits-hud-before.png)). The short version for the
-> owner is [`hero-kits-summary.md`](hero-kits-summary.md).
+> **Phase 2, built** (branch `claude/hero-kits`). The owner approved the design below with five answers (next section); this
+> note now records what was built, where it differs from the design, the numbers it was tuned to and the balance before and after.
+> The design itself (sections 1 to 11, further down) is kept as approved, with its numbers brought up to date where the build
+> changed them. The short version for the owner is [`hero-kits-summary.md`](hero-kits-summary.md); the mock-up the bar was built
+> from is [`hero-kits-hud-mock.png`](../samples/hero-kits-hud-mock.png).
+
+## The owner's answers (2026-10-28)
+
+1. **Auto is off by default.** Once a hero's ultimate is open, the player taps the portrait to fire it; the Auto switch at the end of the
+   hero bar fires them on their own (kept as `Meta.ultAuto?`). Auto-replay always fires them. Headless runs and tests fire them, since
+   `b.autoUlt` unset means Auto.
+2. **Ultimates are rarer and bigger:** about **40 s** of fighting to fill the meter for an average hero (about 30 s for a front-liner,
+   50 s for a support), and each ultimate at least as strong as it was.
+3. **The Warlock is a leech**, as designed.
+4. **Simple effects first, painted art later:** the new skills reuse or recolour the FX-003 signatures; the ones that still want
+   their own painting are listed below (FX-004).
+5. **Heroes need not be equal:** the parity band is 6 points, not 4.
+
+## What was built
+
+### The sim (`src/sim/heroKits.ts`, `src/sim/orders.ts`, `src/sim/kits/`)
+
+- **One pool a hero** (`HERO_KITS()[kind].pool`): 17 mana, 28 stamina, as designed. The pool is kept in `Unit.charge` as a share of
+  the pool in percent, so a run's carried charge, old saves and everything that reads `charge` stay valid; `resOf` gives the points.
+  Summons, wraiths, the standard and every foe have none: foes keep `KITS`, their charge meter and `gain` exactly as before.
+- **Two skills** (`Slot`: skill, cost, `tune`, gap, flags). Skill 1 from level 1, skill 2 from `SKILL2_LEVEL` (10). Every old skill is
+  the same object as in `KITS` (so its FX-003 painting, its tier skills and the foes that borrow it are untouched): skill 1 for 43
+  heroes, skill 2 for the Cleric and the Wanderer. Each hero's new skill is in `src/sim/kits/` (`front.ts`, `blades.ts`, `shooters.ts`,
+  `casters.ts`, `callers.ts`); what they leave on fighters and the field (parries, smoke, marks, forms, a standard, a song, a vow, a
+  stored charge, timed terrain, wraiths) and the rules that read it are in `kits/effects.ts`, called from the fight's generic places
+  (`kitStrike` in `onStrike`, `kitBlow` after a blow, `kitSpare`/`kitDeath` in `hurt`, `kitTick` every tick, `kitQuick`/`kitDef` for speed
+  and reach). The table of all 45 is `kits/table.ts`.
+- **The AI** (`castHero`): a queued ultimate; an emergency (a heal for a friend under 35%, Smoke Bomb, Mirror Image, Shield Wall
+  when the hero itself is in trouble); the ultimate on Auto; skill 2 then skill 1, each when open, affordable, past its gap and with
+  something to do (the cast's own check). Skill 1 is held back while it is skill 2's turn (the two take turns) or skill 2 is about to
+  be affordable; a mana healer keeps its heal's cost while a friend is under 60%.
+- **The ultimate's meter** (`charge2`): fills from damage dealt (and healing given, and the hero's summons' damage), damage taken and
+  time (`ULT_FILL`), times the ultimate's `tuned.rate` and the `ultRate` talent; full stays full; below level 30 it neither fills nor shows.
+- **The tap** (`orderUltimate(b, unitId)` in `orders.ts`): checked like `castSpell` (the fight is on, a living placed hero, an open and
+  full ultimate, no order waiting), queued on `b.orders` with an `ultQueued` event, applied at the start of the next tick, kept in
+  `b.log` (with every king's spell), and fired the first time the hero is free; an order that cannot be fired within `ORDER_WAIT_MS`
+  (3 s) lapses (`ultLapse`, the meter stays full). `replayLog(b, log)` plays a fight's log again; a test replays a tapped fight tick
+  for tick. `b.autoUlt` (unset is Auto) is set by the page from the switch, and forced on under auto-replay.
+- **The ultimates' twists:** Full Moon (both wolf forms at once), Curse of the Pharaoh (the two strongest foes are puppets for 2 s),
+  Keelhaul (each cut a die, x1 to x3), Harvest of Souls (each kill rises as a wraith for 5 s), Ghost Fleet (its salvos set off barrels),
+  Astral Convergence (every ally's pool fills by half).
+- **What reads the pool now:** talents (`castHeal`, `castShield`, `castHaste` on skill 2 and the ultimate only; `refund` is a share of
+  the cost), the old charge gifts (a tier rider, a combo beat, a gear ability, the bard's tune, a kill's charge back: `CHARGE_TO_POOL`,
+  half a point of the pool's share for each point of charge), traits and gear `charge` (pool refill), Battle Cry (fills pools). Texts
+  of traits, relics, combos and talents speak of pools.
+
+### The page (`src/heroBar.ts`, `src/main.ts`, `src/standView.ts`, `src/battleUi.css`, `src/render/`)
+
+- **The hero bar** replaces the bench in a fight: a tile a hero (portrait in the ultimate's ring, violet filling, gold when ready;
+  health; the pool, blue mana or gold stamina; pips 1 and 2, lit when the skill can be paid for, "10" while skill 2 is locked; the
+  name), "TAP" on a ready tile and "Lv 30" on a locked one, a turning ring while an order waits, a shake when it lapses, greyed
+  when fallen; the **Auto** switch is the last tile. The king's spell cards are half as tall. Six to ten heroes (the Last Stand's
+  eight, a Calamity's ten) take two rows. Text is 12 px and never bold. The ready glow is steady and the ring breathes (scale only:
+  `test/no-flicker.test.ts` forbids looping brightness); reduced motion stills the ring.
+- **The Last Stand** has the same bar in two rows above its buttons; **the Calamity's** fights use the page's bar.
+- **On the field:** a hero's pool bar (blue or gold) and ultimate sliver under its health bar; a form or guise swaps the fighter's
+  sheet (`Unit.look`: the Werewolf's white and black wolves, the Druid's treant at her grade, the Kitsune's foe); wraiths are their
+  foe's sheet in a pale ghost tint; a foe turned to stone is grey; the standard is the castle courtyard's banner; ramparts and
+  statues are the board's own ruined-wall props, a flood a pale water sheet, caltrops the snare rune, kegs the barrel's blast; a
+  mark (Bounty, Condemned, Charged, Pinned, Dice 3 + 5...) is a 12 px word over the fighter.
+- **Looks for the new skills** (`src/render/kitLooks.ts`): each borrows a close FX-003 signature, recoloured, and that skill's element
+  for its wind-up and sound (a test holds that every one has a look).
+
+### Where it differs from the design
+
+Each of these was found in the tuning (the design's numbers, played, made skills fire about four times as often as the old
+charge meter did, which the heroes' utility skills could not be tuned down from) or forced by a file outside this task's scope.
+
+1. **The pools' pace.** Every gain of section 1 (the refill and the gains from blows) runs at `RES.PACE` 0.45 of the design's number,
+   and a pool comes back faster once skill 2 is open (`SKILL2_PACE_MANA` 1.6, `SKILL2_PACE_STAM` 1.15). At the design's pace a level-1
+   hero cast about 8.7 skills a minute against the old 2.2 and a team won 94% of fights it used to win half of; guards, banners, taunts,
+   decoys and summons do not get weaker with `tune`, so the pace had to come down. Now a level-1 hero casts about 3.5 a minute (1.6
+   times as often as before, each cast about half as strong), and at level 10 both skills come round in a fight.
+2. **Pools start a little short of a cast** (`STAM_START` 20 of 60, `MANA_START` 20 of 100), not full and 40: with a cast in hand every
+   blinker dived into the back line at the first tick and died, and every buff went up before the fight was joined.
+3. **Costs** are the design's bands, with the mana skill 2s at the cheaper end (55 to 60, not up to 75) so they come round at all.
+4. **Gaps.** The skills whose worth is what they do rather than what they deal keep a longer gap between casts (8 to 15 s: Shield Wall,
+   War Banner, Mirror Image, Trade Places, Grappling Hook, Snare Trap, Pipes of Pan, Call of the Wild, Temporal Surge, Guardian Angel,
+   Treeform, Fox Guise, Rewind, Condemn, Blood Fury, Blood Price, Font of Wisdom, Meteor, Flask Toss); the rest keep the design's 3 s
+   (stamina) and 5 s (mana).
+5. **The AI's holding rule** is stronger: once both skills are open they **take turns** (after a skill 1, skill 1 waits for skill 2) while
+   skill 2 has something to do, which a cheap look per skill says (`kits/when.ts`). Without it the cheaper skill 1 took every cast and
+   skill 2 hardly ever came round.
+6. **The meter's numbers** are smaller, for the owner's 40 s (design: 20 s): `ULT_FILL` 16 per own max health dealt or healed, 26 per own
+   max health taken, 0.55 a second (design 30, 45, 1), and each hero's `tuned.rate` is set for its role: about 30 s for a front-liner,
+   40 for a striker, shooter or caster, 50 for a support. Shielding a friend does not fill it (healing does).
+7. **Raise Rampart** raises a wall (impassable tiles for 10 s, drawn with the board's own ruined-wall props) rather than lifting the
+   ground a step: the board's columns are drawn by `boardView.ts` and `columnTextures.ts`, the WORLD-126 files this task may not touch,
+   and a tile that changed height mid-fight would have drawn its fighters off their column. For the same reason Flood and the Gorgon's
+   statues are drawn as overlays (a water sheet, a ruined pillar) over the unchanged columns; the tiles' rules (water slows, a statue
+   blocks) are the board's own.
+8. **Kit details changed in tuning:** Overload needs one Charged foe (not two) and Chain Lightning's mark lasts 10 s (not 5); Stone
+   Garden takes the strongest foe within 5 when none is held; Pied Piper works on a single foe; Treeform is a third more health for 6 s
+   (not half again for 8 s); Fox Guise is 5 s with the borrowed attack capped at 1.4 times hers; Guardian Angel watches for 4 s; Mark
+   for Coin is a quarter more for 10 s (not 15% for 8 s); Turning Wind also shoves the foes beside him; Raise Rampart also strikes and
+   holds the foes beside the new wall; the Wolf Bard's standing song is a tenth more (Anthem) or less (Dirge) damage within 3, doubled
+   by Change the Tune, and is up from level 10.
+9. **Not done:** the Minotaur's Gore Charge wall-slam bonus (Gore Charge is shared with three foes, whose fights must not change); the
+   Kraken Mate is slowed by his own flood like everyone (the design's "Sea Legs" is the Buccaneer's passive); the combo bar still feeds
+   on each cast (the design's "10 of pool spent" was not needed: casts are only 1.6 times as frequent); the Ninja Monk's Flow and the
+   Lancer's Momentum work from level 10 (with skill 2), the Shambler's spreading rot and the Arc Blade's store too.
+10. **The bar:** no "HEROES · tap a glowing portrait" heading row (the tip says it once, and the field keeps the room); the ready tile's
+    glow is steady and the ring breathes in size (the repo's no-flicker test forbids looping brightness), not a pulsing glow.
+
+11. **`ultPow` multiplies.** A talent's `ultPow` now multiplies the ultimate's tuned power (`(1 + ultPow) * power`), as its text
+    says ("hits 50% harder"); it used to be added to it, which was near enough while every power was below 1 but, with the
+    ultimates now at 0.4 to 2.5 times their written strength, made a "+50%" talent worth a fifth.
+
+### FX-004: the skills that still want their own painting
+
+Every one of the 45 new skills (43 skill 2s, and Smite and Flask Toss) plays a borrowed FX-003 signature, recoloured, with that
+skill's element for its wind-up and sound (`KIT_LOOKS` in `src/render/kitLooks.ts`). All 45 are the FX-004 list: each wants its own
+lead painting in a ninth atlas, as FX-003 gave the old skills. The ones where the borrowed look fits worst, and so come first, are
+marked **first**. The field art that is still drawn rather than painted: the flood's water sheet (no pack has a loose water tile) and
+the marks' words.
+
+| New skill | Plays now (borrowed signature) | Element | FX-004 |
+| --- | --- | --- | --- |
+| Shield Bash | Shield Wall | earth | later |
+| Parry Stance | Iaido | wind | later |
+| Smoke Bomb | Shadow Step | dark | **first** |
+| Pinning Shot | Volley | wind | later |
+| Wildfire | Meteor | fire | **first** |
+| Brace Spears | Hold the Line | earth | later |
+| Stillness Palm | Thousand Fists | light | later |
+| Flask Toss | Sanctuary | light | later |
+| Overload | Chain Lightning | lightning | **first** |
+| Fox Guise | Fox Charm | dark | **first** |
+| Pilfer | Dive | wind | later |
+| Turning Wind | Wind Gust | wind | later |
+| Shift | Ravage | dark | **first** |
+| Bull Rush | Gore Charge | earth | later |
+| Pied Piper | Pipes of Pan | wind | later |
+| Stone Garden | Stone Curse | earth | **first** |
+| Plant the Standard | War Banner | fire | **first** |
+| Martyr's Vow | Holy Challenge | light | later |
+| Smite | Judgement | light | later |
+| Treeform | Call Treant | earth | **first** |
+| Blood Fury | Bloodlust | fire | later |
+| Spike Field | Snare Trap | earth | later |
+| Soul Siphon | Hex | dark | later |
+| Trade Places | Mirror Image | light | **first** |
+| Fan the Hammer | Burst Fire | fire | later |
+| Devour | Rotting Touch | dark | later |
+| Suppressing Fire | Burst Fire | fire | later |
+| Mark for Coin | Bounty Hunt | dark | later |
+| Puppet Strings | Binding Wraps | dark | **first** |
+| Roll the Bones | Grappling Hook | light | **first** |
+| Change the Tune | Dirge | wind | later |
+| Sic 'Em | Call of the Wild | earth | **first** |
+| Flood | Undertow | ice | **first** |
+| Wheel About | Lance Charge | wind | later |
+| Bound Soul | Reap | dark | **first** |
+| Rewind | Temporal Surge | lightning | **first** |
+| Grounding | Voltage Blink | lightning | later |
+| Powder Keg | Broadside | fire | **first** |
+| Siege Mode | Shell Barrage | fire | **first** |
+| Guardian Angel | Holy Light | light | **first** |
+| Jump | Dive | fire | **first** |
+| Raise Rampart | Earthquake | earth | **first** |
+| Font of Wisdom | Starfall | light | later |
+| Blood Price | Hellblade Sweep | dark | later |
+| Condemn | Judgement | fire | later |
+
+### The numbers as built
+
+**The pools** (`RES` in `src/sim/heroKits.ts`; the design's section 1 has the same table, brought up to date):
+
+| | **Mana** | **Stamina** |
+| --- | --- | --- |
+| Pool | 100 | 60 |
+| Starts a fight with | 20 | 20 |
+| Refill a second (`PACE` 0.45 of the design's 3), and from level 10 | 1.35, or 2.0 left alone (focus); 2.16 and 3.24 from level 10 | 1.35 (none for 1 s once emptied); 1.55 from level 10 |
+| On a blow it deals | +1.35 (2.16 from level 10) | +0.9 (1.04) |
+| On a blow it takes | nothing | +1.35 (1.55); +0.45 on a dodge |
+| Skill 1 costs | 40 to 50 | 25 to 35 |
+| Skill 2 costs | 55 to 70 | 40 to 50 (Blood Fury and Blood Price: 25 and 10% or 15% of health) |
+| Shortest gap between two casts | 5 s (8 to 15 s for the utility skills) | 3 s (8 to 14 s) |
+| Casts a minute, all heroes (level 1; level 10) | about 3.5 (old skill: 2.2); about 3 to 4 with both skills | |
+
+**The meter** (`ULT_FILL`): 16 a hero's own max health dealt or healed, 26 a max health taken, 0.55 a second; times `tuned.rate`.
+**The levels:** `SKILL2_LEVEL` 10, `ULT_LEVEL` 30 (unchanged). **The tap:** `ORDER_WAIT_MS` 3000.
+
+### The balance, before and after
+
+"Before" is `main` as this branch started from it (a copy of it played with the same tools and seeds); "after" is this branch.
+The tools: `node tools/balance.mjs --heroes-only --games 12000 [--hero-level 30 --hero-stage 39]` (heroes), `SAVES=32 node
+tools/curve/run.mjs cell ...` (armies), `node tools/balance.mjs --no-tables --calamity --attempts 150`, `node tools/dailyRate.mjs --days
+60`, `node tools/stand-balance.mjs --levels 1,10,20,30,60,100 --attempts 60` (30 before).
+
+**Hero parity** (each hero's win share against the average in fights of five; the owner's band is now 6 points):
+
+| | Average | Spread (best to worst) | Worst against the average |
+| --- | --- | --- | --- |
+| Level 1, stage 5, before | 51.5% | 5.7 | within 4 |
+| Level 1, stage 5, after | 53.1% | 10.5 | Samurai Commander +5.3, Illusionist -5.2, Knight +4.9 |
+| Level 30, stage 39, before | 39.6% | 6.7 | within 4 |
+| Level 30, stage 39, after | 52.6% | 11.4 | Druid +5.8, Demon Swordsman -5.6, Minotaur -5.3 |
+
+At level 10 (stage 24) the average went from 23.5% to about 33%: the second skill is a real step up.
+
+**Armies on Normal** at their recommended level (tries to clear, the curve tool's realistic player; the target is 2 to 3.5). The
+armies' `start` (`src/sim/armies.ts`) moved for three of them: the Undead 1.47 to **1.41**, the Beasts 1.59 to **1.66**, the Wildwood
+1.76 to **1.86**. Level 1 still clears only the first army (`test/armies.test.ts`).
+
+| Army (level) | Orcs (1) | Undead (8) | Beasts (15) | Wildwood (22) | Labyrinth (30) | Ogres (38) | Infernal (40) | Yokai (46) | Golems (52) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Before | 2.1 | 2.9 | 2.8 | 2.7 | 2.9 | 2.9 | 3.0 | 2.8 | 2.7 |
+| After, kits alone | 2.6 | 3.9 | 1.9 | 1.9 | 2.8 | 2.6 | 2.1 | 2.5 | 2.3 |
+| After, retuned | 2.6 | 2.8 | 2.7 | 2.8 | 2.8 | 2.6 | 2.1 | 2.5 | 2.3 |
+
+**The Calamity** (share of 150 greedy runs past each map's boss; the target 90/81/56/45/40/20). With the kits alone the late maps
+were far too easy (30 runs: 90/87/73/63/63/50, and `test/calamity.test.ts`'s "a full clear is not the common case" failed, 11 of
+24), so `CAL_SCALE` (`src/sim/calamity.ts`) went `step` 0.58 to **0.64**, `atkBias` 0.35 to **0.45** and `final` 0.33 to **0.6**:
+
+| | Map 1 | Map 2 | Map 3 | Map 4 | Map 5 | Map 6 (cleared) |
+| --- | --- | --- | --- | --- | --- | --- |
+| Before | 90% | 78% | 52% | 38% | 35% | 17% |
+| After | 92% | 79% | 65% | 51% | 47% | 15% |
+
+**The daily** (60 dates, a fresh save; cleared with hearts / without): before 72% / 53%; kits alone 63% / 47%; after `DAILY_START`
+(`src/sim/daily.ts`) 0.57 to **0.55**: 73% / 55%.
+
+**The Last Stand** (median wave the king fell in; the target about 4, 10, 13, 22, 26, 35). With the kits alone the middle levels
+fell short (the waves' bosses at 10, 20 and 25 are walls); `BOSS_START` (`src/sim/stand.ts`) 0.5 to **0.45** and
+`WAVE_GROWTH_LATE` 0.11 to **0.07** (this changes the numbers in `last-stand.md`'s "Waves grow faster, then ease"):
+
+| Level | 1 | 10 | 20 | 30 | 60 | 100 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Before | 4 | 10 | 13 | 22 | 26 | 35 |
+| Kits alone | 4 | 10 | 10 | 19 | 21 | 27 |
+| After | 4 | 10 | 12 | 20 | 22 | 40 |
+
+The Last Stand's runs are noisy (a boss wave either falls or it does not: the same knobs measured twice at 30 runs gave level 100
+24 and 40), and level 20 to 60 sit a wave or a few short of the target; a later pass could tune the stand's bosses on their own.
+`test/stand-regression.test.ts` is re-pinned (its fights have heroes in them, whose kits change them).
+
+---
+
+# The approved design (phase 1)
+
+As the owner approved it, with the numbers of sections 1, 2 and 9 brought up to date where the build changed them (the
+differences are listed above).
 
 ## The owner's ask, and the decisions already made
 
@@ -45,16 +288,16 @@ Summons (wolves, treants, decoys, the new wraiths and standards) and foes have n
 | | **Mana** (casters, holy, mystic, arcane) | **Stamina** (martial) |
 | --- | --- | --- |
 | Pool (`resMax`) | 100 | 60 |
-| Starts a fight with | 40 | 60 (full) |
-| Refills over time | 3 a second (3% of the pool) | 3 a second (5% of the pool) |
+| Starts a fight with | ~~40~~ **20** | ~~60 (full)~~ **20** |
+| Refills over time | 3 a second (3% of the pool), **times `PACE` 0.45; from level 10 times 1.6** | 3 a second (5% of the pool), **times 0.45; from level 10 times 1.15** |
 | **Focus** / **Winded** | **Focus:** +50% refill while the hero has not been hit for 3 s (back-liners kept safe cast more) | **Winded:** emptying the pool stops the refill for 1 s |
-| On a blow it deals (a blow or shot that lands) | +3 | +2 |
-| On a blow it takes | nothing | +3 (a dodge gives +1): **second wind**, the thick of the fight feeds it |
+| On a blow it deals (a blow or shot that lands) | +3 (**times the same pace**) | +2 (**times the pace**) |
+| On a blow it takes | nothing | +3 (a dodge gives +1), **times the pace**: **second wind**, the thick of the fight feeds it |
 | Skill 1 costs | 40 to 50 | 25 to 35 |
-| Skill 2 costs | 55 to 75 | 40 to 50 (the Barbarian and Demon Swordsman pay 25 and a share of their health) |
-| Shortest gap between two casts of the same skill | 5 s | 3 s |
-| Typical cadence (both skills open) | a spell every 8 to 10 s | a skill every 4 to 6 s |
-| Per-cast strength | big: about today's skill | about 60% of today's skill |
+| Skill 2 costs | ~~55 to 75~~ **55 to 70** | 40 to 50 (the Barbarian and Demon Swordsman pay 25 and a share of their health) |
+| Shortest gap between two casts of the same skill | 5 s (**8 to 15 s for the utility skills**) | 3 s (**8 to 14 s**) |
+| Typical cadence | ~~a spell every 8 to 10 s~~ **about a cast every 17 to 20 s, a little more from level 10** | ~~a skill every 4 to 6 s~~ **about a cast every 15 s, a little more from level 10** |
+| Per-cast strength | ~~big: about today's skill~~ **each hero's `tune`, about half to the whole of today's skill** | ~~about 60%~~ **each hero's `tune`, mostly 0.3 to 0.8 of today's skill** |
 
 So the two feel different: stamina is a small, fast pool that front-liners burn as they go (and get back by being in
 the fight); mana is a deep, slow pool that rewards keeping a caster safe and pays out in fewer, bigger spells.
@@ -65,7 +308,7 @@ A hero sitting at a full pool wastes its refill, which pushes stamina heroes to 
 `localBoost`: the spire's and Calamity's in-run level, capped at 30). Below its level a skill is shown dimmed with
 "Unlocks at level 10." and is never cast.
 
-**Proposed constants** (one table, `RES` in a new `src/sim/heroKits.ts`): `MANA_MAX 100`, `MANA_START 40`,
+**Constants** (one table, `RES` in `src/sim/heroKits.ts`; as proposed, but `MANA_START` and `STAM_START` 20, `PACE` 0.45 and the level-10 paces): `MANA_MAX 100`, `MANA_START 40`,
 `MANA_REGEN 3`, `FOCUS_MULT 1.5`, `FOCUS_MS 3000`, `MANA_ON_BLOW 3`; `STAM_MAX 60`, `STAM_REGEN 3`, `STAM_ON_BLOW 2`,
 `STAM_ON_HIT 3`, `STAM_ON_DODGE 1`, `WINDED_MS 1000`; `GAP_MANA_MS 5000`, `GAP_STAM_MS 3000`; `SKILL2_LEVEL 10`.
 Each skill also carries `cost` and a strength knob `tune` (like the ultimates' `tuned.power`), the per-hero balance dials.
@@ -77,16 +320,17 @@ skill's charge. It fills from the fight itself:
 
 | Source | Gain |
 | --- | --- |
-| Damage the hero deals (blows, skills, burns) | **+30 per the hero's own max health dealt** (dealing your own health's worth fills 30%) |
-| Healing and shielding the hero gives allies | counts as damage dealt (so healers fill too) |
-| Damage the hero takes (after shields) | **+45 per its own max health taken**; a blow turned aside by a guard or block counts at half |
-| Time in the fight | +1 a second (so no hero waits forever) |
+| Damage the hero deals (blows, skills, burns) | ~~+30~~ **+16 per the hero's own max health dealt** |
+| Healing ~~and shielding~~ the hero gives allies | counts as damage dealt (so healers fill too) |
+| Damage the hero takes (after shields) | ~~+45~~ **+26 per its own max health taken**; a blow a guard or block halves counts at half |
+| Time in the fight | ~~+1~~ **+0.55 a second** (so no hero waits forever) |
 | Per-hero knob | times `tuned.rate` (kept from `ultimates.ts`), times `1 + ultRate` (talent) |
 
-**How long it takes.** Target: an average hero fills it in about **18 to 22 s** of steady fighting; front-liners about
-15 s, quiet back-line supports about 25 s. A normal wave (20 to 40 s) therefore sees about one ultimate per hero, a boss
-wave or a long Calamity fight two. This is roughly four times as often as today, so every ultimate's `tuned.power` is
-re-tuned down in phase 2 (see section 9). The meter carries between waves of a run as it does now (`RunHero.charge2`).
+**How long it takes** (the owner: rarer and bigger). An average hero fills it in about **40 s** of fighting (measured: 37.7 s
+at level 30, stage 39); front-liners about 30 s, supports about 50 s (each hero's `tuned.rate`). A normal wave (20 to 40 s) sees
+one ultimate from some of the five, a boss wave or a long Calamity fight about one each. Every ultimate is at least as strong as
+it was (most were at 5 to 10% of their written strength; now 40% to 250%). The meter carries between waves of a run as it did
+(`RunHero.charge2`).
 
 **Ready.** At 100 the meter is full and stays full: no more gain, and nothing is lost by waiting. Below level 30 the
 meter neither fills nor shows.
@@ -417,7 +661,7 @@ reduced motion turns the pulse into a steady glow.
 7. **Terrain changes** (Rampart, Flood, statues) redraw board columns mid-fight; acceptable on a phone, or should they be
    painted marks only?
 
-## Checks for this phase
+## Checks for phase 1
 
 Documentation and images only. Runtime tests and builds were not needed for the change; `npm run web` was run once to
 take the "before" screenshot of the current fight (wave 3 of the Orc Warband, Knight, Werewolf, Beastmaster, Fire

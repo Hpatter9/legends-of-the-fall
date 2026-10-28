@@ -1561,7 +1561,7 @@ export function tryCast(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!k) return false;
   // (a full ultimate goes first; if it has nothing to hit, the ordinary skill may still go)
   const ult = ultimateOf(me);
-  if (ult && (me.charge2 ?? 0) >= ult.need && powered(b, me, ult, tal(me, 'ultPow') + (ultTune(me, ult)?.power ?? 1) - 1, out)) {
+  if (ult && (me.charge2 ?? 0) >= ult.need && powered(b, me, ult, (1 + tal(me, 'ultPow')) * (ultTune(me, ult)?.power ?? 1) - 1, out)) {
     me.charge2! -= ult.need;
     return began(b, me, ult, out);
   }

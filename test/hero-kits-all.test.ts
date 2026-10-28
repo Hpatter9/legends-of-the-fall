@@ -80,12 +80,12 @@ test('every hero\'s skill 1, skill 2 and ultimate can be cast, in at least one o
 });
 const KITS_ULT = (h: string) => ultimateOf({ def: h, side: 'hero', level: ULT_LEVEL } as Unit)!;
 
-/** Every hero, nine fights of five, all at level 30 (both skills and the ultimate open), against a tough band. */
+/** Every hero, nine fights of five, all at level 30 (both skills and the ultimate open), against a band with a lot of health (a long fight: the ultimates end a short one before every skill comes round). */
 function season(): string {
   let trace = '';
   for (let g = 0; g < 9; g++) {
     const seed = 900 + g;
-    const b = startBattle(seed, ['orcs', 'skeletons', 'mixed'][g % 3], { foes: { hp: 10, atk: 2.2 } });
+    const b = startBattle(seed, ['orcs', 'skeletons', 'mixed'][g % 3], { foes: { hp: 16, atk: 1.6 } });
     const spots = deploySpots(b, new Rng(mixSeed(seed, 0xba1a)));
     ALL_HEROES.slice(g * 5, g * 5 + 5).forEach((id, i) => place(b, id, spots[i][0], spots[i][1], undefined, { ...gradeBoost(1, 0, ULT_LEVEL), charge2: 60 }));
     fight(b);

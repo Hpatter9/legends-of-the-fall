@@ -207,12 +207,15 @@ test('Call of the Wild brings two dire wolves, no more, that fight for the Beast
   const wolves = () => b.units.filter((x) => x.alive && x.def === 'wolf');
   assert.equal(wolves().length, 1);
   assert.equal(wolves()[0].owner, me.id);
-  // (a skill keeps a gap before it goes again: COMBAT-002)
-  me.charge = CHARGE_MAX;
-  run(b, 3500);
+  // (a skill keeps a gap before it goes again, 9 s for Call of the Wild (COMBAT-002): the gap is taken as passed each time)
+  const again = () => {
+    me.charge = CHARGE_MAX;
+    if (me.ks) me.ks.at1 = -1e9;
+    run(b, 1500);
+  };
+  again();
   assert.equal(wolves().length, 2);
-  me.charge = CHARGE_MAX;
-  run(b, 3500);
+  again();
   assert.equal(wolves().length, 2);
 });
 
