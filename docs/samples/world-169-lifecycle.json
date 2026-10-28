@@ -1,0 +1,146 @@
+[
+  {
+    "width": 360,
+    "height": 780,
+    "progression": {
+      "stage": 2,
+      "phase": "won",
+      "t": 28900,
+      "walking": true
+    },
+    "ownership": {
+      "iterations": 24,
+      "cache": {
+        "hits": 21357,
+        "misses": 915,
+        "retained": 204,
+        "retainedBytes": 4184064,
+        "live": 204,
+        "liveBytes": 4184064,
+        "leases": 192
+      },
+      "failedBakeCleanup": true,
+      "individualDrops": true
+    },
+    "resume": {
+      "stage": 14,
+      "scenario": "mountain",
+      "w": 12
+    },
+    "manualPan": {
+      "beforePan": [
+        559.1565775401139,
+        -235.5022727272756
+      ],
+      "afterPan": [
+        126.26880291687272,
+        -310.5160499513867
+      ]
+    },
+    "panBack": {
+      "baked": true,
+      "live": true
+    },
+    "offline": {
+      "stage": 14,
+      "w": 12
+    },
+    "errors": []
+  },
+  {
+    "width": 393,
+    "height": 852,
+    "progression": {
+      "stage": 2,
+      "phase": "won",
+      "t": 17500,
+      "walking": true
+    },
+    "ownership": {
+      "iterations": 24,
+      "cache": {
+        "hits": 21357,
+        "misses": 915,
+        "retained": 204,
+        "retainedBytes": 4184064,
+        "live": 204,
+        "liveBytes": 4184064,
+        "leases": 192
+      },
+      "failedBakeCleanup": true,
+      "individualDrops": true
+    },
+    "resume": {
+      "stage": 14,
+      "scenario": "mountain",
+      "w": 12
+    },
+    "manualPan": {
+      "beforePan": [
+        400.77303436510226,
+        -145.71136363636546
+      ],
+      "afterPan": [
+        -17.556593632149458,
+        -200.89946004863637
+      ]
+    },
+    "panBack": {
+      "baked": true,
+      "live": true
+    },
+    "offline": {
+      "stage": 14,
+      "w": 12
+    },
+    "errors": []
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "progression": {
+      "stage": 2,
+      "phase": "won",
+      "t": 24700,
+      "walking": true
+    },
+    "ownership": {
+      "iterations": 24,
+      "cache": {
+        "hits": 21357,
+        "misses": 915,
+        "retained": 204,
+        "retainedBytes": 4184064,
+        "live": 204,
+        "liveBytes": 4184064,
+        "leases": 192
+      },
+      "failedBakeCleanup": true,
+      "individualDrops": true
+    },
+    "resume": {
+      "stage": 14,
+      "scenario": "mountain",
+      "w": 12
+    },
+    "manualPan": {
+      "beforePan": [
+        400.7813638523889,
+        -145.71136363636555
+      ],
+      "afterPan": [
+        90.08430063918362,
+        -247.40033943329544
+      ]
+    },
+    "panBack": {
+      "baked": true,
+      "live": true
+    },
+    "offline": {
+      "stage": 14,
+      "w": 12
+    },
+    "errors": []
+  }
+]

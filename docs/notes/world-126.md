@@ -61,3 +61,10 @@ Original 8×11 army Hire/Auto-arrange/Fight smoke reached simulation 1.0s withou
 Checkpoint scope: column reuse/ownership plus tests, reproducible browser scripts, measurements and handoff only. New owner-requested 14×18 per-army maps are **not implemented** by this checkpoint. The nine-theme planning diagram is in `docs/samples/world-001-army-themes-proposal.png`; connected-section versus one-map interpretation and theme confirmation remain with the owner under AGENTS.md's visual-review rule. The temple destination must be on the central lake island.
 
 Next: resolve rare warm-tail stalls/obtain device evidence before approving wider rollout; confirm the revised per-army map design and implement it as a separate bounded step. Keep #126/#123 open and PR #124 draft. No version bump, main push, merge or deployment.
+
+
+## Owner-authorised release — 0.169.0
+
+On 2026-10-28 the owner requested “Bump and merge”. Integrated latest main 0.168.0 into the WORLD branch, preserving the released interface, effects and in-place heart revival. Credits/task-board conflicts were resolved by retaining current main content and adding the WORLD records. Release bump is 0.169.0 in package and lockfile. This authorisation supersedes the earlier no-merge checkpoint instruction, but does not claim completion of 14×18 army maps or mobile/warm-tail performance approval. Integration checks are recorded below.
+
+Integration validation: `npm run typecheck`, `npm run web` and 48 affected tests passed (WORLD scenarios/turns, long map, texture ownership, heart revival and cinematic/individual effects). The release lifecycle matrix passed real progression/Next, 24 cleanup cycles per size, late-save resume, drag-pan/pan-back and offline reload at 360×780, 393×852 and 412×915, with zero page errors; screenshots were inspected. Release results and images use the `world-169` prefix in `docs/samples/`. Original 8×11 army and 24×24 bake-path compatibility smoke also passed on the integrated build. Existing cold/warm measurements above describe the earlier checkpoint, not a new benchmark of the integrated effects release.

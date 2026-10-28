@@ -6,6 +6,8 @@ import { Rectangle, Texture } from 'pixi.js';
 import { loadImage } from './loadImage';
 import propsUrl from '../art/fx/props.png';
 import type { Burst, Particles } from './particles';
+import { abilityFrames } from './abilityArt';
+import { abilityHeading, shapeFamily } from './abilityLooks';
 import { PACK } from './fxSheets';
 import { VFX, type VfxKey } from './vfxArt';
 import { bits } from './fxRules';
@@ -54,7 +56,7 @@ const jit = (n: number) => (Math.random() * 2 - 1) * n;
 /** Whom a step is drawn on. */
 function targets(st: Step, sc: Scene): readonly Pt[] {
   const on: On = st.on ?? 'self';
-  return on === 'foes' ? (sc.foes.length ? sc.foes : [front(sc, 90)]) : on === 'allies' ? (sc.allies.length ? sc.allies : [sc.self]) : [sc.self];
+  return on === 'target' ? [sc.foes[0] ?? front(sc, 90)] : on === 'foes' ? (sc.foes.length ? sc.foes : [front(sc, 90)]) : on === 'allies' ? (sc.allies.length ? sc.allies : [sc.self]) : [sc.self];
 }
 
 /** A point `d` px along the line to the nearest foe. */
@@ -65,8 +67,10 @@ const body = (t: Pt) => t.y - t.tall * 0.5;
 /** One run of a strip, with the step's size, tint, opacity and speed. */
 function put(sc: Scene, st: Step, frames: Texture[], x: number, y: number, o: Partial<Burst> = {}): void {
   // (a prop is a solid sprite, drawn plainly and tumbling; the strips glow)
-  const prop = PROPS.includes(st.k);
-  sc.p.spawn({ frames, x, y, scale: (st.z ?? 1) * sc.size, frameMs: st.f ?? 70, alpha: st.a ?? (prop ? 1 : 0.9), tint: st.t, add: !prop, prio: true, delay: st.d, ...(prop && !o.rotation ? { spin: jit(0.012) } : {}), ...o });
+  const prop = !st.art && PROPS.includes(st.k);
+  sc.p.spawn({ frames, art: st.art, x, y, scale: (st.z ?? 1) * sc.size, frameMs: st.f ?? 70, alpha: st.a ?? (prop ? 1 : 0.9), tint: st.t, add: !prop, prio: true, delay: st.d, ...(prop && !o.rotation ? { spin: jit(0.012) } : {}), ...o,
+    ...(st.art && (st.s === 'cleave' || st.s === 'fan') ? { rotation: 0 } : {}),
+  });
 }
 
 /** A delay for the `i`th of a run (the step's own wait added). */
@@ -97,7 +101,7 @@ const SHAPES: Record<Step['s'], Draw> = {
     }
   },
   drop(st, f, sc) {
-    const land = framesOf(st.l ?? '');
+    const land = st.l ? (st.art ? abilityFrames(st.art, 'hit') : framesOf(st.l)) : undefined;
     for (const [i, t] of targets(st, sc).slice(0, 6).entries()) {
       const delay = after(st, i * 70);
       put(sc, st, f, t.x, t.y - t.tall * 0.5 - 90, { loop: true, life: 240, vy: 0.375, delay });
@@ -105,7 +109,7 @@ const SHAPES: Record<Step['s'], Draw> = {
     }
   },
   rain(st, f, sc) {
-    const land = framesOf(st.l ?? '');
+    const land = st.l ? (st.art ? abilityFrames(st.art, 'hit') : framesOf(st.l)) : undefined;
     const n = count(st, 8, sc);
     const spots = st.on === 'allies' ? sc.allies : sc.foes;
     for (let i = 0; i < n; i++) {
@@ -118,10 +122,10 @@ const SHAPES: Record<Step['s'], Draw> = {
     }
   },
   meteor(st, f, sc) {
-    const land = framesOf(st.l ?? '');
+    const land = st.l ? (st.art ? abilityFrames(st.art, 'hit') : framesOf(st.l)) : undefined;
     const c = sc.foes[0] ?? front(sc, 90);
     const [dx, dy] = [90, -150];
-    put(sc, st, f, c.x + dx, c.y + dy, { loop: true, life: 340, vx: -dx / 340, vy: -dy / 340, spin: 0.01, delay: after(st, 0) });
+    put(sc, st, f, c.x + dx, c.y + dy, { loop: true, life: 340, vx: -dx / 340, vy: -dy / 340, spin: st.art ? 0 : 0.01, rotation: st.art ? Math.atan2(-dy, -dx) - abilityHeading(st.art) : 0, delay: after(st, 0) });
     if (land) put(sc, { ...st, z: (st.z ?? 1) * 0.8 }, land, c.x, c.y - c.tall * 0.3, { delay: after(st, 340), frameMs: 60 });
   },
   beam(st, f, sc) {
@@ -173,7 +177,7 @@ const SHAPES: Record<Step['s'], Draw> = {
     }
   },
   cleave(st, f, sc) {
-    const spots = sc.foes.length ? sc.foes : [front(sc, 90)];
+    const spots = st.on === 'target' ? [sc.foes[0] ?? front(sc, 90)] : sc.foes.length ? sc.foes : [front(sc, 90)];
     for (const [i, c] of spots.slice(0, 4).entries()) put(sc, st, f, c.x, c.y - c.tall * 0.6, { rotation: -Math.PI / 2 + 0.25, delay: after(st, i * 90), frameMs: 55 });
   },
   spikes(st, f, sc) {
@@ -232,7 +236,9 @@ const SHAPES: Record<Step['s'], Draw> = {
     for (const [i, c] of sc.foes.slice(0, 5).entries()) {
       const [qx, qy] = [c.x, body(c)];
       const len = Math.hypot(qx - px, qy - py);
-      put(sc, { ...st, z: Math.max(0.6, len / 26) * (st.z ?? 1) }, f, (px + qx) / 2, (py + qy) / 2, { rotation: Math.atan2(qy - py, qx - px) - Math.PI / 2, delay: after(st, i * 90), frameMs: 45 });
+      put(sc, { ...st, z: st.art ? st.z : Math.max(0.6, len / 26) * (st.z ?? 1) }, f, (px + qx) / 2, (py + qy) / 2, { rotation: Math.atan2(qy - py, qx - px) - Math.PI / 2, delay: after(st, i * 90), frameMs: 45,
+        ...(st.art ? { stretchY: len / (32 * (st.z ?? 1) * sc.size) } : {}),
+      });
       [px, py] = [qx, qy];
     }
   },
@@ -271,7 +277,7 @@ const SHAPES: Record<Step['s'], Draw> = {
 /** Play steps against a scene. A step whose strip is not loaded is skipped. */
 export function playSteps(steps: readonly Step[], sc: Scene): void {
   for (const st of steps) {
-    const f = framesOf(st.k);
+    const f = st.art ? abilityFrames(st.art, shapeFamily(st.s)) : framesOf(st.k);
     if (f?.length) SHAPES[st.s](st, f, sc);
   }
 }

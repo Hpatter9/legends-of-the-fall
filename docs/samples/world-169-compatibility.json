@@ -1,0 +1,25 @@
+{
+  "standardArmy": {
+    "w": 8,
+    "d": 11,
+    "t": 1000,
+    "scenario": null
+  },
+  "largeFieldFixture": {
+    "w": 24,
+    "d": 24,
+    "texturePixels": 1213440,
+    "activeLeasesBefore": 88,
+    "activeLeasesAfter": 88
+  },
+  "cache": {
+    "hits": 622,
+    "misses": 42,
+    "retained": 42,
+    "retainedBytes": 599040,
+    "live": 42,
+    "liveBytes": 599040,
+    "leases": 88
+  },
+  "errors": []
+}

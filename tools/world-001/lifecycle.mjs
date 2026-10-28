@@ -4,7 +4,8 @@ import assert from 'node:assert/strict';
 import { openBrowser } from './browser.mjs';
 const host=await openBrowser(process.argv[2]??'out/web');
 const sizes=process.env.WORLD_WIDTHS?.split(',').map(Number);
-const reportPath='docs/samples/world-126-lifecycle.json';
+const prefix=process.env.WORLD_ARTIFACT_PREFIX??'world-126';
+const reportPath=`docs/samples/${prefix}-lifecycle.json`;
 const reports=sizes&&existsSync(reportPath)?JSON.parse(readFileSync(reportPath,'utf8')).filter(r=>!sizes.includes(r.width)):[];
 try {
  for(const [width,height] of [[360,780],[393,852],[412,915]].filter(([w])=>!sizes||sizes.includes(w))) {
@@ -17,7 +18,7 @@ try {
   console.log('REAL_WAVE',width);
   const progression=await page.evaluate(()=>({stage:window.__game.run.stage,phase:window.__game.b.phase,t:window.__game.b.t,walking:window.__game.chain.active}));
   assert.equal(progression.stage,2);assert.equal(progression.walking,true);
-  await page.screenshot({path:`docs/samples/world-126-progression-${width}.png`});
+  await page.screenshot({path:`docs/samples/${prefix}-progression-${width}.png`});
   await page.locator('#next').click({timeout:60000});
   await page.waitForFunction(()=>window.__game.b.phase==='deploy');
   const ownership=await page.evaluate(()=>{
@@ -57,7 +58,7 @@ try {
   const afterPan=await page.evaluate(()=>[window.__game.cx,window.__game.cy]);assert.notDeepEqual(afterPan,beforePan);
   const panBack=await page.evaluate(()=>{const v=window.__game.boardView;const scene=v.scenesWanted.find(s=>!v.baked.has(s.board));if(!scene)throw new Error('no lazy section available');const x=(scene.ou-scene.ov)*32,y=(scene.ou+scene.ov)*16;v.cull({x0:x-800,x1:x+800,y0:y-800,y1:y+800});for(let i=0;i<20&&!v.baked.has(scene.board);i++)v.pump();return {baked:v.baked.has(scene.board),live:!!v.sceneryOf.get(scene.board)?.texture.source};});
   assert.ok(panBack.baked&&panBack.live);await page.evaluate(()=>window.__game.focus());
-  await page.screenshot({path:`docs/samples/world-126-resume-${width}.png`});
+  await page.screenshot({path:`docs/samples/${prefix}-resume-${width}.png`});
   await page.waitForFunction(()=>navigator.serviceWorker.controller,{}, {timeout:30000});
   await context.setOffline(true);await page.reload();await page.waitForFunction(()=>window.__game,{}, {timeout:90000});
   const offline=await page.evaluate(()=>({stage:window.__game.run.stage,w:window.__game.b.board.w}));assert.equal(offline.stage,14);assert.equal(offline.w,12);

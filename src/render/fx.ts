@@ -2,18 +2,20 @@
 // screen's shake (the rules for these are Chronos's battle/juiceRules.ts). Everything runs on the fight's own clock,
 // so a faster fight is faster here too.
 
-import { Container, Graphics, Rectangle, Sprite, Text, Texture } from 'pixi.js';
+import { Container, Graphics, Sprite, Text, type Texture } from 'pixi.js';
 import { tileAt, type Board } from '../sim/board';
 import { defOf, type Battle, type BattleEvent, type Unit } from '../sim/battle';
 import { isBoss } from '../sim/foes';
 import { kitOf } from '../sim/abilities';
+import { abilityHeading } from './abilityLooks';
+import { abilityFrames, loadAbilityArt } from './abilityArt';
+import { SPELL_SIGNATURES } from './spellSignatures';
 import { SPELLS } from '../sim/spells';
 import type { Shot } from '../sim/units';
 import { settings } from '../settings';
-import { loadImage } from './loadImage';
 import { at, facesRight, TH, TW } from './iso';
 import { fadeTrauma, popScale, shakeOf, traumaFor } from './juiceRules';
-import { BIG_FOE_HP, SKILL_FX, SPELL_FX, SPELL_GLOW, SPELL_WORD, type Effect, type MagicKey } from './skillFx';
+import { BIG_FOE_HP, SKILL_FX, SPELL_GLOW, SPELL_WORD, type Effect, type MagicKey } from './skillFx';
 import type { UnitSprite } from './unitView';
 import { Particles } from './particles';
 import { loadVfxArt, VFX } from './vfxArt';
@@ -24,60 +26,21 @@ import { comboById, COMBO_NAME } from '../sim/combos';
 import { SIGNATURES, tierRing } from './signatures';
 import { loadProps, playSteps, setSignatureSprite, type Pt, type Scene } from './signatureFx';
 import { tierSkillOf } from '../sim/tierSkills';
-import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, impactElement, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, SPELL_TOUCH, type Missile } from './fxRules';
+import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, impactElement, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, type Missile } from './fxRules';
 import { particleBudget, slashOf } from './vfxRules';
 import { placeLabel } from './labelRules';
-import impactUrl from '../art/fx/impact.png';
-import fireUrl from '../art/fx/hit_fire.png';
-import arrowUrl from '../art/fx/arrow.png';
-import boneUrl from '../art/fx/bone_arrow.png';
-import bloodExplosionUrl from '../art/fx/magic/blood_explosion.png';
-import darkCircleUrl from '../art/fx/magic/dark_circle.png';
-import darkSlashUrl from '../art/fx/magic/dark_slash.png';
-import earthBurstUrl from '../art/fx/magic/earth_burst.png';
-import earthExplosionUrl from '../art/fx/magic/earth_explosion.png';
-import earthShieldUrl from '../art/fx/magic/earth_shield.png';
-import earthWaveUrl from '../art/fx/magic/earth_wave.png';
-import fireCircleUrl from '../art/fx/magic/fire_circle.png';
-import fireExplosionUrl from '../art/fx/magic/fire_explosion.png';
-import goldBurstUrl from '../art/fx/magic/gold_burst.png';
-import iceShieldUrl from '../art/fx/magic/ice_shield.png';
-import lightCircleUrl from '../art/fx/magic/light_circle.png';
-import lightGatherUrl from '../art/fx/magic/light_gather.png';
-import lightNovaUrl from '../art/fx/magic/light_nova.png';
-import lightningBurstUrl from '../art/fx/magic/lightning_burst.png';
-import lightningStrikeUrl from '../art/fx/magic/lightning_strike.png';
-import moonSlashUrl from '../art/fx/magic/moon_slash.png';
-import pinkHeartUrl from '../art/fx/magic/pink_heart.png';
-import whiteBurstUrl from '../art/fx/magic/white_burst.png';
-import windBurstUrl from '../art/fx/magic/wind_burst.png';
-import windVortexUrl from '../art/fx/magic/wind_vortex.png';
-import windWaveUrl from '../art/fx/magic/wind_wave.png';
+import { loadPaintedArt, paintedStrip, paintSprite } from './cinematicArt';
+import type { Element, Family } from './fxRules';
 
-/** The Pixel Effects sheets (32px frames), by the keys `skillFx.ts` uses. */
-const MAGIC: Record<MagicKey, string> = {
-  bloodExplosion: bloodExplosionUrl,
-  darkCircle: darkCircleUrl,
-  darkSlash: darkSlashUrl,
-  earthBurst: earthBurstUrl,
-  earthExplosion: earthExplosionUrl,
-  earthShield: earthShieldUrl,
-  earthWave: earthWaveUrl,
-  fireCircle: fireCircleUrl,
-  fireExplosion: fireExplosionUrl,
-  goldBurst: goldBurstUrl,
-  iceShield: iceShieldUrl,
-  lightCircle: lightCircleUrl,
-  lightGather: lightGatherUrl,
-  lightNova: lightNovaUrl,
-  lightningBurst: lightningBurstUrl,
-  lightningStrike: lightningStrikeUrl,
-  moonSlash: moonSlashUrl,
-  pinkHeart: pinkHeartUrl,
-  whiteBurst: whiteBurstUrl,
-  windBurst: windBurstUrl,
-  windVortex: windVortexUrl,
-  windWave: windWaveUrl,
+/** Shapes for the legacy named skill cues; their scale and release timing remain the skill's own. */
+const MAGIC: Record<MagicKey, readonly [Element, Family]> = {
+  bloodExplosion: ['blood', 'explosion'], darkCircle: ['dark', 'circle'], darkSlash: ['dark', 'slash'],
+  earthBurst: ['earth', 'hit'], earthExplosion: ['earth', 'explosion'], earthShield: ['light', 'shield'], earthWave: ['earth', 'wave'],
+  fireCircle: ['fire', 'circle'], fireExplosion: ['fire', 'explosion'], goldBurst: ['light', 'nova'],
+  iceShield: ['ice', 'shield'], lightCircle: ['light', 'circle'], lightGather: ['forest', 'gather'],
+  lightNova: ['light', 'nova'], lightningBurst: ['lightning', 'hit'], lightningStrike: ['lightning', 'strike'],
+  moonSlash: ['wind', 'slash'], pinkHeart: ['light', 'gather'], whiteBurst: ['wind', 'hit'],
+  windBurst: ['wind', 'hit'], windVortex: ['wind', 'vortex'], windWave: ['wind', 'wave'],
 };
 
 interface Strip {
@@ -90,24 +53,21 @@ let arrow: Texture;
 let bone: Texture;
 let magic: Record<MagicKey, Strip>;
 
-async function strip(url: string, size: number): Promise<Strip> {
-  const base = Texture.from(await loadImage(url));
-  const n = Math.floor(base.width / size);
-  return { frames: Array.from({ length: n }, (_, i) => new Texture({ source: base.source, frame: new Rectangle(i * size, 0, size, size) })) };
-}
-
 export async function loadFx(): Promise<void> {
-  [impact, fire] = await Promise.all([strip(impactUrl, 48), strip(fireUrl, 32)]);
-  arrow = Texture.from(await loadImage(arrowUrl));
-  bone = Texture.from(await loadImage(boneUrl));
+  await loadPaintedArt();
+  impact = { frames: paintedStrip('light', 'hit') };
+  fire = { frames: paintedStrip('fire', 'flame') };
+  arrow = paintedStrip('wind', 'orb', 'arrow')[0];
+  bone = paintedStrip('earth', 'orb', 'bone')[0];
   setBoneArt(bone);
   setSignatureSprite('arrow', arrow);
   const keys = Object.keys(MAGIC) as MagicKey[];
-  const strips = await Promise.all(keys.map((k) => strip(MAGIC[k], 32)));
+  const strips = keys.map(k => ({ frames: paintedStrip(...MAGIC[k]) }));
   magic = Object.fromEntries(keys.map((k, i) => [k, strips[i]])) as Record<MagicKey, Strip>;
   await loadVfxArt();
   await loadPackArt();
-  await loadProps();
+  magic.pinkHeart = { frames: VFX.pinkHeart };
+  await Promise.all([loadProps(), loadAbilityArt()]);
 }
 
 /** A small random offset (the renderer's own, not the sim's). */
@@ -261,7 +221,9 @@ export class Fx {
     const budget = particleBudget(settings().saver);
     this.particles.density = budget.density;
     this.particles.cap = budget.cap;
+    this.particles.calm = this.calm();
     this.enter(b);
+    let royalSky: 'meteor' | 'starfall' | undefined;
     for (const e of events) {
       if (e.kind === 'shot') this.shot(e.by, e.to, e.shot, e.ms);
       else if (e.kind === 'skill') this.skillName(e.by, e.name, e.ms);
@@ -279,8 +241,12 @@ export class Fx {
       else if (e.kind === 'comboCast') this.comboCast(e);
       else if (e.kind === 'comboLand') this.comboLand(b, e);
       else if (e.kind === 'burst') this.burst(e);
-      else if (e.kind === 'area') this.area(b, e);
-      else if (e.kind === 'spell') this.spell(b, e);
+      else if (e.kind === 'area') this.area(b, e, royalSky);
+      else if (e.kind === 'spell') {
+        if (e.id === 'meteor' || e.id === 'starfall') royalSky = e.id;
+        const recipients = new Set(events.filter((touch): touch is Extract<BattleEvent, { kind: 'spellfx' }> => touch.kind === 'spellfx' && touch.id === e.id).map(touch => touch.to));
+        this.spell(b, e, recipients);
+      }
       else if (e.kind === 'spellfx') this.spellFx(e);
       else if (e.kind === 'heal') {
         const to = this.sprites.get(e.to);
@@ -322,9 +288,12 @@ export class Fx {
         const by = b.units.find((x) => x.id === e.by);
         const target = b.units.find((x) => x.id === e.to);
         if (!to || !target) continue;
-        // (no `by` is the king's meteor)
+        // Royal hits already have an individual spellfx or meteor landing. Poison ticks keep their own toxic motif.
         if (!by) {
-          this.anim(magic.fireExplosion, to.x, to.y - to.tall * 0.45, 1.6, 70);
+          if (e.src === 'dot') {
+            const frames = abilityFrames('spell:poison', 'puff');
+            if (frames) this.particles.spawn({ frames, art: 'spell:poison', x: to.x, y: to.y - to.tall * 0.45, scale: 0.9, life: 300, alpha: 0.65 });
+          }
           this.number(e.dmg, to.x, to.y - to.tall - 10, e.heavy, false);
           if (e.killed) this.death(target, to.x, to.y - to.tall * 0.3);
           continue;
@@ -373,6 +342,14 @@ export class Fx {
         const byS = this.sprites.get(e.by);
         if (byS && !e.splash) {
           const way = Math.atan2(to.y - byS.y, to.x - byS.x);
+          // A brief fan carries the blow's direction without covering the target.
+          if (e.src === 'blow' && !defOf(by).shot) {
+            const count = bits(e.heavy ? 7 : 3, this.particles.density);
+            for (let i = 0; i < count; i++) {
+              const a = way + (i / Math.max(1, count - 1) - 0.5) * 1.7;
+              this.particles.spawn({ frames: PACK['light-sparkle'], x: hx, y: hy, scale: e.heavy ? 0.5 : 0.3, life: 200 + i * 20, vx: Math.cos(a) * 0.13, vy: Math.sin(a) * 0.09 - 0.025, gravity: 0.00025, grow: -0.0006, tint: e.heavy ? 0xffd474 : 0xbce8f1, alpha: 0.75, add: true });
+            }
+          }
           const n = nudgeOf(share);
           to.nudge(Math.cos(way) * n, Math.sin(way) * n * 0.5);
         }
@@ -411,7 +388,7 @@ export class Fx {
       frames: VFX[slashOf(defOf(attacker).name)],
       x: to.x,
       y: to.y - to.tall * 0.5,
-      scale: 1.3,
+      scale: 2,
       frameMs: 45,
       rotation: Math.atan2(to.y - by.y, to.x - by.x),
       add: true,
@@ -612,6 +589,7 @@ export class Fx {
     const s = this.calm() ? 0 : shakeOf(this.trauma);
     this.shakeX = s ? (Math.random() * 2 - 1) * s : 0;
     this.shakeY = s ? (Math.random() * 2 - 1) * s : 0;
+    this.particles.calm = this.calm();
     this.particles.step(dt);
     this.slowLeft = Math.max(0, this.slowLeft - dt);
     this.stopLeft = Math.max(0, this.stopLeft - dt);
@@ -635,20 +613,23 @@ export class Fx {
     sp.blendMode = 'add';
     this.root.addChild(sp);
     let t = 0;
+    let peak: number | undefined;
     this.items.push({
       view: sp,
       step: (dt) => {
         t += dt;
+        peak ??= sp.alpha * 0.9;
         const f = Math.floor(t / frameMs);
         if (f >= s.frames.length) return false;
         sp.texture = s.frames[f];
+        paintSprite(sp, t, s.frames.length * frameMs, scale, 0, peak, false, this.calm());
         return true;
       },
     });
     return sp;
   }
 
-  /** One of the Pixel Effects sheets, played on a point (its own scale, speed and tint). */
+  /** A painted skill cue, played on a point with its own size, timing and tint. */
   private effect(e: Effect, x: number, y: number): Sprite {
     const sp = this.anim(magic[e.sheet], x, y, e.scale, e.frameMs ?? 70);
     if (e.tint !== undefined) sp.tint = e.tint;
@@ -854,6 +835,8 @@ export class Fx {
     if (!sp) return;
     sp.promote(2);
     promoteBurst(this.particles, 2, sp.x, sp.y, sp.tall);
+    play(this.particles, 'light-pillar', sp.x, sp.y - sp.tall * 0.6, { scale: sp.tall / 24, frameMs: 65, alpha: 0.4, add: false, tint: 0xffdc88 });
+    play(this.particles, 'light-wave', sp.x, sp.y, { scale: 2.2, frameMs: 55, alpha: 0.65, tint: 0xffdc88, delay: 100 });
     this.label(`Lv ${level}`, sp.x, sp.y - sp.tall - 14, 0xfff2a0, 12, 1300, true);
   }
 
@@ -891,6 +874,22 @@ export class Fx {
       return;
     }
     // (dust kicked up along the run, and a wind slash at its end)
+    if (by && !this.reduced) {
+      const count = settings().saver ? 2 : 4;
+      for (let i = 0; i < count; i++) {
+        const f = (i + 1) / (count + 1);
+        const ghost = by.afterimage();
+        ghost.position.set(x0 + (x1 - x0) * f, y0 + (y1 - y0) * f);
+        ghost.alpha = 0;
+        this.root.addChild(ghost);
+        let age = -i * 30;
+        this.items.push({ view: ghost, step: (dt) => {
+          age += dt;
+          ghost.alpha = age < 0 ? 0 : 0.32 * Math.max(0, 1 - age / 240);
+          return age < 240;
+        } });
+      }
+    }
     for (let i = 0; i <= 5; i++)
       this.particles.spawn({ frames: VFX.dustWhite, x: x0 + ((x1 - x0) * i) / 5, y: y0 + ((y1 - y0) * i) / 5, scale: 0.7, life: 420, delay: i * 25, vy: -0.02, grow: 0.0008, alpha: 0.8 });
     play(this.particles, 'wind-slash', x1, y1 - lift, { scale: 1.6, frameMs: 45, rotation: Math.atan2(y1 - y0, x1 - x0) });
@@ -910,7 +909,7 @@ export class Fx {
   }
 
   /** A 3x3 of tiles marked as a volley or meteor comes down on it after `ms`. */
-  private area(b: Battle, e: Extract<BattleEvent, { kind: 'area' }>): void {
+  private area(b: Battle, e: Extract<BattleEvent, { kind: 'area' }>, royalSky?: 'meteor' | 'starfall'): void {
     const meteor = e.id === 'meteor';
     const color = meteor ? 0xff5a2a : 0xffe27a;
     const view = new Container();
@@ -933,11 +932,13 @@ export class Fx {
           view.addChild(sp);
           return { sp, x: tx + (Math.random() * 30 - 15), y: ty + (Math.random() * 12 - 6), at: Math.random() * Math.max(1, e.ms - 260), landed: false };
         });
-    const orbFrames = PACK['fire-orb'];
+    const skyArt = e.by === 0 ? `spell:${royalSky ?? 'meteor'}` : `skill:${this.casting.get(e.by) ?? 'Meteor'}`;
+    const orbFrames = abilityFrames(skyArt, 'orb') ?? PACK['fire-orb'];
     const ball = new Sprite(orbFrames[0]);
     ball.anchor.set(0.5);
     ball.scale.set(3);
-    ball.blendMode = 'add';
+    ball.blendMode = 'normal';
+    ball.rotation = Math.atan2(360, -150) - abilityHeading(skyArt);
     let landed = false;
     let trailAt = 0;
     ball.visible = false;
@@ -975,7 +976,7 @@ export class Fx {
           }
           if (f >= 1 && !landed) {
             landed = true;
-            this.meteorLanding(cx, cy);
+            this.meteorLanding(cx, cy, skyArt);
           }
         }
         return t < e.ms;
@@ -994,10 +995,11 @@ export class Fx {
   }
 
   /** The meteor lands: a big explosion with a flash, a ring of fire, rubble and smoke, a crater that stays and cools, and a hard shake. */
-  private meteorLanding(cx: number, cy: number): void {
+  private meteorLanding(cx: number, cy: number, art: string): void {
     const p = this.particles;
     // (layers kept apart and thinned so the blast stays orange instead of clipping to white)
-    this.anim(magic.fireExplosion, cx, cy - 12, 3.5, 70).alpha = 0.85;
+    const frames = abilityFrames(art, 'explosion');
+    if (frames) this.particles.spawn({ frames, art, x: cx, y: cy - 12, scale: 3.5, frameMs: 70, alpha: 0.9, prio: true });
     play(p, 'fire-wave', cx, cy, { scale: 4.5, frameMs: 80, add: false, alpha: 0.7 });
     for (let i = 0; i < bits(8, p.density); i++)
       p.spawn({ frames: PACK['earth-puff'], x: cx + jitter(14), y: cy - 6, scale: 0.6, life: 800, vx: jitter(0.12), vy: -0.16 - Math.random() * 0.1, gravity: 0.0006, spin: jitter(0.014), prio: true });
@@ -1021,10 +1023,18 @@ export class Fx {
   }
 
   /** A spell goes off: the 3x3 lit for a moment (a poison cloud's for as long as it lingers), and, for the ones that go everywhere, nothing here (the `spellfx` events light each fighter). */
-  private spell(b: Battle, e: Extract<BattleEvent, { kind: 'spell' }>): void {
+  private spell(b: Battle, e: Extract<BattleEvent, { kind: 'spell' }>, recipients?: ReadonlySet<number>): void {
     // (a meteor, and the shower of them, are drawn by their own `area` events)
     if (e.id === 'meteor' || e.id === 'starfall') return;
-    // (the spell's own circle, nova or pillar at the tapped tile; an everywhere spell has none, only the shake of a quake)
+    // The individual release leads the spell. The tactical tile fill and small elemental supports stay underneath.
+    const [px, py] = this.tilePos(b, e.u, e.v);
+    const near = [...this.sprites.values()].filter(s => recipients?.size ? recipients.has(s.unit.id) : s.unit.alive && (SPELLS[e.id].target === 'all' || (Math.abs(s.unit.u - e.u) <= 1 && Math.abs(s.unit.v - e.v) <= 1)));
+    const points = (side: 'hero' | 'foe') => near.filter(s => s.unit.side === side).slice(0, 6).map(s => ({ x: s.x, y: s.y, tall: s.tall }));
+    const allies = points('hero'), foes = points('foe');
+    const centre = SPELLS[e.id].target === 'all' && near.length
+      ? { x: near.reduce((n, s) => n + s.x, 0) / near.length, y: near.reduce((n, s) => n + s.y, 0) / near.length }
+      : { x: px, y: py };
+    playSteps(SPELL_SIGNATURES[e.id].cast, { p: this.particles, self: { ...centre, tall: 40 }, foes, allies, dir: { x: 0, y: -1 }, ms: 700, size: 1 });
     if (e.id === 'quake') this.trauma = Math.max(this.trauma, 0.7);
     if (SPELLS[e.id].target === 'all') return;
     const [cx, cy] = this.tilePos(b, e.u, e.v);
@@ -1072,19 +1082,14 @@ export class Fx {
         return t < ms;
       },
     });
-    if (e.id === 'poison') {
-      const [x, y] = this.tilePos(b, e.u, e.v);
-      this.effect(SPELL_FX.poison, x, y - 10);
-    }
   }
 
   /** A spell touches a fighter: its sheet plays on them (and Haste says so). */
   private spellFx(e: Extract<BattleEvent, { kind: 'spellfx' }>): void {
     const s = this.sprites.get(e.to);
     if (!s || e.id === 'meteor') return;
-    this.effect(SPELL_FX[e.id], s.x, s.y - s.tall * 0.45);
-    const touch = SPELL_TOUCH[e.id];
-    if (touch) play(this.particles, touch.key, s.x, s.y - s.tall * touch.at - 2, { scale: Math.max(0.8, (s.tall * touch.size) / 32), frameMs: 70 });
+    const spot = { x: s.x, y: s.y, tall: s.tall };
+    playSteps(SPELL_SIGNATURES[e.id].hit, { p: this.particles, self: spot, foes: [spot], allies: [spot], dir: { x: 0, y: -1 }, ms: 500, size: 1 });
     if (e.id === 'haste') this.label('Haste', s.x, s.y - s.tall - 20, SPELL_GLOW.haste.color, 12, 900);
     if (e.id === 'rally') this.label('Rally', s.x, s.y - s.tall - 20, SPELL_GLOW.rally.color, 12, 900);
     if (e.id === 'shield') this.label('Shield', s.x, s.y - s.tall - 20, SPELL_GLOW.shield.color, 12, 900);
@@ -1123,10 +1128,10 @@ export class Fx {
 
   /** A snare on a tile: a dark ring that waits there (and goes out when it is sprung or runs down). */
   private trap(b: Battle, u: number, v: number, ms: number): void {
-    const view = new Graphics();
+    const view = new Sprite(paintedStrip('earth', 'rune', 'snare')[0]);
+    view.anchor.set(0.5);
+    view.scale.set(TW * 0.6 / 32);
     const [x, y] = this.tilePos(b, u, v);
-    view.ellipse(0, 0, TW * 0.22, TH * 0.22).stroke({ width: 2, color: 0xe8c860 });
-    view.ellipse(0, 0, TW * 0.12, TH * 0.12).fill({ color: 0x3a2a14, alpha: 0.8 });
     view.position.set(x, y);
     this.root.addChild(view);
     this.anim(magic.earthBurst, x, y - 6, 0.9, 60);
@@ -1263,7 +1268,7 @@ export class Fx {
     const sp = new Sprite(m.look === 'arrow' ? arrow : m.look === 'bone' ? bone : orb?.[0]);
     sp.anchor.set(0.5);
     sp.scale.set(m.scale);
-    if (orb) sp.blendMode = 'add';
+    if (orb) sp.blendMode = 'normal';
     const g = m.look === 'tracer' ? new Graphics() : undefined;
     if (g) g.blendMode = 'add';
     const view: Container = g ?? sp;
@@ -1294,7 +1299,8 @@ export class Fx {
           sp.position.set(x, y);
           if (orb) {
             sp.texture = orb[Math.floor(t / 70) % orb.length];
-            if (m.spin) sp.rotation += dt * 0.012;
+            paintSprite(sp, ms * 0.4, ms, m.scale, heading, 1, true, this.calm());
+            if (m.spin && !this.calm()) sp.rotation += t * 0.004;
           } else sp.rotation = m.spin ? t * 0.02 : heading;
         }
         // a trail behind it: puffs of its element, a faint glint behind an arrow

@@ -23,6 +23,37 @@ import { sprite } from './render/sheets';
 import { CONTENT_HEROES, lockInfo } from './sim/contentHeroes';
 import { haveOf, toCollect } from './sim/unlock';
 import { portrait } from './render/sheets';
+import swordIcon from './art/talent/sword.png';
+import shieldIcon from './art/talent/shield.png';
+import flameIcon from './art/talent/blast.png';
+import targetIcon from './art/talent/target.png';
+import haloIcon from './art/talent/halo.png';
+import heartIcon from './art/talent/heart.png';
+import crystalIcon from './art/talent/crystal.png';
+
+const DETAIL_TABS = ['overview', 'progression', 'equipment', 'skills'];
+
+function detailHeading(title: string, subtitle: string): HTMLElement {
+  const head = el('header', 'dossierHeading');
+  head.append(el('h4', '', title), el('small', '', subtitle));
+  return head;
+}
+
+function detailIcon(src: string): HTMLImageElement {
+  const img = el('img');
+  img.src = src;
+  img.alt = '';
+  return img;
+}
+
+// Presentation names only: the underlying starter classes and hero rules stay the same.
+const CARD_CLASSES = {
+  front: { name: 'Guardian', icon: shieldIcon },
+  striker: { name: 'Fighter', icon: swordIcon },
+  caster: { name: 'Mage', icon: flameIcon },
+  shooter: { name: 'Shooter', icon: targetIcon },
+  support: { name: 'Support', icon: haloIcon },
+};
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -74,6 +105,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
   const open = meta.unlocked.includes(kind);
   const kit = KITS[kind];
   box.className = 'hsheet heroDetail';
+  box.dataset.class = CLASS_OF[kind];
   box.replaceChildren();
   const bar = el('div', 'heroToolbar');
   const back = el('button', 'heroBack', '‹ Back');
@@ -104,12 +136,19 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
   // (an awakened hero wears its awakened look: the pack's variant, or a recolour of its top form)
   const full = heroRank(meta, kind);
   const step = stepOfRank(full);
-  const spr = sprite(step ? lookSheet(kind, full, 3) : def.sheet, 76);
+  const spr = sprite(step ? lookSheet(kind, full, 3) : def.sheet, 132);
   if (step) spr.canvas.style.filter = lookFilter(kind, step);
   spr.canvas.style.transform = spr.faceRight ? 'translateX(-50%)' : 'translateX(-50%) scaleX(-1)';
   if (!open) spr.canvas.style.filter = 'brightness(0.15) grayscale(1)';
-  pic.append(spr.canvas);
-  const title = el('div');
+  const halo = el('span', 'heroCardHalo');
+  halo.setAttribute('aria-hidden', 'true');
+  const motes = el('span', 'heroCardMotes');
+  motes.setAttribute('aria-hidden', 'true');
+  pic.append(halo, spr.canvas, motes);
+  const banner = el('span', 'dossierClass');
+  banner.append(detailIcon(CARD_CLASSES[CLASS_OF[kind]].icon), CARD_CLASSES[CLASS_OF[kind]].name);
+  pic.append(banner);
+  const title = el('div', 'dossierIdentity');
   const lock = lockInfo(meta, kind);
   title.append(el('h3', '', open || lock?.named ? def.name : '???'), el('em', '', open ? `${CLASS_NAMES[CLASS_OF[kind]]} · ${def.role}` : lock?.named ? `${CLASS_NAMES[CLASS_OF[kind]]} · locked` : 'not yet recruited'));
   // (a hero not owned says how to get it: a milestone to reach, or shards to gather, with a bar where there is a count)
@@ -137,16 +176,16 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
       badge.addEventListener('click', () => openRankUp(meta, kind, redraw));
       title.append(badge);
     }
-    const marks = traitsOf(kind).map((t) => TRAITS[t].name).join(' · ');
-    if (marks) title.append(el('em', '', marks));
   }
-  head.append(pic, title);
+  const atmosphere = el('span', 'dossierAtmosphere');
+  atmosphere.setAttribute('aria-hidden', 'true');
+  head.append(atmosphere, pic, title);
   box.append(head);
   if (open) {
     const tabs = el('div', 'heroTabs');
     tabs.setAttribute('role', 'tablist');
     tabs.setAttribute('aria-label', 'Hero details');
-    const panels = ['overview', 'progression', 'equipment'].map((id) => {
+    const panels = DETAIL_TABS.map((id) => {
       const panel = el('section', 'heroTabPanel');
       panel.id = `hero-${id}`;
       panel.setAttribute('role', 'tabpanel');
@@ -154,8 +193,8 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
       panel.tabIndex = 0;
       return panel;
     });
-    const buttons = ['Overview', 'Progression', 'Equipment'].map((label, i) => {
-      const id = ['overview', 'progression', 'equipment'][i];
+    const buttons = ['Overview', 'Progression', 'Equipment', 'Skills'].map((label, i) => {
+      const id = DETAIL_TABS[i];
       const button = el('button', '', label);
       button.type = 'button';
       button.id = `hero-tab-${id}`;
@@ -177,22 +216,26 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
       return button;
     });
     function select(index: number): void {
-      state.tab = ['overview', 'progression', 'equipment'][index];
+      state.tab = DETAIL_TABS[index];
       buttons.forEach((button, i) => {
         button.setAttribute('aria-selected', String(i === index));
         button.tabIndex = i === index ? 0 : -1;
         panels[i].hidden = i !== index;
       });
     }
-    select(Math.max(0, ['overview', 'progression', 'equipment'].indexOf(state.tab)));
-    const [overview, progression, equipment] = panels;
+    select(Math.max(0, DETAIL_TABS.indexOf(state.tab)));
+    const [overview, progression, equipment, skills] = panels;
+    overview.append(detailHeading('Battle readiness', 'The strength behind the legend.'));
+    progression.append(detailHeading('Path of ascension', 'From a new recruit to a legend of the Keep.'));
+    equipment.append(detailHeading('The armoury', 'Steel, craft and a little good fortune.'));
+    skills.append(detailHeading('Arts of war', 'Every hero has a way to turn the tide.'));
     box.append(tabs, ...panels);
     const b = lastingBoost(x.level);
     const m = rankMult(full);
     const stat = el('div', 'hstats');
     for (const [name, v] of [['HP', Math.round(def.hp * b.hp * m)], ['Attack', Math.round(def.atk * b.atk * m)], ['Defence', def.def], ['Range', def.range]] as const) {
       const cell = el('div');
-      cell.append(el('b', '', String(v)), el('small', '', name));
+      cell.append(detailIcon(({ HP: heartIcon, Attack: swordIcon, Defence: shieldIcon, Range: targetIcon })[name]), el('b', '', String(v)), el('small', '', name));
       stat.append(cell);
     }
     // (how often it swings and how fast it walks, with what its equipment and talents add; they follow an equip or a talent learned)
@@ -207,21 +250,43 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     // (one number for how strong the hero is with its level, rank, equipment and talents, to set heroes side by side)
     const power = el('div', 'hpower');
     const pv = el('b', '', powerText(kindPower(meta, kind)));
-    power.append(el('small', '', 'Power'), pv);
+    power.append(detailIcon(CARD_CLASSES[CLASS_OF[kind]].icon), el('small', '', 'Hero power'), pv);
     const repower = () => {
       pv.textContent = powerText(kindPower(meta, kind));
       for (const [v, rate] of speeds) v.textContent = rate();
     };
     overview.append(power, stat);
+    const profile = el('div', 'dossierProfile');
+    profile.append(detailHeading('Combat profile', def.role));
+    const traits = el('div', 'dossierTraits');
+    for (const trait of traitsOf(kind)) traits.append(el('span', '', TRAITS[trait].name));
+    profile.append(traits);
+    const arts = el('button', 'dossierSkillsLink', 'Explore skills  ›');
+    arts.type = 'button';
+    arts.addEventListener('click', () => { select(3); buttons[3].focus(); });
+    profile.append(arts);
+    overview.append(profile);
+    const path = el('ol', 'dossierRanks');
+    path.setAttribute('aria-label', 'Hero rank progression');
+    for (let n = 1; n <= MAX_RANK; n++) {
+      const milestone = el('li', n <= rank ? 'reached' : '');
+      milestone.append(el('b', '', n <= rank ? '★' : '☆'), el('small', '', `Rank ${n}`));
+      if (n === rank) milestone.setAttribute('aria-current', 'step');
+      path.append(milestone);
+    }
+    progression.append(path);
     if (kit)
       for (const [label, a] of [['Skill', kit.skill], ...(TIER_SKILLS[kind] ? ([['Tier 2', TIER_SKILLS[kind][0]], ['Tier 3', TIER_SKILLS[kind][1]]] as const) : []), ...(kit.ultimate ? [['Ultimate', kit.ultimate] as const] : []), ['Passive', kit.passive]] as const) {
-        const p = el('p');
-        // (an ultimate waits for its level: it shows, dimmed, with the level it unlocks at)
+        const card = el('article', 'dossierAbility');
         const locked = label === 'Ultimate' && 'unlock' in a && !!a.unlock && x.level < a.unlock;
-        if (locked) p.classList.add('locked');
-        p.append(el('i', '', `${label} · ${a.name}: `), a.text);
-        if (locked) p.append(el('span', 'ultLock', ` Unlocks at level ${(a as { unlock: number }).unlock}.`));
-        overview.append(p);
+        if (locked) card.classList.add('locked');
+        card.dataset.type = label.toLowerCase().replace(' ', '-');
+        const icon = label === 'Ultimate' ? crystalIcon : label === 'Passive' ? haloIcon : CARD_CLASSES[CLASS_OF[kind]].icon;
+        const body = el('div');
+        body.append(el('small', 'dossierAbilityLabel', label === 'Skill' ? 'Active skill' : label), el('h5', '', a.name), el('p', '', a.text));
+        if (locked) body.append(el('span', 'ultLock', `Unlocks at level ${(a as { unlock: number }).unlock}`));
+        card.append(detailIcon(icon), body);
+        skills.append(card);
       }
     progression.append(drawAwaken(meta, kind, redraw));
     if (TREES[kind]) progression.append(drawTalents(meta, kind, repower));
@@ -238,7 +303,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
 }
 
 /** The roster page of the Heroes tab: the heroes owned in a grid, then the ones earned in play with the line "Joins when you …" and their progress, then the ones being collected by shards with their bars. A tap on a hero opens its sheet. */
-export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) => void, close: () => void): void {
+export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) => void, close: () => void, lastViewed?: string): void {
   box.className = 'hsheet heroRoster';
   box.replaceChildren();
   const have = ALL_HEROES.filter((k) => meta.unlocked.includes(k));
@@ -257,7 +322,7 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
   box.append(label);
   const searchable: { element: HTMLElement; text: string }[] = [];
   const remember = (element: HTMLElement, kind: string, named = true) => {
-    searchable.push({ element, text: named ? `${UNITS[kind].name} ${CLASS_NAMES[CLASS_OF[kind]]}`.toLowerCase() : '' });
+    searchable.push({ element, text: named ? `${UNITS[kind].name} ${CLASS_NAMES[CLASS_OF[kind]]} ${CARD_CLASSES[CLASS_OF[kind]].name}`.toLowerCase() : '' });
   };
   const result = el('p', 'rosterResult');
   result.setAttribute('role', 'status');
@@ -265,7 +330,34 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
   const grid = el('div', 'rosGrid');
   for (const kind of have) {
     const card = el('button', 'hcard');
-    card.append(portrait(UNITS[kind].sheet, 56), el('b', '', UNITS[kind].name), el('span', 'stars', starsOf(meta, kind)), levelBadge(progressOf(xpOf(meta, kind)).level));
+    card.type = 'button';
+    card.dataset.kind = kind;
+    card.dataset.class = CLASS_OF[kind];
+    const cls = CARD_CLASSES[CLASS_OF[kind]];
+    const banner = el('span', 'heroClassBanner');
+    const icon = el('img');
+    icon.src = cls.icon;
+    icon.alt = '';
+    banner.append(icon, el('span', '', cls.name));
+    const scene = el('span', 'heroCardScene');
+    scene.setAttribute('aria-hidden', 'true');
+    // Reuse the awakened look when one is owned, just as the detail sheet does.
+    const full = heroRank(meta, kind);
+    const step = stepOfRank(full);
+    const figure = portrait(step ? lookSheet(kind, full, 3) : UNITS[kind].sheet, 160);
+    if (step) figure.style.filter = lookFilter(kind, step);
+    scene.append(el('span', 'heroCardHalo'), figure, el('span', 'heroCardMotes'));
+    const level = progressOf(xpOf(meta, kind)).level;
+    const ribbon = el('span', 'heroLevelRibbon');
+    ribbon.append(levelBadge(level));
+    card.append(banner, scene, el('b', 'heroCardName', UNITS[kind].name), el('span', 'stars', starsOf(meta, kind)), ribbon);
+    if (kind === lastViewed) {
+      card.classList.add('lastViewed');
+      const seal = el('span', 'heroCardSeal', '✓');
+      seal.setAttribute('aria-hidden', 'true');
+      card.append(seal);
+      card.setAttribute('aria-description', 'Last viewed hero');
+    }
     if (readyToRise(meta, kind)) card.append(el('small', 'rankTag', 'Rank up'));
     card.addEventListener('click', () => pick(kind));
     remember(card, kind);

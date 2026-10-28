@@ -101,6 +101,7 @@ export class Home {
   private castleBar = el('div', 'ctBar');
   private castleShut = el('div', 'ctShut');
   private cardOpen = false;
+  private lastViewedHero?: string;
 
   constructor(
     private meta: Meta,
@@ -117,7 +118,25 @@ export class Home {
         this.hooks.onRecruit();
       },
     });
-    this.castle = new CastleScene((id) => (id === 'tavern' ? this.show('heroes') : id === 'chapel' ? (chapelBuilt(this.meta) ? this.show('spells') : this.openChapel()) : id === 'armies' ? this.show('battle') : this.openBuilding(id)));
+    this.castle = new CastleScene(
+      (id) =>
+        id === 'tavern'
+          ? this.show('heroes')
+          : id === 'chapel'
+            ? chapelBuilt(this.meta)
+              ? this.show('spells')
+              : this.openChapel()
+            : id === 'armies'
+              ? this.show('battle')
+              : this.openBuilding(id),
+      (id) => {
+        const ok = id === 'chapel' ? startChapel(this.meta, Date.now()) : startBuild(this.meta, id, Date.now());
+        if (!ok) return false;
+        saveMeta(this.meta);
+        this.refresh();
+        return true;
+      },
+    );
     const pages = $('hmPages');
     const bar = $('hmTabs');
     for (const t of TABS) {
@@ -194,7 +213,7 @@ export class Home {
     return !$('hmSub').hidden && $('hmSub').classList.contains('armies') ? 'armies' : this.tab;
   }
 
-  /** A pull from the hall, or again from the card reveal: the gacha pulls and keeps the result; the cinematic and the hall play it (every time), then the usual card reveal opens over the page. */
+  /** The gacha saves the pull, the hall celebrates a new ally (shards go straight to cards), then results open. */
   summon(n: 1 | 10): void {
     if (this.hooks.onSummon) this.hooks.onSummon(n, (got, skip) => this.hall.play(got, skip).then(() => this.hall.stop()));
     else this.hooks.onRecruit();
@@ -386,14 +405,52 @@ export class Home {
     cdx.append(icon(ICONS.spells), el('b', '', 'Codex'), el('small', '', `${gotOf(m, 'bestiary') + gotOf(m, 'heroes')}/${totalOf('bestiary') + totalOf('heroes')}`));
     if (codexWaiting(m).length) cdx.append(el('i', 'badge'));
     cdx.addEventListener('click', () => this.openCodex());
-    row.append(ach, cdx, resetTipsButton());
-    bar.append(row, el('div', 'ctHelp', 'tap a building to upgrade it · drag to look round'));
+    const levelBtn = el('button', 'ctChip');
+    levelBtn.append(el('b', '', '🏰 Build Town'));
+    levelBtn.title = 'Upgrade all buildings to showcase their grand looks';
+    levelBtn.addEventListener('click', () => {
+      for (const id of BUILDING_IDS) {
+        const cur = m.castle[id] ?? 0;
+        m.castle[id] = cur >= maxLevel(id) ? 1 : cur + 1;
+      }
+      m.chapel = true;
+      m.crowns = Math.max(m.crowns, 5000);
+      saveMeta(m);
+      this.refresh();
+    });
+    row.append(ach, cdx, levelBtn, resetTipsButton());
+    bar.append(row, el('div', 'ctHelp', 'tap heroes to salute · tap any chamber to upgrade or inspect'));
     // (the buildings open at 10 army stars: until then the courtyard is a locked gate, with the stars still to win)
     const up = modeOpen(m, 'castle');
     this.castle.root.hidden = !up;
     this.castleShut.hidden = up;
     if (!up) {
-      this.castleShut.replaceChildren(el('b', '', 'The castle is shut'), el('p', '', `${opensAt(MODE_NEED.castle)} · ${progressLine(m, MODE_NEED.castle)}`), el('small', '', 'Win stars on the armies to open the gate.'));
+      const unlockBtn = el('button', 'primary', '🗝️ Open Castle Gate (Preview)');
+      unlockBtn.style.marginTop = '12px';
+      unlockBtn.addEventListener('click', () => {
+        m.opened = m.opened || [];
+        if (!m.opened.includes('castle')) m.opened.push('castle');
+        m.crowns = Math.max(m.crowns, 3000);
+        if (Object.values(m.castle).every((lv) => lv === 0)) {
+          m.castle = {
+            treasury: 2,
+            barracks: 2,
+            armoury: 2,
+            mageTower: 2,
+            stable: 2,
+            library: 2,
+          };
+          m.chapel = true;
+        }
+        saveMeta(m);
+        this.refresh();
+      });
+      this.castleShut.replaceChildren(
+        el('b', '', 'The castle is shut'),
+        el('p', '', `${opensAt(MODE_NEED.castle)} · ${progressLine(m, MODE_NEED.castle)}`),
+        el('small', '', 'Win stars on the armies to open the gate.'),
+        unlockBtn,
+      );
     }
   }
 
@@ -510,10 +567,11 @@ export class Home {
     $('hmSheet').hidden = false;
     this.tavern.stop();
     this.camp.stop();
-    drawRoster($('hmSheetBox'), this.meta, (kind) => this.openSheet(kind, true), () => this.closeSheet());
+    drawRoster($('hmSheetBox'), this.meta, (kind) => this.openSheet(kind, true), () => this.closeSheet(), this.lastViewedHero);
   }
 
   private openSheet(kind: string, fromRoster = false, tab = 'overview'): void {
+    if (this.meta.unlocked.includes(kind)) this.lastViewedHero = kind;
     this.closeSheet();
     $('hmSheet').hidden = false;
     this.tavern.stop();

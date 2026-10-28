@@ -21,5 +21,5 @@ try {
   return {standardArmy:{w:board.w,d:board.d,t:g.b.t,scenario:g.run.mode.scenario??null},largeFieldFixture:{w:24,d:24,texturePixels,activeLeasesBefore:leases,activeLeasesAfter:v.columnStats.leases},cache:v.columnStats};
  });
  assert.equal(result.standardArmy.w,8);assert.equal(result.standardArmy.d,11);assert.equal(result.standardArmy.scenario,null);assert.ok(result.largeFieldFixture.texturePixels>0);assert.deepEqual(errors,[]);
- writeFileSync('docs/samples/world-126-compatibility.json',JSON.stringify({...result,errors},null,2)+'\n');console.log(JSON.stringify(result));
+ writeFileSync(`docs/samples/${process.env.WORLD_ARTIFACT_PREFIX??'world-126'}-compatibility.json`,JSON.stringify({...result,errors},null,2)+'\n');console.log(JSON.stringify(result));
 } finally {await host.close();}

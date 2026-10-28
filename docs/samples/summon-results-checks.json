@@ -1,0 +1,196 @@
+[
+  {
+    "width": 360,
+    "height": 780,
+    "state": "new",
+    "fit": {
+      "overflow": false,
+      "button": {
+        "top": 676,
+        "bottom": 720,
+        "height": 44
+      },
+      "nameHeight": 20,
+      "plaqueHeight": 42
+    }
+  },
+  {
+    "width": 360,
+    "height": 780,
+    "state": "recruitment",
+    "fit": {
+      "overflow": false,
+      "button": {
+        "top": 676,
+        "bottom": 720,
+        "height": 44
+      },
+      "nameHeight": 15,
+      "plaqueHeight": 37
+    }
+  },
+  {
+    "width": 360,
+    "height": 780,
+    "state": "rank",
+    "fit": {
+      "overflow": false,
+      "button": {
+        "top": 676,
+        "bottom": 720,
+        "height": 44
+      },
+      "nameHeight": 18,
+      "plaqueHeight": 37
+    }
+  },
+  {
+    "width": 360,
+    "height": 780,
+    "state": "crowns",
+    "fit": {
+      "overflow": false,
+      "button": {
+        "top": 676,
+        "bottom": 720,
+        "height": 44
+      },
+      "nameHeight": 18,
+      "plaqueHeight": 37
+    }
+  },
+  {
+    "width": 393,
+    "height": 852,
+    "state": "new",
+    "fit": {
+      "overflow": false,
+      "button": {
+        "top": 742,
+        "bottom": 790,
+        "height": 48
+      },
+      "nameHeight": 20,
+      "plaqueHeight": 47
+    }
+  },
+  {
+    "width": 393,
+    "height": 852,
+    "state": "recruitment",
+    "fit": {
+      "overflow": false,
+      "button": {
+        "top": 742,
+        "bottom": 790,
+        "height": 48
+      },
+      "nameHeight": 15,
+      "plaqueHeight": 39
+    }
+  },
+  {
+    "width": 393,
+    "height": 852,
+    "state": "rank",
+    "fit": {
+      "overflow": false,
+      "button": {
+        "top": 742,
+        "bottom": 790,
+        "height": 48
+      },
+      "nameHeight": 18,
+      "plaqueHeight": 39
+    }
+  },
+  {
+    "width": 393,
+    "height": 852,
+    "state": "crowns",
+    "fit": {
+      "overflow": false,
+      "button": {
+        "top": 742,
+        "bottom": 790,
+        "height": 48
+      },
+      "nameHeight": 18,
+      "plaqueHeight": 39
+    }
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "state": "new",
+    "fit": {
+      "overflow": false,
+      "button": {
+        "top": 805,
+        "bottom": 853,
+        "height": 48
+      },
+      "nameHeight": 20,
+      "plaqueHeight": 51
+    }
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "state": "recruitment",
+    "fit": {
+      "overflow": false,
+      "button": {
+        "top": 805,
+        "bottom": 853,
+        "height": 48
+      },
+      "nameHeight": 15,
+      "plaqueHeight": 39
+    }
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "state": "rank",
+    "fit": {
+      "overflow": false,
+      "button": {
+        "top": 805,
+        "bottom": 853,
+        "height": 48
+      },
+      "nameHeight": 18,
+      "plaqueHeight": 39
+    }
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "state": "crowns",
+    "fit": {
+      "overflow": false,
+      "button": {
+        "top": 805,
+        "bottom": 853,
+        "height": 48
+      },
+      "nameHeight": 18,
+      "plaqueHeight": 39
+    }
+  },
+  {
+    "tenResults": "passed",
+    "revealAll": "passed",
+    "keyboard": "passed",
+    "earlyClose": "passed",
+    "collection": "passed",
+    "reducedMotion": "passed",
+    "offlineFrame": "passed",
+    "shardRitualSkipped": "passed",
+    "newHeroCelebration": "passed",
+    "multipleNewSpotlights": "passed",
+    "allShardCards": "passed",
+    "pageErrors": []
+  }
+]

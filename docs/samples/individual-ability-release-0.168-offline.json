@@ -1,0 +1,11 @@
+{
+  "offline": true,
+  "artPixels": 128,
+  "alpha": 0.765,
+  "individualArt": [
+    "skill:Meteor",
+    "spell:heal"
+  ],
+  "simulationUnchanged": true,
+  "errors": []
+}

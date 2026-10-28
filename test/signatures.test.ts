@@ -2,12 +2,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { KITS } from '../src/sim/abilities';
+import { abilitySource } from '../src/render/abilityLooks';
+import { VFX_LOOKS } from '../src/render/cinematicRules';
 import { UNITS } from '../src/sim/units';
 import { TIER_SKILLS } from '../src/sim/tierSkills';
 import { PROPS, SIGNATURES, SPECIAL_STRIPS, tierRing, type Step } from '../src/render/signatures';
 
 const atlas = JSON.parse(readFileSync('src/art/fx/pack/atlas.json', 'utf8')) as Record<string, number[]>;
-const vfx = readFileSync('src/render/vfxArt.ts', 'utf8');
+
 
 /** The skills and ultimates of the heroes (not the foes, not the summons). */
 const heroSkills = () =>
@@ -31,7 +33,7 @@ test('every hero skill and ultimate, and every foe skill, has a look of its own'
 test('every strip a signature names exists', () => {
   for (const [name, sig] of Object.entries(SIGNATURES))
     for (const st of all(sig)) {
-      const ok = atlas[st.k] || PROPS.includes(st.k) || (SPECIAL_STRIPS.includes(st.k) && (st.k === 'arrow' || vfx.includes(`${st.k},`)));
+      const ok = atlas[st.k] || PROPS.includes(st.k) || (SPECIAL_STRIPS.includes(st.k) && (st.k === 'arrow' || Object.hasOwn(VFX_LOOKS, st.k)));
       assert.ok(ok, `${name} names a strip that is not there: ${st.k}`);
       if (st.l) assert.ok(atlas[st.l], `${name} lands in ${st.l}, not in the atlas`);
     }
@@ -61,7 +63,7 @@ test('no foe leads with a hero\'s strip', () => {
 
 test('no two heroes\' casts share a layer (the same shape in the same strip and colour)', () => {
   const names = [...new Set(heroSkills().map((h) => h.name))];
-  const keys = (n: string) => new Set(SIGNATURES[n].cast.map((s) => `${s.s}:${s.k}:${s.t ?? 0}`));
+  const keys = (n: string) => new Set(SIGNATURES[n].cast.map((s) => s.art ? `${s.s}:art:${abilitySource(s.art)}` : `${s.s}:${s.k}:${s.t ?? 0}`));
   const bad: string[] = [];
   for (let i = 0; i < names.length; i++)
     for (let j = i + 1; j < names.length; j++) {
@@ -74,7 +76,7 @@ test('no two heroes\' casts share a layer (the same shape in the same strip and 
 
 test('no foe look is a copy of a hero\'s', () => {
   const hero = new Set(heroSkills().map((h) => h.name));
-  const keys = (n: string) => new Set(SIGNATURES[n].cast.map((s) => `${s.s}:${s.k}:${s.t ?? 0}`));
+  const keys = (n: string) => new Set(SIGNATURES[n].cast.map((s) => s.art ? `${s.s}:art:${abilitySource(s.art)}` : `${s.s}:${s.k}:${s.t ?? 0}`));
   const bad: string[] = [];
   for (const f of Object.keys(SIGNATURES).filter((n) => !hero.has(n)))
     for (const h of hero) {
