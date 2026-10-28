@@ -100,7 +100,7 @@ const STAT_TEXT: Record<StatKey, (v: number) => string> = {
   crit: (v) => `+${pct(v)} crit chance`,
   range: (v) => `+${v} range`,
   dodge: (v) => `+${pct(v)} dodge`,
-  charge: (v) => `+${pct(v)} faster skill charge`,
+  charge: (v) => `+${pct(v)} faster pool refill`,
   regen: (v) => `mends ${Math.round(v * 1000) / 10}% hp a second`,
   resist: (v) => `+${pct(v)} resist to burning and bleeding`,
 };
@@ -148,7 +148,7 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
       { name: 'Twin Cuts', icon: 'blade', text: 'Iaido cuts a third deeper.', tal: { pow: 0.35 } },
     ],
     [
-      { name: 'Death Blossom', icon: 'ruby', text: 'Each kill gives back half a charge of Iaido.', abilities: [ab('tl_samurai_blossom', 'Death Blossom', 'kill', 'charge', { v: 50 })] },
+      { name: 'Death Blossom', icon: 'ruby', text: 'Each kill gives back a quarter of the pool.', abilities: [ab('tl_samurai_blossom', 'Death Blossom', 'kill', 'charge', { v: 50 })] },
       { name: "Master's Focus", icon: 'scroll', text: '+12% attack speed and +8% crit chance.', stats: { atkSpeed: 0.12, crit: 0.08 } },
     ],
   ),
@@ -185,7 +185,7 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     ],
     [
       { name: 'Wildfire', icon: 'emberrobe', text: '40% of his blows burst into flame: half again on the foes beside the target.', abilities: [ab('tl_wizard_wildfire', 'Wildfire', 'hit', 'splash', { p: 0.4, v: 0.5 })] },
-      { name: 'Mana Siphon', icon: 'sapphire', text: 'Each kill feeds the king 8 mana and gives back 40 charge.', abilities: [ab('tl_wizard_siphon', 'Mana Siphon', 'kill', 'mana', { v: 8 }), ab('tl_wizard_siphon2', 'Mana Siphon', 'kill', 'charge', { v: 40 })] },
+      { name: 'Mana Siphon', icon: 'sapphire', text: 'Each kill feeds the king 8 mana and gives back 20% of the pool.', abilities: [ab('tl_wizard_siphon', 'Mana Siphon', 'kill', 'mana', { v: 8 }), ab('tl_wizard_siphon2', 'Mana Siphon', 'kill', 'charge', { v: 40 })] },
     ],
   ),
   ninjaMonk: tree(
@@ -244,7 +244,7 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
       { name: 'Far-sighted', icon: 'spectacles', text: 'Fox Charm reaches 2 tiles further.', tal: { reach: 2 } },
     ],
     [
-      { name: 'Nine Tails Unbound', icon: 'orb', text: 'The Nine-Tailed Dream charges 40% faster, and +10% skill charge.', tal: { ultRate: 0.4 }, stats: { charge: 0.1 } },
+      { name: 'Nine Tails Unbound', icon: 'orb', text: 'The Nine-Tailed Dream charges 40% faster, and +10% pool refill.', tal: { ultRate: 0.4 }, stats: { charge: 0.1 } },
       { name: 'Foxfire', icon: 'ruby', text: '35% of her blows set the foe alight.', abilities: [ab('tl_kitsune_foxfire', 'Foxfire', 'hit', 'burn', { p: 0.35, v: 0.3 })] },
     ],
   ),
@@ -292,7 +292,7 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
       { name: 'Skull Crusher', icon: 'maul', text: 'The foe it hits is stunned for 2.7s.', tal: { dur: 0.8 } },
     ],
     [
-      { name: 'Rampage', icon: 'axe', text: 'Each kill gives back 60 charge.', abilities: [ab('tl_minotaur_rampage', 'Rampage', 'kill', 'charge', { v: 60 })] },
+      { name: 'Rampage', icon: 'axe', text: 'Each kill gives back 30% of the pool.', abilities: [ab('tl_minotaur_rampage', 'Rampage', 'kill', 'charge', { v: 60 })] },
       { name: 'Thick Hide', icon: 'bastion', text: 'Blows from the front lose a further 15%, and +1 defence.', tal: { block: 0.15 }, stats: { def: 1 } },
     ],
   ),
@@ -425,7 +425,7 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     ],
     [
       { name: 'Trick Shot', icon: 'charm', text: 'Every 3rd shot hits nearly twice as hard.', abilities: [ab('tl_gunslinger_trick', 'Trick Shot', 'nth', 'smite', { n: 3, v: 0.9 })] },
-      { name: 'Quick Draw', icon: 'ring', text: 'Dead Eye gives back 40 charge, and +8% attack speed.', tal: { refund: 40 }, stats: { atkSpeed: 0.08 } },
+      { name: 'Quick Draw', icon: 'ring', text: 'Dead Eye gives back 40% of its cost, and +8% attack speed.', tal: { refund: 40 }, stats: { atkSpeed: 0.08 } },
     ],
   ),
 
@@ -451,7 +451,7 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     ],
     [
       { name: 'Suppressing Fire', icon: 'bell', text: '40% of his shots slow the foe for 1.5s.', abilities: [ab('tl_rifleBot_suppress', 'Suppressing Fire', 'hit', 'slow', { p: 0.4, w: 1.5 })] },
-      { name: 'Target Lock', icon: 'ring', text: 'Burst Fire gives back 40 charge, and +8% attack speed.', tal: { refund: 40 }, stats: { atkSpeed: 0.08 } },
+      { name: 'Target Lock', icon: 'ring', text: 'Burst Fire gives back 40% of its cost, and +8% attack speed.', tal: { refund: 40 }, stats: { atkSpeed: 0.08 } },
     ],
   ),
   mercenary: tree(
@@ -486,7 +486,7 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
       { name: 'Barbed Hook', icon: 'dagger', text: 'Grappling Hook cuts 40% deeper.', tal: { pow: 0.4 } },
     ],
     [
-      { name: 'Plunder', icon: 'ruby', text: 'Each kill gives back 60 charge.', abilities: [ab('tl_buccaneer_plunder', 'Plunder', 'kill', 'charge', { v: 60 })] },
+      { name: 'Plunder', icon: 'ruby', text: 'Each kill gives back 30% of the pool.', abilities: [ab('tl_buccaneer_plunder', 'Plunder', 'kill', 'charge', { v: 60 })] },
       { name: 'Rum Ration', icon: 'vial', text: 'Mends 8% of his health every 6s.', abilities: [ab('tl_buccaneer_rum', 'Rum Ration', 'tick', 'heal', { n: 6, v: 0.08 })] },
     ],
   ),
@@ -498,7 +498,7 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
       { name: 'Loud Chorus', icon: 'bell', text: 'Dirge reaches 2 tiles further.', tal: { reach: 2 } },
     ],
     [
-      { name: 'Encore', icon: 'drum', text: 'Dirge gives back 40 charge, and +10% skill charge.', tal: { refund: 40 }, stats: { charge: 0.1 } },
+      { name: 'Encore', icon: 'drum', text: 'Dirge gives back 40% of its cost, and +10% pool refill.', tal: { refund: 40 }, stats: { charge: 0.1 } },
       { name: 'Rousing Ballad', icon: 'emerald', text: 'Every 8s the weakest ally is healed 15% of its health.', abilities: [ab('tl_wolfBard_ballad', 'Rousing Ballad', 'tick', 'healAlly', { n: 8, v: 0.15, show: true })] },
     ],
   ),
@@ -534,7 +534,7 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
       { name: 'Hard Charge', icon: 'maul', text: 'Lance Charge hits 35% harder.', tal: { pow: 0.35 } },
     ],
     [
-      { name: 'Victory Lap', icon: 'ruby', text: 'Each kill gives back 60 charge.', abilities: [ab('tl_lancer_lap', 'Victory Lap', 'kill', 'charge', { v: 60 })] },
+      { name: 'Victory Lap', icon: 'ruby', text: 'Each kill gives back 30% of the pool.', abilities: [ab('tl_lancer_lap', 'Victory Lap', 'kill', 'charge', { v: 60 })] },
       { name: 'Shock Impact', icon: 'idol', text: 'Foes struck by Lance Charge are held for 0.8s.', tal: { skillStun: 800 } },
     ],
   ),
@@ -546,7 +546,7 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
       { name: 'Soul Harvest', icon: 'ruby', text: 'Reap cuts 40% deeper.', tal: { pow: 0.4 } },
     ],
     [
-      { name: 'Collector', icon: 'idol', text: 'Each kill heals him a tenth of his health and gives back 40 charge.', abilities: [ab('tl_reaper_collector', 'Collector', 'kill', 'heal', { v: 0.1 }), ab('tl_reaper_collector2', 'Collector', 'kill', 'charge', { v: 40 })] },
+      { name: 'Collector', icon: 'idol', text: 'Each kill heals him a tenth of his health and gives back 20% of the pool.', abilities: [ab('tl_reaper_collector', 'Collector', 'kill', 'heal', { v: 0.1 }), ab('tl_reaper_collector2', 'Collector', 'kill', 'charge', { v: 40 })] },
       { name: 'Cold Touch', icon: 'shard', text: '35% of his blows slow the foe for 1.5s.', abilities: [ab('tl_reaper_cold', 'Cold Touch', 'hit', 'slow', { p: 0.35, w: 1.5 })] },
     ],
   ),
@@ -559,7 +559,7 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     ],
     [
       { name: 'Time Loop', icon: 'sapphire', text: 'Once a fight, when she would fall she rises at 30% health.', abilities: [ab('tl_timeWitch_loop', 'Time Loop', 'death', 'revive', { v: 0.3 })] },
-      { name: 'Borrowed Time', icon: 'ring', text: 'Temporal Surge gives back 40 charge, and +8% attack speed.', tal: { refund: 40 }, stats: { atkSpeed: 0.08 } },
+      { name: 'Borrowed Time', icon: 'ring', text: 'Temporal Surge gives back 40% of its cost, and +8% attack speed.', tal: { refund: 40 }, stats: { atkSpeed: 0.08 } },
     ],
   ),
   arcBlade: tree(
@@ -643,7 +643,7 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     ],
     [
       { name: 'Cosmic Wisdom', icon: 'ring', text: 'Astral Convergence charges 50% faster, and its shields last 40% longer.', tal: { ultRate: 0.5, dur: 0.4 } },
-      { name: 'Eternal Study', icon: 'spectacles', text: '+8% attack and +10% faster skill charge.', stats: { atk: 0.08, charge: 0.1 } },
+      { name: 'Eternal Study', icon: 'spectacles', text: '+8% attack and +10% faster pool refill.', stats: { atk: 0.08, charge: 0.1 } },
     ],
   ),
   demonSwordsman: tree(

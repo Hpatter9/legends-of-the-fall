@@ -6,6 +6,13 @@ import { addUnit, canStrike, fight, stepBattle, startBattle, shotReach, type Bat
 import { CHARGE_MAX, KITS, afterBlow, onStrike, rollCrit, tickStatus } from '../src/sim/abilities';
 import { UNITS } from '../src/sim/units';
 import { readyBattle } from './helpers';
+import { HERO_KITS, resMax } from '../src/sim/heroKits';
+
+/** A hero's pool after one cast of its skill 1 from a full pool (COMBAT-002: a skill costs its pool, it no longer empties a charge meter). */
+const paidOnce = (kind: string): number => {
+  const k = HERO_KITS()[kind];
+  return CHARGE_MAX - (k.s1.cost / resMax(k.pool)) * CHARGE_MAX;
+};
 
 /** A flat, empty board mid-fight, for setting up one rule at a time. */
 function arena(): Battle {
@@ -34,23 +41,23 @@ test('every hero has a skill and a passive', () => {
   }
 });
 
-test('charge fills from blows dealt, blows taken and time, and stops at full', () => {
+test('charge fills from blows dealt, blows taken and time, and stops at full (a foe\'s skill meter; a hero has a pool, test/hero-kits.test.ts)', () => {
   const b = arena();
+  const boss = spawn(b, 'orcWarlord', 3, 4);
   const knight = spawn(b, 'knight', 3, 5);
-  const skel = spawn(b, 'skeleton', 3, 4);
-  onStrike(b, knight, skel, 10, 'blow', false, []);
-  assert.equal(knight.charge, KITS.knight.skill.dealt);
-  onStrike(b, skel, knight, 10, 'blow', false, []);
-  assert.equal(knight.charge, KITS.knight.skill.dealt + KITS.knight.skill.taken);
-  onStrike(b, knight, skel, 10, 'blow', true, []);
-  assert.equal(knight.charge, KITS.knight.skill.dealt + KITS.knight.skill.taken, 'a splash blow does not charge');
-  const before = knight.charge;
+  const k = KITS.orcWarlord.skill;
+  onStrike(b, boss, knight, 10, 'blow', false, []);
+  assert.equal(boss.charge, k.dealt);
+  onStrike(b, knight, boss, 10, 'blow', false, []);
+  assert.equal(boss.charge, k.dealt + k.taken);
+  onStrike(b, boss, knight, 10, 'blow', true, []);
+  assert.equal(boss.charge, k.dealt + k.taken, 'a splash blow does not charge');
+  const before = boss.charge;
   tickStatus(b, []);
-  assert.ok(knight.charge > before, 'time charges');
-  knight.charge = 99.9;
+  assert.ok(boss.charge > before, 'time charges');
+  boss.charge = 99.9;
   tickStatus(b, []);
-  assert.equal(knight.charge, CHARGE_MAX);
-  assert.equal(skel.charge, 0, 'foes have no charge');
+  assert.equal(boss.charge, CHARGE_MAX);
 });
 
 test('Shield Wall: nearby foes are drawn to the knight, and he takes half damage', () => {
@@ -63,7 +70,7 @@ test('Shield Wall: nearby foes are drawn to the knight, and he takes half damage
   ally.hp = 1; // the weakest, and so the foes' pick, without the draw
   const ev = stepBattle(b);
   assert.ok(ev.some((e) => e.kind === 'skill' && e.name === 'Shield Wall'));
-  assert.equal(knight.charge, 0);
+  assert.equal(knight.charge, paidOnce('knight'));
   assert.equal(near.taunt?.to, knight.id);
   assert.equal(nearer.taunt?.to, knight.id);
   assert.equal(far.taunt, undefined, 'out of the draw');
@@ -99,7 +106,7 @@ test('Iaido: dashes along a line, cuts every foe on it and lands on the last fre
   assert.deepEqual([sam.u, sam.v], [4, 4], 'the last free tile of the four');
   assert.ok(a.hp < a.maxHp && c.hp < c.maxHp);
   assert.equal(off.hp, off.maxHp);
-  assert.equal(sam.charge, 0);
+  assert.equal(sam.charge, paidOnce('samurai'));
   assert.equal(sam.facing, 0);
 });
 
@@ -124,7 +131,8 @@ test('Shadow Step: slips behind the weakest foe and backstabs it', () => {
   assert.equal(strong.hp, strong.maxHp);
   const hit = ev.find((e) => e.kind === 'hit' && e.to === weak.id);
   assert.ok(hit && hit.kind === 'hit' && hit.src === 'skill' && hit.heavy);
-  assert.ok(weak.hp < 100 - (UNITS.kunoichi.atk - UNITS.spearman.def) * 2, 'a backstab is no plain blow');
+  // (a backstab is twice a plain blow and more, at the skill's strength: its kit's `tune`)
+  assert.ok(weak.hp < 100 - (UNITS.kunoichi.atk * HERO_KITS().kunoichi.s1.tune - UNITS.spearman.def) * 2, 'a backstab is no plain blow');
   assert.equal(nin.facing, 1);
 });
 
@@ -147,6 +155,7 @@ test('Volley: arrows land a moment later on every foe in the 3x3, and only there
   const out = spawn(b, 'skeleton', 0, 0);
   for (const f of [a, c, d, out]) f.busyUntil = 1e9; // (hold them still)
   const first = stepBattle(b);
+  const paid = archer.charge;
   assert.ok(first.some((e) => e.kind === 'area' && e.id === 'volley'));
   assert.ok(!first.some((e) => e.kind === 'hit'), 'nothing lands yet');
   const later = run(b, 800).filter((e) => e.kind === 'hit' && e.src === 'skill');
@@ -154,7 +163,7 @@ test('Volley: arrows land a moment later on every foe in the 3x3, and only there
   assert.ok(hurt.has(a.id) || hurt.has(c.id));
   assert.ok(!hurt.has(out.id));
   assert.equal(hurt.size, [a, c, d].filter((f) => f.hp < f.maxHp).length);
-  assert.ok(archer.charge < 30);
+  assert.ok(Math.abs(paid - paidOnce('archer')) < 1, 'the volley was paid for');
 });
 
 test('Eagle Eye: the archer reaches twice as far for its height', () => {
@@ -176,7 +185,7 @@ test('Meteor: a delayed blast on a 3x3 that leaves the ground burning for a whil
   for (const f of [a, c, out]) (f.busyUntil = 1e9), (f.hp = f.maxHp = 2000);
   const first = stepBattle(b);
   assert.ok(first.some((e) => e.kind === 'area' && e.id === 'meteor' && e.u === 3));
-  assert.ok(wiz.charge < 30);
+  assert.equal(wiz.charge, paidOnce('wizard'));
   const land = run(b, 1200);
   const struck = land.filter((e) => e.kind === 'hit' && e.src === 'skill' && e.heavy);
   assert.deepEqual(new Set(struck.map((e) => (e.kind === 'hit' ? e.to : 0))), new Set([a.id, c.id]));

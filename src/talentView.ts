@@ -13,6 +13,10 @@ import {
   whyNot, type TalentNode,
 } from './sim/talents';
 import { TALENT_ICONS } from './talentArt';
+import { warmIcon } from './menuArt';
+
+// (the talent pictures are decoded as the page loads, so a tree redrawn after a pick shows no empty frame)
+for (const u of Object.values(TALENT_ICONS)) warmIcon(u);
 import { glyphOf } from './sim/talentGlyph';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -47,6 +51,7 @@ export function nodeTile(n: TalentNode, state: NodeState): HTMLButtonElement {
   const img = el('img');
   img.alt = '';
   img.draggable = false;
+  img.decoding = 'sync';
   img.src = TALENT_ICONS[glyphOf(n)];
   tile.append(img, el('i', 'tCost', String(TIER_COST[n.tier])));
   tile.title = n.name;
@@ -96,6 +101,7 @@ export function drawTalents(meta: Meta, kind: string, changed: () => void = () =
     };
     const title = el('div', 'tTitle');
     const pic = el('img', 'tBig');
+    pic.decoding = 'sync';
     pic.src = TALENT_ICONS[glyphOf(n)];
     pic.alt = '';
     pic.draggable = false;
