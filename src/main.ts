@@ -7,7 +7,7 @@ import { standable, tileAt } from './sim/board';
 import { canPlace, fight, reviveParty, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
 import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
 // (`saveSlot` as `saveRun`: a tower or calamity run is saved in its own slot, any other in the ordinary one)
-import { armyOfRun, armyRun, benchFull, boostOf, canRetry, chainOf, fallOutcome, MAX_RETRIES, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, waveArmyOf, type Owned, type Run } from './sim/run';
+import { armyOfRun, armyRun, benchFull, boostOf, canRetry, chainOf, fallOutcome, MAX_RETRIES, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, runTheme, waveArmyOf, type Owned, type Run } from './sim/run';
 import { climbXpView, heroLevel, localBoost } from './sim/climb';
 import { calamityRun } from './sim/modes';
 import { CAL_MAPS } from './sim/calamity';
@@ -16,7 +16,7 @@ import { noteFightStats, notePayout, recapOf } from './sim/runRecap';
 import { showRecap } from './recapView';
 import { campArtReady } from './camp';
 import { comebackTips, type ComebackGo } from './sim/comeback';
-import { ARMIES, armyById, armyUnlocked, settleWave, type ArmyPay } from './sim/armies';
+import { ARMIES, armyById, bossOf, armyUnlocked, settleWave, type ArmyPay } from './sim/armies';
 import { drawRunStars, showUnlock } from './armiesView';
 import { modeOpen } from './sim/modeUnlock';
 import { spellIconHtml } from './spellIcons';
@@ -52,9 +52,8 @@ import { hpShare } from './sim/health';
 import { Home } from './home';
 import { Party } from './party';
 import { dailyBonus, dailyCleared, dailyInProgress, modeNote, settleDaily, settleRun, startDaily, type DailyPay } from './sim/modes';
-import { dailyBossName, dailyCrowns, DAILY_WAVES } from './sim/daily';
+import { dailyCrowns, DAILY_WAVES } from './sim/daily';
 import { showDailyStart } from './dailyView';
-import { dailyTheme } from './sim/dailyThemes';
 import { showThemeBanner } from './themeView';
 import { chestPicture } from './chestStash';
 import { toastAchievements, toastJoined, toastSpells, toastStones } from './achievementsView';
@@ -1846,8 +1845,8 @@ class Game {
     const daily = run.mode?.kind === 'daily' ? run.mode.date : 0;
     const head = daily
       ? won
-        ? { title: 'Daily cleared!', tone: 'won' as const, line: `The ${dailyBossName(daily)} has fallen in ${run.recap?.fights ?? 0} fights` }
-        : { title: `Daily over · wave ${run.best}/${DAILY_WAVES}`, tone: 'lost' as const, line: `The ${dailyBossName(daily)} was not reached: ${dailyCleared(run)} waves cleared` }
+        ? { title: 'Daily cleared!', tone: 'won' as const, line: `The ${this.dailyBossOf(run)} has fallen in ${run.recap?.fights ?? 0} fights` }
+        : { title: `Daily over · wave ${run.best}/${DAILY_WAVES}`, tone: 'lost' as const, line: `The ${this.dailyBossOf(run)} was not reached: ${dailyCleared(run)} waves cleared` }
       : won
       ? { title: 'Army defeated!', tone: 'won' as const, line: `${army?.name ?? 'The run'} cleared in ${run.recap?.fights ?? 0} fights` }
       : { title: 'Run over', tone: 'lost' as const, line: army ? `The ${army.name} held at wave ${run.best} of ${army.waves.length}` : `Fell at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} hires` };
@@ -2379,7 +2378,7 @@ class Game {
         b.phase === 'won'
           ? `${run.tower && !cal ? `Floor ${run.stage - 1} done · ` : ''}${left} of ${heroesPlaced(b)} heroes standing · +${this.gain} gold · +${this.crownGain} crowns${share}${clear} · ${clock(b.t)}${run.found?.length ? ` · found: ${run.found.join(', ')}` : ''}`
           : daily
-            ? `The ${dailyBossName(run.mode?.kind === 'daily' ? run.mode.date : 0)} holds at wave ${run.best} of ${DAILY_WAVES} · ${dailyCleared(run)} waves cleared · ${practice ? 'practice, no reward' : `+${dailyCrowns(dailyCleared(run))} crowns`}`
+            ? `The ${this.dailyBossOf(run)} holds at wave ${run.best} of ${DAILY_WAVES} · ${dailyCleared(run)} waves cleared · ${practice ? 'practice, no reward' : `+${dailyCrowns(dailyCleared(run))} crowns`}`
           : run.tower
             ? `The ${cal ? 'calamity' : 'climb'} ends ${cal ? '' : `on floor ${run.stage}, `}${cal ? 'map' : 'act'} ${run.tower.act} · ${cal ? `${run.tower.spots ?? 0} spots cleared` : `${run.stage - 1} floors cleared`} · +${this.crownGain} crowns`
             : army
@@ -2398,9 +2397,14 @@ class Game {
     this.events.drawStrip(run);
   }
 
+  /** The name of a daily run's boss of the day (its own host: a run begun before the themes keeps the old one). */
+  private dailyBossOf(run: Run): string {
+    const army = waveArmyOf(run);
+    return army ? UNITS[bossOf(army)].name : '';
+  }
   /** A themed daily's theme (DAILY-BUILDS), or null for any other run. */
   private theme() {
-    return this.run.mode?.kind === 'daily' ? dailyTheme(this.run.mode.date) : null;
+    return runTheme(this.run);
   }
   /** A themed daily's banner over the deploy board, with its goal counted from the heroes placed. */
   private showTheme(): void {

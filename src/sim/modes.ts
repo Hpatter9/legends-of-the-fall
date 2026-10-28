@@ -10,7 +10,7 @@ import type { Battle } from './battle';
 import { dailyArea, dailySeed, dateKey } from './dailySeed';
 import { dailyBossName, dailyChestSeed, dailyWaveCrowns, DAILY_WAVES } from './daily';
 import { kindPower, powerOf } from './power';
-import { gradeBoost, waveArmyOf, bandFor, isBossRun, isBossStage, recruit, START_GOLD, SUMMON_BASE, type Run } from './run';
+import { gradeBoost, runTheme, waveArmyOf, bandFor, isBossRun, isBossStage, recruit, START_GOLD, SUMMON_BASE, type Run } from './run';
 import { bonusGold } from './castle';
 import { ascRules, ascUnlocked } from './ascension';
 import { CAL_MAPS, CAL_ROWS, CAL_SCALE, CAL_START_GOLD } from './calamity';
@@ -47,7 +47,7 @@ export function dailyRun(date: number, practice = false, scale = 1): Run {
     best: 1,
     pool: theme ? themePool(theme) : [...HEROES],
     area: dailyArea(date),
-    mode: { kind: 'daily', date, practice, ...(scale > 1 ? { scale } : {}) },
+    mode: { kind: 'daily', date, practice, ...(scale > 1 ? { scale } : {}), ...(theme ? { theme: theme.id } : {}) },
     stars: 0,
   };
   for (const kind of five) {
@@ -103,7 +103,7 @@ export function dailyBonus(run: Run): DailyStar[] {
     { text: `Cleared in ${Math.floor(DAILY_TIME_MS / 60000)}:${String((DAILY_TIME_MS % 60000) / 1000).padStart(2, '0')} of battle`, earned: won && !!t && t.ms <= DAILY_TIME_MS },
   ];
   // (a themed day's third star: its goal, met on the boss of the day's fight, `noteFight`)
-  const theme = run.mode?.kind === 'daily' ? dailyTheme(run.mode.date) : null;
+  const theme = runTheme(run);
   if (theme) stars.push({ text: themeGoalText(theme), earned: won && !!run.themeMet });
   return stars;
 }

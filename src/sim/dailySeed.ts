@@ -3,7 +3,7 @@
 
 import { AREAS, type Area } from './board';
 import { Rng, mixSeed } from './rng';
-import { dailyTheme } from './dailyThemes';
+import { dailyTheme, type DailyTheme } from './dailyThemes';
 
 /** yyyymmdd for a calendar date (the page passes today's). */
 export const dateKey = (year: number, month: number, day: number): number => year * 10000 + month * 100 + day;
@@ -12,4 +12,4 @@ export const dateKey = (year: number, month: number, day: number): number => yea
 export const dailySeed = (date: number): number => mixSeed(date, 0xda11);
 
 /** The land a date's daily challenge is fought in (the same all day). */
-export const dailyArea = (date: number): Area => dailyTheme(date)?.area ?? AREAS[new Rng(mixSeed(date, 0xa4ea)).int(0, AREAS.length - 1)];
+export const dailyArea = (date: number, theme: DailyTheme | null = dailyTheme(date)): Area => theme?.area ?? AREAS[new Rng(mixSeed(date, 0xa4ea)).int(0, AREAS.length - 1)];

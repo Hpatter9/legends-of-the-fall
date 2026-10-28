@@ -9,7 +9,7 @@ import { ARMIES, bossOf, type Army } from './armies';
 import { dailyArea } from './dailySeed';
 import { Rng, mixSeed } from './rng';
 import { UNITS } from './units';
-import { dailyTheme, SWARM_MAX } from './dailyThemes';
+import { dailyTheme, SWARM_MAX, type DailyTheme } from './dailyThemes';
 
 /** The daily is this many waves, the last of them the boss of the day, with a mid-boss at `DAILY_MID`. */
 export const DAILY_WAVES = 10;
@@ -29,28 +29,29 @@ export const BOSS_SCALE: Readonly<Record<string, number>> = { orcs: 1, undead: 0
 export const DAILY_ARMIES: readonly string[] = ['orcs', 'undead', 'beasts', 'wildwood', 'labyrinth', 'ogres'];
 
 /** The army whose troops and boss a date's daily uses. */
-export function dailyHost(date: number): Army {
+export function dailyHost(date: number, theme: DailyTheme | null = dailyTheme(date)): Army {
   // (a themed day's host is the theme's: DAILY-BUILDS, `dailyThemes.ts`)
-  const theme = dailyTheme(date);
   if (theme) return ARMIES.find((a) => a.id === theme.host)!;
   const id = DAILY_ARMIES[new Rng(mixSeed(date, 0xb055)).int(0, DAILY_ARMIES.length - 1)];
   return ARMIES.find((a) => a.id === id)!;
 }
 
-const cache = new Map<number, Army>();
+const cache = new Map<string, Army>();
 
 /** A date's daily as an army: ten waves, the host army's field waves thinned to eight, its mid-boss at wave 5 and its last boss at wave 10. */
-export function dailyArmy(date: number): Army {
-  let a = cache.get(date);
+export function dailyArmy(date: number, theme: DailyTheme | null = dailyTheme(date)): Army {
+  // (a run of a themed date begun before the themes passes null: the old daily, `runTheme`)
+  const key = `${date}:${theme?.id ?? ''}`;
+  let a = cache.get(key);
   if (a) return a;
-  const host = dailyHost(date);
+  const host = dailyHost(date, theme);
   const field = host.waves.filter((w) => !w.boss);
   const pick = (i: number) => field[Math.round((i * (field.length - 1)) / 7)];
   const mid = host.waves.find((w) => w.boss === 'mid')!;
   const last = host.waves[host.waves.length - 1];
-  const swarm = !!dailyTheme(date)?.swarm;
+  const swarm = !!theme?.swarm;
   // (a theme's own ease or hardening of its bosses)
-  const ease = dailyTheme(date)?.boss ?? 1;
+  const ease = theme?.boss ?? 1;
   const waves = Array.from({ length: DAILY_WAVES }, (_, k) => {
     const n = k + 1;
     if (n === DAILY_WAVES) return { foes: last.foes, boss: 'final' as const };
@@ -64,7 +65,7 @@ export function dailyArmy(date: number): Army {
     name: `Daily: ${UNITS[bossOf(host)].name}`,
     blurb: `Ten waves ending in the ${UNITS[bossOf(host)].name}.`,
     level: 1,
-    area: dailyArea(date),
+    area: dailyArea(date, theme),
     waves,
     start: DAILY_START,
     growth: DAILY_GROWTH,
@@ -74,7 +75,7 @@ export function dailyArmy(date: number): Army {
     clear: 0,
   };
   if (cache.size > 16) cache.clear();
-  cache.set(date, a);
+  cache.set(key, a);
   return a;
 }
 

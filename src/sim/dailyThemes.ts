@@ -1,15 +1,19 @@
 // The daily's build themes (DAILY-BUILDS): each day pushes one team idea. A theme picks the day's heroes (the starting five and
 // the few more that Hire can bring out), a featured trait whose team bonus is doubled for the day, the host army whose boss
 // ends the run, the land, and sometimes a floor twist; and it sets a goal: beat the boss of the day with enough of the featured
-// trait on the field for a third bonus star. The themes go round in a fixed order from `DAILY_THEMES_FROM` on, one a day, so a
-// theme comes back every `DAILY_THEMES.length` days and never twice in a fortnight; a date before it keeps the old daily.
+// trait on the field for a third bonus star. From `DAILY_THEMES_FROM` on, the days come in blocks of `DAILY_THEMES.length`, each
+// block every theme once in a shuffled order (`themeBlock`), worked out from the date alone, so every player meets the same theme
+// on the same day. No theme comes back within `THEME_GAP` days, across a block's edge too, and no two days running share a host
+// army or a land. A date before the switch keeps the old daily.
 //
-// Pure rules: no Pixi, no DOM, no clock (the date is passed in as yyyymmdd). Nothing here draws from any stream.
+// Pure rules: no Pixi, no DOM, no clock (the date is passed in as yyyymmdd). The shuffle is its own side stream of the block's
+// number (`mixSeed(block, 0x7e3e)`); nothing draws from any stream a fight uses.
 
 import type { Area } from './board';
 import { TWISTS, type TwistFx } from './twists';
 import { mergeEffects } from './relics';
 import { countTraits, TRAITS, type TraitEffects } from './traits';
+import { mixSeed, Rng } from './rng';
 
 export interface DailyTheme {
   id: string;
@@ -36,8 +40,11 @@ export interface DailyTheme {
   boss?: number;
 }
 
-/** The first date that has a theme (yyyymmdd); a date before it is the old daily, so a run saved before the change plays on as it was. */
-export const DAILY_THEMES_FROM = 20261101;
+/** The first date that has a theme (yyyymmdd); a date before it is the old daily. (A run of a themed date begun before the change carries no
+ *  `theme` in its mode, so it plays on as the old daily: `runTheme`.) */
+export const DAILY_THEMES_FROM = 20261026;
+/** No theme comes back within this many days. */
+export const THEME_GAP = 14;
 /** The featured trait's woken bonus counts this many times over. */
 export const FEATURED_MULT = 2;
 /** A swarm's foes have this share of their hp (and there are twice as many). */
@@ -47,7 +54,7 @@ export const SWARM_MAX = 8;
 
 const th = (t: DailyTheme): DailyTheme => t;
 
-/** The themes in the order they come round (set so that no two days running share a host army or a land). */
+/** The themes (each block of days shuffles them: `themeBlock`). */
 export const DAILY_THEMES: readonly DailyTheme[] = [
   th({ id: 'beasts', name: "Beasts' Night", idea: 'Four Beasts wake the pack: +16% attack for the day.', trait: 'beast', need: 4, five: ['werewolf', 'minotaur', 'satyr', 'knight', 'archer'], more: ['gorgon', 'wolfBard'], host: 'beasts', area: 'autumn', boss: 1.08 }),
   th({ id: 'casters', name: 'Spellstorm', idea: 'Casters refill their pools twice as fast, and mana surges.', trait: 'caster', need: 4, five: ['wizard', 'wanderer', 'warlock', 'knight', 'peasant'], more: ['tyrant', 'sage'], host: 'undead', area: 'graveyard', twist: 'mana' }),
@@ -77,12 +84,58 @@ export function dayNumber(date: number): number {
   return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(2000, 0, 1)) / 86_400_000);
 }
 
-/** A date's theme, or null for a date before `DAILY_THEMES_FROM` (the old daily). */
+/** Whether theme `b` may follow theme `a` on the next day: a different host army and a different land. */
+const fits = (a: DailyTheme | undefined, b: DailyTheme): boolean => !a || (a.host !== b.host && a.area !== b.area);
+
+const blocks = new Map<number, readonly number[]>();
+/**
+ * The order of block `n` of days (block 0 starts on `DAILY_THEMES_FROM`): every theme once, as indices into `DAILY_THEMES`. A seeded
+ * shuffle (its own stream, `mixSeed(n, 0x7e3e)`) made as a search: a theme may stand at place i only if it stood at least `THEME_GAP`
+ * days before in the last block (its place there at most i + length - gap), and it must differ in host and land from the day before it
+ * (the last block's last day, for the first). Each block hangs on the one before, so they are worked out from block 0 on and kept.
+ */
+export function themeBlock(n: number): readonly number[] {
+  const got = blocks.get(n);
+  if (got) return got;
+  const len = DAILY_THEMES.length;
+  const prev = n > 0 ? themeBlock(n - 1) : null;
+  const was = new Map<number, number>(prev ? prev.map((t, i) => [t, i]) : []);
+  const rng = new Rng(mixSeed(n, 0x7e3e));
+  const order: number[] = [];
+  const used = new Set<number>();
+  const place = (i: number): boolean => {
+    if (i === len) return true;
+    const before = i ? DAILY_THEMES[order[i - 1]] : prev ? DAILY_THEMES[prev[len - 1]] : undefined;
+    const pick = Array.from({ length: len }, (_, k) => k);
+    for (let k = len - 1; k > 0; k--) {
+      const j = rng.int(0, k);
+      [pick[k], pick[j]] = [pick[j], pick[k]];
+    }
+    for (const t of pick) {
+      if (used.has(t) || (was.has(t) && i + len - was.get(t)! < THEME_GAP) || !fits(before, DAILY_THEMES[t])) continue;
+      used.add(t);
+      order.push(t);
+      if (place(i + 1)) return true;
+      used.delete(t);
+      order.pop();
+    }
+    return false;
+  };
+  if (!place(0)) throw new Error(`no order for theme block ${n}`);
+  blocks.set(n, order);
+  return order;
+}
+
+/** A date's theme, or null for a date before `DAILY_THEMES_FROM` (the old daily). The same for everyone on the date. */
 export function dailyTheme(date: number): DailyTheme | null {
   if (date < DAILY_THEMES_FROM) return null;
-  const n = dayNumber(date) - dayNumber(DAILY_THEMES_FROM);
-  return DAILY_THEMES[((n % DAILY_THEMES.length) + DAILY_THEMES.length) % DAILY_THEMES.length];
+  const day = dayNumber(date) - dayNumber(DAILY_THEMES_FROM);
+  const len = DAILY_THEMES.length;
+  return DAILY_THEMES[themeBlock(Math.floor(day / len))[day % len]];
 }
+
+/** A theme by its id (a saved run names its theme). */
+export const themeById = (id: string | undefined): DailyTheme | null => DAILY_THEMES.find((t) => t.id === id) ?? null;
 
 /** The day's whole pool: the five, then the heroes Hire can add. */
 export const themePool = (t: DailyTheme): string[] => [...t.five, ...t.more];
