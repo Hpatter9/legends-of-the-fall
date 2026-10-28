@@ -10,7 +10,7 @@ import { MAX_RANK } from '../sim/meta';
 export const stepOfRank = (rank: number): number => Math.max(0, Math.min(2, rank - MAX_RANK));
 
 /** Heroes whose awakened sheet is a pack's own colour variant, by the sheet. Every other hero is recoloured. */
-export const PACK_VARIANTS: Readonly<Record<string, string>> = { werewolf: 'werewolf_red' };
+export const PACK_VARIANTS: Readonly<Record<string, string>> = { werewolf: 'hero_res_werewolf_awakened' };
 
 /** The hue a recoloured hero turns by, in degrees: its own for each hero, kept off the plain greens and reds of the originals. */
 export const hueOf = (kind: string): number => {

@@ -7,9 +7,9 @@ import type { Rot } from '../src/sim/turn';
 test('four fighter views follow each rotated isometric section', () => {
   const expected = [
     ['front-right', 'front-left', 'back-left', 'back-right'],
-    ['back-right', 'front-right', 'front-left', 'back-left'],
-    ['back-left', 'back-right', 'front-right', 'front-left'],
     ['front-left', 'back-left', 'back-right', 'front-right'],
+    ['back-left', 'back-right', 'front-right', 'front-left'],
+    ['back-right', 'front-right', 'front-left', 'back-left'],
   ];
   try {
     for (const rot of [0, 1, 2, 3] as Rot[]) {
