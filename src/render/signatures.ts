@@ -9,6 +9,8 @@
 //   hit   what plays on each foe the skill strikes (an ally, for a heal).
 // A tier skill's ring is the lead of its hero's skill at a smaller size (`tierRing`), so it keeps the family look.
 
+import { INDIVIDUAL_RELEASES } from './individualReleases';
+
 /** The shapes a step can be played in (`signatureFx.ts` draws each). */
 export type Shape =
   | 'ring' // a flat ring or circle on the ground (`loop` keeps it turning for the whole cast)
@@ -39,12 +41,14 @@ export type Shape =
   | 'pop'; // one strip on the body (a struck foe's hit)
 
 /** Whom a step is drawn on: the caster (default), every foe, or every ally. */
-export type On = 'self' | 'foes' | 'allies';
+export type On = 'self' | 'foes' | 'allies' | 'target';
 
 export interface Step {
   s: Shape;
   /** The strip: an atlas name ('fire-orb'), a Vfx name ('pinkHeart') or a sprite ('arrow'). */
   k: string;
+  /** An individual painted source; the strip key remains the supporting choreography vocabulary. */
+  art?: string;
   /** Size on screen (1 = 32 px). */
   z?: number;
   /** How many (bits, strips, rings). */
@@ -636,6 +640,13 @@ export const SIGNATURES: Record<string, Signature> = {
     [s('pop', 'fire-vortex', { z: 1.2 })],
   ),
 };
+
+// The original arrangements remain, but every release and corresponding hit has its own authored silhouette.
+for (const [name, look] of Object.entries(SIGNATURES)) {
+  const lead = look.cast[0];
+  look.cast[0] = { ...lead, n: undefined, r: undefined, on: undefined, ...INDIVIDUAL_RELEASES[name as keyof typeof INDIVIDUAL_RELEASES], art: `skill:${name}`, t: undefined };
+  look.hit[0] = { ...look.hit[0], art: `skill:${name}`, t: undefined };
+}
 
 /** The look a tier skill's ring takes: its hero skill's lead, played again a little smaller or bigger as its `reach` (px) asks (and a second time, late, at tier 3). */
 export function tierRing(skillName: string, reachPx: number, tier3: boolean): Step[] {

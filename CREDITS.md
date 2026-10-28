@@ -281,3 +281,13 @@ No new art: the burning heart's flame is the `flame_fire` strip (`src/art/fx/vfx
 - `src/art/hall/sanctum.png`: original generated artwork created for the owner-approved Royal Arcane Summoning Sanctum concept (OpenAI image generation, October 2026). Chamber, ceremonial summoner and griffin altar; no third-party asset dependency.
 
 - `src/art/ui/summon-reveal-frame.png`: original generated pixel-art reveal frame (OpenAI image generation, October 2026), made for the approved Royal Arcane summon-results design; emerald banners, brass columns and griffin guardians.
+
+## Painted battle effects
+
+- `src/art/fx/cinematic/painted-atlas.png` and `accents-atlas.png`: original artwork generated with OpenAI image generation in October 2026 for the owner's approved cinematic fantasy battle-effects proposal. Thirty-two painted effect shapes, including weapon trails, elemental impacts, wards, healing, smoke, arrows, bone darts, hearts and water effects. `cinematicArt.ts` cuts the cells, prepares shared elemental palettes and samples them smoothly; animation follows the fight clock.
+- These materials replace the older Pixel Effects strips in the live combat loaders, including skill signatures, king's spells, statuses, death effects, combos and promotions. Earlier credits above describe the original assets, which remain in the repository and may still appear in other views. Character sprites, signature props, scenery and interface art retain their existing credits.
+
+## Individual skill and spell artwork
+
+- `src/art/fx/abilities/atlas-0.png` through `atlas-8.png`: original cinematic fantasy effect paintings generated with OpenAI image generation in October 2026 for the owner's explicit request for a different visual signature for every skill, ultimate and king's spell. The 129 named motifs and their source cells are recorded in `catalogue.json`: 90 hero skills/ultimates, 18 additional named enemy abilities and 21 royal spells. No third-party artwork was added for these paintings.
+- `tools/fxlab/import-ability-art.py` prepares the shipping atlases from the original generated sources. The runtime isolates detached neighbouring fragments, feathers cell edges and prepares shared 128px materials. The original paintings remain unchanged; existing character, scenery and supporting effect credits still apply.

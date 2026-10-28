@@ -44,6 +44,8 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 | ID | Task | Result | Reference |
 | --- | --- | --- | --- |
+| FX-003 | Individual painted signatures for 129 base abilities | Owner accepted release 0.168.0 and merge through PR #135; 84 integration tests, all five emitted-material browser cases and offline launch passed | [PR #135](https://github.com/Hpatter9/legends-of-the-fall/pull/135), [handoff and scope](notes/individual-ability-effects.md) |
+| FX-002 | Cinematic battle-effects remake | Accepted with FX-003 for release 0.168.0; main 0.167.0 audio/courtyard updates preserved, release checks passed | [PR #135](https://github.com/Hpatter9/legends-of-the-fall/pull/135), [handoff](notes/battle-effects-remake.md) |
 | UI-005 | Cinematic party war council and compact company roll | Owner accepted and authorised release 0.166.0 and merge; typecheck/build, 20 affected tests, all three portrait sizes and all 45 hero tableaux passed on the integrated release | [PR #134](https://github.com/Hpatter9/legends-of-the-fall/pull/134), [handoff](notes/party-war-council.md) |
 | UI-004 | Ornate summoning sanctum and differentiated hero/shard reveals | Owner accepted and authorised release 0.165.0 and merge; implementation, full suite and portrait/offline checks passed; release integration checks passed | [Handoff](notes/summoning-sanctum.md), branch `design/summoning-sanctum` |
 | UI-003 | Ornate hero dossiers and animated portrait scenery | Owner accepted the implementation and authorised release 0.164.0 and GitHub merge; all 103 tests and three portrait sizes validated | [Handoff](notes/hero-detail-dossier.md), branch `design/hero-detail-dossier` |

@@ -1,0 +1,905 @@
+[
+  {
+    "id": "skill:Shield Wall",
+    "name": "Shield Wall",
+    "motif": "four interlocking brass kite-shields forming a low curved wall, stone sparks",
+    "atlas": 0,
+    "cell": 0
+  },
+  {
+    "id": "skill:Last Bastion",
+    "name": "Last Bastion",
+    "motif": "a luminous crenellated fortress bastion with six upright gold ramparts and a broad grounded shockwave",
+    "atlas": 0,
+    "cell": 1
+  },
+  {
+    "id": "skill:Iaido",
+    "name": "Iaido",
+    "motif": "a single razor thin silver horizontal iaido cut crossing a pale crescent moon",
+    "atlas": 0,
+    "cell": 2
+  },
+  {
+    "id": "skill:Heaven-Splitting Cut",
+    "name": "Heaven-Splitting Cut",
+    "motif": "a colossal descending white heavenly katana cleft splitting into two long silver wings",
+    "atlas": 0,
+    "cell": 3
+  },
+  {
+    "id": "skill:Shadow Step",
+    "name": "Shadow Step",
+    "motif": "a smoky violet ninja footprint breaking into a single black dagger trail",
+    "atlas": 0,
+    "cell": 4
+  },
+  {
+    "id": "skill:Shadow Dance",
+    "name": "Shadow Dance",
+    "motif": "a whirling wreath of six curved shadow daggers with alternating violet silk trails",
+    "atlas": 0,
+    "cell": 5
+  },
+  {
+    "id": "skill:Volley",
+    "name": "Volley",
+    "motif": "three parallel emerald feathered arrows in a tight horizontal volley",
+    "atlas": 0,
+    "cell": 6
+  },
+  {
+    "id": "skill:Arrow Storm",
+    "name": "Arrow Storm",
+    "motif": "a cascading diagonal curtain of many gold-tipped silver arrows, fan-shaped rain",
+    "atlas": 0,
+    "cell": 7
+  },
+  {
+    "id": "skill:Meteor",
+    "name": "Meteor",
+    "motif": "one molten orange meteor with a long smoking tail and jagged blazing impact bowl",
+    "atlas": 0,
+    "cell": 8
+  },
+  {
+    "id": "skill:Armageddon",
+    "name": "Armageddon",
+    "motif": "a shattered flaming celestial sphere surrounded by three concentric ember shockfronts",
+    "atlas": 0,
+    "cell": 9
+  },
+  {
+    "id": "skill:Thousand Fists",
+    "name": "Thousand Fists",
+    "motif": "a compact flurry of overlapping white spectral fist impacts, radial knuckle sparks",
+    "atlas": 0,
+    "cell": 10
+  },
+  {
+    "id": "skill:Hundred Fists",
+    "name": "Hundred Fists",
+    "motif": "two gigantic golden spectral fists colliding into a many-spoked martial sunburst",
+    "atlas": 0,
+    "cell": 11
+  },
+  {
+    "id": "skill:Hold the Line",
+    "name": "Hold the Line",
+    "motif": "a braced row of four long ivory spearheads crossing above a straw-coloured shieldline",
+    "atlas": 0,
+    "cell": 12
+  },
+  {
+    "id": "skill:Mass Muster",
+    "name": "Mass Muster",
+    "motif": "a semicircular formation of many spectral peasant spears and small earthen pennants",
+    "atlas": 0,
+    "cell": 13
+  },
+  {
+    "id": "skill:Chain Lightning",
+    "name": "Chain Lightning",
+    "motif": "a forked cyan bolt with three connected bright electric nodes in a zigzag",
+    "atlas": 0,
+    "cell": 14
+  },
+  {
+    "id": "skill:Thunderstorm",
+    "name": "Thunderstorm",
+    "motif": "a dark blue storm cloud crown raining six widely spaced vertical lightning forks",
+    "atlas": 0,
+    "cell": 15
+  },
+  {
+    "id": "skill:Sanctuary",
+    "name": "Sanctuary",
+    "motif": "a warm golden sanctuary arch with a clear hollow centre and curling rays at its feet",
+    "atlas": 1,
+    "cell": 0
+  },
+  {
+    "id": "skill:Dawn Light",
+    "name": "Dawn Light",
+    "motif": "a rising ivory sun horizon with seven long gold dawn rays and delicate descending motes",
+    "atlas": 1,
+    "cell": 1
+  },
+  {
+    "id": "skill:Fox Charm",
+    "name": "Fox Charm",
+    "motif": "a rose heart with two small white foxfire tails curling into a hook",
+    "atlas": 1,
+    "cell": 2
+  },
+  {
+    "id": "skill:Nine-Tailed Dream",
+    "name": "Nine-Tailed Dream",
+    "motif": "nine sweeping pink-white fox tails radiating from a dreamlike hollow violet centre",
+    "atlas": 1,
+    "cell": 3
+  },
+  {
+    "id": "skill:Dive",
+    "name": "Dive",
+    "motif": "a black crow feather diving diagonally through a crimson speed streak",
+    "atlas": 1,
+    "cell": 4
+  },
+  {
+    "id": "skill:Feather Storm",
+    "name": "Feather Storm",
+    "motif": "a broad tempest fan of sharp crimson and black crow feathers",
+    "atlas": 1,
+    "cell": 5
+  },
+  {
+    "id": "skill:Wind Gust",
+    "name": "Wind Gust",
+    "motif": "a horizontal pale teal gust shaped like three long sweeping wind ribbons",
+    "atlas": 1,
+    "cell": 6
+  },
+  {
+    "id": "skill:Tempest",
+    "name": "Tempest",
+    "motif": "a tall emerald-white tornado funnel with three distinct rising wind bands",
+    "atlas": 1,
+    "cell": 7
+  },
+  {
+    "id": "skill:Holy Challenge",
+    "name": "Holy Challenge",
+    "motif": "a radiant upright gold sword surrounded by a thin circular oath halo",
+    "atlas": 1,
+    "cell": 8
+  },
+  {
+    "id": "skill:Divine Aegis",
+    "name": "Divine Aegis",
+    "motif": "a luminous ivory winged tower shield with spread angelic feathers and a clear protective dome",
+    "atlas": 1,
+    "cell": 9
+  },
+  {
+    "id": "skill:Benediction",
+    "name": "Benediction",
+    "motif": "a white-gold blessing cross suspended over a small emerald healing spring",
+    "atlas": 1,
+    "cell": 10
+  },
+  {
+    "id": "skill:Divine Intervention",
+    "name": "Divine Intervention",
+    "motif": "two long angelic hands of light cradling a rising white-gold soul plume",
+    "atlas": 1,
+    "cell": 11
+  },
+  {
+    "id": "skill:Call Treant",
+    "name": "Call Treant",
+    "motif": "a small twisting emerald sapling bursting through an ochre root knot",
+    "atlas": 1,
+    "cell": 12
+  },
+  {
+    "id": "skill:Heart of the Grove",
+    "name": "Heart of the Grove",
+    "motif": "a great luminous heart-shaped tree canopy with branching gold roots and falling leaves",
+    "atlas": 1,
+    "cell": 13
+  },
+  {
+    "id": "skill:Whirlwind",
+    "name": "Whirlwind",
+    "motif": "two rough bronze axe-blade crescents rotating in a low red whirlwind",
+    "atlas": 1,
+    "cell": 14
+  },
+  {
+    "id": "skill:Bloodlust",
+    "name": "Bloodlust",
+    "motif": "a jagged crimson war mask silhouette breaking into three huge outward blood-red axe trails",
+    "atlas": 1,
+    "cell": 15
+  },
+  {
+    "id": "skill:Snare Trap",
+    "name": "Snare Trap",
+    "motif": "a thin amber toothed snare loop with two thorn hooks closing inward",
+    "atlas": 2,
+    "cell": 0
+  },
+  {
+    "id": "skill:Hunter's Net",
+    "name": "Hunter's Net",
+    "motif": "a wide emerald hunting net made of crossing luminous cords and small hooked knots",
+    "atlas": 2,
+    "cell": 1
+  },
+  {
+    "id": "skill:Hex",
+    "name": "Hex",
+    "motif": "a violet six-point curse mark with one black thorn piercing its centre",
+    "atlas": 2,
+    "cell": 2
+  },
+  {
+    "id": "skill:Soul Harvest",
+    "name": "Soul Harvest",
+    "motif": "a dark violet chalice-shaped soul vortex drawing in many pale ghost wisps",
+    "atlas": 2,
+    "cell": 3
+  },
+  {
+    "id": "skill:Mirror Image",
+    "name": "Mirror Image",
+    "motif": "two overlapping transparent violet mirror silhouettes splitting in opposite directions",
+    "atlas": 2,
+    "cell": 4
+  },
+  {
+    "id": "skill:Hall of Mirrors",
+    "name": "Hall of Mirrors",
+    "motif": "a radial hall of five tall iridescent mirror shards with a deep hollow centre",
+    "atlas": 2,
+    "cell": 5
+  },
+  {
+    "id": "skill:Dead Eye",
+    "name": "Dead Eye",
+    "motif": "a single gold sniper reticle pierced by a short brilliant horizontal bullet trail",
+    "atlas": 2,
+    "cell": 6
+  },
+  {
+    "id": "skill:High Noon",
+    "name": "High Noon",
+    "motif": "six rotating golden revolver muzzle flares arranged as a western sunburst",
+    "atlas": 2,
+    "cell": 7
+  },
+  {
+    "id": "skill:Rotting Touch",
+    "name": "Rotting Touch",
+    "motif": "a green rotten handprint dissolving into ragged toxic wisps",
+    "atlas": 2,
+    "cell": 8
+  },
+  {
+    "id": "skill:Plague Tide",
+    "name": "Plague Tide",
+    "motif": "a rolling purple-green tide of many tiny plague skulls over a curved vapour crest",
+    "atlas": 2,
+    "cell": 9
+  },
+  {
+    "id": "skill:Burst Fire",
+    "name": "Burst Fire",
+    "motif": "three short staggered orange muzzle streaks emerging in a tight rectangular burst",
+    "atlas": 2,
+    "cell": 10
+  },
+  {
+    "id": "skill:Overclock",
+    "name": "Overclock",
+    "motif": "a cyan mechanical gear halo shedding fast angled blue electric sparks",
+    "atlas": 2,
+    "cell": 11
+  },
+  {
+    "id": "skill:Bounty Hunt",
+    "name": "Bounty Hunt",
+    "motif": "a bronze bounty seal split by a scarlet dagger, warm sparks",
+    "atlas": 2,
+    "cell": 12
+  },
+  {
+    "id": "skill:Contract Killer",
+    "name": "Contract Killer",
+    "motif": "a long thin red contract ribbon sliced by two silver assassin blades",
+    "atlas": 2,
+    "cell": 13
+  },
+  {
+    "id": "skill:Binding Wraps",
+    "name": "Binding Wraps",
+    "motif": "three long pale linen binding ribbons coiling in an open grasping spiral",
+    "atlas": 2,
+    "cell": 14
+  },
+  {
+    "id": "skill:Curse of the Pharaoh",
+    "name": "Curse of the Pharaoh",
+    "motif": "a broad gold pharaoh headdress silhouette with emerald eye light and streaming sand",
+    "atlas": 2,
+    "cell": 15
+  },
+  {
+    "id": "skill:Grappling Hook",
+    "name": "Grappling Hook",
+    "motif": "a curved silver grappling hook attached to a taut curling teal rope trail",
+    "atlas": 3,
+    "cell": 0
+  },
+  {
+    "id": "skill:Keelhaul",
+    "name": "Keelhaul",
+    "motif": "a dark iron anchor dragging a long crescent of turquoise sea spray",
+    "atlas": 3,
+    "cell": 1
+  },
+  {
+    "id": "skill:Dirge",
+    "name": "Dirge",
+    "motif": "three violet musical notes rising from a ghostly silver wolf throat",
+    "atlas": 3,
+    "cell": 2
+  },
+  {
+    "id": "skill:Battle Hymn",
+    "name": "Battle Hymn",
+    "motif": "a silver lyre with three broad blue sound ribbons fanning upward",
+    "atlas": 3,
+    "cell": 3
+  },
+  {
+    "id": "skill:Call of the Wild",
+    "name": "Call of the Wild",
+    "motif": "a small amber wolf paw print with three leaf-green whistle ripples",
+    "atlas": 3,
+    "cell": 4
+  },
+  {
+    "id": "skill:Hunt of the Pack",
+    "name": "Hunt of the Pack",
+    "motif": "three distinct running spectral wolf heads in an outward crescent hunt formation",
+    "atlas": 3,
+    "cell": 5
+  },
+  {
+    "id": "skill:Undertow",
+    "name": "Undertow",
+    "motif": "a single curling turquoise tentacle pulling a low inward water whirl",
+    "atlas": 3,
+    "cell": 6
+  },
+  {
+    "id": "skill:Maelstrom",
+    "name": "Maelstrom",
+    "motif": "a wide deep-blue maelstrom with four black tentacle tips circling its rim",
+    "atlas": 3,
+    "cell": 7
+  },
+  {
+    "id": "skill:Lance Charge",
+    "name": "Lance Charge",
+    "motif": "a long silver lance tip driving through a narrow cobalt pennant trail",
+    "atlas": 3,
+    "cell": 8
+  },
+  {
+    "id": "skill:Charge of the Knights",
+    "name": "Charge of the Knights",
+    "motif": "three radiant mounted lances advancing abreast with large blue-gold pennants",
+    "atlas": 3,
+    "cell": 9
+  },
+  {
+    "id": "skill:Reap",
+    "name": "Reap",
+    "motif": "one long thin ivory scythe crescent dragging a cold teal soul spark",
+    "atlas": 3,
+    "cell": 10
+  },
+  {
+    "id": "skill:Harvest of Souls",
+    "name": "Harvest of Souls",
+    "motif": "a broad black spectral scythe over a harvest of many ascending turquoise spirits",
+    "atlas": 3,
+    "cell": 11
+  },
+  {
+    "id": "skill:Temporal Surge",
+    "name": "Temporal Surge",
+    "motif": "a tilted violet hourglass scattering sand upward into a curved time ribbon",
+    "atlas": 3,
+    "cell": 12
+  },
+  {
+    "id": "skill:Time Stop",
+    "name": "Time Stop",
+    "motif": "a huge hollow magenta clock face with frozen separated clock hands and orbiting crystal ticks",
+    "atlas": 3,
+    "cell": 13
+  },
+  {
+    "id": "skill:Voltage Blink",
+    "name": "Voltage Blink",
+    "motif": "a short cyan blade bent into a sharp zigzag teleport streak",
+    "atlas": 3,
+    "cell": 14
+  },
+  {
+    "id": "skill:Thunder Cascade",
+    "name": "Thunder Cascade",
+    "motif": "three descending blue katana-shaped lightning cascades connected by electric bridges",
+    "atlas": 3,
+    "cell": 15
+  },
+  {
+    "id": "skill:Broadside",
+    "name": "Broadside",
+    "motif": "three dark iron cannonballs in a wide horizontal fan with orange muzzle smoke",
+    "atlas": 4,
+    "cell": 0
+  },
+  {
+    "id": "skill:Ghost Fleet",
+    "name": "Ghost Fleet",
+    "motif": "a spectral sea-green ship prow with torn ghost sails and curling mist wake",
+    "atlas": 4,
+    "cell": 1
+  },
+  {
+    "id": "skill:Shell Barrage",
+    "name": "Shell Barrage",
+    "motif": "a single brass artillery shell trailing white smoke above a low orange crater fan",
+    "atlas": 4,
+    "cell": 2
+  },
+  {
+    "id": "skill:Orbital Strike",
+    "name": "Orbital Strike",
+    "motif": "a vertical red-white orbital targeting lance with four square mechanical targeting corners",
+    "atlas": 4,
+    "cell": 3
+  },
+  {
+    "id": "skill:Holy Light",
+    "name": "Holy Light",
+    "motif": "a slender white lotus of holy light opening around an upright golden candle ray",
+    "atlas": 4,
+    "cell": 4
+  },
+  {
+    "id": "skill:Resurrection",
+    "name": "Resurrection",
+    "motif": "a broad white phoenix rising from a small gold halo with long ribbon wings",
+    "atlas": 4,
+    "cell": 5
+  },
+  {
+    "id": "skill:Dragon Breath",
+    "name": "Dragon Breath",
+    "motif": "a tight cone of red dragon fire emerging between two small horn-shaped flame curls",
+    "atlas": 4,
+    "cell": 6
+  },
+  {
+    "id": "skill:Inferno Breath",
+    "name": "Inferno Breath",
+    "motif": "a vast violet-orange dragon jaw silhouette exhaling a wide layered inferno plume",
+    "atlas": 4,
+    "cell": 7
+  },
+  {
+    "id": "skill:Earthquake",
+    "name": "Earthquake",
+    "motif": "a fractured ochre ground plate split by three amber seismic cracks",
+    "atlas": 4,
+    "cell": 8
+  },
+  {
+    "id": "skill:Cataclysm",
+    "name": "Cataclysm",
+    "motif": "three towering rugged stone monoliths bursting upward through an enormous hollow dust ring",
+    "atlas": 4,
+    "cell": 9
+  },
+  {
+    "id": "skill:Starfall",
+    "name": "Starfall",
+    "motif": "one large sapphire seven-point falling star trailing a long violet comet ribbon",
+    "atlas": 4,
+    "cell": 10
+  },
+  {
+    "id": "skill:Astral Convergence",
+    "name": "Astral Convergence",
+    "motif": "a floating golden armillary sphere of three orbital rings converging around many blue stars",
+    "atlas": 4,
+    "cell": 11
+  },
+  {
+    "id": "skill:Hellblade Sweep",
+    "name": "Hellblade Sweep",
+    "motif": "a broad red-black flaming sword sweep with serrated ember teeth",
+    "atlas": 4,
+    "cell": 12
+  },
+  {
+    "id": "skill:Demon Form",
+    "name": "Demon Form",
+    "motif": "a symmetrical demonic horn crown with two enormous torn crimson flame wings",
+    "atlas": 4,
+    "cell": 13
+  },
+  {
+    "id": "skill:Judgement",
+    "name": "Judgement",
+    "motif": "a heavy golden execution sword descending through an angular red judgement seal",
+    "atlas": 4,
+    "cell": 14
+  },
+  {
+    "id": "skill:Reign of Terror",
+    "name": "Reign of Terror",
+    "motif": "a black iron spiked royal crown suspended over three large crimson fear waves",
+    "atlas": 4,
+    "cell": 15
+  },
+  {
+    "id": "skill:Ravage",
+    "name": "Ravage",
+    "motif": "three parallel red claw gashes with ragged silver fur wisps",
+    "atlas": 5,
+    "cell": 0
+  },
+  {
+    "id": "skill:Full Moon",
+    "name": "Full Moon",
+    "motif": "a large cold blue full moon framed by two silver wolf claws and red mist",
+    "atlas": 5,
+    "cell": 1
+  },
+  {
+    "id": "skill:Gore Charge",
+    "name": "Gore Charge",
+    "motif": "two low ivory bull horns charging through a wedge of brown dust",
+    "atlas": 5,
+    "cell": 2
+  },
+  {
+    "id": "skill:Stampede",
+    "name": "Stampede",
+    "motif": "a fan of five bronze bull horn silhouettes thundering through a wide ochre dust crest",
+    "atlas": 5,
+    "cell": 3
+  },
+  {
+    "id": "skill:Pipes of Pan",
+    "name": "Pipes of Pan",
+    "motif": "a small gold panpipe bundle exhaling green musical leaf notes",
+    "atlas": 5,
+    "cell": 4
+  },
+  {
+    "id": "skill:Bacchanal",
+    "name": "Bacchanal",
+    "motif": "a round purple grapevine wreath spilling gold dancing notes and emerald vine curls",
+    "atlas": 5,
+    "cell": 5
+  },
+  {
+    "id": "skill:Petrifying Gaze",
+    "name": "Petrifying Gaze",
+    "motif": "a narrow emerald serpent eye casting two angular green petrifying rays",
+    "atlas": 5,
+    "cell": 6
+  },
+  {
+    "id": "skill:Stone Curse",
+    "name": "Stone Curse",
+    "motif": "a grey stone serpent head crumbling into a ring of sharply separated marble fragments",
+    "atlas": 5,
+    "cell": 7
+  },
+  {
+    "id": "skill:War Banner",
+    "name": "War Banner",
+    "motif": "a single tall red-gold military standard with flowing silk and a narrow gold halo",
+    "atlas": 5,
+    "cell": 8
+  },
+  {
+    "id": "skill:Rally Cry",
+    "name": "Rally Cry",
+    "motif": "three broad war trumpets issuing a fan of long red-gold command ribbons",
+    "atlas": 5,
+    "cell": 9
+  },
+  {
+    "id": "skill:Ground Slam",
+    "name": "Ground Slam",
+    "motif": "a single rough brown fist-shaped boulder slamming into four short radial cracks",
+    "atlas": 5,
+    "cell": 10
+  },
+  {
+    "id": "skill:Horned Shove",
+    "name": "Horned Shove",
+    "motif": "one blunt ochre horn sweeping sideways with a short dusty crescent",
+    "atlas": 5,
+    "cell": 11
+  },
+  {
+    "id": "skill:Summon Imps",
+    "name": "Summon Imps",
+    "motif": "a small red infernal doorway with three tiny horned ember silhouettes emerging",
+    "atlas": 5,
+    "cell": 12
+  },
+  {
+    "id": "skill:Hellfire",
+    "name": "Hellfire",
+    "motif": "three hooked black-red flame tongues reaching upward around a hollow pentagonal ember mouth",
+    "atlas": 5,
+    "cell": 13
+  },
+  {
+    "id": "skill:Spirit Ward",
+    "name": "Spirit Ward",
+    "motif": "five small pale blue ancestral spirit faces making a broken protective ring",
+    "atlas": 5,
+    "cell": 14
+  },
+  {
+    "id": "skill:Tusk Flurry",
+    "name": "Tusk Flurry",
+    "motif": "four short curved yellow ivory tusks crossing in a rapid orange impact fan",
+    "atlas": 5,
+    "cell": 15
+  },
+  {
+    "id": "skill:Raise Dead",
+    "name": "Raise Dead",
+    "motif": "a single blue-white skeletal hand reaching up from a low cracked violet grave halo",
+    "atlas": 6,
+    "cell": 0
+  },
+  {
+    "id": "skill:Soul Nova",
+    "name": "Soul Nova",
+    "motif": "a large icy ghost skull dissolving outward into a pale blue spherical shockfront",
+    "atlas": 6,
+    "cell": 1
+  },
+  {
+    "id": "skill:Possession",
+    "name": "Possession",
+    "motif": "a long violet ghost mask wisp curling inward into a sharp spiral hook",
+    "atlas": 6,
+    "cell": 2
+  },
+  {
+    "id": "skill:Foxfire",
+    "name": "Foxfire",
+    "motif": "three small separate floating blue-white fox-flame lanterns with narrow orange cores",
+    "atlas": 6,
+    "cell": 3
+  },
+  {
+    "id": "skill:Kanabo Smash",
+    "name": "Kanabo Smash",
+    "motif": "a thick dark iron studded club head striking a short red-orange stone impact crown",
+    "atlas": 6,
+    "cell": 4
+  },
+  {
+    "id": "skill:Thunder Drum",
+    "name": "Thunder Drum",
+    "motif": "a round bronze drum silhouette with two crossed beaters and concentric blue electric sound arcs",
+    "atlas": 6,
+    "cell": 5
+  },
+  {
+    "id": "skill:Crushing Slam",
+    "name": "Crushing Slam",
+    "motif": "two blocky granite fists striking together over a compact square ochre debris splash",
+    "atlas": 6,
+    "cell": 6
+  },
+  {
+    "id": "skill:Shard Burst",
+    "name": "Shard Burst",
+    "motif": "a tight round burst of short pink amethyst crystals with a bright hollow centre",
+    "atlas": 6,
+    "cell": 7
+  },
+  {
+    "id": "skill:Shard Storm",
+    "name": "Shard Storm",
+    "motif": "a diagonal rain fan of long pale blue diamond shards with icy vapour trails",
+    "atlas": 6,
+    "cell": 8
+  },
+  {
+    "id": "skill:Magma Burst",
+    "name": "Magma Burst",
+    "motif": "three low molten lava geysers with thick red globules and black rock fragments",
+    "atlas": 6,
+    "cell": 9
+  },
+  {
+    "id": "skill:Forge Hammer",
+    "name": "Forge Hammer",
+    "motif": "a single heavy bronze hammer head above a small anvil-shaped burst of golden sparks",
+    "atlas": 6,
+    "cell": 10
+  },
+  {
+    "id": "skill:Furnace Blast",
+    "name": "Furnace Blast",
+    "motif": "a wide rectangular furnace mouth belching a horizontal orange-white flame jet and coal sparks",
+    "atlas": 6,
+    "cell": 11
+  },
+  {
+    "id": "spell:heal",
+    "name": "heal",
+    "motif": "a royal emerald four-petal healing blossom with four tiny gold crosses rising above it",
+    "atlas": 6,
+    "cell": 12
+  },
+  {
+    "id": "spell:meteor",
+    "name": "meteor",
+    "motif": "a black-red royal meteor crowned by five bright gold flame spikes, short curved descent tail",
+    "atlas": 6,
+    "cell": 13
+  },
+  {
+    "id": "spell:haste",
+    "name": "haste",
+    "motif": "a bright gold winged hourglass with two long horizontal forward speed ribbons",
+    "atlas": 6,
+    "cell": 14
+  },
+  {
+    "id": "spell:shield",
+    "name": "shield",
+    "motif": "a translucent sapphire hexagonal shield plate with a small royal gold diamond core",
+    "atlas": 6,
+    "cell": 15
+  },
+  {
+    "id": "spell:chain",
+    "name": "chain",
+    "motif": "four bright turquoise lightning pearls linked by a curved forked royal lightning chain",
+    "atlas": 7,
+    "cell": 0
+  },
+  {
+    "id": "spell:frost",
+    "name": "frost",
+    "motif": "a flat six-armed ice snowflake exploding into a low ring of long blue crystal spears",
+    "atlas": 7,
+    "cell": 1
+  },
+  {
+    "id": "spell:rally",
+    "name": "rally",
+    "motif": "three small upright gold rally flags rising from a single broad amber chevron",
+    "atlas": 7,
+    "cell": 2
+  },
+  {
+    "id": "spell:quake",
+    "name": "quake",
+    "motif": "a hollow brown ground ring with four separated tectonic slabs and branching orange fissures",
+    "atlas": 7,
+    "cell": 3
+  },
+  {
+    "id": "spell:smite",
+    "name": "smite",
+    "motif": "a white-gold descending hammer of divine judgement with one long straight light column",
+    "atlas": 7,
+    "cell": 4
+  },
+  {
+    "id": "spell:resurrect",
+    "name": "resurrect",
+    "motif": "a golden soul feather rising inside a broken white egg-shaped aura with small pink stars",
+    "atlas": 7,
+    "cell": 5
+  },
+  {
+    "id": "spell:poison",
+    "name": "poison",
+    "motif": "a low broad purple poison cauldron plume with three suspended green venom droplets",
+    "atlas": 7,
+    "cell": 6
+  },
+  {
+    "id": "spell:cleanse",
+    "name": "cleanse",
+    "motif": "a clear white-blue water droplet pierced by a thin silver cross and outward cleansing spray",
+    "atlas": 7,
+    "cell": 7
+  },
+  {
+    "id": "spell:blink",
+    "name": "blink",
+    "motif": "two small offset violet oval portals connected by a narrow silver teleport ribbon",
+    "atlas": 7,
+    "cell": 8
+  },
+  {
+    "id": "spell:hex",
+    "name": "hex",
+    "motif": "a purple evil eye enclosed in a triangular black thorn frame with two curling curse wisps",
+    "atlas": 7,
+    "cell": 9
+  },
+  {
+    "id": "spell:lance",
+    "name": "lance",
+    "motif": "a very long thin gold-white spear of light with a sharp diamond tip and parallel light rails",
+    "atlas": 7,
+    "cell": 10
+  },
+  {
+    "id": "spell:renewal",
+    "name": "renewal",
+    "motif": "a green spiral of five small opening leaf buds around a soft gold healing seed",
+    "atlas": 7,
+    "cell": 11
+  },
+  {
+    "id": "spell:deepfreeze",
+    "name": "deepfreeze",
+    "motif": "a massive pale blue faceted ice coffin with a clear hollow centre and hanging icicles",
+    "atlas": 7,
+    "cell": 12
+  },
+  {
+    "id": "spell:warcry",
+    "name": "warcry",
+    "motif": "a large curved crimson war horn emitting three thick angular red sound chevrons",
+    "atlas": 7,
+    "cell": 13
+  },
+  {
+    "id": "spell:bulwark",
+    "name": "bulwark",
+    "motif": "three interlocked low grey stone battlements with gold mortar light and short dust plumes",
+    "atlas": 7,
+    "cell": 14
+  },
+  {
+    "id": "spell:wolves",
+    "name": "wolves",
+    "motif": "two silver spectral wolf pawprints bounding along a curling royal green trail",
+    "atlas": 7,
+    "cell": 15
+  },
+  {
+    "id": "spell:starfall",
+    "name": "starfall",
+    "motif": "five small falling gold celestial stars forming a curved constellation with long silver tails",
+    "atlas": 8,
+    "cell": 0
+  }
+]
