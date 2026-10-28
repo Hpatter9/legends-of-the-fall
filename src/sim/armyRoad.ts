@@ -108,7 +108,7 @@ export function roadMask(w: number, d: number, entry: At[] | null, exit: At[] | 
 
 /** Each theme's land beside the road: the share of each kind (the rest of the table's weights). */
 const BESIDE: Record<string, [Scenery, number][]> = {
-  orcs: [['wood', 5], ['rocks', 3.5], ['fence', 0.8], ['bones', 0.7]],
+  orcs: [['wood', 5], ['rocks', 3.9], ['fence', 0.8], ['bones', 0.3]],
   undead: [['ruin', 3], ['grave', 3], ['wood', 2.5], ['rocks', 1.5]],
   necropolis: [['ruin', 3], ['grave', 3], ['wood', 2.5], ['rocks', 1.5]],
   beasts: [['wood', 4.5], ['rocks', 3], ['bones', 2.5]],
