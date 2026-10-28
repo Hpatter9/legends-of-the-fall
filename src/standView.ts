@@ -18,6 +18,7 @@ import { heroSays, kingSays, newQuipScene, standFoeGrumbles } from './quips';
 import { hideQuip, type Anchor } from './quipView';
 import { closeCalls, KING_LOW_HP, ultimatesCast } from './render/quipRules';
 import { saveMeta, type Meta } from './sim/meta';
+import { HeroBar } from './heroBar';
 import { UNITS } from './sim/units';
 import { levelOfKind } from './sim/levels';
 import { RELICS } from './sim/relics';
@@ -106,6 +107,8 @@ export class StandView {
   private gesture: { kind: 'pan' | 'hero' | 'pinch'; x: number; y: number; cx: number; cy: number; moved: boolean; hero?: number; d0?: number; s0?: number } | null = null;
   private banner = { left: 0 };
   private parts = {} as Record<string, HTMLElement>;
+  /** The eight heroes' bar (`heroBar.ts`): their pools and ultimates, tapped to fire, in two rows; and the Auto switch. */
+  private heroBar!: HeroBar;
   private shown = new Map<string, string>();
   private summary: StandSummary | null = null;
 
@@ -183,6 +186,15 @@ export class StandView {
     mana.innerHTML = '<i><span></span></i><b></b>';
     const cards = el('div', 'stCards');
     spells.append(mana, cards);
+    const heroes = el('div', 'stHeroes');
+    this.heroBar = new HeroBar(heroes, {
+      onAuto: (on) => {
+        const m = this.host.meta();
+        m.ultAuto = on;
+        saveMeta(m);
+        if (this.s) this.s.b.autoUlt = on;
+      },
+    });
     const offer = el('div', 'stOffer');
     const bar = el('div', 'stBar');
     const btn = (id: string, label: string, run: () => void) => {
@@ -197,7 +209,7 @@ export class StandView {
     );
     const start = el('button', 'stStart primary', 'Begin the stand');
     start.addEventListener('click', () => this.begin());
-    bottom.append(spells, offer, bar, start);
+    bottom.append(spells, heroes, offer, bar, start);
     const end = el('div', 'stEnd');
     end.hidden = true;
     const ask = el('div', 'stAsk');
@@ -206,7 +218,7 @@ export class StandView {
     pick.hidden = true;
     root.append(this.input, top, count, arrows, info, banner, bottom, end, ask, pick);
     document.body.append(root);
-    this.parts = { leave, speed, wave, king, gold, count, go, arrows, info, banner, bottom, spells, mana, cards, offer, bar, start, end, ask, pick };
+    this.parts = { leave, speed, wave, king, gold, count, go, arrows, info, banner, bottom, spells, heroes, mana, cards, offer, bar, start, end, ask, pick };
     this.wireInput();
   }
 
@@ -717,9 +729,12 @@ export class StandView {
       this.acc += Math.min(dt, 250) * this.speed * this.fx.timeScale();
       let guard = 0;
       const ts = performance.now();
+      // (the ultimates: tapped on the hero bar, or on their own with its Auto switch on)
+      s.b.autoUlt = !!this.host.meta().ultAuto;
       while (this.acc >= TICK_MS && guard++ < 4) {
         this.acc -= TICK_MS;
         const events = stepStand(s);
+        for (const e of events) if (e.kind === 'ultLapse') this.heroBar.lapse(e.by);
         this.fx.show(s.b, events);
         if (s.b.units.length !== this.sprites.size) this.syncSprites();
         playEvents(s.b, events, 1);
@@ -729,6 +744,8 @@ export class StandView {
       }
       if (guard >= 4) this.acc = 0;
       this.perf.sim += performance.now() - ts;
+      this.heroBar.build(s.b);
+      this.heroBar.refresh(s.b);
       this.fx.step(Math.min(dt, 250));
     } else if (s.phase === 'over') {
       this.acc += dt;
@@ -950,6 +967,11 @@ export class StandView {
     (p.go as HTMLButtonElement).hidden = !brk;
     p.start.hidden = s.phase !== 'deploy';
     p.spells.hidden = !this.host.meta().spellbook.equipped.length || s.phase === 'deploy' || s.phase === 'over';
+    p.heroes.hidden = s.phase === 'deploy' || s.phase === 'over';
+    if (!p.heroes.hidden) {
+      this.heroBar.setAuto(!!this.host.meta().ultAuto);
+      this.heroBar.build(s.b);
+    }
     if (!p.spells.hidden) this.refreshSpells();
     this.refreshBar(false);
   }

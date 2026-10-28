@@ -1,5 +1,9 @@
 # Ultimates for every hero
 
+> **COMBAT-002 (hero kits):** the ultimates now fill their own meter from the fight (about 40 s of fighting) and are fired by a tap on the
+> hero's portrait, or on their own with Auto; their `rate` and `power` were tuned again. See [`hero-kits.md`](hero-kits.md). The tables below
+> are the record of the level-15 and level-30 tuning before that.
+
 > **Now level 30** (`hero-skills.md`, the owner's call): every `ULT_LEVEL` below reads 30 and every table and test was re-run at level 30. The text from "How often they fire" down is the record of the level-15 tuning, kept as it was.
 
 Every hero has an ultimate now (all 45; `KITS[kind].ultimate`), **unlocked when the hero fights at level 30**. Eight heroes (Kitsune, Karasu Tengu,

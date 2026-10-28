@@ -21,7 +21,7 @@ export interface TraitEffects {
   crit?: number;
   /** Multiplies how fast heroes act and walk. */
   speed?: number;
-  /** Multiplies how fast skills charge with time. */
+  /** Multiplies how fast pools refill with time. */
   charge?: number;
   /** Multiplies how fast the king's mana fills. */
   mana?: number;
@@ -61,8 +61,8 @@ export const TRAITS: Record<string, Trait> = {
   blade: { id: 'blade', name: 'Blade', kind: 'class', short: 'Bl', tiers: [{ need: 2, effects: { crit: 0.1 }, text: '+10% crit chance for all' }] },
   marksman: { id: 'marksman', name: 'Marksman', kind: 'class', short: 'Mk', tiers: [{ need: 2, effects: { reach: 0.5 }, text: 'Shooters reach much further from high ground' }] },
   caster: { id: 'caster', name: 'Caster', kind: 'class', short: 'Ca', tiers: [
-    { need: 2, effects: { charge: 1.3 }, text: 'Skills charge 30% faster over time' },
-    { need: 4, effects: { charge: 1.5 }, text: 'Skills charge 50% faster over time' },
+    { need: 2, effects: { charge: 1.3 }, text: 'Pools refill 30% faster over time' },
+    { need: 4, effects: { charge: 1.5 }, text: 'Pools refill 50% faster over time' },
   ] },
   holy: { id: 'holy', name: 'Holy', kind: 'origin', short: 'Ho', tiers: [{ need: 2, effects: { hp: 1.08 }, text: '+8% health' }] },
   wild: { id: 'wild', name: 'Wild', kind: 'origin', short: 'Wi', tiers: [
@@ -70,8 +70,8 @@ export const TRAITS: Record<string, Trait> = {
     { need: 4, effects: { atk: 1.12 }, text: '+12% attack' },
   ] },
   arcane: { id: 'arcane', name: 'Arcane', kind: 'origin', short: 'Ar', tiers: [
-    { need: 2, effects: { charge: 1.15 }, text: 'Skills charge 15% faster over time' },
-    { need: 4, effects: { charge: 1.3 }, text: 'Skills charge 30% faster over time' },
+    { need: 2, effects: { charge: 1.15 }, text: 'Pools refill 15% faster over time' },
+    { need: 4, effects: { charge: 1.3 }, text: 'Pools refill 30% faster over time' },
   ] },
   frontier: { id: 'frontier', name: 'Frontier', kind: 'origin', short: 'Fr', tiers: [
     { need: 2, effects: { crit: 0.06 }, text: '+6% crit chance for all' },
@@ -104,12 +104,12 @@ export const TRAITS: Record<string, Trait> = {
     { need: 2, effects: { crit: 0.08 }, text: '+8% crit chance for all' },
     { need: 4, effects: { crit: 0.16, speed: 1.03 }, text: '+16% crit chance, and all heroes act and walk 3% faster' },
   ] },
-  support: { id: 'support', name: 'Support', kind: 'class', short: 'Su', tiers: [{ need: 2, effects: { hp: 1.04, charge: 1.1 }, text: '+4% health, and skills charge 10% faster over time' }] },
+  support: { id: 'support', name: 'Support', kind: 'class', short: 'Su', tiers: [{ need: 2, effects: { hp: 1.04, charge: 1.1 }, text: '+4% health, and pools refill 10% faster over time' }] },
   vanguard: { id: 'vanguard', name: 'Vanguard', kind: 'class', short: 'Va', tiers: [
     { need: 2, effects: { speed: 1.04 }, text: 'All heroes act and walk 4% faster' },
     { need: 4, effects: { speed: 1.08, atk: 1.03 }, text: 'All heroes act and walk 8% faster, and hit 3% harder' },
   ] },
-  arcanist: { id: 'arcanist', name: 'Arcanist', kind: 'class', short: 'Ac', tiers: [{ need: 2, effects: { mana: 1.15, charge: 1.1 }, text: "The king's mana fills 15% faster, and skills charge 10% faster" }] },
+  arcanist: { id: 'arcanist', name: 'Arcanist', kind: 'class', short: 'Ac', tiers: [{ need: 2, effects: { mana: 1.15, charge: 1.1 }, text: "The king's mana fills 15% faster, and pools refill 10% faster" }] },
   bulwark: { id: 'bulwark', name: 'Bulwark', kind: 'class', short: 'Bw', tiers: [{ need: 2, effects: { guard: 0.04, hp: 1.03 }, text: 'All heroes take 4% less damage, and have 3% more health' }] },
 };
 

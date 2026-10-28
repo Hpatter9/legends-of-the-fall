@@ -13,8 +13,9 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   await page.evaluate(() => document.getElementById('fight').click());
   await page.waitForTimeout(2500);
   await page.screenshot({ path: out('calamity-fight', w) });
-  const bench = await page.evaluate(() => { const r = document.getElementById('bench').getBoundingClientRect(); return { h: r.height, cards: [...document.querySelectorAll('#bench .card')].filter((c) => getComputedStyle(c).display !== 'none').length }; });
-  check(`bench strip is slim (${w})`, bench.h < 50 && bench.cards >= 9, JSON.stringify(bench));
+  // (in a fight the bench gives way to the hero bar, COMBAT-002: a tile for each hero placed, and the Auto switch)
+  const bench = await page.evaluate(() => { const r = document.getElementById('heroBar').getBoundingClientRect(); return { h: r.height, benchShown: document.getElementById('benchWrap').getBoundingClientRect().height > 0, tiles: document.querySelectorAll('#heroBar .hb').length }; });
+  check(`the hero bar replaces the bench (${w})`, bench.h > 0 && bench.h < 110 && !bench.benchShown && bench.tiles >= 1, JSON.stringify(bench));
   // drag a spell onto the grid
   await page.evaluate(() => { window.__game.b.spells.mana = 10; });
   const card = await page.evaluate(() => { const r = document.querySelector('.spell[data-id="meteor"]').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
