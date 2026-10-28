@@ -18,7 +18,7 @@ import { readStash } from './armyStars';
 import { readTalents, type KindTalents } from './talents';
 import { AWAKEN_MULT } from './awakenRules';
 import { readAwakened } from './awaken';
-import { readCodex, readCodexClaimed, type CodexRecord } from './codex';
+import { readCodex, readCodexClaimed, readCodexPaid, type CodexRecord } from './codex';
 import { readCombosSeen } from './combos';
 import { readTickets } from './autoReplay';
 import { grandfather } from './modeUnlock';
@@ -117,6 +117,8 @@ export interface Meta {
   /** The codex: the foe kinds met and the kills per kind (`codex.ts`; saves from before have none), and the milestone rewards claimed. */
   codex?: CodexRecord;
   codexClaimed?: string[];
+  /** The codex entries whose stone is taken (`codex.ts`, `claimEntries`): `foe:<entry>` and `hero:<kind>`. A save from before has every entry it had discovered counted as paid. */
+  codexPaid?: string[];
   /** The five-hero combos seen in a fight (`combos.ts`; the codex lists a combo once it has been seen). Saves from before have none. */
   combosSeen?: string[];
   /** The auto runs spent on a date (yyyymmdd; `autoReplay.ts`, `AUTO_TICKETS` a day). Saves from before have none. */
@@ -177,7 +179,7 @@ export interface Pull {
 }
 
 /** A brand-new save: no hero yet, only the three starter packs to pick from (`pickStarter`). */
-export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, stones: 0, unlocked: [], party: [], starter: { packs: starterPacks(seed), pick: null }, pulls: 0, sinceNew: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], opened: [], achievements: [], claimed: [], stash: [], ranked: {} });
+export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, stones: 0, unlocked: [], party: [], starter: { packs: starterPacks(seed), pick: null }, pulls: 0, sinceNew: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], opened: [], achievements: [], claimed: [], codexPaid: [], stash: [], ranked: {} });
 
 /** A save past the pick with the old starting five unlocked and in the party: what the saves from before the pick have, and what the tests and tools play with. */
 export function startedMeta(seed: number): Meta {
@@ -425,6 +427,8 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       // (saves from before the codex have none)
       m.codex = readCodex(m.codex);
       m.codexClaimed = readCodexClaimed(m.codexClaimed) ?? [];
+      // (saves from before the entry stones: what they had discovered counts as paid, so only new entries pay)
+      m.codexPaid = readCodexPaid(m.codexPaid, m);
       // (saves from before the combos have none seen)
       m.combosSeen = readCombosSeen(m.combosSeen);
       // (saves from before the auto tickets have none: a full day's worth)

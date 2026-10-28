@@ -20,8 +20,8 @@ import { UNITS } from './sim/units';
 import { drawArmies } from './armiesView';
 import { drawChestStash } from './chestStash';
 import { drawAchievements } from './achievementsView';
-import { drawCodex, stopCodex } from './codexView';
-import { claimCodex, codexWaiting, gotOf, totalOf } from './sim/codex';
+import { drawCodex, ENTRIES_CLAIM, stopCodex } from './codexView';
+import { claimCodex, claimEntries, codexAnyWaiting, gotOf, totalOf } from './sim/codex';
 import { todayKey } from './modes';
 import { openSettings } from './settings';
 import { modeOpen, MODE_NEED, opensAt, progressLine } from './sim/modeUnlock';
@@ -406,7 +406,7 @@ export class Home {
     // (the codex sits by the achievements: both are the records of the castle's library of deeds; its badge shows a milestone to claim)
     const cdx = el('button', 'ctChip');
     cdx.append(icon(ICONS.spells), el('b', '', 'Codex'), el('small', '', `${gotOf(m, 'bestiary') + gotOf(m, 'heroes')}/${totalOf('bestiary') + totalOf('heroes')}`));
-    if (codexWaiting(m).length) cdx.append(el('i', 'badge'));
+    if (codexAnyWaiting(m)) cdx.append(el('i', 'badge'));
     cdx.addEventListener('click', () => this.openCodex());
     const levelBtn = el('button', 'ctChip');
     levelBtn.append(el('b', '', '🏰 Build Town'));
@@ -632,11 +632,11 @@ export class Home {
     this.openSub('Achievements', draw);
   }
 
-  /** The codex page; a Claim takes a milestone's crowns and stone, saves, and draws the page again. */
+  /** The codex page; a Claim takes a milestone's crowns and stone (or the new entries' stones), saves, and draws the page again. */
   openCodex(): void {
     const draw = (b: HTMLElement) =>
       drawCodex(b, this.meta, (id) => {
-        if (!claimCodex(this.meta, id)) return;
+        if (!(id === ENTRIES_CLAIM ? claimEntries(this.meta) : claimCodex(this.meta, id))) return;
         saveMeta(this.meta);
         play('coinClaim');
         const keep = b.scrollTop;

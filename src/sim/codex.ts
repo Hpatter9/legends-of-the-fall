@@ -2,7 +2,8 @@
 // randomness. What is kept in the meta (both fields optional, so older saves load as they were): the foe kinds met and the kills
 // per kind (`Meta.codex`), counted when a fight settles from the battle's units, and the milestone rewards claimed
 // (`Meta.codexClaimed`). Milestones sit at 25, 50, 75 and 100% of each collection and pay a few crowns and a summoning stone
-// (`CODEX_STONES`), taken with a tap like achievements. The entries (one per look of foe, so the three minotaur sheets are one entry) are listed in `FOE_ENTRIES`.
+// (`CODEX_STONES`), taken with a tap like achievements. Each entry, a foe's, a boss's or a hero's, also pays a stone the first time
+// it is discovered (`ENTRY_STONES`), taken with the same tap; the entries paid are kept in `Meta.codexPaid`. The entries (one per look of foe, so the three minotaur sheets are one entry) are listed in `FOE_ENTRIES`.
 
 import type { Battle } from './battle';
 import { KITS, type Kit } from './abilities';
@@ -156,6 +157,42 @@ export function claimCodex(m: Meta, id: string): number {
   m.crowns += ms.crowns;
   m.stones = (m.stones ?? 0) + ms.stones;
   return ms.crowns;
+}
+
+/* ------------------------------------------------------------------ a stone for each entry discovered */
+
+/** The summoning stones each entry pays the first time it is discovered (the owner's ask), beside the milestones'. */
+export const ENTRY_STONES = 1;
+/** The id an entry's payment is kept under: `foe:<entry>` for the bestiary, `hero:<kind>` for the heroes. */
+export const foeKey = (e: FoeEntry): string => `foe:${e.id}`;
+export const heroKey = (kind: string): string => `hero:${kind}`;
+const ALL_ENTRY_KEYS: ReadonlySet<string> = new Set([...FOE_ENTRIES.map(foeKey), ...ALL_HEROES.map(heroKey)]);
+/** Every entry discovered so far, by its key: the foes met and the heroes owned, in the codex's order. */
+export const discoveredKeys = (m: Meta): string[] => [...metEntries(m).map(foeKey), ...ALL_HEROES.filter((k) => heroKnown(m, k)).map(heroKey)];
+/** The entries discovered whose stone is not yet taken. */
+export const entriesWaiting = (m: Meta): string[] => {
+  const paid = new Set(m.codexPaid ?? []);
+  return discoveredKeys(m).filter((k) => !paid.has(k));
+};
+/** Take the stone of every entry discovered and not yet paid. Returns the stones paid (0 when none waits); an entry pays once. */
+export function claimEntries(m: Meta): number {
+  const waiting = entriesWaiting(m);
+  if (!waiting.length) return 0;
+  (m.codexPaid ??= []).push(...waiting);
+  const stones = waiting.length * ENTRY_STONES;
+  m.stones = (m.stones ?? 0) + stones;
+  return stones;
+}
+/** Whether anything in the codex waits for a tap: a milestone, or an entry's stone. */
+export const codexAnyWaiting = (m: Meta): boolean => codexWaiting(m).length > 0 || entriesWaiting(m).length > 0;
+/**
+ * The entries paid, read from a save. A save from before the entry stones has none: every entry it has already discovered counts as
+ * paid, so an old save is not paid for its whole codex at once, only for the entries it discovers from now on. Call it after the codex,
+ * the bosses and the heroes are read.
+ */
+export function readCodexPaid(raw: unknown, m: Meta): string[] {
+  if (!Array.isArray(raw)) return discoveredKeys(m);
+  return [...new Set(raw.filter((k): k is string => typeof k === 'string' && ALL_ENTRY_KEYS.has(k)))];
 }
 
 /** The saved claims read safely. */

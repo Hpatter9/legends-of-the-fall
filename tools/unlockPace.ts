@@ -17,7 +17,7 @@ import { mixSeed, Rng } from '../src/sim/rng';
 import { dailyChestSeed, dailyCrowns, DAILY_WAVES } from '../src/sim/daily';
 import { MAP_CROWNS } from '../src/sim/tower';
 import { BUILDINGS } from '../src/sim/castle';
-import { crownsTotal, FOE_ENTRIES, stonesTotal } from '../src/sim/codex';
+import { claimEntries, crownsTotal, FOE_ENTRIES, stonesTotal } from '../src/sim/codex';
 import { ACHIEVEMENTS, stonesOfAchievement } from '../src/sim/achievements';
 
 const arg = (name: string, fallback: number): number => {
@@ -66,9 +66,11 @@ const EXTRA_CROWNS = 900;
 /** And the stones they pay beside those crowns: the same share of every achievement's and codex reward's stones as `EXTRA_CROWNS` is of their crowns. `--nobadges 1` leaves them out. */
 const BADGE_CROWNS = ACHIEVEMENTS.reduce((n, a) => n + a.crowns, 0) + crownsTotal('bestiary') + crownsTotal('heroes');
 const BADGE_STONES = ACHIEVEMENTS.reduce((n, a) => n + stonesOfAchievement(a), 0) + stonesTotal('bestiary') + stonesTotal('heroes');
+/** `--noentries 1`: the codex entries pay no stone (the player is otherwise paid one for each foe entry met and each hero owned, claimed every day). */
+const NO_ENTRIES = arg('--noentries', 0) > 0;
 const EXTRA_STONES = arg('--nobadges', 0) > 0 ? 0 : Math.round((BADGE_STONES * Math.min(1, EXTRA_CROWNS / BADGE_CROWNS)));
 
-interface Report { pdays: Record<number, number>; by: Record<number, number>; pullable: number; days: Record<number, number>; at: Record<string, number>; pulls: number; crowns: number }
+interface Report { pdays: Record<number, number>; by: Record<number, number>; pullable: number; days: Record<number, number>; at: Record<string, number>; pulls: number; crowns: number; entryStones: number }
 const MARKS = [5, 10, 15, 20, 30, 40, 45];
 /** The pullable heroes owned (the starter's three count): the 4th is the first after the starter. */
 const PULL_MARKS = [4, 5, 6, 10, 15, 20, 30, 35];
@@ -84,6 +86,7 @@ function simulate(seed: number): Report {
   let income = 0;
   let castleLeft = CASTLE_TOTAL;
   let pulls = 0;
+  let entryStones = 0;
   const bestFarm = (): number => {
     let best = 0;
     ARMIES.forEach((a) => {
@@ -159,6 +162,8 @@ function simulate(seed: number): Report {
     m.crowns -= toCastle;
     const budget = Math.floor(m.crowns * PULL_SHARE);
     let left = budget;
+    // the codex: a stone for each entry discovered since yesterday (the foes of the armies cleared, the heroes that joined)
+    if (!NO_ENTRIES) entryStones += claimEntries(m);
     // the chest shop: the dearest chest the budget reaches, again and again; every stone is then used (ten at a time, then singles)
     for (;;) {
       const c = [...SHOP].reverse().find((x) => shopPrice(m, x.kind) <= left && stockLeft(m, x.kind, 20260000 + day) > 0);
@@ -178,14 +183,14 @@ function simulate(seed: number): Report {
     spent += 0;
   }
   void spent;
-  return { pdays, by, pullable, days, at, pulls, crowns: income };
+  return { pdays, by, pullable, days, at, pulls, crowns: income, entryStones };
 }
 
 const reports = Array.from({ length: SEEDS }, (_, i) => simulate(i * 7919 + 13));
 const mean = (xs: number[]) => xs.reduce((n, x) => n + x, 0) / xs.length;
 const med = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
 console.log(`Unlock pace for a daily player (${SEEDS} seeds, ${DAYS} days; ${Math.round(PULL_SHARE * 100)}% of crowns to pulls after the castle; ${FOE_ENTRIES.length} bestiary entries, ${ACHIEVEMENTS.length} achievements)`);
-console.log(`Crowns earned: ${Math.round(mean(reports.map((r) => r.crowns)))} in ${DAYS} days; stones used: ${Math.round(mean(reports.map((r) => r.pulls)))} (${EXTRA_STONES} of them from achievements and the codex)`);
+console.log(`Crowns earned: ${Math.round(mean(reports.map((r) => r.crowns)))} in ${DAYS} days; stones used: ${Math.round(mean(reports.map((r) => r.pulls)))} (${EXTRA_STONES} of them from achievements and the codex's milestones, ${Math.round(mean(reports.map((r) => r.entryStones)))} from its entries)`);
 console.log('\nheroes  day reached (median, earliest, latest)');
 for (const n of MARKS) {
   const ds = reports.map((r) => r.days[n] ?? Infinity);
