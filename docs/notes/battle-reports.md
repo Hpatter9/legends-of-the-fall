@@ -2,7 +2,7 @@
 
 Owner: Codex. Branch: `design/battle-reports`. Worktree: `/workspace/legends-of-the-fall`.
 
-The owner accepted the battle HUD, requested its merge, and asked to carry that treatment across all battle screens, including after-action recaps. The accepted HUD merged in [PR #143](https://github.com/Hpatter9/legends-of-the-fall/pull/143) as **0.179.0**. This follow-up is for visual review, without a further version bump or merge.
+The owner accepted the battle HUD, requested its merge, and asked to carry that treatment across all battle screens, including after-action recaps. The accepted HUD merged in [PR #143](https://github.com/Hpatter9/legends-of-the-fall/pull/143) as **0.179.0**. The owner subsequently requested completion against the newer game; this follow-up is prepared as release 0.189.0.
 
 ## Changes
 
@@ -32,4 +32,10 @@ Evidence: `docs/samples/battle-reports-*.png`, `battle-reports-checks.json`, `ba
 
 The first review exposed an inherited ribbon border/height overriding the result header; fixed with explicit banner resets. An invalid gear ID in a victory fixture was corrected to `ironSword`. The initial 412px forced-loss case timed out; its repeat explicitly marks the temporary heroes fallen before the real simulator settles the defeat. These changes affect only review fixtures.
 
-Pending: final owner visual acceptance. No deployment or follow-up merge performed.
+The owner subsequently asked to finish the pass after checking intervening updates. Final integration is recorded below.
+
+## Final integration
+
+Owner asked to finish after subsequent updates. Integrated main `decef2e9` (0.188.0) cleanly, preserving the army roads/hazards, awakening auras, earned spells, recorded combat audio and shared-theme updates. Final release version is 0.189.0. Integrated checks and merge outcome are recorded below.
+
+Integrated validation passed on 0.189.0: typecheck and web build; the eight matching test files for battle-flow, comeback, heart-revive, events, army roads, hazards, awakening auras and hero-kit looks; all 23 report/flow checks at each of the three portrait sizes; daily/old-save variants; real service-worker offline reload/recap; and final-facts/action-button checks on all three sizes. Zero browser page errors. Screenshots and JSON evidence refreshed from the integrated build. No changes to gameplay, rewards or save rules were needed.

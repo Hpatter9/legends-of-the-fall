@@ -215,3 +215,7 @@ Release integration validation for 0.169.0: typecheck/build and 48 affected test
 UI-007 implementation and validation are complete; ready for owner visual review. Scope includes wave results, after-action recaps, daily/replay/Tower/Calamity summaries, between-fight cards and Last Stand. Typecheck/build and the three matching affected test files passed; daily/old-save fixtures and a real service-worker offline reload passed. See [handoff](notes/battle-reports.md). Follow-up visuals await owner acceptance; no new release bump or merge.
 
 UI-007 final browser evidence: all 23 report/flow checks completed at each of 393×852, 360×780 and 412×915, with zero page errors and no horizontal overflow. Daily/old-save fixtures and real service-worker offline reload also passed. Outcome simulations are temporary review fixtures where noted; full campaigns were not replayed.
+
+UI-007 final integration: owner requested completion after subsequent updates. Main 0.188.0 (`decef2e9`) merged cleanly; new army roads/hazards, awakening auras, spell sources and combat audio retained. Finishing as release 0.189.0 after integrated checks.
+
+UI-007 release 0.189.0 integrated validation passed: typecheck/build; eight affected test files; all 23 report/flow checks at all three portrait sizes; daily/old-save variants; service-worker offline reload/recap; final-facts/action-button checks. Evidence refreshed on main 0.188.0 plus this pass. Ready for the requested completion merge.
