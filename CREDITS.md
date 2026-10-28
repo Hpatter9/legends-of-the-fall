@@ -240,6 +240,11 @@ All Craftpix, copied one sprite or layer at a time; no PixelLab. Ground tops and
   isometric kits (`hpatter9/little-town`), halved by a 2x2 box average.
 
 - **Stone and iron UI kit** (`src/art/ui/` frames, buttons, ribbons, chips, flag, `wood.png`, `page.png`; drawn by `tools/ui/styles.py`, which replaced `tools/ui/frames.py`'s brown and gold kit): the `wood.png` (bars) and `page.png` (menu pages, panel fill) textures are the centre tiles of two **DawnLike** brick sets by DragonDePlatino (`Objects/Floor.png`, CC-BY 4.0; palette by DawnBringer), their few colours moved by brightness rank onto the slate ramp, with no resampling. The frames are drawn natively by the script.
+## The army road's scenery and arenas (WORLD-ROAD)
+
+- No new files: the trees, crags, bone piles, palisades, crystals, tents and the arenas' set pieces beside an army's road are cut at run time from the
+  Calamity map's atlas (`src/art/calmap/atlas.png`, credited above), and its ruins and graves are the boards' own ruined walls and graveyard stones.
+
 ## The Calamity's void (`src/art/calmap/`, `tools/calmap/prep.py`)
 
 - The sky behind the islands: the stars (`stars.png`, the bright pixels of the first sky) and the four moons (`planet_white/tan/red/blue.png`) are cut from the Craftpix **Free Moon Pixel Game

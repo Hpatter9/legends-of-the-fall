@@ -12,11 +12,16 @@ import { footDims, liesBehind, type Rot } from '../sim/turn';
 import { AREA_URLS, BUSH_URLS, GROUND_URLS } from './areaArt';
 import { TERRAIN_URLS } from './terrainArt';
 import { LIT_PROPS } from './weatherRules';
+import { loadRoadArt, piece, PIECES, sceneryPictures } from './roadArt';
+import { sceneDepth } from '../sim/armyRoad';
+import { mixSeed } from '../sim/rng';
 import gateUrl from '../art/camp/gate.png';
 import towerUrl from '../art/camp/tower.png';
 
 /** From this height up, a tile's top is stony. */
 const STONY = 3;
+/** How many steps of an army road's column are drawn below its top (they fade out past the first two). */
+const ROAD_SKIRT = 5;
 
 type Mark = 'deploy' | 'hover' | 'bad' | 'chosen' | null;
 const MARK_COLOUR: Record<Exclude<Mark, null>, [number, number]> = {
@@ -100,6 +105,7 @@ export async function loadBoardArt(): Promise<void> {
   const [barrel, crystal, planks] = await Promise.all([loadImage(TERRAIN_URLS.barrel), loadImage(TERRAIN_URLS.crystal), loadImage(TERRAIN_URLS.planks)]);
   const walls = (await all(TERRAIN_URLS.walls)).map((i) => Texture.from(i));
   const [gate, tower] = await all([gateUrl, towerUrl]);
+  await loadRoadArt();
   artEpoch++;
   art = { areas, water, ice, lava, bushes, barrel: Texture.from(barrel), walls, crystal: Texture.from(crystal), planks, gate: Texture.from(gate), tower: Texture.from(tower) };
 }
@@ -358,13 +364,28 @@ export class BoardView {
     const marks: Graphics[] = [];
     const tex: ColumnLease<Texture>[] = [];
     const barrels = new Map<number, Sprite>();
+    // (an army's road: the land beside it sinks a little and its far edge is left ragged, so a section reads as a road through the land, not a slab)
+    const depth = b.tiles.some((t) => t.scene) ? sceneDepth(b) : null;
+    const held = new Set((b.pieces ?? []).map((p) => p.v * b.w + p.u));
     for (let v = 0; v < b.d; v++)
       for (let u = 0; u < b.w; u++) {
-        const t = tileAt(b, u, v)!;
-        const [x, y] = project(f, u, v, t.h);
+        const raw = tileAt(b, u, v)!;
+        const far = depth ? depth[v * b.w + u] : 0;
         const tile = new Container();
         tile.zIndex = depthIn(f, u, v);
-        const ct = this.column(t, u, v, b.area, !!look.boss);
+        const edge = Math.min(u, v, b.w - 1 - u, b.d - 1 - v);
+        if (depth && far >= 3 && !held.has(v * b.w + u) && edge < 1 + ((mixSeed(b.seed, 0xed9e, u, v) >>> 0) % 3)) {
+          // (trimmed: nothing drawn, the tile is still there to the rules as land nobody stands on)
+          const mark = new Graphics();
+          tile.addChild(mark);
+          marks.push(mark);
+          tiles.push(tile);
+          continue;
+        }
+        const sink = raw.scene ? Math.min(2, Math.max(0, far - 1)) : 0;
+        const t: Tile = raw.scene === 'water' || raw.scene === 'lava' ? { ...raw, h: raw.h - sink, ground: raw.scene === 'water' ? 'deep' : 'lava' } : sink ? { ...raw, h: raw.h - sink } : raw;
+        const [x, y] = project(f, u, v, t.h);
+        const ct = this.column(t, u, v, b.area, depth ? !!t.paved : !!look.boss, !!depth);
         tex.push(ct);
         const col = new Sprite(ct.value);
         col.position.set(x - TW / 2, y - TH / 2);
@@ -374,7 +395,30 @@ export class BoardView {
         tile.addChild(mark);
         marks.push(mark);
         const set = art?.areas[b.area];
-        if (t.rock && set) {
+        if (t.scene === 'ruin' && art) {
+          const r = new Sprite(art.walls[t.deco % art.walls.length]);
+          r.anchor.set(0.5, 0.85);
+          r.position.set(x, y + 4);
+          tile.addChild(r);
+        } else if (t.scene === 'grave' && art) {
+          const g = art.areas.graveyard.boulders;
+          const tex = g[t.deco % g.length];
+          const r = new Sprite(tex);
+          r.anchor.set(0.5, 0.8);
+          r.scale.set(Math.min(50 / tex.width, 60 / tex.height));
+          r.position.set(x, y);
+          tile.addChild(r);
+        } else if (t.scene) {
+          for (const p of sceneryPictures(t.scene, b.area, t.deco)) {
+            const tex = piece(p.name);
+            if (!tex) continue;
+            const r = new Sprite(tex);
+            r.anchor.set(0.5, 0.88);
+            r.scale.set(p.scale);
+            r.position.set(x + p.dx, y + p.dy);
+            tile.addChild(r);
+          }
+        } else if (t.rock && set) {
           const tex = set.boulders[t.deco % set.boulders.length];
           const r = new Sprite(tex);
           r.anchor.set(0.5, 0.8);
@@ -421,8 +465,24 @@ export class BoardView {
         }
         tiles.push(tile);
       }
+    // an arena's set pieces, each on its tile of the land round it
+    for (const p of b.pieces ?? []) {
+      const look = PIECES[p.kind];
+      const tex = piece(look.name);
+      const tile = tiles[p.v * b.w + p.u];
+      if (!tex || !tile) continue;
+      const t = tileAt(b, p.u, p.v)!;
+      const far = depth ? depth[p.v * b.w + p.u] : 0;
+      const [x, y] = project(f, p.u, p.v, t.h - Math.min(2, Math.max(0, far - 1)));
+      const sp = new Sprite(tex);
+      sp.anchor.set(0.5, 0.82);
+      sp.scale.set(look.scale);
+      sp.position.set(x, y + 6);
+      tile.addChild(sp);
+    }
     let landmark: Container | null = null;
-    if (b.landmark && b.landmarkAt && art) {
+    // (an army road's final arena is the destination itself: its set pieces stand in for the distant compound)
+    if (b.landmark && b.landmarkAt && art && !b.pieces?.length) {
       // Existing credited gate/tower sprites form a scenic compound beyond the far edge, never collision terrain.
       const base = tiles[Math.floor(b.w / 2)];
       const site = b.landmarkAt;
@@ -496,26 +556,28 @@ export class BoardView {
   }
 
   /** One tile's column: its top laid on the diamond, its two sides down to the foot. */
-  private column(t: Tile, u: number, v: number, area: Area, boss = false): ColumnLease<Texture> {
+  private column(t: Tile, u: number, v: number, area: Area, boss = false, road = false): ColumnLease<Texture> {
     const set = art?.areas[area];
-    const top = t.h >= STONY || boss || t.perch ? -1 : set ? (t.deco + u + v) % set.tops.length : -1;
-    const key = columnKey(area, boss, t.h, !!t.bridge, t.ground, top, artEpoch, u, v, !!t.perch, !!t.ramp);
-    const bytes = TW * (TH + t.h * HH + FOOT + (boss ? HH : 0)) * 4;
-    return this.columns.acquire(key, bytes, () => this.paintColumn(t, u, v, area, boss));
+    const top = (!road && t.h >= STONY) || boss || t.perch ? -1 : set ? (t.deco + u + v) % set.tops.length : -1;
+    const skirt = road ? Math.min(t.h, ROAD_SKIRT) : -1;
+    const key = columnKey(area, boss, t.h, !!t.bridge, t.ground, top, artEpoch, u, v, !!t.perch, !!t.ramp, road ? `skirt${skirt}` : undefined);
+    const bytes = TW * (TH + (road ? skirt : t.h) * HH + FOOT + (boss && !road ? HH : 0)) * 4;
+    return this.columns.acquire(key, bytes, () => this.paintColumn(t, u, v, area, boss, road ? skirt : -1));
   }
 
   /** Original full-resolution painter; reuse only columns whose appearance inputs match. */
-  private paintColumn(t: Tile, u: number, v: number, area: Area, boss = false): Texture {
+  private paintColumn(t: Tile, u: number, v: number, area: Area, boss = false, skirt = -1): Texture {
     const set = art?.areas[area];
-    // (a boss arena stands on a plinth one step deeper)
-    const deep = t.h * HH + FOOT + (boss ? HH : 0);
+    // (a boss arena stands on a plinth one step deeper; an army road's tile has a short skirt instead of a cliff to the foot)
+    const road = skirt >= 0;
+    const deep = road ? skirt * HH + FOOT : t.h * HH + FOOT + (boss ? HH : 0);
     const c = document.createElement('canvas');
     c.width = TW;
     c.height = TH + deep;
     const g = c.getContext('2d')!;
     g.imageSmoothingEnabled = false;
-    // (a boss arena is all flagstone, with a gilded lip)
-    const stony = t.h >= STONY || boss;
+    // (a boss arena is all flagstone, with a gilded lip; on an army's road only the paved tiles are, whatever the height)
+    const stony = road ? boss : t.h >= STONY || boss;
     const lip = boss ? BOSS_LIP : LIP[area][stony ? 1 : 0];
     const face = (pts: [number, number][], fill: string | CanvasPattern) => {
       g.fillStyle = fill;
@@ -550,6 +612,17 @@ export class BoardView {
     };
     side(0, TW / 2, TH / 2, TH, 'rgba(60,40,20,0.12)');
     side(TW / 2, TW, TH, TH / 2, 'rgba(8,6,14,0.45)');
+    if (road && deep > 3 * HH) {
+      // (the skirt fades out below its first steps: the land goes on into the haze rather than ending in a wall)
+      g.save();
+      g.globalCompositeOperation = 'destination-out';
+      const fade = g.createLinearGradient(0, TH + 2.2 * HH, 0, TH + deep);
+      fade.addColorStop(0, 'rgba(0,0,0,0)');
+      fade.addColorStop(1, 'rgba(0,0,0,1)');
+      g.fillStyle = fade;
+      g.fillRect(0, TH / 2 + 2.2 * HH, TW, deep + TH);
+      g.restore();
+    }
     // faint lines at each step
     g.strokeStyle = 'rgba(0,0,0,0.2)';
     g.lineWidth = 1;
@@ -585,7 +658,9 @@ export class BoardView {
       g.fillRect(0, 0, TW, TH);
     }
     // (high ground a shade lighter, so the heights read at a glance)
-    g.fillStyle = `rgba(255,248,220,${0.03 + t.h * 0.035})`;
+    // (an army road stands tens of steps high: its tops take a soft band of light that rises and falls with the height, never bleaching out)
+    const band = Math.abs((t.h % 16) - 8) / 8;
+    g.fillStyle = `rgba(255,248,220,${road ? 0.02 + band * 0.1 : 0.03 + t.h * 0.035})`;
     g.fillRect(0, 0, TW, TH);
     // (the ground that matters is marked so it reads at a glance: ripples on shallows, glints on ice, a glow on lava)
     g.lineWidth = 1;

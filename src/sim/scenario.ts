@@ -1,7 +1,8 @@
 // The grand story-spanning battlefields for the nine armies (and their three prototype aliases).
 // Plan all sections deterministically before wave 1; the renderer still only receives revealed sections.
-import { boardOk, canStep, DEPLOY_ROWS, DIRS, RAMP, sightClear, standable, type Area, type Board, type Tile } from './board';
+import { boardOk, canStep, DEPLOY_ROWS, DIRS, RAMP, sightClear, standable, type Area, type Board, type Piece, type Tile } from './board';
 import { placesAfter, worldOf, type Place, type Section, type SectionSize } from './chain';
+import { arenaMask, ARENAS, besideAt, levelArena, roadMask, touching } from './armyRoad';
 import { mixSeed, Rng } from './rng';
 import { footDims, unturnTile } from './turn';
 
@@ -209,6 +210,16 @@ export function planThematicRoad(theme: ScenarioId, seed: number, n: number, siz
     if (road.length >= 2 && c.join === prev.join && road[road.length - 2].join === prev.join) {
       score += 45;
     }
+    // (the road through a section runs from its heroes' edge up to the foes' rows: a section joined on a flank is joined near the foes' end, so the road
+    // goes on from there rather than doubling back, and one joined straight on is joined about the middle of the foes' edge)
+    const touch = touching(prev, c, size.w, size.d).a;
+    if (touch.length) {
+      const vs = touch.map((p) => p[1]);
+      const us = touch.map((p) => p[0]);
+      const v = vs.reduce((a, b) => a + b, 0) / vs.length;
+      const u = us.reduce((a, b) => a + b, 0) / us.length;
+      score += c.join && touch.every((p) => p[1] === 0) ? Math.abs(u - (size.w - 1) / 2) * 2 : v * 3;
+    }
 
     return score;
   };
@@ -261,6 +272,49 @@ export function scenarioHeight(theme: ScenarioId, U: number, V: number, _waves?:
   return Math.max(0, Math.min(60, Math.floor(field)));
 }
 
+/** Where an arena's set pieces stand: on the land round it, the great one at the back (or a back corner, when the road goes on out that way). */
+function arenaPieces(theme: ScenarioId, b: Board, exit: [number, number][] | null, seed: number): Piece[] {
+  const kinds = (ARENAS[theme] ?? ARENAS.mountain).pieces;
+  const rng = new Rng(seed);
+  const spots: [number, number][] = [[Math.floor(b.w / 2), 0], [1, 1], [b.w - 2, 1], [1, 5], [b.w - 2, 5], [Math.floor(b.w / 2) - 3, 0], [Math.floor(b.w / 2) + 3, 0], [0, 9], [b.w - 1, 9]];
+  const near = (u: number, v: number) => exit?.some(([x, y]) => Math.abs(x - u) + Math.abs(y - v) <= 3);
+  const free = spots.filter(([u, v]) => b.tiles[v * b.w + u].scene && !near(u, v));
+  const out: Piece[] = [];
+  kinds.forEach((kind, k) => {
+    const at = free.splice(k === 0 ? 0 : rng.int(0, Math.max(0, free.length - 1)), 1)[0];
+    if (at) out.push({ u: at[0], v: at[1], kind });
+  });
+  return out;
+}
+
+/** Whether every standable tile can walk (climbing a single level) to the heroes' rows: the reverse of `boardOk`. */
+function walksBack(b: Board): boolean {
+  const seen = new Set<number>();
+  const queue: number[] = [];
+  for (let u = 0; u < b.w; u++) {
+    const i = (b.d - 1) * b.w + u;
+    if (standable(b.tiles[i])) {
+      seen.add(i);
+      queue.push(i);
+    }
+  }
+  for (let k = 0; k < queue.length; k++) {
+    const i = queue[k];
+    const u = i % b.w;
+    const v = Math.floor(i / b.w);
+    for (const [du, dv] of DIRS) {
+      const nu = u + du;
+      const nv = v + dv;
+      if (nu < 0 || nv < 0 || nu >= b.w || nv >= b.d) continue;
+      const j = nv * b.w + nu;
+      if (seen.has(j) || canStep(b.tiles[j], b.tiles[i], RAMP) === null) continue;
+      seen.add(j);
+      queue.push(j);
+    }
+  }
+  return b.tiles.every((t, i) => !standable(t) || seen.has(i));
+}
+
 function isBastionValid(board: Board, checkReach = true): boolean {
   const { w, d } = board;
   const tiles = board.tiles;
@@ -279,6 +333,8 @@ function isBastionValid(board: Board, checkReach = true): boolean {
     }
   }
   if (perches < 6 || ramps < 1) return false;
+  // (a bastion stands on the road, never on the land beside it)
+  if (tiles.some((t) => t.scene && (t.perch || t.ramp))) return false;
 
   for (let v = 0; v < d; v++) {
     for (let u = 0; u < w; u++) {
@@ -328,6 +384,15 @@ function isBastionValid(board: Board, checkReach = true): boolean {
     if (!sightClear(board, { u: pu, v: pv }, { u: pu, v: pv - 4 })) return false;
   }
 
+  // (on a road with land beside it a bastion's long ramp can leave a pocket beside it that a walker drops into and cannot climb out of: every
+  // tile must also be able to walk back to the heroes' rows, so survivors can always walk on to the next section)
+  const bare = (): Board => ({
+    ...board,
+    tiles: board.tiles.map((t) => (t.rock || t.wall || t.tree || t.barrel ? { ...t, rock: undefined, wall: undefined, tree: t.scene ? t.tree : undefined, barrel: undefined } : t)),
+  });
+  // (as with `boardOk` below: the road's own props may be cleared afterwards, so a board that walks back without them will do)
+  if (!walksBack(board) && !walksBack(bare())) return false;
+
   if (!boardOk(board)) {
     const clone = {
       ...board,
@@ -350,6 +415,9 @@ function tryPlaceBastion(board: Board, u0: number, v0: number, checkReach: boole
     const tH0 = board.tiles[(v0 - 4) * w + u0].h;
     if (nH0 + 2 <= tH0) return false;
   }
+
+  // (the world's height stays within its 60 steps)
+  for (let du = 0; du < bw; du++) if (board.tiles[(v0 - 1) * w + u0 + du].h + 2 > 60) return false;
 
   const backup: { idx: number; tile: Tile }[] = [];
 
@@ -497,23 +565,33 @@ export function planScenario(seed: number, theme: ScenarioId, waves: number, bos
     const origin = { u: place.ou, v: place.ov };
     const rot = place.rot;
     const join = place.join;
+    const isBoss = boss(n);
 
     const rng = new Rng(mixSeed(seed, 0x5ce1, n));
     const phase = n / waves;
     const area = land ?? areaOfWave(theme, phase);
     const tiles: Tile[] = [];
-    const leftRoad = theme === 'undead' || theme === 'necropolis' || theme === 'infernal';
-    const roadCols = (u: number) => (leftRoad ? u >= 1 && u <= 3 : u >= w - 4 && u <= w - 2);
-    const midCols = (u: number) => u >= Math.floor(w / 2) - 1 && u <= Math.floor(w / 2);
-    const midCorridor = (u: number) => roadCols(u) || midCols(u);
 
-    // A winding river / stream / lava channel cuts across the middle valley of the section, spanned by bridges.
+    // The road: where it comes in from the section before and leaves for the next (WORLD-ROAD), and the land beside it.
+    const entry = n > 1 ? touching(road[n - 2], place, w, d).b : null;
+    const exit = n < waves ? touching(place, road[n], w, d).a : null;
+    const arena = isBoss ? arenaMask(theme, w, d, entry, exit, mixSeed(seed, 0xa7e0, n)) : null;
+    const onRoad = arena ? arena.road : roadMask(w, d, entry, exit, mixSeed(seed, 0x20ad, n));
+    // (the middle of the road on each row, for where a bridge goes)
+    const roadMid = Array.from({ length: d }, (_, v) => {
+      const us = [...Array(w).keys()].filter((u) => onRoad[v * w + u]);
+      return us.length ? (us[0] + us[us.length - 1]) / 2 : w / 2;
+    });
+    const midCorridor = (u: number, v: number) => Math.abs(u - roadMid[v]) <= 1;
+
+    // A winding river / stream / lava channel cuts across the middle valley of the section, spanned by bridges where the road crosses it.
     const rCenter = Math.floor(d / 2) + ((n % 2 === 0) ? -1 : 0);
     const riverRowAt = (u: number) =>
       Math.max(
         DEPLOY_ROWS + 2,
         Math.min(d - DEPLOY_ROWS - 3, Math.round(rCenter + Math.sin(u * 0.55 + (seed + n) * 0.8) * 1.2)),
       );
+    const riverScene = theme === 'infernal' || (theme === 'golems' && phase >= 0.45) ? 'lava' : 'water';
 
     const secRef = { rot, origin, board: { w, d } };
 
@@ -524,22 +602,27 @@ export function planScenario(seed: number, theme: ScenarioId, waves: number, bos
         const t: Tile = { h, deco: rng.int(0, 255) };
         const inMiddleRows = v >= DEPLOY_ROWS && v < d - DEPLOY_ROWS;
         const rv = riverRowAt(u);
-        const inRiver = inMiddleRows && (!lake || h > 1) && (v === rv || (v === rv + 1 && u % 2 === 0));
+        const inRiver = !arena && inMiddleRows && (!lake || h > 1) && (v === rv || (v === rv + 1 && u % 2 === 0));
         const nearRiver = inMiddleRows && Math.abs(v - rv) <= 2 && !inRiver;
 
-        if (lake && h === 1) {
-          const [nextU, nextV] = worldOf(secRef, Math.min(w - 1, u + 1), v);
-          const nextH = u + 1 < w ? scenarioHeight(theme, nextU, nextV, waves, seed) : 1;
-          if (u === 0 || nextH === 1 || nextH > 2) {
-            t.ground = 'deep';
-          } else if (midCorridor(u) && (v === Math.floor(d / 2) || v === Math.floor(d / 3) || v === Math.floor((2 * d) / 3))) {
+        if (!onRoad[v * w + u]) {
+          // (beside the road: the river runs on through it, the lake laps it, and otherwise the theme's land in patches)
+          if (arena?.ring[v * w + u]) t.scene = arena.ring[v * w + u]!;
+          else if (inRiver || (lake && h === 1)) {
+            t.scene = riverScene;
+            // (the lake itself is deep water at its one level, as it always was)
+            if (lake && h === 1) t.ground = 'deep';
+          }
+          else t.scene = besideAt(theme, seed, U, V);
+          if (t.scene === 'wood') t.tree = treeKindFor(theme, area, rng);
+        } else if (lake && h === 1 && !arena) {
+          if (midCorridor(u, v) && (v === Math.floor(d / 2) || v === Math.floor(d / 3) || v === Math.floor((2 * d) / 3))) {
             t.bridge = true;
-            t.h = Math.max(1, nextH - 1);
           } else {
             t.ground = 'water';
           }
         } else if (inRiver) {
-          if (midCorridor(u)) {
+          if (midCorridor(u, v)) {
             t.bridge = true;
           } else if (lake) {
             // On lake themes, upper canal crossings are bridged aqueducts while the lake shoreline stays at h = 1.
@@ -547,12 +630,13 @@ export function planScenario(seed: number, theme: ScenarioId, waves: number, bos
           } else if (theme === 'infernal' || (theme === 'golems' && phase >= 0.45)) {
             t.ground = 'lava';
           } else if (area === 'snow' || (theme === 'golems' && phase < 0.45)) {
-            t.ground = v === rv && u % 3 === 0 ? 'water' : 'ice';
+            t.ground = 'ice';
           } else {
-            t.ground = v === rv && u % 3 !== 0 ? 'deep' : 'water';
+            t.ground = 'water';
           }
-        } else if (inMiddleRows && !midCorridor(u)) {
-          if (nearRiver && rng.chance(0.28)) {
+        } else if (inMiddleRows && !midCorridor(u, v) && !arena) {
+          // (the road's own cover, thinner than the old open field's: the land beside it is the rest)
+          if (nearRiver && rng.chance(0.18)) {
             if (rng.chance(0.45) && theme !== 'infernal') {
               t.rock = true;
               t.tree = treeKindFor(theme, area, rng);
@@ -562,67 +646,73 @@ export function planScenario(seed: number, theme: ScenarioId, waves: number, bos
               t.rock = true;
             }
           } else if (theme === 'undead' || theme === 'necropolis') {
-            if (rng.chance(0.08 + phase * 0.1)) t.wall = true;
-            else if (rng.chance(0.07)) {
-              t.rock = true;
-              t.tree = treeKindFor(theme, area, rng);
-            } else if (rng.chance(0.06)) t.rock = true;
+            if (rng.chance(0.05 + phase * 0.05)) t.wall = true;
+            else if (rng.chance(0.05)) t.rock = true;
             else if (rng.chance(0.08)) t.ground = 'tall';
           } else if (theme === 'orcs') {
-            if (rng.chance(0.08)) t.wall = true;
-            else if (rng.chance(0.08)) {
-              t.rock = true;
-              t.tree = treeKindFor(theme, area, rng);
-            } else if (rng.chance(0.07)) t.rock = true;
+            if (rng.chance(0.05)) t.wall = true;
+            else if (rng.chance(0.05)) t.rock = true;
             else if (v > DEPLOY_ROWS + 1 && v < d - DEPLOY_ROWS - 1 && rng.chance(0.025)) t.barrel = true;
           } else if (theme === 'beasts') {
+            if (rng.chance(0.05)) t.rock = true;
+            else if (rng.chance(0.1)) t.ground = 'tall';
+          } else if (theme === 'wildwood') {
+            if (rng.chance(0.07)) {
+              t.rock = true;
+              t.tree = treeKindFor(theme, area, rng);
+            } else if (rng.chance(0.12)) t.ground = 'tall';
+            else if (rng.chance(0.02)) t.ground = 'shrine';
+          } else if (theme === 'infernal') {
+            if (v > DEPLOY_ROWS + 1 && v < d - DEPLOY_ROWS - 1 && rng.chance(0.05)) t.ground = 'lava';
+            else if (rng.chance(0.05)) t.wall = true;
+            else if (rng.chance(0.06)) t.rock = true;
+            else if (rng.chance(0.025)) t.barrel = true;
+          } else if (theme === 'yokai') {
             if (rng.chance(0.06)) {
               t.rock = true;
               t.tree = treeKindFor(theme, area, rng);
             } else if (rng.chance(0.08)) t.ground = 'tall';
-            else if (rng.chance(0.04)) t.rock = true;
-          } else if (theme === 'wildwood') {
-            if (rng.chance(0.15)) {
-              t.rock = true;
-              t.tree = treeKindFor(theme, area, rng);
-            } else if (rng.chance(0.12)) t.ground = 'tall';
-            else if (rng.chance(0.06)) t.rock = true;
-            else if (rng.chance(0.02)) t.ground = 'shrine';
-          } else if (theme === 'infernal') {
-            if (v > DEPLOY_ROWS + 1 && v < d - DEPLOY_ROWS - 1 && rng.chance(0.06)) t.ground = 'lava';
-            else if (rng.chance(0.07)) t.wall = true;
-            else if (rng.chance(0.09)) t.rock = true;
-            else if (rng.chance(0.025)) t.barrel = true;
-          } else if (theme === 'yokai') {
-            if (rng.chance(0.13)) {
-              t.rock = true;
-              t.tree = treeKindFor(theme, area, rng);
-            } else if (rng.chance(0.07)) t.rock = true;
-            else if (rng.chance(0.09)) t.ground = 'tall';
             else if (rng.chance(0.025)) t.ground = 'shrine';
           } else if (theme === 'golems') {
             if (phase < 0.45 && rng.chance(0.08)) t.ground = 'ice';
             else if (phase >= 0.45 && v > DEPLOY_ROWS + 1 && v < d - DEPLOY_ROWS - 1 && rng.chance(0.05)) t.ground = 'lava';
-            else if (rng.chance(0.07)) t.wall = true;
-            else if (rng.chance(0.08)) t.rock = true;
+            else if (rng.chance(0.05)) t.wall = true;
+            else if (rng.chance(0.05)) t.rock = true;
           } else {
             // ogres / mountain / temple / labyrinth upper hills
             if (area === 'snow' && rng.chance(0.08)) t.ground = 'ice';
-            else if (lake && rng.chance(0.08)) t.wall = true;
-            else if (rng.chance(0.1)) {
+            else if (lake && rng.chance(0.05)) t.wall = true;
+            else if (rng.chance(0.05)) {
               t.rock = true;
               t.tree = treeKindFor(theme, area, rng);
-            } else if (rng.chance(0.09)) t.rock = true;
+            } else if (rng.chance(0.05)) t.rock = true;
             else if (rng.chance(0.07)) t.ground = 'tall';
           }
         }
-        if (u === 0 || u === w - 1) {
-          delete t.rock;
-          delete t.wall;
-          delete t.barrel;
-        }
-        if (!t.rock && !t.wall && !t.barrel && !t.ground && !t.bridge && rng.chance(0.18)) t.bush = true;
+        if (!t.scene && !t.rock && !t.wall && !t.barrel && !t.ground && !t.bridge && rng.chance(0.18)) t.bush = true;
         tiles.push(t);
+      }
+    }
+
+    if (arena) {
+      // The arena: its floor levelled towards its middle (kept within a step of each neighbour and of the sections either side), flagstones for a
+      // paved one, a bridge where the road crosses a moat, and what stands inside.
+      const spec = ARENAS[theme] ?? ARENAS.mountain;
+      const fixed = [...(entry ?? []), ...(exit ?? [])].map(([u, v]) => v * w + u).filter((i) => onRoad[i]);
+      const [cx, cy] = arena.centre;
+      const level = tiles[Math.round(cy) * w + Math.round(cx)].h;
+      const levelled = levelArena(tiles.map((t) => t.h), w, d, arena.floor, fixed, level);
+      tiles.forEach((t, i) => {
+        t.h = levelled[i];
+        if (arena.floor[i] && spec.paved) t.paved = true;
+        if (arena.floor[i]) delete t.bush;
+        if (arena.gates.has(i) && spec.ring === 'lava') t.bridge = true;
+      });
+      for (const [i, x] of arena.inner) {
+        const t = tiles[i];
+        if (x.scene) t.scene = x.scene;
+        if (x.ground) t.ground = x.ground;
+        if (x.barrel) t.barrel = true;
       }
     }
 
@@ -644,25 +734,28 @@ export function planScenario(seed: number, theme: ScenarioId, waves: number, bos
       d,
       tiles,
     };
+    if (arena) board.pieces = arenaPieces(theme, board, exit, mixSeed(seed, 0x91ece, n));
 
     // Raise steep hills / archer bastion redoubts
-    if (!boss(n)) {
+    if (!isBoss) {
       placeArcherBastion(board, theme);
     }
 
-    // Keep props only when every walkable tile remains reachable by the least mobile ground unit.
-    if (!boardOk(board)) {
-      for (const t of tiles) {
+    // Keep props only when every walkable tile remains reachable by the least mobile ground unit, and can walk back to the heroes' rows.
+    if (!boardOk(board) || !walksBack(board)) {
+      tiles.forEach((t, i) => {
         delete t.rock;
-        delete t.tree;
         delete t.wall;
         delete t.barrel;
-      }
+        if (!t.scene) delete t.tree;
+        // (an arena's inner graves and walls go too; the land beside the road stays)
+        if (onRoad[i]) delete t.scene;
+      });
     }
     if (!boardOk(board)) {
       throw new Error(`disconnected ${theme} section ${n} for seed ${seed}`);
     }
-    sections.push({ wave: n, board, rot, origin, join, boss: boss(n) });
+    sections.push({ wave: n, board, rot, origin, join, boss: isBoss });
   }
 
   return {

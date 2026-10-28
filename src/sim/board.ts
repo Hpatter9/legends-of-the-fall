@@ -125,11 +125,28 @@ export interface Tile {
   ramp?: boolean;
   /** Shallows, deep water, ice, lava, tall growth or a shrine covers the tile. */
   ground?: Ground;
+  /** Off the road (an army's long map, `armyRoad.ts`): the land beside it, a wood, crags, ruins, a pool... Nobody stands on it,
+   *  not even a flier, and it blocks low shots like a boulder (a pool or lava none). */
+  scene?: Scenery;
+  /** Laid with flagstones (an arena's floor: looks only). */
+  paved?: boolean;
   /** A small number for picking the tile's tufts and flowers. */
   deco: number;
 }
 
+/** The kinds of land beside an army's road (`armyRoad.ts`), and of an arena's ring. */
+export type Scenery = 'wood' | 'rocks' | 'ruin' | 'water' | 'lava' | 'bones' | 'fence' | 'stones' | 'grave' | 'crystal';
+/** A set piece of an arena drawn on its scenery (looks only): the war camp's gate, the mausoleum, the den... */
+export type PieceKind = 'warGate' | 'drum' | 'tent' | 'flag' | 'mausoleum' | 'den' | 'arch' | 'circle' | 'foundry' | 'gate' | 'shrine' | 'brazier' | 'lamp' | 'campfire' | 'skulls';
+export interface Piece {
+  u: number;
+  v: number;
+  kind: PieceKind;
+}
+
 export interface Board {
+  /** An arena's set pieces, on its scenery (looks only). */
+  pieces?: Piece[];
   /** Scenic destination, outside collision tiles; only included from the final approach onwards. */
   landmark?: 'fortress' | 'temple' | 'mausoleum' | 'warcamp' | 'den' | 'grove' | 'citadel' | 'shrine' | 'foundry';
   landmarkAt?: { u: number; v: number; h: number };
@@ -195,7 +212,7 @@ export function easeRelief(b: Board, limit = CLIMB_MAX): void {
 export const areaScale = (b: Pick<Board, 'w' | 'd'>): number => (b.w * b.d) / BASE_AREA;
 
 /** Whether something solid stands on the tile (a boulder, a wall, a barrel): not even a flier passes it. */
-export const solid = (t: Tile | null): boolean => !t || !!t.rock || !!t.wall || !!t.barrel;
+export const solid = (t: Tile | null): boolean => !t || !!t.rock || !!t.wall || !!t.barrel || !!t.scene;
 /** Whether a fighter on foot can stand on the tile at all (deep water is only for fliers). */
 export const standable = (t: Tile | null): t is Tile => !solid(t) && t!.ground !== 'deep';
 
@@ -227,7 +244,7 @@ export function sightClear(b: Board, a: At, z: At): boolean {
     const f = i / n;
     const t = tileAt(b, Math.round(a.u + (z.u - a.u) * f), Math.round(a.v + (z.v - a.v) * f));
     if (!t) continue;
-    const top = t.h + (t.wall ? WALL_TOP : t.rock ? 1.6 : t.ground === 'tall' ? TALL_TOP : 0);
+    const top = t.h + (t.wall ? WALL_TOP : t.rock || (t.scene && t.scene !== 'water' && t.scene !== 'lava') ? 1.6 : t.ground === 'tall' ? TALL_TOP : 0);
     if (top > eye + (mark - eye) * f + 1e-6) return false;
   }
   return true;

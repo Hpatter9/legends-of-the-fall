@@ -14,6 +14,17 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### WORLD-ROAD — Army road and boss arenas
+
+- **Goal:** the owner's ask: army battle maps follow a realistic path (a winding road 6 to 10 tiles wide with unwalkable themed scenery beside it, not a full 14x18 slab) and each army's boss waves (8 and 15; the Wildwood's 5, 10 and 15) are fought in its own themed arena.
+- **Status:** phase A (proposal, working prototype and in-game mock-ups) done; awaiting the owner's answers before phase B.
+- **Owner:** Claude (the WORLD army map is normally the other AI's area; the owner assigned this one to Claude).
+- **Branch / worktree / PR:** `claude/army-road`, `/home/user/army-road` (from main 0.185.0); PR none.
+- **Allowed files or systems:** `src/sim/scenario.ts`, new `src/sim/armyRoad.ts`, `src/sim/board.ts` (optional `Tile.scene`, `Tile.paved`, `Board.pieces`; `solid` and `sightClear` honour scenery), `src/render/boardView.ts`, `src/render/columnTextures.ts` (an optional key part), new `src/render/roadArt.ts`, `test/army-road.test.ts`, `test/world-001-scenario.test.ts`, `tools/army-road/`, `docs/notes/army-road.md`, `docs/samples/army-road-mock-*.png`, `CREDITS.md`. Not other modes' boards (8x11 stays as it is), battle rules, the castle or battle-picking tabs.
+- **Completion criteria (phase B):** the owner approves the direction and answers the open questions; the road and arenas tuned to them; arena rings and set pieces with pack art (credited); every walkable tile reachable and every survivor able to walk on to the next section; armies re-measured at their tier levels; typecheck, affected tests, web build; 393x852, 360x780 and 412x915 checks; old saves load.
+- **Validation (phase A):** typecheck passed; `npm test -- army-road world scenario armies run` together with `long-map chain battle-flow` (109 tests) passed; `npm run web` built; mock-ups at 393x852 with no page errors; quick orcs/infernal army comparison in the note.
+- **Handoff:** [proposal and open questions](notes/army-road.md), [mock-up sheet](samples/army-road-mock-sheet.png).
+
 **ART-001 / Resonance hero pilot** — Owner: current Codex art chat. Branch: `art/resonance-heroes`, worktree: `/workspace/legends-of-the-fall`. Owner accepted the implemented appearance and requested integration. Scope: Knight and Archer sprite sheets, their render mappings/scales, art credits, validation tools and evidence. Current main 0.179.0 integrated, preserving newer hero kits, roles, maps and battle command HUD. Status: implementation accepted, ready for the owner's merge through [PR #144](https://github.com/Hpatter9/legends-of-the-fall/pull/144); 48 animation cells installed, typecheck/build and four affected test files passed, actual roster/dossier/deploy/combat checks passed at all three portrait sizes with zero page errors. Source atlases and preview preserved. Version/deployment remain with the director at merge time. See [handoff](notes/resonance-heroes.md).
 
 ### CHEST-001 — XP tomes and Open all
