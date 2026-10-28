@@ -94,6 +94,15 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Limits:** Calamity fights show no aura because the Calamity is a local run that reads nothing of the meta, awakening included (unchanged rule); the summoning hall never summons an awakened hero in play (drawn if one ever comes out).
 - **Handoff:** `docs/notes/awaken-auras.md`, `docs/notes/awaken-auras-art-brief.md`; pictures `docs/samples/awaken-auras-places.png`, `-closeups.png`, `-sizes.png`, `-calm.png` (and the phase A mock-ups).
 
+**STAND-004 / Idle heroes help in the Last Stand** — the owner: "When all the units are on the map and heroes aren't engaged with them, they need to go help in the last stand."
+
+- **Status:** done; released as 0.204.0 (the inner ring stays as the king's guard; one helper sets off at a time).
+- **Owner:** Claude. **Branch / worktree:** `claude/stand-help`, `/home/user/stand-help` (from main 0.200.0). PR: none.
+- **Scope:** new `src/sim/standHelp.ts`; hooks in `src/sim/stand.ts` (`stepStand`, `beginWave`, `clearWave`, the pace levers), `standAi.ts` (`huntDecide`'s focus, `helpWalk`), `battle.ts` (`StandMode.help`); `src/standView.ts` (the helper's pointer); `test/stand-help.test.ts`, the leash test in `test/stand.test.ts`; `tools/stand/help-shots.mjs`; `docs/notes/stand-help.md`, `docs/samples/stand-help-*.png`.
+- **Completion criteria:** once a wave is all in, a hero with nothing in its zone leaves to help and returns when called back, the fight is won or the wave ends; the inner ring and at least two heroes stay, tanks last, one setting off at a time; deterministic and tested; the pace re-tuned to about 4, 9, 10, 14, 20, 25; typecheck, web build, the stand tests and the full suite; screens at 393x852, 360x780 and 412x915.
+- **Validation:** typecheck passed; `npm test -- stand` (49) and the full `npm test` (1352 of 1352) passed; `npm run web` built; `npm run stand-balance` (30 runs a level) 4/9/10/14/20/25 against the targets 4/9/10/14/20/25 (main was 4/9/11/15/20/26; helping with the old levers 4/10/11/17/23/28); `tools/stand/help-shots.mjs` at 393x852, 360x780 and 412x915 with no page errors.
+- **Handoff:** [notes](notes/stand-help.md).
+
 **STAND-003 / Last Stand overhaul** — the owner's ten asks: a castle interior with breached walls and the king on his throne, a dignified king, far less shake, a free camera, ways to find the heroes, a better deploy step, varied halls, the last foes hunted down, a pause with the heroes' stats, and heroes who stay dead.
 
 - **Status:** done; owner approved and released as 0.189.0 (crowns per wave unchanged for the owner's own test). Phase B: the castle's four rooms (walls, breaches, pillars, cover, the 5x5 dais with the castle's enthroned king), the Keep & Kingdom brass, the deploy tray with swaps and Auto-place, the finding aids, the brass pause sheet and end card, the pace retuned to the agreed targets with the pay unchanged. main 0.186.0 merged in.

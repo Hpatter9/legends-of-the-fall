@@ -696,6 +696,24 @@ export class StandView {
       if (u.side === 'hero' && u.tag !== undefined && fight) {
         const c = this.colourOf(u.tag);
         rings.ellipse(sp.x, sp.y, 20, 10).fill({ color: c, alpha: 0.16 }).stroke({ color: c, width: 2, alpha: 0.95 });
+        // (a hero gone to help where the fighting is, STAND-004: a pointer of its colour from its ring towards the foe it was sent to, and a thin ring under that foe)
+        const aid = s.b.stand?.help?.[u.id];
+        const to = aid !== undefined ? this.sprites.get(aid) : undefined;
+        if (to?.root.visible) {
+          const dx = to.x - sp.x;
+          const dy = to.y - sp.y;
+          const len = Math.hypot(dx, dy);
+          if (len > 30) {
+            const ux = dx / len;
+            const uy = dy / len;
+            // (a faint line of its colour along the floor to the foe, and an arrowhead at the ring's rim)
+            rings.moveTo(sp.x + ux * 24, sp.y + uy * 12).lineTo(to.x - ux * 16, to.y - uy * 8).stroke({ color: c, width: 2, alpha: 0.4 });
+            const tip = { x: sp.x + ux * 40, y: sp.y + uy * 20 };
+            const back = { x: sp.x + ux * 24, y: sp.y + uy * 12 };
+            rings.poly([tip.x, tip.y, back.x - uy * 9, back.y + ux * 9, back.x + uy * 9, back.y - ux * 9]).fill({ color: c, alpha: 0.95 }).stroke({ color: 0x140808, width: 1, alpha: 0.7 });
+          }
+          rings.ellipse(to.x, to.y, 16, 8).stroke({ color: c, width: 1.5, alpha: 0.7 });
+        }
         if (this.flashAt?.id === u.id) {
           const k = 1 - this.flashAt.left / 900;
           rings.ellipse(sp.x, sp.y, 20 + 22 * k, 10 + 11 * k).stroke({ color: c, width: 2, alpha: 0.9 * (1 - k) });
