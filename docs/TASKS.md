@@ -14,6 +14,63 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### WORLD-ROAD — Army road, boss arenas and the living land
+
+- **Goal:** the owner's asks: army battle maps follow a realistic path (a winding road 6 to 9 tiles wide with themed scenery beside it that walkers cannot enter, not a full 14x18 slab), each army's boss waves (8 and 15; the Wildwood's 5, 10 and 15) fought in its own themed arena, and (phase B) a living environment: hazards that act on both sides, running water and waterfalls, pack walls and set pieces at the tiles' angle, ambient life.
+- **Status:** done; owner approved and released as 0.187.0 (castle gate sprite removed at the owner's ask).
+- **Owner:** Claude (the WORLD army map is normally the other AI's area; the owner assigned this one to Claude).
+- **Branch / worktree / PR:** `claude/army-road`, `/home/user/army-road` (main 0.186.0 merged in); PR none.
+- **Allowed files or systems:** `src/sim/scenario.ts`, `src/sim/armyRoad.ts`, `src/sim/hazards.ts`, `src/sim/board.ts` (optional `Tile.scene`, `paved`, `ring`, `stream`; `Board.pieces`, `hazards`, `flow`, `falls`; scenery not `standable`), `src/sim/battle.ts` (the `hazard` event and its tick), `src/sim/armies.ts` (seven Normal `start` values), `src/render/boardView.ts`, `columnTextures.ts`, `roadArt.ts`, `roadAtlas.ts`, `hazardLooks.ts`, `fx.ts` (hazard tells and strikes), `soundRules.ts` (their cues), `weatherRules.ts`/`weatherView.ts` (ambient motes on the road), `src/main.ts` (two calls), `src/art/road/`, tests `test/army-road.test.ts`, `test/army-hazards.test.ts`, `test/world-001-scenario.test.ts`, `tools/army-road/`, `docs/notes/army-road.md`, `docs/samples/army-road-*.png`, `CREDITS.md`. Other modes' boards untouched.
+- **Completion criteria:** road and arenas per the owner's answers; hazards deterministic on their own side stream, both sides, each rule tested; rings and set pieces from pack art at the tiles' angle, credited; water flows and pours off open edges; ambient life respecting reduced motion and battery saver; every walkable tile reachable and every survivor able to walk on to the next section; armies within noise of main at their recommended levels; typecheck, affected tests and the full suite, web build; 393x852, 360x780 and 412x915 checks.
+- **Validation:** see the handoff's "Checks run for phase B".
+- **Handoff:** [notes](notes/army-road.md), [phase B sheet](samples/army-road-after-sheet.png), [phase A mock-ups](samples/army-road-mock-sheet.png).
+
+### AWAKEN-MATS — Awakening materials from the armies and the Calamity
+
+- **Goal:** the owner's ask: a hero's awakening needs materials, one kind per class trait; the owner's answers: different armies drop different ores, the Calamity (by map) the richest source, 10 and 20 a step on top of the shards, difficult; small trickles from a first Mythic clear, Last Stand records and gold chests; old saves paid a Rift Cache a Calamity clear (up to five); the pouch on the Calamity's start and the awakening panel; ores on the army result screen and card.
+- **Status:** done; owner approved and released as 0.191.0.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/awaken-mats`, `/home/user/awaken-mats` (main 0.189.0 merged in); PR none.
+- **Allowed files or systems:** new `src/sim/awakenMats.ts`, `src/oreView.ts`, `src/ores.css`, `src/art/ui/ore/`; hooks in `src/sim/awaken.ts`, `meta.ts` (optional `Meta.ores`, `Meta.caches`), `tower.ts` (`finishTower` drops, `settleCalamity`), `calReward.ts`, `armyStars.ts` (chest ores, `sumLoot`), `stand.ts` (`settleStand`), `autoReplay.ts` (totals); the page: `awakenView.ts`, `rankUpView.ts`, `menuHeroes.ts`, `calClear.ts`, `calamityView.ts` (the pouch), `towerView.ts` (the loss summary), `armiesView.ts` (the card's row), `chestStash.ts`, `standView.ts`, `main.ts` (the army result and auto summary), `index.html` (`#oreDrop`), `build.mjs` (the CSS); `tools/unlockPace.ts` (`--awaken`), `tools/awaken/ore-icons.py`, `mats-shots.mjs`, `mats-sheet.py`, `mats-mock*.{mjs,py}`; tests `test/awaken-mats.test.ts`, `test/awaken.test.ts`, `test/rankUp.test.ts`; `CREDITS.md`; `docs/notes/awaken-mats.md`, `docs/samples/awaken-mats-*.png`. Not the Calamity map itself (`claude/cal-void`), the dailies (`claude/daily-builds`), the castle tab or the WORLD army map.
+- **Completion criteria:** the ores in the meta (optional, old saves load and keep their awakened heroes, back pay once); every drop deterministic on its own side stream, every rule tested; 10 / 20 a step; the pouch, panel, recap, victory, loss summary, army card and result, chests and the Last Stand's end card; pack icons credited; pace re-run; typecheck, affected and full tests, web build; 393x852, 360x780 and 412x915.
+- **Validation (phase B):** see the handoff's checks.
+- **Handoff:** `docs/notes/awaken-mats.md`; pictures `docs/samples/awaken-mats-sheet.png`, `-360-sheet.png`, `-412-sheet.png` and the single shots; phase A mock-ups `docs/samples/awaken-mats-mock-*.png`.
+
+### AWAKEN-002 — Class auras for awakened heroes
+
+- **Goal:** the owner's ask: drop the awakened recolour; an awakened hero wears an aura at step 1 (rank 5) and a stronger, bigger one at step 2 (rank 6), its style set by the hero's class trait (not the origin), wherever an awakened hero is drawn.
+- **Status:** done; owner approved and released as 0.188.0 (Calamity fights keep no aura: the owner's call). Earlier: phase A approved by the owner (look suits; Werewolf red sheet dropped; rank 4 keeps its gold glow and outline, awakened steps take the class colour; art behind one seam with a painted-art brief; camp included). Phase B done on the branch, ready for review.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/awaken-auras`, `/home/user/awaken-auras` (main 0.186.0 merged in); PR none yet (not asked).
+- **Allowed files or systems:** the awakened look (`src/render/awakenLook.ts`, `awakenRig.ts`, new `auraStyles.ts`, `auraPlace.ts`, `auraArt.ts`, `awakenAura.ts`, `auraCanvas.ts`, `figureShare` in `sheets.ts`), `unitView.ts`, `fx.ts` (loader), `sceneView.ts`, `menuHeroes.ts`, `rankUpView.ts`, `awakenView.ts`, `awaken.css`, `partyScene.ts`, `party.ts` (one call), `tavern.ts`, `camp.ts`, `hall.ts`, `calMap.ts`, the aura atlas in `src/art/fx/aura/`, `tools/awaken/`, `test/awaken*.test.ts`, `CREDITS.md`, `docs/notes/awaken-auras*.md`, `docs/samples/awaken-auras-*.png`. Not the castle tab, the battle-picking menu tab, the WORLD army map or the Last Stand files; no simulation, save or version change.
+- **Completion criteria:** no recolour anywhere; every class trait has its own step 1 and step 2 aura from pack art, credited, behind one atlas seam with a painted-art brief; the aura shows in fights, the Last Stand, the cinematics, the camp, the tavern, the summoning hall, the Calamity map, the war council, the roster, the dossier, the Rank up card and the awakening panel and burst; reduced motion holds it still and visible; battery saver thins it; no allocation per frame; typecheck, web build, affected and full tests, and the screens at 393x852, 360x780 and 412x915.
+- **Validation (phase B):** typecheck passed; `npm run web` built; full `npm test` 1252 of 1252 passed (including `test/awaken-auras.test.ts`, 4 tests, and the updated look test in `test/awaken.test.ts`); `tools/awaken/aura-places.mjs` captured every place at 393x852, 360x780 and 412x915, and reduced motion and battery saver at 393x852, with no page errors; the painted-art importer tried with stand-in sheets. Frame rate on a real phone not measured.
+- **Limits:** Calamity fights show no aura because the Calamity is a local run that reads nothing of the meta, awakening included (unchanged rule); the summoning hall never summons an awakened hero in play (drawn if one ever comes out).
+- **Handoff:** `docs/notes/awaken-auras.md`, `docs/notes/awaken-auras-art-brief.md`; pictures `docs/samples/awaken-auras-places.png`, `-closeups.png`, `-sizes.png`, `-calm.png` (and the phase A mock-ups).
+
+**STAND-003 / Last Stand overhaul** — the owner's ten asks: a castle interior with breached walls and the king on his throne, a dignified king, far less shake, a free camera, ways to find the heroes, a better deploy step, varied halls, the last foes hunted down, a pause with the heroes' stats, and heroes who stay dead.
+
+- **Status:** done; owner approved and released as 0.189.0 (crowns per wave unchanged for the owner's own test). Phase B: the castle's four rooms (walls, breaches, pillars, cover, the 5x5 dais with the castle's enthroned king), the Keep & Kingdom brass, the deploy tray with swaps and Auto-place, the finding aids, the brass pause sheet and end card, the pace retuned to the agreed targets with the pay unchanged. main 0.186.0 merged in.
+- **Owner:** Claude. **Branch / worktree:** `claude/stand-overhaul`, `/home/user/stand-overhaul` (from main 0.174.0). PR: none yet.
+- **Scope:** the Last Stand only: `src/sim/stand.ts`, `standAi.ts`, `standField.ts`, new `standSheet.ts`, the Last Stand hooks in `battle.ts` (`StandMode`), `spells.ts` and `ultimates.ts` (no raising in the Last Stand); `src/standView.ts`, `src/stand.css`, `src/heroBar.ts`, `src/render/fx.ts` (`still`), new `src/render/standCam.ts`; the Last Stand's art and credits; `tools/stand/`, `tools/stand-balance.ts`; `test/stand*.test.ts`; `docs/notes/stand-overhaul.md`, `last-stand.md`. Not the castle tab, the battle-picking tab or the WORLD army map.
+- **Completion criteria:** phase A: less shake, the free camera, the hunt, the pause (logic) and the fallen staying down built and tested; the balance re-measured; mock-ups of the castle halls and king, the deploy and unit aids, and the pause panel; questions put to the owner. Phase B (after approval): the castle halls (at least four layouts from the seed, breaches on different walls), the new king, the deploy tray, the unit aids and the pause panel built to the approved look; the balance re-tuned; typecheck, web build, `npm test -- stand`, screenshots at 393x852, 360x780 and 412x915 with reduced motion; old saves load.
+- **Validation (phase A):** see the handoff.
+- **Validation (phase B):** typecheck; `npm test -- stand` (the stand files) and the full `npm test`; `npm run web`; `tools/stand/smoke.mjs`; `tools/stand/overhaul.mjs` (camera, pause) and `tools/stand/overhaul-shots.mjs` at 393x852, 360x780, 412x915 and reduced motion; `npm run stand-balance` 4/9/11/15/20/26 against 4/9/10/14/20/25. Results in the handoff.
+- **Handoff:** [notes](notes/stand-overhaul.md); mock-ups `docs/samples/stand-overhaul-mock-*.png`.
+
+**ART-001 / Resonance hero pilot** — Owner: current Codex art chat. Branch: `art/resonance-heroes`, worktree: `/workspace/legends-of-the-fall`. Owner accepted the implemented appearance and requested integration. Scope: Knight and Archer sprite sheets, their render mappings/scales, art credits, validation tools and evidence. Current main 0.179.0 integrated, preserving newer hero kits, roles, maps and battle command HUD. Status: implementation accepted, ready for the owner's merge through [PR #144](https://github.com/Hpatter9/legends-of-the-fall/pull/144); 48 animation cells installed, typecheck/build and four affected test files passed, actual roster/dossier/deploy/combat checks passed at all three portrait sizes with zero page errors. Source atlases and preview preserved. Version/deployment remain with the director at merge time. See [handoff](notes/resonance-heroes.md).
+
+### CHEST-001 — XP tomes and Open all
+
+- **Goal:** the owner's two asks: XP tomes (small, medium, large) as a chest drop, read to one hero of the player's choice from the hero's page; and an Open all for the chests waiting on the cart, with one combined summary.
+- **Status:** done: owner accepted release 0.178.0 (large tome 20,000 XP; overflow at the cap lost with a warning).
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/chest-extras`, `/home/user/chest-extras` (from main 0.174.0); PR none yet.
+- **Allowed files or systems:** `src/sim/tomes.ts` (new), `src/sim/{armyStars,chestShop,meta}.ts` (the loot roll, `openAll`, `sumLoot`, `Meta.tomes`), `src/{chestStash,shopView,menuHeroes,tomeView,tomeArt}.ts`, `src/tomes.css`, `build.mjs` (the CSS list), the tome icons in `src/art/ui/`, `tools/tome-icons.py`, `tools/{unlockPace,levelPace}.ts` (tome reporting), `tools/ui/chest-extras-shots.mjs`, tests, `CREDITS.md`. Not the castle tab, the battle-picking tab, the WORLD army map or the Last Stand files.
+- **Completion criteria:** tomes drop deterministically on top of every stash and shop chest's stones and gear (shop prices unchanged); `Meta.tomes` optional and old saves load; "Use tome" on the hero page with the level-up feedback, capped at `MAX_LEVEL`; Open all identical to opening one by one, with a summary; pack art credited; pace reported; tests; screenshots at 393x852.
+- **Validation:** typecheck passed; `npm run web` built; `npm test -- chest summon-stones levels meta armyStars daily stand tower modes equipment hero-shards calMapRewards progression awaken shards unlock achievements codex` (252) and `npm test -- armies battle-flow calamity elites equip-best gear-sets mystery recycle no-flicker` (134) passed, including the 9 new tests in `test/chest-extras.test.ts`; `npm run unlock-pace` and `npm run level-pace` (with and without `--tomes`, 10 seeds); browser screenshots at 393x852 (`docs/samples/chest-extras-*.png`), also checked at 360x780 and 412x915 with no page errors.
+- **Handoff:** `docs/notes/chest-extras.md`. For the owner: the large tome's size, losing the overflow at the cap, and the drop table.
+
 **FX-002 / Tactile & Visual Juice (Game Feel)** — ready for review: hit-stop, camera micro-thud, dynamic victory poses, and Defeated Boss Trophy Wall.
 
 - **Goal:** implement "Tactile & Visual Juice" combat feel improvements: subtle 2-frame hit-stop and localized camera micro-thud on lethal backstabs, critical hits, and King's Meteor impact; dynamic surviving hero victory poses (Knight salutes/plants shield, Peasant collapses in exhausted relief, Wizard adjusts hat, Duchess hops onto a rock); Defeated Boss Trophy Wall in Tavern and Castle Hall with humorous defeat blurbs.
@@ -94,6 +151,12 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 | ID | Task | Result | Reference |
 | --- | --- | --- | --- |
+| AUDIO-150 | Recorded combat sounds and a quieter, cleaner battle mix | Released as 0.186.0; the sounds' source (given as CC0) still needs naming in CREDITS.md | PR #150 |
+| AUDIO-147 | Battle music opens on the combat downbeat; the camp's theme plays across all home tabs | Released as 0.184.0; the loop start was moved to 5.68 s (bar 4) so the loop stays whole bars and joins on the beat | PR #147 |
+| UI-CASTLE-1 | Remove the corner relic emblems from the castle's building cards | Owner asked; released as 0.183.0; castle tests, build, fresh/old-save and Last Stand smoke passed | branch `claude/castle-card-corners`, screenshot `samples/castle-no-corner-emblems-393x852.png` |
+| SIM-001 | No phantom hit effects; no credit for terrain self-damage | Merged with main 0.181.0 (hero-kit after-blow effects also wait for a landed blow) and released as 0.182.0; full suite, build, fresh/old-save and Last Stand smoke passed | [PR #122](https://github.com/Hpatter9/legends-of-the-fall/pull/122), [handoff](notes/sim-001.md) |
+| FIX-177 | Unblock the publish after the winding maps | Owner asked; armies keep one land on the winding maps, three tests moved to the 14x18 army board, Undead Normal start 1.52; full suite 1220/1220, build, fresh/old-save and Last Stand smoke passed; release 0.180.0 (0.179.0 was also used by PR #143, merged just before) | [Note](notes/fix-177-tests.md), branch `claude/fix-177-tests` |
+| CHEST-001 | XP tomes and Open all | Owner accepted release 0.178.0; tomes 250/5,000/20,000 XP from every stash and shop chest, Open all equal to one-by-one; typecheck, build, fresh/old-save and Last Stand smoke passed; full suite 1216/1220, the 4 failures also fail on main 0.177.0 (winding battle maps), not from this change | [Handoff](notes/chest-extras.md), branch `claude/chest-extras` |
 | UI-006 | Cliffside battle overlook with nine army-dependent bases and distant Calamity | Owner authorised release 0.175.0 and PR merge; typecheck/build, 85 targeted tests, all nine camps at three portrait sizes and offline switching passed | [PR #139](https://github.com/Hpatter9/legends-of-the-fall/pull/139), [implementation and screenshots](notes/battle-overlook.md) |
 
 
@@ -113,6 +176,20 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 | DIALOGUE-001 | Roughly 90% fewer fight conversation bubbles | Owner accepted and authorised merge, release 0.160.0; typecheck, build and dialogue tests pass; full suite stopped after 50 passes and 53 cancellations | [Handoff](notes/fight-bubbles.md), branch `reduce-fight-bubbles` |
 | UI-001 | Keep & Kingdom hero roster, equipment and shared styling | Done; owner accepted the result and authorised merge, release 0.159.0 | [PR #118](https://github.com/Hpatter9/legends-of-the-fall/pull/118), [validation and screenshots](notes/tactical-command-ui.md) |
 | SETUP-001 | Shared Codex instructions and task board | Done; merged at owner's request, version 0.157.0 | [PR #119](https://github.com/Hpatter9/legends-of-the-fall/pull/119), [setup note](notes/manager-setup.md) |
+
+## SIM-001 implementation assignment
+
+- **ID / title:** SIM-001 — effective hits and environmental kill credit (#121).
+- **Status:** ready for Game Director review; not merged.
+- **Owner:** Codex implementation chat.
+- **Branch / worktree / PR:** `codex/sim-001`, `/workspace/legends-of-the-fall`; [PR #122](https://github.com/Hpatter9/legends-of-the-fall/pull/122).
+- **Allowed scope:** simulation damage settlement, pure combat statistics, regression tests, this board and `docs/notes/sim-001.md`.
+- **Reserved:** UI-001's completed work and ownership history are preserved; no UI changes in SIM-001. No UI, input, renderer, charm targeting or RNG isolation changes.
+- **Completion criteria:** reproduce failures first; minimally fix post-hit effects and environmental credit; cover cancelled/dead/shielded hits and genuine kills; run typecheck, tests and web build; open an unmerged PR and report in #121.
+
+- **Validation:** typecheck passed; full `npm test` passed (104 test files); final 19 focused regressions and `npm test -- sim-001` passed; web build and diff checks passed.
+- **Integration:** current main UI release retained unchanged; typecheck, focused tests and web build also passed against 0.159.0.
+- **Handoff:** `docs/notes/sim-001.md`; genuine combat credit and participation/victory XP retained; no implementation blockers. Director reviews shield rider interpretation and handles merge/versioning.
 
 ## Ready queue
 
@@ -149,3 +226,31 @@ Mark a task ready for review after implementation and validation. Mark it done o
 Owner authorised bump and merge of PR #124 on 2026-10-28. Latest main 0.168.0 is integrated, preserving its UI, combat effects, heart-revive behaviour, credits and task history. WORLD remains opt-in at 12×16; the 14×18 per-army maps are still proposals. Rare warm-tail stalls and real-device performance remain open in #126; the broader map initiative remains open in #123. See [rendering handoff](notes/world-126.md).
 
 Release integration validation for 0.169.0: typecheck/build and 48 affected tests passed; release progression/resume/pan/offline lifecycle checks passed all three portrait sizes with zero page errors. Original army/large-field compatibility smoke passed. Evidence: `docs/samples/world-169-lifecycle.json`, `world-169-compatibility.json` and the corresponding screenshots. Owner accepted the rendering checkpoint; broader maps and warm-tail/device investigation remain open.
+
+## UI-006 — Battle command screen — merged
+
+- Owner: Codex; branch `design/battle-command-ui`, worktree `/workspace/legends-of-the-fall`.
+- Owner accepted the toned-down ornate battle treatment and requested merging on 2026-10-28.
+- Merged through [PR #143](https://github.com/Hpatter9/legends-of-the-fall/pull/143) as **0.179.0**, preserving concurrent main 0.178.0, XP tomes/chest actions, renderer updates and manual ultimate controls.
+- Typecheck, web build, battle-flow/hero-kit look/save tests and three-size live-browser checks passed. Spell arm/cancel, drag preview/cast and ultimate Auto passed with no page errors or horizontal page overflow. Reduced-motion captures reviewed.
+- [Handoff](notes/battle-command-ui.md). Wider battle screens continue in UI-007 below.
+
+## UI-007 — Battle reports and remaining combat screens
+
+- Owner: Codex; branch `design/battle-reports`, worktree `/workspace/legends-of-the-fall`.
+- Owner authorised extending the accepted battle UI across all battle screens, including after-action recaps, after requesting the HUD merge on 2026-10-28.
+- UI-006 merged as 0.179.0 through [PR #143](https://github.com/Hpatter9/legends-of-the-fall/pull/143).
+- Scope: wave victory/defeat, XP/performance and full run recaps, replay summary, between-fight equipment/events, Tower/Calamity report cards and Last Stand HUD/end cards; preserve existing gameplay handlers, rewards, comeback actions, maps and saves.
+- Completion: actual result-to-recap navigation, fixtures for report variants, three portrait sizes and reduced motion; typecheck, build and relevant tests; screenshots for owner review. No further merge/deployment assumed.
+
+UI-007 implementation and validation are complete; ready for owner visual review. Scope includes wave results, after-action recaps, daily/replay/Tower/Calamity summaries, between-fight cards and Last Stand. Typecheck/build and the three matching affected test files passed; daily/old-save fixtures and a real service-worker offline reload passed. See [handoff](notes/battle-reports.md). Follow-up visuals await owner acceptance; no new release bump or merge.
+
+UI-007 final browser evidence: all 23 report/flow checks completed at each of 393×852, 360×780 and 412×915, with zero page errors and no horizontal overflow. Daily/old-save fixtures and real service-worker offline reload also passed. Outcome simulations are temporary review fixtures where noted; full campaigns were not replayed.
+
+UI-007 final integration: owner requested completion after subsequent updates. Main 0.188.0 (`decef2e9`) merged cleanly; new army roads/hazards, awakening auras, spell sources and combat audio retained. Finishing as release 0.189.0 after integrated checks.
+
+UI-007 release 0.189.0 integrated validation passed: typecheck/build; eight affected test files; all 23 report/flow checks at all three portrait sizes; daily/old-save variants; service-worker offline reload/recap; final-facts/action-button checks. Evidence refreshed on main 0.188.0 plus this pass. Ready for the requested completion merge.
+
+UI-007 integrated STAND-003 main 0.189.0 before merging. Older Last Stand style overrides removed so its new castle-room HUD, pause and end cards remain intact. Release updated to 0.190.0.
+
+UI-007 final 0.190.0 validation complete: current Last Stand Auto, pause/resume, end navigation and reduced motion passed at all three portrait sizes, with zero page errors. Duplicate crest/style overrides removed and edge-arrow paint contained. Typecheck/build and eight matching affected test files passed. PR #154 ready for completion merge.

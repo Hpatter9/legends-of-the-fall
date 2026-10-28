@@ -12,11 +12,11 @@
 
 /* The show: a ring that opens twice and a word that rises, once, then it is gone. */
 .awakeShow { position: absolute; inset: 0; pointer-events: none; display: flex; align-items: center; justify-content: center; animation: awFlash 0.9s ease-out 1 both; }
-.awakeShow .ring { position: absolute; left: 50%; top: 55%; width: 20px; height: 20px; margin: -10px 0 0 -10px; border: 3px solid var(--p4); border-radius: 50%; animation: awRing 1.2s ease-out 1 both; }
-.awakeShow.s2 .ring { border-color: var(--e6); }
+.awakeShow .ring { position: absolute; left: 50%; top: 55%; width: 20px; height: 20px; margin: -10px 0 0 -10px; border: 3px solid var(--aw, var(--p4)); border-radius: 50%; animation: awRing 1.2s ease-out 1 both; }
+.awakeShow.s2 .ring { border-color: var(--aw, var(--e6)); border-width: 4px; }
 .awakeShow .ring.r2 { animation-delay: 0.25s; }
-.awakeShow b { position: absolute; bottom: 4px; left: 0; right: 0; text-align: center; font: 700 11px var(--display); color: var(--white); text-shadow: 0 0 6px var(--p4), 0 1px 0 var(--black); animation: awWord 1.8s ease-out 1 both; }
-.awakeShow.s2 b { text-shadow: 0 0 6px var(--e6), 0 1px 0 var(--black); }
+.awakeShow b { position: absolute; bottom: 4px; left: 0; right: 0; text-align: center; font: 400 12px var(--display); color: var(--white); text-shadow: 0 0 6px var(--aw, var(--p4)), 0 1px 0 var(--black); animation: awWord 1.8s ease-out 1 both; }
+.awakeShow.s2 b { text-shadow: 0 0 6px var(--aw, var(--e6)), 0 0 12px var(--aw, var(--e6)), 0 1px 0 var(--black); }
 @keyframes awFlash { 0% { background: rgb(var(--white-rgb) / 0.85); } 100% { background: rgb(var(--white-rgb) / 0); } }
 @keyframes awRing { 0% { transform: scale(0.4); opacity: 1; } 100% { transform: scale(6); opacity: 0; } }
 @keyframes awWord { 0% { transform: translateY(8px); opacity: 0; } 20% { transform: translateY(0); opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
@@ -37,3 +37,6 @@
 .ruStats { display: grid; grid-template-columns: 1fr auto auto auto; align-items: center; gap: 6px 12px; padding: 12px; background: rgb(var(--black-rgb) / 0.35); border: 2px solid var(--s5); font: 400 12px var(--body); }
 .ruStats .k { color: var(--dim); } .ruStats .v { color: var(--white); text-align: right; } .ruStats .a { color: var(--dim); } .ruStats .v.up { color: var(--g4); }
 .ruBtns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; } .ruBtns button { min-height: 48px; font-size: 12px; }
+
+/* The awakened aura's layers round a menu picture (`render/auraCanvas.ts`): never caught by the pictures' own canvas rules. */
+canvas.auraLayer { filter: none !important; max-width: none !important; border-radius: 0 !important; background: transparent !important; image-rendering: pixelated; }

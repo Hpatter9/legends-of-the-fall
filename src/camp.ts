@@ -3,7 +3,9 @@
 
 import { tok } from './render/tok';
 import type { Meta } from './sim/meta';
-import { heroRig, lookKey } from './render/awakenRig';
+import { awakenedStep, heroRig, lookKey } from './render/awakenRig';
+import { drawAura, drawAuraGlow } from './render/auraCanvas';
+import { auraParts, type AuraPart } from './render/auraStyles';
 import type { Army } from './sim/armies';
 import { sheetInfo } from './render/sheets';
 import { canvasOf, ROWS, shrinkRig, type Small } from './render/smallRig';
@@ -12,7 +14,20 @@ import { onSettings, settings } from './settings';
 import { EMOTE_NAMES, EMOTES } from './tavern';
 import { goatSheet } from './duchess';
 import { goatSays } from './quips';
-import { chewBob, FRAME, goatFrame, hopLift, newGoat, stepGoat, tapGoat, type Goat } from './render/duchessRules';
+import { showQuip } from './quipView';
+import {
+  chewBob,
+  drawDuchessCosmetic,
+  drawHaystack,
+  FRAME,
+  goatFrame,
+  hopLift,
+  newGoat,
+  rollDailyTreat,
+  stepGoat,
+  tapNudgeGoat,
+  type Goat,
+} from './render/duchessRules';
 import type { Camp } from './render/campSpots';
 import { CAMP_PAINT, scoutCamp, overlookLayout, overlookCrew, overlookRanks } from './render/overlookLayout';
 import { UNITS } from './sim/units';
@@ -69,6 +84,9 @@ interface Actor {
   clip: string;
   emote: { name: string; until: number } | null;
   phase: number;
+  /** Its awakened step, and the parts of its class's aura (none below the first step). */
+  step: number;
+  aura: readonly AuraPart[];
 }
 
 interface Spark {
@@ -177,8 +195,12 @@ export class CampScene {
       const rig = heroRig(meta, kind);
       const spot = camp.heroes[i];
       if (!rig || !spot) return;
+      const step = awakenedStep(meta, kind);
+      const aura = auraParts(kind, step, this.saver);
       const a = this.actors.get(kind);
       if (a) {
+        a.step = step;
+        a.aura = aura;
         a.x += spot.x - a.spot.x;
         a.target += spot.x - a.spot.x;
         a.spot = spot;
@@ -202,6 +224,8 @@ export class CampScene {
         clip: 'idle',
         emote: null,
         phase: rand(0, 6),
+        step,
+        aura,
       });
     });
   }
@@ -541,8 +565,15 @@ export class CampScene {
       return;
     }
     const ground = this.goatGround(camp);
+    const hayX = ground.min + 8;
     this.goat ??= { ...newGoat(ground.min, this.now), face: 1 };
     this.goat.x = Math.max(ground.min, Math.min(ground.max, this.goat.x));
+    // Duchess occasionally nests on the haystack
+    if (this.goat.mode !== 'nest' && this.goat.mode !== 'hop' && Math.random() < 0.003) {
+      this.goat.mode = 'nest';
+      this.goat.x = hayX;
+      this.goat.at = this.now + 12000;
+    }
     // (heroes' feet along her strip: she may go and nibble one)
     const friends = [...this.actors.values()].map((a) => a.x);
     stepGoat(this.goat, dt, this.now, { min: ground.min, max: ground.max, friends }, Math.random, this.reduced);
@@ -653,24 +684,35 @@ export class CampScene {
     g.fillRect(fx - sw + 3, fy - 2, sw * 2 - 6, 1);
     g.fillRect(fx - sw + 3, fy + 1, sw * 2 - 6, 1);
     const dy = fy - lift - small.fh;
+    // (an awakened hero stands in its class's aura: the glow and the parts behind it, then the parts in front)
+    if (a.step) {
+      drawAuraGlow(g, a.kind, a.step, fx, fy, small.figure);
+      drawAura(g, a.aura, fx, fy, small.figure, this.now, 'back', a.face, this.reduced);
+    }
     // (a sheet's figures face right unless the sheet says otherwise; a mirror turns them)
     if ((a.face === 1) !== small.facesRight) {
       g.setTransform(-1, 0, 0, 1, fx, 0);
       g.drawImage(small.c, i * small.fw, row * small.fh, small.fw, small.fh, -Math.round(small.fw / 2), dy, small.fw, small.fh);
       g.setTransform(1, 0, 0, 1, 0, 0);
     } else g.drawImage(small.c, i * small.fw, row * small.fh, small.fw, small.fh, fx - Math.round(small.fw / 2), dy, small.fw, small.fh);
+    if (a.step) drawAura(g, a.aura, fx, fy, small.figure, this.now, 'front', a.face, this.reduced);
   }
 
   /** Duchess herself: a shadow, then her frame (the sheet is 48-pixel frames, her feet at the bottom). */
   private duchess(g: CanvasRenderingContext2D, camp: Camp): void {
     const goat = this.goat!;
     const foot = this.goatGround(camp).y;
+    const hayX = this.goatGround(camp).min + 8;
+    drawHaystack(g, hayX, foot, 1);
     const x = Math.round(goat.x);
     g.fillStyle = 'rgba(8, 3, 1, 0.4)';
     g.fillRect(x - 10, foot - 1, 20, 2);
     g.fillRect(x - 7, foot - 2, 14, 1);
     const lift = Math.round(hopLift(goat, this.now));
-    g.drawImage(this.goatArt!, goatFrame(goat) * FRAME, 0, FRAME, FRAME, x - FRAME / 2, foot - FRAME - lift - chewBob(goat, this.now, this.reduced), FRAME, FRAME);
+    const bob = chewBob(goat, this.now, this.reduced);
+    const dy = foot - FRAME - lift - bob;
+    g.drawImage(this.goatArt!, goatFrame(goat) * FRAME, 0, FRAME, FRAME, x - FRAME / 2, dy, FRAME, FRAME);
+    drawDuchessCosmetic(g, settings().duchessHat, x - FRAME / 2, dy, 1, goat.face, 0);
   }
 
   /** The speech bubbles, each drawn once into a small canvas (the tavern's emotes). */
@@ -715,7 +757,24 @@ export class CampScene {
     if (this.goat && this.goatArt) {
       const foot = this.goatGround(camp).y;
       if (Math.abs(rx - this.goat.x) < 16 && ry > foot - 30 && ry < foot + 6) {
-        if (tapGoat(this.goat, this.now)) this.goatSpeak('tap');
+        const nudge = tapNudgeGoat(this.goat, this.now);
+        if (nudge.hopped) {
+          try {
+            const raw = localStorage.getItem('legends.meta');
+            if (raw) {
+              const m = JSON.parse(raw);
+              m.duchessTaps = (m.duchessTaps ?? 0) + 1;
+              localStorage.setItem('legends.meta', JSON.stringify(m));
+            }
+          } catch {
+            /* ignore */
+          }
+          if (nudge.nudgedFromNest) {
+            this.claimHaystackTreat();
+          } else {
+            this.goatSpeak('tap');
+          }
+        }
         return;
       }
     }
@@ -731,5 +790,47 @@ export class CampScene {
     if (best) return this.onPick(best.kind);
     // The painted war table at the left of the ledge also opens the party.
     if (rx < camp.w * 0.2 && ry > camp.h * 0.62 && ry < camp.h * 0.75) this.onParty();
+  }
+
+  private claimHaystackTreat(): void {
+    const today = new Date().getFullYear() * 10000 + (new Date().getMonth() + 1) * 100 + new Date().getDate();
+    let claimed = false;
+    let meta: Meta | null = null;
+    try {
+      const raw = localStorage.getItem('legends.meta');
+      if (raw) {
+        meta = JSON.parse(raw);
+        if (meta && meta.duchessTreat === today) claimed = true;
+      }
+    } catch {
+      /* ignore */
+    }
+
+    const box = this.canvas.getBoundingClientRect();
+    const g = this.goatGround(this.camp!);
+    const x = box.left + this.goat!.x * this.unit;
+    const y = box.top + (g.y - 34) * this.unit;
+
+    if (claimed) {
+      showQuip({ x, y }, 'Duchess hops off her hay! (Already found today’s treat)', { who: 'Duchess', goat: true, hold: 2200 });
+      return;
+    }
+
+    const treat = rollDailyTreat();
+    if (meta) {
+      meta.duchessHay = true;
+      meta.duchessTreat = today;
+      if (treat.kind === 'stones') {
+        meta.stones = (meta.stones ?? 0) + treat.amount;
+      } else if (treat.kind === 'crowns') {
+        meta.crowns = (meta.crowns ?? 0) + treat.amount;
+      }
+      try {
+        localStorage.setItem('legends.meta', JSON.stringify(meta));
+      } catch {
+        /* ignore */
+      }
+    }
+    showQuip({ x, y }, treat.message, { who: 'Duchess', goat: true, hold: 3200 });
   }
 }

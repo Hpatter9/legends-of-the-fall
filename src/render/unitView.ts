@@ -5,7 +5,8 @@ import { ColorMatrixFilter, Container, Graphics, Sprite, Texture } from 'pixi.js
 import { tileAt, type Board } from '../sim/board';
 import { defOf, type Unit } from '../sim/battle';
 import { formOf, UNITS } from '../sim/units';
-import { GLOW, hueOf, isRecoloured, lookSheet } from './awakenLook';
+import { AwakenAura } from './awakenAura';
+import { auraOf } from './auraStyles';
 import { loadImage } from './loadImage';
 import bannerUrl from '../art/castle/banner.png';
 import { facesRightOf, framesOf, figureOf, hasSheet, type Anim } from './sheets';
@@ -108,6 +109,8 @@ export class UnitSprite {
   /** Four flat-coloured copies of the body, a pixel out each way: a rim behind the sprite. */
   private rim = new Container();
   private sparks = new Graphics();
+  /** An awakened hero's class aura (null for the rest). */
+  private awakenAura: AwakenAura | null;
   private burstAt = -1;
   private readonly grade: number;
   private sheet: string;
@@ -130,7 +133,9 @@ export class UnitSprite {
     const def = defOf(unit);
     this.grade = unit.side === 'hero' ? (unit.grade ?? 1) : 1;
     const awake = unit.side === 'hero' ? (unit.awaken ?? 0) : 0;
-    this.sheet = awake ? lookSheet(unit.def, 4 + awake, this.grade) : formOf(def, this.grade);
+    // (an awakened hero keeps its own colours and sheet: its class's aura is what marks it, `awakenAura.ts`)
+    this.sheet = formOf(def, this.grade);
+    this.awakenAura = awake ? new AwakenAura(unit.def, awake, settings().saver) : null;
     const size = (unit.size ?? 1) * (this.grade > 2 ? GRADE3_SIZE : 1);
     this.tall = figureOf(this.sheet) * def.scale * size;
     this.ownSheet = this.sheet;
@@ -140,24 +145,17 @@ export class UnitSprite {
     this.baseSize = size;
     if (this.grade > 1 || awake) {
       // a halo of stacked ellipses behind the body (silver-blue, then gold), drawn once, and a rim of the body's own shape
-      const col = awake ? GLOW[awake] : this.grade > 2 ? 0xffc83a : 0x9cc8ff;
+      const col = awake ? auraOf(unit.def).colour : this.grade > 2 ? 0xffc83a : 0x9cc8ff;
       const h = this.tall * 0.62;
-      for (let i = 5; i >= 1; i--) this.glow.ellipse(0, -this.tall * 0.45, (12 + i * 5) / size, (h * (0.5 + i * 0.13)) / size).fill({ color: col, alpha: awake || this.grade > 2 ? 0.14 : 0.1 });
+      for (let i = 5; i >= 1; i--) this.glow.ellipse(0, -this.tall * 0.45, (12 + i * 5) / size, (h * (0.5 + i * 0.13)) / size).fill({ color: col, alpha: awake > 1 ? 0.16 : awake || this.grade > 2 ? 0.12 : 0.1 });
       for (const [dx, dy] of [[-1.6, 0], [1.6, 0], [0, -1.6], [0, 1.6]]) {
         const r = new Sprite();
         r.anchor.set(0.5, 1);
         r.position.set(dx, dy);
         this.rim.addChild(r);
       }
-      this.rim.filters = [flatFilter(awake ? GLOW[awake] : this.grade > 2 ? 0xffd24a : 0xa8d0ff)];
+      this.rim.filters = [flatFilter(awake ? auraOf(unit.def).colour : this.grade > 2 ? 0xffd24a : 0xa8d0ff)];
       const tone = this.grade > 1 ? [gradeFilter(this.grade)] : [];
-      // (an awakened hero with no pack variant has its colours turned, its own way; the second step is brighter)
-      if (awake && isRecoloured(unit.def)) {
-        const f = new ColorMatrixFilter();
-        f.hue(hueOf(unit.def), false);
-        f.saturate(awake > 1 ? 0.3 : 0.2, true);
-        tone.push(f);
-      }
       if (tone.length) this.body.filters = tone;
     }
     this.shadow.ellipse(0, 0, 13, 5).fill({ color: 0x000000, alpha: 0.32 });
@@ -176,7 +174,7 @@ export class UnitSprite {
     this.pillar.anchor.set(0.5, 1);
     this.pillar.visible = false;
     this.pillar.blendMode = 'add';
-    this.root.addChild(this.shadow, this.aura, this.glow, this.pillar, this.shield, this.rim, this.body, this.sparks, this.stars, this.bar, this.badge);
+    this.root.addChild(this.shadow, this.aura, this.glow, ...(this.awakenAura ? [this.awakenAura.back] : []), this.pillar, this.shield, this.rim, this.body, ...(this.awakenAura ? [this.awakenAura.front] : []), this.sparks, this.stars, this.bar, this.badge);
   }
 
   /** Draw it at the time `t` of the fight (ms), on the board. */
@@ -306,6 +304,10 @@ export class UnitSprite {
     this.body.x = (facesRight(u.facing) ? 1 : -1) * motion.offset;
     this.body.scale.x *= 1 + motion.stretch;
     this.body.scale.y *= 1 - motion.stretch * 0.5;
+    if (this.awakenAura) {
+      this.awakenAura.back.visible = this.awakenAura.front.visible = u.alive;
+      if (u.alive) this.awakenAura.update(t, this.tall / this.sizeNow, dx, !!this.reduced?.matches);
+    }
     this.rim.x = this.body.x;
     this.rim.y = bob - lift;
     this.rim.rotation = rot;

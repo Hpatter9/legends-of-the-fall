@@ -15,6 +15,7 @@ import { lockInfo } from './sim/contentHeroes';
 import { drawHeroSheet, starsOf } from './menuHeroes';
 import { kindPower, powerText } from './sim/power';
 import { partyTableau } from './partyScene';
+import { awakenedStep } from './render/awakenRig';
 import { ROLE_NAMES, roleOf, suggestParty, type PartyRole } from './sim/suggest';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -198,7 +199,7 @@ export class Party {
     $('ptAvailable').textContent = `${m.unlocked.length} available`;
     const key = this.picked.join('|');
     if (this.sceneKey !== key || !$('ptTableau').firstChild) {
-      $('ptTableau').replaceChildren(partyTableau(this.picked));
+      $('ptTableau').replaceChildren(partyTableau(this.picked, (k) => awakenedStep(this.meta, k)));
       this.sceneKey = key;
     }
     const roles = $('ptRoles');

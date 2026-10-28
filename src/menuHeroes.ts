@@ -11,7 +11,8 @@ import { readyToRise } from './sim/rankUp';
 import { openRankUp, type Taken } from './rankUpView';
 import { AWAKEN_SHARDS, awakenedOf, awakenPlan } from './sim/awaken';
 import { drawAwaken, gems, playAwakenShow } from './awakenView';
-import { lookFilter, lookSheet, stepOfRank } from './render/awakenLook';
+import { lookSheet, stepOfRank } from './render/awakenLook';
+import { wearAura } from './render/auraCanvas';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { lastingBoost, progressOf, xpOf } from './sim/levels';
 import { compactXp, levelBadge } from './levelBadge';
@@ -20,7 +21,7 @@ import { drawTalents } from './talentView';
 import { TREES } from './sim/talents';
 import { blowsPerSecond, jumpText, kindPower, powerText, rateText, tilesPerSecond } from './sim/power';
 import { heroStats } from './sim/talents';
-import { sprite } from './render/sheets';
+import { figureShare, sprite } from './render/sheets';
 import { CONTENT_HEROES, lockInfo } from './sim/contentHeroes';
 import { haveOf, toCollect } from './sim/unlock';
 import { portrait } from './render/sheets';
@@ -32,6 +33,9 @@ import haloIcon from './art/talent/halo.png';
 import heartIcon from './art/talent/heart.png';
 import crystalIcon from './art/talent/crystal.png';
 import { warmIcon } from './menuArt';
+import { tomeControl } from './tomeView';
+import { TOME_SIZES, tomesOf, tomeTotal } from './sim/tomes';
+import { TOME_ICON } from './tomeArt';
 
 const DETAIL_TABS = ['overview', 'progression', 'equipment', 'skills'];
 
@@ -140,11 +144,11 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
   }
   const head = el('div', 'hhead');
   const pic = el('div', 'hpic');
-  // (an awakened hero wears its awakened look: the pack's variant, or a recolour of its top form)
+  // (an awakened hero is drawn in its top form, its own colours, in its class's aura)
   const full = heroRank(meta, kind);
   const step = stepOfRank(full);
-  const spr = sprite(step ? lookSheet(kind, full, 3) : def.sheet, 132);
-  if (step) spr.canvas.style.filter = lookFilter(kind, step);
+  const sheet = step ? lookSheet(kind, full, 3) : def.sheet;
+  const spr = sprite(sheet, 132);
   spr.canvas.style.transform = spr.faceRight ? 'translateX(-50%)' : 'translateX(-50%) scaleX(-1)';
   if (!open) spr.canvas.style.filter = 'brightness(0.15) grayscale(1)';
   const halo = el('span', 'heroCardHalo');
@@ -152,6 +156,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
   const motes = el('span', 'heroCardMotes');
   motes.setAttribute('aria-hidden', 'true');
   pic.append(halo, spr.canvas, motes);
+  if (open && step) wearAura(pic, spr.canvas, kind, step, figureShare(sheet), spr.faceRight ? 1 : -1);
   const banner = el('span', 'dossierClass');
   banner.append(detailIcon(CARD_CLASSES[CLASS_OF[kind]].icon), CARD_CLASSES[CLASS_OF[kind]].name);
   pic.append(banner);
@@ -176,6 +181,9 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     const waiting = rankOf(meta, kind) > rank;
     const next = waiting ? `${shards} shards: rank ${rank + 1} is earned` : rank < MAX_RANK ? `${shards} / ${RANK_SHARDS[rank]} shards to rank ${rank + 1}` : plan.step ? (plan.can ? 'ready to awaken' : `${shards} / ${AWAKEN_SHARDS[plan.step - 1]} shards to awaken`) : 'fully awakened';
     title.append(el('span', 'stars', starsOf(meta, kind)), levelLine(x.level, x.text), x.bar, el('span', 'lv', next));
+    // (the XP tomes held, and "Use tome" to read one to this hero: CHEST-001)
+    const tomes = tomeControl(meta, kind, () => redraw());
+    if (tomes) title.append(tomes);
     // (a rank earned, or an awakening paid for, waits for the player's tap)
     if (readyToRise(meta, kind)) {
       const badge = el('button', 'rankBadge', 'Rank up');
@@ -307,7 +315,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     equipment.append(drawEquipment(meta, kind, repower));
     equipment.append(el('p', 'hint', 'Equipment is kept for good. Gear found in a run lasts that run only.'));
   }
-  if (show) playAwakenShow(pic, show.what === 'awaken' ? show.n : 1, show.what === 'rank' ? `Rank ${show.n}` : undefined);
+  if (show && show.what !== 'cache') playAwakenShow(pic, show.what === 'awaken' ? show.n : 1, show.what === 'rank' ? `Rank ${show.n}` : undefined, show.what === 'awaken' ? kind : undefined);
   const done = el('button', 'primary', 'Back');
   done.addEventListener('click', close);
   box.append(done);
@@ -325,6 +333,23 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
   const head = el('div');
   head.className = 'rosterHeading';
   head.append(el('small', 'rosterEyebrow', 'THE LAST KEEP'), el('h3', '', 'Your company'), el('em', '', `${have.length} of ${ALL_HEROES.length} heroes · ${earned} of ${CONTENT_HEROES.length} earned in play`));
+  // (the XP tomes held, the nearest thing the game has to a bag: they are read to a hero from its page)
+  if (tomeTotal(meta) > 0) {
+    const bag = el('p', 'rosterTomes');
+    bag.append('XP tomes: ');
+    for (const size of TOME_SIZES) {
+      const n = tomesOf(meta, size);
+      if (!n) continue;
+      const img = el('img');
+      img.src = TOME_ICON[size];
+      img.alt = '';
+      const chip = el('span', 'tomeChip');
+      chip.append(img, `${n} ${size}`);
+      bag.append(chip);
+    }
+    bag.append(el('small', '', 'Open a hero to use one.'));
+    head.append(bag);
+  }
   box.append(head);
   const label = el('label', 'rosterSearch');
   label.append(el('span', '', 'Find a hero'));
@@ -360,8 +385,8 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
     const full = heroRank(meta, kind);
     const step = stepOfRank(full);
     const figure = portrait(step ? lookSheet(kind, full, 3) : UNITS[kind].sheet, 160);
-    if (step) figure.style.filter = lookFilter(kind, step);
     scene.append(el('span', 'heroCardHalo'), figure, el('span', 'heroCardMotes'));
+    if (step) wearAura(scene, figure, kind, step, 0.88);
     const level = progressOf(xpOf(meta, kind)).level;
     const ribbon = el('span', 'heroLevelRibbon');
     ribbon.append(levelBadge(level));

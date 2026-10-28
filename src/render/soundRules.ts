@@ -87,15 +87,15 @@ export const CUES: Record<Cue, CueSpec> = {
   swingHeavy: c(160, 320, 2, 1),
   swingSpear: c(130, 140, 1, 0, 0.8),
   swingFist: c(110, 100, 1, 0, 0.8),
-  hitLight: c(80, 150, 2, 1),
-  hitSword: c(80, 200, 2, 1),
-  hitHeavy: c(120, 400, 3, 2),
-  hitBone: c(80, 200, 2, 1),
-  hitFist: c(80, 200, 2, 1),
-  hitSpear: c(80, 160, 2, 1),
-  crit: c(100, 500, 3, 2),
-  block: c(120, 300, 2, 2),
-  miss: c(150, 150, 1, 0, 0.7),
+  hitLight: c(80, 150, 2, 1, 0.45),
+  hitSword: c(80, 200, 2, 1, 0.55),
+  hitHeavy: c(120, 400, 3, 2, 0.95),
+  hitBone: c(80, 200, 2, 1, 0.55),
+  hitFist: c(80, 200, 2, 1, 0.55),
+  hitSpear: c(80, 160, 2, 1, 0.5),
+  crit: c(100, 500, 3, 2, 1.1),
+  block: c(120, 300, 2, 2, 0.95),
+  miss: c(150, 150, 1, 0, 0.5),
 
   bow: c(90, 200, 2, 1),
   arrowFly: c(90, 250, 1, 0, 0.8),
@@ -203,7 +203,11 @@ export function cuesFor(b: Battle, e: BattleEvent): Cued[] {
   switch (e.kind) {
     case 'swing': {
       const by = unit(e.by);
-      return by && !defOf(by).shot ? [{ cue: SWING[weightOf(defOf(by).name)] }] : [];
+      if (!by || defOf(by).shot) return [];
+      const w = weightOf(defOf(by).name);
+      // Cinematic filter: mute repetitive generic melee swings (light, sword, spear, fist) to keep the battle mix clear;
+      // heavy windups (ogres, minotaurs, brutes) keep their impactful swoosh.
+      return w === 'heavy' ? [{ cue: SWING[w] }] : [];
     }
     case 'shot': {
       const by = unit(e.by);
@@ -213,6 +217,16 @@ export function cuesFor(b: Battle, e: BattleEvent): Cued[] {
       return [{ cue: 'miss' }];
     case 'boom':
       return [{ cue: 'fireBoom', gain: 0.9 }];
+    case 'hazard':
+      // (the living land: a strike is heard as it goes off; the river's current and a spring's welling are quiet)
+      if (e.phase !== 'go') return [];
+      return e.what === 'flare' ? [{ cue: 'fireWhoosh', gain: 0.7 }]
+        : e.what === 'rockfall' || e.what === 'stampede' ? [{ cue: 'boom', gain: 0.7 }]
+        : e.what === 'geyser' ? [{ cue: 'poisonHiss', gain: 0.7 }]
+        : e.what === 'spikes' ? [{ cue: 'block', gain: 0.6 }]
+        : e.what === 'grasp' ? [{ cue: 'shadowHum', gain: 0.6 }]
+        : e.what === 'spring' ? [{ cue: 'holyChime', gain: 0.5 }]
+        : [];
     case 'hit': {
       const by = unit(e.by);
       const to = unit(e.to);

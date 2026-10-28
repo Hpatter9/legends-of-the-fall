@@ -1,5 +1,5 @@
 // The full recap of a run that has ended: waves cleared, time, gold, each hero's damage, healing and kills (with the MVP),
-// and the XP, levels, crowns and chests the run paid out. A scrolling sheet in the game's pixel panels; its parts fade in
+// and the XP, levels, crowns and chests the run paid out. A scrolling sheet in the game's brass-framed panels; its parts fade in
 // once, nothing loops. The numbers come from `run.recap` (`sim/runRecap.ts`).
 
 import { mvpKind, type RunRecap } from './sim/runRecap';
@@ -40,7 +40,7 @@ export interface RecapAdvice {
 export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, onClose: () => void, advice?: RecapAdvice): void {
   root.replaceChildren();
   const sheet = el('div', 'rcSheet');
-  sheet.append(el('div', `rcTitle ${head.tone}`, head.title), el('p', 'rcLine', head.line));
+  sheet.append(el('div', 'rcEyebrow', 'After-action report'), el('div', `rcTitle ${head.tone}`, head.title), el('p', 'rcLine', head.line));
   if (head.joke) sheet.append(el('p', 'rcJoke', head.joke));
   const close = (): void => {
     root.hidden = true;
@@ -92,7 +92,7 @@ export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, o
   const work = (k: string) => recap.heroes[k].dealt + recap.heroes[k].healed + recap.heroes[k].taken / 2;
   kinds.sort((a, b) => work(b) - work(a));
   if (kinds.length) {
-    sheet.append(el('h3', '', 'Heroes'));
+    sheet.append(el('h3', '', 'Company performance'));
     const list = el('div', 'rcHeroes');
     const top = (key: 'dealt' | 'healed' | 'kills') => Math.max(1, ...kinds.map((k) => recap.heroes[k][key]));
     kinds.forEach((k, i) => {
@@ -124,7 +124,7 @@ export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, o
   // XP and levels
   const xpKinds = Object.keys(recap.xp).filter((k) => UNITS[k] && recap.xp[k] > 0);
   if (xpKinds.length) {
-    sheet.append(el('h3', '', 'Experience'));
+    sheet.append(el('h3', '', 'Experience earned'));
     const list = el('div', 'rcXp');
     for (const k of xpKinds) {
       const row = el('div', 'rcXpRow');

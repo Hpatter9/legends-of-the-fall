@@ -1,6 +1,7 @@
 // The Last Stand: an endless battle on a big square field (`standField.ts`). The king stands on his keep in the middle, the
 // heroes guard posts round him (`standAi.ts`), and wave after wave of foes comes in from the edges, bigger each time. Every
-// fifth wave is a boss. Between waves there is a short break (`BREAK_MS`) to spend gold: level a hero up, buy a
+// fifth wave is a boss. A hero who falls stays down for the rest of the run (`StandHero.fallen`); when a wave is down to its last
+// `HUNT_AT` foes the heroes leave their posts to hunt them down (`StandMode.hunt`), and walk back after. Between waves there is a short break (`BREAK_MS`) to spend gold: level a hero up, buy a
 // relic, heal the king (at any time, the break is a breather). The heroes also level up by themselves, in the fight, from kills and wave clears. The run ends when
 // the king falls; its score is the best wave reached (`Meta.stand`).
 //
@@ -8,9 +9,11 @@
 // a moment after they fall. The saved run (`StandRun`) is a small record kept at the start of each break; the battle is built
 // again from it. Pure rules: no Pixi, no DOM; every draw is a side stream of the run's seed.
 
+import { grantOres, standOres, type OreDrop } from './awakenMats';
 import { startBattle, addUnit, stepBattle, TICK_MS, creditOf, type Battle, type BattleEvent, type Boost, type Unit } from './battle';
 import { tileAt, standable, type Area, type At } from './board';
-import { canPost, edgeTiles, EDGES, KING_AT, ringPlan, standArea, standBoard, type Edge, type Role } from './standField';
+import { canPost, edgeTiles, KING_AT, ringPlan, standArea, standBoard, type Edge, type Role } from './standField';
+import { HALL_KINDS, hallOf, hallPlan, type HallKind } from './standHalls';
 import { isTank, KING_DEF, leashOf } from './standAi';
 import { CLASS_OF } from './starter';
 import { BOSS_BANDS, FIELD_BANDS, FOE_BANDS, isBoss } from './foes';
@@ -47,7 +50,12 @@ export const WAVE_START = FOE_START;
 export const WAVE_GROWTH = 0.4;
 /** From wave `WAVE_KNEE` on the climb eases to `WAVE_GROWTH_LATE` a wave: steep at first, so the early waves bite at once; gentler later, so a stronger party still goes further. */
 export const WAVE_KNEE = 10;
-export const WAVE_GROWTH_LATE = 0.07;
+export const WAVE_GROWTH_LATE = 0.1;
+/** The castle's rooms (STAND-003) bring the foes in by two or three breaches, onto the posts: their strength is eased by this to keep the agreed pace. */
+export const HALL_EASE = 0.85;
+/** From wave `WAVE_DEEP` the climb steepens again by `WAVE_GROWTH_DEEP` a wave (STAND-003: the strongest parties kept near the agreed pace, about wave 25 at level 100). */
+export const WAVE_DEEP = 22;
+export const WAVE_GROWTH_DEEP = 0.6;
 /** A wave's size: foes at wave 1 and the foes each wave adds. */
 export const WAVE_BASE = 4;
 export const WAVE_STEP = 2;
@@ -64,9 +72,10 @@ export const SPAWN_SPAN = 7000;
 export const ENRAGE_AFTER = 75_000;
 export const ENRAGE_EVERY = 5000;
 export const ENRAGE_STEP = 1.1;
-/** A cleared wave heals the heroes standing by this share of their health, and the fallen rise at their posts with `RISE_SHARE`. */
+/** A cleared wave heals the heroes standing by this share of their health. The fallen stay down (the owner's ask: a hero who dies does not come back). */
 export const CLEAR_HEAL = 0.35;
-export const RISE_SHARE = 0.5;
+/** A wave with no foes still to come and this many or fewer on the field is hunted down: the heroes' leashes are lifted until it clears. */
+export const HUNT_AT = 2;
 /** Dead foes are dropped from the battle's list this long (ms) after they fall (the page has shown them by then). */
 export const CORPSE_MS = 2600;
 
@@ -102,6 +111,10 @@ export interface StandHero {
   lv: number;
   xp: number;
   post: [number, number] | null;
+  /** Fallen in this run: stays down to its end (absent in older saves, where everyone saved was standing). */
+  fallen?: boolean;
+  /** The foes it has felled this run (its summons' kills count for it); absent is none. */
+  kills?: number;
 }
 
 /** What is saved of a run: enough to build it again at the start of a break. */
@@ -109,6 +122,8 @@ export interface StandRun {
   v: 1;
   seed: number;
   area: Area;
+  /** The room of the castle the run is fought in (`standHalls.ts`); absent in a run saved before the rooms, which takes the seed's. */
+  hall?: HallKind;
   /** The armies open when it began, whose foes join the waves later on. */
   armies: string[];
   /** The wave about to come (or being fought). */
@@ -142,6 +157,8 @@ export interface StandSummary {
   heroes: number;
   relics: number;
   newBest: boolean;
+  /** Rift ores a new record paid (`awakenMats.ts`: a couple for each tenth wave passed for the first time); missing when none. */
+  ores?: OreDrop[];
 }
 
 /** A foe still to come: when (ms into the wave), what, where. */
@@ -158,6 +175,10 @@ export type StandNote =
   | { kind: 'clear'; n: number; gold: number }
   | { kind: 'levelup'; unit: number; level: number }
   | { kind: 'kingHit'; dmg: number }
+  /** A hero fell, for good. */
+  | { kind: 'fallen'; unit: number; hero: number }
+  /** The last foes of the wave are being hunted down (the heroes have left their posts). */
+  | { kind: 'hunt' }
   | { kind: 'over'; best: number };
 
 export type StandPhase = 'deploy' | 'wave' | 'break' | 'over';
@@ -209,7 +230,7 @@ export interface WaveSpec {
 
 export const isBossWave = (n: number): boolean => n % BOSS_EVERY === 0;
 /** The foes' strength at wave `n`, as a share of their stats in `foes.ts`. */
-export const strength = (n: number): number => WAVE_START * (1 + WAVE_GROWTH * (Math.min(n, WAVE_KNEE) - 1) + WAVE_GROWTH_LATE * Math.max(0, n - WAVE_KNEE));
+export const strength = (n: number): number => HALL_EASE * WAVE_START * (1 + WAVE_GROWTH * (Math.min(n, WAVE_KNEE) - 1) + WAVE_GROWTH_LATE * Math.max(0, n - WAVE_KNEE) + WAVE_GROWTH_DEEP * Math.max(0, n - WAVE_DEEP));
 /** How many foes wave `n` would have with no cap. */
 export const rawCount = (n: number): number => Math.round(WAVE_BASE + WAVE_STEP * n);
 
@@ -222,18 +243,18 @@ function pools(armies: readonly string[], n: number): { main: string[]; second: 
   return { main: band(block), second: band(block + 1), army: n >= 10 ? army : [] };
 }
 
-/** Which edges wave `n` comes in by: one at first, two from wave 6, three from 11, all four from 16 (a boss wave from at least two). */
-export function waveEdges(seed: number, n: number): Edge[] {
+/** Which breaches wave `n` comes in by (the edges of the room's breaches): one at first, two from wave 6, three from 11 (a boss wave by one more), as many as the room has. */
+export function waveEdges(seed: number, n: number, hall: HallKind = hallOf(seed)): Edge[] {
   const rng = new Rng(mixSeed(seed, 0x57e0, n));
-  const want = Math.min(4, 1 + Math.floor((n - 1) / 5) + (isBossWave(n) ? 1 : 0));
-  const pool = [...EDGES];
+  const pool: Edge[] = hallPlan(seed, hall).breaches.map((b) => b.edge);
+  const want = Math.min(pool.length, 1 + Math.floor((n - 1) / 5) + (isBossWave(n) ? 1 : 0));
   const out: Edge[] = [];
   while (out.length < want) out.push(pool.splice(rng.int(0, pool.length - 1), 1)[0]);
   return out;
 }
 
 /** Wave `n` of a run: deterministic from the seed. */
-export function waveSpec(seed: number, armies: readonly string[], n: number): WaveSpec {
+export function waveSpec(seed: number, armies: readonly string[], n: number, hall?: HallKind): WaveSpec {
   const rng = new Rng(mixSeed(seed, 0x57e1, n));
   const raw = rawCount(n);
   const count = Math.min(FIELD_CAP, raw);
@@ -251,7 +272,7 @@ export function waveSpec(seed: number, armies: readonly string[], n: number): Wa
     const from = n >= 10 && p.army.length && roll < 0.2 ? p.army : n >= 13 && roll < 0.5 ? p.second : p.main;
     foes.push(from === p.main ? from[i++ % from.length] : from[rng.int(0, from.length - 1)]);
   }
-  return { n, boss, foes: foes.slice(0, Math.max(count, boss ? 5 : 0)), edges: waveEdges(seed, n), hp: k, atk: k, raw };
+  return { n, boss, foes: foes.slice(0, Math.max(count, boss ? 5 : 0)), edges: waveEdges(seed, n, hall), hp: k, atk: k, raw };
 }
 
 /* ------------------------------------------------------------------ building a run */
@@ -268,8 +289,9 @@ export function setupFromMeta(m: Meta): StandSetup {
 }
 
 /** A new run for a party (the hero kinds of a save's party). */
-export function newStandRun(seed: number, party: readonly string[], armies: readonly string[] = [], prevBest = 0): StandRun {
-  const run: StandRun = { v: 1, seed, area: standArea(seed), armies: [...armies], wave: 1, gold: START_GOLD, heroes: [], nextId: 1, relics: [], offer: [], king: 1, kills: 0, earned: 0, prevBest, over: false, best: 1 };
+export function newStandRun(seed: number, party: readonly string[], armies: readonly string[] = [], prevBest = 0, prevHall?: string | null): StandRun {
+  const hall = hallOf(seed, prevHall);
+  const run: StandRun = { v: 1, seed, area: standArea(seed, hall), hall, armies: [...armies], wave: 1, gold: START_GOLD, heroes: [], nextId: 1, relics: [], offer: [], king: 1, kills: 0, earned: 0, prevBest, over: false, best: 1 };
   for (const kind of party) run.heroes.push({ id: run.nextId++, kind, lv: 0, xp: 0, post: null });
   return run;
 }
@@ -280,6 +302,9 @@ function boostFor(s: Stand, h: StandHero): Boost {
   const lv = lvMult(h.lv);
   return { ...base, hp: (base.hp ?? 1) * lv.hp, atk: (base.atk ?? 1) * lv.atk };
 }
+
+/** Whether a hero of the run is on the field: posted, and not fallen. */
+export const standing = (h: StandHero): boolean => !!h.post && !h.fallen;
 
 const heroUnits = (s: Stand): Unit[] => s.b.units.filter((u) => u.side === 'hero' && u.tag !== undefined && u.alive);
 const unitOfHero = (s: Stand, id: number): Unit | undefined => s.b.units.find((u) => u.side === 'hero' && u.tag === id);
@@ -294,7 +319,7 @@ export function startStand(run: StandRun, setup: StandSetup): Stand {
   const mana = manaRate(setup.castle) * (rl.mana ?? 1);
   const { atk, hp, mana: _m, first, revive, gold: _g, set, ...team } = rl;
   const b = startBattle(run.seed, [], {
-    board: standBoard(run.seed, run.area),
+    board: standBoard(run.seed, undefined, run.hall ?? hallOf(run.seed)),
     heroes: { hp: castle.hp! * (hp ?? 1), atk: castle.atk! * (atk ?? 1) },
     mana,
     move: moveRate(setup.castle),
@@ -306,13 +331,16 @@ export function startStand(run: StandRun, setup: StandSetup): Stand {
   king.hp = Math.max(1, Math.round(king.maxHp * run.king));
   b.stand = { king: king.id, at: { ...KING_AT }, fields: {} };
   const s: Stand = { run, setup, b, phase: 'deploy', king, queue: [], waveAt: 0, breakLeft: 0, rageAt: 0, notes: [], traitHp: 1, traitAtk: 1, relicHp: hp ?? 1, relicAtk: atk ?? 1, baseMana: mana, kingGrace: 0 };
-  // (the heroes with a post stand on it; a new run's eight are set out in a ring round the keep: `ringPlan`)
-  const fresh = run.heroes.filter((h) => !h.post);
+  // (the heroes with a post stand on it; a new run's eight are set out in a ring round the dais: `ringPlan`. A post saved before the rooms that
+  // is no post in this room (a pillar, cover, the throne) is planned again)
+  for (const h of run.heroes) if (h.post && !canPost(b.board, h.post[0], h.post[1])) h.post = null;
+  const fresh = run.heroes.filter((h) => !h.post && !h.fallen);
   if (fresh.length) {
     const plan = ringPlan(b.board, fresh.map((h) => h.kind), roleOfKind, run.heroes.filter((h) => h.post).map((h) => ({ u: h.post![0], v: h.post![1] })));
     fresh.forEach((h, i) => (h.post = plan[i] ? [plan[i].u, plan[i].v] : null));
   }
-  for (const h of run.heroes) if (h.post) addHeroUnit(s, h);
+  // (the fallen stay down: a run built again from its save leaves them off the field)
+  for (const h of run.heroes) if (standing(h)) addHeroUnit(s, h);
   syncTraits(s);
   syncMana(s);
   if (!run.offer.length) run.offer = drawOffer(run, run.wave);
@@ -358,7 +386,7 @@ function syncMana(s: Stand): void {
 /** Put a hero on a tile (a bench hero comes onto the field; one on the field has its post moved, and walks there). False when the tile is not a place to post, is taken, or the field is full. */
 export function postHero(s: Stand, id: number, u: number, v: number): boolean {
   const h = s.run.heroes.find((x) => x.id === id);
-  if (!h || s.phase === 'over' || !canPost(s.b.board, u, v)) return false;
+  if (!h || h.fallen || s.phase === 'over' || !canPost(s.b.board, u, v)) return false;
   if (s.b.units.some((x) => x.alive && x.u === u && x.v === v && x.tag !== id)) return false;
   const was = h.post;
   h.post = [u, v];
@@ -376,6 +404,44 @@ export function postHero(s: Stand, id: number, u: number, v: number): boolean {
     syncMana(s);
   }
   return !was || was[0] !== u || was[1] !== v || true;
+}
+
+/** Trade two heroes' posts (the deploy tray's swap; in a fight they walk to their new posts). False when either is fallen, missing, or the run is over. */
+export function swapPosts(s: Stand, a: number, b: number): boolean {
+  const ha = s.run.heroes.find((x) => x.id === a);
+  const hb = s.run.heroes.find((x) => x.id === b);
+  if (!ha || !hb || a === b || !standing(ha) || !standing(hb) || s.phase === 'over') return false;
+  const [pa, pb] = [ha.post!, hb.post!];
+  ha.post = [...pb] as [number, number];
+  hb.post = [...pa] as [number, number];
+  for (const h of [ha, hb]) {
+    const unit = unitOfHero(s, h.id);
+    if (!unit?.post) continue;
+    unit.post = { ...unit.post, u: h.post![0], v: h.post![1] };
+    if (s.phase === 'deploy') {
+      unit.u = h.post![0];
+      unit.v = h.post![1];
+    }
+  }
+  return true;
+}
+
+/** Set every standing hero out again by the ring plan (the deploy tray's Auto-place). Only before the first wave. */
+export function autoPlace(s: Stand): boolean {
+  if (s.phase !== 'deploy') return false;
+  const heroes = s.run.heroes.filter(standing);
+  const plan = ringPlan(s.b.board, heroes.map((h) => h.kind), roleOfKind);
+  heroes.forEach((h, i) => {
+    if (!plan[i]) return;
+    h.post = [plan[i].u, plan[i].v];
+    const unit = unitOfHero(s, h.id);
+    if (unit?.post) {
+      unit.post = { ...unit.post, u: plan[i].u, v: plan[i].v };
+      unit.u = plan[i].u;
+      unit.v = plan[i].v;
+    }
+  });
+  return true;
 }
 
 /* ------------------------------------------------------------------ levels and XP */
@@ -412,10 +478,11 @@ const killXpOf = (foe: Unit): number => killXp({ def: foe.def, maxHp: UNITS[foe.
 /** Begin the next wave: its foes are queued, to come in by its edges over the first seconds. */
 function beginWave(s: Stand): void {
   const run = s.run;
-  const spec = waveSpec(run.seed, run.armies, run.wave);
+  const spec = waveSpec(run.seed, run.armies, run.wave, run.hall);
   const b = s.b;
   run.best = Math.max(run.best, run.wave);
   s.phase = 'wave';
+  if (b.stand) b.stand.hunt = false;
   s.waveAt = b.t;
   s.rageAt = b.t + ENRAGE_AFTER;
   b.revived = false;
@@ -435,9 +502,10 @@ function spawnTile(s: Stand, edge: Edge, rng: Rng): At | null {
   const tiles = edgeTiles(s.b.board, edge);
   for (let tries = 0; tries < 10 && tiles.length; tries++) {
     const at = tiles[rng.int(0, tiles.length - 1)];
-    // (a free tile, or one a step in from the edge)
-    const step = edge === 'north' ? { u: at.u, v: at.v + 1 } : edge === 'south' ? { u: at.u, v: at.v - 1 } : edge === 'west' ? { u: at.u + 1, v: at.v } : { u: at.u - 1, v: at.v };
-    for (const p of tries < 5 ? [at] : [at, step]) if (standable(tileAt(s.b.board, p.u, p.v)) && !s.b.units.some((x) => x.alive && x.u === p.u && x.v === p.v)) return p;
+    // (a free tile, or one or two steps in from the edge: a breach is narrow)
+    const [du, dv] = edge === 'north' ? [0, 1] : edge === 'south' ? [0, -1] : edge === 'west' ? [1, 0] : [-1, 0];
+    const steps = [at, { u: at.u + du, v: at.v + dv }, { u: at.u + 2 * du, v: at.v + 2 * dv }];
+    for (const p of tries < 4 ? steps.slice(0, 1) : tries < 7 ? steps.slice(0, 2) : steps) if (standable(tileAt(s.b.board, p.u, p.v)) && !s.b.units.some((x) => x.alive && x.u === p.u && x.v === p.v)) return p;
   }
   return null;
 }
@@ -448,7 +516,7 @@ export const foesAlive = (s: Stand): number => s.b.units.filter((u) => u.alive &
 
 /** Start the run's first wave (from the deploy phase). */
 export function startFirstWave(s: Stand): boolean {
-  if (s.phase !== 'deploy' || !s.run.heroes.some((h) => h.post)) return false;
+  if (s.phase !== 'deploy' || !s.run.heroes.some(standing)) return false;
   syncTraits(s);
   beginWave(s);
   return true;
@@ -477,24 +545,14 @@ function clearWave(s: Stand): void {
   const gold = clearGold(n) + (relicEffects(run.relics).gold ?? 0);
   run.gold += gold;
   run.earned += gold;
-  for (const h of run.heroes) if (h.post) giveXp(s, h, waveXp(n));
-  // (the heroes get their breath back: the hurt mend a little, the fallen rise at their posts)
+  for (const h of run.heroes) if (standing(h)) giveXp(s, h, waveXp(n));
+  // (the heroes standing get their breath back: the hurt mend a little; the fallen stay down)
   for (const u of s.b.units) {
-    if (u.side !== 'hero' || u.tag === undefined) continue;
-    const h = run.heroes.find((x) => x.id === u.tag);
-    if (!u.alive && h?.post) {
-      u.alive = true;
-      u.hp = Math.max(1, Math.round(u.maxHp * RISE_SHARE));
-      u.diedAt = undefined;
-      u.u = h.post[0];
-      u.v = h.post[1];
-      u.busyUntil = s.b.t + 500;
-      u.charge = 0;
-      u.dot = undefined;
-      u.step = undefined;
-      u.swing = undefined;
-    } else if (u.alive) u.hp = Math.min(u.maxHp, u.hp + Math.round(u.maxHp * CLEAR_HEAL * (u.healMult ?? 1)));
+    if (u.side !== 'hero' || u.tag === undefined || !u.alive) continue;
+    u.hp = Math.min(u.maxHp, u.hp + Math.round(u.maxHp * CLEAR_HEAL * (u.healMult ?? 1)));
   }
+  // (the hunt is over: the heroes walk back to their posts in the break)
+  if (s.b.stand) s.b.stand.hunt = false;
   run.wave++;
   run.offer = drawOffer(run, run.wave);
   s.phase = 'break';
@@ -519,9 +577,11 @@ function settleEvents(s: Stand, events: BattleEvent[]): void {
     s.run.gold += gold;
     s.run.earned += gold;
     s.run.kills++;
+    const killer = who?.side === 'hero' && who.tag !== undefined ? s.run.heroes.find((h) => h.id === who.tag) : undefined;
+    if (killer) killer.kills = (killer.kills ?? 0) + 1;
     const xp = killXpOf(to);
     for (const h of s.run.heroes) {
-      if (!h.post) continue;
+      if (!standing(h)) continue;
       const mine = who?.tag === h.id;
       giveXp(s, h, Math.round(xp * (mine ? 1 : XP_ALL_SHARE)));
     }
@@ -557,6 +617,14 @@ export function stepStand(s: Stand): BattleEvent[] {
   }
   const events = stepBattle(b);
   settleEvents(s, events);
+  markFallen(s);
+  // (the last foes of a wave are hunted down; the heroes go back when it clears)
+  if (s.phase === 'wave' && b.stand) {
+    const left = s.queue.length ? Infinity : foesAlive(s);
+    const hunt = left > 0 && left <= HUNT_AT;
+    if (hunt && !b.stand.hunt) s.notes.push({ kind: 'hunt' });
+    b.stand.hunt = hunt;
+  }
   // (the fallen are dropped from the list a moment after they fall)
   if (b.t % 1000 === 0) dropCorpses(s);
   if (b.phase === 'lost' || !s.king.alive) return endRun(s, events);
@@ -569,6 +637,18 @@ export function stepStand(s: Stand): BattleEvent[] {
 }
 
 const FIELD_LAST = 23;
+
+/** A hero whose unit has fallen is marked so, for good: no rising at the clear, no XP, no levels, and it is left off the field when the run is built again. */
+function markFallen(s: Stand): void {
+  for (const h of s.run.heroes) {
+    if (h.fallen || !h.post) continue;
+    const u = unitOfHero(s, h.id);
+    if (u && !u.alive) {
+      h.fallen = true;
+      s.notes.push({ kind: 'fallen', unit: u.id, hero: h.id });
+    }
+  }
+}
 
 /** Drop the foes that fell a while ago, unless something in the battle still points at one (a burn or a bleed it laid, a shot in the air, one it called up). */
 function dropCorpses(s: Stand): void {
@@ -602,11 +682,11 @@ function endRun(s: Stand, events: BattleEvent[]): BattleEvent[] {
 export type Refusal = 'over' | 'gold' | 'full' | 'none';
 
 /** The hero a level-up goes to when none is named: the lowest level on the field (the lowest id of equals). */
-export const weakestHero = (s: Stand): StandHero | undefined => [...s.run.heroes].filter((h) => h.post).sort((x, y) => x.lv - y.lv || x.id - y.id)[0];
+export const weakestHero = (s: Stand): StandHero | undefined => [...s.run.heroes].filter(standing).sort((x, y) => x.lv - y.lv || x.id - y.id)[0];
 
 export function levelBlock(s: Stand, id?: number): Refusal | null {
   const h = id === undefined ? weakestHero(s) : s.run.heroes.find((x) => x.id === id);
-  if (!h) return 'none';
+  if (!h || h.fallen) return 'none';
   if (s.phase === 'over') return 'over';
   return s.run.gold < levelCost(h.lv) ? 'gold' : null;
 }
@@ -704,8 +784,11 @@ export function settleStand(m: Meta, run: StandRun, armies: readonly string[] = 
     gear.push(itemName(grantEquipment(m, rollEquipment(rng, { quality, armyIndex: armyIndex(army.id), milestone: cleared >= 39 }))));
   }
   const newBest = run.best > (m.stand ?? 0);
+  // (a record past a tenth wave the save had not reached pays a couple of rift ores, from a side stream)
+  const ores = standOres(run.seed, m.stand ?? 0, run.best);
+  grantOres(m, ores);
   m.stand = Math.max(m.stand ?? 0, run.best);
-  run.summary = { best: run.best, cleared, crowns, ...c, gear, kills: run.kills, heroes: run.heroes.length, relics: run.relics.length, newBest };
+  run.summary = { best: run.best, cleared, crowns, ...c, gear, kills: run.kills, heroes: run.heroes.length, relics: run.relics.length, newBest, ...(ores.length ? { ores } : {}) };
   return run.summary;
 }
 
@@ -718,7 +801,7 @@ export function loadStand(store: Pick<Storage, 'getItem'> = localStorage): Stand
   try {
     const r = JSON.parse(store.getItem(STAND_KEY) ?? 'null') as StandRun | null;
     const ok = r && r.v === 1 && !r.over && Number.isFinite(r.seed) && r.wave >= 1 && Array.isArray(r.heroes) && r.heroes.length > 0 && Array.isArray(r.relics);
-    return ok ? { ...r, offer: Array.isArray(r.offer) ? r.offer : [], armies: Array.isArray(r.armies) ? r.armies : [] } : null;
+    return ok ? { ...r, offer: Array.isArray(r.offer) ? r.offer : [], armies: Array.isArray(r.armies) ? r.armies : [], hall: (HALL_KINDS as readonly string[]).includes(r.hall as string) ? r.hall : undefined } : null;
   } catch {
     return null;
   }

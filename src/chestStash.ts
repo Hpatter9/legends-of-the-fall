@@ -3,9 +3,14 @@
 // small module so the home screen can mount it anywhere: `drawChestStash(host, meta, onChange)` fills a host element, and
 // `showChest` is the opening moment. The rules (what is in a chest, opening it once) are in `src/sim/armyStars.ts`.
 
+import { ORE_ICON } from './oreView';
+import { ORES } from './sim/awakenMats';
 import { itemIcon } from './equipView';
 import { EQUIP_BASES } from './sim/equipment';
-import { bestChest, chestKind, openChest, type ChestKind, type Loot, type LootItem } from './sim/armyStars';
+import { bestChest, chestKind, openAll, openChest, sumLoot, type ChestKind, type Loot, type LootItem } from './sim/armyStars';
+import { TOME_SIZES } from './sim/tomes';
+import { TOME_ICON } from './tomeArt';
+import { spellIcon } from './spellIcons';
 import { armyById } from './sim/armies';
 import { saveMeta, type Meta } from './sim/meta';
 import { tierOf } from './sim/tiers';
@@ -47,6 +52,19 @@ export function drawChestStash(host: HTMLElement, m: Meta, onChange: () => void)
   });
   host.append(b);
   if (m.stash.length > 1) host.append(el('i', 'csCount', `×${m.stash.length}`));
+  // (several chests waiting: one tap opens them all, with one summary of what they held)
+  if (m.stash.length > 1) {
+    const all = el('button', 'csAll', 'Open all');
+    all.type = 'button';
+    all.setAttribute('aria-label', `Open all ${m.stash.length} chests`);
+    all.addEventListener('click', () => {
+      const loots = openAll(m);
+      if (!loots.length) return;
+      saveMeta(m);
+      showChestSummary(loots, onChange);
+    });
+    host.append(all);
+  }
 }
 
 /** The chest sprite (Craftpix platformer tileset, tinted bronze, silver and gold; the daily chest's wood is tinted violet): two frames side by side, closed then open with its treasure showing. */
@@ -72,6 +90,9 @@ export function chestPicture(kind: ChestKind, scale: number): { root: HTMLElemen
 function lootIcon(it: LootItem): HTMLElement {
   if (it.type === 'crowns') return icon(ICONS.crowns, 'lootIco');
   if (it.type === 'stones') return icon(ICONS.stones, 'lootIco');
+  if (it.type === 'tomes') return icon(TOME_ICON[it.size ?? 'small'], 'lootIco');
+  if (it.type === 'ores') return icon(ORE_ICON[it.trait ?? ''] ?? '', 'lootIco');
+  if (it.type === 'spell' && it.spell) return spellIcon(it.spell);
   if (it.type === 'gear' && it.equip) return itemIcon({ ...it.equip, id: 0 }, EQUIP_BASES[it.equip.base].slot, 'small');
   if (it.type === 'gear') return icon(gearIcon(it.ref ?? 'weapon', 1), 'lootIco');
   const face = portrait(UNITS[it.ref ?? ''].sheet, 48);
@@ -151,5 +172,75 @@ export function showChest(loot: Loot, then: () => void): void {
     go.hidden = false;
   }, 80);
   timers.push(tick as unknown as number);
+}
+
+
+/** The best chest kind among several (for the summary's picture and light): Mythic over gold over silver over the daily over bronze. */
+const KIND_ORDER: readonly ChestKind[] = ['bronze', 'daily', 'silver', 'gold', 'mythic'];
+
+/**
+ * Open all's moment: one chest (the best of the pile) bursts once, then one summary of everything the chests held: the totals of
+ * crowns, stones and each size of tome, then the gear, the best first. No chest-by-chest animation; a tap hurries it along, and with
+ * reduced motion everything is simply there. `then` runs when it is closed.
+ */
+export function showChestSummary(loots: readonly Loot[], then: () => void): void {
+  const sum = sumLoot(loots);
+  const kind = loots.reduce<ChestKind>((k, l) => (KIND_ORDER.indexOf(l.kind) > KIND_ORDER.indexOf(k) ? l.kind : k), 'bronze');
+  const root = el('div', `chestShow chestAll ${kind}`);
+  root.setAttribute('role', 'dialog');
+  root.setAttribute('aria-label', `${sum.chests} chests opened`);
+  root.append(el('div', 'chestRays'), el('div', 'chestGlow'));
+  const title = el('div', 'chestTitle', `${sum.chests} chests opened`);
+  const stage = el('div', 'chestStage');
+  const pic = chestPicture(kind, 3);
+  pic.root.classList.add('shaking');
+  stage.append(pic.root);
+  // (the totals: a tile each, the crowns, the stones and the tomes by size)
+  const tiles = el('div', 'allTotals');
+  const tile = (src: string, n: number, label: string) => {
+    const t = el('div', 'allTile');
+    t.append(icon(src, 'lootIco'), el('b', '', n.toLocaleString('en-GB')), el('small', '', label));
+    tiles.append(t);
+  };
+  tile(ICONS.crowns, sum.crowns, 'crowns');
+  tile(ICONS.stones, sum.stones, sum.stones === 1 ? 'stone' : 'stones');
+  for (const size of TOME_SIZES) if (sum.tomes[size]) tile(TOME_ICON[size], sum.tomes[size]!, `${size} tome${sum.tomes[size] === 1 ? '' : 's'}`);
+  for (const d of sum.ores) tile(ORE_ICON[d.trait], d.n, ORES[d.trait].name);
+  const gearHead = el('div', 'allGearHead', `${sum.spells.length ? `Spells learnt: ${sum.spells.length} · ` : ''}${sum.gear.length ? `Gear won: ${sum.gear.length}, the best first` : 'No gear this time'}`);
+  const list = el('div', 'chestLoot allGear');
+  for (const it of sum.spells) {
+    const card = el('div', 'lootCard spell prize');
+    card.append(lootIcon(it), el('span', '', it.text));
+    list.append(card);
+  }
+  for (const it of sum.gear) {
+    const card = el('div', `lootCard gear${it.prize ? ' prize' : ''}${it.rarity ? ` r${it.rarity}` : ''}`);
+    card.append(lootIcon(it), el('span', '', it.text));
+    list.append(card);
+  }
+  const go = el('button', 'primary chestGo', 'Collect all');
+  root.append(title, stage, tiles, gearHead, list, go);
+  document.body.append(root);
+  const timers: number[] = [];
+  const reveal = () => {
+    timers.forEach(clearTimeout);
+    pic.root.classList.remove('shaking');
+    pic.root.classList.add('burst');
+    root.classList.add('lit', 'shown');
+  };
+  // (one burst, then everything at once; the tiles and cards slide in with a short stagger in CSS)
+  timers.push(window.setTimeout(() => {
+    play('star');
+    reveal();
+    timers.push(window.setTimeout(() => play(sum.gear.some((g) => g.prize) || sum.tomes.large || sum.spells.length ? 'merge' : 'summon'), 300));
+  }, 700));
+  root.addEventListener('click', (e) => {
+    if (e.target !== go && !root.classList.contains('shown')) reveal();
+  });
+  go.addEventListener('click', () => {
+    timers.forEach(clearTimeout);
+    root.remove();
+    then();
+  });
 }
 

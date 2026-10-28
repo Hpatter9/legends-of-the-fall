@@ -2,7 +2,8 @@
 // gives a stronger body (`AWAKEN_MULT`, read through `rankMult`), a new look (`render/awakenLook.ts`) and a passive that is
 // the hero's own: the first step switches it on and the second makes it stronger. A passive is data, one of the
 // signature abilities of the equipment (`equipBases.ts`, run by `equipFx.ts`) under the hero's own name, so it needs no
-// new fight code. Kept per kind in `Meta.awakened` (missing is none). Pure rules: no Pixi, no DOM, no randomness.
+// new fight code. Each step also asks for rift ores of the hero's class (`awakenMats.ts`, AWAKEN-MATS). Kept per kind in
+// `Meta.awakened` (missing is none). Pure rules: no Pixi, no DOM, no randomness.
 
 import type { Meta } from './meta';
 import { MAX_RANK, takenRank } from './meta';
@@ -11,6 +12,7 @@ import { emptyStats, type EquipStats } from './equipment';
 import { ALL_HEROES } from './units';
 import { shardsToSpend } from './talents';
 import { AWAKEN_COSTS, AWAKEN_SHARDS, MAX_AWAKEN } from './awakenRules';
+import { AWAKEN_ORES, oreOf, oresOf } from './awakenMats';
 export * from './awakenRules';
 
 export interface AwakenPassive {
@@ -89,6 +91,12 @@ export interface AwakenPlan {
   /** The shards the kind has in all, and has left to spend. */
   have: number;
   free: number;
+  /** The class trait whose ores the step asks for (empty for a kind without a class), how many, and how many are held. */
+  ore: string;
+  oreCost: number;
+  oreHave: number;
+  /** The shards are ready (the rank, the total and the spare), whatever the ores. */
+  shardsReady: boolean;
   can: boolean;
 }
 
@@ -97,17 +105,24 @@ export function awakenPlan(m: Meta, kind: string): AwakenPlan {
   const done = awakenedOf(m, kind);
   const have = m.shards[kind] ?? 0;
   const free = shardsToSpend(m, kind);
-  if (done >= MAX_AWAKEN) return { step: null, cost: 0, need: 0, have, free, can: false };
+  const ore = oreOf(kind)?.trait ?? '';
+  const oreHave = ore ? oresOf(m, ore) : 0;
+  if (done >= MAX_AWAKEN) return { step: null, cost: 0, need: 0, have, free, ore, oreCost: 0, oreHave, shardsReady: false, can: false };
   const need = AWAKEN_SHARDS[done];
   const cost = AWAKEN_COSTS[done];
-  return { step: done + 1, cost, need, have, free, can: m.unlocked.includes(kind) && takenRank(m, kind) >= MAX_RANK && have >= need && free >= cost };
+  const oreCost = AWAKEN_ORES[done];
+  const shardsReady = m.unlocked.includes(kind) && takenRank(m, kind) >= MAX_RANK && have >= need && free >= cost;
+  return { step: done + 1, cost, need, have, free, ore, oreCost, oreHave, shardsReady, can: shardsReady && !!ore && oreHave >= oreCost };
 }
 
 export const canAwaken = (m: Meta, kind: string): boolean => awakenPlan(m, kind).can;
 
-/** Awaken a hero kind one step, using up the shards. Returns the new step (1 or 2), or 0 (and nothing changes) when it cannot. */
+/** Awaken a hero kind one step, using up the shards and its class's ores. Returns the new step (1 or 2), or 0 (and nothing changes) when it cannot. */
 export function awaken(m: Meta, kind: string): number {
-  if (!canAwaken(m, kind)) return 0;
+  const plan = awakenPlan(m, kind);
+  if (!plan.can) return 0;
+  m.ores![plan.ore] -= plan.oreCost;
+  if (!m.ores![plan.ore]) delete m.ores![plan.ore];
   return ((m.awakened ??= {})[kind] = awakenedOf(m, kind) + 1);
 }
 

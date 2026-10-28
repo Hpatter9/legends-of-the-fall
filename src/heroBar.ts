@@ -34,6 +34,8 @@ export interface HeroBarOpts {
   onAuto: (on: boolean) => void;
   /** A tap was refused (a locked or unfilled ultimate): the page may say why. */
   onRefused?: (u: Unit) => void;
+  /** Any tap on a hero's tile (before its ultimate is ordered or refused): the Last Stand pans its camera to the hero. */
+  onTap?: (u: Unit) => void;
 }
 
 export class HeroBar {
@@ -118,6 +120,7 @@ export class HeroBar {
       if (!b) return;
       const unit = b.units.find((x) => x.id === t.id);
       if (!unit) return;
+      this.opts.onTap?.(unit);
       if (orderUltimate(b, t.id)) {
         el.classList.add('queued');
         this.refresh(b);

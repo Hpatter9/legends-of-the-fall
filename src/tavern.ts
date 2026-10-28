@@ -9,12 +9,15 @@
 import { tok } from './render/tok';
 import { ALL_HEROES, UNITS } from './sim/units';
 import type { Meta } from './sim/meta';
-import { heroRig } from './render/awakenRig';
+import { awakenedStep, heroRig } from './render/awakenRig';
+import { drawAura, drawAuraGlow } from './render/auraCanvas';
+import { auraParts, type AuraPart } from './render/auraStyles';
 import { loadImage } from './render/loadImage';
-import { onSettings, settings } from './settings';
+import { onSettings, setSetting, settings } from './settings';
 import { goatHalfSheet } from './duchess';
 import { goatSays } from './quips';
-import { chewBob, FRAME, goatFrame, hopLift, newGoat, stepGoat, tapGoat, type Goat } from './render/duchessRules';
+import { showQuip } from './quipView';
+import { chewBob, drawDuchessCosmetic, DUCHESS_COSMETICS, FRAME, goatFrame, hopLift, newGoat, stepGoat, tapGoat, type Goat } from './render/duchessRules';
 import { CEIL_H, DOORWAYS, figureHeight, FLOOR_PAD, GLOWS, PROPS, ROOM_H, ROOM_NAMES, ROOM_W, ROOMS, RUGS, SCENE_W, SPOTS, WALL_H, type Spot } from './render/tavernSpots';
 import { TrophyWallModal } from './trophyWall';
 import wallUrl from './art/tavern/wall.png';
@@ -109,6 +112,9 @@ interface Actor {
   clip: string;
   emote: { name: string; until: number } | null;
   phase: number;
+  /** Its awakened step, and the parts of its class's aura (none below the first step). */
+  step: number;
+  aura: readonly AuraPart[];
 }
 
 
@@ -252,10 +258,14 @@ export class Tavern {
       const spot = SPOTS[kind];
       if (!rig || !spot) continue;
       const k = figureHeight(rig.figure, def.scale) / rig.figure;
+      const step = awakenedStep(meta, kind);
+      const aura = auraParts(kind, step, this.saver);
       const a = this.actors.get(kind);
       if (a) {
         a.rig = rig;
         a.k = k;
+        a.step = step;
+        a.aura = aura;
         continue;
       }
       this.actors.set(kind, {
@@ -272,6 +282,8 @@ export class Tavern {
         clip: 'idle',
         emote: null,
         phase: rand(0, 6),
+        step,
+        aura,
       });
     }
   }
@@ -566,7 +578,10 @@ export class Tavern {
     // (the half-size sheet: she stands about half a hero's height in the hall)
     const f = FRAME / 2;
     const lift = Math.round(hopLift(goat, this.now) / 2);
-    g.drawImage(this.goatArt!, goatFrame(goat) * f, 0, f, f, x - f / 2, foot - f - lift - chewBob(goat, this.now, this.reduced), f, f);
+    const bob = chewBob(goat, this.now, this.reduced);
+    const dy = foot - f - lift - bob;
+    g.drawImage(this.goatArt!, goatFrame(goat) * f, 0, f, f, x - f / 2, dy, f, f);
+    drawDuchessCosmetic(g, settings().duchessHat, x - f / 2, dy, 0.5, goat.face, 0);
   }
 
   /** The room names and edge arrows under the picture: which room the view is on, and which ways there is more to see. */
@@ -680,12 +695,19 @@ export class Tavern {
     const dh = rig.h * k;
     const dy = fy - lift - dh;
     const flip = (a.face === 1) !== rig.facesRight;
+    // (an awakened hero stands in its class's aura: the glow and the parts behind it, then the parts in front)
+    const tall = rig.figure * k;
+    if (a.step) {
+      drawAuraGlow(g, a.kind, a.step, fx, fy, tall);
+      drawAura(g, a.aura, fx, fy, tall, this.now, 'back', a.face, this.reduced);
+    }
     if (flip) {
       // (a mirrored transform set and put back by hand: save and restore are slow on a phone's canvas)
       g.transform(-1, 0, 0, 1, fx, 0);
       g.drawImage(rig.img, i * rig.w, r * rig.h, rig.w, rig.h, -dw / 2, dy, dw, dh);
       this.reset(s);
     } else g.drawImage(rig.img, i * rig.w, r * rig.h, rig.w, rig.h, fx - dw / 2, dy, dw, dh);
+    if (a.step) drawAura(g, a.aura, fx, fy, tall, this.now, 'front', a.face, this.reduced);
     if (a.emote) this.bubble(a, fx, fy - Math.round(rig.figure * k) - 15);
   }
 
@@ -735,7 +757,19 @@ export class Tavern {
     const ry = this.camY + (e.clientY - box.top) / this.scale;
     // (Duchess first: a tap on her few pixels is hers, and she hops)
     if (this.goat && this.goatArt && Math.abs(rx - this.goat.x) < 12 && ry > Tavern.GOAT.y - 20 && ry < Tavern.GOAT.y + 6) {
-      if (tapGoat(this.goat, this.now)) goatSays('tap', { x: e.clientX, y: box.top + (Tavern.GOAT.y - 24 - this.camY) * this.scale });
+      if (tapGoat(this.goat, this.now)) {
+        try {
+          const raw = localStorage.getItem('legends.meta');
+          if (raw) {
+            const m = JSON.parse(raw);
+            m.duchessTaps = (m.duchessTaps ?? 0) + 1;
+            localStorage.setItem('legends.meta', JSON.stringify(m));
+          }
+        } catch {
+          /* ignore */
+        }
+        this.cycleDuchessHat(e.clientX, box.top + (Tavern.GOAT.y - 24 - this.camY) * this.scale);
+      }
       return;
     }
     // (decorative trophy wall plaque in the hearth hall)
@@ -760,5 +794,29 @@ export class Tavern {
       if (!best || d < best.d - 0.15 || (Math.abs(d - best.d) <= 0.15 && spot.depth > best.depth)) best = { kind, d, depth: spot.depth };
     }
     if (best) this.onPick(best.kind);
+  }
+
+  private cycleDuchessHat(x: number, y: number): void {
+    let meta: { duchessTaps?: number; duchessLucky?: boolean; duchessHay?: boolean } = {};
+    try {
+      const raw = localStorage.getItem('legends.meta');
+      if (raw) meta = JSON.parse(raw);
+    } catch {
+      /* ignore */
+    }
+    const unlocked = DUCHESS_COSMETICS.filter((c) => c.unlocked(meta));
+    if (unlocked.length <= 1) {
+      goatSays('tap', { x, y });
+      return;
+    }
+    const currentId = settings().duchessHat;
+    const idx = unlocked.findIndex((c) => c.id === currentId);
+    const next = unlocked[(idx + 1) % unlocked.length];
+    setSetting('duchessHat', next.id);
+    if (next.id === 'none') {
+      showQuip({ x, y }, 'Mehh! (Costume removed)', { who: 'Duchess', goat: true, hold: 1800 });
+    } else {
+      showQuip({ x, y }, `Mehh! (Equipped: ${next.name})`, { who: 'Duchess', goat: true, hold: 2000 });
+    }
   }
 }
