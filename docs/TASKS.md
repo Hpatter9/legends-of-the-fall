@@ -229,3 +229,5 @@ UI-007 final browser evidence: all 23 report/flow checks completed at each of 39
 UI-007 final integration: owner requested completion after subsequent updates. Main 0.188.0 (`decef2e9`) merged cleanly; new army roads/hazards, awakening auras, spell sources and combat audio retained. Finishing as release 0.189.0 after integrated checks.
 
 UI-007 release 0.189.0 integrated validation passed: typecheck/build; eight affected test files; all 23 report/flow checks at all three portrait sizes; daily/old-save variants; service-worker offline reload/recap; final-facts/action-button checks. Evidence refreshed on main 0.188.0 plus this pass. Ready for the requested completion merge.
+
+UI-007 integrated STAND-003 main 0.189.0 before merging. Older Last Stand style overrides removed so its new castle-room HUD, pause and end cards remain intact. Release updated to 0.190.0.

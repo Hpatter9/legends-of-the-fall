@@ -2,6 +2,7 @@
 import {launch,boot,calamityFight} from './command-lib.mjs';
 import {writeFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
+if(process.argv[2]==='stand'){await import('./report-stand.mjs');process.exit(0);}
 const browser=await launch();
 const results=[];
 const only=process.argv[2];
