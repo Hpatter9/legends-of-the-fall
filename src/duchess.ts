@@ -158,6 +158,14 @@ export class PageGoat {
     goatSays(kind, { x: r.left + r.width / 2, y: r.top + 12 });
   }
 
+  /** Victory fanfare plays: she hops onto a rock / takes a celebratory hop with a quip. */
+  victory(): void {
+    if (this.root.hidden || !this.present()) return;
+    tapGoat(this.g, performance.now() - this.t0);
+    const r = this.root.getBoundingClientRect();
+    goatSays('won', { x: r.left + r.width / 2, y: r.top + 12 });
+  }
+
   private frame(t: number): void {
     this.raf = requestAnimationFrame((n) => this.frame(n));
     const spot = this.place();

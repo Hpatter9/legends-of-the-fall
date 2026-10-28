@@ -88,7 +88,7 @@ export function standFoeGrumbles(boss: boolean, at: () => Anchor | null): void {
   if (text && a) showQuip(a, text, { who: 'A foe' });
 }
 
-export type GoatKind = keyof Pick<typeof DUCHESS_LINES, 'tap' | 'nibble' | 'bigHit' | 'boss' | 'wipe'>;
+export type GoatKind = keyof Pick<typeof DUCHESS_LINES, 'tap' | 'nibble' | 'bigHit' | 'boss' | 'wipe' | 'won'>;
 
 /** Duchess speaks over `at`. A tap is always answered; her own remarks wait their turn (and the quips setting). */
 export function goatSays(kind: GoatKind, at: Anchor): void {
