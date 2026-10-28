@@ -20,14 +20,14 @@ for (const id of ['hero_soldier', 'hero_samurai_archer']) {
   for (let row = 0; row < l.rows.length; row++) for (let col = 0; col < l.counts[l.rows[row]]; col++) {
     let n = 0;
     for (let y = 0; y < l.h; y++) for (let x = 0; x < l.w; x++) {
-      const alpha = data[((row * l.h + y) * info.width + col * l.w + x) * 4 + 3];
+      const alpha = data[(((row + Math.floor(col / l.perRow)) * l.h + y) * info.width + (col % l.perRow) * l.w + x) * 4 + 3];
       if (!alpha) continue;
       n++;
       assert.ok(x > 0 && x < l.w - 1 && y > 0, `${id} ${l.rows[row]} ${col}: frame edge`);
     }
     assert.ok(n > 300, `${id} ${l.rows[row]} ${col}: visible`);
   }
-  assetChecks.push({ id, frames: 24, alpha: 'hard', geometry: 'fits' });
+  assetChecks.push({ id, frames: Object.values(l.counts).reduce((a, b) => a + b, 0), alpha: 'hard', geometry: 'fits' });
 }
 const mime = { html: 'text/html', js: 'text/javascript', css: 'text/css', png: 'image/png', json: 'application/json', webmanifest: 'application/manifest+json', woff2: 'font/woff2', opus: 'audio/ogg' };
 const server = process.env.GAME_URL ? null : createServer((req, res) => {

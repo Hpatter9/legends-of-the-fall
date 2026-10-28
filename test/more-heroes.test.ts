@@ -409,8 +409,8 @@ test('a fight with the new heroes plays out the same every time', () => {
   assert.equal(play(), play());
 });
 
-test('every grade of a new hero has its own look', () => {
+test('every grade resolves to the new hero artwork', () => {
   for (const id of NEW) assert.equal(formOf(UNITS[id], 1), UNITS[id].sheet);
-  assert.equal(formOf(UNITS.sage, 3), 'hero_sage');
-  assert.equal(formOf(UNITS.shambler, 3), 'hero_shambler');
+  assert.equal(formOf(UNITS.sage, 3), 'hero_res_sage');
+  assert.equal(formOf(UNITS.shambler, 3), 'hero_res_shambler');
 });

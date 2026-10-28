@@ -1,0 +1,11 @@
+{
+  "heroes": 45,
+  "pairs": 50,
+  "directionsPerHero": 4,
+  "walkingClips": 100,
+  "walkingFrames": 800,
+  "checkedFrames": 2800,
+  "hardAlpha": true,
+  "frameBounds": "pass",
+  "reviews": []
+}

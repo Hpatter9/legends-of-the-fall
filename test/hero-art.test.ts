@@ -17,9 +17,13 @@ test('the remade heroes are drawn from their own generated sheet, with every row
     assert.ok(l && existsSync(`src/art/units/${d.sheet}.png`), d.sheet);
     for (const r of ['walk', 'attack', 'idle', 'hurt', 'dead']) assert.ok(l.rows.includes(r) && l.counts[r] > 1, `${d.sheet} ${r}`);
     if (CAST.includes(id)) assert.ok(l.counts.attack2 > 1, `${d.sheet} attack2`);
-    // (the last death frame is the idle figure turned 90 degrees, by lie.py)
+    // (the final death pose lies on the ground)
     assert.ok(l.lies, `${d.sheet} lies down`);
-    for (const r of l.rows) assert.ok(l.counts[r] <= l.perRow, `${d.sheet} ${r} fits its row`);
+    for (const r of l.rows) {
+      const start = l.rows.indexOf(r), span = Math.ceil(l.counts[r] / l.perRow);
+      assert.ok(start + span <= l.rows.length, `${d.sheet} ${r} fits its sheet`);
+      if (span > 1) assert.equal(l.rows[start + 1], '_walk', `${d.sheet}: the extended stride has a reserved continuation row`);
+    }
   }
 });
 
