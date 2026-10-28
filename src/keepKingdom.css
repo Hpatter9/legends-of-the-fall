@@ -1152,3 +1152,15 @@ button:focus-visible, input:focus-visible { outline: 2px solid #efd39a; outline-
     animation: none;
   }
 }
+
+/* The eight rulers share their real atlas with the throne and cinematics. */
+.rulerSetting { margin: 0 0 20px; padding: 12px 0; border-bottom: 1px solid #78603b; }
+.rulerSetting h3 { margin: 0 0 5px; color: #efd399; }
+.rulerSetting .hint { margin: 0 0 12px; }
+.rulerChoices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.rulerChoice { min-width: 0; display: flex; align-items: center; flex-direction: column; padding: 7px 3px 9px; border: 1px solid #67543a; border-radius: 8px; color: #eee0c7; background: radial-gradient(ellipse at center, #33303b, #121018); cursor: pointer; }
+.rulerChoice.on { border-color: var(--ruler-colour); box-shadow: inset 0 0 0 1px var(--ruler-colour), 0 0 12px #d5b66a26; }
+.rulerChoice:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+.rulerPortrait { display: block; width: 100px; height: 100px; background-size: 400% 800%; background-position: 0 0; background-repeat: no-repeat; image-rendering: pixelated; }
+.rulerChoice b { font-size: 13px; line-height: 1.25; text-align: center; }
+.rulerChoice small { margin-top: 3px; font-size: 11px; color: var(--ruler-colour); }

@@ -2,6 +2,7 @@
 // animation, frames `w` x `h`, the figure centred with its feet on the frame's bottom, facing right.
 
 import { Rectangle, Texture } from 'pixi.js';
+import { loadRulers } from './rulerArt';
 import { loadImage } from './loadImage';
 import layout from '../art/units/sheets.json';
 import knight from '../art/units/knight_1.png';
@@ -238,7 +239,7 @@ const images = new Map<string, HTMLImageElement>();
 /** Load every sheet and cut its frames. */
 export async function loadSheets(): Promise<void> {
   await Promise.all(
-    Object.entries(URLS).map(async ([id, url]) => {
+    [loadRulers(), ...Object.entries(URLS).map(async ([id, url]) => {
       const img = await loadImage(url);
       images.set(id, img);
       const base = Texture.from(img);
@@ -248,7 +249,7 @@ export async function loadSheets(): Promise<void> {
         for (let i = 0; i < l.counts[row]; i++) list.push(new Texture({ source: base.source, frame: new Rectangle(i * l.w, r * l.h, l.w, l.h) }));
         frames.set(`${id}:${row}`, list);
       });
-    }),
+    })],
   );
 }
 

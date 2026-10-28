@@ -14,6 +14,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### KING-ART — Eight player rulers and action animations
+
+- **Owner:** Codex. **Branch / worktree:** `design/king-artwork`, `/workspace/legends-of-the-fall`.
+- **Goal:** redo the player's ruler everywhere, with proper action animations and eight Settings options: five sexy adult women and three adult men, with completely varied styles.
+- **Status:** owner approved the personality roster and authorised implementation. Implemented locally on the branch; ready for review, not merged or deployed.
+- **Scope:** eight rulers' artwork, saved ruler settings choice, matching ruler titles/pronouns, castle throne drawing, Last Stand king rendering/event hooks, cinematic ruler rendering, associated asset metadata, credits, checks and notes. Enemy kings and simulation rules excluded.
+- **Completion:** approved consistent seated/standing design; distinct action animations driven by events; reduced motion and offline support preserved; typecheck, web build, affected tests and three portrait sizes checked.
+- **Validation:** typecheck and web build passed; eight affected test files passed; final browser checks at 393×852, 360×780 and 412×915 passed with no page errors, including all eight appearances, saved selection, action completion, reduced motion and offline reload.
+- **Handoff:** [ruler artwork and validation](notes/king-artwork.md), [Settings preview](samples/rulers-settings-393x852.png).
+
 ### WORLD-ROAD — Army road, boss arenas and the living land
 
 - **Goal:** the owner's asks: army battle maps follow a realistic path (a winding road 6 to 9 tiles wide with themed scenery beside it that walkers cannot enter, not a full 14x18 slab), each army's boss waves (8 and 15; the Wildwood's 5, 10 and 15) fought in its own themed arena, and (phase B) a living environment: hazards that act on both sides, running water and waterfalls, pack walls and set pieces at the tiles' angle, ambient life.

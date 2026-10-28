@@ -3,10 +3,12 @@
 // settings' "Hero quips" switch silences the lot (a tap on Duchess still gets its "Mehh."). It only draws; nothing here
 // changes the game, and the picks come from a side stream of the save's seed.
 
-import { settings } from './settings';
 import { UNITS } from './sim/units';
 import { Rng, mixSeed } from './sim/rng';
 import { DUCHESS_LINES, type KingKind, type QuipKind } from './quipData';
+import { rulerOf, rulerWords } from './rulerRules';
+import { rulerSpeech } from './rulerSpeech';
+import { settings } from './settings';
 import { QuipBox } from './render/quipRules';
 import { showBanter, showQuip, type Anchor } from './quipView';
 
@@ -77,7 +79,7 @@ export function kingSays(kind: KingKind, at: () => Anchor | null): void {
   const text = box.king(kind, now());
   if (text && fightBubbleRng.next() >= FIGHT_BUBBLE_CHANCE) return;
   const a = text && at();
-  if (text && a) showQuip(a, text, { who: 'The king' });
+  if (text && a) showQuip(a, rulerWords(rulerSpeech(settings().ruler, kind, text), settings().ruler), { who: rulerOf(settings().ruler).name });
 }
 
 /** A foe at the edge of the field grumbles as a Last Stand wave comes in (one a wave, likelier on a boss wave), over `at()`. */

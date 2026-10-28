@@ -364,3 +364,9 @@ The Grand Scenario prototype reuses the already credited camp gate and Knights w
 ## Battle command ornament
 
 - `src/art/ui/battle-crest.png`: original transparent crossed-sword, emerald lion shield and crimson ribbon ornament generated with OpenAI image generation in October 2026 for the owner-authorised battle UI pass. Other frames, ribbons and spell icons reuse the artwork credited above.
+
+## Player rulers (October 2026)
+
+- `src/art/rulers/{sun_viper,frost_witch,ash_empress,rose_duchess,moon_oracle,iron_stag,storm_corsair,gilded_necromancer}.png`: original fantasy pixel character artwork generated with OpenAI image generation from the owner-approved roster and personality concepts (`docs/samples/ruler-roster-personalities.png`). Eight rulers, each with four frames for idle, walk, strike, cast, hurt, fall, seated idle and seated command. Tattoos, jewellery, personal objects and costumes follow those approved concepts. `tools/rulers/prepare.sh` and `bounds.mjs` mechanically slice and pad generated frames; `src/art/rulers/provenance.json` records the source files.
+- `src/art/rulers/thrones.png`: original empty throne sprites generated with OpenAI image generation for the same eight rulers. The seat remains visible when a ruler stands to cast, recoils or falls in Last Stand. Source: `exec-4085424b-b2af-4831-8f90-7e91b12f2437.png` in the generation workspace; normalised to a four-by-two atlas.
+- These replace the player's earlier Himeko Sutori king and three-frame seated king in the live castle, Last Stand and cinematics. Earlier entries above retain the provenance of those historical assets. Enemy kings retain their existing artwork and credits.
