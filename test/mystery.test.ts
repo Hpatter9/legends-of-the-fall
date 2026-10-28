@@ -32,8 +32,8 @@ const act = (run: Run, label: RegExp): MysteryAct => {
   return (fx as { act: MysteryAct }).act;
 };
 
-test('eleven new mystery events join the tower\'s pool, each with two to four options', () => {
-  assert.equal(MYSTERY_KINDS.length, 11);
+test('mystery events join the tower\'s pool, each with two to four options', () => {
+  assert.equal(MYSTERY_KINDS.length, 15);
   for (const k of MYSTERY_KINDS) assert.ok(TOWER_EVENT_KINDS.includes(k));
   for (const k of MYSTERY_KINDS)
     for (let seed = 1; seed <= 20; seed++) {
