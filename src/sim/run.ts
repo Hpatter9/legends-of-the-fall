@@ -7,7 +7,7 @@ import { startBattle, type Battle, type Boost, type Stage } from './battle';
 import { CLASSIC_AREAS, type Area } from './board';
 import { CAL_CASTLE_EXTRA } from './calamity';
 import { buildChain, type Section } from './chain';
-import { isScenario, planScenario, type ScenarioId } from './scenario';
+import { isScenario, planScenario, scenarioForArmy, type ScenarioId } from './scenario';
 import { BOSS_BANDS, FIELD_BANDS } from './foes';
 import { armyById, armyIndex, landOf, waveBoost, waveFoes, type Army } from './armies';
 import { dailyArmy } from './daily';
@@ -128,7 +128,7 @@ export interface Run {
 }
 
 /** A run that is not an ordinary one: an army's campaign (its stages are the army's waves), today's daily challenge (`practice` for a replay that does not count), or the endless tower. */
-export type RunMode = { kind: 'army'; army: string; tier?: number; scenario?: ScenarioId } | { kind: 'daily'; date: number; practice: boolean; scale?: number } | { kind: 'tower' } | { kind: 'calamity'; ascension?: number };
+export type RunMode = { kind: 'army'; army: string; tier?: number; scenario?: ScenarioId | 'classic' } | { kind: 'daily'; date: number; practice: boolean; scale?: number } | { kind: 'tower' } | { kind: 'calamity'; ascension?: number };
 
 /** A new run drawing from `party` (the hero kinds its summons and starting heroes come from). */
 export function newRun(seed: number, party: readonly string[] = HEROES, castle: Castle = newCastle(), free = 2, gold = START_GOLD): Run {
@@ -356,13 +356,14 @@ export function chainOf(run: Run): Section[] | null {
   if (!army) return null;
   // (a run with no land of its own fights every wave on the one land its seed picks from its army's: `landOf`)
   const area = run.area ?? landOf(army, run.seed);
-  const key = `${run.seed}:${army.id}:${area}:${run.mode?.kind === 'army' ? run.mode.scenario ?? 'standard' : 'standard'}`;
+  const scenario = run.mode?.kind === 'army' ? (run.mode.scenario === 'classic' ? undefined : (run.mode.scenario ?? scenarioForArmy(army.id))) : undefined;
+  const key = `${run.seed}:${army.id}:${area}:${scenario ?? 'standard'}`;
   let c = chains.get(key);
   if (!c) {
-    c = run.mode?.kind === 'army' && run.mode.scenario
-      ? planScenario(run.seed, run.mode.scenario, army.waves.length, (n) => !!army.waves[n - 1].boss).sections
+    c = scenario
+      ? planScenario(run.seed, scenario, army.waves.length, (n) => !!army.waves[n - 1].boss).sections
       : buildChain(run.seed, army.waves.length, area, (n) => boardSeedOf(run, n), (n) => !!army.waves[n - 1].boss);
-    if (chains.size > 8) chains.clear();
+    if (chains.size > 32) chains.clear();
     chains.set(key, c);
   }
   return c;
@@ -467,7 +468,7 @@ export function adoptOldTower(store: Pick<Storage, 'getItem' | 'setItem' | 'remo
 /** Whether a saved run can still be played: a run of fixed waves (an army's, or the daily's ten) must not stand past its last
  *  wave. An endless daily saved by an older version could be on stage 14 of what is now ten waves, and starting it broke. */
 export const runFits = (r: Run): boolean => {
-  if (r.mode?.kind === 'army' && r.mode.scenario !== undefined && !isScenario(r.mode.scenario)) return false;
+  if (r.mode?.kind === 'army' && r.mode.scenario !== undefined && r.mode.scenario !== 'classic' && !isScenario(r.mode.scenario)) return false;
   const army = waveArmyOf(r);
   return !army || (r.stage >= 1 && r.stage <= army.waves.length);
 };
