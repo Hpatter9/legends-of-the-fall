@@ -33,6 +33,7 @@ export const SAY_GAP_MS = 4000;
 
 let card: HTMLElement | null = null;
 let timer = 0;
+let follow = 0;
 let saidAt = -Infinity;
 
 const pick = (kind: DuchessFightLine): string => {
@@ -66,12 +67,17 @@ function portrait(): HTMLCanvasElement {
   return c;
 }
 
-/** Show the card above `bottom` (the panel's top, in CSS px); it goes by itself after `ms`. */
-export function showDuchessCard(bottom: number, ms = CARD_MS): void {
+/** Show the card just above the panel (`panelTop`, its top in CSS px, read each frame while the card is up: the panel settles as the fight's
+ *  bar is built); it goes by itself after `ms`. */
+export function showDuchessCard(panelTop: () => number, ms = CARD_MS): void {
   const box = build();
   clearTimeout(timer);
+  cancelAnimationFrame(follow);
   box.replaceChildren();
-  box.style.bottom = `${Math.max(8, innerHeight - bottom + 8)}px`;
+  const place = () => {
+    box.style.bottom = `${Math.max(8, innerHeight - panelTop() + 8)}px`;
+    if (!box.hidden) follow = requestAnimationFrame(place);
+  };
   const words = document.createElement('span');
   words.className = 'dfWords';
   const title = document.createElement('b');
@@ -84,6 +90,7 @@ export function showDuchessCard(bottom: number, ms = CARD_MS): void {
   words.append(title, lv, line);
   box.append(portrait(), words);
   box.hidden = false;
+  place();
   // (the heroes' bubbles keep quiet while it is up, so none lies over it)
   hideQuip();
   document.body.classList.add('dfUp');
@@ -93,6 +100,7 @@ export function showDuchessCard(bottom: number, ms = CARD_MS): void {
 /** Put the card away (its time is up, a new fight, the home screen). */
 export function hideDuchessCard(): void {
   clearTimeout(timer);
+  cancelAnimationFrame(follow);
   if (card) card.hidden = true;
   document.body.classList.remove('dfUp');
 }

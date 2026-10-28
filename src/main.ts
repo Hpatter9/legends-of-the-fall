@@ -843,7 +843,7 @@ class Game {
         if (b.units.length !== this.sprites.size) this.syncSprites();
         playEvents(b, events, this.speed);
         // (Duchess has wandered on: the first time, her cinematic (not in an auto-replay), then her card; and her bubbles as she fights)
-        if (events.some((e) => e.kind === 'duchess')) void this.queueScene({ kind: 'duchessJoins' }).then(() => showDuchessCard($('panel').getBoundingClientRect().top));
+        if (events.some((e) => e.kind === 'duchess')) void this.queueScene({ kind: 'duchessJoins' }).then(() => showDuchessCard(() => $('panel').getBoundingClientRect().top));
         if (this.b.duchess) duchessFightSays(b, events, () => this.anchorOfKind('duchess'));
         for (const e of events) {
           if (e.kind === 'phase') this.startPhase(e);

@@ -851,6 +851,7 @@ export const AWARD_JOKES: Record<string, string> = {
   tower1: 'Up the spiral stairs. Watch your footing, and mind the trailing goat droppings.',
   tower20: 'Twenty floors ascended! The lift remains perpetually out of order.',
   recruiter: 'A full roster assembled. Duchess was neither consulted nor given veto power.',
+  duchessFavour: 'Her Grace has asked to be paid in cabbages. The treasurer is weighing it.',
 };
 
 export type KingKind = 'waveStart' | 'bossWave' | 'hurt' | 'lowHp' | 'waveCleared' | 'fallen';
