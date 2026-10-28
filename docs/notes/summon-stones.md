@@ -25,9 +25,16 @@ equipment and summoning stones. Each summoning stone gives one shard, with a 1/1
 | Daily chest (`DAILY_CHEST_STONES`) | 2, and one more for each bonus star (2 to 4) |
 | Calamity clear (`clearStones`) | `CAL_STONES_PER_DRAW` (3) for each of `2 + level/2` draws: 6 at level 0, 21 at level 10 |
 | The chest shop | see below |
+| Codex milestones (`CODEX_STONES`) | 1 each, beside the crowns: 8 in all |
+| Achievements (`ACHIEVEMENT_STONES`, `stonesOfAchievement`) | 2 each, beside the crowns; `BIG_STONES` (3) for Thirtieth Stage, Legend in the Making (level 50), Full Roster, Boss Slayer and Last Stand (wave 20); `CENTURION_STONES` (5) for Centurion (level 100): 50 in all |
 | Old saves, once | 10 (`STONES_GIFT`) |
 
-Codex milestones and achievements paid only crowns and still do. Every chest's crowns and gear roll exactly as before (`rollChest`
+**The codex and achievements** (the owner's call: "a stone or two") pay their stones when their crowns are claimed (`claimCodex`,
+`claimAchievement`), so a save that claimed them before is not paid again: the claims are kept in `Meta.codexClaimed` and `Meta.claimed`,
+and an older save's achievements already load as claimed. The reward text shows both: "Win stage 30. · 40 crowns, 3 stones", the
+Claim button ("Claim +40 · 3 stones"), Claim all, the toast, and the codex's reward rows ("+60 crowns, +1 stone") and its "Paid ... of
+... crowns and ... of ... summoning stones" line. Meeting a codex entry pays nothing alone, as before: the milestones are the codex's
+rewards. Every chest's crowns and gear roll exactly as before (`rollChest`
 and `rollDailyChest` are untouched); only the hero shards they named became stones (`chestStones`). `stand.ts` is untouched: its
 chests are the same stash chests, so they pay stones through `lootOf`.
 
@@ -41,32 +48,40 @@ flat pull price); the stock caps what crowns can buy and the rising price keeps 
 | Chest | Base price | A day | Stones | Gear |
 | --- | --- | --- | --- | --- |
 | Bronze | 400 | 3 | 3 | 35% a bronze piece |
-| Silver | 1,500 | 1 | 5 | always a silver-grade piece |
-| Gold | 6,000 | 1 | 8 | always a gold-grade piece, a few levels higher |
+| Silver | 1,500 | 1 | 8 | always a silver-grade piece |
+| Gold | 6,000 | 1 | 15 | always a gold-grade piece, a few levels higher |
 
-At most 22 stones a day from the shop. Gear rolls with `rollEquipment` from a side stream of the seed and `Meta.shopBuys` (so reloading
+At most 32 stones a day from the shop (the owner raised silver from 5 to 8 and gold from 8 to 15; bronze stays 3, and the daily
+stock and rising price stay). Gear rolls with `rollEquipment` from a side stream of the seed and `Meta.shopBuys` (so reloading
 cannot reroll it), at the item level of the furthest army cleared. The opening is the stash's own (`showChest`), with a stones line.
 The shop opens from a "Chest shop" button on the Recruit tab.
 
 ## The pace (`npm run unlock-pace`)
 
 The model now buys the dearest chest its crown budget reaches (stock permitting), opens every chest, and uses every stone. Pullable
-heroes owned (the starter's three count), day reached, median of 30 seeds; `--shop "400:3:3,1500:1:5,6000:1:8"` tries another shop and
+heroes owned (the starter's three count), day reached, median of 30 seeds; `--shop "400:3:3,1500:1:8,6000:1:15"` tries another shop, `--nobadges 1` leaves out the achievements' and codex's stones (the model
+pays 54 of their 58 over the first 150 days, the same share as their crowns), and
 `--noshop 1` plays with free stones only (3,500 a year: the 5th pullable hero on day 3, the 10th on day 58, the 35th on day 312), which is why the shop exists.
 
-| Pullable heroes | Before | After | Slower by |
-| --- | --- | --- | --- |
-| 4th (first after the starter) | day 1 | day 1 | |
-| 5th | day 1 | day 1 | |
-| 6th | day 1 | day 3 | 3x |
-| 10th | day 12 | day 25 | 2.1x |
-| 15th | day 26 | day 66 | 2.5x |
-| 20th | day 44 | day 97 | 2.2x |
-| 30th | day 90 | day 167 | 1.9x |
-| 35th (the last pullable) | day 125 | day 201 | 1.6x |
+"Before stones" is the game before this branch; "First cut" is the first stones version (silver 5, gold 8, no badge stones); "Bigger
+chests" is silver 8 and gold 15 alone; "Now" adds the achievements' and codex's stones. "Slower by" is Now against Before stones.
 
-Heroes owned on day 1 / 7 / 30 / 90 / 180: 5, 7, 12, 24, 40 (was 6, 8, 18, 36, 44). All 45 on day 201 (was 186: the Tyrant's tower
-floors set the end, as before). The late stretch is the least slowed because the lucky roll alone gives a hero about every hundred stones;
+| Pullable heroes | Before stones | First cut | Bigger chests | Now | Slower by |
+| --- | --- | --- | --- | --- | --- |
+| 4th (first after the starter) | day 1 | day 1 | day 1 | day 1 | |
+| 5th | day 1 | day 1 | day 1 | day 1 | |
+| 6th | day 1 | day 3 | day 3 | day 3 | 3x |
+| 10th | day 12 | day 25 | day 25 | day 24 | 2.0x |
+| 15th | day 26 | day 66 | day 62 | day 61 | 2.3x |
+| 20th | day 44 | day 97 | day 88 | day 89 | 2.0x |
+| 30th | day 90 | day 167 | day 154 | day 153 | 1.7x |
+| 35th (the last pullable) | day 125 | day 201 | day 188 | day 184 | 1.5x |
+
+Heroes owned on day 1 / 7 / 30 / 90 / 180: now 5, 7, 13, 26, 44 (first cut 5, 7, 12, 24, 40; before stones 6, 8, 18, 36, 44). All 45 on
+day 186 (first cut 201; before stones 186: the Tyrant's tower floors set the end, as before). The bigger chests move the middle and
+late game (the 20th to the 35th pullable hero come 9 to 13 days sooner, about 8% faster) and leave the early game alone, where the
+budget buys bronze chests; the badge stones (54 over 150 days) move it by a day or so, a little at the 10th hero. The roster still grows
+about half as fast to the 20th pullable hero, and the late stretch is less slowed than before (1.5x to 1.7x against 1.6x to 1.9x). The late stretch is the least slowed because the lucky roll alone gives a hero about every hundred stones;
 making it slower means fewer stones late, not a higher `NEED_LAST` (the model shows no change from 100 to 180). `unlockNeed` is unchanged.
 
 ## Old saves (`loadMeta`)
@@ -90,13 +105,11 @@ A save still waiting for its starter pick, and a new one, start with none.
 `test/summon-stones.test.ts`: a stone is one shard; determinism; the lucky odds (about 1 in 100) and its side stream; the lucky hero is
 never owned or content, and rank shards once all are owned; no `giveShards` outside the stone draw; the shop's prices, stock, contents and
 gear; the shop record read; the old-save grant; the first session reaches five heroes. Changed to the new rules: `meta`, `hero-shards`,
-`armyStars`, `daily`, `calMapRewards`, `awaken`, `shards` (the shard-rule tests pass `{ lucky: false }`).
+`armyStars`, `daily`, `calMapRewards`, `awaken`, `shards` (the shard-rule tests pass `{ lucky: false }`). `achievements` and `codex`: each
+pays its stones on the claim, once, and an older save's claims pay nothing again.
 
-## For the owner to decide
+## The owner's decisions
 
-- The gift for old saves (10 stones), and that unspent crowns are left as crowns (they now buy chests: about 3 stones for 1,600 crowns
-  at 8 heroes, so a saver is set back; a bigger gift or a one-time conversion would soften it).
-- Whether bigger chests should hold more stones for the crown (today a bronze chest is the best stones for the crown; silver and gold
-  are bought for their gear and sold once a day).
-- The shop's daily stock and rising price: the alternative is a flat price with a lower stone count.
-- Codex and achievements pay crowns only; they could pay a stone or two.
+Decided by the owner: the old-save gift stays 10 stones; the daily stock and rising price stay; silver chests hold 8 stones and gold
+15; the codex's milestones pay 1 stone and achievements 2 (a few more for the big ones). Still open: the late game is now 1.5x to 1.7x
+slower rather than 2x (see the pace); whether that is close enough is the owner's call.

@@ -1,6 +1,6 @@
 // The chest shop: crowns buy chests, and chests hold summoning stones and equipment (the owner's ask: "the crowns buy chests; the
 // chests give equipment and summoning stones"). Three chests, bronze, silver and gold, at fixed prices; a bigger chest holds more
-// stones for each crown, and better gear. What a chest holds is fixed by its kind, apart from which piece of gear it is, which
+// stones, and better gear. What a chest holds is fixed by its kind, apart from which piece of gear it is, which
 // rolls (with `rollEquipment`) from a side stream of the save's seed and the count of chests bought, so reloading cannot reroll it.
 // The shop has a stock a day (it fills again each new day), because crowns alone cannot gate heroes: they come in far faster late
 // in the game than early, so a price would hold nothing back; the stock does. Pure rules: no Pixi, no DOM. See `docs/notes/summon-stones.md`.
@@ -34,8 +34,8 @@ export interface ShopChest {
 /** The shop's chests, smallest first. A bigger chest holds better gear, and a few more stones (the stock a day, not the price, is what bounds them). */
 export const SHOP: readonly ShopChest[] = [
   { kind: 'bronze', name: 'Bronze chest', price: 400, stock: 3, stones: 3, gearChance: 0.35, quality: 'bronze', at: 3 },
-  { kind: 'silver', name: 'Silver chest', price: 1500, stock: 1, stones: 5, gearChance: 1, quality: 'silver', at: 5 },
-  { kind: 'gold', name: 'Gold chest', price: 6000, stock: 1, stones: 8, gearChance: 1, quality: 'gold', at: 10 },
+  { kind: 'silver', name: 'Silver chest', price: 1500, stock: 1, stones: 8, gearChance: 1, quality: 'silver', at: 5 },
+  { kind: 'gold', name: 'Gold chest', price: 6000, stock: 1, stones: 15, gearChance: 1, quality: 'gold', at: 10 },
 ];
 export const shopChest = (kind: ShopKind): ShopChest => SHOP.find((c) => c.kind === kind)!;
 

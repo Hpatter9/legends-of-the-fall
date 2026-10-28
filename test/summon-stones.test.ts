@@ -143,7 +143,7 @@ test('crowns buy no pull; chests give stones (every chest source), and a stone i
 });
 
 test('the chest shop: prices, contents, a daily stock, and prices that rise with the heroes owned', () => {
-  assert.deepEqual(SHOP.map((c) => [c.kind, c.price, c.stock, c.stones]), [['bronze', 400, 3, 3], ['silver', 1500, 1, 5], ['gold', 6000, 1, 8]]);
+  assert.deepEqual(SHOP.map((c) => [c.kind, c.price, c.stock, c.stones]), [['bronze', 400, 3, 3], ['silver', 1500, 1, 8], ['gold', 6000, 1, 15]]);
   const m = fresh(11);
   m.crowns = 100000;
   assert.equal(shopPrice(m, 'bronze'), 400, 'the base price while the starter is all you own');
@@ -240,7 +240,7 @@ test('an old save keeps its crowns, pity and heroes, and is given stones once', 
 test('the pace holds its shape: stones a day from the shop and the chests are bounded, and the first heroes come at once', () => {
   // (the unlock-pace tool plays the whole year; these are the numbers it rests on: see docs/notes/summon-stones.md)
   const shopMax = SHOP.reduce((n, c) => n + c.stock * c.stones, 0);
-  assert.equal(shopMax, 22, 'the shop sells at most 22 stones a day');
+  assert.equal(shopMax, 32, 'the shop sells at most 32 stones a day');
   assert.ok(DAILY_CHEST_STONES + 2 <= 4);
   // (a first day: the first clear's bronze chest, the daily chest and a bronze chest from the shop is about nine stones, five heroes)
   let five = 0;

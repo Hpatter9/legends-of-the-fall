@@ -617,7 +617,7 @@ export class Home {
     if (markSeen(this.meta)) saveMeta(this.meta);
   }
 
-  /** The achievements page; a Claim takes the crowns, saves, and draws the page again. */
+  /** The achievements page; a Claim takes the crowns and stones, saves, and draws the page again. */
   private openAchievements(): void {
     const draw = (b: HTMLElement) =>
       drawAchievements(b, this.meta, (ids) => {
@@ -632,7 +632,7 @@ export class Home {
     this.openSub('Achievements', draw);
   }
 
-  /** The codex page; a Claim takes a milestone's crowns, saves, and draws the page again. */
+  /** The codex page; a Claim takes a milestone's crowns and stone, saves, and draws the page again. */
   openCodex(): void {
     const draw = (b: HTMLElement) =>
       drawCodex(b, this.meta, (id) => {

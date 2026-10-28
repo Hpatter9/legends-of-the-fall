@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { startBattle } from '../src/sim/battle';
-import { crownsClaimed, crownsTotal, crownsWaiting, FOE_ENTRIES, claimCodex, codexWaiting, entryOfDef, gotOf, isMet, killsOf, milestonesOf, noteFoes, progressLine, readCodex, tipsOf, totalOf, whereMet, kitOfEntry } from '../src/sim/codex';
+import { CODEX_STONES, crownsClaimed, crownsTotal, crownsWaiting, FOE_ENTRIES, stonesClaimed, stonesTotal, stonesWaiting, claimCodex, codexWaiting, entryOfDef, gotOf, isMet, killsOf, milestonesOf, noteFoes, progressLine, readCodex, tipsOf, totalOf, whereMet, kitOfEntry } from '../src/sim/codex';
 import { FOE_LORE, HERO_STORY } from '../src/sim/codexLore';
 import { loadMeta, saveMeta, startedMeta } from '../src/sim/meta';
 import { settleRun } from '../src/sim/modes';
@@ -166,4 +166,26 @@ test('the rewards add up: what each collection pays in all, what is taken and wh
   assert.equal(crownsWaiting(m), 0);
   m.codexClaimed = ['bestiary25'];
   assert.equal(crownsClaimed(m, 'bestiary'), 10);
+});
+
+test('a codex reward pays a summoning stone beside its crowns, once, and an old claim is not paid again', () => {
+  assert.equal(CODEX_STONES, 1);
+  for (const ms of [...milestonesOf('bestiary'), ...milestonesOf('heroes')]) assert.equal(ms.stones, 1, ms.id);
+  assert.equal(stonesTotal('bestiary'), 4);
+  assert.equal(stonesTotal('heroes'), 4);
+  const m = startedMeta(1);
+  m.unlocked = ALL_HEROES.slice(0, Math.ceil(totalOf('heroes') / 2));
+  assert.equal(stonesWaiting(m), 2);
+  const stones = m.stones ?? 0;
+  claimCodex(m, 'heroes25');
+  assert.equal(m.stones, stones + 1);
+  assert.equal(stonesClaimed(m, 'heroes'), 1);
+  assert.equal(claimCodex(m, 'heroes25'), 0);
+  assert.equal(m.stones, stones + 1, 'not twice');
+  // (a save that claimed milestones before the stones keeps its stones as they are: those claims pay nothing more)
+  const old = { ...startedMeta(2), unlocked: [...ALL_HEROES], codexClaimed: milestonesOf('heroes').map((x) => x.id), stones: 4 } as Record<string, unknown>;
+  const back = loadMeta(1, { getItem: () => JSON.stringify(old) } as never);
+  for (const ms of milestonesOf('heroes')) assert.equal(claimCodex(back, ms.id), 0);
+  assert.equal(back.stones, 4);
+  assert.equal(stonesWaiting(back), 0);
 });

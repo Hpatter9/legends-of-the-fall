@@ -3,7 +3,7 @@
 // Only reads the meta and the codex rules (`sim/codex.ts`); the Claim buttons call back to the home screen, which pays and saves.
 
 import { KITS, type Kit } from './sim/abilities';
-import { codexWaiting, COLLECTIONS, COLLECTION_NAMES, crownsClaimed, crownsTotal, crownsWaiting, FOE_ENTRIES, gotOf, heroKnown, isMet, killsOf, milestoneClaimed, milestoneReached, milestonesOf, progressLine, tipsOf, totalOf, whereMet, type Collection, type FoeEntry } from './sim/codex';
+import { codexWaiting, COLLECTIONS, COLLECTION_NAMES, crownsClaimed, crownsTotal, crownsWaiting, FOE_ENTRIES, gotOf, heroKnown, isMet, killsOf, milestoneClaimed, milestoneReached, milestonesOf, progressLine, stonesClaimed, stonesTotal, stonesWaiting, tipsOf, totalOf, whereMet, type Collection, type FoeEntry } from './sim/codex';
 import { FOE_LORE, HERO_STORY } from './sim/codexLore';
 import { ALL_HEROES, UNITS } from './sim/units';
 import { lockInfo } from './sim/contentHeroes';
@@ -190,13 +190,13 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
     bar.append(fill);
     block.append(bar);
     // (the rewards, one row each: what it pays, what it takes, and whether it is taken, ready or still to earn)
-    block.append(el('p', 'cxPays', `Each entry counts towards a reward; none pays alone. Paid ${crownsClaimed(m, c)} of ${crownsTotal(c)} crowns.`));
+    block.append(el('p', 'cxPays', `Each entry counts towards a reward; none pays alone. Paid ${crownsClaimed(m, c)} of ${crownsTotal(c)} crowns and ${stonesClaimed(m, c)} of ${stonesTotal(c)} summoning stones.`));
     const list = el('div', 'cxRewards');
     for (const ms of milestonesOf(c)) {
       const done = milestoneClaimed(m, ms);
       const ready = milestoneReached(m, ms) && !done;
       const row = el('div', `cxReward${done ? ' done' : ready ? ' ready' : ''}`);
-      row.append(el('span', 'cxWhat', `${ms.percent}%: ${ms.need} ${c === 'bestiary' ? 'foes' : 'heroes'}`), el('span', 'cxPay', `+${ms.crowns} crowns`));
+      row.append(el('span', 'cxWhat', `${ms.percent}%: ${ms.need} ${c === 'bestiary' ? 'foes' : 'heroes'}`), el('span', 'cxPay', `+${ms.crowns} crowns, +${ms.stones} stone${ms.stones === 1 ? '' : 's'}`));
       if (ready) {
         const go = el('button', 'primary', 'Claim');
         go.addEventListener('click', () => claim(ms.id));
@@ -210,7 +210,7 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
   // (one button takes everything that waits)
   const waiting = codexWaiting(m);
   if (waiting.length) {
-    const all = el('button', 'primary cxClaimAll', `Claim rewards: +${crownsWaiting(m)} crowns`);
+    const all = el('button', 'primary cxClaimAll', `Claim rewards: +${crownsWaiting(m)} crowns, +${stonesWaiting(m)} stone${stonesWaiting(m) === 1 ? '' : 's'}`);
     all.addEventListener('click', () => waiting.forEach((ms) => claim(ms.id)));
     head.prepend(all);
   }

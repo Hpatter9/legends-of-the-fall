@@ -1,8 +1,8 @@
 // The codex: a bestiary of every foe and boss the player has met, and a gallery of the heroes. Pure rules: no Pixi, no DOM, no
 // randomness. What is kept in the meta (both fields optional, so older saves load as they were): the foe kinds met and the kills
 // per kind (`Meta.codex`), counted when a fight settles from the battle's units, and the milestone rewards claimed
-// (`Meta.codexClaimed`). Milestones sit at 25, 50, 75 and 100% of each collection and pay a few crowns, taken with a tap like
-// achievements. The entries (one per look of foe, so the three minotaur sheets are one entry) are listed in `FOE_ENTRIES`.
+// (`Meta.codexClaimed`). Milestones sit at 25, 50, 75 and 100% of each collection and pay a few crowns and a summoning stone
+// (`CODEX_STONES`), taken with a tap like achievements. The entries (one per look of foe, so the three minotaur sheets are one entry) are listed in `FOE_ENTRIES`.
 
 import type { Battle } from './battle';
 import { KITS, type Kit } from './abilities';
@@ -110,6 +110,8 @@ export const COLLECTION_NAMES: Record<Collection, string> = { bestiary: 'Bestiar
 export const MILESTONES: readonly number[] = [25, 50, 75, 100];
 /** The crowns of each milestone, in the same order. */
 export const MILESTONE_CROWNS: Record<Collection, readonly number[]> = { bestiary: [10, 20, 35, 60], heroes: [15, 30, 50, 80] };
+/** The summoning stones each milestone pays beside its crowns (the owner's ask: "a stone or two"). A save that claimed a milestone before is not paid again. */
+export const CODEX_STONES = 1;
 
 export const totalOf = (c: Collection): number => (c === 'bestiary' ? FOE_ENTRIES.length : ALL_HEROES.length);
 export const gotOf = (m: Meta, c: Collection): number => (c === 'bestiary' ? metEntries(m).length : ALL_HEROES.filter((k) => heroKnown(m, k)).length);
@@ -123,9 +125,11 @@ export interface Milestone {
   /** How many entries it takes. */
   need: number;
   crowns: number;
+  /** Summoning stones it pays beside the crowns. */
+  stones: number;
 }
 
-export const milestonesOf = (c: Collection): Milestone[] => MILESTONES.map((p, i) => ({ id: `${c}${p}`, collection: c, percent: p, need: Math.ceil((totalOf(c) * p) / 100), crowns: MILESTONE_CROWNS[c][i] }));
+export const milestonesOf = (c: Collection): Milestone[] => MILESTONES.map((p, i) => ({ id: `${c}${p}`, collection: c, percent: p, need: Math.ceil((totalOf(c) * p) / 100), crowns: MILESTONE_CROWNS[c][i], stones: CODEX_STONES }));
 export const ALL_MILESTONES: readonly Milestone[] = COLLECTIONS.flatMap(milestonesOf);
 
 export const milestoneReached = (m: Meta, ms: Milestone): boolean => gotOf(m, ms.collection) >= ms.need;
@@ -139,13 +143,18 @@ export const codexWaiting = (m: Meta): Milestone[] => ALL_MILESTONES.filter((ms)
 export const crownsTotal = (c: Collection): number => milestonesOf(c).reduce((n, ms) => n + ms.crowns, 0);
 export const crownsClaimed = (m: Meta, c: Collection): number => milestonesOf(c).filter((ms) => milestoneClaimed(m, ms)).reduce((n, ms) => n + ms.crowns, 0);
 export const crownsWaiting = (m: Meta): number => codexWaiting(m).reduce((n, ms) => n + ms.crowns, 0);
+/** The same for the stones. */
+export const stonesTotal = (c: Collection): number => milestonesOf(c).reduce((n, ms) => n + ms.stones, 0);
+export const stonesClaimed = (m: Meta, c: Collection): number => milestonesOf(c).filter((ms) => milestoneClaimed(m, ms)).reduce((n, ms) => n + ms.stones, 0);
+export const stonesWaiting = (m: Meta): number => codexWaiting(m).reduce((n, ms) => n + ms.stones, 0);
 
-/** Take a reached milestone's crowns. Returns the crowns paid (0 when it isn't reached, is unknown, or was claimed already). */
+/** Take a reached milestone's crowns and stones. Returns the crowns paid (0 when it isn't reached, is unknown, or was claimed already). */
 export function claimCodex(m: Meta, id: string): number {
   const ms = ALL_MILESTONES.find((x) => x.id === id);
   if (!ms || !milestoneReady(m, ms)) return 0;
   (m.codexClaimed ??= []).push(id);
   m.crowns += ms.crowns;
+  m.stones = (m.stones ?? 0) + ms.stones;
   return ms.crowns;
 }
 

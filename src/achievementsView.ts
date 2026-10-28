@@ -2,29 +2,32 @@
 // the achievement list; the rules are in `src/sim/achievements.ts`.
 
 import { AWARD_JOKES } from './quipData';
-import { ACHIEVEMENTS, claimable, unclaimed, type Achievement } from './sim/achievements';
+import { ACHIEVEMENTS, claimable, stonesOfAchievement, unclaimed, type Achievement } from './sim/achievements';
 import type { Meta } from './sim/meta';
 import { UNITS } from './sim/units';
 
 /** The Achievements page: every achievement, the earned ones marked, the counting ones with a bar. One earned and not yet
- *  claimed has a Claim button (they come first), and `claim` takes its crowns (or every waiting one's, for Claim all). */
+ *  claimed has a Claim button (they come first), and `claim` takes its crowns and stones (or every waiting one's, for Claim all). */
 export function drawAchievements(body: HTMLElement, m: Meta, claim: (ids: string[]) => void = () => {}): void {
   const got = ACHIEVEMENTS.filter((a) => m.achievements.includes(a.id)).length;
   const count = document.createElement('p');
   count.className = 'hint';
-  count.textContent = `${got} of ${ACHIEVEMENTS.length} achievements. Each one pays crowns once: tap Claim to take them.`;
+  count.textContent = `${got} of ${ACHIEVEMENTS.length} achievements. Each one pays crowns and summoning stones once: tap Claim to take them.`;
   body.append(count);
   const waiting = unclaimed(m);
   if (waiting.length > 1) {
     const all = document.createElement('button');
     all.className = 'primary claimAll';
-    all.textContent = `Claim all · +${waiting.reduce((n, a) => n + a.crowns, 0)} crowns`;
+    all.textContent = `Claim all · +${waiting.reduce((n, a) => n + a.crowns, 0)} crowns, +${waiting.reduce((n, a) => n + stonesOfAchievement(a), 0)} stones`;
     all.addEventListener('click', () => claim(waiting.map((a) => a.id)));
     body.append(all);
   }
   const order = [...waiting, ...ACHIEVEMENTS.filter((a) => !claimable(m, a.id))];
   for (const a of order) body.append(row(a, m, claim));
 }
+
+/** "1 stone", "3 stones" */
+const stoneWord = (n: number): string => `${n} stone${n === 1 ? '' : 's'}`;
 
 function row(a: Achievement, m: Meta, claim: (ids: string[]) => void): HTMLElement {
   const done = m.achievements.includes(a.id);
@@ -35,7 +38,7 @@ function row(a: Achievement, m: Meta, claim: (ids: string[]) => void): HTMLEleme
   const name = document.createElement('b');
   name.textContent = `${done ? '★ ' : '☆ '}${a.name}`;
   const what = document.createElement('em');
-  what.textContent = `${a.text} · ${a.crowns} crowns`;
+  what.textContent = `${a.text} · ${a.crowns} crowns, ${stoneWord(stonesOfAchievement(a))}`;
   text.append(name, what);
   const joke = AWARD_JOKES[a.id];
   if (joke) text.append(Object.assign(document.createElement('small'), { className: 'achJoke', textContent: joke }));
@@ -54,7 +57,7 @@ function row(a: Achievement, m: Meta, claim: (ids: string[]) => void): HTMLEleme
   if (ready) {
     const take = document.createElement('button');
     take.className = 'primary';
-    take.textContent = `Claim +${a.crowns}`;
+    take.textContent = `Claim +${a.crowns} · ${stoneWord(stonesOfAchievement(a))}`;
     take.addEventListener('click', () => claim([a.id]));
     el.append(take);
   }
@@ -63,7 +66,7 @@ function row(a: Achievement, m: Meta, claim: (ids: string[]) => void): HTMLEleme
 
 /** Pop up a toast for each achievement just earned, one after another. */
 export function toastAchievements(list: readonly Achievement[]): void {
-  list.forEach((a, i) => setTimeout(() => toast(`Achievement: ${a.name} · claim ${a.crowns} crowns`), i * 2800));
+  list.forEach((a, i) => setTimeout(() => toast(`Achievement: ${a.name} · claim ${a.crowns} crowns and ${stoneWord(stonesOfAchievement(a))}`), i * 2800));
 }
 
 /** A toast for each hero a milestone has just brought in (`grantContent`). */

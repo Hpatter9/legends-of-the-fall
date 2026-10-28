@@ -17,8 +17,8 @@ import { mixSeed, Rng } from '../src/sim/rng';
 import { dailyChestSeed, dailyCrowns, DAILY_WAVES } from '../src/sim/daily';
 import { MAP_CROWNS } from '../src/sim/tower';
 import { BUILDINGS } from '../src/sim/castle';
-import { FOE_ENTRIES } from '../src/sim/codex';
-import { ACHIEVEMENTS } from '../src/sim/achievements';
+import { crownsTotal, FOE_ENTRIES, stonesTotal } from '../src/sim/codex';
+import { ACHIEVEMENTS, stonesOfAchievement } from '../src/sim/achievements';
 
 const arg = (name: string, fallback: number): number => {
   const i = process.argv.indexOf(name);
@@ -63,6 +63,10 @@ const CALAMITY_DAY = 70;
 const ASCENSION_GAP = 28;
 /** Achievements and the codex pay about this many crowns in all over the first 150 days. */
 const EXTRA_CROWNS = 900;
+/** And the stones they pay beside those crowns: the same share of every achievement's and codex reward's stones as `EXTRA_CROWNS` is of their crowns. `--nobadges 1` leaves them out. */
+const BADGE_CROWNS = ACHIEVEMENTS.reduce((n, a) => n + a.crowns, 0) + crownsTotal('bestiary') + crownsTotal('heroes');
+const BADGE_STONES = ACHIEVEMENTS.reduce((n, a) => n + stonesOfAchievement(a), 0) + stonesTotal('bestiary') + stonesTotal('heroes');
+const EXTRA_STONES = arg('--nobadges', 0) > 0 ? 0 : Math.round((BADGE_STONES * Math.min(1, EXTRA_CROWNS / BADGE_CROWNS)));
 
 interface Report { pdays: Record<number, number>; by: Record<number, number>; pullable: number; days: Record<number, number>; at: Record<string, number>; pulls: number; crowns: number }
 const MARKS = [5, 10, 15, 20, 30, 40, 45];
@@ -140,7 +144,10 @@ function simulate(seed: number): Report {
       // (the finishing reward: crowns, shards, a title; `calReward.ts`)
       payClear(m, mixSeed(seed, 0xca1d, day), asc, Math.min(ARMIES.length - 1, Math.floor(day / 12)));
     }
-    if (day <= 150) today += EXTRA_CROWNS / 150;
+    if (day <= 150) {
+      today += EXTRA_CROWNS / 150;
+      m.stones = (m.stones ?? 0) + Math.floor((EXTRA_STONES * day) / 150) - Math.floor((EXTRA_STONES * (day - 1)) / 150);
+    }
     m.crowns += Math.round(today);
     income += Math.round(today);
     // the chests are opened the day they come
@@ -178,7 +185,7 @@ const reports = Array.from({ length: SEEDS }, (_, i) => simulate(i * 7919 + 13))
 const mean = (xs: number[]) => xs.reduce((n, x) => n + x, 0) / xs.length;
 const med = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
 console.log(`Unlock pace for a daily player (${SEEDS} seeds, ${DAYS} days; ${Math.round(PULL_SHARE * 100)}% of crowns to pulls after the castle; ${FOE_ENTRIES.length} bestiary entries, ${ACHIEVEMENTS.length} achievements)`);
-console.log(`Crowns earned: ${Math.round(mean(reports.map((r) => r.crowns)))} in ${DAYS} days; stones used: ${Math.round(mean(reports.map((r) => r.pulls)))}`);
+console.log(`Crowns earned: ${Math.round(mean(reports.map((r) => r.crowns)))} in ${DAYS} days; stones used: ${Math.round(mean(reports.map((r) => r.pulls)))} (${EXTRA_STONES} of them from achievements and the codex)`);
 console.log('\nheroes  day reached (median, earliest, latest)');
 for (const n of MARKS) {
   const ds = reports.map((r) => r.days[n] ?? Infinity);
