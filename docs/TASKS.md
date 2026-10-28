@@ -14,6 +14,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+
 **COMBAT-002 / Hero kits, mana and manual ultimates** — done: owner accepted release 0.172.0.
 
 - **Goal:** every hero gets a mana or stamina pool, two skills that cost it (level 1 and level 10), and an ultimate (level 30) the player fires by tapping its portrait in a new hero bar, with an Auto toggle; all 45 heroes reworked into far more varied roles (summoners, shapeshifters and many odd archetypes), no new heroes.
@@ -83,6 +84,9 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 | ID | Task | Result | Reference |
 | --- | --- | --- | --- |
+| UI-006 | Cliffside battle overlook with nine army-dependent bases and distant Calamity | Owner authorised release 0.175.0 and PR merge; typecheck/build, 85 targeted tests, all nine camps at three portrait sizes and offline switching passed | [PR #139](https://github.com/Hpatter9/legends-of-the-fall/pull/139), [implementation and screenshots](notes/battle-overlook.md) |
+
+
 | UX-002 | Home and loss fixes, menu flicker | Owner accepted release 0.174.0; army ribbon only when new, come-back-stronger card after a final defeat (summon tip updated for summoning stones at merge), menu and camp flicker fixes; 1194 tests, build, fresh/old-save and Last Stand smoke passed | [Handoff](notes/ux-fixes.md), branch `claude/ux-fixes` |
 | SCENES-002 | Cinematic fixes | Owner accepted release 0.173.0; loss scene only on a final defeat, boss scenes once, the king is the player, Calamity scenes gated and retold as a portal, Last Stand milestones retold; 1183 tests, build, fresh/old-save and Last Stand smoke passed | [Handoff](notes/scenes-fixes.md), branch `claude/scenes-fixes` |
 | COMBAT-002 | Hero kits, mana and manual ultimates | Owner accepted release 0.172.0; all 45 heroes reworked, tap-to-fire ultimates with Auto; 1176 tests, build, fresh/old-save and Last Stand smoke passed | [Handoff](notes/hero-kits.md), branch `claude/hero-kits` |
