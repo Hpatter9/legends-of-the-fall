@@ -17,7 +17,8 @@ import { firstStep, walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
 import { standDecide } from './standAi';
 import { duchessDue, joinDuchess, type DuchessWish } from './duchessFight';
-import { FOE_BANDS } from './foes';
+import { FOE_BANDS, isBoss } from './foes';
+import { arenaSpots } from './arenaDeploy';
 import { killXp } from './levels';
 import { enterPhase, PHASE2 } from './bossPhases';
 import { afterBlow, CHARGE_MAX, echoSkill, mendUnit, spawnSpiritWisp, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, rollCrit, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
@@ -183,6 +184,8 @@ export interface StandMode {
   fields: Record<number, number[]>;
   /** The wave is down to its last few foes (`HUNT_AT` in `stand.ts`): the heroes leave their posts to hunt them down, and walk back after. */
   hunt?: boolean;
+  /** Idle heroes gone to help where the fighting is, once a wave's foes are all in (`standHelp.ts`): a helper's id to the foe it goes for. */
+  help?: Record<number, number>;
 }
 
 export interface Pending {
@@ -464,8 +467,23 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed; each takes the
   // higher ground its row offers, and a shooter will take a perch in a row nearer the front for it
   const rng = new Rng(mixSeed(seed, 0xf0e5));
-  (typeof band === 'string' ? FOE_BANDS[band] : band).forEach((id, n) => {
+  // (an army's boss arena: the boss starts in its middle and its band round it, `arenaDeploy.ts`; the usual rows when nothing fits)
+  const ids = typeof band === 'string' ? FOE_BANDS[band] : band;
+  const mid = board.arenaMid && isBoss(ids[0] ?? '') ? board.arenaMid : null;
+  let bossAt: At | null = null;
+  ids.forEach((id, n) => {
     const def = UNITS[id];
+    const boss = n === 0 ? stage.boss : undefined;
+    const boost = () => ({ hp: (foes?.hp ?? 1) * (boss?.hp ?? 1), atk: (foes?.atk ?? 1) * (boss?.atk ?? 1), size: boss?.size, phase: boss?.phase, surge: boss?.surge, shield: boss?.shield });
+    if (mid) {
+      const near = arenaSpots(board, (u, v) => !!unitAt(b, u, v), mid, !!def.shot, n === 0 ? null : bossAt);
+      if (near.length) {
+        const at = rng.pick(near);
+        if (n === 0) bossAt = at;
+        addUnit(b, id, at.u, at.v, boost());
+        return;
+      }
+    }
     const rows = def.shot ? [0, 1, 2] : [DEPLOY_ROWS - 1, DEPLOY_ROWS - 2, 0];
     const spots: { u: number; v: number; score: number }[] = [];
     for (const v of rows) {
@@ -480,8 +498,8 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
     if (!spots.length) return;
     const top = Math.max(...spots.map((x) => x.score));
     const at = rng.pick(spots.filter((x) => x.score === top));
-    const boss = n === 0 ? stage.boss : undefined;
-    addUnit(b, id, at.u, at.v, { hp: (foes?.hp ?? 1) * (boss?.hp ?? 1), atk: (foes?.atk ?? 1) * (boss?.atk ?? 1), size: boss?.size, phase: boss?.phase, surge: boss?.surge, shield: boss?.shield });
+    if (n === 0) bossAt = at;
+    addUnit(b, id, at.u, at.v, boost());
   });
   if (tw?.ambush) ambush(b);
   if (stage.duchess && duchessDue(seed, stage.duchess)) b.duchess = true;

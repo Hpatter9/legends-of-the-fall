@@ -2,6 +2,7 @@
 // animation, frames `w` x `h`, the figure centred with its feet on the frame's bottom, facing right.
 
 import { Rectangle, Texture } from 'pixi.js';
+import { loadRulers } from './rulerArt';
 import { loadImage } from './loadImage';
 import layout from '../art/units/sheets.json';
 import { RESONANCE_URLS } from './resonanceArt';
@@ -244,7 +245,7 @@ export async function loadSheets(): Promise<void> {
   const required = new Set(Object.values(UNITS).flatMap(def => [def.sheet, ...(def.forms ?? [])]));
   for (const id of [...required]) if (LAYOUT[id]?.rear) required.add(LAYOUT[id].rear!);
   await Promise.all(
-    Object.entries(URLS).filter(([id]) => required.has(id)).map(async ([id, url]) => {
+    [loadRulers(), ...Object.entries(URLS).filter(([id]) => required.has(id)).map(async ([id, url]) => {
       const img = await loadImage(url);
       images.set(id, img);
       const base = Texture.from(img);
@@ -255,7 +256,7 @@ export async function loadSheets(): Promise<void> {
           frame: new Rectangle((i % l.perRow) * l.w, (r + Math.floor(i / l.perRow)) * l.h, l.w, l.h) }));
         frames.set(`${id}:${row}`, list);
       });
-    }),
+    })],
   );
 }
 
