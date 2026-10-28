@@ -932,7 +932,7 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swel
         src.loopEnd = info.loop[1];
       }
       src.connect(gain).connect(fade);
-      src.start(t);
+      src.start(t, info ? info.loop[0] : 0);
       loop.stems[stem] = { src, gain };
     }
     this.loops.set(track, loop);
