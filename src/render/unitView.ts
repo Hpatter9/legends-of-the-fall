@@ -25,7 +25,8 @@ function lookScale(sheet: string, own: number): number {
 }
 import { CHARGE_MAX, kitOf, ultimateOf } from '../sim/abilities';
 import { poolOf } from '../sim/heroKits';
-import { at, depth, facesRight, HH } from './iso';
+import { at, depth, facesRight, facesAway, HH } from './iso';
+import { heroLook, rearView, formScale } from './heroFacing';
 import { VFX } from './vfxArt';
 import { paintSprite } from './cinematicArt';
 import { PACK } from './fxSheets';
@@ -184,10 +185,13 @@ export class UnitSprite {
     const u = this.unit;
     const def = defOf(u);
     // (a kit lends it another look for a while: a werewolf's form, a treant, a foe's guise, a wraith's shape; drawn at that shape's own scale)
-    const want = u.look && hasSheet(u.look) ? u.look : this.ownSheet;
+    const borrowed = u.look ? heroLook(u.def, u.look) : undefined;
+    const base = borrowed && hasSheet(borrowed) ? borrowed : this.ownSheet;
+    const facing = facesAway(u.facing) ? rearView(base) : base;
+    const want = hasSheet(facing) ? facing : base;
     if (want !== this.sheet) {
       this.sheet = want;
-      this.scaleNow = want === this.ownSheet ? def.scale : lookScale(want, def.scale);
+      this.scaleNow = base === this.ownSheet ? def.scale : formScale(base) ?? lookScale(base, def.scale);
       this.tall = figureOf(want) * this.scaleNow * this.sizeNow;
     }
     const tile = tileAt(b, u.u, u.v)!;
@@ -200,12 +204,16 @@ export class UnitSprite {
     if (fighting && u.alive && step && t < step.at + step.ms) {
       const f = Math.max(0, (t - step.at) / step.ms);
       const [fx, fy] = at(step.u, step.v, step.h);
-      const hop = Math.sin(Math.PI * f) * (5 + Math.abs(tile.h - step.h) * HH * 0.6);
+      const heightChange = Math.abs(tile.h - step.h);
+      const hop = Math.sin(Math.PI * f) * (heightChange ? 5 + heightChange * HH * 0.6 : 1.5);
       x = fx + (x - fx) * f;
       y = fy + (y - fy) * f - hop;
       z = Math.max(depth(step.u, step.v), z - 5) + 5;
       anim = 'walk';
-      frame = Math.floor(t / 90);
+      // One complete alternating stride per tile. A slow fighter walks the same
+      // distance with slower footfalls instead of cycling its legs in place.
+      const n = framesOf(this.sheet, 'walk').length;
+      frame = Math.min(n - 1, Math.floor(f * n));
     }
     const swing = u.swing;
     if (fighting && u.alive && swing && t >= swing.at && t < swing.at + swing.ms) {

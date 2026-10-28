@@ -68,6 +68,14 @@ export function facesRight(dir: number): boolean {
   return dU > 0 || dV < 0;
 }
 
+/** A step towards the far edge shows the fighter's back, through this section's
+ * turn. Together with facesRight this selects the four isometric facings. */
+export function facesAway(dir: number): boolean {
+  const [du, dv] = [[1, 0], [0, 1], [-1, 0], [0, -1]][dir];
+  const [dU, dV] = turnDir(frame.rot, du, dv);
+  return dU + dV < 0;
+}
+
 /** Conservative bounds of the existing gate/tower compound, including its height above the far edge. */
 export function landmarkBounds(b: Board, f: Frame): { x0: number; x1: number; y0: number; y1: number } | null {
   if (!b.landmark || !b.landmarkAt) return null;

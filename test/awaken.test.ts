@@ -161,9 +161,9 @@ test('the awakened look: the pack variant where there is one, a recolour of the 
   assert.equal(stepOfRank(4), 0);
   assert.equal(stepOfRank(5), 1);
   assert.equal(stepOfRank(6), 2);
-  assert.equal(lookSheet('werewolf', 5, 3), 'werewolf_red');
-  assert.equal(lookSheet('werewolf', 4, 3), 'werewolf_black');
-  assert.equal(lookSheet('paladin', 5, 3), 'cls_paladin_3', 'no pack variant: the top form');
+  assert.equal(lookSheet('werewolf', 5, 3), 'hero_res_werewolf_awakened');
+  assert.equal(lookSheet('werewolf', 4, 3), 'hero_res_werewolf_brute');
+  assert.equal(lookSheet('paladin', 5, 3), 'hero_res_paladin', 'no pack variant: the top form');
   assert.equal(lookFilter('paladin', 0), '');
   assert.ok(lookFilter('paladin', 1).includes('hue-rotate'));
   assert.notEqual(lookFilter('paladin', 1), lookFilter('paladin', 2));
