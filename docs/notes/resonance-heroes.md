@@ -1,6 +1,6 @@
 # Resonance hero pilot — ART-001
 
-Owner approved the pixel direction on 2026-10-28 after supplying Final Fantasy Resonance references. The approved concept is [here](../samples/resonance/approved-concept.png); the [actual game portraits](../samples/resonance/in-game-preview.png) show the implemented result. Branch: `art/resonance-heroes`. Status: ready for owner review; no merge, deployment or release bump requested.
+Owner approved the pixel direction on 2026-10-28 after supplying Final Fantasy Resonance references, then accepted the implemented appearance and requested integration. The approved concept is [here](../samples/resonance/approved-concept.png); the [actual game portraits](../samples/resonance/in-game-preview.png) show the implemented result. Branch: `art/resonance-heroes`. Implementation accepted; prepared for the owner's merge through a pull request.
 
 The soldier is the existing **Knight** (`knight`); the samurai archer is the existing **Archer** (`archer`). Both now use original generated pixel artwork: larger expressive heads, compact heroic proportions, strong outlines, rich highlights and saturated colours. Names, abilities, statistics and save identifiers are unchanged. The Knight has one shared design across grades, with the existing grade and awakening filters/glows providing progression, as with the previously remade heroes. The Archer keeps one design too.
 
@@ -30,4 +30,10 @@ Packing crops connected figures rather than blindly cutting at a column boundary
 - Actual game roster, both dossiers, deployment and combat checked at 360 × 780, 393 × 852 and 412 × 915. Both new heroes were deployed at each size. No page errors or dossier horizontal overflow. Reduced-motion mode exercised. Portrait and combat screenshots are in `docs/samples/resonance/`; machine-readable results are in `checks.json` there.
 - `git diff --check` passed.
 
-The browser required execution outside the process sandbox because the sandbox blocks sockets; the local server and Chromium ran successfully with the approved escalation. No live site was changed. New assets use the existing bundle/offline path; a fresh offline reload was not separately exercised. Runtime version remains 0.171.0.
+The browser required execution outside the process sandbox because the sandbox blocks sockets; the local server and Chromium ran successfully with the approved escalation. New assets use the existing bundle/offline path; a fresh offline reload was not separately exercised.
+
+## Accepted implementation integration
+
+Integrated current main `0f9990d9` (0.178.0), preserving its hero kits, role descriptions, winding battle maps, castle, menus and chest changes. Resolved the unit-definition conflict by retaining current main's complete definitions and changing only the two sheets/scales and Knight forms. Preserved both task-board histories. The new `hasSheet` renderer export remains intact.
+
+Typecheck, web build, `hero-art`, `awaken`, `class-heroes` and `hero-kits-looks` test files passed on the integrated tree. The portrait, deploy and combat evidence was refreshed against 0.178.0 at all three supported sizes, with zero page errors. The version remains 0.178.0 so the director can select the release number at merge time under CLAUDE.md. No deployment has been performed by this chat.

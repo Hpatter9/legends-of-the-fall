@@ -14,7 +14,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
-**ART-001 / Resonance hero pilot** — Owner: current Codex art chat. Branch: `art/resonance-heroes`, worktree: `/workspace/legends-of-the-fall`. Approved direction: compact, richly shaded pixel heroes from the soldier/archer concept. Scope: Knight and Archer sprite sheets, their render mappings/scales, art credits, validation tools and evidence. Preserve names, kits, simulation and saves. Status: ready for review; 48 animation cells installed, typecheck/build and three affected test files passed, actual roster/dossier/deploy/combat checks passed at all three portrait sizes with zero page errors. Source atlases and preview preserved. See [handoff](notes/resonance-heroes.md). No release or merge authorised.
+**ART-001 / Resonance hero pilot** — Owner: current Codex art chat. Branch: `art/resonance-heroes`, worktree: `/workspace/legends-of-the-fall`. Owner accepted the implemented appearance and requested integration. Scope: Knight and Archer sprite sheets, their render mappings/scales, art credits, validation tools and evidence. Current main 0.178.0 integrated, preserving newer hero kits, roles and maps. Status: implementation accepted, ready for the owner's merge through a pull request; 48 animation cells installed, typecheck/build and four affected test files passed, actual roster/dossier/deploy/combat checks passed at all three portrait sizes with zero page errors. Source atlases and preview preserved. Version/deployment remain with the director at merge time. See [handoff](notes/resonance-heroes.md).
 
 ### CHEST-001 — XP tomes and Open all
 
