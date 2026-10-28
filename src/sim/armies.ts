@@ -163,7 +163,7 @@ export const ARMIES: readonly Army[] = [
     area: 'temple',
     lands: ['temple', 'ruins'],
     waves: waves(ramp(['mazeMino1', 'mazeMino2', 'mazeGorgon1', 'mazeMino3', 'mazeGorgon2', 'mazeMino1', 'mazeGorgon3', 'mazeMino2'], 13), { 8: ['gorgonQueen', 'mazeMino1', 'mazeMino2', 'mazeGorgon3'], 15: ['minotaurChampion', 'mazeMino1', 'mazeGorgon1', 'mazeMino2', 'mazeGorgon2', 'mazeMino3'] }),
-    start: 2.89, // (was 2.25: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`)
+    start: 3.05, // (was 2.25: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`)
     tierStart: 1.38,
     growth: 0.05,
     tierGrowth: 0.128,
@@ -180,10 +180,11 @@ export const ARMIES: readonly Army[] = [
     area: 'highlands',
     lands: ['highlands', 'snow'],
     waves: waves(ramp(['clanOgre', 'clanBrute', 'clanBrute', 'clanOgre', 'clanOgre', 'clanBrute', 'clanOgre'], 13), { 8: ['shamanKing', 'clanBrute', 'clanOgre', 'clanBrute'], 15: ['hornedOgre', 'clanOgre', 'clanBrute', 'clanOgre', 'clanBrute', 'clanOgre'] }),
-    start: 4.23, // (was 2.8: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`)
+    start: 4.1, // (was 2.8: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`)
     tierStart: 1.55,
     growth: 0.05,
     tierGrowth: 0.124,
+    tierLift: [1, 1.45, 1.1, 1, 1],
     mid: { hp: 1800, atk: 48 },
     last: { hp: 2200, atk: 48 },
     pay: 3.23,
@@ -191,16 +192,17 @@ export const ARMIES: readonly Army[] = [
   },
   {
     id: 'infernal',
-    level: 55,
+    level: 58,
     name: 'Infernal Host',
     blurb: 'Imps and demons of the pit, a devil and a demon lord.',
     area: 'volcano',
     lands: ['volcano', 'desert'],
     waves: waves(ramp(['hellImp', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon'], 13), { 8: ['devilLeader', 'hellImp', 'hellDemon', 'hellImp'], 15: ['demonLord', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon', 'hellImp'] }),
-    start: 5.03, // (was 3.01: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`)
+    start: 5.67, // (was 3.01: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`)
     tierStart: 1.64,
     growth: 0.05,
     tierGrowth: 0.13,
+    tierLift: [1, 1.72, 1.3, 1.05, 1],
     mid: { hp: 2000, atk: 50 },
     last: { hp: 1840, atk: 41 },
     pay: 4.1,
@@ -208,16 +210,17 @@ export const ARMIES: readonly Army[] = [
   },
   {
     id: 'yokai',
-    level: 60,
+    level: 65,
     name: 'Yokai Night Parade',
     blurb: 'Fox spirits, crows and tengu monks of the night parade, led by a nine-tailed fox and the Oni King.',
     area: 'shrine',
     lands: ['shrine', 'forest'],
     waves: waves(ramp(['yokaiFox', 'yokaiCrow', 'yokaiMonk', 'yokaiWitch', 'yokaiSeer', 'yokaiFox', 'yokaiMonk', 'yokaiCrow', 'yokaiWitch'], 13), { 8: ['nineTails', 'yokaiFox', 'yokaiWitch', 'yokaiCrow'], 15: ['oniKing', 'yokaiMonk', 'yokaiWitch', 'yokaiSeer', 'yokaiFox', 'yokaiCrow'] }),
-    start: 6.45, // (was 3.38: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`)
+    start: 7, // (was 3.38: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`)
     tierStart: 1.55,
     growth: 0.05,
     tierGrowth: 0.127,
+    tierLift: [1, 2.12, 1.6, 1.25, 1],
     mid: { hp: 2200, atk: 52 },
     last: { hp: 2500, atk: 50 },
     pay: 5.11,
@@ -225,16 +228,17 @@ export const ARMIES: readonly Army[] = [
   },
   {
     id: 'golems',
-    level: 66,
+    level: 74,
     name: 'Golem Forge',
     blurb: 'Stone, iron, crystal and magma golems, a sapphire colossus and the Forge Titan.',
     area: 'forge',
     lands: ['forge', 'crystal'],
     waves: waves(ramp(['stoneGolem', 'ironGolem', 'crystalGolem', 'magmaGolem', 'stoneGolem', 'ironGolem', 'magmaGolem'], 13), { 8: ['sapphireColossus', 'stoneGolem', 'crystalGolem', 'ironGolem'], 15: ['forgeTitan', 'ironGolem', 'magmaGolem', 'crystalGolem', 'stoneGolem', 'magmaGolem'] }),
-    start: 6.6, // (was 3.63: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`)
+    start: 7.1, // (was 3.63: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`)
     tierStart: 1.7,
     growth: 0.05,
     tierGrowth: 0.124,
+    tierLift: [1, 1.85, 1.4, 1.2, 1],
     mid: { hp: 1800, atk: 56 },
     last: { hp: 2040, atk: 55 },
     pay: 6.26,

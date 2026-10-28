@@ -40,9 +40,10 @@ const MEASURE_LEVEL = 100;
 /** The party the XP is measured with (the recruits' party of the balance report). */
 const PARTY = ['knight', 'paladin', 'archer', 'warlock', 'cleric'];
 /** The day each army is first cleared on Normal, and the day a Hard / Elite tier is (the same schedule as `unlockPace.ts`; a daily player does not get to Legendary in the first year). */
-const NORMAL_DAY = [1, 4, 8, 13, 19, 26, 34, 43, 53];
+// (ARMY-PACE: the last four armies come later, at the favourite's day for their new recommended levels 45, 58, 65 and 74, and the Golem Forge's Hard a little later, day 118; they were 26, 34, 43, 53 and 112)
+const NORMAL_DAY = [1, 4, 8, 13, 19, 38, 68, 83, 103];
 const HARDER: [number, number, number][] = [
-  [0, 1, 12], [1, 1, 24], [2, 1, 34], [3, 1, 46], [4, 1, 58], [5, 1, 70], [6, 1, 84], [7, 1, 98], [8, 1, 112],
+  [0, 1, 12], [1, 1, 24], [2, 1, 34], [3, 1, 46], [4, 1, 58], [5, 1, 70], [6, 1, 84], [7, 1, 98], [8, 1, 118],
   [0, 2, 40], [1, 2, 62], [2, 2, 80], [3, 2, 96], [4, 2, 112], [5, 2, 130], [6, 2, 150], [7, 2, 170], [8, 2, 190],
 ];
 /** The Library: the castle is built over the first weeks, and the Library level follows (one level every five days to its top). */
