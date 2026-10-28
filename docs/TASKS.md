@@ -117,3 +117,12 @@ Mark a task ready for review after implementation and validation. Mark it done o
 Owner authorised bump and merge of PR #124 on 2026-10-28. Latest main 0.168.0 is integrated, preserving its UI, combat effects, heart-revive behaviour, credits and task history. WORLD remains opt-in at 12×16; the 14×18 per-army maps are still proposals. Rare warm-tail stalls and real-device performance remain open in #126; the broader map initiative remains open in #123. See [rendering handoff](notes/world-126.md).
 
 Release integration validation for 0.169.0: typecheck/build and 48 affected tests passed; release progression/resume/pan/offline lifecycle checks passed all three portrait sizes with zero page errors. Original army/large-field compatibility smoke passed. Evidence: `docs/samples/world-169-lifecycle.json`, `world-169-compatibility.json` and the corresponding screenshots. Owner accepted the rendering checkpoint; broader maps and warm-tail/device investigation remain open.
+
+## UI-006 — Battle command screen
+
+- Owner: Codex; branch `design/battle-command-ui`, worktree `/workspace/legends-of-the-fall`.
+- Scope: deployment/live-combat HUD, spell and bench styling, bounded markup/build changes, browser evidence and notes. Simulation, maps, save format and other screens remain outside scope.
+- Direction: owner rejected subtle restyling, then authorised trying a toned-down ornate battle concept in the game on 2026-10-28.
+- Completion: implemented live-game review at 393×852, 360×780 and 412×915; typecheck, web build and affected interaction checks; preserve spell targeting, cooldowns and reduced motion. Final visual acceptance pending.
+
+UI-006 implementation is ready for visual review. Typecheck and web build passed; three-size live combat checks passed with no page errors or page overflow, including spell selection/cancellation and drag-to-cast. Existing offline UI asset enumeration includes the new crest. Full offline reload was not run. See [handoff](notes/battle-command-ui.md). No merge, release bump or deployment.

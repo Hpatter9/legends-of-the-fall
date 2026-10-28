@@ -1,0 +1,146 @@
+[
+  {
+    "w": 393,
+    "h": 852,
+    "layout": {
+      "phase": "fight",
+      "top": {
+        "top": 0,
+        "bottom": 89.796875,
+        "width": 393,
+        "height": 89.796875
+      },
+      "panel": {
+        "top": 658.140625,
+        "bottom": 852,
+        "width": 393,
+        "height": 193.859375
+      },
+      "bench": {
+        "top": 670.140625,
+        "bottom": 719.140625,
+        "width": 375,
+        "height": 49
+      },
+      "spells": [
+        {
+          "id": "heal",
+          "w": 119.65625,
+          "h": 87.859375
+        },
+        {
+          "id": "meteor",
+          "w": 119.671875,
+          "h": 87.859375
+        },
+        {
+          "id": "haste",
+          "w": 119.65625,
+          "h": 87.859375
+        }
+      ],
+      "overflow": false
+    },
+    "armed": "meteor",
+    "cancelled": true,
+    "preview": true,
+    "cast": true,
+    "errors": []
+  },
+  {
+    "w": 360,
+    "h": 780,
+    "layout": {
+      "phase": "fight",
+      "top": {
+        "top": 0,
+        "bottom": 89.796875,
+        "width": 360,
+        "height": 89.796875
+      },
+      "panel": {
+        "top": 591.140625,
+        "bottom": 780,
+        "width": 360,
+        "height": 188.859375
+      },
+      "bench": {
+        "top": 603.140625,
+        "bottom": 649.140625,
+        "width": 342,
+        "height": 46
+      },
+      "spells": [
+        {
+          "id": "heal",
+          "w": 108.65625,
+          "h": 85.859375
+        },
+        {
+          "id": "meteor",
+          "w": 108.671875,
+          "h": 85.859375
+        },
+        {
+          "id": "haste",
+          "w": 108.65625,
+          "h": 85.859375
+        }
+      ],
+      "overflow": false
+    },
+    "armed": "meteor",
+    "cancelled": true,
+    "preview": true,
+    "cast": true,
+    "errors": []
+  },
+  {
+    "w": 412,
+    "h": 915,
+    "layout": {
+      "phase": "fight",
+      "top": {
+        "top": 0,
+        "bottom": 89.796875,
+        "width": 412,
+        "height": 89.796875
+      },
+      "panel": {
+        "top": 721.140625,
+        "bottom": 915,
+        "width": 412,
+        "height": 193.859375
+      },
+      "bench": {
+        "top": 733.140625,
+        "bottom": 782.140625,
+        "width": 394,
+        "height": 49
+      },
+      "spells": [
+        {
+          "id": "heal",
+          "w": 126,
+          "h": 87.859375
+        },
+        {
+          "id": "meteor",
+          "w": 126,
+          "h": 87.859375
+        },
+        {
+          "id": "haste",
+          "w": 126,
+          "h": 87.859375
+        }
+      ],
+      "overflow": false
+    },
+    "armed": "meteor",
+    "cancelled": true,
+    "preview": true,
+    "cast": true,
+    "errors": []
+  }
+]
