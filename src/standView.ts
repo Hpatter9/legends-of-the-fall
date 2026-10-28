@@ -10,7 +10,7 @@ import { TICK_MS, type BattleEvent, type Unit } from './sim/battle';
 import { ARMIES, armyUnlocked } from './sim/armies';
 import { castSpell, canAfford, cooldownLeft, MANA_MAX, SPELLS, type SpellId } from './sim/spells';
 import {
-  isBossWave, buyLevel, buyRelic, dropStand, foesAlive, goNow, healCost, healKing, levelBlock, levelCost, loadStand, newStandRun, offerCost, pickEight, postHero, relicLine,
+  autoPlace, isBossWave, swapPosts, standing, buyLevel, buyRelic, dropStand, foesAlive, goNow, healCost, healKing, levelBlock, levelCost, loadStand, newStandRun, offerCost, pickEight, postHero, relicLine,
   saveStand, settleStand, setupFromMeta, snapshot, startFirstWave, startStand, stepStand, waveSpec, weakestHero, type Stand, type StandNote, type StandSummary,
 } from './sim/stand';
 import { canPost, EDGES, FIELD, KING_AT, ringOf, type Edge } from './sim/standField';
@@ -19,6 +19,8 @@ import { hideQuip, type Anchor } from './quipView';
 import { closeCalls, KING_LOW_HP, ultimatesCast } from './render/quipRules';
 import { saveMeta, type Meta } from './sim/meta';
 import { HeroBar } from './heroBar';
+import { portrait } from './render/sheets';
+import { formOf } from './sim/units';
 import { UNITS } from './sim/units';
 import { levelOfKind } from './sim/levels';
 import { RELICS } from './sim/relics';
@@ -29,6 +31,8 @@ import { setBackdrop, panBackdrop } from './render/backdrop';
 import { at, depth, setFrame, HH, TH, TW } from './render/iso';
 import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS } from './render/cameraRules';
 import { bossHit, NUDGE_MS, nudgeOffset, wheelStep } from './render/standCam';
+import { StandHall, standHallArt, standBackwallUrl } from './render/standHall';
+import { hallOf } from './sim/standHalls';
 import { standSheet } from './sim/standSheet';
 import { endFight, play, playEvents, setAct, startFight } from './render/sound';
 import { fightLevel, fightTrack } from './render/epicMusic';
@@ -47,6 +51,10 @@ export interface StandHost {
   /** Play a cinematic due at a moment (the run waits while it plays). */
   moment(m: { kind: 'spire'; floor: number }): Promise<void>;
 }
+
+/** The heroes' colours (their rings, tray cards and portraits' rims), by their place in the party. */
+const HERO_COLOURS = [0xffd24a, 0x4ad2ff, 0xff6a4a, 0x8aff6a, 0xd06aff, 0xf2f2f2, 0xff9ad0, 0x6affd2];
+const colourCss = (c: number): string => `#${c.toString(16).padStart(6, '0')}`;
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -79,6 +87,18 @@ export class StandView {
   private fx = new Fx(this.sprites);
   private marks = new Graphics();
   private field: Sprite | null = null;
+  /** The castle's room the run is fought in, drawn (`render/standHall.ts`), and its dark backdrop over the page's sky. */
+  private hall = new StandHall();
+  private sky: HTMLElement | null = null;
+  /** Which build of the room is current (a run started while the art loads is drawn when it arrives). */
+  private hallFor = 0;
+  /** The aids to find the heroes (STAND-003): a ring of each hero's colour under it, the foes' own red bars, and arrows at the screen's rim to heroes off it. */
+  private rings = new Graphics();
+  private foeBars = new Graphics();
+  private finds = new Map<number, HTMLElement>();
+  /** The deploy tray's cards (a hero's roster id each), and the card picked for a swap. */
+  private trayPick: number | null = null;
+  private trayKey = '';
   private s: Stand | null = null;
   active = false;
   private ready = false;
@@ -121,8 +141,11 @@ export class StandView {
     if (this.ready) return;
     this.ready = true;
     this.holder.sortableChildren = true;
-    this.holder.addChild(this.marks, this.fx.dimLayer, this.fx.root);
-    this.marks.zIndex = 2;
+    this.holder.addChild(this.marks, this.rings, this.foeBars, this.fx.dimLayer, this.fx.root);
+    // (the post marks and the heroes' rings lie on the floor, under everyone; the foes' bars over everyone)
+    this.marks.zIndex = -5e5;
+    this.rings.zIndex = -4e5;
+    this.foeBars.zIndex = 9e5;
     this.world.addChild(this.holder);
     this.board.renderer = this.host.app.renderer;
     // (no screen shake from the blows: only the boss's small nudge, made here)
@@ -205,6 +228,8 @@ export class StandView {
         saveMeta(m);
         if (this.s) this.s.b.autoUlt = on;
       },
+      // (a tap on a portrait also takes the camera to that hero)
+      onTap: (u) => this.panTo(u.id),
     });
     const offer = el('div', 'stOffer');
     const bar = el('div', 'stBar');
@@ -218,9 +243,28 @@ export class StandView {
       btn('level', 'Level up', () => this.buy(() => buyLevel(this.s!, this.picked ?? undefined) !== null)),
       btn('heal', 'Heal the king', () => this.buy(() => healKing(this.s!) !== null)),
     );
-    const start = el('button', 'stStart primary', 'Begin the stand');
+    const start = el('button', 'stStart primary', 'Begin');
     start.addEventListener('click', () => this.begin());
-    bottom.append(spells, heroes, offer, bar, start);
+    // (the deploy tray: the eight at their posts, tap two to swap them, Auto-place, Begin)
+    const tray = el('div', 'stTray');
+    const roster = el('div', 'stRoster');
+    const trayRow = el('div', 'stTrayRow');
+    const auto = el('button', 'stAutoPlace', 'Auto-place');
+    auto.addEventListener('click', () => {
+      if (this.s && autoPlace(this.s)) {
+        play('tap');
+        this.trayPick = null;
+        this.picked = null;
+        this.drawMarks();
+        this.save();
+      }
+    });
+    trayRow.append(auto, start);
+    tray.append(el('h3', '', 'Hold the throne'), el('p', 'stTip', 'Your eight stand at their posts. Tap two heroes to swap them, or drag one onto a glowing tile.'), roster, trayRow);
+    bottom.append(spells, heroes, offer, bar, tray);
+    const finds = el('div', 'stFinds');
+    const vignette = el('div', 'stVignette');
+    vignette.hidden = true;
     const end = el('div', 'stEnd');
     end.hidden = true;
     const ask = el('div', 'stAsk');
@@ -229,9 +273,9 @@ export class StandView {
     pick.hidden = true;
     const sheet = el('div', 'stAsk stSheet');
     sheet.hidden = true;
-    root.append(this.input, top, centre, count, arrows, info, banner, bottom, end, ask, pick, sheet);
+    root.append(this.input, vignette, top, centre, count, arrows, finds, info, banner, bottom, end, ask, pick, sheet);
     document.body.append(root);
-    this.parts = { leave, speed, pause, centre, sheet, wave, king, gold, count, go, arrows, info, banner, bottom, spells, heroes, mana, cards, offer, bar, start, end, ask, pick };
+    this.parts = { tray, roster, finds, vignette, leave, speed, pause, centre, sheet, wave, king, gold, count, go, arrows, info, banner, bottom, spells, heroes, mana, cards, offer, bar, start, end, ask, pick };
     this.wireInput();
   }
 
@@ -369,6 +413,9 @@ export class StandView {
     this.root.hidden = true;
     this.world.visible = false;
     this.parts.ask.hidden = true;
+    this.showSky(false);
+    this.hallFor++;
+    this.hall.clear();
     this.host.hideBoard(false);
     this.clearSprites();
     this.fx.clear();
@@ -424,11 +471,29 @@ export class StandView {
 
   private buildField(): void {
     this.field?.destroy({ texture: true });
+    this.field = null;
     const s = this.s!;
-    this.field = this.board.bakeField(s.b.board);
-    this.holder.addChild(this.field);
+    // (the castle's room: drawn when its pictures are in; they are in the game's own bundle)
+    const n = ++this.hallFor;
+    this.hall.clear();
+    void standHallArt().then((art) => {
+      if (n !== this.hallFor || this.s !== s) return;
+      this.hall.build(this.holder, s.b.board, s.run.seed, s.run.hall ?? hallOf(s.run.seed), art);
+    });
     setBackdrop(s.b.board.area);
+    this.showSky(true);
     this.drawMarks();
+  }
+
+  /** The dark castle backdrop over the page's own sky (the throne room's back wall, dimmed, over deep stone), while the Last Stand is up. */
+  private showSky(on: boolean): void {
+    if (!this.sky) {
+      const sky = document.getElementById('sky');
+      this.sky = el('div', 'stSky');
+      this.sky.style.backgroundImage = `linear-gradient(#000a, #0008 40%, #050409 75%), url(${standBackwallUrl})`;
+      sky?.after(this.sky);
+    }
+    this.sky.hidden = !on;
   }
 
   private clearSprites(): void {
@@ -457,7 +522,8 @@ export class StandView {
         } else sp.root.destroy({ children: true });
       }
     for (const u of s.b.units) {
-      if (this.sprites.has(u.id)) continue;
+      // (the king is the room's: on his throne, `StandHall`)
+      if (this.sprites.has(u.id) || u.id === s.king.id) continue;
       const key = this.keyOf(u);
       const pooled = u.side === 'foe' && !u.grade ? this.pool.get(key)?.pop() : undefined;
       const sp = pooled ?? new UnitSprite(u);
@@ -472,26 +538,203 @@ export class StandView {
     return `${u.def}:${u.size ?? 1}`;
   }
 
-  /** Mark the heroes' posts (a soft ring on each) and, with a hero picked, the tiles it may be moved to. */
+  /** Mark the posts. Before the first wave every tile a hero may be posted on is faintly lit and the heroes' posts glow gold (breathing, held
+   *  still under reduced motion), the picked one green; in a fight a hero picked shows where it may go, and the posts keep a thin gold rim. */
   private drawMarks(): void {
     const s = this.s;
     const g = this.marks;
     g.clear();
     if (!s) return;
-    const diamond = (u: number, v: number, colour: number, a: number, line = false) => {
+    const diamond = (u: number, v: number, colour: number, a: number, line = 0, grow = 0) => {
       const [x, y] = at(u, v, tileAt(s.b.board, u, v)?.h ?? 0);
-      g.poly([x, y - TH / 2 + 2, x + TW / 2 - 3, y, x, y + TH / 2 - 2, x - TW / 2 + 3, y]);
-      if (line) g.stroke({ color: colour, alpha: a, width: 1.5 });
+      g.poly([x, y - TH / 2 + 2 - grow, x + TW / 2 - 3 + grow * 2, y, x, y + TH / 2 - 2 + grow, x - TW / 2 + 3 - grow * 2, y]);
+      if (line) g.stroke({ color: colour, alpha: a, width: line });
       else g.fill({ color: colour, alpha: a });
     };
-    if (this.picked !== null) {
+    const deploy = s.phase === 'deploy';
+    const breathe = deploy && !this.hall.reduced ? 0.5 + 0.5 * Math.sin(performance.now() / 420) : 0.6;
+    if (deploy || this.picked !== null) {
       for (let v = KING_AT.v - 6; v <= KING_AT.v + 6; v++)
-        for (let u = KING_AT.u - 6; u <= KING_AT.u + 6; u++) if (canPost(s.b.board, u, v) && !s.b.units.some((x) => x.alive && x.u === u && x.v === v && x.tag !== this.picked)) diamond(u, v, 0x4a9cff, 0.22);
+        for (let u = KING_AT.u - 6; u <= KING_AT.u + 6; u++) if (canPost(s.b.board, u, v)) diamond(u, v, this.picked !== null ? 0x4a9cff : 0x7fc7ff, this.picked !== null ? 0.2 : 0.07);
     }
     for (const h of s.run.heroes) {
-      if (!h.post) continue;
-      diamond(h.post[0], h.post[1], h.id === this.picked ? 0x6dff8a : 0xffe066, h.id === this.picked ? 0.9 : 0.5, true);
+      if (!standing(h)) continue;
+      const [u, v] = h.post!;
+      const mine = h.id === this.picked;
+      if (deploy) {
+        diamond(u, v, mine ? 0x6dff8a : 0xffc84a, 0.22 + 0.16 * breathe);
+        diamond(u, v, mine ? 0xb8ffc8 : 0xfff2b0, 0.95, 2);
+        diamond(u, v, mine ? 0x6dff8a : 0xffd76a, 0.2 + 0.25 * breathe, 2, 4);
+      } else diamond(u, v, mine ? 0x6dff8a : 0xffe066, mine ? 0.9 : 0.4, 1.5);
     }
+  }
+
+  /** The deploy tray's cards: the eight standing heroes in their brass frames (the one picked for a swap lit); built again only when the eight change. */
+  private drawTray(): void {
+    const s = this.s!;
+    const roster = this.parts.roster;
+    const heroes = s.run.heroes.filter(standing);
+    const key = heroes.map((h) => `${h.id}:${h.kind}`).join();
+    if (key !== this.trayKey) {
+      this.trayKey = key;
+      roster.replaceChildren();
+      heroes.forEach((h) => {
+        const card = el('button', 'stMan');
+        card.dataset.id = String(h.id);
+        const pic = portrait(formOf(UNITS[h.kind], 1), 40, 1);
+        pic.className = 'stManPic';
+        card.append(pic, el('span', '', UNITS[h.kind].name));
+        card.style.setProperty('--hc', colourCss(this.colourOf(h.id)));
+        this.wireCard(card, h.id);
+        roster.append(card);
+      });
+    }
+    for (const c of roster.children as HTMLCollectionOf<HTMLElement>) c.classList.toggle('pick', Number(c.dataset.id) === this.trayPick);
+  }
+
+  /** A tray card: tapped, it is picked (a second card tapped trades posts with it); dragged onto the field, it is posted there (or swapped with the hero there). */
+  private wireCard(card: HTMLElement, id: number): void {
+    let drag: { x: number; y: number; ghost: HTMLElement | null } | null = null;
+    card.addEventListener('pointerdown', (e) => {
+      drag = { x: e.clientX, y: e.clientY, ghost: null };
+      try {
+        card.setPointerCapture(e.pointerId);
+      } catch {
+        /* (a pointer already gone) */
+      }
+    });
+    card.addEventListener('pointermove', (e) => {
+      if (!drag) return;
+      if (!drag.ghost && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 10) {
+        const pic = card.querySelector('canvas');
+        drag.ghost = el('div', 'stGhost');
+        if (pic) {
+          const c = portrait(formOf(UNITS[this.s!.run.heroes.find((h) => h.id === id)!.kind], 1), 48, 1);
+          drag.ghost.append(c);
+        }
+        this.root.append(drag.ghost);
+        this.picked = id;
+      }
+      if (drag.ghost) drag.ghost.style.transform = `translate(${e.clientX - 24}px, ${e.clientY - 56}px)`;
+    });
+    const up = (e: PointerEvent) => {
+      const d = drag;
+      drag = null;
+      if (!d || !this.s) return;
+      if (d.ghost) {
+        d.ghost.remove();
+        const tile = this.tileAtScreen(e.clientX - colLeft(), e.clientY);
+        const other = tile ? this.heroOn(tile[0], tile[1], id) : null;
+        if (tile && (other !== null ? swapPosts(this.s, id, other) : postHero(this.s, id, tile[0], tile[1]))) {
+          play('tap');
+          this.save();
+        }
+        this.picked = null;
+        this.trayPick = null;
+      } else if (this.trayPick !== null && this.trayPick !== id) {
+        if (swapPosts(this.s, this.trayPick, id)) {
+          play('tap');
+          this.save();
+        }
+        this.trayPick = null;
+        this.picked = null;
+      } else {
+        this.trayPick = this.trayPick === id ? null : id;
+        this.picked = this.trayPick;
+        play('tap');
+      }
+      this.drawMarks();
+      this.drawTray();
+    };
+    card.addEventListener('pointerup', up);
+    card.addEventListener('pointercancel', () => {
+      drag?.ghost?.remove();
+      drag = null;
+    });
+  }
+
+  /** A hero's colour (its ring, its tray card and its portrait's rim): by its place in the party. */
+  private colourOf(heroId: number): number {
+    const i = this.s ? this.s.run.heroes.findIndex((h) => h.id === heroId) : 0;
+    return HERO_COLOURS[(i < 0 ? 0 : i) % HERO_COLOURS.length];
+  }
+
+  /** The aids to find the heroes, each frame of a fight: a ring of its colour under each hero, the foes' bars, arrows at the rim to heroes off the screen. */
+  private aids(dt: number): void {
+    const s = this.s!;
+    const rings = this.rings;
+    const bars = this.foeBars;
+    rings.clear();
+    bars.clear();
+    if (this.flashAt) {
+      this.flashAt.left -= dt;
+      if (this.flashAt.left <= 0) this.flashAt = null;
+    }
+    const fight = s.phase !== 'deploy';
+    for (const u of s.b.units) {
+      if (!u.alive) continue;
+      const sp = this.sprites.get(u.id);
+      if (!sp || !sp.root.visible) continue;
+      if (u.side === 'hero' && u.tag !== undefined && fight) {
+        const c = this.colourOf(u.tag);
+        rings.ellipse(sp.x, sp.y, 20, 10).fill({ color: c, alpha: 0.16 }).stroke({ color: c, width: 2, alpha: 0.95 });
+        if (this.flashAt?.id === u.id) {
+          const k = 1 - this.flashAt.left / 900;
+          rings.ellipse(sp.x, sp.y, 20 + 22 * k, 10 + 11 * k).stroke({ color: c, width: 2, alpha: 0.9 * (1 - k) });
+        }
+      } else if (u.side === 'foe') {
+        // (the foe's own bar is hidden: the Last Stand draws its foes' bars red, wider and framed, a boss's broader with a gilt frame)
+        const own = (sp as unknown as { bar?: { visible: boolean } }).bar;
+        if (own) own.visible = false;
+        const boss = (u.size ?? 1) > 1.2;
+        const w = boss ? 56 : 30;
+        const y = sp.y - sp.tall - 10;
+        const share = Math.max(0, u.hp / u.maxHp);
+        bars.rect(sp.x - w / 2 - 1, y - 1, w + 2, boss ? 7 : 5).fill({ color: 0x140808, alpha: 0.9 }).stroke({ color: boss ? 0xd8b060 : 0x5a2018, width: 1 });
+        bars.rect(sp.x - w / 2, y, w * share, boss ? 5 : 3).fill({ color: boss ? 0xc0182a : 0xe0362a });
+      }
+    }
+    if (this.frameN % 4 === 0) this.findArrows(fight);
+  }
+
+  /** The arrows at the rim: one for each standing hero off the screen, its portrait in a ring of its colour, pointing its way; a tap takes the camera there. */
+  private findArrows(fight: boolean): void {
+    const s = this.s!;
+    const box = this.parts.finds;
+    const room = this.room;
+    const k = this.world.scale.x;
+    const seen = new Set<number>();
+    if (fight)
+      for (const u of s.b.units) {
+        if (u.side !== 'hero' || u.tag === undefined || !u.alive) continue;
+        const sp = this.sprites.get(u.id);
+        if (!sp) continue;
+        const x = this.world.x + sp.x * k;
+        const y = this.world.y + (sp.y - sp.tall / 2) * k;
+        const inside = x > 8 && x < room.w - 8 && y > room.y + 8 && y < room.y + room.h - 8;
+        if (inside) continue;
+        seen.add(u.id);
+        let a = this.finds.get(u.id);
+        if (!a) {
+          a = el('button', 'stFind');
+          a.style.setProperty('--hc', colourCss(this.colourOf(u.tag)));
+          const pic = portrait(formOf(UNITS[u.def], u.grade ?? 1), 32, u.grade ?? 1);
+          a.append(el('i'), pic, el('b'));
+          const id = u.id;
+          a.addEventListener('click', () => this.panTo(id));
+          box.append(a);
+          this.finds.set(u.id, a);
+        }
+        const cx = room.w / 2;
+        const cy = room.y + room.h / 2;
+        const ang = Math.atan2(y - cy, x - cx);
+        const ax = Math.max(26, Math.min(room.w - 26, x));
+        const ay = Math.max(room.y + 26, Math.min(room.y + room.h - 26, y));
+        a.style.transform = `translate(${Math.round(ax - 22)}px, ${Math.round(ay - 22)}px)`;
+        (a.querySelector('b') as HTMLElement).style.transform = `rotate(${Math.round((ang * 180) / Math.PI)}deg)`;
+        a.hidden = false;
+      }
+    for (const [id, a] of this.finds) if (!seen.has(id)) a.hidden = true;
   }
 
   /* -------------------------------------------------------------- input */
@@ -547,11 +790,19 @@ export class StandView {
         // (a hero dragged onto a tile is posted there; a tap on it picks it, and the next tile tapped moves it)
         if (g.moved) {
           const at = this.tileAtScreen(x, e.clientY);
-          if (at && this.s && postHero(this.s, g.hero, at[0], at[1])) {
+          const other = at && this.s ? this.heroOn(at[0], at[1], g.hero) : null;
+          if (at && this.s && (other !== null ? swapPosts(this.s, g.hero, other) : postHero(this.s, g.hero, at[0], at[1]))) {
             play('tap');
             this.picked = null;
+            this.save();
           } else this.picked = g.hero;
+        } else if (this.picked !== null && this.picked !== g.hero && this.s && swapPosts(this.s, this.picked, g.hero)) {
+          // (a hero picked, then another tapped: they trade posts)
+          play('tap');
+          this.picked = null;
+          this.save();
         } else this.picked = this.picked === g.hero ? null : g.hero;
+        this.trayPick = this.picked;
         this.drawMarks();
         this.refreshBar(true);
         return;
@@ -566,8 +817,13 @@ export class StandView {
         return;
       }
       if (this.picked !== null) {
-        if (postHero(this.s, this.picked, tile[0], tile[1])) play('tap');
+        const other = this.heroOn(tile[0], tile[1], this.picked);
+        if (other !== null ? swapPosts(this.s, this.picked, other) : postHero(this.s, this.picked, tile[0], tile[1])) {
+          play('tap');
+          this.save();
+        }
         this.picked = null;
+        this.trayPick = null;
         this.drawMarks();
         this.refreshBar(true);
       }
@@ -584,6 +840,25 @@ export class StandView {
     inp.addEventListener('pointerup', up);
     inp.addEventListener('pointercancel', up);
   }
+
+  /** The roster id of the standing hero posted on (or standing on) a tile, other than `not`; null when none. */
+  private heroOn(u: number, v: number, not: number): number | null {
+    const s = this.s!;
+    const h = s.run.heroes.find((x) => x.id !== not && standing(x) && ((x.post![0] === u && x.post![1] === v) || s.b.units.some((y) => y.tag === x.id && y.alive && y.u === u && y.v === v)));
+    return h ? h.id : null;
+  }
+
+  /** The camera eases to a hero (a portrait or a rim arrow tapped). */
+  private panTo(unitId: number): void {
+    const sp = this.sprites.get(unitId);
+    if (!sp) return;
+    this.tx = sp.x;
+    this.ty = sp.y - sp.tall / 2;
+    this.clampCam();
+    this.flashAt = { id: unitId, left: 900 };
+  }
+  /** A hero just found (its ring pulses a moment). */
+  private flashAt: { id: number; left: number } | null = null;
 
   /** The roster id of the hero under a point on the screen (its sprite), if any. */
   private heroAt(sx: number, sy: number): number | null {
@@ -683,7 +958,8 @@ export class StandView {
     this.cx = this.tx = kx;
     this.cy = this.ty = ky - 24;
     const steps = this.steps();
-    this.scale = this.tscale = steps[Math.min(steps.length - 1, Math.floor(steps.length / 2))];
+    // (the room seen whole round the dais: the largest step not over 1)
+    this.scale = this.tscale = [...steps].reverse().find((k) => k <= 1.001) ?? steps[0];
     this.place();
   }
 
@@ -736,7 +1012,7 @@ export class StandView {
         for (const e of events) if (e.kind === 'ultLapse') this.heroBar.lapse(e.by);
         this.fx.show(s.b, events);
         if (bossHit(events, s.b.units)) this.nudge = NUDGE_MS;
-        if (s.b.units.length !== this.sprites.size) this.syncSprites();
+        if (s.b.units.length !== this.sprites.size + 1) this.syncSprites();
         playEvents(s.b, events, 1);
         this.takeNotes(events);
         this.sayMoments(events);
@@ -769,7 +1045,14 @@ export class StandView {
       this.banner.left -= dt;
       if (this.banner.left <= 0) this.parts.banner.hidden = true;
     }
+    if (this.vignetteLeft > 0) {
+      this.vignetteLeft -= dt;
+      if (this.vignetteLeft <= 0) this.parts.vignette.hidden = true;
+    }
+    if (s.phase === 'deploy') this.drawMarks();
+    this.aids(dt);
     this.nudge = Math.max(0, this.nudge - dt);
+    this.hall.step(fighting || s.phase === 'deploy' ? dt : 0, s.king.alive ? s.king.hp / s.king.maxHp : 0);
     const f = fighting || s.phase === 'over';
     this.cx = f ? easeTo(this.cx, this.tx, dt, EASE_MOVE_MS) : this.cx + (this.tx - this.cx) * Math.min(1, dt / 220);
     this.cy = f ? easeTo(this.cy, this.ty, dt, EASE_MOVE_MS) : this.cy + (this.ty - this.cy) * Math.min(1, dt / 220);
@@ -797,6 +1080,7 @@ export class StandView {
         this.grumbleBoss = n.boss;
         this.music(n.n, n.boss);
         if (n.boss) play('standBoss');
+        this.hall.burst(waveSpec(s.run.seed, s.run.armies, n.n, s.run.hall).edges);
         this.picked = null;
         this.drawMarks();
       } else if (n.kind === 'clear') {
@@ -807,6 +1091,7 @@ export class StandView {
           void this.host.moment({ kind: 'spire', floor: n.n }).finally(() => (this.hold = false));
         }
         play('victory');
+        this.hall.decree();
         kingSays('waveCleared', () => this.anchorOf(s.king.id));
         this.refreshBar(true);
         this.drawMarks();
@@ -843,6 +1128,13 @@ export class StandView {
 
   /** Where to point a speech bubble at a fighter: above its head, in page pixels, or null if it is not on show. */
   private anchorOf(id: number): Anchor | null {
+    if (this.s && id === this.s.king.id) {
+      // (the king speaks from his throne)
+      const r = this.host.app.canvas.getBoundingClientRect();
+      const k = r.width / this.host.app.screen.width;
+      const w = this.world;
+      return { x: r.left + (w.x + this.hall.kingTop.x * w.scale.x) * k, y: r.top + (w.y + this.hall.kingTop.y * w.scale.y - 8) * k };
+    }
     const sp = this.sprites.get(id);
     if (!sp || !sp.root.visible) return null;
     const box = sp.root.getBounds();
@@ -887,10 +1179,19 @@ export class StandView {
     startFight(boss, { level: mood.level });
   }
 
+  private vignetteLeft = 0;
+  private hbKey = '';
+
   private showBanner(n: number, boss: boolean): void {
     const b = this.parts.banner;
-    b.replaceChildren(el('small', '', boss ? 'A boss comes' : 'Wave'), el('b', '', boss ? `Wave ${n}` : String(n)));
+    const plate = el('div', 'stPlate');
+    plate.append(el('small', '', boss ? 'A BOSS COMES' : 'THEY BREAK THROUGH'), el('b', '', `WAVE ${n}`));
+    b.replaceChildren(el('i', 'stCrest'), plate);
     b.classList.toggle('boss', boss);
+    // (a boss wave's flourish: a red light round the screen for a while, breathing)
+    const vg = this.parts.vignette;
+    vg.hidden = !boss;
+    if (boss) this.vignetteLeft = BANNER_MS * 2;
     b.hidden = false;
     this.banner.left = BANNER_MS;
     // (a new element each time so its entrance plays again)
@@ -966,18 +1267,30 @@ export class StandView {
     } else if (s.phase === 'deploy') {
       this.text('count', p.count.querySelector('b'), `Wave ${run.wave}`);
       const spec = waveSpec(run.seed, run.armies, run.wave, run.hall);
-      this.text('next', p.count.querySelector('i'), `${spec.foes.length} foes from the ${spec.edges.join(', ')}. Tap a hero, then a tile, to move its post.`);
+      this.text('next', p.count.querySelector('i'), `${spec.foes.length} foes from the ${spec.edges.join(', ')}.`);
       (p.count.querySelector('small') as HTMLElement).textContent = 'First up';
       this.arrows(spec.edges);
     } else this.arrows([]);
     (p.go as HTMLButtonElement).hidden = !brk;
     p.start.hidden = s.phase !== 'deploy';
+    p.tray.hidden = s.phase !== 'deploy';
+    p.bar.hidden = s.phase === 'deploy';
+    if (s.phase === 'deploy') this.drawTray();
     p.pause.hidden = s.phase !== 'wave' && s.phase !== 'break';
     p.spells.hidden = !this.host.meta().spellbook.equipped.length || s.phase === 'deploy' || s.phase === 'over';
     p.heroes.hidden = s.phase === 'deploy' || s.phase === 'over';
     if (!p.heroes.hidden) {
       this.heroBar.setAuto(!!this.host.meta().ultAuto);
       this.heroBar.build(s.b);
+      // (each tile's rim in its hero's colour, as its ring on the field)
+      const hk = `${s.run.seed}:${p.heroes.children.length}`;
+      if (hk !== this.hbKey) {
+        this.hbKey = hk;
+        for (const t of p.heroes.querySelectorAll<HTMLElement>('.hb')) {
+          const u = s.b.units.find((x) => x.id === Number(t.dataset.unit));
+          if (u?.tag !== undefined) t.style.setProperty('--hc', colourCss(this.colourOf(u.tag)));
+        }
+      }
     }
     if (!p.spells.hidden) this.refreshSpells();
     this.refreshBar(false);
@@ -1029,7 +1342,7 @@ export class StandView {
     // the relics on offer
     const offer = this.parts.offer;
     offer.replaceChildren();
-    offer.hidden = !run.offer.length || over;
+    offer.hidden = !run.offer.length || over || s.phase === 'deploy';
     const price = offerCost(s);
     run.offer.forEach((id, i) => {
       const b = el('button', 'stRelic');
@@ -1071,26 +1384,48 @@ export class StandView {
     const box = this.parts.sheet;
     box.replaceChildren();
     const card = el('div', 'stCard stSheetCard');
-    card.append(el('h2', '', 'Paused'), el('p', 'stDim', `Wave ${sh.wave} · the king ${sh.king.hp} / ${sh.king.maxHp} · ${sh.gold} gold`));
+    const king = el('div', 'stSheetKing');
+    const kb = el('div');
+    kb.append(el('span', '', `The King · wave ${sh.wave} · ${sh.gold} gold`), el('b', '', `${sh.king.hp} / ${sh.king.maxHp}`), this.barEl(sh.king.hp / sh.king.maxHp, 'hp'));
+    king.append(el('i', 'stCrown'), kb);
+    card.append(el('i', 'stCrest'), el('h2', '', 'Paused'), king);
     const list = el('div', 'stSheetList');
     for (const h of sh.heroes) {
       const row = el('div', `stSheetRow${h.fallen ? ' fallen' : ''}`);
       const head = el('div', 'stSheetHead');
-      head.append(el('span', '', h.name), el('em', '', h.fallen ? 'Fallen' : `Lv ${h.level}${h.runLv ? ` +${h.runLv}` : ''}`));
+      const pic = portrait(formOf(UNITS[h.kind], 1), 32, 1);
+      pic.className = 'stSheetPic';
+      head.append(pic, el('span', '', h.name), el('em', '', h.fallen ? 'Fallen' : `Lv ${h.level}${h.runLv ? ` +${h.runLv}` : ''}`));
+      row.append(head, this.barEl(h.maxHp ? h.hp / h.maxHp : 0, 'hp'));
+      if (h.pool) row.append(this.barEl(h.pool.now / h.pool.max, h.pool.kind));
       const facts = el('div', 'stSheetFacts');
-      const pool = h.pool ? `${h.pool.kind === 'mana' ? 'Mana' : 'Stamina'} ${h.pool.now}/${h.pool.max}` : '';
-      facts.textContent = `Health ${h.hp}/${h.maxHp} · ${pool} · Attack ${h.atk} · Defence ${h.def} · Kills ${h.kills}`;
-      const skills = el('div', 'stSheetSkills');
-      const words = h.skills.map((k) => `${k.name} (${k.open ? `${k.cost}${k.paid ? ', ready' : ''}` : `Lv ${k.opens}`})`);
-      if (h.ult) words.push(`Ultimate: ${h.ult.name} (${!h.ult.open ? `Lv ${h.ult.opens}` : h.ult.ready ? 'ready' : `${Math.round(h.ult.meter * 100)}%`})`);
-      skills.textContent = words.join(' · ');
-      row.append(head, facts, skills);
+      facts.append(el('span', '', `Atk ${h.atk}`), el('span', '', `Def ${h.def}`), el('span', '', `Kills ${h.kills}`));
+      row.append(facts);
+      for (const k of h.skills) {
+        const line = el('div', `stSheetSkill${!k.open ? ' shut' : k.paid ? ' ready' : ''}`);
+        line.append(el('span', '', k.name), el('em', '', k.open ? String(k.cost) : `Lv ${k.opens}`));
+        row.append(line);
+      }
+      if (h.ult) {
+        const line = el('div', `stSheetSkill ult${h.ult.ready ? ' full' : ''}`);
+        line.append(el('span', '', `★ ${h.ult.name}`), el('em', '', !h.ult.open ? `Lv ${h.ult.opens}` : h.ult.ready ? 'Ready' : `${Math.round(h.ult.meter * 100)}%`));
+        row.append(line);
+      }
       list.append(row);
     }
-    const go = el('button', 'primary', 'Resume');
+    const go = el('button', 'primary stResume', 'Resume');
     go.addEventListener('click', () => this.setPaused(false));
     card.append(list, go);
     box.append(card);
+  }
+
+  /** A small bar of a share (health, mana or stamina) for the sheet. */
+  private barEl(share: number, kind: string): HTMLElement {
+    const b = el('i', `stSheetBar ${kind}`);
+    const f = el('span');
+    f.style.width = `${Math.round(Math.max(0, Math.min(1, share)) * 100)}%`;
+    b.append(f);
+    return b;
   }
 
   /** The king has fallen: the run is paid, and the end screen shows what it came to. */
@@ -1102,9 +1437,9 @@ export class StandView {
     dropStand();
     const end = this.parts.end;
     end.replaceChildren();
-    const card = el('div', 'stCard');
+    const card = el('div', 'stCard stEndCard');
     const sum = this.summary!;
-    card.append(el('h2', '', 'The king has fallen'), el('p', 'stBig', `Wave ${sum.best}`), el('p', 'stDim', sum.newBest ? 'A new best wave!' : `Best wave: ${m.stand ?? sum.best}`));
+    card.append(el('i', 'stCrest'), el('h2', '', 'The king has fallen'), el('p', 'stBig', `Wave ${sum.best}`), el('p', 'stDim', sum.newBest ? 'A new best wave!' : `Best wave: ${m.stand ?? sum.best}`));
     const rows = el('div', 'stFacts');
     const row = (a: string, b: string) => rows.append(Object.assign(el('div'), { innerHTML: `<span>${a}</span><b>${b}</b>` }));
     row('Waves cleared', String(sum.cleared));

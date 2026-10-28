@@ -89,13 +89,13 @@ export function hallPlan(seed: number, kind: HallKind): HallPlan {
     // two colonnades down the length of the hall, a carpet the length of it through the dais, braziers round the dais and down the nave
     plan.pillars = mirror4([[-5, -8], [-5, -4], [-5, 4], [-5, 8]].map(([a, b]) => [a, b] as [number, number])).filter((p) => p.v >= 1 && p.v <= 22);
     plan.carpets = rect(MID, MID, 1, 22).filter((p) => Math.abs(p.v - MID) > 2);
-    plan.braziers = mirror4([[3, 3]]).concat([{ u: MID - 5, v: MID }, { u: MID + 5, v: MID }]);
+    plan.braziers = mirror4([[3, 1]]).concat([{ u: MID - 5, v: MID }, { u: MID + 5, v: MID }]);
     plan.raised = [...rect(2, 4, 2, 4), ...rect(19, 21, 19, 21)].map((p) => ({ ...p, h: 2 }));
   } else if (kind === 'chapel') {
     // a ring of pillars round the nave, galleries raised round the walls, a carpet cross to the dais
     plan.pillars = mirror4([[7, 7], [0, 8], [8, 0]]);
     plan.carpets = [...rect(MID, MID, 4, 20), ...rect(4, 20, MID, MID)].filter((p) => Math.max(Math.abs(p.u - MID), Math.abs(p.v - MID)) > 2);
-    plan.braziers = mirror4([[3, 3]]);
+    plan.braziers = mirror4([[3, 1]]);
     for (let v = 1; v <= 22; v++) for (let u = 1; u <= 22; u++) {
       const r = Math.max(Math.abs(u - MID), Math.abs(v - MID));
       if (r >= 9) plan.raised.push({ u, v, h: r === 9 ? 2 : 3 });
@@ -106,7 +106,7 @@ export function hallPlan(seed: number, kind: HallKind): HallPlan {
       for (const p of rect(u0, u1, v0, v1)) if ((p.u === u0 + 1 || p.u === u1 - 1) && p.v !== v0 && p.v !== v1) plan.cover.push({ ...p, what: 'shelf' });
     plan.pillars = [{ u: 7, v: 7 }, { u: 17, v: 7 }, { u: 7, v: 17 }, { u: 17, v: 17 }];
     plan.carpets = rect(MID, MID, 15, 21);
-    plan.braziers = mirror4([[3, 3]]);
+    plan.braziers = mirror4([[3, 1]]);
     plan.lamps = [{ u: 9, v: 5 }, { u: 15, v: 5 }, { u: 9, v: 19 }, { u: 15, v: 19 }];
     plan.raised = rect(9, 15, 1, 3).map((p) => ({ ...p, h: 2 }));
   } else {
@@ -116,7 +116,7 @@ export function hallPlan(seed: number, kind: HallKind): HallPlan {
       { u: 5, v: 18, what: 'chest' }, { u: 7, v: 19, what: 'pots' }, { u: 4, v: 11, what: 'crate' }, { u: 20, v: 13, what: 'barrel' },
     ];
     plan.carpets = [...rect(MID, MID, 1, 22), ...rect(1, 22, MID, MID)].filter((p) => Math.max(Math.abs(p.u - MID), Math.abs(p.v - MID)) > 2);
-    plan.braziers = mirror4([[3, 3]]);
+    plan.braziers = mirror4([[3, 1]]);
     plan.lamps = [{ u: 9, v: 4 }, { u: 15, v: 4 }, { u: 4, v: 9 }, { u: 4, v: 15 }, { u: 20, v: 9 }, { u: 9, v: 20 }, { u: 15, v: 20 }];
     plan.raised = rect(15, 20, 15, 20).filter((p) => !(p.u === 18 && p.v === 17)).map((p) => ({ ...p, h: 2 }));
   }

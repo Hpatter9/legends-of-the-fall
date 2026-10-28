@@ -98,3 +98,89 @@ body[data-stand] #version { top: auto; bottom: 2px; }
 .stSheetHead span { color: var(--gold-hi); }
 .stSheetHead em { font-style: normal; color: var(--dim); }
 .stSheetFacts, .stSheetSkills { color: var(--dim); }
+/* STAND-003 phase B: the castle's dark backdrop (behind the canvas, over the page's sky). */
+.stSky { position: fixed; inset: 0; background-color: #0b0910; background-repeat: no-repeat, repeat-x; background-size: 100% 100%, auto 46%; background-position: center, center 18%; image-rendering: pixelated; }
+.stSky[hidden] { display: none; }
+
+/* STAND-003 phase B: the Keep & Kingdom brass of the battle HUD on the Last Stand (sizes 12 and 24 only, never bold). */
+#stand .stTop { background: linear-gradient(110deg, #111b18f5, #303029fa 50%, #111b18f5), url(ui/page.png); border-bottom: 3px double #b99b61; box-shadow: 0 4px 18px #0008, inset 0 -4px 8px #0006; padding-bottom: 10px; }
+#stand .stTop::after { content: ''; position: absolute; left: calc(50% - 72px); bottom: -30px; width: 144px; height: 48px; background: url(ui/battle-crest.png) center / contain no-repeat; filter: drop-shadow(0 2px 3px #000b); pointer-events: none; }
+#stand .stTop button, #stand .stCentre, #stand .stAutoPlace { border: 1px solid #a58b56; border-radius: 3px; background: linear-gradient(#414435, #1b2720); box-shadow: inset 0 0 0 2px #121c15, 0 2px 5px #0008; color: #f2d69d; }
+#stand .stCentre { top: calc(env(safe-area-inset-top) + 92px); border: 2px solid #c9a75e; box-shadow: 0 0 10px #e8c26a55, inset 0 0 0 2px #121c15; }
+#stand .stWave span, #stand .stGold span { color: #f4db9f; }
+#stand .stKing i { border: 1px solid #9b986d; background: #0a1420; box-shadow: inset 0 2px 4px #000a; }
+#stand .stKing i span { background: linear-gradient(#b4e47d, #4d9b61); box-shadow: 0 0 6px #78c97a88; }
+#stand .stKing.low i span { background: linear-gradient(#ff9a7a, #c0392b); }
+#stand .stBottom { background: radial-gradient(ellipse at 50% 0, #66734533, transparent 65%), linear-gradient(100deg, #131e1af8, #2c3027fa 50%, #131e1af8), url(ui/page.png); border-top: 3px double #c0a268; box-shadow: 0 -6px 25px #0008, inset 0 4px 0 #111b15; }
+#stand .stBottom::before { content: ''; position: absolute; top: -12px; left: calc(50% - 30px); width: 60px; height: 20px; background: url(ui/ribbon.png) center / 100% 100% no-repeat; pointer-events: none; }
+#stand .stHeroes .hb, #stand .stHeroes .hbAuto { border: 1px solid #a28a58; border-radius: 4px; background: radial-gradient(ellipse at top, #83945b33, transparent 75%), linear-gradient(#2b372a, #111d17); box-shadow: inset 0 0 0 2px #0c1712, inset 0 -3px 0 var(--hc, transparent), 0 2px 5px #0007; }
+#stand .stHeroes .hb.ready { border-color: #f6db91; box-shadow: inset 0 0 0 1px #dbc17b, inset 0 -3px 0 var(--hc, transparent), 0 0 12px #edc56c66; }
+#stand .stSpell { border: 1px solid #b69a64; border-radius: 5px; background: radial-gradient(ellipse at 50% 10%, #e9b85c3a, transparent 75%), linear-gradient(#263229, #101a17); box-shadow: inset 0 0 0 2px #101813, 0 2px 6px #0008; color: #f5e6be; }
+#stand .stBuy, #stand .stRelic { border: 1px solid #a58b56; border-radius: 4px; background: linear-gradient(#2d3a2c, #141e18); box-shadow: inset 0 0 0 2px #0f1813, 0 2px 5px #0007; color: #f1e3bf; }
+#stand .stRelic span { color: #f4db9f; }
+#stand .stBuy.level, #stand .stStart, #stand .stResume, #stand .stEnd .primary, #stand .stGo { border: 3px double #d5bb7c; border-radius: 3px; background: linear-gradient(#4a6b48, #1e402b); box-shadow: inset 0 0 14px #b5cf7933, 0 0 12px #e8c26a44; color: #fff3d0; }
+#stand .stCount { border: 2px solid #c9a75e; background: linear-gradient(#1b2420f2, #2e3a2cf2); box-shadow: 0 4px 12px #000a; }
+/* the wave's banner: the crest over a gilt plate; a boss wave's in red, with a red light breathing round the screen */
+#stand .stBanner { top: 30%; }
+#stand .stBanner .stCrest { display: block; width: 220px; height: 74px; background: url(ui/battle-crest.png) center / contain no-repeat; filter: drop-shadow(0 0 12px #f2c96a99) drop-shadow(0 3px 2px #000c); }
+#stand .stPlate { margin-top: -10px; padding: 6px 40px 8px; background: linear-gradient(90deg, transparent, #1b2420f2 18%, #2e3a2cf2 50%, #1b2420f2 82%, transparent); border-top: 2px solid #c9a75e; border-bottom: 2px solid #c9a75e; text-align: center; }
+#stand .stPlate small { display: block; font-size: 12px; color: #e8d9b0; letter-spacing: .3em; }
+#stand .stPlate b { display: block; font: 400 24px/1.2 var(--display); color: #f4db9f; letter-spacing: .12em; text-shadow: 0 0 10px #f2c96a, 0 2px 0 #000; }
+#stand .stBanner.boss .stCrest { filter: drop-shadow(0 0 16px #ff4a3acc) drop-shadow(0 3px 2px #000c); }
+#stand .stBanner.boss .stPlate { border-color: #e0503a; background: linear-gradient(90deg, transparent, #2a0d0cf2 18%, #4a1410f2 50%, #2a0d0cf2 82%, transparent); }
+#stand .stBanner.boss .stPlate b { color: #ffd2b8; text-shadow: 0 0 12px #ff4a3a, 0 2px 0 #000; }
+.stVignette { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 120px 30px #c0201899; animation: stVig 1.2s ease-in-out infinite alternate; }
+.stVignette[hidden] { display: none; }
+@keyframes stVig { from { opacity: .65; } to { opacity: 1; } }
+/* the deploy tray */
+.stTray { display: flex; flex-direction: column; gap: 6px; }
+.stTray[hidden] { display: none; }
+.stTray h3 { margin: 0; text-align: center; font: 400 24px/1.1 var(--display); color: #f4db9f; text-shadow: 0 2px 0 #000; }
+.stTip { margin: 0; text-align: center; color: #d6c9a4; }
+.stRoster { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; }
+#stand .stMan { position: relative; min-height: 0 !important; aspect-ratio: 2 / 3; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 0 0 6px; border: 0; background: #18251a url(ui/hero-brass-frame.png) center / 100% 100% no-repeat; box-shadow: 0 2px 5px #0007, inset 0 -3px 0 var(--hc, transparent); touch-action: none; }
+.stManPic { position: absolute; top: 12%; left: 12%; width: 76%; height: auto; image-rendering: pixelated; }
+.stMan span { position: relative; max-width: 92%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; line-height: 1; color: #f1e3bf; text-shadow: 0 1px 0 #000; }
+#stand .stMan.pick { box-shadow: 0 0 0 2px #ffe499, 0 0 14px #f2c96a; }
+.stTrayRow { display: grid; grid-template-columns: 1fr 1.6fr; gap: 6px; }
+#stand .stTrayRow .stStart { font: 400 24px/1.1 var(--display) !important; }
+.stGhost { position: fixed; left: 0; top: 0; z-index: 5; width: 48px; height: 48px; border-radius: 50%; overflow: hidden; pointer-events: none; outline: 2px solid #ffd76a; box-shadow: 0 0 16px #ffb84a; background: #0008; }
+.stGhost canvas { width: 48px; height: 48px; image-rendering: pixelated; }
+/* the arrows at the rim to the heroes off the screen */
+.stFinds { position: absolute; inset: 0; pointer-events: none; }
+#stand .stFind { position: absolute; left: 0; top: 0; width: 44px; height: 44px; min-height: 44px; padding: 0; border: 0; background: none; pointer-events: auto; }
+.stFind[hidden] { display: none; }
+.stFind i { position: absolute; inset: 0; border-radius: 50%; background: #14101ad9; border: 2px solid var(--hc, #f2c96a); box-shadow: 0 0 8px var(--hc, #f2c96a); }
+.stFind canvas { position: absolute; left: 6px; top: 6px; width: 32px; height: 32px; border-radius: 50%; image-rendering: pixelated; }
+.stFind b { position: absolute; inset: 0; }
+.stFind b::after { content: ''; position: absolute; right: -9px; top: 14px; border: 8px solid transparent; border-left-color: var(--hc, #f2c96a); }
+/* the pause sheet and the end card in brass */
+#stand .stSheetCard, #stand .stEndCard { position: relative; padding-top: 30px; background: radial-gradient(ellipse at 50% 0, #66734540, transparent 60%), linear-gradient(100deg, #131e1afa, #2c3027fc 50%, #131e1afa), url(ui/page.png); border: 3px double #c9a75e; box-shadow: 0 0 0 2px #0c0a08, 0 10px 30px #000c, inset 0 0 30px #0009; }
+#stand .stSheetCard .stCrest, #stand .stEndCard .stCrest { position: absolute; left: calc(50% - 80px); top: -28px; width: 160px; height: 54px; background: url(ui/battle-crest.png) center / contain no-repeat; filter: drop-shadow(0 2px 3px #000b); }
+#stand .stSheetCard h2, #stand .stEndCard h2 { color: #f4db9f; text-shadow: 0 0 10px #f2c96a88, 0 2px 0 #000; }
+.stSheet { padding-top: calc(env(safe-area-inset-top) + 40px); }
+.stSheetKing { width: 100%; display: grid; grid-template-columns: 40px 1fr; gap: 8px; align-items: center; padding: 4px 8px; text-align: left; border: 1px solid #a58b56; border-radius: 4px; background: linear-gradient(#3a2a1c, #1a120c); box-shadow: inset 0 0 0 2px #0f0a06; }
+.stSheetKing span { color: #f4db9f; }
+.stSheetKing b { float: right; font-weight: 400; }
+.stCrown { width: 40px; height: 40px; background: url(ui/ic-crown.png) center / 32px no-repeat, #0a140f; border: 1px solid #c9a75e; border-radius: 50%; }
+#stand .stSheetList { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+#stand .stSheetRow { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; border: 1px solid #a28a58; border-radius: 4px; background: radial-gradient(ellipse at top, #83945b33, transparent 75%), linear-gradient(#2b372a, #111d17); box-shadow: inset 0 0 0 2px #0c1712, 0 2px 5px #0007; }
+#stand .stSheetRow.fallen { filter: grayscale(1) brightness(0.6); opacity: 1; }
+#stand .stSheetRow.fallen .stSheetHead em { color: #e07060; }
+.stSheetHead { display: flex; align-items: center; gap: 6px; }
+.stSheetPic { width: 32px; height: 32px; image-rendering: pixelated; background: #0a140f; border: 1px solid #a58b56; border-radius: 50%; }
+.stSheetBar { display: block; height: 6px; background: #060f0b; border: 1px solid #4c4430; }
+.stSheetBar span { display: block; height: 100%; }
+.stSheetBar.hp span { background: linear-gradient(#b4e47d, #4d9b61); }
+.stSheetBar.mana span { background: linear-gradient(#c2f5ff, #48b6e7 45%, #2b6098); }
+.stSheetBar.stamina span { background: linear-gradient(#ffe8a0, #e0b030); }
+#stand .stSheetFacts { display: grid; grid-template-columns: repeat(3, 1fr); color: #d6c9a4; }
+.stSheetSkill { display: flex; justify-content: space-between; gap: 4px; color: #b9ad8c; }
+.stSheetSkill span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stSheetSkill em { font-style: normal; }
+.stSheetSkill.ready { color: #a8e2ff; text-shadow: 0 0 6px #48b6e7; }
+.stSheetSkill.shut { color: #6e6658; }
+.stSheetSkill.ult { color: #f4db9f; }
+.stSheetSkill.ult.full { color: #fff3c0; text-shadow: 0 0 8px #f2c96a; }
+@media (prefers-reduced-motion: reduce) { .stVignette { animation: none; } }
+.stBar[hidden] { display: none; }
