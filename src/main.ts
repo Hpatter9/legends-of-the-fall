@@ -55,8 +55,9 @@ import { dailyBonus, dailyCleared, dailyInProgress, modeNote, settleDaily, settl
 import { dailyBossName, dailyCrowns, DAILY_WAVES } from './sim/daily';
 import { showDailyStart } from './dailyView';
 import { chestPicture } from './chestStash';
-import { toastAchievements, toastJoined, toastStones } from './achievementsView';
+import { toastAchievements, toastJoined, toastSpells, toastStones } from './achievementsView';
 import { grantContent } from './sim/contentHeroes';
+import { grantSpells } from './sim/spellSources';
 import { clockSeed, todayKey } from './modes';
 import { tips, type Box } from './tips';
 import { ULT_LEVEL } from './sim/abilities';
@@ -322,7 +323,15 @@ class Game {
       },
       onScene: () => this.syncScene(),
       onWatchScene: (id) => void this.playScene(id),
-      onBuilt: (site) => void this.queueScene({ kind: 'castle', site }),
+      onBuilt: (site) => {
+        // (a Mage Tower level teaches its spells the moment it stands)
+        const learnt = grantSpells(this.meta);
+        if (learnt.length) {
+          saveMeta(this.meta);
+          toastSpells(learnt);
+        }
+        void this.queueScene({ kind: 'castle', site });
+      },
     });
     this.towerView = new TowerView({
       meta: () => this.meta,
@@ -2277,6 +2286,8 @@ class Game {
       // (a milestone this fight reached may bring in a hero)
       const joined = grantContent(this.meta);
       toastJoined(joined);
+      // (and may teach a spell)
+      toastSpells(grantSpells(this.meta), joined.length);
       // (the fight's cinematics, one after another: an army's last stand, a hero earned has its own reveal; the Calamity's end plays before its victory card)
       if (army && this.pay?.firstClear) void this.queueScene({ kind: 'armyClear', army: army.id });
       // (the stars this fight won may have opened the Calamity: its reveal, the portal, plays once, the moment it opens)

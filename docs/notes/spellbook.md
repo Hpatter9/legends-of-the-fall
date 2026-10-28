@@ -10,7 +10,7 @@ More king's spells, a power budget so three strong ones can't be taken together,
   nobody to lift). Rally and Earthquake need no tile (`target: 'all'`); the page casts them on the card tap.
 - **Power budget**: three slots, and the equipped powers must add up to `spellBudget(castle)` in `castle.ts`: 9, and the
   Mage Tower adds 1 at level 2 and again at level 4. The starting three (Heal, Meteor, Haste) cost 8.
-- **Unlocking**: `Meta.spellbook = { owned, equipped }`. The starting three are free; the rest cost crowns
+- **Unlocking** (spells are no longer bought: see `spell-sources.md`): `Meta.spellbook = { owned, equipped }`. The starting three are free; the rest cost crowns
   (Shield 60 up to Resurrect 250). `readLoadout` makes a saved value sane (old saves get the starting three equipped;
   unowned, extra or over-budget spells are dropped). Rules: `equipBlock`, `equipSpell`, `unequipSpell`, `unlockSpell`.
 - **Mana**: `MANA_PER_SEC` 1 -> 0.5, start still 2, top 10. A fight of 30-40s buys two to four casts.
