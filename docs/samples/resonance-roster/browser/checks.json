@@ -1,1 +1,38 @@
-[]
+[
+  {
+    "width": 393,
+    "height": 852,
+    "portraits": 45,
+    "frameChecks": 1440,
+    "forms": [
+      "werewolf_white",
+      "werewolf_black",
+      "cls_treant",
+      "cls_treant_2",
+      "cls_treant_3"
+    ],
+    "reducedMotion": true,
+    "offline": true,
+    "errors": []
+  },
+  {
+    "width": 360,
+    "height": 780,
+    "portraits": 9,
+    "frameChecks": 160,
+    "forms": [],
+    "reducedMotion": true,
+    "offline": false,
+    "errors": []
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "portraits": 9,
+    "frameChecks": 160,
+    "forms": [],
+    "reducedMotion": true,
+    "offline": false,
+    "errors": []
+  }
+]

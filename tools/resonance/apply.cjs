@@ -45,6 +45,4 @@ if (!sheets.includes("import { RESONANCE_URLS }")) {
   sheets = sheets.replace('const URLS: Record<string, string> = {', 'const URLS: Record<string, string> = {\n  ...RESONANCE_URLS,');
 }
 fs.writeFileSync('src/render/sheets.ts', sheets);
-const awaken = 'src/render/awakenLook.ts';
-fs.writeFileSync(awaken, fs.readFileSync(awaken, 'utf8').replace("werewolf: 'werewolf_red'", `werewolf: '${sheetOf('werewolfAwakened')}'`));
 console.log(`Registered ${fronts.length} front sheets and ${ids.length - fronts.length} rear sheets; combat definitions retained.`);

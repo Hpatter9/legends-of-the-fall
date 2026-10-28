@@ -1,20 +1,34 @@
 # ART-002 — full roster and four facings
 
-Owner requested all remaining heroes in the approved Resonance pixel style, then added four-direction animation and explicitly grounded walking. Branch: `art/resonance-roster`, based on the accepted pilot in PR #144. Work in progress; do not merge or deploy this checkpoint.
+The approved Resonance inspired pixel artwork now covers all 45 collectible heroes. Each has separately drawn front and rear animation sheets, mirrored for the four isometric directions. All four facings follow section rotation. Walking uses eight contact/down/passing/lift poses with alternating legs, timed to tile movement progress. Flat-ground bounce is reduced to keep footfalls grounded; climbs retain their height movement. Mounted, serpent and floating characters use appropriate movement.
 
-Scope: 45 collectible heroes, with matching front/rear art mirrored left/right to cover all four isometric facings. Preserve identities, stats, kits, saves, enemy art and unrelated UI. Additional Werewolf Brute/awakened art and three Treants preserve hero transformations. The small/medium/large body bands remain 42/50/60 world pixels.
+Branch: `art/resonance-roster`. The two-hero pilot was merged in PR #144. This follow-up integrates main through 0.190.0 without changing its version, combat values, identities or save keys. Main's awakened class auras remain in place; awakening does not switch to the unused red Werewolf art.
 
-## Durable generation state
+The 50 front/rear pairs include five supporting appearances: Werewolf Brute, the unused red variant, and three Treants. Werewolf and Druid transformation look IDs resolve to the new art. Foe disguises retain their borrowed enemy art. Promotion grades keep their existing size/effect progression, using the new character design. Menu portraits stay front-facing; battle sprites have all four facings.
 
-Source files in `tools/resonance/source/` are the local recovery record; skip existing files when resuming. `roster.json` lists the43 remaining heroes; `variants.json` lists five supporting appearances. The two pilot sources are `source/soldier.png` and `source/archer.png`.
+## Artwork and packing
 
-- `source/roster/`: all48 new front atlases saved.
-- `source/turning/`: rear atlases, partly generated. Earlier atlases use their last row for a front walk; later atlases have adjacent JSON marking `fullRear` with a true rear cast row.
-- `source/walk/`: dedicated eight-frame front/rear walking cycles, partly generated. `pose-guide.png` is assembled from the original Knight walk as a pose reference; preserve the generated hero design rather than its older proportions.
-- `rear-prompt.txt` and `walk-prompt.txt` preserve the generation instructions. Raw artwork remains locally available for corrections; the packed sheets and prompts are committed. Raw roster/turning/walk intermediates are ignored to avoid adding hundreds of megabytes to Git.
+Production PNGs, layout metadata, prompts, packing tools and visual evidence are committed. Raw generated intermediates remain locally in `tools/resonance/source/roster`, `turning` and `walk`, ignored to avoid hundreds of megabytes in Git. `roster.json` contains 43 designs; `variants.json` contains five supporting forms. Pilot sources remain in `source/soldier.png` and `archer.png`.
 
-Some initial four-frame walks repeated one leg. They are being replaced with eight-frame contact/down/passing/lift phases for each leg, using dedicated walking atlases. Walking remains unvalidated until reviewed as a loop. Flat-ground hop is reduced; walk playback follows tile movement progress. Isometric facing respects section rotation. Eight-frame rows continue onto a reserved `_walk` row, with renderer and small-rig support.
+Repacking order (requires the local sources):
 
-## Remaining implementation and validation
+```sh
+node tools/resonance/pack-roster.cjs
+node tools/resonance/pack-turning.cjs
+node tools/resonance/pack-walk.cjs
+node tools/resonance/repair-poses.cjs
+node tools/resonance/trim.cjs
+node tools/resonance/apply.cjs
+```
 
-Finish missing rear/walk sources. Pack, inspect flagged overlap/cropping, and wire every new sheet and hero appearance. Trim transparent frame padding and avoid loading obsolete hero textures. Keep original sheets for foes and original credits. Review actual four-facing walking loops and representative species, all45 portraits and combat at360×780,393×852,412×915, transformations, reduced motion and offline reload. Run typecheck/build and affected tests; record actual results here. No final checks have passed for this unfinished full-roster change.
+Eight walk frames span two physical rows; `_walk` reserves the continuation. Battle and small-rig frame selection both wrap correctly. Seven action sequences with overlapping source actors use selected intact attack/cast poses and idle recovery, recorded in `pose-selection.json`. The walking sources have no touching-component warnings. Symmetric transparent trimming preserves paired frame centres and foot anchors. Decoded atlas footprint fell from 393.75 to 187.36 MiB (52.4%); this is texture geometry, not a real-phone peak-memory measurement. Only currently required unit sheets and their rear views are loaded.
+
+## Validation
+
+- `npm run typecheck`, `npm run web`: passed after integrating main.
+- `npm test -- resonance-facing hero-art awaken class-heroes monster-heroes new-heroes more-heroes hero-kits-looks hero-kits-all party`: all 11 selected test files passed.
+- `node tools/resonance/validate.cjs`: all 2,800 animation cells bounded and nonempty, hard alpha, 50 matched pairs, 100 eight-frame walk clips (800 frames), no outstanding death-pose reviews.
+- Ten walk contact sheets reviewed for all heroes/forms; the Soldier/Archer four-facing GIF contains eight frames at 80 ms per frame.
+- Browser checks passed at 393×852, 360×780 and 412×915 with no console/page errors: 45 portraits at 393, nine representative portraits at each other size; 1,760 actual sprite facing/frame checks; five transformation aliases; combat, party and reduced motion at each size; offline reload at 393. Screenshots: `docs/samples/resonance-roster/browser/`; final results recorded in `checks.json` by `tools/resonance/roster-checks.mjs`. Browser validation uses localhost because the game deliberately registers its service worker only for HTTPS or localhost.
+
+No merge or deployment performed. Real-phone frame rate and peak GPU memory remain unmeasured.
