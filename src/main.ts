@@ -78,6 +78,7 @@ import { isScenario } from './sim/scenario';
 import { traitBadge } from './traitBadge';
 import { closestTrait, countTraits, kindsOf, nextTierLine, traitsOf, TRAITS } from './sim/traits';
 import { placeSynergies, startSynergies, updateCombo } from './synergyView';
+import { duoCombosOf } from './sim/duoCombos';
 import { COMBO_NAME, comboById, comboOf, noteCombos } from './sim/combos';
 import { UnitSprite } from './render/unitView';
 import { flyUp, recyclePuff, summonBurst } from './render/uiFx';
@@ -772,7 +773,7 @@ class Game {
     this.stats = startStats(this.b.units);
     // (the music: a boss, a Calamity fight, or one of three battle tracks by how hard the fight runs)
     startFight(isBossRun(this.run), { calamity: this.run.mode?.kind === 'calamity', level: fightLevel(this.run.stage, { elite: this.run.tower?.cur?.kind === 'elite', waves: waveArmyOf(this.run)?.waves.length }) });
-    startSynergies(countTraits(kindsOf(this.b.units)), this.b.combo);
+    startSynergies(countTraits(kindsOf(this.b.units)), this.b.combo, duoCombosOf(kindsOf(this.b.units)));
     this.chosen = null;
     this.boardView.clearMarks();
     this.refreshBossBar();

@@ -47,6 +47,13 @@ export interface KitFx {
   /** Shambler: times he has grown from a meal; and a body that has been eaten (or raised) is gone. */
   grown?: number;
   spent?: boolean;
+  /** Duo-Combos & Trait Resonance: */
+  lifestealUntil?: number;
+  bleedHits?: number;
+  shadowShroudUntil?: number;
+  tempReach?: number;
+  splashShots?: number;
+  bonusDodgeUntil?: number;
   /** Rifle Bot's fire: its skill meter stops filling until then (held at what it had). */
   suppressed?: number;
   frozen?: number;
