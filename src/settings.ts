@@ -126,6 +126,7 @@ function draw(): void {
     toggleRow('Cinematics', 'Short scenes at big moments. Off, none play by themselves; the Scenes list in the codex still plays them', 'cinematics', s.cinematics),
     duchessHatRow(s.duchessHat),
     resetTipsRow(),
+    devRow(),
     startOverRow(),
   );
   const version = document.createElement('p');
@@ -231,6 +232,30 @@ function duchessHatRow(value: DuchessCosmeticId): HTMLElement {
       if (!unlocked) return;
       setSetting('duchessHat', c.id);
       draw();
+    });
+    group.append(b);
+  }
+  r.append(group);
+  return r;
+}
+
+/** The page's handler for the developer grant (`main.ts` sets it: it holds the meta). Returns a line saying what was given. */
+let devGrantFn: ((what: 'crowns' | 'shards', n: number) => string) | null = null;
+export function onDevGrant(fn: (what: 'crowns' | 'shards', n: number) => string): void {
+  devGrantFn = fn;
+}
+
+/** The owner's developer option, for testing: crowns, or shards of every hero, a hundred or a thousand a tap. */
+function devRow(): HTMLElement {
+  const [r, text] = row('Developer', 'For testing: crowns, or shards of every hero, a hundred or a thousand a tap');
+  const group = document.createElement('div');
+  group.className = 'devGrant';
+  for (const [what, n] of [['crowns', 100], ['crowns', 1000], ['shards', 100], ['shards', 1000]] as const) {
+    const b = document.createElement('button');
+    b.textContent = `+${n} ${what}`;
+    b.addEventListener('click', () => {
+      const said = devGrantFn?.(what, n);
+      if (said) text.querySelector('em')!.textContent = said;
     });
     group.append(b);
   }

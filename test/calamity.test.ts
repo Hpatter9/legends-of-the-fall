@@ -911,8 +911,10 @@ test('ascension chaos mutators: rolling gales and hot coal ground', () => {
   assert.equal(TWISTS.rollingGales.fx.gales, 1);
   assert.equal(TWISTS.hotCoals.fx.coals, 4);
 
-  // Optional chaos mutator enables high-ascension twists
-  assert.equal(ascRules(6).chaosMutators, undefined);
+  // The chaos twists begin at ascension 3 (the owner's call), and not below
+  assert.equal(ascRules(2).chaosMutators, undefined);
+  assert.equal(ascRules(3).chaosMutators, true);
+  assert.equal(ascRules(6).chaosMutators, true);
   assert.equal(ascRules(0, { chaosMutators: true }).chaosMutators, true);
 
   // Hot coals board modification
