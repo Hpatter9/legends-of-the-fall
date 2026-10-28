@@ -57,6 +57,7 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 | ID | Task | Result | Reference |
 | --- | --- | --- | --- |
+| STAND-002 | Last Stand made harder | Owner accepted release 0.170.0; greedy median waves 4/10/13/22/26/35 at levels 1/10/20/30/60/100, pay within about 9% of before; typecheck, 1133 tests, build, fresh/old-save and Last Stand smoke passed | [Handoff](notes/last-stand.md) (section "Making it harder"), branch `claude/stand-harder` |
 | FX-003 | Individual painted signatures for 129 base abilities | Owner accepted release 0.168.0 and merge through PR #135; 84 integration tests, all five emitted-material browser cases and offline launch passed | [PR #135](https://github.com/Hpatter9/legends-of-the-fall/pull/135), [handoff and scope](notes/individual-ability-effects.md) |
 | FX-002 | Cinematic battle-effects remake | Accepted with FX-003 for release 0.168.0; main 0.167.0 audio/courtyard updates preserved, release checks passed | [PR #135](https://github.com/Hpatter9/legends-of-the-fall/pull/135), [handoff](notes/battle-effects-remake.md) |
 | UI-005 | Cinematic party war council and compact company roll | Owner accepted and authorised release 0.166.0 and merge; typecheck/build, 20 affected tests, all three portrait sizes and all 45 hero tableaux passed on the integrated release | [PR #134](https://github.com/Hpatter9/legends-of-the-fall/pull/134), [handoff](notes/party-war-council.md) |
