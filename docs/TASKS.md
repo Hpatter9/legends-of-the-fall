@@ -96,7 +96,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 **STAND-004 / Idle heroes help in the Last Stand** — the owner: "When all the units are on the map and heroes aren't engaged with them, they need to go help in the last stand."
 
-- **Status:** ready for review.
+- **Status:** done; released as 0.204.0 (the inner ring stays as the king's guard; one helper sets off at a time).
 - **Owner:** Claude. **Branch / worktree:** `claude/stand-help`, `/home/user/stand-help` (from main 0.200.0). PR: none.
 - **Scope:** new `src/sim/standHelp.ts`; hooks in `src/sim/stand.ts` (`stepStand`, `beginWave`, `clearWave`, the pace levers), `standAi.ts` (`huntDecide`'s focus, `helpWalk`), `battle.ts` (`StandMode.help`); `src/standView.ts` (the helper's pointer); `test/stand-help.test.ts`, the leash test in `test/stand.test.ts`; `tools/stand/help-shots.mjs`; `docs/notes/stand-help.md`, `docs/samples/stand-help-*.png`.
 - **Completion criteria:** once a wave is all in, a hero with nothing in its zone leaves to help and returns when called back, the fight is won or the wave ends; the inner ring and at least two heroes stay, tanks last, one setting off at a time; deterministic and tested; the pace re-tuned to about 4, 9, 10, 14, 20, 25; typecheck, web build, the stand tests and the full suite; screens at 393x852, 360x780 and 412x915.
