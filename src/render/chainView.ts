@@ -116,6 +116,10 @@ export class ChainView {
         x0 = Math.min(x0, scenic.x0); x1 = Math.max(x1, scenic.x1);
         y0 = Math.min(y0, scenic.y0); y1 = Math.max(y1, scenic.y1);
       }
+      let minH = Infinity;
+      for (const t of s.board.tiles) if (t.h < minH) minH = t.h;
+      if (!Number.isFinite(minH)) minH = 0;
+      const large = s.board.w >= 12;
       for (let v = 0; v < s.board.d; v++)
         for (let u = 0; u < s.board.w; u++) {
           const t = s.board.tiles[v * s.board.w + u];
@@ -123,7 +127,8 @@ export class ChainView {
           x0 = Math.min(x0, x - TW / 2);
           x1 = Math.max(x1, x + TW / 2);
           y0 = Math.min(y0, y - TH / 2 - 52);
-          y1 = Math.max(y1, y + TH / 2 + t.h * HH + FOOT);
+          const skirt = large ? Math.min(t.h, Math.max(t.h - minH + 4, 14)) : t.h;
+          y1 = Math.max(y1, y + TH / 2 + skirt * HH + FOOT);
         }
     }
     return (this.reach = { x0, x1, y0, y1 });
