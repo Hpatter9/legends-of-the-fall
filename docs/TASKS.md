@@ -18,7 +18,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 ### FIGHT-FIXES — Boss in the arena's middle, a free fight camera, heroes get up on a revive, the trophy wall closes
 
 - **Goal:** four of the owner's fixes: "The bosses should stand in the middle of the boss arena."; "Don't lock camera in each wave. Allow free movement and zooming during the wave."; "The units get up off the ground, not a new spawn look, when a heart is burnt for another try."; "Trophy wall comes up and locks castle screen."
-- **Status:** done; ready for owner review. Not merged; the version is not bumped.
+- **Status:** done; released as 0.201.0. The four armies the boss move shifted (undead, wildwood, labyrinth, golems) are retuned by ARMY-PACE.
 - **Owner:** Claude
 - **Branch / worktree / PR:** `claude/fight-fixes`, `/home/user/fight-fixes` (from main 0.200.0); PR none.
 - **Allowed files or systems:** new `src/sim/arenaDeploy.ts`, `src/render/fightCam.ts`; hooks in `src/sim/battle.ts` (`startBattle`'s foe placement), `src/sim/board.ts` (optional `Board.arenaMid`), `src/sim/scenario.ts` (one line), `src/main.ts` (camera input, revive), `src/render/unitView.ts` (`getUp`), `src/trophyWall.css`, `src/castle.ts` (`drawVfx` index guard); tests `test/arena-boss.test.ts`, `test/fight-cam.test.ts`, `test/trophy-wall-hidden.test.ts`; `tools/fight-fixes/shots.mjs`; `docs/notes/fight-fixes.md`, `docs/samples/fight-fixes-*.png`.
