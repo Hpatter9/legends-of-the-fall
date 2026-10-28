@@ -75,3 +75,22 @@ d.rectangle((0, sheet.height - 26, sheet.width, sheet.height), fill=(160, 20, 20
 d.text((10, sheet.height - 20), 'MOCK-UP  The king: Himeko Sutori paper doll (chronos-assets) and DawnLike throne, 4x', fill=(255, 255, 255, 255))
 sheet.save('docs/samples/stand-overhaul-mock-king.png')
 print('king sheet')
+
+# ---- round two (the owner: "more ornate, exciting, flashy"): the pieces of the second mock-ups
+import shutil
+# the enthroned king of the castle's throne room (0.176.0), the first of its three frames, so he looks the same everywhere
+Image.open('src/art/throne/king_throne.png').convert('RGBA').crop((0, 0, 160, 210)).save(f'{OUT}/king_throne.png')
+room = Image.open('src/art/throne/throne_room.png').convert('RGBA')
+room.crop((55, 12, 110, 108)).save(f'{OUT}/window.png')      # a stained-glass window
+room.crop((4, 8, 36, 120)).save(f'{OUT}/pilaster.png')        # a gilt pilaster with its red banner
+room.crop((0, 0, 400, 112)).save(f'{OUT}/backwall.png')       # the back wall, for the dark castle backdrop
+SPE = f'{A}/Super Pixel Effects Gigapack (Free Version) v2.9.0/Super Pixel Effects Gigapack (Free Version)/PNG/Smoke Bursts'
+Image.open(f'{SPE}/directional_smoke_burst_001/directional_smoke_burst_001_large_white/frame0012.png').convert('RGBA').save(f'{OUT}/smoke.png')
+Image.open(f'{SPE}/symmetrical_smoke_burst_001/symmetrical_smoke_burst_001_large_brown/frame0003.png').convert('RGBA').save(f'{OUT}/dust.png')
+Image.open(f'{A}/pvfx-foundry-thirteen-spritesheets/effects/landing-dust/grid/sprite-sheet.png').convert('RGBA').crop((288, 0, 384, 96)).save(f'{OUT}/dust2.png')
+# the castle's own props (the Chronos kit pieces already in the game, see CREDITS: Castle courtyard), and the camp's standard and torch
+for src, name in [('castle/banner', 'banner'), ('castle/brazier', 'brazier'), ('castle/lamp', 'lamp'), ('castle/fountain', 'fountain'), ('castle/well', 'well'),
+                  ('castle/chests', 'chests'), ('castle/crates', 'crates'), ('castle/barrels', 'barrels'), ('castle/flagstone', 'flagstone'), ('castle/hedge', 'hedge'),
+                  ('castle/pots', 'pots'), ('camp/standard', 'standard'), ('camp/torch', 'torch')]:
+    shutil.copy(f'src/art/{src}.png', f'{OUT}/{name}.png')
+print('round two pieces')

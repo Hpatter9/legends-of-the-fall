@@ -283,3 +283,20 @@ What changed (all in `src/sim/stand.ts`):
 
   Chests and gear still ride on waves cleared (bronze every 8, silver every 13, gold every 39), so they come a little less often at the same level; what they hold is unchanged.
 - **Tests** (`test/stand.test.ts`, "how hard it is"): the knee and the boss walls, a level-1 party's median in 3-6 and a level-10 one's in 8-12 (five seeds each, through the balance runner), and the pay of the six rows within 15% of the old pay. Nothing else pinned the balance, so nothing was loosened.
+
+## The targets after STAND-003 (the fallen stay down)
+
+The owner kept the run harder when fallen heroes stopped rising (`docs/notes/stand-overhaul.md`): the medians measured then are the targets
+now, not the "Making it harder" ones above. `npm run stand-balance -- --levels 1,10,20,30,60,100 --attempts 30` (greedy), the wave the king fell in:
+
+| Hero level | Target now | Measured (median, min-max) | The old target |
+| --- | --- | --- | --- |
+| 1 | about 4 | 4 (3-4) | 4 |
+| 10 | about 9 | 9 (7-10) | 10 |
+| 20 | about 10 | 10 (9-12) | 13 |
+| 30 | about 14 | 14 (12-21) | 22 |
+| 60 | about 20 | 20 (13-92) | 26 |
+| 100 | about 25 | 25 (15-86) | 35 |
+
+`test/stand.test.ts` pins levels 1, 10 and 30 (five seeds each: 3-5, 7-10, 11-18). The pay per wave was not changed, so a run at the new
+medians pays fewer crowns than one at the old (a question for the owner in the overhaul's note).

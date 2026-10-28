@@ -96,3 +96,55 @@ fountain or well as cover; not mocked: it needs a grass floor). The walls run ro
 6. **Deploy:** the eight start in the tray (nothing placed until Auto-place or a drag), or start placed by the ring plan (as today) with the tray
    used to swap?
 7. **Shake:** no shake at all except a 2 px nudge on a boss's blow: enough, or none at all?
+
+## The owner's answers to the first mock-ups, and the second round (mock-ups, not built)
+
+The owner: "make this fit the new style, more ornate, exciting, flashy" (the Keep & Kingdom brass and stone, the battle HUD's crest from
+PR #143); the king is the enthroned king of the castle's throne room (0.176.0, `src/art/throne/king_throne.png`, reused as it is, the castle's
+files untouched); keep the run harder, with the new medians as the targets (`last-stand.md`, "The targets after STAND-003"; `test/stand.test.ts`
+pins levels 1, 10 and 30); and the defaults: the hunt at 2 or fewer foes, healers too; the four halls, never the same one twice running; a dark
+castle backdrop; the heroes start at their ring-plan posts and the tray swaps them; the 2 px boss nudge, none under reduced motion.
+
+main 0.180.0 is merged in. The second round, 393x852, each labelled MOCK-UP (`tools/stand/mock/shots2.mjs`, after `prep.py` and `build.mjs`):
+
+- `docs/samples/stand-overhaul-mock2-hall.png`: the great hall as a wave breaks in: stained-glass windows and gilt pilasters with red banners
+  on the back walls, coloured light from the glass across the floor, braziers in pools of torchlight, red carpet runners to the dais, the grand
+  5x5 dais with standards and a golden aura round the enthroned king, rubble, smoke and a dust burst at each breach, and the wave's crest banner.
+- `docs/samples/stand-overhaul-mock2-chapel.png`: the chapel on a boss wave: a ring of pillars, raised carpeted galleries, carpet in a cross,
+  the red boss flourish (a red crest banner, "A boss comes", a red vignette round the screen).
+- `docs/samples/stand-overhaul-mock2-library.png`: the library: bookcase rows as cover, three breaches.
+- `docs/samples/stand-overhaul-mock2-courtyard.png`: the courtyard: open to the sky, grass with flagstone paths, a well, a fountain, crates,
+  barrels, chests and pots as cover, lamps, banners on the walls.
+- `docs/samples/stand-overhaul-mock2-deploy.png`: deploy: the eight at their ring-plan posts on glowing gold tiles (each in a soft pool of light;
+  every tile a post may take faintly lit), two heroes marked for a swap with a golden arc between them, and the brass tray: "Hold the throne",
+  the eight in the heroes' brass portrait frames, Auto-place, Reset and Begin.
+- `docs/samples/stand-overhaul-mock2-pause.png`: the pause sheet in brass: the battle crest, the king on his throne with his health, each hero's
+  card (portrait, level, health and pool bars, attack, defence, kills, both skills lit when payable, the ultimate's meter or "Ready"; the fallen
+  greyed), and Resume.
+- On every screen the Stand's top and bottom bars take the battle HUD's brass: the double gilt rule, the crest under the top bar, the ribbon on
+  the bottom deck, the hero bar's and spell cards' brass-edged green stone.
+
+In motion (phase B; the mock-ups are stills): the dust bursts at the breaches as each wave arrives, the smoke drifting in, the braziers'
+flames and pools flickering gently (never off), the post tiles' glow breathing, the wave banner sweeping in and out, the boss flourish's red
+pulse; all held still under reduced motion.
+
+### The pieces used in the second round
+
+- **The king:** `src/art/throne/king_throne.png` (the castle's, three frames of 160x210; the first, and the castle's own idle and decree frames
+  in the game).
+- **The walls' glass and pilasters, the backdrop:** `src/art/throne/throne_room.png` (the castle's): a stained-glass window, a gilt pilaster with
+  its banner, and its back wall dimmed behind the field.
+- **Props:** the castle's own Chronos kit pieces in `src/art/castle/` (banner, brazier, lamp, fountain, well, chests, crates, barrels, pots,
+  flagstone) and the camp's standard (`src/art/camp/standard.png`).
+- **Smoke and dust:** Super Pixel Effects Gigapack (Free Version), `Smoke Bursts/directional_smoke_burst_001` (large white, tinted) and
+  `symmetrical_smoke_burst_001` (large brown); pvfx `effects/landing-dust`.
+- **Floor, walls, carpet, rubble, shelves:** as in the first round (the dungeon pack, DawnLike, the Undead tileset).
+- **The brass:** the game's `ui/` art (`battle-crest.png`, `ribbon.png`, `hero-brass-frame.png`, `page.png`) and the battle HUD's colours.
+- The pools of light, the glass's coloured light and the auras are drawn effects (soft gradients), not art.
+
+### Still open
+
+- **Pay:** with the run harder and the pay per wave unchanged, a run at the new medians pays fewer crowns than one at the old (level 30: wave 14
+  against 21 or 22). Keep it so, or raise `waveCrowns` so the pay per run holds?
+- Inner-ring heroes are set off the throne's own tiles (the dais's middle 3x3 is the throne's) so the king is seen: `ringPlan`'s inner posts move
+  out to the dais's edge.

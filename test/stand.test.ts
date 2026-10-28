@@ -538,12 +538,16 @@ test('the climb is steep to wave 10 and gentler after, and the bosses are real w
   for (const n of [5, 10, 20, 30, 40]) assert.ok(waveSpec(3, armies, n).hp > waveSpec(3, armies, n - 1).hp);
 });
 
-test('a party at level 1 falls in the first waves, and a level-10 party at about wave 10', () => {
+// (STAND-003: with the fallen staying down the owner kept the harder medians as the targets: about 4, 9, 10, 14, 20, 25 at levels 1, 10, 20, 30, 60, 100)
+test('a party at level 1 falls in the first waves, a level-10 party at about wave 9, a level-30 one at about 14', () => {
   const m1 = medianWave(1, 5);
-  assert.ok(m1 >= 3 && m1 <= 6, `level 1 median ${m1}`);
+  assert.ok(m1 >= 3 && m1 <= 5, `level 1 median ${m1}`);
   const m10 = medianWave(10, 5);
-  assert.ok(m10 >= 8 && m10 <= 12, `level 10 median ${m10}`);
+  assert.ok(m10 >= 7 && m10 <= 10, `level 10 median ${m10}`);
   assert.ok(m10 > m1, 'a stronger party goes further');
+  const m30 = medianWave(30, 5);
+  assert.ok(m30 >= 11 && m30 <= 18, `level 30 median ${m30}`);
+  assert.ok(m30 > m10);
 });
 
 test('the pay per wave keeps a run at the new target about as well paid as it was', () => {
