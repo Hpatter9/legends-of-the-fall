@@ -181,7 +181,8 @@ test('a hero is posted where it was placed, within a leash of a few tiles', () =
   const posts = new Map(s.b.units.filter((u) => u.side === 'hero' && u.tag !== undefined).map((u) => [u.id, { ...s.run.heroes.find((h) => h.id === u.tag)!.post! }]));
   let worst = 0;
   const out = new Map<number, number>();
-  // (the hunt of a wave's last foes lifts the leash, STAND-003: a hero carried off by it is let walk home, and must be back within its leash in good time)
+  // (the hunt of a wave's last foes lifts the leash, STAND-003, and so does going to help once a wave is all in, STAND-004 (the owner's ask): a hero
+  // carried off by either is let walk home, and must be back within its leash in good time)
   const homing = new Map<number, number>();
   for (let i = 0; i < 30000 && s.phase !== 'over' && s.run.wave < 18; i++) {
     stepStand(s);
@@ -190,7 +191,7 @@ test('a hero is posted where it was placed, within a leash of a few tiles', () =
       const post = posts.get(u.id);
       if (!post || !u.alive) continue;
       const d = apart(u, { u: post[0], v: post[1] });
-      if (s.b.stand!.hunt) {
+      if (s.b.stand!.hunt || s.b.stand!.help?.[u.id] !== undefined) {
         homing.set(u.id, 0);
         continue;
       }
@@ -199,7 +200,7 @@ test('a hero is posted where it was placed, within a leash of a few tiles', () =
         if (d <= u.post!.leash) homing.delete(u.id);
         else {
           homing.set(u.id, n);
-          assert.ok(n <= 400, `${u.def} was still ${d} from its post 40 s after a hunt`);
+          assert.ok(n <= 400, `${u.def} was still ${d} from its post 40 s after a hunt or helping`);
           continue;
         }
       }

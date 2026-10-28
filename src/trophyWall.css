@@ -13,6 +13,12 @@
   box-sizing: border-box;
 }
 
+/* (FIGHT-FIXES: the overlay's own `display: flex` beat the `hidden` attribute, so the wall stood over the castle and the tavern from the
+   start, over every tap, and its close button could not hide it) */
+.twOverlay[hidden] {
+  display: none;
+}
+
 .twCard {
   width: 100%;
   max-width: 520px;

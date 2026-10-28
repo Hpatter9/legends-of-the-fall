@@ -41,14 +41,16 @@ import standardUrl from '../art/camp/standard.png';
 import libraryWallUrl from '../art/library/wall.png';
 import rosesUrl from '../art/castle/roses.png';
 import bushUrl from '../art/castle/bush.png';
-import kingThroneUrl from '../art/throne/king_throne.png';
+import { rulerTextures, rulerThrone } from './rulerArt';
+import { rulerFrame, type RulerAction } from '../rulerRules';
+import { settings } from '../settings';
 
 export { default as standBackwallUrl } from '../art/stand/backwall.png';
 
 const URLS = {
   libraryWall: libraryWallUrl, roses: rosesUrl, bush: bushUrl, floor1: floor1Url, floor2: floor2Url, rug: rugUrl, wallface: wallfaceUrl, walltop: walltopUrl, rubble1: rubble1Url, rubble2: rubble2Url, shelf1: shelf1Url, shelf2: shelf2Url,
   window: windowUrl, pilaster: pilasterUrl, smoke: smokeUrl, dust: dustUrl, landdust: landdustUrl, grass1: grass1Url, grass2: grass2Url, banner: bannerUrl, brazier: brazierUrl,
-  lamp: lampUrl, fountain: fountainUrl, well: wellUrl, chests: chestsUrl, crates: cratesUrl, barrels: barrelsUrl, pots: potsUrl, standard: standardUrl, king: kingThroneUrl,
+  lamp: lampUrl, fountain: fountainUrl, well: wellUrl, chests: chestsUrl, crates: cratesUrl, barrels: barrelsUrl, pots: potsUrl, standard: standardUrl,
 };
 type Key = keyof typeof URLS;
 let images: Promise<Record<Key, HTMLImageElement>> | null = null;
@@ -59,8 +61,7 @@ export function standHallArt(): Promise<Record<Key, HTMLImageElement>> {
 
 /** How high the near walls (the south and east, between the room and the viewer) are drawn: cut down, so the room can be seen into. */
 const NEAR_H = 2;
-/** The king's throne picture: three frames of 160 x 210 (idle, idle, a decree), and how big it is drawn. */
-const KING_W = 160;
+/** Display height of the selected ruler's square atlas cell. */
 const KING_H = 210;
 const KING_SCALE = 0.62;
 /** The dust burst's frames and their length (ms). */
@@ -102,6 +103,7 @@ export class StandHall {
   private puffs: Puff[] = [];
   private bursts: Burst[] = [];
   private king: Sprite | null = null;
+  private emptyThrone: Sprite | null = null;
   private kingFrames: Texture[] = [];
   private kingBar = new Graphics();
   private decreeLeft = 0;
@@ -308,9 +310,12 @@ export class StandHall {
     const [kx, ky] = top(KING_AT.u, KING_AT.v);
     pool(KING_AT.u, KING_AT.v, glows.gold, 280, 0.42);
     this.flames.push({ sp: add(glows.gold, kx, ky - 64, { ax: 0.5, ay: 0.5, scale: 1.0, add: true, alpha: 0.5, z: (KING_AT.u + KING_AT.v) * 10 + 2 }), base: 0.5, phase: 0.3 });
-    const kingTex = tex('king');
-    this.kingFrames = [0, 1, 2].map((i) => new Texture({ source: kingTex.source, frame: new Rectangle(i * KING_W, 0, KING_W, KING_H) }));
+    this.kingFrames = rulerTextures(settings().ruler, 'seated');
+    this.emptyThrone = add(rulerThrone(settings().ruler), kx, ky + 8, { scale: KING_SCALE, z: (KING_AT.u + KING_AT.v) * 10 + 4 });
+    this.emptyThrone.width = this.emptyThrone.height = KING_H * KING_SCALE;
+    this.emptyThrone.visible = false;
     this.king = add(this.kingFrames[0], kx, ky + 8, { scale: KING_SCALE, z: (KING_AT.u + KING_AT.v) * 10 + 5 });
+    this.king.width = this.king.height = KING_H * KING_SCALE;
     this.kingTop = { x: kx, y: ky + 8 - KING_H * KING_SCALE };
     this.kingBar.zIndex = 1e6;
     this.put(this.kingBar);
@@ -535,6 +540,14 @@ export class StandHall {
     this.decreeLeft = 1600;
   }
 
+  private rulerAction: RulerAction = 'seated';
+  private rulerStarted = 0;
+  react(action: 'hurt' | 'cast' | 'dead'): void {
+    if (this.rulerAction === 'dead') return;
+    this.rulerAction = action;
+    this.rulerStarted = this.t;
+  }
+
   /** The moving parts: flames and pools breathe, smoke rolls in and fades, the dust bursts play out, the king's frame, his health bar. */
   step(dt: number, kingHp: number): void {
     this.t += dt;
@@ -561,7 +574,17 @@ export class StandHall {
     this.bursts = this.bursts.filter((x) => x.t < BURST_MS);
     if (this.king) {
       this.decreeLeft = Math.max(0, this.decreeLeft - dt);
-      this.king.texture = this.kingFrames[this.decreeLeft > 0 ? 2 : !still && Math.floor(this.t / 480) % 2 ? 1 : 0];
+      if (kingHp <= 0 && this.rulerAction !== 'dead') this.react('dead');
+      const elapsed = this.t - this.rulerStarted;
+      if (this.rulerAction !== 'dead' && elapsed >= 720) this.rulerAction = 'seated';
+      const action = this.rulerAction !== 'seated' ? this.rulerAction : this.decreeLeft > 0 ? 'command' : 'seated';
+      if (this.emptyThrone) {
+        this.emptyThrone.texture = rulerThrone(settings().ruler);
+        this.emptyThrone.width = this.emptyThrone.height = KING_H * KING_SCALE;
+        this.emptyThrone.visible = action !== 'seated' && action !== 'command';
+      }
+      this.king.texture = rulerTextures(settings().ruler, action)[rulerFrame(action, action === 'command' ? 1600 - this.decreeLeft : action === 'seated' ? this.t : elapsed, still)];
+      this.king.width = this.king.height = KING_H * KING_SCALE;
       // (his health over his head: green, low and red, on a dark gilt-edged plate)
       const g = this.kingBar;
       g.clear();
@@ -590,6 +613,9 @@ export class StandHall {
     this.puffs = [];
     this.bursts = [];
     this.king = null;
+    this.emptyThrone = null;
+    this.rulerAction = 'seated';
+    this.rulerStarted = 0;
     this.floor = null;
     this.plan = null;
     for (const t of this.made) t.destroy(true);

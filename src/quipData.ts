@@ -14,6 +14,17 @@ export const QUIP_MAX = 70;
 
 export type HeroQuips = Record<QuipKind, readonly string[]>;
 
+/** Snarky quips spoken by an inverted hero clone from the Cursed Mirror. */
+export const INVERTED_HERO_QUIPS: readonly string[] = [
+  'Move over, original. Let someone with real talent handle this.',
+  'Oh look, the original is already exhausted. How entirely predictable.',
+  'Two more floors of your amateur leadership? Truly a fate worse than death.',
+  'I would watch your back, but your posture from behind is embarrassing.',
+  'Nice swing. Did you practice missing, or is it pure natural incompetence?',
+  'I am only carrying you because watching you fail alone was getting pathetic.',
+  'Enjoy the reflection while it lasts—perfection like this does not linger.',
+];
+
 export const HERO_QUIPS: Record<string, HeroQuips> = {
   knight: {
     hired: ['Forty winters at the gate, and not once offered a folding chair.', 'I am sworn to hold the line. Also to a sensible four o\'clock tea.', 'My shield is yours. My knees make no promises.'],

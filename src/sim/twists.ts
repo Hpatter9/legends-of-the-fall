@@ -40,6 +40,10 @@ export interface TwistFx {
   wound?: number;
   /** One foe starts among the heroes' back row. */
   ambush?: boolean;
+  /** Projectile paths are shifted horizontally by this many tiles (Rolling Gales). */
+  gales?: number;
+  /** This many tiles of the middle ground heat up as hot coals. */
+  coals?: number;
 }
 
 export interface Twist {
@@ -69,9 +73,15 @@ export const TWISTS: Record<string, Twist> = Object.fromEntries(
     t('ambush', 'Ambush', 'curse', "A foe lies in wait among the heroes' back row.", { ambush: true }),
     t('glory', 'Glory', 'blessing', 'Old banners stir: the heroes strike 10% harder.', { heroAtk: 1.1 }),
     t('fortified', 'Fortified', 'curse', 'The foes have dug in: +20% hp for every foe.', { foeHp: 1.2 }),
+    t('rollingGales', 'Rolling Gales', 'mixed', 'A wild shifting crosswind: projectile paths shift by 1 tile.', { gales: 1 }),
+    t('hotCoals', 'Hot Coal Ground', 'mixed', 'Hot coals smolder across the earth: 4 tiles heat up and burn anyone standing on them.', { coals: 4 }),
   ].map((x) => [x.id, x]),
 );
 export const TWIST_IDS = Object.keys(TWISTS);
+/** High ascension chaos twists. */
+export const CHAOS_TWISTS: readonly string[] = ['rollingGales', 'hotCoals'];
+/** The twists any fight may roll: all but the chaos ones, which only a high ascension lays (`calamityOnce`). */
+export const PLAIN_TWIST_IDS: readonly string[] = TWIST_IDS.filter((id) => !CHAOS_TWISTS.includes(id));
 
 /** The share of fight nodes and elites that carry a twist; a boss carries one from act 2 on. */
 export const TWIST_RATE = { fight: 0.4, elite: 0.6 } as const;
@@ -81,7 +91,7 @@ export function rollTwist(seed: number, act: number, node: number, kind: string)
   if (kind !== 'fight' && kind !== 'elite' && kind !== 'boss') return undefined;
   const rng = new Rng(mixSeed(seed, 0x7715, act, node));
   if (kind === 'boss' ? act < 2 : !rng.chance(TWIST_RATE[kind])) return undefined;
-  return rng.pick(TWIST_IDS);
+  return rng.pick(PLAIN_TWIST_IDS);
 }
 
 /** The deploy rows' outer tiles that a narrow pass fills with boulders (the back row's four outer tiles, the next row's two). */
@@ -101,6 +111,20 @@ export function twistBoard(b: Board, fx: TwistFx, seed: number): void {
     for (let i = 0; i < fx.lava && spots.length; i++) {
       const tile = b.tiles[spots.splice(rng.int(0, spots.length - 1), 1)[0]];
       tile.ground = 'lava';
+      delete tile.bush;
+    }
+  }
+  if (fx.coals) {
+    const rng = new Rng(mixSeed(seed, 0xc0a1));
+    const spots: number[] = [];
+    for (let v = DEPLOY_ROWS; v < b.d - DEPLOY_ROWS; v++)
+      for (let u = 0; u < b.w; u++) {
+        const t = tileAt(b, u, v)!;
+        if (standable(t) && !t.bridge && t.ground !== 'shrine' && t.ground !== 'lava' && t.ground !== 'coals') spots.push(v * b.w + u);
+      }
+    for (let i = 0; i < fx.coals && spots.length; i++) {
+      const tile = b.tiles[spots.splice(rng.int(0, spots.length - 1), 1)[0]];
+      tile.ground = 'coals';
       delete tile.bush;
     }
   }

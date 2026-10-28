@@ -50,3 +50,77 @@ button:disabled, button.primary:disabled, .hmBig:disabled { color: var(--off-ink
    (the owner's note); the flat ink on the orange reads cleanly. */
 button.primary, .hmBig, .hmBattle, .hmBattle *, .hmTab.hero, .hmTab.hero *, .setting .toggle.on, .setting .pair button.on,
 .asTier.on, .asCounts button.on, .rcXpRow span.up, .rcHero > b small { text-shadow: none; }
+
+/* Event card choices & gambits stone card aesthetic for mobile phone screens (393x852) */
+#events {
+  padding: calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset-bottom) + 12px);
+  box-sizing: border-box;
+}
+.evcard {
+  max-width: min(369px, calc(100vw - 24px));
+  max-height: min(780px, calc(100vh - 48px));
+  box-sizing: border-box;
+  padding: 16px 14px;
+  background: var(--panel-bg);
+  border: 2px solid var(--s7);
+  box-shadow: 0 8px 32px rgb(var(--black-rgb) / 0.75), inset 0 0 0 1px rgb(var(--white-rgb) / 0.08);
+  border-radius: 8px;
+}
+.evcard h2 {
+  font-size: 18px;
+  line-height: 1.25;
+  color: var(--accent-hi);
+  text-shadow: 0 2px 0 var(--black);
+  margin: 0 0 4px;
+}
+.evcard p {
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--text);
+  margin: 0 0 6px;
+}
+.evcard p.note {
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--gold-hi);
+  background: rgb(var(--s0-rgb) / 0.5);
+  border-left: 3px solid var(--accent);
+  padding: 6px 8px;
+  border-radius: 4px;
+  text-align: left;
+}
+.evcard .opt {
+  min-height: 48px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  border-radius: 6px;
+  background: rgb(var(--s1-rgb) / 0.9);
+  border: 1px solid var(--s7);
+  color: var(--text);
+  box-sizing: border-box;
+  touch-action: manipulation;
+}
+.evcard .opt:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.evcard .opt b {
+  font-size: 13px;
+  color: var(--accent-hi);
+  display: block;
+}
+.evcard .opt small {
+  font-size: 11px;
+  line-height: 1.25;
+  color: var(--text-dim);
+  display: block;
+}
+.evcard .opt em {
+  font-style: normal;
+  color: var(--gold-hi);
+  font-weight: 700;
+  font-size: 12px;
+  white-space: nowrap;
+}

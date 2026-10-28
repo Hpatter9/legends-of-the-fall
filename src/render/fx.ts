@@ -259,7 +259,7 @@ export class Fx {
         if (to) {
           this.label('Miss', to.x, to.y - to.tall - 10, 0xcfe8ff, 12);
           // (a whoosh of wind across the one that dodged)
-          this.particles.spawn({ frames: VFX.dashWhite, x: to.x, y: to.y - to.tall * 0.5, scale: 1.1, frameMs: 40, alpha: 0.8, add: true });
+          this.particles.spawn({ frames: VFX.dashWhite, x: to.x, y: to.y - to.tall * 0.5, scale: 1.1, frameMs: 40, alpha: 0.8, add: true, stretchX: facesRight(to.unit.facing) ? 1 : -1 });
         }
       } else if (e.kind === 'boom') this.boom(b, e.u, e.v);
       else if (e.kind === 'hazard') this.hazard(b, e);
@@ -385,7 +385,7 @@ export class Fx {
         const byS = this.sprites.get(e.by);
         let wayAngle = 0;
         if (byS && !e.splash) {
-          const way = Math.atan2(to.y - byS.y, to.x - byS.x);
+          const way = Math.atan2((to.y - to.tall * 0.45) - (byS.y - byS.tall * 0.45), to.x - byS.x);
           wayAngle = way;
           // A brief fan carries the blow's direction without covering the target.
           if (e.src === 'blow' && !defOf(by).shot) {
@@ -438,13 +438,17 @@ export class Fx {
     if (!by || !to || !attacker) return;
     // (a long weapon thrusts out at the foe)
     if (defOf(attacker).range === 2 && !defOf(attacker).shot) this.thrust(by, to);
+    const dx = to.x - by.x;
+    const dy = (to.y - to.tall * 0.5) - (by.y - by.tall * 0.5);
+    const left = dx < 0;
     this.particles.spawn({
       frames: VFX[slashOf(defOf(attacker).name)],
       x: to.x,
       y: to.y - to.tall * 0.5,
       scale: 2,
       frameMs: 45,
-      rotation: Math.atan2(to.y - by.y, to.x - by.x),
+      rotation: left ? Math.atan2(-dy, -dx) : Math.atan2(dy, dx),
+      ...(left ? { stretchX: -1 } : {}),
       add: true,
     });
   }
@@ -840,7 +844,7 @@ export class Fx {
     let dx = facesRight(by.unit.facing) ? 1 : -1;
     let dy = 0.25;
     if (near.length) {
-      const [vx, vy] = [near[0].x - by.x, near[0].y - by.y];
+      const [vx, vy] = [near[0].x - by.x, (near[0].y - near[0].tall * 0.5) - (by.y - by.tall * 0.5)];
       const len = Math.hypot(vx, vy) || 1;
       [dx, dy] = [vx / len, vy / len];
     }
@@ -1005,7 +1009,13 @@ export class Fx {
     }
     for (let i = 0; i <= 5; i++)
       this.particles.spawn({ frames: VFX.dustWhite, x: x0 + ((x1 - x0) * i) / 5, y: y0 + ((y1 - y0) * i) / 5, scale: 0.7, life: 420, delay: i * 25, vy: -0.02, grow: 0.0008, alpha: 0.8 });
-    play(this.particles, 'wind-slash', x1, y1 - lift, { scale: 1.6, frameMs: 45, rotation: Math.atan2(y1 - y0, x1 - x0) });
+    const left = x1 < x0;
+    play(this.particles, 'wind-slash', x1, y1 - lift, {
+      scale: 1.6,
+      frameMs: 45,
+      rotation: left ? Math.atan2(-(y1 - y0), -(x1 - x0)) : Math.atan2(y1 - y0, x1 - x0),
+      ...(left ? { stretchX: -1 } : {}),
+    });
     const g = new Graphics();
     g.moveTo(x0, y0 - lift).lineTo(x1, y1 - lift).stroke({ color: 0xffffff, width: 5, alpha: 0.9, cap: 'round' });
     g.blendMode = 'add';
@@ -1193,7 +1203,10 @@ export class Fx {
     const centre = SPELLS[e.id].target === 'all' && near.length
       ? { x: near.reduce((n, s) => n + s.x, 0) / near.length, y: near.reduce((n, s) => n + s.y, 0) / near.length }
       : { x: px, y: py };
-    playSteps(SPELL_SIGNATURES[e.id].cast, { p: this.particles, self: { ...centre, tall: 40 }, foes, allies, dir: { x: 0, y: -1 }, ms: 700, size: 1 });
+    const targetPt = foes[0] ?? (SPELLS[e.id].target === 'all' ? allies[0] : undefined);
+    const [svx, svy] = targetPt ? [targetPt.x - centre.x, (targetPt.y - targetPt.tall * 0.5) - (centre.y - 20)] : [0, -1];
+    const slen = Math.hypot(svx, svy) || 1;
+    playSteps(SPELL_SIGNATURES[e.id].cast, { p: this.particles, self: { ...centre, tall: 40 }, foes, allies, dir: { x: svx / slen, y: svy / slen }, ms: 700, size: 1 });
     if (e.id === 'quake') this.trauma = Math.max(this.trauma, 0.7);
     if (SPELLS[e.id].target === 'all') return;
     const [cx, cy] = this.tilePos(b, e.u, e.v);
@@ -1526,7 +1539,9 @@ export class Fx {
     const m: Missile = missileOf(kind, defOf(by.unit).name);
     const x0 = by.x;
     const y0 = by.y - by.tall * 0.55;
-    const aim = Math.atan2(to.y - by.y, to.x - by.x);
+    const x1 = to.x;
+    const y1 = to.y - to.tall * 0.45;
+    const aim = Math.atan2(y1 - y0, x1 - x0);
     if (m.muzzle) {
       play(this.particles, packKey(m.el, 'hit'), x0 + Math.cos(aim) * 8, y0 + Math.sin(aim) * 4, { scale: m.look === 'tracer' ? 1.3 : 0.9, frameMs: 40 });
       if (m.look === 'tracer')
@@ -1584,13 +1599,13 @@ export class Fx {
 
   /** A spear's thrust: the shaft runs out two thirds of the way to the foe and snaps back. */
   private thrust(by: UnitSprite, to: UnitSprite): void {
+    const [x0, y0, x1, y1] = [by.x, by.y - by.tall * 0.5, to.x, to.y - to.tall * 0.5];
     const sp = new Sprite(arrow);
     sp.anchor.set(0.5);
     sp.scale.set(1.1);
     sp.tint = 0xe8d8b8;
-    sp.rotation = Math.atan2(to.y - by.y, to.x - by.x);
+    sp.rotation = Math.atan2(y1 - y0, x1 - x0);
     this.root.addChild(sp);
-    const [x0, y0, x1, y1] = [by.x, by.y - by.tall * 0.5, to.x, to.y - to.tall * 0.5];
     let t = 0;
     this.items.push({
       view: sp,
