@@ -166,6 +166,8 @@ export interface StandMode {
   at: At;
   /** The cost to reach the king from every tile, for each jump a fighter has (made when first asked for). */
   fields: Record<number, number[]>;
+  /** The wave is down to its last few foes (`HUNT_AT` in `stand.ts`): the heroes leave their posts to hunt them down, and walk back after. */
+  hunt?: boolean;
 }
 
 export interface Pending {
