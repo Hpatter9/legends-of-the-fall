@@ -4,7 +4,7 @@ import { boardOk, canStep, DIRS, RAMP, sightClear, standable, tileAt, W, D } fro
 import { shotReach } from '../src/sim/battle';
 import { boardTileAt, buildChain, contactPairs, footprint, frameOf, seam, transferFormation, worldOf } from '../src/sim/chain';
 import { armyRun, chainOf, loadRun, saveRun, startStage } from '../src/sim/run';
-import { ARMIES } from '../src/sim/armies';
+import { ARMIES, landsOf } from '../src/sim/armies';
 import { ARMY_SCENARIOS, landmarkOfTheme, planScenario, SCENARIOS, SCENARIO_SIZE, scenarioForArmy, scenarioHeight } from '../src/sim/scenario';
 import { landmarkBounds, project, rawAt } from '../src/render/iso';
 import { dropDelay, dropEnd, FALL_MS, SETTLE_MS } from '../src/render/dropRules';
@@ -128,9 +128,10 @@ test('every army uses its own dedicated story-spanning 14×18 campaign map by de
     assert.equal(c.length, army.waves.length);
     assert.equal(c[0].board.w, SCENARIO_SIZE.w);
     assert.equal(c[0].board.d, SCENARIO_SIZE.d);
-    // Story progression spans multiple distinct areas along the journey.
+    // (the owner's rule: one land for the one long battle; each attempt keeps the land its seed picked from the army's lands)
     const areas = new Set(c.map((s) => s.board.area));
-    assert.ok(areas.size >= 2, `${army.id} progresses through multiple story areas`);
+    assert.equal(areas.size, 1, `${army.id} keeps one land`);
+    assert.ok(landsOf(army).includes(c[0].board.area), `${army.id} on one of its own lands`);
     assert.equal(c[c.length - 1].board.landmark, landmarkOfTheme(theme));
   }
 });
