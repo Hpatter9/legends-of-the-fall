@@ -157,7 +157,7 @@ arena with its hazard told ([orcs](../samples/army-road-after-orcs-mid-fight-clo
 [infernal](../samples/army-road-after-infernal-final-fight-close.png), [wildwood](../samples/army-road-after-wildwood-mid-fight-close.png),
 [beasts](../samples/army-road-after-beasts-final-fight-close.png), [labyrinth](../samples/army-road-after-labyrinth-final-fight-close.png),
 [yokai](../samples/army-road-after-yokai-final-fight-close.png), [golems](../samples/army-road-after-golems-final-fight-close.png),
-[ogres](../samples/army-road-after-ogres-final-fight-close.png)); and at the other phone sizes ([360x780](../samples/army-road-after-360-sheet.png),
+[ogres](../samples/army-road-after-ogres-final-fight-close.png)); the compound behind the final arena ([orcs](../samples/army-road-after-orcs-final.png), [undead](../samples/army-road-after-undead-final.png)); and at the other phone sizes ([360x780](../samples/army-road-after-360-sheet.png),
 [412x915](../samples/army-road-after-412-sheet.png)). Re-shoot: `node tools/army-road/shots.mjs army-road-after orcs:8:mid-fight-close
 orcs:2:fall-zoom ...` (`section`, `road`, `mid`/`final`, `fight`, `fall`, `close`/`zoom` in the label; `VIEW=360x780` for another size).
 
@@ -231,7 +231,7 @@ the harder tiers keep their own `tierStart` and were not re-measured.
 | Beast Packs (15) | 1.5 | 1.3 | 1.3 | 1.66 (kept) |
 | The Wildwood (22) | 3.5 | 2.3 | 3.8 | 1.86 -> 2.01 |
 | The Labyrinth (30) | 13.2 | 17.8 | 13.5 | 2.37 -> 2.25 |
-| Ogre Clans (38) | 3.3 (48 saves) | 2.6 (48) | OGRES_FINAL | 2.76 -> 2.79 |
+| Ogre Clans (38) | 3.3 (48 saves) | 2.6 (48) | 3.3 (48) | 2.76 -> 2.8 |
 | Infernal Host (40) | 1.5 | 1.5 | 1.5 | 3.01 (kept) |
 | Yokai Night Parade (46) | 2.4 | 1.6 | 2.5 | 3.22 -> 3.38 |
 | Golem Forge (52) | 2.7 | 3.6 | 3.0 | 3.79 -> 3.63 |
@@ -244,3 +244,14 @@ New `test/army-hazards.test.ts`: a strike is told then hurts both sides on its t
 flier, hands slow; a spring mends both sides and a boss feels a third; the current carries a walker downstream but not onto a fighter or over a
 cliff, and not a flier; every army's arenas carry its own hazards on standable tiles, on the tick, the same for the same seed; a river pours off an
 open edge and never into another section. `test/army-road.test.ts`: scenery is never standable and a flier can cross it.
+
+### Checks run for phase B
+
+- `npm run typecheck`: passes.
+- The full suite, `npm test`: **1260 of 1260 pass**, none skipped (main 0.186.0 merged in first).
+- `npm run web`: builds. The new pictures (`src/art/road/atlas.png`, `birds.png`) are bundled into game.js as data URLs, so the offline list is
+  unchanged.
+- Browser: every army's road and arena at 393x852 (the screenshots above), and a road section, a waterfall, the undead and infernal arenas mid-fight
+  at 360x780 and 412x915, no page errors.
+- Balance: the table above (the curve tool's cells; main measured on a clean checkout of 0.186.0).
+- Not done: the harder tiers on the new maps were not re-measured (they keep their own `tierStart`); no measurement on a real phone.

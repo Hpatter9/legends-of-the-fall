@@ -14,18 +14,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
-### WORLD-ROAD — Army road and boss arenas
+### WORLD-ROAD — Army road, boss arenas and the living land
 
-- **Goal:** the owner's ask: army battle maps follow a realistic path (a winding road 6 to 10 tiles wide with unwalkable themed scenery beside it, not a full 14x18 slab) and each army's boss waves (8 and 15; the Wildwood's 5, 10 and 15) are fought in its own themed arena.
-- **Status:** phase A (proposal, working prototype and in-game mock-ups) done; awaiting the owner's answers before phase B.
+- **Goal:** the owner's asks: army battle maps follow a realistic path (a winding road 6 to 9 tiles wide with themed scenery beside it that walkers cannot enter, not a full 14x18 slab), each army's boss waves (8 and 15; the Wildwood's 5, 10 and 15) fought in its own themed arena, and (phase B) a living environment: hazards that act on both sides, running water and waterfalls, pack walls and set pieces at the tiles' angle, ambient life.
+- **Status:** phase A approved by the owner (seven answers); phase B done on the branch, ready for review.
 - **Owner:** Claude (the WORLD army map is normally the other AI's area; the owner assigned this one to Claude).
-- **Branch / worktree / PR:** `claude/army-road`, `/home/user/army-road` (from main 0.185.0); PR none.
-- **Allowed files or systems:** `src/sim/scenario.ts`, new `src/sim/armyRoad.ts`, `src/sim/board.ts` (optional `Tile.scene`, `Tile.paved`, `Board.pieces`; `solid` and `sightClear` honour scenery), `src/render/boardView.ts`, `src/render/columnTextures.ts` (an optional key part), new `src/render/roadArt.ts`, `test/army-road.test.ts`, `test/world-001-scenario.test.ts`, `tools/army-road/`, `docs/notes/army-road.md`, `docs/samples/army-road-mock-*.png`, `CREDITS.md`. Not other modes' boards (8x11 stays as it is), battle rules, the castle or battle-picking tabs.
-- **Completion criteria (phase B):** the owner approves the direction and answers the open questions; the road and arenas tuned to them; arena rings and set pieces with pack art (credited); every walkable tile reachable and every survivor able to walk on to the next section; armies re-measured at their tier levels; typecheck, affected tests, web build; 393x852, 360x780 and 412x915 checks; old saves load.
-- **Validation (phase A):** typecheck passed; `npm test -- army-road world scenario armies run` together with `long-map chain battle-flow` (109 tests) passed; `npm run web` built; mock-ups at 393x852 with no page errors; quick orcs/infernal army comparison in the note.
-- **Handoff:** [proposal and open questions](notes/army-road.md), [mock-up sheet](samples/army-road-mock-sheet.png).
-
-**ART-001 / Resonance hero pilot** — Owner: current Codex art chat. Branch: `art/resonance-heroes`, worktree: `/workspace/legends-of-the-fall`. Owner accepted the implemented appearance and requested integration. Scope: Knight and Archer sprite sheets, their render mappings/scales, art credits, validation tools and evidence. Current main 0.179.0 integrated, preserving newer hero kits, roles, maps and battle command HUD. Status: implementation accepted, ready for the owner's merge through [PR #144](https://github.com/Hpatter9/legends-of-the-fall/pull/144); 48 animation cells installed, typecheck/build and four affected test files passed, actual roster/dossier/deploy/combat checks passed at all three portrait sizes with zero page errors. Source atlases and preview preserved. Version/deployment remain with the director at merge time. See [handoff](notes/resonance-heroes.md).
+- **Branch / worktree / PR:** `claude/army-road`, `/home/user/army-road` (main 0.186.0 merged in); PR none.
+- **Allowed files or systems:** `src/sim/scenario.ts`, `src/sim/armyRoad.ts`, `src/sim/hazards.ts`, `src/sim/board.ts` (optional `Tile.scene`, `paved`, `ring`, `stream`; `Board.pieces`, `hazards`, `flow`, `falls`; scenery not `standable`), `src/sim/battle.ts` (the `hazard` event and its tick), `src/sim/armies.ts` (seven Normal `start` values), `src/render/boardView.ts`, `columnTextures.ts`, `roadArt.ts`, `roadAtlas.ts`, `hazardLooks.ts`, `fx.ts` (hazard tells and strikes), `soundRules.ts` (their cues), `weatherRules.ts`/`weatherView.ts` (ambient motes on the road), `src/main.ts` (two calls), `src/art/road/`, tests `test/army-road.test.ts`, `test/army-hazards.test.ts`, `test/world-001-scenario.test.ts`, `tools/army-road/`, `docs/notes/army-road.md`, `docs/samples/army-road-*.png`, `CREDITS.md`. Other modes' boards untouched.
+- **Completion criteria:** road and arenas per the owner's answers; hazards deterministic on their own side stream, both sides, each rule tested; rings and set pieces from pack art at the tiles' angle, credited; water flows and pours off open edges; ambient life respecting reduced motion and battery saver; every walkable tile reachable and every survivor able to walk on to the next section; armies within noise of main at their recommended levels; typecheck, affected tests and the full suite, web build; 393x852, 360x780 and 412x915 checks.
+- **Validation:** see the handoff's "Checks run for phase B".
+- **Handoff:** [notes](notes/army-road.md), [phase B sheet](samples/army-road-after-sheet.png), [phase A mock-ups](samples/army-road-mock-sheet.png).
 
 ### CHEST-001 — XP tomes and Open all
 
