@@ -184,6 +184,8 @@ export interface StandMode {
   fields: Record<number, number[]>;
   /** The wave is down to its last few foes (`HUNT_AT` in `stand.ts`): the heroes leave their posts to hunt them down, and walk back after. */
   hunt?: boolean;
+  /** Idle heroes gone to help where the fighting is, once a wave's foes are all in (`standHelp.ts`): a helper's id to the foe it goes for. */
+  help?: Record<number, number>;
 }
 
 export interface Pending {

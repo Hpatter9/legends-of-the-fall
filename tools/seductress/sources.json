@@ -1,0 +1,18 @@
+{
+  "timeWitch": {
+    "path": "tools/seductress/source/timeWitch.png",
+    "sha256": "7502f3b065da5afa0a1b2f2a3f19e96e6759485b5e0eb0adf1bbe131426a7851"
+  },
+  "gorgon": {
+    "path": "tools/seductress/source/gorgon.png",
+    "sha256": "a4cf62d551225e052a076ed9a0bb47ea02394ac9ccdb8901d2caf228f27a06ee"
+  },
+  "illusionist": {
+    "path": "tools/seductress/source/illusionist.png",
+    "sha256": "fe038deb6191815533c2ba5d8fed6817df9d555c26c4113a6c506c0a09ca0ec2"
+  },
+  "kitsune": {
+    "path": "tools/seductress/source/kitsune.png",
+    "sha256": "53818e4cc5568c7f59fade22c006cfc97b65dcc49fbb4f3cc8b49558c0504c9e"
+  }
+}

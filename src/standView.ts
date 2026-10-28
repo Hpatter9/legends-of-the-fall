@@ -41,6 +41,7 @@ import { colLeft, viewH, viewW } from './viewport';
 import { spellIconHtml } from './spellIcons';
 import { clockSeed } from './modes';
 import { settings } from './settings';
+import { rulerOf, rulerWords } from './rulerRules';
 
 /** What the page lends the Last Stand: the canvas, the save, the way home. */
 export interface StandHost {
@@ -63,7 +64,7 @@ const colourCss = (c: number): string => `#${c.toString(16).padStart(6, '0')}`;
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
-  if (text) e.textContent = text;
+  if (text) e.textContent = rulerWords(text, settings().ruler);
   return e;
 };
 
@@ -191,8 +192,8 @@ export class StandView {
     // (the camera is the player's: this takes it back to the king)
     const centre = el('button', 'stCentre');
     centre.innerHTML = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M3 18h18v3H3zM3 8l5 4 4-7 4 7 5-4-2 9H5z" fill="currentColor" stroke="#1a0a06" stroke-width="1.5" stroke-linejoin="round"/></svg>';
-    centre.title = 'Centre on the king';
-    centre.setAttribute('aria-label', 'Centre on the king');
+    centre.title = 'Centre on your ruler';
+    centre.setAttribute('aria-label', 'Centre on your ruler');
     centre.addEventListener('click', () => this.centreOnKing());
     const wave = el('div', 'stWave');
     wave.append(el('small', '', 'Wave'), el('span'), el('em'));
@@ -245,7 +246,7 @@ export class StandView {
     };
     bar.append(
       btn('level', 'Level up', () => this.buy(() => buyLevel(this.s!, this.picked ?? undefined) !== null)),
-      btn('heal', 'Heal the king', () => this.buy(() => healKing(this.s!) !== null)),
+      btn('heal', 'Heal your ruler', () => this.buy(() => healKing(this.s!) !== null)),
     );
     const start = el('button', 'stStart primary', 'Begin');
     start.addEventListener('click', () => this.begin());
@@ -450,7 +451,7 @@ export class StandView {
     const going = s.phase === 'wave';
     card.append(
       el('p', '', going ? 'Leave the stand? The run is kept as it was when the last wave was cleared, and carries on from there.' : 'Leave the stand? The run is kept, and carries on from here.'),
-      el('p', 'stDim', 'Or give up now: the king falls, and the run is paid for the waves it has cleared.'),
+      el('p', 'stDim', 'Or give up now: your ruler falls, and the run is paid for the waves it has cleared.'),
     );
     const row = el('div', 'stRow');
     const stay = el('button', '', 'Stay');
@@ -695,6 +696,24 @@ export class StandView {
       if (u.side === 'hero' && u.tag !== undefined && fight) {
         const c = this.colourOf(u.tag);
         rings.ellipse(sp.x, sp.y, 20, 10).fill({ color: c, alpha: 0.16 }).stroke({ color: c, width: 2, alpha: 0.95 });
+        // (a hero gone to help where the fighting is, STAND-004: a pointer of its colour from its ring towards the foe it was sent to, and a thin ring under that foe)
+        const aid = s.b.stand?.help?.[u.id];
+        const to = aid !== undefined ? this.sprites.get(aid) : undefined;
+        if (to?.root.visible) {
+          const dx = to.x - sp.x;
+          const dy = to.y - sp.y;
+          const len = Math.hypot(dx, dy);
+          if (len > 30) {
+            const ux = dx / len;
+            const uy = dy / len;
+            // (a faint line of its colour along the floor to the foe, and an arrowhead at the ring's rim)
+            rings.moveTo(sp.x + ux * 24, sp.y + uy * 12).lineTo(to.x - ux * 16, to.y - uy * 8).stroke({ color: c, width: 2, alpha: 0.4 });
+            const tip = { x: sp.x + ux * 40, y: sp.y + uy * 20 };
+            const back = { x: sp.x + ux * 24, y: sp.y + uy * 12 };
+            rings.poly([tip.x, tip.y, back.x - uy * 9, back.y + ux * 9, back.x + uy * 9, back.y - ux * 9]).fill({ color: c, alpha: 0.95 }).stroke({ color: 0x140808, width: 1, alpha: 0.7 });
+          }
+          rings.ellipse(to.x, to.y, 16, 8).stroke({ color: c, width: 1.5, alpha: 0.7 });
+        }
         if (this.flashAt?.id === u.id) {
           const k = 1 - this.flashAt.left / 900;
           rings.ellipse(sp.x, sp.y, 20 + 22 * k, 10 + 11 * k).stroke({ color: c, width: 2, alpha: 0.9 * (1 - k) });
@@ -828,7 +847,7 @@ export class StandView {
       const tile = this.tileAtScreen(x, e.clientY);
       if (!tile || !this.s) return;
       if (this.spell) {
-        if (castSpell(this.s.b, this.spell, tile[0], tile[1])) play('spell');
+        if (castSpell(this.s.b, this.spell, tile[0], tile[1])) { play('spell'); this.hall.react('cast'); }
         this.spell = null;
         this.refreshSpells();
         return;
@@ -1069,7 +1088,7 @@ export class StandView {
     if (s.phase === 'deploy') this.drawMarks();
     this.aids(dt);
     this.nudge = Math.max(0, this.nudge - dt);
-    this.hall.step(fighting || s.phase === 'deploy' ? dt : 0, s.king.alive ? s.king.hp / s.king.maxHp : 0);
+    this.hall.step(fighting || s.phase === 'deploy' || s.phase === 'over' ? dt : 0, s.king.alive ? s.king.hp / s.king.maxHp : 0);
     const f = fighting || s.phase === 'over';
     this.cx = f ? easeTo(this.cx, this.tx, dt, EASE_MOVE_MS) : this.cx + (this.tx - this.cx) * Math.min(1, dt / 220);
     this.cy = f ? easeTo(this.cy, this.ty, dt, EASE_MOVE_MS) : this.cy + (this.ty - this.cy) * Math.min(1, dt / 220);
@@ -1118,6 +1137,7 @@ export class StandView {
         const kind = s.b.units.find((u) => u.id === n.unit)?.def;
         if (kind) heroSays(kind, 'levelUp', () => this.anchorOf(n.unit));
       } else if (n.kind === 'kingHit') {
+        this.hall.react('hurt');
         if (this.frameN - this.lastKingHit > 12) {
           play('kingHit');
           this.lastKingHit = this.frameN;
@@ -1232,7 +1252,7 @@ export class StandView {
         const s = this.s;
         if (!s || (s.phase !== 'wave' && s.phase !== 'break')) return;
         if (sp.target === 'all') {
-          if (castSpell(s.b, id, 0, 0)) play('spell');
+          if (castSpell(s.b, id, 0, 0)) { play('spell'); this.hall.react('cast'); }
         } else this.spell = this.spell === id ? null : canAfford(s.b, id) ? id : this.spell;
         this.refreshSpells();
       });
@@ -1261,6 +1281,7 @@ export class StandView {
     const s = this.s!;
     const run = s.run;
     const p = this.parts;
+    this.text('rulername', p.king.querySelector('small'), rulerOf(settings().ruler).name);
     const wave = s.phase === 'deploy' ? run.wave : s.phase === 'break' ? run.wave : run.wave;
     this.text('wave', p.wave.querySelector('span'), String(wave));
     const boss = (s.phase === 'wave' || s.phase === 'deploy' || s.phase === 'break') && wave % 5 === 0;

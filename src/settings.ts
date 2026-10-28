@@ -4,11 +4,15 @@
 // when one changes (the sound's volumes, the frame cap). Nothing here touches the battle.
 
 import { tips } from './tips';
+import { DEFAULT_RULER, RULERS, rulerOf, type RulerId } from './rulerRules';
+import { RULER_URLS } from './rulerUrls';
 import { DUCHESS_COSMETICS, type DuchessCosmeticId } from './render/duchessRules';
 
 const KEY = 'legends.settings';
 
 export interface Settings {
+  /** The player's ruler; cosmetic, shared by every view. */
+  ruler: RulerId;
   /** Music volume, 0 to 100. */
   music: number;
   /** Effects volume, 0 to 100. */
@@ -31,7 +35,7 @@ export interface Settings {
   duchessHat: DuchessCosmeticId;
 }
 
-export const DEFAULTS: Settings = { music: 100, effects: 100, speed: 1, shake: true, numbers: true, saver: false, awake: true, quips: true, cinematics: true, duchessHat: 'none' };
+export const DEFAULTS: Settings = { ruler: DEFAULT_RULER, music: 100, effects: 100, speed: 1, shake: true, numbers: true, saver: false, awake: true, quips: true, cinematics: true, duchessHat: 'none' };
 
 /** The settings from what was saved (`raw`, the stored text or null): anything missing or wrong falls back to the default. */
 export function parseSettings(raw: string | null): Settings {
@@ -46,6 +50,7 @@ export function parseSettings(raw: string | null): Settings {
   const flag = (x: unknown, d: boolean) => (typeof x === 'boolean' ? x : d);
   const validHat = (x: unknown): DuchessCosmeticId => (typeof x === 'string' && DUCHESS_COSMETICS.some((c) => c.id === x) ? (x as DuchessCosmeticId) : DEFAULTS.duchessHat);
   return {
+    ruler: rulerOf(saved.ruler).id,
     music: volume(saved.music, DEFAULTS.music),
     effects: volume(saved.effects, DEFAULTS.effects),
     speed: saved.speed === 2 ? 2 : 1,
@@ -115,6 +120,7 @@ function draw(): void {
   const s = current;
   const body = $('settingsBody');
   body.replaceChildren(
+    rulerRow(s.ruler),
     volumeRow('Music', 'music', s.music, 'Off turns the music and the ambience off and keeps the effects'),
     volumeRow('Effects', 'effects', s.effects),
     speedRow(s.speed),
@@ -146,6 +152,42 @@ function row(title: string, hint: string): [HTMLElement, HTMLElement] {
   text.append(b, em);
   r.append(text);
   return [r, text];
+}
+
+function rulerRow(value: RulerId): HTMLElement {
+  const section = document.createElement('section');
+  section.className = 'rulerSetting';
+  section.setAttribute('aria-label', 'Choose your ruler');
+  const heading = document.createElement('h3');
+  heading.textContent = 'Your ruler';
+  const hint = document.createElement('p');
+  hint.className = 'hint';
+  hint.textContent = 'Eight crowns, eight characters. Choose who rules your keep.';
+  const grid = document.createElement('div');
+  grid.className = 'rulerChoices';
+  for (const ruler of RULERS) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'rulerChoice';
+    b.style.setProperty('--ruler-colour', ruler.colour);
+    b.classList.toggle('on', ruler.id === value);
+    b.setAttribute('aria-pressed', String(ruler.id === value));
+    b.setAttribute('aria-label', `${ruler.name}, ${ruler.role}`);
+    const picture = document.createElement('span');
+    picture.className = 'rulerPortrait';
+    picture.style.backgroundImage = `url("${RULER_URLS[ruler.id]}")`;
+    picture.setAttribute('aria-hidden', 'true');
+    const name = document.createElement('b');
+    name.textContent = ruler.name;
+    const role = document.createElement('small');
+    role.textContent = ruler.role;
+    b.title = ruler.detail;
+    b.append(picture, name, role);
+    b.addEventListener('click', () => { setSetting('ruler', ruler.id); draw(); });
+    grid.append(b);
+  }
+  section.append(heading, hint, grid);
+  return section;
 }
 
 function volumeRow(title: string, key: 'music' | 'effects', value: number, offHint = 'Off'): HTMLElement {
