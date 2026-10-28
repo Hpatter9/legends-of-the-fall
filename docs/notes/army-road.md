@@ -1,12 +1,14 @@
-# WORLD-ROAD: the army road and boss arenas (phase A: proposal and working prototype)
+# WORLD-ROAD: the army road, its arenas and the living land
 
 The owner: "The battle maps need an update. They need to be able to be irregular shaped so they follow a better more realistic path. And the boss
 sections are terrible." The owner's answers: **road plus scenery** (the walkable ground of each army section is a winding road, roughly 6 to 10 tiles
 wide, with low unwalkable scenery beside it, so a section no longer reads as a full 14x18 slab); **a themed arena** for each army's boss waves (the
 mid-boss at wave 8, the Wildwood's at 5 and 10, the final at 15).
 
-This is **phase A**: a working prototype on `claude/army-road` and real in-game mock-ups, for the owner to confirm the direction before the art and
-tuning are finished. Every screenshot below is labelled MOCK-UP. Nothing is merged; the version is not bumped.
+**Phase A** (a working prototype and real in-game mock-ups) was approved by the owner with seven answers; **phase B** (below, "Phase B: the living
+land") finished it: pack walls and set pieces, a living environment, running water and waterfalls, and the balance re-measured and retuned. The
+phase A sections that follow are kept as they were written, with corrections marked; phase B's own sections come after them. Nothing is merged;
+the version is not bumped.
 
 Mock-ups (393x852, real renders of the prototype, the wave set by hand as a presentation fixture, not a played run):
 
@@ -107,22 +109,17 @@ wave 14). The old boss look (every tile flagstone with a gilded lip on a deeper 
 - **Measured** (quick and noisy, 12 attempts a cell): orcs unchanged at levels 11 and 17 and through waves 1 to 14 at level 5, but the final
   arena stopped every level-5 attempt (33% won it on main). See the table at the end of this note.
 
-## Open questions for the owner
+## Open questions for the owner (phase A; the owner's answers in brackets)
 
-1. Road width: is 6 to 9 tiles (about 59% of the section) right, or narrower (more of a path) or wider?
-2. Should fliers fly over the scenery (woods, crags), or keep to the road like everyone else (the prototype: they keep to the road)?
-3. The arenas' inner features change fights (healing shrines, burning runnels, barrels, cover). Keep them, tone them down, or make them
-   looks-only?
-4. Arena size: about 11 tiles across. Bigger and emptier, or tighter?
-5. The final arena replaces the distant destination compound. Keep the compound as a backdrop behind the final arena too?
-6. Art: the prototype reuses the Calamity atlas's props. For phase B, should I cut more from the packs (proper palisade segments, tombstones, torii,
-   lanterns, foundry pipes) so each arena's ring reads clearly up close?
-7. A run in progress keeps its seed, so its map is rebuilt in the new shape on the next load (the heroes are re-placed on the road). Acceptable?
+1. Road width: is 6 to 9 tiles (about 59% of the section) right? [Yes, keep.]
+2. Should fliers fly over the scenery? [Yes: scenery blocks walkers only, as deep water does.]
+3. The arenas' inner features (healing shrines, burning runnels, barrels, cover)? [Keep them: "I love the idea of a living environment - expand on
+   this."]
+4. Arena about 11 tiles across? [Keep.]
+5. Keep the distant compound behind the final arena too? [Yes, for now.]
+6. Cut proper ring and set-piece sprites? [Yes; and more flair, only where it fits and matches the tiles' angle.]
+7. A run in progress rebuilt in the new shape on its next load? [Acceptable.]
 
-## Phase B (after the owner's answers)
-
-Finish the art (more pack sprites for rings and set pieces, credited), tune the road width and arena features to the answers, re-measure the
-armies at their tier levels, check 360x780 and 412x915, cold-bake timing on the phone sizes, and the full suite.
 
 ## Checks run for phase A
 

@@ -577,8 +577,7 @@ export class BoardView {
       live.loops.push({ sp, frames, ph: fall.v % FALL_FRAMES, ms: 70 });
     }
     let landmark: Container | null = null;
-    // (an army road's final arena is the destination itself: its set pieces stand in for the distant compound)
-    if (b.landmark && b.landmarkAt && art && !b.pieces?.length) {
+    if (b.landmark && b.landmarkAt && art) {
       // Existing credited gate/tower sprites form a scenic compound beyond the far edge, never collision terrain.
       const base = tiles[Math.floor(b.w / 2)];
       const site = b.landmarkAt;
