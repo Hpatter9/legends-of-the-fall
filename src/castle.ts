@@ -507,22 +507,15 @@ export class CastleScene {
     card.className = `ctChamberCard${ready ? ' ready' : ''}${isMax ? ' maxed' : ''}${going ? ' working' : ''}`;
     card.style.setProperty('--chamber-glow', c.glow);
 
-    // Top Diorama Banner: Architectural Edifice + Floating Glowing Relic Medallion + Level Badge
+    // Top Diorama Banner: Architectural Edifice + Level Badge (the corner relic medallion was removed at the owner's ask)
     const diorama = el('div', 'ctCardDiorama');
     const edificeImg = el('img', 'ctEdificeImg');
     edificeImg.src = c.edificeUrl;
     edificeImg.alt = c.name;
     edificeImg.draggable = false;
 
-    const relicBadge = el('div', 'ctRelicFrame');
-    const relicImg = el('img', 'ctRelicImg');
-    relicImg.src = c.icon;
-    relicImg.alt = c.relicName;
-    relicImg.draggable = false;
-    relicBadge.append(relicImg);
-
     const lvPill = el('span', `ctLvPill${isMax ? ' max' : level > 0 ? ' built' : ''}`, isMax ? `MAX · Lv.${level}` : `Lv. ${level} / ${max}`);
-    diorama.append(edificeImg, relicBadge, lvPill);
+    diorama.append(edificeImg, lvPill);
 
     // Title & Relic Name
     const head = el('div', 'ctCardHead');
@@ -596,15 +589,8 @@ export class CastleScene {
     edificeImg.alt = c.name;
     edificeImg.draggable = false;
 
-    const relicBadge = el('div', 'ctRelicFrame');
-    const relicImg = el('img', 'ctRelicImg');
-    relicImg.src = c.icon;
-    relicImg.alt = c.relicName;
-    relicImg.draggable = false;
-    relicBadge.append(relicImg);
-
     const lvPill = el('span', `ctLvPill${built ? ' max' : ''}`, built ? 'SANCTIFIED' : 'LOCKED SANCTUM');
-    diorama.append(edificeImg, relicBadge, lvPill);
+    diorama.append(edificeImg, lvPill);
 
     const contentCol = el('div', 'ctChapelCol');
     const head = el('div', 'ctCardHead');
