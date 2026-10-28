@@ -81,19 +81,21 @@ import { closestTrait, countTraits, kindsOf, nextTierLine, traitsOf, TRAITS } fr
 import { placeSynergies, startSynergies, updateCombo } from './synergyView';
 import { duoCombosOf } from './sim/duoCombos';
 import { COMBO_NAME, comboById, comboOf, noteCombos } from './sim/combos';
-import { UnitSprite } from './render/unitView';
+import { RISE_MS, UnitSprite } from './render/unitView';
 import { flyUp, recyclePuff, summonBurst } from './render/uiFx';
 import { burnHeart, reducedMotion, reviveLine } from './reviveView';
 import { Fx, loadFx } from './render/fx';
 import { framesOf, loadSheets, portrait, sheetInfo, wholeFigure } from './render/sheets';
 import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, framing, PAUSE_MS, settle, viewFor, type View } from './render/cameraRules';
+import { pinchZoom, wheelZoom, zoomAbout, zoomLimits } from './render/fightCam';
 import { titleOf } from './render/bossTitles';
 import { at, depth, FOOT, HH, landmarkBounds, rawAt, setFrame, TH, TW } from './render/iso';
 import { bindDuck, bindMute, play, playEvents, setAct, setScene, setup, startFight } from './render/sound';
 import { fightLevel, type MapKind } from './render/epicMusic';
 import { sceneOf } from './render/audioRules';
 import { colLeft, viewH, viewW } from './viewport';
-import { onSettings, openSettings, setSetting, settings } from './settings';
+import { onDevGrant, onSettings, openSettings, setSetting, settings } from './settings';
+import { devGrant } from './sim/devGrant';
 import { PageGoat } from './duchess';
 import { duchessFightSays, hideDuchessCard, showDuchessCard } from './duchessFightView';
 import type { DuchessWish } from './sim/duchessFight';
@@ -185,7 +187,7 @@ class Game {
   /** How long the fight has been over (ms): the recap waits `END_WAIT_MS` after the last kill, so the deaths play out. */
   private endWait = 0;
   /** The heart-burn after a fall with hearts left: `t` real ms since it began, `swapped` once the fallen heroes rise, `started` once its fight is on (`fightAt`: when). Nothing is settled until it is over; no prompt. */
-  private revive: { t: number; swapped: boolean; started: boolean; fightAt: number; line?: { dismiss: () => void } } | null = null;
+  private revive: { t: number; swapped: boolean; started: boolean; fightAt: number; risenAt?: number; line?: { dismiss: () => void } } | null = null;
   /** This fight's loss has had its cinematic asked for (once a fight: `refresh` runs often). */
   private lossScened = false;
   /** What an army's last settled fight paid (null for any other run). */
@@ -381,6 +383,15 @@ class Game {
     });
     // (battery saver caps the frame rate at 30)
     onSettings((s) => (this.app.ticker.maxFPS = s.saver ? 30 : 0));
+    // (the developer grant in Settings: crowns, or shards of every hero, for testing; saved and shown at once)
+    onDevGrant((what, n) => {
+      const said = devGrant(this.meta, what, n);
+      saveMeta(this.meta);
+      this.syncPool();
+      this.refresh();
+      this.home.refresh();
+      return said;
+    });
     window.addEventListener('resize', () => this.layout());
     // (the home screen covers the board, so the board is not drawn while it is up: the canvas cost nothing but heat and battery behind it)
     const home = $('home');
@@ -455,6 +466,8 @@ class Game {
     showTwistBanner(this.run.tower?.cur?.fight?.twist);
     this.showTheme();
     this.syncSprites(true);
+    // (a new wave's deploy: the camera frames the board afresh, whatever the player did with it last wave)
+    this.manualCam = false;
     this.layout();
     this.revealDestination();
     this.refresh();
@@ -785,6 +798,8 @@ class Game {
     this.chosen = null;
     this.boardView.clearMarks();
     this.refreshBossBar();
+    // (the fight's opening framing; from here a drag or a pinch makes the camera the player's until the next wave)
+    this.manualCam = false;
     this.layout();
     this.refresh();
   }
@@ -997,7 +1012,7 @@ class Game {
     const p = this.push;
     if (!p) return;
     p.left -= dt;
-    if (p.left <= 0 || performance.now() < this.pausedUntil) {
+    if (p.left <= 0 || this.manualCam || performance.now() < this.pausedUntil) {
       this.push = null;
       return;
     }
@@ -1029,6 +1044,8 @@ class Game {
 
   /** The camera closes in on the changing boss. */
   private pushOnPhase(): void {
+    // (the player's own camera stays where they put it)
+    if (this.manualCam) return;
     const boss = this.phaseBoss!;
     const [x, y] = at(boss.u, boss.v, tileAt(this.b.board, boss.u, boss.v)?.h ?? 0);
     this.tx = x;
@@ -1105,11 +1122,17 @@ class Game {
   private tzoom = 1;
   private held: View | null = null;
   private pausedUntil = 0;
+  /** The player has panned or zoomed the camera this wave (FIGHT-FIXES, `fightCam.ts`): the follow, the effects' pushes and a resize leave it
+   *  where they put it until the next wave's deploy (or the fight's start) frames the board afresh. */
+  private manualCam = false;
+  /** The fingers down on the board, and a pinch under way: the fingers' spread and the zoom it began at. */
+  private touches = new Map<number, { x: number; y: number }>();
+  private pinch: { d0: number; z0: number; mx: number; my: number } | null = null;
   private bbox = { x0: 0, x1: 0, y0: 0, y1: 0 };
 
   /** The fight camera: frame the living fighters, zoomed in as far as fits, holding still for small moves. A manual pan pauses it for a few seconds. */
   private follow(): void {
-    if (performance.now() < this.pausedUntil) return;
+    if (this.manualCam || performance.now() < this.pausedUntil) return;
     const spots = this.b.units.filter((u) => u.alive).flatMap((u) => this.sprites.get(u.id) ?? []);
     const box = framing(spots);
     if (!box) return;
@@ -1169,7 +1192,39 @@ class Game {
     this.area = area;
     const scenic = landmarkBounds(b, { rot: chainOf(this.run)?.[this.run.stage - 1]?.rot ?? 0, ou: 0, ov: 0, w: b.w, d: b.d });
     this.bbox = scenic ? { x0: Math.min(x0, scenic.x0), x1: Math.max(x1, scenic.x1), y0: Math.min(y0, scenic.y0), y1: Math.max(y1, scenic.y1) } : { x0, x1, y0, y1 };
-    this.focus(true);
+    // (a camera the player has moved stays put through a resize, kept over the board)
+    if (this.manualCam) {
+      this.clampCam();
+      this.place();
+    } else this.focus(true);
+  }
+
+  /** The zoom the player may use (`fightCam.ts`). */
+  private camLimits(): { lo: number; hi: number } {
+    return zoomLimits(this.minZoom(), this.scale);
+  }
+
+  /** The player zooms to `z` about a screen point (client px), the world under it held still or carried to `(tx, ty)`: the camera is theirs now. */
+  private zoomTo(z: number, sx: number, sy: number, tx = sx, ty = sy): void {
+    const midX = colLeft() + this.area.x + this.area.w / 2;
+    const midY = this.area.y + this.area.h / 2;
+    const k0 = this.scale * this.zoom;
+    const c = zoomAbout(this.cx, this.cy, k0, this.scale * z, sx - midX, sy - midY, tx - midX, ty - midY);
+    this.takeCam();
+    this.zoom = this.tzoom = z;
+    this.cx = this.tx = c.cx;
+    this.cy = this.ty = c.cy;
+    this.clampCam();
+    this.place();
+  }
+
+  /** The player has moved the camera: the follow and the pushes let it be until the next wave (an intro or a reveal in progress ends). */
+  private takeCam(): void {
+    if (this.intro) this.endIntro();
+    this.manualCam = true;
+    this.held = null;
+    this.push = null;
+    this.destinationReveal = null;
   }
 
   /** Send the camera to the heroes' rows (deploying) or the middle of the board (fighting). */
@@ -1334,15 +1389,33 @@ class Game {
     });
     const canvas = this.app.canvas;
     canvas.addEventListener('pointerdown', (e) => {
+      // (two fingers on the board pinch it: any drag the first began is let go where it was, FIGHT-FIXES)
+      this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (this.touches.size === 2) return this.startPinch();
+      if (this.touches.size > 2 || this.pinch) return;
       if (this.drag) return;
       // (a drag that begins on a placed hero moves the hero; anywhere else it pans the board)
       const id = this.b.phase === 'deploy' ? this.heroAtScreen(e.clientX, e.clientY) : null;
       this.drag = { id: id ?? '', x: e.clientX, y: e.clientY, moved: false, fromBoard: true, pan: id ? undefined : { cx: this.cx, cy: this.cy } };
       this.aim(e);
     });
-    window.addEventListener('pointermove', (e) => this.dragMove(e));
-    window.addEventListener('pointerup', (e) => this.dragEnd(e));
-    window.addEventListener('pointercancel', () => this.endDrag());
+    window.addEventListener('pointermove', (e) => (this.touches.has(e.pointerId) && this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY }), this.pinch ? this.pinchMove() : this.dragMove(e)));
+    const lift = (e: PointerEvent) => {
+      this.touches.delete(e.pointerId);
+      if (this.touches.size < 2) this.pinch = null;
+    };
+    window.addEventListener('pointerup', (e) => (lift(e), this.dragEnd(e)));
+    window.addEventListener('pointercancel', (e) => (lift(e), this.endDrag()));
+    // (a mouse wheel zooms about the pointer, at any time in a fight or a deploy)
+    canvas.addEventListener(
+      'wheel',
+      (e) => {
+        e.preventDefault();
+        const { lo, hi } = this.camLimits();
+        this.zoomTo(wheelZoom(this.zoom, e.deltaY, lo, hi), e.clientX, e.clientY);
+      },
+      { passive: false },
+    );
     this.spellGhost.id = 'spellGhost';
     this.spellGhost.hidden = true;
     document.body.append(this.spellGhost);
@@ -1771,7 +1844,8 @@ class Game {
     if (!r) return;
     if (!r.swapped) r.t = Math.max(r.t, this.reviveTimes().swap);
     else {
-      r.fightAt = 0;
+      // (but not before the fallen are on their feet: they would slide about lying down)
+      r.fightAt = Math.min(r.fightAt, r.risenAt ?? 0);
       r.line?.dismiss();
     }
   }
@@ -1789,13 +1863,16 @@ class Game {
       const gold = retryWave(this.run)!;
       play('coinRecycle');
       saveRun(this.run);
+      // (the fallen get up off the ground where they lay, their death played backwards: no burst of light, no fresh arrival, FIGHT-FIXES)
+      const fallen = this.b.units.filter((u) => u.side === 'hero' && !u.alive && !UNITS[u.def].summon);
       reviveParty(this.b);
       this.acc = 0;
       this.endWait = 0;
-      for (const u of this.b.units) if (u.side === 'hero') this.sprites.get(u.id)?.evolve();
+      for (const u of fallen) if (u.alive) this.sprites.get(u.id)?.getUp();
       flyUp(`+${gold} gold`, $('gold'));
-      // (the heroes stand where they stood, glowing; a beat later the fight is on, with no Fight! tap)
-      r.fightAt = r.t + (reducedMotion() ? 200 : 500);
+      // (once they are on their feet the fight is on, with no Fight! tap)
+      r.risenAt = r.t + (reducedMotion() ? 0 : RISE_MS);
+      r.fightAt = r.t + (reducedMotion() ? 200 : RISE_MS + 80);
     }
     if (r.swapped && !r.started && r.t >= r.fightAt) {
       r.started = true;
@@ -1917,6 +1994,32 @@ class Game {
     else this.home.openArmies(focus);
   }
 
+  /** Two fingers are down on the board: a pinch begins (a hero being dragged stays where it was). */
+  private startPinch(): void {
+    if (this.drag) {
+      this.drag = null;
+      this.endDrag();
+    }
+    const [a, b] = [...this.touches.values()];
+    this.pinch = { d0: Math.hypot(a.x - b.x, a.y - b.y), z0: this.zoom, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 };
+  }
+
+  /** The pinch: zoom by the fingers' spread, about the point between them, which the board follows as they move. */
+  private pinchMove(): void {
+    const p = this.pinch!;
+    const [a, b] = [...this.touches.values()];
+    if (!a || !b) return;
+    const { lo, hi } = this.camLimits();
+    const mx = (a.x + b.x) / 2;
+    const my = (a.y + b.y) / 2;
+    this.zoomTo(pinchZoom(p.z0, p.d0, Math.hypot(a.x - b.x, a.y - b.y), lo, hi), p.mx, p.my, mx, my);
+    // (the next move starts from here: the zoom and the point between the fingers so far)
+    p.d0 = Math.hypot(a.x - b.x, a.y - b.y);
+    p.z0 = this.zoom;
+    p.mx = mx;
+    p.my = my;
+  }
+
   private dragMove(e: PointerEvent): void {
     const d = this.drag;
     if (!d) return;
@@ -1925,8 +2028,9 @@ class Game {
     if (d.pan) {
       if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 8) return;
       d.moved = true;
-      // (a manual pan pauses the fight camera's follow for a few seconds)
+      // (a manual pan pauses the fight camera's follow for a few seconds; in a fight, the camera is the player's until the next wave)
       this.pausedUntil = performance.now() + PAUSE_MS;
+      if (this.b.phase === 'fight') this.takeCam();
       this.held = null;
       this.cx = d.pan.cx - (e.clientX - d.x) / this.world.scale.x;
       this.cy = d.pan.cy - (e.clientY - d.y) / this.world.scale.y;

@@ -574,6 +574,7 @@
   .setting .toggle, .setting .pair button { min-width: 64px; }
   .setting .toggle.on, .setting .pair button.on { background: linear-gradient(var(--e4), var(--e1)); border-color: var(--gold); }
   .setting .pair { display: flex; gap: 6px; }
+  .setting .devGrant { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
   /* the first-run tips: a speech bubble by the thing it talks about (placed in src/tips.ts), taps only on itself */
   #tip {
     position: fixed; z-index: 6; width: min(280px, calc(calc(100 * var(--vw)) - 24px)); padding: 10px 12px; background: var(--wood);
