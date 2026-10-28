@@ -22,7 +22,7 @@ import { SCENE_TRACKS, type Track } from './musicScore';
 import { Mixer, cuesFor, intensityOf, type Cue } from './soundRules';
 
 const MUSIC_LEVEL = 0.22;
-const SFX_LEVEL = 0.5;
+const SFX_LEVEL = 0.35;
 const SAVE_KEY = 'legends.sound';
 
 export type Sfx = Cue;
