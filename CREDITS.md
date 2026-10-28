@@ -1,6 +1,8 @@
 # Credits
 
-- **Resonance hero pilot** (`hero_soldier.png`, `hero_samurai_archer.png`): original generated pixel artwork, directed from the owner's approved concept and Final Fantasy Resonance style references. No franchise sprites are included. Cropped, packed and sampled with nearest-neighbour scaling by `tools/resonance/pack.cjs`. These replace the Knight and Archer's displayed art at all grades; existing grade and awakening colour treatments still apply. Original Craftpix sheets and their credits remain available.
+- **Full Resonance hero upgrade** (`src/art/units/hero_res_*.png`, separate `_back` sheets, and the two pilot heroes): original generated pixel artwork following the owner's approved direction. Includes the 43 remaining collectible heroes, Werewolf Brute/awakened appearances and three Treants. Front/rear art supplies four isometric facings through left/right mirroring; dedicated walking atlases supply eight-frame strides. Prompts, specifications and packing tools are in `tools/resonance/`; raw generation intermediates remain in the art workspace. No franchise sprites are included. Foes/NPCs retain their existing art and credits.
+
+- **Resonance hero pilot** (`hero_soldier.png`, `hero_samurai_archer.png`): original generated pixel artwork, directed from the owner's approved concept and Final Fantasy Resonance style references. No franchise sprites are included. Cropped, packed and sampled with nearest-neighbour scaling by `tools/resonance/pack.cjs`. These replace the Knight and Archer's displayed art at all grades; current grade effects and awakened class auras apply. Original Craftpix sheets and their credits remain available.
 
 Most of the art is from free **Craftpix.net** packs (craftpix.net, free licence: use in games allowed, no redistributing
 the raw files), copied one sprite at a time from the private assets repository (`hpatter9/chronos-assets`).
@@ -169,6 +171,7 @@ All Craftpix, copied one sprite or layer at a time; no PixelLab. Ground tops and
 
 ## Art generated with PixelLab
 
+- **Duchess's headbutt and fall** (the attack and dead rows of `duchess_goat.png`) are generated with **PixelLab**: her own standing frame from whtdragon's white goat (`src/art/duchess/goat.png`) on a 64-pixel canvas, animated with `/animate-with-text-v3` (`tools/duchess/gen.py`, the takes kept in `tools/duchess/generated/`), native pixels with hard alpha, then scaled 2x like the pack frames beside them. Four generations: two headbutt takes (the second used), a hurt take (not used: it drew a lightning flash) and the fall (its last three frames used). See `docs/notes/duchess-fights.md`.
 - The **Lich King** (`lich_king.png`, the Undead Legion's boss) is generated the same way as the other bosses: a base figure (`/generate-with-style-v2`, 128 px, Craftpix Minotaur, Samurai Commander and Skeleton Warrior frames as style references), then idle, walk, attack, cast and death clips (`/animate-with-text-v3`), cropped and padded only (native pixels, hard alpha), with a last lying death frame made by an exact 90-degree turn (`tools/pixellab/lie.py`). The steps are in `tools/pixellab/lich.py`; see `docs/notes/armies.md`.
 - The **Oni King** (`oni_king.png`, the Yokai Night Parade's boss) is generated the same way as the Lich King: 4 base candidates at 128 px (Craftpix Minotaur, Samurai Commander and the generated Horned Ogre as style references; the armoured one picked), then idle, walk, attack, attack2 and death clips and the lying last frame. The steps are in `tools/pixellab/oni.py`; see `docs/notes/armies.md`.
 - The Druid's treant (`cls_treant.png`) is generated the same way (base figure from Craftpix Knight and Minotaur style references, then walk, attack and idle clips). Every generated sheet's last death frame is that sheet's idle figure turned exactly 90 degrees (`tools/pixellab/lie.py`), so no extra generation was involved.
@@ -289,6 +292,10 @@ Duchess is the town's goat from Chronos Settlement (`hpatter9/little-town`), and
 is the one Chronos's cutscenes use (three steps walking left, three walking right), copied as it is. It is **whtdragon**'s RPG Maker MV white goat
 (`animals/goats.png`). The pack folder has no licence file: check whtdragon's posted terms of use before any public release (the same note as
 Chronos's CREDITS.md).
+
+Her fighting sheet (`src/art/units/duchess_goat.png`, for the rare fight she joins: `tools/duchess/compose-duchess.py`) keeps that goat's walk and idle
+(the right-facing row, set on a 64-pixel canvas and scaled up 2x with nearest-neighbour) and her hurt (the standing frame brightened and knocked back). Her
+headbutt and her fall are **generated with PixelLab** from her own standing frame (see "Art generated with PixelLab").
 
 ## The Beastmaster's wolves (`src/art/units/wolf_grey.png`, `wolf_black.png`; `tools/wolf/compose-wolf.py`)
 

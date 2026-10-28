@@ -13,6 +13,8 @@ import { Rng } from './rng';
 import { fxBlow, fxStruck, fxTick, hidden } from './equipFx';
 import { heroUltimates } from './ultimates';
 import { runRiders } from './tierSkills';
+import { traitsOf } from './traits';
+import { triggerDuoComboOnUlt } from './duoCombos';
 import { addRes, castHero, CHARGE_TO_POOL, heroKitOf, poolOf, poolOnDealt, poolOnTaken, resMax, tickPool, ultOnDamage } from './heroKits';
 import { kitStrike, kitTick } from './kits/effects';
 
@@ -43,6 +45,7 @@ export interface Trap {
   dmg: number;
   /** How long it holds whoever springs it (a snare's `ROOT_MS` when unset). */
   hold?: number;
+  wisp?: boolean;
 }
 
 /** Heal over time (the Cleric's blessing): `amount` every `every` ms until `until`. */
@@ -1563,7 +1566,7 @@ export function tryCast(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const ult = ultimateOf(me);
   if (ult && (me.charge2 ?? 0) >= ult.need && powered(b, me, ult, (1 + tal(me, 'ultPow')) * (ultTune(me, ult)?.power ?? 1) - 1, out)) {
     me.charge2! -= ult.need;
-    return began(b, me, ult, out);
+    return began(b, me, ult, out, 'ult');
   }
   if (me.charge < k.skill.need || !powered(b, me, k.skill, 0, out)) return false;
   me.charge -= k.skill.need;
@@ -1603,6 +1606,7 @@ export function began(b: Battle, me: Unit, s: Skill, out: BattleEvent[], slot: '
   me.swing = undefined;
   me.busyUntil = b.t + s.castMs;
   out.push({ kind: 'skill', by: me.id, name: s.name, ms: s.castMs });
+  if (slot === 'ult') triggerDuoComboOnUlt(b, me, out);
   // (a hero merged up adds its tier skill's riders to the ordinary skill; the ultimate is the same at every grade)
   if (me.grade && s === kitOf(me)?.skill)
     runRiders(b, me, out, (ms, share) => b.pending.push({ at: b.t + ms, kind: 'echo', by: me.id, to: me.id, dmg: share, heavy: false }));
@@ -1643,6 +1647,24 @@ export const gain = (u: Unit, n: number, skillOnly = false) => {
   if (!skillOnly && ultimateOf(u)) u.charge2 = Math.min(CHARGE_MAX, (u.charge2 ?? 0) + n * ULT_RATE * (ultTune(u, ultimateOf(u)!)?.rate ?? 1) * (1 + tal(u, 'ultRate')));
 };
 
+/** Yokai trait milestone (three Yokai): upon dodging, leave a spirit wisp trap on the tile, hurting and holding the foe that steps on it; one wisp a Yokai at a time. */
+export function spawnSpiritWisp(b: Battle, to: Unit, out: BattleEvent[]): void {
+  const traps = (b.traps ??= []);
+  if (!traps.some((tr) => (tr.u === to.u && tr.v === to.v) || (tr.wisp && tr.by === to.id && tr.until > b.t))) {
+    traps.push({
+      u: to.u,
+      v: to.v,
+      side: to.side,
+      by: to.id,
+      until: b.t + 10000,
+      dmg: Math.max(10, Math.round(atkOf(to) * 1.2)),
+      hold: 800,
+      wisp: true,
+    });
+    out.push({ kind: 'wisp', by: to.id, u: to.u, v: to.v, ms: 10000 });
+  }
+}
+
 /** What a blow or skill does to its target after guards, blocks and dodges (null when slipped), charging both sides. */
 export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow' | 'skill' | 'dot', splash: boolean, out: BattleEvent[]): number | null {
   const blow = src === 'blow';
@@ -1651,6 +1673,9 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
   const dodge = (kit?.passive.dodge ?? 0) + (team?.dodge ?? 0) + (to.eq?.dodge ?? 0);
   if (blow && dodge && roll(b) < dodge) {
     out.push({ kind: 'dodge', to: to.id });
+    if (b.traits?.yokaiWisp && traitsOf(to.def).includes('yokai')) {
+      spawnSpiritWisp(b, to, out);
+    }
     if (poolOf(to)) poolOnTaken(b, to, true);
     else gain(to, (kit?.skill.taken ?? 0) * 0.5);
     return null;
@@ -1860,6 +1885,21 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
       }
     }
     b.traps = b.traps.filter((tr) => tr.until > b.t);
+  }
+  // cabbages kicked by Duchess: the first unit walking over it is healed for 10% max HP
+  if (b.cabbages?.length) {
+    const kept: typeof b.cabbages = [];
+    for (const c of b.cabbages) {
+      const walker = b.units.find((x) => x.alive && x.u === c.u && x.v === c.v);
+      if (walker) {
+        const healAmt = Math.max(1, Math.round(walker.maxHp * (c.healPercent ?? 0.1)));
+        walker.hp = Math.min(walker.maxHp, walker.hp + healAmt);
+        out.push({ kind: 'heal', to: walker.id, amount: healAmt });
+      } else {
+        kept.push(c);
+      }
+    }
+    b.cabbages = kept.length ? kept : undefined;
   }
 }
 

@@ -116,8 +116,8 @@ export function momentText(mo: Moment): string {
       return 'A set of five fires its Last Oath.';
     case 'firstLoss':
       return 'Your first defeat.';
-    case 'duchess':
-      return 'Duchess turns up in a fight.';
+    case 'duchessJoins':
+      return 'Duchess joins a fight.';
     case 'castle':
       return 'A building of the castle is raised.';
     case 'spire':

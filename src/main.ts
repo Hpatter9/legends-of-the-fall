@@ -7,7 +7,7 @@ import { standable, tileAt } from './sim/board';
 import { canPlace, fight, reviveParty, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
 import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
 // (`saveSlot` as `saveRun`: a tower or calamity run is saved in its own slot, any other in the ordinary one)
-import { armyOfRun, armyRun, benchFull, boostOf, canRetry, chainOf, fallOutcome, MAX_RETRIES, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, waveArmyOf, type Owned, type Run } from './sim/run';
+import { armyOfRun, armyRun, benchFull, boostOf, canRetry, chainOf, fallOutcome, MAX_RETRIES, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, runTheme, waveArmyOf, type Owned, type Run } from './sim/run';
 import { climbXpView, heroLevel, localBoost } from './sim/climb';
 import { calamityRun } from './sim/modes';
 import { CAL_MAPS } from './sim/calamity';
@@ -16,7 +16,7 @@ import { noteFightStats, notePayout, recapOf } from './sim/runRecap';
 import { showRecap } from './recapView';
 import { campArtReady } from './camp';
 import { comebackTips, type ComebackGo } from './sim/comeback';
-import { ARMIES, armyById, armyUnlocked, settleWave, type ArmyPay } from './sim/armies';
+import { ARMIES, armyById, bossOf, armyUnlocked, settleWave, type ArmyPay } from './sim/armies';
 import { drawRunStars, showUnlock } from './armiesView';
 import { modeOpen } from './sim/modeUnlock';
 import { spellIconHtml } from './spellIcons';
@@ -54,8 +54,9 @@ import { hpShare } from './sim/health';
 import { Home } from './home';
 import { Party } from './party';
 import { dailyBonus, dailyCleared, dailyInProgress, modeNote, settleDaily, settleRun, startDaily, type DailyPay } from './sim/modes';
-import { dailyBossName, dailyCrowns, DAILY_WAVES } from './sim/daily';
+import { dailyCrowns, DAILY_WAVES } from './sim/daily';
 import { showDailyStart } from './dailyView';
+import { showThemeBanner } from './themeView';
 import { chestPicture } from './chestStash';
 import { toastAchievements, toastJoined, toastSpells, toastStones } from './achievementsView';
 import { grantContent } from './sim/contentHeroes';
@@ -78,6 +79,7 @@ import { isScenario } from './sim/scenario';
 import { traitBadge } from './traitBadge';
 import { closestTrait, countTraits, kindsOf, nextTierLine, traitsOf, TRAITS } from './sim/traits';
 import { placeSynergies, startSynergies, updateCombo } from './synergyView';
+import { duoCombosOf } from './sim/duoCombos';
 import { COMBO_NAME, comboById, comboOf, noteCombos } from './sim/combos';
 import { UnitSprite } from './render/unitView';
 import { flyUp, recyclePuff, summonBurst } from './render/uiFx';
@@ -93,11 +95,15 @@ import { sceneOf } from './render/audioRules';
 import { colLeft, viewH, viewW } from './viewport';
 import { onSettings, openSettings, setSetting, settings } from './settings';
 import { PageGoat } from './duchess';
+import { duchessFightSays, hideDuchessCard, showDuchessCard } from './duchessFightView';
+import type { DuchessWish } from './sim/duchessFight';
 import { Rng } from './sim/rng';
 import { endingQuip, foeGrumbles, heroSays, initQuips, newQuipScene, revivedQuip } from './quips';
 import { closeCalls, ultimatesCast } from './render/quipRules';
 import { LOADING_TIPS, RECAP_LOSS, RECAP_WIN, RESULT_LOSS, RESULT_WIN } from './quipData';
-import { hideQuip, type Anchor } from './quipView';
+import { hideQuip, showQuip, type Anchor } from './quipView';
+import type { LuckyBleatEffect } from './render/duchessRules';
+import { bleatCabbage, bleatStartle } from './sim/duchessBleat';
 import heartUrl from './art/rogue/heart.png';
 
 TextureSource.defaultOptions.scaleMode = 'nearest';
@@ -399,7 +405,7 @@ class Game {
     $('loading').remove();
     (window as unknown as { __game: Game }).__game = this;
     // (a hero's first awakening has its cinematic)
-    this.goat.onArrive = () => void this.duchessTurnsUp();
+    this.goat.onLuckyBleat = (effect) => this.handleDuchessLuckyBleat(effect);
     onAwakened((kind, step) => {
       if (step === 1) void this.queueScene({ kind: 'awaken', hero: kind });
     });
@@ -412,7 +418,9 @@ class Game {
     // (a walk to the new section still going is over: the heroes are placed where it was taking them)
     this.chain.finish();
     this.walking.clear();
-    this.b = startStage(this.run);
+    // (Duchess the goat may join one fight in a thousand: the test page's `?duchess=1` always brings her, `duchessFight.ts`)
+    this.b = startStage(this.run, this.duchessWish());
+    hideDuchessCard();
     // (an army's section may lie turned on the long map: everything is drawn and tapped through its frame)
     const section = chainOf(this.run)?.[this.run.stage - 1];
     setFrame(section ? frameOf(section, section) : undefined);
@@ -434,6 +442,8 @@ class Game {
     this.spell = null;
     this.buildSpells();
     this.goat.newFight();
+    // (a fight she fights in: she is on the board, not at the page's edge)
+    if (this.b.duchess) this.goat.stayAway();
     // (the speed picked stays on from wave to wave)
     this.setSpeed(this.speed);
     this.fx.clear();
@@ -443,6 +453,7 @@ class Game {
     this.weather.resize(this.app.screen.width, this.app.screen.height);
     this.weather.set(weatherOf(this.b.board), this.b.board.area, this.boardView.litSpots(), this.b.board.tiles.some((t) => t.scene));
     showTwistBanner(this.run.tower?.cur?.fight?.twist);
+    this.showTheme();
     this.syncSprites(true);
     this.layout();
     this.revealDestination();
@@ -451,6 +462,12 @@ class Game {
     const due = this.setupMoments().filter((m) => this.scenesOn() && dueScene(this.meta, m));
     if (due.length) void Promise.all(due.map((m) => this.queueScene(m))).then(() => this.startIntro());
     else this.startIntro();
+  }
+
+  /** Whether this page's fights may bring Duchess: rolled on the seed, or always (never) on the test page's `?duchess=1` (`?duchess=0`). */
+  private duchessWish(): DuchessWish {
+    const q = new URLSearchParams(location.search).get('duchess');
+    return q === '1' ? 'always' : q === '0' ? 'never' : 'roll';
   }
 
   /** The moments that bring a cinematic as this fight is set up, in the order they play. */
@@ -499,9 +516,26 @@ class Game {
     return this.queueScene(first ? { kind: 'combo', set: setId } : { kind: 'comboCut', set: setId }, set.heroes);
   }
 
-  /** The first time Duchess turns up in a fight (her visit begins: `PageGoat.onArrive`). */
-  duchessTurnsUp(): Promise<void> {
-    return this.queueScene({ kind: 'duchess' });
+  /** Tactical Lucky Bleat effect triggered once per battle when Duchess is tapped during combat. */
+  private handleDuchessLuckyBleat(effect: LuckyBleatEffect): void {
+    if (!this.b || this.b.phase !== 'fight') return;
+    this.meta.duchessLucky = true;
+    saveMeta(this.meta);
+    if (effect.kind === 'startle') {
+      const target = bleatStartle(this.b, effect.durationMs);
+      if (!target) return;
+      const sb = this.spriteBox(target.id);
+      const anchor: Anchor = sb ? { x: sb.x + sb.w / 2, y: sb.y } : { x: 48, y: 320 };
+      showQuip(anchor, effect.text, { who: UNITS[target.def]?.name ?? 'Foe', hold: 2000 });
+    } else if (effect.kind === 'cabbage') {
+      const b = this.b;
+      const tile = bleatCabbage(b, effect.healPercent);
+      this.fx.cabbage(b, tile[0], tile[1]);
+      const panel = document.getElementById('panel');
+      const r = panel?.getBoundingClientRect();
+      const anchor: Anchor = r ? { x: 32, y: r.top - 20 } : { x: 32, y: 320 };
+      showQuip(anchor, 'Duchess kicked a cabbage! (Heals 10% max HP)', { who: 'Duchess', goat: true, hold: 2200 });
+    }
   }
 
   /** The heroes that play a cinematic: the party, and the hero a Calamity run began with. */
@@ -747,7 +781,7 @@ class Game {
     this.stats = startStats(this.b.units);
     // (the music: a boss, a Calamity fight, or one of three battle tracks by how hard the fight runs)
     startFight(isBossRun(this.run), { calamity: this.run.mode?.kind === 'calamity', level: fightLevel(this.run.stage, { elite: this.run.tower?.cur?.kind === 'elite', waves: waveArmyOf(this.run)?.waves.length }) });
-    startSynergies(countTraits(kindsOf(this.b.units)), this.b.combo);
+    startSynergies(countTraits(kindsOf(this.b.units)), this.b.combo, duoCombosOf(kindsOf(this.b.units)));
     this.chosen = null;
     this.boardView.clearMarks();
     this.refreshBossBar();
@@ -838,6 +872,9 @@ class Game {
         // (a fighter a skill called up mid-fight has no sprite yet: make it, with its entrance)
         if (b.units.length !== this.sprites.size) this.syncSprites();
         playEvents(b, events, this.speed);
+        // (Duchess has wandered on: the first time, her cinematic (not in an auto-replay), then her card; and her bubbles as she fights)
+        if (events.some((e) => e.kind === 'duchess')) void this.queueScene({ kind: 'duchessJoins' }).then(() => showDuchessCard(() => $('panel').getBoundingClientRect().top));
+        if (this.b.duchess) duchessFightSays(b, events, () => this.anchorOfKind('duchess'));
         for (const e of events) {
           if (e.kind === 'phase') this.startPhase(e);
           // (a promotion the sim made: a hero's tier by level; the page's own merge calls `promoteHero` too)
@@ -856,8 +893,9 @@ class Game {
         if (!this.auto) this.sayMoments(events);
         const push = this.fx.takePush();
         if (push) this.push = { ...push, left: push.ms };
-        // (Duchess has a view on a big blow)
+        // (Duchess has a view on a big blow or victory fanfare)
         if (events.some((e) => e.kind === 'hit' && e.heavy && e.dmg >= 90)) this.goat.react('bigHit');
+        if (events.some((e) => e.kind === 'end' && e.won)) this.goat.victory();
         if (events.some((e) => e.kind === 'hit' || e.kind === 'heal')) this.refreshBench();
         if (b.phase !== 'fight') this.refresh();
       }
@@ -878,10 +916,11 @@ class Game {
     if (this.intro) this.stepIntro(dt);
     this.stepRevive(dt);
     this.refreshBossBar();
+    const isWon = b.phase === 'won' || (b.phase !== 'fight' && b.phase !== 'deploy' && !b.units.some((u) => u.side === 'foe' && u.alive));
     const t = b.phase === 'deploy' ? performance.now() : b.phase === 'fight' ? b.t - TICK_MS + this.acc : b.t + this.acc;
     for (const [id, s] of this.sprites) {
       if (this.walking.has(id)) s.root.visible = false;
-      else s.update(b.board, t, b.phase !== 'deploy');
+      else s.update(b.board, t, b.phase !== 'deploy', isWon, this.endWait);
     }
     if (this.chain.active) {
       this.chain.step(dt);
@@ -1847,8 +1886,8 @@ class Game {
     const daily = run.mode?.kind === 'daily' ? run.mode.date : 0;
     const head = daily
       ? won
-        ? { title: 'Daily cleared!', tone: 'won' as const, line: `The ${dailyBossName(daily)} has fallen in ${run.recap?.fights ?? 0} fights` }
-        : { title: `Daily over · wave ${run.best}/${DAILY_WAVES}`, tone: 'lost' as const, line: `The ${dailyBossName(daily)} was not reached: ${dailyCleared(run)} waves cleared` }
+        ? { title: 'Daily cleared!', tone: 'won' as const, line: `The ${this.dailyBossOf(run)} has fallen in ${run.recap?.fights ?? 0} fights` }
+        : { title: `Daily over · wave ${run.best}/${DAILY_WAVES}`, tone: 'lost' as const, line: `The ${this.dailyBossOf(run)} was not reached: ${dailyCleared(run)} waves cleared` }
       : won
       ? { title: 'Army defeated!', tone: 'won' as const, line: `${army?.name ?? 'The run'} cleared in ${run.recap?.fights ?? 0} fights` }
       : { title: 'Run over', tone: 'lost' as const, line: army ? `The ${army.name} held at wave ${run.best} of ${army.waves.length}` : `Fell at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} hires` };
@@ -2076,6 +2115,7 @@ class Game {
         const m = document.createElement('span');
         m.textContent = TRAITS[t].short;
         m.dataset.trait = t;
+        if (this.theme()?.trait === t) m.className = 'featured';
         marks.append(m);
       }
       const lv = levelBadge(this.levelOf(h));
@@ -2383,7 +2423,7 @@ class Game {
         b.phase === 'won'
           ? `${run.tower && !cal ? `Floor ${run.stage - 1} done · ` : ''}${left} of ${heroesPlaced(b)} heroes standing · +${this.gain} gold · +${this.crownGain} crowns${share}${clear} · ${clock(b.t)}${run.found?.length ? ` · found: ${run.found.join(', ')}` : ''}`
           : daily
-            ? `The ${dailyBossName(run.mode?.kind === 'daily' ? run.mode.date : 0)} holds at wave ${run.best} of ${DAILY_WAVES} · ${dailyCleared(run)} waves cleared · ${practice ? 'practice, no reward' : `+${dailyCrowns(dailyCleared(run))} crowns`}`
+            ? `The ${this.dailyBossOf(run)} holds at wave ${run.best} of ${DAILY_WAVES} · ${dailyCleared(run)} waves cleared · ${practice ? 'practice, no reward' : `+${dailyCrowns(dailyCleared(run))} crowns`}`
           : run.tower
             ? `The ${cal ? 'calamity' : 'climb'} ends ${cal ? '' : `on floor ${run.stage}, `}${cal ? 'map' : 'act'} ${run.tower.act} · ${cal ? `${run.tower.spots ?? 0} spots cleared` : `${run.stage - 1} floors cleared`} · +${this.crownGain} crowns`
             : army
@@ -2402,6 +2442,21 @@ class Game {
     this.events.drawStrip(run);
   }
 
+  /** The name of a daily run's boss of the day (its own host: a run begun before the themes keeps the old one). */
+  private dailyBossOf(run: Run): string {
+    const army = waveArmyOf(run);
+    return army ? UNITS[bossOf(army)].name : '';
+  }
+  /** A themed daily's theme (DAILY-BUILDS), or null for any other run. */
+  private theme() {
+    return runTheme(this.run);
+  }
+  /** A themed daily's banner over the deploy board, with its goal counted from the heroes placed. */
+  private showTheme(): void {
+    const t = this.theme();
+    if (t && this.b.phase === 'deploy') showThemeBanner(t, kindsOf(this.b.units), isBossRun(this.run));
+  }
+
   /** The trait strip: the traits of the heroes placed, lit when their bonus is on; a tap says what one does. */
   private traitPick?: string;
   /** The tier each trait stood at the last time the strip was drawn, so a tier that just woke can light up once. */
@@ -2409,18 +2464,22 @@ class Game {
   private refreshTraits(): void {
     const strip = $('traits');
     const hint = $('traitHint');
-    const counts = countTraits(kindsOf(this.b.units));
+    // (a themed daily's featured trait leads the strip)
+    const lead = this.theme()?.trait;
+    const counts = countTraits(kindsOf(this.b.units)).sort((a, b) => Number(b.trait.id === lead) - Number(a.trait.id === lead));
     const key = counts.map((c) => `${c.trait.id}${c.count}`).join() + this.traitPick;
     if (strip.dataset.key === key) return;
     strip.dataset.key = key;
+    const featured = lead;
+    this.showTheme();
     strip.replaceChildren();
     const woke: string[] = [];
     for (const c of counts) {
       const was = this.traitTiers.get(c.trait.id) ?? -1;
       const lit = c.tier > was && strip.dataset.drawn === '1';
-      if (lit) woke.push(`${c.trait.name}: ${c.trait.tiers[c.tier].text}`);
+      if (lit) woke.push(`${c.trait.name}: ${c.trait.tiers[c.tier].text}${featured === c.trait.id ? ', twice over today' : ''}`);
       const pill = document.createElement('button');
-      pill.className = `trait ${c.trait.kind}${c.active ? ' on' : ''}${lit ? ' wake' : ''}${this.traitPick === c.trait.id ? ' picked' : ''}`;
+      pill.className = `trait ${c.trait.kind}${c.active ? ' on' : ''}${lit ? ' wake' : ''}${this.traitPick === c.trait.id ? ' picked' : ''}${featured === c.trait.id ? ' featured' : ''}`;
       // (the chip says the count and what the next tier gives; a trait at its top tier shows just the count)
       const next = c.trait.tiers[c.tier + 1];
       const head = document.createElement('span');

@@ -12,20 +12,23 @@ import { cloneBoard } from './chain';
 import { weatherOf } from './weather';
 import type { LayoutId } from './layouts';
 import { twistBoard, type TwistFx } from './twists';
+import { featuredExtra } from './dailyThemes';
 import { firstStep, walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
 import { standDecide } from './standAi';
+import { duchessDue, joinDuchess, type DuchessWish } from './duchessFight';
 import { FOE_BANDS } from './foes';
 import { killXp } from './levels';
 import { enterPhase, PHASE2 } from './bossPhases';
-import { afterBlow, CHARGE_MAX, echoSkill, mendUnit, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, rollCrit, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
+import { afterBlow, CHARGE_MAX, echoSkill, mendUnit, spawnSpiritWisp, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, rollCrit, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellState } from './spells';
 import type { SetHooks } from './relicSets';
-import { kindsOf, traitEffects, type TraitEffects } from './traits';
+import { kindsOf, traitsOf, traitEffects, type TraitEffects } from './traits';
 import { fxHurt, fxKill, fxRevive, fxStart, hidden } from './equipFx';
 import { mergeEffects } from './relics';
 import { applyTierMods } from './tierSkills';
 import { landCombo, startCombo, tickCombo, type ComboState } from './combos';
+import { startDuoCombos, type DuoState } from './duoCombos';
 import type { EquipStats } from './equipment';
 import { heroKitOf, startPool, ultOnDamage, type KitState } from './heroKits';
 import { applyOrders, type LogEntry, type Order } from './orders';
@@ -45,6 +48,12 @@ export const FOG_RANGE = 1;
 export const TIME_LIMIT_MS = 120_000;
 /** How long a fighter with nothing it can do waits before looking again. */
 export const WAIT_MS = 300;
+
+export interface Cabbage {
+  u: number;
+  v: number;
+  healPercent: number;
+}
 
 export type Phase = 'deploy' | 'fight' | 'won' | 'lost';
 
@@ -158,6 +167,12 @@ export interface Unit {
   expires?: number;
   /** A hero of the Last Stand: the tile it guards, how far (in tiles) it may stray from it, and whether it is a tank that goes for the foes heading for the king (`standAi.ts`). */
   post?: { u: number; v: number; leash: number; tank: boolean };
+  /** Electrified arrows active until then (Archer + Lightning Mage duo). */
+  electrifiedUntil?: number;
+  /** Trickster substitution log spent once per fight. */
+  tricksterLogUsed?: boolean;
+  /** Guardian emergency aegis shield spent once per fight. */
+  guardianShieldUsed?: boolean;
 }
 
 /** What the Last Stand adds to a battle (`stand.ts`, `standAi.ts`): the king's unit, where he stands, and the flow fields the foes walk by. Absent in every other fight. */
@@ -222,12 +237,20 @@ export type BattleEvent =
   | { kind: 'comboCast'; id: string; name: string; ms: number; landMs: number; by: number[] }
   /** The combo's move lands. */
   | { kind: 'comboLand'; id: string }
+  /** A duo combo triggers between complementary heroes (`duoCombos.ts`). */
+  | { kind: 'duoCombo'; id: string; name: string; heroA: number; heroB: number; title: string; harmonic: boolean; banner: string }
+  /** Trickster substitution decoy log. */
+  | { kind: 'decoyLog'; by: number; from: At; to: At }
+  /** Yokai spirit wisp trap placed upon dodging. */
+  | { kind: 'wisp'; by: number; u: number; v: number; ms: number }
   /** A hero is promoted (merged up to `grade`): the page plays it (`promote` in the page's fx). */
   | { kind: 'promote'; to: number; grade: number }
   /** A boss changes form (`bossPhases.ts`): the fight is held for `ms` while the page plays it. */
   | { kind: 'phase'; by: number; phase: 2; line: string; ms: number }
   /** The player's tap queued a hero's ultimate (`orderUltimate`), or the order lapsed unfired (the meter stays full). */
   | { kind: 'ultQueued'; by: number }
+  /** Duchess the goat has wandered on to fight for the heroes (`duchessFight.ts`). */
+  | { kind: 'duchess'; by: number }
   | { kind: 'ultLapse'; by: number }
   /** A fighter is drawn with another sheet (a form, a guise), or its own again (null). */
   | { kind: 'look'; by: number; sheet: string | null }
@@ -259,6 +282,8 @@ export interface Battle {
   zones: Zone[];
   /** Snares laid by rangers (none until one is laid). */
   traps?: Trap[];
+  /** Cabbages kicked onto tiles by Duchess's Lucky Bleat. */
+  cabbages?: Cabbage[];
   nextId: number;
   /** The king's mana, spell cooldowns and meteors falling. */
   spells: SpellState;
@@ -278,12 +303,16 @@ export interface Battle {
   revived?: boolean;
   /** The floor's twist (`twists.ts`), when it has one. */
   twist?: TwistFx;
+  /** A themed daily's featured trait (`Stage.featured`). */
+  featured?: string;
   /** Time still to hold the fight for a boss changing form (ms); nothing moves while it runs down. */
   pause?: number;
   /** Every hero's healing is multiplied by this (a calamity ascension). */
   heroHeal?: number;
   /** The five-hero combo this fight has, when the placed heroes make one (`combos.ts`). */
   combo?: ComboState;
+  /** Active duo-combos tracked this fight (`duoCombos.ts`). */
+  duoCombos?: DuoState[];
   /** Set only in the Last Stand: the heroes guard posts, the foes go for the king, and the fight ends with his fall. */
   stand?: StandMode;
   /** How long a step takes, as a share of its usual time: the usual board is bigger than the old one, so a stride is quicker (`USUAL_WALK`); a Calamity's board has its own balance and keeps 1. */
@@ -303,6 +332,8 @@ export interface Battle {
   kits?: { standards?: boolean; songs?: boolean; vows?: boolean; rewind?: boolean; raise?: { by: number; foe: number }[] };
   /** Timed terrain the kits laid (a flood, a rampart, a statue), put back when it runs out. */
   terrain?: TerrainFx[];
+  /** Duchess the goat joins this fight as it begins (`duchessFight.ts`): set when the fight is made; unset in almost every fight. */
+  duchess?: true;
 }
 
 export const defOf = (u: Unit): UnitDef => UNITS[u.def];
@@ -358,8 +389,12 @@ export interface Stage {
   twist?: TwistFx;
   /** Every hero's healing is multiplied by this (a calamity ascension). */
   heal?: number;
+  /** Whether Duchess the goat may join (`duchessFight.ts`): rolled on the seed, always, or never (the default, so a fight made outside a run never has her). */
+  duchess?: DuchessWish;
   /** A layout to lay the land in (`layouts.ts`), instead of the seed's own pick; ignored when `board` is given. */
   layout?: LayoutId;
+  /** A themed daily's featured trait: its woken bonus counts double (`dailyThemes.ts`). */
+  featured?: string;
 }
 export const apart = (a: At, b: At) => Math.abs(a.u - b.u) + Math.abs(a.v - b.v);
 export const tileOf = (b: Battle, a: At) => tileAt(b.board, a.u, a.v)!;
@@ -424,6 +459,7 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   if (foes) b.foeBoost = foes;
   if (stage.foes?.speed && stage.foes.speed !== 1) b.foeSpeed = stage.foes.speed;
   if (stage.relics) b.relics = stage.relics;
+  if (stage.featured) b.featured = stage.featured;
   if (stage.heal && stage.heal !== 1) b.heroHeal = stage.heal;
   // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed; each takes the
   // higher ground its row offers, and a shooter will take a perch in a row nearer the front for it
@@ -448,6 +484,7 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
     addUnit(b, id, at.u, at.v, { hp: (foes?.hp ?? 1) * (boss?.hp ?? 1), atk: (foes?.atk ?? 1) * (boss?.atk ?? 1), size: boss?.size, phase: boss?.phase, surge: boss?.surge, shield: boss?.shield });
   });
   if (tw?.ambush) ambush(b);
+  if (stage.duchess && duchessDue(seed, stage.duchess)) b.duchess = true;
   return b;
 }
 
@@ -547,7 +584,10 @@ export function fight(b: Battle): boolean {
   b.phase = 'fight';
   applyTraits(b);
   startCombo(b);
+  startDuoCombos(b);
   startKits(b);
+  // (Duchess wanders on as the fight begins, in the rare fight that brings her)
+  if (b.duchess) joinDuchess(b);
   return true;
 }
 
@@ -587,7 +627,8 @@ export function reviveParty(b: Battle): boolean {
 
 /** Fix the placed heroes' trait bonuses: attack and health now, the rest read by the hooks as the fight goes. */
 function applyTraits(b: Battle): void {
-  const fx = mergeEffects(traitEffects(kindsOf(b.units)), b.relics?.team ?? {});
+  let fx = mergeEffects(traitEffects(kindsOf(b.units)), b.relics?.team ?? {});
+  if (b.featured) fx = mergeEffects(fx, featuredExtra(b.featured, kindsOf(b.units)));
   b.traits = fx;
   // (a war drum: the foes stand a while before they act)
   if (b.relics?.first) for (const x of b.units) if (x.side === 'foe') x.busyUntil = b.relics.first;
@@ -703,12 +744,25 @@ function settle(b: Battle, p: Pending, out: BattleEvent[]): void {
   // (a fighter in tall growth is a little hard to hit: its own hash of the moment, so no stream moves)
   if (tileOf(b, target).ground === 'tall' && (mixSeed(b.seed, 0xd0d6, p.at, by.id, target.id) >>> 0) / 4294967296 < TALL_DODGE) {
     out.push({ kind: 'dodge', to: target.id });
+    if (b.traits?.yokaiWisp && traitsOf(target.def).includes('yokai')) {
+      spawnSpiritWisp(b, target, out);
+    }
     return;
   }
   // (only a blow that reached health counts for leech, equipment and the hero kits: SIM-001)
   if (hurt(b, by, target, p.dmg, p.heavy, false, out)) {
     afterBlow(b, by, target, !!p.crit, p.dmg, out);
     kitBlow(b, by, target, !!p.crit, p.dmg, out);
+    if (by.electrifiedUntil && by.electrifiedUntil > b.t) {
+      const chainTargets = b.units
+        .filter((u) => u.alive && u.side === target.side && u.id !== target.id && apart(target, u) <= 2)
+        .sort((x, y) => apart(target, x) - apart(target, y) || x.id - y.id)
+        .slice(0, 2);
+      for (const ct of chainTargets) {
+        out.push({ kind: 'arc', from: target.id, to: ct.id });
+        hurt(b, by, ct, Math.max(1, Math.round(p.dmg * 0.5)), false, true, out, 'skill');
+      }
+    }
   }
   if (def.splash)
     for (const n of b.units)
@@ -735,6 +789,9 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   const credit = by !== to;
   const landed = Math.min(dmg, to.hp);
   if (credit) by.dealt = (by.dealt ?? 0) + landed;
+  if (credit && by.kx?.lifestealUntil && by.kx.lifestealUntil > b.t && landed > 0) {
+    mendUnit(by, Math.max(1, Math.round(landed * 0.3)), out, by);
+  }
   // (the ultimate's meter fills from the fight: what a hero deals, its summons' share counting for it, and what it takes)
   if (by !== to) {
     if (by.side !== to.side) ultOnDamage(by.owner !== undefined ? creditOf(b, by) : by, landed, false);
@@ -743,6 +800,59 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   to.hp = Math.max(0, to.hp - dmg);
   to.hurtAt = b.t;
   let killed = to.hp <= 0;
+
+  // Guardian trait milestone (three Guardians): an emergency Aegis shield the first time a hero drops below 30% health
+  if (b.traits?.guardianShield && to.side === 'hero' && !to.guardianShieldUsed && to.hp < to.maxHp * 0.3 && !killed) {
+    to.guardianShieldUsed = true;
+    to.shield = { hp: Math.round(to.maxHp * 0.15), until: b.t + 5000 };
+    out.push({ kind: 'heal', to: to.id, amount: 0 });
+  }
+
+  // Trickster trait milestone (three Tricksters): a blow that leaves a Trickster under 25% health (not a fatal one) leaves a decoy log
+  // where it stood while it slips to the safest tile beside it (once a fight; no healing, so it is a dodge, not a second life)
+  if (b.traits?.tricksterLog && traitsOf(to.def).includes('trickster') && !to.tricksterLogUsed && !killed && to.hp < to.maxHp * 0.25) {
+    to.tricksterLogUsed = true;
+    const oldU = to.u;
+    const oldV = to.v;
+    const adjacent = [
+      { u: oldU + 1, v: oldV },
+      { u: oldU - 1, v: oldV },
+      { u: oldU, v: oldV + 1 },
+      { u: oldU, v: oldV - 1 },
+      { u: oldU + 1, v: oldV + 1 },
+      { u: oldU - 1, v: oldV - 1 },
+      { u: oldU + 1, v: oldV - 1 },
+      { u: oldU - 1, v: oldV + 1 },
+    ].filter((at) => {
+      const t = tileAt(b.board, at.u, at.v);
+      return t && standable(t) && !unitAt(b, at.u, at.v);
+    });
+
+    if (adjacent.length > 0) {
+      const foes = b.units.filter((u) => u.alive && u.side !== to.side);
+      const best = adjacent.sort((a, bPos) => {
+        const distA = foes.length ? Math.min(...foes.map((f) => apart(a, f))) : 0;
+        const distB = foes.length ? Math.min(...foes.map((f) => apart(bPos, f))) : 0;
+        return distB - distA || a.v - bPos.v || a.u - bPos.u;
+      })[0];
+
+      to.u = best.u;
+      to.v = best.v;
+      to.step = undefined;
+
+      const decoy = addUnit(b, 'decoy', oldU, oldV);
+      decoy.hp = decoy.maxHp = Math.max(1, Math.round(to.maxHp * 0.3));
+      decoy.expires = b.t + 3000;
+      decoy.owner = to.id;
+
+      for (const f of foes.filter((x) => apart({ u: oldU, v: oldV }, x) <= 2)) {
+        f.taunt = { to: decoy.id, until: b.t + 2000 };
+      }
+
+      out.push({ kind: 'decoyLog', by: to.id, from: { u: oldU, v: oldV }, to: { u: to.u, v: to.v } });
+      out.push({ kind: 'blink', by: to.id, from: { u: oldU, v: oldV }, to: { u: to.u, v: to.v } });
+    }
+  }
   // (a kit holds it up: Blood Fury, a guardian angel)
   if (killed && to.kx && kitSpare(b, to, out)) killed = false;
   // (a phoenix feather: the first hero to fall rises at half health)
