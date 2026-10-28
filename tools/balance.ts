@@ -125,15 +125,15 @@ function heroValue(): void {
     );
   });
   console.log(`  average win rate with a hero: ${average.toFixed(1)}%  (value: with minus without; dealt and taken: hp per fight)`);
-  console.log('  lift against the roster average (points of win rate; every hero is held to within about 4), by role:');
-  const over = ALL_HEROES.filter((_, i) => Math.abs(withRates[i] - average) > 4);
+  console.log('  lift against the roster average (points of win rate; every hero is held to within 6), by role:');
+  const over = ALL_HEROES.filter((_, i) => Math.abs(withRates[i] - average) > 6);
   for (const c of Object.keys(CLASS_NAMES) as StarterClass[]) {
     const line = ALL_HEROES.map((h, i) => [h, withRates[i]] as const)
       .filter(([h]) => CLASS_OF[h] === c)
       .map(([h, w]) => `${UNITS[h].name} ${w - average >= 0 ? '+' : ''}${(w - average).toFixed(1)}`);
     if (line.length) console.log(`    ${pad(CLASS_NAMES[c], 12)} ${line.join(', ')}`);
   }
-  console.log(`  heroes beyond 4 points of the average: ${over.length ? over.map((h) => UNITS[h].name).join(', ') : 'none'}`);
+  console.log(`  heroes beyond 6 points of the average: ${over.length ? over.map((h) => UNITS[h].name).join(', ') : 'none'}`);
   const best = Math.max(...withRates);
   const worst = Math.min(...withRates);
   console.log(`  spread: ${worst.toFixed(1)}% to ${best.toFixed(1)}%  (${(best - worst).toFixed(1)} points between the best and the worst)`);

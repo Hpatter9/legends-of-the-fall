@@ -457,9 +457,10 @@ function timeStop(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 /** The eight heroes whose ultimates are in `abilities.ts`: they are retuned here with the rest. */
 const FIRST_EIGHT = ['kitsune', 'karasu', 'yamabushi', 'gorgon', 'samuraiCommander', 'sage', 'demonSwordsman', 'tyrant'];
 
-/** Each hero's ultimate balance from level 30 up, tuned so every hero sits within the band of the roster average: `rate` (how fast the meter fills, times `ULT_RATE`) and
- *  `power` (times the caster's attack while it casts; a stun, guard, shield or heal scales with it too). `test/hero-balance-ultimates.test.ts` holds it, and
- *  `test/hero-balance.test.ts` holds the low levels, where the first eight heroes' ultimates are as written. */
+/** Each hero's ultimate balance from level 30 up (COMBAT-002, docs/notes/hero-kits.md): `rate`, how fast its meter fills (times the fight's own fill,
+ *  `ULT_FILL` in `heroKits.ts`: about 30 s of fighting for a front-liner, 40 for most, 50 for a support), and `power` (times the caster's attack while
+ *  it casts; a stun, guard, shield or heal scales with it too), never below what it was before the hero kits (the owner's call: rarer and bigger).
+ *  `test/hero-balance-ultimates.test.ts` holds every hero within the band of the roster average with them. */
 const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   knight: { rate: 1.86, power: 0.78 },
   samurai: { rate: 0.84, power: 2.43 },
