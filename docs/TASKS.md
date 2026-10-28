@@ -56,7 +56,7 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 ### SUMMON-002 — Summoning stones economy
 
 - **Goal:** crowns buy chests; chests (and every other shard source) give summoning stones; a stone is one shard, one in 100 a whole unowned hero; the roster grows about half as fast. Owner's follow-up: silver chests hold 8 stones and gold 15; codex milestones pay 1 stone and achievements 2 (3 or 5 for the big ones); each codex entry pays 1 stone the first time it is discovered (old saves only for entries discovered from now on); the late pace is fine as it is; the 10-stone gift, daily stock and rising price stay.
-- **Status:** ready for review (origin/main 0.170.0 merged in; the owner's chest, codex and achievement decisions done).
+- **Status:** done: owner accepted and authorised release 0.171.0.
 - **Owner:** Claude
 - **Branch / worktree / PR:** `claude/summon-stones`
 - **Allowed files or systems:** `src/sim/{meta,unlock,unlockRules,armyStars,calReward,chestShop,codex,achievements}.ts`, `src/{gacha,hall,shopView,home,calClear,codexView,achievementsView}.ts`, tests, `tools/unlockPace.ts`. Minimal: `main.ts`, `index.html`. Not the castle or battle tabs, nor WORLD files.
@@ -68,6 +68,7 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 | ID | Task | Result | Reference |
 | --- | --- | --- | --- |
+| SUMMON-002 | Summoning stones economy | Owner accepted release 0.171.0; roster about 2x slower to the 20th hero, 1.5-1.7x late; typecheck, 1150 tests, build, fresh/old-save and Last Stand smoke passed | [Handoff](notes/summon-stones.md), branch `claude/summon-stones` |
 | STAND-002 | Last Stand made harder | Owner accepted release 0.170.0; greedy median waves 4/10/13/22/26/35 at levels 1/10/20/30/60/100, pay within about 9% of before; typecheck, 1133 tests, build, fresh/old-save and Last Stand smoke passed | [Handoff](notes/last-stand.md) (section "Making it harder"), branch `claude/stand-harder` |
 | FX-003 | Individual painted signatures for 129 base abilities | Owner accepted release 0.168.0 and merge through PR #135; 84 integration tests, all five emitted-material browser cases and offline launch passed | [PR #135](https://github.com/Hpatter9/legends-of-the-fall/pull/135), [handoff and scope](notes/individual-ability-effects.md) |
 | FX-002 | Cinematic battle-effects remake | Accepted with FX-003 for release 0.168.0; main 0.167.0 audio/courtyard updates preserved, release checks passed | [PR #135](https://github.com/Hpatter9/legends-of-the-fall/pull/135), [handoff](notes/battle-effects-remake.md) |
