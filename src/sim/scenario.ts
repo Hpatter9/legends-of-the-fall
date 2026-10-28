@@ -3,6 +3,7 @@
 import { boardOk, canStep, DEPLOY_ROWS, DIRS, RAMP, sightClear, standable, type Area, type Board, type Piece, type Tile } from './board';
 import { placesAfter, worldOf, type Place, type Section, type SectionSize } from './chain';
 import { arenaMask, ARENAS, besideAt, levelArena, roadMask, touching } from './armyRoad';
+import { planHazards } from './hazards';
 import { mixSeed, Rng } from './rng';
 import { footDims, unturnTile } from './turn';
 
@@ -594,6 +595,7 @@ export function planScenario(seed: number, theme: ScenarioId, waves: number, bos
     const riverScene = theme === 'infernal' || (theme === 'golems' && phase >= 0.45) ? 'lava' : 'water';
 
     const secRef = { rot, origin, board: { w, d } };
+    const river = new Set<number>();
 
     for (let v = 0; v < d; v++) {
       for (let u = 0; u < w; u++) {
@@ -603,6 +605,7 @@ export function planScenario(seed: number, theme: ScenarioId, waves: number, bos
         const inMiddleRows = v >= DEPLOY_ROWS && v < d - DEPLOY_ROWS;
         const rv = riverRowAt(u);
         const inRiver = !arena && inMiddleRows && (!lake || h > 1) && (v === rv || (v === rv + 1 && u % 2 === 0));
+        if (inRiver) river.add(v * w + u);
         const nearRiver = inMiddleRows && Math.abs(v - rv) <= 2 && !inRiver;
 
         if (!onRoad[v * w + u]) {
@@ -755,6 +758,24 @@ export function planScenario(seed: number, theme: ScenarioId, waves: number, bos
     if (!boardOk(board)) {
       throw new Error(`disconnected ${theme} section ${n} for seed ${seed}`);
     }
+    // The living land (WORLD-ROAD): the way the river runs (out over an open edge, where it pours off as a fall), and the section's hazards.
+    const open = (u: number, v: number, du: number, dv: number) => {
+      const [U, V] = worldOf(secRef, u + du, v + dv);
+      return road.every((q) => {
+        const r = rectOf(q);
+        return U < r.x0 || U >= r.x1 || V < r.y0 || V >= r.y1;
+      });
+    };
+    const edgeOpen = (u: number, du: number) => [...river].some((i) => i % w === u && open(u, Math.floor(i / w), du, 0));
+    const flow: [number, number] = edgeOpen(w - 1, 1) ? [1, 0] : edgeOpen(0, -1) ? [-1, 0] : (seed + n) % 2 ? [1, 0] : [-1, 0];
+    board.flow = flow;
+    const out = flow[0] > 0 ? w - 1 : 0;
+    const falls = [...river]
+      .filter((i) => i % w === out && !tiles[i].bridge && open(out, Math.floor(i / w), flow[0], 0))
+      .map((i) => ({ u: out, v: Math.floor(i / w), du: flow[0], dv: 0, lava: tiles[i].scene === 'lava' || tiles[i].ground === 'lava' }));
+    if (falls.length) board.falls = falls;
+    const hazards = planHazards(theme, board, isBoss, mixSeed(seed, 0x4a2d0, n), flow, arena?.centre);
+    if (hazards.length) board.hazards = hazards;
     sections.push({ wave: n, board, rot, origin, join, boss: isBoss });
   }
 

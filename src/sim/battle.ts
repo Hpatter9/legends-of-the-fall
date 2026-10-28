@@ -6,7 +6,8 @@
 //
 // Pure rules: no Pixi, no DOM. The renderer reads the battle and the events each tick returns.
 
-import { BARREL_BLAST, boardOk, CLIMB_COST, D, DEPLOY_ROWS, DROP_EXTRA, GROUND_COST, LAVA_BURN, LAVA_STAND, makeBoard, SHRINE_HEAL, sightClear, standable, TALL_DODGE, tileAt, type Area, type At, type Board, type Tile } from './board';
+import { tickHazards } from './hazards';
+import { BARREL_BLAST, boardOk, CLIMB_COST, D, DEPLOY_ROWS, DROP_EXTRA, GROUND_COST, LAVA_BURN, LAVA_STAND, makeBoard, SHRINE_HEAL, sightClear, standable, TALL_DODGE, tileAt, type Area, type At, type Board, type HazardKind, type Tile } from './board';
 import { cloneBoard } from './chain';
 import { weatherOf } from './weather';
 import type { LayoutId } from './layouts';
@@ -234,6 +235,8 @@ export type BattleEvent =
   | { kind: 'fade'; to: number }
   /** A kit marks a fighter (a bounty, a condemnation, a charge, a pin, a stance) for `ms`. */
   | { kind: 'mark'; to: number; by: number; what: string; ms: number }
+  /** The land acts (`hazards.ts`): a strike is told (`tell`, `ms` before it comes) or goes off, a spring wells up, the current carries walkers (`tiles` where they now stand). `id` is the hazard's place in the board's list. */
+  | { kind: 'hazard'; id: number; what: HazardKind; phase: 'tell' | 'go'; tiles: number[]; ms: number }
   | { kind: 'end'; won: boolean };
 
 export interface Battle {
@@ -634,6 +637,7 @@ export function stepBattle(b: Battle): BattleEvent[] {
   while (b.pending.length && b.pending[0].at <= b.t) settle(b, b.pending.shift()!, out);
   tickStatus(b, out);
   if (b.groundFx && b.t % 1000 === 0) groundTick(b, out);
+  if (b.board.hazards) tickHazards(b, out);
   for (const me of b.units) if (me.alive && me.busyUntil <= b.t) decide(b, me, rng, out);
   b.rng = rng.state;
   tickCombo(b, out);

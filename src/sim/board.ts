@@ -125,8 +125,8 @@ export interface Tile {
   ramp?: boolean;
   /** Shallows, deep water, ice, lava, tall growth or a shrine covers the tile. */
   ground?: Ground;
-  /** Off the road (an army's long map, `armyRoad.ts`): the land beside it, a wood, crags, ruins, a pool... Nobody stands on it,
-   *  not even a flier, and it blocks low shots like a boulder (a pool or lava none). */
+  /** Off the road (an army's long map, `armyRoad.ts`): the land beside it, a wood, crags, ruins, a pool... Nobody on foot stands on it
+   *  (a flier flies over it, as over deep water), and it blocks low shots like a boulder (a pool or lava none). */
   scene?: Scenery;
   /** Laid with flagstones (an arena's floor: looks only). */
   paved?: boolean;
@@ -144,9 +144,36 @@ export interface Piece {
   kind: PieceKind;
 }
 
+/** The living land's kinds (`hazards.ts`): strikes told a moment before, a spring that mends, a river's current. */
+export type HazardKind = 'flare' | 'rockfall' | 'geyser' | 'spikes' | 'grasp' | 'stampede' | 'spring' | 'current';
+/** One of the land's hazards: its tiles (by index), and its clock: it goes off at `offset` and every `period` ms after, told `tell` ms before. */
+export interface Hazard {
+  kind: HazardKind;
+  tiles: number[];
+  period: number;
+  offset: number;
+  tell: number;
+  /** The way a current runs, a step across the board. */
+  flow?: [number, number];
+}
+/** Where water (or lava) runs off an open edge of a section as a fall: the tile, and the way it pours out (looks only). */
+export interface Fall {
+  u: number;
+  v: number;
+  du: number;
+  dv: number;
+  lava: boolean;
+}
+
 export interface Board {
   /** An arena's set pieces, on its scenery (looks only). */
   pieces?: Piece[];
+  /** The land's hazards (an army's road: `hazards.ts`). */
+  hazards?: Hazard[];
+  /** The way the section's river runs, a step across the board (looks, and the current). */
+  flow?: [number, number];
+  /** Where its water runs off an open edge (looks only). */
+  falls?: Fall[];
   /** Scenic destination, outside collision tiles; only included from the final approach onwards. */
   landmark?: 'fortress' | 'temple' | 'mausoleum' | 'warcamp' | 'den' | 'grove' | 'citadel' | 'shrine' | 'foundry';
   landmarkAt?: { u: number; v: number; h: number };
@@ -212,9 +239,9 @@ export function easeRelief(b: Board, limit = CLIMB_MAX): void {
 export const areaScale = (b: Pick<Board, 'w' | 'd'>): number => (b.w * b.d) / BASE_AREA;
 
 /** Whether something solid stands on the tile (a boulder, a wall, a barrel): not even a flier passes it. */
-export const solid = (t: Tile | null): boolean => !t || !!t.rock || !!t.wall || !!t.barrel || !!t.scene;
-/** Whether a fighter on foot can stand on the tile at all (deep water is only for fliers). */
-export const standable = (t: Tile | null): t is Tile => !solid(t) && t!.ground !== 'deep';
+export const solid = (t: Tile | null): boolean => !t || !!t.rock || !!t.wall || !!t.barrel;
+/** Whether a fighter on foot can stand on the tile at all (deep water is only for fliers, and so is the land beside an army's road, `Tile.scene`). */
+export const standable = (t: Tile | null): t is Tile => !solid(t) && t!.ground !== 'deep' && !t!.scene;
 
 /** A jump this high is flight: no height stops it. */
 export const FLY_JUMP = 9;

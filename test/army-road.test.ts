@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { boardOk, canStep, DEPLOY_ROWS, DIRS, RAMP, solid, standable, tileAt } from '../src/sim/board';
+import { boardOk, canStep, DEPLOY_ROWS, DIRS, FLY_JUMP, RAMP, solid, standable, tileAt } from '../src/sim/board';
 import { startBattle } from '../src/sim/battle';
 import { ARENAS, levelArena, roadMask, sceneDepth } from '../src/sim/armyRoad';
 import { ARMY_SCENARIOS, planScenario } from '../src/sim/scenario';
@@ -18,7 +18,9 @@ test('the road through an ordinary section is a band six to ten tiles wide with 
         const scene = b.tiles.filter((t) => t.scene).length;
         // (a good share of every section is land beside the road, nobody's to stand on)
         assert.ok(scene >= b.tiles.length * 0.25, `${theme}/${seed}/${s.wave} scenery ${scene}`);
-        for (const t of b.tiles) if (t.scene) assert.ok(solid(t) && !standable(t));
+        // (nobody on foot stands beside the road; a flier flies over it, as over deep water)
+        const road = b.tiles.find((t) => standable(t))!;
+        for (const t of b.tiles) if (t.scene) assert.ok(!standable(t) && (solid(t) || canStep(road, t, FLY_JUMP) !== null));
         if (s.boss) continue;
         // (the heroes' rows and the foes' rows lie on the road, with room for a squad of five and a band of six)
         for (const rows of [[b.d - DEPLOY_ROWS, b.d - 1], [0, DEPLOY_ROWS - 1]]) {
