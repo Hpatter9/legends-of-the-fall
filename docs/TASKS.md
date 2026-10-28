@@ -95,6 +95,7 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 | ID | Task | Result | Reference |
 | --- | --- | --- | --- |
+| CHEST-001 | XP tomes and Open all | Owner accepted release 0.178.0; tomes 250/5,000/20,000 XP from every stash and shop chest, Open all equal to one-by-one; typecheck, build, fresh/old-save and Last Stand smoke passed; full suite 1216/1220, the 4 failures also fail on main 0.177.0 (winding battle maps), not from this change | [Handoff](notes/chest-extras.md), branch `claude/chest-extras` |
 | UI-006 | Cliffside battle overlook with nine army-dependent bases and distant Calamity | Owner authorised release 0.175.0 and PR merge; typecheck/build, 85 targeted tests, all nine camps at three portrait sizes and offline switching passed | [PR #139](https://github.com/Hpatter9/legends-of-the-fall/pull/139), [implementation and screenshots](notes/battle-overlook.md) |
 
 
