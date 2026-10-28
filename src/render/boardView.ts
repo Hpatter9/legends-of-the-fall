@@ -6,6 +6,7 @@
 import { Container, Graphics, Sprite, Texture, type Renderer } from 'pixi.js';
 import { LAVA_LANDS, tileAt, type Area, type Board, type Tile } from '../sim/board';
 import { loadImage } from './loadImage';
+import { ColumnTextures, columnKey, type ColumnLease } from './columnTextures';
 import { depthIn, FOOT, HH, project, rawAt, TH, TW, type Frame } from './iso';
 import { footDims, liesBehind, type Rot } from '../sim/turn';
 import { AREA_URLS, BUSH_URLS, GROUND_URLS } from './areaArt';
@@ -82,6 +83,7 @@ interface Art {
   tower: Texture;
 }
 let art: Art | null = null;
+let artEpoch = 0;
 
 export async function loadBoardArt(): Promise<void> {
   const all = (urls: string[]) => Promise.all(urls.map(loadImage));
@@ -98,6 +100,7 @@ export async function loadBoardArt(): Promise<void> {
   const [barrel, crystal, planks] = await Promise.all([loadImage(TERRAIN_URLS.barrel), loadImage(TERRAIN_URLS.crystal), loadImage(TERRAIN_URLS.planks)]);
   const walls = (await all(TERRAIN_URLS.walls)).map((i) => Texture.from(i));
   const [gate, tower] = await all([gateUrl, towerUrl]);
+  artEpoch++;
   art = { areas, water, ice, lava, bushes, barrel: Texture.from(barrel), walls, crystal: Texture.from(crystal), planks, gate: Texture.from(gate), tower: Texture.from(tower) };
 }
 
@@ -106,7 +109,7 @@ interface Built {
   landmark: Container | null;
   tiles: Container[];
   marks: Graphics[];
-  tex: Texture[];
+  tex: ColumnLease<Texture>[];
   /** The powder barrels still standing (by tile index), so a blast can take one away. */
   barrels: Map<number, Sprite>;
 }
@@ -135,6 +138,8 @@ const BAKED_MAX = 20;
 
 export class BoardView {
   readonly root = new Container();
+  private columns = new ColumnTextures<Texture>((texture) => texture.destroy(true));
+  get columnStats() { return this.columns.stats; }
   private marks: Graphics[] = [];
   private board: Board | null = null;
   private built: Built | null = null;
@@ -186,9 +191,13 @@ export class BoardView {
     c.sortableChildren = true;
     c.addChild(...built.tiles);
     const bounds = c.getLocalBounds();
-    const tex = this.renderer ? this.renderer.generateTexture({ target: c, resolution: 1 }) : Texture.EMPTY;
-    c.destroy({ children: true });
-    for (const x of built.tex) x.destroy(true);
+    let tex: Texture;
+    try {
+      tex = this.renderer ? this.renderer.generateTexture({ target: c, resolution: 1 }) : Texture.EMPTY;
+    } finally {
+      c.destroy({ children: true });
+      for (const x of built.tex) x.release();
+    }
     const sp = new Sprite(tex);
     sp.position.set(bounds.minX, bounds.minY);
     sp.zIndex = -1e6;
@@ -220,7 +229,7 @@ export class BoardView {
     if (!o) return;
     const scene = { board: o.section, look, rot: o.rot, ou: o.ou, ov: o.ov };
     for (const t of o.tiles) t.destroy({ children: true });
-    for (const x of o.tex) x.destroy(true);
+    for (const x of o.tex) x.release();
     this.old = null;
     this.bake(scene);
     this.place(scene);
@@ -229,13 +238,13 @@ export class BoardView {
   private dropOld(): void {
     if (!this.old) return;
     for (const t of this.old.tiles) if (!t.destroyed) t.destroy({ children: true });
-    for (const x of this.old.tex) x.destroy(true);
+    for (const x of this.old.tex) x.release();
     this.old = null;
   }
 
   private freeBuilt(): void {
     if (!this.built) return;
-    for (const x of this.built.tex) x.destroy(true);
+    for (const x of this.built.tex) x.release();
     this.built = null;
   }
 
@@ -308,9 +317,13 @@ export class BoardView {
     c.sortableChildren = true;
     c.addChild(...built.tiles);
     const bounds = c.getLocalBounds();
-    const tex = this.renderer.generateTexture({ target: c, resolution: s.board.w >= 12 ? 0.5 : 1 });
-    c.destroy({ children: true });
-    for (const x of built.tex) x.destroy(true);
+    let tex: Texture;
+    try {
+      tex = this.renderer.generateTexture({ target: c, resolution: s.board.w >= 12 ? 0.5 : 1 });
+    } finally {
+      c.destroy({ children: true });
+      for (const x of built.tex) x.release();
+    }
     this.baked.set(s.board, { tex, x: bounds.minX, y: bounds.minY });
     // (the oldest are let go once there are too many)
     while (this.baked.size > BAKED_MAX) {
@@ -343,7 +356,7 @@ export class BoardView {
   private section(b: Board, look: Look, f: Frame): Built {
     const tiles: Container[] = [];
     const marks: Graphics[] = [];
-    const tex: Texture[] = [];
+    const tex: ColumnLease<Texture>[] = [];
     const barrels = new Map<number, Sprite>();
     for (let v = 0; v < b.d; v++)
       for (let u = 0; u < b.w; u++) {
@@ -353,7 +366,7 @@ export class BoardView {
         tile.zIndex = depthIn(f, u, v);
         const ct = this.column(t, u, v, b.area, !!look.boss);
         tex.push(ct);
-        const col = new Sprite(ct);
+        const col = new Sprite(ct.value);
         col.position.set(x - TW / 2, y - TH / 2);
         tile.addChild(col);
         const mark = new Graphics();
@@ -421,7 +434,7 @@ export class BoardView {
         const t: Tile = { h: site.h, deco: (u + 5) * 7 + v + 2 };
         const texture = this.column(t, u, v, b.area, true);
         tex.push(texture);
-        const column = new Sprite(texture);
+        const column = new Sprite(texture.value);
         const [x, y] = project(f, site.u + u, site.v + v, site.h);
         column.position.set(x - TW / 2, y - TH / 2);
         column.zIndex = depthIn(f, site.u + u, site.v + v);
@@ -483,7 +496,16 @@ export class BoardView {
   }
 
   /** One tile's column: its top laid on the diamond, its two sides down to the foot. */
-  private column(t: Tile, u: number, v: number, area: Area, boss = false): Texture {
+  private column(t: Tile, u: number, v: number, area: Area, boss = false): ColumnLease<Texture> {
+    const set = art?.areas[area];
+    const top = t.h >= STONY || boss ? -1 : set ? (t.deco + u + v) % set.tops.length : -1;
+    const key = columnKey(area, boss, t.h, !!t.bridge, t.ground, top, artEpoch, u, v);
+    const bytes = TW * (TH + t.h * HH + FOOT + (boss ? HH : 0)) * 4;
+    return this.columns.acquire(key, bytes, () => this.paintColumn(t, u, v, area, boss));
+  }
+
+  /** Original full-resolution painter; reuse only columns whose appearance inputs match. */
+  private paintColumn(t: Tile, u: number, v: number, area: Area, boss = false): Texture {
     const set = art?.areas[area];
     // (a boss arena stands on a plinth one step deeper)
     const deep = t.h * HH + FOOT + (boss ? HH : 0);

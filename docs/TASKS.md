@@ -9,7 +9,15 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
-None assigned. UI-001 was accepted by the owner for merge.
+WORLD-126 rendering checkpoint ready for review; rare warm-tail stability remains open. WORLD-001 per-army map design awaits owner confirmation before implementation.
+
+- Owner: current WORLD continuation chat, confirmed by owner on 2026-10-27.
+- Branch/worktree/PR: `codex/world-001`, `/workspace/world-001`, draft #124.
+- Scope: column texture ownership/reuse, reproducible cold/warm and pixel/lifecycle checks; then per-army terrain maps using owner-requested 14×18 dimensions. Nine-theme visual proposal and section/progression clarification are with the owner. Drowned Temple must end on a central lake island.
+- Completion: measured baseline/candidate, exact pixels, bounded cache and cleanup, required tests/build and portrait/offline checks; report unmet gates honestly.
+- Reserved: Party/Keep and SIM #122 remain separate. No merge, deployment or version bump.
+- Recovery: published head `7426ac5a` recovered; prior unpublished candidate and temporary outputs absent. Reimplemented from #126 handoff.
+- Validation: typecheck and web build passed; full suite passed 106 files, zero failures/skips (429.58s); five ownership cases and 3,634 strict pixel comparisons passed. Median cold stalls reduced 83.7%, but rare warm-tail stalls remain unresolved. Real progression, 24 rebuild/theme cycles, late-save resume, drag-pan, lazy pan-back and offline reload passed at 360×780, 393×852 and 412×915 with zero page errors. See `docs/notes/world-126.md`.
 
 ## UI-001 manager takeover — 2026-10-26
 

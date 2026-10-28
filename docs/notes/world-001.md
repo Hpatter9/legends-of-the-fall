@@ -81,3 +81,16 @@ Host-only measurements are evidence for a prototype, **not mobile-device perform
 Remaining before wider rollout: replace the initial seeded-offset spine with richer authored multi-direction mountain passes/lake circuits; more dramatic navigable cliffs, stairs and scenario-specific set pieces; distinctive temple/mausoleum compounds beyond tinted reused gate/towers; improve cold build/upload scheduling and validate real portrait devices, long full-run pacing and extended real-device/offline soak. Current art is a functional style-preserving composition, not final bespoke landmark art. Existing bundled art is reused, so no new network-loaded asset was added; generated service worker caching is retained.
 
 The original target remains ambitious WORLD-001, with this tested prototype offered for director/owner review. Keep the PR draft and do not merge or deploy until the owner approves.
+
+## Continuation scope — 2026-10-27
+
+Owner confirmed continuing #126 first, then the broader route/terrain milestone. The prior unpublished candidate was absent from this workspace; recovered published `7426ac5a` and reconstructed the bounded column cache from the issue handoff. Current validation belongs to the continuation, not the earlier prototype checks above.
+
+Route proposal: [planning diagram](../samples/world-001-route-proposal.png), explicitly a geographic concept rather than implemented game art. Mountain ascent uses switchbacks/high passes and legal stair lanes; cemetery uses rising gated terraces. **Owner correction: Drowned Temple ends on an island in the middle of the same lake.** The shore route culminates in a final crossing to the central island; do not leave the temple on the far shoreline. Preserve concealment until the final approach and a fixed destination across the last sections.
+
+Rendering results and outstanding checks are being recorded in `world-126.md`; no mobile approval, merge, deployment or version bump is implied.
+
+
+## Owner scope revision — per-army maps
+
+Owner requested a unique style and varied trees, rocks, debris, rivers, hills, bridges and roads for each army, using **14×18** playable sections. This exact size supersedes the initial 12×16 prototype target (14×18 is larger than that prototype, despite the owner's word “smaller”). Clarification of connected sections versus one map per army is pending; do not silently remove wave-clear/drop/walk progression. Proposed identities are in [army theme proposal](../samples/world-001-army-themes-proposal.png). The Drowned Temple must culminate on an island in the lake's middle, per the owner's explicit correction.
