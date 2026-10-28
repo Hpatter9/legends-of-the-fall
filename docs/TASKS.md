@@ -51,6 +51,17 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 - **Release gate:** update the UI notes, board handoff, and PR with actual results. Keep PR #118 draft until validation and visual review are complete. Its reservation remains in place while blocked.
 - **Reference:** [recorded handoff](notes/ui-coordination-handoff.md).
 
+### SUMMON-002 — Summoning stones economy
+
+- **Goal:** crowns buy chests; chests (and every other shard source) give summoning stones; a stone is one shard, one in 100 a whole unowned hero; the roster grows about half as fast.
+- **Status:** ready for review (sim and economy done; UI is a proposal awaiting the owner).
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/summon-stones`
+- **Allowed files or systems:** `src/sim/{meta,unlock,unlockRules,armyStars,calReward,chestShop}.ts`, `src/{gacha,hall,shopView,home,calClear}.ts`, tests, `tools/unlockPace.ts`. Minimal: `main.ts`, `index.html`. Not the castle or battle tabs, nor WORLD files.
+- **Completion criteria:** stones, shop, sources, old-save grant, tests, pace about 2x slower; owner approves the UI.
+- **Validation:** typecheck, web, affected tests (`summon-stones hero-shards meta armyStars daily calMapRewards awaken shards new-lines starter`); portrait screenshots at 393x852, 360x780, 412x915.
+- **Handoff:** `docs/notes/summon-stones.md`.
+
 ## Completed work
 
 | ID | Task | Result | Reference |
