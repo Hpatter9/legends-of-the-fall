@@ -6,6 +6,7 @@
 import type { Unit } from '../sim/battle';
 import type { SpellId } from '../sim/spells';
 import type { Shot } from '../sim/units';
+import { kitElement } from './kitLooks';
 
 export type Element = 'fire' | 'ice' | 'lightning' | 'light' | 'dark' | 'forest' | 'poison' | 'earth' | 'wind' | 'blood';
 export const ELEMENTS: readonly Element[] = ['fire', 'ice', 'lightning', 'light', 'dark', 'forest', 'poison', 'earth', 'wind', 'blood'];
@@ -192,7 +193,7 @@ export const SKILL_ELEMENT: Record<string, Element> = {
   'Heart of the Grove': 'forest',
 };
 
-export const skillElement = (name: string): Element => SKILL_ELEMENT[name] ?? 'light';
+export const skillElement = (name: string): Element => SKILL_ELEMENT[name] ?? kitElement(name) ?? 'light';
 
 /** The element of each king's spell. */
 export const SPELL_ELEMENT: Record<SpellId, Element> = {

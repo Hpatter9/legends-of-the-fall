@@ -1,3 +1,4 @@
+import { SKILL2_LEVEL } from '../src/sim/heroKits';
 import { bareBoard } from './bare';
 import { starterPacks } from '../src/sim/starter';
 import { test } from 'node:test';
@@ -132,7 +133,8 @@ test('Mending Light heals the most hurt ally, never past full', () => {
 
 test('Sanctuary heals and shields everyone, only when someone is hurt', () => {
   const b = arena();
-  spawn(b, 'wanderer', 3, 8, CHARGE_MAX);
+  // (Sanctuary is the Wanderer's skill 2 since the hero kits: it opens at level 10)
+  spawn(b, 'wanderer', 3, 8, CHARGE_MAX).level = SKILL2_LEVEL;
   const k = spawn(b, 'knight', 3, 6);
   spawn(b, 'skeleton', 3, 1);
   run(b, 100);

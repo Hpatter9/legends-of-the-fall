@@ -1,8 +1,9 @@
+import { ULT_FILL } from '../src/sim/heroKits';
 import { bareBoard } from './bare';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addUnit, startBattle, stepBattle, place, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
-import { CHARGE_MAX, KITS, tryCast, ULT_LEVEL, ULT_RATE, ultimateOf, ultimateReady } from '../src/sim/abilities';
+import { CHARGE_MAX, KITS, tryCast, ULT_LEVEL, ultimateOf, ultimateReady } from '../src/sim/abilities';
 import { localBoost } from '../src/sim/climb';
 import { RUN_MAX_LEVEL, xpFor } from '../src/sim/levels';
 import { enterPhase } from '../src/sim/bossPhases';
@@ -41,7 +42,9 @@ test('every hero has an ultimate, and it charges slower than the skill', () => {
   const u = addUnit(b, 'knight', 3, 8, gradeBoost(1, 0, ULT_LEVEL));
   addUnit(b, 'skeleton', 3, 4);
   run(b, 1000);
-  assert.ok(u.charge > 0 && Math.abs((u.charge2 ?? 0) - u.charge * ULT_RATE * KITS.knight.ultimate!.tuned!.rate) < 1e-6);
+  // (COMBAT-002: the meter fills on its own from the fight, here a second of time with nothing struck, at the ultimate's tuned rate; far slower than the pool)
+  assert.ok(Math.abs((u.charge2 ?? 0) - ULT_FILL.PER_SEC * KITS.knight.ultimate!.tuned!.rate) < 1e-6, `${u.charge2}`);
+  assert.ok(u.charge > (u.charge2 ?? 0));
   assert.equal(ultimateReady(u), false);
 });
 
@@ -73,7 +76,7 @@ test('an ultimate\'s tuned meter speed applies from level 30 up, and below it th
   run(b, 1000);
   assert.ok(low.charge > 0);
   assert.ok(!low.charge2, 'below 30 the meter does not fill');
-  assert.ok(Math.abs((up.charge2 ?? 0) - up.charge * ULT_RATE * KITS.kitsune.ultimate!.tuned!.rate) < 1e-6, 'from 30 it fills at the tuned rate');
+  assert.ok(Math.abs((up.charge2 ?? 0) - ULT_FILL.PER_SEC * KITS.kitsune.ultimate!.tuned!.rate) < 1e-6, 'from 30 it fills at the tuned rate');
 });
 
 test('a locked ultimate neither charges nor casts, and the unlocked one does both', () => {
