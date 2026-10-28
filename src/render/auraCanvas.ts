@@ -18,10 +18,16 @@ const pose = newPose();
 /** Draw the parts of one layer (`back`: behind the hero; `front`: over it) of an aura on a canvas, the hero's feet at
  *  (x, feet), `tall` px high, facing `dir`, at time `t` (ms). Draws nothing until the atlas has loaded. */
 export function drawAura(g: CanvasRenderingContext2D, parts: readonly AuraPart[], x: number, feet: number, tall: number, t: number, layer: 'back' | 'front', dir: number, calm: boolean): void {
+  if (!parts.length) return;
   const img = auraImage();
-  if (!img || !parts.length) return;
+  if (!img) {
+    void loadAuraImage();
+    return;
+  }
   const cell = AURA_CELL;
   const smooth = g.imageSmoothingEnabled;
+  const alpha = g.globalAlpha;
+  const op = g.globalCompositeOperation;
   g.imageSmoothingEnabled = !AURA_PIXEL;
   for (const part of parts) {
     if (!!part.front !== (layer === 'front')) continue;
@@ -30,16 +36,22 @@ export function drawAura(g: CanvasRenderingContext2D, parts: readonly AuraPart[]
     const n = part.count ?? 1;
     for (let i = 0; i < n; i++) {
       poseAura(part, i, strip[1], t, tall, dir, calm, cell, pose);
-      g.save();
-      g.translate(x + pose.x, feet + pose.y);
+      // (the transform is laid on and taken off again by hand: save and restore are slow on a phone's canvas)
+      const tx = x + pose.x;
+      const ty = feet + pose.y;
+      g.translate(tx, ty);
       if (pose.rot) g.rotate(pose.rot);
       g.scale(pose.sx, pose.sy);
-      g.globalAlpha *= pose.alpha;
+      g.globalAlpha = alpha * pose.alpha;
       if (part.add) g.globalCompositeOperation = 'lighter';
       g.drawImage(img, pose.frame * cell, strip[0] * cell, cell, cell, -cell / 2, -cell * pose.ay, cell, cell);
-      g.restore();
+      if (part.add) g.globalCompositeOperation = op;
+      g.scale(1 / pose.sx, 1 / pose.sy);
+      if (pose.rot) g.rotate(-pose.rot);
+      g.translate(-tx, -ty);
     }
   }
+  g.globalAlpha = alpha;
   g.imageSmoothingEnabled = smooth;
 }
 
