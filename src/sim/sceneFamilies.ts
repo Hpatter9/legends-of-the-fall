@@ -1,5 +1,5 @@
-// The cinematics made once for many: the first clear of each army (nine), a hero awakening (all 45), a castle build (each building), the endless tower's milestone floors, and a
-// boss changing form (a cut-in of a few seconds, each time). Each family is one shape filled in from a table, so a new
+// The cinematics made once for many: the first clear of each army (nine), a hero awakening (all 45), a castle build (each building), the Last Stand's milestone waves, and a
+// boss changing form (a cut-in of a few seconds, the first time each boss does). Each family is one shape filled in from a table, so a new
 // army, hero or building is a row, not a script. Pure data; it imports only the kit, the fighters' table and the lore
 // (not the armies or the battle, which load this file's way round).
 
@@ -375,33 +375,37 @@ const buildScene = (b: Build): Scene => ({
   ],
 });
 
-/* ------------------------------------------------------------ the endless tower */
+/* ------------------------------------------------------------ the Last Stand's milestone waves */
 
-const SPIRES: { floor: number; title: string; blurb: string; lines: [string, string, string] }[] = [
-  { floor: 10, title: 'Deceptive Facades', blurb: 'The endless spire reveals its tenth floor, proving considerably roomier than the architecture suggested.', lines: ['The spire reveals its tenth landing. The interior is alarmingly larger than the exterior.', 'I could have sworn the entire tower was only twenty feet wide from the garden path.', 'Everything appears deceptively compact from the outside, my friend. Especially your tactical plans.'] },
-  { floor: 25, title: 'The Floating Summit', blurb: 'Twenty-five storeys climbed, and the pinnacle appears to have acquired an extra storey.', lines: ['Twenty-five floors ascended, yet the upper parapet appears to have grown an additional terrace.', 'I was under the distinct impression we were approaching the ornamental weather vane.', 'The weather vane has been relocated three storeys higher. It sends its warmest personal apologies.'] },
-  { floor: 50, title: 'The Spiralling Masonry', blurb: 'Fifty landings conquered, and the steps appear to be developing a cheerful personality of their own.', lines: ['Fifty storeys behind you. The spiral steps have begun undulating with alarming enthusiasm.', 'I am fairly certain the fourth step from the landing just attempted to shake my hand.', 'It is merely attempting to be hospitable, friend. Do try to return the courtesy.'] },
+// (the old endless tower's milestones, `spire:<n>`, play in the Last Stand at waves 10, 25 and 50: the ids and the moment are kept, so a
+// save's seen scenes still match. The story is the Last Stand's: the castle's walls are breached, and the guard falls back to keep the king
+// at his throne. The king is the player; he stands in the last shot of each.)
+const STANDS: { wave: number; look: Area; title: string; blurb: string; lines: [string, string, string, string] }[] = [
+  { wave: 10, look: 'warcamp', title: 'The Breach Widens', blurb: 'Ten waves in, the outer wall gives way, and the guard falls back towards the king.', lines: ['Ten waves in, the outer wall gave a long groan and then a short, decisive crumble.', 'The breach is getting wider. I preferred it as a crack.', 'Fall back to the inner yard. Bring the king, and the biscuits.', 'I shall walk, thank you. Briskly. With dignity. Mostly briskly.'] },
+  { wave: 25, look: 'dungeon', title: 'The Throne Room', blurb: 'Twenty-five waves, and the guard makes its stand round the king at his throne.', lines: ['Twenty-five waves. The guard has fallen back to the throne room, and the doors are thin.', 'Nobody gets past this rug. It is an heirloom.', 'Majesty, do sit on the throne. It is the one spot we can defend.', 'I have been sitting on it all along. You simply never noticed.'] },
+  { wave: 50, look: 'shrine', title: 'The Last Stand', blurb: 'Fifty waves round the throne, and the bards are already arguing over the song.', lines: ['Fifty waves round the throne. Out in the land, the bards have begun the song already.', 'They say no guard ever held a throne room this long.', 'They also say we are nine feet tall. Let them.', 'Whatever comes through that door, the Last Keep stands while you do.'] },
 ];
 
-const spireScene = (f: (typeof SPIRES)[number]): Scene => ({
-  id: `spire:${f.floor}`,
-  title: `Floor ${f.floor}: ${f.title}`,
+const standScene = (f: (typeof STANDS)[number]): Scene => ({
+  id: `spire:${f.wave}`,
+  title: `Wave ${f.wave}: ${f.title}`,
   blurb: f.blurb,
-  moment: { kind: 'spire', floor: f.floor },
+  moment: { kind: 'spire', floor: f.wave },
   family: 'spire',
   cast: {
-    hero: { role: 'hero', x: 275, facing: 'right', hidden: true },
-    mate: { role: 'party:1', x: 235, facing: 'right', hidden: true },
-    duchess: { role: 'duchess', x: 190, facing: 'right', hidden: true },
+    hero: { role: 'hero', x: 290, facing: 'right', hidden: true },
+    mate: { role: 'party:1', x: 250, facing: 'right', hidden: true },
+    king: { role: 'unit:standKing', x: 195, facing: 'right', hidden: true, scale: 1.2 },
   },
   shots: [
     {
-      look: 'dungeon',
-      cam: wide(260, 195),
-      to: wide(260, 215),
+      look: f.look,
+      cam: wide(270, 195),
+      to: wide(270, 215),
       fx: ['fadeIn', 'darken', 'rumble'],
-      caption: `Floor ${f.floor}`,
-      acts: [{ who: 'hero', enter: 275, from: 190 }, { who: 'mate', enter: 235, from: 150 }],
+      cue: 'earthRumble',
+      caption: `Wave ${f.wave}`,
+      acts: [{ who: 'hero', enter: 290, from: 200 }, { who: 'mate', enter: 250, from: 160 }],
       lines: [tell(f.lines[0])],
     },
     {
@@ -409,9 +413,9 @@ const spireScene = (f: (typeof SPIRES)[number]): Scene => ({
       lines: [say('hero', f.lines[1]), say('mate', f.lines[2])],
     },
     {
-      cam: close(['mate', 'duchess'], 1.5),
-      acts: [{ who: 'duchess', enter: 190, from: 100 }],
-      lines: [say('duchess', 'Mehh.'), tell('The goat had, as with all previous storeys, arrived twenty minutes ahead of the vanguard.')],
+      cam: close(['king', 'mate'], 1.5),
+      acts: [{ who: 'king', enter: 195, from: 100 }],
+      lines: [say('king', f.lines[3])],
     },
   ],
 });
@@ -443,7 +447,7 @@ const FORMS: Form[] = [
   { boss: 'calBoss6', area: 'volcano', line: 'THERE IS NO HORIZON BEYOND MY STRIDE!' },
 ];
 
-/** The beat before a boss's new form, slowed to half pace, then its words. About three seconds all told; the page holds the fight meanwhile. */
+/** The beat before a boss's new form, slowed to half pace, then its words. About three seconds all told; the page holds the fight meanwhile. Once a save for each boss (the owner: "Boss cinematics only need to play once"). */
 const SLOW_BEAT = 0.7;
 
 const formScene = (f: Form): Scene => ({
@@ -453,7 +457,6 @@ const formScene = (f: Form): Scene => ({
   moment: { kind: 'bossForm', boss: f.boss },
   family: 'form',
   short: true,
-  again: true,
   cast: { boss: { role: `unit:${f.boss}`, x: 290, facing: 'left', scale: 1.6 } },
   shots: [
     { look: f.area, cam: close('boss', 1.5), to: close('boss', 2), acts: [{ who: 'boss', pose: 'hurt' }], fx: ['darken'], cue: 'boom', hold: SLOW_BEAT, slow: 0.5 },
@@ -548,7 +551,7 @@ export const FAMILY_SCENES: Scene[] = [
   ...CLEARS.map(clearScene),
   ...ALL_HEROES.map((k, i) => awakenScene(k, i)),
   ...BUILDS.map(buildScene),
-  ...SPIRES.map(spireScene),
+  ...STANDS.map(standScene),
   ...FORMS.map(formScene),
   ...OATHS.map(oathScene),
   ...OATHS.map(oathCut),
@@ -563,7 +566,7 @@ export const FAMILY_NAMES: Record<string, string> = {
   awaken: 'Awakenings',
   earned: 'Heroes earned',
   castle: 'The castle going up',
-  spire: 'The tower’s milestones',
+  spire: 'The Last Stand’s milestones',
   form: 'Bosses changing form',
   oath: 'The Last Oaths',
   oathcut: 'The Last Oaths, in short',

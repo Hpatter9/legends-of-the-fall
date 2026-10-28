@@ -30,7 +30,8 @@ const mini: Scene = {
 test('every scene is 10 to 40 seconds as played untouched (a cut-in 2 to 6), with brief lines', () => {
   for (const id of SCENE_ORDER) {
     const secs = sceneSeconds(SCENES[id]);
-    const cutIn = !!SCENES[id].again;
+    // (a cut-in: the short Last Oath, every time, and a boss changing form, once each)
+    const cutIn = !!SCENES[id].again || SCENES[id].family === 'form';
     const reveal = !!SCENES[id].short && !cutIn;
     const oath = SCENES[id].family === 'oath';
     // (a slowed shot takes longer than its beats: the cut-in's real length counts it)
@@ -174,7 +175,9 @@ test('who plays: the party fills the party roles, the hero is the run\'s lead, f
   assert.equal(kindOf('duchess', players), null);
   const cast = castOf(SCENES.opening, players);
   assert.equal(cast.front.name, 'Knight');
-  assert.equal(cast.herald.name, UNITS.calBoss1.name);
+  // (the king is the player, drawn as the Last Stand's king; the first army's warlord is on the road)
+  assert.deepEqual(cast.king, { kind: 'standKing', name: UNITS.standKing.name });
+  assert.equal(cast.warlord.name, UNITS.orcWarlord.name);
   assert.equal(namesOf(cast).back, 'Archer');
   // (a scene that casts her plays on: she has no kind to draw, and her own name)
   const withGoat: Scene = { ...mini, cast: { ...mini.cast, goat: { role: 'duchess', x: 100, facing: 'right' } } };
@@ -198,6 +201,9 @@ test('the opening is due for a new save that has picked, once; the first Calamit
   const m = newMeta(12);
   pickStarter(m, 0);
   assert.equal(dueScene(m, { kind: 'starter' }), 'opening');
+  // (the Calamity's scenes wait for it to open)
+  assert.equal(dueScene(m, { kind: 'calBoss', map: 1 }), null);
+  m.opened = ['calamity'];
   assert.equal(dueScene(m, { kind: 'calBoss', map: 1 }), 'gorvak');
   assert.equal(dueScene(m, { kind: 'calBoss', map: 2 }), 'thornWarden', 'each map has its own herald');
   assert.equal(dueScene(m, { kind: 'calBoss', map: 7 }), null, 'there are six');
@@ -247,9 +253,11 @@ import { momentKey, type Moment } from '../src/sim/sceneScripts';
 import { momentText, sceneList } from '../src/sim/sceneRules';
 import { FAMILY_NAMES } from '../src/sim/sceneFamilies';
 
+/** A save that has picked its heroes and has the Calamity open (its scenes wait for that). */
 const picked = () => {
   const m = newMeta(21);
   pickStarter(m, 0);
+  m.opened = ['calamity'];
   return m;
 };
 
@@ -291,17 +299,17 @@ test('every hero has an awakening scene (their own sheet, their new look), and t
   assert.equal(dueScene(m, { kind: 'earned', hero: 'knight' }), null, 'a hero not earned by play has no arrival');
 });
 
-test('a boss changing form: a short cut-in with a slow beat, whose words are the boss’s own, and it plays every time', () => {
+test('a boss changing form: a short cut-in with a slow beat, whose words are the boss’s own, and it plays once a save', () => {
   const m = picked();
   for (const [boss, kit] of Object.entries(PHASE2)) {
     const id = dueScene(m, { kind: 'bossForm', boss });
     assert.equal(id, `form:${boss}`);
     const sc = SCENES[id!];
-    assert.ok(sc.short && sc.again);
+    assert.ok(sc.short && !sc.again);
     assert.ok(sc.shots.some((s) => s.slow && s.slow < 1), 'a slow-motion beat');
     assert.equal(sc.shots.flatMap((s) => s.lines ?? []).map((l) => l.text).join(), kit.line, `${boss} says what its phase banner says`);
     markSeen(m, id!);
-    assert.equal(dueScene(m, { kind: 'bossForm', boss }), id, 'seen, and due again');
+    assert.equal(dueScene(m, { kind: 'bossForm', boss }), null, 'seen: boss cinematics play once');
   }
   assert.equal(dueScene(m, { kind: 'bossForm', boss: 'orcGrunt' }), null);
 });

@@ -26,7 +26,7 @@ import { drawKind, giveShards, toCollect } from './unlock';
 import { DUPLICATE_SHARDS, LUCKY_ODDS, LUCKY_RANK_SHARDS, PULL_HEROES, STONES_GIFT } from './unlockRules';
 import { grantContent } from './contentHeroes';
 import { readShop } from './chestShop';
-import { readScenes } from './sceneRules';
+import { readCards, readScenes } from './sceneRules';
 
 export { DUPLICATE_SHARDS, LUCKY_ODDS, LUCKY_RANK_SHARDS };
 /** Shards each rank needs in all: rank 1 at 1, rank 2 at 3, rank 3 at 6, rank 4 at 10. */
@@ -129,6 +129,8 @@ export interface Meta {
   scenes?: string[];
   /** Whether the heroes' ultimates fire on their own in a fight (the hero bar's Auto switch, COMBAT-002); off (the player taps) when unset. Auto-replay always fires them. */
   ultAuto?: boolean;
+  /** The bosses whose card (the slam-down ribbon as the fight begins) has been shown, by boss or `elite:<id>` (`sceneRules.ts` `cardKey`): once a save. Saves from before have none. */
+  bossCards?: string[];
 }
 
 /** An earned, unopened chest: where it came from, and the seed its contents are rolled from (fixed when it was earned). */
@@ -439,6 +441,9 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       // (saves from before the cinematics have none; one that had picked its heroes counts the opening as seen)
       m.scenes = readScenes(m.scenes, !needsStarter(m));
       if (!m.scenes.length) delete m.scenes;
+      // (saves from before the boss cards played once have none shown)
+      m.bossCards = readCards(m.bossCards);
+      if (!m.bossCards.length) delete m.bossCards;
       // (a content hero whose milestone a save from before has already reached joins now)
       if (!needsStarter(m)) grantContent(m);
       return m;

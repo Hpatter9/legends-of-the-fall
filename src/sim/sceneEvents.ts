@@ -1,17 +1,64 @@
-// The cinematics for moments that come once, each its own: the Calamity's heralds of maps 2 to 6 (in the pattern of
-// Gorvak's, in `sceneScripts.ts`), the Calamity's end, the first loss, and the "firsts" (a combo's mega ultimate, Duchess in a
+// The cinematics for moments that come once, each its own: the Calamity's reveal (the portal that ripped open over the keep,
+// played once the Calamity opens), its heralds of maps 2 to 6 (in the pattern of Gorvak's, in `sceneScripts.ts`), the Calamity's end, the first loss, and the "firsts" (a combo's mega ultimate, Duchess in a
 // fight, a summon, an elite, Mythic, the first ascension, the daily's boss). Pure data: the kit and the rules for it are in
 // `sceneKit.ts` and docs/notes/cinematics.md. The voice is the pilots': wry, warm, British, villains short of staff.
 
 import { close, say, tell, wide, type Scene } from './sceneKit';
 
 export const EVENT_SCENES: Scene[] = [
+  // ---------------------------------------------------------------- the Calamity opens: the portal
+  {
+    id: 'calamityOpens',
+    title: 'A Hole in the Sky',
+    blurb: 'A portal rips open over the keep, an invasion pours out, and somebody has to go in.',
+    moment: { kind: 'calOpen' },
+    calamity: true,
+    cast: {
+      hero: { role: 'party:0', x: 270, facing: 'right', hidden: true },
+      mate: { role: 'party:1', x: 232, facing: 'right', hidden: true },
+      king: { role: 'unit:standKing', x: 175, facing: 'right', hidden: true, scale: 1.2 },
+      herald: { role: 'unit:calBoss1', x: 400, facing: 'left', hidden: true, scale: 1.4, shade: true },
+    },
+    shots: [
+      {
+        look: 'shrine',
+        cam: wide(300, 190),
+        to: wide(300, 205),
+        fx: ['fadeIn', 'flash', 'shake'],
+        cue: 'boom',
+        caption: 'The Calamity',
+        lines: [tell('One quiet night, the sky over the keep ripped open like a cheap tent.'), tell('Through the tear: a portal. Beyond it, the void. Out of it, an invasion.')],
+      },
+      {
+        look: 'highlands',
+        cam: close(['hero', 'mate'], 1.5),
+        acts: [{ who: 'hero', enter: 270, from: 170 }, { who: 'mate', enter: 232, from: 140 }],
+        fx: ['darken', 'rumble'],
+        lines: [say('hero', 'Can we shut it from this side?'), say('mate', 'The latch is on the far side. Naturally.')],
+      },
+      {
+        cam: close(['king', 'mate'], 1.5),
+        acts: [{ who: 'king', enter: 175, from: 80 }],
+        lines: [tell('The king sends one hero through, and more may join beyond. That is you, choosing.'), say('hero', 'Into the void, then. I shall want a very long bath afterwards.')],
+      },
+      {
+        look: 'volcano',
+        cam: wide(335, 205),
+        acts: [{ who: 'herald', enter: 400, from: 560 }],
+        fx: ['darken', 'glow', 'rumble'],
+        cue: 'earthRumble',
+        lines: [tell('Beyond the portal, six heralds lead the invasion. Together they are the Calamity.'), tell('It was not consulted on the name.')],
+      },
+    ],
+  },
+
   // ---------------------------------------------------------------- the heralds of maps 2 to 6
   {
     id: 'thornWarden',
     title: 'The Bramble\'s Grudge',
     blurb: 'The Thorn Warden maintains a frosty silence, leaving everyone feeling thoroughly judged.',
     moment: { kind: 'calBoss', map: 2 },
+    calamity: true,
     cast: {
       hero: { role: 'hero', x: 270, facing: 'right', hidden: true },
       warden: { role: 'unit:calBoss2', x: 395, facing: 'left', hidden: true, scale: 1.5 },
@@ -26,7 +73,7 @@ export const EVENT_SCENES: Scene[] = [
         fx: ['fadeIn', 'darken'],
         caption: 'The second herald',
         acts: [{ who: 'hero', enter: 270, from: 170 }],
-        lines: [tell('The second map is all hedge, the grudge-holding sort.')],
+        lines: [tell('Deeper into the void, the way is all hedge, the grudge-holding sort.')],
       },
       {
         cam: close(['hero', 'warden'], 1),
@@ -60,6 +107,7 @@ export const EVENT_SCENES: Scene[] = [
     title: 'Item One: The Breach',
     blurb: 'Malphas summons the infernal legions, but the legions sent a bureaucrat.',
     moment: { kind: 'calBoss', map: 3 },
+    calamity: true,
     cast: {
       hero: { role: 'hero', x: 270, facing: 'right', hidden: true },
       malphas: { role: 'unit:calBoss3', x: 400, facing: 'left', hidden: true, scale: 1.5 },
@@ -73,7 +121,7 @@ export const EVENT_SCENES: Scene[] = [
         fx: ['fadeIn', 'darken', 'glow'],
         caption: 'The third herald',
         acts: [{ who: 'hero', enter: 270, from: 170 }],
-        lines: [tell('Beneath the roots: a court, torches, and a long agenda.')],
+        lines: [tell('Further in, the void keeps a court, torches, and a long agenda.')],
       },
       {
         cam: close(['hero', 'malphas', 'imp'], 1),
@@ -106,6 +154,7 @@ export const EVENT_SCENES: Scene[] = [
     title: 'The Walking Masonry',
     blurb: 'Hrungar the Mountain is tested with a modest shove, purely in the interest of science.',
     moment: { kind: 'calBoss', map: 4 },
+    calamity: true,
     cast: {
       hero: { role: 'hero', x: 285, facing: 'right', hidden: true },
       hrungar: { role: 'unit:calBoss4', x: 395, facing: 'left', hidden: true, scale: 1.5 },
@@ -119,7 +168,7 @@ export const EVENT_SCENES: Scene[] = [
         fx: ['fadeIn', 'darken'],
         caption: 'The fourth herald',
         acts: [{ who: 'hero', enter: 285, from: 185 }, { who: 'hrungar', enter: 395, from: 395 }],
-        lines: [tell('The pass is blocked by a remarkably solid obstruction in iron plate.')],
+        lines: [tell('A pass through the void is blocked by a remarkably solid obstruction in iron plate.')],
       },
       {
         cam: close(['hero', 'hrungar'], 1.5),
@@ -138,7 +187,7 @@ export const EVENT_SCENES: Scene[] = [
         acts: [{ who: 'hrungar', pose: 'strike' }, { who: 'duchess', enter: 170, from: 60, line: 1 }],
         fx: ['flash', 'shake'],
         cue: 'slam',
-        lines: [tell('Hrungar cannot be shoved. The expedition has verified this with several bruised wrists.'), say('duchess', 'Mehh.'), tell('Behold the fourth herald. His commemorative ribbon is awaiting dispatch.')],
+        lines: [tell('Hrungar cannot be shoved. The heroes have verified this with several bruised wrists.'), say('duchess', 'Mehh.'), tell('Behold the fourth herald. His commemorative ribbon is awaiting dispatch.')],
       },
     ],
   },
@@ -147,6 +196,7 @@ export const EVENT_SCENES: Scene[] = [
     title: 'The Fragile Spark',
     blurb: 'Vorgrath the Hellbringer guards the cosmic ember, which is struggling in the breeze.',
     moment: { kind: 'calBoss', map: 5 },
+    calamity: true,
     cast: {
       hero: { role: 'hero', x: 270, facing: 'right', hidden: true },
       vorgrath: { role: 'unit:calBoss5', x: 395, facing: 'left', hidden: true, scale: 1.5 },
@@ -160,7 +210,7 @@ export const EVENT_SCENES: Scene[] = [
         fx: ['fadeIn', 'darken', 'glow'],
         caption: 'The fifth herald',
         acts: [{ who: 'hero', enter: 270, from: 170 }],
-        lines: [tell('The fifth realm is sulphur and cinder, with one small flame fiercely guarded.')],
+        lines: [tell('The void\'s fifth reach is sulphur and cinder, with one small flame fiercely guarded.')],
       },
       {
         cam: close(['hero', 'vorgrath', 'bones'], 1),
@@ -192,8 +242,9 @@ export const EVENT_SCENES: Scene[] = [
   {
     id: 'karnok',
     title: 'The Terminus',
-    blurb: 'Karnok the Calamity brings the end of all roads, including the quick route to the baker.',
+    blurb: 'Karnok, at the heart of the void, brings the end of all roads, including the quick route to the baker.',
     moment: { kind: 'calBoss', map: 6 },
+    calamity: true,
     cast: {
       hero: { role: 'hero', x: 270, facing: 'right', hidden: true },
       karnok: { role: 'unit:calBoss6', x: 400, facing: 'left', hidden: true, scale: 1.3 },
@@ -208,7 +259,7 @@ export const EVENT_SCENES: Scene[] = [
         cue: 'earthRumble',
         caption: 'The final herald',
         acts: [{ who: 'hero', enter: 270, from: 170 }],
-        lines: [tell('The sixth map is the world\'s rim. The clouds look bruised.')],
+        lines: [tell('At the heart of the void, the invasion\'s own gate. The clouds look bruised.')],
       },
       {
         cam: close(['hero', 'karnok'], 1),
@@ -241,14 +292,16 @@ export const EVENT_SCENES: Scene[] = [
   {
     id: 'calamityEnds',
     title: 'Unscripted Horizons',
-    blurb: 'Karnok topples, the sky turns cheerful blue, and nobody planned for peace.',
+    blurb: 'Karnok topples, the portal seals itself, and nobody planned for peace.',
     moment: { kind: 'calVictory' },
+    calamity: true,
     cast: {
       hero: { role: 'hero', x: 275, facing: 'right', hidden: true },
       second: { role: 'party:1', x: 235, facing: 'right', hidden: true },
       karnok: { role: 'unit:calBoss6', x: 400, facing: 'left', scale: 1.3 },
       grunt: { role: 'unit:orcGrunt', x: 480, facing: 'left', hidden: true },
       duchess: { role: 'duchess', x: 185, facing: 'right', hidden: true },
+      king: { role: 'unit:standKing', x: 150, facing: 'right', hidden: true, scale: 1.2 },
     },
     shots: [
       {
@@ -274,7 +327,7 @@ export const EVENT_SCENES: Scene[] = [
         to: wide(300, 195),
         acts: [{ who: 'grunt', enter: 480, from: 575 }],
         fx: ['glow'],
-        lines: [tell('The red sky cleared to a pleasant blue. A finch piped up.'), say('second', 'Is that truly the end of the fuss?')],
+        lines: [tell('Back home, the portal sighed and sealed shut. A finch piped up.'), say('second', 'Is that the end of the invasion?')],
       },
       {
         cam: close(['hero', 'second', 'duchess'], 1.5),
@@ -282,14 +335,15 @@ export const EVENT_SCENES: Scene[] = [
         lines: [
           say('hero', 'What do we do now? My afternoon is clear.'),
           say('second', 'I had not planned past five o\'clock.'),
-          say('grunt', 'Any vacancies at the keep? The heralds have disbanded.'),
+          say('grunt', 'Any jobs at the keep? I came through before it shut.'),
           say('duchess', 'Mehh.'),
         ],
       },
       {
-        cam: wide(300, 195, 1),
+        cam: close(['king', 'hero'], 1),
+        acts: [{ who: 'king', enter: 150, from: 60 }, { who: 'duchess', exit: 'right' }],
         fx: ['fadeOut'],
-        lines: [tell('The king was thanked for placing everyone and then only watching.'), tell('As a celebration, a meteor fell on an empty cabbage plot.')],
+        lines: [tell('The king was thanked for placing everyone, then only watching.'), tell('To celebrate, a meteor fell on an empty cabbage plot.')],
       },
     ],
   },
@@ -304,6 +358,7 @@ export const EVENT_SCENES: Scene[] = [
       front: { role: 'party:0', x: 255, facing: 'right', hidden: true },
       mid: { role: 'party:1', x: 215, facing: 'right', hidden: true },
       back: { role: 'party:2', x: 175, facing: 'right', hidden: true },
+      king: { role: 'unit:standKing', x: 300, facing: 'left', hidden: true, scale: 1.2 },
       duchess: { role: 'duchess', x: 330, facing: 'left', hidden: true },
     },
     shots: [
@@ -321,14 +376,15 @@ export const EVENT_SCENES: Scene[] = [
         lines: [say('front', 'I trust nobody is vulgar enough to blame my placement.'), say('mid', 'It was arguably thirty percent the placement, darling.'), say('back', 'I requested thirty paces to the rear. I was told that was the hedge.')],
       },
       {
-        cam: close(['mid', 'duchess'], 1.5),
-        acts: [{ who: 'duchess', enter: 330, from: 430 }],
-        lines: [tell('The king, who placed everyone and only watched, was quietly blamed.'), say('mid', 'Perhaps try the eastern flank tomorrow, majesty. Just a thought.'), say('duchess', 'Mehh.')],
+        cam: close(['front', 'king'], 1.5),
+        acts: [{ who: 'king', enter: 300, from: 400 }],
+        lines: [tell('The king, who placed everyone and only watched, was quietly blamed.'), say('mid', 'Perhaps try the eastern flank tomorrow, majesty. Just a thought.')],
       },
       {
-        cam: wide(240, 205, 1),
+        cam: wide(260, 205, 1),
+        acts: [{ who: 'duchess', enter: 330, from: 430 }],
         fx: ['fadeOut'],
-        lines: [tell('Tomorrow, they resolved, would be more dignified. Duchess was sceptical.')],
+        lines: [say('duchess', 'Mehh.'), tell('Tomorrow, they resolved, would be more dignified. Duchess was sceptical.')],
       },
     ],
   },
@@ -377,6 +433,7 @@ export const EVENT_SCENES: Scene[] = [
     title: 'A Fresh Chapeau',
     blurb: 'The Calamity, bitterly wounded in its vanity, returns sporting upgraded headwear.',
     moment: { kind: 'ascension' },
+    calamity: true,
     cast: {
       hero: { role: 'hero', x: 270, facing: 'right', hidden: true },
       gorvak: { role: 'unit:calBoss1', x: 405, facing: 'left', hidden: true, scale: 1.5 },
@@ -390,7 +447,7 @@ export const EVENT_SCENES: Scene[] = [
         cue: 'earthRumble',
         caption: 'Ascension I',
         acts: [{ who: 'hero', enter: 270, from: 170 }],
-        lines: [tell('The Calamity handles defeat poorly. It took its grievances away to brood upon them.')],
+        lines: [tell('The portal has torn open again. The Calamity handles defeat very poorly.')],
       },
       {
         cam: close(['hero', 'gorvak'], 1),
@@ -513,7 +570,7 @@ export const EVENT_SCENES: Scene[] = [
       {
         cam: close(['hero', 'duchess', 'foe'], 1),
         acts: [{ who: 'duchess', enter: 330, from: 250 }],
-        lines: [say('foe', 'I say, is that an unescorted goat wandering the battlefield?'), say('hero', 'That is Her Grace the Duchess. Mind your tone.'), say('foe', 'Does she fight for the crown, or does she seek union with our cause?'), say('duchess', 'Mehh.')],
+        lines: [say('foe', 'I say, is that an unescorted goat wandering the battlefield?'), say('hero', 'That is Her Grace the Duchess. Mind your tone.'), say('foe', 'Does she fight for your side, or does she seek union with our cause?'), say('duchess', 'Mehh.')],
       },
       {
         cam: close(['foe', 'duchess'], 1.5),
