@@ -7,14 +7,17 @@ import { boostOf } from '../src/sim/run';
 import { ALL_HEROES } from '../src/sim/units';
 import { buyPoint, canBuyPoint, heroStats, shardsToSpend } from '../src/sim/talents';
 import { lookSheet, stepOfRank } from '../src/render/awakenLook';
+import { ORE_TRAITS } from '../src/sim/awakenMats';
 
 const store = () => {
   let v = '';
   return { setItem: (_: string, s: string) => (v = s), getItem: () => v };
 };
+// (these tests are about the shards: the rift ores each step also asks for (AWAKEN-MATS) are given in plenty; `awaken-mats.test.ts` tests them)
 const withShards = (n: number, kind = 'knight'): Meta => {
   const m = startedMeta(3);
   m.shards[kind] = n;
+  m.ores = Object.fromEntries(ORE_TRAITS.map((t) => [t, 100]));
   return m;
 };
 

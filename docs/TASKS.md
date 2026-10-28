@@ -26,6 +26,17 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Validation:** see the handoff's "Checks run for phase B".
 - **Handoff:** [notes](notes/army-road.md), [phase B sheet](samples/army-road-after-sheet.png), [phase A mock-ups](samples/army-road-mock-sheet.png).
 
+### AWAKEN-MATS — Awakening materials from the armies and the Calamity
+
+- **Goal:** the owner's ask: a hero's awakening needs materials, one kind per class trait; the owner's answers: different armies drop different ores, the Calamity (by map) the richest source, 10 and 20 a step on top of the shards, difficult; small trickles from a first Mythic clear, Last Stand records and gold chests; old saves paid a Rift Cache a Calamity clear (up to five); the pouch on the Calamity's start and the awakening panel; ores on the army result screen and card.
+- **Status:** done; owner approved and released as 0.191.0.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/awaken-mats`, `/home/user/awaken-mats` (main 0.189.0 merged in); PR none.
+- **Allowed files or systems:** new `src/sim/awakenMats.ts`, `src/oreView.ts`, `src/ores.css`, `src/art/ui/ore/`; hooks in `src/sim/awaken.ts`, `meta.ts` (optional `Meta.ores`, `Meta.caches`), `tower.ts` (`finishTower` drops, `settleCalamity`), `calReward.ts`, `armyStars.ts` (chest ores, `sumLoot`), `stand.ts` (`settleStand`), `autoReplay.ts` (totals); the page: `awakenView.ts`, `rankUpView.ts`, `menuHeroes.ts`, `calClear.ts`, `calamityView.ts` (the pouch), `towerView.ts` (the loss summary), `armiesView.ts` (the card's row), `chestStash.ts`, `standView.ts`, `main.ts` (the army result and auto summary), `index.html` (`#oreDrop`), `build.mjs` (the CSS); `tools/unlockPace.ts` (`--awaken`), `tools/awaken/ore-icons.py`, `mats-shots.mjs`, `mats-sheet.py`, `mats-mock*.{mjs,py}`; tests `test/awaken-mats.test.ts`, `test/awaken.test.ts`, `test/rankUp.test.ts`; `CREDITS.md`; `docs/notes/awaken-mats.md`, `docs/samples/awaken-mats-*.png`. Not the Calamity map itself (`claude/cal-void`), the dailies (`claude/daily-builds`), the castle tab or the WORLD army map.
+- **Completion criteria:** the ores in the meta (optional, old saves load and keep their awakened heroes, back pay once); every drop deterministic on its own side stream, every rule tested; 10 / 20 a step; the pouch, panel, recap, victory, loss summary, army card and result, chests and the Last Stand's end card; pack icons credited; pace re-run; typecheck, affected and full tests, web build; 393x852, 360x780 and 412x915.
+- **Validation (phase B):** see the handoff's checks.
+- **Handoff:** `docs/notes/awaken-mats.md`; pictures `docs/samples/awaken-mats-sheet.png`, `-360-sheet.png`, `-412-sheet.png` and the single shots; phase A mock-ups `docs/samples/awaken-mats-mock-*.png`.
+
 ### AWAKEN-002 — Class auras for awakened heroes
 
 - **Goal:** the owner's ask: drop the awakened recolour; an awakened hero wears an aura at step 1 (rank 5) and a stronger, bigger one at step 2 (rank 6), its style set by the hero's class trait (not the origin), wherever an awakened hero is drawn.
