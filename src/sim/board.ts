@@ -117,6 +117,12 @@ export interface Tile {
   bridge?: boolean;
   /** A bush grows here (only for looks). */
   bush?: boolean;
+  /** A tree stands here (paired with `rock` when solid, or scenic on a corner). */
+  tree?: 'oak' | 'pine' | 'birch';
+  /** An elevated steep hill crest or archer redoubt: sheer cliffs on 3 sides, climbable only via a ramp. */
+  perch?: boolean;
+  /** Stepped ramp tile providing the sole jump-1 access up onto an elevated steep hill. */
+  ramp?: boolean;
   /** Shallows, deep water, ice, lava, tall growth or a shrine covers the tile. */
   ground?: Ground;
   /** A small number for picking the tile's tufts and flowers. */
@@ -125,7 +131,7 @@ export interface Tile {
 
 export interface Board {
   /** Scenic destination, outside collision tiles; only included from the final approach onwards. */
-  landmark?: 'fortress' | 'temple' | 'mausoleum';
+  landmark?: 'fortress' | 'temple' | 'mausoleum' | 'warcamp' | 'den' | 'grove' | 'citadel' | 'shrine' | 'foundry';
   landmarkAt?: { u: number; v: number; h: number };
   seed: number;
   area: Area;

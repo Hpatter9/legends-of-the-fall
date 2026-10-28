@@ -14,6 +14,17 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### CHEST-001 — XP tomes and Open all
+
+- **Goal:** the owner's two asks: XP tomes (small, medium, large) as a chest drop, read to one hero of the player's choice from the hero's page; and an Open all for the chests waiting on the cart, with one combined summary.
+- **Status:** done: owner accepted release 0.178.0 (large tome 20,000 XP; overflow at the cap lost with a warning).
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/chest-extras`, `/home/user/chest-extras` (from main 0.174.0); PR none yet.
+- **Allowed files or systems:** `src/sim/tomes.ts` (new), `src/sim/{armyStars,chestShop,meta}.ts` (the loot roll, `openAll`, `sumLoot`, `Meta.tomes`), `src/{chestStash,shopView,menuHeroes,tomeView,tomeArt}.ts`, `src/tomes.css`, `build.mjs` (the CSS list), the tome icons in `src/art/ui/`, `tools/tome-icons.py`, `tools/{unlockPace,levelPace}.ts` (tome reporting), `tools/ui/chest-extras-shots.mjs`, tests, `CREDITS.md`. Not the castle tab, the battle-picking tab, the WORLD army map or the Last Stand files.
+- **Completion criteria:** tomes drop deterministically on top of every stash and shop chest's stones and gear (shop prices unchanged); `Meta.tomes` optional and old saves load; "Use tome" on the hero page with the level-up feedback, capped at `MAX_LEVEL`; Open all identical to opening one by one, with a summary; pack art credited; pace reported; tests; screenshots at 393x852.
+- **Validation:** typecheck passed; `npm run web` built; `npm test -- chest summon-stones levels meta armyStars daily stand tower modes equipment hero-shards calMapRewards progression awaken shards unlock achievements codex` (252) and `npm test -- armies battle-flow calamity elites equip-best gear-sets mystery recycle no-flicker` (134) passed, including the 9 new tests in `test/chest-extras.test.ts`; `npm run unlock-pace` and `npm run level-pace` (with and without `--tomes`, 10 seeds); browser screenshots at 393x852 (`docs/samples/chest-extras-*.png`), also checked at 360x780 and 412x915 with no page errors.
+- **Handoff:** `docs/notes/chest-extras.md`. For the owner: the large tome's size, losing the overflow at the cap, and the drop table.
+
 
 **COMBAT-002 / Hero kits, mana and manual ultimates** — done: owner accepted release 0.172.0.
 
@@ -84,6 +95,7 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 | ID | Task | Result | Reference |
 | --- | --- | --- | --- |
+| CHEST-001 | XP tomes and Open all | Owner accepted release 0.178.0; tomes 250/5,000/20,000 XP from every stash and shop chest, Open all equal to one-by-one; typecheck, build, fresh/old-save and Last Stand smoke passed; full suite 1216/1220, the 4 failures also fail on main 0.177.0 (winding battle maps), not from this change | [Handoff](notes/chest-extras.md), branch `claude/chest-extras` |
 | UI-006 | Cliffside battle overlook with nine army-dependent bases and distant Calamity | Owner authorised release 0.175.0 and PR merge; typecheck/build, 85 targeted tests, all nine camps at three portrait sizes and offline switching passed | [PR #139](https://github.com/Hpatter9/legends-of-the-fall/pull/139), [implementation and screenshots](notes/battle-overlook.md) |
 
 
@@ -150,3 +162,5 @@ Release integration validation for 0.169.0: typecheck/build and 48 affected test
 UI-006 implementation is ready for visual review. Typecheck and web build passed; three-size live combat checks passed with no page errors or page overflow, including spell selection/cancellation and drag-to-cast. Existing offline UI asset enumeration includes the new crest. Full offline reload was not run. See [handoff](notes/battle-command-ui.md). No merge, release bump or deployment.
 
 UI-006 owner accepted and authorised merge as 0.176.0. Main 0.175.0 integrated; manual ultimate controls retained and styled. Typecheck, targeted battle-flow/hero-kit visual and save tests, and release web build passed. Three-size release browser recheck is being completed before PR merge.
+
+UI-006 release updated to 0.179.0 after integrating concurrent main 0.178.0. PR #143; version-only conflicts resolved. Three-size release checks passed for spell arm/cancel, drag preview/cast and ultimate Auto, with no page errors or horizontal page overflow.

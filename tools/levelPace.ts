@@ -49,6 +49,22 @@ const HARDER: [number, number, number][] = [
 const libraryAt = (day: number): number => Math.min(5, Math.floor(day / 5));
 /** The levels the report gives the day of. */
 const MARKS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+/** `--tomes "7:1000,30:9000,..."`: the XP tomes collected by each day (cumulative; `npm run unlock-pace` prints the line), read in full to the
+ *  favourite and, as a second case, to the benched hero; between the days given it grows in a straight line. */
+const TOMES_ARG = process.argv.includes('--tomes') ? process.argv[process.argv.indexOf('--tomes') + 1] ?? '' : '';
+const TOME_POINTS: [number, number][] = [[0, 0] as [number, number], ...TOMES_ARG.split(',').filter(Boolean).map((t) => t.split(':').map(Number) as [number, number])].sort((a, b) => a[0] - b[0]);
+/** The tome XP collected by a day. */
+const tomesBy = (day: number): number => {
+  if (!TOMES_ARG) return 0;
+  for (let i = 1; i < TOME_POINTS.length; i++) {
+    const [d0, x0] = TOME_POINTS[i - 1];
+    const [d1, x1] = TOME_POINTS[i];
+    if (day <= d1) return x0 + ((x1 - x0) * (day - d0)) / Math.max(1, d1 - d0);
+  }
+  const [dl, xl] = TOME_POINTS[TOME_POINTS.length - 1];
+  const [dp, xp] = TOME_POINTS[TOME_POINTS.length - 2] ?? [0, 0];
+  return xl + ((xl - xp) / Math.max(1, dl - dp)) * (day - dl);
+};
 
 /** What a run of an army on a tier pays a hero of the party, on average (one entry per sample run), before the tier's and the Library's multipliers. */
 function measure(): number[][][] {
@@ -113,6 +129,9 @@ function simulate(seed: number, table: number[][][]): Report {
     let bestPay = 0;
     ARMIES.forEach((a, i) => TIERS.forEach((_, t) => cleared[i][t] && replayTotal(a, t) > bestPay && ((bestPay = replayTotal(a, t)), (best = [i, t]))));
     if (best) for (let k = 0; k < FARM_RUNS; k++) xp += FAV_PLAYS * runXp(best[0], best[1], d);
+    const tomes = tomesBy(d) - tomesBy(d - 1);
+    xp += tomes;
+    benched += tomes;
     const lv = levelOf(xp);
     for (const m of MARKS) if (day[m] === undefined && lv >= m) day[m] = d;
     const bl = levelOf(benched);
@@ -124,7 +143,7 @@ function simulate(seed: number, table: number[][][]): Report {
 }
 
 const table = measure();
-console.log(`Level pace for a daily player's favourite hero (${SEEDS} seeds, ${DAYS} days; ${FARM_RUNS} army runs a day on the best tier cleared; the favourite takes ${FAV}x the party mean and is in ${FAV_PLAYS * 100}% of the runs; Library by the day)`);
+console.log(`Level pace for a daily player's favourite hero${TOMES_ARG ? ', every XP tome read to it (and, in the bench table, to the benched hero)' : ''} (${SEEDS} seeds, ${DAYS} days; ${FARM_RUNS} army runs a day on the best tier cleared; the favourite takes ${FAV}x the party mean and is in ${FAV_PLAYS * 100}% of the runs; Library by the day)`);
 console.log('\nXP a run pays the party mean, before the tier and Library multipliers (mean of the sample runs; Normal / Hard / Elite / Legendary):');
 ARMIES.forEach((a, i) => console.log(`  ${a.name.padEnd(20)} ${table[i].map((s) => String(Math.round(s.reduce((n, x) => n + x, 0) / s.length)).padStart(7)).join(' ')}`));
 const reports = Array.from({ length: SEEDS }, (_, i) => simulate(i * 7919 + 13, table));

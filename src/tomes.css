@@ -1,0 +1,74 @@
+/* CHEST-001: XP tomes and Open all. The cart's "Open all", the Open all summary, the hero page's tome line and the tome sheet.
+   Text is 12px or 24px and never bold; the level-up reuses the after-fight XP row's keyframes (xpWash, xpSpark, xpStamp, xpChip). */
+
+/* the cart: "Open all" over the pile, on a line of its own (its side margins fill the line, so it stays the chest's size) */
+.cpStash .csAll, .csAll { flex: none; width: 88px; min-height: 36px; margin: 0 calc(50% - 44px) 4px; padding: 2px 6px; font: 400 12px var(--body); color: var(--btn-ink, #1c1408); background: linear-gradient(var(--gold-hi), var(--e7)); border: 2px solid var(--e1); border-radius: 4px; box-shadow: 0 2px 0 var(--black); }
+
+/* the reveal's tome lines and the gear of the summary: 12px, plain */
+.lootCard.tomes, .chestAll .lootCard, .chestAll .lootCard.prize { font-size: 12px; font-weight: 400; }
+.lootCard.tomes.prize { border-color: var(--gold-hi); }
+
+/* Open all: one burst, the totals in tiles, then the gear, best first */
+.chestAll .chestStage { height: 140px; }
+.chestAll .chestTitle { font-size: 24px; font-weight: 400; }
+.chestAll .chestGo { font-weight: 400; font-size: 24px; }
+.allTotals { position: relative; z-index: 2; width: min(360px, 100%); display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.allTile { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; align-items: center; column-gap: 6px; padding: 4px 8px; background: rgb(var(--s1-rgb) / 0.92); border: 2px solid var(--gold-lo); }
+.allTile .lootIco { grid-row: span 2; }
+.allTile b { font: 400 24px/1 var(--display); color: var(--gold-hi); }
+.allTile small { font: 400 12px/1.2 var(--body); color: var(--ink); }
+.allGearHead { position: relative; z-index: 2; width: min(360px, 100%); font: 400 12px var(--body); color: var(--gold-hi); }
+.chestAll .allGear { max-height: 34vh; }
+.chestAll .allTotals, .chestAll .allGearHead, .chestAll .allGear, .chestAll .chestGo { visibility: hidden; }
+.chestAll.shown .allTotals, .chestAll.shown .allGearHead, .chestAll.shown .allGear, .chestAll.shown .chestGo { visibility: visible; }
+.chestAll.shown .allTile { animation: asLootIn 0.4s steps(5) both; }
+.chestAll.shown .allTile:nth-child(2) { animation-delay: 0.08s; } .chestAll.shown .allTile:nth-child(3) { animation-delay: 0.16s; }
+.chestAll.shown .allTile:nth-child(4) { animation-delay: 0.24s; } .chestAll.shown .allTile:nth-child(5) { animation-delay: 0.32s; }
+.chestAll.shown .allGear .lootCard { animation-delay: 0.4s; }
+@media (prefers-reduced-motion: reduce) { .chestAll .allTile, .chestAll .lootCard { animation: none !important; } }
+
+/* the hero page's tome line: the tomes held, and "Use tome" */
+.tomeLine { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.tomeHeld { display: flex; gap: 6px; }
+.tomeChip { display: inline-flex; align-items: center; gap: 2px; font: 400 12px var(--body); color: var(--kk-text, var(--ink)); }
+.tomeChip img { width: 24px; height: 24px; image-rendering: pixelated; }
+.tomeUse { min-height: 36px; padding: 2px 12px; font: 400 12px var(--body); color: var(--gold-hi); border: 1px solid var(--kk-gold, var(--gold)); }
+.tomeUse:disabled { opacity: 0.6; }
+.rosterTomes { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 4px 8px; margin: 4px 0 0; font: 400 12px var(--body); color: var(--kk-muted, var(--dim)); }
+.rosterTomes small { width: 100%; text-align: left; font-size: 12px; }
+
+/* the tome sheet */
+.tomeSheet { position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; padding: calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset-bottom) + 12px); background: rgb(var(--s0-rgb) / 0.82); overflow: hidden auto; overscroll-behavior: contain; }
+.tomeCard { width: min(360px, 100%); display: flex; flex-direction: column; gap: 10px; padding: 12px; background: linear-gradient(#24261f, #141611); border: 2px solid var(--kk-rim, var(--gold-lo)); border-radius: 6px; box-shadow: 0 8px 24px #000a; color: var(--kk-text, var(--ink)); }
+.tomeCard h3 { margin: 0; text-align: center; font: 400 24px var(--display); color: var(--gold-hi); }
+.tomeRow { position: relative; display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto auto auto; align-items: center; column-gap: 10px; row-gap: 4px; padding: 8px 10px; background: rgb(var(--black-rgb) / 0.3); border: 2px solid var(--s8); border-radius: 6px; overflow: hidden; }
+.tomeFace { grid-row: span 4; position: relative; width: 64px; height: 64px; display: grid; place-items: center; background: rgb(var(--black-rgb) / 0.4); border: 2px solid var(--s8); }
+.tomeFace canvas { width: 56px; height: 56px; image-rendering: pixelated; display: block; }
+.tomeFace .tomeLv { position: absolute; right: -10px; bottom: -8px; }
+.tomeName { font: 400 12px var(--body); color: var(--kk-text, var(--ink)); }
+.tomeGain { min-height: 12px; font: 400 12px var(--body); font-style: normal; color: var(--gold); }
+.tomeBar { display: block; height: 6px; background: var(--s3); border-radius: 3px; overflow: hidden; }
+.tomeBar span { display: block; height: 100%; width: 0; background: var(--b4); transition: width 0.6s ease-out; }
+.tomeXp { font: 400 12px var(--body); color: var(--kk-muted, var(--dim)); }
+.tomeNote { grid-column: 1 / -1; grid-row: 5; margin: 4px 0 0; display: flex; flex-wrap: wrap; gap: 4px; }
+.tomeNote:empty { display: none; }
+.tomeNote span { padding: 1px 6px; font: 400 12px var(--body); color: var(--btn-ink, #1c1408); background: linear-gradient(var(--e8), var(--e5)); border: 1px solid var(--e10); box-shadow: 0 1px 0 var(--black); animation: xpChip 0.3s steps(3) both; }
+.tomeRow.up { border-color: var(--e7); box-shadow: 0 0 0 2px var(--s1), 0 0 12px rgb(var(--e7-rgb) / 0.55); }
+.tomeRow.up .tomeFace { border-color: var(--e7); }
+.tomeRow.up .tomeLv { animation: xpBump 0.45s steps(4) both; }
+.tomeRow .xpStamp { display: inline-block; margin-left: 8px; padding: 2px 6px; font: 400 12px var(--body); color: var(--white); background: var(--r3); border: 2px solid var(--e7); box-shadow: 0 2px 0 var(--black); transform: rotate(-6deg); animation: xpStamp 0.4s steps(4) both; }
+.tomeRow .xpWash { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgb(var(--e8-rgb) / 0.55), rgb(var(--e7-rgb) / 0.35) 60%, rgb(var(--e7-rgb) / 0.1)); transform-origin: 30px 50%; transform: scaleX(0); animation: xpWash 0.9s ease-out forwards; }
+.tomeRow .xpSparks { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
+.tomeRow .xpSparks i { position: absolute; left: -2px; top: -2px; width: 4px; height: 4px; background: var(--e8); box-shadow: 0 0 3px var(--e7); animation: xpSpark 0.8s ease-out forwards; }
+.tomeButtons { display: flex; flex-direction: column; gap: 6px; }
+.tomeBtn { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; min-height: 48px; padding: 4px 10px; text-align: left; }
+.tomeBtn img { width: 32px; height: 32px; image-rendering: pixelated; }
+.tomeBtn > span:not(.tomeHave) { display: flex; flex-direction: column; }
+.tomeBtnName { font: 400 12px var(--body); color: var(--gold-hi); }
+.tomeBtn small { font: 400 12px var(--body); color: var(--kk-muted, var(--dim)); }
+.tomeHave { font: 400 24px var(--display); color: var(--kk-text, var(--ink)); }
+.tomeBtn.large:not(:disabled) { border-color: var(--e7); }
+.tomeBtn:disabled { opacity: 0.5; }
+.tomeHint { margin: 0; font: 400 12px/1.4 var(--body); color: var(--kk-muted, var(--dim)); }
+.tomeClose { min-height: 48px; font: 400 24px var(--display); color: var(--gold-hi); }
+@media (prefers-reduced-motion: reduce) { .tomeNote span, .tomeRow.up .tomeLv, .tomeRow .xpStamp { animation: none; } .tomeRow .xpSparks, .tomeRow .xpWash { display: none; } .tomeBar span { transition: none; } }

@@ -15,6 +15,7 @@ import { BOSS_IDS } from './foes';
 import { readEquipment, readEquipped, type EquipSlot, type Equipment } from './equipment';
 import { migrateArmies, readSeen, seenFor, type ArmyRecord } from './armies';
 import { readStash } from './armyStars';
+import { readTomes, type TomeCounts } from './tomes';
 import { readTalents, type KindTalents } from './talents';
 import { AWAKEN_MULT } from './awakenRules';
 import { readAwakened } from './awaken';
@@ -123,6 +124,8 @@ export interface Meta {
   combosSeen?: string[];
   /** The auto runs spent on a date (yyyymmdd; `autoReplay.ts`, `AUTO_TICKETS` a day). Saves from before have none. */
   autoTickets?: { day: number; used: number };
+  /** The XP tomes held, by size (`tomes.ts`): chests give them, and the player reads one to a hero from its page. Saves from before have none. */
+  tomes?: TomeCounts;
   /** Chests earned from the armies' star milestones and not yet opened, oldest first (`armyStars.ts`). */
   stash: StashChest[];
   /** The cinematics seen (`sceneRules.ts`, by id): each plays once at its moment, and the codex's Scenes list plays a seen one again. Saves from before have none. */
@@ -426,6 +429,9 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.talents = readTalents(m.talents, m);
       // (saves from before the army chests have an empty stash; a chest given but not opened by an earlier format goes into it)
       m.stash = readStash(m.stash, rawArmies, m.seed);
+      // (saves from before the XP tomes have none)
+      m.tomes = readTomes(m.tomes);
+      if (!m.tomes) delete m.tomes;
       // (a save from before the star unlocks keeps what it had open: the armies, the castle, the tower and the Calamity it had reached)
       m.opened = Array.isArray(m.opened) ? m.opened.filter((x) => typeof x === 'string') : grandfather(m);
       // (saves from before the codex have none)

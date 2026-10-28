@@ -24,4 +24,6 @@ Screenshots: `docs/samples/battle-command-live-{393,360,412}.png`, with correspo
 
 Browser checks passed at all three sizes: no page errors or horizontal page overflow; spell arming, cancellation, drag preview and casting passed. Live combat and reduced-motion captures inspected. A random cutscene obscured the initial 360px deployment capture; that capture was repeated after skipping the scene.
 
-Owner accepted the live battle treatment and authorised merging on 2026-10-28. Integrated main 0.175.0, preserving manual ultimate rings/resource bars/Auto controls; release version 0.176.0. Release validation and PR merge recorded below.
+Owner accepted the live battle treatment and authorised merging on 2026-10-28. Integrated main 0.175.0, preserving manual ultimate rings/resource bars/Auto controls; release version 0.179.0. Release validation and PR merge recorded below.
+
+Release integration: main advanced to 0.178.0 while PR #143 was prepared. Integrated those changes, preserving XP tomes, chest actions and renderer updates; resolved only version conflicts. Final release is 0.179.0. Three-size live-browser spell and Auto checks passed; initial browser rerun was interrupted by a random cinematic, so the review helper now disables cinematics explicitly. Casting checks hold the simulation still and verify both mana spend and cooldown.
