@@ -6,7 +6,6 @@ import { loadImage } from './loadImage';
 import layout from '../art/units/sheets.json';
 import { RESONANCE_URLS } from './resonanceArt';
 import { UNITS } from '../sim/units';
-import { PACK_VARIANTS } from './awakenLook';
 import knight from '../art/units/knight_1.png';
 import samurai from '../art/units/samurai.png';
 import kunoichi from '../art/units/kunoichi.png';
@@ -236,11 +235,10 @@ const LAYOUT = layout as Record<string, Layout>;
 const frames = new Map<string, Texture[]>();
 const images = new Map<string, HTMLImageElement>();
 
-/** Load the units' sheets and their rear/awakened forms. Legacy hero imports
+/** Load the units' sheets and their rear views and transformation forms. Legacy hero imports
  * remain available as source art without allocating obsolete GPU textures. */
 export async function loadSheets(): Promise<void> {
   const required = new Set(Object.values(UNITS).flatMap(def => [def.sheet, ...(def.forms ?? [])]));
-  for (const id of Object.values(PACK_VARIANTS)) required.add(id);
   for (const id of [...required]) if (LAYOUT[id]?.rear) required.add(LAYOUT[id].rear!);
   await Promise.all(
     Object.entries(URLS).filter(([id]) => required.has(id)).map(async ([id, url]) => {
@@ -273,6 +271,9 @@ export function sheetInfo(sheet: string): { img: HTMLImageElement; w: number; h:
   const l = LAYOUT[sheet];
   return img && l ? { img, w: l.w, h: l.h, perRow: l.perRow, rows: l.rows, counts: l.counts, figure: l.figure, facesRight: l.facesRight !== false } : null;
 }
+
+/** The figure's height as a share of its sheet's cell (the rest is the room over its head), for laying effects round a `sprite`. */
+export const figureShare = (sheet: string): number => (LAYOUT[sheet] ? LAYOUT[sheet].figure / LAYOUT[sheet].h : 0.8);
 
 /** A small portrait of a fighter for the bench: its first idle frame, cropped to the figure, on a canvas. */
 export function portrait(sheet: string, size: number, grade = 1): HTMLCanvasElement {

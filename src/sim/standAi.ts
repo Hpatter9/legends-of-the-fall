@@ -2,7 +2,8 @@
 // leash from which it can strike, and walks back to its post when the zone is clear, so it never runs off into the horde.
 // A tank prefers the foe nearest the king, and has the longest leash; a shooter has the shortest. A foe goes for the king along
 // a flow field (one table look-up a step, however many foes there are), striking the king if he is in reach, else whoever of the
-// heroes is in reach (the ones that block its way), and shooters stop and shoot what is in range.
+// heroes is in reach (the ones that block its way), and shooters stop and shoot what is in range. When a wave is down to its last
+// foes (`StandMode.hunt`), the leashes are lifted: every hero goes after the nearest of them, and walks home once the wave is clear.
 //
 // Only a battle with `Battle.stand` set comes here (`decide` in battle.ts); every other fight never calls it. Pure rules: no Pixi, no DOM.
 
@@ -121,8 +122,10 @@ export function standDecide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): 
   }
   me.step = undefined;
   me.cast = undefined;
-  if (me.side === 'hero' ? castInZone(b, me, out) : tryCast(b, me, out)) return true;
+  const hunting = me.side === 'hero' && !!b.stand!.hunt;
+  if (me.side === 'hero' && !hunting ? castInZone(b, me, out) : tryCast(b, me, out)) return true;
   if (me.charmUntil !== undefined && me.charmUntil > b.t) return false;
+  if (hunting) return huntDecide(b, me, rng, out);
   return me.side === 'hero' ? heroDecide(b, me, rng, out) : foeDecide(b, me, rng, out);
 }
 
@@ -222,6 +225,39 @@ function heroDecide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): boolean 
     }
     if (strayed && inReach.length) {
       swing(b, me, inReach[0], rng, out);
+      return true;
+    }
+  }
+  me.busyUntil = b.t + IDLE_MS;
+  return true;
+}
+
+/** The hunt (the wave's last few foes): strike the weakest foe in reach, else walk towards the nearest one to a tile it can be struck from, with no leash. */
+function huntDecide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): boolean {
+  const def = strikeDef(b, me);
+  postOf(me, def);
+  const foes = b.units.filter((x) => x.alive && x.side === 'foe' && !hidden(b, x));
+  const inReach = foes.filter((f) => canStrike(b.board, def, me, f)).sort((x, y) => x.hp - y.hp || x.id - y.id);
+  if (inReach.length) {
+    swing(b, me, inReach[0], rng, out);
+    return true;
+  }
+  const blocked = new Set<number>();
+  for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * b.board.w + x.u);
+  for (const f of [...foes].sort((x, y) => apart(me, x) - apart(me, y) || x.id - y.id)) {
+    // (the walks near the hero and the foe: never more than a few tiles past the gap between them)
+    const walk = walkNear(b.board, me, def.jump, blocked, me, apart(me, f) + 4);
+    let goal = -1;
+    let best = Infinity;
+    for (let i = 0; i < walk.cost.length; i++) {
+      if (walk.cost[i] === Infinity || walk.cost[i] === 0 || walk.cost[i] >= best) continue;
+      if (!canStrike(b.board, def, { u: i % b.board.w, v: Math.floor(i / b.board.w) }, f)) continue;
+      best = walk.cost[i];
+      goal = i;
+    }
+    const next = goal >= 0 ? firstOf(walk, goal) : null;
+    if (next !== null) {
+      stepTo(b, me, next, out);
       return true;
     }
   }

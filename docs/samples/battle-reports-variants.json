@@ -1,0 +1,26 @@
+[
+  {
+    "w": 393,
+    "h": 852,
+    "dailyWin": true,
+    "dailyLoss": true,
+    "oldSaveEmptyRecap": true,
+    "errors": []
+  },
+  {
+    "w": 360,
+    "h": 780,
+    "dailyWin": true,
+    "dailyLoss": true,
+    "oldSaveEmptyRecap": true,
+    "errors": []
+  },
+  {
+    "w": 412,
+    "h": 915,
+    "dailyWin": true,
+    "dailyLoss": true,
+    "oldSaveEmptyRecap": true,
+    "errors": []
+  }
+]

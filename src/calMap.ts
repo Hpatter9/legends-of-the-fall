@@ -11,7 +11,10 @@ import { choices, hereOf, routeTo, sideChoices } from './sim/tower';
 import { fogOf, landOf, openSet, sideSpots, START_ID, type Cell, type Land, type LandSpot, type SideSpot } from './sim/calLand';
 import { LAND_ART, RECTS, type LandArt } from './render/calArt';
 import { loadImage } from './render/loadImage';
-import { heroRig, lookKey } from './render/awakenRig';
+import { awakenedStep, heroRig, lookKey } from './render/awakenRig';
+import { drawAura, drawAuraGlow } from './render/auraCanvas';
+import { settings } from './settings';
+import { auraParts, type AuraPart } from './render/auraStyles';
 import { shrinkRig, type Small } from './render/smallRig';
 import { hash } from './render/campSpots';
 import { drawChunk, drawIsland, drawStone, outlineOf, REALMS, type IslandSpec } from './render/calRealm';
@@ -152,7 +155,7 @@ export class CalMap {
   private geo: Geo | null = null;
   private picked = -1;
   private atlas: Assets | null = null;
-  private hero: { cut: string; small: Small } | null = null;
+  private hero: { cut: string; small: Small; kind: string; step: number; aura: readonly AuraPart[] } | null = null;
   private active = false;
   private raf = 0;
   private now = 0;
@@ -889,7 +892,8 @@ export class CalMap {
     const rig = heroRig(meta, lead.kind);
     if (!rig) return null;
     const small = shrinkRig(rig, 44);
-    this.hero = { cut: sheet, small };
+    const step = awakenedStep(meta, lead.kind);
+    this.hero = { cut: sheet, small, kind: lead.kind, step, aura: auraParts(lead.kind, step, settings().saver) };
     return small;
   }
 
@@ -901,26 +905,38 @@ export class CalMap {
       return;
     }
     this.walker.style.display = '';
-    if (this.walker.width !== small.fw || this.walker.height !== small.fh) {
-      this.walker.width = small.fw;
-      this.walker.height = small.fh;
+    // (an awakened leader walks in its class's aura: the canvas has room round the figure for it)
+    const hero = this.hero!;
+    const pad = hero.step ? Math.round(small.figure * 0.45) : 0;
+    const cw = small.fw + pad * 2;
+    const ch = small.fh + pad * 2;
+    if (this.walker.width !== cw || this.walker.height !== ch) {
+      this.walker.width = cw;
+      this.walker.height = ch;
     }
     const u = g.unit;
-    this.walker.style.width = `${small.fw * u}px`;
-    this.walker.style.height = `${small.fh * u}px`;
+    this.walker.style.width = `${cw * u}px`;
+    this.walker.style.height = `${ch * u}px`;
     const c = this.walker.getContext('2d')!;
     c.imageSmoothingEnabled = false;
-    c.clearRect(0, 0, small.fw, small.fh);
+    c.clearRect(0, 0, cw, ch);
     const moving = !!this.walk;
     const row = moving ? 1 : 0;
     const n = small.counts[moving ? 'walk' : 'idle'] ?? 1;
-    const i = reduced() ? 0 : Math.floor(this.now / (moving ? 100 : 170)) % n;
+    const calm = reduced();
+    const i = calm ? 0 : Math.floor(this.now / (moving ? 100 : 170)) % n;
+    const feet = pad + small.fh;
+    if (hero.step) {
+      drawAuraGlow(c, hero.kind, hero.step, cw / 2, feet, small.figure);
+      drawAura(c, hero.aura, cw / 2, feet, small.figure, this.now, 'back', this.face, calm);
+    }
     if ((this.face === 1) !== small.facesRight) {
-      c.setTransform(-1, 0, 0, 1, small.fw, 0);
+      c.setTransform(-1, 0, 0, 1, pad + small.fw, pad);
       c.drawImage(small.c, i * small.fw, row * small.fh, small.fw, small.fh, 0, 0, small.fw, small.fh);
       c.setTransform(1, 0, 0, 1, 0, 0);
-    } else c.drawImage(small.c, i * small.fw, row * small.fh, small.fw, small.fh, 0, 0, small.fw, small.fh);
-    this.walker.style.transform = `translate(${Math.round((this.pos.x - small.fw / 2) * u)}px, ${Math.round((this.pos.y - small.fh) * u)}px)`;
+    } else c.drawImage(small.c, i * small.fw, row * small.fh, small.fw, small.fh, pad, pad, small.fw, small.fh);
+    if (hero.step) drawAura(c, hero.aura, cw / 2, feet, small.figure, this.now, 'front', this.face, calm);
+    this.walker.style.transform = `translate(${Math.round((this.pos.x - cw / 2) * u)}px, ${Math.round((this.pos.y - small.fh - pad) * u)}px)`;
   }
 
   /** Walk the leader to a spot over the bridges, the shortest way through cleared spots, the camera with it; `done` runs on arrival (or when a tap skips). */

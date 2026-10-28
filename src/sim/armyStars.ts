@@ -14,6 +14,8 @@ import { armyOfRun, tierOfRun, type Run } from './run';
 import { MILESTONES, RUN_STARS, TIERS } from './tiers';
 import { ALL_HEROES } from './units';
 import { CHEST_STONES, DAILY_CHEST_STONES } from './unlockRules';
+import { rollScroll, scrollWords } from './spellSources';
+import type { SpellId } from './spells';
 import { addTomes, grantTomes, rollTomes, TOME_SIZES, tomeWords, type TomeCounts, type TomeSize } from './tomes';
 
 // ---- the conditions -----------------------------------------------------------------------------------------------------
@@ -153,7 +155,7 @@ export function rollGear(rng: Rng, at: number, armyIdx: number): GearDrop[] {
 }
 
 export interface LootItem {
-  type: 'crowns' | 'stones' | 'gear' | 'tomes';
+  type: 'crowns' | 'stones' | 'gear' | 'tomes' | 'spell';
   /** A line for the reveal: "320 crowns", "3 summoning stones". */
   text: string;
   /** The equipment's base it is about. */
@@ -162,6 +164,8 @@ export interface LootItem {
   n?: number;
   /** The size of the XP tomes a tomes line holds (`tomes.ts`). */
   size?: TomeSize;
+  /** The spell a scroll teaches (`spellSources.ts`). */
+  spell?: SpellId;
   /** A piece of equipment this reward is (for its icon and frame). */
   equip?: NewEquipment;
   /** A piece of equipment's rarity (for the card colour; heroes have none). */
@@ -275,6 +279,12 @@ function lootOf(m: Meta, c: StashChest, apply: boolean): Loot {
   const tomes = rollTomes(c.seed, daily ? 'daily' : chestKind(c.at), c.bonus ?? 0);
   if (apply) grantTomes(m, tomes);
   items.push(...tomeItems(tomes));
+  // (a spell scroll in a gold or Mythic chest, now and then: from its own side stream, a spell this save does not know yet)
+  const scroll = daily ? null : rollScroll(m, c.seed, chestKind(c.at));
+  if (scroll) {
+    if (apply && !m.spellbook.owned.includes(scroll)) m.spellbook.owned.push(scroll);
+    items.push({ type: 'spell', text: scrollWords(scroll), spell: scroll, prize: true });
+  }
   // (equipment: last, as it was drawn last; granted once, when the chest is opened)
   for (const g of roll.gear) {
     if (apply) grantEquipment(m, g.item);
@@ -291,21 +301,23 @@ export function openChest(m: Meta, index: number): Loot | null {
   return lootOf(m, c, true);
 }
 
-/** What several chests held, added up (the Open all summary): the crowns, stones and tomes, and the gear, the best first (rarity, then level). */
+/** What several chests held, added up (the Open all summary): the crowns, stones and tomes, the spell scrolls, and the gear, the best first (rarity, then level). */
 export interface LootSummary {
   chests: number;
   crowns: number;
   stones: number;
   tomes: TomeCounts;
+  spells: LootItem[];
   gear: LootItem[];
 }
 export function sumLoot(loots: readonly Loot[]): LootSummary {
-  const out: LootSummary = { chests: loots.length, crowns: 0, stones: 0, tomes: {}, gear: [] };
+  const out: LootSummary = { chests: loots.length, crowns: 0, stones: 0, tomes: {}, spells: [], gear: [] };
   for (const l of loots)
     for (const it of l.items) {
       if (it.type === 'crowns') out.crowns += it.n ?? 0;
       else if (it.type === 'stones') out.stones += it.n ?? 0;
       else if (it.type === 'tomes' && it.size) out.tomes = addTomes(out.tomes, { [it.size]: it.n ?? 0 });
+      else if (it.type === 'spell') out.spells.push(it);
       else if (it.type === 'gear') out.gear.push(it);
     }
   // (a stable sort: pieces of the same rarity and level stay in the order their chests were opened)

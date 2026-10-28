@@ -13,7 +13,7 @@ export const free = (b: Battle, at: At): boolean => standable(tileAt(b.board, at
 /** The foes within `reach` tiles of the caster. */
 export const foesNear = (b: Battle, me: Unit, reach: number): Unit[] => foesOf(b, me).filter((f) => apart(me, f) <= reach);
 /** A skill strike: `mult` of the caster's attack, less the foe's defence. */
-export const strike = (b: Battle, me: Unit, f: Unit, mult: number, out: BattleEvent[], heavy = false): void => hurt(b, me, f, net(atkOf(me) * mult, f), heavy, false, out, 'skill');
+export const strike = (b: Battle, me: Unit, f: Unit, mult: number, out: BattleEvent[], heavy = false): void => { hurt(b, me, f, net(atkOf(me) * mult, f), heavy, false, out, 'skill'); };
 /** The strongest (hardest-hitting) first, then by id. */
 export const strongest = (x: Unit, y: Unit) => atkOf(y) - atkOf(x) || x.id - y.id;
 /** The toughest (most health) first. */

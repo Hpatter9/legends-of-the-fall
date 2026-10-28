@@ -6,7 +6,7 @@ import { ABILITIES } from '../src/sim/equipBases';
 import { boostOf } from '../src/sim/run';
 import { ALL_HEROES } from '../src/sim/units';
 import { buyPoint, canBuyPoint, heroStats, shardsToSpend } from '../src/sim/talents';
-import { hueOf, lookFilter, lookSheet, stepOfRank, toneOf, tonePixels } from '../src/render/awakenLook';
+import { lookSheet, stepOfRank } from '../src/render/awakenLook';
 
 const store = () => {
   let v = '';
@@ -157,33 +157,13 @@ test('saves: awakening is optional, round-trips, and cannot be more than the sha
   assert.deepEqual(readAwakened({ knight: 9 }, { knight: 99 }), { knight: 2 });
 });
 
-test('the awakened look: the pack variant where there is one, a recolour of the top form elsewhere', () => {
+test('the awakened look: no recolour and no colour variant, the top form kept (AWAKEN-002: the class aura marks it)', () => {
   assert.equal(stepOfRank(4), 0);
   assert.equal(stepOfRank(5), 1);
   assert.equal(stepOfRank(6), 2);
-  assert.equal(lookSheet('werewolf', 5, 3), 'hero_res_werewolf_awakened');
-  assert.equal(lookSheet('werewolf', 4, 3), 'hero_res_werewolf_brute');
-  assert.equal(lookSheet('paladin', 5, 3), 'hero_res_paladin', 'no pack variant: the top form');
-  assert.equal(lookFilter('paladin', 0), '');
-  assert.ok(lookFilter('paladin', 1).includes('hue-rotate'));
-  assert.notEqual(lookFilter('paladin', 1), lookFilter('paladin', 2));
-  assert.ok(!lookFilter('werewolf', 1).includes('hue-rotate'), 'the pack variant is not turned again');
-  // (the heroes get hues of their own)
-  assert.ok(new Set(ALL_HEROES.map(hueOf)).size >= 30);
-  for (const k of ALL_HEROES) assert.ok(hueOf(k) >= 40 && hueOf(k) < 320);
-});
-
-test('toning pixels turns hue, leaves clear pixels alone, and a plain tone changes nothing', () => {
-  const px = new Uint8ClampedArray([200, 40, 40, 255, 10, 20, 30, 0]);
-  const same = new Uint8ClampedArray(px);
-  tonePixels(same, toneOf('paladin', 0));
-  assert.deepEqual([...same], [...px]);
-  const t = toneOf('paladin', 1);
-  tonePixels(px, t);
-  assert.notDeepEqual([...px.slice(0, 3)], [200, 40, 40]);
-  assert.deepEqual([...px.slice(4)], [10, 20, 30, 0]);
-  // (a grey stays grey under a hue turn, and brightens at the second step)
-  const grey = new Uint8ClampedArray([100, 100, 100, 255]);
-  tonePixels(grey, toneOf('paladin', 2));
-  assert.ok(grey[0] > 100 && Math.abs(grey[0] - grey[1]) <= 1 && Math.abs(grey[1] - grey[2]) <= 1);
+  // (the Werewolf no longer turns red: the owner dropped the red sheet with the recolour)
+  assert.equal(lookSheet('werewolf', 5, 3), lookSheet('werewolf', 4, 3));
+  assert.equal(lookSheet('werewolf', 6, 3), 'hero_res_werewolf_brute');
+  assert.equal(lookSheet('paladin', 5, 3), 'hero_res_paladin', 'the top form');
+  for (const k of ALL_HEROES) assert.equal(lookSheet(k, 6, 3), lookSheet(k, 4, 3), k);
 });

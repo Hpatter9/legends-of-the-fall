@@ -6,6 +6,7 @@ import { ALL_HEROES, HEROES } from '../src/sim/units';
 import { ARMY_START_GOLD, armyRun, boostOf, heroOf, startStage, SQUAD, summon } from '../src/sim/run';
 import { fight, place, playOut } from '../src/sim/battle';
 import { ARMIES } from '../src/sim/armies';
+import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { PULL_HEROES } from '../src/sim/unlockRules';
 
 const store = () => {
@@ -144,9 +145,12 @@ test('the first run works with any pack: a run starts from the three, and a figh
     assert.ok(run.roster.every((h) => m.party.includes(h.kind)));
     assert.ok(run.squad.length <= SQUAD);
     const b = startStage(run);
+    // (the front deploy row of this board, whatever its size: army maps are 14x18 since the winding maps)
+    const front: number[] = [];
+    for (let u = 0; u < b.board.w; u++) if (standable(tileAt(b.board, u, b.board.d - DEPLOY_ROWS))) front.push(u);
     run.squad.forEach((id, n) => {
       const h = heroOf(run, id)!;
-      assert.ok(place(b, h.kind, 1 + n * 2, 8, id, boostOf(h)), `${h.kind} is placed`);
+      assert.ok(place(b, h.kind, front[n * 2], b.board.d - DEPLOY_ROWS, id, boostOf(h)), `${h.kind} is placed`);
     });
     fight(b);
     playOut(b);

@@ -1,0 +1,38 @@
+[
+  {
+    "w": 393,
+    "h": 852,
+    "castleRoomHud": true,
+    "autoToggle": true,
+    "pauseResume": true,
+    "endNavigation": true,
+    "crests": 1,
+    "pseudo": "none",
+    "paddingTop": "30px",
+    "errors": []
+  },
+  {
+    "w": 360,
+    "h": 780,
+    "castleRoomHud": true,
+    "autoToggle": true,
+    "pauseResume": true,
+    "endNavigation": true,
+    "crests": 1,
+    "pseudo": "none",
+    "paddingTop": "30px",
+    "errors": []
+  },
+  {
+    "w": 412,
+    "h": 915,
+    "castleRoomHud": true,
+    "autoToggle": true,
+    "pauseResume": true,
+    "endNavigation": true,
+    "crests": 1,
+    "pseudo": "none",
+    "paddingTop": "30px",
+    "errors": []
+  }
+]
