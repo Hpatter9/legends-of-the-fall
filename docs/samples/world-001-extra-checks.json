@@ -1,0 +1,29 @@
+{
+  "conditions": "Independent Chromium393x852 softwareGL verification: actual pointer pan; late-wave fixture then camera back to first section to test lazy rebake; service-worker controlled offline reload of seeded mountain prototype.",
+  "results": [
+    {
+      "manualPan": {
+        "before": {
+          "x": -256,
+          "y": 224
+        },
+        "after": {
+          "x": -406.1340482573726,
+          "y": 73.86595174262737
+        }
+      },
+      "lazyBefore": false,
+      "lazyAfter": {
+        "firstSectionBaked": true,
+        "firstSectionVisible": true
+      },
+      "offline": {
+        "w": 12,
+        "d": 16,
+        "scenario": "mountain",
+        "controlled": true
+      },
+      "pageErrors": []
+    }
+  ]
+}

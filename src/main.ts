@@ -67,6 +67,7 @@ import { WeatherView } from './render/weatherView';
 import { weatherOf, type Weather } from './sim/weather';
 import { ChainView } from './render/chainView';
 import { against, frameOf, transferFormation } from './sim/chain';
+import { isScenario } from './sim/scenario';
 import { traitBadge } from './traitBadge';
 import { closestTrait, countTraits, kindsOf, nextTierLine, traitsOf, TRAITS } from './sim/traits';
 import { placeSynergies, startSynergies, updateCombo } from './synergyView';
@@ -78,7 +79,7 @@ import { Fx, loadFx } from './render/fx';
 import { framesOf, loadSheets, portrait, sheetInfo, wholeFigure } from './render/sheets';
 import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, framing, PAUSE_MS, settle, viewFor, type View } from './render/cameraRules';
 import { titleOf } from './render/bossTitles';
-import { at, depth, FOOT, HH, rawAt, setFrame, TH, TW } from './render/iso';
+import { at, depth, FOOT, HH, landmarkBounds, rawAt, setFrame, TH, TW } from './render/iso';
 import { bindDuck, bindMute, play, playEvents, setAct, setScene, setup, startFight } from './render/sound';
 import { fightLevel, type MapKind } from './render/epicMusic';
 import { sceneOf } from './render/audioRules';
@@ -245,6 +246,9 @@ class Game {
     if (closed) saveMeta(this.meta);
     // (a fresh page with no saved run shows the first army's board behind the home screen)
     this.run = (!seed && loadRun()) || armyRun(seed || (Date.now() % 100000) + 1, ARMIES[0].id, this.meta.party, this.meta.castle);
+    // Explicit seeded previews leave ordinary and already-saved runs on their original maps.
+    const scenario = query.get('scenario');
+    if (seed && isScenario(scenario) && this.run.mode?.kind === 'army') this.run.mode.scenario = scenario;
     this.syncPool();
     this.gacha = new Gacha(
       this.meta,
@@ -276,7 +280,9 @@ class Game {
       // (an army starts from wave 1 once its party is picked)
       onArmy: (id, tier, auto) =>
         this.party.open('start', () => {
-          this.startRun(armyRun(clockSeed(), id, this.meta.party, this.meta.castle, tier));
+          const next = armyRun(seed && isScenario(scenario) ? seed : clockSeed(), id, this.meta.party, this.meta.castle, tier);
+          if (seed && isScenario(scenario) && next.mode?.kind === 'army') next.mode.scenario = scenario;
+          this.startRun(next);
           if (auto) this.beginAuto(id, tier, auto);
         }),
       onParty: () =>
@@ -341,7 +347,7 @@ class Game {
     // listener throws, which froze fights mid-way)
     this.app.ticker.add((tk) => {
       try {
-        this.frame(tk.deltaMS);
+        this.frame(tk.deltaMS, tk.elapsedMS);
       } catch (err) {
         console.error(err);
       }
@@ -416,6 +422,7 @@ class Game {
     showTwistBanner(this.run.tower?.cur?.fight?.twist);
     this.syncSprites(true);
     this.layout();
+    this.revealDestination();
     this.refresh();
     // (a fight's cinematics come before the boss's own card: a Calamity's herald, a first elite, the tower's milestones ...)
     const due = this.setupMoments().filter((m) => this.scenesOn() && dueScene(this.meta, m));
@@ -554,7 +561,10 @@ class Game {
     this.held = null;
     this.bbox = { x0: this.bbox.x0 + dx, x1: this.bbox.x1 + dx, y0: this.bbox.y0 + dy, y1: this.bbox.y1 + dy };
     document.body.dataset.move = '1';
-    this.chain.begin(c, wave - 1, walkers, () => delete document.body.dataset.move);
+    this.chain.begin(c, wave - 1, walkers, () => {
+      delete document.body.dataset.move;
+      this.revealDestination(next);
+    });
     this.survey = false;
   }
 
@@ -771,7 +781,7 @@ class Game {
     void this.stand.open();
   }
 
-  private frame(dt: number): void {
+  private frame(dt: number, elapsed = dt): void {
     const b = this.b;
     tips.update();
     if (this.standOn) return;
@@ -847,12 +857,13 @@ class Game {
       this.tzoom = 1;
       this.zoom = easeTo(this.zoom, 1, dt, EASE_ZOOM_MS);
     }
+    if (this.destinationReveal) this.stepDestinationReveal(dt, elapsed);
     if (this.survey) this.standBack(dt);
     this.boardView.pump();
     this.weather.step(dt);
     // (the camera eases to where it is sent, unless a finger is holding the board)
     if (this.phaseBoss && (!b.pause || b.phase !== 'fight')) this.endPhase();
-    if (b.phase === 'fight' && !this.intro) this.phaseBoss ? this.pushOnPhase() : (this.follow(), this.leanIn(dt));
+    if (b.phase === 'fight' && !this.intro && !this.destinationReveal) this.phaseBoss ? this.pushOnPhase() : (this.follow(), this.leanIn(dt));
     if (!this.drag?.pan) {
       const f = b.phase === 'fight' && !this.intro;
       this.cx = f ? easeTo(this.cx, this.tx, dt, EASE_MOVE_MS) : this.cx + (this.tx - this.cx) * Math.min(1, dt / 220);
@@ -861,6 +872,43 @@ class Game {
       this.clampCam();
     }
     this.place();
+  }
+
+  private destinationReveal: { armed: boolean; left: number; x: number; y: number; zoom: number } | null = null;
+  private destinationsSeen = new Set<string>();
+
+  /** A short camera journey to the distant destination when its approach section first appears. */
+  private revealDestination(section = chainOf(this.run)?.[this.run.stage - 1]): void {
+    const board = section?.board;
+    if (this.auto || !this.scenesOn() || !board?.landmark) { this.destinationReveal = null; return; }
+    const key = `${this.run.seed}:${this.run.mode?.kind === 'army' ? this.run.mode.scenario : ''}`;
+    if (this.destinationsSeen.has(key)) return;
+    this.destinationsSeen.add(key);
+    if (!section) return;
+    const box = landmarkBounds(board, frameOf(section, section));
+    if (!box) return;
+    this.bbox = { x0: Math.min(this.bbox.x0, box.x0), x1: Math.max(this.bbox.x1, box.x1), y0: Math.min(this.bbox.y0, box.y0), y1: Math.max(this.bbox.y1, box.y1) };
+    this.destinationReveal = { armed: false, left: 3200, x: (box.x0 + box.x1) / 2, y: (box.y0 + box.y1) / 2, zoom: Math.min(2, this.area.w / (box.x1 - box.x0 + 30) / this.scale, this.area.h / (box.y1 - box.y0 + 30) / this.scale) };
+  }
+
+  private stepDestinationReveal(dt: number, elapsed: number): void {
+    const reveal = this.destinationReveal!;
+    if (!reveal.armed) {
+      if (!this.boardView.sceneryReady) return;
+      reveal.armed = true;
+    }
+    reveal.left -= elapsed;
+    if (reveal.left <= 0 || this.drag?.pan) {
+      this.destinationReveal = null;
+      this.focus();
+      return;
+    }
+    this.tx = reveal.x;
+    this.ty = reveal.y;
+    this.cx = easeTo(this.cx, reveal.x, elapsed, EASE_MOVE_MS);
+    this.cy = easeTo(this.cy, reveal.y, elapsed, EASE_MOVE_MS);
+    this.tzoom = reveal.zoom;
+    this.zoom = easeTo(this.zoom, reveal.zoom, Math.max(dt, elapsed), EASE_ZOOM_MS);
   }
 
   /** A short camera push the effects asked for (an ultimate, a combo, a tier 3 promotion): the point, how much closer, and the ms left. */
@@ -1041,7 +1089,8 @@ class Game {
     this.world.scale.set(k);
     this.ghost.scale.set(k);
     this.area = area;
-    this.bbox = { x0, x1, y0, y1 };
+    const scenic = landmarkBounds(b, { rot: chainOf(this.run)?.[this.run.stage - 1]?.rot ?? 0, ou: 0, ov: 0, w: b.w, d: b.d });
+    this.bbox = scenic ? { x0: Math.min(x0, scenic.x0), x1: Math.max(x1, scenic.x1), y0: Math.min(y0, scenic.y0), y1: Math.max(y1, scenic.y1) } : { x0, x1, y0, y1 };
     this.focus(true);
   }
 
@@ -1333,7 +1382,9 @@ class Game {
       // (each run spends a day's auto ticket; a new day mid-replay refills them)
       if (!spendTicket(this.meta, todayKey())) return void this.endAuto('tickets');
       saveMeta(this.meta);
-      this.startRun(armyRun(clockSeed(), a.army, this.meta.party, this.meta.castle, a.tier));
+      const nextRun = armyRun(clockSeed(), a.army, this.meta.party, this.meta.castle, a.tier);
+      if (nextRun.mode?.kind === 'army' && this.run.mode?.kind === 'army' && this.run.mode.scenario) nextRun.mode.scenario = this.run.mode.scenario;
+      this.startRun(nextRun);
       this.autoPrep();
     } else this.endAuto(a.ended ?? 'done');
   }

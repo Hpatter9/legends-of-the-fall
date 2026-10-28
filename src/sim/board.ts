@@ -124,6 +124,9 @@ export interface Tile {
 }
 
 export interface Board {
+  /** Scenic destination, outside collision tiles; only included from the final approach onwards. */
+  landmark?: 'fortress' | 'temple' | 'mausoleum';
+  landmarkAt?: { u: number; v: number; h: number };
   seed: number;
   area: Area;
   w: number;

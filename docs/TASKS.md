@@ -14,6 +14,17 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+WORLD-126 rendering checkpoint ready for review; rare warm-tail stability remains open. WORLD-001 per-army map design awaits owner confirmation before implementation.
+
+- Owner: current WORLD continuation chat, confirmed by owner on 2026-10-27.
+- Branch/worktree/PR: `codex/world-001`, `/workspace/world-001`, PR #124; owner authorised bump/merge as 0.169.0.
+- Scope: column texture ownership/reuse, reproducible cold/warm and pixel/lifecycle checks; then per-army terrain maps using owner-requested 14×18 dimensions. Nine-theme visual proposal and section/progression clarification are with the owner. Drowned Temple must end on a central lake island.
+- Completion: measured baseline/candidate, exact pixels, bounded cache and cleanup, required tests/build and portrait/offline checks; report unmet gates honestly.
+- Reserved: Party/Keep and SIM #122 remain separate. Owner authorised the release bump and merge on 2026-10-28; wider WORLD map design remains separate.
+- Recovery: published head `7426ac5a` recovered; prior unpublished candidate and temporary outputs absent. Reimplemented from #126 handoff.
+- Validation: typecheck and web build passed; full suite passed 106 files, zero failures/skips (429.58s); five ownership cases and 3,634 strict pixel comparisons passed. Median cold stalls reduced 83.7%, but rare warm-tail stalls remain unresolved. Real progression, 24 rebuild/theme cycles, late-save resume, drag-pan, lazy pan-back and offline reload passed at 360×780, 393×852 and 412×915 with zero page errors. See `docs/notes/world-126.md`.
+
+
 **UI-005 / Party war council** — owner accepted the implementation and authorised version bump and merge as 0.166.0. Typecheck/build and 20 affected tests passed; three portrait sizes, all 45 heroes, draft/save, search/filters, starter/empty states, reduced motion and static texture checks validated. Selected portrait row subsequently simplified into a compact, numbered company roll at the owner’s request; tap-to-remove and hold-for-details retained. Initial banner-row concept rejected. Direction: five selected units in action poses fighting a creature horde, with elaborate ornament and deliberate spell effects. Owner: Codex. Branch: `design/party-war-council`, worktree `/workspace/legends-of-the-fall`; [PR #134](https://github.com/Hpatter9/legends-of-the-fall/pull/134). Scope: party picker (`src/party.ts`, `src/partyScene.ts`, party markup in `src/index.html` and styles in `src/keepKingdom.css`), related screenshots and notes; preserve simulation, save format and existing hero dossiers. Goal: ornate, exciting party selection with useful role coverage and synergy guidance. Completion: owner approves concept, implementation passes typecheck, affected tests and build and 393×852, 360×780, 412×915 review. Intentional glows and flourishes are allowed; disappearing textures or glitchy on/off flashing are defects. Implementation uses existing attack sprites, horde sprites, effect strips, brass frame and cached scenery; no simulation or save changes. See [implementation and validation](notes/party-war-council.md).
 
 
@@ -85,3 +96,9 @@ Give the next chat the task ID, branch or PR, relevant docs/notes file, checks a
 
 Mark a task ready for review after implementation and validation. Mark it done only after the owner merges or explicitly accepts the result. Retain a short completed entry with its PR and handoff note.
 
+
+## WORLD rendering release — 0.169.0
+
+Owner authorised bump and merge of PR #124 on 2026-10-28. Latest main 0.168.0 is integrated, preserving its UI, combat effects, heart-revive behaviour, credits and task history. WORLD remains opt-in at 12×16; the 14×18 per-army maps are still proposals. Rare warm-tail stalls and real-device performance remain open in #126; the broader map initiative remains open in #123. See [rendering handoff](notes/world-126.md).
+
+Release integration validation for 0.169.0: typecheck/build and 48 affected tests passed; release progression/resume/pan/offline lifecycle checks passed all three portrait sizes with zero page errors. Original army/large-field compatibility smoke passed. Evidence: `docs/samples/world-169-lifecycle.json`, `world-169-compatibility.json` and the corresponding screenshots. Owner accepted the rendering checkpoint; broader maps and warm-tail/device investigation remain open.

@@ -1,0 +1,13 @@
+{
+  "checked": 3634,
+  "failures": [],
+  "cache": {
+    "hits": 2954,
+    "misses": 872,
+    "retained": 166,
+    "retainedBytes": 4177920,
+    "live": 201,
+    "liveBytes": 4692480,
+    "leases": 192
+  }
+}

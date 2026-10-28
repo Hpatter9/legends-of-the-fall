@@ -1,0 +1,407 @@
+[
+  {
+    "width": 360,
+    "height": 780,
+    "theme": "mountain",
+    "seed": 7,
+    "deployed": 2,
+    "fighting": {
+      "phase": "fight",
+      "t": 2100,
+      "heroes": 2
+    },
+    "concealed": true,
+    "reveal": {
+      "active": false,
+      "site": {
+        "u": 7.5,
+        "v": -18,
+        "h": 9
+      },
+      "boxes": {
+        "x0": -512,
+        "x1": 1096,
+        "y0": -666,
+        "y1": 442
+      }
+    },
+    "revealBounds": {
+      "x0": 52.2138154284558,
+      "x1": 345.0898819920686,
+      "y0": 155.2004226958806,
+      "y1": 533.2546119517441
+    },
+    "returned": true,
+    "cold": {
+      "pending": 0,
+      "baked": 4,
+      "bytes": 2017792
+    },
+    "pageErrors": [],
+    "frameMs": {
+      "mean": 83.37500000003092,
+      "p95": 183.29999999999927,
+      "worst": 183.29999999999927
+    }
+  },
+  {
+    "width": 360,
+    "height": 780,
+    "theme": "temple",
+    "seed": 7,
+    "deployed": 2,
+    "fighting": {
+      "phase": "fight",
+      "t": 1900,
+      "heroes": 2
+    },
+    "concealed": true,
+    "reveal": {
+      "active": true,
+      "site": {
+        "u": 7.5,
+        "v": -18,
+        "h": 2
+      },
+      "boxes": {
+        "x0": -512,
+        "x1": 1096,
+        "y0": -582,
+        "y1": 442
+      }
+    },
+    "revealBounds": {
+      "x0": 52.15960542879361,
+      "x1": 344.99171793862615,
+      "y0": 154.50589315499863,
+      "y1": 481.25772536388683
+    },
+    "returned": true,
+    "cold": {
+      "pending": 0,
+      "baked": 4,
+      "bytes": 1684480
+    },
+    "pageErrors": [],
+    "frameMs": {
+      "mean": 67.9933333333829,
+      "p95": 133.29999999999927,
+      "worst": 133.29999999999927
+    }
+  },
+  {
+    "width": 360,
+    "height": 780,
+    "theme": "necropolis",
+    "seed": 7,
+    "deployed": 2,
+    "fighting": {
+      "phase": "fight",
+      "t": 2100,
+      "heroes": 2
+    },
+    "concealed": true,
+    "reveal": {
+      "active": true,
+      "site": {
+        "u": 7.5,
+        "v": -18,
+        "h": 5
+      },
+      "boxes": {
+        "x0": -512,
+        "x1": 1096,
+        "y0": -618,
+        "y1": 442
+      }
+    },
+    "revealBounds": {
+      "x0": 52.16825778373027,
+      "x1": 345.0073857164846,
+      "y0": 154.5346335915084,
+      "y1": 503.2572284380966
+    },
+    "returned": true,
+    "cold": {
+      "pending": 0,
+      "baked": 3,
+      "bytes": 1392384
+    },
+    "pageErrors": [],
+    "frameMs": {
+      "mean": 73.24285714285712,
+      "p95": 133.39999999999964,
+      "worst": 133.39999999999964
+    }
+  },
+  {
+    "width": 393,
+    "height": 852,
+    "theme": "mountain",
+    "seed": 7,
+    "deployed": 2,
+    "fighting": {
+      "phase": "fight",
+      "t": 1900,
+      "heroes": 2
+    },
+    "concealed": true,
+    "reveal": {
+      "active": false,
+      "site": {
+        "u": 7.5,
+        "v": -18,
+        "h": 9
+      },
+      "boxes": {
+        "x0": -512,
+        "x1": 1096,
+        "y0": -666,
+        "y1": 442
+      }
+    },
+    "revealBounds": {
+      "x0": 57.332121221189425,
+      "x1": 377.060868157289,
+      "y0": 175.6360229220111,
+      "y1": 588.3525470920263
+    },
+    "returned": true,
+    "cold": {
+      "pending": 0,
+      "baked": 3,
+      "bytes": 1532160
+    },
+    "pageErrors": [],
+    "frameMs": {
+      "mean": 92.40833333333346,
+      "p95": 183.3000000000029,
+      "worst": 183.3000000000029
+    }
+  },
+  {
+    "width": 393,
+    "height": 852,
+    "theme": "temple",
+    "seed": 7,
+    "deployed": 2,
+    "fighting": {
+      "phase": "fight",
+      "t": 1800,
+      "heroes": 2
+    },
+    "concealed": true,
+    "reveal": {
+      "active": true,
+      "site": {
+        "u": 7.5,
+        "v": -18,
+        "h": 2
+      },
+      "boxes": {
+        "x0": -512,
+        "x1": 1096,
+        "y0": -582,
+        "y1": 442
+      }
+    },
+    "revealBounds": {
+      "x0": 57.3315476941292,
+      "x1": 377.05982960828806,
+      "y0": 174.5891054618649,
+      "y1": 531.3525800310804
+    },
+    "returned": true,
+    "cold": {
+      "pending": 0,
+      "baked": 3,
+      "bytes": 1263360
+    },
+    "pageErrors": [],
+    "frameMs": {
+      "mean": 88.50833333333337,
+      "p95": 150,
+      "worst": 150
+    }
+  },
+  {
+    "width": 393,
+    "height": 852,
+    "theme": "necropolis",
+    "seed": 7,
+    "deployed": 2,
+    "fighting": {
+      "phase": "fight",
+      "t": 2100,
+      "heroes": 2
+    },
+    "concealed": true,
+    "reveal": {
+      "active": true,
+      "site": {
+        "u": 7.5,
+        "v": -18,
+        "h": 5
+      },
+      "boxes": {
+        "x0": -512,
+        "x1": 1096,
+        "y0": -618,
+        "y1": 442
+      }
+    },
+    "revealBounds": {
+      "x0": 57.331820578229326,
+      "x1": 377.0603237497666,
+      "y0": 174.60920516524376,
+      "y1": 555.3525643586828
+    },
+    "returned": true,
+    "cold": {
+      "pending": 0,
+      "baked": 3,
+      "bytes": 1392384
+    },
+    "pageErrors": [],
+    "frameMs": {
+      "mean": 92.5000000000678,
+      "p95": 183.3000000000011,
+      "worst": 183.3000000000011
+    }
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "theme": "mountain",
+    "seed": 7,
+    "deployed": 2,
+    "fighting": {
+      "phase": "fight",
+      "t": 1900,
+      "heroes": 2
+    },
+    "concealed": true,
+    "reveal": {
+      "active": false,
+      "site": {
+        "u": 7.5,
+        "v": -18,
+        "h": 9
+      },
+      "boxes": {
+        "x0": -512,
+        "x1": 1096,
+        "y0": -666,
+        "y1": 442
+      }
+    },
+    "revealBounds": {
+      "x0": 60.40158030482229,
+      "x1": 395.5920508222457,
+      "y0": 197.58230931210838,
+      "y1": 630.2573416716825
+    },
+    "returned": true,
+    "cold": {
+      "pending": 0,
+      "baked": 3,
+      "bytes": 1532160
+    },
+    "pageErrors": [],
+    "frameMs": {
+      "mean": 102.84000000000015,
+      "p95": 150,
+      "worst": 150
+    }
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "theme": "temple",
+    "seed": 7,
+    "deployed": 2,
+    "fighting": {
+      "phase": "fight",
+      "t": 1800,
+      "heroes": 2
+    },
+    "concealed": true,
+    "reveal": {
+      "active": true,
+      "site": {
+        "u": 7.5,
+        "v": -18,
+        "h": 2
+      },
+      "boxes": {
+        "x0": -512,
+        "x1": 1096,
+        "y0": -582,
+        "y1": 442
+      }
+    },
+    "revealBounds": {
+      "x0": 60.42576218323006,
+      "x1": 395.6358396290923,
+      "y0": 197.2173747642435,
+      "y1": 571.2559528475848
+    },
+    "returned": true,
+    "cold": {
+      "pending": 0,
+      "baked": 3,
+      "bytes": 1263360
+    },
+    "pageErrors": [],
+    "frameMs": {
+      "mean": 78.89230769225036,
+      "p95": 100.10000000000036,
+      "worst": 100.10000000000036
+    }
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "theme": "necropolis",
+    "seed": 7,
+    "deployed": 2,
+    "fighting": {
+      "phase": "fight",
+      "t": 1800,
+      "heroes": 2
+    },
+    "concealed": true,
+    "reveal": {
+      "active": true,
+      "site": {
+        "u": 7.5,
+        "v": -18,
+        "h": 5
+      },
+      "boxes": {
+        "x0": -512,
+        "x1": 1096,
+        "y0": -618,
+        "y1": 442
+      }
+    },
+    "revealBounds": {
+      "x0": 60.41012247670284,
+      "x1": 395.60751907943484,
+      "y0": 198.09261795288643,
+      "y1": 597.2568510739732
+    },
+    "returned": true,
+    "cold": {
+      "pending": 0,
+      "baked": 3,
+      "bytes": 1392384
+    },
+    "pageErrors": [],
+    "frameMs": {
+      "mean": 98.88181818171655,
+      "p95": 183.29999999999927,
+      "worst": 183.29999999999927
+    }
+  }
+]
