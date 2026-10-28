@@ -1,4 +1,4 @@
-// The chest shop: crowns buy chests, and chests hold summoning stones and equipment (the owner's ask: "the crowns buy chests; the
+// The chest shop: crowns buy chests, and chests hold summoning stones, equipment and XP tomes (`tomes.ts`) (the owner's ask: "the crowns buy chests; the
 // chests give equipment and summoning stones"). Three chests, bronze, silver and gold, at fixed prices; a bigger chest holds more
 // stones, and better gear. What a chest holds is fixed by its kind, apart from which piece of gear it is, which
 // rolls (with `rollEquipment`) from a side stream of the save's seed and the count of chests bought, so reloading cannot reroll it.
@@ -8,7 +8,8 @@
 import { ARMIES, armyCleared } from './armies';
 import { grantEquipment, rollEquipment, type Quality } from './equipment';
 import type { Loot, LootItem } from './armyStars';
-import { gearItem, stoneItems } from './armyStars';
+import { gearItem, stoneItems, tomeItems } from './armyStars';
+import { grantTomes, rollTomes } from './tomes';
 import type { Meta } from './meta';
 import { mixSeed, Rng } from './rng';
 import { ownedCount } from './unlock';
@@ -84,6 +85,10 @@ function shopLoot(m: Meta, kind: ShopKind, apply: boolean): Loot {
   const rng = new Rng(mixSeed(m.seed, SHOP_SALT, m.shopBuys ?? 0));
   const items: LootItem[] = stoneItems(c.stones, 0);
   if (apply) m.stones = (m.stones ?? 0) + c.stones;
+  // (XP tomes, on top: from a side stream of the same seed, so the gear rolls as it did before tomes)
+  const tomes = rollTomes(mixSeed(m.seed, SHOP_SALT, m.shopBuys ?? 0), c.kind);
+  if (apply) grantTomes(m, tomes);
+  items.push(...tomeItems(tomes));
   if (c.gearChance >= 1 || rng.chance(c.gearChance)) {
     const item = rollEquipment(rng, { quality: c.quality, armyIndex: shopArmyIndex(m), milestone: c.at >= 10 });
     if (apply) grantEquipment(m, item);
