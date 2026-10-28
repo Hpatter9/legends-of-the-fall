@@ -604,7 +604,7 @@ export function planScenario(seed: number, theme: ScenarioId, waves: number, bos
         const t: Tile = { h, deco: rng.int(0, 255) };
         const inMiddleRows = v >= DEPLOY_ROWS && v < d - DEPLOY_ROWS;
         const rv = riverRowAt(u);
-        const inRiver = !arena && inMiddleRows && (!lake || h > 1) && (v === rv || (v === rv + 1 && u % 2 === 0));
+        const inRiver = !arena && inMiddleRows && (!lake || h > 1) && (v === rv || (v === rv + 1 && (u % 2 === 0 || u === 0 || u === w - 1)));
         if (inRiver) river.add(v * w + u);
         const nearRiver = inMiddleRows && Math.abs(v - rv) <= 2 && !inRiver;
 

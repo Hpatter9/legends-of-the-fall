@@ -8,7 +8,7 @@ const { browser, url, close } = await openBrowser('out/web', 8231);
 try {
   for (const spec of want) {
     const [army, stage, label = `w${stage}`] = spec.split(':');
-    const ctx = await browser.newContext({ viewport: { width: 393, height: 852 } });
+    const ctx = await browser.newContext({ viewport: { width: Number((process.env.VIEW ?? '393x852').split('x')[0]), height: Number((process.env.VIEW ?? '393x852').split('x')[1]) } });
     const page = await ctx.newPage();
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
@@ -34,7 +34,7 @@ try {
     // (the whole section in view, or with `road` in the label the whole road so far, as the map's stand-back does)
     await page.waitForTimeout(400);
     await page.addStyleTag({ content: '#quip{display:none!important}' });
-    await page.evaluate(([road, close]) => {
+    await page.evaluate(([road, close, focusFall]) => {
       const g = window.__game;
       if (road) return g.overview(true);
       const b = g.bbox;
@@ -42,10 +42,11 @@ try {
       g.zoom = g.tzoom = Math.min(1, g.area.w / (b.x1 - b.x0 + 24) / g.scale, g.area.h / (b.y1 - b.y0 - 60) / g.scale) * close;
       // (centred on the arena's middle for a boss, on the road's middle otherwise)
       const bd = g.b.board;
-      const col = g.boardView.built?.tiles[(bd.pieces?.length ? 6 : 9) * bd.w + 7]?.children[0];
+      const fall = focusFall && bd.falls?.[Math.floor(bd.falls.length / 2)];
+      const col = g.boardView.built?.tiles[fall ? fall.v * bd.w + fall.u : (bd.pieces?.length ? 6 : 9) * bd.w + 7]?.children[0];
       g.cx = g.tx = col ? col.x + 32 : (b.x0 + b.x1) / 2;
       g.cy = g.ty = col ? col.y + 16 : (b.y0 + b.y1) / 2 + 20;
-    }, [label.includes('road'), label.includes('zoom') ? 2.8 : label.includes('close') ? 1.7 : 1]);
+    }, [label.includes('road'), label.includes('zoom') ? 2.8 : label.includes('close') ? 1.7 : 1, label.includes('fall')]);
     await page.waitForTimeout(label.startsWith('join') ? 900 : 1500);
     await page.waitForFunction(() => window.__game.boardView.toBake.length === 0, {}, { timeout: 15000 }).catch(() => {});
     // (with `fight` in the label: the fight is started and shot at FIGHT_T ms of fight time, when the land's first strikes are told)
