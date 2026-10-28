@@ -1,6 +1,6 @@
-# Battle cliffside overlook — 0.172.0
+# Battle cliffside overlook — 0.173.0
 
-UI-006, owner: Codex. Branch: `design/battle-overlook`, worktree: `/workspace/legends-of-the-fall`. The owner approved the cliffside concept and distant Calamity, then requested distinct army-dependent camps and explicitly authorised the version bump and PR merge. Implementation and release validation are complete; GitHub PR integration follows.
+UI-006, owner: Codex. Branch: `design/battle-overlook`, worktree: `/workspace/legends-of-the-fall`. The owner approved the cliffside concept and distant Calamity, then requested distinct army-dependent camps and explicitly authorised the version bump and PR merge. Implementation and release validation are complete; Release PR: [#139](https://github.com/Hpatter9/legends-of-the-fall/pull/139).
 
 The Battle tab now looks down from a rocky command ledge into the current army's base. The selected party appears as interactive, animated game sprites, alongside the campfire, war table, supplies, earned chests and Duchess. A floating shattered Calamity citadel looms beyond the valley: a silhouette and star requirement while locked, violet rift and the existing Calamity entry flow once accessible.
 
@@ -28,17 +28,17 @@ Reduced motion freezes the decorative scene. Battery saver retains its frame cap
 
 ## Validation
 
-On the integrated release based on main `7e8e9a0f` (0.171.0):
+On the integrated release based on main `e1fb9137` (0.172.0):
 
 - `npm run typecheck` — passed.
-- `npm test -- overlook camp armyStars modes party summon-stones` — **66 tests passed**, zero failures. Coverage includes per-army scenery selection and occupant positions, real field-creature selection, portrait control separation, army chest rewards, existing modes/party behaviour and summoning-stone integration.
-- `npm run web` — passed at version **0.172.0**.
+- `npm test -- overlook camp armyStars modes party summon-stones hero-kits-looks` — **67 tests passed**, zero failures. Coverage includes per-army scenery selection and occupant positions, real field-creature selection, portrait control separation, army chest rewards, existing modes/party behaviour and summoning-stone integration.
+- `npm run web` — passed at version **0.173.0**.
 - `node tools/ui/battle-overlook-check.mjs` — passed at **393×852, 360×780 and 412×915**, DPR 2. All nine camp panel IDs and actual background pixel hashes differ. Saved-run army priority, all boss/crew rigs, small occupant groups, locked/open Calamity and Last Stand, Daily, party selection, army selection, hero taps, unobstructed controls, reduced-motion stability, opaque scene frames, saver mode and tab lifecycle passed with no page errors.
 - A real service-worker-controlled reload with networking disabled passed, followed by switching through **all nine camp paintings offline**. The script uses `localhost` for this because the existing service-worker registration is restricted to HTTPS or that hostname.
 - Actual game screenshots inspected for all nine camps, including the graveyard and maze at the smallest phone size. The comparison sheet below contains crops of real browser captures, not a concept render. Camp silhouettes, scenery differences, blending, labels, hero feet and foreground control clearance were reviewed.
 - `git diff --check` — passed.
 
-Main's world-rendering, harder Last Stand and summoning-stone changes are retained. Only credit/task-board conflicts needed manual reconciliation; both sides' records and credits were preserved. Package and lockfile are bumped together to 0.172.0. The temporary Claude-transfer material was removed from the release tree after the owner resumed this task; the actual source artwork remains in the repository.
+Main's hero kits/manual ultimates, world-rendering, harder Last Stand and summoning-stone changes are retained. Only credit/task-board conflicts needed manual reconciliation; both sides' records and credits were preserved. Package and lockfile are bumped together to 0.173.0. The temporary Claude-transfer material was removed from the release tree after the owner resumed this task; the actual source artwork remains in the repository.
 
 ## Actual browser images
 

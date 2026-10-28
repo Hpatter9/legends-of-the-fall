@@ -1,3 +1,4 @@
+import { SKILL2_LEVEL } from '../src/sim/heroKits';
 import { bareBoard } from './bare';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -86,6 +87,8 @@ test('the Paladin heals for part of what his front block turns aside', () => {
 test('Benediction cleanses every ally and heals them over time; Grace heals those beside the Cleric', () => {
   const b = arena();
   const c = spawn(b, 'cleric', 3, 5, CHARGE_MAX);
+  // (Benediction is the Cleric's skill 2 since the hero kits: it opens at level 10)
+  c.level = SKILL2_LEVEL;
   const a = spawn(b, 'knight', 5, 6);
   a.hp = 100;
   a.dot = { kind: 'burn', dmg: 3, every: 500, ms: 9000, by: 99, next: 9999, until: 99999 };

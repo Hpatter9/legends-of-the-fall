@@ -128,6 +128,8 @@ test('battle cry jumps every hero\'s skill meter by 40, never past full', () => 
   const foe = addUnit(b, 'skeleton', 3, 0);
   still(b);
   c.charge = CHARGE_MAX - 10;
+  // (a hero's charge is its pool now, and starts part full: empty it, to see the cry's own share)
+  a.charge = 0;
   foe.charge = 0;
   assert.ok(castSpell(b, 'warcry', 0, 0));
   assert.equal(a.charge, WARCRY_CHARGE);

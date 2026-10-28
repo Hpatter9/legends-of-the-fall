@@ -14,7 +14,17 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
-**UI-006 / Battle cliffside overlook** — release 0.172.0 ready for the owner-authorised PR merge. Owner: Codex. Branch: `design/battle-overlook`. Nine distinct army camps, cliffside party and distant Calamity are implemented. Typecheck, 66 targeted tests, web build, all nine camps at three phone sizes, reduced motion, mode/party controls and offline switching passed. Main 0.171.0 is integrated, preserving summoning stones, harder Last Stand and world-rendering updates. [Implementation, validation and actual screenshots](notes/battle-overlook.md).
+
+**COMBAT-002 / Hero kits, mana and manual ultimates** — done: owner accepted release 0.172.0.
+
+- **Goal:** every hero gets a mana or stamina pool, two skills that cost it (level 1 and level 10), and an ultimate (level 30) the player fires by tapping its portrait in a new hero bar, with an Auto toggle; all 45 heroes reworked into far more varied roles (summoners, shapeshifters and many odd archetypes), no new heroes.
+- **Status:** phase 1 (design) approved with the owner's five answers; phase 2 (implementation) done on the branch, ready for review.
+- **Owner:** Claude. **Branch / worktree:** `claude/hero-kits`, `/home/user/hero-kits`. PR: none yet.
+- **Scope:** the battle simulation's hero kits, pool, ultimate meter and a queued ultimate command (`src/sim/abilities.ts`, `ultimates.ts`, `tierSkills.ts`, `combos.ts`, `traits.ts`, `talents.ts`, `units.ts`, `battle.ts`, new `heroKits.ts`, `orders.ts`, `kits/`); the fight HUD (fight panel in `src/main.ts`, `src/index.html`); unit and effect rendering; hero texts; balance retune. Not the castle tab, the battle-picking menu tab or the army battle map (WORLD-001).
+- **Completion criteria:** owner approves the design; then all 45 kits implemented as approved; resource, order/replay and kit tests added; typecheck, web build and affected tests pass; the hero bar checked at 393×852, 360×780 and 412×915 with reduced motion; hero, army, Calamity, daily, Last Stand and spire balance re-measured and recorded; old saves load and play.
+- **Validation (phase 1):** documentation and images only; `npm run web` run once to capture the current fight screen.
+- **Validation (phase 2):** typecheck and web build pass; full `npm test` after merging `origin/main`: 1176 of 1176 pass. `tools/kits/shots.mjs`: all checks ok, no page errors at 393×852, 360×780, 412×915, reduced motion, Last Stand and Calamity. Hero parity within 6 (L1 worst +5.3, L30 worst +5.8); armies 2.1–2.8 tries at their levels; Calamity 92/79/65/51/47/15; daily 73%/55%; Last Stand medians 4, 10, 12, 20, 22, 40. Before/after tables in the note.
+- **Handoff:** [design and build notes](notes/hero-kits.md), [owner summary](notes/hero-kits-summary.md), screenshots `docs/samples/hero-kits-*.png`, [HUD mock-up](samples/hero-kits-hud-mock.png), [current HUD](samples/hero-kits-hud-before.png).
 
 WORLD-126 rendering checkpoint ready for review; rare warm-tail stability remains open. WORLD-001 per-army map design awaits owner confirmation before implementation.
 
@@ -70,6 +80,8 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 | ID | Task | Result | Reference |
 | --- | --- | --- | --- |
+| UI-006 | Cliffside battle overlook with nine army-dependent bases and distant Calamity | Owner authorised release 0.173.0 and PR merge; typecheck/build, 67 targeted tests, all nine camps at three portrait sizes and offline switching passed | [PR #139](https://github.com/Hpatter9/legends-of-the-fall/pull/139), [implementation and screenshots](notes/battle-overlook.md) |
+| COMBAT-002 | Hero kits, mana and manual ultimates | Owner accepted release 0.172.0; all 45 heroes reworked, tap-to-fire ultimates with Auto; 1176 tests, build, fresh/old-save and Last Stand smoke passed | [Handoff](notes/hero-kits.md), branch `claude/hero-kits` |
 | SUMMON-002 | Summoning stones economy | Owner accepted release 0.171.0; roster about 2x slower to the 20th hero, 1.5-1.7x late; typecheck, 1150 tests, build, fresh/old-save and Last Stand smoke passed | [Handoff](notes/summon-stones.md), branch `claude/summon-stones` |
 | STAND-002 | Last Stand made harder | Owner accepted release 0.170.0; greedy median waves 4/10/13/22/26/35 at levels 1/10/20/30/60/100, pay within about 9% of before; typecheck, 1133 tests, build, fresh/old-save and Last Stand smoke passed | [Handoff](notes/last-stand.md) (section "Making it harder"), branch `claude/stand-harder` |
 | FX-003 | Individual painted signatures for 129 base abilities | Owner accepted release 0.168.0 and merge through PR #135; 84 integration tests, all five emitted-material browser cases and offline launch passed | [PR #135](https://github.com/Hpatter9/legends-of-the-fall/pull/135), [handoff and scope](notes/individual-ability-effects.md) |

@@ -230,6 +230,8 @@ test('a tank goes for the foe nearest the king; the others for the weakest', () 
   const near = mk(towards, 300);
   const far = mk(away, 20);
   knight.busyUntil = 0;
+  // (its pool emptied, so it strikes rather than casts: this is about whom it strikes)
+  knight.charge = 0;
   stepStand(s);
   assert.equal(knight.swing?.to, near.id, 'the tank struck the one nearer the king');
   const archer = s.b.units.find((u) => u.def === 'archer')!;
