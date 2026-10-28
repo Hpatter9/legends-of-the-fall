@@ -14,7 +14,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
-**COMBAT-002 / Hero kits, mana and manual ultimates** — ready for review.
+**COMBAT-002 / Hero kits, mana and manual ultimates** — done: owner accepted release 0.172.0.
 
 - **Goal:** every hero gets a mana or stamina pool, two skills that cost it (level 1 and level 10), and an ultimate (level 30) the player fires by tapping its portrait in a new hero bar, with an Auto toggle; all 45 heroes reworked into far more varied roles (summoners, shapeshifters and many odd archetypes), no new heroes.
 - **Status:** phase 1 (design) approved with the owner's five answers; phase 2 (implementation) done on the branch, ready for review.
@@ -79,6 +79,7 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 | ID | Task | Result | Reference |
 | --- | --- | --- | --- |
+| COMBAT-002 | Hero kits, mana and manual ultimates | Owner accepted release 0.172.0; all 45 heroes reworked, tap-to-fire ultimates with Auto; 1176 tests, build, fresh/old-save and Last Stand smoke passed | [Handoff](notes/hero-kits.md), branch `claude/hero-kits` |
 | SUMMON-002 | Summoning stones economy | Owner accepted release 0.171.0; roster about 2x slower to the 20th hero, 1.5-1.7x late; typecheck, 1150 tests, build, fresh/old-save and Last Stand smoke passed | [Handoff](notes/summon-stones.md), branch `claude/summon-stones` |
 | STAND-002 | Last Stand made harder | Owner accepted release 0.170.0; greedy median waves 4/10/13/22/26/35 at levels 1/10/20/30/60/100, pay within about 9% of before; typecheck, 1133 tests, build, fresh/old-save and Last Stand smoke passed | [Handoff](notes/last-stand.md) (section "Making it harder"), branch `claude/stand-harder` |
 | FX-003 | Individual painted signatures for 129 base abilities | Owner accepted release 0.168.0 and merge through PR #135; 84 integration tests, all five emitted-material browser cases and offline launch passed | [PR #135](https://github.com/Hpatter9/legends-of-the-fall/pull/135), [handoff and scope](notes/individual-ability-effects.md) |
