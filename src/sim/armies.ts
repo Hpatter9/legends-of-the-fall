@@ -175,7 +175,7 @@ export const ARMIES: readonly Army[] = [
     area: 'highlands',
     lands: ['highlands', 'snow'],
     waves: waves(ramp(['clanOgre', 'clanBrute', 'clanBrute', 'clanOgre', 'clanOgre', 'clanBrute', 'clanOgre'], 13), { 8: ['shamanKing', 'clanBrute', 'clanOgre', 'clanBrute'], 15: ['hornedOgre', 'clanOgre', 'clanBrute', 'clanOgre', 'clanBrute', 'clanOgre'] }),
-    start: 2.76,
+    start: 2.8, // (was 2.76: retuned on the army road, WORLD-ROAD, to take as many tries as before)
     tierStart: 1.55,
     growth: 0.05,
     tierGrowth: 0.124,

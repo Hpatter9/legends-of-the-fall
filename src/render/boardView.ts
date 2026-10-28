@@ -587,7 +587,7 @@ export class BoardView {
       // A nonwalkable scenic plinth anchors the compound in the landscape instead of suspending it over the sky.
       for (let v = -2; v <= 1; v++) for (let u = -5; u <= 5; u++) {
         const t: Tile = { h: site.h, deco: (u + 5) * 7 + v + 2 };
-        const texture = this.column(t, u, v, b.area, true);
+        const texture = this.column(t, u, v, b.area, true, !!depth);
         tex.push(texture);
         const column = new Sprite(texture.value);
         const [x, y] = project(f, site.u + u, site.v + v, site.h);

@@ -37,7 +37,7 @@ as text, and `tools/army-road/check.ts` audits every theme over many seeds.
   there), and out where the next section joins. Every tile within the road's half-width of the curve is road; the half-width swells and narrows
   along it between `ROAD_MIN` 3.0 and `ROAD_MAX` 4.3 (a road 6 to 9 tiles across; wider where it turns a flank), and is at least 3.4 where the
   heroes come in. Both sections' roads are centred on the same join, so they meet.
-- Every other tile gets `Tile.scene` (new, optional): `wood`, `rocks`, `ruin`, `water`, `lava`, `bones`, `fence`, `stones`, `grave` or `crystal`.
+- [Phase B: scenery is no longer `solid`, only not `standable`, so fliers cross it; see "Fliers over the scenery".] Every other tile gets `Tile.scene` (new, optional): `wood`, `rocks`, `ruin`, `water`, `lava`, `bones`, `fence`, `stones`, `grave` or `crystal`.
   To the rules a scenery tile is `solid` (nobody stands on it, not even a flier) and blocks low shots like a boulder (`water`/`lava` none). That is
   the one rules change; pathing, deploying, `boardOk` and the AI already honour `solid`. The kind comes from a patchy world-space noise per theme
   (`besideAt`), so the land runs on from one section into the next. The river still crosses each section: on the road it is a bridge or shallows,
@@ -83,8 +83,7 @@ either side (`levelArena`: the middle of three bounds that each move at most a s
 | Ogres | The stone ring (round) | standing stones with gaps | a centre stone | stone circle, campfire |
 | Labyrinth | The maze heart (square, paved) | ruined walls | an inner wall broken in four places | gate, lamp |
 
-The final arena is the destination itself, so its distant gate-and-tower compound is no longer drawn on it (it still appears on the approach,
-wave 14). The old boss look (every tile flagstone with a gilded lip on a deeper plinth) is replaced: only paved arenas have flagstones.
+[Phase B: the compound is drawn again, behind the final arena, the owner's answer 5.] The old boss look (every tile flagstone with a gilded lip on a deeper plinth) is replaced: only paved arenas have flagstones.
 
 ## Renderer changes (`src/render/boardView.ts`, new `src/render/roadArt.ts`, `columnTextures.ts`)
 
@@ -102,8 +101,7 @@ wave 14). The old boss look (every tile flagstone with a gilded lip on a deeper 
 ## Gameplay effects
 
 - **Narrower field.** About 59% of a section is road (it was all walkable). Flanking is harder; melee meet sooner and in a front; shooters on the
-  bastion and the arenas' cover matter more. Fliers can no longer cross the land beside the road (scenery is solid to them too); deep water and
-  lava beside the road would let them, if the owner prefers.
+  bastion and the arenas' cover matter more. [Phase B: fliers cross the land beside the road, the owner's answer 2.]
 - **Arenas.** The infernal ring and golem runnels add walkable lava (it burns), the wildwood and yokai shrines heal whoever holds the heart, the orc
   barrels blow up, the graves, stones and maze walls give cover. These are deliberate but need tuning with the owner.
 - **Measured** (quick and noisy, 12 attempts a cell): orcs unchanged at levels 11 and 17 and through waves 1 to 14 at level 5, but the final
@@ -147,3 +145,102 @@ every hero at the level shown; % of 12 attempts clearing the whole army; table 5
 Waves 1 to 14 are unchanged for orcs at every level; the final arena is harder at the lowest level (the levelled, fenced floor and the barrels;
 12 attempts, so this is a hint, not a result). The infernal host is far above these levels on both. Phase B would re-measure every army at its
 tier levels (`npm run balance -- --no-tables --deep`) before and after.
+
+## Phase B: the living land
+
+Screenshots (393x852, real renders: the wave set by hand as a presentation fixture, the fight started and held at 2.7 s of fight time, when the
+first hazards are being told): [contact sheet](../samples/army-road-after-sheet.png); road sections
+([orcs](../samples/army-road-after-orcs-section-close.png), [wildwood](../samples/army-road-after-wildwood-section-close.png),
+[undead](../samples/army-road-after-undead-section-close.png)); a [waterfall](../samples/army-road-after-orcs-fall-zoom.png) and a
+[lavafall](../samples/army-road-after-infernal-fall-zoom.png); [the road across sections](../samples/army-road-after-orcs-road.png); every army's
+arena with its hazard told ([orcs](../samples/army-road-after-orcs-mid-fight-close.png), [undead](../samples/army-road-after-undead-mid-fight-close.png),
+[infernal](../samples/army-road-after-infernal-final-fight-close.png), [wildwood](../samples/army-road-after-wildwood-mid-fight-close.png),
+[beasts](../samples/army-road-after-beasts-final-fight-close.png), [labyrinth](../samples/army-road-after-labyrinth-final-fight-close.png),
+[yokai](../samples/army-road-after-yokai-final-fight-close.png), [golems](../samples/army-road-after-golems-final-fight-close.png),
+[ogres](../samples/army-road-after-ogres-final-fight-close.png)); and at the other phone sizes ([360x780](../samples/army-road-after-360-sheet.png),
+[412x915](../samples/army-road-after-412-sheet.png)). Re-shoot: `node tools/army-road/shots.mjs army-road-after orcs:8:mid-fight-close
+orcs:2:fall-zoom ...` (`section`, `road`, `mid`/`final`, `fight`, `fall`, `close`/`zoom` in the label; `VIEW=360x780` for another size).
+
+### Fliers over the scenery (`board.ts`)
+
+The owner's answer 2: scenery is no longer `solid`. `standable` leaves it out (as it does deep water), so a walker never stands on it and `boardOk`
+still means every walker reaches every other; a flier (`canStep` with `FLY_JUMP`) crosses and lands on it as it does on deep water.
+
+### The living land (`src/sim/hazards.ts`, `Board.hazards`, the `hazard` battle event)
+
+Each board carries its hazards, planned with the map (`planHazards`, its own side stream `mixSeed(seed, 0x4a2d0, wave)`), each with its tiles and a
+clock (`offset`, `period`, `tell`, all whole ticks). `tickHazards` runs them each tick: nothing random in the fight, so a fight replays the same.
+Every hazard acts on **both sides**, like the barrels and shrines. A boss (drawn bigger) feels any of them a third as much (`BOSS_FEELS`), since a
+share of a boss's hp is a great deal more. A **strike** is told first (`tell` ms: the page marks its tiles in its colour, the mark swelling surer
+as it comes, and shows its word once), then hurts whoever stands on its tiles a share of their hp:
+
+| Hazard | Where | Told | Does | Fliers |
+| --- | --- | --- | --- | --- |
+| Lava flares | the road beside lava (any section on a lava course), the infernal ring and the golems' runnels | 1.5 s | 10% of hp | hit |
+| Rockfall | the orcs' war camp (catapult stones, 2 patches), the ogres' stone ring (avalanche, 3 patches) | 1.5 s | 12% | hit |
+| Steam vents | the golems' foundry (1 patch), the yokai shrine court (2) | 1.5 s | 8% | hit |
+| Spike traps | the labyrinth's maze heart (3 patches, in turn) | 1.2 s | 10% | spared |
+| The dead stir | the undead court: hands from the ground beside every grave | 1.2 s | 6% and slowed 2 s | spared |
+| Stampede | the beasts' bone ring: a herd runs across a row of the arena, one row and then the other | 2 s | 10% | spared |
+| Healing spring | the wildwood grove's and the yokai court's heart (3x3) | 0.8 s | mends 8% | mended |
+| The current | wherever the road fords a river in shallows | none (always in sight) | every 2.5 s carries a walker a tile downstream, if that tile is free, on the road and within a step | spared |
+
+Patches of one kind take turns (each its own moment in the period); the periods are 6 to 10 s. The river now runs one way across each section
+(`Board.flow`, towards an open edge) and pours off it (`Board.falls`), never into another section's ground.
+
+### What is drawn (`src/render/roadArt.ts`, `roadAtlas.ts`, `boardView.ts`, `fx.ts`, `hazardLooks.ts`, `weatherRules.ts`)
+
+- **Rings and set pieces from the kits.** The arenas' rings are runs of wall at the tiles' own angle, each tile a segment laid along the ring and
+  mirrored where the ring runs the other way: the orcs' spiked palisade, the undead's bone wall, the labyrinth's stone wall, the golems' iron wall,
+  the beasts' bone fence, the ogres' standing stones, the yokai court's lanterns, the wildwood's great oaks and the yokai's willows. Set pieces: the
+  skull gate and war drum, the mausoleum, the cave den, the stone circle, the generator, the gatehouse, the Fae shrine, braziers, bonfires,
+  lanterns. They are single pieces of Chronos's isometric kits (the same kits as the Calamity map's), so they match the board's angle; cut into
+  `src/art/road/atlas.png` by `tools/army-road/prep.py`.
+- **Flair.** Trees by land (great oaks and birches in the forest, willows at the shrine, snowy pines, burnt and dead trees, iron trees by the forge),
+  crags by land, ruins and pillars, bones, reeds at the water's edge, and small flowers, ferns, mushrooms, pebbles and stumps now and then on the
+  road. A few small birds (DawnLike) peck at the road's edge (not on volcano, forge or dungeon land).
+- **Water that runs.** River tiles carry light streaks sliding the way the river runs (lava streaks on lava). Where the river reaches an open edge
+  whose face is towards the screen, a **waterfall** (or a **lavafall**) pours down the face, two tiles wide, streaks running down it, fading out
+  below. Painted once into eight frames each (no pack has a fall at this angle).
+- **Ambient life.** Trees, shrubs, reeds and flowers sway (a skew about the foot); every torch, brazier, bonfire and lantern has a glow that
+  breathes and wavers (never going out); a clear day on the road has the land's own motes drifting (pollen, petals at the shrine, fireflies over the
+  mire, embers by lava, snow flecks, dust, ash, crystal motes: `ambientOf`).
+- **Hazards.** A tell marks its tiles (fill and outline in its colour, a word over them in that colour lifted towards white), then the strike plays
+  the Pixel Effects pack's strips on each tile (fire pillar, earth strike and dust, steam pillar, spikes, dark spikes, earth wave, forest aura) with
+  a small shake for rocks and the stampede, and a sound (`soundRules.ts`).
+- **Phone care.** Everything moving is a sprite made once with the board: each frame only moves, re-tints or re-frames it (no allocation). With
+  reduced motion the land is still (the tells are a steady mark); on a battery saver the land moves every other frame. Only the live sections
+  move; the baked ones stay still pictures.
+- The distant compound stands **behind** the final arena (owner's answer 5), five tiles beyond its back edge, instead of over its back rows.
+- The way into each arena is seven tiles wide where the heroes come in (it was five), narrowing to five at the arena's mouth.
+
+### Balance (`node tools/curve/run.mjs cell <army>:<level>`)
+
+The established measure (`docs/notes/army-curve.md`): the recruits' party (Knight, Paladin, Archer, Warlock, Cleric) at each army's recommended
+level, the castle a climb has by then, gear dressed, XP carried between tries, at most 25 tries; mean tries to clear Normal, 24 fresh saves a cell
+(48 for the ogres' final check). "Road" is this branch before retuning: the road, the arenas and the living land, the armies' numbers as on main.
+The road makes the first armies a little harder (a narrower field: with the hazards switched off the orcs still took 3.8 tries, and with the arenas
+switched off 3.6, so it is the road itself) and some later ones easier (the healing springs help the side that holds the heart, usually the
+heroes). Six armies' Normal `start` (their foes' strength) were then bisected (`tools/curve/run.mjs tune`) to take as many tries as on main;
+the harder tiers keep their own `tierStart` and were not re-measured.
+
+| Army (level) | main 0.186.0 | road, numbers as main | road, retuned | `start` |
+| --- | --- | --- | --- | --- |
+| Orc Warband (1) | 2.1 | 4.0 | 2.2 | 0.5 -> 0.39 |
+| Undead Legion (8) | 3.5 | 4.8 | 3.7 | 1.52 -> 1.48 |
+| Beast Packs (15) | 1.5 | 1.3 | 1.3 | 1.66 (kept) |
+| The Wildwood (22) | 3.5 | 2.3 | 3.8 | 1.86 -> 2.01 |
+| The Labyrinth (30) | 13.2 | 17.8 | 13.5 | 2.37 -> 2.25 |
+| Ogre Clans (38) | 3.3 (48 saves) | 2.6 (48) | OGRES_FINAL | 2.76 -> 2.79 |
+| Infernal Host (40) | 1.5 | 1.5 | 1.5 | 3.01 (kept) |
+| Yokai Night Parade (46) | 2.4 | 1.6 | 2.5 | 3.22 -> 3.38 |
+| Golem Forge (52) | 2.7 | 3.6 | 3.0 | 3.79 -> 3.63 |
+
+(The Labyrinth's 13 tries at its level are main's own, not this branch's: it was retuned to stay where it was.)
+
+### Tests (phase B)
+
+New `test/army-hazards.test.ts`: a strike is told then hurts both sides on its tiles and no one else, again a period later; which strikes spare a
+flier, hands slow; a spring mends both sides and a boss feels a third; the current carries a walker downstream but not onto a fighter or over a
+cliff, and not a flier; every army's arenas carry its own hazards on standable tiles, on the tick, the same for the same seed; a river pours off an
+open edge and never into another section. `test/army-road.test.ts`: scenery is never standable and a flier can cross it.
