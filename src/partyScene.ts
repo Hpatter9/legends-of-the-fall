@@ -4,12 +4,16 @@ import { sheetInfo } from './render/sheets';
 import { VFX, type VfxKey } from './render/vfxArt';
 import { UNITS } from './sim/units';
 import { roleOf } from './sim/suggest';
+import { drawAura, drawAuraGlow } from './render/auraCanvas';
+import { auraParts } from './render/auraStyles';
+import { settings } from './settings';
 
 const W = 800, H = 640;
 const poses = [[285, 306, 142], [515, 320, 144], [180, 440, 170], [620, 450, 172], [398, 544, 204]];
 
-/** Render once, including the complete weapon sweep. The same party always gets the same poses. */
-export function partyTableau(kinds: readonly string[]): HTMLCanvasElement {
+/** Render once, including the complete weapon sweep. The same party always gets the same poses. An awakened hero
+ *  (`stepOf`, 1 or 2) stands in its class's aura, held still like the rest of the picture. */
+export function partyTableau(kinds: readonly string[], stepOf: (kind: string) => number = () => 0): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;
@@ -73,7 +77,14 @@ export function partyTableau(kinds: readonly string[]): HTMLCanvasElement {
     halo.addColorStop(0, `${colour}55`); halo.addColorStop(1, `${colour}00`);
     g.fillStyle = halo; g.fillRect(x - height, y - height * 1.5, height * 2, height * 2);
     if (role === 'support') effect('levelupGold', x, y - 45, 230);
+    const step = stepOf(kind);
+    const aura = step ? auraParts(kind, step, settings().saver) : [];
+    if (step) {
+      drawAuraGlow(g, kind, step, x, y, height);
+      drawAura(g, aura, x, y, height, 0, 'back', right ? 1 : -1, true);
+    }
     figure(def.sheet, x, y, height, right, slot, true);
+    if (step) drawAura(g, aura, x, y, height, 0, 'front', right ? 1 : -1, true);
     if (def.shot === 'fire') {
       effect('flameFire', x + (right ? 80 : -80), y - height * .8, 195, right ? .65 : -.65);
       effect('sparkleFire', x + (right ? 125 : -125), y - height, 125);

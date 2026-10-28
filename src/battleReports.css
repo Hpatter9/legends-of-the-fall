@@ -1,0 +1,127 @@
+/* The battle's surrounding screens share its brass, emerald stone and crimson cloth.
+   Report values and actions are still supplied by their existing views. */
+#result, #recap, #autoSum, #events {
+  --report-surface: radial-gradient(ellipse at 50% 0, #6c70402b, transparent 65%), linear-gradient(120deg, #243127f8, #121d18fa), url(ui/page.png);
+  --report-rim: #9c8454;
+}
+#result {
+  background: radial-gradient(ellipse at 50% 10%, #56724a33, transparent 60%), #0b1513ed;
+  padding-top: calc(env(safe-area-inset-top) + 20px); gap: 12px;
+  touch-action: pan-y; scrollbar-width: thin; scrollbar-color: #9c8454 #142018;
+}
+#result #banner {
+  position: relative; display: block; height: auto; flex-shrink: 0; width: min(380px, 100%); padding: 69px 12px 17px;
+  border: 0; border-image: none; clip-path: none; filter: none;
+  background: linear-gradient(90deg, transparent, #702b30b3 30%, #702b30b3 70%, transparent);
+  border-bottom: 1px solid #b89c6055;
+  font: 700 clamp(27px, 8vw, 36px)/1.1 var(--display); text-align: center; letter-spacing: .02em;
+  color: #f6dc9b; text-shadow: 0 2px 6px #000a; animation: reportArrive .4s ease-out both;
+}
+#result #banner::before, #recap .rcTitle::before {
+  content: ''; position: absolute; width: 190px; height: 64px; top: 0; left: calc(50% - 95px);
+  background: url(ui/battle-crest.png) center / contain no-repeat; pointer-events: none;
+}
+#result #banner.lost { color: #f0b3a3; background: linear-gradient(90deg, transparent, #65353480, transparent); }
+#result #summary, #result #joke { max-width: 360px; margin: 0; text-align: center; line-height: 1.4; }
+#result #summary { color: #ebdfc1; font-size: 14px; }
+#result #joke { color: #aaa995; font-size: 12px; font-style: italic; }
+#result :is(#stars, #armyStars, #xp, #fightStats, .dayResult) { width: min(380px, 100%); }
+#result :is(#armyStars, #fightStats, .xprow, .star, .dayResult) {
+  border: 1px solid var(--report-rim); border-image: none; border-radius: 5px;
+  background: var(--report-surface); box-shadow: inset 0 0 0 2px #0d191466, 0 3px 9px #0005;
+}
+#result #xp { gap: 8px; }
+#result #xp .xprow { padding: 9px; gap: 4px 8px; }
+#result #xp .xpFace { border: 0; background: #14231b url(ui/hero-brass-frame.png) center / 100% 100%; padding: 4px; border-radius: 4px; }
+#result #xp .xpFace canvas { width: 50px; height: 50px; }
+#result #xp .xprow > b { color: #eee0bd; font: 700 15px var(--body); }
+#result #xp .xprow em { font: 700 13px var(--body); color: #baddaf; }
+#result #xp .xprow i { border: 0; border-radius: 2px; background: #09180f; height: 6px; }
+#result #xp .xprow i span { background: linear-gradient(#b8e7c9, #4c9783); }
+#result #xp .xprow.up { border-color: #ebce85; box-shadow: inset 0 0 18px #e9c36b18, 0 0 12px #b9ab4933; }
+#result #fightStats { padding: 11px 9px; }
+#result #fightStats::before { content: 'AFTER-ACTION REPORT'; display: block; padding-bottom: 9px; margin-bottom: 5px; border-bottom: 1px solid #9c845455; color: #d8bf86; font: 700 10px var(--body); letter-spacing: .15em; }
+#result #fightStats .srow { grid-template-columns: minmax(80px, 1.5fr) repeat(4, minmax(0, 1fr)); gap: 5px; padding: 5px 0; }
+#result #fightStats .srow.head { font: 400 11px var(--body); }
+#result #fightStats .cell em { font: 400 12px var(--body); font-variant-numeric: tabular-nums; }
+#result > .row { z-index: 1; padding-top: 12px; background: linear-gradient(#101c1700, #101c17 30%); }
+#result #next, #recap .rcFoot > button { width: min(380px, 100%); min-height: 48px; border: 3px double #d5bb7c; border-radius: 3px; font: 700 17px var(--body); }
+/* Keep the between-wave march visible until the camera has arrived. */
+body[data-move] #result { background: none; }
+body[data-move] #result #banner { background: #15251ac4; }
+#recap { background: radial-gradient(ellipse at 50% 0, #65744133, transparent 60%), #101c17; }
+#recap .rcSheet { gap: 12px; padding: calc(env(safe-area-inset-top) + 18px) 12px 18px; scrollbar-width: thin; scrollbar-color: #9c8454 #142018; }
+#recap .rcTitle { position: relative; padding: 70px 8px 15px; font: 700 clamp(27px, 8vw, 36px)/1.1 var(--display); letter-spacing: .02em; border-bottom: 1px solid #bca16d66; background: linear-gradient(90deg, transparent, #6d2b3080, transparent); }
+#recap .rcTitle.won { color: #f4d794; }
+#recap .rcTitle.lost { color: #edb29f; }
+#recap .rcLine { color: #e0d6bc; font: 400 15px/1.3 var(--body); }
+#recap .rcJoke { margin: 0; color: #aaa995; font-size: 12px; font-style: italic; text-align: center; }
+#recap .rcGrid { gap: 7px; }
+#recap :is(.rcFig, .rcHero, .rcXpRow, .rcAdvice) { border: 1px solid var(--report-rim); border-radius: 5px; background: var(--report-surface); box-shadow: inset 0 0 0 2px #101a142e, 0 3px 8px #0004; }
+#recap .rcFig { padding: 12px 3px; gap: 4px; }
+#recap .rcFig b { font: 700 23px/1 var(--body); color: #f2d494; font-variant-numeric: tabular-nums; }
+#recap .rcFig span { font: 400 12px var(--body); }
+#recap .rcSheet > h3 { margin: 7px 0 0; padding: 9px 0; border: 0; border-bottom: 1px solid #9c845466; background: none; color: #ddc38e; font: 700 12px var(--body); letter-spacing: .14em; text-transform: uppercase; text-shadow: none; }
+#recap .rcHero { padding: 10px 8px; gap: 5px 9px; }
+#recap .rcHero.mvp { border-color: #dcc27d; background: radial-gradient(ellipse at 0 0, #ba9b362e, transparent), var(--report-surface); box-shadow: inset 0 0 0 1px #d6be7733, 0 3px 12px #0006; }
+#recap .rcFace { border: 0; border-radius: 4px; background: #17221a url(ui/hero-brass-frame.png) center / 100% 100% no-repeat; }
+#recap .rcFace canvas { width: 54px; height: 54px; }
+#recap .rcHero > b small { border: 1px solid #bca164; border-radius: 2px; background: #5b5030; color: #ffedb6; font: 700 10px var(--body); vertical-align: 1px; }
+#recap .rcBar { grid-template-columns: 43px minmax(0, 1fr) 48px; gap: 5px; }
+#recap .rcBar em { font: 400 12px var(--body); font-variant-numeric: tabular-nums; }
+#recap .rcBar i { border: 0; border-radius: 2px; background: #0a1510; height: 5px; }
+#recap .rcBar i span { background: linear-gradient(#e7ce8b, #927c43); }
+#recap .rcBar:nth-child(2) i span { background: linear-gradient(#b2d9a1, #4b9663); }
+#recap .rcBar:nth-child(3) i span { background: linear-gradient(#e2ab8b, #a05c4a); }
+#recap .rcXpRow { padding: 10px; gap: 6px; }
+#recap .rcXpRow em, #recap .rcXpRow span { font: 400 12px var(--body); }
+#recap .rcXpRow span.up { background: #52613a; border: 1px solid #a4b87c; color: #f3e9c6; }
+#recap .rcAdvice { padding: 12px; }
+/* Retain the existing 24px/12px, regular-weight comeback advice and working links. */
+#recap .rcAdvice h3 { color: #dfc691; }
+#recap .rcFoot { border-top: 1px solid #9c845477; background: #111e18; box-shadow: 0 -4px 16px #0005; }
+/* Replay, equipment, events and route summaries use the same compact report card. */
+#autoSum .asumCard, #ask .asumCard, #events .evcard, #towerMap .rtCard {
+  border: 3px double #a68e5d; border-image: none; border-radius: 6px;
+  background: radial-gradient(ellipse at 50% 0, #6c70402b, transparent 65%), linear-gradient(120deg, #243127fa, #121d18fc), url(ui/page.png);
+  box-shadow: inset 0 0 0 2px #09160f66, 0 8px 30px #0009;
+}
+#autoSum .asumCard, #ask .asumCard { max-height: calc(100dvh - 32px); overflow-y: auto; touch-action: pan-y; }
+#autoSum .asumCard::before, #towerMap .rtCard:is(.summary, .ccCard)::before {
+  content: ''; display: block; flex: none; width: 156px; height: 52px; margin: 0 auto 5px;
+  background: url(ui/battle-crest.png) center / contain no-repeat; pointer-events: none;
+}
+#autoSum .asumCard h2, #towerMap .rtCard h2 { font-family: var(--display); color: #f0d49a; text-shadow: 0 2px 4px #0008; }
+#autoSum .asumRows, #towerMap :is(.rtStats, .ccStats, .ccList) { background: #0d1a13aa; border: 1px solid #9c845455; border-radius: 4px; padding: 10px; }
+#autoSum .asumRows b, #towerMap .rtStats b { color: #f2d59a; font-variant-numeric: tabular-nums; }
+#events .evcard { padding: 14px; }
+#events .evcard h2 { font-family: var(--display); font-size: 25px; }
+#events .evcard :is(.row, .opt, .slot, .pick) { border: 1px solid #8d7c54; border-image: none; border-radius: 4px; background: linear-gradient(#354332, #1b2a20); color: #f1e6cc; }
+#events .evcard .pick.on { border-color: #f0cf83; background: linear-gradient(#4f5d3c, #273a28); }
+#events .evcard .opt.curse { border-color: #b87764; }
+#towerMap .rtCard.summary > .primary, #towerMap .rtCard.ccCard > .primary { position: sticky; bottom: 0; min-height: 48px; box-shadow: 0 -4px 12px #142017; }
+#towerMap .rtBest { color: #c9e1a5; }
+#towerMap .ccGroup h3 { color: #dbc18b; }
+/* Last Stand's castle-room HUD and reports are styled by stand.css (STAND-003).
+   Keep its crest, hero-colour stripes and pause/end sheets rather than layering older overrides. */
+@keyframes reportArrive { from { transform: translateY(5px); opacity: .4; } to { transform: none; opacity: 1; } }
+@media (max-width: 375px) {
+  #recap .rcHero { grid-template-columns: 58px minmax(0, 1fr); padding: 8px 6px; gap: 4px 7px; }
+  #recap .rcFace { width: 58px; height: 60px; }
+  #recap .rcFig b { font-size: 21px; }
+  #result #fightStats .srow { gap: 3px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #result #banner, #recap .rcHero { animation: none; }
+  #result > :is(#stars, #armyStars, #xp, #fightStats) { transition: none; }
+}
+#recap .rcEyebrow { color: #c6b180; text-align: center; font: 700 10px var(--body); letter-spacing: .19em; text-transform: uppercase; }
+#autoBar, #bossBar, #phaseBanner, #bossCard, #twistBanner {
+  border-color: #b69a64; border-image: none; border-radius: 4px;
+  background: linear-gradient(110deg, #17251cf5, #303229f5, #17251cf5); box-shadow: 0 3px 12px #0006;
+}
+#bossBar i { border-color: #a88061; background: #201315; }
+#bossBar i span { background: linear-gradient(#e9ac8d, #a65343); }
+.reviveLine { border-color: #b69a64; background: #17251cf5; color: #efcf98; }
+/* The new Last Stand's edge arrows belong inside its viewport, including their tips. */
+#stand .stFinds { overflow: clip; }

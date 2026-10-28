@@ -1,5 +1,5 @@
 // What clearing a whole Calamity pays, on top of the maps' crowns and the gold chests (the owner's ask: something big for finishing):
-// a heap of crowns, summoning stones, a Legendary or Mythic piece of gear, and a title for the
+// a heap of crowns, summoning stones, a Legendary or Mythic piece of gear, a Rift Cache (`awakenMats.ts`), and a title for the
 // ascension cleared (the badge shows on the victory screen and in the Calamity's menu). More at every ascension level.
 // Pure rules: no Pixi, no DOM; the draws come from side streams of the run's seed.
 
@@ -17,6 +17,9 @@ export const clearDraws = (level: number): number => 2 + Math.floor(Math.max(0, 
 export const STONES_PER_DRAW = CAL_STONES_PER_DRAW;
 /** The summoning stones a clear pays. */
 export const clearStones = (level: number): number => clearDraws(level) * STONES_PER_DRAW;
+
+/** Rift Caches a clear pays (`awakenMats.ts`). */
+export const CLEAR_CACHES = 1;
 
 /** The title for clearing the Calamity at an ascension level (index 0 is the plain clear). */
 export const CLEAR_TITLES: readonly string[] = [
@@ -37,6 +40,8 @@ export interface ClearReward {
   /** The title is new to this save. */
   newTitle: boolean;
   level: number;
+  /** Rift Caches given (one: opened on any hero's awakening panel for that hero's class's ores). Missing on a summary from before them. */
+  cache?: number;
 }
 
 /** Pay the finishing reward into the meta, once. `seed` is the run's. */
@@ -53,5 +58,7 @@ export function payClear(m: Meta, seed: number, level: number, armyIdx = 0): Cle
   const title = titleOf(level);
   const had = m.calTitles?.includes(level) ?? false;
   if (!had) (m.calTitles ??= []).push(level);
-  return { crowns, stones, gear: { name: itemName(item), rarity, base: item.base, level: item.level }, title, newTitle: !had, level };
+  // (a Rift Cache, opened later on a hero's awakening panel: the player chooses the class)
+  m.caches = (m.caches ?? 0) + CLEAR_CACHES;
+  return { cache: CLEAR_CACHES, crowns, stones, gear: { name: itemName(item), rarity, base: item.base, level: item.level }, title, newTitle: !had, level };
 }

@@ -57,6 +57,34 @@ export const GLOW: Partial<Record<Area, number>> = { shrine: 0xffb050, warcamp: 
 /** Which of a land's boulders give light at night (an index into its boulders, taken as `deco % boulders.length`). */
 export const LIT_PROPS: Partial<Record<Area, number[]>> = { shrine: [1], warcamp: [2], forge: [0], graveyard: [0, 1] };
 
+/** A clear day on an army's road (WORLD-ROAD) is not empty air: a few motes the land gives off drift through it, by land (pollen and
+ *  petals, fireflies over the mire, embers by the lava, flecks of snow, dust, ash over the graves, motes of crystal). Fewer than any weather. */
+export function ambientOf(area: Area): WeatherLook {
+  const mote = (colours: number[], flow: Flow, speed: [number, number], extra: Partial<WeatherLook> = {}): WeatherLook => ({ ...NONE, count: 16, colours, size: [2, 2], speed, flow, wind: 8, sway: 14, ...extra });
+  switch (area) {
+    case 'volcano':
+    case 'forge':
+      return mote([0xff8a2a, 0xffc040], 'rise', [18, 46]);
+    case 'snow':
+      return mote([0xffffff, 0xeaf2ff], 'fall', [16, 34], { size: [2, 3] });
+    case 'swamp':
+    case 'shrine':
+      return mote(area === 'shrine' ? [0xffd6e4, 0xf4b8d0] : [0xd8ff8a, 0xfff2a0], area === 'shrine' ? 'fall' : 'drift', [6, 16], area === 'shrine' ? { size: [2, 3], wind: 18 } : {});
+    case 'graveyard':
+    case 'dungeon':
+      return mote([0x9a9aa8, 0x7dffb4], 'drift', [4, 12]);
+    case 'desert':
+    case 'warcamp':
+      return mote([0xd8c090, 0xb8a078], 'drift', [6, 14], { wind: 26 });
+    case 'crystal':
+      return mote([0xc0ccff, 0xe8f0ff], 'rise', [8, 20]);
+    case 'autumn':
+      return mote(AUTUMN, 'fall', [20, 40], { size: [3, 3], wind: 20 });
+    default:
+      return mote([0xfff6c0, 0xe8ffd0], 'drift', [5, 14]);
+  }
+}
+
 export function lookOf(w: Weather, area: Area): WeatherLook {
   switch (w) {
     case 'rain':

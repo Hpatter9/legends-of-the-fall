@@ -15,9 +15,11 @@ import { BOSS_IDS } from './foes';
 import { readEquipment, readEquipped, type EquipSlot, type Equipment } from './equipment';
 import { migrateArmies, readSeen, seenFor, type ArmyRecord } from './armies';
 import { readStash } from './armyStars';
+import { readTomes, type TomeCounts } from './tomes';
 import { readTalents, type KindTalents } from './talents';
 import { AWAKEN_MULT } from './awakenRules';
 import { readAwakened } from './awaken';
+import { readCaches, readOres } from './awakenMats';
 import { readCodex, readCodexClaimed, readCodexPaid, type CodexRecord } from './codex';
 import { readCombosSeen } from './combos';
 import { readTickets } from './autoReplay';
@@ -25,6 +27,7 @@ import { grandfather } from './modeUnlock';
 import { drawKind, giveShards, toCollect } from './unlock';
 import { DUPLICATE_SHARDS, LUCKY_ODDS, LUCKY_RANK_SHARDS, PULL_HEROES, STONES_GIFT } from './unlockRules';
 import { grantContent } from './contentHeroes';
+import { grantSpells } from './spellSources';
 import { readShop } from './chestShop';
 import { readCards, readScenes } from './sceneRules';
 
@@ -112,6 +115,10 @@ export interface Meta {
   ranked?: Record<string, number>;
   /** The steps each hero kind has awakened above its top rank, 1 or 2 (`awaken.ts`; missing is none). */
   awakened?: Record<string, number>;
+  /** The rift ores held, by class trait (`awakenMats.ts`): an awakening step asks for its class's on top of the shards. Missing is none. */
+  ores?: Record<string, number>;
+  /** Rift Caches waiting to be opened on a hero's awakening panel (`awakenMats.ts`). A save from before the ores is paid one for each Calamity it cleared, up to five, the first time it is read. */
+  caches?: number;
   /** The talents each hero kind has taken and the points it bought with shards (`talents.ts`; missing is none). */
   talents?: Record<string, KindTalents>;
   /** The codex: the foe kinds met and the kills per kind (`codex.ts`; saves from before have none), and the milestone rewards claimed. */
@@ -123,6 +130,8 @@ export interface Meta {
   combosSeen?: string[];
   /** The auto runs spent on a date (yyyymmdd; `autoReplay.ts`, `AUTO_TICKETS` a day). Saves from before have none. */
   autoTickets?: { day: number; used: number };
+  /** The XP tomes held, by size (`tomes.ts`): chests give them, and the player reads one to a hero from its page. Saves from before have none. */
+  tomes?: TomeCounts;
   /** Chests earned from the armies' star milestones and not yet opened, oldest first (`armyStars.ts`). */
   stash: StashChest[];
   /** The cinematics seen (`sceneRules.ts`, by id): each plays once at its moment, and the codex's Scenes list plays a seen one again. Saves from before have none. */
@@ -430,10 +439,17 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       // (saves from before awakening have none)
       m.awakened = readAwakened(m.awakened, m.shards);
       if (!Object.keys(m.awakened).length) delete m.awakened;
+      // (saves from before the rift ores have none, and are paid a Rift Cache for each Calamity they cleared, up to five, once: the count is kept from then on)
+      m.ores = readOres(m.ores);
+      if (!m.ores) delete m.ores;
+      m.caches = readCaches(m.caches, m.calamity?.clears ?? 0);
       // (saves from before the talents have none; the rest of the save is read first, as the points depend on levels and shards)
       m.talents = readTalents(m.talents, m);
       // (saves from before the army chests have an empty stash; a chest given but not opened by an earlier format goes into it)
       m.stash = readStash(m.stash, rawArmies, m.seed);
+      // (saves from before the XP tomes have none)
+      m.tomes = readTomes(m.tomes);
+      if (!m.tomes) delete m.tomes;
       // (a save from before the star unlocks keeps what it had open: the armies, the castle, the tower and the Calamity it had reached)
       m.opened = Array.isArray(m.opened) ? m.opened.filter((x) => typeof x === 'string') : grandfather(m);
       // (saves from before the codex have none)
@@ -460,6 +476,8 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       if (!m.bossCards.length) delete m.bossCards;
       // (a content hero whose milestone a save from before has already reached joins now)
       if (!needsStarter(m)) grantContent(m);
+      // (spells are no longer bought: those bought before are kept, and any whose tower level or milestone a save has already reached are learnt now)
+      grantSpells(m);
       return m;
     }
   } catch {
