@@ -99,6 +99,7 @@ import { closeCalls, ultimatesCast } from './render/quipRules';
 import { LOADING_TIPS, RECAP_LOSS, RECAP_WIN, RESULT_LOSS, RESULT_WIN } from './quipData';
 import { hideQuip, showQuip, type Anchor } from './quipView';
 import type { LuckyBleatEffect } from './render/duchessRules';
+import { bleatCabbage, bleatStartle } from './sim/duchessBleat';
 import heartUrl from './art/rogue/heart.png';
 
 TextureSource.defaultOptions.scaleMode = 'nearest';
@@ -512,35 +513,14 @@ class Game {
     this.meta.duchessLucky = true;
     saveMeta(this.meta);
     if (effect.kind === 'startle') {
-      const foes = this.b.units.filter((u) => u.alive && u.side === 'foe');
-      if (!foes.length) return;
-      let target = foes[0];
-      let bestD = Infinity;
-      const d = this.b.board.d;
-      for (const f of foes) {
-        const dist = Math.hypot(f.u, f.v - (d - 1));
-        if (dist < bestD) {
-          bestD = dist;
-          target = f;
-        }
-      }
-      target.busyUntil = Math.max(target.busyUntil, this.b.t + effect.durationMs);
-      target.stunUntil = Math.max(target.stunUntil ?? 0, this.b.t + effect.durationMs);
+      const target = bleatStartle(this.b, effect.durationMs);
+      if (!target) return;
       const sb = this.spriteBox(target.id);
       const anchor: Anchor = sb ? { x: sb.x + sb.w / 2, y: sb.y } : { x: 48, y: 320 };
       showQuip(anchor, effect.text, { who: UNITS[target.def]?.name ?? 'Foe', hold: 2000 });
     } else if (effect.kind === 'cabbage') {
       const b = this.b;
-      const candidates: [number, number][] = [
-        [0, b.board.d - 1],
-        [1, b.board.d - 1],
-        [0, b.board.d - 2],
-        [1, b.board.d - 2],
-        [2, b.board.d - 1],
-      ];
-      let tile = candidates.find(([u, v]) => standable(tileAt(b.board, u, v)));
-      if (!tile) tile = [0, b.board.d - 1];
-      (b.cabbages ??= []).push({ u: tile[0], v: tile[1], healPercent: effect.healPercent });
+      const tile = bleatCabbage(b, effect.healPercent);
       this.fx.cabbage(b, tile[0], tile[1]);
       const panel = document.getElementById('panel');
       const r = panel?.getBoundingClientRect();
