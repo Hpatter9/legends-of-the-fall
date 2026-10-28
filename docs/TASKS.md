@@ -14,6 +14,31 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### WORLD-ROAD — Army road, boss arenas and the living land
+
+- **Goal:** the owner's asks: army battle maps follow a realistic path (a winding road 6 to 9 tiles wide with themed scenery beside it that walkers cannot enter, not a full 14x18 slab), each army's boss waves (8 and 15; the Wildwood's 5, 10 and 15) fought in its own themed arena, and (phase B) a living environment: hazards that act on both sides, running water and waterfalls, pack walls and set pieces at the tiles' angle, ambient life.
+- **Status:** done; owner approved and released as 0.187.0 (castle gate sprite removed at the owner's ask).
+- **Owner:** Claude (the WORLD army map is normally the other AI's area; the owner assigned this one to Claude).
+- **Branch / worktree / PR:** `claude/army-road`, `/home/user/army-road` (main 0.186.0 merged in); PR none.
+- **Allowed files or systems:** `src/sim/scenario.ts`, `src/sim/armyRoad.ts`, `src/sim/hazards.ts`, `src/sim/board.ts` (optional `Tile.scene`, `paved`, `ring`, `stream`; `Board.pieces`, `hazards`, `flow`, `falls`; scenery not `standable`), `src/sim/battle.ts` (the `hazard` event and its tick), `src/sim/armies.ts` (seven Normal `start` values), `src/render/boardView.ts`, `columnTextures.ts`, `roadArt.ts`, `roadAtlas.ts`, `hazardLooks.ts`, `fx.ts` (hazard tells and strikes), `soundRules.ts` (their cues), `weatherRules.ts`/`weatherView.ts` (ambient motes on the road), `src/main.ts` (two calls), `src/art/road/`, tests `test/army-road.test.ts`, `test/army-hazards.test.ts`, `test/world-001-scenario.test.ts`, `tools/army-road/`, `docs/notes/army-road.md`, `docs/samples/army-road-*.png`, `CREDITS.md`. Other modes' boards untouched.
+- **Completion criteria:** road and arenas per the owner's answers; hazards deterministic on their own side stream, both sides, each rule tested; rings and set pieces from pack art at the tiles' angle, credited; water flows and pours off open edges; ambient life respecting reduced motion and battery saver; every walkable tile reachable and every survivor able to walk on to the next section; armies within noise of main at their recommended levels; typecheck, affected tests and the full suite, web build; 393x852, 360x780 and 412x915 checks.
+- **Validation:** see the handoff's "Checks run for phase B".
+- **Handoff:** [notes](notes/army-road.md), [phase B sheet](samples/army-road-after-sheet.png), [phase A mock-ups](samples/army-road-mock-sheet.png).
+
+### AWAKEN-002 — Class auras for awakened heroes
+
+- **Goal:** the owner's ask: drop the awakened recolour; an awakened hero wears an aura at step 1 (rank 5) and a stronger, bigger one at step 2 (rank 6), its style set by the hero's class trait (not the origin), wherever an awakened hero is drawn.
+- **Status:** done; owner approved and released as 0.188.0 (Calamity fights keep no aura: the owner's call). Earlier: phase A approved by the owner (look suits; Werewolf red sheet dropped; rank 4 keeps its gold glow and outline, awakened steps take the class colour; art behind one seam with a painted-art brief; camp included). Phase B done on the branch, ready for review.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/awaken-auras`, `/home/user/awaken-auras` (main 0.186.0 merged in); PR none yet (not asked).
+- **Allowed files or systems:** the awakened look (`src/render/awakenLook.ts`, `awakenRig.ts`, new `auraStyles.ts`, `auraPlace.ts`, `auraArt.ts`, `awakenAura.ts`, `auraCanvas.ts`, `figureShare` in `sheets.ts`), `unitView.ts`, `fx.ts` (loader), `sceneView.ts`, `menuHeroes.ts`, `rankUpView.ts`, `awakenView.ts`, `awaken.css`, `partyScene.ts`, `party.ts` (one call), `tavern.ts`, `camp.ts`, `hall.ts`, `calMap.ts`, the aura atlas in `src/art/fx/aura/`, `tools/awaken/`, `test/awaken*.test.ts`, `CREDITS.md`, `docs/notes/awaken-auras*.md`, `docs/samples/awaken-auras-*.png`. Not the castle tab, the battle-picking menu tab, the WORLD army map or the Last Stand files; no simulation, save or version change.
+- **Completion criteria:** no recolour anywhere; every class trait has its own step 1 and step 2 aura from pack art, credited, behind one atlas seam with a painted-art brief; the aura shows in fights, the Last Stand, the cinematics, the camp, the tavern, the summoning hall, the Calamity map, the war council, the roster, the dossier, the Rank up card and the awakening panel and burst; reduced motion holds it still and visible; battery saver thins it; no allocation per frame; typecheck, web build, affected and full tests, and the screens at 393x852, 360x780 and 412x915.
+- **Validation (phase B):** typecheck passed; `npm run web` built; full `npm test` 1252 of 1252 passed (including `test/awaken-auras.test.ts`, 4 tests, and the updated look test in `test/awaken.test.ts`); `tools/awaken/aura-places.mjs` captured every place at 393x852, 360x780 and 412x915, and reduced motion and battery saver at 393x852, with no page errors; the painted-art importer tried with stand-in sheets. Frame rate on a real phone not measured.
+- **Limits:** Calamity fights show no aura because the Calamity is a local run that reads nothing of the meta, awakening included (unchanged rule); the summoning hall never summons an awakened hero in play (drawn if one ever comes out).
+- **Handoff:** `docs/notes/awaken-auras.md`, `docs/notes/awaken-auras-art-brief.md`; pictures `docs/samples/awaken-auras-places.png`, `-closeups.png`, `-sizes.png`, `-calm.png` (and the phase A mock-ups).
+
+**ART-001 / Resonance hero pilot** — Owner: current Codex art chat. Branch: `art/resonance-heroes`, worktree: `/workspace/legends-of-the-fall`. Owner accepted the implemented appearance and requested integration. Scope: Knight and Archer sprite sheets, their render mappings/scales, art credits, validation tools and evidence. Current main 0.179.0 integrated, preserving newer hero kits, roles, maps and battle command HUD. Status: implementation accepted, ready for the owner's merge through [PR #144](https://github.com/Hpatter9/legends-of-the-fall/pull/144); 48 animation cells installed, typecheck/build and four affected test files passed, actual roster/dossier/deploy/combat checks passed at all three portrait sizes with zero page errors. Source atlases and preview preserved. Version/deployment remain with the director at merge time. See [handoff](notes/resonance-heroes.md).
+
 ### CHEST-001 — XP tomes and Open all
 
 - **Goal:** the owner's two asks: XP tomes (small, medium, large) as a chest drop, read to one hero of the player's choice from the hero's page; and an Open all for the chests waiting on the cart, with one combined summary.
@@ -95,6 +120,11 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 | ID | Task | Result | Reference |
 | --- | --- | --- | --- |
+| AUDIO-150 | Recorded combat sounds and a quieter, cleaner battle mix | Released as 0.186.0; the sounds' source (given as CC0) still needs naming in CREDITS.md | PR #150 |
+| AUDIO-147 | Battle music opens on the combat downbeat; the camp's theme plays across all home tabs | Released as 0.184.0; the loop start was moved to 5.68 s (bar 4) so the loop stays whole bars and joins on the beat | PR #147 |
+| UI-CASTLE-1 | Remove the corner relic emblems from the castle's building cards | Owner asked; released as 0.183.0; castle tests, build, fresh/old-save and Last Stand smoke passed | branch `claude/castle-card-corners`, screenshot `samples/castle-no-corner-emblems-393x852.png` |
+| SIM-001 | No phantom hit effects; no credit for terrain self-damage | Merged with main 0.181.0 (hero-kit after-blow effects also wait for a landed blow) and released as 0.182.0; full suite, build, fresh/old-save and Last Stand smoke passed | [PR #122](https://github.com/Hpatter9/legends-of-the-fall/pull/122), [handoff](notes/sim-001.md) |
+| FIX-177 | Unblock the publish after the winding maps | Owner asked; armies keep one land on the winding maps, three tests moved to the 14x18 army board, Undead Normal start 1.52; full suite 1220/1220, build, fresh/old-save and Last Stand smoke passed; release 0.180.0 (0.179.0 was also used by PR #143, merged just before) | [Note](notes/fix-177-tests.md), branch `claude/fix-177-tests` |
 | CHEST-001 | XP tomes and Open all | Owner accepted release 0.178.0; tomes 250/5,000/20,000 XP from every stash and shop chest, Open all equal to one-by-one; typecheck, build, fresh/old-save and Last Stand smoke passed; full suite 1216/1220, the 4 failures also fail on main 0.177.0 (winding battle maps), not from this change | [Handoff](notes/chest-extras.md), branch `claude/chest-extras` |
 | UI-006 | Cliffside battle overlook with nine army-dependent bases and distant Calamity | Owner authorised release 0.175.0 and PR merge; typecheck/build, 85 targeted tests, all nine camps at three portrait sizes and offline switching passed | [PR #139](https://github.com/Hpatter9/legends-of-the-fall/pull/139), [implementation and screenshots](notes/battle-overlook.md) |
 
@@ -115,6 +145,20 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 | DIALOGUE-001 | Roughly 90% fewer fight conversation bubbles | Owner accepted and authorised merge, release 0.160.0; typecheck, build and dialogue tests pass; full suite stopped after 50 passes and 53 cancellations | [Handoff](notes/fight-bubbles.md), branch `reduce-fight-bubbles` |
 | UI-001 | Keep & Kingdom hero roster, equipment and shared styling | Done; owner accepted the result and authorised merge, release 0.159.0 | [PR #118](https://github.com/Hpatter9/legends-of-the-fall/pull/118), [validation and screenshots](notes/tactical-command-ui.md) |
 | SETUP-001 | Shared Codex instructions and task board | Done; merged at owner's request, version 0.157.0 | [PR #119](https://github.com/Hpatter9/legends-of-the-fall/pull/119), [setup note](notes/manager-setup.md) |
+
+## SIM-001 implementation assignment
+
+- **ID / title:** SIM-001 — effective hits and environmental kill credit (#121).
+- **Status:** ready for Game Director review; not merged.
+- **Owner:** Codex implementation chat.
+- **Branch / worktree / PR:** `codex/sim-001`, `/workspace/legends-of-the-fall`; [PR #122](https://github.com/Hpatter9/legends-of-the-fall/pull/122).
+- **Allowed scope:** simulation damage settlement, pure combat statistics, regression tests, this board and `docs/notes/sim-001.md`.
+- **Reserved:** UI-001's completed work and ownership history are preserved; no UI changes in SIM-001. No UI, input, renderer, charm targeting or RNG isolation changes.
+- **Completion criteria:** reproduce failures first; minimally fix post-hit effects and environmental credit; cover cancelled/dead/shielded hits and genuine kills; run typecheck, tests and web build; open an unmerged PR and report in #121.
+
+- **Validation:** typecheck passed; full `npm test` passed (104 test files); final 19 focused regressions and `npm test -- sim-001` passed; web build and diff checks passed.
+- **Integration:** current main UI release retained unchanged; typecheck, focused tests and web build also passed against 0.159.0.
+- **Handoff:** `docs/notes/sim-001.md`; genuine combat credit and participation/victory XP retained; no implementation blockers. Director reviews shield rider interpretation and handles merge/versioning.
 
 ## Ready queue
 

@@ -1,5 +1,7 @@
 # Credits
 
+- **Resonance hero pilot** (`hero_soldier.png`, `hero_samurai_archer.png`): original generated pixel artwork, directed from the owner's approved concept and Final Fantasy Resonance style references. No franchise sprites are included. Cropped, packed and sampled with nearest-neighbour scaling by `tools/resonance/pack.cjs`. These replace the Knight and Archer's displayed art at all grades; existing grade and awakening colour treatments still apply. Original Craftpix sheets and their credits remain available.
+
 Most of the art is from free **Craftpix.net** packs (craftpix.net, free licence: use in games allowed, no redistributing
 the raw files), copied one sprite at a time from the private assets repository (`hpatter9/chronos-assets`).
 
@@ -53,7 +55,9 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
     - Opening (`opening.opus`): **Spooky Waltz (Music Box)** by **Aureolus_Omicron** (OpenGameArt.org, CC0 Public Domain).
     - Story scenes: **Medieval Victory Theme** (`triumph.opus`, CC0); **Emotional Piano Loop** by **Extenz** (`solemn.opus`, CC0); **Soliloquy** by **Matthew Pablo** (`spire.opus`, CC-BY 3.0); **Enchanted Festival** by **Matthew Pablo** (`comic.opus`, CC-BY 3.0).
   - Each track is resampled to 24 kHz, seamlessly crossfaded, and encoded to Opus with a 1.5 s wrap tail. The older synthesised loops (`src/render/musicScore.ts`, rendered in the page by `src/render/musicBake.ts`) remain as a fallback if a browser cannot decode the files.
-- **The sound effects** are synthesised in `src/render/audioProcessors.ts` with the Web Audio API; no files were copied for them.
+- **The sound effects** are synthesised in `src/render/audioProcessors.ts` with the Web Audio API, except eight recorded combat sounds (sword and
+  blunt hits, a shield block, a crit, a bowstring, an arrow hit, a death and an explosion) embedded in `src/render/combatAudioBank.ts`
+  (PR #150, given as CC0). Their original source and authors were not recorded with the PR and should be named here.
 
 ## Areas (`src/art/areas/`, cut by `tools/areas-prep.py`)
 
@@ -100,6 +104,17 @@ All Craftpix, copied one sprite or layer at a time; no PixelLab. Ground tops and
   burst, explosion and wave, ice shield, fire circle and explosion, gold, white and blood bursts, dark circle and slash,
   moon slash, lightning burst and strike, and the pink heart. The pack's licence allows use in games, commercial ones
   included; credit appreciated (https://blueberry-assets.itch.io). Mapped to skills and spells in `src/render/skillFx.ts`.
+
+## Awakened auras (`src/art/fx/aura/`)
+
+- `atlas.png`: 70 strips (32px frames, six or eight each) of the **5000 Pixel Effects** pack by blueberry
+  (https://blueberry-assets.itch.io), copied unchanged from `pixel-effects/sprites/<effect>/sheet-32.png` in the private
+  assets repository and packed a strip a row by `tools/awaken/aura-sheets.py` (`atlas.json` gives each aura part's
+  strip; `tools/awaken/aura-pack.json` which strip each part uses): the ground circles, runes, glyphs, shields, rising
+  auras, sparkles, orbs, flames, smoke, vortices, pillar, cuts, slashes and dashes the class auras of awakened heroes
+  are made of (`src/render/auraStyles.ts`, `docs/notes/awaken-auras.md`). The pack's licence allows use in games; the
+  raw files are not redistributed. A painted replacement (`docs/notes/awaken-auras-art-brief.md`) would be credited
+  here instead.
 
 ## Fight effects (`src/art/fx/vfx/`)
 
@@ -238,6 +253,25 @@ All Craftpix, copied one sprite or layer at a time; no PixelLab. Ground tops and
   isometric kits (`hpatter9/little-town`), halved by a 2x2 box average.
 
 - **Stone and iron UI kit** (`src/art/ui/` frames, buttons, ribbons, chips, flag, `wood.png`, `page.png`; drawn by `tools/ui/styles.py`, which replaced `tools/ui/frames.py`'s brown and gold kit): the `wood.png` (bars) and `page.png` (menu pages, panel fill) textures are the centre tiles of two **DawnLike** brick sets by DragonDePlatino (`Objects/Floor.png`, CC-BY 4.0; palette by DawnBringer), their few colours moved by brightness rank onto the slate ramp, with no resampling. The frames are drawn natively by the script.
+## The army road's scenery and arenas (WORLD-ROAD)
+
+- `src/art/road/atlas.png` (cut by `tools/army-road/prep.py`, listed in `src/render/roadAtlas.ts`): the arenas' rings and set pieces and the land
+  beside the road (the orcs' spiked wall and stake fence, the liches' bone wall, iron fence, mausoleum, dead oak and lantern post, the
+  dwarves' stone wall, braziers, crystals and rubble, the machines' iron wall, generator, iron tree, arc lamp and coil stack, the Moon Pack's bone
+  fence, cave den, howling stone, snowy pine, torch post and fallen log, the druids' great oak, birch, standing stone, stone circle, hedge and
+  mushroom lantern, the Fae's weeping willow, silver birch, shrine and lantern post, the Blood Court's gravestones and brazier, the nomads' tassel
+  lantern, the orcs' skull gate, war drum, skull torch, bonfire, burnt tree and dark rocks, and the wild set's ruins, pillars, statue, bones,
+  skeleton, ferns, reeds, grass, flowers, mushrooms, pebbles, shrubs, thorns and stump) are single pieces of Chronos Settlement's isometric kits
+  (`hpatter9/little-town`, `src/renderer/art/iso/kits/`), the same kits as the Calamity map's atlas above, so they stand at the boards' own angle.
+  The bigger pieces are halved by a 2x2 box average; the atlas is reduced to 256 colours. Chronos credits the kits as drawn with ChatGPT's image
+  generation from prompts written for that game, then cut, cleaned and reduced to 256 colours.
+- The rest of the scenery is cut at run time from the Calamity map's atlas (`src/art/calmap/atlas.png`, credited above), and the ruins from the
+  boards' own ruined walls.
+- `src/art/road/birds.png`: the five small birds pecking at the road's edge, **DawnLike** by DragonDePlatino (`Characters/Avian0.png` and
+  `Avian1.png`, CC-BY 4.0; palette by DawnBringer), as cut for Chronos Settlement (`src/renderer/art/birds.png` there).
+- The running water, the waterfalls and the lights' glow are painted in code (`src/render/roadArt.ts`): no pack has a waterfall at this angle.
+  The hazards' strikes play the **Pixel Effects** pack's strips already in the game (`src/art/fx/pack`).
+
 ## The Calamity's void (`src/art/calmap/`, `tools/calmap/prep.py`)
 
 - The sky behind the islands: the stars (`stars.png`, the bright pixels of the first sky) and the four moons (`planet_white/tan/red/blue.png`) are cut from the Craftpix **Free Moon Pixel Game

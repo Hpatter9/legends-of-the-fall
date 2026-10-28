@@ -6,6 +6,7 @@
 import { AudioProcessor, type SchedulableParam } from '@audiorective/core';
 import { Limiter } from '@audiorective/effects';
 import type { Cue } from './soundRules';
+import { CombatAudioBank, type CombatSample } from './combatAudioBank';
 import { EPIC_INFO, bakeTrack, type Baked } from './musicBake';
 import { CALM_TRACKS, SCENE_TRACKS, STEMS, stemLevels, type Stem, type Track } from './musicScore';
 import { DUCK_GAIN, DUCK_HZ, OPEN_HZ, colourOf, cutoffOf, percActive, percLevel, rateOf, swellOf } from './audioRules';
@@ -136,6 +137,7 @@ export interface Voices {
   thump(t: number, f: number, d: number, v: number, to?: number): void;
   clang(t: number, f: number, d: number, v: number): void;
   snap(t: number, v: number, f?: number): void;
+  sample?(name: CombatSample, t: number, gain?: number, pitch?: number): boolean;
 }
 
 /** What `CueSynth.play` needs to make a sound: how loud and how high, which bus, and where in the stereo field. */
@@ -151,6 +153,7 @@ export interface PlayOpts {
  *  a handful of short-lived nodes (as it always was); a panned cue adds one stereo panner in front of its bus. */
 export class CueSynth extends AudioProcessor implements Voices {
   private readonly noise: AudioBuffer;
+  private readonly bank = new CombatAudioBank();
   /** Where the sound being made now is sent, and its pitch and level (set by `play` around the cue's code). */
   private out: AudioNode;
   private pitch = 1;
@@ -163,6 +166,7 @@ export class CueSynth extends AudioProcessor implements Voices {
     private readonly bus: (name: BusName) => AudioNode,
   ) {
     super(ctx, () => ({}));
+    void this.bank.load(ctx);
     // (one second of white noise, shared by the bursts)
     this.noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
     const data = this.noise.getChannelData(0);
@@ -328,6 +332,23 @@ export class CueSynth extends AudioProcessor implements Voices {
     this.hiss(t, 0.025, f, 'highpass', v * 1.2, f * 0.4, 2.5);
     this.note(t, f * 0.4, 0.03, v * 0.6, 'triangle', f * 0.1);
   }
+
+  /** Plays an authentic recorded combat sample from the soundbank if loaded. Returns true if played, false if not yet available. */
+  sample(name: CombatSample, t: number, gain = 1, pitch = 1): boolean {
+    const buf = this.bank.get(name);
+    if (!buf) return false;
+    const c = this.context;
+    const src = c.createBufferSource();
+    src.buffer = buf;
+    src.playbackRate.value = this.pitch * pitch;
+    const g = c.createGain();
+    const targetGain = Math.max(0.0001, gain * this.voiceGain);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(targetGain, t + 0.004);
+    src.connect(g).connect(this.out);
+    src.start(t);
+    return true;
+  }
 }
 
 /* -------------------------------------------------------------- the synthesised effects */
@@ -368,6 +389,7 @@ export const SOUNDS: Record<Cue, (s: Voices, t: number) => void> = {
     s.thump(t + 0.34, 130, 0.3, 0.18, 50);
   },
   boom: (s, t) => {
+    if (s.sample?.('boom', t, 1.15)) return;
     s.thump(t, 85, 0.8, 0.55, 24);
     s.hiss(t, 0.65, 350, 'lowpass', 0.42, 60);
     s.scatter(t + 0.05, 0.4, 6, 0.14, 1800);
@@ -417,40 +439,48 @@ export const SOUNDS: Record<Cue, (s: Voices, t: number) => void> = {
 
   // and what it lands as
   hitLight: (s, t) => {
+    if (s.sample?.('hitSword', t, 0.45, 1.25)) return;
     s.snap(t, 0.22, 3800);
     s.thump(t, 280, 0.07, 0.18, 110);
   },
   hitSword: (s, t) => {
+    if (s.sample?.('hitSword', t, 0.75)) return;
     s.clang(t, 1420, 0.18, 0.2);
     s.snap(t, 0.28, 4200);
     s.thump(t, 160, 0.11, 0.26, 50);
   },
   hitHeavy: (s, t) => {
+    if (s.sample?.('hitBlunt', t, 0.95, 0.85)) return;
     s.thump(t, 105, 0.32, 0.48, 26);
     s.hiss(t, 0.2, 550, 'lowpass', 0.35, 110);
     s.click(t, 0.25, 1200);
   },
   hitBone: (s, t) => {
+    if (s.sample?.('hitBlunt', t, 0.7, 1.25)) return;
     s.snap(t, 0.26, 3200);
     s.clang(t, 950, 0.1, 0.16);
     s.thump(t, 240, 0.08, 0.18, 80);
   },
   hitFist: (s, t) => {
+    if (s.sample?.('hitBlunt', t, 0.75, 1.1)) return;
     s.thump(t, 145, 0.16, 0.38, 45);
     s.hiss(t, 0.1, 750, 'lowpass', 0.26, 180);
   },
   hitSpear: (s, t) => {
+    if (s.sample?.('hitSword', t, 0.65, 1.15)) return;
     s.snap(t, 0.25, 4500);
     s.clang(t, 1180, 0.14, 0.18);
     s.thump(t, 200, 0.1, 0.22, 60);
   },
   crit: (s, t) => {
+    if (s.sample?.('crit', t, 1.1)) return;
     s.thump(t, 70, 0.48, 0.52, 22);
     s.clang(t, 2150, 0.38, 0.26);
     s.ring(t, 3400, 0.32, 0.14);
     s.hiss(t, 0.18, 5500, 'highpass', 0.25);
   },
   block: (s, t) => {
+    if (s.sample?.('block', t, 0.95)) return;
     s.clang(t, 920, 0.34, 0.28);
     s.clang(t, 1540, 0.24, 0.18);
     s.snap(t, 0.26, 4500);
@@ -460,12 +490,14 @@ export const SOUNDS: Record<Cue, (s: Voices, t: number) => void> = {
 
   // shots
   bow: (s, t) => {
+    if (s.sample?.('bow', t, 0.85)) return;
     s.snap(t, 0.24, 3200);
     s.note(t, 290, 0.13, 0.22, 'triangle', 120);
     s.note(t, 580, 0.05, 0.08, 'sine', 240);
   },
   arrowFly: (s, t) => s.hiss(t, 0.22, 2200, 'bandpass', 0.14, 750, 3),
   arrowHit: (s, t) => {
+    if (s.sample?.('arrowHit', t, 0.8)) return;
     s.snap(t, 0.28, 3600);
     s.thump(t, 230, 0.08, 0.28, 65);
   },
@@ -501,6 +533,7 @@ export const SOUNDS: Record<Cue, (s: Voices, t: number) => void> = {
     s.scatter(t + 0.04, 0.28, 6, 0.08, 2800);
   },
   fireBoom: (s, t) => {
+    if (s.sample?.('boom', t, 1.0)) return;
     s.thump(t, 85, 0.65, 0.58, 22);
     s.hiss(t, 0.55, 850, 'lowpass', 0.45, 120);
     s.scatter(t + 0.05, 0.35, 8, 0.15, 2600);
@@ -628,6 +661,7 @@ export const SOUNDS: Record<Cue, (s: Voices, t: number) => void> = {
 
   // deaths
   deathBones: (s, t) => {
+    if (s.sample?.('death', t, 0.75, 1.2)) return;
     for (let i = 0; i < 8; i++) {
       const at = t + i * 0.045 + Math.random() * 0.02;
       s.snap(at, 0.14, 3000 + Math.random() * 900);
@@ -642,18 +676,21 @@ export const SOUNDS: Record<Cue, (s: Voices, t: number) => void> = {
     s.thump(t, 90, 0.4, 0.25, 35);
   },
   deathThud: (s, t) => {
+    if (s.sample?.('death', t, 0.95)) return;
     s.thump(t, 75, 0.55, 0.58, 22);
     s.hiss(t, 0.4, 320, 'lowpass', 0.4, 80);
     s.note(t + 0.16, 58, 0.38, 0.28, 'sine', 26);
     s.scatter(t + 0.12, 0.35, 5, 0.09, 550, 'lowpass');
   },
   deathStone: (s, t) => {
+    if (s.sample?.('death', t, 0.95, 0.85)) return;
     s.thump(t, 90, 0.4, 0.4, 30);
     s.snap(t, 0.35, 2400);
     s.hiss(t, 0.55, 850, 'lowpass', 0.3, 160);
     s.scatter(t, 0.5, 8, 0.18, 1300, 'bandpass');
   },
   deathBlood: (s, t) => {
+    if (s.sample?.('death', t, 0.85, 1.05)) return;
     s.thump(t, 160, 0.35, 0.28, 45);
     s.snap(t, 0.25, 2800);
     s.hiss(t, 0.3, 550, 'lowpass', 0.18);
@@ -932,7 +969,7 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam; swel
         src.loopEnd = info.loop[1];
       }
       src.connect(gain).connect(fade);
-      src.start(t);
+      src.start(t, info ? info.loop[0] : 0);
       loop.stems[stem] = { src, gain };
     }
     this.loops.set(track, loop);

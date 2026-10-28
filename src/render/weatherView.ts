@@ -7,7 +7,7 @@ import { Container, Sprite, Texture } from 'pixi.js';
 import type { Area } from '../sim/board';
 import type { Weather } from '../sim/weather';
 import { settings } from '../settings';
-import { countFor, fogFor, lookOf, tintAt, type WeatherLook } from './weatherRules';
+import { ambientOf, countFor, fogFor, lookOf, tintAt, type WeatherLook } from './weatherRules';
 
 interface Mote {
   sp: Sprite;
@@ -80,8 +80,9 @@ export class WeatherView {
   }
 
   /** A new fight: show this weather. `spots` are the lit props' places in the world (night's glows go there). */
-  set(weather: Weather, area: Area, spots: [number, number][]): void {
-    this.look = lookOf(weather, area);
+  set(weather: Weather, area: Area, spots: [number, number][], living = false): void {
+    // (an army's road on a clear day: the land's own motes, `ambientOf`)
+    this.look = living && weather === 'clear' ? ambientOf(area) : lookOf(weather, area);
     this.age = 0;
     this.seed = (Math.imul(spots.length + 7, 2654435761) ^ (area.length * 977) ^ weather.length) >>> 0 || 1;
     const look = this.look;

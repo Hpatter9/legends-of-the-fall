@@ -7,7 +7,7 @@ import { fightXp } from '../src/sim/levels';
 import { CHARGE_MAX, BRITTLE_MULT } from '../src/sim/abilities';
 import {
   BLINK_HIDE_MS, BULWARK_MS, BULWARK_SHARE, castSpell, CLEANSE_HEAL, DEEPFREEZE_MS, HEX_MS, HEX_MULT, LANCE_POWER, MANA_MAX, METEOR_MS, RENEWAL_MS, RENEWAL_SHARE, SHOWER_GAP, SHOWER_POWER, SHOWER_SPOTS,
-  SPELL_IDS, SPELLS, STARTER_SPELLS, unlockSpell, WARCRY_CHARGE, WOLVES, readLoadout, equipSpell, type SpellId,
+  SPELL_IDS, SPELLS, STARTER_SPELLS, WARCRY_CHARGE, WOLVES, readLoadout, equipSpell, type SpellId,
 } from '../src/sim/spells';
 import { tileAt } from '../src/sim/board';
 import { startedMeta } from '../src/sim/meta';
@@ -34,18 +34,15 @@ const still = (b: Battle) => {
   for (const x of b.units) x.busyUntil = 1e9;
 };
 
-test('ten new spells: costs, cooldowns and power fit the rules, each costs crowns, and the starters are unchanged', () => {
+test('ten new spells: costs, cooldowns and power fit the rules, and the starters are unchanged', () => {
   assert.equal(SPELL_IDS.length, 11 + NEW.length);
   assert.deepEqual([...STARTER_SPELLS], ['heal', 'meteor', 'haste']);
   for (const id of NEW) {
     const sp = SPELLS[id];
     assert.ok(SPELL_IDS.includes(id), id);
-    assert.ok(sp.cost >= 1 && sp.cost <= MANA_MAX && sp.cooldownMs >= 6000 && sp.power >= 1 && sp.power <= 5 && sp.price >= 60 && sp.price <= 300, id);
+    assert.ok(sp.cost >= 1 && sp.cost <= MANA_MAX && sp.cooldownMs >= 6000 && sp.power >= 1 && sp.power <= 5, id);
     assert.ok(sp.text.length > 10, id);
   }
-  // (the pricier a spell, the stronger: price rises with power, and no two of a power are more than 130 crowns apart in the new ten)
-  const byPrice = [...NEW].sort((x, y) => SPELLS[x].price - SPELLS[y].price);
-  for (let i = 1; i < byPrice.length; i++) assert.ok(SPELLS[byPrice[i]].power >= SPELLS[byPrice[i - 1]].power - 1, byPrice[i]);
   // (the strongest costs the most mana, and nothing outdoes the existing top spells in power)
   assert.equal(Math.max(...NEW.map((id) => SPELLS[id].power)), 5);
   // (three of the new ones that fit the base budget exist, and the biggest three never do)
@@ -55,13 +52,7 @@ test('ten new spells: costs, cooldowns and power fit the rules, each costs crown
   for (const id of ['hex', 'lance', 'renewal'] as const) assert.ok(equipSpell(m, id), id);
 });
 
-test('the new spells are bought with crowns like the others, and a saved loadout keeps them', () => {
-  const m = startedMeta(2);
-  m.crowns = 100;
-  assert.equal(unlockSpell(m, 'starfall'), false);
-  assert.ok(unlockSpell(m, 'cleanse'));
-  assert.equal(m.crowns, 100 - SPELLS.cleanse.price);
-  assert.equal(unlockSpell(m, 'cleanse'), false);
+test('a saved loadout keeps the new spells', () => {
   const l = readLoadout({ owned: ['cleanse', 'lance', 'nonsense'], equipped: ['lance', 'cleanse'] }, 9);
   assert.deepEqual(l.owned, [...STARTER_SPELLS, 'cleanse', 'lance']);
   assert.deepEqual(l.equipped, ['lance', 'cleanse']);

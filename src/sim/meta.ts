@@ -26,6 +26,7 @@ import { grandfather } from './modeUnlock';
 import { drawKind, giveShards, toCollect } from './unlock';
 import { DUPLICATE_SHARDS, LUCKY_ODDS, LUCKY_RANK_SHARDS, PULL_HEROES, STONES_GIFT } from './unlockRules';
 import { grantContent } from './contentHeroes';
+import { grantSpells } from './spellSources';
 import { readShop } from './chestShop';
 import { readCards, readScenes } from './sceneRules';
 
@@ -452,6 +453,8 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       if (!m.bossCards.length) delete m.bossCards;
       // (a content hero whose milestone a save from before has already reached joins now)
       if (!needsStarter(m)) grantContent(m);
+      // (spells are no longer bought: those bought before are kept, and any whose tower level or milestone a save has already reached are learnt now)
+      grantSpells(m);
       return m;
     }
   } catch {

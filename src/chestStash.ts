@@ -8,6 +8,7 @@ import { EQUIP_BASES } from './sim/equipment';
 import { bestChest, chestKind, openAll, openChest, sumLoot, type ChestKind, type Loot, type LootItem } from './sim/armyStars';
 import { TOME_SIZES } from './sim/tomes';
 import { TOME_ICON } from './tomeArt';
+import { spellIcon } from './spellIcons';
 import { armyById } from './sim/armies';
 import { saveMeta, type Meta } from './sim/meta';
 import { tierOf } from './sim/tiers';
@@ -88,6 +89,7 @@ function lootIcon(it: LootItem): HTMLElement {
   if (it.type === 'crowns') return icon(ICONS.crowns, 'lootIco');
   if (it.type === 'stones') return icon(ICONS.stones, 'lootIco');
   if (it.type === 'tomes') return icon(TOME_ICON[it.size ?? 'small'], 'lootIco');
+  if (it.type === 'spell' && it.spell) return spellIcon(it.spell);
   if (it.type === 'gear' && it.equip) return itemIcon({ ...it.equip, id: 0 }, EQUIP_BASES[it.equip.base].slot, 'small');
   if (it.type === 'gear') return icon(gearIcon(it.ref ?? 'weapon', 1), 'lootIco');
   const face = portrait(UNITS[it.ref ?? ''].sheet, 48);
@@ -200,8 +202,13 @@ export function showChestSummary(loots: readonly Loot[], then: () => void): void
   tile(ICONS.crowns, sum.crowns, 'crowns');
   tile(ICONS.stones, sum.stones, sum.stones === 1 ? 'stone' : 'stones');
   for (const size of TOME_SIZES) if (sum.tomes[size]) tile(TOME_ICON[size], sum.tomes[size]!, `${size} tome${sum.tomes[size] === 1 ? '' : 's'}`);
-  const gearHead = el('div', 'allGearHead', sum.gear.length ? `Gear won: ${sum.gear.length}, the best first` : 'No gear this time');
+  const gearHead = el('div', 'allGearHead', `${sum.spells.length ? `Spells learnt: ${sum.spells.length} · ` : ''}${sum.gear.length ? `Gear won: ${sum.gear.length}, the best first` : 'No gear this time'}`);
   const list = el('div', 'chestLoot allGear');
+  for (const it of sum.spells) {
+    const card = el('div', 'lootCard spell prize');
+    card.append(lootIcon(it), el('span', '', it.text));
+    list.append(card);
+  }
   for (const it of sum.gear) {
     const card = el('div', `lootCard gear${it.prize ? ' prize' : ''}${it.rarity ? ` r${it.rarity}` : ''}`);
     card.append(lootIcon(it), el('span', '', it.text));
@@ -221,7 +228,7 @@ export function showChestSummary(loots: readonly Loot[], then: () => void): void
   timers.push(window.setTimeout(() => {
     play('star');
     reveal();
-    timers.push(window.setTimeout(() => play(sum.gear.some((g) => g.prize) || sum.tomes.large ? 'merge' : 'summon'), 300));
+    timers.push(window.setTimeout(() => play(sum.gear.some((g) => g.prize) || sum.tomes.large || sum.spells.length ? 'merge' : 'summon'), 300));
   }, 700));
   root.addEventListener('click', (e) => {
     if (e.target !== go && !root.classList.contains('shown')) reveal();
