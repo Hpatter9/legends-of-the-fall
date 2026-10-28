@@ -1,6 +1,6 @@
 # Individual ability effects (FX-003)
 
-The owner asked whether FX-002 made every skill and spell visually unique. The earlier pass covered them all but reused 32 painted shapes. The owner then explicitly requested a separate recognisable signature for every ability, beyond colour or size changes. This continues the already-approved cinematic fantasy direction on `design/battle-effects-remake`, worktree `/workspace/legends-of-the-fall`, owner Codex. No version bump, merge or deployment is authorised for this task.
+The owner asked whether FX-002 made every skill and spell visually unique. The earlier pass covered them all but reused 32 painted shapes. The owner then explicitly requested a separate recognisable signature for every ability, beyond colour or size changes. This continues the already-approved cinematic fantasy direction on `design/battle-effects-remake`, worktree `/workspace/legends-of-the-fall`, owner Codex. The owner subsequently accepted the implementation and authorised release 0.168.0 and merge; see the release section below.
 
 ## Individual artwork and choreography
 
@@ -48,4 +48,8 @@ Final browser report and review artifacts are linked below.
 
 Use `PLAYWRIGHT_MODULE=/opt/codex/cua_node/lib/node_modules/playwright` in this environment, with the production `out/web` served at localhost:8000. `FX_CASE` selects a single case for the browser scripts. `python3 tools/fxlab/ability-gallery.py` builds the contact sheets and comparison from the captured emitted materials. `import-ability-art.py` takes the nine generated source PNG paths in atlas order and prepares shipping sheets.
 
-Scope of the artwork count: the 108 named cast abilities in `KITS` plus 21 king spells. Tier upgrades retain and strengthen their parent skill's visual family; functional status markers, supporting sparks and combo choreography remain shared supporting systems. Ready for owner visual review; the final reports and comparison files are saved. No merge, release bump, PR or deployment was performed.
+Scope of the artwork count: the 108 named cast abilities in `KITS` plus 21 king spells. Tier upgrades retain and strengthen their parent skill's visual family; functional status markers, supporting sparks and combo choreography remain shared supporting systems. Ready for owner visual review; the final reports and comparison files are saved. The implementation handoff preceded release; the owner has since authorised the bump and merge recorded below.
+
+## Release 0.168.0
+
+The owner accepted the implementation and requested the version bump and merge. Integrated main 0.167.0, preserving its epic audio overhaul and royal citadel courtyard. Only CREDITS.md conflicted; the upstream credits were retained with both effects artwork sections appended. Release version: 0.168.0 in package.json and package-lock.json. Release integration validation passed: typecheck, production build, 84 focused effects/audio tests, all five individual-ability browser cases (three portrait sizes, reduced motion and battery saver) and offline reload. All 129 emitted materials remained distinct, with unchanged battle state and cleanup. No simulation or sound changes were introduced by this effects release. Pull-request submission and the authorised merge follow these checks.

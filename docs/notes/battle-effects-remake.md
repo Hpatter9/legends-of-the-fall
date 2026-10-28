@@ -1,6 +1,6 @@
 # Painted battle effects (FX-002)
 
-The owner approved the cinematic fantasy proposal on 2026-10-27: textured magic, luminous trails and dramatic finishers, with non-pixel artwork permitted. Implemented on `design/battle-effects-remake` in `/workspace/legends-of-the-fall`. Owner: Codex. Ready for owner review; no merge, release version bump or deployment.
+The owner approved the cinematic fantasy proposal on 2026-10-27: textured magic, luminous trails and dramatic finishers, with non-pixel artwork permitted. Implemented on `design/battle-effects-remake` in `/workspace/legends-of-the-fall`. Owner: Codex. The owner accepted the implementation and authorised its release with FX-003 as 0.168.0; see the release integration section below.
 
 ## Implementation
 
@@ -33,3 +33,7 @@ Use `PLAYWRIGHT_MODULE=/opt/codex/cua_node/lib/node_modules/playwright` in this 
 [Painted-effects browser results](../samples/battle-effects-checks.json), [existing polish regression results](../samples/battle-effects-polish-checks.json), [offline results](../samples/battle-effects-offline.json).
 
 No implementation blockers remain. Owner review and any requested release integration are next; the owner has not yet accepted the implemented visuals or authorised deployment for FX-002.
+
+## Release integration
+
+The owner accepted FX-002 together with the individual ability signatures and authorised the version bump and merge as 0.168.0, following main 0.167.0. See [individual ability release handoff](individual-ability-effects.md#release-01680).
