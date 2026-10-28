@@ -11,32 +11,32 @@
         "height": 89.796875
       },
       "panel": {
-        "top": 658.140625,
+        "top": 628,
         "bottom": 852,
         "width": 393,
-        "height": 193.859375
+        "height": 224
       },
       "bench": {
-        "top": 670.140625,
-        "bottom": 719.140625,
-        "width": 375,
-        "height": 49
+        "top": 0,
+        "bottom": 0,
+        "width": 0,
+        "height": 0
       },
       "spells": [
         {
           "id": "heal",
           "w": 119.65625,
-          "h": 87.859375
+          "h": 52
         },
         {
           "id": "meteor",
           "w": 119.671875,
-          "h": 87.859375
+          "h": 52
         },
         {
           "id": "haste",
           "w": 119.65625,
-          "h": 87.859375
+          "h": 52
         }
       ],
       "overflow": false
@@ -45,6 +45,7 @@
     "cancelled": true,
     "preview": true,
     "cast": true,
+    "auto": true,
     "errors": []
   },
   {
@@ -59,32 +60,32 @@
         "height": 89.796875
       },
       "panel": {
-        "top": 591.140625,
+        "top": 556,
         "bottom": 780,
         "width": 360,
-        "height": 188.859375
+        "height": 224
       },
       "bench": {
-        "top": 603.140625,
-        "bottom": 649.140625,
-        "width": 342,
-        "height": 46
+        "top": 0,
+        "bottom": 0,
+        "width": 0,
+        "height": 0
       },
       "spells": [
         {
           "id": "heal",
           "w": 108.65625,
-          "h": 85.859375
+          "h": 52
         },
         {
           "id": "meteor",
           "w": 108.671875,
-          "h": 85.859375
+          "h": 52
         },
         {
           "id": "haste",
           "w": 108.65625,
-          "h": 85.859375
+          "h": 52
         }
       ],
       "overflow": false
@@ -93,6 +94,7 @@
     "cancelled": true,
     "preview": true,
     "cast": true,
+    "auto": true,
     "errors": []
   },
   {
@@ -107,32 +109,32 @@
         "height": 89.796875
       },
       "panel": {
-        "top": 721.140625,
+        "top": 691,
         "bottom": 915,
         "width": 412,
-        "height": 193.859375
+        "height": 224
       },
       "bench": {
-        "top": 733.140625,
-        "bottom": 782.140625,
-        "width": 394,
-        "height": 49
+        "top": 0,
+        "bottom": 0,
+        "width": 0,
+        "height": 0
       },
       "spells": [
         {
           "id": "heal",
           "w": 126,
-          "h": 87.859375
+          "h": 52
         },
         {
           "id": "meteor",
           "w": 126,
-          "h": 87.859375
+          "h": 52
         },
         {
           "id": "haste",
           "w": 126,
-          "h": 87.859375
+          "h": 52
         }
       ],
       "overflow": false
@@ -141,6 +143,7 @@
     "cancelled": true,
     "preview": true,
     "cast": true,
+    "auto": true,
     "errors": []
   }
 ]

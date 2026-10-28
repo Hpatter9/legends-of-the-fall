@@ -24,4 +24,4 @@ Screenshots: `docs/samples/battle-command-live-{393,360,412}.png`, with correspo
 
 Browser checks passed at all three sizes: no page errors or horizontal page overflow; spell arming, cancellation, drag preview and casting passed. Live combat and reduced-motion captures inspected. A random cutscene obscured the initial 360px deployment capture; that capture was repeated after skipping the scene.
 
-No version bump, merge or deployment performed. Ready for owner visual review.
+Owner accepted the live battle treatment and authorised merging on 2026-10-28. Integrated main 0.175.0, preserving manual ultimate rings/resource bars/Auto controls; release version 0.176.0. Release validation and PR merge recorded below.

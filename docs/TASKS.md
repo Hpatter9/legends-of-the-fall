@@ -148,3 +148,5 @@ Release integration validation for 0.169.0: typecheck/build and 48 affected test
 - Completion: implemented live-game review at 393×852, 360×780 and 412×915; typecheck, web build and affected interaction checks; preserve spell targeting, cooldowns and reduced motion. Final visual acceptance pending.
 
 UI-006 implementation is ready for visual review. Typecheck and web build passed; three-size live combat checks passed with no page errors or page overflow, including spell selection/cancellation and drag-to-cast. Existing offline UI asset enumeration includes the new crest. Full offline reload was not run. See [handoff](notes/battle-command-ui.md). No merge, release bump or deployment.
+
+UI-006 owner accepted and authorised merge as 0.176.0. Main 0.175.0 integrated; manual ultimate controls retained and styled. Typecheck, targeted battle-flow/hero-kit visual and save tests, and release web build passed. Three-size release browser recheck is being completed before PR merge.

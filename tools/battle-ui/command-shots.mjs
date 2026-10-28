@@ -20,7 +20,7 @@ try {
       return {phase:document.body.dataset.phase,top:box('top'),panel:box('panel'),bench:box('bench'),spells:[...document.querySelectorAll('.spell')].map(e=>({id:e.dataset.id,w:e.getBoundingClientRect().width,h:e.getBoundingClientRect().height})),overflow:document.body.scrollWidth>innerWidth};
     });
     // The UI uses real mana and targeting handlers; arm then cancel a targeted spell.
-    await page.evaluate(() => {window.__game.b.spells.mana=12;});
+    await page.evaluate(() => {const g=window.__game; g.sceneHold=1; g.b.spells.mana=10; g.refreshSpells();});
     await page.waitForTimeout(200);
     const targeted = page.locator('.spell[data-id="meteor"]');
     await targeted.click();
@@ -32,21 +32,23 @@ try {
     await page.mouse.down();
     const tile = await page.evaluate(() => {
       const g=window.__game;
-      for(let y=190;y<500;y+=10) for(let x=40;x<320;x+=10) if(g.spellTile(x,y)) return [x,y];
+      for(let y=330;y<500;y+=10) for(let x=130;x<270;x+=10) if(g.spellTile(x,y)) return [x,y];
       return null;
     });
     if(!tile) throw new Error('No spell target tile');
     await page.mouse.move(...tile,{steps:8});
     const preview = await page.evaluate(() => !document.getElementById('spellGhost').hidden && !!window.__game.hover);
     await page.mouse.up();
-    const cast = await page.evaluate(() => window.__game.b.spells.mana<8 && window.__game.spell===null);
+    const cast = await page.evaluate(() => window.__game.b.spells.mana===5 && window.__game.spell===null && window.__game.b.spells.ready.meteor>window.__game.b.t);
     await targeted.screenshot({path:`docs/samples/battle-command-cooldown-${w}.png`});
+    await page.locator('#heroBar .hbAuto').click();
+    const auto = await page.evaluate(() => window.__game.b.autoUlt === true && document.querySelector('#heroBar .hbAuto').getAttribute('aria-pressed') === 'true');
     await page.emulateMedia({reducedMotion:'reduce'});
     await page.screenshot({path:`docs/samples/battle-command-reduced-${w}.png`});
-    results.push({w,h,layout,armed,cancelled,preview,cast,errors});
+    results.push({w,h,layout,armed,cancelled,preview,cast,auto,errors});
     await ctx.close();
   }
 } finally {await browser.close();}
 writeFileSync('docs/samples/battle-command-checks.json',JSON.stringify(results,null,2)+'\n');
 console.log(JSON.stringify(results,null,2));
-if(results.some(r=>r.errors.length||r.layout.overflow||r.layout.phase!=='fight'||r.armed!=='meteor'||!r.cancelled||!r.preview||!r.cast||r.layout.spells.some(s=>s.w<44||s.h<44)))process.exitCode=1;
+if(results.some(r=>r.errors.length||r.layout.overflow||r.layout.phase!=='fight'||r.armed!=='meteor'||!r.cancelled||!r.preview||!r.cast||!r.auto||r.layout.spells.some(s=>s.w<44||s.h<44)))process.exitCode=1;

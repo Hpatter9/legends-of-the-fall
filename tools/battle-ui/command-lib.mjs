@@ -21,6 +21,7 @@ export async function boot(browser, w, h, port = 8139, meta = null) {
   await page.evaluate(([heroes, meta]) => {
     if (meta !== 'new') localStorage.setItem('legends.meta', JSON.stringify({ seed: 7, crowns: 1200, unlocked: heroes, party: heroes.slice(0, 5), pulls: 0, dry: 0, dryMythic: 0, castle: { treasury: 1, barracks: 1, armoury: 0, mageTower: 0, stable: 0, library: 0 }, shards: {}, stars: {}, xp: { knight: 5000, samurai: 5000 }, bestStage: 14, tower: 9, daily: {}, bosses: [], achievements: [], armies: {}, armySeen: [], stash: [] }));
     localStorage.setItem('lotf-tips-off', '1');
+    localStorage.setItem('legends.settings', JSON.stringify({ cinematics: false }));
   }, [HEROES, meta]);
   await page.goto(`http://localhost:${port}/`);
   await page.waitForTimeout(2200);
