@@ -439,7 +439,7 @@ class Game {
     this.syncChain();
     setBackdrop(this.b.board.area);
     this.weather.resize(this.app.screen.width, this.app.screen.height);
-    this.weather.set(weatherOf(this.b.board), this.b.board.area, this.boardView.litSpots());
+    this.weather.set(weatherOf(this.b.board), this.b.board.area, this.boardView.litSpots(), this.b.board.tiles.some((t) => t.scene));
     showTwistBanner(this.run.tower?.cur?.fight?.twist);
     this.syncSprites(true);
     this.layout();
@@ -894,6 +894,7 @@ class Game {
     if (this.destinationReveal) this.stepDestinationReveal(dt, elapsed);
     if (this.survey) this.standBack(dt);
     this.boardView.pump();
+    this.boardView.step(dt);
     this.weather.step(dt);
     // (the camera eases to where it is sent, unless a finger is holding the board)
     if (this.phaseBoss && (!b.pause || b.phase !== 'fight')) this.endPhase();

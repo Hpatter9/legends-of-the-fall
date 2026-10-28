@@ -610,7 +610,10 @@ export function planScenario(seed: number, theme: ScenarioId, waves: number, bos
 
         if (!onRoad[v * w + u]) {
           // (beside the road: the river runs on through it, the lake laps it, and otherwise the theme's land in patches)
-          if (arena?.ring[v * w + u]) t.scene = arena.ring[v * w + u]!;
+          if (arena?.ring[v * w + u]) {
+            t.scene = arena.ring[v * w + u]!;
+            t.ring = true;
+          }
           else if (inRiver || (lake && h === 1)) {
             t.scene = riverScene;
             // (the lake itself is deep water at its one level, as it always was)
@@ -768,7 +771,8 @@ export function planScenario(seed: number, theme: ScenarioId, waves: number, bos
     };
     const edgeOpen = (u: number, du: number) => [...river].some((i) => i % w === u && open(u, Math.floor(i / w), du, 0));
     const flow: [number, number] = edgeOpen(w - 1, 1) ? [1, 0] : edgeOpen(0, -1) ? [-1, 0] : (seed + n) % 2 ? [1, 0] : [-1, 0];
-    board.flow = flow;
+    if (river.size) board.flow = flow;
+    for (const i of river) tiles[i].stream = true;
     const out = flow[0] > 0 ? w - 1 : 0;
     const falls = [...river]
       .filter((i) => i % w === out && !tiles[i].bridge && open(out, Math.floor(i / w), flow[0], 0))

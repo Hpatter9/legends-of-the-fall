@@ -45,9 +45,16 @@ try {
       const col = g.boardView.built?.tiles[(bd.pieces?.length ? 6 : 9) * bd.w + 7]?.children[0];
       g.cx = g.tx = col ? col.x + 32 : (b.x0 + b.x1) / 2;
       g.cy = g.ty = col ? col.y + 16 : (b.y0 + b.y1) / 2 + 20;
-    }, [label.includes('road'), label.includes('close') ? 1.7 : 1]);
+    }, [label.includes('road'), label.includes('zoom') ? 2.8 : label.includes('close') ? 1.7 : 1]);
     await page.waitForTimeout(label.startsWith('join') ? 900 : 1500);
     await page.waitForFunction(() => window.__game.boardView.toBake.length === 0, {}, { timeout: 15000 }).catch(() => {});
+    // (with `fight` in the label: the fight is started and shot at FIGHT_T ms of fight time, when the land's first strikes are told)
+    if (label.includes('fight')) {
+      await page.evaluate(() => { window.__game.autoArrange(); document.querySelector('#fight')?.click(); });
+      const T = Number(process.env.FIGHT_T ?? 2700);
+      await page.waitForFunction((T) => window.__game.b.t >= T, T, { timeout: 60000 }).catch(() => {});
+      await page.evaluate(() => { window.__game.speed = 0; });
+    }
     if (process.env.MOCK) await page.evaluate((text) => {
       const d = document.createElement('div');
       d.textContent = text;

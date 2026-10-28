@@ -130,6 +130,10 @@ export interface Tile {
   scene?: Scenery;
   /** Laid with flagstones (an arena's floor: looks only). */
   paved?: boolean;
+  /** Part of an arena's ring (looks only: drawn as a run of wall, fence or stones). */
+  ring?: boolean;
+  /** Part of a section's river (looks only: drawn running the board's `flow` way). */
+  stream?: boolean;
   /** A small number for picking the tile's tufts and flowers. */
   deco: number;
 }

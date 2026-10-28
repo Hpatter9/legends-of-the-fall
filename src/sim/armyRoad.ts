@@ -211,10 +211,11 @@ export function arenaMask(theme: string, w: number, d: number, entry: At[] | nul
       if (o <= 0) floor[v * w + u] = road[v * w + u] = true;
       else if (o <= a.ringW) ring[v * w + u] = a.ring;
     }
-  // the road in, a neck five tiles wide, and on out for a mid-boss
+  // the road in, and on out for a mid-boss
   const inLine = curve([start, [cx + (start[0] - cx) * 0.4, d - 3.5], [cx, cy]]);
   const necked = new Array<boolean>(n).fill(false);
-  brush(necked, w, d, inLine, () => 2.6);
+  // (seven tiles wide where the heroes come in, so a squad of five is not bottled up, narrowing to five at the arena's mouth)
+  brush(necked, w, d, inLine, (i) => 3.6 - (1 * i) / inLine.length);
   if (exit?.length) brush(necked, w, d, curve([[cx, cy], end]), () => 2.6);
   const gates = new Set<number>();
   for (let i = 0; i < n; i++)
