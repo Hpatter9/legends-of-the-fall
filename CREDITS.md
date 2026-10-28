@@ -372,3 +372,8 @@ The Grand Scenario prototype reuses the already credited camp gate and Knights w
 ## Battle command ornament
 
 - `src/art/ui/battle-crest.png`: original transparent crossed-sword, emerald lion shield and crimson ribbon ornament generated with OpenAI image generation in October 2026 for the owner-authorised battle UI pass. Other frames, ribbons and spell icons reuse the artwork credited above.
+
+## Anime hero gallery
+
+- `src/art/heroes/*.webp`: 45 original anime hero scenes and 45 transparent menu cutouts generated with OpenAI image generation in October 2026 for the owner's hero overview request. Each full illustration has an individual pose and situation. Kitsune, Gorgon, Illusionist and Time Witch follow the owner's supplied redesign concept; the other heroes draw on their established game identities and colours.
+- `tools/anime-heroes/catalogue.json` and `scenes.json` record the character directions and scene briefs. Generated production atlases are split into individual assets and transcoded for the offline gallery by `extract.cjs` and `pack.cjs`. Battle animation artwork and its existing credits remain separate.
