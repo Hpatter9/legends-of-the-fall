@@ -5,7 +5,7 @@ import { EPIC_MANIFEST } from '../src/render/epicManifest';
 import { EPIC_INFO, type Baked } from '../src/render/musicBake';
 import { SCORES, SCENE_TRACKS } from '../src/render/musicScore';
 import { OPEN_HZ } from '../src/render/audioRules';
-import { BATTLE_LOOP_START, LOOP_START, STING_IDS, SYNTH_OF, TRACK_OF_PLACE, epicOf, fightLevel, fightTrack, placeOf, type MusicId } from '../src/render/epicMusic';
+import { BATTLE_BAR, BATTLE_LOOP_START, LOOP_START, STING_IDS, SYNTH_OF, TRACK_OF_PLACE, epicOf, fightLevel, fightTrack, placeOf, type MusicId } from '../src/render/epicMusic';
 import { FakeContext, installFakeAudio } from './audioFake';
 
 const LOOPS = ['camp', 'deploy', 'battle', 'battle2', 'battle3', 'boss', 'tower', 'calmap', 'calbattle', 'tavern', ...SCENE_TRACKS] as const;
@@ -157,4 +157,10 @@ test('the battle track skips its ambient intro to start at the combat downbeat',
   } finally {
     undo();
   }
+});
+test('the battle loop, cut short of its intro, is still a whole number of bars, so it joins on the beat', () => {
+  assert.equal(BATTLE_BAR * 48, EPIC_MANIFEST.battle.seconds);
+  const bars = (LOOP_START + EPIC_MANIFEST.battle.seconds - BATTLE_LOOP_START) / BATTLE_BAR;
+  assert.ok(Math.abs(bars - Math.round(bars)) < 1e-6, `${bars} bars`);
+  assert.equal(Math.round(bars), 44);
 });

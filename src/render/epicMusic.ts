@@ -36,8 +36,10 @@ export const DECODE_RATE = 32000;
 /** A loop plays the window [LOOP_START, LOOP_START + length] of its file, which holds a second more than the loop: the music is
  *  periodic, so any window one loop long joins itself cleanly, however a decoder trims the file's ends. */
 export const LOOP_START = 0.1;
-/** The battle track skips its quiet ambient intro (~7.5s) to launch straight into combat on the first downbeat. */
-export const BATTLE_LOOP_START = 7.55;
+/** The battle track's loop skips its quiet four-bar intro and opens on the combat downbeat. Its 66.98 s loop holds 48 bars of
+ *  1.3954 s, so the start sits exactly four bars after `LOOP_START`: the loop stays a whole number of bars and joins on the beat. */
+export const BATTLE_BAR = 66.9772 / 48;
+export const BATTLE_LOOP_START = LOOP_START + 4 * BATTLE_BAR;
 
 let decoder: OfflineAudioContext | null = null;
 async function decode(file: string): Promise<AudioBuffer> {

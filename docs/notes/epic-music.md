@@ -43,6 +43,8 @@ How the choice is made (all in `src/render/epicMusic.ts`, pure and tested in `te
 
 - `placeOf(scene, map)`: the home screen is the camp across all tabs; an open map (`#towerMap`) is the tower's or the
   Calamity's; any other time on the board is the deployment. `main.ts` passes the map to `setScene` (and watches `#towerMap`'s `hidden`).
+- `battle`'s loop starts at `BATTLE_LOOP_START` (5.68 s): four bars past `LOOP_START`, skipping the quiet intro, so a fight opens on
+  the combat downbeat. The loop is 48 bars of 1.3954 s, so the cut keeps it a whole number of bars (44) and it still joins on the beat.
 - `fightTrack`: a boss is `boss`; a Calamity fight is `calbattle`; otherwise `battle`, `battle2` or `battle3` by `fightLevel`: an
   army or a daily by thirds of its waves, any other run by depth (stage or floor 1-9, 10-24, 25 up), an elite fight a step harder.
   `main.ts` passes `{ calamity, level }` to `startFight`.
