@@ -687,18 +687,21 @@ function settle(b: Battle, p: Pending, out: BattleEvent[]): void {
     out.push({ kind: 'dodge', to: to.id });
     return;
   }
-  hurt(b, by, to, p.dmg, p.heavy, false, out);
-  afterBlow(b, by, to, !!p.crit, p.dmg, out);
-  kitBlow(b, by, to, !!p.crit, p.dmg, out);
+  // (only a blow that reached health counts for leech, equipment and the hero kits: SIM-001)
+  if (hurt(b, by, to, p.dmg, p.heavy, false, out)) {
+    afterBlow(b, by, to, !!p.crit, p.dmg, out);
+    kitBlow(b, by, to, !!p.crit, p.dmg, out);
+  }
   if (def.splash)
     for (const n of b.units)
       if (n.alive && n.side === to.side && n !== to && apart(n, to) === 1) hurt(b, by, n, Math.max(1, Math.round(p.dmg * SPLASH_SHARE)), false, true, out);
 }
 
-export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean, splash: boolean, out: BattleEvent[], src: HitSrc = 'blow'): void {
-  if (!to.alive) return;
+/** Apply a hit; return whether it reached health, including a lethal hit or revival. */
+export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean, splash: boolean, out: BattleEvent[], src: HitSrc = 'blow'): boolean {
+  if (!to.alive) return false;
   const left = onStrike(b, by, to, dmg, src, splash, out);
-  if (left === null) return;
+  if (left === null) return false;
   dmg = left;
   if (to.shield) {
     if (to.shield.until <= b.t) to.shield = undefined;
@@ -707,11 +710,13 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
       to.shield.hp -= soaked;
       dmg -= soaked;
       if (to.shield.hp <= 0) to.shield = undefined;
-      if (dmg <= 0) return;
+      if (dmg <= 0) return false;
     }
   }
+  // Terrain uses the victim as its source; it earns no combat contribution (SIM-001).
+  const credit = by !== to;
   const landed = Math.min(dmg, to.hp);
-  by.dealt = (by.dealt ?? 0) + landed;
+  if (credit) by.dealt = (by.dealt ?? 0) + landed;
   // (the ultimate's meter fills from the fight: what a hero deals, its summons' share counting for it, and what it takes)
   if (by !== to) {
     if (by.side !== to.side) ultOnDamage(by.owner !== undefined ? creditOf(b, by) : by, landed, false);
@@ -735,8 +740,10 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   if (killed && undying(to, out)) killed = false;
   if (!killed && to.eq) fxHurt(b, to, out);
   if (killed) {
-    by.kills = (by.kills ?? 0) + 1;
-    by.slain = (by.slain ?? 0) + killXp(to);
+    if (credit) {
+      by.kills = (by.kills ?? 0) + 1;
+      by.slain = (by.slain ?? 0) + killXp(to);
+    }
     to.alive = false;
     to.diedAt = b.t;
     to.step = undefined;
@@ -745,13 +752,14 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   // (a blow struck from higher ground than its target's is tagged, for the page to mark)
   const high = src === 'blow' && !splash && tileOf(b, by).h > tileOf(b, to).h;
   out.push({ kind: 'hit', by: by.id, to: to.id, dmg, heavy, splash, killed, src, ...(high ? { high } : {}) });
-  if (killed) {
+  if (killed && credit) {
     onKill(b, by, out);
     fxKill(b, by, to, out);
     kitDeath(b, to, by, out);
   }
   // (a blow beside a powder barrel sets it off)
   if (b.barrels && src !== 'dot') for (const i of b.barrels.filter((i) => Math.max(Math.abs((i % b.board.w) - to.u), Math.abs(Math.floor(i / b.board.w) - to.v)) <= 1)) blast(b, i, out);
+  return true;
 }
 
 /** A powder barrel goes off: it is gone, whoever is within a tile of it loses `BARREL_BLAST` of their hp, and a barrel beside it goes too. */

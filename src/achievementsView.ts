@@ -4,6 +4,7 @@
 import { AWARD_JOKES } from './quipData';
 import { ACHIEVEMENTS, claimable, stonesOfAchievement, unclaimed, type Achievement } from './sim/achievements';
 import type { Meta } from './sim/meta';
+import { SPELLS, type SpellId } from './sim/spells';
 import { UNITS } from './sim/units';
 
 /** The Achievements page: every achievement, the earned ones marked, the counting ones with a bar. One earned and not yet
@@ -72,6 +73,11 @@ export function toastAchievements(list: readonly Achievement[]): void {
 /** A toast for each hero a milestone has just brought in (`grantContent`). */
 export function toastJoined(kinds: readonly string[]): void {
   kinds.forEach((k, i) => setTimeout(() => toast(`${UNITS[k].name} joins you`), i * 2800));
+}
+
+/** A toast for each spell a milestone or the Mage Tower has just taught (`grantSpells`), after `after` toasts already queued. */
+export function toastSpells(ids: readonly SpellId[], after = 0): void {
+  ids.forEach((id, i) => setTimeout(() => toast(`Spell learnt: ${SPELLS[id].name} · equip it in the spellbook`), (after + i) * 2800));
 }
 
 /** The one-time toast for a save from before the summoning stones: the stones it was given so it is not set back. */

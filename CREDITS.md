@@ -1,5 +1,7 @@
 # Credits
 
+- **Resonance hero pilot** (`hero_soldier.png`, `hero_samurai_archer.png`): original generated pixel artwork, directed from the owner's approved concept and Final Fantasy Resonance style references. No franchise sprites are included. Cropped, packed and sampled with nearest-neighbour scaling by `tools/resonance/pack.cjs`. These replace the Knight and Archer's displayed art at all grades; existing grade and awakening colour treatments still apply. Original Craftpix sheets and their credits remain available.
+
 Most of the art is from free **Craftpix.net** packs (craftpix.net, free licence: use in games allowed, no redistributing
 the raw files), copied one sprite at a time from the private assets repository (`hpatter9/chronos-assets`).
 
@@ -53,7 +55,9 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
     - Opening (`opening.opus`): **Spooky Waltz (Music Box)** by **Aureolus_Omicron** (OpenGameArt.org, CC0 Public Domain).
     - Story scenes: **Medieval Victory Theme** (`triumph.opus`, CC0); **Emotional Piano Loop** by **Extenz** (`solemn.opus`, CC0); **Soliloquy** by **Matthew Pablo** (`spire.opus`, CC-BY 3.0); **Enchanted Festival** by **Matthew Pablo** (`comic.opus`, CC-BY 3.0).
   - Each track is resampled to 24 kHz, seamlessly crossfaded, and encoded to Opus with a 1.5 s wrap tail. The older synthesised loops (`src/render/musicScore.ts`, rendered in the page by `src/render/musicBake.ts`) remain as a fallback if a browser cannot decode the files.
-- **The sound effects** are synthesised in `src/render/audioProcessors.ts` with the Web Audio API; no files were copied for them.
+- **The sound effects** are synthesised in `src/render/audioProcessors.ts` with the Web Audio API, except eight recorded combat sounds (sword and
+  blunt hits, a shield block, a crit, a bowstring, an arrow hit, a death and an explosion) embedded in `src/render/combatAudioBank.ts`
+  (PR #150, given as CC0). Their original source and authors were not recorded with the PR and should be named here.
 
 ## Areas (`src/art/areas/`, cut by `tools/areas-prep.py`)
 
