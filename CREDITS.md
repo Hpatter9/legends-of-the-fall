@@ -23,6 +23,7 @@ the raw files), copied one sprite at a time from the private assets repository (
 - **Effects** (`src/art/fx/impact.png`, `hit_fire.png`): the hit sparks and fire hit from the
   **Super Pixel Effects Gigapack (Free Version)** by unTied Games, as Chronos Settlement cut them
   (`src/renderer/art/effects/`).
+- **Rift ore icons** (`src/art/ui/ore/`, the awakening materials' proposal): thirteen 32x32 icons from the **Free Mining Pixel 32x32 Icons** pack by Craftpix (craftpix.net, free licence), each recoloured to its class's aura colour by `tools/awaken/ore-icons.py`.
 - **Item icons** (`src/art/items/`): single 16x16 tiles cut from the **DawnLike** tileset by DragonDePlatino (Items: Armor, Amulet, Boot, Hat, LongWep, Ring, Shield), for relics and gear.
   The ten relics of the tower's relic sets (Ember Ruby, Dragon Scale, Frost Sapphire, Winter Cloak, Holy Chalice, Saint's Medal, Shadow Cloak, Viper Fang, Wolf Fang, Beast Harness) reuse tiles of the same tileset already cut for the equipment (`src/art/equip/`), copied one a file (CC-BY 4.0).
 - **Tower map icons** (`src/art/rogue/`): single 16x16 tiles cut from the **DawnLike** tileset by DragonDePlatino (Effect0, Money, GUI1, Potion, LongWep; crossed swords is the sword tile and its mirror), by `tools/rogue-icons.py` (CC-BY 4.0).

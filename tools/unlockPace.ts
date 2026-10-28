@@ -3,7 +3,10 @@
 // reached at a plausible pace. It plays the real rules (`buyChest`, `useStones`, `openChest`, `grantContent`) on a real Meta and reports the day
 // each hero count is reached (the starter's three count). Every assumption is a constant below; change one and run it again.
 //
-//   node tools/unlockPace.mjs [--seeds 20] [--share 0.9] [--days 365]
+//   node tools/unlockPace.mjs [--seeds 20] [--share 0.9] [--days 365] [--awaken]
+//
+// `--awaken` adds the awakening pace (AWAKEN-MATS): the day heroes first have the shards for awakening I and II, and with the proposed
+// rift ores (`awakenMats.ts`) the day they could be taken, the player awakening greedily (the most-sharded hero first).
 
 import { payClear } from '../src/sim/calReward';
 import { ARMIES, armyFoes, replayTotal, firstClearTotal } from '../src/sim/armies';
@@ -13,6 +16,8 @@ import { newMeta, pickStarter, stageCrowns, stonesOf, useStones, type Meta } fro
 import { TOME_SIZES, TOMES, tomesOf } from '../src/sim/tomes';
 import { buyChest, SHOP, shopPrice, stockLeft } from '../src/sim/chestShop';
 import { ALL_HEROES } from '../src/sim/units';
+import { AWAKEN_ORES, bossOres, cacheOres, eliteOres, oreOf } from '../src/sim/awakenMats';
+import { AWAKEN_SHARDS } from '../src/sim/awakenRules';
 import { ownedWeight, PULL_HEROES, unlockNeed } from '../src/sim/unlockRules';
 import { mixSeed, Rng } from '../src/sim/rng';
 import { dailyChestSeed, dailyCrowns, DAILY_WAVES } from '../src/sim/daily';
@@ -62,6 +67,12 @@ const HARDER: [number, number, number][] = [
 /** A calamity is cleared at this day, then a level higher after each gap of days; one is tried a week. */
 const CALAMITY_DAY = 70;
 const ASCENSION_GAP = 28;
+/** `--awaken`: calamities tried before the first clear (from this day, one a week, beating a map more each fortnight from two), and runs a week once clearing (`--calweek`). Losses keep their bosses' ores. */
+const CAL_TRY_DAY = arg('--caltry', 35);
+const CAL_WEEK = arg('--calweek', 1);
+// `--ores "6,14"`: try other ore costs for awakening I and II without editing the rules.
+const oresArg = process.argv[process.argv.indexOf('--ores') + 1];
+if (process.argv.includes('--ores') && oresArg) oresArg.split(',').forEach((n, i) => ((AWAKEN_ORES as number[])[i] = Number(n)));
 /** Achievements and the codex pay about this many crowns in all over the first 150 days. */
 const EXTRA_CROWNS = 900;
 /** And the stones they pay beside those crowns: the same share of every achievement's and codex reward's stones as `EXTRA_CROWNS` is of their crowns. `--nobadges 1` leaves them out. */
@@ -71,7 +82,7 @@ const BADGE_STONES = ACHIEVEMENTS.reduce((n, a) => n + stonesOfAchievement(a), 0
 const NO_ENTRIES = arg('--noentries', 0) > 0;
 const EXTRA_STONES = arg('--nobadges', 0) > 0 ? 0 : Math.round((BADGE_STONES * Math.min(1, EXTRA_CROWNS / BADGE_CROWNS)));
 
-interface Report { tomeXp: Record<number, number>; pdays: Record<number, number>; by: Record<number, number>; pullable: number; days: Record<number, number>; at: Record<string, number>; pulls: number; crowns: number; entryStones: number }
+interface Report { aw: { shards1: number; shards2: number; ore1: number; ore2: number; n1: Record<number, number>; n2: Record<number, number>; s1: Record<number, number>; s2: Record<number, number>; ores: number }; tomeXp: Record<number, number>; pdays: Record<number, number>; by: Record<number, number>; pullable: number; days: Record<number, number>; at: Record<string, number>; pulls: number; crowns: number; entryStones: number }
 const MARKS = [5, 10, 15, 20, 30, 40, 45];
 /** The pullable heroes owned (the starter's three count): the 4th is the first after the starter. */
 const PULL_MARKS = [4, 5, 6, 10, 15, 20, 30, 35];
@@ -100,6 +111,14 @@ function simulate(seed: number): Report {
     return best;
   };
   let asc = -1;
+  // (the awakening model: ores held per class, steps taken per kind, and the first days)
+  const ores: Record<string, number> = {};
+  const steps: Record<string, number> = {};
+  const aw = { shards1: Infinity, shards2: Infinity, ore1: Infinity, ore2: Infinity, n1: {} as Record<number, number>, n2: {} as Record<number, number>, s1: {} as Record<number, number>, s2: {} as Record<number, number>, ores: 0 };
+  const gain = (d: { trait: string; n: number }) => {
+    ores[d.trait] = (ores[d.trait] ?? 0) + d.n;
+    aw.ores += d.n;
+  };
   let pullable = Infinity;
   const by: Record<number, number> = {};
   for (let day = 1; day <= DAYS; day++) {
@@ -148,6 +167,16 @@ function simulate(seed: number): Report {
       m.stash.push({ army: ARMIES[Math.min(ARMIES.length - 1, Math.floor(day / 12))].id, at: 10, tier: 0, seed: mixSeed(seed, 0xca1c, day), tower: true });
       // (the finishing reward: crowns, shards, a title; `calReward.ts`)
       payClear(m, mixSeed(seed, 0xca1d, day), asc, Math.min(ARMIES.length - 1, Math.floor(day / 12)));
+      // (the proposed ores: six bosses, three mini-bosses, and a Rift Cache opened on the hero nearest an awakening)
+      const rr = new Rng(mixSeed(seed, 0x0e50, day));
+      const owned = [...m.unlocked];
+      const roster: string[] = [];
+      while (roster.length < Math.min(10, owned.length)) roster.push(owned.splice(rr.int(0, owned.length - 1), 1)[0]);
+      const rs = mixSeed(seed, 0x0e51, day);
+      for (let map = 1; map <= 6; map++) gain(bossOres(rs, map, asc, roster));
+      for (let e = 0; e < 3; e++) gain(eliteOres(rs, e + 1, e, asc));
+      const near = [...m.unlocked].filter((k) => (steps[k] ?? 0) < 2 && oreOf(k)).sort((a, b) => (m.shards[b] ?? 0) - (m.shards[a] ?? 0))[0];
+      if (near) gain({ trait: oreOf(near)!.trait, n: cacheOres(asc) });
     }
     if (day <= 150) {
       today += EXTRA_CROWNS / 150;
@@ -177,6 +206,39 @@ function simulate(seed: number): Report {
       pulls += useStones(m, n)!.length;
     }
     for (const k of grantContent(m)) at[k] = at[k] ?? day;
+    // (awakening: shards alone, then greedily with the ores, the most-sharded hero first)
+    const byShards = [...m.unlocked].sort((a, b) => (m.shards[b] ?? 0) - (m.shards[a] ?? 0));
+    if ((m.shards[byShards[0]] ?? 0) >= AWAKEN_SHARDS[0]) aw.shards1 = Math.min(aw.shards1, day);
+    if ((m.shards[byShards[0]] ?? 0) >= AWAKEN_SHARDS[1]) aw.shards2 = Math.min(aw.shards2, day);
+    for (const k of byShards) {
+      const ore = oreOf(k);
+      while (ore && (steps[k] ?? 0) < 2 && (m.shards[k] ?? 0) >= AWAKEN_SHARDS[steps[k] ?? 0] && (ores[ore.trait] ?? 0) >= AWAKEN_ORES[steps[k] ?? 0]) {
+        ores[ore.trait] -= AWAKEN_ORES[steps[k] ?? 0];
+        steps[k] = (steps[k] ?? 0) + 1;
+        if (steps[k] === 1) aw.ore1 = Math.min(aw.ore1, day);
+        if (steps[k] === 2) aw.ore2 = Math.min(aw.ore2, day);
+      }
+    }
+    if (CHECKS.includes(day)) {
+      aw.s1[day] = m.unlocked.filter((k) => (m.shards[k] ?? 0) >= AWAKEN_SHARDS[0]).length;
+      aw.s2[day] = m.unlocked.filter((k) => (m.shards[k] ?? 0) >= AWAKEN_SHARDS[1]).length;
+      aw.n1[day] = Object.values(steps).filter((n) => n >= 1).length;
+      aw.n2[day] = Object.values(steps).filter((n) => n >= 2).length;
+    }
+    // (the tries before the first clear: the bosses beaten pay their ores; and extra clears a week with `--calweek`)
+    if (day >= CAL_TRY_DAY && day < CALAMITY_DAY && (day - CAL_TRY_DAY) % 7 === 0) {
+      const beaten = Math.min(5, 2 + Math.floor((day - CAL_TRY_DAY) / 14));
+      const kinds = m.unlocked.slice(0, 10);
+      for (let map = 1; map <= beaten; map++) gain(bossOres(mixSeed(seed, 0x0e52, day), map, 0, kinds));
+      gain(eliteOres(mixSeed(seed, 0x0e52, day), 1, 0, 0));
+    }
+    if (day >= CALAMITY_DAY && [3, 5, 1, 2, 4, 6].slice(0, CAL_WEEK - 1).includes((day - CALAMITY_DAY) % 7)) {
+      const rs = mixSeed(seed, 0x0e53, day);
+      for (let map = 1; map <= 6; map++) gain(bossOres(rs, map, Math.max(0, asc), m.unlocked.slice(-10)));
+      for (let e = 0; e < 3; e++) gain(eliteOres(rs, e + 1, e, Math.max(0, asc)));
+      const near = [...m.unlocked].filter((k) => (steps[k] ?? 0) < 2 && oreOf(k)).sort((a, b) => (m.shards[b] ?? 0) - (m.shards[a] ?? 0))[0];
+      if (near) gain({ trait: oreOf(near)!.trait, n: cacheOres(Math.max(0, asc)) });
+    }
     if (CHECKS.includes(day)) by[day] = m.unlocked.length;
     // (the XP tomes are kept, not read: what they would give in all, for `npm run level-pace -- --tomes`)
     if (CHECKS.includes(day)) tomeXp[day] = TOME_SIZES.reduce((n, size) => n + tomesOf(m, size) * TOMES[size].xp, 0);
@@ -187,7 +249,7 @@ function simulate(seed: number): Report {
     spent += 0;
   }
   void spent;
-  return { tomeXp, pdays, by, pullable, days, at, pulls, crowns: income, entryStones };
+  return { aw, tomeXp, pdays, by, pullable, days, at, pulls, crowns: income, entryStones };
 }
 
 const reports = Array.from({ length: SEEDS }, (_, i) => simulate(i * 7919 + 13));
@@ -221,3 +283,14 @@ console.log('\nday   XP tomes collected, as XP (median; `npm run level-pace -- -
 for (const d of CHECKS) if (d <= DAYS) console.log(`${String(d).padStart(3)}   ${med(reports.map((r) => r.tomeXp[d] ?? 0))}`);
 console.log(`--tomes "${CHECKS.filter((d) => d <= DAYS).map((d) => `${d}:${med(reports.map((r) => r.tomeXp[d] ?? 0))}`).join(',')}"`);
 void ALL_HEROES;
+
+if (process.argv.includes('--awaken')) {
+  const fmt = (x: number) => (Number.isFinite(x) ? String(x) : `>${DAYS}`);
+  const first = (f: (r: Report) => number) => fmt(med(reports.map(f)));
+  console.log('\nawakening (median day)               shards only (today)   with the proposed ores');
+  console.log(`first hero ready for awakening I     ${first((r) => r.aw.shards1).padStart(8)}             ${first((r) => r.aw.ore1).padStart(8)}`);
+  console.log(`first hero ready for awakening II    ${first((r) => r.aw.shards2).padStart(8)}             ${first((r) => r.aw.ore2).padStart(8)}`);
+  console.log('\nday   heroes with the shards for I / II   awakened I / II with the ores (median)');
+  for (const d of CHECKS) if (d <= DAYS) console.log(`${String(d).padStart(3)}   ${String(med(reports.map((r) => r.aw.s1[d] ?? 0))).padStart(8)} / ${String(med(reports.map((r) => r.aw.s2[d] ?? 0))).padEnd(8)}                ${String(med(reports.map((r) => r.aw.n1[d] ?? 0))).padStart(4)} / ${med(reports.map((r) => r.aw.n2[d] ?? 0))}`);
+  console.log(`ores earned in ${DAYS} days: ${Math.round(mean(reports.map((r) => r.aw.ores)))}`);
+}

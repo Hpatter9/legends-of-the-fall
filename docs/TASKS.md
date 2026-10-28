@@ -25,6 +25,17 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Validation:** see the handoff's "Checks run for phase B".
 - **Handoff:** [notes](notes/army-road.md), [phase B sheet](samples/army-road-after-sheet.png), [phase A mock-ups](samples/army-road-mock-sheet.png).
 
+### AWAKEN-MATS — Awakening materials from the Calamity
+
+- **Goal:** the owner's ask: a hero's awakening needs materials, one kind per class trait, earned from Calamity wins.
+- **Status:** phase A (proposal, pace and mock-ups) on the branch, waiting for the owner's answers; nothing wired into the game yet.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/awaken-mats`, `/home/user/awaken-mats` (from main 0.189.0); PR none.
+- **Allowed files or systems:** new `src/sim/awakenMats.ts`, `src/art/ui/ore/`; `src/sim/awaken.ts`, `awakenRules.ts`, `meta.ts` (optional `Meta.ores`, `Meta.caches`), the Calamity's boss and mini-boss pay and `settleCalamity` in `tower.ts`, `calReward.ts`; `src/awakenView.ts`, `rankUpView.ts`, `calClear.ts`, `calamityView.ts` (the pouch), `awaken.css`, `calmap.css`; `tools/unlockPace.ts` (`--awaken`), `tools/awaken/ore-icons.py`, `tools/awaken/mats-mock.mjs`; tests `test/awaken-mats.test.ts`, `test/awaken.test.ts`; `CREDITS.md`; `docs/notes/awaken-mats.md`, `docs/samples/awaken-mats-*.png`. Not the void map's look (`claude/cal-void`), the other AI's Calamity encounters, the castle or battle tabs, the WORLD army map or the Last Stand.
+- **Completion criteria:** phase A: proposal with the numbers and pace, mock-ups at 393x852 (and 360x780, 412x915), questions put. Phase B (after approval): the ores in the meta (optional, old saves load, awakened heroes keep their steps), the drops deterministic on their own side streams, the costs, the cache, the panel, recap, victory and pouch; pack icons credited; tests; pace re-run; typecheck, affected tests, web build, three portrait sizes.
+- **Validation (phase A):** see the handoff.
+- **Handoff:** `docs/notes/awaken-mats.md`; mock-ups `docs/samples/awaken-mats-mock-*.png`, sheet `docs/samples/awaken-mats-mock-sheet.png`.
+
 ### AWAKEN-002 — Class auras for awakened heroes
 
 - **Goal:** the owner's ask: drop the awakened recolour; an awakened hero wears an aura at step 1 (rank 5) and a stronger, bigger one at step 2 (rank 6), its style set by the hero's class trait (not the origin), wherever an awakened hero is drawn.
