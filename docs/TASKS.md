@@ -108,6 +108,7 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 | ID | Task | Result | Reference |
 | --- | --- | --- | --- |
+| AUDIO-150 | Recorded combat sounds and a quieter, cleaner battle mix | Released as 0.186.0; the sounds' source (given as CC0) still needs naming in CREDITS.md | PR #150 |
 | AUDIO-147 | Battle music opens on the combat downbeat; the camp's theme plays across all home tabs | Released as 0.184.0; the loop start was moved to 5.68 s (bar 4) so the loop stays whole bars and joins on the beat | PR #147 |
 | UI-CASTLE-1 | Remove the corner relic emblems from the castle's building cards | Owner asked; released as 0.183.0; castle tests, build, fresh/old-save and Last Stand smoke passed | branch `claude/castle-card-corners`, screenshot `samples/castle-no-corner-emblems-393x852.png` |
 | SIM-001 | No phantom hit effects; no credit for terrain self-damage | Merged with main 0.181.0 (hero-kit after-blow effects also wait for a landed blow) and released as 0.182.0; full suite, build, fresh/old-save and Last Stand smoke passed | [PR #122](https://github.com/Hpatter9/legends-of-the-fall/pull/122), [handoff](notes/sim-001.md) |
