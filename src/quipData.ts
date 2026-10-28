@@ -774,7 +774,7 @@ export const RECAP_WIN: readonly string[] = [
   'A masterclass in battlefield tactics. Even the castle stonemason offered a grudging nod.',
   'The surviving foes were seen sprinting for the horizon in some disarray.',
   'A clean sweep. The quartermaster is already pricing their rusted helmets.',
-  'Duchess nibbled a corner of the victory ribbon. High praise indeed from a sovereign goat.',
+  'Duchess nibbled a corner of the victory ribbon. High praise indeed from the court goat.',
   'The heroes stood proud upon the ridge, pretending their knees were not shaking violently.',
   'The kingdom is safe for another afternoon. The heroes have demanded a four-course supper.',
   'The warlord left his ceremonial hat behind in his haste. It makes a fine soup bowl.',

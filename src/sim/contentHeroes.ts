@@ -1,5 +1,5 @@
 // The heroes earned by content: ten heroes that never come from a pull or a chest and join on a milestone of the game
-// (an army's hard tier, the tower, the calamity, the codex), each one a hero that suits the thing it is earned from.
+// (an army's hard tier, the Last Stand, the calamity, the codex), each one a hero that suits the thing it is earned from.
 // `grantContent` is called after a fight settles and when a save loads, and gives every hero whose milestone is met
 // (a save that has already met one gets the hero at once; one that already owns it keeps it). Pure rules: no Pixi, no DOM.
 
@@ -26,10 +26,12 @@ const clearOn = (army: string, name: string, tier: number): Pick<ContentHero, 'l
   met: (m) => (tier ? tierCleared(m, army, tier) : armyCleared(m, army)),
 });
 const TIER_NAMES = ['Normal', 'Hard', 'Elite', 'Legendary'];
+// (the endless tower is the Last Stand now: its best wave counts, and floors an old save climbed still do, as the achievements count them)
+const standOrFloors = (m: Meta): number => Math.max(m.tower, m.stand ?? 0);
 const floors = (n: number): Pick<ContentHero, 'line' | 'met' | 'meter'> => ({
-  line: `clear ${n} floors of the endless tower`,
-  met: (m) => m.tower >= n,
-  meter: (m) => ({ now: Math.min(n, m.tower), need: n }),
+  line: `reach wave ${n} of the Last Stand`,
+  met: (m) => standOrFloors(m) >= n,
+  meter: (m) => ({ now: Math.min(n, standOrFloors(m)), need: n }),
 });
 /** The foes met in the bestiary that earn the Sage: half of them. */
 const SEEN_SHARE = 0.5;

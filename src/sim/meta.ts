@@ -24,7 +24,7 @@ import { grandfather } from './modeUnlock';
 import { drawKind, giveShards } from './unlock';
 import { DUPLICATE_SHARDS, PULL_HEROES } from './unlockRules';
 import { grantContent } from './contentHeroes';
-import { readScenes } from './sceneRules';
+import { readCards, readScenes } from './sceneRules';
 
 export const PULL_COST = 100;
 export const PULL10_COST = 900;
@@ -116,6 +116,8 @@ export interface Meta {
   stash: StashChest[];
   /** The cinematics seen (`sceneRules.ts`, by id): each plays once at its moment, and the codex's Scenes list plays a seen one again. Saves from before have none. */
   scenes?: string[];
+  /** The bosses whose card (the slam-down ribbon as the fight begins) has been shown, by boss or `elite:<id>` (`sceneRules.ts` `cardKey`): once a save. Saves from before have none. */
+  bossCards?: string[];
 }
 
 /** An earned, unopened chest: where it came from, and the seed its contents are rolled from (fixed when it was earned). */
@@ -386,6 +388,9 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       // (saves from before the cinematics have none; one that had picked its heroes counts the opening as seen)
       m.scenes = readScenes(m.scenes, !needsStarter(m));
       if (!m.scenes.length) delete m.scenes;
+      // (saves from before the boss cards played once have none shown)
+      m.bossCards = readCards(m.bossCards);
+      if (!m.bossCards.length) delete m.bossCards;
       // (a content hero whose milestone a save from before has already reached joins now)
       if (!needsStarter(m)) grantContent(m);
       return m;

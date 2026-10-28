@@ -287,10 +287,13 @@ test('a hero not owned says how to get it: a milestone line and progress, or its
   const m = fresh(14);
   assert.equal(lockInfo(m, m.unlocked[0]), null);
   const tyrant = lockInfo(m, 'tyrant')!;
-  assert.equal(tyrant.line, 'Joins when you clear 40 floors of the endless tower');
+  // (the endless tower is the Last Stand now: its best wave counts, and an old save's floors still do)
+  assert.equal(tyrant.line, 'Joins when you reach wave 40 of the Last Stand');
   assert.deepEqual([tyrant.now, tyrant.need, tyrant.named], [0, 40, true]);
   m.tower = 14;
   assert.equal(lockInfo(m, 'tyrant')!.now, 14);
+  m.stand = 22;
+  assert.equal(lockInfo(m, 'tyrant')!.now, 22);
   assert.equal(lockInfo(m, 'reaper')!.need, 0, 'a clear has no bar');
   const kind = toCollect(m)[0];
   assert.equal(lockInfo(m, kind)!.named, false, 'a hero with no shards yet stays a shadow');
