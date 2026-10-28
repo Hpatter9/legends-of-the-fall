@@ -14,6 +14,8 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+**UI-006 / Battle cliffside overlook** — release 0.172.0 ready for the owner-authorised PR merge. Owner: Codex. Branch: `design/battle-overlook`. Nine distinct army camps, cliffside party and distant Calamity are implemented. Typecheck, 66 targeted tests, web build, all nine camps at three phone sizes, reduced motion, mode/party controls and offline switching passed. Main 0.171.0 is integrated, preserving summoning stones, harder Last Stand and world-rendering updates. [Implementation, validation and actual screenshots](notes/battle-overlook.md).
+
 WORLD-126 rendering checkpoint ready for review; rare warm-tail stability remains open. WORLD-001 per-army map design awaits owner confirmation before implementation.
 
 - Owner: current WORLD continuation chat, confirmed by owner on 2026-10-27.

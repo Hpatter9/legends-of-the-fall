@@ -1,8 +1,5 @@
-// The Battle tab's picture: a war camp outside the castle gate at dusk, in the castle courtyard's isometric (2:1) view. The party of
-// five stands round a crackling campfire and idles (turns, hums, strolls a little, now and then a flourish); a map table shows the
-// next army and its boss; a cart on the left is where the chest stash mounts (`stashMount`); the daily and tower cards hang on two
-// signposts (`dailySlot`, `towerSlot`). One canvas drawn in scene pixels times a whole-number scale (nearest neighbour). It only
-// draws (Math.random is fine here: nothing that is played depends on it) and runs only while the tab is showing.
+// The Battle tab: the company scouts its current enemy army from a cliffside command post.
+// All troop ranks, animation and atmosphere are decorative; they never step the battle.
 
 import { tok } from './render/tok';
 import type { Meta } from './sim/meta';
@@ -16,40 +13,17 @@ import { EMOTE_NAMES, EMOTES } from './tavern';
 import { goatSheet } from './duchess';
 import { goatSays } from './quips';
 import { chewBob, FRAME, goatFrame, hopLift, newGoat, stepGoat, tapGoat, type Goat } from './render/duchessRules';
-import { campLayout, PLACE, groundCells, starsFor, TABLE, type Camp, type Piece } from './render/campSpots';
-import portalUrl from './art/calmap/portal.png';
-import gateUrl from './art/camp/gate.png';
-import towerUrl from './art/camp/tower.png';
-import towerLockedUrl from './art/camp/tower_locked.png';
-import boardUrl from './art/camp/board.png';
-import tent1Url from './art/camp/tent1.png';
-import tent2Url from './art/camp/tent2.png';
-import standardUrl from './art/camp/standard.png';
-import skinsUrl from './art/camp/skins.png';
-import torchUrl from './art/camp/torch.png';
-import dirtUrl from './art/camp/dirt_tile.png';
-import skyUrl from './art/camp/sky.png';
-import cloud1Url from './art/camp/cloud1.png';
-import cloud2Url from './art/camp/cloud2.png';
-import nightUrl from './art/camp/night.png';
-import wallUrl from './art/castle/wall.png';
+import type { Camp } from './render/campSpots';
+import { CAMP_PAINT, scoutCamp, overlookLayout, overlookCrew, overlookRanks } from './render/overlookLayout';
+import { UNITS } from './sim/units';
+import { AREA_NAMES } from './menuArt';
+import overlookUrl from './art/camp/overlook.png';
 import campfireUrl from './art/castle/campfire.png';
-import rackUrl from './art/castle/rack.png';
-import barrelsUrl from './art/castle/barrels.png';
-import cratesUrl from './art/castle/crates.png';
-import cartUrl from './art/castle/cart.png';
-import woodpileUrl from './art/castle/woodpile.png';
-import hayUrl from './art/castle/hay.png';
-import pineUrl from './art/castle/pine.png';
-import bushUrl from './art/castle/bush.png';
-import rocksUrl from './art/castle/rocks.png';
-import grassUrl from './art/castle/grass_tile.png';
+import warCampUrl from './art/camp/camp-war.png';
+import wildCampUrl from './art/camp/camp-wild.png';
+import arcaneCampUrl from './art/camp/camp-arcane.png';
 
-const ART: Record<string, string> = {
-  gate: gateUrl, tower: towerUrl, tower_locked: towerLockedUrl, board: boardUrl, tent1: tent1Url, tent2: tent2Url, standard: standardUrl, skins: skinsUrl, torch: torchUrl, dirt_tile: dirtUrl,
-  sky: skyUrl, cloud1: cloud1Url, cloud2: cloud2Url, night: nightUrl,
-  wall: wallUrl, campfire: campfireUrl, rack: rackUrl, barrels: barrelsUrl, crates: cratesUrl, cart: cartUrl, woodpile: woodpileUrl, hay: hayUrl, pine: pineUrl, bush: bushUrl, rocks: rocksUrl, grass_tile: grassUrl,
-};
+const ART: Record<string, string> = { overlook: overlookUrl, campfire: campfireUrl, war: warCampUrl, wild: wildCampUrl, arcane: arcaneCampUrl };
 type Art = Record<string, HTMLImageElement>;
 let art: Art | null = null;
 async function loadArt(): Promise<Art> {
@@ -97,7 +71,7 @@ interface Spark {
   sway: number;
 }
 
-/** What the camp shows of the next army (the table's plate and its figurine). */
+/** The army being scouted: the active run's army, otherwise the next unbeaten army. */
 export interface CampArmy {
   army: Army;
   /** The boss's name and its sheet. */
@@ -105,28 +79,20 @@ export interface CampArmy {
   sheet: string;
 }
 
-/** A 2:1 diamond `w` across and `h` down, centred on (cx, cy), one pixel row at a time (it stays pixel art). */
-function diamond(g: CanvasRenderingContext2D, cx: number, cy: number, w: number, h: number, fill: string): void {
-  g.fillStyle = fill;
-  for (let r = 0; r < h; r++) {
-    const u = Math.abs(r + 0.5 - h / 2) / (h / 2);
-    const hw = Math.max(1, Math.round((w / 2) * (1 - u)));
-    g.fillRect(cx - hw, Math.round(cy - h / 2) + r, hw * 2, 1);
-  }
-}
-
 export class CampScene {
   readonly root = el('div', 'cpWrap');
-  /** Where the chest stash module mounts: a box over the cart's bed on the left of the scene (placed and sized by this scene; the stash fills it). */
+  /** Earned chests rest by the supplies at the left of the ledge. */
   readonly stashMount = el('div', 'cpStash');
-  /** The three places' tap boxes (picture and name plate together): the page puts a button in each. The portal turns in the Calamity's. */
+  /** Two mode plaques below the company and the distant Calamity landmark. */
   readonly dailySlot = el('div', 'cpSlot');
   readonly towerSlot = el('div', 'cpSlot');
   readonly calamitySlot = el('div', 'cpSlot cpPortalSlot');
-  private portalFx = el('div', 'calPortal');
-  /** The Tower is shut (not open yet): its picture is the dimmed, chained one. */
-  private towerLocked = false;
-  /** The table's plate: the next army's name and boss; a tap opens the party. */
+  private heading = el('div', 'cpHeading');
+  private armyRigs = new Map<string, Small>();
+  private bossRig: Small | null = null;
+  private crew: string[] = [];
+  private ranks: ReturnType<typeof overlookRanks> = [];
+  /** The army's brass plaque doubles as the war council's party button. */
   private plate = el('button', 'cpPlate');
   private canvas = el('canvas', 'cpRoom');
   private ctx = this.canvas.getContext('2d')!;
@@ -134,11 +100,8 @@ export class CampScene {
   /** Css pixels per scene pixel: a whole number of device pixels each (`k`) over the device pixel ratio, so it stays crisp. */
   private unit = 1;
   private back: HTMLCanvasElement | null = null;
-  private front: HTMLCanvasElement | null = null;
-  private dusk: HTMLCanvasElement | null = null;
   private glow: HTMLCanvasElement | null = null;
   private flame: { base: HTMLCanvasElement; layer: HTMLCanvasElement; w: number; h: number } | null = null;
-  private table: HTMLCanvasElement | null = null;
   private actors = new Map<string, Actor>();
   private party: string[] = [];
   private meta: Meta | null = null;
@@ -148,7 +111,6 @@ export class CampScene {
   private last = 0;
   private now = 0;
   private running = false;
-  private shown = 0;
   private reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   private saver = settings().saver;
   private down: { x: number; y: number; t: number } | null = null;
@@ -164,9 +126,10 @@ export class CampScene {
     private onParty: () => void,
   ) {
     this.plate.addEventListener('click', () => this.onParty());
-    this.portalFx.style.setProperty('--calPortal', `url(${portalUrl})`);
-    this.calamitySlot.append(this.portalFx);
-    this.root.append(this.canvas, this.stashMount, this.dailySlot, this.towerSlot, this.calamitySlot, this.plate);
+    this.heading.append(el('span', 'cpEyebrow', 'THE WAR COUNCIL'), el('h2', '', 'Battle Overlook'), el('p', '', 'Scout the approaching army'));
+    this.canvas.setAttribute('role', 'img');
+    this.canvas.setAttribute('aria-label', 'Your company on a cliff overlooking the enemy army, with the Calamity citadel on the horizon.');
+    this.root.append(this.canvas, this.stashMount, this.dailySlot, this.towerSlot, this.calamitySlot, this.plate, this.heading);
     this.ctx.imageSmoothingEnabled = false;
     onSettings((s) => (this.saver = s.saver));
     window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
@@ -182,20 +145,16 @@ export class CampScene {
     document.addEventListener('visibilitychange', () => (document.hidden ? this.halt() : this.running && this.start()));
   }
 
-  /** Show the party (hero kinds, the best first) at their ranks, and the next army on the table. Keeps the heroes already there as they are. */
-  update(meta: Meta, party: string[], next: CampArmy | null, towerLocked = false): void {
+  /** Refresh the party and enemy ranks without restarting actors already on the ledge. */
+  update(meta: Meta, party: string[], next: CampArmy | null): void {
     this.meta = meta;
-    if (towerLocked !== this.towerLocked) {
-      this.towerLocked = towerLocked;
-      if (art && this.camp) this.front = this.paintFront(art, this.camp);
-    }
     this.party = party;
     for (const k of [...this.actors.keys()]) if (!party.includes(k)) this.actors.delete(k);
     const changed = next?.army.id !== this.next?.army.id || next?.boss !== this.next?.boss;
     this.next = next;
     if (art && this.camp) {
       this.dress(meta);
-      if (changed || !this.table) this.paintTable();
+      if (changed || !this.bossRig) this.prepareArmy();
       this.layPlate();
     }
   }
@@ -210,9 +169,11 @@ export class CampScene {
       if (!rig || !spot) return;
       const a = this.actors.get(kind);
       if (a) {
+        a.x += spot.x - a.spot.x;
+        a.target += spot.x - a.spot.x;
         a.spot = spot;
         if (a.cut !== sheet) {
-          a.small = shrinkRig(rig);
+          a.small = shrinkRig(rig, 46);
           a.cut = sheet;
         }
         return;
@@ -220,7 +181,7 @@ export class CampScene {
       this.actors.set(kind, {
         kind,
         spot,
-        small: shrinkRig(rig),
+        small: shrinkRig(rig, 46),
         cut: sheet,
         x: spot.x,
         face: spot.face,
@@ -243,7 +204,6 @@ export class CampScene {
       if (!this.running || this.raf) return;
       this.fit();
       this.last = performance.now();
-      this.shown = this.now;
       this.raf = requestAnimationFrame((t) => this.frame(t));
     });
   }
@@ -271,8 +231,9 @@ export class CampScene {
     const w = Math.ceil((bw * dpr) / k);
     const h = Math.ceil((bh * dpr) / k);
     if (this.camp && this.camp.w === w && this.camp.h === h && this.back) return;
-    const camp = campLayout(w, h);
+    const camp = overlookLayout(w, h);
     this.camp = camp;
+    this.ranks = overlookRanks(w, h);
     this.canvas.width = w;
     this.canvas.height = h;
     this.canvas.style.width = `${w * this.unit}px`;
@@ -280,14 +241,11 @@ export class CampScene {
     this.canvas.style.left = `${(bw - w * this.unit) / 2}px`;
     this.ctx.imageSmoothingEnabled = false;
     this.paintBack(art, camp);
-    this.front = this.paintFront(art, camp);
-    this.dusk = this.paintDusk(camp);
     this.glow = this.paintGlow(camp);
     this.flame = this.cutFlame(art);
-    this.table = null;
     if (this.meta) {
       this.dress(this.meta);
-      if (this.next) this.paintTable();
+      if (this.next) this.prepareArmy();
     }
     this.layOut();
   }
@@ -307,11 +265,7 @@ export class CampScene {
     box(this.dailySlot, camp.places.daily.box);
     box(this.towerSlot, camp.places.tower.box);
     box(this.calamitySlot, camp.places.calamity.box);
-    // (the portal's picture sits at the top of its tap box; `--pu` is the css pixels in a scene pixel)
-    const pu = this.unit;
-    this.calamitySlot.style.setProperty('--pu', String(pu));
-    Object.assign(this.portalFx.style, { left: `${((camp.places.calamity.box.w - PLACE.portal) / 2) * pu}px`, top: '0px', width: `${PLACE.portal * pu}px`, height: `${PLACE.portal * pu}px` });
-    for (const e of [this.dailySlot, this.towerSlot, this.calamitySlot]) e.style.setProperty('--plateH', `${PLACE.plate.h * pu}px`);
+    for (const e of [this.dailySlot, this.towerSlot, this.calamitySlot]) e.style.setProperty('--plateH', '44px');
     this.layPlate();
   }
 
@@ -321,91 +275,122 @@ export class CampScene {
     const n = this.next;
     this.plate.hidden = !n;
     if (!n) return;
-    this.plate.replaceChildren(el('b', '', n.army.name), el('small', '', `led by ${n.boss}`));
-    this.plate.setAttribute('aria-label', `War table: ${n.army.name}, led by ${n.boss}. Opens your party.`);
+    this.plate.replaceChildren(el('span', 'cpEyebrow', 'THE ENEMY BELOW'), el('b', '', n.army.name), el('small', '', `${scoutCamp(n.army.id).name} · ${n.boss}`));
+    this.root.dataset.army = n.army.id;
+    this.root.dataset.area = n.army.area;
+    this.canvas.setAttribute('aria-label', `Your company on a cliff above ${n.army.name}, led by ${n.boss}, in ${AREA_NAMES[n.army.area]}. The Calamity citadel looms on the horizon.`);
+    this.plate.setAttribute('aria-label', `War council: ${n.army.name}, led by ${n.boss}. Opens your party.`);
     Object.assign(this.plate.style, this.at(camp.table.x, camp.table.y + 1));
   }
 
-  /** The sky: the dusk's own sky picture with the night's showing through at the top, in a few steps (so it keeps its pixels). */
+  /** The shared cliff and horizon surround a different painted base for each army. */
   private paintBack(a: Art, camp: Camp): void {
     const c = canvasOf(camp.w, camp.h);
     const g = c.getContext('2d')!;
     g.imageSmoothingEnabled = false;
-    const bottom = camp.gateY + 40;
-    const x = Math.round((camp.w - a.sky.width) / 2);
-    g.fillStyle = '#2c2a55';
-    g.fillRect(0, 0, camp.w, camp.h);
-    g.drawImage(a.sky, x, bottom - a.sky.height);
-    const bands = 7;
-    const reach = Math.max(60, Math.round(bottom * 0.62));
-    for (let i = 0; i < bands; i++) {
-      g.globalAlpha = 0.9 - (i * 0.85) / bands;
-      const y0 = Math.round((i * reach) / bands);
-      const y1 = Math.round(((i + 1) * reach) / bands);
-      g.drawImage(a.night, 0, y0 - (bottom - a.night.height), a.night.width, y1 - y0, x, y0, a.night.width, y1 - y0);
-    }
-    g.globalAlpha = 1;
+    g.drawImage(a.overlook, 0, 0, camp.w, camp.h);
+    const plan = scoutCamp(this.next?.army.id ?? 'orcs');
+    const atlas = a[plan.atlas];
+    const patch = canvasOf(camp.w, Math.round(camp.h * CAMP_PAINT.h));
+    const pg = patch.getContext('2d')!;
+    pg.imageSmoothingEnabled = false;
+    const panelH = atlas.height / 3;
+    pg.drawImage(atlas, 0, plan.row * panelH, atlas.width, panelH, 0, 0, patch.width, patch.height);
+    // Feather into the valley mist, keeping the foreground banners and cliff intact.
+    pg.globalCompositeOperation = 'destination-in';
+    const vertical = pg.createLinearGradient(0, 0, 0, patch.height);
+    for (const [at, alpha] of [[0, 0], [0.12, 1], [0.82, 1], [1, 0]]) vertical.addColorStop(at, `rgba(0,0,0,${alpha})`);
+    pg.fillStyle = vertical;
+    pg.fillRect(0, 0, patch.width, patch.height);
+    const horizontal = pg.createLinearGradient(0, 0, patch.width, 0);
+    for (const [at, alpha] of [[0, 0], [0.12, 1], [0.88, 1], [1, 0]]) horizontal.addColorStop(at, `rgba(0,0,0,${alpha})`);
+    pg.fillStyle = horizontal;
+    pg.fillRect(0, 0, patch.width, patch.height);
+    g.drawImage(patch, 0, Math.round(camp.h * CAMP_PAINT.y));
+    this.root.dataset.camp = `${plan.atlas}:${plan.row}`;
     this.back = c;
   }
 
-  /** The ground, the wall, the gate, the Tower and the Daily board: everything that is behind the fire and never moves (the sky shows through above). */
-  private paintFront(a: Art, camp: Camp): HTMLCanvasElement {
-    const c = canvasOf(camp.w, camp.h);
-    const g = c.getContext('2d')!;
-    g.imageSmoothingEnabled = false;
-    const cy = camp.fire.y - 16;
-    // (trampled earth round the fire and along the way from the gate to it)
-    const trampled = (x: number, y: number) => Math.hypot((x - camp.fire.x) / 92, (y - cy) / 54) < 1 || (Math.abs(x - camp.cx) < 50 && y > camp.gateY - 30 && y < cy);
-    for (const { x, y } of groundCells(camp)) {
-      const dirt = trampled(x, y);
-      const im = dirt ? a.dirt_tile : a.grass_tile;
-      if (y + 33 < camp.gateY - 40) continue;
-      const flip = !dirt && (Math.round(x / 45) * 7 + Math.round(y / 26) * 3) % 4 === 0;
-      if (flip) {
-        g.setTransform(-1, 0, 0, 1, Math.round(x + im.width / 2), 0);
-        g.drawImage(im, 0, Math.round(y - 26));
-        g.setTransform(1, 0, 0, 1, 0, 0);
-      } else g.drawImage(im, Math.round(x - im.width / 2), Math.round(y - 26));
+  /** Cache small sheets once per army; never resize/read sprite pixels in a frame. */
+  private prepareArmy(): void {
+    this.armyRigs.clear();
+    if (this.camp) {
+      this.ranks = overlookRanks(this.camp.w, this.camp.h, this.next?.army.id);
+      if (art) this.paintBack(art, this.camp);
     }
-    // (the wall's cells, the far ones first so the near ones overlap them; then the gate)
-    const wall = [...camp.wall].sort((p, q) => p.y - q.y || Math.abs(q.x - camp.cx) - Math.abs(p.x - camp.cx));
-    for (const p of wall) this.piece(g, a, p);
-    this.piece(g, a, { sprite: 'gate', x: camp.cx, y: camp.gateY });
-    // (the Tower and the Daily board stand on the ground at the camp's edges; the portal is the page's)
-    this.piece(g, a, { sprite: this.towerLocked ? 'tower_locked' : 'tower', x: camp.places.tower.x, y: camp.places.tower.foot });
-    this.piece(g, a, { sprite: 'board', x: camp.places.daily.x, y: camp.places.daily.foot });
-    return c;
+    this.crew = this.next ? overlookCrew(this.next.army) : [];
+    if (!this.crew.length && this.next) this.crew = [this.next.army.waves[0].foes[0]];
+    for (const kind of this.crew) {
+      const rig = sheetInfo(UNITS[kind].sheet);
+      if (rig) this.armyRigs.set(kind, this.litRig(shrinkRig(rig, 24)));
+    }
+    const boss = this.next && sheetInfo(this.next.sheet);
+    this.bossRig = boss ? this.litRig(shrinkRig(boss, 32)) : null;
   }
 
-  private piece(g: CanvasRenderingContext2D, a: Art, p: Piece): void {
-    const im = a[p.sprite];
-    const x = Math.round(p.x - im.width / 2);
-    const y = Math.round(p.y - im.height);
-    if (p.flip) {
-      g.setTransform(-1, 0, 0, 1, x + im.width, 0);
-      g.drawImage(im, 0, y);
-      g.setTransform(1, 0, 0, 1, 0, 0);
-    } else g.drawImage(im, x, y);
-  }
-
-  /** The dusk: a cool purple laid over everything by multiplying, with the firelit ground left warm. */
-  private paintDusk(camp: Camp): HTMLCanvasElement {
-    const c = canvasOf(camp.w, camp.h);
+  /** Distant figures catch the sunset so they remain legible against detailed ground. */
+  private litRig(rig: Small): Small {
+    const c = canvasOf(rig.c.width, rig.c.height);
     const g = c.getContext('2d')!;
-    const fx = camp.fire.x;
-    const fy = camp.fire.y - 14;
-    g.save();
-    g.translate(fx, fy);
-    g.scale(1, 0.7);
-    const rg = g.createRadialGradient(0, 0, 20, 0, 0, 300);
-    rg.addColorStop(0, '#fff2dc');
-    rg.addColorStop(0.3, '#e8c8b4');
-    rg.addColorStop(0.62, '#a89cc8');
-    rg.addColorStop(1, '#7f76b6');
-    g.fillStyle = rg;
-    g.fillRect(-camp.w, -camp.h * 2, camp.w * 2, camp.h * 4);
-    g.restore();
-    return c;
+    g.filter = 'brightness(1.15) saturate(1.1)';
+    g.drawImage(rig.c, 0, 0);
+    return { ...rig, c };
+  }
+
+  private army(g: CanvasRenderingContext2D, camp: Camp): void {
+    const draw = (rig: Small, x: number, y: number, size: number, phase: number) => {
+      const scale = size / rig.figure;
+      const w = Math.round(rig.fw * scale);
+      const h = Math.round(rig.fh * scale);
+      const frame = this.reduced ? 0 : Math.floor(this.now / 220 + phase) % (rig.counts.idle || 1);
+      g.fillStyle = 'rgba(8, 16, 20, 0.45)';
+      g.fillRect(x - size / 3, y - 1, size * 0.66, 2);
+      g.drawImage(rig.c, frame * rig.fw, 0, rig.fw, rig.fh, Math.round(x - w / 2), y - h, w, h);
+    };
+    for (const [i, rank] of this.ranks.entries()) {
+      const rig = this.armyRigs.get(this.crew[rank.kind % this.crew.length]);
+      if (rig) draw(rig, rank.x, rank.y, rank.size, i * 1.7);
+    }
+    const [bx, by] = scoutCamp(this.next?.army.id ?? 'orcs').boss;
+    if (this.bossRig) draw(this.bossRig, Math.round(camp.w * bx), Math.round(camp.h * (CAMP_PAINT.y + by * CAMP_PAINT.h)), 17, 0);
+  }
+
+  /** Low mist moves continuously; reduced motion keeps an identical still frame. */
+  private mist(g: CanvasRenderingContext2D, camp: Camp): void {
+    const drift = this.reduced ? 0 : this.now / 45000;
+    const area = this.next?.army.area;
+    const tint: Partial<Record<NonNullable<typeof area>, string>> = {
+      snow: '#9cd4ee', graveyard: '#5c67b0', dungeon: '#77649a',
+      forest: '#5a9569', swamp: '#76965c', volcano: '#c45c38',
+      forge: '#cd843e', desert: '#d4b276', crystal: '#8c7ac9', shrine: '#9e75bb',
+    };
+    if (area && tint[area]) {
+      g.save();
+      g.globalAlpha = 0.17;
+      g.fillStyle = tint[area]!;
+      g.fillRect(0, 0, camp.w, Math.round(camp.h * 0.64));
+      g.restore();
+    }
+    for (let i = 0; i < 3; i++) {
+      const x = camp.w * (0.15 + i * 0.35 + Math.sin(drift + i) * 0.08);
+      const y = camp.h * (0.44 + i * 0.07);
+      const fog = g.createRadialGradient(x, y, 0, x, y, camp.w * 0.36);
+      fog.addColorStop(0, 'rgba(178, 204, 211, 0.12)');
+      fog.addColorStop(1, 'rgba(178, 204, 211, 0)');
+      g.fillStyle = fog;
+      g.fillRect(0, y - 14, camp.w, 28);
+    }
+    if (area === 'snow' || area === 'volcano' || area === 'forge') {
+      const snow = area === 'snow';
+      g.fillStyle = snow ? 'rgba(229, 243, 248, 0.65)' : 'rgba(241, 167, 84, 0.65)';
+      for (let i = 0; i < 24; i++) {
+        const travel = this.reduced ? 0 : this.now / (snow ? 110 : -150);
+        const x = (i * 67 + Math.round(Math.sin(drift + i) * 9)) % camp.w;
+        const span = Math.round(camp.h * 0.58);
+        const y = ((i * 43 + travel) % span + span) % span + camp.h * 0.08;
+        g.fillRect(x, Math.round(y), snow && i % 4 === 0 ? 2 : 1, 1);
+      }
+    }
   }
 
   /** The firelight: warm orange over the ground and the faces, drawn additively at a steady opacity (no flicker). */
@@ -462,59 +447,6 @@ export class CampScene {
     const bc = canvasOf(im.width, im.height);
     bc.getContext('2d')!.putImageData(base, 0, 0);
     return { base: bc, layer, w: im.width, h: im.height };
-  }
-
-  /** The war table: a plain wooden table with a map on it and, standing on the map, a figurine of the next army's boss. Its bottom edge is its foot line. */
-  private paintTable(): void {
-    const n = this.next;
-    const rig = n && sheetInfo(n.sheet);
-    if (!n || !rig) {
-      this.table = null;
-      return;
-    }
-    const fig = shrinkRig(rig, 34);
-    const w = TABLE.w + 6;
-    const topH = TABLE.h;
-    const legs = 18;
-    const h = fig.figure + topH + legs + 8;
-    const c = canvasOf(w, h);
-    const g = c.getContext('2d')!;
-    const cx = Math.round(w / 2);
-    const cy = fig.figure + Math.round(topH / 2) - 4;
-    const ink = '#2a160a';
-    const px = (x: number, y: number, col: string, ww = 1, hh = 1) => {
-      g.fillStyle = col;
-      g.fillRect(x, y, ww, hh);
-    };
-    // (legs first, the top over their tops)
-    for (const [lx, ly] of [[cx - TABLE.w / 2 + 7, cy + 6], [cx + TABLE.w / 2 - 11, cy + 6], [cx - 2, cy + topH / 2 + 1]]) {
-      px(lx, ly, ink, 4, legs);
-      px(lx + 1, ly, '#7a5230', 2, legs - 1);
-    }
-    diamond(g, cx, cy + 6, TABLE.w + 2, topH + 2, ink);
-    for (let t = 5; t >= 1; t--) diamond(g, cx, cy + t, TABLE.w, topH, t > 1 ? '#5e3e22' : '#7a5230');
-    diamond(g, cx, cy, TABLE.w, topH, '#a87a46');
-    // (the map: a parchment with a river, a road, a red cross and a fort)
-    diamond(g, cx, cy, TABLE.w - 8, topH - 5, '#7a5a2a');
-    diamond(g, cx, cy, TABLE.w - 11, topH - 7, '#e3d29c');
-    px(cx - 16, cy + 1, '#4a78b8', 12, 1);
-    px(cx - 8, cy + 2, '#4a78b8', 10, 1);
-    for (let i = 0; i < 4; i++) px(cx + 4 + i * 3, cy - 3 + i, '#8a6a3a', 1, 1);
-    px(cx + 9, cy - 6, '#c02a20', 5, 1);
-    px(cx + 11, cy - 8, '#c02a20', 1, 5);
-    px(cx - 14, cy - 3, '#6a6a72', 5, 2);
-    px(cx - 14, cy - 5, '#6a6a72', 1, 2);
-    px(cx - 10, cy - 5, '#6a6a72', 1, 2);
-    // (the figurine, facing the camp's middle: the table stands on the right)
-    const flip = rig.facesRight;
-    const fx = cx - Math.round(fig.fw / 2);
-    const fy = cy + 2 - fig.fh;
-    if (flip) {
-      g.setTransform(-1, 0, 0, 1, fx + fig.fw, 0);
-      g.drawImage(fig.c, 0, 0, fig.fw, fig.fh, 0, fy, fig.fw, fig.fh);
-      g.setTransform(1, 0, 0, 1, 0, 0);
-    } else g.drawImage(fig.c, 0, 0, fig.fw, fig.fh, fx, fy, fig.fw, fig.fh);
-    this.table = c;
   }
 
   // ---- behaviour ----
@@ -575,8 +507,10 @@ export class CampScene {
     this.last = t;
     this.now += dt;
     for (const a of this.actors.values()) {
-      this.think(a, this.now);
-      this.step(a, dt, this.now);
+      if (!this.reduced) {
+        this.think(a, this.now);
+        this.step(a, dt, this.now);
+      }
     }
     this.stepGoat(dt);
     this.burn(dt);
@@ -585,8 +519,8 @@ export class CampScene {
 
   /** Where Duchess's ground is: a strip across the front of the camp (her feet's line, and the ends), kept clear of the buttons. */
   private goatGround(camp: Camp): { y: number; min: number; max: number } {
-    const y = Math.min(camp.fire.y + 66, camp.buttonTop - 14);
-    return { y, min: Math.max(FRAME / 2, camp.cx - 40), max: Math.min(camp.w - FRAME / 2, camp.cx + 110) };
+    const y = Math.round(camp.h * 0.7);
+    return { y, min: Math.round(camp.w * 0.27), max: Math.round(camp.w * 0.36) };
   }
 
   private stepGoat(dt: number): void {
@@ -597,7 +531,8 @@ export class CampScene {
       return;
     }
     const ground = this.goatGround(camp);
-    this.goat ??= { ...newGoat(camp.cx - 70, this.now), face: 1 };
+    this.goat ??= { ...newGoat(ground.min, this.now), face: 1 };
+    this.goat.x = Math.max(ground.min, Math.min(ground.max, this.goat.x));
     // (heroes' feet along her strip: she may go and nibble one)
     const friends = [...this.actors.values()].map((a) => a.x);
     stepGoat(this.goat, dt, this.now, { min: ground.min, max: ground.max, friends }, Math.random, this.reduced);
@@ -637,38 +572,19 @@ export class CampScene {
     const g = this.ctx;
     const camp = this.camp;
     const a = art;
-    if (!a || !camp || !this.back || !this.front || !this.dusk) return;
+    if (!a || !camp || !this.back) return;
     g.globalAlpha = 1;
     g.globalCompositeOperation = 'source-over';
     g.drawImage(this.back, 0, 0);
-    // (the clouds drift slowly, the nearer ones faster)
-    const sx = Math.round((camp.w - a.sky.width) / 2);
-    const bottom = camp.gateY + 40;
-    const drift = this.reduced ? 0 : this.now / 1000;
-    g.globalAlpha = 0.85;
-    for (const [im, speed] of [[a.cloud2, 2], [a.cloud1, 4]] as const) {
-      const off = Math.floor(drift * speed) % im.width;
-      for (let k = -1; k <= 1; k++) g.drawImage(im, sx + k * im.width - off, bottom - im.height);
-    }
-    g.globalAlpha = 1;
-    this.stars(g, camp);
-    g.drawImage(this.front, 0, 0);
-    // (the things on the ground, sorted by their feet: props, the fire, the table, the cart and the heroes)
+    this.army(g, camp);
+    this.mist(g, camp);
     const list: { depth: number; paint: () => void }[] = [];
-    for (const p of camp.props) list.push({ depth: p.depth ?? p.y, paint: () => this.piece(g, a, p) });
     list.push({ depth: camp.fire.y, paint: () => this.fire(g, camp) });
-    list.push({ depth: camp.cart.y, paint: () => this.piece(g, a, { sprite: 'cart', x: camp.cart.x, y: camp.cart.y }) });
-    if (this.table) {
-      const t = this.table;
-      list.push({ depth: camp.table.y, paint: () => g.drawImage(t, Math.round(camp.table.x - t.width / 2), Math.round(camp.table.y - t.height)) });
-    }
     for (const actor of this.actors.values()) list.push({ depth: actor.spot.y, paint: () => this.hero(g, actor) });
     if (this.goat && this.goatArt) list.push({ depth: this.goatGround(camp).y, paint: () => this.duchess(g, camp) });
     list.sort((p, q) => p.depth - q.depth);
     for (const e of list) e.paint();
     this.sparksDraw(g);
-    g.globalCompositeOperation = 'multiply';
-    g.drawImage(this.dusk, 0, 0);
     g.globalCompositeOperation = 'lighter';
     if (this.glow) {
       g.globalAlpha = 0.8;
@@ -678,22 +594,6 @@ export class CampScene {
     g.globalAlpha = 1;
     // (the emote bubbles stay clear of the dusk)
     for (const actor of this.actors.values()) if (actor.emote) this.bubble(g, actor);
-  }
-
-  /** A few stars come out as the dusk falls (over a few seconds after the tab opens), each twinkling in its own time. */
-  private stars(g: CanvasRenderingContext2D, camp: Camp): void {
-    const fall = this.reduced ? 1 : Math.min(1, (this.now - this.shown) / 9000);
-    for (const s of starsFor(camp)) {
-      if (s.at > fall) continue;
-      const tw = 1;
-      g.fillStyle = `rgba(255, 244, 214, ${0.35 + 0.65 * tw})`;
-      g.fillRect(s.x, s.y, 1, 1);
-      if (s.big && tw > 0.6) {
-        g.fillStyle = `rgba(255, 244, 214, ${0.3 * tw})`;
-        g.fillRect(s.x - 1, s.y, 3, 1);
-        g.fillRect(s.x, s.y - 1, 1, 3);
-      }
-    }
   }
 
   /** The campfire: its logs, then its flame leaning slowly side to side (no flicker: the height holds still). */
@@ -722,6 +622,7 @@ export class CampScene {
 
   /** What row and frame a hero shows now. */
   private pose(a: Actor): { row: number; i: number; lift: number } {
+    if (this.reduced) return { row: 0, i: 0, lift: 0 };
     const walking = a.mood === 'out' || a.mood === 'back';
     const name = a.mood === 'flourish' ? 'attack' : walking ? 'walk' : 'idle';
     const n = a.small.counts[name] ?? 1;
@@ -818,9 +719,7 @@ export class CampScene {
       if (!best || d < best.d - 0.15 || (Math.abs(d - best.d) <= 0.15 && a.spot.y > best.y)) best = { kind: a.kind, d, y: a.spot.y };
     }
     if (best) return this.onPick(best.kind);
-    // (the war table opens the party)
-    const t = camp.table;
-    const th = this.table?.height ?? 80;
-    if (Math.abs(rx - t.x) < TABLE.w / 2 + 8 && ry > t.y - th && ry < t.y + 6) this.onParty();
+    // The painted war table at the left of the ledge also opens the party.
+    if (rx < camp.w * 0.2 && ry > camp.h * 0.62 && ry < camp.h * 0.75) this.onParty();
   }
 }

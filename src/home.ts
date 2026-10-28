@@ -315,8 +315,9 @@ export class Home {
     // (the bottom bar, below the camp's picture so it covers none of it: what the next fight is, then Party, Battle! and Continue)
     const fr = el('div', 'hmFront');
     if (this.note) fr.append(el('div', 'hmNote', this.note));
-    // (the run's wave is shown once, on Continue: the ribbon names the army alone, or the next army when no run is going)
-    fr.append(el('div', 'hmBanner', info ? (army ? `${army.name} · Lv ${army.level}` : `${next.name}`) : `${next.name} · next · Lv ${next.level}`));
+    // The scene plaque names the army; the command bar carries its real progress.
+    const progress = armyStars(m, next);
+    fr.append(el('div', 'hmBanner', info ? (army ? `Wave ${info.stage}/${army.waves.length} · ★ ${progress.got}/${progress.max}` : info.label) : `Next army · Lv ${next.level} · ★ ${progress.got}/${progress.max}`));
     const go = el('div', 'hmGo');
     const has = this.hooks.hasRun();
     const party2 = el('button', 'hmLink hmSide', 'Party');
@@ -324,7 +325,7 @@ export class Home {
     party2.addEventListener('click', () => this.go(this.hooks.onParty));
     const battle = el('button', 'hmBattle');
     battle.id = 'hmBattle';
-    battle.append(el('span', '', 'Battle!'));
+    battle.append(el('span', '', 'Choose your battle'));
     battle.setAttribute('aria-label', ARMIES.some((a) => armyIsNew(m, a.id)) ? 'Battle! A new army marches. Choose an army' : 'Battle! Choose an army');
     if (ARMIES.some((a) => armyIsNew(m, a.id))) battle.append(el('i', 'badge'));
     battle.addEventListener('click', () => this.openArmies());
@@ -357,7 +358,7 @@ export class Home {
     const today = m.daily[String(todayKey())];
     const cleared = !!today?.cleared;
     // (the plate names the boss of the day, with how it stands under it: the whole line "Today: Orc Warlord · not tried" is read aloud)
-    const daily = place('hmDaily', cleared ? 'daily done' : 'daily', dailyBossName(todayKey()), dailyStatus(m, todayKey()), `Daily challenge. ${dailyLine(m, todayKey())}`, () => this.go(this.hooks.onDaily));
+    const daily = place('hmDaily', cleared ? 'daily done' : 'daily', 'Daily challenge', `${dailyBossName(todayKey())} · ${dailyStatus(m, todayKey())}`, `Daily challenge. ${dailyLine(m, todayKey())}`, () => this.go(this.hooks.onDaily));
     if (cleared) {
       const tick = el('i', 'dailyDone');
       tick.setAttribute('role', 'img');
@@ -370,19 +371,19 @@ export class Home {
     const towerLine2 = climbing ?? (towerOpen(m) ? (m.stand ? `best wave ${m.stand}` : 'not tried yet') : opensAt(MODE_NEED.tower));
     const tower = place('hmTower', towerUp ? '' : 'locked', 'Last Stand', towerLine2, `Last Stand: ${towerLine2}${towerUp ? '' : `, ${progressLine(m, MODE_NEED.tower)}`}`, () => this.go(this.hooks.onTower));
     tower.disabled = !towerUp;
-    // (the Calamity: the portal; the plate carries the saved run or the best)
+    // The distant Calamity citadel carries the saved map or the unlock requirement.
     const going = this.hooks.slotInfo?.('calamity');
     const calUp = modeOpen(m, 'calamity') || !!going;
     const calLine = going ?? (!calUp ? opensAt(MODE_NEED.calamity) : m.calamity?.best ? `best ${m.calamity.best} of ${CAL_MAPS}` : 'one hero');
-    const calamity = place('hmCalamity', calUp ? '' : 'locked', 'Calamity', calLine, `The Calamity portal: ${calLine}${calUp ? '' : `, ${progressLine(m, MODE_NEED.calamity)}`}`, () => this.go(this.hooks.onCalamity));
+    const calamity = place('hmCalamity', calUp ? '' : 'locked', 'The Calamity', calLine, `The distant Calamity citadel: ${calLine}${calUp ? '' : `, ${progressLine(m, MODE_NEED.calamity)}`}`, () => this.go(this.hooks.onCalamity));
     calamity.disabled = !calUp;
     this.camp.calamitySlot.classList.toggle('shut', !calUp);
     this.camp.dailySlot.replaceChildren(daily);
     this.camp.towerSlot.replaceChildren(tower);
     this.camp.calamitySlot.querySelector('.cpPlace')?.remove();
     this.camp.calamitySlot.append(calamity);
-    this.camp.update(m, party, { army: next, boss: boss.name, sheet: boss.sheet }, !towerUp);
-    // (the chest stash: the chests the armies' stars have earned sit on the camp's cart, on the left)
+    this.camp.update(m, party, { army: next, boss: boss.name, sheet: boss.sheet });
+    // Earned chests rest by the overlook's supply crates on the left.
     const stash = el('div', 'csStash');
     drawChestStash(stash, m, () => {
       saveMeta(m);

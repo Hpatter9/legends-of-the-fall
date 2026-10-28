@@ -293,6 +293,13 @@ No new art: the burning heart's flame is the `flame_fire` strip (`src/art/fx/vfx
 - `src/art/fx/abilities/atlas-0.png` through `atlas-8.png`: original cinematic fantasy effect paintings generated with OpenAI image generation in October 2026 for the owner's explicit request for a different visual signature for every skill, ultimate and king's spell. The 129 named motifs and their source cells are recorded in `catalogue.json`: 90 hero skills/ultimates, 18 additional named enemy abilities and 21 royal spells. No third-party artwork was added for these paintings.
 - `tools/fxlab/import-ability-art.py` prepares the shipping atlases from the original generated sources. The runtime isolates detached neighbouring fragments, feathers cell edges and prepares shared 128px materials. The original paintings remain unchanged; existing character, scenery and supporting effect credits still apply.
 
+
+## Battle cliffside overlook
+
+- `src/art/camp/overlook.png`: original pixel-art environment generated with OpenAI image generation in October 2026 for the owner-approved Battle Overlook concept. The painting includes the rocky command ledge, war table, valley, banners and distant shattered Calamity citadel. No characters or enemy soldiers are baked into the painting; the live party, army ranks and boss reuse the credited game sprite sheets. The campfire reuses the existing credited scenery asset. The environment is bundled into `game.js` for offline play.
+
+- `src/art/camp/camp-war.png`, `camp-wild.png` and `camp-arcane.png`: original generated pixel-art landscape atlases (OpenAI image generation, October 2026) for the owner-requested army-dependent bases. Three equal horizontal scenes per atlas: orc siege camp, undead cemetery, snowy beast dens; wildwood stronghold, stone labyrinth, ogre clan camp; infernal fortress, yokai shrine, golem foundry. The renderer blends the appropriate landscape into the shared overlook and places existing credited enemy sprites around it. All three atlases are bundled for offline use.
+
 ## Grand Scenario scenery
 
 The Grand Scenario prototype reuses the already credited camp gate and Knights watchtower sprites as scenic destination compounds, on the existing area tile/rock art. No new art pack files are introduced.

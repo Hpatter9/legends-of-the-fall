@@ -31,3 +31,52 @@
 .cpPlace i.dailyDone { position: absolute; left: calc(50% + 8px); top: -4px; width: 24px; height: 24px; box-sizing: border-box; display: block; border: 2px solid var(--white); background: var(--g2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 7' shape-rendering='crispEdges'%3E%3Cpath fill='%23fff' d='M7 0h2v1H7zM6 1h2v1H6zM5 2h2v1H5zM0 3h2v1H0zM4 3h2v1H4zM1 4h4v1H1zM2 5h2v1H2z'/%3E%3C/svg%3E") center / 18px 14px no-repeat; image-rendering: pixelated; box-shadow: 0 2px 0 var(--g0); }
 /* the Calamity's portal while it is shut: grey, and still (one frame of the turn) */
 .cpPortalSlot.shut .calPortal { filter: grayscale(1) brightness(0.55); }
+
+/* The approved cliffside overlook. Scene controls are separate from its sky and
+   party: the horizon citadel stays a landmark, never a foreground portal. */
+.hm-battle .cpWrap { isolation: isolate; background: #192729; }
+.hm-battle .cpHeading { position: absolute; top: 16px; left: 12px; width: 65%; pointer-events: none; text-align: center; color: #f5e4b5; text-shadow: 0 2px 3px #080d16, 0 0 12px #080d16; }
+.hm-battle .cpHeading::before { content: ''; display: block; width: 65%; height: 1px; margin: 0 auto 9px; background: linear-gradient(90deg, transparent, #c4a264, transparent); }
+.hm-battle .cpEyebrow { display: block; font: 400 9px/1.4 var(--body); letter-spacing: 2px; color: #d2b775; }
+.hm-battle .cpHeading h2 { margin: 4px 0 3px; font: 700 19px/1.3 var(--display); letter-spacing: 0.4px; }
+.hm-battle .cpHeading p { margin: 0; font: 400 13px/1.2 var(--body); color: #e4d6be; }
+.hm-battle .cpSlot { z-index: 2; }
+.hm-battle .cpSlot:not(.cpPortalSlot) .cpTag { height: 48px; border: 1px solid #857044; border-image: none; border-radius: 3px; background: linear-gradient(135deg, #202b2bf2, #10171df5); box-shadow: inset 0 0 0 3px #bda05f14, 0 2px 6px #0008; }
+.hm-battle .cpTag b { font: 700 12px/1.3 var(--display); color: #e6c988; }
+.hm-battle .cpTag small { font: 400 12px/1.1 var(--body); color: #c2c6bf; }
+.hm-battle .cpPlace:focus-visible { outline: 2px solid #f5d68d; outline-offset: 2px; }
+.hm-battle .cpPlace:hover:not(:disabled) .cpTag { border-color: #ead09a; }
+.hm-battle .cpPortalSlot .cpTag { height: 40px; border: 0; border-image: none; border-radius: 3px; background: linear-gradient(90deg, #16152700, #161527e8 15%, #161527e8 85%, #16152700); padding: 3px; }
+.hm-battle .cpPortalSlot .cpTag b { color: #e1c9f9; font-size: 12px; }
+.hm-battle .cpPortalSlot .cpTag small { color: #c0b5d3; }
+.hm-battle .cpPortalSlot.shut::before { content: ''; position: absolute; inset: 0 0 35%; backdrop-filter: grayscale(1) brightness(0.45); mask-image: radial-gradient(ellipse, #000 40%, transparent 72%); pointer-events: none; }
+.hm-battle .cpPortalSlot.shut .cpTag b { color: #b4b3c3; }
+.hm-battle .cpPlate { min-height: 50px; width: 218px; max-width: 65%; padding: 5px 12px; white-space: normal; border: 1px solid #ad8e50; border-image: none; border-radius: 3px; background: linear-gradient(135deg, #1b231df5, #10191df5); box-shadow: inset 0 0 0 3px #c4a15d15, 0 3px 10px #0009; }
+.hm-battle .cpPlate::before, .hm-battle .cpPlate::after { content: '◆'; position: absolute; top: 17px; color: #b49b63; font-size: 8px; }
+.hm-battle .cpPlate::before { left: 4px; }
+.hm-battle .cpPlate::after { right: 4px; }
+.hm-battle .cpPlate b { font: 700 14px/1.25 var(--display); color: #e8cb86; }
+.hm-battle .cpPlate small { font: 400 12px/1.15 var(--body); color: #d1cebd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.hm-battle .cpPlate .cpEyebrow { font-size: 8px; letter-spacing: 1.5px; }
+.hm-battle .cpStash { z-index: 2; }
+.hm-battle .cpStash:has(.csChest) { border-radius: 4px; background: #12191dbb; }
+.hm-battle .cpStash .csChest { width: 48px; min-height: 48px; }
+.hm-battle .cpStash .csCount { position: absolute; right: -2px; top: -4px; font-size: 11px; padding: 1px 3px; background: #15201c; }
+.hm-battle .hmFront { height: 110px; padding: 5px 12px 3px; gap: 4px; border-top: 1px solid #9c8351; background: linear-gradient(#202724, #11191c); box-shadow: 0 -4px 16px #0c121a99; }
+.hm-battle { --hmBar: 110px; }
+.hm-battle .hmBanner { height: 20px; line-height: 20px; border: 0; padding: 0 6px; background: none; font: 400 12px/20px var(--body); letter-spacing: 0.7px; box-shadow: none; }
+.hm-battle .hmGo { grid-template-columns: 1fr 1fr; grid-template-rows: 48px 24px; gap: 3px 10px; }
+.hm-battle .hmBattle { grid-column: 1 / -1; grid-row: 1; min-height: 48px; border: 1px solid #c5a567; border-image: none; border-radius: 3px; font: 700 17px/1.2 var(--display); letter-spacing: 0.8px; text-transform: uppercase; background: linear-gradient(110deg, #233c2b, #3c6141 50%, #233c2b); box-shadow: inset 0 0 0 3px #142b24, inset 0 0 0 4px #b5a16a60, 0 2px 5px #0008; color: #f4e3b3; }
+.hm-battle .hmBattle:active { transform: translateY(1px); }
+.hm-battle .hmLink.hmSide { grid-row: 2; border: 0; background: none; box-shadow: none; font: 400 12px/1 var(--body); min-height: 24px; padding: 0; display: flex; flex-direction: row; gap: 5px; color: #d3c39b; }
+.hm-battle .hmSpacer { grid-row: 2; }
+.hm-battle .hmLink.hmSide b, .hm-battle .hmLink.hmSide small { font: 400 12px/1 var(--body); }
+.hm-battle .hmNote { padding: 4px 6px; border-radius: 3px; background: #15201cee; color: #f2ddb5; }
+.hm-battle .cpPlace i.badge { top: 4px; left: auto; right: 4px; }
+.hm-battle .cpPlace i.dailyDone { top: 3px; left: auto; right: 3px; width: 18px; height: 18px; background-size: 13px 11px; }
+@media (max-height: 800px) {
+  .hm-battle .cpHeading { top: 10px; }
+  .hm-battle .cpHeading h2 { font-size: 17px; }
+  .hm-battle .cpHeading p { font-size: 12px; }
+  .hm-battle .cpHeading::before { margin-bottom: 5px; }
+}
