@@ -373,6 +373,8 @@ The Grand Scenario prototype reuses the already credited camp gate and Knights w
 
 - `src/art/ui/battle-crest.png`: original transparent crossed-sword, emerald lion shield and crimson ribbon ornament generated with OpenAI image generation in October 2026 for the owner-authorised battle UI pass. Other frames, ribbons and spell icons reuse the artwork credited above.
 
+- **Four seductress redesigns** (`hero_res_kitsune`, `hero_res_gorgon`, `hero_res_illusionist`, `hero_res_time_witch`, and their `_back` PNGs): original artwork generated with OpenAI image generation in October 2026, following the owner-approved adult character concepts. Front/rear views and action poses are packed with `tools/seductress/pack.py`. Costume revisions keep the heroes’ existing identities and combat rules; the Illusionist’s decoys reuse her updated sheet.
+
 ## Player rulers (October 2026)
 
 - `src/art/rulers/{sun_viper,frost_witch,ash_empress,rose_duchess,moon_oracle,iron_stag,storm_corsair,gilded_necromancer}.png`: original fantasy pixel character artwork generated with OpenAI image generation from the owner-approved roster and personality concepts (`docs/samples/ruler-roster-personalities.png`). Eight rulers, each with four frames for idle, walk, strike, cast, hurt, fall, seated idle and seated command. Tattoos, jewellery, personal objects and costumes follow those approved concepts. `tools/rulers/prepare.sh` and `bounds.mjs` mechanically slice and pad generated frames; `src/art/rulers/provenance.json` records the source files.
