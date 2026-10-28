@@ -9,6 +9,7 @@
 // a moment after they fall. The saved run (`StandRun`) is a small record kept at the start of each break; the battle is built
 // again from it. Pure rules: no Pixi, no DOM; every draw is a side stream of the run's seed.
 
+import { grantOres, standOres, type OreDrop } from './awakenMats';
 import { startBattle, addUnit, stepBattle, TICK_MS, creditOf, type Battle, type BattleEvent, type Boost, type Unit } from './battle';
 import { tileAt, standable, type Area, type At } from './board';
 import { canPost, edgeTiles, KING_AT, ringPlan, standArea, standBoard, type Edge, type Role } from './standField';
@@ -156,6 +157,8 @@ export interface StandSummary {
   heroes: number;
   relics: number;
   newBest: boolean;
+  /** Rift ores a new record paid (`awakenMats.ts`: a couple for each tenth wave passed for the first time); missing when none. */
+  ores?: OreDrop[];
 }
 
 /** A foe still to come: when (ms into the wave), what, where. */
@@ -781,8 +784,11 @@ export function settleStand(m: Meta, run: StandRun, armies: readonly string[] = 
     gear.push(itemName(grantEquipment(m, rollEquipment(rng, { quality, armyIndex: armyIndex(army.id), milestone: cleared >= 39 }))));
   }
   const newBest = run.best > (m.stand ?? 0);
+  // (a record past a tenth wave the save had not reached pays a couple of rift ores, from a side stream)
+  const ores = standOres(run.seed, m.stand ?? 0, run.best);
+  grantOres(m, ores);
   m.stand = Math.max(m.stand ?? 0, run.best);
-  run.summary = { best: run.best, cleared, crowns, ...c, gear, kills: run.kills, heroes: run.heroes.length, relics: run.relics.length, newBest };
+  run.summary = { best: run.best, cleared, crowns, ...c, gear, kills: run.kills, heroes: run.heroes.length, relics: run.relics.length, newBest, ...(ores.length ? { ores } : {}) };
   return run.summary;
 }
 

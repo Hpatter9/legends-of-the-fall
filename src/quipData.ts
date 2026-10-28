@@ -656,6 +656,7 @@ export const DUCHESS_LINES = {
   bigHit: ['Mehh!', 'MEHH!', 'MEEEHHH!', 'Mehh?! (Was that for me?)', 'MEHH! (Tactical sidestep.)', 'Mehh! (Rude brute!)', 'MEHHH! (Dramatic head toss.)'],
   boss: ['Meh... meh... mehhh.', 'Mehh?! (Too tall.)', 'Mehh. (Overrated.)', 'Meh-heh-heh.', 'Mehh! (I have seen larger cabbages.)', 'Meh... (Boring.)', 'Mehh?! (Lacks proper horns.)'],
   wipe: ['Mehh...', 'Meh. (Sorry.)', 'Mehh. (Amateurs.)', 'Meh-meh. (Told you so.)', 'Mehh... (I shall eat the flag now.)', 'Meh. (Nap time.)', 'Mehh. (A turnip would have helped.)'],
+  won: ['Mehh! (Victory is delicious.)', 'Meh-heh! (I planned the whole battle.)', 'Mehh! (Now where is my celebratory turnip?)', 'MEHH! (Top of the rock!)', 'Mehh. (Adequate hero work.)'],
   /** Things she has eaten, for the camp. */
   ate: [
     'the kingdom\'s only accurate map',
@@ -830,6 +831,9 @@ export const RESULT_LOSS: readonly string[] = [
 
 /** A dry aside for each achievement, shown under its real name and text (so the meaning stays). */
 export const AWARD_JOKES: Record<string, string> = {
+  duchessCrown: 'The crown is tin. Her Grace has not been told, and nobody is volunteering.',
+  duchessTactician: 'The foe was startled by livestock. It has asked that this stay off its record.',
+  duchessHaystack: 'Treasure in the hay. The hay would like it noted that it was never consulted.',
   firstWin: 'Duchess ate the victory rosette before the glue was dry.',
   flawless: 'Not a single bruise recorded. Even the armourers feel slightly cheated.',
   perfect: 'The stars align in perfection. They have formally requested apple slices.',

@@ -150,6 +150,28 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
   },
   // (Duchess the goat joins one fight in a thousand: `duchessFight.ts`)
   { id: 'duchessFavour', name: "Her Grace's Favour", text: 'Win a fight with Duchess on the field.', crowns: 20, earned: (c) => c.won && !!c.battle?.units.some((u) => u.def === 'duchess') },
+  {
+    id: 'duchessCrown',
+    name: 'Her Grace',
+    text: 'Tap Duchess 5 times to crown her with the Tiny Tin Crown.',
+    crowns: 10,
+    earned: (c) => (c.meta.duchessTaps ?? 0) >= 5,
+    meter: (m) => ({ now: Math.min(5, m.duchessTaps ?? 0), need: 5 }),
+  },
+  {
+    id: 'duchessTactician',
+    name: 'Livestock Tactician',
+    text: 'Trigger Duchess’s Lucky Bleat in battle to unlock the Wizard Hat.',
+    crowns: 10,
+    earned: (c) => !!c.meta.duchessLucky,
+  },
+  {
+    id: 'duchessHaystack',
+    name: 'Haystack Forager',
+    text: 'Uncover Duchess’s daily haystack treat to unlock the Archery Quiver.',
+    crowns: 10,
+    earned: (c) => !!c.meta.duchessHay,
+  },
 ];
 
 export const achievementById = (id: string): Achievement | undefined => ACHIEVEMENTS.find((a) => a.id === id);

@@ -2217,12 +2217,13 @@
   "facesRight": true
  },
  "hero_soldier": {
-  "w": 192,
-  "h": 128,
+  "w": 184,
+  "h": 113,
   "perRow": 4,
   "rows": [
    "idle",
    "walk",
+   "_walk",
    "attack",
    "hurt",
    "dead",
@@ -2230,23 +2231,26 @@
   ],
   "counts": {
    "idle": 4,
-   "walk": 4,
+   "walk": 8,
    "attack": 4,
    "hurt": 4,
    "dead": 4,
-   "defend": 4
+   "defend": 4,
+   "_walk": 0
   },
   "figure": 96,
   "facesRight": true,
-  "lies": true
+  "lies": true,
+  "rear": "hero_soldier_back"
  },
  "hero_samurai_archer": {
-  "w": 192,
-  "h": 128,
+  "w": 138,
+  "h": 104,
   "perRow": 4,
   "rows": [
    "idle",
    "walk",
+   "_walk",
    "attack",
    "hurt",
    "dead",
@@ -2254,15 +2258,2663 @@
   ],
   "counts": {
    "idle": 4,
-   "walk": 4,
+   "walk": 8,
    "attack": 4,
    "hurt": 4,
    "dead": 4,
-   "attack2": 4
+   "attack2": 4,
+   "_walk": 0
   },
   "figure": 100,
   "facesRight": true,
-  "lies": true
+  "lies": true,
+  "rear": "hero_samurai_archer_back"
+ },
+ "hero_res_kunoichi": {
+  "w": 148,
+  "h": 101,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_kunoichi_back"
+ },
+ "hero_res_wizard": {
+  "w": 144,
+  "h": 116,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_wizard_back"
+ },
+ "hero_res_paladin": {
+  "w": 162,
+  "h": 120,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_paladin_back"
+ },
+ "hero_res_cleric": {
+  "w": 146,
+  "h": 111,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_cleric_back"
+ },
+ "hero_res_minotaur": {
+  "w": 144,
+  "h": 115,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_minotaur_back"
+ },
+ "hero_res_peasant": {
+  "w": 134,
+  "h": 101,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_peasant_back"
+ },
+ "hero_res_ninja_monk": {
+  "w": 122,
+  "h": 101,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_ninja_monk_back"
+ },
+ "hero_res_lightning_mage": {
+  "w": 148,
+  "h": 112,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_lightning_mage_back"
+ },
+ "hero_res_kitsune": {
+  "w": 146,
+  "h": 101,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_kitsune_back"
+ },
+ "hero_res_samurai": {
+  "w": 194,
+  "h": 144,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_samurai_back"
+ },
+ "hero_res_wanderer": {
+  "w": 128,
+  "h": 102,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_wanderer_back"
+ },
+ "hero_res_karasu": {
+  "w": 158,
+  "h": 118,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_karasu_back"
+ },
+ "hero_res_yamabushi": {
+  "w": 160,
+  "h": 121,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_yamabushi_back"
+ },
+ "hero_res_werewolf": {
+  "w": 172,
+  "h": 114,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_werewolf_back"
+ },
+ "hero_res_satyr": {
+  "w": 106,
+  "h": 102,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_satyr_back"
+ },
+ "hero_res_gorgon": {
+  "w": 144,
+  "h": 121,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_gorgon_back"
+ },
+ "hero_res_druid": {
+  "w": 134,
+  "h": 115,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_druid_back"
+ },
+ "hero_res_werewolf_brute": {
+  "w": 164,
+  "h": 111,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_werewolf_brute_back"
+ },
+ "hero_res_werewolf_awakened": {
+  "w": 156,
+  "h": 118,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_werewolf_awakened_back"
+ },
+ "hero_res_treant": {
+  "w": 142,
+  "h": 109,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_treant_back"
+ },
+ "hero_soldier_back": {
+  "w": 184,
+  "h": 113,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_soldier"
+ },
+ "hero_samurai_archer_back": {
+  "w": 138,
+  "h": 104,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 100,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_samurai_archer"
+ },
+ "hero_res_samurai_back": {
+  "w": 194,
+  "h": 144,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_samurai"
+ },
+ "hero_res_samurai_commander": {
+  "w": 186,
+  "h": 111,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_samurai_commander_back"
+ },
+ "hero_res_barbarian": {
+  "w": 154,
+  "h": 133,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_barbarian_back"
+ },
+ "hero_res_ranger": {
+  "w": 136,
+  "h": 107,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_ranger_back"
+ },
+ "hero_res_warlock": {
+  "w": 152,
+  "h": 111,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_warlock_back"
+ },
+ "hero_res_illusionist": {
+  "w": 146,
+  "h": 104,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_illusionist_back"
+ },
+ "hero_res_gunslinger": {
+  "w": 162,
+  "h": 113,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_gunslinger_back"
+ },
+ "hero_res_shambler": {
+  "w": 134,
+  "h": 110,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_shambler_back"
+ },
+ "hero_res_rifle_bot": {
+  "w": 140,
+  "h": 107,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_rifle_bot_back"
+ },
+ "hero_res_mercenary": {
+  "w": 172,
+  "h": 107,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_mercenary_back"
+ },
+ "hero_res_mummy": {
+  "w": 146,
+  "h": 104,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_mummy_back"
+ },
+ "hero_res_buccaneer": {
+  "w": 174,
+  "h": 119,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_buccaneer_back"
+ },
+ "hero_res_wolf_bard": {
+  "w": 114,
+  "h": 108,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_wolf_bard_back"
+ },
+ "hero_res_beastmaster": {
+  "w": 162,
+  "h": 116,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_beastmaster_back"
+ },
+ "hero_res_kraken": {
+  "w": 170,
+  "h": 123,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_kraken_back"
+ },
+ "hero_res_lancer": {
+  "w": 160,
+  "h": 118,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_lancer_back"
+ },
+ "hero_res_reaper": {
+  "w": 160,
+  "h": 106,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_reaper_back"
+ },
+ "hero_res_time_witch": {
+  "w": 142,
+  "h": 108,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_time_witch_back"
+ },
+ "hero_res_arc_blade": {
+  "w": 184,
+  "h": 117,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_arc_blade_back"
+ },
+ "hero_res_dread_pirate": {
+  "w": 176,
+  "h": 104,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_dread_pirate_back"
+ },
+ "hero_res_siege_bot": {
+  "w": 154,
+  "h": 106,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_siege_bot_back"
+ },
+ "hero_res_priestess": {
+  "w": 160,
+  "h": 113,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_priestess_back"
+ },
+ "hero_res_dragoon": {
+  "w": 158,
+  "h": 129,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_dragoon_back"
+ },
+ "hero_res_juggernaut": {
+  "w": 132,
+  "h": 109,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_juggernaut_back"
+ },
+ "hero_res_sage": {
+  "w": 152,
+  "h": 114,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_sage_back"
+ },
+ "hero_res_demon_swordsman": {
+  "w": 192,
+  "h": 116,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_demon_swordsman_back"
+ },
+ "hero_res_tyrant": {
+  "w": 160,
+  "h": 111,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_tyrant_back"
+ },
+ "hero_res_treant2": {
+  "w": 176,
+  "h": 144,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 124,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_treant2_back"
+ },
+ "hero_res_treant3": {
+  "w": 160,
+  "h": 135,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 124,
+  "facesRight": true,
+  "lies": true,
+  "rear": "hero_res_treant3_back"
+ },
+ "hero_res_kunoichi_back": {
+  "w": 148,
+  "h": 101,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_kunoichi"
+ },
+ "hero_res_wizard_back": {
+  "w": 144,
+  "h": 116,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_wizard"
+ },
+ "hero_res_paladin_back": {
+  "w": 162,
+  "h": 120,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_paladin"
+ },
+ "hero_res_cleric_back": {
+  "w": 146,
+  "h": 111,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_cleric"
+ },
+ "hero_res_minotaur_back": {
+  "w": 144,
+  "h": 115,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_minotaur"
+ },
+ "hero_res_peasant_back": {
+  "w": 134,
+  "h": 101,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_peasant"
+ },
+ "hero_res_ninja_monk_back": {
+  "w": 122,
+  "h": 101,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_ninja_monk"
+ },
+ "hero_res_wanderer_back": {
+  "w": 128,
+  "h": 102,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_wanderer"
+ },
+ "hero_res_lightning_mage_back": {
+  "w": 148,
+  "h": 112,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_lightning_mage"
+ },
+ "hero_res_kitsune_back": {
+  "w": 146,
+  "h": 101,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_kitsune"
+ },
+ "hero_res_karasu_back": {
+  "w": 158,
+  "h": 118,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_karasu"
+ },
+ "hero_res_yamabushi_back": {
+  "w": 160,
+  "h": 121,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_yamabushi"
+ },
+ "hero_res_werewolf_back": {
+  "w": 172,
+  "h": 114,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_werewolf"
+ },
+ "hero_res_satyr_back": {
+  "w": 106,
+  "h": 102,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_satyr"
+ },
+ "hero_res_gorgon_back": {
+  "w": 144,
+  "h": 121,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_gorgon"
+ },
+ "hero_res_samurai_commander_back": {
+  "w": 186,
+  "h": 111,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_samurai_commander"
+ },
+ "hero_res_druid_back": {
+  "w": 134,
+  "h": 115,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_druid"
+ },
+ "hero_res_barbarian_back": {
+  "w": 154,
+  "h": 133,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_barbarian"
+ },
+ "hero_res_ranger_back": {
+  "w": 136,
+  "h": 107,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_ranger"
+ },
+ "hero_res_warlock_back": {
+  "w": 152,
+  "h": 111,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_warlock"
+ },
+ "hero_res_illusionist_back": {
+  "w": 146,
+  "h": 104,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_illusionist"
+ },
+ "hero_res_gunslinger_back": {
+  "w": 162,
+  "h": 113,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_gunslinger"
+ },
+ "hero_res_shambler_back": {
+  "w": 134,
+  "h": 110,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_shambler"
+ },
+ "hero_res_rifle_bot_back": {
+  "w": 140,
+  "h": 107,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_rifle_bot"
+ },
+ "hero_res_mercenary_back": {
+  "w": 172,
+  "h": 107,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_mercenary"
+ },
+ "hero_res_mummy_back": {
+  "w": 146,
+  "h": 104,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_mummy"
+ },
+ "hero_res_buccaneer_back": {
+  "w": 174,
+  "h": 119,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_buccaneer"
+ },
+ "hero_res_wolf_bard_back": {
+  "w": 114,
+  "h": 108,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_wolf_bard"
+ },
+ "hero_res_beastmaster_back": {
+  "w": 162,
+  "h": 116,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_beastmaster"
+ },
+ "hero_res_kraken_back": {
+  "w": 170,
+  "h": 123,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_kraken"
+ },
+ "hero_res_lancer_back": {
+  "w": 160,
+  "h": 118,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_lancer"
+ },
+ "hero_res_reaper_back": {
+  "w": 160,
+  "h": 106,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_reaper"
+ },
+ "hero_res_time_witch_back": {
+  "w": 142,
+  "h": 108,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_time_witch"
+ },
+ "hero_res_arc_blade_back": {
+  "w": 184,
+  "h": 117,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_arc_blade"
+ },
+ "hero_res_dread_pirate_back": {
+  "w": 176,
+  "h": 104,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_dread_pirate"
+ },
+ "hero_res_siege_bot_back": {
+  "w": 154,
+  "h": 106,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_siege_bot"
+ },
+ "hero_res_priestess_back": {
+  "w": 160,
+  "h": 113,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_priestess"
+ },
+ "hero_res_dragoon_back": {
+  "w": 158,
+  "h": 129,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_dragoon"
+ },
+ "hero_res_juggernaut_back": {
+  "w": 132,
+  "h": 109,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_juggernaut"
+ },
+ "hero_res_sage_back": {
+  "w": 152,
+  "h": 114,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_sage"
+ },
+ "hero_res_demon_swordsman_back": {
+  "w": 192,
+  "h": 116,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_demon_swordsman"
+ },
+ "hero_res_tyrant_back": {
+  "w": 160,
+  "h": 111,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_tyrant"
+ },
+ "hero_res_werewolf_brute_back": {
+  "w": 164,
+  "h": 111,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_werewolf_brute"
+ },
+ "hero_res_werewolf_awakened_back": {
+  "w": 156,
+  "h": 118,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_werewolf_awakened"
+ },
+ "hero_res_treant_back": {
+  "w": 142,
+  "h": 109,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 96,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_treant"
+ },
+ "hero_res_treant2_back": {
+  "w": 176,
+  "h": 144,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 124,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_treant2"
+ },
+ "hero_res_treant3_back": {
+  "w": 160,
+  "h": 135,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4,
+   "_walk": 0
+  },
+  "figure": 124,
+  "facesRight": true,
+  "lies": true,
+  "front": "hero_res_treant3"
  },
  "duchess_goat": {
   "w": 128,

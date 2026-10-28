@@ -1,0 +1,318 @@
+{
+  "id": "treant",
+  "frames": [
+    {
+      "row": "idle",
+      "col": 0,
+      "box": [
+        27,
+        22,
+        205,
+        243
+      ],
+      "width": 77,
+      "height": 96,
+      "left": 84
+    },
+    {
+      "row": "idle",
+      "col": 1,
+      "box": [
+        290,
+        19,
+        456,
+        242
+      ],
+      "width": 72,
+      "height": 97,
+      "left": 87
+    },
+    {
+      "row": "idle",
+      "col": 2,
+      "box": [
+        548,
+        19,
+        714,
+        243
+      ],
+      "width": 72,
+      "height": 97,
+      "left": 88
+    },
+    {
+      "row": "idle",
+      "col": 3,
+      "box": [
+        819,
+        20,
+        993,
+        243
+      ],
+      "width": 76,
+      "height": 97,
+      "left": 95
+    },
+    {
+      "row": "walk",
+      "col": 0,
+      "box": [
+        27,
+        266,
+        217,
+        494
+      ],
+      "width": 83,
+      "height": 99,
+      "left": 84
+    },
+    {
+      "row": "walk",
+      "col": 1,
+      "box": [
+        300,
+        267,
+        463,
+        494
+      ],
+      "width": 71,
+      "height": 99,
+      "left": 92
+    },
+    {
+      "row": "walk",
+      "col": 2,
+      "box": [
+        544,
+        266,
+        723,
+        494
+      ],
+      "width": 78,
+      "height": 99,
+      "left": 86
+    },
+    {
+      "row": "walk",
+      "col": 3,
+      "box": [
+        806,
+        267,
+        981,
+        494
+      ],
+      "width": 76,
+      "height": 99,
+      "left": 89
+    },
+    {
+      "row": "attack",
+      "col": 0,
+      "box": [
+        20,
+        517,
+        210,
+        751
+      ],
+      "width": 83,
+      "height": 102,
+      "left": 81
+    },
+    {
+      "row": "attack",
+      "col": 1,
+      "box": [
+        255,
+        519,
+        544,
+        751
+      ],
+      "width": 125,
+      "height": 101,
+      "left": 72
+    },
+    {
+      "row": "attack",
+      "col": 2,
+      "box": [
+        530,
+        518,
+        767,
+        751
+      ],
+      "width": 103,
+      "height": 101,
+      "left": 80
+    },
+    {
+      "row": "attack",
+      "col": 3,
+      "box": [
+        795,
+        521,
+        986,
+        751
+      ],
+      "width": 83,
+      "height": 100,
+      "left": 84
+    },
+    {
+      "row": "hurt",
+      "col": 0,
+      "box": [
+        41,
+        788,
+        205,
+        992
+      ],
+      "width": 71,
+      "height": 89,
+      "left": 90
+    },
+    {
+      "row": "hurt",
+      "col": 1,
+      "box": [
+        289,
+        780,
+        493,
+        999
+      ],
+      "width": 89,
+      "height": 95,
+      "left": 87
+    },
+    {
+      "row": "hurt",
+      "col": 2,
+      "box": [
+        556,
+        776,
+        752,
+        999
+      ],
+      "width": 85,
+      "height": 97,
+      "left": 92
+    },
+    {
+      "row": "hurt",
+      "col": 3,
+      "box": [
+        800,
+        795,
+        985,
+        995
+      ],
+      "width": 80,
+      "height": 87,
+      "left": 86
+    },
+    {
+      "row": "dead",
+      "col": 0,
+      "box": [
+        35,
+        1033,
+        232,
+        1236
+      ],
+      "width": 86,
+      "height": 88,
+      "left": 88
+    },
+    {
+      "row": "dead",
+      "col": 1,
+      "box": [
+        265,
+        1043,
+        474,
+        1275
+      ],
+      "width": 91,
+      "height": 101,
+      "left": 77
+    },
+    {
+      "row": "dead",
+      "col": 2,
+      "box": [
+        504,
+        1074,
+        745,
+        1286
+      ],
+      "width": 105,
+      "height": 92,
+      "left": 69
+    },
+    {
+      "row": "dead",
+      "col": 3,
+      "box": [
+        759,
+        1135,
+        1015,
+        1232
+      ],
+      "width": 111,
+      "height": 42,
+      "left": 69
+    },
+    {
+      "row": "attack2",
+      "col": 0,
+      "box": [
+        28,
+        1279,
+        225,
+        1505
+      ],
+      "width": 86,
+      "height": 98,
+      "left": 85
+    },
+    {
+      "row": "attack2",
+      "col": 1,
+      "box": [
+        274,
+        1274,
+        511,
+        1505
+      ],
+      "width": 103,
+      "height": 100,
+      "left": 80
+    },
+    {
+      "row": "attack2",
+      "col": 2,
+      "box": [
+        520,
+        1275,
+        763,
+        1505
+      ],
+      "width": 106,
+      "height": 100,
+      "left": 76
+    },
+    {
+      "row": "attack2",
+      "col": 3,
+      "box": [
+        780,
+        1272,
+        1000,
+        1505
+      ],
+      "width": 96,
+      "height": 101,
+      "left": 78
+    }
+  ],
+  "warnings": []
+}

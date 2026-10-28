@@ -1,6 +1,8 @@
 # Credits
 
-- **Resonance hero pilot** (`hero_soldier.png`, `hero_samurai_archer.png`): original generated pixel artwork, directed from the owner's approved concept and Final Fantasy Resonance style references. No franchise sprites are included. Cropped, packed and sampled with nearest-neighbour scaling by `tools/resonance/pack.cjs`. These replace the Knight and Archer's displayed art at all grades; existing grade and awakening colour treatments still apply. Original Craftpix sheets and their credits remain available.
+- **Full Resonance hero upgrade** (`src/art/units/hero_res_*.png`, separate `_back` sheets, and the two pilot heroes): original generated pixel artwork following the owner's approved direction. Includes the 43 remaining collectible heroes, Werewolf Brute/awakened appearances and three Treants. Front/rear art supplies four isometric facings through left/right mirroring; dedicated walking atlases supply eight-frame strides. Prompts, specifications and packing tools are in `tools/resonance/`; raw generation intermediates remain in the art workspace. No franchise sprites are included. Foes/NPCs retain their existing art and credits.
+
+- **Resonance hero pilot** (`hero_soldier.png`, `hero_samurai_archer.png`): original generated pixel artwork, directed from the owner's approved concept and Final Fantasy Resonance style references. No franchise sprites are included. Cropped, packed and sampled with nearest-neighbour scaling by `tools/resonance/pack.cjs`. These replace the Knight and Archer's displayed art at all grades; current grade effects and awakened class auras apply. Original Craftpix sheets and their credits remain available.
 
 Most of the art is from free **Craftpix.net** packs (craftpix.net, free licence: use in games allowed, no redistributing
 the raw files), copied one sprite at a time from the private assets repository (`hpatter9/chronos-assets`).
@@ -23,6 +25,7 @@ the raw files), copied one sprite at a time from the private assets repository (
 - **Effects** (`src/art/fx/impact.png`, `hit_fire.png`): the hit sparks and fire hit from the
   **Super Pixel Effects Gigapack (Free Version)** by unTied Games, as Chronos Settlement cut them
   (`src/renderer/art/effects/`).
+- **Rift ore icons** (`src/art/ui/ore/`, the awakening materials): thirteen 32x32 icons from the **Free Mining Pixel 32x32 Icons** pack by Craftpix (craftpix.net, free licence), each recoloured to its class's aura colour by `tools/awaken/ore-icons.py`.
 - **Item icons** (`src/art/items/`): single 16x16 tiles cut from the **DawnLike** tileset by DragonDePlatino (Items: Armor, Amulet, Boot, Hat, LongWep, Ring, Shield), for relics and gear.
   The ten relics of the tower's relic sets (Ember Ruby, Dragon Scale, Frost Sapphire, Winter Cloak, Holy Chalice, Saint's Medal, Shadow Cloak, Viper Fang, Wolf Fang, Beast Harness) reuse tiles of the same tileset already cut for the equipment (`src/art/equip/`), copied one a file (CC-BY 4.0).
 - **Tower map icons** (`src/art/rogue/`): single 16x16 tiles cut from the **DawnLike** tileset by DragonDePlatino (Effect0, Money, GUI1, Potion, LongWep; crossed swords is the sword tile and its mirror), by `tools/rogue-icons.py` (CC-BY 4.0).

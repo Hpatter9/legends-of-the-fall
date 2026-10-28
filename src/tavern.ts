@@ -13,11 +13,13 @@ import { awakenedStep, heroRig } from './render/awakenRig';
 import { drawAura, drawAuraGlow } from './render/auraCanvas';
 import { auraParts, type AuraPart } from './render/auraStyles';
 import { loadImage } from './render/loadImage';
-import { onSettings, settings } from './settings';
+import { onSettings, setSetting, settings } from './settings';
 import { goatHalfSheet } from './duchess';
 import { goatSays } from './quips';
-import { chewBob, FRAME, goatFrame, hopLift, newGoat, stepGoat, tapGoat, type Goat } from './render/duchessRules';
+import { showQuip } from './quipView';
+import { chewBob, drawDuchessCosmetic, DUCHESS_COSMETICS, FRAME, goatFrame, hopLift, newGoat, stepGoat, tapGoat, type Goat } from './render/duchessRules';
 import { CEIL_H, DOORWAYS, figureHeight, FLOOR_PAD, GLOWS, PROPS, ROOM_H, ROOM_NAMES, ROOM_W, ROOMS, RUGS, SCENE_W, SPOTS, WALL_H, type Spot } from './render/tavernSpots';
+import { TrophyWallModal } from './trophyWall';
 import wallUrl from './art/tavern/wall.png';
 import wallHearthUrl from './art/tavern/wall_hearth.png';
 import wallBackUrl from './art/tavern/wall_back.png';
@@ -154,6 +156,8 @@ export class Tavern {
   private grip: { x: number; t: number }[] = [];
   private lastRoom = -1;
   private watch: ResizeObserver;
+  private meta: Meta | null = null;
+  private trophyModal = new TrophyWallModal();
 
   constructor(
     private onPick: (kind: string) => void,
@@ -161,6 +165,11 @@ export class Tavern {
   ) {
     const roster = el('button', 'tvRoster', 'Roster');
     roster.addEventListener('click', onRoster);
+    const trophies = el('button', 'tvTrophies', '🏆 Trophies');
+    trophies.title = 'Defeated Boss Trophy Wall';
+    trophies.addEventListener('click', () => {
+      if (this.meta) this.trophyModal.open(this.meta);
+    });
     ROOM_NAMES.forEach((r, i) => {
       if (i) this.nav.append(el('span', 'tvDot', '·'));
       const b = el('button', 'tvRoom1', r.name);
@@ -168,7 +177,7 @@ export class Tavern {
       this.roomBtns.push(b);
       this.nav.append(b);
     });
-    this.root.append(this.canvas, this.count, roster, this.edgeL, this.edgeR, this.nav);
+    this.root.append(this.canvas, this.count, trophies, roster, this.edgeL, this.edgeR, this.nav, this.trophyModal.root);
     this.ctx.imageSmoothingEnabled = false;
     onSettings((s) => (this.saver = s.saver));
     window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
@@ -239,6 +248,7 @@ export class Tavern {
 
   /** Show these heroes (the meta's unlocked ones, at their ranks). Keeps the ones already there as they are. */
   update(meta: Meta): void {
+    this.meta = meta;
     const have = ALL_HEROES.filter((k) => meta.unlocked.includes(k));
     this.count.replaceChildren(`${have.length} of ${ALL_HEROES.length} heroes`, el('small', '', `${meta.equipment?.length ?? 0} equipment`), el('small', '', 'tap a hero · swipe to look'));
     for (const k of [...this.actors.keys()]) if (!have.includes(k)) this.actors.delete(k);
@@ -568,7 +578,10 @@ export class Tavern {
     // (the half-size sheet: she stands about half a hero's height in the hall)
     const f = FRAME / 2;
     const lift = Math.round(hopLift(goat, this.now) / 2);
-    g.drawImage(this.goatArt!, goatFrame(goat) * f, 0, f, f, x - f / 2, foot - f - lift - chewBob(goat, this.now, this.reduced), f, f);
+    const bob = chewBob(goat, this.now, this.reduced);
+    const dy = foot - f - lift - bob;
+    g.drawImage(this.goatArt!, goatFrame(goat) * f, 0, f, f, x - f / 2, dy, f, f);
+    drawDuchessCosmetic(g, settings().duchessHat, x - f / 2, dy, 0.5, goat.face, 0);
   }
 
   /** The room names and edge arrows under the picture: which room the view is on, and which ways there is more to see. */
@@ -744,8 +757,27 @@ export class Tavern {
     const ry = this.camY + (e.clientY - box.top) / this.scale;
     // (Duchess first: a tap on her few pixels is hers, and she hops)
     if (this.goat && this.goatArt && Math.abs(rx - this.goat.x) < 12 && ry > Tavern.GOAT.y - 20 && ry < Tavern.GOAT.y + 6) {
-      if (tapGoat(this.goat, this.now)) goatSays('tap', { x: e.clientX, y: box.top + (Tavern.GOAT.y - 24 - this.camY) * this.scale });
+      if (tapGoat(this.goat, this.now)) {
+        try {
+          const raw = localStorage.getItem('legends.meta');
+          if (raw) {
+            const m = JSON.parse(raw);
+            m.duchessTaps = (m.duchessTaps ?? 0) + 1;
+            localStorage.setItem('legends.meta', JSON.stringify(m));
+          }
+        } catch {
+          /* ignore */
+        }
+        this.cycleDuchessHat(e.clientX, box.top + (Tavern.GOAT.y - 24 - this.camY) * this.scale);
+      }
       return;
+    }
+    // (decorative trophy wall plaque in the hearth hall)
+    if (rx >= ROOM_W + 120 && rx <= ROOM_W + 264 && ry >= 10 && ry <= 90) {
+      if (this.meta) {
+        this.trophyModal.open(this.meta);
+        return;
+      }
     }
     // (generous: the hero whose body is nearest the finger wins, within a reach a little wider and taller than the body, so a
     // thumb that lands beside a hero, or on the seat they sit on, still picks them; on a tie the one in front wins)
@@ -762,5 +794,29 @@ export class Tavern {
       if (!best || d < best.d - 0.15 || (Math.abs(d - best.d) <= 0.15 && spot.depth > best.depth)) best = { kind, d, depth: spot.depth };
     }
     if (best) this.onPick(best.kind);
+  }
+
+  private cycleDuchessHat(x: number, y: number): void {
+    let meta: { duchessTaps?: number; duchessLucky?: boolean; duchessHay?: boolean } = {};
+    try {
+      const raw = localStorage.getItem('legends.meta');
+      if (raw) meta = JSON.parse(raw);
+    } catch {
+      /* ignore */
+    }
+    const unlocked = DUCHESS_COSMETICS.filter((c) => c.unlocked(meta));
+    if (unlocked.length <= 1) {
+      goatSays('tap', { x, y });
+      return;
+    }
+    const currentId = settings().duchessHat;
+    const idx = unlocked.findIndex((c) => c.id === currentId);
+    const next = unlocked[(idx + 1) % unlocked.length];
+    setSetting('duchessHat', next.id);
+    if (next.id === 'none') {
+      showQuip({ x, y }, 'Mehh! (Costume removed)', { who: 'Duchess', goat: true, hold: 1800 });
+    } else {
+      showQuip({ x, y }, `Mehh! (Equipped: ${next.name})`, { who: 'Duchess', goat: true, hold: 2000 });
+    }
   }
 }

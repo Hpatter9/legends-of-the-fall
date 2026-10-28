@@ -4,6 +4,7 @@
 // when one changes (the sound's volumes, the frame cap). Nothing here touches the battle.
 
 import { tips } from './tips';
+import { DUCHESS_COSMETICS, type DuchessCosmeticId } from './render/duchessRules';
 
 const KEY = 'legends.settings';
 
@@ -26,10 +27,11 @@ export interface Settings {
   quips: boolean;
   /** Whether cinematics play by themselves (the opening, a boss's arrival, a hero earned, the summoning). Off, they never start, but the codex's Scenes list can still play a seen one. */
   cinematics: boolean;
-  /** Whether the short summoning cinematic plays before the hall's show on a pull (the owner's ask: it can be turned off on its own). */
+  /** Duchess's equipped unlockable cosmetic accessory. */
+  duchessHat: DuchessCosmeticId;
 }
 
-export const DEFAULTS: Settings = { music: 100, effects: 100, speed: 1, shake: true, numbers: true, saver: false, awake: true, quips: true, cinematics: true };
+export const DEFAULTS: Settings = { music: 100, effects: 100, speed: 1, shake: true, numbers: true, saver: false, awake: true, quips: true, cinematics: true, duchessHat: 'none' };
 
 /** The settings from what was saved (`raw`, the stored text or null): anything missing or wrong falls back to the default. */
 export function parseSettings(raw: string | null): Settings {
@@ -42,6 +44,7 @@ export function parseSettings(raw: string | null): Settings {
   }
   const volume = (x: unknown, d: number) => (typeof x === 'number' && Number.isFinite(x) ? Math.min(100, Math.max(0, Math.round(x))) : d);
   const flag = (x: unknown, d: boolean) => (typeof x === 'boolean' ? x : d);
+  const validHat = (x: unknown): DuchessCosmeticId => (typeof x === 'string' && DUCHESS_COSMETICS.some((c) => c.id === x) ? (x as DuchessCosmeticId) : DEFAULTS.duchessHat);
   return {
     music: volume(saved.music, DEFAULTS.music),
     effects: volume(saved.effects, DEFAULTS.effects),
@@ -52,6 +55,7 @@ export function parseSettings(raw: string | null): Settings {
     awake: flag(saved.awake, DEFAULTS.awake),
     quips: flag(saved.quips, DEFAULTS.quips),
     cinematics: flag(saved.cinematics, DEFAULTS.cinematics),
+    duchessHat: validHat(saved.duchessHat),
   };
 }
 
@@ -120,6 +124,7 @@ function draw(): void {
     toggleRow('Keep screen awake', 'The screen stays on while the game is open', 'awake', s.awake),
     toggleRow('Hero quips', 'Heroes (and now and then Duchess) say the odd word in a small speech bubble', 'quips', s.quips),
     toggleRow('Cinematics', 'Short scenes at big moments. Off, none play by themselves; the Scenes list in the codex still plays them', 'cinematics', s.cinematics),
+    duchessHatRow(s.duchessHat),
     resetTipsRow(),
     startOverRow(),
   );
@@ -190,6 +195,46 @@ function toggleRow(title: string, hint: string, key: 'shake' | 'numbers' | 'save
     draw();
   });
   r.append(b);
+  return r;
+}
+
+function getDuchessMeta(): { duchessTaps?: number; duchessLucky?: boolean; duchessHay?: boolean } {
+  try {
+    const raw = localStorage.getItem('legends.meta');
+    if (raw) return JSON.parse(raw);
+  } catch {
+    /* ignore */
+  }
+  return {};
+}
+
+function duchessHatRow(value: DuchessCosmeticId): HTMLElement {
+  const meta = getDuchessMeta();
+  const [r] = row('Duchess costume', 'Select an unlocked hat or accessory for Duchess');
+  const group = document.createElement('div');
+  group.className = 'pair';
+  group.style.display = 'flex';
+  group.style.flexWrap = 'wrap';
+  group.style.gap = '4px';
+
+  for (const c of DUCHESS_COSMETICS) {
+    const unlocked = c.unlocked(meta);
+    const b = document.createElement('button');
+    b.textContent = unlocked ? c.name : `${c.name} 🔒`;
+    b.title = unlocked ? c.desc : `${c.desc} — Unlock: ${c.hint}`;
+    b.setAttribute('aria-pressed', String(c.id === value));
+    b.classList.toggle('on', c.id === value);
+    if (!unlocked) {
+      b.style.opacity = '0.55';
+    }
+    b.addEventListener('click', () => {
+      if (!unlocked) return;
+      setSetting('duchessHat', c.id);
+      draw();
+    });
+    group.append(b);
+  }
+  r.append(group);
   return r;
 }
 
