@@ -244,3 +244,42 @@ drawing is on the GPU on a phone; this machine cannot measure that, so a real-ph
 - **Music:** the Last Stand uses `fightTrack` and `fightLevel` (`epicMusic.ts`): the boss track on a boss wave, else one of the three battle tracks by depth (waves 1-9, 10-24, 25 up); the track changes only when a wave asks for another. Leaving mid-wave calls `endFight()` (new in `sound.ts`) so the place's music returns.
 - **Scenes:** the tower's talking scenes (the `spire` moments at 10, 25 and 50) now fire from the Last Stand's waves 10, 25 and 50, in the break after the wave, and the run waits while one plays. `eliteMet` and the other elite scenes belong to the Calamity's elites and are left as they are.
 - Screenshots use `--use-angle=swiftshader` (`tools/stand/lib.mjs`).
+
+## Making it harder (the owner: "Make Last Stand harder")
+
+The medians had run too deep: a level-10 party got to wave 15 and a maxed one to 40. The aim: every wave past about 10 is a fight, and a
+stronger party still goes further. Measured by `npm run stand-balance -- --levels 1,10,20,30,60,100 --attempts 30 [--smart]` (eight heroes,
+nothing worn, no castle, from main 0.169). The wave the king fell in:
+
+| Hero level | Before (greedy) | After (greedy) | After (attentive) | Target |
+| --- | --- | --- | --- | --- |
+| 1 | 5 | 4 (4-5) | 4 (4-5) | 4-5 |
+| 10 | 15 | 10 (9-13) | 10 (9-10) | 9-10 |
+| 20 | 21 | 13 (10-14) | 10 (9-14) | about 14 |
+| 30 | 30 | 22 (10-40) | 18 (10-39) | 18-20 |
+| 60 | 33 | 26 (10-40) | 24 (15-40) | 26-28 |
+| 100 | 40 | 35 (15-79) | 40 (16-65) | 35-40 |
+
+(medians, min-max in brackets; "before" is the table above.) The attentive buyer (`--smart`, `spendSmart` in `tools/stand-balance.ts`) takes a
+relic when one is affordable, keeps the knight and paladin a level ahead of the rest, and heals the king below 40%. It lands within a few waves of the greedy
+one (behind it at 20 to 60, ahead at 100: the medians sit on the boss waves, so a few waves either way is one wall), so paying attention is no shortcut. I did not re-run the attentive buyer on the old numbers. Level 30 is a little high and level 100 at the low end of its target; the spread of a row is wide (the maxed row runs from the 20s to the 70s) because a run lives or dies on a boss wave.
+
+What changed (all in `src/sim/stand.ts`):
+
+- **Waves grow faster, then ease.** `strength(n)` climbs `WAVE_GROWTH` 0.4 a wave to wave `WAVE_KNEE` (10), then `WAVE_GROWTH_LATE` 0.11. Before it was a straight 0.21 a wave. A steep start is what stops a level-10 party; a gentle late climb is what lets a level-100 party still pay for its levels (a straight steeper line flattened the high levels to the same wave as the middle ones in the sweeps). `WAVE_STEP` stays 2.
+- **Boss waves are walls.** `bossShare` runs 0.5 to 1.0 (was 0.35 to 0.9).
+- **Gold buys less.** `killGold` is halved (1 gold a kill at first; the wave clear and boss gold are as they were), and a level costs `25 + 11 * lv` (was `18 + 8 * lv`).
+- **The king** is as he was (1000 hp, a heal gives 40%, price as before): the tighter waves came without making him a glass king, and the sweeps never ended a run on one stray hit. I left the heal alone because the attentive buyer already uses it at 40%.
+- **Pay.** A cleared wave now pays `waveCrowns(n) = 8 + 16 * min(n, 8)` and the end's `runCrowns` share is gone (`meta.ts` is untouched; the Calamity still uses `stageCrowns`/`runCrowns`). Crowns of a run to the median wave, old rule at the old median against new rule at the new median:
+
+| Hero level | Old median, old pay | New median, new pay |
+| --- | --- | --- |
+| 1 | wave 5, 125 | wave 4, 120 |
+| 10 | wave 15, 715 | wave 10, 776 |
+| 20 | wave 21, 1261 | wave 13, 1184 |
+| 30 | wave 30, 2350 | wave 21, 2272 |
+| 60 | wave 33, 2785 | wave 26, 2952 |
+| 100 | wave 40, 3940 | wave 35, 4176 |
+
+  Chests and gear still ride on waves cleared (bronze every 8, silver every 13, gold every 39), so they come a little less often at the same level; what they hold is unchanged.
+- **Tests** (`test/stand.test.ts`, "how hard it is"): the knee and the boss walls, a level-1 party's median in 3-6 and a level-10 one's in 8-12 (five seeds each, through the balance runner), and the pay of the six rows within 15% of the old pay. Nothing else pinned the balance, so nothing was loosened.
