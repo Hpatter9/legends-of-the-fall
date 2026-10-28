@@ -268,6 +268,9 @@ export function sheetInfo(sheet: string): { img: HTMLImageElement; w: number; h:
   return img && l ? { img, w: l.w, h: l.h, rows: l.rows, counts: l.counts, figure: l.figure, facesRight: l.facesRight !== false } : null;
 }
 
+/** The figure's height as a share of its sheet's cell (the rest is the room over its head), for laying effects round a `sprite`. */
+export const figureShare = (sheet: string): number => (LAYOUT[sheet] ? LAYOUT[sheet].figure / LAYOUT[sheet].h : 0.8);
+
 /** A small portrait of a fighter for the bench: its first idle frame, cropped to the figure, on a canvas. */
 export function portrait(sheet: string, size: number, grade = 1): HTMLCanvasElement {
   const c = document.createElement('canvas');

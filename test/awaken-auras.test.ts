@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { AURAS, AURA_SHEETS, auraOf, auraParts, FALLBACK_AURA } from '../src/render/auraStyles';
+import { AURAS, AURA_KEYS, auraKey, auraOf, auraParts, FALLBACK_AURA } from '../src/render/auraStyles';
+import { newPose, poseAura } from '../src/render/auraPlace';
+import pack from '../tools/awaken/aura-pack.json';
 import { HERO_TRAITS, TRAITS } from '../src/sim/traits';
 import { ALL_HEROES } from '../src/sim/units';
 import atlas from '../src/art/fx/aura/atlas.json';
@@ -34,5 +36,30 @@ test('battery saver only drops the extra parts, and every strip is in the atlas'
     assert.deepEqual(saver, full.filter((p) => !p.extra));
     assert.ok(saver.length >= 2, kind);
   }
-  for (const s of AURA_SHEETS) assert.ok(s in atlas, s);
+  // (the art seam: every part's key is in the atlas, with frames, and in the pack's map that built it)
+  const parts = (atlas as { cell: number; parts: Record<string, number[]> }).parts;
+  assert.ok((atlas as { cell: number }).cell > 0);
+  for (const k of AURA_KEYS) {
+    assert.ok(parts[k] && parts[k][1] > 0, k);
+    assert.ok(k in pack, k);
+  }
+  assert.equal(new Set(AURA_KEYS).size, AURA_KEYS.length, 'part names are unique within a step');
+  assert.equal(auraParts('knight', 1)[0].key, auraKey('guardian', 1, 'ground'));
+});
+
+test('placing a part reuses the caller\'s pose, stays in its strip, and holds still under reduced motion', () => {
+  const pose = newPose();
+  for (const kind of ['wizard', 'samurai', 'werewolf', 'ranger', 'priestess', 'lancer']) {
+    for (const part of auraParts(kind, 2)) {
+      for (let i = 0; i < (part.count ?? 1); i++) {
+        const a = poseAura(part, i, 8, 1234, 40, 1, false, 32, pose);
+        assert.equal(a, pose);
+        assert.ok(a.frame >= 0 && a.frame < 8 && Number.isFinite(a.x) && Number.isFinite(a.y) && a.alpha > 0, `${kind} ${part.key}`);
+        const s1 = { ...poseAura(part, i, 8, 100, 40, 1, true, 32, pose) };
+        const s2 = { ...poseAura(part, i, 8, 5100, 40, 1, true, 32, pose) };
+        assert.deepEqual(s1, s2, `${kind} ${part.key} still`);
+        assert.ok(s1.alpha > 0, 'never hidden');
+      }
+    }
+  }
 });
