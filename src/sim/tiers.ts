@@ -24,12 +24,14 @@ export interface Tier {
   xp: number;
 }
 
+// (ULT-CHARGE, docs/notes/ult-charge.md: Legendary and Mythic, the tiers played with every ultimate open, are half again and four-fifths again as tough as
+// they were (hp 3.4 and 4.6, attack 2.5 and 3.2), for the ultimates that now come round once or twice a fight; their pace is as it was)
 export const TIERS: readonly Tier[] = [
   { id: 'normal', name: 'Normal', need: 0, stars: 3, hp: 1, atk: 1, speed: 1, pay: 1, xp: 1 },
   { id: 'hard', name: 'Hard', need: 3, stars: 3, hp: 1.75, atk: 1.45, speed: 1.05, pay: 1.6, xp: 1.5 },
   { id: 'elite', name: 'Elite', need: 6, stars: 3, hp: 2.6, atk: 1.95, speed: 1.1, extra: 1, pay: 2.5, xp: 2.2 },
-  { id: 'legendary', name: 'Legendary', need: 9, stars: 1, hp: 3.4, atk: 2.5, speed: 1.15, extra: 1, pay: 4, xp: 3.5 },
-  { id: 'mythic', name: 'Mythic', need: 10, stars: 1, hp: 4.6, atk: 3.2, speed: 1.2, extra: 2, phaseAt: 0.6, surge: 1.2, pay: 7, xp: 6 },
+  { id: 'legendary', name: 'Legendary', need: 9, stars: 1, hp: 5.1, atk: 3.75, speed: 1.15, extra: 1, pay: 4, xp: 3.5 },
+  { id: 'mythic', name: 'Mythic', need: 10, stars: 1, hp: 8.3, atk: 5.8, speed: 1.2, extra: 2, phaseAt: 0.6, surge: 1.2, pay: 7, xp: 6 },
 ];
 /** The most stars an army holds. */
 export const ARMY_STARS = TIERS.reduce((n, t) => n + t.stars, 0);

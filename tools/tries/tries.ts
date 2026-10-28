@@ -9,6 +9,17 @@ import { mixSeed } from '../../src/sim/rng';
 import { boostOf, type Owned } from '../../src/sim/run';
 import { heroStats, learn, tierNodes } from '../../src/sim/talents';
 import { playArmy, savedAt } from '../autoplay';
+import { TIERS } from '../../src/sim/tiers';
+import { ULT_FILL } from '../../src/sim/heroKits';
+
+// (`TIERK=3:1.2:1.1,4:1.3:1.2` scales a tier's foes' hp and attack; `ULTK=0.5` the heroes' ultimate strength: tuning runs, nothing is written)
+for (const kv of (process.env.TIERK ?? '').split(',').filter(Boolean)) {
+  const [i, hp, atk] = kv.split(':').map(Number);
+  const t = TIERS[i] as { hp: number; atk: number };
+  t.hp *= hp;
+  t.atk *= atk ?? hp;
+}
+if (process.env.ULTK) ULT_FILL.POWER = Number(process.env.ULTK);
 
 const party = ['knight', 'paladin', 'archer', 'warlock', 'cleric'];
 const maxed = newCastle();
