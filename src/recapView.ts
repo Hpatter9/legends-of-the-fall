@@ -5,6 +5,7 @@
 import { mvpKind, type RunRecap } from './sim/runRecap';
 import { formOf, UNITS } from './sim/units';
 import { portrait } from './render/sheets';
+import type { ComebackGo, ComebackTip } from './sim/comeback';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -30,11 +31,43 @@ export interface RecapHead {
   joke?: string;
 }
 
-export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, onClose: () => void): void {
+/** The "How to come back stronger" card on a lost run's recap (`sim/comeback.ts`): each pointer's button closes the recap and goes there. */
+export interface RecapAdvice {
+  tips: ComebackTip[];
+  onGo: (go: ComebackGo) => void;
+}
+
+export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, onClose: () => void, advice?: RecapAdvice): void {
   root.replaceChildren();
   const sheet = el('div', 'rcSheet');
   sheet.append(el('div', `rcTitle ${head.tone}`, head.title), el('p', 'rcLine', head.line));
   if (head.joke) sheet.append(el('p', 'rcJoke', head.joke));
+  const close = (): void => {
+    root.hidden = true;
+    root.replaceChildren();
+  };
+
+  // how to come back stronger (a lost run only): two to four pointers, each with its way there
+  if (advice?.tips.length) {
+    const box = el('section', 'rcAdvice');
+    box.setAttribute('aria-label', 'How to come back stronger');
+    box.append(el('h3', '', 'How to come back stronger'));
+    for (const t of advice.tips) {
+      const row = el('div', 'rcTip');
+      row.append(el('p', '', t.text));
+      if (t.go && t.button) {
+        const go = t.go;
+        const b = el('button', '', t.button);
+        b.addEventListener('click', () => {
+          close();
+          advice.onGo(go);
+        });
+        row.append(b);
+      }
+      box.append(row);
+    }
+    sheet.append(box);
+  }
 
   // the headline figures
   const grid = el('div', 'rcGrid');
@@ -105,8 +138,7 @@ export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, o
   const done = el('div', 'rcFoot');
   const ok = el('button', 'primary', 'Continue');
   ok.addEventListener('click', () => {
-    root.hidden = true;
-    root.replaceChildren();
+    close();
     onClose();
   });
   done.append(ok);

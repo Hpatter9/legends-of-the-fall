@@ -52,6 +52,8 @@ const ART: Record<string, string> = {
 };
 type Art = Record<string, HTMLImageElement>;
 let art: Art | null = null;
+/** The camp's pictures, loaded and decoded (the page waits for them behind its loading screen, so the camp never opens empty). */
+export const campArtReady = (): Promise<unknown> => loadArt();
 async function loadArt(): Promise<Art> {
   if (art) return art;
   const got: Art = {};

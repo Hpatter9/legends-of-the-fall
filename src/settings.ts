@@ -208,7 +208,7 @@ function resetTipsRow(): HTMLElement {
 /** The saves "Start over" wipes: the meta (heroes, crowns, castle, armies, gear, chests), every run in progress (the
  *  ordinary one, the spire's and the Calamity's own slots), the tips, the Calamity map's hint, the tavern's camera and what
  *  the achievements page has shown. The settings (volume, speed and the rest) and the sound switch are kept. */
-export const SAVE_KEYS = ['legends.meta', 'legends.run', 'legends.tower', 'legends.stand', 'legends.calamity', 'legends.tips', 'lotf-achievements-seen', 'lotf-cal-hint', 'lotf.tavern.cam'];
+export const SAVE_KEYS = ['legends.meta', 'legends.run', 'legends.tower', 'legends.stand', 'legends.calamity', 'legends.tips', 'lotf-achievements-seen', 'lotf-cal-hint', 'lotf.tavern.cam', 'lotf-army-shown'];
 
 /** Start over: wipe every save and reload to a fresh game. Two taps, the second within a few seconds, so it can't happen by a slip. */
 function startOverRow(): HTMLElement {

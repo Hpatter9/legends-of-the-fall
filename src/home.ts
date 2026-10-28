@@ -33,6 +33,8 @@ import { SummoningHall } from './hall';
 import { Library } from './library';
 import { CampScene } from './camp';
 import { readyKinds } from './sim/rankUp';
+import type { ComebackGo } from './sim/comeback';
+import { announceArmy } from './armyShown';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -80,6 +82,15 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 const SEEN = 'lotf-achievements-seen';
 
+/** The page's storage, or null where it is blocked. */
+const storage = (): Storage | null => {
+  try {
+    return localStorage;
+  } catch {
+    return null;
+  }
+};
+
 const seenCount = (): number => {
   try {
     return Number(localStorage.getItem(SEEN)) || 0;
@@ -87,6 +98,14 @@ const seenCount = (): number => {
     return 0;
   }
 };
+
+/** Put `next` in place of `old` (or at the end of `host`), unless the two read the same: then the old one, its pictures already
+ *  painted, stays. A rebuilt piece is only ever the same markup with the same handlers' targets, so keeping the old is safe. */
+function swapIn(host: HTMLElement, old: Element | null, next: HTMLElement): void {
+  if (old && old.outerHTML === next.outerHTML) return;
+  if (old) old.replaceWith(next);
+  else host.append(next);
+}
 
 export class Home {
   private tab: Tab = 'battle';
@@ -253,8 +272,15 @@ export class Home {
       this.hooks.onBuilt?.(raised);
     }
     // top bar (the run's gold stays in the run: the owner's call)
-    $('hmCrowns').replaceChildren(icon(ICONS.crowns), el('b', '', String(m.crowns)));
-    $('hmStones').replaceChildren(icon(ICONS.stones), el('b', '', String(stonesOf(m))));
+    // (the crowns and stones chips keep their icons: only the number is written, and only when it changed, so the picture never blinks)
+    const chipCount = (id: string, pic: string, n: number): void => {
+      const chip = $(id);
+      const count = chip.querySelector('b');
+      if (!count) chip.replaceChildren(icon(pic), el('b', '', String(n)));
+      else if (count.textContent !== String(n)) count.textContent = String(n);
+    };
+    chipCount('hmCrowns', ICONS.crowns, m.crowns);
+    chipCount('hmStones', ICONS.stones, stonesOf(m));
     const stars = ARMIES.reduce((n, a) => n + armyStars(m, a).got, 0);
     $('hmBest').textContent = `Armies ${clearedCount(m)}/${ARMIES.length} · ★ ${stars}`;
     const fresh = m.achievements.length > seenCount() || unclaimed(m).length > 0;
@@ -263,7 +289,8 @@ export class Home {
     const order = TABS.map((t) => t.id);
     const cur = order.indexOf(this.tab);
     order.forEach((id, i) => {
-      this.pages.get(id)!.style.transform = `translateX(${(i - cur) * 100}%)`;
+      // (a page more than one tab away waits just off screen: a switch slides only the two pages it is between, never a hidden one across the view, which showed as an empty band)
+      this.pages.get(id)!.style.transform = `translateX(${Math.max(-1, Math.min(1, i - cur)) * 100}%)`;
       this.pages.get(id)!.classList.toggle('on', id === this.tab);
       this.tabBtns.get(id)!.classList.toggle('on', id === this.tab);
     });
@@ -311,12 +338,12 @@ export class Home {
     // (the party stands round the fire, the strongest in the middle)
     const party = strongest(m, 99).filter((k) => m.party.includes(k));
     const boss = UNITS[bossOf(next)];
-    page.querySelector('.hmFront')?.remove();
     // (the bottom bar, below the camp's picture so it covers none of it: what the next fight is, then Party, Battle! and Continue)
     const fr = el('div', 'hmFront');
     if (this.note) fr.append(el('div', 'hmNote', this.note));
     // (the run's wave is shown once, on Continue: the ribbon names the army alone, or the next army when no run is going)
-    fr.append(el('div', 'hmBanner', info ? (army ? `${army.name} · Lv ${army.level}` : `${next.name}`) : `${next.name} · next · Lv ${next.level}`));
+    // (named only when the army is new to the player: a fresh unlock, or a run against another army; not on every launch)
+    if (announceArmy(next.id, storage())) fr.append(el('div', 'hmBanner', info ? (army ? `${army.name} · Lv ${army.level}` : `${next.name}`) : `${next.name} · next · Lv ${next.level}`));
     const go = el('div', 'hmGo');
     const has = this.hooks.hasRun();
     const party2 = el('button', 'hmLink hmSide', 'Party');
@@ -377,10 +404,10 @@ export class Home {
     const calamity = place('hmCalamity', calUp ? '' : 'locked', 'Calamity', calLine, `The Calamity portal: ${calLine}${calUp ? '' : `, ${progressLine(m, MODE_NEED.calamity)}`}`, () => this.go(this.hooks.onCalamity));
     calamity.disabled = !calUp;
     this.camp.calamitySlot.classList.toggle('shut', !calUp);
-    this.camp.dailySlot.replaceChildren(daily);
-    this.camp.towerSlot.replaceChildren(tower);
-    this.camp.calamitySlot.querySelector('.cpPlace')?.remove();
-    this.camp.calamitySlot.append(calamity);
+    // (each piece is put in only when it reads differently from the one showing: a redraw that changes nothing replaces no picture, so nothing blinks)
+    swapIn(this.camp.dailySlot, this.camp.dailySlot.querySelector('.cpPlace'), daily);
+    swapIn(this.camp.towerSlot, this.camp.towerSlot.querySelector('.cpPlace'), tower);
+    swapIn(this.camp.calamitySlot, this.camp.calamitySlot.querySelector('.cpPlace'), calamity);
     this.camp.update(m, party, { army: next, boss: boss.name, sheet: boss.sheet }, !towerUp);
     // (the chest stash: the chests the armies' stars have earned sit on the camp's cart, on the left)
     const stash = el('div', 'csStash');
@@ -388,8 +415,10 @@ export class Home {
       saveMeta(m);
       this.refresh();
     });
-    this.camp.stashMount.replaceChildren(stash);
-    page.append(fr);
+    // (the chest a tap opens is picked by its place in the stash: any change to the stash draws it afresh)
+    stash.dataset.key = JSON.stringify(m.stash);
+    swapIn(this.camp.stashMount, this.camp.stashMount.firstElementChild, stash);
+    swapIn(page, page.querySelector(':scope > .hmFront'), fr);
   }
 
   /** The chips over the courtyard's sky: the achievements and settings shortcuts, the tips reset and a line of help. */
@@ -569,6 +598,8 @@ export class Home {
     this.closeSheet();
     $('hmSheet').hidden = false;
     this.tavern.stop();
+    // (the tavern holds a picture under the roster, so its page never slides past empty as the tab changes)
+    this.tavern.paintOnce();
     this.camp.stop();
     drawRoster($('hmSheetBox'), this.meta, (kind) => this.openSheet(kind, true), () => this.closeSheet(), this.lastViewedHero);
   }
@@ -595,6 +626,17 @@ export class Home {
     if (this.isOpen && this.tab === 'heroes') this.tavern.start();
     if (this.isOpen && this.tab === 'battle') this.camp.start();
     if (this.isOpen && this.tab === 'castle') this.castle.start();
+  }
+
+  /** A loss's "come back stronger" pointer was tapped (`sim/comeback.ts`): the screen that does it, over the home screen just opened. */
+  goTo(go: ComebackGo): void {
+    if (go.to === 'armies') return this.openArmies(go.army);
+    if (go.to === 'party') return this.go(this.hooks.onParty);
+    if (go.to === 'heroes' && go.hero) {
+      this.show('heroes');
+      return this.openSheet(go.hero, true, go.tab);
+    }
+    this.show(go.to === 'chests' ? 'battle' : go.to);
   }
 
   /** The Armies screen, over the home screen (the Battle button, and the unlock moment's way on). */

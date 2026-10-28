@@ -488,6 +488,13 @@ body .sbSlot { min-height: 44px; }
 .rcXpRow span { font: 400 8px var(--pixel); color: var(--dim); min-width: 8px; }
 .rcXpRow span.up { padding: 2px 5px; color: var(--btn-ink); background: linear-gradient(var(--e8), var(--e5)); border: 1px solid var(--e10); }
 .rcFoot { flex: none; display: flex; justify-content: center; padding: 10px 12px calc(env(safe-area-inset-bottom) + 12px); background: linear-gradient(rgb(var(--s0-rgb) / 0), rgb(var(--s0-rgb) / 0.95) 30%); }
+/* how to come back stronger: a lost run's pointers, each with its way there (text at 12px and 24px, never bold) */
+.rcAdvice { display: flex; flex-direction: column; gap: 6px; padding: 8px; background: var(--panel-bg); border: 1px solid var(--kk-rim, var(--gold-lo)); border-radius: 6px; box-shadow: 0 3px 8px rgb(var(--black-rgb) / 0.55); }
+.rcSheet .rcAdvice h3 { margin: 0; padding: 0 0 4px; font: 400 24px/1.1 var(--display); color: var(--gold-hi); background: none; border: none; border-bottom: 1px solid var(--kk-rim, var(--gold-lo)); text-align: center; }
+.rcTip { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; }
+.rcTip p { margin: 0; font: 400 12px/1.4 var(--body); color: var(--ink); }
+.rcTip:not(:has(button)) p { grid-column: span 2; color: var(--dim); }
+.rcTip button { min-width: 84px; min-height: 44px; padding: 6px 10px; font: 400 12px var(--body); }
 @keyframes rcIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .rcHero { animation: none; } }
 
