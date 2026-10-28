@@ -9,7 +9,7 @@ import { flowField, leashOf, isTank, KING_DEF } from '../src/sim/standAi';
 import { canPost, edgeTiles, EDGES, FIELD, KING_AT, KEEP_TOP, ringOf, standBoard } from '../src/sim/standField';
 import {
   BOSS_EVERY, BREAK_MS, buyLevel, buyRelic, CLEAR_HEAL, clearGold, clearedOf, FIELD_CAP, FIELD_HEROES, foesAlive, goNow, healCost, healKing, isBossWave, pickEight, roleOfKind, killGold, levelCost,
-  loadStand, newStandRun, offerCost, postHero, rawCount, saveStand, settleStand, snapshot, startFirstWave, startStand, stepStand, strength, waveSpec, xpNeed, type Stand, type StandSetup,
+  loadStand, newStandRun, offerCost, postHero, rawCount, saveStand, settleStand, snapshot, startFirstWave, startStand, stepStand, strength, waveCrowns, waveSpec, xpNeed, type Stand, type StandSetup,
 } from '../src/sim/stand';
 import { gradeBoost } from '../src/sim/run';
 import { newCastle } from '../src/sim/castle';
@@ -19,6 +19,9 @@ import { ARMIES } from '../src/sim/armies';
 import { TICK_MS } from '../src/sim/battle';
 import { towerRun } from '../src/sim/modes';
 import { migrateOldClimb } from '../src/sim/stand';
+import { playStand, setupAtLevel } from '../tools/stand-balance';
+import { mixSeed } from '../src/sim/rng';
+import { stageCrowns, runCrowns } from '../src/sim/meta';
 
 const setupAt = (level: number): StandSetup => ({ boost: () => gradeBoost(1, 0, level), castle: newCastle(), });
 const armies = ARMIES.map((a) => a.id);
@@ -227,6 +230,8 @@ test('a tank goes for the foe nearest the king; the others for the weakest', () 
   const near = mk(towards, 300);
   const far = mk(away, 20);
   knight.busyUntil = 0;
+  // (its pool emptied, so it strikes rather than casts: this is about whom it strikes)
+  knight.charge = 0;
   stepStand(s);
   assert.equal(knight.swing?.to, near.id, 'the tank struck the one nearer the king');
   const archer = s.b.units.find((u) => u.def === 'archer')!;
@@ -503,4 +508,45 @@ test('an old spire climb in a save is closed, paid once and dropped', () => {
   assert.equal(store.has('legends.run'), false);
   store.set('legends.tower', 'junk');
   assert.equal(migrateOldClimb(m, mem), null);
+});
+
+/* ------------------------------------------------------------------ how hard it is (docs/notes/last-stand.md, "Making it harder") */
+
+const medianWave = (level: number, runs: number): number => {
+  const waves = Array.from({ length: runs }, (_, a) => playStand(setupAtLevel(level), mixSeed(a + 1, 0x57a0)).wave).sort((x, y) => x - y);
+  return waves[Math.floor(waves.length / 2)];
+};
+
+test('the climb is steep to wave 10 and gentler after, and the bosses are real walls', () => {
+  assert.ok(strength(10) > 3.5 * strength(1), 'wave 10 is several times wave 1');
+  assert.ok(strength(11) - strength(10) < (strength(10) - strength(1)) / 9, 'past the knee each wave adds less');
+  assert.ok(strength(40) > strength(30) && strength(30) > strength(20), 'and it still rises');
+  // a boss wave hits harder than the wave before it, whatever the foe band
+  for (const n of [5, 10, 20, 30, 40]) assert.ok(waveSpec(3, armies, n).hp > waveSpec(3, armies, n - 1).hp);
+});
+
+test('a party at level 1 falls in the first waves, and a level-10 party at about wave 10', () => {
+  const m1 = medianWave(1, 5);
+  assert.ok(m1 >= 3 && m1 <= 6, `level 1 median ${m1}`);
+  const m10 = medianWave(10, 5);
+  assert.ok(m10 >= 8 && m10 <= 12, `level 10 median ${m10}`);
+  assert.ok(m10 > m1, 'a stronger party goes further');
+});
+
+test('the pay per wave keeps a run at the new target about as well paid as it was', () => {
+  // (the old pay: stageCrowns for each wave cleared and runCrowns of the best; the medians are the old table's against the new target's)
+  const old = (best: number): number => {
+    let c = 0;
+    for (let w = 1; w < best; w++) c += stageCrowns(w);
+    return c + runCrowns(best);
+  };
+  const now = (best: number): number => {
+    let c = 0;
+    for (let w = 1; w < best; w++) c += waveCrowns(w);
+    return c;
+  };
+  for (const [oldBest, newBest] of [[5, 4], [15, 10], [21, 13], [30, 21], [33, 26], [40, 35]]) {
+    const r = now(newBest) / old(oldBest);
+    assert.ok(r > 0.85 && r < 1.15, `a run to wave ${newBest} pays ${now(newBest)} against ${old(oldBest)} (${r.toFixed(2)})`);
+  }
 });

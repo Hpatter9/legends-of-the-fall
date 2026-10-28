@@ -19,10 +19,10 @@ export const BOUNCE_PX = 3;
 const jitter = (u: number, v: number) => (((u * 73856093) ^ (v * 19349663)) >>> 0) % 1000 / 1000;
 
 /** How far a tile is from the edge that meets the old section (the new board's heroes' edge, whichever way it lies), in rows (the middle of the edge first, so the fall ripples outwards). */
-export const dropRank = (u: number, v: number): number => D - 1 - v + Math.abs(u - (W - 1) / 2) * 0.35;
+export const dropRank = (u: number, v: number, w = W, d = D): number => d - 1 - v + Math.abs(u - (w - 1) / 2) * 0.35;
 
 /** When (ms after the start) a tile begins to fall. */
-export const dropDelay = (u: number, v: number): number => dropRank(u, v) * ROW_MS + jitter(u, v) * JITTER_MS;
+export const dropDelay = (u: number, v: number, w = W, d = D): number => dropRank(u, v, w, d) * ROW_MS + jitter(u, v) * JITTER_MS;
 
 export interface DropPose {
   /** How far above its place (px, up is negative). */
@@ -42,9 +42,9 @@ export function dropPose(elapsed: number, delay: number): DropPose {
 }
 
 /** When (ms) the last column of the section has settled. */
-export function dropEnd(): number {
+export function dropEnd(w = W, d = D): number {
   let end = 0;
-  for (let v = 0; v < D; v++) for (let u = 0; u < W; u++) end = Math.max(end, dropDelay(u, v) + FALL_MS + SETTLE_MS);
+  for (let v = 0; v < d; v++) for (let u = 0; u < w; u++) end = Math.max(end, dropDelay(u, v, w, d) + FALL_MS + SETTLE_MS);
   return end;
 }
 

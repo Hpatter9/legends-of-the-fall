@@ -1,5 +1,7 @@
 # Heart revive (no give-up)
 
+The restart behaviour below is superseded by [hearts resuming the existing fight](heart-resume.md). The heart animation and automatic flow remain.
+
 ## What was wrong
 
 On a lost wave with hearts left, the card showed "Use a heart" and "Give up". Give up did nothing: its handler cleared

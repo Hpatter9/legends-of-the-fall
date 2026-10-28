@@ -6,9 +6,8 @@ import { CAL_MAPS } from '../src/sim/calamity';
 import { buy, calamityMap, choices, clearNode, enterNode, finishTower, hire, leaveOpen, moveTo, openTreasure, settleTower, sideChoices, spotFloor } from '../src/sim/tower';
 import { SIDE_BASE, sideSpots, START_ID } from '../src/sim/calLand';
 import { startStage } from '../src/sim/run';
-import { clearCrowns, clearDraws, payClear, titleOf, CLEAR_TITLES, bestTitle } from '../src/sim/calReward';
+import { clearCrowns, clearDraws, clearStones, payClear, titleOf, CLEAR_TITLES, bestTitle } from '../src/sim/calReward';
 import { ASC_MAX } from '../src/sim/ascension';
-import { owns } from '../src/sim/unlock';
 import { RARITY_NAMES } from '../src/sim/equipment';
 import { loadSlot, saveSlot, type Run } from '../src/sim/run';
 
@@ -158,13 +157,14 @@ test('no floor in the calamity: the map is spots, and a spot in a later map is a
   assert.equal(START_ID, -1);
 });
 
-test('the finishing reward: crowns, shards, a Legendary or better piece of gear, a title; more at every ascension', () => {
+test('the finishing reward: crowns, stones, a Legendary or better piece of gear, a title; more at every ascension', () => {
   const m = startedMeta(3);
   const before = m.crowns;
   const a = payClear(m, 99, 0);
   assert.equal(m.crowns - before >= a.crowns, true);
   assert.equal(a.crowns, clearCrowns(0));
-  assert.ok(a.shards.length > 0 && a.shards.reduce((n, s) => n + s.n, 0) > 0);
+  assert.equal(a.stones, clearStones(0));
+  assert.equal(m.stones, a.stones, 'the stones go into the meta');
   assert.ok(a.gear.rarity >= 4, RARITY_NAMES[a.gear.rarity]);
   assert.equal(a.title, CLEAR_TITLES[0]);
   assert.equal(a.newTitle, true);
@@ -183,10 +183,13 @@ test('the finishing reward: crowns, shards, a Legendary or better piece of gear,
   const x = payClear(startedMeta(3), 55, 2);
   const y = payClear(startedMeta(3), 55, 2);
   assert.deepEqual(x, y);
-  // (shards: a hero not owned gains unlock shards toward joining, one owned gains rank shards)
+  // (stones, not shards: nothing is given to a hero until a stone is used, and the stones grow with the ascension)
   const fresh = startedMeta(1);
   const got = payClear(fresh, 7, 4);
-  for (const s of got.shards) assert.ok(owns(fresh, s.kind) || (fresh.unlock?.[s.kind] ?? 0) > 0 || s.joined);
+  assert.equal(got.stones, clearStones(4));
+  assert.ok(clearStones(10) > clearStones(0));
+  assert.deepEqual(fresh.unlock ?? {}, {});
+  assert.deepEqual(fresh.shards, {});
 });
 
 test('a calamity cleared whole settles the reward into the summary, once; a loss pays none of it', () => {

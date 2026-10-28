@@ -26,6 +26,11 @@ import { mergeEffects } from './relics';
 import { applyTierMods } from './tierSkills';
 import { landCombo, startCombo, tickCombo, type ComboState } from './combos';
 import type { EquipStats } from './equipment';
+import { heroKitOf, startPool, ultOnDamage, type KitState } from './heroKits';
+import { applyOrders, type LogEntry, type Order } from './orders';
+import { settleJump } from './kits/blades';
+import { settleKeg } from './kits/shooters';
+import { kitBlow, kitDeath, kitDef, kitDefence, kitQuick, kitSpare, kitStill, realHero, type KitFx, type TerrainFx } from './kits/effects';
 import { SPLASH_SHARE, UNITS, type Shot, type Side, type UnitDef } from './units';
 
 export const TICK_MS = 100;
@@ -140,6 +145,16 @@ export interface Unit {
   phase?: { at: number; done: boolean; surge?: number };
   /** The kit it fights with after changing form (instead of its kind's). */
   kit?: Kit;
+  /** The player's tap on this hero's portrait has queued its ultimate (the time it was applied, `orders.ts`): it fires the first time the hero is free, or lapses after `ORDER_WAIT_MS`. */
+  ultOrder?: number;
+  /** A hero kit's pool bookkeeping (`heroKits.ts`): when each skill was last cast, focus, winded. */
+  ks?: KitState;
+  /** What the hero kits leave on a fighter (`kits/effects.ts`): parries, marks, forms, stances. */
+  kx?: KitFx;
+  /** A sheet the fighter is drawn with instead of its own for a while (a form, a guise, a wraith's borrowed shape). Only the look reads it. */
+  look?: string;
+  /** A fighter a skill called up for a while: it fades at this time. */
+  expires?: number;
   /** A hero of the Last Stand: the tile it guards, how far (in tiles) it may stray from it, and whether it is a tank that goes for the foes heading for the king (`standAi.ts`). */
   post?: { u: number; v: number; leash: number; tank: boolean };
 }
@@ -152,9 +167,11 @@ export interface StandMode {
   fields: Record<number, number[]>;
 }
 
-interface Pending {
+export interface Pending {
   at: number;
-  kind: 'release' | 'land' | 'rain' | 'meteor' | 'echo' | 'combo';
+  kind: 'release' | 'land' | 'rain' | 'meteor' | 'echo' | 'combo' | 'keg' | 'jump';
+  /** A salvo that sets off the powder barrels where it lands (the Dread Pirate's Ghost Fleet). */
+  barrels?: boolean;
   by: number;
   to: number;
   dmg: number;
@@ -178,7 +195,7 @@ export type BattleEvent =
   | { kind: 'blink'; by: number; from: At; to: At }
   | { kind: 'area'; by: number; id: 'volley' | 'meteor'; u: number; v: number; ms: number }
   | { kind: 'arc'; from: number; to: number }
-  | { kind: 'zone'; u: number; v: number; ms: number }
+  | { kind: 'zone'; u: number; v: number; ms: number; what?: 'spikes' }
   | { kind: 'trap'; u: number; v: number; ms: number }
   | { kind: 'dodge'; to: number }
   /** A powder barrel goes off at this tile (the barrel is gone after). */
@@ -206,6 +223,17 @@ export type BattleEvent =
   | { kind: 'promote'; to: number; grade: number }
   /** A boss changes form (`bossPhases.ts`): the fight is held for `ms` while the page plays it. */
   | { kind: 'phase'; by: number; phase: 2; line: string; ms: number }
+  /** The player's tap queued a hero's ultimate (`orderUltimate`), or the order lapsed unfired (the meter stays full). */
+  | { kind: 'ultQueued'; by: number }
+  | { kind: 'ultLapse'; by: number }
+  /** A fighter is drawn with another sheet (a form, a guise), or its own again (null). */
+  | { kind: 'look'; by: number; sheet: string | null }
+  /** Timed terrain from a kit is laid on a tile for `ms` (0: it is gone again). */
+  | { kind: 'terrain'; u: number; v: number; what: TerrainFx['kind']; ms: number }
+  /** A fighter a skill called up fades away (a wraith, a standard). */
+  | { kind: 'fade'; to: number }
+  /** A kit marks a fighter (a bounty, a condemnation, a charge, a pin, a stance) for `ms`. */
+  | { kind: 'mark'; to: number; by: number; what: string; ms: number }
   | { kind: 'end'; won: boolean };
 
 export interface Battle {
@@ -215,6 +243,8 @@ export interface Battle {
   phase: Phase;
   /** Time into the fight (ms). */
   t: number;
+  /** A heart grants more time when a fight has timed out, without rewinding its clock. */
+  timeLimit?: number;
   /** The fight's own random stream (its state). */
   rng: number;
   pending: Pending[];
@@ -259,13 +289,22 @@ export interface Battle {
   groundFx?: boolean;
   /** How many tiles the weather takes off every shooter's range (fog; `weatherOf(board)`). */
   fog?: number;
+  /** Whether the heroes' ultimates fire on their own (`heroKits.ts`): unset means yes, so every headless fight (tests, the balance tools, the bots) fires them; the page sets it from the player's Auto switch (and on for auto-replay). */
+  autoUlt?: boolean;
+  /** The player's orders waiting for the next tick (`orders.ts`), and every order applied so far, with the king's spells: with the seed and the placing, a fight replays from it. */
+  orders?: Order[];
+  log?: LogEntry[];
+  /** What the hero kits keep for the whole fight (set when the fight starts with a hero kit on the field): which auras are about, the bodies waiting to rise. */
+  kits?: { standards?: boolean; songs?: boolean; vows?: boolean; rewind?: boolean; raise?: { by: number; foe: number }[] };
+  /** Timed terrain the kits laid (a flood, a rampart, a statue), put back when it runs out. */
+  terrain?: TerrainFx[];
 }
 
 export const defOf = (u: Unit): UnitDef => UNITS[u.def];
 /** A fighter's attack: its kind's, times its own multiplier. */
 export const atkOf = (u: Unit): number => UNITS[u.def].atk * (u.power ?? 1) * rageOf(u);
 /** A fighter's defence: its kind's, plus what its equipment adds. */
-export const defenceOf = (u: Unit): number => UNITS[u.def].def + (u.eq?.def ?? 0);
+export const defenceOf = (u: Unit): number => UNITS[u.def].def + (u.eq?.def ?? 0) + (u.kx?.tree ? kitDefence(u) : 0);
 /** Per-fighter stat multipliers: hp and attack, and how much bigger it is drawn. */
 export interface Boost {
   hp?: number;
@@ -459,6 +498,8 @@ export function addUnit(b: Battle, defId: string, u: number, v: number, boost: B
   // (a hero's skill keeps the charge it built up in the run's last wave)
   if (boost.charge) unit.charge = Math.min(CHARGE_MAX, boost.charge);
   if (boost.charge2) unit.charge2 = Math.min(CHARGE_MAX, boost.charge2);
+  // (a hero with a kit starts with its pool: stamina full, mana a part, or what it carried from the run's last wave)
+  if (def.side === 'hero' && !def.summon && heroKitOf(unit)) startPool(unit, boost.charge);
   b.units.push(unit);
   return unit;
 }
@@ -501,6 +542,41 @@ export function fight(b: Battle): boolean {
   b.phase = 'fight';
   applyTraits(b);
   startCombo(b);
+  startKits(b);
+  return true;
+}
+
+/** The hero kits' fight-long state: set when a hero with a kit is on the field (a fight without one reads as before). */
+function startKits(b: Battle): void {
+  const kitted = b.units.filter((x) => heroKitOf(x));
+  if (!kitted.length) return;
+  b.kits = {};
+  for (const x of kitted) {
+    if (x.def === 'lancer') x.kx ??= {};
+    if (x.def === 'wolfBard' && (x.level ?? 1) >= 10) {
+      (x.kx ??= {}).tune = 'dirge';
+      b.kits.songs = true;
+    }
+    if (x.def === 'timeWitch' && (x.level ?? 1) >= 10) b.kits.rewind = true;
+  }
+}
+
+/** Raise the fallen party in the same fight. Enemies, charges and spent abilities stay as they were. */
+export function reviveParty(b: Battle): boolean {
+  if (b.phase !== 'lost' || !heroesPlaced(b)) return false;
+  for (const u of b.units) {
+    if (u.side !== 'hero' || defOf(u).summon || u.alive) continue;
+    u.alive = true;
+    u.hp = u.maxHp;
+    u.diedAt = undefined;
+    u.step = undefined;
+    u.swing = undefined;
+    u.cast = undefined;
+    u.hurtAt = undefined;
+    u.busyUntil = b.t;
+  }
+  if (b.t >= (b.timeLimit ?? TIME_LIMIT_MS)) b.timeLimit = b.t + TIME_LIMIT_MS;
+  b.phase = 'fight';
   return true;
 }
 
@@ -527,7 +603,7 @@ function applyTraits(b: Battle): void {
 
 /** The kind's stats as this fighter uses them: a team's reach bonus lengthens its shots from height. */
 export function strikeDef(b: Battle, me: Unit): UnitDef {
-  const def = defOf(me);
+  const def = me.kx ? kitDef(b, me, defOf(me)) : defOf(me);
   const reach = me.side === 'hero' ? b.traits?.reach : undefined;
   const extra = me.eq?.range ?? 0;
   // (twists: fog shortens a shooter's range, a gale lifts every jump)
@@ -549,6 +625,8 @@ export function stepBattle(b: Battle): BattleEvent[] {
   b.t += TICK_MS;
   const rng = new Rng(b.rng);
   out.push(...b.spells.events.splice(0));
+  // (the player's taps since the last tick are applied now, so each is tied to a tick and the fight replays)
+  if (b.orders?.length || b.units.some((x) => x.ultOrder !== undefined)) applyOrders(b, out);
   fillMana(b);
   settleFalls(b, out);
   // blows and shots that land now
@@ -569,9 +647,9 @@ export function stepBattle(b: Battle): BattleEvent[] {
     }
     return out;
   }
-  const heroes = b.units.some((x) => x.alive && x.side === 'hero' && !defOf(x).summon);
+  const heroes = b.units.some((x) => x.alive && realHero(x));
   const foes = b.units.some((x) => x.alive && x.side === 'foe');
-  if (!heroes || !foes || b.t >= TIME_LIMIT_MS) {
+  if (!heroes || !foes || b.t >= (b.timeLimit ?? TIME_LIMIT_MS)) {
     b.phase = heroes && !foes ? 'won' : 'lost';
     b.pending = [];
     out.push({ kind: 'end', won: b.phase === 'won' });
@@ -583,7 +661,13 @@ function settle(b: Battle, p: Pending, out: BattleEvent[]): void {
   const by = b.units.find((x) => x.id === p.by)!;
   const to = b.units.find((x) => x.id === p.to)!;
   const def = defOf(by);
-  if (p.kind === 'rain' || p.kind === 'meteor') return landArea(b, p.kind, by, p.u!, p.v!, p.dmg, out);
+  if (p.kind === 'keg') return settleKeg(b, p, out);
+  if (p.kind === 'jump') return settleJump(b, p, out);
+  if (p.kind === 'rain' || p.kind === 'meteor') {
+    landArea(b, p.kind, by, p.u!, p.v!, p.dmg, out);
+    if (p.barrels && b.barrels) for (const i of b.barrels.filter((i) => Math.max(Math.abs((i % b.board.w) - p.u!), Math.abs(Math.floor(i / b.board.w) - p.v!)) <= 1)) blast(b, i, out);
+    return;
+  }
   if (p.kind === 'combo') return landCombo(b, out);
   if (p.kind === 'echo') return by.alive ? echoSkill(b, by, p.dmg, out) : undefined;
   if (p.kind === 'release') {
@@ -601,7 +685,11 @@ function settle(b: Battle, p: Pending, out: BattleEvent[]): void {
     out.push({ kind: 'dodge', to: to.id });
     return;
   }
-  if (hurt(b, by, to, p.dmg, p.heavy, false, out)) afterBlow(b, by, to, !!p.crit, p.dmg, out);
+  // (only a blow that reached health counts for leech, equipment and the hero kits: SIM-001)
+  if (hurt(b, by, to, p.dmg, p.heavy, false, out)) {
+    afterBlow(b, by, to, !!p.crit, p.dmg, out);
+    kitBlow(b, by, to, !!p.crit, p.dmg, out);
+  }
   if (def.splash)
     for (const n of b.units)
       if (n.alive && n.side === to.side && n !== to && apart(n, to) === 1) hurt(b, by, n, Math.max(1, Math.round(p.dmg * SPLASH_SHARE)), false, true, out);
@@ -623,12 +711,20 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
       if (dmg <= 0) return false;
     }
   }
-  // Terrain uses the victim as its source; it earns no combat contribution.
+  // Terrain uses the victim as its source; it earns no combat contribution (SIM-001).
   const credit = by !== to;
-  if (credit) by.dealt = (by.dealt ?? 0) + Math.min(dmg, to.hp);
+  const landed = Math.min(dmg, to.hp);
+  if (credit) by.dealt = (by.dealt ?? 0) + landed;
+  // (the ultimate's meter fills from the fight: what a hero deals, its summons' share counting for it, and what it takes)
+  if (by !== to) {
+    if (by.side !== to.side) ultOnDamage(by.owner !== undefined ? creditOf(b, by) : by, landed, false);
+    ultOnDamage(to, landed, true);
+  }
   to.hp = Math.max(0, to.hp - dmg);
   to.hurtAt = b.t;
   let killed = to.hp <= 0;
+  // (a kit holds it up: Blood Fury, a guardian angel)
+  if (killed && to.kx && kitSpare(b, to, out)) killed = false;
   // (a phoenix feather: the first hero to fall rises at half health)
   if (killed && to.side === 'hero' && b.relics?.revive && !b.revived) {
     b.revived = true;
@@ -657,6 +753,7 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   if (killed && credit) {
     onKill(b, by, out);
     fxKill(b, by, to, out);
+    kitDeath(b, to, by, out);
   }
   // (a blow beside a powder barrel sets it off)
   if (b.barrels && src !== 'dot') for (const i of b.barrels.filter((i) => Math.max(Math.abs((i % b.board.w) - to.u), Math.abs(Math.floor(i / b.board.w) - to.v)) <= 1)) blast(b, i, out);
@@ -664,7 +761,7 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
 }
 
 /** A powder barrel goes off: it is gone, whoever is within a tile of it loses `BARREL_BLAST` of their hp, and a barrel beside it goes too. */
-function blast(b: Battle, i: number, out: BattleEvent[]): void {
+export function blast(b: Battle, i: number, out: BattleEvent[]): void {
   const at = b.barrels?.indexOf(i) ?? -1;
   if (at < 0) return;
   b.barrels!.splice(at, 1);
@@ -751,6 +848,11 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   const def = strikeDef(b, me);
   me.step = undefined;
   let foes = b.units.filter((x) => x.alive && x.side !== me.side && !hidden(b, x));
+  // (a hero wearing a foe's guise is picked last: the foes go for any other first)
+  if (b.kits && me.side !== 'hero' && foes.some((x) => x.kx?.guise)) {
+    const plain = foes.filter((x) => !(x.kx?.guise && x.kx.guise.until > b.t));
+    if (plain.length) foes = plain;
+  }
   // a charmed fighter turns on its own side (if it has anyone left to turn on)
   if (me.charmUntil !== undefined && me.charmUntil > b.t) {
     const friends = b.units.filter((x) => x.alive && x !== me && x.side === me.side);
@@ -767,6 +869,16 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   if (tryCast(b, me, out)) return;
   // strike the weakest foe in reach (first stepping up to higher ground a step or two away, if it holds the target too)
   const inReach = foes.filter((f) => canStrike(b.board, def, me, f)).sort((x, y) => x.hp - y.hp || apart(me, x) - apart(me, y) || x.id - y.id);
+  // (a foe the Tyrant condemned is every hero's first target, when it can be reached)
+  if (b.kits && me.side === 'hero') {
+    const doomed = inReach.find((f) => f.kx?.condemned && f.kx.condemned.until > b.t);
+    if (doomed) inReach.unshift(doomed);
+  }
+  // (a standard stands where it was planted, and an anchored Siege Bot does not walk)
+  if (b.kits && !inReach.length && kitStill(b, me)) {
+    me.busyUntil = b.t + WAIT_MS;
+    return;
+  }
   if (inReach.length) {
     const up = perchFor(b, me, def, inReach[0]);
     return up >= 0 ? stepTo(b, me, up, out) : swing(b, me, inReach[0], rng, out);
@@ -816,13 +928,13 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
 }
 
 export function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[]): void {
-  const def = defOf(me);
+  const def = me.kx ? kitDef(b, me, defOf(me)) : defOf(me);
   const way = wayTo(me, to);
   me.facing = way;
   const mult = blowMult(tileOf(b, me).h, tileOf(b, to).h, way, to.facing) * guardMult(tileOf(b, me).h, tileOf(b, to).h);
   const crit = rollCrit(b, me);
   const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - Math.max(0, defenceOf(to) - pierceOf(me))) * mult * crit * preyOf(me, to) * farOf(me, to) * finishOf(me, to) * rng.range(0.9, 1.1)));
-  const quick = speedOf(b, me) * frenzyOf(b, me) * (1 + (me.eq?.atkSpeed ?? 0));
+  const quick = speedOf(b, me) * frenzyOf(b, me) * (1 + (me.eq?.atkSpeed ?? 0)) * (me.kx ? kitQuick(b, me) : 1);
   const atkMs = Math.round(def.atkMs / quick);
   const windup = Math.min(def.shot ? 500 : 400, Math.round(atkMs * 0.4));
   me.swing = { at: b.t, ms: windup + 250, to: to.id };
@@ -848,7 +960,13 @@ export function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void
       cost += 0.5;
     }
   }
-  const ms = Math.round((def.moveMs * cost) / (speedOf(b, me) * (1 + (me.eq?.moveSpeed ?? 0)) * (me.side === 'hero' ? b.heroMove ?? 1 : 1) * (b.twist?.chill ?? 1)) * (b.walk ?? 1));
+  // (a lancer riding straight builds momentum: a tenth more on his next blow for each tile, to five)
+  if (me.kx && me.def === 'lancer' && (me.level ?? 1) >= 10) {
+    const way = wayTo(me, next);
+    me.kx.momentum = me.kx.lastWay === way ? Math.min(5, (me.kx.momentum ?? 0) + 1) : 1;
+    me.kx.lastWay = way;
+  }
+  const ms = Math.round((def.moveMs * cost) / (speedOf(b, me) * (me.kx ? kitQuick(b, me, true) : 1) * (1 + (me.eq?.moveSpeed ?? 0)) * (me.side === 'hero' ? b.heroMove ?? 1 : 1) * (b.twist?.chill ?? 1)) * (b.walk ?? 1));
   me.step = { u: me.u, v: me.v, h: from.h, at: b.t, ms };
   me.facing = wayTo(me, next);
   me.u = next.u;

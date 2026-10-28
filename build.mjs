@@ -18,7 +18,7 @@ try {
 } catch {
   /* not a checkout */
 }
-const version = `${pkg.version} · ${commit}`;
+const version = `${pkg.version} · ${commit}${serve ? ' · dev-' + Math.floor(Date.now() / 1000) : ''}`;
 
 rmSync(out, { recursive: true, force: true });
 mkdirSync(out, { recursive: true });
@@ -80,7 +80,39 @@ for (const f of readdirSync('src/audio').filter((f) => f.endsWith('.opus'))) {
 const dataUrl = (f) => `data:image/png;base64,${readFileSync(f).toString('base64')}`;
 const LOADING_ART = { __LD_KNIGHT__: 'src/art/loading/knight-attack.png', __LD_DEMON__: 'src/art/loading/demon-attack.png' };
 const withLoadingArt = (html) => Object.entries(LOADING_ART).reduce((h, [k, f]) => h.replaceAll(k, () => dataUrl(f)), html);
-writeFileSync(`${out}/index.html`, withLoadingArt(readFileSync('src/index.html', 'utf8').replace('/*__PIXEL_CSS__*/', () => readFileSync('src/tokens.css', 'utf8') + readFileSync('src/pixel.css', 'utf8') + readFileSync('src/equip.css', 'utf8') + readFileSync('src/rogue.css', 'utf8') + readFileSync('src/twists.css', 'utf8') + readFileSync('src/eliteSets.css', 'utf8') + readFileSync('src/talents.css', 'utf8') + readFileSync('src/codex.css', 'utf8') + readFileSync('src/awaken.css', 'utf8') + readFileSync('src/calmap.css', 'utf8') + readFileSync('src/campPlaces.css', 'utf8') + readFileSync('src/daily.css', 'utf8') + readFileSync('src/cinematics.css', 'utf8') + readFileSync('src/stone.css', 'utf8') + readFileSync('src/levels.css', 'utf8') + readFileSync('src/battleUi.css', 'utf8') + readFileSync('src/stand.css', 'utf8')).replace('/*__KEEP_KINGDOM_CSS__*/', () => readFileSync('src/keepKingdom.css', 'utf8')).replace('__VERSION__', version)));
+const writeIndexHtml = () => {
+  writeFileSync(
+    `${out}/index.html`,
+    withLoadingArt(
+      readFileSync('src/index.html', 'utf8')
+        .replace(
+          '/*__PIXEL_CSS__*/',
+          () =>
+            readFileSync('src/tokens.css', 'utf8') +
+            readFileSync('src/pixel.css', 'utf8') +
+            readFileSync('src/equip.css', 'utf8') +
+            readFileSync('src/rogue.css', 'utf8') +
+            readFileSync('src/twists.css', 'utf8') +
+            readFileSync('src/eliteSets.css', 'utf8') +
+            readFileSync('src/talents.css', 'utf8') +
+            readFileSync('src/codex.css', 'utf8') +
+            readFileSync('src/awaken.css', 'utf8') +
+            readFileSync('src/calmap.css', 'utf8') +
+            readFileSync('src/campPlaces.css', 'utf8') +
+            readFileSync('src/daily.css', 'utf8') +
+            readFileSync('src/cinematics.css', 'utf8') +
+            readFileSync('src/stone.css', 'utf8') +
+            readFileSync('src/levels.css', 'utf8') +
+            readFileSync('src/battleUi.css', 'utf8') +
+            readFileSync('src/stand.css', 'utf8') +
+            readFileSync('src/tomes.css', 'utf8'),
+        )
+        .replace('/*__KEEP_KINGDOM_CSS__*/', () => readFileSync('src/keepKingdom.css', 'utf8') + readFileSync('src/battleCommand.css', 'utf8'))
+        .replace('__VERSION__', version),
+    ),
+  );
+};
+writeIndexHtml();
 writeFileSync(
   `${out}/manifest.webmanifest`,
   JSON.stringify(

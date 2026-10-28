@@ -22,7 +22,7 @@ import { kindsOf, traitEffects } from './traits';
 import { killXp, levelOfKind } from './levels';
 import { boostOf, FOE_START } from './run';
 import { heroBoost, manaRate, moveRate, type Castle } from './castle';
-import { stageCrowns, runCrowns, heroRank, type Meta, type StashChest } from './meta';
+import { heroRank, type Meta, type StashChest } from './meta';
 import { heroStats } from './talents';
 import { awakenedOf } from './awaken';
 import { chestsFor, gearChance, settleTower } from './tower';
@@ -44,7 +44,10 @@ export const KING_HP = 1000;
 export const KING_HEAL = 0.4;
 /** Foes' hp and attack at wave 1 (a share of their stats in `foes.ts`), and the share they gain each wave after. */
 export const WAVE_START = FOE_START;
-export const WAVE_GROWTH = 0.21;
+export const WAVE_GROWTH = 0.4;
+/** From wave `WAVE_KNEE` on the climb eases to `WAVE_GROWTH_LATE` a wave: steep at first, so the early waves bite at once; gentler later, so a stronger party still goes further. */
+export const WAVE_KNEE = 10;
+export const WAVE_GROWTH_LATE = 0.07;
 /** A wave's size: foes at wave 1 and the foes each wave adds. */
 export const WAVE_BASE = 4;
 export const WAVE_STEP = 2;
@@ -52,8 +55,8 @@ export const WAVE_STEP = 2;
 export const BOSS_EVERY = 5;
 export const BAND_WAVES = 3;
 /** A boss's hp and attack against the same wave's foes (its own stats in `foes.ts` are already big): a share that starts low and grows to `BOSS_TOP` by the ninth boss. */
-export const BOSS_START = 0.35;
-export const BOSS_TOP = 0.9;
+export const BOSS_START = 0.45;
+export const BOSS_TOP = 1.0;
 export const bossShare = (n: number): number => Math.min(BOSS_TOP, BOSS_START + ((BOSS_TOP - BOSS_START) * (n / BOSS_EVERY - 1)) / 8);
 /** The foes of a wave come in over this long at most (ms), a gap between each. */
 export const SPAWN_SPAN = 7000;
@@ -68,14 +71,16 @@ export const RISE_SHARE = 0.5;
 export const CORPSE_MS = 2600;
 
 /** Gold for a kill, and for clearing wave `n`. */
-export const killGold = (n: number): number => 2 + Math.floor(n / 3);
+export const killGold = (n: number): number => Math.max(1, Math.round((2 + Math.floor(n / 3)) / 2));
 export const clearGold = (n: number): number => 12 + 4 * n;
 export const BOSS_GOLD = 10;
 export const START_GOLD = 60;
 /** What the buys cost. */
-export const levelCost = (lv: number): number => 18 + 8 * lv;
+export const levelCost = (lv: number): number => 25 + 11 * lv;
 export const relicCost = (owned: number, wave: number): number => 60 + 12 * owned + 3 * wave;
 export const healCost = (wave: number): number => 25 + 3 * wave;
+/** The crowns a cleared wave pays: climbs to wave 8 and stays, so a run that gets less far (the waves are harder) is paid about what the same party was paid before. */
+export const waveCrowns = (n: number): number => 8 + 16 * Math.min(n, 8);
 /** How many relics a break offers. */
 export const OFFER = 3;
 
@@ -204,7 +209,7 @@ export interface WaveSpec {
 
 export const isBossWave = (n: number): boolean => n % BOSS_EVERY === 0;
 /** The foes' strength at wave `n`, as a share of their stats in `foes.ts`. */
-export const strength = (n: number): number => WAVE_START * (1 + WAVE_GROWTH * (n - 1));
+export const strength = (n: number): number => WAVE_START * (1 + WAVE_GROWTH * (Math.min(n, WAVE_KNEE) - 1) + WAVE_GROWTH_LATE * Math.max(0, n - WAVE_KNEE));
 /** How many foes wave `n` would have with no cap. */
 export const rawCount = (n: number): number => Math.round(WAVE_BASE + WAVE_STEP * n);
 
@@ -669,7 +674,7 @@ export function snapshot(s: Stand): StandRun {
 export const clearedOf = (run: StandRun): number => Math.max(0, run.wave - 1);
 
 /**
- * Pay a finished run, once: crowns for each wave cleared (what a floor of the old tower paid), the end's share, chests into the
+ * Pay a finished run, once: crowns for each wave cleared (`waveCrowns`), chests into the
  * stash (a bronze every 8 waves, a silver every 13, a gold every 39) and a chance of equipment, from the run's seed. The
  * best wave is kept in the meta.
  */
@@ -678,8 +683,7 @@ export function settleStand(m: Meta, run: StandRun, armies: readonly string[] = 
   if (run.summary) return run.summary;
   const cleared = clearedOf(run);
   let crowns = 0;
-  for (let w = 1; w <= cleared; w++) crowns += stageCrowns(w);
-  crowns += runCrowns(run.best);
+  for (let w = 1; w <= cleared; w++) crowns += waveCrowns(w);
   m.crowns += crowns;
   const bosses = Math.floor(cleared / 13);
   const c = chestsFor(cleared, bosses);

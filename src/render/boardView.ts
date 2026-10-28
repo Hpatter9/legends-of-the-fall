@@ -6,11 +6,14 @@
 import { Container, Graphics, Sprite, Texture, type Renderer } from 'pixi.js';
 import { LAVA_LANDS, tileAt, type Area, type Board, type Tile } from '../sim/board';
 import { loadImage } from './loadImage';
+import { ColumnTextures, columnKey, type ColumnLease } from './columnTextures';
 import { depthIn, FOOT, HH, project, rawAt, TH, TW, type Frame } from './iso';
 import { footDims, liesBehind, type Rot } from '../sim/turn';
 import { AREA_URLS, BUSH_URLS, GROUND_URLS } from './areaArt';
 import { TERRAIN_URLS } from './terrainArt';
 import { LIT_PROPS } from './weatherRules';
+import gateUrl from '../art/camp/gate.png';
+import towerUrl from '../art/camp/tower.png';
 
 /** From this height up, a tile's top is stony. */
 const STONY = 3;
@@ -76,8 +79,11 @@ interface Art {
   walls: Texture[];
   crystal: Texture;
   planks: HTMLImageElement;
+  gate: Texture;
+  tower: Texture;
 }
 let art: Art | null = null;
+let artEpoch = 0;
 
 export async function loadBoardArt(): Promise<void> {
   const all = (urls: string[]) => Promise.all(urls.map(loadImage));
@@ -93,14 +99,17 @@ export async function loadBoardArt(): Promise<void> {
   const bushes = (await all(BUSH_URLS)).map((i) => Texture.from(i));
   const [barrel, crystal, planks] = await Promise.all([loadImage(TERRAIN_URLS.barrel), loadImage(TERRAIN_URLS.crystal), loadImage(TERRAIN_URLS.planks)]);
   const walls = (await all(TERRAIN_URLS.walls)).map((i) => Texture.from(i));
-  art = { areas, water, ice, lava, bushes, barrel: Texture.from(barrel), walls, crystal: Texture.from(crystal), planks };
+  const [gate, tower] = await all([gateUrl, towerUrl]);
+  artEpoch++;
+  art = { areas, water, ice, lava, bushes, barrel: Texture.from(barrel), walls, crystal: Texture.from(crystal), planks, gate: Texture.from(gate), tower: Texture.from(tower) };
 }
 
 /** One section's tiles, built: a container for each tile (in row order), the marks over them, and the column textures made for them. */
 interface Built {
+  landmark: Container | null;
   tiles: Container[];
   marks: Graphics[];
-  tex: Texture[];
+  tex: ColumnLease<Texture>[];
   /** The powder barrels still standing (by tile index), so a blast can take one away. */
   barrels: Map<number, Sprite>;
 }
@@ -129,6 +138,8 @@ const BAKED_MAX = 20;
 
 export class BoardView {
   readonly root = new Container();
+  private columns = new ColumnTextures<Texture>((texture) => texture.destroy(true));
+  get columnStats() { return this.columns.stats; }
   private marks: Graphics[] = [];
   private board: Board | null = null;
   private built: Built | null = null;
@@ -141,6 +152,8 @@ export class BoardView {
   private sceneryOf = new Map<Board, Sprite>();
   private baked = new Map<Board, Baked>();
   private toBake: Scene[] = [];
+  private scenesWanted: Scene[] = [];
+  private viewBox: { x0: number; x1: number; y0: number; y1: number } | null = null;
   /** The section just fought, kept as live tiles while the heroes walk off it. */
   private old: (Built & { rot: Rot; ou: number; ov: number; section: Board }) | null = null;
   /** How the host section lies. */
@@ -166,7 +179,7 @@ export class BoardView {
       this.root.addChild(...this.keep);
     }
     this.freeBuilt();
-    this.built = this.section(b, look, { rot, ou: 0, ov: 0 });
+    this.built = this.section(b, look, { rot, ou: 0, ov: 0, w: b.w, d: b.d });
     this.marks = this.built.marks;
     this.root.addChild(...this.built.tiles);
   }
@@ -178,9 +191,13 @@ export class BoardView {
     c.sortableChildren = true;
     c.addChild(...built.tiles);
     const bounds = c.getLocalBounds();
-    const tex = this.renderer ? this.renderer.generateTexture({ target: c, resolution: 1 }) : Texture.EMPTY;
-    c.destroy({ children: true });
-    for (const x of built.tex) x.destroy(true);
+    let tex: Texture;
+    try {
+      tex = this.renderer ? this.renderer.generateTexture({ target: c, resolution: 1 }) : Texture.EMPTY;
+    } finally {
+      c.destroy({ children: true });
+      for (const x of built.tex) x.release();
+    }
     const sp = new Sprite(tex);
     sp.position.set(bounds.minX, bounds.minY);
     sp.zIndex = -1e6;
@@ -192,8 +209,11 @@ export class BoardView {
   demote(section: Board, ou: number, ov: number): void {
     if (!this.built || !this.board) return;
     this.dropOld();
+    // The destination is rendered once by the approaching/current host, never again in retired scenery.
+    this.built.landmark?.destroy({ children: true });
+    this.built.landmark = null;
     const [ox, oy] = rawAt(ou, ov, 0);
-    const f = { rot: this.rot, ou, ov };
+    const f = { rot: this.rot, ou, ov, w: this.board.w, d: this.board.d };
     this.built.tiles.forEach((t, i) => {
       t.position.set(ox, oy);
       t.zIndex = depthIn(f, i % this.board!.w, Math.floor(i / this.board!.w));
@@ -209,7 +229,7 @@ export class BoardView {
     if (!o) return;
     const scene = { board: o.section, look, rot: o.rot, ou: o.ou, ov: o.ov };
     for (const t of o.tiles) t.destroy({ children: true });
-    for (const x of o.tex) x.destroy(true);
+    for (const x of o.tex) x.release();
     this.old = null;
     this.bake(scene);
     this.place(scene);
@@ -218,13 +238,13 @@ export class BoardView {
   private dropOld(): void {
     if (!this.old) return;
     for (const t of this.old.tiles) if (!t.destroyed) t.destroy({ children: true });
-    for (const x of this.old.tex) x.destroy(true);
+    for (const x of this.old.tex) x.release();
     this.old = null;
   }
 
   private freeBuilt(): void {
     if (!this.built) return;
-    for (const x of this.built.tex) x.destroy(true);
+    for (const x of this.built.tex) x.release();
     this.built = null;
   }
 
@@ -239,6 +259,7 @@ export class BoardView {
 
   /** Show the finished sections behind the fight (those of `scenes`, each against the host), baking what is not baked yet, a section a frame (`pump`). Those no longer wanted go. */
   setScenery(scenes: Scene[]): void {
+    this.scenesWanted = scenes;
     const want = new Set(scenes.map((s) => s.board));
     for (const [b, sp] of this.sceneryOf)
       if (!want.has(b)) {
@@ -248,9 +269,11 @@ export class BoardView {
     this.toBake = [];
     for (const s of scenes) {
       if (this.baked.has(s.board)) this.place(s);
-      else this.toBake.push(s);
+      else if (s.board.w < 12 || (this.viewBox && this.inView(s, this.viewBox))) this.toBake.push(s);
     }
   }
+
+  get sceneryReady(): boolean { return this.toBake.length === 0; }
 
   /** Bake one waiting section (called each frame, so a long map comes up a section a frame). */
   pump(): void {
@@ -260,8 +283,26 @@ export class BoardView {
     this.place(s);
   }
 
+  /** A conservative projected board rectangle, excluding destinations which retired sections never draw. */
+  private inView(s: Scene, view: { x0: number; x1: number; y0: number; y1: number }): boolean {
+    const f = { rot: s.rot, ou: s.ou, ov: s.ov, w: s.board.w, d: s.board.d };
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (const u of [0, s.board.w - 1]) for (const v of [0, s.board.d - 1]) {
+      const [x, y] = project(f, u, v, 0);
+      x0 = Math.min(x0, x - TW); x1 = Math.max(x1, x + TW);
+      y0 = Math.min(y0, y - 12 * HH - 120); y1 = Math.max(y1, y + FOOT + TH);
+    }
+    return x0 < view.x1 && x1 > view.x0 && y0 < view.y1 && y1 > view.y0;
+  }
+
   /** Hide the baked sections that lie off the screen (`view`, in world px). */
   cull(view: { x0: number; x1: number; y0: number; y1: number }): void {
+    this.viewBox = view;
+    // On large prototypes, resume/pan only bakes the sections near the camera; panning back queues them on demand.
+    this.toBake = this.toBake.filter(s => s.board.w < 12 || this.inView(s, view));
+    for (const s of this.scenesWanted) {
+      if (s.board.w >= 12 && !this.baked.has(s.board) && !this.toBake.some(q => q.board === s.board) && this.inView(s, view)) this.toBake.push(s);
+    }
     for (const sp of this.sceneryOf.values()) {
       const x = sp.x;
       const y = sp.y;
@@ -271,14 +312,18 @@ export class BoardView {
 
   private bake(s: Scene): void {
     if (this.baked.has(s.board) || !this.renderer) return;
-    const built = this.section(s.board, s.look, { rot: s.rot, ou: 0, ov: 0 });
+    const built = this.section({ ...s.board, landmark: undefined, landmarkAt: undefined }, s.look, { rot: s.rot, ou: 0, ov: 0, w: s.board.w, d: s.board.d });
     const c = new Container();
     c.sortableChildren = true;
     c.addChild(...built.tiles);
     const bounds = c.getLocalBounds();
-    const tex = this.renderer.generateTexture({ target: c, resolution: 1 });
-    c.destroy({ children: true });
-    for (const x of built.tex) x.destroy(true);
+    let tex: Texture;
+    try {
+      tex = this.renderer.generateTexture({ target: c, resolution: s.board.w >= 12 ? 0.5 : 1 });
+    } finally {
+      c.destroy({ children: true });
+      for (const x of built.tex) x.release();
+    }
     this.baked.set(s.board, { tex, x: bounds.minX, y: bounds.minY });
     // (the oldest are let go once there are too many)
     while (this.baked.size > BAKED_MAX) {
@@ -299,8 +344,8 @@ export class BoardView {
       this.sceneryOf.set(s.board, sp);
     }
     // (a section further off than the host goes behind it, any other in front; among themselves, by their middles' depth)
-    const [w, d] = footDims(s.rot);
-    const layer = liesBehind(s.rot, s.ou, s.ov, this.rot) ? this.sceneryBack : this.scenery;
+    const [w, d] = footDims(s.rot, s.board.w, s.board.d);
+    const layer = liesBehind(s.rot, s.ou, s.ov, this.rot, s.board.w, s.board.d, this.board?.w, this.board?.d) ? this.sceneryBack : this.scenery;
     if (sp.parent !== layer) layer.addChild(sp);
     sp.zIndex = (s.ou + s.ov) * 2 + w + d;
     const [ox, oy] = rawAt(s.ou, s.ov, 0);
@@ -311,7 +356,7 @@ export class BoardView {
   private section(b: Board, look: Look, f: Frame): Built {
     const tiles: Container[] = [];
     const marks: Graphics[] = [];
-    const tex: Texture[] = [];
+    const tex: ColumnLease<Texture>[] = [];
     const barrels = new Map<number, Sprite>();
     for (let v = 0; v < b.d; v++)
       for (let u = 0; u < b.w; u++) {
@@ -321,7 +366,7 @@ export class BoardView {
         tile.zIndex = depthIn(f, u, v);
         const ct = this.column(t, u, v, b.area, !!look.boss);
         tex.push(ct);
-        const col = new Sprite(ct);
+        const col = new Sprite(ct.value);
         col.position.set(x - TW / 2, y - TH / 2);
         tile.addChild(col);
         const mark = new Graphics();
@@ -376,7 +421,37 @@ export class BoardView {
         }
         tiles.push(tile);
       }
-    return { tiles, marks, tex, barrels };
+    let landmark: Container | null = null;
+    if (b.landmark && b.landmarkAt && art) {
+      // Existing credited gate/tower sprites form a scenic compound beyond the far edge, never collision terrain.
+      const base = tiles[Math.floor(b.w / 2)];
+      const site = b.landmarkAt;
+      landmark = new Container();
+      landmark.sortableChildren = true;
+      base.addChild(landmark);
+      // A nonwalkable scenic plinth anchors the compound in the landscape instead of suspending it over the sky.
+      for (let v = -2; v <= 1; v++) for (let u = -5; u <= 5; u++) {
+        const t: Tile = { h: site.h, deco: (u + 5) * 7 + v + 2 };
+        const texture = this.column(t, u, v, b.area, true);
+        tex.push(texture);
+        const column = new Sprite(texture.value);
+        const [x, y] = project(f, site.u + u, site.v + v, site.h);
+        column.position.set(x - TW / 2, y - TH / 2);
+        column.zIndex = depthIn(f, site.u + u, site.v + v);
+        landmark.addChild(column);
+      }
+      for (const [u, v, tower] of [[2, -2, true], [5.5, -2, false], [9, -2, true]] as const) {
+        const sp = new Sprite(tower ? art.tower : art.gate);
+        sp.anchor.set(0.5, 1);
+        sp.scale.set(tower ? 2.4 : 2.8);
+        sp.tint = b.landmark === 'mausoleum' ? 0x8c91ae : b.landmark === 'temple' ? 0xd7cb9d : 0xffffff;
+        const [x, y] = project(f, site.u + u - 5.5, site.v + v + 2, site.h);
+        sp.position.set(x, y);
+        sp.zIndex = 100000;
+        landmark.addChild(sp);
+      }
+    }
+    return { tiles, marks, tex, barrels, landmark };
   }
 
   /** Where the board's lit props stand (world px; a lantern, a torch, a forge fire), for night's glows (`weatherView.ts`). */
@@ -385,7 +460,7 @@ export class BoardView {
     const lit = b && LIT_PROPS[b.area];
     if (!b || !lit) return [];
     const n = AREA_URLS[b.area].boulders.length;
-    const f = { rot: this.rot, ou: 0, ov: 0 };
+    const f = { rot: this.rot, ou: 0, ov: 0, w: b.w, d: b.d };
     const out: [number, number][] = [];
     b.tiles.forEach((t, i) => {
       if (t.rock && lit.includes(t.deco % n)) out.push(project(f, i % b.w, Math.floor(i / b.w), t.h));
@@ -421,7 +496,16 @@ export class BoardView {
   }
 
   /** One tile's column: its top laid on the diamond, its two sides down to the foot. */
-  private column(t: Tile, u: number, v: number, area: Area, boss = false): Texture {
+  private column(t: Tile, u: number, v: number, area: Area, boss = false): ColumnLease<Texture> {
+    const set = art?.areas[area];
+    const top = t.h >= STONY || boss || t.perch ? -1 : set ? (t.deco + u + v) % set.tops.length : -1;
+    const key = columnKey(area, boss, t.h, !!t.bridge, t.ground, top, artEpoch, u, v, !!t.perch, !!t.ramp);
+    const bytes = TW * (TH + t.h * HH + FOOT + (boss ? HH : 0)) * 4;
+    return this.columns.acquire(key, bytes, () => this.paintColumn(t, u, v, area, boss));
+  }
+
+  /** Original full-resolution painter; reuse only columns whose appearance inputs match. */
+  private paintColumn(t: Tile, u: number, v: number, area: Area, boss = false): Texture {
     const set = art?.areas[area];
     // (a boss arena stands on a plinth one step deeper)
     const deep = t.h * HH + FOOT + (boss ? HH : 0);
@@ -554,10 +638,33 @@ export class BoardView {
       g.beginPath();
       g.ellipse(TW / 2, TH / 2, TW * 0.3, TH * 0.3, 0, 0, Math.PI * 2);
       g.stroke();
+    } else if (t.perch) {
+      // (elevated archer perch: defensive flagstone tint and firing chevron pointing toward the enemy)
+      g.fillStyle = 'rgba(235,215,180,0.18)';
+      g.fillRect(0, 0, TW, TH);
+      g.strokeStyle = 'rgba(255,235,175,0.7)';
+      g.lineWidth = 1.6;
+      g.beginPath();
+      g.moveTo(TW * 0.32, TH * 0.58);
+      g.lineTo(TW * 0.5, TH * 0.36);
+      g.lineTo(TW * 0.68, TH * 0.58);
+      g.stroke();
+    } else if (t.ramp) {
+      // (stepped ramp: wooden / stone stepped riser slats)
+      g.fillStyle = 'rgba(180,150,110,0.15)';
+      g.fillRect(0, 0, TW, TH);
+      g.strokeStyle = 'rgba(240,210,165,0.75)';
+      g.lineWidth = 1.4;
+      for (const yFrac of [0.38, 0.52, 0.66]) {
+        g.beginPath();
+        g.moveTo(TW * 0.28, TH * yFrac);
+        g.lineTo(TW * 0.72, TH * yFrac);
+        g.stroke();
+      }
     }
     g.restore();
-    g.strokeStyle = t.bridge ? BRIDGE_RIM : t.ground === 'deep' && LAVA_LANDS.includes(area) ? 'rgba(255,120,30,0.95)' : t.ground ? RIM[t.ground] : boss ? 'rgba(255,226,140,0.75)' : 'rgba(20,14,8,0.35)';
-    g.lineWidth = t.bridge || (t.ground && t.ground !== 'tall') ? 2 : 1;
+    g.strokeStyle = t.bridge ? BRIDGE_RIM : t.ground === 'deep' && LAVA_LANDS.includes(area) ? 'rgba(255,120,30,0.95)' : t.ground ? RIM[t.ground] : t.perch ? 'rgba(245,220,150,0.85)' : t.ramp ? 'rgba(215,185,135,0.75)' : boss ? 'rgba(255,226,140,0.75)' : 'rgba(20,14,8,0.35)';
+    g.lineWidth = t.bridge || (t.ground && t.ground !== 'tall') || t.perch || t.ramp ? 2 : 1;
     g.beginPath();
     g.moveTo(TW / 2, 0.5);
     g.lineTo(TW - 0.5, TH / 2);

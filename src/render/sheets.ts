@@ -8,6 +8,8 @@ import knight from '../art/units/knight_1.png';
 import samurai from '../art/units/samurai.png';
 import kunoichi from '../art/units/kunoichi.png';
 import archer from '../art/units/samurai_archer.png';
+import resonanceSoldier from '../art/units/hero_soldier.png';
+import resonanceArcher from '../art/units/hero_samurai_archer.png';
 import wizard from '../art/units/fire_wizard.png';
 import skeleton from '../art/units/skeleton_warrior.png';
 import spearman from '../art/units/skeleton_spearman.png';
@@ -122,6 +124,8 @@ interface Layout {
 }
 
 const URLS: Record<string, string> = {
+  hero_soldier: resonanceSoldier,
+  hero_samurai_archer: resonanceArcher,
   knight_1: knight,
   knight_2: knight2,
   knight_3: knight3,
@@ -254,6 +258,8 @@ export const framesOf = (sheet: string, anim: Anim): Texture[] => frames.get(`${
 export const facesRightOf = (sheet: string) => LAYOUT[sheet].facesRight !== false;
 /** How tall the figure stands in the frame, in the sheet's pixels. */
 export const figureOf = (sheet: string) => LAYOUT[sheet].figure;
+/** Whether a sheet is known (and so can be drawn): a kit's borrowed look is checked before it is used. */
+export const hasSheet = (sheet: string): boolean => !!LAYOUT[sheet] && images.has(sheet);
 
 /** A sheet's picture and layout, for the menus that draw frames straight onto a canvas (null until the sheets are loaded). */
 export function sheetInfo(sheet: string): { img: HTMLImageElement; w: number; h: number; rows: string[]; counts: Record<string, number>; figure: number; facesRight: boolean } | null {

@@ -7,6 +7,7 @@
 import type { Meta } from './meta';
 import { momentKey, SCENES, SCENE_ORDER, type CastMember, type Moment, type Scene } from './sceneScripts';
 import { FAMILY_NAMES } from './sceneFamilies';
+import { modeOpen } from './modeUnlock';
 import { UNITS } from './units';
 
 /** The scenes seen, from what was saved: only known ids, each once. A save with no list that has picked its heroes has seen the opening. */
@@ -22,14 +23,39 @@ export function markSeen(m: Meta, id: string): void {
   if (SCENES[id] && !seenScene(m, id)) (m.scenes ??= []).push(id);
 }
 
-/** The scene waiting at a moment: one the save has not seen, or one that plays every time (a boss changing form). */
+/** The scene waiting at a moment: one the save has not seen, or one that plays every time (the short Last Oath). A scene of the
+ *  Calamity's story waits until the Calamity has opened. */
 export function dueScene(m: Meta, moment: Moment): string | null {
   const key = momentKey(moment);
   for (const id of SCENE_ORDER) {
     const s = SCENES[id];
+    if (s.calamity && !modeOpen(m, 'calamity')) continue;
     if (momentKey(s.moment) === key && (s.again || !seenScene(m, id))) return id;
   }
   return null;
+}
+
+/** The moments a fight lost brings: the first-loss scene only on a real, final defeat (no heart left, or a mode with none), never
+ *  on a fall a heart then revives (`fallOutcome` in `run.ts`). */
+export const lossMoments = (outcome: 'heart' | 'end'): Moment[] => (outcome === 'end' ? [{ kind: 'firstLoss' }] : []);
+
+/* ------------------------------------------------------------ the boss's card */
+
+/** The key of a boss's card (its slam-down ribbon as the fight begins): a named elite by its own id, a boss by its fighter. */
+export const cardKey = (boss: string, elite?: string): string => (elite ? `elite:${elite}` : boss);
+
+/** Whether a boss's card is still to be shown: once a save, the first time that boss is met (the heralds' and bosses' own
+ *  introductions play once, as the scenes do; new runs, retries and new days do not bring it back). */
+export const cardDue = (m: Meta, key: string): boolean => !m.bossCards?.includes(key);
+
+/** Mark a boss's card shown. */
+export function markCard(m: Meta, key: string): void {
+  if (cardDue(m, key)) (m.bossCards ??= []).push(key);
+}
+
+/** The boss cards shown, from what was saved: strings, each once (a save from before has none). */
+export function readCards(raw: unknown): string[] {
+  return Array.isArray(raw) ? [...new Set(raw.filter((k): k is string => typeof k === 'string' && k.length > 0 && k.length < 80))] : [];
 }
 
 /** Who plays a scene: the player's party and the run's lead hero, and the fighters it names. */
@@ -72,6 +98,8 @@ export function momentText(mo: Moment): string {
   switch (mo.kind) {
     case 'starter':
       return 'A new save, before its first heroes are picked.';
+    case 'calOpen':
+      return 'The Calamity opens.';
     case 'calBoss':
       return `The Calamity's map ${mo.map} boss, as the fight is set up.`;
     case 'calVictory':

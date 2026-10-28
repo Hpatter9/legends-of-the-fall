@@ -1,0 +1,826 @@
+[
+  {
+    "width": 393,
+    "height": 852,
+    "reduced": false,
+    "saver": false,
+    "materials": {
+      "reports": [
+        {
+          "sheet": "bloodExplosion",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "darkCircle",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "darkSlash",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "earthBurst",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "earthExplosion",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "earthShield",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "earthWave",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "fireCircle",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "fireExplosion",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "goldBurst",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "iceShield",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "lightCircle",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "lightGather",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "lightNova",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "lightningBurst",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "lightningStrike",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "moonSlash",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "pinkHeart",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "whiteBurst",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "windBurst",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "windVortex",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "windWave",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        }
+      ],
+      "unchanged": true
+    },
+    "lifecycle": {
+      "spawnScale": 1.6,
+      "first": {
+        "alpha": 1,
+        "scale": 1.8381344307270235,
+        "rotation": -0.8104791817101991
+      },
+      "next": {
+        "alpha": 1,
+        "scale": 2.262825788751715,
+        "rotation": -0.49196066319168064
+      },
+      "expired": true,
+      "hidden": true,
+      "appeared": true,
+      "cleared": true,
+      "sourceAlive": true,
+      "density": 1
+    },
+    "catalogue": {
+      "heroes": 45,
+      "skillCues": 90,
+      "spells": 21
+    },
+    "errors": []
+  },
+  {
+    "width": 360,
+    "height": 780,
+    "reduced": false,
+    "saver": false,
+    "materials": {
+      "reports": [
+        {
+          "sheet": "bloodExplosion",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "darkCircle",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "darkSlash",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "earthBurst",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "earthExplosion",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "earthShield",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "earthWave",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "fireCircle",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "fireExplosion",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "goldBurst",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "iceShield",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "lightCircle",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "lightGather",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "lightNova",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "lightningBurst",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "lightningStrike",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "moonSlash",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "pinkHeart",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "whiteBurst",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "windBurst",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "windVortex",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "windWave",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        }
+      ],
+      "unchanged": true
+    },
+    "lifecycle": {
+      "spawnScale": 1.6,
+      "first": {
+        "alpha": 1,
+        "scale": 1.8381344307270235,
+        "rotation": -0.8104791817101991
+      },
+      "next": {
+        "alpha": 1,
+        "scale": 2.262825788751715,
+        "rotation": -0.49196066319168064
+      },
+      "expired": true,
+      "hidden": true,
+      "appeared": true,
+      "cleared": true,
+      "sourceAlive": true,
+      "density": 1
+    },
+    "catalogue": null,
+    "errors": []
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "reduced": false,
+    "saver": false,
+    "materials": {
+      "reports": [
+        {
+          "sheet": "bloodExplosion",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "darkCircle",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "darkSlash",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "earthBurst",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "earthExplosion",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "earthShield",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "earthWave",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "fireCircle",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "fireExplosion",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "goldBurst",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "iceShield",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "lightCircle",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "lightGather",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "lightNova",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "lightningBurst",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "lightningStrike",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "moonSlash",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "pinkHeart",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "whiteBurst",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "windBurst",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "windVortex",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "windWave",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        }
+      ],
+      "unchanged": true
+    },
+    "lifecycle": {
+      "spawnScale": 1.6,
+      "first": {
+        "alpha": 1,
+        "scale": 1.8381344307270235,
+        "rotation": -0.8104791817101991
+      },
+      "next": {
+        "alpha": 1,
+        "scale": 2.262825788751715,
+        "rotation": -0.49196066319168064
+      },
+      "expired": true,
+      "hidden": true,
+      "appeared": true,
+      "cleared": true,
+      "sourceAlive": true,
+      "density": 1
+    },
+    "catalogue": null,
+    "errors": []
+  },
+  {
+    "width": 393,
+    "height": 852,
+    "reduced": true,
+    "saver": false,
+    "materials": {
+      "reports": [
+        {
+          "sheet": "bloodExplosion",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "darkCircle",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "darkSlash",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "earthBurst",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "earthExplosion",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "earthShield",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "earthWave",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "fireCircle",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "fireExplosion",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "goldBurst",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "iceShield",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "lightCircle",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "lightGather",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "lightNova",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "lightningBurst",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "lightningStrike",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "moonSlash",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "pinkHeart",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "whiteBurst",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "windBurst",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "windVortex",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "windWave",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        }
+      ],
+      "unchanged": true
+    },
+    "lifecycle": {
+      "spawnScale": 2,
+      "first": {
+        "alpha": 1,
+        "scale": 2,
+        "rotation": -0.6690800047554666
+      },
+      "next": {
+        "alpha": 1,
+        "scale": 2,
+        "rotation": -0.6690800047554666
+      },
+      "expired": true,
+      "hidden": true,
+      "appeared": true,
+      "cleared": true,
+      "sourceAlive": true,
+      "density": 1
+    },
+    "catalogue": null,
+    "errors": []
+  },
+  {
+    "width": 393,
+    "height": 852,
+    "reduced": false,
+    "saver": true,
+    "materials": {
+      "reports": [
+        {
+          "sheet": "bloodExplosion",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "darkCircle",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "darkSlash",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "earthBurst",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "earthExplosion",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "earthShield",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "earthWave",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "fireCircle",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "fireExplosion",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "goldBurst",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "iceShield",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "lightCircle",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "lightGather",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "lightNova",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "lightningBurst",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "lightningStrike",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "moonSlash",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "pinkHeart",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "whiteBurst",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "windBurst",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "windVortex",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        },
+        {
+          "sheet": "windWave",
+          "logical": 32,
+          "pixels": 128,
+          "filtering": "linear"
+        }
+      ],
+      "unchanged": true
+    },
+    "lifecycle": {
+      "spawnScale": 1.6,
+      "first": {
+        "alpha": 1,
+        "scale": 1.8381344307270235,
+        "rotation": -0.8104791817101991
+      },
+      "next": {
+        "alpha": 1,
+        "scale": 2.262825788751715,
+        "rotation": -0.49196066319168064
+      },
+      "expired": true,
+      "hidden": true,
+      "appeared": true,
+      "cleared": true,
+      "sourceAlive": true,
+      "density": 0.5
+    },
+    "catalogue": null,
+    "errors": []
+  }
+]

@@ -11,6 +11,13 @@ import { xpFor, levelOfKind } from '../src/sim/levels';
 import { ALL_HEROES, UNITS } from '../src/sim/units';
 import { DEEP_KITS } from '../src/sim/talentsDeep';
 import { KITS } from '../src/sim/abilities';
+import { costOf, heroKitOf, resMax } from '../src/sim/heroKits';
+
+/** The share of a hero's pool its skill 1 costs (a fighter without a pool: a full charge). */
+const oneCast = (u: Unit): number => {
+  const k = heroKitOf(u);
+  return k ? (costOf(u, k.s1) / resMax(k.pool)) * 100 + 1e-6 : 100;
+};
 import {
   DEEP_TREE_POINTS, FULL_TREE_POINTS, TIER_COST, TIER_LEVEL, LEVEL_POINT_EVERY, MAX_SHARD_POINTS, RESPEC_BASE, RESPEC_PER_POINT, SHARD_POINT_COST, TAL_KEYS, TALENT_ABILITIES, TREES, boughtOf, buyPoint, canBuyPoint, canLearn, heroStats, learn,
   levelPoints, nodeOf, picksOf, readTalents, pointsEarned, pointsFree, pointsSpent, respec, respecCost, talentStats, tierNodes, whyNot,
@@ -235,10 +242,10 @@ function arena(kind: string, eq: EquipStats | undefined, distance = 1, o: { hp?:
   fight(b);
   return { b, hero, foes };
 }
-/** Fill the hero's charge, step until its skill goes off (or `ticks` pass), and say what it did. */
+/** Fill the hero's charge (a hero's pool: just enough for one cast of its skill 1, COMBAT-002), step until its skill goes off (or `ticks` pass), and say what it did. */
 function castOnce(a: { b: Battle; hero: Unit }, o: { ult?: boolean; ticks?: number } = {}): { events: BattleEvent[]; cast: boolean } {
   if (o.ult) a.hero.charge2 = 100;
-  else a.hero.charge = 100;
+  else a.hero.charge = oneCast(a.hero);
   const events: BattleEvent[] = [];
   for (let i = 0; i < (o.ticks ?? 25) && !events.some((e) => e.kind === 'skill' && e.by === a.hero.id); i++) events.push(...stepBattle(a.b));
   return { events, cast: events.some((e) => e.kind === 'skill' && e.by === a.hero.id) };
@@ -329,6 +336,8 @@ test('extra adds a strike, a jump, a trap, a treant, a second volley or meteor',
     castOnce(a);
     a.hero.charge = 100;
     a.hero.busyUntil = 0;
+    // (and the gap a skill keeps between two casts, COMBAT-002, is past)
+    a.hero.ks = undefined;
     for (let i = 0; i < 30; i++) stepBattle(a.b);
     return a.b.units.filter((x) => x.def === 'treant' && x.alive).length;
   };
@@ -337,20 +346,31 @@ test('extra adds a strike, a jump, a trap, a treant, a second volley or meteor',
 });
 
 test('what a cast gives the hero: healing, a shield, haste and charge back', () => {
-  const after = (t: Record<string, number>) => {
+  // (COMBAT-002: a hero's heal, shield and haste on a cast come with skill 2 and the ultimate, not the cheap skill 1; the charge back is a share of the cost)
+  const after = (t: Record<string, number>, ult = true) => {
+    const a = arena('knight', withTal(t), 2, { level: ULT_LEVEL });
+    a.hero.hp = Math.round(a.hero.maxHp * 0.5);
+    const hp = a.hero.hp;
+    castOnce(a, { ult });
+    return { a, hp };
+  };
+  const heal = after({ castHeal: 0.2 });
+  assert.ok(heal.a.hero.hp > heal.hp + heal.a.hero.maxHp * 0.15);
+  // (the Knight's ultimate shields him itself: the talent's shield is the bigger one)
+  assert.ok(after({ castShield: 0.25 }).a.hero.shield!.hp > (after({}).a.hero.shield?.hp ?? 0));
+  assert.ok(after({ castHaste: 3000 }).a.hero.hasteUntil! > after({}).a.b.t + 2000);
+  const low = (t: Record<string, number>) => {
     const a = arena('knight', withTal(t), 2);
     a.hero.hp = Math.round(a.hero.maxHp * 0.5);
     const hp = a.hero.hp;
     castOnce(a);
     return { a, hp };
   };
-  const heal = after({ castHeal: 0.2 });
-  assert.ok(heal.a.hero.hp > heal.hp + heal.a.hero.maxHp * 0.15);
-  assert.equal(after({}).a.hero.shield, undefined);
-  assert.ok(after({ castShield: 0.25 }).a.hero.shield!.hp > 0);
-  assert.ok(after({ castHaste: 3000 }).a.hero.hasteUntil! > after({}).a.b.t + 2000);
-  assert.ok(after({ refund: 40 }).a.hero.charge >= 40);
-  assert.ok(after({}).a.hero.charge < 20);
+  const plain = low({ castShield: 0.25 });
+  assert.equal(plain.a.hero.shield, undefined, 'skill 1 gives no shield');
+  const cost = oneCast(low({}).a.hero);
+  assert.ok(low({ refund: 40 }).a.hero.charge >= cost * 0.4);
+  assert.ok(low({}).a.hero.charge < cost * 0.2);
 });
 
 test('skillSlow and skillStun hold what a skill hits', () => {

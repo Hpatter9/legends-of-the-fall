@@ -28,7 +28,7 @@ import { FIELD_BANDS } from '../src/sim/foes';
 import { chooseOption, leaveEvent } from '../src/sim/events';
 import { fightXp, gainXp, levelOfKind } from '../src/sim/levels';
 import { BUILDINGS, maxLevel, newCastle, nextCost, upgrade, xpRate, type BuildingId, type Castle } from '../src/sim/castle';
-import { startedMeta, PULL_COST, heroRank, rankMult, recruit, type Meta } from '../src/sim/meta';
+import { startedMeta, heroRank, rankMult, stonesOf, useStones, type Meta } from '../src/sim/meta';
 import { boostOf, bandFor, finish, isBossStage, newRun, type Owned, type Run, SQUAD, stageBoost, startStage, summon } from '../src/sim/run';
 import { awakenStats, awaken } from '../src/sim/awaken';
 import { ARMIES, armyById, settleWave } from '../src/sim/armies';
@@ -125,15 +125,15 @@ function heroValue(): void {
     );
   });
   console.log(`  average win rate with a hero: ${average.toFixed(1)}%  (value: with minus without; dealt and taken: hp per fight)`);
-  console.log('  lift against the roster average (points of win rate; every hero is held to within about 4), by role:');
-  const over = ALL_HEROES.filter((_, i) => Math.abs(withRates[i] - average) > 4);
+  console.log('  lift against the roster average (points of win rate; every hero is held to within 6), by role:');
+  const over = ALL_HEROES.filter((_, i) => Math.abs(withRates[i] - average) > 6);
   for (const c of Object.keys(CLASS_NAMES) as StarterClass[]) {
     const line = ALL_HEROES.map((h, i) => [h, withRates[i]] as const)
       .filter(([h]) => CLASS_OF[h] === c)
       .map(([h, w]) => `${UNITS[h].name} ${w - average >= 0 ? '+' : ''}${(w - average).toFixed(1)}`);
     if (line.length) console.log(`    ${pad(CLASS_NAMES[c], 12)} ${line.join(', ')}`);
   }
-  console.log(`  heroes beyond 4 points of the average: ${over.length ? over.map((h) => UNITS[h].name).join(', ') : 'none'}`);
+  console.log(`  heroes beyond 6 points of the average: ${over.length ? over.map((h) => UNITS[h].name).join(', ') : 'none'}`);
   const best = Math.max(...withRates);
   const worst = Math.min(...withRates);
   console.log(`  spread: ${worst.toFixed(1)}% to ${best.toFixed(1)}%  (${(best - worst).toFixed(1)} points between the best and the worst)`);
@@ -388,7 +388,11 @@ function spendCrowns(meta: Meta): void {
     castleBudget -= cost;
     upgrade(meta, id);
   }
-  while (meta.crowns >= PULL_COST) recruit(meta, 1);
+  // (the sweeps turn spare crowns into stones at the old pull price and use them at once: they measure fights, not the pace of the shop)
+  const bought = Math.floor(meta.crowns / 100);
+  meta.crowns -= bought * 100;
+  meta.stones = stonesOf(meta) + bought;
+  while (stonesOf(meta) > 0) useStones(meta, 1);
   // (a player awakens a hero as soon as its shards allow; `--no-awaken` plays the climb as it was before awakening, to compare)
   // (`--force-awaken` is the worst case for the check: the five best heroes are at both steps from the start of the climb; `--force-rank4` is its control, the same heroes at the top shard rank only)
   if (process.argv.includes('--force-rank4')) for (const k of bestParty(meta)) meta.shards[k] = Math.max(meta.shards[k] ?? 0, 10);

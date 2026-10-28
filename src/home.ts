@@ -7,7 +7,8 @@
 import { BUILDING_IDS, BUILDINGS, buildMs, canBuildChapel, CHAPEL_COST, CHAPEL_MS, chapelBuilt, clockText, maxLevel, nextCost, settleWorks, startBuild, startChapel, worksLeft, type BuildingId, type BuildSite } from './sim/castle';
 import { CastleScene, lookPicture } from './castle';
 import { BLURB, effectText } from './render/castleSpots';
-import { pullCost, saveMeta, type Meta, type Pull } from './sim/meta';
+import { saveMeta, stonesOf, type Meta, type Pull } from './sim/meta';
+import { openShop } from './shopView';
 import { dailyBossName } from './sim/daily';
 import { dailyLine, dailyStatus, towerOpen } from './sim/modes';
 import { CAL_MAPS } from './sim/calamity';
@@ -19,8 +20,8 @@ import { UNITS } from './sim/units';
 import { drawArmies } from './armiesView';
 import { drawChestStash } from './chestStash';
 import { drawAchievements } from './achievementsView';
-import { drawCodex, stopCodex } from './codexView';
-import { claimCodex, codexWaiting, gotOf, totalOf } from './sim/codex';
+import { drawCodex, ENTRIES_CLAIM, stopCodex } from './codexView';
+import { claimCodex, claimEntries, codexAnyWaiting, gotOf, totalOf } from './sim/codex';
 import { todayKey } from './modes';
 import { openSettings } from './settings';
 import { modeOpen, MODE_NEED, opensAt, progressLine } from './sim/modeUnlock';
@@ -32,6 +33,8 @@ import { SummoningHall } from './hall';
 import { Library } from './library';
 import { CampScene } from './camp';
 import { readyKinds } from './sim/rankUp';
+import type { ComebackGo } from './sim/comeback';
+import { announceArmy } from './armyShown';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -79,6 +82,15 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 const SEEN = 'lotf-achievements-seen';
 
+/** The page's storage, or null where it is blocked. */
+const storage = (): Storage | null => {
+  try {
+    return localStorage;
+  } catch {
+    return null;
+  }
+};
+
 const seenCount = (): number => {
   try {
     return Number(localStorage.getItem(SEEN)) || 0;
@@ -86,6 +98,14 @@ const seenCount = (): number => {
     return 0;
   }
 };
+
+/** Put `next` in place of `old` (or at the end of `host`), unless the two read the same: then the old one, its pictures already
+ *  painted, stays. A rebuilt piece is only ever the same markup with the same handlers' targets, so keeping the old is safe. */
+function swapIn(host: HTMLElement, old: Element | null, next: HTMLElement): void {
+  if (old && old.outerHTML === next.outerHTML) return;
+  if (old) old.replaceWith(next);
+  else host.append(next);
+}
 
 export class Home {
   private tab: Tab = 'battle';
@@ -101,6 +121,7 @@ export class Home {
   private castleBar = el('div', 'ctBar');
   private castleShut = el('div', 'ctShut');
   private cardOpen = false;
+  private lastViewedHero?: string;
 
   constructor(
     private meta: Meta,
@@ -112,12 +133,31 @@ export class Home {
     // (the tavern leads to the Heroes tab, the chapel to the Spells tab and the signpost to the battle screen; the six upgrades open their cards)
     this.hall = new SummoningHall({
       onSummon: (n) => this.summon(n),
+      onShop: () => openShop(this.meta, () => this.refresh()),
       onCollection: () => {
         this.hall.stop();
         this.hooks.onRecruit();
       },
     });
-    this.castle = new CastleScene((id) => (id === 'tavern' ? this.show('heroes') : id === 'chapel' ? (chapelBuilt(this.meta) ? this.show('spells') : this.openChapel()) : id === 'armies' ? this.show('battle') : this.openBuilding(id)));
+    this.castle = new CastleScene(
+      (id) =>
+        id === 'tavern'
+          ? this.show('heroes')
+          : id === 'chapel'
+            ? chapelBuilt(this.meta)
+              ? this.show('spells')
+              : this.openChapel()
+            : id === 'armies'
+              ? this.show('battle')
+              : this.openBuilding(id),
+      (id) => {
+        const ok = id === 'chapel' ? startChapel(this.meta, Date.now()) : startBuild(this.meta, id, Date.now());
+        if (!ok) return false;
+        saveMeta(this.meta);
+        this.refresh();
+        return true;
+      },
+    );
     const pages = $('hmPages');
     const bar = $('hmTabs');
     for (const t of TABS) {
@@ -194,7 +234,7 @@ export class Home {
     return !$('hmSub').hidden && $('hmSub').classList.contains('armies') ? 'armies' : this.tab;
   }
 
-  /** A pull from the hall, or again from the card reveal: the gacha pulls and keeps the result; the cinematic and the hall play it (every time), then the usual card reveal opens over the page. */
+  /** The gacha saves the pull, the hall celebrates a new ally (shards go straight to cards), then results open. */
   summon(n: 1 | 10): void {
     if (this.hooks.onSummon) this.hooks.onSummon(n, (got, skip) => this.hall.play(got, skip).then(() => this.hall.stop()));
     else this.hooks.onRecruit();
@@ -232,7 +272,15 @@ export class Home {
       this.hooks.onBuilt?.(raised);
     }
     // top bar (the run's gold stays in the run: the owner's call)
-    $('hmCrowns').replaceChildren(icon(ICONS.crowns), el('b', '', String(m.crowns)));
+    // (the crowns and stones chips keep their icons: only the number is written, and only when it changed, so the picture never blinks)
+    const chipCount = (id: string, pic: string, n: number): void => {
+      const chip = $(id);
+      const count = chip.querySelector('b');
+      if (!count) chip.replaceChildren(icon(pic), el('b', '', String(n)));
+      else if (count.textContent !== String(n)) count.textContent = String(n);
+    };
+    chipCount('hmCrowns', ICONS.crowns, m.crowns);
+    chipCount('hmStones', ICONS.stones, stonesOf(m));
     const stars = ARMIES.reduce((n, a) => n + armyStars(m, a).got, 0);
     $('hmBest').textContent = `Armies ${clearedCount(m)}/${ARMIES.length} · ★ ${stars}`;
     const fresh = m.achievements.length > seenCount() || unclaimed(m).length > 0;
@@ -241,7 +289,8 @@ export class Home {
     const order = TABS.map((t) => t.id);
     const cur = order.indexOf(this.tab);
     order.forEach((id, i) => {
-      this.pages.get(id)!.style.transform = `translateX(${(i - cur) * 100}%)`;
+      // (a page more than one tab away waits just off screen: a switch slides only the two pages it is between, never a hidden one across the view, which showed as an empty band)
+      this.pages.get(id)!.style.transform = `translateX(${Math.max(-1, Math.min(1, i - cur)) * 100}%)`;
       this.pages.get(id)!.classList.toggle('on', id === this.tab);
       this.tabBtns.get(id)!.classList.toggle('on', id === this.tab);
     });
@@ -250,7 +299,7 @@ export class Home {
       return c !== null && m.crowns >= c;
     });
     this.tabBtns.get('castle')!.classList.toggle('new', affordable || canBuildChapel(m) || fresh);
-    this.tabBtns.get('recruit')!.classList.toggle('new', m.crowns >= pullCost(1));
+    this.tabBtns.get('recruit')!.classList.toggle('new', stonesOf(m) > 0);
     // (a rank earned, or an awakening paid for, waits for the player's tap on the Heroes tab)
     this.tabBtns.get('heroes')!.classList.toggle('new', readyKinds(m, m.unlocked).length > 0);
     this.tabBtns.get('battle')!.classList.toggle('new', !m.daily[String(todayKey())] || ARMIES.some((a) => armyIsNew(m, a.id)));
@@ -289,12 +338,12 @@ export class Home {
     // (the party stands round the fire, the strongest in the middle)
     const party = strongest(m, 99).filter((k) => m.party.includes(k));
     const boss = UNITS[bossOf(next)];
-    page.querySelector('.hmFront')?.remove();
     // (the bottom bar, below the camp's picture so it covers none of it: what the next fight is, then Party, Battle! and Continue)
     const fr = el('div', 'hmFront');
     if (this.note) fr.append(el('div', 'hmNote', this.note));
-    // (the run's wave is shown once, on Continue: the ribbon names the army alone, or the next army when no run is going)
-    fr.append(el('div', 'hmBanner', info ? (army ? `${army.name} · Lv ${army.level}` : `${next.name}`) : `${next.name} · next · Lv ${next.level}`));
+    // Keep the new-army announcement quiet on later launches; Continue still shows the wave.
+    const progress = armyStars(m, next);
+    if (announceArmy(next.id, storage())) fr.append(el('div', 'hmBanner', info ? (army ? `Wave ${info.stage}/${army.waves.length} · ★ ${progress.got}/${progress.max}` : info.label) : `Next army · Lv ${next.level} · ★ ${progress.got}/${progress.max}`));
     const go = el('div', 'hmGo');
     const has = this.hooks.hasRun();
     const party2 = el('button', 'hmLink hmSide', 'Party');
@@ -302,7 +351,7 @@ export class Home {
     party2.addEventListener('click', () => this.go(this.hooks.onParty));
     const battle = el('button', 'hmBattle');
     battle.id = 'hmBattle';
-    battle.append(el('span', '', 'Battle!'));
+    battle.append(el('span', '', 'Choose your battle'));
     battle.setAttribute('aria-label', ARMIES.some((a) => armyIsNew(m, a.id)) ? 'Battle! A new army marches. Choose an army' : 'Battle! Choose an army');
     if (ARMIES.some((a) => armyIsNew(m, a.id))) battle.append(el('i', 'badge'));
     battle.addEventListener('click', () => this.openArmies());
@@ -335,7 +384,7 @@ export class Home {
     const today = m.daily[String(todayKey())];
     const cleared = !!today?.cleared;
     // (the plate names the boss of the day, with how it stands under it: the whole line "Today: Orc Warlord · not tried" is read aloud)
-    const daily = place('hmDaily', cleared ? 'daily done' : 'daily', dailyBossName(todayKey()), dailyStatus(m, todayKey()), `Daily challenge. ${dailyLine(m, todayKey())}`, () => this.go(this.hooks.onDaily));
+    const daily = place('hmDaily', cleared ? 'daily done' : 'daily', 'Daily challenge', `${dailyBossName(todayKey())} · ${dailyStatus(m, todayKey())}`, `Daily challenge. ${dailyLine(m, todayKey())}`, () => this.go(this.hooks.onDaily));
     if (cleared) {
       const tick = el('i', 'dailyDone');
       tick.setAttribute('role', 'img');
@@ -348,26 +397,28 @@ export class Home {
     const towerLine2 = climbing ?? (towerOpen(m) ? (m.stand ? `best wave ${m.stand}` : 'not tried yet') : opensAt(MODE_NEED.tower));
     const tower = place('hmTower', towerUp ? '' : 'locked', 'Last Stand', towerLine2, `Last Stand: ${towerLine2}${towerUp ? '' : `, ${progressLine(m, MODE_NEED.tower)}`}`, () => this.go(this.hooks.onTower));
     tower.disabled = !towerUp;
-    // (the Calamity: the portal; the plate carries the saved run or the best)
+    // The distant Calamity citadel carries the saved map or the unlock requirement.
     const going = this.hooks.slotInfo?.('calamity');
     const calUp = modeOpen(m, 'calamity') || !!going;
     const calLine = going ?? (!calUp ? opensAt(MODE_NEED.calamity) : m.calamity?.best ? `best ${m.calamity.best} of ${CAL_MAPS}` : 'one hero');
-    const calamity = place('hmCalamity', calUp ? '' : 'locked', 'Calamity', calLine, `The Calamity portal: ${calLine}${calUp ? '' : `, ${progressLine(m, MODE_NEED.calamity)}`}`, () => this.go(this.hooks.onCalamity));
+    const calamity = place('hmCalamity', calUp ? '' : 'locked', 'The Calamity', calLine, `The distant Calamity citadel: ${calLine}${calUp ? '' : `, ${progressLine(m, MODE_NEED.calamity)}`}`, () => this.go(this.hooks.onCalamity));
     calamity.disabled = !calUp;
     this.camp.calamitySlot.classList.toggle('shut', !calUp);
-    this.camp.dailySlot.replaceChildren(daily);
-    this.camp.towerSlot.replaceChildren(tower);
-    this.camp.calamitySlot.querySelector('.cpPlace')?.remove();
-    this.camp.calamitySlot.append(calamity);
-    this.camp.update(m, party, { army: next, boss: boss.name, sheet: boss.sheet }, !towerUp);
-    // (the chest stash: the chests the armies' stars have earned sit on the camp's cart, on the left)
+    // (each piece is put in only when it reads differently from the one showing: a redraw that changes nothing replaces no picture, so nothing blinks)
+    swapIn(this.camp.dailySlot, this.camp.dailySlot.querySelector('.cpPlace'), daily);
+    swapIn(this.camp.towerSlot, this.camp.towerSlot.querySelector('.cpPlace'), tower);
+    swapIn(this.camp.calamitySlot, this.camp.calamitySlot.querySelector('.cpPlace'), calamity);
+    this.camp.update(m, party, { army: next, boss: boss.name, sheet: boss.sheet });
+    // Earned chests rest by the overlook's supplies.
     const stash = el('div', 'csStash');
     drawChestStash(stash, m, () => {
       saveMeta(m);
       this.refresh();
     });
-    this.camp.stashMount.replaceChildren(stash);
-    page.append(fr);
+    // (the chest a tap opens is picked by its place in the stash: any change to the stash draws it afresh)
+    stash.dataset.key = JSON.stringify(m.stash);
+    swapIn(this.camp.stashMount, this.camp.stashMount.firstElementChild, stash);
+    swapIn(page, page.querySelector(':scope > .hmFront'), fr);
   }
 
   /** The chips over the courtyard's sky: the achievements and settings shortcuts, the tips reset and a line of help. */
@@ -384,16 +435,54 @@ export class Home {
     // (the codex sits by the achievements: both are the records of the castle's library of deeds; its badge shows a milestone to claim)
     const cdx = el('button', 'ctChip');
     cdx.append(icon(ICONS.spells), el('b', '', 'Codex'), el('small', '', `${gotOf(m, 'bestiary') + gotOf(m, 'heroes')}/${totalOf('bestiary') + totalOf('heroes')}`));
-    if (codexWaiting(m).length) cdx.append(el('i', 'badge'));
+    if (codexAnyWaiting(m)) cdx.append(el('i', 'badge'));
     cdx.addEventListener('click', () => this.openCodex());
-    row.append(ach, cdx, resetTipsButton());
-    bar.append(row, el('div', 'ctHelp', 'tap a building to upgrade it · drag to look round'));
+    const levelBtn = el('button', 'ctChip');
+    levelBtn.append(el('b', '', '🏰 Build Town'));
+    levelBtn.title = 'Upgrade all buildings to showcase their grand looks';
+    levelBtn.addEventListener('click', () => {
+      for (const id of BUILDING_IDS) {
+        const cur = m.castle[id] ?? 0;
+        m.castle[id] = cur >= maxLevel(id) ? 1 : cur + 1;
+      }
+      m.chapel = true;
+      m.crowns = Math.max(m.crowns, 5000);
+      saveMeta(m);
+      this.refresh();
+    });
+    row.append(ach, cdx, levelBtn, resetTipsButton());
+    bar.append(row, el('div', 'ctHelp', 'tap heroes to salute · tap any chamber to upgrade or inspect'));
     // (the buildings open at 10 army stars: until then the courtyard is a locked gate, with the stars still to win)
     const up = modeOpen(m, 'castle');
     this.castle.root.hidden = !up;
     this.castleShut.hidden = up;
     if (!up) {
-      this.castleShut.replaceChildren(el('b', '', 'The castle is shut'), el('p', '', `${opensAt(MODE_NEED.castle)} · ${progressLine(m, MODE_NEED.castle)}`), el('small', '', 'Win stars on the armies to open the gate.'));
+      const unlockBtn = el('button', 'primary', '🗝️ Open Castle Gate (Preview)');
+      unlockBtn.style.marginTop = '12px';
+      unlockBtn.addEventListener('click', () => {
+        m.opened = m.opened || [];
+        if (!m.opened.includes('castle')) m.opened.push('castle');
+        m.crowns = Math.max(m.crowns, 3000);
+        if (Object.values(m.castle).every((lv) => lv === 0)) {
+          m.castle = {
+            treasury: 2,
+            barracks: 2,
+            armoury: 2,
+            mageTower: 2,
+            stable: 2,
+            library: 2,
+          };
+          m.chapel = true;
+        }
+        saveMeta(m);
+        this.refresh();
+      });
+      this.castleShut.replaceChildren(
+        el('b', '', 'The castle is shut'),
+        el('p', '', `${opensAt(MODE_NEED.castle)} · ${progressLine(m, MODE_NEED.castle)}`),
+        el('small', '', 'Win stars on the armies to open the gate.'),
+        unlockBtn,
+      );
     }
   }
 
@@ -509,11 +598,14 @@ export class Home {
     this.closeSheet();
     $('hmSheet').hidden = false;
     this.tavern.stop();
+    // (the tavern holds a picture under the roster, so its page never slides past empty as the tab changes)
+    this.tavern.paintOnce();
     this.camp.stop();
-    drawRoster($('hmSheetBox'), this.meta, (kind) => this.openSheet(kind, true), () => this.closeSheet());
+    drawRoster($('hmSheetBox'), this.meta, (kind) => this.openSheet(kind, true), () => this.closeSheet(), this.lastViewedHero);
   }
 
   private openSheet(kind: string, fromRoster = false, tab = 'overview'): void {
+    if (this.meta.unlocked.includes(kind)) this.lastViewedHero = kind;
     this.closeSheet();
     $('hmSheet').hidden = false;
     this.tavern.stop();
@@ -536,6 +628,17 @@ export class Home {
     if (this.isOpen && this.tab === 'castle') this.castle.start();
   }
 
+  /** A loss's "come back stronger" pointer was tapped (`sim/comeback.ts`): the screen that does it, over the home screen just opened. */
+  goTo(go: ComebackGo): void {
+    if (go.to === 'armies') return this.openArmies(go.army);
+    if (go.to === 'party') return this.go(this.hooks.onParty);
+    if (go.to === 'heroes' && go.hero) {
+      this.show('heroes');
+      return this.openSheet(go.hero, true, go.tab);
+    }
+    this.show(go.to === 'chests' ? 'battle' : go.to);
+  }
+
   /** The Armies screen, over the home screen (the Battle button, and the unlock moment's way on). */
   openArmies(focus?: string): void {
     $('home').hidden = false;
@@ -556,7 +659,7 @@ export class Home {
     if (markSeen(this.meta)) saveMeta(this.meta);
   }
 
-  /** The achievements page; a Claim takes the crowns, saves, and draws the page again. */
+  /** The achievements page; a Claim takes the crowns and stones, saves, and draws the page again. */
   private openAchievements(): void {
     const draw = (b: HTMLElement) =>
       drawAchievements(b, this.meta, (ids) => {
@@ -571,11 +674,11 @@ export class Home {
     this.openSub('Achievements', draw);
   }
 
-  /** The codex page; a Claim takes a milestone's crowns, saves, and draws the page again. */
+  /** The codex page; a Claim takes a milestone's crowns and stone (or the new entries' stones), saves, and draws the page again. */
   openCodex(): void {
     const draw = (b: HTMLElement) =>
       drawCodex(b, this.meta, (id) => {
-        if (!claimCodex(this.meta, id)) return;
+        if (!(id === ENTRIES_CLAIM ? claimEntries(this.meta) : claimCodex(this.meta, id))) return;
         saveMeta(this.meta);
         play('coinClaim');
         const keep = b.scrollTop;

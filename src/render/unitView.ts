@@ -1,21 +1,39 @@
 // The fighters drawn: an animated sprite from the unit's sheet, mirrored to face the way it's going, a shadow under it
 // and a health bar over its head. A step is drawn as a glide between the two tiles with a hop (higher for a climb).
 
-import { ColorMatrixFilter, Container, Graphics, Sprite } from 'pixi.js';
+import { ColorMatrixFilter, Container, Graphics, Sprite, Texture } from 'pixi.js';
 import { tileAt, type Board } from '../sim/board';
 import { defOf, type Unit } from '../sim/battle';
-import { formOf } from '../sim/units';
+import { formOf, UNITS } from '../sim/units';
 import { GLOW, hueOf, isRecoloured, lookSheet } from './awakenLook';
-import type { Texture } from 'pixi.js';
-import { facesRightOf, framesOf, figureOf, type Anim } from './sheets';
+import { loadImage } from './loadImage';
+import bannerUrl from '../art/castle/banner.png';
+import { facesRightOf, framesOf, figureOf, hasSheet, type Anim } from './sheets';
+
+/** The standard's look: the castle courtyard's banner (from the packs, already in the game; credited in CREDITS.md). */
+let bannerTex: Texture | null = null;
+if (typeof Image !== 'undefined') void loadImage(bannerUrl).then((img) => (bannerTex = Texture.from(img))).catch(() => {});
+
+/** The scale a borrowed sheet is drawn at: that of a kind whose own sheet (or form) it is, else the fighter's own. */
+const lookScales = new Map<string, number>();
+function lookScale(sheet: string, own: number): number {
+  if (!lookScales.has(sheet)) {
+    const def = Object.values(UNITS).find((d) => d.sheet === sheet || d.forms?.includes(sheet));
+    lookScales.set(sheet, def?.scale ?? own);
+  }
+  return lookScales.get(sheet)!;
+}
 import { CHARGE_MAX, kitOf, ultimateOf } from '../sim/abilities';
+import { poolOf } from '../sim/heroKits';
 import { at, depth, facesRight, HH } from './iso';
 import { VFX } from './vfxArt';
+import { paintSprite } from './cinematicArt';
 import { PACK } from './fxSheets';
 import { deathKind, maxStatuses, statusesOf, STATUS_LOOKS } from './fxRules';
 import { settings } from '../settings';
 import { badgeOf } from '../sim/levels';
 import { AURA_COLOURS, auraHalo, auraRings } from './levelLook';
+import { attackMotion } from './motionRules';
 
 /** The sheet rows beyond `Anim`: the skills' casts (a sheet without one plays its plain attack). */
 type Row = Anim | 'attack2' | 'defend';
@@ -92,11 +110,16 @@ export class UnitSprite {
   private sparks = new Graphics();
   private burstAt = -1;
   private readonly grade: number;
-  private readonly sheet: string;
+  private sheet: string;
+  /** Its own sheet, and the scale it is drawn at, when no kit lends it another look (`Unit.look`: a form, a guise, a wraith's shape). */
+  private readonly ownSheet: string;
+  private scaleNow = 1;
+  private sizeNow = 1;
   /** What its root is scaled to when it stands still, and when and how big (0.25 steps) its promotion's pop began. */
   private baseSize = 1;
   private popAt = -1;
   private popBy = 0;
+  private reduced = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
   /** Where it was last drawn (world pixels): for effects to aim at. */
   x = 0;
   y = 0;
@@ -110,6 +133,9 @@ export class UnitSprite {
     this.sheet = awake ? lookSheet(unit.def, 4 + awake, this.grade) : formOf(def, this.grade);
     const size = (unit.size ?? 1) * (this.grade > 2 ? GRADE3_SIZE : 1);
     this.tall = figureOf(this.sheet) * def.scale * size;
+    this.ownSheet = this.sheet;
+    this.scaleNow = def.scale;
+    this.sizeNow = size;
     this.root.scale.set(size);
     this.baseSize = size;
     if (this.grade > 1 || awake) {
@@ -157,6 +183,13 @@ export class UnitSprite {
   update(b: Board, t: number, fighting: boolean): void {
     const u = this.unit;
     const def = defOf(u);
+    // (a kit lends it another look for a while: a werewolf's form, a treant, a foe's guise, a wraith's shape; drawn at that shape's own scale)
+    const want = u.look && hasSheet(u.look) ? u.look : this.ownSheet;
+    if (want !== this.sheet) {
+      this.sheet = want;
+      this.scaleNow = want === this.ownSheet ? def.scale : lookScale(want, def.scale);
+      this.tall = figureOf(want) * this.scaleNow * this.sizeNow;
+    }
     const tile = tileAt(b, u.u, u.v)!;
     let [x, y] = at(u.u, u.v, tile.h);
     let z = depth(u.u, u.v) + 5;
@@ -205,6 +238,8 @@ export class UnitSprite {
     }
     const list = rowFrames(this.sheet, row ?? anim);
     this.body.texture = row || anim === 'dead' || anim === 'attack' || anim === 'hurt' ? list[Math.min(list.length - 1, Math.max(0, frame))] : list[frame % list.length];
+    // (the Samurai Commander's standard is the castle's banner, planted)
+    if (u.def === 'standard' && bannerTex) this.body.texture = bannerTex;
     // a raised guard is wrapped in the earth shield's ring; a status shows as a small icon over the left shoulder
     this.shield.visible = guarded;
     if (guarded) {
@@ -212,14 +247,22 @@ export class UnitSprite {
       this.shield.texture = ring[Math.floor(t / 90) % ring.length];
       this.shield.scale.set(this.tall / 26);
       this.shield.position.set(0, -this.tall * 0.45);
+      paintSprite(this.shield, 500, 1000, this.tall / 26, 0, 0.65, true, true);
     }
     this.drawBadge(u, t);
     // (most sheets face right, the forest and boss ones left; the board's +u runs down to the right, +v down to the left)
     const dx = (facesRight(u.facing) ? 1 : -1) * (facesRightOf(this.sheet) ? 1 : -1);
-    this.body.scale.set(def.scale * dx, def.scale);
+    this.body.scale.set(this.scaleNow * dx, this.scaleNow);
     // a flyer hovers: its body bobs above a smaller shadow on the ground
     const bob = def.flies && u.alive ? Math.sin(t / 260) * 2 - 12 : 0;
     this.body.y = bob - lift;
+    // Keep the feet planted while the torso draws back, strikes and settles.
+    const motion = fighting && u.alive && !(cast && t < cast.at + cast.ms) && swing && t >= swing.at && t < swing.at + swing.ms && !this.reduced?.matches
+      ? attackMotion((t - swing.at) / swing.ms) : { offset: 0, stretch: 0 };
+    this.body.x = (facesRight(u.facing) ? 1 : -1) * motion.offset;
+    this.body.scale.x *= 1 + motion.stretch;
+    this.body.scale.y *= 1 - motion.stretch * 0.5;
+    this.rim.x = this.body.x;
     this.rim.y = bob - lift;
     this.shadow.scale.set(def.flies ? 0.6 : 1);
     this.shadow.alpha = def.flies ? 0.5 : 1;
@@ -232,6 +275,9 @@ export class UnitSprite {
     // (a slowed fighter is tinted frosty blue; a flash or a dot's tint wins over it)
     const frosty = u.alive && u.slowUntil !== undefined && t < u.slowUntil;
     this.body.tint = this.flash > 0 ? 0xffb0b0 : u.alive && u.dot ? (u.dot.kind === 'burn' ? 0xffc890 : 0xff9a9a) : frosty ? 0xb8e4ff : 0xffffff;
+    // (the kits' looks: a wraith is a pale ghost of the foe it was; a foe turned to stone is grey)
+    if (u.def === 'wraith') this.body.tint = 0x9fd0ff;
+    else if (u.alive && u.kx?.stone !== undefined && t < u.kx.stone) this.body.tint = 0x9a9a92;
     // (the fallen go dark as they burn away, or grey as they turn to stone)
     if (!u.alive) {
       const kind = deathKind(def.name, u.side);
@@ -248,9 +294,9 @@ export class UnitSprite {
     this.root.zIndex = z;
     this.x = x;
     this.y = y;
-    // the fallen fade away
-    const dead = u.alive ? 0 : t - (u.diedAt ?? 0);
-    this.root.alpha = dead > FADE_FROM ? Math.max(0, 1 - (dead - FADE_FROM) / FADE_MS) : 1;
+    // Fallen heroes stay where they fell so a heart can raise them; foes fade away.
+    const dead = u.alive || (u.side === 'hero' && !def.summon) ? 0 : t - (u.diedAt ?? 0);
+    this.root.alpha = dead > FADE_FROM ? Math.max(0, 1 - (dead - FADE_FROM) / FADE_MS) : u.def === 'wraith' ? 0.78 : 1;
     this.root.visible = this.root.alpha > 0;
     this.drawBar(u.alive, t);
     this.drawSparks(u.alive);
@@ -276,6 +322,15 @@ export class UnitSprite {
     this.ky = dy;
   }
 
+  /** Copy the current pose for a short-lived dash silhouette; shares the loaded texture. */
+  afterimage(): Sprite {
+    const sp = new Sprite(this.body.texture);
+    sp.anchor.copyFrom(this.body.anchor);
+    sp.scale.set(this.body.scale.x * this.root.scale.x, this.body.scale.y * this.root.scale.y);
+    sp.tint = 0x82d9ed;
+    return sp;
+  }
+
   /** The loops that stay on it while a status lasts (frost bubbles, flames, a shield's bubble, wind, auras), and the stars of a stun. */
   private drawStatuses(u: Unit, t: number): void {
     const list = statusesOf(u, t);
@@ -298,6 +353,8 @@ export class UnitSprite {
       sp.position.set(0, -this.tall * look.at);
       sp.alpha = look.alpha;
       sp.tint = look.tint ?? 0xffffff;
+      // Use a held material sample so a persistent status never fades out at a strip boundary.
+      paintSprite(sp, 500, 1000, (this.tall * look.size) / 32, 0, look.alpha, true, this.reduced?.matches ?? false);
     }
     const g = this.stars;
     g.clear();
@@ -325,6 +382,7 @@ export class UnitSprite {
     this.badge.texture = frames[Math.floor(t / 90) % frames.length];
     this.badge.scale.set(0.5);
     this.badge.position.set(-BAR_W / 2 - 8, -this.tall - 6);
+    paintSprite(this.badge, 500, 1000, 0.5, 0, 1, true, true);
   }
 
   /** The evolve's light pillar: it rises over the fighter on the burst, then thins out. */
@@ -336,6 +394,7 @@ export class UnitSprite {
     this.pillar.texture = frames[Math.min(frames.length - 1, Math.floor(burst * frames.length))];
     this.pillar.scale.set(this.tall / 26, (this.tall / 26) * 2.4);
     this.pillar.alpha = 1 - burst * 0.6;
+    paintSprite(this.pillar, burst * BURST_MS, BURST_MS, this.tall / 26, 0, 0.65, false, this.reduced?.matches ?? false);
   }
 
   /** The evolve flash and burst (called when a merge makes this hero). */
@@ -411,6 +470,20 @@ export class UnitSprite {
     g.rect(-BAR_W / 2 - 1, top - 1, BAR_W + 2, 5).fill({ color: 0x1a1410, alpha: 0.85 });
     g.rect(-BAR_W / 2, top, BAR_W * share, 3).fill(u.side === 'hero' ? (share > 0.35 ? 0x5fd35f : 0xe0c040) : 0xe04a3a);
 
+    // a hero's pool (COMBAT-002): blue for mana, gold for stamina, and its ultimate's violet sliver (gold, steady, when ready)
+    const pool = poolOf(u);
+    if (pool) {
+      const c = Math.min(1, u.charge / CHARGE_MAX);
+      g.rect(-BAR_W / 2 - 1, top + 5, BAR_W + 2, 4).fill({ color: 0x1a1410, alpha: 0.85 });
+      g.rect(-BAR_W / 2, top + 6, BAR_W * c, 2).fill(pool === 'mana' ? 0x4a90e8 : 0xf0b83a);
+      const ult = ultimateOf(u);
+      if (ult) {
+        const ready = (u.charge2 ?? 0) >= ult.need;
+        g.rect(-BAR_W / 2 - 1, top + 9, BAR_W + 2, 3).fill({ color: 0x1a1410, alpha: 0.85 });
+        g.rect(-BAR_W / 2, top + 10, BAR_W * Math.min(1, (u.charge2 ?? 0) / CHARGE_MAX), 1).fill(ready ? ULT_READY : ULT_FILL);
+      }
+      return;
+    }
     // the skill's charge, a thin bar under it (gold and pulsing when full)
     const kit = kitOf(u);
     if (kit) {

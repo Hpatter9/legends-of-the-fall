@@ -2543,7 +2543,7 @@
   "Tip: five heroes of one set, fighting together, fill the Last Oath bar and unleash a mighty shared move.",
   "Tip: every hero learns an ultimate at level 30. It is worth the wait, and the grumbling.",
   "Tip: the Library adds extra XP from every fight. The books stay unread, but the XP is real.",
-  "Tip: Recruit gathers shards to unlock new heroes. Duchess has checked the shards. They are not edible.",
+  "Tip: Crowns buy chests, and chests hold summoning stones. Duchess has checked the stones. They are not edible.",
   "Tip: stars from clearing armies open the Castle, the Last Stand and the Calamity. Duchess has eaten two of hers.",
   "Tip: the Chapel holds the king's spells. Pick three that fit the power budget, and cast them where it hurts.",
   "Tip: in the Calamity you climb the maps with one hero, hiring more at camps and shops. Each map ends in a boss.",
@@ -2600,7 +2600,7 @@
   "A masterclass in battlefield tactics. Even the castle stonemason offered a grudging nod.",
   "The surviving foes were seen sprinting for the horizon in some disarray.",
   "A clean sweep. The quartermaster is already pricing their rusted helmets.",
-  "Duchess nibbled a corner of the victory ribbon. High praise indeed from a sovereign goat.",
+  "Duchess nibbled a corner of the victory ribbon. High praise indeed from the court goat.",
   "The heroes stood proud upon the ridge, pretending their knees were not shaking violently.",
   "The kingdom is safe for another afternoon. The heroes have demanded a four-course supper.",
   "The warlord left his ceremonial hat behind in his haste. It makes a fine soup bowl."
@@ -2785,13 +2785,14 @@
  "scenes": {
   "opening": {
    "title": "The Road Begins",
-   "blurb": "Your three brave pioneers meet the Calamity's initial welcoming committee.",
+   "blurb": "Your three brave pioneers meet the king, the court goat and the first army on the road.",
    "cast": {
     "front": "party:0",
     "striker": "party:1",
     "back": "party:2",
+    "king": "unit:standKing",
     "duchess": "duchess",
-    "herald": "unit:calBoss1"
+    "warlord": "unit:orcWarlord"
    },
    "shots": [
     {
@@ -2799,11 +2800,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "Beyond the last milestone, an ancient evil woke in a foul temper."
-      },
-      {
-       "who": "narrator",
-       "text": "It is called the Calamity. It was not consulted on the name."
+       "text": "Every army in the land is marching on the Last Keep. Some brought packed lunches."
       }
      ]
     },
@@ -2812,11 +2809,11 @@
      "lines": [
       {
        "who": "front",
-       "text": "Right. Who has the honour of standing at the sharp end?"
+       "text": "Right. Who gets the honour of the sharp end?"
       },
       {
        "who": "striker",
-       "text": "You do. You are quite literally standing there."
+       "text": "You do. You are literally standing on it."
       }
      ]
     },
@@ -2825,19 +2822,28 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "The sovereign places the heroes. That is you."
+       "text": "The king of the Last Keep places the heroes. That is you."
       },
       {
        "who": "narrator",
        "text": "After that, they scrap. Applaud, or drop a meteor."
       },
       {
-       "who": "front",
-       "text": "Applause is lovely, but we prefer the meteor."
-      },
+       "who": "back",
+       "text": "Applause is lovely, majesty. We prefer the meteor."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
       {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "Duchess, the court goat: Her Grace, not the king. She disagrees."
       }
      ]
     },
@@ -2850,7 +2856,7 @@
       },
       {
        "who": "narrator",
-       "text": "The first of six heralds was already on the road."
+       "text": "The first army was on the road."
       }
      ]
     }
@@ -2858,7 +2864,7 @@
   },
   "gorvak": {
    "title": "The Ashen Road",
-   "blurb": "Gorvak the Ashen, the Calamity's first herald, keeps a very firm roadblock.",
+   "blurb": "Gorvak the Ashen, the Calamity's first herald, keeps a very firm roadblock in the void.",
    "cast": {
     "hero": "hero",
     "gorvak": "unit:calBoss1",
@@ -2871,7 +2877,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "The meadow road runs through soot, and something sits in it."
+       "text": "Past the portal lies the void, with a road of soot and something on it."
       }
      ]
     },
@@ -2936,6 +2942,70 @@
     }
    ]
   },
+  "calamityOpens": {
+   "title": "A Hole in the Sky",
+   "blurb": "A portal rips open over the keep, an invasion pours out, and somebody has to go in.",
+   "cast": {
+    "hero": "party:0",
+    "mate": "party:1",
+    "king": "unit:standKing",
+    "herald": "unit:calBoss1"
+   },
+   "shots": [
+    {
+     "caption": "The Calamity",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "One quiet night, the sky over the keep ripped open like a cheap tent."
+      },
+      {
+       "who": "narrator",
+       "text": "Through the tear: a portal. Beyond it, the void. Out of it, an invasion."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "Can we shut it from this side?"
+      },
+      {
+       "who": "mate",
+       "text": "The latch is on the far side. Naturally."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The king sends one hero through, and more may join beyond. That is you, choosing."
+      },
+      {
+       "who": "hero",
+       "text": "Into the void, then. I shall want a very long bath afterwards."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Beyond the portal, six heralds lead the invasion. Together they are the Calamity."
+      },
+      {
+       "who": "narrator",
+       "text": "It was not consulted on the name."
+      }
+     ]
+    }
+   ]
+  },
   "thornWarden": {
    "title": "The Bramble's Grudge",
    "blurb": "The Thorn Warden maintains a frosty silence, leaving everyone feeling thoroughly judged.",
@@ -2951,7 +3021,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "The second map is all hedge, the grudge-holding sort."
+       "text": "Deeper into the void, the way is all hedge, the grudge-holding sort."
       }
      ]
     },
@@ -3027,7 +3097,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "Beneath the roots: a court, torches, and a long agenda."
+       "text": "Further in, the void keeps a court, torches, and a long agenda."
       }
      ]
     },
@@ -3107,7 +3177,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "The pass is blocked by a remarkably solid obstruction in iron plate."
+       "text": "A pass through the void is blocked by a remarkably solid obstruction in iron plate."
       }
      ]
     },
@@ -3146,7 +3216,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "Hrungar cannot be shoved. The expedition has verified this with several bruised wrists."
+       "text": "Hrungar cannot be shoved. The heroes have verified this with several bruised wrists."
       },
       {
        "who": "duchess",
@@ -3175,7 +3245,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "The fifth realm is sulphur and cinder, with one small flame fiercely guarded."
+       "text": "The void's fifth reach is sulphur and cinder, with one small flame fiercely guarded."
       }
      ]
     },
@@ -3238,7 +3308,7 @@
   },
   "karnok": {
    "title": "The Terminus",
-   "blurb": "Karnok the Calamity brings the end of all roads, including the quick route to the baker.",
+   "blurb": "Karnok, at the heart of the void, brings the end of all roads, including the quick route to the baker.",
    "cast": {
     "hero": "hero",
     "karnok": "unit:calBoss6",
@@ -3251,7 +3321,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "The sixth map is the world's rim. The clouds look bruised."
+       "text": "At the heart of the void, the invasion's own gate. The clouds look bruised."
       }
      ]
     },
@@ -3318,13 +3388,14 @@
   },
   "calamityEnds": {
    "title": "Unscripted Horizons",
-   "blurb": "Karnok topples, the sky turns cheerful blue, and nobody planned for peace.",
+   "blurb": "Karnok topples, the portal seals itself, and nobody planned for peace.",
    "cast": {
     "hero": "hero",
     "second": "party:1",
     "karnok": "unit:calBoss6",
     "grunt": "unit:orcGrunt",
-    "duchess": "duchess"
+    "duchess": "duchess",
+    "king": "unit:standKing"
    },
    "shots": [
     {
@@ -3350,11 +3421,11 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "The red sky cleared to a pleasant blue. A finch piped up."
+       "text": "Back home, the portal sighed and sealed shut. A finch piped up."
       },
       {
        "who": "second",
-       "text": "Is that truly the end of the fuss?"
+       "text": "Is that the end of the invasion?"
       }
      ]
     },
@@ -3371,7 +3442,7 @@
       },
       {
        "who": "grunt",
-       "text": "Any vacancies at the keep? The heralds have disbanded."
+       "text": "Any jobs at the keep? I came through before it shut."
       },
       {
        "who": "duchess",
@@ -3384,11 +3455,11 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "The king was thanked for placing everyone and then only watching."
+       "text": "The king was thanked for placing everyone, then only watching."
       },
       {
        "who": "narrator",
-       "text": "As a celebration, a meteor fell on an empty cabbage plot."
+       "text": "To celebrate, a meteor fell on an empty cabbage plot."
       }
      ]
     }
@@ -3401,6 +3472,7 @@
     "front": "party:0",
     "mid": "party:1",
     "back": "party:2",
+    "king": "unit:standKing",
     "duchess": "duchess"
    },
    "shots": [
@@ -3444,16 +3516,16 @@
       {
        "who": "mid",
        "text": "Perhaps try the eastern flank tomorrow, majesty. Just a thought."
-      },
-      {
-       "who": "duchess",
-       "text": "Mehh."
       }
      ]
     },
     {
      "caption": null,
      "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
       {
        "who": "narrator",
        "text": "Tomorrow, they resolved, would be more dignified. Duchess was sceptical."
@@ -3539,7 +3611,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "The Calamity handles defeat poorly. It took its grievances away to brood upon them."
+       "text": "The portal has torn open again. The Calamity handles defeat very poorly."
       }
      ]
     },
@@ -3749,7 +3821,7 @@
       },
       {
        "who": "foe",
-       "text": "Does she fight for the crown, or does she seek union with our cause?"
+       "text": "Does she fight for your side, or does she seek union with our cause?"
       },
       {
        "who": "duchess",
@@ -6541,20 +6613,20 @@
    ]
   },
   "spire:10": {
-   "title": "Floor 10: Deceptive Facades",
-   "blurb": "The endless spire reveals its tenth floor, proving considerably roomier than the architecture suggested.",
+   "title": "Wave 10: The Breach Widens",
+   "blurb": "Ten waves in, the outer wall gives way, and the guard falls back towards the king.",
    "cast": {
     "hero": "hero",
     "mate": "party:1",
-    "duchess": "duchess"
+    "king": "unit:standKing"
    },
    "shots": [
     {
-     "caption": "Floor 10",
+     "caption": "Wave 10",
      "lines": [
       {
        "who": "narrator",
-       "text": "The spire reveals its tenth landing. The interior is alarmingly larger than the exterior."
+       "text": "Ten waves in, the outer wall gave a long groan and then a short, decisive crumble."
       }
      ]
     },
@@ -6563,11 +6635,11 @@
      "lines": [
       {
        "who": "hero",
-       "text": "I could have sworn the entire tower was only twenty feet wide from the garden path."
+       "text": "The breach is getting wider. I preferred it as a crack."
       },
       {
        "who": "mate",
-       "text": "Everything appears deceptively compact from the outside, my friend. Especially your tactical plans."
+       "text": "Fall back to the inner yard. Bring the king, and the biscuits."
       }
      ]
     },
@@ -6575,32 +6647,28 @@
      "caption": null,
      "lines": [
       {
-       "who": "duchess",
-       "text": "Mehh."
-      },
-      {
-       "who": "narrator",
-       "text": "The goat had, as with all previous storeys, arrived twenty minutes ahead of the vanguard."
+       "who": "king",
+       "text": "I shall walk, thank you. Briskly. With dignity. Mostly briskly."
       }
      ]
     }
    ]
   },
   "spire:25": {
-   "title": "Floor 25: The Floating Summit",
-   "blurb": "Twenty-five storeys climbed, and the pinnacle appears to have acquired an extra storey.",
+   "title": "Wave 25: The Throne Room",
+   "blurb": "Twenty-five waves, and the guard makes its stand round the king at his throne.",
    "cast": {
     "hero": "hero",
     "mate": "party:1",
-    "duchess": "duchess"
+    "king": "unit:standKing"
    },
    "shots": [
     {
-     "caption": "Floor 25",
+     "caption": "Wave 25",
      "lines": [
       {
        "who": "narrator",
-       "text": "Twenty-five floors ascended, yet the upper parapet appears to have grown an additional terrace."
+       "text": "Twenty-five waves. The guard has fallen back to the throne room, and the doors are thin."
       }
      ]
     },
@@ -6609,11 +6677,11 @@
      "lines": [
       {
        "who": "hero",
-       "text": "I was under the distinct impression we were approaching the ornamental weather vane."
+       "text": "Nobody gets past this rug. It is an heirloom."
       },
       {
        "who": "mate",
-       "text": "The weather vane has been relocated three storeys higher. It sends its warmest personal apologies."
+       "text": "Majesty, do sit on the throne. It is the one spot we can defend."
       }
      ]
     },
@@ -6621,32 +6689,28 @@
      "caption": null,
      "lines": [
       {
-       "who": "duchess",
-       "text": "Mehh."
-      },
-      {
-       "who": "narrator",
-       "text": "The goat had, as with all previous storeys, arrived twenty minutes ahead of the vanguard."
+       "who": "king",
+       "text": "I have been sitting on it all along. You simply never noticed."
       }
      ]
     }
    ]
   },
   "spire:50": {
-   "title": "Floor 50: The Spiralling Masonry",
-   "blurb": "Fifty landings conquered, and the steps appear to be developing a cheerful personality of their own.",
+   "title": "Wave 50: The Last Stand",
+   "blurb": "Fifty waves round the throne, and the bards are already arguing over the song.",
    "cast": {
     "hero": "hero",
     "mate": "party:1",
-    "duchess": "duchess"
+    "king": "unit:standKing"
    },
    "shots": [
     {
-     "caption": "Floor 50",
+     "caption": "Wave 50",
      "lines": [
       {
        "who": "narrator",
-       "text": "Fifty storeys behind you. The spiral steps have begun undulating with alarming enthusiasm."
+       "text": "Fifty waves round the throne. Out in the land, the bards have begun the song already."
       }
      ]
     },
@@ -6655,11 +6719,11 @@
      "lines": [
       {
        "who": "hero",
-       "text": "I am fairly certain the fourth step from the landing just attempted to shake my hand."
+       "text": "They say no guard ever held a throne room this long."
       },
       {
        "who": "mate",
-       "text": "It is merely attempting to be hospitable, friend. Do try to return the courtesy."
+       "text": "They also say we are nine feet tall. Let them."
       }
      ]
     },
@@ -6667,12 +6731,8 @@
      "caption": null,
      "lines": [
       {
-       "who": "duchess",
-       "text": "Mehh."
-      },
-      {
-       "who": "narrator",
-       "text": "The goat had, as with all previous storeys, arrived twenty minutes ahead of the vanguard."
+       "who": "king",
+       "text": "Whatever comes through that door, the Last Keep stands while you do."
       }
      ]
     }
@@ -7070,32 +7130,6 @@
     }
    ]
   },
-  "oathcut:holyOrder": {
-   "title": "The Holy Order: Last Oath (short)",
-   "blurb": "The five swear their Last Oath as one, in a few seconds.",
-   "cast": {
-    "a": "party:0",
-    "b": "party:1",
-    "c": "party:2",
-    "d": "party:3",
-    "e": "party:4"
-   },
-   "shots": [
-    {
-     "caption": "Holy Order · Oath",
-     "lines": []
-    },
-    {
-     "caption": null,
-     "lines": [
-      {
-       "who": "c",
-       "text": "By sacred radiance and stout shield, we stand as one!"
-      }
-     ]
-    }
-   ]
-  },
   "oath:arcaneCouncil": {
    "title": "The Arcane Council: Last Oath",
    "blurb": "The Arcane Council invoke their grand synthesis, with appropriately volatile results.",
@@ -7153,32 +7187,6 @@
       {
        "who": "e",
        "text": "I swore this identical oath next Tuesday! Keep up!"
-      }
-     ]
-    }
-   ]
-  },
-  "oathcut:arcaneCouncil": {
-   "title": "The Arcane Council: Last Oath (short)",
-   "blurb": "The five swear their Last Oath as one, in a few seconds.",
-   "cast": {
-    "a": "party:0",
-    "b": "party:1",
-    "c": "party:2",
-    "d": "party:3",
-    "e": "party:4"
-   },
-   "shots": [
-    {
-     "caption": "Arcane · Last Oath",
-     "lines": []
-    },
-    {
-     "caption": null,
-     "lines": [
-      {
-       "who": "c",
-       "text": "By star, storm, and eldritch fire, the cosmos bends!"
       }
      ]
     }
@@ -7246,32 +7254,6 @@
     }
    ]
   },
-  "oathcut:shadowClan": {
-   "title": "The Shadow Clan: Last Oath (short)",
-   "blurb": "The five swear their Last Oath as one, in a few seconds.",
-   "cast": {
-    "a": "party:0",
-    "b": "party:1",
-    "c": "party:2",
-    "d": "party:3",
-    "e": "party:4"
-   },
-   "shots": [
-    {
-     "caption": "Shadow Clan · Oath",
-     "lines": []
-    },
-    {
-     "caption": null,
-     "lines": [
-      {
-       "who": "c",
-       "text": "Unseen in darkness, unbroken in resolve, we strike together!"
-      }
-     ]
-    }
-   ]
-  },
   "oath:fleet": {
    "title": "The Black Fleet: Last Oath",
    "blurb": "The buccaneers and sea-dogs declare their sovereign covenant on dry land.",
@@ -7329,32 +7311,6 @@
       {
        "who": "e",
        "text": "I swear! Make it snappy, the tide waits for no man!"
-      }
-     ]
-    }
-   ]
-  },
-  "oathcut:fleet": {
-   "title": "The Black Fleet: Last Oath (short)",
-   "blurb": "The five swear their Last Oath as one, in a few seconds.",
-   "cast": {
-    "a": "party:0",
-    "b": "party:1",
-    "c": "party:2",
-    "d": "party:3",
-    "e": "party:4"
-   },
-   "shots": [
-    {
-     "caption": "Black Fleet · Oath",
-     "lines": []
-    },
-    {
-     "caption": null,
-     "lines": [
-      {
-       "who": "c",
-       "text": "One flag, one broadside, and no quarter given!"
       }
      ]
     }
@@ -7422,32 +7378,6 @@
     }
    ]
   },
-  "oathcut:wildHunt": {
-   "title": "The Wild Hunt: Last Oath (short)",
-   "blurb": "The five swear their Last Oath as one, in a few seconds.",
-   "cast": {
-    "a": "party:0",
-    "b": "party:1",
-    "c": "party:2",
-    "d": "party:3",
-    "e": "party:4"
-   },
-   "shots": [
-    {
-     "caption": "Wild Hunt · Oath",
-     "lines": []
-    },
-    {
-     "caption": null,
-     "lines": [
-      {
-       "who": "c",
-       "text": "One pack, one fang, one relentless pursuit across the heather!"
-      }
-     ]
-    }
-   ]
-  },
   "oath:nightParade": {
    "title": "The Night Parade: Last Oath",
    "blurb": "The mountain spirits and yokai assemble under glowing lanterns to unleash their pact.",
@@ -7505,32 +7435,6 @@
       {
        "who": "e",
        "text": "I swear! Or perhaps I am a charming illusion? Guess!"
-      }
-     ]
-    }
-   ]
-  },
-  "oathcut:nightParade": {
-   "title": "The Night Parade: Last Oath (short)",
-   "blurb": "The five swear their Last Oath as one, in a few seconds.",
-   "cast": {
-    "a": "party:0",
-    "b": "party:1",
-    "c": "party:2",
-    "d": "party:3",
-    "e": "party:4"
-   },
-   "shots": [
-    {
-     "caption": "Night Parade · Oath",
-     "lines": []
-    },
-    {
-     "caption": null,
-     "lines": [
-      {
-       "who": "c",
-       "text": "A hundred lanterns, a thousand spirits, one midnight parade!"
       }
      ]
     }
@@ -7598,32 +7502,6 @@
     }
    ]
   },
-  "oathcut:ironVanguard": {
-   "title": "The Iron Vanguard: Last Oath (short)",
-   "blurb": "The five swear their Last Oath as one, in a few seconds.",
-   "cast": {
-    "a": "party:0",
-    "b": "party:1",
-    "c": "party:2",
-    "d": "party:3",
-    "e": "party:4"
-   },
-   "shots": [
-    {
-     "caption": "Vanguard · Oath",
-     "lines": []
-    },
-    {
-     "caption": null,
-     "lines": [
-      {
-       "who": "c",
-       "text": "Shoulder to iron shoulder, we break the oncoming storm!"
-      }
-     ]
-    }
-   ]
-  },
   "oath:dreadCourt": {
    "title": "The Dread Court: Last Oath",
    "blurb": "The tyrants and denizens of the crypt swear their final, binding court verdict.",
@@ -7681,6 +7559,188 @@
       {
        "who": "e",
        "text": "I swore this covenant three dynasties ago. Still applies."
+      }
+     ]
+    }
+   ]
+  },
+  "oathcut:holyOrder": {
+   "title": "The Holy Order: Last Oath (short)",
+   "blurb": "The five swear their Last Oath as one, in a few seconds.",
+   "cast": {
+    "a": "party:0",
+    "b": "party:1",
+    "c": "party:2",
+    "d": "party:3",
+    "e": "party:4"
+   },
+   "shots": [
+    {
+     "caption": "Holy Order · Oath",
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "c",
+       "text": "By sacred radiance and stout shield, we stand as one!"
+      }
+     ]
+    }
+   ]
+  },
+  "oathcut:arcaneCouncil": {
+   "title": "The Arcane Council: Last Oath (short)",
+   "blurb": "The five swear their Last Oath as one, in a few seconds.",
+   "cast": {
+    "a": "party:0",
+    "b": "party:1",
+    "c": "party:2",
+    "d": "party:3",
+    "e": "party:4"
+   },
+   "shots": [
+    {
+     "caption": "Arcane · Last Oath",
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "c",
+       "text": "By star, storm, and eldritch fire, the cosmos bends!"
+      }
+     ]
+    }
+   ]
+  },
+  "oathcut:shadowClan": {
+   "title": "The Shadow Clan: Last Oath (short)",
+   "blurb": "The five swear their Last Oath as one, in a few seconds.",
+   "cast": {
+    "a": "party:0",
+    "b": "party:1",
+    "c": "party:2",
+    "d": "party:3",
+    "e": "party:4"
+   },
+   "shots": [
+    {
+     "caption": "Shadow Clan · Oath",
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "c",
+       "text": "Unseen in darkness, unbroken in resolve, we strike together!"
+      }
+     ]
+    }
+   ]
+  },
+  "oathcut:fleet": {
+   "title": "The Black Fleet: Last Oath (short)",
+   "blurb": "The five swear their Last Oath as one, in a few seconds.",
+   "cast": {
+    "a": "party:0",
+    "b": "party:1",
+    "c": "party:2",
+    "d": "party:3",
+    "e": "party:4"
+   },
+   "shots": [
+    {
+     "caption": "Black Fleet · Oath",
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "c",
+       "text": "One flag, one broadside, and no quarter given!"
+      }
+     ]
+    }
+   ]
+  },
+  "oathcut:wildHunt": {
+   "title": "The Wild Hunt: Last Oath (short)",
+   "blurb": "The five swear their Last Oath as one, in a few seconds.",
+   "cast": {
+    "a": "party:0",
+    "b": "party:1",
+    "c": "party:2",
+    "d": "party:3",
+    "e": "party:4"
+   },
+   "shots": [
+    {
+     "caption": "Wild Hunt · Oath",
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "c",
+       "text": "One pack, one fang, one relentless pursuit across the heather!"
+      }
+     ]
+    }
+   ]
+  },
+  "oathcut:nightParade": {
+   "title": "The Night Parade: Last Oath (short)",
+   "blurb": "The five swear their Last Oath as one, in a few seconds.",
+   "cast": {
+    "a": "party:0",
+    "b": "party:1",
+    "c": "party:2",
+    "d": "party:3",
+    "e": "party:4"
+   },
+   "shots": [
+    {
+     "caption": "Night Parade · Oath",
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "c",
+       "text": "A hundred lanterns, a thousand spirits, one midnight parade!"
+      }
+     ]
+    }
+   ]
+  },
+  "oathcut:ironVanguard": {
+   "title": "The Iron Vanguard: Last Oath (short)",
+   "blurb": "The five swear their Last Oath as one, in a few seconds.",
+   "cast": {
+    "a": "party:0",
+    "b": "party:1",
+    "c": "party:2",
+    "d": "party:3",
+    "e": "party:4"
+   },
+   "shots": [
+    {
+     "caption": "Vanguard · Oath",
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "c",
+       "text": "Shoulder to iron shoulder, we break the oncoming storm!"
       }
      ]
     }
@@ -7874,7 +7934,7 @@
   },
   "earned:dreadPirate": {
    "title": "Dread Pirate Enlists",
-   "blurb": "A ghost ship navigates twenty floors of spiral tower stairs.",
+   "blurb": "A ghost ship runs aground at the breach and its crew offer to hold the walls.",
    "cast": {
     "figure": "unit:dreadPirate",
     "hero": "unit:dreadPirate"
@@ -7885,7 +7945,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "Twenty storeys up the spiral stair, a corsair crew disembarked."
+       "text": "Twenty waves held at the Last Stand. A corsair crew came ashore to see who was holding."
       }
      ]
     },
@@ -7894,7 +7954,7 @@
      "lines": [
       {
        "who": "hero",
-       "text": "Do not ask how we hauled a brigantine up twenty flights of stone."
+       "text": "Do not ask how we sailed a brigantine through a hole in your wall."
       },
       {
        "who": "narrator",
@@ -7917,7 +7977,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "Forty storeys aloft, the torches were burning brightly. As was a gilded throne."
+       "text": "Forty waves round one throne. Then a second throne arrived, with a tyrant on it."
       }
      ]
     },
@@ -7926,7 +7986,7 @@
      "lines": [
       {
        "who": "hero",
-       "text": "You ascended forty flights. I respect the stamina. Now cease hovering and bow."
+       "text": "Forty waves round your throne. I respect the stamina. Now cease hovering and bow."
       },
       {
        "who": "narrator",

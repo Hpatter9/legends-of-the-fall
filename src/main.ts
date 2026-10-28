@@ -4,7 +4,7 @@
 
 import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { standable, tileAt } from './sim/board';
-import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
+import { canPlace, fight, reviveParty, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
 import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
 // (`saveSlot` as `saveRun`: a tower or calamity run is saved in its own slot, any other in the ordinary one)
 import { armyOfRun, armyRun, benchFull, boostOf, canRetry, chainOf, fallOutcome, MAX_RETRIES, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, waveArmyOf, type Owned, type Run } from './sim/run';
@@ -14,6 +14,8 @@ import { CAL_MAPS } from './sim/calamity';
 import { pickHero } from './calamityView';
 import { noteFightStats, notePayout, recapOf } from './sim/runRecap';
 import { showRecap } from './recapView';
+import { campArtReady } from './camp';
+import { comebackTips, type ComebackGo } from './sim/comeback';
 import { ARMIES, armyById, armyUnlocked, settleWave, type ArmyPay } from './sim/armies';
 import { drawRunStars, showUnlock } from './armiesView';
 import { modeOpen } from './sim/modeUnlock';
@@ -27,7 +29,7 @@ import { awakenedOf } from './sim/awaken';
 import { earn, loadMeta, needsStarter, pickStarter, heroRank, recordStars, saveMeta, type Meta } from './sim/meta';
 import { chooseStarter } from './starter';
 import { ScenePlayer } from './render/sceneView';
-import { dueScene, markSeen } from './sim/sceneRules';
+import { cardDue, cardKey, dueScene, lossMoments, markCard, markSeen } from './sim/sceneRules';
 import { onAwakened } from './awakenView';
 import { SCENES, SCENE_ORDER, type Moment } from './sim/sceneScripts';
 import { previewFrames } from './render/sceneClock';
@@ -53,11 +55,13 @@ import { dailyBonus, dailyCleared, dailyInProgress, modeNote, settleDaily, settl
 import { dailyBossName, dailyCrowns, DAILY_WAVES } from './sim/daily';
 import { showDailyStart } from './dailyView';
 import { chestPicture } from './chestStash';
-import { toastAchievements, toastJoined } from './achievementsView';
+import { toastAchievements, toastJoined, toastStones } from './achievementsView';
 import { grantContent } from './sim/contentHeroes';
 import { clockSeed, todayKey } from './modes';
 import { tips, type Box } from './tips';
-import { CHARGE_MAX, kitOf, ULT_LEVEL } from './sim/abilities';
+import { ULT_LEVEL } from './sim/abilities';
+import { HeroBar } from './heroBar';
+import { ultFull } from './sim/heroKits';
 import { startAwake } from './render/awake';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, type SpellId } from './sim/spells';
 import { bindSpellbook } from './spellbook';
@@ -67,6 +71,7 @@ import { WeatherView } from './render/weatherView';
 import { weatherOf, type Weather } from './sim/weather';
 import { ChainView } from './render/chainView';
 import { against, frameOf, transferFormation } from './sim/chain';
+import { isScenario } from './sim/scenario';
 import { traitBadge } from './traitBadge';
 import { closestTrait, countTraits, kindsOf, nextTierLine, traitsOf, TRAITS } from './sim/traits';
 import { placeSynergies, startSynergies, updateCombo } from './synergyView';
@@ -78,7 +83,7 @@ import { Fx, loadFx } from './render/fx';
 import { framesOf, loadSheets, portrait, sheetInfo, wholeFigure } from './render/sheets';
 import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, framing, PAUSE_MS, settle, viewFor, type View } from './render/cameraRules';
 import { titleOf } from './render/bossTitles';
-import { at, depth, FOOT, HH, rawAt, setFrame, TH, TW } from './render/iso';
+import { at, depth, FOOT, HH, landmarkBounds, rawAt, setFrame, TH, TW } from './render/iso';
 import { bindDuck, bindMute, play, playEvents, setAct, setScene, setup, startFight } from './render/sound';
 import { fightLevel, type MapKind } from './render/epicMusic';
 import { sceneOf } from './render/audioRules';
@@ -170,10 +175,8 @@ class Game {
   private settled = false;
   /** How long the fight has been over (ms): the recap waits `END_WAIT_MS` after the last kill, so the deaths play out. */
   private endWait = 0;
-  /** The heart-burn after a fall with hearts left: `t` real ms since it began, `swapped` once the wave is set out again, `started` once its fight is on (`fightAt`: when). Nothing is settled until it is over; no prompt. */
+  /** The heart-burn after a fall with hearts left: `t` real ms since it began, `swapped` once the fallen heroes rise, `started` once its fight is on (`fightAt`: when). Nothing is settled until it is over; no prompt. */
   private revive: { t: number; swapped: boolean; started: boolean; fightAt: number; line?: { dismiss: () => void } } | null = null;
-  /** Set while the revive itself starts the wave again, so that `newBattle` keeps the revive going. */
-  private reviveRestart = false;
   /** This fight's loss has had its cinematic asked for (once a fight: `refresh` runs often). */
   private lossScened = false;
   /** What an army's last settled fight paid (null for any other run). */
@@ -242,11 +245,20 @@ class Game {
       else await chooseStarter(this.meta);
       saveMeta(this.meta);
     }
+    // (a save from before the summoning stones was given a few, once: it says so)
+    if (this.meta.stoneGift) {
+      toastStones(this.meta.stoneGift);
+      delete this.meta.stoneGift;
+      saveMeta(this.meta);
+    }
     // (a spire climb saved by an older version is closed and paid: the Tower is the Last Stand now)
     const closed = migrateOldClimb(this.meta, localStorage);
     if (closed) saveMeta(this.meta);
     // (a fresh page with no saved run shows the first army's board behind the home screen)
     this.run = (!seed && loadRun()) || armyRun(seed || (Date.now() % 100000) + 1, ARMIES[0].id, this.meta.party, this.meta.castle);
+    // Explicit seeded previews leave ordinary and already-saved runs on their original maps.
+    const scenario = query.get('scenario');
+    if (seed && isScenario(scenario) && this.run.mode?.kind === 'army') this.run.mode.scenario = scenario;
     this.syncPool();
     this.gacha = new Gacha(
       this.meta,
@@ -278,7 +290,9 @@ class Game {
       // (an army starts from wave 1 once its party is picked)
       onArmy: (id, tier, auto) =>
         this.party.open('start', () => {
-          this.startRun(armyRun(clockSeed(), id, this.meta.party, this.meta.castle, tier));
+          const next = armyRun(seed && isScenario(scenario) ? seed : clockSeed(), id, this.meta.party, this.meta.castle, tier);
+          if (seed && isScenario(scenario) && next.mode?.kind === 'army') next.mode.scenario = scenario;
+          this.startRun(next);
           if (auto) this.beginAuto(id, tier, auto);
         }),
       onParty: () =>
@@ -343,7 +357,7 @@ class Game {
     // listener throws, which froze fights mid-way)
     this.app.ticker.add((tk) => {
       try {
-        this.frame(tk.deltaMS);
+        this.frame(tk.deltaMS, tk.elapsedMS);
       } catch (err) {
         console.error(err);
       }
@@ -369,6 +383,8 @@ class Game {
     sync();
     // (the tower's map comes and goes without the home screen changing: the ambience follows it too)
     new MutationObserver(() => this.syncScene()).observe($('towerMap'), { attributes: true, attributeFilter: ['hidden'] });
+    // (the camp's pictures are in before the loading screen goes, so the first look at the home screen is never an empty field; a slow load gives up after a moment)
+    if (this.home.isOpen) await Promise.race([campArtReady().then(() => new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok)))), new Promise((ok) => setTimeout(ok, 2500))]).catch(() => undefined);
     $('loading').remove();
     (window as unknown as { __game: Game }).__game = this;
     // (a hero's first awakening has its cinematic)
@@ -391,7 +407,7 @@ class Game {
     setFrame(section ? frameOf(section, section) : undefined);
     this.settled = false;
     this.endWait = 0;
-    if (!this.reviveRestart) this.revive = null;
+    this.revive = null;
     this.lossScened = false;
     for (const id of [...this.run.squad]) {
       const h = heroOf(this.run, id);
@@ -418,6 +434,7 @@ class Game {
     showTwistBanner(this.run.tower?.cur?.fight?.twist);
     this.syncSprites(true);
     this.layout();
+    this.revealDestination();
     this.refresh();
     // (a fight's cinematics come before the boss's own card: a Calamity's herald, a first elite, the tower's milestones ...)
     const due = this.setupMoments().filter((m) => this.scenesOn() && dueScene(this.meta, m));
@@ -556,7 +573,10 @@ class Game {
     this.held = null;
     this.bbox = { x0: this.bbox.x0 + dx, x1: this.bbox.x1 + dx, y0: this.bbox.y0 + dy, y1: this.bbox.y1 + dy };
     document.body.dataset.move = '1';
-    this.chain.begin(c, wave - 1, walkers, () => delete document.body.dataset.move);
+    this.chain.begin(c, wave - 1, walkers, () => {
+      delete document.body.dataset.move;
+      this.revealDestination(next);
+    });
     this.survey = false;
   }
 
@@ -569,7 +589,7 @@ class Game {
     if (!on) this.focus();
   }
 
-  /** A boss stage's first time: the screen dims, the boss's portrait slides in, its name on a ribbon slams down with its title, and the camera glides to it. Once per stage (a restart of the same fight does not replay it). */
+  /** A boss's first meeting: the screen dims, the boss's portrait slides in, its name on a ribbon slams down with its title, and the camera glides to it. Once a save for each boss (`cardDue`): a new run, a restart or a new day does not replay it. */
   private startIntro(): void {
     const key = `${this.run.seed}:${this.run.stage}`;
     // (a boss, or the named elite of an elite node, gets the card)
@@ -577,6 +597,11 @@ class Game {
     const boss = this.b.units.find((u) => u.side === 'foe' && (isBoss(u.def) || (elite && u.def === elite.def)));
     if (!boss || this.introduced.has(key)) return;
     this.introduced.add(key);
+    // (a boss's card plays once a save, the first time that boss is met: not again on a new run, a retry or a new day)
+    const card0 = cardKey(boss.def, elite?.id);
+    if (!cardDue(this.meta, card0)) return;
+    markCard(this.meta, card0);
+    saveMeta(this.meta);
     this.goat.react('boss');
     this.intro = { t: 0, boss, slammed: false };
     const card = $('bossCard');
@@ -699,11 +724,15 @@ class Game {
 
   private begin(): void {
     if (!fight(this.b)) return;
+    // (the ultimates: tapped by the player, or on their own with Auto on, or under auto-replay)
+    this.b.autoUlt = this.ultAutoOn();
+    this.heroBar.setAuto(this.ultAutoOn());
+    this.heroBar.build(this.b);
     this.evolved = new Set();
     this.endIntro();
     newQuipScene();
-    // (a wave started again by a heart has a hero's line instead of a foe's)
-    if (!this.revive) foeGrumbles(this.b.units.filter((u) => u.side === 'foe' && !UNITS[u.def].summon).length, (i) => this.anchorOfFoe(i));
+    // (the opening grumble belongs to a new fight)
+    foeGrumbles(this.b.units.filter((u) => u.side === 'foe' && !UNITS[u.def].summon).length, (i) => this.anchorOfFoe(i));
     this.stats = startStats(this.b.units);
     // (the music: a boss, a Calamity fight, or one of three battle tracks by how hard the fight runs)
     startFight(isBossRun(this.run), { calamity: this.run.mode?.kind === 'calamity', level: fightLevel(this.run.stage, { elite: this.run.tower?.cur?.kind === 'elite', waves: waveArmyOf(this.run)?.waves.length }) });
@@ -773,7 +802,7 @@ class Game {
     void this.stand.open();
   }
 
-  private frame(dt: number): void {
+  private frame(dt: number, elapsed = dt): void {
     const b = this.b;
     tips.update();
     if (this.standOn) return;
@@ -782,14 +811,16 @@ class Game {
       return;
     }
     if (this.auto) this.autoTick(dt);
-    if (b.phase === 'fight' && this.sceneHold > 0) {
+    if (b.phase === 'fight' && (this.sceneHold > 0 || (this.revive && !this.revive.started))) {
       // (a cinematic is up: the fight is held where it is)
     } else if (b.phase === 'fight') {
       // (a boss's fall slows the fight for a beat: `timeScale`)
       this.acc += Math.min(dt, 250) * this.speed * this.fx.timeScale();
+      b.autoUlt = this.ultAutoOn();
       while (this.acc >= TICK_MS && b.phase === 'fight' && this.sceneHold === 0) {
         this.acc -= TICK_MS;
         const events = stepBattle(b);
+        for (const e of events) if (e.kind === 'ultLapse') this.heroBar.lapse(e.by);
         tally(this.stats, events, b.units);
         this.fx.show(b, events);
         for (const e of events) if (e.kind === 'boom') this.boardView.removeBarrel(e.u, e.v);
@@ -819,6 +850,8 @@ class Game {
         if (events.some((e) => e.kind === 'hit' || e.kind === 'heal')) this.refreshBench();
         if (b.phase !== 'fight') this.refresh();
       }
+      if (b.units.length !== this.sprites.size) this.heroBar.build(b);
+      this.heroBar.refresh(b);
       this.fx.step(Math.min(dt, 250) * this.speed);
       $('clock').textContent = clock(b.t);
       this.refreshSpells();
@@ -849,12 +882,13 @@ class Game {
       this.tzoom = 1;
       this.zoom = easeTo(this.zoom, 1, dt, EASE_ZOOM_MS);
     }
+    if (this.destinationReveal) this.stepDestinationReveal(dt, elapsed);
     if (this.survey) this.standBack(dt);
     this.boardView.pump();
     this.weather.step(dt);
     // (the camera eases to where it is sent, unless a finger is holding the board)
     if (this.phaseBoss && (!b.pause || b.phase !== 'fight')) this.endPhase();
-    if (b.phase === 'fight' && !this.intro) this.phaseBoss ? this.pushOnPhase() : (this.follow(), this.leanIn(dt));
+    if (b.phase === 'fight' && !this.intro && !this.destinationReveal) this.phaseBoss ? this.pushOnPhase() : (this.follow(), this.leanIn(dt));
     if (!this.drag?.pan) {
       const f = b.phase === 'fight' && !this.intro;
       this.cx = f ? easeTo(this.cx, this.tx, dt, EASE_MOVE_MS) : this.cx + (this.tx - this.cx) * Math.min(1, dt / 220);
@@ -863,6 +897,43 @@ class Game {
       this.clampCam();
     }
     this.place();
+  }
+
+  private destinationReveal: { armed: boolean; left: number; x: number; y: number; zoom: number } | null = null;
+  private destinationsSeen = new Set<string>();
+
+  /** A short camera journey to the distant destination when its approach section first appears. */
+  private revealDestination(section = chainOf(this.run)?.[this.run.stage - 1]): void {
+    const board = section?.board;
+    if (this.auto || !this.scenesOn() || !board?.landmark) { this.destinationReveal = null; return; }
+    const key = `${this.run.seed}:${this.run.mode?.kind === 'army' ? this.run.mode.scenario : ''}`;
+    if (this.destinationsSeen.has(key)) return;
+    this.destinationsSeen.add(key);
+    if (!section) return;
+    const box = landmarkBounds(board, frameOf(section, section));
+    if (!box) return;
+    this.bbox = { x0: Math.min(this.bbox.x0, box.x0), x1: Math.max(this.bbox.x1, box.x1), y0: Math.min(this.bbox.y0, box.y0), y1: Math.max(this.bbox.y1, box.y1) };
+    this.destinationReveal = { armed: false, left: 3200, x: (box.x0 + box.x1) / 2, y: (box.y0 + box.y1) / 2, zoom: Math.min(2, this.area.w / (box.x1 - box.x0 + 30) / this.scale, this.area.h / (box.y1 - box.y0 + 30) / this.scale) };
+  }
+
+  private stepDestinationReveal(dt: number, elapsed: number): void {
+    const reveal = this.destinationReveal!;
+    if (!reveal.armed) {
+      if (!this.boardView.sceneryReady) return;
+      reveal.armed = true;
+    }
+    reveal.left -= elapsed;
+    if (reveal.left <= 0 || this.drag?.pan) {
+      this.destinationReveal = null;
+      this.focus();
+      return;
+    }
+    this.tx = reveal.x;
+    this.ty = reveal.y;
+    this.cx = easeTo(this.cx, reveal.x, elapsed, EASE_MOVE_MS);
+    this.cy = easeTo(this.cy, reveal.y, elapsed, EASE_MOVE_MS);
+    this.tzoom = reveal.zoom;
+    this.zoom = easeTo(this.zoom, reveal.zoom, Math.max(dt, elapsed), EASE_ZOOM_MS);
   }
 
   /** A short camera push the effects asked for (an ultimate, a combo, a tier 3 promotion): the point, how much closer, and the ms left. */
@@ -1043,7 +1114,8 @@ class Game {
     this.world.scale.set(k);
     this.ghost.scale.set(k);
     this.area = area;
-    this.bbox = { x0, x1, y0, y1 };
+    const scenic = landmarkBounds(b, { rot: chainOf(this.run)?.[this.run.stage - 1]?.rot ?? 0, ou: 0, ov: 0, w: b.w, d: b.d });
+    this.bbox = scenic ? { x0: Math.min(x0, scenic.x0), x1: Math.max(x1, scenic.x1), y0: Math.min(y0, scenic.y0), y1: Math.max(y1, scenic.y1) } : { x0, x1, y0, y1 };
     this.focus(true);
   }
 
@@ -1192,7 +1264,21 @@ class Game {
 
   /* -------------------------------------------------------------- input */
 
+  /** The fight's hero bar (`heroBar.ts`): a portrait each, tapped to fire an ultimate, and the Auto switch. */
+  private heroBar!: HeroBar;
+  /** Whether the heroes' ultimates fire on their own: the player's Auto switch, and always under auto-replay. */
+  private ultAutoOn(): boolean {
+    return !!this.auto || !!this.meta.ultAuto;
+  }
+
   private wire(): void {
+    this.heroBar = new HeroBar($('heroBar'), {
+      onAuto: (on) => {
+        this.meta.ultAuto = on;
+        saveMeta(this.meta);
+        this.b.autoUlt = this.ultAutoOn();
+      },
+    });
     const canvas = this.app.canvas;
     canvas.addEventListener('pointerdown', (e) => {
       if (this.drag) return;
@@ -1335,7 +1421,9 @@ class Game {
       // (each run spends a day's auto ticket; a new day mid-replay refills them)
       if (!spendTicket(this.meta, todayKey())) return void this.endAuto('tickets');
       saveMeta(this.meta);
-      this.startRun(armyRun(clockSeed(), a.army, this.meta.party, this.meta.castle, a.tier));
+      const nextRun = armyRun(clockSeed(), a.army, this.meta.party, this.meta.castle, a.tier);
+      if (nextRun.mode?.kind === 'army' && this.run.mode?.kind === 'army' && this.run.mode.scenario) nextRun.mode.scenario = this.run.mode.scenario;
+      this.startRun(nextRun);
       this.autoPrep();
     } else this.endAuto(a.ended ?? 'done');
   }
@@ -1427,6 +1515,8 @@ class Game {
   private openMode(kind: 'calamity'): void {
     // (a shut mode has a disabled button; a run begun before it shut is still let in)
     if (!modeOpen(this.meta, kind) && !loadSlot(kind)) return;
+    // (the Calamity's reveal, if it has not played yet (cinematics were off as it opened, or the save opened it before the reveal existed), comes first)
+    if (dueScene(this.meta, { kind: 'calOpen' }) && this.scenesOn()) return void this.queueScene({ kind: 'calOpen' }).then(() => this.openMode(kind));
     const saved = loadSlot(kind);
     if (saved) return this.resumeSlot(saved);
     pickHero(this.meta, (hero, ascension) => this.startTower(calamityRun(clockSeed(), this.meta, hero, ascension)), () => this.home.open());
@@ -1608,12 +1698,12 @@ class Game {
     if (this.run.event) this.events.openEvent(this.run, () => (saveRun(this.run), this.refresh()));
   }
 
-  /** When the heart has burnt and the wave starts again, and when the whole moment ends (real ms; shorter with reduced motion). */
+  /** When the heart has burnt and the fight resumes, and when the whole moment ends (real ms; shorter with reduced motion). */
   private reviveTimes(): { swap: number; end: number } {
     return reducedMotion() ? { swap: 500, end: 1200 } : { swap: 1100, end: 2000 };
   }
 
-  /** The party fell with a heart left: no card and no question. A heart burns, a line says so, and the wave starts again by itself. */
+  /** The party fell with a heart left: no card and no question. A heart burns, a line says so, and the fight resumes by itself. */
   private beginRevive(): void {
     this.revive = { t: 0, swapped: false, started: false, fightAt: 0, line: reviveLine('A heart burns. The party rises.', this.reviveTimes().end) };
     play('sparkle');
@@ -1631,7 +1721,7 @@ class Game {
     }
   }
 
-  /** The burn's clock: at its midpoint the heart is spent and the wave starts again with the retry's gold, the heroes rising in a pillar of light. */
+  /** The burn's clock: at its midpoint the heart is spent and the fight resumes with the retry's gold, the heroes rising in a pillar of light. */
   private stepRevive(dt: number): void {
     const r = this.revive;
     if (!r) return;
@@ -1640,14 +1730,13 @@ class Game {
     if (!r.swapped && r.t >= at.swap) {
       r.swapped = true;
       if (!canRetry(this.run)) return void (this.revive = null);
-      this.noteRecap({}, [], false, false);
       // (the heart burning now stays grey from the next draw of the lives)
       const gold = retryWave(this.run)!;
       play('coinRecycle');
       saveRun(this.run);
-      this.reviveRestart = true;
-      this.newBattle();
-      this.reviveRestart = false;
+      reviveParty(this.b);
+      this.acc = 0;
+      this.endWait = 0;
       for (const u of this.b.units) if (u.side === 'hero') this.sprites.get(u.id)?.evolve();
       flyUp(`+${gold} gold`, $('gold'));
       // (the heroes stand where they stood, glowing; a beat later the fight is on, with no Fight! tap)
@@ -1655,8 +1744,10 @@ class Game {
     }
     if (r.swapped && !r.started && r.t >= r.fightAt) {
       r.started = true;
-      if (this.b.phase === 'deploy') {
-        this.begin();
+      if (this.b.phase === 'fight') {
+        this.acc = 0;
+        startFight(isBossRun(this.run), { calamity: this.run.mode?.kind === 'calamity', level: fightLevel(this.run.stage, { elite: this.run.tower?.cur?.kind === 'elite', waves: waveArmyOf(this.run)?.waves.length }) });
+        this.refresh();
         // (the party is back on its feet: one of them says so)
         if (!this.auto) revivedQuip(this.b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def), (k) => this.anchorOfKind(k));
       }
@@ -1671,7 +1762,7 @@ class Game {
     box.hidden = !!run.tower;
     if (box.hidden) return;
     const left = retriesLeft(run);
-    // (a fall with a heart left: the last full heart burns until the wave starts again and spends it)
+    // (a fall with a heart left: the last full heart burns until the fight resumes and spends it)
     const burning = this.revive && !this.revive.swapped ? left - 1 : -1;
     const key = `${left}:${burning}`;
     if (box.dataset.key === key) return;
@@ -1746,7 +1837,9 @@ class Game {
       ? { title: 'Army defeated!', tone: 'won' as const, line: `${army?.name ?? 'The run'} cleared in ${run.recap?.fights ?? 0} fights` }
       : { title: 'Run over', tone: 'lost' as const, line: army ? `The ${army.name} held at wave ${run.best} of ${army.waves.length}` : `Fell at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} hires` };
     const joke = Rng.from(run.seed, won ? 0x7e1 : 0x7e2).pick(won ? RECAP_WIN : RECAP_LOSS);
-    showRecap($('recap'), recapOf(run), { ...head, joke }, () => void this.revealEarned().then(() => this.afterResult()));
+    // (a real defeat, no heart left: a few pointers on how to come back stronger, each with its way there once the recap is left)
+    const advice = !won && !this.auto ? { tips: comebackTips(this.meta, { army: army?.id, tier: army ? tierOfRun(run) : 0, party: this.meta.party }), onGo: (go: ComebackGo) => void this.revealEarned().then(() => (this.afterResult(), this.home.goTo(go))) } : undefined;
+    showRecap($('recap'), recapOf(run), { ...head, joke }, () => void this.revealEarned().then(() => this.afterResult()), advice);
   }
 
   /** A run has ended: back to the main screen, showing what it earned. */
@@ -2108,8 +2201,9 @@ class Game {
       (card.querySelector('.cool') as HTMLElement).style.height = `${(cooldownLeft(b, id) / SPELLS[id].cooldownMs) * 100}%`;
     }
     if (b.spells.mana >= 3) tips.offer('mana', $('spells'));
-    const full = b.units.find((u) => u.side === 'hero' && u.alive && u.charge >= (kitOf(u)?.skill.need ?? CHARGE_MAX));
-    if (full) tips.offer('skill', () => this.spriteBox(full.id));
+    const caster = b.phase === 'fight' ? b.units.find((u) => u.side === 'hero' && u.alive && u.ks?.at1 !== undefined) : undefined;
+    if (caster) tips.offer('skill', () => this.spriteBox(caster.id));
+    if (b.phase === 'fight' && !b.autoUlt && b.units.some((u) => u.alive && ultFull(u))) tips.offer('ult', $('heroBar'));
     $('spellHint').textContent = this.spell ? (this.spellDrag?.moved ? `${SPELLS[this.spell].text}: let go over the grid to cast, or back on the cards to cancel` : `${SPELLS[this.spell].text}: tap a tile, or drag a card onto the grid (tap the card again to cancel)`) : '';
     if (dropped) this.markTiles();
   }
@@ -2135,12 +2229,14 @@ class Game {
     const n = heroesPlaced(b);
     const ended = b.phase === 'won' || b.phase === 'lost';
     const ready = ended && (!!this.auto || this.endWait >= END_WAIT_MS);
-    // (the first defeat has its cinematic as the loss shows, with a heart to burn or not)
-    if (ready && b.phase === 'lost' && !this.lossScened && !this.auto) {
-      this.lossScened = true;
-      void this.queueScene({ kind: 'firstLoss' });
+    // (the first defeat has its cinematic as the loss shows, but only a real one: a fall a heart revives is not a defeat)
+    // (checked before a heart burns: with one left the moments are none, and the check waits for the next fall)
+    if (ready && b.phase === 'lost' && !this.lossScened && !this.auto && !this.revive) {
+      const moments = lossMoments(fallOutcome(run));
+      if (moments.length) this.lossScened = true;
+      for (const m of moments) void this.queueScene(m);
     }
-    // (a wave lost with a heart left is not settled: a heart burns and the wave starts again by itself. With none left, or in a mode with none, the loss is settled and the run ends)
+    // (a wave lost with a heart left is not settled: a heart burns and the fight resumes by itself. With none left, or in a mode with none, the loss is settled and the run ends)
     if (ready && b.phase === 'lost' && !this.settled && fallOutcome(run) === 'heart' && !this.revive) this.beginRevive();
     if (ready && !this.settled && !this.revive) {
       this.settled = true;
@@ -2183,6 +2279,8 @@ class Game {
       toastJoined(joined);
       // (the fight's cinematics, one after another: an army's last stand, a hero earned has its own reveal; the Calamity's end plays before its victory card)
       if (army && this.pay?.firstClear) void this.queueScene({ kind: 'armyClear', army: army.id });
+      // (the stars this fight won may have opened the Calamity: its reveal, the portal, plays once, the moment it opens)
+      if (modeOpen(this.meta, 'calamity')) void this.queueScene({ kind: 'calOpen' });
       this.earned.push(...joined);
       // (a run that levels its own heroes taught them in `finishTower`; the lasting XP is not touched)
       const own = run.local ? climbXpView(run) : null;

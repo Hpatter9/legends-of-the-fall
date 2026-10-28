@@ -10,7 +10,7 @@ import { against, boardTileAt, frameOf, seam, walkAcross, type Section } from '.
 import { UNITS } from '../sim/units';
 import { dropDelay, dropEnd, dropPose, stepMs } from './dropRules';
 import type { Fx } from './fx';
-import { FOOT, HH, inFrame, project, TH, TW, type Frame } from './iso';
+import { FOOT, HH, inFrame, landmarkBounds, project, TH, TW, type Frame } from './iso';
 import type { BoardView, Look, Scene } from './boardView';
 import { playAll } from './sound';
 import { UnitSprite } from './unitView';
@@ -111,6 +111,15 @@ export class ChainView {
     let y1 = -Infinity;
     for (const s of this.sections.slice(0, this.host + 1)) {
       const f = frameOf(s, h);
+      const scenic = landmarkBounds(s.board, f);
+      if (scenic) {
+        x0 = Math.min(x0, scenic.x0); x1 = Math.max(x1, scenic.x1);
+        y0 = Math.min(y0, scenic.y0); y1 = Math.max(y1, scenic.y1);
+      }
+      let minH = Infinity;
+      for (const t of s.board.tiles) if (t.h < minH) minH = t.h;
+      if (!Number.isFinite(minH)) minH = 0;
+      const large = s.board.w >= 12;
       for (let v = 0; v < s.board.d; v++)
         for (let u = 0; u < s.board.w; u++) {
           const t = s.board.tiles[v * s.board.w + u];
@@ -118,7 +127,8 @@ export class ChainView {
           x0 = Math.min(x0, x - TW / 2);
           x1 = Math.max(x1, x + TW / 2);
           y0 = Math.min(y0, y - TH / 2 - 52);
-          y1 = Math.max(y1, y + TH / 2 + t.h * HH + FOOT);
+          const skirt = large ? Math.min(t.h, Math.max(t.h - minH + 4, 14)) : t.h;
+          y1 = Math.max(y1, y + TH / 2 + skirt * HH + FOOT);
         }
     }
     return (this.reach = { x0, x1, y0, y1 });
@@ -139,7 +149,7 @@ export class ChainView {
     const { board: comp, minU, minV } = seam(old, next);
     const walkFrame: Frame = { rot: 0, ou: minU - next.origin.u, ov: minV - next.origin.v };
     const delay: number[] = [];
-    for (let v = 0; v < next.board.d; v++) for (let u = 0; u < next.board.w; u++) delay.push(dropDelay(u, v));
+    for (let v = 0; v < next.board.d; v++) for (let u = 0; u < next.board.w; u++) delay.push(dropDelay(u, v, next.board.w, next.board.d));
     const moving: Moving[] = walkers.map((w, i) => {
       const def = UNITS[w.unit.def];
       // (the path is over world tiles; the walkers are drawn on the joined board, whose tile (0, 0) is `min`)
@@ -150,7 +160,7 @@ export class ChainView {
       inFrame(walkFrame, () => sprite.update(comp, 0, true));
       return { sprite, unit, path, i: 0, moveAt: null, freeAt: 0, startAt: WALK_AT_MS + i * WALK_GAP_MS, ms: stepMs(def.moveMs) };
     });
-    this.act = { old, next, t: 0, delay, landed: delay.map(() => false), comp, walkFrame, min: { u: minU, v: minV }, moving, end: dropEnd(), lastThud: -1000, done };
+    this.act = { old, next, t: 0, delay, landed: delay.map(() => false), comp, walkFrame, min: { u: minU, v: minV }, moving, end: dropEnd(next.board.w, next.board.d), lastThud: -1000, done };
     this.step(0);
   }
 
@@ -159,7 +169,7 @@ export class ChainView {
     const a = this.act;
     if (!a) return null;
     if (!a.moving.length) {
-      const [x, y] = project({ rot: a.next.rot, ou: 0, ov: 0 }, a.next.board.w / 2, a.next.board.d - 2, 0);
+      const [x, y] = project({ rot: a.next.rot, ou: 0, ov: 0, w: a.next.board.w, d: a.next.board.d }, a.next.board.w / 2, a.next.board.d - 2, 0);
       return { x, y };
     }
     let x = 0;

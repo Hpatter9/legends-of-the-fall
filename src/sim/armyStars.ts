@@ -12,9 +12,9 @@ import { type Meta, type StashChest } from './meta';
 import { mixSeed, Rng } from './rng';
 import { armyOfRun, tierOfRun, type Run } from './run';
 import { MILESTONES, RUN_STARS, TIERS } from './tiers';
-import { ALL_HEROES, UNITS } from './units';
-import { giveShards, swapContent } from './unlock';
-import { CHEST_HERO_SHARDS, CHEST_PRIZE_SHARDS } from './unlockRules';
+import { ALL_HEROES } from './units';
+import { CHEST_STONES, DAILY_CHEST_STONES } from './unlockRules';
+import { addTomes, grantTomes, rollTomes, TOME_SIZES, tomeWords, type TomeCounts, type TomeSize } from './tomes';
 
 // ---- the conditions -----------------------------------------------------------------------------------------------------
 
@@ -153,11 +153,15 @@ export function rollGear(rng: Rng, at: number, armyIdx: number): GearDrop[] {
 }
 
 export interface LootItem {
-  type: 'crowns' | 'shards' | 'hero' | 'gear';
-  /** A line for the reveal: "320 crowns", "3 Knight shards". */
+  type: 'crowns' | 'stones' | 'gear' | 'tomes';
+  /** A line for the reveal: "320 crowns", "3 summoning stones". */
   text: string;
-  /** The hero kind (or the equipment's base) it is about. */
+  /** The equipment's base it is about. */
   ref?: string;
+  /** How many crowns, stones or tomes the line holds. */
+  n?: number;
+  /** The size of the XP tomes a tomes line holds (`tomes.ts`). */
+  size?: TomeSize;
   /** A piece of equipment this reward is (for its icon and frame). */
   equip?: NewEquipment;
   /** A piece of equipment's rarity (for the card colour; heroes have none). */
@@ -233,36 +237,48 @@ export function peekChest(m: Meta, index: number): Loot | null {
   return c ? lootOf(m, c, false) : null;
 }
 
+/**
+ * The summoning stones a chest holds: by its star milestone (`CHEST_STONES`), and a daily chest's base and one for each bonus star. The rolls of the chest
+ * (`rollChest`) are untouched, so every chest still holds the crowns and the gear it did; the hero shards they once named are stones now, which are
+ * not tied to a hero: a stone is one shard of a hero drawn when it is used (`pullOnce`).
+ */
+export function chestStones(c: Pick<StashChest, 'at' | 'daily' | 'bonus'>): number {
+  return c.daily !== undefined ? DAILY_CHEST_STONES + (c.bonus ?? 0) : CHEST_STONES[c.at] ?? 1;
+}
+
+/** The reveal lines of a chest's stones (a plain line and, when there is one, the prize line), the gear after. Shared with the shop's chests. */
+export function stoneItems(plain: number, prize: number): LootItem[] {
+  const word = (n: number) => `${n} summoning stone${n === 1 ? '' : 's'}`;
+  const out: LootItem[] = [];
+  if (plain) out.push({ type: 'stones', text: word(plain), n: plain });
+  if (prize) out.push({ type: 'stones', text: word(prize), n: prize, prize: true });
+  return out;
+}
+
+/** The reveal lines of a chest's XP tomes, one a size, smallest first. Shared with the shop's chests. */
+export function tomeItems(t: TomeCounts): LootItem[] {
+  return TOME_SIZES.filter((size) => (t[size] ?? 0) > 0).map((size) => ({ type: 'tomes', text: tomeWords(size, t[size]!), n: t[size], size, ...(size === 'large' ? { prize: true } : {}) }));
+}
+
+/** The reveal line of a piece of gear a chest drops. */
+export const gearItem = (g: GearDrop): LootItem => ({ type: 'gear', text: `${itemName(g.item)} (${RARITY_NAMES[g.item.rarity]}, Lv ${g.item.level})`, ref: g.item.base, rarity: g.item.rarity, equip: g.item, prize: g.item.rarity >= 5 });
+
 function lootOf(m: Meta, c: StashChest, apply: boolean): Loot {
   const daily = c.daily !== undefined;
   const roll = daily ? rollDailyChest(c.seed, c.bonus ?? 0) : rollChest(c.seed, armyById(c.army)!, c.at, c.tier);
-  const items: LootItem[] = [{ type: 'crowns', text: `${roll.crowns} crowns` }];
+  const items: LootItem[] = [{ type: 'crowns', text: `${roll.crowns} crowns`, n: roll.crowns }];
   if (apply) m.crowns += roll.crowns;
-  // (a content hero the roll lands on, not owned yet, is swapped for another by a side stream: those join on a milestone only)
-  const shards = new Map<string, number>();
-  roll.shards.forEach((k, i) => {
-    const kind = swapContent(m, k, c.seed, i);
-    shards.set(kind, (shards.get(kind) ?? 0) + 1);
-  });
-  for (const [kind, n] of shards) {
-    // (shards of a hero not owned count towards joining; of one owned, towards its rank)
-    const owned = m.unlocked.includes(kind);
-    const g = apply ? giveShards(m, kind, n) : null;
-    const text = owned ? `${n} ${UNITS[kind].name} shard${n > 1 ? 's' : ''}` : `${n} ${UNITS[kind].name} unlock shard${n > 1 ? 's' : ''}`;
-    items.push({ type: 'shards', text: g?.joined ? `${UNITS[kind].name} joins you` : text, ref: kind });
-  }
-  roll.recruits.forEach((r, i) => {
-    // (a hero draw gives unlock shards of a hero not owned, or 2 rank shards of one owned)
-    const kind = swapContent(m, r.kind, c.seed, 100 + i);
-    const owned = m.unlocked.includes(kind);
-    const n = owned ? 2 : r.prize ? CHEST_PRIZE_SHARDS : CHEST_HERO_SHARDS;
-    const g = apply ? giveShards(m, kind, n) : null;
-    items.push({ type: 'hero', text: g?.joined ? `${UNITS[kind].name} joins you` : owned ? `${UNITS[kind].name}: 2 shards (already yours)` : `${UNITS[kind].name}: ${n} unlock shards`, ref: kind, prize: r.prize });
-  });
+  const stones = chestStones(c);
+  if (apply) m.stones = (m.stones ?? 0) + stones;
+  items.push(...stoneItems(stones, 0));
+  // (XP tomes: on top of the rest, from a side stream of the chest's seed, so the crowns and gear roll as they always did)
+  const tomes = rollTomes(c.seed, daily ? 'daily' : chestKind(c.at), c.bonus ?? 0);
+  if (apply) grantTomes(m, tomes);
+  items.push(...tomeItems(tomes));
   // (equipment: last, as it was drawn last; granted once, when the chest is opened)
   for (const g of roll.gear) {
     if (apply) grantEquipment(m, g.item);
-    items.push({ type: 'gear', text: `${itemName(g.item)} (${RARITY_NAMES[g.item.rarity]}, Lv ${g.item.level})`, ref: g.item.base, rarity: g.item.rarity, equip: g.item, prize: g.item.rarity >= 5 });
+    items.push(gearItem(g));
   }
   return { at: c.at, kind: daily ? 'daily' : chestKind(c.at), army: c.army, items };
 }
@@ -273,6 +289,44 @@ export function openChest(m: Meta, index: number): Loot | null {
   if (!c || (c.daily === undefined && !armyById(c.army))) return null;
   m.stash.splice(index, 1);
   return lootOf(m, c, true);
+}
+
+/** What several chests held, added up (the Open all summary): the crowns, stones and tomes, and the gear, the best first (rarity, then level). */
+export interface LootSummary {
+  chests: number;
+  crowns: number;
+  stones: number;
+  tomes: TomeCounts;
+  gear: LootItem[];
+}
+export function sumLoot(loots: readonly Loot[]): LootSummary {
+  const out: LootSummary = { chests: loots.length, crowns: 0, stones: 0, tomes: {}, gear: [] };
+  for (const l of loots)
+    for (const it of l.items) {
+      if (it.type === 'crowns') out.crowns += it.n ?? 0;
+      else if (it.type === 'stones') out.stones += it.n ?? 0;
+      else if (it.type === 'tomes' && it.size) out.tomes = addTomes(out.tomes, { [it.size]: it.n ?? 0 });
+      else if (it.type === 'gear') out.gear.push(it);
+    }
+  // (a stable sort: pieces of the same rarity and level stay in the order their chests were opened)
+  out.gear.sort((a, b) => (b.rarity ?? 0) - (a.rarity ?? 0) || (b.equip?.level ?? 0) - (a.equip?.level ?? 0));
+  return out;
+}
+
+/**
+ * Open every chest in the stash at once, in the order a tap on the cart would open them one by one (the best waiting first, `bestChest`):
+ * each chest pays exactly what it would have, from its own seed, and the gear is given its ids in the same order. Returns what each held.
+ */
+export function openAll(m: Meta): Loot[] {
+  const out: Loot[] = [];
+  while (m.stash.length) {
+    const i = bestChest(m.stash);
+    const loot = openChest(m, i);
+    // (a chest that cannot be opened (an army no longer known) is left where it is; Open all stops rather than loop on it)
+    if (!loot) break;
+    out.push(loot);
+  }
+  return out;
 }
 
 /**

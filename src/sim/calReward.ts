@@ -1,5 +1,5 @@
 // What clearing a whole Calamity pays, on top of the maps' crowns and the gold chests (the owner's ask: something big for finishing):
-// a heap of crowns, hero shards (the pack's own rules, `giveShards`), a Legendary or Mythic piece of gear, and a title for the
+// a heap of crowns, summoning stones, a Legendary or Mythic piece of gear, and a title for the
 // ascension cleared (the badge shows on the victory screen and in the Calamity's menu). More at every ascension level.
 // Pure rules: no Pixi, no DOM; the draws come from side streams of the run's seed.
 
@@ -7,15 +7,16 @@ import { ascCrowns, ASC_MAX } from './ascension';
 import { itemName, grantEquipment, rollEquipment, type Rarity } from './equipment';
 import { mixSeed, Rng } from './rng';
 import type { Meta } from './meta';
-import { drawKind, giveShards } from './unlock';
-import { CHEST_PRIZE_SHARDS } from './unlockRules';
+import { CAL_STONES_PER_DRAW } from './unlockRules';
 
 /** Crowns a clear pays at ascension 0 (the maps' own bonus, 1,700, comes besides); each ascension level adds a fifth, as every calamity pay does. */
 export const CLEAR_CROWNS = 2400;
 export const clearCrowns = (level: number): number => Math.round(CLEAR_CROWNS * ascCrowns(level));
-/** Shard draws a clear pays: two, and one more for every two levels; each draw is a prize chest's worth of one hero's shards. */
+/** Stone draws a clear pays: two, and one more for every two levels; each draw is a prize chest's worth of stones. */
 export const clearDraws = (level: number): number => 2 + Math.floor(Math.max(0, Math.min(ASC_MAX, level)) / 2);
-export const SHARDS_PER_DRAW = CHEST_PRIZE_SHARDS;
+export const STONES_PER_DRAW = CAL_STONES_PER_DRAW;
+/** The summoning stones a clear pays. */
+export const clearStones = (level: number): number => clearDraws(level) * STONES_PER_DRAW;
 
 /** The title for clearing the Calamity at an ascension level (index 0 is the plain clear). */
 export const CLEAR_TITLES: readonly string[] = [
@@ -28,8 +29,8 @@ export const bestTitle = (m: Pick<Meta, 'calTitles'>): string | undefined => (m.
 /** What a clear paid, for the victory screen. */
 export interface ClearReward {
   crowns: number;
-  /** Shards given, by hero kind (unlock shards for a hero not owned, rank shards for one owned), and the heroes they brought in. */
-  shards: { kind: string; n: number; joined: boolean }[];
+  /** Summoning stones given. */
+  stones: number;
   /** The gear piece's name and rarity name. */
   gear: { name: string; rarity: number; base: string; level: number };
   title: string;
@@ -42,19 +43,8 @@ export interface ClearReward {
 export function payClear(m: Meta, seed: number, level: number, armyIdx = 0): ClearReward {
   const crowns = clearCrowns(level);
   m.crowns += crowns;
-  const rng = new Rng(mixSeed(seed, 0xca1d, level));
-  const shards: ClearReward['shards'] = [];
-  for (let i = 0; i < clearDraws(level); i++) {
-    const { kind } = drawKind(m, rng);
-    const got = giveShards(m, kind, SHARDS_PER_DRAW);
-    const n = got.unlock + got.rank;
-    if (!n && !got.crowns) continue;
-    const seen = shards.find((s) => s.kind === kind);
-    if (seen) {
-      seen.n += n;
-      seen.joined ||= got.joined;
-    } else shards.push({ kind, n, joined: got.joined });
-  }
+  const stones = clearStones(level);
+  m.stones = (m.stones ?? 0) + stones;
   // (the gear: Legendary, or Mythic from the sixth level, at the level of a milestone chest; from its own stream)
   const grng = new Rng(mixSeed(seed, 0xca1e, level));
   const rarity: Rarity = level >= 6 ? 5 : 4;
@@ -63,5 +53,5 @@ export function payClear(m: Meta, seed: number, level: number, armyIdx = 0): Cle
   const title = titleOf(level);
   const had = m.calTitles?.includes(level) ?? false;
   if (!had) (m.calTitles ??= []).push(level);
-  return { crowns, shards, gear: { name: itemName(item), rarity, base: item.base, level: item.level }, title, newTitle: !had, level };
+  return { crowns, stones, gear: { name: itemName(item), rarity, base: item.base, level: item.level }, title, newTitle: !had, level };
 }

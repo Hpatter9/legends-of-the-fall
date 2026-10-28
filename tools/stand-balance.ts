@@ -1,6 +1,6 @@
 // The Last Stand's balance: a greedy player holds the keep (`playStand`) with parties at several hero levels, and the report says
 // how many waves each gets through. `npm run balance -- --no-tables --stand` runs it through tools/balance.mjs's bundle;
-// `npm run stand-balance` runs it alone. Options: `--levels 1,10,20` `--attempts 30` `--castle maxed` `` `--waves 150`.
+// `npm run stand-balance` runs it alone. Options: `--levels 1,10,20` `--attempts 30` `--castle maxed` `` `--waves 150` `--smart` (the attentive buyer: tanks first, heals at 40%).
 
 import { BUILDINGS, maxLevel, newCastle, type BuildingId, type Castle } from '../src/sim/castle';
 import { TICK_MS } from '../src/sim/battle';
@@ -52,8 +52,24 @@ export function spend(s: Stand): void {
   }
 }
 
+/** A buyer who pays attention: keeps the tanks (knight, paladin) a level ahead of the rest, mends the king at 40%, takes a relic when one is affordable, then levels the tanks. */
+export function spendSmart(s: Stand): void {
+  const tanks = new Set(['knight', 'paladin']);
+  for (let guard = 0; guard < 40; guard++) {
+    const k = s.king;
+    if (k.hp < k.maxHp * 0.4 && s.run.gold >= healCost(s.run.wave) && healKing(s)) continue;
+    if (s.run.offer.length && s.run.gold >= offerCost(s) && buyRelic(s, 0)) continue;
+    const field = s.run.heroes.filter((h) => h.post);
+    const tankLow = field.filter((h) => tanks.has(h.kind)).sort((x, y) => x.lv - y.lv)[0];
+    const rest = Math.min(...field.map((h) => h.lv));
+    if (tankLow && tankLow.lv <= rest + 1 && !levelBlock(s, tankLow.id) && buyLevel(s, tankLow.id)) continue;
+    if (!levelBlock(s) && buyLevel(s)) continue;
+    break;
+  }
+}
+
 /** One run from a seed: the waves the party holds, until the king falls or `maxWave` is passed. */
-export function playStand(setup: StandSetup, seed: number, party: readonly string[] = PARTIES.eight, maxWave = 150): Played {
+export function playStand(setup: StandSetup, seed: number, party: readonly string[] = PARTIES.eight, maxWave = 150, buyer: (s: Stand) => void = spend): Played {
   const run = newStandRun(seed, party, ARMIES.map((a) => a.id));
   const s = startStand(run, setup);
   startFirstWave(s);
@@ -65,7 +81,7 @@ export function playStand(setup: StandSetup, seed: number, party: readonly strin
     stepStand(s);
     ticks++;
     s.notes.length = 0;
-    if (s.phase === 'break' && was !== 'break') spend(s);
+    if (s.phase === 'break' && was !== 'break') buyer(s);
     // (and gold earned in a wave is spent at the next chance; a break is the only time the greedy player looks)
     was = s.phase;
     if (ticks % 10 === 0) peak = Math.max(peak, s.b.units.filter((u) => u.alive && u.side === 'foe').length);
@@ -80,7 +96,8 @@ export function standTable(): void {
   const maxWave = arg('--waves', 150);
   const levels = process.argv.includes('--levels') ? process.argv[process.argv.indexOf('--levels') + 1].split(',').map(Number) : [1, 10, 20, 40, 60, 80, 100];
   const party = PARTIES.eight;
-  console.log(`\nThe Last Stand: ${attempts} greedy runs a row (${party.join(', ')}, every hero at the level, nothing worn, ${process.argv.includes('--castle') ? `a castle at ${process.argv[process.argv.indexOf('--castle') + 1]}` : 'no castle'}); the wave the king fell in (a run past wave ${maxWave} is stopped there)`);
+  const smart = process.argv.includes('--smart');
+  console.log(`\nThe Last Stand: ${attempts} ${smart ? 'attentive' : 'greedy'} runs a row (${party.join(', ')}, every hero at the level, nothing worn, ${process.argv.includes('--castle') ? `a castle at ${process.argv[process.argv.indexOf('--castle') + 1]}` : 'no castle'}); the wave the king fell in (a run past wave ${maxWave} is stopped there)`);
   console.log('level  median  mean   min   max   kills(mean)  peak foes  ms/tick');
   for (const level of levels) {
     const waves: number[] = [];
@@ -88,7 +105,7 @@ export function standTable(): void {
     let peak = 0;
     let ms = 0;
     for (let a = 0; a < attempts; a++) {
-      const r = playStand(setupAtLevel(level, castleFor()), mixSeed(a + 1, 0x57a0), party, maxWave);
+      const r = playStand(setupAtLevel(level, castleFor()), mixSeed(a + 1, 0x57a0), party, maxWave, smart ? spendSmart : spend);
       waves.push(r.wave);
       kills += r.kills;
       peak = Math.max(peak, r.peak);

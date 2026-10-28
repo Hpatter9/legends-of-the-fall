@@ -40,7 +40,7 @@ export type Beat =
   | { k: 'heal'; share: number }
   | { k: 'ward'; share: number; ms: number }
   | { k: 'haste'; ms: number }
-  /** Every ally's skill meter jumps by `amount`. */
+  /** Every ally's skill meter (a hero's pool: half a point of its pool's share for each) jumps by `amount`. */
   | { k: 'charge'; amount: number }
   /** Every ally takes half damage for `ms`. */
   | { k: 'guard'; ms: number }
@@ -75,7 +75,7 @@ export const COMBOS: readonly Combo[] = [
   },
   {
     id: 'arcaneCouncil', heroes: ['wizard', 'lightningMage', 'sage', 'warlock', 'timeWitch'], name: 'The Arcane Council', move: 'Elemental Cataclysm', tone: 'arcane',
-    text: 'Fire, lightning and starlight crash on every foe, leaving them burning for 4s; every ally is shielded and its skill meter jumps by 40',
+    text: 'Fire, lightning and starlight crash on every foe, leaving them burning for 4s; every ally is shielded and its pool fills by a fifth',
     beats: [{ k: 'hurt', mult: 0.9 }, { k: 'burn', mult: 0.08, ms: 4000, kind: 'burn' }, { k: 'ward', share: 0.12, ms: 4000 }, { k: 'charge', amount: 40 }],
   },
   {
