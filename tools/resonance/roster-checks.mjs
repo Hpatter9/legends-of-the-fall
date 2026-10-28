@@ -52,7 +52,11 @@ try {
       await page.waitForTimeout(40);
       assert.equal(await page.locator('.heroDetail').evaluate(e => e.scrollWidth <= e.clientWidth + 1), true, `${id} dossier fits`);
       assert.ok(await page.locator('.heroDetail canvas').count(), `${id}: art canvas`);
-      if (representative.includes(id)) await page.screenshot({ path: `${out}/portrait-${id}-${width}.png` });
+      if (representative.includes(id)) {
+        // Let the dossier's 200 ms opening fade finish before recording evidence.
+        await page.waitForTimeout(250);
+        await page.screenshot({ path: `${out}/portrait-${id}-${width}.png` });
+      }
       await page.locator('.heroBack').click();
     }
     await page.evaluate(() => localStorage.setItem('legends.meta', JSON.stringify(window.__game.meta)));
