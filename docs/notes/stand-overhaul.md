@@ -178,7 +178,7 @@ posts move out to the dais's edge; keep the run harder, at about 4, 9, 10, 14, 2
 - **The backdrop**: the throne room's back wall, dimmed, over deep stone (`.stSky`, over the page's sky while the Last Stand is up).
 - **The brass**: the top bar with the battle crest under it, the bottom deck with its ribbon, the hero bar and spell cards in brass-edged green
   stone, the buy buttons; the wave banner is the crest over a gilt plate ("THEY BREAK THROUGH / WAVE n"), a boss wave's red ("A BOSS COMES")
-  with a red light breathing round the screen (still under reduced motion).
+  with a red light breathing round the screen three times (a finite animation, as `test/no-flicker.test.ts` asks; still under reduced motion).
 - **Deploy**: the eight start at their ring-plan posts; every tile a hero may be posted on is faintly lit and their posts glow gold (breathing;
   still under reduced motion). The tray: "Hold the throne", the eight in the heroes' brass frames (a stripe of each hero's colour), tap two to
   swap them (or a hero on the field, then another), drag a card onto a tile to post it there (onto another hero: they swap), Auto-place, Begin.
@@ -198,3 +198,9 @@ the banner still to show it). `tools/stand/overhaul.mjs` checks the camera and t
 
 - The heroes are small at the opening zoom on a 2x screen (0.5); a pinch brings them up. On a 3x phone it opens at 2/3.
 - A hero's ring and the breaches' smoke are drawn every frame (a few dozen shapes); a real-phone check of the frame time is still owed.
+
+Results (phase B): typecheck and `npm run web` pass; `npm test -- stand no-flicker` 45 of 45; the full `npm test` 1262 of 1263 before the boss
+light's animation was made finite (the one failure was `no-flicker`'s "no looping css animation changes brightness", then fixed and re-run);
+`tools/stand/smoke.mjs` passes (one first try failed at `enter`, before the page's home was ready: a flake of the script's own timing);
+`tools/stand/overhaul.mjs` 21 of 21; `tools/stand/overhaul-shots.mjs` at the three sizes and reduced motion with no page errors.
+The shot scripts use their own ports (8151, 8152), as other work runs the stand scripts on 8139 at the same time.
