@@ -1,11 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { loadMeta, newMeta, pickStarter, pullCost, pullOnce, PULL_COST, recruit, startedMeta, saveMeta, type Meta } from '../src/sim/meta';
-import { closest, giveShards, haveOf, needOf, ownedCount, swapContent, toCollect } from '../src/sim/unlock';
-import { CONTENT_KINDS, CHEST_HERO_SHARDS, isContent, NEED_FIRST, NEED_LAST, PITY_PULLS, PULL_HEROES, unlockNeed } from '../src/sim/unlockRules';
+import { loadMeta, newMeta, pickStarter, pullOnce, useStones, startedMeta, saveMeta, type Meta } from '../src/sim/meta';
+import { closest, giveShards, haveOf, needOf, ownedCount, toCollect } from '../src/sim/unlock';
+import { CONTENT_KINDS, isContent, NEED_FIRST, NEED_LAST, PITY_PULLS, PULL_HEROES, unlockNeed } from '../src/sim/unlockRules';
 import { CONTENT_HEROES, contentOf, grantContent, lockInfo } from '../src/sim/contentHeroes';
 import { ARMIES, armyById } from '../src/sim/armies';
-import { chestSeed, openChest, peekChest, rollChest } from '../src/sim/armyStars';
+import { chestSeed, openChest, peekChest } from '../src/sim/armyStars';
 import { ALL_HEROES, HEROES } from '../src/sim/units';
 import { starterPacks } from '../src/sim/starter';
 import { OWNED_BOOST, ownedWeight, pityAt } from '../src/sim/unlockRules';
@@ -14,6 +14,8 @@ const store = () => {
   const data: Record<string, string> = {};
   return { setItem: (k: string, v: string) => void (data[k] = v), getItem: (k: string) => data[k] ?? null, data };
 };
+/** The shard rules are tested without the lucky roll (one stone in a hundred is a whole hero: see `summon-stones.test.ts`). */
+const NO_LUCK = { lucky: false };
 /** A new save past the starter pick (pack 0). */
 const fresh = (seed: number): Meta => {
   const m = newMeta(seed);
@@ -76,7 +78,7 @@ test('a pull gives one shard of one hero: unlock shards if not owned, rank shard
   for (let i = 0; i < 400; i++) {
     const owned = m.unlocked.includes(pullPeek(m));
     const before = { unlock: { ...m.unlock }, shards: { ...m.shards }, n: m.unlocked.length };
-    const p = pullOnce(m);
+    const p = pullOnce(m, NO_LUCK);
     if (owned) {
       assert.equal(p.unlock, undefined);
       assert.equal(m.shards[p.kind] ?? 0, (before.shards[p.kind] ?? 0) + (p.crowns ? 0 : 1));
@@ -94,18 +96,18 @@ test('a pull gives one shard of one hero: unlock shards if not owned, rank shard
   assert.equal(new Set(m.unlocked).size, m.unlocked.length);
 });
 /** The kind the next pull will give (the pull on a copy). */
-const pullPeek = (m: Meta): string => pullOnce(JSON.parse(JSON.stringify(m))).kind;
+const pullPeek = (m: Meta): string => pullOnce(JSON.parse(JSON.stringify(m)), NO_LUCK).kind;
 
 test('a first session of pulls brings the party to five', () => {
-  // (about 900 crowns of a first session: nine pulls at the base price, and the first heroes cost 2 and 3 shards)
+  // (a first session has about ten stones: the first clear's chest, the daily and a bronze chest from the shop; the first heroes cost 2 and 3 shards)
   let reached = 0;
   for (let seed = 1; seed <= 40; seed++) {
     const m = fresh(seed);
-    m.crowns = 1000;
-    while (recruit(m, 1)) if (m.unlocked.length >= 5) break;
+    m.stones = 10;
+    while (useStones(m, 1, NO_LUCK)) if (m.unlocked.length >= 5) break;
     if (m.unlocked.length >= 5) reached++;
   }
-  assert.ok(reached >= 30, `${reached} of 40 saves had five heroes after 1000 crowns of pulls`);
+  assert.ok(reached >= 30, `${reached} of 40 saves had five heroes after ten stones`);
 });
 
 test('the pity: after PITY_PULLS pulls without unlock shards, the pull is shards of the hero closest to joining', () => {
@@ -119,7 +121,7 @@ test('the pity: after PITY_PULLS pulls without unlock shards, the pull is shards
   let pities = 0;
   for (let i = 0; i < 300 && toCollect(m).length; i++) {
     const wait = pityAt(ownedCount(m));
-    const p = pullOnce(m);
+    const p = pullOnce(m, NO_LUCK);
     if (p.unlock) dry = 0;
     else dry++;
     assert.ok(dry < wait, `${dry} pulls without unlock shards in a row`);
@@ -132,13 +134,13 @@ test('the pity: after PITY_PULLS pulls without unlock shards, the pull is shards
   // (with every hero owned the pity has nothing to give: a plain draw and a rank shard)
   const full = startedMeta(6);
   full.unlocked = [...ALL_HEROES];
-  for (let i = 0; i < 10; i++) assert.equal(pullOnce(full).pity, undefined);
+  for (let i = 0; i < 10; i++) assert.equal(pullOnce(full, NO_LUCK).pity, undefined);
   // (a counter at the limit sends the very next pull to the nearest hero)
   const n = fresh(7);
   const target = toCollect(n)[4];
   n.unlock = { [target]: 1 };
   n.unlockDry = pityAt(ownedCount(n)) - 1;
-  const p = pullOnce(n);
+  const p = pullOnce(n, NO_LUCK);
   assert.equal(p.kind, target);
   assert.equal(p.pity, true);
   assert.equal(p.isNew, true, 'two shards fill the first bar');
@@ -147,7 +149,7 @@ test('the pity: after PITY_PULLS pulls without unlock shards, the pull is shards
 test('pulls never give a hero earned by content, whatever the seed (an owned one takes rank shards)', () => {
   for (let seed = 1; seed <= 40; seed++) {
     const m = fresh(seed);
-    for (let i = 0; i < 300; i++) pullOnce(m);
+    for (let i = 0; i < 300; i++) pullOnce(m, NO_LUCK);
     for (const k of CONTENT_KINDS) {
       assert.ok(!m.unlocked.includes(k), `${k} came from a pull`);
       assert.equal(m.unlock?.[k] ?? 0, 0);
@@ -201,47 +203,23 @@ test('a content hero joins on its milestone, once, and stays', () => {
   assert.equal(m.unlock && Object.keys(m.unlock).length, undefined);
 });
 
-test('chests give unlock shards, not whole heroes; a content hero rolled is swapped for a pullable one', () => {
+test('chests give summoning stones, never a shard or a hero directly: nothing joins until a stone is used', () => {
   const m = startedMeta(9);
   m.unlocked = HEROES.slice(0, 3) as unknown as string[];
   m.party = [...m.unlocked];
   m.armies.golems = { best: 15, won: 15, clears: 1, stars: {}, met: { 0: 7, 1: 7, 2: 7, 3: 1 } };
   const a = armyById('golems')!;
-  let joinedByChest = 0;
   for (let seed = 1; seed <= 80; seed++) {
-    const before = m.unlocked.length;
     m.stash = [{ army: a.id, at: 10, tier: 0, seed }];
     const preview = peekChest(m, 0)!;
-    const total = () => Object.values(m.unlock ?? {}).reduce((a, b) => a + b, 0) + Object.values(m.shards).reduce((a, b) => a + b, 0) + m.unlocked.length * 1000;
-    const had = total();
+    const had = { stones: m.stones ?? 0, unlocked: [...m.unlocked], unlock: { ...(m.unlock ?? {}) }, shards: { ...m.shards } };
     openChest(m, 0);
-    assert.ok(total() > had, 'a gold chest always gives shards');
-    assert.ok(m.unlocked.length - before <= 2);
-    joinedByChest += m.unlocked.length - before;
-    assert.ok(preview.items.some((i) => i.type === 'hero'));
-    for (const k of CONTENT_KINDS) assert.ok(!m.unlocked.includes(k), `${k} came from a chest`);
+    assert.ok((m.stones ?? 0) > had.stones, 'a gold chest always holds stones');
+    assert.deepEqual(m.unlocked, had.unlocked);
+    assert.deepEqual(m.unlock ?? {}, had.unlock);
+    assert.deepEqual(m.shards, had.shards);
+    assert.ok(preview.items.some((i) => i.type === 'stones'));
   }
-  assert.ok(joinedByChest >= 1);
-  // (the prize of a chest the old way would have recruited at once: now a bar of the same shards)
-  const n = fresh(11);
-  const seed = 5;
-  const roll = rollChest(seed, a, 10);
-  n.stash = [{ army: a.id, at: 10, tier: 0, seed }];
-  openChest(n, 0);
-  const prize = swapContent(n, roll.recruits[0].kind, seed, 100);
-  const got = (n.unlock?.[prize] ?? 0) + (n.unlocked.includes(prize) && !fresh(11).unlocked.includes(prize) ? 1 : 0) + (n.shards[prize] ?? 0);
-  assert.ok(got >= 1);
-  assert.ok(CHEST_HERO_SHARDS >= 1);
-  // (a content hero rolled but not owned is always swapped to a pullable one, the same one every time)
-  for (let i = 0; i < 20; i++) {
-    const s = swapContent(fresh(1), 'tyrant', 1234, i);
-    assert.ok(PULL_HEROES.includes(s));
-    assert.equal(s, swapContent(fresh(1), 'tyrant', 1234, i));
-  }
-  const owner = fresh(1);
-  owner.unlocked.push('tyrant');
-  assert.equal(swapContent(owner, 'tyrant', 1234, 0), 'tyrant');
-  void ARMIES;
 });
 
 test('an old save keeps every hero it owns, and one that has met a milestone gets that hero', () => {
@@ -270,12 +248,12 @@ test('an old save keeps every hero it owns, and one that has met a milestone get
   assert.deepEqual(again.unlock, { paladin: 4 }, 'owned, content and unknown heroes drop out of the bars');
 });
 
-test('pulls and chests are deterministic', () => {
+test('stones and chests are deterministic', () => {
   const run = () => {
     const m = fresh(33);
-    m.crowns = 100000;
+    m.stones = 80;
     const kinds: string[] = [];
-    for (let i = 0; i < 8; i++) kinds.push(...recruit(m, 10)!.map((p) => p.kind));
+    for (let i = 0; i < 8; i++) kinds.push(...useStones(m, 10)!.map((p) => p.kind));
     m.stash = [{ army: 'orcs', at: 5, tier: 1, seed: chestSeed(33, ARMIES[0], 5) }];
     openChest(m, 0);
     return { kinds, unlocked: m.unlocked, unlock: m.unlock, shards: m.shards, crowns: m.crowns };
@@ -299,15 +277,14 @@ test('a hero not owned says how to get it: a milestone line and progress, or its
   assert.deepEqual([begun.now, begun.need, begun.named], [1, needOf(m), true]);
 });
 
-test('a pull costs the same whatever the roster: the price is flat', () => {
+test('a stone costs a stone whatever the roster: ten stones are ten pulls', () => {
   const rich = fresh(40);
   rich.unlocked = [...PULL_HEROES];
-  rich.crowns = 100000;
-  recruit(rich, 10);
-  assert.equal(rich.crowns, 100000 - 900);
-  recruit(rich, 1);
-  assert.equal(rich.crowns, 100000 - 900 - PULL_COST);
-  assert.equal(pullCost(1), PULL_COST);
+  rich.stones = 25;
+  useStones(rich, 10);
+  assert.equal(rich.stones, 15);
+  useStones(rich, 1);
+  assert.equal(rich.stones, 14);
 });
 
 test('the odds fade: a pull is a new hero less and less often as the roster grows, and the pity waits longer', () => {
@@ -323,7 +300,7 @@ test('the odds fade: a pull is a new hero less and less often as the roster grow
       const copy = JSON.parse(JSON.stringify(m)) as Meta;
       copy.pulls = i;
       copy.unlockDry = 0;
-      if (pullOnce(copy).unlock) fresh_++;
+      if (pullOnce(copy, NO_LUCK).unlock) fresh_++;
     }
     return fresh_ / N;
   };
@@ -342,7 +319,7 @@ test('unlock shards are spent when a hero joins: no bar, no rank shards, no stal
     for (let i = 0; i < 400 && joins < 6; i++) {
       const was = m.unlocked.length;
       const need = needOf(m);
-      const p = pullOnce(m);
+      const p = pullOnce(m, NO_LUCK);
       if (m.unlocked.length === was) continue;
       joins++;
       assert.equal(p.isNew, true);

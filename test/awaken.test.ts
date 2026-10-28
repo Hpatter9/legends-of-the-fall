@@ -109,7 +109,7 @@ test('a repeat always has a use: shards until nothing is left to buy, then crown
   for (let i = 0; i < 4000 && !sawCrowns; i++) {
     const before = { ...m.shards };
     const crowns = m.crowns;
-    const p = pullOnce(m);
+    const p = pullOnce(m, { lucky: false });
     if (p.unlock) continue;
     if ((before[p.kind] ?? 0) >= SHARD_CAP) {
       sawCrowns = true;

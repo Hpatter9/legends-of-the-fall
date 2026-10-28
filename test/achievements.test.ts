@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ACHIEVEMENTS, achievementById, checkAchievements, claimAchievement, unclaimed, type AchievementCtx } from '../src/sim/achievements';
+import { ACHIEVEMENT_STONES, ACHIEVEMENTS, achievementById, BIG_STONES, CENTURION_STONES, checkAchievements, claimAchievement, stonesOfAchievement, unclaimed, type AchievementCtx } from '../src/sim/achievements';
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { place, startBattle, type Battle } from '../src/sim/battle';
 import { BOSS_BANDS, BOSS_IDS } from '../src/sim/foes';
@@ -235,4 +235,32 @@ test('an older save, whose achievements paid when earned, loads with them all cl
   const back = loadMeta(1, { getItem: () => JSON.stringify(old) });
   assert.deepEqual(back.claimed, ['firstWin', 'stage10']);
   assert.equal(unclaimed(back).length, 0);
+});
+
+test('an achievement pays summoning stones with its crowns: two, a few more for the big milestones, once', () => {
+  assert.equal(ACHIEVEMENT_STONES, 2);
+  for (const a of ACHIEVEMENTS) assert.ok(stonesOfAchievement(a) >= 2 && stonesOfAchievement(a) <= 5, a.id);
+  const big = ACHIEVEMENTS.filter((a) => stonesOfAchievement(a) === BIG_STONES).map((a) => a.id).sort();
+  assert.deepEqual(big, ['allHeroes', 'bosses', 'level50', 'stage30', 'tower20']);
+  assert.equal(stonesOfAchievement(achievementById('level100')!), CENTURION_STONES);
+  assert.equal(stonesOfAchievement(achievementById('firstWin')!), 2);
+  const meta = startedMeta(1);
+  const stones = meta.stones ?? 0;
+  const got = checkAchievements(ctx({ meta, won: true, stage: 30, battle: fight(['knight']) }));
+  assert.equal(meta.stones ?? 0, stones, 'nothing is paid until it is claimed');
+  for (const a of got) claimAchievement(meta, a.id);
+  assert.equal((meta.stones ?? 0) - stones, got.reduce((n, a) => n + stonesOfAchievement(a), 0));
+  assert.ok(got.some((a) => a.id === 'stage30'));
+  const after = meta.stones;
+  for (const a of got) assert.equal(claimAchievement(meta, a.id), 0);
+  assert.equal(meta.stones, after, 'a claim pays its stones once');
+});
+
+test('an older save is not paid stones again for achievements it already claimed', () => {
+  const old = { ...startedMeta(3), achievements: ['firstWin', 'stage30'], claimed: ['firstWin', 'stage30'], stones: 7 } as Record<string, unknown>;
+  const back = loadMeta(1, { getItem: () => JSON.stringify(old) });
+  assert.equal(back.stones, 7);
+  assert.equal(claimAchievement(back, 'firstWin'), 0);
+  assert.equal(claimAchievement(back, 'stage30'), 0);
+  assert.equal(back.stones, 7);
 });

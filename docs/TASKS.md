@@ -53,6 +53,17 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 - **Release gate:** update the UI notes, board handoff, and PR with actual results. Keep PR #118 draft until validation and visual review are complete. Its reservation remains in place while blocked.
 - **Reference:** [recorded handoff](notes/ui-coordination-handoff.md).
 
+### SUMMON-002 — Summoning stones economy
+
+- **Goal:** crowns buy chests; chests (and every other shard source) give summoning stones; a stone is one shard, one in 100 a whole unowned hero; the roster grows about half as fast. Owner's follow-up: silver chests hold 8 stones and gold 15; codex milestones pay 1 stone and achievements 2 (3 or 5 for the big ones); each codex entry pays 1 stone the first time it is discovered (old saves only for entries discovered from now on); the late pace is fine as it is; the 10-stone gift, daily stock and rising price stay.
+- **Status:** ready for review (origin/main 0.170.0 merged in; the owner's chest, codex and achievement decisions done).
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/summon-stones`
+- **Allowed files or systems:** `src/sim/{meta,unlock,unlockRules,armyStars,calReward,chestShop,codex,achievements}.ts`, `src/{gacha,hall,shopView,home,calClear,codexView,achievementsView}.ts`, tests, `tools/unlockPace.ts`. Minimal: `main.ts`, `index.html`. Not the castle or battle tabs, nor WORLD files.
+- **Completion criteria:** stones, shop, sources, old-save grant, tests, pace about 2x slower; owner approves the UI.
+- **Validation:** typecheck passed; `npm test -- summon-stones achievements codex hero-shards meta armyStars daily calMapRewards awaken shards new-lines starter unlock modes` (162 tests, with the entry stones) and `npm test -- stand` (29, after the merge) passed; `npm run web` built; `npm run unlock-pace -- --seeds 30` re-run (table in the handoff); chest shop re-shot at 393x852 with `tools/ui/summon-stones-shots.mjs`, and the achievements and codex pages checked at 393x852. Not re-checked this round: 360x780 and 412x915.
+- **Handoff:** `docs/notes/summon-stones.md`.
+
 ## Completed work
 
 | ID | Task | Result | Reference |

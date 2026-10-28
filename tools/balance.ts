@@ -28,7 +28,7 @@ import { FIELD_BANDS } from '../src/sim/foes';
 import { chooseOption, leaveEvent } from '../src/sim/events';
 import { fightXp, gainXp, levelOfKind } from '../src/sim/levels';
 import { BUILDINGS, maxLevel, newCastle, nextCost, upgrade, xpRate, type BuildingId, type Castle } from '../src/sim/castle';
-import { startedMeta, PULL_COST, heroRank, rankMult, recruit, type Meta } from '../src/sim/meta';
+import { startedMeta, heroRank, rankMult, stonesOf, useStones, type Meta } from '../src/sim/meta';
 import { boostOf, bandFor, finish, isBossStage, newRun, type Owned, type Run, SQUAD, stageBoost, startStage, summon } from '../src/sim/run';
 import { awakenStats, awaken } from '../src/sim/awaken';
 import { ARMIES, armyById, settleWave } from '../src/sim/armies';
@@ -388,7 +388,11 @@ function spendCrowns(meta: Meta): void {
     castleBudget -= cost;
     upgrade(meta, id);
   }
-  while (meta.crowns >= PULL_COST) recruit(meta, 1);
+  // (the sweeps turn spare crowns into stones at the old pull price and use them at once: they measure fights, not the pace of the shop)
+  const bought = Math.floor(meta.crowns / 100);
+  meta.crowns -= bought * 100;
+  meta.stones = stonesOf(meta) + bought;
+  while (stonesOf(meta) > 0) useStones(meta, 1);
   // (a player awakens a hero as soon as its shards allow; `--no-awaken` plays the climb as it was before awakening, to compare)
   // (`--force-awaken` is the worst case for the check: the five best heroes are at both steps from the start of the climb; `--force-rank4` is its control, the same heroes at the top shard rank only)
   if (process.argv.includes('--force-rank4')) for (const k of bestParty(meta)) meta.shards[k] = Math.max(meta.shards[k] ?? 0, 10);
