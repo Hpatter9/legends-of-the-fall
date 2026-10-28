@@ -71,6 +71,11 @@ export function toastJoined(kinds: readonly string[]): void {
   kinds.forEach((k, i) => setTimeout(() => toast(`${UNITS[k].name} joins you`), i * 2800));
 }
 
+/** The one-time toast for a save from before the summoning stones: the stones it was given so it is not set back. */
+export function toastStones(n: number): void {
+  toast(`${n} summoning stones for your trouble: crowns now buy chests, and chests hold stones`);
+}
+
 function toast(line: string): void {
   const el = document.createElement('div');
   el.className = 'toast';

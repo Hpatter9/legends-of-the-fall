@@ -1,7 +1,8 @@
 // Lasting progress across runs, and the recruiting draw (the usual gacha). Crowns are earned for each stage won and at
-// a run's end; they buy pulls that unlock hero kinds. A repeat of a kind gives a shard of it; shards raise the kind's
-// rank, and each rank makes its heroes a little stronger in every fight. Pure rules: no Pixi, no DOM; every pull draws
-// from a side stream of the meta seed and the pull counter, so it replays exactly.
+// a run's end; they buy chests (`chestShop.ts`), and chests hold summoning stones. Using a stone is the pull: one shard
+// of a hero (and, one time in `LUCKY_ODDS`, a whole hero not yet owned). A repeat of a kind gives a shard of it; shards
+// raise the kind's rank, and each rank makes its heroes a little stronger in every fight. Pure rules: no Pixi, no DOM;
+// every pull draws from a side stream of the meta seed and the pull counter, so it replays exactly.
 
 import { newCastle, readCastle, readChapel, readWorks, spellBudget, type Castle, type Works } from './castle';
 import { newLoadout, readLoadout, STARTER_SPELLS, type Loadout } from './spells';
@@ -21,14 +22,13 @@ import { readCodex, readCodexClaimed, type CodexRecord } from './codex';
 import { readCombosSeen } from './combos';
 import { readTickets } from './autoReplay';
 import { grandfather } from './modeUnlock';
-import { drawKind, giveShards } from './unlock';
-import { DUPLICATE_SHARDS, PULL_HEROES } from './unlockRules';
+import { drawKind, giveShards, toCollect } from './unlock';
+import { DUPLICATE_SHARDS, LUCKY_ODDS, LUCKY_RANK_SHARDS, PULL_HEROES, STONES_GIFT } from './unlockRules';
 import { grantContent } from './contentHeroes';
+import { readShop } from './chestShop';
 import { readScenes } from './sceneRules';
 
-export const PULL_COST = 100;
-export const PULL10_COST = 900;
-export { DUPLICATE_SHARDS };
+export { DUPLICATE_SHARDS, LUCKY_ODDS, LUCKY_RANK_SHARDS };
 /** Shards each rank needs in all: rank 1 at 1, rank 2 at 3, rank 3 at 6, rank 4 at 10. */
 export const RANK_SHARDS: readonly number[] = [1, 3, 6, 10];
 export const MAX_RANK = RANK_SHARDS.length;
@@ -37,10 +37,19 @@ export const PARTY_SIZE = 5;
 /** Hp and attack grow by this for each rank a hero kind has (1.05 until ranking up became the player's choice: see `docs/notes/hero-progress.md`). */
 export const RANK_MULT = 1.08;
 const SALT = 0x6ac4a;
+const LUCKY_SALT = 0x1c4b5;
 
 export interface Meta {
   seed: number;
   crowns: number;
+  /** Summoning stones held (`chestShop.ts` sells them in chests; using one is a pull). Saves from before have none, and are given `STONES_GIFT` on load. */
+  stones?: number;
+  /** The chest shop's sales on a day (a date, yyyymmdd): the stock is per day, so a new date starts again (`chestShop.ts`). */
+  shop?: { day: number; sold: Partial<Record<'bronze' | 'silver' | 'gold', number>> };
+  /** The chests bought from the shop so far (each one's contents roll from a side stream of the seed and this count). */
+  shopBuys?: number;
+  /** Stones a save from before the stones was given on load, for the page to say so once (then it is deleted). */
+  stoneGift?: number;
   /** Hero kinds unlocked for summoning. */
   unlocked: string[];
   /** The party: the hero kinds a run's summons draw from (`partySlots` of them, all unlocked). */
@@ -163,10 +172,12 @@ export interface Pull {
   pity?: boolean;
   /** Crowns a repeat gives instead once the kind's shards have nothing left to buy (`SHARD_CAP`). */
   crowns?: number;
+  /** The lucky roll (one stone in `LUCKY_ODDS`): a whole hero not yet owned joined at rank 0 (`isNew`), or, with every hero owned, `LUCKY_RANK_SHARDS` rank shards (`shards`). */
+  lucky?: boolean;
 }
 
 /** A brand-new save: no hero yet, only the three starter packs to pick from (`pickStarter`). */
-export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, unlocked: [], party: [], starter: { packs: starterPacks(seed), pick: null }, pulls: 0, sinceNew: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], opened: [], achievements: [], claimed: [], stash: [], ranked: {} });
+export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, stones: 0, unlocked: [], party: [], starter: { packs: starterPacks(seed), pick: null }, pulls: 0, sinceNew: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], opened: [], achievements: [], claimed: [], stash: [], ranked: {} });
 
 /** A save past the pick with the old starting five unlocked and in the party: what the saves from before the pick have, and what the tests and tools play with. */
 export function startedMeta(seed: number): Meta {
@@ -293,11 +304,41 @@ function readStars(raw: unknown): Record<string, number> {
   return out;
 }
 
-export const pullCost = (count: 1 | 10) => (count === 10 ? PULL10_COST : PULL_COST);
+/** The stones a summon costs: one each. */
+export const stoneCost = (count: 1 | 10): number => count;
+/** The stones held. */
+export const stonesOf = (m: Meta): number => m.stones ?? 0;
 
-/** One pull (no payment): shards of one hero. A hero not yet owned gets unlock shards (it joins when they fill its bar); one owned gets rank shards. Every `PITY_PULLS` pulls without unlock shards, the pull is the hero closest to joining. */
-export function pullOnce(m: Meta): Pull {
+/** What forces a draw (the tests' and the page's debug hook): the lucky roll lands or does not, whatever the stream says. */
+export interface PullOpts {
+  lucky?: boolean;
+}
+
+/**
+ * One stone used (no payment): one shard of one hero. A hero not yet owned gets an unlock shard (it joins when they fill its bar); one owned gets a rank
+ * shard. Every `PITY_PULLS` pulls without unlock shards, the pull is the hero closest to joining. One stone in `LUCKY_ODDS` is the lucky roll instead:
+ * a whole hero not yet owned joins at rank 0 (never a content hero), or, with every pullable hero owned, `LUCKY_RANK_SHARDS` rank shards of a hero.
+ * The lucky roll has a side stream of its own, so the shard draws are the same as before it existed.
+ */
+export function pullOnce(m: Meta, opts: PullOpts = {}): Pull {
   const rng = Rng.from(m.seed, SALT, m.pulls);
+  const luck = Rng.from(m.seed, LUCKY_SALT, m.pulls);
+  const lucky = opts.lucky ?? luck.int(1, LUCKY_ODDS) === 1;
+  if (lucky) {
+    m.pulls++;
+    const left = toCollect(m);
+    if (left.length) {
+      const kind = luck.pick(left);
+      m.unlocked.push(kind);
+      delete m.unlock?.[kind];
+      m.unlockDry = 0;
+      return { kind, isNew: true, shards: 0, lucky: true };
+    }
+    // (everything is owned: a big batch of rank shards of a hero, as the odds of a pull would pick it)
+    const { kind } = drawKind(m, rng);
+    const g = giveShards(m, kind, LUCKY_RANK_SHARDS);
+    return { kind, isNew: false, shards: g.rank, lucky: true, ...(g.crowns ? { crowns: g.crowns } : {}) };
+  }
   const { kind, pity } = drawKind(m, rng);
   m.pulls++;
   const g = giveShards(m, kind, DUPLICATE_SHARDS);
@@ -309,12 +350,12 @@ export function pullOnce(m: Meta): Pull {
   return out;
 }
 
-/** Pay for and make 1 or 10 pulls. Null when too poor. */
-export function recruit(m: Meta, count: 1 | 10): Pull[] | null {
-  const cost = pullCost(count);
-  if (m.crowns < cost) return null;
-  m.crowns -= cost;
-  return Array.from({ length: count }, () => pullOnce(m));
+/** Use 1 or 10 summoning stones, a pull for each. Null when there are too few stones. */
+export function useStones(m: Meta, count: 1 | 10, opts: PullOpts = {}): Pull[] | null {
+  const cost = stoneCost(count);
+  if (stonesOf(m) < cost) return null;
+  m.stones = stonesOf(m) - cost;
+  return Array.from({ length: count }, () => pullOnce(m, opts));
 }
 
 const KEY = 'legends.meta';
@@ -331,6 +372,12 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       // (saves from before parties have the first five unlocked)
       m.party = readParty(m.party, m.unlocked);
       m.pulls = m.pulls | 0;
+      // (saves from before the stones have none; one that had picked its heroes is given a few pulls' worth, once, so it is not set back mid-collection)
+      m.stones = typeof m.stones === 'number' ? Math.max(0, Math.floor(m.stones)) : m.starter?.pick === null ? 0 : (m.stoneGift = STONES_GIFT);
+      m.shopBuys = Math.max(0, (m.shopBuys ?? 0) | 0);
+      m.shop = readShop(m.shop);
+      if (!m.shop) delete m.shop;
+      if (!(m.stoneGift! > 0)) delete m.stoneGift;
       m.sinceNew = Math.max(0, (m.sinceNew ?? 0) | 0);
       m.unlock = readUnlock(m.unlock, m.unlocked);
       m.unlockDry = Math.max(0, (m.unlockDry ?? 0) | 0);

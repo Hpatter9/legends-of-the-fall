@@ -81,5 +81,5 @@ export const ascUnlocked = (m: Pick<Meta, 'calamity'>): number => Math.min(ASC_M
 /** A line for the reward a level pays. */
 export function ascReward(level: number): string {
   const chests = ascChests(level);
-  return `Clear: crowns x${ascCrowns(level).toFixed(1)}, ${chests === 1 ? 'a gold chest' : `${chests} gold chests`}, hero shards, ${level >= 6 ? 'a Mythic' : 'a Legendary'} piece of gear and a title`;
+  return `Clear: crowns x${ascCrowns(level).toFixed(1)}, ${chests === 1 ? 'a gold chest' : `${chests} gold chests`}, summoning stones, ${level >= 6 ? 'a Mythic' : 'a Legendary'} piece of gear and a title`;
 }

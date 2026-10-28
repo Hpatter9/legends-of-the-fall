@@ -392,7 +392,7 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
   section('Earned in play', CONTENT_HEROES.filter((c) => !meta.unlocked.includes(c.kind)).map((c) => c.kind));
   const begun = toCollect(meta).filter((k) => haveOf(meta, k) > 0).sort((a, b) => haveOf(meta, b) - haveOf(meta, a));
   const rest = toCollect(meta).length - begun.length;
-  section('Gathering shards', begun, rest ? `${rest} more to find: pulls and chests give their shards.` : '');
+  section('Gathering shards', begun, rest ? `${rest} more to find: summoning stones give their shards.` : '');
   search.addEventListener('input', () => {
     const query = search.value.trim().toLowerCase();
     let shown = 0;

@@ -130,7 +130,7 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
   {
     id: 'recruiter',
     name: 'Recruiter',
-    text: 'Make 10 pulls at the recruiting.',
+    text: 'Use 10 summoning stones at the recruiting.',
     crowns: 10,
     earned: (c) => c.meta.pulls >= 10,
     meter: (m) => ({ now: Math.min(10, m.pulls), need: 10 }),

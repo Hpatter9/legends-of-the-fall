@@ -1,5 +1,8 @@
 # Hero shards: unlocking heroes is much harder
 
+> **Since the summoning stones (`docs/notes/summon-stones.md`) a pull costs a stone, not 100 crowns, and chests give stones, not shards:** the rules below still
+> hold for what a stone does, but the price, the chest contents and the pace table are the stones' (the pace here is the old one).
+
 The owner's ask: "make it harder to unlock units. Much harder." Chosen: shards to unlock, ten heroes earned by content,
 and about six months or more for a daily player to own all 45.
 

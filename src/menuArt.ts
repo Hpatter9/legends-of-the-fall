@@ -15,12 +15,13 @@ import tabBattle from './art/ui/tab-battle.png';
 import tabCastle from './art/ui/tab-castle.png';
 import tabSpells from './art/ui/tab-spells.png';
 import icCrown from './art/ui/ic-crown.png';
+import icStone from './art/ui/ic-stone.png';
 import icGold from './art/ui/ic-gold.png';
 import icTrophy from './art/ui/ic-trophy.png';
 import type { Area } from './sim/board';
 import type { BuildingId } from './sim/castle';
 
-export const ICONS = { crowns: icCrown, gold: icGold, recruit: tabRecruit, heroes: tabHeroes, battle: tabBattle, castle: tabCastle, spells: tabSpells, trophy: icTrophy, daily: hourglass, tower: spyglass };
+export const ICONS = { crowns: icCrown, stones: icStone, gold: icGold, recruit: tabRecruit, heroes: tabHeroes, battle: tabBattle, castle: tabCastle, spells: tabSpells, trophy: icTrophy, daily: hourglass, tower: spyglass };
 export const BUILDING_ICON: Record<BuildingId, string> = { treasury: coin, barracks: armour1, armoury: sword, mageTower: whetstone, stable: boots, library: scroll };
 
 export const AREA_NAMES: Record<Area, string> = {

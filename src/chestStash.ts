@@ -71,6 +71,7 @@ export function chestPicture(kind: ChestKind, scale: number): { root: HTMLElemen
 /** The reward line's picture: a hero's face, a piece of gear's icon, or the crown. */
 function lootIcon(it: LootItem): HTMLElement {
   if (it.type === 'crowns') return icon(ICONS.crowns, 'lootIco');
+  if (it.type === 'stones') return icon(ICONS.stones, 'lootIco');
   if (it.type === 'gear' && it.equip) return itemIcon({ ...it.equip, id: 0 }, EQUIP_BASES[it.equip.base].slot, 'small');
   if (it.type === 'gear') return icon(gearIcon(it.ref ?? 'weapon', 1), 'lootIco');
   const face = portrait(UNITS[it.ref ?? ''].sheet, 48);
