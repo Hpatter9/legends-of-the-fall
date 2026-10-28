@@ -81,6 +81,7 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 | ID | Task | Result | Reference |
 | --- | --- | --- | --- |
+| SCENES-002 | Cinematic fixes | Owner accepted release 0.173.0; loss scene only on a final defeat, boss scenes once, the king is the player, Calamity scenes gated and retold as a portal, Last Stand milestones retold; 1183 tests, build, fresh/old-save and Last Stand smoke passed | [Handoff](notes/scenes-fixes.md), branch `claude/scenes-fixes` |
 | COMBAT-002 | Hero kits, mana and manual ultimates | Owner accepted release 0.172.0; all 45 heroes reworked, tap-to-fire ultimates with Auto; 1176 tests, build, fresh/old-save and Last Stand smoke passed | [Handoff](notes/hero-kits.md), branch `claude/hero-kits` |
 | SUMMON-002 | Summoning stones economy | Owner accepted release 0.171.0; roster about 2x slower to the 20th hero, 1.5-1.7x late; typecheck, 1150 tests, build, fresh/old-save and Last Stand smoke passed | [Handoff](notes/summon-stones.md), branch `claude/summon-stones` |
 | STAND-002 | Last Stand made harder | Owner accepted release 0.170.0; greedy median waves 4/10/13/22/26/35 at levels 1/10/20/30/60/100, pay within about 9% of before; typecheck, 1133 tests, build, fresh/old-save and Last Stand smoke passed | [Handoff](notes/last-stand.md) (section "Making it harder"), branch `claude/stand-harder` |
