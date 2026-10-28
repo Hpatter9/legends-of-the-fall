@@ -54,7 +54,8 @@ export class FakeNode {
   }
   connect<T>(n: T): T { if (n instanceof FakeNode) this.to.push(n); return n; }
   disconnect(n?: FakeNode) { this.to = n ? this.to.filter((x) => x !== n) : []; }
-  start() { this.started = true; }
+  startOffset = 0;
+  start(_when?: number, offset?: number) { this.started = true; if (offset !== undefined) this.startOffset = offset; }
   stop() { this.stopped = true; }
 }
 

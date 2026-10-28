@@ -16,7 +16,7 @@ and every melody note against its chord. Please listen to `docs/samples/epic-mus
 
 | Track | Key | bpm | Length | Size | Plays |
 |---|---|---|---|---|---|
-| `camp` | D minor | 84 | 91 s loop | 428 KB | the home screen (every tab but the tavern) |
+| `camp` | D minor | 84 | 91 s loop | 428 KB | the home screen across all tabs |
 | `tavern` | B minor, 3/4 | 132 | 65 s | 308 KB | the Heroes tab (the tavern): a lighter gothic waltz |
 | `deploy` | E minor | 108 | 71 s | 334 KB | placing the heroes, in any mode |
 | `tower` | C minor | 92 | 94 s | 439 KB | the tower map |
@@ -41,8 +41,10 @@ scene data changed. The scene loops are 46-63 s, shorter than the main loops (63
 
 How the choice is made (all in `src/render/epicMusic.ts`, pure and tested in `test/epic-music.test.ts`):
 
-- `placeOf(scene, map)`: the home screen is the camp, the Heroes tab the tavern; an open map (`#towerMap`) is the tower's or the
+- `placeOf(scene, map)`: the home screen is the camp across all tabs; an open map (`#towerMap`) is the tower's or the
   Calamity's; any other time on the board is the deployment. `main.ts` passes the map to `setScene` (and watches `#towerMap`'s `hidden`).
+- `battle`'s loop starts at `BATTLE_LOOP_START` (5.68 s): four bars past `LOOP_START`, skipping the quiet intro, so a fight opens on
+  the combat downbeat. The loop is 48 bars of 1.3954 s, so the cut keeps it a whole number of bars (44) and it still joins on the beat.
 - `fightTrack`: a boss is `boss`; a Calamity fight is `calbattle`; otherwise `battle`, `battle2` or `battle3` by `fightLevel`: an
   army or a daily by thirds of its waves, any other run by depth (stage or floor 1-9, 10-24, 25 up), an elite fight a step harder.
   `main.ts` passes `{ calamity, level }` to `startFight`.
