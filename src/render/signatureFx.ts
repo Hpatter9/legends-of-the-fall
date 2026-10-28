@@ -68,9 +68,7 @@ const body = (t: Pt) => t.y - t.tall * 0.5;
 function put(sc: Scene, st: Step, frames: Texture[], x: number, y: number, o: Partial<Burst> = {}): void {
   // (a prop is a solid sprite, drawn plainly and tumbling; the strips glow)
   const prop = !st.art && PROPS.includes(st.k);
-  sc.p.spawn({ frames, art: st.art, x, y, scale: (st.z ?? 1) * sc.size, frameMs: st.f ?? 70, alpha: st.a ?? (prop ? 1 : 0.9), tint: st.t, add: !prop, prio: true, delay: st.d, ...(prop && !o.rotation ? { spin: jit(0.012) } : {}), ...o,
-    ...(st.art && (st.s === 'cleave' || st.s === 'fan') ? { rotation: 0 } : {}),
-  });
+  sc.p.spawn({ frames, art: st.art, x, y, scale: (st.z ?? 1) * sc.size, frameMs: st.f ?? 70, alpha: st.a ?? (prop ? 1 : 0.9), tint: st.t, add: !prop, prio: true, delay: st.d, ...(prop && !o.rotation ? { spin: jit(0.012) } : {}), ...o });
 }
 
 /** A delay for the `i`th of a run (the step's own wait added). */
@@ -131,10 +129,11 @@ const SHAPES: Record<Step['s'], Draw> = {
   beam(st, f, sc) {
     const n = count(st, 5, sc);
     const r = st.r ?? 140;
-    const rot = Math.atan2(sc.dir.y, sc.dir.x);
+    const left = sc.dir.x < 0;
+    const rot = left ? Math.atan2(-sc.dir.y, -sc.dir.x) : Math.atan2(sc.dir.y, sc.dir.x);
     for (let i = 0; i < n; i++) {
       const d = ((i + 1) / n) * r;
-      put(sc, st, f, sc.self.x + sc.dir.x * d, body(sc.self) + sc.dir.y * d, { rotation: rot, delay: after(st, i * 38) });
+      put(sc, st, f, sc.self.x + sc.dir.x * d, body(sc.self) + sc.dir.y * d, { rotation: rot, ...(left ? { stretchX: -1 } : {}), delay: after(st, i * 38) });
     }
   },
   orbit(st, f, sc) {
@@ -178,14 +177,17 @@ const SHAPES: Record<Step['s'], Draw> = {
   },
   cleave(st, f, sc) {
     const spots = st.on === 'target' ? [sc.foes[0] ?? front(sc, 90)] : sc.foes.length ? sc.foes : [front(sc, 90)];
-    for (const [i, c] of spots.slice(0, 4).entries()) put(sc, st, f, c.x, c.y - c.tall * 0.6, { rotation: -Math.PI / 2 + 0.25, delay: after(st, i * 90), frameMs: 55 });
+    const left = sc.dir.x < 0;
+    const rot = -Math.PI / 2 + 0.25;
+    for (const [i, c] of spots.slice(0, 4).entries()) put(sc, st, f, c.x, c.y - c.tall * 0.6, { rotation: rot, ...(left ? { stretchX: -1 } : {}), delay: after(st, i * 90), frameMs: 55 });
   },
   spikes(st, f, sc) {
     const n = count(st, 4, sc);
     const r = st.r ?? 100;
+    const left = sc.dir.x < 0;
     for (let i = 0; i < n; i++) {
       const d = ((i + 1) / n) * r;
-      put(sc, st, f, sc.self.x + sc.dir.x * d, sc.self.y + sc.dir.y * d - 14 * (st.z ?? 1), { delay: after(st, i * 70) });
+      put(sc, st, f, sc.self.x + sc.dir.x * d, sc.self.y + sc.dir.y * d - 14 * (st.z ?? 1), { ...(left ? { stretchX: -1 } : {}), delay: after(st, i * 70) });
     }
   },
   fan(st, f, sc) {
@@ -193,18 +195,25 @@ const SHAPES: Record<Step['s'], Draw> = {
     const arc = st.r ?? 2;
     const base = Math.atan2(sc.dir.y, sc.dir.x);
     // (a fan aimed at a foe is narrower than a full ring of rays)
+    const pillar = !st.art && st.k.includes('pillar');
     for (let i = 0; i < n; i++) {
       const a = n === 1 ? base : base - arc / 2 + (arc * i) / (n - 1);
       const d = 22 + (st.z ?? 1) * 8;
-      put(sc, st, f, sc.self.x + Math.cos(a) * d, body(sc.self) + Math.sin(a) * d * 0.6 - 4, { rotation: a + Math.PI / 2, delay: after(st, i * 40) });
+      const left = Math.cos(a) < 0;
+      const rot = pillar
+        ? a + Math.PI / 2
+        : left ? Math.atan2(-Math.sin(a), -Math.cos(a)) : a;
+      put(sc, st, f, sc.self.x + Math.cos(a) * d, body(sc.self) + Math.sin(a) * d * 0.6 - 4, { rotation: rot, ...(!pillar && left ? { stretchX: -1 } : {}), delay: after(st, i * 40) });
     }
   },
   cone(st, f, sc) {
     const n = count(st, 6, sc);
     const r = st.r ?? 160;
+    const left = sc.dir.x < 0;
+    const rot = left ? Math.atan2(-sc.dir.y, -sc.dir.x) : Math.atan2(sc.dir.y, sc.dir.x);
     for (let i = 0; i < n; i++) {
       const g = (i + 1) / n;
-      put(sc, { ...st, z: (st.z ?? 1) * (0.5 + g * 0.8) }, f, sc.self.x + sc.dir.x * r * g, body(sc.self) + sc.dir.y * r * g + jit(6), { delay: after(st, i * 55) });
+      put(sc, { ...st, z: (st.z ?? 1) * (0.5 + g * 0.8) }, f, sc.self.x + sc.dir.x * r * g, body(sc.self) + sc.dir.y * r * g + jit(6), { rotation: rot, ...(left ? { stretchX: -1 } : {}), delay: after(st, i * 55) });
     }
   },
   dome(st, f, sc) {
@@ -245,9 +254,11 @@ const SHAPES: Record<Step['s'], Draw> = {
   dash(st, f, sc) {
     const n = count(st, 7, sc);
     const r = st.r ?? 110;
+    const left = sc.dir.x < 0;
+    const rot = left ? Math.atan2(-sc.dir.y, -sc.dir.x) : Math.atan2(sc.dir.y, sc.dir.x);
     for (let i = 0; i < n; i++) {
       const d = ((i + 1) / n) * r;
-      put(sc, st, f, sc.self.x + sc.dir.x * d, sc.self.y + sc.dir.y * d - 8, { delay: after(st, i * 32), life: 420, vy: -0.015 });
+      put(sc, st, f, sc.self.x + sc.dir.x * d, sc.self.y + sc.dir.y * d - 8, { rotation: rot, ...(left ? { stretchX: -1 } : {}), delay: after(st, i * 32), life: 420, vy: -0.015 });
     }
   },
   barrier(st, f, sc) {
