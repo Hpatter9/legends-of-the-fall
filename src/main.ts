@@ -54,6 +54,8 @@ import { Party } from './party';
 import { dailyBonus, dailyCleared, dailyInProgress, modeNote, settleDaily, settleRun, startDaily, type DailyPay } from './sim/modes';
 import { dailyBossName, dailyCrowns, DAILY_WAVES } from './sim/daily';
 import { showDailyStart } from './dailyView';
+import { dailyTheme } from './sim/dailyThemes';
+import { showThemeBanner } from './themeView';
 import { chestPicture } from './chestStash';
 import { toastAchievements, toastJoined, toastSpells, toastStones } from './achievementsView';
 import { grantContent } from './sim/contentHeroes';
@@ -441,6 +443,7 @@ class Game {
     this.weather.resize(this.app.screen.width, this.app.screen.height);
     this.weather.set(weatherOf(this.b.board), this.b.board.area, this.boardView.litSpots(), this.b.board.tiles.some((t) => t.scene));
     showTwistBanner(this.run.tower?.cur?.fight?.twist);
+    this.showTheme();
     this.syncSprites(true);
     this.layout();
     this.revealDestination();
@@ -2072,6 +2075,7 @@ class Game {
         const m = document.createElement('span');
         m.textContent = TRAITS[t].short;
         m.dataset.trait = t;
+        if (this.theme()?.trait === t) m.className = 'featured';
         marks.append(m);
       }
       const lv = levelBadge(this.levelOf(h));
@@ -2394,6 +2398,16 @@ class Game {
     this.events.drawStrip(run);
   }
 
+  /** A themed daily's theme (DAILY-BUILDS), or null for any other run. */
+  private theme() {
+    return this.run.mode?.kind === 'daily' ? dailyTheme(this.run.mode.date) : null;
+  }
+  /** A themed daily's banner over the deploy board, with its goal counted from the heroes placed. */
+  private showTheme(): void {
+    const t = this.theme();
+    if (t && this.b.phase === 'deploy') showThemeBanner(t, kindsOf(this.b.units), isBossRun(this.run));
+  }
+
   /** The trait strip: the traits of the heroes placed, lit when their bonus is on; a tap says what one does. */
   private traitPick?: string;
   /** The tier each trait stood at the last time the strip was drawn, so a tier that just woke can light up once. */
@@ -2401,18 +2415,22 @@ class Game {
   private refreshTraits(): void {
     const strip = $('traits');
     const hint = $('traitHint');
-    const counts = countTraits(kindsOf(this.b.units));
+    // (a themed daily's featured trait leads the strip)
+    const lead = this.theme()?.trait;
+    const counts = countTraits(kindsOf(this.b.units)).sort((a, b) => Number(b.trait.id === lead) - Number(a.trait.id === lead));
     const key = counts.map((c) => `${c.trait.id}${c.count}`).join() + this.traitPick;
     if (strip.dataset.key === key) return;
     strip.dataset.key = key;
+    const featured = lead;
+    this.showTheme();
     strip.replaceChildren();
     const woke: string[] = [];
     for (const c of counts) {
       const was = this.traitTiers.get(c.trait.id) ?? -1;
       const lit = c.tier > was && strip.dataset.drawn === '1';
-      if (lit) woke.push(`${c.trait.name}: ${c.trait.tiers[c.tier].text}`);
+      if (lit) woke.push(`${c.trait.name}: ${c.trait.tiers[c.tier].text}${featured === c.trait.id ? ', twice over today' : ''}`);
       const pill = document.createElement('button');
-      pill.className = `trait ${c.trait.kind}${c.active ? ' on' : ''}${lit ? ' wake' : ''}${this.traitPick === c.trait.id ? ' picked' : ''}`;
+      pill.className = `trait ${c.trait.kind}${c.active ? ' on' : ''}${lit ? ' wake' : ''}${this.traitPick === c.trait.id ? ' picked' : ''}${featured === c.trait.id ? ' featured' : ''}`;
       // (the chip says the count and what the next tier gives; a trait at its top tier shows just the count)
       const next = c.trait.tiers[c.tier + 1];
       const head = document.createElement('span');

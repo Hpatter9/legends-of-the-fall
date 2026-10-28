@@ -11,6 +11,8 @@ import { isScenario, planScenario, scenarioForArmy, type ScenarioId } from './sc
 import { BOSS_BANDS, FIELD_BANDS } from './foes';
 import { armyById, armyIndex, landOf, waveBoost, waveFoes, type Army } from './armies';
 import { dailyArmy } from './daily';
+import { dailyTheme, SWARM_HP, themeFx, themeGoalMet } from './dailyThemes';
+import { kindsOf } from './traits';
 import { bonusGold, foeAnswer, heroBoost, manaRate, moveRate, newCastle, type Castle } from './castle';
 import { rankMult } from './meta';
 import { lastingBoost } from './levels';
@@ -125,6 +127,8 @@ export interface Run {
   retries?: number;
   /** The whole run's figures for the recap shown when it ends (`runRecap.ts`). */
   recap?: RunRecap;
+  /** A themed daily's goal was met when the boss of the day fell (`dailyThemes.ts`). */
+  themeMet?: boolean;
 }
 
 /** A run that is not an ordinary one: an army's campaign (its stages are the army's waves), today's daily challenge (`practice` for a replay that does not count), or the endless tower. */
@@ -171,6 +175,9 @@ export function noteFight(run: Run, b: Battle): void {
   t.lost += fell;
   if (run.stage >= army.waves.length) t.bossLost = fell;
   if (army.waves[run.stage - 1]?.boss) t.bossFell = (t.bossFell ?? 0) + fell;
+  // (a themed daily: the heroes fielded against the boss of the day, for its goal)
+  const theme = run.mode?.kind === 'daily' ? dailyTheme(run.mode.date) : null;
+  if (theme && run.stage >= army.waves.length && b.phase === 'won') run.themeMet = themeGoalMet(theme, kindsOf(b.units));
 }
 /** The army a run is fighting, if it is an army run. */
 export const armyOfRun = (run: Run): Army | undefined => (run.mode?.kind === 'army' ? armyById(run.mode.army) : undefined);
@@ -383,15 +390,19 @@ export function startStage(run: Run): Battle {
   const ans = run.local ? (calAns ? { hp: foeAnswer(run.castle).hp! * calAns.hp! ** CAL_CASTLE_EXTRA, atk: foeAnswer(run.castle).atk! * calAns.atk! ** CAL_CASTLE_EXTRA } : foeAnswer(run.castle)) : run.mode?.kind === 'daily' && run.mode.scale ? { hp: run.mode.scale, atk: run.mode.scale } : undefined;
   const { atk, hp, mana, first, revive, gold: _gold, set, ...team } = rl;
   const section = chainOf(run)?.[run.stage - 1];
+  // (a themed daily: its twist on every wave, its featured trait, and a swarm's thin foes)
+  const theme = run.mode?.kind === 'daily' ? dailyTheme(run.mode.date) : null;
+  const thin = theme?.swarm && army && !army.waves[run.stage - 1]?.boss ? SWARM_HP : 1;
   return startBattle(boardSeedOf(run, run.stage), node ? node.band : army ? waveFoes(army, run.stage, tierOfRun(run)) : bandFor(run.stage), {
     ...base,
     area: run.area ?? base.area ?? areaFor(run.stage),
     board: section?.board,
-    foes: { hp: base.foes!.hp! * foes * (ans?.hp ?? 1), atk: base.foes!.atk! * foes * (ans?.atk ?? 1), speed: base.foes!.speed },
+    foes: { hp: base.foes!.hp! * foes * (ans?.hp ?? 1) * thin, atk: base.foes!.atk! * foes * (ans?.atk ?? 1), speed: base.foes!.speed },
     heroes: { hp: castle.hp! * (hp ?? 1) * (run.buff?.hp ?? 1), atk: castle.atk! * (atk ?? 1) * (run.buff?.atk ?? 1) },
     mana: manaRate(run.castle) * (mana ?? 1),
     move: moveRate(run.castle),
     relics: Object.keys(team).length || first || revive || set ? { team, first, revive, set } : undefined,
+    ...(theme ? { twist: themeFx(theme), featured: theme.trait } : {}),
   });
 }
 

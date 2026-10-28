@@ -7,6 +7,7 @@
 import { newCastle, readCastle, readChapel, readWorks, spellBudget, type Castle, type Works } from './castle';
 import { newLoadout, readLoadout, STARTER_SPELLS, type Loadout } from './spells';
 import { DAILY_WAVES } from './daily';
+import { dailyStarsMax } from './dailyThemes';
 import { Rng } from './rng';
 import { ALL_HEROES, HEROES } from './units';
 import { readStarter, starterPacks, type Starter } from './starter';
@@ -147,7 +148,7 @@ export interface StashChest {
   seed: number;
   /** Paid by an endless tower run (a run pays several of one milestone; an army's is given once). */
   tower?: boolean;
-  /** A daily chest: the date (yyyymmdd) of the daily that paid it, and the bonus stars (0 to 2) of the clear. `army` is 'daily'. */
+  /** A daily chest: the date (yyyymmdd) of the daily that paid it, and the bonus stars (0 to 2, 3 on a themed day) of the clear. `army` is 'daily'. */
   daily?: number;
   bonus?: number;
   /** Paid for an army's first clear on a tier (one per army and tier, told apart by its seed; `at` only sets the chest's size). */
@@ -164,7 +165,7 @@ export interface DailyEntry {
   wave?: number;
   /** The counted run has ended (so a record that is not cleared is a fall, not a run going on). */
   over?: boolean;
-  /** The bonus stars of the clear (0 to 2), which added to the daily chest. */
+  /** The bonus stars of the clear (0 to 2, 3 on a themed day), which added to the daily chest. */
   stars?: number;
 }
 
@@ -300,7 +301,7 @@ function readDaily(raw: unknown): Record<string, DailyEntry> {
         if (d.cleared === true) entry.cleared = true;
         if (typeof d.wave === 'number' && d.wave >= 1) entry.wave = Math.min(DAILY_WAVES, d.wave | 0);
         if (d.over === true) entry.over = true;
-        if (typeof d.stars === 'number' && d.stars >= 1) entry.stars = Math.min(2, d.stars | 0);
+        if (typeof d.stars === 'number' && d.stars >= 1) entry.stars = Math.min(dailyStarsMax(Number(k)), d.stars | 0);
         out[k] = entry;
       }
     }

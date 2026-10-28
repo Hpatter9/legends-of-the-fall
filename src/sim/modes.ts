@@ -21,6 +21,7 @@ import type { Meta } from './meta';
 import { mapFor, newTower } from './tower';
 import { noteFoes } from './codex';
 import { noteCombos } from './combos';
+import { dailyTheme, themeGoalText, themePool } from './dailyThemes';
 
 /** The stage the endless tower opens at (reached in any run), or once the first army has been beaten. */
 export const TOWER_UNLOCK = 10;
@@ -31,6 +32,9 @@ export { dailyArea, dailySeed, dateKey };
 
 /** A date's daily run: the starting five in the squad, the starting gold, no castle upgrades, and the day's land. */
 export function dailyRun(date: number, practice = false, scale = 1): Run {
+  // (a themed day brings its own five and the heroes Hire draws from: DAILY-BUILDS)
+  const theme = dailyTheme(date);
+  const five: readonly string[] = theme?.five ?? HEROES;
   const run: Run = {
     seed: dailySeed(date),
     gold: START_GOLD,
@@ -41,12 +45,12 @@ export function dailyRun(date: number, practice = false, scale = 1): Run {
     squad: [],
     over: false,
     best: 1,
-    pool: [...HEROES],
+    pool: theme ? themePool(theme) : [...HEROES],
     area: dailyArea(date),
     mode: { kind: 'daily', date, practice, ...(scale > 1 ? { scale } : {}) },
     stars: 0,
   };
-  for (const kind of HEROES) {
+  for (const kind of five) {
     run.roster.push({ id: run.nextId, kind, grade: 1 });
     run.squad.push(run.nextId++);
   }
@@ -60,8 +64,9 @@ export function dailyRun(date: number, practice = false, scale = 1): Run {
  */
 /** The share of the power ratio the foes answer with (below 1: a hero's power is not all won in a fight, and the daily is short). */
 export const DAILY_ANSWER = { share: 0.75 };
-export function dailyScale(m: Meta): number {
-  const ratio = HEROES.reduce((n, k) => n + kindPower(m, k) / powerOf(k, gradeBoost(1, 0, 1)), 0) / HEROES.length;
+export function dailyScale(m: Meta, date?: number): number {
+  const five: readonly string[] = (date !== undefined ? dailyTheme(date)?.five : undefined) ?? HEROES;
+  const ratio = five.reduce((n, k) => n + kindPower(m, k) / powerOf(k, gradeBoost(1, 0, 1)), 0) / five.length;
   return Math.max(1, Math.round(ratio ** DAILY_ANSWER.share * 100) / 100);
 }
 
@@ -71,7 +76,7 @@ export function startDaily(m: Meta, date: number): Run {
   const entry = (m.daily[key] ??= { best: 0, plays: 0 });
   const practice = entry.plays > 0;
   entry.plays++;
-  return dailyRun(date, practice, dailyScale(m));
+  return dailyRun(date, practice, dailyScale(m, date));
 }
 
 /** The daily run saved for a date, if it is still going (so Daily resumes it rather than starting over). */
@@ -93,10 +98,14 @@ export interface DailyStar {
 export function dailyBonus(run: Run): DailyStar[] {
   const t = run.tally;
   const won = !!run.cleared;
-  return [
+  const stars = [
     { text: 'No heart spent', earned: won && !run.retries },
     { text: `Cleared in ${Math.floor(DAILY_TIME_MS / 60000)}:${String((DAILY_TIME_MS % 60000) / 1000).padStart(2, '0')} of battle`, earned: won && !!t && t.ms <= DAILY_TIME_MS },
   ];
+  // (a themed day's third star: its goal, met on the boss of the day's fight, `noteFight`)
+  const theme = run.mode?.kind === 'daily' ? dailyTheme(run.mode.date) : null;
+  if (theme) stars.push({ text: themeGoalText(theme), earned: won && !!run.themeMet });
+  return stars;
 }
 
 export interface DailyPay {
@@ -210,7 +219,7 @@ export function dailyStatus(m: Meta, date: number): string {
 }
 
 /** The camp's line for the daily board: "Today: Orc Warlord · not tried". */
-export const dailyLine = (m: Meta, date: number): string => `Today: ${dailyBossName(date)} · ${dailyStatus(m, date)}`;
+export const dailyLine = (m: Meta, date: number): string => `Today: ${dailyTheme(date) ? `${dailyTheme(date)!.name}, the ${dailyBossName(date)}` : dailyBossName(date)} · ${dailyStatus(m, date)}`;
 
 /** The home screen's line for the endless tower button. */
 export const towerLine = (m: Meta): string => (towerOpen(m) ? `Endless tower · best floor ${m.tower}` : `Endless tower · ${opensAt(MODE_NEED.tower).toLowerCase()}`);

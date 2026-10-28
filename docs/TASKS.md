@@ -25,6 +25,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Validation:** see the handoff's "Checks run for phase B".
 - **Handoff:** [notes](notes/army-road.md), [phase B sheet](samples/army-road-after-sheet.png), [phase A mock-ups](samples/army-road-mock-sheet.png).
 
+### DAILY-BUILDS — Varied dailies: build themes and synergies
+
+- **Goal:** the owner's ask: make the dailies varied, showing builds and synergies; each day pushes a different team idea, shown up front, and rewards trying it.
+- **Status:** phase A (proposal, prototype and mock-ups) on the branch; waiting for the owner's answers.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/daily-builds`, `/home/user/daily-builds`; PR none.
+- **Allowed files or systems:** new `src/sim/dailyThemes.ts`, `src/themeView.ts`, `test/daily-builds.test.ts`, `tools/daily-builds/`; small hooks in `src/sim/daily.ts`, `dailySeed.ts`, `modes.ts`, `run.ts` (`startStage`, `noteFight`, `Run.themeMet`), `battle.ts` (`Stage.featured`, `applyTraits`), `meta.ts` and `armyStars.ts` (the third star's clamp), `src/dailyView.ts`, `src/home.ts` (the board's line), `src/main.ts` (the deploy banner, the featured chip and bench mark), `src/daily.css`; `docs/notes/daily-builds.md`, `docs/samples/daily-builds-*.png`. Not the twists' table, the traits' numbers or the armies.
+- **Completion criteria:** 14 to 20 themes from the date, no repeat within a fortnight, deterministic and drawing on no existing stream; dates before the switch play as before; each theme's twist, pool, featured boost and goal tested; each theme winnable from a fresh save (about 60 to 75% for a sensible party); theme on the camp board, the start card and the deploy screen at 393x852, 360x780 and 412x915; typecheck, affected tests, web build.
+- **Handoff:** [proposal](notes/daily-builds.md), mock-ups `docs/samples/daily-builds-mock-*.png`.
+
 ### AWAKEN-002 — Class auras for awakened heroes
 
 - **Goal:** the owner's ask: drop the awakened recolour; an awakened hero wears an aura at step 1 (rank 5) and a stronger, bigger one at step 2 (rank 6), its style set by the hero's class trait (not the origin), wherever an awakened hero is drawn.

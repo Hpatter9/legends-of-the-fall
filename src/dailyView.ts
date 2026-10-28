@@ -10,6 +10,8 @@ import { UNITS } from './sim/units';
 import { portrait } from './render/sheets';
 import { AREA_NAMES } from './menuArt';
 import { chestPicture } from './chestStash';
+import { dailyTheme } from './sim/dailyThemes';
+import { themeBlock } from './themeView';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -28,12 +30,14 @@ export function dayName(date: number): string {
 export function showDailyStart(m: Meta, date: number, go: () => void, back: () => void): void {
   const played = (m.daily[String(date)]?.plays ?? 0) > 0;
   const boss = UNITS[dailyBoss(date)];
-  const root = el('div', 'dayCard');
+  // (a themed day: its block under the heading, and a smaller boss: DAILY-BUILDS)
+  const theme = dailyTheme(date);
+  const root = el('div', `dayCard${theme ? ' themed' : ''}`);
   root.setAttribute('role', 'dialog');
   root.setAttribute('aria-label', `Daily challenge: ${boss.name}`);
   const head = el('div', 'dayHead');
   head.append(el('span', 'dayTitle', 'Daily challenge'), el('span', 'dayDate', dayName(date)));
-  const face = portrait(boss.sheet, 144);
+  const face = portrait(boss.sheet, theme ? 96 : 144);
   face.className = 'dayFace';
   const name = el('div', 'dayBoss');
   name.append(el('small', '', 'Boss of the day'), el('span', '', boss.name));
@@ -41,7 +45,7 @@ export function showDailyStart(m: Meta, date: number, go: () => void, back: () =
   for (const [k, v] of [
     ['Land', AREA_NAMES[dailyArea(date)]],
     ['Run', `${DAILY_WAVES} waves, a mid-boss at ${DAILY_MID}`],
-    ['Squad', 'the starting five'],
+    ['Squad', theme ? "the day's five, and its hires" : 'the starting five'],
     ['Hearts', `${MAX_RETRIES} retries`],
   ]) {
     const li = el('li');
@@ -51,7 +55,7 @@ export function showDailyStart(m: Meta, date: number, go: () => void, back: () =
   const prize = el('div', 'dayPrize');
   const chest = chestPicture('daily', 2).root;
   chest.classList.add('dayChest');
-  prize.append(chest, el('span', '', played ? 'Practice: no reward this time' : 'Clear it for a daily chest: crowns, summoning stones, maybe gear. A win with no heart spent, or a quick one, adds a bonus star to it.'));
+  prize.append(chest, el('span', '', played ? 'Practice: no reward this time' : theme ? 'Clear it for a daily chest. No heart spent, a quick win, and the goal each add a bonus star.' : 'Clear it for a daily chest: crowns, summoning stones, maybe gear. A win with no heart spent, or a quick one, adds a bonus star to it.'));
   const status = el('div', 'dayStatus', `Today: ${dailyStatus(m, date)}`);
   const row = el('div', 'dayBtns');
   const fight = el('button', 'primary', played ? 'Practice' : 'Fight!');
@@ -65,6 +69,11 @@ export function showDailyStart(m: Meta, date: number, go: () => void, back: () =
     back();
   });
   row.append(fight, leave);
-  root.append(head, face, name, facts, prize, status, row);
+  if (theme) {
+    // (the boss beside its name, to leave room for the theme)
+    const bossRow = el('div', 'dayBossRow');
+    bossRow.append(face, name);
+    root.append(head, themeBlock(theme), bossRow, facts, prize, status, row);
+  } else root.append(head, face, name, facts, prize, status, row);
   document.body.append(root);
 }
