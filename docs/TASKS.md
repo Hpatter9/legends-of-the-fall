@@ -28,12 +28,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 ### DAILY-BUILDS — Varied dailies: build themes and synergies
 
 - **Goal:** the owner's ask: make the dailies varied, showing builds and synergies; each day pushes a different team idea, shown up front, and rewards trying it.
-- **Status:** phase A (proposal, prototype and mock-ups) on the branch; waiting for the owner's answers.
+- **Status:** phase B done on the branch, ready for review. The owner answered phase A: reward the build (a third chest star), the day's heroes lent to everyone, a seeded shuffled order (no repeat within 14 days, no two days running with a host or land, tomorrow not shown), a fixed boss per theme, eight foes in the Swarm. Live from 26 October 2026.
 - **Owner:** Claude
-- **Branch / worktree / PR:** `claude/daily-builds`, `/home/user/daily-builds`; PR none.
-- **Allowed files or systems:** new `src/sim/dailyThemes.ts`, `src/themeView.ts`, `test/daily-builds.test.ts`, `tools/daily-builds/`; small hooks in `src/sim/daily.ts`, `dailySeed.ts`, `modes.ts`, `run.ts` (`startStage`, `noteFight`, `Run.themeMet`), `battle.ts` (`Stage.featured`, `applyTraits`), `meta.ts` and `armyStars.ts` (the third star's clamp), `src/dailyView.ts`, `src/home.ts` (the board's line), `src/main.ts` (the deploy banner, the featured chip and bench mark), `src/daily.css`; `docs/notes/daily-builds.md`, `docs/samples/daily-builds-*.png`. Not the twists' table, the traits' numbers or the armies.
-- **Completion criteria:** 14 to 20 themes from the date, no repeat within a fortnight, deterministic and drawing on no existing stream; dates before the switch play as before; each theme's twist, pool, featured boost and goal tested; each theme winnable from a fresh save (about 60 to 75% for a sensible party); theme on the camp board, the start card and the deploy screen at 393x852, 360x780 and 412x915; typecheck, affected tests, web build.
-- **Handoff:** [proposal](notes/daily-builds.md), mock-ups `docs/samples/daily-builds-mock-*.png`.
+- **Branch / worktree / PR:** `claude/daily-builds`, `/home/user/daily-builds` (main 0.190.0 merged in); PR none.
+- **Allowed files or systems:** new `src/sim/dailyThemes.ts`, `src/themeView.ts`, `test/daily-builds.test.ts`, `tools/daily-builds/`; small hooks in `src/sim/daily.ts`, `dailySeed.ts`, `modes.ts`, `run.ts` (`runTheme`, `startStage`, `noteFight`, `Run.themeMet`, the daily mode's `theme`), `battle.ts` (`Stage.featured`, `applyTraits`), `meta.ts` and `armyStars.ts` (the third star's clamp), `src/dailyView.ts`, `src/home.ts`, `src/main.ts`, `src/daily.css`; `docs/notes/daily-builds.md`, `docs/samples/daily-builds-*.png`. Not the twists' table, the traits' numbers, the armies or the Auto formation.
+- **Completion criteria:** 18 themes in a seeded shuffle from the date, the same for everyone, no repeat within 14 days across block edges, no two days running with a host or land; dates before the switch and runs begun before it play as before; each theme's twist, pool, featured boost and goal tested; each theme near the others' clear rate from a fresh save; theme on the camp board, the start card and the deploy screen at 393x852, 360x780 and 412x915; typecheck, affected and full tests, web build.
+- **Validation:** see the handoff's checks: typecheck, `npm test -- daily-builds daily modes armyStars meta ...` and the full `npm test`, `npm run web`; screens at the three sizes with no page errors or overflow; `themeRate` (40 dates a theme) before and after tuning; `swarmPerf` with 8 and 10 foes.
+- **Handoff:** [notes](notes/daily-builds.md), [sheet](samples/daily-builds-sheet.png), phase A [mock-ups](samples/daily-builds-mock-sheet.png).
 
 ### AWAKEN-002 — Class auras for awakened heroes
 

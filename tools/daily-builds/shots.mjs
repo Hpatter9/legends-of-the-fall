@@ -1,7 +1,7 @@
-// MOCK-UP screenshots of the daily build themes (docs/notes/daily-builds.md): the camp's notice board, the start card of a few themes,
+// Screenshots of the daily build themes (MOCK=1 labels them MOCK-UP, as phase A did) (docs/notes/daily-builds.md): the camp's notice board, the start card of a few themes,
 // and the deploy screen with the theme's banner, its goal counted and the featured trait lit. The page's clock is moved to a themed date.
 //   node tools/daily-builds/shots.mjs <build dir> [WxH]
-// Writes docs/samples/daily-builds-mock-<scene>[-WxH].png, each with a MOCK-UP label.
+// Writes docs/samples/daily-builds-<scene>[-WxH].png.
 import { createRequire } from 'node:module';
 const { chromium } = createRequire('/opt/node-tools/node_modules/')('playwright');
 import { serve, HEROES, saveScript } from '../audit/lib.mjs';
@@ -13,8 +13,8 @@ const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromi
 const base = `http://localhost:8187/`;
 const out = process.env.OUT ?? 'docs/samples';
 const failed = [];
-// (the themes go round from 1 November 2026: day n is DAILY_THEMES[n])
-const dateFor = (n) => Date.UTC(2026, 10, 1 + n, 12);
+// (the themes start on 26 October 2026; day n after it is: 4 The Swarm, 9 Sea Dogs, 16 Beasts' Night, pinned in test/daily-builds.test.ts' order)
+const dateFor = (n) => Date.UTC(2026, 9, 26 + n, 12);
 async function open(n) {
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1, hasTouch: true });
   const page = await ctx.newPage();
@@ -45,8 +45,8 @@ const label = (page) => page.evaluate(() => {
 });
 const shot = async (page, name, wait = 500) => {
   await page.waitForTimeout(wait);
-  await label(page);
-  await page.screenshot({ path: `${out}/daily-builds-mock-${name}${tag}.png` });
+  if (process.env.MOCK) await label(page);
+  await page.screenshot({ path: `${out}/daily-builds-${name}${tag}.png` });
   const over = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
   if (over) failed.push(`${name}: page wider than the screen`);
 };
@@ -54,13 +54,13 @@ const group = async (n, fn) => {
   let c;
   try { c = await open(n); await fn(c.page); } catch (e) { failed.push(`${n}: ${String(e.message).split('\n')[0]}`); } finally { await c?.ctx.close(); }
 };
-await group(0, async (page) => shot(page, 'board', 600));
-for (const [n, name] of [[0, 'start-beasts'], [2, 'start-swarm'], [13, 'start-sea']]) await group(n, async (page) => {
+await group(16, async (page) => shot(page, 'board', 600));
+for (const [n, name] of [[16, 'start-beasts'], [4, 'start-swarm'], [9, 'start-sea']]) await group(n, async (page) => {
   await page.evaluate(() => document.getElementById('hmDaily').click());
   await shot(page, name, 800);
 });
 // (the deploy screen: Beasts' Night, wave 1 with the day's five placed by Auto; then the boss wave with the goal met)
-await group(0, async (page) => {
+await group(16, async (page) => {
   await page.evaluate(() => document.getElementById('hmDaily').click());
   await page.waitForTimeout(500);
   await page.evaluate(() => document.querySelector('.dayBtns .primary').click());
@@ -75,6 +75,20 @@ await group(0, async (page) => {
   }
   await page.evaluate(() => document.getElementById('auto').click());
   await shot(page, 'deploy-boss', 900);
+});
+// (a swarm wave: The Swarm's wave 9, eight foes)
+await group(4, async (page) => {
+  await page.evaluate(() => document.getElementById('hmDaily').click());
+  await page.waitForTimeout(500);
+  await page.evaluate(() => document.querySelector('.dayBtns .primary').click());
+  await page.waitForTimeout(1500);
+  await page.evaluate(() => { const g = window.__game; g.run.stage = 9; g.newBattle(); });
+  for (let i = 0; i < 6; i++) {
+    await page.waitForTimeout(600);
+    await page.evaluate(() => document.querySelector('.csSkip')?.click());
+  }
+  await page.evaluate(() => document.getElementById('auto').click());
+  await shot(page, 'deploy-swarm', 900);
 });
 console.log(failed.length ? `FAILED\n${failed.join('\n')}` : 'ok');
 srv.close();

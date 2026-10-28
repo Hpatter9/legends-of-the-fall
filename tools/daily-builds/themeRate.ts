@@ -20,12 +20,32 @@ const arg = (name: string, d: number): number => {
   return i >= 0 ? Number(process.argv[i + 1]) : d;
 };
 const RUNS = arg('runs', 12);
+const sarg = (name: string): string | undefined => {
+  const i = process.argv.indexOf(`--${name}`);
+  return i >= 0 ? process.argv[i + 1] : undefined;
+};
+/** `--only swarm,arcane` plays those themes alone; `--boss swarm=0.55,arcane=0.8` tries other boss eases (for tuning `boss` in the table). */
+const ONLY = sarg('only')?.split(',');
+for (const pair of sarg('boss')?.split(',') ?? []) {
+  const [id, v] = pair.split('=');
+  (DAILY_THEMES.find((t) => t.id === id) as { boss?: number }).boss = Number(v);
+}
 
-/** The date `k` cycles on of theme `i` (the themes go round one a day from `DAILY_THEMES_FROM`). */
+/** The `k`th date from `DAILY_THEMES_FROM` whose theme is theme `i` (each block of days has every theme once, shuffled). */
+const dated = new Map<string, number[]>();
 function dateOf(i: number, k: number): number {
-  const day = dayNumber(DAILY_THEMES_FROM) + i + k * DAILY_THEMES.length;
-  const d = new Date(Date.UTC(2000, 0, 1) + day * 86_400_000);
-  return d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate();
+  const id = DAILY_THEMES[i].id;
+  let list = dated.get(id);
+  if (!list) {
+    list = [];
+    for (let n = 0; list.length < RUNS; n++) {
+      const d = new Date(Date.UTC(2000, 0, 1) + (dayNumber(DAILY_THEMES_FROM) + n) * 86_400_000);
+      const date = d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate();
+      if (dailyTheme(date)!.id === id) list.push(date);
+    }
+    dated.set(id, list);
+  }
+  return list[k];
 }
 
 /** The themed player's squad: the featured heroes first (the strongest of each kind), then the strongest of the rest. */
@@ -69,6 +89,7 @@ const pct = (n: number, of: number) => `${Math.round((100 * n) / Math.max(1, of)
 console.log(`theme                  host        greedy: clear goal  fell  | themed: clear goal  hearts  (${RUNS} dates each, fresh save)`);
 const all = { g: 0, t: 0, gg: 0, tg: 0, n: 0 };
 DAILY_THEMES.forEach((t, i) => {
+  if (ONLY && !ONLY.includes(t.id)) return;
   const g = Array.from({ length: RUNS }, (_, k) => play(dateOf(i, k), k + 1, false));
   const th = Array.from({ length: RUNS }, (_, k) => play(dateOf(i, k), k + 1, true));
   const c = (r: typeof g) => r.filter((x) => x.cleared).length;
