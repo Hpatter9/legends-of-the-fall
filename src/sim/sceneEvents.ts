@@ -549,10 +549,11 @@ export const EVENT_SCENES: Scene[] = [
     ],
   },
   {
-    id: 'duchessInFight',
+    // (the id was `duchessInFight`, seen on her first visit to a fight's edge; it is new so that every save sees it once, when she first really fights)
+    id: 'duchessJoins',
     title: 'An Unregistered Entry',
     blurb: 'Duchess wanders directly between the battle lines, and etiquette prevents interruption.',
-    moment: { kind: 'duchess' },
+    moment: { kind: 'duchessJoins' },
     cast: {
       hero: { role: 'hero', x: 265, facing: 'right', hidden: true },
       foe: { role: 'unit:orcGrunt', x: 400, facing: 'left', hidden: true },

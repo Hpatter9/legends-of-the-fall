@@ -106,9 +106,3 @@ export function duchessIn(b: Battle): { fought: boolean; standing: boolean } {
   return { fought: !!me, standing: !!me?.alive };
 }
 
-/** "Not today" (only if the owner wants her to be turned away): before the fight begins, she is sent off and this fight goes on without her. */
-export function declineDuchess(b: Battle): boolean {
-  if (b.phase !== 'deploy' || !b.duchess) return false;
-  delete b.duchess;
-  return true;
-}

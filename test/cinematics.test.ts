@@ -319,7 +319,7 @@ test('the castle, the tower and the firsts each have their scene', () => {
   for (const site of [...BUILDING_IDS, 'chapel']) assert.equal(dueScene(m, { kind: 'castle', site }), `castle:${site}`);
   for (const floor of [10, 25, 50]) assert.equal(dueScene(m, { kind: 'spire', floor }), `spire:${floor}`);
   assert.equal(dueScene(m, { kind: 'spire', floor: 11 }), null);
-  const firsts: Moment['kind'][] = ['firstLoss', 'duchess', 'mythic', 'elite', 'ascension', 'dailyBoss'];
+  const firsts: Moment['kind'][] = ['firstLoss', 'duchessJoins', 'mythic', 'elite', 'ascension', 'dailyBoss'];
   for (const kind of firsts) {
     const id = dueScene(m, { kind } as Moment);
     assert.ok(id, kind);

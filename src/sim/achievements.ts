@@ -148,6 +148,8 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
     earned: (c) => c.meta.pulls >= 10,
     meter: (m) => ({ now: Math.min(10, m.pulls), need: 10 }),
   },
+  // (Duchess the goat joins one fight in a thousand: `duchessFight.ts`)
+  { id: 'duchessFavour', name: "Her Grace's Favour", text: 'Win a fight with Duchess on the field.', crowns: 20, earned: (c) => c.won && !!c.battle?.units.some((u) => u.def === 'duchess') },
 ];
 
 export const achievementById = (id: string): Achievement | undefined => ACHIEVEMENTS.find((a) => a.id === id);
