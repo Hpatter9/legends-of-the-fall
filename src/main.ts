@@ -439,7 +439,7 @@ class Game {
     this.syncChain();
     setBackdrop(this.b.board.area);
     this.weather.resize(this.app.screen.width, this.app.screen.height);
-    this.weather.set(weatherOf(this.b.board), this.b.board.area, this.boardView.litSpots());
+    this.weather.set(weatherOf(this.b.board), this.b.board.area, this.boardView.litSpots(), this.b.board.tiles.some((t) => t.scene));
     showTwistBanner(this.run.tower?.cur?.fight?.twist);
     this.syncSprites(true);
     this.layout();
@@ -894,6 +894,7 @@ class Game {
     if (this.destinationReveal) this.stepDestinationReveal(dt, elapsed);
     if (this.survey) this.standBack(dt);
     this.boardView.pump();
+    this.boardView.step(dt);
     this.weather.step(dt);
     // (the camera eases to where it is sent, unless a finger is holding the board)
     if (this.phaseBoss && (!b.pause || b.phase !== 'fight')) this.endPhase();
@@ -915,6 +916,8 @@ class Game {
   private revealDestination(section = chainOf(this.run)?.[this.run.stage - 1]): void {
     const board = section?.board;
     if (this.auto || !this.scenesOn() || !board?.landmark) { this.destinationReveal = null; return; }
+    // (an army road's destination is its final arena: the camera looks it over when the arena itself is reached, not from the approach)
+    if (board.tiles.some((t) => t.scene) && !board.pieces?.length) { this.destinationReveal = null; return; }
     const key = `${this.run.seed}:${this.run.mode?.kind === 'army' ? this.run.mode.scenario : ''}`;
     if (this.destinationsSeen.has(key)) return;
     this.destinationsSeen.add(key);

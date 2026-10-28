@@ -32,6 +32,7 @@ import { tierSkillOf } from '../sim/tierSkills';
 import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, impactElement, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, type Missile } from './fxRules';
 import { particleBudget, slashOf } from './vfxRules';
 import { placeLabel } from './labelRules';
+import { HAZARD_LOOKS } from './hazardLooks';
 import { loadPaintedArt, paintedStrip, paintSprite } from './cinematicArt';
 import type { Element, Family } from './fxRules';
 
@@ -251,6 +252,7 @@ export class Fx {
           this.particles.spawn({ frames: VFX.dashWhite, x: to.x, y: to.y - to.tall * 0.5, scale: 1.1, frameMs: 40, alpha: 0.8, add: true });
         }
       } else if (e.kind === 'boom') this.boom(b, e.u, e.v);
+      else if (e.kind === 'hazard') this.hazard(b, e);
       else if (e.kind === 'dash' || e.kind === 'blink') this.streak(b, e);
       else if (e.kind === 'phase') this.phaseShock(e.by);
       else if (e.kind === 'comboCast') this.comboCast(e);
@@ -1002,6 +1004,50 @@ export class Fx {
         return t < e.ms;
       },
     });
+  }
+
+  /** The land acts (`sim/hazards.ts`). Told: its tiles are marked in its colour, the mark swelling as it comes (steady with reduced motion), and
+   *  its word shown once over them; it goes off: its strips play on each tile. */
+  private hazard(b: Battle, e: Extract<BattleEvent, { kind: 'hazard' }>): void {
+    const look = HAZARD_LOOKS[e.what];
+    const w = b.board.w;
+    const spots = e.tiles.map((i) => this.tilePos(b, i % w, Math.floor(i / w)));
+    if (!spots.length) return;
+    if (e.phase === 'tell') {
+      const view = new Container();
+      this.root.addChildAt(view, 0);
+      for (const [x, y] of spots) {
+        const g = new Graphics();
+        g.poly([0, -TH / 2 + 3, TW / 2 - 5, 0, 0, TH / 2 - 3, -TW / 2 + 5, 0])
+          .fill({ color: look.colour, alpha: 0.45 })
+          .stroke({ color: look.colour, alpha: 1, width: 2.5 });
+        g.position.set(x, y);
+        view.addChild(g);
+      }
+      if (look.word) {
+        const mx = spots.reduce((a, s) => a + s[0], 0) / spots.length;
+        const my = Math.min(...spots.map((s) => s[1]));
+        // (the word in its colour lifted halfway to white, so it reads over dark ground too)
+        const c = look.colour;
+        const pale = (((((c >> 16) & 255) + 255) >> 1) << 16) | (((((c >> 8) & 255) + 255) >> 1) << 8) | (((c & 255) + 255) >> 1);
+        this.label(look.word, mx, my - 26, pale, 14, Math.min(1600, e.ms + 300));
+      }
+      const calm = this.calm();
+      let t = 0;
+      this.items.push({
+        view,
+        step: (dt) => {
+          t += dt;
+          // (it grows surer as it comes: the mark breathes faster and brighter, and never blinks out)
+          const k = Math.min(1, t / e.ms);
+          view.alpha = calm ? 0.9 : 0.65 + 0.25 * k + 0.1 * Math.sin((t / (260 - 160 * k)) * Math.PI);
+          return t < e.ms;
+        },
+      });
+      return;
+    }
+    for (const [x, y] of spots) for (const fx of look.go) play(this.particles, fx.key, x, y - 6, { scale: fx.scale, frameMs: 70, add: e.what !== 'rockfall' && e.what !== 'stampede' });
+    if (e.what === 'rockfall' || e.what === 'stampede') this.trauma = Math.min(1, this.trauma + 0.2);
   }
 
   /** A powder barrel goes off: a burst of fire and a ring of smoke on its tile, a shake (once, no loop). */
