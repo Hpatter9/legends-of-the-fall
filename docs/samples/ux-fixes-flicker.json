@@ -1,0 +1,2222 @@
+{
+ "method": "tools/ux-fixes/flicker-probe.mjs + dropouts.py; CDP screencast frames about 80 ms apart; DOM mutation log. Steady = 2.4 s on a screen a second after it opened; -open = from the tap; dropouts count 16px blocks that go flat or wholly change for 1-4 frames and come back (idle animations count too, so treat as an upper bound).",
+ "sizes": {
+  "393x852": {
+   "camp": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 5,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 51,
+     "dropouts": 1,
+     "replacedIn": {}
+    }
+   },
+   "camp-open": {
+    "before": {
+     "picturesReplaced": 17,
+     "nodesRemoved": 76,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 1,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmCrowns": 1,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    },
+    "after": {
+     "picturesReplaced": 16,
+     "nodesRemoved": 69,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 18,
+     "dropouts": 0,
+     "replacedIn": {
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    }
+   },
+   "tavern": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 10,
+     "dropouts": 1,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 88,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "tavern-open": {
+    "before": {
+     "picturesReplaced": 33,
+     "nodesRemoved": 94,
+     "hiddenToggles": 5,
+     "undecodedImages": 0,
+     "framesStreamed": 1,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmCrowns": 1,
+      ".ctBar": 2,
+      ".ctChamberCard": 14,
+      "#hmSheetBox": 16
+     }
+    },
+    "after": {
+     "picturesReplaced": 32,
+     "nodesRemoved": 87,
+     "hiddenToggles": 5,
+     "undecodedImages": 0,
+     "framesStreamed": 42,
+     "dropouts": 0,
+     "replacedIn": {
+      ".ctBar": 2,
+      ".ctChamberCard": 14,
+      "#hmSheetBox": 16
+     }
+    }
+   },
+   "roster": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 4,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 0,
+     "dropouts": null,
+     "replacedIn": {}
+    }
+   },
+   "roster-open": {
+    "before": {
+     "picturesReplaced": 16,
+     "nodesRemoved": 18,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 6,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmSheetBox": 16
+     }
+    },
+    "after": {
+     "picturesReplaced": 16,
+     "nodesRemoved": 18,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 7,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmSheetBox": 16
+     }
+    }
+   },
+   "dossier": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 10,
+     "dropouts": 37,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 68,
+     "dropouts": 2,
+     "replacedIn": {}
+    }
+   },
+   "dossier-open": {
+    "before": {
+     "picturesReplaced": 18,
+     "nodesRemoved": 9,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 4,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmSheetBox": 18
+     }
+    },
+    "after": {
+     "picturesReplaced": 18,
+     "nodesRemoved": 9,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 30,
+     "dropouts": 1,
+     "replacedIn": {
+      "#hmSheetBox": 18
+     }
+    }
+   },
+   "party": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 5,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 36,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "party-open": {
+    "before": {
+     "picturesReplaced": 45,
+     "nodesRemoved": 63,
+     "hiddenToggles": 4,
+     "undecodedImages": 0,
+     "framesStreamed": 2,
+     "dropouts": 0,
+     "replacedIn": {
+      "#ptGrid": 45
+     }
+    },
+    "after": {
+     "picturesReplaced": 45,
+     "nodesRemoved": 63,
+     "hiddenToggles": 4,
+     "undecodedImages": 0,
+     "framesStreamed": 16,
+     "dropouts": 0,
+     "replacedIn": {
+      "#ptGrid": 45
+     }
+    }
+   },
+   "sanctum": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 6,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 49,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "sanctum-open": {
+    "before": {
+     "picturesReplaced": 17,
+     "nodesRemoved": 76,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 1,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmCrowns": 1,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    },
+    "after": {
+     "picturesReplaced": 16,
+     "nodesRemoved": 69,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 19,
+     "dropouts": 0,
+     "replacedIn": {
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    }
+   },
+   "castle": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 1,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 4,
+     "dropouts": 1,
+     "replacedIn": {}
+    }
+   },
+   "castle-open": {
+    "before": {
+     "picturesReplaced": 17,
+     "nodesRemoved": 76,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 0,
+     "dropouts": null,
+     "replacedIn": {
+      "#hmCrowns": 1,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    },
+    "after": {
+     "picturesReplaced": 16,
+     "nodesRemoved": 69,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 2,
+     "dropouts": 0,
+     "replacedIn": {
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    }
+   },
+   "spells": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 18,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 87,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "spells-open": {
+    "before": {
+     "picturesReplaced": 17,
+     "nodesRemoved": 76,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 0,
+     "dropouts": null,
+     "replacedIn": {
+      "#hmCrowns": 1,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    },
+    "after": {
+     "picturesReplaced": 16,
+     "nodesRemoved": 69,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 33,
+     "dropouts": 2,
+     "replacedIn": {
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    }
+   },
+   "codex": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 11,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 40,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "codex-open": {
+    "before": {
+     "picturesReplaced": 80,
+     "nodesRemoved": 79,
+     "hiddenToggles": 3,
+     "undecodedImages": 0,
+     "framesStreamed": 1,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmSubBody": 63,
+      "#hmCrowns": 1,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    },
+    "after": {
+     "picturesReplaced": 79,
+     "nodesRemoved": 72,
+     "hiddenToggles": 3,
+     "undecodedImages": 0,
+     "framesStreamed": 16,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmSubBody": 63,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    }
+   },
+   "settings": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 13,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 42,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "settings-open": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 12,
+     "hiddenToggles": 1,
+     "undecodedImages": 0,
+     "framesStreamed": 6,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 12,
+     "hiddenToggles": 1,
+     "undecodedImages": 0,
+     "framesStreamed": 21,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "achievements": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 18,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 41,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "achievements-open": {
+    "before": {
+     "picturesReplaced": 17,
+     "nodesRemoved": 98,
+     "hiddenToggles": 3,
+     "undecodedImages": 0,
+     "framesStreamed": 1,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmCrowns": 1,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    },
+    "after": {
+     "picturesReplaced": 16,
+     "nodesRemoved": 91,
+     "hiddenToggles": 3,
+     "undecodedImages": 0,
+     "framesStreamed": 17,
+     "dropouts": 0,
+     "replacedIn": {
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    }
+   },
+   "armies": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 12,
+     "dropouts": 20,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 27,
+     "dropouts": 26,
+     "replacedIn": {}
+    }
+   },
+   "armies-open": {
+    "before": {
+     "picturesReplaced": 108,
+     "nodesRemoved": 77,
+     "hiddenToggles": 3,
+     "undecodedImages": 0,
+     "framesStreamed": 1,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmSubBody": 91,
+      "#hmCrowns": 1,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    },
+    "after": {
+     "picturesReplaced": 107,
+     "nodesRemoved": 70,
+     "hiddenToggles": 3,
+     "undecodedImages": 0,
+     "framesStreamed": 7,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmSubBody": 91,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    }
+   },
+   "dossier-switch": {
+    "before": {
+     "picturesReplaced": 18,
+     "nodesRemoved": 9,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 7,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmSheetBox": 18
+     }
+    },
+    "after": {
+     "picturesReplaced": 18,
+     "nodesRemoved": 9,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 23,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmSheetBox": 18
+     }
+    }
+   },
+   "dossier-tab": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 4,
+     "undecodedImages": 0,
+     "framesStreamed": 12,
+     "dropouts": 28,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 4,
+     "undecodedImages": 0,
+     "framesStreamed": 27,
+     "dropouts": 2,
+     "replacedIn": {}
+    }
+   },
+   "dossier-equip": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 4,
+     "undecodedImages": 0,
+     "framesStreamed": 9,
+     "dropouts": 22,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 4,
+     "undecodedImages": 0,
+     "framesStreamed": 26,
+     "dropouts": 2,
+     "replacedIn": {}
+    }
+   },
+   "party-tap": {
+    "before": {
+     "picturesReplaced": 46,
+     "nodesRemoved": 64,
+     "hiddenToggles": 1,
+     "undecodedImages": 0,
+     "framesStreamed": 1,
+     "dropouts": 0,
+     "replacedIn": {
+      "#ptTableau": 1,
+      "#ptGrid": 45
+     }
+    },
+    "after": {
+     "picturesReplaced": 46,
+     "nodesRemoved": 64,
+     "hiddenToggles": 1,
+     "undecodedImages": 0,
+     "framesStreamed": 2,
+     "dropouts": 0,
+     "replacedIn": {
+      "#ptTableau": 1,
+      "#ptGrid": 45
+     }
+    }
+   },
+   "codex-tab": {
+    "before": {
+     "picturesReplaced": 63,
+     "nodesRemoved": 63,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 0,
+     "dropouts": null,
+     "replacedIn": {
+      ".cxGrid": 63
+     }
+    },
+    "after": {
+     "picturesReplaced": 63,
+     "nodesRemoved": 63,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 19,
+     "dropouts": 0,
+     "replacedIn": {
+      ".cxGrid": 63
+     }
+    }
+   },
+   "armies-swipe": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 1,
+     "undecodedImages": 0,
+     "framesStreamed": 5,
+     "dropouts": 8,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 1,
+     "undecodedImages": 0,
+     "framesStreamed": 8,
+     "dropouts": 1,
+     "replacedIn": {}
+    }
+   },
+   "tabs-cycle": {
+    "before": {
+     "picturesReplaced": 120,
+     "nodesRemoved": 465,
+     "hiddenToggles": 21,
+     "undecodedImages": 0,
+     "framesStreamed": 4,
+     "dropouts": 7,
+     "replacedIn": {
+      "#hmCrowns": 6,
+      ".ctBar": 12,
+      ".ctChamberCard": 84,
+      "#hmSheetBox": 18
+     }
+    },
+    "after": {
+     "picturesReplaced": 114,
+     "nodesRemoved": 423,
+     "hiddenToggles": 21,
+     "undecodedImages": 0,
+     "framesStreamed": 15,
+     "dropouts": 42,
+     "replacedIn": {
+      ".ctBar": 12,
+      ".ctChamberCard": 84,
+      "#hmSheetBox": 18
+     }
+    }
+   },
+   "armies-close": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 1,
+     "undecodedImages": 0,
+     "framesStreamed": 7,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 1,
+     "undecodedImages": 0,
+     "framesStreamed": 16,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   }
+  },
+  "360x780": {
+   "camp": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 12,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 59,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "camp-open": {
+    "before": {
+     "picturesReplaced": 17,
+     "nodesRemoved": 76,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 9,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmCrowns": 1,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    },
+    "after": {
+     "picturesReplaced": 16,
+     "nodesRemoved": 69,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 23,
+     "dropouts": 0,
+     "replacedIn": {
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    }
+   },
+   "tavern": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 43,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 89,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "tavern-open": {
+    "before": {
+     "picturesReplaced": 33,
+     "nodesRemoved": 94,
+     "hiddenToggles": 5,
+     "undecodedImages": 0,
+     "framesStreamed": 21,
+     "dropouts": 2,
+     "replacedIn": {
+      "#hmCrowns": 1,
+      ".ctBar": 2,
+      ".ctChamberCard": 14,
+      "#hmSheetBox": 16
+     }
+    },
+    "after": {
+     "picturesReplaced": 32,
+     "nodesRemoved": 87,
+     "hiddenToggles": 5,
+     "undecodedImages": 0,
+     "framesStreamed": 39,
+     "dropouts": 0,
+     "replacedIn": {
+      ".ctBar": 2,
+      ".ctChamberCard": 14,
+      "#hmSheetBox": 16
+     }
+    }
+   },
+   "roster": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 24,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 57,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "roster-open": {
+    "before": {
+     "picturesReplaced": 16,
+     "nodesRemoved": 18,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 13,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmSheetBox": 16
+     }
+    },
+    "after": {
+     "picturesReplaced": 16,
+     "nodesRemoved": 18,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 26,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmSheetBox": 16
+     }
+    }
+   },
+   "dossier": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 34,
+     "dropouts": 11,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 66,
+     "dropouts": 16,
+     "replacedIn": {}
+    }
+   },
+   "dossier-open": {
+    "before": {
+     "picturesReplaced": 18,
+     "nodesRemoved": 9,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 7,
+     "dropouts": 4,
+     "replacedIn": {
+      "#hmSheetBox": 18
+     }
+    },
+    "after": {
+     "picturesReplaced": 18,
+     "nodesRemoved": 9,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 28,
+     "dropouts": 4,
+     "replacedIn": {
+      "#hmSheetBox": 18
+     }
+    }
+   },
+   "party": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 13,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 36,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "party-open": {
+    "before": {
+     "picturesReplaced": 45,
+     "nodesRemoved": 62,
+     "hiddenToggles": 4,
+     "undecodedImages": 0,
+     "framesStreamed": 6,
+     "dropouts": 0,
+     "replacedIn": {
+      "#ptGrid": 45
+     }
+    },
+    "after": {
+     "picturesReplaced": 45,
+     "nodesRemoved": 63,
+     "hiddenToggles": 4,
+     "undecodedImages": 0,
+     "framesStreamed": 17,
+     "dropouts": 0,
+     "replacedIn": {
+      "#ptGrid": 45
+     }
+    }
+   },
+   "sanctum": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 42,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 69,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "sanctum-open": {
+    "before": {
+     "picturesReplaced": 17,
+     "nodesRemoved": 76,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 13,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmCrowns": 1,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    },
+    "after": {
+     "picturesReplaced": 16,
+     "nodesRemoved": 69,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 27,
+     "dropouts": 0,
+     "replacedIn": {
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    }
+   },
+   "castle": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 0,
+     "dropouts": null,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 7,
+     "dropouts": 3,
+     "replacedIn": {}
+    }
+   },
+   "castle-open": {
+    "before": {
+     "picturesReplaced": 17,
+     "nodesRemoved": 76,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 0,
+     "dropouts": null,
+     "replacedIn": {
+      "#hmCrowns": 1,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    },
+    "after": {
+     "picturesReplaced": 16,
+     "nodesRemoved": 69,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 6,
+     "dropouts": 0,
+     "replacedIn": {
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    }
+   },
+   "spells": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 21,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 64,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "spells-open": {
+    "before": {
+     "picturesReplaced": 17,
+     "nodesRemoved": 76,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 13,
+     "dropouts": 5,
+     "replacedIn": {
+      "#hmCrowns": 1,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    },
+    "after": {
+     "picturesReplaced": 16,
+     "nodesRemoved": 69,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 29,
+     "dropouts": 0,
+     "replacedIn": {
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    }
+   },
+   "codex": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 23,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 54,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "codex-open": {
+    "before": {
+     "picturesReplaced": 80,
+     "nodesRemoved": 79,
+     "hiddenToggles": 3,
+     "undecodedImages": 0,
+     "framesStreamed": 9,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmSubBody": 63,
+      "#hmCrowns": 1,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    },
+    "after": {
+     "picturesReplaced": 79,
+     "nodesRemoved": 72,
+     "hiddenToggles": 3,
+     "undecodedImages": 0,
+     "framesStreamed": 10,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmSubBody": 63,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    }
+   },
+   "settings": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 30,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 30,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "settings-open": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 12,
+     "hiddenToggles": 1,
+     "undecodedImages": 0,
+     "framesStreamed": 16,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 12,
+     "hiddenToggles": 1,
+     "undecodedImages": 0,
+     "framesStreamed": 21,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "achievements": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 30,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 38,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "achievements-open": {
+    "before": {
+     "picturesReplaced": 17,
+     "nodesRemoved": 98,
+     "hiddenToggles": 3,
+     "undecodedImages": 0,
+     "framesStreamed": 8,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmCrowns": 1,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    },
+    "after": {
+     "picturesReplaced": 16,
+     "nodesRemoved": 91,
+     "hiddenToggles": 3,
+     "undecodedImages": 0,
+     "framesStreamed": 16,
+     "dropouts": 0,
+     "replacedIn": {
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    }
+   },
+   "armies": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 19,
+     "dropouts": 17,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 21,
+     "dropouts": 12,
+     "replacedIn": {}
+    }
+   },
+   "armies-open": {
+    "before": {
+     "picturesReplaced": 108,
+     "nodesRemoved": 77,
+     "hiddenToggles": 3,
+     "undecodedImages": 0,
+     "framesStreamed": 7,
+     "dropouts": 3,
+     "replacedIn": {
+      "#hmSubBody": 91,
+      "#hmCrowns": 1,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    },
+    "after": {
+     "picturesReplaced": 107,
+     "nodesRemoved": 70,
+     "hiddenToggles": 3,
+     "undecodedImages": 0,
+     "framesStreamed": 7,
+     "dropouts": 6,
+     "replacedIn": {
+      "#hmSubBody": 91,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    }
+   },
+   "dossier-switch": {
+    "before": {
+     "picturesReplaced": 18,
+     "nodesRemoved": 9,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 6,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmSheetBox": 18
+     }
+    },
+    "after": {
+     "picturesReplaced": 18,
+     "nodesRemoved": 9,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 18,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmSheetBox": 18
+     }
+    }
+   },
+   "dossier-tab": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 4,
+     "undecodedImages": 0,
+     "framesStreamed": 17,
+     "dropouts": 8,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 4,
+     "undecodedImages": 0,
+     "framesStreamed": 18,
+     "dropouts": 4,
+     "replacedIn": {}
+    }
+   },
+   "dossier-equip": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 4,
+     "undecodedImages": 0,
+     "framesStreamed": 20,
+     "dropouts": 6,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 4,
+     "undecodedImages": 0,
+     "framesStreamed": 25,
+     "dropouts": 4,
+     "replacedIn": {}
+    }
+   },
+   "party-tap": {
+    "before": {
+     "picturesReplaced": 46,
+     "nodesRemoved": 63,
+     "hiddenToggles": 1,
+     "undecodedImages": 0,
+     "framesStreamed": 0,
+     "dropouts": null,
+     "replacedIn": {
+      "#ptTableau": 1,
+      "#ptGrid": 45
+     }
+    },
+    "after": {
+     "picturesReplaced": 46,
+     "nodesRemoved": 64,
+     "hiddenToggles": 1,
+     "undecodedImages": 0,
+     "framesStreamed": 1,
+     "dropouts": 0,
+     "replacedIn": {
+      "#ptTableau": 1,
+      "#ptGrid": 45
+     }
+    }
+   },
+   "codex-tab": {
+    "before": {
+     "picturesReplaced": 63,
+     "nodesRemoved": 63,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 7,
+     "dropouts": 0,
+     "replacedIn": {
+      ".cxGrid": 63
+     }
+    },
+    "after": {
+     "picturesReplaced": 63,
+     "nodesRemoved": 63,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 19,
+     "dropouts": 0,
+     "replacedIn": {
+      ".cxGrid": 63
+     }
+    }
+   },
+   "armies-swipe": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 1,
+     "undecodedImages": 0,
+     "framesStreamed": 5,
+     "dropouts": 1,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 1,
+     "undecodedImages": 0,
+     "framesStreamed": 7,
+     "dropouts": 5,
+     "replacedIn": {}
+    }
+   },
+   "tabs-cycle": {
+    "before": {
+     "picturesReplaced": 120,
+     "nodesRemoved": 465,
+     "hiddenToggles": 21,
+     "undecodedImages": 0,
+     "framesStreamed": 8,
+     "dropouts": 48,
+     "replacedIn": {
+      "#hmCrowns": 6,
+      ".ctBar": 12,
+      ".ctChamberCard": 84,
+      "#hmSheetBox": 18
+     }
+    },
+    "after": {
+     "picturesReplaced": 114,
+     "nodesRemoved": 423,
+     "hiddenToggles": 21,
+     "undecodedImages": 0,
+     "framesStreamed": 11,
+     "dropouts": 208,
+     "replacedIn": {
+      ".ctBar": 12,
+      ".ctChamberCard": 84,
+      "#hmSheetBox": 18
+     }
+    }
+   },
+   "armies-close": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 1,
+     "undecodedImages": 0,
+     "framesStreamed": 10,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 1,
+     "undecodedImages": 0,
+     "framesStreamed": 13,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   }
+  },
+  "412x915": {
+   "camp": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 16,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 34,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "camp-open": {
+    "before": {
+     "picturesReplaced": 17,
+     "nodesRemoved": 76,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 4,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmCrowns": 1,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    },
+    "after": {
+     "picturesReplaced": 16,
+     "nodesRemoved": 69,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 10,
+     "dropouts": 0,
+     "replacedIn": {
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    }
+   },
+   "tavern": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 31,
+     "dropouts": 3,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 47,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "tavern-open": {
+    "before": {
+     "picturesReplaced": 33,
+     "nodesRemoved": 94,
+     "hiddenToggles": 5,
+     "undecodedImages": 0,
+     "framesStreamed": 6,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmCrowns": 1,
+      ".ctBar": 2,
+      ".ctChamberCard": 14,
+      "#hmSheetBox": 16
+     }
+    },
+    "after": {
+     "picturesReplaced": 32,
+     "nodesRemoved": 87,
+     "hiddenToggles": 5,
+     "undecodedImages": 0,
+     "framesStreamed": 12,
+     "dropouts": 17,
+     "replacedIn": {
+      ".ctBar": 2,
+      ".ctChamberCard": 14,
+      "#hmSheetBox": 16
+     }
+    }
+   },
+   "roster": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 19,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 0,
+     "dropouts": null,
+     "replacedIn": {}
+    }
+   },
+   "roster-open": {
+    "before": {
+     "picturesReplaced": 16,
+     "nodesRemoved": 18,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 7,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmSheetBox": 16
+     }
+    },
+    "after": {
+     "picturesReplaced": 16,
+     "nodesRemoved": 18,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 7,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmSheetBox": 16
+     }
+    }
+   },
+   "dossier": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 20,
+     "dropouts": 35,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 58,
+     "dropouts": 7,
+     "replacedIn": {}
+    }
+   },
+   "dossier-open": {
+    "before": {
+     "picturesReplaced": 18,
+     "nodesRemoved": 9,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 6,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmSheetBox": 18
+     }
+    },
+    "after": {
+     "picturesReplaced": 18,
+     "nodesRemoved": 9,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 13,
+     "dropouts": 25,
+     "replacedIn": {
+      "#hmSheetBox": 18
+     }
+    }
+   },
+   "party": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 6,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 22,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "party-open": {
+    "before": {
+     "picturesReplaced": 45,
+     "nodesRemoved": 63,
+     "hiddenToggles": 4,
+     "undecodedImages": 0,
+     "framesStreamed": 2,
+     "dropouts": 0,
+     "replacedIn": {
+      "#ptGrid": 45
+     }
+    },
+    "after": {
+     "picturesReplaced": 45,
+     "nodesRemoved": 63,
+     "hiddenToggles": 4,
+     "undecodedImages": 0,
+     "framesStreamed": 12,
+     "dropouts": 0,
+     "replacedIn": {
+      "#ptGrid": 45
+     }
+    }
+   },
+   "sanctum": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 23,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 41,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "sanctum-open": {
+    "before": {
+     "picturesReplaced": 17,
+     "nodesRemoved": 76,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 7,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmCrowns": 1,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    },
+    "after": {
+     "picturesReplaced": 16,
+     "nodesRemoved": 69,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 12,
+     "dropouts": 0,
+     "replacedIn": {
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    }
+   },
+   "castle": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 1,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 1,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "castle-open": {
+    "before": {
+     "picturesReplaced": 17,
+     "nodesRemoved": 76,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 0,
+     "dropouts": null,
+     "replacedIn": {
+      "#hmCrowns": 1,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    },
+    "after": {
+     "picturesReplaced": 16,
+     "nodesRemoved": 69,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 1,
+     "dropouts": 0,
+     "replacedIn": {
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    }
+   },
+   "spells": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 6,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 43,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "spells-open": {
+    "before": {
+     "picturesReplaced": 17,
+     "nodesRemoved": 76,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 13,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmCrowns": 1,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    },
+    "after": {
+     "picturesReplaced": 16,
+     "nodesRemoved": 69,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 28,
+     "dropouts": 0,
+     "replacedIn": {
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    }
+   },
+   "codex": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 19,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 49,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "codex-open": {
+    "before": {
+     "picturesReplaced": 80,
+     "nodesRemoved": 79,
+     "hiddenToggles": 3,
+     "undecodedImages": 0,
+     "framesStreamed": 10,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmSubBody": 63,
+      "#hmCrowns": 1,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    },
+    "after": {
+     "picturesReplaced": 79,
+     "nodesRemoved": 72,
+     "hiddenToggles": 3,
+     "undecodedImages": 0,
+     "framesStreamed": 24,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmSubBody": 63,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    }
+   },
+   "settings": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 23,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 28,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "settings-open": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 12,
+     "hiddenToggles": 1,
+     "undecodedImages": 0,
+     "framesStreamed": 10,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 12,
+     "hiddenToggles": 1,
+     "undecodedImages": 0,
+     "framesStreamed": 17,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "achievements": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 16,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 25,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "achievements-open": {
+    "before": {
+     "picturesReplaced": 17,
+     "nodesRemoved": 98,
+     "hiddenToggles": 3,
+     "undecodedImages": 0,
+     "framesStreamed": 3,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmCrowns": 1,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    },
+    "after": {
+     "picturesReplaced": 16,
+     "nodesRemoved": 91,
+     "hiddenToggles": 3,
+     "undecodedImages": 0,
+     "framesStreamed": 9,
+     "dropouts": 0,
+     "replacedIn": {
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    }
+   },
+   "armies": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 14,
+     "dropouts": 12,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 14,
+     "dropouts": 33,
+     "replacedIn": {}
+    }
+   },
+   "armies-open": {
+    "before": {
+     "picturesReplaced": 108,
+     "nodesRemoved": 77,
+     "hiddenToggles": 3,
+     "undecodedImages": 0,
+     "framesStreamed": 4,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmSubBody": 91,
+      "#hmCrowns": 1,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    },
+    "after": {
+     "picturesReplaced": 107,
+     "nodesRemoved": 70,
+     "hiddenToggles": 3,
+     "undecodedImages": 0,
+     "framesStreamed": 4,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmSubBody": 91,
+      ".ctBar": 2,
+      ".ctChamberCard": 14
+     }
+    }
+   },
+   "dossier-switch": {
+    "before": {
+     "picturesReplaced": 18,
+     "nodesRemoved": 9,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 7,
+     "dropouts": 2,
+     "replacedIn": {
+      "#hmSheetBox": 18
+     }
+    },
+    "after": {
+     "picturesReplaced": 18,
+     "nodesRemoved": 9,
+     "hiddenToggles": 2,
+     "undecodedImages": 0,
+     "framesStreamed": 12,
+     "dropouts": 0,
+     "replacedIn": {
+      "#hmSheetBox": 18
+     }
+    }
+   },
+   "dossier-tab": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 4,
+     "undecodedImages": 0,
+     "framesStreamed": 11,
+     "dropouts": 18,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 4,
+     "undecodedImages": 0,
+     "framesStreamed": 14,
+     "dropouts": 7,
+     "replacedIn": {}
+    }
+   },
+   "dossier-equip": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 4,
+     "undecodedImages": 0,
+     "framesStreamed": 7,
+     "dropouts": 2,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 4,
+     "undecodedImages": 0,
+     "framesStreamed": 18,
+     "dropouts": 8,
+     "replacedIn": {}
+    }
+   },
+   "party-tap": {
+    "before": {
+     "picturesReplaced": 46,
+     "nodesRemoved": 64,
+     "hiddenToggles": 1,
+     "undecodedImages": 0,
+     "framesStreamed": 0,
+     "dropouts": null,
+     "replacedIn": {
+      "#ptTableau": 1,
+      "#ptGrid": 45
+     }
+    },
+    "after": {
+     "picturesReplaced": 46,
+     "nodesRemoved": 64,
+     "hiddenToggles": 1,
+     "undecodedImages": 0,
+     "framesStreamed": 0,
+     "dropouts": null,
+     "replacedIn": {
+      "#ptTableau": 1,
+      "#ptGrid": 45
+     }
+    }
+   },
+   "codex-tab": {
+    "before": {
+     "picturesReplaced": 63,
+     "nodesRemoved": 63,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 1,
+     "dropouts": 0,
+     "replacedIn": {
+      ".cxGrid": 63
+     }
+    },
+    "after": {
+     "picturesReplaced": 63,
+     "nodesRemoved": 63,
+     "hiddenToggles": 0,
+     "undecodedImages": 0,
+     "framesStreamed": 11,
+     "dropouts": 0,
+     "replacedIn": {
+      ".cxGrid": 63
+     }
+    }
+   },
+   "armies-swipe": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 1,
+     "undecodedImages": 0,
+     "framesStreamed": 3,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 1,
+     "undecodedImages": 0,
+     "framesStreamed": 5,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   },
+   "tabs-cycle": {
+    "before": {
+     "picturesReplaced": 120,
+     "nodesRemoved": 465,
+     "hiddenToggles": 21,
+     "undecodedImages": 0,
+     "framesStreamed": 4,
+     "dropouts": 1,
+     "replacedIn": {
+      "#hmCrowns": 6,
+      ".ctBar": 12,
+      ".ctChamberCard": 84,
+      "#hmSheetBox": 18
+     }
+    },
+    "after": {
+     "picturesReplaced": 114,
+     "nodesRemoved": 423,
+     "hiddenToggles": 21,
+     "undecodedImages": 0,
+     "framesStreamed": 8,
+     "dropouts": 496,
+     "replacedIn": {
+      ".ctBar": 12,
+      ".ctChamberCard": 84,
+      "#hmSheetBox": 18
+     }
+    }
+   },
+   "armies-close": {
+    "before": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 1,
+     "undecodedImages": 0,
+     "framesStreamed": 2,
+     "dropouts": 0,
+     "replacedIn": {}
+    },
+    "after": {
+     "picturesReplaced": 0,
+     "nodesRemoved": 0,
+     "hiddenToggles": 1,
+     "undecodedImages": 0,
+     "framesStreamed": 10,
+     "dropouts": 0,
+     "replacedIn": {}
+    }
+   }
+  }
+ }
+}

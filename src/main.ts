@@ -14,6 +14,8 @@ import { CAL_MAPS } from './sim/calamity';
 import { pickHero } from './calamityView';
 import { noteFightStats, notePayout, recapOf } from './sim/runRecap';
 import { showRecap } from './recapView';
+import { campArtReady } from './camp';
+import { comebackTips, type ComebackGo } from './sim/comeback';
 import { ARMIES, armyById, armyUnlocked, settleWave, type ArmyPay } from './sim/armies';
 import { drawRunStars, showUnlock } from './armiesView';
 import { modeOpen } from './sim/modeUnlock';
@@ -381,6 +383,8 @@ class Game {
     sync();
     // (the tower's map comes and goes without the home screen changing: the ambience follows it too)
     new MutationObserver(() => this.syncScene()).observe($('towerMap'), { attributes: true, attributeFilter: ['hidden'] });
+    // (the camp's pictures are in before the loading screen goes, so the first look at the home screen is never an empty field; a slow load gives up after a moment)
+    if (this.home.isOpen) await Promise.race([campArtReady().then(() => new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok)))), new Promise((ok) => setTimeout(ok, 2500))]).catch(() => undefined);
     $('loading').remove();
     (window as unknown as { __game: Game }).__game = this;
     // (a hero's first awakening has its cinematic)
@@ -1833,7 +1837,9 @@ class Game {
       ? { title: 'Army defeated!', tone: 'won' as const, line: `${army?.name ?? 'The run'} cleared in ${run.recap?.fights ?? 0} fights` }
       : { title: 'Run over', tone: 'lost' as const, line: army ? `The ${army.name} held at wave ${run.best} of ${army.waves.length}` : `Fell at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} hires` };
     const joke = Rng.from(run.seed, won ? 0x7e1 : 0x7e2).pick(won ? RECAP_WIN : RECAP_LOSS);
-    showRecap($('recap'), recapOf(run), { ...head, joke }, () => void this.revealEarned().then(() => this.afterResult()));
+    // (a real defeat, no heart left: a few pointers on how to come back stronger, each with its way there once the recap is left)
+    const advice = !won && !this.auto ? { tips: comebackTips(this.meta, { army: army?.id, tier: army ? tierOfRun(run) : 0, party: this.meta.party }), onGo: (go: ComebackGo) => void this.revealEarned().then(() => (this.afterResult(), this.home.goTo(go))) } : undefined;
+    showRecap($('recap'), recapOf(run), { ...head, joke }, () => void this.revealEarned().then(() => this.afterResult()), advice);
   }
 
   /** A run has ended: back to the main screen, showing what it earned. */

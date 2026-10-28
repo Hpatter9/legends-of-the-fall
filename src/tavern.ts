@@ -279,6 +279,17 @@ export class Tavern {
     });
   }
 
+  /** Paint one still picture without starting the loop: the tab is behind a sheet, but its page still slides through the view when
+   *  the tab changes, and an unpainted canvas showed there as an empty band. */
+  paintOnce(): void {
+    if (this.raf || document.hidden) return;
+    void loadArt().then(() => {
+      if (this.raf) return;
+      this.fit();
+      this.draw();
+    });
+  }
+
   /** Stop drawing (another tab is showing, or a sheet is open over it). */
   stop(): void {
     this.running = false;
