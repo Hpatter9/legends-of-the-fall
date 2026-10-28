@@ -19,6 +19,7 @@ import { readTomes, type TomeCounts } from './tomes';
 import { readTalents, type KindTalents } from './talents';
 import { AWAKEN_MULT } from './awakenRules';
 import { readAwakened } from './awaken';
+import { readCaches, readOres } from './awakenMats';
 import { readCodex, readCodexClaimed, readCodexPaid, type CodexRecord } from './codex';
 import { readCombosSeen } from './combos';
 import { readTickets } from './autoReplay';
@@ -114,6 +115,10 @@ export interface Meta {
   ranked?: Record<string, number>;
   /** The steps each hero kind has awakened above its top rank, 1 or 2 (`awaken.ts`; missing is none). */
   awakened?: Record<string, number>;
+  /** The rift ores held, by class trait (`awakenMats.ts`): an awakening step asks for its class's on top of the shards. Missing is none. */
+  ores?: Record<string, number>;
+  /** Rift Caches waiting to be opened on a hero's awakening panel (`awakenMats.ts`). A save from before the ores is paid one for each Calamity it cleared, up to five, the first time it is read. */
+  caches?: number;
   /** The talents each hero kind has taken and the points it bought with shards (`talents.ts`; missing is none). */
   talents?: Record<string, KindTalents>;
   /** The codex: the foe kinds met and the kills per kind (`codex.ts`; saves from before have none), and the milestone rewards claimed. */
@@ -426,6 +431,10 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       // (saves from before awakening have none)
       m.awakened = readAwakened(m.awakened, m.shards);
       if (!Object.keys(m.awakened).length) delete m.awakened;
+      // (saves from before the rift ores have none, and are paid a Rift Cache for each Calamity they cleared, up to five, once: the count is kept from then on)
+      m.ores = readOres(m.ores);
+      if (!m.ores) delete m.ores;
+      m.caches = readCaches(m.caches, m.calamity?.clears ?? 0);
       // (saves from before the talents have none; the rest of the save is read first, as the points depend on levels and shards)
       m.talents = readTalents(m.talents, m);
       // (saves from before the army chests have an empty stash; a chest given but not opened by an earlier format goes into it)

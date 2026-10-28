@@ -1,0 +1,38 @@
+/* The rift ores (AWAKEN-MATS, `oreView.ts`): chips, the pouch, an army's drops, the awakening panel's ore line and cache. */
+.oreIco { width: 24px; height: 24px; image-rendering: pixelated; flex: none; }
+.oreChip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; background: rgb(var(--black-rgb) / 0.4); border: 2px solid var(--ore, #cbb477); box-shadow: inset 0 0 8px color-mix(in srgb, var(--ore, #cbb477) 45%, transparent); }
+.oreChip .oreIco { width: 28px; height: 28px; object-fit: contain; }
+.oreChip.cache .oreIco { object-fit: cover; object-position: left center; width: 30px; }
+.oreChip small { font: 400 12px/15px var(--body); color: var(--ink); }
+.oreChip small b { color: var(--ore, #e8c86a); font-weight: 700; }
+.oreList { display: flex; flex-wrap: wrap; gap: 4px; }
+#oreDrop { display: flex; flex-direction: column; gap: 4px; width: min(300px, calc(86 * var(--vw))); }
+#oreDrop[hidden] { display: none; }
+#oreDrop h4 { margin: 0; font: 700 13px var(--display); color: var(--gold-hi); }
+.oreCacheIco { width: 34px; height: 30px; object-fit: cover; object-position: left center; image-rendering: pixelated; flex: none; }
+.orePouch { display: flex; flex-direction: column; gap: 6px; padding: 8px; background: rgb(var(--black-rgb) / 0.45); border: 2px solid #5b4f36; }
+.orePouchHead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.orePouchHead > b { font: 700 14px var(--display); color: #e8c86a; }
+.orePouchHead > small { font: 12px var(--body); color: var(--dim); }
+.orePouchCache { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font: 700 12px var(--body); color: #e8dcb4; }
+.orePouchCache .oreCacheIco { width: 26px; height: 24px; }
+.orePouchGrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.orePouchGrid span { display: flex; flex-direction: column; align-items: center; font: 700 11px var(--body); color: #fff; }
+.orePouchGrid .oreIco { width: 30px; height: 30px; }
+.orePouchGrid span.none { opacity: 0.4; }
+.asOres { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font: 12px var(--body); color: var(--ink); }
+.asOres > small { color: var(--dim); }
+.asOres span { display: inline-flex; align-items: center; gap: 3px; color: var(--ore); font-weight: 700; }
+.asOres .oreIco { width: 20px; height: 20px; }
+/* the awakening panel */
+.oreLine { display: grid; grid-template-columns: 40px 1fr auto; gap: 2px 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--ore); background: linear-gradient(120deg, color-mix(in srgb, var(--ore) 18%, #141018), #141018); border-radius: 3px; }
+.oreLine .oreIco { grid-row: span 2; width: 40px; height: 40px; filter: drop-shadow(0 0 6px var(--ore)); }
+.oreLine b { font: 700 16px var(--display); color: var(--ore); }
+.oreLine em { font: 700 16px var(--display); color: #fff; font-style: normal; grid-row: span 2; grid-column: 3; grid-row-start: 1; }
+.oreLine em.short { color: #ff9a8a; }
+.oreLine small { font: italic 12px/1.35 var(--body); color: #b9b2c4; }
+.oreCache { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px dashed #cbb477; background: #221d14; border-radius: 3px; font: 13px/1.3 var(--body); color: #e8dcb4; }
+.oreCache small { color: var(--dim); }
+.oreCache button { margin-left: auto; min-height: 34px; font-size: 12px; padding: 0 10px; }
+.oreCost { display: inline-flex; align-items: center; gap: 3px; color: var(--ore) !important; font-weight: 700; }
+.oreCost .oreIco { width: 18px; height: 18px; }

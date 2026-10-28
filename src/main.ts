@@ -21,6 +21,8 @@ import { drawRunStars, showUnlock } from './armiesView';
 import { modeOpen } from './sim/modeUnlock';
 import { spellIconHtml } from './spellIcons';
 import { settleArmyRun, type StarResult } from './sim/armyStars';
+import { settleArmyOres, type ArmyOres } from './sim/awakenMats';
+import { drawOreGain } from './oreView';
 import { TIERS, tierOf } from './sim/tiers';
 import { formOf, UNITS } from './sim/units';
 import { ELITE_BY_ID } from './sim/elites';
@@ -1475,7 +1477,7 @@ class Game {
             : `You stopped it. ${a.totals.runs} of ${a.count} runs cleared`;
     const rows = card.querySelector('.asumRows')!;
     rows.replaceChildren();
-    for (const [label, n] of [['Crowns', a.totals.crowns], ['XP', a.totals.xp], ['Chests', a.totals.chests], ['Gear found', a.totals.gear]] as const) {
+    for (const [label, n] of [['Crowns', a.totals.crowns], ['XP', a.totals.xp], ['Chests', a.totals.chests], ['Gear found', a.totals.gear], ...(a.totals.ores ? [['Rift ores', a.totals.ores] as const] : [])] as const) {
       rows.append(Object.assign(document.createElement('span'), { textContent: label }), Object.assign(document.createElement('b'), { textContent: String(n) }));
     }
     $('asumOk').textContent = why === 'stopped' ? 'Back to the board' : 'To the armies';
@@ -1496,6 +1498,8 @@ class Game {
   /** Begin a run (any mode's) and its first fight. */
   /** The army-run stars the last cleared army run earned (for the result screen). */
   private runStars: StarResult | null = null;
+  /** The rift ores the last army fight paid (`awakenMats.ts`), for the result screen. */
+  private oreGain: ArmyOres | null = null;
 
   private startRun(run: Run): void {
     this.run = run;
@@ -2284,6 +2288,8 @@ class Game {
       if (won && !army && !daily && run.mode?.kind !== 'calamity') recordStars(this.meta, stage, rating.stars);
       const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b });
       this.runStars = settleArmyRun(this.meta, run);
+      // (an army's boss waves now and then drop rift ores of its kinds, and a tier's first clear always: `awakenMats.ts`)
+      this.oreGain = army ? settleArmyOres(this.meta, army.id, army.waves[stage - 1]?.boss, tierOfRun(run), won, !!this.runStars?.firstClear, run.seed, stage) : null;
       // (the stars this run won may have opened an army: its banner rises when the run's result is left)
       if (this.pay) this.pay.unlocked = ARMIES.find((a) => !openBefore.includes(a.id) && armyUnlocked(this.meta, a.id));
       // (a milestone this fight reached may bring in a hero)
@@ -2313,7 +2319,7 @@ class Game {
       if (this.auto) {
         // (no result screen to show: the fight's pay goes into the replay's totals)
         this.showStars(null);
-        for (const id of ['armyStars', 'xp', 'fightStats']) $(id).hidden = true;
+        for (const id of ['armyStars', 'oreDrop', 'xp', 'fightStats']) $(id).hidden = true;
         const over = run.cleared || !won;
         this.autoNext = afterFight(this.auto, {
           won,
@@ -2323,11 +2329,13 @@ class Game {
           xp: Object.values(gains).reduce((n, x) => n + x, 0),
           chests: run.cleared ? (this.runStars?.chests.length ?? 0) + (this.runStars?.firstClear ? 1 : 0) : 0,
           gear: over ? gearCount(run) : 0,
+          ores: this.oreGain?.drops.reduce((n, d) => n + d.n, 0) ?? 0,
         });
         this.autoWait = 900;
       } else {
         this.showStars(won ? rating : null);
         drawRunStars($('armyStars'), army && run.cleared ? this.runStars : null, army ? tierOf(tierOfRun(run)).name : '');
+        drawOreGain($('oreDrop'), this.oreGain);
         this.showStats();
         this.showXp(gains, from, ups, !own);
         this.showBench();
