@@ -1,5 +1,5 @@
 // The Rank up card: what a hero has earned, the stats before and after, the look before and after (when it changes: an awakening
-// recolours), and the button that takes the step. A rank is the player's choice, never automatic (`sim/rankUp.ts`); the awakening
+// lays on the class's aura), and the button that takes the step. A rank is the player's choice, never automatic (`sim/rankUp.ts`); the awakening
 // steps above the top rank use the same card (`sim/awaken.ts`). `openRankUp` puts the card over the page and calls `done` with what
 // was taken (a rank, or an awakened step) when the button is tapped; Back (or a tap outside) closes it and changes nothing.
 
@@ -8,8 +8,9 @@ import { MAX_RANK, RANK_SHARDS, rankMult, saveMeta, takenRank, type Meta } from 
 import { AWAKEN_COSTS, AWAKEN_SHARDS, PASSIVES, awaken, awakenPlan, awakenedOf } from './sim/awaken';
 import { rankPlan, rankUp } from './sim/rankUp';
 import { lastingBoost, progressOf, xpOf } from './sim/levels';
-import { lookFilter, lookSheet, stepOfRank } from './render/awakenLook';
-import { sprite } from './render/sheets';
+import { lookSheet, stepOfRank } from './render/awakenLook';
+import { wearAura } from './render/auraCanvas';
+import { figureShare, sprite } from './render/sheets';
 import { play } from './render/sound';
 
 export interface Taken {
@@ -26,15 +27,16 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 };
 const stars = (n: number): string => '★'.repeat(n) + '☆'.repeat(MAX_RANK - n);
 
-/** A hero's picture at a whole rank (its look: the form, or the awakened recolour); `tick` animates its idle. */
+/** A hero's picture at a whole rank (its look: its form, and once awakened its class's aura); `tick` animates its idle. */
 function pic(kind: string, full: number): { box: HTMLElement; tick: (n: number) => void } {
   const def = UNITS[kind];
   const step = stepOfRank(full);
-  const spr = sprite(step ? lookSheet(kind, full, 3) : def.sheet, 76);
-  if (step) spr.canvas.style.filter = lookFilter(kind, step);
+  const sheet = step ? lookSheet(kind, full, 3) : def.sheet;
+  const spr = sprite(sheet, 76);
   spr.canvas.style.transform = spr.faceRight ? 'translateX(-50%)' : 'translateX(-50%) scaleX(-1)';
   const box = el('div', 'ruPic');
   box.append(spr.canvas);
+  wearAura(box, spr.canvas, kind, step, figureShare(sheet), spr.faceRight ? 1 : -1);
   return { box, tick: spr.tick };
 }
 

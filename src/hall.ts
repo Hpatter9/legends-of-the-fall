@@ -6,7 +6,9 @@ import { stoneCost, stonesOf, type Meta, type Pull } from './sim/meta';
 import { luckyLine, pityLine } from './gacha';
 import { closest, haveOf, needOf } from './sim/unlock';
 import { ICONS, icon } from './menuArt';
-import { heroRig } from './render/awakenRig';
+import { awakenedStep, heroRig } from './render/awakenRig';
+import { drawAura, drawAuraGlow } from './render/auraCanvas';
+import { auraParts, type AuraPart } from './render/auraStyles';
 import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
 import { beamKind, fanSpots, hallLayout, MIN_H, ROOM_W, type BeamKind, type HallLayout, type Timeline } from './render/hallSpots';
@@ -240,6 +242,9 @@ interface Arrival {
   x: number;
   y: number;
   face: 1 | -1;
+  /** Its awakened step, and the parts of its class's aura (none below the first step). */
+  step: number;
+  aura: readonly AuraPart[];
 }
 
 interface Show {
@@ -398,6 +403,8 @@ export class SummoningHall {
         x: spot.x,
         y: spot.y,
         face: spot.x < this.lay.circle.x ? 1 : -1,
+        step: awakenedStep(meta, p.kind),
+        aura: auraParts(p.kind, awakenedStep(meta, p.kind), this.saver),
       });
     });
     this.pull1.disabled = this.pull10.disabled = true;
@@ -944,6 +951,13 @@ export class SummoningHall {
     g.fillRect((x - Math.round(6 * gf)) * s, y * s, Math.round(12 * gf) * s, 2 * s);
     const i = Math.floor(since / 150) % ar.frames;
     const lift = Math.round((1 - e) * 14);
+    // (an awakened hero rises in its class's aura)
+    if (ar.step) {
+      g.globalAlpha = e * o.alpha;
+      drawAuraGlow(g, ar.kind, ar.step, x * s, (y + lift) * s, ar.fig * s);
+      drawAura(g, ar.aura, x * s, (y + lift) * s, ar.fig * s, this.now, 'back', ar.face, this.reduced);
+      g.globalAlpha = 1;
+    }
     g.save();
     g.globalAlpha = e * o.alpha;
     const flip = (ar.face === 1) !== ar.facesRight;
@@ -954,5 +968,10 @@ export class SummoningHall {
     g.clip();
     this.blit(g, ar, i, x * s, dy, dw, dh, flip);
     g.restore();
+    if (ar.step) {
+      g.globalAlpha = e * o.alpha;
+      drawAura(g, ar.aura, x * s, (y + lift) * s, ar.fig * s, this.now, 'front', ar.face, this.reduced);
+      g.globalAlpha = 1;
+    }
   }
 }
