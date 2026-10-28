@@ -81,7 +81,7 @@ export function drawAwaken(meta: Meta, kind: string, changed: (taken: Taken) => 
     const cost = el('small', '', step <= done ? 'awakened' : `${AWAKEN_SHARDS[step - 1]} shards in all · uses ${AWAKEN_COSTS[step - 1]}`);
     if (step > done && ore) {
       const c = el('span', 'oreCost');
-      c.append(' + ', oreIcon(ore.trait), `${AWAKEN_ORES[step - 1]} ${ore.name}`);
+      c.append('+', oreIcon(ore.trait), `${AWAKEN_ORES[step - 1]} ${ore.name}`);
       cost.append(c);
     }
     head.append(el('b', '', `${step <= done ? '◆' : '◇'} Awakening ${ROMAN[step]}`), cost);
