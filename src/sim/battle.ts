@@ -12,6 +12,7 @@ import { cloneBoard } from './chain';
 import { weatherOf } from './weather';
 import type { LayoutId } from './layouts';
 import { twistBoard, type TwistFx } from './twists';
+import { featuredExtra } from './dailyThemes';
 import { firstStep, walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
 import { standDecide } from './standAi';
@@ -302,6 +303,8 @@ export interface Battle {
   revived?: boolean;
   /** The floor's twist (`twists.ts`), when it has one. */
   twist?: TwistFx;
+  /** A themed daily's featured trait (`Stage.featured`). */
+  featured?: string;
   /** Time still to hold the fight for a boss changing form (ms); nothing moves while it runs down. */
   pause?: number;
   /** Every hero's healing is multiplied by this (a calamity ascension). */
@@ -390,6 +393,8 @@ export interface Stage {
   duchess?: DuchessWish;
   /** A layout to lay the land in (`layouts.ts`), instead of the seed's own pick; ignored when `board` is given. */
   layout?: LayoutId;
+  /** A themed daily's featured trait: its woken bonus counts double (`dailyThemes.ts`). */
+  featured?: string;
 }
 export const apart = (a: At, b: At) => Math.abs(a.u - b.u) + Math.abs(a.v - b.v);
 export const tileOf = (b: Battle, a: At) => tileAt(b.board, a.u, a.v)!;
@@ -454,6 +459,7 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   if (foes) b.foeBoost = foes;
   if (stage.foes?.speed && stage.foes.speed !== 1) b.foeSpeed = stage.foes.speed;
   if (stage.relics) b.relics = stage.relics;
+  if (stage.featured) b.featured = stage.featured;
   if (stage.heal && stage.heal !== 1) b.heroHeal = stage.heal;
   // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed; each takes the
   // higher ground its row offers, and a shooter will take a perch in a row nearer the front for it
@@ -621,7 +627,8 @@ export function reviveParty(b: Battle): boolean {
 
 /** Fix the placed heroes' trait bonuses: attack and health now, the rest read by the hooks as the fight goes. */
 function applyTraits(b: Battle): void {
-  const fx = mergeEffects(traitEffects(kindsOf(b.units)), b.relics?.team ?? {});
+  let fx = mergeEffects(traitEffects(kindsOf(b.units)), b.relics?.team ?? {});
+  if (b.featured) fx = mergeEffects(fx, featuredExtra(b.featured, kindsOf(b.units)));
   b.traits = fx;
   // (a war drum: the foes stand a while before they act)
   if (b.relics?.first) for (const x of b.units) if (x.side === 'foe') x.busyUntil = b.relics.first;

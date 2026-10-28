@@ -48,6 +48,17 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Validation (phase B):** typecheck passed; `npm test -- duchess-fights achievements new-lines scene cinemat quips` passed; full `npm test` 1287 of 1287; `npm run web` built; `tools/duchess/shots.mjs` at 393x852, 360x780 and 412x915: she joins at level 100, the card shows above the panel with no bubble over it, her bubble shows, no page errors, no sideways overflow. PixelLab: 4 generations (balance 20.75 to 16.75).
 - **Handoff:** [notes](notes/duchess-fights.md); [screens](samples/duchess-fights-screens.png), [her sheet](samples/duchess-fights-sheet.png); phase A [mock-ups](samples/duchess-fights-mock-sheet.png).
 
+### DAILY-BUILDS — Varied dailies: build themes and synergies
+
+- **Goal:** the owner's ask: make the dailies varied, showing builds and synergies; each day pushes a different team idea, shown up front, and rewards trying it.
+- **Status:** done; owner approved and released as 0.197.0. The owner answered phase A: reward the build (a third chest star), the day's heroes lent to everyone, a seeded shuffled order (no repeat within 14 days, no two days running with a host or land, tomorrow not shown), a fixed boss per theme, eight foes in the Swarm. Live from 26 October 2026.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/daily-builds`, `/home/user/daily-builds` (main 0.190.0 merged in); PR none.
+- **Allowed files or systems:** new `src/sim/dailyThemes.ts`, `src/themeView.ts`, `test/daily-builds.test.ts`, `tools/daily-builds/`; small hooks in `src/sim/daily.ts`, `dailySeed.ts`, `modes.ts`, `run.ts` (`runTheme`, `startStage`, `noteFight`, `Run.themeMet`, the daily mode's `theme`), `battle.ts` (`Stage.featured`, `applyTraits`), `meta.ts` and `armyStars.ts` (the third star's clamp), `src/dailyView.ts`, `src/home.ts`, `src/main.ts`, `src/daily.css`; `docs/notes/daily-builds.md`, `docs/samples/daily-builds-*.png`. Not the twists' table, the traits' numbers, the armies or the Auto formation.
+- **Completion criteria:** 18 themes in a seeded shuffle from the date, the same for everyone, no repeat within 14 days across block edges, no two days running with a host or land; dates before the switch and runs begun before it play as before; each theme's twist, pool, featured boost and goal tested; each theme near the others' clear rate from a fresh save; theme on the camp board, the start card and the deploy screen at 393x852, 360x780 and 412x915; typecheck, affected and full tests, web build.
+- **Validation:** see the handoff's checks: typecheck, `npm test -- daily-builds daily modes armyStars meta ...` and the full `npm test`, `npm run web`; screens at the three sizes with no page errors or overflow; `themeRate` (40 dates a theme) before and after tuning; `swarmPerf` with 8 and 10 foes.
+- **Handoff:** [notes](notes/daily-builds.md), [sheet](samples/daily-builds-sheet.png), phase A [mock-ups](samples/daily-builds-mock-sheet.png).
+
 ### AWAKEN-002 — Class auras for awakened heroes
 
 - **Goal:** the owner's ask: drop the awakened recolour; an awakened hero wears an aura at step 1 (rank 5) and a stronger, bigger one at step 2 (rank 6), its style set by the hero's class trait (not the origin), wherever an awakened hero is drawn.

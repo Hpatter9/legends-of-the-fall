@@ -23,3 +23,25 @@
 .dayResult .chestPic { flex: none; filter: drop-shadow(0 0 5px var(--p4)); }
 .dayResult[hidden] { display: none; }
 .chestShow.daily .chestRays { background: repeating-conic-gradient(from 0deg, rgb(var(--p4-rgb) / 0.5) 0 7deg, rgb(var(--p4-rgb) / 0) 7deg 20deg); }
+/* a themed daily (DAILY-BUILDS): the theme block on the start card, the boss beside its name, and the featured trait lit on the deploy screen */
+.dayCard.themed { gap: 8px; }
+.dayTheme { width: min(340px, calc(90 * var(--vw))); box-sizing: border-box; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; text-align: left; background: rgb(var(--s1-rgb) / 0.9); border: 2px solid var(--gold); box-shadow: 0 0 10px rgb(var(--e6-rgb) / 0.35); }
+.dtHead { display: flex; align-items: center; gap: 8px; }
+.dtHead b { font: 400 24px/1.1 var(--display); color: var(--accent-hi); text-shadow: 0 2px 0 var(--s2); }
+.dtHead small { margin-left: auto; font: 400 12px/1.2 var(--body); color: var(--gold); white-space: nowrap; }
+.dtIdea { margin: 0; font: 400 12px/1.35 var(--body); color: var(--text); }
+.dtGoal { margin: 0; font: 400 12px/1.35 var(--body); color: var(--gold-hi, var(--gold)); }
+.dtStar { margin-right: 4px; color: var(--gold); }
+.dtHeroes { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.dtHero { width: 30px; height: 30px; border: 2px solid var(--edge-lo); background: radial-gradient(var(--s6), var(--s1)); }
+.dtHero canvas, .dtHero img { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
+.dtHero.feat { border-color: var(--gold); box-shadow: 0 0 6px rgb(var(--e6-rgb) / 0.6); }
+.dtHero.more { opacity: 0.85; border-style: dashed; }
+.dtPlus { font: 400 12px/1 var(--body); font-style: normal; color: var(--text-dim); padding: 0 2px; }
+.dayBossRow { display: flex; align-items: center; gap: 12px; }
+.dayCard.themed .dayFace { width: min(72px, calc(18 * var(--vw))); height: min(72px, calc(18 * var(--vw))); }
+.dayCard.themed .dayBoss { align-items: flex-start; }
+#twistBanner.theme { --tw: var(--gold); }
+.trait.featured { border-color: var(--gold); box-shadow: inset 0 0 0 2px var(--gold); }
+.trait.featured .thead::after { content: 'x2'; padding: 0 3px; font: 700 9px/12px var(--body); color: var(--s1); background: var(--gold-hi, var(--gold)); border: 1px solid var(--s1); border-radius: 3px; }
+.card small span.featured { background: var(--gold); color: var(--s1); }

@@ -6,6 +6,7 @@
 // opening, and they pay better the higher the milestone and the tier and the later the army. Pure rules: no
 // Pixi, no DOM.
 
+import { dailyStarsMax } from './dailyThemes';
 import { chestOres, grantOres, ORES, sumOres, type OreDrop } from './awakenMats';
 import { ARMIES, armyById, armyIndex, recordOf, type Army, type ArmyRecord } from './armies';
 import { grantEquipment, itemName, RARITY_NAMES, rollEquipment, type NewEquipment } from './equipment';
@@ -368,7 +369,7 @@ export function readStash(raw: unknown, rawArmies: unknown, seed: number): Stash
   if (Array.isArray(raw))
     for (const c of raw as Partial<StashChest>[]) {
       // (a daily chest names its date and has no army)
-      if (c && c.army === 'daily' && /^\d{8}$/.test(String(c.daily)) && typeof c.seed === 'number') add({ army: 'daily', at: 3, tier: 0, seed: c.seed >>> 0, daily: c.daily as number, bonus: Math.max(0, Math.min(2, (c.bonus ?? 0) | 0)) });
+      if (c && c.army === 'daily' && /^\d{8}$/.test(String(c.daily)) && typeof c.seed === 'number') add({ army: 'daily', at: 3, tier: 0, seed: c.seed >>> 0, daily: c.daily as number, bonus: Math.max(0, Math.min(dailyStarsMax(c.daily as number), (c.bonus ?? 0) | 0)) });
       else if (c && typeof c.army === 'string' && armyById(c.army) && MILESTONES.includes(c.at as number) && typeof c.seed === 'number') add({ army: c.army, at: c.at as number, tier: Math.max(0, Math.min(TIERS.length - 1, (c.tier ?? 0) | 0)), seed: c.seed >>> 0, ...(c.tower === true ? { tower: true } : {}), ...(c.first === true ? { first: true } : {}) });
     }
   // (the earlier format: a record with its given chests and the opened ones)
