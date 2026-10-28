@@ -507,7 +507,7 @@ export class StandView {
     if (!this.sky) {
       const sky = document.getElementById('sky');
       this.sky = el('div', 'stSky');
-      this.sky.style.backgroundImage = `linear-gradient(#000a, #0008 40%, #050409 75%), url(${standBackwallUrl})`;
+      this.sky.style.backgroundImage = `linear-gradient(#080b13ed, #080b13e8 40%, #050409 75%), url(${standBackwallUrl})`;
       sky?.after(this.sky);
     }
     this.sky.hidden = !on;
