@@ -3,7 +3,9 @@
 
 import { tok } from './render/tok';
 import type { Meta } from './sim/meta';
-import { heroRig, lookKey } from './render/awakenRig';
+import { awakenedStep, heroRig, lookKey } from './render/awakenRig';
+import { drawAura, drawAuraGlow } from './render/auraCanvas';
+import { auraParts, type AuraPart } from './render/auraStyles';
 import type { Army } from './sim/armies';
 import { sheetInfo } from './render/sheets';
 import { canvasOf, ROWS, shrinkRig, type Small } from './render/smallRig';
@@ -69,6 +71,9 @@ interface Actor {
   clip: string;
   emote: { name: string; until: number } | null;
   phase: number;
+  /** Its awakened step, and the parts of its class's aura (none below the first step). */
+  step: number;
+  aura: readonly AuraPart[];
 }
 
 interface Spark {
@@ -177,8 +182,12 @@ export class CampScene {
       const rig = heroRig(meta, kind);
       const spot = camp.heroes[i];
       if (!rig || !spot) return;
+      const step = awakenedStep(meta, kind);
+      const aura = auraParts(kind, step, this.saver);
       const a = this.actors.get(kind);
       if (a) {
+        a.step = step;
+        a.aura = aura;
         a.x += spot.x - a.spot.x;
         a.target += spot.x - a.spot.x;
         a.spot = spot;
@@ -202,6 +211,8 @@ export class CampScene {
         clip: 'idle',
         emote: null,
         phase: rand(0, 6),
+        step,
+        aura,
       });
     });
   }
@@ -653,12 +664,18 @@ export class CampScene {
     g.fillRect(fx - sw + 3, fy - 2, sw * 2 - 6, 1);
     g.fillRect(fx - sw + 3, fy + 1, sw * 2 - 6, 1);
     const dy = fy - lift - small.fh;
+    // (an awakened hero stands in its class's aura: the glow and the parts behind it, then the parts in front)
+    if (a.step) {
+      drawAuraGlow(g, a.kind, a.step, fx, fy, small.figure);
+      drawAura(g, a.aura, fx, fy, small.figure, this.now, 'back', a.face, this.reduced);
+    }
     // (a sheet's figures face right unless the sheet says otherwise; a mirror turns them)
     if ((a.face === 1) !== small.facesRight) {
       g.setTransform(-1, 0, 0, 1, fx, 0);
       g.drawImage(small.c, i * small.fw, row * small.fh, small.fw, small.fh, -Math.round(small.fw / 2), dy, small.fw, small.fh);
       g.setTransform(1, 0, 0, 1, 0, 0);
     } else g.drawImage(small.c, i * small.fw, row * small.fh, small.fw, small.fh, fx - Math.round(small.fw / 2), dy, small.fw, small.fh);
+    if (a.step) drawAura(g, a.aura, fx, fy, small.figure, this.now, 'front', a.face, this.reduced);
   }
 
   /** Duchess herself: a shadow, then her frame (the sheet is 48-pixel frames, her feet at the bottom). */

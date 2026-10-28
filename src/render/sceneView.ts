@@ -6,7 +6,7 @@
 // on; Skip ends it at once. The picture lives on its own small Pixi canvas, made when a scene starts and dropped when it
 // ends, so nothing costs anything the rest of the time. It never touches a battle.
 
-import { Application, ColorMatrixFilter, Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js';
+import { Application, Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js';
 import { FEET, fillLine, STAGE_H, STAGE_W, SCENES, type Scene, type SceneCue, type Shot } from '../sim/sceneScripts';
 import { castOf, namesOf, type Cast, type Players } from '../sim/sceneRules';
 import { UNITS } from '../sim/units';
@@ -16,7 +16,7 @@ import { facesRightOf, framesOf, figureOf, type Anim } from './sheets';
 import { actorsAt, cameraAt, keepInside, lineNow, lineStart, lookAt, next, scaleOf, shotLength, start, tick, TYPE_RATE, typedChars, type ActorNow, type Cursor } from './sceneClock';
 import { endScene, play, playScene } from './sound';
 import { goatSheet } from '../duchess';
-import { toneOf } from './awakenLook';
+import { AwakenAura } from './awakenAura';
 import { FRAME as GOAT_FRAME } from './duchessRules';
 import { settings } from '../settings';
 import type { Area } from '../sim/board';
@@ -39,16 +39,6 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   if (text) e.textContent = text;
   return e;
 };
-
-/** The awakened tone of a hero as a colour matrix (the same hue turn, richer colour and finish the menus use). */
-function lookMatrix(kind: string, step: number): ColorMatrixFilter {
-  const t = toneOf(kind, step);
-  const f = new ColorMatrixFilter();
-  if (t.hue) f.hue(t.hue, false);
-  f.saturate((t.saturate - 1) * 1.5, true);
-  if (t.brightness !== 1) f.brightness(t.brightness, true);
-  return f;
-}
 
 /** The colour of each land's sky (the top of its first layer), laid under the layers. */
 const SKY: Record<Area, number> = {
@@ -133,8 +123,9 @@ class Hud {
 interface Figure {
   box: Container;
   body: Sprite;
-  /** The awakened look drawn now. */
+  /** The awakened step drawn now, and its aura. */
   look?: number;
+  aura?: AwakenAura;
 }
 
 export class ScenePlayer {
@@ -435,11 +426,21 @@ class Run {
       const k = def.scale * (m.scale ?? 1);
       f.body.scale.set(k * dir, k);
       f.body.tint = m.shade ? 0x000000 : 0xffffff;
-      // (the awakened look: the tone `awakenLook.ts` gives the hero, as a colour matrix)
+      // (an awakened hero keeps its colours and wears its class's aura, `awakenAura.ts`)
       if (f.look !== a.look) {
         f.look = a.look;
-        f.body.filters = a.look ? [lookMatrix(kind, a.look)] : [];
+        if (f.aura) {
+          f.aura.back.destroy({ children: true });
+          f.aura.front.destroy({ children: true });
+          f.aura = undefined;
+        }
+        if (a.look) {
+          f.aura = new AwakenAura(kind, a.look, settings().saver);
+          f.box.addChildAt(f.aura.back, 1);
+          f.box.addChild(f.aura.front);
+        }
       }
+      f.aura?.update(this.now, figureOf(def.sheet) * k, a.facing === 'right' ? 1 : -1, reduced());
       const bob = speaking === id && a.pose !== 'down' && !reduced() ? Math.round(Math.sin(this.now / 160)) : 0;
       f.body.y = -bob;
       f.box.position.set(Math.round(a.x), FEET);

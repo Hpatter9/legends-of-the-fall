@@ -105,6 +105,17 @@ All Craftpix, copied one sprite or layer at a time; no PixelLab. Ground tops and
   moon slash, lightning burst and strike, and the pink heart. The pack's licence allows use in games, commercial ones
   included; credit appreciated (https://blueberry-assets.itch.io). Mapped to skills and spells in `src/render/skillFx.ts`.
 
+## Awakened auras (`src/art/fx/aura/`)
+
+- `atlas.png`: 70 strips (32px frames, six or eight each) of the **5000 Pixel Effects** pack by blueberry
+  (https://blueberry-assets.itch.io), copied unchanged from `pixel-effects/sprites/<effect>/sheet-32.png` in the private
+  assets repository and packed a strip a row by `tools/awaken/aura-sheets.py` (`atlas.json` gives each aura part's
+  strip; `tools/awaken/aura-pack.json` which strip each part uses): the ground circles, runes, glyphs, shields, rising
+  auras, sparkles, orbs, flames, smoke, vortices, pillar, cuts, slashes and dashes the class auras of awakened heroes
+  are made of (`src/render/auraStyles.ts`, `docs/notes/awaken-auras.md`). The pack's licence allows use in games; the
+  raw files are not redistributed. A painted replacement (`docs/notes/awaken-auras-art-brief.md`) would be credited
+  here instead.
+
 ## Fight effects (`src/art/fx/vfx/`)
 
 - 27 Pixel Effects strips (six 32px frames each, copied unchanged from `pixel-effects/sprites/<effect>/sheet-32.png` in

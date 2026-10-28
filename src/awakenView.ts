@@ -7,7 +7,7 @@ import { ABILITIES } from './sim/equipBases';
 import { describeAbility } from './sim/equipment';
 import { MAX_RANK, takenRank, type Meta } from './sim/meta';
 import { openRankUp, type Taken } from './rankUpView';
-import { isRecoloured } from './render/awakenLook';
+import { auraOf } from './render/auraStyles';
 import { play } from './render/sound';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -21,9 +21,11 @@ const ROMAN = ['', 'I', 'II'];
 /** The gems after a hero's stars: a lit one for each step taken, a dark one for each still to take. */
 export const gems = (steps: number): string => '◆'.repeat(steps) + '◇'.repeat(MAX_AWAKEN - steps);
 
-/** A one-shot burst on a picture: a ring, a flash and the word "Awakened", gone when it ends (still, with reduced motion). */
-export function playAwakenShow(pic: HTMLElement, step: number, label?: string): void {
+/** A one-shot burst on a picture: a ring, a flash and the word "Awakened" (in the class's aura colour when `kind` is given), gone when it ends (still, with reduced motion). */
+export function playAwakenShow(pic: HTMLElement, step: number, label?: string, kind?: string): void {
   const show = el('div', `awakeShow s${step}`);
+  // (an awakening's rings and word glow in the hero's aura colour)
+  if (kind) show.style.setProperty('--aw', `#${auraOf(kind).colour.toString(16).padStart(6, '0')}`);
   show.append(el('i', 'ring'), el('i', 'ring r2'), el('b', '', label ?? (step >= MAX_AWAKEN ? 'Fully awakened' : 'Awakened')));
   pic.append(show);
   show.addEventListener('animationend', (e) => {
@@ -52,7 +54,7 @@ export function drawAwaken(meta: Meta, kind: string, changed: (taken: Taken) => 
     const head = el('div', 'awHead');
     head.append(el('b', '', `${step <= done ? '◆' : '◇'} Awakening ${ROMAN[step]}`), el('small', '', step <= done ? 'awakened' : `${AWAKEN_SHARDS[step - 1]} shards in all · uses ${AWAKEN_COSTS[step - 1]}`));
     row.append(head);
-    const lines = [`+${Math.round((AWAKEN_MULT - 1) * 100)}% hp and attack`, step === 1 ? 'A new look' + (isRecoloured(kind) ? ' (recoloured)' : '') : 'A brighter, golden look'];
+    const lines = [`+${Math.round((AWAKEN_MULT - 1) * 100)}% hp and attack`, step === 1 ? `An aura: ${auraOf(kind).name.toLowerCase()}` : 'A bigger, brighter aura'];
     row.append(el('small', 'awGives', lines.join(' · ')));
     if (passive && ABILITIES[passive.ability]) {
       const text = step === 1 ? `${passive.name}: ${passive.text}` : `${passive.name} grows stronger (${describeAbility(ABILITIES[passive.ability], PASSIVE_STRENGTH[1])})`;
