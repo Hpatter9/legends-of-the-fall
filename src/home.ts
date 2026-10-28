@@ -516,7 +516,7 @@ export class Home {
     const title = el('div');
     title.append(el('h3', '', 'Chapel'), el('em', '', m.works?.id === 'chapel' ? 'being built' : 'not built yet'));
     head.append(pic, title);
-    box.append(head, el('p', 'hint', 'A place to study the king\'s spells: opens the spellbook.'), el('p', 'hint', 'One purchase, no levels. Your starting spells still work in fights until then.'));
+    box.append(head, el('p', 'hint', 'A place to study the ruler\'s spells: opens the spellbook.'), el('p', 'hint', 'One purchase, no levels. Your starting spells still work in fights until then.'));
     this.cardFor = 'chapel';
     const buy = this.buildButton('chapel', CHAPEL_COST, CHAPEL_MS, canBuildChapel(m), () => startChapel(m, Date.now()));
     const done = el('button', '', 'Close');

@@ -19,6 +19,8 @@ import { goatSheet } from '../duchess';
 import { AwakenAura } from './awakenAura';
 import { FRAME as GOAT_FRAME } from './duchessRules';
 import { settings } from '../settings';
+import { rulerTextures } from './rulerArt';
+import { rulerFrame, rulerOf, rulerWords, type RulerAction } from '../rulerRules';
 import type { Area } from '../sim/board';
 
 /** The bars of a film, as shares of the screen's height: thin at the top, deeper at the foot for the subtitles. */
@@ -121,6 +123,9 @@ class Hud {
 
 /** One actor on the stage: its shadow and its sprite. */
 interface Figure {
+  actionShot?: number;
+  action?: RulerAction;
+  actionAt?: number;
   box: Container;
   body: Sprite;
   /** The awakened step drawn now, and its aura. */
@@ -198,6 +203,7 @@ class Run {
   ) {
     this.cast = castOf(scene, players);
     this.names = namesOf(this.cast);
+    for (const [id, actor] of Object.entries(this.cast)) if (actor.kind === 'standKing') this.names[id] = rulerOf(settings().ruler).name;
   }
 
   /** Play to the end. A stage that cannot start (no WebGL, say) is a scene skipped: the game goes on without it. */
@@ -324,7 +330,7 @@ class Run {
   private tap(): void {
     this.frozen = false;
     const line = lineNow(this.cursor, this.scene);
-    const text = line ? fillLine(line.text, this.names) : '';
+    const text = line ? rulerWords(fillLine(line.text, this.names), settings().ruler) : '';
     if (line && !reduced() && typedChars(text, this.cursor.t) < text.length) {
       // (still typing: the line shown whole, the beat going on from there)
       const t = text.length / TYPE_RATE;
@@ -380,12 +386,12 @@ class Run {
     this.drawVeil(shot, c.shotT);
     // the words
     const line = lineNow(c, scene);
-    const text = line ? fillLine(line.text, this.names) : '';
+    const text = line ? rulerWords(fillLine(line.text, this.names), settings().ruler) : '';
     const shown = text.slice(0, typedChars(text, c.t, reduced()));
-    const who = line && line.who !== 'narrator' ? (this.names[line.who] ?? line.who) : null;
+    const who = line && line.who !== 'narrator' ? (this.cast[line.who]?.kind === 'standKing' ? rulerOf(settings().ruler).name : rulerWords(this.names[line.who] ?? line.who, settings().ruler)) : null;
     this.hud.line(who, shown, line?.tone ?? (line && !who ? 'narrator' : ''), shown.length === text.length);
     const capAlpha = shot.caption && c.shotT < 4 ? Math.max(0, Math.min(1, c.shotT / 0.8, (4 - c.shotT) / 0.8)) : 0;
-    this.hud.caption(shot.caption ?? null, reduced() ? (capAlpha > 0 ? 1 : 0) : capAlpha);
+    this.hud.caption(shot.caption ? rulerWords(shot.caption, settings().ruler) : null, reduced() ? (capAlpha > 0 ? 1 : 0) : capAlpha);
   }
 
   private cue(name: SceneCue): void {
@@ -418,6 +424,20 @@ class Run {
       f.box.visible = a.visible;
       if (!a.visible) continue;
       const m = this.scene.cast[id];
+      if (kind === 'standKing') {
+        const action: RulerAction = a.walking ? 'walk' : a.pose === 'cast' ? 'cast' : a.pose === 'strike' ? 'strike' : a.pose === 'hurt' ? 'hurt' : a.pose === 'down' ? 'dead' : 'idle';
+        if (f.action !== action || f.actionShot !== c.shot) { f.action = action; f.actionAt = this.now; f.actionShot = c.shot; }
+        const list = rulerTextures(settings().ruler, action);
+        f.body.texture = list[rulerFrame(action, action === 'walk' ? a.walked * 1000 : this.now - (f.actionAt ?? this.now), reduced())];
+        const height = 60 * (m.scale ?? 1);
+        const scale = height / f.body.texture.height;
+        f.body.scale.set(scale * (a.facing === 'right' ? 1 : -1), scale);
+        f.body.tint = m.shade ? 0x000000 : 0xffffff;
+        f.body.y = 0;
+        f.box.position.set(Math.round(a.x), FEET);
+        f.box.zIndex = Math.round(a.x);
+        continue;
+      }
       const anim: Anim = a.walking ? 'walk' : a.pose === 'strike' || a.pose === 'cast' ? 'attack' : a.pose === 'hurt' ? 'hurt' : a.pose === 'down' ? 'dead' : 'idle';
       const list = framesOf(def.sheet, anim);
       const frame = anim === 'dead' ? list.length - 1 : anim === 'walk' ? Math.floor(a.walked * 9) : anim === 'attack' ? Math.floor(this.now / 120) : Math.floor(this.now / 170);
