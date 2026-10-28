@@ -1,0 +1,57 @@
+{
+  "assetChecks": [
+    {
+      "id": "hero_soldier",
+      "frames": 24,
+      "alpha": "hard",
+      "geometry": "fits"
+    },
+    {
+      "id": "hero_samurai_archer",
+      "frames": 24,
+      "alpha": "hard",
+      "geometry": "fits"
+    }
+  ],
+  "results": [
+    {
+      "width": 360,
+      "height": 780,
+      "deployed": [
+        "knight",
+        "samurai",
+        "archer",
+        "wizard",
+        "cleric"
+      ],
+      "errors": [],
+      "reducedMotion": true
+    },
+    {
+      "width": 393,
+      "height": 852,
+      "deployed": [
+        "knight",
+        "samurai",
+        "archer",
+        "wizard",
+        "cleric"
+      ],
+      "errors": [],
+      "reducedMotion": true
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "deployed": [
+        "knight",
+        "samurai",
+        "archer",
+        "wizard",
+        "cleric"
+      ],
+      "errors": [],
+      "reducedMotion": true
+    }
+  ]
+}

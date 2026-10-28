@@ -60,6 +60,8 @@ test('a hero not owned, or with nothing earned, has no rank to take', () => {
 test('awakening needs the top rank taken, not just earned', () => {
   const m = chosen();
   m.shards.knight = 40;
+  // (the step's rift ores, AWAKEN-MATS: this test is about the rank)
+  m.ores = { guardian: 10 };
   assert.equal(canAwaken(m, 'knight'), false);
   for (let i = 0; i < MAX_RANK; i++) rankUp(m, 'knight');
   assert.equal(takenRank(m, 'knight'), MAX_RANK);

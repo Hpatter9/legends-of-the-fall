@@ -26,7 +26,7 @@ import {
 } from '../src/sim/armies';
 import { CHARGE_MAX, KITS, tryCast } from '../src/sim/abilities';
 import { fight, place, playOut, stepBattle, type BattleEvent } from '../src/sim/battle';
-import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
+import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { BOSS_IDS, FOE_BANDS, isBoss } from '../src/sim/foes';
 import { levelOfKind, xpFor } from '../src/sim/levels';
 import { ARMY_STARS, TIERS } from '../src/sim/tiers';
@@ -431,8 +431,9 @@ test('a whole fight against the Lich King plays out to an end, the same every ti
   const play = () => {
     const b = startStage({ ...armyRun(14, 'undead', HEROES), stage: 15 });
     const spots: [number, number][] = [];
-    for (let v = D - DEPLOY_ROWS; v < D; v++) for (let u = 0; u < b.board.w; u++) if (standable(tileAt(b.board, u, v))) spots.push([u, v]);
-    HEROES.forEach((id, i) => place(b, id, ...spots[(i * 3) % spots.length], undefined, gradeBoost(2, 0, 9)));
+    // (the deploy rows are the last rows of this board, whatever its depth: army maps are 14x18 since the winding maps)
+    for (let v = b.board.d - DEPLOY_ROWS; v < b.board.d; v++) for (let u = 0; u < b.board.w; u++) if (standable(tileAt(b.board, u, v))) spots.push([u, v]);
+    HEROES.forEach((id, i) => assert.ok(place(b, id, ...spots[(i * 3) % spots.length], undefined, gradeBoost(2, 0, 9)), `${id} is placed`));
     assert.equal(stepBattle(b).length, 0, 'nothing happens before the fight starts');
     fight(b);
     playOut(b);

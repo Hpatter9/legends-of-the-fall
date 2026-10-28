@@ -54,7 +54,7 @@ test('weapons sort by weight', () => {
   assert.equal(weightOf('Ninja Monk'), 'fist');
 });
 
-test('a fight calls for blows, shots, hits and a closing sting', () => {
+test('a fight calls for shots, hits and a closing sting with basic swings filtered', () => {
   const b = readyBattle(7);
   fight(b);
   const seen = new Set<Cue>();
@@ -67,10 +67,20 @@ test('a fight calls for blows, shots, hits and a closing sting', () => {
       seen.add(q.cue);
     }
   }
-  assert.ok([...seen].some((c) => c.startsWith('swing')), 'a swing');
+  // (repetitive generic swings are filtered so combat audio remains crisp and uncluttered)
+  assert.equal(seen.has('swingSword') || seen.has('swingLight'), false, 'generic swings muted');
   assert.ok([...seen].some((c) => c.startsWith('hit') || c === 'arrowHit'), 'a hit');
   assert.ok([...seen].some((c) => c.startsWith('death')), 'a death');
   assert.ok(seen.has('victory') || seen.has('defeat'), 'an ending');
+});
+
+test('heavy blows keep their impactful windup swing', () => {
+  const b = readyBattle(1, ['ogre']);
+  const ogre = b.units.find((u) => u.side === 'foe');
+  assert.ok(ogre);
+  const hero = b.units.find((u) => u.side === 'hero')!;
+  const q = cuesFor(b, { kind: 'swing', by: ogre.id, to: hero.id });
+  assert.deepEqual(q.map((x) => x.cue), ['swingHeavy']);
 });
 
 test('the meteor falls, then booms when it lands', () => {

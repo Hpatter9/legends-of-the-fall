@@ -12,11 +12,17 @@ import { footDims, liesBehind, type Rot } from '../sim/turn';
 import { AREA_URLS, BUSH_URLS, GROUND_URLS } from './areaArt';
 import { TERRAIN_URLS } from './terrainArt';
 import { LIT_PROPS } from './weatherRules';
+import { birdOf, fallFrames, FALL_FRAMES, flairOf, flowFrames, FLOW_FRAMES, glow, loadRoadArt, piece, sceneryPictures, setPiece, type Pic } from './roadArt';
+import { settings } from '../settings';
+import { sceneDepth } from '../sim/armyRoad';
+import { mixSeed } from '../sim/rng';
 import gateUrl from '../art/camp/gate.png';
 import towerUrl from '../art/camp/tower.png';
 
 /** From this height up, a tile's top is stony. */
 const STONY = 3;
+/** How many steps of an army road's column are drawn below its top (they fade out past the first two). */
+const ROAD_SKIRT = 5;
 
 type Mark = 'deploy' | 'hover' | 'bad' | 'chosen' | null;
 const MARK_COLOUR: Record<Exclude<Mark, null>, [number, number]> = {
@@ -100,6 +106,7 @@ export async function loadBoardArt(): Promise<void> {
   const [barrel, crystal, planks] = await Promise.all([loadImage(TERRAIN_URLS.barrel), loadImage(TERRAIN_URLS.crystal), loadImage(TERRAIN_URLS.planks)]);
   const walls = (await all(TERRAIN_URLS.walls)).map((i) => Texture.from(i));
   const [gate, tower] = await all([gateUrl, towerUrl]);
+  await loadRoadArt();
   artEpoch++;
   art = { areas, water, ice, lava, bushes, barrel: Texture.from(barrel), walls, crystal: Texture.from(crystal), planks, gate: Texture.from(gate), tower: Texture.from(tower) };
 }
@@ -112,7 +119,16 @@ interface Built {
   tex: ColumnLease<Texture>[];
   /** The powder barrels still standing (by tile index), so a blast can take one away. */
   barrels: Map<number, Sprite>;
+  /** What moves on its own (an army's road): swaying growth, flickering lights, running water, falls. */
+  live: Live;
 }
+/** The living land's moving parts on a section (looks only): each is a sprite made once and only moved or re-framed each frame. */
+interface Live {
+  sway: { sp: Sprite; ph: number; amp: number }[];
+  lights: { sp: Sprite; ph: number; base: number }[];
+  loops: { sp: Sprite; frames: Texture[]; ph: number; ms: number }[];
+}
+const noLive = (): Live => ({ sway: [], lights: [], loops: [] });
 /** A finished section baked into one texture, and where its top left lies against the section's own origin. */
 interface Baked {
   tex: Texture;
@@ -131,6 +147,30 @@ export interface Scene {
   rot: Rot;
   ou: number;
   ov: number;
+}
+
+/** Stand a picture on a tile (its foot at the tile's middle, moved by its offset); note it if it sways or gives light. */
+function addPic(tile: Container, p: Pic, x: number, y: number, live: Live): void {
+  const tex = piece(p.name);
+  if (!tex) return;
+  const r = new Sprite(tex);
+  r.anchor.set(p.ax ?? 0.5, p.ay ?? 0.88);
+  r.scale.set(p.flip ? -p.scale : p.scale, p.scale);
+  r.position.set(x + p.dx, y + p.dy);
+  tile.addChild(r);
+  const ph = (x * 0.071 + y * 0.113) % (Math.PI * 2);
+  // (taller growth sways less at the foot, the same at the top: a skew about the foot)
+  if (p.sway) live.sway.push({ sp: r, ph, amp: 0.035 });
+  if (p.light) {
+    const g = new Sprite(glow());
+    g.anchor.set(0.5);
+    g.tint = p.light.colour;
+    g.blendMode = 'add';
+    g.position.set(x + p.dx, y + p.dy - p.light.y * p.scale);
+    g.alpha = 0.55;
+    tile.addChild(g);
+    live.lights.push({ sp: g, ph, base: 0.55 });
+  }
 }
 
 /** The most baked sections kept at once (a long map is fifteen). */
@@ -248,6 +288,29 @@ export class BoardView {
     this.built = null;
   }
 
+  private liveT = 0;
+  private liveSkip = false;
+  private calm = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /** Each frame: the living land of the live sections moves (the host, and the one the heroes are walking off). Held still when the device asks
+   *  for reduced motion; on a battery saver every other frame. Nothing is made here: the sprites are moved, re-tinted or re-framed. */
+  step(dt: number): void {
+    if (this.calm) return;
+    if (settings().saver && (this.liveSkip = !this.liveSkip)) return;
+    this.liveT += settings().saver ? dt * 2 : dt;
+    const t = this.liveT / 1000;
+    for (const live of [this.built?.live, this.old?.live]) {
+      if (!live) continue;
+      for (const s of live.sway) s.sp.skew.x = Math.sin(t * 1.3 + s.ph) * s.amp + Math.sin(t * 2.9 + s.ph * 2) * s.amp * 0.3;
+      // (a flame's glow breathes and wavers, never going out)
+      for (const l of live.lights) {
+        l.sp.alpha = l.base + Math.sin(t * 7.1 + l.ph) * 0.08 + Math.sin(t * 12.7 + l.ph * 3) * 0.05;
+        l.sp.scale.set(0.95 + Math.sin(t * 5.3 + l.ph) * 0.06);
+      }
+      for (const lp of live.loops) lp.sp.texture = lp.frames[(Math.floor(this.liveT / lp.ms) + lp.ph) % lp.frames.length];
+    }
+  }
+
   /** A tile of the host falls: `dy` px above where it lies (up is negative), `alpha` how much of it shows. */
   lift(i: number, dy: number, alpha: number): void {
     const t = this.built?.tiles[i];
@@ -358,13 +421,30 @@ export class BoardView {
     const marks: Graphics[] = [];
     const tex: ColumnLease<Texture>[] = [];
     const barrels = new Map<number, Sprite>();
+    const live = noLive();
+    // (an army's road: the land beside it sinks a little and its far edge is left ragged, so a section reads as a road through the land, not a slab)
+    const depth = b.tiles.some((t) => t.scene) ? sceneDepth(b) : null;
+    const held = new Set((b.pieces ?? []).map((p) => p.v * b.w + p.u));
     for (let v = 0; v < b.d; v++)
       for (let u = 0; u < b.w; u++) {
-        const t = tileAt(b, u, v)!;
-        const [x, y] = project(f, u, v, t.h);
+        const raw = tileAt(b, u, v)!;
+        const far = depth ? depth[v * b.w + u] : 0;
         const tile = new Container();
         tile.zIndex = depthIn(f, u, v);
-        const ct = this.column(t, u, v, b.area, !!look.boss);
+        const edge = Math.min(u, v, b.w - 1 - u, b.d - 1 - v);
+        // (water and lava are never trimmed: a river runs on to the edge, and pours off it)
+        if (depth && far >= 3 && !held.has(v * b.w + u) && raw.scene !== 'water' && raw.scene !== 'lava' && edge < 1 + ((mixSeed(b.seed, 0xed9e, u, v) >>> 0) % 3)) {
+          // (trimmed: nothing drawn, the tile is still there to the rules as land nobody stands on)
+          const mark = new Graphics();
+          tile.addChild(mark);
+          marks.push(mark);
+          tiles.push(tile);
+          continue;
+        }
+        const sink = raw.scene ? Math.min(2, Math.max(0, far - 1)) : 0;
+        const t: Tile = raw.scene === 'water' || raw.scene === 'lava' ? { ...raw, h: raw.h - sink, ground: raw.scene === 'water' ? 'deep' : 'lava' } : sink ? { ...raw, h: raw.h - sink } : raw;
+        const [x, y] = project(f, u, v, t.h);
+        const ct = this.column(t, u, v, b.area, depth ? !!t.paved : !!look.boss, !!depth);
         tex.push(ct);
         const col = new Sprite(ct.value);
         col.position.set(x - TW / 2, y - TH / 2);
@@ -374,7 +454,37 @@ export class BoardView {
         tile.addChild(mark);
         marks.push(mark);
         const set = art?.areas[b.area];
-        if (t.rock && set) {
+        if (t.scene === 'grave') {
+          addPic(tile, { name: 'gravestones', scale: 0.62, ay: 0.86, dx: 0, dy: 4 }, x, y, live);
+        } else if (t.scene) {
+          // (an arena's ring is a run of wall along the ring: down to the right on the screen, or mirrored down to the left)
+          let across = false;
+          if (t.ring) {
+            const ringAt = (du: number, dv: number) => !!tileAt(b, u + du, v + dv)?.ring;
+            const alongU = +ringAt(1, 0) + +ringAt(-1, 0) >= +ringAt(0, 1) + +ringAt(0, -1);
+            const [ax, ay] = project(f, u + (alongU ? 1 : 0), v + (alongU ? 0 : 1), t.h);
+            across = (ax - x) * (ay - y) < 0;
+          }
+          for (const p of sceneryPictures(t.scene, b.area, t.deco, !!t.ring, across, far)) addPic(tile, p, x, y, live);
+          if (t.scene === 'ruin' && !t.ring && art && t.deco % 3 !== 0) {
+            const r = new Sprite(art.walls[t.deco % art.walls.length]);
+            r.anchor.set(0.5, 0.85);
+            r.position.set(x, y + 4);
+            tile.addChild(r);
+          }
+        }
+        // (running water: streaks sliding the way the river runs)
+        if (depth && t.stream && b.flow && (t.ground === 'water' || t.ground === 'deep' || t.ground === 'lava' || t.ground === 'ice')) {
+          const [fx, fy] = project(f, u + b.flow[0], v + b.flow[1], t.h);
+          const frames = flowFrames(fx - x, fy - y, t.ground === 'lava' || (t.ground === 'deep' && LAVA_LANDS.includes(b.area)));
+          const sp = new Sprite(frames[0]);
+          sp.position.set(x - TW / 2, y - TH / 2);
+          tile.addChild(sp);
+          live.loops.push({ sp, frames, ph: (u * 3 + v * 5) % FLOW_FRAMES, ms: 110 });
+        }
+        if (t.scene) {
+          // (the scenery's own picture is set; nothing more on it)
+        } else if (t.rock && set) {        } else if (t.rock && set) {
           const tex = set.boulders[t.deco % set.boulders.length];
           const r = new Sprite(tex);
           r.anchor.set(0.5, 0.8);
@@ -419,10 +529,56 @@ export class BoardView {
           s.position.set(x + ((t.deco >> 3) % 2 ? 12 : -12), y - 5);
           tile.addChild(s);
         }
+        // (an army's road: small things growing on it now and then)
+        const flair = depth && !t.scene && !t.ground && !t.bridge && !t.rock && !t.wall && !t.barrel && !t.paved ? flairOf(b.area, t.deco) : null;
+        if (flair) addPic(tile, flair, x, y, live);
         tiles.push(tile);
       }
+    // an arena's set pieces, each on its tile of the land round it
+    for (const p of b.pieces ?? []) {
+      const tile = tiles[p.v * b.w + p.u];
+      if (!tile) continue;
+      const t = tileAt(b, p.u, p.v)!;
+      const far = depth ? depth[p.v * b.w + p.u] : 0;
+      const [x, y] = project(f, p.u, p.v, t.h - Math.min(2, Math.max(0, far - 1)));
+      addPic(tile, setPiece(p.kind, b.area), x, y, live);
+    }
+    // a few small birds at the road's edge, pecking (on the land beside it, a tile off the road)
+    if (depth) {
+      let n = 0;
+      b.tiles.forEach((t, i) => {
+        if (n >= 3 || !t.scene || depth[i] !== 1 || t.scene === 'water' || t.scene === 'lava' || t.deco % 11 !== 5) return;
+        const frames = birdOf(b.area, t.deco);
+        if (!frames) return;
+        const [x, y] = project(f, i % b.w, Math.floor(i / b.w), t.h);
+        const sp = new Sprite(frames[0]);
+        sp.anchor.set(0.5, 1);
+        sp.scale.set((t.deco >> 4) % 2 ? -1.1 : 1.1, 1.1);
+        sp.position.set(x + ((t.deco >> 2) % 3) * 6 - 6, y + 10);
+        tiles[i].addChild(sp);
+        live.loops.push({ sp, frames, ph: t.deco % 2, ms: 380 + (t.deco % 5) * 120 });
+        n++;
+      });
+    }
+    // water pouring off an open edge, where its face is towards the screen
+    for (const fall of b.falls ?? []) {
+      const tile = tiles[fall.v * b.w + fall.u];
+      const t = tileAt(b, fall.u, fall.v)!;
+      if (!tile || !depth) continue;
+      const h = t.h - Math.min(2, Math.max(0, depth[fall.v * b.w + fall.u] - 1));
+      const [x, y] = project(f, fall.u, fall.v, h);
+      const [ox, oy] = project(f, fall.u + fall.du, fall.v + fall.dv, h);
+      if (oy <= y) continue;
+      const left = ox < x;
+      const frames = fallFrames(left, fall.lava);
+      const sp = new Sprite(frames[0]);
+      sp.position.set(left ? x - TW / 2 : x, y);
+      tile.addChild(sp);
+      live.loops.push({ sp, frames, ph: fall.v % FALL_FRAMES, ms: 70 });
+    }
     let landmark: Container | null = null;
-    if (b.landmark && b.landmarkAt && art) {
+    // (an army road draws no distant compound: the owner found the castle gate too angled for the grid; its final arena is the destination)
+    if (b.landmark && b.landmarkAt && art && !depth) {
       // Existing credited gate/tower sprites form a scenic compound beyond the far edge, never collision terrain.
       const base = tiles[Math.floor(b.w / 2)];
       const site = b.landmarkAt;
@@ -432,7 +588,7 @@ export class BoardView {
       // A nonwalkable scenic plinth anchors the compound in the landscape instead of suspending it over the sky.
       for (let v = -2; v <= 1; v++) for (let u = -5; u <= 5; u++) {
         const t: Tile = { h: site.h, deco: (u + 5) * 7 + v + 2 };
-        const texture = this.column(t, u, v, b.area, true);
+        const texture = this.column(t, u, v, b.area, true, !!depth);
         tex.push(texture);
         const column = new Sprite(texture.value);
         const [x, y] = project(f, site.u + u, site.v + v, site.h);
@@ -451,7 +607,7 @@ export class BoardView {
         landmark.addChild(sp);
       }
     }
-    return { tiles, marks, tex, barrels, landmark };
+    return { tiles, marks, tex, barrels, landmark, live };
   }
 
   /** Where the board's lit props stand (world px; a lantern, a torch, a forge fire), for night's glows (`weatherView.ts`). */
@@ -496,26 +652,28 @@ export class BoardView {
   }
 
   /** One tile's column: its top laid on the diamond, its two sides down to the foot. */
-  private column(t: Tile, u: number, v: number, area: Area, boss = false): ColumnLease<Texture> {
+  private column(t: Tile, u: number, v: number, area: Area, boss = false, road = false): ColumnLease<Texture> {
     const set = art?.areas[area];
-    const top = t.h >= STONY || boss || t.perch ? -1 : set ? (t.deco + u + v) % set.tops.length : -1;
-    const key = columnKey(area, boss, t.h, !!t.bridge, t.ground, top, artEpoch, u, v, !!t.perch, !!t.ramp);
-    const bytes = TW * (TH + t.h * HH + FOOT + (boss ? HH : 0)) * 4;
-    return this.columns.acquire(key, bytes, () => this.paintColumn(t, u, v, area, boss));
+    const top = (!road && t.h >= STONY) || boss || t.perch ? -1 : set ? (t.deco + u + v) % set.tops.length : -1;
+    const skirt = road ? Math.min(t.h, ROAD_SKIRT) : -1;
+    const key = columnKey(area, boss, t.h, !!t.bridge, t.ground, top, artEpoch, u, v, !!t.perch, !!t.ramp, road ? `skirt${skirt}` : undefined);
+    const bytes = TW * (TH + (road ? skirt : t.h) * HH + FOOT + (boss && !road ? HH : 0)) * 4;
+    return this.columns.acquire(key, bytes, () => this.paintColumn(t, u, v, area, boss, road ? skirt : -1));
   }
 
   /** Original full-resolution painter; reuse only columns whose appearance inputs match. */
-  private paintColumn(t: Tile, u: number, v: number, area: Area, boss = false): Texture {
+  private paintColumn(t: Tile, u: number, v: number, area: Area, boss = false, skirt = -1): Texture {
     const set = art?.areas[area];
-    // (a boss arena stands on a plinth one step deeper)
-    const deep = t.h * HH + FOOT + (boss ? HH : 0);
+    // (a boss arena stands on a plinth one step deeper; an army road's tile has a short skirt instead of a cliff to the foot)
+    const road = skirt >= 0;
+    const deep = road ? skirt * HH + FOOT : t.h * HH + FOOT + (boss ? HH : 0);
     const c = document.createElement('canvas');
     c.width = TW;
     c.height = TH + deep;
     const g = c.getContext('2d')!;
     g.imageSmoothingEnabled = false;
-    // (a boss arena is all flagstone, with a gilded lip)
-    const stony = t.h >= STONY || boss;
+    // (a boss arena is all flagstone, with a gilded lip; on an army's road only the paved tiles are, whatever the height)
+    const stony = road ? boss : t.h >= STONY || boss;
     const lip = boss ? BOSS_LIP : LIP[area][stony ? 1 : 0];
     const face = (pts: [number, number][], fill: string | CanvasPattern) => {
       g.fillStyle = fill;
@@ -550,6 +708,17 @@ export class BoardView {
     };
     side(0, TW / 2, TH / 2, TH, 'rgba(60,40,20,0.12)');
     side(TW / 2, TW, TH, TH / 2, 'rgba(8,6,14,0.45)');
+    if (road && deep > 3 * HH) {
+      // (the skirt fades out below its first steps: the land goes on into the haze rather than ending in a wall)
+      g.save();
+      g.globalCompositeOperation = 'destination-out';
+      const fade = g.createLinearGradient(0, TH + 2.2 * HH, 0, TH + deep);
+      fade.addColorStop(0, 'rgba(0,0,0,0)');
+      fade.addColorStop(1, 'rgba(0,0,0,1)');
+      g.fillStyle = fade;
+      g.fillRect(0, TH / 2 + 2.2 * HH, TW, deep + TH);
+      g.restore();
+    }
     // faint lines at each step
     g.strokeStyle = 'rgba(0,0,0,0.2)';
     g.lineWidth = 1;
@@ -585,7 +754,9 @@ export class BoardView {
       g.fillRect(0, 0, TW, TH);
     }
     // (high ground a shade lighter, so the heights read at a glance)
-    g.fillStyle = `rgba(255,248,220,${0.03 + t.h * 0.035})`;
+    // (an army road stands tens of steps high: its tops take a soft band of light that rises and falls with the height, never bleaching out)
+    const band = Math.abs((t.h % 16) - 8) / 8;
+    g.fillStyle = `rgba(255,248,220,${road ? 0.02 + band * 0.1 : 0.03 + t.h * 0.035})`;
     g.fillRect(0, 0, TW, TH);
     // (the ground that matters is marked so it reads at a glance: ripples on shallows, glints on ice, a glow on lava)
     g.lineWidth = 1;

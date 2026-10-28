@@ -9,7 +9,9 @@
 import { tok } from './render/tok';
 import { ALL_HEROES, UNITS } from './sim/units';
 import type { Meta } from './sim/meta';
-import { heroRig } from './render/awakenRig';
+import { awakenedStep, heroRig } from './render/awakenRig';
+import { drawAura, drawAuraGlow } from './render/auraCanvas';
+import { auraParts, type AuraPart } from './render/auraStyles';
 import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
 import { goatHalfSheet } from './duchess';
@@ -108,6 +110,9 @@ interface Actor {
   clip: string;
   emote: { name: string; until: number } | null;
   phase: number;
+  /** Its awakened step, and the parts of its class's aura (none below the first step). */
+  step: number;
+  aura: readonly AuraPart[];
 }
 
 
@@ -243,10 +248,14 @@ export class Tavern {
       const spot = SPOTS[kind];
       if (!rig || !spot) continue;
       const k = figureHeight(rig.figure, def.scale) / rig.figure;
+      const step = awakenedStep(meta, kind);
+      const aura = auraParts(kind, step, this.saver);
       const a = this.actors.get(kind);
       if (a) {
         a.rig = rig;
         a.k = k;
+        a.step = step;
+        a.aura = aura;
         continue;
       }
       this.actors.set(kind, {
@@ -263,6 +272,8 @@ export class Tavern {
         clip: 'idle',
         emote: null,
         phase: rand(0, 6),
+        step,
+        aura,
       });
     }
   }
@@ -671,12 +682,19 @@ export class Tavern {
     const dh = rig.h * k;
     const dy = fy - lift - dh;
     const flip = (a.face === 1) !== rig.facesRight;
+    // (an awakened hero stands in its class's aura: the glow and the parts behind it, then the parts in front)
+    const tall = rig.figure * k;
+    if (a.step) {
+      drawAuraGlow(g, a.kind, a.step, fx, fy, tall);
+      drawAura(g, a.aura, fx, fy, tall, this.now, 'back', a.face, this.reduced);
+    }
     if (flip) {
       // (a mirrored transform set and put back by hand: save and restore are slow on a phone's canvas)
       g.transform(-1, 0, 0, 1, fx, 0);
       g.drawImage(rig.img, i * rig.w, r * rig.h, rig.w, rig.h, -dw / 2, dy, dw, dh);
       this.reset(s);
     } else g.drawImage(rig.img, i * rig.w, r * rig.h, rig.w, rig.h, fx - dw / 2, dy, dw, dh);
+    if (a.step) drawAura(g, a.aura, fx, fy, tall, this.now, 'front', a.face, this.reduced);
     if (a.emote) this.bubble(a, fx, fy - Math.round(rig.figure * k) - 15);
   }
 

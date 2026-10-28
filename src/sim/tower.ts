@@ -29,6 +29,7 @@ import { ascChests, ascCrowns, ascOf, ascRules, ascCleared } from './ascension';
 import { CALAMITY_XP, CLIMB_XP, calXpShare, fightXpByHero, gainRunXp, heroLevel, hireable, hireHero, ownsKind, promoteByLevel, type Promotion } from './climb';
 import { xpRate } from './castle';
 import { payClear, type ClearReward } from './calReward';
+import { bossOres, eliteOres, grantOres, ORES, sumOres, type OreDrop } from './awakenMats';
 import { type LevelUp } from './levels';
 
 /** Floors in an act: the path floors, then the boss on the last. */
@@ -147,6 +148,8 @@ export interface TowerSummary {
   clear?: ClearReward;
   /** A calamity's map recaps, one a map cleared. */
   recaps?: MapRecap[];
+  /** A calamity's rift ores (`awakenMats.ts`), the same kinds added together; paid on a loss too. */
+  ores?: OreDrop[];
 }
 
 /** What a calamity's map paid and showed, for the recap when it is cleared: the spots, the gold, the finds and the events met. */
@@ -166,6 +169,8 @@ export interface MapRecap {
   gear: string[];
   heroes: string[];
   events: string[];
+  /** The rift ores its boss and mini-bosses dropped (`awakenMats.ts`; none on a recap from before them). */
+  ores?: OreDrop[];
 }
 
 export interface TowerState {
@@ -195,6 +200,8 @@ export interface TowerState {
   /** What the calamity's map in play has paid so far, and the recaps of the maps already cleared (`MapRecap`). */
   recap?: MapRecap;
   recaps?: MapRecap[];
+  /** The rift ores a calamity's bosses and mini-bosses have dropped so far (`awakenMats.ts`): paid into the meta when the run ends, a loss too. */
+  ores?: OreDrop[];
   /** The map just cleared, whose recap the page shows once (and then clears). */
   mapDone?: MapRecap;
   /** The relics an elite offers, until one is taken (`takeRelic` in `elites.ts`). */
@@ -849,6 +856,13 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
     recap.fights++;
     if (kind === 'elite') recap.elites++;
   }
+  // (a calamity's boss and mini-bosses drop rift ores of their map's kinds, from side streams: kept on the run, paid when it ends)
+  if (t.maps && (kind === 'boss' || kind === 'elite')) {
+    const drop = kind === 'boss' ? bossOres(run.seed, t.act, ascOf(run)) : eliteOres(run.seed, t.act, floor, ascOf(run));
+    (t.ores ??= []).push(drop);
+    if (recap) (recap.ores ??= []).push(drop);
+    run.found.push(`${drop.n} ${ORES[drop.trait].name}`);
+  }
   const prizes: Gear[] = run.buff?.gear ? [run.buff.gear] : [];
   const rng = new Rng(mixSeed(run.seed, 0xe11e, floor));
   // (a run whose heroes start bare finds gear in its fights too: now and then in a plain one, always from an elite; from a side stream)
@@ -1038,9 +1052,12 @@ function settleCalamity(m: Meta, run: Run): TowerSummary {
   m.calamity = { ...best, best: Math.max(best.best, maps), clears: best.clears + (run.cleared ? 1 : 0) };
   if (run.cleared) m.calamity.asc = Math.max(cleared, level);
   else if (best.asc !== undefined) m.calamity.asc = best.asc;
-  // (a calamity cleared whole pays the finish: crowns, shards, a Legendary piece of gear, a title)
+  // (a calamity cleared whole pays the finish: crowns, shards, a Legendary piece of gear, a title, and a Rift Cache)
   const clear = run.cleared ? payClear(m, run.seed, level, armyIndex(army.id)) : undefined;
-  t.summary = { floors: t.spots ?? Math.max(0, run.stage - 1), act: Math.min(t.act, t.maps ?? t.act), crowns: t.crowns + bonus + (clear?.crowns ?? 0), ...c, gear: [], relics: run.relics?.length ?? 0, heroes: run.roster.length, newBest: maps > best.best, maps, cleared: !!run.cleared, abandoned: t.abandoned, ...(level ? { ascension: level } : {}), ...(clear ? { clear } : {}), recaps: t.recaps ?? [] };
+  // (the rift ores its bosses and mini-bosses dropped, a loss's too)
+  const ores = sumOres(t.ores ?? []);
+  grantOres(m, ores);
+  t.summary = { floors: t.spots ?? Math.max(0, run.stage - 1), act: Math.min(t.act, t.maps ?? t.act), crowns: t.crowns + bonus + (clear?.crowns ?? 0), ...c, gear: [], relics: run.relics?.length ?? 0, heroes: run.roster.length, newBest: maps > best.best, maps, cleared: !!run.cleared, abandoned: t.abandoned, ...(level ? { ascension: level } : {}), ...(clear ? { clear } : {}), recaps: t.recaps ?? [], ...(ores.length ? { ores } : {}) };
   return t.summary;
 }
 

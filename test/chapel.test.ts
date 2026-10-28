@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildChapel, canBuildChapel, CHAPEL_COST, chapelBuilt, spellsOpen, upgrade } from '../src/sim/castle';
 import { loadMeta, startedMeta, saveMeta } from '../src/sim/meta';
-import { unlockSpell } from '../src/sim/spells';
+import { grantSpells } from '../src/sim/spellSources';
 import { CHAPEL_SITE, lookFor, PLACE_LOOK } from '../src/render/castleSpots';
 
 const store = () => {
@@ -60,11 +60,12 @@ test('old saves keep what they had: a spell beyond the starters, a changed loado
   assert.equal(chapelBuilt(m), false);
 });
 
-test('unlocking a spell once the Chapel is built still works as before', () => {
+test('learning a spell once the Chapel is built still works as before', () => {
   const m = startedMeta(1);
   m.crowns = 1000;
   buildChapel(m);
-  assert.equal(unlockSpell(m, 'shield'), true);
+  m.castle.mageTower = 1;
+  assert.ok(grantSpells(m).includes('shield'));
 });
 
 test('the unbuilt Chapel is a site made of kit pieces, not the church', () => {

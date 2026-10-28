@@ -3,6 +3,7 @@
 // treasure chest, then the summary of a run that has ended. Like events.ts it reads and changes the Run only through the sim's own functions
 // (`enterNode`, `buy`, `rest`, ...); a battle node hands over to the page (`onFight`), a mystery floor to the event card.
 
+import { oreChip } from './oreView';
 import { chestKind } from './sim/armyStars';
 import { gainXp, xpOf, levelOf } from './sim/levels';
 import { saveMeta, type Meta } from './sim/meta';
@@ -976,6 +977,12 @@ export class TowerView {
     stat('Heroes', String(s.heroes));
     stat('Crowns earned', String(s.crowns));
     card.append(stats);
+    // (a calamity's rift ores are paid on a loss too: AWAKEN-MATS)
+    if (s.ores?.length) {
+      const ores = el('div', 'oreList');
+      ores.append(...s.ores.map((d) => oreChip(d)));
+      card.append(el('p', 'rtLead', 'Rift ores, for awakening:'), ores);
+    }
     if (s.newBest) card.append(el('p', 'rtBest', cal ? `A new best: ${s.maps} map${s.maps === 1 ? '' : 's'} cleared!` : `A new best floor: ${s.floors}!`));
     const rewards = el('div', 'rtRewards');
     for (const [name, n] of [['bronze', s.bronze], ['silver', s.silver], ['gold', s.gold]] as const) {

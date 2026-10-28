@@ -153,11 +153,10 @@ const still = (b: Battle) => {
   for (const x of b.units) x.busyUntil = 1e9;
 };
 
-test('every spell has a cost, a cooldown, a power, and the starters are free', () => {
+test('every spell has a cost, a cooldown and a power', () => {
   for (const id of SPELL_IDS) {
     const sp = SPELLS[id];
     assert.ok(sp.cost >= 1 && sp.cost <= MANA_MAX && sp.cooldownMs > 0 && sp.power >= 1 && sp.power <= 5, id);
-    assert.equal(sp.price === 0, ['heal', 'meteor', 'haste'].includes(id), id);
   }
   assert.ok(SPELL_IDS.length >= 10);
 });

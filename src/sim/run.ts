@@ -369,7 +369,7 @@ export function chainOf(run: Run): Section[] | null {
   let c = chains.get(key);
   if (!c) {
     c = scenario
-      ? planScenario(run.seed, scenario, army.waves.length, (n) => !!army.waves[n - 1].boss).sections
+      ? planScenario(run.seed, scenario, army.waves.length, (n) => !!army.waves[n - 1].boss, area).sections
       : buildChain(run.seed, army.waves.length, area, (n) => boardSeedOf(run, n), (n) => !!army.waves[n - 1].boss);
     if (chains.size > 32) chains.clear();
     chains.set(key, c);
