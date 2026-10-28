@@ -87,7 +87,7 @@ built once; the heroes' leashed walks search only the tiles near the post; dead 
   mid-wave (its post moves and it walks there).
 - **Skills and the leash.** A hero's skill is cast as if no foe outside its zone existed, and a dash or blink that would end past the
   leash stops on the last tile of its way inside it (`castInZone`). The test holds every hero on the field to its leash every tick.
-- **Fallen heroes** rise at their posts at the next wave clear (half hp); the others mend 35%. The king is not healed by it.
+- **Fallen heroes** stay down for the rest of the run (STAND-003, `docs/notes/stand-overhaul.md`; before, they rose at their posts at the next wave clear); the others mend 35%. The king is not healed by it.
 - **Pooling and cost.** Foe sprites are reused by kind and size (`UnitSprite.rebind`); health bars of units with no skill meter redraw only
   when they change; sprites far off the screen are hidden and looked at every eighth frame; the field is one baked texture
   (`BoardView.bakeField`); corpses are dropped from the unit list unless something still points at them.
@@ -157,7 +157,7 @@ built once; the heroes' leashed walks search only the tiles near the post; dead 
   mid-wave (its post moves and it walks there).
 - **Skills and the leash.** A hero's skill is cast as if no foe outside its zone existed, and a dash or blink that would end past the
   leash stops on the last tile of its way inside it (`castInZone`). The test holds every hero on the field to its leash every tick.
-- **Fallen heroes** rise at their posts at the next wave clear (half hp); the others mend 35%. The king is not healed by it.
+- **Fallen heroes** stay down for the rest of the run (STAND-003, `docs/notes/stand-overhaul.md`; before, they rose at their posts at the next wave clear); the others mend 35%. The king is not healed by it.
 - **Pooling and cost.** Foe sprites are reused by kind and size (`UnitSprite.rebind`); health bars of units with no skill meter redraw only
   when they change; sprites far off the screen are hidden and looked at every eighth frame; the field is one baked texture
   (`BoardView.bakeField`); corpses are dropped from the unit list unless something still points at them.

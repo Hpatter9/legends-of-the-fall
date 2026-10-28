@@ -14,6 +14,15 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+**STAND-003 / Last Stand overhaul** — the owner's ten asks: a castle interior with breached walls and the king on his throne, a dignified king, far less shake, a free camera, ways to find the heroes, a better deploy step, varied halls, the last foes hunted down, a pause with the heroes' stats, and heroes who stay dead.
+
+- **Status:** phase A (rules and visual proposal) ready for the owner's review; phase B (the look) waits for the owner's approval of the mock-ups.
+- **Owner:** Claude. **Branch / worktree:** `claude/stand-overhaul`, `/home/user/stand-overhaul` (from main 0.174.0). PR: none yet.
+- **Scope:** the Last Stand only: `src/sim/stand.ts`, `standAi.ts`, `standField.ts`, new `standSheet.ts`, the Last Stand hooks in `battle.ts` (`StandMode`), `spells.ts` and `ultimates.ts` (no raising in the Last Stand); `src/standView.ts`, `src/stand.css`, `src/heroBar.ts`, `src/render/fx.ts` (`still`), new `src/render/standCam.ts`; the Last Stand's art and credits; `tools/stand/`, `tools/stand-balance.ts`; `test/stand*.test.ts`; `docs/notes/stand-overhaul.md`, `last-stand.md`. Not the castle tab, the battle-picking tab or the WORLD army map.
+- **Completion criteria:** phase A: less shake, the free camera, the hunt, the pause (logic) and the fallen staying down built and tested; the balance re-measured; mock-ups of the castle halls and king, the deploy and unit aids, and the pause panel; questions put to the owner. Phase B (after approval): the castle halls (at least four layouts from the seed, breaches on different walls), the new king, the deploy tray, the unit aids and the pause panel built to the approved look; the balance re-tuned; typecheck, web build, `npm test -- stand`, screenshots at 393x852, 360x780 and 412x915 with reduced motion; old saves load.
+- **Validation (phase A):** see the handoff.
+- **Handoff:** [notes](notes/stand-overhaul.md); mock-ups `docs/samples/stand-overhaul-mock-*.png`.
+
 **COMBAT-002 / Hero kits, mana and manual ultimates** — done: owner accepted release 0.172.0.
 
 - **Goal:** every hero gets a mana or stamina pool, two skills that cost it (level 1 and level 10), and an ultimate (level 30) the player fires by tapping its portrait in a new hero bar, with an Auto toggle; all 45 heroes reworked into far more varied roles (summoners, shapeshifters and many odd archetypes), no new heroes.

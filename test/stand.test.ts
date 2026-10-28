@@ -177,6 +177,8 @@ test('a hero is posted where it was placed, within a leash of a few tiles', () =
   const posts = new Map(s.b.units.filter((u) => u.side === 'hero' && u.tag !== undefined).map((u) => [u.id, { ...s.run.heroes.find((h) => h.id === u.tag)!.post! }]));
   let worst = 0;
   const out = new Map<number, number>();
+  // (the hunt of a wave's last foes lifts the leash, STAND-003: a hero carried off by it is let walk home, and must be back within its leash in good time)
+  const homing = new Map<number, number>();
   for (let i = 0; i < 30000 && s.phase !== 'over' && s.run.wave < 18; i++) {
     stepStand(s);
     s.notes.length = 0;
@@ -184,6 +186,19 @@ test('a hero is posted where it was placed, within a leash of a few tiles', () =
       const post = posts.get(u.id);
       if (!post || !u.alive) continue;
       const d = apart(u, { u: post[0], v: post[1] });
+      if (s.b.stand!.hunt) {
+        homing.set(u.id, 0);
+        continue;
+      }
+      if (homing.has(u.id)) {
+        const n = homing.get(u.id)! + 1;
+        if (d <= u.post!.leash) homing.delete(u.id);
+        else {
+          homing.set(u.id, n);
+          assert.ok(n <= 400, `${u.def} was still ${d} from its post 40 s after a hunt`);
+          continue;
+        }
+      }
       worst = Math.max(worst, d);
       // (even a skill that leaps or dives stops short of the leash; only a foe's blow that shoves a hero can put it a tile past, and it walks straight back, or fights where it stands if foes shut the way)
       const ticks = d > u.post!.leash ? (out.get(u.id) ?? 0) + 1 : 0;
@@ -266,7 +281,7 @@ test('a cleared wave gives a break of five seconds that counts down, and Go ends
   assert.ok(!goNow(s), 'there is no break to end in a wave');
 });
 
-test('a cleared wave pays gold, XP and mends the heroes; the fallen rise at their posts', () => {
+test('a cleared wave pays gold, XP and mends the heroes; the fallen stay down', () => {
   const s = fresh(5, 20);
   startFirstWave(s);
   const gold = s.run.gold;
@@ -277,17 +292,15 @@ test('a cleared wave pays gold, XP and mends the heroes; the fallen rise at thei
   assert.ok(s.notes.some((n) => n.kind === 'clear'));
   assert.ok(s.run.heroes.every((h) => h.xp > 0 || h.lv > 0), 'every hero was taught');
   void knight;
-  // a fallen hero rises at the clear
+  // a fallen hero does not rise at the clear (STAND-003: the owner's "if a unit dies, they don't come back")
   const s2 = fresh(6, 20);
   startFirstWave(s2);
   const wiz = s2.b.units.find((u) => u.def === 'wizard')!;
-  const post = [...s2.run.heroes.find((h) => h.kind === 'wizard')!.post!];
   wiz.alive = false;
   wiz.hp = 0;
   until(s2, 'break');
-  assert.ok(wiz.alive, 'the wizard rose');
-  assert.deepEqual([wiz.u, wiz.v], post);
-  assert.ok(wiz.hp >= Math.round(wiz.maxHp * 0.5) - 1);
+  assert.ok(!wiz.alive, 'the wizard stays down');
+  assert.ok(s2.run.heroes.find((h) => h.kind === 'wizard')!.fallen);
   assert.ok(CLEAR_HEAL > 0);
 });
 

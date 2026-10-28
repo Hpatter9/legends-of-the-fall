@@ -1,6 +1,6 @@
 // The Last Stand's page (`docs/notes/last-stand.md`): the big field drawn as one baked picture with the fighters on it, the camera
-// (it shows the ground round the king and eases out to fit the fighting; a finger pans it and two pinch it, in whole-number
-// steps of pixels), the top bar (wave, the king's health, gold), the countdown of the break with the arrows of the edges the next
+// (the player's own: it starts on the king, a finger pans it and two pinch it, in whole-number steps of pixels, and it goes back
+// to the king only when the crown button is tapped; STAND-003), the pause button and its sheet of the heroes, the top bar (wave, the king's health, gold), the countdown of the break with the arrows of the edges the next
 // wave comes in by, the spell cards, and the bottom shop bar. The rules are `sim/stand.ts`; this file only shows them and passes
 // the player's taps on. It draws into the page's own Pixi canvas, with the board of the ordinary fights hidden meanwhile.
 
@@ -27,7 +27,9 @@ import { Fx } from './render/fx';
 import { UnitSprite } from './render/unitView';
 import { setBackdrop, panBackdrop } from './render/backdrop';
 import { at, depth, setFrame, HH, TH, TW } from './render/iso';
-import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, PAUSE_MS } from './render/cameraRules';
+import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS } from './render/cameraRules';
+import { bossHit, NUDGE_MS, nudgeOffset, wheelStep } from './render/standCam';
+import { standSheet } from './sim/standSheet';
 import { endFight, play, playEvents, setAct, startFight } from './render/sound';
 import { fightLevel, fightTrack } from './render/epicMusic';
 import { colLeft, viewH, viewW } from './viewport';
@@ -56,9 +58,6 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 /** The most the camera may be zoomed, in CSS px per world px: from a little under a third (about eight tiles across a phone at the least) to two. */
 const SCALE_MIN = 0.6;
 const SCALE_MAX = 2;
-/** The foes round the king that the camera frames (tiles), and how much room it leaves round them (world px). */
-const FRAME_RING = 7;
-const FRAME_PAD = 56;
 /** How long after a wave begins that a foe grumbles (battle ms): the king's line has gone, and the first foes are in. */
 const GRUMBLE_AFTER_MS = 5200;
 /** How long a wave's banner stays (ms). */
@@ -96,10 +95,11 @@ export class StandView {
   private ty = 0;
   private scale = 1;
   private tscale = 1;
-  private pausedUntil = 0;
   private room = { x: 0, y: 0, w: 1, h: 1 };
-  private fitScale = 0;
-  private fitSince = 0;
+  /** The boss's nudge still to run (ms; `standCam.ts`). */
+  private nudge = 0;
+  /** The run is paused (the pause button): nothing steps until it is resumed. */
+  private paused = false;
   /** What the player has hold of: the hero selected (roster id), the spell armed, a finger's gesture. */
   private picked: number | null = null;
   private spell: SpellId | null = null;
@@ -125,6 +125,8 @@ export class StandView {
     this.marks.zIndex = 2;
     this.world.addChild(this.holder);
     this.board.renderer = this.host.app.renderer;
+    // (no screen shake from the blows: only the boss's small nudge, made here)
+    this.fx.still = true;
     this.world.visible = false;
     this.host.app.stage.addChildAt(this.world, 0);
     this.buildPage();
@@ -154,8 +156,17 @@ export class StandView {
       this.speed = ((this.speed % 3) + 1) as 1 | 2 | 3;
       speed.textContent = `×${this.speed}`;
     });
+    const pause = el('button', 'stPause', 'Pause');
+    pause.setAttribute('aria-label', 'Pause, and see the heroes');
+    pause.addEventListener('click', () => this.setPaused(true));
     const left = el('div', 'stLeft');
-    left.append(leave, speed);
+    left.append(leave, speed, pause);
+    // (the camera is the player's: this takes it back to the king)
+    const centre = el('button', 'stCentre');
+    centre.innerHTML = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M3 18h18v3H3zM3 8l5 4 4-7 4 7 5-4-2 9H5z" fill="currentColor" stroke="#1a0a06" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+    centre.title = 'Centre on the king';
+    centre.setAttribute('aria-label', 'Centre on the king');
+    centre.addEventListener('click', () => this.centreOnKing());
     const wave = el('div', 'stWave');
     wave.append(el('small', '', 'Wave'), el('span'), el('em'));
     const king = el('div', 'stKing');
@@ -216,9 +227,11 @@ export class StandView {
     ask.hidden = true;
     const pick = el('div', 'stAsk stPick');
     pick.hidden = true;
-    root.append(this.input, top, count, arrows, info, banner, bottom, end, ask, pick);
+    const sheet = el('div', 'stAsk stSheet');
+    sheet.hidden = true;
+    root.append(this.input, top, centre, count, arrows, info, banner, bottom, end, ask, pick, sheet);
     document.body.append(root);
-    this.parts = { leave, speed, wave, king, gold, count, go, arrows, info, banner, bottom, spells, heroes, mana, cards, offer, bar, start, end, ask, pick };
+    this.parts = { leave, speed, pause, centre, sheet, wave, king, gold, count, go, arrows, info, banner, bottom, spells, heroes, mana, cards, offer, bar, start, end, ask, pick };
     this.wireInput();
   }
 
@@ -324,6 +337,9 @@ export class StandView {
     this.picked = null;
     this.spell = null;
     this.banner.left = 0;
+    this.nudge = 0;
+    this.paused = false;
+    this.parts.sheet.hidden = true;
     this.shown.clear();
     this.track = '';
     this.active = true;
@@ -507,13 +523,11 @@ export class StandView {
       if (g.kind === 'pinch' && this.pointers.size >= 2) {
         const [a, b] = [...this.pointers.values()];
         const ratio = Math.hypot(a.x - b.x, a.y - b.y) / Math.max(1, g.d0!);
-        this.pausedUntil = performance.now() + PAUSE_MS;
         this.tscale = this.snapScale(g.s0! * ratio);
         return;
       }
       if (Math.hypot(p.x - g.x, p.y - g.y) > 8) g.moved = true;
       if (g.kind === 'pan' && g.moved) {
-        this.pausedUntil = performance.now() + PAUSE_MS;
         this.cx = this.tx = g.cx - (p.x - g.x) / this.scale;
         this.cy = this.ty = g.cy - (p.y - g.y) / this.scale;
         this.clampCam();
@@ -558,6 +572,15 @@ export class StandView {
         this.refreshBar(true);
       }
     };
+    // (a mouse wheel zooms a step at a time, on a desktop)
+    inp.addEventListener(
+      'wheel',
+      (e) => {
+        e.preventDefault();
+        this.tscale = wheelStep(this.steps(), this.tscale, e.deltaY);
+      },
+      { passive: false },
+    );
     inp.addEventListener('pointerup', up);
     inp.addEventListener('pointercancel', up);
   }
@@ -635,7 +658,22 @@ export class StandView {
     const bottom = this.parts.bottom.getBoundingClientRect().top;
     this.room = { x: 0, y: top, w: viewW(), h: Math.max(80, bottom - top) };
     this.fx.fitScreen(viewW(), viewH());
-    if (this.s) this.snapCamera();
+    // (the camera stays where the player put it; a run just laid out is put on the king by `start`)
+    if (this.s) {
+      this.clampCam();
+      this.place();
+    }
+  }
+
+  /** The crown button: the camera eases back to the king (the zoom is left as it is). */
+  private centreOnKing(): void {
+    const s = this.s;
+    if (!s) return;
+    const [kx, ky] = at(KING_AT.u, KING_AT.v, tileAt(s.b.board, KING_AT.u, KING_AT.v)!.h);
+    this.tx = kx;
+    this.ty = ky - 24;
+    this.clampCam();
+    play('tap');
   }
 
   /** Put the camera on the king at a first step, with no easing. */
@@ -646,47 +684,7 @@ export class StandView {
     this.cy = this.ty = ky - 24;
     const steps = this.steps();
     this.scale = this.tscale = steps[Math.min(steps.length - 1, Math.floor(steps.length / 2))];
-    this.fitScale = this.tscale;
     this.place();
-  }
-
-  /** The camera frames the king, the heroes and the foes near them: the largest step that holds them in the room; it holds a step a moment before it changes. */
-  private follow(): void {
-    const s = this.s!;
-    if (performance.now() < this.pausedUntil) return;
-    let x0 = Infinity;
-    let x1 = -Infinity;
-    let y0 = Infinity;
-    let y1 = -Infinity;
-    for (const u of s.b.units) {
-      if (!u.alive) continue;
-      if (u.side === 'foe' && ringOf(u) > FRAME_RING) continue;
-      const sp = this.sprites.get(u.id);
-      if (!sp) continue;
-      x0 = Math.min(x0, sp.x);
-      x1 = Math.max(x1, sp.x);
-      y0 = Math.min(y0, sp.y - sp.tall);
-      y1 = Math.max(y1, sp.y);
-    }
-    if (x0 > x1) return;
-    x0 -= FRAME_PAD;
-    x1 += FRAME_PAD;
-    y0 -= FRAME_PAD;
-    y1 += FRAME_PAD * 0.6;
-    const fit = Math.min(this.room.w / (x1 - x0), this.room.h / (y1 - y0));
-    const steps = this.steps();
-    let want = steps[0];
-    for (const k of steps) if (k <= fit) want = k;
-    const now = performance.now();
-    // (zooming in waits for the room to stay free a little; zooming out is at once)
-    if (want !== this.fitScale) {
-      if (want < this.fitScale || now - this.fitSince > 900) this.fitScale = want;
-    } else this.fitSince = now;
-    if (want > this.fitScale) this.fitSince = this.fitSince || now;
-    this.tscale = this.fitScale;
-    this.tx = (x0 + x1) / 2;
-    this.ty = (y0 + y1) / 2;
-    this.clampCam();
   }
 
   private clampCam(): void {
@@ -711,7 +709,8 @@ export class StandView {
   private place(): void {
     const k = this.scale;
     this.world.scale.set(k);
-    this.world.position.set(Math.round(this.room.x + this.room.w / 2 - this.cx * k) + this.fx.shakeX, Math.round(this.room.y + this.room.h / 2 - this.cy * k) + this.fx.shakeY);
+    const n = nudgeOffset(this.nudge, this.fx.calm());
+    this.world.position.set(Math.round(this.room.x + this.room.w / 2 - this.cx * k) + n.x, Math.round(this.room.y + this.room.h / 2 - this.cy * k) + n.y);
     panBackdrop((this.cx - 0) / (FIELD * TW), (this.cy - (FIELD * TH) / 2) / (FIELD * TH));
     const w = this.world;
     this.fx.view = { x0: (0 - w.x) / k + 4, x1: (viewW() - w.x) / k - 4, y0: (this.room.y - w.y) / k + 4, y1: (this.room.y + this.room.h - w.y) / k };
@@ -724,7 +723,7 @@ export class StandView {
     if (!s) return;
     this.frameN++;
     const t0 = performance.now();
-    const fighting = (s.phase === 'wave' || s.phase === 'break') && !this.hold;
+    const fighting = (s.phase === 'wave' || s.phase === 'break') && !this.hold && !this.paused;
     if (fighting) {
       this.acc += Math.min(dt, 250) * this.speed * this.fx.timeScale();
       let guard = 0;
@@ -736,6 +735,7 @@ export class StandView {
         const events = stepStand(s);
         for (const e of events) if (e.kind === 'ultLapse') this.heroBar.lapse(e.by);
         this.fx.show(s.b, events);
+        if (bossHit(events, s.b.units)) this.nudge = NUDGE_MS;
         if (s.b.units.length !== this.sprites.size) this.syncSprites();
         playEvents(s.b, events, 1);
         this.takeNotes(events);
@@ -769,7 +769,7 @@ export class StandView {
       this.banner.left -= dt;
       if (this.banner.left <= 0) this.parts.banner.hidden = true;
     }
-    this.follow();
+    this.nudge = Math.max(0, this.nudge - dt);
     const f = fighting || s.phase === 'over';
     this.cx = f ? easeTo(this.cx, this.tx, dt, EASE_MOVE_MS) : this.cx + (this.tx - this.cx) * Math.min(1, dt / 220);
     this.cy = f ? easeTo(this.cy, this.ty, dt, EASE_MOVE_MS) : this.cy + (this.ty - this.cy) * Math.min(1, dt / 220);
@@ -824,6 +824,11 @@ export class StandView {
         // (a few words from the king, thinly spread: a hit now and then, and once his health is low)
         if (s.king.hp > 0 && s.king.hp < s.king.maxHp * KING_LOW_HP) kingSays('lowHp', () => this.anchorOf(s.king.id));
         else kingSays('hurt', () => this.anchorOf(s.king.id));
+      } else if (n.kind === 'fallen') {
+        // (a hero is down for good: its tile in the bar greys, its body stays where it fell)
+        this.refreshBar(true);
+      } else if (n.kind === 'hunt') {
+        // (the last foes are being run down: nothing to show yet beyond the heroes leaving their posts)
       } else if (n.kind === 'over') {
         kingSays('fallen', () => this.anchorOf(s.king.id));
         this.finish();
@@ -926,7 +931,8 @@ export class StandView {
     this.text('mana', this.parts.mana.querySelector('b'), `${Math.floor(b.spells.mana)}/${MANA_MAX}`);
     for (const card of this.parts.cards.children as HTMLCollectionOf<HTMLElement>) {
       const id = card.dataset.id as SpellId;
-      card.classList.toggle('dim', !canAfford(b, id));
+      // (Resurrect has nobody to lift in the Last Stand: the fallen stay down)
+      card.classList.toggle('dim', !canAfford(b, id) || id === 'resurrect');
       card.classList.toggle('armed', this.spell === id);
       (card.querySelector('.cool') as HTMLElement).style.height = `${(cooldownLeft(b, id) / SPELLS[id].cooldownMs) * 100}%`;
     }
@@ -966,6 +972,7 @@ export class StandView {
     } else this.arrows([]);
     (p.go as HTMLButtonElement).hidden = !brk;
     p.start.hidden = s.phase !== 'deploy';
+    p.pause.hidden = s.phase !== 'wave' && s.phase !== 'break';
     p.spells.hidden = !this.host.meta().spellbook.equipped.length || s.phase === 'deploy' || s.phase === 'over';
     p.heroes.hidden = s.phase === 'deploy' || s.phase === 'over';
     if (!p.heroes.hidden) {
@@ -1046,6 +1053,46 @@ export class StandView {
     info.textContent = `${UNITS[h.kind].name} · level ${h.lv}${u ? ` · ${Math.max(0, Math.ceil(u.hp))}/${u.maxHp}` : ' · on the bench'}. Tap a tile to move its post.`;
   }
 
+  /** Pause (the sim stops; the sheet of the heroes shows) or resume from where it stood. */
+  private setPaused(on: boolean): void {
+    const s = this.s;
+    if (!s || (on && s.phase !== 'wave' && s.phase !== 'break')) return;
+    this.paused = on;
+    this.acc = 0;
+    if (on) this.drawSheet();
+    this.parts.sheet.hidden = !on;
+    play('tap');
+  }
+
+  /** The pause sheet (`standSheet`): the king, then each hero's level, health, pool, attack and defence, kills, skills and ultimate. */
+  private drawSheet(): void {
+    const s = this.s!;
+    const sh = standSheet(s);
+    const box = this.parts.sheet;
+    box.replaceChildren();
+    const card = el('div', 'stCard stSheetCard');
+    card.append(el('h2', '', 'Paused'), el('p', 'stDim', `Wave ${sh.wave} · the king ${sh.king.hp} / ${sh.king.maxHp} · ${sh.gold} gold`));
+    const list = el('div', 'stSheetList');
+    for (const h of sh.heroes) {
+      const row = el('div', `stSheetRow${h.fallen ? ' fallen' : ''}`);
+      const head = el('div', 'stSheetHead');
+      head.append(el('span', '', h.name), el('em', '', h.fallen ? 'Fallen' : `Lv ${h.level}${h.runLv ? ` +${h.runLv}` : ''}`));
+      const facts = el('div', 'stSheetFacts');
+      const pool = h.pool ? `${h.pool.kind === 'mana' ? 'Mana' : 'Stamina'} ${h.pool.now}/${h.pool.max}` : '';
+      facts.textContent = `Health ${h.hp}/${h.maxHp} · ${pool} · Attack ${h.atk} · Defence ${h.def} · Kills ${h.kills}`;
+      const skills = el('div', 'stSheetSkills');
+      const words = h.skills.map((k) => `${k.name} (${k.open ? `${k.cost}${k.paid ? ', ready' : ''}` : `Lv ${k.opens}`})`);
+      if (h.ult) words.push(`Ultimate: ${h.ult.name} (${!h.ult.open ? `Lv ${h.ult.opens}` : h.ult.ready ? 'ready' : `${Math.round(h.ult.meter * 100)}%`})`);
+      skills.textContent = words.join(' · ');
+      row.append(head, facts, skills);
+      list.append(row);
+    }
+    const go = el('button', 'primary', 'Resume');
+    go.addEventListener('click', () => this.setPaused(false));
+    card.append(list, go);
+    box.append(card);
+  }
+
   /** The king has fallen: the run is paid, and the end screen shows what it came to. */
   private finish(): void {
     const s = this.s!;
@@ -1080,6 +1127,11 @@ export class StandView {
       end.hidden = false;
     }, 900);
     play('defeat');
+  }
+
+  /** For tests and screenshots: the pause sheet of the run in play. */
+  get sheet(): ReturnType<typeof standSheet> | null {
+    return this.s ? standSheet(this.s) : null;
   }
 
   /** For tests and screenshots: the run in play. */

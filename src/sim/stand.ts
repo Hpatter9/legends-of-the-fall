@@ -1,6 +1,7 @@
 // The Last Stand: an endless battle on a big square field (`standField.ts`). The king stands on his keep in the middle, the
 // heroes guard posts round him (`standAi.ts`), and wave after wave of foes comes in from the edges, bigger each time. Every
-// fifth wave is a boss. Between waves there is a short break (`BREAK_MS`) to spend gold: level a hero up, buy a
+// fifth wave is a boss. A hero who falls stays down for the rest of the run (`StandHero.fallen`); when a wave is down to its last
+// `HUNT_AT` foes the heroes leave their posts to hunt them down (`StandMode.hunt`), and walk back after. Between waves there is a short break (`BREAK_MS`) to spend gold: level a hero up, buy a
 // relic, heal the king (at any time, the break is a breather). The heroes also level up by themselves, in the fight, from kills and wave clears. The run ends when
 // the king falls; its score is the best wave reached (`Meta.stand`).
 //
@@ -64,9 +65,10 @@ export const SPAWN_SPAN = 7000;
 export const ENRAGE_AFTER = 75_000;
 export const ENRAGE_EVERY = 5000;
 export const ENRAGE_STEP = 1.1;
-/** A cleared wave heals the heroes standing by this share of their health, and the fallen rise at their posts with `RISE_SHARE`. */
+/** A cleared wave heals the heroes standing by this share of their health. The fallen stay down (the owner's ask: a hero who dies does not come back). */
 export const CLEAR_HEAL = 0.35;
-export const RISE_SHARE = 0.5;
+/** A wave with no foes still to come and this many or fewer on the field is hunted down: the heroes' leashes are lifted until it clears. */
+export const HUNT_AT = 2;
 /** Dead foes are dropped from the battle's list this long (ms) after they fall (the page has shown them by then). */
 export const CORPSE_MS = 2600;
 
@@ -102,6 +104,10 @@ export interface StandHero {
   lv: number;
   xp: number;
   post: [number, number] | null;
+  /** Fallen in this run: stays down to its end (absent in older saves, where everyone saved was standing). */
+  fallen?: boolean;
+  /** The foes it has felled this run (its summons' kills count for it); absent is none. */
+  kills?: number;
 }
 
 /** What is saved of a run: enough to build it again at the start of a break. */
@@ -158,6 +164,10 @@ export type StandNote =
   | { kind: 'clear'; n: number; gold: number }
   | { kind: 'levelup'; unit: number; level: number }
   | { kind: 'kingHit'; dmg: number }
+  /** A hero fell, for good. */
+  | { kind: 'fallen'; unit: number; hero: number }
+  /** The last foes of the wave are being hunted down (the heroes have left their posts). */
+  | { kind: 'hunt' }
   | { kind: 'over'; best: number };
 
 export type StandPhase = 'deploy' | 'wave' | 'break' | 'over';
@@ -281,6 +291,9 @@ function boostFor(s: Stand, h: StandHero): Boost {
   return { ...base, hp: (base.hp ?? 1) * lv.hp, atk: (base.atk ?? 1) * lv.atk };
 }
 
+/** Whether a hero of the run is on the field: posted, and not fallen. */
+export const standing = (h: StandHero): boolean => !!h.post && !h.fallen;
+
 const heroUnits = (s: Stand): Unit[] => s.b.units.filter((u) => u.side === 'hero' && u.tag !== undefined && u.alive);
 const unitOfHero = (s: Stand, id: number): Unit | undefined => s.b.units.find((u) => u.side === 'hero' && u.tag === id);
 
@@ -312,7 +325,8 @@ export function startStand(run: StandRun, setup: StandSetup): Stand {
     const plan = ringPlan(b.board, fresh.map((h) => h.kind), roleOfKind, run.heroes.filter((h) => h.post).map((h) => ({ u: h.post![0], v: h.post![1] })));
     fresh.forEach((h, i) => (h.post = plan[i] ? [plan[i].u, plan[i].v] : null));
   }
-  for (const h of run.heroes) if (h.post) addHeroUnit(s, h);
+  // (the fallen stay down: a run built again from its save leaves them off the field)
+  for (const h of run.heroes) if (standing(h)) addHeroUnit(s, h);
   syncTraits(s);
   syncMana(s);
   if (!run.offer.length) run.offer = drawOffer(run, run.wave);
@@ -358,7 +372,7 @@ function syncMana(s: Stand): void {
 /** Put a hero on a tile (a bench hero comes onto the field; one on the field has its post moved, and walks there). False when the tile is not a place to post, is taken, or the field is full. */
 export function postHero(s: Stand, id: number, u: number, v: number): boolean {
   const h = s.run.heroes.find((x) => x.id === id);
-  if (!h || s.phase === 'over' || !canPost(s.b.board, u, v)) return false;
+  if (!h || h.fallen || s.phase === 'over' || !canPost(s.b.board, u, v)) return false;
   if (s.b.units.some((x) => x.alive && x.u === u && x.v === v && x.tag !== id)) return false;
   const was = h.post;
   h.post = [u, v];
@@ -416,6 +430,7 @@ function beginWave(s: Stand): void {
   const b = s.b;
   run.best = Math.max(run.best, run.wave);
   s.phase = 'wave';
+  if (b.stand) b.stand.hunt = false;
   s.waveAt = b.t;
   s.rageAt = b.t + ENRAGE_AFTER;
   b.revived = false;
@@ -448,7 +463,7 @@ export const foesAlive = (s: Stand): number => s.b.units.filter((u) => u.alive &
 
 /** Start the run's first wave (from the deploy phase). */
 export function startFirstWave(s: Stand): boolean {
-  if (s.phase !== 'deploy' || !s.run.heroes.some((h) => h.post)) return false;
+  if (s.phase !== 'deploy' || !s.run.heroes.some(standing)) return false;
   syncTraits(s);
   beginWave(s);
   return true;
@@ -477,24 +492,14 @@ function clearWave(s: Stand): void {
   const gold = clearGold(n) + (relicEffects(run.relics).gold ?? 0);
   run.gold += gold;
   run.earned += gold;
-  for (const h of run.heroes) if (h.post) giveXp(s, h, waveXp(n));
-  // (the heroes get their breath back: the hurt mend a little, the fallen rise at their posts)
+  for (const h of run.heroes) if (standing(h)) giveXp(s, h, waveXp(n));
+  // (the heroes standing get their breath back: the hurt mend a little; the fallen stay down)
   for (const u of s.b.units) {
-    if (u.side !== 'hero' || u.tag === undefined) continue;
-    const h = run.heroes.find((x) => x.id === u.tag);
-    if (!u.alive && h?.post) {
-      u.alive = true;
-      u.hp = Math.max(1, Math.round(u.maxHp * RISE_SHARE));
-      u.diedAt = undefined;
-      u.u = h.post[0];
-      u.v = h.post[1];
-      u.busyUntil = s.b.t + 500;
-      u.charge = 0;
-      u.dot = undefined;
-      u.step = undefined;
-      u.swing = undefined;
-    } else if (u.alive) u.hp = Math.min(u.maxHp, u.hp + Math.round(u.maxHp * CLEAR_HEAL * (u.healMult ?? 1)));
+    if (u.side !== 'hero' || u.tag === undefined || !u.alive) continue;
+    u.hp = Math.min(u.maxHp, u.hp + Math.round(u.maxHp * CLEAR_HEAL * (u.healMult ?? 1)));
   }
+  // (the hunt is over: the heroes walk back to their posts in the break)
+  if (s.b.stand) s.b.stand.hunt = false;
   run.wave++;
   run.offer = drawOffer(run, run.wave);
   s.phase = 'break';
@@ -519,9 +524,11 @@ function settleEvents(s: Stand, events: BattleEvent[]): void {
     s.run.gold += gold;
     s.run.earned += gold;
     s.run.kills++;
+    const killer = who?.side === 'hero' && who.tag !== undefined ? s.run.heroes.find((h) => h.id === who.tag) : undefined;
+    if (killer) killer.kills = (killer.kills ?? 0) + 1;
     const xp = killXpOf(to);
     for (const h of s.run.heroes) {
-      if (!h.post) continue;
+      if (!standing(h)) continue;
       const mine = who?.tag === h.id;
       giveXp(s, h, Math.round(xp * (mine ? 1 : XP_ALL_SHARE)));
     }
@@ -557,6 +564,14 @@ export function stepStand(s: Stand): BattleEvent[] {
   }
   const events = stepBattle(b);
   settleEvents(s, events);
+  markFallen(s);
+  // (the last foes of a wave are hunted down; the heroes go back when it clears)
+  if (s.phase === 'wave' && b.stand) {
+    const left = s.queue.length ? Infinity : foesAlive(s);
+    const hunt = left > 0 && left <= HUNT_AT;
+    if (hunt && !b.stand.hunt) s.notes.push({ kind: 'hunt' });
+    b.stand.hunt = hunt;
+  }
   // (the fallen are dropped from the list a moment after they fall)
   if (b.t % 1000 === 0) dropCorpses(s);
   if (b.phase === 'lost' || !s.king.alive) return endRun(s, events);
@@ -569,6 +584,18 @@ export function stepStand(s: Stand): BattleEvent[] {
 }
 
 const FIELD_LAST = 23;
+
+/** A hero whose unit has fallen is marked so, for good: no rising at the clear, no XP, no levels, and it is left off the field when the run is built again. */
+function markFallen(s: Stand): void {
+  for (const h of s.run.heroes) {
+    if (h.fallen || !h.post) continue;
+    const u = unitOfHero(s, h.id);
+    if (u && !u.alive) {
+      h.fallen = true;
+      s.notes.push({ kind: 'fallen', unit: u.id, hero: h.id });
+    }
+  }
+}
 
 /** Drop the foes that fell a while ago, unless something in the battle still points at one (a burn or a bleed it laid, a shot in the air, one it called up). */
 function dropCorpses(s: Stand): void {
@@ -602,11 +629,11 @@ function endRun(s: Stand, events: BattleEvent[]): BattleEvent[] {
 export type Refusal = 'over' | 'gold' | 'full' | 'none';
 
 /** The hero a level-up goes to when none is named: the lowest level on the field (the lowest id of equals). */
-export const weakestHero = (s: Stand): StandHero | undefined => [...s.run.heroes].filter((h) => h.post).sort((x, y) => x.lv - y.lv || x.id - y.id)[0];
+export const weakestHero = (s: Stand): StandHero | undefined => [...s.run.heroes].filter(standing).sort((x, y) => x.lv - y.lv || x.id - y.id)[0];
 
 export function levelBlock(s: Stand, id?: number): Refusal | null {
   const h = id === undefined ? weakestHero(s) : s.run.heroes.find((x) => x.id === id);
-  if (!h) return 'none';
+  if (!h || h.fallen) return 'none';
   if (s.phase === 'over') return 'over';
   return s.run.gold < levelCost(h.lv) ? 'gold' : null;
 }
