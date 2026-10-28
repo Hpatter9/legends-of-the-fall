@@ -30,6 +30,7 @@ import targetIcon from './art/talent/target.png';
 import haloIcon from './art/talent/halo.png';
 import heartIcon from './art/talent/heart.png';
 import crystalIcon from './art/talent/crystal.png';
+import { warmIcon } from './menuArt';
 
 const DETAIL_TABS = ['overview', 'progression', 'equipment', 'skills'];
 
@@ -40,7 +41,9 @@ function detailHeading(title: string, subtitle: string): HTMLElement {
 }
 
 function detailIcon(src: string): HTMLImageElement {
+  warmIcon(src);
   const img = el('img');
+  img.decoding = 'sync';
   img.src = src;
   img.alt = '';
   return img;
@@ -54,6 +57,8 @@ const CARD_CLASSES = {
   shooter: { name: 'Shooter', icon: targetIcon },
   support: { name: 'Support', icon: haloIcon },
 };
+// (the class pictures are decoded as the page loads, so a redrawn roster shows no empty banner)
+for (const c of Object.values(CARD_CLASSES)) warmIcon(c.icon);
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -336,6 +341,7 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
     const cls = CARD_CLASSES[CLASS_OF[kind]];
     const banner = el('span', 'heroClassBanner');
     const icon = el('img');
+    icon.decoding = 'sync';
     icon.src = cls.icon;
     icon.alt = '';
     banner.append(icon, el('span', '', cls.name));
