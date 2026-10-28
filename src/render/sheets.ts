@@ -8,6 +8,8 @@ import knight from '../art/units/knight_1.png';
 import samurai from '../art/units/samurai.png';
 import kunoichi from '../art/units/kunoichi.png';
 import archer from '../art/units/samurai_archer.png';
+import resonanceSoldier from '../art/units/hero_soldier.png';
+import resonanceArcher from '../art/units/hero_samurai_archer.png';
 import wizard from '../art/units/fire_wizard.png';
 import skeleton from '../art/units/skeleton_warrior.png';
 import spearman from '../art/units/skeleton_spearman.png';
@@ -122,6 +124,8 @@ interface Layout {
 }
 
 const URLS: Record<string, string> = {
+  hero_soldier: resonanceSoldier,
+  hero_samurai_archer: resonanceArcher,
   knight_1: knight,
   knight_2: knight2,
   knight_3: knight3,

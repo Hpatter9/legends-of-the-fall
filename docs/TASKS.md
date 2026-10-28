@@ -14,6 +14,8 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+**ART-001 / Resonance hero pilot** — Owner: current Codex art chat. Branch: `art/resonance-heroes`, worktree: `/workspace/legends-of-the-fall`. Approved direction: compact, richly shaded pixel heroes from the soldier/archer concept. Scope: Knight and Archer sprite sheets, their render mappings/scales, art credits, validation tools and evidence. Preserve names, kits, simulation and saves. Status: ready for review; 48 animation cells installed, typecheck/build and three affected test files passed, actual roster/dossier/deploy/combat checks passed at all three portrait sizes with zero page errors. Source atlases and preview preserved. See [handoff](notes/resonance-heroes.md). No release or merge authorised.
+
 WORLD-126 rendering checkpoint ready for review; rare warm-tail stability remains open. WORLD-001 per-army map design awaits owner confirmation before implementation.
 
 - Owner: current WORLD continuation chat, confirmed by owner on 2026-10-27.
