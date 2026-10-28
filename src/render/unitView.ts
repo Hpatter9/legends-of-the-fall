@@ -180,7 +180,7 @@ export class UnitSprite {
   }
 
   /** Draw it at the time `t` of the fight (ms), on the board. */
-  update(b: Board, t: number, fighting: boolean): void {
+  update(b: Board, t: number, fighting: boolean, victory = false, victoryMs = 0): void {
     const u = this.unit;
     const def = defOf(u);
     // (a kit lends it another look for a while: a werewolf's form, a treant, a foe's guise, a wraith's shape; drawn at that shape's own scale)
@@ -232,6 +232,49 @@ export class UnitSprite {
       anim = 'hurt';
       frame = Math.floor((t - u.hurtAt) / 80);
     }
+    let rot = 0;
+    if (victory && u.alive && u.side === 'hero' && anim === 'idle') {
+      const heroName = def.name.toLowerCase();
+      if (heroName.includes('knight')) {
+        // Knight salutes / plants shield firmly
+        if (hasRow(this.sheet, 'defend')) {
+          row = 'defend';
+          frame = 99;
+        } else lift = -2;
+      } else if (heroName.includes('peasant')) {
+        // Peasant collapses in exhausted relief
+        if (hasRow(this.sheet, 'hurt')) {
+          row = 'hurt';
+          frame = 1;
+        }
+        lift = -7 + (this.reduced?.matches ? 0 : Math.sin(victoryMs / 250) * 1.5);
+      } else if (heroName.includes('wizard')) {
+        // Wizard adjusts hat with a confident flourish and slight tilt
+        rot = (facesRight(u.facing) ? 1 : -1) * (this.reduced?.matches ? 0.04 : 0.08);
+        lift = -1;
+      } else if (heroName.includes('samurai') || heroName.includes('commander')) {
+        // Samurai sheathes blade with a formal victory bow
+        rot = (facesRight(u.facing) ? 1 : -1) * -0.06;
+        lift = -3;
+      } else if (heroName.includes('archer') || heroName.includes('ranger')) {
+        // Archer raises weapon high in triumph
+        if (hasRow(this.sheet, 'attack')) {
+          row = 'attack';
+          frame = 1;
+        }
+        lift = this.reduced?.matches ? 2 : Math.sin(victoryMs / 200) * 3;
+      } else if (heroName.includes('cleric') || heroName.includes('priestess')) {
+        // Cleric offers thanksgiving prayer
+        lift = -2;
+      } else if (heroName.includes('kunoichi')) {
+        // Kunoichi shadow stance
+        lift = -3;
+        rot = (facesRight(u.facing) ? 1 : -1) * 0.05;
+      } else {
+        // Other heroes strike a lively victory bounce
+        lift = this.reduced?.matches ? 2 : Math.max(0, Math.sin((victoryMs + u.id * 120) / 160)) * 5;
+      }
+    }
     if (!u.alive) {
       anim = 'dead';
       frame = Math.floor((t - (u.diedAt ?? 0)) / 120);
@@ -253,6 +296,7 @@ export class UnitSprite {
     // (most sheets face right, the forest and boss ones left; the board's +u runs down to the right, +v down to the left)
     const dx = (facesRight(u.facing) ? 1 : -1) * (facesRightOf(this.sheet) ? 1 : -1);
     this.body.scale.set(this.scaleNow * dx, this.scaleNow);
+    this.body.rotation = rot;
     // a flyer hovers: its body bobs above a smaller shadow on the ground
     const bob = def.flies && u.alive ? Math.sin(t / 260) * 2 - 12 : 0;
     this.body.y = bob - lift;
@@ -264,6 +308,7 @@ export class UnitSprite {
     this.body.scale.y *= 1 - motion.stretch * 0.5;
     this.rim.x = this.body.x;
     this.rim.y = bob - lift;
+    this.rim.rotation = rot;
     this.shadow.scale.set(def.flies ? 0.6 : 1);
     this.shadow.alpha = def.flies ? 0.5 : 1;
     for (const r of this.rim.children as Sprite[]) {

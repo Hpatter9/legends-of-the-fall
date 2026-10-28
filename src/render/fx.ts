@@ -6,7 +6,7 @@ import { Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
 import { TERRAIN_URLS } from './terrainArt';
 import { loadImage } from './loadImage';
 import { tileAt, type Board } from '../sim/board';
-import { defOf, type Battle, type BattleEvent, type Unit } from '../sim/battle';
+import { defOf, wayTo, type Battle, type BattleEvent, type Unit } from '../sim/battle';
 import { isBoss } from '../sim/foes';
 import { kitOf } from '../sim/abilities';
 import { abilityHeading } from './abilityLooks';
@@ -29,7 +29,7 @@ import { tierRing } from './signatures';
 import { kitSignature } from './kitLooks';
 import { loadProps, playSteps, setSignatureSprite, type Pt, type Scene } from './signatureFx';
 import { tierSkillOf } from '../sim/tierSkills';
-import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, impactElement, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, type Missile } from './fxRules';
+import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, impactElement, isBackstab, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, type Missile } from './fxRules';
 import { particleBudget, slashOf } from './vfxRules';
 import { placeLabel } from './labelRules';
 import { loadPaintedArt, paintedStrip, paintSprite } from './cinematicArt';
@@ -100,6 +100,12 @@ export class Fx {
   private trauma = 0;
   shakeX = 0;
   shakeY = 0;
+  thudX = 0;
+  thudY = 0;
+  private thudLeft = 0;
+  private thudDuration = 0;
+  private thudPeakX = 0;
+  private thudPeakY = 0;
   /** A white flash over the whole screen (on the stage, above the board), for a crit or a big kill. */
   readonly flashLayer = new Graphics();
   private flashLeft = 0;
@@ -360,8 +366,10 @@ export class Fx {
         // (the struck is knocked a little away along the blow, and a crit or a killing blow stops the fight for a moment)
         const share = e.dmg / target.maxHp;
         const byS = this.sprites.get(e.by);
+        let wayAngle = 0;
         if (byS && !e.splash) {
           const way = Math.atan2(to.y - byS.y, to.x - byS.x);
+          wayAngle = way;
           // A brief fan carries the blow's direction without covering the target.
           if (e.src === 'blow' && !defOf(by).shot) {
             const count = bits(e.heavy ? 7 : 3, this.particles.density);
@@ -373,7 +381,16 @@ export class Fx {
           const n = nudgeOf(share);
           to.nudge(Math.cos(way) * n, Math.sin(way) * n * 0.5);
         }
-        this.stopLeft = Math.max(this.stopLeft, hitStopMs(e.heavy, share, e.killed, this.calm()));
+        const backstab = by && target ? isBackstab(by.facing, target.facing, byS ? wayTo(by, target) : undefined) : false;
+        const lethalBackstab = backstab && e.killed;
+        const isCrit = e.heavy && e.src === 'blow';
+        this.stopLeft = Math.max(this.stopLeft, hitStopMs(e.heavy, share, e.killed, this.calm(), backstab, isCrit));
+        if (lethalBackstab) {
+          this.microThud(to.x, to.y, 1.25, Math.cos(wayAngle), Math.sin(wayAngle) * 0.6);
+          play(this.particles, 'dark-strike', to.x, to.y - to.tall * 0.45, { scale: 1.5, frameMs: 40 });
+        } else if (isCrit) {
+          this.microThud(to.x, to.y, 1.0, Math.cos(wayAngle), Math.sin(wayAngle) * 0.6);
+        }
         if (e.killed) this.death(target, to.x, to.y - to.tall * 0.3);
         if (e.heavy && e.src === 'blow') {
           // (a crit, or a blow from height: a gold burst; a big one, a third of the target's health or more, also blinks the screen)
@@ -595,6 +612,31 @@ export class Fx {
     this.trauma = Math.max(this.trauma, level);
   }
 
+  /** A localized camera micro-thud on lethal backstabs, critical hits, and King's Meteor impact.
+   *  Applies a snappy directional micro-offset that springs back over 2-3 frames (~50ms). */
+  microThud(x: number, y: number, strength = 1.0, dirX = 0, dirY = 0): void {
+    if (this.calm()) return;
+    let dx = dirX;
+    let dy = dirY;
+    if (dx === 0 && dy === 0) {
+      if (this.view) {
+        const vcx = (this.view.x0 + this.view.x1) / 2;
+        const vcy = (this.view.y0 + this.view.y1) / 2;
+        const dist = Math.hypot(x - vcx, y - vcy);
+        if (dist > 1) {
+          dx = ((x - vcx) / dist) * 0.7;
+          dy = ((y - vcy) / dist) * 0.7;
+        }
+      }
+      if (dx === 0 && dy === 0) dy = 1;
+    }
+    const amp = 4.2 * strength;
+    this.thudPeakX = dx * amp;
+    this.thudPeakY = dy * amp;
+    this.thudDuration = 55;
+    this.thudLeft = this.thudDuration;
+  }
+
   /** Advance the effects by `dt` ms of the fight. */
   step(dt: number): void {
     // (an item may add more while it steps, so they go to a fresh list)
@@ -607,8 +649,18 @@ export class Fx {
     this.clock += dt;
     this.trauma = fadeTrauma(this.trauma, dt / 1000);
     const s = this.calm() ? 0 : shakeOf(this.trauma);
-    this.shakeX = s ? (Math.random() * 2 - 1) * s : 0;
-    this.shakeY = s ? (Math.random() * 2 - 1) * s : 0;
+    if (this.thudLeft > 0) {
+      this.thudLeft = Math.max(0, this.thudLeft - dt);
+      const p = this.thudLeft / this.thudDuration;
+      const k = Math.sin(p * Math.PI);
+      this.thudX = this.thudPeakX * k;
+      this.thudY = this.thudPeakY * k;
+    } else {
+      this.thudX = 0;
+      this.thudY = 0;
+    }
+    this.shakeX = (s ? (Math.random() * 2 - 1) * s : 0) + this.thudX;
+    this.shakeY = (s ? (Math.random() * 2 - 1) * s : 0) + this.thudY;
     this.particles.calm = this.calm();
     this.particles.step(dt);
     this.slowLeft = Math.max(0, this.slowLeft - dt);
@@ -1014,8 +1066,10 @@ export class Fx {
     this.trauma = Math.min(1, this.trauma + 0.35);
   }
 
-  /** The meteor lands: a big explosion with a flash, a ring of fire, rubble and smoke, a crater that stays and cools, and a hard shake. */
+  /** The meteor lands: a big explosion with a flash, a ring of fire, rubble and smoke, a crater that stays and cools, and a hard shake with a 2-frame hit-stop and micro-thud. */
   private meteorLanding(cx: number, cy: number, art: string): void {
+    if (!this.calm()) this.stopLeft = Math.max(this.stopLeft, 34); // subtle 2-frame hit-stop
+    this.microThud(cx, cy, 1.5, 0, 1.2); // localized downward camera micro-thud
     const p = this.particles;
     // (layers kept apart and thinned so the blast stays orange instead of clipping to white)
     const frames = abilityFrames(art, 'explosion');

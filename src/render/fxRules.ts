@@ -292,9 +292,18 @@ export const maxStatuses = (saver: boolean) => (saver ? 2 : 3);
 /** How many bits of a burst to throw: the usual count scaled by the particle density, never fewer than one. */
 export const bits = (n: number, density: number) => Math.max(1, Math.round(n * density));
 
-/** A hit-stop in ms for a blow: only a crit or a big share of health, and none when reduced motion or no-shake is on. */
-export function hitStopMs(heavy: boolean, share: number, killed: boolean, calm: boolean): number {
+/** Whether a blow strikes from behind the target: attacker facing matches target facing, or strike vector matches. */
+export function isBackstab(fromFacing: number, toFacing: number, way?: number): boolean {
+  if (way !== undefined && way === toFacing) return true;
+  return fromFacing === toFacing;
+}
+
+/** A hit-stop in ms for a blow: only a crit, a lethal backstab, meteor, or a big share of health, and none when reduced motion or no-shake is on. */
+export function hitStopMs(heavy: boolean, share: number, killed: boolean, calm: boolean, backstab = false, crit = false, meteor = false): number {
   if (calm) return 0;
+  if (meteor) return 34; // subtle 2-frame hit-stop at 60fps (~33.3ms)
+  if (crit) return 34;
+  if (backstab && killed) return 34;
   if (killed && share >= 0.3) return 90;
   return heavy ? 60 : 0;
 }

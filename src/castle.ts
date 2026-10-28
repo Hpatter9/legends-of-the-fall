@@ -23,6 +23,7 @@ import { effectText, type PlotId } from './render/castleSpots';
 import { goatSheet } from './duchess';
 import { goatSays } from './quips';
 import { chewBob, FRAME as GOAT_FRAME, goatFrame, hopLift, tapGoat, type Goat } from './render/duchessRules';
+import { TrophyWallModal } from './trophyWall';
 
 // Bespoke Castle Throne Room background and Seated King sprite sheets
 import throneRoomUrl from './art/throne/throne_room.png';
@@ -272,6 +273,7 @@ export class CastleScene {
   private heroFlourishUntil = [0, 0, 0, 0];
   private kingDecreeUntil = 0;
   private reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  private trophyModal = new TrophyWallModal();
 
   // Duchess the goat wandering the Throne Room floor
   private goat: Goat | null = null;
@@ -331,7 +333,13 @@ export class CastleScene {
     toArmies.title = 'March to the Armies';
     toArmies.addEventListener('click', () => this.onPick('armies'));
 
-    quickNav.append(toTavern, toSpells, toArmies);
+    const toTrophies = el('button', 'ctPortalChip', '🏆 Trophies');
+    toTrophies.title = 'Defeated Boss Trophy Wall';
+    toTrophies.addEventListener('click', () => {
+      if (this.meta) this.trophyModal.open(this.meta);
+    });
+
+    quickNav.append(toTavern, toSpells, toArmies, toTrophies);
     sectionHeader.append(sectionTitle, quickNav);
 
     // 3. Chamber Grid (6 Sacred Chambers + High Chapel)
@@ -353,7 +361,7 @@ export class CastleScene {
 
     this.stage.append(this.scenicFrame, this.powerBanner, sectionHeader, this.grid);
     this.scroll.append(this.stage);
-    this.root.append(this.scroll);
+    this.root.append(this.scroll, this.trophyModal.root);
   }
 
   /** Interactive tap on the Throne Room scene: tap King for royal decree, Duchess to bleat & hop, or guards to salute! */
@@ -389,7 +397,16 @@ export class CastleScene {
       return;
     }
 
-    // 3. Check nearest Royal Guard
+    // 3. Check Trophy Rack mounted on the wall
+    if (cx >= 590 && cx <= 710 && cy >= 190 && cy <= 300) {
+      if (this.meta) {
+        this.triggerHallBurst(655, 240, '#f59e0b', 'Boss Trophies!');
+        this.trophyModal.open(this.meta);
+        return;
+      }
+    }
+
+    // 4. Check nearest Royal Guard
     let nearestIdx = -1;
     let bestDist = 110;
     GUARD_SPOTS.forEach((spot, idx) => {
