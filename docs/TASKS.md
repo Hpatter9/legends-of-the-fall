@@ -14,6 +14,17 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### AWAKEN-002 — Class auras for awakened heroes
+
+- **Goal:** the owner's ask: drop the awakened recolour; an awakened hero wears an aura at step 1 (rank 5) and a stronger, bigger one at step 2 (rank 6), its style set by the hero's class trait (not the origin), wherever an awakened hero is drawn.
+- **Status:** phase A (proposal, prototype and mock-up pictures) ready for the owner's review; phase B (the full implementation) waits for approval of the look.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/awaken-auras`, `/home/user/awaken-auras` (from main 0.180.0); PR none yet.
+- **Allowed files or systems:** the awakened look (`src/render/awakenLook.ts`, `awakenRig.ts`, new `auraStyles.ts`, `awakenAura.ts`), the fighters' sprite (`src/render/unitView.ts`), the effects loader (`src/render/fx.ts`), the places an awakened hero is drawn (`src/menuHeroes.ts`, `src/rankUpView.ts`, `src/awakenView.ts`, `src/partyScene.ts`, `src/tavern.ts`, `src/hall.ts`, `src/render/sceneView.ts`, `src/calMap.ts`), the aura atlas in `src/art/fx/aura/`, `tools/awaken/`, `test/awaken*.test.ts`, `CREDITS.md`, `docs/notes/awaken-auras.md`, `docs/samples/awaken-auras-*.png`. Not the castle tab (`src/camp.ts` only if it is not the castle tab's), the battle-picking menu tab, the WORLD army map or the Last Stand files (`src/sim/stand*.ts`, `src/standView.ts`); no simulation, save or version change.
+- **Completion criteria:** owner approves the look (phase A); then no recolour anywhere; every class trait has its own step 1 and step 2 aura from pack art, credited; the aura shows in fights (normal, Last Stand, Calamity), the hero dossier and roster portraits, the Rank up card, the party war council, the tavern, the summoning and awakening reveals and the cinematics; reduced motion holds the aura still and visible; battery saver thins it; no allocation per frame; typecheck, web build, the awaken tests and the affected screens at 393x852, 360x780 and 412x915 pass.
+- **Validation (phase A):** typecheck passed; `npm run web` built; `npm test -- awaken-auras awaken` passed (13 tests, 3 new); `tools/awaken/aura-mock.mjs` captured the prototype in headless Chromium at 393x852 with no page errors. Not yet checked at 360x780 or 412x915 (phase B).
+- **Handoff:** `docs/notes/awaken-auras.md`; mock-ups `docs/samples/awaken-auras-mock-sheet.png`, `awaken-auras-mock-motion-wizard.png`, `awaken-auras-mock-motion-werewolf.png`.
+
 ### CHEST-001 — XP tomes and Open all
 
 - **Goal:** the owner's two asks: XP tomes (small, medium, large) as a chest drop, read to one hero of the player's choice from the hero's page; and an Open all for the chests waiting on the cart, with one combined summary.

@@ -21,6 +21,7 @@ import { BIG_FOE_HP, SKILL_FX, SPELL_GLOW, SPELL_WORD, type Effect, type MagicKe
 import type { UnitSprite } from './unitView';
 import { Particles } from './particles';
 import { loadVfxArt, VFX } from './vfxArt';
+import { loadAuraArt } from './awakenAura';
 import { loadPackArt, PACK } from './fxSheets';
 import { bossEntrance, deathBurst, impactBurst, play, setBoneArt, windUp } from './combatFx';
 import { comboGather, comboStrike, promoteBurst, ringOut, toneColour, type Spot } from './spectacle';
@@ -70,7 +71,7 @@ export async function loadFx(): Promise<void> {
   await loadVfxArt();
   await loadPackArt();
   magic.pinkHeart = { frames: VFX.pinkHeart };
-  await Promise.all([loadProps(), loadAbilityArt()]);
+  await Promise.all([loadProps(), loadAbilityArt(), loadAuraArt()]);
   // (the hero kits' terrain: a rampart's ruined walls, a statue's stone, a keg's barrel; the pack's own props, as the board draws them)
   const tex = async (url: string) => Texture.from(await loadImage(url));
   kitArt = { walls: await Promise.all(TERRAIN_URLS.walls.map(tex)), barrel: await tex(TERRAIN_URLS.barrel) };
