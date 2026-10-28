@@ -656,6 +656,7 @@ export const DUCHESS_LINES = {
   bigHit: ['Mehh!', 'MEHH!', 'MEEEHHH!', 'Mehh?! (Was that for me?)', 'MEHH! (Tactical sidestep.)', 'Mehh! (Rude brute!)', 'MEHHH! (Dramatic head toss.)'],
   boss: ['Meh... meh... mehhh.', 'Mehh?! (Too tall.)', 'Mehh. (Overrated.)', 'Meh-heh-heh.', 'Mehh! (I have seen larger cabbages.)', 'Meh... (Boring.)', 'Mehh?! (Lacks proper horns.)'],
   wipe: ['Mehh...', 'Meh. (Sorry.)', 'Mehh. (Amateurs.)', 'Meh-meh. (Told you so.)', 'Mehh... (I shall eat the flag now.)', 'Meh. (Nap time.)', 'Mehh. (A turnip would have helped.)'],
+  won: ['Mehh! (Victory is delicious.)', 'Meh-heh! (I planned the whole battle.)', 'Mehh! (Now where is my celebratory turnip?)', 'MEHH! (Top of the rock!)', 'Mehh. (Adequate hero work.)'],
   /** Things she has eaten, for the camp. */
   ate: [
     'the kingdom\'s only accurate map',

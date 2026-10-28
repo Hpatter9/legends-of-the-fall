@@ -881,8 +881,9 @@ class Game {
         if (!this.auto) this.sayMoments(events);
         const push = this.fx.takePush();
         if (push) this.push = { ...push, left: push.ms };
-        // (Duchess has a view on a big blow)
+        // (Duchess has a view on a big blow or victory fanfare)
         if (events.some((e) => e.kind === 'hit' && e.heavy && e.dmg >= 90)) this.goat.react('bigHit');
+        if (events.some((e) => e.kind === 'end' && e.won)) this.goat.victory();
         if (events.some((e) => e.kind === 'hit' || e.kind === 'heal')) this.refreshBench();
         if (b.phase !== 'fight') this.refresh();
       }
@@ -903,10 +904,11 @@ class Game {
     if (this.intro) this.stepIntro(dt);
     this.stepRevive(dt);
     this.refreshBossBar();
+    const isWon = b.phase === 'won' || (b.phase !== 'fight' && b.phase !== 'deploy' && !b.units.some((u) => u.side === 'foe' && u.alive));
     const t = b.phase === 'deploy' ? performance.now() : b.phase === 'fight' ? b.t - TICK_MS + this.acc : b.t + this.acc;
     for (const [id, s] of this.sprites) {
       if (this.walking.has(id)) s.root.visible = false;
-      else s.update(b.board, t, b.phase !== 'deploy');
+      else s.update(b.board, t, b.phase !== 'deploy', isWon, this.endWait);
     }
     if (this.chain.active) {
       this.chain.step(dt);
