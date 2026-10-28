@@ -94,6 +94,8 @@ import { sceneOf } from './render/audioRules';
 import { colLeft, viewH, viewW } from './viewport';
 import { onSettings, openSettings, setSetting, settings } from './settings';
 import { PageGoat } from './duchess';
+import { duchessFightSays, hideDuchessCard, showDuchessCard } from './duchessFightView';
+import type { DuchessWish } from './sim/duchessFight';
 import { Rng } from './sim/rng';
 import { endingQuip, foeGrumbles, heroSays, initQuips, newQuipScene, revivedQuip } from './quips';
 import { closeCalls, ultimatesCast } from './render/quipRules';
@@ -402,7 +404,6 @@ class Game {
     $('loading').remove();
     (window as unknown as { __game: Game }).__game = this;
     // (a hero's first awakening has its cinematic)
-    this.goat.onArrive = () => void this.duchessTurnsUp();
     this.goat.onLuckyBleat = (effect) => this.handleDuchessLuckyBleat(effect);
     onAwakened((kind, step) => {
       if (step === 1) void this.queueScene({ kind: 'awaken', hero: kind });
@@ -416,7 +417,9 @@ class Game {
     // (a walk to the new section still going is over: the heroes are placed where it was taking them)
     this.chain.finish();
     this.walking.clear();
-    this.b = startStage(this.run);
+    // (Duchess the goat may join one fight in a thousand: the test page's `?duchess=1` always brings her, `duchessFight.ts`)
+    this.b = startStage(this.run, this.duchessWish());
+    hideDuchessCard();
     // (an army's section may lie turned on the long map: everything is drawn and tapped through its frame)
     const section = chainOf(this.run)?.[this.run.stage - 1];
     setFrame(section ? frameOf(section, section) : undefined);
@@ -438,6 +441,8 @@ class Game {
     this.spell = null;
     this.buildSpells();
     this.goat.newFight();
+    // (a fight she fights in: she is on the board, not at the page's edge)
+    if (this.b.duchess) this.goat.stayAway();
     // (the speed picked stays on from wave to wave)
     this.setSpeed(this.speed);
     this.fx.clear();
@@ -455,6 +460,12 @@ class Game {
     const due = this.setupMoments().filter((m) => this.scenesOn() && dueScene(this.meta, m));
     if (due.length) void Promise.all(due.map((m) => this.queueScene(m))).then(() => this.startIntro());
     else this.startIntro();
+  }
+
+  /** Whether this page's fights may bring Duchess: rolled on the seed, or always (never) on the test page's `?duchess=1` (`?duchess=0`). */
+  private duchessWish(): DuchessWish {
+    const q = new URLSearchParams(location.search).get('duchess');
+    return q === '1' ? 'always' : q === '0' ? 'never' : 'roll';
   }
 
   /** The moments that bring a cinematic as this fight is set up, in the order they play. */
@@ -501,11 +512,6 @@ class Game {
     hideQuip();
     const first = dueScene(this.meta, { kind: 'combo', set: setId });
     return this.queueScene(first ? { kind: 'combo', set: setId } : { kind: 'comboCut', set: setId }, set.heroes);
-  }
-
-  /** The first time Duchess turns up in a fight (her visit begins: `PageGoat.onArrive`). */
-  duchessTurnsUp(): Promise<void> {
-    return this.queueScene({ kind: 'duchess' });
   }
 
   /** Tactical Lucky Bleat effect triggered once per battle when Duchess is tapped during combat. */
@@ -864,6 +870,9 @@ class Game {
         // (a fighter a skill called up mid-fight has no sprite yet: make it, with its entrance)
         if (b.units.length !== this.sprites.size) this.syncSprites();
         playEvents(b, events, this.speed);
+        // (Duchess has wandered on: the first time, her cinematic (not in an auto-replay), then her card; and her bubbles as she fights)
+        if (events.some((e) => e.kind === 'duchess')) void this.queueScene({ kind: 'duchessJoins' }).then(() => showDuchessCard(() => $('panel').getBoundingClientRect().top));
+        if (this.b.duchess) duchessFightSays(b, events, () => this.anchorOfKind('duchess'));
         for (const e of events) {
           if (e.kind === 'phase') this.startPhase(e);
           // (a promotion the sim made: a hero's tier by level; the page's own merge calls `promoteHero` too)

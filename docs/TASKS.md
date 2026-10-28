@@ -37,6 +37,17 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Validation (phase B):** see the handoff's checks.
 - **Handoff:** `docs/notes/awaken-mats.md`; pictures `docs/samples/awaken-mats-sheet.png`, `-360-sheet.png`, `-412-sheet.png` and the single shots; phase A mock-ups `docs/samples/awaken-mats-mock-*.png`.
 
+### DUCHESS-FIGHTS — Duchess joins a fight
+
+- **Goal:** the owner's ask: one fight in 1000, Duchess the court goat joins on the player's side as a level-100 goat (a real fighter), a short card says so, and a cinematic plays the first time only.
+- **Status:** done; owner approved and released as 0.196.0 (owner's phase A answers: no turning her away; the cinematic on her first real fight under its own trigger; a true level 100; armies, daily and practice, old tower runs, Calamity, not the Last Stand, auto-replay without the cinematic; Her Grace's Favour; PixelLab for her missing poses, four generations at most).
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/duchess-fights`, `/home/user/duchess-fights` (main 0.190.0 merged in); PR none.
+- **Allowed files or systems:** new `src/sim/duchessFight.ts`, `src/duchessFightView.ts`, `src/duchessFightLines.ts`, `src/art/units/duchess_goat.png`, `tools/duchess/`, `test/duchess-fights.test.ts`; hooks in `src/sim/battle.ts`, `run.ts` (`startStage`'s wish), `units.ts`, `achievements.ts`, the scene files (`sceneEvents.ts`, `sceneKit.ts`, `sceneRules.ts`, `sceneScripts.ts`: the scene's id and moment), `src/render/sheets.ts`, `src/art/units/sheets.json`, `src/duchess.ts` (`stayAway` only), `src/main.ts`, `src/quipData.ts` (the achievement's aside), `docs/lines/new-lines.json`, `test/cinematics.test.ts` (the firsts list), `tools/cinematics/flow5.mjs`, `CREDITS.md`. Not Duchess's tap, trinkets or hats (the other AI's), not `render/duchessRules.ts`, not the Last Stand.
+- **Completion criteria:** met: the roll on the fight's seed only; she joins at level 100 with her kit in the agreed modes; the cinematic once on her first real fight; the card clear of bubbles and the panel; her lines; the achievement; her sheet with PixelLab headbutt and fall, credited; `?duchess=1`; tests; three phone sizes.
+- **Validation (phase B):** typecheck passed; `npm test -- duchess-fights achievements new-lines scene cinemat quips` passed; full `npm test` 1287 of 1287; `npm run web` built; `tools/duchess/shots.mjs` at 393x852, 360x780 and 412x915: she joins at level 100, the card shows above the panel with no bubble over it, her bubble shows, no page errors, no sideways overflow. PixelLab: 4 generations (balance 20.75 to 16.75).
+- **Handoff:** [notes](notes/duchess-fights.md); [screens](samples/duchess-fights-screens.png), [her sheet](samples/duchess-fights-sheet.png); phase A [mock-ups](samples/duchess-fights-mock-sheet.png).
+
 ### AWAKEN-002 — Class auras for awakened heroes
 
 - **Goal:** the owner's ask: drop the awakened recolour; an awakened hero wears an aura at step 1 (rank 5) and a stronger, bigger one at step 2 (rank 6), its style set by the hero's class trait (not the origin), wherever an awakened hero is drawn.

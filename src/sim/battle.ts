@@ -15,6 +15,7 @@ import { twistBoard, type TwistFx } from './twists';
 import { firstStep, walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
 import { standDecide } from './standAi';
+import { duchessDue, joinDuchess, type DuchessWish } from './duchessFight';
 import { FOE_BANDS } from './foes';
 import { killXp } from './levels';
 import { enterPhase, PHASE2 } from './bossPhases';
@@ -247,6 +248,8 @@ export type BattleEvent =
   | { kind: 'phase'; by: number; phase: 2; line: string; ms: number }
   /** The player's tap queued a hero's ultimate (`orderUltimate`), or the order lapsed unfired (the meter stays full). */
   | { kind: 'ultQueued'; by: number }
+  /** Duchess the goat has wandered on to fight for the heroes (`duchessFight.ts`). */
+  | { kind: 'duchess'; by: number }
   | { kind: 'ultLapse'; by: number }
   /** A fighter is drawn with another sheet (a form, a guise), or its own again (null). */
   | { kind: 'look'; by: number; sheet: string | null }
@@ -326,6 +329,8 @@ export interface Battle {
   kits?: { standards?: boolean; songs?: boolean; vows?: boolean; rewind?: boolean; raise?: { by: number; foe: number }[] };
   /** Timed terrain the kits laid (a flood, a rampart, a statue), put back when it runs out. */
   terrain?: TerrainFx[];
+  /** Duchess the goat joins this fight as it begins (`duchessFight.ts`): set when the fight is made; unset in almost every fight. */
+  duchess?: true;
 }
 
 export const defOf = (u: Unit): UnitDef => UNITS[u.def];
@@ -381,6 +386,8 @@ export interface Stage {
   twist?: TwistFx;
   /** Every hero's healing is multiplied by this (a calamity ascension). */
   heal?: number;
+  /** Whether Duchess the goat may join (`duchessFight.ts`): rolled on the seed, always, or never (the default, so a fight made outside a run never has her). */
+  duchess?: DuchessWish;
   /** A layout to lay the land in (`layouts.ts`), instead of the seed's own pick; ignored when `board` is given. */
   layout?: LayoutId;
 }
@@ -471,6 +478,7 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
     addUnit(b, id, at.u, at.v, { hp: (foes?.hp ?? 1) * (boss?.hp ?? 1), atk: (foes?.atk ?? 1) * (boss?.atk ?? 1), size: boss?.size, phase: boss?.phase, surge: boss?.surge, shield: boss?.shield });
   });
   if (tw?.ambush) ambush(b);
+  if (stage.duchess && duchessDue(seed, stage.duchess)) b.duchess = true;
   return b;
 }
 
@@ -572,6 +580,8 @@ export function fight(b: Battle): boolean {
   startCombo(b);
   startDuoCombos(b);
   startKits(b);
+  // (Duchess wanders on as the fight begins, in the rare fight that brings her)
+  if (b.duchess) joinDuchess(b);
   return true;
 }
 

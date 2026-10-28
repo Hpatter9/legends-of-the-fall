@@ -2678,7 +2678,8 @@
   "daily": "Same time tomorrow? The enemy warlord has already marked it in his diary.",
   "tower1": "Up the spiral stairs. Watch your footing, and mind the trailing goat droppings.",
   "tower20": "Twenty floors ascended! The lift remains perpetually out of order.",
-  "recruiter": "A full roster assembled. Duchess was neither consulted nor given veto power."
+  "recruiter": "A full roster assembled. Duchess was neither consulted nor given veto power.",
+  "duchessFavour": "Her Grace has asked to be paid in cabbages. The treasurer is weighing it."
  },
  "hero_story": {
   "knight": "Sir Aldric guarded the gate for forty winters without once inquiring why. They say a blow that falls upon his oak shield vibrates through the castle foundations, rattling every kettle.",
@@ -3800,7 +3801,7 @@
     }
    ]
   },
-  "duchessInFight": {
+  "duchessJoins": {
    "title": "An Unregistered Entry",
    "blurb": "Duchess wanders directly between the battle lines, and etiquette prevents interruption.",
    "cast": {
@@ -8173,6 +8174,36 @@
    "The boss says double rations if we bring him the royal signet ring!",
    "Tremble, keep-dwellers! The master of the warband comes for your sovereign!",
    "Clear the flanks! When the boss charges, he doesn't know how to steer!"
+  ]
+ },
+ "duchess_fights": {
+  "joins": [
+   "Mehh.",
+   "Mehh. (Make way.)",
+   "Mehh! (Her Grace will see to this.)",
+   "Mehh. (Hold my hay.)",
+   "Meh-heh. (Stand aside.)"
+  ],
+  "headbutt": [
+   "MEHH!",
+   "Mehh! (Out of my meadow.)",
+   "MEEEHH!",
+   "Mehh! (Mind the horns.)",
+   "MEHH! (Manners.)"
+  ],
+  "nom": [
+   "Nom.",
+   "Nom nom.",
+   "Nom. (Shield-flavoured.)",
+   "Nom nom nom. (Rivets.)",
+   "Nom. (Needs mustard.)"
+  ],
+  "won": [
+   "Mehh. (Naturally.)",
+   "Mehh. (You are welcome.)",
+   "Meh-heh-heh.",
+   "Mehh. (Hay, now.)",
+   "Nom. (Victory snack.)"
   ]
  }
 }

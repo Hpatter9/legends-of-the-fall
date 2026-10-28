@@ -16,6 +16,8 @@ import spearman from '../art/units/skeleton_spearman.png';
 import boneArcher from '../art/units/skeleton_archer.png';
 import wolfGrey from '../art/units/wolf_grey.png';
 import wolfBlack from '../art/units/wolf_black.png';
+// (Duchess the goat, when she joins a fight: `sim/duchessFight.ts`, `tools/duchess/compose-duchess.py`)
+import duchessGoat from '../art/units/duchess_goat.png';
 import werewolfBlack from '../art/units/werewolf_black.png';
 import werewolfRed from '../art/units/werewolf_red.png';
 import werewolfWhite from '../art/units/werewolf_white.png';
@@ -139,6 +141,7 @@ const URLS: Record<string, string> = {
   skeleton_archer: boneArcher,
   wolf_grey: wolfGrey,
   wolf_black: wolfBlack,
+  duchess_goat: duchessGoat,
   werewolf_black: werewolfBlack,
   werewolf_red: werewolfRed,
   werewolf_white: werewolfWhite,

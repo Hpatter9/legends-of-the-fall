@@ -110,6 +110,12 @@ export class PageGoat {
     this.g.face = 1;
   }
 
+  /** She is on the board in this fight (`sim/duchessFight.ts`), so she does not also watch it from the page's edge. */
+  stayAway(): void {
+    this.planned = true;
+    this.plan = null;
+  }
+
   /** Whether she is on the page just now (not away, not still to arrive). */
   private present(): boolean {
     return !this.planned || visitAt(this.plan, performance.now() - this.planAt).phase !== 'away';
