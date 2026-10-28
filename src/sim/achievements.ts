@@ -1,6 +1,6 @@
-// Achievements: things a player can do, each with crowns for the first time it is earned. A check reads what the game
+// Achievements: things a player can do, each with crowns and summoning stones for the first time it is earned. A check reads what the game
 // has just settled (a finished fight, the run, the meta), so it is pure: no Pixi, no DOM. The unlocked ids are kept in
-// `Meta.achievements`; `checkAchievements` returns what was new, for the toast. The crowns wait until the player taps Claim on
+// `Meta.achievements`; `checkAchievements` returns what was new, for the toast. The crowns and stones wait until the player taps Claim on
 // the achievements page (`claimAchievement`); the ones already paid are kept in `Meta.claimed`.
 
 import type { Battle } from './battle';
@@ -30,6 +30,8 @@ export interface Achievement {
   text: string;
   /** Crowns paid the first time it is earned. */
   crowns: number;
+  /** Summoning stones paid with them, where not `ACHIEVEMENT_STONES` (the big milestones pay a little more). */
+  stones?: number;
   earned(c: AchievementCtx): boolean;
   /** How far on it is, for the page (only for ones that count up). */
   meter?(m: Meta): { now: number; need: number };
@@ -41,6 +43,13 @@ const sumStars = (m: Meta) => Object.values(m.stars).reduce((n, s) => n + s, 0);
 const dailiesCleared = (m: Meta) => Object.values(m.daily).filter((e) => e.cleared).length;
 /** The highest lasting level of any hero. */
 const bestLevel = (m: Meta) => Math.max(1, ...ALL_HEROES.map((k) => levelOfKind(m, k)));
+
+/** The summoning stones an achievement pays beside its crowns (the owner's ask: "a stone or two"). A save that claimed one before is not paid again. */
+export const ACHIEVEMENT_STONES = 2;
+/** The stones the big milestones pay instead: the thirtieth stage, level 50, every boss, wave 20 of the Last Stand, every hero; and level 100, the longest of all. */
+export const BIG_STONES = 3;
+export const CENTURION_STONES = 5;
+export const stonesOfAchievement = (a: Achievement): number => a.stones ?? ACHIEVEMENT_STONES;
 
 export const ACHIEVEMENTS: readonly Achievement[] = [
   { id: 'firstWin', name: 'First Blood', text: 'Win a stage.', crowns: 5, earned: (c) => c.won },
@@ -54,7 +63,7 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
   { id: 'perfect', name: 'Three Stars', text: 'Win a stage with three stars.', crowns: 15, earned: (c) => c.won && c.stars === 3 },
   { id: 'stage10', name: 'Tenth Stage', text: 'Win stage 10.', crowns: 10, earned: (c) => c.won && c.stage >= 10 },
   { id: 'stage20', name: 'Twentieth Stage', text: 'Win stage 20.', crowns: 20, earned: (c) => c.won && c.stage >= 20 },
-  { id: 'stage30', name: 'Thirtieth Stage', text: 'Win stage 30.', crowns: 40, earned: (c) => c.won && c.stage >= 30 },
+  { id: 'stage30', name: 'Thirtieth Stage', text: 'Win stage 30.', crowns: 40, stones: BIG_STONES, earned: (c) => c.won && c.stage >= 30 },
   {
     id: 'yokaiOnly',
     name: 'Yokai Only',
@@ -69,12 +78,13 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
   { id: 'relics5', name: 'Relic Hoarder', text: 'Collect five relics in one run.', crowns: 15, earned: (c) => (c.run.relics?.length ?? 0) >= 5 },
   { id: 'level10', name: 'Veteran', text: 'Bring a hero to level 10.', crowns: 20, earned: (c) => ALL_HEROES.some((k) => levelOfKind(c.meta, k) >= 10) },
   // (the deep levels: the best level of any hero, with a meter towards the goal)
-  ...([[30, 'level30', 'Hardened Champion', 30], [50, 'level50', 'Legend in the Making', 60], [100, 'level100', 'Centurion', 200]] as const).map(
-    ([need, id, name, crowns]): Achievement => ({
+  ...([[30, 'level30', 'Hardened Champion', 30, ACHIEVEMENT_STONES], [50, 'level50', 'Legend in the Making', 60, BIG_STONES], [100, 'level100', 'Centurion', 200, CENTURION_STONES]] as const).map(
+    ([need, id, name, crowns, stones]): Achievement => ({
       id,
       name,
       text: `Bring a hero to level ${need}.`,
       crowns,
+      stones,
       earned: (c) => bestLevel(c.meta) >= need,
       meter: (m) => ({ now: Math.min(need, bestLevel(m)), need }),
     }),
@@ -84,6 +94,7 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
     name: 'Full Roster',
     text: 'Unlock every hero.',
     crowns: 30,
+    stones: BIG_STONES,
     earned: (c) => ALL_HEROES.every((k) => c.meta.unlocked.includes(k)),
     meter: (m) => ({ now: ALL_HEROES.filter((k) => m.unlocked.includes(k)).length, need: ALL_HEROES.length }),
   },
@@ -92,6 +103,7 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
     name: 'Boss Slayer',
     text: 'Beat every boss.',
     crowns: 50,
+    stones: BIG_STONES,
     earned: (c) => BOSS_IDS.every((b) => c.meta.bosses.includes(b)),
     meter: (m) => ({ now: BOSS_IDS.filter((b) => m.bosses.includes(b)).length, need: BOSS_IDS.length }),
   },
@@ -124,13 +136,14 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
     name: 'Last Stand',
     text: 'Reach wave 20 of the Last Stand (or clear 20 floors of the old tower).',
     crowns: 40,
+    stones: BIG_STONES,
     earned: (c) => Math.max(c.meta.tower, c.meta.stand ?? 0) >= 20,
     meter: (m) => ({ now: Math.min(20, Math.max(m.tower, m.stand ?? 0)), need: 20 }),
   },
   {
     id: 'recruiter',
     name: 'Recruiter',
-    text: 'Make 10 pulls at the recruiting.',
+    text: 'Use 10 summoning stones at the recruiting.',
     crowns: 10,
     earned: (c) => c.meta.pulls >= 10,
     meter: (m) => ({ now: Math.min(10, m.pulls), need: 10 }),
@@ -155,11 +168,12 @@ export const claimable = (m: Meta, id: string): boolean => m.achievements.includ
 /** The achievements earned whose crowns are still waiting. */
 export const unclaimed = (m: Meta): Achievement[] => ACHIEVEMENTS.filter((a) => claimable(m, a.id));
 
-/** Take an earned achievement's crowns. Returns the crowns paid (0 when it isn't earned, or was claimed already). */
+/** Take an earned achievement's crowns and stones. Returns the crowns paid (0 when it isn't earned, or was claimed already). */
 export function claimAchievement(m: Meta, id: string): number {
   const a = achievementById(id);
   if (!a || !claimable(m, id)) return 0;
   (m.claimed ??= []).push(id);
   m.crowns += a.crowns;
+  m.stones = (m.stones ?? 0) + stonesOfAchievement(a);
   return a.crowns;
 }

@@ -53,7 +53,7 @@ import { dailyBonus, dailyCleared, dailyInProgress, modeNote, settleDaily, settl
 import { dailyBossName, dailyCrowns, DAILY_WAVES } from './sim/daily';
 import { showDailyStart } from './dailyView';
 import { chestPicture } from './chestStash';
-import { toastAchievements, toastJoined } from './achievementsView';
+import { toastAchievements, toastJoined, toastStones } from './achievementsView';
 import { grantContent } from './sim/contentHeroes';
 import { clockSeed, todayKey } from './modes';
 import { tips, type Box } from './tips';
@@ -241,6 +241,12 @@ class Game {
       if (!seed) await this.playDue({ kind: 'starter' }, { party: [...(SCENES.opening.trio ?? [])] });
       if (seed) pickStarter(this.meta, 0);
       else await chooseStarter(this.meta);
+      saveMeta(this.meta);
+    }
+    // (a save from before the summoning stones was given a few, once: it says so)
+    if (this.meta.stoneGift) {
+      toastStones(this.meta.stoneGift);
+      delete this.meta.stoneGift;
       saveMeta(this.meta);
     }
     // (a spire climb saved by an older version is closed and paid: the Tower is the Last Stand now)

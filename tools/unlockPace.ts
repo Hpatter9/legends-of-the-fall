@@ -1,6 +1,6 @@
 // The pace of unlocking heroes for a typical daily player, 30 to 45 minutes a day: the daily challenge, ten auto-replays and a few
 // manual army runs on the best army and tier cleared so far, a tower climb, the star and first-clear chests, and the milestones
-// reached at a plausible pace. It plays the real rules (`recruit`, `openChest`, `grantContent`) on a real Meta and reports the day
+// reached at a plausible pace. It plays the real rules (`buyChest`, `useStones`, `openChest`, `grantContent`) on a real Meta and reports the day
 // each hero count is reached (the starter's three count). Every assumption is a constant below; change one and run it again.
 //
 //   node tools/unlockPace.mjs [--seeds 20] [--share 0.9] [--days 365]
@@ -9,23 +9,33 @@ import { payClear } from '../src/sim/calReward';
 import { ARMIES, armyFoes, replayTotal, firstClearTotal } from '../src/sim/armies';
 import { chestSeed, firstClearSeed, FIRST_CLEAR_CHEST, openChest } from '../src/sim/armyStars';
 import { grantContent, CONTENT_HEROES } from '../src/sim/contentHeroes';
-import { newMeta, pickStarter, pullCost, recruit, stageCrowns, type Meta } from '../src/sim/meta';
+import { newMeta, pickStarter, stageCrowns, stonesOf, useStones, type Meta } from '../src/sim/meta';
+import { buyChest, SHOP, shopPrice, stockLeft } from '../src/sim/chestShop';
 import { ALL_HEROES } from '../src/sim/units';
 import { ownedWeight, PULL_HEROES, unlockNeed } from '../src/sim/unlockRules';
 import { mixSeed, Rng } from '../src/sim/rng';
 import { dailyChestSeed, dailyCrowns, DAILY_WAVES } from '../src/sim/daily';
 import { MAP_CROWNS } from '../src/sim/tower';
 import { BUILDINGS } from '../src/sim/castle';
-import { FOE_ENTRIES } from '../src/sim/codex';
-import { ACHIEVEMENTS } from '../src/sim/achievements';
+import { claimEntries, crownsTotal, FOE_ENTRIES, stonesTotal } from '../src/sim/codex';
+import { ACHIEVEMENTS, stonesOfAchievement } from '../src/sim/achievements';
 
 const arg = (name: string, fallback: number): number => {
   const i = process.argv.indexOf(name);
   return i >= 0 && Number(process.argv[i + 1]) > 0 ? Number(process.argv[i + 1]) : fallback;
 };
 const SEEDS = arg('--seeds', 20);
+// `--shop "500:2:2,1800:1:6,6000:1:20"`: try other shop chests (price:stock:stones for bronze, silver, gold) without editing the rules.
+const shopArg = process.argv[process.argv.indexOf('--shop') + 1];
+if (process.argv.includes('--shop') && shopArg)
+  shopArg.split(',').forEach((t, i) => {
+    const [price, stock, stones] = t.split(':').map(Number);
+    Object.assign(SHOP[i], { price, stock, stones });
+  });
+/** `--noshop 1`: the player buys no chests (only the stones that come free). */
+const NO_SHOP = arg('--noshop', 0) > 0;
 const DAYS = arg('--days', 365);
-/** The share of crowns that goes to pulls once the castle is built (the rest buys other things: spells, rebuilds, rerolls). */
+/** The share of crowns that goes to chests once the castle is built (the rest buys other things: spells, rebuilds, rerolls). */
 const PULL_SHARE = arg('--share', 0.9);
 /** While the castle is unbuilt, this share of the day's crowns goes to it first (it costs about 13000 in all). */
 const CASTLE_SHARE = 0.3;
@@ -53,9 +63,17 @@ const CALAMITY_DAY = 70;
 const ASCENSION_GAP = 28;
 /** Achievements and the codex pay about this many crowns in all over the first 150 days. */
 const EXTRA_CROWNS = 900;
+/** And the stones they pay beside those crowns: the same share of every achievement's and codex reward's stones as `EXTRA_CROWNS` is of their crowns. `--nobadges 1` leaves them out. */
+const BADGE_CROWNS = ACHIEVEMENTS.reduce((n, a) => n + a.crowns, 0) + crownsTotal('bestiary') + crownsTotal('heroes');
+const BADGE_STONES = ACHIEVEMENTS.reduce((n, a) => n + stonesOfAchievement(a), 0) + stonesTotal('bestiary') + stonesTotal('heroes');
+/** `--noentries 1`: the codex entries pay no stone (the player is otherwise paid one for each foe entry met and each hero owned, claimed every day). */
+const NO_ENTRIES = arg('--noentries', 0) > 0;
+const EXTRA_STONES = arg('--nobadges', 0) > 0 ? 0 : Math.round((BADGE_STONES * Math.min(1, EXTRA_CROWNS / BADGE_CROWNS)));
 
-interface Report { by: Record<number, number>; pullable: number; days: Record<number, number>; at: Record<string, number>; pulls: number; crowns: number }
+interface Report { pdays: Record<number, number>; by: Record<number, number>; pullable: number; days: Record<number, number>; at: Record<string, number>; pulls: number; crowns: number; entryStones: number }
 const MARKS = [5, 10, 15, 20, 30, 40, 45];
+/** The pullable heroes owned (the starter's three count): the 4th is the first after the starter. */
+const PULL_MARKS = [4, 5, 6, 10, 15, 20, 30, 35];
 const CHECKS = [1, 2, 3, 7, 14, 30, 60, 90, 120, 150, 180, 240, 365];
 
 function simulate(seed: number): Report {
@@ -63,10 +81,12 @@ function simulate(seed: number): Report {
   pickStarter(m, 0);
   const at: Record<string, number> = {};
   const days: Record<number, number> = {};
+  const pdays: Record<number, number> = {};
   let spent = 0;
   let income = 0;
   let castleLeft = CASTLE_TOTAL;
   let pulls = 0;
+  let entryStones = 0;
   const bestFarm = (): number => {
     let best = 0;
     ARMIES.forEach((a) => {
@@ -127,7 +147,10 @@ function simulate(seed: number): Report {
       // (the finishing reward: crowns, shards, a title; `calReward.ts`)
       payClear(m, mixSeed(seed, 0xca1d, day), asc, Math.min(ARMIES.length - 1, Math.floor(day / 12)));
     }
-    if (day <= 150) today += EXTRA_CROWNS / 150;
+    if (day <= 150) {
+      today += EXTRA_CROWNS / 150;
+      m.stones = (m.stones ?? 0) + Math.floor((EXTRA_STONES * day) / 150) - Math.floor((EXTRA_STONES * (day - 1)) / 150);
+    }
     m.crowns += Math.round(today);
     income += Math.round(today);
     // the chests are opened the day they come
@@ -139,36 +162,46 @@ function simulate(seed: number): Report {
     m.crowns -= toCastle;
     const budget = Math.floor(m.crowns * PULL_SHARE);
     let left = budget;
-    // (the owner's first session: the day-one crowns are all spent at once)
-    // (ten at a time while the budget allows, then singles; the price follows the roster)
+    // the codex: a stone for each entry discovered since yesterday (the foes of the armies cleared, the heroes that joined)
+    if (!NO_ENTRIES) entryStones += claimEntries(m);
+    // the chest shop: the dearest chest the budget reaches, again and again; every stone is then used (ten at a time, then singles)
     for (;;) {
-      const n = left >= pullCost(10) ? 10 : left >= pullCost(1) ? 1 : 0;
-      if (!n) break;
-      const got = recruit(m, n) ?? (n === 10 ? recruit(m, 1) : null);
-      if (!got) break;
-      left -= got.length === 10 ? pullCost(10) : pullCost(1) * got.length;
-      pulls += got.length;
+      const c = [...SHOP].reverse().find((x) => shopPrice(m, x.kind) <= left && stockLeft(m, x.kind, 20260000 + day) > 0);
+      if (NO_SHOP || !c || !buyChest(m, c.kind, 20260000 + day)) break;
+      left -= shopPrice(m, c.kind);
+    }
+    while (stonesOf(m) > 0) {
+      const n = stonesOf(m) >= 10 ? 10 : 1;
+      pulls += useStones(m, n)!.length;
     }
     for (const k of grantContent(m)) at[k] = at[k] ?? day;
     if (CHECKS.includes(day)) by[day] = m.unlocked.length;
     if (pullable === Infinity && PULL_HEROES.every((k) => m.unlocked.includes(k))) pullable = day;
+    const ownedPull = PULL_HEROES.filter((k) => m.unlocked.includes(k)).length;
+    for (const n of PULL_MARKS) if (pdays[n] === undefined && ownedPull >= n) pdays[n] = day;
     for (const n of MARKS) if (days[n] === undefined && m.unlocked.length >= n) days[n] = day;
     spent += 0;
   }
   void spent;
-  return { by, pullable, days, at, pulls, crowns: income };
+  return { pdays, by, pullable, days, at, pulls, crowns: income, entryStones };
 }
 
 const reports = Array.from({ length: SEEDS }, (_, i) => simulate(i * 7919 + 13));
 const mean = (xs: number[]) => xs.reduce((n, x) => n + x, 0) / xs.length;
 const med = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
 console.log(`Unlock pace for a daily player (${SEEDS} seeds, ${DAYS} days; ${Math.round(PULL_SHARE * 100)}% of crowns to pulls after the castle; ${FOE_ENTRIES.length} bestiary entries, ${ACHIEVEMENTS.length} achievements)`);
-console.log(`Crowns earned: ${Math.round(mean(reports.map((r) => r.crowns)))} in ${DAYS} days; pulls made: ${Math.round(mean(reports.map((r) => r.pulls)))}`);
+console.log(`Crowns earned: ${Math.round(mean(reports.map((r) => r.crowns)))} in ${DAYS} days; stones used: ${Math.round(mean(reports.map((r) => r.pulls)))} (${EXTRA_STONES} of them from achievements and the codex's milestones, ${Math.round(mean(reports.map((r) => r.entryStones)))} from its entries)`);
 console.log('\nheroes  day reached (median, earliest, latest)');
 for (const n of MARKS) {
   const ds = reports.map((r) => r.days[n] ?? Infinity);
   const fmt = (x: number) => (Number.isFinite(x) ? String(x) : `>${DAYS}`);
   console.log(`${String(n).padStart(6)}  ${fmt(med(ds)).padStart(5)}  (${fmt(Math.min(...ds))} to ${fmt(Math.max(...ds))})`);
+}
+console.log('\npullable heroes owned  day reached (median, earliest, latest)');
+for (const n of PULL_MARKS) {
+  const ds = reports.map((r) => r.pdays[n] ?? Infinity);
+  const fmt = (x: number) => (Number.isFinite(x) ? String(x) : `>${DAYS}`);
+  console.log(`${String(n).padStart(8)}  ${fmt(med(ds)).padStart(5)}  (${fmt(Math.min(...ds))} to ${fmt(Math.max(...ds))})`);
 }
 console.log('\nday   heroes owned (median)');
 for (const d of CHECKS) console.log(`${String(d).padStart(3)}   ${med(reports.map((r) => r.by[d] ?? 0))}`);

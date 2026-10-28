@@ -7,8 +7,8 @@ import { bossOf } from '../src/sim/armies';
 import { canRetry, loadRun, saveRun, chainOf, finish, isBossRun, noteFight, retryWave, startStage, waveArmyOf, MAX_RETRIES } from '../src/sim/run';
 import { isBoss } from '../src/sim/foes';
 import { loadMeta, saveMeta, startedMeta } from '../src/sim/meta';
-import { isContent } from '../src/sim/unlockRules';
-import { ALL_HEROES, UNITS } from '../src/sim/units';
+import { DAILY_CHEST_STONES } from '../src/sim/unlockRules';
+import { UNITS } from '../src/sim/units';
 import { dateKey } from '../src/sim/dailySeed';
 import { playDaily } from '../tools/autoplay';
 
@@ -155,40 +155,32 @@ test('the bonus stars: no heart spent and a quick clear, and they add to the che
   assert.ok(sum(2) > sum(1) && sum(1) > sum(0));
 });
 
-test('the daily chest follows the shard rules: unlock shards for heroes not owned, rank shards for owned ones, never a content hero whole', () => {
+test('the daily chest holds crowns, summoning stones (more with bonus stars) and now and then gear, and gives no shard directly', () => {
   let gear = 0;
-  let draws = 0;
   for (let n = 0; n < 120; n++) {
     const m = startedMeta(100 + n);
     const owned = [...m.unlocked];
     const before = { unlock: { ...(m.unlock ?? {}) }, shards: { ...m.shards } };
-    m.stash.push({ army: 'daily', at: 3, tier: 0, seed: dailyChestSeed(m.seed, 20261021 + n), daily: 20261021 + n, bonus: n % 3 });
+    const bonus = n % 3;
+    m.stash.push({ army: 'daily', at: 3, tier: 0, seed: dailyChestSeed(m.seed, 20261021 + n), daily: 20261021 + n, bonus });
     const peek = peekChest(m, 0)!;
     assert.equal(peek.kind, 'daily');
     assert.equal(peek.army, 'daily');
-    assert.deepEqual(m.unlock ?? {}, before.unlock, 'peeking gives nothing');
+    assert.equal(m.stones ?? 0, 0, 'peeking gives nothing');
     const crowns = m.crowns;
     const loot = openChest(m, 0)!;
     assert.equal(m.stash.length, 0, 'the chest leaves the stash');
     assert.equal(loot.kind, 'daily');
     assert.equal(openChest(m, 0), null, 'it opens once');
     assert.ok(m.crowns > crowns, 'crowns paid');
-    // (no content hero joins, or gets unlock shards, from a chest)
-    for (const k of Object.keys(m.unlock ?? {})) assert.ok(!isContent(k), `no unlock shards for the content hero ${k}`);
-    for (const k of m.unlocked) if (isContent(k)) assert.ok(owned.includes(k), `${k} is not given whole`);
-    // (a hero already owned gets rank shards; one not owned gets unlock shards)
-    for (const it of loot.items.filter((i) => i.type === 'shards' || i.type === 'hero')) {
-      const k = it.ref!;
-      if (owned.includes(k)) assert.match(it.text, /shards?( \(already yours\))?$/);
-      else assert.match(it.text, /unlock shards?|joins you/);
-    }
-    for (const k of ALL_HEROES.filter((k) => !owned.includes(k) && !m.unlocked.includes(k))) assert.equal(m.shards[k] ?? 0, before.shards[k] ?? 0, `${k} not owned: no rank shards`);
+    assert.equal(m.stones, DAILY_CHEST_STONES + bonus, 'a base of stones, one more for each bonus star');
+    assert.deepEqual(m.unlocked, owned);
+    assert.deepEqual(m.unlock ?? {}, before.unlock);
+    assert.deepEqual(m.shards, before.shards);
     gear += loot.items.filter((i) => i.type === 'gear').length;
-    draws += loot.items.filter((i) => i.type === 'hero').length;
     assert.equal(m.equipment?.length ?? 0, loot.items.filter((i) => i.type === 'gear').length, 'gear is granted when it is opened');
   }
   assert.ok(gear > 20 && gear < 100, `a chance of gear, not always (${gear} of 120)`);
-  assert.ok(draws > 10 && draws < 70, `a hero draw now and then (${draws} of 120)`);
 });
 
 test('a daily chest rolls the same from its seed, and its seed is the save and the date', () => {

@@ -2,9 +2,10 @@
 // Artwork and controls only; recruiting and saving remain in the gacha.
 
 import { ALL_HEROES, UNITS } from './sim/units';
-import { pullCost, type Meta, type Pull } from './sim/meta';
-import { pityLine } from './gacha';
+import { stoneCost, stonesOf, type Meta, type Pull } from './sim/meta';
+import { luckyLine, pityLine } from './gacha';
 import { closest, haveOf, needOf } from './sim/unlock';
+import { ICONS, icon } from './menuArt';
 import { heroRig } from './render/awakenRig';
 import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
@@ -45,6 +46,10 @@ const CSS = `
 .hlProgress { height: 7px; margin: 5px 0; padding: 1px; background: #060e13; border: 1px solid #756a46; }
 .hlProgress i { display: block; height: 100%; background: linear-gradient(#c1f3b4, #409b6c); box-shadow: 0 0 6px #77c99566; }
 .hlScroll .odds { display: block; font: 10px/1.3 var(--body); color: #bfc9be; }
+.hlShop { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; max-width: 390px; min-height: 40px; padding: 4px 8px; font: 400 12px var(--body); color: #ffe3a2; border: 1px solid #b28a45; border-radius: 3px; background: linear-gradient(#244e3a, #122b22); }
+.hlShop:disabled { opacity: .5; }
+.hlShopIco { width: 24px; height: 24px; image-rendering: pixelated; }
+.hlScroll .odds.lucky { margin-top: 2px; font-size: 12px; color: #ffe3a2; }
 .hlBar { display: flex; gap: 10px; width: 100%; max-width: 390px; }
 .hlBar button { flex: 1; min-height: 59px; padding: 7px 3px; font: 900 17px var(--display); color: #ffe3a2; border: 2px solid #d0a452; border-radius: 3px; background: linear-gradient(135deg, #684b2b, #382a1d); box-shadow: inset 0 0 0 2px #846638, inset 0 0 0 4px #2e251c, 0 3px 0 #080e10; }
 .hlBar button.primary { background: linear-gradient(135deg, #286846, #103e30); box-shadow: inset 0 0 0 2px #a38b43, inset 0 0 0 4px #173c2b, 0 3px 0 #080e10; }
@@ -163,11 +168,17 @@ const CSS = `
 #gacha .summonCelebration { position: absolute; z-index: 0; inset: 18% 13% 20%; border-radius: 50%; background: repeating-conic-gradient(from 15deg, transparent 0deg 23deg, #e2c97525 24deg 27deg, transparent 28deg 30deg), radial-gradient(ellipse, #c9e09155, transparent 70%); pointer-events: none; }
 #gacha .new.up .summonCelebration { animation: summonCoronation 1.2s ease-out both; }
 #gacha .new.up .summonPortrait { animation: summonArrival .8s cubic-bezier(.18,.8,.25,1) both; }
+/* The lucky summon: a gold frame that stays, and one burst of light when the card turns (played once, never looped). */
+#gacha .flip.lucky .face { box-shadow: inset 0 0 0 3px #f6dca0, inset 0 0 0 6px #8a6a22, 0 0 24px #e2c975b3; border: 2px solid #f6dca0; }
+#gacha .flip.lucky .resultSeal { color: #fff1c4; text-shadow: 0 0 8px #e2c975; }
+#gacha .luckyBurst { position: absolute; z-index: 4; inset: 22% 8% 30%; border: 4px solid #ffe9a8; border-radius: 50%; background: radial-gradient(circle, #fff3c8cc, #e2c97566 45%, transparent 70%); opacity: 0; pointer-events: none; }
+#gacha .lucky.up .luckyBurst { animation: luckyBurst 1.1s ease-out 1 both; }
+@keyframes luckyBurst { from { transform: scale(.2); opacity: .95; } to { transform: scale(2.4); opacity: 0; } }
 @keyframes summonCoronation { from { transform: scale(.4) rotate(-18deg); } to { transform: scale(1) rotate(0); } }
 @keyframes summonArrival { from { transform: translateY(28px) scale(.75); } to { transform: translateY(0) scale(1); } }
 
 @media (max-height: 800px) { #gacha .summonHeading > small { font-size: 9px; letter-spacing: 1px; } #gacha #gachaClose { min-height: 44px; margin-bottom: 6px; } #gacha .gachaActions { padding-top: 7px; } #gacha .summonHeading h2 { font-size: 18px; } }
-@media (prefers-reduced-motion: reduce) { #gacha .flip, #gacha .flip .face, #gacha .flip .back { transition: none; } #gacha .new.up .summonCelebration, #gacha .new.up .summonPortrait { animation: none; } }
+@media (prefers-reduced-motion: reduce) { #gacha .flip, #gacha .flip .face, #gacha .flip .back { transition: none; } #gacha .new.up .summonCelebration, #gacha .new.up .summonPortrait { animation: none; } #gacha .lucky.up .luckyBurst { animation: none; } }
 
 `;
 
@@ -249,6 +260,8 @@ export interface HallHooks {
   onSummon(count: 1 | 10): void;
   /** The collection control opens the heroes and summon rules. */
   onCollection(): void;
+  /** The chest shop button: crowns buy chests, and chests hold stones. */
+  onShop(): void;
 }
 
 export class SummoningHall {
@@ -257,6 +270,7 @@ export class SummoningHall {
   private ctx = this.canvas.getContext('2d')!;
   private count = el('div', 'hlCount');
   private scroll = el('div', 'hlScroll');
+  private shop = el('button', 'hlShop');
   private pull1 = el('button', '');
   private pull10 = el('button', 'primary');
   private still: HTMLCanvasElement | null = null;
@@ -297,7 +311,8 @@ export class SummoningHall {
     const bar = el('div', 'hlBar');
     bar.append(this.pull1, this.pull10);
     const low = el('div', 'hlLow');
-    low.append(this.scroll, bar);
+    this.shop.addEventListener('click', () => this.hooks.onShop());
+    low.append(this.scroll, this.shop, bar);
     this.root.append(this.canvas, head, low, this.over, this.skipPad);
     // (a tap anywhere skips the show straight to the result)
     this.skipPad.addEventListener('pointerdown', (e) => {
@@ -325,12 +340,14 @@ export class SummoningHall {
     const have = ALL_HEROES.filter((k) => meta.unlocked.includes(k)).length;
     this.count.textContent = `${have} / ${ALL_HEROES.length} Heroes`;
     const busy = !!this.show;
+    this.shop.replaceChildren(icon(ICONS.stones, 'hlShopIco'), `Chest shop · buy stones with crowns`);
+    this.shop.disabled = busy;
     for (const [b, n] of [[this.pull1, 1], [this.pull10, 10]] as const) {
-      b.replaceChildren(`Summon ×${n}`, el('small', '', `♛ ${pullCost(n)} crowns`));
-      b.disabled = busy || meta.crowns < pullCost(n);
+      b.replaceChildren(`Use ${stoneCost(n)} stone${n === 1 ? '' : 's'}`, el('small', '', `◆ ${stonesOf(meta)} held`));
+      b.disabled = busy || stonesOf(meta) < stoneCost(n);
     }
     const line = el('b', '', 'Hero shards');
-    const hint = el('span', 'hlHint', 'Each summon brings a hero closer');
+    const hint = el('span', 'hlHint', 'Each stone brings a hero closer');
     const near = closest(meta);
     const progress = el('div', 'hlProgress');
     const fill = el('i');
@@ -345,7 +362,7 @@ export class SummoningHall {
     progress.setAttribute('aria-valuemin', '0');
     progress.setAttribute('aria-valuemax', `${near ? need : 1}`);
     progress.setAttribute('aria-valuenow', `${near ? haveShards : 1}`);
-    this.scroll.replaceChildren(line, hint, label, progress, el('span', 'odds', pityLine(meta)));
+    this.scroll.replaceChildren(line, hint, label, progress, el('span', 'odds', pityLine(meta)), el('span', 'odds lucky', luckyLine()));
 
   }
 

@@ -29,7 +29,7 @@ export const TIPS: Readonly<Record<TipId, TipDef>> = {
   skill: { text: 'Heroes cast their skills on their own, paid from the blue mana or gold stamina bar under each portrait.', page: 'game', during: 'fight' },
   ult: { text: 'A glowing portrait means its ultimate is ready: tap it to fire. The Auto switch fires them for you.', page: 'game', during: 'fight' },
   summon: { text: 'Spend gold to Hire a hero. Three of the same hero merge into a stronger one.', page: 'game', during: 'deploy' },
-  crowns: { text: 'Recruit gathers shards to unlock new heroes. Army stars open the Castle, the Last Stand and the Calamity.', page: 'home' },
+  crowns: { text: 'Crowns buy chests in the Recruit tab, and chests hold summoning stones. Each stone gives a hero shard. Army stars open the Castle, the Last Stand and the Calamity.', page: 'home' },
   calamity: { text: 'Calamity: climb the maps with one hero, and hire more at camps and shops. Each map ends in a boss.', page: 'home' },
   tower: { text: 'Last Stand: guard the king on his keep as wave after wave comes in from every side. It never ends.', page: 'home' },
   talents: { text: 'Spend talent points here to change how this hero fights. Each hero has its own tree.', page: 'any' },

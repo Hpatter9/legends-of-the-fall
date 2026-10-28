@@ -135,6 +135,7 @@ All Craftpix, copied one sprite or layer at a time; no PixelLab. Ground tops and
   shown as CSS 9-slices at whole-number scales.
 - **The tab icons** (`tab-*.png`) and **the gold, crown, gear, sound, mute and trophy icons** (`ic-*.png`): 32x32 pixel art
   generated with PixelLab (`tools/ui/genicons.py`), used as they came.
+- **The summoning stone** (`ic-stone.png`): the "Mana" crystal from the Crystal Caves 2D platformer tileset (Craftpix free pack), cropped and scaled to 64x64 by `tools/ui/stone-icon.py`.
 - **Pixelify Sans** (Stefie Justprince; SIL Open Font Licence 1.1), from the `@fontsource/pixelify-sans` npm package: the
   text font for the whole interface (`out/web/fonts/`). Press Start 2P stays for the counters.
 
