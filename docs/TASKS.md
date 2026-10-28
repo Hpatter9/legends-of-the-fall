@@ -14,10 +14,21 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### WORLD-ROAD — Army road, boss arenas and the living land
+
+- **Goal:** the owner's asks: army battle maps follow a realistic path (a winding road 6 to 9 tiles wide with themed scenery beside it that walkers cannot enter, not a full 14x18 slab), each army's boss waves (8 and 15; the Wildwood's 5, 10 and 15) fought in its own themed arena, and (phase B) a living environment: hazards that act on both sides, running water and waterfalls, pack walls and set pieces at the tiles' angle, ambient life.
+- **Status:** done; owner approved and released as 0.187.0 (castle gate sprite removed at the owner's ask).
+- **Owner:** Claude (the WORLD army map is normally the other AI's area; the owner assigned this one to Claude).
+- **Branch / worktree / PR:** `claude/army-road`, `/home/user/army-road` (main 0.186.0 merged in); PR none.
+- **Allowed files or systems:** `src/sim/scenario.ts`, `src/sim/armyRoad.ts`, `src/sim/hazards.ts`, `src/sim/board.ts` (optional `Tile.scene`, `paved`, `ring`, `stream`; `Board.pieces`, `hazards`, `flow`, `falls`; scenery not `standable`), `src/sim/battle.ts` (the `hazard` event and its tick), `src/sim/armies.ts` (seven Normal `start` values), `src/render/boardView.ts`, `columnTextures.ts`, `roadArt.ts`, `roadAtlas.ts`, `hazardLooks.ts`, `fx.ts` (hazard tells and strikes), `soundRules.ts` (their cues), `weatherRules.ts`/`weatherView.ts` (ambient motes on the road), `src/main.ts` (two calls), `src/art/road/`, tests `test/army-road.test.ts`, `test/army-hazards.test.ts`, `test/world-001-scenario.test.ts`, `tools/army-road/`, `docs/notes/army-road.md`, `docs/samples/army-road-*.png`, `CREDITS.md`. Other modes' boards untouched.
+- **Completion criteria:** road and arenas per the owner's answers; hazards deterministic on their own side stream, both sides, each rule tested; rings and set pieces from pack art at the tiles' angle, credited; water flows and pours off open edges; ambient life respecting reduced motion and battery saver; every walkable tile reachable and every survivor able to walk on to the next section; armies within noise of main at their recommended levels; typecheck, affected tests and the full suite, web build; 393x852, 360x780 and 412x915 checks.
+- **Validation:** see the handoff's "Checks run for phase B".
+- **Handoff:** [notes](notes/army-road.md), [phase B sheet](samples/army-road-after-sheet.png), [phase A mock-ups](samples/army-road-mock-sheet.png).
+
 ### AWAKEN-002 — Class auras for awakened heroes
 
 - **Goal:** the owner's ask: drop the awakened recolour; an awakened hero wears an aura at step 1 (rank 5) and a stronger, bigger one at step 2 (rank 6), its style set by the hero's class trait (not the origin), wherever an awakened hero is drawn.
-- **Status:** phase A approved by the owner (look suits; Werewolf red sheet dropped; rank 4 keeps its gold glow and outline, awakened steps take the class colour; art behind one seam with a painted-art brief; camp included). Phase B done on the branch, ready for review.
+- **Status:** done; owner approved and released as 0.188.0 (Calamity fights keep no aura: the owner's call). Earlier: phase A approved by the owner (look suits; Werewolf red sheet dropped; rank 4 keeps its gold glow and outline, awakened steps take the class colour; art behind one seam with a painted-art brief; camp included). Phase B done on the branch, ready for review.
 - **Owner:** Claude
 - **Branch / worktree / PR:** `claude/awaken-auras`, `/home/user/awaken-auras` (main 0.186.0 merged in); PR none yet (not asked).
 - **Allowed files or systems:** the awakened look (`src/render/awakenLook.ts`, `awakenRig.ts`, new `auraStyles.ts`, `auraPlace.ts`, `auraArt.ts`, `awakenAura.ts`, `auraCanvas.ts`, `figureShare` in `sheets.ts`), `unitView.ts`, `fx.ts` (loader), `sceneView.ts`, `menuHeroes.ts`, `rankUpView.ts`, `awakenView.ts`, `awaken.css`, `partyScene.ts`, `party.ts` (one call), `tavern.ts`, `camp.ts`, `hall.ts`, `calMap.ts`, the aura atlas in `src/art/fx/aura/`, `tools/awaken/`, `test/awaken*.test.ts`, `CREDITS.md`, `docs/notes/awaken-auras*.md`, `docs/samples/awaken-auras-*.png`. Not the castle tab, the battle-picking menu tab, the WORLD army map or the Last Stand files; no simulation, save or version change.

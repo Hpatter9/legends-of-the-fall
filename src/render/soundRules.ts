@@ -217,6 +217,16 @@ export function cuesFor(b: Battle, e: BattleEvent): Cued[] {
       return [{ cue: 'miss' }];
     case 'boom':
       return [{ cue: 'fireBoom', gain: 0.9 }];
+    case 'hazard':
+      // (the living land: a strike is heard as it goes off; the river's current and a spring's welling are quiet)
+      if (e.phase !== 'go') return [];
+      return e.what === 'flare' ? [{ cue: 'fireWhoosh', gain: 0.7 }]
+        : e.what === 'rockfall' || e.what === 'stampede' ? [{ cue: 'boom', gain: 0.7 }]
+        : e.what === 'geyser' ? [{ cue: 'poisonHiss', gain: 0.7 }]
+        : e.what === 'spikes' ? [{ cue: 'block', gain: 0.6 }]
+        : e.what === 'grasp' ? [{ cue: 'shadowHum', gain: 0.6 }]
+        : e.what === 'spring' ? [{ cue: 'holyChime', gain: 0.5 }]
+        : [];
     case 'hit': {
       const by = unit(e.by);
       const to = unit(e.to);

@@ -253,6 +253,25 @@ All Craftpix, copied one sprite or layer at a time; no PixelLab. Ground tops and
   isometric kits (`hpatter9/little-town`), halved by a 2x2 box average.
 
 - **Stone and iron UI kit** (`src/art/ui/` frames, buttons, ribbons, chips, flag, `wood.png`, `page.png`; drawn by `tools/ui/styles.py`, which replaced `tools/ui/frames.py`'s brown and gold kit): the `wood.png` (bars) and `page.png` (menu pages, panel fill) textures are the centre tiles of two **DawnLike** brick sets by DragonDePlatino (`Objects/Floor.png`, CC-BY 4.0; palette by DawnBringer), their few colours moved by brightness rank onto the slate ramp, with no resampling. The frames are drawn natively by the script.
+## The army road's scenery and arenas (WORLD-ROAD)
+
+- `src/art/road/atlas.png` (cut by `tools/army-road/prep.py`, listed in `src/render/roadAtlas.ts`): the arenas' rings and set pieces and the land
+  beside the road (the orcs' spiked wall and stake fence, the liches' bone wall, iron fence, mausoleum, dead oak and lantern post, the
+  dwarves' stone wall, braziers, crystals and rubble, the machines' iron wall, generator, iron tree, arc lamp and coil stack, the Moon Pack's bone
+  fence, cave den, howling stone, snowy pine, torch post and fallen log, the druids' great oak, birch, standing stone, stone circle, hedge and
+  mushroom lantern, the Fae's weeping willow, silver birch, shrine and lantern post, the Blood Court's gravestones and brazier, the nomads' tassel
+  lantern, the orcs' skull gate, war drum, skull torch, bonfire, burnt tree and dark rocks, and the wild set's ruins, pillars, statue, bones,
+  skeleton, ferns, reeds, grass, flowers, mushrooms, pebbles, shrubs, thorns and stump) are single pieces of Chronos Settlement's isometric kits
+  (`hpatter9/little-town`, `src/renderer/art/iso/kits/`), the same kits as the Calamity map's atlas above, so they stand at the boards' own angle.
+  The bigger pieces are halved by a 2x2 box average; the atlas is reduced to 256 colours. Chronos credits the kits as drawn with ChatGPT's image
+  generation from prompts written for that game, then cut, cleaned and reduced to 256 colours.
+- The rest of the scenery is cut at run time from the Calamity map's atlas (`src/art/calmap/atlas.png`, credited above), and the ruins from the
+  boards' own ruined walls.
+- `src/art/road/birds.png`: the five small birds pecking at the road's edge, **DawnLike** by DragonDePlatino (`Characters/Avian0.png` and
+  `Avian1.png`, CC-BY 4.0; palette by DawnBringer), as cut for Chronos Settlement (`src/renderer/art/birds.png` there).
+- The running water, the waterfalls and the lights' glow are painted in code (`src/render/roadArt.ts`): no pack has a waterfall at this angle.
+  The hazards' strikes play the **Pixel Effects** pack's strips already in the game (`src/art/fx/pack`).
+
 ## The Calamity's void (`src/art/calmap/`, `tools/calmap/prep.py`)
 
 - The sky behind the islands: the stars (`stars.png`, the bright pixels of the first sky) and the four moons (`planet_white/tan/red/blue.png`) are cut from the Craftpix **Free Moon Pixel Game
