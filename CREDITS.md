@@ -372,3 +372,5 @@ The Grand Scenario prototype reuses the already credited camp gate and Knights w
 ## Battle command ornament
 
 - `src/art/ui/battle-crest.png`: original transparent crossed-sword, emerald lion shield and crimson ribbon ornament generated with OpenAI image generation in October 2026 for the owner-authorised battle UI pass. Other frames, ribbons and spell icons reuse the artwork credited above.
+
+- **Four seductress redesigns** (`hero_res_kitsune`, `hero_res_gorgon`, `hero_res_illusionist`, `hero_res_time_witch`, and their `_back` PNGs): original artwork generated with OpenAI image generation in October 2026, following the owner-approved adult character concepts. Front/rear views and action poses are packed with `tools/seductress/pack.py`. Costume revisions keep the heroes’ existing identities and combat rules; the Illusionist’s decoys reuse her updated sheet.

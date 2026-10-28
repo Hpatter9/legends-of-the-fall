@@ -7,3 +7,6 @@ __pycache__/
 tools/resonance/source/roster/
 tools/resonance/source/turning/
 tools/resonance/source/walk/
+
+# Raw four-hero generation intermediates; packed assets are committed.
+tools/seductress/source/

@@ -2487,8 +2487,8 @@
   "rear": "hero_res_lightning_mage_back"
  },
  "hero_res_kitsune": {
-  "w": 146,
-  "h": 101,
+  "w": 104,
+  "h": 122,
   "perRow": 4,
   "rows": [
    "idle",
@@ -2676,8 +2676,8 @@
   "rear": "hero_res_satyr_back"
  },
  "hero_res_gorgon": {
-  "w": 144,
-  "h": 121,
+  "w": 122,
+  "h": 113,
   "perRow": 4,
   "rows": [
    "idle",
@@ -3000,8 +3000,8 @@
   "rear": "hero_res_warlock_back"
  },
  "hero_res_illusionist": {
-  "w": 146,
-  "h": 104,
+  "w": 126,
+  "h": 110,
   "perRow": 4,
   "rows": [
    "idle",
@@ -3324,8 +3324,8 @@
   "rear": "hero_res_reaper_back"
  },
  "hero_res_time_witch": {
-  "w": 142,
-  "h": 108,
+  "w": 108,
+  "h": 116,
   "perRow": 4,
   "rows": [
    "idle",
@@ -3891,8 +3891,8 @@
   "front": "hero_res_lightning_mage"
  },
  "hero_res_kitsune_back": {
-  "w": 146,
-  "h": 101,
+  "w": 104,
+  "h": 122,
   "perRow": 4,
   "rows": [
    "idle",
@@ -4026,8 +4026,8 @@
   "front": "hero_res_satyr"
  },
  "hero_res_gorgon_back": {
-  "w": 144,
-  "h": 121,
+  "w": 122,
+  "h": 113,
   "perRow": 4,
   "rows": [
    "idle",
@@ -4188,8 +4188,8 @@
   "front": "hero_res_warlock"
  },
  "hero_res_illusionist_back": {
-  "w": 146,
-  "h": 104,
+  "w": 126,
+  "h": 110,
   "perRow": 4,
   "rows": [
    "idle",
@@ -4512,8 +4512,8 @@
   "front": "hero_res_reaper"
  },
  "hero_res_time_witch_back": {
-  "w": 142,
-  "h": 108,
+  "w": 108,
+  "h": 116,
   "perRow": 4,
   "rows": [
    "idle",
