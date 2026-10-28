@@ -14,6 +14,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+**COMBAT-002 / Hero kits, mana and manual ultimates** — design awaiting owner approval.
+
+- **Goal:** every hero gets a mana or stamina pool, two skills that cost it (level 1 and level 10), and an ultimate (level 30) the player fires by tapping its portrait in a new hero bar, with an Auto toggle; all 45 heroes reworked into far more varied roles (summoners, shapeshifters and many odd archetypes), no new heroes.
+- **Status:** phase 1 (design) done; phase 2 (implementation) waits for the owner's approval and answers to the open questions.
+- **Owner:** Claude. **Branch / worktree:** `claude/hero-kits`, `/home/user/hero-kits`. PR: none yet.
+- **Scope:** the battle simulation's hero kits, pool, ultimate meter and a queued ultimate command (`src/sim/abilities.ts`, `ultimates.ts`, `tierSkills.ts`, `combos.ts`, `traits.ts`, `talents.ts`, `units.ts`, `battle.ts`, new `heroKits.ts`, `orders.ts`, `kits/`); the fight HUD (fight panel in `src/main.ts`, `src/index.html`); unit and effect rendering; hero texts; balance retune. Not the castle tab, the battle-picking menu tab or the army battle map (WORLD-001).
+- **Completion criteria:** owner approves the design; then all 45 kits implemented as approved; resource, order/replay and kit tests added; typecheck, web build and affected tests pass; the hero bar checked at 393×852, 360×780 and 412×915 with reduced motion; hero, army, Calamity, daily, Last Stand and spire balance re-measured and recorded; old saves load and play.
+- **Validation (phase 1):** documentation and images only; `npm run web` run once to capture the current fight screen.
+- **Handoff:** [design](notes/hero-kits.md), [owner summary](notes/hero-kits-summary.md), [HUD mock-up](samples/hero-kits-hud-mock.png), [current HUD](samples/hero-kits-hud-before.png).
+
 WORLD-126 rendering checkpoint ready for review; rare warm-tail stability remains open. WORLD-001 per-army map design awaits owner confirmation before implementation.
 
 - Owner: current WORLD continuation chat, confirmed by owner on 2026-10-27.
