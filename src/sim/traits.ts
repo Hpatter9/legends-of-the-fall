@@ -27,11 +27,11 @@ export interface TraitEffects {
   mana?: number;
   /** Shooters gain this much reach per step of height above the target. */
   reach?: number;
-  /** Trickster milestone: fatal or low-health blow leaves substitution decoy log and teleports to safety. */
+  /** Trickster milestone (three Tricksters): a blow that leaves a Trickster under 25% health leaves a decoy log, and it slips aside. */
   tricksterLog?: boolean;
-  /** Yokai milestone: dodging a blow leaves a spirit wisp trap on the tile damaging stepping enemies. */
+  /** Yokai milestone (three Yokai): dodging a blow leaves a spirit wisp trap on the tile, hurting the foe that steps on it. */
   yokaiWisp?: boolean;
-  /** Guardian milestone: grants emergency Aegis shield when ally drops below 30% HP. */
+  /** Guardian milestone (three Guardians): an emergency Aegis shield the first time a hero drops below 30% health. */
   guardianShield?: boolean;
 }
 
@@ -61,9 +61,15 @@ export const TRAITS: Record<string, Trait> = {
     { need: 2, effects: { mana: 1.3 }, text: "The king's mana fills 30% faster" },
     { need: 4, effects: { mana: 1.6 }, text: "The king's mana fills 60% faster" },
   ] },
-  yokai: { id: 'yokai', name: 'Yokai', kind: 'origin', short: 'Yo', tiers: [{ need: 2, effects: { dodge: 0.06, yokaiWisp: true }, text: 'Slip 6% of blows; upon dodging, Yokai leave a spirit wisp' }] },
+  yokai: { id: 'yokai', name: 'Yokai', kind: 'origin', short: 'Yo', tiers: [
+    { need: 2, effects: { dodge: 0.06 }, text: 'Slip 6% of blows' },
+    { need: 3, effects: { dodge: 0.06, yokaiWisp: true }, text: 'Slip 6% of blows, and a Yokai that slips one leaves a spirit wisp on its tile' },
+  ] },
   knightly: { id: 'knightly', name: 'Knightly', kind: 'origin', short: 'Kn', tiers: [{ need: 2, effects: { hp: 1.05 }, text: '+5% health' }] },
-  guardian: { id: 'guardian', name: 'Guardian', kind: 'class', short: 'Gu', tiers: [{ need: 2, effects: { guard: 0.05, guardianShield: true }, text: 'All heroes take 5% less damage; grant Aegis shield when badly hurt' }] },
+  guardian: { id: 'guardian', name: 'Guardian', kind: 'class', short: 'Gu', tiers: [
+    { need: 2, effects: { guard: 0.05 }, text: 'All heroes take 5% less damage' },
+    { need: 3, effects: { guard: 0.05, guardianShield: true }, text: 'All heroes take 5% less damage, and an Aegis shield covers each the first time it is badly hurt' },
+  ] },
   blade: { id: 'blade', name: 'Blade', kind: 'class', short: 'Bl', tiers: [{ need: 2, effects: { crit: 0.1 }, text: '+10% crit chance for all' }] },
   marksman: { id: 'marksman', name: 'Marksman', kind: 'class', short: 'Mk', tiers: [{ need: 2, effects: { reach: 0.5 }, text: 'Shooters reach much further from high ground' }] },
   caster: { id: 'caster', name: 'Caster', kind: 'class', short: 'Ca', tiers: [
@@ -87,7 +93,10 @@ export const TRAITS: Record<string, Trait> = {
     { need: 2, effects: { guard: 0.04 }, text: 'All heroes take 4% less damage' },
     { need: 4, effects: { guard: 0.1 }, text: 'All heroes take 10% less damage' },
   ] },
-  trickster: { id: 'trickster', name: 'Trickster', kind: 'class', short: 'Tr', tiers: [{ need: 2, effects: { speed: 1.05, tricksterLog: true }, text: 'All heroes act and walk 5% faster; Tricksters leave a decoy log upon fatal/low-health blows' }] },
+  trickster: { id: 'trickster', name: 'Trickster', kind: 'class', short: 'Tr', tiers: [
+    { need: 2, effects: { speed: 1.05 }, text: 'All heroes act and walk 5% faster' },
+    { need: 3, effects: { speed: 1.05, tricksterLog: true }, text: 'All heroes act and walk 5% faster, and a Trickster brought low leaves a decoy log and slips aside (once a fight)' },
+  ] },
   beast: { id: 'beast', name: 'Beast', kind: 'class', short: 'Be', tiers: [
     { need: 2, effects: { atk: 1.03 }, text: '+3% attack' },
     { need: 4, effects: { atk: 1.08 }, text: '+8% attack' },

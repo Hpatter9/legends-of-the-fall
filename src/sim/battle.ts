@@ -762,15 +762,16 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   to.hurtAt = b.t;
   let killed = to.hp <= 0;
 
-  // Guardian trait milestone: emergency Aegis shield when ally drops below 30% HP
+  // Guardian trait milestone (three Guardians): an emergency Aegis shield the first time a hero drops below 30% health
   if (b.traits?.guardianShield && to.side === 'hero' && !to.guardianShieldUsed && to.hp < to.maxHp * 0.3 && !killed) {
     to.guardianShieldUsed = true;
     to.shield = { hp: Math.round(to.maxHp * 0.15), until: b.t + 5000 };
     out.push({ kind: 'heal', to: to.id, amount: 0 });
   }
 
-  // Trickster trait milestone: leave a decoy log upon fatal or low-health blow (once per fight)
-  if (b.traits?.tricksterLog && traitsOf(to.def).includes('trickster') && !to.tricksterLogUsed && (killed || to.hp < to.maxHp * 0.25)) {
+  // Trickster trait milestone (three Tricksters): a blow that leaves a Trickster under 25% health (not a fatal one) leaves a decoy log
+  // where it stood while it slips to the safest tile beside it (once a fight; no healing, so it is a dodge, not a second life)
+  if (b.traits?.tricksterLog && traitsOf(to.def).includes('trickster') && !to.tricksterLogUsed && !killed && to.hp < to.maxHp * 0.25) {
     to.tricksterLogUsed = true;
     const oldU = to.u;
     const oldV = to.v;
@@ -801,15 +802,12 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
       to.step = undefined;
 
       const decoy = addUnit(b, 'decoy', oldU, oldV);
-      decoy.hp = decoy.maxHp = Math.max(1, Math.round(to.maxHp * 0.45));
-      decoy.expires = b.t + 3500;
+      decoy.hp = decoy.maxHp = Math.max(1, Math.round(to.maxHp * 0.3));
+      decoy.expires = b.t + 3000;
       decoy.owner = to.id;
 
-      to.hp = Math.max(to.hp, Math.round(to.maxHp * 0.3));
-      killed = false;
-
-      for (const f of foes.filter((x) => apart({ u: oldU, v: oldV }, x) <= 4)) {
-        f.taunt = { to: decoy.id, until: b.t + 3000 };
+      for (const f of foes.filter((x) => apart({ u: oldU, v: oldV }, x) <= 2)) {
+        f.taunt = { to: decoy.id, until: b.t + 2000 };
       }
 
       out.push({ kind: 'decoyLog', by: to.id, from: { u: oldU, v: oldV }, to: { u: to.u, v: to.v } });

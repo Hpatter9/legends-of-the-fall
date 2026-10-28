@@ -1647,21 +1647,21 @@ export const gain = (u: Unit, n: number, skillOnly = false) => {
   if (!skillOnly && ultimateOf(u)) u.charge2 = Math.min(CHARGE_MAX, (u.charge2 ?? 0) + n * ULT_RATE * (ultTune(u, ultimateOf(u)!)?.rate ?? 1) * (1 + tal(u, 'ultRate')));
 };
 
-/** Yokai trait milestone: upon dodging, leave a spirit wisp trap on the tile damaging stepping enemies. */
+/** Yokai trait milestone (three Yokai): upon dodging, leave a spirit wisp trap on the tile, hurting and holding the foe that steps on it; one wisp a Yokai at a time. */
 export function spawnSpiritWisp(b: Battle, to: Unit, out: BattleEvent[]): void {
   const traps = (b.traps ??= []);
-  if (!traps.some((tr) => tr.u === to.u && tr.v === to.v)) {
+  if (!traps.some((tr) => (tr.u === to.u && tr.v === to.v) || (tr.wisp && tr.by === to.id && tr.until > b.t))) {
     traps.push({
       u: to.u,
       v: to.v,
       side: to.side,
       by: to.id,
-      until: b.t + 12000,
-      dmg: Math.max(12, Math.round(atkOf(to) * 1.5)),
+      until: b.t + 10000,
+      dmg: Math.max(10, Math.round(atkOf(to) * 1.2)),
       hold: 800,
       wisp: true,
     });
-    out.push({ kind: 'wisp', by: to.id, u: to.u, v: to.v, ms: 12000 });
+    out.push({ kind: 'wisp', by: to.id, u: to.u, v: to.v, ms: 10000 });
   }
 }
 

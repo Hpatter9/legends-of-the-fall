@@ -1,6 +1,6 @@
 // Duo-Combos and Harmonic Resonance (docs/notes/duo-combos.md):
-// Complementary pairs of heroes trigger harmonic synergy effects when fielded together
-// and when activating their ultimates in close succession.
+// Complementary pairs of heroes fielded together trigger a synergy
+// when both cast their ultimates in close succession (`DUO_WINDOW_MS`).
 //
 // Pure simulation rules: strictly deterministic (no Math.random(), Date.now(), or DOM access).
 
@@ -9,8 +9,13 @@ import { apart, foesOf, gain, mendUnit, net, slowFor } from './abilities';
 
 const alliesOf = (b: Battle, me: Unit): Unit[] => b.units.filter((a) => a.alive && a.side === me.side);
 
-/** Maximum time gap (ms) between two partner ultimates to count as in close succession (Harmonic Resonance). */
-export const DUO_WINDOW_MS = 10000;
+/**
+ * How close together (ms) the two partners' ultimates must land for their duo to fire: the second ultimate within this of the first sets it off.
+ * Ultimates come about once a long fight, so a duo is a rare, earned moment, not a rider on every ultimate (the retune for the parity band).
+ */
+export const DUO_WINDOW_MS = 3000;
+/** Closer still (ms), the duo fires as a Harmonic Resonance, its stronger form (the owner's first pitch: both ultimates within a second and a half). */
+export const HARMONIC_MS = 1500;
 
 export interface DuoCombo {
   id: string;
@@ -42,7 +47,7 @@ export const DUO_COMBOS: readonly DuoCombo[] = [
     heroes: ['knight', 'peasant'],
     title: 'Vassal Shield & Rally',
     banner: 'Knight & Peasant Duo: Vassal Shield & Rally!',
-    text: 'When either casts an ultimate, Peasant gains a squire shield and guard while Knight receives rally and mends wounds.',
+    text: 'When both cast their ultimates together, Peasant gains a squire shield and guard while Knight receives rally and mends wounds.',
     execute: (b, caster, partner, harmonic, out) => {
       const peasant = caster.def === 'peasant' ? caster : partner;
       const knight = caster.def === 'knight' ? caster : partner;
@@ -79,7 +84,7 @@ export const DUO_COMBOS: readonly DuoCombo[] = [
     heroes: ['samurai', 'kunoichi'],
     title: 'Twin Shadow Flurry',
     banner: 'Samurai & Kunoichi Duo: Twin Shadows!',
-    text: 'When either casts an ultimate, both gain haste. Samurai blades inflict bleeding while Kunoichi gains shadow shroud.',
+    text: 'When both cast their ultimates together, both gain haste. Samurai blades inflict bleeding while Kunoichi gains shadow shroud.',
     execute: (b, caster, partner, harmonic, out) => {
       const samurai = caster.def === 'samurai' ? caster : partner;
       const kunoichi = caster.def === 'kunoichi' ? caster : partner;
@@ -303,10 +308,10 @@ export const DUO_COMBOS: readonly DuoCombo[] = [
   },
 ];
 
-/** Check placed hero kinds and find all complementary Duo-Combos. */
 /** A combo by its id. */
 export const comboById = (id: string): DuoCombo | undefined => DUO_COMBOS.find((c) => c.id === id);
 
+/** Check placed hero kinds and find all complementary Duo-Combos. */
 export function duoCombosOf(kinds: Iterable<string>): DuoCombo[] {
   const set = new Set(kinds);
   return DUO_COMBOS.filter((c) => set.has(c.heroes[0]) && set.has(c.heroes[1]));
@@ -336,7 +341,7 @@ export function startDuoCombos(b: Battle): void {
   b.duoCombos = states;
 }
 
-/** Triggered when a unit activates an ultimate. Checks for duo combo synergy. */
+/** Called when a hero casts its ultimate: notes the time, and fires each duo whose partner's ultimate landed within `DUO_WINDOW_MS` (harmonic within `HARMONIC_MS`). */
 export function triggerDuoComboOnUlt(b: Battle, caster: Unit, out: BattleEvent[]): boolean {
   if (!b.duoCombos || !b.duoCombos.length) return false;
 
@@ -348,17 +353,18 @@ export function triggerDuoComboOnUlt(b: Battle, caster: Unit, out: BattleEvent[]
     const partner = b.units.find((u) => u.id === partnerId && u.alive);
     if (!partner) continue;
 
-    // Check if partner activated an ultimate recently (in close succession)
+    // (the duo fires only on the second of the pair's ultimates, when the partner's landed within the window; each pair of ultimates fires it once)
     const isCasterA = caster.id === state.heroAId;
     const partnerLastUlt = isCasterA ? state.lastUltB : state.lastUltA;
-    const harmonic = partnerLastUlt !== undefined && b.t - partnerLastUlt <= DUO_WINDOW_MS;
-
-    // Record this ultimate's timestamp
-    if (isCasterA) {
-      state.lastUltA = b.t;
-    } else {
-      state.lastUltB = b.t;
+    const gap = partnerLastUlt === undefined ? Infinity : b.t - partnerLastUlt;
+    if (gap > DUO_WINDOW_MS) {
+      if (isCasterA) state.lastUltA = b.t;
+      else state.lastUltB = b.t;
+      continue;
     }
+    const harmonic = gap <= HARMONIC_MS;
+    state.lastUltA = undefined;
+    state.lastUltB = undefined;
 
     state.triggerCount++;
     if (harmonic) state.harmonicCount++;
