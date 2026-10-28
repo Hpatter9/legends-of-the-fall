@@ -1,0 +1,434 @@
+[
+  {
+    "w": 393,
+    "h": 852,
+    "checks": [
+      {
+        "name": "pack",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "event",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "wave-victory",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "wave-performance",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "wave-defeat",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "loss-recap",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "loss-company",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "loss-recap-end",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "real-result-recap-advice-navigation",
+        "passed": true
+      },
+      {
+        "name": "victory-recap-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "victory-company-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "victory-xp-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "recap-reduced-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "tower-summary-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "calamity-summary-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "replay-summary-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "calamity-map-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "calamity-victory-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "calamity-victory-end-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "stand-deploy",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "stand-live",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "stand-recap",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "stand-reduced",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      }
+    ],
+    "errors": [],
+    "completed": true
+  },
+  {
+    "w": 360,
+    "h": 780,
+    "checks": [
+      {
+        "name": "pack",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "event",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "wave-victory",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "wave-performance",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "wave-defeat",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "loss-recap",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "loss-company",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "loss-recap-end",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "real-result-recap-advice-navigation",
+        "passed": true
+      },
+      {
+        "name": "victory-recap-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "victory-company-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "victory-xp-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "recap-reduced-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "tower-summary-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "calamity-summary-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "replay-summary-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "calamity-map-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "calamity-victory-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "calamity-victory-end-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "stand-deploy",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "stand-live",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "stand-recap",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "stand-reduced",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      }
+    ],
+    "errors": [],
+    "completed": true
+  },
+  {
+    "w": 412,
+    "h": 915,
+    "checks": [
+      {
+        "name": "pack",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "event",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "wave-victory",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "wave-performance",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "wave-defeat",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "loss-recap",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "loss-company",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "loss-recap-end",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "real-result-recap-advice-navigation",
+        "passed": true
+      },
+      {
+        "name": "victory-recap-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "victory-company-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "victory-xp-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "recap-reduced-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "tower-summary-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "calamity-summary-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "replay-summary-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "calamity-map-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "calamity-victory-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "calamity-victory-end-fixture",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "stand-deploy",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "stand-live",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "stand-recap",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      },
+      {
+        "name": "stand-reduced",
+        "visible": true,
+        "overflow": false,
+        "pageOverflow": false
+      }
+    ],
+    "errors": [],
+    "completed": true
+  }
+]

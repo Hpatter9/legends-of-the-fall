@@ -1,0 +1,29 @@
+[
+  {
+    "w": 393,
+    "h": 852,
+    "scroll": 57,
+    "scrollMax": 57,
+    "lastFactAboveAction": true,
+    "buttonVisible": true,
+    "errors": []
+  },
+  {
+    "w": 360,
+    "h": 780,
+    "scroll": 129,
+    "scrollMax": 129,
+    "lastFactAboveAction": true,
+    "buttonVisible": true,
+    "errors": []
+  },
+  {
+    "w": 412,
+    "h": 915,
+    "scroll": 0,
+    "scrollMax": 0,
+    "lastFactAboveAction": true,
+    "buttonVisible": true,
+    "errors": []
+  }
+]
