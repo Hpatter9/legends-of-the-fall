@@ -107,7 +107,7 @@ const writeIndexHtml = () => {
             readFileSync('src/stand.css', 'utf8') +
             readFileSync('src/tomes.css', 'utf8'),
         )
-        .replace('/*__KEEP_KINGDOM_CSS__*/', () => readFileSync('src/keepKingdom.css', 'utf8'))
+        .replace('/*__KEEP_KINGDOM_CSS__*/', () => readFileSync('src/keepKingdom.css', 'utf8') + readFileSync('src/battleCommand.css', 'utf8'))
         .replace('__VERSION__', version),
     ),
   );

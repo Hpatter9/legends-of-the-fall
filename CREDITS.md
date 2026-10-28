@@ -306,3 +306,7 @@ No new art: the burning heart's flame is the `flame_fire` strip (`src/art/fx/vfx
 ## Grand Scenario scenery
 
 The Grand Scenario prototype reuses the already credited camp gate and Knights watchtower sprites as scenic destination compounds, on the existing area tile/rock art. No new art pack files are introduced.
+
+## Battle command ornament
+
+- `src/art/ui/battle-crest.png`: original transparent crossed-sword, emerald lion shield and crimson ribbon ornament generated with OpenAI image generation in October 2026 for the owner-authorised battle UI pass. Other frames, ribbons and spell icons reuse the artwork credited above.
