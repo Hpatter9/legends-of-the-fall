@@ -123,3 +123,5 @@ body[data-move] #result #banner { background: #15251ac4; }
 #bossBar i { border-color: #a88061; background: #201315; }
 #bossBar i span { background: linear-gradient(#e9ac8d, #a65343); }
 .reviveLine { border-color: #b69a64; background: #17251cf5; color: #efcf98; }
+/* The new Last Stand's edge arrows belong inside its viewport, including their tips. */
+#stand .stFinds { overflow: clip; }

@@ -6,11 +6,11 @@ const browser=await launch();const results=[];
 try{
  for(const [w,h]of [[393,852],[360,780],[412,915]]){
   const {ctx,page,errors}=await boot(browser,w,h);
-  await page.evaluate(()=>{const g=window.__game;g.meta.opened=['castle','tower'];g.openStand();});
+  await page.evaluate(()=>{const g=window.__game;g.meta.opened=['castle','tower'];g.home.go(()=>g.openStand());});
   await page.locator('.stPick').waitFor({state:'visible'});
   await page.getByRole('button',{name:'Auto fill',exact:true}).click();await page.locator('.stPick .primary').click();
   await page.locator('.stStart').waitFor({state:'visible'});
-  const shot=async name=>{await page.waitForTimeout(300);await page.screenshot({path:`docs/samples/battle-reports-stand-${name}-${w}.png`});assert.equal(await page.evaluate(()=>document.body.scrollWidth>innerWidth),false);};
+  const shot=async name=>{await page.waitForTimeout(300);await page.screenshot({path:`docs/samples/battle-reports-stand-${name}-${w}.png`});const overflow=await page.evaluate(()=>({width:innerWidth,scroll:document.body.scrollWidth}));assert.ok(overflow.scroll<=overflow.width,JSON.stringify(overflow));};
   await shot('deploy');await page.click('.stStart');await page.waitForTimeout(700);await shot('live');
   const before=await page.evaluate(()=>window.__game.stand.state.b.autoUlt);
   await page.click('#stand .hbAuto');assert.notEqual(await page.evaluate(()=>window.__game.stand.state.b.autoUlt),before);

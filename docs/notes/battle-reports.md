@@ -2,7 +2,7 @@
 
 Owner: Codex. Branch: `design/battle-reports`. Worktree: `/workspace/legends-of-the-fall`.
 
-The owner accepted the battle HUD, requested its merge, and asked to carry that treatment across all battle screens, including after-action recaps. The accepted HUD merged in [PR #143](https://github.com/Hpatter9/legends-of-the-fall/pull/143) as **0.179.0**. The owner subsequently requested completion against the newer game; this follow-up is prepared as release 0.189.0.
+The owner accepted the battle HUD, requested its merge, and asked to carry that treatment across all battle screens, including after-action recaps. The accepted HUD merged in [PR #143](https://github.com/Hpatter9/legends-of-the-fall/pull/143) as **0.179.0**. The owner subsequently requested completion against the newer game; this follow-up is completed as release 0.190.0.
 
 ## Changes
 
@@ -41,3 +41,5 @@ Owner asked to finish after subsequent updates. Integrated main `decef2e9` (0.18
 Integrated validation passed on 0.189.0: typecheck and web build; the eight matching test files for battle-flow, comeback, heart-revive, events, army roads, hazards, awakening auras and hero-kit looks; all 23 report/flow checks at each of the three portrait sizes; daily/old-save variants; real service-worker offline reload/recap; and final-facts/action-button checks on all three sizes. Zero browser page errors. Screenshots and JSON evidence refreshed from the integrated build. No changes to gameplay, rewards or save rules were needed.
 
 Final fetch also brought STAND-003 (main `b53b0e3e`, 0.189.0), the castle-room Last Stand overhaul. Removed all older Last Stand overrides from `battleReports.css`: its newer crest, hero colour stripes, king bars, pause sheet and end-card materials now come exclusively from `stand.css`. This avoids duplicate crests and competing card styles. Release updated to 0.190.0; recheck targets the changed Last Stand path and inherited combat/report callers.
+
+Final 0.190.0 checks passed: typecheck/build, eight matching affected test files (including all three Last Stand test files), and the castle-room Last Stand at 393×852, 360×780 and 412×915. Auto toggle, pause/resume, king-fall/end navigation, reduced motion and exactly one native end-card crest passed with zero page errors. The check found directional-arrow tips extending the document width; `.stFinds` now clips its paint to the viewport. No older Last Stand decorative overrides remain. Evidence: `battle-reports-stand-integration.json` and refreshed `battle-reports-stand-*.png`.
