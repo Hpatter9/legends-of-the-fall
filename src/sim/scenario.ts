@@ -474,8 +474,10 @@ function placeArcherBastion(board: Board, theme: ScenarioId): void {
   }
 }
 
-/** A complete seeded route through an army's landscape: 14×18 sections with hills, rivers, bridges, trees, rocks, and 45–60 tile world height. */
-export function planScenario(seed: number, theme: ScenarioId, waves: number, boss: (wave: number) => boolean): ScenarioPlan {
+/** A complete seeded route through an army's landscape: 14×18 sections with hills, rivers, bridges, trees, rocks, and 45–60 tile world height.
+ *  `land`, when given, holds every section on that one land (an army's attempt keeps the land its seed picked: the owner's rule, one
+ *  land for the one long battle); without it the route walks through its theme's lands by phase (`areaOfWave`). */
+export function planScenario(seed: number, theme: ScenarioId, waves: number, boss: (wave: number) => boolean, land?: Area): ScenarioPlan {
   if (!Number.isInteger(waves) || waves < 1) throw new Error('a scenario needs at least one wave');
   const { w, d } = SCENARIO_SIZE;
   const sections: Section[] = [];
@@ -498,7 +500,7 @@ export function planScenario(seed: number, theme: ScenarioId, waves: number, bos
 
     const rng = new Rng(mixSeed(seed, 0x5ce1, n));
     const phase = n / waves;
-    const area = areaOfWave(theme, phase);
+    const area = land ?? areaOfWave(theme, phase);
     const tiles: Tile[] = [];
     const leftRoad = theme === 'undead' || theme === 'necropolis' || theme === 'infernal';
     const roadCols = (u: number) => (leftRoad ? u >= 1 && u <= 3 : u >= w - 4 && u <= w - 2);
