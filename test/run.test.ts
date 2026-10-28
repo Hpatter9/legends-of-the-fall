@@ -109,7 +109,7 @@ function fightOut(b: ReturnType<typeof startBattle>): void {
   playOut(b);
 }
 
-test('a hero still standing keeps its skill charge into the next wave; one that fell starts empty', () => {
+test('a hero still standing keeps its pool into the next wave; one that fell starts afresh', () => {
   const run = newRun(1);
   const [a, b2] = run.roster;
   const bt = startBattle(1);
@@ -123,7 +123,9 @@ test('a hero still standing keeps its skill charge into the next wave; one that 
   assert.equal(b2.charge, undefined);
   const next = startBattle(2);
   assert.equal(addUnit(next, a.kind, 0, 7, boostOf(a), a.id).charge, 60);
-  assert.equal(addUnit(next, b2.kind, 1, 7, boostOf(b2), b2.id).charge, 0);
+  // (COMBAT-002: a hero's charge is its pool; one that fell starts the next wave with the pool every hero starts with)
+  const fresh = addUnit(startBattle(3), b2.kind, 1, 7, {}, b2.id).charge;
+  assert.equal(addUnit(next, b2.kind, 1, 7, boostOf(b2), b2.id).charge, fresh);
 });
 
 test('now and then a summon arrives at grade 2, about as often as LUCKY_SUMMON says', () => {

@@ -71,12 +71,21 @@ if (args[0] === '--child') {
     if (!process.argv.includes('--apply')) return;
     const key: keyof Knobs = Number(level) >= 30 ? 'up' : Number(level) >= 10 ? 't2' : 't1';
     const step = Number(process.env.STEP ?? 0.035);
+    const prev: Record<string, number> = {};
     for (const { h, lift } of lifts) {
       const k = (state[h] ??= {});
       const now = k[key] ?? (key === 'up' ? KITS[h].ultimate!.tuned!.power : key === 't1' ? HERO_KITS()[h].s1.tune : HERO_KITS()[h].s2.tune);
+      prev[h] = now;
       // (a damped multiplicative step: a hero 4 points over the average loses about 13% of its strength)
       const next = Math.max(0.1, Math.min(4, now * Math.exp(-step * Math.max(-8, Math.min(8, lift)))));
       k[key] = Math.round(next * 1000) / 1000;
+    }
+    // (the step moves heroes against each other, not the roster as a whole: the knob's geometric mean is held where it was)
+    if (process.env.NORM !== '0') {
+      const before = lifts.map(({ h }) => Math.log(prev[h]));
+      const after = lifts.map(({ h }) => Math.log(state[h][key]!));
+      const drift = after.reduce((a, x) => a + x, 0) / after.length - before.reduce((a, x) => a + x, 0) / before.length;
+      for (const { h } of lifts) state[h][key] = Math.round(state[h][key]! * Math.exp(-drift) * 1000) / 1000;
     }
     writeFileSync(file, JSON.stringify(state, null, 1));
   });

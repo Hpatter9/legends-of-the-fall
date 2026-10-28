@@ -81,8 +81,11 @@ export class HeroBar {
     this.key = key;
     this.root.replaceChildren();
     this.tiles = [];
-    this.root.style.setProperty('--hb-n', String(Math.min(units.length, 5)));
+    // (up to five in a row; more (the Last Stand's eight, a Calamity's ten) in two rows)
+    this.root.style.setProperty('--hb-n', String(units.length > 5 ? Math.min(5, Math.ceil(units.length / 2)) : Math.max(1, units.length)));
     this.root.classList.toggle('two', units.length > 5);
+    // (four to a row leaves room for the bars beside the portrait; five to a row stacks them under it)
+    this.root.classList.toggle('flat', units.length > 5 && units.length <= 8);
     for (const u of units) this.root.append(this.tile(u));
     this.root.append(this.auto);
     this.refresh(b);

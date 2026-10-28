@@ -85,7 +85,7 @@ function season(): string {
   let trace = '';
   for (let g = 0; g < 9; g++) {
     const seed = 900 + g;
-    const b = startBattle(seed, ['orcs', 'skeletons', 'mixed'][g % 3], { foes: { hp: 4, atk: 2 } });
+    const b = startBattle(seed, ['orcs', 'skeletons', 'mixed'][g % 3], { foes: { hp: 10, atk: 2.2 } });
     const spots = deploySpots(b, new Rng(mixSeed(seed, 0xba1a)));
     ALL_HEROES.slice(g * 5, g * 5 + 5).forEach((id, i) => place(b, id, spots[i][0], spots[i][1], undefined, { ...gradeBoost(1, 0, ULT_LEVEL), charge2: 60 }));
     fight(b);
@@ -98,7 +98,6 @@ function season(): string {
 
 test('every hero fights with its whole kit open, and the fights are deterministic', () => {
   const first = season();
-  console.log(first);
   assert.equal(season(), first);
   // (most heroes cast both skills in a long fight)
   let both = 0;

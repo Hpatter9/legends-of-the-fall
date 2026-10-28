@@ -1,3 +1,4 @@
+import { HERO_KITS } from '../src/sim/heroKits';
 import { bareBoard } from './bare';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -181,13 +182,19 @@ test('Dirge slows every foe within four tiles, and the bard\'s tune charges the 
   run(b, 200);
   assert.ok((f.slowUntil ?? 0) > b.t);
   assert.ok(f.hp < f.maxHp);
-  // (the tune: a friend far from the fight gains charge faster than time alone gives)
+  // (the tune: a friend far from the fight gains its pool faster than time alone gives it; the same friend without the bard is the measure)
   const c = arena();
   const bard = spawn(c, 'wolfBard', 3, 8);
   const friend = spawn(c, 'knight', 4, 8);
-  spawn(c, 'skeleton', 3, 0);
+  spawn(c, 'skeleton', 3, 0).busyUntil = 1e9;
+  friend.busyUntil = bard.busyUntil = 1e9;
   run(c, 5000);
-  assert.ok(friend.charge >= 5 * (KITS.knight.skill.perSec) + KITS.wolfBard.passive.tune!.charge, `${friend.charge}`);
+  const alone = arena();
+  const lone = spawn(alone, 'knight', 4, 8);
+  spawn(alone, 'skeleton', 3, 0).busyUntil = 1e9;
+  lone.busyUntil = 1e9;
+  run(alone, 5000);
+  assert.ok(friend.charge > lone.charge + KITS.wolfBard.passive.tune!.charge * 0.5 - 0.01, `${friend.charge} ${lone.charge}`);
   assert.ok(bard.alive);
   assert.equal(me.alive, true);
 });
@@ -200,11 +207,12 @@ test('Call of the Wild brings two dire wolves, no more, that fight for the Beast
   const wolves = () => b.units.filter((x) => x.alive && x.def === 'wolf');
   assert.equal(wolves().length, 1);
   assert.equal(wolves()[0].owner, me.id);
+  // (a skill keeps a gap before it goes again: COMBAT-002)
   me.charge = CHARGE_MAX;
-  run(b, 1000);
+  run(b, 3500);
   assert.equal(wolves().length, 2);
   me.charge = CHARGE_MAX;
-  run(b, 1000);
+  run(b, 3500);
   assert.equal(wolves().length, 2);
 });
 
@@ -232,7 +240,8 @@ test('Lance Charge runs a foe down, and the Lancer rides faster after it', () =>
   const f = spawn(b, 'skeleton', 3, 3);
   run(b, 200);
   assert.equal(apart(me, f), 1);
-  assert.ok(f.hp < f.maxHp * 0.9);
+  // (more than double a plain blow, at the skill's strength: its kit's `tune`)
+  assert.ok(f.maxHp - f.hp >= (UNITS.lancer.atk * 2.2 * HERO_KITS().lancer.s1.tune - UNITS.skeleton.def) * 0.9, `${f.maxHp - f.hp}`);
   assert.ok((me.hasteUntil ?? 0) > b.t);
 });
 

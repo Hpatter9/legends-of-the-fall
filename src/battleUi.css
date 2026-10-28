@@ -30,8 +30,7 @@ body[data-phase='fight'] #bench .card.g3 { box-shadow: none; border-color: var(-
 body[data-phase='fight'] #heroBar:not(:empty) { display: grid; }
 body[data-phase='fight'] #heroBar:not(:empty) ~ #benchWrap { display: none; }
 .heroBar { grid-template-columns: repeat(var(--hb-n, 5), minmax(0, 1fr)) 40px; gap: 4px; align-items: stretch; margin-top: 2px; }
-.heroBar.two { grid-template-columns: repeat(4, minmax(0, 1fr)) 40px; }
-.heroBar.two .hbAuto { grid-column: 5; grid-row: 1 / span 2; }
+.heroBar.two .hbAuto { grid-column: calc(var(--hb-n) + 1); grid-row: 1 / span 2; }
 .hb { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; padding: 3px 2px 2px; border: 2px solid var(--s8); border-radius: 0;
   background: linear-gradient(rgb(var(--e8-rgb) / 0.06), rgb(var(--black-rgb) / 0.3)), var(--s3); color: var(--ink, #f0e6d2); font: 400 12px/12px var(--body); touch-action: manipulation; cursor: pointer; }
 .hbRing { position: relative; width: 44px; height: 44px; flex: none; }
@@ -57,13 +56,15 @@ body[data-phase='fight'] #heroBar:not(:empty) ~ #benchWrap { display: none; }
 .hb.locked .hbPic { filter: grayscale(0.7) brightness(0.75); }
 .hb.locked .hbRing .arc { stroke: transparent; }
 .hb.fallen { filter: grayscale(1) brightness(0.6); }
-.hb.ready { border-color: var(--gold, #f5c542); box-shadow: 0 0 0 1px var(--gold-hi, #ffe08a), 0 0 12px rgb(255 210 74 / 0.75); animation: hbGlow 1.2s ease-in-out infinite; }
+.hb.ready { border-color: var(--gold, #f5c542); box-shadow: 0 0 0 1px var(--gold-hi, #ffe08a), 0 0 12px rgb(255 210 74 / 0.8); }
+/* (the ready glow is steady; what moves is the portrait's ring, breathing a little bigger and back: no looping brightness) */
+.hb.ready .hbRing { animation: hbBreath 1.2s ease-in-out infinite; }
 .hb.ready .hbRing .arc { stroke: #ffd24a; }
 .hb.queued { border-color: #d9b2ff; }
 .hb.queued .hbRing svg { animation: hbSpin 1s linear infinite; }
 .hb.queued .hbRing .arc { stroke: #f0dcff; stroke-dasharray: 18 8 !important; }
 .hb.nudge { animation: hbNudge 0.35s ease-out 1; }
-@keyframes hbGlow { 0%, 100% { box-shadow: 0 0 0 1px var(--gold-hi, #ffe08a), 0 0 8px rgb(255 210 74 / 0.55); } 50% { box-shadow: 0 0 0 1px var(--gold-hi, #ffe08a), 0 0 16px rgb(255 210 74 / 0.95); } }
+@keyframes hbBreath { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
 @keyframes hbSpin { to { transform: rotate(270deg); } }
 @keyframes hbNudge { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
 .hbAuto { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 2px 0; border: 2px solid var(--s8); border-radius: 0; background: var(--s3);
@@ -74,7 +75,7 @@ body[data-phase='fight'] #heroBar:not(:empty) ~ #benchWrap { display: none; }
 .hbAuto.on .sw { background: #3a2c08; }
 .hbAuto.on .sw b { bottom: 14px; background: #fff3b0; }
 @media (prefers-reduced-motion: reduce) {
-  .hb.ready { animation: none; box-shadow: 0 0 0 1px var(--gold-hi, #ffe08a), 0 0 12px rgb(255 210 74 / 0.8); }
+  .hb.ready .hbRing { animation: none; }
   .hb.queued .hbRing svg { animation: none; }
   .hb.nudge { animation: none; }
   .hbRing .arc { transition: none; }
@@ -86,14 +87,16 @@ body[data-phase='fight'] #spellCards .spell b { font-size: 12px; line-height: 12
 body[data-phase='fight'] #spellCards .spell em { font-size: 12px; line-height: 12px; font-family: var(--body); }
 .hbAuto small { font: 400 12px/12px var(--body); }
 body[data-phase='fight'] #spellCards .spell em { font-weight: 400; }
-/* Two rows (the Last Stand's eight): each tile lies flat, the ring on the left and the bars, pips and name beside it, so the bar stays low. */
+/* Two rows (the Last Stand's eight, a Calamity's ten): smaller tiles, the portrait in its ring over the health and pool bars; the name and pips give
+   way (the portrait says who it is), so the bar stays low and the field keeps its room. */
 .stHeroes { display: grid; }
 .stHeroes[hidden] { display: none; }
-.heroBar.two .hb { display: grid; grid-template-columns: 36px minmax(0, 1fr); grid-template-rows: auto auto auto; column-gap: 3px; row-gap: 2px; align-items: center; padding: 2px; }
-.heroBar.two .hbRing { grid-row: 1 / span 3; width: 36px; height: 36px; }
-.heroBar.two .hbRing svg { width: 36px; height: 36px; }
-.heroBar.two .hbPic { left: 5px; top: 5px; width: 26px; height: 26px; }
-.heroBar.two .hbPlate { left: 18px; top: 26px; }
-.heroBar.two .hbName { grid-column: 2; grid-row: 1; text-align: left; }
-.heroBar.two .hbHp, .heroBar.two .hbRes { grid-column: 2; }
-.heroBar.two .hbPips { display: none; }
+.heroBar.two .hb { padding: 2px; gap: 2px; }
+.heroBar.two .hbRing, .heroBar.two .hbRing svg { width: 34px; height: 34px; }
+.heroBar.two .hbPic { left: 5px; top: 5px; width: 24px; height: 24px; }
+.heroBar.two .hbPlate { top: 22px; }
+.heroBar.two .hbName, .heroBar.two .hbPips { display: none; }
+.heroBar.flat .hb { display: grid; grid-template-columns: 34px minmax(0, 1fr); grid-template-rows: auto auto auto; column-gap: 3px; row-gap: 3px; align-items: center; }
+.heroBar.flat .hbRing { grid-row: 1 / span 3; }
+.heroBar.flat .hbName { display: block; grid-column: 2; grid-row: 1; text-align: left; }
+.heroBar.flat .hbHp, .heroBar.flat .hbRes { grid-column: 2; }

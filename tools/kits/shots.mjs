@@ -1,7 +1,7 @@
 // The hero kits' shots and checks (COMBAT-002): the fight's hero bar at the three upright sizes, a glowing ready portrait, a tapped ultimate, Auto on,
 // and a few signature kits in action; page errors are checked throughout. Run after `npm run web`: node tools/kits/shots.mjs [only]
 // Writes docs/samples/hero-kits-*.png.
-import { serve, launch } from '../battle-ui/lib.mjs';
+import { serve, launch, boot as plainBoot, calamityFight } from '../battle-ui/lib.mjs';
 import { boot as standBoot, enter as standEnter } from '../stand/lib.mjs';
 import { mkdirSync } from 'node:fs';
 import * as esbuild from 'esbuild';
@@ -30,6 +30,7 @@ async function bootFight(w, h, party, level, seed = 5) {
   await page.evaluate(([party, xp]) => {
     localStorage.setItem('legends.meta', JSON.stringify({ seed: 7, crowns: 1200, unlocked: party, party, pulls: 0, dry: 0, dryMythic: 0, castle: { treasury: 1, barracks: 1, armoury: 0, mageTower: 0, stable: 0, library: 0 }, shards: {}, stars: {}, xp, bestStage: 14, tower: 9, daily: {}, bosses: [], achievements: [], armies: {}, armySeen: [], stash: [] }));
     localStorage.setItem('lotf-tips-off', '1');
+    localStorage.setItem('legends.settings', JSON.stringify({ cinematics: false }));
     localStorage.setItem('legends.tips', JSON.stringify(['home', 'deploy', 'fight', 'mana', 'skill', 'ult', 'summon', 'crowns', 'retry', 'recycle', 'calamity', 'tower', 'talents', 'castle', 'spellbook', 'stash', 'equipment', 'autoReplay']));
   }, [party, xp]);
   await page.goto(`http://localhost:8139/?seed=${seed}`);
@@ -117,6 +118,23 @@ if (!only || only === 'locked') {
   await ctx.close();
 }
 
+// the Calamity's fights carry the same bar
+if (!only || only === 'calamity')
+  for (const [w, h] of SIZES) {
+    const { ctx, page, errors } = await plainBoot(br, w, h);
+    // (no cinematic over the fight)
+    await page.evaluate(() => localStorage.setItem('legends.settings', JSON.stringify({ cinematics: false })));
+    await calamityFight(page);
+    await page.evaluate(() => document.getElementById('fight').click());
+    await page.waitForTimeout(2500);
+    await hold(page, true);
+    const bar = await page.evaluate(() => ({ tiles: document.querySelectorAll('#heroBar .hb').length, h: document.getElementById('heroBar').getBoundingClientRect().height, overflow: document.documentElement.scrollWidth > innerWidth }));
+    check(`the Calamity's fight has the hero bar (${w})`, bar.tiles >= 1 && bar.h > 0 && !bar.overflow, JSON.stringify(bar));
+    await page.screenshot({ path: out('calamity', w) });
+    check(`no page errors (calamity ${w})`, errors.length === 0, errors.join('|'));
+    await ctx.close();
+  }
+
 // the Last Stand: eight heroes in two rows
 if (!only || only === 'stand')
   for (const [w, h] of SIZES) {
@@ -135,39 +153,39 @@ if (!only || only === 'stand')
     await ctx.close();
   }
 
-// signature kits in action: set each up and catch it as it plays
+// signature kits in action: the hero's pool kept full and skill 2 owed its turn, until what the skill leaves on the field is seen
 const KITS = [
-  ['werewolf-shift', ['werewolf', 'knight', 'cleric', 'archer', 'wizard'], 'werewolf', 'Shift'],
-  ['beastmaster-pack', ['beastmaster', 'knight', 'cleric', 'archer', 'wizard'], 'beastmaster', "Sic 'Em"],
-  ['reaper-wraiths', ['reaper', 'knight', 'cleric', 'archer', 'wizard'], 'reaper', 'Bound Soul'],
-  ['time-witch-rewind', ['timeWitch', 'knight', 'cleric', 'archer', 'wizard'], 'timeWitch', 'Rewind'],
-  ['dread-pirate-kegs', ['dreadPirate', 'knight', 'cleric', 'archer', 'wizard'], 'dreadPirate', 'Powder Keg'],
+  ['werewolf-shift', ['werewolf', 'knight', 'cleric', 'archer', 'wizard'], 'werewolf', "(b, me) => me.look === 'werewolf_white' || me.look === 'werewolf_black'"],
+  ['beastmaster-pack', ['beastmaster', 'knight', 'cleric', 'archer', 'wizard'], 'beastmaster', "(b, me) => b.units.filter((u) => u.alive && u.owner === me.id && u.form).length >= 1"],
+  ['reaper-wraiths', ['reaper', 'knight', 'cleric', 'archer', 'wizard'], 'reaper', "(b, me) => b.units.some((u) => u.alive && u.def === 'wraith')"],
+  ['time-witch-rewind', ['timeWitch', 'knight', 'cleric', 'archer', 'wizard'], 'timeWitch', "(b, me) => b.units.some((u) => u.kx && u.kx.hist && u.kx.hist.length === 0 && u !== me && u.side === 'hero')"],
+  ['dread-pirate-kegs', ['dreadPirate', 'knight', 'cleric', 'archer', 'wizard'], 'dreadPirate', "(b, me) => b.pending.some((p) => p.kind === 'keg')"],
 ];
-for (const [name, party, hero, skill] of KITS) {
+for (const [name, party, hero, seen] of KITS) {
   if (only && only !== 'kits' && only !== name) continue;
   const { ctx, page, errors } = await bootFight(393, 852, party, 30, 9);
-  await start(page, 1500);
-  // (play on until the skill goes off, at most 40s of fight)
-  const seen = await page.evaluate(async ([hero, skill]) => {
+  await start(page, 1200);
+  const got = await page.evaluate(async ([hero, seen]) => {
+    const test = eval(seen);
     const g = window.__game;
     const { b } = g;
     const me = b.units.find((u) => u.def === hero);
-    for (let i = 0; i < 400; i++) {
-      // (keep its pool full, so the skill goes as soon as its check passes)
-      me.charge = 100;
-      me.ks = { ...me.ks, at1: b.t, idle2: undefined };
-      if (hero === 'timeWitch') for (const u of b.units) if (u.side === 'hero' && u !== me && u.kx?.hist?.length) u.hp = Math.max(1, Math.round(u.hp * 0.6));
-      await new Promise((r) => setTimeout(r, 100));
-      if (window.__kitSeen) break;
+    for (let i = 0; i < 300; i++) {
       if (b.phase !== 'fight') return false;
-      if (g.fx && (g.lastSkill ?? '') === skill) break;
+      me.charge = 100;
+      me.ks = { ...me.ks, at1: b.t, idle2: undefined, at2: undefined };
+      // (the Time Witch needs a friend that has lost a lot lately; the Reaper a fallen foe near him)
+      if (hero === 'timeWitch') for (const u of b.units) if (u.side === 'hero' && u !== me && u.alive && u.kx?.hist?.length > 4 && u.hp > u.maxHp * 0.6) u.hp = Math.round(u.maxHp * 0.4);
+      if (hero === 'reaper' && i === 20) { const f = b.units.filter((u) => u.side === 'foe' && u.alive).sort((x, y) => Math.abs(x.u - me.u) + Math.abs(x.v - me.v) - (Math.abs(y.u - me.u) + Math.abs(y.v - me.v)))[0]; if (f) f.hp = 1; }
+      if (test(b, me)) return true;
+      await new Promise((r) => setTimeout(r, 100));
     }
-    return true;
-  }, [hero, skill]);
-  void seen;
-  await page.waitForTimeout(300);
+    return false;
+  }, [hero, seen]);
+  await page.waitForTimeout(350);
   await hold(page, true);
   await page.screenshot({ path: `docs/samples/hero-kits-${name}.png` });
+  check(`${name} seen in a fight`, got);
   check(`no page errors (${name})`, errors.length === 0, errors.join('|'));
   await ctx.close();
 }

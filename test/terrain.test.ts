@@ -107,6 +107,8 @@ test('a walker stepping onto ice may slide a tile further, never onto lava, a fi
   const b = arena();
   for (let v = 0; v < D; v++) for (let u = 0; u < W; u++) tileAt(b.board, u, v)!.ground = 'ice';
   const bird = addUnit(b, 'karasu', 3, 8);
+  // (its pool emptied, so it walks rather than dives: this is about its steps)
+  bird.charge = 0;
   addUnit(b, 'skeleton', 3, 0).busyUntil = 1e9;
   for (let i = 0; i < 100; i++) {
     const was = { u: bird.u, v: bird.v };

@@ -103,13 +103,16 @@ test('a skill costs its pool, keeps a gap before it goes again, and waits until 
   assert.ok(out.some((e) => e.kind === 'skill' && e.name === 'Shield Wall'));
   assert.ok(Math.abs(resOf(k) - (RES.STAM_MAX - costOf(k, hk.s1))) < 1e-9, 'paid');
   assert.ok(!canPay(b, k, hk, 1), 'the gap holds it back');
-  b.t += RES.GAP_STAM_MS;
+  const gap = hk.s1.gap ?? RES.GAP_STAM_MS;
+  b.t += gap - 100;
+  assert.ok(!canPay(b, k, hk, 1), 'still within the gap');
+  b.t += 100;
   assert.ok(canPay(b, k, hk, 1));
   k.charge = 0;
   assert.ok(!canPay(b, k, hk, 1), 'not enough stamina');
   // (emptying a stamina pool winds the hero)
   k.charge = (costOf(k, hk.s1) / RES.STAM_MAX) * CHARGE_MAX;
-  b.t += RES.GAP_STAM_MS;
+  b.t += gap;
   assert.ok(castHero(b, k, hk, []));
   assert.ok(k.ks!.winded! > b.t);
 });
@@ -154,17 +157,20 @@ test('skill 1 is held back when skill 2 is about to be affordable', () => {
 
 test('a healer with mana keeps its heal in reserve while a friend is badly hurt', () => {
   const b = arena();
-  const p = spawn(b, 'priestess', 3, 7, SKILL2_LEVEL);
+  const c = spawn(b, 'cleric', 3, 6, SKILL2_LEVEL);
   const friend = spawn(b, 'knight', 3, 5);
   spawn(b, 'skeleton', 3, 4).busyUntil = 1e9;
+  const hk = heroKitOf(c)!;
+  // (enough for Smite, not for Benediction, and Smite would leave too little for it: with the knight badly hurt the Cleric waits)
+  c.charge = ((costOf(c, hk.s1) + 5) / RES.MANA_MAX) * CHARGE_MAX;
   friend.hp = Math.round(friend.maxHp * 0.5);
-  const hk = heroKitOf(p)!;
-  // (enough for Guardian Angel but not for it and Holy Light: the angel waits)
-  p.charge = ((costOf(p, hk.s2) + 5) / RES.MANA_MAX) * CHARGE_MAX;
   const out: BattleEvent[] = [];
-  castHero(b, p, hk, out);
-  assert.ok(!out.some((e) => e.kind === 'skill' && e.name === 'Guardian Angel'));
-  assert.ok(out.some((e) => e.kind === 'skill' && e.name === 'Holy Light'), 'the heal goes instead');
+  assert.ok(!castHero(b, c, hk, out));
+  assert.ok(!out.some((e) => e.kind === 'skill'), 'Smite waits');
+  // (with nobody badly hurt, Smite goes)
+  friend.hp = friend.maxHp;
+  assert.ok(castHero(b, c, hk, out));
+  assert.ok(out.some((e) => e.kind === 'skill' && e.name === 'Smite'));
 });
 
 test('the ultimate opens at level 30, and its meter fills from damage dealt, damage taken and time', () => {

@@ -21,13 +21,13 @@ export type Pool = 'mana' | 'stamina';
  *  being in the thick of it. */
 export const RES = {
   MANA_MAX: 100,
-  MANA_START: 25,
+  MANA_START: 20,
   MANA_REGEN: 3,
   FOCUS_MULT: 1.5,
   FOCUS_MS: 3000,
   MANA_ON_BLOW: 3,
   STAM_MAX: 60,
-  STAM_START: 30,
+  STAM_START: 20,
   STAM_REGEN: 3,
   STAM_ON_BLOW: 2,
   STAM_ON_HIT: 3,
