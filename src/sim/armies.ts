@@ -44,6 +44,11 @@ export interface Army {
   tierStart?: number;
   /** The `growth` the harder tiers use (likewise: Normal's curve is flatter from the second army on, so a level-1 party cannot grind through it on the XP of its lost tries). */
   tierGrowth?: number;
+  /**
+   * The harder tiers' foes (hp and attack) times this, by tier (index 1 Hard to 4 Mythic; missing is 1). A late army's Normal is now steep
+   * (ARMY-PACE, `docs/notes/army-pace.md`), so its Hard and Elite are lifted to stay above it; Mythic is left as it was tuned.
+   */
+  tierLift?: readonly number[];
   /** The hp and attack a boss has at wave 1's strength (the wave's multiplier then applies, as to every foe): the army's mid-bosses, and its last. These set the walls of the campaign, whatever the boss's own stats in `foes.ts`. */
   mid: BossStats;
   last: BossStats;
@@ -152,13 +157,13 @@ export const ARMIES: readonly Army[] = [
   },
   {
     id: 'labyrinth',
-    level: 30,
+    level: 35,
     name: 'The Labyrinth',
     blurb: 'Minotaurs charge and gorgons turn heroes to stone.',
     area: 'temple',
     lands: ['temple', 'ruins'],
     waves: waves(ramp(['mazeMino1', 'mazeMino2', 'mazeGorgon1', 'mazeMino3', 'mazeGorgon2', 'mazeMino1', 'mazeGorgon3', 'mazeMino2'], 13), { 8: ['gorgonQueen', 'mazeMino1', 'mazeMino2', 'mazeGorgon3'], 15: ['minotaurChampion', 'mazeMino1', 'mazeGorgon1', 'mazeMino2', 'mazeGorgon2', 'mazeMino3'] }),
-    start: 2.25, // (was 2.37: retuned on the army road, WORLD-ROAD, to take as many tries as before)
+    start: 2.89, // (was 2.25: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`)
     tierStart: 1.38,
     growth: 0.05,
     tierGrowth: 0.128,
@@ -169,13 +174,13 @@ export const ARMIES: readonly Army[] = [
   },
   {
     id: 'ogres',
-    level: 38,
+    level: 45,
     name: 'Ogre Clans',
     blurb: 'Ogres and orc brutes, a shaman king and a horned giant.',
     area: 'highlands',
     lands: ['highlands', 'snow'],
     waves: waves(ramp(['clanOgre', 'clanBrute', 'clanBrute', 'clanOgre', 'clanOgre', 'clanBrute', 'clanOgre'], 13), { 8: ['shamanKing', 'clanBrute', 'clanOgre', 'clanBrute'], 15: ['hornedOgre', 'clanOgre', 'clanBrute', 'clanOgre', 'clanBrute', 'clanOgre'] }),
-    start: 2.8, // (was 2.76: retuned on the army road, WORLD-ROAD, to take as many tries as before)
+    start: 4.23, // (was 2.8: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`)
     tierStart: 1.55,
     growth: 0.05,
     tierGrowth: 0.124,
@@ -186,13 +191,13 @@ export const ARMIES: readonly Army[] = [
   },
   {
     id: 'infernal',
-    level: 40,
+    level: 55,
     name: 'Infernal Host',
     blurb: 'Imps and demons of the pit, a devil and a demon lord.',
     area: 'volcano',
     lands: ['volcano', 'desert'],
     waves: waves(ramp(['hellImp', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon'], 13), { 8: ['devilLeader', 'hellImp', 'hellDemon', 'hellImp'], 15: ['demonLord', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon', 'hellImp'] }),
-    start: 3.01,
+    start: 5.03, // (was 3.01: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`)
     tierStart: 1.64,
     growth: 0.05,
     tierGrowth: 0.13,
@@ -203,13 +208,13 @@ export const ARMIES: readonly Army[] = [
   },
   {
     id: 'yokai',
-    level: 46,
+    level: 60,
     name: 'Yokai Night Parade',
     blurb: 'Fox spirits, crows and tengu monks of the night parade, led by a nine-tailed fox and the Oni King.',
     area: 'shrine',
     lands: ['shrine', 'forest'],
     waves: waves(ramp(['yokaiFox', 'yokaiCrow', 'yokaiMonk', 'yokaiWitch', 'yokaiSeer', 'yokaiFox', 'yokaiMonk', 'yokaiCrow', 'yokaiWitch'], 13), { 8: ['nineTails', 'yokaiFox', 'yokaiWitch', 'yokaiCrow'], 15: ['oniKing', 'yokaiMonk', 'yokaiWitch', 'yokaiSeer', 'yokaiFox', 'yokaiCrow'] }),
-    start: 3.38, // (was 3.22: retuned on the army road, WORLD-ROAD, to take as many tries as before)
+    start: 6.45, // (was 3.38: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`)
     tierStart: 1.55,
     growth: 0.05,
     tierGrowth: 0.127,
@@ -220,13 +225,13 @@ export const ARMIES: readonly Army[] = [
   },
   {
     id: 'golems',
-    level: 52,
+    level: 66,
     name: 'Golem Forge',
     blurb: 'Stone, iron, crystal and magma golems, a sapphire colossus and the Forge Titan.',
     area: 'forge',
     lands: ['forge', 'crystal'],
     waves: waves(ramp(['stoneGolem', 'ironGolem', 'crystalGolem', 'magmaGolem', 'stoneGolem', 'ironGolem', 'magmaGolem'], 13), { 8: ['sapphireColossus', 'stoneGolem', 'crystalGolem', 'ironGolem'], 15: ['forgeTitan', 'ironGolem', 'magmaGolem', 'crystalGolem', 'stoneGolem', 'magmaGolem'] }),
-    start: 3.63, // (was 3.79: retuned on the army road, WORLD-ROAD, to take as many tries as before)
+    start: 6.6, // (was 3.63: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`)
     tierStart: 1.7,
     growth: 0.05,
     tierGrowth: 0.124,
@@ -265,7 +270,8 @@ export function waveBoost(a: Army, n: number, tier = 0): Stage {
     const def = FOES[w.foes[0]];
     boss = { size: w.boss === 'final' ? 1.5 : 1.3, hp: want.hp / def.hp, atk: want.atk / def.atk, ...(w.boss === 'final' ? { phase: t.phaseAt ?? PHASE_AT, ...(t.surge ? { surge: t.surge } : {}) } : {}) };
   }
-  return { foes: { hp: k * t.hp, atk: k * t.atk, ...(t.speed !== 1 ? { speed: t.speed } : {}) }, boss, area: a.area };
+  const lift = tier > 0 ? a.tierLift?.[tier] ?? 1 : 1;
+  return { foes: { hp: k * t.hp * lift, atk: k * t.atk * lift, ...(t.speed !== 1 ? { speed: t.speed } : {}) }, boss, area: a.area };
 }
 
 /** The foes of wave n on a tier: the wave's own band, then the tier's escorts, copies of the wave's escorts in turn (a boss is never copied, so a boss with no escorts stays alone). */
