@@ -37,3 +37,5 @@ No implementation blockers remain. Owner review and any requested release integr
 ## Release integration
 
 The owner accepted FX-002 together with the individual ability signatures and authorised the version bump and merge as 0.168.0, following main 0.167.0. See [individual ability release handoff](individual-ability-effects.md#release-01680).
+
+Release pull request: [#135](https://github.com/Hpatter9/legends-of-the-fall/pull/135). The integrated 0.168.0 release passed typecheck, build, 84 focused effects/audio tests, all five individual-material browser cases and offline launch.
