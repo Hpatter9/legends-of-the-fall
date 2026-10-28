@@ -15,6 +15,17 @@ The manager maintains the integrated board. Workers propose their task updates i
 ## Active work
 
 **ART-002 / Resonance full roster** — Owner: current Codex art chat. Branch: `art/resonance-roster`, worktree: `/workspace/legends-of-the-fall`, based on the approved ART-001 pilot. Scope: all 43 remaining collectible heroes, animation sheets and necessary hero-form render mappings, size bands, asset credits, art tooling and portrait/battle evidence. Preserve combat rules, save keys, hero identities, enemies and unrelated UI work. Owner extended scope to four isometric facings and visibly grounded walking cycles. Completion: all 45 heroes use front/rear facings mirrored left/right, walking is reviewed as a loop with alternating footfalls, required animations and transformations remain available, typecheck/build/affected tests and all three phone sizes pass. Status: implemented and validated; ready for owner review. All 11 affected test files, typecheck/build, 2,800 asset-cell checks and three phone sizes pass; offline reload passes. Handoff: [notes](notes/resonance-roster.md). No merge or release requested.
+### FIGHT-FIXES — Boss in the arena's middle, a free fight camera, heroes get up on a revive, the trophy wall closes
+
+- **Goal:** four of the owner's fixes: "The bosses should stand in the middle of the boss arena."; "Don't lock camera in each wave. Allow free movement and zooming during the wave."; "The units get up off the ground, not a new spawn look, when a heart is burnt for another try."; "Trophy wall comes up and locks castle screen."
+- **Status:** done; ready for owner review. Not merged; the version is not bumped.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/fight-fixes`, `/home/user/fight-fixes` (from main 0.200.0); PR none.
+- **Allowed files or systems:** new `src/sim/arenaDeploy.ts`, `src/render/fightCam.ts`; hooks in `src/sim/battle.ts` (`startBattle`'s foe placement), `src/sim/board.ts` (optional `Board.arenaMid`), `src/sim/scenario.ts` (one line), `src/main.ts` (camera input, revive), `src/render/unitView.ts` (`getUp`), `src/trophyWall.css`, `src/castle.ts` (`drawVfx` index guard); tests `test/arena-boss.test.ts`, `test/fight-cam.test.ts`, `test/trophy-wall-hidden.test.ts`; `tools/fight-fixes/shots.mjs`; `docs/notes/fight-fixes.md`, `docs/samples/fight-fixes-*.png`.
+- **Completion criteria:** every army's mid and final boss starts in its arena's middle with its band round it, tested; pan, pinch and wheel during a wave, kept until the next wave's deploy; fallen heroes get up (dead row reversed), reduced motion stands at once; the trophy wall opens only when asked and always closes, castle and tavern; typecheck, affected and full tests, web build; 393x852, 360x780, 412x915.
+- **Validation:** see the handoff's "Checks". The boss move shifts some armies' tries (the handoff's table); `start` values not retuned (army difficulty is another task's).
+- **Handoff:** [notes](notes/fight-fixes.md).
+
 ### WORLD-ROAD — Army road, boss arenas and the living land
 
 - **Goal:** the owner's asks: army battle maps follow a realistic path (a winding road 6 to 9 tiles wide with themed scenery beside it that walkers cannot enter, not a full 14x18 slab), each army's boss waves (8 and 15; the Wildwood's 5, 10 and 15) fought in its own themed arena, and (phase B) a living environment: hazards that act on both sides, running water and waterfalls, pack walls and set pieces at the tiles' angle, ambient life.
