@@ -306,6 +306,28 @@ No new art: the five-hero combos' gathering and strike, a tier skill's ring and 
 
 - **The Last Stand's king** (`src/art/units/stand_king.png`): layered from the Himeko Sutori character pack in `chronos-assets` (plain male body, Plate 06 Lordly armour and its top layer, the Crown helm, a Broad Sword), cut by `tools/compose-class-heroes.cjs stand_king` as the class heroes once were.
 
+## The Last Stand's castle (`src/art/stand/`, cut by `tools/stand/prep-art.py`; STAND-003)
+
+- The floor's flagstones (`floor1.png`, `floor2.png`), the walls', pillars' and steps' dressed stone (`wallface.png`) and the walls' coping
+  (`walltop.png`): cells of `walls_floor.png` from the Craftpix **Free 2D Top-Down Pixel Dungeon Asset Pack**, under Craftpix's free licence
+  (use in the game; the raw files are not redistributed): https://craftpix.net/file-licenses/.
+- The rubble at the breaches (`rubble1.png`, `rubble2.png`): `Ruin_shadow1_3.png` and `Ruin_shadow1_4.png` of the Craftpix **Free Undead
+  Tileset Top-Down Pixel Art**, the same licence.
+- The red carpet and the dais (`rug.png`) and the library's bookcases (`shelf1.png`, `shelf2.png`): cells of `Objects/Decor0.png` of the
+  **DawnLike** tileset by DragonDePlatino, on DawnBringer's palette, CC-BY 4.0, four times up.
+- The smoke at the breaches (`smoke.png`) and the dust burst's ring (`dust.png`, ten frames): `directional_smoke_burst_001` (large white,
+  frame 12) and `symmetrical_smoke_burst_001` (large brown) of the **Super Pixel Effects Gigapack (Free Version)** by unTied Games.
+- The dust kicked up as a wave comes in (`landdust.png`): the `landing-dust` effect of **PVFX Foundry** (Pixel VFX Studio,
+  `pvfx-foundry-thirteen-spritesheets`), CC0 1.0, its grid sheet as it is.
+- The stained-glass window, the gilt pilaster with its banner and the dark back wall behind the field (`window.png`, `pilaster.png`,
+  `backwall.png`) are cut from the castle's own throne room (`src/art/throne/throne_room.png`); the king on his throne is the castle's
+  enthroned king (`src/art/throne/king_throne.png`, used as it is), so he looks the same everywhere.
+- The banners, braziers, lamps, fountain, well, chests, crates, barrels and pots are the castle courtyard's Chronos kit pieces already in
+  `src/art/castle/` (see "Castle courtyard"), and the standards the war camp's (`src/art/camp/standard.png`); the courtyard's grass is
+  `src/art/ground/grass1.png` and `grass2.png`.
+- The brass of the Last Stand's bars, deploy tray, pause sheet and end card is the game's own `ui/` art (the battle crest, the ribbon, the
+  heroes' brass frame, the page). The pools of light, the glass's coloured light and the auras are drawn effects.
+
 ## Heart revive
 
 No new art: the burning heart's flame is the `flame_fire` strip (`src/art/fx/vfx/flame_fire.png`) from the **5000 Pixel Effects** pack by blueberry already credited above, played once over the heart (`src/reviveView.ts`); the heroes rise in the existing light pillar of a promotion.

@@ -3,10 +3,10 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { boardOk, canStep, tileAt, standable } from '../src/sim/board';
+import { canStep, tileAt, standable } from '../src/sim/board';
 import { addUnit, apart } from '../src/sim/battle';
 import { flowField, leashOf, isTank, KING_DEF } from '../src/sim/standAi';
-import { canPost, edgeTiles, EDGES, FIELD, KING_AT, KEEP_TOP, ringOf, standBoard } from '../src/sim/standField';
+import { canPost, edgeTiles, EDGES, fieldOk, FIELD, KING_AT, KEEP_TOP, ringOf, standBoard } from '../src/sim/standField';
 import {
   BOSS_EVERY, BREAK_MS, buyLevel, buyRelic, CLEAR_HEAL, clearGold, clearedOf, FIELD_CAP, FIELD_HEROES, foesAlive, goNow, healCost, healKing, isBossWave, pickEight, roleOfKind, killGold, levelCost,
   loadStand, newStandRun, offerCost, postHero, rawCount, saveStand, settleStand, snapshot, startFirstWave, startStand, stepStand, strength, waveCrowns, waveSpec, xpNeed, type Stand, type StandSetup,
@@ -34,16 +34,16 @@ function until(s: Stand, phase: Stand['phase'], max = 20000): void {
 
 /* ------------------------------------------------------------------ the field */
 
-test('the field is 24 x 24, the same for a seed, walkable, with the king on a raised keep', () => {
+test('the field is 24 x 24, the same for a seed, walkable, with the king on a raised dais', () => {
   for (const seed of [1, 2, 3, 7, 11, 42, 99, 123]) {
     const a = standBoard(seed);
     const b = standBoard(seed);
     assert.deepEqual(a.tiles, b.tiles, `seed ${seed} makes the same field`);
     assert.equal(a.w, FIELD);
     assert.equal(a.d, FIELD);
-    assert.ok(boardOk(a), `seed ${seed} can be walked`);
+    assert.ok(fieldOk(a), `seed ${seed} can be walked`);
     const king = tileAt(a, KING_AT.u, KING_AT.v)!;
-    assert.equal(king.h, KEEP_TOP, 'the king stands on the top of the keep');
+    assert.equal(king.h, KEEP_TOP, 'the king stands on the top of the dais');
     assert.ok(standable(king));
     // (every tile within the plaza is level enough to walk over: no step a one-step climber cannot take)
     for (let v = 0; v < a.d; v++)
@@ -62,15 +62,18 @@ test('the field has height variety', () => {
   assert.ok(heights.size >= 4, `heights ${[...heights]}`);
 });
 
-test('every edge can walk to the king, by any walker that climbs a single level', () => {
+test('every breach can walk to the king, by any walker that climbs a single level; the rest of the edge is wall (STAND-003)', () => {
   for (const seed of [3, 8, 21]) {
     const b = standBoard(seed);
     const field = flowField(b, KING_AT, 1);
+    let open = 0;
     for (const edge of EDGES) {
       const tiles = edgeTiles(b, edge);
-      assert.ok(tiles.length > 12, `${edge} has room to come in by`);
+      if (tiles.length) open++;
+      assert.ok(tiles.length === 0 || tiles.length >= 5, `${edge}: a breach is ${tiles.length} wide`);
       for (const t of tiles) assert.ok(field[t.v * b.w + t.u] < Infinity, `${edge} ${t.u},${t.v} reaches the king`);
     }
+    assert.ok(open >= 2 && open <= 3, `seed ${seed}: ${open} walls are breached`);
   }
 });
 
@@ -84,6 +87,7 @@ test('eight heroes are set round the keep: tanks out front on the sides, shooter
   const ring = (kinds: string[]) => heroes.filter((u) => kinds.includes(u.def)).map((u) => ringOf(u));
   assert.ok(Math.min(...ring(['knight', 'paladin'])) >= 3, 'the tanks stand out');
   assert.ok(Math.max(...ring(['archer', 'ranger', 'wizard', 'cleric'])) <= 3, 'the shooters and healers stay in');
+  assert.ok(Math.min(...heroes.map((u) => ringOf(u))) >= 2, 'nobody stands on the throne\'s own tiles (STAND-003)');
   assert.equal(roleOfKind('knight'), 'tank');
   assert.equal(roleOfKind('cleric'), 'inner');
   // the sides: the heroes are spread over all four quarters of the keep
@@ -177,6 +181,8 @@ test('a hero is posted where it was placed, within a leash of a few tiles', () =
   const posts = new Map(s.b.units.filter((u) => u.side === 'hero' && u.tag !== undefined).map((u) => [u.id, { ...s.run.heroes.find((h) => h.id === u.tag)!.post! }]));
   let worst = 0;
   const out = new Map<number, number>();
+  // (the hunt of a wave's last foes lifts the leash, STAND-003: a hero carried off by it is let walk home, and must be back within its leash in good time)
+  const homing = new Map<number, number>();
   for (let i = 0; i < 30000 && s.phase !== 'over' && s.run.wave < 18; i++) {
     stepStand(s);
     s.notes.length = 0;
@@ -184,6 +190,19 @@ test('a hero is posted where it was placed, within a leash of a few tiles', () =
       const post = posts.get(u.id);
       if (!post || !u.alive) continue;
       const d = apart(u, { u: post[0], v: post[1] });
+      if (s.b.stand!.hunt) {
+        homing.set(u.id, 0);
+        continue;
+      }
+      if (homing.has(u.id)) {
+        const n = homing.get(u.id)! + 1;
+        if (d <= u.post!.leash) homing.delete(u.id);
+        else {
+          homing.set(u.id, n);
+          assert.ok(n <= 400, `${u.def} was still ${d} from its post 40 s after a hunt`);
+          continue;
+        }
+      }
       worst = Math.max(worst, d);
       // (even a skill that leaps or dives stops short of the leash; only a foe's blow that shoves a hero can put it a tile past, and it walks straight back, or fights where it stands if foes shut the way)
       const ticks = d > u.post!.leash ? (out.get(u.id) ?? 0) + 1 : 0;
@@ -266,7 +285,7 @@ test('a cleared wave gives a break of five seconds that counts down, and Go ends
   assert.ok(!goNow(s), 'there is no break to end in a wave');
 });
 
-test('a cleared wave pays gold, XP and mends the heroes; the fallen rise at their posts', () => {
+test('a cleared wave pays gold, XP and mends the heroes; the fallen stay down', () => {
   const s = fresh(5, 20);
   startFirstWave(s);
   const gold = s.run.gold;
@@ -277,17 +296,15 @@ test('a cleared wave pays gold, XP and mends the heroes; the fallen rise at thei
   assert.ok(s.notes.some((n) => n.kind === 'clear'));
   assert.ok(s.run.heroes.every((h) => h.xp > 0 || h.lv > 0), 'every hero was taught');
   void knight;
-  // a fallen hero rises at the clear
+  // a fallen hero does not rise at the clear (STAND-003: the owner's "if a unit dies, they don't come back")
   const s2 = fresh(6, 20);
   startFirstWave(s2);
   const wiz = s2.b.units.find((u) => u.def === 'wizard')!;
-  const post = [...s2.run.heroes.find((h) => h.kind === 'wizard')!.post!];
   wiz.alive = false;
   wiz.hp = 0;
   until(s2, 'break');
-  assert.ok(wiz.alive, 'the wizard rose');
-  assert.deepEqual([wiz.u, wiz.v], post);
-  assert.ok(wiz.hp >= Math.round(wiz.maxHp * 0.5) - 1);
+  assert.ok(!wiz.alive, 'the wizard stays down');
+  assert.ok(s2.run.heroes.find((h) => h.kind === 'wizard')!.fallen);
   assert.ok(CLEAR_HEAL > 0);
 });
 
@@ -525,12 +542,16 @@ test('the climb is steep to wave 10 and gentler after, and the bosses are real w
   for (const n of [5, 10, 20, 30, 40]) assert.ok(waveSpec(3, armies, n).hp > waveSpec(3, armies, n - 1).hp);
 });
 
-test('a party at level 1 falls in the first waves, and a level-10 party at about wave 10', () => {
+// (STAND-003: with the fallen staying down the owner kept the harder medians as the targets: about 4, 9, 10, 14, 20, 25 at levels 1, 10, 20, 30, 60, 100)
+test('a party at level 1 falls in the first waves, a level-10 party at about wave 9, a level-30 one at about 14', () => {
   const m1 = medianWave(1, 5);
-  assert.ok(m1 >= 3 && m1 <= 6, `level 1 median ${m1}`);
+  assert.ok(m1 >= 3 && m1 <= 5, `level 1 median ${m1}`);
   const m10 = medianWave(10, 5);
-  assert.ok(m10 >= 8 && m10 <= 12, `level 10 median ${m10}`);
+  assert.ok(m10 >= 7 && m10 <= 10, `level 10 median ${m10}`);
   assert.ok(m10 > m1, 'a stronger party goes further');
+  const m30 = medianWave(30, 5);
+  assert.ok(m30 >= 11 && m30 <= 18, `level 30 median ${m30}`);
+  assert.ok(m30 > m10);
 });
 
 test('the pay per wave keeps a run at the new target about as well paid as it was', () => {

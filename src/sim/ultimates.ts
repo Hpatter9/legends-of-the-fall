@@ -428,7 +428,8 @@ function hallOfMirrors(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 
 /** High Priestess: up to two fallen heroes rise with half their health, and everyone is healed. */
 function resurrection(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const fallen = b.units.filter((a) => !a.alive && a.side === me.side && a.owner === undefined && !defOf(a).summon).sort((x, y) => (x.diedAt ?? 0) - (y.diedAt ?? 0) || x.id - y.id);
+  // (none rise in the Last Stand: there the fallen stay down)
+  const fallen = b.units.filter((a) => !b.stand && !a.alive && a.side === me.side && a.owner === undefined && !defOf(a).summon).sort((x, y) => (x.diedAt ?? 0) - (y.diedAt ?? 0) || x.id - y.id);
   if (!fallen.length && !wounded(b, me)) return false;
   for (const x of fallen.slice(0, 2)) {
     x.alive = true;

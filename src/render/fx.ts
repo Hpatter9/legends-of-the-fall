@@ -102,6 +102,8 @@ export class Fx {
   private trauma = 0;
   shakeX = 0;
   shakeY = 0;
+  /** No screen shake at all from this Fx (the Last Stand: the page makes its own tiny nudge, `standCam.ts`). */
+  still = false;
   /** A white flash over the whole screen (on the stage, above the board), for a crit or a big kill. */
   readonly flashLayer = new Graphics();
   private flashLeft = 0;
@@ -172,7 +174,7 @@ export class Fx {
   }
 
   /** Whether the screen is to stay still: shake off in the settings, or reduced motion on the device. */
-  private calm(): boolean {
+  calm(): boolean {
     return this.reduced || !settings().shake;
   }
 
@@ -609,7 +611,7 @@ export class Fx {
     }
     this.clock += dt;
     this.trauma = fadeTrauma(this.trauma, dt / 1000);
-    const s = this.calm() ? 0 : shakeOf(this.trauma);
+    const s = this.calm() || this.still ? 0 : shakeOf(this.trauma);
     this.shakeX = s ? (Math.random() * 2 - 1) * s : 0;
     this.shakeY = s ? (Math.random() * 2 - 1) * s : 0;
     this.particles.calm = this.calm();

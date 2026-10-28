@@ -186,9 +186,9 @@ export const canAfford = (b: Battle, id: SpellId) => b.phase === 'fight' && b.sp
 
 /** The foes in the 3x3 around a tile, in id order. */
 const foesIn = (b: Battle, u: number, v: number) => b.units.filter((x) => x.alive && x.side === 'foe' && inArea(x, u, v));
-/** The fallen hero a Resurrect on this tile would lift: the nearest in the 3x3 whose tile is free. */
-const fallenIn = (b: Battle, u: number, v: number) =>
-  b.units
+/** The fallen hero a Resurrect on this tile would lift: the nearest in the 3x3 whose tile is free. None in the Last Stand, where the fallen stay down. */
+export const fallenIn = (b: Battle, u: number, v: number) =>
+  b.stand ? undefined : b.units
     .filter((x) => !x.alive && x.side === 'hero' && !defOf(x).summon && inArea(x, u, v) && !b.units.some((o) => o.alive && o.u === x.u && o.v === x.v))
     .sort((x, y) => apart(x, { u, v }) - apart(y, { u, v }) || x.id - y.id)[0];
 
