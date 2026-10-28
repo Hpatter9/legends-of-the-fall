@@ -3,35 +3,35 @@
 The owner's ask: "I want to update the ascended look. The colour change is kind of dumb. Let's do an aura when they
 ascend, and a stronger aura when they ascend x2", and then: "the aura depends on the type of character class."
 
-**Status: phase A (proposal and prototype), waiting for the owner's approval of the look.** Branch `claude/awaken-auras`
-(from main 0.180.0). Nothing outside the fight board has changed yet.
+**Status: phase B (the whole game) done on the branch, ready for review.** Branch `claude/awaken-auras` (main 0.186.0
+merged in). The owner approved the phase A look (the mock-ups below) with these answers: the look suits; drop the
+Werewolf's red sheet; keep the gold glow and gold outline of the rank 4 top form, and give the awakened steps the class
+colour instead; the step from 1 to 2 is big enough; keep the art behind one seam so painted art can replace it
+([art brief](awaken-auras-art-brief.md)); include the camp.
 
-## The proposal
+## The rule
 
-- **No recolour.** An awakened hero keeps its own colours and its top form's sheet. The hue turn, the extra saturation
-  and the brighter finish (`toneOf`, `lookFilter`, `tonePixels` in `src/render/awakenLook.ts`) go.
-- **The Werewolf's red sheet goes too.** It is a real pack sheet, not a recolour, but it is still a colour change, the
-  thing the owner called dumb, and the beast's flame aura now marks it. (Easy to keep if the owner prefers it:
-  `PACK_VARIANTS` stays in `awakenLook.ts` and only the fight board stopped reading it.)
-- **Step 1 (rank 5): an aura. Step 2 (rank 6): a bigger, brighter one with more parts.** Step 2 uses the pack's bright
-  (`-b`) strips, larger rings, and adds rising rings and extra motes; the soft glow behind the body is stronger, and the
-  rim round the body takes the aura's colour at both steps.
+- **No recolour and no colour variant.** An awakened hero keeps its own colours and its top form's sheet. The hue
+  turn, the saturation and the brighter finish are gone from the game (`awakenLook.ts` keeps only `stepOfRank` and
+  `lookSheet`, which is now the form; `awakenRig.ts` no longer tones pixels; the cinematics no longer use a colour
+  matrix). The Werewolf's red sheet is no longer used for an awakened Werewolf (it stays for the red werewolf foes).
+- **Step 1 (rank 5): an aura. Step 2 (rank 6): a bigger, brighter one with more parts.** The rank 4 top form keeps
+  its gold glow and gold outline; at an awakened step the glow and the outline take the class's colour, so an
+  awakening reads clearly over the gold.
 - **The aura's style comes from the hero's class trait** (`traitsOf(kind)[1]`), never the origin. All 13 class traits
-  have their own style, so no hero needs a fallback today. A hero with no class trait (none exist) would fall back to
-  the guardian's golden shield (`FALLBACK_AURA`), the colour of the old awakened glow. "Holy" is an origin trait, so
-  holy heroes take their class's aura (the Cleric warden, the Paladin guardian, the Priestess support).
-
-Every part is a looping 32px strip of the **5000 Pixel Effects** pack (`pixel-effects/sprites/<name>/sheet-32.png` in
-the assets repository), copied unchanged into one atlas. The pack's families used: `circle` (a flat ring on the
-ground), `rune` (a spinning ring), `glyph` (a triangle sigil in a ring), `shield` (a bubble), `aura` (rising rings),
-`sparkle` (rising motes), `orb`, `flame`, `smoke`, `vortex`, `pillar`, `cut` and `slash`, and the neutral `dash`.
-Strip suffixes: `-s` slow (8 frames), `-b` bright, `-sb` slow and bright.
+  have their own style, so no hero needs a fallback (`FALLBACK_AURA`, the guardian's golden shield, is there for a hero
+  with no class). "Holy" is an origin trait, so holy heroes take their class's aura. A foe a cinematic shows awakened
+  (the Orc Warlord rising) has no class and wears the feral flame (`FOE_AURA`).
+- The awakening panel says "An aura: <the class's aura>" for step 1 and "A bigger, brighter aura" for step 2, and the
+  awakening burst's rings and word glow in the class's colour.
 
 ### The table
 
 Places: **ground** flat under the feet; **wrap** behind the body's middle; **rise** rings rising from the feet; **halo**
 flat over the head; **orbit** circling the body (dimmer behind it); **motes** dotted round the body on their own beats;
-**trail** speed lines streaming back the way the hero faces. Parts marked † are left out on battery saver.
+**trail** speed lines streaming back the way the hero faces. Parts marked † are left out on battery saver. The names
+in `code` are the 5000 Pixel Effects strips each part is drawn from today (`tools/awaken/aura-pack.json`; the parts'
+own keys, such as `caster.2.orbit`, are listed in the [art brief](awaken-auras-art-brief.md)).
 
 | Class (heroes) | Style and colour | Step 1 (rank 5) | Step 2 (rank 6) |
 | --- | --- | --- | --- |
@@ -54,61 +54,99 @@ seconds; the halo bobs a pixel. Nothing blinks off: a part only changes frame, p
 
 ### Rules kept
 
-- **Reduced motion:** every part holds one frame and stays where it is (orbits stop at a fixed angle); the aura stays
-  fully visible.
-- **Battery saver:** the † parts are left out; every aura keeps at least two parts.
-- **Phone cost:** the sprites are made once per hero (on the first frame after the atlas is ready) and only moved and
-  re-framed after that; no allocation per frame. The atlas is one 256x2240 PNG (about 58 KB), bundled in `game.js`,
-  so it plays offline with nothing added to the service worker list. At most 5 heroes wear an aura, at most 8 sprites
-  each.
+- **Reduced motion:** every part holds one frame and stays where it is (orbits stop at a fixed angle). The aura stays
+  fully visible and never blinks off. The menus' pictures are drawn once, still.
+- **Battery saver:** the † parts are left out everywhere, and every aura keeps at least two parts. The menus' aura loop
+  runs at 30 a second.
+- **No allocation per frame.**
+  - In the fight and the cinematics, the sprites are made once per hero and only moved and re-framed after that.
+  - On the canvases, one pose object is reused, and the transform is applied and undone by hand (no `save` or
+    `restore`). The glow is drawn once per colour and kept.
+  - The menus' pictures share one animation loop. It skips pictures scrolled out of sight (`IntersectionObserver`),
+    sleeps when none is in sight, and measures a picture again only when its size changes (`ResizeObserver`).
+- **Offline:** the atlas (about 58 KB) is bundled in `game.js`. Nothing new is fetched by URL.
 - **Deaths:** a fallen hero's aura goes out with it.
 
-## The prototype (what exists on the branch)
+## The art seam
 
-- `src/render/auraStyles.ts`: the table above as pure data (`AURAS`, `auraOf`, `auraParts`, `AURA_SHEETS`,
-  `FALLBACK_AURA`); no Pixi, no DOM.
-- `src/render/awakenAura.ts`: `AwakenAura` (two containers, behind and in front of the body) and `loadAuraArt`, which
-  `loadFx` in `fx.ts` awaits.
-- `src/render/unitView.ts`: the fight sprite. An awakened hero now keeps its own sheet (no recolour, no red Werewolf),
-  its glow and rim take the class colour, and it wears its `AwakenAura`. This already covers the normal fights, the
-  Calamity and the Last Stand (which passes `awaken` through `sim/stand.ts`; no Last Stand file changed).
-- `src/art/fx/aura/atlas.png` + `atlas.json`: 70 strips, packed by `tools/awaken/aura-sheets.py` (run by hand).
-- `test/awaken-auras.test.ts`: every class trait has its own aura and every hero wears its class's; no aura below
-  step 1; step 2 has more parts and is no smaller; battery saver drops only the extras; every strip is in the atlas.
-- `tools/awaken/aura-mock.mjs` + `aura-sheet.py`: the mock-up pictures below (after `npm run web`).
+`auraStyles.ts` names the parts and places them. A part's frames come only from the atlas `src/art/fx/aura/atlas.png`
+with `atlas.json` (`{"cell": 32, "parts": {"<class>.<step>.<part>": [column, row, frames]}}`), read by `auraArt.ts`.
 
-The rest of the game still shows the old recolour until phase B.
+- **Today:** `tools/awaken/aura-sheets.py` builds the atlas from the pack, by the key-to-strip map in
+  `tools/awaken/aura-pack.json`.
+- **Painted art later:** `tools/awaken/import-aura-art.py <folder> 96` builds it from painted sheets, under the same
+  keys, with no code change. I tried it with stand-in sheets: 80 parts were packed and the aura tests passed. Then the
+  pack atlas was put back.
+- **What to paint:** [awaken-auras-art-brief.md](awaken-auras-art-brief.md) lists every part of every class at both
+  steps, the frames, the cell size, the angle, and a prompt for each class.
 
-## Mock-up pictures
+## Where the aura shows
 
-Real browser captures (headless Chromium at 393x852) of the prototype on the fight board, each hero alone on a clear
-tile. Step 0 is the hero's top form at rank 4, with the existing gold top-form glow.
+| Place | File | How |
+| --- | --- | --- |
+| Fights (normal runs, armies, daily, the spire) | `render/unitView.ts` | Pixi `AwakenAura`, behind and in front of the body |
+| Last Stand | `render/unitView.ts` (through `sim/stand.ts`'s `awaken`) | the same; no Last Stand file changed |
+| Cinematics (the awakening scene and the rest) | `render/sceneView.ts` | Pixi `AwakenAura` on the actor, when its look is 1 or 2 |
+| Camp (the Battle tab) | `camp.ts` | `drawAura` round each party hero |
+| Tavern | `tavern.ts` | `drawAura` round each hero in the rooms |
+| Summoning hall | `hall.ts` | `drawAura` as the hero rises, fading in with it |
+| Calamity map | `calMap.ts` | `drawAura` round the walking leader (its canvas has room for it) |
+| War council tableau | `partyScene.ts`, `party.ts` | a still `drawAura` (the tableau is a still picture) |
+| Roster cards and the dossier | `menuHeroes.ts` | `wearAura`: a canvas behind the picture and one over it |
+| Rank up card (before and after) | `rankUpView.ts` | `wearAura` on the "after" picture of an awakening |
+| Awakening panel and burst | `awakenView.ts`, `awaken.css` | the class's aura named in the panel; the burst in its colour |
 
-- [Contact sheet: 13 classes x steps 0, 1, 2](../samples/awaken-auras-mock-sheet.png)
-- [Motion: the Wizard (caster), step 2](../samples/awaken-auras-mock-motion-wizard.png)
-- [Motion: the Werewolf (beast), step 2](../samples/awaken-auras-mock-motion-werewolf.png)
+**Calamity fights show no aura.** The Calamity is a run that levels its own heroes (`run.local`): it reads nothing of
+the meta, awakening included (`boostFor` in `main.ts`), as before this change. The aura would show there through the
+same `unitView.ts` if that rule changes. The Calamity map's leader does wear it, as it wore the recolour before.
 
-## Phase B plan (after approval)
+**The summoning hall:** only new heroes are summoned, and a new hero cannot be awakened, so in play the hall shows no
+aura. It is drawn if an awakened hero ever comes out of the circle; the picture below makes that happen on purpose.
 
-1. Retire the recolour: `awakenLook.ts` keeps `stepOfRank` and loses `hueOf`, `toneOf`, `tonePixels`, `lookFilter`
-   and (if approved) `PACK_VARIANTS`; `awakenRig.ts` returns the plain sheet; `sceneView.ts` drops its colour matrix and
-   wears the aura instead; the awaken tests change to match the approved rule.
-2. Draw the aura everywhere an awakened hero is drawn:
-   - fights, Calamity and Last Stand: done in the prototype (`unitView.ts`);
-   - the hero dossier and roster portraits, and the Rank up card (`menuHeroes.ts`, `rankUpView.ts`): a small canvas
-     aura behind and in front of the picture, from the same table and atlas (a 2D-canvas twin of `AwakenAura`);
-   - the party war council tableau (`partyScene.ts`, which today shows no awakened look at all);
-   - the tavern (`tavern.ts`), the summoning hall's reveal (`hall.ts`), the awakening panel and its burst
-     (`awakenView.ts`), and the cinematics (`sceneView.ts`);
-   - the camp (`camp.ts`) and the Calamity map (`calMap.ts`) also draw awakened heroes through `awakenRig.ts`. If the
-     camp counts as the castle tab, which is reserved, it is left to that tab's owner.
-3. Checks: typecheck, web build, `npm test -- awaken`, the fight, dossier, party, tavern and summon screens at
-   393x852, 360x780 and 412x915, with reduced motion and battery saver.
+## Files
 
-## Questions for the owner
+- `src/render/auraStyles.ts`: the table (`AURAS`, `auraOf`, `auraParts`, `auraKey`, `AURA_KEYS`, `FALLBACK_AURA`,
+  `FOE_AURA`). Pure.
+- `src/render/auraPlace.ts`: where each piece sits at a moment (`poseAura` into a reused `AuraPose`). Pure; shared by
+  both renderers.
+- `src/render/auraArt.ts`: the atlas (`AURA_CELL`, `AURA_PIXEL`, `auraStrip`, `loadAuraImage`).
+- `src/render/awakenAura.ts`: the Pixi aura (`AwakenAura`, `loadAuraArt`, which `loadFx` awaits).
+- `src/render/auraCanvas.ts`: the canvas aura (`drawAura`, `drawAuraGlow`, `wearAura`).
+- `src/render/awakenLook.ts`, `src/render/awakenRig.ts` (`awakenedStep`), `src/render/sheets.ts` (`figureShare`).
+- Tools in `tools/awaken/`:
+  - `aura-sheets.py` and `aura-pack.json`: build the pack atlas;
+  - `import-aura-art.py`: build it from painted sheets;
+  - `aura-mock.mjs` and `aura-sheet.py`: the phase A mock-ups;
+  - `aura-places.mjs` and `aura-places-sheet.py`: the phase B pictures.
+- Tests:
+  - `test/awaken-auras.test.ts` (4): every class trait has its own aura, and every hero wears its class's; a foe
+    wears the feral flame; no aura below step 1; step 2 has more parts and is no smaller; battery saver drops only the
+    extras; every part key is in the atlas and in the pack map; placing reuses the caller's pose, stays within its
+    strip and holds still under reduced motion.
+  - `test/awaken.test.ts`: its look test now checks that there is no recolour and no colour variant (the owner's
+    approved change).
 
-1. Does the look and the class table suit? Any class whose aura you would change?
-2. Werewolf: drop the red sheet (the proposal), or keep it as well as the flame aura?
-3. Should rank 4 (the top form before awakening) keep its gold glow and gold rim? Today it does, so step 0 and step 1
-   of a gold class (guardian, support) differ less than the others.
-4. Step 2 strength: is the step 1 to step 2 jump big enough, or should step 2 be bigger still?
+## Pictures
+
+Phase B, real captures of the built game in headless Chromium at 2x:
+
+- [Every place at 393x852](../samples/awaken-auras-places.png)
+- [Close-ups](../samples/awaken-auras-closeups.png)
+- [The three phone sizes](../samples/awaken-auras-sizes.png)
+- [Reduced motion and battery saver](../samples/awaken-auras-calm.png)
+
+Phase A mock-ups (approved): [contact sheet](../samples/awaken-auras-mock-sheet.png), motion of the
+[Wizard](../samples/awaken-auras-mock-motion-wizard.png) and the [Werewolf](../samples/awaken-auras-mock-motion-werewolf.png).
+
+## Validation
+
+- `npm run typecheck`: passed. `npm run web`: built.
+- `npm test -- awaken party camp tavern hall calMap`: 40 of 40 passed while building.
+- Full `npm test`: **1252 of 1252 passed**, none failed, cancelled or skipped. That includes `test/awaken-auras.test.ts`
+  (5) and the updated look test in `test/awaken.test.ts`.
+- `tools/awaken/aura-places.mjs` captured every place in the built game (headless Chromium, 2x) at 393x852, 360x780
+  and 412x915, plus reduced motion and battery saver at 393x852, with **no page errors**.
+- Under reduced motion the auras are drawn still and stay visible; under battery saver the extra parts are gone.
+- `tools/awaken/import-aura-art.py` was tried with stand-in sheets: 80 parts packed, and the aura tests passed on its
+  atlas. The pack atlas was rebuilt afterwards.
+- Not measured: frame rate on a real phone.

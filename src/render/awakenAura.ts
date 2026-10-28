@@ -19,16 +19,17 @@ export async function loadAuraArt(): Promise<void> {
   const img = auraImage()!;
   const base = Texture.from(img);
   base.source.style.scaleMode = AURA_PIXEL ? 'nearest' : 'linear';
-  // (parts that share a row share its frames)
-  const rows = new Map<number, Texture[]>();
+  // (parts that share a strip share its frames)
+  const rows = new Map<string, Texture[]>();
   for (const key of AURA_KEYS) {
     const s = auraStrip(key);
     if (!s) continue;
-    let frames = rows.get(s[0]);
+    const at = `${s[0]}:${s[1]}`;
+    let frames = rows.get(at);
     if (!frames) {
       frames = [];
-      for (let i = 0; i < s[1]; i++) frames.push(new Texture({ source: base.source, frame: new Rectangle(i * AURA_CELL, s[0] * AURA_CELL, AURA_CELL, AURA_CELL) }));
-      rows.set(s[0], frames);
+      for (let i = 0; i < s[2]; i++) frames.push(new Texture({ source: base.source, frame: new Rectangle((s[0] + i) * AURA_CELL, s[1] * AURA_CELL, AURA_CELL, AURA_CELL) }));
+      rows.set(at, frames);
     }
     STRIPS.set(key, frames);
   }

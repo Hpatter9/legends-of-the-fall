@@ -35,7 +35,7 @@ export function drawAura(g: CanvasRenderingContext2D, parts: readonly AuraPart[]
     if (!strip) continue;
     const n = part.count ?? 1;
     for (let i = 0; i < n; i++) {
-      poseAura(part, i, strip[1], t, tall, dir, calm, cell, pose);
+      poseAura(part, i, strip[2], t, tall, dir, calm, cell, pose);
       // (the transform is laid on and taken off again by hand: save and restore are slow on a phone's canvas)
       const tx = x + pose.x;
       const ty = feet + pose.y;
@@ -44,7 +44,7 @@ export function drawAura(g: CanvasRenderingContext2D, parts: readonly AuraPart[]
       g.scale(pose.sx, pose.sy);
       g.globalAlpha = alpha * pose.alpha;
       if (part.add) g.globalCompositeOperation = 'lighter';
-      g.drawImage(img, pose.frame * cell, strip[0] * cell, cell, cell, -cell / 2, -cell * pose.ay, cell, cell);
+      g.drawImage(img, (strip[0] + pose.frame) * cell, strip[1] * cell, cell, cell, -cell / 2, -cell * pose.ay, cell, cell);
       if (part.add) g.globalCompositeOperation = op;
       g.scale(1 / pose.sx, 1 / pose.sy);
       if (pose.rot) g.rotate(-pose.rot);
@@ -111,6 +111,8 @@ interface Worn {
   still: boolean;
   /** The host has been on the page (so leaving it later means it is gone). */
   shown: boolean;
+  /** On screen now (a card scrolled out of sight is not drawn). */
+  seen: boolean;
   born: number;
 }
 
@@ -118,7 +120,27 @@ const worn: Worn[] = [];
 let raf = 0;
 let last = 0;
 const reducedQuery = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
-const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(() => worn.forEach((w) => (w.dirty = true))) : null;
+reducedQuery?.addEventListener?.('change', () => {
+  worn.forEach((w) => (w.dirty = true));
+  wake();
+});
+const observer =
+  typeof ResizeObserver === 'function'
+    ? new ResizeObserver(() => {
+        worn.forEach((w) => (w.dirty = true));
+        wake();
+      })
+    : null;
+const sight =
+  typeof IntersectionObserver === 'function'
+    ? new IntersectionObserver((list) => {
+        for (const e of list) {
+          const w = worn.find((x) => x.host === e.target);
+          if (w) w.seen = e.isIntersecting;
+        }
+        wake();
+      })
+    : null;
 
 function measure(w: Worn): void {
   const hr = w.host.getBoundingClientRect();
@@ -166,11 +188,16 @@ function loop(now: number): void {
       // (a picture that has left the page is let go; one not yet put on the page is waited for a while)
       if (w.shown || now - w.born > 10000) {
         observer?.unobserve(w.host);
+        sight?.unobserve(w.host);
         worn.splice(i, 1);
       } else live = true;
       continue;
     }
     w.shown = true;
+    // (the loop sleeps while no aura is in sight: the sight and size watchers wake it)
+    if (!w.seen) continue;
+    // (reduced motion: once drawn still, nothing more to do until its size changes)
+    if (calm && w.still && !w.dirty) continue;
     live = true;
     if (!due && !w.dirty) continue;
     if (w.dirty) {
@@ -206,9 +233,10 @@ export function wearAura(host: HTMLElement, figure: HTMLElement, kind: string, s
   const front = layer('3', 'auraFront');
   host.insertBefore(back, figure);
   figure.after(front);
-  const w: Worn = { host, figure, back, front, kind, step, parts: auraParts(kind, step, settings().saver), tallShare, fx: 0, fy: 0, tall: 0, dir, scale: 1, dirty: true, still: false, shown: false, born: performance.now() };
+  const w: Worn = { host, figure, back, front, kind, step, parts: auraParts(kind, step, settings().saver), tallShare, fx: 0, fy: 0, tall: 0, dir, scale: 1, dirty: true, still: false, shown: false, seen: !sight, born: performance.now() };
   worn.push(w);
   observer?.observe(host);
+  sight?.observe(host);
   void loadAuraImage().then(() => {
     w.dirty = true;
     wake();

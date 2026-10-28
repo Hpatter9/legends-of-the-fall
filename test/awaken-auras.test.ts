@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { AURAS, AURA_KEYS, auraKey, auraOf, auraParts, FALLBACK_AURA } from '../src/render/auraStyles';
+import { AURAS, AURA_KEYS, auraKey, auraOf, auraParts, FALLBACK_AURA, FOE_AURA } from '../src/render/auraStyles';
 import { newPose, poseAura } from '../src/render/auraPlace';
 import pack from '../tools/awaken/aura-pack.json';
 import { HERO_TRAITS, TRAITS } from '../src/sim/traits';
@@ -11,7 +11,8 @@ test('every class trait has its own aura, and every hero wears its class trait\'
   const classes = Object.values(TRAITS).filter((t) => t.kind === 'class').map((t) => t.id);
   assert.deepEqual(Object.keys(AURAS).sort(), [...classes].sort());
   for (const kind of ALL_HEROES) assert.equal(auraOf(kind).trait, HERO_TRAITS[kind][1], kind);
-  assert.equal(auraOf('noSuchHero').trait, FALLBACK_AURA);
+  assert.equal(auraOf('orcWarlord').trait, FOE_AURA, 'a foe shown awakened in a scene');
+  assert.ok(AURAS[FALLBACK_AURA]);
   // (the styles differ: no two classes share a name or the same parts)
   const looks = Object.values(AURAS).map((a) => JSON.stringify(a.steps));
   assert.equal(new Set(looks).size, looks.length);
@@ -40,7 +41,7 @@ test('battery saver only drops the extra parts, and every strip is in the atlas'
   const parts = (atlas as { cell: number; parts: Record<string, number[]> }).parts;
   assert.ok((atlas as { cell: number }).cell > 0);
   for (const k of AURA_KEYS) {
-    assert.ok(parts[k] && parts[k][1] > 0, k);
+    assert.ok(parts[k] && parts[k].length === 3 && parts[k][2] > 0, k);
     assert.ok(k in pack, k);
   }
   assert.equal(new Set(AURA_KEYS).size, AURA_KEYS.length, 'part names are unique within a step');

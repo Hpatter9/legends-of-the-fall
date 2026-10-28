@@ -191,10 +191,14 @@ export const AURAS: Readonly<Record<string, AuraStyle>> = Object.fromEntries(
 
 /** The class a hero's aura falls back to when its class has no aura (none today): the golden shield. */
 export const FALLBACK_AURA = 'guardian';
+/** A foe a cinematic shows awakened (the Orc Warlord rising) has no class: it wears the feral flame. */
+export const FOE_AURA = 'beast';
 
-/** A hero's aura style, by its class trait. */
+/** A hero's aura style, by its class trait (a foe's: the feral flame). */
 export function auraOf(kind: string): AuraStyle {
-  return AURAS[traitsOf(kind)[1] ?? ''] ?? AURAS[FALLBACK_AURA];
+  const traits = traitsOf(kind);
+  if (!traits.length) return AURAS[FOE_AURA];
+  return AURAS[traits[1] ?? ''] ?? AURAS[FALLBACK_AURA];
 }
 
 /** The parts a hero wears at an awakened step (none below 1), without the extras on battery saver. */
