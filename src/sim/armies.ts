@@ -103,7 +103,7 @@ export const ARMIES: readonly Army[] = [
     area: 'graveyard',
     lands: ['graveyard', 'dungeon'],
     waves: waves(ramp(['skeleton', 'skeleton', 'boneVolley', 'spearman', 'skeleton', 'spearman', 'boneVolley', 'spearman'], 13), { 8: ['boneCaptain', 'skeleton', 'spearman', 'boneVolley'], 15: ['lichKing', 'skeleton', 'spearman', 'spearman', 'boneVolley', 'boneVolley'] }),
-    start: 1.41,
+    start: 1.52,
     tierStart: 0.7,
     growth: 0.05,
     tierGrowth: 0.17,
