@@ -9,6 +9,10 @@ import { GEAR_SETS, SET_OF_BASE, activeTiers, setCounts, type GearSet } from './
 import { saveMeta, type Meta } from './sim/meta';
 import { UNITS } from './sim/units';
 import { EQUIP_ICONS } from './equipArt';
+import { warmIcon } from './menuArt';
+
+// (the item pictures are decoded as the page loads, so a slot redrawn after an equip shows no empty frame)
+for (const u of Object.values(EQUIP_ICONS)) warmIcon(u);
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -23,6 +27,7 @@ export function itemIcon(it: Equipment | undefined, slot: EquipSlot, size: 'big'
   const img = el('img');
   img.alt = '';
   img.draggable = false;
+  img.decoding = 'sync';
   img.src = EQUIP_ICONS[it ? EQUIP_BASES[it.base].icon : { weapon: 'sword', armour: 'plate', trinket: 'ring' }[slot]];
   frame.append(img);
   return frame;

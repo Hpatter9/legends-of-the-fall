@@ -1,6 +1,6 @@
 // The cinematics' scripts (the owner's ask: "Let's explore adding some cinematics"; docs/notes/cinematics.md). The types, the
 // timing and the shorthands are in `sceneKit.ts`; this file holds the two pilots and gathers every other scene into
-// `SCENES` (the heralds, the endings and firsts in `sceneEvents.ts`; the scenes made once for many heroes, armies and
+// `SCENES` (the Calamity's reveal, the heralds, the endings and firsts in `sceneEvents.ts`; the scenes made once for many heroes, armies and
 // buildings in `sceneFamilies.ts`). Pure data: no Pixi, no DOM, no randomness.
 
 import { close, say, tell, wide, type Scene } from './sceneKit';
@@ -19,7 +19,7 @@ const PILOTS: Record<string, Scene> = {
   opening: {
     id: 'opening',
     title: 'The Road Begins',
-    blurb: 'Your three brave pioneers meet the Calamity\'s initial welcoming committee.',
+    blurb: 'Your three brave pioneers meet the king, the court goat and the first army on the road.',
     moment: { kind: 'starter' },
     music: 'opening',
     trio: OPENING_TRIO,
@@ -27,18 +27,19 @@ const PILOTS: Record<string, Scene> = {
       front: { role: 'party:0', x: 262, facing: 'right', hidden: true },
       striker: { role: 'party:1', x: 228, facing: 'right', hidden: true },
       back: { role: 'party:2', x: 194, facing: 'right', hidden: true },
-      duchess: { role: 'duchess', x: 172, facing: 'right', hidden: true },
-      herald: { role: 'unit:calBoss1', x: 350, facing: 'left', hidden: true, scale: 1.4, shade: true },
+      king: { role: 'unit:standKing', x: 150, facing: 'right', hidden: true, scale: 1.2 },
+      duchess: { role: 'duchess', x: 300, facing: 'left', hidden: true },
+      warlord: { role: 'unit:orcWarlord', x: 380, facing: 'left', hidden: true, scale: 1.4, shade: true },
     },
     shots: [
       {
-        look: 'volcano',
+        look: 'warcamp',
         cam: wide(300, 190),
         to: wide(300, 215),
         fx: ['fadeIn', 'darken', 'rumble'],
         cue: 'earthRumble',
         caption: 'A rather bleak dawn',
-        lines: [tell('Beyond the last milestone, an ancient evil woke in a foul temper.'), tell('It is called the Calamity. It was not consulted on the name.')],
+        lines: [tell('Every army in the land is marching on the Last Keep. Some brought packed lunches.')],
       },
       {
         look: 'highlands',
@@ -48,21 +49,26 @@ const PILOTS: Record<string, Scene> = {
           { who: 'striker', enter: 228, from: 120 },
           { who: 'back', enter: 194, from: 90 },
         ],
-        lines: [say('front', 'Right. Who has the honour of standing at the sharp end?'), say('striker', 'You do. You are quite literally standing there.')],
+        lines: [say('front', 'Right. Who gets the honour of the sharp end?'), say('striker', 'You do. You are literally standing on it.')],
       },
       {
-        cam: close(['front', 'back'], 1.5),
+        cam: close(['king', 'back'], 1.5),
         caption: 'The Crown',
-        acts: [{ who: 'duchess', enter: 172, from: 110 }],
-        lines: [tell('The sovereign places the heroes. That is you.'), tell('After that, they scrap. Applaud, or drop a meteor.'), say('front', 'Applause is lovely, but we prefer the meteor.'), say('duchess', 'Mehh.')],
+        acts: [{ who: 'king', enter: 150, from: 60 }],
+        lines: [tell('The king of the Last Keep places the heroes. That is you.'), tell('After that, they scrap. Applaud, or drop a meteor.'), say('back', 'Applause is lovely, majesty. We prefer the meteor.')],
       },
       {
-        look: 'volcano',
-        cam: wide(275, 215),
-        acts: [{ who: 'herald', enter: 350, from: 520 }, { who: 'back', face: 'right' }],
+        cam: close(['front', 'duchess'], 1.5),
+        acts: [{ who: 'duchess', enter: 300, from: 380 }],
+        lines: [say('duchess', 'Mehh.'), tell('Duchess, the court goat: Her Grace, not the king. She disagrees.')],
+      },
+      {
+        look: 'warcamp',
+        cam: wide(290, 215),
+        acts: [{ who: 'warlord', enter: 380, from: 540 }, { who: 'back', face: 'right' }],
         fx: ['shake', 'darken'],
         cue: 'boom',
-        lines: [say('back', 'I should like to stand three miles further back.'), tell('The first of six heralds was already on the road.')],
+        lines: [say('back', 'I should like to stand three miles further back.'), tell('The first army was on the road.')],
       },
     ],
   },
@@ -71,8 +77,9 @@ const PILOTS: Record<string, Scene> = {
   gorvak: {
     id: 'gorvak',
     title: 'The Ashen Road',
-    blurb: 'Gorvak the Ashen, the Calamity\'s first herald, keeps a very firm roadblock.',
+    blurb: 'Gorvak the Ashen, the Calamity\'s first herald, keeps a very firm roadblock in the void.',
     moment: { kind: 'calBoss', map: 1 },
+    calamity: true,
     music: 'gorvak',
     cast: {
       hero: { role: 'hero', x: 285, facing: 'right', hidden: true },
@@ -88,7 +95,7 @@ const PILOTS: Record<string, Scene> = {
         fx: ['fadeIn', 'darken'],
         caption: 'The first herald',
         acts: [{ who: 'hero', enter: 285, from: 185 }],
-        lines: [tell('The meadow road runs through soot, and something sits in it.')],
+        lines: [tell('Past the portal lies the void, with a road of soot and something on it.')],
       },
       {
         cam: close(['hero', 'gorvak'], 1),
@@ -129,8 +136,8 @@ const EARNED: Readonly<Record<string, { look: Area; title: string; blurb: string
   demonSwordsman: { look: 'volcano', title: 'Demon Swordsman Enlists', blurb: 'A cursed blade changes masters after a dispute over wages.', why: 'The Infernal Host boasted of its vanguard. It was one swordsman short.', says: 'I have left my old employers. The pension was atrocious.' },
   samuraiCommander: { look: 'highlands', title: 'Samurai Commander Enlists', blurb: 'A decorated tactician decides to align his banner with a superior formation.', why: 'The Night Parade departed into the mist. Its commander stayed to propose an alliance.', says: 'A splendid drill. I claim the silk banner; you may keep the turf.' },
   juggernaut: { look: 'dungeon', title: 'Juggernaut Enlists', blurb: 'A walking fortress decides to lend its bulk to the keep\'s defence.', why: 'The Golem Forge went stone cold. One living rampart remained warm, largely out of stubborn habit.', says: 'Forge quiet now. Stone marches. I carry the luggage.' },
-  dreadPirate: { look: 'snow', title: 'Dread Pirate Enlists', blurb: 'A ghost ship navigates twenty floors of spiral tower stairs.', why: 'Twenty storeys up the spiral stair, a corsair crew disembarked.', says: 'Do not ask how we hauled a brigantine up twenty flights of stone.' },
-  tyrant: { look: 'dungeon', title: 'Tyrant Enlists', blurb: 'An imperial magistrate descends from his high dais to offer supervision.', why: 'Forty storeys aloft, the torches were burning brightly. As was a gilded throne.', says: 'You ascended forty flights. I respect the stamina. Now cease hovering and bow.' },
+  dreadPirate: { look: 'snow', title: 'Dread Pirate Enlists', blurb: 'A ghost ship runs aground at the breach and its crew offer to hold the walls.', why: 'Twenty waves held at the Last Stand. A corsair crew came ashore to see who was holding.', says: 'Do not ask how we sailed a brigantine through a hole in your wall.' },
+  tyrant: { look: 'dungeon', title: 'Tyrant Enlists', blurb: 'An imperial magistrate descends from his high dais to offer supervision.', why: 'Forty waves round one throne. Then a second throne arrived, with a tyrant on it.', says: 'Forty waves round your throne. I respect the stamina. Now cease hovering and bow.' },
   timeWitch: { look: 'desert', title: 'Time Witch Enlists', blurb: 'A temporal sorceress arrives precisely when she intended, which is yesterday.', why: 'The Calamity was subdued. Somebody noted the disturbance and arrived slightly ahead of time.', says: 'Fret not regarding the future. I have already read the final chapter.' },
   dragoon: { look: 'volcano', title: 'Queen Dragoon Enlists', blurb: 'An aerial monarch investigates a sudden plume of volcanic heat.', why: 'The Calamity reached ascension three. Something with scales came to see.', says: 'Adequately toasty. Shall we find something larger to annoy?' },
   sage: { look: 'forest', title: 'Great Sage Enlists', blurb: 'A senior scholar reviews the bestiary and points out several errors.', why: 'Half the monsters of the known world catalogued. An academic read the notes.', says: 'Fascinating. You have three beasts in completely the wrong genus.' },
@@ -162,10 +169,10 @@ const EARNED_SCENES: Scene[] = Object.entries(EARNED).map(([k, e]) => earnedScen
 
 /** The score each scene plays under (the audio worker's tracks, `musicScore.ts`): a herald its own, the rest a shared mood. A cut-in has none: the fight's music goes on. */
 const MUSIC: Record<string, string> = {
-  opening: 'opening', gorvak: 'gorvak', thornWarden: 'herald2', malphas: 'herald3', hrungar: 'herald4', vorgrath: 'herald5', karnok: 'herald6',
+  opening: 'opening', calamityOpens: 'gorvak', gorvak: 'gorvak', thornWarden: 'herald2', malphas: 'herald3', hrungar: 'herald4', vorgrath: 'herald5', karnok: 'herald6',
   calamityEnds: 'triumph', firstLoss: 'comic', eliteMet: 'spire', ascensionOne: 'triumph', dailyBoss: 'spire', mythicOpens: 'triumph', duchessInFight: 'comic',
 };
-const STING: Record<string, Scene['sting']> = { gorvak: 'sceneBoss', thornWarden: 'sceneBoss', malphas: 'sceneBoss', hrungar: 'sceneBoss', vorgrath: 'sceneBoss', karnok: 'sceneBoss', calamityEnds: 'sceneVictory' };
+const STING: Record<string, Scene['sting']> = { calamityOpens: 'sceneBoss', gorvak: 'sceneBoss', thornWarden: 'sceneBoss', malphas: 'sceneBoss', hrungar: 'sceneBoss', vorgrath: 'sceneBoss', karnok: 'sceneBoss', calamityEnds: 'sceneVictory' };
 const FAMILY_MUSIC: Record<string, string> = { oath: 'triumph', clear: 'triumph', awaken: 'solemn', earned: 'triumph', castle: 'comic', spire: 'spire' };
 
 const ALL: Scene[] = [...Object.values(PILOTS), ...EVENT_SCENES, ...FAMILY_SCENES, ...EARNED_SCENES].map((c) => {

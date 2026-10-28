@@ -69,6 +69,6 @@ export class ColumnTextures<T> {
 }
 
 /** Inputs used by the existing painter. Keep signed/fractional offsets: scenery uses negative coordinates. */
-export function columnKey(area: string, boss: boolean, height: number, bridge: boolean, ground: string | undefined, top: number, artEpoch: number, u: number, v: number): string {
-  return JSON.stringify([area, boss, height, bridge, ground ?? null, top, artEpoch, ((u * 23 + v * 11) % 5) * 16]);
+export function columnKey(area: string, boss: boolean, height: number, bridge: boolean, ground: string | undefined, top: number, artEpoch: number, u: number, v: number, perch?: boolean, ramp?: boolean): string {
+  return JSON.stringify([area, boss, height, bridge, ground ?? null, top, artEpoch, ((u * 23 + v * 11) % 5) * 16, !!perch, !!ramp]);
 }

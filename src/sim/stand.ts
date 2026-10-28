@@ -47,7 +47,7 @@ export const WAVE_START = FOE_START;
 export const WAVE_GROWTH = 0.4;
 /** From wave `WAVE_KNEE` on the climb eases to `WAVE_GROWTH_LATE` a wave: steep at first, so the early waves bite at once; gentler later, so a stronger party still goes further. */
 export const WAVE_KNEE = 10;
-export const WAVE_GROWTH_LATE = 0.11;
+export const WAVE_GROWTH_LATE = 0.07;
 /** A wave's size: foes at wave 1 and the foes each wave adds. */
 export const WAVE_BASE = 4;
 export const WAVE_STEP = 2;
@@ -55,7 +55,7 @@ export const WAVE_STEP = 2;
 export const BOSS_EVERY = 5;
 export const BAND_WAVES = 3;
 /** A boss's hp and attack against the same wave's foes (its own stats in `foes.ts` are already big): a share that starts low and grows to `BOSS_TOP` by the ninth boss. */
-export const BOSS_START = 0.5;
+export const BOSS_START = 0.45;
 export const BOSS_TOP = 1.0;
 export const bossShare = (n: number): number => Math.min(BOSS_TOP, BOSS_START + ((BOSS_TOP - BOSS_START) * (n / BOSS_EVERY - 1)) / 8);
 /** The foes of a wave come in over this long at most (ms), a gap between each. */

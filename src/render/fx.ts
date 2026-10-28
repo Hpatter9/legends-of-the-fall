@@ -2,7 +2,9 @@
 // screen's shake (the rules for these are Chronos's battle/juiceRules.ts). Everything runs on the fight's own clock,
 // so a faster fight is faster here too.
 
-import { Container, Graphics, Sprite, Text, type Texture } from 'pixi.js';
+import { Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
+import { TERRAIN_URLS } from './terrainArt';
+import { loadImage } from './loadImage';
 import { tileAt, type Board } from '../sim/board';
 import { defOf, type Battle, type BattleEvent, type Unit } from '../sim/battle';
 import { isBoss } from '../sim/foes';
@@ -23,7 +25,8 @@ import { loadPackArt, PACK } from './fxSheets';
 import { bossEntrance, deathBurst, impactBurst, play, setBoneArt, windUp } from './combatFx';
 import { comboGather, comboStrike, promoteBurst, ringOut, toneColour, type Spot } from './spectacle';
 import { comboById, COMBO_NAME } from '../sim/combos';
-import { SIGNATURES, tierRing } from './signatures';
+import { tierRing } from './signatures';
+import { kitSignature } from './kitLooks';
 import { loadProps, playSteps, setSignatureSprite, type Pt, type Scene } from './signatureFx';
 import { tierSkillOf } from '../sim/tierSkills';
 import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, impactElement, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, type Missile } from './fxRules';
@@ -68,7 +71,19 @@ export async function loadFx(): Promise<void> {
   await loadPackArt();
   magic.pinkHeart = { frames: VFX.pinkHeart };
   await Promise.all([loadProps(), loadAbilityArt()]);
+  // (the hero kits' terrain: a rampart's ruined walls, a statue's stone, a keg's barrel; the pack's own props, as the board draws them)
+  const tex = async (url: string) => Texture.from(await loadImage(url));
+  kitArt = { walls: await Promise.all(TERRAIN_URLS.walls.map(tex)), barrel: await tex(TERRAIN_URLS.barrel) };
 }
+
+/** The props the hero kits' terrain is drawn with (`loadFx`). */
+let kitArt: { walls: Texture[]; barrel: Texture } | null = null;
+/** The words a kit's mark shows over the fighter it is on. */
+const MARK_WORDS: Record<string, string> = {
+  parry: 'Parry', smoke: 'Smoke', pinned: 'Pinned', charged: 'Charged', vow: "Martyr's Vow", hunter: 'Hunter', brute: 'Brute', dance: 'Dancing',
+  stone: 'Stone', puppet: 'Puppet', siege: 'Anchored', angel: 'Watched', rewind: 'Rewound', prey: 'Prey', suppressed: 'Pinned down',
+  dirge: 'Dirge', anthem: 'Anthem', bounty: 'Bounty', condemned: 'Condemned',
+};
 
 /** A small random offset (the renderer's own, not the sim's). */
 const jitter = (n: number) => (Math.random() * 2 - 1) * n;
@@ -281,8 +296,13 @@ export class Fx {
           this.label('War Banner', by.x, by.y - by.tall - 20, 0xffe27a, 13, 1200);
           this.anim(magic.goldBurst, by.x, by.y - by.tall * 0.45, 1.2, 60);
         }
-      } else if (e.kind === 'zone') this.zone(b, e.u, e.v, e.ms);
+      } else if (e.kind === 'zone') {
+        if (e.what === 'spikes') this.spikes(b, e.u, e.v, e.ms);
+        else this.zone(b, e.u, e.v, e.ms);
+      }
       else if (e.kind === 'trap') this.trap(b, e.u, e.v, e.ms);
+      else if (e.kind === 'terrain') this.kitTerrain(b, e);
+      else if (e.kind === 'mark') this.kitMark(e);
       else if (e.kind === 'hit') {
         const to = this.sprites.get(e.to);
         const by = b.units.find((x) => x.id === e.by);
@@ -308,7 +328,7 @@ export class Fx {
         }
         // (a skill's blow has its own sheet; a crit or a big kill adds a burst, a white flash and a harder shake)
         const castName = e.src === 'skill' ? this.casting.get(e.by) ?? kitOf(by)?.skill.name ?? '' : '';
-        const signature = SIGNATURES[castName]?.hit;
+        const signature = kitSignature(castName)?.hit;
         const skillFx = e.src === 'skill' && !signature ? SKILL_FX[castName]?.hit : undefined;
         // (the spark grows with the blow: a scratch is small, a half-health blow fills the struck)
         const spark = Math.min(2, 0.6 + (e.dmg / target.maxHp) * 3);
@@ -688,7 +708,7 @@ export class Fx {
     while (this.skillStack.length >= 3) this.skillStack.shift()!.cut();
     this.skillStack.push(this.label(name, by.x, by.y - by.tall - 20, ultimate ? 0xfff2a0 : boss ? 0xff9a8a : 0xffe27a, ultimate || boss ? 15 : 13, 1200));
     this.casting.set(byId, name);
-    const signature = SIGNATURES[name];
+    const signature = kitSignature(name);
     if (signature) playSteps(signature.wind, this.sceneOf(by, ms, ultimate ? 1.45 : 1.15));
     else windUp(this.particles, el, by.x, by.y, ms, by.tall, ultimate || boss);
     const cast = signature ? undefined : SKILL_FX[name]?.cast;
@@ -765,7 +785,7 @@ export class Fx {
     if (!by) return;
     const skillName = kitOf(by.unit)?.skill.name ?? '';
     // (a hero's tier ring is its skill's own look again; a foe's is the element's wave)
-    if (SIGNATURES[skillName]) playSteps(tierRing(skillName, e.reach * 64, (by.unit.grade ?? 1) > 2), this.sceneOf(by, 600, 1));
+    if (kitSignature(skillName)) playSteps(tierRing(skillName, e.reach * 64, (by.unit.grade ?? 1) > 2), this.sceneOf(by, 600, 1));
     else ringOut(this.particles, skillElement(skillName), by.x, by.y, e.reach);
     this.trauma = Math.max(this.trauma, 0.15);
   }
@@ -1124,6 +1144,81 @@ export class Fx {
         return t < ms;
       },
     });
+  }
+
+  /** Caltrops on a 3x3 (the Ranger's Spike Field): the snare's rune, small, on each tile, for `ms`. */
+  private spikes(b: Battle, u: number, v: number, ms: number): void {
+    const view = new Container();
+    this.root.addChild(view);
+    const rune = paintedStrip('earth', 'rune', 'snare')[0];
+    for (let du = -1; du <= 1; du++)
+      for (let dv = -1; dv <= 1; dv++) {
+        if (!tileAt(b.board, u + du, v + dv)) continue;
+        const [x, y] = this.tilePos(b, u + du, v + dv);
+        const sp = new Sprite(rune);
+        sp.anchor.set(0.5);
+        sp.scale.set((TW * 0.36) / 32);
+        sp.tint = 0xd0b890;
+        sp.alpha = 0.7;
+        sp.position.set(x, y);
+        view.addChild(sp);
+      }
+    let t = 0;
+    this.items.push({ view, step: (dt) => ((t += dt), (view.alpha = t > ms - 500 ? Math.max(0, (ms - t) / 500) : 1), t < ms) });
+  }
+
+  /** Timed terrain from a kit: a rampart's wall, a statue, a flood's water on a tile, until it goes back (a terrain event of 0 ms, or the battle no longer has it). */
+  private kitTerrain(b: Battle, e: Extract<BattleEvent, { kind: 'terrain' }>): void {
+    if (!e.ms) return;
+    const [x, y] = this.tilePos(b, e.u, e.v);
+    const i = e.v * b.board.w + e.u;
+    let view: Container;
+    if (e.what === 'flood') {
+      // (shallow water: a pale blue sheet on the tile's top, gently breathing; no pack has a loose water tile, so it is drawn)
+      const g = new Graphics();
+      g.poly([0, -TH / 2, TW / 2, 0, 0, TH / 2, -TW / 2, 0]).fill({ color: 0x4aa8e8, alpha: 0.45 }).stroke({ color: 0xbfe8ff, width: 1, alpha: 0.6 });
+      g.position.set(x, y);
+      view = g;
+      this.anim(magic.windWave, x, y - 4, 0.8, 70).tint = 0x80c8ff;
+    } else {
+      const tex = kitArt ? (e.what === 'statue' ? kitArt.walls[2] : kitArt.walls[(e.u + e.v) % 2]) : undefined;
+      const sp = new Sprite(tex ?? Texture.WHITE);
+      sp.anchor.set(0.5, 0.85);
+      sp.scale.set(tex ? TW / Math.max(1, tex.width) : 1);
+      if (e.what === 'statue') sp.tint = 0xb8b8b0;
+      sp.position.set(x, y);
+      view = sp;
+      this.anim(magic.earthBurst, x, y - 6, 1.1, 60);
+    }
+    // (the walls and statues stand among the fighters: sorted by depth with them)
+    view.zIndex = 0;
+    this.root.addChild(view);
+    let t = 0;
+    this.items.push({
+      view,
+      step: (dt) => {
+        t += dt;
+        const live = !!b.terrain?.some((tf) => tf.i === i && tf.kind === e.what);
+        if (e.what === 'flood' && !this.reduced) view.alpha = 0.85 + 0.15 * Math.sin(t / 400);
+        if (!live && t > 200) {
+          view.alpha = Math.max(0, view.alpha - dt / 300);
+          return view.alpha > 0;
+        }
+        return true;
+      },
+    });
+  }
+
+  /** A kit's mark on a fighter: its word over it, and a small cue on it. */
+  private kitMark(e: Extract<BattleEvent, { kind: 'mark' }>): void {
+    const to = this.sprites.get(e.to);
+    if (!to) return;
+    const dice = e.what.startsWith('dice ') ? e.what.slice(5).split(' ').map(Number) : null;
+    const word = dice ? `Dice ${dice[0]} + ${dice[1]}` : MARK_WORDS[e.what] ?? e.what;
+    const foe = to.unit.side === 'foe';
+    this.label(word, to.x, to.y - to.tall - 8, foe ? 0xffb070 : 0xa8e0ff, 12, 1000, true);
+    const sheet: MagicKey = foe ? 'darkCircle' : e.what === 'angel' || e.what === 'vow' ? 'lightCircle' : 'whiteBurst';
+    this.anim(magic[sheet], to.x, to.y - to.tall * 0.4, 0.8, 70);
   }
 
   /** A snare on a tile: a dark ring that waits there (and goes out when it is sprung or runs down). */

@@ -498,8 +498,8 @@ export class BoardView {
   /** One tile's column: its top laid on the diamond, its two sides down to the foot. */
   private column(t: Tile, u: number, v: number, area: Area, boss = false): ColumnLease<Texture> {
     const set = art?.areas[area];
-    const top = t.h >= STONY || boss ? -1 : set ? (t.deco + u + v) % set.tops.length : -1;
-    const key = columnKey(area, boss, t.h, !!t.bridge, t.ground, top, artEpoch, u, v);
+    const top = t.h >= STONY || boss || t.perch ? -1 : set ? (t.deco + u + v) % set.tops.length : -1;
+    const key = columnKey(area, boss, t.h, !!t.bridge, t.ground, top, artEpoch, u, v, !!t.perch, !!t.ramp);
     const bytes = TW * (TH + t.h * HH + FOOT + (boss ? HH : 0)) * 4;
     return this.columns.acquire(key, bytes, () => this.paintColumn(t, u, v, area, boss));
   }
@@ -638,10 +638,33 @@ export class BoardView {
       g.beginPath();
       g.ellipse(TW / 2, TH / 2, TW * 0.3, TH * 0.3, 0, 0, Math.PI * 2);
       g.stroke();
+    } else if (t.perch) {
+      // (elevated archer perch: defensive flagstone tint and firing chevron pointing toward the enemy)
+      g.fillStyle = 'rgba(235,215,180,0.18)';
+      g.fillRect(0, 0, TW, TH);
+      g.strokeStyle = 'rgba(255,235,175,0.7)';
+      g.lineWidth = 1.6;
+      g.beginPath();
+      g.moveTo(TW * 0.32, TH * 0.58);
+      g.lineTo(TW * 0.5, TH * 0.36);
+      g.lineTo(TW * 0.68, TH * 0.58);
+      g.stroke();
+    } else if (t.ramp) {
+      // (stepped ramp: wooden / stone stepped riser slats)
+      g.fillStyle = 'rgba(180,150,110,0.15)';
+      g.fillRect(0, 0, TW, TH);
+      g.strokeStyle = 'rgba(240,210,165,0.75)';
+      g.lineWidth = 1.4;
+      for (const yFrac of [0.38, 0.52, 0.66]) {
+        g.beginPath();
+        g.moveTo(TW * 0.28, TH * yFrac);
+        g.lineTo(TW * 0.72, TH * yFrac);
+        g.stroke();
+      }
     }
     g.restore();
-    g.strokeStyle = t.bridge ? BRIDGE_RIM : t.ground === 'deep' && LAVA_LANDS.includes(area) ? 'rgba(255,120,30,0.95)' : t.ground ? RIM[t.ground] : boss ? 'rgba(255,226,140,0.75)' : 'rgba(20,14,8,0.35)';
-    g.lineWidth = t.bridge || (t.ground && t.ground !== 'tall') ? 2 : 1;
+    g.strokeStyle = t.bridge ? BRIDGE_RIM : t.ground === 'deep' && LAVA_LANDS.includes(area) ? 'rgba(255,120,30,0.95)' : t.ground ? RIM[t.ground] : t.perch ? 'rgba(245,220,150,0.85)' : t.ramp ? 'rgba(215,185,135,0.75)' : boss ? 'rgba(255,226,140,0.75)' : 'rgba(20,14,8,0.35)';
+    g.lineWidth = t.bridge || (t.ground && t.ground !== 'tall') || t.perch || t.ramp ? 2 : 1;
     g.beginPath();
     g.moveTo(TW / 2, 0.5);
     g.lineTo(TW - 0.5, TH / 2);

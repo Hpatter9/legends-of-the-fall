@@ -6,9 +6,11 @@
 // with no lines holds for `hold` seconds. The clock is `render/sceneClock.ts`, the player `render/sceneView.ts`, when a
 // scene is queued `sceneRules.ts`. Pure data: no Pixi, no DOM, no randomness.
 //
-// The voice: wry and warm, in British spelling. The Calamity is the end of the world; the heroes take it about as
-// seriously as a delayed train. Running gags to keep: the villains' staffing problems, heroes who would rather stand
-// further back, and the king (the player), who places everyone and then only watches.
+// The voice: wry and warm, in British spelling. The Calamity is a portal that ripped open over the keep, with the void beyond it
+// and an invasion pouring out; the heroes take it about as seriously as a delayed train. Running gags to keep: the villains'
+// staffing problems, heroes who would rather stand further back, and the king (the player), who places everyone and then only
+// watches. The king is always the player; Duchess is the court's goat ("Her Grace"), never the king: a shot about the king shows
+// the king (`unit:standKing`) or nobody, not her.
 
 import type { Area } from './board';
 
@@ -100,14 +102,16 @@ export interface Shot {
   slow?: number;
 }
 
-/** When a scene comes up. `starter`: a new save has just picked its first heroes. `calBoss`: a Calamity's boss floor of
- *  this map is about to be fought. `calVictory`: the Calamity's last herald has fallen. `armyClear`: an army cleared for
+/** When a scene comes up. `starter`: a new save has just picked its first heroes. `calOpen`: the Calamity has opened (its
+ *  reveal: the portal). `calBoss`: a Calamity's boss of this map is about to be fought. `calVictory`: the Calamity's last herald has fallen. `armyClear`: an army cleared for
  *  the first time. `awaken` / `earned`: a hero awakened, or joined by a milestone. `combo`: a five-unit combo's mega ultimate
- *  fires. `firstLoss`. `duchess`: she turns up in a fight. `castle`: a build is raised. `spire`: the endless tower's floor.
+ *  fires. `firstLoss`. `duchess`: she turns up in a fight. `castle`: a build is raised. `spire`: the Last Stand's milestone
+ *  waves (the old endless tower's moment, kept so a save's seen scenes still match).
  *  `bossForm`: a boss changes form mid-fight. `mythic`: Mythic opened on an army. `elite`, `ascension`,
  *  `dailyBoss`: the first of each. */
 export type Moment =
   | { kind: 'starter' }
+  | { kind: 'calOpen' }
   | { kind: 'calBoss'; map: number }
   | { kind: 'calVictory' }
   | { kind: 'armyClear'; army: string }
@@ -147,8 +151,10 @@ export interface Scene {
   sting?: 'sceneBoss' | 'sceneVictory';
   /** A cut-in of a few seconds, not a scene (it need not reach 10 s). */
   short?: boolean;
-  /** Plays every time its moment comes, not once (a boss changing form); the Scenes list still plays it again. */
+  /** Plays every time its moment comes, not once (the short Last Oath); the Scenes list still plays it again. */
   again?: boolean;
+  /** A scene of the Calamity's story: due only once the Calamity has opened (`modeOpen(m, 'calamity')`). */
+  calamity?: boolean;
   cast: Record<string, CastMember>;
   shots: Shot[];
 }

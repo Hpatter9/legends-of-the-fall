@@ -15,6 +15,7 @@ import { BOSS_IDS } from './foes';
 import { readEquipment, readEquipped, type EquipSlot, type Equipment } from './equipment';
 import { migrateArmies, readSeen, seenFor, type ArmyRecord } from './armies';
 import { readStash } from './armyStars';
+import { readTomes, type TomeCounts } from './tomes';
 import { readTalents, type KindTalents } from './talents';
 import { AWAKEN_MULT } from './awakenRules';
 import { readAwakened } from './awaken';
@@ -26,7 +27,7 @@ import { drawKind, giveShards, toCollect } from './unlock';
 import { DUPLICATE_SHARDS, LUCKY_ODDS, LUCKY_RANK_SHARDS, PULL_HEROES, STONES_GIFT } from './unlockRules';
 import { grantContent } from './contentHeroes';
 import { readShop } from './chestShop';
-import { readScenes } from './sceneRules';
+import { readCards, readScenes } from './sceneRules';
 
 export { DUPLICATE_SHARDS, LUCKY_ODDS, LUCKY_RANK_SHARDS };
 /** Shards each rank needs in all: rank 1 at 1, rank 2 at 3, rank 3 at 6, rank 4 at 10. */
@@ -123,10 +124,16 @@ export interface Meta {
   combosSeen?: string[];
   /** The auto runs spent on a date (yyyymmdd; `autoReplay.ts`, `AUTO_TICKETS` a day). Saves from before have none. */
   autoTickets?: { day: number; used: number };
+  /** The XP tomes held, by size (`tomes.ts`): chests give them, and the player reads one to a hero from its page. Saves from before have none. */
+  tomes?: TomeCounts;
   /** Chests earned from the armies' star milestones and not yet opened, oldest first (`armyStars.ts`). */
   stash: StashChest[];
   /** The cinematics seen (`sceneRules.ts`, by id): each plays once at its moment, and the codex's Scenes list plays a seen one again. Saves from before have none. */
   scenes?: string[];
+  /** Whether the heroes' ultimates fire on their own in a fight (the hero bar's Auto switch, COMBAT-002); off (the player taps) when unset. Auto-replay always fires them. */
+  ultAuto?: boolean;
+  /** The bosses whose card (the slam-down ribbon as the fight begins) has been shown, by boss or `elite:<id>` (`sceneRules.ts` `cardKey`): once a save. Saves from before have none. */
+  bossCards?: string[];
 }
 
 /** An earned, unopened chest: where it came from, and the seed its contents are rolled from (fixed when it was earned). */
@@ -422,6 +429,9 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.talents = readTalents(m.talents, m);
       // (saves from before the army chests have an empty stash; a chest given but not opened by an earlier format goes into it)
       m.stash = readStash(m.stash, rawArmies, m.seed);
+      // (saves from before the XP tomes have none)
+      m.tomes = readTomes(m.tomes);
+      if (!m.tomes) delete m.tomes;
       // (a save from before the star unlocks keeps what it had open: the armies, the castle, the tower and the Calamity it had reached)
       m.opened = Array.isArray(m.opened) ? m.opened.filter((x) => typeof x === 'string') : grandfather(m);
       // (saves from before the codex have none)
@@ -437,6 +447,9 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       // (saves from before the cinematics have none; one that had picked its heroes counts the opening as seen)
       m.scenes = readScenes(m.scenes, !needsStarter(m));
       if (!m.scenes.length) delete m.scenes;
+      // (saves from before the boss cards played once have none shown)
+      m.bossCards = readCards(m.bossCards);
+      if (!m.bossCards.length) delete m.bossCards;
       // (a content hero whose milestone a save from before has already reached joins now)
       if (!needsStarter(m)) grantContent(m);
       return m;

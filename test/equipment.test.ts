@@ -302,11 +302,14 @@ test('a few abilities do what they say', () => {
   for (let seed = 1; seed <= 8 && !arced; seed++) arced = events(trial('stormStaff', seed).b, 1500).some((e) => e.kind === 'arc');
   assert.ok(arced);
   // a freeze stuns the struck foe
-  const fb = trial('frostbrand', 2);
+  // (the hero kits changed how every fight goes, so, as for the war drum below, any of a few seeds will do)
   let frozen = false;
-  for (let i = 0; i < 1200 && fb.b.phase === 'fight'; i++) {
-    stepBattle(fb.b);
-    if (fb.b.units.some((u) => u.side === 'foe' && u.stunUntil !== undefined && u.stunUntil > fb.b.t)) frozen = true;
+  for (let seed = 2; seed <= 9 && !frozen; seed++) {
+    const fb = trial('frostbrand', seed);
+    for (let i = 0; i < 1200 && fb.b.phase === 'fight'; i++) {
+      stepBattle(fb.b);
+      if (fb.b.units.some((u) => u.side === 'foe' && u.stunUntil !== undefined && u.stunUntil > fb.b.t)) frozen = true;
+    }
   }
   assert.ok(frozen);
   // a war drum lifts an ally's attack
@@ -314,6 +317,8 @@ test('a few abilities do what they say', () => {
   let drummed = false;
   for (let seed = 1; seed <= 8 && !drummed; seed++) {
     const wd = trial('warDrum', seed);
+    // (the ally's pool is emptied, so its first skill, a dash, does not take it away before the drum beats)
+    for (const u of wd.b.units) if (u.tag === 2) u.charge = 0;
     events(wd.b, 30);
     drummed = (wd.b.units.find((u) => u.tag === 2)!.power ?? 1) > 1.2;
   }

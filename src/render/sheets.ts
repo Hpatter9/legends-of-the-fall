@@ -258,6 +258,8 @@ export const framesOf = (sheet: string, anim: Anim): Texture[] => frames.get(`${
 export const facesRightOf = (sheet: string) => LAYOUT[sheet].facesRight !== false;
 /** How tall the figure stands in the frame, in the sheet's pixels. */
 export const figureOf = (sheet: string) => LAYOUT[sheet].figure;
+/** Whether a sheet is known (and so can be drawn): a kit's borrowed look is checked before it is used. */
+export const hasSheet = (sheet: string): boolean => !!LAYOUT[sheet] && images.has(sheet);
 
 /** A sheet's picture and layout, for the menus that draw frames straight onto a canvas (null until the sheets are loaded). */
 export function sheetInfo(sheet: string): { img: HTMLImageElement; w: number; h: number; rows: string[]; counts: Record<string, number>; figure: number; facesRight: boolean } | null {

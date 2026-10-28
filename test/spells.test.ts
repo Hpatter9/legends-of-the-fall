@@ -99,6 +99,8 @@ test('haste speeds up attacks and walking for a while, then wears off', () => {
   const swingGap = (hasted: boolean): number => {
     const b = arena();
     const k = addUnit(b, 'samurai', 3, 5);
+    // (its pool emptied, so it swings rather than casts: this is about the swing's pace)
+    k.charge = 0;
     addUnit(b, 'skeleton', 3, 4).hp = 1e9;
     if (hasted) {
       b.spells.mana = MANA_MAX;

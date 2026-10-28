@@ -1,6 +1,5 @@
-// The Royal Citadel & Throne Room: an imposing, gilded High-Fantasy Great Hall where the King's
-// Royal Company stands honor guard amid glowing arcane sigils, roaring braziers, and the treasures
-// of your kingdom upgrades, above the 6 Sacred Citadel Chambers & High Chapel.
+// The Royal Citadel & Throne Room: an imposing Great Hall where the King sits enthroned,
+// Royal Guards stand at attention, and Duchess wanders nearby, above the 6 Sacred Citadel Chambers & High Chapel.
 
 import {
   BUILDING_IDS,
@@ -19,12 +18,17 @@ import { sheetInfo } from './render/sheets';
 import { loadImage } from './render/loadImage';
 import { VFX, type VfxKey } from './render/vfxArt';
 import { UNITS } from './sim/units';
-import { roleOf } from './sim/suggest';
 import { play } from './render/sound';
 import { effectText, type PlotId } from './render/castleSpots';
+import { goatSheet } from './duchess';
+import { goatSays } from './quips';
+import { chewBob, FRAME as GOAT_FRAME, goatFrame, hopLift, tapGoat, type Goat } from './render/duchessRules';
+
+// Bespoke Castle Throne Room background and Seated King sprite sheets
+import throneRoomUrl from './art/throne/throne_room.png';
+import kingThroneUrl from './art/throne/king_throne.png';
 
 // High-res chamber & architectural sprites (bundled as data URLs by esbuild)
-import sanctumUrl from './art/hall/sanctum.png';
 import lightPillarUrl from './art/hall/fx_light-pillar.png';
 import rugUrl from './art/tavern/rug.png';
 import lecternUrl from './art/library/lectern.png';
@@ -58,7 +62,8 @@ import tomeUrl from './art/items/hourglass.png';
 import chaliceUrl from './art/items/holy_chalice.png';
 
 const SCENE_ART_URLS = {
-  sanctum: sanctumUrl,
+  throneRoom: throneRoomUrl,
+  kingThrone: kingThroneUrl,
   lightPillar: lightPillarUrl,
   rug: rugUrl,
   lectern: lecternUrl,
@@ -218,16 +223,20 @@ interface BurstEffect {
   label?: string;
 }
 
-const DEFAULT_GUARD = ['knight', 'archer', 'mage', 'cleric', 'samurai'];
+const DEFAULT_GUARD = ['knight', 'paladin', 'samurai', 'archer'];
 
-// 5 dramatic Honor Guard positions across the Throne Room dais (back-left, back-right, mid-left, mid-right, center champion)
+// 4 disciplined Royal Guards standing at attention flanking the High Throne & dais:
+// 2 Inner Dais Guards (left and right of the throne steps, facing inward at attention)
+// 2 Outer Floor Guards (left and right of the red carpet, standing at attention)
 const GUARD_SPOTS = [
-  { x: 215, y: 268, height: 112, faceRight: true },
-  { x: 585, y: 268, height: 112, faceRight: false },
-  { x: 112, y: 332, height: 128, faceRight: true },
-  { x: 688, y: 332, height: 128, faceRight: false },
-  { x: 400, y: 348, height: 148, faceRight: true },
+  { x: 172, y: 254, height: 110, faceRight: true, label: 'Dais Guard' },
+  { x: 628, y: 254, height: 110, faceRight: false, label: 'Dais Guard' },
+  { x: 120, y: 342, height: 128, faceRight: true, label: 'Honor Guard' },
+  { x: 680, y: 342, height: 128, faceRight: false, label: 'Honor Guard' },
 ];
+
+// King's High Throne position (centered at x = 400, anchored firmly on dais platform tread at y = 258)
+const KING_SPOT = { x: 400, y: 258, w: 160, h: 210, frameW: 160, frameH: 210 };
 
 export class CastleScene {
   readonly root = el('div', 'ctWrap ctCitadelWrap');
@@ -242,8 +251,8 @@ export class CastleScene {
   private crestTitle = el('div', 'ctCrestTitle', 'ROYAL CITADEL');
   private crestSub = el('div', 'ctCrestSub', 'Realm Power · Lv. 0');
   private guardPlaque = el('figcaption', 'ctGuardPlaque');
-  private guardTitle = el('span', '', 'CHAMPIONS OF THE HIGH THRONE');
-  private guardNames = el('b', '', 'Royal Honor Guard');
+  private guardTitle = el('span', '', 'HIGH THRONE OF THE KING');
+  private guardNames = el('b', '', 'Royal Honor Guard & Duchess');
 
   // Kingdom Power Summary Strip
   private powerBanner = el('div', 'ctPowerBanner');
@@ -260,8 +269,14 @@ export class CastleScene {
   private heroKinds: string[] = [...DEFAULT_GUARD];
   private particles: HallParticle[] = [];
   private bursts: BurstEffect[] = [];
-  private heroFlourishUntil = [0, 0, 0, 0, 0];
+  private heroFlourishUntil = [0, 0, 0, 0];
+  private kingDecreeUntil = 0;
   private reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Duchess the goat wandering the Throne Room floor
+  private goat: Goat | null = null;
+  private goatArt: HTMLImageElement | null = null;
+  private goatWas = '';
 
   constructor(
     private onPick: (id: PlotId) => void,
@@ -341,16 +356,42 @@ export class CastleScene {
     this.root.append(this.scroll);
   }
 
-  /** Interactive tap on the Throne Room scene: triggers a hero attack flourish, sound, and golden particle burst! */
+  /** Interactive tap on the Throne Room scene: tap King for royal decree, Duchess to bleat & hop, or guards to salute! */
   private handleSceneTap(e: PointerEvent): void {
     const rect = this.canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
     const cx = ((e.clientX - rect.left) / rect.width) * this.canvas.width;
     const cy = ((e.clientY - rect.top) / rect.height) * this.canvas.height;
 
-    // Find nearest hero spot or salute all if tapping the central altar/throne
+    // 1. Check if Duchess is tapped
+    if (this.goat) {
+      const gx = this.goat.x;
+      const gy = 368;
+      if (Math.hypot(cx - gx, cy - gy) < 42) {
+        if (tapGoat(this.goat, this.now)) {
+          play('sparkle');
+          const clientX = rect.left + (gx / this.canvas.width) * rect.width;
+          const clientY = rect.top + ((gy - 38) / this.canvas.height) * rect.height;
+          goatSays('tap', { x: clientX, y: clientY });
+          this.triggerHallBurst(gx, gy - 20, '#ffffff', 'Duchess hops!');
+          return;
+        }
+      }
+    }
+
+    // 2. Check if King on the High Throne is tapped
+    const kingDist = Math.hypot(cx - KING_SPOT.x, cy - (KING_SPOT.y - 45));
+    if (kingDist < 85) {
+      play('levelUp');
+      this.kingDecreeUntil = this.now + 1600;
+      for (let i = 0; i < 4; i++) this.heroFlourishUntil[i] = this.now + 1200 + i * 110;
+      this.triggerHallBurst(KING_SPOT.x, KING_SPOT.y - 70, '#ffd700', 'The King Decrees!');
+      return;
+    }
+
+    // 3. Check nearest Royal Guard
     let nearestIdx = -1;
-    let bestDist = 135;
+    let bestDist = 110;
     GUARD_SPOTS.forEach((spot, idx) => {
       const d = Math.hypot(cx - spot.x, cy - (spot.y - spot.height * 0.45));
       if (d < bestDist) {
@@ -364,11 +405,12 @@ export class CastleScene {
       this.heroFlourishUntil[nearestIdx] = this.now + 950;
       const spot = GUARD_SPOTS[nearestIdx];
       const kind = this.heroKinds[nearestIdx];
-      const unitName = UNITS[kind]?.name ?? 'Champion';
+      const unitName = UNITS[kind]?.name ?? 'Royal Guard';
       this.triggerHallBurst(spot.x, spot.y - 30, '#ffd700', `${unitName} Salutes!`);
     } else {
-      // Grand Royal Salute from the whole company
-      for (let i = 0; i < 5; i++) this.heroFlourishUntil[i] = this.now + 900 + i * 120;
+      // Tap on throne room hall / carpet: King & all guards salute
+      this.kingDecreeUntil = this.now + 1400;
+      for (let i = 0; i < 4; i++) this.heroFlourishUntil[i] = this.now + 900 + i * 120;
       this.triggerHallBurst(400, 225, '#ffe066', 'For the King!');
     }
   }
@@ -399,17 +441,17 @@ export class CastleScene {
   update(meta: Meta): void {
     this.meta = meta;
 
-    // 1. Always assemble a full 5-Hero Royal Guard (player's strongest unlocked heroes, padded with iconic champions)
-    const topUnlocked = strongest(meta, 5);
+    // 1. Assemble 4 disciplined Royal Guards flanking the King's throne
+    const topUnlocked = strongest(meta, 4);
     const guard: string[] = [...topUnlocked];
     for (const fallback of DEFAULT_GUARD) {
-      if (guard.length >= 5) break;
+      if (guard.length >= 4) break;
       if (!guard.includes(fallback)) guard.push(fallback);
     }
-    this.heroKinds = guard.slice(0, 5);
+    this.heroKinds = guard.slice(0, 4);
 
     const names = this.heroKinds.map((k) => UNITS[k]?.name ?? k).join(' · ');
-    this.guardNames.textContent = names;
+    this.guardNames.textContent = `${names} · Duchess`;
 
     // 2. Compute total Citadel Tier & Kingdom Bonuses for the Royal Crest and Power Banner
     const totalLevels = BUILDING_IDS.reduce((sum, id) => sum + (meta.castle[id] ?? 0), 0) + (chapelBuilt(meta) ? 1 : 0);
@@ -527,7 +569,8 @@ export class CastleScene {
           if (ok) {
             play('levelUp');
             this.triggerHallBurst(400, 230, c.glow, `${c.name} Upgrading!`);
-            for (let i = 0; i < 5; i++) this.heroFlourishUntil[i] = this.now + 850;
+            this.kingDecreeUntil = this.now + 1500;
+            for (let i = 0; i < 4; i++) this.heroFlourishUntil[i] = this.now + 850;
             return;
           }
         }
@@ -632,7 +675,83 @@ export class CastleScene {
     this.last = t;
     this.now += dt;
     this.stepParticles(dt);
+    this.stepGoat(dt);
     this.paintGreatHall();
+  }
+
+  private stepGoat(dt: number): void {
+    if (!this.goatArt) {
+      void goatSheet().then((im) => (this.goatArt = im));
+      return;
+    }
+    // Duchess actively walks and explores the throne room floor (x = 180..620, y = 370)
+    if (!this.goat) {
+      this.goat = {
+        x: 280,
+        face: 1,
+        mode: 'walk',
+        at: this.now + 2000,
+        to: 450,
+        then: 'graze',
+        steps: 0,
+      };
+    }
+
+    const g = this.goat;
+    const groundMin = 180;
+    const groundMax = 620;
+    const friends = GUARD_SPOTS.map((s) => s.x);
+
+    // If hopping, let hop finish
+    if (g.mode === 'hop') {
+      if (this.now - g.at >= 450) {
+        g.mode = 'walk';
+        g.to = g.face === 1 ? groundMax - 40 : groundMin + 40;
+        g.then = 'graze';
+      }
+      return;
+    }
+
+    if (g.mode === 'walk') {
+      // Lively walking speed across the wide 800px hall (38 px/sec)
+      const move = 38 * (dt / 1000);
+      const dx = g.to - g.x;
+      g.steps += move * 0.8;
+      if (Math.abs(dx) <= move) {
+        g.x = g.to;
+        g.mode = g.then;
+        g.at = this.now + (g.then === 'nibble' ? 1800 : 1200 + Math.random() * 2000);
+      } else {
+        g.x += Math.sign(dx) * move;
+      }
+    } else if (this.now >= g.at) {
+      // Grazing / nibble finished: pick a new destination and start walking!
+      const roll = Math.random();
+      if (roll < 0.35 && friends.length) {
+        // Walk over to inspect/nibble near a guard's boots
+        const targetHero = friends[Math.floor(Math.random() * friends.length)];
+        const side = g.x < targetHero ? -1 : 1;
+        g.to = Math.max(groundMin, Math.min(groundMax, targetHero + side * 22));
+        g.then = 'nibble';
+        g.mode = 'walk';
+        g.face = g.to > g.x ? 1 : -1;
+      } else {
+        // Walk across to another spot on the floor
+        const targetX = groundMin + Math.random() * (groundMax - groundMin);
+        g.to = targetX;
+        g.then = 'graze';
+        g.mode = 'walk';
+        g.face = g.to > g.x ? 1 : -1;
+      }
+    }
+
+    if (g.mode === 'nibble' && this.goatWas !== 'nibble') {
+      const rect = this.canvas.getBoundingClientRect();
+      const clientX = rect.left + (g.x / this.canvas.width) * rect.width;
+      const clientY = rect.top + ((368 - 38) / this.canvas.height) * rect.height;
+      goatSays('nibble', { x: clientX, y: clientY });
+    }
+    this.goatWas = g.mode;
   }
 
   private stepParticles(dt: number): void {
@@ -714,108 +833,122 @@ export class CastleScene {
     const a = sceneArt;
     const castle = this.meta?.castle;
 
-    // 1. ARCHITECTURAL BACKDROP: Painted Gothic Royal Sanctum (`sanctum.png` is 1024×1536)
-    if (a?.sanctum) {
-      // Crop the upper/middle vaulted gothic arches, stained glass rose windows, griffin altar & pillars
-      g.drawImage(a.sanctum, 0, 80, 1024, 620, 0, 0, W, H);
+    // 1. ARCHITECTURAL BACKDROP: Bespoke Castle Throne Room (400x210 pixel art drawn at 2x)
+    if (a?.throneRoom) {
+      g.drawImage(a.throneRoom, 0, 0, 400, 210, 0, 0, W, H);
     } else {
       const fallbackBg = g.createLinearGradient(0, 0, 0, H);
-      fallbackBg.addColorStop(0, '#162820');
-      fallbackBg.addColorStop(1, '#0b130f');
+      fallbackBg.addColorStop(0, '#221b28');
+      fallbackBg.addColorStop(1, '#0e0b12');
       g.fillStyle = fallbackBg;
       g.fillRect(0, 0, W, H);
     }
 
-    // Subtle atmospheric depth vignette so foreground props & heroes pop vividly
-    const floorGrad = g.createLinearGradient(0, H * 0.45, 0, H);
-    floorGrad.addColorStop(0, 'rgba(10, 18, 15, 0)');
-    floorGrad.addColorStop(0.7, 'rgba(12, 20, 16, 0.45)');
-    floorGrad.addColorStop(1, 'rgba(8, 13, 10, 0.82)');
-    g.fillStyle = floorGrad;
-    g.fillRect(0, 0, W, H);
-
-    // 2. ROYAL CRIMSON & GOLD RUNNER RUGS across the Throne Dais
-    if (a?.rug) {
-      g.save();
-      g.globalAlpha = 0.92;
-      g.drawImage(a.rug, Math.round(W / 2 - 150), 286, 300, 96);
-      g.restore();
-    }
-
-    // 3. PULSING ARCANE RITUAL SIGIL & SUNBURST ON THE CENTRAL DAIS
-    const pulse = this.reduced ? 0.5 : 0.5 + 0.5 * Math.sin(this.now / 480);
+    // 2. SUNBURST & ARCANE DAIS AURA behind the King's Throne
+    const pulse = this.reduced ? 0.5 : 0.5 + 0.5 * Math.sin(this.now / 520);
     g.save();
     g.globalCompositeOperation = 'lighter';
-    const daisGlow = g.createRadialGradient(400, 275, 10, 400, 275, 185);
-    daisGlow.addColorStop(0, `rgba(255, 215, 90, ${0.22 + pulse * 0.1})`);
-    daisGlow.addColorStop(0.55, `rgba(74, 222, 128, ${0.1 + pulse * 0.06})`);
+    const daisGlow = g.createRadialGradient(400, 160, 10, 400, 160, 210);
+    daisGlow.addColorStop(0, `rgba(255, 218, 100, ${0.28 + pulse * 0.12})`);
+    daisGlow.addColorStop(0.45, `rgba(234, 179, 8, ${0.12 + pulse * 0.08})`);
     daisGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
     g.fillStyle = daisGlow;
-    g.fillRect(180, 120, 440, 280);
-
-    // Orbiting golden rune motes around the central dais ring
-    const runeCount = 14;
-    const spin = this.reduced ? 0 : this.now / 2200;
-    g.fillStyle = 'rgba(255, 230, 140, 0.78)';
-    for (let i = 0; i < runeCount; i++) {
-      const ang = spin + (i * Math.PI * 2) / runeCount;
-      const rx = Math.round(400 + Math.cos(ang) * 128);
-      const ry = Math.round(315 + Math.sin(ang) * 34);
-      g.fillRect(rx - 2, ry - 2, 4, 4);
-    }
+    g.fillRect(180, 20, 440, 280);
     g.restore();
 
-    // 4. KINGDOM UPGRADE PROPS & TREASURES IN THE GREAT HALL
+    // 3. KINGDOM UPGRADE PROPS IN THE THRONE ROOM (positioned neatly in alcoves clear of the King & Guards)
     if (a) {
-      // Royal Banners flanking the hall pillars (Barracks)
-      const barracksLv = castle?.barracks ?? 1;
-      g.drawImage(a.banner, 52, 68, 44, 138);
-      g.drawImage(a.banner, W - 96, 68, 44, 138);
-      if (barracksLv >= 2) {
-        g.drawImage(a.banner, 165, 52, 38, 120);
-        g.drawImage(a.banner, W - 203, 52, 38, 120);
-      }
-
-      // Arcane Spire & Library props (Left Alcove: Glowing Mana Crystals & Golden Spell Lectern)
+      // Arcane Spire & Library props (Left Alcove)
       const mageLv = castle?.mageTower ?? 1;
       const libLv = castle?.library ?? 1;
       if (mageLv >= 1) {
-        g.drawImage(a.crystals, 30, 210, 68, 98);
+        g.drawImage(a.crystals, 24, 216, 68, 98);
       }
       if (libLv >= 1) {
-        g.drawImage(a.lectern, 142, 214, 62, 78);
+        g.drawImage(a.lectern, 126, 216, 56, 70);
       }
 
-      // Armoury props (Right Alcove: Masterwork Weapon Rack & Sunforge Anvil)
+      // Armoury props (Right Alcove)
       const armouryLv = castle?.armoury ?? 1;
       if (armouryLv >= 1) {
-        g.drawImage(a.rack, W - 220, 202, 96, 94);
+        g.drawImage(a.rack, W - 188, 208, 86, 84);
       }
       if (armouryLv >= 2) {
-        g.drawImage(a.anvil, W - 102, 214, 78, 96);
+        g.drawImage(a.anvil, W - 92, 222, 68, 84);
       }
 
-      // High Treasury props (Overflowing Treasure Chests & Golden Coffer flanking the Throne)
+      // High Treasury props (Treasury Chests on Dais sides)
       const treasuryLv = castle?.treasury ?? 1;
-      g.drawImage(a.chests, 255, 226, 88, 68);
-      g.drawImage(a.chests, W - 343, 226, 88, 68);
+      if (treasuryLv >= 1) {
+        g.drawImage(a.chests, 212, 198, 72, 56);
+        g.drawImage(a.chests, W - 284, 198, 72, 56);
+      }
       if (treasuryLv >= 2) {
-        g.drawImage(a.goldChest, 318, 244, 52, 52);
-        g.drawImage(a.goldChest, W - 370, 244, 52, 52);
+        g.drawImage(a.goldChest, 236, 224, 46, 46);
+        g.drawImage(a.goldChest, W - 282, 224, 46, 46);
       }
 
-      // Standing Twin Stone Braziers with live animated VFX flames
-      g.drawImage(a.brazier, 92, 198, 52, 130);
-      g.drawImage(a.brazier, W - 144, 198, 52, 130);
+      // Standing Twin Stone Braziers flanking the royal steps
+      g.drawImage(a.brazier, 78, 198, 48, 120);
+      g.drawImage(a.brazier, W - 126, 198, 48, 120);
     }
 
-    // Live Brazier Fire & Warm Torchlight Halos
-    this.drawVfx('flameFire', 118, 190, 92, 0);
-    this.drawVfx('flameFire', W - 118, 190, 92, 3);
-    this.drawVfx('sparkleFire', 118, 165, 64, 1);
-    this.drawVfx('sparkleFire', W - 118, 165, 64, 4);
+    // Live Brazier Fire & Torchlight Halos
+    this.drawVfx('flameFire', 102, 188, 84, 0);
+    this.drawVfx('flameFire', W - 102, 188, 84, 3);
+    this.drawVfx('sparkleFire', 102, 164, 58, 1);
+    this.drawVfx('sparkleFire', W - 102, 164, 58, 4);
 
-    // 5. THE 5-HERO ROYAL HONOR GUARD
+    // 4. THE KING SITTING ON THE HIGH THRONE (Top-center of Dais)
+    if (a?.kingThrone) {
+      const isDecree = this.now < this.kingDecreeUntil;
+      const frameIdx = isDecree ? 2 : !this.reduced && Math.floor(this.now / 480) % 2 === 1 ? 1 : 0;
+      const kx = KING_SPOT.x;
+      const ky = KING_SPOT.y;
+      const kw = KING_SPOT.w;
+      const kh = KING_SPOT.h;
+
+      // Golden halo aura behind High Throne
+      g.save();
+      const kingAura = g.createRadialGradient(kx, ky - kh * 0.55, 10, kx, ky - kh * 0.55, kh * 0.7);
+      kingAura.addColorStop(0, 'rgba(255, 230, 130, 0.45)');
+      kingAura.addColorStop(0.5, 'rgba(234, 179, 8, 0.18)');
+      kingAura.addColorStop(1, 'rgba(234, 179, 8, 0)');
+      g.fillStyle = kingAura;
+      g.fillRect(kx - kw, ky - kh * 1.2, kw * 2, kh * 1.5);
+
+      // Throne plinth contact shadow directly on dais step
+      g.fillStyle = 'rgba(8, 4, 12, 0.65)';
+      g.beginPath();
+      g.ellipse(kx, ky, 72, 14, 0, 0, Math.PI * 2);
+      g.fill();
+
+      // King's decree celebration aura
+      if (isDecree) {
+        this.drawVfx('levelupGold', kx, ky - kh * 0.5, 200, 0, 0, 0.85);
+      }
+
+      // Draw King seated on High Throne (frame is 160x210)
+      g.drawImage(
+        a.kingThrone,
+        frameIdx * KING_SPOT.frameW,
+        0,
+        KING_SPOT.frameW,
+        KING_SPOT.frameH,
+        Math.round(kx - kw / 2),
+        Math.round(ky - kh),
+        kw,
+        kh
+      );
+
+      // Crown glint star
+      if (!this.reduced && !isDecree) {
+        this.drawVfx('starGold', kx, ky - kh + 32, 44, 0, 0, 0.75);
+      }
+      g.restore();
+    }
+
+    // 5. THE 4 ROYAL GUARDS STANDING AT ATTENTION (Clean, disciplined posture with no aura/fx spam)
     GUARD_SPOTS.forEach((spot, i) => {
       const kind = this.heroKinds[i] ?? DEFAULT_GUARD[i];
       const unit = UNITS[kind];
@@ -823,59 +956,24 @@ export class CastleScene {
       const s = sheetInfo(unit.sheet);
       if (!s) return;
 
-      const isCenter = i === 4;
       const flourishing = this.now < this.heroFlourishUntil[i];
-      const role = roleOf(kind);
 
-      // Class-coloured radial light pool behind each hero
-      const auraColor = isCenter
-        ? '#ffd700'
-        : role === 'support'
-          ? '#fde047'
-          : unit.shot === 'fire'
-            ? '#fb923c'
-            : '#38bdf8';
-
+      // Subtle, clean floor shadow (no glowing neon halos or pedestal rings)
       g.save();
-      const halo = g.createRadialGradient(
-        spot.x,
-        spot.y - spot.height * 0.45,
-        6,
-        spot.x,
-        spot.y - spot.height * 0.45,
-        spot.height * 0.95,
-      );
-      halo.addColorStop(0, `${auraColor}66`);
-      halo.addColorStop(1, `${auraColor}00`);
-      g.fillStyle = halo;
-      g.fillRect(spot.x - spot.height, spot.y - spot.height * 1.4, spot.height * 2, spot.height * 1.8);
-      g.restore();
-
-      // Golden floor pedestal ring under each hero's feet
-      g.save();
-      g.fillStyle = 'rgba(0, 0, 0, 0.55)';
+      g.fillStyle = 'rgba(10, 6, 14, 0.45)';
       g.beginPath();
-      g.ellipse(spot.x, spot.y, isCenter ? 36 : 28, isCenter ? 12 : 9, 0, 0, Math.PI * 2);
+      g.ellipse(spot.x, spot.y - 1, 24, 7, 0, 0, Math.PI * 2);
       g.fill();
-      g.strokeStyle = isCenter ? 'rgba(255, 215, 0, 0.75)' : 'rgba(218, 181, 102, 0.45)';
-      g.lineWidth = isCenter ? 2 : 1.5;
-      g.stroke();
       g.restore();
 
-      // Background aura VFX on central Sovereign Champion or flourishing heroes
-      if (isCenter || flourishing) {
-        this.drawVfx('levelupGold', spot.x, spot.y - spot.height * 0.45, isCenter ? 190 : 150, i * 2, 0, 0.75);
-      }
-
-      // Choose animation row: attack flourish when tapped or periodic royal salute, otherwise animated idle
-      const periodicFlourish = !this.reduced && Math.floor((this.now + i * 1700) / 6500) % 5 === 0 && ((this.now + i * 1700) % 6500) < 750;
-      const useAttack = (flourishing || periodicFlourish) && s.rows.includes('attack');
+      // Guards stand strictly at attention! Attack salute only when tapped or King decrees
+      const useAttack = flourishing && s.rows.includes('attack');
       const rowName = useAttack ? 'attack' : s.rows.includes('idle') ? 'idle' : s.rows[0];
       const rowIdx = Math.max(0, s.rows.indexOf(rowName));
       const frameCount = s.counts[rowName] ?? 1;
-      const frameSpeed = useAttack ? 105 : 155;
-      const frameIdx = this.reduced ? 0 : Math.floor((this.now + i * 310) / frameSpeed) % frameCount;
-      const breatheLift = !this.reduced && frameCount === 1 && Math.sin((this.now + i * 900) / 420) > 0.3 ? 2 : 0;
+      const frameSpeed = useAttack ? 105 : 180;
+      const frameIdx = this.reduced ? 0 : Math.floor((this.now + i * 350) / frameSpeed) % frameCount;
+      const breatheLift = !this.reduced && !useAttack && frameCount === 1 && Math.sin((this.now + i * 900) / 480) > 0.4 ? 1 : 0;
 
       const scale = spot.height / s.figure;
       const dw = Math.round(s.w * scale);
@@ -884,8 +982,6 @@ export class CastleScene {
       g.save();
       g.translate(spot.x, spot.y - breatheLift);
       if (s.facesRight !== spot.faceRight) g.scale(-1, 1);
-      g.shadowColor = isCenter ? '#ffd700' : '#ffe4a0';
-      g.shadowBlur = isCenter ? 14 : 8;
       g.drawImage(
         s.img,
         frameIdx * s.w,
@@ -899,19 +995,43 @@ export class CastleScene {
       );
       g.restore();
 
-      // Foreground weapon/spell flourish VFX
-      if (useAttack || flourishing) {
-        if (unit.shot === 'fire') {
-          this.drawVfx('flameFire', spot.x + (spot.faceRight ? 42 : -42), spot.y - spot.height * 0.6, 120, i);
-        } else if (role === 'front' || role === 'striker') {
-          this.drawVfx('slashLight', spot.x + (spot.faceRight ? 36 : -36), spot.y - spot.height * 0.5, 115, i, spot.faceRight ? -0.4 : 2.4);
-        } else {
-          this.drawVfx('sparkleLight', spot.x, spot.y - spot.height * 0.65, 110, i);
-        }
-      } else if (isCenter && !this.reduced) {
-        this.drawVfx('starGold', spot.x, spot.y - spot.height - 8, 68, 0, 0, 0.8);
+      // Subtle golden salute shine only when tapped
+      if (flourishing) {
+        this.drawVfx('sparkleLight', spot.x, spot.y - spot.height * 0.6, 90, i);
       }
     });
+
+    // 6. DUCHESS THE GOAT WANDERING THE THRONE ROOM FLOOR
+    if (this.goat && this.goatArt) {
+      const gx = Math.round(this.goat.x);
+      const gy = 370;
+      const lift = Math.round(hopLift(this.goat, this.now));
+      const bob = chewBob(this.goat, this.now, this.reduced);
+      const fr = goatFrame(this.goat);
+
+      g.save();
+      // Goat shadow
+      g.fillStyle = 'rgba(8, 5, 12, 0.45)';
+      g.beginPath();
+      g.ellipse(gx, gy, 20, 6, 0, 0, Math.PI * 2);
+      g.fill();
+
+      // Draw Duchess at 2x scale (48x48 -> 96x96)
+      const gw = GOAT_FRAME * 2;
+      const gh = GOAT_FRAME * 2;
+      g.drawImage(
+        this.goatArt,
+        fr * GOAT_FRAME,
+        0,
+        GOAT_FRAME,
+        GOAT_FRAME,
+        Math.round(gx - gw / 2),
+        Math.round(gy - gh - lift * 2 + bob * 2),
+        gw,
+        gh,
+      );
+      g.restore();
+    }
 
     // 6. CELEBRATION LIGHT PILLARS & FLOATING BANNERS (on tap or upgrade)
     for (const b of this.bursts) {

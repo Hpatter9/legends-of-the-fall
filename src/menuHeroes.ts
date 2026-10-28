@@ -3,6 +3,7 @@
 
 import { ALL_HEROES, UNITS } from './sim/units';
 import { KITS } from './sim/abilities';
+import { HERO_KITS, SKILL2_LEVEL } from './sim/heroKits';
 import { TIER_SKILLS } from './sim/tierSkills';
 import { traitsOf, TRAITS } from './sim/traits';
 import { MAX_RANK, RANK_SHARDS, heroRank, rankMult, rankOf, takenRank, type Meta } from './sim/meta';
@@ -30,6 +31,10 @@ import targetIcon from './art/talent/target.png';
 import haloIcon from './art/talent/halo.png';
 import heartIcon from './art/talent/heart.png';
 import crystalIcon from './art/talent/crystal.png';
+import { warmIcon } from './menuArt';
+import { tomeControl } from './tomeView';
+import { TOME_SIZES, tomesOf, tomeTotal } from './sim/tomes';
+import { TOME_ICON } from './tomeArt';
 
 const DETAIL_TABS = ['overview', 'progression', 'equipment', 'skills'];
 
@@ -40,7 +45,9 @@ function detailHeading(title: string, subtitle: string): HTMLElement {
 }
 
 function detailIcon(src: string): HTMLImageElement {
+  warmIcon(src);
   const img = el('img');
+  img.decoding = 'sync';
   img.src = src;
   img.alt = '';
   return img;
@@ -54,6 +61,8 @@ const CARD_CLASSES = {
   shooter: { name: 'Shooter', icon: targetIcon },
   support: { name: 'Support', icon: haloIcon },
 };
+// (the class pictures are decoded as the page loads, so a redrawn roster shows no empty banner)
+for (const c of Object.values(CARD_CLASSES)) warmIcon(c.icon);
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -104,6 +113,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
   const rank = takenRank(meta, kind);
   const open = meta.unlocked.includes(kind);
   const kit = KITS[kind];
+  const hk = HERO_KITS()[kind];
   box.className = 'hsheet heroDetail';
   box.dataset.class = CLASS_OF[kind];
   box.replaceChildren();
@@ -169,6 +179,9 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     const waiting = rankOf(meta, kind) > rank;
     const next = waiting ? `${shards} shards: rank ${rank + 1} is earned` : rank < MAX_RANK ? `${shards} / ${RANK_SHARDS[rank]} shards to rank ${rank + 1}` : plan.step ? (plan.can ? 'ready to awaken' : `${shards} / ${AWAKEN_SHARDS[plan.step - 1]} shards to awaken`) : 'fully awakened';
     title.append(el('span', 'stars', starsOf(meta, kind)), levelLine(x.level, x.text), x.bar, el('span', 'lv', next));
+    // (the XP tomes held, and "Use tome" to read one to this hero: CHEST-001)
+    const tomes = tomeControl(meta, kind, () => redraw());
+    if (tomes) title.append(tomes);
     // (a rank earned, or an awakening paid for, waits for the player's tap)
     if (readyToRise(meta, kind)) {
       const badge = el('button', 'rankBadge', 'Rank up');
@@ -276,15 +289,22 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     }
     progression.append(path);
     if (kit)
-      for (const [label, a] of [['Skill', kit.skill], ...(TIER_SKILLS[kind] ? ([['Tier 2', TIER_SKILLS[kind][0]], ['Tier 3', TIER_SKILLS[kind][1]]] as const) : []), ...(kit.ultimate ? [['Ultimate', kit.ultimate] as const] : []), ['Passive', kit.passive]] as const) {
+      // (COMBAT-002: two skills paid from the hero's pool, skill 2 from level 10; the tier skills improve the hero's first skill as before)
+      for (const [label, a, cost, opens] of [
+        ['Skill 1', hk?.s1.skill ?? kit.skill, hk ? `${hk.s1.cost} ${hk.pool}` : '', 1],
+        ...(hk ? ([['Skill 2', hk.s2.skill, `${hk.s2.cost} ${hk.pool}${hk.s2.hpCost ? ' and blood' : ''}`, SKILL2_LEVEL]] as const) : []),
+        ...(TIER_SKILLS[kind] ? ([['Tier 2', TIER_SKILLS[kind][0], '', 1], ['Tier 3', TIER_SKILLS[kind][1], '', 1]] as const) : []),
+        ...(kit.ultimate ? [['Ultimate', kit.ultimate, 'tap its portrait', kit.ultimate.unlock ?? 1] as const] : []),
+        ['Passive', kit.passive, '', 1],
+      ] as const) {
         const card = el('article', 'dossierAbility');
-        const locked = label === 'Ultimate' && 'unlock' in a && !!a.unlock && x.level < a.unlock;
+        const locked = x.level < opens;
         if (locked) card.classList.add('locked');
         card.dataset.type = label.toLowerCase().replace(' ', '-');
         const icon = label === 'Ultimate' ? crystalIcon : label === 'Passive' ? haloIcon : CARD_CLASSES[CLASS_OF[kind]].icon;
         const body = el('div');
-        body.append(el('small', 'dossierAbilityLabel', label === 'Skill' ? 'Active skill' : label), el('h5', '', a.name), el('p', '', a.text));
-        if (locked) body.append(el('span', 'ultLock', `Unlocks at level ${(a as { unlock: number }).unlock}`));
+        body.append(el('small', 'dossierAbilityLabel', cost ? `${label} · ${cost}` : label), el('h5', '', a.name), el('p', '', a.text));
+        if (locked) body.append(el('span', 'ultLock', `Unlocks at level ${opens}`));
         card.append(detailIcon(icon), body);
         skills.append(card);
       }
@@ -311,6 +331,23 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
   const head = el('div');
   head.className = 'rosterHeading';
   head.append(el('small', 'rosterEyebrow', 'THE LAST KEEP'), el('h3', '', 'Your company'), el('em', '', `${have.length} of ${ALL_HEROES.length} heroes · ${earned} of ${CONTENT_HEROES.length} earned in play`));
+  // (the XP tomes held, the nearest thing the game has to a bag: they are read to a hero from its page)
+  if (tomeTotal(meta) > 0) {
+    const bag = el('p', 'rosterTomes');
+    bag.append('XP tomes: ');
+    for (const size of TOME_SIZES) {
+      const n = tomesOf(meta, size);
+      if (!n) continue;
+      const img = el('img');
+      img.src = TOME_ICON[size];
+      img.alt = '';
+      const chip = el('span', 'tomeChip');
+      chip.append(img, `${n} ${size}`);
+      bag.append(chip);
+    }
+    bag.append(el('small', '', 'Open a hero to use one.'));
+    head.append(bag);
+  }
   box.append(head);
   const label = el('label', 'rosterSearch');
   label.append(el('span', '', 'Find a hero'));
@@ -336,6 +373,7 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
     const cls = CARD_CLASSES[CLASS_OF[kind]];
     const banner = el('span', 'heroClassBanner');
     const icon = el('img');
+    icon.decoding = 'sync';
     icon.src = cls.icon;
     icon.alt = '';
     banner.append(icon, el('span', '', cls.name));
