@@ -12,7 +12,7 @@ import { footDims, liesBehind, type Rot } from '../sim/turn';
 import { AREA_URLS, BUSH_URLS, GROUND_URLS } from './areaArt';
 import { TERRAIN_URLS } from './terrainArt';
 import { LIT_PROPS } from './weatherRules';
-import { fallFrames, FALL_FRAMES, flairOf, flowFrames, FLOW_FRAMES, glow, loadRoadArt, piece, sceneryPictures, setPiece, type Pic } from './roadArt';
+import { birdOf, fallFrames, FALL_FRAMES, flairOf, flowFrames, FLOW_FRAMES, glow, loadRoadArt, piece, sceneryPictures, setPiece, type Pic } from './roadArt';
 import { settings } from '../settings';
 import { sceneDepth } from '../sim/armyRoad';
 import { mixSeed } from '../sim/rng';
@@ -542,6 +542,23 @@ export class BoardView {
       const far = depth ? depth[p.v * b.w + p.u] : 0;
       const [x, y] = project(f, p.u, p.v, t.h - Math.min(2, Math.max(0, far - 1)));
       addPic(tile, setPiece(p.kind, b.area), x, y, live);
+    }
+    // a few small birds at the road's edge, pecking (on the land beside it, a tile off the road)
+    if (depth) {
+      let n = 0;
+      b.tiles.forEach((t, i) => {
+        if (n >= 3 || !t.scene || depth[i] !== 1 || t.scene === 'water' || t.scene === 'lava' || t.deco % 11 !== 5) return;
+        const frames = birdOf(b.area, t.deco);
+        if (!frames) return;
+        const [x, y] = project(f, i % b.w, Math.floor(i / b.w), t.h);
+        const sp = new Sprite(frames[0]);
+        sp.anchor.set(0.5, 1);
+        sp.scale.set((t.deco >> 4) % 2 ? -1.1 : 1.1, 1.1);
+        sp.position.set(x + ((t.deco >> 2) % 3) * 6 - 6, y + 10);
+        tiles[i].addChild(sp);
+        live.loops.push({ sp, frames, ph: t.deco % 2, ms: 380 + (t.deco % 5) * 120 });
+        n++;
+      });
     }
     // water pouring off an open edge, where its face is towards the screen
     for (const fall of b.falls ?? []) {

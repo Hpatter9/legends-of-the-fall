@@ -1027,7 +1027,10 @@ export class Fx {
       if (look.word) {
         const mx = spots.reduce((a, s) => a + s[0], 0) / spots.length;
         const my = Math.min(...spots.map((s) => s[1]));
-        this.label(look.word, mx, my - 26, look.colour, 14, Math.min(1600, e.ms + 300));
+        // (the word in its colour lifted halfway to white, so it reads over dark ground too)
+        const c = look.colour;
+        const pale = (((((c >> 16) & 255) + 255) >> 1) << 16) | (((((c >> 8) & 255) + 255) >> 1) << 8) | (((c & 255) + 255) >> 1);
+        this.label(look.word, mx, my - 26, pale, 14, Math.min(1600, e.ms + 300));
       }
       const calm = this.calm();
       let t = 0;

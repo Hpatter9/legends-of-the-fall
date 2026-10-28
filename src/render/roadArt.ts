@@ -10,18 +10,23 @@ import { RECTS } from './calArt';
 import { ROAD_RECTS } from './roadAtlas';
 import calUrl from '../art/calmap/atlas.png';
 import roadUrl from '../art/road/atlas.png';
+import birdsUrl from '../art/road/birds.png';
 import { loadImage } from './loadImage';
 import { TH, TW } from './iso';
 
 let cal: Texture | null = null;
 let road: Texture | null = null;
+let birds: Texture[][] = [];
 const cut = new Map<string, Texture>();
 
 export async function loadRoadArt(): Promise<void> {
   if (cal && road) return;
-  const [a, b] = await Promise.all([loadImage(calUrl), loadImage(roadUrl)]);
+  const [a, b, c] = await Promise.all([loadImage(calUrl), loadImage(roadUrl), loadImage(birdsUrl)]);
   cal = Texture.from(a);
   road = Texture.from(b);
+  // (five small birds of DawnLike's, two frames each: a column a bird)
+  const bs = Texture.from(c).source;
+  birds = [0, 1, 2, 3, 4].map((k) => [0, 1].map((f) => new Texture({ source: bs, frame: new Rectangle(k * 16, f * 16, 16, 16) })));
 }
 
 /** A picture by its name: the road's atlas first, then the Calamity map's. */
@@ -225,6 +230,12 @@ export function setPiece(kind: PieceKind, area: Area): Pic {
     case 'skulls':
       return p('b5_1', 0.8);
   }
+}
+
+/** A small bird's two frames, for a land: a pale one in the snow, a dark one over the graves, the others by the tile's number. Null where no bird would be. */
+export function birdOf(area: Area, deco: number): Texture[] | null {
+  if (!birds.length || area === 'volcano' || area === 'forge' || area === 'dungeon') return null;
+  return birds[area === 'snow' || area === 'crystal' ? 3 : area === 'graveyard' ? 4 : [0, 1, 2][deco % 3]];
 }
 
 /** A soft round glow, white in the middle (tinted and added over a flame). */
