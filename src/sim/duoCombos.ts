@@ -23,7 +23,8 @@ export interface DuoCombo {
 }
 
 export interface DuoState {
-  def: DuoCombo;
+  /** The combo's id in `DUO_COMBOS` (an id, not the combo itself, so the battle stays plain data a heart can copy and a save can keep). */
+  id: string;
   heroAId: number;
   heroBId: number;
   heroAKind: string;
@@ -303,6 +304,9 @@ export const DUO_COMBOS: readonly DuoCombo[] = [
 ];
 
 /** Check placed hero kinds and find all complementary Duo-Combos. */
+/** A combo by its id. */
+export const comboById = (id: string): DuoCombo | undefined => DUO_COMBOS.find((c) => c.id === id);
+
 export function duoCombosOf(kinds: Iterable<string>): DuoCombo[] {
   const set = new Set(kinds);
   return DUO_COMBOS.filter((c) => set.has(c.heroes[0]) && set.has(c.heroes[1]));
@@ -318,7 +322,7 @@ export function startDuoCombos(b: Battle): void {
     const unitB = heroes.find((u) => u.def === combo.heroes[1]);
     if (unitA && unitB) {
       states.push({
-        def: combo,
+        id: combo.id,
         heroAId: unitA.id,
         heroBId: unitB.id,
         heroAKind: unitA.def,
@@ -360,20 +364,22 @@ export function triggerDuoComboOnUlt(b: Battle, caster: Unit, out: BattleEvent[]
     if (harmonic) state.harmonicCount++;
 
     // Execute the synergy
-    state.def.execute(b, caster, partner, harmonic, out);
+    const def = comboById(state.id);
+    if (!def) continue;
+    def.execute(b, caster, partner, harmonic, out);
 
     // Emit duo combo event
     out.push({
       kind: 'duoCombo',
-      id: state.def.id,
-      name: state.def.name,
+      id: def.id,
+      name: def.name,
       heroA: state.heroAId,
       heroB: state.heroBId,
-      title: harmonic ? `Harmonic: ${state.def.title}` : state.def.title,
+      title: harmonic ? `Harmonic: ${def.title}` : def.title,
       harmonic,
       banner: harmonic
-        ? `Harmonic Resonance! ${state.def.name}: ${state.def.title}`
-        : `Duo-Combo! ${state.def.name}: ${state.def.title}`,
+        ? `Harmonic Resonance! ${def.name}: ${def.title}`
+        : `Duo-Combo! ${def.name}: ${def.title}`,
     });
 
     triggered = true;

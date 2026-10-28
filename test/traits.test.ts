@@ -95,7 +95,7 @@ test('Marksman lengthens a shooter\'s reach from height, and the traits are fixe
 test('Duo-Combos: complementary hero pairs trigger synergies and harmonic resonances', () => {
   const b = started(['knight', 'peasant']);
   assert.ok(b.duoCombos && b.duoCombos.length > 0);
-  const duo = b.duoCombos.find((d) => d.def.id === 'knight_peasant')!;
+  const duo = b.duoCombos.find((d) => d.id === 'knight_peasant')!;
   assert.ok(duo);
 
   const k = hero(b, 'knight');

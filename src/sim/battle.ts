@@ -765,7 +765,7 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   // Guardian trait milestone: emergency Aegis shield when ally drops below 30% HP
   if (b.traits?.guardianShield && to.side === 'hero' && !to.guardianShieldUsed && to.hp < to.maxHp * 0.3 && !killed) {
     to.guardianShieldUsed = true;
-    to.shield = { hp: Math.round(to.maxHp * 0.25), until: b.t + 5000 };
+    to.shield = { hp: Math.round(to.maxHp * 0.15), until: b.t + 5000 };
     out.push({ kind: 'heal', to: to.id, amount: 0 });
   }
 
