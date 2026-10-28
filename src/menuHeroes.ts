@@ -32,6 +32,9 @@ import haloIcon from './art/talent/halo.png';
 import heartIcon from './art/talent/heart.png';
 import crystalIcon from './art/talent/crystal.png';
 import { warmIcon } from './menuArt';
+import { tomeControl } from './tomeView';
+import { TOME_SIZES, tomesOf, tomeTotal } from './sim/tomes';
+import { TOME_ICON } from './tomeArt';
 
 const DETAIL_TABS = ['overview', 'progression', 'equipment', 'skills'];
 
@@ -176,6 +179,9 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     const waiting = rankOf(meta, kind) > rank;
     const next = waiting ? `${shards} shards: rank ${rank + 1} is earned` : rank < MAX_RANK ? `${shards} / ${RANK_SHARDS[rank]} shards to rank ${rank + 1}` : plan.step ? (plan.can ? 'ready to awaken' : `${shards} / ${AWAKEN_SHARDS[plan.step - 1]} shards to awaken`) : 'fully awakened';
     title.append(el('span', 'stars', starsOf(meta, kind)), levelLine(x.level, x.text), x.bar, el('span', 'lv', next));
+    // (the XP tomes held, and "Use tome" to read one to this hero: CHEST-001)
+    const tomes = tomeControl(meta, kind, () => redraw());
+    if (tomes) title.append(tomes);
     // (a rank earned, or an awakening paid for, waits for the player's tap)
     if (readyToRise(meta, kind)) {
       const badge = el('button', 'rankBadge', 'Rank up');
@@ -325,6 +331,23 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
   const head = el('div');
   head.className = 'rosterHeading';
   head.append(el('small', 'rosterEyebrow', 'THE LAST KEEP'), el('h3', '', 'Your company'), el('em', '', `${have.length} of ${ALL_HEROES.length} heroes · ${earned} of ${CONTENT_HEROES.length} earned in play`));
+  // (the XP tomes held, the nearest thing the game has to a bag: they are read to a hero from its page)
+  if (tomeTotal(meta) > 0) {
+    const bag = el('p', 'rosterTomes');
+    bag.append('XP tomes: ');
+    for (const size of TOME_SIZES) {
+      const n = tomesOf(meta, size);
+      if (!n) continue;
+      const img = el('img');
+      img.src = TOME_ICON[size];
+      img.alt = '';
+      const chip = el('span', 'tomeChip');
+      chip.append(img, `${n} ${size}`);
+      bag.append(chip);
+    }
+    bag.append(el('small', '', 'Open a hero to use one.'));
+    head.append(bag);
+  }
   box.append(head);
   const label = el('label', 'rosterSearch');
   label.append(el('span', '', 'Find a hero'));

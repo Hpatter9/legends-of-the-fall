@@ -14,6 +14,7 @@ import { armyOfRun, tierOfRun, type Run } from './run';
 import { MILESTONES, RUN_STARS, TIERS } from './tiers';
 import { ALL_HEROES } from './units';
 import { CHEST_STONES, DAILY_CHEST_STONES } from './unlockRules';
+import { addTomes, grantTomes, rollTomes, TOME_SIZES, tomeWords, type TomeCounts, type TomeSize } from './tomes';
 
 // ---- the conditions -----------------------------------------------------------------------------------------------------
 
@@ -152,13 +153,15 @@ export function rollGear(rng: Rng, at: number, armyIdx: number): GearDrop[] {
 }
 
 export interface LootItem {
-  type: 'crowns' | 'stones' | 'gear';
+  type: 'crowns' | 'stones' | 'gear' | 'tomes';
   /** A line for the reveal: "320 crowns", "3 summoning stones". */
   text: string;
   /** The equipment's base it is about. */
   ref?: string;
-  /** How many stones a stones line holds. */
+  /** How many crowns, stones or tomes the line holds. */
   n?: number;
+  /** The size of the XP tomes a tomes line holds (`tomes.ts`). */
+  size?: TomeSize;
   /** A piece of equipment this reward is (for its icon and frame). */
   equip?: NewEquipment;
   /** A piece of equipment's rarity (for the card colour; heroes have none). */
@@ -252,17 +255,26 @@ export function stoneItems(plain: number, prize: number): LootItem[] {
   return out;
 }
 
+/** The reveal lines of a chest's XP tomes, one a size, smallest first. Shared with the shop's chests. */
+export function tomeItems(t: TomeCounts): LootItem[] {
+  return TOME_SIZES.filter((size) => (t[size] ?? 0) > 0).map((size) => ({ type: 'tomes', text: tomeWords(size, t[size]!), n: t[size], size, ...(size === 'large' ? { prize: true } : {}) }));
+}
+
 /** The reveal line of a piece of gear a chest drops. */
 export const gearItem = (g: GearDrop): LootItem => ({ type: 'gear', text: `${itemName(g.item)} (${RARITY_NAMES[g.item.rarity]}, Lv ${g.item.level})`, ref: g.item.base, rarity: g.item.rarity, equip: g.item, prize: g.item.rarity >= 5 });
 
 function lootOf(m: Meta, c: StashChest, apply: boolean): Loot {
   const daily = c.daily !== undefined;
   const roll = daily ? rollDailyChest(c.seed, c.bonus ?? 0) : rollChest(c.seed, armyById(c.army)!, c.at, c.tier);
-  const items: LootItem[] = [{ type: 'crowns', text: `${roll.crowns} crowns` }];
+  const items: LootItem[] = [{ type: 'crowns', text: `${roll.crowns} crowns`, n: roll.crowns }];
   if (apply) m.crowns += roll.crowns;
   const stones = chestStones(c);
   if (apply) m.stones = (m.stones ?? 0) + stones;
   items.push(...stoneItems(stones, 0));
+  // (XP tomes: on top of the rest, from a side stream of the chest's seed, so the crowns and gear roll as they always did)
+  const tomes = rollTomes(c.seed, daily ? 'daily' : chestKind(c.at), c.bonus ?? 0);
+  if (apply) grantTomes(m, tomes);
+  items.push(...tomeItems(tomes));
   // (equipment: last, as it was drawn last; granted once, when the chest is opened)
   for (const g of roll.gear) {
     if (apply) grantEquipment(m, g.item);
@@ -277,6 +289,44 @@ export function openChest(m: Meta, index: number): Loot | null {
   if (!c || (c.daily === undefined && !armyById(c.army))) return null;
   m.stash.splice(index, 1);
   return lootOf(m, c, true);
+}
+
+/** What several chests held, added up (the Open all summary): the crowns, stones and tomes, and the gear, the best first (rarity, then level). */
+export interface LootSummary {
+  chests: number;
+  crowns: number;
+  stones: number;
+  tomes: TomeCounts;
+  gear: LootItem[];
+}
+export function sumLoot(loots: readonly Loot[]): LootSummary {
+  const out: LootSummary = { chests: loots.length, crowns: 0, stones: 0, tomes: {}, gear: [] };
+  for (const l of loots)
+    for (const it of l.items) {
+      if (it.type === 'crowns') out.crowns += it.n ?? 0;
+      else if (it.type === 'stones') out.stones += it.n ?? 0;
+      else if (it.type === 'tomes' && it.size) out.tomes = addTomes(out.tomes, { [it.size]: it.n ?? 0 });
+      else if (it.type === 'gear') out.gear.push(it);
+    }
+  // (a stable sort: pieces of the same rarity and level stay in the order their chests were opened)
+  out.gear.sort((a, b) => (b.rarity ?? 0) - (a.rarity ?? 0) || (b.equip?.level ?? 0) - (a.equip?.level ?? 0));
+  return out;
+}
+
+/**
+ * Open every chest in the stash at once, in the order a tap on the cart would open them one by one (the best waiting first, `bestChest`):
+ * each chest pays exactly what it would have, from its own seed, and the gear is given its ids in the same order. Returns what each held.
+ */
+export function openAll(m: Meta): Loot[] {
+  const out: Loot[] = [];
+  while (m.stash.length) {
+    const i = bestChest(m.stash);
+    const loot = openChest(m, i);
+    // (a chest that cannot be opened (an army no longer known) is left where it is; Open all stops rather than loop on it)
+    if (!loot) break;
+    out.push(loot);
+  }
+  return out;
 }
 
 /**

@@ -959,26 +959,6 @@ button:focus-visible, input:focus-visible { outline: 2px solid #efd39a; outline-
   filter: drop-shadow(0 3px 5px #000);
   transform: translateY(2px);
 }
-.ctRelicFrame {
-  position: absolute;
-  left: 5px;
-  bottom: 5px;
-  width: 34px;
-  height: 34px;
-  display: grid;
-  place-items: center;
-  background: radial-gradient(circle at 50% 50%, var(--chamber-glow, #ffd700) 0%, #121a14 78%);
-  border: 1.5px solid #e0be6e;
-  border-radius: 5px;
-  box-shadow: 0 2px 6px #000c, inset 0 0 6px #000;
-}
-.ctRelicImg {
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 2px 3px #000);
-}
 .ctLvPill {
   position: absolute;
   top: 4px;

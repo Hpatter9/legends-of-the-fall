@@ -36,7 +36,8 @@ export function tally(stats: FightStats, events: BattleEvent[], units: readonly 
     if (e.kind === 'hit') {
       const by = row(e.by);
       const to = row(e.to);
-      if (by) {
+      // Environmental self-hits still count as damage taken, never as dealt or kills.
+      if (by && e.by !== e.to) {
         by.dealt += e.dmg;
         if (e.killed) by.kills++;
       }

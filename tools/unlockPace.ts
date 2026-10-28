@@ -10,6 +10,7 @@ import { ARMIES, armyFoes, replayTotal, firstClearTotal } from '../src/sim/armie
 import { chestSeed, firstClearSeed, FIRST_CLEAR_CHEST, openChest } from '../src/sim/armyStars';
 import { grantContent, CONTENT_HEROES } from '../src/sim/contentHeroes';
 import { newMeta, pickStarter, stageCrowns, stonesOf, useStones, type Meta } from '../src/sim/meta';
+import { TOME_SIZES, TOMES, tomesOf } from '../src/sim/tomes';
 import { buyChest, SHOP, shopPrice, stockLeft } from '../src/sim/chestShop';
 import { ALL_HEROES } from '../src/sim/units';
 import { ownedWeight, PULL_HEROES, unlockNeed } from '../src/sim/unlockRules';
@@ -70,7 +71,7 @@ const BADGE_STONES = ACHIEVEMENTS.reduce((n, a) => n + stonesOfAchievement(a), 0
 const NO_ENTRIES = arg('--noentries', 0) > 0;
 const EXTRA_STONES = arg('--nobadges', 0) > 0 ? 0 : Math.round((BADGE_STONES * Math.min(1, EXTRA_CROWNS / BADGE_CROWNS)));
 
-interface Report { pdays: Record<number, number>; by: Record<number, number>; pullable: number; days: Record<number, number>; at: Record<string, number>; pulls: number; crowns: number; entryStones: number }
+interface Report { tomeXp: Record<number, number>; pdays: Record<number, number>; by: Record<number, number>; pullable: number; days: Record<number, number>; at: Record<string, number>; pulls: number; crowns: number; entryStones: number }
 const MARKS = [5, 10, 15, 20, 30, 40, 45];
 /** The pullable heroes owned (the starter's three count): the 4th is the first after the starter. */
 const PULL_MARKS = [4, 5, 6, 10, 15, 20, 30, 35];
@@ -82,6 +83,7 @@ function simulate(seed: number): Report {
   const at: Record<string, number> = {};
   const days: Record<number, number> = {};
   const pdays: Record<number, number> = {};
+  const tomeXp: Record<number, number> = {};
   let spent = 0;
   let income = 0;
   let castleLeft = CASTLE_TOTAL;
@@ -176,6 +178,8 @@ function simulate(seed: number): Report {
     }
     for (const k of grantContent(m)) at[k] = at[k] ?? day;
     if (CHECKS.includes(day)) by[day] = m.unlocked.length;
+    // (the XP tomes are kept, not read: what they would give in all, for `npm run level-pace -- --tomes`)
+    if (CHECKS.includes(day)) tomeXp[day] = TOME_SIZES.reduce((n, size) => n + tomesOf(m, size) * TOMES[size].xp, 0);
     if (pullable === Infinity && PULL_HEROES.every((k) => m.unlocked.includes(k))) pullable = day;
     const ownedPull = PULL_HEROES.filter((k) => m.unlocked.includes(k)).length;
     for (const n of PULL_MARKS) if (pdays[n] === undefined && ownedPull >= n) pdays[n] = day;
@@ -183,7 +187,7 @@ function simulate(seed: number): Report {
     spent += 0;
   }
   void spent;
-  return { pdays, by, pullable, days, at, pulls, crowns: income, entryStones };
+  return { tomeXp, pdays, by, pullable, days, at, pulls, crowns: income, entryStones };
 }
 
 const reports = Array.from({ length: SEEDS }, (_, i) => simulate(i * 7919 + 13));
@@ -213,4 +217,7 @@ for (const c of CONTENT_HEROES) {
 }
 console.log('\nowned (pullable)  shards to unlock the next  odds that a pull is a new hero shard (nothing begun)');
 for (const n of [3, 4, 5, 6, 8, 10, 14, 18, 22, 26, 30, 34]) console.log(`${String(n).padStart(8)}  ${String(unlockNeed(n)).padStart(8)}  ${(((PULL_HEROES.length - n) / (PULL_HEROES.length - n + n * ownedWeight(n))) * 100).toFixed(1).padStart(8)}%`);
+console.log('\nday   XP tomes collected, as XP (median; `npm run level-pace -- --tomes "<day>:<xp>,..."` reads this line)');
+for (const d of CHECKS) if (d <= DAYS) console.log(`${String(d).padStart(3)}   ${med(reports.map((r) => r.tomeXp[d] ?? 0))}`);
+console.log(`--tomes "${CHECKS.filter((d) => d <= DAYS).map((d) => `${d}:${med(reports.map((r) => r.tomeXp[d] ?? 0))}`).join(',')}"`);
 void ALL_HEROES;
