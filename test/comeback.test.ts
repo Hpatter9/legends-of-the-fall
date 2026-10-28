@@ -94,3 +94,14 @@ test('there are always two to four pointers, the same for the same save', () => 
   assert.ok(comebackTips(many, { army: 'golems', party: many.party }).length <= 4);
   for (const t of [...a, ...comebackTips(many, { army: 'golems', party: many.party })]) assert.ok(t.text.length < 140, `short: ${t.text}`);
 });
+
+test('summoning stones waiting: the summon pointer names them, crowns or not', () => {
+  const m = save(30);
+  m.crowns = 0;
+  m.stones = 4;
+  const tip = comebackTips(m, { army: 'orcs', party: m.party }, 12).find((t) => t.id === 'summon');
+  assert.ok(tip?.text.includes('4 summoning stones'));
+  assert.equal(tip?.go?.to, 'recruit');
+  m.stones = 0;
+  assert.ok(!comebackTips(m, { army: 'orcs', party: m.party }, 12).some((t) => t.id === 'summon'), 'nothing to spend, no pointer');
+});

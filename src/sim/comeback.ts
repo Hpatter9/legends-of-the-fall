@@ -8,7 +8,8 @@ import { ARMIES, armyById, armyCleared, armyUnlocked, type Army } from './armies
 import { BUILDING_IDS, BUILDINGS, nextCost } from './castle';
 import { bestFor } from './equipment';
 import { levelOfKind } from './levels';
-import { pullCost, type Meta } from './meta';
+import { stonesOf, type Meta } from './meta';
+import { shopPrice } from './chestShop';
 import { modeOpen } from './modeUnlock';
 import { readyToRise } from './rankUp';
 import { roleOf } from './suggest';
@@ -102,7 +103,10 @@ export function comebackTips(m: Meta, ctx: ComebackContext, max = 4): ComebackTi
     }).sort((a, b) => (nextCost(m.castle, a) ?? 0) - (nextCost(m.castle, b) ?? 0))[0];
     if (build) out.push({ id: 'castle', text: `You can afford the next ${BUILDINGS[build].name}. Every run after this one gets it.`, button: 'Castle', go: { to: 'castle' } });
   }
-  if (m.crowns >= pullCost(1)) out.push({ id: 'summon', text: `${m.crowns} crowns doing nothing. A summon might find a hero who does something.`, button: 'Summon', go: { to: 'recruit' } });
+  // (summoning stones waiting, or crowns enough for the cheapest chest of stones)
+  const stones = stonesOf(m);
+  if (stones > 0) out.push({ id: 'summon', text: `${stones} summoning ${stones === 1 ? 'stone is' : 'stones are'} doing nothing. One might find a hero who does something.`, button: 'Summon', go: { to: 'recruit' } });
+  else if (m.crowns >= shopPrice(m, 'bronze')) out.push({ id: 'summon', text: `${m.crowns} crowns doing nothing. A chest of summoning stones might find a hero who does something.`, button: 'Summon', go: { to: 'recruit' } });
 
   // (the party itself: a synergy one hero short, with an owned hero who would wake it; no one at the front)
   const benched = m.unlocked.filter((k) => !party.includes(k) && UNITS[k]);
