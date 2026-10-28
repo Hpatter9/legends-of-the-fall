@@ -21,7 +21,7 @@ import { neighboursOf, openSet, routeBetween, SIDE_BASE, sideSpots, START_ID, ty
 import { ALL_RELIC_IDS, RELICS, relicEffects } from './relics';
 import { mixSeed, Rng } from './rng';
 import { addTwists, CHAOS_TWISTS, TWISTS } from './twists';
-import { BOSS, FOE_START, reward, squadLimit, summonCost, type Run } from './run';
+import { BOSS, FOE_START, ownHeroes, reward, spendBuff, squadLimit, summonCost, type Run } from './run';
 import { UNITS } from './units';
 import { CAL_BOARD, CAL_MAPS, CAL_OPENING, CAL_SCALE, calBossBoost, fitBand, squadFoeMult } from './calamity';
 import { calBossBand } from './calamityBosses';
@@ -522,9 +522,6 @@ export function fightSpec(run: Run, kind: NodeKind, floor: number, twist?: strin
     spec.twist = tw.id;
     spec.stage.twist = tw.fx;
   }
-  if (run.buff?.speed) spec.stage.move = (spec.stage.move ?? 1) * run.buff.speed;
-  if (run.buff?.atk) spec.stage.heroes = { ...(spec.stage.heroes ?? {}), atk: (spec.stage.heroes?.atk ?? 1) * run.buff.atk };
-  if (run.buff?.hp) spec.stage.heroes = { ...(spec.stage.heroes ?? {}), hp: (spec.stage.heroes?.hp ?? 1) * run.buff.hp };
   return spec;
 }
 
@@ -618,7 +615,7 @@ function stockHires(run: Run, floor: number): Hire[] {
 }
 
 /** Whether the run has room for another hero (a calamity owns at most its squad limit). */
-export const hasRoom = (run: Run): boolean => run.mode?.kind !== 'calamity' || run.roster.length < squadLimit(run);
+export const hasRoom = (run: Run): boolean => run.mode?.kind !== 'calamity' || ownHeroes(run).length < squadLimit(run);
 
 /** Whether the hero of this kind cannot be hired now: a Calamity hires each kind once, so one already on the roster is closed. */
 export const hireClosed = (run: Run, kind: string): boolean => run.mode?.kind === 'calamity' && ownsKind(run, kind);
@@ -716,18 +713,17 @@ export function clearNode(run: Run): void {
   const first = !t.path.includes(cur.id);
   if (first) {
     t.path.push(cur.id);
-    if (run.buff) {
-      if (run.buff.duration && run.buff.duration > 1) run.buff.duration--;
-      else run.buff = undefined;
-    }
+    // (a mirror's clone stays for its floors, then goes: its place in the squad goes back to a benched hero of the party's own)
     for (const h of [...run.roster]) {
       if (h.cloneFloors !== undefined) {
         h.cloneFloors--;
         if (h.cloneFloors <= 0) {
+          const fought = run.squad.includes(h.id);
           run.roster = run.roster.filter((x) => x.id !== h.id);
           run.squad = run.squad.filter((x) => x !== h.id);
-          if (run.tower) delete run.tower.hp[String(h.id)];
-          if (!run.squad.length && run.roster.length) run.squad.push(run.roster[0].id);
+          delete t.hp[String(h.id)];
+          const bench = ownHeroes(run).find((x) => !run.squad.includes(x.id));
+          if (bench && (fought || !run.squad.length) && run.squad.length < squadLimit(run)) run.squad.push(bench.id);
         }
       }
     }
@@ -906,7 +902,7 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
     recap?.gear.push(g.name);
   }
   if (run.buff?.gold) run.found.push(`${run.buff.gold} gold from the cursed path`);
-  run.buff = undefined;
+  spendBuff(run);
   clearNode(run);
 }
 

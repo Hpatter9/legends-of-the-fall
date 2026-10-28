@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fight, place, playOut, type Battle } from '../src/sim/battle';
-import { CALAMITY_SQUAD, dropSlot, adoptOldTower, heroOf, loadRun, loadSlot, saveRun, saveSlot, setSquad, squadLimit, startStage, summon, type Run } from '../src/sim/run';
+import { CALAMITY_SQUAD, dropSlot, adoptOldTower, heroOf, loadRun, loadSlot, saveRun, saveSlot, setSquad, spendBuff, squadLimit, startStage, summon, type Run } from '../src/sim/run';
 import { startedMeta, type Meta } from '../src/sim/meta';
 import { calamityRun, towerRun } from '../src/sim/modes';
 import { CAL_BOSSES, CAL_BOSS_TITLES } from '../src/sim/calamityBosses';
@@ -18,9 +18,10 @@ import { hpShare } from '../src/sim/health';
 import { frontSpots, playCalamity, playTower, starterEnd } from '../tools/autoplay';
 import { HEROES, UNITS } from '../src/sim/units';
 import { mixSeed } from '../src/sim/rng';
-import { chooseOption, drawEvent } from '../src/sim/events';
+import { chooseOption, CREATIVE_KINDS, drawEvent, MYSTERY_KINDS, TOWER_EVENT_KINDS } from '../src/sim/events';
+import { moveRate } from '../src/sim/castle';
 import { makeGear } from '../src/sim/gear';
-import { TWISTS, CHAOS_TWISTS, twistBoard } from '../src/sim/twists';
+import { TWISTS, CHAOS_TWISTS, rollTwist, twistBoard } from '../src/sim/twists';
 import { ascRules } from '../src/sim/ascension';
 import { makeBoard } from '../src/sim/board';
 
@@ -679,17 +680,20 @@ test('the wandering bard: awful ballad grants temporary Earworm speed buff, or p
   assert.equal(run.buff?.speed, 1.25);
   assert.equal(run.buff?.duration, 2);
 
-  // Buff affects fight speed
-  const spec = fightSpec(run, 'fight', 2);
-  assert.equal(spec.stage.move, 1.25);
+  // A quiet floor does not spend it
+  run.tower!.cur = { id: 1, kind: 'campfire' };
+  clearNode(run);
+  assert.equal(run.buff?.duration, 2, 'the floor without a fight keeps it');
 
-  // Clearing nodes decrements buff duration over floors
-  run.tower!.cur = { id: 1, kind: 'fight' };
-  clearNode(run);
+  // The Earworm quickens the heroes' steps once (the castle's own pace times 1.25), and each fight spends a floor of it
+  reachNode(run, 'fight');
+  const b = playNode(run);
+  assert.ok(Math.abs((b.heroMove ?? 1) - moveRate(run.castle) * 1.25) < 1e-9, 'a quarter faster, not that squared');
+  finishTower(run, b, true);
   assert.equal(run.buff?.duration, 1);
-  run.tower!.cur = { id: 2, kind: 'fight' };
-  clearNode(run);
-  assert.equal(run.buff, undefined, 'buff expires after 2 floors');
+  assert.equal(run.buff?.speed, 1.25);
+  spendBuff(run);
+  assert.equal(run.buff, undefined, 'buff expires after 2 fights');
 
   // Test choice 1: Pay to stop -> Heals party
   const run2 = calamityRun(11, startedMeta(1), 'knight');
@@ -816,6 +820,89 @@ test('the whispering void well: drink deep for attack buff or toss gold for reli
   chooseOption(run2, 1);
   assert.equal(run2.gold, 60 - cost);
   assert.equal(run2.items?.length, 1);
+});
+
+test('an event\'s blessing waits for the next fight: clearing the mystery floor does not spend it, the fight does', () => {
+  const run = calamityRun(12, startedMeta(1), 'knight');
+  run.buff = { atk: 1.15, gold: 30 };
+  run.tower!.cur = { id: 3, kind: 'mystery' };
+  clearNode(run);
+  assert.deepEqual(run.buff, { atk: 1.15, gold: 30 }, 'still there for the fight ahead');
+  spendBuff(run);
+  assert.equal(run.buff, undefined, 'one fight, then gone');
+  // (a buff of more fights keeps its hp, attack and speed, but a prize is paid once)
+  run.buff = { atk: 1.2, gold: 30, duration: 2 };
+  spendBuff(run);
+  assert.deepEqual(run.buff, { atk: 1.2, duration: 1 });
+});
+
+test('the cursed mirror\'s clone is a guest: it takes no real hero\'s id or room, and its going leaves the party whole', () => {
+  const run = calamityRun(20, startedMeta(1), 'knight');
+  run.event = drawEvent(run, 2, ['cursedMirror']);
+  const ids = run.nextId;
+  assert.equal(run.nextId, ids, 'drawing the card takes no id');
+  chooseOption(run, 0);
+  const clone = run.roster.find((h) => h.inverted)!;
+  assert.equal(clone.id, ids, 'the clone takes the next id');
+  // fill the party to its limit around the clone: the clone neither blocks a hire nor keeps a real hero on the bench
+  const kinds = [...HEROES, 'paladin', 'cleric', 'archer'].filter((k) => k !== 'knight');
+  for (let i = 0; i < squadLimit(run) - 1; i++) {
+    assert.equal(hasRoom(run), true, `room for hire ${i + 1}`);
+    const h = hireHero(run, kinds[i], 0);
+    assert.notEqual(h.id, clone.id);
+    assert.ok(run.squad.includes(h.id), 'the hire fights');
+  }
+  assert.equal(hasRoom(run), false);
+  assert.equal(new Set(run.roster.map((h) => h.id)).size, run.roster.length, 'every id is its own');
+  const own = run.roster.filter((h) => !h.inverted).map((h) => h.id);
+  run.tower!.cur = { id: 10, kind: 'fight' };
+  clearNode(run);
+  run.tower!.cur = { id: 11, kind: 'fight' };
+  clearNode(run);
+  assert.deepEqual(run.roster.map((h) => h.id), own, 'only the clone has gone');
+  assert.deepEqual([...run.squad].sort((a, b) => a - b), [...own].sort((a, b) => a - b), 'the whole party fights');
+});
+
+test('the goblin forge\'s whetstone is paid once', () => {
+  const run = calamityRun(1, startedMeta(1), 'knight');
+  run.gold = 100;
+  (run.items ??= []).push(makeGear(7, 'weapon', 1));
+  run.event = drawEvent(run, 3, ['goblinForge']);
+  const cost = run.event.options[1].cost;
+  chooseOption(run, 1);
+  assert.equal(run.gold, 100 - cost);
+});
+
+test('the chaos twists never roll on an ordinary fight: a calamity below the chaos rules has none, and the other twists roll as before', () => {
+  for (let seed = 1; seed <= 40; seed++)
+    for (let act = 1; act <= 3; act++)
+      for (let node = 0; node < 30; node++)
+        for (const kind of ['fight', 'elite', 'boss']) {
+          const tw = rollTwist(seed, act, node, kind);
+          assert.ok(!tw || !CHAOS_TWISTS.includes(tw), `${tw} rolled at seed ${seed}`);
+        }
+  for (let seed = 1; seed <= 6; seed++) {
+    const run = calamityRun(seed, startedMeta(1), 'knight');
+    assert.ok(run.tower!.map.every((n) => !n.twist || !CHAOS_TWISTS.includes(n.twist)), `seed ${seed}`);
+  }
+});
+
+test('the creative encounters stand in for plainer floors on their own stream: the older mysteries come up as often as before', () => {
+  const older = TOWER_EVENT_KINDS.filter((k) => !CREATIVE_KINDS.includes(k));
+  const plain = older.filter((k) => !MYSTERY_KINDS.includes(k));
+  let creative = 0;
+  const N = 400;
+  for (let seed = 1; seed <= N; seed++) {
+    const run = calamityRun(seed, startedMeta(1), 'knight');
+    const was = drawEvent(JSON.parse(JSON.stringify(run)) as Run, 5, older).kind;
+    const now = drawEvent(run, 5, TOWER_EVENT_KINDS).kind;
+    if (CREATIVE_KINDS.includes(now)) {
+      creative++;
+      assert.ok(plain.includes(was), `${now} took the place of ${was}, not of a plainer floor`);
+    } else assert.equal(now, was, 'an older kind is drawn just as it was');
+  }
+  const share = creative / N;
+  assert.ok(share > 0.1 && share < 0.25, `a creative encounter on ${(share * 100).toFixed(0)}% of floors`);
 });
 
 test('ascension chaos mutators: rolling gales and hot coal ground', () => {

@@ -299,6 +299,10 @@ export function retryWave(run: Run): number | null {
 }
 
 export const heroOf = (run: Run, id: number) => run.roster.find((h) => h.id === id);
+/** Whether a roster hero is a cursed mirror's clone: a guest for a few floors, never counted as one of the party's own (room, hires' catch-up XP). */
+export const isClone = (h: Owned): boolean => h.cloneFloors !== undefined;
+/** The party's own heroes: the roster without a mirror's clone. */
+export const ownHeroes = (run: Run): Owned[] => run.roster.filter((h) => !isClone(h));
 export const benched = (run: Run) => run.roster.filter((h) => !run.squad.includes(h.id));
 
 /** Hp and attack multipliers of a grade, times the hero kind's rank (from its shards) and its level (from its XP). Every hero kind is alike here: what sets one apart is its own stats and skill. */
@@ -398,7 +402,7 @@ export function startStage(run: Run): Battle {
     foes: { hp: base.foes!.hp! * foes * (ans?.hp ?? 1), atk: base.foes!.atk! * foes * (ans?.atk ?? 1), speed: base.foes!.speed },
     heroes: { hp: castle.hp! * (hp ?? 1) * (run.buff?.hp ?? 1), atk: castle.atk! * (atk ?? 1) * (run.buff?.atk ?? 1) },
     mana: manaRate(run.castle) * (mana ?? 1),
-    move: (base.move ?? moveRate(run.castle)) * (run.buff?.speed ?? 1),
+    move: moveRate(run.castle) * (run.buff?.speed ?? 1),
     relics: Object.keys(team).length || first || revive || set ? { team, first, revive, set } : undefined,
   });
 }
@@ -434,10 +438,19 @@ export function finish(run: Run, won: boolean, stars = 0): void {
       run.event = run.mode?.kind !== 'tower' && eventAfter(run.stage - 1, boss) ? drawEvent(run, run.stage - 1) : undefined;
     }
   } else run.over = true;
-  if (run.buff) {
-    if (run.buff.duration && run.buff.duration > 1) run.buff.duration--;
-    else run.buff = undefined;
+  spendBuff(run);
+}
+
+/** A fight has used the buff: one that lasts more fights (`duration`, the bard's or the void well's) keeps its hp, attack and speed for the next, and
+ *  loses its one-fight prizes (gold, gear, a foes' multiplier); any other is gone. Counted by fights, not by the quiet floors between them. */
+export function spendBuff(run: Run): void {
+  const b = run.buff;
+  const left = (b?.duration ?? 1) - 1;
+  if (!b || left <= 0) {
+    run.buff = undefined;
+    return;
   }
+  run.buff = { ...(b.hp ? { hp: b.hp } : {}), ...(b.atk ? { atk: b.atk } : {}), ...(b.speed ? { speed: b.speed } : {}), duration: left };
 }
 
 /** Choose or release a hero for the fight. Returns whether the squad changed. */

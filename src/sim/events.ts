@@ -71,8 +71,26 @@ export const MYSTERY_KINDS: readonly EventKind[] = [
   'cursedMirror',
   'voidWell',
 ];
-/** What a mystery floor of the tower can be: the usual five, the three about health, and the eleven newer ones. */
+/** What a mystery floor of the tower can be: the usual five, the three about health, and the mysteries. */
 export const TOWER_EVENT_KINDS: readonly EventKind[] = [...EVENT_KINDS, 'spring', 'gambler', 'altar', ...MYSTERY_KINDS];
+/** The four creative encounters (the bard, the goblin forge, the cursed mirror, the void well). */
+export const CREATIVE_KINDS: readonly EventKind[] = ['bard', 'goblinForge', 'cursedMirror', 'voidWell'];
+/** The plainer floors a creative encounter may stand in for: the usual five and the three about health. */
+const PLAIN_KINDS: readonly EventKind[] = [...EVENT_KINDS, 'spring', 'gambler', 'altar'];
+/** The share of those plainer floors a creative encounter takes (about one mystery floor in six in all, as an even share of the pool would be). */
+export const CREATIVE_SHARE = 0.4;
+
+/** The kind of a stage's card. The older kinds are drawn just as they were (the creative encounters left out of the pick), so the XP and heroes the
+ *  older mysteries give come up as often as ever; then a creative encounter, on its own side stream, may take the place of a plainer floor. */
+function kindOf(run: Run, stage: number, kinds: readonly EventKind[], rng: Rng): EventKind {
+  const older = kinds.filter((k) => !CREATIVE_KINDS.includes(k));
+  if (!older.length) return pick(rng, kinds);
+  const kind = pick(rng, older);
+  const creative = kinds.filter((k) => CREATIVE_KINDS.includes(k));
+  if (!creative.length || !PLAIN_KINDS.includes(kind)) return kind;
+  const side = new Rng(mixSeed(run.seed, 0xc4ea7, stage));
+  return side.chance(CREATIVE_SHARE) ? pick(side, creative) : kind;
+}
 
 /** What taking an option does. */
 export type Effect =
@@ -127,7 +145,7 @@ const gearOption = (g: Gear, cost: number): EventOption => ({ label: g.name, tex
 /** The event card of a stage, made from the run's seed (it draws gear ids from the run); `kinds` is what it may be. */
 export function drawEvent(run: Run, stage: number, kinds: readonly EventKind[] = EVENT_KINDS): EventCard {
   const rng = new Rng(mixSeed(run.seed, 0xe7e47, stage));
-  const kind = pick(rng, kinds);
+  const kind = kindOf(run, stage, kinds, rng);
   if (MYSTERY_KINDS.includes(kind)) return drawMystery(run, stage, kind, rng);
   const relics = unownedRelics(run);
   switch (kind) {

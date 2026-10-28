@@ -50,7 +50,7 @@ export type MysteryAct =
   | { k: 'sneak'; ok: boolean; lose: number }
   | { k: 'bard'; listen: boolean; speed: number; floors: number; cost: number; heal: number }
   | { k: 'goblinForge'; gearId: number; win: boolean; boost: number; n: number; buySafe?: boolean; fresh?: Gear }
-  | { k: 'cursedMirror'; hero: number; cloneId: number; floors: number; smash?: boolean; gold?: number; hurt?: number }
+  | { k: 'cursedMirror'; hero: number; floors: number; smash?: boolean; gold?: number; hurt?: number }
   | { k: 'voidWell'; drink: boolean; atk: number; floors: number; wound: number; coin: boolean; cost: number; gear?: Gear };
 
 export const FREE_HURT = 0.15;
@@ -276,7 +276,6 @@ export function drawMystery(run: Run, stage: number, kind: EventKind, rng: Rng):
     }
     case 'cursedMirror': {
       const hero = pick(rng, ids);
-      const cloneId = (run.nextId = (run.nextId ?? 100) + 1);
       const smashGold = 35 + 5 * stage;
       const heroName = nameOf(run, hero);
       return card(
@@ -287,13 +286,13 @@ export function drawMystery(run: Run, stage: number, kind: EventKind, rng: Rng):
             `Summon inverted ${heroName}`,
             `the inverted clone steps through to fight alongside your squad for 2 floors with snarky quips`,
             0,
-            { k: 'cursedMirror', hero, cloneId, floors: 2 },
+            { k: 'cursedMirror', hero, floors: 2 },
           ),
           act(
             'Smash the mirror',
             `shatter the glass for +${smashGold} gold in silvered shards, but flying shards deal 10% damage to all heroes`,
             0,
-            { k: 'cursedMirror', hero, cloneId, floors: 0, smash: true, gold: smashGold, hurt: 0.1 },
+            { k: 'cursedMirror', hero, floors: 0, smash: true, gold: smashGold, hurt: 0.1 },
           ),
           leave(),
         ],
@@ -487,15 +486,14 @@ export function applyMystery(run: Run, a: MysteryAct): string {
       return `The bard eagerly pockets ${a.cost} gold and hands over a soothing herbal draught. Blessed silence settles over the party (${pct(a.heal)} healed).`;
     }
     case 'goblinForge': {
+      // (the price is the option's cost, paid by `chooseOption`: it is not taken twice)
       if (a.fresh) {
-        run.gold = Math.max(0, run.gold - a.n);
         (run.items ??= []).push(a.fresh);
         return `You purchase the experimental ${a.fresh.name}.`;
       }
       const g = allGear(run).find((x) => x.id === a.gearId);
       if (!g) return 'The forge coals die down. Nothing happens.';
       if (a.buySafe) {
-        run.gold = Math.max(0, run.gold - a.n);
         g.atk = Number(((g.atk || 0) + a.boost).toFixed(2));
         g.name = `${g.name} (Honed)`;
         return `The whetstone bites into the edge: ${g.name} is safely sharpened (+${pct(a.boost)} attack).`;
@@ -525,8 +523,9 @@ export function applyMystery(run: Run, a: MysteryAct): string {
       const orig = run.roster.find((x) => x.id === a.hero);
       if (!orig) return 'The mirror fades to mist.';
       const cloneName = UNITS[orig.kind]?.name ?? 'Hero';
+      // (the clone takes the run's next id, as a hire does, so no real hero ever shares it)
       const clone: Owned = {
-        id: a.cloneId,
+        id: run.nextId++,
         kind: orig.kind,
         grade: orig.grade,
         tiered: orig.tiered,

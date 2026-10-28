@@ -39,7 +39,7 @@ Four new narrative dilemmas join the mystery pool (`MYSTERY_KINDS` in `events.ts
 
 ## 2. Temporary Buffs & Doppelgangers (`src/sim/run.ts`, `src/sim/tower.ts`, `src/quipData.ts`)
 
-- **Multi-Floor Buff Duration**: `Buff.duration` and `Buff.speed` in `src/sim/run.ts` allow temporary speed and combat boosts across multiple battles. `fightSpec` in `tower.ts` and `startStage` in `run.ts` pass speed to `stage.move`, increasing hero movement speed on the battlefield. When each floor is cleared (`clearNode`), `run.buff.duration` decrements and expires when zero.
+- **Multi-Fight Buff Duration**: `Buff.duration` and `Buff.speed` in `src/sim/run.ts` allow temporary speed and combat boosts across multiple battles. `startStage` in `run.ts` multiplies the castle's own pace (`moveRate`) by the speed. Each fight spends one (`spendBuff`, from `finish` and `finishTower`); the quiet floors between do not (see Fix at merge).
 - **Inverted Mirror Clones**: Clones are tracked via `Owned.cloneFloors` and `Owned.inverted`. They participate in combat as full squad members with their original skills. When `clearNode` ticks down their remaining floors to zero, they shatter and are cleanly excised from the squad and roster.
 - **Snarky Mirror Banter**: Added `INVERTED_HERO_QUIPS` in `src/quipData.ts` giving the inverted doppelgangers colorful quips:
   - *"Move over, original. Let someone with real talent handle this."*
@@ -84,3 +84,43 @@ Styled specifically for mobile portrait viewports (393x852) adhering to the ston
   - Choice resolution for The Whispering Void Well (drink void essence attack buff vs coin tribute gear drop).
   - Chaos mutator functionality: Rolling Gales projectile shift and Hot Coal Ground burn damage.
 - `npm test -- asc`, `npm test -- events`, `npm test -- mystery`, `npm test -- twists`: All passing.
+
+---
+
+## Fix at merge
+
+With main merged in, the bot's Calamity runs left the starting hero lower than on main (`test/calamity.test.ts`, "well past level 20", ended
+at 25, 30, 20). The causes, and what changed:
+
+- **The chaos twists rolled on every fight, at every ascension.** `rollTwist` (`twists.ts`) picked from `TWIST_IDS`, which now held
+  `rollingGales` and `hotCoals`, so they turned up on ordinary floors at ascension 0, and every other twist roll moved too (a pick over 16
+  instead of 14). This was the largest cause. It now picks from `PLAIN_TWIST_IDS` (all but `CHAOS_TWISTS`), so ordinary maps roll exactly as
+  on main; the chaos twists are laid only by `calamityOnce` under `AscRules.chaosMutators`. (Nothing yet passes `{ chaosMutators: true }`
+  to `ascRules`, so the owner has still to say at which ascension they begin.)
+- **An event's buff was lost before its fight.** `clearNode` spent `run.buff` on the mystery floor itself, so a shrine's blessing, a cursed
+  path's prize or the void well's attack never reached the next fight. A buff is now spent by fights only: `spendBuff` (`run.ts`), called by
+  `finish` and `finishTower`, keeps a buff with `duration` left for the next fight (its hp, attack and speed; gold, gear and the foes'
+  multiplier are one fight's) and drops any other.
+- **The bard's speed was doubled and replaced the castle's.** `fightSpec` put the speed into `stage.move` and `startStage` then used
+  `base.move` in place of `moveRate(castle)` and multiplied by the speed again (1.5625 instead of 1.25). `fightSpec` no longer touches the
+  buff (`startStage` already applies hp, attack and speed at the fight), and `startStage` uses `moveRate(run.castle) * speed`.
+- **The mirror's clone shared an id with the next hire.** `drawMystery` set `run.nextId` to the clone's id while drawing the card (taken
+  or not), so the next hire got the same id; when the clone left, `clearNode` removed both, a real hero with it. The clone now takes
+  `run.nextId++` when it steps out. It is a guest (`isClone`, `ownHeroes` in `run.ts`): it does not count for `hasRoom` (so it never costs a
+  hire) or for `hireXp`; a hire into a full squad takes the clone's place (`hireHero`), and when it goes a benched hero of the party's own
+  takes the place back.
+- **The goblin forge charged twice.** The whetstone and the fresh blade took their price in `applyMystery` on top of the option's cost that
+  `chooseOption` pays. They no longer do.
+- **The new kinds thinned the older mysteries.** With the four in `TOWER_EVENT_KINDS`, every older kind (the trainer, the tome, the prisoner
+  and the rest, which give XP and heroes) came up 19/23 as often. `drawEvent` now draws the older kinds just as on main (`kindOf`, the
+  creative encounters left out of the pick), and then a creative encounter (`CREATIVE_KINDS`), on its own side stream
+  (`mixSeed(seed, 0xc4ea7, stage)`), takes `CREATIVE_SHARE` (0.4) of the plainer floors (the five usual events and the three about health):
+  about one mystery floor in six, as an even share would be. A card asked for one kind (`drawEvent(run, stage, ['bard'])`) is as before.
+
+The bot's starter, seeds 1 to 12 (* cleared): main 24, 22, 30, 26, 7, 26, 30, 29, 20, 14, 30*, 30*; the PR before 21, 10, 25, 23, 18,
+25*, 30, 28, 30, 18, 30*, 20; after 24, 22, 30*, 24, 7, 26, 30, 30, 20, 14, 30*, 30*. Over 200 seeds the mean end level was 22.4 on main
+(32 clears), 20.8 before (15) and 22.0 after (26).
+
+Tests: `test/calamity.test.ts` (an event's blessing waits for its fight; the clone a guest; the whetstone paid once; no chaos twist on an
+ordinary fight; the creative encounters' share; the bard's speed applied once and spent by fights), `test/twists.test.ts` (every twist but
+the chaos ones turns up on ordinary maps).

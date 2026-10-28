@@ -9,7 +9,7 @@ import { startedMeta } from '../src/sim/meta';
 import { towerRun } from '../src/sim/modes';
 import { startStage } from '../src/sim/run';
 import { ACT_ROWS, enterNode, choices, finishTower, fightSpec, makeMap } from '../src/sim/tower';
-import { rollTwist, TWIST_IDS, TWISTS, twistBoard, type TwistFx } from '../src/sim/twists';
+import { CHAOS_TWISTS, PLAIN_TWIST_IDS, rollTwist, TWIST_IDS, TWISTS, twistBoard, type TwistFx } from '../src/sim/twists';
 
 /** A fight against `band` with a twist's effects (none when `id` is undefined), all five heroes placed on the first free tiles of their rows. */
 function ready(id?: string, seed = 11, band: string | string[] = 'skeletons'): Battle {
@@ -69,10 +69,11 @@ test('about 40% of fights and 60% of elites carry a twist; nothing else does; a 
   }
 });
 
-test('every twist turns up across the maps', () => {
+test('every twist but the chaos ones turns up across the maps (those are for a high ascension only)', () => {
   const seen = new Set<string>();
   for (let seed = 1; seed <= 300; seed++) for (const n of makeMap(seed, 2)) if (n.twist) seen.add(n.twist);
-  assert.deepEqual([...seen].sort(), [...TWIST_IDS].sort());
+  assert.deepEqual([...seen].sort(), [...PLAIN_TWIST_IDS].sort());
+  assert.deepEqual([...PLAIN_TWIST_IDS, ...CHAOS_TWISTS].sort(), [...TWIST_IDS].sort());
 });
 
 test('a fight with no twist, or an empty one, plays exactly as before', () => {

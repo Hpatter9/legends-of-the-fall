@@ -80,6 +80,8 @@ export const TWISTS: Record<string, Twist> = Object.fromEntries(
 export const TWIST_IDS = Object.keys(TWISTS);
 /** High ascension chaos twists. */
 export const CHAOS_TWISTS: readonly string[] = ['rollingGales', 'hotCoals'];
+/** The twists any fight may roll: all but the chaos ones, which only a high ascension lays (`calamityOnce`). */
+export const PLAIN_TWIST_IDS: readonly string[] = TWIST_IDS.filter((id) => !CHAOS_TWISTS.includes(id));
 
 /** The share of fight nodes and elites that carry a twist; a boss carries one from act 2 on. */
 export const TWIST_RATE = { fight: 0.4, elite: 0.6 } as const;
@@ -89,7 +91,7 @@ export function rollTwist(seed: number, act: number, node: number, kind: string)
   if (kind !== 'fight' && kind !== 'elite' && kind !== 'boss') return undefined;
   const rng = new Rng(mixSeed(seed, 0x7715, act, node));
   if (kind === 'boss' ? act < 2 : !rng.chance(TWIST_RATE[kind])) return undefined;
-  return rng.pick(TWIST_IDS);
+  return rng.pick(PLAIN_TWIST_IDS);
 }
 
 /** The deploy rows' outer tiles that a narrow pass fills with boulders (the back row's four outer tiles, the next row's two). */
