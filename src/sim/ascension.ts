@@ -27,6 +27,8 @@ export interface AscRules {
   bossCurse: boolean;
   /** Foes in the field hit harder (folded into `foeAtk`); and bosses begin behind a shield of this share of their health. */
   bossShield: number;
+  /** Optional high-ascension chaos floor twists (Rolling Gales, Hot Coals). */
+  chaosMutators?: boolean;
 }
 
 /** The rule each level adds, in words. Index 0 is level 1. */
@@ -44,9 +46,9 @@ export const ASC_TEXT: readonly string[] = [
 ];
 
 /** The rules at an ascension level (all the levels up to it, together). */
-export function ascRules(level: number): AscRules {
+export function ascRules(level: number, options?: { chaosMutators?: boolean }): AscRules {
   const n = Math.max(0, Math.min(ASC_MAX, Math.floor(level || 0)));
-  return {
+  const rules: AscRules = {
     foeHp: n >= 1 ? 1.2 : 1,
     foeAtk: n >= 9 ? 1.15 : 1,
     hires: n >= 2 ? 1.4 : 1,
@@ -58,6 +60,8 @@ export function ascRules(level: number): AscRules {
     bossCurse: n >= 8,
     bossShield: n >= 10 ? 0.1 : 0,
   };
+  if (options?.chaosMutators) rules.chaosMutators = true;
+  return rules;
 }
 
 /** The ascension level of a run (0 for anything that is not an ascended calamity). */

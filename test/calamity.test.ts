@@ -18,6 +18,11 @@ import { hpShare } from '../src/sim/health';
 import { frontSpots, playCalamity, playTower, starterEnd } from '../tools/autoplay';
 import { HEROES, UNITS } from '../src/sim/units';
 import { mixSeed } from '../src/sim/rng';
+import { chooseOption, drawEvent } from '../src/sim/events';
+import { makeGear } from '../src/sim/gear';
+import { TWISTS, CHAOS_TWISTS, twistBoard } from '../src/sim/twists';
+import { ascRules } from '../src/sim/ascension';
+import { makeBoard } from '../src/sim/board';
 
 const store = () => {
   const s: Record<string, string> = {};
@@ -637,4 +642,199 @@ test('a full Calamity clear leaves the starting hero well past level 20 (the bot
   }
   assert.ok(ends.length >= 1, 'some seeds clear it');
   assert.ok(ends.every((l) => l > 20), `ended at ${ends.join(', ')}`);
+});
+
+/* ------------------------------------------------------------------ Creative Encounters & Gambits */
+
+test('calamity creative encounters: seed determinism for bard, goblin forge, cursed mirror, and void well', () => {
+  const kinds = ['bard', 'goblinForge', 'cursedMirror', 'voidWell'] as const;
+  for (const k of kinds) {
+    for (let seed = 1; seed <= 15; seed++) {
+      const runA = calamityRun(seed, startedMeta(1), 'knight');
+      const runB = calamityRun(seed, startedMeta(1), 'knight');
+      // Give each run a weapon so goblin forge can present weapon choices
+      const weapon = makeGear(1, 'weapon', 1);
+      (runA.items ??= []).push({ ...weapon });
+      (runB.items ??= []).push({ ...weapon });
+
+      const cardA = drawEvent(runA, 4, [k]);
+      const cardB = drawEvent(runB, 4, [k]);
+      assert.deepEqual(cardA, cardB, `${k} seed ${seed} is deterministic`);
+      assert.ok(cardA.options.length >= 2, `${k} has choices`);
+      assert.ok(cardA.title.length > 0 && cardA.text.length > 0);
+      assert.ok(cardA.options.every((o) => o.label.length > 0 && o.text.length > 0));
+    }
+  }
+});
+
+test('the wandering bard: awful ballad grants temporary Earworm speed buff, or pay to stop', () => {
+  // Test choice 0: Listen to ballad -> Earworm buff
+  const run = calamityRun(10, startedMeta(1), 'knight');
+  run.event = drawEvent(run, 2, ['bard']);
+  assert.equal(run.event.kind, 'bard');
+  assert.match(run.event.options[0].label, /Endure/);
+  
+  const line = chooseOption(run, 0);
+  assert.match(line!, /Earworm/);
+  assert.equal(run.buff?.speed, 1.25);
+  assert.equal(run.buff?.duration, 2);
+
+  // Buff affects fight speed
+  const spec = fightSpec(run, 'fight', 2);
+  assert.equal(spec.stage.move, 1.25);
+
+  // Clearing nodes decrements buff duration over floors
+  run.tower!.cur = { id: 1, kind: 'fight' };
+  clearNode(run);
+  assert.equal(run.buff?.duration, 1);
+  run.tower!.cur = { id: 2, kind: 'fight' };
+  clearNode(run);
+  assert.equal(run.buff, undefined, 'buff expires after 2 floors');
+
+  // Test choice 1: Pay to stop -> Heals party
+  const run2 = calamityRun(11, startedMeta(1), 'knight');
+  run2.gold = 50;
+  run2.tower!.hp = { [String(run2.roster[0].id)]: 0.5 };
+  run2.event = drawEvent(run2, 2, ['bard']);
+  assert.match(run2.event.options[1].label, /Pay/);
+  const cost = run2.event.options[1].cost;
+  assert.ok(cost > 0);
+  
+  chooseOption(run2, 1);
+  assert.equal(run2.gold, 50 - cost);
+  assert.ok(hpShare(run2, run2.roster[0].id) > 0.5, 'party healed');
+});
+
+test('the goblin gambler forge: gambles weapon for +20% attack or humorous Rusted Spoon', () => {
+  // Find a winning seed and a losing seed
+  let winSeed = 0;
+  let loseSeed = 0;
+  for (let s = 1; s <= 50; s++) {
+    const testRun = calamityRun(s, startedMeta(1), 'knight');
+    (testRun.items ??= []).push(makeGear(1, 'weapon', 1));
+    const card = drawEvent(testRun, 3, ['goblinForge']);
+    const fx = card.options[0].effect;
+    if (fx.t === 'mystery' && fx.act.k === 'goblinForge') {
+      if (fx.act.win && !winSeed) winSeed = s;
+      if (!fx.act.win && !loseSeed) loseSeed = s;
+    }
+    if (winSeed && loseSeed) break;
+  }
+  assert.ok(winSeed > 0 && loseSeed > 0, 'found win and lose seeds');
+
+  // Test Win resolution: +20% attack
+  const runWin = calamityRun(winSeed, startedMeta(1), 'knight');
+  const sword = makeGear(5, 'weapon', 1);
+  (runWin.items ??= []).push(sword);
+  runWin.event = drawEvent(runWin, 3, ['goblinForge']);
+  const winLine = chooseOption(runWin, 0);
+  assert.match(winLine!, /\+20% attack/);
+  assert.equal(sword.atk, 0.28);
+  assert.match(sword.name, /\(\+20%\)/);
+
+  // Test Loss resolution: transformed into Rusted Spoon
+  const runLose = calamityRun(loseSeed, startedMeta(1), 'knight');
+  const dagger = makeGear(6, 'weapon', 1);
+  (runLose.items ??= []).push(dagger);
+  runLose.event = drawEvent(runLose, 3, ['goblinForge']);
+  const loseLine = chooseOption(runLose, 0);
+  assert.match(loseLine!, /Rusted Spoon/);
+  const spoon = runLose.items?.find((g) => g.id === 6);
+  assert.ok(spoon);
+  assert.equal(spoon.name, 'Rusted Spoon');
+  assert.equal(spoon.atk, 0.01);
+
+  // Test Safe Sharpening Option (Whetstone)
+  const runSafe = calamityRun(1, startedMeta(1), 'knight');
+  runSafe.gold = 100;
+  const axe = makeGear(7, 'weapon', 1);
+  (runSafe.items ??= []).push(axe);
+  runSafe.event = drawEvent(runSafe, 3, ['goblinForge']);
+  chooseOption(runSafe, 1);
+  assert.equal(axe.atk, 0.14);
+  assert.match(axe.name, /Honed/);
+});
+
+test('the cursed mirror: temporarily clones inverted hero for 2 floors, then clone shatters', () => {
+  // Test summon inverted clone
+  const run = calamityRun(20, startedMeta(1), 'knight');
+  assert.equal(run.roster.length, 1);
+  assert.equal(run.squad.length, 1);
+  
+  run.event = drawEvent(run, 2, ['cursedMirror']);
+  assert.equal(run.event.kind, 'cursedMirror');
+  assert.match(run.event.options[0].label, /Summon inverted/);
+
+  const line = chooseOption(run, 0);
+  assert.match(line!, /inverted/i);
+  assert.equal(run.roster.length, 2, 'clone added to roster');
+  assert.equal(run.squad.length, 2, 'clone added to squad');
+  
+  const clone = run.roster.find((h) => h.inverted);
+  assert.ok(clone);
+  assert.equal(clone.cloneFloors, 2);
+  assert.equal(clone.kind, 'knight');
+
+  // Floor 1 cleared
+  run.tower!.cur = { id: 10, kind: 'fight' };
+  clearNode(run);
+  assert.equal(clone.cloneFloors, 1);
+  assert.equal(run.roster.length, 2, 'clone still present after 1 floor');
+
+  // Floor 2 cleared
+  run.tower!.cur = { id: 11, kind: 'fight' };
+  clearNode(run);
+  assert.equal(run.roster.length, 1, 'clone removed after 2 floors');
+  assert.equal(run.squad.length, 1);
+
+  // Test smash option
+  const runSmash = calamityRun(21, startedMeta(1), 'knight');
+  runSmash.gold = 10;
+  runSmash.event = drawEvent(runSmash, 2, ['cursedMirror']);
+  assert.match(runSmash.event.options[1].label, /Smash/);
+  chooseOption(runSmash, 1);
+  assert.ok(runSmash.gold > 10, 'gained gold from silver shards');
+  assert.ok(hpShare(runSmash, runSmash.roster[0].id) < 1.0, 'party wounded by glass shards');
+});
+
+test('the whispering void well: drink deep for attack buff or toss gold for relics', () => {
+  const run = calamityRun(30, startedMeta(1), 'knight');
+  run.event = drawEvent(run, 2, ['voidWell']);
+  assert.equal(run.event.kind, 'voidWell');
+
+  // Drink option: attack boost + wound
+  chooseOption(run, 0);
+  assert.equal(run.buff?.atk, 1.2);
+  assert.equal(run.buff?.duration, 2);
+  assert.ok(hpShare(run, run.roster[0].id) < 1.0);
+
+  // Toss coin option: gold spent, gear received
+  const run2 = calamityRun(31, startedMeta(1), 'knight');
+  run2.gold = 60;
+  run2.event = drawEvent(run2, 2, ['voidWell']);
+  const cost = run2.event.options[1].cost;
+  chooseOption(run2, 1);
+  assert.equal(run2.gold, 60 - cost);
+  assert.equal(run2.items?.length, 1);
+});
+
+test('ascension chaos mutators: rolling gales and hot coal ground', () => {
+  assert.deepEqual(CHAOS_TWISTS, ['rollingGales', 'hotCoals']);
+  assert.ok(TWISTS.rollingGales && TWISTS.hotCoals);
+  assert.equal(TWISTS.rollingGales.fx.gales, 1);
+  assert.equal(TWISTS.hotCoals.fx.coals, 4);
+
+  // Optional chaos mutator enables high-ascension twists
+  assert.equal(ascRules(6).chaosMutators, undefined);
+  assert.equal(ascRules(0, { chaosMutators: true }).chaosMutators, true);
+
+  // Hot coals board modification
+  const board = makeBoard(42, 'forge');
+  twistBoard(board, TWISTS.hotCoals.fx, 42);
+  const coalTiles = board.tiles.filter((t) => t.ground === 'coals');
+  assert.equal(coalTiles.length, 4);
+
+  // Rolling gales is a registered twist that can roll on high ascension
+  const rules = ascRules(8);
+  assert.ok(rules.bossCurse);
 });

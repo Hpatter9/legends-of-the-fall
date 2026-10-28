@@ -23,8 +23,8 @@ const heroes = (b: Battle) => b.units.filter((u) => u.side === 'hero');
 const foes = (b: Battle) => b.units.filter((u) => u.side === 'foe');
 const unitOf = (b: Battle, def: string): Unit => b.units.find((u) => u.def === def)!;
 
-test('there are 10 to 14 twists, curses, blessings and mixed, each named and told in a line', () => {
-  assert.ok(TWIST_IDS.length >= 10 && TWIST_IDS.length <= 14);
+test('there are 10 to 16 twists, curses, blessings and mixed, each named and told in a line', () => {
+  assert.ok(TWIST_IDS.length >= 10 && TWIST_IDS.length <= 16);
   const tones = new Set(TWIST_IDS.map((id) => TWISTS[id].tone));
   assert.deepEqual([...tones].sort(), ['blessing', 'curse', 'mixed']);
   for (const id of TWIST_IDS) {
@@ -232,6 +232,16 @@ test('fortified: every foe has 20% more hp', () => {
   const plain = ready();
   foes(b).forEach((f, i) => assert.equal(f.maxHp, Math.round(foes(plain)[i].maxHp * 1.2)));
   assert.ok(foes(b).length === foes(plain).length);
+});
+
+test('hot coal ground: four tiles of the middle ground become hot coals', () => {
+  const b = ready('hotCoals');
+  const coals = b.board.tiles.filter((t) => t.ground === 'coals');
+  assert.equal(coals.length, 4);
+});
+
+test('rolling gales: projectiles shift trajectory by 1 tile', () => {
+  assert.equal(TWISTS.rollingGales.fx.gales, 1);
 });
 
 test('twistBoard changes only the lava and the boulders, and keeps every board playable', () => {

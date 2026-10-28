@@ -20,7 +20,7 @@ import { drawOffer, eliteAt, eliteFight, OFFER_SIZE, sideEliteAt } from './elite
 import { neighboursOf, openSet, routeBetween, SIDE_BASE, sideSpots, START_ID, type SideSpot } from './calLand';
 import { ALL_RELIC_IDS, RELICS, relicEffects } from './relics';
 import { mixSeed, Rng } from './rng';
-import { addTwists, TWISTS } from './twists';
+import { addTwists, CHAOS_TWISTS, TWISTS } from './twists';
 import { BOSS, FOE_START, reward, squadLimit, summonCost, type Run } from './run';
 import { UNITS } from './units';
 import { CAL_BOARD, CAL_MAPS, CAL_OPENING, CAL_SCALE, calBossBoost, fitBand, squadFoeMult } from './calamity';
@@ -402,6 +402,14 @@ function calamityOnce(seed: number, act: number, rows: number, asc: number, atte
     if (pool.length) rng.pick(pool).kind = 'elite';
   }
   addTwists(nodes, seed, act);
+  if (rules.chaosMutators) {
+    const chaosRng = new Rng(mixSeed(seed, 0xc4a0, act));
+    for (const n of nodes) {
+      if ((n.kind === 'elite' || n.kind === 'fight') && !n.twist && chaosRng.chance(0.35)) {
+        n.twist = chaosRng.pick(CHAOS_TWISTS);
+      }
+    }
+  }
   // (a high ascension curses every boss floor: a twist from the curses, its own stream)
   if (rules.bossCurse) for (const n of nodes) if (n.kind === 'boss') n.twist = new Rng(mixSeed(seed, 0xa5c8, act)).pick(CURSES);
   return nodes;
@@ -507,6 +515,9 @@ export function fightSpec(run: Run, kind: NodeKind, floor: number, twist?: strin
     spec.twist = tw.id;
     spec.stage.twist = tw.fx;
   }
+  if (run.buff?.speed) spec.stage.move = (spec.stage.move ?? 1) * run.buff.speed;
+  if (run.buff?.atk) spec.stage.heroes = { ...(spec.stage.heroes ?? {}), atk: (spec.stage.heroes?.atk ?? 1) * run.buff.atk };
+  if (run.buff?.hp) spec.stage.heroes = { ...(spec.stage.heroes ?? {}), hp: (spec.stage.heroes?.hp ?? 1) * run.buff.hp };
   return spec;
 }
 
@@ -696,7 +707,24 @@ export function clearNode(run: Run): void {
     return;
   }
   const first = !t.path.includes(cur.id);
-  if (first) t.path.push(cur.id);
+  if (first) {
+    t.path.push(cur.id);
+    if (run.buff) {
+      if (run.buff.duration && run.buff.duration > 1) run.buff.duration--;
+      else run.buff = undefined;
+    }
+    for (const h of [...run.roster]) {
+      if (h.cloneFloors !== undefined) {
+        h.cloneFloors--;
+        if (h.cloneFloors <= 0) {
+          run.roster = run.roster.filter((x) => x.id !== h.id);
+          run.squad = run.squad.filter((x) => x !== h.id);
+          if (run.tower) delete run.tower.hp[String(h.id)];
+          if (!run.squad.length && run.roster.length) run.squad.push(run.roster[0].id);
+        }
+      }
+    }
+  }
   const recap = t.maps ? recapOf(run) : undefined;
   if (recap && first) {
     if (cur.kind !== 'boss') recap.spots++;

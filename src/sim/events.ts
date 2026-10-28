@@ -28,10 +28,49 @@ import { UNITS } from './units';
 import { applyMystery, drawMystery, type MysteryAct } from './mystery';
 import type { Run } from './run';
 
-export type EventKind = 'shrine' | 'merchant' | 'chest' | 'cursed' | 'training' | 'spring' | 'gambler' | 'altar' | 'blackAltar' | 'imp' | 'prisoner' | 'fountain' | 'forge' | 'trainer' | 'oath' | 'mimic' | 'tome' | 'cairn' | 'bandits';
+export type EventKind =
+  | 'shrine'
+  | 'merchant'
+  | 'chest'
+  | 'cursed'
+  | 'training'
+  | 'spring'
+  | 'gambler'
+  | 'altar'
+  | 'blackAltar'
+  | 'imp'
+  | 'prisoner'
+  | 'fountain'
+  | 'forge'
+  | 'trainer'
+  | 'oath'
+  | 'mimic'
+  | 'tome'
+  | 'cairn'
+  | 'bandits'
+  | 'bard'
+  | 'goblinForge'
+  | 'cursedMirror'
+  | 'voidWell';
 export const EVENT_KINDS: readonly EventKind[] = ['shrine', 'merchant', 'chest', 'cursed', 'training'];
-/** The tower's eleven newer mystery floors, with real choices (`mystery.ts`). */
-export const MYSTERY_KINDS: readonly EventKind[] = ['blackAltar', 'imp', 'prisoner', 'fountain', 'forge', 'trainer', 'oath', 'mimic', 'tome', 'cairn', 'bandits'];
+/** The tower and calamity mystery floors with narrative dilemmas and real choices (`mystery.ts`). */
+export const MYSTERY_KINDS: readonly EventKind[] = [
+  'blackAltar',
+  'imp',
+  'prisoner',
+  'fountain',
+  'forge',
+  'trainer',
+  'oath',
+  'mimic',
+  'tome',
+  'cairn',
+  'bandits',
+  'bard',
+  'goblinForge',
+  'cursedMirror',
+  'voidWell',
+];
 /** What a mystery floor of the tower can be: the usual five, the three about health, and the eleven newer ones. */
 export const TOWER_EVENT_KINDS: readonly EventKind[] = [...EVENT_KINDS, 'spring', 'gambler', 'altar', ...MYSTERY_KINDS];
 

@@ -6,7 +6,7 @@
 //
 // Pure rules: no Pixi, no DOM. The renderer reads the battle and the events each tick returns.
 
-import { BARREL_BLAST, boardOk, CLIMB_COST, D, DEPLOY_ROWS, DROP_EXTRA, GROUND_COST, LAVA_BURN, LAVA_STAND, makeBoard, SHRINE_HEAL, sightClear, standable, TALL_DODGE, tileAt, type Area, type At, type Board, type Tile } from './board';
+import { BARREL_BLAST, boardOk, CLIMB_COST, COALS_BURN, COALS_STAND, D, DEPLOY_ROWS, DROP_EXTRA, GROUND_COST, LAVA_BURN, LAVA_STAND, makeBoard, SHRINE_HEAL, sightClear, standable, TALL_DODGE, tileAt, type Area, type At, type Board, type Tile } from './board';
 import { cloneBoard } from './chain';
 import { weatherOf } from './weather';
 import type { LayoutId } from './layouts';
@@ -452,7 +452,7 @@ export function noteTerrain(b: Battle): void {
   b.board.tiles.forEach((t, i) => t.barrel && barrels.push(i));
   if (barrels.length) b.barrels = barrels;
   else delete b.barrels;
-  if (b.board.tiles.some((t) => t.ground === 'shrine' || t.ground === 'lava')) b.groundFx = true;
+  if (b.board.tiles.some((t) => t.ground === 'shrine' || t.ground === 'lava' || t.ground === 'coals')) b.groundFx = true;
   else delete b.groundFx;
 }
 
@@ -680,17 +680,31 @@ function settle(b: Battle, p: Pending, out: BattleEvent[]): void {
   }
   // (a sword falls with its wielder; a shot already flying still lands)
   if (!def.shot && !by.alive) return;
+  let target = to;
+  if (def.shot && b.twist?.gales) {
+    const du = ((mixSeed(b.seed, 0x9a1e, p.at, by.id) >>> 0) % 2 === 0 ? 1 : -1) * b.twist.gales;
+    const nu = Math.max(0, Math.min(b.board.w - 1, to.u + du));
+    if (nu !== to.u) {
+      const shifted = unitAt(b, nu, to.v);
+      if (shifted) {
+        target = shifted;
+      } else {
+        out.push({ kind: 'dodge', to: to.id });
+        return;
+      }
+    }
+  }
   // (a fighter in tall growth is a little hard to hit: its own hash of the moment, so no stream moves)
-  if (tileOf(b, to).ground === 'tall' && (mixSeed(b.seed, 0xd0d6, p.at, by.id, to.id) >>> 0) / 4294967296 < TALL_DODGE) {
-    out.push({ kind: 'dodge', to: to.id });
+  if (tileOf(b, target).ground === 'tall' && (mixSeed(b.seed, 0xd0d6, p.at, by.id, target.id) >>> 0) / 4294967296 < TALL_DODGE) {
+    out.push({ kind: 'dodge', to: target.id });
     return;
   }
-  hurt(b, by, to, p.dmg, p.heavy, false, out);
-  afterBlow(b, by, to, !!p.crit, p.dmg, out);
-  kitBlow(b, by, to, !!p.crit, p.dmg, out);
+  hurt(b, by, target, p.dmg, p.heavy, false, out);
+  afterBlow(b, by, target, !!p.crit, p.dmg, out);
+  kitBlow(b, by, target, !!p.crit, p.dmg, out);
   if (def.splash)
     for (const n of b.units)
-      if (n.alive && n.side === to.side && n !== to && apart(n, to) === 1) hurt(b, by, n, Math.max(1, Math.round(p.dmg * SPLASH_SHARE)), false, true, out);
+      if (n.alive && n.side === target.side && n !== target && apart(n, target) === 1) hurt(b, by, n, Math.max(1, Math.round(p.dmg * SPLASH_SHARE)), false, true, out);
 }
 
 export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean, splash: boolean, out: BattleEvent[], src: HitSrc = 'blow'): void {
@@ -773,6 +787,7 @@ function groundTick(b: Battle, out: BattleEvent[]): void {
     const g = tileOf(b, x).ground;
     if (g === 'shrine') mendUnit(x, x.maxHp * SHRINE_HEAL, out);
     else if (g === 'lava' && !defOf(x).flies) hurt(b, x, x, Math.max(1, Math.round(x.maxHp * LAVA_STAND)), false, false, out, 'dot');
+    else if (g === 'coals' && !defOf(x).flies) hurt(b, x, x, Math.max(1, Math.round(x.maxHp * COALS_STAND)), false, false, out, 'dot');
   }
 }
 
@@ -797,6 +812,7 @@ const perchValue = (def: UnitDef, h: number, hf: number): number => (def.shot ? 
 /** What the ground under a tile is worth to a fighter standing on it, in steps of walking (below zero is good): lava burns a walker, tall growth hides a shooter, a shrine mends a hurt fighter, ice may slide it off. */
 function groundScore(def: UnitDef, wound: number, g: Tile['ground']): number {
   if (g === 'lava') return def.flies ? 0 : 3;
+  if (g === 'coals') return def.flies ? 0 : 2;
   if (g === 'tall') return def.shot ? -0.6 : -0.2;
   if (g === 'shrine') return wound > 0.4 ? -2 : -0.3;
   if (g === 'ice') return def.flies ? 0 : 0.3;
@@ -964,8 +980,9 @@ export function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void
   me.u = next.u;
   me.v = next.v;
   me.busyUntil = b.t + ms;
-  // lava burns whoever ends a step on it (fliers pass over)
+  // lava and hot coals burn whoever ends a step on them (fliers pass over)
   if (to.ground === 'lava' && !def.flies) hurt(b, me, me, Math.max(1, Math.round(me.maxHp * LAVA_BURN)), false, false, out, 'dot');
+  else if (to.ground === 'coals' && !def.flies) hurt(b, me, me, Math.max(1, Math.round(me.maxHp * COALS_BURN)), false, false, out, 'dot');
 }
 
 /** Play a fight to its end (for tests and quick checks). */

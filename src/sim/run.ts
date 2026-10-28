@@ -67,6 +67,10 @@ export interface Owned {
   /** Skill charge (and an ultimate's charge) kept from the last wave, so a skill half-filled is not lost between waves. */
   charge?: number;
   charge2?: number;
+  /** If this hero is a temporary mirror clone, how many floors it remains for. */
+  cloneFloors?: number;
+  /** Whether this hero is an inverted mirror clone (with snarky quips). */
+  inverted?: boolean;
 }
 
 /** What the next fight carries over from an event: heroes' multipliers, foes' multiplier, a prize for a win. */
@@ -76,6 +80,10 @@ export interface Buff {
   foes?: number;
   gold?: number;
   gear?: Gear;
+  /** Move speed multiplier for heroes (e.g. 1.25 for +25% move speed from Wandering Bard). */
+  speed?: number;
+  /** How many stages/floors this buff lasts (default 1). */
+  duration?: number;
 }
 
 export interface Run {
@@ -390,7 +398,7 @@ export function startStage(run: Run): Battle {
     foes: { hp: base.foes!.hp! * foes * (ans?.hp ?? 1), atk: base.foes!.atk! * foes * (ans?.atk ?? 1), speed: base.foes!.speed },
     heroes: { hp: castle.hp! * (hp ?? 1) * (run.buff?.hp ?? 1), atk: castle.atk! * (atk ?? 1) * (run.buff?.atk ?? 1) },
     mana: manaRate(run.castle) * (mana ?? 1),
-    move: moveRate(run.castle),
+    move: (base.move ?? moveRate(run.castle)) * (run.buff?.speed ?? 1),
     relics: Object.keys(team).length || first || revive || set ? { team, first, revive, set } : undefined,
   });
 }
@@ -426,7 +434,10 @@ export function finish(run: Run, won: boolean, stars = 0): void {
       run.event = run.mode?.kind !== 'tower' && eventAfter(run.stage - 1, boss) ? drawEvent(run, run.stage - 1) : undefined;
     }
   } else run.over = true;
-  run.buff = undefined;
+  if (run.buff) {
+    if (run.buff.duration && run.buff.duration > 1) run.buff.duration--;
+    else run.buff = undefined;
+  }
 }
 
 /** Choose or release a hero for the fight. Returns whether the squad changed. */
