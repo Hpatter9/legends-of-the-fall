@@ -8,6 +8,8 @@ import knight from '../art/units/knight_1.png';
 import samurai from '../art/units/samurai.png';
 import kunoichi from '../art/units/kunoichi.png';
 import archer from '../art/units/samurai_archer.png';
+import resonanceSoldier from '../art/units/hero_soldier.png';
+import resonanceArcher from '../art/units/hero_samurai_archer.png';
 import wizard from '../art/units/fire_wizard.png';
 import skeleton from '../art/units/skeleton_warrior.png';
 import spearman from '../art/units/skeleton_spearman.png';
@@ -122,6 +124,8 @@ interface Layout {
 }
 
 const URLS: Record<string, string> = {
+  hero_soldier: resonanceSoldier,
+  hero_samurai_archer: resonanceArcher,
   knight_1: knight,
   knight_2: knight2,
   knight_3: knight3,
@@ -263,6 +267,9 @@ export function sheetInfo(sheet: string): { img: HTMLImageElement; w: number; h:
   const l = LAYOUT[sheet];
   return img && l ? { img, w: l.w, h: l.h, rows: l.rows, counts: l.counts, figure: l.figure, facesRight: l.facesRight !== false } : null;
 }
+
+/** The figure's height as a share of its sheet's cell (the rest is the room over its head), for laying effects round a `sprite`. */
+export const figureShare = (sheet: string): number => (LAYOUT[sheet] ? LAYOUT[sheet].figure / LAYOUT[sheet].h : 0.8);
 
 /** A small portrait of a fighter for the bench: its first idle frame, cropped to the figure, on a canvas. */
 export function portrait(sheet: string, size: number, grade = 1): HTMLCanvasElement {

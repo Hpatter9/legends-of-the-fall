@@ -93,36 +93,34 @@ export interface Spell {
   cooldownMs: number;
   /** How strong it counts against the loadout's power budget. */
   power: number;
-  /** The crowns it costs to unlock (0 for the starting three). */
-  price: number;
   /** Where it goes: the 3x3 around a tapped tile, or everywhere at once. */
   target: 'tile' | 'all';
 }
 
-const sp = (id: SpellId, name: string, text: string, cost: number, cooldownMs: number, power: number, price: number, target: 'tile' | 'all' = 'tile'): Spell => ({ id, name, text, cost, cooldownMs, power, price, target });
+const sp = (id: SpellId, name: string, text: string, cost: number, cooldownMs: number, power: number, target: 'tile' | 'all' = 'tile'): Spell => ({ id, name, text, cost, cooldownMs, power, target });
 
 export const SPELLS: Record<SpellId, Spell> = {
-  heal: sp('heal', 'Heal', 'Heroes in a 3x3 regain 40% of their health', 3, 6000, 2, 0),
-  meteor: sp('meteor', 'Meteor', 'A meteor blasts the foes in a 3x3', 5, 10000, 4, 0),
-  haste: sp('haste', 'Haste', 'Heroes in a 3x3 attack and move 50% faster for 5s', 3, 8000, 2, 0),
-  shield: sp('shield', 'Shield', 'Heroes in a 3x3 gain a shield worth 40% of their health for 6s', 3, 8000, 2, 60),
-  smite: sp('smite', 'Smite', 'A bolt of light strikes the sturdiest foe in a 3x3 for great damage', 3, 8000, 3, 80),
-  chain: sp('chain', 'Chain Lightning', 'Lightning hits a foe in a 3x3, then leaps to three more, weaker each time', 4, 9000, 3, 100),
-  poison: sp('poison', 'Poison Cloud', 'A cloud on a 3x3 poisons foes inside it for 6s', 4, 12000, 3, 120),
-  frost: sp('frost', 'Frost Nova', 'Foes in a 3x3 freeze for 2s, then move and strike at half speed', 4, 12000, 3, 120),
-  rally: sp('rally', 'Rally', 'Every hero attacks 25% harder for 8s', 4, 14000, 3, 150, 'all'),
-  quake: sp('quake', 'Earthquake', 'The ground shakes: every foe on low ground takes damage', 5, 14000, 4, 180, 'all'),
-  resurrect: sp('resurrect', 'Resurrect', 'A fallen hero in a 3x3 rises with half its health', 5, 20000, 5, 250),
-  cleanse: sp('cleanse', 'Cleanse', 'Heroes in a 3x3 shake off burns, bleeding, curses, slows, holds and charms, and regain 15% of their health', 2, 8000, 1, 90),
-  blink: sp('blink', 'Blink', 'Your most wounded hero leaps to the tapped tile and cannot be targeted for 1.5s', 3, 12000, 2, 110),
-  hex: sp('hex', 'Hex', 'Foes in a 3x3 strike 30% weaker for 8s', 3, 10000, 2, 130),
-  lance: sp('lance', 'Light Lance', 'A beam of light runs down a whole column and hits every foe in it', 4, 9000, 3, 140),
-  renewal: sp('renewal', 'Renewal', 'Heroes in a 3x3 regain 8% of their health every second for 8s', 4, 14000, 3, 150),
-  deepfreeze: sp('deepfreeze', 'Deep Freeze', 'The sturdiest foe in a 3x3 is frozen for 4s and takes 30% more from every blow', 4, 12000, 3, 170),
-  warcry: sp('warcry', 'Battle Cry', 'Every hero\'s skill meter jumps by 40', 4, 14000, 3, 180, 'all'),
-  bulwark: sp('bulwark', 'Bulwark', 'Every hero gains a shield worth 30% of its health for 6s', 5, 16000, 4, 220, 'all'),
-  wolves: sp('wolves', 'Call the Wolves', 'Two Dire Wolves come up on free tiles in a 3x3 and fight for you', 5, 20000, 4, 240),
-  starfall: sp('starfall', 'Meteor Shower', 'Five small meteors rain round the tapped tile, one after another, each blasting a 3x3', 7, 18000, 5, 300),
+  heal: sp('heal', 'Heal', 'Heroes in a 3x3 regain 40% of their health', 3, 6000, 2),
+  meteor: sp('meteor', 'Meteor', 'A meteor blasts the foes in a 3x3', 5, 10000, 4),
+  haste: sp('haste', 'Haste', 'Heroes in a 3x3 attack and move 50% faster for 5s', 3, 8000, 2),
+  shield: sp('shield', 'Shield', 'Heroes in a 3x3 gain a shield worth 40% of their health for 6s', 3, 8000, 2),
+  smite: sp('smite', 'Smite', 'A bolt of light strikes the sturdiest foe in a 3x3 for great damage', 3, 8000, 3),
+  chain: sp('chain', 'Chain Lightning', 'Lightning hits a foe in a 3x3, then leaps to three more, weaker each time', 4, 9000, 3),
+  poison: sp('poison', 'Poison Cloud', 'A cloud on a 3x3 poisons foes inside it for 6s', 4, 12000, 3),
+  frost: sp('frost', 'Frost Nova', 'Foes in a 3x3 freeze for 2s, then move and strike at half speed', 4, 12000, 3),
+  rally: sp('rally', 'Rally', 'Every hero attacks 25% harder for 8s', 4, 14000, 3, 'all'),
+  quake: sp('quake', 'Earthquake', 'The ground shakes: every foe on low ground takes damage', 5, 14000, 4, 'all'),
+  resurrect: sp('resurrect', 'Resurrect', 'A fallen hero in a 3x3 rises with half its health', 5, 20000, 5),
+  cleanse: sp('cleanse', 'Cleanse', 'Heroes in a 3x3 shake off burns, bleeding, curses, slows, holds and charms, and regain 15% of their health', 2, 8000, 1),
+  blink: sp('blink', 'Blink', 'Your most wounded hero leaps to the tapped tile and cannot be targeted for 1.5s', 3, 12000, 2),
+  hex: sp('hex', 'Hex', 'Foes in a 3x3 strike 30% weaker for 8s', 3, 10000, 2),
+  lance: sp('lance', 'Light Lance', 'A beam of light runs down a whole column and hits every foe in it', 4, 9000, 3),
+  renewal: sp('renewal', 'Renewal', 'Heroes in a 3x3 regain 8% of their health every second for 8s', 4, 14000, 3),
+  deepfreeze: sp('deepfreeze', 'Deep Freeze', 'The sturdiest foe in a 3x3 is frozen for 4s and takes 30% more from every blow', 4, 12000, 3),
+  warcry: sp('warcry', 'Battle Cry', 'Every hero\'s skill meter jumps by 40', 4, 14000, 3, 'all'),
+  bulwark: sp('bulwark', 'Bulwark', 'Every hero gains a shield worth 30% of its health for 6s', 5, 16000, 4, 'all'),
+  wolves: sp('wolves', 'Call the Wolves', 'Two Dire Wolves come up on free tiles in a 3x3 and fight for you', 5, 20000, 4),
+  starfall: sp('starfall', 'Meteor Shower', 'Five small meteors rain round the tapped tile, one after another, each blasting a 3x3', 7, 18000, 5),
 };
 export const SPELL_IDS: SpellId[] = ['heal', 'meteor', 'haste', 'shield', 'smite', 'chain', 'poison', 'frost', 'rally', 'quake', 'resurrect', 'cleanse', 'blink', 'hex', 'lance', 'renewal', 'deepfreeze', 'warcry', 'bulwark', 'wolves', 'starfall'];
 /** The three every save starts with (and has equipped). */
@@ -188,9 +186,9 @@ export const canAfford = (b: Battle, id: SpellId) => b.phase === 'fight' && b.sp
 
 /** The foes in the 3x3 around a tile, in id order. */
 const foesIn = (b: Battle, u: number, v: number) => b.units.filter((x) => x.alive && x.side === 'foe' && inArea(x, u, v));
-/** The fallen hero a Resurrect on this tile would lift: the nearest in the 3x3 whose tile is free. */
-const fallenIn = (b: Battle, u: number, v: number) =>
-  b.units
+/** The fallen hero a Resurrect on this tile would lift: the nearest in the 3x3 whose tile is free. None in the Last Stand, where the fallen stay down. */
+export const fallenIn = (b: Battle, u: number, v: number) =>
+  b.stand ? undefined : b.units
     .filter((x) => !x.alive && x.side === 'hero' && !defOf(x).summon && inArea(x, u, v) && !b.units.some((o) => o.alive && o.u === x.u && o.v === x.v))
     .sort((x, y) => apart(x, { u, v }) - apart(y, { u, v }) || x.id - y.id)[0];
 
@@ -475,15 +473,6 @@ export function unequipSpell(m: SpellMeta, id: SpellId): boolean {
   const i = m.spellbook.equipped.indexOf(id);
   if (i < 0) return false;
   m.spellbook.equipped.splice(i, 1);
-  return true;
-}
-
-/** Pay the crowns to unlock a spell. False (and nothing changed) if already owned, too poor, or not a spell. */
-export function unlockSpell(m: SpellMeta, id: SpellId): boolean {
-  const spell = SPELLS[id];
-  if (!spell || m.spellbook.owned.includes(id) || m.crowns < spell.price) return false;
-  m.crowns -= spell.price;
-  m.spellbook.owned.push(id);
   return true;
 }
 

@@ -75,8 +75,8 @@ export class Library {
   private dim = el('div', 'lbDim');
   private lock = el('div', 'lbPage lbLock');
   private page = el('div', 'lbPage');
-  private crowns = el('span');
-  private book = spellbookView(() => (this.crowns.textContent = this.book?.crowns() ?? ''));
+  private known = el('span');
+  private book = spellbookView(() => (this.known.textContent = this.book?.known() ?? ''));
   private glow: HTMLCanvasElement | null = null;
   private motes: Mote[] = [];
   private scale = 2;
@@ -100,11 +100,11 @@ export class Library {
     go.addEventListener('click', onCastle);
     this.lock.append(el('h2', '', 'The spellbook is locked'), el('p', '', 'Build the Chapel in the castle to study spells'), go);
     const head = el('div', 'lbHead');
-    head.append(el('h2', '', 'Spellbook'), this.crowns);
+    head.append(el('h2', '', 'Spellbook'), this.known);
     page.append(head, this.book.root);
     this.panel.append(page, this.lock);
     this.root.append(this.canvas, this.dim, this.panel);
-    this.crowns.textContent = this.book.crowns();
+    this.known.textContent = this.book.known();
     this.ctx.imageSmoothingEnabled = false;
     onSettings((s) => (this.saver = s.saver));
     window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
@@ -113,7 +113,7 @@ export class Library {
     document.addEventListener('visibilitychange', () => (document.hidden ? this.halt() : this.running && this.start()));
   }
 
-  /** Redraw the book from the Meta (crowns and unlocks may have changed elsewhere). */
+  /** Redraw the book from the Meta (spells may have been learnt elsewhere). */
   update(meta: Meta): void {
     // (until the Chapel is built the room is darkened and a locked parchment stands in for the book; the starting spells still work in fights)
     const open = spellsOpen(meta);

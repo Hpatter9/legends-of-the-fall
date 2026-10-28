@@ -43,6 +43,8 @@ async function bootDpr(browser, w, h, port, dpr) {
   return { ctx, page, errors };
 }
 export async function enter(page) {
+  // (wait for the home screen to be drawn: a busy machine can take longer than the boot's fixed pause)
+  await page.waitForFunction(() => document.getElementById('hmTower'), {}, { timeout: 60000 });
   await page.evaluate(() => document.getElementById('hmTower').click());
   await page.waitForTimeout(1200);
   // (the choice of the eight: the party is filled up by Auto fill and taken)

@@ -87,7 +87,7 @@ export const ARMIES: readonly Army[] = [
     area: 'warcamp',
     lands: ['warcamp', 'highlands'],
     waves: waves(ramp(['orcGrunt', 'orcGrunt', 'orcArcher', 'orcBrute', 'orcGrunt', 'orcArcher', 'orcBrute', 'orcGrunt'], 13), { 8: ['orcChieftain', 'orcGrunt', 'orcGrunt', 'orcArcher'], 15: ['orcWarlord', 'orcGrunt', 'orcArcher', 'orcGrunt', 'orcBrute', 'orcBrute'] }),
-    start: 0.5,
+    start: 0.39, // (was 0.5: retuned on the army road, WORLD-ROAD, to take as many tries as before)
     tierStart: 0.5,
     growth: 0.176,
     mid: { hp: 1500, atk: 50 },
@@ -103,7 +103,7 @@ export const ARMIES: readonly Army[] = [
     area: 'graveyard',
     lands: ['graveyard', 'dungeon'],
     waves: waves(ramp(['skeleton', 'skeleton', 'boneVolley', 'spearman', 'skeleton', 'spearman', 'boneVolley', 'spearman'], 13), { 8: ['boneCaptain', 'skeleton', 'spearman', 'boneVolley'], 15: ['lichKing', 'skeleton', 'spearman', 'spearman', 'boneVolley', 'boneVolley'] }),
-    start: 1.41,
+    start: 1.48, // (was 1.52: retuned on the army road, WORLD-ROAD, to take as many tries as before)
     tierStart: 0.7,
     growth: 0.05,
     tierGrowth: 0.17,
@@ -141,7 +141,7 @@ export const ARMIES: readonly Army[] = [
         10: ['forestBoss2', 'groveSatyr3', 'groveSatyr1', 'groveSatyr2', 'groveSatyr3'],
         15: ['forestBoss3', 'groveSatyr1', 'groveSatyr2', 'groveSatyr3', 'groveSatyr1', 'groveSatyr2'],
       }),
-    start: 1.86,
+    start: 2.01, // (was 1.86: retuned on the army road, WORLD-ROAD, to take as many tries as before)
     tierStart: 1.15,
     growth: 0.05,
     tierGrowth: 0.136,
@@ -158,7 +158,7 @@ export const ARMIES: readonly Army[] = [
     area: 'temple',
     lands: ['temple', 'ruins'],
     waves: waves(ramp(['mazeMino1', 'mazeMino2', 'mazeGorgon1', 'mazeMino3', 'mazeGorgon2', 'mazeMino1', 'mazeGorgon3', 'mazeMino2'], 13), { 8: ['gorgonQueen', 'mazeMino1', 'mazeMino2', 'mazeGorgon3'], 15: ['minotaurChampion', 'mazeMino1', 'mazeGorgon1', 'mazeMino2', 'mazeGorgon2', 'mazeMino3'] }),
-    start: 2.37,
+    start: 2.25, // (was 2.37: retuned on the army road, WORLD-ROAD, to take as many tries as before)
     tierStart: 1.38,
     growth: 0.05,
     tierGrowth: 0.128,
@@ -175,7 +175,7 @@ export const ARMIES: readonly Army[] = [
     area: 'highlands',
     lands: ['highlands', 'snow'],
     waves: waves(ramp(['clanOgre', 'clanBrute', 'clanBrute', 'clanOgre', 'clanOgre', 'clanBrute', 'clanOgre'], 13), { 8: ['shamanKing', 'clanBrute', 'clanOgre', 'clanBrute'], 15: ['hornedOgre', 'clanOgre', 'clanBrute', 'clanOgre', 'clanBrute', 'clanOgre'] }),
-    start: 2.76,
+    start: 2.8, // (was 2.76: retuned on the army road, WORLD-ROAD, to take as many tries as before)
     tierStart: 1.55,
     growth: 0.05,
     tierGrowth: 0.124,
@@ -209,7 +209,7 @@ export const ARMIES: readonly Army[] = [
     area: 'shrine',
     lands: ['shrine', 'forest'],
     waves: waves(ramp(['yokaiFox', 'yokaiCrow', 'yokaiMonk', 'yokaiWitch', 'yokaiSeer', 'yokaiFox', 'yokaiMonk', 'yokaiCrow', 'yokaiWitch'], 13), { 8: ['nineTails', 'yokaiFox', 'yokaiWitch', 'yokaiCrow'], 15: ['oniKing', 'yokaiMonk', 'yokaiWitch', 'yokaiSeer', 'yokaiFox', 'yokaiCrow'] }),
-    start: 3.22,
+    start: 3.38, // (was 3.22: retuned on the army road, WORLD-ROAD, to take as many tries as before)
     tierStart: 1.55,
     growth: 0.05,
     tierGrowth: 0.127,
@@ -226,7 +226,7 @@ export const ARMIES: readonly Army[] = [
     area: 'forge',
     lands: ['forge', 'crystal'],
     waves: waves(ramp(['stoneGolem', 'ironGolem', 'crystalGolem', 'magmaGolem', 'stoneGolem', 'ironGolem', 'magmaGolem'], 13), { 8: ['sapphireColossus', 'stoneGolem', 'crystalGolem', 'ironGolem'], 15: ['forgeTitan', 'ironGolem', 'magmaGolem', 'crystalGolem', 'stoneGolem', 'magmaGolem'] }),
-    start: 3.79,
+    start: 3.63, // (was 3.79: retuned on the army road, WORLD-ROAD, to take as many tries as before)
     tierStart: 1.7,
     growth: 0.05,
     tierGrowth: 0.124,

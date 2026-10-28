@@ -1,0 +1,149 @@
+[
+  {
+    "w": 393,
+    "h": 852,
+    "layout": {
+      "phase": "fight",
+      "top": {
+        "top": 0,
+        "bottom": 89.796875,
+        "width": 393,
+        "height": 89.796875
+      },
+      "panel": {
+        "top": 628,
+        "bottom": 852,
+        "width": 393,
+        "height": 224
+      },
+      "bench": {
+        "top": 0,
+        "bottom": 0,
+        "width": 0,
+        "height": 0
+      },
+      "spells": [
+        {
+          "id": "heal",
+          "w": 119.65625,
+          "h": 52
+        },
+        {
+          "id": "meteor",
+          "w": 119.671875,
+          "h": 52
+        },
+        {
+          "id": "haste",
+          "w": 119.65625,
+          "h": 52
+        }
+      ],
+      "overflow": false
+    },
+    "armed": "meteor",
+    "cancelled": true,
+    "preview": true,
+    "cast": true,
+    "auto": true,
+    "errors": []
+  },
+  {
+    "w": 360,
+    "h": 780,
+    "layout": {
+      "phase": "fight",
+      "top": {
+        "top": 0,
+        "bottom": 89.796875,
+        "width": 360,
+        "height": 89.796875
+      },
+      "panel": {
+        "top": 556,
+        "bottom": 780,
+        "width": 360,
+        "height": 224
+      },
+      "bench": {
+        "top": 0,
+        "bottom": 0,
+        "width": 0,
+        "height": 0
+      },
+      "spells": [
+        {
+          "id": "heal",
+          "w": 108.65625,
+          "h": 52
+        },
+        {
+          "id": "meteor",
+          "w": 108.671875,
+          "h": 52
+        },
+        {
+          "id": "haste",
+          "w": 108.65625,
+          "h": 52
+        }
+      ],
+      "overflow": false
+    },
+    "armed": "meteor",
+    "cancelled": true,
+    "preview": true,
+    "cast": true,
+    "auto": true,
+    "errors": []
+  },
+  {
+    "w": 412,
+    "h": 915,
+    "layout": {
+      "phase": "fight",
+      "top": {
+        "top": 0,
+        "bottom": 89.796875,
+        "width": 412,
+        "height": 89.796875
+      },
+      "panel": {
+        "top": 691,
+        "bottom": 915,
+        "width": 412,
+        "height": 224
+      },
+      "bench": {
+        "top": 0,
+        "bottom": 0,
+        "width": 0,
+        "height": 0
+      },
+      "spells": [
+        {
+          "id": "heal",
+          "w": 126,
+          "h": 52
+        },
+        {
+          "id": "meteor",
+          "w": 126,
+          "h": 52
+        },
+        {
+          "id": "haste",
+          "w": 126,
+          "h": 52
+        }
+      ],
+      "overflow": false
+    },
+    "armed": "meteor",
+    "cancelled": true,
+    "preview": true,
+    "cast": true,
+    "auto": true,
+    "errors": []
+  }
+]

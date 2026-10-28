@@ -1,4 +1,4 @@
-// The chest shop (#shop): crowns buy chests, and chests hold summoning stones and equipment. A card for each chest with what it holds,
+// The chest shop (#shop): crowns buy chests, and chests hold summoning stones, equipment and XP tomes. A card for each chest with what it holds,
 // what is left of today's stock and the price; a tap on Buy pays and plays the usual chest opening (`showChest`). The rules are in
 // `src/sim/chestShop.ts`; this only reads and changes the meta through them.
 
@@ -45,6 +45,12 @@ const GEAR_LINE: Record<ShopChest['kind'], string> = {
   gold: 'A piece of gold-grade gear, a few levels higher',
 };
 
+const TOME_LINE: Record<ShopChest['kind'], string> = {
+  bronze: 'A small XP tome, sometimes two',
+  silver: 'Two small XP tomes, and perhaps a medium',
+  gold: 'A medium and two small XP tomes, and perhaps a large',
+};
+
 /** Open the chest shop over the page. `onChange` runs after every sale (and when the shop is closed), so the page behind can redraw its crowns and stones. */
 export function openShop(m: Meta, onChange: () => void): void {
   if (!document.getElementById('shopStyle')) {
@@ -69,7 +75,7 @@ export function openShop(m: Meta, onChange: () => void): void {
     stones.append(icon(ICONS.stones, ''), `${stonesOf(m)} stones`);
     purse.append(crowns, stones);
     head.append(purse);
-    const note = el('p', 'shopNote', `Chests hold summoning stones and gear. Using a stone gives one hero shard, and 1 in ${LUCKY_ODDS} brings a whole new hero. The shop restocks each day, and prices rise with the heroes you own.`);
+    const note = el('p', 'shopNote', `Chests hold summoning stones, gear and XP tomes. Using a stone gives one hero shard, and 1 in ${LUCKY_ODDS} brings a whole new hero. The shop restocks each day, and prices rise with the heroes you own.`);
     const list = el('div', 'shopList');
     for (const c of SHOP) {
       const left = stockLeft(m, c.kind, day);
@@ -77,7 +83,7 @@ export function openShop(m: Meta, onChange: () => void): void {
       const card = el('div', `shopCard ${c.kind}`);
       card.append(chestPicture(c.kind, 2).root);
       const text = el('div');
-      text.append(el('h3', '', c.name), el('p', '', `${c.stones} summoning stones`), el('p', '', GEAR_LINE[c.kind]), el('p', 'shopLeft', `${left} of ${c.stock} left today`));
+      text.append(el('h3', '', c.name), el('p', '', `${c.stones} summoning stones`), el('p', '', GEAR_LINE[c.kind]), el('p', '', TOME_LINE[c.kind]), el('p', 'shopLeft', `${left} of ${c.stock} left today`));
       card.append(text);
       const buy = el('button', 'shopBuy');
       buy.append(icon(ICONS.crowns, ''), `${price}`);

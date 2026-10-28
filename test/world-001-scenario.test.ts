@@ -4,7 +4,7 @@ import { boardOk, canStep, DIRS, RAMP, sightClear, standable, tileAt, W, D } fro
 import { shotReach } from '../src/sim/battle';
 import { boardTileAt, buildChain, contactPairs, footprint, frameOf, seam, transferFormation, worldOf } from '../src/sim/chain';
 import { armyRun, chainOf, loadRun, saveRun, startStage } from '../src/sim/run';
-import { ARMIES } from '../src/sim/armies';
+import { ARMIES, landsOf } from '../src/sim/armies';
 import { ARMY_SCENARIOS, landmarkOfTheme, planScenario, SCENARIOS, SCENARIO_SIZE, scenarioForArmy, scenarioHeight } from '../src/sim/scenario';
 import { landmarkBounds, project, rawAt } from '../src/render/iso';
 import { dropDelay, dropEnd, FALL_MS, SETTLE_MS } from '../src/render/dropRules';
@@ -66,7 +66,8 @@ for (const theme of SCENARIOS)
           for (let u = 0; u < w; u++) {
             const t = tileAt(s.board, u, v)!;
             const [U, V] = worldOf(s, u, v);
-            if (!t.bridge && !t.perch && !t.ramp) assert.equal(t.h, scenarioHeight(theme, U, V, 15, seed));
+            // (a boss's arena is levelled towards its middle: WORLD-ROAD, `levelArena`)
+            if (!s.boss && !t.bridge && !t.perch && !t.ramp) assert.equal(t.h, scenarioHeight(theme, U, V, 15, seed));
             if (p.waterLevel !== null && (t.ground === 'deep' || t.ground === 'water')) assert.equal(t.h, 1);
             if (t.bridge) bridges++;
             if (t.ground === 'water' || t.ground === 'deep' || t.ground === 'lava' || t.ground === 'ice') rivers++;
@@ -76,14 +77,16 @@ for (const theme of SCENARIOS)
             boardMax = Math.max(boardMax, t.h);
           }
         // Every single 14×18 wave section has 12–20+ tiles of local vertical relief.
-        assert.ok(boardMax - boardMin >= 12, `${theme}/${seed}/wave ${k + 1} delta ${boardMax - boardMin}`);
+        if (!s.boss) assert.ok(boardMax - boardMin >= 12, `${theme}/${seed}/wave ${k + 1} delta ${boardMax - boardMin}`);
         runMinH = Math.min(runMinH, boardMin);
         runMaxH = Math.max(runMaxH, boardMax);
         assert.equal(!!s.board.landmark, k >= c.length - 2);
         if (!k) continue;
         const old = c[k - 1];
         const { board, minU, minV } = seam(old, s);
-        const [U, V] = worldOf(s, Math.floor(w / 2), d - 1);
+        // (the next formation stands on the road: the middle standable tile of the new section's heroes' row; WORLD-ROAD leaves the rest of the row as scenery)
+        const row = [...Array(w).keys()].filter((u) => standable(tileAt(s.board, u, d - 1)));
+        const [U, V] = worldOf(s, row[Math.floor(row.length / 2)], d - 1);
         const goal = (V - minV) * board.w + U - minU;
         // Reverse flood: every standable survivor position must be able to walk TO the next formation.
         const seen = new Set([goal]);
@@ -128,9 +131,10 @@ test('every army uses its own dedicated story-spanning 14×18 campaign map by de
     assert.equal(c.length, army.waves.length);
     assert.equal(c[0].board.w, SCENARIO_SIZE.w);
     assert.equal(c[0].board.d, SCENARIO_SIZE.d);
-    // Story progression spans multiple distinct areas along the journey.
+    // (the owner's rule: one land for the one long battle; each attempt keeps the land its seed picked from the army's lands)
     const areas = new Set(c.map((s) => s.board.area));
-    assert.ok(areas.size >= 2, `${army.id} progresses through multiple story areas`);
+    assert.equal(areas.size, 1, `${army.id} keeps one land`);
+    assert.ok(landsOf(army).includes(c[0].board.area), `${army.id} on one of its own lands`);
     assert.equal(c[c.length - 1].board.landmark, landmarkOfTheme(theme));
   }
 });

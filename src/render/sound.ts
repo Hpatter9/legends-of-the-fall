@@ -22,7 +22,7 @@ import { SCENE_TRACKS, type Track } from './musicScore';
 import { Mixer, cuesFor, intensityOf, type Cue } from './soundRules';
 
 const MUSIC_LEVEL = 0.22;
-const SFX_LEVEL = 0.5;
+const SFX_LEVEL = 0.35;
 const SAVE_KEY = 'legends.sound';
 
 export type Sfx = Cue;
@@ -89,7 +89,7 @@ function unlock(): void {
   if (!engine.music.current) {
     syncMusic();
     // (the fight's track is decoded while the camp's plays, so a fight's music starts at once)
-    setTimeout(() => engine?.music.warm('battle'), 4000);
+    setTimeout(() => engine?.music.warm('battle'), 1000);
   }
 }
 
@@ -307,6 +307,7 @@ export function setScene(scene: Scene | null, map: MapKind = null): void {
   engine?.beds.setScene(scene);
   // (the music follows too: the camp's or the tavern's, the tower's or the Calamity's map, or the deployment)
   place = placeOf(scene, map);
+  if (place === 'deploy') engine?.music.warm('battle');
   syncMusic();
 }
 
