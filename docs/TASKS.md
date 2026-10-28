@@ -217,15 +217,30 @@ Owner authorised bump and merge of PR #124 on 2026-10-28. Latest main 0.168.0 is
 
 Release integration validation for 0.169.0: typecheck/build and 48 affected tests passed; release progression/resume/pan/offline lifecycle checks passed all three portrait sizes with zero page errors. Original army/large-field compatibility smoke passed. Evidence: `docs/samples/world-169-lifecycle.json`, `world-169-compatibility.json` and the corresponding screenshots. Owner accepted the rendering checkpoint; broader maps and warm-tail/device investigation remain open.
 
-## UI-006 — Battle command screen
+## UI-006 — Battle command screen — merged
 
 - Owner: Codex; branch `design/battle-command-ui`, worktree `/workspace/legends-of-the-fall`.
-- Scope: deployment/live-combat HUD, spell and bench styling, bounded markup/build changes, browser evidence and notes. Simulation, maps, save format and other screens remain outside scope.
-- Direction: owner rejected subtle restyling, then authorised trying a toned-down ornate battle concept in the game on 2026-10-28.
-- Completion: implemented live-game review at 393×852, 360×780 and 412×915; typecheck, web build and affected interaction checks; preserve spell targeting, cooldowns and reduced motion. Final visual acceptance pending.
+- Owner accepted the toned-down ornate battle treatment and requested merging on 2026-10-28.
+- Merged through [PR #143](https://github.com/Hpatter9/legends-of-the-fall/pull/143) as **0.179.0**, preserving concurrent main 0.178.0, XP tomes/chest actions, renderer updates and manual ultimate controls.
+- Typecheck, web build, battle-flow/hero-kit look/save tests and three-size live-browser checks passed. Spell arm/cancel, drag preview/cast and ultimate Auto passed with no page errors or horizontal page overflow. Reduced-motion captures reviewed.
+- [Handoff](notes/battle-command-ui.md). Wider battle screens continue in UI-007 below.
 
-UI-006 implementation is ready for visual review. Typecheck and web build passed; three-size live combat checks passed with no page errors or page overflow, including spell selection/cancellation and drag-to-cast. Existing offline UI asset enumeration includes the new crest. Full offline reload was not run. See [handoff](notes/battle-command-ui.md). No merge, release bump or deployment.
+## UI-007 — Battle reports and remaining combat screens
 
-UI-006 owner accepted and authorised merge as 0.176.0. Main 0.175.0 integrated; manual ultimate controls retained and styled. Typecheck, targeted battle-flow/hero-kit visual and save tests, and release web build passed. Three-size release browser recheck is being completed before PR merge.
+- Owner: Codex; branch `design/battle-reports`, worktree `/workspace/legends-of-the-fall`.
+- Owner authorised extending the accepted battle UI across all battle screens, including after-action recaps, after requesting the HUD merge on 2026-10-28.
+- UI-006 merged as 0.179.0 through [PR #143](https://github.com/Hpatter9/legends-of-the-fall/pull/143).
+- Scope: wave victory/defeat, XP/performance and full run recaps, replay summary, between-fight equipment/events, Tower/Calamity report cards and Last Stand HUD/end cards; preserve existing gameplay handlers, rewards, comeback actions, maps and saves.
+- Completion: actual result-to-recap navigation, fixtures for report variants, three portrait sizes and reduced motion; typecheck, build and relevant tests; screenshots for owner review. No further merge/deployment assumed.
 
-UI-006 release updated to 0.179.0 after integrating concurrent main 0.178.0. PR #143; version-only conflicts resolved. Three-size release checks passed for spell arm/cancel, drag preview/cast and ultimate Auto, with no page errors or horizontal page overflow.
+UI-007 implementation and validation are complete; ready for owner visual review. Scope includes wave results, after-action recaps, daily/replay/Tower/Calamity summaries, between-fight cards and Last Stand. Typecheck/build and the three matching affected test files passed; daily/old-save fixtures and a real service-worker offline reload passed. See [handoff](notes/battle-reports.md). Follow-up visuals await owner acceptance; no new release bump or merge.
+
+UI-007 final browser evidence: all 23 report/flow checks completed at each of 393×852, 360×780 and 412×915, with zero page errors and no horizontal overflow. Daily/old-save fixtures and real service-worker offline reload also passed. Outcome simulations are temporary review fixtures where noted; full campaigns were not replayed.
+
+UI-007 final integration: owner requested completion after subsequent updates. Main 0.188.0 (`decef2e9`) merged cleanly; new army roads/hazards, awakening auras, spell sources and combat audio retained. Finishing as release 0.189.0 after integrated checks.
+
+UI-007 release 0.189.0 integrated validation passed: typecheck/build; eight affected test files; all 23 report/flow checks at all three portrait sizes; daily/old-save variants; service-worker offline reload/recap; final-facts/action-button checks. Evidence refreshed on main 0.188.0 plus this pass. Ready for the requested completion merge.
+
+UI-007 integrated STAND-003 main 0.189.0 before merging. Older Last Stand style overrides removed so its new castle-room HUD, pause and end cards remain intact. Release updated to 0.190.0.
+
+UI-007 final 0.190.0 validation complete: current Last Stand Auto, pause/resume, end navigation and reduced motion passed at all three portrait sizes, with zero page errors. Duplicate crest/style overrides removed and edge-arrow paint contained. Typecheck/build and eight matching affected test files passed. PR #154 ready for completion merge.
