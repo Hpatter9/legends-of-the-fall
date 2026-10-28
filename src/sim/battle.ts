@@ -46,6 +46,12 @@ export const TIME_LIMIT_MS = 120_000;
 /** How long a fighter with nothing it can do waits before looking again. */
 export const WAIT_MS = 300;
 
+export interface Cabbage {
+  u: number;
+  v: number;
+  healPercent: number;
+}
+
 export type Phase = 'deploy' | 'fight' | 'won' | 'lost';
 
 export interface Unit {
@@ -259,6 +265,8 @@ export interface Battle {
   zones: Zone[];
   /** Snares laid by rangers (none until one is laid). */
   traps?: Trap[];
+  /** Cabbages kicked onto tiles by Duchess's Lucky Bleat. */
+  cabbages?: Cabbage[];
   nextId: number;
   /** The king's mana, spell cooldowns and meteors falling. */
   spells: SpellState;

@@ -830,6 +830,9 @@ export const RESULT_LOSS: readonly string[] = [
 
 /** A dry aside for each achievement, shown under its real name and text (so the meaning stays). */
 export const AWARD_JOKES: Record<string, string> = {
+  duchessCrown: 'The crown is tin. Her Grace has not been told, and nobody is volunteering.',
+  duchessTactician: 'The foe was startled by livestock. It has asked that this stay off its record.',
+  duchessHaystack: 'Treasure in the hay. The hay would like it noted that it was never consulted.',
   firstWin: 'Duchess ate the victory rosette before the glue was dry.',
   flawless: 'Not a single bruise recorded. Even the armourers feel slightly cheated.',
   perfect: 'The stars align in perfection. They have formally requested apple slices.',
