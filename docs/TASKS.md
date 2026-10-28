@@ -14,6 +14,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### KING-ART — Eight player rulers and action animations
+
+- **Owner:** Codex. **Branch / worktree:** `design/king-artwork`, `/workspace/legends-of-the-fall`.
+- **Goal:** redo the player's ruler everywhere, with proper action animations and eight Settings options: five sexy adult women and three adult men, with completely varied styles.
+- **Status:** owner approved the personality roster and authorised implementation. Implemented on the branch; owner requested [PR #165](https://github.com/Hpatter9/legends-of-the-fall/pull/165) for Claude to merge. Latest main (0.200.0) integrated; PR not merged or deployed.
+- **Scope:** eight rulers' artwork, saved ruler settings choice, matching ruler titles/pronouns, castle throne drawing, Last Stand king rendering/event hooks, cinematic ruler rendering, associated asset metadata, credits, checks and notes. Enemy kings and simulation rules excluded.
+- **Completion:** approved consistent seated/standing design; distinct action animations driven by events; reduced motion and offline support preserved; typecheck, web build, affected tests and three portrait sizes checked.
+- **Validation:** typecheck and web build passed; eight affected test files passed; final browser checks at 393×852, 360×780 and 412×915 passed with no page errors, including all eight appearances, saved selection, action completion, reduced motion and offline reload.
+- **Handoff:** [ruler artwork and validation](notes/king-artwork.md), [Settings preview](samples/rulers-settings-393x852.png).
+
 **ART-002 / Resonance full roster** — Owner: current Codex art chat. Branch: `art/resonance-roster`, worktree: `/workspace/legends-of-the-fall`, based on the approved ART-001 pilot. Scope: all 43 remaining collectible heroes, animation sheets and necessary hero-form render mappings, size bands, asset credits, art tooling and portrait/battle evidence. Preserve combat rules, save keys, hero identities, enemies and unrelated UI work. Owner extended scope to four isometric facings and visibly grounded walking cycles. Completion: all 45 heroes use front/rear facings mirrored left/right, walking is reviewed as a loop with alternating footfalls, required animations and transformations remain available, typecheck/build/affected tests and all three phone sizes pass. Status: implemented and validated; ready for owner review. All 11 affected test files, typecheck/build, 2,800 asset-cell checks and three phone sizes pass; offline reload passes. Handoff: [notes](notes/resonance-roster.md). No merge or release requested.
 ### FIGHT-FIXES — Boss in the arena's middle, a free fight camera, heroes get up on a revive, the trophy wall closes
 
