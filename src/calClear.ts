@@ -13,6 +13,8 @@ import { ICONS, icon } from './menuArt';
 import { iconImg, relicIcon } from './render/items';
 import { play } from './render/sound';
 import { calamityLook } from './towerTheme';
+import { sumOres } from './sim/awakenMats';
+import { cacheChip, classWord, oreChip } from './oreView';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -55,6 +57,7 @@ export function mapRecapCard(card: HTMLElement, r: MapRecap, onDone: () => void)
   stats.append(row('Spots cleared', `${r.spots} of ${r.total}`), row('Fights won', `${r.fights}${r.elites ? ` (${r.elites} mini-boss${r.elites === 1 ? '' : 'es'})` : ''}`), row('Gold won', String(r.gold)));
   card.append(stats);
   const parts = [
+    group('Rift ores', sumOres(r.ores ?? []).map((d) => oreChip(d, `for the ${classWord(d.trait)} heroes`))),
     group('Relics found', r.relics.filter((id) => RELICS[id]).map((id) => chip(iconImg(relicIcon(id), RELICS[id].name), RELICS[id].name))),
     group('Gear found', r.gear.map((g) => el('span', 'ccLine', g))),
     group('Heroes who joined', r.heroes.map((h) => el('span', 'ccLine', h))),
@@ -116,6 +119,8 @@ export function victoryCard(card: HTMLElement, s: TowerSummary, onDone: () => vo
   card.append(crowns);
   countUp(num, s.crowns);
   const rewards: (HTMLElement | null)[] = [];
+  // the rift ores the run's bosses and mini-bosses dropped, and the clear's Rift Cache (`awakenMats.ts`)
+  rewards.push(group('Rift ores', [...(s.ores ?? []).map((d) => oreChip(d)), ...(c.cache ? [cacheChip(c.cache)] : [])]));
   // the gear
   const gearItem: Equipment = { id: 0, base: c.gear.base, rarity: c.gear.rarity as Equipment['rarity'], level: c.gear.level };
   const gear = el('div', `ccGear r${c.gear.rarity}`);

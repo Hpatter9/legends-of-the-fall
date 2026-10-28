@@ -1,0 +1,44 @@
+[
+ {
+  "id": "werewolfBrute",
+  "name": "Werewolf Brute form",
+  "size": 72,
+  "design": "A massive anthropomorphic BLACK furred wolf monster, long wolf muzzle, pointed ears, gold eyes, broad muscular hunched shoulders, huge clawed hands, torn dark indigo trousers, red leather straps. Clearly a bulky black werewolf, not human.",
+  "attack": "huge claw swipe to the right",
+  "cast": "crouch and roar then smash both claws down"
+ },
+ {
+  "id": "werewolfAwakened",
+  "name": "Awakened Werewolf",
+  "size": 60,
+  "design": "A powerful anthropomorphic RED brown furred werewolf, long wolf muzzle, pointed ears, gold eyes, massive claws, dark blue torn trousers and brass leather bracers. Clearly a wolf monster, red fur differentiates awakened form from silver base and black brute.",
+  "attack": "slash claws to the right",
+  "cast": "raise muzzle and howl then recover"
+ },
+ {
+  "id": "treant",
+  "name": "Treant sapling form",
+  "size": 48,
+  "design": "Living tree warrior, mossy brown bark body, expressive knotted wooden face with emerald eyes, little crown of fresh green leaves, root feet and branch arms, compact and friendly but strong forest creature, no human clothes or weapons.",
+  "attack": "swing a wooden branch fist right",
+  "cast": "raise branch arms and spread green leaves"
+ },
+ {
+  "id": "treant2",
+  "name": "Treant flowering guardian form",
+  "size": 62,
+  "design": "Large living tree warrior, broad mossy brown bark body, expressive knotted wood face with green eyes, broad branch crown covered with pink flowers and green leaves, thick root feet and powerful branch arms, small leafy branch staff, no human clothes.",
+  "attack": "sweep branch staff right",
+  "cast": "raise branch crown and both wooden arms",
+  "figure": 124
+ },
+ {
+  "id": "treant3",
+  "name": "Treant ancient form",
+  "size": 62,
+  "design": "Ancient living tree guardian, massive gnarled bark torso, expressive venerable wooden face with green eyes, branching antler crown with orange autumn leaves and pink blossoms, small glowing green runes carved in chest, thick root feet and giant branch arms, no human clothing.",
+  "attack": "slam wooden branch fist to the right",
+  "cast": "raise rune carved arms and spread branch crown",
+  "figure": 124
+ }
+]

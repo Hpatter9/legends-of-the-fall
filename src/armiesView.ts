@@ -5,6 +5,7 @@
 // button. A locked army shows its scene as a silhouette. The rules are in `src/sim/armies.ts`, `armyStars.ts` and
 // `tiers.ts`; this only draws them.
 
+import { armyOreRow } from './oreView';
 import { progressLine } from './sim/modeUnlock';
 import { ARMIES, armyCleared, armyNeed, armyIsNew, armyStars, armyUnlocked, bossOf, bossesOf, firstClearTotal, landsOf, recordOf, replayTotal, tierOpen, tierStars, type Army } from './sim/armies';
 import { AUTO_COUNTS, AUTO_TICKETS, canAutoReplay, ticketsLeft } from './sim/autoReplay';
@@ -387,6 +388,9 @@ function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLEle
     const pay = el('div', 'asPay');
     pay.append(tierDone ? 'Cleared ✓ · ' : 'First clear ', tierDone ? '' : crowns(firstClearTotal(a, tier)), tierDone ? 'Replay ' : ' · Replay ', crowns(replayTotal(a, tier)));
     info.append(pay);
+    // (the rift ores it drops, so a player knows where to look for a class's: `awakenMats.ts`)
+    const ores = open ? armyOreRow(a.id) : null;
+    if (ores) info.append(ores);
     if (tier > 0) info.append(el('p', 'asHint', `Foes ×${t.hp} hp, ×${t.atk} attack, ×${t.speed} speed${t.extra ? `, ${t.extra} more in every wave` : ''}${t.phaseAt ? ', a boss that turns sooner and hits harder' : ''} · crowns ×${t.pay} · XP ×${t.xp}`));
     if (hooks.running && !hooks.running.army) {
       const cont = el('button', 'small asCont', `Continue ${hooks.running.label}`);

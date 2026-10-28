@@ -7,14 +7,17 @@ import { boostOf } from '../src/sim/run';
 import { ALL_HEROES } from '../src/sim/units';
 import { buyPoint, canBuyPoint, heroStats, shardsToSpend } from '../src/sim/talents';
 import { lookSheet, stepOfRank } from '../src/render/awakenLook';
+import { ORE_TRAITS } from '../src/sim/awakenMats';
 
 const store = () => {
   let v = '';
   return { setItem: (_: string, s: string) => (v = s), getItem: () => v };
 };
+// (these tests are about the shards: the rift ores each step also asks for (AWAKEN-MATS) are given in plenty; `awaken-mats.test.ts` tests them)
 const withShards = (n: number, kind = 'knight'): Meta => {
   const m = startedMeta(3);
   m.shards[kind] = n;
+  m.ores = Object.fromEntries(ORE_TRAITS.map((t) => [t, 100]));
   return m;
 };
 
@@ -163,7 +166,7 @@ test('the awakened look: no recolour and no colour variant, the top form kept (A
   assert.equal(stepOfRank(6), 2);
   // (the Werewolf no longer turns red: the owner dropped the red sheet with the recolour)
   assert.equal(lookSheet('werewolf', 5, 3), lookSheet('werewolf', 4, 3));
-  assert.equal(lookSheet('werewolf', 6, 3), 'werewolf_black');
-  assert.equal(lookSheet('paladin', 5, 3), 'cls_paladin_3', 'the top form');
+  assert.equal(lookSheet('werewolf', 6, 3), 'hero_res_werewolf_brute');
+  assert.equal(lookSheet('paladin', 5, 3), 'hero_res_paladin', 'the top form');
   for (const k of ALL_HEROES) assert.equal(lookSheet(k, 6, 3), lookSheet(k, 4, 3), k);
 });

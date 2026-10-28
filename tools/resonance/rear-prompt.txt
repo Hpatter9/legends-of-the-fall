@@ -1,0 +1,9 @@
+Create a production transparent pixel JRPG sprite atlas showing the matching REAR VIEW of the exact hero in the attached front atlas. Match its face/head proportions, hair, species, costume, colours and equipment. Crisp square pixels, dark outlines, rich clustered shading, compact heroic body and expressive large head.
+Show back of head, armour/cloak, heels, back of shield and quiver. Body faces AWAY toward UPPER RIGHT, no front-facing eyes. Weapon is foreshortened toward upper right.
+Portrait sheet in FOUR columns and SIX rows =24 poses. Each entire figure about175px tall inside a256px cell, 25px transparent gutters, same scale throughout, baseline near y225. NO text, captions, grid, shadows, floor, backdrop, or huge effects.
+Row1 four distinct idle breathing poses.
+Row2 four walking phases with alternating foot contacts and passing knees. One foot grounded, steady hips, deliberate walk, no two-foot hopping. Snake slithers, horse walks, flying creature glides naturally.
+Row3 four attack poses: windup, contact, followthrough, recovery.
+Row4 four hurt flinch/recoil/recovery poses.
+Row5 four death poses: stagger, topple backward, collapse, final LYING HORIZONTAL flat on ground. Do not enlarge corpse.
+Row6 four BACK VIEW secondary/casting poses: windup, channel, release, recovery. Every row faces away. Same identity, costume and equipment in every frame. Do not touch neighbouring figures or crop weapons, hats, tails or boots.
