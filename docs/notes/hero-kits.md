@@ -666,3 +666,27 @@ reduced motion turns the pulse into a steady glow.
 Documentation and images only. Runtime tests and builds were not needed for the change; `npm run web` was run once to
 take the "before" screenshot of the current fight (wave 3 of the Orc Warband, Knight, Werewolf, Beastmaster, Fire
 Wizard, Cleric, at 393x852), and the mock-up was painted over it with PIL.
+
+## Checks for phase 2
+
+- `npm run typecheck`: passes. `npm run web`: builds (0.171.0 after merging `origin/main`).
+- `npm test` (the whole suite, once, after the merge of `origin/main`): 1176 tests, 1176 pass, none skipped. The new tests:
+  `test/hero-kits.test.ts` (pools, costs, gaps, the meter, the tap, lapses, replay), `hero-kits-all.test.ts` (every hero's three
+  skills cast; a season of nine level-30 fights is deterministic and 35 of the 45 cast both skills; two vowed Paladins),
+  `hero-kits-looks.test.ts` (every new skill has a look), `hero-kits-saves.test.ts` (old saves and runs load and play). Tests whose
+  rules changed were updated to the new rules (charge paid from the pool, skill 2 at level 10, the gaps); the parity band went from
+  4 to 6 (the owner's answer); `stand-regression.test.ts` is re-pinned.
+- `node tools/kits/shots.mjs`: every check ok and no page errors at 393x852, 360x780 and 412x915, reduced motion, a locked bar, the
+  Last Stand and the Calamity, and the five kit scenes. Screenshots: `docs/samples/hero-kits-{bar,ready,tapped,auto}[-360|-412].png`,
+  `hero-kits-locked.png`, `hero-kits-reduced.png`, `hero-kits-stand[-360|-412].png`, `hero-kits-calamity[-360|-412].png`,
+  `hero-kits-{werewolf-shift,beastmaster-pack,reaper-wraiths,time-witch-rewind,dread-pirate-kegs}.png`.
+- The balance tools as listed under "The balance, before and after".
+
+## For the owner to decide
+
+1. **The level-10 step.** Skill 2 makes a level-10 hero much stronger (stage 24's win share went from about 23% to 33%); the
+   armies were retuned at their recommended levels, but say if the step should be smaller.
+2. **The Last Stand** sits a little short at levels 20 to 60 (12, 20, 22 against 13, 22, 26). STAND-002 (`claude/stand-harder`)
+   also changes `src/sim/stand.ts`; whichever merges second should re-measure.
+3. **FX-004:** the 45 new skills' own paintings (the list above), the ones marked **first** before the rest.
+

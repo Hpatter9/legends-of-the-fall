@@ -171,7 +171,7 @@ if (!only || only === 'stand')
 // signature kits in action: the hero's pool kept full and skill 2 owed its turn, until what the skill leaves on the field is seen
 const KITS = [
   ['werewolf-shift', ['werewolf', 'knight', 'cleric', 'archer', 'wizard'], 'werewolf', "(b, me) => me.look === 'werewolf_white' || me.look === 'werewolf_black'"],
-  ['beastmaster-pack', ['beastmaster', 'knight', 'cleric', 'archer', 'wizard'], 'beastmaster', "(b, me) => b.units.filter((u) => u.alive && u.owner === me.id && u.form).length >= 1"],
+  ['beastmaster-pack', ['beastmaster', 'knight', 'cleric', 'archer', 'wizard'], 'beastmaster', "(b, me) => b.units.filter((u) => u.alive && u.owner === me.id && u.taunt && u.taunt.until > b.t).length >= 1"],
   ['reaper-wraiths', ['reaper', 'knight', 'cleric', 'archer', 'wizard'], 'reaper', "(b, me) => b.units.some((u) => u.alive && u.def === 'wraith')"],
   ['time-witch-rewind', ['timeWitch', 'knight', 'cleric', 'archer', 'wizard'], 'timeWitch', "(b, me) => b.units.some((u) => u.kx && u.kx.hist && u.kx.hist.length === 0 && u !== me && u.side === 'hero')"],
   ['dread-pirate-kegs', ['dreadPirate', 'knight', 'cleric', 'archer', 'wizard'], 'dreadPirate', "(b, me) => b.pending.some((p) => p.kind === 'keg')"],
