@@ -300,3 +300,19 @@ now, not the "Making it harder" ones above. `npm run stand-balance -- --levels 1
 
 `test/stand.test.ts` pins levels 1, 10 and 30 (five seeds each: 3-5, 7-10, 11-18). The pay per wave was not changed, so a run at the new
 medians pays fewer crowns than one at the old (a question for the owner in the overhaul's note).
+
+## The pace in the castle's rooms (STAND-003 phase B)
+
+The field is now a room of the castle (`docs/notes/stand-overhaul.md`): walls round the edge, the foes coming in only by two or three breaches,
+and a 5x5 dais. That made the run a little harder at the low levels and much easier at the highest (a strong party holds a narrow breach), so:
+`HALL_EASE` 0.85 on every wave's strength, `WAVE_GROWTH_LATE` 0.07 to **0.1**, and a deep climb from `WAVE_DEEP` 22 of `WAVE_GROWTH_DEEP` 0.6
+a wave (`src/sim/stand.ts`). The pay is as it was (the owner: keep it). `npm run stand-balance -- --levels 1,10,20,30,60,100 --attempts 30`:
+
+| Hero level | Target | Median | Mean | Min-max |
+| --- | --- | --- | --- | --- |
+| 1 | about 4 | 4 | 3.5 | 3-4 |
+| 10 | about 9 | 9 | 9.2 | 7-11 |
+| 20 | about 10 | 11 | 10.9 | 10-13 |
+| 30 | about 14 | 15 | 15.6 | 12-22 |
+| 60 | about 20 | 20 | 20.0 | 12-28 |
+| 100 | about 25 | 26 | 25.4 | 14-35 |

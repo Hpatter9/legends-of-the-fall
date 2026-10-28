@@ -148,3 +148,53 @@ pulse; all held still under reduced motion.
   against 21 or 22). Keep it so, or raise `waveCrowns` so the pay per run holds?
 - Inner-ring heroes are set off the throne's own tiles (the dais's middle 3x3 is the throne's) so the king is seen: `ringPlan`'s inner posts move
   out to the dais's edge.
+
+## Phase B: built (the owner approved the second mock-ups)
+
+main 0.186.0 merged in. The owner's answers: keep the pay as it is (no change to `waveCrowns` or anything that pays crowns); the throne's inner
+posts move out to the dais's edge; keep the run harder, at about 4, 9, 10, 14, 20 and 25 waves at levels 1, 10, 20, 30, 60 and 100.
+
+### The rooms (the rules)
+
+| Piece | What | Where |
+| --- | --- | --- |
+| The four rooms | `HALL_KINDS`: the great hall (two colonnades, a carpet the length of it, raised corners), the chapel (a ring of pillars, carpeted galleries raised round the walls, a carpet cross), the library (rows of shelves as cover, a mezzanine), the courtyard (open sky, a fountain, a well, stores as cover, a terrace, lamps, flagstone paths). `hallOf(seed, avoid)` picks one from the seed (side stream `0x4a11`), never the room of the run before (`legends.standHall`, kept by the page); `hallPlan(seed, kind)` lays out its breaches (two in the hall and the chapel, three in the library and the courtyard, on different walls, 5 tiles wide, from side stream `0x4a12`), pillars, cover, raised floor and the page's dressing. | `src/sim/standHalls.ts` |
+| The field | `standBoard(seed, area, hall)`: the floor at 1, walls (`wall`, height 8) round the edge except the breaches (their broken ends at 5), pillars (`wall`), cover (`rock`), raised floor stepping down to 1 near a breach (never a cliff), and the 5x5 dais at `KEEP_TOP` 3 with a step at 2. A pillar or a piece of cover that would shut a tile off is left out, one at a time (`fieldOk`: every standable tile walks to the king both ways). | `src/sim/standField.ts` |
+| The posts | The throne's own tiles (within `THRONE` 1 of the king) are no posts; `ringPlan`'s inner ring stands on the dais's edge (ring 2); the tanks face the breached sides first. | `standField.ts` |
+| The waves | `waveEdges(seed, n, hall)` picks among the room's breaches (one, then two from wave 6, three from wave 11, a boss wave one more, as many as the room has); the foes come in at a breach or up to two tiles inside it. `StandRun.hall` (optional: a run saved before the rooms takes its seed's room, and a saved post that is no post there is planned again). | `src/sim/stand.ts` |
+| The deploy tray | `swapPosts(s, a, b)` (any time; before the first wave they stand on the new posts at once) and `autoPlace(s)` (before the first wave). | `src/sim/stand.ts` |
+| The pace | `HALL_EASE` 0.85, `WAVE_GROWTH_LATE` 0.1, `WAVE_DEEP` 22 / `WAVE_GROWTH_DEEP` 0.6: see `last-stand.md`, "The pace in the castle's rooms". | `src/sim/stand.ts` |
+
+### The page
+
+- **The room** (`src/render/standHall.ts`): the floor baked into one picture (flagstones, red carpet on the dais and the room's carpets, the
+  chapel's red galleries, the courtyard's grass and paths); every wall and pillar its own column of dressed stone, sorted among the fighters
+  by depth, the near walls (south and east) cut down to 2 so the room can be seen into; stained-glass windows and gilt pilasters on the back
+  walls, the glass's coloured light across the floor (indoors), banners on the near walls (and the courtyard's back walls); braziers and
+  lamps in breathing pools of light; the cover drawn (rubble, bookcases, a well, a fountain, stores); standards behind the throne, a golden aura,
+  the castle's enthroned king (`king_throne.png`, idle frames and his decree frame when a wave is cleared), his health on a gilt plate over him;
+  smoke rolling in at each breach (each puff drifts in and thins, never blinking off), a red glow beyond; and a dust burst at each breach a
+  wave comes in by. Reduced motion: the flames and smoke hold still, no bursts.
+- **The backdrop**: the throne room's back wall, dimmed, over deep stone (`.stSky`, over the page's sky while the Last Stand is up).
+- **The brass**: the top bar with the battle crest under it, the bottom deck with its ribbon, the hero bar and spell cards in brass-edged green
+  stone, the buy buttons; the wave banner is the crest over a gilt plate ("THEY BREAK THROUGH / WAVE n"), a boss wave's red ("A BOSS COMES")
+  with a red light breathing round the screen (still under reduced motion).
+- **Deploy**: the eight start at their ring-plan posts; every tile a hero may be posted on is faintly lit and their posts glow gold (breathing;
+  still under reduced motion). The tray: "Hold the throne", the eight in the heroes' brass frames (a stripe of each hero's colour), tap two to
+  swap them (or a hero on the field, then another), drag a card onto a tile to post it there (onto another hero: they swap), Auto-place, Begin.
+- **Finding the heroes**: a ring of its colour under each hero (the same colour on its tray card and its hero-bar tile), a tap on a portrait
+  pans the camera to the hero (its ring pulses), an arrow at the screen's rim with the portrait for each hero off the screen (tap: pan to it),
+  and the foes' own bars: red, wider and framed (a boss's broader with a gilt frame).
+- **The camera** starts on the king at the largest whole-pixel step not over 0.7 (the room seen whole round the dais; `SCALE_MIN` is 0.5 now).
+- **The pause sheet and the end card** in brass (the crest, the king's plate, the heroes' cards as in the mock-up).
+
+### Checks
+
+See the TASKS row. Screenshots: `docs/samples/stand-overhaul-{deploy,hall-banner,hall,chapel-banner,chapel,library-banner,library,courtyard-banner,courtyard,pause,boss,end}-{393x852,360x780,412x915}.png`
+and `stand-overhaul-reduced-393x852.png` (`tools/stand/overhaul-shots.mjs`; headless Chromium does not run CSS animations, so the shots hold
+the banner still to show it). `tools/stand/overhaul.mjs` checks the camera and the pause at the three sizes.
+
+### Left open
+
+- The heroes are small at the opening zoom on a 2x screen (0.5); a pinch brings them up. On a 3x phone it opens at 2/3.
+- A hero's ring and the breaches' smoke are drawn every frame (a few dozen shapes); a real-phone check of the frame time is still owed.

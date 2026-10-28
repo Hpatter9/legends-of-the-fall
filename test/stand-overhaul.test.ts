@@ -17,6 +17,8 @@ import { newCastle } from '../src/sim/castle';
 import { ARMIES } from '../src/sim/armies';
 import { ULT_LEVEL } from '../src/sim/abilities';
 import { SKILL2_LEVEL } from '../src/sim/heroKits';
+import { bossHit, NUDGE_MS, NUDGE_PX, nudgeOffset, wheelStep } from '../src/render/standCam';
+import { BOSS_IDS } from '../src/sim/foes';
 
 const setupAt = (level: number): StandSetup => ({ boost: () => gradeBoost(1, 0, level), castle: newCastle() });
 const armies = ARMIES.map((a) => a.id);
@@ -313,4 +315,27 @@ test('a run saved before the rooms (no hall) builds in its seed\'s room, and a s
   const h = s.run.heroes[0];
   assert.ok(h.post && canPost(s.b.board, h.post[0], h.post[1]), 'its post was planned again');
   assert.equal(new Set(heroes(s).map((x) => `${x.u},${x.v}`)).size, 8);
+});
+
+/* ------------------------------------------------------------------ the camera's rules */
+
+test('the Last Stand barely shakes: a 2 px nudge on a boss\'s blow, none when the screen is to stay still; the wheel steps the zoom', () => {
+  const hit = (by: number) => [{ kind: 'hit' as const, by, to: 1, dmg: 50, heavy: true, splash: false, killed: false, src: 'blow' as const }];
+  const units = [
+    { id: 1, side: 'hero', def: 'knight' },
+    { id: 2, side: 'foe', def: 'skeleton' },
+    { id: 3, side: 'foe', def: BOSS_IDS[0] },
+  ] as unknown as Unit[];
+  assert.ok(!bossHit(hit(2), units), 'a plain foe\'s blow moves nothing');
+  assert.ok(bossHit(hit(3), units), 'a boss\'s blow nudges');
+  for (let left = 0; left <= NUDGE_MS; left += 10) {
+    const n = nudgeOffset(left, false);
+    assert.ok(Math.abs(n.x) + Math.abs(n.y) <= NUDGE_PX);
+    assert.deepEqual(nudgeOffset(left, true), { x: 0, y: 0 }, 'reduced motion or shake off: still');
+  }
+  assert.equal(NUDGE_PX, 2);
+  const steps = [0.5, 1, 1.5, 2];
+  assert.equal(wheelStep(steps, 1, -1), 1.5);
+  assert.equal(wheelStep(steps, 1, 1), 0.5);
+  assert.equal(wheelStep(steps, 0.5, 1), 0.5);
 });

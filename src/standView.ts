@@ -52,6 +52,9 @@ export interface StandHost {
   moment(m: { kind: 'spire'; floor: number }): Promise<void>;
 }
 
+/** Where the room of the last run is kept, so the next is another (`hallOf`). */
+const HALL_KEY = 'legends.standHall';
+
 /** The heroes' colours (their rings, tray cards and portraits' rims), by their place in the party. */
 const HERO_COLOURS = [0xffd24a, 0x4ad2ff, 0xff6a4a, 0x8aff6a, 0xd06aff, 0xf2f2f2, 0xff9ad0, 0x6affd2];
 const colourCss = (c: number): string => `#${c.toString(16).padStart(6, '0')}`;
@@ -361,7 +364,20 @@ export class StandView {
     });
     go.addEventListener('click', () => {
       box.hidden = true;
-      this.start(newStandRun(clockSeed(), chosen, ARMIES.filter((a) => armyUnlocked(m, a.id)).map((a) => a.id), m.stand ?? 0));
+      // (never the room of the run before: kept in `legends.standHall`)
+      let prev: string | null = null;
+      try {
+        prev = localStorage.getItem(HALL_KEY);
+      } catch {
+        /* (no storage: any room) */
+      }
+      const run = newStandRun(clockSeed(), chosen, ARMIES.filter((a) => armyUnlocked(m, a.id)).map((a) => a.id), m.stand ?? 0, prev);
+      try {
+        if (run.hall) localStorage.setItem(HALL_KEY, run.hall);
+      } catch {
+        /* (no storage) */
+      }
+      this.start(run);
     });
     const row = el('div', 'stRow');
     row.append(home, auto, go);
