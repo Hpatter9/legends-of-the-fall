@@ -1,5 +1,7 @@
 # Credits
 
+- **Resonance hero pilot** (`hero_soldier.png`, `hero_samurai_archer.png`): original generated pixel artwork, directed from the owner's approved concept and Final Fantasy Resonance style references. No franchise sprites are included. Cropped, packed and sampled with nearest-neighbour scaling by `tools/resonance/pack.cjs`. These replace the Knight and Archer's displayed art at all grades; existing grade and awakening colour treatments still apply. Original Craftpix sheets and their credits remain available.
+
 Most of the art is from free **Craftpix.net** packs (craftpix.net, free licence: use in games allowed, no redistributing
 the raw files), copied one sprite at a time from the private assets repository (`hpatter9/chronos-assets`).
 
