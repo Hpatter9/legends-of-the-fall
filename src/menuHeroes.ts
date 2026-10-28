@@ -3,6 +3,7 @@
 
 import { ALL_HEROES, UNITS } from './sim/units';
 import { KITS } from './sim/abilities';
+import { HERO_KITS, SKILL2_LEVEL } from './sim/heroKits';
 import { TIER_SKILLS } from './sim/tierSkills';
 import { traitsOf, TRAITS } from './sim/traits';
 import { MAX_RANK, RANK_SHARDS, heroRank, rankMult, rankOf, takenRank, type Meta } from './sim/meta';
@@ -104,6 +105,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
   const rank = takenRank(meta, kind);
   const open = meta.unlocked.includes(kind);
   const kit = KITS[kind];
+  const hk = HERO_KITS()[kind];
   box.className = 'hsheet heroDetail';
   box.dataset.class = CLASS_OF[kind];
   box.replaceChildren();
@@ -276,15 +278,22 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     }
     progression.append(path);
     if (kit)
-      for (const [label, a] of [['Skill', kit.skill], ...(TIER_SKILLS[kind] ? ([['Tier 2', TIER_SKILLS[kind][0]], ['Tier 3', TIER_SKILLS[kind][1]]] as const) : []), ...(kit.ultimate ? [['Ultimate', kit.ultimate] as const] : []), ['Passive', kit.passive]] as const) {
+      // (COMBAT-002: two skills paid from the hero's pool, skill 2 from level 10; the tier skills improve the hero's first skill as before)
+      for (const [label, a, cost, opens] of [
+        ['Skill 1', hk?.s1.skill ?? kit.skill, hk ? `${hk.s1.cost} ${hk.pool}` : '', 1],
+        ...(hk ? ([['Skill 2', hk.s2.skill, `${hk.s2.cost} ${hk.pool}${hk.s2.hpCost ? ' and blood' : ''}`, SKILL2_LEVEL]] as const) : []),
+        ...(TIER_SKILLS[kind] ? ([['Tier 2', TIER_SKILLS[kind][0], '', 1], ['Tier 3', TIER_SKILLS[kind][1], '', 1]] as const) : []),
+        ...(kit.ultimate ? [['Ultimate', kit.ultimate, 'tap its portrait', kit.ultimate.unlock ?? 1] as const] : []),
+        ['Passive', kit.passive, '', 1],
+      ] as const) {
         const card = el('article', 'dossierAbility');
-        const locked = label === 'Ultimate' && 'unlock' in a && !!a.unlock && x.level < a.unlock;
+        const locked = x.level < opens;
         if (locked) card.classList.add('locked');
         card.dataset.type = label.toLowerCase().replace(' ', '-');
         const icon = label === 'Ultimate' ? crystalIcon : label === 'Passive' ? haloIcon : CARD_CLASSES[CLASS_OF[kind]].icon;
         const body = el('div');
-        body.append(el('small', 'dossierAbilityLabel', label === 'Skill' ? 'Active skill' : label), el('h5', '', a.name), el('p', '', a.text));
-        if (locked) body.append(el('span', 'ultLock', `Unlocks at level ${(a as { unlock: number }).unlock}`));
+        body.append(el('small', 'dossierAbilityLabel', cost ? `${label} · ${cost}` : label), el('h5', '', a.name), el('p', '', a.text));
+        if (locked) body.append(el('span', 'ultLock', `Unlocks at level ${opens}`));
         card.append(detailIcon(icon), body);
         skills.append(card);
       }

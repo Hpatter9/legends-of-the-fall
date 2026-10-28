@@ -57,7 +57,9 @@ import { toastAchievements, toastJoined } from './achievementsView';
 import { grantContent } from './sim/contentHeroes';
 import { clockSeed, todayKey } from './modes';
 import { tips, type Box } from './tips';
-import { CHARGE_MAX, kitOf, ULT_LEVEL } from './sim/abilities';
+import { ULT_LEVEL } from './sim/abilities';
+import { HeroBar } from './heroBar';
+import { ultFull } from './sim/heroKits';
 import { startAwake } from './render/awake';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, type SpellId } from './sim/spells';
 import { bindSpellbook } from './spellbook';
@@ -707,6 +709,10 @@ class Game {
 
   private begin(): void {
     if (!fight(this.b)) return;
+    // (the ultimates: tapped by the player, or on their own with Auto on, or under auto-replay)
+    this.b.autoUlt = this.ultAutoOn();
+    this.heroBar.setAuto(this.ultAutoOn());
+    this.heroBar.build(this.b);
     this.evolved = new Set();
     this.endIntro();
     newQuipScene();
@@ -795,9 +801,11 @@ class Game {
     } else if (b.phase === 'fight') {
       // (a boss's fall slows the fight for a beat: `timeScale`)
       this.acc += Math.min(dt, 250) * this.speed * this.fx.timeScale();
+      b.autoUlt = this.ultAutoOn();
       while (this.acc >= TICK_MS && b.phase === 'fight' && this.sceneHold === 0) {
         this.acc -= TICK_MS;
         const events = stepBattle(b);
+        for (const e of events) if (e.kind === 'ultLapse') this.heroBar.lapse(e.by);
         tally(this.stats, events, b.units);
         this.fx.show(b, events);
         for (const e of events) if (e.kind === 'boom') this.boardView.removeBarrel(e.u, e.v);
@@ -827,6 +835,8 @@ class Game {
         if (events.some((e) => e.kind === 'hit' || e.kind === 'heal')) this.refreshBench();
         if (b.phase !== 'fight') this.refresh();
       }
+      if (b.units.length !== this.sprites.size) this.heroBar.build(b);
+      this.heroBar.refresh(b);
       this.fx.step(Math.min(dt, 250) * this.speed);
       $('clock').textContent = clock(b.t);
       this.refreshSpells();
@@ -1239,7 +1249,21 @@ class Game {
 
   /* -------------------------------------------------------------- input */
 
+  /** The fight's hero bar (`heroBar.ts`): a portrait each, tapped to fire an ultimate, and the Auto switch. */
+  private heroBar!: HeroBar;
+  /** Whether the heroes' ultimates fire on their own: the player's Auto switch, and always under auto-replay. */
+  private ultAutoOn(): boolean {
+    return !!this.auto || !!this.meta.ultAuto;
+  }
+
   private wire(): void {
+    this.heroBar = new HeroBar($('heroBar'), {
+      onAuto: (on) => {
+        this.meta.ultAuto = on;
+        saveMeta(this.meta);
+        this.b.autoUlt = this.ultAutoOn();
+      },
+    });
     const canvas = this.app.canvas;
     canvas.addEventListener('pointerdown', (e) => {
       if (this.drag) return;
@@ -2158,8 +2182,9 @@ class Game {
       (card.querySelector('.cool') as HTMLElement).style.height = `${(cooldownLeft(b, id) / SPELLS[id].cooldownMs) * 100}%`;
     }
     if (b.spells.mana >= 3) tips.offer('mana', $('spells'));
-    const full = b.units.find((u) => u.side === 'hero' && u.alive && u.charge >= (kitOf(u)?.skill.need ?? CHARGE_MAX));
-    if (full) tips.offer('skill', () => this.spriteBox(full.id));
+    const caster = b.phase === 'fight' ? b.units.find((u) => u.side === 'hero' && u.alive && u.ks?.at1 !== undefined) : undefined;
+    if (caster) tips.offer('skill', () => this.spriteBox(caster.id));
+    if (b.phase === 'fight' && !b.autoUlt && b.units.some((u) => u.alive && ultFull(u))) tips.offer('ult', $('heroBar'));
     $('spellHint').textContent = this.spell ? (this.spellDrag?.moved ? `${SPELLS[this.spell].text}: let go over the grid to cast, or back on the cards to cancel` : `${SPELLS[this.spell].text}: tap a tile, or drag a card onto the grid (tap the card again to cancel)`) : '';
     if (dropped) this.markTiles();
   }

@@ -22,3 +22,78 @@ body[data-phase='fight'] #bench .card.g3 { box-shadow: none; border-color: var(-
 #spellGhost { position: fixed; z-index: 20; pointer-events: none; transform: translate(-50%, -50%); }
 #spellGhost[hidden] { display: none; }
 #spellGhost .spIcon { zoom: 0.5; }
+
+/* The hero bar (COMBAT-002, docs/notes/hero-kits.md): in a fight the bench gives way to a tile for each hero, its portrait in the ultimate's ring
+   (violet as it fills, gold when ready: tap to fire), its health and pool (blue mana, gold stamina) and two skill pips; the last tile is the Auto
+   switch. The king's spell cards above it are half as tall. Text is 12px and never bold. A ready tile pulses; with reduced motion it glows still. */
+#heroBar { display: none; }
+body[data-phase='fight'] #heroBar:not(:empty) { display: grid; }
+body[data-phase='fight'] #heroBar:not(:empty) ~ #benchWrap { display: none; }
+.heroBar { grid-template-columns: repeat(var(--hb-n, 5), minmax(0, 1fr)) 40px; gap: 4px; align-items: stretch; margin-top: 2px; }
+.heroBar.two { grid-template-columns: repeat(4, minmax(0, 1fr)) 40px; }
+.heroBar.two .hbAuto { grid-column: 5; grid-row: 1 / span 2; }
+.hb { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; padding: 3px 2px 2px; border: 2px solid var(--s8); border-radius: 0;
+  background: linear-gradient(rgb(var(--e8-rgb) / 0.06), rgb(var(--black-rgb) / 0.3)), var(--s3); color: var(--ink, #f0e6d2); font: 400 12px/12px var(--body); touch-action: manipulation; cursor: pointer; }
+.hbRing { position: relative; width: 44px; height: 44px; flex: none; }
+.hbRing svg { position: absolute; inset: 0; width: 44px; height: 44px; transform: rotate(-90deg); }
+.hbRing circle { fill: none; stroke-width: 4; }
+.hbRing .trk { stroke: rgb(var(--black-rgb) / 0.55); }
+.hbRing .arc { stroke: #b06aff; stroke-linecap: butt; transition: stroke-dashoffset 0.2s linear; }
+.hbPic { position: absolute; left: 6px; top: 6px; width: 32px; height: 32px; border-radius: 50%; image-rendering: pixelated; background: rgb(var(--black-rgb) / 0.35); }
+.hbPlate { position: absolute; left: 50%; top: 32px; transform: translateX(-50%); padding: 0 3px; font: 400 12px/12px var(--body); letter-spacing: 0; color: var(--black, #000);
+  background: var(--gold, #f5c542); border: 1px solid var(--black, #000); white-space: nowrap; pointer-events: none; }
+.hbPlate[hidden] { display: none; }
+.hb i { display: block; width: 100%; height: 4px; background: var(--s1); border: 1px solid rgb(var(--black-rgb) / 0.8); box-sizing: content-box; overflow: hidden; }
+.hb i span { display: block; height: 100%; width: 0; }
+.hb .hbHp span { background: linear-gradient(#8ef07a, #3fa836); }
+.hb .hbRes { height: 6px; }
+.hb .hbRes.mana span { background: linear-gradient(var(--b5, #9fd4ff), var(--b2, #2a6ad1)); }
+.hb .hbRes.stamina span { background: linear-gradient(#ffe27a, #d79a1e); }
+.hbPips { display: flex; gap: 2px; justify-content: center; }
+.hbPips b { min-width: 14px; padding: 0 1px; font: 400 12px/12px var(--body); text-align: center; color: rgb(255 255 255 / 0.45); background: rgb(var(--black-rgb) / 0.45); border: 1px solid rgb(255 255 255 / 0.18); }
+.hbPips b.lit { color: var(--black, #000); background: #ffe27a; border-color: #fff3b0; }
+.hbPips b.shut { color: rgb(255 255 255 / 0.35); }
+.hbName { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 12px/12px var(--body); }
+.hb.locked .hbPic { filter: grayscale(0.7) brightness(0.75); }
+.hb.locked .hbRing .arc { stroke: transparent; }
+.hb.fallen { filter: grayscale(1) brightness(0.6); }
+.hb.ready { border-color: var(--gold, #f5c542); box-shadow: 0 0 0 1px var(--gold-hi, #ffe08a), 0 0 12px rgb(255 210 74 / 0.75); animation: hbGlow 1.2s ease-in-out infinite; }
+.hb.ready .hbRing .arc { stroke: #ffd24a; }
+.hb.queued { border-color: #d9b2ff; }
+.hb.queued .hbRing svg { animation: hbSpin 1s linear infinite; }
+.hb.queued .hbRing .arc { stroke: #f0dcff; stroke-dasharray: 18 8 !important; }
+.hb.nudge { animation: hbNudge 0.35s ease-out 1; }
+@keyframes hbGlow { 0%, 100% { box-shadow: 0 0 0 1px var(--gold-hi, #ffe08a), 0 0 8px rgb(255 210 74 / 0.55); } 50% { box-shadow: 0 0 0 1px var(--gold-hi, #ffe08a), 0 0 16px rgb(255 210 74 / 0.95); } }
+@keyframes hbSpin { to { transform: rotate(270deg); } }
+@keyframes hbNudge { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+.hbAuto { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 2px 0; border: 2px solid var(--s8); border-radius: 0; background: var(--s3);
+  color: rgb(255 255 255 / 0.7); font: 400 12px/12px var(--body); cursor: pointer; touch-action: manipulation; }
+.hbAuto .sw { position: relative; display: block; width: 18px; height: 32px; border-radius: 9px; background: var(--s1); border: 1px solid rgb(255 255 255 / 0.3); }
+.hbAuto .sw b { position: absolute; left: 2px; bottom: 2px; width: 14px; height: 14px; border-radius: 50%; background: #9aa0a8; transition: bottom 0.15s; }
+.hbAuto.on { color: var(--black, #000); background: var(--gold, #f5c542); border-color: var(--gold-hi, #ffe08a); }
+.hbAuto.on .sw { background: #3a2c08; }
+.hbAuto.on .sw b { bottom: 14px; background: #fff3b0; }
+@media (prefers-reduced-motion: reduce) {
+  .hb.ready { animation: none; box-shadow: 0 0 0 1px var(--gold-hi, #ffe08a), 0 0 12px rgb(255 210 74 / 0.8); }
+  .hb.queued .hbRing svg { animation: none; }
+  .hb.nudge { animation: none; }
+  .hbRing .arc { transition: none; }
+}
+/* The king's spells in a fight: the cards half as tall (icon on the left, name and cost beside it). */
+body[data-phase='fight'] #spellCards .spell { font-size: 12px; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; align-items: center; column-gap: 4px; padding: 1px 4px; text-align: left; min-height: 0; }
+body[data-phase='fight'] #spellCards .spell .spIcon { grid-row: 1 / span 2; margin: 0; zoom: 0.4; }
+body[data-phase='fight'] #spellCards .spell b { font-size: 12px; line-height: 12px; font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body[data-phase='fight'] #spellCards .spell em { font-size: 12px; line-height: 12px; font-family: var(--body); }
+.hbAuto small { font: 400 12px/12px var(--body); }
+body[data-phase='fight'] #spellCards .spell em { font-weight: 400; }
+/* Two rows (the Last Stand's eight): each tile lies flat, the ring on the left and the bars, pips and name beside it, so the bar stays low. */
+.stHeroes { display: grid; }
+.stHeroes[hidden] { display: none; }
+.heroBar.two .hb { display: grid; grid-template-columns: 36px minmax(0, 1fr); grid-template-rows: auto auto auto; column-gap: 3px; row-gap: 2px; align-items: center; padding: 2px; }
+.heroBar.two .hbRing { grid-row: 1 / span 3; width: 36px; height: 36px; }
+.heroBar.two .hbRing svg { width: 36px; height: 36px; }
+.heroBar.two .hbPic { left: 5px; top: 5px; width: 26px; height: 26px; }
+.heroBar.two .hbPlate { left: 18px; top: 26px; }
+.heroBar.two .hbName { grid-column: 2; grid-row: 1; text-align: left; }
+.heroBar.two .hbHp, .heroBar.two .hbRes { grid-column: 2; }
+.heroBar.two .hbPips { display: none; }

@@ -8,7 +8,7 @@ import { colLeft, viewH, viewW } from './viewport';
 import { SYSTEM_FINDERS } from './systemTips';
 
 /** Every tip, by the moment it is for. */
-export type TipId = 'home' | 'deploy' | 'fight' | 'mana' | 'skill' | 'summon' | 'crowns' | SystemTipId;
+export type TipId = 'home' | 'deploy' | 'fight' | 'mana' | 'skill' | 'ult' | 'summon' | 'crowns' | SystemTipId;
 
 /** The tips for the newer systems: each shows once, the first time its element is on the page and open to the player. */
 export type SystemTipId = 'calamity' | 'tower' | 'talents' | 'castle' | 'spellbook' | 'stash' | 'equipment' | 'recycle' | 'retry' | 'autoReplay';
@@ -26,7 +26,8 @@ export const TIPS: Readonly<Record<TipId, TipDef>> = {
   deploy: { text: 'Drag your heroes onto the blue tiles. High ground hits harder; blows from behind hit hardest.', page: 'game', during: 'deploy' },
   fight: { text: 'Press Fight! Your heroes fight on their own.', page: 'game', during: 'deploy' },
   mana: { text: 'Tap a spell card, then a tile, to cast.', page: 'game', during: 'fight' },
-  skill: { text: 'Skills fire on their own when the gold bar fills.', page: 'game', during: 'fight' },
+  skill: { text: 'Heroes cast their skills on their own, paid from the blue mana or gold stamina bar under each portrait.', page: 'game', during: 'fight' },
+  ult: { text: 'A glowing portrait means its ultimate is ready: tap it to fire. The Auto switch fires them for you.', page: 'game', during: 'fight' },
   summon: { text: 'Spend gold to Hire a hero. Three of the same hero merge into a stronger one.', page: 'game', during: 'deploy' },
   crowns: { text: 'Recruit gathers shards to unlock new heroes. Army stars open the Castle, the Last Stand and the Calamity.', page: 'home' },
   calamity: { text: 'Calamity: climb the maps with one hero, and hire more at camps and shops. Each map ends in a boss.', page: 'home' },
