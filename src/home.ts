@@ -10,6 +10,7 @@ import { BLURB, effectText } from './render/castleSpots';
 import { saveMeta, stonesOf, type Meta, type Pull } from './sim/meta';
 import { openShop } from './shopView';
 import { dailyBossName } from './sim/daily';
+import { dailyTheme } from './sim/dailyThemes';
 import { dailyLine, dailyStatus, towerOpen } from './sim/modes';
 import { CAL_MAPS } from './sim/calamity';
 import { ARMIES, armyById, armyCleared, armyIsNew, armyStars, armyUnlocked, bossOf, clearedCount, markSeen } from './sim/armies';
@@ -384,7 +385,7 @@ export class Home {
     const today = m.daily[String(todayKey())];
     const cleared = !!today?.cleared;
     // (the plate names the boss of the day, with how it stands under it: the whole line "Today: Orc Warlord · not tried" is read aloud)
-    const daily = place('hmDaily', cleared ? 'daily done' : 'daily', 'Daily challenge', `${dailyBossName(todayKey())} · ${dailyStatus(m, todayKey())}`, `Daily challenge. ${dailyLine(m, todayKey())}`, () => this.go(this.hooks.onDaily));
+    const daily = place('hmDaily', cleared ? 'daily done' : 'daily', 'Daily challenge', `${dailyTheme(todayKey())?.name ?? dailyBossName(todayKey())} · ${dailyStatus(m, todayKey())}`, `Daily challenge. ${dailyLine(m, todayKey())}`, () => this.go(this.hooks.onDaily));
     if (cleared) {
       const tick = el('i', 'dailyDone');
       tick.setAttribute('role', 'img');

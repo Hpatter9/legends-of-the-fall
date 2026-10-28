@@ -20,8 +20,8 @@ import { drawOffer, eliteAt, eliteFight, OFFER_SIZE, sideEliteAt } from './elite
 import { neighboursOf, openSet, routeBetween, SIDE_BASE, sideSpots, START_ID, type SideSpot } from './calLand';
 import { ALL_RELIC_IDS, RELICS, relicEffects } from './relics';
 import { mixSeed, Rng } from './rng';
-import { addTwists, TWISTS } from './twists';
-import { BOSS, FOE_START, reward, squadLimit, summonCost, type Run } from './run';
+import { addTwists, CHAOS_TWISTS, TWISTS } from './twists';
+import { BOSS, FOE_START, ownHeroes, reward, spendBuff, squadLimit, summonCost, type Run } from './run';
 import { UNITS } from './units';
 import { CAL_BOARD, CAL_MAPS, CAL_OPENING, CAL_SCALE, calBossBoost, fitBand, squadFoeMult } from './calamity';
 import { calBossBand } from './calamityBosses';
@@ -29,6 +29,7 @@ import { ascChests, ascCrowns, ascOf, ascRules, ascCleared } from './ascension';
 import { CALAMITY_XP, CLIMB_XP, calXpShare, fightXpByHero, gainRunXp, heroLevel, hireable, hireHero, ownsKind, promoteByLevel, type Promotion } from './climb';
 import { xpRate } from './castle';
 import { payClear, type ClearReward } from './calReward';
+import { bossOres, eliteOres, grantOres, ORES, sumOres, type OreDrop } from './awakenMats';
 import { type LevelUp } from './levels';
 
 /** Floors in an act: the path floors, then the boss on the last. */
@@ -147,6 +148,8 @@ export interface TowerSummary {
   clear?: ClearReward;
   /** A calamity's map recaps, one a map cleared. */
   recaps?: MapRecap[];
+  /** A calamity's rift ores (`awakenMats.ts`), the same kinds added together; paid on a loss too. */
+  ores?: OreDrop[];
 }
 
 /** What a calamity's map paid and showed, for the recap when it is cleared: the spots, the gold, the finds and the events met. */
@@ -166,6 +169,8 @@ export interface MapRecap {
   gear: string[];
   heroes: string[];
   events: string[];
+  /** The rift ores its boss and mini-bosses dropped (`awakenMats.ts`; none on a recap from before them). */
+  ores?: OreDrop[];
 }
 
 export interface TowerState {
@@ -195,6 +200,8 @@ export interface TowerState {
   /** What the calamity's map in play has paid so far, and the recaps of the maps already cleared (`MapRecap`). */
   recap?: MapRecap;
   recaps?: MapRecap[];
+  /** The rift ores a calamity's bosses and mini-bosses have dropped so far (`awakenMats.ts`): paid into the meta when the run ends, a loss too. */
+  ores?: OreDrop[];
   /** The map just cleared, whose recap the page shows once (and then clears). */
   mapDone?: MapRecap;
   /** The relics an elite offers, until one is taken (`takeRelic` in `elites.ts`). */
@@ -402,6 +409,14 @@ function calamityOnce(seed: number, act: number, rows: number, asc: number, atte
     if (pool.length) rng.pick(pool).kind = 'elite';
   }
   addTwists(nodes, seed, act);
+  if (rules.chaosMutators) {
+    const chaosRng = new Rng(mixSeed(seed, 0xc4a0, act));
+    for (const n of nodes) {
+      if ((n.kind === 'elite' || n.kind === 'fight') && !n.twist && chaosRng.chance(0.35)) {
+        n.twist = chaosRng.pick(CHAOS_TWISTS);
+      }
+    }
+  }
   // (a high ascension curses every boss floor: a twist from the curses, its own stream)
   if (rules.bossCurse) for (const n of nodes) if (n.kind === 'boss') n.twist = new Rng(mixSeed(seed, 0xa5c8, act)).pick(CURSES);
   return nodes;
@@ -600,7 +615,7 @@ function stockHires(run: Run, floor: number): Hire[] {
 }
 
 /** Whether the run has room for another hero (a calamity owns at most its squad limit). */
-export const hasRoom = (run: Run): boolean => run.mode?.kind !== 'calamity' || run.roster.length < squadLimit(run);
+export const hasRoom = (run: Run): boolean => run.mode?.kind !== 'calamity' || ownHeroes(run).length < squadLimit(run);
 
 /** Whether the hero of this kind cannot be hired now: a Calamity hires each kind once, so one already on the roster is closed. */
 export const hireClosed = (run: Run, kind: string): boolean => run.mode?.kind === 'calamity' && ownsKind(run, kind);
@@ -696,7 +711,23 @@ export function clearNode(run: Run): void {
     return;
   }
   const first = !t.path.includes(cur.id);
-  if (first) t.path.push(cur.id);
+  if (first) {
+    t.path.push(cur.id);
+    // (a mirror's clone stays for its floors, then goes: its place in the squad goes back to a benched hero of the party's own)
+    for (const h of [...run.roster]) {
+      if (h.cloneFloors !== undefined) {
+        h.cloneFloors--;
+        if (h.cloneFloors <= 0) {
+          const fought = run.squad.includes(h.id);
+          run.roster = run.roster.filter((x) => x.id !== h.id);
+          run.squad = run.squad.filter((x) => x !== h.id);
+          delete t.hp[String(h.id)];
+          const bench = ownHeroes(run).find((x) => !run.squad.includes(x.id));
+          if (bench && (fought || !run.squad.length) && run.squad.length < squadLimit(run)) run.squad.push(bench.id);
+        }
+      }
+    }
+  }
   const recap = t.maps ? recapOf(run) : undefined;
   if (recap && first) {
     if (cur.kind !== 'boss') recap.spots++;
@@ -821,6 +852,13 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
     recap.fights++;
     if (kind === 'elite') recap.elites++;
   }
+  // (a calamity's boss and mini-bosses drop rift ores of their map's kinds, from side streams: kept on the run, paid when it ends)
+  if (t.maps && (kind === 'boss' || kind === 'elite')) {
+    const drop = kind === 'boss' ? bossOres(run.seed, t.act, ascOf(run)) : eliteOres(run.seed, t.act, floor, ascOf(run));
+    (t.ores ??= []).push(drop);
+    if (recap) (recap.ores ??= []).push(drop);
+    run.found.push(`${drop.n} ${ORES[drop.trait].name}`);
+  }
   const prizes: Gear[] = run.buff?.gear ? [run.buff.gear] : [];
   const rng = new Rng(mixSeed(run.seed, 0xe11e, floor));
   // (a run whose heroes start bare finds gear in its fights too: now and then in a plain one, always from an elite; from a side stream)
@@ -864,7 +902,7 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
     recap?.gear.push(g.name);
   }
   if (run.buff?.gold) run.found.push(`${run.buff.gold} gold from the cursed path`);
-  run.buff = undefined;
+  spendBuff(run);
   clearNode(run);
 }
 
@@ -1010,9 +1048,12 @@ function settleCalamity(m: Meta, run: Run): TowerSummary {
   m.calamity = { ...best, best: Math.max(best.best, maps), clears: best.clears + (run.cleared ? 1 : 0) };
   if (run.cleared) m.calamity.asc = Math.max(cleared, level);
   else if (best.asc !== undefined) m.calamity.asc = best.asc;
-  // (a calamity cleared whole pays the finish: crowns, shards, a Legendary piece of gear, a title)
+  // (a calamity cleared whole pays the finish: crowns, shards, a Legendary piece of gear, a title, and a Rift Cache)
   const clear = run.cleared ? payClear(m, run.seed, level, armyIndex(army.id)) : undefined;
-  t.summary = { floors: t.spots ?? Math.max(0, run.stage - 1), act: Math.min(t.act, t.maps ?? t.act), crowns: t.crowns + bonus + (clear?.crowns ?? 0), ...c, gear: [], relics: run.relics?.length ?? 0, heroes: run.roster.length, newBest: maps > best.best, maps, cleared: !!run.cleared, abandoned: t.abandoned, ...(level ? { ascension: level } : {}), ...(clear ? { clear } : {}), recaps: t.recaps ?? [] };
+  // (the rift ores its bosses and mini-bosses dropped, a loss's too)
+  const ores = sumOres(t.ores ?? []);
+  grantOres(m, ores);
+  t.summary = { floors: t.spots ?? Math.max(0, run.stage - 1), act: Math.min(t.act, t.maps ?? t.act), crowns: t.crowns + bonus + (clear?.crowns ?? 0), ...c, gear: [], relics: run.relics?.length ?? 0, heroes: run.roster.length, newBest: maps > best.best, maps, cleared: !!run.cleared, abandoned: t.abandoned, ...(level ? { ascension: level } : {}), ...(clear ? { clear } : {}), recaps: t.recaps ?? [], ...(ores.length ? { ores } : {}) };
   return t.summary;
 }
 

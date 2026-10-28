@@ -7,6 +7,7 @@
 import { newCastle, readCastle, readChapel, readWorks, spellBudget, type Castle, type Works } from './castle';
 import { newLoadout, readLoadout, STARTER_SPELLS, type Loadout } from './spells';
 import { DAILY_WAVES } from './daily';
+import { dailyStarsMax } from './dailyThemes';
 import { Rng } from './rng';
 import { ALL_HEROES, HEROES } from './units';
 import { readStarter, starterPacks, type Starter } from './starter';
@@ -19,6 +20,7 @@ import { readTomes, type TomeCounts } from './tomes';
 import { readTalents, type KindTalents } from './talents';
 import { AWAKEN_MULT } from './awakenRules';
 import { readAwakened } from './awaken';
+import { readCaches, readOres } from './awakenMats';
 import { readCodex, readCodexClaimed, readCodexPaid, type CodexRecord } from './codex';
 import { readCombosSeen } from './combos';
 import { readTickets } from './autoReplay';
@@ -114,6 +116,10 @@ export interface Meta {
   ranked?: Record<string, number>;
   /** The steps each hero kind has awakened above its top rank, 1 or 2 (`awaken.ts`; missing is none). */
   awakened?: Record<string, number>;
+  /** The rift ores held, by class trait (`awakenMats.ts`): an awakening step asks for its class's on top of the shards. Missing is none. */
+  ores?: Record<string, number>;
+  /** Rift Caches waiting to be opened on a hero's awakening panel (`awakenMats.ts`). A save from before the ores is paid one for each Calamity it cleared, up to five, the first time it is read. */
+  caches?: number;
   /** The talents each hero kind has taken and the points it bought with shards (`talents.ts`; missing is none). */
   talents?: Record<string, KindTalents>;
   /** The codex: the foe kinds met and the kills per kind (`codex.ts`; saves from before have none), and the milestone rewards claimed. */
@@ -131,6 +137,14 @@ export interface Meta {
   stash: StashChest[];
   /** The cinematics seen (`sceneRules.ts`, by id): each plays once at its moment, and the codex's Scenes list plays a seen one again. Saves from before have none. */
   scenes?: string[];
+  /** Number of times Duchess has been tapped (unlocks Tiny Tin Crown at 5). */
+  duchessTaps?: number;
+  /** Whether Duchess's Lucky Bleat has been used in battle (unlocks Wizard Hat). */
+  duchessLucky?: boolean;
+  /** Whether Duchess's daily haystack treat has been found (unlocks Archery Quiver). */
+  duchessHay?: boolean;
+  /** Date (yyyymmdd) Duchess's haystack treat was last claimed. */
+  duchessTreat?: number;
   /** Whether the heroes' ultimates fire on their own in a fight (the hero bar's Auto switch, COMBAT-002); off (the player taps) when unset. Auto-replay always fires them. */
   ultAuto?: boolean;
   /** The bosses whose card (the slam-down ribbon as the fight begins) has been shown, by boss or `elite:<id>` (`sceneRules.ts` `cardKey`): once a save. Saves from before have none. */
@@ -147,7 +161,7 @@ export interface StashChest {
   seed: number;
   /** Paid by an endless tower run (a run pays several of one milestone; an army's is given once). */
   tower?: boolean;
-  /** A daily chest: the date (yyyymmdd) of the daily that paid it, and the bonus stars (0 to 2) of the clear. `army` is 'daily'. */
+  /** A daily chest: the date (yyyymmdd) of the daily that paid it, and the bonus stars (0 to 2, 3 on a themed day) of the clear. `army` is 'daily'. */
   daily?: number;
   bonus?: number;
   /** Paid for an army's first clear on a tier (one per army and tier, told apart by its seed; `at` only sets the chest's size). */
@@ -164,7 +178,7 @@ export interface DailyEntry {
   wave?: number;
   /** The counted run has ended (so a record that is not cleared is a fall, not a run going on). */
   over?: boolean;
-  /** The bonus stars of the clear (0 to 2), which added to the daily chest. */
+  /** The bonus stars of the clear (0 to 2, 3 on a themed day), which added to the daily chest. */
   stars?: number;
 }
 
@@ -300,7 +314,7 @@ function readDaily(raw: unknown): Record<string, DailyEntry> {
         if (d.cleared === true) entry.cleared = true;
         if (typeof d.wave === 'number' && d.wave >= 1) entry.wave = Math.min(DAILY_WAVES, d.wave | 0);
         if (d.over === true) entry.over = true;
-        if (typeof d.stars === 'number' && d.stars >= 1) entry.stars = Math.min(2, d.stars | 0);
+        if (typeof d.stars === 'number' && d.stars >= 1) entry.stars = Math.min(dailyStarsMax(Number(k)), d.stars | 0);
         out[k] = entry;
       }
     }
@@ -426,6 +440,10 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       // (saves from before awakening have none)
       m.awakened = readAwakened(m.awakened, m.shards);
       if (!Object.keys(m.awakened).length) delete m.awakened;
+      // (saves from before the rift ores have none, and are paid a Rift Cache for each Calamity they cleared, up to five, once: the count is kept from then on)
+      m.ores = readOres(m.ores);
+      if (!m.ores) delete m.ores;
+      m.caches = readCaches(m.caches, m.calamity?.clears ?? 0);
       // (saves from before the talents have none; the rest of the save is read first, as the points depend on levels and shards)
       m.talents = readTalents(m.talents, m);
       // (saves from before the army chests have an empty stash; a chest given but not opened by an earlier format goes into it)
@@ -450,6 +468,12 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       if (!m.scenes.length) delete m.scenes;
       // (saves from before the boss cards played once have none shown)
       m.bossCards = readCards(m.bossCards);
+      if (typeof m.duchessTaps === 'number' && Number.isFinite(m.duchessTaps)) m.duchessTaps = Math.max(0, m.duchessTaps | 0);
+      else delete m.duchessTaps;
+      m.duchessLucky = !!m.duchessLucky || undefined;
+      m.duchessHay = !!m.duchessHay || undefined;
+      if (typeof m.duchessTreat === 'number' && Number.isFinite(m.duchessTreat)) m.duchessTreat = m.duchessTreat | 0;
+      else delete m.duchessTreat;
       if (!m.bossCards.length) delete m.bossCards;
       // (a content hero whose milestone a save from before has already reached joins now)
       if (!needsStarter(m)) grantContent(m);

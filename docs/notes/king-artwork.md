@@ -2,7 +2,7 @@
 
 Owner: Codex. Branch: `design/king-artwork`. Worktree: `/workspace/legends-of-the-fall`.
 
-The owner approved the eight personality concepts and authorised implementation. The roster is implemented locally; no merge, deployment or version bump has been requested or performed.
+The owner approved the eight personality concepts and authorised implementation. The roster is implemented on the branch. The owner requested [PR #165](https://github.com/Hpatter9/legends-of-the-fall/pull/165) for Claude to merge; the PR remains unmerged and no deployment has been performed. The feature version bump is left to Claude at merge time.
 
 ## Result
 
@@ -47,3 +47,9 @@ Original artwork was generated with OpenAI image generation from the approved co
 Screenshots: `docs/samples/rulers-settings-<size>.png`, `ruler-<id>-<size>.png`, `ruler-scene-<id>-<size>.png`, `ruler-stand-<id>-<size>.png`, and `ruler-stand-fallen-<size>.png`. All eight appearances were captured at 393×852; Sun Viper is the representative on the other sizes.
 
 Approved concept: [eight personalities](../samples/ruler-roster-personalities.png). Earlier concepts retained for history: [original roster](../samples/ruler-roster-proposal.png), [king](../samples/king-artwork-proposal.png), [first queen](../samples/queen-artwork-proposal.png), [revised queen](../samples/queen-artwork-proposal-v2.png).
+
+## PR integration handoff
+
+PR #165 targets `main`. Integrated `origin/main` at `c21e6038` (0.200.0), resolving the task-board, Settings and sprite-loader conflicts. Preserved Duchess cosmetic settings, developer settings and the required-sheet/rear-view loader alongside ruler loading. Removed a duplicate settings import introduced by the automatic castle merge. Typecheck, web build and all eight affected test files passed after integration. Refreshed portrait screenshots are included; the post-integration browser result is recorded below.
+
+Post-integration `node tools/rulers/check.mjs`: passed at all three phone sizes with no page errors. Offline reload, persisted ruler selection, all eight appearances, cinematic one-shot completion, Last Stand reactions and reduced motion passed. `git diff origin/main --check` also passed.

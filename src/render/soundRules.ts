@@ -8,7 +8,7 @@ import { defOf } from '../sim/battle';
 import { kitOf } from '../sim/abilities';
 import type { Shot } from '../sim/units';
 import { BIG_FOE_HP } from './skillFx';
-import { SPELL_ELEMENT, deathKind, impactElement, missileOf, skillElement, type Element } from './fxRules';
+import { SPELL_ELEMENT, deathKind, impactElement, isBackstab, missileOf, skillElement, type Element } from './fxRules';
 
 /** Every sound the page can make. The first group is the page's own (taps, summons, stingers); the rest are the fight's. */
 export type Cue =
@@ -257,6 +257,8 @@ export function cuesFor(b: Battle, e: BattleEvent): Cued[] {
       }
       // (a crit, or a blow from height, lands heavier still)
       if (e.heavy && e.src === 'blow') out.push({ cue: 'crit' });
+      const backstab = by && to && isBackstab(by.facing, to.facing);
+      if (backstab && e.killed) out.push({ cue: 'deathThud', gain: 1.25 });
       if (e.killed) out.push({ cue: DEATH[deathKind(defOf(to).name, to.side)], delay: 40, gain: to.maxHp >= BIG_FOE_HP ? 1.4 : 1 });
       return out;
     }
@@ -302,6 +304,12 @@ export function cuesFor(b: Battle, e: BattleEvent): Cued[] {
       return [{ cue: 'ultimate' }];
     case 'comboLand':
       return [{ cue: 'fireBoom', gain: 1.2 }, { cue: 'thunder', delay: 80, gain: 0.9 }];
+    case 'duoCombo':
+      return [{ cue: 'ultimate', gain: 0.8 }, { cue: 'holyChime', delay: 100, gain: 0.7 }];
+    case 'decoyLog':
+      return [{ cue: 'shadowHum', gain: 0.7 }, { cue: 'fireWhoosh', delay: 60, gain: 0.5 }];
+    case 'wisp':
+      return [{ cue: 'sparkle', gain: 0.6 }];
     case 'burst':
       return e.tone === 'tier' ? [{ cue: 'shieldHum', gain: 0.5 }] : [];
     case 'promote':

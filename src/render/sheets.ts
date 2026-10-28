@@ -5,18 +5,20 @@ import { Rectangle, Texture } from 'pixi.js';
 import { loadRulers } from './rulerArt';
 import { loadImage } from './loadImage';
 import layout from '../art/units/sheets.json';
+import { RESONANCE_URLS } from './resonanceArt';
+import { UNITS } from '../sim/units';
 import knight from '../art/units/knight_1.png';
 import samurai from '../art/units/samurai.png';
 import kunoichi from '../art/units/kunoichi.png';
 import archer from '../art/units/samurai_archer.png';
-import resonanceSoldier from '../art/units/hero_soldier.png';
-import resonanceArcher from '../art/units/hero_samurai_archer.png';
 import wizard from '../art/units/fire_wizard.png';
 import skeleton from '../art/units/skeleton_warrior.png';
 import spearman from '../art/units/skeleton_spearman.png';
 import boneArcher from '../art/units/skeleton_archer.png';
 import wolfGrey from '../art/units/wolf_grey.png';
 import wolfBlack from '../art/units/wolf_black.png';
+// (Duchess the goat, when she joins a fight: `sim/duchessFight.ts`, `tools/duchess/compose-duchess.py`)
+import duchessGoat from '../art/units/duchess_goat.png';
 import werewolfBlack from '../art/units/werewolf_black.png';
 import werewolfRed from '../art/units/werewolf_red.png';
 import werewolfWhite from '../art/units/werewolf_white.png';
@@ -122,11 +124,11 @@ interface Layout {
   figure: number;
   /** Drawn facing right unless the sheet says otherwise (the forest and boss sheets face left). */
   facesRight?: boolean;
+  rear?: string;
 }
 
 const URLS: Record<string, string> = {
-  hero_soldier: resonanceSoldier,
-  hero_samurai_archer: resonanceArcher,
+  ...RESONANCE_URLS,
   knight_1: knight,
   knight_2: knight2,
   knight_3: knight3,
@@ -140,6 +142,7 @@ const URLS: Record<string, string> = {
   skeleton_archer: boneArcher,
   wolf_grey: wolfGrey,
   wolf_black: wolfBlack,
+  duchess_goat: duchessGoat,
   werewolf_black: werewolfBlack,
   werewolf_red: werewolfRed,
   werewolf_white: werewolfWhite,
@@ -236,17 +239,21 @@ const LAYOUT = layout as Record<string, Layout>;
 const frames = new Map<string, Texture[]>();
 const images = new Map<string, HTMLImageElement>();
 
-/** Load every sheet and cut its frames. */
+/** Load the units' sheets and their rear views and transformation forms. Legacy hero imports
+ * remain available as source art without allocating obsolete GPU textures. */
 export async function loadSheets(): Promise<void> {
+  const required = new Set(Object.values(UNITS).flatMap(def => [def.sheet, ...(def.forms ?? [])]));
+  for (const id of [...required]) if (LAYOUT[id]?.rear) required.add(LAYOUT[id].rear!);
   await Promise.all(
-    [loadRulers(), ...Object.entries(URLS).map(async ([id, url]) => {
+    [loadRulers(), ...Object.entries(URLS).filter(([id]) => required.has(id)).map(async ([id, url]) => {
       const img = await loadImage(url);
       images.set(id, img);
       const base = Texture.from(img);
       const l = LAYOUT[id];
       l.rows.forEach((row, r) => {
         const list: Texture[] = [];
-        for (let i = 0; i < l.counts[row]; i++) list.push(new Texture({ source: base.source, frame: new Rectangle(i * l.w, r * l.h, l.w, l.h) }));
+        for (let i = 0; i < l.counts[row]; i++) list.push(new Texture({ source: base.source,
+          frame: new Rectangle((i % l.perRow) * l.w, (r + Math.floor(i / l.perRow)) * l.h, l.w, l.h) }));
         frames.set(`${id}:${row}`, list);
       });
     })],
@@ -263,10 +270,10 @@ export const figureOf = (sheet: string) => LAYOUT[sheet].figure;
 export const hasSheet = (sheet: string): boolean => !!LAYOUT[sheet] && images.has(sheet);
 
 /** A sheet's picture and layout, for the menus that draw frames straight onto a canvas (null until the sheets are loaded). */
-export function sheetInfo(sheet: string): { img: HTMLImageElement; w: number; h: number; rows: string[]; counts: Record<string, number>; figure: number; facesRight: boolean } | null {
+export function sheetInfo(sheet: string): { img: HTMLImageElement; w: number; h: number; perRow: number; rows: string[]; counts: Record<string, number>; figure: number; facesRight: boolean } | null {
   const img = images.get(sheet);
   const l = LAYOUT[sheet];
-  return img && l ? { img, w: l.w, h: l.h, rows: l.rows, counts: l.counts, figure: l.figure, facesRight: l.facesRight !== false } : null;
+  return img && l ? { img, w: l.w, h: l.h, perRow: l.perRow, rows: l.rows, counts: l.counts, figure: l.figure, facesRight: l.facesRight !== false } : null;
 }
 
 /** The figure's height as a share of its sheet's cell (the rest is the room over its head), for laying effects round a `sprite`. */

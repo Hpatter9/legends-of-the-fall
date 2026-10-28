@@ -8,6 +8,7 @@
 import { traitBadge } from './traitBadge';
 import { activeTier, nextTierLine, type TraitCount } from './sim/traits';
 import { COMBO_NAME, COMBO_NEED, comboById, type ComboState } from './sim/combos';
+import { type DuoCombo } from './sim/duoCombos';
 import { UNITS } from './sim/units';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -120,30 +121,40 @@ export function synergyLines(counts: readonly TraitCount[]): string[] {
 }
 
 /** A fight begins: the combo bar shows for its length when the five of a combo are placed (the trait plates stay hidden in a fight). */
-export function startSynergies(counts: readonly TraitCount[], combo?: ComboState): void {
+export function startSynergies(counts: readonly TraitCount[], combo?: ComboState, duos?: readonly DuoCombo[]): void {
   made();
   startComboBar(combo);
   const on = counts.filter((c) => c.active);
   list!.hidden = true;
   col!.replaceChildren();
-  col!.hidden = !on.length;
-  if (!on.length) return;
+  col!.hidden = !on.length && !duos?.length;
+  if (!on.length && !duos?.length) return;
   for (const c of on) {
     const full = c.tier === c.trait.tiers.length - 1;
     const plate = el('span', `sy ${c.trait.kind}${full ? ' top' : ''}`);
     plate.append(traitBadge(c.trait.id, { small: true }), document.createTextNode(`${c.trait.name} ${c.count}`));
     col!.append(plate);
   }
-  list!.replaceChildren(
-    ...on.map((c) => {
-      const row = el('div');
-      row.append(el('b', '', `${c.trait.name} ${c.count}`), document.createTextNode(` ${activeTier(c)!.text}`));
-      const next = nextTierLine(c);
-      if (next) row.append(el('small', '', next));
-      return row;
-    }),
-    el('small', '', 'Tap to close'),
-  );
+  const rows: HTMLElement[] = on.map((c) => {
+    const row = el('div');
+    row.append(el('b', '', `${c.trait.name} ${c.count}`), document.createTextNode(` ${activeTier(c)!.text}`));
+    const next = nextTierLine(c);
+    if (next) row.append(el('small', '', next));
+    return row;
+  });
+  if (duos?.length) {
+    const dHeader = el('div');
+    dHeader.append(el('b', '', 'Duo Harmonies'));
+    rows.push(dHeader);
+    for (const d of duos) {
+      const dRow = el('div');
+      dRow.append(el('b', '', `${d.name}: `), document.createTextNode(d.title));
+      dRow.append(el('small', '', d.text));
+      rows.push(dRow);
+    }
+  }
+  rows.push(el('small', '', 'Tap to close'));
+  list!.replaceChildren(...rows);
 }
 
 /** The combo bar for a fight: shown when it has a combo, with the combo's five and its move in the tap list. */

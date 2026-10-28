@@ -1,0 +1,214 @@
+{
+  "id": "minotaur",
+  "frames": [
+    {
+      "row": "frontA",
+      "col": 0,
+      "box": [
+        12,
+        61,
+        322,
+        324
+      ],
+      "width": 113,
+      "height": 96,
+      "left": 75
+    },
+    {
+      "row": "frontA",
+      "col": 1,
+      "box": [
+        332,
+        63,
+        637,
+        327
+      ],
+      "width": 111,
+      "height": 96,
+      "left": 78
+    },
+    {
+      "row": "frontA",
+      "col": 2,
+      "box": [
+        642,
+        64,
+        943,
+        327
+      ],
+      "width": 110,
+      "height": 96,
+      "left": 76
+    },
+    {
+      "row": "frontA",
+      "col": 3,
+      "box": [
+        956,
+        62,
+        1250,
+        326
+      ],
+      "width": 107,
+      "height": 96,
+      "left": 77
+    },
+    {
+      "row": "frontB",
+      "col": 0,
+      "box": [
+        13,
+        347,
+        323,
+        609
+      ],
+      "width": 113,
+      "height": 96,
+      "left": 76
+    },
+    {
+      "row": "frontB",
+      "col": 1,
+      "box": [
+        338,
+        350,
+        631,
+        614
+      ],
+      "width": 107,
+      "height": 96,
+      "left": 80
+    },
+    {
+      "row": "frontB",
+      "col": 2,
+      "box": [
+        648,
+        349,
+        950,
+        611
+      ],
+      "width": 110,
+      "height": 96,
+      "left": 79
+    },
+    {
+      "row": "frontB",
+      "col": 3,
+      "box": [
+        962,
+        353,
+        1248,
+        614
+      ],
+      "width": 104,
+      "height": 95,
+      "left": 79
+    },
+    {
+      "row": "rearA",
+      "col": 0,
+      "box": [
+        13,
+        645,
+        333,
+        905
+      ],
+      "width": 117,
+      "height": 95,
+      "left": 76
+    },
+    {
+      "row": "rearA",
+      "col": 1,
+      "box": [
+        346,
+        644,
+        638,
+        905
+      ],
+      "width": 107,
+      "height": 95,
+      "left": 83
+    },
+    {
+      "row": "rearA",
+      "col": 2,
+      "box": [
+        648,
+        645,
+        957,
+        905
+      ],
+      "width": 113,
+      "height": 95,
+      "left": 79
+    },
+    {
+      "row": "rearA",
+      "col": 3,
+      "box": [
+        972,
+        645,
+        1250,
+        905
+      ],
+      "width": 101,
+      "height": 95,
+      "left": 82
+    },
+    {
+      "row": "rearB",
+      "col": 0,
+      "box": [
+        22,
+        928,
+        335,
+        1192
+      ],
+      "width": 114,
+      "height": 96,
+      "left": 79
+    },
+    {
+      "row": "rearB",
+      "col": 1,
+      "box": [
+        338,
+        928,
+        643,
+        1189
+      ],
+      "width": 111,
+      "height": 95,
+      "left": 80
+    },
+    {
+      "row": "rearB",
+      "col": 2,
+      "box": [
+        652,
+        927,
+        955,
+        1195
+      ],
+      "width": 111,
+      "height": 98,
+      "left": 80
+    },
+    {
+      "row": "rearB",
+      "col": 3,
+      "box": [
+        962,
+        927,
+        1253,
+        1191
+      ],
+      "width": 106,
+      "height": 96,
+      "left": 79
+    }
+  ],
+  "warnings": []
+}

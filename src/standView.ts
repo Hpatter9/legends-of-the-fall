@@ -4,6 +4,7 @@
 // wave comes in by, the spell cards, and the bottom shop bar. The rules are `sim/stand.ts`; this file only shows them and passes
 // the player's taps on. It draws into the page's own Pixi canvas, with the board of the ordinary fights hidden meanwhile.
 
+import { ORES } from './sim/awakenMats';
 import { Container, Graphics, Sprite, type Application } from 'pixi.js';
 import { tileAt } from './sim/board';
 import { TICK_MS, type BattleEvent, type Unit } from './sim/battle';
@@ -1467,6 +1468,8 @@ export class StandView {
     const chests = [sum.bronze && `${sum.bronze} bronze`, sum.silver && `${sum.silver} silver`, sum.gold && `${sum.gold} gold`].filter(Boolean).join(', ');
     if (chests) row('Chests', chests);
     if (sum.gear.length) row('Equipment', sum.gear.join(', '));
+    // (a record past a tenth wave pays a couple of rift ores: AWAKEN-MATS)
+    if (sum.ores?.length) row('Rift ores', sum.ores.map((d) => `${d.n} ${ORES[d.trait]?.name ?? d.trait}`).join(', '));
     row('Heroes held', String(sum.heroes));
     card.append(rows);
     const btns = el('div', 'stRow');

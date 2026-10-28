@@ -182,9 +182,9 @@
     background: linear-gradient(rgb(var(--s0-rgb) / 0), rgb(var(--s0-rgb) / 0.92) 40%); }
   #result[hidden] { display: none; }
   /* (an army wave won: the next section falls into place and the party walks across it behind the recap, which shows only its banner until they have arrived) */
-  #result > :is(#stars, #armyStars, #xp, #fightStats) { transition: opacity 0.6s ease-out; }
+  #result > :is(#stars, #armyStars, #oreDrop, #xp, #fightStats) { transition: opacity 0.6s ease-out; }
   body[data-move] #result { background: none; }
-  body[data-move] #result > :is(#stars, #armyStars, #xp, #fightStats) { opacity: 0; pointer-events: none; }
+  body[data-move] #result > :is(#stars, #armyStars, #oreDrop, #xp, #fightStats) { opacity: 0; pointer-events: none; }
   #banner { font: bold 46px/1 var(--display); letter-spacing: 2px; text-shadow: 0 3px 0 var(--black), 0 0 24px rgb(var(--black-rgb) / 0.8); animation: punch 0.5s cubic-bezier(0.2, 1.6, 0.4, 1); }
   #banner.won { color: var(--gold); }
   #banner.lost { color: var(--red); }
@@ -574,6 +574,7 @@
   .setting .toggle, .setting .pair button { min-width: 64px; }
   .setting .toggle.on, .setting .pair button.on { background: linear-gradient(var(--e4), var(--e1)); border-color: var(--gold); }
   .setting .pair { display: flex; gap: 6px; }
+  .setting .devGrant { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
   /* the first-run tips: a speech bubble by the thing it talks about (placed in src/tips.ts), taps only on itself */
   #tip {
     position: fixed; z-index: 6; width: min(280px, calc(calc(100 * var(--vw)) - 24px)); padding: 10px 12px; background: var(--wood);
@@ -815,6 +816,7 @@
   <div id="joke" hidden></div>
   <div id="stars" hidden></div>
   <div id="armyStars" hidden></div>
+  <div id="oreDrop" hidden></div>
   <div id="dayResult" class="dayResult" hidden></div>
   <div id="xp" hidden></div>
   <div id="fightStats" hidden></div>

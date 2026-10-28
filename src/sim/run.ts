@@ -3,6 +3,7 @@
 // the bench. Stage n meets a band of foes made tougher by n, and every fifth stage a boss (its own band, led by the boss). A win pays gold; a lost
 // fight ends the run. Pure rules: no Pixi, no DOM; the summon draws from a side stream of the run's seed.
 
+import { duchessModeOk, type DuchessWish } from './duchessFight';
 import { startBattle, type Battle, type Boost, type Stage } from './battle';
 import { CLASSIC_AREAS, type Area } from './board';
 import { CAL_CASTLE_EXTRA } from './calamity';
@@ -11,6 +12,8 @@ import { isScenario, planScenario, scenarioForArmy, type ScenarioId } from './sc
 import { BOSS_BANDS, FIELD_BANDS } from './foes';
 import { armyById, armyIndex, landOf, waveBoost, waveFoes, type Army } from './armies';
 import { dailyArmy } from './daily';
+import { SWARM_HP, themeById, themeFx, themeGoalMet, type DailyTheme } from './dailyThemes';
+import { kindsOf } from './traits';
 import { bonusGold, foeAnswer, heroBoost, manaRate, moveRate, newCastle, type Castle } from './castle';
 import { rankMult } from './meta';
 import { lastingBoost } from './levels';
@@ -67,6 +70,10 @@ export interface Owned {
   /** Skill charge (and an ultimate's charge) kept from the last wave, so a skill half-filled is not lost between waves. */
   charge?: number;
   charge2?: number;
+  /** If this hero is a temporary mirror clone, how many floors it remains for. */
+  cloneFloors?: number;
+  /** Whether this hero is an inverted mirror clone (with snarky quips). */
+  inverted?: boolean;
 }
 
 /** What the next fight carries over from an event: heroes' multipliers, foes' multiplier, a prize for a win. */
@@ -76,6 +83,10 @@ export interface Buff {
   foes?: number;
   gold?: number;
   gear?: Gear;
+  /** Move speed multiplier for heroes (e.g. 1.25 for +25% move speed from Wandering Bard). */
+  speed?: number;
+  /** How many stages/floors this buff lasts (default 1). */
+  duration?: number;
 }
 
 export interface Run {
@@ -125,10 +136,12 @@ export interface Run {
   retries?: number;
   /** The whole run's figures for the recap shown when it ends (`runRecap.ts`). */
   recap?: RunRecap;
+  /** A themed daily's goal was met when the boss of the day fell (`dailyThemes.ts`). */
+  themeMet?: boolean;
 }
 
 /** A run that is not an ordinary one: an army's campaign (its stages are the army's waves), today's daily challenge (`practice` for a replay that does not count), or the endless tower. */
-export type RunMode = { kind: 'army'; army: string; tier?: number; scenario?: ScenarioId | 'classic' } | { kind: 'daily'; date: number; practice: boolean; scale?: number } | { kind: 'tower' } | { kind: 'calamity'; ascension?: number };
+export type RunMode = { kind: 'army'; army: string; tier?: number; scenario?: ScenarioId | 'classic' } | { kind: 'daily'; date: number; practice: boolean; scale?: number; theme?: string } | { kind: 'tower' } | { kind: 'calamity'; ascension?: number };
 
 /** A new run drawing from `party` (the hero kinds its summons and starting heroes come from). */
 export function newRun(seed: number, party: readonly string[] = HEROES, castle: Castle = newCastle(), free = 2, gold = START_GOLD): Run {
@@ -171,11 +184,16 @@ export function noteFight(run: Run, b: Battle): void {
   t.lost += fell;
   if (run.stage >= army.waves.length) t.bossLost = fell;
   if (army.waves[run.stage - 1]?.boss) t.bossFell = (t.bossFell ?? 0) + fell;
+  // (a themed daily: the heroes fielded against the boss of the day, for its goal)
+  const theme = runTheme(run);
+  if (theme && run.stage >= army.waves.length && b.phase === 'won') run.themeMet = themeGoalMet(theme, kindsOf(b.units));
 }
 /** The army a run is fighting, if it is an army run. */
 export const armyOfRun = (run: Run): Army | undefined => (run.mode?.kind === 'army' ? armyById(run.mode.army) : undefined);
 /** The fixed run of waves a run is fighting: an army's, or a date's daily (`daily.ts`, an army in shape that is in no list and keeps no army record). */
-export const waveArmyOf = (run: Run): Army | undefined => (run.mode?.kind === 'daily' ? dailyArmy(run.mode.date) : armyOfRun(run));
+export const waveArmyOf = (run: Run): Army | undefined => (run.mode?.kind === 'daily' ? dailyArmy(run.mode.date, runTheme(run)) : armyOfRun(run));
+/** A themed daily run's theme (DAILY-BUILDS: named in its mode when it began), or null for any other run, a daily before the themes among them. */
+export const runTheme = (run: Run): DailyTheme | null => (run.mode?.kind === 'daily' ? themeById(run.mode.theme) : null);
 /** Whether stage n of the run (its current one by default) has a boss. */
 export const isBossRun = (run: Run, stage = run.stage): boolean => {
   if (run.tower) return run.tower.cur?.kind === 'boss';
@@ -291,6 +309,10 @@ export function retryWave(run: Run): number | null {
 }
 
 export const heroOf = (run: Run, id: number) => run.roster.find((h) => h.id === id);
+/** Whether a roster hero is a cursed mirror's clone: a guest for a few floors, never counted as one of the party's own (room, hires' catch-up XP). */
+export const isClone = (h: Owned): boolean => h.cloneFloors !== undefined;
+/** The party's own heroes: the roster without a mirror's clone. */
+export const ownHeroes = (run: Run): Owned[] => run.roster.filter((h) => !isClone(h));
 export const benched = (run: Run) => run.roster.filter((h) => !run.squad.includes(h.id));
 
 /** Hp and attack multipliers of a grade, times the hero kind's rank (from its shards) and its level (from its XP). Every hero kind is alike here: what sets one apart is its own stats and skill. */
@@ -370,7 +392,9 @@ export function chainOf(run: Run): Section[] | null {
 }
 
 /** A fresh fight for the run's current stage (a different board each stage; an army's is its section of the long map). */
-export function startStage(run: Run): Battle {
+/** Make the fight for the run's stage. `duchess`: whether Duchess the goat may join (`duchessFight.ts`); the page passes 'roll', and every headless
+ *  caller (the tests, the balance tools) leaves it 'never', so their fights are as they were. A mode she stays out of never has her. */
+export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
   const rl = relicEffects(run.relics);
   const army = waveArmyOf(run);
   // (a floor of the tower brings its own band and strength, fixed when the node was entered)
@@ -383,15 +407,20 @@ export function startStage(run: Run): Battle {
   const ans = run.local ? (calAns ? { hp: foeAnswer(run.castle).hp! * calAns.hp! ** CAL_CASTLE_EXTRA, atk: foeAnswer(run.castle).atk! * calAns.atk! ** CAL_CASTLE_EXTRA } : foeAnswer(run.castle)) : run.mode?.kind === 'daily' && run.mode.scale ? { hp: run.mode.scale, atk: run.mode.scale } : undefined;
   const { atk, hp, mana, first, revive, gold: _gold, set, ...team } = rl;
   const section = chainOf(run)?.[run.stage - 1];
+  // (a themed daily: its twist on every wave, its featured trait, and a swarm's thin foes)
+  const theme = runTheme(run);
+  const thin = theme?.swarm && army && !army.waves[run.stage - 1]?.boss ? SWARM_HP : 1;
   return startBattle(boardSeedOf(run, run.stage), node ? node.band : army ? waveFoes(army, run.stage, tierOfRun(run)) : bandFor(run.stage), {
     ...base,
     area: run.area ?? base.area ?? areaFor(run.stage),
     board: section?.board,
-    foes: { hp: base.foes!.hp! * foes * (ans?.hp ?? 1), atk: base.foes!.atk! * foes * (ans?.atk ?? 1), speed: base.foes!.speed },
+    foes: { hp: base.foes!.hp! * foes * (ans?.hp ?? 1) * thin, atk: base.foes!.atk! * foes * (ans?.atk ?? 1), speed: base.foes!.speed },
     heroes: { hp: castle.hp! * (hp ?? 1) * (run.buff?.hp ?? 1), atk: castle.atk! * (atk ?? 1) * (run.buff?.atk ?? 1) },
     mana: manaRate(run.castle) * (mana ?? 1),
-    move: moveRate(run.castle),
+    move: moveRate(run.castle) * (run.buff?.speed ?? 1),
     relics: Object.keys(team).length || first || revive || set ? { team, first, revive, set } : undefined,
+    ...(theme ? { twist: themeFx(theme), featured: theme.trait } : {}),
+    duchess: duchessModeOk(run.mode) ? duchess : 'never',
   });
 }
 
@@ -426,7 +455,19 @@ export function finish(run: Run, won: boolean, stars = 0): void {
       run.event = run.mode?.kind !== 'tower' && eventAfter(run.stage - 1, boss) ? drawEvent(run, run.stage - 1) : undefined;
     }
   } else run.over = true;
-  run.buff = undefined;
+  spendBuff(run);
+}
+
+/** A fight has used the buff: one that lasts more fights (`duration`, the bard's or the void well's) keeps its hp, attack and speed for the next, and
+ *  loses its one-fight prizes (gold, gear, a foes' multiplier); any other is gone. Counted by fights, not by the quiet floors between them. */
+export function spendBuff(run: Run): void {
+  const b = run.buff;
+  const left = (b?.duration ?? 1) - 1;
+  if (!b || left <= 0) {
+    run.buff = undefined;
+    return;
+  }
+  run.buff = { ...(b.hp ? { hp: b.hp } : {}), ...(b.atk ? { atk: b.atk } : {}), ...(b.speed ? { speed: b.speed } : {}), duration: left };
 }
 
 /** Choose or release a hero for the fight. Returns whether the squad changed. */

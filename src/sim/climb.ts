@@ -6,7 +6,7 @@
 import type { Battle, Boost, Unit } from './battle';
 import { ALL_HEROES, UNITS } from './units';
 import { CAL_TIER, tierOfLevel } from './calamity';
-import { GRADE_MULT, recruit, squadLimit, type Owned, type Run } from './run';
+import { GRADE_MULT, isClone, ownHeroes, recruit, squadLimit, type Owned, type Run } from './run';
 import { gearBoost } from './gear';
 import { XP_PER_DAMAGE, XP_PER_HEALING, XP_TAKE_PART, XP_WIN, levelBoost, levelOf, RUN_MAX_LEVEL, type LevelUp } from './levels';
 
@@ -92,10 +92,11 @@ export function gainKindXp(run: Run, kind: string, n: number): void {
   for (const h of run.roster) if (h.kind === kind) h.xp = (h.xp ?? 0) + n;
 }
 
-/** The XP a hired hero joins with: `HIRE_CATCH_UP` of the roster's mean. */
+/** The XP a hired hero joins with: `HIRE_CATCH_UP` of the mean of the party's own heroes (a mirror's clone is not counted). */
 export function hireXp(run: Run): number {
-  if (!run.roster.length) return 0;
-  return Math.floor((run.roster.reduce((n, h) => n + (h.xp ?? 0), 0) / run.roster.length) * HIRE_CATCH_UP);
+  const own = ownHeroes(run);
+  if (!own.length) return 0;
+  return Math.floor((own.reduce((n, h) => n + (h.xp ?? 0), 0) / own.length) * HIRE_CATCH_UP);
 }
 
 /** Whether the run's roster holds a hero of this kind. */
@@ -113,6 +114,9 @@ export function hireHero(run: Run, kind: string, paid: number, toSquad = run.mod
   const h = recruit(run, kind, paid);
   if (run.local && xp) h.xp = xp;
   promoteByLevel(run);
+  // (a mirror's clone gives up its place in a full squad to a hero who stays)
+  const guest = run.squad.find((id) => run.roster.some((x) => x.id === id && isClone(x)));
+  if (toSquad && run.squad.length >= squadLimit(run) && guest !== undefined) run.squad = run.squad.filter((id) => id !== guest);
   if (toSquad && run.squad.length < squadLimit(run) && !run.squad.includes(h.id)) run.squad.push(h.id);
   return h;
 }

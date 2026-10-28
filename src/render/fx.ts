@@ -6,7 +6,7 @@ import { Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
 import { TERRAIN_URLS } from './terrainArt';
 import { loadImage } from './loadImage';
 import { tileAt, type Board } from '../sim/board';
-import { defOf, type Battle, type BattleEvent, type Unit } from '../sim/battle';
+import { defOf, wayTo, type Battle, type BattleEvent, type Unit } from '../sim/battle';
 import { isBoss } from '../sim/foes';
 import { kitOf } from '../sim/abilities';
 import { abilityHeading } from './abilityLooks';
@@ -24,13 +24,14 @@ import { loadVfxArt, VFX } from './vfxArt';
 import { loadAuraArt } from './awakenAura';
 import { loadPackArt, PACK } from './fxSheets';
 import { bossEntrance, deathBurst, impactBurst, play, setBoneArt, windUp } from './combatFx';
+import { showDuoToast } from '../duoToast';
 import { comboGather, comboStrike, promoteBurst, ringOut, toneColour, type Spot } from './spectacle';
 import { comboById, COMBO_NAME } from '../sim/combos';
 import { tierRing } from './signatures';
 import { kitSignature } from './kitLooks';
 import { loadProps, playSteps, setSignatureSprite, type Pt, type Scene } from './signatureFx';
 import { tierSkillOf } from '../sim/tierSkills';
-import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, impactElement, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, type Missile } from './fxRules';
+import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, impactElement, isBackstab, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, type Missile } from './fxRules';
 import { particleBudget, slashOf } from './vfxRules';
 import { placeLabel } from './labelRules';
 import { HAZARD_LOOKS } from './hazardLooks';
@@ -102,6 +103,12 @@ export class Fx {
   private trauma = 0;
   shakeX = 0;
   shakeY = 0;
+  thudX = 0;
+  thudY = 0;
+  private thudLeft = 0;
+  private thudDuration = 0;
+  private thudPeakX = 0;
+  private thudPeakY = 0;
   /** No screen shake at all from this Fx (the Last Stand: the page makes its own tiny nudge, `standCam.ts`). */
   still = false;
   /** A white flash over the whole screen (on the stage, above the board), for a crit or a big kill. */
@@ -252,7 +259,7 @@ export class Fx {
         if (to) {
           this.label('Miss', to.x, to.y - to.tall - 10, 0xcfe8ff, 12);
           // (a whoosh of wind across the one that dodged)
-          this.particles.spawn({ frames: VFX.dashWhite, x: to.x, y: to.y - to.tall * 0.5, scale: 1.1, frameMs: 40, alpha: 0.8, add: true });
+          this.particles.spawn({ frames: VFX.dashWhite, x: to.x, y: to.y - to.tall * 0.5, scale: 1.1, frameMs: 40, alpha: 0.8, add: true, stretchX: facesRight(to.unit.facing) ? 1 : -1 });
         }
       } else if (e.kind === 'boom') this.boom(b, e.u, e.v);
       else if (e.kind === 'hazard') this.hazard(b, e);
@@ -306,6 +313,17 @@ export class Fx {
         else this.zone(b, e.u, e.v, e.ms);
       }
       else if (e.kind === 'trap') this.trap(b, e.u, e.v, e.ms);
+      else if (e.kind === 'duoCombo') this.duoCombo(e);
+      else if (e.kind === 'decoyLog') {
+        const by = this.sprites.get(e.by);
+        if (by) this.label('Substitution Log!', by.x, by.y - by.tall - 20, 0x85e3a8, 13, 1400, true);
+      }
+      else if (e.kind === 'wisp') {
+        this.trap(b, e.u, e.v, e.ms);
+        const [wx, wy] = this.tilePos(b, e.u, e.v);
+        this.label('Spirit Wisp', wx, wy - 12, 0x9be5ff, 11, 1200);
+        this.sparkles(wx, wy, 0x9be5ff);
+      }
       else if (e.kind === 'terrain') this.kitTerrain(b, e);
       else if (e.kind === 'mark') this.kitMark(e);
       else if (e.kind === 'hit') {
@@ -365,8 +383,10 @@ export class Fx {
         // (the struck is knocked a little away along the blow, and a crit or a killing blow stops the fight for a moment)
         const share = e.dmg / target.maxHp;
         const byS = this.sprites.get(e.by);
+        let wayAngle = 0;
         if (byS && !e.splash) {
-          const way = Math.atan2(to.y - byS.y, to.x - byS.x);
+          const way = Math.atan2((to.y - to.tall * 0.45) - (byS.y - byS.tall * 0.45), to.x - byS.x);
+          wayAngle = way;
           // A brief fan carries the blow's direction without covering the target.
           if (e.src === 'blow' && !defOf(by).shot) {
             const count = bits(e.heavy ? 7 : 3, this.particles.density);
@@ -378,7 +398,16 @@ export class Fx {
           const n = nudgeOf(share);
           to.nudge(Math.cos(way) * n, Math.sin(way) * n * 0.5);
         }
-        this.stopLeft = Math.max(this.stopLeft, hitStopMs(e.heavy, share, e.killed, this.calm()));
+        const backstab = by && target ? isBackstab(by.facing, target.facing, byS ? wayTo(by, target) : undefined) : false;
+        const lethalBackstab = backstab && e.killed;
+        const isCrit = e.heavy && e.src === 'blow';
+        this.stopLeft = Math.max(this.stopLeft, hitStopMs(e.heavy, share, e.killed, this.calm(), backstab, isCrit));
+        if (lethalBackstab) {
+          this.microThud(to.x, to.y, 1.25, Math.cos(wayAngle), Math.sin(wayAngle) * 0.6);
+          play(this.particles, 'dark-strike', to.x, to.y - to.tall * 0.45, { scale: 1.5, frameMs: 40 });
+        } else if (isCrit) {
+          this.microThud(to.x, to.y, 1.0, Math.cos(wayAngle), Math.sin(wayAngle) * 0.6);
+        }
         if (e.killed) this.death(target, to.x, to.y - to.tall * 0.3);
         if (e.heavy && e.src === 'blow') {
           // (a crit, or a blow from height: a gold burst; a big one, a third of the target's health or more, also blinks the screen)
@@ -409,13 +438,17 @@ export class Fx {
     if (!by || !to || !attacker) return;
     // (a long weapon thrusts out at the foe)
     if (defOf(attacker).range === 2 && !defOf(attacker).shot) this.thrust(by, to);
+    const dx = to.x - by.x;
+    const dy = (to.y - to.tall * 0.5) - (by.y - by.tall * 0.5);
+    const left = dx < 0;
     this.particles.spawn({
       frames: VFX[slashOf(defOf(attacker).name)],
       x: to.x,
       y: to.y - to.tall * 0.5,
       scale: 2,
       frameMs: 45,
-      rotation: Math.atan2(to.y - by.y, to.x - by.x),
+      rotation: left ? Math.atan2(-dy, -dx) : Math.atan2(dy, dx),
+      ...(left ? { stretchX: -1 } : {}),
       add: true,
     });
   }
@@ -600,6 +633,31 @@ export class Fx {
     this.trauma = Math.max(this.trauma, level);
   }
 
+  /** A localized camera micro-thud on lethal backstabs, critical hits, and King's Meteor impact.
+   *  Applies a snappy directional micro-offset that springs back over 2-3 frames (~50ms). */
+  microThud(x: number, y: number, strength = 1.0, dirX = 0, dirY = 0): void {
+    if (this.calm()) return;
+    let dx = dirX;
+    let dy = dirY;
+    if (dx === 0 && dy === 0) {
+      if (this.view) {
+        const vcx = (this.view.x0 + this.view.x1) / 2;
+        const vcy = (this.view.y0 + this.view.y1) / 2;
+        const dist = Math.hypot(x - vcx, y - vcy);
+        if (dist > 1) {
+          dx = ((x - vcx) / dist) * 0.7;
+          dy = ((y - vcy) / dist) * 0.7;
+        }
+      }
+      if (dx === 0 && dy === 0) dy = 1;
+    }
+    const amp = 4.2 * strength;
+    this.thudPeakX = dx * amp;
+    this.thudPeakY = dy * amp;
+    this.thudDuration = 55;
+    this.thudLeft = this.thudDuration;
+  }
+
   /** Advance the effects by `dt` ms of the fight. */
   step(dt: number): void {
     // (an item may add more while it steps, so they go to a fresh list)
@@ -612,8 +670,18 @@ export class Fx {
     this.clock += dt;
     this.trauma = fadeTrauma(this.trauma, dt / 1000);
     const s = this.calm() || this.still ? 0 : shakeOf(this.trauma);
-    this.shakeX = s ? (Math.random() * 2 - 1) * s : 0;
-    this.shakeY = s ? (Math.random() * 2 - 1) * s : 0;
+    if (this.thudLeft > 0 && !this.still) {
+      this.thudLeft = Math.max(0, this.thudLeft - dt);
+      const p = this.thudLeft / this.thudDuration;
+      const k = Math.sin(p * Math.PI);
+      this.thudX = this.thudPeakX * k;
+      this.thudY = this.thudPeakY * k;
+    } else {
+      this.thudX = 0;
+      this.thudY = 0;
+    }
+    this.shakeX = (s ? (Math.random() * 2 - 1) * s : 0) + this.thudX;
+    this.shakeY = (s ? (Math.random() * 2 - 1) * s : 0) + this.thudY;
     this.particles.calm = this.calm();
     this.particles.step(dt);
     this.slowLeft = Math.max(0, this.slowLeft - dt);
@@ -776,7 +844,7 @@ export class Fx {
     let dx = facesRight(by.unit.facing) ? 1 : -1;
     let dy = 0.25;
     if (near.length) {
-      const [vx, vy] = [near[0].x - by.x, near[0].y - by.y];
+      const [vx, vy] = [near[0].x - by.x, (near[0].y - near[0].tall * 0.5) - (by.y - by.tall * 0.5)];
       const len = Math.hypot(vx, vy) || 1;
       [dx, dy] = [vx / len, vy / len];
     }
@@ -830,6 +898,30 @@ export class Fx {
     this.trauma = Math.min(1, this.trauma + 0.6);
     this.slowMo(550);
     if (!this.calm()) this.stopLeft = Math.max(this.stopLeft, 90);
+  }
+
+  /** A duo-combo triggers between complementary heroes: floating text, sparkles and battle toast. */
+  private duoCombo(e: Extract<BattleEvent, { kind: 'duoCombo' }>): void {
+    const sA = this.sprites.get(e.heroA);
+    const sB = this.sprites.get(e.heroB);
+    const col = e.harmonic ? 0xffd700 : 0xffe27a;
+    if (sA && sB) {
+      const cx = (sA.x + sB.x) / 2;
+      const cy = (sA.y + sB.y) / 2;
+      this.label(e.harmonic ? 'Harmonic Resonance!' : 'Duo-Combo!', cx, cy - 80, col, 14, 2000, true);
+      this.label(e.title, cx, cy - 60, 0xfff2a0, 16, 2200, true);
+      this.label(e.name, sA.x, sA.y - sA.tall - 20, col, 12, 1600, true);
+      this.label(e.name, sB.x, sB.y - sB.tall - 20, col, 12, 1600, true);
+      this.sparkles(sA.x, sA.y - sA.tall * 0.5, col);
+      this.sparkles(sB.x, sB.y - sB.tall * 0.5, col);
+    } else if (sA) {
+      this.label(e.title, sA.x, sA.y - sA.tall - 25, col, 14, 1800, true);
+      this.sparkles(sA.x, sA.y - sA.tall * 0.5, col);
+    } else if (sB) {
+      this.label(e.title, sB.x, sB.y - sB.tall - 25, col, 14, 1800, true);
+      this.sparkles(sB.x, sB.y - sB.tall * 0.5, col);
+    }
+    showDuoToast(e.banner, e.harmonic);
   }
 
   /** A hero is promoted to `grade` (2 or 3): the one call both ways in take, the page's merge after a hire and a sim `promote` event (the Calamity's tier by level). The hero rises in light and scales up a beat; tier 3 adds a pillar of light, a nova, a flash, a short slow-motion, a camera push and a banner with its name and its new skill's. */
@@ -917,7 +1009,13 @@ export class Fx {
     }
     for (let i = 0; i <= 5; i++)
       this.particles.spawn({ frames: VFX.dustWhite, x: x0 + ((x1 - x0) * i) / 5, y: y0 + ((y1 - y0) * i) / 5, scale: 0.7, life: 420, delay: i * 25, vy: -0.02, grow: 0.0008, alpha: 0.8 });
-    play(this.particles, 'wind-slash', x1, y1 - lift, { scale: 1.6, frameMs: 45, rotation: Math.atan2(y1 - y0, x1 - x0) });
+    const left = x1 < x0;
+    play(this.particles, 'wind-slash', x1, y1 - lift, {
+      scale: 1.6,
+      frameMs: 45,
+      rotation: left ? Math.atan2(-(y1 - y0), -(x1 - x0)) : Math.atan2(y1 - y0, x1 - x0),
+      ...(left ? { stretchX: -1 } : {}),
+    });
     const g = new Graphics();
     g.moveTo(x0, y0 - lift).lineTo(x1, y1 - lift).stroke({ color: 0xffffff, width: 5, alpha: 0.9, cap: 'round' });
     g.blendMode = 'add';
@@ -1063,8 +1161,10 @@ export class Fx {
     this.trauma = Math.min(1, this.trauma + 0.35);
   }
 
-  /** The meteor lands: a big explosion with a flash, a ring of fire, rubble and smoke, a crater that stays and cools, and a hard shake. */
+  /** The meteor lands: a big explosion with a flash, a ring of fire, rubble and smoke, a crater that stays and cools, and a hard shake with a 2-frame hit-stop and micro-thud. */
   private meteorLanding(cx: number, cy: number, art: string): void {
+    if (!this.calm()) this.stopLeft = Math.max(this.stopLeft, 34); // subtle 2-frame hit-stop
+    this.microThud(cx, cy, 1.5, 0, 1.2); // localized downward camera micro-thud
     const p = this.particles;
     // (layers kept apart and thinned so the blast stays orange instead of clipping to white)
     const frames = abilityFrames(art, 'explosion');
@@ -1103,7 +1203,10 @@ export class Fx {
     const centre = SPELLS[e.id].target === 'all' && near.length
       ? { x: near.reduce((n, s) => n + s.x, 0) / near.length, y: near.reduce((n, s) => n + s.y, 0) / near.length }
       : { x: px, y: py };
-    playSteps(SPELL_SIGNATURES[e.id].cast, { p: this.particles, self: { ...centre, tall: 40 }, foes, allies, dir: { x: 0, y: -1 }, ms: 700, size: 1 });
+    const targetPt = foes[0] ?? (SPELLS[e.id].target === 'all' ? allies[0] : undefined);
+    const [svx, svy] = targetPt ? [targetPt.x - centre.x, (targetPt.y - targetPt.tall * 0.5) - (centre.y - 20)] : [0, -1];
+    const slen = Math.hypot(svx, svy) || 1;
+    playSteps(SPELL_SIGNATURES[e.id].cast, { p: this.particles, self: { ...centre, tall: 40 }, foes, allies, dir: { x: svx / slen, y: svy / slen }, ms: 700, size: 1 });
     if (e.id === 'quake') this.trauma = Math.max(this.trauma, 0.7);
     if (SPELLS[e.id].target === 'all') return;
     const [cx, cy] = this.tilePos(b, e.u, e.v);
@@ -1292,6 +1395,41 @@ export class Fx {
     });
   }
 
+  /** A cabbage kicked onto a tile by Duchess: heals the first unit walking over it. */
+  cabbage(b: Battle, u: number, v: number): void {
+    const c = document.createElement('canvas');
+    c.width = 16;
+    c.height = 16;
+    const ctx = c.getContext('2d')!;
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = '#2f741d';
+    ctx.fillRect(4, 5, 8, 8);
+    ctx.fillStyle = '#59b83b';
+    ctx.fillRect(5, 4, 6, 8);
+    ctx.fillRect(4, 6, 8, 5);
+    ctx.fillStyle = '#a6eb86';
+    ctx.fillRect(6, 6, 4, 4);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(7, 7, 2, 2);
+
+    const view = Sprite.from(c);
+    view.anchor.set(0.5);
+    const [x, y] = this.tilePos(b, u, v);
+    view.position.set(x, y - 6);
+    this.root.addChild(view);
+    this.items.push({
+      view,
+      step: () => {
+        const live = b.cabbages?.some((item) => item.u === u && item.v === v);
+        if (!live) {
+          view.destroy();
+          return false;
+        }
+        return true;
+      },
+    });
+  }
+
   /** The damage numbers still rising over each spot, so a new one over the same fighter starts above the last, not on it. */
   private stacks = new Map<string, { at: number; n: number }>();
 
@@ -1401,7 +1539,9 @@ export class Fx {
     const m: Missile = missileOf(kind, defOf(by.unit).name);
     const x0 = by.x;
     const y0 = by.y - by.tall * 0.55;
-    const aim = Math.atan2(to.y - by.y, to.x - by.x);
+    const x1 = to.x;
+    const y1 = to.y - to.tall * 0.45;
+    const aim = Math.atan2(y1 - y0, x1 - x0);
     if (m.muzzle) {
       play(this.particles, packKey(m.el, 'hit'), x0 + Math.cos(aim) * 8, y0 + Math.sin(aim) * 4, { scale: m.look === 'tracer' ? 1.3 : 0.9, frameMs: 40 });
       if (m.look === 'tracer')
@@ -1459,13 +1599,13 @@ export class Fx {
 
   /** A spear's thrust: the shaft runs out two thirds of the way to the foe and snaps back. */
   private thrust(by: UnitSprite, to: UnitSprite): void {
+    const [x0, y0, x1, y1] = [by.x, by.y - by.tall * 0.5, to.x, to.y - to.tall * 0.5];
     const sp = new Sprite(arrow);
     sp.anchor.set(0.5);
     sp.scale.set(1.1);
     sp.tint = 0xe8d8b8;
-    sp.rotation = Math.atan2(to.y - by.y, to.x - by.x);
+    sp.rotation = Math.atan2(y1 - y0, x1 - x0);
     this.root.addChild(sp);
-    const [x0, y0, x1, y1] = [by.x, by.y - by.tall * 0.5, to.x, to.y - to.tall * 0.5];
     let t = 0;
     this.items.push({
       view: sp,

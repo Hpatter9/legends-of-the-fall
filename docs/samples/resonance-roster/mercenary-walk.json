@@ -1,0 +1,214 @@
+{
+  "id": "mercenary",
+  "frames": [
+    {
+      "row": "frontA",
+      "col": 0,
+      "box": [
+        40,
+        44,
+        272,
+        320
+      ],
+      "width": 81,
+      "height": 96,
+      "left": 88
+    },
+    {
+      "row": "frontA",
+      "col": 1,
+      "box": [
+        339,
+        40,
+        562,
+        320
+      ],
+      "width": 78,
+      "height": 97,
+      "left": 83
+    },
+    {
+      "row": "frontA",
+      "col": 2,
+      "box": [
+        644,
+        44,
+        873,
+        326
+      ],
+      "width": 80,
+      "height": 98,
+      "left": 80
+    },
+    {
+      "row": "frontA",
+      "col": 3,
+      "box": [
+        961,
+        44,
+        1194,
+        326
+      ],
+      "width": 81,
+      "height": 98,
+      "left": 81
+    },
+    {
+      "row": "frontB",
+      "col": 0,
+      "box": [
+        28,
+        339,
+        255,
+        620
+      ],
+      "width": 79,
+      "height": 98,
+      "left": 83
+    },
+    {
+      "row": "frontB",
+      "col": 1,
+      "box": [
+        339,
+        338,
+        568,
+        618
+      ],
+      "width": 80,
+      "height": 97,
+      "left": 83
+    },
+    {
+      "row": "frontB",
+      "col": 2,
+      "box": [
+        650,
+        339,
+        875,
+        620
+      ],
+      "width": 78,
+      "height": 98,
+      "left": 82
+    },
+    {
+      "row": "frontB",
+      "col": 3,
+      "box": [
+        961,
+        342,
+        1184,
+        620
+      ],
+      "width": 78,
+      "height": 97,
+      "left": 81
+    },
+    {
+      "row": "rearA",
+      "col": 0,
+      "box": [
+        34,
+        644,
+        303,
+        925
+      ],
+      "width": 94,
+      "height": 98,
+      "left": 85
+    },
+    {
+      "row": "rearA",
+      "col": 1,
+      "box": [
+        339,
+        643,
+        608,
+        925
+      ],
+      "width": 94,
+      "height": 98,
+      "left": 83
+    },
+    {
+      "row": "rearA",
+      "col": 2,
+      "box": [
+        657,
+        645,
+        920,
+        922
+      ],
+      "width": 91,
+      "height": 96,
+      "left": 84
+    },
+    {
+      "row": "rearA",
+      "col": 3,
+      "box": [
+        972,
+        645,
+        1229,
+        925
+      ],
+      "width": 89,
+      "height": 97,
+      "left": 85
+    },
+    {
+      "row": "rearB",
+      "col": 0,
+      "box": [
+        28,
+        936,
+        326,
+        1215
+      ],
+      "width": 104,
+      "height": 97,
+      "left": 83
+    },
+    {
+      "row": "rearB",
+      "col": 1,
+      "box": [
+        345,
+        937,
+        638,
+        1215
+      ],
+      "width": 102,
+      "height": 97,
+      "left": 85
+    },
+    {
+      "row": "rearB",
+      "col": 2,
+      "box": [
+        653,
+        936,
+        949,
+        1215
+      ],
+      "width": 103,
+      "height": 97,
+      "left": 83
+    },
+    {
+      "row": "rearB",
+      "col": 3,
+      "box": [
+        965,
+        937,
+        1234,
+        1215
+      ],
+      "width": 94,
+      "height": 97,
+      "left": 82
+    }
+  ],
+  "warnings": []
+}

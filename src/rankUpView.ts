@@ -5,6 +5,7 @@
 
 import { UNITS } from './sim/units';
 import { MAX_RANK, RANK_SHARDS, rankMult, saveMeta, takenRank, type Meta } from './sim/meta';
+import { ORES } from './sim/awakenMats';
 import { AWAKEN_COSTS, AWAKEN_SHARDS, PASSIVES, awaken, awakenPlan, awakenedOf } from './sim/awaken';
 import { rankPlan, rankUp } from './sim/rankUp';
 import { lastingBoost, progressOf, xpOf } from './sim/levels';
@@ -14,8 +15,8 @@ import { figureShare, sprite } from './render/sheets';
 import { play } from './render/sound';
 
 export interface Taken {
-  /** `rank`: a shard rank taken (`n` is the new rank); `awaken`: an awakened step (`n` is the step, 1 or 2). */
-  what: 'rank' | 'awaken';
+  /** `rank`: a shard rank taken (`n` is the new rank); `awaken`: an awakened step (`n` is the step, 1 or 2); `cache`: a Rift Cache opened on the awakening panel (`n` ores; no show). */
+  what: 'rank' | 'awaken' | 'cache';
   n: number;
 }
 
@@ -76,7 +77,7 @@ export function openRankUp(meta: Meta, kind: string, done: (t: Taken) => void): 
   } else card.append(looks);
   // what was earned
   const have = meta.shards[kind] ?? 0;
-  card.append(el('p', 'ruEarned', rp ? `Earned with ${RANK_SHARDS[rp.to - 1]} shards (you have ${have}).` : `${AWAKEN_SHARDS[steps]} shards in all, and ${AWAKEN_COSTS[steps]} of them are used up.`));
+  card.append(el('p', 'ruEarned', rp ? `Earned with ${RANK_SHARDS[rp.to - 1]} shards (you have ${have}).` : `${AWAKEN_SHARDS[steps]} shards in all, and ${AWAKEN_COSTS[steps]} of them are used up${ap?.ore && ORES[ap.ore] ? `, with ${ap.oreCost} ${ORES[ap.ore].name}` : ''}.`));
   // the stats, before and after
   const a = statsAt(meta, kind, now);
   const b = statsAt(meta, kind, next);

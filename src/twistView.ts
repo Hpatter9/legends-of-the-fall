@@ -20,7 +20,24 @@ import ambush from './art/twists/ambush.png';
 import glory from './art/twists/glory.png';
 import fortified from './art/twists/fortified.png';
 
-const ICONS: Record<string, string> = { fog, holy, lava, gale, bloodmoon, narrow, treasure, haste, frost, mana, cursed, ambush, glory, fortified };
+const ICONS: Record<string, string> = {
+  fog,
+  holy,
+  lava,
+  gale,
+  bloodmoon,
+  narrow,
+  treasure,
+  haste,
+  frost,
+  mana,
+  cursed,
+  ambush,
+  glory,
+  fortified,
+  rollingGales: gale,
+  hotCoals: lava,
+};
 
 export const TONE_NAMES: Record<Tone, string> = { curse: 'Curse', blessing: 'Blessing', mixed: 'Mixed' };
 

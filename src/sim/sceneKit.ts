@@ -105,7 +105,7 @@ export interface Shot {
 /** When a scene comes up. `starter`: a new save has just picked its first heroes. `calOpen`: the Calamity has opened (its
  *  reveal: the portal). `calBoss`: a Calamity's boss of this map is about to be fought. `calVictory`: the Calamity's last herald has fallen. `armyClear`: an army cleared for
  *  the first time. `awaken` / `earned`: a hero awakened, or joined by a milestone. `combo`: a five-unit combo's mega ultimate
- *  fires. `firstLoss`. `duchess`: she turns up in a fight. `castle`: a build is raised. `spire`: the Last Stand's milestone
+ *  fires. `firstLoss`. `duchessJoins`: she joins a fight as a fighter for the first time (`duchessFight.ts`; it was her first visit to a fight's edge until DUCHESS-FIGHTS). `castle`: a build is raised. `spire`: the Last Stand's milestone
  *  waves (the old endless tower's moment, kept so a save's seen scenes still match).
  *  `bossForm`: a boss changes form mid-fight. `mythic`: Mythic opened on an army. `elite`, `ascension`,
  *  `dailyBoss`: the first of each. */
@@ -120,7 +120,7 @@ export type Moment =
   | { kind: 'combo'; set: string }
   | { kind: 'comboCut'; set: string }
   | { kind: 'firstLoss' }
-  | { kind: 'duchess' }
+  | { kind: 'duchessJoins' }
   | { kind: 'castle'; site: string }
   | { kind: 'spire'; floor: number }
   | { kind: 'bossForm'; boss: string }

@@ -61,7 +61,7 @@ const SCENERY_Z = 5000;
 const SCENERY_BACK_Z = -100000;
 
 /** The rim drawn round each kind of ground. */
-const RIM = { water: 'rgba(120,190,255,0.9)', deep: 'rgba(40,90,180,0.95)', ice: 'rgba(210,245,255,0.95)', lava: 'rgba(255,150,40,0.95)', tall: 'rgba(30,70,20,0.6)', shrine: 'rgba(140,255,225,0.95)' };
+const RIM = { water: 'rgba(120,190,255,0.9)', deep: 'rgba(40,90,180,0.95)', ice: 'rgba(210,245,255,0.95)', lava: 'rgba(255,150,40,0.95)', tall: 'rgba(30,70,20,0.6)', shrine: 'rgba(140,255,225,0.95)', coals: 'rgba(255,100,30,0.95)' };
 /** The rim round a bridge's planks. */
 const BRIDGE_RIM = 'rgba(44,26,12,0.9)';
 
@@ -744,7 +744,7 @@ export class BoardView {
       const b = TH / (2 * SRC);
       g.imageSmoothingEnabled = true;
       g.setTransform(a, b, -a, b, TW / 2, 0);
-      const lie = t.bridge ? art.planks : t.ground === 'deep' ? (LAVA_LANDS.includes(area) ? art.lava : art.water) : t.ground && t.ground !== 'tall' && t.ground !== 'shrine' ? art[t.ground] : null;
+      const lie = t.bridge ? art.planks : t.ground === 'deep' ? (LAVA_LANDS.includes(area) ? art.lava : art.water) : t.ground === 'coals' ? art.lava : t.ground && t.ground !== 'tall' && t.ground !== 'shrine' ? art[t.ground] : null;
       // (planks are pixel art: not smoothed)
       if (t.bridge) g.imageSmoothingEnabled = false;
       g.drawImage(lie ?? (stony ? set.high : set.tops[(t.deco + u + v) % set.tops.length]), 0, 0, SRC, SRC);

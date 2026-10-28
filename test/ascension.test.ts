@@ -1,7 +1,7 @@
 import { clearCrowns } from '../src/sim/calReward';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ascChests, ascCleared, ascCrowns, ascOf, ascReward, ascRules, ascUnlocked, ASC_MAX, ASC_TEXT } from '../src/sim/ascension';
+import { ascChests, ascCleared, ascCrowns, ascOf, ascReward, ascRules, ascUnlocked, ASC_MAX, ASC_TEXT, CHAOS_ASC } from '../src/sim/ascension';
 import { startedMeta, type Meta } from '../src/sim/meta';
 import { calamityRun } from '../src/sim/modes';
 import { CAL_MAPS, CAL_START_GOLD } from '../src/sim/calamity';
@@ -22,7 +22,7 @@ function clearedTo(done: number): Meta {
   return m;
 }
 
-test('each level adds one rule on top of the ones before; level 0 changes nothing', () => {
+test('each level adds one rule on top of the ones before (level 3 two); level 0 changes nothing', () => {
   assert.equal(ASC_TEXT.length, ASC_MAX);
   const none = ascRules(0);
   assert.deepEqual(none, { foeHp: 1, foeAtk: 1, hires: 1, phaseAt: 0.5, elites: 1, shops: 1, heal: 1, startGold: 0, bossCurse: false, bossShield: 0 });
@@ -30,7 +30,9 @@ test('each level adds one rule on top of the ones before; level 0 changes nothin
   for (let n = 1; n <= ASC_MAX; n++) {
     const now = ascRules(n);
     const changed = Object.keys(now).filter((k) => JSON.stringify((now as never)[k]) !== JSON.stringify((JSON.parse(was) as never)[k]));
-    assert.equal(changed.length, 1, `level ${n} changes one rule: ${changed}`);
+    // (level 3 also brings the chaos twists, the owner's call: CHAOS_ASC)
+    if (n === CHAOS_ASC) assert.deepEqual(changed.sort(), ['chaosMutators', 'phaseAt'], `level ${n}: ${changed}`);
+    else assert.equal(changed.length, 1, `level ${n} changes one rule: ${changed}`);
     was = JSON.stringify(now);
   }
   // (nothing is taken back going up, and a level past the top is the top)

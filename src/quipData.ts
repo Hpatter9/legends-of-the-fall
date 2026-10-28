@@ -14,6 +14,17 @@ export const QUIP_MAX = 70;
 
 export type HeroQuips = Record<QuipKind, readonly string[]>;
 
+/** Snarky quips spoken by an inverted hero clone from the Cursed Mirror. */
+export const INVERTED_HERO_QUIPS: readonly string[] = [
+  'Move over, original. Let someone with real talent handle this.',
+  'Oh look, the original is already exhausted. How entirely predictable.',
+  'Two more floors of your amateur leadership? Truly a fate worse than death.',
+  'I would watch your back, but your posture from behind is embarrassing.',
+  'Nice swing. Did you practice missing, or is it pure natural incompetence?',
+  'I am only carrying you because watching you fail alone was getting pathetic.',
+  'Enjoy the reflection while it lasts—perfection like this does not linger.',
+];
+
 export const HERO_QUIPS: Record<string, HeroQuips> = {
   knight: {
     hired: ['Forty winters at the gate, and not once offered a folding chair.', 'I am sworn to hold the line. Also to a sensible four o\'clock tea.', 'My shield is yours. My knees make no promises.'],
@@ -656,6 +667,7 @@ export const DUCHESS_LINES = {
   bigHit: ['Mehh!', 'MEHH!', 'MEEEHHH!', 'Mehh?! (Was that for me?)', 'MEHH! (Tactical sidestep.)', 'Mehh! (Rude brute!)', 'MEHHH! (Dramatic head toss.)'],
   boss: ['Meh... meh... mehhh.', 'Mehh?! (Too tall.)', 'Mehh. (Overrated.)', 'Meh-heh-heh.', 'Mehh! (I have seen larger cabbages.)', 'Meh... (Boring.)', 'Mehh?! (Lacks proper horns.)'],
   wipe: ['Mehh...', 'Meh. (Sorry.)', 'Mehh. (Amateurs.)', 'Meh-meh. (Told you so.)', 'Mehh... (I shall eat the flag now.)', 'Meh. (Nap time.)', 'Mehh. (A turnip would have helped.)'],
+  won: ['Mehh! (Victory is delicious.)', 'Meh-heh! (I planned the whole battle.)', 'Mehh! (Now where is my celebratory turnip?)', 'MEHH! (Top of the rock!)', 'Mehh. (Adequate hero work.)'],
   /** Things she has eaten, for the camp. */
   ate: [
     'the kingdom\'s only accurate map',
@@ -830,6 +842,9 @@ export const RESULT_LOSS: readonly string[] = [
 
 /** A dry aside for each achievement, shown under its real name and text (so the meaning stays). */
 export const AWARD_JOKES: Record<string, string> = {
+  duchessCrown: 'The crown is tin. Her Grace has not been told, and nobody is volunteering.',
+  duchessTactician: 'The foe was startled by livestock. It has asked that this stay off its record.',
+  duchessHaystack: 'Treasure in the hay. The hay would like it noted that it was never consulted.',
   firstWin: 'Duchess ate the victory rosette before the glue was dry.',
   flawless: 'Not a single bruise recorded. Even the armourers feel slightly cheated.',
   perfect: 'The stars align in perfection. They have formally requested apple slices.',
@@ -851,6 +866,7 @@ export const AWARD_JOKES: Record<string, string> = {
   tower1: 'Up the spiral stairs. Watch your footing, and mind the trailing goat droppings.',
   tower20: 'Twenty floors ascended! The lift remains perpetually out of order.',
   recruiter: 'A full roster assembled. Duchess was neither consulted nor given veto power.',
+  duchessFavour: 'Her Grace has asked to be paid in cabbages. The treasurer is weighing it.',
 };
 
 export type KingKind = 'waveStart' | 'bossWave' | 'hurt' | 'lowHp' | 'waveCleared' | 'fallen';
