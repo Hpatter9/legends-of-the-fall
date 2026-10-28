@@ -27,7 +27,7 @@ export interface AscRules {
   bossCurse: boolean;
   /** Foes in the field hit harder (folded into `foeAtk`); and bosses begin behind a shield of this share of their health. */
   bossShield: number;
-  /** Optional high-ascension chaos floor twists (Rolling Gales, Hot Coals). */
+  /** Chaos floor twists (Rolling Gales, Hot Coals) on some fights: from ascension 3, the owner's call. */
   chaosMutators?: boolean;
 }
 
@@ -35,7 +35,7 @@ export interface AscRules {
 export const ASC_TEXT: readonly string[] = [
   'Foes have 20% more health.',
   'Heroes for hire in the shops cost 40% more.',
-  'Bosses change form sooner: at 65% health.',
+  'Bosses change form sooner: at 65% health. Chaos stirs: gales and hot coals on some fights.',
   'Elites turn up twice as often.',
   'Shops charge 25% more.',
   'All healing is halved.',
@@ -44,6 +44,9 @@ export const ASC_TEXT: readonly string[] = [
   'Foes hit 15% harder.',
   'Bosses begin the fight behind a shield.',
 ];
+
+/** The ascension level the chaos twists (Rolling Gales, Hot Coals) begin at: the owner's call. */
+export const CHAOS_ASC = 3;
 
 /** The rules at an ascension level (all the levels up to it, together). */
 export function ascRules(level: number, options?: { chaosMutators?: boolean }): AscRules {
@@ -60,7 +63,7 @@ export function ascRules(level: number, options?: { chaosMutators?: boolean }): 
     bossCurse: n >= 8,
     bossShield: n >= 10 ? 0.1 : 0,
   };
-  if (options?.chaosMutators) rules.chaosMutators = true;
+  if (n >= CHAOS_ASC || options?.chaosMutators) rules.chaosMutators = true;
   return rules;
 }
 

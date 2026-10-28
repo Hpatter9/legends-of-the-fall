@@ -93,7 +93,8 @@ import { bindDuck, bindMute, play, playEvents, setAct, setScene, setup, startFig
 import { fightLevel, type MapKind } from './render/epicMusic';
 import { sceneOf } from './render/audioRules';
 import { colLeft, viewH, viewW } from './viewport';
-import { onSettings, openSettings, setSetting, settings } from './settings';
+import { onDevGrant, onSettings, openSettings, setSetting, settings } from './settings';
+import { devGrant } from './sim/devGrant';
 import { PageGoat } from './duchess';
 import { duchessFightSays, hideDuchessCard, showDuchessCard } from './duchessFightView';
 import type { DuchessWish } from './sim/duchessFight';
@@ -381,6 +382,15 @@ class Game {
     });
     // (battery saver caps the frame rate at 30)
     onSettings((s) => (this.app.ticker.maxFPS = s.saver ? 30 : 0));
+    // (the developer grant in Settings: crowns, or shards of every hero, for testing; saved and shown at once)
+    onDevGrant((what, n) => {
+      const said = devGrant(this.meta, what, n);
+      saveMeta(this.meta);
+      this.syncPool();
+      this.refresh();
+      this.home.refresh();
+      return said;
+    });
     window.addEventListener('resize', () => this.layout());
     // (the home screen covers the board, so the board is not drawn while it is up: the canvas cost nothing but heat and battery behind it)
     const home = $('home');

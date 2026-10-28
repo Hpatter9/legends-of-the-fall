@@ -128,7 +128,8 @@ test('shards come only from stones: no source calls giveShards but the stone dra
   };
   walk('src');
   const callers = files.filter((f) => /\bgiveShards\(/.test(readFileSync(f, 'utf8')) && !f.endsWith('src/sim/unlock.ts'));
-  assert.deepEqual(callers, ['src/sim/meta.ts'], 'only pullOnce (the stone draw) gives shards');
+  // (the developer grant in Settings is the owner's testing tool, not a source in play: `devGrant.ts`)
+  assert.deepEqual(callers.sort(), ['src/sim/devGrant.ts', 'src/sim/meta.ts'], 'only pullOnce (the stone draw) gives shards in play');
 });
 
 test('crowns buy no pull; chests give stones (every chest source), and a stone is the only way to a shard', () => {
