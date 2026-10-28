@@ -49,7 +49,12 @@ export const WAVE_START = FOE_START;
 export const WAVE_GROWTH = 0.4;
 /** From wave `WAVE_KNEE` on the climb eases to `WAVE_GROWTH_LATE` a wave: steep at first, so the early waves bite at once; gentler later, so a stronger party still goes further. */
 export const WAVE_KNEE = 10;
-export const WAVE_GROWTH_LATE = 0.07;
+export const WAVE_GROWTH_LATE = 0.1;
+/** The castle's rooms (STAND-003) bring the foes in by two or three breaches, onto the posts: their strength is eased by this to keep the agreed pace. */
+export const HALL_EASE = 0.85;
+/** From wave `WAVE_DEEP` the climb steepens again by `WAVE_GROWTH_DEEP` a wave (STAND-003: the strongest parties kept near the agreed pace, about wave 25 at level 100). */
+export const WAVE_DEEP = 22;
+export const WAVE_GROWTH_DEEP = 0.6;
 /** A wave's size: foes at wave 1 and the foes each wave adds. */
 export const WAVE_BASE = 4;
 export const WAVE_STEP = 2;
@@ -222,7 +227,7 @@ export interface WaveSpec {
 
 export const isBossWave = (n: number): boolean => n % BOSS_EVERY === 0;
 /** The foes' strength at wave `n`, as a share of their stats in `foes.ts`. */
-export const strength = (n: number): number => WAVE_START * (1 + WAVE_GROWTH * (Math.min(n, WAVE_KNEE) - 1) + WAVE_GROWTH_LATE * Math.max(0, n - WAVE_KNEE));
+export const strength = (n: number): number => HALL_EASE * WAVE_START * (1 + WAVE_GROWTH * (Math.min(n, WAVE_KNEE) - 1) + WAVE_GROWTH_LATE * Math.max(0, n - WAVE_KNEE) + WAVE_GROWTH_DEEP * Math.max(0, n - WAVE_DEEP));
 /** How many foes wave `n` would have with no cap. */
 export const rawCount = (n: number): number => Math.round(WAVE_BASE + WAVE_STEP * n);
 

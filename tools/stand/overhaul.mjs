@@ -1,7 +1,7 @@
 // STAND-003 phase A checks in the page: the free camera (a pan stays where it was put, the crown button goes back to the king), the pause
 // (the battle's clock stops, the sheet lists the eight and the king, Resume carries on) and no page errors, at the three phone sizes.
 import { serve, launch, boot, enter, SIZES } from './lib.mjs';
-const server = serve();
+const server = serve('out/web', 8152);
 const browser = await launch();
 let bad = 0;
 const check = (ok, what) => {
@@ -9,7 +9,7 @@ const check = (ok, what) => {
   if (!ok) bad++;
 };
 for (const [w, h] of SIZES) {
-  const { page, errors, ctx } = await boot(browser, w, h, 20);
+  const { page, errors, ctx } = await boot(browser, w, h, 20, 8152);
   await page.waitForSelector('#hmTower', { state: 'attached', timeout: 15000 });
   await enter(page);
   await page.evaluate(() => document.querySelector('.stStart').click());

@@ -32,7 +32,7 @@ import { at, depth, setFrame, HH, TH, TW } from './render/iso';
 import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS } from './render/cameraRules';
 import { bossHit, NUDGE_MS, nudgeOffset, wheelStep } from './render/standCam';
 import { StandHall, standHallArt, standBackwallUrl } from './render/standHall';
-import { hallOf } from './sim/standHalls';
+import { hallOf, type HallKind } from './sim/standHalls';
 import { standSheet } from './sim/standSheet';
 import { endFight, play, playEvents, setAct, startFight } from './render/sound';
 import { fightLevel, fightTrack } from './render/epicMusic';
@@ -64,7 +64,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 };
 
 /** The most the camera may be zoomed, in CSS px per world px: from a little under a third (about eight tiles across a phone at the least) to two. */
-const SCALE_MIN = 0.6;
+const SCALE_MIN = 0.5;
 const SCALE_MAX = 2;
 /** How long after a wave begins that a foe grumbles (battle ms): the king's line has gone, and the first foes are in. */
 const GRUMBLE_AFTER_MS = 5200;
@@ -958,8 +958,8 @@ export class StandView {
     this.cx = this.tx = kx;
     this.cy = this.ty = ky - 24;
     const steps = this.steps();
-    // (the room seen whole round the dais: the largest step not over 1)
-    this.scale = this.tscale = [...steps].reverse().find((k) => k <= 1.001) ?? steps[0];
+    // (the room round the dais seen wide: the largest step not over 0.7, else the smallest; the player pinches in from there)
+    this.scale = this.tscale = [...steps].reverse().find((k) => k <= 0.701) ?? steps[0];
     this.place();
   }
 
@@ -1467,6 +1467,13 @@ export class StandView {
   /** For tests and screenshots: the pause sheet of the run in play. */
   get sheet(): ReturnType<typeof standSheet> | null {
     return this.s ? standSheet(this.s) : null;
+  }
+
+  /** For the screenshots: the run laid out again in one of the castle's rooms (before its first wave). */
+  debugHall(kind: HallKind): void {
+    const s = this.s;
+    if (!s) return;
+    this.start({ ...s.run, hall: kind, heroes: s.run.heroes.map((h) => ({ ...h, post: null })) });
   }
 
   /** For tests and screenshots: the run in play. */
