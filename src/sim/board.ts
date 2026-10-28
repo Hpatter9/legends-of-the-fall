@@ -185,6 +185,8 @@ export interface Board {
   /** Scenic destination, outside collision tiles; only included from the final approach onwards. */
   landmark?: 'fortress' | 'temple' | 'mausoleum' | 'warcamp' | 'den' | 'grove' | 'citadel' | 'shrine' | 'foundry';
   landmarkAt?: { u: number; v: number; h: number };
+  /** A boss arena's middle (an army's boss section, `scenario.ts`): its boss starts there and its band round it (`arenaDeploy.ts`). */
+  arenaMid?: At;
   seed: number;
   area: Area;
   w: number;

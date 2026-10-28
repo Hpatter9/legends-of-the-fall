@@ -837,8 +837,10 @@ export class CastleScene {
   private drawVfx(key: VfxKey, x: number, y: number, size: number, frameOffset = 0, angle = 0, alpha = 0.9): void {
     const frames = VFX[key];
     if (!frames?.length) return;
-    const idx = Math.floor(this.now / 110 + frameOffset) % frames.length;
+    // (kept in range when the hall's clock is still below zero on its first frames: a negative index once threw every frame, FIGHT-FIXES)
+    const idx = ((Math.floor(this.now / 110 + frameOffset) % frames.length) + frames.length) % frames.length;
     const tex = frames[idx];
+    if (!tex) return;
     const r = tex.frame;
     const g = this.ctx;
     g.save();
