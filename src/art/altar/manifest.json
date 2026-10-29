@@ -1,0 +1,67 @@
+{
+  "atlas": "patrons-atlas.png",
+  "width": 1254,
+  "height": 1254,
+  "frames": {
+    "ember-altar": {
+      "x": 0,
+      "y": 0,
+      "width": 418,
+      "height": 440
+    },
+    "bastion-altar": {
+      "x": 418,
+      "y": 0,
+      "width": 418,
+      "height": 440
+    },
+    "echo-altar": {
+      "x": 836,
+      "y": 0,
+      "width": 418,
+      "height": 440
+    },
+    "ember-crest": {
+      "x": 0,
+      "y": 440,
+      "width": 418,
+      "height": 395
+    },
+    "bastion-crest": {
+      "x": 418,
+      "y": 440,
+      "width": 418,
+      "height": 395
+    },
+    "echo-crest": {
+      "x": 836,
+      "y": 440,
+      "width": 418,
+      "height": 395
+    },
+    "pedestal": {
+      "x": 0,
+      "y": 835,
+      "width": 418,
+      "height": 419
+    },
+    "consecration-seal": {
+      "x": 418,
+      "y": 835,
+      "width": 418,
+      "height": 419
+    },
+    "corruption-seal": {
+      "x": 836,
+      "y": 835,
+      "width": 418,
+      "height": 419
+    }
+  },
+  "backdrop": {
+    "file": "sanctuary.png",
+    "width": 1024,
+    "height": 1536
+  },
+  "notes": "The generated rows have unequal heights. Use these measured frames rather than a uniform 3\u00d73 grid. Source pixels remain unchanged."
+}

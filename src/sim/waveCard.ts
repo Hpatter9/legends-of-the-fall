@@ -55,8 +55,9 @@ export function waveNotes(m: WaveMoments): WaveNote[] {
 
 /** The heading of a spire floor's or a Calamity fight's short card (WAVE-RECAP-2): "Floor 12 cleared", "Act 2 cleared!", "Spot cleared",
  *  "Map 3 cleared!", or the fall ("Fell on floor 12", "The party falls"). `act` is the act or map whose boss has just fallen. */
-export function towerHeadline(kind: 'spire' | 'calamity', floor: number, won: boolean, act?: number): string {
+export function towerHeadline(kind: 'spire' | 'calamity' | 'expedition', floor: number, won: boolean, act?: number): string {
   if (!won) return kind === 'spire' ? `Fell on floor ${floor}` : 'The party falls';
-  if (act !== undefined) return `${kind === 'spire' ? 'Act' : 'Map'} ${act} cleared!`;
-  return kind === 'spire' ? `Floor ${floor} cleared` : 'Spot cleared';
+  // (a Rift Sanctuary expedition is told in regions and crossings, CAL-SANCTUARY)
+  if (act !== undefined) return `${kind === 'spire' ? 'Act' : kind === 'expedition' ? 'Region' : 'Map'} ${act} cleared!`;
+  return kind === 'spire' ? `Floor ${floor} cleared` : kind === 'expedition' ? 'Crossing made' : 'Spot cleared';
 }

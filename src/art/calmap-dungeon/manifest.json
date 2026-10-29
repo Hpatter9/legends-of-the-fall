@@ -1,0 +1,68 @@
+{
+  "atlas": "encounters.png",
+  "width": 1254,
+  "height": 1254,
+  "frames": {
+    "fight": {
+      "x": 0,
+      "y": 0,
+      "width": 418,
+      "height": 410
+    },
+    "elite": {
+      "x": 418,
+      "y": 0,
+      "width": 418,
+      "height": 410
+    },
+    "recruit": {
+      "x": 836,
+      "y": 0,
+      "width": 418,
+      "height": 410
+    },
+    "campfire": {
+      "x": 0,
+      "y": 410,
+      "width": 418,
+      "height": 370
+    },
+    "shop": {
+      "x": 418,
+      "y": 410,
+      "width": 418,
+      "height": 395
+    },
+    "treasure": {
+      "x": 836,
+      "y": 410,
+      "width": 418,
+      "height": 375
+    },
+    "altar": {
+      "x": 0,
+      "y": 780,
+      "width": 418,
+      "height": 474
+    },
+    "mystery": {
+      "x": 418,
+      "y": 805,
+      "width": 418,
+      "height": 449
+    },
+    "boss": {
+      "x": 836,
+      "y": 785,
+      "width": 418,
+      "height": 469
+    }
+  },
+  "notes": "Original PNG unchanged. Per-column row boundaries measured to keep neighbouring symbols out of each frame.",
+  "arrivalPortal": {
+    "file": "arrival-portal.png",
+    "width": 1312,
+    "height": 1199,
+    "transparent": true
+  }
+}

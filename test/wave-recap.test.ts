@@ -62,6 +62,10 @@ test('a spire floor\'s and a Calamity fight\'s card are headed by what fell', ()
   assert.equal(towerHeadline('calamity', 1, true), 'Spot cleared');
   assert.equal(towerHeadline('calamity', 1, true, 3), 'Map 3 cleared!');
   assert.equal(towerHeadline('calamity', 1, false), 'The party falls');
+  // (a Rift Sanctuary expedition: crossings and regions)
+  assert.equal(towerHeadline('expedition', 1, true), 'Crossing made');
+  assert.equal(towerHeadline('expedition', 1, true, 2), 'Region 2 cleared!');
+  assert.equal(towerHeadline('expedition', 1, false), 'The party falls');
 });
 
 /** One fight noted the way the page notes it: its rows, its pay, its line. */

@@ -543,7 +543,10 @@ export class BoardView {
       const t = tileAt(b, p.u, p.v)!;
       const far = depth ? depth[p.v * b.w + p.u] : 0;
       const [x, y] = project(f, p.u, p.v, t.h - Math.min(2, Math.max(0, far - 1)));
-      addPic(tile, setPiece(p.kind, b.area), x, y, live);
+      const picture = setPiece(p.kind, b.area);
+      // Rift courts have authored landmark pairs on their scenic margins.
+      if (b.riftWorld && p.kind !== 'riftPortal') picture.scale *= p.v === 1 ? 1.8 : 1.25;
+      addPic(tile, picture, x, y, live);
     }
     // a few small birds at the road's edge, pecking (on the land beside it, a tile off the road)
     if (depth) {

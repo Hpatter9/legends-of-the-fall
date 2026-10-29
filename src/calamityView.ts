@@ -4,7 +4,7 @@
 import { orePouch } from './oreView';
 import { bestTitle } from './sim/calReward';
 import type { Meta } from './sim/meta';
-import { CAL_MAPS } from './sim/calamity';
+import { RIFT_ROWS } from './sim/rift';
 import { ascCleared, ascReward, ascUnlocked, ASC_MAX, ASC_TEXT } from './sim/ascension';
 import { UNITS } from './sim/units';
 import { portrait } from './render/sheets';
@@ -69,7 +69,7 @@ export function pickHero(meta: Meta, onPick: (kind: string, ascension: number) =
     rules.replaceChildren();
     // (the newest rule first, the ones it stacks on after)
     for (let i = level; i >= 1; i--) rules.append(el('li', i === level ? 'new' : '', ASC_TEXT[i - 1]));
-    if (!level) rules.append(el('li', 'none', 'The calamity as it was.'));
+    if (!level) rules.append(el('li', 'none', 'The first awakening. No ascension modifiers.'));
     reward.textContent = level ? ascReward(level) : '';
     const done = ascCleared(meta);
     best.textContent = done >= 0 ? `Best cleared: Ascension ${done}${open < ASC_MAX && level === open ? ' · clear this to open the next' : ''}${bestTitle(meta) ? ` · Title: ${bestTitle(meta)}` : ''}` : 'Clear the calamity to open Ascension 1';
@@ -112,7 +112,7 @@ export function pickHero(meta: Meta, onPick: (kind: string, ascension: number) =
   });
   card.append(
     el('h2', '', 'The Calamity'),
-    el('p', 'cvLead', `Pick one hero, at level 1. Climb ${CAL_MAPS} short maps, hiring the heroes you meet (up to ten, none merge); every map ends in a boss, and optional mini-bosses guard the best rewards. Your party's levels and gear stay out of it.`),
+    el('p', 'cvLead', `Begin alone at level 1. Build your team across ${RIFT_ROWS.length} regions. After your first victory, discover an altar; evolve it after each guardian. Your starter earns guaranteed growth and reaches level 30 for the final Calamity. Recruit allies and find gear along the way. Lasting hero levels and equipment stay out of the run.`),
     asc,
     // (the rift ores held: the Calamity is where most of them are found; AWAKEN-MATS)
     orePouch(meta),

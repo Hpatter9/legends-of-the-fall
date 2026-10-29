@@ -342,7 +342,7 @@ class Game {
         }
         const r = loadSlot(kind);
         if (!r) return null;
-        return kind === 'calamity' ? `Map ${r.tower?.act ?? 1}/${CAL_MAPS} · continue` : `Floor ${r.stage} · continue`;
+        return kind === 'calamity' ? `${r.rift?.expedition ? 'Region' : 'Map'} ${r.tower?.act ?? 1}/${r.tower?.maps ?? CAL_MAPS} · continue` : `Floor ${r.stage} · continue`;
       },
       onScene: () => this.syncScene(),
       onWatchScene: (id) => void this.playScene(id),
@@ -476,7 +476,7 @@ class Game {
     this.fx.clear();
     this.boardView.build(this.b.board, { boss: !!waveArmyOf(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
     this.syncChain();
-    setBackdrop(this.b.board.area);
+    setBackdrop(this.b.board.area, this.b.board.riftWorld);
     this.weather.resize(this.app.screen.width, this.app.screen.height);
     this.weather.set(weatherOf(this.b.board), this.b.board.area, this.boardView.litSpots(), this.b.board.tiles.some((t) => t.scene));
     showTwistBanner(this.run.tower?.cur?.fight?.twist);
@@ -1177,7 +1177,7 @@ class Game {
       }
     const pad = 10;
     const fit = Math.min(3, (area.w - pad * 2) / (x1 - x0), (area.h - pad * 2) / (y1 - y0));
-    const k = Math.min(3, fit * ZOOM);
+    const k = Math.min(3, fit * (b.riftWorld ? 1 : ZOOM));
     this.scale = k;
     this.world.scale.set(k);
     this.ghost.scale.set(k);
@@ -1223,7 +1223,7 @@ class Game {
   private focus(snap = false): void {
     const { x0, x1, y0, y1 } = this.bbox;
     const b = this.b.board;
-    if (this.b.phase === 'deploy') {
+    if (this.b.phase === 'deploy' && !b.riftWorld) {
       let sx = 0;
       let sy = 0;
       let n = 0;
@@ -1761,7 +1761,7 @@ class Game {
       $('result').hidden = true;
       saveRun(this.run);
       if (this.run.over) {
-        const show = (): void => this.towerView.showSummary(this.run, this.run.tower?.summary ?? settleTower(this.meta, this.run)!, () => this.home.open(`${this.run.mode?.kind === 'calamity' ? (this.run.cleared ? 'The calamity is ended' : 'The calamity ended') : 'The climb ended'} ${this.run.mode?.kind === 'calamity' ? `in map ${Math.min(this.run.tower!.act, CAL_MAPS)}` : `on floor ${this.run.stage}`}: +${this.run.tower!.summary?.crowns ?? this.run.tower!.crowns} crowns earned`));
+        const show = (): void => this.towerView.showSummary(this.run, this.run.tower?.summary ?? settleTower(this.meta, this.run)!, () => this.home.open(`${this.run.mode?.kind === 'calamity' ? (this.run.cleared ? 'The calamity is ended' : 'The calamity ended') : 'The climb ended'} ${this.run.mode?.kind === 'calamity' ? `in ${this.run.rift?.expedition ? 'region' : 'map'} ${Math.min(this.run.tower!.act, this.run.tower!.maps ?? CAL_MAPS)}` : `on floor ${this.run.stage}`}: +${this.run.tower!.summary?.crowns ?? this.run.tower!.crowns} crowns earned`));
         // (a Calamity cleared whole has its ending cinematic first, then the victory card)
         if (this.run.cleared && this.run.mode?.kind === 'calamity') void this.queueScene({ kind: 'calVictory' }).then(show);
         else show();
@@ -2125,7 +2125,7 @@ class Game {
   private recycleDropped(id: string): void {
     const h = heroOf(this.run, Number(id));
     const card = $('bench').querySelector<HTMLElement>(`[data-id="${id}"]`);
-    if (!h || !card || this.run.roster.length <= 1) return;
+    if (!h || !card || this.run.roster.length <= 1 || this.run.rift?.starter === h.id) return;
     if (h.grade < 2) return this.recycleHero(h.id, card);
     const value = recycleValue(this.run);
     $('askText').textContent = `Recycle the ${'★'.repeat(h.grade)} ${UNITS[h.kind].name} for ${value} gold?`;
@@ -2206,6 +2206,7 @@ class Game {
         marks.append(m);
       }
       const lv = levelBadge(this.levelOf(h));
+      if (this.run.rift?.starter === h.id) lv.append(document.createTextNode(' · Starter'));
       const sell = document.createElement('button');
       sell.className = 'recycle';
       const value = recycleValue(this.run);
@@ -2235,7 +2236,7 @@ class Game {
       card.append(portrait(formOf(def, h.grade), 96, h.grade), stars, name, lv, pw, marks, bar);
       if (ready.has(h.id)) card.append(Object.assign(document.createElement('span'), { className: 'mergeMark', textContent: '⇧', title: 'A match is ready: drag one onto the other to merge' }));
       // (the last hero cannot be recycled)
-      if (this.run.roster.length > 1) card.append(sell);
+      if (this.run.roster.length > 1 && this.run.rift?.starter !== h.id) card.append(sell);
       card.title = `${def.role} · Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;
       card.addEventListener('pointerdown', (e) => {
         if (this.b.phase !== 'deploy') return;
@@ -2445,7 +2446,7 @@ class Game {
       closeMapLeg(run);
       // (WAVE-RECAP-2: the spire's floors and the Calamity's fights have the short card too; their decisions, the map and the picks, keep their own screens after it)
       this.passing = won && !run.over && !run.cleared && !this.auto ? { wait: 0, marched: false } : null;
-      const title = run.tower ? towerHeadline(run.mode?.kind === 'calamity' ? 'calamity' : 'spire', stage, won, this.bossDown ? run.tower.act - 1 : undefined) : undefined;
+      const title = run.tower ? towerHeadline(run.rift?.expedition ? 'expedition' : run.mode?.kind === 'calamity' ? 'calamity' : 'spire', stage, won, this.bossDown ? run.tower.act - 1 : undefined) : undefined;
       this.waveCard = { wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [] };
       if (!this.auto) {
         const fought = b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def);
@@ -2485,7 +2486,7 @@ class Game {
     const army = armyOfRun(run);
     const fixed = waveArmyOf(run);
     const kind = run.tower?.cur?.kind;
-    const stage = `${fixed ? `Wave ${run.stage}/${fixed.waves.length}` : run.mode?.kind === 'calamity' ? `Map ${run.tower!.act} · ${mapProgress(run.tower!).done} of ${mapProgress(run.tower!).total} cleared` : run.tower ? `Floor ${run.stage}` : `Stage ${run.stage}`}${kind === 'elite' ? ' · Elite' : isBossRun(run) ? ' · Boss' : ''}`;
+    const stage = `${fixed ? `Wave ${run.stage}/${fixed.waves.length}` : run.rift?.expedition ? `Region ${run.tower!.act} · Crossing ${run.tower!.row + 1}/${run.tower!.rows![run.tower!.act - 1]}` : run.mode?.kind === 'calamity' ? `Map ${run.tower!.act} · ${mapProgress(run.tower!).done} of ${mapProgress(run.tower!).total} cleared` : run.tower ? `Floor ${run.stage}` : `Stage ${run.stage}`}${kind === 'elite' ? ' · Elite' : isBossRun(run) ? ' · Boss' : ''}`;
     // (the five of a combo placed: the deploy line says so, so a player finds the combos by trying)
     const combo = b.phase === 'deploy' ? comboOf(b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def)) : undefined;
     const deployCombo = combo ? ` · ${COMBO_NAME}: ${combo.name}` : '';
@@ -2543,7 +2544,7 @@ class Game {
       if (card) $('joke').hidden = true;
       else this.showJoke(b.phase === 'won');
       this.drawDailyResult(run);
-      $('next').textContent = run.over && !run.tower ? 'Run recap' : run.cleared && run.tower ? 'See the summary' : b.phase === 'won' ? (fixed ? `Next wave (${run.stage})` : run.tower ? 'To the map' : `Next stage (${run.stage})`) : run.tower ? 'See the summary' : 'Home';
+      $('next').textContent = run.over && !run.tower ? 'Run recap' : run.cleared && run.tower ? 'See the summary' : b.phase === 'won' ? (fixed ? `Next wave (${run.stage})` : run.rift?.expedition ? 'Return to sanctuary' : run.tower ? 'To the map' : `Next stage (${run.stage})`) : run.tower ? 'See the summary' : 'Home';
     }
     this.refreshAuto();
     if (b.phase === 'deploy' && !this.auto && !(this.revive && !this.revive.started)) tips.atDeploy(n, run.stage, () => this.deployBox());
