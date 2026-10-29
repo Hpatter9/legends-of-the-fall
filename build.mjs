@@ -76,6 +76,13 @@ for (const f of readdirSync('src/audio').filter((f) => f.endsWith('.opus'))) {
   copyFileSync(`src/audio/${f}`, `${out}/audio/${f}`);
   AUDIO_FILES.push(`audio/${f}`);
 }
+// (the king's spells' sounds: rendered offline by tools/spell-sfx/ into src/sfx/*.opus, served as sfx/<name>.opus and cached with the
+// music; `spellBank.ts` loads them, and the old synthesised cues stand in if a browser cannot decode them)
+mkdirSync(`${out}/sfx`, { recursive: true });
+for (const f of readdirSync('src/sfx').filter((f) => f.endsWith('.opus'))) {
+  copyFileSync(`src/sfx/${f}`, `${out}/sfx/${f}`);
+  AUDIO_FILES.push(`sfx/${f}`);
+}
 // Full art and smaller menu cutouts are separate files, all retained for offline play.
 const HERO_ART_FILES = [];
 mkdirSync(`${out}/heroes`, { recursive: true });

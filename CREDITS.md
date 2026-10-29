@@ -63,6 +63,8 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
 - **The sound effects** are synthesised in `src/render/audioProcessors.ts` with the Web Audio API, except eight recorded combat sounds (sword and
   blunt hits, a shield block, a crit, a bowstring, an arrow hit, a death and an explosion) embedded in `src/render/combatAudioBank.ts`
   (PR #150, given as CC0). Their original source and authors were not recorded with the PR and should be named here.
+- **The king's spells' sounds** (`src/sfx/*.opus`, 44 files): original, synthesised offline by `tools/spell-sfx/` for this game (using the
+  filters, hall and instruments of `tools/epic-music/`). No samples or third-party audio went in.
 
 ## Areas (`src/art/areas/`, cut by `tools/areas-prep.py`)
 
