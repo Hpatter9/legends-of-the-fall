@@ -4,6 +4,7 @@
 
 import type { Battle, BattleEvent } from '../sim/battle';
 import { D, W } from '../sim/board';
+import type { SpellId } from '../sim/spells';
 import { at } from './iso';
 import type { Cue } from './soundRules';
 import { CALM_TRACKS, type Track } from './musicScore';
@@ -27,6 +28,10 @@ const BOARD_HALF = (at(W - 1, 0, 0)[0] - at(0, D - 1, 0)[0]) / 2;
 export function panOfTile(u: number, v: number): number {
   return panFromScreen(at(u, v, 0)[0], BOARD_CENTRE, BOARD_HALF);
 }
+
+/** The king's spells cast on no tile (their `target` is 'all'; named here, not read from `SPELLS`, as importing the spells here
+ *  loops back on itself; `test/spell-sfx.test.ts` checks the two agree). */
+export const NO_TILE_SPELLS: ReadonlySet<SpellId> = new Set<SpellId>(['rally', 'quake', 'warcry', 'bulwark']);
 
 /** Where on the board a battle event happens, for its sound's pan: the fighter it is about, or the tile it lands on.
  *  Null for events with no place (the end of the fight). */
@@ -53,8 +58,10 @@ export function eventSpot(b: Battle, e: BattleEvent): { u: number; v: number } |
     case 'area':
     case 'zone':
     case 'trap':
-    case 'spell':
       return { u: e.u, v: e.v };
+    // (a spell that goes everywhere is cast on no tile: its 0, 0 would pan it hard to one side)
+    case 'spell':
+      return NO_TILE_SPELLS.has(e.id) ? null : { u: e.u, v: e.v };
     default:
       return null;
   }
