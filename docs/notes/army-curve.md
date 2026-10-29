@@ -2,6 +2,8 @@
 
 ## 1. The armies' recommended levels (the owner's ask: "up the levels required to beat the normal armies, a steeper curve")
 
+> The last five armies were made steeper again in ARMY-PACE (`docs/notes/army-pace.md`): their levels are now 35, 45, 58, 65, 74.
+
 `Army.level` (shown as "Recommended: Lv N" on the armies screen and "Lv N" on the war table) is now **1, 8, 15, 22, 30, 38, 40, 46, 52**
 (it was 1, 5, 8, 12, 16, 20, 24, 28, 32). The owner first asked for about 1, 8, 15 ... 62; he then eased the last three (Infernal 46 to 40, Yokai 54 to 46, Golems 62 to 52). The first army is as easy as before (`start` back at 0.5).
 

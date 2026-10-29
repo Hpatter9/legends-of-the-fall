@@ -1,0 +1,227 @@
+[
+  {
+    "id": "knight",
+    "transparent": 0.503,
+    "visible": 0.485
+  },
+  {
+    "id": "archer",
+    "transparent": 0.632,
+    "visible": 0.346
+  },
+  {
+    "id": "samurai",
+    "transparent": 0.639,
+    "visible": 0.346
+  },
+  {
+    "id": "kunoichi",
+    "transparent": 0.604,
+    "visible": 0.375
+  },
+  {
+    "id": "wizard",
+    "transparent": 0.476,
+    "visible": 0.486
+  },
+  {
+    "id": "paladin",
+    "transparent": 0.504,
+    "visible": 0.488
+  },
+  {
+    "id": "cleric",
+    "transparent": 0.497,
+    "visible": 0.485
+  },
+  {
+    "id": "minotaur",
+    "transparent": 0.489,
+    "visible": 0.497
+  },
+  {
+    "id": "peasant",
+    "transparent": 0.666,
+    "visible": 0.315
+  },
+  {
+    "id": "ninjaMonk",
+    "transparent": 0.672,
+    "visible": 0.313
+  },
+  {
+    "id": "wanderer",
+    "transparent": 0.487,
+    "visible": 0.497
+  },
+  {
+    "id": "lightningMage",
+    "transparent": 0.543,
+    "visible": 0.428
+  },
+  {
+    "id": "kitsune",
+    "transparent": 0.262,
+    "visible": 0.724
+  },
+  {
+    "id": "karasu",
+    "transparent": 0.511,
+    "visible": 0.472
+  },
+  {
+    "id": "yamabushi",
+    "transparent": 0.386,
+    "visible": 0.602
+  },
+  {
+    "id": "werewolf",
+    "transparent": 0.609,
+    "visible": 0.376
+  },
+  {
+    "id": "satyr",
+    "transparent": 0.637,
+    "visible": 0.347
+  },
+  {
+    "id": "gorgon",
+    "transparent": 0.327,
+    "visible": 0.661
+  },
+  {
+    "id": "samuraiCommander",
+    "transparent": 0.573,
+    "visible": 0.415
+  },
+  {
+    "id": "druid",
+    "transparent": 0.501,
+    "visible": 0.481
+  },
+  {
+    "id": "barbarian",
+    "transparent": 0.482,
+    "visible": 0.501
+  },
+  {
+    "id": "ranger",
+    "transparent": 0.576,
+    "visible": 0.408
+  },
+  {
+    "id": "warlock",
+    "transparent": 0.551,
+    "visible": 0.431
+  },
+  {
+    "id": "illusionist",
+    "transparent": 0.359,
+    "visible": 0.621
+  },
+  {
+    "id": "gunslinger",
+    "transparent": 0.54,
+    "visible": 0.443
+  },
+  {
+    "id": "shambler",
+    "transparent": 0.512,
+    "visible": 0.462
+  },
+  {
+    "id": "rifleBot",
+    "transparent": 0.598,
+    "visible": 0.392
+  },
+  {
+    "id": "mercenary",
+    "transparent": 0.614,
+    "visible": 0.375
+  },
+  {
+    "id": "mummy",
+    "transparent": 0.646,
+    "visible": 0.325
+  },
+  {
+    "id": "buccaneer",
+    "transparent": 0.558,
+    "visible": 0.428
+  },
+  {
+    "id": "wolfBard",
+    "transparent": 0.569,
+    "visible": 0.419
+  },
+  {
+    "id": "beastmaster",
+    "transparent": 0.536,
+    "visible": 0.445
+  },
+  {
+    "id": "kraken",
+    "transparent": 0.591,
+    "visible": 0.397
+  },
+  {
+    "id": "lancer",
+    "transparent": 0.582,
+    "visible": 0.398
+  },
+  {
+    "id": "reaper",
+    "transparent": 0.639,
+    "visible": 0.331
+  },
+  {
+    "id": "timeWitch",
+    "transparent": 0.487,
+    "visible": 0.489
+  },
+  {
+    "id": "arcBlade",
+    "transparent": 0.614,
+    "visible": 0.369
+  },
+  {
+    "id": "dreadPirate",
+    "transparent": 0.61,
+    "visible": 0.366
+  },
+  {
+    "id": "siegeBot",
+    "transparent": 0.468,
+    "visible": 0.518
+  },
+  {
+    "id": "priestess",
+    "transparent": 0.473,
+    "visible": 0.504
+  },
+  {
+    "id": "dragoon",
+    "transparent": 0.488,
+    "visible": 0.492
+  },
+  {
+    "id": "juggernaut",
+    "transparent": 0.517,
+    "visible": 0.474
+  },
+  {
+    "id": "sage",
+    "transparent": 0.688,
+    "visible": 0.299
+  },
+  {
+    "id": "demonSwordsman",
+    "transparent": 0.51,
+    "visible": 0.473
+  },
+  {
+    "id": "tyrant",
+    "transparent": 0.386,
+    "visible": 0.603
+  }
+]

@@ -14,6 +14,9 @@ const ids = ['sun_viper','frost_witch','ash_empress','rose_duchess','moon_oracle
 const names = ['Sun Viper','Frost Witch','Ash Empress','Rose Duchess','Moon Oracle','Iron Stag','Storm Corsair','Gilded Necromancer'];
 const heroes = ['knight','samurai','kunoichi','archer','wizard','paladin','druid','mercenary'];
 const errors = [];
+// (Settings shows one Ruler row; its button opens the picker of the eight, which closes on a pick)
+const openRulers = async (page) => { if (!(await page.locator('.spOverlay:not([hidden])').count())) await page.locator('.rulerOpen').click(); };
+const closeRulers = async (page) => { if (await page.locator('.spOverlay:not([hidden])').count()) await page.locator('.spClose').click(); };
 const browser = await chromium.launch({ executablePath: '/usr/bin/chromium', args: ['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader'] });
 try {
 for (const [width,height] of [[393,852],[360,780],[412,915]]) {
@@ -29,15 +32,20 @@ for (const [width,height] of [[393,852],[360,780],[412,915]]) {
   await page.goto('http://localhost:8163/');
   await page.waitForFunction(()=>!!window.__game?.home,{timeout:90000});
   await page.locator('#hmGear').click();
+  await openRulers(page);
   await page.locator('.rulerChoice').first().waitFor();
+  await openRulers(page);
   assert.equal(await page.locator('.rulerChoice').count(),8);
+  await openRulers(page);
   assert.equal(await page.locator('.rulerChoice[aria-pressed="true"]').getAttribute('aria-label'),'Iron Stag, The Veteran');
   for (let i=0;i<8;i++) {
+    await openRulers(page);
     await page.locator('.rulerChoice').nth(i).click();
     assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('legends.settings')).ruler),ids[i]);
+    await openRulers(page);
     assert.equal(await page.locator('.rulerChoice[aria-pressed="true"]').count(),1);
     if (i === 0) await page.screenshot({path:`docs/samples/rulers-settings-${width}x${height}.png`});
-    await page.locator('#settingsClose').click();
+    await closeRulers(page); await page.locator('#settingsClose').click();
     await page.locator('.hmTab').nth(3).click();
     await page.waitForTimeout(300);
     if(width===393 || i===0) await page.screenshot({path:`docs/samples/ruler-${ids[i]}-${width}x${height}.png`});
@@ -64,22 +72,25 @@ for (const [width,height] of [[393,852],[360,780],[412,915]]) {
     }
     await page.locator('#hmGear').click();
   }
-  await page.locator('#settingsClose').click();
+  await closeRulers(page); await page.locator('#settingsClose').click();
   await page.reload();
   await page.waitForFunction(()=>!!window.__game?.home,{timeout:90000});
   assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('legends.settings')).ruler),'gilded_necromancer');
   await page.locator('#hmGear').click();
+  await openRulers(page);
   assert.equal(await page.locator('.rulerChoice[aria-pressed="true"]').getAttribute('aria-label'),'Gilded Necromancer, The Eccentric');
+  await openRulers(page);
   await page.locator('.rulerChoice').first().click();
-  await page.locator('#settingsClose').click();
+  await closeRulers(page); await page.locator('#settingsClose').click();
   await page.evaluate(()=>window.__game.home.go(()=>void window.__game.stand.open()));
   await page.getByRole('button',{name:'To the keep',exact:true}).click();
   await page.waitForFunction(()=>!!window.__game.stand.hall.king);
   if (await page.locator('#tipSkip').isVisible()) await page.locator('#tipSkip').click();
   for (let i=0;i<(width===393?8:1);i++) {
     await page.evaluate(()=>document.getElementById('hmGear').click());
+    await openRulers(page);
     await page.locator('.rulerChoice').nth(i).click();
-    await page.locator('#settingsClose').click();
+    await closeRulers(page); await page.locator('#settingsClose').click();
     await page.waitForTimeout(100);
     assert.equal(await page.locator('.stKing small').innerText(),names[i]);
     await page.screenshot({path: `docs/samples/ruler-stand-${ids[i]}-${width}x${height}.png`});
@@ -104,7 +115,9 @@ for (const [width,height] of [[393,852],[360,780],[412,915]]) {
     await page.reload({waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>!!window.__game?.home,{timeout:90000});
     await page.locator('#hmGear').click();
+    await openRulers(page);
     assert.equal(await page.locator('.rulerChoice').count(),8);
+    await openRulers(page);
     assert.equal(await page.locator('.rulerChoice[aria-pressed="true"]').getAttribute('aria-label'),'Gilded Necromancer, The Eccentric');
     await page.screenshot({path:'docs/samples/rulers-offline-393x852.png'});
     await context.setOffline(false);
