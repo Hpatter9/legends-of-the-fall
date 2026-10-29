@@ -1,6 +1,8 @@
 // STATUS-FX step one: moving the old effects (damage over time, holds, slows, curses, cleanses) into the one ailment model changed
 // nothing. With the new ailments switched off, seeded fights of every mode play out exactly as they did on main before the change:
 // the same events, tick by tick, and the same health at the end (`tools/status-fx/logs.ts`; the fixture was recorded on main's code).
+// (TIER-PROMISES re-recorded three of its scenarios, `army`, `daily` and `tower`, whose merged heroes' tier skills now do what their words say: the
+// owner's ask, `docs/notes/tier-promises.md`. Only those three moved; the proof stands for every other mode.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { scenarioHashes } from '../tools/status-fx/logs';

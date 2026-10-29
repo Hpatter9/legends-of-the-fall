@@ -236,3 +236,87 @@ test('promoting a hero in a fight swaps its tier skill and sends a promote event
   const foe = b.units.find((x) => x.side === 'foe')!;
   assert.equal(promoteUnit(foe, 3, []), false, 'a foe is never promoted');
 });
+
+// ---- The tier skills do what their words promise (the owner: "Make them work") ----
+
+test('a tier skill\'s cast modifiers go off with the skill it improves (skill 1), not through the talents', () => {
+  const { b, me } = arena('knight', 2);
+  assert.equal(me.eq?.tal?.castShield, undefined, 'the shield is not a talent: it would go off with skill 2 and the ultimate only');
+  const foe = b.units.find((x) => x.side === 'foe')!;
+  foe.u = 3;
+  foe.v = 7;
+  fight(b);
+  me.charge = CHARGE_MAX;
+  me.shield = undefined;
+  const out: BattleEvent[] = [];
+  assert.ok(tryCast(b, me, out));
+  assert.ok(out.some((e) => e.kind === 'skill' && e.name === 'Shield Wall'), 'skill 1 went off');
+  const shield = (me as Unit).shield;
+  assert.equal(shield?.hp, Math.round(me.maxHp * 0.035), 'Iron Wall: "he is shielded"');
+});
+
+test('a tier skill\'s haste comes on top of the skill\'s own, and its heal and charge back go off with the cast', () => {
+  // (the Lancer's charge hastens him for 3s; Longer Charge's 0.7s is added to it)
+  const b = startBattle(11, 'skeletons');
+  const plain = addUnit(b, 'lancer', 2, 8, gradeBoost(1, 0, 1));
+  const two = addUnit(b, 'lancer', 5, 8, gradeBoost(2, 0, 1));
+  fight(b);
+  const run = (u: Unit) => {
+    u.hasteUntil = b.t + 3000;
+    runRiders(b, u, [], () => {});
+    return (u.hasteUntil ?? 0) - b.t;
+  };
+  assert.equal(run(plain), 3000, 'grade 1 has no tier skill');
+  assert.equal(run(two), 3700);
+  const wolf = addUnit(b, 'werewolf', 3, 7, gradeBoost(2, 0, 1));
+  wolf.hp = 10;
+  runRiders(b, wolf, [], () => {});
+  assert.equal(wolf.hp, 10 + Math.round(wolf.maxHp * 0.028), 'Savage Ravage: "heals him a little"');
+});
+
+test('"two more volleys follow" is two: each extra is one more follow-up, and a reach widens the patch', () => {
+  for (const [grade, follows, wide] of [[1, 0, 0], [2, 1, 0], [3, 2, 1]] as const) {
+    const { b, me } = arena('archer', grade);
+    fight(b);
+    const foe = b.units.find((x) => x.side === 'foe')!;
+    foe.u = 3;
+    foe.v = 4;
+    me.charge = CHARGE_MAX;
+    const out: BattleEvent[] = [];
+    assert.ok(tryCast(b, me, out));
+    const rains = b.pending.filter((p) => p.kind === 'rain' && p.by === me.id);
+    assert.equal(rains.length, 1 + follows, `grade ${grade}: the volley and its follow-ups`);
+    assert.ok(rains.every((p) => (p.r ?? 0) === wide), `grade ${grade}: the patch`);
+  }
+  for (const kind of ['wizard', 'dreadPirate', 'tyrant']) {
+    const { b, me } = arena(kind, 3);
+    fight(b);
+    me.charge = CHARGE_MAX;
+    assert.ok(tryCast(b, me, []), kind);
+    assert.equal(b.pending.filter((p) => (p.kind === 'rain' || p.kind === 'meteor') && p.by === me.id).length, 3, `${kind}: two more follow`);
+  }
+});
+
+test('a widened volley strikes a foe two tiles from its centre; a plain one does not', async () => {
+  const { landArea } = await import('../src/sim/abilities');
+  for (const [r, struck] of [[0, false], [1, true]] as const) {
+    const b = startBattle(7, 'skeletons');
+    const me = addUnit(b, 'archer', 3, 8, gradeBoost(1, 0, 1));
+    const foe = b.units.find((x) => x.side === 'foe')!;
+    foe.u = 5;
+    foe.v = 3;
+    const before = foe.hp;
+    landArea(b, 'rain', me, 3, 3, 50, [], r);
+    assert.equal(foe.hp < before, struck, `r ${r}`);
+  }
+});
+
+test('no tier skill promises a hold or a slow that its skill\'s own would cover (those lengthen the skill\'s own instead)', () => {
+  // (the Minotaur's, Ninja Monk's, Arc Blade's and Juggernaut's skills set their own stun on what they hit, and the Kraken's its own slow:
+  //  a `skillStun` or `skillSlow` from the same moment would be lost under it)
+  for (const k of ['minotaur', 'ninjaMonk', 'arcBlade', 'juggernaut', 'kraken'])
+    for (const s of TIER_SKILLS[k]) {
+      assert.equal(s.mods?.skillSlow, undefined, `${k}: ${s.name}`);
+      if (k !== 'kraken') assert.equal(s.mods?.skillStun, undefined, `${k}: ${s.name}`);
+    }
+});
