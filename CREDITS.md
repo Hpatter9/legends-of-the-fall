@@ -407,6 +407,10 @@ The Grand Scenario prototype reuses the already credited camp gate and Knights w
 - `src/art/heroes/*.webp`: 45 original anime hero scenes and 45 transparent menu cutouts generated with OpenAI image generation in October 2026 for the owner's hero overview request. Each full illustration has an individual pose and situation. Kitsune, Gorgon, Illusionist and Time Witch follow the owner's supplied redesign concept; the other heroes draw on their established game identities and colours.
 - `tools/anime-heroes/catalogue.json` and `scenes.json` record the character directions and scene briefs. Generated production atlases are split into individual assets and transcoded for the offline gallery by `extract.cjs` and `pack.cjs`. Battle animation artwork and its existing credits remain separate.
 
+## Heritage looks
+
+- `src/art/units/*_{deep,brown,tan,olive}.png` (24 sheets, front and rear, for twelve human heroes): the Resonance hero sheets credited above (original generated pixel artwork), with only their skin (and, for the Knight and the Paladin, their hair) recoloured to another tone by `tools/heritage/recolour.py`. No new artwork was generated or drawn; every other pixel, the outlines and the alpha are the source's. The source sheets stay in `src/art/units/`. See `docs/notes/heritage-looks.md`.
+
 
 ## Last Stand ornate room artwork (`src/art/stand/ornate/`)
 

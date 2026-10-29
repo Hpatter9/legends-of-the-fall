@@ -25,6 +25,7 @@ import { settleArmyOres, type ArmyOres } from './sim/awakenMats';
 import { drawOreGain } from './oreView';
 import { TIERS, tierOf } from './sim/tiers';
 import { formOf, UNITS } from './sim/units';
+import { heroName } from './sim/heroNames';
 import { ELITE_BY_ID } from './sim/elites';
 import { isBoss } from './sim/foes';
 import { awakenedOf } from './sim/awaken';
@@ -760,7 +761,7 @@ class Game {
       const row = document.createElement('div');
       row.className = 'srow';
       const name = document.createElement('b');
-      name.textContent = UNITS[s.kind].name;
+      name.textContent = heroName(s.kind);
       if (s === mvp) name.append(' ', Object.assign(document.createElement('em'), { textContent: '♛', title: 'MVP' }));
       row.append(name);
       for (const k of STAT_KEYS) {
@@ -1741,7 +1742,7 @@ class Game {
       face.className = `xpFace g${grade}`;
       face.append(portrait(formOf(UNITS[kind], grade), 64, grade), lv);
       const name = document.createElement('b');
-      name.textContent = UNITS[kind].name;
+      name.textContent = heroName(kind);
       const gain = document.createElement('em');
       gain.textContent = `+${xp.toLocaleString('en-GB')} XP`;
       const bar = document.createElement('i');
@@ -1932,7 +1933,7 @@ class Game {
     const n = this.benchNote;
     if (!n) return;
     const list = $('xp');
-    const rose = n.ups.map((u) => `${UNITS[u.kind].name} Lv ${u.to}`).join(', ');
+    const rose = n.ups.map((u) => `${heroName(u.kind)} Lv ${u.to}`).join(', ');
     const line = document.createElement('small');
     line.className = 'xpBench';
     line.textContent = `Bench +${n.each.toLocaleString('en-GB')} XP each${rose ? ` · ${rose}` : ''}`;
@@ -2220,7 +2221,7 @@ class Game {
       const stars = document.createElement('em');
       stars.textContent = '★'.repeat(h.grade);
       const name = document.createElement('b');
-      name.textContent = def.name;
+      name.textContent = heroName(h.kind);
       const bar = document.createElement('i');
       bar.append(document.createElement('span'));
       const marks = document.createElement('small');
