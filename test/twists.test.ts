@@ -9,7 +9,7 @@ import { startedMeta } from '../src/sim/meta';
 import { towerRun } from '../src/sim/modes';
 import { startStage } from '../src/sim/run';
 import { ACT_ROWS, enterNode, choices, finishTower, fightSpec, makeMap } from '../src/sim/tower';
-import { rollTwist, TWIST_IDS, TWISTS, twistBoard, type TwistFx } from '../src/sim/twists';
+import { CHAOS_TWISTS, PLAIN_TWIST_IDS, rollTwist, TWIST_IDS, TWISTS, twistBoard, type TwistFx } from '../src/sim/twists';
 
 /** A fight against `band` with a twist's effects (none when `id` is undefined), all five heroes placed on the first free tiles of their rows. */
 function ready(id?: string, seed = 11, band: string | string[] = 'skeletons'): Battle {
@@ -23,8 +23,8 @@ const heroes = (b: Battle) => b.units.filter((u) => u.side === 'hero');
 const foes = (b: Battle) => b.units.filter((u) => u.side === 'foe');
 const unitOf = (b: Battle, def: string): Unit => b.units.find((u) => u.def === def)!;
 
-test('there are 10 to 14 twists, curses, blessings and mixed, each named and told in a line', () => {
-  assert.ok(TWIST_IDS.length >= 10 && TWIST_IDS.length <= 14);
+test('there are 10 to 16 twists, curses, blessings and mixed, each named and told in a line', () => {
+  assert.ok(TWIST_IDS.length >= 10 && TWIST_IDS.length <= 16);
   const tones = new Set(TWIST_IDS.map((id) => TWISTS[id].tone));
   assert.deepEqual([...tones].sort(), ['blessing', 'curse', 'mixed']);
   for (const id of TWIST_IDS) {
@@ -69,10 +69,11 @@ test('about 40% of fights and 60% of elites carry a twist; nothing else does; a 
   }
 });
 
-test('every twist turns up across the maps', () => {
+test('every twist but the chaos ones turns up across the maps (those are for a high ascension only)', () => {
   const seen = new Set<string>();
   for (let seed = 1; seed <= 300; seed++) for (const n of makeMap(seed, 2)) if (n.twist) seen.add(n.twist);
-  assert.deepEqual([...seen].sort(), [...TWIST_IDS].sort());
+  assert.deepEqual([...seen].sort(), [...PLAIN_TWIST_IDS].sort());
+  assert.deepEqual([...PLAIN_TWIST_IDS, ...CHAOS_TWISTS].sort(), [...TWIST_IDS].sort());
 });
 
 test('a fight with no twist, or an empty one, plays exactly as before', () => {
@@ -232,6 +233,16 @@ test('fortified: every foe has 20% more hp', () => {
   const plain = ready();
   foes(b).forEach((f, i) => assert.equal(f.maxHp, Math.round(foes(plain)[i].maxHp * 1.2)));
   assert.ok(foes(b).length === foes(plain).length);
+});
+
+test('hot coal ground: four tiles of the middle ground become hot coals', () => {
+  const b = ready('hotCoals');
+  const coals = b.board.tiles.filter((t) => t.ground === 'coals');
+  assert.equal(coals.length, 4);
+});
+
+test('rolling gales: projectiles shift trajectory by 1 tile', () => {
+  assert.equal(TWISTS.rollingGales.fx.gales, 1);
 });
 
 test('twistBoard changes only the lava and the boulders, and keeps every board playable', () => {

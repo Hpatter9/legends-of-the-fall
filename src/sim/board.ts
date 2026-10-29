@@ -43,13 +43,17 @@ export const CLASSIC_AREAS: readonly Area[] = AREAS.slice(0, 6);
 
 /** What can cover a tile: shallows slow a walker, deep water stops all but fliers, ice speeds one (and may slide it on), lava slows and burns one,
  *  tall growth hides a tile from shots and gives a little dodge, a shrine heals whoever stands on it. */
-export type Ground = 'water' | 'deep' | 'ice' | 'lava' | 'tall' | 'shrine';
+export type Ground = 'water' | 'deep' | 'ice' | 'lava' | 'tall' | 'shrine' | 'coals';
 /** What stepping onto each costs besides the tile itself (ice is a faster step). */
-export const GROUND_COST: Record<Ground, number> = { water: 1, deep: 0, ice: -0.5, lava: 2, tall: 0, shrine: 0 };
+export const GROUND_COST: Record<Ground, number> = { water: 1, deep: 0, ice: -0.5, lava: 2, tall: 0, shrine: 0, coals: 1 };
 /** The share of its hp a fighter loses each time a step ends on lava. */
 export const LAVA_BURN = 0.08;
 /** The share it loses each second it stands on lava. */
 export const LAVA_STAND = 0.04;
+/** The share of its hp a fighter loses each time a step ends on hot coals. */
+export const COALS_BURN = 0.05;
+/** The share it loses each second it stands on hot coals. */
+export const COALS_STAND = 0.03;
 /** How high tall growth stands for a shot's line (a shooter's eye is at 1.6 above its tile). */
 export const TALL_TOP = 1.7;
 /** How high a ruined wall stands for a shot's line (above a boulder, so a shooter a level up still cannot see over it). */
@@ -181,6 +185,8 @@ export interface Board {
   /** Scenic destination, outside collision tiles; only included from the final approach onwards. */
   landmark?: 'fortress' | 'temple' | 'mausoleum' | 'warcamp' | 'den' | 'grove' | 'citadel' | 'shrine' | 'foundry';
   landmarkAt?: { u: number; v: number; h: number };
+  /** A boss arena's middle (an army's boss section, `scenario.ts`): its boss starts there and its band round it (`arenaDeploy.ts`). */
+  arenaMid?: At;
   seed: number;
   area: Area;
   w: number;

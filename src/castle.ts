@@ -23,7 +23,6 @@ import { effectText, type PlotId } from './render/castleSpots';
 import { goatSheet } from './duchess';
 import { goatSays } from './quips';
 import { showQuip } from './quipView';
-import { settings } from './settings';
 import {
   chewBob,
   drawDuchessCosmetic,
@@ -39,7 +38,9 @@ import { TrophyWallModal } from './trophyWall';
 
 // Bespoke Castle Throne Room background and Seated King sprite sheets
 import throneRoomUrl from './art/throne/throne_room.png';
-import kingThroneUrl from './art/throne/king_throne.png';
+import { drawRuler } from './render/rulerArt';
+import { settings } from './settings';
+import { rulerOf, rulerWords } from './rulerRules';
 
 // High-res chamber & architectural sprites (bundled as data URLs by esbuild)
 import lightPillarUrl from './art/hall/fx_light-pillar.png';
@@ -76,7 +77,6 @@ import chaliceUrl from './art/items/holy_chalice.png';
 
 const SCENE_ART_URLS = {
   throneRoom: throneRoomUrl,
-  kingThrone: kingThroneUrl,
   lightPillar: lightPillarUrl,
   rug: rugUrl,
   lectern: lecternUrl,
@@ -165,7 +165,7 @@ export const CHAMBERS: ChamberDef[] = [
     glow: '#38bdf8',
     statName: 'Mana & Spell Power',
     perLevelShort: '+12% Mana / Lv',
-    lore: 'Converging astral rings that accelerate the King’s mana and expand spell budget.',
+    lore: 'Converging astral rings that accelerate royal mana and expand spell budget.',
   },
   {
     id: 'stable',
@@ -205,7 +205,7 @@ export const CHAMBERS: ChamberDef[] = [
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
-  if (text) e.textContent = text;
+  if (text) e.textContent = rulerWords(text, settings().ruler);
   return e;
 }
 
@@ -284,6 +284,7 @@ export class CastleScene {
   private bursts: BurstEffect[] = [];
   private heroFlourishUntil = [0, 0, 0, 0];
   private kingDecreeUntil = 0;
+  private kingDecreeStarted = 0;
   private reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   private trophyModal = new TrophyWallModal();
 
@@ -418,9 +419,10 @@ export class CastleScene {
     const kingDist = Math.hypot(cx - KING_SPOT.x, cy - (KING_SPOT.y - 45));
     if (kingDist < 85) {
       play('levelUp');
+      this.kingDecreeStarted = this.now;
       this.kingDecreeUntil = this.now + 1600;
       for (let i = 0; i < 4; i++) this.heroFlourishUntil[i] = this.now + 1200 + i * 110;
-      this.triggerHallBurst(KING_SPOT.x, KING_SPOT.y - 70, '#ffd700', 'The King Decrees!');
+      this.triggerHallBurst(KING_SPOT.x, KING_SPOT.y - 70, '#ffd700', `The ${rulerOf(settings().ruler).female ? 'Queen' : 'King'} Decrees!`);
       return;
     }
 
@@ -453,9 +455,10 @@ export class CastleScene {
       this.triggerHallBurst(spot.x, spot.y - 30, '#ffd700', `${unitName} Salutes!`);
     } else {
       // Tap on throne room hall / carpet: King & all guards salute
+      this.kingDecreeStarted = this.now;
       this.kingDecreeUntil = this.now + 1400;
       for (let i = 0; i < 4; i++) this.heroFlourishUntil[i] = this.now + 900 + i * 120;
-      this.triggerHallBurst(400, 225, '#ffe066', 'For the King!');
+      this.triggerHallBurst(400, 225, '#ffe066', `For the ${rulerOf(settings().ruler).female ? 'Queen' : 'King'}!`);
     }
   }
 
@@ -606,6 +609,7 @@ export class CastleScene {
           if (ok) {
             play('levelUp');
             this.triggerHallBurst(400, 230, c.glow, `${c.name} Upgrading!`);
+            this.kingDecreeStarted = this.now;
             this.kingDecreeUntil = this.now + 1500;
             for (let i = 0; i < 4; i++) this.heroFlourishUntil[i] = this.now + 850;
             return;
@@ -649,7 +653,7 @@ export class CastleScene {
       'div',
       'ctStatLine',
       built
-        ? 'Active: Unlocks the King’s Spellbook & Divine Battle Cards'
+        ? 'Active: Unlocks the Royal Spellbook & Divine Battle Cards'
         : 'Consecrate the High Chapel to unlock the Spells tab and customize your battle spellbook.',
     );
     body.append(stat);
@@ -701,7 +705,8 @@ export class CastleScene {
   private loop(t: number): void {
     if (!this.running) return;
     this.raf = requestAnimationFrame((n) => this.loop(n));
-    const dt = Math.min(100, t - this.last);
+    // A resumed callback may carry a timestamp just before start() read performance.now().
+    const dt = Math.max(0, Math.min(100, t - this.last));
     this.last = t;
     this.now += dt;
     this.stepParticles(dt);
@@ -837,8 +842,10 @@ export class CastleScene {
   private drawVfx(key: VfxKey, x: number, y: number, size: number, frameOffset = 0, angle = 0, alpha = 0.9): void {
     const frames = VFX[key];
     if (!frames?.length) return;
-    const idx = Math.floor(this.now / 110 + frameOffset) % frames.length;
+    // (kept in range when the hall's clock is still below zero on its first frames: a negative index once threw every frame, FIGHT-FIXES)
+    const idx = ((Math.floor(this.now / 110 + frameOffset) % frames.length) + frames.length) % frames.length;
     const tex = frames[idx];
+    if (!tex) return;
     const r = tex.frame;
     const g = this.ctx;
     g.save();
@@ -862,6 +869,8 @@ export class CastleScene {
 
   /** Paint the full multi-layered Royal Citadel Throne Room scene on the 800×420 canvas. */
   private paintGreatHall(): void {
+    const title = `HIGH THRONE · ${rulerOf(settings().ruler).name.toUpperCase()}`;
+    if (this.guardTitle.textContent !== title) this.guardTitle.textContent = title;
     const g = this.ctx;
     const W = this.canvas.width;
     const H = this.canvas.height;
@@ -937,9 +946,8 @@ export class CastleScene {
     this.drawVfx('sparkleFire', W - 102, 164, 58, 4);
 
     // 4. THE KING SITTING ON THE HIGH THRONE (Top-center of Dais)
-    if (a?.kingThrone) {
+    if (a) {
       const isDecree = this.now < this.kingDecreeUntil;
-      const frameIdx = isDecree ? 2 : !this.reduced && Math.floor(this.now / 480) % 2 === 1 ? 1 : 0;
       const kx = KING_SPOT.x;
       const ky = KING_SPOT.y;
       const kw = KING_SPOT.w;
@@ -965,18 +973,7 @@ export class CastleScene {
         this.drawVfx('levelupGold', kx, ky - kh * 0.5, 200, 0, 0, 0.85);
       }
 
-      // Draw King seated on High Throne (frame is 160x210)
-      g.drawImage(
-        a.kingThrone,
-        frameIdx * KING_SPOT.frameW,
-        0,
-        KING_SPOT.frameW,
-        KING_SPOT.frameH,
-        Math.round(kx - kw / 2),
-        Math.round(ky - kh),
-        kw,
-        kh
-      );
+      drawRuler(g, settings().ruler, isDecree ? 'command' : 'seated', isDecree ? this.now - this.kingDecreeStarted : this.now, this.reduced, kx, ky, kh);
 
       // Crown glint star
       if (!this.reduced && !isDecree) {

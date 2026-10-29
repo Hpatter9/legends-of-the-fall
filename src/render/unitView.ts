@@ -55,6 +55,8 @@ const ULT_FILL = 0xb06aff;
 const ULT_READY = 0xffd24a;
 /** How long the evolve burst lasts (ms). */
 const BURST_MS = 800;
+/** How long a fallen hero takes to get up when a heart raises it (its dead row played backwards, FIGHT-FIXES). */
+export const RISE_MS = 720;
 
 /** The colour grade of a hero above the first: richer tones; grade 3 lifts red and green together and trims blue, so
  *  highlights go warm gold without turning grey armour pink. Built once per sprite. */
@@ -113,6 +115,8 @@ export class UnitSprite {
   /** An awakened hero's class aura (null for the rest). */
   private awakenAura: AwakenAura | null;
   private burstAt = -1;
+  /** When a heart raised this fighter (Date.now ms; -1 when it is not getting up), and how it fell (for its tint going back). */
+  private riseAt = -1;
   private readonly grade: number;
   private sheet: string;
   /** Its own sheet, and the scale it is drawn at, when no kit lends it another look (`Unit.look`: a form, a guise, a wraith's shape). */
@@ -285,6 +289,16 @@ export class UnitSprite {
       anim = 'dead';
       frame = Math.floor((t - (u.diedAt ?? 0)) / 120);
     }
+    // (raised by a heart: it gets up off the ground where it lay, its dead row backwards, then stands; at once with reduced motion)
+    const rising = this.rising();
+    if (u.alive && rising < 1) {
+      anim = 'dead';
+      row = undefined;
+      lift = 0;
+      rot = 0;
+      const n = framesOf(this.sheet, 'dead').length;
+      frame = n - 1 - Math.floor(rising * n);
+    }
     const list = rowFrames(this.sheet, row ?? anim);
     this.body.texture = row || anim === 'dead' || anim === 'attack' || anim === 'hurt' ? list[Math.min(list.length - 1, Math.max(0, frame))] : list[frame % list.length];
     // (the Samurai Commander's standard is the castle's banner, planted)
@@ -334,9 +348,10 @@ export class UnitSprite {
     if (u.def === 'wraith') this.body.tint = 0x9fd0ff;
     else if (u.alive && u.kx?.stone !== undefined && t < u.kx.stone) this.body.tint = 0x9a9a92;
     // (the fallen go dark as they burn away, or grey as they turn to stone)
-    if (!u.alive) {
+    if (!u.alive || rising < 1) {
       const kind = deathKind(def.name, u.side);
-      const k = Math.max(0, Math.min(1, (t - (u.diedAt ?? 0)) / 700));
+      // (a burnt or stony fallen hero's colour comes back as it gets up, not all at once)
+      const k = u.alive ? 1 - rising : Math.max(0, Math.min(1, (t - (u.diedAt ?? 0)) / 700));
       if (kind === 'burn') this.body.tint = mixTint(0xffffff, 0x2a1008, k);
       else if (kind === 'stone') this.body.tint = mixTint(0xffffff, 0x8e9488, k);
     }
@@ -450,6 +465,19 @@ export class UnitSprite {
     this.pillar.scale.set(this.tall / 26, (this.tall / 26) * 2.4);
     this.pillar.alpha = 1 - burst * 0.6;
     paintSprite(this.pillar, burst * BURST_MS, BURST_MS, this.tall / 26, 0, 0.65, false, this.reduced?.matches ?? false);
+  }
+
+  /** A heart has raised this fallen hero: it gets up from where it lay (`RISE_MS`), with no burst or light; at once with reduced motion. */
+  getUp(): void {
+    this.riseAt = this.reduced?.matches ? -1 : Date.now();
+  }
+
+  /** How far through getting up it is, 0 to 1 (1 when it is not getting up). */
+  private rising(): number {
+    if (this.riseAt < 0) return 1;
+    const p = (Date.now() - this.riseAt) / RISE_MS;
+    if (p >= 1) this.riseAt = -1;
+    return Math.max(0, Math.min(1, p));
   }
 
   /** The evolve flash and burst (called when a merge makes this hero). */

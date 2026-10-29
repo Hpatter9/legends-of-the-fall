@@ -126,3 +126,46 @@ test('sizes and counts are sane (a phone has to draw them)', () => {
     }
   assert.ok(layers > 300);
 });
+
+test('directional effects face the right direction and stay upright when facing left', async () => {
+  const { playSteps, setSignatureSprite } = await import('../src/render/signatureFx');
+  setSignatureSprite('arrow', {} as any);
+
+  for (const dirX of [1, -1]) {
+    const spawned: any[] = [];
+    const mockParticles = {
+      spawn: (b: any) => spawned.push(b),
+      density: 1,
+    } as any;
+
+    const scene = {
+      p: mockParticles,
+      self: { x: 100, y: 100, tall: 40 },
+      foes: [{ x: 100 + dirX * 50, y: 100, tall: 40 }],
+      allies: [],
+      dir: { x: dirX, y: 0 },
+      ms: 500,
+      size: 1,
+    };
+
+    // Test beam, cone, dash, spikes, cleave, fan
+    for (const s of ['beam', 'cone', 'dash', 'spikes', 'cleave', 'fan'] as const) {
+      spawned.length = 0;
+      playSteps([{ s, k: 'arrow' }], scene);
+      assert.ok(spawned.length > 0, `no particles spawned for ${s}`);
+      for (const b of spawned) {
+        if (dirX < 0) {
+          if (s !== 'fan') {
+            assert.equal(b.stretchX, -1, `${s} facing left should have stretchX: -1`);
+          }
+          if (b.rotation !== undefined) {
+            // Rotation should be within [-pi, pi] but not upside down (facing left via horizontal flip)
+            assert.ok(Math.abs(b.rotation) <= Math.PI + 0.1, `${s} rotation ${b.rotation}`);
+          }
+        } else {
+          assert.equal(b.stretchX, undefined, `${s} facing right should not be flipped horizontally`);
+        }
+      }
+    }
+  }
+});

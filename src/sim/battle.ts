@@ -7,7 +7,7 @@
 // Pure rules: no Pixi, no DOM. The renderer reads the battle and the events each tick returns.
 
 import { tickHazards } from './hazards';
-import { BARREL_BLAST, boardOk, CLIMB_COST, D, DEPLOY_ROWS, DROP_EXTRA, GROUND_COST, LAVA_BURN, LAVA_STAND, makeBoard, SHRINE_HEAL, sightClear, standable, TALL_DODGE, tileAt, type Area, type At, type Board, type HazardKind, type Tile } from './board';
+import { BARREL_BLAST, boardOk, CLIMB_COST, COALS_BURN, COALS_STAND, D, DEPLOY_ROWS, DROP_EXTRA, GROUND_COST, LAVA_BURN, LAVA_STAND, makeBoard, SHRINE_HEAL, sightClear, standable, TALL_DODGE, tileAt, type Area, type At, type Board, type HazardKind, type Tile } from './board';
 import { cloneBoard } from './chain';
 import { weatherOf } from './weather';
 import type { LayoutId } from './layouts';
@@ -17,7 +17,8 @@ import { firstStep, walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
 import { standDecide } from './standAi';
 import { duchessDue, joinDuchess, type DuchessWish } from './duchessFight';
-import { FOE_BANDS } from './foes';
+import { FOE_BANDS, isBoss } from './foes';
+import { arenaSpots } from './arenaDeploy';
 import { killXp } from './levels';
 import { enterPhase, PHASE2 } from './bossPhases';
 import { afterBlow, CHARGE_MAX, echoSkill, mendUnit, spawnSpiritWisp, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, rollCrit, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
@@ -183,6 +184,8 @@ export interface StandMode {
   fields: Record<number, number[]>;
   /** The wave is down to its last few foes (`HUNT_AT` in `stand.ts`): the heroes leave their posts to hunt them down, and walk back after. */
   hunt?: boolean;
+  /** Idle heroes gone to help where the fighting is, once a wave's foes are all in (`standHelp.ts`): a helper's id to the foe it goes for. */
+  help?: Record<number, number>;
 }
 
 export interface Pending {
@@ -464,8 +467,23 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed; each takes the
   // higher ground its row offers, and a shooter will take a perch in a row nearer the front for it
   const rng = new Rng(mixSeed(seed, 0xf0e5));
-  (typeof band === 'string' ? FOE_BANDS[band] : band).forEach((id, n) => {
+  // (an army's boss arena: the boss starts in its middle and its band round it, `arenaDeploy.ts`; the usual rows when nothing fits)
+  const ids = typeof band === 'string' ? FOE_BANDS[band] : band;
+  const mid = board.arenaMid && isBoss(ids[0] ?? '') ? board.arenaMid : null;
+  let bossAt: At | null = null;
+  ids.forEach((id, n) => {
     const def = UNITS[id];
+    const boss = n === 0 ? stage.boss : undefined;
+    const boost = () => ({ hp: (foes?.hp ?? 1) * (boss?.hp ?? 1), atk: (foes?.atk ?? 1) * (boss?.atk ?? 1), size: boss?.size, phase: boss?.phase, surge: boss?.surge, shield: boss?.shield });
+    if (mid) {
+      const near = arenaSpots(board, (u, v) => !!unitAt(b, u, v), mid, !!def.shot, n === 0 ? null : bossAt);
+      if (near.length) {
+        const at = rng.pick(near);
+        if (n === 0) bossAt = at;
+        addUnit(b, id, at.u, at.v, boost());
+        return;
+      }
+    }
     const rows = def.shot ? [0, 1, 2] : [DEPLOY_ROWS - 1, DEPLOY_ROWS - 2, 0];
     const spots: { u: number; v: number; score: number }[] = [];
     for (const v of rows) {
@@ -480,8 +498,8 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
     if (!spots.length) return;
     const top = Math.max(...spots.map((x) => x.score));
     const at = rng.pick(spots.filter((x) => x.score === top));
-    const boss = n === 0 ? stage.boss : undefined;
-    addUnit(b, id, at.u, at.v, { hp: (foes?.hp ?? 1) * (boss?.hp ?? 1), atk: (foes?.atk ?? 1) * (boss?.atk ?? 1), size: boss?.size, phase: boss?.phase, surge: boss?.surge, shield: boss?.shield });
+    if (n === 0) bossAt = at;
+    addUnit(b, id, at.u, at.v, boost());
   });
   if (tw?.ambush) ambush(b);
   if (stage.duchess && duchessDue(seed, stage.duchess)) b.duchess = true;
@@ -494,7 +512,7 @@ export function noteTerrain(b: Battle): void {
   b.board.tiles.forEach((t, i) => t.barrel && barrels.push(i));
   if (barrels.length) b.barrels = barrels;
   else delete b.barrels;
-  if (b.board.tiles.some((t) => t.ground === 'shrine' || t.ground === 'lava')) b.groundFx = true;
+  if (b.board.tiles.some((t) => t.ground === 'shrine' || t.ground === 'lava' || t.ground === 'coals')) b.groundFx = true;
   else delete b.groundFx;
 }
 
@@ -727,32 +745,46 @@ function settle(b: Battle, p: Pending, out: BattleEvent[]): void {
   }
   // (a sword falls with its wielder; a shot already flying still lands)
   if (!def.shot && !by.alive) return;
+  let target = to;
+  if (def.shot && b.twist?.gales) {
+    const du = ((mixSeed(b.seed, 0x9a1e, p.at, by.id) >>> 0) % 2 === 0 ? 1 : -1) * b.twist.gales;
+    const nu = Math.max(0, Math.min(b.board.w - 1, to.u + du));
+    if (nu !== to.u) {
+      const shifted = unitAt(b, nu, to.v);
+      if (shifted) {
+        target = shifted;
+      } else {
+        out.push({ kind: 'dodge', to: to.id });
+        return;
+      }
+    }
+  }
   // (a fighter in tall growth is a little hard to hit: its own hash of the moment, so no stream moves)
-  if (tileOf(b, to).ground === 'tall' && (mixSeed(b.seed, 0xd0d6, p.at, by.id, to.id) >>> 0) / 4294967296 < TALL_DODGE) {
-    out.push({ kind: 'dodge', to: to.id });
-    if (b.traits?.yokaiWisp && traitsOf(to.def).includes('yokai')) {
-      spawnSpiritWisp(b, to, out);
+  if (tileOf(b, target).ground === 'tall' && (mixSeed(b.seed, 0xd0d6, p.at, by.id, target.id) >>> 0) / 4294967296 < TALL_DODGE) {
+    out.push({ kind: 'dodge', to: target.id });
+    if (b.traits?.yokaiWisp && traitsOf(target.def).includes('yokai')) {
+      spawnSpiritWisp(b, target, out);
     }
     return;
   }
   // (only a blow that reached health counts for leech, equipment and the hero kits: SIM-001)
-  if (hurt(b, by, to, p.dmg, p.heavy, false, out)) {
-    afterBlow(b, by, to, !!p.crit, p.dmg, out);
-    kitBlow(b, by, to, !!p.crit, p.dmg, out);
+  if (hurt(b, by, target, p.dmg, p.heavy, false, out)) {
+    afterBlow(b, by, target, !!p.crit, p.dmg, out);
+    kitBlow(b, by, target, !!p.crit, p.dmg, out);
     if (by.electrifiedUntil && by.electrifiedUntil > b.t) {
       const chainTargets = b.units
-        .filter((u) => u.alive && u.side === to.side && u.id !== to.id && apart(to, u) <= 2)
-        .sort((x, y) => apart(to, x) - apart(to, y) || x.id - y.id)
+        .filter((u) => u.alive && u.side === target.side && u.id !== target.id && apart(target, u) <= 2)
+        .sort((x, y) => apart(target, x) - apart(target, y) || x.id - y.id)
         .slice(0, 2);
       for (const ct of chainTargets) {
-        out.push({ kind: 'arc', from: to.id, to: ct.id });
+        out.push({ kind: 'arc', from: target.id, to: ct.id });
         hurt(b, by, ct, Math.max(1, Math.round(p.dmg * 0.5)), false, true, out, 'skill');
       }
     }
   }
   if (def.splash)
     for (const n of b.units)
-      if (n.alive && n.side === to.side && n !== to && apart(n, to) === 1) hurt(b, by, n, Math.max(1, Math.round(p.dmg * SPLASH_SHARE)), false, true, out);
+      if (n.alive && n.side === target.side && n !== target && apart(n, target) === 1) hurt(b, by, n, Math.max(1, Math.round(p.dmg * SPLASH_SHARE)), false, true, out);
 }
 
 /** Apply a hit; return whether it reached health, including a lethal hit or revival. */
@@ -897,6 +929,7 @@ function groundTick(b: Battle, out: BattleEvent[]): void {
     const g = tileOf(b, x).ground;
     if (g === 'shrine') mendUnit(x, x.maxHp * SHRINE_HEAL, out);
     else if (g === 'lava' && !defOf(x).flies) hurt(b, x, x, Math.max(1, Math.round(x.maxHp * LAVA_STAND)), false, false, out, 'dot');
+    else if (g === 'coals' && !defOf(x).flies) hurt(b, x, x, Math.max(1, Math.round(x.maxHp * COALS_STAND)), false, false, out, 'dot');
   }
 }
 
@@ -921,6 +954,7 @@ const perchValue = (def: UnitDef, h: number, hf: number): number => (def.shot ? 
 /** What the ground under a tile is worth to a fighter standing on it, in steps of walking (below zero is good): lava burns a walker, tall growth hides a shooter, a shrine mends a hurt fighter, ice may slide it off. */
 function groundScore(def: UnitDef, wound: number, g: Tile['ground']): number {
   if (g === 'lava') return def.flies ? 0 : 3;
+  if (g === 'coals') return def.flies ? 0 : 2;
   if (g === 'tall') return def.shot ? -0.6 : -0.2;
   if (g === 'shrine') return wound > 0.4 ? -2 : -0.3;
   if (g === 'ice') return def.flies ? 0 : 0.3;
@@ -1088,8 +1122,9 @@ export function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void
   me.u = next.u;
   me.v = next.v;
   me.busyUntil = b.t + ms;
-  // lava burns whoever ends a step on it (fliers pass over)
+  // lava and hot coals burn whoever ends a step on them (fliers pass over)
   if (to.ground === 'lava' && !def.flies) hurt(b, me, me, Math.max(1, Math.round(me.maxHp * LAVA_BURN)), false, false, out, 'dot');
+  else if (to.ground === 'coals' && !def.flies) hurt(b, me, me, Math.max(1, Math.round(me.maxHp * COALS_BURN)), false, false, out, 'dot');
 }
 
 /** Play a fight to its end (for tests and quick checks). */

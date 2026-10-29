@@ -20,8 +20,8 @@ import { drawOffer, eliteAt, eliteFight, OFFER_SIZE, sideEliteAt } from './elite
 import { neighboursOf, openSet, routeBetween, SIDE_BASE, sideSpots, START_ID, type SideSpot } from './calLand';
 import { ALL_RELIC_IDS, RELICS, relicEffects } from './relics';
 import { mixSeed, Rng } from './rng';
-import { addTwists, TWISTS } from './twists';
-import { BOSS, FOE_START, reward, squadLimit, summonCost, type Run } from './run';
+import { addTwists, CHAOS_TWISTS, TWISTS } from './twists';
+import { BOSS, FOE_START, ownHeroes, reward, spendBuff, squadLimit, summonCost, type Run } from './run';
 import { UNITS } from './units';
 import { CAL_BOARD, CAL_MAPS, CAL_OPENING, CAL_SCALE, calBossBoost, fitBand, squadFoeMult } from './calamity';
 import { calBossBand } from './calamityBosses';
@@ -409,6 +409,14 @@ function calamityOnce(seed: number, act: number, rows: number, asc: number, atte
     if (pool.length) rng.pick(pool).kind = 'elite';
   }
   addTwists(nodes, seed, act);
+  if (rules.chaosMutators) {
+    const chaosRng = new Rng(mixSeed(seed, 0xc4a0, act));
+    for (const n of nodes) {
+      if ((n.kind === 'elite' || n.kind === 'fight') && !n.twist && chaosRng.chance(0.35)) {
+        n.twist = chaosRng.pick(CHAOS_TWISTS);
+      }
+    }
+  }
   // (a high ascension curses every boss floor: a twist from the curses, its own stream)
   if (rules.bossCurse) for (const n of nodes) if (n.kind === 'boss') n.twist = new Rng(mixSeed(seed, 0xa5c8, act)).pick(CURSES);
   return nodes;
@@ -607,7 +615,7 @@ function stockHires(run: Run, floor: number): Hire[] {
 }
 
 /** Whether the run has room for another hero (a calamity owns at most its squad limit). */
-export const hasRoom = (run: Run): boolean => run.mode?.kind !== 'calamity' || run.roster.length < squadLimit(run);
+export const hasRoom = (run: Run): boolean => run.mode?.kind !== 'calamity' || ownHeroes(run).length < squadLimit(run);
 
 /** Whether the hero of this kind cannot be hired now: a Calamity hires each kind once, so one already on the roster is closed. */
 export const hireClosed = (run: Run, kind: string): boolean => run.mode?.kind === 'calamity' && ownsKind(run, kind);
@@ -703,7 +711,23 @@ export function clearNode(run: Run): void {
     return;
   }
   const first = !t.path.includes(cur.id);
-  if (first) t.path.push(cur.id);
+  if (first) {
+    t.path.push(cur.id);
+    // (a mirror's clone stays for its floors, then goes: its place in the squad goes back to a benched hero of the party's own)
+    for (const h of [...run.roster]) {
+      if (h.cloneFloors !== undefined) {
+        h.cloneFloors--;
+        if (h.cloneFloors <= 0) {
+          const fought = run.squad.includes(h.id);
+          run.roster = run.roster.filter((x) => x.id !== h.id);
+          run.squad = run.squad.filter((x) => x !== h.id);
+          delete t.hp[String(h.id)];
+          const bench = ownHeroes(run).find((x) => !run.squad.includes(x.id));
+          if (bench && (fought || !run.squad.length) && run.squad.length < squadLimit(run)) run.squad.push(bench.id);
+        }
+      }
+    }
+  }
   const recap = t.maps ? recapOf(run) : undefined;
   if (recap && first) {
     if (cur.kind !== 'boss') recap.spots++;
@@ -878,7 +902,7 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
     recap?.gear.push(g.name);
   }
   if (run.buff?.gold) run.found.push(`${run.buff.gold} gold from the cursed path`);
-  run.buff = undefined;
+  spendBuff(run);
   clearNode(run);
 }
 

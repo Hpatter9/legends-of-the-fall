@@ -1,4 +1,4 @@
-# ART-003 — Anime hero gallery
+# ART-004 — Anime hero gallery
 
 Branch: `art/anime-hero-gallery`. Owner requested all 45 collectible heroes in the approved ornate anime direction, with transparent overview portraits and full artwork on click. Kitsune, Gorgon, Illusionist and Time Witch use the owner's supplied redesign concept. The follow-up request gives every hero an individual pose and situation.
 
@@ -35,4 +35,4 @@ Artwork is original generated material credited in `CREDITS.md`. The owner's fou
 - Existing dossier browser regressions also passed at all three portrait sizes: atmosphere and reduced motion, all four tabs, equipment/unequip, talents, locked portraits, keyboard tab navigation, hero switching, long names and back navigation. Results: `docs/samples/anime-heroes/dossiers/results.json`. Locked catalogue thumbnails retain their dimmed styling.
 - Final diff and JavaScript syntax checks passed.
 
-No merge, version bump or deployment requested. Real-phone performance remains unmeasured.
+PR: [#169](https://github.com/Hpatter9/legends-of-the-fall/pull/169). Main integrated with both sets of credits and task entries retained; the gallery task is ART-004 to avoid the existing ART-003 battle-art assignment. No merge into main, version bump or deployment requested. Real-phone performance remains unmeasured.

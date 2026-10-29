@@ -1,7 +1,8 @@
 // The Last Stand: an endless battle on a big square field (`standField.ts`). The king stands on his keep in the middle, the
 // heroes guard posts round him (`standAi.ts`), and wave after wave of foes comes in from the edges, bigger each time. Every
 // fifth wave is a boss. A hero who falls stays down for the rest of the run (`StandHero.fallen`); when a wave is down to its last
-// `HUNT_AT` foes the heroes leave their posts to hunt them down (`StandMode.hunt`), and walk back after. Between waves there is a short break (`BREAK_MS`) to spend gold: level a hero up, buy a
+// `HUNT_AT` foes the heroes leave their posts to hunt them down (`StandMode.hunt`), and walk back after; before that, once every foe of a
+// wave is in, heroes with nothing near their posts go to help where the fighting is (`standHelp.ts`). Between waves there is a short break (`BREAK_MS`) to spend gold: level a hero up, buy a
 // relic, heal the king (at any time, the break is a breather). The heroes also level up by themselves, in the fight, from kills and wave clears. The run ends when
 // the king falls; its score is the best wave reached (`Meta.stand`).
 //
@@ -15,6 +16,7 @@ import { tileAt, standable, type Area, type At } from './board';
 import { canPost, edgeTiles, KING_AT, ringPlan, standArea, standBoard, type Edge, type Role } from './standField';
 import { HALL_KINDS, hallOf, hallPlan, type HallKind } from './standHalls';
 import { isTank, KING_DEF, leashOf } from './standAi';
+import { newHelpBook, planHelp, type HelpBook } from './standHelp';
 import { CLASS_OF } from './starter';
 import { BOSS_BANDS, FIELD_BANDS, FOE_BANDS, isBoss } from './foes';
 import { armyById, ARMIES, armyIndex, armyUnlocked } from './armies';
@@ -50,12 +52,14 @@ export const WAVE_START = FOE_START;
 export const WAVE_GROWTH = 0.4;
 /** From wave `WAVE_KNEE` on the climb eases to `WAVE_GROWTH_LATE` a wave: steep at first, so the early waves bite at once; gentler later, so a stronger party still goes further. */
 export const WAVE_KNEE = 10;
-export const WAVE_GROWTH_LATE = 0.1;
-/** The castle's rooms (STAND-003) bring the foes in by two or three breaches, onto the posts: their strength is eased by this to keep the agreed pace. */
-export const HALL_EASE = 0.85;
-/** From wave `WAVE_DEEP` the climb steepens again by `WAVE_GROWTH_DEEP` a wave (STAND-003: the strongest parties kept near the agreed pace, about wave 25 at level 100). */
-export const WAVE_DEEP = 22;
-export const WAVE_GROWTH_DEEP = 0.6;
+export const WAVE_GROWTH_LATE = 0.14;
+/** The castle's rooms (STAND-003) bring the foes in by two or three breaches, onto the posts: their strength is eased by this to keep the agreed pace
+ *  (0.85 until the idle heroes went to help, STAND-004, which made the waves easier: now 0.88, with a steeper late and deep climb). */
+export const HALL_EASE = 0.88;
+/** From wave `WAVE_DEEP` the climb steepens again by `WAVE_GROWTH_DEEP` a wave (STAND-003: the strongest parties kept near the agreed pace, about wave 25 at level 100;
+ *  STAND-004 moved it from wave 22 at 0.6 to wave 18 at 0.35, and the late climb from 0.1 to 0.14, for the heroes who go to help). */
+export const WAVE_DEEP = 18;
+export const WAVE_GROWTH_DEEP = 0.35;
 /** A wave's size: foes at wave 1 and the foes each wave adds. */
 export const WAVE_BASE = 4;
 export const WAVE_STEP = 2;
@@ -211,6 +215,8 @@ export interface Stand {
   relicAtk: number;
   baseMana: number;
   kingGrace: number;
+  /** The idle heroes' helping (`standHelp.ts`): who has had nothing to do since when; not saved. Absent on a stand made by hand is a fresh one. */
+  help?: HelpBook;
 }
 
 /* ------------------------------------------------------------------ waves */
@@ -482,7 +488,12 @@ function beginWave(s: Stand): void {
   const b = s.b;
   run.best = Math.max(run.best, run.wave);
   s.phase = 'wave';
-  if (b.stand) b.stand.hunt = false;
+  if (b.stand) {
+    b.stand.hunt = false;
+    // (a new wave: the helpers go home and the helping starts afresh)
+    b.stand.help = {};
+  }
+  s.help = newHelpBook();
   s.waveAt = b.t;
   s.rageAt = b.t + ENRAGE_AFTER;
   b.revived = false;
@@ -551,8 +562,11 @@ function clearWave(s: Stand): void {
     if (u.side !== 'hero' || u.tag === undefined || !u.alive) continue;
     u.hp = Math.min(u.maxHp, u.hp + Math.round(u.maxHp * CLEAR_HEAL * (u.healMult ?? 1)));
   }
-  // (the hunt is over: the heroes walk back to their posts in the break)
-  if (s.b.stand) s.b.stand.hunt = false;
+  // (the hunt and the helping are over: the heroes walk back to their posts in the break)
+  if (s.b.stand) {
+    s.b.stand.hunt = false;
+    s.b.stand.help = {};
+  }
   run.wave++;
   run.offer = drawOffer(run, run.wave);
   s.phase = 'break';
@@ -624,6 +638,8 @@ export function stepStand(s: Stand): BattleEvent[] {
     const hunt = left > 0 && left <= HUNT_AT;
     if (hunt && !b.stand.hunt) s.notes.push({ kind: 'hunt' });
     b.stand.hunt = hunt;
+    // (with every foe of the wave in, the heroes with nothing near their posts go to help where the fighting is: `standHelp.ts`)
+    planHelp(b, (s.help ??= newHelpBook()), !s.queue.length);
   }
   // (the fallen are dropped from the list a moment after they fall)
   if (b.t % 1000 === 0) dropCorpses(s);

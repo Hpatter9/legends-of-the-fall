@@ -1,0 +1,32 @@
+{
+  "generator": "OpenAI image generation",
+  "reference": "docs/samples/ruler-roster-personalities.png",
+  "cell": 224,
+  "columns": 4,
+  "rows": [
+    "idle",
+    "walk",
+    "strike",
+    "cast",
+    "hurt",
+    "dead",
+    "seated",
+    "command"
+  ],
+  "sources": {
+    "sun_viper": "exec-52b19bc7-dc84-4553-a168-b96feadbf6ff.png",
+    "frost_witch": "exec-54d69198-f771-418e-b306-9c6bd08d065e.png",
+    "ash_empress": "exec-290caf57-8bab-4397-9d34-407c22842ce0.png",
+    "rose_duchess": "exec-43d90ddb-55e1-41c1-a881-220371639f6a.png",
+    "moon_oracle": "exec-84338fc5-7b00-47d0-8a54-725ca6fe58db.png",
+    "iron_stag": "exec-fecabb88-dc65-4130-a0ae-991d3412dfb3.png",
+    "storm_corsair": "exec-ce00d142-d106-41d4-867f-2a662425911e.png",
+    "gilded_necromancer": "exec-e124aa69-7013-4677-8f17-9556300e615e.png"
+  },
+  "thrones": {
+    "source": "exec-4085424b-b2af-4831-8f90-7e91b12f2437.png",
+    "columns": 4,
+    "rows": 2,
+    "cell": 224
+  }
+}

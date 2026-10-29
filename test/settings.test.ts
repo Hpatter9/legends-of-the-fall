@@ -41,3 +41,11 @@ test('Start over wipes every run in progress: the ordinary one and the spire and
   for (const k of ['legends.meta', 'legends.run', ...Object.values(SLOT_KEYS)]) assert.ok(SAVE_KEYS.includes(k), k);
   assert.ok(!SAVE_KEYS.includes('legends.settings') && !SAVE_KEYS.includes('legends.sound'));
 });
+
+test('the chosen ruler is saved by identity; older and malformed choices keep the veteran king', () => {
+  assert.equal(parseSettings(null).ruler, 'iron_stag');
+  assert.equal(parseSettings('{"ruler":"frost_witch"}').ruler, 'frost_witch');
+  for (const ruler of [null, 2, {}, 'lichKing', 'unknown']) {
+    assert.equal(parseSettings(JSON.stringify({ ruler })).ruler, 'iron_stag');
+  }
+});

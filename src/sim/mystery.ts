@@ -23,7 +23,7 @@ import { dropGear, gearText, makeGear, MAX_TIER, SLOTS, type Gear } from './gear
 import { GREAT_RELIC_IDS, RELIC_IDS, RELICS } from './relics';
 import { hpShare, healParty, hurtParty } from './health';
 import { HEROES, UNITS } from './units';
-import { squadLimit, type Run } from './run';
+import { squadLimit, type Owned, type Run } from './run';
 import { gainKindXp, hireable, hireHero } from './climb';
 import type { EventCard, EventKind, EventOption } from './events';
 
@@ -47,7 +47,11 @@ export type MysteryAct =
   | { k: 'respects'; frac: number }
   | { k: 'toll' }
   | { k: 'brawl'; hurt: number; n: number }
-  | { k: 'sneak'; ok: boolean; lose: number };
+  | { k: 'sneak'; ok: boolean; lose: number }
+  | { k: 'bard'; listen: boolean; speed: number; floors: number; cost: number; heal: number }
+  | { k: 'goblinForge'; gearId: number; win: boolean; boost: number; n: number; buySafe?: boolean; fresh?: Gear }
+  | { k: 'cursedMirror'; hero: number; floors: number; smash?: boolean; gold?: number; hurt?: number }
+  | { k: 'voidWell'; drink: boolean; atk: number; floors: number; wound: number; coin: boolean; cost: number; gear?: Gear };
 
 export const FREE_HURT = 0.15;
 export const FOUNTAIN_HEAL = 0.5;
@@ -197,6 +201,127 @@ export function drawMystery(run: Run, stage: number, kind: EventKind, rng: Rng):
         act('Pay your respects', `the dead knight's blessing heals every hero ${pct(0.25)}`, 0, { k: 'respects', frac: 0.25 }),
         leave(),
       ]);
+    }
+    case 'bard': {
+      const cost = Math.min(run.gold, 20 + 2 * stage);
+      return card(
+        'The Wandering Bard',
+        'A flamboyant minstrel in a feathered cap plucks a violently out-of-tune lute in the middle of the path. "Hail, wanderers! Care to hear my 80-verse epic, The Ballad of Sir Reginald\'s Blistered Toes?"',
+        [
+          act('Endure the awful ballad', 'all heroes gain "Earworm" (+25% move speed for 2 floors) as they scramble to outrun the memory', 0, {
+            k: 'bard',
+            listen: true,
+            speed: 0.25,
+            floors: 2,
+            cost: 0,
+            heal: 0,
+          }),
+          act(`Pay him to stop playing`, `pay ${cost} gold: the bard departs with a wink and a soothing tonic that heals the party 20%`, cost, {
+            k: 'bard',
+            listen: false,
+            speed: 0,
+            floors: 0,
+            cost,
+            heal: 0.2,
+          }),
+          leave(),
+        ],
+      );
+    }
+    case 'goblinForge': {
+      const weapons = allGear(run).filter((g) => g.slot === 'weapon');
+      const target = weapons.length ? pick(rng, weapons) : undefined;
+      const win = rng.chance(0.6);
+      const safeCost = 25 + 3 * stage;
+      if (!target) {
+        const fresh = makeGear(gearId(run), 'weapon', 1);
+        return card(
+          'The Goblin Gambler Forge',
+          'A maniacal goblin smith balances atop a smoking anvil. "No weapon to gamble? A travesty! Buy me experimental blade or scram!"',
+          [
+            act(`Buy experimental ${fresh.name}`, `weapon: ${gearText(fresh)}`, 25 + 2 * stage, {
+              k: 'goblinForge',
+              gearId: fresh.id,
+              win: true,
+              boost: 0,
+              n: 25 + 2 * stage,
+              fresh,
+            }),
+            leave(),
+          ],
+        );
+      }
+      return card(
+        'The Goblin Gambler Forge',
+        'A grinning goblin juggles glowing hammers over a roaring forge. "Step right up! One tap of me lucky hammer: +20% attack... or maybe it turns into a spoon! Care to roll the iron?"',
+        [
+          act(`Gamble the ${target.name}`, `60% chance to upgrade by +20% attack; 40% chance to turn it into a humorous "Rusted Spoon"`, 0, {
+            k: 'goblinForge',
+            gearId: target.id,
+            win,
+            boost: 0.2,
+            n: 0,
+          }),
+          act(`Buy Goblin Whetstone`, `pay ${safeCost} gold for a safe sharpening (+6% attack on this weapon)`, safeCost, {
+            k: 'goblinForge',
+            gearId: target.id,
+            win: true,
+            boost: 0.06,
+            n: safeCost,
+            buySafe: true,
+          }),
+          leave(),
+        ],
+      );
+    }
+    case 'cursedMirror': {
+      const hero = pick(rng, ids);
+      const smashGold = 35 + 5 * stage;
+      const heroName = nameOf(run, hero);
+      return card(
+        'The Cursed Mirror',
+        `An obsidian mirror looms in the mist. Inside the dark glass, an inverted reflection of your ${heroName} smirks back, rolling its eyes at your party.`,
+        [
+          act(
+            `Summon inverted ${heroName}`,
+            `the inverted clone steps through to fight alongside your squad for 2 floors with snarky quips`,
+            0,
+            { k: 'cursedMirror', hero, floors: 2 },
+          ),
+          act(
+            'Smash the mirror',
+            `shatter the glass for +${smashGold} gold in silvered shards, but flying shards deal 10% damage to all heroes`,
+            0,
+            { k: 'cursedMirror', hero, floors: 0, smash: true, gold: smashGold, hurt: 0.1 },
+          ),
+          leave(),
+        ],
+      );
+    }
+    case 'voidWell': {
+      const wound = 0.15;
+      const atkBoost = 0.2;
+      const coinCost = 30 + 3 * stage;
+      const gear = dropGear(rng, gearId(run), stage, 1);
+      return card(
+        'The Whispering Void Well',
+        'A bottomless well carved from star-stone hums with dark planar energy. Whispers echo from its depths, offering forbidden might for a price.',
+        [
+          act(
+            'Drink the void essence',
+            `all heroes gain +20% attack for 2 floors, but the corrupting essence wounds everyone for ${pct(wound)} hp`,
+            0,
+            { k: 'voidWell', drink: true, atk: atkBoost, floors: 2, wound, coin: false, cost: 0 },
+          ),
+          act(
+            'Toss a gold tribute',
+            `toss ${coinCost} gold into the depths to dredge up a drowned relic (${gear.name})`,
+            coinCost,
+            { k: 'voidWell', drink: false, atk: 0, floors: 0, wound: 0, coin: true, cost: coinCost, gear },
+          ),
+          leave(),
+        ],
+      );
     }
     default: {
       const toll = 35 + 3 * stage;
@@ -352,5 +477,77 @@ export function applyMystery(run: Run, a: MysteryAct): string {
       if (a.ok) return 'Quiet as cats, you slip past. The bandits never wake.';
       run.gold = Math.max(0, run.gold - a.lose);
       return `A twig snaps. The bandits take up to ${a.lose} gold for the trouble.`;
+    case 'bard': {
+      if (a.listen) {
+        run.buff = { ...run.buff, speed: 1 + a.speed, duration: a.floors };
+        return `The ballad is agonizingly catchy! The awful tune rings in your ears ('Earworm': +${pct(a.speed)} move speed for ${a.floors} floors). The heroes march double-time to get away!`;
+      }
+      healParty(run, a.heal);
+      return `The bard eagerly pockets ${a.cost} gold and hands over a soothing herbal draught. Blessed silence settles over the party (${pct(a.heal)} healed).`;
+    }
+    case 'goblinForge': {
+      // (the price is the option's cost, paid by `chooseOption`: it is not taken twice)
+      if (a.fresh) {
+        (run.items ??= []).push(a.fresh);
+        return `You purchase the experimental ${a.fresh.name}.`;
+      }
+      const g = allGear(run).find((x) => x.id === a.gearId);
+      if (!g) return 'The forge coals die down. Nothing happens.';
+      if (a.buySafe) {
+        g.atk = Number(((g.atk || 0) + a.boost).toFixed(2));
+        g.name = `${g.name} (Honed)`;
+        return `The whetstone bites into the edge: ${g.name} is safely sharpened (+${pct(a.boost)} attack).`;
+      }
+      if (a.win) {
+        g.atk = Number(((g.atk || 0) + a.boost).toFixed(2));
+        g.name = `${g.name} (+20%)`;
+        return `CLANG! The goblin hits the anvil with a manic cackle! White sparks shower the room: ${g.name} is upgraded (+20% attack)!`;
+      }
+      const spoon: Gear = {
+        id: g.id,
+        slot: 'weapon',
+        tier: 1,
+        name: 'Rusted Spoon',
+        atk: 0.01,
+        hp: 0,
+      };
+      swapGear(run, a.gearId, spoon);
+      return `KAPOW! A cloud of greasy smoke billows up. Your weapon has turned into a bent, greasy "Rusted Spoon" (+1% attack). The goblin chortles: "No refunds, chum!"`;
+    }
+    case 'cursedMirror': {
+      if (a.smash) {
+        run.gold += a.gold ?? 0;
+        hurtParty(run, a.hurt ?? 0.1);
+        return `CRASH! The mirror shatters into glittering dust. You scoop up +${a.gold} gold in silvered shards, nursing bleeding cuts.`;
+      }
+      const orig = run.roster.find((x) => x.id === a.hero);
+      if (!orig) return 'The mirror fades to mist.';
+      const cloneName = UNITS[orig.kind]?.name ?? 'Hero';
+      // (the clone takes the run's next id, as a hire does, so no real hero ever shares it)
+      const clone: Owned = {
+        id: run.nextId++,
+        kind: orig.kind,
+        grade: orig.grade,
+        tiered: orig.tiered,
+        xp: orig.xp,
+        inverted: true,
+        cloneFloors: a.floors,
+      };
+      run.roster.push(clone);
+      if (run.squad.length < squadLimit(run)) run.squad.push(clone.id);
+      return `The glass ripples! An inverted ${cloneName} steps out, sneering: "Move over, amateur. Let someone with real talent handle this." The inverted clone joins you for ${a.floors} floors!`;
+    }
+    case 'voidWell': {
+      if (a.drink) {
+        hurtParty(run, a.wound);
+        run.buff = { ...run.buff, atk: Number(((run.buff?.atk ?? 1) * (1 + a.atk)).toFixed(2)), duration: a.floors };
+        return `The void liquid burns cold as ice. The party surges with dark power (+${pct(a.atk)} attack for ${a.floors} floors), but the dark essence extracts its toll (-${pct(a.wound)} hp).`;
+      }
+      if (a.coin) {
+        if (a.gear) (run.items ??= []).push(a.gear);
+        return `The gold sinks into the bottomless abyss. Moments later, the water bubbles and yields a ${a.gear?.name ?? 'trinket'}!`;
+      }
+      return 'You step back from the void well.';
+    }
   }
 }

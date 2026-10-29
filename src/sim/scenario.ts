@@ -742,6 +742,8 @@ export function planScenario(seed: number, theme: ScenarioId, waves: number, bos
       tiles,
     };
     if (arena) board.pieces = arenaPieces(theme, board, exit, mixSeed(seed, 0x91ece, n));
+    // (the boss starts in the arena's middle, FIGHT-FIXES)
+    if (arena) board.arenaMid = { u: Math.round(arena.centre[0]), v: Math.round(arena.centre[1]) };
 
     // Raise steep hills / archer bastion redoubts
     if (!isBoss) {
