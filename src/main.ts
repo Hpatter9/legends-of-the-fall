@@ -4,6 +4,7 @@
 
 import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { standable, tileAt } from './sim/board';
+import * as toolkit from './sim/toolkit';
 import { canPlace, fight, reviveParty, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
 import { mvpOf, startStats, tally, type FightStats } from './sim/fightStats';
 // (`saveSlot` as `saveRun`: a tower or calamity run is saved in its own slot, any other in the ordinary one)
@@ -428,6 +429,8 @@ class Game {
     if (this.home.isOpen) await Promise.race([campArtReady().then(() => new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok)))), new Promise((ok) => setTimeout(ok, 2500))]).catch(() => undefined);
     $('loading').remove();
     (window as unknown as { __game: Game }).__game = this;
+    // (the movement toolkit's sim functions, for the screenshot tools to stage its moves in a real fight: `tools/spells/shots.mjs`; the game never calls it from here)
+    (window as unknown as { __toolkit: typeof toolkit }).__toolkit = toolkit;
     // (a hero's first awakening has its cinematic)
     this.goat.onLuckyBleat = (effect) => this.handleDuchessLuckyBleat(effect);
     onAwakened((kind, step) => {

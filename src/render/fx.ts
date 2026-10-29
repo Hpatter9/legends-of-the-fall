@@ -42,6 +42,8 @@ import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, im
 import { particleBudget, slashOf } from './vfxRules';
 import { placeLabel } from './labelRules';
 import { HAZARD_LOOKS } from './hazardLooks';
+import { MOVE_LOOKS, WALL_LOOKS, auraLook, type Look } from './toolkitLooks';
+import type { WallKind } from '../sim/toolkit';
 import { loadPaintedArt, paintedStrip, paintSprite } from './cinematicArt';
 import { coverAlpha, overFighter } from './overFighter';
 import type { Element, Family } from './fxRules';
@@ -108,6 +110,8 @@ interface Item {
 export class Fx {
   readonly root = new Container();
   private items: Item[] = [];
+  /** The auras drawn now (by caster and name), so a refreshed aura is not drawn twice (RPG-SPELLS). */
+  private auraShown = new Set<string>();
   private trauma = 0;
   shakeX = 0;
   shakeY = 0;
@@ -338,6 +342,8 @@ export class Fx {
         this.sparkles(wx, wy, 0x9be5ff);
       }
       else if (e.kind === 'terrain') this.kitTerrain(b, e);
+      // (the movement toolkit, RPG-SPELLS batch 1: placeholder looks from the pack until the painted effects arrive)
+      else if (e.kind === 'shove' || e.kind === 'launch' || e.kind === 'slam' || e.kind === 'fall' || e.kind === 'burrow' || e.kind === 'swap' || e.kind === 'aura' || e.kind === 'wallBreak') this.toolkit(b, e);
       else if (e.kind === 'mark') this.kitMark(e);
       else if (e.kind === 'hit') {
         const to = this.sprites.get(e.to);
@@ -982,6 +988,168 @@ export class Fx {
     this.label(`Lv ${level}`, sp.x, sp.y - sp.tall - 14, 0xfff2a0, 12, 1300, true);
   }
 
+  // ---- the movement toolkit (RPG-SPELLS batch 1): placeholders from the pack (`toolkitLooks.ts`) until the painted effects arrive ----
+
+  /** A look's one-off strip at a point. */
+  private lookOnce(l: Look, x: number, y: number, scale: number): void {
+    const frames = l.once ? PACK[l.once] : undefined;
+    if (!frames?.length) return;
+    this.particles.spawn({ frames, x, y, scale, frameMs: 60, add: true, prio: true, ...(l.tint ? { tint: l.tint } : {}), ...(l.alpha ? { alpha: l.alpha } : {}) });
+  }
+
+  /** A look's strip looped at a point while `live` holds (it may move, `where`); it fades out when `live` stops holding. Reduced motion
+   *  holds its first frame. */
+  private lookLoop(l: Look, where: () => [number, number], scale: number, live: () => boolean, depthOf?: () => number): void {
+    const frames = l.loop ? PACK[l.loop] : undefined;
+    if (!frames?.length) return;
+    const sp = new Sprite(frames[0]);
+    sp.anchor.set(0.5, 0.6);
+    sp.scale.set(scale);
+    if (l.tint) sp.tint = l.tint;
+    sp.alpha = l.alpha ?? 0.9;
+    sp.blendMode = 'add';
+    this.root.addChild(sp);
+    let t = 0;
+    let gone = false;
+    this.items.push({
+      view: sp,
+      step: (dt) => {
+        t += dt;
+        const [x, y] = where();
+        sp.position.set(x, y);
+        if (depthOf) sp.zIndex = depthOf();
+        if (!this.reduced) sp.texture = frames[Math.floor(t / 90) % frames.length];
+        if (!gone && !live()) gone = true;
+        if (gone) {
+          sp.alpha = Math.max(0, sp.alpha - dt / 300);
+          return sp.alpha > 0;
+        }
+        return true;
+      },
+    });
+  }
+
+  /** A raised wall's tile: it rises (a burst), stands (the ruined-wall prop for a solid one, and its loop) and goes when the sim no longer has it. */
+  private wallTile(b: Battle, u: number, v: number, kind: WallKind): void {
+    const look = WALL_LOOKS[kind];
+    const [x, y] = this.tilePos(b, u, v);
+    const i = v * b.board.w + u;
+    const live = () => !!b.walls?.some((w) => w.i === i && w.kind === kind && w.until > b.t);
+    this.lookOnce(look, x, y - 8, 1.6);
+    if (look.prop && kitArt) {
+      const sp = new Sprite(kitArt.walls[(u + v) % 2]);
+      sp.anchor.set(0.5, 0.85);
+      sp.scale.set(TW / Math.max(1, sp.texture.width));
+      if (look.tint) sp.tint = look.tint;
+      sp.position.set(x, y);
+      sp.zIndex = 0;
+      this.root.addChild(sp);
+      let t = 0;
+      this.items.push({ view: sp, step: (dt) => ((t += dt), live() || t < 200 ? true : ((sp.alpha = Math.max(0, sp.alpha - dt / 300)), sp.alpha > 0)) });
+    }
+    this.lookLoop(look, () => [x, y - 10], kind === 'wind' ? 1.4 : 1.2, live);
+  }
+
+  private toolkit(b: Battle, e: Extract<BattleEvent, { kind: 'shove' | 'launch' | 'slam' | 'fall' | 'burrow' | 'swap' | 'aura' | 'wallBreak' }>): void {
+    const saver = settings().saver;
+    if (e.kind === 'shove') {
+      // (dust kicked up along the slide)
+      for (const at2 of saver ? e.path.slice(-1) : e.path) {
+        const [x, y] = this.tilePos(b, at2.u, at2.v);
+        this.particles.spawn({ frames: VFX.dustWhite, x: x + jitter(4), y: y - 4, scale: 1.1, life: 420, alpha: 0.75 });
+      }
+    } else if (e.kind === 'launch') {
+      const [x0, y0] = this.tilePos(b, e.from.u, e.from.v);
+      const [x1, y1] = this.tilePos(b, e.land.u, e.land.v);
+      this.lookOnce(MOVE_LOOKS.lift, x0, y0 - 6, 1.4);
+      this.later(e.ms, () => {
+        this.lookOnce(MOVE_LOOKS.land, x1, y1 - 4, 1.5);
+        this.trauma = Math.min(1, this.trauma + 0.15);
+      });
+    } else if (e.kind === 'slam') {
+      const to = this.sprites.get(e.to);
+      if (to) this.lookOnce(MOVE_LOOKS.slam, to.x, to.y - to.tall * 0.4, 1.3);
+      this.trauma = Math.min(1, this.trauma + 0.2);
+    } else if (e.kind === 'fall') {
+      const to = this.sprites.get(e.to);
+      if (to) this.label('Fall!', to.x, to.y - to.tall - 10, 0xffd0a0, 12, 900);
+    } else if (e.kind === 'burrow') {
+      const [x, y] = this.tilePos(b, e.u, e.v);
+      if (e.phase === 'up') {
+        this.lookOnce(MOVE_LOOKS.erupt, x, y - 8, 2.2);
+        this.trauma = Math.min(1, this.trauma + 0.3);
+        return;
+      }
+      this.lookOnce(MOVE_LOOKS.dig, x, y - 6, 1.6);
+      // (the mound runs along the tunnel under the ground for as long as the burrower is under)
+      const path = [{ u: e.u, v: e.v }, ...e.path];
+      const start = b.t;
+      const where = (): [number, number] => {
+        const f = Math.max(0, Math.min(1, (b.t - start) / Math.max(1, e.ms)));
+        const k = f * (path.length - 1);
+        const a = path[Math.floor(k)];
+        const z = path[Math.min(path.length - 1, Math.floor(k) + 1)];
+        const [ax, ay] = this.tilePos(b, a.u, a.v);
+        const [zx, zy] = this.tilePos(b, z.u, z.v);
+        const r = k - Math.floor(k);
+        return [ax + (zx - ax) * r, ay + (zy - ay) * r - 2];
+      };
+      const me = b.units.find((x) => x.id === e.by);
+      this.lookLoop(MOVE_LOOKS.mound, where, 1.2, () => !!me?.under && me.alive);
+    } else if (e.kind === 'swap') {
+      for (const id of [e.a, e.b]) {
+        const s = this.sprites.get(id);
+        if (s) this.lookOnce(MOVE_LOOKS.swap, s.x, s.y - s.tall * 0.45, 1.4);
+      }
+    } else if (e.kind === 'aura') {
+      this.aura(b, e);
+    } else {
+      const [x, y] = this.tilePos(b, e.u, e.v);
+      this.lookOnce(MOVE_LOOKS.shatter, x, y - 10, 1.6);
+    }
+  }
+
+  /** An aura: a ring over the ground of its reach (a diamond of tiles, as the grid counts reach), turning at its heart, round its caster
+   *  or on its tile, for as long as the sim keeps it. */
+  private aura(b: Battle, e: Extract<BattleEvent, { kind: 'aura' }>): void {
+    const look = auraLook(e.what);
+    const me = b.units.find((x) => x.id === e.by);
+    const live = () => !!b.auras?.some((a) => a.by === e.by && a.what === e.what && a.until > b.t);
+    if (b.auras?.some((a) => a.by === e.by && a.what === e.what) && this.auraShown.has(`${e.by}:${e.what}`)) return;
+    this.auraShown.add(`${e.by}:${e.what}`);
+    const centre = (): [number, number] => {
+      const c = e.at ?? me ?? { u: 0, v: 0 };
+      return this.tilePos(b, c.u, c.v);
+    };
+    const g = new Graphics();
+    const r = e.reach + 0.5;
+    g.poly([0, (-TH / 2) * r * 2, (TW / 2) * r * 2, 0, 0, (TH / 2) * r * 2, (-TW / 2) * r * 2, 0]).fill({ color: look.ring, alpha: 0.1 }).stroke({ color: look.ring, width: 2, alpha: 0.7 });
+    g.zIndex = -1;
+    this.root.addChild(g);
+    let t = 0;
+    let gone = false;
+    this.items.push({
+      view: g,
+      step: (dt) => {
+        t += dt;
+        const [x, y] = centre();
+        g.position.set(x, y);
+        if (!this.reduced) g.alpha = 0.8 + 0.2 * Math.sin(t / 350);
+        if (!gone && !live()) gone = true;
+        if (gone) {
+          g.alpha = Math.max(0, g.alpha - dt / 300);
+          if (g.alpha <= 0) this.auraShown.delete(`${e.by}:${e.what}`);
+          return g.alpha > 0;
+        }
+        return true;
+      },
+    });
+    this.lookLoop(look, () => {
+      const [x, y] = centre();
+      return [x, y - 4];
+    }, 1.3, live);
+  }
+
   /** The world position of a tile's top. */
   private tilePos(b: Battle, u: number, v: number): [number, number] {
     return at(u, v, tileAt(b.board, u, v)?.h ?? 0);
@@ -1349,6 +1517,7 @@ export class Fx {
   /** Timed terrain from a kit: a rampart's wall, a statue, a flood's water on a tile, until it goes back (a terrain event of 0 ms, or the battle no longer has it). */
   private kitTerrain(b: Battle, e: Extract<BattleEvent, { kind: 'terrain' }>): void {
     if (!e.ms) return;
+    if (e.what in WALL_LOOKS) return this.wallTile(b, e.u, e.v, e.what as WallKind);
     const [x, y] = this.tilePos(b, e.u, e.v);
     const i = e.v * b.board.w + e.u;
     let view: Container;

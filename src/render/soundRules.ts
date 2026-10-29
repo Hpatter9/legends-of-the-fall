@@ -284,6 +284,23 @@ export function cuesFor(b: Battle, e: BattleEvent): Cued[] {
       return [{ cue: 'dash' }];
     case 'blink':
       return [{ cue: 'blink' }];
+    // (the movement toolkit, RPG-SPELLS batch 1: the shared cues until the rendered `mv-` sounds of the design's section 6.4)
+    case 'shove':
+      return [{ cue: 'windGust', gain: 0.7 }];
+    case 'launch':
+      return [{ cue: 'windGust' }, { cue: 'earthRumble', delay: e.ms, gain: 0.8 }];
+    case 'slam':
+      return [{ cue: 'hitHeavy', gain: 0.9 }];
+    case 'fall':
+      return [{ cue: 'deathThud', gain: 0.6 }];
+    case 'burrow':
+      return [{ cue: 'earthRumble', gain: e.phase === 'up' ? 1.1 : 0.7 }];
+    case 'swap':
+      return [{ cue: 'blink' }, { cue: 'blink', delay: 80, gain: 0.8 }];
+    case 'aura':
+      return [{ cue: 'shieldHum', gain: 0.7 }];
+    case 'wallBreak':
+      return [{ cue: 'frostShatter' }];
     case 'area':
       // (the meteor whistles down and lands with a boom `ms` later; a volley rains)
       return e.id === 'meteor'
