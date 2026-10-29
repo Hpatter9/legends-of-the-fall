@@ -52,3 +52,11 @@ export function waveNotes(m: WaveMoments): WaveNote[] {
   if (m.hearts > 0) out.push({ kind: 'heart', text: `${m.hearts > 1 ? `${m.hearts} hearts` : 'A heart'} burned · ${m.heartsLeft} left` });
   return out;
 }
+
+/** The heading of a spire floor's or a Calamity fight's short card (WAVE-RECAP-2): "Floor 12 cleared", "Act 2 cleared!", "Spot cleared",
+ *  "Map 3 cleared!", or the fall ("Fell on floor 12", "The party falls"). `act` is the act or map whose boss has just fallen. */
+export function towerHeadline(kind: 'spire' | 'calamity', floor: number, won: boolean, act?: number): string {
+  if (!won) return kind === 'spire' ? `Fell on floor ${floor}` : 'The party falls';
+  if (act !== undefined) return `${kind === 'spire' ? 'Act' : 'Map'} ${act} cleared!`;
+  return kind === 'spire' ? `Floor ${floor} cleared` : 'Spot cleared';
+}

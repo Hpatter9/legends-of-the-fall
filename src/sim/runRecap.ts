@@ -114,3 +114,43 @@ export function mvpKind(r: RunRecap): string | null {
   const rows: HeroStat[] = Object.entries(r.heroes).map(([kind, t], id) => ({ id, kind, dealt: t.dealt, taken: t.taken, healed: t.healed, kills: t.kills }));
   return mvpOf(rows)?.kind ?? null;
 }
+
+/** What a recap gained since an earlier copy of it (`then`; none for the whole of it): the figures, XP and crowns added, each
+ *  kind's level over the stretch (from where `then` left it), and the waves fought since. Pure: neither recap is changed. */
+export function recapSince(now: RunRecap, then?: RunRecap): RunRecap {
+  const out = newRecap();
+  const was = then ?? newRecap();
+  for (const k of ['fights', 'cleared', 'ms', 'earned', 'spent', 'crowns', 'chests'] as const) out[k] = Math.max(0, now[k] - was[k]);
+  for (const [kind, t] of Object.entries(now.heroes)) {
+    const b = was.heroes[kind];
+    const d = { dealt: t.dealt - (b?.dealt ?? 0), taken: t.taken - (b?.taken ?? 0), healed: t.healed - (b?.healed ?? 0), kills: t.kills - (b?.kills ?? 0), grade: t.grade };
+    if (d.dealt > 0 || d.taken > 0 || d.healed > 0 || d.kills > 0) out.heroes[kind] = d;
+  }
+  for (const [kind, n] of Object.entries(now.xp)) if (n - (was.xp[kind] ?? 0) > 0) out.xp[kind] = n - (was.xp[kind] ?? 0);
+  for (const [kind, [from, to]] of Object.entries(now.levels)) {
+    const start = was.levels[kind]?.[1] ?? from;
+    if (to > start) out.levels[kind] = [start, to];
+  }
+  // (the waves fought since: as many of the latest rows as fights were added, the cap allowing)
+  const rows = now.waves ?? [];
+  const n = Math.min(rows.length, out.fights);
+  if (n) out.waves = rows.slice(rows.length - n);
+  return out;
+}
+
+/** A calamity's map has just been cleared (`mapDone`, set as its boss fell): once its last fight is in the run's recap, its share
+ *  goes onto the map's recap (and its copy in `recaps`), and the next map counts from here. Nothing for any other run, or twice. */
+export function closeMapLeg(run: Run): void {
+  const t = run.tower;
+  const done = t?.mapDone;
+  if (!t || !done || done.detail) return;
+  const now = recapOf(run);
+  const detail = recapSince(now, t.recapAt);
+  done.detail = detail;
+  const kept = t.recaps?.at(-1);
+  if (kept && kept !== done && kept.map === done.map) kept.detail = detail;
+  t.recapAt = JSON.parse(JSON.stringify(now)) as RunRecap;
+  // (the copy needs no wave lines or finds: `recapSince` counts fights, and the finds are the map recap's own)
+  delete t.recapAt.waves;
+  delete t.recapAt.found;
+}
