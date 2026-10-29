@@ -1,0 +1,15 @@
+{
+  "tool": "OpenAI image generation",
+  "request": "Completely replace the old Calamity map look",
+  "sources": [
+    {
+      "original": "/workspace/generated_images/exec-46a7213f-8ea6-44e9-b6e5-f638dcc3ab23.png",
+      "copy": "valley.png"
+    },
+    {
+      "original": "/workspace/generated_images/exec-eb884b38-c140-4bf6-b3fd-0ca2fde047f1.png",
+      "copy": "landmarks.png"
+    }
+  ],
+  "originalsRetained": true
+}

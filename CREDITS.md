@@ -385,3 +385,8 @@ The Grand Scenario prototype reuses the already credited camp gate and Knights w
 
 - `src/art/altar/patrons-atlas.png`: original ornate dark-fantasy artwork generated with OpenAI image generation at the owner's explicit request for new altar assets. Includes Ember, Bastion and Echo altars and matching crests, a shared pedestal, and consecration/corruption seals. The original transparent atlas is unchanged; `manifest.json` records measured display frames.
 - `src/art/altar/sanctuary.png`: original generated emerald, obsidian and gold sanctuary backdrop for the same screen. `provenance.json` records both retained generation sources. The generated-asset prototype demonstrates their appearance; production integration is separate.
+
+## Calamity overland map proposal
+
+- `src/art/calmap-overland/valley.png`: original hand-painted dark-fantasy landscape generated with OpenAI image generation for the owner's request to completely replace the floating-island Calamity map. A continuous valley of forests, roads, rivers and ruins leads towards a corrupted citadel.
+- `src/art/calmap-overland/landmarks.png`: original transparent atlas generated for the same replacement map: battle outpost, elite stronghold, recruit lodge, camp, merchant wagon, treasure ruins, altar shrine, mystery ruin and guardian citadel. `manifest.json` records display frames; `provenance.json` identifies the retained original generation files. The PNGs are unmodified. These assets currently appear in the separate map proposal; production integration is pending visual review.

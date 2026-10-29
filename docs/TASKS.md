@@ -14,6 +14,15 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### CAL-MAP-NEW — Replace the Calamity map
+
+- **Owner:** current Codex chat. **Branch / worktree:** `design/calamity-overland`, `/workspace/legends-of-the-fall`.
+- **Goal:** owner rejected the old floating-island map and requested an entirely new visual style.
+- **Scope:** original continuous-landscape map art, a playable visual prototype with ornate UI, readable routes and distinct encounter landmarks; integrate after the visual-direction check required above. Preserve the new three-region run and altar mechanics.
+- **Completion:** new map look reviewed, then production renderer replacement, existing save/route behaviour retained, portrait/accessibility/offline checks and affected tests.
+- **Status:** new landscape and nine landmark assets generated; interactive proposal uses the real first-region route graph. Browser checks passed at all three phone sizes, including selection, simulated travel and unreached-route locking. Typecheck/build passed. Awaiting visual-direction confirmation before production renderer replacement. [Handoff](notes/calamity-overland.md); [new map preview](samples/calamity-overland/proposal-393.png).
+
+
 ### ALTAR-UI — Ornate altar sanctuary
 
 - **Owner:** current Codex chat. **Branch / worktree:** `design/altar-sanctuary`, `/workspace/legends-of-the-fall`.

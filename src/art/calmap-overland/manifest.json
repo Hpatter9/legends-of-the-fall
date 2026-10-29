@@ -1,0 +1,67 @@
+{
+  "atlas": "landmarks.png",
+  "width": 1254,
+  "height": 1254,
+  "frames": {
+    "battle": {
+      "x": 0,
+      "y": 0,
+      "width": 418,
+      "height": 418
+    },
+    "elite": {
+      "x": 418,
+      "y": 0,
+      "width": 418,
+      "height": 418
+    },
+    "recruit": {
+      "x": 836,
+      "y": 0,
+      "width": 418,
+      "height": 418
+    },
+    "campfire": {
+      "x": 0,
+      "y": 418,
+      "width": 418,
+      "height": 386
+    },
+    "shop": {
+      "x": 418,
+      "y": 418,
+      "width": 418,
+      "height": 386
+    },
+    "treasure": {
+      "x": 836,
+      "y": 418,
+      "width": 418,
+      "height": 386
+    },
+    "altar": {
+      "x": 0,
+      "y": 804,
+      "width": 418,
+      "height": 450
+    },
+    "mystery": {
+      "x": 418,
+      "y": 804,
+      "width": 418,
+      "height": 450
+    },
+    "boss": {
+      "x": 836,
+      "y": 804,
+      "width": 418,
+      "height": 450
+    }
+  },
+  "landscape": "valley.png",
+  "landscapeSize": [
+    1024,
+    1536
+  ],
+  "preparation": "Unmodified generated originals. Measured unequal row heights preserve the lower landmarks' spires. Layout metadata only."
+}
