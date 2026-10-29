@@ -103,8 +103,8 @@ for (const [width,height] of [[393,852],[360,780],[412,915]]) {
       assert.equal(await page.evaluate(()=>window.__game.stand.hall.rulerAction),action);
       assert.equal(await page.evaluate(()=>window.__game.stand.hall.emptyThrone.visible),true);
       if (i === 0 && action === 'cast') await page.screenshot({path: `docs/samples/ruler-stand-${ids[i]}-cast-${width}x${height}.png`});
-      await page.waitForFunction(()=>window.__game.stand.hall.rulerAction==='seated',null,{timeout:5000}).catch(()=>{});
-      assert.equal(await page.evaluate(()=>window.__game.stand.hall.rulerAction),'seated');
+      await page.waitForFunction(()=>window.__game.stand.hall.rulerAction==='idle',null,{timeout:5000}).catch(()=>{});
+      assert.equal(await page.evaluate(()=>window.__game.stand.hall.rulerAction),'idle');
     }
   }
   await page.evaluate(()=>{const s=window.__game.stand;s.s.king.hp=0;s.s.king.alive=false;s.hall.react('dead')});

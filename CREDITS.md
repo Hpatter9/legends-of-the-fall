@@ -1,5 +1,7 @@
 # Credits
 
+- **Active ceremonial summoner** (`src/art/hall/summoner-active.png`) and character-free sanctum background (`src/art/hall/sanctum.png`): original generated artwork based on the existing approved chamber. Separate idle, casting and eye-shield poses; no third-party character art. Both images are bundled into game.js for offline use.
+
 - **Full Resonance hero upgrade** (`src/art/units/hero_res_*.png`, separate `_back` sheets, and the two pilot heroes): original generated pixel artwork following the owner's approved direction. Includes the 43 remaining collectible heroes, Werewolf Brute/awakened appearances and three Treants. Front/rear art supplies four isometric facings through left/right mirroring; dedicated walking atlases supply eight-frame strides. Prompts, specifications and packing tools are in `tools/resonance/`; raw generation intermediates remain in the art workspace. No franchise sprites are included. Foes/NPCs retain their existing art and credits.
 
 - **Resonance hero pilot** (`hero_soldier.png`, `hero_samurai_archer.png`): original generated pixel artwork, directed from the owner's approved concept and Final Fantasy Resonance style references. No franchise sprites are included. Cropped, packed and sampled with nearest-neighbour scaling by `tools/resonance/pack.cjs`. These replace the Knight and Archer's displayed art at all grades; current grade effects and awakened class auras apply. Original Craftpix sheets and their credits remain available.
@@ -402,3 +404,13 @@ The Grand Scenario prototype reuses the already credited camp gate and Knights w
 
 - `src/art/heroes/*.webp`: 45 original anime hero scenes and 45 transparent menu cutouts generated with OpenAI image generation in October 2026 for the owner's hero overview request. Each full illustration has an individual pose and situation. Kitsune, Gorgon, Illusionist and Time Witch follow the owner's supplied redesign concept; the other heroes draw on their established game identities and colours.
 - `tools/anime-heroes/catalogue.json` and `scenes.json` record the character directions and scene briefs. Generated production atlases are split into individual assets and transcoded for the offline gallery by `extract.cjs` and `pack.cjs`. Battle animation artwork and its existing credits remain separate.
+
+
+## Last Stand ornate room artwork (`src/art/stand/ornate/`)
+
+- Original castle environment artwork generated with OpenAI image generation at the owner's request to replace the earlier coarse room assets, following the approved Last Stand concept. Production source atlases are retained in `tools/stand/generated/ornate-{props,materials,garden}.png`.
+- The new pieces are carved heraldic columns, Gothic stained glass, wooden bookcases, braziers, a tiered fountain, rose-covered arcades, reading desks, carved rubble, a compass medallion, limestone and courtyard paving, ashlar masonry, embroidered velvet, lawn, rose planters, trailing ivy and heraldic banners. `tools/stand/cut-ornate.py` extracts and downsamples them; `src/art/stand/ornate/provenance.json` records their sources.
+- Last Stand uses the selected player's existing ruler atlas and throne from the Player rulers section above. These room assets do not replace any ruler, hero or enemy artwork. Earlier room-asset entries retain their historical provenance; the remaining well, lamps, stores, smoke and dust keep their existing credits.
+## Illustrated loading screen
+
+`src/art/loading/last-keep.webp`: original fantasy illustration generated with OpenAI image generation from the owner-approved moonlit keep concept, revised with a crowned king and his archer, paladin and fire wizard guard. Typography, mist, embers, beacon light and loading indicator are live HTML/CSS.

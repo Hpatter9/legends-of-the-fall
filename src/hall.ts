@@ -15,6 +15,7 @@ import { beamKind, fanSpots, hallLayout, MIN_H, ROOM_W, type BeamKind, type Hall
 import { cardAt, dimAt, shakeAt, showcaseAt, skipAction, summonPlan, type ShowPlan } from './render/summonRules';
 import { duck, hushSummon, play as playSfx } from './render/sound';
 import sanctumUrl from './art/hall/sanctum.png';
+import { summoner } from './summoner';
 import lightPillarUrl from './art/hall/fx_light-pillar.png';
 
 const ART: Record<string, string> = { sanctum: sanctumUrl, lightPillar: lightPillarUrl };
@@ -272,6 +273,7 @@ export interface HallHooks {
 export class SummoningHall {
   readonly root = el('div', 'hlWrap');
   private canvas = el('canvas', 'hlRoom');
+  private actor = summoner();
   private ctx = this.canvas.getContext('2d')!;
   private count = el('div', 'hlCount');
   private scroll = el('div', 'hlScroll');
@@ -318,7 +320,7 @@ export class SummoningHall {
     const low = el('div', 'hlLow');
     this.shop.addEventListener('click', () => this.hooks.onShop());
     low.append(this.scroll, this.shop, bar);
-    this.root.append(this.canvas, head, low, this.over, this.skipPad);
+    this.root.append(this.canvas, this.actor, head, low, this.over, this.skipPad);
     // (a tap anywhere skips the show: a new hero's show jumps to the moment it stands revealed, and only a tap after that goes on to the
     //  result; taps in the first moments, a double tap on the summon button, are let go. SUMMON-TAROT: a double tap used to skip a join's whole show)
     this.skipPad.addEventListener('pointerdown', (e) => {
@@ -456,6 +458,7 @@ export class SummoningHall {
     const s = this.show;
     if (!s) return;
     this.show = null;
+    this.actor.dataset.pose = 'idle';
     if (cut) hushSummon();
     duck(false, 'summon');
     this.skipPad.classList.remove('on');
@@ -533,6 +536,9 @@ export class SummoningHall {
     this.last = t;
     this.now += dt;
     this.tick(dt);
+    const show = this.show;
+    const actorAt = show ? this.now - show.t0 : -1;
+    this.actor.dataset.pose = !show ? 'idle' : actorAt >= show.tl.charge && actorAt < show.plan.revealAt + 500 ? 'shield' : actorAt < show.tl.charge ? 'cast' : 'idle';
     this.draw();
     const s = this.show;
     if (!s) return;
