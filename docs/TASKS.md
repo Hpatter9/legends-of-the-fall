@@ -26,6 +26,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Completion criteria:** every spell its own cast and effect sound, timed to its look, on the effects bus, panned, muted with the rest, offline, with the synthesised cues as the fallback; typecheck, affected and full tests, web build; every spell cast once in Chromium.
 - **Validation and handoff:** [notes](notes/spell-sfx.md).
 
+### RANK4-SKILLS — A fourth tier skill for every hero
+
+- **Goal:** the owner's ask, with heroes going to four ranks (two of a kind merge; `claude/merge-two`): "A new rank-4 skill each": every hero a fourth version of its skill with its own name, as tiers 2 and 3 have.
+- **Status:** done on the branch; waiting for the owner.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/rank4-skills`, `/home/user/rank4-skills` (from main 0.218.0); PR none.
+- **Allowed files or systems:** `src/sim/tierSkills.ts` (the tier 4 entries, `TOP_TIER`, the `cleanse` rider), `src/codexView.ts` and `src/menuHeroes.ts` (a "Tier 4" line), `tools/balance.ts` (`--tier-cap`), new `tools/rank4/`, `tools/fxlab/audit.ts` (a Tier 4 column), `test/tier-skills.test.ts`, `docs/notes/rank4-skills.md`, `docs/samples/rank4-skills-*.png`. Not `run.ts`'s merging, `MAX_GRADE`, `GRADE_MULT` or the merge UI.
+- **Completion criteria:** 45 named tier 4 skills a step past tier 3; grade 4 and up casts them whatever `MAX_GRADE` is; grade 3 fights unchanged; parity of the tier 4 skills measured; typecheck, full tests, web build; the hero card at three sizes.
+- **Validation and handoff:** [notes](notes/rank4-skills.md).
+
 ### STARTER-KING — Two fixed starter packs of simple heroes; the classic king is the default ruler
 
 - **Goal:** the owner's asks: "The 3 starter packs should be reduced to 2 starter packs that are always the same and are simple characters."; "The default king should be the stereotypical man king."; and (added) "The animations for the kings on the throne is weird. The thrones move around too much. Make them stable and give them a simple idle animation."
