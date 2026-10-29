@@ -27,3 +27,18 @@ for i, name in enumerate(['limestone', 'velvet', 'masonry', 'paving']):
                            (x + 1) * materials.width // 2, (y + 1) * materials.height // 2))
     tile.resize((128, 128), Image.Resampling.LANCZOS).save(out / f'{name}.png', optimize=True)
 print('Cut nine sprites and four materials.')
+garden = Image.open('tools/stand/generated/ornate-garden.png').convert('RGBA')
+# The garden source uses unequal object padding: explicit source bounds avoid
+# including the next row's ivy/banner tips in the grass and rose crops.
+garden_crops = [
+    ('grass', 128, (8, 8, 553, 553)),
+    ('roses', 76, (610, 0, 1254, 575)),
+    ('ivy', 108, (0, 580, 627, 1254)),
+    ('banner', 118, (627, 580, 1254, 1254)),
+]
+for name, height, bounds in garden_crops:
+    sprite = garden.crop(bounds)
+    sprite = sprite.convert('RGB') if name == 'grass' else sprite.crop(sprite.getchannel('A').getbbox())
+    size = (128, 128) if name == 'grass' else (round(sprite.width * height / sprite.height), height)
+    sprite.resize(size, Image.Resampling.LANCZOS).save(out / f'{name}.png', optimize=True)
+print('Cut garden material, planter, ivy and banner.')

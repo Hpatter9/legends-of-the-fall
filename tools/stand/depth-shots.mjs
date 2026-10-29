@@ -1,5 +1,6 @@
 // Room-detail review: all four halls at each portrait size and with reduced motion.
 // npm run web first. Set CHROMIUM_PATH if Chromium is outside the usual location.
+import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
@@ -51,6 +52,21 @@ try {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.waitForTimeout(500);
   await page.screenshot({ path: 'docs/samples/stand-depth-reduced-393x852.png' });
+  // Change the real Options selection while Last Stand is open, then inspect its atlas.
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.evaluate(() => { window.__standReviewSources = []; });
+  for (let i = 0; i < 8; i++) {
+    await page.evaluate(() => document.getElementById('hmGear').click());
+    await page.locator('.rulerChoice').nth(i).click();
+    const selected = await page.locator('.rulerChoice').nth(i).getAttribute('aria-label');
+    await page.locator('#settingsClose').click();
+    await page.waitForTimeout(450);
+    assert.equal(await page.locator('.stKing small').innerText(), selected.split(',')[0]);
+    await page.evaluate(() => window.__standReviewSources.push(window.__game.stand.hall.king.texture.source));
+    if (i === 0) await page.screenshot({ path: 'docs/samples/stand-depth-selected-ruler-393x852.png' });
+  }
+  assert.equal(await page.evaluate(() => new Set(window.__standReviewSources).size), 8);
+  console.log('All eight Options choices use distinct Last Stand ruler atlases.');
   console.log(JSON.stringify({ errors }));
   if (errors.length) process.exitCode = 1;
 } finally { await browser.close(); server.close(); }
