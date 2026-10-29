@@ -62,7 +62,7 @@ export const auraGuard = (b: Battle, u: Unit): number => (u.auraGuard && u.auraG
 /** Every tick: auras run out, and those due act on the fighters inside them. */
 export function tickAuras(b: Battle, out: BattleEvent[]): void {
   const auras = b.auras;
-  if (!auras?.length) return;
+  if (!auras) return;
   // (an attack lift runs out with the aura that gave it)
   for (const u of b.units)
     if (u.auraAtk && u.auraAtk.until <= b.t) {
@@ -70,6 +70,11 @@ export function tickAuras(b: Battle, out: BattleEvent[]): void {
       delete u.auraAtk;
     }
   b.auras = auras.filter((a) => a.until > b.t && auraCentre(b, a));
+  // (the table goes once its last aura and the last lift it gave are gone, so a fight with none does nothing each tick)
+  if (!b.auras.length && !b.units.some((u) => u.auraAtk)) {
+    delete b.auras;
+    return;
+  }
   for (const a of b.auras) {
     if (a.next > b.t) continue;
     a.next = b.t + a.every;

@@ -758,7 +758,7 @@ function stepOnce(b: Battle): BattleEvent[] {
   b.pending.sort((x, y) => x.at - y.at);
   while (b.pending.length && b.pending[0].at <= b.t) settle(b, b.pending.shift()!, out);
   tickStatus(b, out);
-  if (b.walls?.length || b.auras?.length) tickToolkit(b, out);
+  if (b.walls?.length || b.auras) tickToolkit(b, out);
   tickRift(b, out);
   if (b.groundFx && b.t % 1000 === 0) groundTick(b, out);
   if (b.board.hazards) tickHazards(b, out);

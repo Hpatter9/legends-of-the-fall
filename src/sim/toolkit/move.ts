@@ -85,7 +85,8 @@ const free = (b: Battle, at: At, f: Unit): boolean => {
  *  stops beside it. */
 export function previewMove(b: Battle, by: Unit, f: Unit, way: number, n: number, how: MoveHow): MovePlan | undefined {
   const m = movable(f);
-  if (m === 'no' || n <= 0) return undefined;
+  // (no friendly fire: a fighter never shoves, drags or throws one of its own side; a swap or a charge moves friends on purpose)
+  if (m === 'no' || n <= 0 || (f !== by && f.side === by.side)) return undefined;
   if (m === 'boss') {
     if (how === 'launch') {
       how = 'shove';

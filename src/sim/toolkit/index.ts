@@ -18,5 +18,5 @@ export * from './score';
 /** Every tick: walls and auras (nothing to do until one is up). */
 export function tickToolkit(b: Battle, out: BattleEvent[]): void {
   if (b.walls?.length) tickWalls(b, out);
-  if (b.auras?.length) tickAuras(b, out);
+  if (b.auras) tickAuras(b, out);
 }
