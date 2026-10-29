@@ -206,7 +206,7 @@ export const ARMIES: readonly Army[] = [
     area: 'volcano',
     lands: ['volcano', 'desert'],
     waves: waves(ramp(['hellImp', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon'], 13), { 8: ['devilLeader', 'hellImp', 'hellDemon', 'hellImp'], 15: ['demonLord', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon', 'hellImp'] }),
-    start: 11, // (LATE-RETUNE: 9.4 until two of a kind merged, MERGE-TWO, and made the late game easy, `docs/notes/late-retune.md`; was 3.01: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 5.67 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`; 10 until STATUS-FX's ailments, whose boss rules and fire-proof imps made it harder)
+    start: 10.2, // (LATE-RETUNE: 9.4 until two of a kind merged, MERGE-TWO, and made the late game easy, `docs/notes/late-retune.md`; was 3.01: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 5.67 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`; 10 until STATUS-FX's ailments, whose boss rules and fire-proof imps made it harder)
     xpStart: 3.01,
     tierStart: 1.64,
     growth: 0.05,
@@ -225,7 +225,7 @@ export const ARMIES: readonly Army[] = [
     area: 'shrine',
     lands: ['shrine', 'forest'],
     waves: waves(ramp(['yokaiFox', 'yokaiCrow', 'yokaiMonk', 'yokaiWitch', 'yokaiSeer', 'yokaiFox', 'yokaiMonk', 'yokaiCrow', 'yokaiWitch'], 13), { 8: ['nineTails', 'yokaiFox', 'yokaiWitch', 'yokaiCrow'], 15: ['oniKing', 'yokaiMonk', 'yokaiWitch', 'yokaiSeer', 'yokaiFox', 'yokaiCrow'] }),
-    start: 13.35, // (LATE-RETUNE: 12.5 until two of a kind merged, MERGE-TWO, and its bosses stronger, `docs/notes/late-retune.md`; it stays under the Golem Forge's; was 3.38: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 7 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
+    start: 12.8, // (LATE-RETUNE: 12.5 until two of a kind merged, MERGE-TWO, and its bosses stronger, `docs/notes/late-retune.md`; it stays under the Golem Forge's; was 3.38: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 7 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
     xpStart: 3.38,
     tierStart: 1.55,
     growth: 0.05,
@@ -244,7 +244,7 @@ export const ARMIES: readonly Army[] = [
     area: 'forge',
     lands: ['forge', 'crystal'],
     waves: waves(ramp(['stoneGolem', 'ironGolem', 'crystalGolem', 'magmaGolem', 'stoneGolem', 'ironGolem', 'magmaGolem'], 13), { 8: ['sapphireColossus', 'stoneGolem', 'crystalGolem', 'ironGolem'], 15: ['forgeTitan', 'ironGolem', 'magmaGolem', 'crystalGolem', 'stoneGolem', 'magmaGolem'] }),
-    start: 13.4, // (LATE-RETUNE: 12.7 until two of a kind merged, MERGE-TWO, `docs/notes/late-retune.md`; was 3.63: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 7.1 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
+    start: 13.7, // (LATE-RETUNE: 12.7 until two of a kind merged, MERGE-TWO, `docs/notes/late-retune.md`; was 3.63: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 7.1 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
     xpStart: 3.63,
     tierStart: 1.7,
     growth: 0.05,
