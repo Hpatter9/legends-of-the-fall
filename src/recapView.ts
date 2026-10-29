@@ -102,7 +102,7 @@ export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, o
       const mvpDef = w.mvp ? UNITS[w.mvp] : undefined;
       if (mvpDef) {
         const face = el('i', 'rcWaveMvp');
-        face.title = `MVP: ${mvpDef.name}`;
+        face.title = `MVP: ${heroName(w.mvp!)}`;
         face.append(portrait(formOf(mvpDef, 1), 64, 1));
         chip.append(face);
       }

@@ -127,7 +127,8 @@ its source), so `game.js` does not grow for them: the 23 re-toned PNGs are 9.05 
   hair; the tool and the table name the same heroes; every sheet the hero is drawn from has its re-toned file, the same
   size as the source, holding every frame, and bundled in its place; every hero has a unique one-word name of 9 letters
   at most that is not its class; `heroName` / `heroTitle`).
-- Full `npm test`: 1432 tests, 1432 pass, 0 fail.
+- Full `npm test` (after merging main 0.224.0): 1446 tests, 1446 pass, 0 fail.
+- `game.js`: 152.66 MB, against 153.01 MB for main 0.224.0 built the same way (the re-toned sheets replace their sources).
 - `npm run web`, then `node tools/heritage/shots.mjs` at 393x852, 360x780 and 412x915: every roster card's name and every
   hero bar name fits its tile, the bar shows "Kwame" with "Kwame · Knight" in the tooltip, no page errors.
 - Screens: [home overlook](../samples/heritage-home.png) ([its party, enlarged](../samples/heritage-home-party.png)), [roster](../samples/heritage-roster.png)
