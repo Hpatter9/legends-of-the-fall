@@ -22,6 +22,8 @@ import { atPlace, musicOf, type BattleEnd, type MusicState } from './battleMusic
 import { bakeTrack } from './musicBake';
 import { SCENE_TRACKS, type Track } from './musicScore';
 import { Mixer, cuesFor, type Cue } from './soundRules';
+import { SpellBank } from './spellBank';
+import { coveredBySpells, spellParts } from './spellSfx';
 
 const MUSIC_LEVEL = 0.22;
 const SFX_LEVEL = 0.35;
@@ -86,6 +88,7 @@ function unlock(): void {
     engine.beds.setScene(wantScene);
   }
   if (engine.core.context.state !== 'running') void engine.core.start();
+  warmSpells();
   if (!engine.music.current) {
     syncMusic();
     // (the fight's track is decoded while the camp's plays, so a fight's music starts at once)
@@ -222,7 +225,12 @@ export function endVictory(): void {
 
 /** Sounds for one tick's battle events (`speed` is the fight's: quieter at ×2). Each is panned by where on the board it happens. Call after stepping the battle `b`. */
 export function playEvents(b: Battle, events: BattleEvent[], speed = 1): void {
+  // (a king's spell plays its own rendered cast and effect once they are decoded, and the plain cues they stand in for are
+  // left out: `spellSfx.ts`)
+  const covered = spellBank?.ready ? coveredBySpells(events) : null;
   for (const e of events) {
+    if (covered && e.kind === 'spell') playSpell(b, e, events, speed);
+    if (covered && (e.kind === 'spell' || covered.has(e))) continue;
     const cues = cuesFor(b, e);
     if (cues.length) {
       const pan = panOfEvent(b, e);
@@ -261,6 +269,34 @@ function cue(name: Cue, speed: number, gain: number, delay: number, pan: number)
   // (a test page can set `window.__sfxLog = []` to see which sounds played)
   (window as unknown as { __sfxLog?: string[] }).__sfxLog?.push(name);
   engine.synth.play(name, engine.core.context.currentTime + 0.01 + delay / 1000, { gain: v.gain, pitch: v.pitch, bus: busOf(name), pan });
+}
+
+/** The king's spells' rendered sounds: loaded on the first tap (a few hundred KB, decoded once). */
+let spellBank: SpellBank | null = null;
+function warmSpells(): void {
+  if (spellBank || !engine) return;
+  spellBank = new SpellBank(engine.core.context, engine.mixer.bus('sfx'));
+  void spellBank.load();
+}
+
+/** A king's spell's own sounds (`spellParts`): each takes its place in the mix (always heard: the player's big moment), is timed
+ *  to the spell's look at the fight's speed, panned to where it lands, and falls back to its synthesised cues if its file is
+ *  missing. Not hushed at ×2, as a hero's blows are. */
+function playSpell(b: Battle, e: Extract<BattleEvent, { kind: 'spell' }>, events: BattleEvent[], speed: number): void {
+  if (!engine || !spellBank || engine.core.context.state !== 'running' || muted) return;
+  const pace = Math.max(1, speed);
+  for (const p of spellParts(b, e, events)) {
+    const delay = p.delay / pace;
+    if (!spellBank.has(p.file)) {
+      for (const q of p.fallback) cue(q.cue, speed, q.gain ?? 1, delay + (q.delay ?? 0) / pace, p.pan);
+      continue;
+    }
+    const v = mixer.request(p.role === 'cast' ? 'kingCast' : 'kingSpell', performance.now() + delay, 1, p.gain);
+    if (!v) continue;
+    (window as unknown as { __sfxLog?: string[] }).__sfxLog?.push(`sfx:${p.file}`);
+    // (a touch of the mix's random pitch, so a shower's five falls or a chain's leaps are not all alike)
+    spellBank.play(p.file, engine.core.context.currentTime + 0.01 + delay / 1000, v.gain, p.pan, 1 + (v.pitch - 1) * 0.4);
+  }
 }
 
 /** The cinematics' music: a scene's id to the track it plays (a scene with no score of its own has none). */

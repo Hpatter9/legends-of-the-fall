@@ -414,6 +414,10 @@ export const SOUNDS: Record<Cue, (s: Voices, t: number) => void> = {
     s.clang(t + 0.08, 1650, 0.35, 0.12);
     s.hiss(t, 0.25, 3000, 'highpass', 0.12, 1500);
   },
+  // (the king's spells' own sounds are rendered files, `spellBank.ts`; these two only name their place in the mix, and
+  // sound like a plain spell if played by name)
+  kingCast: (s, t) => SOUNDS.spell(s, t),
+  kingSpell: (s, t) => SOUNDS.spell(s, t),
 
   // blows: the swing
   swingLight: (s, t) => {

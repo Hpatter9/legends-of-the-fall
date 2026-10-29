@@ -16,6 +16,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 **STAND-005 / Room artwork replacement** — Owner: current art chat. Branch: `art/stand-room-depth`, worktree: `/workspace/legends-of-the-fall`. Scope: Last Stand renderer, new generated production artwork, selected-ruler integration, ruler self-defence in `standAi.ts`/`units.ts`, affected tests, art credits, visual tooling and notes. Owner rejected the coarse reused assets and explicitly requested new artwork matching the ornate concept, retaining the central king and combat layout. Completion: new room assets visibly integrated in four rooms, selected castle king reused, stable depth sorting, reduced motion, typecheck/build, affected tests and three portrait sizes. Status: artwork and standing ruler defence complete. The selected ruler stands before a separate rear throne and strikes adjacent foes without chasing. Typecheck/build, eight affected test files, the finishing-blow check, three portrait sizes, reduced motion, the current nine ruler choices and event-driven melee pass. No page errors. PR: [#178](https://github.com/Hpatter9/legends-of-the-fall/pull/178), ready for review; main 0.213.0 integrated, retaining its default King and picker. No release or deployment. Handoff: [room artwork](notes/stand-room-depth.md).
 
+### SPELL-SFX — Sound effects for the king's spells
+
+- **Goal:** the owner's ask: "Need to add sound effects for the king spells".
+- **Status:** done on the branch; not merged.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/spell-sfx`, `/home/user/spell-sfx` (from main 0.218.0); PR none.
+- **Allowed files or systems:** new `tools/spell-sfx/` (kit, sounds, render, probe), new `src/sfx/*.opus`, new `src/render/spellSfx.ts`, `spellBank.ts`, `spellSfxManifest.ts`; small hooks in `src/render/sound.ts` (`playEvents`' top, `unlock`), `soundRules.ts` (two mix cues, `spellCues` exported, the meteor's doubled fall), `audioRules.ts` (the pan of a spell cast on no tile), `audioProcessors.ts` (two cue names), `build.mjs` (copies `src/sfx`), `src/standView.ts` (the extra cast chime); `test/spell-sfx.test.ts`; `CREDITS.md`; `docs/notes/spell-sfx.md`.
+- **Completion criteria:** every spell its own cast and effect sound, timed to its look, on the effects bus, panned, muted with the rest, offline, with the synthesised cues as the fallback; typecheck, affected and full tests, web build; every spell cast once in Chromium.
+- **Validation and handoff:** [notes](notes/spell-sfx.md).
+
 ### STARTER-KING — Two fixed starter packs of simple heroes; the classic king is the default ruler
 
 - **Goal:** the owner's asks: "The 3 starter packs should be reduced to 2 starter packs that are always the same and are simple characters."; "The default king should be the stereotypical man king."; and (added) "The animations for the kings on the throne is weird. The thrones move around too much. Make them stable and give them a simple idle animation."

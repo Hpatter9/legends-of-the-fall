@@ -847,7 +847,7 @@ export class StandView {
       const tile = this.tileAtScreen(x, e.clientY);
       if (!tile || !this.s) return;
       if (this.spell) {
-        if (castSpell(this.s.b, this.spell, tile[0], tile[1])) { play('spell'); this.hall.react('cast'); }
+        if (castSpell(this.s.b, this.spell, tile[0], tile[1])) this.hall.react('cast'); // (the spell's own cast sound plays from its event: spellSfx.ts)
         this.spell = null;
         this.refreshSpells();
         return;
@@ -1257,7 +1257,7 @@ export class StandView {
         const s = this.s;
         if (!s || (s.phase !== 'wave' && s.phase !== 'break')) return;
         if (sp.target === 'all') {
-          if (castSpell(s.b, id, 0, 0)) { play('spell'); this.hall.react('cast'); }
+          if (castSpell(s.b, id, 0, 0)) this.hall.react('cast'); // (the spell's own cast sound plays from its event: spellSfx.ts)
         } else this.spell = this.spell === id ? null : canAfford(s.b, id) ? id : this.spell;
         this.refreshSpells();
       });
