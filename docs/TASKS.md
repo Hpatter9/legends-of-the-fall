@@ -16,6 +16,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 **STAND-005 / Room artwork replacement** — Owner: current art chat. Branch: `art/stand-room-depth`, worktree: `/workspace/legends-of-the-fall`. Scope: Last Stand renderer, new generated production artwork, selected-ruler integration, ruler self-defence in `standAi.ts`/`units.ts`, affected tests, art credits, visual tooling and notes. Owner rejected the coarse reused assets and explicitly requested new artwork matching the ornate concept, retaining the central king and combat layout. Completion: new room assets visibly integrated in four rooms, selected castle king reused, stable depth sorting, reduced motion, typecheck/build, affected tests and three portrait sizes. Status: artwork and standing ruler defence complete. The selected ruler stands before a separate rear throne and strikes adjacent foes without chasing. Typecheck/build, eight affected test files, the finishing-blow check, three portrait sizes, reduced motion, the current nine ruler choices and event-driven melee pass. No page errors. PR: [#178](https://github.com/Hpatter9/legends-of-the-fall/pull/178), ready for review; main 0.213.0 integrated, retaining its default King and picker. No release or deployment. Handoff: [room artwork](notes/stand-room-depth.md).
 
+### SPELL-SFX — Sound effects for the king's spells
+
+- **Goal:** the owner's ask: "Need to add sound effects for the king spells".
+- **Status:** done on the branch; not merged.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/spell-sfx`, `/home/user/spell-sfx` (from main 0.218.0); PR none.
+- **Allowed files or systems:** new `tools/spell-sfx/` (kit, sounds, render, probe), new `src/sfx/*.opus`, new `src/render/spellSfx.ts`, `spellBank.ts`, `spellSfxManifest.ts`; small hooks in `src/render/sound.ts` (`playEvents`' top, `unlock`), `soundRules.ts` (two mix cues, `spellCues` exported, the meteor's doubled fall), `audioRules.ts` (the pan of a spell cast on no tile), `audioProcessors.ts` (two cue names), `build.mjs` (copies `src/sfx`), `src/standView.ts` (the extra cast chime); `test/spell-sfx.test.ts`; `CREDITS.md`; `docs/notes/spell-sfx.md`.
+- **Completion criteria:** every spell its own cast and effect sound, timed to its look, on the effects bus, panned, muted with the rest, offline, with the synthesised cues as the fallback; typecheck, affected and full tests, web build; every spell cast once in Chromium.
+- **Validation and handoff:** [notes](notes/spell-sfx.md).
+
 ### STARTER-KING — Two fixed starter packs of simple heroes; the classic king is the default ruler
 
 - **Goal:** the owner's asks: "The 3 starter packs should be reduced to 2 starter packs that are always the same and are simple characters."; "The default king should be the stereotypical man king."; and (added) "The animations for the kings on the throne is weird. The thrones move around too much. Make them stable and give them a simple idle animation."
@@ -275,6 +285,7 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 | ID | Task | Result | Reference |
 | --- | --- | --- | --- |
+| AUDIO-BATTLE | Battle music stays on and steady through a battle; victory music when it is won | Done, awaiting review: one track a battle (`trackOfRun`, kept wave to wave, boss waves included; no drop to the deploy track between waves, no sting between waves); the tension low-pass, swell, pace and rumble removed; a won battle ends on the victory fanfare leading into the triumph loop at a lower bed under the results until they are left; defeat sting as before. Typecheck, 37 affected tests, full suite 1415/1415, build, an army's last two waves played at x2 in Chromium at 393x852 | [Note](notes/battle-music.md), branch `claude/battle-music` |
 | ULT-CHARGE | Ultimates used once or twice a battle | Released as 0.213.0 (owner: keep ultimates at full strength, answer with tougher foes): the meter starts each fight 60 full and fills about 2.5x as fast, ultimates at full strength (none weaker than main), parity by meter speed at stage 78 (spread 5.7); the extra power answered by tougher foes only where ultimates are open: the five late armies' Normal `start` and `tierLift`, Legendary x2.8 and Mythic x2.6 (`Tier.answer`, XP taken back out), the Last Stand's late climb, the Calamity's last map, the daily for levelled saves. Army pace, first-army stars, Stand, Calamity and daily back near main; full suite 1377/1377, build, three phone sizes | [Note](notes/ult-charge.md), branch `claude/ult-charge` |
 | AUDIO-150 | Recorded combat sounds and a quieter, cleaner battle mix | Released as 0.186.0; the sounds' source (given as CC0) still needs naming in CREDITS.md | PR #150 |
 | AUDIO-147 | Battle music opens on the combat downbeat; the camp's theme plays across all home tabs | Released as 0.184.0; the loop start was moved to 5.68 s (bar 4) so the loop stays whole bars and joins on the beat | PR #147 |

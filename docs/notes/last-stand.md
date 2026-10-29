@@ -241,7 +241,7 @@ drawing is on the GPU on a phone; this machine cannot measure that, so a real-ph
 
 ## After merging main 0.153
 
-- **Music:** the Last Stand uses `fightTrack` and `fightLevel` (`epicMusic.ts`): the boss track on a boss wave, else one of the three battle tracks by depth (waves 1-9, 10-24, 25 up); the track changes only when a wave asks for another. Leaving mid-wave calls `endFight()` (new in `sound.ts`) so the place's music returns.
+- **Music:** (changed, `battle-music.md`) one battle track for the whole run, `standTrack(seed)` in `battleMusic.ts`, kept through boss waves and breaks; the king's fall rings the defeat sting. Leaving mid-wave calls `endFight()` (new in `sound.ts`) so the place's music returns.
 - **Scenes:** the tower's talking scenes (the `spire` moments at 10, 25 and 50) now fire from the Last Stand's waves 10, 25 and 50, in the break after the wave, and the run waits while one plays. `eliteMet` and the other elite scenes belong to the Calamity's elites and are left as they are.
 - Screenshots use `--use-angle=swiftshader` (`tools/stand/lib.mjs`).
 

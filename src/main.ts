@@ -92,8 +92,9 @@ import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, framing, PAUSE_MS, settle, viewFor,
 import { pinchZoom, wheelZoom, zoomAbout, zoomLimits } from './render/fightCam';
 import { titleOf } from './render/bossTitles';
 import { at, depth, FOOT, HH, landmarkBounds, rawAt, setFrame, TH, TW } from './render/iso';
-import { bindDuck, bindMute, play, playEvents, setAct, setScene, setup, startFight } from './render/sound';
-import { fightLevel, type MapKind } from './render/epicMusic';
+import { bindDuck, bindMute, endVictory, endWave, play, playEvents, setAct, setScene, setup, startFight } from './render/sound';
+import type { MapKind } from './render/epicMusic';
+import { endOfFight, trackOfRun } from './render/battleMusic';
 import { sceneOf } from './render/audioRules';
 import { colLeft, viewH, viewW } from './viewport';
 import { onDevGrant, onSettings, openSettings, setSetting, settings } from './settings';
@@ -796,8 +797,8 @@ class Game {
     // (the opening grumble belongs to a new fight)
     foeGrumbles(this.b.units.filter((u) => u.side === 'foe' && !UNITS[u.def].summon).length, (i) => this.anchorOfFoe(i));
     this.stats = startStats(this.b.units);
-    // (the music: a boss, a Calamity fight, or one of three battle tracks by how hard the fight runs)
-    startFight(isBossRun(this.run), { calamity: this.run.mode?.kind === 'calamity', level: fightLevel(this.run.stage, { elite: this.run.tower?.cur?.kind === 'elite', waves: waveArmyOf(this.run)?.waves.length }) });
+    // (the music: the battle's one track, the same for every wave of an army or a daily, `battleMusic.ts`)
+    startFight(trackOfRun(this.run));
     startSynergies(countTraits(kindsOf(this.b.units)), this.b.combo, duoCombosOf(kindsOf(this.b.units)));
     this.chosen = null;
     this.boardView.clearMarks();
@@ -891,6 +892,9 @@ class Game {
         // (a fighter a skill called up mid-fight has no sprite yet: make it, with its entrance)
         if (b.units.length !== this.sprites.size) this.syncSprites();
         playEvents(b, events, this.speed);
+        // (the battle's music: on through a wave won with more to come or a fall a heart revives; the victory music at a battle won, the defeat sting at one lost)
+        const end = events.find((e) => e.kind === 'end');
+        if (end) endWave(endOfFight(this.run, end.won));
         // (Duchess has wandered on: the first time, her cinematic (not in an auto-replay), then her card; and her bubbles as she fights)
         if (events.some((e) => e.kind === 'duchess')) void this.queueScene({ kind: 'duchessJoins' }).then(() => showDuchessCard(() => $('panel').getBoundingClientRect().top));
         if (this.b.duchess) duchessFightSays(b, events, () => this.anchorOfKind('duchess'));
@@ -1808,6 +1812,8 @@ class Game {
 
   /** The result screen's way on, once any recap has been seen. */
   private afterResult(): void {
+    // (a won battle's victory music ends with its results)
+    endVictory();
     // (an army's last boss has fallen: the next army's unlock moment, if it opened one, then the armies)
     if (this.run.cleared && this.run.mode?.kind === 'daily') {
       $('result').hidden = true;
@@ -1887,7 +1893,7 @@ class Game {
       r.started = true;
       if (this.b.phase === 'fight') {
         this.acc = 0;
-        startFight(isBossRun(this.run), { calamity: this.run.mode?.kind === 'calamity', level: fightLevel(this.run.stage, { elite: this.run.tower?.cur?.kind === 'elite', waves: waveArmyOf(this.run)?.waves.length }) });
+        startFight(trackOfRun(this.run));
         this.refresh();
         // (the party is back on its feet: one of them says so)
         if (!this.auto) revivedQuip(this.b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def), (k) => this.anchorOfKind(k));
