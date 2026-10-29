@@ -1221,8 +1221,9 @@ const FORM_HEAL = 0.2;
 function demonForm(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!foesOf(b, me).some((f) => apart(me, f) <= 7)) return false;
   if (me.form === undefined) me.power = (me.power ?? 1) * FORM_MULT;
-  me.form = { until: b.t + durOf(me, FORM_MS) };
-  mendUnit(me, me.maxHp * FORM_HEAL, out);
+  // (its tuned strength lengthens the form and deepens the heal, as the other ultimates' stuns and heals scale: ULT-CHARGE)
+  me.form = { until: b.t + durOf(me, Math.round(FORM_MS * Math.sqrt(castPower()))) };
+  mendUnit(me, me.maxHp * FORM_HEAL * castPower(), out);
   out.push({ kind: 'frenzy', by: me.id, n: 3 });
   return true;
 }

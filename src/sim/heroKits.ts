@@ -71,9 +71,6 @@ export const ULT_FILL = {
   TAKEN: 64,
   PER_SEC: 1.6,
   START: 60,
-  /** Every hero's ultimate strength, times its own `tuned.power`: the meter's faster turn (about four ultimates where there was one) is paid for here,
-   *  once for the roster, so the heroes' ultimates keep their sizes against each other and the late armies their pace. */
-  POWER: 0.5,
   /** The Last Stand's heroes fill at this share of the pace (`Unit.ultPace`): its waves follow on from each other in one long battle, so the meter
    *  carries from wave to wave and fills a little slower, about once a wave, keeping the Stand's pace (`stand.test.ts`) where its own tuning put it. */
   STAND: 0.5,
@@ -281,7 +278,7 @@ function reserve(b: Battle, me: Unit, hk: HeroKit, n: 1 | 2): boolean {
 export function castHero(b: Battle, me: Unit, hk: HeroKit, out: BattleEvent[]): boolean {
   const ult = ultimateOf(me);
   if (ult && (me.charge2 ?? 0) >= ult.need && (me.ultOrder !== undefined || b.autoUlt !== false)) {
-    if (powered(b, me, ult, (1 + tal(me, 'ultPow')) * (ultTune(me, ult)?.power ?? 1) * ULT_FILL.POWER - 1, out)) {
+    if (powered(b, me, ult, (1 + tal(me, 'ultPow')) * (ultTune(me, ult)?.power ?? 1) - 1, out)) {
       me.charge2 = (me.charge2 ?? 0) - ult.need;
       delete me.ultOrder;
       return began(b, me, ult, out, 'ult');
