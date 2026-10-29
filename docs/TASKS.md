@@ -14,6 +14,8 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+**SUMMON-ARRIVAL / Hero arrival showcase** — Owner: Codex. Branch: `design/hero-arrival-showcase`, worktree: `/workspace/legends-of-the-fall`. Scope: first-time reveal presentation, foreground sprite attack then idle, existing artwork, affected visual checks and notes. Owner approved the visual concept and requested the sprite in front performing a small attack then idling. Completion: stronger charge/impact/payoff, one attack then idle, skip/queue/save/reduced-motion/offline preserved, typecheck/build, affected tests and all three portrait sizes. Status: implemented and validated; ready for owner review. Typecheck/build, four affected test files, all three portrait sizes, reduced motion, varied heroes, a real stone summon and offline reload passed with no page errors. [Handoff](notes/summon-arrival.md), [implemented preview](samples/summon-arrival/revealed-393.png). PR: [#193](https://github.com/Hpatter9/legends-of-the-fall/pull/193). Latest main integrated; no merge to main or deployment.
+
 **STAND-005 / Room artwork replacement** — Owner: current art chat. Branch: `art/stand-room-depth`, worktree: `/workspace/legends-of-the-fall`. Scope: Last Stand renderer, new generated production artwork, selected-ruler integration, ruler self-defence in `standAi.ts`/`units.ts`, affected tests, art credits, visual tooling and notes. Owner rejected the coarse reused assets and explicitly requested new artwork matching the ornate concept, retaining the central king and combat layout. Completion: new room assets visibly integrated in four rooms, selected castle king reused, stable depth sorting, reduced motion, typecheck/build, affected tests and three portrait sizes. Status: artwork and standing ruler defence complete. The selected ruler stands before a separate rear throne and strikes adjacent foes without chasing. Typecheck/build, eight affected test files, the finishing-blow check, three portrait sizes, reduced motion, the current nine ruler choices and event-driven melee pass. No page errors. PR: [#178](https://github.com/Hpatter9/legends-of-the-fall/pull/178), ready for review; main 0.213.0 integrated, retaining its default King and picker. No release or deployment. Handoff: [room artwork](notes/stand-room-depth.md).
 
 ### HERITAGE-LOOKS — A varied cast: re-toned hero sprites, every hero named, a prompt for new paintings
@@ -85,6 +87,15 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Allowed files or systems:** `src/sim/tierSkills.ts` (the tier 4 entries, `TOP_TIER`, the `cleanse` rider), `src/codexView.ts` and `src/menuHeroes.ts` (a "Tier 4" line), `tools/balance.ts` (`--tier-cap`), new `tools/rank4/`, `tools/fxlab/audit.ts` (a Tier 4 column), `test/tier-skills.test.ts`, `docs/notes/rank4-skills.md`, `docs/samples/rank4-skills-*.png`. Not `run.ts`'s merging, `MAX_GRADE`, `GRADE_MULT` or the merge UI.
 - **Completion criteria:** 45 named tier 4 skills a step past tier 3; grade 4 and up casts them whatever `MAX_GRADE` is; grade 3 fights unchanged; parity of the tier 4 skills measured; typecheck, full tests, web build; the hero card at three sizes.
 - **Validation and handoff:** [notes](notes/rank4-skills.md).
+### AURA-ART — Generated painted ascension effects
+
+- **Owner:** Codex. **Branch / worktree:** `art/painted-ascension-auras`, `/workspace/legends-of-the-fall`.
+- **Goal:** replace outdated pixel aura assets with generated painted effects for all 13 classes and both ascension levels.
+- **Scope:** aura source artwork, shipped atlas/import tooling as needed, credits, visual evidence and handoff. Preserve class identities, placement, gameplay, saves, reduced motion and offline support.
+- **Status:** implemented and validated; ready for review. Owner approved the generated painted proposal. No merge or deployment requested.
+- **Completion:** approved visual direction, all 80 aura parts replaced, typecheck/build and aura tests pass, affected screens reviewed at three portrait sizes.
+- **Validation:** typecheck, web build and all four affected test files passed. All 480 frames audited; all 13 classes at both steps checked in Pixi. Camp/roster/dossier and representative battle fixtures passed at all three portrait sizes, reduced motion and battery saver, with zero page errors. Offline reload passed at 393×852.
+- **Handoff:** [painted ascension auras](notes/painted-ascension-auras.md), [all-class comparison](samples/painted-auras/all-classes.jpg).
 
 ### STARTER-KING — Two fixed starter packs of simple heroes; the classic king is the default ruler
 

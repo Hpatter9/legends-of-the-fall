@@ -1,5 +1,9 @@
 # Awakened auras: brief for painted art (AWAKEN-002)
 
+This brief has now been used for the owner's approved generated replacement. See
+[painted ascension auras](painted-ascension-auras.md) for the current atlas, sources and review evidence.
+The original format and planning notes follow.
+
 The awakened auras ship with strips of the **5000 Pixel Effects** pack. The owner may later want them repainted in the
 style of the FX-003 painted combat effects (`docs/notes/individual-ability-effects.md`, `src/art/fx/abilities/`). This
 brief says exactly what to paint so that the painted atlas can replace the pack strips **with no code change**.
