@@ -114,14 +114,14 @@ All Craftpix, copied one sprite or layer at a time; no PixelLab. Ground tops and
 
 ## Awakened auras (`src/art/fx/aura/`)
 
-- `atlas.png`: 70 strips (32px frames, six or eight each) of the **5000 Pixel Effects** pack by blueberry
-  (https://blueberry-assets.itch.io), copied unchanged from `pixel-effects/sprites/<effect>/sheet-32.png` in the private
-  assets repository and packed a strip a row by `tools/awaken/aura-sheets.py` (`atlas.json` gives each aura part's
-  strip; `tools/awaken/aura-pack.json` which strip each part uses): the ground circles, runes, glyphs, shields, rising
-  auras, sparkles, orbs, flames, smoke, vortices, pillar, cuts, slashes and dashes the class auras of awakened heroes
-  are made of (`src/render/auraStyles.ts`, `docs/notes/awaken-auras.md`). The pack's licence allows use in games; the
-  raw files are not redistributed. A painted replacement (`docs/notes/awaken-auras-art-brief.md`) would be credited
-  here instead.
+- `atlas.png`: original smooth painted effects generated with OpenAI image generation in October 2026 for the
+  owner's approved ascension aura concept. Thirteen class sheets supply 80 separate component loops, six 96px
+  frames each, for both ascension levels. Shield facets, bronze bastions, crimson cuts, wind, gunsmoke, arcane runes,
+  constellations, holy light, feral flames, shadows, moonlit mist, leaves and amber heat retain their class identities.
+- `tools/awaken/import-aura-art.py` slices the generated grids, normalises their cells and feathers boundaries before
+  packing the shipped atlas. Original sources remain unchanged in the art workspace; filenames and hashes are in
+  `tools/awaken/painted-sources.json`. These replace the aura atlas's former **5000 Pixel Effects** strips by blueberry;
+  that pack's other uses and credits remain. See `docs/notes/painted-ascension-auras.md`.
 
 ## Summon tarot cards (SUMMON-TAROT, phase A mock-up)
 

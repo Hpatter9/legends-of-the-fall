@@ -1,5 +1,9 @@
 # Class auras for awakened heroes (AWAKEN-002)
 
+**Artwork update:** the pack strips described below have been replaced by generated painted class effects.
+See [painted ascension auras](painted-ascension-auras.md) for the current artwork, provenance and validation.
+The original implementation and approval record below remains for reference.
+
 The owner's ask: "I want to update the ascended look. The colour change is kind of dumb. Let's do an aura when they
 ascend, and a stronger aura when they ascend x2", and then: "the aura depends on the type of character class."
 
