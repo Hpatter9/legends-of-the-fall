@@ -16,6 +16,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 **STAND-005 / Room artwork replacement** — Owner: current art chat. Branch: `art/stand-room-depth`, worktree: `/workspace/legends-of-the-fall`. Scope: Last Stand renderer, new generated production artwork, selected-ruler integration, ruler self-defence in `standAi.ts`/`units.ts`, affected tests, art credits, visual tooling and notes. Owner rejected the coarse reused assets and explicitly requested new artwork matching the ornate concept, retaining the central king and combat layout. Completion: new room assets visibly integrated in four rooms, selected castle king reused, stable depth sorting, reduced motion, typecheck/build, affected tests and three portrait sizes. Status: artwork and standing ruler defence complete. The selected ruler stands before a separate rear throne and strikes adjacent foes without chasing. Typecheck/build, eight affected test files, the finishing-blow check, three portrait sizes, reduced motion, the current nine ruler choices and event-driven melee pass. No page errors. PR: [#178](https://github.com/Hpatter9/legends-of-the-fall/pull/178), ready for review; main 0.213.0 integrated, retaining its default King and picker. No release or deployment. Handoff: [room artwork](notes/stand-room-depth.md).
 
+### WAVE-RECAP — A short, see-through card between waves; the detail kept for the end recap
+
+- **Goal:** the owner's asks: "Let's do a shorter recap of a wave and keep most of the info for the end of the battle" and "Make the between wave recap see through and have it show while the units travel to the next wave".
+- **Status:** done on the branch; not merged.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/wave-recap`, `/home/user/wave-recap` (from main 0.220.0); PR none.
+- **Allowed files or systems:** new `src/sim/waveCard.ts`, `src/waveCardView.ts`, `test/wave-recap.test.ts`, `tools/wave-recap/shots.mjs`; `src/sim/runRecap.ts` (optional `waves`, `found`, `noteWave`, `heartsBurned`); `src/recapView.ts` (wave-by-wave strip, spoils, hearts burned); small hooks in `src/main.ts` (settle, refresh's result block, `stepPassing`); `src/index.html` (`#waveNotes`); `src/battleReports.css`; `tools/battle-ui/report-shots.mjs` (the wave-victory step); `docs/notes/wave-recap.md`.
+- **Completion criteria:** a won wave with more to come shows a short, see-through card over the march that leaves by itself; the last card (a loss with no hearts, a cleared run) is short and leads to the full recap, which totals the performance, XP, levels, pay and finds and adds a wave-by-wave strip; the spire and the Calamity unchanged; typecheck, affected and full tests, web build; three portrait sizes in Chromium.
+- **Validation and handoff:** [notes](notes/wave-recap.md).
+
 ### SPELL-SFX — Sound effects for the king's spells
 
 - **Goal:** the owner's ask: "Need to add sound effects for the king spells".

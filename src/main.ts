@@ -12,7 +12,9 @@ import { climbXpView, heroLevel, localBoost } from './sim/climb';
 import { calamityRun } from './sim/modes';
 import { CAL_MAPS } from './sim/calamity';
 import { pickHero } from './calamityView';
-import { noteFightStats, notePayout, recapOf } from './sim/runRecap';
+import { noteFightStats, notePayout, noteWave, recapOf } from './sim/runRecap';
+import { waveHeadline, waveNotes, type WaveMoments } from './sim/waveCard';
+import { drawWaveNotes } from './waveCardView';
 import { showRecap } from './recapView';
 import { campArtReady } from './camp';
 import { comebackTips, type ComebackGo } from './sim/comeback';
@@ -123,6 +125,10 @@ const FOLLOW_IN = 1.7;
 const INTRO_ZOOM = 0.25;
 /** How long the board stays on show after the last kill before the wave recap comes up (ms). */
 const END_WAIT_MS = 2000;
+/** How long the short wave card stays once the march has arrived, how long with no march at all, and its fade (WAVE-RECAP). */
+const PASS_AFTER_MARCH_MS = 1400;
+const PASS_NO_MARCH_MS = 3200;
+const PASS_FADE_MS = 450;
 const STAT_LABELS: Record<(typeof STAT_KEYS)[number], string> = { dealt: 'Dealt', taken: 'Taken', healed: 'Healed', kills: 'Kills' };
 
 /** The spells that hurt foes (their 3x3 shows red). */
@@ -192,6 +198,13 @@ class Game {
   private revive: { t: number; swapped: boolean; started: boolean; fightAt: number; risenAt?: number; line?: { dismiss: () => void } } | null = null;
   /** This fight's loss has had its cinematic asked for (once a fight: `refresh` runs often). */
   private lossScened = false;
+  /** Hearts burned in this wave (WAVE-RECAP: the short card and the end recap's strip say so). */
+  private heartsBurned = 0;
+  /** A won wave with more to come (WAVE-RECAP): its short card rides over the march, see-through, and goes by itself once the party has arrived. `wait` counts the ms since
+   *  nothing held it (the march, a cinematic, the home screen), `marched` whether a march was seen. Null otherwise. */
+  private passing: { wait: number; marched: boolean } | null = null;
+  /** The settled wave's short card (WAVE-RECAP): its number, its count of waves, and the moments worth a line; null for a card that keeps the full report (the spire and the Calamity). */
+  private waveCard: (WaveMoments & { wave: number; of: number | null }) | null = null;
   /** What an army's last settled fight paid (null for any other run). */
   private pay: ArmyPay | null = null;
   /** What a daily's last settled fight paid (null for any other run). */
@@ -439,6 +452,9 @@ class Game {
     this.endWait = 0;
     this.revive = null;
     this.lossScened = false;
+    this.heartsBurned = 0;
+    this.passing = null;
+    $('result').classList.remove('passing', 'leaving');
     for (const id of [...this.run.squad]) {
       const h = heroOf(this.run, id);
       if (!h) continue;
@@ -937,6 +953,7 @@ class Game {
     }
     if (this.intro) this.stepIntro(dt);
     this.stepRevive(dt);
+    this.stepPassing(dt);
     this.refreshBossBar();
     const isWon = b.phase === 'won' || (b.phase !== 'fight' && b.phase !== 'deploy' && !b.units.some((u) => u.side === 'foe' && u.alive));
     const t = b.phase === 'deploy' ? performance.now() : b.phase === 'fight' ? b.t - TICK_MS + this.acc : b.t + this.acc;
@@ -1457,6 +1474,10 @@ class Game {
     $('homeBtn').addEventListener('click', () => this.home.open());
     // (a tap anywhere hurries the heart-burn: the wave starts at once, and the line goes)
     document.addEventListener('pointerdown', () => this.skipRevive(), true);
+    // (a tap on the short card over the march goes straight on to the next wave)
+    $('result').addEventListener('click', (e) => {
+      if (this.passing && !(e.target as HTMLElement).closest('button')) this.passOn();
+    });
     $('next').addEventListener('click', () => {
       if (this.run.over && !this.run.tower && !this.auto) return this.showRunRecap();
       this.afterResult();
@@ -1804,6 +1825,27 @@ class Game {
     return ids.length ? ids : [...this.run.squad];
   }
 
+  /** The short card over the march (WAVE-RECAP): held while the party walks, a cinematic plays or the home screen is up; then a moment to read it
+   *  (longer with no march to watch), a fade, and the next wave's deploy, with no tap. A tap on the card goes on at once. */
+  private stepPassing(dt: number): void {
+    const p = this.passing;
+    const card = $('result');
+    if (!p || card.hidden) return;
+    if (document.body.dataset.move) p.marched = true;
+    if (document.body.dataset.move || this.sceneHold || this.homeUp || this.destinationReveal) return;
+    p.wait += dt;
+    const stay = p.marched ? PASS_AFTER_MARCH_MS : PASS_NO_MARCH_MS;
+    if (p.wait >= stay - PASS_FADE_MS) card.classList.add('leaving');
+    if (p.wait >= stay) this.passOn();
+  }
+
+  /** The short card is done: the next wave. */
+  private passOn(): void {
+    if (!this.passing) return;
+    this.passing = null;
+    this.afterResult();
+  }
+
   /** The result screen's way on, once any recap has been seen. */
   private afterResult(): void {
     // (a won battle's victory music ends with its results)
@@ -1870,6 +1912,7 @@ class Game {
       if (!canRetry(this.run)) return void (this.revive = null);
       // (the heart burning now stays grey from the next draw of the lives)
       const gold = retryWave(this.run)!;
+      this.heartsBurned++;
       play('coinRecycle');
       saveRun(this.run);
       // (the fallen get up off the ground where they lay, their death played backwards: no burst of light, no fresh arrival, FIGHT-FIXES)
@@ -2464,6 +2507,11 @@ class Game {
       const ups = own ? own.ups : gainXp(this.meta, { ...gains, ...bench });
       this.benchNote = Object.keys(bench).length ? { each: Object.values(bench)[0], ups: ups.filter((u) => u.kind in bench) } : null;
       this.noteRecap(gains, ups.filter((u) => !(u.kind in bench)), won);
+      // (WAVE-RECAP: the wave's line for the end recap's strip, and anything it found; the short card takes its moments from the same)
+      noteWave(run, { wave: stage, won, stars: won ? rating.stars : 0, ms: b.t, mvp: mvpOf(this.stats)?.kind, ...(this.heartsBurned ? { hearts: this.heartsBurned } : {}) }, run.found ?? []);
+      const fell = won ? b.units.filter((u) => u.side === 'hero' && u.owner === undefined && !u.alive && !UNITS[u.def].summon).map((u) => u.def) : [];
+      this.passing = !run.tower && won && !run.over && !run.cleared && !this.auto ? { wait: 0, marched: false } : null;
+      this.waveCard = run.tower ? null : { wave: stage, of: fixed ? fixed.waves.length : null, ups, fell, hearts: this.heartsBurned, heartsLeft: retriesLeft(run), found: run.found ?? [] };
       if (!this.auto) {
         const fought = b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def);
         endingQuip(fought, won, (k) => this.anchorOfKind(k));
@@ -2489,9 +2537,14 @@ class Game {
         this.showStars(won ? rating : null);
         drawRunStars($('armyStars'), army && run.cleared ? this.runStars : null, army ? tierOf(tierOfRun(run)).name : '');
         drawOreGain($('oreDrop'), this.oreGain);
-        this.showStats();
-        this.showXp(gains, from, ups, !own);
-        this.showBench();
+        // (WAVE-RECAP: a short card keeps its one-liners; the performance table and each hero's XP wait for the end recap)
+        drawWaveNotes($('waveNotes'), this.waveCard ? waveNotes(this.waveCard) : []);
+        if (this.waveCard) for (const id of ['xp', 'fightStats']) $(id).hidden = true;
+        else {
+          this.showStats();
+          this.showXp(gains, from, ups, !own);
+          this.showBench();
+        }
       }
       saveMeta(this.meta);
       saveRun(run);
@@ -2529,7 +2582,12 @@ class Game {
       $('banner').textContent = daily && run.cleared ? 'Daily cleared!' : daily && run.over ? 'Daily over' : run.cleared ? (cal ? 'Calamity ended!' : 'Army defeated!') : this.bossDown ? `${cal ? 'Map' : 'Act'} ${run.tower!.act - 1} cleared!` : b.phase === 'won' ? (run.tower ? (cal ? 'Spot cleared!' : 'Floor cleared!') : 'Victory!') : 'Defeat';
       $('banner').className = `${b.phase}${daily ? ' daily' : ''}`;
       // (a daily's fall names the wave under its heading: "Daily over · wave 6/10")
-      if (daily && run.over && !run.cleared) $('banner').append(Object.assign(document.createElement('small'), { textContent: `wave ${run.best}/${DAILY_WAVES}` }));
+      // (WAVE-RECAP: a short card's heading names the wave and how it went, "Wave 4 of 15 won", bar the end of a cleared run)
+      const card = this.waveCard;
+      if (card && !run.cleared) {
+        $('banner').textContent = waveHeadline(card.wave, card.of, b.phase === 'won');
+        $('banner').className = b.phase;
+      } else if (daily && run.over && !run.cleared) $('banner').append(Object.assign(document.createElement('small'), { textContent: `wave ${run.best}/${DAILY_WAVES}` }));
       const share = this.pay?.replay ? ' (a replay pays a share)' : practice ? ' (practice)' : '';
       const clear = this.pay?.firstClear ? ' · first clear!' : '';
       $('summary').textContent =
@@ -2542,7 +2600,12 @@ class Game {
             : army
             ? `The ${army.name} holds at wave ${run.best} of ${army.waves.length}. It starts again from wave 1; your heroes keep their levels.`
             : `The run ends at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} summons · +${this.crownGain} crowns${modeNote(run)}`;
-      this.showJoke(b.phase === 'won');
+      // (a short card's pay line drops the finds, which have lines of their own, and the dry aside)
+      if (card && b.phase === 'won') $('summary').textContent = `+${this.gain} gold · +${this.crownGain} crowns${share}${clear} · ${clock(b.t)}`;
+      result.classList.toggle('short', !!card);
+      result.classList.toggle('passing', !!this.passing);
+      if (card) $('joke').hidden = true;
+      else this.showJoke(b.phase === 'won');
       this.drawDailyResult(run);
       $('next').textContent = run.over && !run.tower ? 'Run recap' : run.cleared && run.tower ? 'See the summary' : b.phase === 'won' ? (fixed ? `Next wave (${run.stage})` : run.tower ? 'To the map' : `Next stage (${run.stage})`) : run.tower ? 'See the summary' : 'Home';
     }
