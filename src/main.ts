@@ -24,6 +24,7 @@ import { modeOpen } from './sim/modeUnlock';
 import { spellIconHtml } from './spellIcons';
 import { settleArmyRun, type StarResult } from './sim/armyStars';
 import { settleArmyOres, type ArmyOres } from './sim/awakenMats';
+import { settleArmyDrop, type DropPaid } from './sim/armyDrops';
 import { drawOreGain } from './oreView';
 import { TIERS, tierOf } from './sim/tiers';
 import { formOf, UNITS } from './sim/units';
@@ -1590,7 +1591,7 @@ class Game {
             : `You stopped it. ${a.totals.runs} of ${a.count} runs cleared`;
     const rows = card.querySelector('.asumRows')!;
     rows.replaceChildren();
-    for (const [label, n] of [['Crowns', a.totals.crowns], ['XP', a.totals.xp], ['Chests', a.totals.chests], ['Gear found', a.totals.gear], ...(a.totals.ores ? [['Rift ores', a.totals.ores] as const] : [])] as const) {
+    for (const [label, n] of [['Crowns', a.totals.crowns], ['XP', a.totals.xp], ['Chests', a.totals.chests], ['Gear found', a.totals.gear], ...(a.totals.ores ? [['Rift ores', a.totals.ores] as const] : []), ...(a.totals.drops ? [['Rare drops', a.totals.drops] as const] : [])] as const) {
       rows.append(Object.assign(document.createElement('span'), { textContent: label }), Object.assign(document.createElement('b'), { textContent: String(n) }));
     }
     $('asumOk').textContent = why === 'stopped' ? 'Back to the board' : 'To the armies';
@@ -1613,6 +1614,8 @@ class Game {
   private runStars: StarResult | null = null;
   /** The rift ores the last army fight paid (`awakenMats.ts`), for the result screen. */
   private oreGain: ArmyOres | null = null;
+  /** ARMY-DROPS: the won army wave's rare drop (shards, a tome), or null. */
+  private dropGain: DropPaid | null = null;
 
   private startRun(run: Run): void {
     this.run = run;
@@ -2417,6 +2420,9 @@ class Game {
       this.runStars = settleArmyRun(this.meta, run);
       // (an army's boss waves now and then drop rift ores of its kinds, and a tier's first clear always: `awakenMats.ts`)
       this.oreGain = army ? settleArmyOres(this.meta, army.id, army.waves[stage - 1]?.boss, tierOfRun(run), won, !!this.runStars?.firstClear, run.seed, stage) : null;
+      // (ARMY-DROPS: a won army wave now and then drops shards or a tome, from a side stream of the run's seed and the wave; `window.__forceDrop` = 'shards' | 'tome' | 'both' forces one for screenshots)
+      this.dropGain = army ? settleArmyDrop(this.meta, won, army.waves[stage - 1]?.boss, tierOfRun(run), run.seed, stage, (window as unknown as { __forceDrop?: 'shards' | 'tome' | 'both' }).__forceDrop) : null;
+      if (this.dropGain?.joined && this.dropGain.drop.shards) toastJoined([this.dropGain.drop.shards.kind]);
       // (the stars this run won may have opened an army: its banner rises when the run's result is left)
       if (this.pay) this.pay.unlocked = ARMIES.find((a) => !openBefore.includes(a.id) && armyUnlocked(this.meta, a.id));
       // (a milestone this fight reached may bring in a hero)
@@ -2438,14 +2444,14 @@ class Game {
       this.noteRecap(gains, ups.filter((u) => !(u.kind in bench)), won);
       // (WAVE-RECAP: the wave's line for the end recap's strip, and anything it found; the short card takes its moments from the same)
       // (a calamity's fights are counted one by one, its stage standing still; WAVE-RECAP-2)
-      noteWave(run, { wave: run.mode?.kind === 'calamity' ? recapOf(run).fights : stage, won, stars: won ? rating.stars : 0, ms: b.t, mvp: mvpOf(this.stats)?.kind, ...(this.heartsBurned ? { hearts: this.heartsBurned } : {}) }, run.found ?? []);
+      noteWave(run, { wave: run.mode?.kind === 'calamity' ? recapOf(run).fights : stage, won, stars: won ? rating.stars : 0, ms: b.t, mvp: mvpOf(this.stats)?.kind, ...(this.heartsBurned ? { hearts: this.heartsBurned } : {}) }, [...(this.dropGain?.words ?? []), ...(run.found ?? [])]);
       const fell = won ? b.units.filter((u) => u.side === 'hero' && u.owner === undefined && !u.alive && !UNITS[u.def].summon).map((u) => u.def) : [];
       // (a calamity's map just cleared takes its share of the recap for its map recap, and the next map counts from here)
       closeMapLeg(run);
       // (WAVE-RECAP-2: the spire's floors and the Calamity's fights have the short card too; their decisions, the map and the picks, keep their own screens after it)
       this.passing = won && !run.over && !run.cleared && !this.auto ? { wait: 0, marched: false } : null;
       const title = run.tower ? towerHeadline(run.rift?.expedition ? 'expedition' : run.mode?.kind === 'calamity' ? 'calamity' : 'spire', stage, won, this.bossDown ? run.tower.act - 1 : undefined) : undefined;
-      this.waveCard = { wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [] };
+      this.waveCard = { wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [], ...(this.dropGain ? { drops: this.dropGain.words } : {}) };
       if (!this.auto) {
         const fought = b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def);
         endingQuip(fought, won, (k) => this.anchorOfKind(k));
@@ -2465,6 +2471,7 @@ class Game {
           chests: run.cleared ? (this.runStars?.chests.length ?? 0) + (this.runStars?.firstClear ? 1 : 0) : 0,
           gear: over ? gearCount(run) : 0,
           ores: this.oreGain?.drops.reduce((n, d) => n + d.n, 0) ?? 0,
+          drops: this.dropGain?.words.length ?? 0,
         });
         this.autoWait = 900;
       } else {
