@@ -459,11 +459,11 @@ function timeStop(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 const FIRST_EIGHT = ['kitsune', 'karasu', 'yamabushi', 'gorgon', 'samuraiCommander', 'sage', 'demonSwordsman', 'tyrant'];
 
 /** Each hero's ultimate balance from level 30 up (COMBAT-002, docs/notes/hero-kits.md): `rate`, how fast its meter fills (times the fight's own fill,
- *  `ULT_FILL` in `heroKits.ts`), and `power` (times the caster's attack while it casts, and times `ULT_FILL.POWER`; a stun, guard, shield or heal
- *  scales with it too). Retuned for ULT-CHARGE (docs/notes/ult-charge.md), when the meter came to fill once or twice a fight: the ultimates whose
- *  worth is what they do rather than what they deal (Nine-Tailed Dream, Hall of Mirrors, the Priestess's) are slower and lighter, and a few heroes
- *  whose kits fall behind against the stronger foes a level-30 team now meets (the Samurai, Ninja Monk, Buccaneer, Demon Swordsman) fire theirs more
- *  often. `test/hero-balance-ultimates.test.ts` holds every hero within the band of the roster average with them. */
+ *  `ULT_FILL` in `heroKits.ts`), and `power` (times the caster's attack while it casts; a stun, guard, shield or heal scales with it too). Retuned for
+ *  ULT-CHARGE (docs/notes/ult-charge.md), when the meter came to fill once or twice a fight: no power below what it was (the owner: "make it still
+ *  hit hard"), and the roster held level by the meters, so the ultimates whose worth is what they do rather than what they deal come round less often
+ *  and a few heroes whose kits fall behind against the stronger foes a level-30 team now meets (the Samurai, Ninja Monk, Buccaneer, Demon Swordsman)
+ *  fire theirs more than twice in a long fight. `test/hero-balance-ultimates.test.ts` holds every hero within the band of the roster average with them. */
 const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   knight: { rate: 1.46, power: 0.78 },
   samurai: { rate: 2.33, power: 3.07 },
