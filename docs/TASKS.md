@@ -205,6 +205,14 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Completion criteria:** two-to-merge by hand and by the button, no merging on a hire, a full bench refuses a hire, rank 4 with its own look and step; the army pace, daily and spire kept near main (before/after table in the note); typecheck, full tests, web build; drag-merge and Auto merge at 393x852, 360x780 and 412x915 with no page errors.
 - **Validation and handoff:** [notes](notes/merge-two.md).
 
+### LATE-RETUNE — The late armies tougher again after two of a kind merging
+
+- **Goal:** the owner's "harder late game": the late armies (Infernal Host, Yokai, Golem Forge, the first army's Mythic) take about the tries they took on 0.218.0, before MERGE-TWO, through the armies' own strength; the order kept (Infernal just before the first army's 11 stars, Yokai and Golems after); the grade-4 Tyrant (level 1) and Juggernaut (level 30) brought in; the start, the daily, the Last Stand and grade-1 parity kept.
+- **Branch / worktree / PR:** `claude/late-retune`, `/home/user/late-retune`; PR none.
+- **Allowed files or systems:** `src/sim/armies.ts` (the three late armies' `start`, Yokai bosses, `tierLift`), `src/sim/tiers.ts` (Mythic `answer`), `src/sim/tierSkills.ts` (the Tyrant's and Juggernaut's tier 4 only), `tools/army-pace/`, `tools/merge-two/`, `tools/balance.ts` (a comment), `docs/notes/late-retune.md`.
+- **Status:** done on the branch; before/after tables in the note. Typecheck, full tests, web build.
+- **Validation and handoff:** [notes](notes/late-retune.md).
+
 ### ARMY-PACE — Getting to the harder armies is harder
 
 - **Goal:** the owner's ask: "Make it so getting to harder armies is harder. The final armies probably won't be clearable before the player clears all 15 stars on the first army." (an army holds 11 stars in the code; taken as all 11, Mythic included).
