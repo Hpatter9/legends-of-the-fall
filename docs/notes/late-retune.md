@@ -51,7 +51,24 @@ never clears moves the mean by 2 to 3 tries: on 48 saves 0.218.0 itself is the c
 (With 8 saves, as the owner's figures: 0.218.0 Yokai 14.5, Golems 11.1, Infernal 7.0 at 55; the first draft of this branch, Infernal 11 and
 Yokai 13.35, read 7.8, 12.9 and 9.0 there and 7.5, 16.0, 9.5 on 24 saves: too hard for the Infernal and the Yokai once measured properly.)
 
-STARS_TABLE
+The first army's 11 stars (`node tools/army-pace/run.mjs stars 50,55,60,65`, 12 saves, on main 0.234.0's rule: the clear, no heart used,
+the battle-time target; Mythic's one star flawless). Mean Mythic tries, and the saves with all 11 (Normal to Legendary take 1 to 2.4 tries
+on every tree). 0.218.0's figures are from `merge-two.md` (its rule then: the clear, no hero lost in the last boss fight, the time target).
+
+| Level | 0.218.0 | main 0.234.0 | this branch | main, `HEARTS=1` | this branch, `HEARTS=1` |
+| --- | --- | --- | --- | --- | --- |
+| 50 | - | 16.9, 7/12 | 18.5, 4/12 | 15.9, 9/12 | 13.7, 9/12 |
+| 55 | 15.2, 8/12 | 9.8, 12/12 | 18.9, 6/12 | 7.4, 12/12 | 12.8, 10/12 |
+| 60 | - | 5.2, 12/12 | 9.4, 12/12 | 3.6, 12/12 | 5.3, 12/12 |
+| 65 | 5.3, 12/12 | 3.1, 12/12 | 4.8, 12/12 | 2.4, 12/12 | 3.2, 12/12 |
+
+Without hearts (the convention every figure above and in the earlier notes uses) the star "no heart used" comes with every clear, so the
+new rule moves nothing here: the Mythic is the last star, and it comes between 55 and 60 as on 0.218.0 (a little later at 55).
+
+With hearts burned as the page burns them (`HEARTS=1`, 24 saves, this branch), every army is easier: the Infernal Host 1.8 tries at 50 and
+1.5 at 55, the Yokai 4.8 at 60 and 4.2 at 65, the Golem Forge 4.0 at 60 and 3.8 at 65. There, the first army's stars and the Yokai and Golems
+come together at about 60, not one after the other. The owner's targets were all measured without hearts, so the branch is tuned to those;
+a hearts-on target would want its own call (below).
 
 The army gate (`gate 55,60,65`, 12 saves, from the Infernal Host with the armies before it beaten; tries at each army, saves that beat it):
 
@@ -77,6 +94,14 @@ of 4,000 teams each, the same seeds on both trees; lift = a hero's win rate in i
 The older rank-4 outliers (`rank4-skills.md`: the Knight and the Beastmaster at level 1, the Siege Bot and the Dread Pirate at level 30) are
 left: they stood out by the same margin casting their tier 3 skill (the Knight +12.8, the Beastmaster +15.6, the Siege Bot +12.2, the Dread
 Pirate +11.8), so it is how their kits grow with a grade's stats, not their tier 4 entries, and no light touch to tier 4 answers them.
+
+## For the owner
+
+- The targets in tries (14.5, 11, 7) were 8-save means; on 48 saves 0.218.0 itself is 8.5, 10.4 and 4.4, and the branch matches those.
+- Every pace figure (here and in `army-pace.md` and `merge-two.md`) is a player whose run ends at the first lost wave. The page burns a heart
+  instead (two a run), so a real player clears the late armies in about half the tries, and with hearts the Yokai and the Golem Forge come
+  at about the same level as the first army's last star, not after it. If the order should hold for a player who uses hearts, the late armies
+  want to be tougher again (a measure with `HEARTS=1`); say if so.
 
 **Kept as they are** (the same tools and seeds on main and the branch):
 
