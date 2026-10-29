@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### RPG-SPELLS B0/B1 — Fixed skill keys and the movement toolkit
+
+- **Owner:** Claude. **Branch/worktree:** `claude/spells-b01`, `/home/user/spells-b01`.
+- **Authorisation:** owner approved design v2 (`docs/notes/rpg-spells-design.md`) and said build; batches 0 and 1 first.
+- **Scope:** skill keys (`keyOf`, `skillShown`, foes' own copies); the toolkit in `src/sim/toolkit/` (move rule, charge, teleport, pull, shove/launch, burrow, six walls, auras, swap, AI choices, boss rules) with placeholder looks. No hero uses it yet.
+- **Status:** ready for review. Every fight hashes as on main (`test/spells-identity.test.ts`); full `npm test` passes; staged screenshots in `docs/samples/spells-b01-*`. [Notes](notes/spells-b01.md). Next: batch 2, healers and the revive.
+
 ### CAL-SANCTUARY — Portal expeditions and destination arenas
 
 - **Owner:** current Codex chat. **Branch/worktree:** `feat/rift-sanctuary`, `/workspace/legends-of-the-fall`.
