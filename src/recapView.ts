@@ -91,7 +91,7 @@ export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, o
   if (hearts) grid.append(fig('Hearts burned', String(hearts)));
   sheet.append(grid);
 
-  // wave by wave, the company, XP and levels, and the spoils (`recapDetail`)
+  // wave by wave, the company, and the XP and levels (`recapDetail`)
   sheet.append(...recapDetail(recap, { strip: 'Wave by wave', prefix: 'W' }));
 
   const done = el('div', 'rcFoot');
@@ -110,13 +110,11 @@ export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, o
 export interface DetailOpts {
   strip: string;
   prefix: string;
-  /** Leave out the spoils (a screen that lists its own finds). */
-  noSpoils?: boolean;
 }
 
 /** The detail of a recap, as a list of parts to lay out in order (WAVE-RECAP-2: the run's recap here, and the spire's and the
  *  Calamity's summaries and map recaps): each fight's stars, time and MVP; each hero's damage, healing and kills, with the MVP; the XP
- *  and levels gained; and the spoils found. A part with nothing to show is left out. */
+ *  and levels gained. A part with nothing to show is left out. */
 export function recapDetail(recap: RunRecap, opts: DetailOpts): HTMLElement[] {
   const out: HTMLElement[] = [];
   // wave by wave (WAVE-RECAP): each wave's stars, time and MVP, which the short card after each wave left for here
@@ -189,12 +187,7 @@ export function recapDetail(recap: RunRecap, opts: DetailOpts): HTMLElement[] {
     out.push(list);
   }
 
-  // what the battle found (WAVE-RECAP: the gear and prizes each wave's card named, all together)
-  if (recap.found?.length && !opts.noSpoils) {
-    out.push(el('h3', '', 'Spoils found'));
-    const list = el('div', 'rcFound');
-    for (const f of recap.found) list.append(el('p', '', f));
-    out.push(list);
-  }
+  // (RECAP-REVEAL: no spoils list. The gear and relics a run finds leave with it, so the owner asked for them only on each wave's
+  // card; what is kept after the run, the crowns, chests, XP and levels, is above)
   return out;
 }

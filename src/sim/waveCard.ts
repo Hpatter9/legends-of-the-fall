@@ -4,6 +4,7 @@
 
 import { ULT_LEVEL } from './abilities';
 import { heroName } from './heroNames';
+import { otherFinds, type WaveGain } from './waveGains';
 
 /** What a wave left worth saying, gathered when it is settled. */
 export interface WaveMoments {
@@ -16,6 +17,9 @@ export interface WaveMoments {
   heartsLeft: number;
   /** Gear and prizes picked up (the run's `found`). */
   found: readonly string[];
+  /** Everything the wave brought in, grouped (RECAP-REVEAL, `waveGains.ts`): the card lists them as chips, and a `found` line they
+   *  already cover is dropped. Missing (an older caller): every `found` line is kept. */
+  gains?: readonly WaveGain[];
 }
 
 /** One line on the card, with its kind (the line's mark and colour). */
@@ -47,7 +51,7 @@ export function waveNotes(m: WaveMoments): WaveNote[] {
   if (best.size) out.push({ kind: 'level', text: `Level up: ${[...best].map(([k, lv]) => `${nameOf(k)} Lv ${lv}`).join(', ')}` });
   const ult = [...new Set(m.ups.filter((u) => u.from < ULT_LEVEL && u.to >= ULT_LEVEL).map((u) => u.kind))];
   if (ult.length) out.push({ kind: 'ult', text: `Ultimate unlocked: ${names(ult)}` });
-  for (const f of m.found) out.push({ kind: 'found', text: `Found ${f}` });
+  for (const f of m.gains ? otherFinds(m.found, m.gains) : m.found) out.push({ kind: 'found', text: `Found ${f}` });
   if (m.fell.length) out.push({ kind: 'fell', text: `Fell: ${names(m.fell)}` });
   if (m.hearts > 0) out.push({ kind: 'heart', text: `${m.hearts > 1 ? `${m.hearts} hearts` : 'A heart'} burned · ${m.heartsLeft} left` });
   return out;
