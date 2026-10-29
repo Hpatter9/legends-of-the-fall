@@ -2,7 +2,7 @@
 // who joins then has its first-time reveal), and the list of every hero with the locked ones shaded. It only reads and changes the Meta through the sim's own functions.
 
 import { ALL_HEROES, UNITS } from './sim/units';
-import { heroName, heroTitle } from './sim/heroNames';
+import { heroClassLabel, heroName, heroTitle } from './sim/heroNames';
 import { awakenedOf, AWAKEN_SHARDS } from './sim/awaken';
 import { LUCKY_ODDS, MAX_RANK, RANK_MULT, RANK_SHARDS, rankOf, saveMeta, stoneCost, stonesOf, takenRank, useStones, type Meta, type Pull } from './sim/meta';
 import { closest, haveOf, needOf, ownedCount } from './sim/unlock';
@@ -271,7 +271,7 @@ export function pityLine(m: Meta): string {
   const near = closest(m);
   if (!near) return 'You have every hero you can recruit';
   const left = Math.max(1, pityAt(ownedCount(m)) - (m.unlockDry ?? 0));
-  return `Nearest: ${heroTitle(near)} ${haveOf(m, near)}/${needOf(m)} · its shards are sure within ${left} stone${left === 1 ? '' : 's'}`;
+  return `Nearest: ${heroClassLabel(near)} ${haveOf(m, near)}/${needOf(m)} · its shards are sure within ${left} stone${left === 1 ? '' : 's'}`;
 }
 
 /** The recruit page's short rule: what a stone is, the lucky chance, and why new heroes turn up less as the roster grows. */

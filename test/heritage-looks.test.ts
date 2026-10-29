@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { ALL_HEROES, UNITS, formOf } from '../src/sim/units';
 import { HAIRS, HERO_LOOKS, NOT_HUMAN, TONES } from '../src/sim/heroLooks';
-import { HERO_NAMES, heroName, heroTitle } from '../src/sim/heroNames';
+import { HERO_NAMES, heroClassLabel, heroName } from '../src/sim/heroNames';
 import layout from '../src/art/units/sheets.json';
 
 const LAYOUT = layout as Record<string, { w: number; h: number; perRow: number; rows: string[]; counts: Record<string, number>; rear?: string }>;
@@ -75,10 +75,10 @@ test('every hero has its own name, short enough for the hero bar', () => {
     assert.notEqual(n.name, UNITS[k].name, `${k}'s name is not its class`);
     seen.add(n.name.toLowerCase());
     assert.equal(heroName(k), n.name);
-    assert.equal(heroTitle(k), `${n.name} · ${UNITS[k].name}`);
+    assert.equal(heroClassLabel(k), `${n.name} · ${UNITS[k].name}`);
   }
   assert.deepEqual(Object.keys(HERO_NAMES).sort(), [...ALL_HEROES].sort(), 'no names for heroes that are not there');
   // (anything else keeps the name it had)
   assert.equal(heroName('skeleton'), UNITS.skeleton.name);
-  assert.equal(heroTitle('skeleton'), UNITS.skeleton.name);
+  assert.equal(heroClassLabel('skeleton'), UNITS.skeleton.name);
 });
