@@ -603,7 +603,7 @@
   #loading > * { position: absolute; pointer-events: none; }
   .ldScene { inset: 0; overflow: hidden; }
   .ldArt { position: absolute; inset: -1.5%; background: #061320 url(__LD_KEEP__) center / cover no-repeat; animation: ldDepth 24s ease-in-out infinite alternate; }
-  .ldBeacon { position: absolute; inset: 0; background: radial-gradient(ellipse at 74% 34%, #ffc86b55, transparent 8%), radial-gradient(ellipse at 77% 46%, #f4ae3326, transparent 16%); mix-blend-mode: screen; opacity: .5; animation: ldGlow 4.8s ease-in-out infinite alternate; }
+  .ldBeacon { position: absolute; inset: 0; background: radial-gradient(ellipse at 74% 34%, #ffc86b55, transparent 8%), radial-gradient(ellipse at 77% 46%, #f4ae3326, transparent 16%); mix-blend-mode: screen; opacity: .72; transform-origin: 75% 38%; animation: ldGlow 4.8s ease-in-out infinite alternate; }
   .ldMist { position: absolute; inset: 37% -18% 10%; background: radial-gradient(ellipse at 32% 44%, #b6d8e32b, transparent 38%), radial-gradient(ellipse at 73% 63%, #a9cfdd24, transparent 32%); animation: ldMist 19s ease-in-out infinite alternate; }
   .ldMist.far { inset: 20% -25% 35%; opacity: .5; animation-duration: 29s; animation-delay: -12s; }
   .ldShade { inset: 0; background: linear-gradient(#020c1740, transparent 25% 65%, #020910d9 88%, #020910ed); }
@@ -619,9 +619,10 @@
   .ldBar i { display: block; width: 35%; height: 100%; background: linear-gradient(90deg, #836038, #f5d68b, #b98c49); box-shadow: 0 0 12px #edb75f66; animation: ldMarch 2.8s ease-in-out infinite alternate; }
   .ldTip { min-height: 3.9em; max-width: 330px; margin: 0; color: #ccbea5; font: 400 14px/1.3 Georgia, serif; text-shadow: 0 1px 4px #000; }
   @keyframes ldDepth { from { transform: scale(1); } to { transform: scale(1.025) translate3d(-.3%, .3%, 0); } }
-  @keyframes ldGlow { to { opacity: .95; } }
+  /* (the beacon breathes by size at a steady brightness, and the embers rise clear off the top: no looping fade, the no-flicker rule) */
+  @keyframes ldGlow { to { transform: scale(1.08); } }
   @keyframes ldMist { from { transform: translate3d(-4%, 1%, 0); } to { transform: translate3d(5%, -2%, 0); } }
-  @keyframes ldEmber { from { transform: translate3d(0, 0, 0) rotate(-15deg); opacity: 0; } 12%, 65% { opacity: .75; } to { transform: translate3d(var(--dx, 20px), -85vh, 0) rotate(30deg); opacity: 0; } }
+  @keyframes ldEmber { from { transform: translate3d(0, 0, 0) rotate(-15deg); } to { transform: translate3d(var(--dx, 20px), -112vh, 0) rotate(30deg); } }
   @keyframes ldMarch { from { transform: translateX(0); } to { transform: translateX(186%); } }
   @media (min-width: 700px) { .ldScene { left: calc(50% - 350px); right: calc(50% - 350px); } .ldScene::after { content: ''; position: absolute; inset: 0; box-shadow: inset 60px 0 65px -30px #061320, inset -60px 0 65px -30px #061320; } }
   @media (prefers-reduced-motion: reduce) { #loading *, #loading *::before, #loading *::after { animation: none !important; } .ldBar i { width: 100%; opacity: .65; } }
