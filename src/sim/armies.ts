@@ -230,7 +230,7 @@ export const ARMIES: readonly Army[] = [
     tierStart: 1.55,
     growth: 0.05,
     tierGrowth: 0.127,
-    tierLift: [1, 3.79, 2.9, 0.84, 0.7], // (LATE-RETUNE: 3.45, 2.76, 0.79, 0.67, raised to stay over the tougher Normal and its bosses; before that, ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
+    tierLift: [1, 3.57, 2.81, 0.81, 0.68], // (LATE-RETUNE: 3.45, 2.76, 0.79, 0.67, raised a little with Normal's `start` so the harder tiers keep their step over it; before that, ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
     mid: { hp: 2600, atk: 58 }, // (LATE-RETUNE: 2200 and 52, `docs/notes/late-retune.md`)
     last: { hp: 3000, atk: 57 }, // (LATE-RETUNE: 2500 and 50)
     pay: 5.11,
