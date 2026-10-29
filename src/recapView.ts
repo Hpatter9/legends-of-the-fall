@@ -5,6 +5,7 @@
 import { heartsBurned, mvpKind, type RunRecap } from './sim/runRecap';
 import { MAX_STARS } from './sim/stars';
 import { formOf, UNITS } from './sim/units';
+import { heroName } from './sim/heroNames';
 import { portrait } from './render/sheets';
 import type { ComebackGo, ComebackTip } from './sim/comeback';
 
@@ -129,7 +130,7 @@ export function recapDetail(recap: RunRecap, opts: DetailOpts): HTMLElement[] {
       const mvpDef = w.mvp ? UNITS[w.mvp] : undefined;
       if (mvpDef) {
         const face = el('i', 'rcWaveMvp');
-        face.title = `MVP: ${mvpDef.name}`;
+        face.title = `MVP: ${heroName(w.mvp!)}`;
         face.append(portrait(formOf(mvpDef, 1), 64, 1));
         chip.append(face);
       }
@@ -156,7 +157,7 @@ export function recapDetail(recap: RunRecap, opts: DetailOpts): HTMLElement[] {
       const face = el('div', `rcFace g${t.grade}`);
       face.append(portrait(formOf(def, t.grade), 64, t.grade));
       if (k === mvp) face.append(el('em', 'rcCrown', '♛'));
-      const name = el('b', '', def.name);
+      const name = el('b', '', heroName(k));
       if (k === mvp) name.append(el('small', '', 'MVP'));
       const bars = el('div', 'rcBars');
       for (const [key, label] of [['dealt', 'Damage'], ['healed', 'Healing'], ['kills', 'Kills']] as const) {
@@ -182,7 +183,7 @@ export function recapDetail(recap: RunRecap, opts: DetailOpts): HTMLElement[] {
     for (const k of xpKinds) {
       const row = el('div', 'rcXpRow');
       const lv = recap.levels[k];
-      row.append(el('b', '', UNITS[k].name), el('em', '', `+${num(recap.xp[k])} XP`), el('span', lv ? 'up' : '', lv ? `Lv ${lv[0]} → ${lv[1]}` : ''));
+      row.append(el('b', '', heroName(k)), el('em', '', `+${num(recap.xp[k])} XP`), el('span', lv ? 'up' : '', lv ? `Lv ${lv[0]} → ${lv[1]}` : ''));
       list.append(row);
     }
     out.push(list);

@@ -4,6 +4,7 @@
 // was taken (a rank, or an awakened step) when the button is tapped; Back (or a tap outside) closes it and changes nothing.
 
 import { UNITS } from './sim/units';
+import { heroName } from './sim/heroNames';
 import { MAX_RANK, RANK_SHARDS, rankMult, saveMeta, takenRank, type Meta } from './sim/meta';
 import { ORES } from './sim/awakenMats';
 import { AWAKEN_COSTS, AWAKEN_SHARDS, PASSIVES, awaken, awakenPlan, awakenedOf } from './sim/awaken';
@@ -58,10 +59,9 @@ export function openRankUp(meta: Meta, kind: string, done: (t: Taken) => void): 
   const steps = awakenedOf(meta, kind);
   const now = taken + steps;
   const next = rp ? rp.to + steps : taken + steps + 1;
-  const def = UNITS[kind];
   const back = el('div', 'ruBack');
   const card = el('div', 'ruCard');
-  card.append(el('h3', '', rp ? `${def.name} · Rank up` : `${def.name} · Awakening`));
+  card.append(el('h3', '', rp ? `${heroName(kind)} · Rank up` : `${heroName(kind)} · Awakening`));
   // the look, before and after (one picture when the look does not change)
   const looks = el('div', 'ruLooks');
   const before = pic(kind, now);

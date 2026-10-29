@@ -56,3 +56,7 @@ dialog.heroArtViewer > .heroArtClose {
   color: #ffedc5; background: #19232e; font: 16px var(--body);
 }
 dialog.heroArtViewer > .heroArtClose:focus-visible { outline: 2px solid #ffe0a0; outline-offset: 2px; }
+
+/* The hero's own name on its company card, its class small under it (docs/notes/heritage-looks.md). */
+.heroRoster .hcard .heroCardName { flex-direction: column; gap: 2px; }
+.heroRoster .hcard .heroCardName small.heroCardKind { font: 400 10px/1 var(--body); color: #d9bd7e; letter-spacing: .02em; }

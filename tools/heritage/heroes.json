@@ -1,0 +1,553 @@
+{
+ "knight": {
+  "sheets": [
+   "hero_soldier",
+   "hero_soldier_back"
+  ],
+  "skin": {
+   "boxes": [
+    [
+     "hero_soldier",
+     0,
+     84,
+     34,
+     100,
+     50
+    ],
+    [
+     "hero_soldier",
+     13,
+     86,
+     45,
+     100,
+     54
+    ]
+   ],
+   "negatives": [
+    [
+     "hero_soldier_back",
+     0
+    ]
+   ]
+  },
+  "hair": {
+   "window": [
+    12,
+    60,
+    0.12,
+    1,
+    0.2,
+    1
+   ],
+   "boxes": [
+    [
+     "hero_soldier",
+     0,
+     68,
+     16,
+     112,
+     40
+    ],
+    [
+     "hero_soldier_back",
+     0,
+     50,
+     14,
+     105,
+     50
+    ]
+   ],
+   "minArea": 40
+  }
+ },
+ "wizard": {
+  "sheets": [
+   "hero_res_wizard",
+   "hero_res_wizard_back"
+  ],
+  "skin": {
+   "boxes": [
+    [
+     "hero_res_wizard",
+     0,
+     72,
+     50,
+     80,
+     58
+    ],
+    [
+     "hero_res_wizard",
+     0,
+     94,
+     71,
+     100,
+     77
+    ],
+    [
+     "hero_res_wizard",
+     0,
+     54,
+     81,
+     60,
+     84
+    ],
+    [
+     "hero_res_wizard_back",
+     0,
+     91,
+     52,
+     94,
+     56
+    ],
+    [
+     "hero_res_wizard_back",
+     0,
+     105,
+     62,
+     110,
+     67
+    ]
+   ]
+  }
+ },
+ "cleric": {
+  "sheets": [
+   "hero_res_cleric",
+   "hero_res_cleric_back"
+  ],
+  "skin": {
+   "boxes": [
+    [
+     "hero_res_cleric",
+     0,
+     80,
+     36,
+     90,
+     48
+    ]
+   ],
+   "negatives": [
+    [
+     "hero_res_cleric_back",
+     0
+    ]
+   ]
+  }
+ },
+ "ranger": {
+  "sheets": [
+   "hero_res_ranger",
+   "hero_res_ranger_back"
+  ],
+  "skin": {
+   "boxes": [
+    [
+     "hero_res_ranger",
+     0,
+     71,
+     35,
+     83,
+     46
+    ],
+    [
+     "hero_res_ranger",
+     0,
+     58,
+     76,
+     66,
+     83
+    ],
+    [
+     "hero_res_ranger",
+     0,
+     97,
+     71,
+     100,
+     73
+    ],
+    [
+     "hero_res_ranger_back",
+     0,
+     75,
+     74,
+     83,
+     83
+    ],
+    [
+     "hero_res_ranger_back",
+     0,
+     97,
+     69,
+     100,
+     73
+    ],
+    [
+     "hero_res_ranger",
+     0,
+     78,
+     72,
+     86,
+     84
+    ]
+   ],
+   "negatives": [
+    [
+     "hero_res_ranger_back",
+     0
+    ]
+   ]
+  }
+ },
+ "illusionist": {
+  "sheets": [
+   "hero_res_illusionist",
+   "hero_res_illusionist_back"
+  ],
+  "skin": {
+   "boxes": [
+    [
+     "hero_res_illusionist",
+     0,
+     70,
+     27,
+     77,
+     36
+    ],
+    [
+     "hero_res_illusionist",
+     0,
+     67,
+     38,
+     73,
+     41
+    ],
+    [
+     "hero_res_illusionist_back",
+     0,
+     69,
+     37,
+     73,
+     42
+    ]
+   ],
+   "negatives": [
+    [
+     "hero_res_illusionist_back",
+     0
+    ]
+   ]
+  }
+ },
+ "buccaneer": {
+  "sheets": [
+   "hero_res_buccaneer",
+   "hero_res_buccaneer_back"
+  ],
+  "skin": {
+   "boxes": [
+    [
+     "hero_res_buccaneer",
+     0,
+     96,
+     49,
+     106,
+     59
+    ],
+    [
+     "hero_res_buccaneer",
+     0,
+     120,
+     72,
+     126,
+     76
+    ],
+    [
+     "hero_res_buccaneer_back",
+     0,
+     67,
+     68,
+     75,
+     75
+    ],
+    [
+     "hero_res_buccaneer_back",
+     0,
+     113,
+     70,
+     120,
+     76
+    ]
+   ],
+   "negatives": [
+    [
+     "hero_res_buccaneer_back",
+     0
+    ]
+   ]
+  }
+ },
+ "timeWitch": {
+  "sheets": [
+   "hero_res_time_witch",
+   "hero_res_time_witch_back"
+  ],
+  "skin": {
+   "boxes": [
+    [
+     "hero_res_time_witch",
+     0,
+     51,
+     37,
+     60,
+     46
+    ],
+    [
+     "hero_res_time_witch",
+     0,
+     47,
+     48,
+     59,
+     55
+    ],
+    [
+     "hero_res_time_witch",
+     0,
+     74,
+     57,
+     78,
+     61
+    ],
+    [
+     "hero_res_time_witch",
+     0,
+     30,
+     75,
+     34,
+     79
+    ],
+    [
+     "hero_res_time_witch_back",
+     0,
+     74,
+     57,
+     78,
+     61
+    ],
+    [
+     "hero_res_time_witch_back",
+     0,
+     57,
+     47,
+     63,
+     54
+    ]
+   ],
+   "negatives": [
+    [
+     "hero_res_time_witch_back",
+     0
+    ]
+   ]
+  }
+ },
+ "dragoon": {
+  "sheets": [
+   "hero_res_dragoon",
+   "hero_res_dragoon_back"
+  ],
+  "skin": {
+   "boxes": [
+    [
+     "hero_res_dragoon",
+     0,
+     87,
+     59,
+     96,
+     67
+    ],
+    [
+     "hero_res_dragoon",
+     0,
+     83,
+     70,
+     92,
+     75
+    ],
+    [
+     "hero_res_dragoon",
+     0,
+     72,
+     93,
+     81,
+     99
+    ],
+    [
+     "hero_res_dragoon_back",
+     0,
+     89,
+     90,
+     94,
+     96
+    ]
+   ],
+   "negatives": [
+    [
+     "hero_res_dragoon_back",
+     0
+    ]
+   ]
+  }
+ },
+ "sage": {
+  "sheets": [
+   "hero_res_sage",
+   "hero_res_sage_back"
+  ],
+  "skin": {
+   "boxes": [
+    [
+     "hero_res_sage",
+     0,
+     81,
+     46,
+     93,
+     54
+    ],
+    [
+     "hero_res_sage",
+     0,
+     107,
+     65,
+     113,
+     70
+    ],
+    [
+     "hero_res_sage",
+     0,
+     71,
+     73,
+     78,
+     78
+    ],
+    [
+     "hero_res_sage_back",
+     0,
+     110,
+     59,
+     115,
+     65
+    ],
+    [
+     "hero_res_sage_back",
+     0,
+     96,
+     47,
+     98,
+     51
+    ]
+   ],
+   "negatives": [
+    [
+     "hero_res_sage_back",
+     0
+    ]
+   ]
+  }
+ },
+ "peasant": {
+  "sheets": [
+   "hero_res_peasant",
+   "hero_res_peasant_back"
+  ],
+  "skin": {
+   "boxes": [
+    [
+     "hero_res_peasant",
+     0,
+     62,
+     38,
+     73,
+     48
+    ],
+    [
+     "hero_res_peasant",
+     0,
+     91,
+     55,
+     97,
+     64
+    ],
+    [
+     "hero_res_peasant",
+     0,
+     43,
+     68,
+     48,
+     73
+    ],
+    [
+     "hero_res_peasant_back",
+     0,
+     75,
+     56,
+     80,
+     64
+    ],
+    [
+     "hero_res_peasant_back",
+     0,
+     87,
+     55,
+     93,
+     64
+    ]
+   ],
+   "negatives": [
+    [
+     "hero_res_peasant_back",
+     0
+    ]
+   ]
+  }
+ },
+ "lightningMage": {
+  "sheets": [
+   "hero_res_lightning_mage",
+   "hero_res_lightning_mage_back"
+  ],
+  "skin": {
+   "boxes": [
+    [
+     "hero_res_lightning_mage",
+     0,
+     75,
+     44,
+     83,
+     54
+    ],
+    [
+     "hero_res_lightning_mage",
+     0,
+     100,
+     61,
+     105,
+     67
+    ],
+    [
+     "hero_res_lightning_mage_back",
+     0,
+     101,
+     58,
+     106,
+     65
+    ]
+   ],
+   "negatives": [
+    [
+     "hero_res_lightning_mage_back",
+     0
+    ]
+   ]
+  }
+ }
+}
