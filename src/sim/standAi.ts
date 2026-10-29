@@ -118,8 +118,15 @@ function firstOf(w: { cost: number[]; from: number[] }, goal: number): number | 
 /** What a hero or foe does when it is free to act, in the Last Stand. True when it has done something (or waited); false hands the unit back to the usual mind. */
 export function standDecide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): boolean {
   if (me.def === KING_DEF) {
-    // (the king stands)
-    me.busyUntil = b.t + 1000;
+    // The ruler defends the dais when a foe reaches it, without abandoning the objective.
+    me.step = undefined;
+    me.cast = undefined;
+    const def = strikeDef(b, me);
+    const foe = me.charmUntil !== undefined && me.charmUntil > b.t ? undefined : b.units
+      .filter((x) => x.alive && x.side === 'foe' && !hidden(b, x) && canStrike(b.board, def, me, x))
+      .sort((a, c) => apart(me, a) - apart(me, c) || a.hp - c.hp || a.id - c.id)[0];
+    if (foe) swing(b, me, foe, rng, out);
+    else me.busyUntil = b.t + IDLE_MS;
     return true;
   }
   me.step = undefined;

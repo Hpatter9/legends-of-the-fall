@@ -1,0 +1,77 @@
+{
+  "generator": "OpenAI image generation",
+  "direction": "Owner-approved ornate Last Stand concept; replacement room assets explicitly requested.",
+  "processor": "tools/stand/cut-ornate.py",
+  "sources": {
+    "tools/stand/generated/ornate-props.png": {
+      "sha256": "6054e43e3478504dda227e5b1478e2389b5e45a3ebb82ba015fa4dedfcdad441"
+    },
+    "tools/stand/generated/ornate-materials.png": {
+      "sha256": "05eee546a25ecd667ee2e0c6eac97c7e9a5a715cd0b9b863a5cca5ded43d3544"
+    },
+    "tools/stand/generated/ornate-garden.png": {
+      "sha256": "168db6e251586c09d431d9f29948c991bbb03dac5973bb0e136a6ab74c89a66b"
+    }
+  },
+  "props_grid": {
+    "columns": 3,
+    "rows": 3,
+    "order": [
+      "column",
+      "window",
+      "bookcase",
+      "brazier",
+      "fountain",
+      "arcade",
+      "desk",
+      "rubble",
+      "medallion"
+    ]
+  },
+  "materials_grid": {
+    "columns": 2,
+    "rows": 2,
+    "order": [
+      "limestone",
+      "velvet",
+      "masonry",
+      "paving"
+    ]
+  },
+  "garden_grid": {
+    "columns": 2,
+    "rows": 2,
+    "order": [
+      "grass",
+      "roses",
+      "ivy",
+      "banner"
+    ]
+  },
+  "garden_crops": {
+    "grass": [
+      8,
+      8,
+      553,
+      553
+    ],
+    "roses": [
+      610,
+      0,
+      1254,
+      575
+    ],
+    "ivy": [
+      0,
+      580,
+      627,
+      1254
+    ],
+    "banner": [
+      627,
+      580,
+      1254,
+      1254
+    ]
+  }
+}
