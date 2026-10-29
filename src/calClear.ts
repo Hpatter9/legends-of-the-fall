@@ -12,7 +12,7 @@ import type { MapRecap, TowerSummary } from './sim/tower';
 import { ICONS, icon } from './menuArt';
 import { iconImg, relicIcon } from './render/items';
 import { play } from './render/sound';
-import { calamityLook } from './towerTheme';
+import { dungeonName } from './calMap';
 import { sumOres } from './sim/awakenMats';
 import { cacheChip, classWord, oreChip } from './oreView';
 
@@ -52,7 +52,7 @@ const chip = (pic: HTMLElement, name: string): HTMLElement => {
 export function mapRecapCard(card: HTMLElement, r: MapRecap, onDone: () => void): void {
   const next = r.map + 1;
   card.classList.add('ccCard');
-  card.append(el('p', 'ccLead', calamityLook(r.realm ?? r.map).name));
+  card.append(el('p', 'ccLead', dungeonName(r.map)));
   const stats = el('div', 'ccStats');
   stats.append(row('Spots cleared', `${r.spots} of ${r.total}`), row('Fights won', `${r.fights}${r.elites ? ` (${r.elites} mini-boss${r.elites === 1 ? '' : 'es'})` : ''}`), row('Gold won', String(r.gold)));
   card.append(stats);

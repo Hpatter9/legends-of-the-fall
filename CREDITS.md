@@ -384,7 +384,7 @@ The Grand Scenario prototype reuses the already credited camp gate and Knights w
 ## Calamity altar sanctuary artwork
 
 - `src/art/altar/patrons-atlas.png`: original ornate dark-fantasy artwork generated with OpenAI image generation at the owner's explicit request for new altar assets. Includes Ember, Bastion and Echo altars and matching crests, a shared pedestal, and consecration/corruption seals. The original transparent atlas is unchanged; `manifest.json` records measured display frames.
-- `src/art/altar/sanctuary.png`: original generated emerald, obsidian and gold sanctuary backdrop for the same screen. `provenance.json` records both retained generation sources. The generated-asset prototype demonstrates their appearance; production integration is separate.
+- `src/art/altar/sanctuary.png`: original generated emerald, obsidian and gold sanctuary backdrop for the same screen. `provenance.json` records both retained generation sources. These images are bundled into the live altar screen for offline play. The earlier generated-asset prototype remains as design history.
 
 ## Calamity overland map proposal
 
@@ -393,4 +393,6 @@ The Grand Scenario prototype reuses the already credited camp gate and Knights w
 
 ## Calamity dungeon-floor encounter symbols
 
-- `src/art/calmap-dungeon/encounters.png`: original fantasy encounter symbols generated with OpenAI image generation for the owner's research-led Great Rift map revision. Nine motifs represent battle, elite, recruit, rest, merchant, treasure, altar, mystery and guardian rooms. The PNG is unchanged; `manifest.json` supplies rendering rectangles and `provenance.json` records the retained original. The prototype reuses the game's previously credited floor/wall textures, torch strip and starter sprite. No King God Castle artwork was copied into the project.
+- `src/art/calmap-dungeon/encounters.png`: original fantasy encounter symbols generated with OpenAI image generation for the owner's research-led Great Rift map revision. Nine motifs represent battle, elite, recruit, rest, merchant, treasure, altar, mystery and guardian rooms. The PNG is unchanged; `manifest.json` supplies rendering rectangles and `provenance.json` records the retained original. The live dungeon map reuses the game's previously credited floor/wall textures, torch strip and starter sprite. No King God Castle artwork was copied into the project.
+
+- `src/art/calmap-dungeon/arrival-portal.png`: original emerald-and-gold arrival portal generated with OpenAI image generation for the owner's explicit request that the portal bring heroes into the Calamity. The PNG is unmodified; its source, size and checksum are recorded in `provenance.json`. It is bundled into the live map for offline play.

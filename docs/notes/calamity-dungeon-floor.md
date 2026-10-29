@@ -30,3 +30,7 @@ Production map rendering and simulation are unchanged. AGENTS.md requires showin
 Typecheck and web build passed. Simulation tests were not rerun because production simulation and renderer code are unchanged. Reproduce the offline portrait and interaction checks with `node tools/calamity/dungeon-proposal-shots.cjs` using the configured local Chromium/Playwright environment.
 
 No merge, deployment or version bump.
+
+## Owner approval and live integration
+
+The owner approved this direction and requested an arrival portal. The live implementation is on `feat/calamity-dungeon-map`; see [the portal and live map handoff](calamity-dungeon-live.md). The prototype-only boundary above describes the earlier review stage.

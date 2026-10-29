@@ -19,3 +19,7 @@ Generated a new transparent patron atlas and matching portrait sanctuary backdro
 `docs/samples/altar-sanctuary/generated-assets-preview.html` is a separate prototype using the new background, altar and crest art. It renders the atlas through view boxes without modifying its pixels. The existing proposal and production UI are preserved.
 
 New-art preview checks passed at 393×852, 360×780 and 412×915: no page errors or horizontal overflow; both ritual buttons remained visible; every patron selection and the corruption preview responded. Typecheck and web build passed. No simulation rules changed, so simulation tests were not rerun. Generated images are not yet imported by production UI; integration must bundle them or explicitly cache any URL-loaded assets for offline play.
+
+## Live integration
+
+The generated sanctuary, patron altars/crests and ritual seals are now integrated on `feat/calamity-dungeon-map`, alongside the owner-approved dungeon map and arrival portal. The earlier prototype-only statements above describe the design stage. See [live implementation and checks](calamity-dungeon-live.md).

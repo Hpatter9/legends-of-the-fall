@@ -4,5 +4,17 @@
   "original": "/workspace/generated_images/exec-76843a12-06ac-42a4-be7c-7127b9dafbed.png",
   "copy": "encounters.png",
   "originalRetained": true,
-  "pixelEditing": false
+  "pixelEditing": false,
+  "arrivalPortal": {
+    "original": "/workspace/generated_images/exec-a7510712-fedc-4ed1-9b62-fe2114072a44.png",
+    "copy": "arrival-portal.png",
+    "size": [
+      1312,
+      1199
+    ],
+    "mode": "RGBA",
+    "sha256": "2df44558f482fe58cc77dee07c8ce29881364803409b76922670298bde26752c",
+    "originalRetained": true,
+    "pixelEditing": false
+  }
 }

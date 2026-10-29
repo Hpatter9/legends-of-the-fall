@@ -3,6 +3,7 @@
 // treasure chest, then the summary of a run that has ended. Like events.ts it reads and changes the Run only through the sim's own functions
 // (`enterNode`, `buy`, `rest`, ...); a battle node hands over to the page (`onFight`), a mystery floor to the event card.
 
+import { altarBackdrop, altarPicture, type AltarPicture } from './altarArt';
 import { tips } from './tips';
 import { oreChip } from './oreView';
 import { chestKind } from './sim/armyStars';
@@ -11,11 +12,11 @@ import { saveMeta, type Meta } from './sim/meta';
 import { hpShare } from './sim/health';
 import { ELITE_BY_ID, eliteAt } from './sim/elites';
 import {
-  buy, chestLine, choices, clearNode, enterNode, finishMystery, setGoing, floorOf, hasRoom, hire, hireClosed, inBattle, leaveOpen, localTrainXp, NODE_NAMES, openTreasure, REST_HEAL, rest, mapProgress, moveTo, rowsIn, takeXp, train, trainXp, type MapNode, type NodeKind, type ShopItem, type TowerSummary,
+  buy, chestLine, choices, clearNode, enterNode, finishMystery, hereOf, setGoing, floorOf, hasRoom, hire, hireClosed, inBattle, leaveOpen, localTrainXp, NODE_NAMES, openTreasure, REST_HEAL, rest, mapProgress, moveTo, rowsIn, takeXp, train, trainXp, type MapNode, type NodeKind, type ShopItem, type TowerSummary,
 } from './sim/tower';
 import { SIDE_BASE, sideSpots, START_ID } from './sim/calLand';
 import { sideEliteAt } from './sim/elites';
-import { CalMap } from './calMap';
+import { CalMap, dungeonIcon, dungeonName } from './calMap';
 import { saveSlot, squadLimit, type Run } from './sim/run';
 import { heroLevel } from './sim/climb';
 import { chooseAltar, COMMANDMENTS, corruptionText, OFFERINGS, PATRONS, pendingAltar, reforgeAltar, RIFT_BOSSES, riftRank } from './sim/rift';
@@ -87,6 +88,7 @@ const CAL_INFO: Partial<Record<NodeKind, string>> = {
 const calInfo = (kind: NodeKind): string => CAL_INFO[kind] ?? NODE_INFO[kind].text;
 
 /** The acts whose intro card has been shown this session (by run and act), so it plays once as an act starts. */
+const NO_PICK = -2;
 const introSeen = new Set<string>();
 const reduced = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
@@ -109,13 +111,13 @@ const seenHint = (): void => {
 const calHint = (run: Run): string => {
   const t = run.tower!;
   const first = !hinted() && t.act === 1 && t.path.length === 0;
-  return first ? 'Tap a lit spot to go there. Clear spots in any order, and walk back over the bridges. The fog lifts as you clear.' : 'Tap a lit spot to go there, or any cleared spot to walk back.';
+  return first ? 'The portal brought your company here. Choose your first chamber.' : 'Tap a chamber, or use the arrows to move through cleared rooms.';
 };
 
 export class TowerView {
   private root = el('div');
   private run!: Run;
-  private picked = -1;
+  private picked = NO_PICK;
   /** A screen over the map (shop, campfire, treasure, summary). */
   private card: HTMLElement | null = null;
   private lay = new Layout(393);
@@ -166,7 +168,8 @@ export class TowerView {
   /** Show the map of the run's tower (and the node in play, if the run was left at one that is not a battle). */
   open(run: Run): void {
     this.run = run;
-    this.picked = -1;
+    this.moving = false;
+    this.picked = NO_PICK;
     this.lastTapped = -1;
     this.card = null;
     this.root.hidden = false;
@@ -201,6 +204,7 @@ export class TowerView {
     const run = this.run;
     const t = run.tower!;
     const keep = this.root.querySelector('.rtScroll')?.scrollTop;
+    this.root.classList.toggle('dmMode', this.calamity);
     this.root.replaceChildren(this.header(), this.mapBox(), this.footer());
     const sc = this.root.querySelector<HTMLElement>('.rtScroll')!;
     // (the map keeps its place while it is redrawn; on opening it scrolls to the row now being picked)
@@ -215,6 +219,7 @@ export class TowerView {
   }
 
   private header(): HTMLElement {
+    if (this.calamity) return this.dungeonHeader();
     const run = this.run;
     const t = run.tower!;
     const head = el('header', 'rtHead');
@@ -256,6 +261,46 @@ export class TowerView {
     if (!run.relics?.length) relics.append(el('span', 'hint', 'No relics yet. Elites, bosses, chests and shops have them.'));
     head.append(relics);
     return head;
+  }
+
+  /** The approved map keeps its compact status bar; full company details stay one tap away. */
+  private dungeonHeader(): HTMLElement {
+    const run = this.run, t = run.tower!;
+    const head = el('header', 'rtHead dmHead');
+    const top = el('div', 'dmTop');
+    const words = el('div');
+    words.append(el('p', 'dmEyebrow', `The Calamity · Region ${t.act} / ${t.maps ?? CAL_MAPS}`), el('h2', '', dungeonName(t.act)));
+    const home = el('button', 'dmClose', '×');
+    home.setAttribute('aria-label', 'Return home');
+    home.addEventListener('click', () => { saveSlot(run); this.close(); this.hooks.onHome(); });
+    top.append(words, home);
+    const status = el('div', 'dmStatus');
+    const starter = run.roster.find((h) => h.id === run.rift?.starter) ?? run.roster[0];
+    if (starter) {
+      const face = portrait(UNITS[starter.kind].sheet, 36, starter.grade);
+      face.className = 'dmAvatar';
+      const name = el('span', 'dmStarter');
+      name.append(el('b', '', UNITS[starter.kind].name), el('small', '', `Starter · Lv ${heroLevel(starter)}`));
+      status.append(face, name, el('span', 'dmChip', `${Math.round(hpShare(run, starter.id) * 100)}% HP`));
+    }
+    status.append(el('span', 'dmChip', `${run.roster.length} hero${run.roster.length === 1 ? '' : 'es'}`));
+    const gold = el('span', 'rtGold');
+    gold.append(icon(ICONS.gold), el('b', '', String(run.gold)));
+    status.append(gold);
+    head.append(top, status);
+    return head;
+  }
+
+  private companyCard(): void {
+    const card = this.cardShell('Your company', 'recruit');
+    card.append(this.partyBars());
+    const relics = el('div', 'rtRelics');
+    for (const id of this.run.relics ?? []) relics.append(relicButton(this.run, id, () => relicPopup(this.run, id, this.root)));
+    if (!this.run.relics?.length) relics.append(el('p', 'rtLead', 'Relics are found in chambers, shops and guardian battles.'));
+    card.append(relics, this.abandonRow());
+    const back = el('button', '', 'Back');
+    back.addEventListener('click', () => { this.card?.remove(); this.card = null; });
+    card.append(back);
   }
 
   /** Start over: a small link under the party, behind a confirm. */
@@ -303,7 +348,7 @@ export class TowerView {
     const run = this.run;
     const t = run.tower!;
     if (this.calamity) {
-      const cal = (this.cal ??= new CalMap({ meta: () => this.hooks.meta(), onSpot: (id) => this.pickSpot(id) }));
+      const cal = (this.cal ??= new CalMap({ meta: () => this.hooks.meta(), onSpot: (id) => this.pickSpot(id), onStep: (id) => { if (this.moving || pendingAltar(this.run)) return; this.pickSpot(id); if (this.picked === id) this.go(); } }));
       this.calW = this.mapWidth();
       return cal.mount(run, this.calW, this.picked, this.recentre);
     }
@@ -529,12 +574,46 @@ export class TowerView {
   }
 
   private footer(): HTMLElement {
+    if (this.calamity) return this.dungeonFooter();
     const foot = el('footer', 'rtFoot');
     const say = el('p', 'rtSay', this.defaultSay());
     const go = el('button', 'primary rtGo', this.calamity ? 'Travel' : 'Climb');
     go.disabled = this.picked < 0;
     go.addEventListener('click', () => this.go());
     foot.append(say, go);
+    return foot;
+  }
+
+  private dungeonFooter(): HTMLElement {
+    const foot = el('footer', 'rtFoot dmFoot');
+    const info = el('div', 'dmSelection');
+    const badge = el('span', 'dmEncounterIcon');
+    const here = hereOf(this.run.tower!);
+    const kind = here === START_ID ? 'start' : this.kindOf(here);
+    badge.append(dungeonIcon(kind));
+    const words = el('div', 'dmEncounterWords');
+    words.append(el('h3', 'dmSelectedName', kind === 'start' ? 'Arrival portal' : `${NODE_NAMES[kind]} chamber`), el('p', 'rtSay', this.defaultSay()));
+    info.append(badge, words);
+    const nav = el('div', 'dmNav');
+    const actions = el('div', 'dmActions');
+    const go = el('button', 'primary rtGo', 'Enter chamber');
+    go.disabled = this.picked === NO_PICK;
+    go.addEventListener('click', () => this.go());
+    actions.append(go, el('p', 'dmHint', 'Tap a chamber or use the arrows. Cleared rooms stay open.'));
+    nav.append(this.cal!.controls(), actions);
+    const bar = el('div', 'dmMenu');
+    if (this.run.rift) {
+      const r = this.run.rift;
+      const altar = el('button', '', pendingAltar(this.run) ? 'Altar · Evolve!' : `Altar · ${r.patron ? PATRONS[r.patron].name : 'dormant'}`);
+      altar.addEventListener('click', () => this.altarCard());
+      bar.append(altar);
+    }
+    const pack = el('button', '', 'Pack');
+    pack.addEventListener('click', () => this.hooks.onPack());
+    const company = el('button', '', `Company · ${this.run.roster.length}`);
+    company.addEventListener('click', () => this.companyCard());
+    bar.append(pack, company);
+    foot.append(info, nav, bar);
     return foot;
   }
 
@@ -592,7 +671,7 @@ export class TowerView {
     this.lastTapped = id;
     if (!this.cal!.openIds().has(id)) {
       // (a spot already cleared, or the portal: nothing to do there, only to walk back to)
-      this.say(id === START_ID ? 'The portal you came through. Walk back to it.' : `${id >= SIDE_BASE ? 'The detour' : NODE_NAMES[t.map[id].kind]} is cleared. Walk back to it.`);
+      this.say(id === START_ID ? 'The portal that brought your heroes into the Calamity. Walk back to its threshold.' : `${id >= SIDE_BASE ? 'The detour' : NODE_NAMES[t.map[id].kind]} is cleared. Walk back to it.`);
       this.markPicked();
       return;
     }
@@ -612,8 +691,13 @@ export class TowerView {
     this.cal?.setPicked(this.picked);
     const go = this.root.querySelector<HTMLButtonElement>('.rtGo');
     if (!go) return;
-    go.disabled = this.picked < 0;
-    if (this.picked < 0) return void (go.textContent = 'Travel');
+    go.disabled = this.picked === NO_PICK;
+    if (this.picked === NO_PICK) return void (go.textContent = 'Enter chamber');
+    const badge = this.root.querySelector('.dmEncounterIcon');
+    const portal = this.picked === START_ID;
+    badge?.replaceChildren(dungeonIcon(portal ? 'start' : this.kindOf(this.picked)));
+    const title = this.root.querySelector('.dmSelectedName');
+    if (title) title.textContent = portal ? 'Arrival portal' : `${this.picked >= SIDE_BASE ? 'Detour · ' : ''}${NODE_NAMES[this.kindOf(this.picked)]} chamber`;
     const kind = this.kindOf(this.picked);
     const side = this.picked >= SIDE_BASE;
     if (!this.cal!.openIds().has(this.picked)) return void (go.textContent = 'Walk there');
@@ -624,7 +708,7 @@ export class TowerView {
   private go(): void {
     const run = this.run;
     const calamity = this.calamity;
-    if (this.picked < 0 || this.moving) return;
+    if (this.moving || this.picked < 0 && (!calamity || this.picked !== START_ID)) return;
     if (calamity && this.cal && !this.cal.openIds().has(this.picked) && this.cal.walkIds().has(this.picked)) return this.walkBack(this.picked);
     if (calamity ? !this.cal?.openIds().has(this.picked) : !choices(run).some((n) => n.id === this.picked)) return;
     const id = this.picked;
@@ -648,7 +732,7 @@ export class TowerView {
       this.moving = false;
       moveTo(run, id);
       saveSlot(run);
-      this.picked = -1;
+      this.picked = NO_PICK;
       this.draw(true);
     });
   }
@@ -678,7 +762,7 @@ export class TowerView {
       play('summon');
       saveSlot(run);
       const cur = run.tower!.cur!;
-      this.picked = -1;
+      this.picked = NO_PICK;
       if (cur.fight) {
         this.close();
         this.hooks.onFight();
@@ -741,6 +825,25 @@ export class TowerView {
     const slot = reforge ? 'patron' : pendingAltar(run);
     const card = this.cardShell(reforge ? 'Reforge your altar' : slot ? `Awaken your ${slot}` : 'Your altar', 'campfire');
     card.classList.add('riftAltar');
+    card.parentElement!.classList.add('dmAltarVeil');
+    const scenery = el('div', 'altarScenery');
+    scenery.setAttribute('aria-hidden', 'true');
+    const background = el('img');
+    background.src = altarBackdrop;
+    background.alt = '';
+    scenery.append(background);
+    card.prepend(scenery);
+    const heading = card.querySelector('h2')!;
+    const eyebrow = el('p', 'altarEyebrow', 'The Calamity · Altar of Ascension');
+    heading.before(eyebrow);
+    const steps = el('div', 'altarSteps');
+    for (const [id, label] of [['patron', 'Patron'], ['offering', 'Offering'], ['commandment', 'Commandment']] as const) {
+      const step = el('span', id === slot ? 'active' : r[id] ? 'complete' : '', `◆ ${label}`);
+      steps.append(step);
+    }
+    const scene = el('div', 'altarScene');
+    scene.append(altarPicture(r.patron ? `${r.patron}-altar` : 'pedestal'));
+    heading.after(steps, scene);
     card.append(el('p', 'rtLead', 'Your starter grows with the altar. Each evolution grants +15% health and +20% attack.'));
     if (r.patron) card.append(el('p', 'rtNote', `Patron: ${PATRONS[r.patron].name}`));
     if (r.offering) card.append(el('p', 'rtLead', OFFERINGS[r.offering].text));
@@ -770,9 +873,13 @@ export class TowerView {
         b.setAttribute('aria-pressed', 'false');
         const words = el('span');
         words.append(el('b', '', option.name), el('small', '', option.text));
-        b.append(words);
+        const motif: AltarPicture = slot === 'patron' ? `${id as keyof typeof PATRONS}-crest` : id === 'vitality' || id === 'together' ? 'bastion-crest' : id === 'fury' ? 'ember-crest' : 'echo-crest';
+        b.append(altarPicture(motif, 'altarChoiceArt'), words);
         b.addEventListener('click', () => {
           choice = id;
+          const patron = slot === 'patron' ? id as keyof typeof PATRONS : r.patron;
+          scene.replaceChildren(altarPicture(patron ? `${patron}-altar` : 'pedestal'));
+          if (!reduced()) scene.animate([{ filter: 'brightness(1.4)' }, { filter: 'brightness(1)' }], { duration: 450 });
           for (const other of buttons) other.setAttribute('aria-pressed', String(other === b));
           safe.disabled = risky.disabled = false;
           risk.textContent = `If corrupted: ${corruptionText(r.corruption + 1, slot === 'patron' ? id as keyof typeof PATRONS : r.patron)}`;
@@ -785,7 +892,12 @@ export class TowerView {
         if (!(reforge ? reforgeAltar(run, choice) : chooseAltar(run, choice, corrupt))) return;
         play('summon');
         saveSlot(run);
-        close();
+        for (const button of card.querySelectorAll<HTMLButtonElement>('button')) button.disabled = true;
+        card.classList.add(corrupt ? 'altarCorrupting' : 'altarConsecrating');
+        const effect = altarPicture(corrupt ? 'corruption-seal' : 'consecration-seal', 'altarRitual');
+        scene.append(effect);
+        if (reduced()) close();
+        else window.setTimeout(() => { if (this.run === run && card.isConnected) close(); }, 650);
       };
       safe.addEventListener('click', () => commit(false));
       risky.addEventListener('click', () => commit(true));

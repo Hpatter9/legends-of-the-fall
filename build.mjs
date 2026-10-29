@@ -98,6 +98,7 @@ const writeIndexHtml = () => {
             readFileSync('src/codex.css', 'utf8') +
             readFileSync('src/awaken.css', 'utf8') +
             readFileSync('src/calmap.css', 'utf8') +
+            readFileSync('src/dungeonMap.css', 'utf8') +
             readFileSync('src/campPlaces.css', 'utf8') +
             readFileSync('src/daily.css', 'utf8') +
             readFileSync('src/cinematics.css', 'utf8') +

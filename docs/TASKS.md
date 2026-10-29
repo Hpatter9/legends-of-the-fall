@@ -14,13 +14,22 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### CAL-MAP-LIVE — Dungeon map and arrival portal
+
+- **Owner:** current Codex chat. **Branch / worktree:** `feat/calamity-dungeon-map`, `/workspace/legends-of-the-fall`.
+- **Authorisation:** owner approved the dungeon-floor proposal and requested a visible portal that brings the heroes into the Calamity. No further visual approval needed within this direction.
+- **Scope:** replace the live Calamity map renderer, layout and navigation UI; original arrival-portal artwork, hero arrival/movement, existing route/encounter/save callbacks, offline assets, affected tests and portrait checks. Also integrate the previously requested altar artwork/style that the owner preferred. Preserve combat, altar choices, run rewards, legacy save keys and other modes.
+- **Completion:** portal present at every region entrance, starter emerges there on a fresh arrival, real reachable-room navigation and battles/shops/recruits, safe revisiting including portal, reload/mid-walk compatibility, reduced motion, offline reload and all three phone sizes verified.
+- **Status:** implemented; ready for review. Typecheck/build, seven affected test files, three-size live encounter/altar/offline checks and focused portal/travel/modal recovery checks passed. [Handoff](notes/calamity-dungeon-live.md); [arrival preview](samples/calamity-dungeon-live/arrival-393.png). No merge or deployment.
+
+
 ### CAL-MAP-RIFT — Research-led dungeon floor
 
 - **Owner:** current Codex chat. **Branch / worktree:** `design/calamity-dungeon-floor`, `/workspace/legends-of-the-fall`.
 - **Goal:** research King God Castle Great Rift and retry the map around its exploration flow.
 - **Scope:** sourced design notes, original encounter symbols and an interactive room/corridor prototype with starter movement, directional controls, revisiting and clear room types. Preserve ornate styling and three-region Calamity rules.
 - **Completion:** research cited, new example rendered at all three phone sizes, movement/selection/revisit checks, saved handoff for visual review before live integration.
-- **Status:** research documented and cited; original encounter-symbol atlas and interactive chamber/corridor prototype completed. Browser checks passed at 393×852, 360×780 and 412×915 for movement, revisiting, keyboard, tap entry, unreached-room blocking, 44px arrow targets and no errors/overflow. Typecheck/build passed. Ready for visual review; production integration pending. [Handoff](notes/calamity-dungeon-floor.md); [revised example](samples/calamity-dungeon/proposal-393.png). Supersedes the scenic overworld proposal as the active direction.
+- **Status:** research documented and cited; original encounter-symbol atlas and interactive chamber/corridor prototype completed. Browser checks passed at 393×852, 360×780 and 412×915 for movement, revisiting, keyboard, tap entry, unreached-room blocking, 44px arrow targets and no errors/overflow. Typecheck/build passed. Owner approved the direction; live integration is complete under CAL-MAP-LIVE. [Handoff](notes/calamity-dungeon-floor.md); [revised example](samples/calamity-dungeon/proposal-393.png). Supersedes the scenic overworld proposal as the active direction.
 
 
 ### CAL-MAP-NEW — Replace the Calamity map
@@ -29,7 +38,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Goal:** owner rejected the old floating-island map and requested an entirely new visual style.
 - **Scope:** original continuous-landscape map art, a playable visual prototype with ornate UI, readable routes and distinct encounter landmarks; integrate after the visual-direction check required above. Preserve the new three-region run and altar mechanics.
 - **Completion:** new map look reviewed, then production renderer replacement, existing save/route behaviour retained, portrait/accessibility/offline checks and affected tests.
-- **Status:** new landscape and nine landmark assets generated; interactive proposal uses the real first-region route graph. Browser checks passed at all three phone sizes, including selection, simulated travel and unreached-route locking. Typecheck/build passed. Awaiting visual-direction confirmation before production renderer replacement. [Handoff](notes/calamity-overland.md); [new map preview](samples/calamity-overland/proposal-393.png).
+- **Status:** new landscape and nine landmark assets generated; interactive proposal uses the real first-region route graph. Browser checks passed at all three phone sizes, including selection, simulated travel and unreached-route locking. Typecheck/build passed. Superseded by the approved dungeon-floor direction and CAL-MAP-LIVE implementation. [Handoff](notes/calamity-overland.md); [new map preview](samples/calamity-overland/proposal-393.png).
 
 
 ### ALTAR-UI — Ornate altar sanctuary
@@ -37,7 +46,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Owner:** current Codex chat. **Branch / worktree:** `design/altar-sanctuary`, `/workspace/legends-of-the-fall`.
 - **Scope:** altar presentation and ritual effects; owner subsequently requested original generated altar assets, now saved with provenance and credits. Preserve altar rules, choices, run progression, saves and other screens.
 - **Completion:** visual direction reviewed before integration; accessible portrait UI at all three phone sizes, reduced motion, offline support, typecheck/build and affected checks.
-- **Status:** visual proposal rendered and checked at 393×852, 360×780 and 412×915; no page errors or horizontal overflow, ritual actions fit. Owner requested new assets: nine transparent altar/crest/ritual motifs and a sanctuary backdrop are generated, saved and shown in an updated preview. Typecheck/build and offline prototype checks at all three sizes passed. Production UI integration remains separate. [Handoff](notes/altar-sanctuary.md); [new-art preview](samples/altar-sanctuary/generated-393.png).
+- **Status:** visual proposal rendered and checked at 393×852, 360×780 and 412×915; no page errors or horizontal overflow, ritual actions fit. Owner requested new assets: nine transparent altar/crest/ritual motifs and a sanctuary backdrop are generated, saved and shown in an updated preview. Typecheck/build and offline prototype checks at all three sizes passed. Production UI integration is complete under CAL-MAP-LIVE. [Handoff](notes/altar-sanctuary.md); [new-art preview](samples/altar-sanctuary/generated-393.png).
 
 
 ### CAL-RIFT — Starter-led altar runs
