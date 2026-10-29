@@ -67,8 +67,9 @@ export function dailyRun(date: number, practice = false, scale = 1): Run {
 /** The share of the power ratio the foes answer with (below 1: a hero's power is not all won in a fight, and the daily is short). */
 /** `ult`: the foes' answer to the ultimates, which `kindPower` does not count (ULT-CHARGE, `docs/notes/ult-charge.md`): this much stronger again for
  *  each of the five whose ultimate is open (level `ULT_LEVEL` or more), so a levelled save clears the daily about as often as before the ultimates came
- *  round once or twice a fight. A fresh save (no hero at 30) meets the daily as it was. */
-export const DAILY_ANSWER = { share: 0.75, ult: 0.17 };
+ *  round once or twice a fight. A fresh save (no hero at 30) meets the daily as it was. 0.17 until STATUS-FX's ailments (their boss rules made the
+ *  day's boss harder for a levelled save). */
+export const DAILY_ANSWER = { share: 0.75, ult: 0.15 };
 export function dailyScale(m: Meta, date?: number): number {
   const five: readonly string[] = (date !== undefined ? dailyTheme(date)?.five : undefined) ?? HEROES;
   const ratio = five.reduce((n, k) => n + kindPower(m, k) / powerOf(k, gradeBoost(1, 0, 1)), 0) / five.length;

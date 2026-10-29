@@ -10,6 +10,7 @@ import { BANNER_MULT, foesOf, gain, mendUnit, roll } from './abilities';
 import { ABILITIES, type Ability, type Kind } from './equipBases';
 import { TALENT_ABILITIES } from './talents';
 import { MANA_MAX } from './spells';
+import { AILMENT_SWITCH, chillFor, cleanse, dotOf, setDot, stunFor } from './ailments';
 
 const DIRS = [
   [1, 0],
@@ -69,14 +70,14 @@ function fire(b: Battle, me: Unit, a: Ability, s: number, foe: Unit | undefined,
     case 'bleed':
     case 'curse':
       // (never over a skill's own burn or bleed already on the foe)
-      if (!foe!.dot) foe!.dot = { kind: a.kind, dmg: Math.max(1, Math.round(atkOf(me) * v)), every: 1000, ms: 3000, by: me.id, next: b.t + 1000, until: b.t + 3000 };
+      // (with the ailments on, the Ranger's Poisoned Tips poison rather than bleed, STATUS-FX)
+      if (!dotOf(foe!)) setDot(b, foe!, { kind: AILMENT_SWITCH.on && a.id === 'tl_ranger_poison' ? 'poison' : a.kind, dmg: Math.max(1, Math.round(atkOf(me) * v)), every: 1000, ms: 3000, by: me.id, next: b.t + 1000, until: b.t + 3000 });
       break;
     case 'slow':
-      foe!.slowUntil = Math.max(foe!.slowUntil ?? 0, b.t + w);
+      chillFor(b, foe!, w);
       break;
     case 'stun':
-      foe!.busyUntil = Math.max(foe!.busyUntil, b.t + w);
-      foe!.stunUntil = b.t + w;
+      stunFor(b, foe!, w, true);
       break;
     case 'chain': {
       const second = beside(foe!, 2).sort((x, y) => apart(x, foe!) - apart(y, foe!) || x.id - y.id)[0];
@@ -150,7 +151,7 @@ function fire(b: Battle, me: Unit, a: Ability, s: number, foe: Unit | undefined,
       me.power = (me.power ?? 1) * (1 + v);
       break;
     case 'cleanse':
-      me.dot = undefined;
+      cleanse(b, me);
       me.slowUntil = undefined;
       mendUnit(me, me.maxHp * v, out);
       break;

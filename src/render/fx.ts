@@ -22,6 +22,12 @@ import type { UnitSprite } from './unitView';
 import { Particles } from './particles';
 import { loadVfxArt, VFX } from './vfxArt';
 import { loadAuraArt } from './awakenAura';
+import { loadStatusArt, statusFrames, STATUS_CELL } from './statusArt';
+import { IMMUNE_COLOUR, SHATTER_COLOUR, STATUS_STYLES, statusKey, type AilmentKey } from './statusStyles';
+import { ailmentChip } from './ailmentLayer';
+
+/** An ailment's damage colour (none for a plain blow: it keeps the usual white, gold or red). */
+const numberColour = (ail?: AilmentKey | 'shatter'): number | undefined => (ail === 'shatter' ? SHATTER_COLOUR : ail ? STATUS_STYLES[ail].number : undefined);
 import { loadPackArt, PACK } from './fxSheets';
 import { bossEntrance, deathBurst, impactBurst, play, setBoneArt, windUp } from './combatFx';
 import { showDuoToast } from '../duoToast';
@@ -73,7 +79,7 @@ export async function loadFx(): Promise<void> {
   await loadVfxArt();
   await loadPackArt();
   magic.pinkHeart = { frames: VFX.pinkHeart };
-  await Promise.all([loadProps(), loadAbilityArt(), loadAuraArt()]);
+  await Promise.all([loadProps(), loadAbilityArt(), loadAuraArt(), loadStatusArt()]);
   // (the hero kits' terrain: a rampart's ruined walls, a statue's stone, a keg's barrel; the pack's own props, as the board draws them)
   const tex = async (url: string) => Texture.from(await loadImage(url));
   kitArt = { walls: await Promise.all(TERRAIN_URLS.walls.map(tex)), barrel: await tex(TERRAIN_URLS.barrel) };
@@ -285,7 +291,10 @@ export class Fx {
           const healer = e.by !== undefined && e.by !== e.to ? this.sprites.get(e.by) : undefined;
           if (healer) this.thread(healer.x, healer.y - healer.tall * 0.5, to.x, to.y - to.tall * 0.5, 'light-sparkle');
         }
-      } else if (e.kind === 'arc') this.arc(e.from, e.to);
+      } else if (e.kind === 'arc') this.arc(e.from, e.to, e.ail === 'shock');
+      // (STATUS-FX: an ailment shrugged off, and a frozen fighter's ice shattering)
+      else if (e.kind === 'immune') this.immune(e.to, e.what);
+      else if (e.kind === 'shatter') this.shatter(e.to);
       else if (e.kind === 'frenzy') {
         const by = this.sprites.get(e.by);
         if (by) this.label(`Frenzy x${e.n}`, by.x, by.y - by.tall - 20, 0xff6b4a, 12, 700);
@@ -337,15 +346,17 @@ export class Fx {
             const frames = abilityFrames('spell:poison', 'puff');
             if (frames) this.particles.spawn({ frames, art: 'spell:poison', x: to.x, y: to.y - to.tall * 0.45, scale: 0.9, life: 300, alpha: 0.65 });
           }
-          this.number(e.dmg, to.x, to.y - to.tall - 10, e.heavy, false);
+          this.number(e.dmg, to.x, to.y - to.tall - 10, e.heavy, false, false, e.ail);
           if (e.killed) this.death(target, to.x, to.y - to.tall * 0.3);
           continue;
         }
         if (e.src === 'dot') {
-          const burn = target.dot?.kind === 'burn' || target.dot === undefined;
-          if (target.dot?.kind === 'curse') this.particles.spawn({ frames: VFX.puffFire, x: to.x, y: to.y - to.tall * 0.45, scale: 0.8, life: 260, alpha: 0.8, add: true, tint: 0xb06aff });
-          else this.anim(burn ? fire : impact, to.x, to.y - to.tall * 0.45, burn ? 0.7 : 0.6, 60);
-          this.number(e.dmg, to.x, to.y - to.tall - 10, false, target.side === 'hero');
+          // (the tick of an ailment: its own puff, and its number in its colour; an untagged tick is burning ground)
+          const burn = e.ail === 'burn' || e.ail === undefined;
+          if (e.ail === 'curse') this.particles.spawn({ frames: VFX.puffFire, x: to.x, y: to.y - to.tall * 0.45, scale: 0.8, life: 260, alpha: 0.8, add: true, tint: 0xb06aff });
+          else if (e.ail === 'poison') this.particles.spawn({ frames: PACK['poison-puff'], x: to.x, y: to.y - to.tall * 0.45, scale: 0.7, life: 300, alpha: 0.8 });
+          else if (e.ail !== 'shock') this.anim(burn ? fire : impact, to.x, to.y - to.tall * 0.45, burn ? 0.7 : 0.6, 60);
+          this.number(e.dmg, to.x, to.y - to.tall - 10, false, target.side === 'hero', false, e.ail);
           if (e.killed) this.death(target, to.x, to.y - to.tall * 0.3);
           continue;
         }
@@ -378,7 +389,7 @@ export class Fx {
         } else this.anim(impact, hx, hy, 0.9 * spark, 45);
         if (this.particles.rate(0.7)) this.puffAt(to.x, to.y - to.tall * 0.3, target.side === 'hero' ? 'white' : 'blood', 0.8 + spark * 0.2);
         this.flesh(target, hx, hy, e.dmg / target.maxHp);
-        this.number(e.dmg, to.x, to.y - to.tall - 10, e.heavy, target.side === 'hero', e.high);
+        this.number(e.dmg, to.x, to.y - to.tall - 10, e.heavy, target.side === 'hero', e.high, e.ail);
         this.trauma = Math.min(1, this.trauma + traumaFor(e.dmg / target.maxHp, e.killed) * 0.5);
         // (the struck is knocked a little away along the blow, and a crit or a killing blow stops the fight for a moment)
         const share = e.dmg / target.maxHp;
@@ -1430,10 +1441,38 @@ export class Fx {
     });
   }
 
+  /** An ailment shrugged off (resisted, a boss's ladder, a ward): its chip crossed out, and the word, rising a little (STATUS-FX). */
+  private immune(id: number, what: AilmentKey): void {
+    const s = this.sprites.get(id);
+    if (!s || !settings().numbers) return;
+    const { txt } = this.label('Immune', s.x + 6, s.y - s.tall - 12, IMMUNE_COLOUR, 9, 800);
+    if (txt.children.length) return;
+    const chip = ailmentChip(what, undefined, true);
+    chip.position.set(-txt.width / 2 - 8, -txt.height / 2);
+    txt.addChild(chip);
+  }
+
+  /** A frozen fighter's ice shatters: the burst of shards, once, and the word (the extra blow's number follows, ice-white and big). */
+  private shatter(id: number): void {
+    const s = this.sprites.get(id);
+    if (!s) return;
+    const part = STATUS_STYLES.freeze.parts.burst!;
+    const frames = statusFrames(statusKey('freeze', 'burst'));
+    if (frames.length) {
+      // (with reduced motion: one still frame of it, fading)
+      const calm = matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+      const sp = this.anim({ frames: calm ? [frames[Math.floor(frames.length * 0.6)]] : frames }, s.x, s.y - s.tall * part.at, (s.tall * part.size) / STATUS_CELL, part.frameMs);
+      sp.blendMode = 'normal';
+    }
+    this.label('SHATTER', s.x, s.y - s.tall - 44, SHATTER_COLOUR, 9, 900);
+  }
+
   /** The damage numbers still rising over each spot, so a new one over the same fighter starts above the last, not on it. */
   private stacks = new Map<string, { at: number; n: number }>();
 
-  private number(n: number, x: number, y: number, heavy: boolean, onHero: boolean, high = false): void {
+  /** A damage number: white (gold for a heavy blow, red on a hero), or an ailment's colour for its ticks and riders (STATUS-FX), and
+   *  bigger and ice-white for a shatter. */
+  private number(n: number, x: number, y: number, heavy: boolean, onHero: boolean, high = false, ail?: AilmentKey | 'shatter'): void {
     if (!settings().numbers) return;
     // (numbers over the same fighter within half a second step up a row each, and to alternate sides, so they never sit on each other)
     const key = `${Math.round(x / 16)},${Math.round(y / 16)}`;
@@ -1444,7 +1483,7 @@ export class Fx {
     if (this.stacks.size > 64) for (const [s, v] of this.stacks) if (now - v.at > 1000) this.stacks.delete(s);
     const txt = new Text({
       text: String(n),
-      style: { fontFamily: "'Press Start 2P', monospace", fontWeight: 'normal', fontSize: heavy ? 12 : 9, fill: onHero ? 0xff7a6a : heavy ? 0xffd34a : 0xffffff, stroke: { color: 0x1a1008, width: 3 } },
+      style: { fontFamily: "'Press Start 2P', monospace", fontWeight: 'normal', fontSize: ail === 'shatter' ? 13 : heavy ? 12 : 9, fill: numberColour(ail) ?? (onHero ? 0xff7a6a : heavy ? 0xffd34a : 0xffffff), stroke: { color: 0x1a1008, width: 3 } },
       resolution: 3,
     });
     txt.anchor.set(0.5, 1);
@@ -1474,11 +1513,11 @@ export class Fx {
 
   /** A line between two fighters: lightning jumping (jagged, a white core in a blue glow, a crack at each end), the Kitsune's
    *  charm (a wavy pink thread with hearts) or the Warlock's hex (a wavy violet thread with smoke). */
-  private arc(fromId: number, toId: number): void {
+  private arc(fromId: number, toId: number, shock = false): void {
     const a = this.sprites.get(fromId);
     const c = this.sprites.get(toId);
     if (!a || !c) return;
-    const style = arcStyle(a.unit.def);
+    const style = shock ? 'lightning' : arcStyle(a.unit.def);
     const [x0, y0, x1, y1] = [a.x, a.y - a.tall * 0.5, c.x, c.y - c.tall * 0.5];
     const len = Math.hypot(x1 - x0, y1 - y0) || 1;
     const nx = -(y1 - y0) / len;

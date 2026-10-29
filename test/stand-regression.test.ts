@@ -9,6 +9,7 @@ import { fight, place, playOut, startBattle } from '../src/sim/battle';
 import { FIELD_BANDS } from '../src/sim/foes';
 import { HEROES } from '../src/sim/units';
 import { stageBoost } from '../src/sim/run';
+import { AILMENT_SWITCH } from '../src/sim/ailments';
 
 /** One fight in a line: who won, how long it took, who is left standing, and the fight's random stream. */
 function signature(seed: number, band: string, stage: number): string {
@@ -24,9 +25,17 @@ function signature(seed: number, band: string, stage: number): string {
 
 const SEEDS: [number, number][] = [[1, 1], [2, 3], [3, 5], [4, 8], [5, 12], [6, 2], [7, 6], [8, 10], [9, 4], [10, 15], [11, 7], [12, 20]];
 
+// (STATUS-FX's ailments change ordinary fights on purpose, so these are played under the rules they were pinned on: the ailments off, which
+// `ailments-identical.test.ts` holds to main's fights before the ailment model)
 test('ordinary fights play out as they did before the Last Stand', () => {
-  const got = SEEDS.map(([seed, stage]) => signature(seed, FIELD_BANDS[seed % FIELD_BANDS.length], stage));
-  assert.deepEqual(got, PINNED);
+  const was = AILMENT_SWITCH.on;
+  AILMENT_SWITCH.on = false;
+  try {
+    const got = SEEDS.map(([seed, stage]) => signature(seed, FIELD_BANDS[seed % FIELD_BANDS.length], stage));
+    assert.deepEqual(got, PINNED);
+  } finally {
+    AILMENT_SWITCH.on = was;
+  }
 });
 
 const PINNED: string[] = [

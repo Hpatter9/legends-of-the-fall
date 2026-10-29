@@ -23,6 +23,7 @@ import {
   levelPoints, nodeOf, picksOf, readTalents, pointsEarned, pointsFree, pointsSpent, respec, respecCost, talentStats, tierNodes, whyNot,
 } from '../src/sim/talents';
 import { EQUIP_ICONS } from '../src/equipArt';
+import { dotOf } from '../src/sim/ailments';
 
 const stats = (p: Partial<EquipStats>): EquipStats => ({ ...emptyStats(), ...p });
 /** A meta with `kind` unlocked, at `level` (by its XP) and with `shards` shards. */
@@ -291,7 +292,7 @@ test('dur makes what a skill does last longer', () => {
   const hex = (t: Record<string, number>) => {
     const a = arena('warlock', withTal(t), 2);
     castOnce(a);
-    return Math.max(...a.foes.map((f) => f.dot?.until ?? 0)) - a.b.t;
+    return Math.max(...a.foes.map((f) => dotOf(f)?.until ?? 0)) - a.b.t;
   };
   assert.ok(hex({ dur: 0.6 }) > hex({}) + 2000);
 });

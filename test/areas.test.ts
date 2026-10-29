@@ -4,6 +4,7 @@ import { AREAS, CLASSIC_AREAS, boardOk, canStep, D, DEPLOY_ROWS, GROUND_COST, LA
 import { addUnit, fight, place, startBattle, stepBattle } from '../src/sim/battle';
 import { AREA_STAGES, areaFor, newRun, startStage } from '../src/sim/run';
 import { walkFrom } from '../src/sim/path';
+import { dotOf } from '../src/sim/ailments';
 
 const flat = (extra: Partial<Tile> = {}): Tile => ({ h: 0, deco: 0, ...extra });
 /** A board with every tile level and bare. */
@@ -114,7 +115,9 @@ test('lava burns a fighter whose step ends on it', () => {
     burned = me.hp < me.maxHp && tileAt(b.board, me.u, me.v)!.ground === 'lava';
   }
   assert.ok(burned, 'lost hp stepping onto lava');
-  assert.ok(me.maxHp - me.hp >= Math.max(1, Math.round(me.maxHp * LAVA_BURN)));
+  // (STATUS-FX: the step's sear is half what it was, and the lava sets the walker burning for the rest)
+  assert.ok(me.maxHp - me.hp >= Math.max(1, Math.round(me.maxHp * LAVA_BURN * 0.5)));
+  assert.equal(dotOf(me)?.kind, 'burn', 'and it is burning');
 });
 
 test('a fight on each area plays out to its end', () => {

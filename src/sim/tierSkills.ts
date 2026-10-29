@@ -11,6 +11,7 @@ import { hurt, defOf, atkOf, type Battle, type BattleEvent, type Unit } from './
 import { callSummon, foesOf, gain, mendUnit, net, apart, tal } from './abilities';
 import type { EquipStats } from './equipment';
 import { ALL_HEROES } from './units';
+import { stunFor } from './ailments';
 
 /** What a skill adds when it goes off. */
 export type Rider =
@@ -283,8 +284,7 @@ export function runRiders(b: Battle, me: Unit, out: BattleEvent[], schedule: (ms
       for (const f of near) {
         hurt(b, me, f, net(atkOf(me) * r.mult * TIER_STRENGTH, f), false, false, out, 'skill');
         if (r.stun && f.alive) {
-          f.busyUntil = Math.max(f.busyUntil, b.t + r.stun);
-          f.stunUntil = Math.max(f.stunUntil ?? 0, b.t + r.stun);
+          stunFor(b, f, r.stun);
         }
       }
     } else if (r.kind === 'mend') {
