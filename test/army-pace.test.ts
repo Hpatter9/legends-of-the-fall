@@ -3,8 +3,8 @@
 // harder tiers are lifted (`tierLift`) to stay above it, and Mythic and the first four armies are as they were.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ARMIES, armyById, waveBoost, type Army } from '../src/sim/armies';
-import { BUILDINGS, maxLevel, newCastle, type BuildingId } from '../src/sim/castle';
+import { ARMIES, armyById, armyXpShare, waveBoost, type Army } from '../src/sim/armies';
+import { BUILDINGS, maxLevel, newCastle, type BuildingId, type Castle } from '../src/sim/castle';
 import { levelOfKind } from '../src/sim/levels';
 import { heroRank } from '../src/sim/meta';
 import { mixSeed } from '../src/sim/rng';
@@ -13,18 +13,27 @@ import { heroStats, learn, tierNodes } from '../src/sim/talents';
 import { playArmy, savedAt } from '../tools/autoplay';
 
 const party = ['knight', 'paladin', 'archer', 'warlock', 'cleric'];
-const maxed = newCastle();
-for (const id of Object.keys(BUILDINGS) as BuildingId[]) maxed[id] = maxLevel(id);
+/** A castle of `n` levels spread over its buildings, the lowest first (the castle a climb has: 17 levels at about hero level 45, every one at 80, `tools/army-pace`). */
+function castleOf(n: number): Castle {
+  const c = newCastle();
+  const ids = Object.keys(BUILDINGS) as BuildingId[];
+  for (let i = 0; i < n; i++) {
+    const open = ids.filter((id) => c[id] < maxLevel(id)).sort((a, b) => c[a] - c[b]);
+    if (open.length) c[open[0]]++;
+  }
+  return c;
+}
 
-/** Whether a party at `level` (every talent its level opens, a maxed castle, gear dressed) clears an army's Normal within `cap` tries. */
-function clears(army: string, level: number, save: number, cap: number): boolean {
+/** Whether a party at `level` (every talent its level opens, a castle of `built` levels, gear dressed) clears an army's Normal within `cap` tries. */
+function clears(army: string, level: number, save: number, cap: number, built: number): boolean {
+  const castle = castleOf(built);
   const meta = savedAt(level, party, save);
   for (const k of party) {
     if (!meta.unlocked.includes(k)) meta.unlocked.push(k);
     for (const t of [1, 2, 3, 4, 5, 6, 7] as const) for (const n of tierNodes(k, t)) learn(meta, k, n.id);
   }
   const boostFor = (h: Owned) => boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), heroStats(meta, h.kind));
-  for (let n = 0; n < cap; n++) if (playArmy(meta, army, mixSeed(save, 0xa9ace, ARMIES.findIndex((a) => a.id === army) * 100 + n), party, maxed, true, 0, boostFor).cleared) return true;
+  for (let n = 0; n < cap; n++) if (playArmy(meta, army, mixSeed(save, 0xa9ace, ARMIES.findIndex((a) => a.id === army) * 100 + n), party, castle, true, 0, boostFor).cleared) return true;
   return false;
 }
 
@@ -59,10 +68,20 @@ test('the late armies climb steeply: each recommended level at least five above 
 });
 
 test('the final armies are out of reach of a party at level 45, where the first army’s Mythic is still a wall', () => {
-  // (level 45 with every talent and a maxed castle: the first army's Mythic takes about 15 tries there, `tools/army-pace`)
-  for (const army of ['infernal', 'yokai', 'golems']) for (const save of [1, 2]) assert.equal(clears(army, 45, save, 3), false, `${army} save ${save}`);
+  // (level 45 with every talent and the castle a climb has there: the first army's Mythic takes about 17 tries, `tools/army-pace`)
+  for (const army of ['infernal', 'yokai', 'golems']) for (const save of [1, 2]) assert.equal(clears(army, 45, save, 3, 17), false, `${army} save ${save}`);
 });
 
 test('and a strong party does clear them in the end: the Golem Forge at level 80', () => {
-  assert.ok([1, 2].some((save) => clears('golems', 80, save, 3)));
+  assert.ok([1, 2].some((save) => clears('golems', 80, save, 3, 99)));
+});
+
+test('a steeper army pays the XP it did before: its added toughness is taken back out of a fight’s XP, and the other armies pay in full', () => {
+  for (const a of ARMIES.slice(0, 4)) for (const t of [0, 1, 2, 3, 4]) assert.equal(armyXpShare(a, t), 1, `${a.id} tier ${t}`);
+  for (const a of ARMIES.slice(4)) {
+    assert.ok(a.xpStart !== undefined && a.xpStart < a.start, a.id);
+    assert.ok(Math.abs(armyXpShare(a, 0) * a.start - a.xpStart!) < 1e-9, a.id);
+    for (const t of [1, 2, 3, 4]) assert.ok(Math.abs(armyXpShare(a, t) * (a.tierLift?.[t] ?? 1) - 1) < 1e-9, `${a.id} tier ${t}`);
+    assert.equal(armyXpShare(a, 4), 1, `${a.id} Mythic`);
+  }
 });

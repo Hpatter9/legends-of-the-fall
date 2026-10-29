@@ -8,12 +8,14 @@
 //
 // Every assumption is a constant below; change one and run it again. `docs/notes/level-100.md` has the table.
 
-import { ARMIES, replayTotal } from '../src/sim/armies';
+import { ARMIES, armyXpShare, replayTotal } from '../src/sim/armies';
 import { fight, playOut } from '../src/sim/battle';
 import { maxLevel, newCastle, xpRate } from '../src/sim/castle';
-import { BENCH_SHARE, fightXp, levelOf, MAX_LEVEL, xpFor } from '../src/sim/levels';
+import { BENCH_SHARE, fightXp, levelOf, levelOfKind, MAX_LEVEL, xpFor } from '../src/sim/levels';
 import { Rng, mixSeed } from '../src/sim/rng';
-import { armyRun, finish, isBossRun, noteFight, startStage } from '../src/sim/run';
+import { armyRun, boostOf, finish, isBossRun, noteFight, startStage, type Owned } from '../src/sim/run';
+import { heroRank } from '../src/sim/meta';
+import { heroStats, learn, tierNodes } from '../src/sim/talents';
 import { autoDeploy, autoRound } from '../src/sim/autoplay';
 import { ratingOf } from '../src/sim/stars';
 import { TIERS } from '../src/sim/tiers';
@@ -76,18 +78,25 @@ function measure(): number[][][] {
       const out: number[] = [];
       for (let s = 1; s <= SAMPLES; s++) {
         const meta = savedAt(MEASURE_LEVEL, PARTY, s);
+        // (every talent row level 100 opens, as a player there has: the late armies' Normal and lifted tiers are steep since ARMY-PACE, and a
+        // level-100 party without talents no longer wins every run, which this table assumes)
+        for (const k of PARTY) {
+          if (!meta.unlocked.includes(k)) meta.unlocked.push(k);
+          for (const tr of [1, 2, 3, 4, 5, 6, 7] as const) for (const n of tierNodes(k, tr)) learn(meta, k, n.id);
+        }
+        const boostFor = (h: Owned) => boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), heroStats(meta, h.kind));
         const run = armyRun(mixSeed(s, 0x1e7e1, ai * 10 + t), a.id, PARTY, castle, t);
         let sum = 0;
         while (!run.over) {
           autoRound(run, meta, true);
           const b = startStage(run);
-          autoDeploy(b, run, meta);
+          autoDeploy(b, run, meta, boostFor);
           fight(b);
           playOut(b);
           const ok = b.phase === 'won';
           noteFight(run, b);
           finish(run, ok, ratingOf(b, isBossRun(run)).stars);
-          sum += Object.values(fightXp(b, 1)).reduce((n, x) => n + x, 0) / PARTY.length;
+          sum += Object.values(fightXp(b, armyXpShare(a, t))).reduce((n, x) => n + x, 0) / PARTY.length;
         }
         out.push(sum);
       }

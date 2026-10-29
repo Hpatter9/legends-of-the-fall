@@ -30,7 +30,7 @@ export interface Army {
   name: string;
   /** One line for the army's card. */
   blurb: string;
-  /** The hero level Normal is meant for: about 2 to 4 tries with a party at this level, one try about ten levels above, and out of reach of a level-1 party (`docs/notes/difficulty.md`). */
+  /** The hero level Normal is meant for: about 2 to 4 tries with a party at this level, one try about ten levels above, and out of reach of a level-1 party (`docs/notes/difficulty.md`). From the Labyrinth on it is measured with the talents that level opens (ARMY-PACE, `docs/notes/army-pace.md`). */
   level: number;
   /** The land of its first wave (and its card's backdrop); `lands` is every land its waves are fought in. */
   area: Area;
@@ -46,9 +46,14 @@ export interface Army {
   tierGrowth?: number;
   /**
    * The harder tiers' foes (hp and attack) times this, by tier (index 1 Hard to 4 Mythic; missing is 1). A late army's Normal is now steep
-   * (ARMY-PACE, `docs/notes/army-pace.md`), so its Hard and Elite are lifted to stay above it; Mythic is left as it was tuned.
+   * (ARMY-PACE, `docs/notes/army-pace.md`), so its Hard, Elite and Legendary are lifted to stay above it, each above the one before; Mythic is left as it was tuned.
    */
   tierLift?: readonly number[];
+  /**
+   * The Normal `start` a run's XP is paid at (missing is `start` itself). XP follows the damage the heroes deal, so a late army made tougher in
+   * ARMY-PACE would pay more XP for the same run and speed up the whole level pace; its runs pay as they did at its old strength (`armyXpShare`).
+   */
+  xpStart?: number;
   /** The hp and attack a boss has at wave 1's strength (the wave's multiplier then applies, as to every foe): the army's mid-bosses, and its last. These set the walls of the campaign, whatever the boss's own stats in `foes.ts`. */
   mid: BossStats;
   last: BossStats;
@@ -164,6 +169,7 @@ export const ARMIES: readonly Army[] = [
     lands: ['temple', 'ruins'],
     waves: waves(ramp(['mazeMino1', 'mazeMino2', 'mazeGorgon1', 'mazeMino3', 'mazeGorgon2', 'mazeMino1', 'mazeGorgon3', 'mazeMino2'], 13), { 8: ['gorgonQueen', 'mazeMino1', 'mazeMino2', 'mazeGorgon3'], 15: ['minotaurChampion', 'mazeMino1', 'mazeGorgon1', 'mazeMino2', 'mazeGorgon2', 'mazeMino3'] }),
     start: 3.05, // (was 2.25: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`)
+    xpStart: 2.25,
     tierStart: 1.38,
     growth: 0.05,
     tierGrowth: 0.128,
@@ -181,6 +187,7 @@ export const ARMIES: readonly Army[] = [
     lands: ['highlands', 'snow'],
     waves: waves(ramp(['clanOgre', 'clanBrute', 'clanBrute', 'clanOgre', 'clanOgre', 'clanBrute', 'clanOgre'], 13), { 8: ['shamanKing', 'clanBrute', 'clanOgre', 'clanBrute'], 15: ['hornedOgre', 'clanOgre', 'clanBrute', 'clanOgre', 'clanBrute', 'clanOgre'] }),
     start: 4.1, // (was 2.8: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`)
+    xpStart: 2.8,
     tierStart: 1.55,
     growth: 0.05,
     tierGrowth: 0.124,
@@ -199,10 +206,11 @@ export const ARMIES: readonly Army[] = [
     lands: ['volcano', 'desert'],
     waves: waves(ramp(['hellImp', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon'], 13), { 8: ['devilLeader', 'hellImp', 'hellDemon', 'hellImp'], 15: ['demonLord', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon', 'hellImp'] }),
     start: 5.67, // (was 3.01: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`)
+    xpStart: 3.01,
     tierStart: 1.64,
     growth: 0.05,
     tierGrowth: 0.13,
-    tierLift: [1, 1.72, 1.3, 1.05, 1],
+    tierLift: [1, 1.55, 1.16, 1, 1],
     mid: { hp: 2000, atk: 50 },
     last: { hp: 1840, atk: 41 },
     pay: 4.1,
@@ -217,6 +225,7 @@ export const ARMIES: readonly Army[] = [
     lands: ['shrine', 'forest'],
     waves: waves(ramp(['yokaiFox', 'yokaiCrow', 'yokaiMonk', 'yokaiWitch', 'yokaiSeer', 'yokaiFox', 'yokaiMonk', 'yokaiCrow', 'yokaiWitch'], 13), { 8: ['nineTails', 'yokaiFox', 'yokaiWitch', 'yokaiCrow'], 15: ['oniKing', 'yokaiMonk', 'yokaiWitch', 'yokaiSeer', 'yokaiFox', 'yokaiCrow'] }),
     start: 7, // (was 3.38: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`)
+    xpStart: 3.38,
     tierStart: 1.55,
     growth: 0.05,
     tierGrowth: 0.127,
@@ -235,10 +244,11 @@ export const ARMIES: readonly Army[] = [
     lands: ['forge', 'crystal'],
     waves: waves(ramp(['stoneGolem', 'ironGolem', 'crystalGolem', 'magmaGolem', 'stoneGolem', 'ironGolem', 'magmaGolem'], 13), { 8: ['sapphireColossus', 'stoneGolem', 'crystalGolem', 'ironGolem'], 15: ['forgeTitan', 'ironGolem', 'magmaGolem', 'crystalGolem', 'stoneGolem', 'magmaGolem'] }),
     start: 7.1, // (was 3.63: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`)
+    xpStart: 3.63,
     tierStart: 1.7,
     growth: 0.05,
     tierGrowth: 0.124,
-    tierLift: [1, 1.85, 1.4, 1.2, 1],
+    tierLift: [1, 1.8, 1.34, 1.2, 1],
     mid: { hp: 1800, atk: 56 },
     last: { hp: 2040, atk: 55 },
     pay: 6.26,
@@ -277,6 +287,12 @@ export function waveBoost(a: Army, n: number, tier = 0): Stage {
   const lift = tier > 0 ? a.tierLift?.[tier] ?? 1 : 1;
   return { foes: { hp: k * t.hp * lift, atk: k * t.atk * lift, ...(t.speed !== 1 ? { speed: t.speed } : {}) }, boss, area: a.area };
 }
+
+/**
+ * The share of a fight's XP a run of an army pays on a tier (ARMY-PACE): its foes' added toughness taken back out, so a late army made steeper
+ * pays what it did before, and the level pace (`npm run level-pace`) stays where it was. 1 for every army that was not changed.
+ */
+export const armyXpShare = (a: Army, tier = 0): number => (tier > 0 ? 1 / (a.tierLift?.[tier] ?? 1) : (a.xpStart ?? a.start) / a.start);
 
 /** The foes of wave n on a tier: the wave's own band, then the tier's escorts, copies of the wave's escorts in turn (a boss is never copied, so a boss with no escorts stays alone). */
 export function waveFoes(a: Army, n: number, tier = 0): readonly string[] {
