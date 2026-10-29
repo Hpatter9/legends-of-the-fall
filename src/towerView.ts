@@ -269,7 +269,7 @@ export class TowerView {
       const h = run.roster.find((x) => x.id === run.rift!.starter);
       const altar = el('button', 'rtChoice riftStatus');
       const words = el('span');
-      words.append(el('b', '', `${h ? UNITS[h.kind].name : 'Starter'} · Lv ${h ? heroLevel(h) : 1} · Evolution ${riftRank(run.rift)}/3`), el('small', '', pendingAltar(run) ? 'An altar evolution awaits — choose your blessing' : `${run.rift.patron ? PATRONS[run.rift.patron].name : 'Altar awakens after your first victory'} · Corruption ${run.rift.corruption}`));
+      words.append(el('b', '', `${h ? heroName(h.kind) : 'Starter'} · Lv ${h ? heroLevel(h) : 1} · Evolution ${riftRank(run.rift)}/3`), el('small', '', pendingAltar(run) ? 'An altar evolution awaits — choose your blessing' : `${run.rift.patron ? PATRONS[run.rift.patron].name : 'Altar awakens after your first victory'} · Corruption ${run.rift.corruption}`));
       altar.append(words);
       altar.addEventListener('click', () => this.altarCard());
       head.append(altar);
@@ -301,7 +301,7 @@ export class TowerView {
       const face = portrait(UNITS[starter.kind].sheet, 36, starter.grade);
       face.className = 'dmAvatar';
       const name = el('span', 'dmStarter');
-      name.append(el('b', '', UNITS[starter.kind].name), el('small', '', `Starter · Lv ${heroLevel(starter)}`));
+      name.append(el('b', '', heroName(starter.kind)), el('small', '', `Starter · Lv ${heroLevel(starter)}`));
       status.append(face, name, el('span', 'dmChip', `${Math.round(hpShare(run, starter.id) * 100)}% HP`));
     }
     status.append(el('span', 'dmChip', `${run.roster.length} hero${run.roster.length === 1 ? '' : 'es'}`));

@@ -6,6 +6,7 @@ import { TWISTS } from './sim/twists';
 import { PATRONS, pendingAltar, riftRank } from './sim/rift';
 import { heroLevel } from './sim/climb';
 import { formOf, UNITS } from './sim/units';
+import { heroName } from './sim/heroNames';
 import { hpShare } from './sim/health';
 import { sheetInfo } from './render/sheets';
 import { shrinkRig } from './render/smallRig';
@@ -48,7 +49,7 @@ export class SanctuaryView {
     ordered.slice(0,10).forEach((hero,i)=>{
       const slot=el('div',`rsHero${hero.id===r.starter?' starter':''}`);
       slot.style.setProperty('--hero-i',String(i));
-      const canvas=el('canvas');canvas.setAttribute('role','img');canvas.setAttribute('aria-label',`${UNITS[hero.kind].name}, level ${heroLevel(hero)}`);
+      const canvas=el('canvas');canvas.setAttribute('role','img');canvas.setAttribute('aria-label',`${heroName(hero.kind)}, level ${heroLevel(hero)}`);
       const info=sheetInfo(formOf(UNITS[hero.kind],hero.grade));const rig=info?shrinkRig(info,hero.id===r.starter?64:48):null;
       if(rig){canvas.width=rig.fw;canvas.height=rig.fh;rigs.push(()=>{const g=canvas.getContext('2d')!;g.clearRect(0,0,canvas.width,canvas.height);g.imageSmoothingEnabled=false;const frame=reduced()?0:Math.floor(performance.now()/170)%(rig.counts.idle??1);g.drawImage(rig.c,frame*rig.fw,0,rig.fw,rig.fh,0,0,rig.fw,rig.fh);});}
       slot.append(canvas);if(hero.id===r.starter)slot.append(el('span','',`Lv ${heroLevel(hero)} · ${Math.round(hpShare(run,hero.id)*100)}% HP`));party.append(slot);
