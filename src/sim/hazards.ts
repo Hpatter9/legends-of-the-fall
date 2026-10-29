@@ -8,6 +8,7 @@ import { mendUnit } from './abilities';
 import { defOf, hurt, tileOf, unitAt, type Battle, type BattleEvent, type Unit } from './battle';
 import { DEPLOY_ROWS, DIRS, standable, tileAt, type Board, type Hazard, type HazardKind } from './board';
 import { mixSeed, Rng } from './rng';
+import { AIL, AILMENT_SWITCH, burnFor, chillFor, putOut } from './ailments';
 
 /** What each strike does: the share of a fighter's hp it takes, whether it reaches a flier, and how long it slows (ms). */
 export const STRIKES: Record<Exclude<HazardKind, 'spring' | 'current'>, { share: number; fliers: boolean; slowMs?: number }> = {
@@ -48,7 +49,10 @@ export function tickHazards(b: Battle, out: BattleEvent[]): void {
       const s = STRIKES[h.kind];
       if (!s.fliers && defOf(x).flies) continue;
       hurt(b, x, x, Math.max(1, Math.round(x.maxHp * s.share * feel)), false, false, out, 'dot');
-      if (s.slowMs && x.alive) x.slowUntil = Math.max(x.slowUntil ?? 0, b.t + s.slowMs);
+      if (s.slowMs && x.alive) chillFor(b, x, s.slowMs);
+      // (a lava flare sets it burning; a steam geyser puts a fire out: STATUS-FX)
+      if (h.kind === 'flare' && x.alive) burnFor(b, x, x, AIL.BURN_MS, 0.04);
+      else if (h.kind === 'geyser' && AILMENT_SWITCH.on) putOut(x);
     }
   });
 }

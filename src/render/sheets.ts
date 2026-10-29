@@ -332,13 +332,13 @@ export function portrait(sheet: string, size: number, grade = 1): HTMLCanvasElem
     mid = box.x + box.w / 2;
   }
   const sx = Math.min(Math.max(0, mid - side / 2), l.w - side);
-  // (a higher grade is richer in colour, and tinted gold at the top)
-  if (grade > 1 && 'filter' in g) g.filter = grade > 2 ? 'saturate(1.5) contrast(1.08) sepia(0.25)' : 'saturate(1.3) contrast(1.04)';
+  // (a higher grade is richer in colour, and tinted gold at the top; rank 4 violet)
+  if (grade > 1 && 'filter' in g) g.filter = grade > 3 ? 'saturate(1.6) contrast(1.1) hue-rotate(-8deg)' : grade > 2 ? 'saturate(1.5) contrast(1.08) sepia(0.25)' : 'saturate(1.3) contrast(1.04)';
   g.drawImage(img, sx, idle * l.h + l.h - side, side, side, 0, 0, size, size);
   g.filter = 'none';
   if (grade > 1) {
     g.globalCompositeOperation = 'source-atop';
-    g.fillStyle = grade > 2 ? 'rgba(255, 200, 70, 0.16)' : 'rgba(210, 225, 255, 0.1)';
+    g.fillStyle = grade > 3 ? 'rgba(176, 106, 255, 0.2)' : grade > 2 ? 'rgba(255, 200, 70, 0.16)' : 'rgba(210, 225, 255, 0.1)';
     g.fillRect(0, 0, size, size);
   }
   return c;

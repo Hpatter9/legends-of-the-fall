@@ -27,6 +27,8 @@ import { play } from './render/sound';
 import { chestPicture } from './chestStash';
 import { detourInfo, eliteInfo, relicButton, relicChoice, relicPopup } from './towerElites';
 import { mapRecapCard, victoryCard } from './calClear';
+import { recapDetail } from './recapView';
+import type { RunRecap } from './sim/runRecap';
 import { ICONS, icon } from './menuArt';
 import swords from './art/rogue/swords.png';
 import skull from './art/rogue/skull.png';
@@ -734,6 +736,8 @@ export class TowerView {
       this.card?.remove();
       this.card = null;
     });
+    // (WAVE-RECAP-2: the map's share of the company's work, its XP and its fights; its finds are the recap's own groups)
+    putDetail(card, done.detail, { strip: 'Fight by fight', prefix: '#', noSpoils: true });
   }
 
   /** The relics an elite paid: choose one (the offer is kept in the run, so leaving and coming back finds it). */
@@ -956,6 +960,8 @@ export class TowerView {
         this.close();
         then();
       });
+      // (WAVE-RECAP-2: the whole calamity's detail under the finishing reward)
+      putDetail(card, run.recap, { strip: 'Fight by fight', prefix: '#' });
       wrap.append(card);
       this.root.append(wrap);
       return;
@@ -997,14 +1003,29 @@ export class TowerView {
     const line = chestLine(s);
     card.append(el('p', 'rtLead', line ? `${line} added to your stash.` : cal ? 'Clear every map for a chest.' : 'No chests yet: climb further to earn them.'));
     if (cal && s.cleared && (s.ascension ?? 0) < ASC_MAX) card.append(el('p', 'rtBest', `Ascension ${Math.max(s.ascension ?? 0, 0) + 1} is open.`));
-    for (const g of s.gear) card.append(el('p', 'rtGear', `Equipment found: ${g}`));
+    // (the finds: the run's own list when it kept one, which the detail below shows with the rest)
+    if (!run.recap?.found?.length) for (const g of s.gear) card.append(el('p', 'rtGear', `Equipment found: ${g}`));
     const go = el('button', 'primary', 'Back to camp');
     go.addEventListener('click', () => {
       this.close();
       then();
     });
     card.append(go);
+    // (WAVE-RECAP-2: the per-hero detail the short card after each fight left for here)
+    putDetail(card, run.recap, cal ? { strip: 'Fight by fight', prefix: '#' } : { strip: 'Floor by floor', prefix: 'F' });
     wrap.append(card);
     this.root.append(wrap);
   }
+}
+
+/** Lay a recap's detail (`recapDetail`: the fights one by one, the company's work with its MVP, the XP and levels, the spoils) into a
+ *  summary card, above its closing button. Nothing when there is no recap (a save from before) or nothing in it. */
+function putDetail(card: HTMLElement, recap: RunRecap | undefined, opts: Parameters<typeof recapDetail>[1]): void {
+  if (!recap) return;
+  const parts = recapDetail(recap, opts);
+  if (!parts.length) return;
+  const box = el('div', 'rcDetail');
+  box.append(...parts);
+  const button = [...card.children].reverse().find((c) => c.matches('button.primary'));
+  card.insertBefore(box, button ?? null);
 }

@@ -11,7 +11,7 @@ import { TICK_MS, type BattleEvent, type Unit } from './sim/battle';
 import { ARMIES, armyUnlocked } from './sim/armies';
 import { castSpell, canAfford, cooldownLeft, MANA_MAX, SPELLS, type SpellId } from './sim/spells';
 import {
-  autoPlace, isBossWave, swapPosts, standing, buyLevel, buyRelic, dropStand, foesAlive, goNow, healCost, healKing, levelBlock, levelCost, loadStand, newStandRun, offerCost, pickEight, postHero, relicLine,
+  autoPlace, swapPosts, standing, buyLevel, buyRelic, dropStand, foesAlive, goNow, healCost, healKing, levelBlock, levelCost, loadStand, newStandRun, offerCost, pickEight, postHero, relicLine,
   saveStand, settleStand, setupFromMeta, snapshot, startFirstWave, startStand, stepStand, waveSpec, weakestHero, type Stand, type StandNote, type StandSummary,
 } from './sim/stand';
 import { canPost, EDGES, FIELD, KING_AT, ringOf, type Edge } from './sim/standField';
@@ -35,8 +35,8 @@ import { bossHit, NUDGE_MS, nudgeOffset, wheelStep } from './render/standCam';
 import { StandHall, standHallArt, standBackwallUrl } from './render/standHall';
 import { hallOf, type HallKind } from './sim/standHalls';
 import { standSheet } from './sim/standSheet';
-import { endFight, play, playEvents, setAct, startFight } from './render/sound';
-import { fightLevel, fightTrack } from './render/epicMusic';
+import { endFight, endWave, play, playEvents, setAct, startFight } from './render/sound';
+import { standTrack } from './render/battleMusic';
 import { colLeft, viewH, viewW } from './viewport';
 import { spellIconHtml } from './spellIcons';
 import { clockSeed } from './modes';
@@ -308,7 +308,7 @@ export class StandView {
   private begin(): void {
     const s = this.s;
     if (!s || !startFirstWave(s)) return;
-    this.music(s.run.wave, isBossWave(s.run.wave));
+    this.music(s.run.seed);
     this.picked = null;
     this.drawMarks();
     this.refreshBar(true);
@@ -847,7 +847,7 @@ export class StandView {
       const tile = this.tileAtScreen(x, e.clientY);
       if (!tile || !this.s) return;
       if (this.spell) {
-        if (castSpell(this.s.b, this.spell, tile[0], tile[1])) { play('spell'); this.hall.react('cast'); }
+        if (castSpell(this.s.b, this.spell, tile[0], tile[1])) this.hall.react('cast'); // (the spell's own cast sound plays from its event: spellSfx.ts)
         this.spell = null;
         this.refreshSpells();
         return;
@@ -1053,6 +1053,8 @@ export class StandView {
         if (bossHit(events, s.b.units)) this.nudge = NUDGE_MS;
         if (s.b.units.length !== this.sprites.size + 1) this.syncSprites();
         playEvents(s.b, events, 1);
+        // (the Last Stand never wins: the king's fall is its defeat, with the sting as before)
+        if (events.some((e) => e.kind === 'end')) endWave('defeat');
         this.takeNotes(events);
         this.sayMoments(events);
         this.grumbleDue();
@@ -1117,7 +1119,7 @@ export class StandView {
         kingSays(n.boss ? 'bossWave' : 'waveStart', () => this.anchorOf(s.king.id));
         this.grumbleAt = s.b.t + GRUMBLE_AFTER_MS;
         this.grumbleBoss = n.boss;
-        this.music(n.n, n.boss);
+        this.music(s.run.seed);
         if (n.boss) play('standBoss');
         this.hall.burst(waveSpec(s.run.seed, s.run.armies, n.n, s.run.hall).edges);
         this.picked = null;
@@ -1208,15 +1210,15 @@ export class StandView {
     });
   }
 
-  /** The battle music for a wave: a boss wave has the boss track, else one of the three by how deep the run is (`fightTrack`); the track changes only when the wave's would be another. */
+  /** The battle music: one track for the whole run (`standTrack`, by its seed), started with its first wave and kept, boss waves
+   *  and breaks included, until the king falls or the run is left (`battleMusic.ts`). */
   private hold = false;
   private track = '';
-  private music(wave: number, boss: boolean): void {
-    const mood = { boss, calamity: false, level: fightLevel(wave) };
-    const want = fightTrack(mood);
+  private music(seed: number): void {
+    const want = standTrack(seed);
     if (want === this.track) return;
     this.track = want;
-    startFight(boss, { level: mood.level });
+    startFight(want);
   }
 
   private vignetteLeft = 0;
@@ -1255,7 +1257,7 @@ export class StandView {
         const s = this.s;
         if (!s || (s.phase !== 'wave' && s.phase !== 'break')) return;
         if (sp.target === 'all') {
-          if (castSpell(s.b, id, 0, 0)) { play('spell'); this.hall.react('cast'); }
+          if (castSpell(s.b, id, 0, 0)) this.hall.react('cast'); // (the spell's own cast sound plays from its event: spellSfx.ts)
         } else this.spell = this.spell === id ? null : canAfford(s.b, id) ? id : this.spell;
         this.refreshSpells();
       });

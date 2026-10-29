@@ -3,10 +3,10 @@
 import { standable, tileAt, type At } from '../board';
 import { atkOf, unitAt, wayTo, tileOf, hurt, type Battle, type BattleEvent, type Unit } from '../battle';
 import { DIR, durOf, foesOf, net, apart } from '../abilities';
+import { stunFor } from '../ailments';
 
 export const stun = (b: Battle, f: Unit, ms: number): void => {
-  f.busyUntil = Math.max(f.busyUntil, b.t + ms);
-  f.stunUntil = Math.max(f.stunUntil ?? 0, b.t + ms);
+  stunFor(b, f, ms);
 };
 export const alliesOf = (b: Battle, me: Unit): Unit[] => b.units.filter((a) => a.alive && a.side === me.side);
 export const free = (b: Battle, at: At): boolean => standable(tileAt(b.board, at.u, at.v)) && !unitAt(b, at.u, at.v);

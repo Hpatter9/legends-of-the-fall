@@ -63,6 +63,8 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
 - **The sound effects** are synthesised in `src/render/audioProcessors.ts` with the Web Audio API, except eight recorded combat sounds (sword and
   blunt hits, a shield block, a crit, a bowstring, an arrow hit, a death and an explosion) embedded in `src/render/combatAudioBank.ts`
   (PR #150, given as CC0). Their original source and authors were not recorded with the PR and should be named here.
+- **The king's spells' sounds** (`src/sfx/*.opus`, 44 files): original, synthesised offline by `tools/spell-sfx/` for this game (using the
+  filters, hall and instruments of `tools/epic-music/`). No samples or third-party audio went in.
 
 ## Areas (`src/art/areas/`, cut by `tools/areas-prep.py`)
 
@@ -136,6 +138,14 @@ All Craftpix, copied one sprite or layer at a time; no PixelLab. Ground tops and
   earth, wind slashes; white, gold, wind, fire, ice, sand and blood puffs; white and gold dust; water ripple and splash;
   fire sparkle and flame; white dash; light hit; dark smoke; light pillar; gold level-up; light sparkle; white sparkle;
   gold star; and the burning, bleeding, hasted and shielded-icon status strips. Used by `src/render/vfxArt.ts`.
+
+## Ailment effects (`src/art/fx/status/`)
+
+- **Placeholder art for the ailments** (STATUS-FX, `docs/notes/status-fx.md`): 33 strips (32px frames, six or eight
+  each) of the **5000 Pixel Effects** pack by blueberry (https://blueberry-assets.itch.io), copied unchanged from
+  `pixel-effects/sprites/<effect>/sheet-32.png` in the private assets repository and packed into `atlas.png` by
+  `tools/status-fx/status-sheets.py` (the key-to-strip map is `tools/status-fx/status-pack.json`). Painted art made to
+  `docs/notes/status-fx-art-brief.md` will replace them.
 
 ## Combat effects (`src/art/fx/pack/`)
 
@@ -406,3 +416,7 @@ The Grand Scenario prototype reuses the already credited camp gate and Knights w
 ## Illustrated loading screen
 
 `src/art/loading/last-keep.webp`: original fantasy illustration generated with OpenAI image generation from the owner-approved moonlit keep concept, revised with a crowned king and his archer, paladin and fire wizard guard. Typography, mist, embers, beacon light and loading indicator are live HTML/CSS.
+
+## Status effects (painted)
+
+- The 11 sheets in `art-source/status-fx/`: original artwork generated for this game with OpenAI image generation.
