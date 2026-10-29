@@ -1,0 +1,54 @@
+{
+  "guardian": {
+    "source": "/workspace/generated_images/exec-13c8cc69-1617-492e-9153-16e041565c76.png",
+    "sha256": "3e3961b0b4e5ce099dcbb1c1aec753599a74fe152fe4932f0a91a4c2b3bb7048"
+  },
+  "bulwark": {
+    "source": "/workspace/generated_images/exec-b1d74f23-52e8-443e-a860-ca468deba8e3.png",
+    "sha256": "bbf68928943535fd31c204c0a61a45e5343410b77317bd0110b935aeb715fbad"
+  },
+  "blade": {
+    "source": "/workspace/generated_images/exec-777d8238-9b87-4eb6-bb64-8ef18ab54380.png",
+    "sha256": "21aa07eca3469b0c20f813b5dc5c07b18ea0795290a6201b142bc10ba82187b4"
+  },
+  "gunner": {
+    "source": "/workspace/generated_images/exec-efe17ccd-94b6-4b0f-8045-8aa40abd0e97.png",
+    "sha256": "b564035b5652e7804b2221fd9c3ecbf144de4bd7f28bf1a2c7e542076fc560eb"
+  },
+  "marksman": {
+    "source": "/workspace/generated_images/exec-b503501c-09ad-4edf-8ff8-04b3b59f1d93.png",
+    "sha256": "2c3c8699c39e6a61fe502b97c761d199a59fed46cccad2a4b722665bbe8b6e6d"
+  },
+  "caster": {
+    "source": "/workspace/generated_images/exec-b7b21473-d509-42ee-a00e-4916d3be23ce.png",
+    "sha256": "0da7ba274854241e156165232899c3bde55fd13dd93bb1db506876284a185ca3"
+  },
+  "arcanist": {
+    "source": "/workspace/generated_images/exec-bd660a16-a602-48e6-b227-d1471b0e7a4b.png",
+    "sha256": "0cb6061bfff195f23ac85b3865fa807feb2c8d28a1ae59f3808cc07299707e94"
+  },
+  "support": {
+    "source": "/workspace/generated_images/exec-f6decbab-0f74-4038-bedf-6a24cad3bc3c.png",
+    "sha256": "57e0bf37da4d378995f5e7321a4eb6faf455334f326c824d693edafaea72d450"
+  },
+  "beast": {
+    "source": "/workspace/generated_images/exec-927c0afc-8e7d-4abe-9b32-288bd057a0c7.png",
+    "sha256": "a6d94f2ba96cd7a88f6c033509c8473db5f017adea32fadf1bf0ece68debc65a"
+  },
+  "assassin": {
+    "source": "/workspace/generated_images/exec-da89e117-4f26-40cf-a95a-dcbdbbfda1c7.png",
+    "sha256": "2336fdad438d58e689aa53cfd30d5348d1e8be7d3463da7ef7704980a9ad36bc"
+  },
+  "trickster": {
+    "source": "/workspace/generated_images/exec-5820ea34-5713-4c70-b64f-feab58167350.png",
+    "sha256": "7dd1f1f140b63b0fa4220671e3002e72e9fe27ea61dd52beffee54fc1a17decf"
+  },
+  "warden": {
+    "source": "/workspace/generated_images/exec-3c815058-3d48-4c27-a35f-2a53f8b7ba8b.png",
+    "sha256": "248f26f0a34a09342930acfb48c9d0f268ac187922e91770747df4e6969a9730"
+  },
+  "vanguard": {
+    "source": "/workspace/generated_images/exec-940a73ad-8eb8-4fff-b903-8b7c486feba1.png",
+    "sha256": "f8a094aa76dcd6f3a0ed9f5d99bbdf67ddb97a13663dfab4c920fc9048629a23"
+  }
+}

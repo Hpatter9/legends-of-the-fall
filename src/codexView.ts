@@ -7,6 +7,7 @@ import { HERO_KITS, SKILL2_LEVEL } from './sim/heroKits';
 import { codexWaiting, COLLECTIONS, COLLECTION_NAMES, crownsClaimed, crownsTotal, crownsWaiting, FOE_ENTRIES, gotOf, heroKnown, isMet, killsOf, milestoneClaimed, milestoneReached, milestonesOf, progressLine, ENTRY_STONES, entriesWaiting, stonesClaimed, stonesTotal, stonesWaiting, tipsOf, totalOf, whereMet, type Collection, type FoeEntry } from './sim/codex';
 import { FOE_LORE, HERO_STORY } from './sim/codexLore';
 import { ALL_HEROES, UNITS } from './sim/units';
+import { heroName, heroTitle } from './sim/heroNames';
 import { lockInfo } from './sim/contentHeroes';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { TRAITS, traitsOf } from './sim/traits';
@@ -132,7 +133,7 @@ function openHero(root: HTMLElement, m: Meta, kind: string): void {
   closers.push(stop);
   const head = el('div', 'hhead');
   const title = el('div');
-  title.append(el('h3', '', def.name), el('em', '', `${CLASS_NAMES[CLASS_OF[kind]]} · ${def.role}`));
+  title.append(el('h3', '', heroTitle(kind)), el('em', '', `${CLASS_NAMES[CLASS_OF[kind]]} · ${def.role}`));
   const marks = traitsOf(kind).map((t) => TRAITS[t].name).join(' · ');
   if (marks) title.append(el('span', 'lv', marks));
   head.append(pic, title);
@@ -295,7 +296,8 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
       for (const k of ALL_HEROES) {
         const known = heroKnown(m, k);
         const def = UNITS[k];
-        const c = card(def.sheet, 1, def.name, known ? CLASS_NAMES[CLASS_OF[k]] : 'locked', true);
+        // (a hero met goes by its own name, its class under it)
+        const c = card(def.sheet, 1, known ? heroName(k) : def.name, known ? def.name : 'locked', true);
         if (!known) c.classList.add('dark');
         c.addEventListener('click', () => openHero(root, m, k));
         grid.append(c);

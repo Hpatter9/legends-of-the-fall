@@ -3,7 +3,7 @@
 // each hero's XP) waits for the end of the battle's full recap (`recapView.ts`, from `run.recap`). Pure rules: no Pixi, no DOM.
 
 import { ULT_LEVEL } from './abilities';
-import { UNITS } from './units';
+import { heroName } from './heroNames';
 
 /** What a wave left worth saying, gathered when it is settled. */
 export interface WaveMoments {
@@ -24,7 +24,7 @@ export interface WaveNote {
   text: string;
 }
 
-const nameOf = (k: string) => UNITS[k]?.name ?? k;
+const nameOf = (k: string) => heroName(k);
 
 /** Names, with a count for a kind named more than once ("Archer ×2"). */
 function names(kinds: readonly string[]): string {

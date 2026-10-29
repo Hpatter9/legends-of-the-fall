@@ -1,3 +1,4 @@
+import { heroName } from '../src/sim/heroNames';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { newRun, type Run } from '../src/sim/run';
@@ -5,7 +6,6 @@ import { closeMapLeg, heartsBurned, newRecap, noteFightStats, notePayout, noteWa
 import type { MapRecap, TowerState } from '../src/sim/tower';
 import { towerHeadline, waveHeadline, waveNotes } from '../src/sim/waveCard';
 import { ULT_LEVEL } from '../src/sim/abilities';
-import { UNITS } from '../src/sim/units';
 
 test('the recap keeps a line a wave (stars, time, MVP, hearts) and every find, for the end recap', () => {
   const r = newRun(41);
@@ -49,9 +49,9 @@ test('the short card says only the notable moments: levels, an ultimate, finds, 
     found: ['Iron Sword (weapon, +4 Atk)'],
   });
   assert.deepEqual(notes.map((n) => n.kind), ['level', 'ult', 'found', 'fell', 'heart']);
-  assert.equal(notes[0].text, `Level up: ${UNITS.knight.name} Lv 6, ${UNITS.cleric.name} Lv ${ULT_LEVEL}`);
-  assert.equal(notes[1].text, `Ultimate unlocked: ${UNITS.cleric.name}`);
-  assert.equal(notes[3].text, `Fell: ${UNITS.archer.name} ×2`);
+  assert.equal(notes[0].text, `Level up: ${heroName('knight')} Lv 6, ${heroName('cleric')} Lv ${ULT_LEVEL}`);
+  assert.equal(notes[1].text, `Ultimate unlocked: ${heroName('cleric')}`);
+  assert.equal(notes[3].text, `Fell: ${heroName('archer')} ×2`);
   assert.equal(notes[4].text, 'A heart burned · 2 left');
 });
 

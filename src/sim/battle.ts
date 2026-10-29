@@ -216,6 +216,8 @@ export interface Pending {
   /** Where a volley or meteor falls. */
   u?: number;
   v?: number;
+  /** How many tiles wider than a 3x3 a volley or judgement falls (a tier skill's reach; none for most). */
+  r?: number;
 }
 
 /** What hurt: a blow, a skill's strike, or burning or bleeding. */
@@ -232,7 +234,7 @@ export type BattleEvent =
   | { kind: 'skill'; by: number; name: string; ms: number }
   | { kind: 'dash'; by: number; from: At; to: At }
   | { kind: 'blink'; by: number; from: At; to: At }
-  | { kind: 'area'; by: number; id: 'volley' | 'meteor'; u: number; v: number; ms: number }
+  | { kind: 'area'; by: number; id: 'volley' | 'meteor'; u: number; v: number; ms: number; r?: number }
   | { kind: 'arc'; from: number; to: number; ail?: 'shock' }
   | { kind: 'zone'; u: number; v: number; ms: number; what?: 'spikes' }
   | { kind: 'trap'; u: number; v: number; ms: number }
@@ -767,7 +769,7 @@ function settle(b: Battle, p: Pending, out: BattleEvent[]): void {
   if (p.kind === 'keg') return settleKeg(b, p, out);
   if (p.kind === 'jump') return settleJump(b, p, out);
   if (p.kind === 'rain' || p.kind === 'meteor') {
-    landArea(b, p.kind, by, p.u!, p.v!, p.dmg, out);
+    landArea(b, p.kind, by, p.u!, p.v!, p.dmg, out, p.r);
     if (p.barrels && b.barrels) for (const i of b.barrels.filter((i) => Math.max(Math.abs((i % b.board.w) - p.u!), Math.abs(Math.floor(i / b.board.w) - p.v!)) <= 1)) blast(b, i, out);
     return;
   }

@@ -287,25 +287,33 @@ const shadowStep = (b: Battle, me: Unit, out: BattleEvent[]) => blinkStrike(b, m
 /** Mercenary: slips beside the strongest foe (the hardest hitter) and cuts it for its bounty. */
 const bountyHunt = (b: Battle, me: Unit, out: BattleEvent[]) => blinkStrike(b, me, out, 1.9, (x, y) => atkOf(y) - atkOf(x) || x.id - y.id);
 
-/** Archer: arrows rain on a 3x3 of tiles a moment after the call, on whoever is standing there. */
+/** Archer: arrows rain on a 3x3 of tiles a moment after the call, on whoever is standing there (a talent's or tier skill's `reach` widens the patch:
+ *  a 5x5 for one, a 7x7 for two). */
 const VOLLEY_MS = 700;
 function volley(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const def = strikeDef(b, me);
   const aim = crowd(b, me, (f) => canStrike(b.board, def, me, f));
   if (!aim) return false;
-  b.pending.push({ at: b.t + VOLLEY_MS, kind: 'rain', by: me.id, to: aim.id, dmg: atkOf(me) * 1.0, heavy: false, u: aim.u, v: aim.v });
-  out.push({ kind: 'area', by: me.id, id: 'volley', u: aim.u, v: aim.v, ms: VOLLEY_MS });
-  followUp(b, me, 'rain', aim, atkOf(me) * 1.0, 'volley', VOLLEY_MS, out);
+  const r = wider(me);
+  b.pending.push({ at: b.t + VOLLEY_MS, kind: 'rain', by: me.id, to: aim.id, dmg: atkOf(me) * 1.0, heavy: false, u: aim.u, v: aim.v, ...(r ? { r } : {}) });
+  out.push({ kind: 'area', by: me.id, id: 'volley', u: aim.u, v: aim.v, ms: VOLLEY_MS, ...(r ? { r } : {}) });
+  followUp(b, me, 'rain', aim, atkOf(me) * 1.0, 'volley', VOLLEY_MS, out, r);
   return true;
 }
 
-/** A talent's `extra` on a volley or meteor: a second one falls on the same spot a moment after the first, for 70% of it. */
+/** How many tiles past the 3x3 a volley or a judgement spreads: the caster's `reach` (0 for most). */
+const wider = (me: Unit): number => Math.max(0, Math.round(tal(me, 'reach')));
+
+/** A talent's or tier skill's `extra` on a volley, meteor, broadside, shell or judgement: as many more fall on the same spot as it has `extra`, one
+ *  every half second after the first, each 70% of it ("two more volleys follow" is two). `r` is how much wider than a 3x3 they fall. */
 const FOLLOW_SHARE = 0.7;
 const FOLLOW_GAP = 500;
-function followUp(b: Battle, me: Unit, kind: 'rain' | 'meteor', aim: Unit, power: number, id: 'volley' | 'meteor', ms: number, out: BattleEvent[]): void {
-  if (tal(me, 'extra') < 1) return;
-  b.pending.push({ at: b.t + ms + FOLLOW_GAP, kind, by: me.id, to: aim.id, dmg: power * FOLLOW_SHARE, heavy: kind === 'meteor', u: aim.u, v: aim.v });
-  out.push({ kind: 'area', by: me.id, id, u: aim.u, v: aim.v, ms: ms + FOLLOW_GAP });
+function followUp(b: Battle, me: Unit, kind: 'rain' | 'meteor', aim: Unit, power: number, id: 'volley' | 'meteor', ms: number, out: BattleEvent[], r = 0): void {
+  const n = Math.floor(tal(me, 'extra'));
+  for (let i = 1; i <= n; i++) {
+    b.pending.push({ at: b.t + ms + FOLLOW_GAP * i, kind, by: me.id, to: aim.id, dmg: power * FOLLOW_SHARE, heavy: kind === 'meteor', u: aim.u, v: aim.v, ...(r ? { r } : {}) });
+    out.push({ kind: 'area', by: me.id, id, u: aim.u, v: aim.v, ms: ms + FOLLOW_GAP * i, ...(r ? { r } : {}) });
+  }
 }
 
 /** Wizard: a meteor falls on a 3x3 and leaves it burning. */
@@ -1231,9 +1239,11 @@ function judgement(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     .filter((x) => apart(me, x) <= reachOf(me, 6))
     .sort((x, y) => y.hp - x.hp || x.id - y.id)[0];
   if (!f) return false;
-  b.pending.push({ at: b.t + JUDGEMENT_MS, kind: 'rain', by: me.id, to: f.id, dmg: atkOf(me) * 2.4, heavy: true, u: f.u, v: f.v });
-  out.push({ kind: 'area', by: me.id, id: 'meteor', u: f.u, v: f.v, ms: JUDGEMENT_MS });
-  followUp(b, me, 'rain', f, atkOf(me) * 2.4, 'meteor', JUDGEMENT_MS, out);
+  // (a tier skill's `reach` carries the judgement further and spreads it wider than its 3x3)
+  const r = wider(me);
+  b.pending.push({ at: b.t + JUDGEMENT_MS, kind: 'rain', by: me.id, to: f.id, dmg: atkOf(me) * 2.4, heavy: true, u: f.u, v: f.v, ...(r ? { r } : {}) });
+  out.push({ kind: 'area', by: me.id, id: 'meteor', u: f.u, v: f.v, ms: JUDGEMENT_MS, ...(r ? { r } : {}) });
+  followUp(b, me, 'rain', f, atkOf(me) * 2.4, 'meteor', JUDGEMENT_MS, out, r);
   return true;
 }
 
@@ -1794,10 +1804,10 @@ export function afterBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg = 0,
   blowRiders(b, by, to);
 }
 
-/** Land a volley or a meteor: everything of the caster's foes in the 3x3 is struck. */
-export function landArea(b: Battle, kind: 'rain' | 'meteor', by: Unit, u: number, v: number, power: number, out: BattleEvent[]): void {
+/** Land a volley or a meteor: everything of the caster's foes in the 3x3 is struck (`r` tiles wider each way for a widened one). */
+export function landArea(b: Battle, kind: 'rain' | 'meteor', by: Unit, u: number, v: number, power: number, out: BattleEvent[], r = 0): void {
   for (const f of b.units)
-    if (f.alive && f.side !== by.side && near3x3(f, { u, v })) hurt(b, by, f, net(power, f), kind === 'meteor', false, out, 'skill');
+    if (f.alive && f.side !== by.side && Math.abs(f.u - u) <= 1 + r && Math.abs(f.v - v) <= 1 + r) hurt(b, by, f, net(power, f), kind === 'meteor', false, out, 'skill');
   if (kind === 'meteor') {
     const ms = durOf(by, BURN_MS);
     b.zones.push({ u, v, side: by.side, by: by.id, until: b.t + ms, next: b.t + BURN_EVERY, dmg: 6 });
