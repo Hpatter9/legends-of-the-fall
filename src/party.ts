@@ -4,7 +4,7 @@
 // until Start or Done, which saves it through `setParty`; Back throws it away. The rules are in `src/sim/meta.ts`.
 
 import { ALL_HEROES, UNITS } from './sim/units';
-import { heroName, heroTitle } from './sim/heroNames';
+import { heroClassLabel, heroName } from './sim/heroNames';
 import { partySlots, saveMeta, setParty, type Meta } from './sim/meta';
 import { progressOf, xpOf } from './sim/levels';
 import { levelBadge } from './levelBadge';
@@ -174,8 +174,8 @@ export class Party {
         continue;
       }
       const b = el('button', 'ptSlot');
-      b.setAttribute('aria-label', `Remove ${heroTitle(kind)} from party`);
-      b.title = `Remove ${heroTitle(kind)} · hold for details`;
+      b.setAttribute('aria-label', `Remove ${heroClassLabel(kind)} from party`);
+      b.title = `Remove ${heroClassLabel(kind)} · hold for details`;
       const remove = el('span', 'ptSlotRemove', '×');
       remove.setAttribute('aria-hidden', 'true');
       const number = el('span', 'ptSlotNumber', String(i + 1));
