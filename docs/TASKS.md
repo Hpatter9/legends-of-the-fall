@@ -14,6 +14,14 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### ALTAR-UI — Ornate altar sanctuary
+
+- **Owner:** current Codex chat. **Branch / worktree:** `design/altar-sanctuary`, `/workspace/legends-of-the-fall`.
+- **Scope:** altar presentation and ritual effects only; reuse the game's existing ornate frames, shrine and relic art. Preserve altar rules, choices, run progression, saves and other screens.
+- **Completion:** visual direction reviewed before integration; accessible portrait UI at all three phone sizes, reduced motion, offline support, typecheck/build and affected checks.
+- **Status:** visual proposal rendered and checked at 393×852, 360×780 and 412×915; no page errors or horizontal overflow, ritual actions fit. Awaiting owner confirmation under the visual-review rule above; production UI unchanged. [Handoff](notes/altar-sanctuary.md); [proposal](samples/altar-sanctuary/proposal-393.png).
+
+
 ### CAL-RIFT — Starter-led altar runs
 
 - **Owner:** current Codex chat. **Branch / worktree:** `feat/calamity-altar-runs`, `/workspace/legends-of-the-fall`.
