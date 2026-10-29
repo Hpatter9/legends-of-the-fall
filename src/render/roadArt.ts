@@ -8,6 +8,7 @@ import { Rectangle, Texture } from 'pixi.js';
 import type { Area, PieceKind, Scenery } from '../sim/board';
 import { RECTS } from './calArt';
 import { ROAD_RECTS } from './roadAtlas';
+import portalUrl from '../art/calmap-dungeon/arrival-portal.png';
 import calUrl from '../art/calmap/atlas.png';
 import roadUrl from '../art/road/atlas.png';
 import birdsUrl from '../art/road/birds.png';
@@ -16,12 +17,14 @@ import { TH, TW } from './iso';
 
 let cal: Texture | null = null;
 let road: Texture | null = null;
+let portal: Texture | null = null;
 let birds: Texture[][] = [];
 const cut = new Map<string, Texture>();
 
 export async function loadRoadArt(): Promise<void> {
   if (cal && road) return;
-  const [a, b, c] = await Promise.all([loadImage(calUrl), loadImage(roadUrl), loadImage(birdsUrl)]);
+  const [a, b, c, p] = await Promise.all([loadImage(calUrl), loadImage(roadUrl), loadImage(birdsUrl), loadImage(portalUrl)]);
+  portal = Texture.from(p);
   cal = Texture.from(a);
   road = Texture.from(b);
   // (five small birds of DawnLike's, two frames each: a column a bird)
@@ -31,6 +34,7 @@ export async function loadRoadArt(): Promise<void> {
 
 /** A picture by its name: the road's atlas first, then the Calamity map's. */
 export function piece(name: string): Texture | null {
+  if (name === 'riftPortal') return portal;
   let t = cut.get(name);
   if (t) return t;
   const r = ROAD_RECTS[name] ?? RECTS[name];
@@ -217,6 +221,8 @@ export function setPiece(kind: PieceKind, area: Area): Pic {
       return p('stoneCircle', 0.52);
     case 'foundry':
       return p('generator', 0.6);
+    case 'riftPortal':
+      return p('riftPortal', 0.09);
     case 'shrine':
       return p('shrineFae', 0.75);
     case 'brazier':

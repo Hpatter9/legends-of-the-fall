@@ -49,12 +49,12 @@ const chip = (pic: HTMLElement, name: string): HTMLElement => {
 };
 
 /** The sheet of a map's recap: how much of it was cleared, what it paid, and the events it held. */
-export function mapRecapCard(card: HTMLElement, r: MapRecap, onDone: () => void): void {
+export function mapRecapCard(card: HTMLElement, r: MapRecap, onDone: () => void, expedition = false): void {
   const next = r.map + 1;
   card.classList.add('ccCard');
   card.append(el('p', 'ccLead', dungeonName(r.map)));
   const stats = el('div', 'ccStats');
-  stats.append(row('Spots cleared', `${r.spots} of ${r.total}`), row('Fights won', `${r.fights}${r.elites ? ` (${r.elites} mini-boss${r.elites === 1 ? '' : 'es'})` : ''}`), row('Gold won', String(r.gold)));
+  stats.append(row(expedition ? 'Crossings resolved' : 'Spots cleared', `${r.spots} of ${r.total}`), row('Fights won', `${r.fights}${r.elites ? ` (${r.elites} mini-boss${r.elites === 1 ? '' : 'es'})` : ''}`), row('Gold won', String(r.gold)));
   card.append(stats);
   const parts = [
     group('Rift ores', sumOres(r.ores ?? []).map((d) => oreChip(d, `for the ${classWord(d.trait)} heroes`))),
@@ -65,7 +65,7 @@ export function mapRecapCard(card: HTMLElement, r: MapRecap, onDone: () => void)
   ].filter((x): x is HTMLElement => !!x);
   card.append(...parts);
   if (!parts.length) card.append(el('p', 'ccLead', 'A quiet map: nothing found on it.'));
-  const go = el('button', 'primary', next <= CAL_MAPS ? `On to map ${next}` : 'Onward');
+  const go = el('button', 'primary', next <= CAL_MAPS ? `On to ${expedition ? 'region' : 'map'} ${next}` : 'Onward');
   go.addEventListener('click', () => {
     play('summon');
     onDone();

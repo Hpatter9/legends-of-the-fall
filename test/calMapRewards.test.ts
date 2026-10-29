@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { startedMeta } from '../src/sim/meta';
 import { calamityRun } from '../src/sim/modes';
 import { CAL_MAPS } from '../src/sim/calamity';
-import { buy, calamityMap, choices, clearNode, enterNode, finishTower, hire, leaveOpen, moveTo, openTreasure, settleTower, sideChoices, spotFloor } from '../src/sim/tower';
+import { buy, mapFor, calamityMap, choices, clearNode, enterNode, finishTower, hire, leaveOpen, moveTo, openTreasure, settleTower, sideChoices, spotFloor } from '../src/sim/tower';
 import { SIDE_BASE, sideSpots, START_ID } from '../src/sim/calLand';
 import { startStage } from '../src/sim/run';
 import { clearCrowns, clearDraws, clearStones, payClear, titleOf, CLEAR_TITLES, bestTitle } from '../src/sim/calReward';
@@ -11,7 +11,8 @@ import { ASC_MAX } from '../src/sim/ascension';
 import { RARITY_NAMES } from '../src/sim/equipment';
 import { loadSlot, saveSlot, type Run } from '../src/sim/run';
 
-const run = (seed: number, level = 0): Run => calamityRun(seed, startedMeta(5), 'knight', level);
+// Graph reward/backtracking compatibility for saves made before portal expeditions.
+const run = (seed: number, level = 0): Run => { const r=calamityRun(seed,startedMeta(5),'knight',level);delete r.rift!.expedition;r.tower!.map=mapFor(r,1);return r; };
 const clear = (r: Run, id: number): void => {
   assert.equal(enterNode(r, id), true, `spot ${id} can be entered`);
   clearNode(r);

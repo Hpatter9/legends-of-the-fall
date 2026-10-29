@@ -192,7 +192,8 @@ test('a final boss entry guarantees level 30 and tier three, even on a short rou
   t.act = 3;
   t.map = mapFor(run, 3);
   const boss = t.map.find((n) => n.kind === 'boss')!;
-  // Reach the lair over cleared bridges, as a short route would.
+  // The final crossing is the guardian in portal expeditions.
+  t.row = boss.row;
   t.path = t.map.filter((n) => n.id !== boss.id).map((n) => n.id);
   t.here = t.map.find((n) => n.next.includes(boss.id))!.id;
   assert.equal(enterNode(run, boss.id), true);

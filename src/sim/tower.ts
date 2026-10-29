@@ -6,6 +6,7 @@
 // is the floor about to be climbed, and keeps counting through the acts. A lost fight ends the run; `settleTower` then pays
 // the run's chests and equipment into the meta, by the floors cleared. Pure rules: no Pixi, no DOM, no clock.
 
+import { destinationBoard, destinationWorld, expeditionOf, growExpeditionStarter, sanctuaryMap, type RiftWorld } from './sanctuary';
 import { growStarter, pendingAltar, RIFT_BOSSES } from './rift';
 import type { Battle, Boost, Stage } from './battle';
 import { CLASSIC_AREAS } from './board';
@@ -107,6 +108,7 @@ export interface Treasure {
 
 /** The node being played: its fight, its stock, its chest or its campfire. */
 export interface Current {
+  world?: RiftWorld;
   id: number;
   kind: NodeKind;
   fight?: FightSpec;
@@ -426,12 +428,25 @@ function calamityOnce(seed: number, act: number, rows: number, asc: number, atte
 }
 
 /** The map of an act of this run: the tower's, or a calamity's (shorter, with recruit camps). */
-export const mapFor = (run: Run, act: number): MapNode[] => (run.tower?.maps ? calamityMap(run.seed, act, rowsIn(run.tower, act), ascOf(run)) : makeMap(run.seed, act, true, rowsIn(run.tower, act)));
+export function mapFor(run: Run, act: number): MapNode[] {
+  if (!expeditionOf(run)) return run.tower?.maps ? calamityMap(run.seed, act, rowsIn(run.tower, act), ascOf(run)) : makeMap(run.seed, act, true, rowsIn(run.tower, act));
+  const nodes = sanctuaryMap(run.seed, act, rowsIn(run.tower!, act));
+  const rules = ascRules(ascOf(run));
+  if (rules.elites > 1) for (const n of nodes) if (n.row > 1 && n.kind === 'fight') n.kind = 'elite';
+  addTwists(nodes, run.seed, act);
+  if (rules.chaosMutators) {
+    const rng = new Rng(mixSeed(run.seed, 0xc4a0, act));
+    for (const n of nodes) if ((n.kind === 'fight' || n.kind === 'elite') && !n.twist && rng.chance(0.35)) n.twist = rng.pick(CHAOS_TWISTS);
+  }
+  if (rules.bossCurse) for (const n of nodes) if (n.kind === 'boss') n.twist = new Rng(mixSeed(run.seed, 0xa5c8, act)).pick(CURSES);
+  return nodes;
+}
 
 /** The nodes the player may pick next: those the last one leads to (the whole first floor at the start of an act). Empty while a node is in play. */
 export function choices(run: Run): MapNode[] {
   const t = run.tower;
   if (!t || t.cur || run.over) return [];
+  if (expeditionOf(run)) return t.map.filter(n => n.row === t.row);
   // (a calamity's map is walked freely: any spot a bridge leads to from a cleared one, in either direction, and not cleared yet)
   if (t.maps) {
     const sides = sideSpots(run.seed, t.act, t.map);
@@ -495,7 +510,7 @@ export function setGoing(run: Run, id: number): boolean {
 /** The hidden side spots the party may take now: those hanging from the node it stands at, not yet taken (a calamity's; none while a node is in play). They are optional: the road's own choices stay as they are. */
 export function sideChoices(run: Run): SideSpot[] {
   const t = run.tower;
-  if (!t?.maps || t.cur || run.over) return [];
+  if (!t?.maps || t.cur || run.over || expeditionOf(run)) return [];
   // (shown once the node it hangs from is cleared, and taken whenever the party likes: it is optional, and never lost)
   return sideSpots(run.seed, t.act, t.map).filter((s) => t.path.includes(s.from) && !t.sideDone?.includes(s.id));
 }
@@ -649,7 +664,7 @@ function stockChest(run: Run, floor: number): Treasure {
 export function recapOf(run: Run): MapRecap | undefined {
   const t = run.tower;
   if (!t?.maps) return undefined;
-  return (t.recap ??= { map: t.act, ...(run.rift ? { realm: RIFT_BOSSES[t.act - 1] } : {}), spots: 0, total: t.map.filter((n) => n.kind !== 'boss').length, fights: 0, elites: 0, gold: 0, relics: [], gear: [], heroes: [], events: [] });
+  return (t.recap ??= { map: t.act, ...(run.rift ? { realm: RIFT_BOSSES[t.act - 1] } : {}), spots: 0, total: expeditionOf(run) ? rowsIn(t, t.act) - 1 : t.map.filter((n) => n.kind !== 'boss').length, fights: 0, elites: 0, gold: 0, relics: [], gear: [], heroes: [], events: [] });
 }
 
 /** Leave a recruit spot with nobody taken: the spot stays open, and the party can come back (its offer is the same). */
@@ -669,7 +684,7 @@ export function enterNode(run: Run, id: number): boolean {
   const t = run.tower;
   const side = id >= SIDE_BASE ? sideChoices(run).find((s) => s.id === id) : undefined;
   // (a cleared shop of a calamity can be entered again)
-  const again = t?.maps && !t.cur && !run.over && t.path.includes(id) && t.map[id]?.kind === 'shop' ? t.map[id] : undefined;
+  const again = t?.maps && !expeditionOf(run) && !t.cur && !run.over && t.path.includes(id) && t.map[id]?.kind === 'shop' ? t.map[id] : undefined;
   const node = side ? { id, kind: side.kind as NodeKind, twist: undefined } : again ?? choices(run).find((n) => n.id === id);
   if (!t || !node) return false;
   // (a calamity's spots are fought at their own floor, wherever the party has been: its row, running on through the maps)
@@ -677,9 +692,16 @@ export function enterNode(run: Run, id: number): boolean {
   const floor = run.stage;
   t.lastBoss = undefined;
   const cur: Current = { id, kind: node.kind };
+  if (expeditionOf(run)) cur.world = destinationWorld(run, id);
   if (side) cur.side = true;
   t.going = undefined;
   if (node.kind === 'fight' || node.kind === 'elite' || node.kind === 'boss') cur.fight = fightSpec(run, node.kind, floor, node.twist, id);
+  if (cur.fight && cur.world) {
+    const board = destinationBoard(mixSeed(run.seed, t.act, id), cur.world);
+    if (node.kind === 'boss') board.arenaMid = { u: 7, v: 5 };
+    cur.fight.stage.board = board;
+    cur.fight.stage.area = board.area;
+  }
   if (run.rift && node.kind === 'boss' && t.act === t.maps) {
     const starter = run.roster.find((h) => h.id === run.rift!.starter);
     if (starter) starter.xp = Math.max(starter.xp ?? 0, xpFor(30));
@@ -719,6 +741,11 @@ export function clearNode(run: Run): void {
     return;
   }
   const first = !t.path.includes(cur.id);
+  const expedition = expeditionOf(run);
+  if (first && expedition && cur.world) {
+    growExpeditionStarter(run); levelTiers(run);
+    expedition.history.push({ region: t.act, node: cur.id, world: cur.world, kind: cur.kind });
+  }
   if (first) {
     t.path.push(cur.id);
     // (a mirror's clone stays for its floors, then goes: its place in the squad goes back to a benched hero of the party's own)
@@ -776,7 +803,8 @@ export function clearNode(run: Run): void {
     if (t.maps) run.stage = floorOf(t.act, 0, t);
   } else {
     t.at = cur.id;
-    if (!t.maps) t.row++;
+    if (!t.maps || expedition && first) t.row++;
+    if (expedition) t.here = START_ID;
   }
 }
 
@@ -822,6 +850,7 @@ function teachFight(run: Run, b: Battle): void {
   gainRunXp(run, gains);
   // (a calamity's heroes rise a tier at the levels set in `CAL_TIER`: the stand-in for a merge's promotion)
   growStarter(run, !!t.cur?.side);
+  growExpeditionStarter(run);
   levelTiers(run);
   t.gains = Object.entries(gains).map(([id, xp]) => {
     const h = run.roster.find((x) => x.id === Number(id));
@@ -835,7 +864,7 @@ function teachFight(run: Run, b: Battle): void {
  */
 export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void {
   const t = run.tower;
-  if (!t) return;
+  if (!t || expeditionOf(run) && (!t.cur?.fight || run.over)) return;
   const kind = t.cur?.kind ?? 'fight';
   const floor = run.stage;
   t.gains = undefined;

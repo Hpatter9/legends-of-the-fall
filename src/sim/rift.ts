@@ -1,4 +1,5 @@
 // The rebuilt Calamity. Optional state leaves already-saved six-map runs intact.
+import type { Expedition } from './sanctuary';
 import type { Run } from './run';
 import { xpFor } from './levels';
 
@@ -8,6 +9,7 @@ export type Patron = 'ember' | 'bastion' | 'echo';
 export type Offering = 'vitality' | 'fury';
 export type Commandment = 'together' | 'solitude';
 export interface Rift {
+  expedition?: Expedition;
   starter: number;
   wins: number;
   patron?: Patron;

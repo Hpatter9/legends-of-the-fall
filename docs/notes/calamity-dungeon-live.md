@@ -28,3 +28,5 @@ The ornate altar was separately checked at all three sizes: its actual backdrop 
 Reproduce with `node tools/calamity/dungeon-live-shots.mjs` after `npm run web`. `--altar-only` checks all altar states; `--navigation-only` checks recovery, normal motion and modal keyboard guards. The helper serves only compiled `out/web` files, only on loopback, with browser-only simulation fixtures for reaching later encounters. Original generated sources are retained and credits/provenance updated.
 
 No full-suite or unrelated balance sweep was needed: combat and reward rules are unchanged. No version bump, merge or deployment.
+
+Follow-up: the owner subsequently approved replacing the new-run dungeon with [Rift Sanctuary portal expeditions](rift-sanctuary.md). This renderer remains available for existing graph saves.

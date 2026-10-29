@@ -257,7 +257,7 @@ function playClimb(meta: Meta, run: Run, maxFloors: number): { floors: number; b
     const side = calamity && cleared < explore.limit ? sideChoices(run).find((s) => s.kind === 'treasure' || squadHealth(run) > 0.7) : undefined;
     // (nothing left but the boss: a look in at a shop it has cleared, with gold to spend, first)
     let shopId: number | undefined;
-    if (calamity && explore.visitShops && (!others.length || cleared >= explore.limit) && run.gold >= 70) {
+    if (calamity && !run.rift?.expedition && explore.visitShops && (!others.length || cleared >= explore.limit) && run.gold >= 70) {
       const t = run.tower!;
       shopId = t.map.find((n) => n.kind === 'shop' && t.path.includes(n.id) && !again.has(`${t.act}:${n.id}`))?.id;
       if (shopId !== undefined) again.add(`${t.act}:${shopId}`);

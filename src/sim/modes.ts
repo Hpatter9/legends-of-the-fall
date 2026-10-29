@@ -176,7 +176,7 @@ export function calamityRun(seed: number, m: Meta, hero: string, ascension = 0):
   run.squad.push(recruit(run, kind, 0).id);
   run.mode = level ? { kind: 'calamity', ascension: level } : { kind: 'calamity' };
   const t = newTower(seed, ARMIES.filter((a) => armyUnlocked(m, a.id)).map((a) => a.id), m.tower);
-  run.rift = { starter: run.roster[0].id, wins: 0, corruption: 0 };
+  run.rift = { starter: run.roster[0].id, wins: 0, corruption: 0, expedition: { version: 1, shifts: 0, history: [] } };
   t.rows = [...RIFT_ROWS];
   t.maps = RIFT_ROWS.length;
   t.scale = { start: CAL_SCALE.start, growth: CAL_SCALE.growth, step: CAL_SCALE.step };

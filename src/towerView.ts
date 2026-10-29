@@ -3,6 +3,9 @@
 // treasure chest, then the summary of a run that has ended. Like events.ts it reads and changes the Run only through the sim's own functions
 // (`enterNode`, `buy`, `rest`, ...); a battle node hands over to the page (`onFight`), a mystery floor to the event card.
 
+import { SanctuaryView } from './sanctuaryView';
+import { worldPicture } from './sanctuaryArt';
+import { expeditionOf, shiftDestinations, WORLDS } from './sim/sanctuary';
 import { altarBackdrop, altarPicture, type AltarPicture } from './altarArt';
 import { tips } from './tips';
 import { oreChip } from './oreView';
@@ -130,6 +133,7 @@ export class TowerView {
   /** The calamity's land (`calMap.ts`), made when a calamity's map is first drawn, and the width it was laid for. */
   private cal: CalMap | null = null;
   private calW = 0;
+  private sanctuary: SanctuaryView | null = null;
 
   /** The look of the run's current act or map. */
   private look(): ActLook {
@@ -179,7 +183,7 @@ export class TowerView {
     this.draw(true);
     const cur = run.tower?.cur;
     // (a calamity closed mid-walk: the spot it was going to is lit as chosen, the leader there)
-    if (this.calamity && !cur && run.tower?.going !== undefined) this.pickSpot(run.tower.going);
+    if (this.calamity && !expeditionOf(run) && !cur && run.tower?.going !== undefined) this.pickSpot(run.tower.going);
     if (cur && !cur.fight) this.resumeNode();
     else if (pendingAltar(run)) this.altarCard();
     else if (run.tower?.offer) this.offerCard();
@@ -187,6 +191,7 @@ export class TowerView {
   }
 
   close(): void {
+    this.sanctuary?.release();
     this.cal?.release();
     this.endIntro();
     this.root.hidden = true;
@@ -204,7 +209,20 @@ export class TowerView {
     const run = this.run;
     const t = run.tower!;
     const keep = this.root.querySelector('.rtScroll')?.scrollTop;
+    this.root.classList.toggle('rsMode', !!expeditionOf(run));
     this.root.classList.toggle('dmMode', this.calamity);
+    this.sanctuary?.release();
+    if (expeditionOf(run)) {
+      this.cal?.release();
+      const sanctuary = (this.sanctuary ??= new SanctuaryView({
+        enter: (id) => { if (!this.moving && !this.card && !pendingAltar(this.run)) this.goTo(id); },
+        altar: () => this.altarCard(), company: () => this.companyCard(), pack: () => this.hooks.onPack(),
+        home: () => { saveSlot(this.run); this.close(); this.hooks.onHome(); },
+        shift: () => { if (pendingAltar(this.run) || this.card) return; if (shiftDestinations(this.run)) {saveSlot(this.run);this.draw();} },
+      }));
+      this.root.replaceChildren(sanctuary.mount(run));
+      return;
+    }
     this.root.replaceChildren(this.header(), this.mapBox(), this.footer());
     const sc = this.root.querySelector<HTMLElement>('.rtScroll')!;
     // (the map keeps its place while it is redrawn; on opening it scrolls to the row now being picked)
@@ -296,7 +314,7 @@ export class TowerView {
     card.append(this.partyBars());
     const relics = el('div', 'rtRelics');
     for (const id of this.run.relics ?? []) relics.append(relicButton(this.run, id, () => relicPopup(this.run, id, this.root)));
-    if (!this.run.relics?.length) relics.append(el('p', 'rtLead', 'Relics are found in chambers, shops and guardian battles.'));
+    if (!this.run.relics?.length) relics.append(el('p', 'rtLead', 'Relics are found in worlds, shops and guardian battles.'));
     card.append(relics, this.abandonRow());
     const back = el('button', '', 'Back');
     back.addEventListener('click', () => { this.card?.remove(); this.card = null; });
@@ -741,6 +759,7 @@ export class TowerView {
     const run = this.run;
     const calamity = this.calamity;
     const way = (arrive: () => void) => {
+      if (expeditionOf(run)) return arrive();
       if (!calamity) return this.climbTo(id, arrive);
       // (the squad's leader walks the road to the spot, the camera with it; a tap skips it. The walk is saved as begun: closed mid-walk, the game reopens with the leader at the spot and its fight not yet started)
       const t = run.tower!;
@@ -763,12 +782,13 @@ export class TowerView {
       saveSlot(run);
       const cur = run.tower!.cur!;
       this.picked = NO_PICK;
-      if (cur.fight) {
-        this.close();
-        this.hooks.onFight();
-        return;
-      }
-      this.resumeNode();
+      const show = () => {
+        this.moving = false;
+        if (cur.fight) { this.close(); this.hooks.onFight(); return; }
+        this.resumeNode();
+      };
+      if (expeditionOf(run) && this.sanctuary) { this.moving = true; this.sanctuary.depart(show); }
+      else show();
     });
   }
 
@@ -811,6 +831,13 @@ export class TowerView {
     const wrap = el('div', 'rtCardWrap');
     const card = el('div', `rtCard ${kind}`);
     card.append(el('h2', '', title));
+    const world = this.run.tower?.cur?.world;
+    if (expeditionOf(this.run) && world) {
+      wrap.classList.add('rsLocation');
+      const background = el('div', 'rsLocationScenery');background.append(worldPicture(world));wrap.prepend(background);
+      card.prepend(el('p', 'rsEyebrow', WORLDS[world].name));
+      card.append(el('p', 'rtLead', WORLDS[world].description));
+    }
     wrap.append(card);
     this.root.append(wrap);
     this.card = wrap;
@@ -923,14 +950,14 @@ export class TowerView {
     const t = run.tower!;
     const done = t.mapDone;
     if (!done) return;
-    const card = this.cardShell(`Map ${done.map} cleared`, 'boss');
+    const card = this.cardShell(`${expeditionOf(this.run) ? 'Region' : 'Map'} ${done.map} cleared`, 'boss');
     mapRecapCard(card, done, () => {
       t.mapDone = undefined;
       saveSlot(run);
       this.card?.remove();
       this.card = null;
       if (pendingAltar(run)) this.altarCard();
-    });
+    }, !!expeditionOf(run));
   }
 
   /** The relics an elite paid: choose one (the offer is kept in the run, so leaving and coming back finds it). */
@@ -994,7 +1021,7 @@ export class TowerView {
     const hires = run.tower!.cur!.hires ?? [];
     const taken = hires.some((h) => h.hired);
     const card = this.cardShell('Heroes for hire', 'recruit');
-    card.append(el('p', 'rtLead', taken ? 'A sellsword takes the road with you.' : 'Three sellswords wait by the road. Choose one: they join the party free.'), this.partyBars());
+    card.append(el('p', 'rtLead', taken ? 'A new companion joins your expedition.' : expeditionOf(run) ? 'Three travellers wait beyond the portal. Choose one to join your company free.' : 'Three sellswords wait by the road. Choose one: they join the party free.'), this.partyBars());
     card.append(el('p', 'rtNote', `${run.roster.length} of ${squadLimit(run)} places filled`));
     const list = el('div', 'rtShop');
     hires.forEach((h, i) => {

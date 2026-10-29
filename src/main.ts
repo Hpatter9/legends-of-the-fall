@@ -460,7 +460,7 @@ class Game {
     this.fx.clear();
     this.boardView.build(this.b.board, { boss: !!waveArmyOf(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
     this.syncChain();
-    setBackdrop(this.b.board.area);
+    setBackdrop(this.b.board.area, this.b.board.riftWorld);
     this.weather.resize(this.app.screen.width, this.app.screen.height);
     this.weather.set(weatherOf(this.b.board), this.b.board.area, this.boardView.litSpots(), this.b.board.tiles.some((t) => t.scene));
     showTwistBanner(this.run.tower?.cur?.fight?.twist);
@@ -1185,7 +1185,7 @@ class Game {
       }
     const pad = 10;
     const fit = Math.min(3, (area.w - pad * 2) / (x1 - x0), (area.h - pad * 2) / (y1 - y0));
-    const k = Math.min(3, fit * ZOOM);
+    const k = Math.min(3, fit * (b.riftWorld ? 1 : ZOOM));
     this.scale = k;
     this.world.scale.set(k);
     this.ghost.scale.set(k);
@@ -1231,7 +1231,7 @@ class Game {
   private focus(snap = false): void {
     const { x0, x1, y0, y1 } = this.bbox;
     const b = this.b.board;
-    if (this.b.phase === 'deploy') {
+    if (this.b.phase === 'deploy' && !b.riftWorld) {
       let sx = 0;
       let sy = 0;
       let n = 0;
@@ -2494,7 +2494,7 @@ class Game {
     const army = armyOfRun(run);
     const fixed = waveArmyOf(run);
     const kind = run.tower?.cur?.kind;
-    const stage = `${fixed ? `Wave ${run.stage}/${fixed.waves.length}` : run.mode?.kind === 'calamity' ? `Map ${run.tower!.act} · ${mapProgress(run.tower!).done} of ${mapProgress(run.tower!).total} cleared` : run.tower ? `Floor ${run.stage}` : `Stage ${run.stage}`}${kind === 'elite' ? ' · Elite' : isBossRun(run) ? ' · Boss' : ''}`;
+    const stage = `${fixed ? `Wave ${run.stage}/${fixed.waves.length}` : run.rift?.expedition ? `Region ${run.tower!.act} · Crossing ${run.tower!.row + 1}/${run.tower!.rows![run.tower!.act - 1]}` : run.mode?.kind === 'calamity' ? `Map ${run.tower!.act} · ${mapProgress(run.tower!).done} of ${mapProgress(run.tower!).total} cleared` : run.tower ? `Floor ${run.stage}` : `Stage ${run.stage}`}${kind === 'elite' ? ' · Elite' : isBossRun(run) ? ' · Boss' : ''}`;
     // (the five of a combo placed: the deploy line says so, so a player finds the combos by trying)
     const combo = b.phase === 'deploy' ? comboOf(b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def)) : undefined;
     const deployCombo = combo ? ` · ${COMBO_NAME}: ${combo.name}` : '';
@@ -2536,7 +2536,7 @@ class Game {
             : `The run ends at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} summons · +${this.crownGain} crowns${modeNote(run)}`;
       this.showJoke(b.phase === 'won');
       this.drawDailyResult(run);
-      $('next').textContent = run.over && !run.tower ? 'Run recap' : run.cleared && run.tower ? 'See the summary' : b.phase === 'won' ? (fixed ? `Next wave (${run.stage})` : run.tower ? 'To the map' : `Next stage (${run.stage})`) : run.tower ? 'See the summary' : 'Home';
+      $('next').textContent = run.over && !run.tower ? 'Run recap' : run.cleared && run.tower ? 'See the summary' : b.phase === 'won' ? (fixed ? `Next wave (${run.stage})` : run.rift?.expedition ? 'Return to sanctuary' : run.tower ? 'To the map' : `Next stage (${run.stage})`) : run.tower ? 'See the summary' : 'Home';
     }
     this.refreshAuto();
     if (b.phase === 'deploy' && !this.auto && !(this.revive && !this.revive.started)) tips.atDeploy(n, run.stage, () => this.deployBox());

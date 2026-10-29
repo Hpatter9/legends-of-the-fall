@@ -14,6 +14,15 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### CAL-SANCTUARY — Portal expeditions and destination arenas
+
+- **Owner:** current Codex chat. **Branch/worktree:** `feat/rift-sanctuary`, `/workspace/legends-of-the-fall`.
+- **Authorisation:** owner approved the Rift Sanctuary concept and encounter loop; requested complete destination scenery, distinct battle environments and the established ornate UI.
+- **Scope:** new-run portal expedition rules, sanctuary and location UI/art, destination battle boards/backdrops, saved progression and legacy compatibility. Preserve altar/combat/reward systems unless needed for the approved expedition loop.
+- **Completion:** three destination previews, explicit enter/return flow, recruitment and growth, region guardians, altar-influenced worlds, complete themed arenas with arrival portal; deterministic regression coverage, typecheck/build, three portrait sizes, offline and resume checks, credits and handoff. No merge/deployment/version bump.
+- **Status:** implemented and ready for review. Typecheck/build and thirteen affected test files passed; the separate difficulty checks also passed. Live portal/battle/altar/recruit/offline flows passed at 393×852, 360×780 and 412×915; all six arenas captured at every size. Shop/rest actions, guardian → offering → recap → next region, a full company, interrupted crossing/reload and existing graph-save compatibility passed with no page errors. [Handoff](notes/rift-sanctuary.md); [live sanctuary](samples/rift-sanctuary/sanctuary-393.png); [battle example](samples/rift-sanctuary/arena-rootbound-393.png). No merge or deployment.
+
+
 ### CAL-MAP-LIVE — Dungeon map and arrival portal
 
 - **Owner:** current Codex chat. **Branch / worktree:** `feat/calamity-dungeon-map`, `/workspace/legends-of-the-fall`.

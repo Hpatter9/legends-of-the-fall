@@ -417,7 +417,7 @@ export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
     ...base,
     ...(run.rift ? { rift: { ...run.rift }, riftBoss: run.tower?.cur?.kind === 'boss' } : {}),
     area: run.area ?? base.area ?? areaFor(run.stage),
-    board: section?.board,
+    board: section?.board ?? base.board,
     foes: { hp: base.foes!.hp! * foes * (ans?.hp ?? 1) * thin, atk: base.foes!.atk! * foes * (ans?.atk ?? 1), speed: base.foes!.speed },
     heroes: { hp: castle.hp! * (hp ?? 1) * (run.buff?.hp ?? 1), atk: castle.atk! * (atk ?? 1) * (run.buff?.atk ?? 1) },
     mana: manaRate(run.castle) * (mana ?? 1),
