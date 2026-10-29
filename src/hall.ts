@@ -12,7 +12,7 @@ import { auraParts, type AuraPart } from './render/auraStyles';
 import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
 import { beamKind, fanSpots, hallLayout, MIN_H, ROOM_W, type BeamKind, type HallLayout, type Timeline } from './render/hallSpots';
-import { cardAt, dimAt, shakeAt, showcaseAt, summonPlan, type ShowPlan } from './render/summonRules';
+import { cardAt, dimAt, shakeAt, showcaseAt, skipAction, summonPlan, type ShowPlan } from './render/summonRules';
 import { duck, hushSummon, play as playSfx } from './render/sound';
 import sanctumUrl from './art/hall/sanctum.png';
 import lightPillarUrl from './art/hall/fx_light-pillar.png';
@@ -319,10 +319,20 @@ export class SummoningHall {
     this.shop.addEventListener('click', () => this.hooks.onShop());
     low.append(this.scroll, this.shop, bar);
     this.root.append(this.canvas, head, low, this.over, this.skipPad);
-    // (a tap anywhere skips the show straight to the result)
+    // (a tap anywhere skips the show: a new hero's show jumps to the moment it stands revealed, and only a tap after that goes on to the
+    //  result; taps in the first moments, a double tap on the summon button, are let go. SUMMON-TAROT: a double tap used to skip a join's whole show)
     this.skipPad.addEventListener('pointerdown', (e) => {
       e.preventDefault();
-      this.finish(true);
+      const s = this.show;
+      if (!s) return;
+      const act = skipAction(s.plan, this.now - s.t0);
+      if (act === 'ignore') return;
+      if (act === 'end') return this.finish(true);
+      hushSummon();
+      s.t0 = this.now - s.plan.revealAt;
+      // (the build-up's cues are passed over; the reveal's sting plays once)
+      while (s.cueI < s.plan.cues.length && s.plan.cues[s.cueI].at < s.plan.revealAt) s.cueI++;
+      playSfx('stingSummon');
     });
     this.pull1.addEventListener('click', () => this.hooks.onSummon(1));
     this.pull10.addEventListener('click', () => this.hooks.onSummon(10));
