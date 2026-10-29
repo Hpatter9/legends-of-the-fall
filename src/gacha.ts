@@ -141,9 +141,8 @@ export class Gacha {
     this.busy = false;
   }
 
-  /** The cards of a batch: each lies face down, then turns by itself to its tarot face (a hero's silhouette and class sigil, never
-   *  its figure). When all have turned, each hero who joined plays its first-time reveal, the unlock scene, one after another, and
-   *  its card then shows the hero. Each card keeps its own saved shard count. */
+  /** Shards turn to tarot cards; joins begin as dark figures, then play the chamber arrival in queue order.
+   *  After acknowledgement, each joined figure is shown in full. Every reward keeps its saved shard count. */
   private reveal(got: Pull[]): void {
     this.clearReveal();
     this.busy = true;
@@ -175,10 +174,12 @@ export class Gacha {
       turn.setAttribute('aria-label', 'Turn the card');
       const back = document.createElement('div');
       back.className = 'tarotSide back';
-      back.append(tarotBack());
+      back.append(p.isNew ? heroCard(p.kind, px) : tarotBack());
+      if (p.isNew) back.style.filter = 'brightness(0.15)';
       const front = document.createElement('div');
       front.className = 'tarotSide front';
-      front.append(tarotFace(p.kind, px));
+      front.append(p.isNew ? heroCard(p.kind, px) : tarotFace(p.kind, px));
+      if (p.isNew) front.style.filter = 'brightness(0.15)';
       turn.append(back, front);
       res.append(turn, pullInfo(this.meta, p));
       const up = (): void => {
@@ -222,7 +223,9 @@ export class Gacha {
       await queueReveal(this.meta, p.kind, { lucky: p.lucky, force: true });
       if (batch !== this.batch) return;
       const res = $('reveal').querySelector<HTMLElement>(`.tarotResult.joined[data-kind="${p.kind}"]`);
-      res?.querySelector('.tarotSide.front')?.replaceChildren(heroCard(p.kind, px));
+      const front = res?.querySelector<HTMLElement>('.tarotSide.front');
+      front?.replaceChildren(heroCard(p.kind, px));
+      if (front) front.style.filter = '';
     }
     if (batch !== this.batch) return;
     this.busy = false;

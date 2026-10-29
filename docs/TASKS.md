@@ -365,3 +365,10 @@ UI-007 final 0.190.0 validation complete: current Last Stand Auto, pause/resume,
 - Scope: loading artwork, loading-only markup/styles, build embedding, credits and visual evidence. Preserve startup behaviour, saves, gameplay and offline caching.
 - Completion: approved artwork with drifting mist/embers, subtle depth and beacon glow; reduced motion; typecheck/build and three portrait sizes, startup and offline checks.
 - Status: approved king-and-guard artwork applied and validated; owner requested [PR #179](https://github.com/Hpatter9/legends-of-the-fall/pull/179) for Claude. Current main integration is required (GitHub reports merge conflicts). Typecheck/build, all three portrait sizes, moving layers, reduced motion, seeded startup and real service-worker offline reload passed again; zero page errors. Handoff: [loading refresh](notes/loading-refresh.md). Screenshots and results: `docs/samples/loading/`. No merge or deployment performed.
+
+## SUMMONER-ACTIVE — Animated ceremonial summoner
+
+- Owner: Codex; branch `art/animated-summoner`, worktree `/workspace/legends-of-the-fall`.
+- Scope: chamber artwork, separate summoner actor with idle/cast/eye-shield poses, new-recruit chamber reveal, relevant checks and credits. Shard tarot rewards, simulation and saves preserved.
+- Direction: owner approved current appearance with idle, summoning, and shielding eyes against the bright hero arrival.
+- Completion: three poses integrated with reveal timing and reduced motion. Typecheck/build, four affected test files and browser checks at all three portrait sizes plus reduced motion passed. Status: ready for owner review. [Handoff](notes/animated-summoner.md).
