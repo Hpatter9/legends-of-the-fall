@@ -1,8 +1,8 @@
 // STATUS-FX step one: moving the old effects (damage over time, holds, slows, curses, cleanses) into the one ailment model changed
 // nothing. With the new ailments switched off, seeded fights of every mode play out exactly as they did on main before the change:
 // the same events, tick by tick, and the same health at the end (`tools/status-fx/logs.ts`; the fixture was recorded on main's code).
-// (TIER-PROMISES re-recorded two of its scenarios, `army` and `daily`, whose merged heroes' tier skills now do what their words say: the
-// owner's ask, `docs/notes/tier-promises.md`. Only those two moved; the proof stands for every other mode.)
+// (TIER-PROMISES re-recorded three of its scenarios, `army`, `daily` and `tower`, whose merged heroes' tier skills now do what their words say: the
+// owner's ask, `docs/notes/tier-promises.md`. Only those three moved; the proof stands for every other mode.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { scenarioHashes } from '../tools/status-fx/logs';
@@ -13,6 +13,8 @@ import { CAL_SCALE } from '../src/sim/calamity';
 import { DAILY_ANSWER } from '../src/sim/modes';
 import { KITS } from '../src/sim/abilities';
 
+// (MERGE-TWO, the owner's change to merging, re-recorded the three scenarios that hire and merge: `army`, `daily` and `tower` (two of a kind merge,
+// by the greedy player's Auto merge, and the spire's foes grow faster); every other scenario's hash is the one recorded on main)
 // (the balance pass that followed, step two, moved a few foe strengths and the Shambler's Plague Tide to answer the ailments: they are put back to
 // main's for this proof)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {

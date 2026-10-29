@@ -38,8 +38,8 @@ export const ACT_ROWS = 13;
 export const LANES = 5;
 /** Paths walked up from the first floor to make a map. */
 export const PATHS = 4;
-/** Foes' hp and attack grow by this share of their first-floor strength for each floor climbed, the acts running on. */
-export const TOWER_GROWTH = 0.17;
+/** Foes' hp and attack grow by this share of their first-floor strength for each floor climbed, the acts running on (0.17 until MERGE-TWO: two to merge made a long climb's heroes stronger, `docs/notes/merge-two.md`). */
+export const TOWER_GROWTH = 0.19;
 /** An elite's foes are this much stronger than a plain fight's, and its leader is a mini-boss. */
 export const ELITE_MULT = 1.22;
 /** An elite pays this much more than a fight. */

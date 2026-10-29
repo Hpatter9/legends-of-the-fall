@@ -2,7 +2,8 @@
 // and the XP, levels, crowns and chests the run paid out. A scrolling sheet in the game's brass-framed panels; its parts fade in
 // once, nothing loops. The numbers come from `run.recap` (`sim/runRecap.ts`).
 
-import { mvpKind, type RunRecap } from './sim/runRecap';
+import { heartsBurned, mvpKind, type RunRecap } from './sim/runRecap';
+import { MAX_STARS } from './sim/stars';
 import { formOf, UNITS } from './sim/units';
 import { portrait } from './render/sheets';
 import type { ComebackGo, ComebackTip } from './sim/comeback';
@@ -84,7 +85,31 @@ export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, o
     fig('Crowns', `+${num(recap.crowns)}`),
     fig('Chests', String(recap.chests)),
   );
+  // (WAVE-RECAP: the hearts the battle burned, when it burned any)
+  const hearts = heartsBurned(recap);
+  if (hearts) grid.append(fig('Hearts burned', String(hearts)));
   sheet.append(grid);
+
+  // wave by wave (WAVE-RECAP): each wave's stars, time and MVP, which the short card after each wave left for here
+  const waves = recap.waves ?? [];
+  if (waves.length) {
+    sheet.append(el('h3', '', 'Wave by wave'));
+    const strip = el('div', 'rcWaves');
+    for (const w of waves) {
+      const chip = el('div', `rcWave${w.won ? '' : ' lost'}`);
+      chip.append(el('b', '', `W${w.wave}`), el('span', 'rcWaveStars', w.won ? '★'.repeat(w.stars) + '☆'.repeat(Math.max(0, MAX_STARS - w.stars)) : 'Lost'), el('small', '', clock(w.ms)));
+      const mvpDef = w.mvp ? UNITS[w.mvp] : undefined;
+      if (mvpDef) {
+        const face = el('i', 'rcWaveMvp');
+        face.title = `MVP: ${mvpDef.name}`;
+        face.append(portrait(formOf(mvpDef, 1), 64, 1));
+        chip.append(face);
+      }
+      if (w.hearts) chip.append(el('em', '', '♥'.repeat(Math.min(3, w.hearts))));
+      strip.append(chip);
+    }
+    sheet.append(strip);
+  }
 
   // the heroes: one row a kind, strongest first
   const kinds = Object.keys(recap.heroes).filter((k) => UNITS[k]);
@@ -132,6 +157,14 @@ export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, o
       row.append(el('b', '', UNITS[k].name), el('em', '', `+${num(recap.xp[k])} XP`), el('span', lv ? 'up' : '', lv ? `Lv ${lv[0]} → ${lv[1]}` : ''));
       list.append(row);
     }
+    sheet.append(list);
+  }
+
+  // what the battle found (WAVE-RECAP: the gear and prizes each wave's card named, all together)
+  if (recap.found?.length) {
+    sheet.append(el('h3', '', 'Spoils found'));
+    const list = el('div', 'rcFound');
+    for (const f of recap.found) list.append(el('p', '', f));
     sheet.append(list);
   }
 

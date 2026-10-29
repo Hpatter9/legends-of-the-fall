@@ -44,8 +44,8 @@ export interface UnitDef {
   still?: boolean;
 }
 
-/** The sheet a hero is drawn from at a grade (1 to 3). */
-export const formOf = (def: UnitDef, grade = 1): string => def.forms?.[grade - 1] ?? def.sheet;
+/** The sheet a hero is drawn from at a grade (1 to 4; grade 4 keeps the last form the packs have). */
+export const formOf = (def: UnitDef, grade = 1): string => def.forms?.[Math.min(grade, def.forms.length) - 1] ?? def.sheet;
 
 /** The share of a splash blow that lands on each tile beside the target. */
 export const SPLASH_SHARE = 0.5;

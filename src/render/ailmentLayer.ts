@@ -9,7 +9,7 @@
 import { Container, Graphics, Sprite } from 'pixi.js';
 import type { Unit } from '../sim/battle';
 import { statusFrames, STATUS_CELL } from './statusArt';
-import { MAX_CHIPS, STATUS_STYLES, maxBodyFx, shownAilments, statusKey, type AilmentKey, type StatusPart } from './statusStyles';
+import { MAX_CHIPS, STATUS_STYLES, maxBodyFx, partAlpha, shownAilments, statusKey, type AilmentKey, type StatusPart } from './statusStyles';
 
 /** One drawn piece: its sprite, its strip, where it rests, its own beat, and which mote it is. */
 interface Bit {
@@ -104,7 +104,8 @@ export class AilmentFx {
           const sp = new Sprite(statusFrames(key)[0]);
           sp.anchor.set(0.5);
           sp.scale.set((tall * part.size) / STATUS_CELL);
-          sp.alpha = part.alpha;
+          // (FX-CLEAR: the parts in front of the body are see-through)
+          sp.alpha = partAlpha(part);
           if (part.tint !== undefined) sp.tint = part.tint;
           const y = -tall * part.at;
           sp.position.set(0, y);
