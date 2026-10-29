@@ -414,3 +414,7 @@ The Grand Scenario prototype reuses the already credited camp gate and Knights w
 ## Illustrated loading screen
 
 `src/art/loading/last-keep.webp`: original fantasy illustration generated with OpenAI image generation from the owner-approved moonlit keep concept, revised with a crowned king and his archer, paladin and fire wizard guard. Typography, mist, embers, beacon light and loading indicator are live HTML/CSS.
+
+## Status effects (painted)
+
+- The 11 sheets in `art-source/status-fx/`: original artwork generated for this game with OpenAI image generation.
