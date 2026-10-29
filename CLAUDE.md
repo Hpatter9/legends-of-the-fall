@@ -23,7 +23,8 @@ Chronos later, so keep its conventions.
 6. Never put a model name or ID in code, comments or docs.
 7. **The version (the owner's ask):** the page shows "Version <package.json version> · <commit>" (top right).
    Every merge into the working branch bumps the minor version in `package.json`
-   (0.2.0, 0.3.0, ...), done by whoever merges (the director); workers never change it.
+   (0.2.0, 0.3.0, ...), done by whoever merges (the director); workers never change it. The same merge adds the
+   release's entry at the top of `UPDATES` in `src/updates.ts` (Settings, Updates and notes; a test checks it).
 
 ## Rules that are easy to break
 

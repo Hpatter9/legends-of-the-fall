@@ -15,7 +15,11 @@ const names = ['The King','Sun Viper','Frost Witch','Ash Empress','Rose Duchess'
 const heroes = ['knight','samurai','kunoichi','archer','wizard','paladin','druid','mercenary'];
 const errors = [];
 // (Settings shows one Ruler row; its button opens the picker of the nine, which closes on a pick)
-const openRulers = async (page) => { if (!(await page.locator('.spOverlay:not([hidden])').count())) await page.locator('.rulerOpen').click(); };
+const openRulers = async (page) => {
+  if (await page.locator('.spOverlay:not([hidden])').count()) return;
+  if (!(await page.locator('.rulerOpen').count())) await page.locator('.setMenu[data-page="ruler"]').click(); // (its own submenu)
+  await page.locator('.rulerOpen').click();
+};
 const closeRulers = async (page) => { if (await page.locator('.spOverlay:not([hidden])').count()) await page.locator('.spClose').click(); };
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM ?? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader'] });
 try {

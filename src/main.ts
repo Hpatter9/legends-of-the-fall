@@ -99,7 +99,7 @@ import type { MapKind } from './render/epicMusic';
 import { endOfFight, trackOfRun } from './render/battleMusic';
 import { sceneOf } from './render/audioRules';
 import { colLeft, viewH, viewW } from './viewport';
-import { onDevGrant, onSettings, openSettings, setSetting, settings } from './settings';
+import { onDevGrant, onSettings, openSettings, refreshUpdatesDot, setSetting, settings } from './settings';
 import { devGrant } from './sim/devGrant';
 import { PageGoat } from './duchess';
 import { duchessFightSays, hideDuchessCard, showDuchessCard } from './duchessFightView';
@@ -1480,6 +1480,7 @@ class Game {
     // (a hidden tab draws no frames, so the replay and its fight stand still; the banner says so, and the screen lock is asked for again on return)
     document.addEventListener('visibilitychange', () => this.auto && this.refreshAuto());
     $('gear').addEventListener('click', () => openSettings());
+    refreshUpdatesDot(); // (the gears' dot while the Updates page has news: settings.ts)
   }
 
   /** The fastest speed this fight may run at: ×3 on an army tier already cleared, or during an auto-replay; ×2 otherwise. */
