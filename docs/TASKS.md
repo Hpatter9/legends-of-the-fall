@@ -26,6 +26,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Completion criteria:** effects over a fighter thinned by named constants (`OVER_FIGHTER_ALPHA` 0.6, `OVER_FIGHTER_STATUS_ALPHA` 0.7) and still visible, ground and back layers unchanged, no blinking, reduced motion kept; pip 2 reads "2" and is greyed while locked; typecheck, affected and full tests, web build; 393x852, 360x780, 412x915.
 - **Validation and handoff:** [notes](notes/fx-clear.md).
 
+### WAVE-RECAP — A short, see-through card between waves; the detail kept for the end recap
+
+- **Goal:** the owner's asks: "Let's do a shorter recap of a wave and keep most of the info for the end of the battle" and "Make the between wave recap see through and have it show while the units travel to the next wave".
+- **Status:** done on the branch; not merged.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/wave-recap`, `/home/user/wave-recap` (from main 0.220.0); PR none.
+- **Allowed files or systems:** new `src/sim/waveCard.ts`, `src/waveCardView.ts`, `test/wave-recap.test.ts`, `tools/wave-recap/shots.mjs`; `src/sim/runRecap.ts` (optional `waves`, `found`, `noteWave`, `heartsBurned`); `src/recapView.ts` (wave-by-wave strip, spoils, hearts burned); small hooks in `src/main.ts` (settle, refresh's result block, `stepPassing`); `src/index.html` (`#waveNotes`); `src/battleReports.css`; `tools/battle-ui/report-shots.mjs` (the wave-victory step); `docs/notes/wave-recap.md`.
+- **Completion criteria:** a won wave with more to come shows a short, see-through card over the march that leaves by itself; the last card (a loss with no hearts, a cleared run) is short and leads to the full recap, which totals the performance, XP, levels, pay and finds and adds a wave-by-wave strip; the spire and the Calamity unchanged; typecheck, affected and full tests, web build; three portrait sizes in Chromium.
+- **Validation and handoff:** [notes](notes/wave-recap.md).
+
 ### SPELL-SFX — Sound effects for the king's spells
 
 - **Goal:** the owner's ask: "Need to add sound effects for the king spells".

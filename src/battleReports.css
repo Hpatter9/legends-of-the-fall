@@ -125,3 +125,53 @@ body[data-move] #result #banner { background: #15251ac4; }
 .reviveLine { border-color: #b69a64; background: #17251cf5; color: #efcf98; }
 /* The new Last Stand's edge arrows belong inside its viewport, including their tips. */
 #stand .stFinds { overflow: clip; }
+/* WAVE-RECAP: the short card after a wave. Its one-liners (a level, a find, a fall, a heart) in the report's colours. */
+#result #waveNotes { display: flex; flex-direction: column; gap: 4px; width: min(380px, 100%); }
+#result #waveNotes[hidden] { display: none; }
+#result #waveNotes .wn { display: flex; align-items: baseline; gap: 7px; margin: 0; padding: 5px 9px; border-left: 2px solid #9c8454; background: #0d1a13aa; color: #ebdfc1; font: 400 13px/1.35 var(--body); opacity: 0; animation: reportArrive .35s ease-out forwards; animation-delay: calc(var(--i) * .12s + .2s); }
+#result #waveNotes .wn > span { flex: none; width: 12px; text-align: center; color: #d8bf86; }
+#result #waveNotes .wn.level, #result #waveNotes .wn.ult { border-left-color: #ebce85; }
+#result #waveNotes .wn.level > span, #result #waveNotes .wn.ult > span { color: #f6dc9b; }
+#result #waveNotes .wn.found > span { color: #9fd3e6; }
+#result #waveNotes .wn.fell { border-left-color: #a8705f; color: #e2c7b8; }
+#result #waveNotes .wn.fell > span, #result #waveNotes .wn.heart > span { color: #e2917d; }
+#result #waveNotes .wn.heart { border-left-color: #c75f53; }
+/* A short card's stars sit in one row: the gems, with each rule's words dropped (a star's pay still flies to the purse). */
+#result.short #stars { flex-direction: row; justify-content: center; gap: 6px; }
+#result.short #stars .star { display: flex; padding: 3px 8px; border-radius: 4px; }
+#result.short #stars .star > :is(b, em) { display: none; }
+#result.short #stars .star > span { font-size: 22px; }
+/* Between waves the short card rides over the march: a see-through panel high on the screen, the board and the walking party
+   showing through and below it; no button (it goes by itself once the party has arrived, or at a tap), and it fades as it goes. */
+body #result.passing {
+  inset: calc(env(safe-area-inset-top) + 84px) 0 auto; margin: 0 auto; width: min(360px, calc(100% - 24px)); max-height: 46vh;
+  padding: 0 0 10px; gap: 7px; overflow: hidden; justify-content: flex-start;
+  border: 1px solid #c8ad6e66; border-radius: 6px; background: linear-gradient(#0b1513b3, #0b1513 140%);
+  box-shadow: 0 4px 16px #0006; transition: opacity .45s ease-out; cursor: pointer;
+}
+#result.passing.leaving { opacity: 0; pointer-events: none; }
+#result.passing > .row { display: none; }
+body #result.passing #banner { padding: 8px 10px 7px; width: 100%; font-size: clamp(20px, 6vw, 24px); background: linear-gradient(90deg, transparent, #702b3080 30%, #702b3080 70%, transparent); }
+#result.passing #banner::before { display: none; }
+#result.passing #summary { font-size: 13px; padding: 0 10px; }
+#result.passing :is(#stars, #oreDrop, #waveNotes) { width: calc(100% - 20px); }
+#result.passing #waveNotes .wn { background: #0d1a1388; }
+#result.passing #stars .star { background: #0d1a13aa; }
+body[data-move] #result.passing > :is(#stars, #armyStars, #oreDrop, #waveNotes) { opacity: 1; pointer-events: auto; }
+@media (prefers-reduced-motion: reduce) {
+  #result #waveNotes .wn { animation: none; opacity: 1; }
+  #result.passing { transition: none; }
+}
+/* WAVE-RECAP: the end recap's wave-by-wave strip (each wave's stars, time and MVP) and the spoils the battle found. */
+#recap .rcWaves { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 5px; }
+#recap .rcWave { position: relative; display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; align-items: center; gap: 1px 4px; padding: 5px 6px; border: 1px solid #9c845488; border-radius: 4px; background: var(--report-surface); }
+#recap .rcWave b { color: #f2d494; font: 700 13px var(--body); }
+#recap .rcWave .rcWaveStars { grid-column: 1; color: #f0cf83; font-size: 12px; letter-spacing: 1px; }
+#recap .rcWave small { grid-column: 1; color: #c9bd9f; font: 400 11px var(--body); font-variant-numeric: tabular-nums; }
+#recap .rcWave .rcWaveMvp { grid-column: 2; grid-row: 1 / span 3; width: 30px; height: 30px; border-radius: 3px; overflow: hidden; background: #17221a url(ui/hero-brass-frame.png) center / 100% 100% no-repeat; }
+#recap .rcWave .rcWaveMvp canvas { width: 30px; height: 30px; image-rendering: pixelated; display: block; }
+#recap .rcWave em { grid-column: 1; color: #e2917d; font: normal 10px var(--body); }
+#recap .rcWave.lost { border-color: #a8705f99; }
+#recap .rcWave.lost .rcWaveStars { color: #e2a08f; letter-spacing: 0; }
+#recap .rcFound { display: flex; flex-direction: column; gap: 4px; }
+#recap .rcFound p { margin: 0; padding: 6px 9px; border-left: 2px solid #9fd3e6aa; background: #0d1a13aa; color: #ebdfc1; font: 400 13px/1.35 var(--body); }

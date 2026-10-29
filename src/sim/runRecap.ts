@@ -32,7 +32,30 @@ export interface RunRecap {
   levels: Record<string, [number, number]>;
   crowns: number;
   chests: number;
+  /** Each wave fought, in order (WAVE-RECAP: the short card after a wave leaves its detail to the end; optional, older saves have none). */
+  waves?: WaveRow[];
+  /** The gear and prizes the run picked up, by name (the wave's `run.found`, kept for the end; optional). */
+  found?: string[];
 }
+
+/** One wave's line in the end recap's wave-by-wave strip. */
+export interface WaveRow {
+  /** The wave (stage) it was. */
+  wave: number;
+  won: boolean;
+  /** Stars it earned (none for a loss). */
+  stars: number;
+  /** Its fight time, in ms. */
+  ms: number;
+  /** The hero kind that did the most in it, if anyone did anything. */
+  mvp?: string;
+  /** Hearts burned to win it (a fall a heart revived). */
+  hearts?: number;
+}
+
+/** The most wave rows and finds a recap keeps (a long climb would grow the save without end). */
+export const RECAP_WAVES = 60;
+export const RECAP_FOUND = 40;
 
 export const newRecap = (): RunRecap => ({ fights: 0, cleared: 0, ms: 0, earned: 0, spent: 0, heroes: {}, xp: {}, levels: {}, crowns: 0, chests: 0 });
 export const recapOf = (run: Run): RunRecap => (run.recap ??= newRecap());
@@ -69,6 +92,22 @@ export function notePayout(run: Run, xp: Record<string, number>, ups: readonly {
   r.crowns += crowns;
   r.chests += chests;
 }
+
+/** Add a finished wave's line (its stars, time, MVP, hearts) and anything it found, for the end recap. */
+export function noteWave(run: Run, row: WaveRow, found: readonly string[] = []): void {
+  const r = recapOf(run);
+  const rows = (r.waves ??= []);
+  rows.push(row);
+  if (rows.length > RECAP_WAVES) rows.splice(0, rows.length - RECAP_WAVES);
+  if (found.length) {
+    const got = (r.found ??= []);
+    got.push(...found);
+    if (got.length > RECAP_FOUND) got.splice(0, got.length - RECAP_FOUND);
+  }
+}
+
+/** Hearts burned over the run (from the wave rows). */
+export const heartsBurned = (r: RunRecap): number => (r.waves ?? []).reduce((n, w) => n + (w.hearts ?? 0), 0);
 
 /** The kind that did the most over the run (by `fightStats`' own measure), or null when nobody did anything. */
 export function mvpKind(r: RunRecap): string | null {
