@@ -8,6 +8,7 @@
 
 import { AILMENT_KEYS, type AilmentKey } from '../sim/ailmentKeys';
 import type { Unit } from '../sim/battle';
+import { OVER_FIGHTER_STATUS_ALPHA } from './overFighter';
 
 export type { AilmentKey };
 export const AILMENTS: readonly AilmentKey[] = AILMENT_KEYS;
@@ -64,7 +65,7 @@ const icon = (frameMs = 120, tint?: number): StatusPart => ({ place: 'icon', siz
 
 export const STATUS_STYLES: Record<AilmentKey, StatusStyle> = {
   burn: { name: 'Burning', tint: 0xffc890, rim: 0xff8a2a, number: 0xff9a3c, parts: {
-    front: { place: 'front', size: 0.7, at: 0.3, alpha: 0.95, frameMs: 100 },
+    front: { place: 'front', size: 0.6, at: 0.22, alpha: 0.95, frameMs: 100 },
     motes: { place: 'motes', size: 0.45, at: 0.75, alpha: 0.9, frameMs: 110, n: 2, saver: true },
     icon: icon(),
   } },
@@ -76,7 +77,7 @@ export const STATUS_STYLES: Record<AilmentKey, StatusStyle> = {
   freeze: { name: 'Frozen', tint: 0x9fdcff, rim: 0x7fd4ff, number: 0x9fe6ff, parts: {
     ground: { place: 'ground', size: 1.15, at: 0, alpha: 0.85, frameMs: 130 },
     back: { place: 'back', size: 1.1, at: 0.5, alpha: 0.5, frameMs: 130, saver: true },
-    front: { place: 'front', size: 0.95, at: 0.18, alpha: 0.95, frameMs: 130 },
+    front: { place: 'front', size: 0.8, at: 0.13, alpha: 0.95, frameMs: 130 },
     burst: { place: 'burst', size: 1.1, at: 0.5, alpha: 0.8, frameMs: 70 },
     icon: icon(),
   } },
@@ -121,6 +122,12 @@ export const STATUS_STYLES: Record<AilmentKey, StatusStyle> = {
     icon: icon(110),
   } },
 };
+
+/** The parts drawn in front of the body (FX-CLEAR): drawn see-through, `OVER_FIGHTER_STATUS_ALPHA` of their own alpha, so the
+ *  fighter under them still reads; the ground and back parts, behind it, keep theirs (the shatter's burst is played by `Fx`, which
+ *  thins it as any effect over a fighter). */
+export const OVER_BODY: readonly StatusPlace[] = ['front', 'halo', 'motes'];
+export const partAlpha = (part: StatusPart): number => (OVER_BODY.includes(part.place) ? part.alpha * OVER_FIGHTER_STATUS_ALPHA : part.alpha);
 
 /** Every part key the atlas must hold (`<ailment>.<place>`), in the importer's order. */
 export const STATUS_KEYS: readonly string[] = AILMENTS.flatMap((a) => Object.keys(STATUS_STYLES[a].parts).map((p) => `${a}.${p}`));

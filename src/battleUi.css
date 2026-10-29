@@ -54,7 +54,8 @@ body[data-phase='fight'] #heroBar:not(:empty) ~ #benchWrap { display: none; }
 .hbPips { display: flex; gap: 2px; justify-content: center; }
 .hbPips b { min-width: 14px; padding: 0 1px; font: 400 12px/12px var(--body); text-align: center; color: rgb(255 255 255 / 0.45); background: rgb(var(--black-rgb) / 0.45); border: 1px solid rgb(255 255 255 / 0.18); }
 .hbPips b.lit { color: var(--black, #000); background: #ffe27a; border-color: #fff3b0; }
-.hbPips b.shut { color: rgb(255 255 255 / 0.35); }
+/* (skill 2 still locked, below level 10: the pip still reads "2" but is greyed out, dim and colourless, and never lit; FX-CLEAR) */
+.hbPips b.shut, .hbPips b.shut.lit { color: rgb(255 255 255 / 0.28); background: rgb(70 70 70 / 0.55); border-color: rgb(255 255 255 / 0.1); filter: grayscale(1); opacity: 0.55; }
 .hbName { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 12px/12px var(--body); }
 /* (a hero without its ultimate yet, HEROBAR-LOCK: no ring at all; the portrait fills the ring's place in a plain frame, so the tile keeps its shape) */
 .hb.locked .hbRing svg { display: none; }

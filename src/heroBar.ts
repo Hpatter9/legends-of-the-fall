@@ -1,9 +1,9 @@
 // The fight's hero bar (COMBAT-002, docs/notes/hero-kits.md section 10): a tile for each placed hero, in the party's order: its portrait inside a
-// ring (the ultimate's meter), its health, its pool (blue for mana, gold for stamina), two pips (lit when that skill can be paid for; "10" while
-// skill 2 is locked) and its name. A full ring glows gold and says TAP; a tap queues the ultimate (`orderUltimate`, the sim's own command), and the
-// ring turns while it waits. A hero without its ultimate yet (below level 30) shows no ring and no level plate at all, only its portrait in a
-// plain frame of the ring's size, so the tile keeps its shape with no gap (HEROBAR-LOCK). The last, narrower tile is the Auto switch. The Last
-// Stand's eight heroes take two rows.
+// ring (the ultimate's meter), its health, its pool (blue for mana, gold for stamina), two pips, "1" and "2" (lit when that skill can be paid
+// for; pip 2 is greyed out, and never lit, while skill 2 is locked below level 10: FX-CLEAR) and its name. A full ring glows gold and says
+// TAP; a tap queues the ultimate (`orderUltimate`, the sim's own command), and the ring turns while it waits. A hero without its ultimate
+// yet (below level 30) shows no ring and no level plate at all, only its portrait in a plain frame of the ring's size, so the tile keeps its
+// shape with no gap (HEROBAR-LOCK). The last, narrower tile is the Auto switch. The Last Stand's eight heroes take two rows.
 //
 // It only reads the battle and calls the sim's command; nothing here changes a fight by itself.
 
@@ -173,7 +173,7 @@ export class HeroBar {
       t.p1.classList.toggle('lit', can1 && u.alive);
       t.p2.classList.toggle('lit', can2 && u.alive);
       t.p2.classList.toggle('shut', !open2);
-      t.p2.textContent = open2 ? '2' : String(SKILL2_LEVEL);
+      t.p2.title = open2 ? '' : `Skill 2 opens at level ${SKILL2_LEVEL}`;
       t.el.classList.toggle('ready', ready && !queued);
       t.el.classList.toggle('queued', queued && u.alive);
       t.el.classList.toggle('locked', locked);
