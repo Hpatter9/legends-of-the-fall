@@ -16,7 +16,7 @@ import { SPELL_SIGNATURES } from './spellSignatures';
 import { SPELLS } from '../sim/spells';
 import type { Shot } from '../sim/units';
 import { settings } from '../settings';
-import { at, facesRight, TH, TW } from './iso';
+import { at, depth, facesRight, TH, TW } from './iso';
 import { fadeTrauma, popScale, shakeOf, traumaFor } from './juiceRules';
 import { BIG_FOE_HP, SKILL_FX, SPELL_GLOW, SPELL_WORD, type Effect, type MagicKey } from './skillFx';
 import type { UnitSprite } from './unitView';
@@ -1084,9 +1084,11 @@ export class Fx {
       // (the mound runs along the tunnel under the ground for as long as the burrower is under)
       const path = [{ u: e.u, v: e.v }, ...e.path];
       const start = b.t;
+      let near = path[0];
       const where = (): [number, number] => {
         const f = Math.max(0, Math.min(1, (b.t - start) / Math.max(1, e.ms)));
         const k = f * (path.length - 1);
+        near = path[Math.round(k)];
         const a = path[Math.floor(k)];
         const z = path[Math.min(path.length - 1, Math.floor(k) + 1)];
         const [ax, ay] = this.tilePos(b, a.u, a.v);
@@ -1095,7 +1097,31 @@ export class Fx {
         return [ax + (zx - ax) * r, ay + (zy - ay) * r - 2];
       };
       const me = b.units.find((x) => x.id === e.by);
-      this.lookLoop(MOVE_LOOKS.mound, where, 1.2, () => !!me?.under && me.alive);
+      const under = () => !!me?.under && me.alive;
+      // (a heaped ridge of earth over the tunnel, with the dust strip churning on it: drawn, until the painted burrow arrives)
+      const g = new Graphics();
+      g.ellipse(0, 0, 22, 9).fill({ color: 0x4a3426, alpha: 0.95 });
+      g.ellipse(0, -4, 16, 7).fill({ color: 0x7a5a40, alpha: 0.95 });
+      g.ellipse(-4, -7, 8, 3).fill({ color: 0xa88660, alpha: 0.9 });
+      for (const [x, y] of [[-14, 1], [12, -1], [3, 4]]) g.circle(x, y, 2.2).fill({ color: 0x8a8070 });
+      this.root.addChild(g);
+      let t = 0;
+      this.items.push({
+        view: g,
+        step: (dt) => {
+          t += dt;
+          const [x, y] = where();
+          g.position.set(x, y + 2);
+          g.zIndex = depth(near.u, near.v) + 4;
+          if (!this.reduced) g.scale.set(1 + 0.08 * Math.sin(t / 90), 1);
+          if (!under()) {
+            g.alpha = Math.max(0, g.alpha - dt / 200);
+            return g.alpha > 0;
+          }
+          return true;
+        },
+      });
+      this.lookLoop(MOVE_LOOKS.mound, where, 1.4, under, () => depth(near.u, near.v) + 5);
     } else if (e.kind === 'swap') {
       for (const id of [e.a, e.b]) {
         const s = this.sprites.get(id);

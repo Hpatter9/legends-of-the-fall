@@ -52,9 +52,10 @@ async function open(w, h) {
   await page.waitForTimeout(700);
   await page.evaluate(() => document.getElementById('fight').click());
   await page.waitForFunction(() => {
-    const u = window.__game.b.units.filter((x) => x.alive);
-    return u.some((h) => h.side === 'hero' && u.some((f) => f.side === 'foe' && Math.abs(f.u - h.u) + Math.abs(f.v - h.v) <= 3));
-  }, null, { timeout: 25000, polling: 200 }).catch(() => {});
+    const b = window.__game.b;
+    const u = b.units.filter((x) => x.alive);
+    return b.t >= 9000 || u.filter((h) => h.side === 'hero' && u.some((f) => f.side === 'foe' && Math.abs(f.u - h.u) + Math.abs(f.v - h.v) <= 1)).length >= 2;
+  }, null, { timeout: 120000, polling: 200 }).catch(() => {});
   return { ctx, page };
 }
 
@@ -87,63 +88,74 @@ const closeOn = (page, u, v, zoom = 2) => page.evaluate(([u, v, zoom]) => {
   g.ty = g.cy = y - 20;
   g.zoom = g.tzoom = zoom;
 }, [u, v, zoom]);
+/** Put the camera on a hero's sprite (a little ahead of it, `dy` px up the screen, towards the foes) and let it settle, before staging. */
+async function lookAt(page, def, zoom, dy) {
+  await page.evaluate(([def, zoom, dy]) => {
+    const g = window.__game;
+    const me = g.b.units.find((x) => x.alive && x.def === def) ?? g.b.units.find((x) => x.alive && x.side === 'hero');
+    const s = g.sprites.get(me.id);
+    g.manualCam = true;
+    g.tx = g.cx = s.x;
+    g.ty = g.cy = s.y + dy;
+    g.zoom = g.tzoom = zoom;
+  }, [def, zoom, dy]);
+  await page.waitForTimeout(1500);
+}
 const hero = 'const me = g.b.units.find((x) => x.alive && x.side === "hero" && x.def === arg.def) ?? g.b.units.find((x) => x.alive && x.side === "hero");';
 const nearFoe = 'const foes = g.b.units.filter((x) => x.alive && x.side === "foe" && !x.under).sort((x, y) => Math.abs(x.u - me.u) + Math.abs(x.v - me.v) - Math.abs(y.u - me.u) - Math.abs(y.v - me.v) || x.id - y.id);';
 
+const ONLY = process.env.ONLY?.split(',');
+const want = (k) => !ONLY || ONLY.includes(k);
 for (const [w, h] of SIZES) {
   const size = `${w}x${h}`;
   // 1. A launch, caught mid-air.
-  {
+  if (want('launch')) {
     const { ctx, page } = await open(w, h);
-    const at = await stage(page, `${hero} ${nearFoe} const f = foes[0]; if (!f) return null; const p = tk.launch(g.b, me, f, 3, out); return p ? [p.land.u, p.land.v, f.u, f.v, p.from.u, p.from.v] : null;`, { def: 'juggernaut' });
+    await lookAt(page, 'juggernaut', 2.2, -50);
+    const at = await stage(page, `${hero} ${nearFoe} const f = foes[0]; if (!f) return null; const p = tk.launch(g.b, me, f, 3, out); if (!p) return null; const s = g.sprites.get(f.id); g.tx = g.cx = s.x; g.ty = g.cy = s.y - 40; return [p.land.u, p.land.v, f.u, f.v, p.from.u, p.from.v];`, { def: 'juggernaut' });
     await runThenHold(page, 260);
-    if (at) await closeOn(page, Math.round((at[0] + at[4]) / 2), Math.round((at[1] + at[5]) / 2), 2.1);
-    await page.waitForTimeout(1200);
     await page.screenshot({ path: `docs/samples/spells-b01-launch-${size}.png` });
     console.log(size, 'launch', JSON.stringify(at));
     await ctx.close();
   }
   if (size !== '393x852' && !process.env.ALL) continue;
   // 2. Walls of every kind in a row before the heroes.
-  {
+  if (want('walls')) {
     const { ctx, page } = await open(w, h);
-    const row = await stage(page, `${hero} ${nearFoe} const f = foes[0]; const v = Math.round((me.v + f.v) / 2); const kinds = ['stone', 'ice', 'thorns', 'light', 'fire', 'wind']; const laid = []; let u = 0; for (const k of kinds) { for (; u < g.b.board.w; u++) { if (tk.raiseWall(g.b, me, [{ u, v }], k, 20000, out).length) { laid.push(k + '@' + u); u++; break; } } } return { v, laid };`, { def: 'juggernaut' });
+    await lookAt(page, 'juggernaut', 2.4, -40);
+    const row = await stage(page, `${hero} ${nearFoe} const kinds = ['stone', 'ice', 'thorns', 'light', 'fire', 'wind']; const laid = []; let v = me.v - 1; let u = 0; for (const k of kinds) { for (let tries = 0; tries < 40; tries++, u++) { if (u >= g.b.board.w) { u = 0; v--; } if (tk.raiseWall(g.b, me, [{ u, v }], k, 20000, out).length) { laid.push(k + '@' + u + ',' + v); u++; break; } } } return { v, laid };`, { def: 'juggernaut' });
     await runThenHold(page, 400);
-    await closeOn(page, 5, row.v, 1.7);
-    await page.waitForTimeout(1200);
     await page.screenshot({ path: `docs/samples/spells-b01-walls-${size}.png` });
     console.log(size, 'walls', JSON.stringify(row));
     await ctx.close();
   }
   // 3. An aura round a hero (Spirit Guardians, reach 2), and one on a tile (a font).
-  {
+  if (want('aura')) {
     const { ctx, page } = await open(w, h);
+    await lookAt(page, 'paladin', 2.2, -10);
     const at = await stage(page, `${hero} tk.raiseAura(g.b, me, { what: 'Spirit Guardians', reach: 2, ms: 20000, every: 500, ally: { heal: 0.01 }, foe: { dmg: 0.2, slow: 600 } }, out); return [me.u, me.v];`, { def: 'paladin' });
     await runThenHold(page, 700);
-    await closeOn(page, at[0], at[1], 2);
-    await page.waitForTimeout(1200);
     await page.screenshot({ path: `docs/samples/spells-b01-aura-${size}.png` });
     console.log(size, 'aura', JSON.stringify(at));
     await ctx.close();
   }
   // 4. A burrow: the mound halfway along its tunnel.
-  {
+  if (want('burrow')) {
     const { ctx, page } = await open(w, h);
+    await lookAt(page, 'juggernaut', 3, -20);
     const at = await stage(page, `${hero} const ok = tk.burrow(g.b, me, { reach: 8, mult: 1.6, launch: 2, splash: 0.6 }, out); return ok ? [me.u, me.v, me.under.until - g.b.t] : null;`, { def: 'juggernaut' });
     await runThenHold(page, at ? Math.round(at[2] * 0.5) : 300);
-    if (at) await closeOn(page, at[0], at[1] - 2, 1.9);
-    await page.waitForTimeout(1200);
+
     await page.screenshot({ path: `docs/samples/spells-b01-burrow-${size}.png` });
     console.log(size, 'burrow', JSON.stringify(at));
     await ctx.close();
   }
   // 5. A teleport slash through three foes.
-  {
+  if (want('slash')) {
     const { ctx, page } = await open(w, h);
+    await lookAt(page, 'kunoichi', 1.7, -60);
     const at = await stage(page, `${hero} const hit = tk.teleportSlash(g.b, me, { k: 3, reach: 6, mult: 1.4, order: (x, y) => x.hp - y.hp }, out); return [me.u, me.v, hit.length];`, { def: 'kunoichi' });
     await runThenHold(page, 150);
-    await closeOn(page, at[0], at[1], 2);
-    await page.waitForTimeout(1200);
     await page.screenshot({ path: `docs/samples/spells-b01-slash-${size}.png` });
     console.log(size, 'slash', JSON.stringify(at));
     await ctx.close();
