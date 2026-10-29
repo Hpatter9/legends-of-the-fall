@@ -357,3 +357,11 @@ UI-007 release 0.189.0 integrated validation passed: typecheck/build; eight affe
 UI-007 integrated STAND-003 main 0.189.0 before merging. Older Last Stand style overrides removed so its new castle-room HUD, pause and end cards remain intact. Release updated to 0.190.0.
 
 UI-007 final 0.190.0 validation complete: current Last Stand Auto, pause/resume, end navigation and reduced motion passed at all three portrait sizes, with zero page errors. Duplicate crest/style overrides removed and edge-arrow paint contained. Typecheck/build and eight matching affected test files passed. PR #154 ready for completion merge.
+
+## LOAD-001 — Illustrated loading screen
+
+- Owner: current Codex chat. Branch: `design/loading-refresh`; worktree: `/workspace/legends-of-the-fall`.
+- Owner approved the generated moonlit keep concept and requested movement and liveliness. Follow-up approved: crowned king centrally surrounded by an archer, paladin and fire wizard in defensive guard poses.
+- Scope: loading artwork, loading-only markup/styles, build embedding, credits and visual evidence. Preserve startup behaviour, saves, gameplay and offline caching.
+- Completion: approved artwork with drifting mist/embers, subtle depth and beacon glow; reduced motion; typecheck/build and three portrait sizes, startup and offline checks.
+- Status: approved king-and-guard artwork applied and validated; owner requested [PR #179](https://github.com/Hpatter9/legends-of-the-fall/pull/179) for Claude. Current main integration is required (GitHub reports merge conflicts). Typecheck/build, all three portrait sizes, moving layers, reduced motion, seeded startup and real service-worker offline reload passed again; zero page errors. Handoff: [loading refresh](notes/loading-refresh.md). Screenshots and results: `docs/samples/loading/`. No merge or deployment performed.
