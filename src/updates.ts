@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.234.0',
+    date: '2026-10-29',
+    title: 'Three army stars',
+    notes: ['An army’s three stars: clear it, clear it without using a heart, and clear it within the time target.'],
+  },
+  {
     version: '0.233.0',
     date: '2026-10-29',
     title: 'A star for clearing without a heart',
