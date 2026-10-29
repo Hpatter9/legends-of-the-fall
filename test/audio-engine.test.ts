@@ -3,8 +3,7 @@ import assert from 'node:assert/strict';
 import { fight, stepBattle, type BattleEvent } from '../src/sim/battle';
 import { D, W } from '../src/sim/board';
 import {
-  ACT_COLOURS, DUCK_GAIN, DuckCounter, OPEN_HZ, PAN_MAX, TENSION_RATE, colourOf, cutoffOf, eventSpot, panFromScreen, panOfEvent, panOfTile,
-  percActive, percLevel, rateOf, swellOf,
+  ACT_COLOURS, DUCK_GAIN, DuckCounter, OPEN_HZ, PAN_MAX, colourOf, eventSpot, musicColour, panFromScreen, panOfEvent, panOfTile,
 } from '../src/render/audioRules';
 import { readyBattle } from './helpers';
 
@@ -65,36 +64,10 @@ test('the duck is about -8 dB', () => {
   assert.ok(Math.abs(20 * Math.log10(DUCK_GAIN) + 8) < 1e-9);
 });
 
-test('the music low-pass opens with tension, and the tension never quickens the pace past 8%', () => {
-  for (const track of ['battle', 'boss'] as const) {
-    let last = 0;
-    for (let t = 0; t <= 1.0001; t += 0.1) {
-      const hz = cutoffOf(track, t, null);
-      assert.ok(hz >= last, 'rises with tension');
-      last = hz;
-    }
-    assert.ok(cutoffOf(track, 0, null) < cutoffOf(track, 1, null));
-    assert.equal(cutoffOf(track, 1, null), OPEN_HZ);
-    assert.ok(rateOf(track, 1, null) <= 1 + TENSION_RATE + 1e-9);
-    assert.equal(rateOf(track, 1, null), 1 + TENSION_RATE);
-  }
-  // (the town ignores tension, as before)
-  assert.equal(cutoffOf('town', 1, null), cutoffOf('town', 0, null));
-  assert.equal(rateOf('town', 1, null), 1);
-  assert.equal(swellOf('town', 1), 1);
-  assert.ok(Math.abs(swellOf('battle', 1) - 1.33) < 1e-9);
-  // (out-of-range tension is held to 0..1)
-  assert.equal(swellOf('battle', 5), swellOf('battle', 1));
-  assert.equal(cutoffOf('battle', -2, null), cutoffOf('battle', 0, null));
-});
-
-test('the percussion layer is silent until the fight runs hot and full at the end', () => {
-  assert.equal(percLevel(0), 0);
-  assert.equal(percLevel(0.5), 0);
-  assert.equal(percLevel(1), 1);
-  assert.ok(percLevel(0.8) > 0 && percLevel(0.8) < 1);
-  assert.equal(percActive(0.4), false);
-  assert.equal(percActive(0.9), true);
+// (the owner changed the rule these replaced: the battle music once opened its low-pass, swelled and quickened with the fight's
+//  tension, and a rumble came in when it ran hot; now it stays steady through a battle, docs/notes/battle-music.md)
+test('the music is open and at its own pace with no act, whatever the fight is doing', () => {
+  assert.deepEqual(musicColour(null), { cutoff: OPEN_HZ, rate: 1 });
 });
 
 test('each tower act has its own colour: act 1 muffled and slow, act 2 open, act 3 stormy; later acts reuse the three', () => {
@@ -110,12 +83,9 @@ test('each tower act has its own colour: act 1 muffled and slow, act 2 open, act
   assert.equal(colourOf(3), storm);
   assert.equal(colourOf(4), crypt);
   assert.equal(colourOf(0), crypt);
-  // (an act's cutoff caps the music, and tension opens a battle track towards it)
-  assert.equal(cutoffOf('town', 0, 1), crypt.cutoff);
-  assert.ok(cutoffOf('battle', 0, 1) < cutoffOf('battle', 1, 1));
-  assert.equal(cutoffOf('battle', 1, 1), crypt.cutoff);
-  // (the act's pace multiplies in, the tension's share stays within 8%)
-  assert.ok(Math.abs(rateOf('battle', 1, 1) - crypt.rate * (1 + TENSION_RATE)) < 1e-9);
+  // (an act's cutoff caps the music and its pace sets the tempo)
+  assert.deepEqual(musicColour(1), { cutoff: crypt.cutoff, rate: crypt.rate });
+  assert.deepEqual(musicColour(3), { cutoff: storm.cutoff, rate: storm.rate });
   for (const a of ACT_COLOURS) assert.ok(a.drone.voices.length > 0 && a.drone.level > 0 && a.drone.level <= 1);
 });
 
@@ -186,43 +156,26 @@ test('every cue can be made, and a panned cue goes through a panner while a cent
   }
 });
 
-test('the music player crossfades tracks, colours them by tension and act, and keeps a rumble (no beat) only while the fight is hot', async () => {
+test('the music player crossfades tracks, holds a battle track steady (no tension filter or rumble), and colours by the act', async () => {
   const undo = installFakeAudio();
   const { MusicPlayer } = await import('../src/render/audioProcessors');
   try {
     const ctx = new FakeContext();
     const music = new MusicPlayer(ctx as unknown as AudioContext, async () => ({ pad: null, bass: null, lead: null, drums: null }));
     const cutoff = () => (music.params.cutoff.audioParam as unknown as { target?: number }).target;
-    const perc = () => (music.params.perc.audioParam as unknown as { target?: number }).target;
     music.setTrack('town');
     assert.equal(music.current, 'town');
     assert.equal(cutoff(), OPEN_HZ);
-    // a fight: the battle track, closed at first, opening as the tension climbs
+    // a fight: the battle track (its synthesised fallback here) is open from the start, and nothing it does moves it
     music.setTrack('battle');
     await new Promise((r) => setTimeout(r, 5));
-    const closed = cutoff()!;
-    assert.ok(closed < OPEN_HZ);
-    music.setTension(0.4);
-    assert.ok(cutoff()! > closed);
-    assert.equal(perc(), 0, 'no rumble yet');
-    const before = FakeContext.made.length;
-    music.setTension(0.95);
-    assert.ok(perc()! > 0, 'the rumble fades in');
-    assert.ok(perc()! <= 0.12 + 1e-9, 'and sits quietly');
-    assert.ok(cutoff()! > OPEN_HZ * 0.9);
-    // (a few long-lived nodes, made once: no hits are scheduled, so nothing is made as the clock runs on)
-    const rumble = FakeContext.made.length - before;
-    assert.ok(rumble > 0 && rumble <= 8, `a handful of nodes (${rumble})`);
-    music.setTension(1);
-    await new Promise((r) => setTimeout(r, 300));
+    assert.equal(cutoff(), OPEN_HZ, 'no muffled start');
     ctx.currentTime = 5;
     await new Promise((r) => setTimeout(r, 250));
-    assert.equal(FakeContext.made.length - before, rumble, 'no node is made per beat or per tick');
-    // the fight ends: back to the town, tension spent
-    music.setTension(0);
+    assert.equal(cutoff(), OPEN_HZ, 'and no opening later');
+    assert.ok(!('setTension' in music), 'the fight has no say in the music any more');
     music.setTrack('town');
     await new Promise((r) => setTimeout(r, 5));
-    assert.equal(perc(), 0);
     // a tower act: the drone starts, and the act's ceiling holds the music down
     const quiet = FakeContext.made.length;
     music.setAct(1);

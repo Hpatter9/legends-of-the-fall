@@ -1,7 +1,8 @@
 // The page's sound: the public face of the audio engine. The parts are audiorective processors (`audioProcessors.ts`: the
 // cue synth, the music player and the bus mixer), created together by `createEngine` on the first tap; the rules they
-// follow (pan, ducking, the tension and act colours) are in `audioRules.ts`. Nothing in the sim knows about any of this:
-// the page calls `playEvents` on each tick's events, `startFight` when a fight begins, and `play` for the rest.
+// follow (pan, ducking, the act colours) are in `audioRules.ts`, and the battle music's (one track a battle, victory music
+// at a won battle's end) in `battleMusic.ts`. Nothing in the sim knows about any of this: the page calls `playEvents` on each
+// tick's events, `startFight` when a fight begins, `endWave` as one ends, `endVictory` as its results are left, and `play` for the rest.
 //
 // Phones block sound until a tap, so `setup` starts the audio on the first pointer-down, and every later call is
 // safe before that (it does nothing). The mute button's choice is remembered in localStorage (legends.sound); the
@@ -16,10 +17,11 @@ import { onSettings, settings } from '../settings';
 import { BusMixer, CueSynth, MusicPlayer, type BusName } from './audioProcessors';
 import { AmbientBeds } from './audioBeds';
 import { DuckCounter, panOfEvent, type PlannedCue, type Scene } from './audioRules';
-import { TRACK_OF_PLACE, fightTrack, placeOf, type FightMood, type MapKind, type MusicId, type Place, type StingId } from './epicMusic';
+import { TRACK_OF_PLACE, placeOf, type MapKind, type MusicId, type StingId } from './epicMusic';
+import { atPlace, musicOf, type BattleEnd, type MusicState } from './battleMusic';
 import { bakeTrack } from './musicBake';
 import { SCENE_TRACKS, type Track } from './musicScore';
-import { Mixer, cuesFor, intensityOf, type Cue } from './soundRules';
+import { Mixer, cuesFor, type Cue } from './soundRules';
 import { SpellBank } from './spellBank';
 import { coveredBySpells, spellParts } from './spellSfx';
 
@@ -47,17 +49,15 @@ interface Parts {
 
 let engine: (Parts & { core: { context: AudioContext; start(): Promise<void> } }) | null = null;
 const mixer = new Mixer();
-/** How hot the fight is, 0 to 1: the battle music opens, quickens and swells with it. */
-let tensionTick = 0;
 let muted = readMuted();
 /** What is holding the music down (menus, cards, the summoning show), by reason. */
 const ducks = new DuckCounter();
 /** The act and scene asked for before the audio was unlocked. */
 let wantAct: number | null = null;
 let wantScene: Scene | null = null;
-/** Where the player is, as the music hears it (`placeOf`), the fight in progress (if any) and whether a cinematic's own score is playing. */
-let place: Place = 'camp';
-let fight: FightMood | null = null;
+/** Where the player is, as the music hears it (`placeOf`), the battle on (its one track), whether a fight is being fought and
+ *  whether a won battle's victory music is up (`battleMusic.ts`); and whether a cinematic's own score is playing. */
+let music: MusicState = { place: 'camp', battle: null, fighting: false, victory: false };
 let sceneMusic = false;
 
 function readMuted(): boolean {
@@ -111,7 +111,7 @@ export function setup(): void {
   // (for the tests and the owner: `window.__audioDebug()` says what the engine is doing)
   const w = window as unknown as { __audioDebug?: () => unknown; __audioApi?: unknown };
   w.__audioDebug = debugState;
-  w.__audioApi = { setAct, setMusic, playSting, setTension, duck, setScene, playScene, endScene, probe, bake: bakeTrack, renderCue };
+  w.__audioApi = { setAct, setMusic, playSting, duck, setScene, playScene, endScene, probe, bake: bakeTrack, renderCue };
 }
 
 /** Lets the game's sound mix with whatever else the phone is playing (a music app), and never take the audio focus: the
@@ -179,34 +179,51 @@ export function bindMute(button: HTMLElement): void {
   });
 }
 
-/** The track the place or the fight asks for. */
-const wantedTrack = (): MusicId => (fight ? fightTrack(fight) : TRACK_OF_PLACE[place]);
-
-/** Puts the music on the track the place or the fight wants (unless a cinematic's own score is playing). */
+/** Puts the music on the track the place, the battle or its victory wants (unless a cinematic's own score is playing). */
 function syncMusic(): void {
   if (sceneMusic) return;
-  engine?.music.setTrack(wantedTrack());
+  const want = musicOf(music, (p) => TRACK_OF_PLACE[p]);
+  engine?.music.setTrack(want.track, want.level);
 }
 
-/** A fight has begun: the boss track on a boss stage, the Calamity's on a Calamity fight, else one of the three battle tracks by
- *  how hard the fight runs (`fightLevel` in `epicMusic.ts`). */
-export function startFight(boss: boolean, mood: { calamity?: boolean; level?: number } = {}): void {
+/** A fight has begun, with the battle's one track (`trackOfRun` or `standTrack` in `battleMusic.ts`). Every wave of a battle
+ *  passes the same track, so the music plays on unbroken from wave to wave; a new battle's track crossfades in. A victory's
+ *  music still up (an auto-replay going straight on) gives way. */
+export function startFight(track: MusicId): void {
   mixer.reset();
-  setTension(0);
-  fight = { boss, calamity: !!mood.calamity, level: mood.level ?? 0 };
-  engine?.music.stopSting();
+  const was = music.battle;
+  music = { ...music, battle: track, fighting: true, victory: false };
+  if (was !== track) engine?.music.stopSting();
   syncMusic();
+  // (the fanfare is decoded while the battle plays, so it rings the moment the battle is won)
+  engine?.music.warmSting('victory');
 }
 
-/** A fight is left without an end (the Last Stand is left mid-wave): the place's music comes back. */
+/** A battle is left without an end (the Last Stand is left mid-wave): the place's music comes back. */
 export function endFight(): void {
-  fight = null;
-  setTension(0);
+  music = { ...music, battle: null, fighting: false, victory: false };
   syncMusic();
 }
 
-/** Sounds for one tick's battle events (`speed` is the fight's: quieter at ×2), and the music going back to the town when
- *  the fight ends. Each is panned by where on the board it happens. Call after stepping the battle `b`. */
+/** A fight has ended and `end` (`endOfFight`) says what the music does: a won battle's victory fanfare, leading into the
+ *  triumph loop under the results; a lost one's defeat sting, the place's music after it; or nothing (a wave won with more to
+ *  come, a fall a heart revives), the battle's track playing straight on. */
+export function endWave(end: BattleEnd): void {
+  if (end === 'none') return;
+  music = { ...music, battle: null, fighting: false, victory: end === 'victory' };
+  engine?.music.sting(end);
+  syncMusic();
+}
+
+/** The results of a won battle are left: the fanfare, if still ringing, fades, and the place's music comes back. */
+export function endVictory(): void {
+  if (!music.victory) return;
+  music = { ...music, victory: false };
+  engine?.music.stopSting(false);
+  syncMusic();
+}
+
+/** Sounds for one tick's battle events (`speed` is the fight's: quieter at ×2). Each is panned by where on the board it happens. Call after stepping the battle `b`. */
 export function playEvents(b: Battle, events: BattleEvent[], speed = 1): void {
   // (a king's spell plays its own rendered cast and effect once they are decoded, and the plain cues they stand in for are
   // left out: `spellSfx.ts`)
@@ -219,16 +236,9 @@ export function playEvents(b: Battle, events: BattleEvent[], speed = 1): void {
       const pan = panOfEvent(b, e);
       for (const q of cues) cue(q.cue, speed, q.gain ?? 1, q.delay ?? 0, pan);
     }
-    if (e.kind === 'end') {
-      setTension(0);
-      fight = null;
-      // (a victory or a defeat sting rings over the fading battle, and the place's music comes back after it)
-      playSting(e.won ? 'victory' : 'defeat');
-      syncMusic();
-    }
+    // (the fight is over; the battle's music plays on until the page says how it ended: `endWave`)
+    if (e.kind === 'end') music = { ...music, fighting: false };
   }
-  // (the music's pace follows how thin the sides have got, checked about twice a second)
-  if (b.phase === 'fight' && ++tensionTick % 5 === 0) setTension(intensityOf(b));
 }
 
 /** A tap skipped the summoning show: whatever of its sound is still ringing fades out at once. */
@@ -289,11 +299,6 @@ function playSpell(b: Battle, e: Extract<BattleEvent, { kind: 'spell' }>, events
   }
 }
 
-/** The fight's tension (0 to 1): the battle music opens, quickens and swells with it, and a percussion layer joins when it runs hot. */
-export function setTension(t: number): void {
-  engine?.music.setTension(t);
-}
-
 /** The cinematics' music: a scene's id to the track it plays (a scene with no score of its own has none). */
 const SCENE_TRACK: Record<string, Track> = {
   ...Object.fromEntries(SCENE_TRACKS.map((t) => [t, t])),
@@ -320,6 +325,8 @@ export function playScene(id: string): void {
   const track = SCENE_TRACK[id];
   if (!track || !engine) return;
   sceneMusic = true;
+  // (a victory cinematic scores the same triumph the victory music plays: it carries on, its fanfare included, without a restart)
+  if (track === engine.music.current) return engine.music.setTrack(track);
   engine.music.stopSting();
   engine.music.setTrack(track);
 }
@@ -341,9 +348,10 @@ export function setAct(act: number | null): void {
 export function setScene(scene: Scene | null, map: MapKind = null): void {
   wantScene = scene;
   engine?.beds.setScene(scene);
-  // (the music follows too: the camp's or the tavern's, the tower's or the Calamity's map, or the deployment)
-  place = placeOf(scene, map);
-  if (place === 'deploy') engine?.music.warm('battle');
+  // (the music follows too: the camp's or the tavern's, the tower's or the Calamity's map, or the deployment; off the board a
+  //  battle that was on is over or left, and a victory's results are behind)
+  music = atPlace(music, placeOf(scene, map));
+  if (music.place === 'deploy' && !music.battle) engine?.music.warm('battle');
   syncMusic();
 }
 
@@ -371,16 +379,21 @@ export function bindDuck(el: HTMLElement, reason: string): void {
 function debugState(): unknown {
   if (!engine) return { started: false };
   const ctx = engine.core.context;
-  const { music, mixer: m } = engine;
+  const { music: player, mixer: m } = engine;
   return {
     started: true,
     state: ctx.state,
     muted,
-    track: music.current,
-    place,
-    fight,
-    tension: music.tension,
-    act: music.act,
+    track: player.current,
+    level: player.level,
+    sounding: player.sounding,
+    sting: player.stingId,
+    place: music.place,
+    battle: music.battle,
+    fighting: music.fighting,
+    victory: music.victory,
+    sceneMusic,
+    act: player.act,
     scene: engine.beds.scene,
     bed: engine.beds.bed,
     beds: engine.beds.live,

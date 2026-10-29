@@ -1,13 +1,13 @@
 // The rules behind the page's audio engine, kept free of Web Audio and the DOM so the tests can check them: where a cue
-// sits in the stereo field, which reasons are holding the music down (ducking), how the battle music follows the
-// fight's tension, and the colour each tower act gives the music. `sound.ts` and `audioProcessors.ts` make the sound.
+// sits in the stereo field, which reasons are holding the music down (ducking),
+// and the colour each tower act gives the music (a battle's music no longer follows its tension). `sound.ts` and `audioProcessors.ts` make the sound.
 
 import type { Battle, BattleEvent } from '../sim/battle';
 import { D, W } from '../sim/board';
 import type { SpellId } from '../sim/spells';
 import { at } from './iso';
 import type { Cue } from './soundRules';
-import { CALM_TRACKS, type Track } from './musicScore';
+import type { Track } from './musicScore';
 
 /* ------------------------------------------------------------------ stereo */
 
@@ -114,36 +114,14 @@ export class DuckCounter {
 
 export type { Track };
 
-/** The music's tempo goes up to this much quicker (a share) as the fight's tension climbs: unchanged from before. */
-export const TENSION_RATE = 0.08;
-/** The music's level swells by up to this share with tension: unchanged from before. */
-export const TENSION_SWELL = 0.33;
-/** The battle tracks' low-pass starts this share of the way open (of its act's ceiling) and opens fully at full tension. */
-export const TENSION_CLOSED = 0.55;
-
-/** The level multiplier a track's swell takes at tension `t` (the town's does not swell). */
-export const swellOf = (track: Track, t: number): number => (CALM_TRACKS.has(track) ? 1 : 1 + TENSION_SWELL * clamp01(t));
-
-/** The tempo multiplier at tension `t`, with the act's own (the tension's part never passes `1 + TENSION_RATE`). */
-export const rateOf = (track: Track, t: number, act: number | null): number =>
-  (colourOf(act)?.rate ?? 1) * (CALM_TRACKS.has(track) ? 1 : 1 + TENSION_RATE * clamp01(t));
-
-/** The music's low-pass (Hz): the act's ceiling, and on a battle track opening from `TENSION_CLOSED` of it to all of it
- *  as tension climbs (exponentially, so the opening sounds even). */
-export function cutoffOf(track: Track, t: number, act: number | null): number {
-  const top = colourOf(act)?.cutoff ?? OPEN_HZ;
-  if (CALM_TRACKS.has(track)) return top;
-  return top * TENSION_CLOSED ** (1 - clamp01(t));
+/** The music's colour (its low-pass, in Hz, and its pace) under a tower act: the act's ceiling and pace, or open and as written
+ *  with no act. The same for every track: a battle no longer follows the fight's tension (the owner's ask, "the battle music
+ *  should stay on and consistent through battle"), so no low-pass muffles and opens it, no swell or rumble comes and goes and
+ *  its pace never changes as a fight runs hot. See docs/notes/battle-music.md. */
+export function musicColour(act: number | null): { cutoff: number; rate: number } {
+  const c = colourOf(act);
+  return { cutoff: c?.cutoff ?? OPEN_HZ, rate: c?.rate ?? 1 };
 }
-
-/** How loud the percussion layer is at tension `t` (0 to 1): silent until the fight is half-way hot, full at the end. */
-export function percLevel(t: number): number {
-  const x = clamp01((t - 0.5) / 0.5);
-  return x * x * (3 - 2 * x);
-}
-
-/** Whether the percussion layer needs its scheduler running at tension `t`. */
-export const percActive = (t: number): boolean => percLevel(t) > 0.01;
 
 const clamp01 = (x: number): number => Math.max(0, Math.min(1, x));
 
