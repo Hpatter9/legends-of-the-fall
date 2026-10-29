@@ -7,7 +7,7 @@
 
 import { armyOreRow } from './oreView';
 import { progressLine } from './sim/modeUnlock';
-import { ARMIES, armyCleared, armyNeed, armyIsNew, armyStars, armyUnlocked, bossOf, bossesOf, firstClearTotal, landsOf, recordOf, replayTotal, tierOpen, tierStars, type Army } from './sim/armies';
+import { ARMIES, armyBefore, armyCleared, armyNeed, armyIsNew, armyStars, armyUnlocked, bossOf, bossesOf, firstClearTotal, landsOf, recordOf, replayTotal, tierOpen, tierStars, type Army } from './sim/armies';
 import { AUTO_COUNTS, AUTO_TICKETS, canAutoReplay, ticketsLeft } from './sim/autoReplay';
 import { todayKey } from './modes';
 import { armyRules, chestKind, chestsOf, type StarResult } from './sim/armyStars';
@@ -39,8 +39,13 @@ export interface ArmiesHooks {
   running: { army?: string; stage: number; label: string } | null;
 }
 
-/** The locked card's line: the stars the army opens at. */
-export const unlockLine = (a: Army): string => `Opens at ${armyNeed(a.id)} stars`;
+/** The locked card's line: the army to beat first (named once it is open, else "the army before") and the stars it opens at. */
+export const unlockLine = (a: Army, m: Meta): string => {
+  const before = armyBefore(a.id);
+  if (!before) return `Opens at ${armyNeed(a.id)} stars`;
+  const who = armyUnlocked(m, before.id) ? `the ${before.name.replace(/^The /, '')}` : 'the army before';
+  return armyCleared(m, before.id) ? `Opens at ${armyNeed(a.id)} stars` : `Beat ${who} · ${armyNeed(a.id)} stars`;
+};
 
 // ---- the scenes -------------------------------------------------------------------------------------------------------
 
@@ -328,7 +333,7 @@ function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLEle
   if (fresh) scene.append(el('i', 'armyNew', 'NEW'));
   if (!open) {
     const lock = el('div', 'asLock');
-    lock.append(el('b', '', unlockLine(a)), el('small', '', `${progressLine(m, armyNeed(a.id))} · ${a.waves.length} waves · ${landsOf(a).map((l) => AREA_NAMES[l]).join(' and ')}`));
+    lock.append(el('b', '', unlockLine(a, m)), el('small', '', `${progressLine(m, armyNeed(a.id))} · ${a.waves.length} waves · ${landsOf(a).map((l) => AREA_NAMES[l]).join(' and ')}`));
     scene.append(lock);
   }
   const info = el('div', `asInfo${open ? '' : ' shut'}`);

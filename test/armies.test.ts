@@ -120,13 +120,29 @@ test('only the first army is open on a fresh save, and each opens at its number 
   for (let n = 1; n <= a0.waves.length; n++) settleWave(m, a0.id, n, true, 0);
   assert.equal(armyCleared(m, a0.id), true);
   assert.equal(armyUnlocked(m, 'undead'), false);
-  // (the stars open them in order, the curve in `ARMY_NEED`)
+  // (with every army before beaten, the stars open them in order, the curve in `ARMY_NEED`)
+  for (const a of ARMIES) for (let n = 1; n <= a.waves.length; n++) settleWave(m, a.id, n, true, 0);
   for (let stars = 0; stars <= ARMY_STARS * 2; stars++) {
     giveStars(m, 'orcs', Math.min(stars, ARMY_STARS));
     if (stars > ARMY_STARS) giveStars(m, 'undead', stars - ARMY_STARS);
     ARMIES.forEach((a, i) => assert.equal(armyUnlocked(m, a.id), i === 0 || totalStars(m) >= 2 * i, `${a.id} at ${totalStars(m)} stars`));
   }
   assert.deepEqual(ARMY_NEED, ARMIES.map((_, i) => 2 * i));
+});
+
+test('stars alone never open an army past one not yet beaten: each army needs the one before it beaten', () => {
+  const m = startedMeta(1);
+  // (the first army beaten and every one of its stars won: enough stars for several armies, but only the second opens)
+  for (let n = 1; n <= ARMIES[0].waves.length; n++) settleWave(m, ARMIES[0].id, n, true, 0);
+  giveStars(m, 'orcs', ARMY_STARS);
+  assert.ok(totalStars(m) >= ARMY_NEED[3]);
+  assert.deepEqual(ARMIES.filter((a) => armyUnlocked(m, a.id)).map((a) => a.id), ['orcs', 'undead']);
+  // (beating the second opens the third; the fourth waits for the third to be beaten)
+  for (let n = 1; n <= ARMIES[1].waves.length; n++) settleWave(m, ARMIES[1].id, n, true, 0);
+  assert.equal(armyUnlocked(m, ARMIES[2].id), true);
+  assert.equal(armyUnlocked(m, ARMIES[3].id), false);
+  for (let n = 1; n <= ARMIES[2].waves.length; n++) settleWave(m, ARMIES[2].id, n, true, 0);
+  assert.equal(armyUnlocked(m, ARMIES[3].id), true);
 });
 
 test('a save that had an army open keeps it, whatever its stars', () => {
@@ -223,6 +239,8 @@ test('a newly opened army glows until its card has been seen', () => {
   const m = startedMeta(5);
   assert.equal(armyIsNew(m, 'orcs'), false);
   assert.equal(armyIsNew(m, 'undead'), false);
+  // (the second army opens once the first is beaten and its stars are won)
+  for (let n = 1; n <= ARMIES[0].waves.length; n++) settleWave(m, ARMIES[0].id, n, true, 0);
   giveStars(m, 'orcs', 2);
   assert.equal(armyIsNew(m, 'undead'), true);
   assert.equal(markSeen(m), true);
