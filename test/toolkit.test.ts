@@ -230,7 +230,7 @@ test('fliers take no fall damage', () => {
   for (const t of b.board.tiles) t.h = 4;
   tile(b, 3, 6).h = 0;
   const me = spawn(b, 'knight', 3, 8);
-  const f = spawn(b, 'karasu', 3, 7);
+  const f = spawn(b, 'yokaiCrow', 3, 7);
   assert.equal(shove(b, me, f, 1, [])!.fell, 0);
 });
 
