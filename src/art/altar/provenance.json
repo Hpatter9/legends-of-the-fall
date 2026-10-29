@@ -1,0 +1,18 @@
+{
+  "kind": "original generated artwork",
+  "tool": "OpenAI image generation",
+  "requested": "New ornate altar assets for Calamity",
+  "sources": [
+    {
+      "source": "/workspace/generated_images/exec-0b7cb668-8738-4f25-b08b-53b8ffeab8d7.png",
+      "copy": "patrons-atlas.png",
+      "transparent": true
+    },
+    {
+      "source": "/workspace/generated_images/exec-91dda85a-aa76-4cd8-a6f3-014777aed7f6.png",
+      "copy": "sanctuary.png",
+      "transparent": false
+    }
+  ],
+  "preparation": "Unmodified copies; originals retained. Frames are measured metadata only, with no pixel editing."
+}
