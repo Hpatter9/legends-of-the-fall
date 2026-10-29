@@ -90,9 +90,12 @@ Pirate +11.8), so it is how their kits grow with a grade's stats, not their tier
 
 ## Tests
 
-No test was changed. `test/armyStars.test.ts`'s "the foes get tougher by tier" holds with the lifts above.
+`test/armyStars.test.ts`'s "the foes get tougher by tier" holds with the lifts above. `test/ailments-identical.test.ts` (the proof that
+the old effects play as before the ailment model) plays the Yokai and the Golem Forge: as it already does for the Infernal Host's `start`,
+it now puts their recorded strengths back for the proof (the Yokai's `start` 12.5 and bosses 2200/52 and 2500/50, the Golems' `start` 12.7);
+the fixture is unchanged.
 
 ## Files
 
 `src/sim/armies.ts`, `src/sim/tiers.ts`, `src/sim/tierSkills.ts`, `tools/army-pace/pace.ts`, `tools/merge-two/pace.ts`, `tools/balance.ts`
-(a comment), `docs/notes/late-retune.md`, `docs/TASKS.md`.
+(a comment), `test/ailments-identical.test.ts`, `docs/notes/late-retune.md`, `docs/TASKS.md`.

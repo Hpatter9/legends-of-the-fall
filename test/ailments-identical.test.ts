@@ -20,10 +20,17 @@ import { KITS } from '../src/sim/abilities';
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {
   const was = AILMENT_SWITCH.on;
   const infernal = ARMIES.find((a) => a.id === 'infernal') as unknown as { start: number };
+  // (LATE-RETUNE made the Yokai and the Golem Forge tougher on Normal, `docs/notes/late-retune.md`: put back to the strengths recorded)
+  type Strength = { start: number; mid?: { hp: number; atk: number }; last?: { hp: number; atk: number } };
+  const yokai = ARMIES.find((a) => a.id === 'yokai') as unknown as Strength;
+  const golems = ARMIES.find((a) => a.id === 'golems') as unknown as Strength;
+  const late = { yokai: { ...yokai }, golems: golems.start };
   const plague = KITS.shambler.ultimate!.tuned!;
   const tuned = { start: infernal.start, bossHp: CAL_SCALE.bossHp, ult: DAILY_ANSWER.ult, plague: plague.power };
   AILMENT_SWITCH.on = false;
   infernal.start = 10;
+  Object.assign(yokai, { start: 12.5, mid: { hp: 2200, atk: 52 }, last: { hp: 2500, atk: 50 } });
+  golems.start = 12.7;
   CAL_SCALE.bossHp = 1;
   DAILY_ANSWER.ult = 0.17;
   plague.power = 0.99;
@@ -32,6 +39,8 @@ test('with the new ailments off, every mode plays as it did before the ailment m
   } finally {
     AILMENT_SWITCH.on = was;
     infernal.start = tuned.start;
+    Object.assign(yokai, late.yokai);
+    golems.start = late.golems;
     CAL_SCALE.bossHp = tuned.bossHp;
     DAILY_ANSWER.ult = tuned.ult;
     plague.power = tuned.plague;
