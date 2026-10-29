@@ -8,7 +8,8 @@ import { loadImage } from './loadImage';
 import { tileAt, type Board } from '../sim/board';
 import { defOf, wayTo, type Battle, type BattleEvent, type Unit } from '../sim/battle';
 import { isBoss } from '../sim/foes';
-import { kitOf } from '../sim/abilities';
+import { keyOfKit, ultKeyOf } from '../sim/abilities';
+import { skillShown } from '../sim/heroKits';
 import { abilityHeading } from './abilityLooks';
 import { abilityFrames, loadAbilityArt } from './abilityArt';
 import { SPELL_SIGNATURES } from './spellSignatures';
@@ -364,7 +365,7 @@ export class Fx {
           continue;
         }
         // (a skill's blow has its own sheet; a crit or a big kill adds a burst, a white flash and a harder shake)
-        const castName = e.src === 'skill' ? this.casting.get(e.by) ?? kitOf(by)?.skill.name ?? '' : '';
+        const castName = e.src === 'skill' ? this.casting.get(e.by) ?? keyOfKit(by) : '';
         const signature = kitSignature(castName)?.hit;
         const skillFx = e.src === 'skill' && !signature ? SKILL_FX[castName]?.hit : undefined;
         // (the spark grows with the blow: a scratch is small, a half-health blow fills the struck)
@@ -379,11 +380,11 @@ export class Fx {
         if (signature) {
           // (a hero's skill has a look of its own: no shared burst on top)
           const spot = { x: hx, y: to.y, tall: to.tall };
-          playSteps(signature, { p: this.particles, self: spot, foes: [spot], allies: [spot], dir: { x: 0, y: 1 }, ms: 0, size: kitOf(by)?.ultimate?.name === castName ? 1.25 : 1 });
+          playSteps(signature, { p: this.particles, self: spot, foes: [spot], allies: [spot], dir: { x: 0, y: 1 }, ms: 0, size: ultKeyOf(by) === castName ? 1.25 : 1 });
         } else if (skillFx) {
           this.effect(skillFx, hx, hy);
           // (and a burst of the skill's own element on top)
-          impactBurst(this.particles, skillElement(kitOf(by)?.skill.name ?? ''), hx, hy, 0.8, e.splash);
+          impactBurst(this.particles, skillElement(keyOfKit(by)), hx, hy, 0.8, e.splash);
         } else if (defOf(by).shot) {
           // (a shot lands in its own element: fire bursts, frost shatters, lightning cracks, poison lingers, an arrow bites)
           const m = missileOf(defOf(by).shot!, defOf(by).name);
@@ -797,13 +798,13 @@ export class Fx {
   private skillName(byId: number, name: string, ms: number): void {
     const by = this.sprites.get(byId);
     if (!by) return;
-    const ultimate = kitOf(by.unit)?.ultimate?.name === name;
+    const ultimate = ultKeyOf(by.unit) === name;
     const boss = by.unit.side === 'foe' && isBoss(by.unit.def);
     const el = skillElement(name);
     // (three skill names at most: the oldest fades out early when a fourth comes)
     this.skillStack = this.skillStack.filter((l) => !l.txt.destroyed);
     while (this.skillStack.length >= 3) this.skillStack.shift()!.cut();
-    this.skillStack.push(this.label(name, by.x, by.y - by.tall - 20, ultimate ? 0xfff2a0 : boss ? 0xff9a8a : 0xffe27a, ultimate || boss ? 15 : 13, 1200));
+    this.skillStack.push(this.label(skillShown(by.unit, name), by.x, by.y - by.tall - 20, ultimate ? 0xfff2a0 : boss ? 0xff9a8a : 0xffe27a, ultimate || boss ? 15 : 13, 1200));
     this.casting.set(byId, name);
     const signature = kitSignature(name);
     if (signature) playSteps(signature.wind, this.sceneOf(by, ms, ultimate ? 1.45 : 1.15));
@@ -880,7 +881,7 @@ export class Fx {
     if (e.tone !== 'tier') return;
     const by = this.sprites.get(e.by);
     if (!by) return;
-    const skillName = kitOf(by.unit)?.skill.name ?? '';
+    const skillName = keyOfKit(by.unit);
     // (a hero's tier ring is its skill's own look again; a foe's is the element's wave)
     if (kitSignature(skillName)) playSteps(tierRing(skillName, e.reach * 64, (by.unit.grade ?? 1) > 2), this.sceneOf(by, 600, 1));
     else ringOut(this.particles, skillElement(skillName), by.x, by.y, e.reach);

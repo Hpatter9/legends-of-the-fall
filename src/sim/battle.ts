@@ -231,6 +231,7 @@ export type BattleEvent =
   | { kind: 'immune'; to: number; what: AilmentKey }
   /** A frozen fighter's ice shattered under a heavy blow (the extra hit follows, tagged `shatter`). */
   | { kind: 'shatter'; to: number }
+  /** A skill is cast: `name` is the skill's fixed key (`keyOf`), what the page looks its look and sound up by; the words it shows are `skillShown`. */
   | { kind: 'skill'; by: number; name: string; ms: number }
   | { kind: 'dash'; by: number; from: At; to: At }
   | { kind: 'blink'; by: number; from: At; to: At }

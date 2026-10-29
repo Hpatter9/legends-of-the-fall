@@ -5,7 +5,7 @@
 
 import type { Battle, BattleEvent, Unit } from '../sim/battle';
 import { defOf } from '../sim/battle';
-import { kitOf } from '../sim/abilities';
+import { keyOfKit, kitOf, ultKeyOf } from '../sim/abilities';
 import type { Shot } from '../sim/units';
 import { BIG_FOE_HP } from './skillFx';
 import { SPELL_ELEMENT, deathKind, impactElement, isBackstab, missileOf, skillElement, type Element } from './fxRules';
@@ -249,7 +249,7 @@ export function cuesFor(b: Battle, e: BattleEvent): Cued[] {
         else if (e.ail === 'poison') out.push({ cue: 'poisonHiss', gain: 0.25 });
         else if (e.ail === 'shock') out.push({ cue: 'crackle', gain: 0.35 });
       } else if (e.src === 'skill') {
-        const name = kitOf(by)?.skill.name ?? '';
+        const name = keyOfKit(by);
         out.push({ cue: elementCue(skillElement(name)), gain: 0.7 });
       } else if (to.guardUntil !== undefined && to.guardUntil > b.t) {
         out.push({ cue: 'block' });
@@ -273,7 +273,7 @@ export function cuesFor(b: Battle, e: BattleEvent): Cued[] {
     case 'skill': {
       const by = unit(e.by);
       const kit = by ? kitOf(by) : undefined;
-      if (kit?.ultimate?.name === e.name) return [{ cue: 'ultimate' }];
+      if (kit?.ultimate && by && ultKeyOf(by) === e.name) return [{ cue: 'ultimate' }];
       const el = skillElement(e.name);
       const out: Cued[] = [{ cue: elementCue(el), gain: 0.8 }];
       if (by && by.side === 'foe' && by.maxHp >= BIG_FOE_HP) out.push({ cue: 'bossSkill', delay: 60 });
