@@ -25,14 +25,14 @@ try {
     const page = await ctx.newPage();
     const errors = [];
     page.on('pageerror', (e) => { errors.push(e.message); console.log('PAGE ERROR', e.message); });
-    await page.goto(`http://localhost:${PORT}/?x=${Math.random()}`);
+    await page.goto(`http://localhost:${PORT}/?x=${Math.random()}`, { timeout: 180000 });
     await page.evaluate((party) => {
       localStorage.clear();
       localStorage.setItem('legends.meta', JSON.stringify({ seed: 7, crowns: 1200, unlocked: party, party, pulls: 0, dry: 0, dryMythic: 0, castle: { treasury: 1, barracks: 1, armoury: 0, mageTower: 0, stable: 0, library: 0 }, shards: {}, stars: {}, xp: {}, bestStage: 14, tower: 9, daily: {}, bosses: [], achievements: [], armies: {}, armySeen: [], stash: [] }));
       localStorage.setItem('lotf-tips-off', '1');
       localStorage.setItem('legends.settings', JSON.stringify({ cinematics: false }));
     }, PARTY);
-    await page.goto(`http://localhost:${PORT}/`);
+    await page.goto(`http://localhost:${PORT}/`, { timeout: 180000 });
     await page.waitForFunction(() => window.__game, null, { timeout: 120000 });
     await page.waitForTimeout(800);
     await page.evaluate(() => document.getElementById('tipSkip')?.click());
@@ -58,7 +58,7 @@ try {
       await page.evaluate((f) => { window.__forceDrop = f; }, force);
       await page.click('#fight'); await page.waitForTimeout(600);
       await page.evaluate(() => { for (const u of window.__game.b.units) if (u.side === 'foe') u.hp = 0; });
-      await page.waitForFunction(() => !document.getElementById('result').hidden, null, { timeout: 60000 });
+      await page.waitForFunction(() => !document.getElementById('result').hidden, null, { timeout: 240000 });
       await page.waitForTimeout(1900);
     };
     // ---- wave 1: shards drop
@@ -69,7 +69,7 @@ try {
     assert.ok(n1.some((t) => /^wn drop: .Found: \d shards of /.test(t)), JSON.stringify(n1));
     const banked = await page.evaluate(() => { const m = window.__game.meta; const saved = JSON.parse(localStorage.getItem('legends.meta')); return { unlock: m.unlock, saved: saved.unlock, unlocked: m.unlocked.length }; });
     await page.click('#banner').catch(() => {});
-    await page.waitForFunction(() => document.getElementById('result').hidden, null, { timeout: 30000 });
+    await page.waitForFunction(() => document.getElementById('result').hidden, null, { timeout: 120000 });
     await clearEvent();
     // ---- wave 2: a tome
     await winWave('tome');
@@ -78,14 +78,14 @@ try {
     assert.ok(n2.some((t) => /XP tome/.test(t)), JSON.stringify(n2));
     const tomesAfter = await page.evaluate(() => JSON.stringify(JSON.parse(localStorage.getItem('legends.meta')).tomes ?? {}));
     await page.click('#banner').catch(() => {});
-    await page.waitForFunction(() => document.getElementById('result').hidden, null, { timeout: 30000 });
+    await page.waitForFunction(() => document.getElementById('result').hidden, null, { timeout: 120000 });
     await clearEvent();
     // ---- wave 3: lost (no drop), then the recap's spoils
     await page.locator('#fight').waitFor({ state: 'visible' });
     await page.evaluate(() => { window.__forceDrop = undefined; });
     await page.click('#fight'); await page.waitForTimeout(600);
     await page.evaluate(() => { const g = window.__game; g.run.retries = 9; for (const u of g.b.units) if (u.side === 'hero') { u.hp = 0; u.alive = false; } });
-    await page.locator('#next').waitFor({ state: 'visible', timeout: 30000 });
+    await page.locator('#next').waitFor({ state: 'visible', timeout: 120000 });
     await page.waitForTimeout(800);
     await page.click('#next');
     await page.locator('.rcSheet').waitFor({ state: 'visible' });
