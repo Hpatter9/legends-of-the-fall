@@ -1,0 +1,63 @@
+/* The portal is the expedition hub. The established gold/emerald/obsidian scheme carries through. */
+#towerMap.rsMode { background:#071310;overflow:hidden; }
+.riftSanctuary { display:flex;flex-direction:column;width:100%;max-width:480px;height:100%;margin:auto;color:#e9dfc7;background:#071310;overflow:hidden; }
+.rsHead { position:relative;z-index:2;display:grid;grid-template-columns:1fr 44px;gap:6px;padding:calc(env(safe-area-inset-top) + 12px) 14px 10px;background:linear-gradient(115deg,#1e3027,#091611);border-bottom:1px solid #aa874d;box-shadow:0 4px 18px #0009; }
+.rsEyebrow { color:#d2b575;text-transform:uppercase;font:600 9px/1.4 var(--body);letter-spacing:1.8px;margin:0 0 4px; }
+.rsHead h2 { font:700 20px/1.2 var(--display);color:#ffe1a3;margin:0;text-shadow:0 2px 3px #000; }
+.rsStats { grid-column:1/-1;display:flex;justify-content:space-between;gap:7px;font-size:11px;color:#c1c7b8; }
+.rsStats b { color:#f3cf7c; }
+.rsScene { position:relative;isolation:isolate;flex:1;min-height:200px;overflow:hidden;background:#102c27; }
+.rsScenery { position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 64%;z-index:-2; }
+.rsScene::after { content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(#01130c00 55%,#071310dd);box-shadow:inset 0 0 25px #0006; }
+.rsPortalView { position:absolute;left:35%;top:5%;width:31%;height:49%;border-radius:50% 50% 35% 35%;overflow:hidden;opacity:.75;box-shadow:0 0 20px #39faca7a;mask-image:radial-gradient(ellipse,#000 30%,transparent 73%); }
+.rsPortalView svg { width:100%;height:100%; }
+.rsPortalCaption { position:absolute;top:5px;width:100%;text-align:center;font:600 12px var(--display);color:#fff0ce;text-shadow:0 2px 4px #000,0 0 6px #000;margin:0; }
+.rsParty { position:absolute;bottom:41px;left:19%;right:8%;display:flex;align-items:end;justify-content:center;flex-wrap:wrap;gap:0; }
+.rsHero { position:relative;display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 7px 4px #000);margin:0 -4px; }
+.rsHero canvas { image-rendering:pixelated;max-width:65px;max-height:83px; }
+.rsHero.starter { order:0;margin:0 4px;filter:drop-shadow(0 0 9px #e7b845); }
+.rsHero.starter canvas { max-width:82px;max-height:104px; }
+.rsHero span { color:#ffe1a3;font-size:9px;white-space:nowrap;text-shadow:0 2px 3px #000; }
+.rsAltar { position:absolute;bottom:20px;left:10px;min-height:44px;font-size:10px;padding:6px 10px;border:1px solid #a5864d;border-radius:3px;background:linear-gradient(#1a3129ed,#0a1813ed);color:#f7d48b;box-shadow:0 0 12px #4ee6ba25; }
+.rsGrowth { position:absolute;bottom:8px;right:12px;font-size:10px;color:#d5ccad;margin:0;text-shadow:0 2px 4px #000; }
+.rsFragments { position:absolute;top:25%;left:7%;right:7%;display:flex;justify-content:space-between;pointer-events:none; }
+.rsFragment { display:block;width:28px;height:32px;transform:rotate(12deg);opacity:.8;box-shadow:0 0 12px #8cdedc;clip-path:polygon(50% 0,100% 25%,85% 85%,15% 100%,0 25%); }
+.rsFragment svg {width:100%;height:100%;}
+.rsDestinations { position:relative;z-index:1;padding:9px 12px calc(env(safe-area-inset-bottom) + 8px);background:linear-gradient(#10241d,#08110d);border-top:1px solid #b39453;box-shadow:0 -8px 22px #0008; }
+.rsDestinationBar { display:flex;align-items:center;justify-content:space-between;gap:5px;margin-bottom:8px; }
+.rsDestinationBar h3 { margin:0;color:#e0c68c;font:600 13px var(--display); }
+.rsShift { font-size:10px;min-height:44px;background:transparent;border:1px solid #a68d534d;border-radius:2px;color:#e0c68c;padding:4px 8px; }
+.rsCards { display:flex;gap:7px; }
+#towerMap .rsDestination { display:flex;flex-direction:column;flex:1;min-width:0;align-items:stretch;padding:0 0 7px;overflow:hidden;border:1px solid #897044;border-radius:3px;background:linear-gradient(#1e3027,#080f0b);color:#f4dfae;box-shadow:0 3px 6px #0009;text-align:center; }
+.rsDestination > svg { width:100%;height:72px;display:block; }
+.rsDestinationName { font:600 12px/1.2 var(--display);padding:7px 3px 4px;min-height:36px;display:flex;align-items:center;justify-content:center; }
+.rsKind { display:flex;align-items:center;justify-content:center;gap:3px;font-size:10px;color:#d4c7a5; }
+.rsKind svg { width:20px;height:20px; }
+#towerMap .rsDestination.selected { border-color:#f1cc74;box-shadow:0 0 0 1px #f1cc7470,0 0 14px #d4ad4840; }
+.rsDetails { min-height:67px;padding:9px 1px 8px;font-size:11px;line-height:1.35;color:#bec9bb; }
+.rsDetails b { color:#e6d9b6;font-weight:500; }
+.rsDetails p { margin:3px 0;color:#b3bda9; }
+.rsDetails small { display:block;color:#dab773;font-size:10px; }
+#towerMap .rsEnter { width:100%;min-height:48px;font:700 17px var(--display);color:#ffedb8;border:1px solid #d5b061;border-radius:3px;background:linear-gradient(100deg,#54401e,#8b672b 50%,#44351b);box-shadow:inset 0 0 0 3px #c7a45026,0 2px 8px #0008;text-shadow:0 2px 3px #000; }
+.rsMenu { display:flex;gap:8px;margin-top:7px; }
+.rsMenu button { flex:1;min-width:0;min-height:44px;border:1px solid #9a804948;border-radius:2px;background:#0c1b13;color:#dfcc9b;font-size:11px; }
+.rsDestination:focus-visible,.rsEnter:focus-visible,.rsMenu button:focus-visible { outline:2px solid #86ffe4;outline-offset:2px; }
+#towerMap .rsLocation { isolation:isolate;background:#06100be8; }
+.rsLocationScenery { position:absolute;inset:0;z-index:-1;overflow:hidden; }
+.rsLocationScenery > svg { width:100%;height:100%;opacity:.75; }
+#towerMap .rsLocation .rtCard { background:linear-gradient(#0b1c13ec,#08110df5);border:1px solid #bf9a57;box-shadow:0 0 0 3px #b89a4925,0 20px 60px #000; }
+.riftBattleBackdrop svg {width:100%;height:100%;opacity:.8;}
+@media (max-height:800px) { .rsHead {padding-top:8px;padding-bottom:7px;} .rsHead h2 {font-size:18px;} .rsDestination > svg {height:58px;} .rsDestinationName {font-size:11px;min-height:31px;padding-top:5px;} .rsDetails {font-size:10px;min-height:61px;padding-block:7px;} .rsDestinations {padding-top:7px;} .rsScene {min-height:170px;} }
+@media (prefers-reduced-motion:no-preference) { .rsPortalView {animation:rsBreathe 5s ease-in-out infinite;} .rsHero {animation:rsArrive .6s ease-out both;} @keyframes rsBreathe {50% {transform:scale(1.025);}} @keyframes rsArrive {from{opacity:0;transform:translateY(-12px) scale(.8);}to{opacity:1;transform:none;}} }
+.rsCrossing {position:absolute;z-index:10;inset:0;display:grid;place-items:center;color:#fff3cc;font:700 22px var(--display);background:radial-gradient(ellipse,#3fae8c80,#071b17ef);animation:rsCross .65s ease-in both;}
+.rsDeparting .rsParty {transition:transform .5s,opacity .5s;transform:translateY(-85px) scale(.4);opacity:0;}
+@keyframes rsCross {from{opacity:0;}to{opacity:1;}}
+@media(prefers-reduced-motion:reduce){.rsCrossing{animation:none;}.rsDeparting .rsParty{transition:none;}}
+body:has(#towerMap.rsMode:not([hidden])) #version {top:calc(env(safe-area-inset-top) + 76px);right:8px;font-size:7px;opacity:.65;}
+.riftLandscape {image-rendering:auto;}
+.rsParty.large .rsHero canvas {max-width:42px;max-height:54px;}
+.rsParty.large .rsHero.starter canvas {max-width:64px;max-height:82px;}
+.riftSanctuary[data-region='2'] .rsScene::after {background:radial-gradient(ellipse at 50% 20%,#7047a433,transparent 70%),linear-gradient(transparent 55%,#0d0b1be6);}
+.riftSanctuary[data-region='3'] .rsScene::after {background:radial-gradient(ellipse at 50% 20%,#cf5b452a,transparent 70%),linear-gradient(transparent 55%,#190c0be6);}
+.riftSanctuary[data-patron='ember'] .rsPortalView {box-shadow:0 0 25px #ffc76599;}
+.riftSanctuary[data-patron='echo'] .rsPortalView {box-shadow:0 0 25px #ba82ff99;}

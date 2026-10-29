@@ -7,7 +7,8 @@ import { calamityMap, choices, makeMap, clearNode, enterNode, floorOf, mapFor, o
 import { fogOf, landOf, roadBetween, SIDE_BASE, sideSpots, START_ID } from '../src/sim/calLand';
 import { loadSlot, saveSlot, type Run } from '../src/sim/run';
 
-const run = (seed: number): Run => calamityRun(seed, startedMeta(5), 'knight', 0);
+// Existing graph saves retain their original exploration rules.
+const run = (seed: number): Run => { const r = calamityRun(seed, startedMeta(5), 'knight', 0); delete r.rift!.expedition; r.tower!.map = mapFor(r, 1); return r; };
 
 /** Put the run at map `act` standing at `id` with the road before it cleared (as a climb that way would leave it). */
 function stand(r: Run, act: number, id: number): void {

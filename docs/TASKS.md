@@ -14,6 +14,57 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### CAL-SANCTUARY — Portal expeditions and destination arenas
+
+- **Owner:** current Codex chat. **Branch/worktree:** `feat/rift-sanctuary`, `/workspace/legends-of-the-fall`.
+- **Authorisation:** owner approved the Rift Sanctuary concept and encounter loop; requested complete destination scenery, distinct battle environments and the established ornate UI.
+- **Scope:** new-run portal expedition rules, sanctuary and location UI/art, destination battle boards/backdrops, saved progression and legacy compatibility. Preserve altar/combat/reward systems unless needed for the approved expedition loop.
+- **Completion:** three destination previews, explicit enter/return flow, recruitment and growth, region guardians, altar-influenced worlds, complete themed arenas with arrival portal; deterministic regression coverage, typecheck/build, three portrait sizes, offline and resume checks, credits and handoff. No merge/deployment/version bump.
+- **Integration:** merged with main up to 0.229.0 (short card, per-hero region and end detail, battle music, hero names, no merging kept); full `npm test` passes; [notes](notes/rift-sanctuary.md#brought-up-to-main-02290).
+- **Status:** implemented and ready for review. Typecheck/build and thirteen affected test files passed; the separate difficulty checks also passed. Live portal/battle/altar/recruit/offline flows passed at 393×852, 360×780 and 412×915; all six arenas captured at every size. Shop/rest actions, guardian → offering → recap → next region, a full company, interrupted crossing/reload and existing graph-save compatibility passed with no page errors. [Handoff](notes/rift-sanctuary.md); [live sanctuary](samples/rift-sanctuary/sanctuary-393.png); [battle example](samples/rift-sanctuary/arena-rootbound-393.png). No merge or deployment.
+
+
+### CAL-MAP-LIVE — Dungeon map and arrival portal
+
+- **Owner:** current Codex chat. **Branch / worktree:** `feat/calamity-dungeon-map`, `/workspace/legends-of-the-fall`.
+- **Authorisation:** owner approved the dungeon-floor proposal and requested a visible portal that brings the heroes into the Calamity. No further visual approval needed within this direction.
+- **Scope:** replace the live Calamity map renderer, layout and navigation UI; original arrival-portal artwork, hero arrival/movement, existing route/encounter/save callbacks, offline assets, affected tests and portrait checks. Also integrate the previously requested altar artwork/style that the owner preferred. Preserve combat, altar choices, run rewards, legacy save keys and other modes.
+- **Completion:** portal present at every region entrance, starter emerges there on a fresh arrival, real reachable-room navigation and battles/shops/recruits, safe revisiting including portal, reload/mid-walk compatibility, reduced motion, offline reload and all three phone sizes verified.
+- **Status:** implemented; ready for review. Typecheck/build, seven affected test files, three-size live encounter/altar/offline checks and focused portal/travel/modal recovery checks passed. [Handoff](notes/calamity-dungeon-live.md); [arrival preview](samples/calamity-dungeon-live/arrival-393.png). No merge or deployment.
+
+
+### CAL-MAP-RIFT — Research-led dungeon floor
+
+- **Owner:** current Codex chat. **Branch / worktree:** `design/calamity-dungeon-floor`, `/workspace/legends-of-the-fall`.
+- **Goal:** research King God Castle Great Rift and retry the map around its exploration flow.
+- **Scope:** sourced design notes, original encounter symbols and an interactive room/corridor prototype with starter movement, directional controls, revisiting and clear room types. Preserve ornate styling and three-region Calamity rules.
+- **Completion:** research cited, new example rendered at all three phone sizes, movement/selection/revisit checks, saved handoff for visual review before live integration.
+- **Status:** research documented and cited; original encounter-symbol atlas and interactive chamber/corridor prototype completed. Browser checks passed at 393×852, 360×780 and 412×915 for movement, revisiting, keyboard, tap entry, unreached-room blocking, 44px arrow targets and no errors/overflow. Typecheck/build passed. Owner approved the direction; live integration is complete under CAL-MAP-LIVE. [Handoff](notes/calamity-dungeon-floor.md); [revised example](samples/calamity-dungeon/proposal-393.png). Supersedes the scenic overworld proposal as the active direction.
+
+
+### CAL-MAP-NEW — Replace the Calamity map
+
+- **Owner:** current Codex chat. **Branch / worktree:** `design/calamity-overland`, `/workspace/legends-of-the-fall`.
+- **Goal:** owner rejected the old floating-island map and requested an entirely new visual style.
+- **Scope:** original continuous-landscape map art, a playable visual prototype with ornate UI, readable routes and distinct encounter landmarks; integrate after the visual-direction check required above. Preserve the new three-region run and altar mechanics.
+- **Completion:** new map look reviewed, then production renderer replacement, existing save/route behaviour retained, portrait/accessibility/offline checks and affected tests.
+- **Status:** new landscape and nine landmark assets generated; interactive proposal uses the real first-region route graph. Browser checks passed at all three phone sizes, including selection, simulated travel and unreached-route locking. Typecheck/build passed. Superseded by the approved dungeon-floor direction and CAL-MAP-LIVE implementation. [Handoff](notes/calamity-overland.md); [new map preview](samples/calamity-overland/proposal-393.png).
+
+
+### ALTAR-UI — Ornate altar sanctuary
+
+- **Owner:** current Codex chat. **Branch / worktree:** `design/altar-sanctuary`, `/workspace/legends-of-the-fall`.
+- **Scope:** altar presentation and ritual effects; owner subsequently requested original generated altar assets, now saved with provenance and credits. Preserve altar rules, choices, run progression, saves and other screens.
+- **Completion:** visual direction reviewed before integration; accessible portrait UI at all three phone sizes, reduced motion, offline support, typecheck/build and affected checks.
+- **Status:** visual proposal rendered and checked at 393×852, 360×780 and 412×915; no page errors or horizontal overflow, ritual actions fit. Owner requested new assets: nine transparent altar/crest/ritual motifs and a sanctuary backdrop are generated, saved and shown in an updated preview. Typecheck/build and offline prototype checks at all three sizes passed. Production UI integration is complete under CAL-MAP-LIVE. [Handoff](notes/altar-sanctuary.md); [new-art preview](samples/altar-sanctuary/generated-393.png).
+
+
+### CAL-RIFT — Starter-led altar runs
+
+- **Owner:** current Codex chat. **Branch / worktree:** `feat/calamity-altar-runs`, `/workspace/legends-of-the-fall`.
+- **Scope:** new Calamity runs, tracked starter growth, three altar slots, corruption, combat integration, existing map/picker UI, tests and handoff. Existing saved runs, unrelated modes and artwork preserved.
+- **Completion:** playable solo opening, recruits, three regions, starter evolutions and altar choices with visible consequences; deterministic regression tests, typecheck/build and portrait checks.
+- **Status:** implemented; typecheck/build, Calamity playthrough checks, new rift regression coverage and affected callers passed. Browser checks passed at 393×852, 360×780 and 412×915: opening victory, patron, corruption, offering, commandment and reforge; no page errors or horizontal overflow; offline reload retained choices at every size. Handoff: [starter-led altar runs](notes/calamity-altar-runs.md). No merge or deployment requested.
 **SUMMON-ARRIVAL / Hero arrival showcase** — Owner: Codex. Branch: `design/hero-arrival-showcase`, worktree: `/workspace/legends-of-the-fall`. Scope: first-time reveal presentation, foreground sprite attack then idle, existing artwork, affected visual checks and notes. Owner approved the visual concept and requested the sprite in front performing a small attack then idling. Completion: stronger charge/impact/payoff, one attack then idle, skip/queue/save/reduced-motion/offline preserved, typecheck/build, affected tests and all three portrait sizes. Status: implemented and validated; ready for owner review. Typecheck/build, four affected test files, all three portrait sizes, reduced motion, varied heroes, a real stone summon and offline reload passed with no page errors. [Handoff](notes/summon-arrival.md), [implemented preview](samples/summon-arrival/revealed-393.png). PR: [#193](https://github.com/Hpatter9/legends-of-the-fall/pull/193). Latest main integrated; no merge to main or deployment.
 
 **STAND-005 / Room artwork replacement** — Owner: current art chat. Branch: `art/stand-room-depth`, worktree: `/workspace/legends-of-the-fall`. Scope: Last Stand renderer, new generated production artwork, selected-ruler integration, ruler self-defence in `standAi.ts`/`units.ts`, affected tests, art credits, visual tooling and notes. Owner rejected the coarse reused assets and explicitly requested new artwork matching the ornate concept, retaining the central king and combat layout. Completion: new room assets visibly integrated in four rooms, selected castle king reused, stable depth sorting, reduced motion, typecheck/build, affected tests and three portrait sizes. Status: artwork and standing ruler defence complete. The selected ruler stands before a separate rear throne and strikes adjacent foes without chasing. Typecheck/build, eight affected test files, the finishing-blow check, three portrait sizes, reduced motion, the current nine ruler choices and event-driven melee pass. No page errors. PR: [#178](https://github.com/Hpatter9/legends-of-the-fall/pull/178), ready for review; main 0.213.0 integrated, retaining its default King and picker. No release or deployment. Handoff: [room artwork](notes/stand-room-depth.md).

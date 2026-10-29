@@ -15,7 +15,7 @@ import { castSpell, MANA_MAX, SPELL_IDS, type SpellId } from '../../src/sim/spel
 import { startedMeta } from '../../src/sim/meta';
 import { newCastle } from '../../src/sim/castle';
 import { deploySpots, fieldBoost, pickTeam, play } from '../heroSweep';
-import { playArmy, playCalamity, playDaily, playTower, savedAt } from '../autoplay';
+import { legacyCalamity, playArmy, playCalamity, playDaily, playTower, savedAt } from '../autoplay';
 import { playStand, setupAtLevel } from '../stand-balance';
 import type { Area } from '../../src/sim/board';
 
@@ -91,7 +91,8 @@ export const SCENARIOS: Record<string, () => void> = {
   daily: () => playDaily(startedMeta(3), 20260115),
   tower: () => playTower(startedMeta(4), 13, undefined, newCastle(), 6),
   stand: () => playStand(setupAtLevel(30), mixSeed(1, 0x57a0), undefined, 6),
-  calamity: () => playCalamity(startedMeta(5), 21, 'wizard'),
+  // (recorded before the Rift Sanctuary rebuilt the Calamity: the proof plays a calamity of the shape saved then, which still loads and plays as it did)
+  calamity: () => playCalamity(startedMeta(5), 21, 'wizard', newCastle(), 0, legacyCalamity),
 };
 
 /** Play every scenario and give each one's hash. */

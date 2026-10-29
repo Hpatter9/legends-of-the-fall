@@ -1,0 +1,21 @@
+{
+  "original": true,
+  "purpose": "Approved Rift Sanctuary and six destination environment illustrations; unchanged source pixels, selected through SVG viewports.",
+  "assets": [
+    {
+      "file": "sanctuary.webp",
+      "source": "/workspace/generated_images/exec-ec797300-c506-482b-b280-8d1909554040.png",
+      "width": 941,
+      "height": 1672,
+      "sha256": "ac96375d06a75bbe1b3444c2208244f5a2919adae61ab8fae0e955490e6e4a7e"
+    },
+    {
+      "file": "destinations.webp",
+      "source": "/workspace/generated_images/exec-867c7987-640c-4468-99d8-8dab1fd81c2c.png",
+      "width": 1254,
+      "height": 1254,
+      "sha256": "5378c6784d586a9992c094fc8946741e97bda88b6829a7dc677b41a0b8d16418"
+    }
+  ],
+  "converted": "Shipped as WebP (quality 86, alpha 90; same size) to keep game.js small; the unchanged PNG is in git history before the conversion, and the sha256 is the PNG's."
+}
