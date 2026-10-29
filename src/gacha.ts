@@ -2,6 +2,7 @@
 // who joins then has its first-time reveal), and the list of every hero with the locked ones shaded. It only reads and changes the Meta through the sim's own functions.
 
 import { ALL_HEROES, UNITS } from './sim/units';
+import { heroName, heroTitle } from './sim/heroNames';
 import { awakenedOf, AWAKEN_SHARDS } from './sim/awaken';
 import { LUCKY_ODDS, MAX_RANK, RANK_MULT, RANK_SHARDS, rankOf, saveMeta, stoneCost, stonesOf, takenRank, useStones, type Meta, type Pull } from './sim/meta';
 import { closest, haveOf, needOf, ownedCount } from './sim/unlock';
@@ -75,7 +76,7 @@ export class Gacha {
       const cell = document.createElement('div');
       cell.className = `hero${owned ? '' : ' locked'}`;
       const name = document.createElement('b');
-      name.textContent = owned || begun ? def.name : '???';
+      name.textContent = owned || begun ? heroName(kind) : '???';
       cell.append(portrait(def.sheet, 72), name);
       if (owned) cell.append(this.rankLine(kind));
       else if (begun) cell.append(unlockBar(m, kind));
@@ -163,7 +164,6 @@ export class Gacha {
     const px = got.length === 1 ? 230 : 70;
     let turned = 0;
     got.forEach((p) => {
-      const def = UNITS[p.kind];
       const res = document.createElement('div');
       res.className = `tarotResult${p.isNew ? ' joined' : ''}${p.lucky ? ' lucky' : ''}`;
       res.dataset.kind = p.kind;
@@ -186,7 +186,7 @@ export class Gacha {
         if (res.classList.contains('up')) return;
         res.classList.add('up');
         const n = p.unlock ?? p.shards;
-        turn.setAttribute('aria-label', `${def.name}: ${p.isNew ? 'joined your company' : p.crowns ? `${p.crowns} crowns` : `${n} shard${n === 1 ? '' : 's'}`}${p.unlock && p.need && !p.isNew ? `, ${p.have} of ${p.need} to join` : ''}`);
+        turn.setAttribute('aria-label', `${heroTitle(p.kind)}: ${p.isNew ? 'joined your company' : p.crowns ? `${p.crowns} crowns` : `${n} shard${n === 1 ? '' : 's'}`}${p.unlock && p.need && !p.isNew ? `, ${p.have} of ${p.need} to join` : ''}`);
         turned++;
         if (turned < got.length) {
           $('resultSummary').textContent = `${turned} / ${got.length} cards turned`;
@@ -271,7 +271,7 @@ export function pityLine(m: Meta): string {
   const near = closest(m);
   if (!near) return 'You have every hero you can recruit';
   const left = Math.max(1, pityAt(ownedCount(m)) - (m.unlockDry ?? 0));
-  return `Nearest: ${UNITS[near].name} ${haveOf(m, near)}/${needOf(m)} · its shards are sure within ${left} stone${left === 1 ? '' : 's'}`;
+  return `Nearest: ${heroTitle(near)} ${haveOf(m, near)}/${needOf(m)} · its shards are sure within ${left} stone${left === 1 ? '' : 's'}`;
 }
 
 /** The recruit page's short rule: what a stone is, the lucky chance, and why new heroes turn up less as the roster grows. */

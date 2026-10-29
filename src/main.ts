@@ -27,6 +27,7 @@ import { settleArmyOres, type ArmyOres } from './sim/awakenMats';
 import { drawOreGain } from './oreView';
 import { TIERS, tierOf } from './sim/tiers';
 import { UNITS } from './sim/units';
+import { heroName } from './sim/heroNames';
 import { ELITE_BY_ID } from './sim/elites';
 import { isBoss } from './sim/foes';
 import { awakenedOf } from './sim/awaken';
@@ -2195,7 +2196,7 @@ class Game {
       const stars = document.createElement('em');
       stars.textContent = '★'.repeat(h.grade);
       const name = document.createElement('b');
-      name.textContent = def.name;
+      name.textContent = heroName(h.kind);
       const bar = document.createElement('i');
       bar.append(document.createElement('span'));
       const marks = document.createElement('small');

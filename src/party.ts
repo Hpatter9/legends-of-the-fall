@@ -5,6 +5,7 @@
 
 import { ALL_HEROES, UNITS } from './sim/units';
 import { heroRank, partySlots, saveMeta, setParty, type Meta } from './sim/meta';
+import { heroName, heroTitle } from './sim/heroNames';
 import { progressOf, xpOf } from './sim/levels';
 import { levelBadge } from './levelBadge';
 import { countTraits, traitsOf } from './sim/traits';
@@ -174,13 +175,13 @@ export class Party {
         continue;
       }
       const b = el('button', 'ptSlot');
-      b.setAttribute('aria-label', `Remove ${UNITS[kind].name} from party`);
-      b.title = `Remove ${UNITS[kind].name} · hold for details`;
+      b.setAttribute('aria-label', `Remove ${heroTitle(kind)} from party`);
+      b.title = `Remove ${heroTitle(kind)} · hold for details`;
       const remove = el('span', 'ptSlotRemove', '×');
       remove.setAttribute('aria-hidden', 'true');
       const number = el('span', 'ptSlotNumber', String(i + 1));
       number.dataset.number = String(i + 1);
-      b.append(number, el('small', '', UNITS[kind].name), remove);
+      b.append(number, el('small', '', heroName(kind)), remove);
       b.addEventListener('click', () => (this.held ? (this.held = false) : this.toggle(kind)));
       this.holdTo(b, kind);
       row.append(b);
@@ -242,7 +243,7 @@ export class Party {
       if (this.filter !== 'all' && roleOf(kind) !== this.filter) continue;
       // Unknown locked names stay unknown, including through search.
       const known = m.unlocked.includes(kind) || lockInfo(m, kind)?.named;
-      if (this.search.trim() && (!known || !def.name.toLocaleLowerCase().includes(this.search.trim().toLocaleLowerCase()))) continue;
+      if (this.search.trim() && (!known || !`${heroName(kind)} ${def.name}`.toLocaleLowerCase().includes(this.search.trim().toLocaleLowerCase()))) continue;
       const open = m.unlocked.includes(kind);
       const on = this.picked.includes(kind);
       const hit = !!this.focus && traitsOf(kind).includes(this.focus);
@@ -252,7 +253,7 @@ export class Party {
       if (on) card.append(el('span', 'ptPickedFlag', '◆ Chosen'));
       if (open) card.append(el('span', 'ptCardRole', ROLE_NAMES[roleOf(kind)]));
       const lock = lockInfo(m, kind);
-      card.append(el('b', '', open || lock?.named ? def.name : '???'));
+      card.append(el('b', '', open || lock?.named ? heroName(kind) : '???'));
       if (open) {
         const p = progressOf(xpOf(m, kind));
         const tags = el('span', 'ptTags');

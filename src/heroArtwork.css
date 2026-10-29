@@ -62,3 +62,6 @@ dialog.heroArtViewer > .heroArtClose:focus-visible { outline: 2px solid #ffe0a0;
 .heroDetail .heroStrip .heroAwakenedArt,
 .heroDetail .hpic .heroAwakenedArt,
 dialog.heroArtViewer > .heroAwakenedArt { image-rendering: pixelated; }
+/* The hero's own name on its company card, its class small under it (docs/notes/heritage-looks.md). */
+.heroRoster .hcard .heroCardName { flex-direction: column; gap: 2px; }
+.heroRoster .hcard .heroCardName small.heroCardKind { font: 400 10px/1 var(--body); color: #d9bd7e; letter-spacing: .02em; }

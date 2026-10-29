@@ -4,7 +4,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
-const sharp = require('sharp');
+// (loaded when a sheet is packed, so `apply.cjs`, which needs only `sheetOf`, runs without it)
+const sharp = (...args) => require('sharp')(...args);
 const w = 256, h = 144;
 const sheetOf = id => `hero_res_${id.replace(/[A-Z]/g, c => '_' + c.toLowerCase())}`;
 

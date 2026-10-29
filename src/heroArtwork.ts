@@ -1,12 +1,13 @@
 // Menu illustrations are separate from the battle animation sheets.
-import { ALL_HEROES, UNITS } from './sim/units';
+import { ALL_HEROES } from './sim/units';
+import { heroTitle } from './sim/heroNames';
 
 export function heroArtwork(kind: string, full = false, awakened = 0): HTMLImageElement {
   if (!ALL_HEROES.includes(kind)) throw new Error(`Unknown hero artwork: ${kind}`);
   const image = document.createElement('img');
   image.className = `heroAnimeArt${awakened ? ' heroAwakenedArt' : ''}`;
   image.src = awakened ? `heroes/awakened-${kind}.webp` : `heroes/${kind}${full ? '' : '-portrait'}.webp`;
-  image.alt = `${UNITS[kind].name} — ${awakened ? 'awakened character with legendary gear' : 'anime character artwork'}`;
+  image.alt = `${heroTitle(kind)} — ${awakened ? 'awakened character with legendary gear' : 'anime character artwork'}`;
   image.decoding = 'async';
   image.draggable = false;
   return image;
@@ -16,14 +17,14 @@ export function heroArtwork(kind: string, full = false, awakened = 0): HTMLImage
 export function openHeroArtwork(kind: string, trigger: HTMLElement, awakened = 0): () => void {
   const dialog = document.createElement('dialog');
   dialog.className = 'heroArtViewer';
-  dialog.setAttribute('aria-label', `${UNITS[kind].name} full artwork`);
+  dialog.setAttribute('aria-label', `${heroTitle(kind)} full artwork`);
   const close = document.createElement('button');
   close.type = 'button';
   close.className = 'heroArtClose';
   close.textContent = '× Close';
   close.setAttribute('aria-label', 'Close full artwork');
   const title = document.createElement('h2');
-  title.textContent = `${UNITS[kind].name}${awakened ? ' · Awakened' : ''}`;
+  title.textContent = `${heroTitle(kind)}${awakened ? ' · Awakened' : ''}`;
   dialog.append(close, heroArtwork(kind, true, awakened), title);
   const dismiss = () => dialog.close();
   close.addEventListener('click', dismiss);
