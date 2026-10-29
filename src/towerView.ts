@@ -6,7 +6,7 @@
 import { oreChip } from './oreView';
 import { chestKind } from './sim/armyStars';
 import { gainXp, xpOf, levelOf } from './sim/levels';
-import { saveMeta, type Meta } from './sim/meta';
+import { heroRank, saveMeta, type Meta } from './sim/meta';
 import { hpShare } from './sim/health';
 import { ELITE_BY_ID, eliteAt } from './sim/elites';
 import {
@@ -21,6 +21,7 @@ import { CAL_MAPS } from './sim/calamity';
 import { ASC_MAX } from './sim/ascension';
 import { UNITS } from './sim/units';
 import { gearIcon, iconImg, relicIcon } from './render/items';
+import { lookSheet } from './render/awakenLook';
 import { portrait } from './render/sheets';
 import { play } from './render/sound';
 import { chestPicture } from './chestStash';
@@ -271,7 +272,7 @@ export class TowerView {
       if (!h) continue;
       const share = hpShare(run, id);
       const cell = el('div', `rtHero${share <= 0.3 ? ' low' : ''}`);
-      const face = portrait(UNITS[h.kind].sheet, 40, h.grade);
+      const face = portrait(lookSheet(h.kind, heroRank(this.hooks.meta(), h.kind), h.grade), 40, h.grade);
       face.className = 'rtFace';
       const bar = el('i', 'rtBar');
       const fill = el('span');
@@ -421,7 +422,7 @@ export class TowerView {
     const lead = run.squad.map((id) => run.roster.find((x) => x.id === id)).find(Boolean);
     const m = el('div', 'rtMarker');
     if (lead) {
-      const face = portrait(UNITS[lead.kind].sheet, 36, lead.grade);
+      const face = portrait(lookSheet(lead.kind, heroRank(this.hooks.meta(), lead.kind), lead.grade), 36, lead.grade);
       face.style.width = face.style.height = '36px';
       m.append(face);
     } else m.append(el('i', 'rtFlag'));
@@ -890,7 +891,7 @@ export class TowerView {
       if (!run.local && seen.has(h.kind)) continue;
       seen.add(h.kind);
       const b = el('button', 'rtTrainHero');
-      const face = portrait(UNITS[h.kind].sheet, 40, h.grade);
+      const face = portrait(lookSheet(h.kind, heroRank(this.hooks.meta(), h.kind), h.grade), 40, h.grade);
       b.append(face, el('small', '', UNITS[h.kind].name), el('em', '', `Lv ${run.local ? heroLevel(h) : levelOf(xpOf(this.hooks.meta(), h.kind))}`));
       b.addEventListener('click', () => {
         const got = train(run, h.id);

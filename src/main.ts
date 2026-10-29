@@ -24,7 +24,7 @@ import { settleArmyRun, type StarResult } from './sim/armyStars';
 import { settleArmyOres, type ArmyOres } from './sim/awakenMats';
 import { drawOreGain } from './oreView';
 import { TIERS, tierOf } from './sim/tiers';
-import { formOf, UNITS } from './sim/units';
+import { UNITS } from './sim/units';
 import { ELITE_BY_ID } from './sim/elites';
 import { isBoss } from './sim/foes';
 import { awakenedOf } from './sim/awaken';
@@ -86,7 +86,8 @@ import { RISE_MS, UnitSprite } from './render/unitView';
 import { flyUp, recyclePuff, summonBurst } from './render/uiFx';
 import { burnHeart, reducedMotion, reviveLine } from './reviveView';
 import { Fx, loadFx } from './render/fx';
-import { framesOf, loadSheets, portrait, sheetInfo, wholeFigure } from './render/sheets';
+import { lookSheet } from './render/awakenLook';
+import { framesOf, loadAwakenedSheets, loadSheets, portrait, sheetInfo, wholeFigure } from './render/sheets';
 import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, framing, PAUSE_MS, settle, viewFor, type View } from './render/cameraRules';
 import { pinchZoom, wheelZoom, zoomAbout, zoomLimits } from './render/fightCam';
 import { titleOf } from './render/bossTitles';
@@ -247,6 +248,7 @@ class Game {
     const query = new URLSearchParams(location.search);
     const seed = Number(query.get('seed'));
     this.meta = loadMeta((Date.now() % 100000) + 1);
+    await loadAwakenedSheets(Object.keys(this.meta.awakened ?? {}));
     saveMeta(this.meta);
     initQuips(this.meta.seed);
     // (a new save, or one after Start over, picks its first three heroes before anything else; an address with a seed is a test page and takes the first pack)
@@ -1070,7 +1072,7 @@ class Game {
     if (old.shownGrade < grade) {
       u.grade = grade;
       old.root.destroy({ children: true });
-      const s = new UnitSprite(u);
+      const s = new UnitSprite(u, awakenedOf(this.meta, u.def));
       this.sprites.set(unitId, s);
       this.boardView.root.addChild(s.root);
       s.update(this.b.board, performance.now(), this.b.phase !== 'deploy');
@@ -1095,7 +1097,7 @@ class Game {
       }
     for (const u of this.b.units)
       if (!this.sprites.has(u.id)) {
-        const s = new UnitSprite(u);
+        const s = new UnitSprite(u, awakenedOf(this.meta, u.def));
         this.sprites.set(u.id, s);
         // (a merge's hero rises in light: the same promotion a sim `promote` event plays)
         if (u.tag !== undefined && this.evolved.has(u.tag)) {
@@ -1384,6 +1386,7 @@ class Game {
 
   private wire(): void {
     this.heroBar = new HeroBar($('heroBar'), {
+      equipmentStep: (kind) => awakenedOf(this.meta, kind),
       onAuto: (on) => {
         this.meta.ultAuto = on;
         saveMeta(this.meta);
@@ -1735,7 +1738,7 @@ class Game {
       // (the look it fought in: the highest grade of the kind that stood in the fight, in that grade's form, framed whole)
       const grade = this.b.units.reduce((g, u) => (u.side === 'hero' && u.def === kind && u.owner === undefined ? Math.max(g, u.grade ?? 1) : g), 1);
       face.className = `xpFace g${grade}`;
-      face.append(portrait(formOf(UNITS[kind], grade), 64, grade), lv);
+      face.append(portrait(lookSheet(kind, heroRank(this.meta, kind), grade), 64, grade), lv);
       const name = document.createElement('b');
       name.textContent = UNITS[kind].name;
       const gain = document.createElement('em');
@@ -2054,7 +2057,8 @@ class Game {
       $('bench').querySelector(`[data-id="${d.id}"]`)?.classList.add('dragging');
     }
     // (the hero is held a little over the finger, so it can be seen)
-    this.ghost.texture = framesOf(this.defOf(d.id).sheet, 'idle')[0];
+    const held = heroOf(this.run, Number(d.id))!;
+    this.ghost.texture = framesOf(lookSheet(held.kind, heroRank(this.meta, held.kind), held.grade), 'idle')[0];
     this.ghost.scale.set(this.scale * this.defOf(d.id).scale);
     this.ghost.position.set(e.clientX - colLeft(), e.clientY - 24);
     this.ghost.visible = true;
@@ -2252,7 +2256,7 @@ class Game {
       const pw = document.createElement('span');
       pw.className = 'pw';
       pw.textContent = `Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;
-      card.append(portrait(formOf(def, h.grade), 96, h.grade), stars, name, lv, pw, marks, bar);
+      card.append(portrait(lookSheet(h.kind, heroRank(this.meta, h.kind), h.grade), 96, h.grade), stars, name, lv, pw, marks, bar);
       // (the last hero cannot be recycled)
       if (this.run.roster.length > 1) card.append(sell);
       card.title = `${def.role} · Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;

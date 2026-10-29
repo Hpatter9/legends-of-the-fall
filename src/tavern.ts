@@ -9,7 +9,7 @@
 import { tok } from './render/tok';
 import { ALL_HEROES, UNITS } from './sim/units';
 import type { Meta } from './sim/meta';
-import { awakenedStep, heroRig } from './render/awakenRig';
+import { menuAuraStep, heroRig } from './render/awakenRig';
 import { drawAura, drawAuraGlow } from './render/auraCanvas';
 import { auraParts, type AuraPart } from './render/auraStyles';
 import { loadImage } from './render/loadImage';
@@ -258,7 +258,7 @@ export class Tavern {
       const spot = SPOTS[kind];
       if (!rig || !spot) continue;
       const k = figureHeight(rig.figure, def.scale) / rig.figure;
-      const step = awakenedStep(meta, kind);
+      const step = menuAuraStep(meta, kind);
       const aura = auraParts(kind, step, this.saver);
       const a = this.actors.get(kind);
       if (a) {

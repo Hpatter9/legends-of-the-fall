@@ -1,0 +1,25 @@
+{
+  "id": "archer",
+  "inputSize": [
+    1290,
+    1219
+  ],
+  "cell": [
+    108,
+    115
+  ],
+  "scale": 0.5882352941176471,
+  "warnings": [
+    {
+      "row": 5,
+      "col": 7,
+      "box": [
+        976,
+        889,
+        1284,
+        977
+      ],
+      "issue": "touching actors: inspect cell edges"
+    }
+  ]
+}

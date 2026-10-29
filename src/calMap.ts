@@ -11,7 +11,7 @@ import { choices, hereOf, routeTo, sideChoices } from './sim/tower';
 import { fogOf, landOf, openSet, sideSpots, START_ID, type Cell, type Land, type LandSpot, type SideSpot } from './sim/calLand';
 import { LAND_ART, RECTS, type LandArt } from './render/calArt';
 import { loadImage } from './render/loadImage';
-import { awakenedStep, heroRig, lookKey } from './render/awakenRig';
+import { menuAuraStep, heroRig, lookKey } from './render/awakenRig';
 import { drawAura, drawAuraGlow } from './render/auraCanvas';
 import { settings } from './settings';
 import { auraParts, type AuraPart } from './render/auraStyles';
@@ -892,7 +892,7 @@ export class CalMap {
     const rig = heroRig(meta, lead.kind);
     if (!rig) return null;
     const small = shrinkRig(rig, 44);
-    const step = awakenedStep(meta, lead.kind);
+    const step = menuAuraStep(meta, lead.kind);
     this.hero = { cut: sheet, small, kind: lead.kind, step, aura: auraParts(lead.kind, step, settings().saver) };
     return small;
   }

@@ -4,12 +4,13 @@
 // until Start or Done, which saves it through `setParty`; Back throws it away. The rules are in `src/sim/meta.ts`.
 
 import { ALL_HEROES, UNITS } from './sim/units';
-import { partySlots, saveMeta, setParty, type Meta } from './sim/meta';
+import { heroRank, partySlots, saveMeta, setParty, type Meta } from './sim/meta';
 import { progressOf, xpOf } from './sim/levels';
 import { levelBadge } from './levelBadge';
 import { countTraits, traitsOf } from './sim/traits';
 import { traitBadge } from './traitBadge';
 import { pipsOf, raisedBy } from './traitHelp';
+import { lookSheet } from './render/awakenLook';
 import { portrait } from './render/sheets';
 import { lockInfo } from './sim/contentHeroes';
 import { drawHeroSheet, starsOf } from './menuHeroes';
@@ -247,7 +248,7 @@ export class Party {
       const hit = !!this.focus && traitsOf(kind).includes(this.focus);
       const card = el('button', `hcard ptCard${open ? '' : ' locked'}${on ? ' picked' : ''}${hit ? ' hit' : ''}${this.focus && !hit ? ' faded' : ''}`);
       card.setAttribute('aria-pressed', String(on));
-      card.append(portrait(def.sheet, 56));
+      card.append(portrait(lookSheet(kind, heroRank(this.meta, kind), 1), 56));
       if (on) card.append(el('span', 'ptPickedFlag', '◆ Chosen'));
       if (open) card.append(el('span', 'ptCardRole', ROLE_NAMES[roleOf(kind)]));
       const lock = lockInfo(m, kind);

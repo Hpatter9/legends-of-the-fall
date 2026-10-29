@@ -160,13 +160,15 @@ test('saves: awakening is optional, round-trips, and cannot be more than the sha
   assert.deepEqual(readAwakened({ knight: 9 }, { knight: 99 }), { knight: 2 });
 });
 
-test('the awakened look: no recolour and no colour variant, the top form kept (AWAKEN-002: the class aura marks it)', () => {
+test('the awakened look unlocks legendary equipment, retaining the same form at the second step', () => {
   assert.equal(stepOfRank(4), 0);
   assert.equal(stepOfRank(5), 1);
   assert.equal(stepOfRank(6), 2);
-  // (the Werewolf no longer turns red: the owner dropped the red sheet with the recolour)
-  assert.equal(lookSheet('werewolf', 5, 3), lookSheet('werewolf', 4, 3));
-  assert.equal(lookSheet('werewolf', 6, 3), 'hero_res_werewolf_brute');
-  assert.equal(lookSheet('paladin', 5, 3), 'hero_res_paladin', 'the top form');
-  for (const k of ALL_HEROES) assert.equal(lookSheet(k, 6, 3), lookSheet(k, 4, 3), k);
+  assert.equal(lookSheet('werewolf', 5, 3), 'awakened_werewolfBrute');
+  assert.equal(lookSheet('werewolf', 6, 3), 'awakened_werewolfBrute');
+  assert.equal(lookSheet('paladin', 5, 3), 'awakened_paladin');
+  for (const k of ALL_HEROES) {
+    assert.notEqual(lookSheet(k, 5, 3), lookSheet(k, 4, 3), `${k}: first awakening changes gear`);
+    assert.equal(lookSheet(k, 6, 3), lookSheet(k, 5, 3), `${k}: second step keeps that gear`);
+  }
 });

@@ -86,7 +86,7 @@ export function drawAwaken(meta: Meta, kind: string, changed: (taken: Taken) => 
     }
     head.append(el('b', '', `${step <= done ? '◆' : '◇'} Awakening ${ROMAN[step]}`), cost);
     row.append(head);
-    const lines = [`+${Math.round((AWAKEN_MULT - 1) * 100)}% hp and attack`, step === 1 ? `An aura: ${auraOf(kind).name.toLowerCase()}` : 'A bigger, brighter aura'];
+    const lines = [`+${Math.round((AWAKEN_MULT - 1) * 100)}% hp and attack`, step === 1 ? 'A new form with legendary gear' : 'Your awakened form grows stronger'];
     row.append(el('small', 'awGives', lines.join(' · ')));
     if (passive && ABILITIES[passive.ability]) {
       const text = step === 1 ? `${passive.name}: ${passive.text}` : `${passive.name} grows stronger (${describeAbility(ABILITIES[passive.ability], PASSIVE_STRENGTH[1])})`;

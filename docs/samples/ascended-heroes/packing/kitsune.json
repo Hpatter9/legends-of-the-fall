@@ -1,0 +1,13 @@
+{
+  "id": "kitsune",
+  "inputSize": [
+    1536,
+    1024
+  ],
+  "cell": [
+    124,
+    102
+  ],
+  "scale": 0.64,
+  "warnings": []
+}

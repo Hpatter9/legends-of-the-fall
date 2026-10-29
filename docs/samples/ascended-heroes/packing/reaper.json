@@ -1,0 +1,25 @@
+{
+  "id": "reaper",
+  "inputSize": [
+    1536,
+    1024
+  ],
+  "cell": [
+    150,
+    111
+  ],
+  "scale": 0.676056338028169,
+  "warnings": [
+    {
+      "row": 3,
+      "col": 2,
+      "box": [
+        293,
+        447,
+        615,
+        576
+      ],
+      "issue": "touching actors: inspect cell edges"
+    }
+  ]
+}
