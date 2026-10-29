@@ -110,6 +110,21 @@ battle orcs ...`). For the audio-mix worker: no gain tables or player levels wer
 battle tracks' loudness (-15 dB RMS, peaks -1 dBFS; the camp -19.6, the triumph -16.5) and the per-track `mix.levels` inside each
 track file are only the arrangement's own balance.
 
+**Trims for `audioMix.ts` (`TRACK_GAIN`), for whoever merges second.** The audio-mix branch's `TRACK_GAIN` is keyed by the manifest,
+so once both are in, `battle2` and `battle3` must go and these entries must be there (typecheck fails otherwise). Measured as file
+loudness (ffmpeg's EBU R128 meter, integrated) against the old files and their trims: the old battle, boss, Calamity, camp, triumph and
+victory files with their trims all land at the same page offset (-13.2 ± 0.1 LU from file to page), so each new file's trim takes it
+to its class's target in `tools/audio-mix/targets.mjs` (battle tracks -30.5, the boss and Calamity -30, the camp and triumph -28, the
+fanfare -23.5):
+
+```ts
+battle: 0.58, orcs: 0.58, undead: 0.54, beasts: 0.58, wildwood: 0.55, labyrinth: 0.52, ogres: 0.58, infernal: 0.51, yokai: 0.58,
+golems: 0.58, boss: 0.6, calbattle: 0.54, camp: 1.19, triumph: 0.9, victory: 1.57,
+```
+
+`MUSIC_TARGET` and `measure.mjs`'s `TRACKS` want the nine army ids (at -30.5) in place of `battle2`/`battle3`. A re-measure with
+`tools/audio-mix/measure.mjs` after the merge should confirm them within a dB.
+
 ## Wiring
 
 - `src/render/epicMusic.ts`: `ARMY_TRACKS` (the nine), `MusicId` has them (`battle2` and `battle3` are gone, their files deleted),
