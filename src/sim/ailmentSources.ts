@@ -6,7 +6,7 @@
 // The one balance table for the new sources: each rider's length and strength is here.
 
 import type { Battle, BattleEvent, Unit } from './battle';
-import { AILMENT_SWITCH, AIL, bleedFor, burnFor, fearFor, shockFor, silenceFor, weakFor } from './ailments';
+import { AILMENT_SWITCH, bleedFor, burnFor, fearFor, shockFor, silenceFor, weakFor } from './ailments';
 
 type Rider = (b: Battle, me: Unit, to: Unit) => void;
 
@@ -31,18 +31,18 @@ export const SKILL_RIDERS: Readonly<Record<string, Rider>> = {
   // blades bleed
   Whirlwind: bleed(0.08),
   Bloodlust: bleed(0.08),
-  'Shadow Step': bleed(0.1),
-  'Shadow Dance': bleed(0.1),
+  'Shadow Step': bleed(0.06),
+  'Shadow Dance': bleed(0.06),
   'Hellblade Sweep': bleed(0.08),
   // the songs and judgements weaken, the bullets and palms silence, the reapers and roars frighten
   Dirge: weak(3000),
-  Condemn: weak(AIL.WEAK_MS),
+  Condemn: weak(4000),
   'Suppressing Fire': silence(2000),
   'Stillness Palm': silence(2000),
   Pilfer: silence(1500),
-  'Harvest of Souls': fear(AIL.FEAR_MS),
+  'Harvest of Souls': fear(700),
   'Full Moon': fear(1200),
-  'Reign of Terror': fear(AIL.FEAR_MS),
+  'Reign of Terror': fear(1500),
   'Kanabo Smash': fear(1000),
 };
 

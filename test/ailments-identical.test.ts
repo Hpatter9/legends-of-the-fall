@@ -6,13 +6,30 @@ import assert from 'node:assert/strict';
 import { scenarioHashes } from '../tools/status-fx/logs';
 import { AILMENT_SWITCH } from '../src/sim/ailments';
 import recorded from './fixtures/ailment-logs.json';
+import { ARMIES } from '../src/sim/armies';
+import { CAL_SCALE } from '../src/sim/calamity';
+import { DAILY_ANSWER } from '../src/sim/modes';
+import { KITS } from '../src/sim/abilities';
 
+// (the balance pass that followed, step two, moved a few foe strengths and the Shambler's Plague Tide to answer the ailments: they are put back to
+// main's for this proof)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {
   const was = AILMENT_SWITCH.on;
+  const infernal = ARMIES.find((a) => a.id === 'infernal') as unknown as { start: number };
+  const plague = KITS.shambler.ultimate!.tuned!;
+  const tuned = { start: infernal.start, bossHp: CAL_SCALE.bossHp, ult: DAILY_ANSWER.ult, plague: plague.power };
   AILMENT_SWITCH.on = false;
+  infernal.start = 10;
+  CAL_SCALE.bossHp = 1;
+  DAILY_ANSWER.ult = 0.17;
+  plague.power = 0.99;
   try {
     assert.deepEqual(scenarioHashes(), recorded);
   } finally {
     AILMENT_SWITCH.on = was;
+    infernal.start = tuned.start;
+    CAL_SCALE.bossHp = tuned.bossHp;
+    DAILY_ANSWER.ult = tuned.ult;
+    plague.power = tuned.plague;
   }
 });

@@ -4,12 +4,30 @@
 // the chip's icon over the head. A part's frames come only from the atlas (`statusArt.ts`: src/art/fx/status/atlas.png
 // and atlas.json): the pack's strips today (tools/status-fx/status-sheets.py), painted sheets later
 // (tools/status-fx/import-status-art.py, docs/notes/status-fx-art-brief.md), with no code change.
-// Pure data: no Pixi, no DOM.
+// Pure data and rules: no Pixi, no DOM.
 
-/** The eleven ailments the owner asked for. */
-export type AilmentKey = 'burn' | 'poison' | 'freeze' | 'bleed' | 'chill' | 'shock' | 'stun' | 'weak' | 'curse' | 'silence' | 'fear';
+import { AILMENT_KEYS, type AilmentKey } from '../sim/ailmentKeys';
+import type { Unit } from '../sim/battle';
 
-export const AILMENTS: readonly AilmentKey[] = ['burn', 'poison', 'freeze', 'bleed', 'chill', 'shock', 'stun', 'weak', 'curse', 'silence', 'fear'];
+export type { AilmentKey };
+export const AILMENTS: readonly AilmentKey[] = AILMENT_KEYS;
+
+/** The fields of a fighter its ailments are read from (a `Unit` has them all). */
+export type AilmentSource = Pick<Unit, 'alive' | 'ail' | 'dot' | 'stunUntil' | 'slowUntil' | 'weakUntil'>;
+
+/** The ailments a fighter shows at time `t`, the latest first: its list, and a hold, slow or weakening set the old way (a timer with no
+ *  entry: a kit or a test that wrote the field, or the ailments switched off). */
+export function shownAilments(u: AilmentSource, t: number): AilmentKey[] {
+  if (!u.alive) return [];
+  const out: AilmentKey[] = [];
+  const list = u.ail ?? [];
+  for (let i = list.length - 1; i >= 0; i--) if (list[i].until > t && !out.includes(list[i].kind)) out.push(list[i].kind);
+  if (u.dot && u.dot.until > t && !out.includes(u.dot.kind)) out.push(u.dot.kind);
+  if (u.stunUntil !== undefined && u.stunUntil > t && !out.includes('stun') && !out.includes('freeze')) out.push('stun');
+  if (u.slowUntil !== undefined && u.slowUntil > t && !out.includes('chill')) out.push('chill');
+  if (u.weakUntil !== undefined && u.weakUntil > t && !out.includes('weak')) out.push('weak');
+  return out;
+}
 
 /** Where a part sits: flat under the feet, behind the body, in front of it, over the head, dotted round it, a one-off
  *  burst (the shatter), or the chip's icon. */

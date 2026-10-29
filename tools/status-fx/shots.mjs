@@ -1,130 +1,169 @@
-// STATUS-FX phase A mock-up shots (docs/notes/status-fx.md): a real fight held still, with the prototype's ailments
-// (`src/render/statusMock.ts`) set on its fighters through `window.__statusMock`. Run after `npm run web`:
-//   node tools/status-fx/shots.mjs
-import { serve, launch, boot } from '../battle-ui/lib.mjs';
-const PORT = 8281;
-const s = serve('out/web', PORT);
-const br = await launch();
-const { ctx, page, errors } = await boot(br, 393, 852, PORT);
-await page.goto(`http://localhost:${PORT}/?seed=5`);
-await page.waitForTimeout(2500);
-await page.evaluate(() => document.getElementById('tipSkip')?.click());
-// (a party: five hires, set out by the Auto button's own arrangement)
-await page.evaluate(() => { const g = window.__game; g.run.gold = 3000; for (let i = 0; i < 5; i++) document.getElementById('summon').click(); g.autoArrange(true); });
-await page.waitForTimeout(800);
-await page.addStyleTag({ content: '#tip, .tip, #tipBox, .duchess, .say, [class*=bubble], [class*=Bubble], #quip { display: none !important; }' });
-await page.evaluate(() => document.getElementById('fight').click());
-// (let the two sides close, then hold the fight where it is)
-await page.waitForTimeout(Number(process.env.WAIT ?? 3300));
-await page.evaluate(() => { window.__game.sceneHold = 1; });
-await page.waitForTimeout(300);
-const units = await page.evaluate(() => window.__game.b.units.filter((u) => u.alive).map((u) => ({ id: u.id, def: u.def, side: u.side, u: u.u, v: u.v })));
-console.log(JSON.stringify(units));
-const heroes = units.filter((u) => u.side === 'hero');
-const foes = units.filter((u) => u.side === 'foe');
-const shot = (name) => page.screenshot({ path: `docs/samples/status-fx-${name}.png` });
-// (the camera closer in, on the middle of the fighters, held there)
-await page.evaluate((zoom) => {
-  const g = window.__game;
-  const live = g.b.units.filter((u) => u.alive && u.def !== 'orcArcher').map((u) => g.sprites.get(u.id));
-  g.manualCam = true;
-  g.tx = g.cx = live.reduce((a, s) => a + s.x, 0) / live.length;
-  g.ty = g.cy = live.reduce((a, s) => a + s.y, 0) / live.length - 16;
-  g.zoom = g.tzoom = zoom;
-}, Number(process.env.ZOOM ?? 2.4));
+// STATUS-FX phase B screenshots (docs/notes/status-fx.md): real army fights with the ailments as the game lays them, held still at the
+// moment that shows them: a fight with several at once, a frozen foe's shatter, a fire-proof foe's "Immune", and the same fight with
+// reduced motion; at 393x852, 360x780 and 412x915. After `npm run web`:
+//   node tools/status-fx/shots.mjs             every size        SIZES=393x852 node tools/status-fx/shots.mjs     one
+// The party is set on the page (a level-30 save of the heroes that lay ailments); the spells are cast by tapping the board as a player does.
+import { createRequire } from 'node:module';
+import { createServer } from 'node:http';
+import { readFileSync, existsSync, mkdirSync } from 'node:fs';
+const { chromium } = createRequire('/opt/node-tools/node_modules/')('playwright');
+const PORT = 8283;
+const root = 'out/web';
+const types = { html: 'text/html', js: 'text/javascript', png: 'image/png', woff2: 'font/woff2', json: 'application/json', webmanifest: 'application/json', ogg: 'audio/ogg', opus: 'audio/ogg', css: 'text/css' };
+const srv = createServer((q, r) => {
+  const p = `${root}/` + (q.url.split('?')[0].slice(1) || 'index.html');
+  if (!existsSync(p)) { r.writeHead(404); return r.end(); }
+  r.writeHead(200, { 'content-type': types[p.split('.').pop()] ?? 'application/octet-stream' });
+  r.end(readFileSync(p));
+}).listen(PORT);
+const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+mkdirSync('docs/samples', { recursive: true });
+const SIZES = (process.env.SIZES ?? '393x852,360x780,412x915').split(',').map((s) => s.split('x').map(Number));
+const xpAt = (level) => Math.round(30 * (level - 1) * level * (level > 20 ? 4 : 1));
+let errors = 0;
 
-// 1. A fight with several ailments at once, on heroes and foes, with chips and coloured numbers.
-await page.evaluate(([h, f]) => {
-  const m = window.__statusMock;
-  m.clear();
-  m.set(f[0].id, ['burn', 'poison']); m.num(f[0].id, 18, 'burn'); m.num(f[0].id, 11, 'poison');
-  m.set(f[1].id, ['freeze']); m.num(f[1].id, 64, 'hit');
-  m.set(h[0].id, ['bleed', 'weak']); m.num(h[0].id, 9, 'bleed');
-  m.set(h[1].id, ['shock', 'stun']); m.num(h[1].id, 27, 'shock');
-  if (h[2]) m.set(h[2].id, ['chill']);
-  if (h[3]) { m.set(h[3].id, ['curse', 'silence']); m.num(h[3].id, 14, 'curse'); }
-  if (h[4]) m.set(h[4].id, ['fear']);
-  if (f[2]) m.immune(f[2].id, 'burn');
-}, [heroes, foes]);
-await page.waitForTimeout(400);
-await shot('fight');
-
-// 2. The frozen shatter: a frozen foe takes a heavy blow and the crust bursts.
-await page.evaluate(([h, f]) => {
-  const m = window.__statusMock;
-  m.clear();
-  m.shatter(f[1].id); m.num(f[1].id, 186, 'shatter');
-  m.set(f[0].id, ['freeze']);
-}, [heroes, foes]);
-await page.waitForTimeout(400);
-await shot('shatter');
-
-// 3. A foe resisting: Immune over a fire-proof foe (as a fire golem or a demon would be) beside one that burns.
-await page.evaluate(([h, f]) => {
-  const m = window.__statusMock;
-  m.clear();
-  m.immune(f[0].id, 'burn'); m.num(f[0].id, 31, 'hit');
-  m.set(f[1].id, ['burn']); m.num(f[1].id, 18, 'burn');
-}, [heroes, foes]);
-await page.waitForTimeout(400);
-await shot('immune');
-
-// 4. Close-ups of every body effect on a hero and on a foe, the camera close on each, cut out and laid into a contact
-// sheet by tools/status-fx/sheet.py (docs/samples/status-fx-contact.png).
-const KEYS = ['burn', 'poison', 'freeze', 'bleed', 'chill', 'shock', 'stun', 'weak', 'curse', 'silence', 'fear'];
-const W = 128, H = 168;
-/** Stand one fighter alone on a clear tile (the way tools/awaken/aura-mock.mjs does: for the picture only, nothing is saved), the camera close on it. */
-async function stand(kind, side, ailment) {
-  await page.evaluate(([kind, side, ailment, spot]) => {
-    const g = window.__game;
-    const b = g.b;
-    const proto = g.proto ?? (g.proto = JSON.parse(JSON.stringify(b.units[0])));
-    g.spot ??= spot ?? (() => {
-      const bd = b.board;
-      const tile = (u, v) => bd.tiles?.[v * bd.w + u] ?? bd.tiles?.[v]?.[u];
-      const clear = (t) => t && !t.rock && !t.wall && !t.barrel && !t.bush && !t.tree && !t.ground && !t.perch && !t.ramp && !t.bridge;
-      let best = [3, 8], score = -1e9;
-      for (let v = 2; v < bd.d - 1; v++) for (let u = 1; u < bd.w - 1; u++) {
-        const t = tile(u, v);
-        if (!clear(t)) continue;
-        const near = [[u + 1, v], [u, v + 1], [u + 1, v + 1], [u - 1, v + 1], [u + 1, v - 1], [u - 1, v], [u, v - 1]].map(([a, c]) => tile(a, c));
-        if (!near.every((f) => clear(f) && f.h <= t.h)) continue;
-        const sc = -Math.abs(u - bd.w / 2) - Math.abs(v - bd.d / 2) * 0.5;
-        if (sc > score) { score = sc; best = [u, v]; }
-      }
-      return best;
-    })();
-    const x = JSON.parse(JSON.stringify(proto));
-    Object.assign(x, { id: 9000, def: kind, side, u: g.spot[0], v: g.spot[1], facing: side === 'hero' ? 3 : 1, alive: true, hp: 70, maxHp: 100 });
-    for (const k of ['dot', 'slowUntil', 'stunUntil', 'swing', 'step', 'cast', 'hurtAt', 'look']) delete x[k];
-    b.units = [x];
-    // (the fight's leftovers: burning ground and the effects still playing)
-    b.zones = [];
-    if (g.fx?.root) g.fx.root.visible = false;
-    g.syncSprites(true);
-    const m = window.__statusMock;
-    m.clear();
-    m.set(9000, [ailment]);
-    const sp = g.sprites.get(9000);
-    sp.update(b.board, b.t, true);
-    g.manualCam = true;
-    g.tx = g.cx = sp.x;
-    g.ty = g.cy = sp.y - 20;
-    g.zoom = g.tzoom = 2.6;
-  }, [kind, side, ailment, (process.env.SPOT ?? '4,9').split(',').map(Number)]);
-  await page.waitForTimeout(450);
-  return page.evaluate(() => {
-    const g = window.__game;
-    const r = g.app.canvas.getBoundingClientRect();
-    const c = r.width / g.app.screen.width;
-    const p = g.sprites.get(9000).root.getGlobalPosition();
-    return { x: r.left + p.x * c, y: r.top + p.y * c };
-  });
+async function open(w, h, calm, party) {
+  const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1, hasTouch: false, reducedMotion: calm ? 'reduce' : 'no-preference' });
+  const page = await ctx.newPage();
+  page.on('pageerror', (e) => { errors++; console.log('PAGE ERROR', e.message); });
+  const owned = [...new Set([...party, 'knight', 'archer'])];
+  await page.addInitScript(([owned, party, xp]) => {
+    if (sessionStorage.getItem('sfx-set')) return;
+    sessionStorage.setItem('sfx-set', '1');
+    localStorage.clear();
+    localStorage.setItem('legends.meta', JSON.stringify({ seed: 7, crowns: 1200, unlocked: owned, party, pulls: 0, dry: 0, dryMythic: 0, castle: { treasury: 1, barracks: 1, armoury: 0, mageTower: 0, stable: 0, library: 0 }, shards: {}, stars: {}, xp: Object.fromEntries(owned.map((k) => [k, xp])), bestStage: 14, tower: 9, daily: {}, bosses: [], achievements: [], armies: {}, armySeen: [], stash: [], opened: ['undead', 'beasts', 'wildwood', 'labyrinth', 'ogres', 'infernal', 'yokai', 'golems'] }));
+    localStorage.setItem('lotf-tips-off', '1');
+    localStorage.setItem('legends.settings', JSON.stringify({ cinematics: false, speed: 1 }));
+  }, [owned, party, xpAt(30)]);
+  await page.goto(`http://localhost:${PORT}/`);
+  await page.waitForFunction(() => !!window.__game?.home, null, { timeout: 60000 });
+  await page.waitForTimeout(1500);
+  await page.evaluate(() => document.getElementById('tipSkip')?.click());
+  await page.addStyleTag({ content: '#tip, .tip, #tipBox, .duchess, .say, [class*=bubble], [class*=Bubble], #quip { display: none !important; }' });
+  return { ctx, page };
 }
-for (const k of KEYS)
-  for (const [kind, side] of [['knight', 'hero'], ['orcGrunt', 'foe']]) {
-    const at = await stand(kind, side, k);
-    await page.screenshot({ path: `out/shots/status-fx-crop-${k}-${side}.png`, clip: { x: Math.round(at.x - W / 2), y: Math.round(at.y - H + 34), width: W, height: H } });
+
+/** Into an army's wave with `party` placed by the Auto button, and the fight begun. */
+async function armyWave(page, army, wave, party) {
+  await page.evaluate(([army, wave, party]) => {
+    const g = window.__game;
+    const r = JSON.parse(JSON.stringify(g.run));
+    Object.assign(r, { mode: { kind: 'army', army }, stage: wave, over: false, cleared: false, gold: 0, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade: 1, paid: 30 })), squad: [], nextId: 200 });
+    document.getElementById('home').hidden = true;
+    g.startRun(r);
+    g.autoArrange(true);
+  }, [army, wave, party]);
+  await page.waitForTimeout(700);
+  await page.evaluate(() => document.getElementById('fight').click());
+}
+
+/** Until the two sides have met (a hero and a foe within two tiles), or 25 s. */
+const engaged = (page) => page.waitForFunction(() => {
+  const u = window.__game.b.units.filter((x) => x.alive);
+  return u.some((h) => h.side === 'hero' && u.some((f) => f.side === 'foe' && Math.max(Math.abs(f.u - h.u), Math.abs(f.v - h.v)) <= 2));
+}, null, { timeout: 25000, polling: 200 }).catch(() => {});
+
+/** The page position of a fighter's feet. */
+const feetOf = (page, id) => page.evaluate((id) => {
+  const g = window.__game;
+  const r = g.app.canvas.getBoundingClientRect();
+  const c = r.width / g.app.screen.width;
+  const p = g.sprites.get(id).root.getGlobalPosition();
+  return { x: r.left + p.x * c, y: r.top + p.y * c };
+}, id);
+
+/** Cast a king's spell on a foe's tile as a player does: choose it, then tap the board there. */
+async function cast(page, id, foe) {
+  await page.evaluate((id) => { const g = window.__game; g.b.spells.mana = 10; g.b.spells.ready[id] = 0; g.spell = id; }, id);
+  const at = await feetOf(page, foe);
+  await page.mouse.click(at.x, at.y - 4);
+}
+
+/** Hold the fight still once `test` holds (checked every frame), or after `ms`. */
+async function holdWhen(page, test, ms, arg = null) {
+  try {
+    await page.waitForFunction(test, arg, { timeout: ms, polling: 'raf' });
+  } catch { /* the moment did not come: hold where it is */ }
+  await page.evaluate(() => { window.__game.sceneHold = 1; });
+  await page.waitForTimeout(250);
+}
+const foes = (page) => page.evaluate(() => window.__game.b.units.filter((u) => u.alive && u.side === 'foe').map((u) => u.id));
+/** The camera close on the fight's middle (the heroes and the nearest foes). */
+const closeIn = (page, zoom) => page.evaluate((zoom) => {
+  const g = window.__game;
+  const live = g.b.units.filter((u) => u.alive).map((u) => g.sprites.get(u.id)).filter(Boolean);
+  live.sort((a, b) => a.y - b.y);
+  const mid = live.slice(Math.floor(live.length * 0.2));
+  g.manualCam = true;
+  g.tx = g.cx = mid.reduce((n, s) => n + s.x, 0) / mid.length;
+  g.ty = g.cy = mid.reduce((n, s) => n + s.y, 0) / mid.length - 20;
+  g.zoom = g.tzoom = zoom;
+}, zoom);
+const label = (page, text) => page.evaluate((text) => window.__game.fx.shownLabels.some((o) => !o.destroyed && o.text === text && o.alpha > 0.6), text);
+
+const PARTY = ['wizard', 'lightningMage', 'samurai', 'warlock', 'shambler'];
+for (const [w, h] of SIZES) {
+  const size = `${w}x${h}`;
+  // 1. The Beast Packs: the heroes burn, shock, bleed, curse and poison the wolves, the wolves bite the heroes bleeding,
+  //    the meteor burns, Chain Lightning shocks.
+  for (const calm of size === '393x852' ? [false, true] : [false]) {
+    const { ctx, page } = await open(w, h, calm, PARTY);
+    await armyWave(page, process.env.ARMY ?? 'infernal', Number(process.env.WAVE ?? 5), PARTY);
+    await engaged(page);
+    const f = await foes(page);
+    if (f.length) await cast(page, 'meteor', f[0]);
+    await page.waitForTimeout(1200);
+    if (f.length > 1) await cast(page, 'chain', f[f.length - 1]);
+    await page.waitForTimeout(900);
+    await closeIn(page, 2.1);
+    await holdWhen(page, (need) => window.__game.b.units.filter((u) => u.alive && (u.ail ?? []).some((a) => a.until > window.__game.b.t)).length >= need, 12000, Number(process.env.NEED ?? 5));
+    await page.screenshot({ path: `docs/samples/status-fx-fight-${size}${calm ? '-calm' : ''}.png` });
+    console.log(size, calm ? 'calm' : '', 'fight', await page.evaluate(() => window.__game.b.units.filter((u) => u.alive).map((u) => `${u.def}:${(u.ail ?? []).filter((a) => a.until > window.__game.b.t).map((a) => a.kind).join('+')}`).join(' ')));
+    await ctx.close();
   }
-console.log('errors', errors.length);
-await ctx.close(); await br.close(); s.close();
+  if (size !== '393x852') continue;
+  // 2. A frozen foe shatters: Deep Freeze on the sturdiest, and the heroes' next heavy blow breaks the ice.
+  {
+    const { ctx, page } = await open(w, h, false, PARTY);
+    await armyWave(page, 'ogres', 3, PARTY);
+    await engaged(page);
+    for (let i = 0; i < 6; i++) {
+      const f = await foes(page);
+      if (!f.length) break;
+      await cast(page, i % 2 ? 'deepfreeze' : 'frost', f[i % f.length]);
+      await closeIn(page, 2.2);
+      try {
+        await page.waitForFunction(() => window.__game.fx.shownLabels.some((o) => !o.destroyed && o.text === 'SHATTER'), null, { timeout: 2500, polling: 'raf' });
+        // (held, and the camera on the shattered foe)
+        await page.evaluate(() => {
+          const g = window.__game;
+          g.sceneHold = 1;
+          const o = g.fx.shownLabels.find((o) => !o.destroyed && o.text === 'SHATTER');
+          g.manualCam = true;
+          g.tx = g.cx = o.x;
+          g.ty = g.cy = o.y + 30;
+          g.zoom = g.tzoom = 2.6;
+        });
+        break;
+      } catch { /* no shatter yet: freeze another */ }
+    }
+    await page.waitForTimeout(250);
+    console.log(size, 'shatter shown:', await label(page, 'SHATTER'));
+    await page.screenshot({ path: `docs/samples/status-fx-shatter-${size}.png` });
+    await ctx.close();
+  }
+  // 3. The Infernal Host: imps and demons are fire beings, so the Fire Wizard's fire does not take ("Immune").
+  {
+    const { ctx, page } = await open(w, h, false, PARTY);
+    await armyWave(page, 'infernal', 2, PARTY);
+    await engaged(page);
+    await closeIn(page, 2.2);
+    await holdWhen(page, () => window.__game.fx.shownLabels.some((o) => !o.destroyed && o.text === 'Immune' && o.alpha > 0.8), 12000);
+    console.log(size, 'immune shown:', await label(page, 'Immune'));
+    await page.screenshot({ path: `docs/samples/status-fx-immune-${size}.png` });
+    await ctx.close();
+  }
+}
+console.log('page errors', errors);
+await browser.close();
+srv.close();

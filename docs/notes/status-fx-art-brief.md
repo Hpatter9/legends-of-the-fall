@@ -19,8 +19,9 @@ painted atlas replaces the placeholders **with no code change**. The design is i
   height, whatever the cell's size.
 - To put the pack placeholders back: `python3 tools/status-fx/status-sheets.py` (it reads `tools/status-fx/status-pack.json`).
 - Check a swap with `npm test -- status-fx` (every key has frames, in the importer's order), then
-  `npm run web && node tools/status-fx/shots.mjs && python3 tools/status-fx/sheet.py` (the fight, the shatter, the
-  immune foe and the contact sheet, at 393x852, in `docs/samples/status-fx-*.png`).
+  `npm run web && node tools/status-fx/shots.mjs` (real army fights: several ailments at once, a shatter and an "Immune",
+  at 393x852, 360x780 and 412x915 and with reduced motion, in `docs/samples/status-fx-*.png`). Where the parts are drawn:
+  `src/render/ailmentLayer.ts`.
 - I tried the importer with stand-in sheets (the placeholders blown up to 256px cells): 35 parts packed, the tests
   passed, and the placeholder atlas was put back.
 

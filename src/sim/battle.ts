@@ -231,7 +231,7 @@ export type BattleEvent =
   | { kind: 'dash'; by: number; from: At; to: At }
   | { kind: 'blink'; by: number; from: At; to: At }
   | { kind: 'area'; by: number; id: 'volley' | 'meteor'; u: number; v: number; ms: number }
-  | { kind: 'arc'; from: number; to: number }
+  | { kind: 'arc'; from: number; to: number; ail?: 'shock' }
   | { kind: 'zone'; u: number; v: number; ms: number; what?: 'spikes' }
   | { kind: 'trap'; u: number; v: number; ms: number }
   | { kind: 'dodge'; to: number }
@@ -701,12 +701,12 @@ export function strikeDef(b: Battle, me: Unit): UnitDef {
 export const battleTap: { fn?: (b: Battle, events: BattleEvent[]) => void } = {};
 
 export function stepBattle(b: Battle): BattleEvent[] {
-  const out = stepInner(b);
+  const out = stepOnce(b);
   battleTap.fn?.(b, out);
   return out;
 }
 
-function stepInner(b: Battle): BattleEvent[] {
+function stepOnce(b: Battle): BattleEvent[] {
   const out: BattleEvent[] = [];
   ailCtx.b = b;
   if (b.phase !== 'fight') return out;

@@ -154,7 +154,7 @@ export class ChainView {
       const def = UNITS[w.unit.def];
       // (the path is over world tiles; the walkers are drawn on the joined board, whose tile (0, 0) is `min`)
       const path = walkAcross(old, next, w.unit, { u: w.goal[0], v: w.goal[1] }, def.jump).map((p) => ({ u: p.u - minU, v: p.v - minV }));
-      const unit: Unit = { ...w.unit, u: path[0].u, v: path[0].v, step: undefined, swing: undefined, cast: undefined, hurtAt: undefined, guardUntil: undefined, slowUntil: undefined, hasteUntil: undefined, charmUntil: undefined, dot: undefined };
+      const unit: Unit = { ...w.unit, u: path[0].u, v: path[0].v, step: undefined, swing: undefined, cast: undefined, hurtAt: undefined, guardUntil: undefined, slowUntil: undefined, hasteUntil: undefined, charmUntil: undefined, dot: undefined, ail: undefined };
       const sprite = new UnitSprite(unit);
       this.layer.addChild(sprite.root);
       inFrame(walkFrame, () => sprite.update(comp, 0, true));

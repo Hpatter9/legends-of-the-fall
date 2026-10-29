@@ -36,7 +36,7 @@ import { settings } from '../settings';
 import { badgeOf } from '../sim/levels';
 import { AURA_COLOURS, auraHalo, auraRings } from './levelLook';
 import { attackMotion } from './motionRules';
-import { statusMockHook } from './statusMock';
+import { AilmentFx, ailmentTint } from './ailmentLayer';
 
 /** The sheet rows beyond `Anim`: the skills' casts (a sheet without one plays its plain attack). */
 type Row = Anim | 'attack2' | 'defend';
@@ -100,9 +100,11 @@ export class UnitSprite {
   private shield = new Sprite();
   private badge = new Sprite();
   private pillar = new Sprite();
-  /** The loops of the statuses on it (up to three, made as needed), and the stars that circle a stunned head. */
+  /** The loops of the buffs on it (up to three, made as needed); `stars` only marks where they go in the drawing order. */
   private overlays: Sprite[] = [];
   private stars = new Graphics();
+  /** Its ailments' look: body parts behind and in front of it, and the chips over its head (STATUS-FX). */
+  private ail = new AilmentFx();
   /** A knock from a blow, in px (it eases back to nothing). */
   private kx = 0;
   private ky = 0;
@@ -180,7 +182,7 @@ export class UnitSprite {
     this.pillar.anchor.set(0.5, 1);
     this.pillar.visible = false;
     this.pillar.blendMode = 'add';
-    this.root.addChild(this.shadow, this.aura, this.glow, ...(this.awakenAura ? [this.awakenAura.back] : []), this.pillar, this.shield, this.rim, this.body, ...(this.awakenAura ? [this.awakenAura.front] : []), this.sparks, this.stars, this.bar, this.badge);
+    this.root.addChild(this.shadow, this.aura, this.glow, ...(this.awakenAura ? [this.awakenAura.back] : []), this.pillar, this.shield, this.ail.back, this.rim, this.body, ...(this.awakenAura ? [this.awakenAura.front] : []), this.sparks, this.stars, this.bar, this.badge, this.ail.front);
   }
 
   /** Draw it at the time `t` of the fight (ms), on the board. */
@@ -342,9 +344,9 @@ export class UnitSprite {
     }
     // a blink of white when struck
     if (u.hurtAt !== undefined && t - u.hurtAt < 90 && u.alive) this.flash = 1;
-    // (a slowed fighter is tinted frosty blue; a flash or a dot's tint wins over it)
-    const frosty = u.alive && u.slowUntil !== undefined && t < u.slowUntil;
-    this.body.tint = this.flash > 0 ? 0xffb0b0 : u.alive && u.dot ? (u.dot.kind === 'burn' ? 0xffc890 : 0xff9a9a) : frosty ? 0xb8e4ff : 0xffffff;
+    // (its ailments: their parts and chips, and the tint of the latest that has one (burning orange, frozen ice blue...); a flash wins over it)
+    this.ail.update(u, this.tall, t, this.reduced?.matches ?? false, settings().saver);
+    this.body.tint = this.flash > 0 ? 0xffb0b0 : ailmentTint(this.ail.shown) ?? 0xffffff;
     // (the kits' looks: a wraith is a pale ghost of the foe it was; a foe turned to stone is grey)
     if (u.def === 'wraith') this.body.tint = 0x9fd0ff;
     else if (u.alive && u.kx?.stone !== undefined && t < u.kx.stone) this.body.tint = 0x9a9a92;
@@ -374,8 +376,6 @@ export class UnitSprite {
     this.drawPillar(u.alive);
     if (this.popAt >= 0) this.root.scale.set(this.baseSize * this.popScale());
     else if (this.root.scale.x !== this.baseSize) this.root.scale.set(this.baseSize);
-    // (STATUS-FX phase A: the ailments' mock-up, drawn only on fighters the console has given some; docs/notes/status-fx.md)
-    statusMockHook(this.root, this.body, u, this.tall, t);
   }
 
   /** Use this sprite for another fighter of the same kind and size (a crowd's foes are drawn from a pool, so a wave of fifty makes no new sprites). */
@@ -404,10 +404,9 @@ export class UnitSprite {
     return sp;
   }
 
-  /** The loops that stay on it while a status lasts (frost bubbles, flames, a shield's bubble, wind, auras), and the stars of a stun. */
+  /** The loops that stay on it while a buff lasts (a shield's bubble, wind, auras). Its ailments are `ailmentLayer.ts`'s. */
   private drawStatuses(u: Unit, t: number): void {
-    const list = statusesOf(u, t);
-    const loops = list.filter((k): k is Exclude<typeof k, 'stun'> => k !== 'stun').slice(0, maxStatuses(settings().saver));
+    const loops = statusesOf(u, t).slice(0, maxStatuses(settings().saver));
     for (let i = 0; i < Math.max(loops.length, this.overlays.length); i++) {
       if (i >= this.overlays.length) {
         const sp = new Sprite();
@@ -429,29 +428,14 @@ export class UnitSprite {
       // Use a held material sample so a persistent status never fades out at a strip boundary.
       paintSprite(sp, 500, 1000, (this.tall * look.size) / 32, 0, look.alpha, true, this.reduced?.matches ?? false);
     }
-    const g = this.stars;
-    g.clear();
-    g.visible = list[0] === 'stun';
-    if (!g.visible) return;
-    // (three little stars circling over the head)
-    for (let i = 0; i < 3; i++) {
-      const a = t / 260 + (i * Math.PI * 2) / 3;
-      g.star(Math.cos(a) * 9, -this.tall - 2 + Math.sin(a) * 3, 4, 3, 1.2).fill({ color: 0xffe27a, alpha: 0.9 });
-    }
   }
 
-  /** The status icon: burning, then bleeding, charmed, hasted, slowed (one at a time, the first that holds). */
+  /** A charmed fighter's heart beside its bar (the ailments' chips took the old badge's other icons, STATUS-FX; a haste keeps its wind loop). */
   private drawBadge(u: Unit, t: number): void {
-    const key =
-      !u.alive ? null
-      : u.dot && t < u.dot.until ? (u.dot.kind === 'burn' ? 'burn' : 'bleed')
-      : u.charmUntil !== undefined && t < u.charmUntil ? 'charm'
-      : u.hasteUntil !== undefined && t < u.hasteUntil ? 'haste'
-      : u.slowUntil !== undefined && t < u.slowUntil ? 'slow'
-      : null;
-    this.badge.visible = key !== null;
-    if (!key) return;
-    const frames = { burn: VFX.statusFire, bleed: VFX.statusBlood, charm: VFX.pinkHeart, haste: VFX.statusWind, slow: VFX.statusIce }[key];
+    const on = u.alive && u.charmUntil !== undefined && t < u.charmUntil;
+    this.badge.visible = on;
+    if (!on) return;
+    const frames = VFX.pinkHeart;
     this.badge.texture = frames[Math.floor(t / 90) % frames.length];
     this.badge.scale.set(0.5);
     this.badge.position.set(-BAR_W / 2 - 8, -this.tall - 6);

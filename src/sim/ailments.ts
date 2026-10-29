@@ -15,9 +15,8 @@ import { isBoss } from './foes';
 import { mendUnit, type Dot } from './abilities';
 import { mixSeed } from './rng';
 
-/** The eleven ailments. */
-export type AilmentKey = 'burn' | 'poison' | 'freeze' | 'bleed' | 'chill' | 'shock' | 'stun' | 'weak' | 'curse' | 'silence' | 'fear';
-export const AILMENT_KEYS: readonly AilmentKey[] = ['burn', 'poison', 'freeze', 'bleed', 'chill', 'shock', 'stun', 'weak', 'curse', 'silence', 'fear'];
+import { AILMENT_KEYS, type AilmentKey } from './ailmentKeys';
+export { AILMENT_KEYS, type AilmentKey };
 
 /** The new ailments on (the game) or off (main's rules exactly, for the identity test and for measuring before and after). */
 export const AILMENT_SWITCH = { on: true };
@@ -39,8 +38,6 @@ export interface Ailment {
   /** A shock that was passed on does not pass on again; and the one it came from. */
   relay?: boolean;
   from?: number;
-  /** The share of each tick the one who laid it drinks (a curse's is `HEX_DRAIN`; the Shambler's rot). */
-  drain?: number;
 }
 
 /** The kinds that hurt over time. */
@@ -279,14 +276,6 @@ export function bleedFor(b: Battle, by: Unit, to: Unit, share: number, ms = 3000
   if (!on() || !to.alive) return;
   setDot(b, to, { kind: 'bleed', dmg: Math.max(1, Math.round(attack(by) * share)), every: 500, ms, by: by.id, next: b.t + 500, until: b.t + ms });
 }
-/** The Shambler's rot (on only): two stacks of poison of `dmg` a tick each, and he drinks from it as a curse's layer does. */
-export function rotFor(b: Battle, me: Unit, to: Unit, dmg: number, every: number, ms: number): void {
-  if (!on() || !to.alive) return;
-  for (let i = 0; i < 2; i++) setDot(b, to, { kind: 'poison', dmg, every, ms, by: me.id, next: b.t + every, until: b.t + ms });
-  const p = find(to, 'poison');
-  if (p && p.by === me.id) p.drain = HEX_DRAIN;
-}
-
 /** A curse that only turns healing to harm (a Hex spell's), or deepens one already ticking. */
 export function curseFor(b: Battle, by: Unit, to: Unit, ms = AIL.CURSE_MS): void {
   if (!on() || !to.alive) return;
@@ -510,9 +499,8 @@ export function tickAilments(b: Battle, u: Unit, out: BattleEvent[]): void {
       const by = layer(b, a.by)!;
       const dmg = on() ? a.dmg * (a.stacks ?? 1) * (a.kind === 'bleed' && walking(b, u) ? 2 : 1) : a.dmg;
       tagged(out, a.kind, () => hurt(b, by, u, dmg, false, false, out, 'dot'));
-      // (a curse feeds the one who laid it, and so does the Shambler's rot)
+      // (a curse feeds the one who laid it)
       if (a.kind === 'curse' && by.alive) mendUnit(by, a.dmg * HEX_DRAIN, out);
-      else if (a.drain && by.alive) mendUnit(by, dmg * a.drain, out);
     } else if (a.kind === 'shock' && on()) {
       a.next += a.every;
       spark(b, u, a, out);
@@ -533,7 +521,7 @@ function spark(b: Battle, u: Unit, a: Ailment, out: BattleEvent[]): void {
     .sort((x, y) => Math.max(Math.abs(x.u - u.u), Math.abs(x.v - u.v)) - Math.max(Math.abs(y.u - u.u), Math.abs(y.v - u.v)) || x.id - y.id);
   const to = wet ? near : near.slice(0, 1);
   for (const x of to) {
-    out.push({ kind: 'arc', from: u.id, to: x.id });
+    out.push({ kind: 'arc', from: u.id, to: x.id, ail: 'shock' });
     tagged(out, 'shock', () => hurt(b, by, x, Math.max(1, Math.round((a.dmg ?? 1) * (isMachine(x.def) ? AIL.SHOCK_MACHINE : 1))), false, true, out, 'dot'));
     if (a.relay && x.alive) shockFor(b, by, x, AIL.SHOCK_PASS_MS, false, u.id);
   }

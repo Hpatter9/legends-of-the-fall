@@ -124,12 +124,10 @@ test('Rotting Touch makes every foe within two tiles rot, and the Shambler drink
   const b = arena();
   const me = spawn(b, 'shambler', 3, 6, CHARGE_MAX);
   me.hp = 100;
-  // (STATUS-FX: the rot is poison now, two stacks, so the foes are orcs: skeletons cannot be poisoned)
-  const near = spawn(b, 'orcGrunt', 3, 5);
-  const far = spawn(b, 'orcGrunt', 3, 0);
+  const near = spawn(b, 'skeleton', 3, 5);
+  const far = spawn(b, 'skeleton', 3, 0);
   run(b, 200);
-  assert.equal(dotOf(near)?.kind, 'poison');
-  assert.equal(dotOf(near)?.stacks, 2);
+  assert.equal(dotOf(near)?.kind, 'curse');
   assert.equal(dotOf(far), undefined);
   run(b, 1500);
   assert.ok((me.healed ?? 0) > 0);

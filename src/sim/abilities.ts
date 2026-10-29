@@ -18,7 +18,7 @@ import { triggerDuoComboOnUlt } from './duoCombos';
 import { addRes, castHero, CHARGE_TO_POOL, heroKitOf, poolOf, poolOnDealt, poolOnTaken, resMax, tickPool, ultOnDamage } from './heroKits';
 import { kitStrike, kitTick } from './kits/effects';
 import { skillRiders } from './ailmentSources';
-import { AILMENT_SWITCH, rotFor, blowRiders, charmFor, chillFor, cleanse, freezeFor, harmed, healThrough, isSilenced, setDot, stunFor, tickAilments } from './ailments';
+import { AILMENT_SWITCH, blowRiders, charmFor, chillFor, cleanse, freezeFor, harmed, healThrough, isSilenced, setDot, stunFor, tickAilments } from './ailments';
 
 /** A skill fires at this much charge. */
 export const CHARGE_MAX = 100;
@@ -955,9 +955,9 @@ function rottingTouch(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!near.length) return false;
   const ms = durOf(me, ROT_MS);
   for (const f of near) {
-    // (with the ailments on, the rot is poison: two stacks, half the tick each, and he still drinks from it, STATUS-FX)
-    if (AILMENT_SWITCH.on) rotFor(b, me, f, Math.max(1, Math.round(atkOf(me) * 0.15)), HEX_EVERY, ms);
-    else setDot(b, f, { kind: 'curse', dmg: Math.max(1, Math.round(atkOf(me) * 0.3)), every: HEX_EVERY, ms, by: me.id, next: b.t + HEX_EVERY, until: b.t + ms });
+    // (the rot is a curse: it ticks, he drinks from it, and with STATUS-FX's ailments it turns the foe's healing to harm. It was to become poison,
+    // but the dead and the golems shrug poison off, and the Shambler fell out of step with the roster: docs/notes/status-fx.md)
+    setDot(b, f, { kind: 'curse', dmg: Math.max(1, Math.round(atkOf(me) * 0.3)), every: HEX_EVERY, ms, by: me.id, next: b.t + HEX_EVERY, until: b.t + ms });
     out.push({ kind: 'arc', from: me.id, to: f.id });
   }
   return true;

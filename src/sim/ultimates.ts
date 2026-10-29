@@ -490,7 +490,7 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   warlock: { rate: 0.5, power: 1.07 },
   illusionist: { rate: 1.08, power: 0.47 },
   gunslinger: { rate: 0.37, power: 1.7 },
-  shambler: { rate: 1.04, power: 0.99 },
+  shambler: { rate: 1.04, power: 0.9 }, // (0.99 until STATUS-FX: Plague Tide's curse now also turns the foes' healing to harm)
   rifleBot: { rate: 1.01, power: 2.17 },
   mercenary: { rate: 1.21, power: 3.07 },
   mummy: { rate: 0.99, power: 0.49 },

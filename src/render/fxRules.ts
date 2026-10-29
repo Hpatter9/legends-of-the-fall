@@ -237,7 +237,8 @@ export function deathKind(name: string, side: 'hero' | 'foe'): DeathKind {
 
 /* ------------------------------------------------------------------ statuses */
 
-export type StatusKey = 'shield' | 'slow' | 'burn' | 'bleed' | 'curse' | 'stun' | 'haste' | 'rally' | 'banner' | 'frenzy' | 'regen';
+/** The buffs a fighter wears as loops. The ailments (burning, frozen, stunned...) are drawn by `ailmentLayer.ts` (STATUS-FX). */
+export type StatusKey = 'shield' | 'haste' | 'rally' | 'banner' | 'frenzy' | 'regen';
 
 /** A looping overlay that stays on a fighter while its status lasts. */
 export interface StatusLook {
@@ -251,12 +252,8 @@ export interface StatusLook {
   tint?: number;
 }
 
-export const STATUS_LOOKS: Record<Exclude<StatusKey, 'stun'>, StatusLook> = {
+export const STATUS_LOOKS: Record<StatusKey, StatusLook> = {
   shield: { sheet: 'light-shield', size: 1.15, at: 0.5, alpha: 0.4, frameMs: 120, tint: 0x9ad0ff },
-  slow: { sheet: 'ice-status', size: 1.3, at: 0.55, alpha: 0.95, frameMs: 130 },
-  burn: { sheet: 'fire-flame', size: 0.7, at: 0.35, alpha: 0.9, frameMs: 90 },
-  bleed: { sheet: 'blood-status', size: 1.2, at: 0.5, alpha: 0.9, frameMs: 130 },
-  curse: { sheet: 'dark-aura', size: 1.3, at: 0.3, alpha: 0.9, frameMs: 120 },
   haste: { sheet: 'wind-status', size: 1.3, at: 0.5, alpha: 0.9, frameMs: 100 },
   rally: { sheet: 'fire-aura', size: 1.2, at: 0.3, alpha: 0.85, frameMs: 120 },
   banner: { sheet: 'light-aura', size: 1.2, at: 0.3, alpha: 0.8, frameMs: 120, tint: 0xffe27a },
@@ -265,15 +262,12 @@ export const STATUS_LOOKS: Record<Exclude<StatusKey, 'stun'>, StatusLook> = {
 };
 
 /** The fields of a fighter the statuses read (a `Unit` has them all). */
-export type StatusSource = Pick<Unit, 'alive' | 'dot' | 'slowUntil' | 'hasteUntil' | 'rallyUntil' | 'banner' | 'frenzy' | 'form' | 'hot' | 'shield' | 'stunUntil'>;
+export type StatusSource = Pick<Unit, 'alive' | 'hasteUntil' | 'rallyUntil' | 'banner' | 'frenzy' | 'form' | 'hot' | 'shield'>;
 
-/** The statuses holding on a fighter at time `t`, most telling first. */
+/** The buffs holding on a fighter at time `t`, most telling first (its ailments: `shownAilments` in `statusStyles.ts`). */
 export function statusesOf(u: StatusSource, t: number): StatusKey[] {
   if (!u.alive) return [];
   const out: StatusKey[] = [];
-  if (u.stunUntil !== undefined && t < u.stunUntil) out.push('stun');
-  if (u.dot && t < u.dot.until) out.push(u.dot.kind === 'burn' ? 'burn' : u.dot.kind === 'curse' ? 'curse' : 'bleed');
-  if (u.slowUntil !== undefined && t < u.slowUntil) out.push('slow');
   if (u.shield && t < u.shield.until && u.shield.hp > 0) out.push('shield');
   if (u.hasteUntil !== undefined && t < u.hasteUntil) out.push('haste');
   if (u.rallyUntil !== undefined && t < u.rallyUntil) out.push('rally');
