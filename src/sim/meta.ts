@@ -203,8 +203,8 @@ export interface Pull {
   lucky?: boolean;
 }
 
-/** A brand-new save: no hero yet, only the three starter packs to pick from (`pickStarter`). */
-export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, stones: 0, unlocked: [], party: [], starter: { packs: starterPacks(seed), pick: null }, pulls: 0, sinceNew: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], heroesSeen: [], opened: [], achievements: [], claimed: [], codexPaid: [], stash: [], ranked: {} });
+/** A brand-new save: no hero yet, only the two starter packs to pick from (`pickStarter`). */
+export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, stones: 0, unlocked: [], party: [], starter: { packs: starterPacks(), pick: null }, pulls: 0, sinceNew: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], heroesSeen: [], opened: [], achievements: [], claimed: [], codexPaid: [], stash: [], ranked: {} });
 
 /** A save past the pick with the old starting five unlocked and in the party: what the saves from before the pick have, and what the tests and tools play with. */
 export function startedMeta(seed: number): Meta {
@@ -396,7 +396,7 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
     const m = JSON.parse(store.getItem(KEY) ?? 'null') as Meta | null;
     if (m && typeof m.crowns === 'number' && Array.isArray(m.unlocked) && typeof m.seed === 'number') {
       // (a save from before the starter pick always has the old five; one with a pick keeps just what it unlocked, and its pack)
-      m.starter = readStarter(m.starter, m.seed);
+      m.starter = readStarter(m.starter);
       m.unlocked = [...new Set([...(m.starter ? [] : HEROES), ...m.unlocked.filter((k) => ALL_HEROES.includes(k))])];
       if (!m.starter) delete m.starter;
       // (saves from before parties have the first five unlocked)

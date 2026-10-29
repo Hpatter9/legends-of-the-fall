@@ -162,7 +162,7 @@ test('pulls never give a hero earned by content, whatever the seed (an owned one
   assert.equal(g.unlock + g.rank, 0);
   assert.ok(!m.unlocked.includes('tyrant'));
   // (the starter packs never offer one either: see starter.test.ts)
-  for (let seed = 1; seed <= 100; seed++) assert.ok(starterPacks(seed).flat().every((k) => !isContent(k)));
+  assert.ok(starterPacks().flat().every((k) => !isContent(k)));
 });
 
 test('a content hero joins on its milestone, once, and stays', () => {

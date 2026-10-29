@@ -1,6 +1,5 @@
 import { SKILL2_LEVEL } from '../src/sim/heroKits';
 import { bareBoard } from './bare';
-import { starterPacks } from '../src/sim/starter';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addUnit, fight, playOut, stepBattle, startBattle, place, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
@@ -243,11 +242,16 @@ test('a team of new heroes is about as strong as the starting five', () => {
     return w;
   };
   const base = wins([...HEROES]);
-  // (with no tiers, teams of new heroes are no stronger than the old five: teams made of two starter packs, which have a front-liner, a striker and a back-liner each)
-  const teams = [1, 2, 3, 4, 5, 6].map((seed) => {
-    const [a, b] = starterPacks(seed);
-    return [...a, b[0], b[2]];
-  });
+  // (with no tiers, teams of new heroes are no stronger than the old five: mixed teams of a front-liner, a striker and a back-liner and two more,
+  // the teams the seeded starter packs of seeds 1 to 6 used to make; the packs are fixed now, so the teams are written out)
+  const teams = [
+    ['peasant', 'kitsune', 'wolfBard', 'kraken', 'gorgon'],
+    ['peasant', 'illusionist', 'archer', 'paladin', 'warlock'],
+    ['mummy', 'karasu', 'wizard', 'kraken', 'satyr'],
+    ['shambler', 'kitsune', 'druid', 'mummy', 'siegeBot'],
+    ['yamabushi', 'lancer', 'wolfBard', 'shambler', 'wizard'],
+    ['paladin', 'samurai', 'druid', 'peasant', 'satyr'],
+  ];
   const results = teams.map((t) => wins(t));
   const mean = results.reduce((x, y) => x + y, 0) / results.length;
   assert.ok(mean >= base * 0.6 && mean <= base * 1.4, `the teams won ${results} on average ${mean}, base ${base}`);

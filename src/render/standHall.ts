@@ -38,7 +38,7 @@ import cratesUrl from '../art/castle/crates.png';
 import barrelsUrl from '../art/castle/barrels.png';
 import potsUrl from '../art/castle/pots.png';
 import standardUrl from '../art/camp/standard.png';
-import { rulerTextures, rulerThrone } from './rulerArt';
+import { rulerSeatTexture, rulerTextures, rulerThrone } from './rulerArt';
 import { rulerFrame, type RulerAction } from '../rulerRules';
 import { settings } from '../settings';
 
@@ -486,7 +486,10 @@ export class StandHall {
         this.emptyThrone.width = this.emptyThrone.height = KING_H * KING_SCALE;
         this.emptyThrone.visible = action !== 'seated' && action !== 'command';
       }
-      this.king.texture = rulerTextures(settings().ruler, action)[rulerFrame(action, action === 'command' ? 1600 - this.decreeLeft : action === 'seated' ? this.t : elapsed, still)];
+      // (on the throne the throne stays put and the ruler breathes, `seatFrame`; standing actions play their frames)
+      this.king.texture = action === 'seated' || action === 'command'
+        ? rulerSeatTexture(settings().ruler, action, action === 'command' ? 1600 - this.decreeLeft : this.t, still)
+        : rulerTextures(settings().ruler, action)[rulerFrame(action, elapsed, still)];
       this.king.width = this.king.height = KING_H * KING_SCALE;
       // (his health over his head: green, low and red, on a dark gilt-edged plate)
       const g = this.kingBar;
