@@ -6,7 +6,8 @@
 //   npm run balance -- --games 800     fewer fights, quicker and noisier
 //   npm run balance -- --hero-stage 1  play the hero table at another stage (default 5)
 //   npm run balance -- --heroes-only --hero-level 100 --hero-stage 60   the same with every hero at a level (pick a stage where the average team wins about half)
-//   npm run balance -- --heroes-only --hero-grade 3 --hero-stage 14   the same with every hero merged up (grade 2 or 3: the tier skills, `tierSkills.ts`)
+//   npm run balance -- --heroes-only --hero-grade 3 --hero-stage 14   the same with every hero merged up (grade 2, 3 or 4: the tier skills, `tierSkills.ts`)
+//   npm run balance -- --heroes-only --hero-grade 4 --tier-cap 3 ...   the same, every hero casting no higher than its tier 3 skill (to set tier 4 against it; `tools/rank4/` measures each hero's step)
 //   npm run balance -- --saves 200     fresh saves in the whole-run table (default 400)
 //   npm run balance -- --heroes-only  only the hero value table (table 1); --json file.json also writes each hero's win rate and lift; --seed-offset n plays other fights
 //   npm run balance -- --runs-only     only the whole-run table (quicker when tuning the levels)
@@ -43,6 +44,7 @@ import { deploySpots, fieldBoost, pickTeam, play } from './heroSweep';
 import { CLASS_NAMES, CLASS_OF, type StarterClass } from '../src/sim/starter';
 import { heroStats, learn, tierNodes } from '../src/sim/talents';
 import { writeFileSync } from 'node:fs';
+import { capTiers } from './rank4/cap';
 
 const arg = (name: string, fallback: number): number => {
   const i = process.argv.indexOf(name);
@@ -58,6 +60,8 @@ const HERO_STAGE = arg('--hero-stage', 5);
 /** The level every hero fights at in the hero table (`--hero-level 60`; a stage that suits it is picked with `--hero-stage`). */
 const HERO_LEVEL = arg('--hero-level', 1);
 const HERO_GRADE = arg('--hero-grade', 1);
+// (`--tier-cap 3`: every hero casts its tier 3 skill at grade 4, as it did before tier 4 was added)
+if (process.argv.includes('--tier-cap')) capTiers(ALL_HEROES, arg('--tier-cap', 4));
 const RUNS_ONLY = process.argv.includes('--runs-only');
 const ARMIES_ONLY = process.argv.includes('--armies-only');
 const HEROES_ONLY = process.argv.includes('--heroes-only');
