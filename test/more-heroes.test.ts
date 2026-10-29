@@ -365,16 +365,21 @@ test('Hellblade Sweep heals the Demon Swordsman, and Demon Form lifts his attack
   me.hp = 100;
   [[3, 5], [4, 5]].forEach(([u, v]) => spawn(b, 'skeleton', u, v));
   run(b, 200);
-  assert.ok(me.hp > 100);
+  assert.ok(me.hp > 100, `Hellblade Sweep heals: ${me.hp}`);
   const c = arena();
   const dm = spawn(c, 'demonSwordsman', 3, 6, 0, ULT_LEVEL);
   dm.charge2 = CHARGE_MAX;
-  spawn(c, 'skeleton', 3, 4);
+  // (a sturdy foe, so the fight lasts while the form wears off)
+  const foe = spawn(c, 'skeleton', 3, 4);
+  foe.hp = foe.maxHp = 100000;
   const before = dm.power ?? 1;
   run(c, 200);
-  assert.ok(Math.abs((dm.power ?? 1) / before - FORM_MULT) < 1e-6);
-  run(c, 8000);
-  assert.ok(Math.abs((dm.power ?? 1) / before - 1) < 1e-6);
+  assert.ok(Math.abs((dm.power ?? 1) / before - FORM_MULT) < 1e-6, `in form: ${(dm.power ?? 1) / before}`);
+  // (and no second Demon Form while the first wears off: with ULT-CHARGE's quicker meter it would be full again before then; the form lasts
+  // 7 s times the square root of its tuned strength)
+  c.autoUlt = false;
+  run(c, 13000);
+  assert.ok(Math.abs((dm.power ?? 1) / before - 1) < 1e-6, `worn off: ${(dm.power ?? 1) / before}, form ${JSON.stringify(dm.form)} at ${c.t}`);
   assert.equal(dm.form, undefined);
 });
 

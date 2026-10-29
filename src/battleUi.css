@@ -53,8 +53,9 @@ body[data-phase='fight'] #heroBar:not(:empty) ~ #benchWrap { display: none; }
 .hbPips b.lit { color: var(--black, #000); background: #ffe27a; border-color: #fff3b0; }
 .hbPips b.shut { color: rgb(255 255 255 / 0.35); }
 .hbName { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 12px/12px var(--body); }
-.hb.locked .hbPic { filter: grayscale(0.7) brightness(0.75); }
-.hb.locked .hbRing .arc { stroke: transparent; }
+/* (a hero without its ultimate yet, HEROBAR-LOCK: no ring at all; the portrait fills the ring's place in a plain frame, so the tile keeps its shape) */
+.hb.locked .hbRing svg { display: none; }
+.hb.locked .hbPic { left: 0; top: 0; width: 44px; height: 44px; box-sizing: border-box; border: 2px solid #a28a58; }
 .hb.fallen { filter: grayscale(1) brightness(0.6); }
 .hb.ready { border-color: var(--gold, #f5c542); box-shadow: 0 0 0 1px var(--gold-hi, #ffe08a), 0 0 12px rgb(255 210 74 / 0.8); }
 /* (the ready glow is steady; what moves is the portrait's ring, breathing a little bigger and back: no looping brightness) */
@@ -94,6 +95,7 @@ body[data-phase='fight'] #spellCards .spell em { font-weight: 400; }
 .heroBar.two .hb { padding: 2px; gap: 2px; }
 .heroBar.two .hbRing, .heroBar.two .hbRing svg { width: 34px; height: 34px; }
 .heroBar.two .hbPic { left: 5px; top: 5px; width: 24px; height: 24px; }
+.heroBar.two .hb.locked .hbPic { left: 0; top: 0; width: 34px; height: 34px; }
 .heroBar.two .hbPlate { top: 22px; }
 .heroBar.two .hbName, .heroBar.two .hbPips { display: none; }
 .heroBar.flat .hb { display: grid; grid-template-columns: 34px minmax(0, 1fr); grid-template-rows: auto auto auto; column-gap: 3px; row-gap: 3px; align-items: center; }

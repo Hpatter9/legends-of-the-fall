@@ -31,7 +31,7 @@ import { applyTierMods } from './tierSkills';
 import { landCombo, startCombo, tickCombo, type ComboState } from './combos';
 import { startDuoCombos, type DuoState } from './duoCombos';
 import type { EquipStats } from './equipment';
-import { heroKitOf, startPool, ultOnDamage, type KitState } from './heroKits';
+import { heroKitOf, startPool, startUlt, ultOnDamage, type KitState } from './heroKits';
 import { applyOrders, type LogEntry, type Order } from './orders';
 import { settleJump } from './kits/blades';
 import { settleKeg } from './kits/shooters';
@@ -80,6 +80,8 @@ export interface Unit {
   charge: number;
   /** An ultimate's charge, 0 to `CHARGE_MAX` (only the heroes with an ultimate fill it). */
   charge2?: number;
+  /** How fast this hero's ultimate meter fills, as a multiple (absent is x1): the Last Stand's heroes take `ULT_FILL.STAND`. */
+  ultPace?: number;
   /** The skill being cast, from when and for how long. */
   cast?: { at: number; ms: number; anim: 'attack' | 'attack2' | 'defend' };
   /** Takes half damage until then (Shield Wall). */
@@ -615,6 +617,8 @@ function startKits(b: Battle): void {
   if (!kitted.length) return;
   b.kits = {};
   for (const x of kitted) {
+    // (the ultimate's meter starts the fight part full: ULT-CHARGE)
+    startUlt(x);
     if (x.def === 'lancer') x.kx ??= {};
     if (x.def === 'wolfBard' && (x.level ?? 1) >= 10) {
       (x.kx ??= {}).tune = 'dirge';

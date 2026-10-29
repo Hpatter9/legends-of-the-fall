@@ -76,6 +76,13 @@ for (const f of readdirSync('src/audio').filter((f) => f.endsWith('.opus'))) {
   copyFileSync(`src/audio/${f}`, `${out}/audio/${f}`);
   AUDIO_FILES.push(`audio/${f}`);
 }
+// Full art and smaller menu cutouts are separate files, all retained for offline play.
+const HERO_ART_FILES = [];
+mkdirSync(`${out}/heroes`, { recursive: true });
+for (const f of readdirSync('src/art/heroes').filter(f => f.endsWith('.webp'))) {
+  copyFileSync(`src/art/heroes/${f}`, `${out}/heroes/${f}`);
+  HERO_ART_FILES.push(`heroes/${f}`);
+}
 // (the loading screen's fighters and bursts go into the page as data URLs, so it shows before game.js has downloaded)
 const dataUrl = (f) => `data:image/png;base64,${readFileSync(f).toString('base64')}`;
 const LOADING_ART = { __LD_KNIGHT__: 'src/art/loading/knight-attack.png', __LD_DEMON__: 'src/art/loading/demon-attack.png' };
@@ -108,7 +115,7 @@ const writeIndexHtml = () => {
             readFileSync('src/tomes.css', 'utf8') +
             readFileSync('src/ores.css', 'utf8'),
         )
-        .replace('/*__KEEP_KINGDOM_CSS__*/', () => readFileSync('src/keepKingdom.css', 'utf8') + readFileSync('src/battleCommand.css', 'utf8') + readFileSync('src/battleReports.css', 'utf8') + readFileSync('src/trophyWall.css', 'utf8'))
+        .replace('/*__KEEP_KINGDOM_CSS__*/', () => readFileSync('src/keepKingdom.css', 'utf8') + readFileSync('src/battleCommand.css', 'utf8') + readFileSync('src/battleReports.css', 'utf8') + readFileSync('src/trophyWall.css', 'utf8') + readFileSync('src/heroArtwork.css', 'utf8'))
         .replace('__VERSION__', version),
     ),
   );
@@ -138,7 +145,7 @@ writeFileSync(
 writeFileSync(
   `${out}/sw.js`,
   `const CACHE = 'legends-${version}';
-const FILES = ['.', 'index.html', 'game.js', 'bg1.png', 'bg2.png', 'bg3.png', 'bg4.png', 'bg5.png', ${AREA_BGS.map((f) => `'${f}'`).join(', ')}, 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', ${FONTS.map(([, f]) => `'fonts/${f}'`).join(', ')}, ${UI_FILES.map((f) => `'${f}'`).join(', ')}, ${AUDIO_FILES.map((f) => `'${f}'`).join(', ')}];
+const FILES = ['.', 'index.html', 'game.js', 'bg1.png', 'bg2.png', 'bg3.png', 'bg4.png', 'bg5.png', ${AREA_BGS.map((f) => `'${f}'`).join(', ')}, 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', ${FONTS.map(([, f]) => `'fonts/${f}'`).join(', ')}, ${UI_FILES.map((f) => `'${f}'`).join(', ')}, ${AUDIO_FILES.map((f) => `'${f}'`).join(', ')}, ${HERO_ART_FILES.map((f) => `'${f}'`).join(', ')}];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k))))); self.clients.claim(); });
 // (network first, but a connection that hangs, like a plane's, gives up after a few seconds and the saved copy is used;

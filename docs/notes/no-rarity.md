@@ -37,6 +37,9 @@ equal odds; a new save picks one of three starter packs. (This replaces `rarity.
 
 ## Starter pick
 
+(Since STARTER-KING the packs are no longer drawn from the seed: every new save is offered the same two fixed packs. See
+[starter-king.md](starter-king.md).)
+
 - `src/sim/starter.ts`: every hero has a class (Front-liner, Striker, Shooter, Caster, Support). `starterPacks(seed)` draws
   three packs from the side stream `mixSeed(seed, 0x57a47)`: pack i is one front-liner, one striker and one back-liner;
   the back-liners are one shooter, one caster and one support in random order, and no hero is in two packs.
