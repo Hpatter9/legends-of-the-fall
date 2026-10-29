@@ -13,6 +13,7 @@ import { deedLine } from './sim/heroArrival';
 import { auraOf } from './render/auraStyles';
 import { revealSprite } from './render/revealSprite';
 import { heroArtwork } from './heroArtwork';
+import { titleLine } from './heroTitleView';
 import { duck, play as playSfx } from './render/sound';
 import { SKIP_GUARD_MS } from './render/summonRules';
 import overlookUrl from './art/camp/overlook.png';
@@ -59,7 +60,8 @@ export function earnedArrival(meta: Meta, kind: string, opts: { hold?: 1 | 2 | 3
   const dust = el('div', 'eaDust');
   stage.append(light, artwork, dust, walker);
   const plate = el('div', 'eaPlate');
-  plate.append(el('small', 'eaKicker', 'A new ally rides in'), el('h3', '', heroTitle(kind)), el('span', 'eaTitle', title), el('p', 'eaRole', def.role), el('span', 'eaJoin', 'Joins your company'));
+  // (the name with its title under it, and the calling, as the summoning's plate has them: BENCH-TITLES)
+  plate.append(el('small', 'eaKicker', 'A new ally rides in'), titleLine(kind, 'h3', '', true), el('span', 'eaTitle', [def.name, title].filter(Boolean).join(' · ')), el('p', 'eaRole', def.role), el('span', 'eaJoin', 'Joins your company'));
   const hint = el('small', 'eaHint', 'Tap to skip');
   root.append(deed, lead, stage, plate, hint);
   document.body.append(root);

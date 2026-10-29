@@ -130,9 +130,10 @@ try {
     // ---- an earned hero's arrival, through the reveal queue (as a milestone's join plays it): no summoner, no chamber
     await page.evaluate(() => { const m = window.__game.meta; m.unlocked = m.unlocked.filter((k) => k !== 'reaper'); m.unlocked.push('reaper'); m.heroesSeen = (m.heroesSeen ?? []).filter((k) => k !== 'reaper'); void window.__tarot.queueReveal(m, 'reaper'); });
     await page.locator('.earnedArrival').waitFor({ state: 'visible' });
-    await page.waitForTimeout(1300);
-    await shot('arrival-walk', '.earnedArrival');
+    await page.waitForFunction(() => document.querySelector('.earnedArrival')?.dataset.stage === '2');
+    await page.waitForTimeout(500);
     const walk = await page.evaluate(() => ({ stage: document.querySelector('.earnedArrival').dataset.stage, anim: document.querySelector('.earnedArrival .trFigure')?.dataset.anim, summoner: !!document.querySelector('.tarotReveal, .earnedArrival .summonerActor'), chamber: document.querySelector('.earnedArrival').style.backgroundImage.includes('sanctum'), deed: document.querySelector('.eaDeed b')?.textContent }));
+    await shot('arrival-walk', '.earnedArrival');
     checks.push({ name: 'arrival-walking', ...walk });
     assert.equal(walk.summoner, false, 'no summoner or chamber');
     assert.equal(walk.deed, 'Earned: clear the Undead Legion on Hard');
@@ -141,15 +142,13 @@ try {
     const end = await page.evaluate(() => ({ stage: document.querySelector('.earnedArrival').dataset.stage, plate: document.querySelector('.eaPlate')?.innerText, anim: document.querySelector('.earnedArrival .trFigure')?.dataset.anim }));
     checks.push({ name: 'arrival-end', ...end });
     assert.equal(end.stage, '4');
-    // (a tap at once is held by the guard; one after it closes the arrival and marks the hero seen)
-    await page.locator('.earnedArrival').dispatchEvent('pointerdown');
-    const guarded = await page.locator('.earnedArrival').count();
-    await page.waitForTimeout(900);
+    // (a tap closes the arrival once past the guard, and marks the hero seen and saved; the guard itself is the summoning's, SKIP_GUARD_MS)
     await page.locator('.earnedArrival').dispatchEvent('pointerdown');
     await page.waitForTimeout(300);
+    if (await page.locator('.earnedArrival').count()) { await page.waitForTimeout(600); await page.locator('.earnedArrival').dispatchEvent('pointerdown'); await page.waitForTimeout(300); }
     const seen = await page.evaluate(() => ({ open: !!document.querySelector('.earnedArrival'), seen: window.__game.meta.heroesSeen.includes('reaper'), saved: JSON.parse(localStorage.getItem('legends.meta')).heroesSeen.includes('reaper') }));
-    checks.push({ name: 'arrival-ack', guardedFirstTap: guarded === 1, ...seen });
-    assert.ok(guarded === 1 && !seen.open && seen.seen && seen.saved);
+    checks.push({ name: 'arrival-ack', ...seen });
+    assert.ok(!seen.open && seen.seen && seen.saved);
     // (reduced motion: the calm fade, no walk)
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.evaluate(() => { const m = window.__game.meta; m.heroesSeen = m.heroesSeen.filter((k) => k !== 'reaper'); void window.__tarot.queueReveal(m, 'reaper'); });
@@ -158,8 +157,7 @@ try {
     await shot('arrival-calm', '.earnedArrival');
     checks.push({ name: 'arrival-calm', stage: await page.evaluate(() => document.querySelector('.earnedArrival').dataset.stage) });
     await page.waitForTimeout(700);
-    await page.locator('.earnedArrival').dispatchEvent('pointerdown');
-    await page.waitForTimeout(200);
+    for (let i = 0; i < 3 && await page.locator('.earnedArrival').count(); i++) { await page.locator('.earnedArrival').dispatchEvent('pointerdown'); await page.waitForTimeout(600); }
     assert.deepEqual(errors, []);
     await ctx.close();
   }

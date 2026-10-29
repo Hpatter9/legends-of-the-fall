@@ -1,0 +1,424 @@
+[
+  {
+    "w": 393,
+    "h": 852,
+    "checks": [
+      {
+        "name": "wave-card",
+        "top": 84,
+        "bottom": 356,
+        "height": 272,
+        "pageOverflow": false
+      },
+      {
+        "name": "wave-card-items",
+        "chips": [
+          {
+            "text": "Vesper joins",
+            "icon": true
+          },
+          {
+            "text": "Silver chest",
+            "icon": true
+          },
+          {
+            "text": "Bronze chest",
+            "icon": true
+          },
+          {
+            "text": "Steel Blade (Rare)",
+            "icon": true
+          },
+          {
+            "text": "Jade Charm (Common) ×2",
+            "icon": true
+          },
+          {
+            "text": "Inti unlock shard ×3",
+            "icon": true
+          },
+          {
+            "text": "Kwame shard ×5",
+            "icon": true
+          },
+          {
+            "text": "Small XP tome ×2",
+            "icon": true
+          },
+          {
+            "text": "Medium XP tome",
+            "icon": true
+          },
+          {
+            "text": "Summoning stone",
+            "icon": true
+          }
+        ],
+        "notes": [
+          "▲Level up: Selam Lv 2",
+          "✝Fell: Natsu"
+        ],
+        "summary": "+48 gold · +15 crowns · 0:12"
+      },
+      {
+        "name": "recap",
+        "top": 0,
+        "bottom": 852,
+        "height": 852,
+        "pageOverflow": false
+      },
+      {
+        "name": "recap-end",
+        "top": 0,
+        "bottom": 852,
+        "height": 852,
+        "pageOverflow": false
+      },
+      {
+        "name": "recap-sections",
+        "heads": [
+          "How to come back stronger",
+          "Wave by wave",
+          "Company performance",
+          "Experience earned"
+        ],
+        "figs": [
+          "Waves cleared",
+          "Time fought",
+          "Gold earned",
+          "Gold spent",
+          "Crowns",
+          "Chests"
+        ],
+        "foundKept": 2
+      },
+      {
+        "name": "arrival-walk",
+        "top": 0,
+        "bottom": 852,
+        "height": 852,
+        "pageOverflow": false
+      },
+      {
+        "name": "arrival-walking",
+        "stage": "2",
+        "anim": "walk",
+        "summoner": false,
+        "chamber": false,
+        "deed": "Earned: clear the Undead Legion on Hard"
+      },
+      {
+        "name": "arrival",
+        "top": 0,
+        "bottom": 852,
+        "height": 852,
+        "pageOverflow": false
+      },
+      {
+        "name": "arrival-end",
+        "stage": "4",
+        "plate": "A NEW ALLY RIDES IN\nVesper\nKeeper of the Last Hour\nReaper · Undead · Assassin\n\nA soul harvester: the foes he reaps rise for him\n\nJoins your company",
+        "anim": "idle"
+      },
+      {
+        "name": "arrival-ack",
+        "open": false,
+        "seen": true,
+        "saved": true
+      },
+      {
+        "name": "arrival-calm",
+        "top": 0,
+        "bottom": 852,
+        "height": 852,
+        "pageOverflow": false
+      },
+      {
+        "name": "arrival-calm",
+        "stage": "4"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "w": 360,
+    "h": 780,
+    "checks": [
+      {
+        "name": "wave-card",
+        "top": 84,
+        "bottom": 354,
+        "height": 270,
+        "pageOverflow": false
+      },
+      {
+        "name": "wave-card-items",
+        "chips": [
+          {
+            "text": "Vesper joins",
+            "icon": true
+          },
+          {
+            "text": "Silver chest",
+            "icon": true
+          },
+          {
+            "text": "Bronze chest",
+            "icon": true
+          },
+          {
+            "text": "Steel Blade (Rare)",
+            "icon": true
+          },
+          {
+            "text": "Jade Charm (Common) ×2",
+            "icon": true
+          },
+          {
+            "text": "Inti unlock shard ×3",
+            "icon": true
+          },
+          {
+            "text": "Kwame shard ×5",
+            "icon": true
+          },
+          {
+            "text": "Small XP tome ×2",
+            "icon": true
+          },
+          {
+            "text": "Medium XP tome",
+            "icon": true
+          },
+          {
+            "text": "Summoning stone",
+            "icon": true
+          }
+        ],
+        "notes": [
+          "▲Level up: Selam Lv 2",
+          "✝Fell: Natsu"
+        ],
+        "summary": "+48 gold · +15 crowns · 0:13"
+      },
+      {
+        "name": "recap",
+        "top": 0,
+        "bottom": 780,
+        "height": 780,
+        "pageOverflow": false
+      },
+      {
+        "name": "recap-end",
+        "top": 0,
+        "bottom": 780,
+        "height": 780,
+        "pageOverflow": false
+      },
+      {
+        "name": "recap-sections",
+        "heads": [
+          "How to come back stronger",
+          "Wave by wave",
+          "Company performance",
+          "Experience earned"
+        ],
+        "figs": [
+          "Waves cleared",
+          "Time fought",
+          "Gold earned",
+          "Gold spent",
+          "Crowns",
+          "Chests"
+        ],
+        "foundKept": 2
+      },
+      {
+        "name": "arrival-walk",
+        "top": 0,
+        "bottom": 780,
+        "height": 780,
+        "pageOverflow": false
+      },
+      {
+        "name": "arrival-walking",
+        "stage": "2",
+        "anim": "walk",
+        "summoner": false,
+        "chamber": false,
+        "deed": "Earned: clear the Undead Legion on Hard"
+      },
+      {
+        "name": "arrival",
+        "top": 0,
+        "bottom": 780,
+        "height": 780,
+        "pageOverflow": false
+      },
+      {
+        "name": "arrival-end",
+        "stage": "4",
+        "plate": "A NEW ALLY RIDES IN\nVesper\nKeeper of the Last Hour\nReaper · Undead · Assassin\n\nA soul harvester: the foes he reaps rise for him\n\nJoins your company",
+        "anim": "idle"
+      },
+      {
+        "name": "arrival-ack",
+        "open": false,
+        "seen": true,
+        "saved": true
+      },
+      {
+        "name": "arrival-calm",
+        "top": 0,
+        "bottom": 780,
+        "height": 780,
+        "pageOverflow": false
+      },
+      {
+        "name": "arrival-calm",
+        "stage": "4"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "w": 412,
+    "h": 915,
+    "checks": [
+      {
+        "name": "wave-card",
+        "top": 84,
+        "bottom": 325,
+        "height": 241,
+        "pageOverflow": false
+      },
+      {
+        "name": "wave-card-items",
+        "chips": [
+          {
+            "text": "Vesper joins",
+            "icon": true
+          },
+          {
+            "text": "Silver chest",
+            "icon": true
+          },
+          {
+            "text": "Bronze chest",
+            "icon": true
+          },
+          {
+            "text": "Steel Blade (Rare)",
+            "icon": true
+          },
+          {
+            "text": "Jade Charm (Common) ×2",
+            "icon": true
+          },
+          {
+            "text": "Inti unlock shard ×3",
+            "icon": true
+          },
+          {
+            "text": "Kwame shard ×5",
+            "icon": true
+          },
+          {
+            "text": "Small XP tome ×2",
+            "icon": true
+          },
+          {
+            "text": "Medium XP tome",
+            "icon": true
+          },
+          {
+            "text": "Summoning stone",
+            "icon": true
+          }
+        ],
+        "notes": [
+          "✝Fell: Kenji, Ravi"
+        ],
+        "summary": "+48 gold · +15 crowns · 0:13"
+      },
+      {
+        "name": "recap",
+        "top": 0,
+        "bottom": 915,
+        "height": 915,
+        "pageOverflow": false
+      },
+      {
+        "name": "recap-end",
+        "top": 0,
+        "bottom": 915,
+        "height": 915,
+        "pageOverflow": false
+      },
+      {
+        "name": "recap-sections",
+        "heads": [
+          "How to come back stronger",
+          "Wave by wave",
+          "Company performance",
+          "Experience earned"
+        ],
+        "figs": [
+          "Waves cleared",
+          "Time fought",
+          "Gold earned",
+          "Gold spent",
+          "Crowns",
+          "Chests"
+        ],
+        "foundKept": 2
+      },
+      {
+        "name": "arrival-walk",
+        "top": 0,
+        "bottom": 915,
+        "height": 915,
+        "pageOverflow": false
+      },
+      {
+        "name": "arrival-walking",
+        "stage": "2",
+        "anim": "walk",
+        "summoner": false,
+        "chamber": false,
+        "deed": "Earned: clear the Undead Legion on Hard"
+      },
+      {
+        "name": "arrival",
+        "top": 0,
+        "bottom": 915,
+        "height": 915,
+        "pageOverflow": false
+      },
+      {
+        "name": "arrival-end",
+        "stage": "4",
+        "plate": "A NEW ALLY RIDES IN\nVesper\nKeeper of the Last Hour\nReaper · Undead · Assassin\n\nA soul harvester: the foes he reaps rise for him\n\nJoins your company",
+        "anim": "idle"
+      },
+      {
+        "name": "arrival-ack",
+        "open": false,
+        "seen": true,
+        "saved": true
+      },
+      {
+        "name": "arrival-calm",
+        "top": 0,
+        "bottom": 915,
+        "height": 915,
+        "pageOverflow": false
+      },
+      {
+        "name": "arrival-calm",
+        "stage": "4"
+      }
+    ],
+    "errors": []
+  }
+]
