@@ -23,6 +23,7 @@ import { readAwakened } from './awaken';
 import { readCaches, readOres } from './awakenMats';
 import { readCodex, readCodexClaimed, readCodexPaid, type CodexRecord } from './codex';
 import { readCombosSeen } from './combos';
+import { readHeroesSeen } from './heroesSeen';
 import { readTickets } from './autoReplay';
 import { grandfather } from './modeUnlock';
 import { drawKind, giveShards, toCollect } from './unlock';
@@ -129,6 +130,8 @@ export interface Meta {
   codexPaid?: string[];
   /** The five-hero combos seen in a fight (`combos.ts`; the codex lists a combo once it has been seen). Saves from before have none. */
   combosSeen?: string[];
+  /** The heroes whose first-time reveal has played (`heroesSeen.ts`): one owned and not listed still has its reveal due. Saves from before count every hero they own. */
+  heroesSeen?: string[];
   /** The auto runs spent on a date (yyyymmdd; `autoReplay.ts`, `AUTO_TICKETS` a day). Saves from before have none. */
   autoTickets?: { day: number; used: number };
   /** The XP tomes held, by size (`tomes.ts`): chests give them, and the player reads one to a hero from its page. Saves from before have none. */
@@ -201,7 +204,7 @@ export interface Pull {
 }
 
 /** A brand-new save: no hero yet, only the three starter packs to pick from (`pickStarter`). */
-export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, stones: 0, unlocked: [], party: [], starter: { packs: starterPacks(seed), pick: null }, pulls: 0, sinceNew: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], opened: [], achievements: [], claimed: [], codexPaid: [], stash: [], ranked: {} });
+export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, stones: 0, unlocked: [], party: [], starter: { packs: starterPacks(seed), pick: null }, pulls: 0, sinceNew: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], heroesSeen: [], opened: [], achievements: [], claimed: [], codexPaid: [], stash: [], ranked: {} });
 
 /** A save past the pick with the old starting five unlocked and in the party: what the saves from before the pick have, and what the tests and tools play with. */
 export function startedMeta(seed: number): Meta {
@@ -210,6 +213,7 @@ export function startedMeta(seed: number): Meta {
   delete m.ranked; // (every earned rank counts, so the tests and tools need no tap)
   m.unlocked = [...HEROES];
   m.party = [...HEROES];
+  m.heroesSeen = [...HEROES];
   return m;
 }
 
@@ -223,6 +227,8 @@ export function pickStarter(m: Meta, index: number): boolean {
   m.starter.pick = index;
   m.unlocked = [...pack];
   m.party = [...pack];
+  // (the starters are met in the pick itself: no first-time reveal for them)
+  m.heroesSeen = [...pack];
   return true;
 }
 /** The rank a hero kind's shards have earned (0 to MAX_RANK): the one it may take with "Rank up" (`rankUp.ts`). */
@@ -460,6 +466,8 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.codexPaid = readCodexPaid(m.codexPaid, m);
       // (saves from before the combos have none seen)
       m.combosSeen = readCombosSeen(m.combosSeen);
+      // (saves from before the first-time reveals count every hero they own as seen)
+      m.heroesSeen = readHeroesSeen(m.heroesSeen, m.unlocked);
       // (saves from before the auto tickets have none: a full day's worth)
       m.autoTickets = readTickets(m.autoTickets);
       if (!m.autoTickets) delete m.autoTickets;
