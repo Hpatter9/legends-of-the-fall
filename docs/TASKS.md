@@ -206,6 +206,7 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 | ID | Task | Result | Reference |
 | --- | --- | --- | --- |
+| ULT-CHARGE | Ultimates used once or twice a battle | Ready for owner review: the meter starts each fight 60 full and fills about 2.5x as fast (army waves 0 to about 0.7 ultimates a hero, boss waves about 1.4, first about 12 s in); ultimates half as strong, Last Stand meter at half pace, Legendary x1.5 and Mythic x1.7 foes, per-hero retune; parity at stage 56 (spread 7.8), full suite 1367/1367, build, three phone sizes. Owner questions in the note (weaker ultimates, four heroes over two a fight) | [Note](notes/ult-charge.md), branch `claude/ult-charge` |
 | AUDIO-150 | Recorded combat sounds and a quieter, cleaner battle mix | Released as 0.186.0; the sounds' source (given as CC0) still needs naming in CREDITS.md | PR #150 |
 | AUDIO-147 | Battle music opens on the combat downbeat; the camp's theme plays across all home tabs | Released as 0.184.0; the loop start was moved to 5.68 s (bar 4) so the loop stays whole bars and joins on the beat | PR #147 |
 | UI-CASTLE-1 | Remove the corner relic emblems from the castle's building cards | Owner asked; released as 0.183.0; castle tests, build, fresh/old-save and Last Stand smoke passed | branch `claude/castle-card-corners`, screenshot `samples/castle-no-corner-emblems-393x852.png` |

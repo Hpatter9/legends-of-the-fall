@@ -64,8 +64,8 @@ export const TIER3_DISCOUNT = 0.85;
  *  `tuned.rate` and the hero's `ultRate` talent. A blow turned aside by a guard counts at half (the guard halves the damage that reaches here).
  *  The owner's call (ULT-CHARGE, docs/notes/ult-charge.md): an ultimate once or twice a battle, the first by about mid-fight in an ordinary wave and a
  *  second in a long or boss fight. So every fight starts with the meter `START` full (or what the hero carried from the run's last wave, if more), and
- *  it fills in about 20 s of fighting for an average hero (about 15 for a front-liner, 25 for a support); it was 40 s from empty, and most fights
- *  (20 to 30 s) ended before it filled. */
+ *  it fills about two and a half times as fast as it did: an average hero's first ultimate comes about 12 s into an army wave (about 30 s for a
+ *  meter from empty, less in a fierce fight). It was about 40 s from empty, and most fights (20 to 30 s) ended before it filled. */
 export const ULT_FILL = {
   DEALT: 40,
   TAKEN: 64,
