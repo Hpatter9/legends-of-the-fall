@@ -1,13 +1,19 @@
 // Render and exercise the separate dungeon-map proposal entirely offline.
-const { chromium } = require('/opt/codex/cua_node/lib/node_modules/playwright');
+// (Playwright and Chromium from wherever this machine keeps them: see browser.mjs)
+const { chromium } = require((() => { for (const p of [process.env.PLAYWRIGHT_DIR, '/opt/codex/cua_node/lib/node_modules/playwright', '/opt/node-tools/node_modules/playwright']) { try { if (p) return require.resolve(p); } catch {} } return 'playwright'; })());
 const { readFileSync } = require('node:fs');
 const root = require('node:path').resolve(__dirname, '../..');
 const assets = ['calmap-dungeon/encounters','stand/floor1','stand/walltop','units/hero_soldier','tower/torch'];
 let html = readFileSync(root + '/docs/samples/calamity-dungeon/proposal.html', 'utf8');
-for (const name of assets) html = html.replaceAll('/src/art/' + name + '.png', 'data:image/png;base64,' + readFileSync(root + '/src/art/' + name + '.png').toString('base64'));
+// (the encounter symbols ship as WebP since CAL-SANCTUARY's integration; the proposal names the old PNG)
+const { existsSync } = require('node:fs');
+for (const name of assets) {
+  const webp = existsSync(root + '/src/art/' + name + '.webp');
+  html = html.replaceAll('/src/art/' + name + '.png', `data:image/${webp ? 'webp' : 'png'};base64,` + readFileSync(root + '/src/art/' + name + (webp ? '.webp' : '.png')).toString('base64'));
+}
 for (const font of ['cinzel-decorative-latin-700-normal','alegreya-sans-latin-400-normal','alegreya-sans-latin-700-normal']) html = html.replaceAll('/out/web/fonts/' + font + '.woff2','data:font/woff2;base64,' + readFileSync(root+'/out/web/fonts/'+font+'.woff2').toString('base64'));
 (async()=>{
- const browser = await chromium.launch({ executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox'] });
+ const browser = await chromium.launch({ executablePath:[process.env.CHROMIUM,'/usr/bin/chromium','/opt/pw-browsers/chromium-1194/chrome-linux/chrome'].filter(Boolean).find((p)=>require('node:fs').existsSync(p)),headless:true,args:['--no-sandbox'] });
  try {
   for(const [width,height] of [[393,852],[360,780],[412,915]]) {
    const page = await browser.newPage({ viewport:{width,height},reducedMotion:'reduce' });

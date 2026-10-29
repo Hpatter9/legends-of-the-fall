@@ -48,7 +48,7 @@ export function prepareRoom(run, kind) {
  }
  return target.id;
 }`;
-const bundle = await build({ stdin:{contents:source,resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'DungeonFixture',loader:{'.png':'empty'} });
+const bundle = await build({ stdin:{contents:source,resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'DungeonFixture',loader:{'.png':'empty', '.webp': 'empty' } });
 let browser;
 mkdirSync('docs/samples/calamity-dungeon-live',{recursive:true});
 const altarOnly = process.argv.includes('--altar-only');

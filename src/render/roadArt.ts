@@ -8,7 +8,7 @@ import { Rectangle, Texture } from 'pixi.js';
 import type { Area, PieceKind, Scenery } from '../sim/board';
 import { RECTS } from './calArt';
 import { ROAD_RECTS } from './roadAtlas';
-import portalUrl from '../art/calmap-dungeon/arrival-portal.png';
+import portalUrl from '../art/calmap-dungeon/arrival-portal.webp';
 import calUrl from '../art/calmap/atlas.png';
 import roadUrl from '../art/road/atlas.png';
 import birdsUrl from '../art/road/birds.png';

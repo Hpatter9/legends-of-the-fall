@@ -59,4 +59,9 @@ The branch was written on 0.204.0 and merged with main up to 0.229.0 (merge comm
 - **Browser checks.** `tools/calamity/browser.mjs` finds Playwright and Chromium on either machine (`PLAYWRIGHT_DIR`, `CHROMIUM`).
   `sanctuary-shots.mjs` passes the short card instead of pressing Next, and also covers the world preview, the region recap's detail,
   the last guardian and the end summary at the three sizes, and a lost crossing.
-- **Size.** The new art is bundled into `game.js` as data URLs (offline needs nothing in `FILES`), which adds about 27 MB to it.
+- **Size (the owner: "Shrink and drop unused").** The six new paintings (the sanctuary, the six-world atlas, the altar backdrop and
+  atlas, the encounter symbols and the arrival portal) ship as WebP at quality 86 (alpha 90), 16.5 MB of PNG down to 2.9 MB, and
+  look the same. `build.mjs` bundles `.webp` as data URLs like the PNGs, so offline needs nothing in `FILES`; `src/types.d.ts`
+  declares the module, and the test runner and the calamity tools load it as empty. The unused overland-map proposal
+  (`src/art/calmap-overland/`, its `proposal.html` and `route.json`) and its credit are gone. `game.js`: main 0.230.0 is 161.0 MB;
+  the PR was 182.9 MB (+21.9); it is now 164.7 MB (+3.7).

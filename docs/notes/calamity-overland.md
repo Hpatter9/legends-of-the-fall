@@ -15,3 +15,5 @@ AGENTS.md requires: “For visual work, show a visual proposal and confirm the d
 Typecheck and web build passed. Simulation tests were not rerun because production simulation and rendering code are unchanged.
 
 No version bump, merge or deployment.
+
+**Removed (CAL-SANCTUARY integration):** the owner chose the Rift Sanctuary over this proposal and asked for its unused art to go. `src/art/calmap-overland/`, the interactive `proposal.html` and its `route.json` were deleted; the screenshots stay here as design history, and git history keeps the rest.

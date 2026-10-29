@@ -13,7 +13,7 @@ const server = createServer((req, res) => {
   res.end(readFileSync(path));
 });
 await new Promise((resolve) => server.listen(8148, resolve));
-const bundle = await build({ stdin: { contents: `export { startedMeta } from './src/sim/meta'; export { calamityRun } from './src/sim/modes'; export { growStarter, chooseAltar } from './src/sim/rift'; export { enterNode, choices, finishTower } from './src/sim/tower'; export { frontSpots } from './tools/autoplay'; export { localBoost } from './src/sim/climb'; export { place, fight, playOut } from './src/sim/battle'; export { startStage } from './src/sim/run';`, resolveDir: process.cwd() }, bundle: true, write: false, format: 'iife', globalName: 'RiftQA', loader: { '.png': 'empty' } });
+const bundle = await build({ stdin: { contents: `export { startedMeta } from './src/sim/meta'; export { calamityRun } from './src/sim/modes'; export { growStarter, chooseAltar } from './src/sim/rift'; export { enterNode, choices, finishTower } from './src/sim/tower'; export { frontSpots } from './tools/autoplay'; export { localBoost } from './src/sim/climb'; export { place, fight, playOut } from './src/sim/battle'; export { startStage } from './src/sim/run';`, resolveDir: process.cwd() }, bundle: true, write: false, format: 'iife', globalName: 'RiftQA', loader: { '.png': 'empty', '.webp': 'empty' } });
 const browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 mkdirSync('docs/samples/calamity-rift', { recursive: true });
 try {

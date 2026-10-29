@@ -2,12 +2,12 @@
   "tool": "OpenAI image generation",
   "request": "Original encounter symbols for a dungeon-floor Calamity map inspired by Great Rift exploration",
   "original": "/workspace/generated_images/exec-76843a12-06ac-42a4-be7c-7127b9dafbed.png",
-  "copy": "encounters.png",
+  "copy": "encounters.webp",
   "originalRetained": true,
   "pixelEditing": false,
   "arrivalPortal": {
     "original": "/workspace/generated_images/exec-a7510712-fedc-4ed1-9b62-fe2114072a44.png",
-    "copy": "arrival-portal.png",
+    "copy": "arrival-portal.webp",
     "size": [
       1312,
       1199
@@ -16,5 +16,6 @@
     "sha256": "2df44558f482fe58cc77dee07c8ce29881364803409b76922670298bde26752c",
     "originalRetained": true,
     "pixelEditing": false
-  }
+  },
+  "converted": "Shipped as WebP (quality 86, alpha 90; same size) to keep game.js small; the unchanged PNG is in git history before the conversion, and the sha256 is the PNG's."
 }

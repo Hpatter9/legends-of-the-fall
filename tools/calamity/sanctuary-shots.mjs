@@ -34,13 +34,14 @@ export function prepare(run,kind) {
  }
  return choices(run).find(n=>n.kind===kind).id;
 }`;
-const bundle=await build({stdin:{contents:source,resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'RiftFixture',loader:{'.png':'empty'}});
+const bundle=await build({stdin:{contents:source,resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'RiftFixture',loader:{'.png':'empty', '.webp': 'empty' }});
 const sceneryOnly=process.argv.includes('--scenery-only');
 const expect=(ok,message)=>{if(!ok)throw Error(message)};
 // (WAVE-RECAP-2: a won Calamity fight shows the short see-through card, which goes on by itself or on a tap; there is no Next button to press)
-const passCard=async(page,shot)=>{await page.waitForFunction(()=>{const r=document.getElementById('result');return !r.hidden&&r.classList.contains('passing')});if(shot)await page.screenshot({path:shot});const title=await page.evaluate(()=>document.getElementById('banner')?.textContent??'');await page.evaluate(()=>document.getElementById('result').click());await page.waitForFunction(()=>document.getElementById('result').hidden);return title;};
+const passCard=async(page,file)=>{await page.waitForFunction(()=>{const r=document.getElementById('result');return !r.hidden&&r.classList.contains('passing')});if(file)await page.screenshot({path:file});const title=await page.evaluate(()=>document.getElementById('banner')?.textContent??'');await page.evaluate(()=>document.getElementById('result').click());await page.waitForFunction(()=>document.getElementById('result').hidden);return title;};
 // (the run's screens fade in: a screenshot waits for them to be whole)
-const settled=async(page)=>page.waitForFunction(()=>getComputedStyle(document.getElementById('towerMap')).opacity==='1');
+const settled=async(page)=>page.waitForFunction(()=>{const t=document.getElementById('towerMap');return t.hidden||getComputedStyle(t).opacity==='1'});
+const shot=async(page,opts)=>{await settled(page);await page.screenshot(opts);};
 const winFight=async(page)=>page.evaluate(()=>{const g=window.__game;for(const u of g.b.units)if(u.side==='foe'){u.hp=u.maxHp=1;u.power=.01;}RiftQA.fight(g.b);RiftQA.playOut(g.b);g.endWait=100000;g.refresh()});
 let browser;mkdirSync('docs/samples/rift-sanctuary',{recursive:true});
 try {
@@ -57,16 +58,16 @@ try {
   await page.waitForFunction(()=>document.querySelector('.rsScenery')?.naturalWidth>0);
   expect(await hub.locator('.rsDestination').count()===3,'Three destinations missing');
   expect(await hub.locator('.rsHero canvas').count()===1,'Starter missing');
-  await page.screenshot({path:`docs/samples/rift-sanctuary/sanctuary-${width}.png`});
+  await shot(page,{path:`docs/samples/rift-sanctuary/sanctuary-${width}.png`});
   const layout=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth,enter:document.querySelector('.rsMenu').getBoundingClientRect().bottom<=innerHeight,card:[...document.querySelectorAll('.rsDestination')].every(e=>e.getBoundingClientRect().width>=44),scene:document.querySelector('.rsScene').getBoundingClientRect().height}));expect(!layout.overflow&&layout.enter&&layout.card&&layout.scene>=170,JSON.stringify(layout));
   const first=await page.evaluate(()=>window.__game.run.tower.path.length);
   await hub.locator('.rsDestination').nth(1).click();expect(await page.evaluate(()=>window.__game.run.tower.path.length)===first,'Preview committed encounter');
-  await page.screenshot({path:`docs/samples/rift-sanctuary/preview-${width}.png`});
+  await shot(page,{path:`docs/samples/rift-sanctuary/preview-${width}.png`});
   await hub.locator('.rsEnter').click();
   await page.waitForFunction(()=>window.__game.run.tower.cur?.fight&&window.__game.b.phase==='deploy');
   expect(await page.locator('#sky .riftBattleBackdrop').count()===1,'Destination battle backdrop missing');
   expect(await page.evaluate(()=>window.__game.b.board.pieces.some(p=>p.kind==='riftPortal')),'Battle arrival portal missing');
-  await page.screenshot({path:`docs/samples/rift-sanctuary/battle-${width}.png`});
+  await shot(page,{path:`docs/samples/rift-sanctuary/battle-${width}.png`});
   await page.evaluate(()=>{const g=window.__game;for(const u of g.b.units)if(u.side==='foe'){u.hp=u.maxHp=1;u.power=.01;}RiftQA.fight(g.b);RiftQA.playOut(g.b);g.endWait=100000;g.refresh()});
   await passCard(page,`docs/samples/rift-sanctuary/short-card-${width}.png`);await page.getByRole('button',{name:/^Ember /}).click();await page.getByRole('button',{name:'Consecrate',exact:true}).click();await hub.waitFor();
   expect(await page.evaluate(()=>window.__game.run.tower.row)===1,'Victory did not advance one crossing');
@@ -74,13 +75,13 @@ try {
   const recruitId=await page.evaluate(()=>RiftQA.choices(window.__game.run).find(n=>n.kind==='recruit').id);
   await hub.locator(`.rsDestination[data-id="${recruitId}"]`).click();await hub.locator('.rsEnter').click();
   expect(await hub.locator('.rsLocation .rtCard.recruit').isVisible(),'Scenic recruit location missing');
-  await page.screenshot({path:`docs/samples/rift-sanctuary/recruit-${width}.png`});
+  await shot(page,{path:`docs/samples/rift-sanctuary/recruit-${width}.png`});
   await hub.locator('.rtCard.recruit .rtItem.hero').first().click();await page.getByRole('button',{name:'Move on',exact:true}).click();
   expect(await hub.locator('.rsHero canvas').count()===2,'Recruited hero absent from sanctuary');
   const gold=await page.evaluate(()=>{window.__game.run.gold=100;window.__game.towerView.open(window.__game.run);return window.__game.run.gold});
   await hub.locator('.rsShift').click();expect(await page.evaluate(()=>window.__game.run.gold)===gold-20,'Reshape cost incorrect');expect(await hub.locator('.rsShift').isDisabled(),'Reshape repeat allowed');
   await hub.locator('.rsMenu').getByRole('button',{name:'Company',exact:true}).click();expect(await hub.locator('.rtParty .rtHero').count()===2,'Company lost heroes');await page.getByRole('button',{name:'Back',exact:true}).click();
-  await page.screenshot({path:`docs/samples/rift-sanctuary/company-${width}.png`});
+  await shot(page,{path:`docs/samples/rift-sanctuary/company-${width}.png`});
   await page.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:60000});await context.setOffline(true);await page.reload();await page.waitForFunction(()=>!!window.__game);await page.evaluate(()=>window.__game.home.go(()=>window.__game.openMode('calamity')));await hub.waitFor();
   expect(await hub.locator('.rsHero canvas').count()===2,'Offline company lost');expect(await page.evaluate(()=>window.__game.run.rift.expedition.shifts)===1,'Offline reshaping lost');expect(await hub.locator('.rsShift').isDisabled(),'Offline reshape repeated');await context.setOffline(false);
   console.log(`PASS ${width}x${height}: previews, real battle/return, altar, recruit scenery and party, fragments, reshape, company, offline reload, layout`);
@@ -91,7 +92,7 @@ try {
   for(const world of ['ashen','rootbound','caravan','prism','hollow','frost']){
    await page.evaluate(world=>{const g=window.__game;g.towerView.close();document.getElementById('result').hidden=true;const r=RiftQA.calamityRun(14,g.meta,'knight');RiftQA.enterNode(r,RiftQA.choices(r)[0].id);r.tower.cur.world=world;r.tower.cur.fight.stage.board=RiftQA.destinationBoard(14,world);r.tower.cur.fight.stage.area=r.tower.cur.fight.stage.board.area;g.home.go(()=>g.resumeSlot(r))},world);
    await page.waitForFunction(w=>window.__game.b.board.riftWorld===w,world);
-   await page.screenshot({path:`docs/samples/rift-sanctuary/arena-${world}-${width}.png`});
+   await shot(page,{path:`docs/samples/rift-sanctuary/arena-${world}-${width}.png`});
    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Arena page overflow');
   }
   console.log(`PASS ${width}: six destination battle courts`);
@@ -117,13 +118,13 @@ try {
  await passCard(page);await page.getByRole('button',{name:/^Offering of Fury /}).click();await page.getByRole('button',{name:'Consecrate',exact:true}).click();
  // (the region recap carries the region's share of the run recap: WAVE-RECAP-2's detail)
  expect(await page.locator('.rtCard .rcDetail').count()===1,'Region recap has no per-hero detail');
- await settled(page);await page.screenshot({path:'docs/samples/rift-sanctuary/region-recap-412.png'});
+ await shot(page,{path:'docs/samples/rift-sanctuary/region-recap-412.png'});
  await page.getByRole('button',{name:'On to region 2',exact:true}).click();
  expect(await page.evaluate(()=>window.__game.run.tower.act)===2,'Guardian did not open region 2');expect(await page.locator('.rsDestination').count()===3,'Next region has no destinations');
  console.log('PASS guardian battle, offering, recap and next region');
  // The full company remains readable; starter stays visually central.
  await page.evaluate(()=>{const g=window.__game;for(const kind of RiftQA.ALL_HEROES.slice(1,10))if(g.run.roster.length<10)RiftQA.hireHero(g.run,kind,0);g.towerView.open(g.run)});
- expect(await page.locator('.rsHero').count()===10,'Full company is not displayed');await page.screenshot({path:'docs/samples/rift-sanctuary/full-company-412.png'});
+ expect(await page.locator('.rsHero').count()===10,'Full company is not displayed');await shot(page,{path:'docs/samples/rift-sanctuary/full-company-412.png'});
  // Portal crossing commits and saves before the flourish, and a reload resumes that exact encounter.
  await page.emulateMedia({reducedMotion:'no-preference'});
  await page.evaluate(()=>{const g=window.__game;g.towerView.close();const r=RiftQA.calamityRun(41,g.meta,'knight');g.home.go(()=>g.resumeSlot(r));document.querySelector('.rsEnter').click()});
@@ -143,17 +144,17 @@ try {
    for(;;){const id=RiftQA.prepare(r,'boss');if(r.tower.act===3)break;RiftQA.enterNode(r,id);RiftQA.clearNode(r);}
    const altar=RiftQA.pendingAltar(r);if(altar)RiftQA.chooseAltar(r,altar==='patron'?'ember':altar==='offering'?'fury':'together');r.tower.mapDone=undefined;g.home.go(()=>g.resumeSlot(r))});
   expect(await page.locator('.rsDestination').count()===1,'Last guardian has alternatives');
-  await page.screenshot({path:`docs/samples/rift-sanctuary/guardian-preview-${width}.png`});
+  await shot(page,{path:`docs/samples/rift-sanctuary/guardian-preview-${width}.png`});
   await page.locator('.rsEnter').click();
   await page.waitForFunction(()=>window.__game.b.phase==='deploy'&&window.__game.run.tower.cur?.kind==='boss'&&window.__game.run.tower.act===3);
-  await page.screenshot({path:`docs/samples/rift-sanctuary/guardian-${width}.png`});
+  await shot(page,{path:`docs/samples/rift-sanctuary/guardian-${width}.png`});
   await winFight(page);
   await page.waitForFunction(()=>!document.getElementById('result').hidden);
   expect(await page.evaluate(()=>window.__game.run.cleared&&!document.getElementById('result').classList.contains('passing')),'The last guardian should end the run with no short card');
   await page.locator('#next').click();
   await page.locator('.rtCard.victory').waitFor();
   expect(await page.locator('.rtCard.victory .rcDetail').count()===1,'End summary has no per-hero detail');
-  await settled(page);await page.screenshot({path:`docs/samples/rift-sanctuary/end-summary-${width}.png`});
+  await shot(page,{path:`docs/samples/rift-sanctuary/end-summary-${width}.png`});
   const over=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);expect(!over,'End summary overflows');
   console.log(`PASS ${width}: last guardian and the end summary with detail`);
  }
@@ -163,11 +164,11 @@ try {
  await page.locator('.rsEnter').click();await page.waitForFunction(()=>window.__game.b.phase==='deploy');
  await page.evaluate(()=>{const g=window.__game;for(const u of g.b.units){if(u.side==='hero'){u.hp=u.maxHp=1;u.power=.01;}else u.power=50;}RiftQA.fight(g.b);RiftQA.playOut(g.b);g.endWait=100000;g.refresh()});
  await page.waitForFunction(()=>!document.getElementById('result').hidden&&window.__game.run.over);
- await page.screenshot({path:'docs/samples/rift-sanctuary/lost-card-393.png'});
+ await shot(page,{path:'docs/samples/rift-sanctuary/lost-card-393.png'});
  await page.locator('#next').click();await page.locator('.rtCard.summary').waitFor();
  expect(await page.locator('.rtCard.summary .rcDetail').count()===1,'Loss summary has no detail');
  expect(/region 1/.test(await page.locator('.rtCard.summary').innerText()),'Loss summary not told in regions');
- await settled(page);await page.screenshot({path:'docs/samples/rift-sanctuary/lost-summary-393.png'});
+ await shot(page,{path:'docs/samples/rift-sanctuary/lost-summary-393.png'});
  console.log('PASS lost crossing: short last card and summary in regions');
  }
  expect(errors.length===0,errors.join('\n'));await context.close();

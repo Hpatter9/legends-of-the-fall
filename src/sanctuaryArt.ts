@@ -1,6 +1,6 @@
 // The original six-world atlas stays intact; SVG viewports select its equal panels.
-import sanctuary from './art/rift-sanctuary/sanctuary.png';
-import destinations from './art/rift-sanctuary/destinations.png';
+import sanctuary from './art/rift-sanctuary/sanctuary.webp';
+import destinations from './art/rift-sanctuary/destinations.webp';
 import { WORLD_IDS, type RiftWorld } from './sim/sanctuary';
 export { sanctuary };
 export function worldPicture(world: RiftWorld, cls = ''): SVGSVGElement {

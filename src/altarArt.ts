@@ -1,6 +1,6 @@
 // Original altar artwork, bundled with the game so it is available offline.
-import atlas from './art/altar/patrons-atlas.png';
-import backdrop from './art/altar/sanctuary.png';
+import atlas from './art/altar/patrons-atlas.webp';
+import backdrop from './art/altar/sanctuary.webp';
 import manifest from './art/altar/manifest.json';
 
 export const altarBackdrop = backdrop;

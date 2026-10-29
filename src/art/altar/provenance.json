@@ -5,14 +5,15 @@
   "sources": [
     {
       "source": "/workspace/generated_images/exec-0b7cb668-8738-4f25-b08b-53b8ffeab8d7.png",
-      "copy": "patrons-atlas.png",
+      "copy": "patrons-atlas.webp",
       "transparent": true
     },
     {
       "source": "/workspace/generated_images/exec-91dda85a-aa76-4cd8-a6f3-014777aed7f6.png",
-      "copy": "sanctuary.png",
+      "copy": "sanctuary.webp",
       "transparent": false
     }
   ],
-  "preparation": "Unmodified copies; originals retained. Frames are measured metadata only, with no pixel editing."
+  "preparation": "Unmodified copies; originals retained. Frames are measured metadata only, with no pixel editing.",
+  "converted": "Shipped as WebP (quality 86, alpha 90; same size) to keep game.js small; the unchanged PNG is in git history before the conversion, and the sha256 is the PNG's."
 }

@@ -33,7 +33,8 @@ const options = {
   minify: !serve,
   sourcemap: true,
   logLevel: 'warning',
-  loader: { '.png': 'dataurl' },
+  // (the large paintings are WebP, data URLs as the PNGs are: bundled, so offline needs nothing in FILES)
+  loader: { '.png': 'dataurl', '.webp': 'dataurl' },
   define: { __GAME_VERSION__: JSON.stringify(version), ...(boardArg ? { __BOARD__: JSON.stringify(boardArg) } : {}) },
 };
 
