@@ -1,0 +1,178 @@
+[
+  {
+    "width": 393,
+    "height": 852,
+    "reduced": false,
+    "fit": {
+      "artLoaded": true,
+      "sprite": {
+        "x": 85.5,
+        "y": 471.484375,
+        "width": 222,
+        "height": 159,
+        "top": 471.484375,
+        "right": 307.5,
+        "bottom": 630.484375,
+        "left": 85.5
+      },
+      "plate": {
+        "x": 16,
+        "y": 643.203125,
+        "width": 361,
+        "height": 149.171875,
+        "top": 643.203125,
+        "right": 377,
+        "bottom": 792.375,
+        "left": 16
+      },
+      "hint": {
+        "x": 141.234375,
+        "y": 819,
+        "width": 110.53125,
+        "height": 13,
+        "top": 819,
+        "right": 251.765625,
+        "bottom": 832,
+        "left": 141.234375
+      },
+      "width": 393,
+      "height": 852,
+      "visible": "1",
+      "animation": "trEmber",
+      "frame": "1"
+    },
+    "errors": []
+  },
+  {
+    "width": 360,
+    "height": 780,
+    "reduced": false,
+    "fit": {
+      "artLoaded": true,
+      "sprite": {
+        "x": 69,
+        "y": 418.203125,
+        "width": 222,
+        "height": 159,
+        "top": 418.203125,
+        "right": 291,
+        "bottom": 577.203125,
+        "left": 69
+      },
+      "plate": {
+        "x": 16,
+        "y": 579.140625,
+        "width": 328,
+        "height": 146.265625,
+        "top": 579.140625,
+        "right": 344,
+        "bottom": 725.40625,
+        "left": 16
+      },
+      "hint": {
+        "x": 124.734375,
+        "y": 747,
+        "width": 110.53125,
+        "height": 13,
+        "top": 747,
+        "right": 235.265625,
+        "bottom": 760,
+        "left": 124.734375
+      },
+      "width": 360,
+      "height": 780,
+      "visible": "1",
+      "animation": "trEmber",
+      "frame": "1"
+    },
+    "errors": []
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "reduced": false,
+    "fit": {
+      "artLoaded": true,
+      "sprite": {
+        "x": 95,
+        "y": 518.109375,
+        "width": 222,
+        "height": 159,
+        "top": 518.109375,
+        "right": 317,
+        "bottom": 677.109375,
+        "left": 95
+      },
+      "plate": {
+        "x": 16,
+        "y": 700.1438598632812,
+        "width": 380,
+        "height": 150.828125,
+        "top": 700.1438598632812,
+        "right": 396,
+        "bottom": 850.9719848632812,
+        "left": 16
+      },
+      "hint": {
+        "x": 150.734375,
+        "y": 882,
+        "width": 110.53125,
+        "height": 13,
+        "top": 882,
+        "right": 261.265625,
+        "bottom": 895,
+        "left": 150.734375
+      },
+      "width": 412,
+      "height": 915,
+      "visible": "1",
+      "animation": "trEmber",
+      "frame": "0"
+    },
+    "errors": []
+  },
+  {
+    "width": 393,
+    "height": 852,
+    "reduced": true,
+    "fit": {
+      "artLoaded": true,
+      "sprite": {
+        "x": 85.5,
+        "y": 471.484375,
+        "width": 222,
+        "height": 159,
+        "top": 471.484375,
+        "right": 307.5,
+        "bottom": 630.484375,
+        "left": 85.5
+      },
+      "plate": {
+        "x": 16,
+        "y": 643.203125,
+        "width": 361,
+        "height": 149.171875,
+        "top": 643.203125,
+        "right": 377,
+        "bottom": 792.375,
+        "left": 16
+      },
+      "hint": {
+        "x": 141.234375,
+        "y": 819,
+        "width": 110.53125,
+        "height": 13,
+        "top": 819,
+        "right": 251.765625,
+        "bottom": 832,
+        "left": 141.234375
+      },
+      "width": 393,
+      "height": 852,
+      "visible": "1",
+      "animation": "none",
+      "frame": "0"
+    },
+    "errors": []
+  }
+]

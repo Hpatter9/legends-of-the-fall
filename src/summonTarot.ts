@@ -1,5 +1,5 @@
-// Shard rewards use tarot cards. New allies appear directly in the chamber: the summoner casts,
-// shields his eyes against the arrival flash, then relaxes as the hero and name are revealed.
+// Shard rewards use tarot cards. New allies get a chamber charge, an arrival impact and a full-art reveal,
+// with the real battle sprite performing one attack in front before settling into idle.
 // The existing seen-hero queue covers stone pulls, earned heroes and interrupted reveals.
 // Atlas effects are from the credited Pixel Effects pack; reduced motion uses a calm fade.
 
@@ -11,7 +11,9 @@ import { traitsOf, TRAITS } from './sim/traits';
 import { CLASS_OF, type StarterClass } from './sim/starter';
 import { auraOf } from './render/auraStyles';
 import { portrait } from './render/sheets';
-import { duck, play as playSfx } from './render/sound';
+import { revealSprite } from './render/revealSprite';
+import { heroArtwork } from './heroArtwork';
+import { duck, hushSummon, play as playSfx } from './render/sound';
 import { SKIP_GUARD_MS } from './render/summonRules';
 import arcanaUrl from './art/tarot/arcana.png';
 import sanctumUrl from './art/hall/sanctum.png';
@@ -33,7 +35,7 @@ const PART = { glyph: 0, burst: 1, circle: 2, aura: 3 } as const;
 const CLASS_ICON: Record<StarterClass, string> = { front: shieldIcon, striker: swordIcon, caster: flameIcon, shooter: targetIcon, support: haloIcon };
 
 /** Reveal beats (ms): casting, flash and eye shield, hero arrival, then name and return to idle. */
-export const BEATS = [0, 1000, 1700, 2900] as const;
+export const BEATS = [0, 1400, 1900, 3100] as const;
 /** With reduced motion: casting pose, then a calm fade to the hero and its name. */
 export const CALM_BEATS = [0, 900, 900, 900] as const;
 
@@ -151,7 +153,11 @@ export function firstReveal(meta: Meta, kind: string, opts: { lucky?: boolean; h
   root.setAttribute('role', 'dialog');
   root.setAttribute('aria-label', `${heroTitle(kind)} joins your company`);
   root.style.setProperty('--cls', a.colour);
-  root.style.background = `linear-gradient(#030a0730, #030a0740), url("${sanctumUrl}") center / 100% 100%`;
+  root.style.background = `linear-gradient(#02080588, #02080566 46%, #020906ed 90%), url("${sanctumUrl}") center / cover`;
+  const heading = el('div', 'trHeading', 'The summoning');
+  const charge = el('div', 'trCharge');
+  const beam = el('div', 'trBeam');
+  const impact = el('div', 'trImpact');
   const rays = el('div', 'trRays');
   const stage = el('div', 'trStage');
   const actor = summoner();
@@ -159,8 +165,17 @@ export function firstReveal(meta: Meta, kind: string, opts: { lucky?: boolean; h
   const burst = strip(a.row, 'burst', '240px', 'trBurst once');
   const ring = strip(a.row, 'circle', '200px', 'trRing');
   const halo = strip(a.row, 'glyph', '210px', 'trHalo');
-  const fig = portrait(def.sheet, 250);
-  fig.className = 'trFigure';
+  const artwork = heroArtwork(kind, true);
+  artwork.className = 'trArtwork';
+  // The art decodes during the charge; the battle sprite remains available if the illustration cannot load.
+  void artwork.decode().catch(() => { artwork.hidden = true; });
+  const showcase = revealSprite(def.sheet, reduced);
+  const sparks = el('div', 'trSparks');
+  for (let i = 0; i < 18; i++) {
+    const spark = el('i');
+    spark.style.cssText = `--x:${8 + (i * 37) % 84}%;--y:${8 + (i * 23) % 75}%;--delay:${-(i % 7) * .4}s`;
+    sparks.append(spark);
+  }
   const plate = el('div', 'trPlate');
   plate.append(
     el('small', 'trKicker', opts.lucky ? 'A lucky summon' : 'A new ally answers'),
@@ -171,14 +186,15 @@ export function firstReveal(meta: Meta, kind: string, opts: { lucky?: boolean; h
   );
   const lead = el('p', 'trLead', opts.lucky ? 'The stone burns gold…' : 'The summoner calls an ally…');
   const hint = el('small', 'trHint', 'Tap to skip');
-  stage.append(halo, ring, fig, burst);
-  root.append(rays, actor, lead, stage, plate, flash, hint);
+  stage.append(charge, beam, halo, artwork, ring, impact, showcase.canvas, burst, sparks);
+  root.append(rays, actor, heading, lead, stage, plate, flash, hint);
   document.body.append(root);
   duck(true, 'reveal');
   let at = performance.now();
   const set = (n: number) => {
     root.dataset.stage = `${n}`;
     actor.dataset.pose = n === 1 ? 'cast' : n < 4 ? 'shield' : 'idle';
+    if (n >= 3) showcase.start(n === 3);
     if (n === 4) {
       hint.textContent = 'Tap to continue';
       at = performance.now();
@@ -187,11 +203,13 @@ export function firstReveal(meta: Meta, kind: string, opts: { lucky?: boolean; h
   const beats = reduced ? CALM_BEATS : BEATS;
   const timers: number[] = [];
   set(1);
+  if (!reduced) playSfx('riseSummon');
   for (let n = 2; n <= 4; n++) {
     if (opts.hold && n > opts.hold) break;
     timers.push(window.setTimeout(() => {
       set(n);
       if (n === 2) playSfx('stingSummon');
+      if (n === 3 && !reduced) playSfx('slam');
     }, beats[n - 1]));
   }
   return new Promise((done) => {
@@ -201,15 +219,18 @@ export function firstReveal(meta: Meta, kind: string, opts: { lucky?: boolean; h
       if (performance.now() - at < SKIP_GUARD_MS) return;
       if (root.dataset.stage !== '4') {
         timers.forEach((t) => window.clearTimeout(t));
+        hushSummon();
         if (root.dataset.stage === '1') playSfx('stingSummon');
         root.classList.add('skipped');
         set(4);
         return;
       }
       timers.forEach((t) => window.clearTimeout(t));
+      hushSummon();
       markHeroSeen(meta, kind);
       saveMeta(meta);
       duck(false, 'reveal');
+      showcase.stop();
       root.remove();
       done();
     });
@@ -254,7 +275,6 @@ const css = `
 .tarotReveal.calm .trFlash, .tarotReveal.skipped .trFlash { display: none; }
 .tarotReveal .summonerActor { z-index: 1; }
 .tarotReveal .trStage, .tarotReveal .trPlate { z-index: 2; }
-.tarotReveal .trPlate { width: calc(100% - 32px); max-width: 370px; padding: 10px 0; background: #06170fe6; border: 1px solid #b99349; box-shadow: 0 4px 18px #0008; }
 
 .tarotStrip { display: block; background-image: url("${arcanaUrl}"); background-repeat: no-repeat; image-rendering: pixelated; background-position-x: var(--sx); animation: tarotStrip 0.9s steps(6) infinite; }
 .tarotStrip.once { animation: none; background-position-x: var(--sx); }
@@ -308,38 +328,56 @@ const css = `
   .tarotResult.up .tarotTurn > .tarotSide.back { opacity: 0; }
 }
 
-.tarotReveal { position: fixed; inset: 0; z-index: 44; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; touch-action: none; background: #030a07; color: #ffe4a4; }
-.tarotReveal .trRays { position: absolute; inset: -40%; background: repeating-conic-gradient(from 0deg at 50% 50%, color-mix(in srgb, var(--cls) 30%, transparent) 0deg 7deg, transparent 7deg 18deg); opacity: 0; transition: opacity .6s; mask-image: radial-gradient(circle at 50% 50%, #000 0 18%, transparent 46%); }
-.tarotReveal .trLead { position: absolute; top: 9%; margin: 0; font: italic 700 18px var(--display); color: #e9d6a5; transition: opacity .4s; }
-.tarotReveal .trStage { position: relative; width: 320px; height: 360px; display: grid; place-items: center; }
-.tarotReveal .trStage > * { position: absolute; }
-@keyframes trFloat { from { translate: 0 -4px; } to { translate: 0 4px; } }
-.tarotReveal .trBurst { opacity: 0; pointer-events: none; filter: drop-shadow(0 0 12px var(--cls)); }
-.tarotReveal .trRing { bottom: -30px; opacity: 0; transform: scaleY(.9); transition: opacity .5s; }
-.tarotReveal .trHalo { top: 40px; opacity: 0; transition: opacity .8s; filter: drop-shadow(0 0 12px var(--cls)); }
-.tarotReveal .trFigure { bottom: 52px; width: 250px; height: 250px; image-rendering: pixelated; opacity: 0; transform: translateY(40px); filter: brightness(4) drop-shadow(0 0 14px var(--cls)); transition: opacity .5s, transform .9s cubic-bezier(.2,.9,.3,1.2), filter 1.2s .3s; }
-.tarotReveal .trPlate { position: relative; margin-top: 22px; text-align: center; opacity: 0; transform: scale(1.25); transition: opacity .35s, transform .45s cubic-bezier(.2,.9,.3,1.3); }
-.tarotReveal .trPlate h3 { margin: 4px 0 2px; font: 900 32px/1.05 var(--display); color: #ffe7a6; text-shadow: 0 2px 0 #3a2410, 0 0 14px var(--cls); }
-.tarotReveal .trKicker { display: inline-block; padding: 3px 12px; font: 900 12px var(--display); letter-spacing: 2px; text-transform: uppercase; color: #1d1205; background: linear-gradient(#ffe8a8, #d7a446); border: 1px solid #fff2c4; }
-.tarotReveal .trTitle { display: block; font: 700 14px var(--body); color: var(--cls); text-shadow: 0 1px 0 #000; letter-spacing: 1px; }
-.tarotReveal .trRole { margin: 6px 24px 0; font: 13px/1.3 var(--body); color: #c9d8c5; }
-.tarotReveal .trJoin { display: block; margin-top: 8px; font: 700 13px var(--body); color: #b8eac2; }
-.tarotReveal .trHint { position: absolute; bottom: calc(env(safe-area-inset-bottom) + 22px); color: #c9c09e; font: 12px var(--body); }
-.tarotReveal[data-stage="2"] .trRays, .tarotReveal[data-stage="3"] .trRays, .tarotReveal[data-stage="4"] .trRays { opacity: 1; animation: trSpin 24s linear infinite; }
+/* The chamber charges before the full illustration and the real battle sprite arrive together. */
+.tarotReveal { position: fixed; inset: 0; z-index: 44; display: flex; flex-direction: column; align-items: center; overflow: hidden; touch-action: none; background: #030a07; color: #ffe4a4; }
+.tarotReveal::after { content: ''; position: absolute; inset: 0; box-shadow: inset 0 0 90px 24px #0008; pointer-events: none; }
+.tarotReveal .trHeading { position: absolute; top: max(30px, 5%); z-index: 3; text-align: center; font: 700 12px var(--display); letter-spacing: 4px; text-transform: uppercase; color: #e6ca87; }
+.tarotReveal .trHeading::after { content: ''; display: block; width: 110px; height: 1px; margin: 14px auto; background: linear-gradient(90deg, transparent, #edca77, transparent); }
+.tarotReveal .trRays { position: absolute; inset: -40%; background: repeating-conic-gradient(from 7deg at 50% 45%, #fff1ac20 0deg 4deg, transparent 4deg 19deg); opacity: 0; transition: opacity .6s; mask-image: radial-gradient(ellipse at 50% 45%, #000, transparent 60%); }
+.tarotReveal .trLead { position: absolute; top: 21%; z-index: 3; margin: 0; font: italic 700 18px var(--display); color: #e9d6a5; transition: opacity .3s; text-align: center; padding: 0 24px; }
+.tarotReveal .trStage { position: absolute; top: 12%; bottom: 26%; width: min(100%, 440px); display: grid; place-items: center; }
+.tarotReveal .trStage > * { position: absolute; pointer-events: none; }
+.tarotReveal .trArtwork { top: 0; height: 94%; width: 86%; object-fit: contain; opacity: 0; transform: translateY(20px) scale(.93); filter: brightness(2); transition: opacity .5s, transform 1.1s cubic-bezier(.16,1,.3,1), filter 1s; mask-image: linear-gradient(#000 85%, transparent); }
+.tarotReveal .trCharge { width: 220px; height: 220px; bottom: 8%; border-radius: 50%; background: radial-gradient(ellipse, #fff7d799, color-mix(in srgb, var(--cls) 45%, transparent) 35%, transparent 70%); animation: trGather 1.4s ease-in both; }
+@keyframes trGather { from { transform: scale(.3); opacity: .15; } to { transform: scale(1.5); opacity: 1; } }
+.tarotReveal .trBeam { width: 16%; inset-block: -5% 4%; background: linear-gradient(90deg, transparent, #fffbe8cc, transparent); filter: blur(6px); opacity: 0; transform-origin: 50% 100%; }
+.tarotReveal .trImpact { width: 80%; height: 15%; bottom: -1%; border: 2px solid #ffe9b3; border-radius: 50%; opacity: 0; box-shadow: 0 0 22px #f5c66a80; }
+.tarotReveal .trBurst { opacity: 0; bottom: 1%; pointer-events: none; filter: drop-shadow(0 0 12px var(--cls)); }
+.tarotReveal .trRing { bottom: -5%; opacity: 0; transform: scaleY(.4) scaleX(1.4); transition: opacity .5s; }
+.tarotReveal .trHalo { top: 20%; opacity: 0; transition: opacity .8s; filter: drop-shadow(0 0 25px var(--cls)); }
+.tarotReveal .trFigure { bottom: 0; left: 50%; image-rendering: pixelated; opacity: 0; translate: -50% 0; transform: translateY(20px); filter: drop-shadow(0 0 7px var(--cls)) drop-shadow(0 5px 3px #000); transition: opacity .3s, transform .5s cubic-bezier(.2,.9,.3,1.2); z-index: 2; }
+.tarotReveal .trSparks { inset: 0; opacity: 0; transition: opacity .5s; }
+.tarotReveal .trSparks i { position: absolute; left: var(--x); top: var(--y); width: 2px; height: 5px; background: #ffe7a6; box-shadow: 0 0 6px #edc05c; border-radius: 50%; animation: trEmber 3.2s var(--delay) linear infinite; }
+@keyframes trEmber { from { transform: translateY(35px); } to { transform: translateY(-35px); } }
+.tarotReveal .trPlate { position: absolute; bottom: max(7%, calc(env(safe-area-inset-bottom) + 44px)); width: calc(100% - 32px); max-width: 400px; padding: 14px 10px; text-align: center; opacity: 0; transform: translateY(12px); transition: opacity .4s, transform .6s cubic-bezier(.16,1,.3,1); border: 0; border-top: 1px solid #d5b56c90; border-bottom: 1px solid #d5b56c60; background: linear-gradient(90deg, #05130fd9, #05130ff5 50%, #05130fd9); box-shadow: 0 8px 28px #0006; }
+.tarotReveal .trPlate h3 { margin: 8px 0 5px; font: 900 clamp(25px, 8vw, 36px)/1.1 var(--display); color: #ffe7a6; text-wrap: balance; text-shadow: 0 2px 0 #3a2410, 0 0 18px #f1cc6750; }
+.tarotReveal .trKicker { display: block; font: 700 10px var(--display); letter-spacing: 2px; text-transform: uppercase; color: #e9c578; }
+.tarotReveal .trTitle { display: block; font: 700 12px var(--body); color: #b8cabe; letter-spacing: 1px; }
+.tarotReveal .trRole { margin: 6px 8px 0; font: 13px/1.2 var(--body); color: #c9d8c5; }
+.tarotReveal .trJoin { display: block; margin-top: 9px; font: italic 14px var(--display); color: #f2deb0; }
+.tarotReveal .trHint { position: absolute; bottom: calc(env(safe-area-inset-bottom) + 20px); z-index: 3; color: #a7b4a8; font: 11px var(--body); letter-spacing: 2px; text-transform: uppercase; }
+.tarotReveal[data-stage="2"] .trRays, .tarotReveal[data-stage="3"] .trRays, .tarotReveal[data-stage="4"] .trRays { opacity: 1; animation: trSpin 32s linear infinite; }
 @keyframes trSpin { to { rotate: 360deg; } }
+.tarotReveal[data-stage="2"] .trBeam { animation: trBeam .8s ease-out both; }
+@keyframes trBeam { 0% { opacity: 0; transform: scaleX(.2); } 20% { opacity: 1; transform: scaleX(2); } 100% { opacity: 0; transform: scaleX(.4); } }
 .tarotReveal[data-stage="2"] .trBurst { opacity: 1; }
-.tarotReveal[data-stage="3"] .trBurst { opacity: 0; transition: opacity .5s; }
-.tarotReveal[data-stage="3"] .trRing, .tarotReveal[data-stage="4"] .trRing { opacity: 1; }
-.tarotReveal[data-stage="3"] .trHalo { opacity: .7; }
-.tarotReveal[data-stage="4"] .trHalo { opacity: .35; }
-.tarotReveal[data-stage="3"] .trFigure { opacity: 1; transform: none; filter: brightness(1.6) drop-shadow(0 0 12px var(--cls)); }
-.tarotReveal[data-stage="4"] .trFigure { opacity: 1; transform: none; filter: drop-shadow(0 0 8px var(--cls)) drop-shadow(0 3px 2px #000); }
-.tarotReveal[data-stage="3"] .trLead, .tarotReveal[data-stage="4"] .trLead { opacity: 0; }
-.tarotReveal[data-stage="4"] .trBurst { opacity: 0; transition: opacity .4s; }
+.tarotReveal:not([data-stage="1"]) .trCharge { display: none; }
+.tarotReveal:is([data-stage="3"], [data-stage="4"]) .trArtwork { opacity: 1; transform: none; filter: brightness(1); }
+.tarotReveal[data-stage="3"] .trStage { animation: trLand .35s ease-out; }
+@keyframes trLand { 0%, 100% { transform: translateY(0); } 22% { transform: translateY(4px); } 55% { transform: translateY(-2px); } }
+.tarotReveal[data-stage="3"] .trImpact { animation: trShock .65s ease-out both; }
+@keyframes trShock { from { opacity: .9; transform: scale(.3); } to { opacity: 0; transform: scale(1.6); } }
+.tarotReveal:is([data-stage="3"], [data-stage="4"]) .trRing { opacity: .85; }
+.tarotReveal:is([data-stage="3"], [data-stage="4"]) .trHalo { opacity: .35; }
+.tarotReveal:is([data-stage="3"], [data-stage="4"]) .trFigure { opacity: 1; transform: none; }
+.tarotReveal:is([data-stage="3"], [data-stage="4"]) .trSparks { opacity: .75; }
+.tarotReveal:is([data-stage="3"], [data-stage="4"]) .trLead { opacity: 0; }
+.tarotReveal:is([data-stage="3"], [data-stage="4"]) .trBurst { opacity: 0; transition: opacity .4s; }
 .tarotReveal[data-stage="4"] .trPlate { opacity: 1; transform: none; }
-.tarotReveal.calm *, .tarotReveal.skipped * { animation-duration: 0s !important; transition-duration: .35s !important; transition-delay: 0s !important; }
-.tarotReveal.calm .trRays, .tarotReveal.calm .trBurst { display: none; }
-.tarotReveal.calm .trFigure, .tarotReveal.calm .trPlate { transform: none !important; translate: none; }
+.tarotReveal.calm *, .tarotReveal.skipped * { animation: none !important; transition-duration: .35s !important; transition-delay: 0s !important; }
+.tarotReveal.calm :is(.trRays, .trBurst, .trCharge, .trBeam, .trImpact, .trSparks), .tarotReveal.skipped :is(.trCharge, .trBeam, .trImpact) { display: none; }
+.tarotReveal.calm .trFigure, .tarotReveal.calm .trArtwork, .tarotReveal.calm .trPlate { transform: none !important; }
+
 `;
 const style = document.createElement('style');
 style.textContent = css;
