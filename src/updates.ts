@@ -27,6 +27,18 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.236.0',
+    date: '2026-10-29',
+    title: 'Settings in submenus, and this page',
+    notes: ['Settings is now a short list: Sound, Display and motion, Gameplay, Ruler and Duchess, Save and data, Developer, Updates and notes, About.', 'Updates and notes lists what changed in each version, newest first.'],
+  },
+  {
+    version: '0.235.0',
+    date: '2026-10-29',
+    title: 'Titles, and an easy way back to the bench',
+    notes: ['Every hero has a title, such as Kwame, Shield of the Dawn, shown on their page, the summon reveal and the codex.', 'Dragging a placed hero lights up the bench: let go anywhere over it, or flick down, to send them back.'],
+  },
+  {
     version: '0.234.0',
     date: '2026-10-29',
     title: 'Three army stars',
