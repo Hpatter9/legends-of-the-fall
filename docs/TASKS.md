@@ -30,7 +30,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 ### SETTINGS-MENUS — The ruler picker and stones in the developer row
 
 - **Goal:** the owner's asks: "The rulers in the settings menu should be a menu that opens up after clicking on it." and "I also want the developer menu to have stones as an option too."
-- **Status:** done on the branch, awaiting review.
+- **Status:** done; released as 0.205.0.
 - **Owner:** Claude
 - **Branch / worktree / PR:** `claude/settings-menus`, `/home/user/settings-menus` (from main 0.204.0); PR none.
 - **Allowed files or systems:** new `src/settingsPicker.ts`; `src/settings.ts` (ruler, Duchess costume and developer rows), the ruler/picker styles in `src/keepKingdom.css`, `src/sim/devGrant.ts`, `test/dev-grant.test.ts`, `tools/rulers/check.mjs` (opens the sheet), new `tools/settings-menus/shots.mjs`; `docs/notes/settings-menus.md`, `docs/samples/settings-menus-*.png`.
