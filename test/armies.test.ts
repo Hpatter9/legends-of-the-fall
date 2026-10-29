@@ -511,7 +511,8 @@ test('each army names the hero level Normal is meant for: rising army by army, t
 });
 
 test('the steeper curve: a steeper level an army, and a level-1 party cannot grind through any army but the first, XP carried between tries', () => {
-  assert.deepEqual(ARMIES.map((a) => a.level), [1, 8, 15, 22, 30, 38, 40, 46, 52]);
+  // (the last five were made steeper by the owner's ask in ARMY-PACE, `docs/notes/army-pace.md`: they were 30, 38, 40, 46, 52)
+  assert.deepEqual(ARMIES.map((a) => a.level), [1, 8, 15, 22, 35, 45, 58, 65, 74]);
   for (let i = 1; i < ARMIES.length; i++) {
     // (from the second army Normal is flat across its waves, so a party that falls early earns little XP; the harder tiers keep their own curve)
     assert.ok(ARMIES[i].growth <= 0.05 && (ARMIES[i].tierGrowth ?? ARMIES[i].growth) >= ARMIES[i].growth, ARMIES[i].id);
