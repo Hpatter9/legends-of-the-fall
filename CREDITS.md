@@ -135,6 +135,14 @@ All Craftpix, copied one sprite or layer at a time; no PixelLab. Ground tops and
   fire sparkle and flame; white dash; light hit; dark smoke; light pillar; gold level-up; light sparkle; white sparkle;
   gold star; and the burning, bleeding, hasted and shielded-icon status strips. Used by `src/render/vfxArt.ts`.
 
+## Ailment effects (`src/art/fx/status/`)
+
+- **Placeholder art for the ailments** (STATUS-FX, `docs/notes/status-fx.md`): 33 strips (32px frames, six or eight
+  each) of the **5000 Pixel Effects** pack by blueberry (https://blueberry-assets.itch.io), copied unchanged from
+  `pixel-effects/sprites/<effect>/sheet-32.png` in the private assets repository and packed into `atlas.png` by
+  `tools/status-fx/status-sheets.py` (the key-to-strip map is `tools/status-fx/status-pack.json`). Painted art made to
+  `docs/notes/status-fx-art-brief.md` will replace them.
+
 ## Combat effects (`src/art/fx/pack/`)
 
 - **The projectile, impact, wind-up, status and death effects**: 225 32px strips (up to eight frames each) of the **5000

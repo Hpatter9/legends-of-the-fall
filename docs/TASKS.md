@@ -127,6 +127,17 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Validation:** see the handoff's checks: typecheck, `npm test -- daily-builds daily modes armyStars meta ...` and the full `npm test`, `npm run web`; screens at the three sizes with no page errors or overflow; `themeRate` (40 dates a theme) before and after tuning; `swarmPerf` with 8 and 10 foes.
 - **Handoff:** [notes](notes/daily-builds.md), [sheet](samples/daily-builds-sheet.png), phase A [mock-ups](samples/daily-builds-mock-sheet.png).
 
+### STATUS-FX — Damage and status effects (ailments)
+
+- **Goal:** the owner's ask: "I want to add in damage effects, like frozen, burning, poisoned, etc." Eleven ailments (Burning, Poisoned, Frozen, Bleeding, Chilled, Shocked, Stunned, Weakened, Cursed, Silenced, Feared) from heroes by element, foes, terrain and the king's spells (with a cleanse); a body effect, an icon over the head and coloured numbers; resists by type, shorter on bosses. The owner will have ChatGPT paint the art, so it sits behind one atlas seam with a brief.
+- **Status:** phase A (design, mock-ups, art seam and brief) done; waiting for the owner's answers to the questions in the note before phase B (the rules).
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/status-fx`, `/home/user/status-fx` (from main 0.213.0); PR none (not asked).
+- **Allowed files or systems:** phase A: new `src/render/statusStyles.ts`, `statusArt.ts`, `statusMock.ts`, one hook line in `src/render/unitView.ts`, `src/art/fx/status/`, `tools/status-fx/`, `test/status-fx-art.test.ts`, `CREDITS.md`, `docs/notes/status-fx*.md`, `docs/samples/status-fx-*.png`. Phase B (after approval): new `src/sim/ailments.ts`, `ailmentSources.ts`, `ailmentResists.ts`; small hooks in `battle.ts`, `abilities.ts`, `spells.ts`, `hazards.ts`, the kits, `fx.ts`, `unitView.ts`, `soundRules.ts`. No save or version change.
+- **Completion criteria (phase A):** a design note (one model, the eleven ailments, sources, terrain, spells, resists and boss rules, the look, reduced motion and saver, balance plan, questions); real in-game mock-ups at 393x852 (a busy fight, a contact sheet of all eleven, a shatter, an immune foe) from pack placeholder art; the atlas seam with a builder, an importer and an art brief with prompts; no PixelLab use.
+- **Validation (phase A):** typecheck passed; `npm test -- status-fx` (2) passed; the full `npm test` 1389 of 1389 passed; `npm run web` built; `tools/status-fx/shots.mjs` at 393x852 with no page errors; the importer tried with stand-in 256px sheets and the placeholder atlas put back. The fight's rules are unchanged (the prototype draws only what the console sets). 360x780 and 412x915 not shot (no layout changes; the effects sit on the fighters).
+- **Handoff:** [notes](notes/status-fx.md), [art brief](notes/status-fx-art-brief.md); pictures `docs/samples/status-fx-fight.png`, `-contact.png`, `-shatter.png`, `-immune.png`.
+
 ### AWAKEN-002 — Class auras for awakened heroes
 
 - **Goal:** the owner's ask: drop the awakened recolour; an awakened hero wears an aura at step 1 (rank 5) and a stronger, bigger one at step 2 (rank 6), its style set by the hero's class trait (not the origin), wherever an awakened hero is drawn.

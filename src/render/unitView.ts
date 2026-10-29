@@ -36,6 +36,7 @@ import { settings } from '../settings';
 import { badgeOf } from '../sim/levels';
 import { AURA_COLOURS, auraHalo, auraRings } from './levelLook';
 import { attackMotion } from './motionRules';
+import { statusMockHook } from './statusMock';
 
 /** The sheet rows beyond `Anim`: the skills' casts (a sheet without one plays its plain attack). */
 type Row = Anim | 'attack2' | 'defend';
@@ -373,6 +374,8 @@ export class UnitSprite {
     this.drawPillar(u.alive);
     if (this.popAt >= 0) this.root.scale.set(this.baseSize * this.popScale());
     else if (this.root.scale.x !== this.baseSize) this.root.scale.set(this.baseSize);
+    // (STATUS-FX phase A: the ailments' mock-up, drawn only on fighters the console has given some; docs/notes/status-fx.md)
+    statusMockHook(this.root, this.body, u, this.tall, t);
   }
 
   /** Use this sprite for another fighter of the same kind and size (a crowd's foes are drawn from a pool, so a wave of fifty makes no new sprites). */
