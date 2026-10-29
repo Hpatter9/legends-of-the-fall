@@ -11,7 +11,9 @@
 //   node tools/army-pace/run.mjs gate 55,65              the armies' Normals in order, each tried only once the one before is beaten (the army
 //                                                        gate, `docs/notes/army-gate.md`): FROM (infernal) on, the armies before it beaten
 //
-// Environment: SAVES (default 12), CAP (25 tries a tier, or to clear), ONLY (army ids), START, GROWTH (army:value,...), ARMY (the army `stars` chases: orcs).
+// Environment: SAVES (default 12), CAP (25 tries a tier, or to clear), ONLY (army ids), START, GROWTH (army:value,...), ARMY (the army `stars` chases: orcs),
+// HEARTS=1 (a lost wave burns a heart and is fought again, as the page does; by default a loss ends the try, as every figure in the notes was
+// measured; the star "clear without using a heart" is then met by every clear).
 import { ARMIES, ARMY_WAVES, armyById, armyUnlocked } from '../../src/sim/armies';
 import { armyRules } from '../../src/sim/armyStars';
 import { fight, playOut, type Boost } from '../../src/sim/battle';
@@ -19,7 +21,7 @@ import { BUILDINGS, maxLevel, newCastle, xpRate, type BuildingId, type Castle } 
 import { fightXp, gainXp, levelOfKind } from '../../src/sim/levels';
 import { heroRank, type Meta } from '../../src/sim/meta';
 import { mixSeed } from '../../src/sim/rng';
-import { armyRun, boostOf, finish, isBossRun, noteFight, startStage, tierOfRun, type Owned, type Run } from '../../src/sim/run';
+import { armyRun, boostOf, canRetry, finish, isBossRun, noteFight, retryWave, startStage, tierOfRun, type Owned, type Run } from '../../src/sim/run';
 import { autoDeploy, autoRound } from '../../src/sim/autoplay';
 import { ratingOf } from '../../src/sim/stars';
 import { heroStats, learn, tierNodes } from '../../src/sim/talents';
@@ -29,6 +31,7 @@ import { savedAt } from '../autoplay';
 const party = ['knight', 'paladin', 'archer', 'warlock', 'cleric'];
 const SAVES = Number(process.env.SAVES ?? 12);
 const CAP = Number(process.env.CAP ?? 25);
+const HEARTS = process.env.HEARTS === '1';
 const SPREAD: BuildingId[] = ['barracks', 'armoury', 'library', 'treasury', 'stable', 'mage'].filter((id) => id in BUILDINGS) as BuildingId[];
 const CASTLE_MAX = (Object.keys(BUILDINGS) as BuildingId[]).reduce((n, id) => n + maxLevel(id), 0);
 /** The castle levels a player has at a hero level: the climb's (`tools/curve`: none to level 30, 6 at 38, 13 at 40, 18 at 46, 22 at 52), then a level more every two hero levels to the top. */
@@ -96,6 +99,10 @@ function attempt(meta: Meta, id: string, seed: number, castle: Castle, tier: num
     fight(b);
     playOut(b);
     const ok = b.phase === 'won';
+    if (!ok && HEARTS && canRetry(run)) {
+      retryWave(run);
+      continue;
+    }
     if (ok) won = run.stage;
     noteFight(run, b);
     finish(run, ok, ratingOf(b, isBossRun(run)).stars);
