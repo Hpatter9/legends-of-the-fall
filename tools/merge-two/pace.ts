@@ -5,7 +5,8 @@
 //
 //   node tools/merge-two/run.mjs orcs:4:55 infernal:0:55          SAVES (default 24) tries a cell
 //   node tools/merge-two/run.mjs early:beasts:20 spire:max         the starting five at a level (no castle or talents); the spire's climb
-import { armyById } from '../../src/sim/armies';
+import { ARMIES, armyById } from '../../src/sim/armies';
+import { TIERS } from '../../src/sim/tiers';
 import { fight, playOut, type Boost } from '../../src/sim/battle';
 import { BUILDINGS, maxLevel, newCastle, type BuildingId, type Castle } from '../../src/sim/castle';
 import { levelOfKind } from '../../src/sim/levels';
@@ -22,6 +23,18 @@ import * as run_ from '../../src/sim/run';
 
 // (GB=1,1.4,1.9,2.8 tries other grade multipliers: a tuning run, nothing is written; only on a tree that has `GRADE_BOOST`)
 if (process.env.GB) (run_ as unknown as { GRADE_BOOST: number[] }).GRADE_BOOST.splice(0, 4, ...process.env.GB.split(',').map(Number));
+
+// (START=infernal:11,yokai:14 sets an army's Normal `start`; TIERK=4:1.2 scales a tier's hp and attack (4:1.2:1.1 each on its own): tuning runs, nothing is written)
+for (const kv of (process.env.START ?? '').split(',').filter(Boolean)) {
+  const [aid, v] = kv.split(':');
+  (ARMIES.find((a) => a.id === aid) as unknown as { start: number }).start = Number(v);
+}
+for (const kv of (process.env.TIERK ?? '').split(',').filter(Boolean)) {
+  const [i, hp, atk] = kv.split(':').map(Number);
+  const t = TIERS[i] as { hp: number; atk: number };
+  t.hp *= hp;
+  t.atk *= atk ?? hp;
+}
 
 const party = ['knight', 'paladin', 'archer', 'warlock', 'cleric'];
 const SAVES = Number(process.env.SAVES ?? 24);

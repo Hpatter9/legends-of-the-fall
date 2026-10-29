@@ -273,7 +273,8 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
   juggernaut: [
     t('Heavier Quake', 'The quake reaches a tile further and holds longer', { reach: 1, dur: 0.12 }),
     t('Titan Quake', 'The quake reaches two tiles further and holds well longer; he is shielded', { reach: 2, dur: 0.23, castShield: 0.052 }),
-    t('Earthshatter', 'The quake reaches three tiles further, hits harder and holds far longer; the ground splits round him, and he and the allies beside him are warded', { reach: 3, dur: 0.42, pow: 0.15, castShield: 0.07 }, [nova(2.5, 0.3, 200), ward(2, 0.03)]),
+    // (LATE-RETUNE: the hold 0.42, the blow 0.15 and the split 0.3 until the grade-4 Juggernaut stood +7.6 points over the roster at level 30)
+    t('Earthshatter', 'The quake reaches three tiles further, hits harder and holds far longer; the ground splits round him, and he and the allies beside him are warded', { reach: 3, dur: 0.3, pow: 0.08, castShield: 0.07 }, [nova(2.5, 0.22, 200), ward(2, 0.03)]),
   ],
   sage: [
     t('Fourth Star', 'Starfall calls a fourth star', { extra: 1 }),
@@ -288,7 +289,9 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
   tyrant: [
     t('Twin Verdicts', 'A second, smaller judgement follows the first, a tile wider', { extra: 1, reach: 1 }),
     t('Tyrant\'s Decree', 'Two more judgements follow, and a wave of dread bursts round him', { extra: 2, reach: 1 }, [nova(3, 0.21)]),
-    t('The Iron Throne', 'The judgements fall two tiles wider and harder, a wave of dread holds the foes near, and a lighter verdict falls again', { extra: 2, reach: 2, pow: 0.12 }, [nova(3, 0.28, 200), echo(1200, 0.2)]),
+    // (LATE-RETUNE: it also hit harder (pow 0.12), its wave was stronger (0.28) and a lighter verdict fell again (echo 0.2) until the grade-4 Tyrant
+    // stood +10.7 points over the roster at level 1: the judgements falling two tiles wider is the step past tier 3)
+    t('The Iron Throne', 'The judgements fall two tiles wider, and a wave of dread holds the foes near', { extra: 2, reach: 2 }, [nova(3, 0.21, 200)]),
   ],
 };
 
