@@ -1,6 +1,6 @@
 # Every item on the wave card; no spoils in the end recap; earned heroes walk in — RECAP-REVEAL
 
-Owner: Claude. Branch: `claude/recap-reveal` (from main 0.233.0).
+Owner: Claude. Branch: `claude/recap-reveal` (from main 0.233.0, merged up to 0.235.0).
 
 The owner's asks: "The wave recap should show all items gained, spoils don't really matter if they leave", and "When a hero is
 obtained through a task, they shouldn't act like they came from the summoner. They can have a similar reveal, but not from the
@@ -49,10 +49,11 @@ that write it carry on; nothing shows it now.
 Hard").
 
 `src/earnedArrival.ts` is their first reveal: no summoner and no chamber. The keep's overlook at dusk (the camp's own painting,
-`art/camp/overlook.png`) with the deed in a banner at the top; the hero walks in along the rampart (its battle sprite's walk frames:
+`art/camp/overlook.png`) with the deed in a banner at the top ("A deed done"); the hero walks in along the rampart (its battle sprite's walk frames:
 `revealSprite` takes `{ walk: true }` and a `walk()` that loops them; the summoning reveal does not ask and plays as before), then
 its painted art rises behind it as it plants its feet and strikes once (the dust ring, the `eliteSting` cue); the plate gives "A new
-ally rides in", the name, the class title, the role and "Joins your company". Beats `ARRIVAL_BEATS` (0, 0.6, 2.3, 3.1 s).
+ally rides in", the name with its title under it (`titleLine`, BENCH-TITLES), the calling and its classes, the role and "Joins
+your company". Beats `ARRIVAL_BEATS` (0, 0.6, 2.3, 3.1 s).
 
 It keeps the summoning reveal's manners: the same queue (`queueReveal` in `summonTarot.ts` picks the arrival by `arrivalOf`, so a
 milestone's join after a fight and `revealUnseen` for a missed one both walk in), the skip guard (`SKIP_GUARD_MS`), a tap to the
@@ -66,7 +67,7 @@ and still plays first when cinematics are on.
 - `npm test -- recap-reveal wave-recap`: `test/recap-reveal.test.ts` is new (no gains for a quiet wave; every kind grouped and
   ordered, ores row and spending left out; the found lines the gains cover are dropped and the rest kept; a settled boss gear;
   the arrival rule and deed lines for all ten). `test/wave-recap.test.ts` is unchanged and passes.
-- Full `npm test`: see the handoff.
+- Full `npm test` (after merging main 0.235.0): 1498 tests, 0 failures.
 - `tools/recap-reveal/shots.mjs` (Chromium, the built game, a real Undead Legion run): a won wave whose settlement pays a cursed
   path's gear and two charms, a hero joining, two chests, shards, tomes and a stone (the save's drops added as the wave settles,
   standing in for the systems that pay them); the defeat and the end recap (no spoils heading); the Reaper's arrival through the
