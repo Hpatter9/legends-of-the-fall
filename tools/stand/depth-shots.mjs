@@ -35,6 +35,11 @@ try {
     document.querySelector('.stPick .primary').click();
   });
   await page.waitForFunction(() => window.__game.stand.state);
+  await page.waitForFunction(() => window.__game.stand.hall.king && window.__game.stand.hall.emptyThrone);
+  assert.deepEqual(await page.evaluate(() => {
+    const hall = window.__game.stand.hall;
+    return { idle: hall.rulerAction, throneVisible: hall.emptyThrone.visible, throneBehind: hall.emptyThrone.y < hall.king.y && hall.emptyThrone.zIndex < hall.king.zIndex };
+  }), { idle: 'idle', throneVisible: true, throneBehind: true });
   await page.addStyleTag({ content: '#quip, #tip, .stCount { display: none !important; }' });
   for (const [width, height] of [[393, 852], [360, 780], [412, 915]]) {
     await page.setViewportSize({ width, height });
@@ -66,6 +71,22 @@ try {
     if (i === 0) await page.screenshot({ path: 'docs/samples/stand-depth-selected-ruler-393x852.png' });
   }
   assert.equal(await page.evaluate(() => new Set(window.__standReviewSources).size), 8);
+  // A real melee event must select the standing strike row, land damage, then return to idle.
+  await page.evaluate(() => {
+    const s = window.__game.stand.state;
+    s.phase = 'wave'; s.b.phase = 'fight'; s.queue.length = 0;
+    for (const u of s.b.units) { if (u.side === 'foe') u.alive = false; else if (u.id !== s.king.id) u.busyUntil = 1e9; }
+    const foe = { ...s.king, id: s.b.nextId++, def: 'skeleton', side: 'foe', u: s.king.u + 1, v: s.king.v, hp: 10000, maxHp: 10000, alive: true, busyUntil: 1e9, power: undefined, swing: undefined, cast: undefined, step: undefined };
+    s.b.units.push(foe);
+    s.king.busyUntil = 0;
+    window.__standReviewFoe = foe.id;
+  });
+  await page.waitForFunction(() => { const h = window.__game.stand.hall; return h.rulerAction === 'strike' && h.king.texture.frame.y === h.king.texture.frame.height * 2; });
+  await page.screenshot({ path: 'docs/samples/stand-depth-ruler-defence-393x852.png' });
+  await page.waitForFunction(() => window.__game.stand.state.b.units.find(u => u.id === window.__standReviewFoe).hp < 10000);
+  await page.waitForFunction(() => window.__game.stand.hall.rulerAction === 'idle');
+  assert.equal(await page.evaluate(() => window.__game.stand.hall.emptyThrone.visible), true);
+  console.log('Standing ruler, rear throne and event-driven melee verified.');
   console.log('All eight Options choices use distinct Last Stand ruler atlases.');
   console.log(JSON.stringify({ errors }));
   if (errors.length) process.exitCode = 1;

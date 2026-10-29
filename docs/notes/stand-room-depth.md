@@ -18,14 +18,22 @@ The initial checkout was 0.197.0. The owner pointed to the implemented Options k
 
 The king/queen remains in the middle. Last Stand reads the actual Settings choice, including switching ruler while the room is open. No second selection or new appearance save key was introduced. All eight choices were exercised through the real Options UI, checking the ruler label and that eight distinct atlases reached the Last Stand sprite.
 
+## Standing ruler and defence
+
+The owner's follow-up: the ruler need not sit, should help fight if needed, and may have the throne behind them. Last Stand now uses the chosen ruler's standing idle/strike/cast/hurt/fall rows, with their separate empty throne at the reserved tile diagonally behind the centre. The throne remains visible throughout, while the castle tab keeps its existing seated presentation.
+
+The ruler guards the centre and strikes visible adjacent foes using the normal wind-up, damage, cooldown and kill-reward paths. Base attack is 24, melee range one tile and attack interval 1500 ms, shared by all eight appearances and using the existing castle/relic modifiers. The ruler does not chase, even when the final-foe hunt is active. Health, failure condition, hero posts and saves remain unchanged. A swing event drives the standing strike animation; the wave-clear flourish uses a standing cast pose.
+
+`test/stand-ruler.test.ts` covers actual damage, no pursuit, cooldown/wind-up, hidden/charmed targeting, determinism and a finishing blow's run credit/payment. The earlier stationary-objective test was renamed to reflect the authorised ability to strike. The browser tool checks standing idle, a visible rear throne, all eight appearances and a real adjacent enemy causing a strike pose, damage and return to idle. `tools/rulers/check.mjs` now expects standing idle on returning from a Last Stand action.
+
 ## Verification
 
 - `npm run typecheck`: passed.
 - `npm run web`: passed on main 0.204.0 plus this branch's room work.
-- `npm test -- stand rulers settings no-flicker`: passed, seven affected test files.
+- `npm test -- stand rulers settings no-flicker`: passed, eight affected test files; the added finishing-blow case also passed in a focused rerun.
 - `git diff --check`: passed.
-- Browser captures: `tools/stand/depth-shots.mjs`, all four rooms and a live fight at 393x852, 360x780 and 412x915; reduced motion at 393x852; all eight Options selections. No page errors. The final courtyard crop removes transparent atlas padding that produced black lawn seams. `tools/stand/depth-preview.mjs` lays out the real captures in a 16:9 review image (`docs/samples/stand-depth-preview.png`). Final screenshots: `docs/samples/stand-depth-*.png`, including `stand-depth-selected-ruler-393x852.png`.
+- Browser captures: `tools/stand/depth-shots.mjs`, all four rooms and a live fight at 393x852, 360x780 and 412x915; reduced motion at 393x852; all eight Options selections. No page errors. The final courtyard crop removes transparent atlas padding that produced black lawn seams. `tools/stand/depth-preview.mjs` lays out the real captures in a 16:9 review image (`docs/samples/stand-depth-preview.png`). Final screenshots: `docs/samples/stand-depth-*.png`, including `stand-depth-selected-ruler-393x852.png` and `stand-depth-ruler-defence-393x852.png`.
 
 The capture tool needs Playwright available to Node and a Chromium executable (`CHROMIUM_PATH`, default `/usr/bin/chromium`). In the managed environment, use the supplied Node dependency directory in `NODE_PATH`. The review browser is capped to 5 FPS for software graphics; the game itself is not capped by this change. Real-phone performance has not been measured.
 
-All new runtime art is imported and embedded in the game bundle, preserving offline asset delivery. New simulation rules, rewards and save keys were not introduced. Ready for visual review; no release version bump or deployment.
+All new runtime art is imported and embedded in the game bundle, preserving offline asset delivery. The only new combat rule is stationary ruler self-defence; reward formulas and save keys are unchanged. Ready for visual review; no release version bump or deployment.

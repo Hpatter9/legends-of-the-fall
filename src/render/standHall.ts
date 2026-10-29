@@ -300,7 +300,7 @@ export class StandHall {
       }
     }
 
-    // the dais: standards behind the throne, a golden aura, the castle's enthroned king, his health above him
+    // The ruler stands at the centre, with their throne on the reserved tile behind them.
     for (const [u, v] of [[KING_AT.u - 1, KING_AT.v - 2], [KING_AT.u + 1, KING_AT.v - 2]]) {
       const [x, y] = top(u, v);
       add(tex('standard'), x, y, { scale: 0.5, z: (u + v) * 10 + 3 });
@@ -308,10 +308,11 @@ export class StandHall {
     const [kx, ky] = top(KING_AT.u, KING_AT.v);
     pool(KING_AT.u, KING_AT.v, glows.gold, 280, 0.42);
     this.flames.push({ sp: add(glows.gold, kx, ky - 64, { ax: 0.5, ay: 0.5, scale: 1.0, add: true, alpha: 0.5, z: (KING_AT.u + KING_AT.v) * 10 + 2 }), base: 0.5, phase: 0.3 });
-    this.kingFrames = rulerTextures(settings().ruler, 'seated');
-    this.emptyThrone = add(rulerThrone(settings().ruler), kx, ky + 8, { scale: KING_SCALE, z: (KING_AT.u + KING_AT.v) * 10 + 4 });
+    this.kingFrames = rulerTextures(settings().ruler, 'idle');
+    const [throneX, throneY] = top(KING_AT.u - 1, KING_AT.v - 1);
+    this.emptyThrone = add(rulerThrone(settings().ruler), throneX, throneY + 8, { scale: KING_SCALE, z: (KING_AT.u + KING_AT.v - 2) * 10 + 4 });
     this.emptyThrone.width = this.emptyThrone.height = KING_H * KING_SCALE;
-    this.emptyThrone.visible = false;
+    this.emptyThrone.visible = true;
     this.king = add(this.kingFrames[0], kx, ky + 8, { scale: KING_SCALE, z: (KING_AT.u + KING_AT.v) * 10 + 5 });
     this.king.width = this.king.height = KING_H * KING_SCALE;
     this.kingTop = { x: kx, y: ky + 8 - KING_H * KING_SCALE };
@@ -550,9 +551,9 @@ export class StandHall {
     this.decreeLeft = 1600;
   }
 
-  private rulerAction: RulerAction = 'seated';
+  private rulerAction: RulerAction = 'idle';
   private rulerStarted = 0;
-  react(action: 'hurt' | 'cast' | 'dead'): void {
+  react(action: 'hurt' | 'cast' | 'strike' | 'dead'): void {
     if (this.rulerAction === 'dead') return;
     this.rulerAction = action;
     this.rulerStarted = this.t;
@@ -586,14 +587,14 @@ export class StandHall {
       this.decreeLeft = Math.max(0, this.decreeLeft - dt);
       if (kingHp <= 0 && this.rulerAction !== 'dead') this.react('dead');
       const elapsed = this.t - this.rulerStarted;
-      if (this.rulerAction !== 'dead' && elapsed >= 720) this.rulerAction = 'seated';
-      const action = this.rulerAction !== 'seated' ? this.rulerAction : this.decreeLeft > 0 ? 'command' : 'seated';
+      if (this.rulerAction !== 'dead' && elapsed >= 720) this.rulerAction = 'idle';
+      const action = this.rulerAction !== 'idle' ? this.rulerAction : this.decreeLeft > 0 ? 'cast' : 'idle';
       if (this.emptyThrone) {
         this.emptyThrone.texture = rulerThrone(settings().ruler);
         this.emptyThrone.width = this.emptyThrone.height = KING_H * KING_SCALE;
-        this.emptyThrone.visible = action !== 'seated' && action !== 'command';
+        this.emptyThrone.visible = true;
       }
-      this.king.texture = rulerTextures(settings().ruler, action)[rulerFrame(action, action === 'command' ? 1600 - this.decreeLeft : action === 'seated' ? this.t : elapsed, still)];
+      this.king.texture = rulerTextures(settings().ruler, action)[rulerFrame(action, this.rulerAction === 'idle' && this.decreeLeft > 0 ? 1600 - this.decreeLeft : action === 'idle' ? this.t : elapsed, still)];
       this.king.width = this.king.height = KING_H * KING_SCALE;
       // (his health over his head: green, low and red, on a dark gilt-edged plate)
       const g = this.kingBar;
@@ -624,7 +625,7 @@ export class StandHall {
     this.bursts = [];
     this.king = null;
     this.emptyThrone = null;
-    this.rulerAction = 'seated';
+    this.rulerAction = 'idle';
     this.rulerStarted = 0;
     this.floor = null;
     this.plan = null;
