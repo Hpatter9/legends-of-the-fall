@@ -597,56 +597,34 @@
   #tip[data-side='right'] i { left: -18px; top: calc(var(--ay) - 9px); border-right-color: var(--gold); }
   .tipLit { outline: 2px solid var(--gold); outline-offset: 3px; box-shadow: 0 0 14px var(--gold); }
 
-  /* ---- the loading screen: a Knight against the Demon Lord on a dusk battlefield, in pure CSS and DOM sprites (the two attack strips and the
-     slash and impact bursts are inlined by build.mjs, so it is on screen before game.js has downloaded). The fight loops (steps and whole
-     pixels only, nothing fades or flashes); `--s` is the pixel scale of the sprites. ---- */
-  #loading { --s: 2; position: fixed; inset: 0; z-index: 30; overflow: hidden; display: grid; place-items: center; color: var(--gold); background: var(--s0); image-rendering: pixelated; font-size: 18px; }
+  /* The illustrated keep is embedded by the build: visible before the game bundle arrives.
+     Only transforms and opacity animate; the title and tips stay still and readable. */
+  #loading { position: fixed; inset: 0; z-index: 30; overflow: hidden; isolation: isolate; display: grid; place-items: center; color: #edcf91; background: #061320; font: 18px/1.4 Georgia, serif; text-align: center; }
   #loading > * { position: absolute; pointer-events: none; }
-  .ldSky { inset: 0 0 28% 0; background: linear-gradient(var(--s0) 0 14%, var(--s2) 14% 27%, var(--p0) 27% 39%, var(--p0) 39% 50%, var(--p1) 50% 60%, var(--r3) 60% 68%, var(--e5) 68% 78%, var(--e6) 78%); }
-  .ldMoon { left: 60%; top: 24%; width: 88px; height: 88px; border-radius: 50%; background: radial-gradient(circle at 36% 36%, var(--e10) 0 28%, var(--e8) 28% 58%, var(--e6) 58% 80%, var(--s11) 80%); box-shadow: 0 0 0 8px rgb(var(--e7-rgb) / 0.14), 0 0 0 20px rgb(var(--e7-rgb) / 0.08); }
-  .ldRidge { left: 0; right: 0; bottom: 28%; }
-  .ldRidge.a { height: 24%; background: var(--p0); clip-path: polygon(0 100%, 0 52%, 9% 30%, 17% 58%, 26% 18%, 37% 62%, 46% 36%, 57% 70%, 68% 24%, 79% 60%, 88% 34%, 100% 56%, 100% 100%); }
-  .ldRidge.b { height: 15%; background: var(--s2); clip-path: polygon(0 100%, 0 40%, 12% 66%, 22% 20%, 33% 60%, 44% 30%, 55% 74%, 66% 36%, 77% 68%, 90% 22%, 100% 58%, 100% 100%); }
-  .ldGround { inset: 72% 0 0 0; background: linear-gradient(var(--e5) 0 4px, var(--r2) 4px 8px, var(--r0) 8px 28px, var(--s2) 28px 64px, var(--s1) 64px); }
-  .ldVig { inset: 0; background: radial-gradient(ellipse at 50% 52%, rgb(var(--black-rgb) / 0) 40%, rgb(var(--black-rgb) / 0.55) 100%); }
+  .ldScene { inset: 0; overflow: hidden; }
+  .ldArt { position: absolute; inset: -1.5%; background: #061320 url(__LD_KEEP__) center / cover no-repeat; animation: ldDepth 24s ease-in-out infinite alternate; }
+  .ldBeacon { position: absolute; inset: 0; background: radial-gradient(ellipse at 74% 34%, #ffc86b55, transparent 8%), radial-gradient(ellipse at 77% 46%, #f4ae3326, transparent 16%); mix-blend-mode: screen; opacity: .5; animation: ldGlow 4.8s ease-in-out infinite alternate; }
+  .ldMist { position: absolute; inset: 37% -18% 10%; background: radial-gradient(ellipse at 32% 44%, #b6d8e32b, transparent 38%), radial-gradient(ellipse at 73% 63%, #a9cfdd24, transparent 32%); animation: ldMist 19s ease-in-out infinite alternate; }
+  .ldMist.far { inset: 20% -25% 35%; opacity: .5; animation-duration: 29s; animation-delay: -12s; }
+  .ldShade { inset: 0; background: linear-gradient(#020c1740, transparent 25% 65%, #020910d9 88%, #020910ed); }
   .ldEmbers { inset: 0; overflow: hidden; }
-  .ldEmbers i { position: absolute; left: var(--x); bottom: -8px; width: 4px; height: 4px; background: var(--e6); box-shadow: 0 0 0 2px rgb(var(--e5-rgb) / 0.25); animation: ldEmber var(--t) steps(240) var(--d) infinite; }
-  @keyframes ldEmber { to { translate: var(--dx, 0px) -960px; } }
-  .ldFight { left: 0; right: 0; bottom: calc(28% - 22px); height: calc(var(--s) * 125px); }
-  .ldK, .ldD { position: absolute; bottom: 0; background-repeat: no-repeat; background-position: 0 0; animation-timing-function: step-end; animation-iteration-count: infinite; animation-duration: 2.8s; }
-  .ldK { z-index: 2; left: calc(50% - var(--s) * 154px); width: calc(var(--s) * 180px); height: calc(var(--s) * 76px); background-image: url(__LD_KNIGHT__); background-size: calc(var(--s) * 900px) calc(var(--s) * 76px); animation-name: ldKnight; }
-  .ldD { z-index: 1; left: calc(50% - var(--s) * 34px); width: calc(var(--s) * 128px); height: calc(var(--s) * 125px); background-image: url(__LD_DEMON__); background-size: calc(var(--s) * 640px) calc(var(--s) * 125px); scale: -1 1; animation-name: ldDemon; }
-  @keyframes ldKnight {
-    0% { background-position-x: 0; translate: 0 0; }
-    5% { background-position-x: calc(var(--s) * -180px); translate: calc(var(--s) * -2px) 0; }
-    10% { background-position-x: calc(var(--s) * -360px); translate: 0 0; }
-    15% { background-position-x: calc(var(--s) * -540px); translate: calc(var(--s) * 6px) 0; }
-    20% { background-position-x: calc(var(--s) * -720px); translate: calc(var(--s) * 14px) 0; }
-    36% { background-position-x: 0; translate: calc(var(--s) * 4px) 0; }
-    42% { translate: 0 0; }
-    68% { translate: calc(var(--s) * -6px) 0; }
-    78% { translate: calc(var(--s) * -3px) 0; }
-    86%, 100% { translate: 0 0; }
-  }
-  @keyframes ldDemon {
-    0% { background-position-x: 0; translate: 0 0; }
-    50% { background-position-x: calc(var(--s) * -128px); translate: calc(var(--s) * 2px) 0; }
-    56% { background-position-x: calc(var(--s) * -256px); translate: 0 0; }
-    62% { background-position-x: calc(var(--s) * -384px); translate: calc(var(--s) * -6px) 0; }
-    68% { background-position-x: calc(var(--s) * -512px); translate: calc(var(--s) * -14px) 0; }
-    84% { background-position-x: 0; translate: calc(var(--s) * -4px) 0; }
-    90%, 100% { translate: 0 0; }
-  }
-  /* (the clash: where the two blades meet, a little right of the middle) */
-  .ldTitle { left: 0; right: 0; top: calc(env(safe-area-inset-top) + 9%); margin: 0; text-align: center; font: 900 40px/1 Georgia, 'Times New Roman', serif; letter-spacing: 3px; text-transform: uppercase; color: var(--gold-hi); text-shadow: 0 3px 0 var(--e1), 0 6px 0 var(--s2), 3px 0 0 var(--s2), -3px 0 0 var(--s2), 0 -3px 0 var(--s2); }
-  .ldTitle small { display: block; margin-top: 8px; font-size: 20px; letter-spacing: 8px; color: var(--gold); text-shadow: 0 2px 0 var(--s2), 2px 0 0 var(--s2), -2px 0 0 var(--s2), 0 -2px 0 var(--s2); }
-  .ldLine { left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom) + 12%); margin: 0; text-align: center; font: 900 16px Georgia, 'Times New Roman', serif; letter-spacing: 4px; text-transform: uppercase; color: var(--ink); text-shadow: 0 2px 0 var(--black); }
-  .ldBar { left: 50%; bottom: calc(env(safe-area-inset-bottom) + 8%); width: 160px; height: 8px; margin-left: -80px; background: var(--s1); border: 2px solid var(--s7); box-sizing: content-box; overflow: hidden; }
-  .ldTip { left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom) + 14px); margin: 0 auto; max-width: 320px; padding: 0 16px; text-align: center; font: 400 12px/1.3 var(--body); color: var(--s13); text-shadow: 0 1px 0 var(--black); }
-  .ldBar i { position: absolute; top: 0; left: 0; width: 40px; height: 100%; background: var(--gold); animation: ldMarch 1.6s steps(16) infinite; }
-  @keyframes ldMarch { from { translate: -40px 0; } to { translate: 160px 0; } }
-  @media (min-width: 700px) { #loading { --s: 3; } .ldTitle { font-size: 56px; } }
-  @media (prefers-reduced-motion: reduce) { .ldK, .ldD, .ldEmbers i, .ldBar i { animation: none; } }
+  .ldEmbers i { position: absolute; left: var(--x); bottom: -12px; width: 2px; height: 5px; border-radius: 50%; background: #ffd593; box-shadow: 0 0 7px 2px #ff9f4366; opacity: .65; animation: ldEmber var(--t) linear var(--d) infinite; }
+  .ldEmbers i:nth-child(3n) { width: 3px; height: 3px; }
+  .ldTitle { top: max(5.5%, calc(env(safe-area-inset-top) + 20px)); left: 4%; right: 4%; margin: 0; color: #ebc780; font: 900 clamp(40px, 12.5vw, 68px)/1.1 'Cinzel Decorative', Georgia, serif; letter-spacing: .025em; text-transform: uppercase; text-shadow: 0 2px 3px #020810, 0 0 24px #020810; }
+  .ldTitle::before { content: '✦'; display: block; margin-bottom: 10px; font: 24px/1 Georgia, serif; color: #e0b873; }
+  .ldTitle small { display: block; margin: 10px auto 0; padding: 10px 0; width: fit-content; border-top: 1px solid #c9a56b80; border-bottom: 1px solid #c9a56b80; font: 700 clamp(12px, 3.7vw, 20px)/1.2 Georgia, serif; letter-spacing: .18em; }
+  #loading .ldFooter { left: 8%; right: 8%; bottom: max(5%, calc(env(safe-area-inset-bottom) + 16px)); display: grid; gap: 16px; justify-items: center; }
+  .ldLine { margin: 0; color: #edcf91; font: 700 clamp(18px, 5vw, 24px)/1.3 Georgia, serif; text-shadow: 0 2px 8px #000; }
+  .ldBar { position: relative; width: 100%; max-width: 340px; height: 7px; border: 1px solid #ad8753; padding: 2px; background: #030d17; box-shadow: 0 0 0 3px #02091088; overflow: hidden; }
+  .ldBar i { display: block; width: 35%; height: 100%; background: linear-gradient(90deg, #836038, #f5d68b, #b98c49); box-shadow: 0 0 12px #edb75f66; animation: ldMarch 2.8s ease-in-out infinite alternate; }
+  .ldTip { min-height: 3.9em; max-width: 330px; margin: 0; color: #ccbea5; font: 400 14px/1.3 Georgia, serif; text-shadow: 0 1px 4px #000; }
+  @keyframes ldDepth { from { transform: scale(1); } to { transform: scale(1.025) translate3d(-.3%, .3%, 0); } }
+  @keyframes ldGlow { to { opacity: .95; } }
+  @keyframes ldMist { from { transform: translate3d(-4%, 1%, 0); } to { transform: translate3d(5%, -2%, 0); } }
+  @keyframes ldEmber { from { transform: translate3d(0, 0, 0) rotate(-15deg); opacity: 0; } 12%, 65% { opacity: .75; } to { transform: translate3d(var(--dx, 20px), -85vh, 0) rotate(30deg); opacity: 0; } }
+  @keyframes ldMarch { from { transform: translateX(0); } to { transform: translateX(186%); } }
+  @media (min-width: 700px) { .ldScene { left: calc(50% - 350px); right: calc(50% - 350px); } .ldScene::after { content: ''; position: absolute; inset: 0; box-shadow: inset 60px 0 65px -30px #061320, inset -60px 0 65px -30px #061320; } }
+  @media (prefers-reduced-motion: reduce) { #loading *, #loading *::before, #loading *::after { animation: none !important; } .ldBar i { width: 100%; opacity: .65; } }
   #version { position: fixed; right: 6px; bottom: 2px; font-size: 10px; color: rgb(var(--white-rgb) / 0.5); text-shadow: 0 1px 0 var(--black); pointer-events: none; }
   #version { bottom: auto; top: calc(env(safe-area-inset-top) + 34px); }
   /* The party screen (src/party.ts): five slots, the traits they wake, the heroes to pick from, and the button to start */
@@ -876,15 +854,12 @@
   <div id="settingsBody"></div>
 </div>
 <div id="tip" hidden><p id="tipText"></p><div class="tipRow"><button id="tipSkip">Skip tutorial</button><button id="tipGot" class="primary">Got it</button></div><i></i></div>
-<div id="loading" role="status" aria-label="Loading">
-  <div class="ldSky"></div><div class="ldMoon"></div><div class="ldRidge a"></div><div class="ldRidge b"></div><div class="ldGround"></div>
-  <div class="ldEmbers"><i style="--x:6%;--t:11s;--d:-1s;--dx:12px"></i><i style="--x:15%;--t:9s;--d:-6s;--dx:-8px"></i><i style="--x:24%;--t:13s;--d:-3s;--dx:16px"></i><i style="--x:33%;--t:10s;--d:-8s;--dx:-12px"></i><i style="--x:41%;--t:12s;--d:-2s;--dx:8px"></i><i style="--x:52%;--t:9s;--d:-5s;--dx:-16px"></i><i style="--x:60%;--t:14s;--d:-9s;--dx:12px"></i><i style="--x:69%;--t:10s;--d:-4s;--dx:-8px"></i><i style="--x:78%;--t:12s;--d:-7s;--dx:16px"></i><i style="--x:86%;--t:11s;--d:-0s;--dx:-12px"></i><i style="--x:93%;--t:9s;--d:-2s;--dx:8px"></i><i style="--x:47%;--t:13s;--d:-10s;--dx:-4px"></i></div>
-  <div class="ldFight">
-    <div class="ldK"></div><div class="ldD"></div>
-  </div>
-  <div class="ldVig"></div>
+<div id="loading" role="status" aria-label="Preparing the keep" aria-live="polite">
+  <div class="ldScene" aria-hidden="true"><div class="ldArt"></div><div class="ldBeacon"></div><div class="ldMist far"></div><div class="ldMist"></div></div>
+  <div class="ldShade" aria-hidden="true"></div>
+  <div class="ldEmbers" aria-hidden="true"><i style="--x:6%;--t:9s;--d:-1s;--dx:15px"></i><i style="--x:15%;--t:10s;--d:-2s;--dx:-18px"></i><i style="--x:24%;--t:11s;--d:-3s;--dx:21px"></i><i style="--x:33%;--t:12s;--d:-4s;--dx:-24px"></i><i style="--x:41%;--t:13s;--d:-5s;--dx:27px"></i><i style="--x:52%;--t:14s;--d:-6s;--dx:-30px"></i><i style="--x:60%;--t:9s;--d:-7s;--dx:33px"></i><i style="--x:69%;--t:10s;--d:-8s;--dx:-36px"></i><i style="--x:78%;--t:11s;--d:-9s;--dx:39px"></i><i style="--x:86%;--t:12s;--d:-10s;--dx:-42px"></i><i style="--x:93%;--t:13s;--d:-11s;--dx:45px"></i><i style="--x:47%;--t:14s;--d:-12s;--dx:-48px"></i></div>
   <h1 class="ldTitle">Legends<small>of the Last Keep</small></h1>
-  <p class="ldLine">Loading&hellip;</p><div class="ldBar"><i></i></div><p class="ldTip"></p>
+  <div class="ldFooter"><p class="ldLine">Preparing the keep&hellip;</p><div class="ldBar" aria-hidden="true"><i></i></div><p class="ldTip">Your heroes are gathering. The keep awaits.</p></div>
 </div>
 <div id="turnUp"><b>Turn your phone upright</b><span>Legends of the Last Keep is played upright.</span></div>
 <div id="version">Version __VERSION__</div>
