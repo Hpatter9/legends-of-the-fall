@@ -25,8 +25,8 @@ export type Cue =
   | 'heal' | 'shieldHum' | 'horn' | 'pipes'
   // moves and traps
   | 'dash' | 'blink' | 'trap'
-  // big moments
-  | 'ultimate' | 'bossSkill'
+  // big moments (`kingCast` and `kingSpell` hold the mix's voices for a king's spell's own rendered sounds: `spellSfx.ts`)
+  | 'ultimate' | 'bossSkill' | 'kingCast' | 'kingSpell'
   // the summoning hall's build-up and stinger, and a ribbon slamming in
   | 'riseSummon' | 'stingSummon' | 'slam'
   // deaths
@@ -132,6 +132,8 @@ export const CUES: Record<Cue, CueSpec> = {
 
   ultimate: c(600, 1400, 6, 3),
   bossSkill: c(500, 900, 4, 3),
+  kingCast: c(0, 600, 2, 3),
+  kingSpell: c(0, 1200, 3, 3),
 
   riseSummon: c(0, 2300, 4, 3),
   stingSummon: c(0, 1800, 4, 3),
@@ -327,12 +329,14 @@ export function cuesFor(b: Battle, e: BattleEvent): Cued[] {
   }
 }
 
-/** The king's spells: each in its own element's voice. */
-function spellCues(id: keyof typeof SPELL_ELEMENT): Cued[] {
+/** The king's spells' synthesised cues: each in its own element's voice. Their rendered sounds (`spellSfx.ts`) play instead
+ *  once decoded; these stand in until then, or where a browser cannot decode the files. */
+export function spellCues(id: keyof typeof SPELL_ELEMENT): Cued[] {
   switch (id) {
     case 'heal': return [{ cue: 'heal' }];
     case 'shield': return [{ cue: 'shieldHum' }, { cue: 'holyChime', gain: 0.5, delay: 100 }];
-    case 'meteor': return [{ cue: 'meteorFall', delay: 0 }, { cue: 'fireBoom', delay: 850, gain: 1.5 }, { cue: 'thunder', delay: 910, gain: 0.8 }];
+    // (its fall and boom come from its own `area` event, timed to the landing: played here too, the fall rang twice)
+    case 'meteor': return [];
     case 'chain': return [{ cue: 'crackle' }, { cue: 'thunder', delay: 120, gain: 0.7 }];
     case 'frost': return [{ cue: 'frostCrack' }, { cue: 'frostShatter', delay: 160 }];
     case 'rally': return [{ cue: 'horn' }, { cue: 'fireWhoosh', gain: 0.6 }];
