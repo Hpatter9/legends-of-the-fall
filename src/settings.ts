@@ -15,6 +15,9 @@ const KEY = 'legends.settings';
 export interface Settings {
   /** The player's ruler; cosmetic, shared by every view. */
   ruler: RulerId;
+  /** Set once the player picks a ruler in the picker. Before The King (0.212.0) any saved setting carried the old default,
+   *  Iron Stag, so a saved Iron Stag without this is read as the old default and moves to The King, the owner's call. */
+  rulerPicked?: boolean;
   /** Music volume, 0 to 100. */
   music: number;
   /** Effects volume, 0 to 100. */
@@ -52,7 +55,8 @@ export function parseSettings(raw: string | null): Settings {
   const flag = (x: unknown, d: boolean) => (typeof x === 'boolean' ? x : d);
   const validHat = (x: unknown): DuchessCosmeticId => (typeof x === 'string' && DUCHESS_COSMETICS.some((c) => c.id === x) ? (x as DuchessCosmeticId) : DEFAULTS.duchessHat);
   return {
-    ruler: rulerOf(saved.ruler).id,
+    ruler: saved.ruler === 'iron_stag' && saved.rulerPicked !== true ? DEFAULT_RULER : rulerOf(saved.ruler).id,
+    ...(saved.rulerPicked === true ? { rulerPicked: true } : {}),
     music: volume(saved.music, DEFAULTS.music),
     effects: volume(saved.effects, DEFAULTS.effects),
     speed: saved.speed === 2 ? 2 : 1,
@@ -157,7 +161,7 @@ function row(title: string, hint: string): [HTMLElement, HTMLElement] {
   return [r, text];
 }
 
-/** The ruler: one compact row with the current ruler's portrait and name; its button opens the picker of all eight
+/** The ruler: one compact row with the current ruler's portrait and name; its button opens the picker of all nine
  *  (`settingsPicker.ts`), which saves to the same `ruler` setting. */
 function rulerRow(value: RulerId): HTMLElement {
   const ruler = rulerOf(value);
@@ -178,7 +182,7 @@ function rulerRow(value: RulerId): HTMLElement {
       $('settings'),
       {
         title: 'Choose your ruler',
-        hint: 'Eight crowns, eight characters. Choose who rules your keep.',
+        hint: 'Nine crowns, nine characters. Choose who rules your keep.',
         listClass: 'rulerChoices',
         options: RULERS.map((x) => ({
           id: x.id,
@@ -196,6 +200,7 @@ function rulerRow(value: RulerId): HTMLElement {
           },
         })),
         onPick: (id) => {
+          setSetting('rulerPicked', true);
           setSetting('ruler', id as RulerId);
           draw();
           (document.querySelector('.rulerOpen') as HTMLElement | null)?.focus();
@@ -208,11 +213,12 @@ function rulerRow(value: RulerId): HTMLElement {
   return r;
 }
 
-/** A ruler's portrait: the first frame of their sheet. */
+/** A ruler's portrait: the first frame of their sheet (The King's on his throne: his standing figure is the old, smaller pack sprite). */
 function rulerPortrait(id: RulerId): HTMLElement {
   const picture = document.createElement('span');
   picture.className = 'rulerPortrait';
   picture.style.backgroundImage = `url("${RULER_URLS[id]}")`;
+  if (id === 'the_king') picture.style.backgroundPosition = `0 ${(6 / 7) * 100}%`;
   picture.setAttribute('aria-hidden', 'true');
   return picture;
 }

@@ -121,13 +121,13 @@ if (!only || only === 'reduced') {
   await ctx.close();
 }
 
-// a locked bar: level 12 (skill 2 open, the ultimate not): "Lv 30" plates
+// a locked bar: level 12 (skill 2 open, the ultimate not): no plate and no ring until the ultimate unlocks (HEROBAR-LOCK)
 if (!only || only === 'locked') {
   const { ctx, page, errors } = await bootFight(393, 852, ['knight', 'samurai', 'archer', 'priestess', 'satyr'], 12);
   await start(page, 2000);
   await hold(page, true);
-  const locked = await page.evaluate(() => [...document.querySelectorAll('#heroBar .hb')].map((t) => t.querySelector('.hbPlate').textContent));
-  check('below level 30 every portrait says Lv 30', locked.length === 5 && locked.every((x) => x === 'Lv 30'), JSON.stringify(locked));
+  const locked = await page.evaluate(() => [...document.querySelectorAll('#heroBar .hb')].map((t) => ({ plate: t.querySelector('.hbPlate').textContent, ring: getComputedStyle(t.querySelector('.hbRing svg')).display !== 'none' })));
+  check('below level 30 no portrait shows a plate or a ring', locked.length === 5 && locked.every((x) => !x.plate && !x.ring), JSON.stringify(locked));
   await page.screenshot({ path: out('locked', 393) });
   check('no page errors (locked)', errors.length === 0, errors.join('|'));
   await ctx.close();

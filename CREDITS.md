@@ -119,6 +119,14 @@ All Craftpix, copied one sprite or layer at a time; no PixelLab. Ground tops and
   raw files are not redistributed. A painted replacement (`docs/notes/awaken-auras-art-brief.md`) would be credited
   here instead.
 
+## Summon tarot cards (SUMMON-TAROT, phase A mock-up)
+
+- `src/art/ui/tarot-frame.png`: the gold tarot card frame, generated with PixelLab (one generation) for this game.
+- `src/art/tarot/arcana.png`: 48 strips of the **5000 Pixel Effects** pack by blueberry (https://blueberry-assets.itch.io),
+  copied unchanged from `pixel-effects/sprites/<element>-<glyph|burst|circle|aura>/sheet-32.png` in the private assets
+  repository and packed twelve elements a row (light, earth, blood, wind, lightning, crystal, star, fire, dark, moon, forest,
+  sand): the class sigils on the cards and the burst, ring and halo of the first-time reveal (`src/summonTarot.ts`).
+
 ## Fight effects (`src/art/fx/vfx/`)
 
 - 27 Pixel Effects strips (six 32px frames each, copied unchanged from `pixel-effects/sprites/<effect>/sheet-32.png` in
@@ -380,6 +388,7 @@ The Grand Scenario prototype reuses the already credited camp gate and Knights w
 - `src/art/rulers/{sun_viper,frost_witch,ash_empress,rose_duchess,moon_oracle,iron_stag,storm_corsair,gilded_necromancer}.png`: original fantasy pixel character artwork generated with OpenAI image generation from the owner-approved roster and personality concepts (`docs/samples/ruler-roster-personalities.png`). Eight rulers, each with four frames for idle, walk, strike, cast, hurt, fall, seated idle and seated command. Tattoos, jewellery, personal objects and costumes follow those approved concepts. `tools/rulers/prepare.sh` and `bounds.mjs` mechanically slice and pad generated frames; `src/art/rulers/provenance.json` records the source files.
 - `src/art/rulers/thrones.png`: original empty throne sprites generated with OpenAI image generation for the same eight rulers. The seat remains visible when a ruler stands to cast, recoils or falls in Last Stand. Source: `exec-4085424b-b2af-4831-8f90-7e91b12f2437.png` in the generation workspace; normalised to a four-by-two atlas.
 - These replace the player's earlier Himeko Sutori king and three-frame seated king in the live castle, Last Stand and cinematics. Earlier entries above retain the provenance of those historical assets. Enemy kings retain their existing artwork and credits.
+- `src/art/rulers/the_king.png` (The King, the ninth ruler and the default since STARTER-KING): the earlier king brought back, no new artwork. The seated and command rows are the castle's enthroned king (`src/art/throne/king_throne.png`, see the throne room entries above) as it is. The standing rows are the Last Stand's old king from the **Himeko Sutori** character pack in `chronos-assets` (`Template_Male`, `Plate_06_Lordly_Male` and its top, `Helm/Helm_Crown_Male`), with the same pack's `Facial Hair/BeardBlond` and `Staff_05_Radiant_Male` as his sceptre, cut from the pack's 128 px grid and drawn twice up; his fall ends on the kneel turned 90 degrees. Built by `tools/rulers/the-king.py` (lossless pixel moves only). When he rises from his seat he stands before the Iron Stag's throne from `thrones.png` (the old art has no empty throne).
 
 ## Anime hero gallery
 
