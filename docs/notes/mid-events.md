@@ -73,14 +73,16 @@ twist, gone after one fight) or a curse on the foes (`Buff.foes`), never a wound
 It leaves the road's cards and the cart alone (as it left the cursed path and the merchant), and on a card with no way off (an ambush, a
 duel, a storm, a debt) takes the first free choice, as the page makes a player choose.
 
-## Pace (before on main 0.232.0, after on this branch)
+## Pace (before: main 0.232.0; after: this branch, merged with main 0.234.0)
 
-- `npm run daily-rate` (60 dates): with hearts 75% cleared (hearts/run 0.72) before, 75% (0.67) after; no hearts 60% before, 62% after.
-- `node tools/army-pace/run.mjs cell ...` (16 saves, mean tries): orcs L1 2.0 → 2.3, undead L8 6.1 → 5.5, beasts L15 1.4 → 1.6,
-  wildwood L22 1.9 → 1.6, labyrinth L30 8.4 → 7.9 (94% → 100%). Noise of a few saves either way.
-  (Measured before the last change, which keeps shrines and chests exactly where the old draw put them; that only brings the greedy
-  player closer to main: the army scenario hash of `ailments-identical` and the infernal guard of `army-pace` are main's again.)
-- Re-recorded: the `daily` hash of `test/fixtures/ailment-logs.json` (the daily's gaps can bring hazards the greedy player must answer).
+- `npm run daily-rate` (60 dates): with hearts 75% cleared (0.72 hearts a run) before, 80% (0.67) after; no hearts 60% before, 62% after
+  (three dates and one date of 60, about the run-to-run noise: the greedy player's shrines and chests fall exactly where they did).
+- `SAVES=16 node tools/army-pace/run.mjs cell ...` (mean tries to clear Normal): orcs L1 2.0 / 2.0, undead L8 6.1 / 5.7, beasts L15
+  1.4 / 1.4, wildwood L22 1.9 / 1.9, labyrinth L30 8.4 / 8.9 (94% / 94% cleared).
+- `ailments-identical`: the `army` scenario's hash is main's; the `daily` hash was re-recorded (the daily's gaps can bring hazards the
+  greedy player must answer). The `army-pace` guards (the final armies out of reach at level 45) pass unchanged.
+- Gold: the cart's prices are the old merchant's and the tower shop's, and the road's costs and purses are scaled like the old events'
+  (about a wave's pay at most); income from waves is untouched.
 
 ## Tests
 
