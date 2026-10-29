@@ -141,7 +141,7 @@ for (const cell of process.argv.slice(2)) {
     if (tEnd) topEnd++;
     if (run.cleared && won === army.waves.length) {
       cleared++;
-      // (each star's rule as the game settles it, `armyRules`: on Normal to Elite the clear, no hero lost in the last boss fight, and no heart used)
+      // (each star's rule as the game settles it, `armyRules`, so the tool follows the stars' rules as they change)
       armyRules(army, tierOfRun(run), run).forEach((r, i) => r.earned && (starsMet[i] = (starsMet[i] ?? 0) + 1));
     }
   }

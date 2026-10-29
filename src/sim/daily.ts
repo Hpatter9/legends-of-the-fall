@@ -16,8 +16,7 @@ export const DAILY_WAVES = 10;
 export const DAILY_MID = 5;
 
 /** The foes' hp and attack at wave 1, as a share of their stats in `foes.ts`, and the share they gain each wave after (the same for every day). */
-// (0.575 since LATE-RETUNE: 0.55 until the tier skills did what they say, TIER-PROMISES, and a fresh save cleared 83% of days; `docs/notes/late-retune.md`)
-export const DAILY_START = 0.575;
+export const DAILY_START = 0.55;
 export const DAILY_GROWTH = 0.155;
 /** The hp and attack a mid-boss and the boss of the day have at wave 1's strength (the wave's multiplier then applies). */
 export const DAILY_MID_STATS = { hp: 1500, atk: 46 };
