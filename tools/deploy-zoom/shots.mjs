@@ -62,6 +62,8 @@ const SAVES = await import('../../out/shots/bu-saves.mjs');
 const ROSTER = [['knight', 1], ['knight', 1], ['archer', 1], ['cleric', 1], ['wizard', 1], ['samurai', 1]];
 for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   const tag = `${w}x${h}`;
+  // (ONLY=calamity in the environment runs the Calamity's shots alone)
+  if (process.env.ONLY !== 'calamity') {
   const { ctx, page, errs } = await boot(w, h);
   // (wave 1, a save with no army beaten: Auto and Auto merge are locked; the camera eases in on the placement rows)
   await setUp(page, ROSTER, 1, []);
@@ -98,6 +100,7 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   console.log(tag, 'fight', JSON.stringify(await camOf(page)));
   await ctx.close();
   errors += errs.length;
+  }
   // (a Calamity: the Rift's arena and its own board)
   const c = await boot(w, h);
   await c.page.evaluate((json) => localStorage.setItem('legends.calamity', json), JSON.stringify(SAVES.big(11)));
