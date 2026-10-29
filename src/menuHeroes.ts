@@ -388,7 +388,10 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
     // (the hero's own name, its class under it)
     const name = el('b', 'heroCardName');
     name.append(el('span', '', heroName(kind)), el('small', 'heroCardKind', UNITS[kind].name));
-    card.append(banner, scene, name, el('span', 'stars', starsOf(meta, kind)), ribbon);
+    // (its hero power, the dossier's one number, so heroes can be set side by side without opening each)
+    const power = el('span', 'heroCardPower');
+    power.append(el('small', '', 'Power'), el('b', '', powerText(kindPower(meta, kind))));
+    card.append(banner, scene, name, el('span', 'stars', starsOf(meta, kind)), power, ribbon);
     if (kind === lastViewed) {
       card.classList.add('lastViewed');
       const seal = el('span', 'heroCardSeal', '✓');
