@@ -39,6 +39,17 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Completion criteria:** one compact Ruler row opening a sheet of the eight that saves to the same setting and always closes (pick, ✕, backdrop, Escape, Settings' Close; `[hidden]` respected); the Duchess costume the same way; +100 and +1000 stones in the developer row, six buttons fitting at 360; tests extended; typecheck, full tests, web build; 393x852, 360x780, 412x915.
 - **Validation and handoff:** [notes](notes/settings-menus.md).
 
+### ARMY-PACE — Getting to the harder armies is harder
+
+- **Goal:** the owner's ask: "Make it so getting to harder armies is harder. The final armies probably won't be clearable before the player clears all 15 stars on the first army." (an army holds 11 stars in the code; taken as all 11, Mythic included).
+- **Status:** done; released as 0.208.0.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/army-pace`, `/home/user/army-pace` (main 0.204.0 merged in); PR none.
+- **Allowed files or systems:** `src/sim/armies.ts` (the last five armies' `start`, `level`, new `tierLift` and `xpStart`, `waveBoost`, `armyXpShare`), `src/main.ts` (one multiplier on a fight's XP), `tools/army-pace/`, `tools/levelPace.ts`, `tools/unlockPace.ts` (the model's clear days), tests `test/army-pace.test.ts`, `test/armies.test.ts`, `docs/notes/army-pace.md`, `docs/samples/army-pace-*.png`. Not the unlocks, the first four armies, Mythic, the other modes.
+- **Completion criteria:** the Golem Forge and the Yokai not clearable on Normal before a typical player has the first army's 11 stars, the Infernal Host about then, the middle armies ramping; the first army as it was; the harder tiers above Normal; XP, ore and Calamity pace checked; typecheck, affected and full tests, web build; the armies screen at the three sizes.
+- **Validation:** see the handoff's tables and tests.
+- **Handoff:** [notes](notes/army-pace.md).
+
 ### FIGHT-FIXES — Boss in the arena's middle, a free fight camera, heroes get up on a revive, the trophy wall closes
 
 - **Goal:** four of the owner's fixes: "The bosses should stand in the middle of the boss arena."; "Don't lock camera in each wave. Allow free movement and zooming during the wave."; "The units get up off the ground, not a new spawn look, when a heart is burnt for another try."; "Trophy wall comes up and locks castle screen."
