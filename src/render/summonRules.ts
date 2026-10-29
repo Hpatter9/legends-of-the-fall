@@ -156,3 +156,13 @@ export function shakeAt(plan: ShowPlan, t: number): number {
   const p = (t - plan.shakeAt) / plan.shakeMs;
   return (1 - p) * (1 - p);
 }
+
+/** Taps on the show this soon after it starts are let go (a second tap on the summon button, a common double tap on a phone, used to skip a new hero's whole arrival). */
+export const SKIP_GUARD_MS = 450;
+
+/** What a tap on the show at `t` (ms) does: `'ignore'` in the first moments, `'reveal'` (jump to `plan.revealAt`, the new hero in full view with its ribbon) while a grand show is still building, `'end'` (straight to the cards) otherwise. So a join is never skipped past the moment the hero appears. */
+export function skipAction(plan: ShowPlan, t: number): 'ignore' | 'reveal' | 'end' {
+  if (t < SKIP_GUARD_MS) return 'ignore';
+  if (plan.full && t < plan.revealAt) return 'reveal';
+  return 'end';
+}
