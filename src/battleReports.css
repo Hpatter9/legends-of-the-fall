@@ -57,25 +57,25 @@ body[data-move] #result #banner { background: #15251ac4; }
 #recap .rcLine { color: #e0d6bc; font: 400 15px/1.3 var(--body); }
 #recap .rcJoke { margin: 0; color: #aaa995; font-size: 12px; font-style: italic; text-align: center; }
 #recap .rcGrid { gap: 7px; }
-#recap :is(.rcFig, .rcHero, .rcXpRow, .rcAdvice) { border: 1px solid var(--report-rim); border-radius: 5px; background: var(--report-surface); box-shadow: inset 0 0 0 2px #101a142e, 0 3px 8px #0004; }
-#recap .rcFig { padding: 12px 3px; gap: 4px; }
-#recap .rcFig b { font: 700 23px/1 var(--body); color: #f2d494; font-variant-numeric: tabular-nums; }
-#recap .rcFig span { font: 400 12px var(--body); }
+:is(#recap, .rcDetail) :is(.rcFig, .rcHero, .rcXpRow, .rcAdvice) { border: 1px solid var(--report-rim); border-radius: 5px; background: var(--report-surface); box-shadow: inset 0 0 0 2px #101a142e, 0 3px 8px #0004; }
+:is(#recap, .rcDetail) .rcFig { padding: 12px 3px; gap: 4px; }
+:is(#recap, .rcDetail) .rcFig b { font: 700 23px/1 var(--body); color: #f2d494; font-variant-numeric: tabular-nums; }
+:is(#recap, .rcDetail) .rcFig span { font: 400 12px var(--body); }
 #recap .rcSheet > h3 { margin: 7px 0 0; padding: 9px 0; border: 0; border-bottom: 1px solid #9c845466; background: none; color: #ddc38e; font: 700 12px var(--body); letter-spacing: .14em; text-transform: uppercase; text-shadow: none; }
-#recap .rcHero { padding: 10px 8px; gap: 5px 9px; }
-#recap .rcHero.mvp { border-color: #dcc27d; background: radial-gradient(ellipse at 0 0, #ba9b362e, transparent), var(--report-surface); box-shadow: inset 0 0 0 1px #d6be7733, 0 3px 12px #0006; }
-#recap .rcFace { border: 0; border-radius: 4px; background: #17221a url(ui/hero-brass-frame.png) center / 100% 100% no-repeat; }
-#recap .rcFace canvas { width: 54px; height: 54px; }
-#recap .rcHero > b small { border: 1px solid #bca164; border-radius: 2px; background: #5b5030; color: #ffedb6; font: 700 10px var(--body); vertical-align: 1px; }
-#recap .rcBar { grid-template-columns: 43px minmax(0, 1fr) 48px; gap: 5px; }
-#recap .rcBar em { font: 400 12px var(--body); font-variant-numeric: tabular-nums; }
-#recap .rcBar i { border: 0; border-radius: 2px; background: #0a1510; height: 5px; }
-#recap .rcBar i span { background: linear-gradient(#e7ce8b, #927c43); }
-#recap .rcBar:nth-child(2) i span { background: linear-gradient(#b2d9a1, #4b9663); }
-#recap .rcBar:nth-child(3) i span { background: linear-gradient(#e2ab8b, #a05c4a); }
-#recap .rcXpRow { padding: 10px; gap: 6px; }
-#recap .rcXpRow em, #recap .rcXpRow span { font: 400 12px var(--body); }
-#recap .rcXpRow span.up { background: #52613a; border: 1px solid #a4b87c; color: #f3e9c6; }
+:is(#recap, .rcDetail) .rcHero { padding: 10px 8px; gap: 5px 9px; }
+:is(#recap, .rcDetail) .rcHero.mvp { border-color: #dcc27d; background: radial-gradient(ellipse at 0 0, #ba9b362e, transparent), var(--report-surface); box-shadow: inset 0 0 0 1px #d6be7733, 0 3px 12px #0006; }
+:is(#recap, .rcDetail) .rcFace { border: 0; border-radius: 4px; background: #17221a url(ui/hero-brass-frame.png) center / 100% 100% no-repeat; }
+:is(#recap, .rcDetail) .rcFace canvas { width: 54px; height: 54px; }
+:is(#recap, .rcDetail) .rcHero > b small { border: 1px solid #bca164; border-radius: 2px; background: #5b5030; color: #ffedb6; font: 700 10px var(--body); vertical-align: 1px; }
+:is(#recap, .rcDetail) .rcBar { grid-template-columns: 43px minmax(0, 1fr) 48px; gap: 5px; }
+:is(#recap, .rcDetail) .rcBar em { font: 400 12px var(--body); font-variant-numeric: tabular-nums; }
+:is(#recap, .rcDetail) .rcBar i { border: 0; border-radius: 2px; background: #0a1510; height: 5px; }
+:is(#recap, .rcDetail) .rcBar i span { background: linear-gradient(#e7ce8b, #927c43); }
+:is(#recap, .rcDetail) .rcBar:nth-child(2) i span { background: linear-gradient(#b2d9a1, #4b9663); }
+:is(#recap, .rcDetail) .rcBar:nth-child(3) i span { background: linear-gradient(#e2ab8b, #a05c4a); }
+:is(#recap, .rcDetail) .rcXpRow { padding: 10px; gap: 6px; }
+:is(#recap, .rcDetail) .rcXpRow em, :is(#recap, .rcDetail) .rcXpRow span { font: 400 12px var(--body); }
+:is(#recap, .rcDetail) .rcXpRow span.up { background: #52613a; border: 1px solid #a4b87c; color: #f3e9c6; }
 #recap .rcAdvice { padding: 12px; }
 /* Retain the existing 24px/12px, regular-weight comeback advice and working links. */
 #recap .rcAdvice h3 { color: #dfc691; }
@@ -106,13 +106,13 @@ body[data-move] #result #banner { background: #15251ac4; }
    Keep its crest, hero-colour stripes and pause/end sheets rather than layering older overrides. */
 @keyframes reportArrive { from { transform: translateY(5px); opacity: .4; } to { transform: none; opacity: 1; } }
 @media (max-width: 375px) {
-  #recap .rcHero { grid-template-columns: 58px minmax(0, 1fr); padding: 8px 6px; gap: 4px 7px; }
-  #recap .rcFace { width: 58px; height: 60px; }
+  :is(#recap, .rcDetail) .rcHero { grid-template-columns: 58px minmax(0, 1fr); padding: 8px 6px; gap: 4px 7px; }
+  :is(#recap, .rcDetail) .rcFace { width: 58px; height: 60px; }
   #recap .rcFig b { font-size: 21px; }
   #result #fightStats .srow { gap: 3px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  #result #banner, #recap .rcHero { animation: none; }
+  #result #banner, :is(#recap, .rcDetail) .rcHero { animation: none; }
   #result > :is(#stars, #armyStars, #xp, #fightStats) { transition: none; }
 }
 #recap .rcEyebrow { color: #c6b180; text-align: center; font: 700 10px var(--body); letter-spacing: .19em; text-transform: uppercase; }
@@ -125,3 +125,60 @@ body[data-move] #result #banner { background: #15251ac4; }
 .reviveLine { border-color: #b69a64; background: #17251cf5; color: #efcf98; }
 /* The new Last Stand's edge arrows belong inside its viewport, including their tips. */
 #stand .stFinds { overflow: clip; }
+/* WAVE-RECAP: the short card after a wave. Its one-liners (a level, a find, a fall, a heart) in the report's colours. */
+#result #waveNotes { display: flex; flex-direction: column; gap: 4px; width: min(380px, 100%); }
+#result #waveNotes[hidden] { display: none; }
+#result #waveNotes .wn { display: flex; align-items: baseline; gap: 7px; margin: 0; padding: 5px 9px; border-left: 2px solid #9c8454; background: #0d1a13aa; color: #ebdfc1; font: 400 13px/1.35 var(--body); opacity: 0; animation: reportArrive .35s ease-out forwards; animation-delay: calc(var(--i) * .12s + .2s); }
+#result #waveNotes .wn > span { flex: none; width: 12px; text-align: center; color: #d8bf86; }
+#result #waveNotes .wn.level, #result #waveNotes .wn.ult { border-left-color: #ebce85; }
+#result #waveNotes .wn.level > span, #result #waveNotes .wn.ult > span { color: #f6dc9b; }
+#result #waveNotes .wn.found > span { color: #9fd3e6; }
+#result #waveNotes .wn.fell { border-left-color: #a8705f; color: #e2c7b8; }
+#result #waveNotes .wn.fell > span, #result #waveNotes .wn.heart > span { color: #e2917d; }
+#result #waveNotes .wn.heart { border-left-color: #c75f53; }
+/* A short card's stars sit in one row: the gems, with each rule's words dropped (a star's pay still flies to the purse). */
+#result.short #stars { flex-direction: row; justify-content: center; gap: 6px; }
+#result.short #stars .star { display: flex; padding: 3px 8px; border-radius: 4px; }
+#result.short #stars .star > :is(b, em) { display: none; }
+#result.short #stars .star > span { font-size: 22px; }
+/* Between waves the short card rides over the march: a see-through panel high on the screen, the board and the walking party
+   showing through and below it; no button (it goes by itself once the party has arrived, or at a tap), and it fades as it goes. */
+body #result.passing {
+  inset: calc(env(safe-area-inset-top) + 84px) 0 auto; margin: 0 auto; width: min(360px, calc(100% - 24px)); max-height: 46vh;
+  padding: 0 0 10px; gap: 7px; overflow: hidden; justify-content: flex-start;
+  border: 1px solid #c8ad6e66; border-radius: 6px; background: linear-gradient(#0b1513b3, #0b1513 140%);
+  box-shadow: 0 4px 16px #0006; transition: opacity .45s ease-out; cursor: pointer;
+}
+#result.passing.leaving { opacity: 0; pointer-events: none; }
+#result.passing > .row { display: none; }
+body #result.passing #banner { padding: 8px 10px 7px; width: 100%; font-size: clamp(20px, 6vw, 24px); background: linear-gradient(90deg, transparent, #702b3080 30%, #702b3080 70%, transparent); }
+#result.passing #banner::before { display: none; }
+#result.passing #summary { font-size: 13px; padding: 0 10px; }
+#result.passing :is(#stars, #oreDrop, #waveNotes) { width: calc(100% - 20px); }
+#result.passing #waveNotes .wn { background: #0d1a1388; }
+#result.passing #stars .star { background: #0d1a13aa; }
+body[data-move] #result.passing > :is(#stars, #armyStars, #oreDrop, #waveNotes) { opacity: 1; pointer-events: auto; }
+@media (prefers-reduced-motion: reduce) {
+  #result #waveNotes .wn { animation: none; opacity: 1; }
+  #result.passing { transition: none; }
+}
+/* WAVE-RECAP: the end recap's wave-by-wave strip (each wave's stars, time and MVP) and the spoils the battle found. */
+:is(#recap, .rcDetail) .rcWaves { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 5px; }
+:is(#recap, .rcDetail) .rcWave { position: relative; display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; align-items: center; gap: 1px 4px; padding: 5px 6px; border: 1px solid #9c845488; border-radius: 4px; background: var(--report-surface); }
+:is(#recap, .rcDetail) .rcWave b { color: #f2d494; font: 700 13px var(--body); }
+:is(#recap, .rcDetail) .rcWave .rcWaveStars { grid-column: 1; color: #f0cf83; font-size: 12px; letter-spacing: 1px; }
+:is(#recap, .rcDetail) .rcWave small { grid-column: 1; color: #c9bd9f; font: 400 11px var(--body); font-variant-numeric: tabular-nums; }
+:is(#recap, .rcDetail) .rcWave .rcWaveMvp { grid-column: 2; grid-row: 1 / span 3; width: 30px; height: 30px; border-radius: 3px; overflow: hidden; background: #17221a url(ui/hero-brass-frame.png) center / 100% 100% no-repeat; }
+:is(#recap, .rcDetail) .rcWave .rcWaveMvp canvas { width: 30px; height: 30px; image-rendering: pixelated; display: block; }
+:is(#recap, .rcDetail) .rcWave em { grid-column: 1; color: #e2917d; font: normal 10px var(--body); }
+:is(#recap, .rcDetail) .rcWave.lost { border-color: #a8705f99; }
+:is(#recap, .rcDetail) .rcWave.lost .rcWaveStars { color: #e2a08f; letter-spacing: 0; }
+:is(#recap, .rcDetail) .rcFound { display: flex; flex-direction: column; gap: 4px; }
+:is(#recap, .rcDetail) .rcFound p { margin: 0; padding: 6px 9px; border-left: 2px solid #9fd3e6aa; background: #0d1a13aa; color: #ebdfc1; font: 400 13px/1.35 var(--body); }
+/* WAVE-RECAP-2: the same detail (fights one by one, the company, XP, spoils) in the spire's and the Calamity's summaries and map recaps. */
+.rcDetail {
+  --report-surface: radial-gradient(ellipse at 50% 0, #6c70402b, transparent 65%), linear-gradient(120deg, #243127f8, #121d18fa), url(ui/page.png);
+  --report-rim: #9c8454;
+  display: flex; flex-direction: column; gap: 8px; width: 100%; text-align: left;
+}
+#towerMap .rcDetail > h3 { margin: 7px 0 0; padding: 9px 0; border: 0; border-bottom: 1px solid #9c845466; background: none; color: #ddc38e; font: 700 12px var(--body); letter-spacing: .14em; text-transform: uppercase; text-shadow: none; }

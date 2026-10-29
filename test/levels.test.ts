@@ -5,7 +5,7 @@ import { benchXp, BENCH_SHARE } from '../src/sim/levels';
 import { AURA_COLOURS, auraHalo, auraRings } from '../src/render/levelLook';
 import { BADGE_LEVELS, BADGE_NAMES, badgeOf, DEEP_SHARE, DIM_SHARE, fightXp, gainXp, killXp, lastingBoost, LATE_SHARE, LATE_XP, levelBoost, levelGain, levelOf, levelOfKind, LATE_LEVEL, MAX_LEVEL, MILESTONES, milestonePoints, OLD_MAX_LEVEL, progressOf, RUN_MAX_LEVEL, XP_TAKE_PART, xpFor, xpOf } from '../src/sim/levels';
 import { loadMeta, RANK_MULT, startedMeta } from '../src/sim/meta';
-import { gradeBoost } from '../src/sim/run';
+import { GRADE_BOOST, gradeBoost } from '../src/sim/run';
 import { HEROES, UNITS } from '../src/sim/units';
 import { readyBattle } from './helpers';
 
@@ -144,7 +144,7 @@ test('a level stacks with the grade and rank in the hero boost, and reaches the 
   assert.ok(Math.abs(lv.atk! - levelBoost(5).atk) < 1e-9);
   assert.equal(plain.hp, 1);
   const both = gradeBoost(2, 1, 4);
-  assert.ok(Math.abs(both.hp! - 1.6 * RANK_MULT * levelBoost(4).hp) < 1e-9);
+  assert.ok(Math.abs(both.hp! - GRADE_BOOST[1] * RANK_MULT * levelBoost(4).hp) < 1e-9);
   const b = startBattle(2);
   place(b, 'knight', 0, 8, 1, gradeBoost(1, 0, 5));
   const u = b.units.find((x) => x.side === 'hero')!;

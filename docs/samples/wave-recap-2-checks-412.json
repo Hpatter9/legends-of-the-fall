@@ -1,0 +1,161 @@
+[
+  {
+    "w": 412,
+    "h": 915,
+    "checks": [
+      {
+        "name": "spire-card",
+        "top": 84,
+        "bottom": 235,
+        "pageOverflow": false
+      },
+      {
+        "name": "spire-card",
+        "banner": "Floor 1 cleared",
+        "summary": "+26 gold · +21 crowns · 0:04",
+        "notes": [
+          "▲Level up: Knight Lv 3, Archer Lv 2, Cleric Lv 2"
+        ],
+        "passing": true,
+        "tableHidden": true
+      },
+      {
+        "name": "spire-card-went-to-map-by-itself",
+        "ms": 3458,
+        "resultHidden": true
+      },
+      {
+        "name": "spire-last-card",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false
+      },
+      {
+        "name": "spire-last-card",
+        "banner": "Fell on floor 2",
+        "summary": "The climb ends on floor 2, act 1 · 1 floors cleared · +14 crowns",
+        "notes": [],
+        "passing": false,
+        "tableHidden": true,
+        "next": "See the summary"
+      },
+      {
+        "name": "spire-summary",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false
+      },
+      {
+        "name": "spire-summary-detail",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false
+      },
+      {
+        "name": "spire-summary-detail",
+        "strip": [
+          "F1★★★0:04",
+          "F2Lost0:00"
+        ],
+        "heroes": 5,
+        "mvp": "ArcherMVP",
+        "xp": 5,
+        "heads": [
+          "Floor by floor",
+          "Company performance",
+          "Experience earned"
+        ]
+      },
+      {
+        "name": "cal-card",
+        "top": 84,
+        "bottom": 253,
+        "pageOverflow": false
+      },
+      {
+        "name": "cal-card",
+        "banner": "Spot cleared",
+        "summary": "+26 gold · +21 crowns · 0:05",
+        "notes": [
+          "▲Level up: Samurai Lv 2, Knight Lv 2, Archer Lv 2, Fire Wizard Lv 2, Cleric Lv 3"
+        ],
+        "passing": true,
+        "tableHidden": true
+      },
+      {
+        "name": "cal-card-went-to-map-by-itself",
+        "ms": 3518,
+        "resultHidden": true
+      },
+      {
+        "name": "cal-map-recap-fixture",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false
+      },
+      {
+        "name": "cal-map-recap-detail-fixture",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false
+      },
+      {
+        "name": "cal-map-recap-detail",
+        "strip": [
+          "#1★★★0:05"
+        ],
+        "heroes": 5,
+        "mvp": "ClericMVP",
+        "xp": 5,
+        "heads": [
+          "Fight by fight",
+          "Company performance",
+          "Experience earned"
+        ]
+      },
+      {
+        "name": "cal-last-card",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false
+      },
+      {
+        "name": "cal-last-card",
+        "banner": "The party falls",
+        "summary": "The calamity ends map 1 · 1 spots cleared · +1 crowns",
+        "notes": [],
+        "passing": false,
+        "tableHidden": true,
+        "next": "See the summary"
+      },
+      {
+        "name": "cal-summary",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false
+      },
+      {
+        "name": "cal-summary-detail",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false
+      },
+      {
+        "name": "cal-summary-detail",
+        "strip": [
+          "#1★★★0:05",
+          "#2Lost0:00"
+        ],
+        "heroes": 5,
+        "mvp": "ClericMVP",
+        "xp": 5,
+        "heads": [
+          "Fight by fight",
+          "Company performance",
+          "Experience earned"
+        ]
+      }
+    ],
+    "errors": []
+  }
+]

@@ -10,6 +10,7 @@
 import { atkOf, defOf, hurt, type Battle, type BattleEvent, type Unit } from './battle';
 import { callSummon, foesOf, gain, mendUnit, net } from './abilities';
 import type { Meta } from './meta';
+import { charmFor, chillFor, cleanse, setDot, stunFor } from './ailments';
 
 /** What the page calls the combo: the owner's pick of the names below. */
 export const COMBO_NAME = 'Last Oath';
@@ -196,19 +197,18 @@ export function landCombo(b: Battle, out: BattleEvent[]): void {
       case 'stun':
         for (const f of foes) {
           if (!f.alive) continue;
-          f.busyUntil = Math.max(f.busyUntil, b.t + beat.ms);
-          f.stunUntil = Math.max(f.stunUntil ?? 0, b.t + beat.ms);
+          stunFor(b, f, beat.ms);
         }
         break;
       case 'slow':
-        for (const f of foes) f.slowUntil = Math.max(f.slowUntil ?? 0, b.t + beat.ms);
+        for (const f of foes) chillFor(b, f, beat.ms);
         break;
       case 'burn':
-        for (const f of foes) if (f.alive) f.dot = { kind: beat.kind, dmg: Math.max(1, Math.round(total * beat.mult)), every: 500, ms: beat.ms, by: lead.id, next: b.t + 500, until: b.t + beat.ms };
+        for (const f of foes) if (f.alive) setDot(b, f, { kind: beat.kind, dmg: Math.max(1, Math.round(total * beat.mult)), every: 500, ms: beat.ms, by: lead.id, next: b.t + 500, until: b.t + beat.ms });
         break;
       case 'heal':
         for (const a of allies) {
-          a.dot = undefined;
+          cleanse(b, a);
           mendUnit(a, a.maxHp * beat.share, out, lead);
         }
         break;
@@ -234,7 +234,7 @@ export function landCombo(b: Battle, out: BattleEvent[]): void {
         // (a lone foe has no one to turn on)
         if (foes.length < 2) break;
         for (const f of [...foes].sort((x, y) => atkOf(y) - atkOf(x) || x.id - y.id).slice(0, Math.min(beat.n, foes.length - 1))) {
-          f.charmUntil = b.t + beat.ms;
+          charmFor(b, f, beat.ms);
           f.taunt = undefined;
           f.busyUntil = Math.min(f.busyUntil, b.t + 300);
         }

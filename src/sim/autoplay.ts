@@ -1,5 +1,5 @@
 // The greedy player, shared by the Auto button, the auto-replay of cleared armies, the balance tool and the tests: it
-// picks the squad, summons while the gold lasts, takes the safe picks of an event, dresses the squad in the pack's gear
+// picks the squad, summons while the gold lasts (merging every pair, as the Auto merge button does), takes the safe picks of an event, dresses the squad in the pack's gear
 // and arranges the heroes on the deploy rows. Everything here is pure and deterministic (no random numbers, no DOM): the
 // same run and the same board always give the same formation.
 
@@ -11,6 +11,7 @@ import { heroRank, type Meta } from './meta';
 import { awakenStats } from './awaken';
 import { boostOf, equip, squadLimit, summon, type Owned, type Run } from './run';
 import { localBoost } from './climb';
+import { autoMerge } from './merge';
 import { UNITS } from './units';
 
 /** How strong a hero is for the squad: its base hp times attack, times its boosts (grade, rank, level, gear, bumps). */
@@ -67,9 +68,9 @@ export const gearCount = (run: Run): number => (run.items?.length ?? 0) + run.ro
 /** Everything between two fights: the event, the summons while the gold lasts, the squad of the strongest, and its gear. Gear is optional so the balance report can leave it out. */
 export function autoRound(run: Run, meta: Meta, gear = true): void {
   autoEvent(run);
-  while (summon(run)) {
-    // (summons while the gold lasts; threes of a kind merge as they come)
-  }
+  // (summons while the gold lasts, tapping Auto merge after each, as a player would: two of a kind merge only when merged)
+  autoMerge(run);
+  while (summon(run)) autoMerge(run);
   run.squad = pickSquad(run, meta).map((h) => h.id);
   if (gear) dressSquad(run);
 }

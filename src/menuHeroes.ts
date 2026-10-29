@@ -294,7 +294,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
       for (const [label, a, cost, opens] of [
         ['Skill 1', hk?.s1.skill ?? kit.skill, hk ? `${hk.s1.cost} ${hk.pool}` : '', 1],
         ...(hk ? ([['Skill 2', hk.s2.skill, `${hk.s2.cost} ${hk.pool}${hk.s2.hpCost ? ' and blood' : ''}`, SKILL2_LEVEL]] as const) : []),
-        ...(TIER_SKILLS[kind] ? ([['Tier 2', TIER_SKILLS[kind][0], '', 1], ['Tier 3', TIER_SKILLS[kind][1], '', 1]] as const) : []),
+        ...(TIER_SKILLS[kind] ? ([['Tier 2', TIER_SKILLS[kind][0], '', 1], ['Tier 3', TIER_SKILLS[kind][1], '', 1], ['Tier 4', TIER_SKILLS[kind][2], '', 1]] as const) : []),
         ...(kit.ultimate ? [['Ultimate', kit.ultimate, 'tap its portrait', kit.ultimate.unlock ?? 1] as const] : []),
         ['Passive', kit.passive, '', 1],
       ] as const) {

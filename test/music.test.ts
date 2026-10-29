@@ -84,7 +84,7 @@ test('baking a track gives a looping buffer for each stem, folded to the loop le
   }
 });
 
-test('the music player starts a track\'s stems together, mixes them by tension, and lets the old track go', async () => {
+test('the music player starts a track\'s stems together, mixes a battle\'s as its full band, and lets the old track go', async () => {
   const undo = installFakeAudio();
   const { MusicPlayer } = await import('../src/render/audioProcessors');
   try {
@@ -101,7 +101,7 @@ test('the music player starts a track\'s stems together, mixes them by tension, 
     assert.equal(sources.length, 3, 'one looping source for each stem that has a buffer');
     assert.ok(sources.every((n) => n.started));
     // (no media element anywhere: the music is buffers)
-    music.setTension(1);
+    // (a battle's stems play as a fight at its height had them, the full band, and stay so: the tension no longer mixes them)
     const gains = FakeContext.made.slice(before).filter((n) => n.gain.target !== undefined && n.gain.target <= 1).map((n) => n.gain.target);
     assert.ok(gains.includes(stemLevels('battle', 1).lead));
     // off: the sources are let go, and nothing starts again until it is on
