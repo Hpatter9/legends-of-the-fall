@@ -1,10 +1,10 @@
-// An army's 10 stars and its chests. A run through an army earns up to three stars from how well the whole run went (the
-// conditions are the same on every tier but Legendary, whose single star is a flawless clear); the conditions a tier has
-// met are kept for good, so a replay adds only the ones still missing. At 3, 5 and 10 stars an army gives a chest, once
-// each, into the meta's stash (opened later from the home screen); its rewards are fixed when it is earned, from a side
-// stream of the save's seed, the army and the milestone, so they cannot be rerolled by reloading or by the order of
-// opening, and they pay better the higher the milestone and the tier and the later the army. Pure rules: no
-// Pixi, no DOM.
+// An army's 10 stars and its chests. A run through an army earns up to three stars from how well the whole run went:
+// clear it, use no heart, and clear it within a battle-time target (the same on every tier but Legendary, whose single star
+// is a flawless clear). The conditions a tier has met are kept for good, so a replay adds only the ones still missing. At
+// 3, 5 and 10 stars an army gives a chest, once each, into the meta's stash (opened later from the home screen); its
+// rewards are fixed when it is earned, from a side stream of the save's seed, the army and the milestone, so they cannot
+// be rerolled by reloading or by the order of opening, and they pay better the higher the milestone and the tier and the
+// later the army. Pure rules: no Pixi, no DOM.
 
 import { dailyStarsMax } from './dailyThemes';
 import { chestOres, grantOres, ORES, sumOres, type OreDrop } from './awakenMats';
@@ -40,7 +40,8 @@ export function armyRules(a: Army, tier: number, run?: Run): StarRule[] {
   if (TIERS[tier].stars === 1) return [{ text: 'Flawless: no hero lost in any boss fight', earned: won && !!t && (t.bossFell ?? t.bossLost) === 0 }];
   return [
     { text: `Clear ${a.name}`, earned: won },
-    { text: 'No hero lost in the last boss fight', earned: won && !!t && t.bossLost === 0 },
+    // (the second star: no heart burned on the way, the owner's call, in place of "no hero lost in the last boss fight")
+    { text: 'Clear without using a heart', earned: won && (run?.retries ?? 0) === 0 },
     { text: `Clear in ${clock(timeTarget(a, tier))} of battle`, earned: won && !!t && t.ms <= timeTarget(a, tier) },
   ];
 }
