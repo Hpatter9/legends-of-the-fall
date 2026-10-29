@@ -42,10 +42,12 @@ test('Start over wipes every run in progress: the ordinary one and the spire and
   assert.ok(!SAVE_KEYS.includes('legends.settings') && !SAVE_KEYS.includes('legends.sound'));
 });
 
-test('the chosen ruler is saved by identity; older and malformed choices keep the veteran king', () => {
-  assert.equal(parseSettings(null).ruler, 'iron_stag');
+test('the chosen ruler is saved by identity; missing and malformed choices get the classic king, a saved Iron Stag is kept', () => {
+  assert.equal(parseSettings(null).ruler, 'the_king');
+  assert.equal(parseSettings('{"music":40}').ruler, 'the_king', 'settings saved before the rulers');
   assert.equal(parseSettings('{"ruler":"frost_witch"}').ruler, 'frost_witch');
+  assert.equal(parseSettings('{"ruler":"iron_stag"}').ruler, 'iron_stag');
   for (const ruler of [null, 2, {}, 'lichKing', 'unknown']) {
-    assert.equal(parseSettings(JSON.stringify({ ruler })).ruler, 'iron_stag');
+    assert.equal(parseSettings(JSON.stringify({ ruler })).ruler, 'the_king');
   }
 });

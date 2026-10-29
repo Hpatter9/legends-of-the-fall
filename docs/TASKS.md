@@ -14,6 +14,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### STARTER-KING — Two fixed starter packs of simple heroes; the classic king is the default ruler
+
+- **Goal:** the owner's asks: "The 3 starter packs should be reduced to 2 starter packs that are always the same and are simple characters."; "The default king should be the stereotypical man king."; and (added) "The animations for the kings on the throne is weird. The thrones move around too much. Make them stable and give them a simple idle animation."
+- **Status:** done on the branch; not merged.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/starter-king`, `/home/user/starter-king` (from main 0.208.0); PR none.
+- **Allowed files or systems:** `src/sim/starter.ts` (`FIXED_PACKS`, `readStarter`), `src/sim/meta.ts` (two calls), `src/starter.ts` (the pick screen), `src/rulerRules.ts`, `src/rulerUrls.ts`, `src/render/rulerArt.ts` (throne cells, the seated breath), `src/render/standHall.ts` (the seated texture), `src/settings.ts` (picker wording, The King's portrait), new `src/art/rulers/the_king.png` and `tools/rulers/the-king.py`, `tools/rulers/check.mjs`, new `tools/rulers/seat-strip.mjs` and `seat-montage.py`, new `tools/starter-packs/`; tests `test/starter.test.ts`, `test/rulers.test.ts`, `test/settings.test.ts`, `test/hero-shards.test.ts`, `test/new-heroes.test.ts`; `CREDITS.md`, `CLAUDE.md` (one line), `docs/notes/no-rarity.md` (a pointer), `docs/notes/starter-king.md`, `docs/samples/starter-king-*.png`, `docs/samples/ruler*-the_king-*.png`.
+- **Completion criteria:** two fixed packs (front-liner, striker, back-liner each, named, with chips) about equal on the first army at level 1; old saves safe (picked keeps its heroes; mid-pick moves to the two); The King a ninth ruler and the default, working in the castle, Last Stand, cinematics and picker; every ruler's throne still when seated, with a gentle idle; typecheck, affected and full tests, web build; 393x852, 360x780, 412x915.
+- **Validation and handoff:** [notes](notes/starter-king.md).
+
 ### KING-ART — Eight player rulers and action animations
 
 - **Owner:** Codex. **Branch / worktree:** `design/king-artwork`, `/workspace/legends-of-the-fall`.

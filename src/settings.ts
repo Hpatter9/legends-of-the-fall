@@ -157,7 +157,7 @@ function row(title: string, hint: string): [HTMLElement, HTMLElement] {
   return [r, text];
 }
 
-/** The ruler: one compact row with the current ruler's portrait and name; its button opens the picker of all eight
+/** The ruler: one compact row with the current ruler's portrait and name; its button opens the picker of all nine
  *  (`settingsPicker.ts`), which saves to the same `ruler` setting. */
 function rulerRow(value: RulerId): HTMLElement {
   const ruler = rulerOf(value);
@@ -178,7 +178,7 @@ function rulerRow(value: RulerId): HTMLElement {
       $('settings'),
       {
         title: 'Choose your ruler',
-        hint: 'Eight crowns, eight characters. Choose who rules your keep.',
+        hint: 'Nine crowns, nine characters. Choose who rules your keep.',
         listClass: 'rulerChoices',
         options: RULERS.map((x) => ({
           id: x.id,
@@ -208,11 +208,12 @@ function rulerRow(value: RulerId): HTMLElement {
   return r;
 }
 
-/** A ruler's portrait: the first frame of their sheet. */
+/** A ruler's portrait: the first frame of their sheet (The King's on his throne: his standing figure is the old, smaller pack sprite). */
 function rulerPortrait(id: RulerId): HTMLElement {
   const picture = document.createElement('span');
   picture.className = 'rulerPortrait';
   picture.style.backgroundImage = `url("${RULER_URLS[id]}")`;
+  if (id === 'the_king') picture.style.backgroundPosition = `0 ${(6 / 7) * 100}%`;
   picture.setAttribute('aria-hidden', 'true');
   return picture;
 }

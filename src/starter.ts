@@ -1,11 +1,12 @@
-// The starter pick (#starter): a brand-new save, and one after Start over, offers three packs of three heroes on a
+// The starter pick (#starter): a brand-new save, and one after Start over, offers two packs of three heroes on a
 // full-screen page; the player taps a pack, then confirms it, and its heroes become the unlocked heroes and the party.
-// The packs come from the save (`meta.starter`, drawn from its seed in `sim/starter.ts`); this only shows them and
-// calls the sim's `pickStarter`. Nothing on it moves or flashes.
+// The packs come from the save (`meta.starter`, the fixed packs of `sim/starter.ts`); this only shows them, with the
+// pack's name, line and chips, and the synergy it wakes, and calls the sim's `pickStarter`. Nothing on it moves or flashes.
 
 import { UNITS } from './sim/units';
 import { pickStarter, saveMeta, type Meta } from './sim/meta';
-import { CLASS_NAMES, CLASS_OF } from './sim/starter';
+import { CLASS_NAMES, CLASS_OF, packNamed } from './sim/starter';
+import { countTraits } from './sim/traits';
 import { portrait } from './render/sheets';
 import { heroSays } from './quips';
 
@@ -23,6 +24,10 @@ const CSS = `
 #starter .stHead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 2px 2px 0; font: 700 12px var(--display); color: var(--gold-hi, var(--e8)); text-shadow: 0 2px 0 var(--black); }
 #starter .stHead i { font-style: normal; font-size: 10px; color: var(--s11); }
 #starter .stPack.on .stHead i { color: var(--g5); }
+#starter .stLine { margin: 0 2px; font: 400 10px/1.4 var(--body); color: var(--s13); }
+#starter .stChips { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 2px 2px; }
+#starter .stChips span { padding: 1px 6px; border: 1px solid var(--s8); border-radius: 8px; font: 700 9px var(--body); letter-spacing: 0.5px; text-transform: uppercase; color: var(--e6); background: var(--s3); }
+#starter .stChips span.syn { border-color: var(--g5); color: var(--g5); }
 #starter .stHero { display: flex; align-items: center; gap: 8px; min-width: 0; }
 #starter .stHero canvas { flex: none; width: 52px; height: 52px; background: radial-gradient(var(--s8), var(--s1)); border: 2px solid var(--s1); image-rendering: pixelated; }
 #starter .stHero div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -62,8 +67,20 @@ export function chooseStarter(meta: Meta): Promise<void> {
     card.setAttribute('role', 'button');
     const state = el('i', '', 'tap to pick');
     const head = el('div', 'stHead');
-    head.append(el('span', '', `Pack ${i + 1}`), state);
+    // (a fixed pack is named, with its line and chips; an old save's seeded pack is just numbered)
+    const named = packNamed(pack);
+    head.append(el('span', '', named?.name ?? `Pack ${i + 1}`), state);
     card.append(head);
+    const chips = el('div', 'stChips');
+    for (const c of named?.chips ?? []) chips.append(el('span', '', c));
+    // (the synergies the three wake together, as the party screen counts them)
+    for (const t of countTraits(pack).filter((x) => x.active)) {
+      const chip = el('span', 'syn', t.trait.name);
+      chip.title = `${t.trait.name}: ${t.trait.tiers[t.tier].text}`;
+      chips.append(chip);
+    }
+    if (named) card.append(el('p', 'stLine', named.line));
+    if (chips.childElementCount) card.append(chips);
     for (const kind of pack) {
       const def = UNITS[kind];
       const row = el('div', 'stHero');
