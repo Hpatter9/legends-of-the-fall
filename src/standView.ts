@@ -1444,9 +1444,10 @@ export class StandView {
         line.append(el('span', '', k.name), el('em', '', k.open ? String(k.cost) : `Lv ${k.opens}`));
         row.append(line);
       }
-      if (h.ult) {
+      // (an ultimate shows only once it has unlocked: no "Lv 30" line before, HEROBAR-LOCK)
+      if (h.ult?.open) {
         const line = el('div', `stSheetSkill ult${h.ult.ready ? ' full' : ''}`);
-        line.append(el('span', '', `★ ${h.ult.name}`), el('em', '', !h.ult.open ? `Lv ${h.ult.opens}` : h.ult.ready ? 'Ready' : `${Math.round(h.ult.meter * 100)}%`));
+        line.append(el('span', '', `★ ${h.ult.name}`), el('em', '', h.ult.ready ? 'Ready' : `${Math.round(h.ult.meter * 100)}%`));
         row.append(line);
       }
       list.append(row);
