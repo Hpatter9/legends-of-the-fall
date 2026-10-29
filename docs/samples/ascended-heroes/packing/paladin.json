@@ -1,13 +1,36 @@
 {
   "id": "paladin",
   "inputSize": [
-    1341,
-    1173
+    1342,
+    1172
   ],
   "cell": [
-    150,
-    132
+    138,
+    127
   ],
-  "scale": 0.7164179104477612,
-  "warnings": []
+  "scale": 0.7058823529411765,
+  "warnings": [
+    {
+      "row": 5,
+      "col": 3,
+      "box": [
+        343,
+        902,
+        674,
+        1001
+      ],
+      "issue": "touching actors: inspect cell edges"
+    },
+    {
+      "row": 5,
+      "col": 6,
+      "box": [
+        1010,
+        911,
+        1341,
+        995
+      ],
+      "issue": "touching actors: inspect cell edges"
+    }
+  ]
 }

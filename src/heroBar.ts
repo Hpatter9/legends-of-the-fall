@@ -12,7 +12,6 @@ import { heroName, heroTitle } from './sim/heroNames';
 import { ultimateOf } from './sim/abilities';
 import { costOf, heroKitOf, resOf, skill2Open, SKILL2_LEVEL, ultFull } from './sim/heroKits';
 import { canOrderUltimate, orderUltimate } from './sim/orders';
-import { UNITS } from './sim/units';
 import { portrait } from './render/sheets';
 import { battleSheet } from './render/awakenLook';
 
@@ -104,7 +103,6 @@ export class HeroBar {
     // (a rank-4 hero's ring is ringed in violet: MERGE-TWO)
     el.className = (u.grade ?? 1) > 3 ? 'hb g4' : 'hb';
     el.dataset.unit = String(u.id);
-    const def = UNITS[u.def];
     el.innerHTML =
       '<span class="hbRing"><svg viewBox="0 0 48 48" aria-hidden="true"><circle class="trk" cx="24" cy="24" r="21"/><circle class="arc" cx="24" cy="24" r="21"/></svg></span>' +
       '<span class="hbPlate"></span><i class="hbHp"><span></span></i><i class="hbRes"><span></span></i><span class="hbPips"><b>1</b><b>2</b></span><span class="hbName"></span>';

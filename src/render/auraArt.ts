@@ -1,7 +1,7 @@
 // The aura atlas: one picture of square cells, and `atlas.json` giving its cell size and, for each part key of
 // `auraStyles.ts` (`<class>.<step>.<part>`), where its strip starts (column and row, in cells) and how many frames run
-// along the row from there. The pack's strips are in it today
-// (`tools/awaken/aura-sheets.py`); a painted atlas with the same keys and its own cell size drops in with no code change.
+// along the row from there. The painted class effects are packed by `tools/awaken/import-aura-art.py`;
+// `tools/awaken/aura-sheets.py` can rebuild the original pack atlas if needed.
 // Loaded once; the fight's Pixi aura and the menus' canvas aura both read it.
 
 import atlasUrl from '../art/fx/aura/atlas.png';

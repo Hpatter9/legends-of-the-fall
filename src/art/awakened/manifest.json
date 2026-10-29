@@ -47,12 +47,13 @@
   "hero_res_minotaur": "awakened_minotaur",
   "hero_res_samurai_commander": "awakened_samuraiCommander",
   "hero_res_treant": "awakened_treant",
-  "hero_res_werewolf_brute": "awakened_werewolfBrute"
+  "hero_res_werewolf_brute": "awakened_werewolfBrute",
+  "hero_res_peasant": "awakened_peasant"
  },
  "layouts": {
   "awakened_knight": {
-   "w": 118,
-   "h": 130,
+   "w": 152,
+   "h": 116,
    "perRow": 4,
    "rows": [
     "idle",
@@ -75,11 +76,14 @@
    "figure": 96,
    "facesRight": true,
    "lies": true,
+   "aliases": {
+    "defend": "attack2"
+   },
    "rear": "awakened_knight_back"
   },
   "awakened_knight_back": {
-   "w": 118,
-   "h": 130,
+   "w": 152,
+   "h": 116,
    "perRow": 4,
    "rows": [
     "idle",
@@ -102,6 +106,9 @@
    "figure": 96,
    "facesRight": true,
    "lies": true,
+   "aliases": {
+    "defend": "attack2"
+   },
    "front": "awakened_knight"
   },
   "awakened_archer": {
@@ -160,7 +167,7 @@
   },
   "awakened_wizard": {
    "w": 118,
-   "h": 117,
+   "h": 107,
    "perRow": 4,
    "rows": [
     "idle",
@@ -187,7 +194,7 @@
   },
   "awakened_wizard_back": {
    "w": 118,
-   "h": 117,
+   "h": 107,
    "perRow": 4,
    "rows": [
     "idle",
@@ -321,8 +328,8 @@
    "front": "awakened_kunoichi"
   },
   "awakened_paladin": {
-   "w": 150,
-   "h": 132,
+   "w": 138,
+   "h": 127,
    "perRow": 4,
    "rows": [
     "idle",
@@ -348,8 +355,8 @@
    "rear": "awakened_paladin_back"
   },
   "awakened_paladin_back": {
-   "w": 150,
-   "h": 132,
+   "w": 138,
+   "h": 127,
    "perRow": 4,
    "rows": [
     "idle",
@@ -375,8 +382,8 @@
    "front": "awakened_paladin"
   },
   "awakened_cleric": {
-   "w": 114,
-   "h": 105,
+   "w": 116,
+   "h": 110,
    "perRow": 4,
    "rows": [
     "idle",
@@ -402,8 +409,8 @@
    "rear": "awakened_cleric_back"
   },
   "awakened_cleric_back": {
-   "w": 114,
-   "h": 105,
+   "w": 116,
+   "h": 110,
    "perRow": 4,
    "rows": [
     "idle",
@@ -537,8 +544,8 @@
    "front": "awakened_wanderer"
   },
   "awakened_lightningMage": {
-   "w": 134,
-   "h": 124,
+   "w": 124,
+   "h": 111,
    "perRow": 4,
    "rows": [
     "idle",
@@ -564,8 +571,8 @@
    "rear": "awakened_lightningMage_back"
   },
   "awakened_lightningMage_back": {
-   "w": 134,
-   "h": 124,
+   "w": 124,
+   "h": 111,
    "perRow": 4,
    "rows": [
     "idle",
@@ -1023,8 +1030,8 @@
    "front": "awakened_barbarian"
   },
   "awakened_ranger": {
-   "w": 134,
-   "h": 111,
+   "w": 148,
+   "h": 115,
    "perRow": 4,
    "rows": [
     "idle",
@@ -1050,8 +1057,8 @@
    "rear": "awakened_ranger_back"
   },
   "awakened_ranger_back": {
-   "w": 134,
-   "h": 111,
+   "w": 148,
+   "h": 115,
    "perRow": 4,
    "rows": [
     "idle",
@@ -1131,7 +1138,7 @@
    "front": "awakened_warlock"
   },
   "awakened_illusionist": {
-   "w": 136,
+   "w": 146,
    "h": 104,
    "perRow": 4,
    "rows": [
@@ -1158,7 +1165,7 @@
    "rear": "awakened_illusionist_back"
   },
   "awakened_illusionist_back": {
-   "w": 136,
+   "w": 146,
    "h": 104,
    "perRow": 4,
    "rows": [
@@ -1347,8 +1354,8 @@
    "front": "awakened_rifleBot"
   },
   "awakened_mercenary": {
-   "w": 158,
-   "h": 113,
+   "w": 162,
+   "h": 112,
    "perRow": 4,
    "rows": [
     "idle",
@@ -1374,8 +1381,8 @@
    "rear": "awakened_mercenary_back"
   },
   "awakened_mercenary_back": {
-   "w": 158,
-   "h": 113,
+   "w": 162,
+   "h": 112,
    "perRow": 4,
    "rows": [
     "idle",
@@ -1455,8 +1462,8 @@
    "front": "awakened_mummy"
   },
   "awakened_buccaneer": {
-   "w": 158,
-   "h": 108,
+   "w": 156,
+   "h": 104,
    "perRow": 4,
    "rows": [
     "idle",
@@ -1482,8 +1489,8 @@
    "rear": "awakened_buccaneer_back"
   },
   "awakened_buccaneer_back": {
-   "w": 158,
-   "h": 108,
+   "w": 156,
+   "h": 104,
    "perRow": 4,
    "rows": [
     "idle",
@@ -1563,8 +1570,8 @@
    "front": "awakened_wolfBard"
   },
   "awakened_beastmaster": {
-   "w": 164,
-   "h": 115,
+   "w": 160,
+   "h": 114,
    "perRow": 4,
    "rows": [
     "idle",
@@ -1590,8 +1597,8 @@
    "rear": "awakened_beastmaster_back"
   },
   "awakened_beastmaster_back": {
-   "w": 164,
-   "h": 115,
+   "w": 160,
+   "h": 114,
    "perRow": 4,
    "rows": [
     "idle",
@@ -1671,8 +1678,8 @@
    "front": "awakened_kraken"
   },
   "awakened_lancer": {
-   "w": 136,
-   "h": 124,
+   "w": 142,
+   "h": 126,
    "perRow": 4,
    "rows": [
     "idle",
@@ -1698,8 +1705,8 @@
    "rear": "awakened_lancer_back"
   },
   "awakened_lancer_back": {
-   "w": 136,
-   "h": 124,
+   "w": 142,
+   "h": 126,
    "perRow": 4,
    "rows": [
     "idle",
@@ -1779,8 +1786,8 @@
    "front": "awakened_reaper"
   },
   "awakened_timeWitch": {
-   "w": 154,
-   "h": 104,
+   "w": 146,
+   "h": 100,
    "perRow": 4,
    "rows": [
     "idle",
@@ -1806,8 +1813,8 @@
    "rear": "awakened_timeWitch_back"
   },
   "awakened_timeWitch_back": {
-   "w": 154,
-   "h": 104,
+   "w": 146,
+   "h": 100,
    "perRow": 4,
    "rows": [
     "idle",
@@ -2049,8 +2056,8 @@
    "front": "awakened_priestess"
   },
   "awakened_dragoon": {
-   "w": 172,
-   "h": 132,
+   "w": 170,
+   "h": 133,
    "perRow": 4,
    "rows": [
     "idle",
@@ -2076,8 +2083,8 @@
    "rear": "awakened_dragoon_back"
   },
   "awakened_dragoon_back": {
-   "w": 172,
-   "h": 132,
+   "w": 170,
+   "h": 133,
    "perRow": 4,
    "rows": [
     "idle",
@@ -2641,6 +2648,60 @@
    "facesRight": true,
    "lies": true,
    "front": "awakened_werewolfBrute"
+  },
+  "awakened_peasant": {
+   "w": 118,
+   "h": 104,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "rear": "awakened_peasant_back"
+  },
+  "awakened_peasant_back": {
+   "w": 118,
+   "h": 104,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "front": "awakened_peasant"
   }
  }
 }

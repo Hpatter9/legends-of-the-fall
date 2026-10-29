@@ -24,13 +24,38 @@ export function openHeroArtwork(kind: string, trigger: HTMLElement, awakened = 0
   close.textContent = '× Close';
   close.setAttribute('aria-label', 'Close full artwork');
   const title = document.createElement('h2');
-  title.textContent = `${heroTitle(kind)}${awakened ? ' · Awakened' : ''}`;
-  dialog.append(close, heroArtwork(kind, true, awakened), title);
+  const illustration = heroArtwork(kind, true);
+  title.textContent = heroTitle(kind);
+  dialog.append(close, illustration, title);
+  const controls: HTMLButtonElement[] = [close];
+  if (awakened) {
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'heroArtForm';
+    toggle.textContent = 'Show awakened form';
+    toggle.setAttribute('aria-pressed', 'false');
+    let showingForm = false;
+    toggle.addEventListener('click', () => {
+      showingForm = !showingForm;
+      const next = heroArtwork(kind, true, showingForm ? awakened : 0);
+      illustration.src = next.src;
+      illustration.alt = next.alt;
+      illustration.className = next.className;
+      toggle.textContent = showingForm ? 'Show illustration' : 'Show awakened form';
+      toggle.setAttribute('aria-pressed', String(showingForm));
+      title.textContent = `${heroTitle(kind)}${showingForm ? ' · Awakened' : ''}`;
+    });
+    controls.push(toggle);
+    dialog.append(toggle);
+  }
   const dismiss = () => dialog.close();
   close.addEventListener('click', dismiss);
   dialog.addEventListener('keydown', event => {
-    // The close button is the viewer's only control; keep Tab and Shift+Tab on it.
-    if (event.key === 'Tab') { event.preventDefault(); close.focus(); }
+    if (event.key === 'Tab') {
+      event.preventDefault();
+      const at = controls.indexOf(document.activeElement as HTMLButtonElement);
+      controls[(at + (event.shiftKey ? controls.length - 1 : 1)) % controls.length].focus();
+    }
   });
   dialog.addEventListener('click', event => {
     if (event.target === dialog) {

@@ -56,6 +56,12 @@ dialog.heroArtViewer > .heroArtClose {
   color: #ffedc5; background: #19232e; font: 16px var(--body);
 }
 dialog.heroArtViewer > .heroArtClose:focus-visible { outline: 2px solid #ffe0a0; outline-offset: 2px; }
+dialog.heroArtViewer > .heroArtForm {
+  position: absolute; top: 8px; left: 12px; min-height: 44px; max-width: calc(100% - 120px);
+  padding: 8px 10px; border: 1px solid #ac915c; border-radius: 4px;
+  color: #ffedc5; background: #19232e; font: 14px var(--body);
+}
+dialog.heroArtViewer > .heroArtForm:focus-visible { outline: 2px solid #ffe0a0; outline-offset: 2px; }
 
 /* The awakened equipment is the production pixel artwork, kept crisp at menu scale. */
 .heroRoster .rosGrid .hcard .heroCardScene .heroAwakenedArt,

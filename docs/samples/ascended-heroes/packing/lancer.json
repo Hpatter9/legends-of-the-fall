@@ -1,23 +1,23 @@
 {
   "id": "lancer",
   "inputSize": [
-    1341,
-    1173
+    1342,
+    1172
   ],
   "cell": [
-    136,
-    124
+    142,
+    126
   ],
-  "scale": 0.6620689655172414,
+  "scale": 0.631578947368421,
   "warnings": [
     {
-      "row": 5,
+      "row": 6,
       "col": 4,
       "box": [
-        695,
-        856,
-        829,
-        1146
+        690,
+        853,
+        826,
+        1147
       ],
       "issue": "touching actors: inspect cell edges"
     }

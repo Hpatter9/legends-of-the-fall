@@ -4,9 +4,11 @@
     "name": "Knight",
     "base": "hero_soldier",
     "rear": "hero_soldier_back",
-    "design": "Heroic adult male soldier, short bright blond hair and expressive blue eyes, steel plate armour with gold details, burgundy red cape, blue cloth at waist, broad steel sword and sturdy shield, brown leather boots. Noble determined face.",
-    "gear": "new silver blue-crystal channel sword with gold hilt and new blue-gold lion-relief kite shield, fitted celestial silver/gold plate, blue cape",
-    "figure": 96
+    "design": "a young adult Ghanaian man, deep brown skin (sprite ramp `#2a150d` `#4a2617` `#6b3c25` `#84522f` `#9a6640`), short black tightly coiled hair with a little height on top, dark eyes, broad noble determined face.",
+    "gear": "NEW fitted silver/cobalt celestial plate with compact gold crystal pauldrons, legendary broad silver sword with blue crystalline channel and gold guard, blue-gold LION RELIEF kite shield, narrow burgundy cape; small kente strip at belt. Face and short black tightly coiled hair visible, no helmet.",
+    "figure": 96,
+    "accent": "a narrow kente-woven strip (gold, green and black) as the sword belt or the cape's lining.",
+    "personalName": "Kwame"
   },
   {
     "id": "archer",
@@ -40,27 +42,33 @@
     "name": "Fire Wizard",
     "base": "hero_res_wizard",
     "rear": "hero_res_wizard_back",
-    "design": "Expressive adult male fire wizard, swept auburn hair, long burgundy coat with gold borders over charcoal robes, pointed red wizard hat, wooden staff with amber crystal, leather belt and boots.",
+    "design": "a young adult Tamil man, brown skin (ramp `#4a2a18` `#6e4026` `#92593a` `#ad7148` `#c2875a`), thick dark brown hair with warm auburn lights falling over his brow, dark eyes, a focused, lively face.",
     "gear": "new blackened-gold claw staff enclosing suspended amber crystal, new fitted charcoal/scarlet runic coat, gold vambraces, crystal belt, red crown-banded hat; bright glowing amber eyes",
-    "figure": 96
+    "figure": 96,
+    "accent": "the coat's gold border worked in a temple-border (kolam-like) pattern.",
+    "personalName": "Ravi"
   },
   {
     "id": "paladin",
     "name": "Paladin",
     "base": "hero_res_paladin",
     "rear": "hero_res_paladin_back",
-    "design": "Noble adult male holy knight, silver white plate armour with ornate gold trim, ivory and royal blue tabard, short golden hair, heavy golden mace and kite shield marked with a sun. Heroic readable face.",
-    "gear": "new sunsteel gold-crossguard sword and white-gold sun heraldic shield with amber crystal, fitted ivory-gold consecrated plate",
-    "figure": 96
+    "design": "an adult Lebanese man, olive skin (ramp `#5e4429` `#86643f` `#a88259` `#bf9a6e` `#d2b083`), short dark brown hair, dark eyes, clean-shaven or light stubble, a calm protective face.",
+    "gear": "NEW fitted ivory-silver/gold consecrated plate, narrow blue/ivory tabard, legendary GOLDEN MACE with sunburst head and amber crystal core, blue-gold sun heraldic kite shield with engraved cedar motif. NO sword. Dark brown short hair and natural dark eyes.",
+    "figure": 96,
+    "accent": "a small cedar-tree emblem engraved on a pauldron or the shield's rim.",
+    "personalName": "Karim"
   },
   {
     "id": "cleric",
     "name": "Cleric",
     "base": "hero_res_cleric",
     "rear": "hero_res_cleric_back",
-    "design": "Kind but determined adult female battle priest, chestnut hair, ivory hood and white robes, teal stole and gold trim, leather boots, compact steel mace and small prayer book at belt, readable warm face.",
-    "gear": "new ornate gold winged healing staff with suspended mint crystal, fitted white-teal-gold ceremonial coat and narrow high collar; glowing mint eyes",
-    "figure": 96
+    "design": "an adult Ethiopian woman, deep brown skin (ramp `#2a150d` `#4a2617` `#6b3c25` `#84522f` `#9a6640`), dark brown hair in soft curls or fine braids framing her face under the hood, warm determined eyes.",
+    "gear": "NEW fitted ivory/teal/gold priestly robes and compact gold vambraces, ivory hood framing fine dark braids, tibeb embroidered hem, NEW ornate compact golden MACE with mint crystal head, gold-edged PRAYER BOOK at belt. Glowing mint eyes. NO long staff.",
+    "figure": 96,
+    "accent": "a woven tibeb border (the patterned hem of a habesha dress) on the white robe, and an Ethiopian processional cross motif in the stole's gold embroidery.",
+    "personalName": "Selam"
   },
   {
     "id": "minotaur",
@@ -76,9 +84,11 @@
     "name": "Peasant",
     "base": "hero_res_peasant",
     "rear": "hero_res_peasant_back",
-    "design": "Resourceful young adult Japanese peasant militia fighter, straw jingasa hat, simple ochre padded tunic, navy trousers, white leg bindings, rope belt, wooden long spear. Cheerful determined face, humble practical costume.",
+    "design": "a young adult Vietnamese man, warm tan skin (ramp `#6a4127` `#8f5d3c` `#ad7752` `#c48d63` `#d6a57a`), short dark brown-black hair, cheerful determined face. Humble, practical, proud.",
     "gear": "new elegant silver halberd with emerald core, fitted moss-green tunic with leaf-steel breastplate and leather guards",
-    "figure": 96
+    "figure": 96,
+    "accent": "none beyond the n\u00f3n l\u00e1; keep the clothes plain and honest.",
+    "personalName": "Minh"
   },
   {
     "id": "ninjaMonk",
@@ -103,9 +113,11 @@
     "name": "Lightning Mage",
     "base": "hero_res_lightning_mage",
     "rear": "hero_res_lightning_mage_back",
-    "design": "Quick energetic adult lightning sorceress, silver white hair, deep purple blue robes with gold lightning patterns, short pointed violet hat, staff tipped with small blue crystal, bright cyan eyes, expressive confident face.",
+    "design": "a young adult Samoan woman, brown skin (ramp `#4a2a18` `#6e4026` `#92593a` `#ad7148` `#c2875a`), long silver-white hair (keep it), an energetic, confident face.",
     "gear": "new forked black-gold storm staff with electric-blue crystal, fitted dark-blue/violet robes with gold lightning channels; glowing cyan eyes",
-    "figure": 96
+    "figure": 96,
+    "accent": "Polynesian-inspired geometric patterns in the gold trim of the robes only (on the cloth, not tattooed on her skin), and a small shell or flower ornament in her hair.",
+    "personalName": "Malia"
   },
   {
     "id": "kitsune",
@@ -193,9 +205,11 @@
     "name": "Ranger",
     "base": "hero_res_ranger",
     "rear": "hero_res_ranger_back",
-    "design": "Adult female woodland ranger, long brown hair, deep green hooded cloak and leather armour, gold clasp, tan leggings and high boots, simple elegant wooden longbow, back quiver and belt snares. Clearly medieval forest archer, distinct from the samurai archer.",
+    "design": "a young adult Quechua woman, brown skin (ramp `#4a2a18` `#6e4026` `#92593a` `#ad7148` `#c2875a`), long dark brown hair in a braid, dark eyes, a keen, steady face.",
     "gear": "new ivory-darkwood jade-core recurve bow and silver feather arrows, fitted emerald-charcoal scout armour and narrow green cloak",
-    "figure": 96
+    "figure": 96,
+    "accent": "an Andean woven belt with geometric patterns at her waist, and a woollen lining to the cloak.",
+    "personalName": "Inti"
   },
   {
     "id": "warlock",
@@ -211,9 +225,11 @@
     "name": "Illusionist",
     "base": "hero_res_illusionist",
     "rear": "hero_res_illusionist_back",
-    "design": "Adult female theatrical illusionist, long wavy chestnut hair, expressive violet eyes, purple feathered gold trimmed tricorn with white and purple plumes, ornate purple and gold corseted longcoat dress with white lace sleeves, dark thigh high stockings and ornate purple gold boots, white gloves, slender wand in one hand and ornate hand mirror with glowing violet gem in other. Charming confident smile, fine violet illusion ribbons.",
+    "design": "an adult Afro-Brazilian woman, brown skin (ramp `#4a2a18` `#6e4026` `#92593a` `#ad7148` `#c2875a`), long voluminous chestnut-brown curls, a charming confident smile.",
     "gear": "new gold prism wand and small hovering amethyst, fitted violet-black-gold magical performer outfit with high collar; glowing violet eyes",
-    "figure": 96
+    "figure": 96,
+    "accent": "fine Bahian-style white lace (renda) at the sleeves and collar.",
+    "personalName": "Luana"
   },
   {
     "id": "gunslinger",
@@ -247,9 +263,11 @@
     "name": "Mercenary",
     "base": "hero_res_mercenary",
     "rear": "hero_res_mercenary_back",
-    "design": "Grizzled mature human sellsword, scarred stubbled readable face, short dark hair with grey streak, worn leather armour and steel chainmail, charcoal travelling cloak, notched broadsword, coin purse and leather boots. Grounded veteran distinct from the bright blond Soldier.",
+    "design": "a grizzled middle-aged Persian man, olive-tan skin (as now), short dark hair with a grey streak, stubble, a scar, a grounded veteran's face.",
     "gear": "new silver bastard sword with ruby channel, fitted darksteel-crimson gold-edged veteran plate and narrow red cloak",
-    "figure": 96
+    "figure": 96,
+    "accent": "a girih (Persian geometric) pattern on the sword's guard, and a paisley (boteh) lining to the cloak.",
+    "personalName": "Kian"
   },
   {
     "id": "mummy",
@@ -265,9 +283,11 @@
     "name": "Buccaneer",
     "base": "hero_res_buccaneer",
     "rear": "hero_res_buccaneer_back",
-    "design": "Dashing adult male pirate, red bandana under brown tricorn, expressive stubbled face, open ivory shirt, red sash and weathered brown shortcoat, curved silver cutlass in right hand and iron grappling hook left, knee boots and belts.",
+    "design": "an adult Cape Verdean man, brown skin (ramp `#4a2a18` `#6e4026` `#92593a` `#ad7148` `#c2875a`), short dark curly hair under the bandana, light stubble, a dashing grin.",
     "gear": "new silver wave-channel sapphire cutlass with gold basket hilt, fitted navy-crimson gold-trimmed privateer coat and decorated pistol",
-    "figure": 96
+    "figure": 96,
+    "accent": "the sash or a coat lining in panu di terra, the indigo-and-white woven cloth of the islands.",
+    "personalName": "Tiago"
   },
   {
     "id": "wolfBard",
@@ -283,9 +303,11 @@
     "name": "Beastmaster",
     "base": "hero_res_beastmaster",
     "rear": "hero_res_beastmaster_back",
-    "design": "Wild adult female beastmaster, dark skin and expressive face with blue warpaint, dark braided hair, fur trimmed brown leather armour, feathers and bone charms, wolf tooth necklace, coiled leather whip and small curved hunting knife, rugged boots.",
-    "gear": "new gold-hooked emerald-core hunting spear, fitted forest-brown green bronze warden armour, compact fur shoulder and ornate hunting horn",
-    "figure": 96
+    "design": "an adult Maya woman, brown skin (as she is now), long black braids, strong calm features.",
+    "gear": "NEW fitted brown/forest-green reinforced leather and bronze warden armour, compact fur trim, ornate coiled leather WHIP with jade grip and silver hunting KNIFE; jade bead necklace, huipil-inspired embroidered sash and ribbons in long black braids. NO face paint, NO bone charms, NO spear. Natural dark eyes.",
+    "figure": 96,
+    "accent": "replace the current war paint and bone charms (they read as a generic \"tribal\" costume): no face paint; instead a jade bead necklace and a sash embroidered in the bright floral and geometric style of a Yucatec huipil, ribbons woven into the braids.",
+    "personalName": "Itzel"
   },
   {
     "id": "kraken",
@@ -301,9 +323,11 @@
     "name": "Lancer",
     "base": "hero_res_lancer",
     "rear": "hero_res_lancer_back",
-    "design": "Mounted adult lancer knight riding a compact sturdy BROWN ARMOURED HORSE, steel plate and blue plume helmet with visible face, royal blue saddle cloth and brown leather tack, long silver tipped lance held forward. Show entire horse, rider and lance in every frame; mounted cavalry silhouette.",
+    "design": "an adult Mongolian man, light warm skin, black hair, dark eyes, a weathered, cheerful horseman's face.",
     "gear": "new long silver dragon-engraved sapphire-core lance with gold guard, fitted silver-cobalt plate and small swept crest; preserve existing mount if shown",
-    "figure": 96
+    "figure": 96,
+    "accent": "a blue silk scarf (a khadag) tied to the lance below the tip, and the high collar of a deel under the armour.",
+    "personalName": "Bataar"
   },
   {
     "id": "reaper",
@@ -319,9 +343,11 @@
     "name": "Time Witch",
     "base": "hero_res_time_witch",
     "rear": "hero_res_time_witch_back",
-    "design": "Adult female time witch, long flowing silver hair, violet eyes, crooked wide brim midnight blue witch hat decorated with gold clock faces and gears, ornate midnight blue and gold star patterned corseted robe dress with split flowing skirts and pale silk lining, black thigh high stockings and gold trimmed boots, hanging gold pocket watches and clockwork chains, tall staff topped with golden hourglass containing glowing blue sand. Confident elegant expression.",
+    "design": "an adult Igbo woman, deep brown skin (ramp `#2a150d` `#4a2617` `#6b3c25` `#84522f` `#9a6640`), long flowing silver hair (keep it: it is her magic), violet eyes, an elegant, confident face.",
     "gear": "new gold clockwork staff enclosing suspended hourglass crystal, fitted black-violet gold-trimmed chronomancer outfit and hourglass belt; glowing pale-gold eyes",
-    "figure": 96
+    "figure": 96,
+    "accent": "coral bead jewellery, and uli-style flowing line patterns in the gold embroidery.",
+    "personalName": "Adaeze"
   },
   {
     "id": "arcBlade",
@@ -364,9 +390,11 @@
     "name": "Queen Dragoon",
     "base": "hero_res_dragoon",
     "rear": "hero_res_dragoon_back",
-    "design": "Regal adult female dragon knight, long teal hair, expressive fierce face under horned dragon crest helm, ornate teal and gold dragon scale plate armour, small leathery dragon wings on back, purple waist cape, long silver tipped lance, armoured boots. Human dragon knight, not a full dragon.",
+    "design": "an adult Amazigh woman, olive skin (ramp `#5e4429` `#86643f` `#a88259` `#bf9a6e` `#d2b083`), long teal hair (keep it), strong regal features, a fierce, proud face. Human, not a dragon.",
     "gear": "new long silver dragon-headed teal-core lance, fitted teal-gold dragon-scale plate, narrow purple cape and compact horned crest; existing wings folded close",
-    "figure": 96
+    "figure": 96,
+    "accent": "Amazigh geometric motifs (the \u2d63 yaz among them) engraved in the gold trim, and a silver fibula brooch at the cape.",
+    "personalName": "Tiziri"
   },
   {
     "id": "juggernaut",
@@ -382,9 +410,11 @@
     "name": "Great Sage",
     "base": "hero_res_sage",
     "rear": "hero_res_sage_back",
-    "design": "Wise elderly male mage, long white beard and expressive kindly eyes, deep blue star patterned robes, broad pointed blue wizard hat with gold band, gnarled wooden staff topped with a small golden star orb, book at belt and brown shoes.",
+    "design": "an elderly Malian scholar, deep brown skin (ramp `#2a150d` `#4a2617` `#6b3c25` `#84522f` `#9a6640`), a long white beard, kind, knowing eyes.",
     "gear": "new ornate gold star staff with suspended sapphire orb, fitted deep-blue celestial runic robes and crown-banded pointed hat; white beard; glowing starlit blue eyes",
-    "figure": 96
+    "figure": 96,
+    "accent": "bogolan (mud-cloth) patterns on the robe's lining, and old manuscripts among the star charts, recalling the libraries of Timbuktu.",
+    "personalName": "Seydou"
   },
   {
     "id": "demonSwordsman",

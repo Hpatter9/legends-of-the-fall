@@ -4,6 +4,7 @@
 // (`enterNode`, `buy`, `rest`, ...); a battle node hands over to the page (`onFight`), a mystery floor to the event card.
 
 import { oreChip } from './oreView';
+import { awakenedOf } from './sim/awaken';
 import { chestKind } from './sim/armyStars';
 import { gainXp, xpOf, levelOf } from './sim/levels';
 import { heroRank, saveMeta, type Meta } from './sim/meta';
@@ -737,7 +738,7 @@ export class TowerView {
       this.card = null;
     });
     // (WAVE-RECAP-2: the map's share of the company's work, its XP and its fights; its finds are the recap's own groups)
-    putDetail(card, done.detail, { strip: 'Fight by fight', prefix: '#', noSpoils: true });
+    putDetail(card, done.detail, { strip: 'Fight by fight', prefix: '#', noSpoils: true, equipmentStep: (kind) => awakenedOf(this.hooks.meta(), kind) });
   }
 
   /** The relics an elite paid: choose one (the offer is kept in the run, so leaving and coming back finds it). */
@@ -961,7 +962,7 @@ export class TowerView {
         then();
       });
       // (WAVE-RECAP-2: the whole calamity's detail under the finishing reward)
-      putDetail(card, run.recap, { strip: 'Fight by fight', prefix: '#' });
+      putDetail(card, run.recap, { strip: 'Fight by fight', prefix: '#', equipmentStep: (kind) => awakenedOf(this.hooks.meta(), kind) });
       wrap.append(card);
       this.root.append(wrap);
       return;
@@ -1012,7 +1013,7 @@ export class TowerView {
     });
     card.append(go);
     // (WAVE-RECAP-2: the per-hero detail the short card after each fight left for here)
-    putDetail(card, run.recap, cal ? { strip: 'Fight by fight', prefix: '#' } : { strip: 'Floor by floor', prefix: 'F' });
+    putDetail(card, run.recap, { strip: cal ? 'Fight by fight' : 'Floor by floor', prefix: cal ? '#' : 'F', equipmentStep: (kind) => awakenedOf(this.hooks.meta(), kind) });
     wrap.append(card);
     this.root.append(wrap);
   }

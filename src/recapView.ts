@@ -4,7 +4,8 @@
 
 import { heartsBurned, mvpKind, type RunRecap } from './sim/runRecap';
 import { MAX_STARS } from './sim/stars';
-import { formOf, UNITS } from './sim/units';
+import { UNITS } from './sim/units';
+import { battleSheet } from './render/awakenLook';
 import { heroName } from './sim/heroNames';
 import { portrait } from './render/sheets';
 import type { ComebackGo, ComebackTip } from './sim/comeback';
@@ -23,6 +24,7 @@ const clock = (ms: number) => {
 const num = (n: number) => Math.round(n).toLocaleString('en-GB');
 
 export interface RecapHead {
+  equipmentStep?: (kind: string) => number;
   /** "Victory!", "Defeat" ... */
   title: string;
   /** "won" or "lost": the title's colour. */
@@ -92,7 +94,7 @@ export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, o
   sheet.append(grid);
 
   // wave by wave, the company, XP and levels, and the spoils (`recapDetail`)
-  sheet.append(...recapDetail(recap, { strip: 'Wave by wave', prefix: 'W' }));
+  sheet.append(...recapDetail(recap, { strip: 'Wave by wave', prefix: 'W', equipmentStep: head.equipmentStep }));
 
   const done = el('div', 'rcFoot');
   const ok = el('button', 'primary', 'Continue');
@@ -108,6 +110,7 @@ export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, o
 
 /** How the detail's fight-by-fight strip is headed, and what marks each fight's number ("W4" a wave, "F12" a floor, "#7" a fight). */
 export interface DetailOpts {
+  equipmentStep?: (kind: string) => number;
   strip: string;
   prefix: string;
   /** Leave out the spoils (a screen that lists its own finds). */
@@ -131,7 +134,7 @@ export function recapDetail(recap: RunRecap, opts: DetailOpts): HTMLElement[] {
       if (mvpDef) {
         const face = el('i', 'rcWaveMvp');
         face.title = `MVP: ${heroName(w.mvp!)}`;
-        face.append(portrait(formOf(mvpDef, 1), 64, 1));
+        face.append(portrait(battleSheet(w.mvp!, opts.equipmentStep?.(w.mvp!) ?? 0, 1), 64, 1));
         chip.append(face);
       }
       if (w.hearts) chip.append(el('em', '', '♥'.repeat(Math.min(3, w.hearts))));
@@ -151,11 +154,10 @@ export function recapDetail(recap: RunRecap, opts: DetailOpts): HTMLElement[] {
     const top = (key: 'dealt' | 'healed' | 'kills') => Math.max(1, ...kinds.map((k) => recap.heroes[k][key]));
     kinds.forEach((k, i) => {
       const t = recap.heroes[k];
-      const def = UNITS[k];
       const row = el('div', `rcHero${k === mvp ? ' mvp' : ''}`);
       row.style.setProperty('--i', String(Math.min(i, 8)));
       const face = el('div', `rcFace g${t.grade}`);
-      face.append(portrait(formOf(def, t.grade), 64, t.grade));
+      face.append(portrait(battleSheet(k, opts.equipmentStep?.(k) ?? 0, t.grade), 64, t.grade));
       if (k === mvp) face.append(el('em', 'rcCrown', '♛'));
       const name = el('b', '', heroName(k));
       if (k === mvp) name.append(el('small', '', 'MVP'));

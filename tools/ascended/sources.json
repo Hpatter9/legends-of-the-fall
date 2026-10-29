@@ -1,38 +1,71 @@
 {
-  "paladin": "exec-065c1134-3e70-4c08-986d-d4cba1581c31.png",
+  "paladin": {
+    "file": "heritage-paladin.png",
+    "sha256": "3c3722f4384f9a52516ab8025606f016790962aa61ab0cb9fe3b7e30ab5d581c"
+  },
   "wanderer": "exec-baa74b10-5e41-489c-9506-a71ebd54bf6c.png",
   "kraken": "exec-8d19a62d-4e5d-4bf7-b9be-73c35a83cb36.png",
   "samuraiCommander": "exec-828243c7-be1e-4a76-9a84-9a272f28dccf.png",
   "karasu": "exec-622babdc-e5bd-4dea-9296-5a5334bd8192.png",
-  "beastmaster": "exec-8cc154ea-1362-4717-a8d4-285554be5fdc.png",
-  "cleric": "exec-c52000b0-a5c2-42e5-8dd3-318ce2393f21.png",
+  "beastmaster": {
+    "file": "heritage-beastmaster.png",
+    "sha256": "0190d6dde62c6b591c875fc19ae15c0123062e279b1447b785fe9c5593103782"
+  },
+  "cleric": {
+    "file": "heritage-cleric.png",
+    "sha256": "5cd59bc0a9244c841c4415a0643a9f411865808fef1cee551c7a734d7deaf030"
+  },
   "druid": "exec-f22992e3-f034-438a-915a-3f4670b4bbb1.png",
-  "ranger": "exec-3bb0691a-daef-4b1d-a587-41c552569032.png",
+  "ranger": {
+    "file": "heritage-ranger.png",
+    "sha256": "259d91ee123d34df8918483f17c9da5f2b933709e8f9ddf91baa474ac5452884"
+  },
   "kunoichi": "exec-3644b7d7-e117-476c-990d-114f762d6ef7.png",
-  "lancer": "exec-6439c709-0b21-4e08-8994-345a69c346b6.png",
+  "lancer": {
+    "file": "heritage-lancer.png",
+    "sha256": "1a40344f101d836f050fa3b50481c3323927a39ebe0bcf726c695ab2a8d53538"
+  },
   "werewolfBrute": "exec-969ec9b4-d6b9-437d-bee4-50c75ad7fd30.png",
-  "lightningMage": "exec-d7588cbf-5b5a-4843-8a07-93cd4135dcec.png",
-  "knight": "exec-66a8640c-29ff-453c-998c-271a9b09d268.png",
+  "lightningMage": {
+    "file": "heritage-lightningMage.png",
+    "sha256": "12f7bc766f0d56b4441004cb544ffd8317d8900350baa17073a8060ae3f392f6"
+  },
+  "knight": {
+    "file": "heritage-knight.png",
+    "sha256": "e8134a1325b43897aa31c0ead657f4d2aef1402e6f874daad0c69f0ffdfdd52d"
+  },
   "kitsune": "exec-c7fc1ec4-007e-4b50-bd1f-83f0a23e87a0.png",
   "samurai": "exec-499f0b59-db13-4165-834e-76970d9042dd.png",
   "barbarian": "exec-95a6902e-e392-4247-bec6-4dba1e2a28be.png",
-  "timeWitch": "exec-368017a8-b51d-45d9-ac8f-13ac11be0dc5.png",
+  "timeWitch": {
+    "file": "heritage-timeWitch.png",
+    "sha256": "90a2b9ae05afb56f85c98610917009eca32ceb711becd2fe10c43169b3cd10ed"
+  },
   "treant": "exec-c835831f-e2b3-4236-bf5b-9d327f303cc7.png",
   "archer": "exec-c750ec04-d31a-4125-af03-0ca6388f8413.png",
   "yamabushi": "exec-f9738ef3-7c83-48c0-8380-e8f4cde780ae.png",
   "minotaur": "exec-63041493-8529-4eaf-ae34-ad3e1b46b573.png",
   "reaper": "exec-31be6bca-435c-4240-ab76-637d2937b9a6.png",
   "werewolf": "exec-57a816ba-1317-48cd-a761-fb021519623b.png",
-  "wizard": "exec-de2115b3-c527-4ed2-8128-2b40318e8bc8.png",
+  "wizard": {
+    "file": "heritage-wizard.png",
+    "sha256": "bead51cb9b2f0b5bb7b4a432cd526cdb542f13d51c2d8d1683086faee279f7ef"
+  },
   "treant2": "exec-fa42e809-8523-4ec5-bfd1-268309fad898.png",
   "warlock": "exec-b824e557-6a5e-40f4-8812-681aaa02866c.png",
-  "peasant": "exec-a5b75a4f-683a-45c2-878b-b2e8d07a7398.png",
+  "peasant": {
+    "file": "heritage-peasant.png",
+    "sha256": "f39cbaf933590e43d976f0df5330a5bf635f11fc2ec15cceb340aa7753503ee0"
+  },
   "arcBlade": "exec-6f0c1ae8-1d7f-4f5a-a458-686b653c126f.png",
   "gorgon": "exec-211e63f8-f1de-4fd6-b69f-078d80587b19.png",
   "treant3": "exec-f061f847-8d2e-41a7-bc2a-f89aaa3874ae.png",
   "ninjaMonk": "exec-5de2b2b7-a6c2-4d0a-a658-bcef97ed9cd9.png",
   "siegeBot": "exec-7d1eaba6-f3eb-4a88-a2ed-087f90d749f4.png",
-  "illusionist": "exec-d4417d21-3ba8-4785-869f-96564d880830.png",
+  "illusionist": {
+    "file": "heritage-illusionist.png",
+    "sha256": "8472e718ff542ef1caf94e8cbd0fd202602e9579255b3e6a34d6e4e3e5660cd5"
+  },
   "satyr": "exec-4b9d5123-22c3-4163-b5e0-291b930c6c26.png",
   "dreadPirate": "exec-b4b8c87c-ae42-4a40-be36-a3c1b5bcc544.png",
   "gunslinger": "exec-8bb78562-a0c6-441e-9b8f-e8fa9613703b.png",
@@ -40,12 +73,24 @@
   "shambler": "exec-b00b3628-f142-4322-a283-e40d04c02394.png",
   "juggernaut": "exec-0caca9e8-076c-45aa-b395-9ef0b6fccd6e.png",
   "rifleBot": "exec-620d0e3c-d8a4-4246-973f-5d7847b21b6c.png",
-  "dragoon": "exec-19c9f049-d1b1-4ffd-8a1e-624400e16248.png",
-  "mercenary": "exec-b30b2e4a-7bf2-4b53-9931-857a8bd5f05c.png",
+  "dragoon": {
+    "file": "heritage-dragoon.png",
+    "sha256": "677ebbe8ee492e11e6a07a968d53356bf20395288703e3c7319994255b61e057"
+  },
+  "mercenary": {
+    "file": "heritage-mercenary.png",
+    "sha256": "dc4888b20ce8e615d849770b8a26f563ed9f66df03952622551b2eccbfcbd2f9"
+  },
   "mummy": "exec-95b28966-7edc-46c9-961c-dd75b2c2eb35.png",
-  "sage": "exec-9526bf76-fc37-436d-ac76-e587f8b25f19.png",
+  "sage": {
+    "file": "heritage-sage.png",
+    "sha256": "37f6cf77a8c2b8f0722069c671a13daa937422f5d4bef148d23f3347343b82b2"
+  },
   "demonSwordsman": "exec-48b867e3-b657-423f-9c5f-d8dab527be5c.png",
   "tyrant": "exec-c42efa5a-5839-4311-ac85-9556e768c0f8.png",
   "wolfBard": "exec-88a04570-a6ad-4aae-bc16-63d482a13d8a.png",
-  "buccaneer": "exec-40d156f1-f629-49dc-a347-cb999f048ac3.png"
+  "buccaneer": {
+    "file": "heritage-buccaneer.png",
+    "sha256": "99f9c9f2fe0ee72df6b6eb5feb0f2f50bfc7782dc1b05b37659440923e39e509"
+  }
 }

@@ -1,0 +1,137 @@
+[
+  {
+    "id": "knight",
+    "title": "Kwame, the Knight (Ghanaian, Akan)",
+    "role": "the front-line guardian: \"a wall of a man: draws the foes and bashes them back\". Sword and shield.",
+    "baseGear": "silver steel plate with gold trim, royal-blue scarf and tabard with an ivory panel and a blue cross, burgundy cape, round blue shield with a gold cross, broad steel sword, brown boots.",
+    "person": "a young adult Ghanaian man, deep brown skin (sprite ramp `#2a150d` `#4a2617` `#6b3c25` `#84522f` `#9a6640`), short black tightly coiled hair with a little height on top, dark eyes, broad noble determined face.",
+    "accent": "a narrow kente-woven strip (gold, green and black) as the sword belt or the cape's lining.",
+    "scene": "kneeling on one knee behind his shield at a breached castle gate, sword braced diagonally, shielding a small lantern from drifting embers at dawn."
+  },
+  {
+    "id": "wizard",
+    "title": "Ravi, the Fire Wizard (Indian, Tamil)",
+    "role": "a pyromancer: fire that runs from foe to foe. Staff caster.",
+    "baseGear": "tall pointed red wizard hat with a gold band, long burgundy coat with gold borders over charcoal robes, wooden staff topped with an amber flame crystal, leather belt and boots.",
+    "person": "a young adult Tamil man, brown skin (ramp `#4a2a18` `#6e4026` `#92593a` `#ad7148` `#c2875a`), thick dark brown hair with warm auburn lights falling over his brow, dark eyes, a focused, lively face.",
+    "accent": "the coat's gold border worked in a temple-border (kolam-like) pattern.",
+    "scene": "leaning into a sweeping staff cast in a ruined library, a spiral of controlled flame rising round levitating scorched books."
+  },
+  {
+    "id": "peasant",
+    "title": "Minh, the Peasant (Vietnamese)",
+    "role": "formation militia who closes ranks and braces pikes. Long spear.",
+    "baseGear": "wide conical straw hat (paint it as a Vietnamese n\u00f3n l\u00e1), simple ochre padded tunic, navy trousers, white leg bindings, rope belt, wooden spear with a red tassel.",
+    "person": "a young adult Vietnamese man, warm tan skin (ramp `#6a4127` `#8f5d3c` `#ad7752` `#c48d63` `#d6a57a`), short dark brown-black hair, cheerful determined face. Humble, practical, proud.",
+    "accent": "none beyond the n\u00f3n l\u00e1; keep the clothes plain and honest.",
+    "scene": "bracing his spear diagonally across a narrow bridge over flooded rice terraces at sunrise, hat tilted into the wind."
+  },
+  {
+    "id": "paladin",
+    "title": "Karim, the Paladin (Lebanese)",
+    "role": "a martyr who takes his friends' wounds on himself. Mace and shield.",
+    "baseGear": "silver-white plate with ornate gold trim, ivory and royal-blue tabard, heavy golden mace, blue kite shield marked with a gold sun.",
+    "person": "an adult Lebanese man, olive skin (ramp `#5e4429` `#86643f` `#a88259` `#bf9a6e` `#d2b083`), short dark brown hair, dark eyes, clean-shaven or light stubble, a calm protective face.",
+    "accent": "a small cedar-tree emblem engraved on a pauldron or the shield's rim.",
+    "scene": "stepping forward with shield raised and mace lowered through a broken cathedral doorway, golden morning light striking the sun emblem."
+  },
+  {
+    "id": "cleric",
+    "title": "Selam, the Cleric (Ethiopian, Amhara)",
+    "role": "a battle priest whose smites heal. Mace and prayer book.",
+    "baseGear": "ivory hood and white robes, teal stole with gold trim, leather boots, compact mace, small prayer book at the belt.",
+    "person": "an adult Ethiopian woman, deep brown skin (ramp `#2a150d` `#4a2617` `#6b3c25` `#84522f` `#9a6640`), dark brown hair in soft curls or fine braids framing her face under the hood, warm determined eyes.",
+    "accent": "a woven tibeb border (the patterned hem of a habesha dress) on the white robe, and an Ethiopian processional cross motif in the stole's gold embroidery.",
+    "scene": "kneeling beside a wounded traveller's discarded shield in a field hospital, prayer book open on a crate, one hand extended with gentle teal healing light."
+  },
+  {
+    "id": "ranger",
+    "title": "Inti, the Ranger (Quechua, Peruvian Andes)",
+    "role": "a trapper: snares and fields of caltrops, and a longbow.",
+    "baseGear": "deep green hooded cloak with a gold clasp, leather armour, tan leggings, high boots, plain wooden longbow, back quiver, belt snares.",
+    "person": "a young adult Quechua woman, brown skin (ramp `#4a2a18` `#6e4026` `#92593a` `#ad7148` `#c2875a`), long dark brown hair in a braid, dark eyes, a keen, steady face.",
+    "accent": "an Andean woven belt with geometric patterns at her waist, and a woollen lining to the cloak.",
+    "scene": "half kneeling in fern cover on a forest ridge, bow drawn low through the foliage as dawn breaks through ancient trees."
+  },
+  {
+    "id": "illusionist",
+    "title": "Luana, the Illusionist (Afro-Brazilian)",
+    "role": "a trickster: decoys, and friends swapped out of danger. Wand and hand mirror.",
+    "baseGear": "purple feathered tricorn with gold trim and white and purple plumes, ornate purple and gold corseted longcoat dress with white lace sleeves, dark stockings, purple and gold boots, white gloves, slender wand, ornate hand mirror with a glowing violet gem.",
+    "person": "an adult Afro-Brazilian woman, brown skin (ramp `#4a2a18` `#6e4026` `#92593a` `#ad7148` `#c2875a`), long voluminous chestnut-brown curls, a charming confident smile.",
+    "accent": "fine Bahian-style white lace (renda) at the sleeves and collar.",
+    "scene": "taking a theatrical bow on a candlelit enchanted theatre stage, one gloved hand flourishing the wand, the other raising the jewelled mirror, violet illusion ribbons spiralling through floating playing cards."
+  },
+  {
+    "id": "buccaneer",
+    "title": "Tiago, the Buccaneer (Cape Verdean)",
+    "role": "a gambler: hooks, and the dice. Cutlass and grappling hook.",
+    "baseGear": "brown tricorn over a red bandana, open ivory shirt, red sash, weathered brown short coat, curved silver cutlass, iron grappling hook, knee boots and belts.",
+    "person": "an adult Cape Verdean man, brown skin (ramp `#4a2a18` `#6e4026` `#92593a` `#ad7148` `#c2875a`), short dark curly hair under the bandana, light stubble, a dashing grin.",
+    "accent": "the sash or a coat lining in panu di terra, the indigo-and-white woven cloth of the islands.",
+    "scene": "swinging from a ship's rigging above a sunlit harbour, cutlass held out and hook catching the rope, coat and sash flying."
+  },
+  {
+    "id": "timeWitch",
+    "title": "Adaeze, the Time Witch (Nigerian, Igbo)",
+    "role": "a time-bender: hastes, slows, and turns back a friend's clock. Hourglass staff.",
+    "baseGear": "wide crooked midnight-blue witch hat with gold clock faces and gears, ornate midnight-blue and gold star-patterned corseted robe dress with split skirts and pale silk lining, black stockings, gold-trimmed boots, hanging gold pocket watches and clockwork chains, tall staff topped with a golden hourglass of glowing blue sand.",
+    "person": "an adult Igbo woman, deep brown skin (ramp `#2a150d` `#4a2617` `#6b3c25` `#84522f` `#9a6640`), long flowing silver hair (keep it: it is her magic), violet eyes, an elegant, confident face.",
+    "accent": "coral bead jewellery, and uli-style flowing line patterns in the gold embroidery.",
+    "scene": "suspended above the floor of a shattered clock tower, one hand turning a floating golden clock ring while her hourglass staff holds falling fragments in mid-air."
+  },
+  {
+    "id": "dragoon",
+    "title": "Tiziri, the Queen Dragoon (Amazigh, Moroccan)",
+    "role": "a dragon knight who breathes fire and leaps. Lance.",
+    "baseGear": "horned dragon-crest helm, ornate teal and gold dragon-scale plate, small leathery dragon wings on her back, purple waist cape, long silver-tipped lance, armoured boots.",
+    "person": "an adult Amazigh woman, olive skin (ramp `#5e4429` `#86643f` `#a88259` `#bf9a6e` `#d2b083`), long teal hair (keep it), strong regal features, a fierce, proud face. Human, not a dragon.",
+    "accent": "Amazigh geometric motifs (the \u2d63 yaz among them) engraved in the gold trim, and a silver fibula brooch at the cape.",
+    "scene": "landing from a leap on a ruined battlement, one knee bent, lance braced into the stone and wings spread, teal hair streaming against a violet mountain sky."
+  },
+  {
+    "id": "sage",
+    "title": "Seydou, the Great Sage (Malian)",
+    "role": "a mana battery: falling stars, and his friends' mana pools filled. Staff.",
+    "baseGear": "deep-blue star-patterned robes, broad pointed blue wizard hat with a gold band, gnarled wooden staff topped with a small golden star orb, book at the belt, brown shoes.",
+    "person": "an elderly Malian scholar, deep brown skin (ramp `#2a150d` `#4a2617` `#6b3c25` `#84522f` `#9a6640`), a long white beard, kind, knowing eyes.",
+    "accent": "bogolan (mud-cloth) patterns on the robe's lining, and old manuscripts among the star charts, recalling the libraries of Timbuktu.",
+    "scene": "seated cross-legged on a floating stone in an open celestial observatory, star staff across his lap, beard and robes drifting among luminous star charts."
+  },
+  {
+    "id": "lightningMage",
+    "title": "Malia, the Lightning Mage (Samoan)",
+    "role": "a storm marker: lightning that marks, then sets the marks off. Crystal staff.",
+    "baseGear": "deep purple-blue robes with gold lightning patterns, short pointed violet hat, staff tipped with a blue crystal, bright cyan eyes.",
+    "person": "a young adult Samoan woman, brown skin (ramp `#4a2a18` `#6e4026` `#92593a` `#ad7148` `#c2875a`), long silver-white hair (keep it), an energetic, confident face.",
+    "accent": "Polynesian-inspired geometric patterns in the gold trim of the robes only (on the cloth, not tattooed on her skin), and a small shell or flower ornament in her hair.",
+    "scene": "landing on one knee on a storm-battered observatory balcony, staff touching the stone as branching cyan lightning crackles across a shattered astrolabe."
+  },
+  {
+    "id": "beastmaster",
+    "title": "Itzel, the Beastmaster (Maya, Mexico)",
+    "role": "a summoner who calls the pack and sets it on a foe. Whip and hunting knife, a grey wolf.",
+    "baseGear": "fur-trimmed brown leather armour, coiled leather whip, small curved hunting knife, rugged boots, long dark braids with a small feather (the sprite has one).",
+    "person": "an adult Maya woman, brown skin (as she is now), long black braids, strong calm features.",
+    "accent": "replace the current war paint and bone charms (they read as a generic \"tribal\" costume): no face paint; instead a jade bead necklace and a sash embroidered in the bright floral and geometric style of a Yucatec huipil, ribbons woven into the braids.",
+    "scene": "kneeling on a ridge above a misty tropical forest with a gloved hand resting near the muzzle of her loyal grey wolf, whip at her hip, distant pyramid-shaped hills under storm clouds."
+  },
+  {
+    "id": "lancer",
+    "title": "Bataar, the Lancer (Mongolian)",
+    "role": "momentum cavalry who hits harder the further he rides. Mounted, lance.",
+    "baseGear": "steel plate and a blue-plumed helmet with the face visible, royal-blue saddle cloth, brown leather tack, a compact sturdy brown armoured horse, long silver-tipped lance. Show the entire horse, rider and lance.",
+    "person": "an adult Mongolian man, light warm skin, black hair, dark eyes, a weathered, cheerful horseman's face.",
+    "accent": "a blue silk scarf (a khadag) tied to the lance below the tip, and the high collar of a deel under the armour.",
+    "scene": "his horse rearing on a grassy steppe ridge above battle banners, blue saddle cloth flying, lance held diagonally skyward."
+  },
+  {
+    "id": "mercenary",
+    "title": "Kian, the Mercenary (Persian, Iranian)",
+    "role": "a bounty hunter who marks the strongest and is paid for it. Broadsword.",
+    "baseGear": "worn leather armour over steel chainmail, charcoal travelling cloak, notched broadsword, coin purse, leather boots.",
+    "person": "a grizzled middle-aged Persian man, olive-tan skin (as now), short dark hair with a grey streak, stubble, a scar, a grounded veteran's face.",
+    "accent": "a girih (Persian geometric) pattern on the sword's guard, and a paisley (boteh) lining to the cloak.",
+    "scene": "seated on a broken camp cart at dusk, broadsword across his knees while he sharpens its edge, his face lit by a low campfire."
+  }
+]

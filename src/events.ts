@@ -7,7 +7,8 @@ import { gearText, SLOTS, type Gear } from './sim/gear';
 import { RELICS } from './sim/relics';
 import { equip, unequip, type Run } from './sim/run';
 import { equipBestRun } from './sim/runGear';
-import { formOf, UNITS } from './sim/units';
+import { UNITS } from './sim/units';
+import { battleSheet } from './render/awakenLook';
 import { gearIcon, iconImg, relicIcon } from './render/items';
 import { portrait } from './render/sheets';
 
@@ -33,7 +34,7 @@ export class Events {
   private only?: readonly number[];
   private onChange: () => void = () => {};
 
-  constructor() {
+  constructor(private equipmentStep: (kind: string) => number = () => 0) {
     this.root.id = 'events';
     this.root.hidden = true;
     document.body.append(this.root);
@@ -167,7 +168,7 @@ export class Events {
     const heroes = el('div', 'heroes');
     for (const h of this.listed()) {
       const b = el('button', h.id === this.hero ? 'pick on' : 'pick');
-      b.append(portrait(formOf(UNITS[h.kind], h.grade), 48, h.grade));
+      b.append(portrait(battleSheet(h.kind, this.equipmentStep(h.kind), h.grade), 48, h.grade));
       b.addEventListener('click', () => {
         this.hero = h.id;
         this.drawPack();

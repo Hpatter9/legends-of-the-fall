@@ -1,44 +1,37 @@
-# ART-ASCEND — Permanent upgraded forms
+# ART-ASCEND — Upgraded forms and combat tier auras
 
-Branch: `art/ascended-hero-forms`.
+Branch: `art/ascended-hero-forms`. Implementation in progress, not merged or deployed.
 
-The owner approved permanent evolved hero designs for ascension, with the existing class auras reused for combat tier progression on either form. In the game, the permanent hero system is called Awakening; Calamity Ascension is a different system and is outside this task.
+## Owner-approved direction
 
-## Visual proposal
+Awakening permanently upgrades each hero's equipment and appearance. The owner approved new legendary weapons/armour, glowing eyes for mages, and compact bodies and capes. The first step unlocks the evolved form; the second retains it and keeps its existing mechanical bonuses. The owner-approved painted class atlas from `art/painted-ascension-auras` (`a5ebb152`) now follows combat tier, on either form: tier 1 none, tier 2 light, tiers 3 and 4 strong. Tier 4 retains main's additional size, colour grading and promotion flourishes.
 
-[Generated concept sheet](../samples/ascended-heroes/concept.png).
+References: [initial concept](../samples/ascended-heroes/concept.png), [legendary gear](../samples/ascended-heroes/concept-legendary-gear.png), [approved compact direction](../samples/ascended-heroes/concept-compact.png). These are concepts, not game screenshots.
 
-A generated concept sheet compares Knight, Archer and Fire Wizard: base costume, awakened costume without aura, then the same awakened costume with light and strong combat effects. This is concept artwork, not an implemented screenshot. Specific costume direction awaits owner review as required by AGENTS.md before substantial visual implementation.
+The owner also asked to distinguish the soldier/Knight from the Paladin, then supplied [the heritage art brief](heritage-art-prompt.md). The brief supplies the character identities and painting requirements; its separate artwork-only branch/PR procedure does not supersede the ongoing awakening implementation. Kwame (Knight) and Karim (Paladin) now have distinct appearances. The brief's fifteen identities are being applied to the awakened sheets and their base gallery illustrations. The existing `claude/heritage-looks` base sprite/name work is integrated, preserving all 45 personal names and its original 23 re-toned sprite assets.
 
-Preserve each hero's face, palette, weapon type and identity. Upgrades must change equipment and silhouette, not just recolour the original. Knight gains ornate silver-and-gold armour and blue heraldic equipment; Archer richer crimson lamellar and a more elaborate yumi; Fire Wizard layered scarlet/charcoal robes and an upgraded crystal staff. Actual in-game effects will reuse the existing class aura atlas, including the caster's violet runes.
+## Current implementation
 
-Proposed combat mapping: grade 1 no class aura, grade 2 current light aura, grade 3 current strong aura. This is independent of permanent awakening, and applies to both original and upgraded designs. First Awakening would unlock the evolved design; the second keeps that design unless the owner requests a second distinct evolution. No balance or progression cost changes are proposed.
+- All 45 heroes plus the Werewolf Brute and three Treants have newly generated front/rear artwork, each with eight walking poses and four idle/attack/hurt/death/ability frames. Both mirror directions remain available. Source atlases are ignored under `tools/ascended/source/`; production PNGs, metadata, briefs and packing/validation tooling are retained.
+- Permanent forms resolve through `awakenLook.ts`, separately from `combatAuraStep`. Borrowed druid/werewolf shapes upgrade, while enemy disguises remain unchanged. No balance values, costs, save keys, or RNG rules change.
+- Unit sprites, hero bar, bench and drag ghosts, Last Stand, camp/tavern/hall, party tableau, awakening cutscene/preview, run gear picker and recaps use the equipment look. Home scenes have no combat aura. Reduced motion and battery-saver handling remain in the existing aura renderer.
+- Newly awakened sheets decode for saved awakened heroes and on demand before the first awakening preview; the whole additional roster is not decoded at startup. Their PNG files stay outside the script and are explicitly copied and cached by the service worker for offline use.
+- Awakened menu portraits are extracted from actual production idle poses. The full-art viewer retains the painted illustration and offers an awakened-form toggle, so the new gear and the paintings can both be inspected.
+- Current main through 0.226.0 (`e4a22a52`) is integrated, retaining four-tier combat, manual/Auto pair merges and the new short wave cards. `claude/heritage-looks` (`73db30af`) is integrated on this feature branch. No release version was bumped.
 
-## Stronger evolution revision
+## Art packaging and review
 
-[Revised powerful forms concept](../samples/ascended-heroes/concept-powerful.png).
+`node tools/ascended/pack.cjs [ids...]` packages sources without repainting pixels: connected-component selection, hard alpha, uniform nearest-neighbour scaling and paired frame dimensions/ground line. `pose-selection.json` records conservative intact-pose substitutions; `extra-clips.json` supplies separately generated Peasant action poses where the original long polearm overlapped neighbouring cells. Knight shield defence aliases the physical ability row. `validate.cjs` checks emitted frames and writes actual-animation review contact sheets and an asset report.
 
-Owner feedback on the first sheet: “I want them to feel even more powerful in their awaked form”. The next concept pushes equipment and silhouette much further: champion Knight with broad sculpted plate, enormous heraldic shield and broad sword; war-general Archer with sweeping kabuto crest, imposing crimson lamellar, war mantle and grand yumi; archmage Fire Wizard with high layered mantle, dramatic flame-shaped robes and large branching crystal staff. The awakened-only column remains free of aura so the permanent design must communicate power by itself. Faces and core palettes stay recognisable. Revision awaits visual review; no production integration yet.
+The fifteen heritage paintings are being generated as scene/cutout pairs under ignored `art-source/heritage-heroes/`, following the provided identities, class equipment and cultural accents. The paintings are being checked against the existing anime gallery rendering before importing with `tools/heritage/import-art.py`. Final source and production validation is outstanding.
 
-## Distinct legendary gear and mage eyes
+## Validation so far
 
-[Legendary equipment concept](../samples/ascended-heroes/concept-legendary-gear.png). This presentation enlarges the awakened figures for equipment detail and crops the lower Archer/Wizard bodies; production sheets must show complete bodies at consistent gameplay scale.
+- Typecheck passed after integrating main and the heritage branch.
+- 49 targeted tests passed for awakening, auras/materials, permanent equipment selection, transformations/facings, original art rules, heritage looks/names and four-tier pair merging. Subsequent alias/viewer changes require the final targeted pass.
+- Before the latest heritage artwork replacement, all 2,744 emitted animation cells across 98 sheets passed hard-alpha, dimensions, nonempty-frame and safety-margin checks, with no remaining automated review flags. The updated heritage sheets must be revalidated.
+- Final build, browser review at 393x852, 360x780 and 412x915, actual first/second awakening, tier promotion, live combat, reduced motion, saved-state and offline checks remain outstanding. Tooling: `tools/ascended/checks.mjs`.
 
-Further owner direction: the awakened form needs new upgraded gear, and mages should have glowing eyes. The next comparison isolates base versus awakened forms without combat auras. Equipment must change visibly in shape and construction, rather than just size or ornament: Knight gets a crystal-core broad sword and lion-relief tower shield, Archer a dragon-limbed yumi and new dragon-scale lamellar, Fire Wizard an elaborate suspended-crystal staff and runic archmage coat. The Fire Wizard has clearly glowing molten-gold eyes with restrained local light. Mage eye glow is intrinsic to the permanent form, separate from the class aura used for combat tiers. Non-mage pilot heroes retain natural eyes. Full-roster glow colours should suit each mage's identity; exact roster mapping remains to be specified during implementation. This remains a concept revision, with no production code changes.
+## Handoff
 
-## Approved gear, compact proportions
-
-The owner accepted the legendary equipment direction: “Yes, this is more of what I'm looking for. The characters don't have to end up so wide though. But I like the upgraded gear”. Preserve the new equipment designs and mage eye glow. Bring body widths and shoulder proportions close to current production sprites; fold capes down behind the body, keep shields close, and use vertical bow/staff idle poses. The [compact design reference](../samples/ascended-heroes/concept-compact.png) captures this correction, with full bodies, narrower shoulder armour and vertical bow/staff idle poses. The approved gear direction does not require another approval of the same design choice; this latest concept is a proportion refinement. Production animation sheets and runtime integration remain outstanding.
-
-## Implementation findings
-
-- `src/render/awakenLook.ts`: `lookSheet` currently ignores permanent rank and selects only the combat-grade form.
-- `src/render/unitView.ts`: class aura currently depends on `unit.awaken`; combat grade already controls size, tint and promotion effects.
-- `src/render/awakenRig.ts`: shared menu/canvas rig resolves through `lookSheet`; aura is separately selected from permanent rank.
-- `src/render/auraStyles.ts`: all thirteen class styles have light and strong variants ready for reuse.
-- Current production roster has 45 heroes with paired front/rear sheets, action poses and eight-frame walk cycles. Upgraded production forms must preserve that coverage, transformation aliases, offline availability and reduced motion.
-- Anime gallery artwork is a separate presentation asset set; whether its full-art scenes also evolve remains unspecified. This proposal focuses on battle/canvas hero forms first.
-
-## Handoff and validation
-
-Concept phase only. No runtime code, simulation rules, saves, production artwork or aura selectors changed. Runtime checks not run because executable code is unchanged. Review the generated concept and confirm the costume direction before full-roster generation and integration. No merge, release or deployment performed.
+Continue packaging and reviewing the fifteen updated awakened sources, finish the fifteen gallery pairs (the selected anime revisions have `-anime` in the ignored source filename), run the importer, then complete validation and actual browser review. Do not claim this work is complete until those checks finish. No merge/deployment requested.

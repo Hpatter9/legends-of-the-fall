@@ -6,10 +6,11 @@ import { awakenedSheet, battleSheet, combatAuraStep, lookSheet } from '../src/re
 import { heroLook, rearView } from '../src/render/heroFacing';
 import { auraParts } from '../src/render/auraStyles';
 import art from '../src/art/awakened/manifest.json';
+import originalArt from '../src/art/units/sheets.json';
 
 test('permanent equipment and combat aura strength progress independently for every hero', () => {
   for (const kind of ALL_HEROES) {
-    for (const grade of [1, 2, 3]) {
+    for (const grade of [1, 2, 3, 4]) {
       const base = formOf(UNITS[kind], grade);
       assert.equal(lookSheet(kind, 4, grade), base, `${kind}: top rank is not awakening`);
       const upgraded = battleSheet(kind, 1, grade);
@@ -17,7 +18,7 @@ test('permanent equipment and combat aura strength progress independently for ev
       assert.equal(battleSheet(kind, 2, grade), upgraded, `${kind}: second step keeps equipment`);
       const parts = auraParts(kind, combatAuraStep(grade));
       assert.equal(parts.length === 0, grade === 1, `${kind}: tier one has no combat aura`);
-      assert.deepEqual(parts, auraParts(kind, grade - 1), `${kind}: existing aura artwork reused`);
+      assert.deepEqual(parts, auraParts(kind, Math.min(2, grade - 1)), `${kind}: existing aura artwork reused`);
     }
     assert.ok(existsSync(`src/art/heroes/awakened-${kind}.webp`), `${kind}: matching menu gear`);
   }
@@ -42,7 +43,7 @@ test('upgraded werewolf and druid transformations retain four facings without ch
 });
 
 test('every upgraded animation has production assets, matched views and complete eight-frame walking', () => {
-  const layouts = art.layouts as Record<string, { w: number; h: number; figure: number; perRow: number; rear?: string; rows: string[]; counts: Record<string, number> }>;
+  const layouts = art.layouts as Record<string, { w: number; h: number; figure: number; perRow: number; rear?: string; rows: string[]; counts: Record<string, number>; aliases?: Record<string, string> }>;
   assert.equal(Object.keys(art.forms).length, 49, '45 heroes and four supporting transformations');
   for (const id of Object.values(art.forms)) {
     const front = layouts[id];
@@ -56,6 +57,14 @@ test('every upgraded animation has production assets, matched views and complete
       for (const row of ['idle', 'attack', 'hurt', 'dead', 'attack2']) assert.ok(layout.counts[row] > 0, `${name}: ${row}`);
       const png = readFileSync(`src/art/awakened/${name}.png`);
       assert.deepEqual([png.readUInt32BE(16), png.readUInt32BE(20)], [layout.w * layout.perRow, layout.h * layout.rows.length], `${name}: layout matches actual image`);
+    }
+  }
+  const originals = originalArt as Record<string, { rows: string[] }>;
+  for (const kind of ALL_HEROES) {
+    const upgraded = layouts[battleSheet(kind, 1, 1)];
+    for (const row of originals[UNITS[kind].sheet].rows) {
+      if (row === '_walk') continue;
+      assert.ok(upgraded.rows.includes(row) || upgraded.rows.includes(upgraded.aliases?.[row] ?? ''), `${kind}: retains ${row}`);
     }
   }
 });

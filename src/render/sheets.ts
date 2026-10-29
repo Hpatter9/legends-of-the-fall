@@ -127,6 +127,8 @@ interface Layout {
   /** Drawn facing right unless the sheet says otherwise (the forest and boss sheets face left). */
   facesRight?: boolean;
   rear?: string;
+  /** Two named actions may share one physical row (the Knight's shield block). */
+  aliases?: Record<string, string>;
 }
 
 const URLS: Record<string, string> = {
@@ -258,6 +260,7 @@ function loadSheet(id: string): Promise<void> {
         frame: new Rectangle((i % l.perRow) * l.w, (r + Math.floor(i / l.perRow)) * l.h, l.w, l.h) }));
       frames.set(`${id}:${row}`, list);
     });
+    for (const [alias, row] of Object.entries(l.aliases ?? {})) frames.set(`${id}:${alias}`, frames.get(`${id}:${row}`)!);
     images.set(id, img);
   })();
   loading.set(id, task);
@@ -266,7 +269,7 @@ function loadSheet(id: string): Promise<void> {
 }
 
 /** Newly awakened equipment is decoded for owned awakened heroes and previews,
- * not the whole extra roster at startup. Bundled art remains available offline. */
+ * not the whole extra roster at startup. The service worker caches their files. */
 export async function loadAwakenedSheets(kinds: readonly string[]): Promise<void> {
   const extra: Record<string, string[]> = { druid: ['hero_res_treant', 'hero_res_treant2', 'hero_res_treant3'] };
   const forms = awakened.forms as Record<string, string>;

@@ -1,13 +1,8 @@
 {
-  "forms": 48,
-  "views": 96,
-  "checked": 2688,
-  "decodedMiB": 167.28521728515625,
-  "issues": [
-    "peasant: missing form"
-  ],
-  "reviews": [
-    "awakened_minotaur_back/attack2/1: tall pose (166px vs 96px figure)",
-    "awakened_samuraiCommander_back/dead/0: tall pose (139px vs 96px figure)"
-  ]
+  "forms": 49,
+  "views": 98,
+  "checked": 2744,
+  "decodedMiB": 166.91607666015625,
+  "issues": [],
+  "reviews": []
 }

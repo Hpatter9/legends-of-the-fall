@@ -8,6 +8,40 @@
     122,
     100
   ],
-  "scale": 0.5748502994011976,
-  "warnings": []
+  "scale": 0.5581395348837209,
+  "warnings": [
+    {
+      "row": 6,
+      "col": 1,
+      "box": [
+        177,
+        869,
+        335,
+        1156
+      ],
+      "issue": "touching actors: inspect cell edges"
+    },
+    {
+      "row": 5,
+      "col": 6,
+      "box": [
+        1000,
+        900,
+        1338,
+        987
+      ],
+      "issue": "touching actors: inspect cell edges"
+    },
+    {
+      "row": 5,
+      "col": 2,
+      "box": [
+        336,
+        901,
+        678,
+        989
+      ],
+      "issue": "touching actors: inspect cell edges"
+    }
+  ]
 }
