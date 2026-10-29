@@ -1,6 +1,6 @@
 # Last Stand room artwork
 
-Branch: `art/stand-room-depth`, worktree: `/workspace/legends-of-the-fall`. Owner requested a PR; no release or deployment requested.
+Branch: `art/stand-room-depth`, worktree: `/workspace/legends-of-the-fall`. PR: [#178](https://github.com/Hpatter9/legends-of-the-fall/pull/178). Ready for review; no release or deployment requested.
 
 The owner approved the ornate four-room concept with the king at the centre and the current combat layout. The first pass reused the existing game art; the owner rejected that look as lacking and explicitly requested replacement artwork. The 16:9 request applies to the concept presentation; gameplay retains the project's portrait layout.
 
