@@ -34,7 +34,7 @@ fills the page between the top bar and the tab bar (`#hmSub.armies` takes the `p
 | Legendary | 10 | 9 stars | x2.8 / x2.0 / x1.15 | x4 | x3.5 |
 
 - A run's stars come from the **whole army run** (`Run.tally`, filled by `noteFight` after each fight): on Normal, Hard and Elite,
-  **1** clear the army, **2** no hero lost in the last boss fight, **3** clear within a battle-time target
+  **1** clear the army, **2** no hero lost in the last boss fight, **3** clear without using a heart (until 0.233.0 this was a battle-time target; the owner made it the heart, which is easier to earn)
   (`timeTarget` = 26 s a wave, a little more on harder tiers, shown as m:ss). Legendary's single star is **flawless: no hero lost in
   any boss fight** (the mid-bosses too; a whole-run flawless was met by about one clear in ten even by a maxed-castle level-20 team,
   so it was loosened to the boss fights). Summoned helpers falling never count.

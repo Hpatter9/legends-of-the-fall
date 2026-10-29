@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ARMIES, armyById, armyStars, migrateArmies, recordOf, settleWave, tierOpen, tierStars, waveBoost, firstClearTotal, replayTotal } from '../src/sim/armies';
-import { FIRST_CLEAR_CHEST, chestKind, armyRules, bestChest, chestCrowns, chestSeed, chestsOf, grantChests, openChest, peekChest, rollChest, settleArmyRun, timeTarget } from '../src/sim/armyStars';
+import { FIRST_CLEAR_CHEST, chestKind, armyRules, bestChest, chestCrowns, chestSeed, chestsOf, grantChests, openChest, peekChest, rollChest, settleArmyRun } from '../src/sim/armyStars';
 import { ARMY_STARS, MILESTONES, RUN_STARS, TIERS, tierRange } from '../src/sim/tiers';
 import { CHEST_STONES } from '../src/sim/unlockRules';
 import { ALL_HEROES, UNITS } from '../src/sim/units';
@@ -17,9 +17,10 @@ const store = () => {
 };
 
 /** An army run that has just been cleared, with a tally. */
-function cleared(army: string, tier: number, tally: { ms: number; lost: number; bossLost: number; bossFell?: number }): Run {
+function cleared(army: string, tier: number, tally: { ms: number; lost: number; bossLost: number; bossFell?: number }, hearts = 0): Run {
   const run = armyRun(1, army, undefined, undefined, tier);
   run.cleared = true;
+  run.retries = hearts;
   run.over = true;
   run.tally = tally;
   return run;
@@ -106,13 +107,18 @@ test('a run earns at most three stars, whatever the tier', () => {
   assert.equal(settleArmyRun(startedMeta(3), run), null);
 });
 
-test('the conditions: clear, no hero lost in the last boss fight, and a battle-time target', () => {
+test('the conditions: clear, no hero lost in the last boss fight, and no heart used', () => {
   const a = armyById('orcs')!;
-  const earned = (tally: { ms: number; lost: number; bossLost: number }) => armyRules(a, 0, cleared('orcs', 0, tally)).map((r) => r.earned);
+  const earned = (tally: { ms: number; lost: number; bossLost: number }, hearts = 0) => {
+    const run = cleared('orcs', 0, tally);
+    run.retries = hearts;
+    return armyRules(a, 0, run).map((r) => r.earned);
+  };
   assert.deepEqual(earned(perfect), [true, true, true]);
   assert.deepEqual(earned({ ms: 1000, lost: 3, bossLost: 1 }), [true, false, true]);
-  assert.deepEqual(earned({ ms: timeTarget(a, 0) + 1, lost: 0, bossLost: 0 }), [true, true, false]);
-  assert.ok(timeTarget(a, 2) > timeTarget(a, 0));
+  // (a long, slow clear still earns the third star; a heart burned on the way does not)
+  assert.deepEqual(earned({ ms: 99 * 60_000, lost: 0, bossLost: 0 }), [true, true, true]);
+  assert.deepEqual(earned(perfect, 1), [true, true, false]);
   // (a run not yet cleared has none)
   assert.deepEqual(armyRules(a, 0, armyRun(1, 'orcs')).map((r) => r.earned), [false, false, false]);
   assert.equal(armyRules(a, 1).length, 3);
@@ -120,15 +126,15 @@ test('the conditions: clear, no hero lost in the last boss fight, and a battle-t
 
 test('stars are the best ever per tier: a replay adds only the new ones', () => {
   const m = startedMeta(1);
-  const first = settleArmyRun(m, cleared('orcs', 0, { ms: 1e9, lost: 5, bossLost: 2 }))!;
+  const first = settleArmyRun(m, cleared('orcs', 0, { ms: 1e9, lost: 5, bossLost: 2 }, 1))!;
   assert.equal(first.gained, 1);
   assert.equal(tierStars(recordOf(m, 'orcs'), 0), 1);
   // a worse run adds nothing and takes nothing
-  const worse = settleArmyRun(m, cleared('orcs', 0, { ms: 1e9, lost: 5, bossLost: 2 }))!;
+  const worse = settleArmyRun(m, cleared('orcs', 0, { ms: 1e9, lost: 5, bossLost: 2 }, 1))!;
   assert.equal(worse.gained, 0);
   assert.equal(tierStars(recordOf(m, 'orcs'), 0), 1);
   // a run that meets only the boss condition merges with the clear star
-  const better = settleArmyRun(m, cleared('orcs', 0, { ms: 1e9, lost: 1, bossLost: 0 }))!;
+  const better = settleArmyRun(m, cleared('orcs', 0, { ms: 1e9, lost: 1, bossLost: 0 }, 1))!;
   assert.equal(better.gained, 1);
   assert.deepEqual(better.fresh, [1]);
   assert.equal(tierStars(recordOf(m, 'orcs'), 0), 2);
@@ -154,7 +160,7 @@ test('a milestone puts a chest in the stash once; opening removes it and pays it
   assert.deepEqual(settleArmyRun(m, cleared('orcs', 0, perfect))!.chests, []);
   assert.deepEqual(grantChests(m, a, m.armies.orcs), []);
   assert.equal(m.stash.length, 1);
-  const r2 = settleArmyRun(m, cleared('orcs', 1, { ms: 1e9, lost: 3, bossLost: 1 }))!;
+  const r2 = settleArmyRun(m, cleared('orcs', 1, { ms: 1e9, lost: 3, bossLost: 1 }, 1))!;
   assert.equal(r2.total, 4);
   assert.deepEqual(r2.chests, []);
   const r3 = settleArmyRun(m, cleared('orcs', 1, perfect))!;
