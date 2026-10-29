@@ -1,7 +1,8 @@
 // The armies' pace (ARMY-PACE, `docs/notes/army-pace.md`): the owner's ask, "getting to harder armies is harder; the final armies
 // probably won't be clearable before the player clears all the stars on the first army". The late armies' Normal is steep, their
-// harder tiers are lifted (`tierLift`) to stay above it, and Mythic and the first four armies are as they were.
+// harder tiers are lifted (`tierLift`) to stay above it, and the first four armies' Normal is as it was.
 import { test } from 'node:test';
+import { TIERS } from '../src/sim/tiers';
 import assert from 'node:assert/strict';
 import { ARMIES, armyById, armyXpShare, waveBoost, type Army } from '../src/sim/armies';
 import { BUILDINGS, maxLevel, newCastle, type BuildingId, type Castle } from '../src/sim/castle';
@@ -48,9 +49,10 @@ test('a tier lift multiplies that tier’s foes, hp and attack, and never Normal
       assert.ok(Math.abs(waveBoost(golems, n, t).foes!.atk! - waveBoost(plain, n, t).foes!.atk! * lift) < 1e-9, `atk wave ${n} tier ${t}`);
     }
   }
-  // (Mythic is left as it was tuned on every army, and the first five armies have no lift at all)
-  for (const a of ARMIES) assert.equal(a.tierLift?.[4] ?? 1, 1, a.id);
-  for (const a of ARMIES.slice(0, 5)) assert.equal(a.tierLift, undefined, a.id);
+  // (the first four armies have no lift at all. Until ULT-CHARGE Mythic was 1 on every army and the Labyrinth unlifted; with the ultimates at full
+  // strength the tiers' own Legendary and Mythic rose for the first army's stars, and the later armies' lifts take some of that back:
+  // `docs/notes/ult-charge.md`)
+  for (const a of ARMIES.slice(0, 4)) assert.equal(a.tierLift, undefined, a.id);
 });
 
 test('the early armies are as they were: the first four keep their Normal strength and levels', () => {
@@ -77,11 +79,12 @@ test('and a strong party does clear them in the end: the Golem Forge at level 80
 });
 
 test('a steeper army pays the XP it did before: its added toughness is taken back out of a fight’s XP, and the other armies pay in full', () => {
-  for (const a of ARMIES.slice(0, 4)) for (const t of [0, 1, 2, 3, 4]) assert.equal(armyXpShare(a, t), 1, `${a.id} tier ${t}`);
+  // (and a tier's answer to the ultimates, ULT-CHARGE, is taken back out on every army: Legendary and Mythic)
+  const answer = (t: number) => TIERS[t].answer ?? 1;
+  for (const a of ARMIES.slice(0, 4)) for (const t of [0, 1, 2, 3, 4]) assert.ok(Math.abs(armyXpShare(a, t) * answer(t) - 1) < 1e-9, `${a.id} tier ${t}`);
   for (const a of ARMIES.slice(4)) {
     assert.ok(a.xpStart !== undefined && a.xpStart < a.start, a.id);
     assert.ok(Math.abs(armyXpShare(a, 0) * a.start - a.xpStart!) < 1e-9, a.id);
-    for (const t of [1, 2, 3, 4]) assert.ok(Math.abs(armyXpShare(a, t) * (a.tierLift?.[t] ?? 1) - 1) < 1e-9, `${a.id} tier ${t}`);
-    assert.equal(armyXpShare(a, 4), 1, `${a.id} Mythic`);
+    for (const t of [1, 2, 3, 4]) assert.ok(Math.abs(armyXpShare(a, t) * (a.tierLift?.[t] ?? 1) * answer(t) - 1) < 1e-9, `${a.id} tier ${t}`);
   }
 });

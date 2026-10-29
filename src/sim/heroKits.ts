@@ -60,14 +60,21 @@ export const CHARGE_TO_POOL = 0.5;
 /** A tier 3 hero's other skill (the one its tier skill does not improve) costs this much less. */
 export const TIER3_DISCOUNT = 0.85;
 
-/** The ultimate's meter, from level 30: what fills it (the owner's call: rarer and bigger, about 40 seconds of fighting for an average hero, about 30
- *  for a front-liner and 50 for a support). Per the hero's own max health dealt (or healed) and taken, and per second; times the ultimate's `tuned.rate`
- *  and the hero's `ultRate` talent. A blow turned aside by a guard counts at half (the guard halves the damage that reaches here). */
+/** The ultimate's meter, from level 30: what fills it. Per the hero's own max health dealt (or healed) and taken, and per second; times the ultimate's
+ *  `tuned.rate` and the hero's `ultRate` talent. A blow turned aside by a guard counts at half (the guard halves the damage that reaches here).
+ *  The owner's call (ULT-CHARGE, docs/notes/ult-charge.md): an ultimate once or twice a battle, the first by about mid-fight in an ordinary wave and a
+ *  second in a long or boss fight. So every fight starts with the meter `START` full (or what the hero carried from the run's last wave, if more), and
+ *  it fills about two and a half times as fast as it did: an average hero's first ultimate comes about 12 s into an army wave (about 30 s for a
+ *  meter from empty, less in a fierce fight). It was about 40 s from empty, and most fights (20 to 30 s) ended before it filled. */
 export const ULT_FILL = {
-  DEALT: 16,
-  TAKEN: 26,
-  PER_SEC: 0.55,
-} as const;
+  DEALT: 40,
+  TAKEN: 64,
+  PER_SEC: 1.6,
+  START: 60,
+  /** The Last Stand's heroes fill at this share of the pace (`Unit.ultPace`): its waves follow on from each other in one long battle, so the meter
+   *  carries from wave to wave and fills a little slower, about once a wave, keeping the Stand's pace (`stand.test.ts`) where its own tuning put it. */
+  STAND: 0.5,
+};
 
 /** One of a hero's two skills: the skill, what it costs, how much of the caster's attack it carries (`tune`, the balance knob), the shortest gap
  *  between two casts of it, and the AI's flags. */
@@ -174,7 +181,7 @@ export function tickPool(b: Battle, u: Unit, tickMs: number): void {
 function fillUlt(u: Unit, n: number): void {
   const ult = ultimateOf(u);
   if (!ult || !u.alive || n <= 0) return;
-  const rate = (ultTune(u, ult)?.rate ?? 1) * (1 + tal(u, 'ultRate'));
+  const rate = (ultTune(u, ult)?.rate ?? 1) * (1 + tal(u, 'ultRate')) * (u.ultPace ?? 1);
   u.charge2 = Math.min(CHARGE_MAX, (u.charge2 ?? 0) + n * rate);
 }
 /** The ultimate meter's share of a fight's damage or healing: `amount` points of health dealt (or healed) or taken by a hero with a kit. */
@@ -290,6 +297,12 @@ export function castHero(b: Battle, me: Unit, hk: HeroKit, out: BattleEvent[]): 
     if (n === 2) ks(me).idle2 = b.t;
   }
   return false;
+}
+
+/** As a fight begins: every placed hero whose ultimate is open starts with its meter at least `ULT_FILL.START` (a carried meter that is fuller is kept). */
+export function startUlt(u: Unit): void {
+  if (!heroKitOf(u) || !ultimateOf(u)) return;
+  u.charge2 = Math.min(CHARGE_MAX, Math.max(u.charge2 ?? 0, ULT_FILL.START));
 }
 
 /** The ultimate's meter: whether it is full (for the page's ready glow). */
