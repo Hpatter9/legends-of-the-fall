@@ -195,6 +195,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Completion criteria:** one compact Ruler row opening a sheet of the eight that saves to the same setting and always closes (pick, ✕, backdrop, Escape, Settings' Close; `[hidden]` respected); the Duchess costume the same way; +100 and +1000 stones in the developer row, six buttons fitting at 360; tests extended; typecheck, full tests, web build; 393x852, 360x780, 412x915.
 - **Validation and handoff:** [notes](notes/settings-menus.md).
 
+### DEPLOY-ZOOM — Each wave's deploy zooms in on the placement rows; Auto merge and Auto place are earned
+
+- **Goal:** the owner's asks: "At the beginning of every wave, zoom in on the hero placement box for easy placement." and "Actually, let's have the auto merge unlock after defeating the second army, and auto place unlock after defeating the 4th army."
+- **Status:** done on the branch; ready for review. Not merged.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/deploy-zoom`, `/home/user/deploy-zoom` (from main 0.233.0); PR none.
+- **Allowed files or systems:** new `src/render/deployCam.ts`, `src/sim/featureUnlocks.ts`, `tools/deploy-zoom/`; small hooks in `src/main.ts` (deploy camera, the two buttons' gates, the notice), `src/sim/meta.ts` (`featuresTold`), `src/achievementsView.ts` (`toastLines`), `src/pixel.css` (`#auto[hidden]`), `src/tips.ts`; tests `test/deployCam.test.ts`, `test/featureUnlocks.test.ts`.
+- **Completion criteria:** the deploy eases in on the placement rows at every wave (a cut with reduced motion), the camera stays free, Fight! eases back to the fight framing; Auto merge after army 2 and Auto place after army 4, told once; typecheck, full tests, web build; shots at 393x852, 360x780 and 412x915 with no page errors.
+- **Validation and handoff:** [notes](notes/deploy-zoom.md).
+
 ### MERGE-TWO — Two to merge, merged by the player, an Auto merge button, four ranks
 
 - **Goal:** the owner's ask: "I want the heroes to only need two to merge and upgrade. And I don't want them to auto upgrade so there's more for the player to do. But I want an auto merge button added. Then there will be 4 ranks now. Instead of the three we had before. With the 4th rank being harder to get to." (1+1→2, 2+2→3, 3+3→4; drag to merge, ready heroes marked; Auto merge cascades and stops.)

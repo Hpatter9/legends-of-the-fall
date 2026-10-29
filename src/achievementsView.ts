@@ -85,6 +85,11 @@ export function toastStones(n: number): void {
   toast(`${n} summoning stones for your trouble: crowns now buy chests, and chests hold stones`);
 }
 
+/** Toasts for these lines, one after another (DEPLOY-ZOOM: an earned deploy helper's unlocking). */
+export function toastLines(lines: readonly string[]): void {
+  lines.forEach((line, i) => setTimeout(() => toast(line), i * 2800));
+}
+
 function toast(line: string): void {
   const el = document.createElement('div');
   el.className = 'toast';
