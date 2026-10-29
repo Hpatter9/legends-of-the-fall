@@ -44,7 +44,7 @@ export const MAX_RETRIES = 2;
 /** Hp and attack of a hero at each grade (1 to 4), as a multiple of grade 1 (MERGE-TWO, `docs/notes/merge-two.md`). Two of a kind make the
  *  next grade, so grade g holds 2^(g-1) hires (it was three of a kind and 3^(g-1)): the steps are smaller than the old x1.6 a grade so a run
  *  reaches the strength it did at the same gold, and the last step is the biggest, so rank 4 is a prize. */
-export const GRADE_BOOST: readonly number[] = [1, 1.25, 1.6, 2.4];
+export const GRADE_BOOST: readonly number[] = [1, 1.3, 1.6, 2.4];
 /** The first grade step (grade 2 over grade 1); a merge's step is at least this. */
 export const GRADE_MULT = GRADE_BOOST[1];
 /** Hp and attack multiplier of a grade from merging (`GRADE_BOOST`; past the top it keeps the top's). */

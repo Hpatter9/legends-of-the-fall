@@ -99,13 +99,14 @@
   /* (rank 4, the top: violet, MERGE-TWO) */
   .card.g4 { border-color: var(--p4); box-shadow: 0 0 11px rgb(var(--p4-rgb) / 0.8), inset 0 0 9px rgb(var(--p3-rgb) / 0.45); background: linear-gradient(var(--p1), rgb(var(--black-rgb) / 0.35)); }
   .card.g4 em { color: var(--p4); text-shadow: 0 0 4px rgb(var(--p4-rgb) / 0.9), 0 1px 0 var(--black); letter-spacing: -1px; }
-  /* (a hero with a match ready to merge: a pulsing gold ring and a merge arrow; while one is dragged, its matches light up) */
-  .card.ready { outline: 2px solid var(--e7); outline-offset: 1px; animation: mergeReady 1.4s ease-in-out infinite; }
+  /* (a hero with a match ready to merge: a gold ring and a bobbing merge arrow; while one is dragged, its matches light up) */
+  .card.ready { outline: 2px solid var(--e7); outline-offset: 1px; box-shadow: 0 0 9px rgb(var(--e7-rgb) / 0.8); }
   .card .mergeMark { position: absolute; right: 3px; bottom: 16px; z-index: 1; width: 14px; height: 14px; font: 700 11px/14px var(--body, sans-serif); color: var(--s1); background: var(--e7); border-radius: 50%; box-shadow: 0 0 6px rgb(var(--e7-rgb) / 0.9); }
-  @keyframes mergeReady { 0%, 100% { box-shadow: 0 0 4px rgb(var(--e7-rgb) / 0.5); } 50% { box-shadow: 0 0 12px rgb(var(--e7-rgb) / 0.95); } }
   .card.mergeCan { outline: 2px dashed var(--e8); outline-offset: 1px; }
   .card.mergeHot { outline: 3px solid var(--e8); outline-offset: 1px; transform: scale(1.06); box-shadow: 0 0 14px rgb(var(--e8-rgb) / 0.95); }
-  @media (prefers-reduced-motion: reduce) { .card.ready { animation: none; box-shadow: 0 0 8px rgb(var(--e7-rgb) / 0.8); } }
+  .card .mergeMark { animation: mergeBob 1.2s ease-in-out infinite; }
+  @keyframes mergeBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+  @media (prefers-reduced-motion: reduce) { .card .mergeMark { animation: none; } }
   /* (the Auto merge button: a gold pill just over the bench, at the right of the synergy hint's line, shown while a pair is ready, MERGE-TWO) */
   #panel:has(#mergeAll:not([hidden])) #traitHint { padding-right: 118px; }
   #benchWrap #mergeAll {

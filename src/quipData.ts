@@ -852,7 +852,7 @@ export const AWARD_JOKES: Record<string, string> = {
   stage20: 'Stage twenty! The enemy warband has asked the guild to step in.',
   stage30: 'Thirty stages! The enemy has resorted to hiring casual labourers.',
   yokaiOnly: 'Strictly spirit folk in the ranks. A total coincidence, we assure the church.',
-  threeStar: 'Four identical heroes, merged two by two. It is not witchcraft, merely aggressive recruitment.',
+  threeStar: 'Four heroes, merged two by two. Not witchcraft, merely aggressive recruitment.',
   relics5: 'Your pockets rattle like an ironmonger\'s cart. The heroes beg you to walk quietly.',
   level10: 'Ten levels of hard-won wisdom, and still not a single comfortable chair.',
   level30: 'Thirty levels! The wizard\'s hat has expanded to accommodate his swollen intellect.',

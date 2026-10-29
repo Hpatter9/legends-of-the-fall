@@ -31,7 +31,7 @@ worker's `claude/rank4-skills`: until that merges a rank-4 hero casts its tier-3
 - Between waves (the deploy phase only), drag a bench card or a fielded hero onto a matching card or a matching hero on the board: they
   merge (`mergeTargetAt`, `mergeHeroes`). Tap one, then tap its match, does the same. While dragging, the matching cards are outlined and
   the one under the finger lights up; a match on the board stands on a gold tile (the new `merge` tile mark in `boardView.ts`).
-- Heroes with a match ready: a pulsing gold ring and a ⇧ badge on the bench card, and a gold tile under a fielded one.
+- Heroes with a match ready: a gold ring and a bobbing ⇧ badge on the bench card, and a gold tile under a fielded one.
 - **Auto merge · N**: a gold pill on the bench's top-right edge, shown only while N pairs are ready.
 - A merge plays the old merge moment (`showMerges`): the merged-away hero leaves the board, the target is set down again where it stood at
   its new grade and rises in light (`fx.promote`), the card flashes, the merge chime (a sparkle too for rank 3 or 4).
@@ -43,41 +43,56 @@ worker's `claude/rank4-skills`: until that merges a rank-4 hero casts its tier-3
 ## Balance
 
 Two to merge makes ranks far cheaper (rank 3 is 4 hires, not 9), and the tier skills come with them, so the stat steps were cut:
-**`GRADE_BOOST` = [1, 1.25, 1.6, 2.4]** (hp and attack at grades 1 to 4; it was 1.6 a grade, so 1, 1.6, 2.56). Rank 4 is the biggest step
-(x1.5 over rank 3). The hire prices, lucky chance (5%) and gold are as they were. A long spire climb still came out stronger, so the
-spire's foes grow faster: **`TOWER_GROWTH` 0.17 to 0.19** (the spire only; the Calamity has its own scale).
+**`GRADE_BOOST` = [1, 1.3, 1.6, 2.4]** (hp and attack at grades 1 to 4; it was x1.6 a grade, so 1, 1.6, 2.56). Rank 4 is the biggest step
+(x1.5 over rank 3). The hire prices, the lucky chance (5%) and the gold are as they were. Two answers elsewhere:
+**`TOWER_GROWTH` 0.17 to 0.19** (the spire's foes grow faster; the Calamity has its own scale) and **`DAILY_ANSWER.ult` 0.15 to 0.17**
+(`modes.ts`: a levelled save's daily foes; a fresh save's daily is untouched).
 
-Measured against main 0.218.0 (before) on the same seeds. The tool `tools/merge-two/run.mjs` (new) plays single tries of army cells
-(army:tier:level; the recruits' party with every talent its level opens, gear dressed, the castle a climb has, as `tools/army-pace`) and
-the spire (`spire:none`, `spire:max`); `GB=1,1.25,1.6,2.4` tries other steps.
+Measured against main 0.218.0 (before) on the same seeds, after main 0.221.0's tier 4 skills were merged in. The tool
+`tools/merge-two/run.mjs` (new) plays single tries of army cells (army:tier:level; the recruits' party with every talent its level opens, gear
+dressed, the castle a climb has, as `tools/army-pace`), `early:army:level` (the starting five, no castle, talents or gear, as
+`test/armies.test.ts`) and the spire (`spire:none`, `spire:max`); `GB=1,1.3,1.6,2.4` tries other steps. A cell of 96 tries is about 5
+points of noise.
 
 | Measure | Before | After |
 | --- | --- | --- |
-| First army Normal at level 1: waves won (48 tries) | 10.6 / 15 | 11.0 / 15 |
-| Single-try clears (48): first army Legendary 45, Mythic 55, Mythic 65 | 25%, 13%, 35% | 38%, 6%, 33% |
-| Single-try clears (48): Ogres 45, Infernal 55, Yokai 64, Golems 74 (Normal) | 19%, 19%, 10%, 27% | 15%, 29%, 8%, 23% |
-| First army's 11 stars (`army-pace stars`): Mythic tries, saves with all 11, at 55 / 60 / 65 | 12.8 6/8, 10.0 11/12, 6.0 8/8 | 19.6 3/8, 6.4 12/12, 7.4 8/8 |
-| Normal tries at 55 / 65 (`army-pace normal`, 8 saves): Infernal | 7.0, 1.9 | 2.5, 1.6 |
-| the same: Yokai (share cleared in 25) | 23.1 (25%), 14.5 (75%) | 25.5 (13%), 9.1 (88%) |
-| the same: Golems | 26 (0%), 11.1 (100%) | 22 (25%), 10.0 (88%) |
-| Daily, fresh save with hearts (`npm run daily-rate`, 112 dates) | 76% | 74% |
-| Daily, levelled save at 30 / 50 (`tools/ult-charge` daily, 80 dates) | 65%, 69% | 73%, 71% |
-| Spire, no castle (80 climbs): floors p25/median/p75, mean, first act boss | 12/12/25, 22.2, 30% | 12/12/25, 19.6, 28% |
-| Spire, full castle: the same | 12/25/38, 34.2, 61% | 12/25/51, 35.3, 60% |
-| Fielded grades at the last wave (g1/g2/g3/g4) | 11/86/3/0% | 11/31/54/3% |
-| Tries with a rank-4 hero fielded by wave 10 / at any wave | 0% / 0% | 0-4% / 4-13% |
+| Single-try clears, 96 tries: first army Mythic at 55 / 60 / 65 | 8%, 28%, 30% | 10%, 34%, 39% |
+| the same, Normal: Ogres 45, Infernal 55, Yokai 64, Golems 74 | 19%, 19%, 16%, 28% | 29%, 35%, 20%, 34% |
+| the same, the starting five, no talents: first army at 1, Undead at 20 / 22, Beasts at 20 | 11%, 38% / 42%, 35% | 14%, 30% / 39%, 34% |
+| First army's 11 stars (`army-pace stars`, 12 saves): Mythic tries and saves with all 11 at 55 / 60 / 65 | 15.2 8/12, -, 5.3 12/12 | 16.0 9/12, 6.5 12/12, 7.2 12/12 |
+| Normal tries at 55 / 65 (`army-pace normal`, 8 saves, share cleared in 25): Infernal | 7.0, 1.9 | 2.3, 1.5 |
+| the same: Yokai | 23.1 (25%), 14.5 (75%) | 22.1 (75%), 5.0 (100%) |
+| the same: Golems | 26 (0%), 11.1 (100%) | 25.6 (25%), 7.4 (100%) |
+| Daily, fresh save with hearts (`npm run daily-rate`, 112 dates) | 76% | 77% |
+| Daily, levelled save at 30 / 50 (`tools/ult-charge` daily, 80 dates) | 65%, 69% | 70%, 75% (76%, 78% before the answer moved) |
+| Spire, no castle (80 climbs): floors p25/median/p75, mean, first act boss | 12/12/25, 22.2, 30% | 12/12/25, 22.2, 30% |
+| Spire, full castle: the same | 12/25/38, 34.2, 61% | 12/25/77, 43.3, 61% |
+| Fielded grades at the last wave (g1/g2/g3/g4), the late cells | 11/87/2/0% | 6/44/48/3% |
+| Tries with a rank-4 hero fielded by wave 10 / at any wave | 0% / 0% | 1-3% / 4-11% |
 
-(With `TOWER_GROWTH` left at 0.17 the full-castle spire's median went from 25 to 38 floors and its mean to 48.5.)
+So the army pace holds in its shape: the Infernal Host is cleared before the first army's 11 stars, the Yokai Night Parade and the Golem
+Forge after them (at 55, where 9 saves in 12 have every star, they take 22 and 26 tries; at 65 they take 5 and 7), and the first army's
+stars still come between level 55 and 65. The late armies are a little easier than on main (a few levels sooner: the Yokai at 65 takes 5
+tries, not 14.5), and the Infernal Host at 55 clearly so. The daily is in its 66-75% band (the fresh save was 76% on main already), the
+spire's median and first boss are where they were (a full castle's long climbs go further: at 0.20 the no-castle spire turned too hard, 18%
+first boss). The starting five without talents meet the second army a level or two later. Rank 4 shows up in a good run's last waves and
+hardly ever by wave 10.
 
-So the army pace holds: the Infernal Host is still cleared before the first army's 11 stars, the Yokai and the Golem Forge after them,
-and the first army's stars still come between level 55 and 65 (a little harder at 55, a little easier at 60: within the noise of 8 to 12
-saves). The daily stays in its 66-75% band, the spire's median and first boss are where they were. Rank 4 shows up in a good run's
-last waves and almost never by wave 10.
+Tried and dropped: [1, 1.25, 1.6, 2.4] kept the late armies right but the early ones (no talents) fell 6 to 12 points; [1, 1.35, 1.6, 2.4]
+fixed the early ones but made every late cell 10 to 25 points easier. The early and the late runs answer the grade-2 step very differently
+(the late ones live on the tier skills), so no one curve fits both; [1, 1.3, 1.6, 2.4] is between.
 
-Untouched by construction: **hero parity** (measured at grade 1, `gradeMult(1)` is 1), **the Last Stand** (its heroes are grade 1 and
-never merge; its scenario hash in `test/ailments-identical.test.ts` is the one recorded on main) and **the Calamity** (no merging; its
-hash is unchanged too). The tier-3 skills now come into the armies routinely (rank 3 was 3% of the last wave's heroes, now about half):
-the smaller stat steps pay for them.
+**Rank-4 parity** (the coordinator's note from RANK4-SKILLS: Knight and Beastmaster beyond 6 at level 1, Dread Pirate and Siege Bot at level 30,
+measured at x4.1). With x2.4, `npm run balance -- --heroes-only --hero-grade 4`, two runs of 4,000 teams (level 1 stage 25, average 33%;
+level 30 stage 255, average 49%): level 1 Knight +12.1, Beastmaster +11.2, Karasu +10.7, Gunslinger +8.8, Wolf Bard +8.2, Demon Swordsman
++6.2, Dread Pirate -7.4; level 30 Siege Bot +8.5, Dread Pirate +7.5, Karasu -8.3 (spread 19.5 and 16.8 points). The same heroes stand out at
+x2.4 as at x4.1, and they stood out at tier 3 too, so it is how their kits grow with power, not the size of the rank-4 step; a smaller step
+does not help them. Fixing them is a kit change, outside this branch. Hero parity at grade 1 (levels 1 and 30, the owner's 6 points) is
+untouched: `gradeMult(1)` is 1.
+
+Untouched by construction: **the Last Stand** (its heroes are grade 1 and never merge; its scenario hash in `test/ailments-identical.test.ts`
+is the one recorded on main) and **the Calamity** (no merging; its hash is unchanged too). The tier-3 skills now come into the armies
+routinely (rank 3 was 2% of the last wave's heroes, now about half): the smaller stat steps pay for them.
 
 ## Tests
 
@@ -92,19 +107,23 @@ the smaller stat steps pay for them.
   (summons with Auto merge between), `test/calamity.test.ts` (no merging in a calamity, the tower merges a pair).
 - `test/fixtures/ailment-logs.json`: the `army`, `daily` and `tower` scenario hashes re-recorded (they hire and merge); the other eight
   are main's.
+- `test/armies.test.ts`: the starting five's check on the second army moved from level 20 to 22 (over 96 tries it was 38% at 20 before,
+  and is 35% at 21 and 39% at 22 now: the merge change moved it a level or two). The owner or the director may prefer the old level back
+  with a stronger grade-2 step (x1.35), at the cost of easier late armies (above).
 
 ## Files
 
 `src/sim/merge.ts` (new), `src/sim/run.ts` (`MAX_GRADE`, `GRADE_BOOST`, `gradeMult`, `add`, `hireBlock`, `paidOf`), `src/sim/climb.ts`,
-`src/sim/units.ts` (`formOf`), `src/sim/tower.ts` (`TOWER_GROWTH`), `src/sim/autoplay.ts`, `src/main.ts`, `src/index.html`,
+`src/sim/units.ts` (`formOf`), `src/sim/tower.ts` (`TOWER_GROWTH`), `src/sim/modes.ts` (`DAILY_ANSWER.ult`), `src/sim/autoplay.ts`, `src/main.ts`, `src/index.html`,
 `src/pixel.css`, `src/battleUi.css`, `src/heroBar.ts`, `src/render/boardView.ts`, `src/render/unitView.ts`, `src/render/sheets.ts`,
 `src/render/fx.ts`, `src/render/spectacle.ts`, `src/tips.ts`, `src/quipData.ts`, `tools/autoplay.ts`, `tools/balance.ts`,
 `tools/merge-two/` (`pace.ts`, `run.mjs`, `shots.mjs`), the tests above, `docs/notes/battle-flow.md` and `lucky-summon.md` (a line each),
-the pictures `docs/samples/merge-two-{ready,auto,rank4}-{393x852,360x780,412x915}.png` and `merge-two-{drag,dragged}-393x852.png`.
+the pictures `docs/samples/merge-two-{ready,auto,rank4}-{393x852,360x780,412x915}.png` and `merge-two-{drag,dragged,rank4-close}-393x852.png`.
 
 ## For the owner
 
-- Rank 4's numbers: x2.4 hp and attack against x1.6 at rank 3. If merging should feel stronger step by step, the steps can rise
+- Rank 4's numbers: x2.4 hp and attack against x1.6 at rank 3 (x1.3 at rank 2). If merging should feel stronger step by step, the steps can rise
   together with tougher foes; say if so.
-- The tier-3 skill is now an ordinary sight in the armies (half the last wave's heroes). Rank 4's own skill comes with
-  `claude/rank4-skills`; it was not measured here and adds a little for the few runs that reach rank 4.
+- The tier-3 skill is now an ordinary sight in the armies (half the last wave's heroes). The tier 4 skills (RANK4-SKILLS) were merged in
+  before the measurements above.
+- The late armies come a few levels sooner than on main, the early ones (no talents) a level or two later; say which matters more.

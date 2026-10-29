@@ -75,8 +75,19 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
     g.put(String(p.id), spots[Math.floor(spots.length / 2)]);
     g.refresh();
   });
-  await wait(page, 2600);
+  // (after the promotion's banner and the hero's line have gone)
+  await wait(page, 7000);
   await page.screenshot({ path: `docs/samples/merge-two-rank4-${w}x${h}.png` });
+  if (w === 393) {
+    const box = await page.evaluate(() => {
+      const g = window.__game;
+      const u = g.b.units.find((x) => x.grade === 4);
+      const p = g.sprites.get(u.id).root.getGlobalPosition();
+      const c = g.app.canvas.getBoundingClientRect();
+      return { x: Math.max(0, c.left + p.x - 90), y: Math.max(0, c.top + p.y - 120), width: 180, height: 150 };
+    });
+    await page.screenshot({ path: `docs/samples/merge-two-rank4-close-${w}x${h}.png`, clip: box });
+  }
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
   console.log(`${w}x${h}: after drag ${afterDrag} · button ${btn} · after auto ${afterAuto} · button then ${btn2} · sideways scroll ${overflow} · page errors ${errs.length}`);
   errors += errs.length;
