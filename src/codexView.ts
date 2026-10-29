@@ -7,7 +7,8 @@ import { HERO_KITS, SKILL2_LEVEL } from './sim/heroKits';
 import { codexWaiting, COLLECTIONS, COLLECTION_NAMES, crownsClaimed, crownsTotal, crownsWaiting, FOE_ENTRIES, gotOf, heroKnown, isMet, killsOf, milestoneClaimed, milestoneReached, milestonesOf, progressLine, ENTRY_STONES, entriesWaiting, stonesClaimed, stonesTotal, stonesWaiting, tipsOf, totalOf, whereMet, type Collection, type FoeEntry } from './sim/codex';
 import { FOE_LORE, HERO_STORY } from './sim/codexLore';
 import { ALL_HEROES, UNITS } from './sim/units';
-import { heroName, heroTitle } from './sim/heroNames';
+import { heroName } from './sim/heroNames';
+import { titleLine } from './heroTitleView';
 import { lockInfo } from './sim/contentHeroes';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { TRAITS, traitsOf } from './sim/traits';
@@ -133,7 +134,7 @@ function openHero(root: HTMLElement, m: Meta, kind: string): void {
   closers.push(stop);
   const head = el('div', 'hhead');
   const title = el('div');
-  title.append(el('h3', '', heroTitle(kind)), el('em', '', `${CLASS_NAMES[CLASS_OF[kind]]} · ${def.role}`));
+  title.append(titleLine(kind, 'h3', '', true), el('em', '', `${def.name} · ${CLASS_NAMES[CLASS_OF[kind]]} · ${def.role}`));
   const marks = traitsOf(kind).map((t) => TRAITS[t].name).join(' · ');
   if (marks) title.append(el('span', 'lv', marks));
   head.append(pic, title);

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ARMIES, armyById, armyStars, migrateArmies, recordOf, settleWave, tierOpen, tierStars, waveBoost, firstClearTotal, replayTotal } from '../src/sim/armies';
-import { FIRST_CLEAR_CHEST, chestKind, armyRules, bestChest, chestCrowns, chestSeed, chestsOf, grantChests, openChest, peekChest, rollChest, settleArmyRun } from '../src/sim/armyStars';
+import { FIRST_CLEAR_CHEST, chestKind, armyRules, bestChest, chestCrowns, chestSeed, chestsOf, grantChests, openChest, peekChest, rollChest, settleArmyRun, timeTarget } from '../src/sim/armyStars';
 import { ARMY_STARS, MILESTONES, RUN_STARS, TIERS, tierRange } from '../src/sim/tiers';
 import { CHEST_STONES } from '../src/sim/unlockRules';
 import { ALL_HEROES, UNITS } from '../src/sim/units';
@@ -107,18 +107,15 @@ test('a run earns at most three stars, whatever the tier', () => {
   assert.equal(settleArmyRun(startedMeta(3), run), null);
 });
 
-test('the conditions: clear, no hero lost in the last boss fight, and no heart used', () => {
+test('the conditions: clear, no heart used, and a battle-time target', () => {
   const a = armyById('orcs')!;
-  const earned = (tally: { ms: number; lost: number; bossLost: number }, hearts = 0) => {
-    const run = cleared('orcs', 0, tally);
-    run.retries = hearts;
-    return armyRules(a, 0, run).map((r) => r.earned);
-  };
+  const earned = (tally: { ms: number; lost: number; bossLost: number }, hearts = 0) => armyRules(a, 0, cleared('orcs', 0, tally, hearts)).map((r) => r.earned);
   assert.deepEqual(earned(perfect), [true, true, true]);
-  assert.deepEqual(earned({ ms: 1000, lost: 3, bossLost: 1 }), [true, false, true]);
-  // (a long, slow clear still earns the third star; a heart burned on the way does not)
-  assert.deepEqual(earned({ ms: 99 * 60_000, lost: 0, bossLost: 0 }), [true, true, true]);
-  assert.deepEqual(earned(perfect, 1), [true, true, false]);
+  // (heroes lost in the boss fight no longer cost a star; a heart burned does)
+  assert.deepEqual(earned({ ms: 1000, lost: 3, bossLost: 1 }), [true, true, true]);
+  assert.deepEqual(earned(perfect, 1), [true, false, true]);
+  assert.deepEqual(earned({ ms: timeTarget(a, 0) + 1, lost: 0, bossLost: 0 }), [true, true, false]);
+  assert.ok(timeTarget(a, 2) > timeTarget(a, 0));
   // (a run not yet cleared has none)
   assert.deepEqual(armyRules(a, 0, armyRun(1, 'orcs')).map((r) => r.earned), [false, false, false]);
   assert.equal(armyRules(a, 1).length, 3);
@@ -134,7 +131,7 @@ test('stars are the best ever per tier: a replay adds only the new ones', () => 
   assert.equal(worse.gained, 0);
   assert.equal(tierStars(recordOf(m, 'orcs'), 0), 1);
   // a run that meets only the boss condition merges with the clear star
-  const better = settleArmyRun(m, cleared('orcs', 0, { ms: 1e9, lost: 1, bossLost: 0 }, 1))!;
+  const better = settleArmyRun(m, cleared('orcs', 0, { ms: 1e9, lost: 1, bossLost: 0 }))!;
   assert.equal(better.gained, 1);
   assert.deepEqual(better.fresh, [1]);
   assert.equal(tierStars(recordOf(m, 'orcs'), 0), 2);
@@ -508,7 +505,7 @@ test('the first clear of an army on each tier pays a chest, once: Normal bronze,
   const m = startedMeta(9);
   const sizes: string[] = [];
   TIERS.forEach((_, tier) => {
-    const res = settleArmyRun(m, cleared('orcs', tier, { ms: 1e9, lost: 3, bossLost: 3 }))!;
+    const res = settleArmyRun(m, cleared('orcs', tier, { ms: 1e9, lost: 3, bossLost: 3 }, 1))!;
     assert.equal(res.firstClear, FIRST_CLEAR_CHEST[tier]);
     sizes.push(chestKind(res.firstClear));
     // (clearing it again pays no second one)
