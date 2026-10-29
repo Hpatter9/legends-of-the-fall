@@ -21,7 +21,7 @@ import { playArmy, playCalamity, savedAt } from '../autoplay';
 import { autoDeploy, autoRound } from '../../src/sim/autoplay';
 import { canRetry, finish, isBossRun, retryWave, startStage } from '../../src/sim/run';
 import { fight, playOut } from '../../src/sim/battle';
-import { dailyRun, dailyScale } from '../../src/sim/modes';
+import { DAILY_ANSWER, dailyRun, dailyScale } from '../../src/sim/modes';
 import { dailyTheme } from '../../src/sim/dailyThemes';
 import { ratingOf } from '../../src/sim/stars';
 import { HEROES } from '../../src/sim/units';
@@ -32,6 +32,7 @@ for (const kv of (process.env.ULT ?? '').split(',').filter(Boolean)) {
   (ULT_FILL as Record<string, number>)[k] = Number(v);
 }
 if (process.env.ULT) console.log('meter:', JSON.stringify(ULT_FILL));
+if (process.env.DAILYK) DAILY_ANSWER.ult = Number(process.env.DAILYK);
 
 interface HeroLog { def: string; fulls: number[]; ults: number[]; start: number }
 interface FightLog { t0: number; t1: number; boss: boolean; heroes: Map<number, HeroLog> }
@@ -145,7 +146,9 @@ if (want('daily')) {
   console.log("\nThe daily (the starting five at a level, the foes scaled to the save as `startDaily` does, the day's gold, hearts spent):");
   for (const level of [30, 50]) {
     label = `daily:${level}`;
-    for (let d = 0; d < SAVES * 2; d++) {
+    let clears = 0;
+    const days = SAVES * 2;
+    for (let d = 0; d < days; d++) {
       const meta = startedMeta(d + 1);
       const date = 20260101 + d * 7;
       for (const k of new Set([...meta.unlocked, ...HEROES, ...(dailyTheme(date)?.five ?? [])])) meta.xp[k] = xpFor(level);
@@ -163,7 +166,9 @@ if (want('daily')) {
         }
         finish(run, ok, ratingOf(b, isBossRun(run)).stars);
       }
+      if (run.cleared) clears++;
     }
+    console.log(`daily lv ${level}: cleared ${clears} of ${days} (${Math.round((100 * clears) / days)}%)`);
     flush(`daily lv ${level} waves`, (f) => !f.boss);
     flush(`daily lv ${level} bosses`, (f) => f.boss);
   }

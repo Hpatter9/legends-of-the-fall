@@ -54,6 +54,13 @@ const set = (env: string | undefined, key: 'start' | 'growth') => {
   }
 };
 set(process.env.START, 'start');
+// (TIERK=3:1.5,4:2 scales a tier's hp and attack, or 3:1.5:1.3 each on its own: a tuning run, nothing is written)
+for (const kv of (process.env.TIERK ?? '').split(',').filter(Boolean)) {
+  const [i, hp, atk] = kv.split(':').map(Number);
+  const t = TIERS[i] as { hp: number; atk: number };
+  t.hp *= hp;
+  t.atk *= atk ?? hp;
+}
 // (LIFT=golems:1:1.3,golems:2:1.2 sets an army's `tierLift` for a tier)
 for (const kv of (process.env.LIFT ?? '').split(',').filter(Boolean)) {
   const [id, t, v] = kv.split(':');

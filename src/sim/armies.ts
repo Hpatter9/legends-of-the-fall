@@ -168,11 +168,12 @@ export const ARMIES: readonly Army[] = [
     area: 'temple',
     lands: ['temple', 'ruins'],
     waves: waves(ramp(['mazeMino1', 'mazeMino2', 'mazeGorgon1', 'mazeMino3', 'mazeGorgon2', 'mazeMino1', 'mazeGorgon3', 'mazeMino2'], 13), { 8: ['gorgonQueen', 'mazeMino1', 'mazeMino2', 'mazeGorgon3'], 15: ['minotaurChampion', 'mazeMino1', 'mazeGorgon1', 'mazeMino2', 'mazeGorgon2', 'mazeMino3'] }),
-    start: 3.05, // (was 2.25: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`)
+    start: 4.85, // (was 2.25: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 3.05 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
     xpStart: 2.25,
     tierStart: 1.38,
     growth: 0.05,
     tierGrowth: 0.128,
+    tierLift: [1, 1.6, 2.34, 0.83, 0.98], // (ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
     mid: { hp: 1700, atk: 46 },
     last: { hp: 2420, atk: 61 },
     pay: 2.21,
@@ -186,12 +187,12 @@ export const ARMIES: readonly Army[] = [
     area: 'highlands',
     lands: ['highlands', 'snow'],
     waves: waves(ramp(['clanOgre', 'clanBrute', 'clanBrute', 'clanOgre', 'clanOgre', 'clanBrute', 'clanOgre'], 13), { 8: ['shamanKing', 'clanBrute', 'clanOgre', 'clanBrute'], 15: ['hornedOgre', 'clanOgre', 'clanBrute', 'clanOgre', 'clanBrute', 'clanOgre'] }),
-    start: 4.1, // (was 2.8: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`)
+    start: 9.3, // (was 2.8: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 4.1 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
     xpStart: 2.8,
     tierStart: 1.55,
     growth: 0.05,
     tierGrowth: 0.124,
-    tierLift: [1, 1.45, 1.1, 1, 1],
+    tierLift: [1, 3.18, 2.57, 0.83, 0.92], // (ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
     mid: { hp: 1800, atk: 48 },
     last: { hp: 2200, atk: 48 },
     pay: 3.23,
@@ -205,12 +206,12 @@ export const ARMIES: readonly Army[] = [
     area: 'volcano',
     lands: ['volcano', 'desert'],
     waves: waves(ramp(['hellImp', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon'], 13), { 8: ['devilLeader', 'hellImp', 'hellDemon', 'hellImp'], 15: ['demonLord', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon', 'hellImp'] }),
-    start: 5.67, // (was 3.01: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`)
+    start: 10, // (was 3.01: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 5.67 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
     xpStart: 3.01,
     tierStart: 1.64,
     growth: 0.05,
     tierGrowth: 0.13,
-    tierLift: [1, 1.55, 1.16, 1, 1],
+    tierLift: [1, 2.97, 2.38, 0.76, 0.87], // (ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
     mid: { hp: 2000, atk: 50 },
     last: { hp: 1840, atk: 41 },
     pay: 4.1,
@@ -224,12 +225,12 @@ export const ARMIES: readonly Army[] = [
     area: 'shrine',
     lands: ['shrine', 'forest'],
     waves: waves(ramp(['yokaiFox', 'yokaiCrow', 'yokaiMonk', 'yokaiWitch', 'yokaiSeer', 'yokaiFox', 'yokaiMonk', 'yokaiCrow', 'yokaiWitch'], 13), { 8: ['nineTails', 'yokaiFox', 'yokaiWitch', 'yokaiCrow'], 15: ['oniKing', 'yokaiMonk', 'yokaiWitch', 'yokaiSeer', 'yokaiFox', 'yokaiCrow'] }),
-    start: 7, // (was 3.38: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`)
+    start: 12.5, // (was 3.38: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 7 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
     xpStart: 3.38,
     tierStart: 1.55,
     growth: 0.05,
     tierGrowth: 0.127,
-    tierLift: [1, 2.12, 1.6, 1.25, 1],
+    tierLift: [1, 3.45, 2.76, 0.79, 0.67], // (ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
     mid: { hp: 2200, atk: 52 },
     last: { hp: 2500, atk: 50 },
     pay: 5.11,
@@ -243,12 +244,12 @@ export const ARMIES: readonly Army[] = [
     area: 'forge',
     lands: ['forge', 'crystal'],
     waves: waves(ramp(['stoneGolem', 'ironGolem', 'crystalGolem', 'magmaGolem', 'stoneGolem', 'ironGolem', 'magmaGolem'], 13), { 8: ['sapphireColossus', 'stoneGolem', 'crystalGolem', 'ironGolem'], 15: ['forgeTitan', 'ironGolem', 'magmaGolem', 'crystalGolem', 'stoneGolem', 'magmaGolem'] }),
-    start: 7.1, // (was 3.63: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`)
+    start: 12.7, // (was 3.63: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 7.1 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
     xpStart: 3.63,
     tierStart: 1.7,
     growth: 0.05,
     tierGrowth: 0.124,
-    tierLift: [1, 1.8, 1.34, 1.2, 1],
+    tierLift: [1, 3.3, 2.5, 0.74, 0.73], // (ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
     mid: { hp: 1800, atk: 56 },
     last: { hp: 2040, atk: 55 },
     pay: 6.26,
@@ -284,15 +285,16 @@ export function waveBoost(a: Army, n: number, tier = 0): Stage {
     const def = FOES[w.foes[0]];
     boss = { size: w.boss === 'final' ? 1.5 : 1.3, hp: want.hp / def.hp, atk: want.atk / def.atk, ...(w.boss === 'final' ? { phase: t.phaseAt ?? PHASE_AT, ...(t.surge ? { surge: t.surge } : {}) } : {}) };
   }
-  const lift = tier > 0 ? a.tierLift?.[tier] ?? 1 : 1;
+  const lift = (tier > 0 ? a.tierLift?.[tier] ?? 1 : 1) * (t.answer ?? 1);
   return { foes: { hp: k * t.hp * lift, atk: k * t.atk * lift, ...(t.speed !== 1 ? { speed: t.speed } : {}) }, boss, area: a.area };
 }
 
 /**
  * The share of a fight's XP a run of an army pays on a tier (ARMY-PACE): its foes' added toughness taken back out, so a late army made steeper
- * pays what it did before, and the level pace (`npm run level-pace`) stays where it was. 1 for every army that was not changed.
+ * pays what it did before, and the level pace (`npm run level-pace`) stays where it was; the same for a tier's `answer` to the ultimates (ULT-CHARGE).
+ * 1 for every army that was not changed, on a tier without an answer.
  */
-export const armyXpShare = (a: Army, tier = 0): number => (tier > 0 ? 1 / (a.tierLift?.[tier] ?? 1) : (a.xpStart ?? a.start) / a.start);
+export const armyXpShare = (a: Army, tier = 0): number => (tier > 0 ? 1 / ((a.tierLift?.[tier] ?? 1) * (tierOf(tier).answer ?? 1)) : (a.xpStart ?? a.start) / a.start);
 
 /** The foes of wave n on a tier: the wave's own band, then the tier's escorts, copies of the wave's escorts in turn (a boss is never copied, so a boss with no escorts stays alone). */
 export function waveFoes(a: Army, n: number, tier = 0): readonly string[] {
