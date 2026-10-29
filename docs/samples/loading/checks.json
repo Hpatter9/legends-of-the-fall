@@ -1,0 +1,42 @@
+[
+  {
+    "width": 393,
+    "height": 852,
+    "artWidth": 853,
+    "footerVisible": true,
+    "overflow": false,
+    "animations": 17,
+    "movement": true,
+    "reducedMotion": true,
+    "startup": true,
+    "pageErrors": []
+  },
+  {
+    "width": 360,
+    "height": 780,
+    "artWidth": 853,
+    "footerVisible": true,
+    "overflow": false,
+    "animations": 17,
+    "movement": true,
+    "reducedMotion": true,
+    "startup": true,
+    "pageErrors": []
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "artWidth": 853,
+    "footerVisible": true,
+    "overflow": false,
+    "animations": 17,
+    "movement": true,
+    "reducedMotion": true,
+    "startup": true,
+    "pageErrors": []
+  },
+  {
+    "offlineReload": true,
+    "artEmbeddedInCachedPage": true
+  }
+]

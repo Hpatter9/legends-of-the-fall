@@ -508,7 +508,7 @@ export class StandView {
     if (!this.sky) {
       const sky = document.getElementById('sky');
       this.sky = el('div', 'stSky');
-      this.sky.style.backgroundImage = `linear-gradient(#000a, #0008 40%, #050409 75%), url(${standBackwallUrl})`;
+      this.sky.style.backgroundImage = `linear-gradient(#080b13ed, #080b13e8 40%, #050409 75%), url(${standBackwallUrl})`;
       sky?.after(this.sky);
     }
     this.sky.hidden = !on;
@@ -1045,7 +1045,10 @@ export class StandView {
       while (this.acc >= TICK_MS && guard++ < 4) {
         this.acc -= TICK_MS;
         const events = stepStand(s);
-        for (const e of events) if (e.kind === 'ultLapse') this.heroBar.lapse(e.by);
+        for (const e of events) {
+          if (e.kind === 'ultLapse') this.heroBar.lapse(e.by);
+          else if (e.kind === 'swing' && e.by === s.king.id) this.hall.react('strike');
+        }
         this.fx.show(s.b, events);
         if (bossHit(events, s.b.units)) this.nudge = NUDGE_MS;
         if (s.b.units.length !== this.sprites.size + 1) this.syncSprites();

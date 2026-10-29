@@ -14,6 +14,8 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+**STAND-005 / Room artwork replacement** — Owner: current art chat. Branch: `art/stand-room-depth`, worktree: `/workspace/legends-of-the-fall`. Scope: Last Stand renderer, new generated production artwork, selected-ruler integration, ruler self-defence in `standAi.ts`/`units.ts`, affected tests, art credits, visual tooling and notes. Owner rejected the coarse reused assets and explicitly requested new artwork matching the ornate concept, retaining the central king and combat layout. Completion: new room assets visibly integrated in four rooms, selected castle king reused, stable depth sorting, reduced motion, typecheck/build, affected tests and three portrait sizes. Status: artwork and standing ruler defence complete. The selected ruler stands before a separate rear throne and strikes adjacent foes without chasing. Typecheck/build, eight affected test files, the finishing-blow check, three portrait sizes, reduced motion, the current nine ruler choices and event-driven melee pass. No page errors. PR: [#178](https://github.com/Hpatter9/legends-of-the-fall/pull/178), ready for review; main 0.213.0 integrated, retaining its default King and picker. No release or deployment. Handoff: [room artwork](notes/stand-room-depth.md).
+
 ### STARTER-KING — Two fixed starter packs of simple heroes; the classic king is the default ruler
 
 - **Goal:** the owner's asks: "The 3 starter packs should be reduced to 2 starter packs that are always the same and are simple characters."; "The default king should be the stereotypical man king."; and (added) "The animations for the kings on the throne is weird. The thrones move around too much. Make them stable and give them a simple idle animation."
@@ -355,6 +357,14 @@ UI-007 release 0.189.0 integrated validation passed: typecheck/build; eight affe
 UI-007 integrated STAND-003 main 0.189.0 before merging. Older Last Stand style overrides removed so its new castle-room HUD, pause and end cards remain intact. Release updated to 0.190.0.
 
 UI-007 final 0.190.0 validation complete: current Last Stand Auto, pause/resume, end navigation and reduced motion passed at all three portrait sizes, with zero page errors. Duplicate crest/style overrides removed and edge-arrow paint contained. Typecheck/build and eight matching affected test files passed. PR #154 ready for completion merge.
+
+## LOAD-001 — Illustrated loading screen
+
+- Owner: current Codex chat. Branch: `design/loading-refresh`; worktree: `/workspace/legends-of-the-fall`.
+- Owner approved the generated moonlit keep concept and requested movement and liveliness. Follow-up approved: crowned king centrally surrounded by an archer, paladin and fire wizard in defensive guard poses.
+- Scope: loading artwork, loading-only markup/styles, build embedding, credits and visual evidence. Preserve startup behaviour, saves, gameplay and offline caching.
+- Completion: approved artwork with drifting mist/embers, subtle depth and beacon glow; reduced motion; typecheck/build and three portrait sizes, startup and offline checks.
+- Status: approved king-and-guard artwork applied and validated; owner requested [PR #179](https://github.com/Hpatter9/legends-of-the-fall/pull/179) for Claude. Current main integration is required (GitHub reports merge conflicts). Typecheck/build, all three portrait sizes, moving layers, reduced motion, seeded startup and real service-worker offline reload passed again; zero page errors. Handoff: [loading refresh](notes/loading-refresh.md). Screenshots and results: `docs/samples/loading/`. No merge or deployment performed.
 
 ## SUMMONER-ACTIVE — Animated ceremonial summoner
 
