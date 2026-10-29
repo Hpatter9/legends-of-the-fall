@@ -3,7 +3,8 @@
 // one new twist (a second echo, a ward, a cleanse, a held ring of force). It is all data, `TIER_SKILLS`, read two ways:
 //   - `mods` are talent-style modifiers (`talents.ts` lists the keys: more damage, a longer or wider skill, one more of what it makes,
 //     a shield or a heal when it goes off...). They are merged into the hero's `eq.tal` when it joins the fight (`applyTierMods`), so
-//     every skill reads them the way it reads a talent.
+//     every skill reads them the way it reads a talent. The cast ones (`ON_CAST`: a heal, a shield, haste, charge back) are not: they go off
+//     with the skill the tier skill improves, from `runRiders`, as its words promise (a talent's go off with skill 2 and the ultimate).
 //   - `riders` are extra things that happen when the skill goes off (`runRiders`, called by `began` in abilities.ts): a ring of damage round
 //     the caster, a heal, haste, a ward or charge for its friends, fighters called up, or an echo: the skill goes off again a moment later.
 // A tier 3 entry is the whole of tier 3 (it replaces tier 2's, it does not add to it), and a tier 4 entry the whole of tier 4. Nothing here draws from the fight's main stream.
@@ -45,6 +46,10 @@ export interface TierSkill {
 export const TIER_STRENGTH = 1;
 /** The talent keys whose value is a whole count or a tile count (`extra`, `reach`): not scaled by `TIER_STRENGTH`. */
 const WHOLE = ['extra', 'reach'];
+/** The modifiers that go off when the improved skill is cast (`runRiders`), not merged into the hero's talents: for a hero with a kit, a talent's
+ *  `castHeal`, `castShield` and `castHaste` go off with skill 2 and the ultimate only, and its `refund` with either skill, so a tier skill's
+ *  "he is shielded" or "gives back some charge" would not have come with the skill its words are about. */
+export const ON_CAST = ['castHeal', 'castShield', 'castHaste', 'refund'];
 
 const nova = (reach: number, mult: number, stun?: number): Rider => ({ kind: 'nova', reach, mult, ...(stun ? { stun } : {}) });
 const mend = (reach: number, mult: number): Rider => ({ kind: 'mend', reach, mult });
@@ -78,7 +83,7 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
   archer: [
     t('Double Volley', 'A second, smaller volley follows the first', { extra: 1 }),
     t('Rain of Arrows', 'Two more volleys follow, over a wider patch, and every arrow hits harder', { extra: 2, reach: 1, pow: 0.07 }),
-    t('Sky Darkened', 'The rain of arrows falls over a far wider patch and hits much harder, and the whole of it comes down a second time', { extra: 2, reach: 2, pow: 0.14 }, [echo(1300, 0.55)]),
+    t('Sky Darkened', 'The rain of arrows falls over a far wider patch and hits much harder, and a lighter rain of it comes down a second time', { extra: 2, reach: 2, pow: 0.14 }, [echo(1300, 0.2)]),
   ],
   wizard: [
     t('Twin Meteor', 'A second, smaller meteor follows the first', { extra: 1 }),
@@ -92,8 +97,8 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
   ],
   ninjaMonk: [
     t('Fourth Fist', 'Thousand Fists lands a fourth strike', { extra: 1 }),
-    t('Fifth Fist', 'Two more strikes, a longer stun, and a burst of force round him', { extra: 2, skillStun: 175 }, [nova(1.5, 0.18)]),
-    t('Hundred Fists', 'Five more strikes, each far harder, a long stun, and a great burst of force round him that holds the foes near', { extra: 5, skillStun: 350, pow: 0.35 }, [nova(2, 0.5, 250)]),
+    t('Fifth Fist', 'Two more strikes, a longer stun, and a burst of force round him', { extra: 2, dur: 0.12 }, [nova(1.5, 0.18)]),
+    t('Hundred Fists', 'Five more strikes, each far harder, a long stun, and a great burst of force round him that holds the foes near', { extra: 5, dur: 0.23, pow: 0.35 }, [nova(2, 0.5, 250)]),
   ],
   wanderer: [
     t('Brighter Sanctuary', 'Heals more, and shields him', { pow: 0.105, castShield: 0.028 }),
@@ -126,9 +131,9 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
     t('Alpha\'s Howl', 'Bites far harder and bites again, heals him greatly, and his howl hastens him and the allies near', { pow: 0.38, castHeal: 0.07, castHaste: 1400 }, [mend(0, 0.5), haste(3, 900), echo(700, 0.4)]),
   ],
   minotaur: [
-    t('Heavier Charge', 'Charges a tile further and the foe is stunned longer', { reach: 1, skillStun: 175 }),
+    t('Heavier Charge', 'Charges a tile further and the foe is stunned longer', { reach: 1, dur: 0.12 }),
     t('Rampage', 'Charges two tiles further, and charges again a moment later', { reach: 2 }, [echo(900, 0.45)]),
-    t('Lord of the Labyrinth', 'Charges three tiles further, hits far harder and charges again as hard; he lands with a stamp that holds the foes near', { reach: 3, skillStun: 300, pow: 0.45 }, [echo(900, 1), nova(2, 0.55, 400)]),
+    t('Lord of the Labyrinth', 'Charges three tiles further, hits far harder and charges again as hard; he lands with a stamp that holds the foes near', { reach: 3, dur: 0.2, pow: 0.45 }, [echo(900, 1), nova(2, 0.55, 400)]),
   ],
   satyr: [
     t('Livelier Pipes', 'The pipes last longer and reach a tile further', { dur: 0.14, reach: 1 }),
@@ -167,8 +172,8 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
   ],
   ranger: [
     t('Third Snare', 'Lays a third trap', { extra: 1 }),
-    t('Fourth Snare', 'Lays three more traps, and what they hold is held longer', { extra: 2, dur: 0.175 }),
-    t('Hunter\'s Maze', 'Lays four more traps, what they hold is held far longer, and they bite much harder', { extra: 3, dur: 0.35, pow: 0.18 }),
+    t('Fourth Snare', 'Lays two more traps, and what they hold is held longer', { extra: 2, dur: 0.175 }),
+    t('Hunter\'s Maze', 'Lays three more traps, what they hold is held far longer, and they bite much harder', { extra: 3, dur: 0.35, pow: 0.18 }),
   ],
   warlock: [
     t('Deep Hex', 'The curse burns longer and deeper', { dur: 0.14, pow: 0.07 }),
@@ -221,12 +226,12 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
     t('Lord of the Wild Hunt', 'Two great dire wolves can run beside him with up to three wolves; each call brings a dire wolf beside the wolf', { extra: 2 }, [{ kind: 'summon', unit: 'direWolf', n: 1, cap: 1 }]),
   ],
   kraken: [
-    t('Stronger Undertow', 'The undertow reaches a tile further and slows longer', { reach: 1, skillSlow: 350 }),
+    t('Stronger Undertow', 'The undertow reaches a tile further and slows longer', { reach: 1, dur: 0.175 }),
     t('Maelstrom Tide', 'The undertow reaches two tiles further, hits harder and holds each foe briefly', { reach: 2, pow: 0.105, skillStun: 210 }),
-    t('Abyssal Maw', 'The undertow reaches three tiles further, hits much harder, slows and holds each foe longer', { reach: 3, pow: 0.16, skillStun: 320, skillSlow: 400 }),
+    t('Abyssal Maw', 'The undertow reaches three tiles further, hits much harder, slows and holds each foe longer', { reach: 3, pow: 0.16, skillStun: 320, dur: 0.2 }),
   ],
   lancer: [
-    t('Longer Charge', 'Charges a tile further and the riders are hastened', { reach: 1, castHaste: 700 }),
+    t('Longer Charge', 'Charges a tile further, and he rides faster for longer after it', { reach: 1, castHaste: 700 }),
     t('Knight\'s Charge', 'Charges two tiles further, hits harder, and charges again a moment later', { reach: 2, pow: 0.105 }, [echo(1000, 0.45)]),
     t('Thunder of Hooves', 'Charges three tiles further, hits far harder, charges again, and the riders near him are hastened', { reach: 3, pow: 0.24 }, [echo(1000, 0.65), haste(2, 800)]),
   ],
@@ -241,9 +246,9 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
     t('Eternity', 'The surge lasts far longer, two tiles further; her friends\' skill meters jump by 30, and they are hastened', { dur: 0.4, reach: 2 }, [charge(4, 30), haste(4, 700)]),
   ],
   arcBlade: [
-    t('Live Wire', 'The discharge holds longer and hits harder', { skillStun: 175, pow: 0.07 }),
-    t('Storm Blink', 'The discharge hits much harder and holds well, and he blinks and discharges again a moment later', { pow: 0.14, skillStun: 280 }, [echo(800, 0.45)]),
-    t('Tempest Blade', 'The discharge hits much harder and holds long; he blinks and discharges again, and lightning crackles round him', { pow: 0.15, skillStun: 290 }, [echo(800, 0.45), nova(1.5, 0.12)]),
+    t('Live Wire', 'The discharge holds longer and hits harder', { dur: 0.175, pow: 0.07 }),
+    t('Storm Blink', 'The discharge hits much harder and holds well, and he blinks and discharges again a moment later', { pow: 0.14, dur: 0.28 }, [echo(800, 0.45)]),
+    t('Tempest Blade', 'The discharge hits much harder and holds long; he blinks and discharges again, and lightning crackles round him', { pow: 0.15, dur: 0.29 }, [echo(800, 0.45), nova(1.5, 0.12)]),
   ],
   dreadPirate: [
     t('Double Broadside', 'A second, smaller broadside follows the first', { extra: 1 }),
@@ -266,9 +271,9 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
     t('Wyrmqueen\'s Breath', 'The breath carries three tiles further and hits far harder, and two more breaths follow', { reach: 3, pow: 0.5 }, [echo(900, 0.85), echo(1700, 0.6)]),
   ],
   juggernaut: [
-    t('Heavier Quake', 'The quake reaches a tile further and holds longer', { reach: 1, skillStun: 140 }),
-    t('Titan Quake', 'The quake reaches two tiles further and holds well longer; he is shielded', { reach: 2, skillStun: 280, castShield: 0.052 }),
-    t('Earthshatter', 'The quake reaches three tiles further, hits harder and holds far longer; the ground splits round him, and he and the allies beside him are warded', { reach: 3, skillStun: 500, pow: 0.15, castShield: 0.07 }, [nova(2.5, 0.3, 200), ward(2, 0.03)]),
+    t('Heavier Quake', 'The quake reaches a tile further and holds longer', { reach: 1, dur: 0.12 }),
+    t('Titan Quake', 'The quake reaches two tiles further and holds well longer; he is shielded', { reach: 2, dur: 0.23, castShield: 0.052 }),
+    t('Earthshatter', 'The quake reaches three tiles further, hits harder and holds far longer; the ground splits round him, and he and the allies beside him are warded', { reach: 3, dur: 0.42, pow: 0.15, castShield: 0.07 }, [nova(2.5, 0.3, 200), ward(2, 0.03)]),
   ],
   sage: [
     t('Fourth Star', 'Starfall calls a fourth star', { extra: 1 }),
@@ -283,7 +288,7 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
   tyrant: [
     t('Twin Verdicts', 'A second, smaller judgement follows the first, a tile wider', { extra: 1, reach: 1 }),
     t('Tyrant\'s Decree', 'Two more judgements follow, and a wave of dread bursts round him', { extra: 2, reach: 1 }, [nova(3, 0.21)]),
-    t('The Iron Throne', 'The judgements fall two tiles wider and harder, a wave of dread holds the foes near, and the whole verdict falls again', { extra: 2, reach: 2, pow: 0.12 }, [nova(3, 0.28, 200), echo(1200, 0.45)]),
+    t('The Iron Throne', 'The judgements fall two tiles wider and harder, a wave of dread holds the foes near, and a lighter verdict falls again', { extra: 2, reach: 2, pow: 0.12 }, [nova(3, 0.28, 200), echo(1200, 0.2)]),
   ],
 };
 
@@ -297,7 +302,7 @@ export function applyTierMods(unit: Unit, grade: number): void {
   if (!mods) return;
   const eq: EquipStats = unit.eq ? { ...unit.eq } : { hp: 0, atk: 0, def: 0, atkSpeed: 0, moveSpeed: 0, crit: 0, range: 0, dodge: 0, charge: 0, regen: 0, resist: 0, abilities: [] };
   eq.tal = { ...eq.tal };
-  for (const [k, v] of Object.entries(mods)) eq.tal[k] = (eq.tal[k] ?? 0) + (WHOLE.includes(k) ? v : v * TIER_STRENGTH);
+  for (const [k, v] of Object.entries(mods)) if (!ON_CAST.includes(k)) eq.tal[k] = (eq.tal[k] ?? 0) + (WHOLE.includes(k) ? v : v * TIER_STRENGTH);
   unit.eq = eq;
 }
 
@@ -306,7 +311,7 @@ function removeTierMods(unit: Unit, grade: number): void {
   const mods = tierSkillOf(unit.def, grade)?.mods;
   if (!mods || !unit.eq?.tal) return;
   const eq = { ...unit.eq, tal: { ...unit.eq.tal } };
-  for (const [k, v] of Object.entries(mods)) eq.tal[k] = (eq.tal[k] ?? 0) - (WHOLE.includes(k) ? v : v * TIER_STRENGTH);
+  for (const [k, v] of Object.entries(mods)) if (!ON_CAST.includes(k)) eq.tal[k] = (eq.tal[k] ?? 0) - (WHOLE.includes(k) ? v : v * TIER_STRENGTH);
   unit.eq = eq;
 }
 
@@ -325,10 +330,27 @@ export function promoteUnit(unit: Unit, grade: number, out: BattleEvent[]): bool
   return true;
 }
 
-/** The riders of a hero's tier skill: called when its skill has gone off. `recast` runs the skill again at a share of its strength (the echo). */
+/** The riders of a hero's tier skill: called when its skill (the one the tier skill improves) has gone off. First its cast modifiers (`ON_CAST`:
+ *  a heal of its max hp, a shield of it for 3s, haste, charge back), then the riders. `schedule` runs the skill again at a share of its strength (the echo). */
 export function runRiders(b: Battle, me: Unit, out: BattleEvent[], schedule: (ms: number, share: number) => void): void {
-  const riders = tierSkillOf(me.def, me.grade)?.riders;
-  if (!riders || me.side !== 'hero') return;
+  const skill = tierSkillOf(me.def, me.grade);
+  if (!skill || me.side !== 'hero') return;
+  const m = skill.mods ?? {};
+  if (m.castHeal) mendUnit(me, me.maxHp * m.castHeal * TIER_STRENGTH, out);
+  if (m.castShield) {
+    // (a bigger shield it already has, a lasting one from a boon say, is kept)
+    const hp = Math.round(me.maxHp * m.castShield * TIER_STRENGTH);
+    if (!me.shield || me.shield.until <= b.t || me.shield.hp < hp) me.shield = { hp, until: b.t + 3000 };
+  }
+  if (m.castHaste) {
+    // (on top of any haste it has, the skill's own included: a charge that hastens the rider for 3s hastens it this much longer)
+    me.hasteUntil = Math.max(me.hasteUntil ?? 0, b.t) + m.castHaste;
+    out.push({ kind: 'haste', to: me.id, ms: me.hasteUntil - b.t });
+  }
+  // (charge back, in the old meter's points: a hero with a kit takes it into its pool, `CHARGE_TO_POOL`)
+  if (m.refund) gain(me, m.refund * TIER_STRENGTH, true);
+  const riders = skill.riders;
+  if (!riders) return;
   const allies = () => b.units.filter((a) => a.alive && a.side === me.side && !defOf(a).summon);
   for (const r of riders) {
     if (r.kind === 'nova') {

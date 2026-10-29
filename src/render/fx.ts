@@ -1051,7 +1051,9 @@ export class Fx {
     view.addChild(g);
     this.root.addChild(view);
     const tiles: [number, number][] = [];
-    for (let du = -1; du <= 1; du++) for (let dv = -1; dv <= 1; dv++) if (tileAt(b.board, e.u + du, e.v + dv)) tiles.push(this.tilePos(b, e.u + du, e.v + dv));
+    // (a 3x3, or wider for a tier skill's widened volley or judgement)
+    const r = 1 + (e.r ?? 0);
+    for (let du = -r; du <= r; du++) for (let dv = -r; dv <= r; dv++) if (tileAt(b.board, e.u + du, e.v + dv)) tiles.push(this.tilePos(b, e.u + du, e.v + dv));
     const [cx, cy] = this.tilePos(b, e.u, e.v);
     // volley: a dozen arrows, each falling in its own moment; meteor: one fireball from the sky
     const arrows = meteor
