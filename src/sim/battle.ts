@@ -6,6 +6,8 @@
 //
 // Pure rules: no Pixi, no DOM. The renderer reads the battle and the events each tick returns.
 
+import type { Rift } from './rift';
+import { startRift, tickRift } from './riftBattle';
 import { tickHazards } from './hazards';
 import { BARREL_BLAST, boardOk, CLIMB_COST, COALS_BURN, COALS_STAND, D, DEPLOY_ROWS, DROP_EXTRA, GROUND_COST, LAVA_BURN, LAVA_STAND, makeBoard, SHRINE_HEAL, sightClear, standable, TALL_DODGE, tileAt, type Area, type At, type Board, type HazardKind, type Tile } from './board';
 import { cloneBoard } from './chain';
@@ -268,6 +270,8 @@ export type BattleEvent =
   | { kind: 'end'; won: boolean };
 
 export interface Battle {
+  rift?: Rift;
+  riftBoss?: boolean;
   seed: number;
   board: Board;
   units: Unit[];
@@ -373,6 +377,8 @@ export interface Boost {
 }
 /** Boosts for a fight's foes: all of them by `foes`, and the first one more by `boss` (a boss stage). */
 export interface Stage {
+  rift?: Rift;
+  riftBoss?: boolean;
   foes?: Boost;
   boss?: Boost;
   /** Every hero's boost (the castle's), multiplied into the hero's own; and how fast the king's mana fills. */
@@ -463,6 +469,7 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   if (stage.foes?.speed && stage.foes.speed !== 1) b.foeSpeed = stage.foes.speed;
   if (stage.relics) b.relics = stage.relics;
   if (stage.featured) b.featured = stage.featured;
+  if (stage.rift) { b.rift = { ...stage.rift }; b.riftBoss = stage.riftBoss; }
   if (stage.heal && stage.heal !== 1) b.heroHeal = stage.heal;
   // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed; each takes the
   // higher ground its row offers, and a shooter will take a perch in a row nearer the front for it
@@ -604,6 +611,7 @@ export function fight(b: Battle): boolean {
   startCombo(b);
   startDuoCombos(b);
   startKits(b);
+  startRift(b);
   // (Duchess wanders on as the fight begins, in the rare fight that brings her)
   if (b.duchess) joinDuchess(b);
   return true;
@@ -697,6 +705,7 @@ export function stepBattle(b: Battle): BattleEvent[] {
   b.pending.sort((x, y) => x.at - y.at);
   while (b.pending.length && b.pending[0].at <= b.t) settle(b, b.pending.shift()!, out);
   tickStatus(b, out);
+  tickRift(b, out);
   if (b.groundFx && b.t % 1000 === 0) groundTick(b, out);
   if (b.board.hazards) tickHazards(b, out);
   for (const me of b.units) if (me.alive && me.busyUntil <= b.t) decide(b, me, rng, out);

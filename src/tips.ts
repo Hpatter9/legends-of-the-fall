@@ -30,7 +30,7 @@ export const TIPS: Readonly<Record<TipId, TipDef>> = {
   ult: { text: 'A glowing portrait means its ultimate is ready: tap it to fire. The Auto switch fires them for you.', page: 'game', during: 'fight' },
   summon: { text: 'Spend gold to Hire a hero. Three of the same hero merge into a stronger one.', page: 'game', during: 'deploy' },
   crowns: { text: 'Crowns buy chests in the Recruit tab, and chests hold summoning stones. Each stone gives a hero shard. Army stars open the Castle, the Last Stand and the Calamity.', page: 'home' },
-  calamity: { text: 'Calamity: climb the maps with one hero, and hire more at camps and shops. Each map ends in a boss.', page: 'home' },
+  calamity: { text: 'Calamity: start with one hero, recruit a team and evolve your altar across three regions. Your starter grows stronger.', page: 'home' },
   tower: { text: 'Last Stand: guard your ruler on the keep as wave after wave comes in from every side. It never ends.', page: 'home' },
   talents: { text: 'Spend talent points here to change how this hero fights. Each hero has its own tree.', page: 'any' },
   castle: { text: 'Each build takes real time, and the builders do one at a time. It carries on while the game is closed.', page: 'home' },
@@ -154,6 +154,11 @@ class Tips {
 
   /** Each frame: keep the bubble by its anchor, and show the next waiting tip whose page is up. */
   update(): void {
+    // The run map and its altar cards cover the deploy screen and its tutorial anchors.
+    if (document.body.classList.contains('towerUp')) {
+      if (this.shown) this.dismiss(false);
+      return;
+    }
     this.scan();
     if (this.shown) {
       const box = boxOf(this.shown.anchor);

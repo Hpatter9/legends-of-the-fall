@@ -12,7 +12,7 @@ import { openShop } from './shopView';
 import { dailyBossName } from './sim/daily';
 import { dailyTheme } from './sim/dailyThemes';
 import { dailyLine, dailyStatus, towerOpen } from './sim/modes';
-import { CAL_MAPS } from './sim/calamity';
+
 import { ARMIES, armyById, armyCleared, armyIsNew, armyStars, armyUnlocked, bossOf, clearedCount, markSeen } from './sim/armies';
 import { ACHIEVEMENTS, claimAchievement, unclaimed } from './sim/achievements';
 import { play } from './render/sound';
@@ -401,7 +401,7 @@ export class Home {
     // The distant Calamity citadel carries the saved map or the unlock requirement.
     const going = this.hooks.slotInfo?.('calamity');
     const calUp = modeOpen(m, 'calamity') || !!going;
-    const calLine = going ?? (!calUp ? opensAt(MODE_NEED.calamity) : m.calamity?.best ? `best ${m.calamity.best} of ${CAL_MAPS}` : 'one hero');
+    const calLine = going ?? (!calUp ? opensAt(MODE_NEED.calamity) : m.calamity?.best ? `best ${m.calamity.best} regions` : 'one hero');
     const calamity = place('hmCalamity', calUp ? '' : 'locked', 'The Calamity', calLine, `The distant Calamity citadel: ${calLine}${calUp ? '' : `, ${progressLine(m, MODE_NEED.calamity)}`}`, () => this.go(this.hooks.onCalamity));
     calamity.disabled = !calUp;
     this.camp.calamitySlot.classList.toggle('shut', !calUp);

@@ -8,7 +8,7 @@ import { CAL_BOSSES, CAL_BOSS_TITLES } from '../src/sim/calamityBosses';
 import { KITS } from '../src/sim/abilities';
 import { BOSS_IDS, isBoss } from '../src/sim/foes';
 import { titleOf } from '../src/render/bossTitles';
-import { CAL_MAPS, CAL_ROWS, CAL_SCALE, calBossBoost, fitBand, squadFoeMult } from '../src/sim/calamity';
+import { CAL_SCALE, calBossBoost, fitBand, squadFoeMult } from '../src/sim/calamity';
 import { CALAMITY_XP, CLIMB_XP, climbXpView, fightXpByHero, gainRunXp, heroLevel, hireHero, hireXp, localBoost } from '../src/sim/climb';
 import { levelBoost, RUN_MAX_LEVEL, xpFor } from '../src/sim/levels';
 import { ULT_LEVEL, ultimateOf } from '../src/sim/abilities';
@@ -17,6 +17,7 @@ import { abandonTower, buy, calamityMap, choices, clearNode, enterNode, finishTo
 import { hpShare } from '../src/sim/health';
 import { frontSpots, playCalamity, playTower, starterEnd } from '../tools/autoplay';
 import { HEROES, UNITS } from '../src/sim/units';
+import { RIFT_ROWS, RIFT_BOSSES, chooseAltar, pendingAltar } from '../src/sim/rift';
 import { mixSeed } from '../src/sim/rng';
 import { chooseOption, CREATIVE_KINDS, drawEvent, MYSTERY_KINDS, TOWER_EVENT_KINDS } from '../src/sim/events';
 import { moveRate } from '../src/sim/castle';
@@ -24,6 +25,9 @@ import { makeGear } from '../src/sim/gear';
 import { TWISTS, CHAOS_TWISTS, rollTwist, twistBoard } from '../src/sim/twists';
 import { ascRules } from '../src/sim/ascension';
 import { makeBoard } from '../src/sim/board';
+
+const CAL_MAPS = RIFT_ROWS.length;
+const CAL_ROWS = RIFT_ROWS;
 
 const store = () => {
   const s: Record<string, string> = {};
@@ -186,7 +190,7 @@ test('a calamity starts with one hero at level 1, the squad limit is ten, and th
   assert.equal(squadLimit(run), CALAMITY_SQUAD);
   assert.equal(CALAMITY_SQUAD, 10);
   assert.equal(run.tower!.maps, CAL_MAPS);
-  assert.ok(CAL_MAPS === 6);
+  assert.ok(CAL_MAPS === 3);
   for (const rows of CAL_ROWS) assert.ok(rows >= 6 && rows <= 8, 'six to eight floors a map');
   assert.deepEqual(run.pool, m.unlocked, 'heroes are hired from the collection');
   assert.equal(calamityRun(7, m, 'nobody').roster[0].kind, m.party[0], 'a kind not owned falls back to the party');
@@ -315,6 +319,8 @@ test('a boss\'s fall opens the next map, with its own rows and look, and the las
     assert.equal(Math.max(...t.map.map((n) => n.row)) + 1, CAL_ROWS[act - 1], 'the map has its own length');
     // walk to the boss
     for (;;) {
+      const altar = pendingAltar(run);
+      if (altar) chooseAltar(run, altar === 'patron' ? 'ember' : altar === 'offering' ? 'fury' : 'solitude');
       const [pick] = [...choices(run)].sort((a, b) => Number(b.kind === 'boss') - Number(a.kind === 'boss'));
       enterNode(run, pick.id);
       const kind = t.cur!.kind;
@@ -545,8 +551,8 @@ test('the greedy calamity: the first map can be cleared, and a full clear is har
   assert.ok(map1 > full);
 });
 
-test('six maps, each ending in its own boss, bigger than the last; the later maps add a twist to the boss fight', () => {
-  assert.equal(CAL_MAPS, 6);
+test('three regions, each ending in its own boss, bigger than the last; the later maps add a twist to the boss fight', () => {
+  assert.equal(CAL_MAPS, 3);
   assert.equal(new Set(CAL_BOSSES).size, 6, 'six different bosses');
   for (let k = 2; k <= 6; k++) assert.ok(calBossBoost(k).size > calBossBoost(k - 1).size && calBossBoost(k).hp > calBossBoost(k - 1).hp);
   const run = calamityRun(5, startedMeta(1), 'knight');
@@ -559,9 +565,9 @@ test('six maps, each ending in its own boss, bigger than the last; the later map
     if (act >= 2) assert.ok(boss.twist, `map ${act}'s boss fight has a twist`);
     const spec = fightSpec(run, 'boss', 10 + act, boss.twist, boss.id);
     specs.push(spec.band[0]);
-    assert.equal(spec.band[0], CAL_BOSSES[act - 1]);
+    assert.equal(spec.band[0], CAL_BOSSES[RIFT_BOSSES[act - 1] - 1]);
   }
-  assert.equal(new Set(specs).size, 6);
+  assert.equal(new Set(specs).size, 3);
 });
 
 test('every calamity map has a mini-boss on a floor with other ways round it, a shop and a chest', () => {

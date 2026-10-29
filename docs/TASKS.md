@@ -14,6 +14,14 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### CAL-RIFT — Starter-led altar runs
+
+- **Owner:** current Codex chat. **Branch / worktree:** `feat/calamity-altar-runs`, `/workspace/legends-of-the-fall`.
+- **Scope:** new Calamity runs, tracked starter growth, three altar slots, corruption, combat integration, existing map/picker UI, tests and handoff. Existing saved runs, unrelated modes and artwork preserved.
+- **Completion:** playable solo opening, recruits, three regions, starter evolutions and altar choices with visible consequences; deterministic regression tests, typecheck/build and portrait checks.
+- **Status:** implemented; typecheck/build, Calamity playthrough checks, new rift regression coverage and affected callers passed. Browser checks passed at 393×852, 360×780 and 412×915: opening victory, patron, corruption, offering, commandment and reforge; no page errors or horizontal overflow; offline reload retained choices at every size. Handoff: [starter-led altar runs](notes/calamity-altar-runs.md). No merge or deployment requested.
+
+
 ### KING-ART — Eight player rulers and action animations
 
 - **Owner:** Codex. **Branch / worktree:** `design/king-artwork`, `/workspace/legends-of-the-fall`.

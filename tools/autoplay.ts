@@ -20,6 +20,7 @@ import { UNITS } from '../src/sim/units';
 import { takeRelic } from '../src/sim/elites';
 import { buy, hire, choices, sideChoices, clearNode, enterNode, finishMystery, finishTower, openTreasure, rest, takeXp, train, type MapNode, type NodeKind } from '../src/sim/tower';
 import { calamityRun, dailyBonus, dailyRun, towerRun } from '../src/sim/modes';
+import { chooseAltar, pendingAltar } from '../src/sim/rift';
 import { squadHealth } from '../src/sim/health';
 
 export { strengthOf };
@@ -242,6 +243,8 @@ function playClimb(meta: Meta, run: Run, maxFloors: number): { floors: number; b
   const again = new Set<string>();
   let guard = 0;
   while (!run.over && run.stage <= maxFloors && guard++ < 2000) {
+    const altar = pendingAltar(run);
+    if (altar) chooseAltar(run, altar === 'patron' ? 'bastion' : altar === 'offering' ? 'vitality' : 'together');
     // (the tower's greedy player summons while the gold lasts; a calamity hires instead)
     while (!calamity && summon(run)) {
       // (summons while the gold lasts, but keeps a purse for the shop when a fire is near)

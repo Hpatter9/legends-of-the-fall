@@ -329,7 +329,7 @@ class Game {
         }
         const r = loadSlot(kind);
         if (!r) return null;
-        return kind === 'calamity' ? `Map ${r.tower?.act ?? 1}/${CAL_MAPS} · continue` : `Floor ${r.stage} · continue`;
+        return kind === 'calamity' ? `Map ${r.tower?.act ?? 1}/${r.tower?.maps ?? CAL_MAPS} · continue` : `Floor ${r.stage} · continue`;
       },
       onScene: () => this.syncScene(),
       onWatchScene: (id) => void this.playScene(id),
@@ -1810,7 +1810,7 @@ class Game {
       $('result').hidden = true;
       saveRun(this.run);
       if (this.run.over) {
-        const show = (): void => this.towerView.showSummary(this.run, this.run.tower?.summary ?? settleTower(this.meta, this.run)!, () => this.home.open(`${this.run.mode?.kind === 'calamity' ? (this.run.cleared ? 'The calamity is ended' : 'The calamity ended') : 'The climb ended'} ${this.run.mode?.kind === 'calamity' ? `in map ${Math.min(this.run.tower!.act, CAL_MAPS)}` : `on floor ${this.run.stage}`}: +${this.run.tower!.summary?.crowns ?? this.run.tower!.crowns} crowns earned`));
+        const show = (): void => this.towerView.showSummary(this.run, this.run.tower?.summary ?? settleTower(this.meta, this.run)!, () => this.home.open(`${this.run.mode?.kind === 'calamity' ? (this.run.cleared ? 'The calamity is ended' : 'The calamity ended') : 'The climb ended'} ${this.run.mode?.kind === 'calamity' ? `in map ${Math.min(this.run.tower!.act, this.run.tower!.maps ?? CAL_MAPS)}` : `on floor ${this.run.stage}`}: +${this.run.tower!.summary?.crowns ?? this.run.tower!.crowns} crowns earned`));
         // (a Calamity cleared whole has its ending cinematic first, then the victory card)
         if (this.run.cleared && this.run.mode?.kind === 'calamity') void this.queueScene({ kind: 'calVictory' }).then(show);
         else show();
@@ -2144,7 +2144,7 @@ class Game {
   private recycleDropped(id: string): void {
     const h = heroOf(this.run, Number(id));
     const card = $('bench').querySelector<HTMLElement>(`[data-id="${id}"]`);
-    if (!h || !card || this.run.roster.length <= 1) return;
+    if (!h || !card || this.run.roster.length <= 1 || this.run.rift?.starter === h.id) return;
     if (h.grade < 2) return this.recycleHero(h.id, card);
     const value = recycleValue(this.run);
     $('askText').textContent = `Recycle the ${'★'.repeat(h.grade)} ${UNITS[h.kind].name} for ${value} gold?`;
@@ -2223,6 +2223,7 @@ class Game {
         marks.append(m);
       }
       const lv = levelBadge(this.levelOf(h));
+      if (this.run.rift?.starter === h.id) lv.append(document.createTextNode(' · Starter'));
       const sell = document.createElement('button');
       sell.className = 'recycle';
       const value = recycleValue(this.run);
@@ -2251,7 +2252,7 @@ class Game {
       pw.textContent = `Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;
       card.append(portrait(formOf(def, h.grade), 96, h.grade), stars, name, lv, pw, marks, bar);
       // (the last hero cannot be recycled)
-      if (this.run.roster.length > 1) card.append(sell);
+      if (this.run.roster.length > 1 && this.run.rift?.starter !== h.id) card.append(sell);
       card.title = `${def.role} · Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;
       card.addEventListener('pointerdown', (e) => {
         if (this.b.phase !== 'deploy') return;
