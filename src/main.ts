@@ -44,6 +44,7 @@ import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
 import { autoDeploy, autoRound, gearCount, pickSquad } from './sim/autoplay';
 import { afterFight, maxSpeed, spendTicket, startAuto, stopAuto, type AutoReplay } from './sim/autoReplay';
 import { Gacha } from './gacha';
+import { queueReveal } from './summonTarot';
 import { Events } from './events';
 import { TowerView } from './towerView';
 import { StandView } from './standView';
@@ -282,8 +283,6 @@ class Game {
       this.refresh();
       this.home.refresh();
     },
-    // (a pull from the card reveal runs the hall's show again, like one from the hall)
-    (n) => this.home.summon(n),
     );
     this.home = new Home(this.meta, {
       hasRun: () => {
@@ -578,7 +577,11 @@ class Game {
   /** The heroes earned in play since the last result was closed: each has its reveal, once, before the game goes on. */
   private earned: string[] = [];
   private async revealEarned(): Promise<void> {
-    for (const kind of this.earned.splice(0)) await this.playDue({ kind: 'earned', hero: kind });
+    for (const kind of this.earned.splice(0)) {
+      await this.playDue({ kind: 'earned', hero: kind });
+      // (then its first-time reveal, as every hero has the first time it is seen)
+      await queueReveal(this.meta, kind);
+    }
   }
 
   /** Show a weather on this board whatever the fight rolled (for previews and the screenshots: `__game.previewWeather('rain')`). */
