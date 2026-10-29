@@ -390,3 +390,7 @@ The Grand Scenario prototype reuses the already credited camp gate and Knights w
 
 - `src/art/calmap-overland/valley.png`: original hand-painted dark-fantasy landscape generated with OpenAI image generation for the owner's request to completely replace the floating-island Calamity map. A continuous valley of forests, roads, rivers and ruins leads towards a corrupted citadel.
 - `src/art/calmap-overland/landmarks.png`: original transparent atlas generated for the same replacement map: battle outpost, elite stronghold, recruit lodge, camp, merchant wagon, treasure ruins, altar shrine, mystery ruin and guardian citadel. `manifest.json` records display frames; `provenance.json` identifies the retained original generation files. The PNGs are unmodified. These assets currently appear in the separate map proposal; production integration is pending visual review.
+
+## Calamity dungeon-floor encounter symbols
+
+- `src/art/calmap-dungeon/encounters.png`: original fantasy encounter symbols generated with OpenAI image generation for the owner's research-led Great Rift map revision. Nine motifs represent battle, elite, recruit, rest, merchant, treasure, altar, mystery and guardian rooms. The PNG is unchanged; `manifest.json` supplies rendering rectangles and `provenance.json` records the retained original. The prototype reuses the game's previously credited floor/wall textures, torch strip and starter sprite. No King God Castle artwork was copied into the project.

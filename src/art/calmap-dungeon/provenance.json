@@ -1,0 +1,8 @@
+{
+  "tool": "OpenAI image generation",
+  "request": "Original encounter symbols for a dungeon-floor Calamity map inspired by Great Rift exploration",
+  "original": "/workspace/generated_images/exec-76843a12-06ac-42a4-be7c-7127b9dafbed.png",
+  "copy": "encounters.png",
+  "originalRetained": true,
+  "pixelEditing": false
+}

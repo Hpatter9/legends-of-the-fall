@@ -14,6 +14,15 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### CAL-MAP-RIFT — Research-led dungeon floor
+
+- **Owner:** current Codex chat. **Branch / worktree:** `design/calamity-dungeon-floor`, `/workspace/legends-of-the-fall`.
+- **Goal:** research King God Castle Great Rift and retry the map around its exploration flow.
+- **Scope:** sourced design notes, original encounter symbols and an interactive room/corridor prototype with starter movement, directional controls, revisiting and clear room types. Preserve ornate styling and three-region Calamity rules.
+- **Completion:** research cited, new example rendered at all three phone sizes, movement/selection/revisit checks, saved handoff for visual review before live integration.
+- **Status:** research documented and cited; original encounter-symbol atlas and interactive chamber/corridor prototype completed. Browser checks passed at 393×852, 360×780 and 412×915 for movement, revisiting, keyboard, tap entry, unreached-room blocking, 44px arrow targets and no errors/overflow. Typecheck/build passed. Ready for visual review; production integration pending. [Handoff](notes/calamity-dungeon-floor.md); [revised example](samples/calamity-dungeon/proposal-393.png). Supersedes the scenic overworld proposal as the active direction.
+
+
 ### CAL-MAP-NEW — Replace the Calamity map
 
 - **Owner:** current Codex chat. **Branch / worktree:** `design/calamity-overland`, `/workspace/legends-of-the-fall`.
