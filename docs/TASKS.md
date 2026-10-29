@@ -36,6 +36,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Completion criteria:** effects over a fighter thinned by named constants (`OVER_FIGHTER_ALPHA` 0.6, `OVER_FIGHTER_STATUS_ALPHA` 0.7) and still visible, ground and back layers unchanged, no blinking, reduced motion kept; pip 2 reads "2" and is greyed while locked; typecheck, affected and full tests, web build; 393x852, 360x780, 412x915.
 - **Validation and handoff:** [notes](notes/fx-clear.md).
 
+### WAVE-RECAP-2 — The short card for the spire and the Calamity; their detail in their summaries
+
+- **Goal:** the owner's answer: "Yeah, give them the same treatment" (the short, see-through card between spire floors and Calamity fights, the detail moved to their end summaries).
+- **Status:** done on the branch; not merged.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/wave-recap-2`, `/home/user/wave-recap-2` (from main 0.223.0); PR none.
+- **Allowed files or systems:** `src/sim/runRecap.ts` (`recapSince`, `closeMapLeg`), `src/sim/tower.ts` (optional `MapRecap.detail`, `TowerState.recapAt`), `src/sim/waveCard.ts` (`towerHeadline`), `src/recapView.ts` (`recapDetail`), `src/towerView.ts` (summaries, victory, map recap), small hooks in `src/main.ts` (settle, `passOn`; the old per-fight table and XP cards removed), `src/battleReports.css`; `test/wave-recap.test.ts`; `tools/wave-recap/` (saves, tower shots); `docs/notes/wave-recap-2.md`.
+- **Completion criteria:** every spire floor and Calamity fight shows the short card (see-through, leaving by itself after a win); their summaries, the Calamity's victory and map recaps carry the per-hero detail and a fight-by-fight strip; typecheck, affected and full tests, web build; three portrait sizes in Chromium.
+- **Validation and handoff:** [notes](notes/wave-recap-2.md).
+
 ### WAVE-RECAP — A short, see-through card between waves; the detail kept for the end recap
 
 - **Goal:** the owner's asks: "Let's do a shorter recap of a wave and keep most of the info for the end of the battle" and "Make the between wave recap see through and have it show while the units travel to the next wave".

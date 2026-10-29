@@ -3,7 +3,7 @@
 // each hero's XP) waits for the end of the battle's full recap (`recapView.ts`, from `run.recap`). Pure rules: no Pixi, no DOM.
 
 import { ULT_LEVEL } from './abilities';
-import { UNITS } from './units';
+import { heroName } from './heroNames';
 
 /** What a wave left worth saying, gathered when it is settled. */
 export interface WaveMoments {
@@ -24,7 +24,7 @@ export interface WaveNote {
   text: string;
 }
 
-const nameOf = (k: string) => UNITS[k]?.name ?? k;
+const nameOf = (k: string) => heroName(k);
 
 /** Names, with a count for a kind named more than once ("Archer ×2"). */
 function names(kinds: readonly string[]): string {
@@ -51,4 +51,12 @@ export function waveNotes(m: WaveMoments): WaveNote[] {
   if (m.fell.length) out.push({ kind: 'fell', text: `Fell: ${names(m.fell)}` });
   if (m.hearts > 0) out.push({ kind: 'heart', text: `${m.hearts > 1 ? `${m.hearts} hearts` : 'A heart'} burned · ${m.heartsLeft} left` });
   return out;
+}
+
+/** The heading of a spire floor's or a Calamity fight's short card (WAVE-RECAP-2): "Floor 12 cleared", "Act 2 cleared!", "Spot cleared",
+ *  "Map 3 cleared!", or the fall ("Fell on floor 12", "The party falls"). `act` is the act or map whose boss has just fallen. */
+export function towerHeadline(kind: 'spire' | 'calamity', floor: number, won: boolean, act?: number): string {
+  if (!won) return kind === 'spire' ? `Fell on floor ${floor}` : 'The party falls';
+  if (act !== undefined) return `${kind === 'spire' ? 'Act' : 'Map'} ${act} cleared!`;
+  return kind === 'spire' ? `Floor ${floor} cleared` : 'Spot cleared';
 }

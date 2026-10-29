@@ -355,10 +355,20 @@ export const ARMY_NEED: readonly number[] = ARMIES.map((_, i) => 2 * i);
 export const armyNeed = (id: string): number => ARMY_NEED[Math.max(0, armyIndex(id))];
 /** Every star won over all the armies. */
 export const totalStars = (m: Meta): number => ARMIES.reduce((n, a) => n + armyStars(m, a).got, 0);
-/** An army is open when the stars won so far reach its number, or a save already had it open (`Meta.opened`, set once for a save from before the stars). */
+/** The army before this one, which must be beaten (its Normal tier cleared) before this one opens; none for the first. */
+export const armyBefore = (id: string): Army | null => {
+  const i = armyIndex(id);
+  return i > 0 ? ARMIES[i - 1] : null;
+};
+/** An army is open when the army before it has been beaten and the stars won so far reach its number, or a save already had it
+ *  open (`Meta.opened`, set once for a save from before the stars). Stars alone never skip an army: the owner's rule, so a player
+ *  cannot farm the first army's tiers past an unbeaten one. */
 export function armyUnlocked(m: Meta, id: string): boolean {
   const i = armyIndex(id);
-  return i === 0 || (i > 0 && (totalStars(m) >= ARMY_NEED[i] || !!m.opened?.includes(id)));
+  if (i === 0) return true;
+  if (i < 0) return false;
+  if (m.opened?.includes(id)) return true;
+  return armyCleared(m, ARMIES[i - 1].id) && totalStars(m) >= ARMY_NEED[i];
 }
 /** The armies beaten so far. */
 export const clearedCount = (m: Meta): number => ARMIES.filter((a) => armyCleared(m, a.id)).length;

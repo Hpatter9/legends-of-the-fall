@@ -91,14 +91,42 @@ export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, o
   if (hearts) grid.append(fig('Hearts burned', String(hearts)));
   sheet.append(grid);
 
+  // wave by wave, the company, XP and levels, and the spoils (`recapDetail`)
+  sheet.append(...recapDetail(recap, { strip: 'Wave by wave', prefix: 'W' }));
+
+  const done = el('div', 'rcFoot');
+  const ok = el('button', 'primary', 'Continue');
+  ok.addEventListener('click', () => {
+    close();
+    onClose();
+  });
+  done.append(ok);
+  root.append(sheet, done);
+  root.hidden = false;
+  root.scrollTop = 0;
+}
+
+/** How the detail's fight-by-fight strip is headed, and what marks each fight's number ("W4" a wave, "F12" a floor, "#7" a fight). */
+export interface DetailOpts {
+  strip: string;
+  prefix: string;
+  /** Leave out the spoils (a screen that lists its own finds). */
+  noSpoils?: boolean;
+}
+
+/** The detail of a recap, as a list of parts to lay out in order (WAVE-RECAP-2: the run's recap here, and the spire's and the
+ *  Calamity's summaries and map recaps): each fight's stars, time and MVP; each hero's damage, healing and kills, with the MVP; the XP
+ *  and levels gained; and the spoils found. A part with nothing to show is left out. */
+export function recapDetail(recap: RunRecap, opts: DetailOpts): HTMLElement[] {
+  const out: HTMLElement[] = [];
   // wave by wave (WAVE-RECAP): each wave's stars, time and MVP, which the short card after each wave left for here
   const waves = recap.waves ?? [];
   if (waves.length) {
-    sheet.append(el('h3', '', 'Wave by wave'));
+    out.push(el('h3', '', opts.strip));
     const strip = el('div', 'rcWaves');
     for (const w of waves) {
       const chip = el('div', `rcWave${w.won ? '' : ' lost'}`);
-      chip.append(el('b', '', `W${w.wave}`), el('span', 'rcWaveStars', w.won ? '★'.repeat(w.stars) + '☆'.repeat(Math.max(0, MAX_STARS - w.stars)) : 'Lost'), el('small', '', clock(w.ms)));
+      chip.append(el('b', '', `${opts.prefix}${w.wave}`), el('span', 'rcWaveStars', w.won ? '★'.repeat(w.stars) + '☆'.repeat(Math.max(0, MAX_STARS - w.stars)) : 'Lost'), el('small', '', clock(w.ms)));
       const mvpDef = w.mvp ? UNITS[w.mvp] : undefined;
       if (mvpDef) {
         const face = el('i', 'rcWaveMvp');
@@ -109,7 +137,7 @@ export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, o
       if (w.hearts) chip.append(el('em', '', '♥'.repeat(Math.min(3, w.hearts))));
       strip.append(chip);
     }
-    sheet.append(strip);
+    out.push(strip);
   }
 
   // the heroes: one row a kind, strongest first
@@ -118,7 +146,7 @@ export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, o
   const work = (k: string) => recap.heroes[k].dealt + recap.heroes[k].healed + recap.heroes[k].taken / 2;
   kinds.sort((a, b) => work(b) - work(a));
   if (kinds.length) {
-    sheet.append(el('h3', '', 'Company performance'));
+    out.push(el('h3', '', 'Company performance'));
     const list = el('div', 'rcHeroes');
     const top = (key: 'dealt' | 'healed' | 'kills') => Math.max(1, ...kinds.map((k) => recap.heroes[k][key]));
     kinds.forEach((k, i) => {
@@ -144,13 +172,13 @@ export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, o
       row.append(face, name, bars);
       list.append(row);
     });
-    sheet.append(list);
+    out.push(list);
   }
 
   // XP and levels
   const xpKinds = Object.keys(recap.xp).filter((k) => UNITS[k] && recap.xp[k] > 0);
   if (xpKinds.length) {
-    sheet.append(el('h3', '', 'Experience earned'));
+    out.push(el('h3', '', 'Experience earned'));
     const list = el('div', 'rcXp');
     for (const k of xpKinds) {
       const row = el('div', 'rcXpRow');
@@ -158,25 +186,15 @@ export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, o
       row.append(el('b', '', heroName(k)), el('em', '', `+${num(recap.xp[k])} XP`), el('span', lv ? 'up' : '', lv ? `Lv ${lv[0]} → ${lv[1]}` : ''));
       list.append(row);
     }
-    sheet.append(list);
+    out.push(list);
   }
 
   // what the battle found (WAVE-RECAP: the gear and prizes each wave's card named, all together)
-  if (recap.found?.length) {
-    sheet.append(el('h3', '', 'Spoils found'));
+  if (recap.found?.length && !opts.noSpoils) {
+    out.push(el('h3', '', 'Spoils found'));
     const list = el('div', 'rcFound');
     for (const f of recap.found) list.append(el('p', '', f));
-    sheet.append(list);
+    out.push(list);
   }
-
-  const done = el('div', 'rcFoot');
-  const ok = el('button', 'primary', 'Continue');
-  ok.addEventListener('click', () => {
-    close();
-    onClose();
-  });
-  done.append(ok);
-  root.append(sheet, done);
-  root.hidden = false;
-  root.scrollTop = 0;
+  return out;
 }
