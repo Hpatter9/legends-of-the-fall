@@ -54,7 +54,7 @@
 ### The page (`src/heroBar.ts`, `src/main.ts`, `src/standView.ts`, `src/battleUi.css`, `src/render/`)
 
 - **The hero bar** replaces the bench in a fight: a tile a hero (portrait in the ultimate's ring, violet filling, gold when ready;
-  health; the pool, blue mana or gold stamina; pips 1 and 2, lit when the skill can be paid for, "10" while skill 2 is locked; the
+  health; the pool, blue mana or gold stamina; pips 1 and 2, lit when the skill can be paid for, pip 2 greyed out while skill 2 is locked (it read "10" until FX-CLEAR); the
   name), "TAP" on a ready tile and "Lv 30" on a locked one, a turning ring while an order waits, a shake when it lapses, greyed
   when fallen; the **Auto** switch is the last tile. The king's spell cards are half as tall. Six to ten heroes (the Last Stand's
   eight, a Calamity's ten) take two rows. Text is 12 px and never bold. The ready glow is steady and the ring breathes (scale only:
@@ -635,7 +635,7 @@ See the mock-up. In the fight, the panel's bottom row (today five 32x35 bench ch
 
 - five tiles (60x98 at 393 wide), one a hero, in the party's order; each with the **portrait** inside a round
   **ultimate meter** (a violet ring filling clockwise), the hero's **health** (thin green), its **pool** (blue for mana,
-  gold for stamina, 7 px), and two **skill pips** (lit when that skill can be paid for; "10" while skill 2 is locked);
+  gold for stamina, 7 px), and two **skill pips** (lit when that skill can be paid for; pip 2 greyed out while skill 2 is locked (it read "10" until FX-CLEAR));
 - **ready**: the ring turns gold, the tile glows and a "TAP" plate shows; a tap queues the ultimate (the ring spins
   while it waits); a lapse shakes the tile once. Below level 30 the ring is dark and a "Lv 30" plate sits on the portrait;
 - a fallen hero's tile greys out (a heart revive lights it again);
