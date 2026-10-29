@@ -8,6 +8,7 @@
 
 import { destinationBoard, destinationWorld, expeditionOf, growExpeditionStarter, sanctuaryMap, type RiftWorld } from './sanctuary';
 import { growStarter, pendingAltar, RIFT_BOSSES } from './rift';
+import type { RunRecap } from './runRecap';
 import type { Battle, Boost, Stage } from './battle';
 import { CLASSIC_AREAS } from './board';
 import { spireArea } from './lands';
@@ -40,8 +41,8 @@ export const ACT_ROWS = 13;
 export const LANES = 5;
 /** Paths walked up from the first floor to make a map. */
 export const PATHS = 4;
-/** Foes' hp and attack grow by this share of their first-floor strength for each floor climbed, the acts running on. */
-export const TOWER_GROWTH = 0.17;
+/** Foes' hp and attack grow by this share of their first-floor strength for each floor climbed, the acts running on (0.17 until MERGE-TWO: two to merge made a long climb's heroes stronger, `docs/notes/merge-two.md`). */
+export const TOWER_GROWTH = 0.19;
 /** An elite's foes are this much stronger than a plain fight's, and its leader is a mini-boss. */
 export const ELITE_MULT = 1.22;
 /** An elite pays this much more than a fight. */
@@ -176,6 +177,8 @@ export interface MapRecap {
   events: string[];
   /** The rift ores its boss and mini-bosses dropped (`awakenMats.ts`; none on a recap from before them). */
   ores?: OreDrop[];
+  /** The map's share of the run's recap (WAVE-RECAP-2): each hero's damage, healing and kills, XP and levels, and its fights one by one (`closeMapLeg`; none on a recap from before). */
+  detail?: RunRecap;
 }
 
 export interface TowerState {
@@ -207,6 +210,8 @@ export interface TowerState {
   recaps?: MapRecap[];
   /** The rift ores a calamity's bosses and mini-bosses have dropped so far (`awakenMats.ts`): paid into the meta when the run ends, a loss too. */
   ores?: OreDrop[];
+  /** The run's recap as it stood when the calamity's map in play began (`closeMapLeg`; none for the first map, or a save from before). */
+  recapAt?: RunRecap;
   /** The map just cleared, whose recap the page shows once (and then clears). */
   mapDone?: MapRecap;
   /** The relics an elite offers, until one is taken (`takeRelic` in `elites.ts`). */

@@ -32,7 +32,30 @@ export interface RunRecap {
   levels: Record<string, [number, number]>;
   crowns: number;
   chests: number;
+  /** Each wave fought, in order (WAVE-RECAP: the short card after a wave leaves its detail to the end; optional, older saves have none). */
+  waves?: WaveRow[];
+  /** The gear and prizes the run picked up, by name (the wave's `run.found`, kept for the end; optional). */
+  found?: string[];
 }
+
+/** One wave's line in the end recap's wave-by-wave strip. */
+export interface WaveRow {
+  /** The wave (stage) it was. */
+  wave: number;
+  won: boolean;
+  /** Stars it earned (none for a loss). */
+  stars: number;
+  /** Its fight time, in ms. */
+  ms: number;
+  /** The hero kind that did the most in it, if anyone did anything. */
+  mvp?: string;
+  /** Hearts burned to win it (a fall a heart revived). */
+  hearts?: number;
+}
+
+/** The most wave rows and finds a recap keeps (a long climb would grow the save without end). */
+export const RECAP_WAVES = 60;
+export const RECAP_FOUND = 40;
 
 export const newRecap = (): RunRecap => ({ fights: 0, cleared: 0, ms: 0, earned: 0, spent: 0, heroes: {}, xp: {}, levels: {}, crowns: 0, chests: 0 });
 export const recapOf = (run: Run): RunRecap => (run.recap ??= newRecap());
@@ -70,8 +93,64 @@ export function notePayout(run: Run, xp: Record<string, number>, ups: readonly {
   r.chests += chests;
 }
 
+/** Add a finished wave's line (its stars, time, MVP, hearts) and anything it found, for the end recap. */
+export function noteWave(run: Run, row: WaveRow, found: readonly string[] = []): void {
+  const r = recapOf(run);
+  const rows = (r.waves ??= []);
+  rows.push(row);
+  if (rows.length > RECAP_WAVES) rows.splice(0, rows.length - RECAP_WAVES);
+  if (found.length) {
+    const got = (r.found ??= []);
+    got.push(...found);
+    if (got.length > RECAP_FOUND) got.splice(0, got.length - RECAP_FOUND);
+  }
+}
+
+/** Hearts burned over the run (from the wave rows). */
+export const heartsBurned = (r: RunRecap): number => (r.waves ?? []).reduce((n, w) => n + (w.hearts ?? 0), 0);
+
 /** The kind that did the most over the run (by `fightStats`' own measure), or null when nobody did anything. */
 export function mvpKind(r: RunRecap): string | null {
   const rows: HeroStat[] = Object.entries(r.heroes).map(([kind, t], id) => ({ id, kind, dealt: t.dealt, taken: t.taken, healed: t.healed, kills: t.kills }));
   return mvpOf(rows)?.kind ?? null;
+}
+
+/** What a recap gained since an earlier copy of it (`then`; none for the whole of it): the figures, XP and crowns added, each
+ *  kind's level over the stretch (from where `then` left it), and the waves fought since. Pure: neither recap is changed. */
+export function recapSince(now: RunRecap, then?: RunRecap): RunRecap {
+  const out = newRecap();
+  const was = then ?? newRecap();
+  for (const k of ['fights', 'cleared', 'ms', 'earned', 'spent', 'crowns', 'chests'] as const) out[k] = Math.max(0, now[k] - was[k]);
+  for (const [kind, t] of Object.entries(now.heroes)) {
+    const b = was.heroes[kind];
+    const d = { dealt: t.dealt - (b?.dealt ?? 0), taken: t.taken - (b?.taken ?? 0), healed: t.healed - (b?.healed ?? 0), kills: t.kills - (b?.kills ?? 0), grade: t.grade };
+    if (d.dealt > 0 || d.taken > 0 || d.healed > 0 || d.kills > 0) out.heroes[kind] = d;
+  }
+  for (const [kind, n] of Object.entries(now.xp)) if (n - (was.xp[kind] ?? 0) > 0) out.xp[kind] = n - (was.xp[kind] ?? 0);
+  for (const [kind, [from, to]] of Object.entries(now.levels)) {
+    const start = was.levels[kind]?.[1] ?? from;
+    if (to > start) out.levels[kind] = [start, to];
+  }
+  // (the waves fought since: as many of the latest rows as fights were added, the cap allowing)
+  const rows = now.waves ?? [];
+  const n = Math.min(rows.length, out.fights);
+  if (n) out.waves = rows.slice(rows.length - n);
+  return out;
+}
+
+/** A calamity's map has just been cleared (`mapDone`, set as its boss fell): once its last fight is in the run's recap, its share
+ *  goes onto the map's recap (and its copy in `recaps`), and the next map counts from here. Nothing for any other run, or twice. */
+export function closeMapLeg(run: Run): void {
+  const t = run.tower;
+  const done = t?.mapDone;
+  if (!t || !done || done.detail) return;
+  const now = recapOf(run);
+  const detail = recapSince(now, t.recapAt);
+  done.detail = detail;
+  const kept = t.recaps?.at(-1);
+  if (kept && kept !== done && kept.map === done.map) kept.detail = detail;
+  t.recapAt = JSON.parse(JSON.stringify(now)) as RunRecap;
+  // (the copy needs no wave lines or finds: `recapSince` counts fights, and the finds are the map recap's own)
+  delete t.recapAt.waves;
+  delete t.recapAt.found;
 }

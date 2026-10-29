@@ -12,6 +12,7 @@ import { SETS, SET_IDS, setBonus, setOf } from '../src/sim/relicSets';
 import { enterNode, fightSpec, finishTower, makeMap, type NodeKind } from '../src/sim/tower';
 import { UNITS } from '../src/sim/units';
 import { frontSpots } from '../tools/autoplay';
+import { dotOf } from '../src/sim/ailments';
 
 const store = () => {
   const s: Record<string, string> = {};
@@ -208,7 +209,7 @@ test('Fire 3: a hero blow sets the foe burning; Frost 3: the first blow on a foe
     let seen = 0;
     for (let i = 0; i < 600; i++) {
       stepBattle(b);
-      if (b.units.some((u) => u.side === 'foe' && u.alive && u.dot?.kind === 'burn')) seen++;
+      if (b.units.some((u) => u.side === 'foe' && u.alive && dotOf(u)?.kind === 'burn')) seen++;
     }
     return seen;
   };

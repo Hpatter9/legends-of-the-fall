@@ -32,6 +32,8 @@ import { play } from './render/sound';
 import { chestPicture } from './chestStash';
 import { detourInfo, eliteInfo, relicButton, relicChoice, relicPopup } from './towerElites';
 import { mapRecapCard, victoryCard } from './calClear';
+import { recapDetail } from './recapView';
+import type { RunRecap } from './sim/runRecap';
 import { ICONS, icon } from './menuArt';
 import swords from './art/rogue/swords.png';
 import skull from './art/rogue/skull.png';
@@ -958,6 +960,8 @@ export class TowerView {
       this.card = null;
       if (pendingAltar(run)) this.altarCard();
     }, !!expeditionOf(run));
+    // (WAVE-RECAP-2: the map's share of the company's work, its XP and its fights; its finds are the recap's own groups)
+    putDetail(card, done.detail, { strip: 'Fight by fight', prefix: '#', noSpoils: true });
   }
 
   /** The relics an elite paid: choose one (the offer is kept in the run, so leaving and coming back finds it). */
@@ -1186,14 +1190,19 @@ export class TowerView {
         this.close();
         then();
       });
+      // (WAVE-RECAP-2: the whole calamity's detail under the finishing reward)
+      putDetail(card, run.recap, { strip: 'Fight by fight', prefix: '#' });
       wrap.append(card);
       this.root.append(wrap);
       return;
     }
     const card = el('div', 'rtCard summary');
+    // (a Rift Sanctuary expedition is told in regions and crossings; a calamity saved before it in maps and spots)
+    const unit = expeditionOf(run) ? 'region' : 'map';
+    const spots = expeditionOf(run) ? 'crossings' : 'spots';
     card.append(
       el('h2', '', cal ? (s.cleared ? 'The calamity is ended!' : 'The calamity goes on') : s.abandoned ? 'The climb is over' : 'The climb ends'),
-      el('p', 'rtLead', cal ? (s.cleared ? `All ${run.tower?.maps ?? CAL_MAPS} maps are cleared: the calamity falls.` : s.abandoned ? `The party turns back in map ${Math.min(s.act, run.tower?.maps ?? CAL_MAPS)}, ${s.floors} spots cleared.` : `The party falls in map ${Math.min(s.act, run.tower?.maps ?? CAL_MAPS)}, ${s.floors} spots cleared.`) : s.abandoned ? `The heroes turn back on floor ${run.stage}, in act ${s.act}.` : `The heroes fall on floor ${run.stage}, in act ${s.act}.`),
+      el('p', 'rtLead', cal ? (s.cleared ? `All ${run.tower?.maps ?? CAL_MAPS} ${unit}s are cleared: the calamity falls.` : s.abandoned ? `The party turns back in ${unit} ${Math.min(s.act, run.tower?.maps ?? CAL_MAPS)}, ${s.floors} ${spots} cleared.` : `The party falls in ${unit} ${Math.min(s.act, run.tower?.maps ?? CAL_MAPS)}, ${s.floors} ${spots} cleared.`) : s.abandoned ? `The heroes turn back on floor ${run.stage}, in act ${s.act}.` : `The heroes fall on floor ${run.stage}, in act ${s.act}.`),
     );
     const stats = el('div', 'rtStats');
     const stat = (label: string, value: string) => {
@@ -1201,9 +1210,9 @@ export class TowerView {
       row.append(el('span', '', label), el('b', '', value));
       stats.append(row);
     };
-    stat(cal ? 'Spots cleared' : 'Floors climbed', String(s.floors));
+    stat(cal ? (expeditionOf(run) ? 'Crossings made' : 'Spots cleared') : 'Floors climbed', String(s.floors));
     if (cal && s.ascension) stat('Ascension', String(s.ascension));
-    stat(cal ? 'Maps cleared' : 'Acts', cal ? `${s.maps} of ${run.tower?.maps ?? CAL_MAPS}` : String(s.act));
+    stat(cal ? (expeditionOf(run) ? 'Regions cleared' : 'Maps cleared') : 'Acts', cal ? `${s.maps} of ${run.tower?.maps ?? CAL_MAPS}` : String(s.act));
     stat('Relics', String(s.relics));
     stat('Heroes', String(s.heroes));
     stat('Crowns earned', String(s.crowns));
@@ -1214,7 +1223,7 @@ export class TowerView {
       ores.append(...s.ores.map((d) => oreChip(d)));
       card.append(el('p', 'rtLead', 'Rift ores, for awakening:'), ores);
     }
-    if (s.newBest) card.append(el('p', 'rtBest', cal ? `A new best: ${s.maps} map${s.maps === 1 ? '' : 's'} cleared!` : `A new best floor: ${s.floors}!`));
+    if (s.newBest) card.append(el('p', 'rtBest', cal ? `A new best: ${s.maps} ${unit}${s.maps === 1 ? '' : 's'} cleared!` : `A new best floor: ${s.floors}!`));
     const rewards = el('div', 'rtRewards');
     for (const [name, n] of [['bronze', s.bronze], ['silver', s.silver], ['gold', s.gold]] as const) {
       if (!n) continue;
@@ -1225,16 +1234,31 @@ export class TowerView {
     }
     card.append(rewards);
     const line = chestLine(s);
-    card.append(el('p', 'rtLead', line ? `${line} added to your stash.` : cal ? 'Clear every map for a chest.' : 'No chests yet: climb further to earn them.'));
+    card.append(el('p', 'rtLead', line ? `${line} added to your stash.` : cal ? `Clear every ${unit} for a chest.` : 'No chests yet: climb further to earn them.'));
     if (cal && s.cleared && (s.ascension ?? 0) < ASC_MAX) card.append(el('p', 'rtBest', `Ascension ${Math.max(s.ascension ?? 0, 0) + 1} is open.`));
-    for (const g of s.gear) card.append(el('p', 'rtGear', `Equipment found: ${g}`));
+    // (the finds: the run's own list when it kept one, which the detail below shows with the rest)
+    if (!run.recap?.found?.length) for (const g of s.gear) card.append(el('p', 'rtGear', `Equipment found: ${g}`));
     const go = el('button', 'primary', 'Back to camp');
     go.addEventListener('click', () => {
       this.close();
       then();
     });
     card.append(go);
+    // (WAVE-RECAP-2: the per-hero detail the short card after each fight left for here)
+    putDetail(card, run.recap, cal ? { strip: 'Fight by fight', prefix: '#' } : { strip: 'Floor by floor', prefix: 'F' });
     wrap.append(card);
     this.root.append(wrap);
   }
+}
+
+/** Lay a recap's detail (`recapDetail`: the fights one by one, the company's work with its MVP, the XP and levels, the spoils) into a
+ *  summary card, above its closing button. Nothing when there is no recap (a save from before) or nothing in it. */
+function putDetail(card: HTMLElement, recap: RunRecap | undefined, opts: Parameters<typeof recapDetail>[1]): void {
+  if (!recap) return;
+  const parts = recapDetail(recap, opts);
+  if (!parts.length) return;
+  const box = el('div', 'rcDetail');
+  box.append(...parts);
+  const button = [...card.children].reverse().find((c) => c.matches('button.primary'));
+  card.insertBefore(box, button ?? null);
 }

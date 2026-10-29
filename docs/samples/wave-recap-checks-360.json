@@ -1,0 +1,98 @@
+[
+  {
+    "w": 360,
+    "h": 780,
+    "checks": [
+      {
+        "name": "march",
+        "top": 84,
+        "bottom": 232,
+        "height": 148,
+        "pageOverflow": false
+      },
+      {
+        "name": "march-under-card",
+        "marchingWhenCardShowed": true,
+        "stillMarchingAtShot": true,
+        "nextButtonHidden": true
+      },
+      {
+        "name": "wave1-notes",
+        "notes": [
+          "✝Fell: Fire Wizard, Archer"
+        ],
+        "banner": "Wave 1 of 15 won",
+        "summary": "+36 gold · +15 crowns · 0:13"
+      },
+      {
+        "name": "card-left-by-itself",
+        "msAfterShot": 7660
+      },
+      {
+        "name": "heart",
+        "top": 84,
+        "bottom": 264,
+        "height": 180,
+        "pageOverflow": false
+      },
+      {
+        "name": "wave2-notes",
+        "notes": [
+          "▲Level up: Fire Wizard Lv 2, Archer Lv 2, Cleric Lv 2",
+          "♥A heart burned · 1 left"
+        ],
+        "banner": "Wave 2 of 15 won"
+      },
+      {
+        "name": "tap-goes-on",
+        "passed": true
+      },
+      {
+        "name": "defeat",
+        "top": 0,
+        "bottom": 780,
+        "height": 780,
+        "pageOverflow": false
+      },
+      {
+        "name": "defeat-card",
+        "banner": "Wave 3 of 15 lost",
+        "next": "Run recap",
+        "passing": false,
+        "statsHidden": true
+      },
+      {
+        "name": "recap",
+        "top": 0,
+        "bottom": 780,
+        "height": 780,
+        "pageOverflow": false
+      },
+      {
+        "name": "recap-waves",
+        "top": 0,
+        "bottom": 780,
+        "height": 780,
+        "pageOverflow": false
+      },
+      {
+        "name": "recap-end",
+        "top": 0,
+        "bottom": 780,
+        "height": 780,
+        "pageOverflow": false
+      },
+      {
+        "name": "recap-strip",
+        "waves": [
+          "W1★★☆0:13",
+          "W2★★★0:06♥",
+          "W3Lost0:00"
+        ],
+        "heroes": 5,
+        "xpRows": 5
+      }
+    ],
+    "errors": []
+  }
+]

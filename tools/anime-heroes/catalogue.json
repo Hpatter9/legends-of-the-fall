@@ -1,0 +1,272 @@
+[
+  {
+    "id": "knight",
+    "name": "Knight",
+    "design": "Heroic adult male soldier, short bright blond hair and expressive blue eyes, steel plate armour with gold details, burgundy red cape, blue cloth at waist, broad steel sword and sturdy shield, brown leather boots. Noble determined face.",
+    "redesigned": false
+  },
+  {
+    "id": "archer",
+    "name": "Archer",
+    "design": "Adult Japanese samurai archer, expressive face, crimson and dark brown lamellar armour with gold details, red kabuto helmet, a tall elegant yumi bow and quiver of arrows, leather bracers and armoured boots. Poised disciplined sniper.",
+    "redesigned": false
+  },
+  {
+    "id": "samurai",
+    "name": "Samurai",
+    "design": "Disciplined Japanese swordsman, expressive mature face under a dark blue kabuto helmet, midnight navy and burgundy lamellar armour, ivory scarf, katana held in two hands, short red sash. Distinct from the red bow archer.",
+    "redesigned": false
+  },
+  {
+    "id": "kunoichi",
+    "name": "Kunoichi",
+    "design": "Agile adult female ninja, long dark hair in high ponytail, burgundy and purple fitted shinobi outfit, ivory leg wraps, red scarf, small curved kunai in each hand, compact athletic silhouette, face visible.",
+    "redesigned": false
+  },
+  {
+    "id": "wizard",
+    "name": "Fire Wizard",
+    "design": "Expressive adult male fire wizard, swept auburn hair, long burgundy coat with gold borders over charcoal robes, pointed red wizard hat, wooden staff with amber crystal, leather belt and boots.",
+    "redesigned": false
+  },
+  {
+    "id": "paladin",
+    "name": "Paladin",
+    "design": "Noble adult male holy knight, silver white plate armour with ornate gold trim, ivory and royal blue tabard, short golden hair, heavy golden mace and kite shield marked with a sun. Heroic readable face.",
+    "redesigned": false
+  },
+  {
+    "id": "cleric",
+    "name": "Cleric",
+    "design": "Kind but determined adult female battle priest, chestnut hair, ivory hood and white robes, teal stole and gold trim, leather boots, compact steel mace and small prayer book at belt, readable warm face.",
+    "redesigned": false
+  },
+  {
+    "id": "minotaur",
+    "name": "Minotaur",
+    "design": "Massive bull headed anthropomorphic warrior, warm dark brown fur, broad cream horns, expressive bull face, deep red leather straps, gold nose ring, steel shoulder armour and enormous double headed battleaxe. Compact heroic monster proportions, broad muscular build, NOT a human.",
+    "redesigned": false
+  },
+  {
+    "id": "peasant",
+    "name": "Peasant",
+    "design": "Resourceful young adult Japanese peasant militia fighter, straw jingasa hat, simple ochre padded tunic, navy trousers, white leg bindings, rope belt, wooden long spear. Cheerful determined face, humble practical costume.",
+    "redesigned": false
+  },
+  {
+    "id": "ninjaMonk",
+    "name": "Ninja Monk",
+    "design": "Athletic adult martial monk, bald head with small dark topknot, large wooden prayer beads, saffron wrap over dark indigo shinobi trousers, white fist wraps, bare forearms and sandals. No weapon, strong compact fighting stance.",
+    "redesigned": false
+  },
+  {
+    "id": "wanderer",
+    "name": "Wanderer",
+    "design": "Mysterious adult travelling alchemist mage, weathered green hooded cloak, cream scarf, leather satchel and belt full of colourful potion flasks, auburn hair and goggles on forehead, short crooked walking staff. Clearly an alchemist.",
+    "redesigned": false
+  },
+  {
+    "id": "lightningMage",
+    "name": "Lightning Mage",
+    "design": "Quick energetic adult lightning sorceress, silver white hair, deep purple blue robes with gold lightning patterns, short pointed violet hat, staff tipped with small blue crystal, bright cyan eyes, expressive confident face.",
+    "redesigned": false
+  },
+  {
+    "id": "kitsune",
+    "name": "Kitsune",
+    "design": "Adult female fox spirit, long flowing auburn hair, orange fox ears, nine magnificent fluffy orange tails tipped ivory spreading behind her, ornate crimson and gold embroidered Japanese kimono with open flowing sleeves, white lining, fitted red and gold bodice, elaborate gold jewellery and red floral hair ornaments, black thigh high stockings and gold trimmed heels, opened red and gold folding fan. Confident charming expression.",
+    "redesigned": true
+  },
+  {
+    "id": "karasu",
+    "name": "Karasu Tengu",
+    "design": "Small agile crow tengu, black feathered bird head with obvious dark beak and bright gold eye, black wings, purple yamabushi robes, red scarf, tall geta sandals, curved short sword. A crow person, NOT a human wearing a mask.",
+    "redesigned": false
+  },
+  {
+    "id": "yamabushi",
+    "name": "Yamabushi Tengu",
+    "design": "Imposing mature mountain tengu, traditional red long nosed expressive face, large white beard, black feather wings, ornate ivory and dark red mountain priest robes, gold prayer beads, tall black hat, large leaf shaped war fan.",
+    "redesigned": false
+  },
+  {
+    "id": "werewolf",
+    "name": "Werewolf",
+    "design": "Powerful anthropomorphic wolf warrior, silver grey fur, long wolf muzzle, pointed ears, gold eyes, dark blue leather torn trousers and bracers, massive clawed hands and feet, no weapon, expressive fierce wolf face. Clearly a wolf monster NOT human.",
+    "redesigned": false
+  },
+  {
+    "id": "satyr",
+    "name": "Satyr",
+    "design": "Playful adult male forest satyr, curly chestnut hair, small curved ram horns, pointed ears and expressive smiling face, furred goat legs with cloven hooves, green vest and purple sash, wooden pan pipes, rustic leather belt.",
+    "redesigned": false
+  },
+  {
+    "id": "gorgon",
+    "name": "Gorgon",
+    "design": "Adult regal female gorgon, beautiful expressive olive human face, magnificent living emerald green snakes as hair, gold serpent crown and emerald jewellery, emerald and gold ornate fitted scale bodice, sheer ivory draped sleeves, gold chains, large curled emerald snake tail with cream belly INSTEAD OF ANY LEGS. Tall gold snake staff with emerald serpent head. Proud graceful pose.",
+    "redesigned": true
+  },
+  {
+    "id": "samuraiCommander",
+    "name": "Samurai Commander",
+    "design": "Imposing mature samurai general, heavily plated black and scarlet gold edged armour, magnificent gold crescent kabuto helmet, visible stern moustached face, broad shoulders, crimson cape, back mounted vertical sashimono battle banner, long nodachi sword. More ornate and bulkier than normal samurai.",
+    "redesigned": false
+  },
+  {
+    "id": "druid",
+    "name": "Druid",
+    "design": "Adult female forest druid, long copper red hair, small antler crown and leaves, emerald robe and brown leather bodice, cream fur shoulder cape, wooden staff with leafy spiral and small emerald, leather boots, warm expressive face.",
+    "redesigned": false
+  },
+  {
+    "id": "barbarian",
+    "name": "Barbarian",
+    "design": "Broad muscular adult male barbarian, wild red hair and thick beard, bare tattooed arms and chest, fur mantle, leather harness and bronze belt, dark wool trousers and heavy fur boots, enormous steel two handed axe. Compact powerful heroic proportions.",
+    "redesigned": false
+  },
+  {
+    "id": "ranger",
+    "name": "Ranger",
+    "design": "Adult female woodland ranger, long brown hair, deep green hooded cloak and leather armour, gold clasp, tan leggings and high boots, simple elegant wooden longbow, back quiver and belt snares. Clearly medieval forest archer, distinct from the samurai archer.",
+    "redesigned": false
+  },
+  {
+    "id": "warlock",
+    "name": "Warlock",
+    "design": "Sinister adult male warlock, pale readable face with silver hair, deep violet hooded robes with crimson lining and silver trim, dark leather gloves, tall black staff crowned with a small violet skull crystal, occult tome hanging from belt.",
+    "redesigned": false
+  },
+  {
+    "id": "illusionist",
+    "name": "Illusionist",
+    "design": "Adult female theatrical illusionist, long wavy chestnut hair, expressive violet eyes, purple feathered gold trimmed tricorn with white and purple plumes, ornate purple and gold corseted longcoat dress with white lace sleeves, dark thigh high stockings and ornate purple gold boots, white gloves, slender wand in one hand and ornate hand mirror with glowing violet gem in other. Charming confident smile, fine violet illusion ribbons.",
+    "redesigned": true
+  },
+  {
+    "id": "gunslinger",
+    "name": "Gunslinger",
+    "design": "Rugged adult female fantasy gunslinger, auburn braid, wide brown hat, long burgundy duster, ivory shirt and leather gun belts, steel revolver in each hand, tall brown boots, confident expressive face. Antique flintlock fantasy firearms, no modern tactical equipment.",
+    "redesigned": false
+  },
+  {
+    "id": "shambler",
+    "name": "Shambler",
+    "design": "Hunched undead zombie hero, grey green decayed skin, messy sparse dark hair, vacant pale eyes and expressive slack face, torn brown tunic and purple ragged trousers, exposed bandaged ribs, bare clawed hands, mismatched boots. Charming dark fantasy monster, no gore.",
+    "redesigned": false
+  },
+  {
+    "id": "rifleBot",
+    "name": "Rifle Bot",
+    "design": "Compact fantasy clockwork rifle automaton, steel and brass segmented armour, single bright cyan eye in squat helmet head, navy enamel panels, exposed bronze joints and short mechanical legs, integrated long steel rifle held in mechanical hands. Clearly a robot, NOT a human.",
+    "redesigned": false
+  },
+  {
+    "id": "mercenary",
+    "name": "Mercenary",
+    "design": "Grizzled mature human sellsword, scarred stubbled readable face, short dark hair with grey streak, worn leather armour and steel chainmail, charcoal travelling cloak, notched broadsword, coin purse and leather boots. Grounded veteran distinct from the bright blond Soldier.",
+    "redesigned": false
+  },
+  {
+    "id": "mummy",
+    "name": "Mummy",
+    "design": "Ancient mummy hero, tightly wrapped aged ivory linen bandages, large glowing amber eyes beneath wraps, ornate turquoise and gold collar and wrist bands, trailing loose bandage strips, hunched human silhouette with bare wrapped hands. Egyptian fantasy, no gore.",
+    "redesigned": false
+  },
+  {
+    "id": "buccaneer",
+    "name": "Buccaneer",
+    "design": "Dashing adult male pirate, red bandana under brown tricorn, expressive stubbled face, open ivory shirt, red sash and weathered brown shortcoat, curved silver cutlass in right hand and iron grappling hook left, knee boots and belts.",
+    "redesigned": false
+  },
+  {
+    "id": "wolfBard",
+    "name": "Wolf Bard",
+    "design": "Anthropomorphic grey wolf minstrel, expressive wolf muzzle and ears, friendly gold eyes, burgundy feathered cap, forest green and cream travelling doublet, leather boots, fluffy tail, polished wooden lute held in both hands. Clearly a wolf person with a musical instrument.",
+    "redesigned": false
+  },
+  {
+    "id": "beastmaster",
+    "name": "Beastmaster",
+    "design": "Wild adult female beastmaster, dark skin and expressive face with blue warpaint, dark braided hair, fur trimmed brown leather armour, feathers and bone charms, wolf tooth necklace, coiled leather whip and small curved hunting knife, rugged boots.",
+    "redesigned": false
+  },
+  {
+    "id": "kraken",
+    "name": "Kraken Mate",
+    "design": "Broad squid headed sailor monster, purple squid head with obvious long tentacle beard and large yellow eyes, navy blue sailor jacket with brass buttons, burgundy sash, heavy leather trousers and sea boots, iron harpoon held forward. Clearly cephalopod humanoid, no human face.",
+    "redesigned": false
+  },
+  {
+    "id": "lancer",
+    "name": "Lancer",
+    "design": "Mounted adult lancer knight riding a compact sturdy BROWN ARMOURED HORSE, steel plate and blue plume helmet with visible face, royal blue saddle cloth and brown leather tack, long silver tipped lance held forward. Show entire horse, rider and lance in every frame; mounted cavalry silhouette.",
+    "redesigned": false
+  },
+  {
+    "id": "reaper",
+    "name": "Reaper",
+    "design": "Dark hooded spectral reaper, shadowed skull face with small violet glowing eyes, tattered charcoal and purple layered robes, bony hands, large curved steel scythe on dark wooden shaft, floating robe hem and no visible feet. Expressive sinister fantasy mascot proportions.",
+    "redesigned": false
+  },
+  {
+    "id": "timeWitch",
+    "name": "Time Witch",
+    "design": "Adult female time witch, long flowing silver hair, violet eyes, crooked wide brim midnight blue witch hat decorated with gold clock faces and gears, ornate midnight blue and gold star patterned corseted robe dress with split flowing skirts and pale silk lining, black thigh high stockings and gold trimmed boots, hanging gold pocket watches and clockwork chains, tall staff topped with golden hourglass containing glowing blue sand. Confident elegant expression.",
+    "redesigned": true
+  },
+  {
+    "id": "arcBlade",
+    "name": "Arc Blade",
+    "design": "Sleek humanoid clockwork sword robot, silver black segmented armour with brass joints and cyan circuit inlays, compact enclosed helmet with glowing cyan visor, violet short cape, broad blue edged steel energy sword. Clearly mechanical, no human skin.",
+    "redesigned": false
+  },
+  {
+    "id": "dreadPirate",
+    "name": "Dread Pirate",
+    "design": "Undead pirate captain, expressive skeletal face with tiny green glowing eyes, elaborate black feathered tricorn, tattered long black coat with gold trim, crimson sash, rusty cutlass, small powder keg attached to belt, tall sea boots, dark green accents.",
+    "redesigned": false
+  },
+  {
+    "id": "siegeBot",
+    "name": "Siege Bot",
+    "design": "Massive squat fantasy siege automaton, riveted gunmetal and brass armoured torso, broad mechanical shoulders, crimson enamel panels, single amber optic in compact mechanical head, integrated heavy cannon arm, stout piston legs. Clearly a bulky robot, no human skin.",
+    "redesigned": false
+  },
+  {
+    "id": "priestess",
+    "name": "High Priestess",
+    "design": "Regal adult female high priestess, long golden hair and serene expressive face, elaborate ivory and gold layered robes, tall mitre headdress, small gold halo, staff topped with golden eight pointed star, red gemstone belt and ivory shoes. More ornate than Cleric.",
+    "redesigned": false
+  },
+  {
+    "id": "dragoon",
+    "name": "Queen Dragoon",
+    "design": "Regal adult female dragon knight, long teal hair, expressive fierce face under horned dragon crest helm, ornate teal and gold dragon scale plate armour, small leathery dragon wings on back, purple waist cape, long silver tipped lance, armoured boots. Human dragon knight, not a full dragon.",
+    "redesigned": false
+  },
+  {
+    "id": "juggernaut",
+    "name": "Juggernaut",
+    "design": "Huge hulking iron armoured knight, enormous riveted dark steel plate, brass edges, tiny enclosed helmet with amber slit, giant steel gauntlet fists, broad barrel torso and squat heavy boots, dark burgundy cloth underneath. No handheld weapon; fists are the weapons.",
+    "redesigned": false
+  },
+  {
+    "id": "sage",
+    "name": "Great Sage",
+    "design": "Wise elderly male mage, long white beard and expressive kindly eyes, deep blue star patterned robes, broad pointed blue wizard hat with gold band, gnarled wooden staff topped with a small golden star orb, book at belt and brown shoes.",
+    "redesigned": false
+  },
+  {
+    "id": "demonSwordsman",
+    "name": "Demon Swordsman",
+    "design": "Adult male demon swordsman, dark red skin, small black horns, expressive sharp face with red eyes, swept black hair, black spiked plate armour with crimson trim, torn dark cape, jagged black greatsword with narrow red edge. Clearly a horned demon warrior.",
+    "redesigned": false
+  },
+  {
+    "id": "tyrant",
+    "name": "Tyrant",
+    "design": "Imposing mature tyrannical human warlord, stern expressive face with dark beard, spiked iron crown, ornate black and gold heavy plate, long crimson royal cape with white fur collar, gold sceptre spear in one hand, broad steel boots. Regal dark king silhouette.",
+    "redesigned": false
+  }
+]

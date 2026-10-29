@@ -1,14 +1,13 @@
-// The recruiting screen (#gacha): crowns, the pull buttons and rates, a card-flip reveal of each pull, and the list of
-// every hero with the locked ones shaded. It only reads and changes the Meta through the sim's own functions.
+// The recruiting screen (#gacha): the stones, the pull buttons and rates, a tarot card for each pull (`summonTarot.ts`; a hero
+// who joins then has its first-time reveal), and the list of every hero with the locked ones shaded. It only reads and changes the Meta through the sim's own functions.
 
 import { ALL_HEROES, UNITS } from './sim/units';
 import { awakenedOf, AWAKEN_SHARDS } from './sim/awaken';
 import { LUCKY_ODDS, MAX_RANK, RANK_MULT, RANK_SHARDS, rankOf, saveMeta, stoneCost, stonesOf, takenRank, useStones, type Meta, type Pull } from './sim/meta';
 import { closest, haveOf, needOf, ownedCount } from './sim/unlock';
 import { isContent, pityAt } from './sim/unlockRules';
-import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { portrait } from './render/sheets';
-import { play as playSfx } from './render/sound';
+import { heroCard, pullInfo, queueReveal, revealUnseen, tarotBack, tarotFace } from './summonTarot';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -19,24 +18,19 @@ export class Gacha {
   private busy = false;
   private revealTimers: number[] = [];
   private revealCards: HTMLElement[] = [];
-  private revealingAll = false;
+  /** Counts the batches shown, so a reveal still playing from an older batch does not touch a newer one. */
+  private batch = 0;
   /** `onClose` runs when the screen is shut (the run's draw pool follows the unlocks). */
   constructor(
     private meta: Meta,
     private onClose: () => void,
-    /** A pull started from the reveal screen runs the hall's show again, like one from the hall (the screen shuts under it). */
-    private again?: (count: 1 | 10) => void,
   ) {
     $('pull1').addEventListener('click', () => this.pull(1));
     $('pull10').addEventListener('click', () => this.pull(10));
     $('gachaClose').addEventListener('click', () => this.close());
     $('rates').textContent = ratesText();
-    $('revealAll').addEventListener('click', () => {
-      this.revealingAll = true;
-      this.revealCards.forEach(card => card.click());
-      this.revealingAll = false;
-      this.revealCards.find(card => card.classList.contains('new'))?.scrollIntoView({ block: 'center', behavior: 'auto' });
-    });
+    // (turns every card at once; the joins' reveals follow as usual)
+    $('revealAll').addEventListener('click', () => this.revealCards.forEach(card => card.click()));
   }
 
   open(): void {
@@ -49,12 +43,16 @@ export class Gacha {
     $('gachaClose').textContent = 'Return to sanctum';
     ($('collectionPanel') as HTMLDetailsElement).open = true;
     this.refresh();
+    // (a hero joined elsewhere and not yet revealed has its reveal before the collection shows it)
+    void revealUnseen(this.meta).then(() => this.refresh());
   }
 
   close(): void {
     this.clearReveal();
     $('gacha').hidden = true;
     this.onClose();
+    // (a join whose cards were closed before its reveal came, by a quick tap on Continue, still has it: over the hall)
+    void revealUnseen(this.meta);
   }
 
   private refresh(): void {
@@ -111,7 +109,7 @@ export class Gacha {
     return frag;
   }
 
-  /** A pull started from the summoning hall: the pull is made at once (so it is saved whatever happens), the hall plays it, then the usual reveal opens. */
+  /** A pull started from the summoning hall: the pull is made at once (so it is saved whatever happens), then the cards open. `play` is the hall's part (it stops its drawing); a hero's unlock scene is the cards' own first-time reveal. */
   summon(count: 1 | 10, play: (got: Pull[]) => Promise<void>): void {
     if (this.busy) return;
     const got = useStones(this.meta, count, forced());
@@ -126,12 +124,7 @@ export class Gacha {
   }
 
   private pull(count: 1 | 10): void {
-    if (this.again) {
-      if (this.busy || stonesOf(this.meta) < stoneCost(count)) return;
-      $('gacha').hidden = true;
-      this.again(count);
-      return;
-    }
+    if (this.busy) return;
     const got = useStones(this.meta, count, forced());
     if (!got) return;
     saveMeta(this.meta);
@@ -148,125 +141,99 @@ export class Gacha {
     this.busy = false;
   }
 
-  /** The ceremonial seals open repeats first and new heroes last; each reward keeps its own saved shard count. */
+  /** Shards turn to tarot cards; joins begin as dark figures, then play the chamber arrival in queue order.
+   *  After acknowledgement, each joined figure is shown in full. Every reward keeps its saved shard count. */
   private reveal(got: Pull[]): void {
     this.clearReveal();
     this.busy = true;
+    const batch = ++this.batch;
     const box = $('reveal');
     $('gacha').classList.add('hasResults');
     $('gacha').querySelector('.gachaBody')!.scrollTop = 0;
-    $('gacha').querySelector('h2')!.textContent = got.some(p => p.isNew) ? 'A new ally answers' : 'The cards reveal';
+    const fresh = got.filter(p => p.isNew).length;
+    $('gacha').querySelector('h2')!.textContent = fresh ? 'A new ally answers' : 'The cards are drawn';
     $('gachaClose').textContent = 'Continue';
     $('resultIntro').hidden = false;
-    $('resultSummary').textContent = got.length === 1 ? 'Tap the seal to reveal your reward' : `${got.length} summons · tap a seal to reveal`;
+    $('resultSummary').textContent = got.length === 1 ? 'The card turns…' : `${got.length} cards drawn`;
     $('revealAll').hidden = got.length === 1;
     ($('collectionPanel') as HTMLDetailsElement).open = false;
     ($('summonRules') as HTMLDetailsElement).open = false;
     box.replaceChildren();
-    box.classList.toggle('single', got.length === 1);
-    let revealed = 0;
-    let celebrated = false;
+    box.className = got.length === 1 ? 'tarotSingle' : 'tarotSpread';
+    const px = got.length === 1 ? 230 : 70;
+    let turned = 0;
     got.forEach((p) => {
       const def = UNITS[p.kind];
-      const card = document.createElement('div');
-      card.className = `flip${p.isNew ? ' new' : ' tarot'}${p.lucky ? ' lucky' : ''}${def.name.length > 14 ? ' longName' : ''}`;
-      card.dataset.kind = p.kind;
-      card.tabIndex = 0;
-      card.setAttribute('role', 'button');
-      card.setAttribute('aria-label', 'Reveal summon');
-      card.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); }
-      });
-      const face = document.createElement('div');
-      face.className = 'face';
-      const seal = document.createElement('span');
-      seal.className = 'resultSeal';
-      seal.textContent = p.lucky ? 'Lucky summon' : p.isNew ? 'New hero' : p.crowns ? 'Crowns' : p.unlock ? 'Hero shards' : 'Rank shards';
-      const scene = document.createElement('div');
-      scene.className = 'summonPortrait';
-      scene.append(portrait(def.sheet, got.length === 1 ? 192 : 112));
-      const caption = document.createElement('div');
-      caption.className = 'summonCaption';
-      const name = document.createElement('b');
-      name.textContent = def.name;
-      const role = small(CLASS_NAMES[CLASS_OF[p.kind]]);
-      caption.append(name, role);
-      const reward = document.createElement('div');
-      reward.className = 'resultReward';
-      const tag = document.createElement('em');
-      const shardCount = p.unlock ?? p.shards;
-      tag.textContent = p.lucky && p.isNew ? 'Called to your company at once' : p.isNew ? 'Joined your company' : p.crowns ? `+${p.crowns} crowns` : `+${shardCount} shard${shardCount === 1 ? '' : 's'}`;
-      reward.append(tag);
-      if (p.unlock && p.need && !p.isNew) {
-        const label = small(`${p.have} / ${p.need} to recruit`);
-        label.className = 'resultProgressLabel';
-        const bar = cardBar(p.have! / p.need);
-        bar.setAttribute('role', 'progressbar');
-        bar.setAttribute('aria-label', `${def.name} recruitment`);
-        bar.setAttribute('aria-valuemin', '0');
-        bar.setAttribute('aria-valuemax', `${p.need}`);
-        bar.setAttribute('aria-valuenow', `${p.have}`);
-        reward.append(bar, label);
-      }
-      if (got.length === 1) {
-        const description = small(def.role);
-        description.className = 'resultDescription';
-        reward.append(description);
-      }
-      if (p.lucky) {
-        // (one burst of gold when the card turns, played once: no loop)
-        const burst = document.createElement('div');
-        burst.className = 'luckyBurst';
-        burst.setAttribute('aria-hidden', 'true');
-        face.append(burst);
-      }
-      if (p.isNew) {
-        const celebration = document.createElement('div');
-        celebration.className = 'summonCelebration';
-        celebration.setAttribute('aria-hidden', 'true');
-        face.append(celebration);
-      }
-      face.append(seal, scene, caption, reward);
+      const res = document.createElement('div');
+      res.className = `tarotResult${p.isNew ? ' joined' : ''}${p.lucky ? ' lucky' : ''}`;
+      res.dataset.kind = p.kind;
+      const turn = document.createElement('div');
+      turn.className = 'tarotTurn';
+      turn.tabIndex = 0;
+      turn.setAttribute('role', 'button');
+      turn.setAttribute('aria-label', 'Turn the card');
       const back = document.createElement('div');
-      back.className = 'back';
-      const sigil = document.createElement('span');
-      sigil.textContent = '◆';
-      const invitation = small('Tap to reveal');
-      back.append(sigil, invitation);
-      card.append(back, face);
-      card.addEventListener('click', () => {
-        if (card.classList.contains('up')) return;
-        card.classList.add('up');
-        if (p.isNew || p.lucky) {
-          if (!celebrated) playSfx('stingSummon');
-          celebrated = true;
-          if (got.length > 1 && !this.revealingAll) card.scrollIntoView({ block: 'center', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
-        }
-        card.setAttribute('aria-label', `${def.name}: ${tag.textContent}${p.unlock && p.need && !p.isNew ? `, ${p.have} of ${p.need} to recruit` : ''}`);
-        revealed++;
-        if (revealed < got.length) {
-          $('resultSummary').textContent = `${revealed} / ${got.length} rewards revealed`;
+      back.className = 'tarotSide back';
+      back.append(p.isNew ? heroCard(p.kind, px) : tarotBack());
+      if (p.isNew) back.style.filter = 'brightness(0.15)';
+      const front = document.createElement('div');
+      front.className = 'tarotSide front';
+      front.append(p.isNew ? heroCard(p.kind, px) : tarotFace(p.kind, px));
+      if (p.isNew) front.style.filter = 'brightness(0.15)';
+      turn.append(back, front);
+      res.append(turn, pullInfo(this.meta, p));
+      const up = (): void => {
+        if (res.classList.contains('up')) return;
+        res.classList.add('up');
+        const n = p.unlock ?? p.shards;
+        turn.setAttribute('aria-label', `${def.name}: ${p.isNew ? 'joined your company' : p.crowns ? `${p.crowns} crowns` : `${n} shard${n === 1 ? '' : 's'}`}${p.unlock && p.need && !p.isNew ? `, ${p.have} of ${p.need} to join` : ''}`);
+        turned++;
+        if (turned < got.length) {
+          $('resultSummary').textContent = `${turned} / ${got.length} cards turned`;
           return;
         }
         this.revealTimers.forEach(timer => window.clearTimeout(timer));
         this.revealTimers = [];
-        this.busy = false;
         $('revealAll').hidden = true;
-        const fresh = got.filter(pull => pull.isNew).length;
-        $('resultSummary').textContent = got.length === 1
-          ? p.lucky && p.isNew ? 'Lucky! A whole hero answers the call' : p.lucky ? 'Lucky! A great store of rank shards' : p.isNew ? 'A new ally joins your company' : p.unlock ? 'Another step towards a new ally' : p.crowns ? 'A tribute for your kingdom' : 'Your company grows stronger'
-          : `${got.length} rewards revealed${fresh ? ` · ${fresh} new ${fresh === 1 ? 'ally' : 'allies'}` : ''}`;
-        this.refresh();
+        $('resultSummary').textContent = fresh ? `A new ally answers the call…` : got.length === 1 ? 'The card is turned' : `${got.length} cards drawn`;
+        // (a moment to see the spread, then each join's unlock scene)
+        this.revealTimers.push(window.setTimeout(() => void this.playJoins(got, batch), fresh ? 900 : 0));
+      };
+      turn.addEventListener('click', up);
+      turn.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); up(); }
       });
-      box.append(card);
-      this.revealCards.push(card);
+      box.append(res);
+      this.revealCards.push(turn);
     });
-    const order = got.map((_, i) => i).sort((x, y) => Number(got[x].isNew) - Number(got[y].isNew) || x - y);
-    let at = 220;
-    for (const i of order) {
-      this.revealTimers.push(window.setTimeout(() => this.revealCards[i]?.click(), at));
-      at += got[i].isNew ? 900 : 160;
+    // (the cards turn by themselves, left to right)
+    let at = 260;
+    for (const card of this.revealCards) {
+      this.revealTimers.push(window.setTimeout(() => card.click(), at));
+      at += got.length === 1 ? 0 : 140;
     }
+    this.refresh();
+  }
+
+  /** Every join of the batch plays its first-time reveal in turn; then its card shows the hero, and the screen is free again. */
+  private async playJoins(got: Pull[], batch: number): Promise<void> {
+    const px = got.length === 1 ? 230 : 70;
+    for (const p of got) {
+      if (!p.isNew) continue;
+      await queueReveal(this.meta, p.kind, { lucky: p.lucky, force: true });
+      if (batch !== this.batch) return;
+      const res = $('reveal').querySelector<HTMLElement>(`.tarotResult.joined[data-kind="${p.kind}"]`);
+      const front = res?.querySelector<HTMLElement>('.tarotSide.front');
+      front?.replaceChildren(heroCard(p.kind, px));
+      if (front) front.style.filter = '';
+    }
+    if (batch !== this.batch) return;
+    this.busy = false;
+    const fresh = got.filter(p => p.isNew).length;
+    const p = got[0];
+    $('resultSummary').textContent = got.length === 1
+      ? p.lucky && p.isNew ? 'Lucky! A whole hero answers the call' : p.lucky ? 'Lucky! A great store of rank shards' : p.isNew ? 'A new ally joins your company' : p.unlock ? 'Another step towards a new ally' : p.crowns ? 'A tribute for your kingdom' : 'Your company grows stronger'
+      : `${got.length} cards drawn${fresh ? ` · ${fresh} new ${fresh === 1 ? 'ally' : 'allies'}` : ''}`;
     this.refresh();
   }
 }
@@ -283,16 +250,6 @@ function barOf(part: number): HTMLElement {
   const bar = document.createElement('span');
   bar.className = 'bar';
   const fill = document.createElement('i');
-  fill.style.width = `${Math.min(1, part) * 100}%`;
-  bar.append(fill);
-  return bar;
-}
-
-/** The small bar on a pull's card (the stone look of the XP bar). */
-function cardBar(part: number): HTMLElement {
-  const bar = document.createElement('div');
-  bar.className = 'xpbar';
-  const fill = document.createElement('span');
   fill.style.width = `${Math.min(1, part) * 100}%`;
   bar.append(fill);
   return bar;

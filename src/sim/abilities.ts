@@ -17,6 +17,8 @@ import { traitsOf } from './traits';
 import { triggerDuoComboOnUlt } from './duoCombos';
 import { addRes, castHero, CHARGE_TO_POOL, heroKitOf, poolOf, poolOnDealt, poolOnTaken, resMax, tickPool, ultOnDamage } from './heroKits';
 import { kitStrike, kitTick } from './kits/effects';
+import { skillRiders } from './ailmentSources';
+import { AILMENT_SWITCH, blowRiders, charmFor, chillFor, cleanse, freezeFor, harmed, healThrough, isSilenced, setDot, stunFor, tickAilments } from './ailments';
 
 /** A skill fires at this much charge. */
 export const CHARGE_MAX = 100;
@@ -29,7 +31,7 @@ export const ULT_LEVEL = 30;
 
 /** Damage over time: `dmg` every `every` ms for `ms`. */
 export interface Dot {
-  kind: 'bleed' | 'burn' | 'curse';
+  kind: 'bleed' | 'burn' | 'curse' | 'poison';
   dmg: number;
   every: number;
   ms: number;
@@ -328,6 +330,8 @@ const sorted = (fs: Unit[]) => fs.sort((x, y) => x.hp - y.hp || x.id - y.id);
 
 /** Heal an ally (never past full), with the event for the renderer; the healing counts for `by` (its healer, or itself). */
 export function mendUnit(u: Unit, amount: number, out: BattleEvent[], by: Unit = u): void {
+  // (poison cuts healing, a curse turns it to harm: STATUS-FX)
+  amount = healThrough(u, amount, out);
   const n = Math.min(Math.round(amount * (u.healMult ?? 1)), u.maxHp - u.hp);
   if (n <= 0 || !u.alive) return;
   u.hp += n;
@@ -347,8 +351,7 @@ function flurry(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const strikes = 3 + tal(me, 'extra');
   for (let i = 0; i < strikes; i++) hurt(b, me, f, net(atkOf(me) * 0.8 * mult, f), i === strikes - 1, false, out, 'skill');
   if (f.alive) {
-    f.busyUntil = Math.max(f.busyUntil, b.t + durOf(me, STUN_MS));
-    f.stunUntil = b.t + durOf(me, STUN_MS);
+    stunFor(b, f, durOf(me, STUN_MS), true);
   }
   return true;
 }
@@ -402,7 +405,7 @@ function charm(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     .filter((x) => apart(me, x) <= reachOf(me, 5) && !(x.charmUntil !== undefined && x.charmUntil > b.t) && foes.some((o) => o !== x))
     .sort((x, y) => atkOf(y) - atkOf(x) || x.id - y.id)[0];
   if (!f) return false;
-  f.charmUntil = b.t + durOf(me, CHARM_MS);
+  charmFor(b, f, durOf(me, CHARM_MS));
   f.taunt = undefined;
   f.busyUntil = Math.min(f.busyUntil, b.t + 300);
   out.push({ kind: 'arc', from: me.id, to: f.id });
@@ -446,8 +449,7 @@ function gust(b: Battle, me: Unit, out: BattleEvent[], reach: number, mult: numb
     hurt(b, me, f, net(atkOf(me) * mult, f), false, false, out, 'skill');
     if (!f.alive) continue;
     if (stunMs) {
-      f.busyUntil = Math.max(f.busyUntil, b.t + stunMs);
-      f.stunUntil = b.t + stunMs;
+      stunFor(b, f, stunMs, true);
     }
     if (kitOf(f)?.passive.steady) continue;
     const to = { u: f.u + DIR[way][0], v: f.v + DIR[way][1] };
@@ -543,8 +545,7 @@ function chargeAt(b: Battle, me: Unit, out: BattleEvent[], o: ChargeOpts): boole
   }
   if (!f.alive) return true;
   if (o.stun) {
-    f.busyUntil = Math.max(f.busyUntil, b.t + durOf(me, STUN_MS));
-    f.stunUntil = b.t + durOf(me, STUN_MS);
+    stunFor(b, f, durOf(me, STUN_MS), true);
   }
   if (!o.knock) return true;
   const to = { u: f.u + DIR[way][0], v: f.v + DIR[way][1] };
@@ -585,8 +586,7 @@ function gaze(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   me.facing = wayTo(me, f);
   hurt(b, me, f, net(atkOf(me), f), false, false, out, 'skill');
   if (f.alive) {
-    f.busyUntil = Math.max(f.busyUntil, b.t + durOf(me, PETRIFY_MS));
-    f.stunUntil = b.t + durOf(me, PETRIFY_MS);
+    stunFor(b, f, durOf(me, PETRIFY_MS), true);
   }
   out.push({ kind: 'gaze', by: me.id, to: f.id });
   return true;
@@ -602,7 +602,7 @@ function nineTails(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     .slice(0, Math.min(3, foes.length - 1));
   if (!prey.length) return false;
   for (const f of prey) {
-    f.charmUntil = b.t + durOf(me, DREAM_MS);
+    charmFor(b, f, durOf(me, DREAM_MS));
     f.taunt = undefined;
     f.busyUntil = Math.min(f.busyUntil, b.t + 300);
     out.push({ kind: 'arc', from: me.id, to: f.id });
@@ -630,8 +630,7 @@ function stoneCurse(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   for (const f of seen) {
     hurt(b, me, f, net(atkOf(me) * 1.2, f), false, false, out, 'skill');
     if (f.alive) {
-      f.busyUntil = Math.max(f.busyUntil, b.t + durOf(me, STONE_MS));
-      f.stunUntil = b.t + durOf(me, STONE_MS);
+      stunFor(b, f, durOf(me, STONE_MS), true);
     }
     out.push({ kind: 'gaze', by: me.id, to: f.id });
   }
@@ -731,8 +730,7 @@ function soulNova(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   for (const f of near) {
     hurt(b, me, f, net(atkOf(me) * 1.3, f), false, false, out, 'skill');
     if (!f.alive) continue;
-    f.busyUntil = Math.max(f.busyUntil, b.t + NOVA_MS);
-    f.stunUntil = b.t + NOVA_MS;
+    freezeFor(b, f, NOVA_MS, true, me);
   }
   return true;
 }
@@ -741,17 +739,16 @@ function soulNova(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 const SHARD_REACH = 2;
 const SHARD_MS = 1200;
 function shardBurst(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  return burstAround(b, me, out, SHARD_REACH, 1.0, SHARD_MS);
+  return burstAround(b, me, out, SHARD_REACH, 1.0, SHARD_MS, 'freeze');
 }
 /** Every foe within `reach` is hurt for `mult` of the attack and held still for `ms`. */
-function burstAround(b: Battle, me: Unit, out: BattleEvent[], reach: number, mult: number, ms: number): boolean {
+function burstAround(b: Battle, me: Unit, out: BattleEvent[], reach: number, mult: number, ms: number, kind: 'stun' | 'freeze' = 'stun'): boolean {
   const near = foesOf(b, me).filter((f) => apart(me, f) <= reach);
   if (!near.length) return false;
   for (const f of near) {
     hurt(b, me, f, net(atkOf(me) * mult, f), false, false, out, 'skill');
     if (!f.alive) continue;
-    f.busyUntil = Math.max(f.busyUntil, b.t + ms);
-    f.stunUntil = b.t + ms;
+    stunFor(b, f, ms, true, kind, me);
   }
   return true;
 }
@@ -770,9 +767,9 @@ function holyChallenge(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 const BLESS_MS = 5000;
 function benediction(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const team = b.units.filter((a) => a.alive && a.side === me.side);
-  if (!team.some((a) => a.dot || a.hp < a.maxHp * 0.85)) return false;
+  if (!team.some((a) => harmed(a) || a.hp < a.maxHp * 0.85)) return false;
   for (const a of team) {
-    a.dot = undefined;
+    cleanse(b, a);
     a.hot = { amount: atkOf(me) * 1.2, every: 1000, next: b.t + 1000, until: b.t + durOf(me, BLESS_MS), by: me.id };
     out.push({ kind: 'heal', to: a.id, amount: 0, by: me.id });
   }
@@ -842,7 +839,6 @@ function snareTrap(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 /** Warlock: the three toughest foes in reach are cursed: they burn for a few seconds and he drinks part of it. */
 const HEX_MS = 5000;
 const HEX_EVERY = 500;
-const HEX_DRAIN = 0.6;
 function hex(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const def = defOf(me);
   const prey = foesOf(b, me)
@@ -851,7 +847,7 @@ function hex(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     .slice(0, 3);
   if (!prey.length) return false;
   for (const f of prey) {
-    f.dot = { kind: 'curse', dmg: Math.max(1, Math.round(atkOf(me) * 0.35)), every: HEX_EVERY, ms: durOf(me, HEX_MS), by: me.id, next: b.t + HEX_EVERY, until: b.t + durOf(me, HEX_MS) };
+    setDot(b, f, { kind: 'curse', dmg: Math.max(1, Math.round(atkOf(me) * 0.35)), every: HEX_EVERY, ms: durOf(me, HEX_MS), by: me.id, next: b.t + HEX_EVERY, until: b.t + durOf(me, HEX_MS) });
     out.push({ kind: 'arc', from: me.id, to: f.id });
   }
   return true;
@@ -950,7 +946,7 @@ function drag(b: Battle, f: Unit, to: At): boolean {
 }
 
 /** The ms a foe is slowed for, taken on to any slow it has already. */
-const slowFor = (b: Battle, f: Unit, ms: number) => (f.slowUntil = Math.max(f.slowUntil ?? 0, b.t + ms));
+const slowFor = (b: Battle, f: Unit, ms: number): void => void chillFor(b, f, ms);
 
 /** Shambler: every foe within two tiles starts to rot, and the Shambler drinks part of what it costs them. */
 const ROT_MS = 4000;
@@ -959,7 +955,9 @@ function rottingTouch(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!near.length) return false;
   const ms = durOf(me, ROT_MS);
   for (const f of near) {
-    f.dot = { kind: 'curse', dmg: Math.max(1, Math.round(atkOf(me) * 0.3)), every: HEX_EVERY, ms, by: me.id, next: b.t + HEX_EVERY, until: b.t + ms };
+    // (the rot is a curse: it ticks, he drinks from it, and with STATUS-FX's ailments it turns the foe's healing to harm. It was to become poison,
+    // but the dead and the golems shrug poison off, and the Shambler fell out of step with the roster: docs/notes/status-fx.md)
+    setDot(b, f, { kind: 'curse', dmg: Math.max(1, Math.round(atkOf(me) * 0.3)), every: HEX_EVERY, ms, by: me.id, next: b.t + HEX_EVERY, until: b.t + ms });
     out.push({ kind: 'arc', from: me.id, to: f.id });
   }
   return true;
@@ -1012,8 +1010,7 @@ function grapple(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     out.push({ kind: 'arc', from: me.id, to: f.id });
     hurt(b, me, f, net(atkOf(me) * 1.6 * blowMult(tileOf(b, me).h, tileOf(b, f).h, me.facing, f.facing), f), true, false, out, 'skill');
     if (f.alive) {
-      f.busyUntil = Math.max(f.busyUntil, b.t + durOf(me, 1000));
-      f.stunUntil = b.t + durOf(me, 1000);
+      stunFor(b, f, durOf(me, 1000), true);
     }
     return true;
   }
@@ -1104,8 +1101,7 @@ function voltageBlink(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     out.push({ kind: 'arc', from: me.id, to: f.id });
     hurt(b, me, f, net(atkOf(me) * 1.4, f), false, false, out, 'skill');
     if (f.alive) {
-      f.busyUntil = Math.max(f.busyUntil, b.t + durOf(me, DISCHARGE_MS));
-      f.stunUntil = b.t + durOf(me, DISCHARGE_MS);
+      stunFor(b, f, durOf(me, DISCHARGE_MS), true);
     }
   }
   return true;
@@ -1138,7 +1134,7 @@ function holyLight(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const team = b.units.filter((a) => a.alive && a.side === me.side);
   const worst = team.filter((a) => a.hp < a.maxHp * 0.8).sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp || x.id - y.id)[0];
   if (!worst) return false;
-  worst.dot = undefined;
+  cleanse(b, worst);
   mendUnit(worst, atkOf(me) * 5, out, me);
   for (const a of team) if (a !== worst && apart(a, worst) <= reachOf(me, 2)) mendUnit(a, atkOf(me) * 2, out, me);
   return true;
@@ -1162,7 +1158,7 @@ function dragonBreath(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   for (const f of best.sort((x, y) => apart(me, x) - apart(me, y) || x.id - y.id)) {
     out.push({ kind: 'shot', by: me.id, to: f.id, shot: 'fire', ms: 120 + apart(me, f) * 40 });
     hurt(b, me, f, net(atkOf(me) * 1.4, f), true, false, out, 'skill');
-    if (f.alive) f.dot = { kind: 'burn', dmg: Math.max(1, Math.round(atkOf(me) * 0.12)), every: 500, ms, by: me.id, next: b.t + 500, until: b.t + ms };
+    if (f.alive) setDot(b, f, { kind: 'burn', dmg: Math.max(1, Math.round(atkOf(me) * 0.12)), every: 500, ms, by: me.id, next: b.t + 500, until: b.t + ms });
   }
   return true;
 }
@@ -1221,8 +1217,9 @@ const FORM_HEAL = 0.2;
 function demonForm(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!foesOf(b, me).some((f) => apart(me, f) <= 7)) return false;
   if (me.form === undefined) me.power = (me.power ?? 1) * FORM_MULT;
-  me.form = { until: b.t + durOf(me, FORM_MS) };
-  mendUnit(me, me.maxHp * FORM_HEAL, out);
+  // (its tuned strength lengthens the form and deepens the heal, as the other ultimates' stuns and heals scale: ULT-CHARGE)
+  me.form = { until: b.t + durOf(me, Math.round(FORM_MS * Math.sqrt(castPower()))) };
+  mendUnit(me, me.maxHp * FORM_HEAL * castPower(), out);
   out.push({ kind: 'frenzy', by: me.id, n: 3 });
   return true;
 }
@@ -1557,6 +1554,8 @@ export const kitOf = (u: Unit): Kit | undefined => u.kit ?? KITS[u.def];
 
 /** A free hero whose charge is full lets its skill go, if there is something to use it on. */
 export function tryCast(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  // (a silenced fighter casts nothing, STATUS-FX)
+  if (isSilenced(b, me)) return false;
   // (a placed hero casts from its own kit: its pool, two skills and the ultimate by tap or Auto, `heroKits.ts`)
   const hk = heroKitOf(me);
   if (hk) return castHero(b, me, hk, out);
@@ -1575,13 +1574,19 @@ export function tryCast(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 
 /** Cast a skill with the caster's `pow` talent (and `more`, an ultimate's) lifting its attack while it runs: the blows, the volleys and meteors, the healing and what is called up all take it. */
 export function powered(b: Battle, me: Unit, s: Skill, more: number, out: BattleEvent[]): boolean {
+  const from = out.length;
   const k = 1 + tal(me, 'pow') + more;
-  if (k === 1) return s.cast(b, me, out);
-  me.power = (me.power ?? 1) * k;
-  castK = k;
-  const ok = s.cast(b, me, out);
-  castK = 1;
-  me.power = (me.power ?? 1) / k;
+  let ok: boolean;
+  if (k === 1) ok = s.cast(b, me, out);
+  else {
+    me.power = (me.power ?? 1) * k;
+    castK = k;
+    ok = s.cast(b, me, out);
+    castK = 1;
+    me.power = (me.power ?? 1) / k;
+  }
+  // (what the skill leaves on the foes it struck: a burn, a shock, a bleed... `ailmentSources.ts`, STATUS-FX)
+  if (ok) skillRiders(b, me, s.name, out, from);
   return ok;
 }
 /** How strong the skill being cast is, as a multiple (1 unless a talent or an ultimate's `power` lifts it): an ultimate's engines scale what is not an attack (how long a stun or guard lasts, how much is shielded) by it. */
@@ -1715,10 +1720,9 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
   const left = Math.max(1, Math.round(dmg));
   // (a talent's rider on a skill: what it hits is slowed or held)
   if (src === 'skill' && by.eq?.tal && by.side !== to.side) {
-    if (by.eq.tal.skillSlow) to.slowUntil = Math.max(to.slowUntil ?? 0, b.t + by.eq.tal.skillSlow);
+    if (by.eq.tal.skillSlow) chillFor(b, to, by.eq.tal.skillSlow);
     if (by.eq.tal.skillStun) {
-      to.busyUntil = Math.max(to.busyUntil, b.t + by.eq.tal.skillStun);
-      to.stunUntil = Math.max(to.stunUntil ?? 0, b.t + by.eq.tal.skillStun);
+      stunFor(b, to, by.eq.tal.skillStun);
     }
   }
   fxStruck(b, by, to, left, blow && !splash, out);
@@ -1774,17 +1778,20 @@ export function afterBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg = 0,
     }
   }
   if (!to.alive) return;
-  if (p?.slow) to.slowUntil = Math.max(to.slowUntil ?? 0, b.t + p.slow);
+  if (p?.slow) chillFor(b, to, p.slow);
   // (the relic sets: a hero's blows burn the foe, its first blow chills it, its crits make it bleed)
   const set = by.side === 'hero' ? b.relics?.set : undefined;
   if (set?.chill && !to.chilled) {
     to.chilled = true;
-    to.slowUntil = Math.max(to.slowUntil ?? 0, b.t + set.chill);
+    chillFor(b, to, set.chill, false, true, by);
   }
   const share = set && (crit ? set.bleed : set.burn);
-  const setDot: Dot | undefined = share ? { kind: crit ? 'bleed' : 'burn', dmg: Math.max(1, Math.round(atkOf(by) * share)), every: 500, ms: crit ? 3000 : 2000 } : undefined;
-  const dot = (crit ? p?.crit?.bleed : p?.ignite) ?? setDot;
-  if (dot) to.dot = { ...dot, by: by.id, next: b.t + dot.every, until: b.t + dot.ms };
+  const relicDot: Dot | undefined = share ? { kind: crit ? 'bleed' : 'burn', dmg: Math.max(1, Math.round(atkOf(by) * share)), every: 500, ms: crit ? 3000 : 2000 } : undefined;
+  const dot = (crit ? p?.crit?.bleed : p?.ignite) ?? relicDot;
+  // (with the ailments on, a venomous foe's blows poison rather than curse: Nyssa and the Calamity's Blight, STATUS-FX)
+  const venom = AILMENT_SWITCH.on && dot?.kind === 'curse' && (by.def === 'eliteNyssa' || by.def === 'calBoss5' || by.def === 'calBoss6');
+  if (dot) setDot(b, to, { ...dot, ...(venom ? { kind: 'poison' as const } : {}), by: by.id, next: b.t + dot.every, until: b.t + dot.ms });
+  blowRiders(b, by, to);
 }
 
 /** Land a volley or a meteor: everything of the caster's foes in the 3x3 is struck. */
@@ -1846,17 +1853,8 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
         if (weakest) mendUnit(weakest, atkOf(u) * p.mend.share, out, u);
       }
     }
-    const d = u.dot;
-    if (d) {
-      if (b.t >= d.until) u.dot = undefined;
-      else if (b.t >= d.next) {
-        d.next += d.every;
-        const by = b.units.find((x) => x.id === d.by)!;
-        hurt(b, by, u, d.dmg, false, false, out, 'dot');
-        // (a curse feeds the one who laid it)
-        if (d.kind === 'curse' && by.alive) mendUnit(by, d.dmg * HEX_DRAIN, out);
-      }
-    }
+    // (its ailments: the damage over time ticks, a curse feeds the one who laid it, shocks spark, the ended ones go: `ailments.ts`)
+    tickAilments(b, u, out);
   }
   for (const z of b.zones) {
     while (z.next <= b.t && z.next <= z.until) {
@@ -1880,8 +1878,7 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
       const layer = b.units.find((x) => x.id === tr.by)!;
       hurt(b, layer, f, net(tr.dmg, f), true, false, out, 'skill');
       if (f.alive) {
-        f.busyUntil = Math.max(f.busyUntil, b.t + durOf(layer, tr.hold ?? ROOT_MS));
-        f.stunUntil = b.t + durOf(layer, tr.hold ?? ROOT_MS);
+        stunFor(b, f, durOf(layer, tr.hold ?? ROOT_MS), true);
       }
     }
     b.traps = b.traps.filter((tr) => tr.until > b.t);

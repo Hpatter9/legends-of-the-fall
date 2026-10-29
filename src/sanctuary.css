@@ -48,7 +48,7 @@
 #towerMap .rsLocation .rtCard { background:linear-gradient(#0b1c13ec,#08110df5);border:1px solid #bf9a57;box-shadow:0 0 0 3px #b89a4925,0 20px 60px #000; }
 .riftBattleBackdrop svg {width:100%;height:100%;opacity:.8;}
 @media (max-height:800px) { .rsHead {padding-top:8px;padding-bottom:7px;} .rsHead h2 {font-size:18px;} .rsDestination > svg {height:58px;} .rsDestinationName {font-size:11px;min-height:31px;padding-top:5px;} .rsDetails {font-size:10px;min-height:61px;padding-block:7px;} .rsDestinations {padding-top:7px;} .rsScene {min-height:170px;} }
-@media (prefers-reduced-motion:no-preference) { .rsPortalView {animation:rsBreathe 5s ease-in-out infinite;} .rsHero {animation:rsArrive .6s ease-out both;} @keyframes rsBreathe {50% {filter:brightness(1.2);opacity:.9;}} @keyframes rsArrive {from{opacity:0;transform:translateY(-12px) scale(.8);}to{opacity:1;transform:none;}} }
+@media (prefers-reduced-motion:no-preference) { .rsPortalView {animation:rsBreathe 5s ease-in-out infinite;} .rsHero {animation:rsArrive .6s ease-out both;} @keyframes rsBreathe {50% {transform:scale(1.025);}} @keyframes rsArrive {from{opacity:0;transform:translateY(-12px) scale(.8);}to{opacity:1;transform:none;}} }
 .rsCrossing {position:absolute;z-index:10;inset:0;display:grid;place-items:center;color:#fff3cc;font:700 22px var(--display);background:radial-gradient(ellipse,#3fae8c80,#071b17ef);animation:rsCross .65s ease-in both;}
 .rsDeparting .rsParty {transition:transform .5s,opacity .5s;transform:translateY(-85px) scale(.4);opacity:0;}
 @keyframes rsCross {from{opacity:0;}to{opacity:1;}}

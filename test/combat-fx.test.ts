@@ -8,6 +8,7 @@ import { readyBattle } from './helpers';
 import { ALL_HEROES, UNITS } from '../src/sim/units';
 import { FOES } from '../src/sim/foes';
 import { FLASH_MAX, FLASH_MS, ULT_TINT, arcStyle, bits, deathKind, ELEMENTS, hitStopMs, impactElement, maxStatuses, missileOf, nudgeOf, packKey, SKILL_ELEMENT, SPELL_CAST, SPELL_ELEMENT, SPELL_TOUCH, STATUS_LOOKS, statusesOf, type PackKey, type StatusSource } from '../src/render/fxRules';
+import { shownAilments, type AilmentSource } from '../src/render/statusStyles';
 
 const atlas = JSON.parse(readFileSync('src/art/fx/pack/atlas.json', 'utf8')) as Record<string, [number, number, number]>;
 
@@ -94,17 +95,22 @@ describe('statuses', () => {
   const none: StatusSource = { alive: true };
   it('shows nothing on a fighter with no status, or a fallen one', () => {
     assert.deepEqual(statusesOf(none, 1000), []);
-    assert.deepEqual(statusesOf({ alive: false, stunUntil: 5000 }, 1000), []);
+    assert.deepEqual(statusesOf({ alive: false, hasteUntil: 5000 }, 1000), []);
   });
-  it('shows each status while it lasts and not after', () => {
-    const u: StatusSource = { alive: true, stunUntil: 2000, slowUntil: 3000, hasteUntil: 4000, dot: { kind: 'burn', dmg: 1, every: 500, ms: 2000, by: 1, next: 0, until: 2500 }, shield: { hp: 5, until: 3500 } };
-    assert.deepEqual(statusesOf(u, 1000), ['stun', 'burn', 'slow', 'shield', 'haste']);
-    assert.deepEqual(statusesOf(u, 2600), ['slow', 'shield', 'haste']);
+  // (STATUS-FX: the ailments left these loops for their own layer; `shownAilments` reads them, the new list and the old timers alike)
+  it('shows each buff while it lasts and not after', () => {
+    const u: StatusSource = { alive: true, hasteUntil: 4000, shield: { hp: 5, until: 3500 } };
+    assert.deepEqual(statusesOf(u, 1000), ['shield', 'haste']);
+    assert.deepEqual(statusesOf(u, 3600), ['haste']);
     assert.deepEqual(statusesOf(u, 4500), []);
   });
-  it('tells a bleed and a curse from a burn, and ignores a spent shield', () => {
-    assert.deepEqual(statusesOf({ alive: true, dot: { kind: 'bleed', dmg: 1, every: 1, ms: 1, by: 1, next: 0, until: 9 } }, 1), ['bleed']);
-    assert.deepEqual(statusesOf({ alive: true, dot: { kind: 'curse', dmg: 1, every: 1, ms: 1, by: 1, next: 0, until: 9 } }, 1), ['curse']);
+  it('shows each ailment while it lasts and not after, the latest first, and tells a bleed and a curse from a burn', () => {
+    const u: AilmentSource = { alive: true, stunUntil: 2000, slowUntil: 3000, dot: { kind: 'burn', dmg: 1, every: 500, ms: 2000, by: 1, next: 0, until: 2500 } };
+    assert.deepEqual(shownAilments(u, 1000), ['burn', 'stun', 'chill']);
+    assert.deepEqual(shownAilments(u, 2600), ['chill']);
+    assert.deepEqual(shownAilments(u, 4500), []);
+    assert.deepEqual(shownAilments({ alive: true, ail: [{ kind: 'bleed', by: 1, until: 9 }, { kind: 'curse', by: 1, until: 9 }] }, 1), ['curse', 'bleed']);
+    assert.deepEqual(shownAilments({ alive: false, ail: [{ kind: 'bleed', by: 1, until: 9 }] }, 1), []);
     assert.deepEqual(statusesOf({ alive: true, shield: { hp: 0, until: 9 } }, 1), []);
   });
   it('draws fewer loops on battery saver', () => {

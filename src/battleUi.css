@@ -16,6 +16,7 @@ body[data-phase='fight'] #bench .card .recycle { display: none; }
 body[data-phase='fight'] #bench .card i { height: 4px; margin: 1px 1px 0; }
 body[data-phase='fight'] #bench .card.g2 { box-shadow: none; border-color: var(--b5); }
 body[data-phase='fight'] #bench .card.g3 { box-shadow: none; border-color: var(--e6); }
+body[data-phase='fight'] #bench .card.g4 { box-shadow: none; border-color: var(--p4); }
 
 /* A spell card is dragged onto the grid to cast it: the card takes the touch whole, and its icon follows the finger. */
 .spell { touch-action: none; }
@@ -34,6 +35,8 @@ body[data-phase='fight'] #heroBar:not(:empty) ~ #benchWrap { display: none; }
 .hb { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; padding: 3px 2px 2px; border: 2px solid var(--s8); border-radius: 0;
   background: linear-gradient(rgb(var(--e8-rgb) / 0.06), rgb(var(--black-rgb) / 0.3)), var(--s3); color: var(--ink, #f0e6d2); font: 400 12px/12px var(--body); touch-action: manipulation; cursor: pointer; }
 .hbRing { position: relative; width: 44px; height: 44px; flex: none; }
+/* (rank 4, the top grade since MERGE-TWO: a violet glow round the ring) */
+.hb.g4 .hbRing { filter: drop-shadow(0 0 4px rgb(var(--p4-rgb) / 0.95)); }
 .hbRing svg { position: absolute; inset: 0; width: 44px; height: 44px; transform: rotate(-90deg); }
 .hbRing circle { fill: none; stroke-width: 4; }
 .hbRing .trk { stroke: rgb(var(--black-rgb) / 0.55); }
@@ -51,10 +54,12 @@ body[data-phase='fight'] #heroBar:not(:empty) ~ #benchWrap { display: none; }
 .hbPips { display: flex; gap: 2px; justify-content: center; }
 .hbPips b { min-width: 14px; padding: 0 1px; font: 400 12px/12px var(--body); text-align: center; color: rgb(255 255 255 / 0.45); background: rgb(var(--black-rgb) / 0.45); border: 1px solid rgb(255 255 255 / 0.18); }
 .hbPips b.lit { color: var(--black, #000); background: #ffe27a; border-color: #fff3b0; }
-.hbPips b.shut { color: rgb(255 255 255 / 0.35); }
+/* (skill 2 still locked, below level 10: the pip still reads "2" but is greyed out, dim and colourless, and never lit; FX-CLEAR) */
+.hbPips b.shut, .hbPips b.shut.lit { color: rgb(255 255 255 / 0.28); background: rgb(70 70 70 / 0.55); border-color: rgb(255 255 255 / 0.1); filter: grayscale(1); opacity: 0.55; }
 .hbName { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 12px/12px var(--body); }
-.hb.locked .hbPic { filter: grayscale(0.7) brightness(0.75); }
-.hb.locked .hbRing .arc { stroke: transparent; }
+/* (a hero without its ultimate yet, HEROBAR-LOCK: no ring at all; the portrait fills the ring's place in a plain frame, so the tile keeps its shape) */
+.hb.locked .hbRing svg { display: none; }
+.hb.locked .hbPic { left: 0; top: 0; width: 44px; height: 44px; box-sizing: border-box; border: 2px solid #a28a58; }
 .hb.fallen { filter: grayscale(1) brightness(0.6); }
 .hb.ready { border-color: var(--gold, #f5c542); box-shadow: 0 0 0 1px var(--gold-hi, #ffe08a), 0 0 12px rgb(255 210 74 / 0.8); }
 /* (the ready glow is steady; what moves is the portrait's ring, breathing a little bigger and back: no looping brightness) */
@@ -94,6 +99,7 @@ body[data-phase='fight'] #spellCards .spell em { font-weight: 400; }
 .heroBar.two .hb { padding: 2px; gap: 2px; }
 .heroBar.two .hbRing, .heroBar.two .hbRing svg { width: 34px; height: 34px; }
 .heroBar.two .hbPic { left: 5px; top: 5px; width: 24px; height: 24px; }
+.heroBar.two .hb.locked .hbPic { left: 0; top: 0; width: 34px; height: 34px; }
 .heroBar.two .hbPlate { top: 22px; }
 .heroBar.two .hbName, .heroBar.two .hbPips { display: none; }
 .heroBar.flat .hb { display: grid; grid-template-columns: 34px minmax(0, 1fr); grid-template-rows: auto auto auto; column-gap: 3px; row-gap: 3px; align-items: center; }

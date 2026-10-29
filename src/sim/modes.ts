@@ -10,6 +10,8 @@ import type { Battle } from './battle';
 import { dailyArea, dailySeed, dateKey } from './dailySeed';
 import { dailyBossName, dailyChestSeed, dailyWaveCrowns, DAILY_WAVES } from './daily';
 import { kindPower, powerOf } from './power';
+import { levelOfKind } from './levels';
+import { ULT_LEVEL } from './abilities';
 import { gradeBoost, runTheme, waveArmyOf, bandFor, isBossRun, isBossStage, recruit, START_GOLD, SUMMON_BASE, type Run } from './run';
 import { bonusGold } from './castle';
 import { ascRules, ascUnlocked } from './ascension';
@@ -64,11 +66,17 @@ export function dailyRun(date: number, practice = false, scale = 1): Run {
  * The daily is tuned for a fresh save (`docs/notes/daily-goal.md`); levels past that would otherwise make it trivial (`docs/notes/difficulty.md`).
  */
 /** The share of the power ratio the foes answer with (below 1: a hero's power is not all won in a fight, and the daily is short). */
-export const DAILY_ANSWER = { share: 0.75 };
+/** `ult`: the foes' answer to the ultimates, which `kindPower` does not count (ULT-CHARGE, `docs/notes/ult-charge.md`): this much stronger again for
+ *  each of the five whose ultimate is open (level `ULT_LEVEL` or more), so a levelled save clears the daily about as often as before the ultimates came
+ *  round once or twice a fight. A fresh save (no hero at 30) meets the daily as it was. 0.17 until STATUS-FX's ailments (their boss rules made the
+ *  day's boss harder for a levelled save), then 0.15, and 0.17 again since MERGE-TWO (two to merge made a levelled squad stronger: 76% and 78% clears at
+ *  levels 30 and 50, back to 70% and 75%; `docs/notes/merge-two.md`). */
+export const DAILY_ANSWER = { share: 0.75, ult: 0.17 };
 export function dailyScale(m: Meta, date?: number): number {
   const five: readonly string[] = (date !== undefined ? dailyTheme(date)?.five : undefined) ?? HEROES;
   const ratio = five.reduce((n, k) => n + kindPower(m, k) / powerOf(k, gradeBoost(1, 0, 1)), 0) / five.length;
-  return Math.max(1, Math.round(ratio ** DAILY_ANSWER.share * 100) / 100);
+  const ults = five.filter((k) => levelOfKind(m, k) >= ULT_LEVEL).length;
+  return Math.max(1, Math.round(ratio ** DAILY_ANSWER.share * (1 + DAILY_ANSWER.ult * ults) * 100) / 100);
 }
 
 /** Start a date's daily run. The first play of the date counts; a later one is practice. Records the play in the meta. */

@@ -10,6 +10,7 @@ import { standable, tileAt } from './board';
 import { CHARGE_MAX, mendUnit } from './abilities';
 import { addUnit, apart, defOf, hurt, TICK_MS, unitAt, type Battle, type BattleEvent, type Unit } from './battle';
 import { spellBudget, type Castle } from './castle';
+import { AILMENT_SWITCH, burnFor, chillFor, cleanse, curseFor, freezeFor, poisonFor, shockFor, tagged, unfear, ward } from './ailments';
 
 export type SpellId =
   | 'heal' | 'meteor' | 'haste' | 'shield' | 'chain' | 'frost' | 'rally' | 'quake' | 'smite' | 'resurrect' | 'poison'
@@ -269,6 +270,7 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
         hit.add(at.id);
         fx(at);
         strike(b, at, power, false, ev);
+        shockFor(b, KING, at);
         power *= CHAIN_FALLOFF;
         const from: Unit = at;
         if (n === CHAIN_JUMPS) break;
@@ -279,10 +281,8 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
     }
     case 'frost':
       for (const x of foesIn(b, u, v)) {
-        x.busyUntil = Math.max(x.busyUntil, b.t + FREEZE_MS);
-        x.stunUntil = b.t + FREEZE_MS;
-        x.step = undefined;
-        x.slowUntil = b.t + SLOW_MS;
+        if (freezeFor(b, x, FREEZE_MS, true)) x.step = undefined;
+        chillFor(b, x, SLOW_MS, true, true);
         fx(x);
       }
       break;
@@ -311,10 +311,9 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
     case 'deepfreeze': {
       const x = foesIn(b, u, v).sort((y, z) => z.hp - y.hp || y.id - z.id)[0];
       if (x) {
-        x.busyUntil = Math.max(x.busyUntil, b.t + DEEPFREEZE_MS);
-        x.stunUntil = b.t + DEEPFREEZE_MS;
-        x.step = undefined;
-        x.brittleUntil = b.t + DEEPFREEZE_MS;
+        if (freezeFor(b, x, DEEPFREEZE_MS, true)) x.step = undefined;
+        // (with the ailments on, the freeze itself makes it brittle, as long as it holds)
+        if (!AILMENT_SWITCH.on) x.brittleUntil = b.t + DEEPFREEZE_MS;
         fx(x);
       }
       break;
@@ -323,6 +322,8 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
       for (const x of b.units) {
         if (!x.alive || x.side !== 'hero') continue;
         x.charge = Math.min(CHARGE_MAX, x.charge + WARCRY_CHARGE);
+        // (the cry steadies them: no hero stays afraid, STATUS-FX)
+        unfear(x);
         fx(x);
       }
       break;
@@ -341,7 +342,7 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
     case 'cleanse':
       for (const x of b.units) {
         if (!x.alive || x.side !== 'hero' || !inArea(x, u, v)) continue;
-        x.dot = undefined;
+        cleanse(b, x);
         x.slowUntil = undefined;
         x.charmUntil = undefined;
         x.weakUntil = undefined;
@@ -349,6 +350,8 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
         if (x.stunUntil !== undefined && x.stunUntil > b.t) x.busyUntil = Math.min(x.busyUntil, b.t + TICK_MS);
         x.stunUntil = undefined;
         mendUnit(x, x.maxHp * CLEANSE_HEAL, ev);
+        // (and wards them a moment against the next: STATUS-FX)
+        ward(b, x);
         fx(x);
       }
       break;
@@ -377,6 +380,8 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
         // (a second hex only lengthens the first: the attack is cut once)
         if (x.weakUntil === undefined) x.power = (x.power ?? 1) * HEX_MULT;
         x.weakUntil = b.t + HEX_MS;
+        // (and its healing is turned to harm: STATUS-FX)
+        curseFor(b, KING, x, HEX_MS);
         fx(x);
       }
       break;
@@ -388,7 +393,7 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
       x.busyUntil = b.t + 500;
       x.charge = 0;
       x.charge2 = undefined;
-      x.dot = undefined;
+      cleanse(b, x);
       ev.push({ kind: 'heal', to: x.id, amount: x.hp });
       fx(x);
       break;
@@ -406,12 +411,18 @@ export function settleFalls(b: Battle, out: BattleEvent[]): void {
     for (const x of b.units) {
       if (!x.alive || x.side !== 'foe' || !inArea(x, f.u, f.v)) continue;
       hurt(b, KING, x, Math.max(1, (f.power ?? METEOR_POWER) - defOf(x).def), true, false, out, 'skill');
+      // (a meteor, not a shower's star, sets what it strikes burning: STATUS-FX)
+      if (f.power === undefined) burnFor(b, KING, x);
     }
   }
   for (const c of s.clouds) {
     while (c.next <= b.t && c.next <= c.until) {
       c.next += POISON_EVERY;
-      for (const x of foesIn(b, c.u, c.v)) hurt(b, KING, x, POISON_DMG, false, false, out, 'dot');
+      for (const x of foesIn(b, c.u, c.v)) {
+        tagged(out, 'poison', () => hurt(b, KING, x, POISON_DMG, false, false, out, 'dot'));
+        // (and each bite leaves a stack of poison: STATUS-FX)
+        poisonFor(b, KING, x);
+      }
     }
   }
   s.clouds = s.clouds.filter((c) => c.until > b.t);

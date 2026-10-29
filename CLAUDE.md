@@ -50,7 +50,7 @@ Chronos later, so keep its conventions.
 - `src/sim/board.ts`: the grid (8 across, 11 deep: `W`, `D`; the Calamity's is 10 x 13), heights (hills, platforms with a staircase, pits; `docs/notes/height.md`), the terrain (shallow and deep water, ice, lava, tall grass, shrines, ruined walls, powder barrels; `docs/notes/map-layouts.md`), `canStep` (each unit's own `jump`), `sightClear`, `makeBoard(seed)`.
 - `src/sim/layouts.ts`: the battlefield shapes (river, hill, pass, ruined fort, islands, ring, ravine, plain, rolling land), picked by land and seed (`layoutFor`) and laid over the land (`applyLayout`); `src/sim/terrainInfo.ts` is the codex's words for each.
 - `src/sim/lands.ts` / `weather.ts`: the seventeen lands (`AREAS`; `CLASSIC_AREAS` are the first six), which land each army's waves and the spire use, and each fight's weather (`weatherOf(board)`, looks only; `docs/notes/map-lands.md`).
-- `src/sim/starter.ts` / `src/starter.ts`: the starter pick (three packs of three heroes for a new save). Heroes have no rarity; every hero is as strong as any other (`docs/notes/no-rarity.md`).
+- `src/sim/starter.ts` / `src/starter.ts`: the starter pick (two fixed packs of three simple heroes for every new save, `FIXED_PACKS`; `docs/notes/starter-king.md`). Heroes have no rarity; every hero is as strong as any other (`docs/notes/no-rarity.md`).
 - `src/sim/unlock.ts` / `unlockRules.ts` / `contentHeroes.ts`: heroes are collected by shards (`Meta.unlock`) or, for ten of them, earned by a milestone (`docs/notes/hero-shards.md`; `npm run unlock-pace` models the pace).
 - `src/sim/daily.ts`: the daily's shape (ten waves, the boss of the day, `dailyArmy`), with `modes.ts` (`settleDaily`, `dailyLine`) and `docs/notes/daily-goal.md`.
 - `src/sim/units.ts`: `UNITS` (the five heroes; the foes come from `foes.ts`), `HEROES`. `src/sim/foes.ts`: `FOES`, `FOE_BANDS`.
@@ -64,7 +64,7 @@ Chronos later, so keep its conventions.
 - `src/render/sound.ts`: the page's sound (the API: `play`, `playEvents`, `duck`, `setAct`); `audioProcessors.ts` (the audiorective
   processors: cue synth, music player, bus mixer), `audioRules.ts` (pure: pan, ducking, adaptive music), `soundRules.ts` (which cues
   an event calls for). See `docs/notes/audio-engine.md`.
-- `src/render/epicMusic.ts`: the music the page plays: 23 original gothic-symphonic tracks (`src/audio/*.opus`, rendered offline by `tools/epic-music/`; `npm run music` re-renders them; `docs/notes/epic-music.md`), which track each place and fight takes (`placeOf`, `fightTrack`, `fightLevel`) and the loader. `build.mjs` copies the files and lists them in the service worker.
+- `src/render/epicMusic.ts`: the music the page plays: 23 original gothic-symphonic tracks (`src/audio/*.opus`, rendered offline by `tools/epic-music/`; `npm run music` re-renders them; `docs/notes/epic-music.md`), which track each place takes (`placeOf`) and the loader; `src/render/battleMusic.ts` picks a battle's one track (`trackOfRun`, kept wave to wave) and its victory music (`docs/notes/battle-music.md`). `build.mjs` copies the files and lists them in the service worker.
 - `src/main.ts`: the page: input (drag or tap to place), camera fit, the bench and buttons. `window.__game` is the game.
 - `src/index.html`: the page and its CSS; `build.mjs` builds `out/web`.
 

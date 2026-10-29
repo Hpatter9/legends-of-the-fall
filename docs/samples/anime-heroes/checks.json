@@ -1,0 +1,23 @@
+[
+  {
+    "width": 393,
+    "height": 852,
+    "heroesReviewed": 45,
+    "errors": [],
+    "offline": true
+  },
+  {
+    "width": 360,
+    "height": 780,
+    "heroesReviewed": 5,
+    "errors": [],
+    "offline": false
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "heroesReviewed": 5,
+    "errors": [],
+    "offline": false
+  }
+]

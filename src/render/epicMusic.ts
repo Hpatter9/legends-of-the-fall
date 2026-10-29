@@ -85,25 +85,4 @@ export function placeOf(scene: Scene | null, map: MapKind): Place {
 /** The track a place plays. */
 export const TRACK_OF_PLACE: Record<Place, MusicId> = { camp: 'camp', tavern: 'tavern', deploy: 'deploy', tower: 'tower', calmap: 'calmap' };
 
-/** What a fight is, for its music. `level` is how hard it runs (0 to 2). */
-export interface FightMood {
-  boss: boolean;
-  calamity: boolean;
-  level: number;
-}
-
-/** The track for a fight: a boss has its own; a Calamity fight has its own; otherwise one of three by how hard the fight is. */
-export function fightTrack(f: FightMood): MusicId {
-  if (f.boss) return 'boss';
-  if (f.calamity) return 'calbattle';
-  return (['battle', 'battle2', 'battle3'] as const)[Math.max(0, Math.min(2, Math.floor(f.level)))];
-}
-
-/** How hard a fight runs, 0 to 2, for choosing among the three battle tracks: an army or a daily by thirds of its waves; any other
- *  run by how deep it is (stage or floor 1-9, 10-24, 25 up); an elite fight a step harder. */
-export function fightLevel(stage: number, o: { elite?: boolean; waves?: number } = {}): number {
-  let level: number;
-  if (o.waves && o.waves > 1) level = Math.min(2, Math.floor(((stage - 1) / o.waves) * 3));
-  else level = stage >= 25 ? 2 : stage >= 10 ? 1 : 0;
-  return Math.min(2, level + (o.elite ? 1 : 0));
-}
+/* The battle's track (one for the whole battle, wave to wave) and the victory music are chosen in `battleMusic.ts`. */

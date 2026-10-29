@@ -63,7 +63,8 @@
 .dmPad { width:138px; height:91px; display:grid; grid-template-columns:repeat(3,44px); grid-template-rows:repeat(2,44px); gap:3px; flex:none; }.dmPad button { width:44px; height:44px; min-width:44px; min-height:44px; padding:0; margin:0; border:1px solid #9b8759; border-image:none; border-radius:2px; box-shadow:inset 0 0 0 2px #132619; background:linear-gradient(#364b34,#1c3225); color:#e4d09a; font-size:21px; line-height:1; }.dmPad button:disabled { opacity:.3; }.dmPad .up { grid-column:2; grid-row:1; }.dmPad .left { grid-column:1; grid-row:2; }.dmPad .down { grid-column:2; grid-row:2; }.dmPad .right { grid-column:3; grid-row:2; }
 .dmMenu { display:flex; gap:6px; border-top:1px solid #a1894b33; padding-top:8px; }.dmMenu button { flex:1; min-width:0; min-height:44px; padding:3px; border:1px solid #7e704953; border-image:none; border-radius:2px; background:#11271bcc; color:#d7d2b5; font-size:11px; font-weight:400; }
 .dmMode button:focus-visible { outline:2px solid #ffe7a7; outline-offset:3px; }
-@keyframes dmPortalGlow { to { filter:drop-shadow(0 0 9px #51ddc288); } }
+/* (a steady glow; the portal breathes by its size, not its light: the no-flicker rule) */
+@keyframes dmPortalGlow { to { transform:scale(1.04); } }
 @keyframes dmArrival { from { opacity:0; transform:translate(-50%,-120%) scale(.4); filter:drop-shadow(0 0 10px #85ffe3); } to { opacity:1; transform:translate(-50%,-100%) scale(1); } }
 @media (max-height:800px) { .dmHead.rtHead { padding-top:calc(env(safe-area-inset-top) + 9px); padding-bottom:8px; gap:7px; }.dmHead h2 { font-size:18px; }.dmFoot.rtFoot { padding-top:8px; gap:7px; } }
 @media (prefers-reduced-motion:reduce) { .dmMode *,.dmMode *::before,.dmMode *::after { animation:none!important; transition:none!important; } }

@@ -173,6 +173,8 @@ test('Tempest hurts, shoves and stuns everything within four tiles', () => {
   const me = addUnit(b, 'yamabushi', 3, 8, gradeBoost(1, 0, ULT_LEVEL));
   const near = addUnit(b, 'skeleton', 3, 5);
   const far = addUnit(b, 'skeleton', 3, 0);
+  // (sturdy foes, so the stun and shove are seen on a living one at the ultimate's full strength: ULT-CHARGE)
+  for (const f of [near, far]) f.hp = f.maxHp = 10000;
   me.charge2 = CHARGE_MAX;
   const v = near.v;
   cast(b, me);
@@ -185,6 +187,7 @@ test('Stone Curse petrifies every foe in sight', () => {
   const b = arena();
   const me = addUnit(b, 'gorgon', 3, 8, gradeBoost(1, 0, ULT_LEVEL));
   const foes = [addUnit(b, 'skeleton', 2, 5), addUnit(b, 'skeleton', 4, 5), addUnit(b, 'spearman', 3, 4)];
+  for (const f of foes) f.hp = f.maxHp = 10000;
   me.charge2 = CHARGE_MAX;
   cast(b, me);
   for (const f of foes) assert.ok(f.hp < f.maxHp && f.busyUntil >= b.t + 2500);

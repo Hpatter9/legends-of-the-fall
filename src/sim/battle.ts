@@ -23,6 +23,7 @@ import { FOE_BANDS, isBoss } from './foes';
 import { arenaSpots } from './arenaDeploy';
 import { killXp } from './levels';
 import { enterPhase, PHASE2 } from './bossPhases';
+import { ailCtx, AILMENT_SWITCH, fleeTile, groundSecond, groundStep, isFeared, shatterOf, tagged, type Ailment, type AilmentKey } from './ailments';
 import { afterBlow, CHARGE_MAX, echoSkill, mendUnit, spawnSpiritWisp, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, rollCrit, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellState } from './spells';
 import type { SetHooks } from './relicSets';
@@ -33,7 +34,7 @@ import { applyTierMods } from './tierSkills';
 import { landCombo, startCombo, tickCombo, type ComboState } from './combos';
 import { startDuoCombos, type DuoState } from './duoCombos';
 import type { EquipStats } from './equipment';
-import { heroKitOf, startPool, ultOnDamage, type KitState } from './heroKits';
+import { heroKitOf, startPool, startUlt, ultOnDamage, type KitState } from './heroKits';
 import { applyOrders, type LogEntry, type Order } from './orders';
 import { settleJump } from './kits/blades';
 import { settleKeg } from './kits/shooters';
@@ -82,14 +83,25 @@ export interface Unit {
   charge: number;
   /** An ultimate's charge, 0 to `CHARGE_MAX` (only the heroes with an ultimate fill it). */
   charge2?: number;
+  /** How fast this hero's ultimate meter fills, as a multiple (absent is x1): the Last Stand's heroes take `ULT_FILL.STAND`. */
+  ultPace?: number;
   /** The skill being cast, from when and for how long. */
   cast?: { at: number; ms: number; anim: 'attack' | 'attack2' | 'defend' };
   /** Takes half damage until then (Shield Wall). */
   guardUntil?: number;
   /** Must go for this fighter until then (Shield Wall's draw). */
   taunt?: { to: number; until: number };
-  /** Bleeding or burning. */
+  /** Bleeding or burning: the old single damage over time. Only an old caller (or a test) sets it now; the ailment model folds it into `ail`
+   *  when it next reads the fighter (`ailments.ts`). */
   dot?: Dot & { by: number; next: number; until: number };
+  /** Its ailments (STATUS-FX, `ailments.ts`): burning, poisoned, frozen, bleeding, chilled, shocked, stunned, weakened, cursed, silenced, feared. */
+  ail?: Ailment[];
+  /** A boss's hard-control ladder (`ailments.ts`): how many in the window, when the last ends, and until when it is immune. */
+  cc?: { n: number; end: number; immune?: number };
+  /** No new ailment takes hold until then (a cleanse's ward). */
+  wardUntil?: number;
+  /** When its recent frost chills landed (three close together freeze it). */
+  frost?: number[];
   /** Hasted (the king's spell) until then. */
   hasteUntil?: number;
   /** Soaks this much damage until then (the king's Shield). */
@@ -212,12 +224,16 @@ export type HitSrc = 'blow' | 'skill' | 'dot';
 export type BattleEvent =
   | { kind: 'swing'; by: number; to: number }
   | { kind: 'shot'; by: number; to: number; shot: Shot; ms: number }
-  | { kind: 'hit'; by: number; to: number; dmg: number; heavy: boolean; splash: boolean; killed: boolean; src: HitSrc; high?: boolean }
+  | { kind: 'hit'; by: number; to: number; dmg: number; heavy: boolean; splash: boolean; killed: boolean; src: HitSrc; high?: boolean; ail?: AilmentKey | 'shatter' }
+  /** An ailment shrugged off (resisted, a boss's ladder, a ward): the page shows "Immune". */
+  | { kind: 'immune'; to: number; what: AilmentKey }
+  /** A frozen fighter's ice shattered under a heavy blow (the extra hit follows, tagged `shatter`). */
+  | { kind: 'shatter'; to: number }
   | { kind: 'skill'; by: number; name: string; ms: number }
   | { kind: 'dash'; by: number; from: At; to: At }
   | { kind: 'blink'; by: number; from: At; to: At }
   | { kind: 'area'; by: number; id: 'volley' | 'meteor'; u: number; v: number; ms: number }
-  | { kind: 'arc'; from: number; to: number }
+  | { kind: 'arc'; from: number; to: number; ail?: 'shock' }
   | { kind: 'zone'; u: number; v: number; ms: number; what?: 'spikes' }
   | { kind: 'trap'; u: number; v: number; ms: number }
   | { kind: 'dodge'; to: number }
@@ -519,7 +535,8 @@ export function noteTerrain(b: Battle): void {
   b.board.tiles.forEach((t, i) => t.barrel && barrels.push(i));
   if (barrels.length) b.barrels = barrels;
   else delete b.barrels;
-  if (b.board.tiles.some((t) => t.ground === 'shrine' || t.ground === 'lava' || t.ground === 'coals')) b.groundFx = true;
+  // (with the ailments on, standing still on ice chills, once a second: STATUS-FX)
+  if (b.board.tiles.some((t) => t.ground === 'shrine' || t.ground === 'lava' || t.ground === 'coals' || (AILMENT_SWITCH.on && t.ground === 'ice'))) b.groundFx = true;
   else delete b.groundFx;
 }
 
@@ -623,6 +640,8 @@ function startKits(b: Battle): void {
   if (!kitted.length) return;
   b.kits = {};
   for (const x of kitted) {
+    // (the ultimate's meter starts the fight part full: ULT-CHARGE)
+    startUlt(x);
     if (x.def === 'lancer') x.kx ??= {};
     if (x.def === 'wolfBard' && (x.level ?? 1) >= 10) {
       (x.kx ??= {}).tune = 'dirge';
@@ -686,8 +705,18 @@ export function strikeDef(b: Battle, me: Unit): UnitDef {
 }
 
 /** One tick of the fight. Returns what happened, for the renderer to show. */
+/** A listener on every tick's events (tools and tests only: `tools/status-fx/logs.ts` fingerprints whole fights with it). The game never sets it. */
+export const battleTap: { fn?: (b: Battle, events: BattleEvent[]) => void } = {};
+
 export function stepBattle(b: Battle): BattleEvent[] {
+  const out = stepOnce(b);
+  battleTap.fn?.(b, out);
+  return out;
+}
+
+function stepOnce(b: Battle): BattleEvent[] {
   const out: BattleEvent[] = [];
+  ailCtx.b = b;
   if (b.phase !== 'fight') return out;
   // (a boss changing form holds the whole fight)
   if (b.pause) {
@@ -802,6 +831,8 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   const left = onStrike(b, by, to, dmg, src, splash, out);
   if (left === null) return false;
   dmg = left;
+  // (a heavy blow on a frozen fighter shatters the ice: the extra lands after the blow, STATUS-FX)
+  const shatter = shatterOf(b, by, to, dmg, heavy, src);
   if (to.shield) {
     if (to.shield.until <= b.t) to.shield = undefined;
     else {
@@ -907,6 +938,10 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   // (a blow struck from higher ground than its target's is tagged, for the page to mark)
   const high = src === 'blow' && !splash && tileOf(b, by).h > tileOf(b, to).h;
   out.push({ kind: 'hit', by: by.id, to: to.id, dmg, heavy, splash, killed, src, ...(high ? { high } : {}) });
+  if (shatter && to.alive) {
+    out.push({ kind: 'shatter', to: to.id });
+    tagged(out, 'shatter', () => hurt(b, by, to, shatter, true, true, out, 'skill'));
+  }
   if (killed && credit) {
     onKill(b, by, out);
     fxKill(b, by, to, out);
@@ -936,6 +971,8 @@ function groundTick(b: Battle, out: BattleEvent[]): void {
   for (const x of b.units) {
     if (!x.alive) continue;
     const g = tileOf(b, x).ground;
+    groundSecond(b, x);
+    if (!x.alive) continue;
     if (g === 'shrine') mendUnit(x, x.maxHp * SHRINE_HEAL, out);
     else if (g === 'lava' && !defOf(x).flies) hurt(b, x, x, Math.max(1, Math.round(x.maxHp * LAVA_STAND)), false, false, out, 'dot');
     else if (g === 'coals' && !defOf(x).flies) hurt(b, x, x, Math.max(1, Math.round(x.maxHp * COALS_STAND)), false, false, out, 'dot');
@@ -1002,6 +1039,8 @@ function perchFor(b: Battle, me: Unit, def: UnitDef, target: Unit): number {
 }
 
 function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
+  // (a feared fighter runs from the nearest foe and strikes nobody, STATUS-FX)
+  if (isFeared(b, me)) return flee(b, me, out);
   // (the Last Stand has its own mind for heroes and foes; every other fight goes on below as it always did)
   if (b.stand && standDecide(b, me, rng, out)) return;
   const def = strikeDef(b, me);
@@ -1132,8 +1171,31 @@ export function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void
   me.v = next.v;
   me.busyUntil = b.t + ms;
   // lava and hot coals burn whoever ends a step on them (fliers pass over)
-  if (to.ground === 'lava' && !def.flies) hurt(b, me, me, Math.max(1, Math.round(me.maxHp * LAVA_BURN)), false, false, out, 'dot');
+  // (with the ailments on, lava's sear is half what it was and it sets the walker burning, `groundStep`)
+  if (to.ground === 'lava' && !def.flies) hurt(b, me, me, Math.max(1, Math.round(me.maxHp * LAVA_BURN * (AILMENT_SWITCH.on ? 0.5 : 1))), false, false, out, 'dot');
   else if (to.ground === 'coals' && !def.flies) hurt(b, me, me, Math.max(1, Math.round(me.maxHp * COALS_BURN)), false, false, out, 'dot');
+  if (me.alive) groundStep(b, me);
+}
+
+/** A feared fighter's step: a free tile next to it, further from the foes (none: it cowers where it is). */
+function flee(b: Battle, me: Unit, out: BattleEvent[]): void {
+  me.step = undefined;
+  const def = defOf(me);
+  const blocked = new Set<number>();
+  for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * b.board.w + x.u);
+  const walk = walkFrom(b.board, me, def.jump, blocked);
+  const steps: { i: number; u: number; v: number }[] = [];
+  for (let i = 0; i < walk.cost.length; i++) {
+    const t = b.board.tiles[i];
+    if (walk.cost[i] > 0 && walk.cost[i] <= 2 && !blocked.has(i) && t.ground !== 'lava' && t.ground !== 'coals') {
+      const u = i % b.board.w;
+      const v = Math.floor(i / b.board.w);
+      if (Math.abs(u - me.u) + Math.abs(v - me.v) === 1) steps.push({ i, u, v });
+    }
+  }
+  const i = fleeTile(b, me, steps);
+  if (i >= 0) return stepTo(b, me, i, out);
+  me.busyUntil = b.t + WAIT_MS;
 }
 
 /** Play a fight to its end (for tests and quick checks). */

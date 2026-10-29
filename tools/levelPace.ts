@@ -8,12 +8,14 @@
 //
 // Every assumption is a constant below; change one and run it again. `docs/notes/level-100.md` has the table.
 
-import { ARMIES, replayTotal } from '../src/sim/armies';
+import { ARMIES, armyXpShare, replayTotal } from '../src/sim/armies';
 import { fight, playOut } from '../src/sim/battle';
 import { maxLevel, newCastle, xpRate } from '../src/sim/castle';
-import { BENCH_SHARE, fightXp, levelOf, MAX_LEVEL, xpFor } from '../src/sim/levels';
+import { BENCH_SHARE, fightXp, levelOf, levelOfKind, MAX_LEVEL, xpFor } from '../src/sim/levels';
 import { Rng, mixSeed } from '../src/sim/rng';
-import { armyRun, finish, isBossRun, noteFight, startStage } from '../src/sim/run';
+import { armyRun, boostOf, finish, isBossRun, noteFight, startStage, type Owned } from '../src/sim/run';
+import { heroRank } from '../src/sim/meta';
+import { heroStats, learn, tierNodes } from '../src/sim/talents';
 import { autoDeploy, autoRound } from '../src/sim/autoplay';
 import { ratingOf } from '../src/sim/stars';
 import { TIERS } from '../src/sim/tiers';
@@ -40,9 +42,10 @@ const MEASURE_LEVEL = 100;
 /** The party the XP is measured with (the recruits' party of the balance report). */
 const PARTY = ['knight', 'paladin', 'archer', 'warlock', 'cleric'];
 /** The day each army is first cleared on Normal, and the day a Hard / Elite tier is (the same schedule as `unlockPace.ts`; a daily player does not get to Legendary in the first year). */
-const NORMAL_DAY = [1, 4, 8, 13, 19, 26, 34, 43, 53];
+// (ARMY-PACE: the last four armies come later, at the favourite's day for their new recommended levels 45, 58, 65 and 74, and the Golem Forge's Hard a little later, day 118; they were 26, 34, 43, 53 and 112)
+const NORMAL_DAY = [1, 4, 8, 13, 19, 38, 68, 83, 103];
 const HARDER: [number, number, number][] = [
-  [0, 1, 12], [1, 1, 24], [2, 1, 34], [3, 1, 46], [4, 1, 58], [5, 1, 70], [6, 1, 84], [7, 1, 98], [8, 1, 112],
+  [0, 1, 12], [1, 1, 24], [2, 1, 34], [3, 1, 46], [4, 1, 58], [5, 1, 70], [6, 1, 84], [7, 1, 98], [8, 1, 118],
   [0, 2, 40], [1, 2, 62], [2, 2, 80], [3, 2, 96], [4, 2, 112], [5, 2, 130], [6, 2, 150], [7, 2, 170], [8, 2, 190],
 ];
 /** The Library: the castle is built over the first weeks, and the Library level follows (one level every five days to its top). */
@@ -75,18 +78,25 @@ function measure(): number[][][] {
       const out: number[] = [];
       for (let s = 1; s <= SAMPLES; s++) {
         const meta = savedAt(MEASURE_LEVEL, PARTY, s);
+        // (every talent row level 100 opens, as a player there has: the late armies' Normal and lifted tiers are steep since ARMY-PACE, and a
+        // level-100 party without talents no longer wins every run, which this table assumes)
+        for (const k of PARTY) {
+          if (!meta.unlocked.includes(k)) meta.unlocked.push(k);
+          for (const tr of [1, 2, 3, 4, 5, 6, 7] as const) for (const n of tierNodes(k, tr)) learn(meta, k, n.id);
+        }
+        const boostFor = (h: Owned) => boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), heroStats(meta, h.kind));
         const run = armyRun(mixSeed(s, 0x1e7e1, ai * 10 + t), a.id, PARTY, castle, t);
         let sum = 0;
         while (!run.over) {
           autoRound(run, meta, true);
           const b = startStage(run);
-          autoDeploy(b, run, meta);
+          autoDeploy(b, run, meta, boostFor);
           fight(b);
           playOut(b);
           const ok = b.phase === 'won';
           noteFight(run, b);
           finish(run, ok, ratingOf(b, isBossRun(run)).stars);
-          sum += Object.values(fightXp(b, 1)).reduce((n, x) => n + x, 0) / PARTY.length;
+          sum += Object.values(fightXp(b, armyXpShare(a, t))).reduce((n, x) => n + x, 0) / PARTY.length;
         }
         out.push(sum);
       }

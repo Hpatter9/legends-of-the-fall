@@ -19,6 +19,10 @@ export interface Tier {
   /** The army's last boss changes form at this share of its health (`PHASE_AT`, a half, when unset) and its second form hits this much harder (1 when unset). */
   phaseAt?: number;
   surge?: number;
+  /** The tier's answer to the ultimates (ULT-CHARGE, `docs/notes/ult-charge.md`): its foes' hp and attack are this much more again (1 when unset).
+   *  Legendary and Mythic, the tiers fought with every ultimate open, rose for the full-strength ultimates that come round once or twice a fight,
+   *  so the first army's stars come at the levels they did; `armyXpShare` takes it back out of a fight's XP, so the level pace is as it was. */
+  answer?: number;
   /** Crowns for waves and clears, and XP for fights. */
   pay: number;
   xp: number;
@@ -28,8 +32,8 @@ export const TIERS: readonly Tier[] = [
   { id: 'normal', name: 'Normal', need: 0, stars: 3, hp: 1, atk: 1, speed: 1, pay: 1, xp: 1 },
   { id: 'hard', name: 'Hard', need: 3, stars: 3, hp: 1.75, atk: 1.45, speed: 1.05, pay: 1.6, xp: 1.5 },
   { id: 'elite', name: 'Elite', need: 6, stars: 3, hp: 2.6, atk: 1.95, speed: 1.1, extra: 1, pay: 2.5, xp: 2.2 },
-  { id: 'legendary', name: 'Legendary', need: 9, stars: 1, hp: 3.4, atk: 2.5, speed: 1.15, extra: 1, pay: 4, xp: 3.5 },
-  { id: 'mythic', name: 'Mythic', need: 10, stars: 1, hp: 4.6, atk: 3.2, speed: 1.2, extra: 2, phaseAt: 0.6, surge: 1.2, pay: 7, xp: 6 },
+  { id: 'legendary', name: 'Legendary', need: 9, stars: 1, hp: 3.4, atk: 2.5, speed: 1.15, extra: 1, answer: 2.8, pay: 4, xp: 3.5 },
+  { id: 'mythic', name: 'Mythic', need: 10, stars: 1, hp: 4.6, atk: 3.2, speed: 1.2, extra: 2, phaseAt: 0.6, surge: 1.2, answer: 2.6, pay: 7, xp: 6 },
 ];
 /** The most stars an army holds. */
 export const ARMY_STARS = TIERS.reduce((n, t) => n + t.stars, 0);

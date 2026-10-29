@@ -6,6 +6,7 @@ import { DIR, apart, foesOf, kitOf, mendUnit, slowFor } from '../abilities';
 import { UNITS } from '../units';
 import { kx, layTerrain, KIT } from './effects';
 import { alliesOf, foesNear, free, mark, ms, nearestFoe, shove, strike, strongest, stun } from './common';
+import { charmFor } from '../ailments';
 
 /** Knight, Shield Bash: the strongest foe beside him is struck, stunned 1.5s and shoved back a tile. */
 export function shieldBash(b: Battle, me: Unit, out: BattleEvent[]): boolean {
@@ -116,7 +117,7 @@ export function puppetStrings(b: Battle, me: Unit, out: BattleEvent[]): boolean 
   if (foes.length < 2) return false;
   const f = foes.filter((x) => apart(me, x) <= 4 && !(x.charmUntil !== undefined && x.charmUntil > b.t)).sort(strongest)[0];
   if (!f) return false;
-  f.charmUntil = b.t + ms(me, 3000);
+  charmFor(b, f, ms(me, 3000));
   f.taunt = undefined;
   f.busyUntil = Math.min(f.busyUntil, b.t + 300);
   out.push({ kind: 'arc', from: me.id, to: f.id });

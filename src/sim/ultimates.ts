@@ -44,6 +44,7 @@ import {
   tal,
   type Skill,
 } from './abilities';
+import { charmFor, cleanse, harmed, setDot, stunFor } from './ailments';
 
 /** A duration in ms, as the caster's `dur` talent lengthens it, and the ultimate's strength: a stronger ultimate holds, guards and hastens a little longer (by the square root of its strength). */
 const dur = (me: Unit, ms: number): number => durOf(me, Math.round(ms * Math.sqrt(castPower())));
@@ -53,11 +54,10 @@ const alliesOf = (b: Battle, me: Unit): Unit[] => b.units.filter((a) => a.alive 
 const byId = (x: Unit, y: Unit) => x.id - y.id;
 const strongest = (x: Unit, y: Unit) => atkOf(y) - atkOf(x) || x.id - y.id;
 const stun = (b: Battle, f: Unit, ms: number) => {
-  f.busyUntil = Math.max(f.busyUntil, b.t + ms);
-  f.stunUntil = Math.max(f.stunUntil ?? 0, b.t + ms);
+  stunFor(b, f, ms);
 };
 /** Whether some ally is hurt (or burning, bleeding or cursed): what a healing ultimate waits for. */
-const wounded = (b: Battle, me: Unit, share = 0.8): boolean => alliesOf(b, me).some((a) => a.dot || a.hp < a.maxHp * share);
+const wounded = (b: Battle, me: Unit, share = 0.8): boolean => alliesOf(b, me).some((a) => harmed(a) || a.hp < a.maxHp * share);
 /** Free, standable tiles within `radius` of the caster that it (or a fighter its size) could stand on, nearest first. */
 function spotsNear(b: Battle, me: Unit, radius: number, climb: number): At[] {
   const h = tileOf(b, me).h;
@@ -151,7 +151,7 @@ function smite(b: Battle, me: Unit, out: BattleEvent[], o: Smite): boolean {
     if (o.pull && drag(b, f, me)) f.busyUntil = Math.max(f.busyUntil, b.t + 400);
     if (o.curse) {
       const ms = dur(me, o.curse.ms);
-      f.dot = { kind: 'curse', dmg: Math.max(1, Math.round(atkOf(me) * o.curse.dot)), every: HEX_EVERY, ms, by: me.id, next: b.t + HEX_EVERY, until: b.t + ms };
+      setDot(b, f, { kind: 'curse', dmg: Math.max(1, Math.round(atkOf(me) * o.curse.dot)), every: HEX_EVERY, ms, by: me.id, next: b.t + HEX_EVERY, until: b.t + ms });
     }
   }
   if (o.drink) mendUnit(me, share(Math.min(o.drink.cap, o.drink.each * foes.length)) * me.maxHp, out);
@@ -182,7 +182,7 @@ interface Bless {
 function bless(b: Battle, me: Unit, out: BattleEvent[], o: Bless): void {
   for (const a of alliesOf(b, me)) {
     if (o.reach !== undefined && apart(me, a) > reachOf(me, o.reach)) continue;
-    if (o.cleanse) a.dot = undefined;
+    if (o.cleanse) cleanse(b, a);
     if (o.heal) mendUnit(a, atkOf(me) * o.heal, out, me);
     if (o.healShare) mendUnit(a, a.maxHp * share(o.healShare), out, me);
     if (o.hot) a.hot = { amount: atkOf(me) * o.hot.amount, every: 1000, next: b.t + 1000, until: b.t + dur(me, o.hot.ms), by: me.id };
@@ -373,7 +373,7 @@ function infernoBreath(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   for (const f of best.sort((x, y) => apart(me, x) - apart(me, y) || x.id - y.id)) {
     out.push({ kind: 'shot', by: me.id, to: f.id, shot: 'fire', ms: 120 + apart(me, f) * 40 });
     hurt(b, me, f, net(atkOf(me) * 2.8, f), true, false, out, 'skill');
-    if (f.alive) f.dot = { kind: 'burn', dmg: Math.max(1, Math.round(atkOf(me) * 0.15)), every: 500, ms, by: me.id, next: b.t + 500, until: b.t + ms };
+    if (f.alive) setDot(b, f, { kind: 'burn', dmg: Math.max(1, Math.round(atkOf(me) * 0.15)), every: 500, ms, by: me.id, next: b.t + 500, until: b.t + ms });
   }
   return true;
 }
@@ -438,7 +438,7 @@ function resurrection(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     x.busyUntil = b.t + 500;
     x.charge = 0;
     x.charge2 = undefined;
-    x.dot = undefined;
+    cleanse(b, x);
     out.push({ kind: 'heal', to: x.id, amount: x.hp });
   }
   bless(b, me, out, { heal: 5, cleanse: true });
@@ -459,55 +459,57 @@ function timeStop(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 const FIRST_EIGHT = ['kitsune', 'karasu', 'yamabushi', 'gorgon', 'samuraiCommander', 'sage', 'demonSwordsman', 'tyrant'];
 
 /** Each hero's ultimate balance from level 30 up (COMBAT-002, docs/notes/hero-kits.md): `rate`, how fast its meter fills (times the fight's own fill,
- *  `ULT_FILL` in `heroKits.ts`: about 30 s of fighting for a front-liner, 40 for most, 50 for a support), and `power` (times the caster's attack while
- *  it casts; a stun, guard, shield or heal scales with it too), never below what it was before the hero kits (the owner's call: rarer and bigger).
- *  `test/hero-balance-ultimates.test.ts` holds every hero within the band of the roster average with them. */
+ *  `ULT_FILL` in `heroKits.ts`), and `power` (times the caster's attack while it casts; a stun, guard, shield or heal scales with it too). Retuned for
+ *  ULT-CHARGE (docs/notes/ult-charge.md), when the meter came to fill once or twice a fight: no power below what it was (the owner: "make it still
+ *  hit hard"), and the roster held level by the meters, so the ultimates whose worth is what they do rather than what they deal come round less often
+ *  and a few heroes whose kits fall behind against the stronger foes a level-30 team now meets (the Samurai, Ninja Monk, Buccaneer, Demon Swordsman)
+ *  fire theirs more than twice in a long fight. `test/hero-balance-ultimates.test.ts` holds every hero within the band of the roster average with them. */
 const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
-  knight: { rate: 1.86, power: 0.78 },
-  samurai: { rate: 0.84, power: 2.43 },
-  kunoichi: { rate: 0.6, power: 0.76 },
-  archer: { rate: 0.77, power: 1.15 },
-  wizard: { rate: 0.7, power: 1.06 },
-  peasant: { rate: 1.95, power: 0.77 },
-  ninjaMonk: { rate: 0.96, power: 1.64 },
-  wanderer: { rate: 0.58, power: 0.96 },
-  lightningMage: { rate: 0.72, power: 0.57 },
-  kitsune: { rate: 0.66, power: 0.71 },
-  karasu: { rate: 0.54, power: 1.52 },
-  yamabushi: { rate: 1.4, power: 2.53 },
-  werewolf: { rate: 0.61, power: 1.72 },
-  minotaur: { rate: 1.41, power: 2.32 },
-  satyr: { rate: 0.67, power: 0.53 },
-  gorgon: { rate: 1.06, power: 1.51 },
-  samuraiCommander: { rate: 0.85, power: 1.4 },
-  paladin: { rate: 1.53, power: 0.83 },
-  cleric: { rate: 0.76, power: 1.12 },
-  druid: { rate: 1.15, power: 0.4 },
-  barbarian: { rate: 0.84, power: 0.72 },
-  ranger: { rate: 0.8, power: 1.03 },
-  warlock: { rate: 0.72, power: 0.91 },
-  illusionist: { rate: 1.15, power: 0.47 },
-  gunslinger: { rate: 0.73, power: 1.7 },
-  shambler: { rate: 1.53, power: 0.43 },
-  rifleBot: { rate: 0.76, power: 0.98 },
-  mercenary: { rate: 0.59, power: 1.67 },
-  mummy: { rate: 1.7, power: 0.49 },
-  buccaneer: { rate: 0.76, power: 1.21 },
-  wolfBard: { rate: 1.04, power: 0.49 },
-  beastmaster: { rate: 0.93, power: 0.59 },
-  kraken: { rate: 1.62, power: 0.88 },
-  lancer: { rate: 0.67, power: 1.02 },
-  reaper: { rate: 0.55, power: 0.91 },
-  timeWitch: { rate: 0.97, power: 0.61 },
-  arcBlade: { rate: 0.54, power: 0.81 },
-  dreadPirate: { rate: 1.4, power: 1.24 },
-  siegeBot: { rate: 1.18, power: 2.06 },
-  priestess: { rate: 0.87, power: 0.43 },
-  dragoon: { rate: 0.69, power: 1.34 },
-  juggernaut: { rate: 1.87, power: 1.39 },
-  sage: { rate: 0.95, power: 1.51 },
-  demonSwordsman: { rate: 0.79, power: 2.45 },
-  tyrant: { rate: 1.18, power: 1.82 },
+  knight: { rate: 1.46, power: 0.78 },
+  samurai: { rate: 2.33, power: 3.07 },
+  kunoichi: { rate: 1.65, power: 3.07 },
+  archer: { rate: 0.65, power: 1.15 },
+  wizard: { rate: 0.51, power: 1.44 },
+  peasant: { rate: 1.11, power: 0.77 },
+  ninjaMonk: { rate: 2.41, power: 3.07 },
+  wanderer: { rate: 0.37, power: 0.96 },
+  lightningMage: { rate: 0.92, power: 1.24 },
+  kitsune: { rate: 0.6, power: 0.71 },
+  karasu: { rate: 0.77, power: 3.07 },
+  yamabushi: { rate: 1.85, power: 3.07 },
+  werewolf: { rate: 0.73, power: 3.05 },
+  minotaur: { rate: 1.51, power: 2.85 },
+  satyr: { rate: 0.69, power: 0.89 },
+  gorgon: { rate: 1.29, power: 2.2 },
+  samuraiCommander: { rate: 1.1, power: 1.6 },
+  paladin: { rate: 1.31, power: 0.83 },
+  cleric: { rate: 0.58, power: 1.12 },
+  druid: { rate: 1.19, power: 0.4 },
+  barbarian: { rate: 0.9, power: 2.14 },
+  ranger: { rate: 0.84, power: 1.11 },
+  warlock: { rate: 0.5, power: 1.07 },
+  illusionist: { rate: 1.08, power: 0.47 },
+  gunslinger: { rate: 0.37, power: 1.7 },
+  shambler: { rate: 1.04, power: 0.9 }, // (0.99 until STATUS-FX: Plague Tide's curse now also turns the foes' healing to harm)
+  rifleBot: { rate: 1.01, power: 2.17 },
+  mercenary: { rate: 1.21, power: 3.07 },
+  mummy: { rate: 0.99, power: 0.49 },
+  buccaneer: { rate: 3.11, power: 3.07 },
+  wolfBard: { rate: 0.93, power: 0.49 },
+  beastmaster: { rate: 0.7, power: 0.59 },
+  kraken: { rate: 1.37, power: 0.94 },
+  lancer: { rate: 1.61, power: 3.07 },
+  reaper: { rate: 1.79, power: 3.07 },
+  timeWitch: { rate: 1.09, power: 0.62 },
+  arcBlade: { rate: 0.59, power: 2.42 },
+  dreadPirate: { rate: 1.06, power: 1.24 },
+  siegeBot: { rate: 0.5, power: 2.06 },
+  priestess: { rate: 0.38, power: 0.43 },
+  dragoon: { rate: 1.1, power: 3.07 },
+  juggernaut: { rate: 1.55, power: 1.5 },
+  sage: { rate: 1.7, power: 1.51 },
+  demonSwordsman: { rate: 2.06, power: 3.07 },
+  tyrant: { rate: 0.88, power: 1.82 },
 };
 
 /** Every hero's ultimate: the first eight's (as `first` gives them) and the rest's, which unlock at `ULT_LEVEL`; `abilities.ts` puts them in its kits. */
@@ -535,7 +537,7 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
       const foes = foesOf(b, me);
       if (foes.length > 2)
         for (const f of foes.filter((x) => apart(me, x) <= 5).sort(strongest).slice(0, 2)) {
-          f.charmUntil = b.t + dur(me, 2000);
+          charmFor(b, f, dur(me, 2000));
           f.taunt = undefined;
           out.push({ kind: 'arc', from: me.id, to: f.id });
         }

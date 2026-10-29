@@ -12,16 +12,18 @@ import { startedMeta, heroRank, type Meta } from '../src/sim/meta';
 import { awakenStats } from '../src/sim/awaken';
 import { armyById } from '../src/sim/armies';
 import { armyRun, boostOf, canRetry, finish, isBossRun, noteFight, retryWave, squadLimit, startStage, summon, tierOfRun, type Owned, type Run } from '../src/sim/run';
+import { autoMerge } from '../src/sim/merge';
 import { heroLevel, localBoost } from '../src/sim/climb';
 import { armyRules } from '../src/sim/armyStars';
 import { ratingOf } from '../src/sim/stars';
 import { autoDeploy, autoRound, dressSquad, strengthOf } from '../src/sim/autoplay';
 import { UNITS } from '../src/sim/units';
 import { takeRelic } from '../src/sim/elites';
-import { buy, hire, choices, sideChoices, clearNode, enterNode, finishMystery, finishTower, openTreasure, rest, takeXp, train, type MapNode, type NodeKind } from '../src/sim/tower';
+import { buy, hire, choices, sideChoices, clearNode, enterNode, finishMystery, finishTower, mapFor, openTreasure, rest, takeXp, train, type MapNode, type NodeKind } from '../src/sim/tower';
 import { calamityRun, dailyBonus, dailyRun, towerRun } from '../src/sim/modes';
 import { chooseAltar, pendingAltar } from '../src/sim/rift';
 import { squadHealth } from '../src/sim/health';
+import { CAL_MAPS, CAL_ROWS } from '../src/sim/calamity';
 
 export { strengthOf };
 
@@ -212,11 +214,22 @@ function hireAll(run: Run): void {
 }
 
 /** One calamity (at an ascension level) as a greedy player: the heroes hired whenever the gold allows. Returns the maps cleared, the floors, whether it was cleared whole and the heroes held. */
-export function playCalamity(meta: Meta, seed: number, hero: string, castle: Castle = newCastle(), ascension = 0): { maps: number; floors: number; cleared: boolean; heroes: number; level: number } {
+export function playCalamity(meta: Meta, seed: number, hero: string, castle: Castle = newCastle(), ascension = 0, prep?: (run: Run) => void): { maps: number; floors: number; cleared: boolean; heroes: number; level: number } {
   // (the ascension asked for is open: the meta has cleared the one before)
   const run = calamityRun(seed, { ...meta, castle, ...(ascension ? { calamity: { best: 6, clears: 1, asc: ascension - 1 } } : {}) } as Meta, hero, ascension);
+  // (`prep` can turn the new run into another shape first: e.g. a calamity saved before the Rift Sanctuary, `legacyCalamity`)
+  prep?.(run);
   const r = playClimb(meta, run, 80);
   return { maps: run.tower!.bosses, floors: r.floors, cleared: !!run.cleared, heroes: run.roster.length, level: r.level };
+}
+
+/** Turn a new calamity run into one saved before the Rift Sanctuary and its altars: the six-map graph, no starter altar (a save from main before CAL-RIFT). */
+export function legacyCalamity(run: Run): void {
+  const t = run.tower!;
+  delete run.rift;
+  t.rows = [...CAL_ROWS];
+  t.maps = CAL_MAPS;
+  t.map = mapFor(run, 1);
 }
 
 /** The node kind and act of the fight the last climb lost (for tuning). */
@@ -246,9 +259,9 @@ function playClimb(meta: Meta, run: Run, maxFloors: number): { floors: number; b
     const altar = pendingAltar(run);
     if (altar) chooseAltar(run, altar === 'patron' ? 'bastion' : altar === 'offering' ? 'vitality' : 'together');
     // (the tower's greedy player summons while the gold lasts; a calamity hires instead)
-    while (!calamity && summon(run)) {
-      // (summons while the gold lasts, but keeps a purse for the shop when a fire is near)
-    }
+    // (summons while the gold lasts, merging every pair as the Auto merge button does; a calamity has no merging)
+    if (!calamity) autoMerge(run);
+    while (!calamity && summon(run)) autoMerge(run);
     const front = choices(run);
     const others = calamity ? front.filter((n) => n.kind !== 'boss') : front;
     const cleared = calamity ? run.tower!.path.length : 0;

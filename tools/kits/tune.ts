@@ -80,7 +80,7 @@ if (args[0] === '--child') {
     if (target !== undefined) for (const x of lifts) x.lift = x.lift + avg - target;
     for (const { h, lift } of lifts) {
       const k = (state[h] ??= {});
-      const now = k[key] ?? (key === 'up' ? KITS[h].ultimate!.tuned!.power : key === 't1' ? HERO_KITS()[h].s1.tune : HERO_KITS()[h].s2.tune);
+      const now = k[key] ?? (key === 'up' ? KITS[h].ultimate!.tuned!.power : key === 'ur' ? KITS[h].ultimate!.tuned!.rate : key === 't1' ? HERO_KITS()[h].s1.tune : HERO_KITS()[h].s2.tune);
       prev[h] = now;
       // (a damped multiplicative step: a hero 4 points over the average loses about 13% of its strength)
       const next = Math.max(0.05, Math.min(3, now * Math.exp(-step * Math.max(-8, Math.min(8, lift)))));

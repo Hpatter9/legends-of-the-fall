@@ -331,7 +331,8 @@ test('the foes get tougher by tier: hp, attack and speed', () => {
     assert.ok(f.hp! > lastHp && f.atk! > lastAtk && f.speed! > lastSpeed, `tier ${t}`);
     // (the harder tiers scale from the army's `tierStart` and `tierGrowth`, which are Normal's `start` and `growth` unless the army's Normal curve of levels has moved them)
     const k = (start: number, growth: number) => start * (1 + growth * (W - 1));
-    assert.ok(Math.abs(f.hp! / base.hp! - (TIERS[t].hp * k(a.tierStart ?? a.start, a.tierGrowth ?? a.growth)) / k(a.start, a.growth)) < 1e-9);
+    // (and a tier's `answer` to the ultimates, ULT-CHARGE, on top)
+    assert.ok(Math.abs(f.hp! / base.hp! - (TIERS[t].hp * (TIERS[t].answer ?? 1) * k(a.tierStart ?? a.start, a.tierGrowth ?? a.growth)) / k(a.start, a.growth)) < 1e-9);
     [lastHp, lastAtk, lastSpeed] = [f.hp!, f.atk!, f.speed!];
   }
   // Normal is unchanged

@@ -1,13 +1,14 @@
 // The fight's hero bar (COMBAT-002, docs/notes/hero-kits.md section 10): a tile for each placed hero, in the party's order: its portrait inside a
-// ring (the ultimate's meter), its health, its pool (blue for mana, gold for stamina), two pips (lit when that skill can be paid for; "10" while
-// skill 2 is locked) and its name. A full ring glows gold and says TAP; a tap queues the ultimate (`orderUltimate`, the sim's own command), and the
-// ring turns while it waits. Below level 30 a "Lv 30" plate dims the portrait. The last, narrower tile is the Auto switch. The Last Stand's eight
-// heroes take two rows.
+// ring (the ultimate's meter), its health, its pool (blue for mana, gold for stamina), two pips, "1" and "2" (lit when that skill can be paid
+// for; pip 2 is greyed out, and never lit, while skill 2 is locked below level 10: FX-CLEAR) and its name. A full ring glows gold and says
+// TAP; a tap queues the ultimate (`orderUltimate`, the sim's own command), and the ring turns while it waits. A hero without its ultimate
+// yet (below level 30) shows no ring and no level plate at all, only its portrait in a plain frame of the ring's size, so the tile keeps its
+// shape with no gap (HEROBAR-LOCK). The last, narrower tile is the Auto switch. The Last Stand's eight heroes take two rows.
 //
 // It only reads the battle and calls the sim's command; nothing here changes a fight by itself.
 
 import { type Battle, type Unit } from './sim/battle';
-import { ULT_LEVEL, ultimateOf } from './sim/abilities';
+import { ultimateOf } from './sim/abilities';
 import { costOf, heroKitOf, resOf, skill2Open, SKILL2_LEVEL, ultFull } from './sim/heroKits';
 import { canOrderUltimate, orderUltimate } from './sim/orders';
 import { formOf, UNITS } from './sim/units';
@@ -96,7 +97,8 @@ export class HeroBar {
   private tile(u: Unit): HTMLButtonElement {
     const el = document.createElement('button');
     el.type = 'button';
-    el.className = 'hb';
+    // (a rank-4 hero's ring is ringed in violet: MERGE-TWO)
+    el.className = (u.grade ?? 1) > 3 ? 'hb g4' : 'hb';
     el.dataset.unit = String(u.id);
     const def = UNITS[u.def];
     el.innerHTML =
@@ -113,7 +115,6 @@ export class HeroBar {
     arc.style.strokeDasharray = `${RING}`;
     const pips = el.querySelectorAll('.hbPips b');
     const t: Tile = { id: u.id, el, arc, hp: el.querySelector('.hbHp span') as HTMLElement, res: el.querySelector('.hbRes span') as HTMLElement, p1: pips[0] as HTMLElement, p2: pips[1] as HTMLElement, plate: el.querySelector('.hbPlate') as HTMLElement, last: '' };
-    el.title = `${def.name}: tap the portrait when it glows to fire its ultimate`;
     el.addEventListener('click', (e) => {
       e.stopPropagation();
       const b = this.b;
@@ -124,7 +125,8 @@ export class HeroBar {
       if (orderUltimate(b, t.id)) {
         el.classList.add('queued');
         this.refresh(b);
-      } else if (!canOrderUltimate(b, t.id) && unit.ultOrder === undefined) {
+      } else if (ultimateOf(unit) && !canOrderUltimate(b, t.id) && unit.ultOrder === undefined) {
+        // (a hero without its ultimate yet does nothing: it has no meter to point at)
         this.opts.onRefused?.(unit);
         el.classList.remove('nudge');
         void el.offsetWidth;
@@ -171,14 +173,16 @@ export class HeroBar {
       t.p1.classList.toggle('lit', can1 && u.alive);
       t.p2.classList.toggle('lit', can2 && u.alive);
       t.p2.classList.toggle('shut', !open2);
-      t.p2.textContent = open2 ? '2' : String(SKILL2_LEVEL);
+      t.p2.title = open2 ? '' : `Skill 2 opens at level ${SKILL2_LEVEL}`;
       t.el.classList.toggle('ready', ready && !queued);
       t.el.classList.toggle('queued', queued && u.alive);
       t.el.classList.toggle('locked', locked);
       t.el.classList.toggle('fallen', !u.alive);
-      t.plate.textContent = locked ? `Lv ${ULT_LEVEL}` : ready && !queued ? 'TAP' : '';
+      // (a locked ultimate has no plate: the tile shows no hint of it until it unlocks)
+      t.plate.textContent = ready && !queued ? 'TAP' : '';
       t.plate.hidden = !t.plate.textContent;
-      t.el.setAttribute('aria-label', `${UNITS[u.def].name}${locked ? `, ultimate unlocks at level ${ULT_LEVEL}` : ready ? ', ultimate ready: tap to fire' : `, ultimate ${Math.round(meter * 100)}%`}`);
+      t.el.title = locked ? UNITS[u.def].name : `${UNITS[u.def].name}: tap the portrait when it glows to fire its ultimate`;
+      t.el.setAttribute('aria-label', `${UNITS[u.def].name}${locked ? '' : ready ? ', ultimate ready: tap to fire' : `, ultimate ${Math.round(meter * 100)}%`}`);
     }
   }
 }

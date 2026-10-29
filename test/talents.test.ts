@@ -23,6 +23,7 @@ import {
   levelPoints, nodeOf, picksOf, readTalents, pointsEarned, pointsFree, pointsSpent, respec, respecCost, talentStats, tierNodes, whyNot,
 } from '../src/sim/talents';
 import { EQUIP_ICONS } from '../src/equipArt';
+import { dotOf } from '../src/sim/ailments';
 
 const stats = (p: Partial<EquipStats>): EquipStats => ({ ...emptyStats(), ...p });
 /** A meta with `kind` unlocked, at `level` (by its XP) and with `shards` shards. */
@@ -291,7 +292,7 @@ test('dur makes what a skill does last longer', () => {
   const hex = (t: Record<string, number>) => {
     const a = arena('warlock', withTal(t), 2);
     castOnce(a);
-    return Math.max(...a.foes.map((f) => f.dot?.until ?? 0)) - a.b.t;
+    return Math.max(...a.foes.map((f) => dotOf(f)?.until ?? 0)) - a.b.t;
   };
   assert.ok(hex({ dur: 0.6 }) > hex({}) + 2000);
 });
@@ -388,8 +389,10 @@ test('skillSlow and skillStun hold what a skill hits', () => {
 test('ultRate fills the ultimate faster', () => {
   const fill = (t: Record<string, number>) => {
     const a = arena('kitsune', withTal(t), 6, { level: ULT_LEVEL });
-    for (let i = 0; i < 100; i++) stepBattle(a.b);
-    return a.hero.charge2 ?? 0;
+    // (the gain over the first 3 s, from the fight's starting meter: with ULT-CHARGE's quicker meter a longer look sees it fill and fire)
+    const from = a.hero.charge2 ?? 0;
+    for (let i = 0; i < 30; i++) stepBattle(a.b);
+    return (a.hero.charge2 ?? 0) - from;
   };
   assert.ok(fill({ ultRate: 0.6 }) > fill({}) * 1.4);
 });

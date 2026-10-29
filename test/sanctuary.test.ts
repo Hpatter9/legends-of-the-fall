@@ -10,6 +10,7 @@ import { standable, tileAt, canStep } from '../src/sim/board';
 import { fight, place, playOut, startBattle } from '../src/sim/battle';
 import { localBoost } from '../src/sim/climb';
 import { frontSpots } from '../tools/autoplay';
+import { closeMapLeg, noteFightStats, noteWave, recapOf } from '../src/sim/runRecap';
 const fresh = (seed=14) => calamityRun(seed,startedMeta(1),'knight');
 
 test('new runs offer three distinct worlds and commit one crossing; alternatives cannot be farmed',()=>{
@@ -93,4 +94,20 @@ test('arena scenery never drops a large enemy band and support crossings strengt
   for(const world of WORLD_IDS){const band=Array.from({length:13},(_,i)=>i%2?'boneArcher':'skeleton');const b=startBattle(5,band,{board:destinationBoard(5,world)});assert.equal(b.units.length,13,world);assert.ok(b.units.every(u=>standable(tileAt(b.board,u.u,u.v))));}
   const r=fresh();enterNode(r,choices(r)[0].id);clearNode(r);const xp=r.roster[0].xp??0;
   const recruit=choices(r).find(n=>n.kind==='recruit')!;enterNode(r,recruit.id);clearNode(r);assert.ok((r.roster[0].xp??0)>xp);
+});
+
+test('each region recap carries its own share of the run recap: its fights and heroes (WAVE-RECAP-2 on expeditions)',()=>{
+  const r=fresh();const perRegion=[0,0,0];
+  while(!r.over){
+    const altar=pendingAltar(r);if(altar)chooseAltar(r,altar==='patron'?'ember':altar==='offering'?'fury':'together');
+    r.tower!.mapDone=undefined;
+    const node=choices(r)[0];const act=r.tower!.act;assert.ok(enterNode(r,node.id));
+    const fought=!!r.tower!.cur!.fight;clearNode(r);
+    // (as the page does after each settled fight: the fight's line and the heroes' work, then the region closes its share)
+    if(fought){perRegion[act-1]++;noteFightStats(r,[{id:1,kind:'knight',dealt:10,taken:2,healed:0,kills:1}],1000,true);noteWave(r,{wave:recapOf(r).fights,won:true,stars:3,ms:1000});}
+    closeMapLeg(r);
+    if(node.kind==='boss'){const done=r.tower!.recaps!.at(-1)!;assert.equal(done.map,act);assert.equal(done.detail!.fights,perRegion[act-1],`region ${act}'s fights`);assert.equal(done.detail!.heroes.knight.dealt,10*perRegion[act-1]);}
+  }
+  assert.equal(r.tower!.recaps!.length,3);assert.ok(r.tower!.recaps!.every(x=>x.detail));
+  assert.equal(perRegion.reduce((a,b)=>a+b),recapOf(r).fights);
 });

@@ -36,6 +36,7 @@ import { settings } from '../settings';
 import { badgeOf } from '../sim/levels';
 import { AURA_COLOURS, auraHalo, auraRings } from './levelLook';
 import { attackMotion } from './motionRules';
+import { AilmentFx, ailmentTint } from './ailmentLayer';
 
 /** The sheet rows beyond `Anim`: the skills' casts (a sheet without one plays its plain attack). */
 type Row = Anim | 'attack2' | 'defend';
@@ -48,8 +49,13 @@ const HURT_MS = 240;
 /** The fallen fade out over this long, after lying still a while. */
 const FADE_FROM = 1600;
 const FADE_MS = 900;
-/** A grade 3 hero is drawn this much bigger. */
+/** A grade 3 hero is drawn this much bigger, and a grade 4 (rank 4, the top since MERGE-TWO) bigger again. */
 const GRADE3_SIZE = 1.08;
+const GRADE4_SIZE = 1.14;
+/** Rank 4's colours: a violet halo and rim, and violet sparks (grade 3's are gold). */
+const GRADE4_HALO = 0xb06aff;
+const GRADE4_RIM = 0xd49aff;
+const GRADE4_SPARK = 0xe6c2ff;
 /** The ultimate's meter under the skill's: violet while it fills, gold when ready. */
 const ULT_FILL = 0xb06aff;
 const ULT_READY = 0xffd24a;
@@ -99,9 +105,11 @@ export class UnitSprite {
   private shield = new Sprite();
   private badge = new Sprite();
   private pillar = new Sprite();
-  /** The loops of the statuses on it (up to three, made as needed), and the stars that circle a stunned head. */
+  /** The loops of the buffs on it (up to three, made as needed); `stars` only marks where they go in the drawing order. */
   private overlays: Sprite[] = [];
   private stars = new Graphics();
+  /** Its ailments' look: body parts behind and in front of it, and the chips over its head (STATUS-FX). */
+  private ail = new AilmentFx();
   /** A knock from a blow, in px (it eases back to nothing). */
   private kx = 0;
   private ky = 0;
@@ -141,7 +149,7 @@ export class UnitSprite {
     // (an awakened hero keeps its own colours and sheet: its class's aura is what marks it, `awakenAura.ts`)
     this.sheet = formOf(def, this.grade);
     this.awakenAura = awake ? new AwakenAura(unit.def, awake, settings().saver) : null;
-    const size = (unit.size ?? 1) * (this.grade > 2 ? GRADE3_SIZE : 1);
+    const size = (unit.size ?? 1) * (this.grade > 3 ? GRADE4_SIZE : this.grade > 2 ? GRADE3_SIZE : 1);
     this.tall = figureOf(this.sheet) * def.scale * size;
     this.ownSheet = this.sheet;
     this.scaleNow = def.scale;
@@ -150,16 +158,16 @@ export class UnitSprite {
     this.baseSize = size;
     if (this.grade > 1 || awake) {
       // a halo of stacked ellipses behind the body (silver-blue, then gold), drawn once, and a rim of the body's own shape
-      const col = awake ? auraOf(unit.def).colour : this.grade > 2 ? 0xffc83a : 0x9cc8ff;
+      const col = awake ? auraOf(unit.def).colour : this.grade > 3 ? GRADE4_HALO : this.grade > 2 ? 0xffc83a : 0x9cc8ff;
       const h = this.tall * 0.62;
-      for (let i = 5; i >= 1; i--) this.glow.ellipse(0, -this.tall * 0.45, (12 + i * 5) / size, (h * (0.5 + i * 0.13)) / size).fill({ color: col, alpha: awake > 1 ? 0.16 : awake || this.grade > 2 ? 0.12 : 0.1 });
+      for (let i = 5; i >= 1; i--) this.glow.ellipse(0, -this.tall * 0.45, (12 + i * 5) / size, (h * (0.5 + i * 0.13)) / size).fill({ color: col, alpha: awake > 1 || this.grade > 3 ? 0.16 : awake || this.grade > 2 ? 0.12 : 0.1 });
       for (const [dx, dy] of [[-1.6, 0], [1.6, 0], [0, -1.6], [0, 1.6]]) {
         const r = new Sprite();
         r.anchor.set(0.5, 1);
         r.position.set(dx, dy);
         this.rim.addChild(r);
       }
-      this.rim.filters = [flatFilter(awake ? auraOf(unit.def).colour : this.grade > 2 ? 0xffd24a : 0xa8d0ff)];
+      this.rim.filters = [flatFilter(awake ? auraOf(unit.def).colour : this.grade > 3 ? GRADE4_RIM : this.grade > 2 ? 0xffd24a : 0xa8d0ff)];
       const tone = this.grade > 1 ? [gradeFilter(this.grade)] : [];
       if (tone.length) this.body.filters = tone;
     }
@@ -179,7 +187,7 @@ export class UnitSprite {
     this.pillar.anchor.set(0.5, 1);
     this.pillar.visible = false;
     this.pillar.blendMode = 'add';
-    this.root.addChild(this.shadow, this.aura, this.glow, ...(this.awakenAura ? [this.awakenAura.back] : []), this.pillar, this.shield, this.rim, this.body, ...(this.awakenAura ? [this.awakenAura.front] : []), this.sparks, this.stars, this.bar, this.badge);
+    this.root.addChild(this.shadow, this.aura, this.glow, ...(this.awakenAura ? [this.awakenAura.back] : []), this.pillar, this.shield, this.ail.back, this.rim, this.body, ...(this.awakenAura ? [this.awakenAura.front] : []), this.sparks, this.stars, this.bar, this.badge, this.ail.front);
   }
 
   /** Draw it at the time `t` of the fight (ms), on the board. */
@@ -341,9 +349,9 @@ export class UnitSprite {
     }
     // a blink of white when struck
     if (u.hurtAt !== undefined && t - u.hurtAt < 90 && u.alive) this.flash = 1;
-    // (a slowed fighter is tinted frosty blue; a flash or a dot's tint wins over it)
-    const frosty = u.alive && u.slowUntil !== undefined && t < u.slowUntil;
-    this.body.tint = this.flash > 0 ? 0xffb0b0 : u.alive && u.dot ? (u.dot.kind === 'burn' ? 0xffc890 : 0xff9a9a) : frosty ? 0xb8e4ff : 0xffffff;
+    // (its ailments: their parts and chips, and the tint of the latest that has one (burning orange, frozen ice blue...); a flash wins over it)
+    this.ail.update(u, this.tall, t, this.reduced?.matches ?? false, settings().saver);
+    this.body.tint = this.flash > 0 ? 0xffb0b0 : ailmentTint(this.ail.shown) ?? 0xffffff;
     // (the kits' looks: a wraith is a pale ghost of the foe it was; a foe turned to stone is grey)
     if (u.def === 'wraith') this.body.tint = 0x9fd0ff;
     else if (u.alive && u.kx?.stone !== undefined && t < u.kx.stone) this.body.tint = 0x9a9a92;
@@ -401,10 +409,9 @@ export class UnitSprite {
     return sp;
   }
 
-  /** The loops that stay on it while a status lasts (frost bubbles, flames, a shield's bubble, wind, auras), and the stars of a stun. */
+  /** The loops that stay on it while a buff lasts (a shield's bubble, wind, auras). Its ailments are `ailmentLayer.ts`'s. */
   private drawStatuses(u: Unit, t: number): void {
-    const list = statusesOf(u, t);
-    const loops = list.filter((k): k is Exclude<typeof k, 'stun'> => k !== 'stun').slice(0, maxStatuses(settings().saver));
+    const loops = statusesOf(u, t).slice(0, maxStatuses(settings().saver));
     for (let i = 0; i < Math.max(loops.length, this.overlays.length); i++) {
       if (i >= this.overlays.length) {
         const sp = new Sprite();
@@ -426,29 +433,14 @@ export class UnitSprite {
       // Use a held material sample so a persistent status never fades out at a strip boundary.
       paintSprite(sp, 500, 1000, (this.tall * look.size) / 32, 0, look.alpha, true, this.reduced?.matches ?? false);
     }
-    const g = this.stars;
-    g.clear();
-    g.visible = list[0] === 'stun';
-    if (!g.visible) return;
-    // (three little stars circling over the head)
-    for (let i = 0; i < 3; i++) {
-      const a = t / 260 + (i * Math.PI * 2) / 3;
-      g.star(Math.cos(a) * 9, -this.tall - 2 + Math.sin(a) * 3, 4, 3, 1.2).fill({ color: 0xffe27a, alpha: 0.9 });
-    }
   }
 
-  /** The status icon: burning, then bleeding, charmed, hasted, slowed (one at a time, the first that holds). */
+  /** A charmed fighter's heart beside its bar (the ailments' chips took the old badge's other icons, STATUS-FX; a haste keeps its wind loop). */
   private drawBadge(u: Unit, t: number): void {
-    const key =
-      !u.alive ? null
-      : u.dot && t < u.dot.until ? (u.dot.kind === 'burn' ? 'burn' : 'bleed')
-      : u.charmUntil !== undefined && t < u.charmUntil ? 'charm'
-      : u.hasteUntil !== undefined && t < u.hasteUntil ? 'haste'
-      : u.slowUntil !== undefined && t < u.slowUntil ? 'slow'
-      : null;
-    this.badge.visible = key !== null;
-    if (!key) return;
-    const frames = { burn: VFX.statusFire, bleed: VFX.statusBlood, charm: VFX.pinkHeart, haste: VFX.statusWind, slow: VFX.statusIce }[key];
+    const on = u.alive && u.charmUntil !== undefined && t < u.charmUntil;
+    this.badge.visible = on;
+    if (!on) return;
+    const frames = VFX.pinkHeart;
     this.badge.texture = frames[Math.floor(t / 90) % frames.length];
     this.badge.scale.set(0.5);
     this.badge.position.set(-BAR_W / 2 - 8, -this.tall - 6);
@@ -517,10 +509,12 @@ export class UnitSprite {
     g.visible = true;
     g.clear();
     const now = Date.now();
-    const gold = this.grade > 2 ? 0xffe27a : 0xdce8ff;
+    const gold = this.grade > 3 ? GRADE4_SPARK : this.grade > 2 ? 0xffe27a : 0xdce8ff;
+    // (rank 4 rises in more sparks, and violet ones)
+    const n = this.grade > 3 ? 9 : 6;
     if (this.grade > 2)
-      for (let i = 0; i < 6; i++) {
-        const f = ((now / 1500 + i / 6) % 1);
+      for (let i = 0; i < n; i++) {
+        const f = ((now / 1500 + i / n) % 1);
         const x = Math.sin(i * 2.4 + now / 900) * 14;
         g.star(x, -this.tall * 0.1 - f * this.tall * 0.95, 4, 3.4, 1.3).fill({ color: gold, alpha: Math.sin(Math.PI * f) });
       }

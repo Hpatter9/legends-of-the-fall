@@ -404,7 +404,7 @@ test('a hero can be moved before the first wave by tapping it, then a tile', () 
   assert.equal(FIELD_HEROES, 8);
 });
 
-test('the king is a unit of his kind that never moves or strikes', () => {
+test('the ruler remains the central objective and never leaves the dais', () => {
   const s = fresh(5, 20);
   startFirstWave(s);
   const at = { u: s.king.u, v: s.king.v };

@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { autoMerge, canMerge, mergeReady } from '../src/sim/merge';
 import assert from 'node:assert/strict';
 import { fight, place, playOut, type Battle } from '../src/sim/battle';
 import { CALAMITY_SQUAD, dropSlot, adoptOldTower, heroOf, loadRun, loadSlot, saveRun, saveSlot, setSquad, spendBuff, squadLimit, startStage, summon, type Run } from '../src/sim/run';
@@ -267,19 +268,23 @@ test('the squad takes ten and no more, and a full roster cannot hire', () => {
   assert.equal(setSquad(ordinary, 999, true), false);
 });
 
-test('there is no merging in a calamity: three of a kind stay three, and the tower still merges', () => {
+// (MERGE-TWO, the owner's change: two of a kind merge, and only when merged; a calamity still has none)
+test('there is no merging in a calamity: two or three of a kind stay as they are, and the tower still merges', () => {
   const run = calamityRun(4, startedMeta(1), 'knight');
   hireHero(run, 'knight', 10);
   hireHero(run, 'knight', 10);
   hireHero(run, 'knight', 10);
   assert.equal(run.roster.filter((h) => h.kind === 'knight').length, 4);
   assert.ok(run.roster.every((h) => h.grade === 1));
-  // (the tower's rule is as it was)
+  assert.equal(canMerge(run, run.roster[0].id, run.roster[1].id), false);
+  assert.deepEqual(autoMerge(run), []);
+  assert.ok(run.roster.every((h) => h.grade === 1));
+  // (the tower merges a pair)
   const tower = towerRun(4, startedMeta(1));
-  const knight = tower.roster.find((h) => h.kind === 'knight')!;
   tower.gold = 9999;
-  while (tower.roster.some((h) => h.id === knight.id)) if (!summon(tower)) break;
-  assert.ok(tower.roster.some((h) => h.grade > 1) || tower.roster.length >= 5, 'summons still merge in the tower');
+  while (summon(tower)) if (mergeReady(tower).length) break;
+  assert.ok(autoMerge(tower).length > 0, 'a pair merges in the tower');
+  assert.ok(tower.roster.some((h) => h.grade > 1));
 });
 
 test('a calamity fight follows the party: a lone hero meets two foes, ten heroes meet stronger ones', () => {

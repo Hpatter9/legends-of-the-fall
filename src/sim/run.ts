@@ -1,6 +1,6 @@
 // A run, King God Castle style: gold, a stage number and a roster of owned heroes. Gold buys a random hero (grade 1, now and then grade 2)
-// (`summon`); three of a kind and grade merge into one of the next grade at once; at most five fight, the rest wait on
-// the bench. Stage n meets a band of foes made tougher by n, and every fifth stage a boss (its own band, led by the boss). A win pays gold; a lost
+// (`summon`); two of a kind and grade merge into one of the next grade when the player merges them (`merge.ts`: by hand, or the Auto
+// merge button), never on their own; grade 4 is the top. At most five fight, the rest wait on the bench. Stage n meets a band of foes made tougher by n, and every fifth stage a boss (its own band, led by the boss). A win pays gold; a lost
 // fight ends the run. Pure rules: no Pixi, no DOM; the summon draws from a side stream of the run's seed.
 
 import { duchessModeOk, type DuchessWish } from './duchessFight';
@@ -28,7 +28,8 @@ import { noteGold, type RunRecap } from './runRecap';
 import type { TowerState } from './tower';
 import { HEROES, UNITS } from './units';
 
-export const MAX_GRADE = 3;
+/** The top grade (rank): 1+1 make 2, 2+2 make 3, 3+3 make 4 (MERGE-TWO; it was three of a kind up to 3). */
+export const MAX_GRADE = 4;
 export const SQUAD = 5;
 /** A calamity run fields up to this many heroes (and owns no more). */
 export const CALAMITY_SQUAD = 10;
@@ -41,8 +42,14 @@ export const RECYCLE_SHARE = 0.5;
 export const BENCH_MAX = 10;
 /** A run may retry a wave it lost this many times. */
 export const MAX_RETRIES = 2;
-/** Hp and attack grow by this for each grade above the first. */
-export const GRADE_MULT = 1.6;
+/** Hp and attack of a hero at each grade (1 to 4), as a multiple of grade 1 (MERGE-TWO, `docs/notes/merge-two.md`). Two of a kind make the
+ *  next grade, so grade g holds 2^(g-1) hires (it was three of a kind and 3^(g-1)): the steps are smaller than the old x1.6 a grade so a run
+ *  reaches the strength it did at the same gold, and the last step is the biggest, so rank 4 is a prize. */
+export const GRADE_BOOST: readonly number[] = [1, 1.3, 1.6, 2.4];
+/** The first grade step (grade 2 over grade 1); a merge's step is at least this. */
+export const GRADE_MULT = GRADE_BOOST[1];
+/** Hp and attack multiplier of a grade from merging (`GRADE_BOOST`; past the top it keeps the top's). */
+export const gradeMult = (grade: number): number => GRADE_BOOST[Math.max(0, Math.min(GRADE_BOOST.length, Math.round(grade)) - 1)];
 /** Foes' hp and attack at stage 1, as a share of their stats in `foes.ts`. */
 export const FOE_START = 0.55;
 /** Foes' hp and attack grow by this share for each stage after the first. */
@@ -209,7 +216,7 @@ export const wavesOf = (run: Run): number => waveArmyOf(run)?.waves.length ?? 0;
 /** How many heroes the run fields: five, or ten in a calamity. */
 export const squadLimit = (run: Run): number => (run.mode?.kind === 'calamity' ? CALAMITY_SQUAD : SQUAD);
 
-/** Hire a particular grade-1 hero for `paid` gold (the tower's shop sells them); three of a kind merge as ever. */
+/** Hire a particular grade-1 hero for `paid` gold (the tower's shop sells them); it waits to be merged like any hire. */
 export const recruit = (run: Run, kind: string, paid = SUMMON_BASE): Owned => add(run, kind, paid);
 
 const draw = (run: Run): string => {
@@ -227,17 +234,15 @@ const nextHire = (run: Run): { kind: string; grade: number } => ({
 /** Whether the bench is at its limit (`BENCH_MAX`). */
 export const benchFull = (run: Run): boolean => benched(run).length >= BENCH_MAX;
 
-/** Why a Hire is refused now, if it is: the run is over, gold is short, or the bench is full (a hire that would merge three of a kind into one is let through, as it frees room). */
+/** Why a Hire is refused now, if it is: the run is over, gold is short, or the bench is full (nothing merges on its own any more, so the
+ *  player merges a pair, recycles a hero or fields one to make room). */
 export function hireBlock(run: Run): 'over' | 'gold' | 'bench' | null {
   if (run.over) return 'over';
   if (run.gold < summonCost(run)) return 'gold';
-  if (!benchFull(run)) return null;
-  const next = nextHire(run);
-  const merges = next.grade < MAX_GRADE && run.roster.filter((h) => h.kind === next.kind && h.grade === next.grade).length >= 2;
-  return merges ? null : 'bench';
+  return benchFull(run) ? 'bench' : null;
 }
 
-/** Buy a random hero: grade 1, or now and then grade 2 (`luckyChance`). Returns it (or what it merged into), or null when too poor, the bench is full or the run is over. */
+/** Buy a random hero: grade 1, or now and then grade 2 (`luckyChance`). Returns it, or null when too poor, the bench is full or the run is over. */
 export function summon(run: Run): Owned | null {
   if (hireBlock(run)) return null;
   const cost = summonCost(run);
@@ -253,29 +258,15 @@ export const LUCKY_SUMMON = 0.05;
 /** A run's chance of a grade-2 summon: the base for now; castle buildings or items can add to it later. */
 export const luckyChance = (_run: Run): number => LUCKY_SUMMON;
 
-/** Add a hero bought at `paid` gold (grade 1 unless told otherwise), then merge threes of a kind and grade, upward. Returns the hero that ends up holding the new one's place. */
+/** Add a hero bought at `paid` gold (grade 1 unless told otherwise). It does not merge: the player merges pairs (`merge.ts`). */
 function add(run: Run, kind: string, paid: number, grade = 1): Owned {
-  let made: Owned = { id: run.nextId++, kind, grade, paid };
+  const made: Owned = { id: run.nextId++, kind, grade, paid };
   run.roster.push(made);
-  for (;;) {
-    // (a calamity has no merging: three of a kind stay three)
-    if (run.mode?.kind === 'calamity') return made;
-    const same = run.roster.filter((h) => h.kind === made.kind && h.grade === made.grade);
-    if (same.length < 3 || made.grade >= MAX_GRADE) return made;
-    // (the new one stays in the squad's place of the oldest: the first three leave, one of the next grade arrives)
-    const gone = new Set(same.slice(0, 3).map((h) => h.id));
-    for (const h of same.slice(0, 3)) for (const g of Object.values(h.gear ?? {})) (run.items ??= []).push(g);
-    const slot = run.squad.findIndex((id) => gone.has(id));
-    run.roster = run.roster.filter((h) => !gone.has(h.id));
-    run.squad = run.squad.filter((id) => !gone.has(id));
-    made = { id: run.nextId++, kind: made.kind, grade: made.grade + 1, paid: same.slice(0, 3).reduce((n, h) => n + paidOf(h), 0), ...(run.local ? { xp: Math.max(...same.slice(0, 3).map((h) => h.xp ?? 0)) } : {}) };
-    run.roster.push(made);
-    if (slot >= 0 && run.squad.length < squadLimit(run)) run.squad.splice(Math.min(slot, run.squad.length), 0, made.id);
-  }
+  return made;
 }
 
-/** The gold paid into a hero. A hero from an older save has no record: it is taken to have cost the base price of a summon for each grade-1 hero in it. */
-export const paidOf = (h: Owned): number => h.paid ?? SUMMON_BASE * 3 ** (h.grade - 1);
+/** The gold paid into a hero. A hero from an older save has no record: it is taken to have cost the base price of a summon for each grade-1 hero in it (two a grade). */
+export const paidOf = (h: Owned): number => h.paid ?? SUMMON_BASE * 2 ** (h.grade - 1);
 /** The gold recycling a hero pays back: half the Hire price as it stands now, rounded, at least 1 (whatever the hero's grade or cost). */
 export const recycleValue = (run: Run): number => Math.max(1, Math.round(summonCost(run) * RECYCLE_SHARE));
 
@@ -320,7 +311,7 @@ export const benched = (run: Run) => run.roster.filter((h) => !run.squad.include
 
 /** Hp and attack multipliers of a grade, times the hero kind's rank (from its shards) and its level (from its XP). Every hero kind is alike here: what sets one apart is its own stats and skill. */
 export const gradeBoost = (grade: number, rank = 0, level = 1): Boost => {
-  const k = GRADE_MULT ** (grade - 1) * rankMult(rank);
+  const k = gradeMult(grade) * rankMult(rank);
   const lv = lastingBoost(level);
   return { hp: k * lv.hp, atk: k * lv.atk, grade, level };
 };

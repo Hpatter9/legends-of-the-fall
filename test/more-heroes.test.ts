@@ -12,6 +12,7 @@ import { SKILL_FX } from '../src/render/skillFx';
 import { SKILL_ELEMENT } from '../src/render/fxRules';
 import { SPOTS } from '../src/render/tavernSpots';
 import layout from '../src/art/units/sheets.json';
+import { dotOf } from '../src/sim/ailments';
 
 const NEW = ['shambler', 'rifleBot', 'mercenary', 'mummy', 'buccaneer', 'wolfBard', 'beastmaster', 'kraken', 'lancer', 'reaper', 'timeWitch', 'arcBlade', 'dreadPirate', 'siegeBot', 'priestess', 'dragoon', 'juggernaut', 'sage', 'demonSwordsman', 'tyrant'];
 const LAYOUT = layout as Record<string, { w: number; h: number; rows: string[]; counts: Record<string, number>; figure: number }>;
@@ -126,8 +127,8 @@ test('Rotting Touch makes every foe within two tiles rot, and the Shambler drink
   const near = spawn(b, 'skeleton', 3, 5);
   const far = spawn(b, 'skeleton', 3, 0);
   run(b, 200);
-  assert.equal(near.dot?.kind, 'curse');
-  assert.equal(far.dot, undefined);
+  assert.equal(dotOf(near)?.kind, 'curse');
+  assert.equal(dotOf(far), undefined);
   run(b, 1500);
   assert.ok((me.healed ?? 0) > 0);
 });
@@ -328,8 +329,8 @@ test('Dragon Breath burns every foe in a line', () => {
   spawn(b, 'dragoon', 3, 8, CHARGE_MAX);
   const line = [[3, 6], [3, 5], [3, 4]].map(([u, v]) => spawn(b, 'skeleton', u, v));
   run(b, 200);
-  assert.ok(line.every((f) => f.dot?.kind === 'burn' || f.hp < f.maxHp));
-  assert.ok(line.filter((f) => f.dot?.kind === 'burn').length >= 2);
+  assert.ok(line.every((f) => dotOf(f)?.kind === 'burn' || f.hp < f.maxHp));
+  assert.ok(line.filter((f) => dotOf(f)?.kind === 'burn').length >= 2);
 });
 
 test('Earthquake holds every foe within three tiles', () => {
@@ -365,16 +366,23 @@ test('Hellblade Sweep heals the Demon Swordsman, and Demon Form lifts his attack
   me.hp = 100;
   [[3, 5], [4, 5]].forEach(([u, v]) => spawn(b, 'skeleton', u, v));
   run(b, 200);
-  assert.ok(me.hp > 100);
+  assert.ok(me.hp > 100, `Hellblade Sweep heals: ${me.hp}`);
   const c = arena();
   const dm = spawn(c, 'demonSwordsman', 3, 6, 0, ULT_LEVEL);
   dm.charge2 = CHARGE_MAX;
-  spawn(c, 'skeleton', 3, 4);
+  // (a sturdy foe, so the fight lasts while the form wears off; and the hero warded against its grave-rot, so its poison does not end the
+  // fight first: this is about the form, STATUS-FX)
+  const foe = spawn(c, 'skeleton', 3, 4);
+  dm.wardUntil = 1e9;
+  foe.hp = foe.maxHp = 100000;
   const before = dm.power ?? 1;
   run(c, 200);
-  assert.ok(Math.abs((dm.power ?? 1) / before - FORM_MULT) < 1e-6);
-  run(c, 8000);
-  assert.ok(Math.abs((dm.power ?? 1) / before - 1) < 1e-6);
+  assert.ok(Math.abs((dm.power ?? 1) / before - FORM_MULT) < 1e-6, `in form: ${(dm.power ?? 1) / before}`);
+  // (and no second Demon Form while the first wears off: with ULT-CHARGE's quicker meter it would be full again before then; the form lasts
+  // 7 s times the square root of its tuned strength)
+  c.autoUlt = false;
+  run(c, 13000);
+  assert.ok(Math.abs((dm.power ?? 1) / before - 1) < 1e-6, `worn off: ${(dm.power ?? 1) / before}, form ${JSON.stringify(dm.form)} at ${c.t}`);
   assert.equal(dm.form, undefined);
 });
 

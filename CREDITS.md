@@ -1,5 +1,7 @@
 # Credits
 
+- **Active ceremonial summoner** (`src/art/hall/summoner-active.png`) and character-free sanctum background (`src/art/hall/sanctum.png`): original generated artwork based on the existing approved chamber. Separate idle, casting and eye-shield poses; no third-party character art. Both images are bundled into game.js for offline use.
+
 - **Full Resonance hero upgrade** (`src/art/units/hero_res_*.png`, separate `_back` sheets, and the two pilot heroes): original generated pixel artwork following the owner's approved direction. Includes the 43 remaining collectible heroes, Werewolf Brute/awakened appearances and three Treants. Front/rear art supplies four isometric facings through left/right mirroring; dedicated walking atlases supply eight-frame strides. Prompts, specifications and packing tools are in `tools/resonance/`; raw generation intermediates remain in the art workspace. No franchise sprites are included. Foes/NPCs retain their existing art and credits.
 
 - **Resonance hero pilot** (`hero_soldier.png`, `hero_samurai_archer.png`): original generated pixel artwork, directed from the owner's approved concept and Final Fantasy Resonance style references. No franchise sprites are included. Cropped, packed and sampled with nearest-neighbour scaling by `tools/resonance/pack.cjs`. These replace the Knight and Archer's displayed art at all grades; current grade effects and awakened class auras apply. Original Craftpix sheets and their credits remain available.
@@ -61,6 +63,8 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
 - **The sound effects** are synthesised in `src/render/audioProcessors.ts` with the Web Audio API, except eight recorded combat sounds (sword and
   blunt hits, a shield block, a crit, a bowstring, an arrow hit, a death and an explosion) embedded in `src/render/combatAudioBank.ts`
   (PR #150, given as CC0). Their original source and authors were not recorded with the PR and should be named here.
+- **The king's spells' sounds** (`src/sfx/*.opus`, 44 files): original, synthesised offline by `tools/spell-sfx/` for this game (using the
+  filters, hall and instruments of `tools/epic-music/`). No samples or third-party audio went in.
 
 ## Areas (`src/art/areas/`, cut by `tools/areas-prep.py`)
 
@@ -119,6 +123,14 @@ All Craftpix, copied one sprite or layer at a time; no PixelLab. Ground tops and
   raw files are not redistributed. A painted replacement (`docs/notes/awaken-auras-art-brief.md`) would be credited
   here instead.
 
+## Summon tarot cards (SUMMON-TAROT, phase A mock-up)
+
+- `src/art/ui/tarot-frame.png`: the gold tarot card frame, generated with PixelLab (one generation) for this game.
+- `src/art/tarot/arcana.png`: 48 strips of the **5000 Pixel Effects** pack by blueberry (https://blueberry-assets.itch.io),
+  copied unchanged from `pixel-effects/sprites/<element>-<glyph|burst|circle|aura>/sheet-32.png` in the private assets
+  repository and packed twelve elements a row (light, earth, blood, wind, lightning, crystal, star, fire, dark, moon, forest,
+  sand): the class sigils on the cards and the burst, ring and halo of the first-time reveal (`src/summonTarot.ts`).
+
 ## Fight effects (`src/art/fx/vfx/`)
 
 - 27 Pixel Effects strips (six 32px frames each, copied unchanged from `pixel-effects/sprites/<effect>/sheet-32.png` in
@@ -126,6 +138,14 @@ All Craftpix, copied one sprite or layer at a time; no PixelLab. Ground tops and
   earth, wind slashes; white, gold, wind, fire, ice, sand and blood puffs; white and gold dust; water ripple and splash;
   fire sparkle and flame; white dash; light hit; dark smoke; light pillar; gold level-up; light sparkle; white sparkle;
   gold star; and the burning, bleeding, hasted and shielded-icon status strips. Used by `src/render/vfxArt.ts`.
+
+## Ailment effects (`src/art/fx/status/`)
+
+- **Placeholder art for the ailments** (STATUS-FX, `docs/notes/status-fx.md`): 33 strips (32px frames, six or eight
+  each) of the **5000 Pixel Effects** pack by blueberry (https://blueberry-assets.itch.io), copied unchanged from
+  `pixel-effects/sprites/<effect>/sheet-32.png` in the private assets repository and packed into `atlas.png` by
+  `tools/status-fx/status-sheets.py` (the key-to-strip map is `tools/status-fx/status-pack.json`). Painted art made to
+  `docs/notes/status-fx-art-brief.md` will replace them.
 
 ## Combat effects (`src/art/fx/pack/`)
 
@@ -400,3 +420,23 @@ The Grand Scenario prototype reuses the already credited camp gate and Knights w
 ### Rift Sanctuary and destination worlds
 
 Original generated illustrations for the approved Calamity portal-expedition direction: the emerald-and-obsidian sanctuary and six destination environments (Ashen Keep, Rootbound Shrine, Lost Caravan, Prism Vault, Hollow Court and Frostwatch). Unchanged source PNGs are in `src/art/rift-sanctuary/`; provenance and hashes are recorded alongside them. Equal SVG viewports select the destination atlas panels for cards, scenic encounter screens and battle backdrops. The live arenas reuse the credited Chronos isometric stone, terrain, vegetation, ruins, camps and light assets, and the original Calamity arrival portal. Hero sprites retain their existing pack credits.
+- `src/art/rulers/the_king.png` (The King, the ninth ruler and the default since STARTER-KING): the earlier king brought back, no new artwork. The seated and command rows are the castle's enthroned king (`src/art/throne/king_throne.png`, see the throne room entries above) as it is. The standing rows are the Last Stand's old king from the **Himeko Sutori** character pack in `chronos-assets` (`Template_Male`, `Plate_06_Lordly_Male` and its top, `Helm/Helm_Crown_Male`), with the same pack's `Facial Hair/BeardBlond` and `Staff_05_Radiant_Male` as his sceptre, cut from the pack's 128 px grid and drawn twice up; his fall ends on the kneel turned 90 degrees. Built by `tools/rulers/the-king.py` (lossless pixel moves only). When he rises from his seat he stands before the Iron Stag's throne from `thrones.png` (the old art has no empty throne).
+
+## Anime hero gallery
+
+- `src/art/heroes/*.webp`: 45 original anime hero scenes and 45 transparent menu cutouts generated with OpenAI image generation in October 2026 for the owner's hero overview request. Each full illustration has an individual pose and situation. Kitsune, Gorgon, Illusionist and Time Witch follow the owner's supplied redesign concept; the other heroes draw on their established game identities and colours.
+- `tools/anime-heroes/catalogue.json` and `scenes.json` record the character directions and scene briefs. Generated production atlases are split into individual assets and transcoded for the offline gallery by `extract.cjs` and `pack.cjs`. Battle animation artwork and its existing credits remain separate.
+
+
+## Last Stand ornate room artwork (`src/art/stand/ornate/`)
+
+- Original castle environment artwork generated with OpenAI image generation at the owner's request to replace the earlier coarse room assets, following the approved Last Stand concept. Production source atlases are retained in `tools/stand/generated/ornate-{props,materials,garden}.png`.
+- The new pieces are carved heraldic columns, Gothic stained glass, wooden bookcases, braziers, a tiered fountain, rose-covered arcades, reading desks, carved rubble, a compass medallion, limestone and courtyard paving, ashlar masonry, embroidered velvet, lawn, rose planters, trailing ivy and heraldic banners. `tools/stand/cut-ornate.py` extracts and downsamples them; `src/art/stand/ornate/provenance.json` records their sources.
+- Last Stand uses the selected player's existing ruler atlas and throne from the Player rulers section above. These room assets do not replace any ruler, hero or enemy artwork. Earlier room-asset entries retain their historical provenance; the remaining well, lamps, stores, smoke and dust keep their existing credits.
+## Illustrated loading screen
+
+`src/art/loading/last-keep.webp`: original fantasy illustration generated with OpenAI image generation from the owner-approved moonlit keep concept, revised with a crowned king and his archer, paladin and fire wizard guard. Typography, mist, embers, beacon light and loading indicator are live HTML/CSS.
+
+## Status effects (painted)
+
+- The 11 sheets in `art-source/status-fx/`: original artwork generated for this game with OpenAI image generation.

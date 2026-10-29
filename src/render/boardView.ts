@@ -24,12 +24,14 @@ const STONY = 3;
 /** How many steps of an army road's column are drawn below its top (they fade out past the first two). */
 const ROAD_SKIRT = 5;
 
-type Mark = 'deploy' | 'hover' | 'bad' | 'chosen' | null;
+/** A tile's mark; `merge` is a hero on the field with a match ready to merge (MERGE-TWO). */
+type Mark = 'deploy' | 'hover' | 'bad' | 'chosen' | 'merge' | null;
 const MARK_COLOUR: Record<Exclude<Mark, null>, [number, number]> = {
   deploy: [0x4a9cff, 0.28],
   hover: [0xffe066, 0.5],
   bad: [0xff4a4a, 0.4],
   chosen: [0x6dff8a, 0.45],
+  merge: [0xffb43a, 0.6],
 };
 
 /** The colour of the lip at the edge of a tile's top: grass-like, then stony. */
