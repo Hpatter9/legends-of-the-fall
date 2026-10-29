@@ -60,17 +60,18 @@ try {
   // Change the real Options selection while Last Stand is open, then inspect its atlas.
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.evaluate(() => { window.__standReviewSources = []; });
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 9; i++) {
     await page.evaluate(() => document.getElementById('hmGear').click());
-    await page.locator('.rulerChoice').nth(i).click();
+    await page.locator('.rulerOpen').click();
     const selected = await page.locator('.rulerChoice').nth(i).getAttribute('aria-label');
+    await page.locator('.rulerChoice').nth(i).click();
     await page.locator('#settingsClose').click();
     await page.waitForTimeout(450);
     assert.equal(await page.locator('.stKing small').innerText(), selected.split(',')[0]);
     await page.evaluate(() => window.__standReviewSources.push(window.__game.stand.hall.king.texture.source));
     if (i === 0) await page.screenshot({ path: 'docs/samples/stand-depth-selected-ruler-393x852.png' });
   }
-  assert.equal(await page.evaluate(() => new Set(window.__standReviewSources).size), 8);
+  assert.equal(await page.evaluate(() => new Set(window.__standReviewSources).size), 9);
   // A real melee event must select the standing strike row, land damage, then return to idle.
   await page.evaluate(() => {
     const s = window.__game.stand.state;
@@ -87,7 +88,7 @@ try {
   await page.waitForFunction(() => window.__game.stand.hall.rulerAction === 'idle');
   assert.equal(await page.evaluate(() => window.__game.stand.hall.emptyThrone.visible), true);
   console.log('Standing ruler, rear throne and event-driven melee verified.');
-  console.log('All eight Options choices use distinct Last Stand ruler atlases.');
+  console.log('All nine Options choices use distinct Last Stand ruler atlases.');
   console.log(JSON.stringify({ errors }));
   if (errors.length) process.exitCode = 1;
 } finally { await browser.close(); server.close(); }
