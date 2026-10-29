@@ -30,6 +30,7 @@ import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { BOSS_IDS, FOE_BANDS, isBoss } from '../src/sim/foes';
 import { levelOfKind, xpFor } from '../src/sim/levels';
 import { ARMY_STARS, TIERS } from '../src/sim/tiers';
+import { timeTarget } from '../src/sim/armyStars';
 import { loadMeta, startedMeta, saveMeta } from '../src/sim/meta';
 import { BOSS_TITLES, titleOf } from '../src/render/bossTitles';
 import { ARMY_START_GOLD, armyOfRun, armyRun, bandFor, finish, gradeBoost, isBossRun, loadRun, newRun, saveRun, startStage, waveArmyOf } from '../src/sim/run';
@@ -479,6 +480,10 @@ test('every army has fifteen waves, and the first-clear pay rose a little (about
     assert.ok(sizes.every((n, i) => i === 0 || n >= sizes[i - 1]), a.id);
     assert.ok(Math.max(...sizes) <= 6, a.id);
   }
+});
+
+test('the time target for the third star scales with the fifteen waves', () => {
+  for (const a of ARMIES) assert.equal(timeTarget(a, 0), 15 * 26_000);
 });
 
 test('records saved when the armies were shorter map onto the fifteen waves: a cleared army stays cleared, stars and chests are untouched', () => {
