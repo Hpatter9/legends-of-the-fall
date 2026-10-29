@@ -71,9 +71,10 @@ and the **default** (`DEFAULT_RULER = 'the_king'`; `rulerOf` falls back to him).
   `rulerArt.ts`). His standing figure fills less of its cell than the new rulers' do (the pack's 75 px figure at 2x), so in cinematics
   and the Last Stand he stands a little shorter than they would, about the heroes' size. His picker portrait is his throne frame.
 - **Old settings:** a setting with no ruler (saved before 0.202.0, or never saved) or an unknown one gets The King. A saved `iron_stag`
-  is kept: `setSetting` writes every setting, so anyone who changed any setting since 0.202.0 has `ruler: 'iron_stag'` saved whether
-  they chose him or not, and the two cannot be told apart. Those players (the owner's phone very likely among them) pick The King once in
-  Settings.
+  could be a real choice or just the old default: `setSetting` writes every setting, so anyone who changed any setting since 0.202.0
+  has it saved. At merge (0.212.0) the director chose the owner's intent: the picker now also saves `rulerPicked: true`, and a saved
+  `iron_stag` without it is read as the old default and becomes The King, once. A pick in the picker, Iron Stag included, then sticks.
+  Tested in `test/settings.test.ts`.
 
 ## The thrones held still (the owner's later ask)
 

@@ -15,6 +15,9 @@ const KEY = 'legends.settings';
 export interface Settings {
   /** The player's ruler; cosmetic, shared by every view. */
   ruler: RulerId;
+  /** Set once the player picks a ruler in the picker. Before The King (0.212.0) any saved setting carried the old default,
+   *  Iron Stag, so a saved Iron Stag without this is read as the old default and moves to The King, the owner's call. */
+  rulerPicked?: boolean;
   /** Music volume, 0 to 100. */
   music: number;
   /** Effects volume, 0 to 100. */
@@ -52,7 +55,8 @@ export function parseSettings(raw: string | null): Settings {
   const flag = (x: unknown, d: boolean) => (typeof x === 'boolean' ? x : d);
   const validHat = (x: unknown): DuchessCosmeticId => (typeof x === 'string' && DUCHESS_COSMETICS.some((c) => c.id === x) ? (x as DuchessCosmeticId) : DEFAULTS.duchessHat);
   return {
-    ruler: rulerOf(saved.ruler).id,
+    ruler: saved.ruler === 'iron_stag' && saved.rulerPicked !== true ? DEFAULT_RULER : rulerOf(saved.ruler).id,
+    ...(saved.rulerPicked === true ? { rulerPicked: true } : {}),
     music: volume(saved.music, DEFAULTS.music),
     effects: volume(saved.effects, DEFAULTS.effects),
     speed: saved.speed === 2 ? 2 : 1,
@@ -196,6 +200,7 @@ function rulerRow(value: RulerId): HTMLElement {
           },
         })),
         onPick: (id) => {
+          setSetting('rulerPicked', true);
           setSetting('ruler', id as RulerId);
           draw();
           (document.querySelector('.rulerOpen') as HTMLElement | null)?.focus();

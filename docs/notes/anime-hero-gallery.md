@@ -36,3 +36,12 @@ Artwork is original generated material credited in `CREDITS.md`. The owner's fou
 - Final diff and JavaScript syntax checks passed.
 
 PR: [#169](https://github.com/Hpatter9/legends-of-the-fall/pull/169). Main integrated with both sets of credits and task entries retained; the gallery task is ART-004 to avoid the existing ART-003 battle-art assignment. No merge into main, version bump or deployment requested. Real-phone performance remains unmeasured.
+
+## Top-half portraits (the owner's ask, 0.209.0)
+
+Before a hero is opened, its art shows only the top half: face and shoulders.
+- **Company cards:** the card's cutout is drawn at twice the scene's height (`height: 230px`, `object-position: 50% 0`), so the 115px scene shows the top half.
+- **Dossier portrait:** the cutout is twice the portrait's height (`height: 200%`, `object-fit: contain`, top-anchored) inside a clipped button.
+
+Tapping the portrait still opens the full artwork. The hero strip's 48px thumbs were already face crops. CSS only, in `src/heroArtwork.css`.
+Screens: `docs/samples/hero-bust-{roster,dossier}-393x852.png`.

@@ -42,12 +42,21 @@ test('Start over wipes every run in progress: the ordinary one and the spire and
   assert.ok(!SAVE_KEYS.includes('legends.settings') && !SAVE_KEYS.includes('legends.sound'));
 });
 
-test('the chosen ruler is saved by identity; missing and malformed choices get the classic king, a saved Iron Stag is kept', () => {
+test('the chosen ruler is saved by identity; missing and malformed choices get the classic king, a saved Iron Stag never picked becomes the classic king', () => {
   assert.equal(parseSettings(null).ruler, 'the_king');
   assert.equal(parseSettings('{"music":40}').ruler, 'the_king', 'settings saved before the rulers');
   assert.equal(parseSettings('{"ruler":"frost_witch"}').ruler, 'frost_witch');
-  assert.equal(parseSettings('{"ruler":"iron_stag"}').ruler, 'iron_stag');
+  assert.equal(parseSettings('{"ruler":"iron_stag"}').ruler, 'the_king', 'the old default moves to The King');
   for (const ruler of [null, 2, {}, 'lichKing', 'unknown']) {
     assert.equal(parseSettings(JSON.stringify({ ruler })).ruler, 'the_king');
   }
+});
+
+// The King became the default in 0.212.0; before that every saved setting carried Iron Stag, so a saved Iron Stag without a
+// pick in the picker is read as the old default and moves to The King once (the owner's call). A real pick sticks.
+test('a saved Iron Stag never picked moves to The King; a picked one, or any other ruler, stays', () => {
+  assert.equal(parseSettings('{"ruler":"iron_stag"}').ruler, 'the_king');
+  assert.equal(parseSettings('{"ruler":"iron_stag","rulerPicked":true}').ruler, 'iron_stag');
+  assert.equal(parseSettings('{"ruler":"sun_viper"}').ruler, 'sun_viper');
+  assert.equal(parseSettings('{"ruler":"iron_stag","rulerPicked":true}').rulerPicked, true);
 });
