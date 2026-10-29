@@ -6,6 +6,7 @@
 
 import { atkOf, hurt, type Battle, type BattleEvent, type Unit } from './battle';
 import { apart, foesOf, gain, mendUnit, net, slowFor } from './abilities';
+import { cleanse, stunFor } from './ailments';
 
 const alliesOf = (b: Battle, me: Unit): Unit[] => b.units.filter((a) => a.alive && a.side === me.side);
 
@@ -72,8 +73,7 @@ export const DUO_COMBOS: readonly DuoCombo[] = [
         const foes = foesOf(b, knight).filter((f) => apart(knight, f) <= 2);
         for (const f of foes) {
           hurt(b, knight, f, net(atkOf(knight) * 1.2, f), true, false, out, 'skill');
-          f.busyUntil = Math.max(f.busyUntil, b.t + 800);
-          f.stunUntil = Math.max(f.stunUntil ?? 0, b.t + 800);
+          stunFor(b, f, 800);
         }
       }
     },
@@ -137,8 +137,7 @@ export const DUO_COMBOS: readonly DuoCombo[] = [
       for (const t of targets) {
         out.push({ kind: 'arc', from: mage.id, to: t.id });
         hurt(b, mage, t, net(atkOf(mage) * (harmonic ? 1.8 : 1.3), t), false, false, out, 'skill');
-        t.busyUntil = Math.max(t.busyUntil, b.t + 800);
-        t.stunUntil = Math.max(t.stunUntil ?? 0, b.t + 800);
+        stunFor(b, t, 800);
       }
     },
   },
@@ -156,7 +155,7 @@ export const DUO_COMBOS: readonly DuoCombo[] = [
       // Cleanse and shield all allies
       const allies = alliesOf(b, wanderer);
       for (const a of allies) {
-        a.dot = undefined;
+        cleanse(b, a);
         const shieldHp = Math.round(a.maxHp * (harmonic ? 0.3 : 0.18));
         a.shield = { hp: shieldHp, until: b.t + 5000 };
       }
@@ -189,7 +188,7 @@ export const DUO_COMBOS: readonly DuoCombo[] = [
       const nearAllies = alliesOf(b, paladin).filter((a: Unit) => apart(paladin, a) <= 4);
       for (const a of nearAllies) {
         mendUnit(a, a.maxHp * (harmonic ? 0.3 : 0.18), out, cleric);
-        a.dot = undefined;
+        cleanse(b, a);
         a.guardUntil = Math.max(a.guardUntil ?? 0, b.t + (harmonic ? 6000 : 4000));
       }
 
@@ -222,8 +221,7 @@ export const DUO_COMBOS: readonly DuoCombo[] = [
       for (const f of roarFoes) {
         slowFor(b, f, harmonic ? 5000 : 3500);
         if (harmonic) {
-          f.busyUntil = Math.max(f.busyUntil, b.t + 1000);
-          f.stunUntil = Math.max(f.stunUntil ?? 0, b.t + 1000);
+          stunFor(b, f, 1000);
         }
       }
     },

@@ -5,6 +5,7 @@ import { CAST_MS, COMBO_NEED, COMBOS, comboOf, MIN_ALIVE, noteCombos, readCombos
 import { newMeta } from '../src/sim/meta';
 import { ALL_HEROES } from '../src/sim/units';
 import { gradeBoost } from '../src/sim/run';
+import { dotOf } from '../src/sim/ailments';
 
 /** A fight with the five of a combo placed on the heroes' rows. */
 function team(kinds: readonly string[], seed = 5, band = 'skeletons'): Battle {
@@ -106,7 +107,7 @@ test('each combo\'s move does what its text says: the holy order heals and shiel
   assert.ok(holy.b.units.some((u) => u.side === 'hero' && u.shield), 'a ward');
   assert.ok(holy.events.filter((e) => e.kind === 'heal').length >= 5, 'every ally healed');
   const arcane = run('arcaneCouncil');
-  assert.ok(arcane.b.units.some((u) => u.side === 'foe' && u.dot?.kind === 'burn'), 'the foes burn');
+  assert.ok(arcane.b.units.some((u) => u.side === 'foe' && dotOf(u)?.kind === 'burn'), 'the foes burn');
   const hunt = run('wildHunt');
   assert.ok(hunt.b.units.filter((u) => u.def === 'wolf').length >= 3 && hunt.b.units.some((u) => u.def === 'direWolf'), 'wolves rise');
   const shadow = run('shadowClan');

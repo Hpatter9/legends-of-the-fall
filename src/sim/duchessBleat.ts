@@ -3,6 +3,7 @@
 
 import { standable, tileAt } from './board';
 import type { Battle, Unit } from './battle';
+import { stunFor } from './ailments';
 
 /** Startle the foe nearest the heroes' back row: it can do nothing for `ms`. Returns the startled foe, if there is one. */
 export function bleatStartle(b: Battle, ms: number): Unit | undefined {
@@ -18,8 +19,7 @@ export function bleatStartle(b: Battle, ms: number): Unit | undefined {
       target = f;
     }
   }
-  target.busyUntil = Math.max(target.busyUntil, b.t + ms);
-  target.stunUntil = Math.max(target.stunUntil ?? 0, b.t + ms);
+  stunFor(b, target, ms);
   return target;
 }
 

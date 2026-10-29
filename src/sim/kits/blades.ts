@@ -8,6 +8,7 @@ import { hurt } from '../battle';
 import { addRes } from '../heroKits';
 import { kx, raiseWraith, setLook } from './effects';
 import { alliesOf, blinkTo, foesNear, freeNear, mark, ms, strike, strongest, stun } from './common';
+import { chillFor, setDot } from '../ailments';
 
 /** Kunoichi, Smoke Bomb: she cannot be targeted for 2s, the foes in the 3x3 round her miss half their blows for 3s, and her next blow crits. */
 export function smokeBomb(b: Battle, me: Unit, out: BattleEvent[]): boolean {
@@ -112,8 +113,8 @@ export function rollTheBones(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   me.facing = wayTo(me, f);
   mark(out, me, me, `dice ${d1} ${d2}`, 1200);
   strike(b, me, f, mult, out, mult >= 2.2);
-  if (sum >= 10 && !top && f.alive) f.dot = { kind: 'bleed', dmg: Math.max(1, Math.round(atkOf(me) * 0.15)), every: 500, ms: 3000, by: me.id, next: b.t + 500, until: b.t + 3000 };
-  if (sum <= 4 && !top) me.slowUntil = Math.max(me.slowUntil ?? 0, b.t + 2000);
+  if (sum >= 10 && !top && f.alive) setDot(b, f, { kind: 'bleed', dmg: Math.max(1, Math.round(atkOf(me) * 0.15)), every: 500, ms: 3000, by: me.id, next: b.t + 500, until: b.t + 3000 });
+  if (sum <= 4 && !top) chillFor(b, me, 2000);
   if (top)
     for (const a of alliesOf(b, me)) {
       a.hasteUntil = Math.max(a.hasteUntil ?? 0, b.t + ms(me, 3000));

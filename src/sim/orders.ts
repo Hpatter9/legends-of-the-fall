@@ -9,6 +9,7 @@ import type { Battle, BattleEvent } from './battle';
 import { ultimateOf } from './abilities';
 import { heroKitOf, ultFull } from './heroKits';
 import { castSpell, type SpellId } from './spells';
+import { isSilenced } from './ailments';
 
 /** A tap waiting for the next tick. */
 export interface Order {
@@ -50,7 +51,8 @@ export function applyOrders(b: Battle, out: BattleEvent[]): void {
   }
   for (const u of b.units) {
     if (u.ultOrder === undefined) continue;
-    if (!u.alive || !ultFull(u) || b.t - u.ultOrder > ORDER_WAIT_MS) {
+    // (a silenced hero's order waits for the silence to end, STATUS-FX)
+    if (!u.alive || !ultFull(u) || (b.t - u.ultOrder > ORDER_WAIT_MS && !isSilenced(b, u))) {
       delete u.ultOrder;
       if (u.alive) out.push({ kind: 'ultLapse', by: u.id });
     }

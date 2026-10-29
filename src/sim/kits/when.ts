@@ -4,6 +4,7 @@
 import { UNITS } from '../units';
 import { atkOf, type Battle, type Unit } from '../battle';
 import { apart, foesOf } from '../abilities';
+import { harmed, hasAil } from '../ailments';
 
 const on = (t: number | undefined, b: Battle) => t !== undefined && t > b.t;
 const foesWithin = (b: Battle, me: Unit, n: number) => foesOf(b, me).some((f) => apart(me, f) <= n);
@@ -16,7 +17,7 @@ export const SKILL2_WHEN: Readonly<Record<string, (b: Battle, me: Unit) => boole
   'Parry Stance': (b, me) => foesOf(b, me).some((f) => apart(f, me) === 1 && !UNITS[f.def].shot),
   'Smoke Bomb': (b, me) => foesOf(b, me).some((f) => Math.abs(f.u - me.u) <= 1 && Math.abs(f.v - me.v) <= 1),
   'Turning Wind': (b, me) => foesOf(b, me).some((f) => UNITS[f.def].shot && apart(f, me) <= 8),
-  Wildfire: (b, me) => foesOf(b, me).some((f) => apart(me, f) <= 7 && (f.dot?.kind === 'burn' || b.zones.some((z) => z.side === me.side && !z.slow && Math.abs(z.u - f.u) <= 1 && Math.abs(z.v - f.v) <= 1))),
+  Wildfire: (b, me) => foesOf(b, me).some((f) => apart(me, f) <= 7 && (hasAil(f, 'burn') || b.zones.some((z) => z.side === me.side && !z.slow && Math.abs(z.u - f.u) <= 1 && Math.abs(z.v - f.v) <= 1))),
   Overload: (b, me) => foesOf(b, me).some((f) => on(f.kx?.charged, b) && apart(me, f) <= 8),
   'Fox Guise': (b, me) => !on(me.kx?.guise?.until, b) && foesWithin(b, me, 7),
   Shift: (b, me) => foesWithin(b, me, 4) && (me.kx?.wolfAt === undefined || b.t - me.kx.wolfAt >= 4000) && me.kx?.wolf !== (me.hp < me.maxHp * 0.5 || foesOf(b, me).filter((f) => apart(f, me) === 1).length >= 3 ? 'brute' : 'hunter'),
@@ -43,6 +44,6 @@ export const SKILL2_WHEN: Readonly<Record<string, (b: Battle, me: Unit) => boole
   'Font of Wisdom': (b, me) => allies(b, me).filter((a) => a !== me && apart(a, me) <= 4 && a.charge < 34).length >= 1,
   Condemn: (b, me) => foesOf(b, me).some((f) => apart(f, me) <= 7 && !on(f.kx?.condemned?.until, b)),
   'Change the Tune': (b, me) => foesWithin(b, me, 5),
-  Benediction: (b, me) => allies(b, me).some((a) => a.dot || a.hp < a.maxHp * 0.85),
+  Benediction: (b, me) => allies(b, me).some((a) => harmed(a) || a.hp < a.maxHp * 0.85),
   Sanctuary: (b, me) => allies(b, me).some((a) => a.hp < a.maxHp * 0.75),
 };

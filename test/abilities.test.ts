@@ -7,6 +7,7 @@ import { CHARGE_MAX, KITS, afterBlow, onStrike, rollCrit, tickStatus } from '../
 import { UNITS } from '../src/sim/units';
 import { readyBattle } from './helpers';
 import { HERO_KITS, resMax } from '../src/sim/heroKits';
+import { dotOf } from '../src/sim/ailments';
 
 /** A hero's pool after one cast of its skill 1 from a full pool (COMBAT-002: a skill costs its pool, it no longer empties a charge meter). */
 const paidOnce = (kind: string): number => {
@@ -203,19 +204,20 @@ test('Meteor: a delayed blast on a 3x3 that leaves the ground burning for a whil
 test('Keen Edge: about one blow in seven crits, and a crit makes the foe bleed', () => {
   const b = arena();
   const sam = spawn(b, 'samurai', 3, 5);
-  const skel = spawn(b, 'skeleton', 3, 4);
+  // (an orc, not a skeleton: the undead do not bleed, STATUS-FX)
+  const skel = spawn(b, 'orcGrunt', 3, 4);
   let crits = 0;
   for (let i = 0; i < 1000; i++) if (rollCrit(b, sam) > 1) crits++;
   assert.ok(crits > 110 && crits < 190, `crits ${crits}`);
   assert.equal(rollCrit(b, skel), 1, 'foes have no passive');
   skel.hp = skel.maxHp = 500;
   afterBlow(b, sam, skel, true);
-  assert.equal(skel.dot?.kind, 'bleed');
+  assert.equal(dotOf(skel)?.kind, 'bleed');
   run(b, 3200);
   assert.ok(skel.hp < 500 - 4 * 4, 'bled for its full time');
-  assert.equal(skel.dot, undefined);
+  assert.equal(dotOf(skel), undefined);
   afterBlow(b, sam, skel, false);
-  assert.equal(skel.dot, undefined, 'no crit, no bleed');
+  assert.equal(dotOf(skel), undefined, 'no crit, no bleed');
 });
 
 test('Cinders: the wizard\'s blows set the foe alight', () => {
@@ -223,7 +225,7 @@ test('Cinders: the wizard\'s blows set the foe alight', () => {
   const wiz = spawn(b, 'wizard', 3, 8);
   const skel = spawn(b, 'skeleton', 3, 4);
   afterBlow(b, wiz, skel, false);
-  assert.equal(skel.dot?.kind, 'burn');
+  assert.equal(dotOf(skel)?.kind, 'burn');
 });
 
 test('in the plain five-hero fights every hero casts its skill', () => {

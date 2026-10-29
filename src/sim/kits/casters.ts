@@ -10,9 +10,10 @@ import { addRes, poolOf } from '../heroKits';
 import { formOf, UNITS } from '../units';
 import { kx, setLook } from './effects';
 import { alliesOf, blinkTo, foesNear, free, freeNear, mark, ms, nearestFoe, strike, strongest, stun, toughest } from './common';
+import { cleanse, hasAil, setDot } from '../ailments';
 
 const on = (t: number | undefined, b: Battle) => t !== undefined && t > b.t;
-const burning = (b: Battle, f: Unit, side: Unit['side']) => f.dot?.kind === 'burn' || b.zones.some((z) => z.side === side && !z.slow && near3x3(f, z));
+const burning = (b: Battle, f: Unit, side: Unit['side']) => hasAil(f, 'burn') || b.zones.some((z) => z.side === side && !z.slow && near3x3(f, z));
 
 /** Fire Wizard, Wildfire: every burning foe within 7 erupts: its 3x3 is hurt and set alight, so fire runs through a pack (each foe is struck once). */
 export function wildfire(b: Battle, me: Unit, out: BattleEvent[]): boolean {
@@ -26,7 +27,7 @@ export function wildfire(b: Battle, me: Unit, out: BattleEvent[]): boolean {
       if (struck.has(f.id) || !f.alive || !near3x3(f, src)) continue;
       struck.add(f.id);
       strike(b, me, f, 1.2, out);
-      if (f.alive) f.dot = { kind: 'burn', dmg: Math.max(1, Math.round(atkOf(me) * 0.12)), every: 500, ms: 3000, by: me.id, next: b.t + 500, until: b.t + ms(me, 3000) };
+      if (f.alive) setDot(b, f, { kind: 'burn', dmg: Math.max(1, Math.round(atkOf(me) * 0.12)), every: 500, ms: 3000, by: me.id, next: b.t + 500, until: b.t + ms(me, 3000) });
     }
   }
   return true;
@@ -146,7 +147,7 @@ export function rewind(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!best) return false;
   const { a, then } = best;
   mendUnit(a, then.hp - a.hp, out, me);
-  a.dot = undefined;
+  cleanse(b, a);
   a.stunUntil = undefined;
   a.slowUntil = undefined;
   if ((a.u !== then.u || a.v !== then.v) && free(b, then)) blinkTo(b, a, then, out);

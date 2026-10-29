@@ -35,6 +35,7 @@ import { chestsFor, gearChance, settleTower } from './tower';
 import type { Run } from './run';
 import { grantEquipment, rollEquipment, itemName } from './equipment';
 import { UNITS } from './units';
+import { ailmentsOf } from './ailments';
 
 /* ------------------------------------------------------------------ the numbers */
 
@@ -679,7 +680,7 @@ function dropCorpses(s: Stand): void {
   for (const z of b.zones) held.add(z.by);
   for (const t of b.traps ?? []) held.add(t.by);
   for (const u of b.units) {
-    if (u.dot) held.add(u.dot.by);
+    for (const a of ailmentsOf(u)) if (a.dmg) held.add(a.by);
     if (u.hot?.by !== undefined) held.add(u.hot.by);
     if (u.owner !== undefined) held.add(u.owner);
     if (u.taunt) held.add(u.taunt.to);

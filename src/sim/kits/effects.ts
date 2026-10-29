@@ -11,6 +11,7 @@ import { atkOf, defOf, hurt, type Battle, type BattleEvent, type Unit } from '..
 import { foesOf, mendUnit, net, roll } from '../abilities';
 import { addRes, heroKitOf, skill2Open } from '../heroKits';
 import { UNITS, type UnitDef } from '../units';
+import { AILMENT_SWITCH, ailmentsOf, dotOf, setDot } from '../ailments';
 
 /** The kits' marks and stances on a fighter (hero or foe): each a time it lasts until, or a small state. */
 export interface KitFx {
@@ -226,7 +227,7 @@ export function kitBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg: numbe
     bx.flow = f && f.to === to.id ? { to: to.id, n: Math.min(5, f.n + 1) } : { to: to.id, n: 1 };
   }
   const moon = on(bx.moon, b);
-  if ((bx.wolf === 'hunter' || moon) && to.alive) to.dot = { kind: 'bleed', dmg: Math.max(1, Math.round(atkOf(by) * KIT.HUNTER_BLEED)), every: 500, ms: 3000, by: by.id, next: b.t + 500, until: b.t + 3000 };
+  if ((bx.wolf === 'hunter' || moon) && to.alive) setDot(b, to, { kind: 'bleed', dmg: Math.max(1, Math.round(atkOf(by) * KIT.HUNTER_BLEED)), every: 500, ms: 3000, by: by.id, next: b.t + 500, until: b.t + 3000 });
   if (bx.wolf === 'brute' || moon) for (const f of foesOf(b, by)) if (f !== to && apart(f, to) === 1) hurt(b, by, f, Math.max(1, Math.round(dmg * KIT.BRUTE_SPLASH)), false, true, out, 'skill');
   // (a crit gives the Buccaneer back some stamina, from skill 2's level)
   if (crit && by.def === 'buccaneer' && skill2Open(by)) addRes(by, 10);
@@ -262,13 +263,14 @@ export function kitDeath(b: Battle, to: Unit, by: Unit, out: BattleEvent[]): voi
   }
   if (x?.condemned && on(x.condemned.until, b)) for (const a of b.units) if (a.alive && a.side === 'hero') addRes(a, 10);
   // (rot spreads when its host dies: the Shambler's curse jumps to the foes beside it, from skill 2's level)
-  const d = to.dot;
-  if (d && d.kind === 'curse') {
+  // (and, with the ailments on, its poison: the rot became poison, STATUS-FX)
+  const d = ailmentsOf(to).find((a) => a.kind === 'curse' || (AILMENT_SWITCH.on && a.kind === 'poison' && a.by !== to.id));
+  if (d && d.dmg) {
     const sham = b.units.find((u) => u.id === d.by && u.alive && u.def === 'shambler' && skill2Open(u));
     if (sham)
       for (const n of b.units)
-        if (n.alive && n.side === to.side && apart(n, to) === 1 && !n.dot) {
-          n.dot = { ...d, next: b.t + d.every, until: b.t + d.ms };
+        if (n.alive && n.side === to.side && apart(n, to) === 1 && !dotOf(n)) {
+          setDot(b, n, { kind: d.kind as 'curse' | 'poison', dmg: d.dmg, every: d.every!, ms: d.ms!, by: d.by, next: b.t + d.every!, until: b.t + d.ms! });
           out.push({ kind: 'arc', from: to.id, to: n.id });
         }
   }
