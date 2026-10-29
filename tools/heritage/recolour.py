@@ -9,8 +9,10 @@ colour outside the boxes on the same frames. Stray single pixels are dropped and
 pixel is recoloured by its own lightness along the hero's tone ramp (`src/sim/heroLooks.ts`): the shading, the outlines
 and every other pixel stay exactly as they were. Alpha is untouched and nothing is blurred.
 
-The source sheets stay; each re-toned sheet is written next to it as `<sheet>_<tone>.png` (`src/render/heritageArt.ts`
-bundles them under the source sheet's key, so the layout, the rear view and the portraits all follow).
+The source sheets stay; each re-toned sheet is written next to it as `<sheet>_<tone>.png` and listed in
+`tools/heritage/sheets.json`; `node tools/resonance/apply.cjs --art-only` then bundles it under the source sheet's key in
+`src/render/resonanceArt.ts`, in the source's place (so the layout, the rear view and the portraits all follow, and the
+source is no longer bundled). A sheet where no skin shows is left as it is.
 
   python3 tools/heritage/recolour.py                 # every hero in the table
   python3 tools/heritage/recolour.py knight cleric   # only these
@@ -246,6 +248,12 @@ def run(hero, tones, hairs, looks, preview=None):
             out[s] = recolour(out[s], hairm[s], hairs[hair], hlo, hhi)
     for s in sheets:
         name = os.path.join(UNITS, f'{s}_{tone}.png')
+        # (a sheet where no skin shows, the Cleric's back, is left as it is: the source is drawn, not a copy)
+        if (out[s] == images[s]).all():
+            if os.path.exists(name):
+                os.remove(name)
+            print(f'{hero}: {s} unchanged, no skin shows; the source is used')
+            continue
         Image.fromarray(out[s]).save(name, optimize=True)
         print(f'{hero}: {os.path.relpath(name, ROOT)} ({int(skin[s].sum())} skin px'
               + (f', {int((hairm[s]).sum())} hair px' if hairm is not None else '') + ')')
@@ -274,6 +282,22 @@ def main():
     tones, hairs, looks = read_table()
     for hero in args or [h for h in CONFIG if looks.get(h) and looks[h][0] != 'source']:
         run(hero, tones, hairs, looks, preview)
+    write_map(looks)
+
+
+def write_map(looks):
+    """`tools/heritage/sheets.json`: each re-toned sheet's file, read by `tools/resonance/apply.cjs`, which bundles that file
+    under the sheet's key in `src/render/resonanceArt.ts` in place of the source (so the source is not bundled at all)."""
+    out = {}
+    for hero, cfg in CONFIG.items():
+        tone = looks.get(hero, ('source', None))[0]
+        for s in cfg['sheets']:
+            if tone != 'source' and os.path.exists(os.path.join(UNITS, f'{s}_{tone}.png')):
+                out[s] = f'{s}_{tone}'
+    with open(os.path.join(os.path.dirname(__file__), 'sheets.json'), 'w') as f:
+        json.dump(dict(sorted(out.items())), f, indent=1)
+        f.write('\n')
+    print(f'tools/heritage/sheets.json: {len(out)} re-toned sheets; now run node tools/resonance/apply.cjs --art-only')
 
 
 if __name__ == '__main__':

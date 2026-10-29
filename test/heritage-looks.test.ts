@@ -32,23 +32,34 @@ test('every re-toned hero is a real human hero, with a known tone and hair', () 
   assert.ok(Object.keys(HERO_LOOKS).length >= people.length / 3, 'a good share of the cast re-toned');
 });
 
-test('every sheet of a re-toned hero has its re-toned file, the same size as the source, and is bundled in its place', () => {
-  const bundle = readFileSync('src/render/heritageArt.ts', 'utf8');
+test('every sheet of a re-toned hero is bundled from its re-toned file, the same size as the source, and the source is not bundled', () => {
+  const bundle = readFileSync('src/render/resonanceArt.ts', 'utf8');
   const tool = JSON.parse(readFileSync('tools/heritage/heroes.json', 'utf8')) as Record<string, { sheets: string[] }>;
+  const retoned = JSON.parse(readFileSync('tools/heritage/sheets.json', 'utf8')) as Record<string, string>;
   assert.deepEqual(Object.keys(tool).sort(), Object.keys(HERO_LOOKS).sort(), 'the tool and the table name the same heroes');
   for (const [kind, look] of Object.entries(HERO_LOOKS)) {
     const sheets = sheetsOf(kind);
     assert.deepEqual([...tool[kind].sheets].sort(), [...sheets].sort(), `${kind}: the tool re-tones every sheet the hero is drawn from`);
+    // (the front is always re-toned; a rear where no skin shows, the Cleric's, is drawn from the source as it is)
+    assert.ok(retoned[sheets[0]], `${kind}: its front sheet is re-toned`);
     for (const s of sheets) {
       const src = `src/art/units/${s}.png`;
+      assert.ok(existsSync(src), src);
       const out = `src/art/units/${s}_${look.tone}.png`;
-      assert.ok(existsSync(src) && existsSync(out), out);
+      if (!retoned[s]) {
+        assert.ok(!existsSync(out), `${out}: an unchanged copy is not kept`);
+        assert.ok(bundle.includes(`'../art/units/${s}.png'`), `${s} bundled from its source`);
+        continue;
+      }
+      assert.equal(retoned[s], `${s}_${look.tone}`, s);
+      assert.ok(existsSync(out), out);
       assert.deepEqual(size(out), size(src), `${out} matches its source`);
       const l = LAYOUT[s];
       const [w, h] = size(out);
       const cells = l.rows.reduce((n, r) => n + Math.ceil((l.counts[r] ?? 0) / l.perRow), 0);
       assert.ok(w >= l.w * l.perRow && h >= l.h * cells, `${out} holds every frame`);
-      assert.ok(new RegExp(`\\b${s}: \\w+,`).test(bundle) && bundle.includes(`${s}_${look.tone}.png'`), `${s} bundled from ${out}`);
+      assert.ok(bundle.includes(`'../art/units/${s}_${look.tone}.png'`), `${s} bundled from ${out}`);
+      assert.ok(!bundle.includes(`'../art/units/${s}.png'`), `${src} is no longer bundled`);
     }
   }
 });

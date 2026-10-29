@@ -1,6 +1,6 @@
 // The heroes' looks: which skin tone (and, for a few, which hair) each human hero's battle sheets are drawn in
 // (docs/notes/heritage-looks.md). The re-toned sheets are made offline by `tools/heritage/recolour.py`, which reads this
-// table (keep one entry a line), and bundled by `src/render/heritageArt.ts`. 'source' keeps the sheet as it was drawn.
+// table (keep one entry a line), and bundled in the source sheets' place by `src/render/resonanceArt.ts`. 'source' keeps the sheet as it was drawn.
 // Data only: no imports, so the tests and the tool can read it.
 
 export type Tone = 'source' | 'deep' | 'brown' | 'tan' | 'olive';

@@ -6,7 +6,6 @@ import { loadRulers } from './rulerArt';
 import { loadImage } from './loadImage';
 import layout from '../art/units/sheets.json';
 import { RESONANCE_URLS } from './resonanceArt';
-import { HERITAGE_URLS } from './heritageArt';
 import { UNITS } from '../sim/units';
 import knight from '../art/units/knight_1.png';
 import samurai from '../art/units/samurai.png';
@@ -130,8 +129,6 @@ interface Layout {
 
 const URLS: Record<string, string> = {
   ...RESONANCE_URLS,
-  // (the human heroes re-toned for a varied cast take their source sheet's place: docs/notes/heritage-looks.md)
-  ...HERITAGE_URLS,
   knight_1: knight,
   knight_2: knight2,
   knight_3: knight3,
