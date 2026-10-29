@@ -96,7 +96,7 @@ function countUp(target: HTMLElement, value: number): void {
 }
 
 /** The victory screen: the Calamity falls, and the finishing reward is laid out piece by piece. */
-export function victoryCard(card: HTMLElement, s: TowerSummary, onDone: () => void): void {
+export function victoryCard(card: HTMLElement, s: TowerSummary, onDone: () => void, expedition = false): void {
   const c = s.clear!;
   card.classList.add('ccCard', 'ccVictory');
   // (a one-shot burst of gold sparks over the title, and a faint one-shot light: neither loops)
@@ -107,7 +107,7 @@ export function victoryCard(card: HTMLElement, s: TowerSummary, onDone: () => vo
     p.style.setProperty('--d', `${48 + (i % 3) * 22}px`);
     burst.append(p);
   }
-  card.append(burst, el('h2', 'ccTitle', 'The Calamity is ended!'), el('p', 'ccLead', `All ${s.maps ?? CAL_MAPS} maps are cleared and the rift is sealed.${c.level ? ` Ascension ${c.level}.` : ''}`));
+  card.append(burst, el('h2', 'ccTitle', 'The Calamity is ended!'), el('p', 'ccLead', `All ${s.maps ?? CAL_MAPS} ${expedition ? 'regions' : 'maps'} are cleared and the rift is sealed.${c.level ? ` Ascension ${c.level}.` : ''}`));
   // the title: the badge of the level cleared
   const badge = el('div', 'ccBadge');
   badge.append(el('small', '', c.newTitle ? 'A new title' : 'Your title'), el('b', '', c.title));

@@ -4,7 +4,7 @@ import { readFileSync, existsSync, statSync, mkdirSync } from 'node:fs';
 import { resolve, sep } from 'node:path';
 import { createRequire } from 'node:module';
 import { build } from 'esbuild';
-const { chromium } = createRequire('/opt/codex/cua_node/lib/node_modules/')('playwright');
+import { chromium, executablePath } from './browser.mjs';
 const webRoot = resolve('out/web');
 const server = createServer((req, res) => {
   if (!['GET','HEAD'].includes(req.method)) { res.writeHead(405); res.end(); return; }
@@ -55,7 +55,7 @@ const altarOnly = process.argv.includes('--altar-only');
 const navigationOnly = process.argv.includes('--navigation-only');
 const expect = (ok, message) => { if(!ok) throw Error(message); };
 try {
- browser = await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+ browser = await chromium.launch({executablePath,headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  const context=await browser.newContext({viewport:{width:393,height:852},reducedMotion:'reduce'});
  await context.addInitScript({content:bundle.outputFiles[0].text+`;globalThis.DungeonQA=DungeonFixture;if(!localStorage.getItem('legends.meta')){const m=DungeonQA.startedMeta(1);m.opened=['calamity','tower','castle'];localStorage.setItem('legends.meta',JSON.stringify(m));}localStorage.setItem('legends.settings',JSON.stringify({cinematics:false,music:0,effects:0}));`});
  const page=await context.newPage();const errors=[];page.on('pageerror',e=>{errors.push(e.message);console.log('PAGE ERROR',e.message)});

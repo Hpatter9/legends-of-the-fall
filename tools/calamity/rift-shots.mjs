@@ -3,7 +3,7 @@ import { createServer } from 'node:http';
 import { readFileSync, existsSync, mkdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { build } from 'esbuild';
-const { chromium } = createRequire('/opt/codex/cua_node/lib/node_modules/')('playwright');
+import { chromium, executablePath } from './browser.mjs';
 const root = new URL('../../out/web/', import.meta.url);
 const server = createServer((req, res) => {
   const path = new URL((req.url.split('?')[0].slice(1) || 'index.html'), root);
@@ -14,7 +14,7 @@ const server = createServer((req, res) => {
 });
 await new Promise((resolve) => server.listen(8148, resolve));
 const bundle = await build({ stdin: { contents: `export { startedMeta } from './src/sim/meta'; export { calamityRun } from './src/sim/modes'; export { growStarter, chooseAltar } from './src/sim/rift'; export { enterNode, choices, finishTower } from './src/sim/tower'; export { frontSpots } from './tools/autoplay'; export { localBoost } from './src/sim/climb'; export { place, fight, playOut } from './src/sim/battle'; export { startStage } from './src/sim/run';`, resolveDir: process.cwd() }, bundle: true, write: false, format: 'iife', globalName: 'RiftQA', loader: { '.png': 'empty' } });
-const browser = await chromium.launch({ executablePath: '/usr/bin/chromium', headless: true, args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 mkdirSync('docs/samples/calamity-rift', { recursive: true });
 try {
   for (const [width, height] of [[393,852], [360,780], [412,915]]) {

@@ -1189,7 +1189,7 @@ export class TowerView {
       victoryCard(card, s, () => {
         this.close();
         then();
-      });
+      }, !!expeditionOf(run));
       // (WAVE-RECAP-2: the whole calamity's detail under the finishing reward)
       putDetail(card, run.recap, { strip: 'Fight by fight', prefix: '#' });
       wrap.append(card);
