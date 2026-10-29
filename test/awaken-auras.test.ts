@@ -1,11 +1,31 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { AURAS, AURA_KEYS, auraKey, auraOf, auraParts, FALLBACK_AURA, FOE_AURA } from '../src/render/auraStyles';
 import { newPose, poseAura } from '../src/render/auraPlace';
 import pack from '../tools/awaken/aura-pack.json';
 import { HERO_TRAITS, TRAITS } from '../src/sim/traits';
 import { ALL_HEROES } from '../src/sim/units';
 import atlas from '../src/art/fx/aura/atlas.json';
+
+test('painted aura strips use smooth transparent cells and fit without overlap', () => {
+  const png = readFileSync('src/art/fx/aura/atlas.png');
+  assert.equal(png[25], 6, 'RGBA artwork preserves transparency');
+  assert.equal(atlas.cell, 96, 'painted cells enable smooth sampling in both renderers');
+  const width = png.readUInt32BE(16), height = png.readUInt32BE(20);
+  assert.ok(width <= 4096 && height <= 4096, 'fits mobile texture limits');
+  const occupied = new Set<string>();
+  assert.deepEqual(Object.keys(atlas.parts).sort(), [...AURA_KEYS].sort());
+  for (const [key, [x, y, frames]] of Object.entries(atlas.parts)) {
+    assert.equal(frames, 6, `${key} has a complete animation loop`);
+    assert.ok((x + frames) * atlas.cell <= width && (y + 1) * atlas.cell <= height, key);
+    for (let i = 0; i < frames; i++) {
+      const at = `${x + i}:${y}`;
+      assert.ok(!occupied.has(at), `${key} does not overlap another strip`);
+      occupied.add(at);
+    }
+  }
+});
 
 test('every class trait has its own aura, and every hero wears its class trait\'s', () => {
   const classes = Object.values(TRAITS).filter((t) => t.kind === 'class').map((t) => t.id);

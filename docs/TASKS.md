@@ -68,6 +68,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Completion criteria:** every spell its own cast and effect sound, timed to its look, on the effects bus, panned, muted with the rest, offline, with the synthesised cues as the fallback; typecheck, affected and full tests, web build; every spell cast once in Chromium.
 - **Validation and handoff:** [notes](notes/spell-sfx.md).
 
+### TIER-PROMISES — The tier skills do what their words say
+
+- **Goal:** the owner's answer to RANK4-SKILLS' questions 2 and 3, "Make them work": every tier 2, 3 and 4 skill does what its description promises.
+- **Status:** done on the branch; waiting for the owner.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/tier-promises`, `/home/user/tier-promises` (from main 0.221.0); PR none.
+- **Allowed files or systems:** `src/sim/tierSkills.ts` (cast modifiers on the improved skill, `ON_CAST`; a few entries' modifiers and words), `src/sim/abilities.ts` (`followUp` makes one follow-up for each `extra`; a volley's and a judgement's `reach` widens its patch, `landArea`'s `r`), `src/sim/battle.ts` (`Pending.r`, the `area` event's `r`), `src/render/fx.ts` (a wider patch drawn), tests (`tier-skills`, the `ailments-identical` fixture's `army` and `daily`), `docs/notes/tier-promises.md`. Not `GRADE_MULT`, the merging or the economy (`claude/merge-two`).
+- **Completion criteria:** every tier skill's words true in the fight; grade 2 to 4 steps and parity measured before and after at levels 1 and 30; typecheck, full tests, web build.
+- **Validation and handoff:** [notes](notes/tier-promises.md).
+
 ### RANK4-SKILLS — A fourth tier skill for every hero
 
 - **Goal:** the owner's ask, with heroes going to four ranks (two of a kind merge; `claude/merge-two`): "A new rank-4 skill each": every hero a fourth version of its skill with its own name, as tiers 2 and 3 have.
@@ -77,6 +87,15 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Allowed files or systems:** `src/sim/tierSkills.ts` (the tier 4 entries, `TOP_TIER`, the `cleanse` rider), `src/codexView.ts` and `src/menuHeroes.ts` (a "Tier 4" line), `tools/balance.ts` (`--tier-cap`), new `tools/rank4/`, `tools/fxlab/audit.ts` (a Tier 4 column), `test/tier-skills.test.ts`, `docs/notes/rank4-skills.md`, `docs/samples/rank4-skills-*.png`. Not `run.ts`'s merging, `MAX_GRADE`, `GRADE_MULT` or the merge UI.
 - **Completion criteria:** 45 named tier 4 skills a step past tier 3; grade 4 and up casts them whatever `MAX_GRADE` is; grade 3 fights unchanged; parity of the tier 4 skills measured; typecheck, full tests, web build; the hero card at three sizes.
 - **Validation and handoff:** [notes](notes/rank4-skills.md).
+### AURA-ART — Generated painted ascension effects
+
+- **Owner:** Codex. **Branch / worktree:** `art/painted-ascension-auras`, `/workspace/legends-of-the-fall`.
+- **Goal:** replace outdated pixel aura assets with generated painted effects for all 13 classes and both ascension levels.
+- **Scope:** aura source artwork, shipped atlas/import tooling as needed, credits, visual evidence and handoff. Preserve class identities, placement, gameplay, saves, reduced motion and offline support.
+- **Status:** implemented and validated; ready for review. Owner approved the generated painted proposal. No merge or deployment requested.
+- **Completion:** approved visual direction, all 80 aura parts replaced, typecheck/build and aura tests pass, affected screens reviewed at three portrait sizes.
+- **Validation:** typecheck, web build and all four affected test files passed. All 480 frames audited; all 13 classes at both steps checked in Pixi. Camp/roster/dossier and representative battle fixtures passed at all three portrait sizes, reduced motion and battery saver, with zero page errors. Offline reload passed at 393×852.
+- **Handoff:** [painted ascension auras](notes/painted-ascension-auras.md), [all-class comparison](samples/painted-auras/all-classes.jpg).
 
 ### STARTER-KING — Two fixed starter packs of simple heroes; the classic king is the default ruler
 
