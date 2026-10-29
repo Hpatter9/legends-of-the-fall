@@ -355,3 +355,10 @@ UI-007 release 0.189.0 integrated validation passed: typecheck/build; eight affe
 UI-007 integrated STAND-003 main 0.189.0 before merging. Older Last Stand style overrides removed so its new castle-room HUD, pause and end cards remain intact. Release updated to 0.190.0.
 
 UI-007 final 0.190.0 validation complete: current Last Stand Auto, pause/resume, end navigation and reduced motion passed at all three portrait sizes, with zero page errors. Duplicate crest/style overrides removed and edge-arrow paint contained. Typecheck/build and eight matching affected test files passed. PR #154 ready for completion merge.
+
+## SUMMONER-ACTIVE — Animated ceremonial summoner
+
+- Owner: Codex; branch `art/animated-summoner`, worktree `/workspace/legends-of-the-fall`.
+- Scope: chamber artwork, separate summoner actor with idle/cast/eye-shield poses, new-recruit chamber reveal, relevant checks and credits. Shard tarot rewards, simulation and saves preserved.
+- Direction: owner approved current appearance with idle, summoning, and shielding eyes against the bright hero arrival.
+- Completion: three poses integrated with reveal timing and reduced motion. Typecheck/build, four affected test files and browser checks at all three portrait sizes plus reduced motion passed. Status: ready for owner review. [Handoff](notes/animated-summoner.md).

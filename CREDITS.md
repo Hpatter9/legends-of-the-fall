@@ -1,5 +1,7 @@
 # Credits
 
+- **Active ceremonial summoner** (`src/art/hall/summoner-active.png`) and character-free sanctum background (`src/art/hall/sanctum.png`): original generated artwork based on the existing approved chamber. Separate idle, casting and eye-shield poses; no third-party character art. Both images are bundled into game.js for offline use.
+
 - **Full Resonance hero upgrade** (`src/art/units/hero_res_*.png`, separate `_back` sheets, and the two pilot heroes): original generated pixel artwork following the owner's approved direction. Includes the 43 remaining collectible heroes, Werewolf Brute/awakened appearances and three Treants. Front/rear art supplies four isometric facings through left/right mirroring; dedicated walking atlases supply eight-frame strides. Prompts, specifications and packing tools are in `tools/resonance/`; raw generation intermediates remain in the art workspace. No franchise sprites are included. Foes/NPCs retain their existing art and credits.
 
 - **Resonance hero pilot** (`hero_soldier.png`, `hero_samurai_archer.png`): original generated pixel artwork, directed from the owner's approved concept and Final Fantasy Resonance style references. No franchise sprites are included. Cropped, packed and sampled with nearest-neighbour scaling by `tools/resonance/pack.cjs`. These replace the Knight and Archer's displayed art at all grades; current grade effects and awakened class auras apply. Original Craftpix sheets and their credits remain available.
