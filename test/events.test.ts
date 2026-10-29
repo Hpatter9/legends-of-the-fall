@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { chooseOption, drawEvent, eventAfter, leaveEvent, EVENT_KINDS, CURSE_FOES, SHRINE_HP } from '../src/sim/events';
-import { equip, finish, loadRun, newRun, saveRun, startStage, boostOf, summon } from '../src/sim/run';
+import { merge } from '../src/sim/merge';
+import { equip, finish, loadRun, newRun, saveRun, startStage, boostOf } from '../src/sim/run';
 import { makeGear } from '../src/sim/gear';
 import { place } from '../src/sim/battle';
 
@@ -119,12 +120,12 @@ test('a boss stage drops a sure piece of gear, and leaving takes nothing', () =>
   assert.equal(run.event, undefined);
 });
 
+// (MERGE-TWO: a hire no longer merges on its own; the hero merged away hands its gear back, the target keeps its own)
 test('a merge hands gear back to the pack', () => {
   const run = newRun(5, ['knight']);
   run.items = [makeGear(1, 'armour', 1)];
   equip(run, run.roster[0].id, 1);
-  run.gold = 500;
-  summon(run);
+  merge(run, run.roster[0].id, run.roster[1].id);
   assert.equal(run.roster.length, 1);
   assert.equal(run.roster[0].grade, 2);
   assert.deepEqual(run.items!.map((g) => g.id), [1]);

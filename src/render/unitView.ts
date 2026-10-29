@@ -49,8 +49,13 @@ const HURT_MS = 240;
 /** The fallen fade out over this long, after lying still a while. */
 const FADE_FROM = 1600;
 const FADE_MS = 900;
-/** A grade 3 hero is drawn this much bigger. */
+/** A grade 3 hero is drawn this much bigger, and a grade 4 (rank 4, the top since MERGE-TWO) bigger again. */
 const GRADE3_SIZE = 1.08;
+const GRADE4_SIZE = 1.14;
+/** Rank 4's colours: a violet halo and rim, and violet sparks (grade 3's are gold). */
+const GRADE4_HALO = 0xb06aff;
+const GRADE4_RIM = 0xd49aff;
+const GRADE4_SPARK = 0xe6c2ff;
 /** The ultimate's meter under the skill's: violet while it fills, gold when ready. */
 const ULT_FILL = 0xb06aff;
 const ULT_READY = 0xffd24a;
@@ -144,7 +149,7 @@ export class UnitSprite {
     // (an awakened hero keeps its own colours and sheet: its class's aura is what marks it, `awakenAura.ts`)
     this.sheet = formOf(def, this.grade);
     this.awakenAura = awake ? new AwakenAura(unit.def, awake, settings().saver) : null;
-    const size = (unit.size ?? 1) * (this.grade > 2 ? GRADE3_SIZE : 1);
+    const size = (unit.size ?? 1) * (this.grade > 3 ? GRADE4_SIZE : this.grade > 2 ? GRADE3_SIZE : 1);
     this.tall = figureOf(this.sheet) * def.scale * size;
     this.ownSheet = this.sheet;
     this.scaleNow = def.scale;
@@ -153,16 +158,16 @@ export class UnitSprite {
     this.baseSize = size;
     if (this.grade > 1 || awake) {
       // a halo of stacked ellipses behind the body (silver-blue, then gold), drawn once, and a rim of the body's own shape
-      const col = awake ? auraOf(unit.def).colour : this.grade > 2 ? 0xffc83a : 0x9cc8ff;
+      const col = awake ? auraOf(unit.def).colour : this.grade > 3 ? GRADE4_HALO : this.grade > 2 ? 0xffc83a : 0x9cc8ff;
       const h = this.tall * 0.62;
-      for (let i = 5; i >= 1; i--) this.glow.ellipse(0, -this.tall * 0.45, (12 + i * 5) / size, (h * (0.5 + i * 0.13)) / size).fill({ color: col, alpha: awake > 1 ? 0.16 : awake || this.grade > 2 ? 0.12 : 0.1 });
+      for (let i = 5; i >= 1; i--) this.glow.ellipse(0, -this.tall * 0.45, (12 + i * 5) / size, (h * (0.5 + i * 0.13)) / size).fill({ color: col, alpha: awake > 1 || this.grade > 3 ? 0.16 : awake || this.grade > 2 ? 0.12 : 0.1 });
       for (const [dx, dy] of [[-1.6, 0], [1.6, 0], [0, -1.6], [0, 1.6]]) {
         const r = new Sprite();
         r.anchor.set(0.5, 1);
         r.position.set(dx, dy);
         this.rim.addChild(r);
       }
-      this.rim.filters = [flatFilter(awake ? auraOf(unit.def).colour : this.grade > 2 ? 0xffd24a : 0xa8d0ff)];
+      this.rim.filters = [flatFilter(awake ? auraOf(unit.def).colour : this.grade > 3 ? GRADE4_RIM : this.grade > 2 ? 0xffd24a : 0xa8d0ff)];
       const tone = this.grade > 1 ? [gradeFilter(this.grade)] : [];
       if (tone.length) this.body.filters = tone;
     }
@@ -504,10 +509,12 @@ export class UnitSprite {
     g.visible = true;
     g.clear();
     const now = Date.now();
-    const gold = this.grade > 2 ? 0xffe27a : 0xdce8ff;
+    const gold = this.grade > 3 ? GRADE4_SPARK : this.grade > 2 ? 0xffe27a : 0xdce8ff;
+    // (rank 4 rises in more sparks, and violet ones)
+    const n = this.grade > 3 ? 9 : 6;
     if (this.grade > 2)
-      for (let i = 0; i < 6; i++) {
-        const f = ((now / 1500 + i / 6) % 1);
+      for (let i = 0; i < n; i++) {
+        const f = ((now / 1500 + i / n) % 1);
         const x = Math.sin(i * 2.4 + now / 900) * 14;
         g.star(x, -this.tall * 0.1 - f * this.tall * 0.95, 4, 3.4, 1.3).fill({ color: gold, alpha: Math.sin(Math.PI * f) });
       }

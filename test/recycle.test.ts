@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { dropGear } from '../src/sim/gear';
 import { Rng } from '../src/sim/rng';
+import { autoMerge } from '../src/sim/merge';
 import { equip, heroOf, loadRun, newRun, paidOf, recycle, recycleValue, saveRun, summon, summonCost, SUMMON_BASE, SUMMON_STEP, type Run } from '../src/sim/run';
 
 /** A run with plenty of gold that has bought `n` heroes. */
@@ -19,7 +20,11 @@ test('a hero keeps count of the gold paid into it: starters the base price, summ
   const price = summonCost(r);
   const got = summon(r)!;
   assert.equal(heroOf(r, got.id)!.grade === 1 ? paidOf(got) : 0, got.grade === 1 ? price : 0);
-  for (let i = 0; i < 40; i++) summon(r);
+  // (MERGE-TWO: hires wait to be merged; summons until the bench is full, merging every pair as the Auto merge button does)
+  for (let i = 0; i < 40; i++) {
+    summon(r);
+    autoMerge(r);
+  }
   // (every hero's paid gold is at least a base price for each grade-1 hero it holds, and the whole roster has cost what was spent plus the two free ones)
   const spent = 100000 - r.gold;
   assert.equal(r.roster.reduce((n, h) => n + paidOf(h), 0), spent + 2 * SUMMON_BASE);

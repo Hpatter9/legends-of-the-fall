@@ -96,6 +96,25 @@
   .card.g2 { border-color: var(--b5); box-shadow: 0 0 6px rgb(var(--b6-rgb) / 0.45); background: linear-gradient(var(--s6), rgb(var(--black-rgb) / 0.35)); }
   .card.g3 { border-color: var(--e6); box-shadow: 0 0 9px rgb(var(--e6-rgb) / 0.7), inset 0 0 8px rgb(var(--e7-rgb) / 0.35); background: linear-gradient(var(--s3), rgb(var(--black-rgb) / 0.35)); }
   .card.g3 em { color: var(--e8); }
+  /* (rank 4, the top: violet, MERGE-TWO) */
+  .card.g4 { border-color: var(--p4); box-shadow: 0 0 11px rgb(var(--p4-rgb) / 0.8), inset 0 0 9px rgb(var(--p3-rgb) / 0.45); background: linear-gradient(var(--p1), rgb(var(--black-rgb) / 0.35)); }
+  .card.g4 em { color: var(--p4); text-shadow: 0 0 4px rgb(var(--p4-rgb) / 0.9), 0 1px 0 var(--black); letter-spacing: -1px; }
+  /* (a hero with a match ready to merge: a pulsing gold ring and a merge arrow; while one is dragged, its matches light up) */
+  .card.ready { outline: 2px solid var(--e7); outline-offset: 1px; animation: mergeReady 1.4s ease-in-out infinite; }
+  .card .mergeMark { position: absolute; right: 3px; bottom: 16px; z-index: 1; width: 14px; height: 14px; font: 700 11px/14px var(--body, sans-serif); color: var(--s1); background: var(--e7); border-radius: 50%; box-shadow: 0 0 6px rgb(var(--e7-rgb) / 0.9); }
+  @keyframes mergeReady { 0%, 100% { box-shadow: 0 0 4px rgb(var(--e7-rgb) / 0.5); } 50% { box-shadow: 0 0 12px rgb(var(--e7-rgb) / 0.95); } }
+  .card.mergeCan { outline: 2px dashed var(--e8); outline-offset: 1px; }
+  .card.mergeHot { outline: 3px solid var(--e8); outline-offset: 1px; transform: scale(1.06); box-shadow: 0 0 14px rgb(var(--e8-rgb) / 0.95); }
+  @media (prefers-reduced-motion: reduce) { .card.ready { animation: none; box-shadow: 0 0 8px rgb(var(--e7-rgb) / 0.8); } }
+  /* (the Auto merge button: a gold pill just over the bench, at the right of the synergy hint's line, shown while a pair is ready, MERGE-TWO) */
+  #panel:has(#mergeAll:not([hidden])) #traitHint { padding-right: 118px; }
+  #benchWrap #mergeAll {
+    min-height: 0; border-image: none; box-sizing: border-box;
+    position: absolute; bottom: calc(100% + 1px); right: 2px; z-index: 3; height: 22px; padding: 0 9px; font-size: 11px; line-height: 18px; font-weight: 700; white-space: nowrap; border-radius: 11px;
+    color: var(--s1); background: linear-gradient(var(--e8), var(--e5)); border: 2px solid var(--e9); box-shadow: 0 2px 0 var(--black), 0 0 10px rgb(var(--e7-rgb) / 0.7);
+  }
+  #mergeAll[hidden] { display: none; }
+  body:not([data-phase='deploy']) #mergeAll { display: none; }
   .card.evolve { animation: evolve 0.9s ease-out; }
   .card.evolve::before {
     content: ''; position: absolute; inset: -4px; border-radius: 10px; pointer-events: none;
@@ -212,7 +231,7 @@
      badge over, pops in its gains, sweeps a light across the row and bursts sparks from the face, all once) */
   #xp .xprow { grid-template-columns: auto 1fr auto; }
   #xp .xprow .xpFace { grid-row: span 3; position: relative; width: 60px; height: 60px; display: grid; place-items: center; background: rgb(var(--black-rgb) / 0.4); border: 2px solid var(--s8); }
-  #xp .xprow .xpFace.g2 { border-color: var(--b5); } #xp .xprow .xpFace.g3 { border-color: var(--e6); background: rgb(var(--s1-rgb) / 0.6); }
+  #xp .xprow .xpFace.g2 { border-color: var(--b5); } #xp .xprow .xpFace.g3 { border-color: var(--e6); background: rgb(var(--s1-rgb) / 0.6); } #xp .xprow .xpFace.g4 { border-color: var(--p4); background: rgb(var(--p1-rgb) / 0.6); }
   #xp .xprow .xpFace canvas { width: 56px; height: 56px; image-rendering: pixelated; display: block; }
   #xp .xprow .xpLv { position: absolute; right: -10px; bottom: -8px; }
   #xp .xprow i, #xp .xprow p { grid-column: 2 / span 2; }
@@ -705,7 +724,7 @@
   /* cards: bench, spells, heroes, traits */
   .card, .spell, .hcard, .hrow, .brow, .setting, .sbCard, .sbSlot { background: linear-gradient(rgb(var(--e8-rgb) / 0.06), rgb(var(--black-rgb) / 0.25)), var(--s3); border: 2px solid var(--s8);
     box-shadow: inset 0 1px 0 rgb(var(--e8-rgb) / 0.14), 0 2px 4px rgb(var(--black-rgb) / 0.4); }
-  .card.g2 { background: linear-gradient(var(--s6), rgb(var(--black-rgb) / 0.35)); } .card.g3 { background: linear-gradient(var(--s3), rgb(var(--black-rgb) / 0.35)); }
+  .card.g2 { background: linear-gradient(var(--s6), rgb(var(--black-rgb) / 0.35)); } .card.g3 { background: linear-gradient(var(--s3), rgb(var(--black-rgb) / 0.35)); } .card.g4 { background: linear-gradient(var(--p1), rgb(var(--black-rgb) / 0.35)); }
   .card.chosen { box-shadow: 0 0 0 1px var(--gold-hi), 0 0 14px var(--ember); }
   .card b, .spell b, .hcard b, .hrow b, .brow b, .setting b, .evcard .opt b { font-family: var(--body); font-weight: 700; }
   .card b { font-size: 12px; } .spell { font-size: 13px; } .spell em, #mana b, .card em { font-family: var(--pixel); font-size: 8px; }
@@ -786,7 +805,7 @@
   <div id="heroBar"></div>
   <div id="traits"></div><div id="traitHint"></div>
   <div id="relics" hidden></div>
-  <div id="benchWrap"><div id="bench"></div><div id="recycleZone" hidden><svg viewBox="0 0 12 14" width="18" height="21" aria-hidden="true"><path d="M1 3h10v1H1zM4 0h4v2H4zM2 5h8l-1 9H3z" fill="currentColor"/></svg><b>Recycle</b><span id="recycleGold"></span></div></div>
+  <div id="benchWrap"><button id="mergeAll" hidden>Auto merge</button><div id="bench"></div><div id="recycleZone" hidden><svg viewBox="0 0 12 14" width="18" height="21" aria-hidden="true"><path d="M1 3h10v1H1zM4 0h4v2H4zM2 5h8l-1 9H3z" fill="currentColor"/></svg><b>Recycle</b><span id="recycleGold"></span></div></div>
   <div id="buttons"><button id="summon">Hire</button><button id="pack">Pack</button><button id="auto" title="Place the heroes for me"><svg viewBox="0 0 10 10" width="12" height="12" aria-hidden="true"><path d="M5 0l1.2 3.8L10 5 6.2 6.2 5 10 3.8 6.2 0 5l3.8-1.2z" fill="currentColor"/></svg>Auto</button><button id="homeBtn">Home</button><button id="fight" class="primary" disabled>Fight!</button></div>
 </div>
 <div id="result" hidden>

@@ -16,6 +16,7 @@ body[data-phase='fight'] #bench .card .recycle { display: none; }
 body[data-phase='fight'] #bench .card i { height: 4px; margin: 1px 1px 0; }
 body[data-phase='fight'] #bench .card.g2 { box-shadow: none; border-color: var(--b5); }
 body[data-phase='fight'] #bench .card.g3 { box-shadow: none; border-color: var(--e6); }
+body[data-phase='fight'] #bench .card.g4 { box-shadow: none; border-color: var(--p4); }
 
 /* A spell card is dragged onto the grid to cast it: the card takes the touch whole, and its icon follows the finger. */
 .spell { touch-action: none; }
@@ -34,6 +35,8 @@ body[data-phase='fight'] #heroBar:not(:empty) ~ #benchWrap { display: none; }
 .hb { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; padding: 3px 2px 2px; border: 2px solid var(--s8); border-radius: 0;
   background: linear-gradient(rgb(var(--e8-rgb) / 0.06), rgb(var(--black-rgb) / 0.3)), var(--s3); color: var(--ink, #f0e6d2); font: 400 12px/12px var(--body); touch-action: manipulation; cursor: pointer; }
 .hbRing { position: relative; width: 44px; height: 44px; flex: none; }
+/* (rank 4, the top grade since MERGE-TWO: a violet glow round the ring) */
+.hb.g4 .hbRing { filter: drop-shadow(0 0 4px rgb(var(--p4-rgb) / 0.95)); }
 .hbRing svg { position: absolute; inset: 0; width: 44px; height: 44px; transform: rotate(-90deg); }
 .hbRing circle { fill: none; stroke-width: 4; }
 .hbRing .trk { stroke: rgb(var(--black-rgb) / 0.55); }

@@ -6,7 +6,7 @@
 import type { Battle, Boost, Unit } from './battle';
 import { ALL_HEROES, UNITS } from './units';
 import { CAL_TIER, tierOfLevel } from './calamity';
-import { GRADE_MULT, isClone, ownHeroes, recruit, squadLimit, type Owned, type Run } from './run';
+import { gradeMult, isClone, ownHeroes, recruit, squadLimit, type Owned, type Run } from './run';
 import { gearBoost } from './gear';
 import { XP_PER_DAMAGE, XP_PER_HEALING, XP_TAKE_PART, XP_WIN, levelBoost, levelOf, RUN_MAX_LEVEL, type LevelUp } from './levels';
 
@@ -32,7 +32,7 @@ export const heroLevel = (h: Owned): number => levelOf(h.xp ?? 0, RUN_MAX_LEVEL)
  * lasting equipment or talents, and no kind-by-kind multipliers: every hero starts the climb alike.
  */
 export function localBoost(h: Owned): Boost {
-  const k = (h.tiered ? CAL_TIER.mult : GRADE_MULT) ** (h.grade - 1);
+  const k = h.tiered ? CAL_TIER.mult ** (h.grade - 1) : gradeMult(h.grade);
   const lv = levelBoost(heroLevel(h));
   const g = gearBoost(h.gear);
   return { hp: k * lv.hp * g.hp! + (h.bump?.hp ?? 0), atk: k * lv.atk * g.atk! + (h.bump?.atk ?? 0), grade: h.grade, level: heroLevel(h), ...(h.charge ? { charge: h.charge } : {}), ...(h.charge2 ? { charge2: h.charge2 } : {}) };
