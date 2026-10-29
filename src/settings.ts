@@ -7,6 +7,8 @@ import { tips } from './tips';
 import { DEFAULT_RULER, RULERS, rulerOf, type RulerId } from './rulerRules';
 import { RULER_URLS } from './rulerUrls';
 import { DUCHESS_COSMETICS, type DuchessCosmeticId } from './render/duchessRules';
+import { closePicker, openPicker } from './settingsPicker';
+import type { DevGift } from './sim/devGrant';
 
 const KEY = 'legends.settings';
 
@@ -112,6 +114,7 @@ export function openSettings(): void {
 }
 
 export function closeSettings(): void {
+  closePicker();
   $('settings').hidden = true;
 }
 
@@ -154,40 +157,64 @@ function row(title: string, hint: string): [HTMLElement, HTMLElement] {
   return [r, text];
 }
 
+/** The ruler: one compact row with the current ruler's portrait and name; its button opens the picker of all eight
+ *  (`settingsPicker.ts`), which saves to the same `ruler` setting. */
 function rulerRow(value: RulerId): HTMLElement {
-  const section = document.createElement('section');
-  section.className = 'rulerSetting';
-  section.setAttribute('aria-label', 'Choose your ruler');
-  const heading = document.createElement('h3');
-  heading.textContent = 'Your ruler';
-  const hint = document.createElement('p');
-  hint.className = 'hint';
-  hint.textContent = 'Eight crowns, eight characters. Choose who rules your keep.';
-  const grid = document.createElement('div');
-  grid.className = 'rulerChoices';
-  for (const ruler of RULERS) {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'rulerChoice';
-    b.style.setProperty('--ruler-colour', ruler.colour);
-    b.classList.toggle('on', ruler.id === value);
-    b.setAttribute('aria-pressed', String(ruler.id === value));
-    b.setAttribute('aria-label', `${ruler.name}, ${ruler.role}`);
-    const picture = document.createElement('span');
-    picture.className = 'rulerPortrait';
-    picture.style.backgroundImage = `url("${RULER_URLS[ruler.id]}")`;
-    picture.setAttribute('aria-hidden', 'true');
-    const name = document.createElement('b');
-    name.textContent = ruler.name;
-    const role = document.createElement('small');
-    role.textContent = ruler.role;
-    b.title = ruler.detail;
-    b.append(picture, name, role);
-    b.addEventListener('click', () => { setSetting('ruler', ruler.id); draw(); });
-    grid.append(b);
-  }
-  section.append(heading, hint, grid);
-  return section;
+  const ruler = rulerOf(value);
+  const [r] = row('Ruler', `${ruler.name} · ${ruler.role}`);
+  r.classList.add('rulerRow');
+  r.style.setProperty('--ruler-colour', ruler.colour);
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'rulerOpen';
+  b.setAttribute('aria-haspopup', 'dialog');
+  b.setAttribute('aria-label', `Ruler: ${ruler.name}, ${ruler.role}. Change`);
+  const picture = rulerPortrait(ruler.id);
+  const label = document.createElement('span');
+  label.textContent = 'Change ▾';
+  b.append(picture, label);
+  b.addEventListener('click', () =>
+    openPicker(
+      $('settings'),
+      {
+        title: 'Choose your ruler',
+        hint: 'Eight crowns, eight characters. Choose who rules your keep.',
+        listClass: 'rulerChoices',
+        options: RULERS.map((x) => ({
+          id: x.id,
+          on: x.id === value,
+          className: 'rulerChoice',
+          fill: (c) => {
+            c.style.setProperty('--ruler-colour', x.colour);
+            c.setAttribute('aria-label', `${x.name}, ${x.role}`);
+            c.title = x.detail;
+            const name = document.createElement('b');
+            name.textContent = x.name;
+            const role = document.createElement('small');
+            role.textContent = x.role;
+            c.append(rulerPortrait(x.id), name, role);
+          },
+        })),
+        onPick: (id) => {
+          setSetting('ruler', id as RulerId);
+          draw();
+          (document.querySelector('.rulerOpen') as HTMLElement | null)?.focus();
+        },
+      },
+      b,
+    ),
+  );
+  r.append(b);
+  return r;
+}
+
+/** A ruler's portrait: the first frame of their sheet. */
+function rulerPortrait(id: RulerId): HTMLElement {
+  const picture = document.createElement('span');
+  picture.className = 'rulerPortrait';
+  picture.style.backgroundImage = `url("${RULER_URLS[id]}")`;
+  picture.setAttribute('aria-hidden', 'true');
+  return picture;
 }
 
 function volumeRow(title: string, key: 'music' | 'effects', value: number, offHint = 'Off'): HTMLElement {
@@ -251,48 +278,66 @@ function getDuchessMeta(): { duchessTaps?: number; duchessLucky?: boolean; duche
   return {};
 }
 
+/** Duchess's costume: one row with the one she wears; its button opens a picker of them all (locked ones say how to unlock). */
 function duchessHatRow(value: DuchessCosmeticId): HTMLElement {
   const meta = getDuchessMeta();
-  const [r] = row('Duchess costume', 'Select an unlocked hat or accessory for Duchess');
-  const group = document.createElement('div');
-  group.className = 'pair';
-  group.style.display = 'flex';
-  group.style.flexWrap = 'wrap';
-  group.style.gap = '4px';
-
-  for (const c of DUCHESS_COSMETICS) {
-    const unlocked = c.unlocked(meta);
-    const b = document.createElement('button');
-    b.textContent = unlocked ? c.name : `${c.name} 🔒`;
-    b.title = unlocked ? c.desc : `${c.desc} — Unlock: ${c.hint}`;
-    b.setAttribute('aria-pressed', String(c.id === value));
-    b.classList.toggle('on', c.id === value);
-    if (!unlocked) {
-      b.style.opacity = '0.55';
-    }
-    b.addEventListener('click', () => {
-      if (!unlocked) return;
-      setSetting('duchessHat', c.id);
-      draw();
-    });
-    group.append(b);
-  }
-  r.append(group);
+  const worn = DUCHESS_COSMETICS.find((c) => c.id === value) ?? DUCHESS_COSMETICS[0];
+  const [r] = row('Duchess costume', worn.name);
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'costumeOpen';
+  b.setAttribute('aria-haspopup', 'dialog');
+  b.setAttribute('aria-label', `Duchess costume: ${worn.name}. Change`);
+  b.textContent = 'Change ▾';
+  b.addEventListener('click', () =>
+    openPicker(
+      $('settings'),
+      {
+        title: 'Duchess’s costume',
+        hint: 'An unlocked hat or accessory for Duchess.',
+        listClass: 'costumeChoices',
+        options: DUCHESS_COSMETICS.map((c) => {
+          const unlocked = c.unlocked(meta);
+          return {
+            id: c.id,
+            on: c.id === value,
+            locked: !unlocked,
+            className: 'costumeChoice',
+            fill: (o: HTMLButtonElement) => {
+              const name = document.createElement('b');
+              name.textContent = unlocked ? c.name : `${c.name} 🔒`;
+              const desc = document.createElement('small');
+              desc.textContent = unlocked ? c.desc : `To unlock: ${c.hint}`;
+              o.append(name, desc);
+            },
+          };
+        }),
+        onPick: (id) => {
+          setSetting('duchessHat', id as DuchessCosmeticId);
+          draw();
+          (document.querySelector('.costumeOpen') as HTMLElement | null)?.focus();
+        },
+      },
+      b,
+    ),
+  );
+  r.append(b);
   return r;
 }
 
 /** The page's handler for the developer grant (`main.ts` sets it: it holds the meta). Returns a line saying what was given. */
-let devGrantFn: ((what: 'crowns' | 'shards', n: number) => string) | null = null;
-export function onDevGrant(fn: (what: 'crowns' | 'shards', n: number) => string): void {
+let devGrantFn: ((what: DevGift, n: number) => string) | null = null;
+export function onDevGrant(fn: (what: DevGift, n: number) => string): void {
   devGrantFn = fn;
 }
 
-/** The owner's developer option, for testing: crowns, or shards of every hero, a hundred or a thousand a tap. */
+/** The owner's developer option, for testing: crowns, shards of every hero, or summoning stones, a hundred or a thousand a
+ *  tap. Six buttons in two columns (a hundred, a thousand) and three rows, so they fit at 360 wide. */
 function devRow(): HTMLElement {
-  const [r, text] = row('Developer', 'For testing: crowns, or shards of every hero, a hundred or a thousand a tap');
+  const [r, text] = row('Developer', 'For testing: crowns, shards of every hero, or summoning stones, a hundred or a thousand a tap');
   const group = document.createElement('div');
   group.className = 'devGrant';
-  for (const [what, n] of [['crowns', 100], ['crowns', 1000], ['shards', 100], ['shards', 1000]] as const) {
+  for (const [what, n] of [['crowns', 100], ['crowns', 1000], ['shards', 100], ['shards', 1000], ['stones', 100], ['stones', 1000]] as const) {
     const b = document.createElement('button');
     b.textContent = `+${n} ${what}`;
     b.addEventListener('click', () => {
