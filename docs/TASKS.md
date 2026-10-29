@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### DARK-WAVE — Some waves, the screen darkens
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/dark-wave`, `/home/user/dark-wave`.
+- **Cause:** the fight's weather is rolled per board, so about one wave in eight is night: a flat deep-blue tint at 0.36 over the whole screen took about 30% of the light off the board (rain, about one in eight too, took 15%). No dim was left on or stacking.
+- **Fix:** flat tints capped at 0.15 (night 0.14, rain 0.1, ash and embers 0.08); night's mood moves to darkened edges (a vignette clear over the board). A dim from a fall is lifted when a heart burns and the wave starts again.
+- **Status:** ready for review. Typecheck, full `npm test`, `npm run web`, browser checks at 393×852, 360×780 and 412×915 with no page errors. [Note](notes/dark-wave.md); [before](samples/dark-wave-before-393x852.png); [after](samples/dark-wave-after-393x852.png). No merge or version bump.
+
 ### CAL-SANCTUARY — Portal expeditions and destination arenas
 
 - **Owner:** current Codex chat. **Branch/worktree:** `feat/rift-sanctuary`, `/workspace/legends-of-the-fall`.
