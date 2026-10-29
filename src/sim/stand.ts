@@ -10,6 +10,7 @@
 // a moment after they fall. The saved run (`StandRun`) is a small record kept at the start of each break; the battle is built
 // again from it. Pure rules: no Pixi, no DOM; every draw is a side stream of the run's seed.
 
+import { ULT_FILL } from './heroKits';
 import { grantOres, standOres, type OreDrop } from './awakenMats';
 import { startBattle, addUnit, stepBattle, TICK_MS, creditOf, type Battle, type BattleEvent, type Boost, type Unit } from './battle';
 import { tileAt, standable, type Area, type At } from './board';
@@ -359,6 +360,8 @@ function addHeroUnit(s: Stand, h: StandHero): Unit {
   const unit = addUnit(s.b, h.kind, u, v, boostFor(s, h), h.id);
   unit.post = { u, v, leash: leashOf(UNITS[h.kind]), tank: isTank(UNITS[h.kind]) };
   fxStart(s.b, unit);
+  // (the ultimate's meter fills a little slower in the Stand's one long battle: ULT-CHARGE)
+  unit.ultPace = ULT_FILL.STAND;
   return unit;
 }
 

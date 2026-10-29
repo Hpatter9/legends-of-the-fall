@@ -373,6 +373,8 @@ test('Hellblade Sweep heals the Demon Swordsman, and Demon Form lifts his attack
   const before = dm.power ?? 1;
   run(c, 200);
   assert.ok(Math.abs((dm.power ?? 1) / before - FORM_MULT) < 1e-6);
+  // (and no second Demon Form while the first wears off: with ULT-CHARGE's quicker meter it would be full again inside the 8 s)
+  c.autoUlt = false;
   run(c, 8000);
   assert.ok(Math.abs((dm.power ?? 1) / before - 1) < 1e-6);
   assert.equal(dm.form, undefined);

@@ -74,6 +74,9 @@ export const ULT_FILL = {
   /** Every hero's ultimate strength, times its own `tuned.power`: the meter's faster turn (about four ultimates where there was one) is paid for here,
    *  once for the roster, so the heroes' ultimates keep their sizes against each other and the late armies their pace. */
   POWER: 0.5,
+  /** The Last Stand's heroes fill at this share of the pace (`Unit.ultPace`): its waves follow on from each other in one long battle, so the meter
+   *  carries from wave to wave and fills a little slower, about once a wave, keeping the Stand's pace (`stand.test.ts`) where its own tuning put it. */
+  STAND: 0.5,
 };
 
 /** One of a hero's two skills: the skill, what it costs, how much of the caster's attack it carries (`tune`, the balance knob), the shortest gap
@@ -181,7 +184,7 @@ export function tickPool(b: Battle, u: Unit, tickMs: number): void {
 function fillUlt(u: Unit, n: number): void {
   const ult = ultimateOf(u);
   if (!ult || !u.alive || n <= 0) return;
-  const rate = (ultTune(u, ult)?.rate ?? 1) * (1 + tal(u, 'ultRate'));
+  const rate = (ultTune(u, ult)?.rate ?? 1) * (1 + tal(u, 'ultRate')) * (u.ultPace ?? 1);
   u.charge2 = Math.min(CHARGE_MAX, (u.charge2 ?? 0) + n * rate);
 }
 /** The ultimate meter's share of a fight's damage or healing: `amount` points of health dealt (or healed) or taken by a hero with a kit. */

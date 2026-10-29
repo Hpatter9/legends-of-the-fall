@@ -80,6 +80,8 @@ export interface Unit {
   charge: number;
   /** An ultimate's charge, 0 to `CHARGE_MAX` (only the heroes with an ultimate fill it). */
   charge2?: number;
+  /** How fast this hero's ultimate meter fills, as a multiple (absent is x1): the Last Stand's heroes take `ULT_FILL.STAND`. */
+  ultPace?: number;
   /** The skill being cast, from when and for how long. */
   cast?: { at: number; ms: number; anim: 'attack' | 'attack2' | 'defend' };
   /** Takes half damage until then (Shield Wall). */
