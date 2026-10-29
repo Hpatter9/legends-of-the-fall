@@ -42,6 +42,7 @@ import { particleBudget, slashOf } from './vfxRules';
 import { placeLabel } from './labelRules';
 import { HAZARD_LOOKS } from './hazardLooks';
 import { loadPaintedArt, paintedStrip, paintSprite } from './cinematicArt';
+import { coverAlpha, overFighter } from './overFighter';
 import type { Element, Family } from './fxRules';
 
 /** Shapes for the legacy named skill cues; their scale and release timing remain the skill's own. */
@@ -162,6 +163,8 @@ export class Fx {
     this.dimLayer.zIndex = 1e7 - 1;
     this.dimLayer.visible = false;
     this.root.addChild(this.particles.root);
+    // (FX-CLEAR: the puffs, rings and signature steps laid over a fighter are thinned too)
+    this.particles.cover = (x, y, half) => coverAlpha(1, this.overBody(x, y, half));
     if (typeof matchMedia === 'function') matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
   }
 
@@ -709,6 +712,12 @@ export class Fx {
     this.flashLayer.alpha = (this.flashPeak * this.flashLeft) / this.flashMs;
   }
 
+  /** FX-CLEAR: whether an effect centred on (x, y), `half` px across from its centre, lies over a living fighter's body. */
+  private overBody(x: number, y: number, half: number): boolean {
+    for (const s of this.sprites.values()) if (s.unit.alive && overFighter(x, y, half, [s])) return true;
+    return false;
+  }
+
   private anim(s: Strip, x: number, y: number, scale: number, frameMs: number): Sprite {
     const sp = new Sprite(s.frames[0]);
     sp.anchor.set(0.5);
@@ -718,15 +727,19 @@ export class Fx {
     this.root.addChild(sp);
     let t = 0;
     let peak: number | undefined;
+    let own: number | undefined;
     this.items.push({
       view: sp,
       step: (dt) => {
         t += dt;
-        peak ??= sp.alpha * 0.9;
+        // (FX-CLEAR: an effect laid over a fighter's body is drawn see-through, `OVER_FIGHTER_ALPHA`; a strip that is not painted
+        // keeps the alpha it was given, thinned the same way)
+        own ??= coverAlpha(sp.alpha, this.overBody(x, y, 16 * scale));
+        peak ??= own * 0.9;
         const f = Math.floor(t / frameMs);
         if (f >= s.frames.length) return false;
         sp.texture = s.frames[f];
-        paintSprite(sp, t, s.frames.length * frameMs, scale, 0, peak, false, this.calm());
+        if (!paintSprite(sp, t, s.frames.length * frameMs, scale, 0, peak, false, this.calm())) sp.alpha = own;
         return true;
       },
     });

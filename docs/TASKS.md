@@ -16,6 +16,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 **STAND-005 / Room artwork replacement** — Owner: current art chat. Branch: `art/stand-room-depth`, worktree: `/workspace/legends-of-the-fall`. Scope: Last Stand renderer, new generated production artwork, selected-ruler integration, ruler self-defence in `standAi.ts`/`units.ts`, affected tests, art credits, visual tooling and notes. Owner rejected the coarse reused assets and explicitly requested new artwork matching the ornate concept, retaining the central king and combat layout. Completion: new room assets visibly integrated in four rooms, selected castle king reused, stable depth sorting, reduced motion, typecheck/build, affected tests and three portrait sizes. Status: artwork and standing ruler defence complete. The selected ruler stands before a separate rear throne and strikes adjacent foes without chasing. Typecheck/build, eight affected test files, the finishing-blow check, three portrait sizes, reduced motion, the current nine ruler choices and event-driven melee pass. No page errors. PR: [#178](https://github.com/Hpatter9/legends-of-the-fall/pull/178), ready for review; main 0.213.0 integrated, retaining its default King and picker. No release or deployment. Handoff: [room artwork](notes/stand-room-depth.md).
 
+### FX-CLEAR — Effects see-through over fighters; skill 2 pip greyed until it opens
+
+- **Goal:** the owner's asks: "Some of the effects cover the heroes too much, make them more opaque." (the fighters should show through) and "The 10 can be removed and the second box can be greyed out till unlock."
+- **Status:** done on the branch; not merged.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/fx-clear`, `/home/user/fx-clear` (from main 0.220.0); PR none.
+- **Allowed files or systems:** new `src/render/overFighter.ts`; small hooks in `src/render/fx.ts` (`anim`, `overBody`, the particles' `cover`), `src/render/particles.ts` (`cover`), `src/render/statusStyles.ts` (`OVER_BODY`, `partAlpha`, two front parts' size), `src/render/ailmentLayer.ts`; `src/heroBar.ts`, `src/battleUi.css` (`.hbPips b.shut`); `test/fx-clear.test.ts`; new `tools/fx-clear/shots.mjs`; `docs/notes/fx-clear.md`, `docs/notes/hero-kits.md`, `docs/samples/fx-clear-*.png`.
+- **Completion criteria:** effects over a fighter thinned by named constants (`OVER_FIGHTER_ALPHA` 0.6, `OVER_FIGHTER_STATUS_ALPHA` 0.7) and still visible, ground and back layers unchanged, no blinking, reduced motion kept; pip 2 reads "2" and is greyed while locked; typecheck, affected and full tests, web build; 393x852, 360x780, 412x915.
+- **Validation and handoff:** [notes](notes/fx-clear.md).
+
 ### WAVE-RECAP — A short, see-through card between waves; the detail kept for the end recap
 
 - **Goal:** the owner's asks: "Let's do a shorter recap of a wave and keep most of the info for the end of the battle" and "Make the between wave recap see through and have it show while the units travel to the next wave".
@@ -35,6 +45,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Allowed files or systems:** new `tools/spell-sfx/` (kit, sounds, render, probe), new `src/sfx/*.opus`, new `src/render/spellSfx.ts`, `spellBank.ts`, `spellSfxManifest.ts`; small hooks in `src/render/sound.ts` (`playEvents`' top, `unlock`), `soundRules.ts` (two mix cues, `spellCues` exported, the meteor's doubled fall), `audioRules.ts` (the pan of a spell cast on no tile), `audioProcessors.ts` (two cue names), `build.mjs` (copies `src/sfx`), `src/standView.ts` (the extra cast chime); `test/spell-sfx.test.ts`; `CREDITS.md`; `docs/notes/spell-sfx.md`.
 - **Completion criteria:** every spell its own cast and effect sound, timed to its look, on the effects bus, panned, muted with the rest, offline, with the synthesised cues as the fallback; typecheck, affected and full tests, web build; every spell cast once in Chromium.
 - **Validation and handoff:** [notes](notes/spell-sfx.md).
+
+### RANK4-SKILLS — A fourth tier skill for every hero
+
+- **Goal:** the owner's ask, with heroes going to four ranks (two of a kind merge; `claude/merge-two`): "A new rank-4 skill each": every hero a fourth version of its skill with its own name, as tiers 2 and 3 have.
+- **Status:** done on the branch; waiting for the owner.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/rank4-skills`, `/home/user/rank4-skills` (from main 0.218.0); PR none.
+- **Allowed files or systems:** `src/sim/tierSkills.ts` (the tier 4 entries, `TOP_TIER`, the `cleanse` rider), `src/codexView.ts` and `src/menuHeroes.ts` (a "Tier 4" line), `tools/balance.ts` (`--tier-cap`), new `tools/rank4/`, `tools/fxlab/audit.ts` (a Tier 4 column), `test/tier-skills.test.ts`, `docs/notes/rank4-skills.md`, `docs/samples/rank4-skills-*.png`. Not `run.ts`'s merging, `MAX_GRADE`, `GRADE_MULT` or the merge UI.
+- **Completion criteria:** 45 named tier 4 skills a step past tier 3; grade 4 and up casts them whatever `MAX_GRADE` is; grade 3 fights unchanged; parity of the tier 4 skills measured; typecheck, full tests, web build; the hero card at three sizes.
+- **Validation and handoff:** [notes](notes/rank4-skills.md).
 
 ### STARTER-KING — Two fixed starter packs of simple heroes; the classic king is the default ruler
 
