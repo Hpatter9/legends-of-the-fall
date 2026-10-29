@@ -9,6 +9,7 @@ import { isContent, pityAt } from './sim/unlockRules';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { portrait } from './render/sheets';
 import { play as playSfx } from './render/sound';
+import { revealJoins, shardResult, tarotFace } from './summonTarot';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -150,6 +151,9 @@ export class Gacha {
 
   /** The ceremonial seals open repeats first and new heroes last; each reward keeps its own saved shard count. */
   private reveal(got: Pull[]): void {
+    // (SUMMON-TAROT phase A: the prototype tarot results, only when a mock-up page asks for them)
+    const proto = (window as unknown as { __tarotMock?: 'sigil' | 'shadow' }).__tarotMock;
+    if (proto) return this.tarotReveal(got, proto);
     this.clearReveal();
     this.busy = true;
     const box = $('reveal');
@@ -270,6 +274,59 @@ export class Gacha {
     this.refresh();
   }
 }
+
+export interface Gacha {
+  tarotReveal(got: Pull[], variant: 'sigil' | 'shadow'): void;
+}
+
+/** SUMMON-TAROT phase A prototype: every shard a tarot card (laid out five to a row), every join a card that its first-time reveal
+ *  scene opens, played one after another once the spread is laid. */
+Gacha.prototype.tarotReveal = function (this: Gacha, got: Pull[], variant: 'sigil' | 'shadow'): void {
+  const self = this as unknown as { meta: Meta; busy: boolean; refresh(): void; clearReveal(): void };
+  self.clearReveal();
+  const box = $('reveal');
+  $('gacha').classList.add('hasResults');
+  $('gacha').querySelector('.gachaBody')!.scrollTop = 0;
+  const fresh = got.filter(p => p.isNew).length;
+  $('gacha').querySelector('h2')!.textContent = fresh ? 'A new ally answers' : 'The cards are drawn';
+  $('gachaClose').textContent = 'Continue';
+  $('resultIntro').hidden = false;
+  $('resultSummary').textContent = got.length === 1 ? (got[0].isNew ? 'A new ally joins your company' : 'Another step towards a new ally') : `${got.length} cards drawn${fresh ? ` · ${fresh} new ${fresh === 1 ? 'ally' : 'allies'}` : ''}`;
+  $('revealAll').hidden = true;
+  ($('collectionPanel') as HTMLDetailsElement).open = false;
+  ($('summonRules') as HTMLDetailsElement).open = false;
+  box.replaceChildren();
+  box.className = got.length === 1 ? 'tarotSingle' : 'tarotSpread';
+  const px = got.length === 1 ? 230 : 70;
+  for (const p of got) {
+    if (!p.isNew) { box.append(shardResult(self.meta, p, px, variant)); continue; }
+    // (a join: its card stays a sigil until its reveal has played, then it shows the hero)
+    const res = document.createElement('div');
+    res.className = 'tarotResult joined';
+    res.dataset.kind = p.kind;
+    res.append(tarotFace(p.kind, px, variant));
+    const name = document.createElement('b');
+    name.className = 'tarotName';
+    name.textContent = UNITS[p.kind].name;
+    const tag = document.createElement('em');
+    tag.className = 'tarotGain';
+    tag.textContent = p.lucky ? 'Lucky! Joined' : 'Joined';
+    res.append(name, tag);
+    box.append(res);
+  }
+  self.refresh();
+  if (!fresh) return;
+  window.setTimeout(() => void revealJoins(got).then(() => {
+    for (const res of box.querySelectorAll<HTMLElement>('.tarotResult.joined')) {
+      const kind = res.dataset.kind!;
+      const fig = document.createElement('div');
+      fig.className = 'tarotFig';
+      fig.style.setProperty('--cls', (res.firstElementChild as HTMLElement).style.getPropertyValue('--cls'));
+      fig.append(portrait(UNITS[kind].sheet, 128));
+      res.firstElementChild!.replaceWith(fig);
+    }
+  }), 700);
+};
 
 const small = (text: string): HTMLElement => {
   const e = document.createElement('small');

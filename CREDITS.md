@@ -119,6 +119,14 @@ All Craftpix, copied one sprite or layer at a time; no PixelLab. Ground tops and
   raw files are not redistributed. A painted replacement (`docs/notes/awaken-auras-art-brief.md`) would be credited
   here instead.
 
+## Summon tarot cards (SUMMON-TAROT, phase A mock-up)
+
+- `src/art/ui/tarot-frame.png`: the gold tarot card frame, generated with PixelLab (one generation) for this game.
+- `src/art/tarot/arcana.png`: 48 strips of the **5000 Pixel Effects** pack by blueberry (https://blueberry-assets.itch.io),
+  copied unchanged from `pixel-effects/sprites/<element>-<glyph|burst|circle|aura>/sheet-32.png` in the private assets
+  repository and packed twelve elements a row (light, earth, blood, wind, lightning, crystal, star, fire, dark, moon, forest,
+  sand): the class sigils on the cards and the burst, ring and halo of the first-time reveal (`src/summonTarot.ts`).
+
 ## Fight effects (`src/art/fx/vfx/`)
 
 - 27 Pixel Effects strips (six 32px frames each, copied unchanged from `pixel-effects/sprites/<effect>/sheet-32.png` in
