@@ -70,8 +70,8 @@ export function dailyRun(date: number, practice = false, scale = 1): Run {
  *  each of the five whose ultimate is open (level `ULT_LEVEL` or more), so a levelled save clears the daily about as often as before the ultimates came
  *  round once or twice a fight. A fresh save (no hero at 30) meets the daily as it was. 0.17 until STATUS-FX's ailments (their boss rules made the
  *  day's boss harder for a levelled save), then 0.15, and 0.17 again since MERGE-TWO (two to merge made a levelled squad stronger: 76% and 78% clears at
- *  levels 30 and 50, back to 70% and 75%; `docs/notes/merge-two.md`), 0.16 with LATE-RETUNE's `DAILY_START` (71% and 75%). */
-export const DAILY_ANSWER = { share: 0.75, ult: 0.16 };
+ *  levels 30 and 50, back to 70% and 75%; `docs/notes/merge-two.md`). */
+export const DAILY_ANSWER = { share: 0.75, ult: 0.17 };
 export function dailyScale(m: Meta, date?: number): number {
   const five: readonly string[] = (date !== undefined ? dailyTheme(date)?.five : undefined) ?? HEROES;
   const ratio = five.reduce((n, k) => n + kindPower(m, k) / powerOf(k, gradeBoost(1, 0, 1)), 0) / five.length;
