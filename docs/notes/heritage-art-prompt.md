@@ -68,17 +68,7 @@ it in the menus; paint natural, luminous skin in that range, not a flat fill.
 - **Scene:** bracing his spear diagonally across a narrow bridge over flooded rice terraces at sunrise, hat tilted into
   the wind.
 
-### 4. `paladin`: Karim, the Paladin (Lebanese)
-- **Role:** a martyr who takes his friends' wounds on himself. Mace and shield.
-- **Sprite gear and colours:** silver-white plate with ornate gold trim, ivory and royal-blue tabard, heavy golden mace,
-  blue kite shield marked with a gold sun.
-- **The person:** an adult Lebanese man, olive skin (ramp `#5e4429` `#86643f` `#a88259` `#bf9a6e` `#d2b083`), short dark
-  brown hair, dark eyes, clean-shaven or light stubble, a calm protective face.
-- **Accent:** a small cedar-tree emblem engraved on a pauldron or the shield's rim.
-- **Scene:** stepping forward with shield raised and mace lowered through a broken cathedral doorway, golden morning light
-  striking the sun emblem.
-
-### 5. `cleric`: Selam, the Cleric (Ethiopian, Amhara)
+### 4. `cleric`: Selam, the Cleric (Ethiopian, Amhara)
 - **Role:** a battle priest whose smites heal. Mace and prayer book.
 - **Sprite gear and colours:** ivory hood and white robes, teal stole with gold trim, leather boots, compact mace, small
   prayer book at the belt.
@@ -89,7 +79,7 @@ it in the menus; paint natural, luminous skin in that range, not a flat fill.
 - **Scene:** kneeling beside a wounded traveller's discarded shield in a field hospital, prayer book open on a crate, one
   hand extended with gentle teal healing light.
 
-### 6. `ranger`: Inti, the Ranger (Quechua, Peruvian Andes)
+### 5. `ranger`: Inti, the Ranger (Quechua, Peruvian Andes)
 - **Role:** a trapper: snares and fields of caltrops, and a longbow.
 - **Sprite gear and colours:** deep green hooded cloak with a gold clasp, leather armour, tan leggings, high boots, plain
   wooden longbow, back quiver, belt snares.
@@ -99,7 +89,7 @@ it in the menus; paint natural, luminous skin in that range, not a flat fill.
 - **Scene:** half kneeling in fern cover on a forest ridge, bow drawn low through the foliage as dawn breaks through
   ancient trees.
 
-### 7. `illusionist`: Luana, the Illusionist (Afro-Brazilian)
+### 6. `illusionist`: Luana, the Illusionist (Afro-Brazilian)
 - **Role:** a trickster: decoys, and friends swapped out of danger. Wand and hand mirror.
 - **Sprite gear and colours:** purple feathered tricorn with gold trim and white and purple plumes, ornate purple and gold
   corseted longcoat dress with white lace sleeves, dark stockings, purple and gold boots, white gloves, slender wand,
@@ -110,7 +100,7 @@ it in the menus; paint natural, luminous skin in that range, not a flat fill.
 - **Scene:** taking a theatrical bow on a candlelit enchanted theatre stage, one gloved hand flourishing the wand, the
   other raising the jewelled mirror, violet illusion ribbons spiralling through floating playing cards.
 
-### 8. `buccaneer`: Tiago, the Buccaneer (Cape Verdean)
+### 7. `buccaneer`: Tiago, the Buccaneer (Cape Verdean)
 - **Role:** a gambler: hooks, and the dice. Cutlass and grappling hook.
 - **Sprite gear and colours:** brown tricorn over a red bandana, open ivory shirt, red sash, weathered brown short coat,
   curved silver cutlass, iron grappling hook, knee boots and belts.
@@ -120,7 +110,7 @@ it in the menus; paint natural, luminous skin in that range, not a flat fill.
 - **Scene:** swinging from a ship's rigging above a sunlit harbour, cutlass held out and hook catching the rope, coat and
   sash flying.
 
-### 9. `timeWitch`: Adaeze, the Time Witch (Nigerian, Igbo)
+### 8. `timeWitch`: Adaeze, the Time Witch (Nigerian, Igbo)
 - **Role:** a time-bender: hastes, slows, and turns back a friend's clock. Hourglass staff.
 - **Sprite gear and colours:** wide crooked midnight-blue witch hat with gold clock faces and gears, ornate midnight-blue
   and gold star-patterned corseted robe dress with split skirts and pale silk lining, black stockings, gold-trimmed boots,
@@ -131,7 +121,7 @@ it in the menus; paint natural, luminous skin in that range, not a flat fill.
 - **Scene:** suspended above the floor of a shattered clock tower, one hand turning a floating golden clock ring while her
   hourglass staff holds falling fragments in mid-air.
 
-### 10. `dragoon`: Tiziri, the Queen Dragoon (Amazigh, Moroccan)
+### 9. `dragoon`: Tiziri, the Queen Dragoon (Amazigh, Moroccan)
 - **Role:** a dragon knight who breathes fire and leaps. Lance.
 - **Sprite gear and colours:** horned dragon-crest helm, ornate teal and gold dragon-scale plate, small leathery dragon
   wings on her back, purple waist cape, long silver-tipped lance, armoured boots.
@@ -142,7 +132,7 @@ it in the menus; paint natural, luminous skin in that range, not a flat fill.
 - **Scene:** landing from a leap on a ruined battlement, one knee bent, lance braced into the stone and wings spread, teal
   hair streaming against a violet mountain sky.
 
-### 11. `sage`: Seydou, the Great Sage (Malian)
+### 10. `sage`: Seydou, the Great Sage (Malian)
 - **Role:** a mana battery: falling stars, and his friends' mana pools filled. Staff.
 - **Sprite gear and colours:** deep-blue star-patterned robes, broad pointed blue wizard hat with a gold band, gnarled
   wooden staff topped with a small golden star orb, book at the belt, brown shoes.
@@ -153,7 +143,7 @@ it in the menus; paint natural, luminous skin in that range, not a flat fill.
 - **Scene:** seated cross-legged on a floating stone in an open celestial observatory, star staff across his lap, beard
   and robes drifting among luminous star charts.
 
-### 12. `lightningMage`: Malia, the Lightning Mage (Samoan)
+### 11. `lightningMage`: Malia, the Lightning Mage (Samoan)
 - **Role:** a storm marker: lightning that marks, then sets the marks off. Crystal staff.
 - **Sprite gear and colours:** deep purple-blue robes with gold lightning patterns, short pointed violet hat, staff tipped
   with a blue crystal, bright cyan eyes.
@@ -164,7 +154,7 @@ it in the menus; paint natural, luminous skin in that range, not a flat fill.
 - **Scene:** landing on one knee on a storm-battered observatory balcony, staff touching the stone as branching cyan
   lightning crackles across a shattered astrolabe.
 
-### 13. `beastmaster`: Itzel, the Beastmaster (Maya, Mexico)
+### 12. `beastmaster`: Itzel, the Beastmaster (Maya, Mexico)
 - **Role:** a summoner who calls the pack and sets it on a foe. Whip and hunting knife, a grey wolf.
 - **Sprite gear and colours:** fur-trimmed brown leather armour, coiled leather whip, small curved hunting knife, rugged
   boots, long dark braids with a small feather (the sprite has one).
@@ -175,7 +165,7 @@ it in the menus; paint natural, luminous skin in that range, not a flat fill.
 - **Scene:** kneeling on a ridge above a misty tropical forest with a gloved hand resting near the muzzle of her loyal grey
   wolf, whip at her hip, distant pyramid-shaped hills under storm clouds.
 
-### 14. `lancer`: Bataar, the Lancer (Mongolian)
+### 13. `lancer`: Bataar, the Lancer (Mongolian)
 - **Role:** momentum cavalry who hits harder the further he rides. Mounted, lance.
 - **Sprite gear and colours:** steel plate and a blue-plumed helmet with the face visible, royal-blue saddle cloth, brown
   leather tack, a compact sturdy brown armoured horse, long silver-tipped lance. Show the entire horse, rider and lance.
@@ -184,7 +174,7 @@ it in the menus; paint natural, luminous skin in that range, not a flat fill.
 - **Scene:** his horse rearing on a grassy steppe ridge above battle banners, blue saddle cloth flying, lance held
   diagonally skyward.
 
-### 15. `mercenary`: Kian, the Mercenary (Persian, Iranian)
+### 14. `mercenary`: Kian, the Mercenary (Persian, Iranian)
 - **Role:** a bounty hunter who marks the strongest and is paid for it. Broadsword.
 - **Sprite gear and colours:** worn leather armour over steel chainmail, charcoal travelling cloak, notched broadsword,
   coin purse, leather boots.
@@ -214,7 +204,7 @@ replace the existing files, keeping their names.
   "Painted artwork for a more varied cast (HERITAGE-LOOKS part 2)".
 - The commit holds only the 30 replaced files in `src/art/heroes/` (two per hero above) and one added line in
   `CREDITS.md`, at the end of the "## Anime hero gallery" section:
-  `- Fifteen heroes repainted for a more varied cast (Knight, Fire Wizard, Peasant, Paladin, Cleric, Ranger, Illusionist, Buccaneer, Time Witch, Queen Dragoon, Great Sage, Lightning Mage, Beastmaster, Lancer, Mercenary): original artwork generated with OpenAI image generation for the owner's heritage request (docs/notes/heritage-art-prompt.md), replacing their earlier scenes and cutouts; same file names and sizes.`
+  `- Fourteen heroes repainted for a more varied cast (Knight, Fire Wizard, Peasant, Cleric, Ranger, Illusionist, Buccaneer, Time Witch, Queen Dragoon, Great Sage, Lightning Mage, Beastmaster, Lancer, Mercenary): original artwork generated with OpenAI image generation for the owner's heritage request (docs/notes/heritage-art-prompt.md), replacing their earlier scenes and cutouts; same file names and sizes.`
 - **Change nothing else:** no code, no other art, no version number, no other notes.
-- In the pull request's description, put a contact sheet of the fifteen new cutouts (an image in the description is
+- In the pull request's description, put a contact sheet of the fourteen new cutouts (an image in the description is
   enough; do not commit it), and list the heroes.

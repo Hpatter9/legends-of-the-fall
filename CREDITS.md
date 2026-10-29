@@ -409,7 +409,7 @@ The Grand Scenario prototype reuses the already credited camp gate and Knights w
 
 ## Heritage looks
 
-- `src/art/units/*_{deep,brown,tan,olive}.png` (23 sheets, front and rear, for twelve human heroes; the Cleric's back shows no skin and is used as it is): the Resonance hero sheets credited above (original generated pixel artwork), with only their skin (and, for the Knight and the Paladin, their hair) recoloured to another tone by `tools/heritage/recolour.py`. No new artwork was generated or drawn; every other pixel, the outlines and the alpha are the source's. The source sheets stay in `src/art/units/` as the tool's input; the game bundles the re-toned sheets in their place. See `docs/notes/heritage-looks.md`.
+- `src/art/units/*_{deep,brown,tan,olive}.png` (21 sheets, front and rear, for eleven human heroes; the Cleric's back shows no skin and is used as it is): the Resonance hero sheets credited above (original generated pixel artwork), with only their skin (and, for the Knight, his hair) recoloured to another tone by `tools/heritage/recolour.py`. No new artwork was generated or drawn; every other pixel, the outlines and the alpha are the source's. The source sheets stay in `src/art/units/` as the tool's input; the game bundles the re-toned sheets in their place. See `docs/notes/heritage-looks.md`.
 
 
 ## Last Stand ornate room artwork (`src/art/stand/ornate/`)
