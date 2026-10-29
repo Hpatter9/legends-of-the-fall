@@ -9,7 +9,8 @@ import { heroLevel } from '../src/sim/climb';
 import { LATE_LEVEL, levelOf, RUN_MAX_LEVEL, xpFor } from '../src/sim/levels';
 import { loadSlot, saveSlot, type Run } from '../src/sim/run';
 
-const run = (seed: number): Run => calamityRun(seed, startedMeta(5), 'knight', 0);
+// Existing graph saves retain their original exploration rules.
+const run = (seed: number): Run => { const r = calamityRun(seed, startedMeta(5), 'knight', 0); delete r.rift!.expedition; r.tower!.map = mapFor(r, 1); return r; };
 const store = () => {
   const s: Record<string, string> = {};
   return { getItem: (k: string) => s[k] ?? null, setItem: (k: string, v: string) => void (s[k] = v) };

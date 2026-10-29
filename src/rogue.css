@@ -193,3 +193,12 @@ body.towerUp #version { z-index: 7; }
 .cvNote b { color: var(--gold-hi); font: 700 15px var(--display); }
 .hmCalamity b { color: var(--e8); }
 .rtLv { color: var(--gold-hi); font-size: 10px; }
+
+/* Altar choices use the existing portrait card layout and pack art. */
+.riftStatus { width: 100%; padding: 6px 8px; min-height: 44px; }
+.riftAltar .rtChoice { padding: 8px; min-height: 64px; }
+.riftAltar .rtChoice small { font-size: 12px; line-height: 1.35; }
+.riftAltar .rtChoice[aria-pressed="true"] { border-color: var(--gold-hi); background: var(--s1); }
+.riftActions { display: flex; gap: 8px; }
+.riftActions button { flex: 1; min-height: 44px; }
+.riftAltar .riftRisk { color: var(--gold-hi); line-height: 1.4; }

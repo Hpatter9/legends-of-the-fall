@@ -2,6 +2,8 @@
 // light (`build.mjs` copies them to the web folder), shifted a little by the pan. The highlands keep the Mountain
 // Backgrounds m1 set; the others sit in `src/art/areas/<area>/bgN.png`.
 
+import { worldPicture } from '../sanctuaryArt';
+import type { RiftWorld } from '../sim/sanctuary';
 import type { Area } from '../sim/board';
 
 const LAYERS: Record<Area, number> = { highlands: 5, forest: 5, snow: 3, desert: 5, volcano: 3, dungeon: 4, plains: 4, autumn: 5, swamp: 6, graveyard: 6, ruins: 6, temple: 5, crystal: 5, forge: 4, shrine: 6, warcamp: 5, oasis: 5 };
@@ -29,18 +31,22 @@ const TINT: Record<Area, string> = {
 };
 
 let layers: HTMLElement[] = [];
-let shown: Area | null = null;
+let shown: string | null = null;
 
 /** The files of an area's parallax layers, back to front (the menus lay their own copy). */
 export const backdropFiles = (area: Area): string[] => Array.from({ length: LAYERS[area] }, (_, i) => file(area, i + 1));
 
 /** Show an area's backdrop (nothing to do when it is already up). */
-export function setBackdrop(area: Area): void {
+export function setBackdrop(area: Area, world?: RiftWorld): void {
   const sky = document.getElementById('sky');
-  if (!sky || shown === area) return;
-  shown = area;
+  if (!sky || shown === (world ?? area)) return;
+  shown = world ?? area;
   sky.replaceChildren();
   layers = [];
+  if (world) {
+    const layer = document.createElement('div');layer.className = 'riftBattleBackdrop';layer.append(worldPicture(world));sky.append(layer);layers.push(layer);
+    sky.style.setProperty('--tint', TINT[area]);return;
+  }
   for (let n = 1; n <= LAYERS[area]; n++) {
     const el = document.createElement('div');
     el.style.backgroundImage = `url(${file(area, n)})`;

@@ -6,6 +6,7 @@
 import { duchessModeOk, type DuchessWish } from './duchessFight';
 import { startBattle, type Battle, type Boost, type Stage } from './battle';
 import { CLASSIC_AREAS, type Area } from './board';
+import type { Rift } from './rift';
 import { CAL_CASTLE_EXTRA } from './calamity';
 import { buildChain, type Section } from './chain';
 import { isScenario, planScenario, scenarioForArmy, type ScenarioId } from './scenario';
@@ -97,6 +98,8 @@ export interface Buff {
 }
 
 export interface Run {
+  /** New Calamity runs only; old saves keep their original rules. */
+  rift?: Rift;
   seed: number;
   gold: number;
   stage: number;
@@ -271,7 +274,7 @@ export const recycleValue = (run: Run): number => Math.max(1, Math.round(summonC
  *  change, so this is no way to reroll for free. Returns the gold paid, or null when the hero is unknown, the run is over, or it is the last hero. */
 export function recycle(run: Run, heroId: number): number | null {
   const h = heroOf(run, heroId);
-  if (!h || run.over || run.roster.length <= 1) return null;
+  if (!h || run.over || run.roster.length <= 1 || run.rift?.starter === heroId) return null;
   const gold = recycleValue(run);
   for (const g of Object.values(h.gear ?? {})) (run.items ??= []).push(g);
   run.roster = run.roster.filter((x) => x.id !== heroId);
@@ -403,8 +406,9 @@ export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
   const thin = theme?.swarm && army && !army.waves[run.stage - 1]?.boss ? SWARM_HP : 1;
   return startBattle(boardSeedOf(run, run.stage), node ? node.band : army ? waveFoes(army, run.stage, tierOfRun(run)) : bandFor(run.stage), {
     ...base,
+    ...(run.rift ? { rift: { ...run.rift }, riftBoss: run.tower?.cur?.kind === 'boss' } : {}),
     area: run.area ?? base.area ?? areaFor(run.stage),
-    board: section?.board,
+    board: section?.board ?? base.board,
     foes: { hp: base.foes!.hp! * foes * (ans?.hp ?? 1) * thin, atk: base.foes!.atk! * foes * (ans?.atk ?? 1), speed: base.foes!.speed },
     heroes: { hp: castle.hp! * (hp ?? 1) * (run.buff?.hp ?? 1), atk: castle.atk! * (atk ?? 1) * (run.buff?.atk ?? 1) },
     mana: manaRate(run.castle) * (mana ?? 1),
