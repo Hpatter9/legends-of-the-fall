@@ -682,7 +682,16 @@ export function strikeDef(b: Battle, me: Unit): UnitDef {
 }
 
 /** One tick of the fight. Returns what happened, for the renderer to show. */
+/** A listener on every tick's events (tools and tests only: `tools/status-fx/logs.ts` fingerprints whole fights with it). The game never sets it. */
+export const battleTap: { fn?: (b: Battle, events: BattleEvent[]) => void } = {};
+
 export function stepBattle(b: Battle): BattleEvent[] {
+  const out = stepInner(b);
+  battleTap.fn?.(b, out);
+  return out;
+}
+
+function stepInner(b: Battle): BattleEvent[] {
   const out: BattleEvent[] = [];
   if (b.phase !== 'fight') return out;
   // (a boss changing form holds the whole fight)
