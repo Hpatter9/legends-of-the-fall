@@ -11,8 +11,6 @@ import { readyToRise } from './sim/rankUp';
 import { openRankUp, type Taken } from './rankUpView';
 import { AWAKEN_SHARDS, awakenedOf, awakenPlan } from './sim/awaken';
 import { drawAwaken, gems, playAwakenShow } from './awakenView';
-import { lookSheet, stepOfRank } from './render/awakenLook';
-import { wearAura } from './render/auraCanvas';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { lastingBoost, progressOf, xpOf } from './sim/levels';
 import { compactXp, levelBadge } from './levelBadge';
@@ -21,10 +19,9 @@ import { drawTalents } from './talentView';
 import { TREES } from './sim/talents';
 import { blowsPerSecond, jumpText, kindPower, powerText, rateText, tilesPerSecond } from './sim/power';
 import { heroStats } from './sim/talents';
-import { figureShare, sprite } from './render/sheets';
+import { heroArtwork, openHeroArtwork } from './heroArtwork';
 import { CONTENT_HEROES, lockInfo } from './sim/contentHeroes';
 import { haveOf, toCollect } from './sim/unlock';
-import { portrait } from './render/sheets';
 import swordIcon from './art/talent/sword.png';
 import shieldIcon from './art/talent/shield.png';
 import flameIcon from './art/talent/blast.png';
@@ -131,7 +128,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
       const button = el('button', other === kind ? 'selected' : '');
       button.type = 'button';
       button.setAttribute('aria-current', other === kind ? 'true' : 'false');
-      button.append(portrait(UNITS[other].sheet, 48), el('small', '', UNITS[other].name));
+      button.append(heroArtwork(other), el('small', '', UNITS[other].name));
       button.addEventListener('click', () => state.onPick?.(other, state.tab));
       strip.append(button);
     }
@@ -144,19 +141,21 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
   }
   const head = el('div', 'hhead');
   const pic = el('div', 'hpic');
-  // (an awakened hero is drawn in its top form, its own colours, in its class's aura)
   const full = heroRank(meta, kind);
-  const step = stepOfRank(full);
-  const sheet = step ? lookSheet(kind, full, 3) : def.sheet;
-  const spr = sprite(sheet, 132);
-  spr.canvas.style.transform = spr.faceRight ? 'translateX(-50%)' : 'translateX(-50%) scaleX(-1)';
-  if (!open) spr.canvas.style.filter = 'brightness(0.15) grayscale(1)';
+  const artwork = heroArtwork(kind);
+  if (!open) artwork.style.filter = 'brightness(0.15) grayscale(1)';
+  let closeArtwork: (() => void) | undefined;
+  const view = el('button', 'heroArtOpen');
+  view.type = 'button';
+  view.setAttribute('aria-label', `View ${def.name} full artwork`);
+  view.append(artwork, el('span', 'heroArtHint', 'View full artwork ⤢'));
+  view.disabled = !open;
+  view.addEventListener('click', () => { closeArtwork = openHeroArtwork(kind, view); });
   const halo = el('span', 'heroCardHalo');
   halo.setAttribute('aria-hidden', 'true');
   const motes = el('span', 'heroCardMotes');
   motes.setAttribute('aria-hidden', 'true');
-  pic.append(halo, spr.canvas, motes);
-  if (open && step) wearAura(pic, spr.canvas, kind, step, figureShare(sheet), spr.faceRight ? 1 : -1);
+  pic.append(halo, view, motes);
   const banner = el('span', 'dossierClass');
   banner.append(detailIcon(CARD_CLASSES[CLASS_OF[kind]].icon), CARD_CLASSES[CLASS_OF[kind]].name);
   pic.append(banner);
@@ -319,9 +318,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
   const done = el('button', 'primary', 'Back');
   done.addEventListener('click', close);
   box.append(done);
-  let n = 0;
-  const timer = setInterval(() => spr.tick(++n), 140);
-  return () => clearInterval(timer);
+  return () => closeArtwork?.();
 }
 
 /** The roster page of the Heroes tab: the heroes owned in a grid, then the ones earned in play with the line "Joins when you …" and their progress, then the ones being collected by shards with their bars. A tap on a hero opens its sheet. */
@@ -381,12 +378,9 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
     banner.append(icon, el('span', '', cls.name));
     const scene = el('span', 'heroCardScene');
     scene.setAttribute('aria-hidden', 'true');
-    // Reuse the awakened look when one is owned, just as the detail sheet does.
-    const full = heroRank(meta, kind);
-    const step = stepOfRank(full);
-    const figure = portrait(step ? lookSheet(kind, full, 3) : UNITS[kind].sheet, 160);
+    const figure = heroArtwork(kind);
+    figure.alt = '';
     scene.append(el('span', 'heroCardHalo'), figure, el('span', 'heroCardMotes'));
-    if (step) wearAura(scene, figure, kind, step, 0.88);
     const level = progressOf(xpOf(meta, kind)).level;
     const ribbon = el('span', 'heroLevelRibbon');
     ribbon.append(levelBadge(level));
@@ -416,7 +410,7 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
       bar.append(fill);
       text.append(bar, el('span', 'lv', `${lock.now} / ${lock.need}`));
     }
-    const pic = portrait(UNITS[kind].sheet, 48);
+    const pic = heroArtwork(kind);
     pic.classList.add('dim');
     r.append(pic, text);
     r.addEventListener('click', () => pick(kind));

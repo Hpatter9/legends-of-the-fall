@@ -1,12 +1,9 @@
-// The starter pick: a brand-new save (and one after Start over) offers three packs of three heroes and unlocks the pack
-// taken. Each pack is a front-liner, a striker and a back-liner (a shooter, a caster or a support), so any pack can
-// hold a line, hit hard and cover itself. The packs are drawn from a side stream of the save's seed, so they replay
-// exactly and differ from one another (no hero is in two packs). Pure rules: no Pixi, no DOM.
+// The starter pick: a brand-new save (and one after Start over) offers two packs of three heroes and unlocks the pack
+// taken. The packs are fixed, the same for every save (the owner's ask: "two starter packs that are always the same and
+// are simple characters"): plain classic heroes a new player reads at a glance. Each is a front-liner, a striker and a
+// back-liner, so either pack can hold a line, hit hard and cover itself. Pure rules: no Pixi, no DOM.
 
-import { mixSeed, Rng } from './rng';
 import { ALL_HEROES } from './units';
-import { isContent } from './unlockRules';
-
 export type StarterClass = 'front' | 'striker' | 'shooter' | 'caster' | 'support';
 
 /** What each hero is for, as the starter pick tells it. Every hero is in exactly one class. */
@@ -21,9 +18,24 @@ export const CLASS_OF: Readonly<Record<string, StarterClass>> = {
 
 export const CLASS_NAMES: Readonly<Record<StarterClass, string>> = { front: 'Front-liner', striker: 'Striker', shooter: 'Shooter', caster: 'Caster', support: 'Support' };
 
-export const STARTER_PACKS = 3;
+/** A starter pack: its name, a line and chips for the pick screen, and its three heroes (front-liner, striker, back-liner). */
+export interface StarterPack {
+  id: string;
+  name: string;
+  line: string;
+  /** Three short words for the pack's chips on the pick screen, one for each hero's weapon. */
+  chips: readonly [string, string, string];
+  heroes: readonly [string, string, string];
+}
+
+/** The two packs every new save is offered, in the order the pick screen shows them. */
+export const FIXED_PACKS: readonly StarterPack[] = [
+  { id: 'swordShield', name: 'Sword and Shield', line: 'Steel up front, a bow behind: hold the line and shoot past it.', chips: ['Shield', 'Sword', 'Bow'], heroes: ['knight', 'samurai', 'archer'] },
+  { id: 'bladeSpell', name: 'Blade and Spell', line: 'Pikes to hold them, a quick blade to cut them, fire to finish them.', chips: ['Pike', 'Blade', 'Spell'], heroes: ['peasant', 'kunoichi', 'wizard'] },
+];
+
+export const STARTER_PACKS = FIXED_PACKS.length;
 export const PACK_SIZE = 3;
-const SALT = 0x57a47;
 
 /** A starter pick: the packs on offer and the one taken (null while the save waits for it). */
 export interface Starter {
@@ -31,34 +43,26 @@ export interface Starter {
   pick: number | null;
 }
 
-/** The hero kinds of a class a pack can offer, in the order the roster lists them (the heroes earned by content are not offered). */
-const ofClass = (c: StarterClass): string[] => ALL_HEROES.filter((k) => CLASS_OF[k] === c && !isContent(k));
+/** The packs a new save is offered (fresh copies of the fixed packs' heroes). */
+export const starterPacks = (): string[][] => FIXED_PACKS.map((p) => [...p.heroes]);
 
-/** `items` shuffled by `rng` (a copy). */
-function shuffled<T>(rng: Rng, items: readonly T[]): T[] {
-  const a = [...items];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = rng.int(0, i);
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
+/** The fixed pack whose heroes are exactly these (a save's pack, in any order), if any: what names a pack on the page. */
+export const packNamed = (heroes: readonly string[]): StarterPack | undefined =>
+  FIXED_PACKS.find((p) => p.heroes.length === heroes.length && p.heroes.every((k) => heroes.includes(k)));
 
-/** The three packs a seed offers: pack i is a front-liner, a striker and a back-liner, and the nine heroes are all different. The back-liners are one shooter, one caster and one support, dealt out in a random order. */
-export function starterPacks(seed: number): string[][] {
-  const rng = new Rng(mixSeed(seed, SALT));
-  const fronts = shuffled(rng, ofClass('front'));
-  const strikers = shuffled(rng, ofClass('striker'));
-  const backs = shuffled(rng, (['shooter', 'caster', 'support'] as const).map((c) => rng.pick(ofClass(c))));
-  return Array.from({ length: STARTER_PACKS }, (_, i) => [fronts[i], strikers[i], backs[i]]);
-}
-
-/** A saved starter pick that is sane: three packs of three different known heroes, and a pick that is null or one of them. A pack that is not sane is drawn again from the seed. Undefined for a save from before the pick. */
-export function readStarter(raw: unknown, seed: number): Starter | undefined {
+/** A saved starter pick made safe on load. Undefined for a save from before the pick (it keeps the old five).
+ *  - A save still waiting for its pick (pick null or not a number) is offered the fixed packs, whatever it was offered before
+ *    (the old seeded draw offered three).
+ *  - A save that has picked keeps its record as saved, three old packs and all, when the record is sane; when it is damaged its pick
+ *    still counts as made (it is moved onto the fixed packs, the pick kept in range), so a load never asks again for a pick and never
+ *    swaps the heroes it has for a pack. */
+export function readStarter(raw: unknown): Starter | undefined {
   if (!raw || typeof raw !== 'object') return undefined;
   const r = raw as Partial<Starter>;
+  const made = typeof r.pick === 'number' && Number.isInteger(r.pick) && r.pick >= 0;
+  if (!made) return { packs: starterPacks(), pick: null };
   const sane = (p: unknown): p is string[] => Array.isArray(p) && p.length === PACK_SIZE && new Set(p).size === PACK_SIZE && p.every((k) => typeof k === 'string' && ALL_HEROES.includes(k));
-  const packs = Array.isArray(r.packs) && r.packs.length === STARTER_PACKS && r.packs.every(sane) ? r.packs.map((p) => [...p]) : starterPacks(seed);
-  const pick = typeof r.pick === 'number' && Number.isInteger(r.pick) && r.pick >= 0 && r.pick < STARTER_PACKS ? r.pick : null;
-  return { packs, pick };
+  const pick = r.pick as number;
+  if (Array.isArray(r.packs) && r.packs.length > pick && r.packs.every(sane)) return { packs: r.packs.map((p) => [...p]), pick };
+  return { packs: starterPacks(), pick: Math.min(pick, STARTER_PACKS - 1) };
 }

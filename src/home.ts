@@ -31,6 +31,7 @@ import { ICONS, icon } from './menuArt';
 import { drawHeroSheet, drawRoster, strongest } from './menuHeroes';
 import { Tavern } from './tavern';
 import { SummoningHall } from './hall';
+import { revealUnseen } from './summonTarot';
 import { Library } from './library';
 import { CampScene } from './camp';
 import { readyKinds } from './sim/rankUp';
@@ -223,6 +224,8 @@ export class Home {
     tips.offer('home', $('hmBattle'));
     // (a run has just ended: the crowns are there to spend)
     if (note) tips.offer('crowns', $('hmTabs'));
+    // (a hero who joined and has not had its first-time reveal, one earned in play or one whose reveal was missed, has it now)
+    void revealUnseen(this.meta).then(() => this.refresh());
   }
 
   get isOpen(): boolean {
@@ -235,9 +238,13 @@ export class Home {
     return !$('hmSub').hidden && $('hmSub').classList.contains('armies') ? 'armies' : this.tab;
   }
 
-  /** The gacha saves the pull, the hall celebrates a new ally (shards go straight to cards), then results open. */
+  /** The gacha saves the pull, the hall stops drawing, then the cards open (a hero who joins has its unlock scene there, its
+   *  first-time reveal in `summonTarot.ts`, whatever the hall's state; the hall's altar show no longer plays for it). */
   summon(n: 1 | 10): void {
-    if (this.hooks.onSummon) this.hooks.onSummon(n, (got, skip) => this.hall.play(got, skip).then(() => this.hall.stop()));
+    if (this.hooks.onSummon) this.hooks.onSummon(n, () => {
+      this.hall.stop();
+      return Promise.resolve();
+    });
     else this.hooks.onRecruit();
   }
 

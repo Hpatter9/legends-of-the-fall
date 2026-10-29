@@ -14,6 +14,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### STARTER-KING — Two fixed starter packs of simple heroes; the classic king is the default ruler
+
+- **Goal:** the owner's asks: "The 3 starter packs should be reduced to 2 starter packs that are always the same and are simple characters."; "The default king should be the stereotypical man king."; and (added) "The animations for the kings on the throne is weird. The thrones move around too much. Make them stable and give them a simple idle animation."
+- **Status:** done; released as 0.212.0 (a saved Iron Stag never picked moves to The King, the director's call on the owner's intent).
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/starter-king`, `/home/user/starter-king` (from main 0.208.0); PR none.
+- **Allowed files or systems:** `src/sim/starter.ts` (`FIXED_PACKS`, `readStarter`), `src/sim/meta.ts` (two calls), `src/starter.ts` (the pick screen), `src/rulerRules.ts`, `src/rulerUrls.ts`, `src/render/rulerArt.ts` (throne cells, the seated breath), `src/render/standHall.ts` (the seated texture), `src/settings.ts` (picker wording, The King's portrait), new `src/art/rulers/the_king.png` and `tools/rulers/the-king.py`, `tools/rulers/check.mjs`, new `tools/rulers/seat-strip.mjs` and `seat-montage.py`, new `tools/starter-packs/`; tests `test/starter.test.ts`, `test/rulers.test.ts`, `test/settings.test.ts`, `test/hero-shards.test.ts`, `test/new-heroes.test.ts`; `CREDITS.md`, `CLAUDE.md` (one line), `docs/notes/no-rarity.md` (a pointer), `docs/notes/starter-king.md`, `docs/samples/starter-king-*.png`, `docs/samples/ruler*-the_king-*.png`.
+- **Completion criteria:** two fixed packs (front-liner, striker, back-liner each, named, with chips) about equal on the first army at level 1; old saves safe (picked keeps its heroes; mid-pick moves to the two); The King a ninth ruler and the default, working in the castle, Last Stand, cinematics and picker; every ruler's throne still when seated, with a gentle idle; typecheck, affected and full tests, web build; 393x852, 360x780, 412x915.
+- **Validation and handoff:** [notes](notes/starter-king.md).
+
 ### KING-ART — Eight player rulers and action animations
 
 - **Owner:** Codex. **Branch / worktree:** `design/king-artwork`, `/workspace/legends-of-the-fall`.
@@ -26,7 +36,42 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 **ART-003 / Four seductress redesigns** — Owner: current Codex chat. Branch/worktree: `art/seductress-four`, `/workspace/legends-of-the-fall`. Scope: approved adult Kitsune, Gorgon, Illusionist and Time Witch costume redesigns; their front/rear animation assets, packaging evidence and credits. Preserve identities and combat. Completion: all four designs applied, complete animations/facings, asset validation, typecheck/build, affected tests and three phone sizes reviewed. Status: implemented and validated; ready for owner review. Typecheck/build, three affected test files, 2,800 asset-cell checks, and browser checks at all three phone sizes passed, including offline reload at 393. Handoff: [notes](notes/seductress-four.md); [implemented preview](samples/seductress/packed-preview.png). No merge or deployment requested.
 
+**ART-004 / Anime hero gallery** — Owner: current Codex chat. Branch: `art/anime-hero-gallery`, worktree: `/workspace/legends-of-the-fall`. Scope: generated anime cutouts for all 45 collectible heroes, roster/detail presentation and accessible full-art viewer, build/offline asset handling, credits and visual checks. Kitsune, Gorgon, Illusionist and Time Witch follow the owner’s supplied redesign concept; other heroes retain identities and colours. Direction confirmed by owner on 2026-10-28. Preserve battle sprites, simulation and saves. Completion: all 45 artworks available, overview cutouts open full artwork, typecheck/build and affected portrait/offline checks pass. Status: implemented and validated; ready for owner review. All 45 scenes and transparent cutouts shipped (90 offline assets). Typecheck/build, five affected test files, all 45 hero viewers, all three phone sizes, existing dossier flows and offline reload passed. [Handoff](notes/anime-hero-gallery.md), [all scenes](samples/anime-heroes/scenes-contact.jpg). Owner requested PR: [#169](https://github.com/Hpatter9/legends-of-the-fall/pull/169).
+
 **ART-002 / Resonance full roster** — Owner: current Codex art chat. Branch: `art/resonance-roster`, worktree: `/workspace/legends-of-the-fall`, based on the approved ART-001 pilot. Scope: all 43 remaining collectible heroes, animation sheets and necessary hero-form render mappings, size bands, asset credits, art tooling and portrait/battle evidence. Preserve combat rules, save keys, hero identities, enemies and unrelated UI work. Owner extended scope to four isometric facings and visibly grounded walking cycles. Completion: all 45 heroes use front/rear facings mirrored left/right, walking is reviewed as a loop with alternating footfalls, required animations and transformations remain available, typecheck/build/affected tests and all three phone sizes pass. Status: implemented and validated; ready for owner review. All 11 affected test files, typecheck/build, 2,800 asset-cell checks and three phone sizes pass; offline reload passes. Handoff: [notes](notes/resonance-roster.md). No merge or release requested.
+**SUMMON-TAROT / Shards as tarot cards, every hero's first-time reveal; joins always get their unlock scene** — Owner: Claude. Branch/worktree: `claude/summon-tarot`, `/home/user/summon-tarot`. The owner: shards as tarot cards rather than the hero's figure, and an exciting reveal the first time a hero is seen; and a bug report: a join should always play the unlock scene. Phase A mock-ups approved with every recommendation (silhouette face; the tarot reveal is the whole unlock scene, no hall ritual; five to a row, turning by themselves; every hero incl. earned in play, starters and old saves' heroes seen; the PixelLab frame; rank shards as cards). Scope: `src/summonTarot.ts` (new), `src/gacha.ts`, `src/home.ts`, `src/main.ts` (earned reveal, old hook removed), `src/sim/heroesSeen.ts` (new) and the optional `Meta.heroesSeen` in `src/sim/meta.ts`, art `src/art/tarot/arcana.png` and `src/art/ui/tarot-frame.png`, credits, `test/heroes-seen.test.ts`, `tools/summon-tarot/`. Status: **done; owner approved and released as 0.210.0**. The skip-fix half shipped in 0.207.0; the tarot path also closes a lost reveal when a pull or Continue interrupted a batch. Validation: typecheck, web build, affected tests, full suite, `join-show.mjs` (every join path, nothing left unseen) and `shots.mjs` at 393x852, 360x780, 412x915 and reduced motion with no page errors. See [handoff](notes/summon-tarot.md), [screens](samples/summon-tarot-sheet.png).
+
+### HEROBAR-LOCK — No "Lv 30" or ultimate ring on the hero bar until the ultimate unlocks
+
+- **Goal:** the owner's ask: "In the battle screen, the units have LV 30 on them in the bottom section if they don't have the ultimate yet and that doesn't need to be there. The bar for the ultimate doesn't need to exist until they have it unlocked."
+- **Status:** done; released as 0.211.0.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/herobar-lock`, `/home/user/herobar-lock` (from main 0.209.0); PR none.
+- **Allowed files or systems:** `src/heroBar.ts`, `src/battleUi.css` (`.hb.locked`), `src/standView.ts` (the pause sheet's ultimate line), `tools/kits/shots.mjs` (its locked check now expects no plate and no ring), new `tools/herobar-lock/shots.mjs`; `docs/notes/herobar-lock.md`, `docs/samples/herobar-lock-*.png`. Not the sim or the ultimate's charge rate.
+- **Completion criteria:** a locked hero's tile shows no "Lv 30", no ring and no dimming, with the portrait filling the ring's place (no gap); an unlocked one unchanged; ordinary fights, the daily, the Calamity and the Last Stand; typecheck, tests, web build; 393x852, 360x780, 412x915.
+- **Validation and handoff:** [notes](notes/herobar-lock.md).
+
+### SETTINGS-MENUS — The ruler picker and stones in the developer row
+
+- **Goal:** the owner's asks: "The rulers in the settings menu should be a menu that opens up after clicking on it." and "I also want the developer menu to have stones as an option too."
+- **Status:** done; released as 0.205.0.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/settings-menus`, `/home/user/settings-menus` (from main 0.204.0); PR none.
+- **Allowed files or systems:** new `src/settingsPicker.ts`; `src/settings.ts` (ruler, Duchess costume and developer rows), the ruler/picker styles in `src/keepKingdom.css`, `src/sim/devGrant.ts`, `test/dev-grant.test.ts`, `tools/rulers/check.mjs` (opens the sheet), new `tools/settings-menus/shots.mjs`; `docs/notes/settings-menus.md`, `docs/samples/settings-menus-*.png`.
+- **Completion criteria:** one compact Ruler row opening a sheet of the eight that saves to the same setting and always closes (pick, ✕, backdrop, Escape, Settings' Close; `[hidden]` respected); the Duchess costume the same way; +100 and +1000 stones in the developer row, six buttons fitting at 360; tests extended; typecheck, full tests, web build; 393x852, 360x780, 412x915.
+- **Validation and handoff:** [notes](notes/settings-menus.md).
+
+### ARMY-PACE — Getting to the harder armies is harder
+
+- **Goal:** the owner's ask: "Make it so getting to harder armies is harder. The final armies probably won't be clearable before the player clears all 15 stars on the first army." (an army holds 11 stars in the code; taken as all 11, Mythic included).
+- **Status:** done; released as 0.208.0.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/army-pace`, `/home/user/army-pace` (main 0.204.0 merged in); PR none.
+- **Allowed files or systems:** `src/sim/armies.ts` (the last five armies' `start`, `level`, new `tierLift` and `xpStart`, `waveBoost`, `armyXpShare`), `src/main.ts` (one multiplier on a fight's XP), `tools/army-pace/`, `tools/levelPace.ts`, `tools/unlockPace.ts` (the model's clear days), tests `test/army-pace.test.ts`, `test/armies.test.ts`, `docs/notes/army-pace.md`, `docs/samples/army-pace-*.png`. Not the unlocks, the first four armies, Mythic, the other modes.
+- **Completion criteria:** the Golem Forge and the Yokai not clearable on Normal before a typical player has the first army's 11 stars, the Infernal Host about then, the middle armies ramping; the first army as it was; the harder tiers above Normal; XP, ore and Calamity pace checked; typecheck, affected and full tests, web build; the armies screen at the three sizes.
+- **Validation:** see the handoff's tables and tests.
+- **Handoff:** [notes](notes/army-pace.md).
+
 ### FIGHT-FIXES — Boss in the arena's middle, a free fight camera, heroes get up on a revive, the trophy wall closes
 
 - **Goal:** four of the owner's fixes: "The bosses should stand in the middle of the boss arena."; "Don't lock camera in each wave. Allow free movement and zooming during the wave."; "The units get up off the ground, not a new spawn look, when a heart is burnt for another try."; "Trophy wall comes up and locks castle screen."
@@ -206,6 +251,7 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 | ID | Task | Result | Reference |
 | --- | --- | --- | --- |
+| ULT-CHARGE | Ultimates used once or twice a battle | Released as 0.213.0 (owner: keep ultimates at full strength, answer with tougher foes): the meter starts each fight 60 full and fills about 2.5x as fast, ultimates at full strength (none weaker than main), parity by meter speed at stage 78 (spread 5.7); the extra power answered by tougher foes only where ultimates are open: the five late armies' Normal `start` and `tierLift`, Legendary x2.8 and Mythic x2.6 (`Tier.answer`, XP taken back out), the Last Stand's late climb, the Calamity's last map, the daily for levelled saves. Army pace, first-army stars, Stand, Calamity and daily back near main; full suite 1377/1377, build, three phone sizes | [Note](notes/ult-charge.md), branch `claude/ult-charge` |
 | AUDIO-150 | Recorded combat sounds and a quieter, cleaner battle mix | Released as 0.186.0; the sounds' source (given as CC0) still needs naming in CREDITS.md | PR #150 |
 | AUDIO-147 | Battle music opens on the combat downbeat; the camp's theme plays across all home tabs | Released as 0.184.0; the loop start was moved to 5.68 s (bar 4) so the loop stays whole bars and joins on the beat | PR #147 |
 | UI-CASTLE-1 | Remove the corner relic emblems from the castle's building cards | Owner asked; released as 0.183.0; castle tests, build, fresh/old-save and Last Stand smoke passed | branch `claude/castle-card-corners`, screenshot `samples/castle-no-corner-emblems-393x852.png` |

@@ -1,0 +1,58 @@
+/* Smooth anime cutouts keep the existing company frames and class colours. */
+.heroRoster .rosGrid .hcard .heroCardScene .heroAnimeArt {
+  /* (the owner's ask: before a hero is opened, its card shows the top half of the art: face and shoulders) */
+  position: relative; z-index: 1; flex: none; width: 100%; height: 230px;
+  max-width: none; object-fit: cover; object-position: 50% 0;
+  align-self: flex-start; image-rendering: auto; border-radius: 0; background: transparent;
+  filter: drop-shadow(0 3px 4px #0009);
+}
+.heroDetail .heroStrip .heroAnimeArt, .heroRoster .rosRow > .heroAnimeArt {
+  flex: none; width: 48px; height: 48px; object-fit: cover; object-position: center 10%;
+  image-rendering: auto; background: transparent;
+}
+.heroRoster .rosRow > .heroAnimeArt.dim { filter: brightness(.35) grayscale(1); }
+.heroDetail .hhead .hpic { height: 258px; border-radius: 12px 12px 0 0; }
+.heroDetail .hpic .heroArtOpen {
+  position: absolute; inset: 0; z-index: 2; display: block; width: 100%; height: 100%;
+  margin: 0; padding: 0 0 24px; border: 0; border-radius: 0;
+  background: transparent; box-shadow: none; cursor: zoom-in;
+}
+.heroDetail .hpic .heroArtOpen:disabled { opacity: 1; cursor: default; }
+.heroDetail .hpic .heroArtOpen:focus-visible { outline: 2px solid #ffe0a0; outline-offset: -3px; }
+.heroDetail .hpic .heroArtOpen { overflow: hidden; }
+/* (the dossier's portrait shows the top half too; a tap opens the whole artwork) */
+.heroDetail .hpic .heroAnimeArt {
+  position: relative; display: block; width: 100%; height: 200%; object-fit: contain; object-position: 50% 0;
+  image-rendering: auto; background: transparent; border: 0; border-radius: 0;
+  filter: drop-shadow(0 5px 8px #0008);
+}
+.heroArtHint {
+  position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
+  padding: 3px 10px; border: 1px solid #b49a6380; border-radius: 20px;
+  background: #111b1ce8; color: #f3dfb4; white-space: nowrap; font: 12px var(--body);
+}
+.heroArtOpen:disabled .heroArtHint { display: none; }
+.heroDetail .hpic .dossierClass { z-index: 3; pointer-events: none; }
+dialog.heroArtViewer {
+  box-sizing: border-box; width: min(660px, calc(100vw - 20px)); max-width: none;
+  height: calc(100dvh - 24px); max-height: calc(100dvh - 24px);
+  margin: auto; padding: 54px 12px 48px; overflow: hidden;
+  border: 1px solid #b99a5d; border-radius: 8px; color: #f4e2bb;
+  background: radial-gradient(ellipse at 50% 40%, #303343, #0c131df5 75%);
+  box-shadow: inset 0 0 0 4px #0b131d, inset 0 0 0 5px #b99a5d40, 0 15px 60px #000b;
+}
+dialog.heroArtViewer::backdrop { background: #05090de8; }
+dialog.heroArtViewer > .heroAnimeArt {
+  display: block; width: 100%; height: 100%; max-width: none; max-height: none;
+  object-fit: contain; image-rendering: auto; background: transparent; border: 0;
+}
+dialog.heroArtViewer > h2 {
+  position: absolute; bottom: 12px; left: 12px; right: 12px; margin: 0;
+  text-align: center; color: #f3db9d; font: 700 24px/1.2 var(--display);
+}
+dialog.heroArtViewer > .heroArtClose {
+  position: absolute; top: 8px; right: 8px; min-height: 44px; min-width: 88px;
+  padding: 8px 12px; border: 1px solid #ac915c; border-radius: 4px;
+  color: #ffedc5; background: #19232e; font: 16px var(--body);
+}
+dialog.heroArtViewer > .heroArtClose:focus-visible { outline: 2px solid #ffe0a0; outline-offset: 2px; }
