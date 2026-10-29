@@ -4,6 +4,7 @@ import { HEROES } from '../src/sim/units';
 import { makeGear } from '../src/sim/gear';
 import { equipBestRun } from '../src/sim/runGear';
 import { mvpKind, newRecap, noteFightStats, notePayout, recapOf } from '../src/sim/runRecap';
+import { merge } from '../src/sim/merge';
 import { BENCH_MAX, benchFull, benched, canRetry, finish, hireBlock, MAX_RETRIES, newRun, recycle, recycleValue, retriesLeft, retryGold, retryWave, setSquad, summon, summonCost, SUMMON_BASE, type Run } from '../src/sim/run';
 
 /** A run with `n` heroes on the bench and plenty of gold, made by recruiting straight in (no merging). */
@@ -48,11 +49,10 @@ test('choosing a hero for the squad frees a place on the bench', () => {
   assert.ok(summon(r));
 });
 
-test('a full bench still lets through a hire that merges three of a kind into one', () => {
-  let merged = 0;
-  let refused = 0;
-  for (let seed = 1; seed <= 60; seed++) {
-    // (a full bench of two knights and eight others, and a pool that can only draw a knight)
+// (MERGE-TWO, the owner's change: a hire no longer merges on its own, so a full bench refuses every hire, a pair or not; this pinned the old
+// let-through of a hire that would merge three of a kind)
+test('a full bench refuses a hire, even one that would make a pair; merging a pair frees the room', () => {
+  for (let seed = 1; seed <= 20; seed++) {
     const r = newRun(seed);
     r.pool = ['knight'];
     r.gold = 100000;
@@ -61,21 +61,13 @@ test('a full bench still lets through a hire that merges three of a kind into on
     const others = HEROES.filter((k) => k !== 'knight');
     for (let i = 0; i < BENCH_MAX; i++) r.roster.push({ id: r.nextId++, kind: i < 2 ? 'knight' : others[i % others.length], grade: i < 2 ? 1 : 3, paid: SUMMON_BASE });
     assert.ok(benchFull(r));
-    const block = hireBlock(r);
-    if (block === null) {
-      assert.ok(summon(r));
-      assert.equal(r.roster.length, BENCH_MAX - 1);
-      assert.ok(r.roster.some((h) => h.kind === 'knight' && h.grade === 2));
-      merged++;
-    } else {
-      // (a lucky draw comes as grade 2, which two grade-1 knights do not complete)
-      assert.equal(block, 'bench');
-      assert.equal(summon(r), null);
-      assert.equal(r.roster.length, BENCH_MAX);
-      refused++;
-    }
+    assert.equal(hireBlock(r), 'bench');
+    assert.equal(summon(r), null);
+    assert.equal(r.roster.length, BENCH_MAX);
+    assert.ok(merge(r, r.roster[0].id, r.roster[1].id));
+    assert.equal(hireBlock(r), null);
+    assert.ok(summon(r));
   }
-  assert.ok(merged > 0 && refused > 0, `${merged} merged, ${refused} refused`);
 });
 
 test('recycling a hero frees its place on a full bench', () => {

@@ -98,7 +98,8 @@ export class HeroBar {
   private tile(u: Unit): HTMLButtonElement {
     const el = document.createElement('button');
     el.type = 'button';
-    el.className = 'hb';
+    // (a rank-4 hero's ring is ringed in violet: MERGE-TWO)
+    el.className = (u.grade ?? 1) > 3 ? 'hb g4' : 'hb';
     el.dataset.unit = String(u.id);
     const def = UNITS[u.def];
     el.innerHTML =

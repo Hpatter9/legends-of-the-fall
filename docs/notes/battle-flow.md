@@ -7,8 +7,9 @@ form (`formOf`), at 56 px in a 60 px frame (grade 2 and 3 get the silver and gol
 figure shows.
 
 **Bench.** The bench is the roster minus the squad, at most `BENCH_MAX` = 10 (`run.ts`: `benchFull`, `hireBlock`).
-Hire is refused when it is full (the button reads "Bench full", the status line says why), except for a hire that would
-merge three of a kind into one, which frees room. Lucky summons come from the same hire, so they obey it too. The cards
+Hire is refused when it is full (the button reads "Bench full", the status line says why). Since MERGE-TWO
+(`merge-two.md`) nothing merges on its own, so a full bench refuses every hire: the player merges a pair, recycles a hero or
+fields one to make room (it used to let through a hire that would merge three of a kind). Lucky summons come from the same hire, so they obey it too. The cards
 are compact (portrait 46 px, name, level, health bar; the power is in the tap tooltip) so ten fit in two rows with no
 scrolling at 393x852, 360x780 and 412x915. During a wave the bar shows only the units on the field.
 

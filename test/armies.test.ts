@@ -357,10 +357,12 @@ test('the Orc Warlord is a wall at level 1 that levelling takes down', () => {
 });
 
 test('each army needs more levels than the one before: the same hero levels clear the early ones and fail the later', () => {
-  // (the starting five alone, no castle, no recruits, over fifteen waves: the second army falls around level 20, the third is a long way
+  // (the starting five alone, no castle, no recruits, over fifteen waves: the second army falls around level 20 to 22, the third is a long way
   // off, and the later ones are out of their reach, which is what the rarer heroes, ranks and the castle are for)
   assert.ok(clearRate('undead', 4) <= 0.25, 'undead at 4');
-  assert.ok(clearRate('undead', 20, 16) >= 0.35, 'undead at 20');
+  // (MERGE-TWO, the owner's change to merging, moved the second army's fall a level or two later: over 96 tries it was 38% at level 20 before, and
+  // is 35% at 21 and 39% at 22 now, so it is checked at 22; `docs/notes/merge-two.md`)
+  assert.ok(clearRate('undead', 22, 16) >= 0.35, 'undead at 22');
   assert.ok(clearRate('beasts', 6) <= 0.25, 'beasts at 6');
   assert.ok(clearRate('beasts', 20, 16) >= 0.3, 'beasts at 20');
   assert.ok(clearRate('infernal', 14) <= 0.1, 'infernal at 14');

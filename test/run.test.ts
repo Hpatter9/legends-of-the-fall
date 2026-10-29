@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addUnit, place, playOut, startBattle } from '../src/sim/battle';
-import { boostOf, keepCharges, finish, gradeBoost, isBossStage, loadRun, newRun, reward, saveRun, setSquad, stageBoost, startStage, summon, summonCost, LUCKY_SUMMON, START_GOLD, SQUAD, type Run } from '../src/sim/run';
+import { autoMerge, merge } from '../src/sim/merge';
+import { boostOf, heroOf, keepCharges, finish, GRADE_BOOST, gradeBoost, MAX_GRADE, isBossStage, loadRun, newRun, reward, saveRun, setSquad, stageBoost, startStage, summon, summonCost, LUCKY_SUMMON, START_GOLD, SQUAD, type Run } from '../src/sim/run';
 import { UNITS } from '../src/sim/units';
 
 const kinds = (r: Run) => r.roster.map((h) => `${h.kind}${h.grade}`).join();
@@ -29,15 +30,19 @@ test('summon costs gold, rises, and is deterministic', () => {
   assert.equal(poor.gold, price - 1);
 });
 
-test('three of a kind and grade merge into the next grade', () => {
+// (MERGE-TWO, the owner's change: nothing merges on its own any more, two of a kind merge when the player merges them, up to grade 4;
+// these three tests pinned three of a kind merging at once on a summon, and are kept with the new rule: `test/merge.test.ts` has the rest)
+test('summons never merge on their own; Auto merge leaves no two of a kind and grade below the top', () => {
   const r = newRun(3);
   r.gold = 100000;
-  for (let i = 0; i < 60; i++) summon(r);
+  for (let i = 0; i < 8; i++) summon(r);
+  assert.equal(r.roster.every((h) => h.grade <= 2), true);
+  assert.equal(r.roster.length, 10);
+  autoMerge(r);
   assert.equal(r.roster.some((h) => h.grade >= 2), true);
-  // never three of the same kind and grade left over
   const count = new Map<string, number>();
-  for (const h of r.roster) if (h.grade < 3) count.set(`${h.kind}${h.grade}`, (count.get(`${h.kind}${h.grade}`) ?? 0) + 1);
-  assert.equal([...count.values()].every((n) => n < 3), true);
+  for (const h of r.roster) if (h.grade < MAX_GRADE) count.set(`${h.kind}${h.grade}`, (count.get(`${h.kind}${h.grade}`) ?? 0) + 1);
+  assert.equal([...count.values()].every((n) => n < 2), true);
 });
 
 test('a merge keeps the squad place', () => {
@@ -45,12 +50,10 @@ test('a merge keeps the squad place', () => {
   r.roster = [1, 2].map((id) => ({ id, kind: 'knight', grade: 1 }));
   r.nextId = 3;
   r.squad = [1, 2];
-  r.gold = 1e6;
-  let guard = 0;
-  while (!r.roster.some((h) => h.kind === 'knight' && h.grade === 2) && guard++ < 300) summon(r);
-  const merged = r.roster.find((h) => h.kind === 'knight' && h.grade === 2)!;
-  assert.ok(merged);
-  assert.deepEqual(r.squad, [merged.id]);
+  const made = merge(r, 1, 2)!;
+  assert.equal(made.id, 2);
+  assert.equal(heroOf(r, 2)!.grade, 2);
+  assert.deepEqual(r.squad, [2]);
 });
 
 test('grade raises hp and attack in the fight', () => {
@@ -59,8 +62,8 @@ test('grade raises hp and attack in the fight', () => {
   place(b, 'knight', 1, 8, 2, gradeBoost(3));
   const [lo, hi] = b.units.filter((u) => u.side === 'hero');
   assert.equal(lo.tag, 1);
-  assert.equal(hi.maxHp, Math.round(UNITS.knight.hp * 1.6 ** 2));
-  assert.ok(Math.abs((hi.power ?? 0) - 1.6 ** 2) < 1e-9);
+  assert.equal(hi.maxHp, Math.round(UNITS.knight.hp * GRADE_BOOST[2]));
+  assert.ok(Math.abs((hi.power ?? 0) - GRADE_BOOST[2]) < 1e-9);
   assert.equal(lo.power, undefined);
 });
 
