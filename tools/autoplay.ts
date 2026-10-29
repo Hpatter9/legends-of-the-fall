@@ -12,6 +12,7 @@ import { startedMeta, heroRank, type Meta } from '../src/sim/meta';
 import { awakenStats } from '../src/sim/awaken';
 import { armyById } from '../src/sim/armies';
 import { armyRun, boostOf, canRetry, finish, isBossRun, noteFight, retryWave, squadLimit, startStage, summon, tierOfRun, type Owned, type Run } from '../src/sim/run';
+import { autoMerge } from '../src/sim/merge';
 import { heroLevel, localBoost } from '../src/sim/climb';
 import { armyRules } from '../src/sim/armyStars';
 import { ratingOf } from '../src/sim/stars';
@@ -243,9 +244,9 @@ function playClimb(meta: Meta, run: Run, maxFloors: number): { floors: number; b
   let guard = 0;
   while (!run.over && run.stage <= maxFloors && guard++ < 2000) {
     // (the tower's greedy player summons while the gold lasts; a calamity hires instead)
-    while (!calamity && summon(run)) {
-      // (summons while the gold lasts, but keeps a purse for the shop when a fire is near)
-    }
+    // (summons while the gold lasts, merging every pair as the Auto merge button does; a calamity has no merging)
+    if (!calamity) autoMerge(run);
+    while (!calamity && summon(run)) autoMerge(run);
     const front = choices(run);
     const others = calamity ? front.filter((n) => n.kind !== 'boss') : front;
     const cleared = calamity ? run.tower!.path.length : 0;

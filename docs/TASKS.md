@@ -113,6 +113,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Completion criteria:** one compact Ruler row opening a sheet of the eight that saves to the same setting and always closes (pick, ✕, backdrop, Escape, Settings' Close; `[hidden]` respected); the Duchess costume the same way; +100 and +1000 stones in the developer row, six buttons fitting at 360; tests extended; typecheck, full tests, web build; 393x852, 360x780, 412x915.
 - **Validation and handoff:** [notes](notes/settings-menus.md).
 
+### MERGE-TWO — Two to merge, merged by the player, an Auto merge button, four ranks
+
+- **Goal:** the owner's ask: "I want the heroes to only need two to merge and upgrade. And I don't want them to auto upgrade so there's more for the player to do. But I want an auto merge button added. Then there will be 4 ranks now. Instead of the three we had before. With the 4th rank being harder to get to." (1+1→2, 2+2→3, 3+3→4; drag to merge, ready heroes marked; Auto merge cascades and stops.)
+- **Status:** done on the branch; ready for review. Not merged.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/merge-two`, `/home/user/merge-two` (from main 0.218.0); PR none.
+- **Allowed files or systems:** new `src/sim/merge.ts`; `src/sim/run.ts` (grades, hire block, `paidOf`), `src/sim/climb.ts`, `src/sim/units.ts` (`formOf`), `src/sim/tower.ts` (`TOWER_GROWTH`), `src/sim/modes.ts` (`DAILY_ANSWER.ult`), `src/sim/autoplay.ts`; the page's bench, drag, Auto merge button and rank-4 look (`src/main.ts`, `src/index.html`, `src/pixel.css`, `src/battleUi.css`, `src/heroBar.ts`, `src/render/boardView.ts`, `unitView.ts`, `sheets.ts`, `fx.ts`, `spectacle.ts`); tips and lines; `tools/autoplay.ts`, `tools/balance.ts`, new `tools/merge-two/`; the merge tests, `test/armies.test.ts` (one level) and the ailment-log fixture. Not `tierSkills.ts` (rank-4 skills are `claude/rank4-skills`), not the music or sound rules.
+- **Completion criteria:** two-to-merge by hand and by the button, no merging on a hire, a full bench refuses a hire, rank 4 with its own look and step; the army pace, daily and spire kept near main (before/after table in the note); typecheck, full tests, web build; drag-merge and Auto merge at 393x852, 360x780 and 412x915 with no page errors.
+- **Validation and handoff:** [notes](notes/merge-two.md).
+
 ### ARMY-PACE — Getting to the harder armies is harder
 
 - **Goal:** the owner's ask: "Make it so getting to harder armies is harder. The final armies probably won't be clearable before the player clears all 15 stars on the first army." (an army holds 11 stars in the code; taken as all 11, Mythic included).

@@ -11,6 +11,8 @@ import { CAL_SCALE } from '../src/sim/calamity';
 import { DAILY_ANSWER } from '../src/sim/modes';
 import { KITS } from '../src/sim/abilities';
 
+// (MERGE-TWO, the owner's change to merging, re-recorded the three scenarios that hire and merge: `army`, `daily` and `tower` (two of a kind merge,
+// by the greedy player's Auto merge, and the spire's foes grow faster); every other scenario's hash is the one recorded on main)
 // (the balance pass that followed, step two, moved a few foe strengths and the Shambler's Plague Tide to answer the ailments: they are put back to
 // main's for this proof)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {

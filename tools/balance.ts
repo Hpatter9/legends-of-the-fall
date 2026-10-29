@@ -31,6 +31,7 @@ import { fightXp, gainXp, levelOfKind } from '../src/sim/levels';
 import { BUILDINGS, maxLevel, newCastle, nextCost, upgrade, xpRate, type BuildingId, type Castle } from '../src/sim/castle';
 import { startedMeta, heroRank, rankMult, stonesOf, useStones, type Meta } from '../src/sim/meta';
 import { boostOf, bandFor, finish, isBossStage, newRun, type Owned, type Run, SQUAD, stageBoost, startStage, summon } from '../src/sim/run';
+import { autoMerge } from '../src/sim/merge';
 import { awakenStats, awaken } from '../src/sim/awaken';
 import { ARMIES, armyById, settleWave } from '../src/sim/armies';
 import { TIERS } from '../src/sim/tiers';
@@ -217,9 +218,9 @@ function playRun(meta: Meta, seed: number): number {
   const run: Run = newRun(seed, HEROES, { ...CASTLE });
   while (!run.over && run.stage <= MAX_STAGE) {
     while (run.event) if (chooseOption(run, 0) === null) leaveEvent(run);
-    while (summon(run)) {
-      // (summons while the gold lasts)
-    }
+    // (summons while the gold lasts, merging every pair as the Auto merge button does)
+    autoMerge(run);
+    while (summon(run)) autoMerge(run);
     const squad = [...run.roster].sort((a, b) => strengthOf(meta, b) - strengthOf(meta, a)).slice(0, SQUAD);
     run.squad = squad.map((h) => h.id);
     const b = startStage(run);
