@@ -30,7 +30,8 @@ A fall with a heart left still has no card (the heart burns and the fight resume
 burned. The last card of a battle (a loss with no heart left, or the army or daily cleared) is short too (its heading, the
 existing one-line outcome, the run's stars, chest and ores) but stays a full-screen card with its button ("Run recap"), which
 opens the full recap. The spire and the Calamity keep their full wave reports: their ends are the tower summaries, which do not
-show the per-hero detail.
+show the per-hero detail. (Since [WAVE-RECAP-2](wave-recap-2.md) they have the short card too, and their summaries carry the
+detail.)
 
 ## The end recap keeps everything
 

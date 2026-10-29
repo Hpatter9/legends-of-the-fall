@@ -16,6 +16,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 **STAND-005 / Room artwork replacement** — Owner: current art chat. Branch: `art/stand-room-depth`, worktree: `/workspace/legends-of-the-fall`. Scope: Last Stand renderer, new generated production artwork, selected-ruler integration, ruler self-defence in `standAi.ts`/`units.ts`, affected tests, art credits, visual tooling and notes. Owner rejected the coarse reused assets and explicitly requested new artwork matching the ornate concept, retaining the central king and combat layout. Completion: new room assets visibly integrated in four rooms, selected castle king reused, stable depth sorting, reduced motion, typecheck/build, affected tests and three portrait sizes. Status: artwork and standing ruler defence complete. The selected ruler stands before a separate rear throne and strikes adjacent foes without chasing. Typecheck/build, eight affected test files, the finishing-blow check, three portrait sizes, reduced motion, the current nine ruler choices and event-driven melee pass. No page errors. PR: [#178](https://github.com/Hpatter9/legends-of-the-fall/pull/178), ready for review; main 0.213.0 integrated, retaining its default King and picker. No release or deployment. Handoff: [room artwork](notes/stand-room-depth.md).
 
+### HERITAGE-LOOKS — A varied cast: re-toned hero sprites, every hero named, a prompt for new paintings
+
+- **Goal:** the owner's asks: "Is there a way to add more ethnicity to the game" (skin-tone variety on the heroes' sprites and portraits, and new painted artwork from a ChatGPT prompt; "just want more cultures represented") and "I also want to give all the heroes names. So they feel more unique and less generic".
+- **Status:** done on the branch; not merged. Part 2 (the paintings) waits for the owner to run the prompt.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/heritage-looks`, `/home/user/heritage-looks` (from main 0.222.0, main 0.224.0 merged in); PR none.
+- **Allowed files or systems:** new `src/sim/heroLooks.ts`, `src/sim/heroNames.ts`, `src/art/units/*_{deep,brown,tan,olive}.png`, `tools/heritage/`; the generated `src/render/resonanceArt.ts` (regenerated) and its generator `tools/resonance/apply.cjs` (`--art-only`, the re-toned map), `tools/resonance/atlas.cjs` (`sharp` loaded lazily); `test/heritage-looks.test.ts`; name hooks (display only) in `menuHeroes.ts`, `heroArtwork.ts`/`.css`, `heroBar.ts`, `gacha.ts`, `summonTarot.ts`, `hall.ts`, `codexView.ts`, `starter.ts`, `rankUpView.ts`, `party.ts`, `recapView.ts` (two names), `main.ts` (four names); `.gitignore` (the paintings' originals); `CREDITS.md`; `docs/notes/heritage-looks.md`, `docs/notes/heritage-art-prompt.md`, `docs/samples/heritage-*.png`.
+- **Completion criteria:** about half the human heroes in a non-light look, spread over roles and both starter packs, skin (and two heroes' hair) recoloured pixel-exact with the source sheets kept; every hero a short unique name shown as "Name · Class" where heroes are presented and alone on the hero bar; the art prompt with the exact file spec and an import script; typecheck, affected and full tests, web build; 393x852, 360x780, 412x915 with names fitting.
+- **Validation and handoff:** [notes](notes/heritage-looks.md), [art prompt](notes/heritage-art-prompt.md).
+
 ### FX-CLEAR — Effects see-through over fighters; skill 2 pip greyed until it opens
 
 - **Goal:** the owner's asks: "Some of the effects cover the heroes too much, make them more opaque." (the fighters should show through) and "The 10 can be removed and the second box can be greyed out till unlock."
@@ -25,6 +35,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Allowed files or systems:** new `src/render/overFighter.ts`; small hooks in `src/render/fx.ts` (`anim`, `overBody`, the particles' `cover`), `src/render/particles.ts` (`cover`), `src/render/statusStyles.ts` (`OVER_BODY`, `partAlpha`, two front parts' size), `src/render/ailmentLayer.ts`; `src/heroBar.ts`, `src/battleUi.css` (`.hbPips b.shut`); `test/fx-clear.test.ts`; new `tools/fx-clear/shots.mjs`; `docs/notes/fx-clear.md`, `docs/notes/hero-kits.md`, `docs/samples/fx-clear-*.png`.
 - **Completion criteria:** effects over a fighter thinned by named constants (`OVER_FIGHTER_ALPHA` 0.6, `OVER_FIGHTER_STATUS_ALPHA` 0.7) and still visible, ground and back layers unchanged, no blinking, reduced motion kept; pip 2 reads "2" and is greyed while locked; typecheck, affected and full tests, web build; 393x852, 360x780, 412x915.
 - **Validation and handoff:** [notes](notes/fx-clear.md).
+
+### WAVE-RECAP-2 — The short card for the spire and the Calamity; their detail in their summaries
+
+- **Goal:** the owner's answer: "Yeah, give them the same treatment" (the short, see-through card between spire floors and Calamity fights, the detail moved to their end summaries).
+- **Status:** done on the branch; not merged.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/wave-recap-2`, `/home/user/wave-recap-2` (from main 0.223.0); PR none.
+- **Allowed files or systems:** `src/sim/runRecap.ts` (`recapSince`, `closeMapLeg`), `src/sim/tower.ts` (optional `MapRecap.detail`, `TowerState.recapAt`), `src/sim/waveCard.ts` (`towerHeadline`), `src/recapView.ts` (`recapDetail`), `src/towerView.ts` (summaries, victory, map recap), small hooks in `src/main.ts` (settle, `passOn`; the old per-fight table and XP cards removed), `src/battleReports.css`; `test/wave-recap.test.ts`; `tools/wave-recap/` (saves, tower shots); `docs/notes/wave-recap-2.md`.
+- **Completion criteria:** every spire floor and Calamity fight shows the short card (see-through, leaving by itself after a win); their summaries, the Calamity's victory and map recaps carry the per-hero detail and a fight-by-fight strip; typecheck, affected and full tests, web build; three portrait sizes in Chromium.
+- **Validation and handoff:** [notes](notes/wave-recap-2.md).
 
 ### WAVE-RECAP — A short, see-through card between waves; the detail kept for the end recap
 

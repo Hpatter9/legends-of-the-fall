@@ -4,6 +4,7 @@
 // pack's name, line and chips, and the synergy it wakes, and calls the sim's `pickStarter`. Nothing on it moves or flashes.
 
 import { UNITS } from './sim/units';
+import { heroTitle } from './sim/heroNames';
 import { pickStarter, saveMeta, type Meta } from './sim/meta';
 import { CLASS_NAMES, CLASS_OF, packNamed } from './sim/starter';
 import { countTraits } from './sim/traits';
@@ -85,7 +86,7 @@ export function chooseStarter(meta: Meta): Promise<void> {
       const def = UNITS[kind];
       const row = el('div', 'stHero');
       const text = el('div');
-      const name = el('b', '', def.name);
+      const name = el('b', '', heroTitle(kind));
       name.append(el('em', '', CLASS_NAMES[CLASS_OF[kind]]));
       text.append(name, el('span', '', def.role));
       row.append(portrait(def.sheet, 52), text);
