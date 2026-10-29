@@ -9,6 +9,7 @@ import { HERO_TRAITS, TRAITS, membersOf } from '../src/sim/traits';
 import { ratingOf } from '../src/sim/stars';
 import { SKILL_FX } from '../src/render/skillFx';
 import layout from '../src/art/units/sheets.json';
+import { dotOf } from '../src/sim/ailments';
 
 const CLASSES = ['paladin', 'cleric', 'druid', 'barbarian', 'ranger', 'warlock', 'illusionist', 'gunslinger'];
 
@@ -94,7 +95,7 @@ test('Benediction cleanses every ally and heals them over time; Grace heals thos
   a.dot = { kind: 'burn', dmg: 3, every: 500, ms: 9000, by: 99, next: 9999, until: 99999 };
   spawn(b, 'skeleton', 3, 0);
   run(b, 100);
-  assert.equal(a.dot, undefined);
+  assert.equal(dotOf(a), undefined);
   assert.ok(a.hot);
   const before = a.hp;
   run(b, 2100);
@@ -269,7 +270,7 @@ test('Hex curses the three toughest foes in reach, and the Warlock drinks part o
   const d = spawn(b, 'boneArcher', 2, 3);
   const e = spawn(b, 'skeleton', 3, 0);
   run(b, 100);
-  const cursed = [a, c, d, e].filter((x) => x.dot?.kind === 'curse');
+  const cursed = [a, c, d, e].filter((x) => dotOf(x)?.kind === 'curse');
   assert.equal(cursed.length, 3);
   for (const x of [a, c, d, e]) x.busyUntil = 1e9;
   w.hp = 50;
@@ -278,7 +279,7 @@ test('Hex curses the three toughest foes in reach, and the Warlock drinks part o
   assert.ok(w.hp > 50);
   assert.ok(a.hp < a.maxHp);
   run(b, 5200);
-  assert.equal(a.dot, undefined);
+  assert.equal(dotOf(a), undefined);
 });
 
 test('Mirror Image leaves two decoys where she stood, slips her away and turns the foes on the decoys', () => {

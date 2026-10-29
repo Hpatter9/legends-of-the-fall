@@ -49,11 +49,10 @@ try {
     await page.click('#fight'); await page.waitForTimeout(500);
     await page.evaluate(()=>{const g=window.__game;for(const u of g.b.units)if(u.side==='foe')u.hp=0;});
     await page.locator('#result').waitFor({state:'visible',timeout:30000});
-    await page.waitForFunction(()=>!document.body.hasAttribute('data-move'),null,{timeout:20000});
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(1200);
+    // (WAVE-RECAP: a won wave's short card rides over the march and goes by itself; its performance table waits for the end recap)
     await shot('wave-victory','#result');
-    await page.locator('#fightStats').scrollIntoViewIfNeeded(); await shot('wave-performance','#result');
-    await page.click('#next');
+    await page.waitForFunction(()=>document.getElementById('result').hidden&&document.body.dataset.phase==='deploy',null,{timeout:30000});
     await page.locator('#fight').waitFor({state:'visible'}); await page.click('#fight');
     await page.waitForTimeout(500);
     await page.evaluate(()=>{const g=window.__game;g.run.retries=2;for(const u of g.b.units)if(u.side==='hero'){u.hp=0;u.alive=false;}});

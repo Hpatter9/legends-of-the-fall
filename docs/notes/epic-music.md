@@ -21,16 +21,16 @@ and every melody note against its chord. Please listen to `docs/samples/epic-mus
 | `deploy` | E minor | 108 | 71 s | 334 KB | placing the heroes, in any mode |
 | `tower` | C minor | 92 | 94 s | 439 KB | the tower map |
 | `calmap` | G minor | 100 | 86 s | 405 KB | the Calamity map |
-| `battle` | A minor | 160 | 72 s | 338 KB | a fight, the easiest third |
-| `battle2` | E minor (Phrygian turns) | 168 | 69 s | 322 KB | a fight, the middle third |
-| `battle3` | C# minor | 176 | 65 s | 308 KB | a fight, the hardest third |
-| `boss` | D minor (flat second) | 150 | 90 s | 419 KB | every boss, in every mode |
+| `battle` | A minor | 160 | 72 s | 338 KB | a battle (one of three, kept for the whole battle: `battle-music.md`) |
+| `battle2` | E minor (Phrygian turns) | 168 | 69 s | 322 KB | a battle |
+| `battle3` | C# minor | 176 | 65 s | 308 KB | a battle; every Legendary and Mythic army run |
+| `boss` | D minor (flat second) | 150 | 90 s | 419 KB | a boss fought alone (a spire or Calamity boss, a one-wave boss army); a boss wave inside an army keeps the battle's track |
 | `calbattle` | F# minor | 184 | 63 s | 294 KB | a Calamity fight that is not a boss |
-| `victory`, `defeat` | D major, D minor | 108, 92 | 14 s, 15 s | 65, 72 KB | stings when a fight ends (they play once) |
+| `victory`, `defeat` | D major, D minor | 108, 92 | 14 s, 15 s | 65, 72 KB | stings when a battle is won (leading into `triumph`) or lost |
 | `opening` | A minor | 62 | 62 s | 239 KB | the opening cinematic: a music box, a drone, no drums |
 | `gorvak` | C minor | 88 | 55 s | 210 KB | Gorvak (`gorvak`, `calBoss1`): a heavy march of toms |
 | `herald2` .. `herald6` | A, B, F, G, E | 76 .. 126 | 46 .. 63 s | 177 .. 243 KB | the other five heralds (`calBoss2`..`calBoss6`) |
-| `triumph` | C major | 104 | 46 s | 179 KB | triumph / victory scenes |
+| `triumph` | C major | 104 | 46 s | 179 KB | triumph / victory scenes, and the bed under a won battle's results |
 | `comic` | F major | 124 | 46 s | 180 KB | the light scenes |
 | `solemn` | D minor | 56 | 51 s | 199 KB | awakening and quiet moments: a piano |
 | `spire` | D major | 98 | 59 s | 227 KB | the spire's milestones |
@@ -45,11 +45,11 @@ How the choice is made (all in `src/render/epicMusic.ts`, pure and tested in `te
   Calamity's; any other time on the board is the deployment. `main.ts` passes the map to `setScene` (and watches `#towerMap`'s `hidden`).
 - `battle`'s loop starts at `BATTLE_LOOP_START` (5.68 s): four bars past `LOOP_START`, skipping the quiet intro, so a fight opens on
   the combat downbeat. The loop is 48 bars of 1.3954 s, so the cut keeps it a whole number of bars (44) and it still joins on the beat.
-- `fightTrack`: a boss is `boss`; a Calamity fight is `calbattle`; otherwise `battle`, `battle2` or `battle3` by `fightLevel`: an
-  army or a daily by thirds of its waves, any other run by depth (stage or floor 1-9, 10-24, 25 up), an elite fight a step harder.
-  `main.ts` passes `{ calamity, level }` to `startFight`.
-- At the end of a fight the music fades, the **victory or defeat sting** rings over it (`playEvents` plays it on the `end` event), and the
-  place's music comes back when the sting's notes have finished. A new fight cuts a sting short.
+- **Changed (`battle-music.md`):** a battle's track is chosen once, by `trackOfRun` in `src/render/battleMusic.ts` (`fightTrack`
+  and `fightLevel`, which switched `battle` → `battle2` → `battle3` by thirds of an army's waves, are gone), and plays unbroken
+  through every wave and the breaks between them. Nothing rings between waves: a won battle ends on the **victory** sting leading
+  into the `triumph` loop at a lower level under the results, until they are left; a lost one ends on the **defeat** sting, and the
+  place's music comes back after it. A new fight cuts a sting short.
 - `setMusic(id)` and the `__audioApi` are still there for poking; a cinematic's score still takes over until `endScene`.
 
 ## How it was made
@@ -89,8 +89,8 @@ now all start from zero.
 - **Loops are seamless whatever the decoder does to the ends of the file.** The music is periodic, so each file holds the loop plus one
   second of its own start again, and the source loops the window `[0.1 s, 0.1 s + loop]`; any window one period long joins itself.
   Seam steps were measured in the renders (the join is as smooth as the music around it).
-- An epic track is **not coloured** by the tension low-pass, swell, pace-up or rumble, or by the tower acts' ceilings and drones: those
-  would only muddy a rendered mix (a pace-up would also detune it). The old rules still hold for the synthesised fallback and for the tests.
+- An epic track is **not coloured** by the tower acts' ceilings and drones: those would only muddy a rendered mix. (The tension
+  low-pass, swell, pace-up and rumble are gone for every track, the synthesised fallback included: `battle-music.md`.)
 - **Fallback:** if a file is missing or a browser cannot decode Opus, `bakeMusic` falls back to the old synthesised track (`SYNTH_OF`
   says which). Opus in Ogg decodes in Chromium and Firefox and in Safari from 18.4; **I could only check Chromium**.
 - **Offline:** `build.mjs` copies `src/audio/*.opus` to `out/web/audio/` and lists each in the service worker's `FILES`
@@ -109,5 +109,5 @@ A real phone's speakers and the iOS decoder are the things only the owner can ch
   tempo or an instrument's level is one line in `tools/epic-music/tracks/<id>.mjs`; say which and I will retune it.
 - The band is the same one in the three battles (rock kit, palm-muted guitar, brass and strings); they differ in key, speed, riffs, tunes and
   how much of the orchestra joins. If you want the battles further apart, say so.
-- The tension adaptation of the old battle music (muffled, then opening and quickening as a fight thinned out) is gone for the new
-  tracks; the three battle tracks by difficulty replace it. A mid-fight crossfade between two layers would cost another ~300 KB a track.
+- The tension adaptation of the old battle music (muffled, then opening and quickening as a fight thinned out) is gone; the battle
+  music now stays steady for the whole battle (`battle-music.md`).

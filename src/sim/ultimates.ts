@@ -44,6 +44,7 @@ import {
   tal,
   type Skill,
 } from './abilities';
+import { charmFor, cleanse, harmed, setDot, stunFor } from './ailments';
 
 /** A duration in ms, as the caster's `dur` talent lengthens it, and the ultimate's strength: a stronger ultimate holds, guards and hastens a little longer (by the square root of its strength). */
 const dur = (me: Unit, ms: number): number => durOf(me, Math.round(ms * Math.sqrt(castPower())));
@@ -53,11 +54,10 @@ const alliesOf = (b: Battle, me: Unit): Unit[] => b.units.filter((a) => a.alive 
 const byId = (x: Unit, y: Unit) => x.id - y.id;
 const strongest = (x: Unit, y: Unit) => atkOf(y) - atkOf(x) || x.id - y.id;
 const stun = (b: Battle, f: Unit, ms: number) => {
-  f.busyUntil = Math.max(f.busyUntil, b.t + ms);
-  f.stunUntil = Math.max(f.stunUntil ?? 0, b.t + ms);
+  stunFor(b, f, ms);
 };
 /** Whether some ally is hurt (or burning, bleeding or cursed): what a healing ultimate waits for. */
-const wounded = (b: Battle, me: Unit, share = 0.8): boolean => alliesOf(b, me).some((a) => a.dot || a.hp < a.maxHp * share);
+const wounded = (b: Battle, me: Unit, share = 0.8): boolean => alliesOf(b, me).some((a) => harmed(a) || a.hp < a.maxHp * share);
 /** Free, standable tiles within `radius` of the caster that it (or a fighter its size) could stand on, nearest first. */
 function spotsNear(b: Battle, me: Unit, radius: number, climb: number): At[] {
   const h = tileOf(b, me).h;
@@ -151,7 +151,7 @@ function smite(b: Battle, me: Unit, out: BattleEvent[], o: Smite): boolean {
     if (o.pull && drag(b, f, me)) f.busyUntil = Math.max(f.busyUntil, b.t + 400);
     if (o.curse) {
       const ms = dur(me, o.curse.ms);
-      f.dot = { kind: 'curse', dmg: Math.max(1, Math.round(atkOf(me) * o.curse.dot)), every: HEX_EVERY, ms, by: me.id, next: b.t + HEX_EVERY, until: b.t + ms };
+      setDot(b, f, { kind: 'curse', dmg: Math.max(1, Math.round(atkOf(me) * o.curse.dot)), every: HEX_EVERY, ms, by: me.id, next: b.t + HEX_EVERY, until: b.t + ms });
     }
   }
   if (o.drink) mendUnit(me, share(Math.min(o.drink.cap, o.drink.each * foes.length)) * me.maxHp, out);
@@ -182,7 +182,7 @@ interface Bless {
 function bless(b: Battle, me: Unit, out: BattleEvent[], o: Bless): void {
   for (const a of alliesOf(b, me)) {
     if (o.reach !== undefined && apart(me, a) > reachOf(me, o.reach)) continue;
-    if (o.cleanse) a.dot = undefined;
+    if (o.cleanse) cleanse(b, a);
     if (o.heal) mendUnit(a, atkOf(me) * o.heal, out, me);
     if (o.healShare) mendUnit(a, a.maxHp * share(o.healShare), out, me);
     if (o.hot) a.hot = { amount: atkOf(me) * o.hot.amount, every: 1000, next: b.t + 1000, until: b.t + dur(me, o.hot.ms), by: me.id };
@@ -373,7 +373,7 @@ function infernoBreath(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   for (const f of best.sort((x, y) => apart(me, x) - apart(me, y) || x.id - y.id)) {
     out.push({ kind: 'shot', by: me.id, to: f.id, shot: 'fire', ms: 120 + apart(me, f) * 40 });
     hurt(b, me, f, net(atkOf(me) * 2.8, f), true, false, out, 'skill');
-    if (f.alive) f.dot = { kind: 'burn', dmg: Math.max(1, Math.round(atkOf(me) * 0.15)), every: 500, ms, by: me.id, next: b.t + 500, until: b.t + ms };
+    if (f.alive) setDot(b, f, { kind: 'burn', dmg: Math.max(1, Math.round(atkOf(me) * 0.15)), every: 500, ms, by: me.id, next: b.t + 500, until: b.t + ms });
   }
   return true;
 }
@@ -438,7 +438,7 @@ function resurrection(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     x.busyUntil = b.t + 500;
     x.charge = 0;
     x.charge2 = undefined;
-    x.dot = undefined;
+    cleanse(b, x);
     out.push({ kind: 'heal', to: x.id, amount: x.hp });
   }
   bless(b, me, out, { heal: 5, cleanse: true });
@@ -490,7 +490,7 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   warlock: { rate: 0.5, power: 1.07 },
   illusionist: { rate: 1.08, power: 0.47 },
   gunslinger: { rate: 0.37, power: 1.7 },
-  shambler: { rate: 1.04, power: 0.99 },
+  shambler: { rate: 1.04, power: 0.9 }, // (0.99 until STATUS-FX: Plague Tide's curse now also turns the foes' healing to harm)
   rifleBot: { rate: 1.01, power: 2.17 },
   mercenary: { rate: 1.21, power: 3.07 },
   mummy: { rate: 0.99, power: 0.49 },
@@ -537,7 +537,7 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
       const foes = foesOf(b, me);
       if (foes.length > 2)
         for (const f of foes.filter((x) => apart(me, x) <= 5).sort(strongest).slice(0, 2)) {
-          f.charmUntil = b.t + dur(me, 2000);
+          charmFor(b, f, dur(me, 2000));
           f.taunt = undefined;
           out.push({ kind: 'arc', from: me.id, to: f.id });
         }

@@ -78,17 +78,20 @@ export function ringOut(p: Particles, el: Element, x: number, y: number, reach: 
   play(p, packKey(el, 'nova'), x, y - 12, { scale: Math.max(1.4, k * 0.5), frameMs: 60, alpha: 0.6 });
 }
 
-/** A hero is promoted: tier 2 rises in a ring of light; tier 3 in a tall column, a nova, a wave and a shower of sparks. */
+/** A hero is promoted: tier 2 rises in a ring of light; tier 3 in a tall column, a nova, a wave and a shower of sparks; tier 4 (rank 4,
+ *  MERGE-TWO) the same in violet, with a second wave. */
 export function promoteBurst(p: Particles, grade: number, x: number, y: number, tall: number): void {
   play(p, 'light-circle', x, y - 2, { scale: grade > 2 ? 3 : 2, frameMs: 80, alpha: 0.8 });
   play(p, 'light-nova', x, y - tall * 0.5, { scale: grade > 2 ? 4 : 2.4, frameMs: 70, alpha: 0.75 });
   const sparks = PACK['light-sparkle'];
-  const n = grade > 2 ? 16 : 8;
-  if (sparks?.length) for (let i = 0; i < bits(n, p.density); i++) p.spawn({ frames: sparks, x: x + jit(16), y: y - tall * 0.3 + jit(8), scale: 0.8, life: 1000, delay: i * 30, vx: jit(0.03), vy: -0.06 - Math.random() * 0.06, add: true, tint: grade > 2 ? 0xffe27a : 0xdce8ff });
+  const n = grade > 3 ? 24 : grade > 2 ? 16 : 8;
+  const tone = grade > 3 ? 0xd49aff : grade > 2 ? 0xffe27a : 0xdce8ff;
+  if (sparks?.length) for (let i = 0; i < bits(n, p.density); i++) p.spawn({ frames: sparks, x: x + jit(16), y: y - tall * 0.3 + jit(8), scale: 0.8, life: 1000, delay: i * 30, vx: jit(0.03), vy: -0.06 - Math.random() * 0.06, add: true, tint: tone });
   if (grade < 3) return;
   // (tier 3: the column of light, twice as tall as the hero is drawn, and a wave and a warm aura behind it)
-  play(p, 'light-pillar', x, y - tall * 1.1, { scale: 5, frameMs: 90, alpha: 0.85, tint: 0xffe9a0 });
+  play(p, 'light-pillar', x, y - tall * 1.1, { scale: 5, frameMs: 90, alpha: 0.85, tint: grade > 3 ? 0xd8b0ff : 0xffe9a0 });
   play(p, 'light-pillar', x, y - tall * 1.1, { scale: 3.4, frameMs: 90, delay: 160, alpha: 0.7 });
   play(p, 'light-wave', x, y, { scale: 6.5, frameMs: 80, alpha: 0.7, delay: 120 });
-  play(p, 'fire-aura', x, y - tall * 0.4, { scale: 2.6, frameMs: 90, alpha: 0.5, tint: 0xffd24a, delay: 200 });
+  play(p, 'fire-aura', x, y - tall * 0.4, { scale: 2.6, frameMs: 90, alpha: 0.5, tint: grade > 3 ? 0xb06aff : 0xffd24a, delay: 200 });
+  if (grade > 3) play(p, 'light-wave', x, y, { scale: 8.5, frameMs: 80, alpha: 0.6, delay: 380, tint: 0xd49aff });
 }

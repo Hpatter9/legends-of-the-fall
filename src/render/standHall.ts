@@ -12,40 +12,45 @@ import { breachTiles, hallPlan, inward, type Edge, type HallKind, type HallPlan 
 import { FIELD, KING_AT } from '../sim/standField';
 import { FOOT, HH, rawAt, TH, TW } from './iso';
 import { loadImage } from './loadImage';
-import floor1Url from '../art/stand/floor1.png';
-import floor2Url from '../art/stand/floor2.png';
-import rugUrl from '../art/stand/rug.png';
-import wallfaceUrl from '../art/stand/wallface.png';
-import walltopUrl from '../art/stand/walltop.png';
-import rubble1Url from '../art/stand/rubble1.png';
-import rubble2Url from '../art/stand/rubble2.png';
-import shelf1Url from '../art/stand/shelf1.png';
-import shelf2Url from '../art/stand/shelf2.png';
-import windowUrl from '../art/stand/window.png';
-import pilasterUrl from '../art/stand/pilaster.png';
+import floor1Url from '../art/stand/ornate/limestone.png';
+import floor2Url from '../art/stand/ornate/paving.png';
+import rugUrl from '../art/stand/ornate/velvet.png';
+import wallfaceUrl from '../art/stand/ornate/masonry.png';
+import walltopUrl from '../art/stand/ornate/paving.png';
+import rubble1Url from '../art/stand/ornate/rubble.png';
+import rubble2Url from '../art/stand/ornate/rubble.png';
+import shelf1Url from '../art/stand/ornate/bookcase.png';
+import shelf2Url from '../art/stand/ornate/bookcase.png';
+import windowUrl from '../art/stand/ornate/window.png';
+import pilasterUrl from '../art/stand/ornate/column.png';
 import smokeUrl from '../art/stand/smoke.png';
 import dustUrl from '../art/stand/dust.png';
 import landdustUrl from '../art/stand/landdust.png';
-import grass1Url from '../art/ground/grass1.png';
-import grass2Url from '../art/ground/grass2.png';
-import bannerUrl from '../art/castle/banner.png';
-import brazierUrl from '../art/castle/brazier.png';
+import grass1Url from '../art/stand/ornate/grass.png';
+import grass2Url from '../art/stand/ornate/grass.png';
+import bannerUrl from '../art/stand/ornate/banner.png';
+import brazierUrl from '../art/stand/ornate/brazier.png';
 import lampUrl from '../art/castle/lamp.png';
-import fountainUrl from '../art/castle/fountain.png';
+import fountainUrl from '../art/stand/ornate/fountain.png';
 import wellUrl from '../art/castle/well.png';
 import chestsUrl from '../art/castle/chests.png';
 import cratesUrl from '../art/castle/crates.png';
 import barrelsUrl from '../art/castle/barrels.png';
 import potsUrl from '../art/castle/pots.png';
 import standardUrl from '../art/camp/standard.png';
-import { rulerSeatTexture, rulerTextures, rulerThrone } from './rulerArt';
+import arcadeUrl from '../art/stand/ornate/arcade.png';
+import deskUrl from '../art/stand/ornate/desk.png';
+import medallionUrl from '../art/stand/ornate/medallion.png';
+import rosesUrl from '../art/stand/ornate/roses.png';
+import bushUrl from '../art/stand/ornate/ivy.png';
+import { rulerTextures, rulerThrone } from './rulerArt';
 import { rulerFrame, type RulerAction } from '../rulerRules';
 import { settings } from '../settings';
 
 export { default as standBackwallUrl } from '../art/stand/backwall.png';
 
 const URLS = {
-  floor1: floor1Url, floor2: floor2Url, rug: rugUrl, wallface: wallfaceUrl, walltop: walltopUrl, rubble1: rubble1Url, rubble2: rubble2Url, shelf1: shelf1Url, shelf2: shelf2Url,
+  arcade: arcadeUrl, desk: deskUrl, medallion: medallionUrl, roses: rosesUrl, bush: bushUrl, floor1: floor1Url, floor2: floor2Url, rug: rugUrl, wallface: wallfaceUrl, walltop: walltopUrl, rubble1: rubble1Url, rubble2: rubble2Url, shelf1: shelf1Url, shelf2: shelf2Url,
   window: windowUrl, pilaster: pilasterUrl, smoke: smokeUrl, dust: dustUrl, landdust: landdustUrl, grass1: grass1Url, grass2: grass2Url, banner: bannerUrl, brazier: brazierUrl,
   lamp: lampUrl, fountain: fountainUrl, well: wellUrl, chests: chestsUrl, crates: cratesUrl, barrels: barrelsUrl, pots: potsUrl, standard: standardUrl,
 };
@@ -130,10 +135,13 @@ export class StandHall {
       const t = tex(k);
       if (t.source) t.source.scaleMode = 'nearest';
     }
+    const shelf = tex('shelf1');
     const at = (u: number, v: number) => b.tiles[v * b.w + u];
     const top = (u: number, v: number, h = at(u, v).h): [number, number] => rawAt(u, v, h);
     const indoors = kind !== 'courtyard';
-    const carpet = new Set(plan.carpets.map((p) => p.v * FIELD + p.u));
+    const carpet = new Set(plan.carpets.flatMap((p) => [[p.u, p.v], [p.u - 1, p.v], [p.u + 1, p.v]])
+      .filter(([u, v]) => u > 0 && v > 0 && u < FIELD - 1 && v < FIELD - 1)
+      .map(([u, v]) => v * FIELD + u));
     const near = (u: number, v: number) => u === FIELD - 1 || v === FIELD - 1;
 
     // the floor: every tile that is not wall, in one picture
@@ -142,19 +150,20 @@ export class StandHall {
       if (r <= 2) return art.rug;
       if (carpet.has(v * FIELD + u) && r > 3) return indoors ? art.rug : art.floor1;
       if (kind === 'chapel' && t.h >= 2 && r >= 9) return art.rug;
-      if (!indoors && r > 3) return (u * 7 + v * 3) % 5 === 0 ? art.grass2 : art.grass1;
-      return (u + v + t.deco) % 3 === 0 ? art.floor2 : art.floor1;
+      if (!indoors && r > 6) return (u * 7 + v * 3) % 5 === 0 ? art.grass2 : art.grass1;
+      return indoors ? art.floor1 : art.floor2;
     });
     this.put(this.floor);
 
-    // the walls and pillars, each its own column (the near walls cut down)
+    // Rear masonry and low foreground cutaways; interior columns use their own carved sprites.
     const columns = new Map<string, Texture>();
     for (let v = 0; v < b.d; v++)
       for (let u = 0; u < b.w; u++) {
         const t = at(u, v);
         if (!t.wall) continue;
         const pillar = u > 0 && v > 0 && u < FIELD - 1 && v < FIELD - 1;
-        const h = !pillar && near(u, v) ? Math.min(NEAR_H, t.h) : t.h;
+        if (pillar) continue; // The carved sprite below supplies the entire pillar silhouette.
+        const h = near(u, v) ? Math.min(NEAR_H, t.h) : t.h + 4;
         const key = `${h}`;
         let c = columns.get(key);
         if (!c) {
@@ -188,6 +197,20 @@ export class StandHall {
       return add(t, x, y, { ax: 0.5, ay: 0.5, scale: size / 128, sy: 0.55, add: true, alpha, z });
     };
 
+    // Contact and cast shadows share the scenery's coordinates, behind every fighter.
+    const shadows = new Graphics();
+    shadows.zIndex = -9.5e5;
+    for (let v = 1; v < b.d - 1; v++) for (let u = 1; u < b.w - 1; u++) {
+      const tile = at(u, v);
+      if (!tile.wall && !tile.rock) continue;
+      const [x, y] = top(u, v, tile.wall ? 1 : tile.h);
+      if (tile.wall) {
+        shadows.poly([x - 30, y, x + 30, y + 12, x + 96, y + 62, x + 48, y + 64]).fill({ color: 0x0b101b, alpha: 0.26 });
+      }
+      shadows.ellipse(x + 6, y + 6, tile.wall ? 32 : 26, 12).fill({ color: 0x090c14, alpha: 0.32 });
+    }
+    this.put(shadows);
+
     // the back walls (north and west): stained glass and gilt pilasters (banners in the courtyard), the glass's light across the floor
     // (the breach and its broken ends are left bare)
     const gap = new Set(plan.breaches.flatMap((br) => breachTiles({ ...br, width: br.width + 2 }).map((p) => `${p.u},${p.v}`)));
@@ -199,27 +222,52 @@ export class StandHall {
       for (const side of ['north', 'west'] as const) {
         const [u, v] = side === 'north' ? [i, 0] : [0, i];
         if (gap.has(`${u},${v}`) || !at(u, v).wall) continue;
-        const [x, y] = top(u, v);
+        const [x, y] = top(u, v, at(u, v).h + 4);
         const dx = side === 'north' ? -TW / 4 : TW / 4;
         const skew = side === 'north' ? ATAN : -ATAN;
-        if (indoors && i % 4 === 2) {
-          add(tex('window'), x + dx, y + TH / 4 + 6, { ax: 0.5, ay: 0, scale: 0.62, skewY: skew, z: (u + v) * 10 + 5 });
+        if (indoors && kind !== 'library' && i % (kind === 'chapel' ? 3 : 4) === 2) {
+          add(tex('window'), x + dx, y + TH / 4 + 6, { ax: 0.5, ay: 0, scale: kind === 'chapel' ? 0.9 : 0.8, skewY: skew, z: (u + v) * 10 + 5 });
           // (the glass's light falls across the floor below it, away from the wall)
           const [fx, fy] = top(side === 'north' ? i : 1, side === 'north' ? 1 : i, 1);
           const s = side === 'north' ? 1 : -1;
-          shafts.poly([fx - 30 * s, fy - 6, fx - 6 * s, fy - 18, fx + 70 * s, fy + 40, fx + 44 * s, fy + 54]).fill({ color: GLASS[i % 4], alpha: 0.12 });
+          shafts.poly([fx - 30 * s, fy - 6, fx - 6 * s, fy - 18, fx + 210 * s, fy + 100, fx + 144 * s, fy + 128]).fill({ color: GLASS[Math.floor(i / 3) % GLASS.length], alpha: kind === 'chapel' ? 0.24 : 0.14 });
+        } else if (kind === 'library' && i % 4 === 2) {
+          // Complete carved bookcase bays, at the same plane as the rear masonry.
+          add(shelf, x + dx, y + 150, { scale: 0.96, skewY: skew, z: (u + v) * 10 + 5 });
+        } else if (kind === 'courtyard' && i % 4 === 2) {
+          add(tex('arcade'), x + dx, y + 12, { ay: 0, scale: 0.9, skewY: skew, z: (u + v) * 10 + 5 });
         } else if (i % 4 === 0) {
-          if (indoors) add(tex('pilaster'), x + dx, y + TH / 4 + 4, { ax: 0.5, ay: 0, scale: 0.62, skewY: skew, z: (u + v) * 10 + 5 });
-          else add(tex('banner'), x, y + 2, { scale: 0.85, z: (u + v) * 10 + 5 });
+          add(tex('pilaster'), x + dx, y + 12, { ay: 0, scale: 0.83, z: (u + v) * 10 + 5 });
         }
       }
     }
+    // The colonnades get the same carved, bannered stone as the rear wall.
+    // Their feet stay on the actual blocked tiles, so fighters still sort around them.
+    for (const p of plan.pillars) {
+      if (!at(p.u, p.v).wall) continue;
+      const [x, y] = top(p.u, p.v, 1);
+      add(tex('pilaster'), x, y + 8, { scale: 0.95, z: (p.u + p.v) * 10 + 5 });
+    }
+    if (kind === 'courtyard') {
+      // Planting crowns the boundary stone; it never suggests an obstacle on the field.
+      for (let i = 1; i < FIELD - 1; i++) {
+        for (const [u, v] of [[i, 0], [0, i], [i, FIELD - 1], [FIELD - 1, i]]) {
+          if (!at(u, v).wall || gap.has(`${u},${v}`)) continue;
+          const [x, y] = top(u, v, near(u, v) ? NEAR_H : at(u, v).h + 4);
+          if (!near(u, v) && i % 4 === 1)
+            add(tex('bush'), x, y + 6, { ay: 0, scale: 0.85, z: (u + v) * 10 + 6 });
+          if (near(u, v) && i % 3 === 0)
+            add(tex('roses'), x, y + 12, { scale: 0.85, z: (u + v) * 10 + 6 });
+        }
+      }
+    }
+
     // banners on the near walls' tops, so the room reads whole where their faces are hidden
     for (let i = 3; i <= FIELD - 4; i += 5) {
       for (const [u, v] of [[i, FIELD - 1], [FIELD - 1, i]]) {
         if (!at(u, v).wall || gap.has(`${u},${v}`)) continue;
         const [x, y] = top(u, v, NEAR_H);
-        add(tex('banner'), x, y + 2, { scale: 0.75, z: (u + v) * 10 + 5 });
+        add(tex('banner'), x, y + 2, { ay: 0, scale: 0.34, z: (u + v) * 10 + 5 });
       }
     }
 
@@ -228,8 +276,8 @@ export class StandHall {
       if (at(p.u, p.v).wall || at(p.u, p.v).rock) continue;
       const [x, y] = top(p.u, p.v);
       this.flames.push({ sp: pool(p.u, p.v, glows.warm, 160, 0.5), base: 0.5, phase: p.u * 1.7 + p.v });
-      add(tex('brazier'), x, y + 4, { scale: 0.6, z: (p.u + p.v) * 10 + 6 });
-      this.flames.push({ sp: add(glows.warm, x, y - 44, { ax: 0.5, ay: 0.5, scale: 0.36, add: true, alpha: 0.85, z: (p.u + p.v) * 10 + 7 }), base: 0.85, phase: p.v * 2.3 + p.u });
+      add(tex('brazier'), x, y + 4, { scale: 0.78, z: (p.u + p.v) * 10 + 6 });
+      this.flames.push({ sp: add(glows.warm, x, y - 72, { ax: 0.5, ay: 0.5, scale: 0.36, add: true, alpha: 0.85, z: (p.u + p.v) * 10 + 7 }), base: 0.85, phase: p.v * 2.3 + p.u });
     }
     for (const p of plan.lamps) {
       if (at(p.u, p.v).wall || at(p.u, p.v).rock) continue;
@@ -244,15 +292,15 @@ export class StandHall {
       const [x, y] = top(c.u, c.v);
       const z = (c.u + c.v) * 10 + 6;
       const pick = (c.u * 3 + c.v) % 2;
-      if (c.what === 'rubble') add(tex(pick ? 'rubble1' : 'rubble2'), x, y + (pick ? 22 : 16), { scale: pick ? 0.42 : 0.4, z });
-      else if (c.what === 'shelf') add(tex(pick ? 'shelf1' : 'shelf2'), x, y + 6, { scale: 0.62, z });
+      if (c.what === 'rubble') add(tex(pick ? 'rubble1' : 'rubble2'), x, y + 8, { scale: 0.85, z });
+      else if (c.what === 'shelf') add(tex((c.u + c.v) % 5 === 0 ? 'desk' : 'shelf1'), x, y + 6, { scale: 0.65, z });
       else {
         const k: Key = c.what === 'crate' ? 'crates' : c.what === 'barrel' ? 'barrels' : c.what === 'chest' ? 'chests' : c.what;
-        add(tex(k), x, y + 10, { scale: c.what === 'fountain' ? 0.6 : 0.72, z });
+        add(tex(k), x, y + 10, { scale: c.what === 'fountain' ? 1.05 : 0.85, z });
       }
     }
 
-    // the dais: standards behind the throne, a golden aura, the castle's enthroned king, his health above him
+    // The ruler stands at the centre, with their throne on the reserved tile behind them.
     for (const [u, v] of [[KING_AT.u - 1, KING_AT.v - 2], [KING_AT.u + 1, KING_AT.v - 2]]) {
       const [x, y] = top(u, v);
       add(tex('standard'), x, y, { scale: 0.5, z: (u + v) * 10 + 3 });
@@ -260,10 +308,11 @@ export class StandHall {
     const [kx, ky] = top(KING_AT.u, KING_AT.v);
     pool(KING_AT.u, KING_AT.v, glows.gold, 280, 0.42);
     this.flames.push({ sp: add(glows.gold, kx, ky - 64, { ax: 0.5, ay: 0.5, scale: 1.0, add: true, alpha: 0.5, z: (KING_AT.u + KING_AT.v) * 10 + 2 }), base: 0.5, phase: 0.3 });
-    this.kingFrames = rulerTextures(settings().ruler, 'seated');
-    this.emptyThrone = add(rulerThrone(settings().ruler), kx, ky + 8, { scale: KING_SCALE, z: (KING_AT.u + KING_AT.v) * 10 + 4 });
+    this.kingFrames = rulerTextures(settings().ruler, 'idle');
+    const [throneX, throneY] = top(KING_AT.u - 1, KING_AT.v - 1);
+    this.emptyThrone = add(rulerThrone(settings().ruler), throneX, throneY + 8, { scale: KING_SCALE, z: (KING_AT.u + KING_AT.v - 2) * 10 + 4 });
     this.emptyThrone.width = this.emptyThrone.height = KING_H * KING_SCALE;
-    this.emptyThrone.visible = false;
+    this.emptyThrone.visible = true;
     this.king = add(this.kingFrames[0], kx, ky + 8, { scale: KING_SCALE, z: (KING_AT.u + KING_AT.v) * 10 + 5 });
     this.king.width = this.king.height = KING_H * KING_SCALE;
     this.kingTop = { x: kx, y: ky + 8 - KING_H * KING_SCALE };
@@ -342,8 +391,45 @@ export class StandHall {
       const a = TW / (2 * 64);
       const bb = TH / (2 * 64);
       g.setTransform(a, bb, -a, bb, ox + TW / 2, oy);
-      g.drawImage(topOf(t, u, v), 0, 0, 64, 64);
+      const surface = topOf(t, u, v);
+      if (surface === art.rug) g.drawImage(surface, 0, 0, 64, 64);
+      else g.drawImage(surface, (u % 2) * 64, (v % 2) * 64, 64, 64, 0, 0, 64, 64);
+      const kind = this.plan!.kind;
+      // Warm limestone, cool sanctuary stone and dark library slate replace the checkerboard.
+      if (surface === art.floor1 || surface === art.floor2) {
+        g.fillStyle = kind === 'hall' ? 'rgba(132,98,51,0.28)' : kind === 'library' ? 'rgba(35,48,43,0.34)' : 'rgba(30,38,65,0.2)';
+        g.fillRect(0, 0, 64, 64);
+      }
+      if (surface === art.rug) {
+        g.fillStyle = 'rgba(68,8,20,0.28)';
+        g.fillRect(0, 0, 64, 64);
+        g.strokeStyle = 'rgba(224,180,87,0.7)';
+        g.lineWidth = 2;
+        // Borders follow the carpet's perimeter, rather than outlining every carpet tile.
+        const rugAt = (du: number, dv: number) => {
+          const a = u + du, b0 = v + dv;
+          return a >= 0 && b0 >= 0 && a < b.w && b0 < b.d && topOf(b.tiles[b0 * b.w + a], a, b0) === art.rug;
+        };
+        for (const [du, dv, ax, ay, bx, by] of [[-1,0,3,3,3,61],[1,0,61,3,61,61],[0,-1,3,3,61,3],[0,1,3,61,61,61]]) {
+          if (rugAt(du, dv)) continue;
+          g.beginPath(); g.moveTo(ax, ay); g.lineTo(bx, by); g.stroke();
+        }
+      }
+      // Stable variation gives stone its age without animated noise.
+      g.fillStyle = `rgba(10,8,18,${((u * 17 + v * 31) % 7) * 0.012})`;
+      g.fillRect(0, 0, 64, 64);
       g.setTransform(1, 0, 0, 1, 0, 0);
+      // Occlusion hugs walls and raised steps, leaving the central battlefield readable.
+      const edge = Math.min(u, v, b.w - 1 - u, b.d - 1 - v);
+      g.fillStyle = `rgba(8,9,18,${edge < 3 ? (3 - edge) * 0.12 : 0.025})`;
+      g.fillRect(ox, oy, TW, TH);
+      for (const [du, dv] of [[-1, 0], [0, -1]]) {
+        const neighbour = b.tiles[(v + dv) * b.w + u + du];
+        if (u + du < 0 || v + dv < 0 || !neighbour || (!neighbour.wall && neighbour.h <= t.h)) continue;
+        const shadow = g.createLinearGradient(ox, oy, ox, oy + TH);
+        shadow.addColorStop(0, 'rgba(8,6,15,0.38)'); shadow.addColorStop(1, 'rgba(8,6,15,0)');
+        g.fillStyle = shadow; g.fillRect(ox, oy, TW, TH);
+      }
       // (raised floor a shade lighter, so the heights read at a glance; a dark line round each step)
       g.fillStyle = `rgba(255,240,210,${0.02 + (t.h - 1) * 0.04})`;
       g.fillRect(ox, oy, TW, TH);
@@ -356,6 +442,28 @@ export class StandHall {
       g.lineTo(ox + TW, oy + TH / 2 + 0.5);
       g.stroke();
     }
+    if (this.plan!.kind === 'chapel' || this.plan!.kind === 'library') {
+      const u = KING_AT.u, v = KING_AT.v + 6;
+      const tile = b.tiles[v * b.w + u];
+      if (!tile.wall && !tile.rock) {
+        const [x, y] = rawAt(u, v, tile.h);
+        g.save();
+        g.setTransform(0.5, 0.25, -0.5, 0.25, x - x0, y - y0);
+        g.drawImage(art.medallion, -128, -128, 256, 256);
+        g.restore();
+      }
+    }
+    // A quiet pool of warm light pulls the eye to the central throne; the edges fall into cool shade.
+    g.save();
+    g.globalCompositeOperation = 'source-atop';
+    const [kx, ky] = rawAt(KING_AT.u, KING_AT.v, 1);
+    const ambience = g.createRadialGradient(kx - x0, ky - y0, 70, kx - x0, ky - y0, FIELD * TH);
+    ambience.addColorStop(0, 'rgba(237,170,65,0.10)');
+    ambience.addColorStop(0.48, 'rgba(17,21,32,0.05)');
+    ambience.addColorStop(1, 'rgba(9,15,30,0.48)');
+    g.fillStyle = ambience;
+    g.fillRect(0, 0, w, h);
+    g.restore();
     const tex = Texture.from(c);
     this.made.push(tex);
     const sp = new Sprite(tex);
@@ -387,8 +495,8 @@ export class StandHall {
       g.fillRect(0, 0, TW, TH + deep);
       g.restore();
     };
-    side(0, TH / 2, TW / 2, TH, 'rgba(40,28,20,0.12)');
-    side(TW / 2, TH, TW, TH / 2, 'rgba(8,6,14,0.45)');
+    side(0, TH / 2, TW / 2, TH, 'rgba(26,22,24,0.3)');
+    side(TW / 2, TH, TW, TH / 2, 'rgba(8,6,14,0.58)');
     g.save();
     g.beginPath();
     g.moveTo(TW / 2, 0);
@@ -443,9 +551,9 @@ export class StandHall {
     this.decreeLeft = 1600;
   }
 
-  private rulerAction: RulerAction = 'seated';
+  private rulerAction: RulerAction = 'idle';
   private rulerStarted = 0;
-  react(action: 'hurt' | 'cast' | 'dead'): void {
+  react(action: 'hurt' | 'cast' | 'strike' | 'dead'): void {
     if (this.rulerAction === 'dead') return;
     this.rulerAction = action;
     this.rulerStarted = this.t;
@@ -479,17 +587,14 @@ export class StandHall {
       this.decreeLeft = Math.max(0, this.decreeLeft - dt);
       if (kingHp <= 0 && this.rulerAction !== 'dead') this.react('dead');
       const elapsed = this.t - this.rulerStarted;
-      if (this.rulerAction !== 'dead' && elapsed >= 720) this.rulerAction = 'seated';
-      const action = this.rulerAction !== 'seated' ? this.rulerAction : this.decreeLeft > 0 ? 'command' : 'seated';
+      if (this.rulerAction !== 'dead' && elapsed >= 720) this.rulerAction = 'idle';
+      const action = this.rulerAction !== 'idle' ? this.rulerAction : this.decreeLeft > 0 ? 'cast' : 'idle';
       if (this.emptyThrone) {
         this.emptyThrone.texture = rulerThrone(settings().ruler);
         this.emptyThrone.width = this.emptyThrone.height = KING_H * KING_SCALE;
-        this.emptyThrone.visible = action !== 'seated' && action !== 'command';
+        this.emptyThrone.visible = true;
       }
-      // (on the throne the throne stays put and the ruler breathes, `seatFrame`; standing actions play their frames)
-      this.king.texture = action === 'seated' || action === 'command'
-        ? rulerSeatTexture(settings().ruler, action, action === 'command' ? 1600 - this.decreeLeft : this.t, still)
-        : rulerTextures(settings().ruler, action)[rulerFrame(action, elapsed, still)];
+      this.king.texture = rulerTextures(settings().ruler, action)[rulerFrame(action, this.rulerAction === 'idle' && this.decreeLeft > 0 ? 1600 - this.decreeLeft : action === 'idle' ? this.t : elapsed, still)];
       this.king.width = this.king.height = KING_H * KING_SCALE;
       // (his health over his head: green, low and red, on a dark gilt-edged plate)
       const g = this.kingBar;
@@ -520,7 +625,7 @@ export class StandHall {
     this.bursts = [];
     this.king = null;
     this.emptyThrone = null;
-    this.rulerAction = 'seated';
+    this.rulerAction = 'idle';
     this.rulerStarted = 0;
     this.floor = null;
     this.plan = null;

@@ -5,7 +5,7 @@ import { EPIC_MANIFEST } from '../src/render/epicManifest';
 import { EPIC_INFO, type Baked } from '../src/render/musicBake';
 import { SCORES, SCENE_TRACKS } from '../src/render/musicScore';
 import { OPEN_HZ } from '../src/render/audioRules';
-import { BATTLE_BAR, BATTLE_LOOP_START, LOOP_START, STING_IDS, SYNTH_OF, TRACK_OF_PLACE, epicOf, fightLevel, fightTrack, placeOf, type MusicId } from '../src/render/epicMusic';
+import { BATTLE_BAR, BATTLE_LOOP_START, LOOP_START, STING_IDS, SYNTH_OF, TRACK_OF_PLACE, epicOf, placeOf, type MusicId } from '../src/render/epicMusic';
 import { FakeContext, installFakeAudio } from './audioFake';
 
 const LOOPS = ['camp', 'deploy', 'battle', 'battle2', 'battle3', 'boss', 'tower', 'calmap', 'calbattle', 'tavern', ...SCENE_TRACKS] as const;
@@ -37,7 +37,7 @@ test('every track the player can be asked for has a file or a synth fallback, an
   assert.equal(epicOf('battle2'), EPIC_MANIFEST.battle2);
 });
 
-test('the place and the fight choose the track', () => {
+test('the place chooses the track (a battle\'s own is chosen in battleMusic.ts: test/battle-music.test.ts)', () => {
   assert.equal(placeOf(null, null), 'camp');
   for (const s of ['camp', 'hall', 'castle', 'spells', 'armies', 'tavern'] as const) assert.equal(placeOf(s, null), 'camp');
   assert.equal(placeOf('field', null), 'deploy');
@@ -45,14 +45,6 @@ test('the place and the fight choose the track', () => {
   assert.equal(placeOf('tower1', 'tower'), 'tower');
   assert.equal(placeOf('tower3', 'calamity'), 'calmap');
   assert.equal(TRACK_OF_PLACE.camp, 'camp');
-  assert.equal(fightTrack({ boss: true, calamity: true, level: 2 }), 'boss');
-  assert.equal(fightTrack({ boss: false, calamity: true, level: 0 }), 'calbattle');
-  assert.deepEqual([0, 1, 2, 5, -1].map((level) => fightTrack({ boss: false, calamity: false, level })), ['battle', 'battle2', 'battle3', 'battle3', 'battle']);
-  // (an army's waves go by thirds; a stage run by depth; an elite is a step harder, never past the top)
-  assert.deepEqual([1, 4, 7, 10].map((w) => fightLevel(w, { waves: 10 })), [0, 0, 1, 2]);
-  assert.deepEqual([1, 9, 10, 24, 25, 99].map((n) => fightLevel(n)), [0, 0, 1, 1, 2, 2]);
-  assert.equal(fightLevel(3, { elite: true }), 1);
-  assert.equal(fightLevel(30, { elite: true }), 2);
 });
 
 /** A baked track as an epic file would give it: one stem with its loop window. */
@@ -63,15 +55,13 @@ function epicBaked(ctx: FakeContext): Baked {
   return b;
 }
 
-test('an epic track loops its window, and takes no colour from the fight or the tower act', async () => {
+test('an epic track loops its window, and takes no colour from the tower act', async () => {
   const undo = installFakeAudio();
   const { MusicPlayer } = await import('../src/render/audioProcessors');
   try {
     const ctx = new FakeContext();
     const music = new MusicPlayer(ctx as unknown as AudioContext, async () => epicBaked(ctx));
     const cutoff = () => (music.params.cutoff.audioParam as unknown as { target?: number }).target;
-    const perc = () => (music.params.perc.audioParam as unknown as { target?: number }).target;
-    const swell = () => (music.params.swell.audioParam as unknown as { target?: number }).target;
     const before = FakeContext.made.length;
     music.setTrack('battle2');
     await new Promise((r) => setTimeout(r, 10));
@@ -81,11 +71,8 @@ test('an epic track loops its window, and takes no colour from the fight or the 
     assert.ok(src.started);
     assert.equal(src.loopStart, LOOP_START);
     assert.equal(src.loopEnd, LOOP_START + 90);
-    // (no tension low-pass, swell or rumble, and no tower act's ceiling or drone)
-    music.setTension(1);
+    // (open, and no tower act's ceiling or drone)
     assert.equal(cutoff(), OPEN_HZ);
-    assert.equal(swell(), 1);
-    assert.equal(perc(), 0);
     const nodes = FakeContext.made.length;
     music.setAct(1);
     assert.equal(cutoff(), OPEN_HZ, 'the act does not close the filter');

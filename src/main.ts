@@ -5,14 +5,16 @@
 import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { standable, tileAt } from './sim/board';
 import { canPlace, fight, reviveParty, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
-import { mvpOf, startStats, STAT_KEYS, tally, type FightStats } from './sim/fightStats';
+import { mvpOf, startStats, tally, type FightStats } from './sim/fightStats';
 // (`saveSlot` as `saveRun`: a tower or calamity run is saved in its own slot, any other in the ordinary one)
 import { armyOfRun, armyRun, benchFull, boostOf, canRetry, chainOf, fallOutcome, MAX_RETRIES, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, runTheme, waveArmyOf, type Owned, type Run } from './sim/run';
 import { climbXpView, heroLevel, localBoost } from './sim/climb';
 import { calamityRun } from './sim/modes';
 import { CAL_MAPS } from './sim/calamity';
 import { pickHero } from './calamityView';
-import { noteFightStats, notePayout, recapOf } from './sim/runRecap';
+import { closeMapLeg, noteFightStats, notePayout, noteWave, recapOf } from './sim/runRecap';
+import { towerHeadline, waveHeadline, waveNotes, type WaveMoments } from './sim/waveCard';
+import { drawWaveNotes } from './waveCardView';
 import { showRecap } from './recapView';
 import { campArtReady } from './camp';
 import { comebackTips, type ComebackGo } from './sim/comeback';
@@ -25,6 +27,7 @@ import { settleArmyOres, type ArmyOres } from './sim/awakenMats';
 import { drawOreGain } from './oreView';
 import { TIERS, tierOf } from './sim/tiers';
 import { formOf, UNITS } from './sim/units';
+import { heroName } from './sim/heroNames';
 import { ELITE_BY_ID } from './sim/elites';
 import { isBoss } from './sim/foes';
 import { awakenedOf } from './sim/awaken';
@@ -38,10 +41,11 @@ import { previewFrames } from './render/sceneClock';
 import { xpRate } from './sim/castle';
 import { heroStats } from './sim/talents';
 import { powerOf, powerText } from './sim/power';
-import { benchXp, fightXp, gainXp, levelGain, levelOfKind, progressOf, xpOf, type LevelUp } from './sim/levels';
+import { benchXp, fightXp, gainXp, levelOfKind, type LevelUp } from './sim/levels';
 import { levelBadge } from './levelBadge';
 import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
 import { autoDeploy, autoRound, gearCount, pickSquad } from './sim/autoplay';
+import { autoMerge, canMerge, merge, mergeMatches, mergeReady, type Merged } from './sim/merge';
 import { afterFight, maxSpeed, spendTicket, startAuto, stopAuto, type AutoReplay } from './sim/autoReplay';
 import { Gacha } from './gacha';
 import { queueReveal } from './summonTarot';
@@ -64,7 +68,6 @@ import { grantContent } from './sim/contentHeroes';
 import { grantSpells } from './sim/spellSources';
 import { clockSeed, todayKey } from './modes';
 import { tips, type Box } from './tips';
-import { ULT_LEVEL } from './sim/abilities';
 import { HeroBar } from './heroBar';
 import { ultFull } from './sim/heroKits';
 import { startAwake } from './render/awake';
@@ -91,8 +94,9 @@ import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, framing, PAUSE_MS, settle, viewFor,
 import { pinchZoom, wheelZoom, zoomAbout, zoomLimits } from './render/fightCam';
 import { titleOf } from './render/bossTitles';
 import { at, depth, FOOT, HH, landmarkBounds, rawAt, setFrame, TH, TW } from './render/iso';
-import { bindDuck, bindMute, play, playEvents, setAct, setScene, setup, startFight } from './render/sound';
-import { fightLevel, type MapKind } from './render/epicMusic';
+import { bindDuck, bindMute, endVictory, endWave, play, playEvents, setAct, setScene, setup, startFight } from './render/sound';
+import type { MapKind } from './render/epicMusic';
+import { endOfFight, trackOfRun } from './render/battleMusic';
 import { sceneOf } from './render/audioRules';
 import { colLeft, viewH, viewW } from './viewport';
 import { onDevGrant, onSettings, openSettings, setSetting, settings } from './settings';
@@ -122,7 +126,10 @@ const FOLLOW_IN = 1.7;
 const INTRO_ZOOM = 0.25;
 /** How long the board stays on show after the last kill before the wave recap comes up (ms). */
 const END_WAIT_MS = 2000;
-const STAT_LABELS: Record<(typeof STAT_KEYS)[number], string> = { dealt: 'Dealt', taken: 'Taken', healed: 'Healed', kills: 'Kills' };
+/** How long the short wave card stays once the march has arrived, how long with no march at all, and its fade (WAVE-RECAP). */
+const PASS_AFTER_MARCH_MS = 1400;
+const PASS_NO_MARCH_MS = 3200;
+const PASS_FADE_MS = 450;
 
 /** The spells that hurt foes (their 3x3 shows red). */
 const HURTING = new Set<SpellId>(['meteor', 'smite', 'chain', 'poison', 'frost']);
@@ -191,6 +198,13 @@ class Game {
   private revive: { t: number; swapped: boolean; started: boolean; fightAt: number; risenAt?: number; line?: { dismiss: () => void } } | null = null;
   /** This fight's loss has had its cinematic asked for (once a fight: `refresh` runs often). */
   private lossScened = false;
+  /** Hearts burned in this wave (WAVE-RECAP: the short card and the end recap's strip say so). */
+  private heartsBurned = 0;
+  /** A won wave with more to come (WAVE-RECAP): its short card rides over the march, see-through, and goes by itself once the party has arrived. `wait` counts the ms since
+   *  nothing held it (the march, a cinematic, the home screen), `marched` whether a march was seen. Null otherwise. */
+  private passing: { wait: number; marched: boolean } | null = null;
+  /** The settled wave's short card (WAVE-RECAP): its number, its count of waves, and the moments worth a line; null for a card that keeps the full report (the spire and the Calamity). */
+  private waveCard: (WaveMoments & { wave: number; of: number | null; title?: string }) | null = null;
   /** What an army's last settled fight paid (null for any other run). */
   private pay: ArmyPay | null = null;
   /** What a daily's last settled fight paid (null for any other run). */
@@ -438,6 +452,9 @@ class Game {
     this.endWait = 0;
     this.revive = null;
     this.lossScened = false;
+    this.heartsBurned = 0;
+    this.passing = null;
+    $('result').classList.remove('passing', 'leaving');
     for (const id of [...this.run.squad]) {
       const h = heroOf(this.run, id);
       if (!h) continue;
@@ -744,38 +761,6 @@ class Game {
     (bar.querySelector('span') as HTMLElement).style.width = `${(boss.hp / boss.maxHp) * 100}%`;
   }
 
-  /** The fight's numbers: a row a hero, with a bar for each number (scaled to the best hero) and the MVP's crown. */
-  private showStats(): void {
-    const list = $('fightStats');
-    list.replaceChildren();
-    list.hidden = !this.stats.length;
-    if (list.hidden) return;
-    const mvp = mvpOf(this.stats);
-    const head = document.createElement('div');
-    head.className = 'srow head';
-    head.append(document.createElement('span'), ...STAT_KEYS.map((k) => Object.assign(document.createElement('span'), { textContent: STAT_LABELS[k] })));
-    list.append(head);
-    for (const s of this.stats) {
-      const row = document.createElement('div');
-      row.className = 'srow';
-      const name = document.createElement('b');
-      name.textContent = UNITS[s.kind].name;
-      if (s === mvp) name.append(' ', Object.assign(document.createElement('em'), { textContent: '♛', title: 'MVP' }));
-      row.append(name);
-      for (const k of STAT_KEYS) {
-        const top = Math.max(1, ...this.stats.map((x) => x[k]));
-        const cell = document.createElement('span');
-        cell.className = 'cell';
-        cell.append(
-          Object.assign(document.createElement('em'), { textContent: String(Math.round(s[k])) }),
-          Object.assign(document.createElement('i'), { innerHTML: `<span style="width: ${((s[k] / top) * 100).toFixed(1)}%"></span>` }),
-        );
-        row.append(cell);
-      }
-      list.append(row);
-    }
-  }
-
   /** The first free standable tile on the heroes' rows, front row first. */
   private freeTile(): [number, number] | null {
     for (let v = 0; v < this.b.board.d; v++)
@@ -795,8 +780,8 @@ class Game {
     // (the opening grumble belongs to a new fight)
     foeGrumbles(this.b.units.filter((u) => u.side === 'foe' && !UNITS[u.def].summon).length, (i) => this.anchorOfFoe(i));
     this.stats = startStats(this.b.units);
-    // (the music: a boss, a Calamity fight, or one of three battle tracks by how hard the fight runs)
-    startFight(isBossRun(this.run), { calamity: this.run.mode?.kind === 'calamity', level: fightLevel(this.run.stage, { elite: this.run.tower?.cur?.kind === 'elite', waves: waveArmyOf(this.run)?.waves.length }) });
+    // (the music: the battle's one track, the same for every wave of an army or a daily, `battleMusic.ts`)
+    startFight(trackOfRun(this.run));
     startSynergies(countTraits(kindsOf(this.b.units)), this.b.combo, duoCombosOf(kindsOf(this.b.units)));
     this.chosen = null;
     this.boardView.clearMarks();
@@ -890,6 +875,9 @@ class Game {
         // (a fighter a skill called up mid-fight has no sprite yet: make it, with its entrance)
         if (b.units.length !== this.sprites.size) this.syncSprites();
         playEvents(b, events, this.speed);
+        // (the battle's music: on through a wave won with more to come or a fall a heart revives; the victory music at a battle won, the defeat sting at one lost)
+        const end = events.find((e) => e.kind === 'end');
+        if (end) endWave(endOfFight(this.run, end.won));
         // (Duchess has wandered on: the first time, her cinematic (not in an auto-replay), then her card; and her bubbles as she fights)
         if (events.some((e) => e.kind === 'duchess')) void this.queueScene({ kind: 'duchessJoins' }).then(() => showDuchessCard(() => $('panel').getBoundingClientRect().top));
         if (this.b.duchess) duchessFightSays(b, events, () => this.anchorOfKind('duchess'));
@@ -933,6 +921,7 @@ class Game {
     }
     if (this.intro) this.stepIntro(dt);
     this.stepRevive(dt);
+    this.stepPassing(dt);
     this.refreshBossBar();
     const isWon = b.phase === 'won' || (b.phase !== 'fight' && b.phase !== 'deploy' && !b.units.some((u) => u.side === 'foe' && u.alive));
     const t = b.phase === 'deploy' ? performance.now() : b.phase === 'fight' ? b.t - TICK_MS + this.acc : b.t + this.acc;
@@ -1433,19 +1422,24 @@ class Game {
     bindDuck($('bossCard'), 'boss');
     bindDuck($('events'), 'event');
     $('fight').addEventListener('click', () => this.begin());
+    // (MERGE-TWO: one tap merges every pair ready, then the pairs those make, up to rank 4, and stops)
+    $('mergeAll').addEventListener('click', () => {
+      if (this.b.phase !== 'deploy') return;
+      const done = autoMerge(this.run);
+      if (done.length) this.showMerges(done);
+    });
     $('summon').addEventListener('click', () => {
-      const before = new Set(this.run.roster.map((h) => h.id));
       const got = summon(this.run);
       if (got) {
         saveRun(this.run);
         play(got.grade > 1 ? 'merge' : 'summon');
         // (a lucky hire, already a higher star: a sparkle over the merge's chime)
         if (got.grade > 1) play('sparkle');
-        this.clearMerged(got);
       }
-      // (a hero of a higher grade that wasn't there before is a merge's: it flashes)
-      this.evolved = new Set(this.run.roster.filter((h) => h.grade > 1 && !before.has(h.id)).map((h) => h.id));
+      // (a lucky hire flashes as a merge's hero does; nothing merges on its own any more: MERGE-TWO)
+      this.evolved = new Set(got && got.grade > 1 ? [got.id] : []);
       this.refresh();
+      this.markTiles();
       const card = got ? $('bench').querySelector<HTMLElement>(`[data-id="${got.id}"]`) : null;
       if (card) summonBurst(card);
       if (got) heroSays(got.kind, 'hired', () => rectAnchor(card));
@@ -1453,6 +1447,10 @@ class Game {
     $('homeBtn').addEventListener('click', () => this.home.open());
     // (a tap anywhere hurries the heart-burn: the wave starts at once, and the line goes)
     document.addEventListener('pointerdown', () => this.skipRevive(), true);
+    // (a tap on the short card over the march goes straight on to the next wave)
+    $('result').addEventListener('click', (e) => {
+      if (this.passing && !(e.target as HTMLElement).closest('button')) this.passOn();
+    });
     $('next').addEventListener('click', () => {
       if (this.run.over && !this.run.tower && !this.auto) return this.showRunRecap();
       this.afterResult();
@@ -1719,89 +1717,39 @@ class Game {
     });
   }
 
-  /** The result screen's XP: a row per hero kind that fought, its bar filling with the XP it earned. A level up fills the bar, then flashes the new level and its stat gains, with a chime, and the bar starts again from the new level. */
-  private showXp(gains: Record<string, number>, from: Record<string, number>, ups: LevelUp[], lasting = true): void {
-    const list = $('xp');
-    list.replaceChildren();
-    list.hidden = !Object.keys(gains).length;
-    const share = (p: { into: number; need: number }) => (p.need ? (p.into / p.need) * 100 : 100);
-    Object.entries(gains).forEach(([kind, xp], i) => {
-      const row = document.createElement('div');
-      row.className = 'xprow';
-      // (the hero's face, with its level on a badge at the corner)
-      const face = document.createElement('div');
-      face.className = 'xpFace';
-      let lv = levelBadge(progressOf(from[kind]).level, 'xpLv');
-      // (the look it fought in: the highest grade of the kind that stood in the fight, in that grade's form, framed whole)
-      const grade = this.b.units.reduce((g, u) => (u.side === 'hero' && u.def === kind && u.owner === undefined ? Math.max(g, u.grade ?? 1) : g), 1);
-      face.className = `xpFace g${grade}`;
-      face.append(portrait(formOf(UNITS[kind], grade), 64, grade), lv);
-      const name = document.createElement('b');
-      name.textContent = UNITS[kind].name;
-      const gain = document.createElement('em');
-      gain.textContent = `+${xp.toLocaleString('en-GB')} XP`;
-      const bar = document.createElement('i');
-      const fill = document.createElement('span');
-      bar.append(fill);
-      const note = document.createElement('p');
-      row.append(face, name, gain, bar, note);
-      list.append(row);
-      const after = progressOf(from[kind] + xp);
-      const up = ups.find((u) => u.kind === kind);
-      fill.style.width = `${share(progressOf(from[kind]))}%`;
-      const at = 400 + i * 700;
-      setTimeout(() => (fill.style.width = `${up ? 100 : share(after)}%`), at);
-      if (!up) return;
-      setTimeout(() => {
-        const gained = levelGain(up.from, up.to, lasting);
-        // (the level-up: a stamp, the badge ticking over, the gains popping in one after the other, a sweep of light and a
-        //  burst of sparks; all of it once, none of it looping)
-        const stamp = document.createElement('span');
-        stamp.className = 'xpStamp';
-        stamp.textContent = 'Level up!';
-        const grown = levelBadge(up.to, 'xpLv');
-        lv.replaceWith(grown);
-        lv = grown;
-        // (reaching the ultimates' level says so)
-        const chips = [`+${gained.hp}% HP`, `+${gained.atk}% Atk`, ...(up.from < ULT_LEVEL && up.to >= ULT_LEVEL ? ['Ultimate unlocked'] : [])].map((t, n) => {
-          const c = document.createElement('span');
-          c.textContent = t;
-          c.style.animationDelay = `${0.25 + n * 0.15}s`;
-          return c;
-        });
-        note.replaceChildren(...chips);
-        const sparks = document.createElement('span');
-        sparks.className = 'xpSparks';
-        for (let s = 0; s < 10; s++) {
-          const dot = document.createElement('i');
-          const ang = (s / 10) * Math.PI * 2;
-          dot.style.setProperty('--dx', `${Math.round(Math.cos(ang) * (26 + (s % 3) * 8))}px`);
-          dot.style.setProperty('--dy', `${Math.round(Math.sin(ang) * (20 + (s % 2) * 8)) - 10}px`);
-          sparks.append(dot);
-        }
-        face.append(sparks);
-        name.append(stamp);
-        row.classList.add('up');
-        fill.style.transition = 'none';
-        fill.style.width = `${share(after)}%`;
-        // (a gold wash spreads across the row from the hero's face; the heroes of this kind on the board, if it's showing, rise in light)
-        const wash = document.createElement('span');
-        wash.className = 'xpWash';
-        row.append(wash);
-        for (const u of this.b.units) if (u.side === 'hero' && u.def === kind) this.sprites.get(u.id)?.evolve();
-        play('levelUp');
-      }, at + 900);
-    });
-  }
-
   /** The roster ids of the heroes on the field (the squad when none is placed yet). */
   private fielded(): number[] {
     const ids = this.b.units.filter((u) => u.side === 'hero' && u.tag !== undefined && !u.owner).map((u) => u.tag!);
     return ids.length ? ids : [...this.run.squad];
   }
 
+  /** The short card over the march (WAVE-RECAP): held while the party walks, a cinematic plays or the home screen is up; then a moment to read it
+   *  (longer with no march to watch), a fade, and the next wave's deploy, with no tap. A tap on the card goes on at once. */
+  private stepPassing(dt: number): void {
+    const p = this.passing;
+    const card = $('result');
+    if (!p || card.hidden) return;
+    if (document.body.dataset.move) p.marched = true;
+    if (document.body.dataset.move || this.sceneHold || this.homeUp || this.destinationReveal) return;
+    p.wait += dt;
+    const stay = p.marched ? PASS_AFTER_MARCH_MS : PASS_NO_MARCH_MS;
+    if (p.wait >= stay - PASS_FADE_MS) card.classList.add('leaving');
+    if (p.wait >= stay) this.passOn();
+  }
+
+  /** The short card is done: the next wave. */
+  private passOn(): void {
+    if (!this.passing) return;
+    this.passing = null;
+    // (the spire and the Calamity go to their map with no new battle: the card's own look is dropped here)
+    $('result').classList.remove('passing', 'leaving');
+    this.afterResult();
+  }
+
   /** The result screen's way on, once any recap has been seen. */
   private afterResult(): void {
+    // (a won battle's victory music ends with its results)
+    endVictory();
     // (an army's last boss has fallen: the next army's unlock moment, if it opened one, then the armies)
     if (this.run.cleared && this.run.mode?.kind === 'daily') {
       $('result').hidden = true;
@@ -1864,6 +1812,7 @@ class Game {
       if (!canRetry(this.run)) return void (this.revive = null);
       // (the heart burning now stays grey from the next draw of the lives)
       const gold = retryWave(this.run)!;
+      this.heartsBurned++;
       play('coinRecycle');
       saveRun(this.run);
       // (the fallen get up off the ground where they lay, their death played backwards: no burst of light, no fresh arrival, FIGHT-FIXES)
@@ -1881,7 +1830,7 @@ class Game {
       r.started = true;
       if (this.b.phase === 'fight') {
         this.acc = 0;
-        startFight(isBossRun(this.run), { calamity: this.run.mode?.kind === 'calamity', level: fightLevel(this.run.stage, { elite: this.run.tower?.cur?.kind === 'elite', waves: waveArmyOf(this.run)?.waves.length }) });
+        startFight(trackOfRun(this.run));
         this.refresh();
         // (the party is back on its feet: one of them says so)
         if (!this.auto) revivedQuip(this.b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def), (k) => this.anchorOfKind(k));
@@ -1921,22 +1870,6 @@ class Game {
   }
 
   /** Add the fight just ended (stats, time, pay) to the run's recap. */
-  /** A small line under the XP rows: what the heroes that sat out the fight earned, and any that rose a level. */
-  private showBench(): void {
-    const n = this.benchNote;
-    if (!n) return;
-    const list = $('xp');
-    const rose = n.ups.map((u) => `${UNITS[u.kind].name} Lv ${u.to}`).join(', ');
-    const line = document.createElement('small');
-    line.className = 'xpBench';
-    line.textContent = `Bench +${n.each.toLocaleString('en-GB')} XP each${rose ? ` · ${rose}` : ''}`;
-    list.append(line);
-    list.hidden = false;
-  }
-
-  /** The bench's share of the last fight, for the XP section's small line. */
-  private benchNote: { each: number; ups: LevelUp[] } | null = null;
-
   private noteRecap(gains: Record<string, number>, ups: LevelUp[], won: boolean, settled = true): void {
     const grades: Record<string, number> = {};
     for (const u of this.b.units) if (u.side === 'hero' && u.owner === undefined) grades[u.def] = Math.max(grades[u.def] ?? 1, u.grade ?? 1);
@@ -2058,7 +1991,13 @@ class Game {
     this.ghost.scale.set(this.scale * this.defOf(d.id).scale);
     this.ghost.position.set(e.clientX - colLeft(), e.clientY - 24);
     this.ghost.visible = true;
-    const sell = !d.fromBoard && overRecycle(e.clientX, e.clientY);
+    // (the cards it can merge with glow, the one under the finger the brightest)
+    const onto = this.mergeTargetAt(d.id, e.clientX, e.clientY);
+    for (const c of $('bench').children as HTMLCollectionOf<HTMLElement>) {
+      c.classList.toggle('mergeCan', canMerge(this.run, Number(d.id), Number(c.dataset.id)));
+      c.classList.toggle('mergeHot', onto !== null && c.dataset.id === String(onto));
+    }
+    const sell = !d.fromBoard && onto === null && overRecycle(e.clientX, e.clientY);
     $('recycleZone').classList.toggle('hot', sell);
     this.hover = sell ? null : this.tileAtScreen(e.clientX, e.clientY - 24);
     this.markTiles();
@@ -2077,21 +2016,28 @@ class Game {
     if (d.moved && d.id) {
       // dropped: on a tile of the heroes' rows, or back on the bench
       const tile = this.tileAtScreen(e.clientX, e.clientY - 24);
-      if (!d.fromBoard && overRecycle(e.clientX, e.clientY)) this.recycleDropped(d.id);
+      const onto = this.mergeTargetAt(d.id, e.clientX, e.clientY);
+      if (onto !== null) this.mergeHeroes(Number(d.id), onto);
+      else if (!d.fromBoard && overRecycle(e.clientX, e.clientY)) this.recycleDropped(d.id);
       else if (tile && this.canPut(d.id, tile)) this.put(d.id, tile);
       else if (overBench(e.clientX, e.clientY)) this.takeBack(d.id);
       this.chosen = null;
     } else if (d.fromBoard && (e.target as HTMLElement) === this.app.canvas) {
       // a tap on the board: pick up a hero, put the chosen one down, or send the chosen one back to the bench
       const tile = this.tileAtScreen(e.clientX, e.clientY);
+      const there = tile ? unitAt(this.b, tile[0], tile[1]) : undefined;
       if (d.id && d.id === this.chosen) {
         this.takeBack(d.id);
         this.chosen = null;
+      } else if (this.chosen && there?.tag !== undefined && canMerge(this.run, Number(this.chosen), there.tag)) {
+        // (a chosen hero tapped onto its match on the board merges into it)
+        this.mergeHeroes(Number(this.chosen), there.tag);
       } else if (this.chosen && tile && this.canPut(this.chosen, tile)) {
         this.put(this.chosen, tile);
         this.chosen = null;
       } else this.chosen = d.id || null;
-    } else if (!d.fromBoard) this.chosen = this.chosen === d.id ? null : d.id;
+    } else if (!d.fromBoard && this.chosen && this.chosen !== d.id && canMerge(this.run, Number(this.chosen), Number(d.id))) this.mergeHeroes(Number(this.chosen), Number(d.id));
+    else if (!d.fromBoard) this.chosen = this.chosen === d.id ? null : d.id;
     this.endDrag();
   }
 
@@ -2099,10 +2045,57 @@ class Game {
     this.drag = null;
     $('recycleZone').hidden = true;
     $('recycleZone').classList.remove('hot');
-    for (const c of $('bench').querySelectorAll('.dragging')) c.classList.remove('dragging');
+    for (const c of $('bench').querySelectorAll('.dragging, .mergeCan, .mergeHot')) c.classList.remove('dragging', 'mergeCan', 'mergeHot');
     this.hover = null;
     this.ghost.visible = false;
     this.refresh();
+    this.markTiles();
+  }
+
+  /** The hero a dragged hero `id` would merge into if let go at (x, y): a matching card on the bench under the finger, or a matching hero on
+   *  the board tile the held hero is over (MERGE-TWO). Null when there is none. */
+  private mergeTargetAt(id: string, x: number, y: number): number | null {
+    const card = document.elementsFromPoint(x, y).map((el) => el.closest<HTMLElement>('#bench .card')).find((c) => c && c.dataset.id !== id);
+    if (card && canMerge(this.run, Number(id), Number(card.dataset.id))) return Number(card.dataset.id);
+    const tile = this.tileAtScreen(x, y - 24);
+    const here = tile ? unitAt(this.b, tile[0], tile[1]) : undefined;
+    return here?.side === 'hero' && here.tag !== undefined && canMerge(this.run, Number(id), here.tag) ? here.tag : null;
+  }
+
+  /** Merge hero `aId` into hero `bId` by hand (dragged or tapped onto it, between waves only). */
+  private mergeHeroes(aId: number, bId: number): void {
+    if (this.b.phase !== 'deploy') return;
+    const m = merge(this.run, aId, bId);
+    if (m) this.showMerges([m]);
+  }
+
+  /** Show merges the sim has made: each merged-away hero leaves the board, each target is set down again where it stood at its new grade
+   *  (its sprite made afresh, so it rises in light as a promotion does), and the cards flash. */
+  private showMerges(done: readonly Merged[]): void {
+    for (const m of done) {
+      const gone = this.b.units.find((u) => u.side === 'hero' && u.tag === m.gone);
+      if (gone) unplace(this.b, gone.def, m.gone);
+      this.placed.delete(String(m.gone));
+      const at = this.b.units.find((u) => u.side === 'hero' && u.tag === m.id);
+      const h = heroOf(this.run, m.id);
+      if (at && h) {
+        const [u, v] = [at.u, at.v];
+        unplace(this.b, at.def, m.id);
+        place(this.b, h.kind, u, v, h.id, this.boostFor(h));
+      }
+    }
+    this.evolved = new Set(done.map((m) => m.id));
+    this.chosen = null;
+    play('merge');
+    if (done.some((m) => m.grade >= 3)) play('sparkle');
+    saveRun(this.run);
+    this.syncSprites();
+    this.refresh();
+    this.markTiles();
+    for (const id of this.evolved) {
+      const card = $('bench').querySelector<HTMLElement>(`[data-id="${id}"]`);
+      if (card && !card.classList.contains('placed')) summonBurst(card);
+    }
   }
 
   private defOf(id: string) {
@@ -2124,23 +2117,6 @@ class Game {
     saveRun(this.run);
     this.syncSprites();
     heroSays(h.kind, 'placed', () => this.anchorOfKind(h.kind));
-  }
-
-  /** After a summon: heroes merged away leave the board, and the merged hero takes the place of one of them (if it's in
-   *  the squad and isn't placed yet). */
-  private clearMerged(got: { id: number; kind: string }): void {
-    let freed: [number, number] | undefined;
-    for (const u of this.b.units.filter((x) => x.side === 'hero' && x.tag !== undefined && !heroOf(this.run, x.tag))) {
-      freed ??= [u.u, u.v];
-      unplace(this.b, u.def, u.tag);
-      this.placed.delete(String(u.tag));
-    }
-    if (freed && this.run.squad.includes(got.id) && !this.b.units.some((x) => x.tag === got.id)) {
-      // (the squad slot it holds is already the merged-away hero's: put it on that one's tile)
-      setSquad(this.run, got.id, false);
-      this.put(String(got.id), freed);
-    }
-    this.syncSprites();
   }
 
   /** A card was let go over the recycle area: a hero of grade 2 or more asks first. */
@@ -2201,7 +2177,8 @@ class Game {
   /** The bench: a card for every hero owned, rebuilt when the roster changes. */
   private buildBench(): void {
     const bench = $('bench');
-    const key = `${summonCost(this.run)};` + this.run.roster.map((h) => `${h.id}:${h.grade}:${this.levelOf(h)}:${powerOf(h.kind, this.boostFor(h))}`).join();
+    const ready = this.b.phase === 'deploy' ? mergeMatches(this.run) : new Set<number>();
+    const key = `${summonCost(this.run)};${[...ready].join('.')};` + this.run.roster.map((h) => `${h.id}:${h.grade}:${this.levelOf(h)}:${powerOf(h.kind, this.boostFor(h))}`).join();
     if (bench.dataset.key === key) return;
     bench.dataset.key = key;
     bench.replaceChildren();
@@ -2209,12 +2186,13 @@ class Game {
       const def = UNITS[h.kind];
       const id = String(h.id);
       const card = document.createElement('div');
-      card.className = `card g${h.grade}${this.evolved.has(h.id) ? ' evolve' : ''}`;
+      // (a hero with a match ready to merge glows: MERGE-TWO)
+      card.className = `card g${h.grade}${this.evolved.has(h.id) ? ' evolve' : ''}${ready.has(h.id) ? ' ready' : ''}`;
       card.dataset.id = id;
       const stars = document.createElement('em');
       stars.textContent = '★'.repeat(h.grade);
       const name = document.createElement('b');
-      name.textContent = def.name;
+      name.textContent = heroName(h.kind);
       const bar = document.createElement('i');
       bar.append(document.createElement('span'));
       const marks = document.createElement('small');
@@ -2253,6 +2231,7 @@ class Game {
       pw.className = 'pw';
       pw.textContent = `Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;
       card.append(portrait(formOf(def, h.grade), 96, h.grade), stars, name, lv, pw, marks, bar);
+      if (ready.has(h.id)) card.append(Object.assign(document.createElement('span'), { className: 'mergeMark', textContent: '⇧', title: 'A match is ready: drag one onto the other to merge' }));
       // (the last hero cannot be recycled)
       if (this.run.roster.length > 1) card.append(sell);
       card.title = `${def.role} · Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;
@@ -2452,12 +2431,20 @@ class Game {
       // (a run that levels its own heroes taught them in `finishTower`; the lasting XP is not touched)
       const own = run.local ? climbXpView(run) : null;
       const gains = own ? own.gains : fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp * (army ? armyXpShare(army, tierOfRun(run)) : 1));
-      const from = own ? own.from : Object.fromEntries(Object.keys(gains).map((k) => [k, xpOf(this.meta, k)]));
       // (the heroes of the run that sat out the fight earn a small share, to power-level the low ones)
       const bench = own ? {} : benchXp(gains, run.roster.map((h) => h.kind));
       const ups = own ? own.ups : gainXp(this.meta, { ...gains, ...bench });
-      this.benchNote = Object.keys(bench).length ? { each: Object.values(bench)[0], ups: ups.filter((u) => u.kind in bench) } : null;
       this.noteRecap(gains, ups.filter((u) => !(u.kind in bench)), won);
+      // (WAVE-RECAP: the wave's line for the end recap's strip, and anything it found; the short card takes its moments from the same)
+      // (a calamity's fights are counted one by one, its stage standing still; WAVE-RECAP-2)
+      noteWave(run, { wave: run.mode?.kind === 'calamity' ? recapOf(run).fights : stage, won, stars: won ? rating.stars : 0, ms: b.t, mvp: mvpOf(this.stats)?.kind, ...(this.heartsBurned ? { hearts: this.heartsBurned } : {}) }, run.found ?? []);
+      const fell = won ? b.units.filter((u) => u.side === 'hero' && u.owner === undefined && !u.alive && !UNITS[u.def].summon).map((u) => u.def) : [];
+      // (a calamity's map just cleared takes its share of the recap for its map recap, and the next map counts from here)
+      closeMapLeg(run);
+      // (WAVE-RECAP-2: the spire's floors and the Calamity's fights have the short card too; their decisions, the map and the picks, keep their own screens after it)
+      this.passing = won && !run.over && !run.cleared && !this.auto ? { wait: 0, marched: false } : null;
+      const title = run.tower ? towerHeadline(run.mode?.kind === 'calamity' ? 'calamity' : 'spire', stage, won, this.bossDown ? run.tower.act - 1 : undefined) : undefined;
+      this.waveCard = { wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [] };
       if (!this.auto) {
         const fought = b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def);
         endingQuip(fought, won, (k) => this.anchorOfKind(k));
@@ -2483,9 +2470,9 @@ class Game {
         this.showStars(won ? rating : null);
         drawRunStars($('armyStars'), army && run.cleared ? this.runStars : null, army ? tierOf(tierOfRun(run)).name : '');
         drawOreGain($('oreDrop'), this.oreGain);
-        this.showStats();
-        this.showXp(gains, from, ups, !own);
-        this.showBench();
+        // (WAVE-RECAP: every card is short: its one-liners here, the performance table and each hero's XP in the end recap or summary)
+        drawWaveNotes($('waveNotes'), this.waveCard ? waveNotes(this.waveCard) : []);
+        for (const id of ['xp', 'fightStats']) $(id).hidden = true;
       }
       saveMeta(this.meta);
       saveRun(run);
@@ -2501,7 +2488,7 @@ class Game {
     const combo = b.phase === 'deploy' ? comboOf(b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def)) : undefined;
     const deployCombo = combo ? ` · ${COMBO_NAME}: ${combo.name}` : '';
     $('status').textContent =
-      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : benchFull(run) ? `${stage} · bench full: recycle a hero to hire` : n ? `${stage} · ${n} of ${squadLimit(run)} placed${deployCombo}` : run.roster.length ? `${stage} · drag heroes onto the blue tiles` : `${stage} · no heroes yet: hire two`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
+      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : benchFull(run) ? `${stage} · bench full: merge or recycle a hero to hire` : n ? `${stage} · ${n} of ${squadLimit(run)} placed${deployCombo}` : run.roster.length ? `${stage} · drag heroes onto the blue tiles` : `${stage} · no heroes yet: hire two`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
     $('gold').textContent = `${run.gold} gold`;
     this.drawLives(run);
     const buy = $('summon') as HTMLButtonElement;
@@ -2510,7 +2497,13 @@ class Game {
     const block = hireBlock(run);
     buy.textContent = block === 'bench' ? 'Bench full' : `Hire · ${summonCost(run)}`;
     buy.disabled = block !== null;
-    buy.title = block === 'bench' ? 'The bench holds 10 heroes: recycle one, or send one to the field, to hire another' : '';
+    buy.title = block === 'bench' ? 'The bench holds 10 heroes: merge a pair, recycle one or send one to the field to hire another' : '';
+    // (the Auto merge button shows while a pair is ready, with how many: MERGE-TWO)
+    const pairs = b.phase === 'deploy' && run.mode?.kind !== 'calamity' ? mergeReady(run).length : 0;
+    const mergeAll = $('mergeAll') as HTMLButtonElement;
+    mergeAll.hidden = pairs === 0;
+    mergeAll.textContent = `Auto merge · ${pairs}`;
+    mergeAll.title = pairs ? `Merge every pair ready (${pairs}), and the pairs those make, up to rank 4` : '';
     ($('fight') as HTMLButtonElement).disabled = b.phase !== 'deploy' || n === 0;
     $('clock').textContent = b.phase === 'deploy' ? '' : clock(b.t);
     const result = $('result');
@@ -2523,7 +2516,12 @@ class Game {
       $('banner').textContent = daily && run.cleared ? 'Daily cleared!' : daily && run.over ? 'Daily over' : run.cleared ? (cal ? 'Calamity ended!' : 'Army defeated!') : this.bossDown ? `${cal ? 'Map' : 'Act'} ${run.tower!.act - 1} cleared!` : b.phase === 'won' ? (run.tower ? (cal ? 'Spot cleared!' : 'Floor cleared!') : 'Victory!') : 'Defeat';
       $('banner').className = `${b.phase}${daily ? ' daily' : ''}`;
       // (a daily's fall names the wave under its heading: "Daily over · wave 6/10")
-      if (daily && run.over && !run.cleared) $('banner').append(Object.assign(document.createElement('small'), { textContent: `wave ${run.best}/${DAILY_WAVES}` }));
+      // (WAVE-RECAP: a short card's heading names the wave and how it went, "Wave 4 of 15 won", bar the end of a cleared run)
+      const card = this.waveCard;
+      if (card && !run.cleared) {
+        $('banner').textContent = card.title ?? waveHeadline(card.wave, card.of, b.phase === 'won');
+        $('banner').className = b.phase;
+      } else if (daily && run.over && !run.cleared) $('banner').append(Object.assign(document.createElement('small'), { textContent: `wave ${run.best}/${DAILY_WAVES}` }));
       const share = this.pay?.replay ? ' (a replay pays a share)' : practice ? ' (practice)' : '';
       const clear = this.pay?.firstClear ? ' · first clear!' : '';
       $('summary').textContent =
@@ -2536,7 +2534,12 @@ class Game {
             : army
             ? `The ${army.name} holds at wave ${run.best} of ${army.waves.length}. It starts again from wave 1; your heroes keep their levels.`
             : `The run ends at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} summons · +${this.crownGain} crowns${modeNote(run)}`;
-      this.showJoke(b.phase === 'won');
+      // (a short card's pay line drops the finds, which have lines of their own, and the dry aside)
+      if (card && b.phase === 'won') $('summary').textContent = `+${this.gain} gold · +${this.crownGain} crowns${share}${clear} · ${clock(b.t)}`;
+      result.classList.toggle('short', !!card);
+      result.classList.toggle('passing', !!this.passing);
+      if (card) $('joke').hidden = true;
+      else this.showJoke(b.phase === 'won');
       this.drawDailyResult(run);
       $('next').textContent = run.over && !run.tower ? 'Run recap' : run.cleared && run.tower ? 'See the summary' : b.phase === 'won' ? (fixed ? `Next wave (${run.stage})` : run.tower ? 'To the map' : `Next stage (${run.stage})`) : run.tower ? 'See the summary' : 'Home';
     }
@@ -2642,13 +2645,18 @@ class Game {
     }
     if (b.phase !== 'deploy') return;
     const who = this.chosen;
+    // (a hero on the field with a match ready to merge stands on a gold tile; with a hero chosen, only its own matches do: MERGE-TWO)
+    const matches = mergeMatches(this.run);
     for (let v = 0; v < b.board.d; v++)
       for (let u = 0; u < b.board.w; u++) {
         if (!isDeployTile(v, b.board.d) || !standable(tileAt(b.board, u, v))) continue;
         const here = unitAt(b, u, v);
+        const tag = here?.side === 'hero' ? here.tag : undefined;
+        const mergeHere = tag !== undefined && (who ? canMerge(this.run, Number(who), tag) : matches.has(tag));
         const ok = who ? this.canPut(who, [u, v]) : !here;
-        if (this.hover && this.hover[0] === u && this.hover[1] === v) this.boardView.mark(u, v, who && ok ? 'hover' : 'bad');
+        if (this.hover && this.hover[0] === u && this.hover[1] === v) this.boardView.mark(u, v, who && (ok || mergeHere) ? 'hover' : 'bad');
         else if (here && who && String(here.tag) === who) this.boardView.mark(u, v, 'chosen');
+        else if (mergeHere) this.boardView.mark(u, v, 'merge');
         else if (ok) this.boardView.mark(u, v, 'deploy');
       }
     if (this.hover && !isDeployTile(this.hover[1], b.board.d)) this.boardView.mark(this.hover[0], this.hover[1], 'bad');

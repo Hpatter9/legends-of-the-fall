@@ -44,8 +44,8 @@ export interface UnitDef {
   still?: boolean;
 }
 
-/** The sheet a hero is drawn from at a grade (1 to 3). */
-export const formOf = (def: UnitDef, grade = 1): string => def.forms?.[grade - 1] ?? def.sheet;
+/** The sheet a hero is drawn from at a grade (1 to 4; grade 4 keeps the last form the packs have). */
+export const formOf = (def: UnitDef, grade = 1): string => def.forms?.[Math.min(grade, def.forms.length) - 1] ?? def.sheet;
 
 /** The share of a splash blow that lands on each tile beside the target. */
 export const SPLASH_SHARE = 0.5;
@@ -123,8 +123,8 @@ export const UNITS: Record<string, UnitDef> = {
   spearman: { id: 'spearman', name: 'Skeleton Spearman', side: 'foe', sheet: 'skeleton_spearman', scale: 0.67, hp: 270, atk: 28, def: 5, range: 2, moveMs: 650, atkMs: 1250, jump: 2, role: 'Reaches two tiles' },
   // Duchess the court's goat, in the rare fight she joins (`duchessFight.ts`): her base before her level-100 gains
   duchess: { id: 'duchess', name: 'Duchess', side: 'hero', sheet: 'duchess_goat', scale: 0.66, hp: 220, atk: 20, def: 6, range: 1, moveMs: 520, atkMs: 900, jump: 4, summon: true, role: 'Her Grace the court goat: she fights for herself, and today that is you' },
-  // the Last Stand's king (`stand.ts`): he stands on his keep, never moves and never strikes; his hp is the run's
-  standKing: { id: 'standKing', name: 'The King', side: 'hero', sheet: 'stand_king', scale: 0.8, hp: 1000, atk: 1, def: 4, range: 1, moveMs: 1000, atkMs: 1500, jump: 1, summon: true, role: 'The king, on his keep' },
+  // The Last Stand's ruler defends the central dais in melee; their hp remains the run's objective.
+  standKing: { id: 'standKing', name: 'The King', side: 'hero', sheet: 'stand_king', scale: 0.8, hp: 1000, atk: 24, def: 4, range: 1, moveMs: 1000, atkMs: 1500, jump: 1, summon: true, role: 'The ruler, defending the central dais' },
   boneArcher: { id: 'boneArcher', name: 'Skeleton Archer', side: 'foe', sheet: 'skeleton_archer', scale: 0.79, hp: 200, atk: 23, def: 3, range: 4, moveMs: 700, atkMs: 1400, jump: 2, shot: 'bone', role: 'Bone arrows' },
 };
 

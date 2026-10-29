@@ -1,16 +1,10 @@
-// The summoning's cards (SUMMON-TAROT). A shard from a summoning stone is a tarot card: the hero's black silhouette behind its
-// class sigil, in its class aura's colour, with its arcana number, its name, "+1 shard" and its bar; the hero's own figure is not
-// shown. A hero's figure is revealed the first time with its own scene, the unlock scene: the card glows, turns and breaks into
-// light, the hero rises out of it, and its name and title come in. It plays for every hero the first time it joins, whatever
-// brought it (shards, a lucky stone, a milestone earned in play), driven by the pull itself or by `Meta.heroesSeen`
-// (`sim/heroesSeen.ts`), so a reveal missed for any reason plays the next time the game can show it.
-//
-// Art: the card frame is `ui/tarot-frame.png` (one PixelLab generation); the sigils, bursts, rings and halos are strips of the
-// 5000 Pixel Effects pack packed into `art/tarot/arcana.png` (12 elements a row; glyph, burst, circle, aura, six 32px frames each).
-// Every moving part is a CSS animation or transition (nothing is drawn per frame), nothing blinks off and on, and with reduced
-// motion the scene is a calm fade from the card to the hero.
+// Shard rewards use tarot cards. New allies appear directly in the chamber: the summoner casts,
+// shields his eyes against the arrival flash, then relaxes as the hero and name are revealed.
+// The existing seen-hero queue covers stone pulls, earned heroes and interrupted reveals.
+// Atlas effects are from the credited Pixel Effects pack; reduced motion uses a calm fade.
 
 import { ALL_HEROES, UNITS } from './sim/units';
+import { heroName, heroTitle } from './sim/heroNames';
 import { RANK_SHARDS, rankOf, saveMeta, type Meta, type Pull } from './sim/meta';
 import { heroSeen, markHeroSeen, unseenHeroes } from './sim/heroesSeen';
 import { traitsOf, TRAITS } from './sim/traits';
@@ -21,6 +15,7 @@ import { duck, play as playSfx } from './render/sound';
 import { SKIP_GUARD_MS } from './render/summonRules';
 import arcanaUrl from './art/tarot/arcana.png';
 import sanctumUrl from './art/hall/sanctum.png';
+import { summoner } from './summoner';
 import swordIcon from './art/talent/sword.png';
 import shieldIcon from './art/talent/shield.png';
 import flameIcon from './art/talent/blast.png';
@@ -37,9 +32,9 @@ const TRAIT_ELEMENT: Record<string, (typeof ELEMENTS)[number]> = {
 const PART = { glyph: 0, burst: 1, circle: 2, aura: 3 } as const;
 const CLASS_ICON: Record<StarterClass, string> = { front: shieldIcon, striker: swordIcon, caster: flameIcon, shooter: targetIcon, support: haloIcon };
 
-/** When each beat of the reveal begins (ms): 1 the card glows, 2 it turns and breaks into light, 3 the hero rises, 4 its name. */
+/** Reveal beats (ms): casting, flash and eye shield, hero arrival, then name and return to idle. */
 export const BEATS = [0, 1000, 1700, 2900] as const;
-/** With reduced motion: the card, then one calm fade to the hero and its name. */
+/** With reduced motion: casting pose, then a calm fade to the hero and its name. */
 export const CALM_BEATS = [0, 900, 900, 900] as const;
 
 const roman = (n: number): string => {
@@ -114,7 +109,7 @@ export function heroCard(kind: string, px: number): HTMLElement {
 /** What a pull's card says under it: the name, what it gave, and its bar (green to join, gold to the next rank). */
 export function pullInfo(m: Meta, p: Pull): HTMLElement {
   const info = el('div', 'tarotInfo');
-  info.append(el('b', 'tarotName', UNITS[p.kind].name));
+  info.append(el('b', 'tarotName', heroName(p.kind)));
   const n = p.unlock ?? p.shards;
   const gain = p.isNew ? (p.lucky ? 'Lucky! Joined at once' : 'Joined your company') : p.crowns ? `+${p.crowns} crowns` : `${p.lucky ? 'Lucky! ' : ''}+${n} shard${n === 1 ? '' : 's'}`;
   info.append(el('em', 'tarotGain', gain));
@@ -126,7 +121,7 @@ export function pullInfo(m: Meta, p: Pull): HTMLElement {
   if (p.unlock && p.need) {
     part = p.have! / p.need;
     label = `${p.have}/${p.need} to join`;
-    bar.setAttribute('aria-label', `${UNITS[p.kind].name} recruitment`);
+    bar.setAttribute('aria-label', `${heroTitle(p.kind)} recruitment`);
   } else {
     // (a hero owned: its shards towards the next rank, as they stand now)
     const rank = rankOf(m, p.kind);
@@ -154,13 +149,13 @@ export function firstReveal(meta: Meta, kind: string, opts: { lucky?: boolean; h
   const reduced = reducedMotion();
   const root = el('div', `tarotReveal${reduced ? ' calm' : ''}`);
   root.setAttribute('role', 'dialog');
-  root.setAttribute('aria-label', `${def.name} joins your company`);
+  root.setAttribute('aria-label', `${heroTitle(kind)} joins your company`);
   root.style.setProperty('--cls', a.colour);
-  root.style.background = `linear-gradient(#030a07e6, #030a07f2), url("${sanctumUrl}") center / cover`;
+  root.style.background = `linear-gradient(#030a0730, #030a0740), url("${sanctumUrl}") center / 100% 100%`;
   const rays = el('div', 'trRays');
   const stage = el('div', 'trStage');
-  const card = el('div', 'trCard');
-  card.append(tarotFace(kind, 210));
+  const actor = summoner();
+  const flash = el('div', 'trFlash');
   const burst = strip(a.row, 'burst', '240px', 'trBurst once');
   const ring = strip(a.row, 'circle', '200px', 'trRing');
   const halo = strip(a.row, 'glyph', '210px', 'trHalo');
@@ -169,20 +164,21 @@ export function firstReveal(meta: Meta, kind: string, opts: { lucky?: boolean; h
   const plate = el('div', 'trPlate');
   plate.append(
     el('small', 'trKicker', opts.lucky ? 'A lucky summon' : 'A new ally answers'),
-    el('h3', '', def.name),
+    el('h3', '', heroTitle(kind)),
     el('span', 'trTitle', `${a.numeral} · ${a.title}`),
     el('p', 'trRole', def.role),
     el('span', 'trJoin', 'Joins your company'),
   );
-  const lead = el('p', 'trLead', opts.lucky ? 'The stone burns gold…' : 'A new card is drawn…');
+  const lead = el('p', 'trLead', opts.lucky ? 'The stone burns gold…' : 'The summoner calls an ally…');
   const hint = el('small', 'trHint', 'Tap to skip');
-  stage.append(halo, ring, fig, card, burst);
-  root.append(rays, lead, stage, plate, hint);
+  stage.append(halo, ring, fig, burst);
+  root.append(rays, actor, lead, stage, plate, flash, hint);
   document.body.append(root);
   duck(true, 'reveal');
   let at = performance.now();
   const set = (n: number) => {
     root.dataset.stage = `${n}`;
+    actor.dataset.pose = n === 1 ? 'cast' : n < 4 ? 'shield' : 'idle';
     if (n === 4) {
       hint.textContent = 'Tap to continue';
       at = performance.now();
@@ -252,6 +248,14 @@ export const revealing = (): boolean => playing > 0 || waiting.size > 0;
 
 // The styles (the page's palette: brass, emerald, parchment).
 const css = `
+.tarotReveal .trFlash { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(ellipse at 54% 52%, #fffef1, #fff4bbcc 25%, #ffeaa000 75%); }
+.tarotReveal[data-stage="2"] .trFlash { animation: summonFlash .7s ease-out both; }
+@keyframes summonFlash { 0% { opacity: 0; } 12% { opacity: .95; } 100% { opacity: 0; } }
+.tarotReveal.calm .trFlash, .tarotReveal.skipped .trFlash { display: none; }
+.tarotReveal .summonerActor { z-index: 1; }
+.tarotReveal .trStage, .tarotReveal .trPlate { z-index: 2; }
+.tarotReveal .trPlate { width: calc(100% - 32px); max-width: 370px; padding: 10px 0; background: #06170fe6; border: 1px solid #b99349; box-shadow: 0 4px 18px #0008; }
+
 .tarotStrip { display: block; background-image: url("${arcanaUrl}"); background-repeat: no-repeat; image-rendering: pixelated; background-position-x: var(--sx); animation: tarotStrip 0.9s steps(6) infinite; }
 .tarotStrip.once { animation: none; background-position-x: var(--sx); }
 .tarotReveal[data-stage="2"] .tarotStrip.once { animation: tarotOnce 0.5s steps(4, jump-none) forwards; }
@@ -309,7 +313,6 @@ const css = `
 .tarotReveal .trLead { position: absolute; top: 9%; margin: 0; font: italic 700 18px var(--display); color: #e9d6a5; transition: opacity .4s; }
 .tarotReveal .trStage { position: relative; width: 320px; height: 360px; display: grid; place-items: center; }
 .tarotReveal .trStage > * { position: absolute; }
-.tarotReveal .trCard { width: 210px; perspective: 900px; transition: transform .7s ease-in, opacity .3s .5s; filter: drop-shadow(0 0 18px var(--cls)); animation: trFloat 2s ease-in-out infinite alternate; }
 @keyframes trFloat { from { translate: 0 -4px; } to { translate: 0 4px; } }
 .tarotReveal .trBurst { opacity: 0; pointer-events: none; filter: drop-shadow(0 0 12px var(--cls)); }
 .tarotReveal .trRing { bottom: -30px; opacity: 0; transform: scaleY(.9); transition: opacity .5s; }
@@ -322,12 +325,10 @@ const css = `
 .tarotReveal .trRole { margin: 6px 24px 0; font: 13px/1.3 var(--body); color: #c9d8c5; }
 .tarotReveal .trJoin { display: block; margin-top: 8px; font: 700 13px var(--body); color: #b8eac2; }
 .tarotReveal .trHint { position: absolute; bottom: calc(env(safe-area-inset-bottom) + 22px); color: #c9c09e; font: 12px var(--body); }
-.tarotReveal[data-stage="2"] .trCard { transform: rotateY(90deg) scale(1.08); }
 .tarotReveal[data-stage="2"] .trRays, .tarotReveal[data-stage="3"] .trRays, .tarotReveal[data-stage="4"] .trRays { opacity: 1; animation: trSpin 24s linear infinite; }
 @keyframes trSpin { to { rotate: 360deg; } }
 .tarotReveal[data-stage="2"] .trBurst { opacity: 1; }
 .tarotReveal[data-stage="3"] .trBurst { opacity: 0; transition: opacity .5s; }
-.tarotReveal[data-stage="3"] .trCard, .tarotReveal[data-stage="4"] .trCard { opacity: 0; transform: rotateY(90deg); transition: opacity .15s; }
 .tarotReveal[data-stage="3"] .trRing, .tarotReveal[data-stage="4"] .trRing { opacity: 1; }
 .tarotReveal[data-stage="3"] .trHalo { opacity: .7; }
 .tarotReveal[data-stage="4"] .trHalo { opacity: .35; }
@@ -338,7 +339,7 @@ const css = `
 .tarotReveal[data-stage="4"] .trPlate { opacity: 1; transform: none; }
 .tarotReveal.calm *, .tarotReveal.skipped * { animation-duration: 0s !important; transition-duration: .35s !important; transition-delay: 0s !important; }
 .tarotReveal.calm .trRays, .tarotReveal.calm .trBurst { display: none; }
-.tarotReveal.calm .trCard, .tarotReveal.calm .trFigure, .tarotReveal.calm .trPlate { transform: none !important; translate: none; }
+.tarotReveal.calm .trFigure, .tarotReveal.calm .trPlate { transform: none !important; translate: none; }
 `;
 const style = document.createElement('style');
 style.textContent = css;

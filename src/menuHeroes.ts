@@ -20,6 +20,7 @@ import { TREES } from './sim/talents';
 import { blowsPerSecond, jumpText, kindPower, powerText, rateText, tilesPerSecond } from './sim/power';
 import { heroStats } from './sim/talents';
 import { heroArtwork, openHeroArtwork } from './heroArtwork';
+import { heroName, heroTitle } from './sim/heroNames';
 import { CONTENT_HEROES, lockInfo } from './sim/contentHeroes';
 import { haveOf, toCollect } from './sim/unlock';
 import swordIcon from './art/talent/sword.png';
@@ -128,7 +129,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
       const button = el('button', other === kind ? 'selected' : '');
       button.type = 'button';
       button.setAttribute('aria-current', other === kind ? 'true' : 'false');
-      button.append(heroArtwork(other), el('small', '', UNITS[other].name));
+      button.append(heroArtwork(other), el('small', '', heroName(other)));
       button.addEventListener('click', () => state.onPick?.(other, state.tab));
       strip.append(button);
     }
@@ -147,7 +148,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
   let closeArtwork: (() => void) | undefined;
   const view = el('button', 'heroArtOpen');
   view.type = 'button';
-  view.setAttribute('aria-label', `View ${def.name} full artwork`);
+  view.setAttribute('aria-label', `View ${heroTitle(kind)} full artwork`);
   view.append(artwork, el('span', 'heroArtHint', 'View full artwork ⤢'));
   view.disabled = !open;
   view.addEventListener('click', () => { closeArtwork = openHeroArtwork(kind, view); });
@@ -161,7 +162,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
   pic.append(banner);
   const title = el('div', 'dossierIdentity');
   const lock = lockInfo(meta, kind);
-  title.append(el('h3', '', open || lock?.named ? def.name : '???'), el('em', '', open ? `${CLASS_NAMES[CLASS_OF[kind]]} · ${def.role}` : lock?.named ? `${CLASS_NAMES[CLASS_OF[kind]]} · locked` : 'not yet recruited'));
+  title.append(el('h3', '', open || lock?.named ? heroTitle(kind) : '???'), el('em', '', open ? `${CLASS_NAMES[CLASS_OF[kind]]} · ${def.role}` : lock?.named ? `${CLASS_NAMES[CLASS_OF[kind]]} · locked` : 'not yet recruited'));
   // (a hero not owned says how to get it: a milestone to reach, or shards to gather, with a bar where there is a count)
   if (lock) {
     title.append(el('span', 'lv', lock.line));
@@ -294,7 +295,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
       for (const [label, a, cost, opens] of [
         ['Skill 1', hk?.s1.skill ?? kit.skill, hk ? `${hk.s1.cost} ${hk.pool}` : '', 1],
         ...(hk ? ([['Skill 2', hk.s2.skill, `${hk.s2.cost} ${hk.pool}${hk.s2.hpCost ? ' and blood' : ''}`, SKILL2_LEVEL]] as const) : []),
-        ...(TIER_SKILLS[kind] ? ([['Tier 2', TIER_SKILLS[kind][0], '', 1], ['Tier 3', TIER_SKILLS[kind][1], '', 1]] as const) : []),
+        ...(TIER_SKILLS[kind] ? ([['Tier 2', TIER_SKILLS[kind][0], '', 1], ['Tier 3', TIER_SKILLS[kind][1], '', 1], ['Tier 4', TIER_SKILLS[kind][2], '', 1]] as const) : []),
         ...(kit.ultimate ? [['Ultimate', kit.ultimate, 'tap its portrait', kit.ultimate.unlock ?? 1] as const] : []),
         ['Passive', kit.passive, '', 1],
       ] as const) {
@@ -358,7 +359,7 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
   box.append(label);
   const searchable: { element: HTMLElement; text: string }[] = [];
   const remember = (element: HTMLElement, kind: string, named = true) => {
-    searchable.push({ element, text: named ? `${UNITS[kind].name} ${CLASS_NAMES[CLASS_OF[kind]]} ${CARD_CLASSES[CLASS_OF[kind]].name}`.toLowerCase() : '' });
+    searchable.push({ element, text: named ? `${heroName(kind)} ${UNITS[kind].name} ${CLASS_NAMES[CLASS_OF[kind]]} ${CARD_CLASSES[CLASS_OF[kind]].name}`.toLowerCase() : '' });
   };
   const result = el('p', 'rosterResult');
   result.setAttribute('role', 'status');
@@ -384,7 +385,10 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
     const level = progressOf(xpOf(meta, kind)).level;
     const ribbon = el('span', 'heroLevelRibbon');
     ribbon.append(levelBadge(level));
-    card.append(banner, scene, el('b', 'heroCardName', UNITS[kind].name), el('span', 'stars', starsOf(meta, kind)), ribbon);
+    // (the hero's own name, its class under it)
+    const name = el('b', 'heroCardName');
+    name.append(el('span', '', heroName(kind)), el('small', 'heroCardKind', UNITS[kind].name));
+    card.append(banner, scene, name, el('span', 'stars', starsOf(meta, kind)), ribbon);
     if (kind === lastViewed) {
       card.classList.add('lastViewed');
       const seal = el('span', 'heroCardSeal', '✓');
@@ -402,7 +406,7 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
     const lock = lockInfo(meta, kind)!;
     const r = el('button', 'rosRow');
     const text = el('span', 'rosText');
-    text.append(el('b', '', lock.named ? UNITS[kind].name : '???'), el('span', 'lv', lock.line));
+    text.append(el('b', '', lock.named ? heroTitle(kind) : '???'), el('span', 'lv', lock.line));
     if (lock.need) {
       const bar = el('div', 'xpbar');
       const fill = el('span');

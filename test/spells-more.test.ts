@@ -12,6 +12,7 @@ import {
 import { tileAt } from '../src/sim/board';
 import { startedMeta } from '../src/sim/meta';
 import { readyBattle } from './helpers';
+import { dotOf } from '../src/sim/ailments';
 
 const NEW: SpellId[] = ['cleanse', 'blink', 'hex', 'lance', 'renewal', 'deepfreeze', 'warcry', 'bulwark', 'wolves', 'starfall'];
 
@@ -103,13 +104,14 @@ test('deep freeze holds the sturdiest foe in the area, which takes 30% more unti
   assert.ok(big.busyUntil >= b.t + DEEPFREEZE_MS && big.stunUntil === b.t + DEEPFREEZE_MS);
   assert.equal(small.stunUntil, undefined);
   assert.equal(out.brittleUntil, undefined);
+  // (a light blow: STATUS-FX's frozen foe shatters under a heavy one, 15% of its health or more, `ailments.test.ts`)
   const before = big.hp;
-  hurt(b, k, big, 100, false, false, []);
-  assert.equal(before - big.hp, Math.round(100 * BRITTLE_MULT));
+  hurt(b, k, big, 40, false, false, []);
+  assert.equal(before - big.hp, Math.round(40 * BRITTLE_MULT));
   b.t += DEEPFREEZE_MS;
   const after = big.hp;
-  hurt(b, k, big, 100, false, false, []);
-  assert.equal(after - big.hp, 100);
+  hurt(b, k, big, 40, false, false, []);
+  assert.equal(after - big.hp, 40);
 });
 
 test('battle cry jumps every hero\'s skill meter by 40, never past full', () => {
@@ -216,14 +218,14 @@ test('cleanse frees heroes in the area of burns, slows, holds and charms, and he
     x.hp = Math.round(x.maxHp * 0.5);
   }
   assert.ok(castSpell(b, 'cleanse', 3, 7));
-  assert.equal(a.dot, undefined);
+  assert.equal(dotOf(a), undefined);
   assert.equal(a.slowUntil, undefined);
   assert.equal(a.stunUntil, undefined);
   assert.equal(a.charmUntil, undefined);
   assert.ok(a.busyUntil <= b.t + TICK_MS);
   assert.equal(a.hp, Math.round(a.maxHp * 0.5) + Math.round(a.maxHp * CLEANSE_HEAL));
-  assert.ok(out.dot && out.slowUntil && out.stunUntil && out.charmUntil);
-  assert.ok(foe.dot && foe.slowUntil);
+  assert.ok(dotOf(out) && out.slowUntil && out.stunUntil && out.charmUntil);
+  assert.ok(dotOf(foe) && foe.slowUntil);
   assert.equal(out.hp, Math.round(out.maxHp * 0.5));
 });
 

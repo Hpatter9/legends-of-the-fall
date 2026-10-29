@@ -35,6 +35,7 @@ import { chestsFor, gearChance, settleTower } from './tower';
 import type { Run } from './run';
 import { grantEquipment, rollEquipment, itemName } from './equipment';
 import { UNITS } from './units';
+import { ailmentsOf } from './ailments';
 
 /* ------------------------------------------------------------------ the numbers */
 
@@ -53,15 +54,16 @@ export const WAVE_START = FOE_START;
 export const WAVE_GROWTH = 0.4;
 /** From wave `WAVE_KNEE` on the climb eases to `WAVE_GROWTH_LATE` a wave: steep at first, so the early waves bite at once; gentler later, so a stronger party still goes further. */
 export const WAVE_KNEE = 10;
-export const WAVE_GROWTH_LATE = 0.2;
+export const WAVE_GROWTH_LATE = 0.26;
 /** The castle's rooms (STAND-003) bring the foes in by two or three breaches, onto the posts: their strength is eased by this to keep the agreed pace
  *  (0.85 until the idle heroes went to help, STAND-004, which made the waves easier: now 0.88, with a steeper late and deep climb). */
 export const HALL_EASE = 0.88;
 /** From wave `WAVE_DEEP` the climb steepens again by `WAVE_GROWTH_DEEP` a wave (STAND-003: the strongest parties kept near the agreed pace, about wave 25 at level 100;
  *  STAND-004 moved it from wave 22 at 0.6 to wave 18 at 0.35, and the late climb from 0.1 to 0.14, for the heroes who go to help; ULT-CHARGE, for the
- *  ultimates that now come round about once a wave, the late climb to 0.2 and the deep one to 0.29, so the climb past wave 18 is as steep as it was). */
+ *  ultimates that now come round about once a wave, the late climb to 0.2 and the deep one to 0.29, so the climb past wave 18 is as steep as it was;
+ *  STATUS-FX, for the heroes' ailments, which carried a level-30 party three waves further, the late climb to 0.26 and the deep one to 0.24). */
 export const WAVE_DEEP = 18;
-export const WAVE_GROWTH_DEEP = 0.29;
+export const WAVE_GROWTH_DEEP = 0.24;
 /** A wave's size: foes at wave 1 and the foes each wave adds. */
 export const WAVE_BASE = 4;
 export const WAVE_STEP = 2;
@@ -679,7 +681,7 @@ function dropCorpses(s: Stand): void {
   for (const z of b.zones) held.add(z.by);
   for (const t of b.traps ?? []) held.add(t.by);
   for (const u of b.units) {
-    if (u.dot) held.add(u.dot.by);
+    for (const a of ailmentsOf(u)) if (a.dmg) held.add(a.by);
     if (u.hot?.by !== undefined) held.add(u.hot.by);
     if (u.owner !== undefined) held.add(u.owner);
     if (u.taunt) held.add(u.taunt.to);
