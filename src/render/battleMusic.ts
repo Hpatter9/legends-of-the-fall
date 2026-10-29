@@ -10,11 +10,12 @@
 // - the Last Stand: the whole run, until the king falls (it never wins, so it never has victory music);
 // - a plain stage run (a field fight, from an old save): each stage.
 
-import { fallOutcome, isBossRun, tierOfRun, waveArmyOf, type Run } from '../sim/run';
-import type { MusicId, Place } from './epicMusic';
+import { fallOutcome, isBossRun, waveArmyOf, type Run } from '../sim/run';
+import { ARMY_TRACKS, type ArmyTrack, type MusicId, type Place } from './epicMusic';
 
-/** The three battle tracks, easiest first. */
-export const BATTLE_TRACKS = ['battle', 'battle2', 'battle3'] as const;
+/** The general battle track: the main theme in its plainest dress, for the battles that are no army's own (the daily, the
+ *  Last Stand, a spire floor, a field fight). */
+export const GENERAL_TRACK: MusicId = 'battle';
 
 /** How loud the triumph loop sits under the results, against a track's full level (about -4.4 dB): a bed, not a fanfare. */
 export const VICTORY_BED = 0.6;
@@ -22,38 +23,31 @@ export const VICTORY_BED = 0.6;
 /** The track the victory fanfare leads into, and the fanfare itself (a sting). */
 export const VICTORY_LOOP: MusicId = 'triumph';
 
-/** A seed's pick among the three battle tracks (any whole number, negative too). */
-const bySeed = (seed: number): MusicId => BATTLE_TRACKS[(seed >>> 0) % 3];
-
-/** How deep a single fight is, 0 to 2, for its battle track: floor or stage 1-9, 10-24, 25 up; an elite fight a step harder. */
-export function depthLevel(stage: number, elite = false): number {
-  const level = stage >= 25 ? 2 : stage >= 10 ? 1 : 0;
-  return Math.min(2, level + (elite ? 1 : 0));
+/** An army's own battle track (the main theme in its dress: docs/notes/music-theme.md), or the general one for an army with none. */
+export function armyTrack(id: string): MusicId {
+  return (ARMY_TRACKS as readonly string[]).includes(id) ? (id as ArmyTrack) : GENERAL_TRACK;
 }
 
 /** The one track a battle plays from its first wave to its end. It reads only what holds for the whole battle (the mode, the
- *  army's tier and waves, the run's seed; for a single fight its floor), so asking again at a later wave gives the same track,
- *  and a boss wave inside an army or a daily does not change it:
+ *  army, whether a single fight is a boss), so asking again at a later wave gives the same track, and a boss wave inside an
+ *  army or a daily does not change it:
  *  - the Calamity: a boss spot `boss`, any other `calbattle`;
- *  - a spire floor or a field fight (one fight each): a boss `boss`, else a battle track by depth (`depthLevel`);
- *  - an army run: `boss` for an army that is one boss wave and nothing else; Legendary and Mythic (tier 3 up) the hardest
- *    track, `battle3`; any lower tier one of the three by the run's seed, so runs differ;
- *  - the daily: one of the three by its date (the same all day, another tomorrow). */
+ *  - an army run: `boss` for an army that is one boss wave and nothing else, otherwise the army's own track, at every tier;
+ *  - the daily: the general track (whichever army's foes the day brings);
+ *  - a spire floor or a field fight (one fight each): a boss `boss`, else the general track. */
 export function trackOfRun(run: Run): MusicId {
   const mode = run.mode?.kind;
   if (mode === 'calamity') return isBossRun(run) ? 'boss' : 'calbattle';
   const army = waveArmyOf(run);
   if (army) {
     if (army.waves.length === 1 && army.waves[0].boss) return 'boss';
-    if (mode === 'army' && tierOfRun(run) >= 3) return 'battle3';
-    return bySeed(run.mode?.kind === 'daily' ? run.mode.date : run.seed);
+    return run.mode?.kind === 'army' ? armyTrack(run.mode.army) : GENERAL_TRACK;
   }
-  if (isBossRun(run)) return 'boss';
-  return BATTLE_TRACKS[depthLevel(run.stage, run.tower?.cur?.kind === 'elite')];
+  return isBossRun(run) ? 'boss' : GENERAL_TRACK;
 }
 
-/** The Last Stand's track for a run: one of the three by its seed (a run resumed from its save keeps its track). */
-export const standTrack = (seed: number): MusicId => bySeed(seed);
+/** The Last Stand's track: the general one (the run's seed is kept for the call, so a resumed run asks the same way). */
+export const standTrack = (_seed: number): MusicId => GENERAL_TRACK;
 
 /** What the music does as a fight ends: `victory` when the battle is won (the fanfare, then the triumph loop under the results),
  *  `defeat` when it is lost for good (the defeat sting, as before), `none` when it carries on (a wave won with more to come, or a

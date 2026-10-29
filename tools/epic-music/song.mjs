@@ -1,9 +1,9 @@
 // A song: a tempo, a key, a chord grid and layers of notes placed on it; then the mix (buses, sends, the hall) and the master.
 
 import { SR, Rng, Biquad, compress, limit, rms, linToDb } from './dsp.mjs';
-import { Bus, strings, choir, brass, organ, harpsichord, piano, musicbox, bell, guitarLead, guitarChord, bassSynth, cello, drum, swell, timpani, rng as voiceRng } from './instruments.mjs';
+import { Bus, strings, choir, brass, organ, harpsichord, piano, musicbox, bell, guitarLead, guitarChord, bassSynth, cello, drum, swell, timpani, synthLead, flute, pluck, slapBass, anvil, rng as voiceRng } from './instruments.mjs';
 import { hallIR, reverbOf, ensemble, pingpong, eq, widen } from './fx.mjs';
-import { pcOf, midiOf, MINOR, MAJOR, chordOf, voiceLead, parseMelody } from './theory.mjs';
+import { pcOf, midiOf, MINOR, MAJOR, DORIAN, PHRYGIAN, chordOf, voiceLead, parseMelody } from './theory.mjs';
 
 /** The instruments: which bus each sits on and how a note is played. */
 const INST = {
@@ -23,6 +23,20 @@ const INST = {
   mbox: { bus: 'keys', fn: musicbox, jit: 0.004 },
   bell: { bus: 'bells', fn: bell, jit: 0 },
   timp: { bus: 'timp', fn: (b, t, d, m, v, o) => timpani(b, t, d, m, v, o), jit: 0.003 },
+  // (the JRPG band's voices: docs/notes/music-theme.md)
+  lead: { bus: 'lead', fn: synthLead, jit: 0 },
+  sqlead: { bus: 'lead', fn: (b, t, d, m, v, o) => synthLead(b, t, d, m, v, { square: true, detune: 5, cut: 2200 + 3000 * v, ...o }), jit: 0 },
+  flute: { bus: 'flute', fn: flute, jit: 0.004 },
+  shaku: { bus: 'flute', fn: (b, t, d, m, v, o) => flute(b, t, d, m, v, { breathy: 0.32, vib: 9, bend: 1, a: 0.08, ...o }), jit: 0.006 },
+  fiddle: { bus: 'fiddle', fn: (b, t, d, m, v, o) => strings(b, t, d, m, v, { voices: 2, spread: 5, width: 0.25, vib: 15, a: 0.025, r: 0.12, cut: 3800 + 3000 * v, gain: 2.2, ...o }), jit: 0.003 },
+  violins: { bus: 'strings', fn: (b, t, d, m, v, o) => strings(b, t, d, m, v, { a: 0.05, r: 0.2, vib: 10, cut: 2600 + 3800 * v, gain: 1.3, ...o }), jit: 0.006 },
+  koto: { bus: 'koto', fn: (b, t, d, m, v, o) => pluck(b, t, d, m, v, { ring: 1.3, bright: 0.75, pos: 0.12, body: 520, ...o }), jit: 0.002 },
+  harp: { bus: 'koto', fn: (b, t, d, m, v, o) => pluck(b, t, d, m, v, { ring: 2.2, bright: 0.35, pos: 0.3, body: 300, ...o }), jit: 0.003 },
+  tuba: { bus: 'brass', fn: (b, t, d, m, v, o) => brass(b, t, d, m, v, { a: 0.03, cut: 520 + 1100 * v, sus: 0.85, bloom: 0.05, gain: 1.5, ...o }), jit: 0.004 },
+  trumpet: { bus: 'brass', fn: (b, t, d, m, v, o) => brass(b, t, d, m, v, { a: 0.02, cut: 2200 + 5200 * v, bloom: 0.05, vib: 10, sus: 0.85, ...o }), jit: 0.003 },
+  slap: { bus: 'bass', fn: slapBass, jit: 0 },
+  synth: { bus: 'synth', fn: (b, t, d, m, v, o) => synthLead(b, t, d, m, v, { square: true, a: 0.002, dTau: 0.12, sus: 0.2, vib: 0, cut: 1800 + 4200 * v, ...o }), jit: 0 },
+  anvil: { bus: 'metal', fn: anvil, jit: 0.001 },
 };
 
 /** Default bus settings. `gain` is the dry level, `hall` and `room` the sends. */
@@ -40,6 +54,12 @@ const BUSES = {
   bells: { gain: 0.8, hall: 0.55, room: 0, eq: [{ type: 'hp', hz: 120 }] },
   drums: { gain: 0.95, hall: 0.1, room: 0.28, comp: { threshold: -16, ratio: 3, attack: 6, release: 90 }, eq: [{ type: 'hp', hz: 35 }] },
   timp: { gain: 1, hall: 0.45, room: 0.1, eq: [{ type: 'hp', hz: 30 }] },
+  lead: { gain: 0.62, hall: 0.24, room: 0.05, ens: 0.35, echo: { beats: 0.75, feedback: 0.3, wet: 0.2 }, eq: [{ type: 'hp', hz: 180 }, { type: 'peak', hz: 2600, q: 0.8, g: 1.5 }] },
+  flute: { gain: 0.9, hall: 0.4, room: 0.04, eq: [{ type: 'hp', hz: 220 }] },
+  fiddle: { gain: 0.8, hall: 0.3, room: 0.06, eq: [{ type: 'hp', hz: 190 }, { type: 'peak', hz: 480, q: 1.2, g: 2.5 }, { type: 'peak', hz: 2900, q: 1.1, g: 3 }, { type: 'lp', hz: 7500 }] },
+  koto: { gain: 0.9, hall: 0.32, room: 0.08, eq: [{ type: 'hp', hz: 140 }, { type: 'peak', hz: 3000, q: 1, g: 2 }] },
+  synth: { gain: 0.5, hall: 0.18, room: 0.05, ens: 0.45, echo: { beats: 0.375, feedback: 0.25, wet: 0.18 }, eq: [{ type: 'hp', hz: 200 }] },
+  metal: { gain: 0.7, hall: 0.28, room: 0.12, eq: [{ type: 'hp', hz: 300 }] },
 };
 
 const DRUMS = new Set(['kick', 'snare', 'rim', 'hat', 'openhat', 'ride', 'crash', 'tom1', 'tom2', 'tom3', 'taiko', 'taikoRim', 'gong']);
@@ -62,10 +82,13 @@ export class Song {
   constructor(o) {
     Object.assign(this, { beatsPerBar: 4, loop: true, mode: 'min', target: 0.16, tail: 4, hallSeconds: 3.4, hallRt: [4.2, 3.4, 2.3, 1.1], seed: 1, mix: {}, ...o });
     this.tonicPc = pcOf(this.key);
-    this.scale = this.mode === 'maj' ? MAJOR : MINOR;
+    this.scale = o.scale ?? { maj: MAJOR, dor: DORIAN, phr: PHRYGIAN }[this.mode] ?? MINOR;
     this.spb = 60 / this.bpm;
     this.beats = this.bars * this.beatsPerBar;
     this.loopSeconds = this.beats * this.spb;
+    // (`intro`: bars at the start that play once; the loop then runs from their end. The song's last bars must be the same
+    //  music as the intro, so the loop's join hears what came before the intro's end. See render.mjs and music-theme.md.)
+    this.introSeconds = (this.intro ?? 0) * this.beatsPerBar * this.spb;
     this.events = [];
     this.grid = []; // chord segments {t, d, chord}
     this.rng = new Rng(this.seed * 977 + 5);
@@ -80,7 +103,7 @@ export class Song {
       const parts = body.split('+');
       for (let r = 0; r < (rep ? Number(rep) : 1); r++) {
         const d = this.beatsPerBar / parts.length;
-        parts.forEach((sym, i) => this.grid.push({ t: b * this.beatsPerBar + i * d, d, chord: chordOf(sym, this.tonicPc), sym }));
+        parts.forEach((sym, i) => this.grid.push({ t: b * this.beatsPerBar + i * d, d, chord: chordOf(sym, this.tonicPc, this.scale), sym }));
         b++;
       }
     }
@@ -175,28 +198,82 @@ export class Song {
   }
 
   /** A written melody, from bar `bar` (a bar number, fractions allowed). `oct` is the octave of degree 1. */
-  mel(inst, bar, text, { oct = 4, vel = 0.8, art = 0.95, o = {}, tr = 0, accent = 0.08 } = {}) {
+  mel(inst, bar, text, { oct = 4, vel = 0.8, art = 0.95, o = {}, tr = 0, accent = 0.08, snap = null, glide = 0 } = {}) {
     const tonic = midiOf(this.tonicPc, oct) + tr;
     const { notes, beats } = parseMelody(text, tonic, this.scale);
+    // (`snap`: semitones above the tonic that the tune is moved onto, keeping its direction: the yokai's pentatonic)
+    if (snap) {
+      let prevIn = null;
+      let prevOut = null;
+      for (const n of notes) {
+        const rel = (((n.midi - tonic) % 12) + 12) % 12;
+        if (!snap.includes(rel)) {
+          const up = prevIn === null || n.midi >= prevIn;
+          let m = n.midi;
+          for (let k = 1; k < 12; k++) {
+            const c = n.midi + (up ? k : -k);
+            if (snap.includes((((c - tonic) % 12) + 12) % 12)) { m = c; break; }
+          }
+          // (never let the snap turn a step into a repeated note when the other way keeps it moving)
+          if (m === prevOut) for (let k = 1; k < 12; k++) {
+            const c = n.midi + (up ? -k : k);
+            if (snap.includes((((c - tonic) % 12) + 12) % 12)) { m = c; break; }
+          }
+          prevIn = n.midi;
+          n.midi = m;
+        } else prevIn = n.midi;
+        prevOut = n.midi;
+      }
+    }
+    // (`glide`: a lead slides up into each note that leaps, as a synth lead or a guitar does)
+    if (glide) notes.forEach((n, i) => {
+      if (i && Math.abs(n.midi - notes[i - 1].midi) >= 3) n.o = { glide, slide: glide };
+    });
     const t0 = bar * this.beatsPerBar;
-    for (const n of notes) this.add(inst, t0 + n.t, n.d * art, n.midi, Math.min(1, vel + (n.t % 1 === 0 ? accent : 0)), o);
+    for (const n of notes) this.add(inst, t0 + n.t, n.d * art, n.midi, Math.min(1, vel + (n.t % 1 === 0 ? accent : 0)), n.o ? { ...o, ...n.o } : o);
     this.melodies.push({ inst, from: t0, notes: notes.map((n) => ({ ...n, t: n.t + t0 })) });
     return bar + beats / this.beatsPerBar;
   }
 
+  /** A counter-melody drawn from the chords: on each `rhythm` slot (beats, repeating every bar) the chord tone nearest the last
+   *  note in [lo, hi], stepping to the next one up or down on the off-slots so the line keeps moving, like a horn's inner line. */
+  line(inst, from, to, { lo = 55, hi = 72, rhythm = [2, 1.5, 0.5], vel = 0.6, o = {}, art = 0.92, dir = 1 } = {}) {
+    let prev = Math.round((lo + hi) / 2);
+    let d = dir;
+    for (let bar = from; bar < to; bar++) {
+      let t = bar * this.beatsPerBar;
+      rhythm.forEach((len, k) => {
+        const ch = this.chordAt(t);
+        const cands = [];
+        for (let m = lo; m <= hi; m++) if (ch.tones.includes(((m % 12) + 12) % 12)) cands.push(m);
+        let best = cands.reduce((a, b) => (Math.abs(b - prev) < Math.abs(a - prev) ? b : a), cands[0]);
+        if (k > 0 && best === prev) {
+          const i = cands.indexOf(best) + d;
+          if (i < 0 || i >= cands.length) d = -d;
+          best = cands[Math.max(0, Math.min(cands.length - 1, cands.indexOf(best) + d))];
+        }
+        this.add(inst, t, len * art, best, vel * (k === 0 ? 1 : 0.9), o);
+        prev = best;
+        t += len;
+      });
+    }
+  }
+
   /** Drums over the bars, from a groove (see GROOVES), optionally with fills on the listed bars (the last beat) and crashes on bars. */
-  kit(from, to, { groove = 'rock', fills = [], crash = [], vel = 1, pan = 0, tomFill = 'tom', skip = [] } = {}) {
+  kit(from, to, { groove = 'rock', fills = [], crash = [], vel = 1, pan = 0, tomFill = 'tom', skip = [], map = {} } = {}) {
     const g = typeof groove === 'string' ? GROOVES[groove] : groove;
     for (let bar = from; bar < to; bar++) {
       const t0 = bar * this.beatsPerBar;
       const filling = fills.includes(bar);
       for (const [name, pat] of Object.entries(g)) {
-        const kind = name === 'open' ? 'openhat' : name;
+        const named = name === 'open' ? 'openhat' : name;
+        // (`map` swaps a kit piece for another: a war drum for the kick, an anvil for the snare, a clank for the hat)
+        const kind = map[named] ?? named;
         for (let k = 0; k < pat.length; k++) {
           const c = pat[k];
           if (c === '.' || skip.includes(kind)) continue;
-          if (filling && k >= 12 && (kind === 'snare' || kind === 'hat' || kind === 'openhat' || kind === 'ride')) continue;
-          this.add('drum', t0 + k * 0.25, 0, kind, VEL[c] * vel, { pan: kind === 'hat' ? 0.25 : kind === 'ride' ? 0.3 : 0 });
+          if (filling && k >= 12 && (named === 'snare' || named === 'hat' || named === 'openhat' || named === 'ride')) continue;
+          this.add('drum', t0 + k * 0.25, 0, kind, VEL[c] * vel, { pan: named === 'hat' ? 0.25 : named === 'ride' ? 0.3 : 0 });
         }
       }
       if (filling) this.fill(bar, tomFill, vel);
@@ -213,6 +290,10 @@ export class Song {
       ['tom1', 'tom1', 'tom2', 'tom2', 'tom3', 'tom3', 'tom3', 'tom3'].forEach((k, i) => this.add('drum', t0 + i * 0.125, 0, k, (0.7 + i * 0.04) * vel, { pan: -0.3 + i * 0.09 }));
     } else if (type === 'snare') {
       for (let i = 0; i < 8; i++) this.add('drum', t0 + i * 0.125, 0, 'snare', (0.4 + i * 0.07) * vel);
+    } else if (type === 'snare2') {
+      for (let i = 0; i < 8; i++) this.add('drum', t0 + i * 0.125, 0, 'snare2', (0.45 + i * 0.07) * vel);
+    } else if (type === 'war') {
+      ['wardrum', 'wardrum', 'tom2', 'tom2', 'tom3', 'tom3', 'wardrum', 'wardrum'].forEach((k, i) => this.add('drum', t0 + i * 0.125, 0, k, (0.75 + i * 0.03) * vel, { pan: -0.25 + i * 0.07 }));
     } else if (type === 'taiko') {
       [0, 0.5, 0.75].forEach((o, i) => this.add('drum', t0 + o, 0, 'taiko', (0.8 + i * 0.1) * vel));
     }

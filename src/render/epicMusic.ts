@@ -3,13 +3,16 @@
 // track is, how the page's moods pick a track, and the loader. The old synthesised tracks (`musicScore.ts`) stay as the
 // fallback for a browser that cannot decode the files, and as the tests' stand-in.
 
-import { EPIC_MANIFEST } from './epicManifest';
+import { EPIC_MANIFEST, type EpicEntry } from './epicManifest';
 import { EPIC_INFO, type Baked } from './musicBake';
 import type { Track } from './musicScore';
 import type { Scene } from './audioRules';
 
+/** The armies' own battle tracks: the main theme in each army's dress (docs/notes/music-theme.md), named as the armies are. */
+export const ARMY_TRACKS = ['orcs', 'undead', 'beasts', 'wildwood', 'labyrinth', 'ogres', 'infernal', 'yokai', 'golems'] as const;
+export type ArmyTrack = (typeof ARMY_TRACKS)[number];
 /** Tracks that exist only as files (the synth has no score for them). */
-export type EpicOnly = 'camp' | 'deploy' | 'battle2' | 'battle3' | 'tower' | 'calmap' | 'calbattle' | 'tavern';
+export type EpicOnly = 'camp' | 'deploy' | 'tower' | 'calmap' | 'calbattle' | 'tavern' | ArmyTrack;
 /** Every track the player can be asked for. `town` is the old name of the camp's theme. */
 export type MusicId = Track | EpicOnly;
 export type StingId = 'victory' | 'defeat';
@@ -19,7 +22,8 @@ export const STING_IDS: readonly StingId[] = ['victory', 'defeat'];
 export const SYNTH_OF: Record<MusicId, Track> = {
   town: 'town', battle: 'battle', boss: 'boss', opening: 'opening', gorvak: 'gorvak', herald2: 'herald2', herald3: 'herald3', herald4: 'herald4', herald5: 'herald5', herald6: 'herald6',
   triumph: 'triumph', comic: 'comic', solemn: 'solemn', spire: 'spire',
-  camp: 'town', deploy: 'town', battle2: 'battle', battle3: 'battle', tower: 'town', calmap: 'boss', calbattle: 'boss', tavern: 'town',
+  camp: 'town', deploy: 'town', tower: 'town', calmap: 'boss', calbattle: 'boss', tavern: 'town',
+  orcs: 'battle', undead: 'battle', beasts: 'battle', wildwood: 'battle', labyrinth: 'battle', ogres: 'battle', infernal: 'battle', yokai: 'battle', golems: 'battle',
 };
 
 type FileId = keyof typeof EPIC_MANIFEST;
@@ -36,10 +40,14 @@ export const DECODE_RATE = 32000;
 /** A loop plays the window [LOOP_START, LOOP_START + length] of its file, which holds a second more than the loop: the music is
  *  periodic, so any window one loop long joins itself cleanly, however a decoder trims the file's ends. */
 export const LOOP_START = 0.1;
-/** The battle track's loop skips its quiet four-bar intro and opens on the combat downbeat. Its 66.98 s loop holds 48 bars of
- *  1.3954 s, so the start sits exactly four bars after `LOOP_START`: the loop stays a whole number of bars and joins on the beat. */
-export const BATTLE_BAR = 66.9772 / 48;
-export const BATTLE_LOOP_START = LOOP_START + 4 * BATTLE_BAR;
+
+/** Where a track plays from and the window that loops. A battle track built on the main theme has a four-bar intro (its manifest
+ *  `start`): it plays from `LOOP_START`, intro and all, then loops from the intro's end to the song's end. The song's last four
+ *  bars are the intro's music again (with its last moments crossfaded into the intro's own), so the join hears what the intro's
+ *  end would have led into. A track with no intro loops the whole of itself. */
+export function loopWindow(e: EpicEntry): { from: number; loop: [number, number] } {
+  return { from: LOOP_START, loop: [LOOP_START + e.start, LOOP_START + e.seconds] };
+}
 
 let decoder: OfflineAudioContext | null = null;
 async function decode(file: string): Promise<AudioBuffer> {
@@ -57,8 +65,7 @@ export async function loadEpic(id: MusicId): Promise<Baked> {
   const buf = await decode(e.file);
   if (buf.duration < e.seconds + LOOP_START + 0.2) throw new Error(`${e.file} is short`);
   const baked: Baked = { pad: buf, bass: null, lead: null, drums: null };
-  const loopStart = id === 'battle' ? BATTLE_LOOP_START : LOOP_START;
-  EPIC_INFO.set(baked, { loop: [loopStart, LOOP_START + e.seconds] });
+  EPIC_INFO.set(baked, loopWindow(e));
   return baked;
 }
 

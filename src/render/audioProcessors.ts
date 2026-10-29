@@ -993,7 +993,8 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam }> {
         src.loopEnd = info.loop[1];
       }
       src.connect(gain).connect(fade);
-      src.start(t, info ? info.loop[0] : 0);
+      // (a track with an intro starts before its loop window: the intro plays once)
+      src.start(t, info ? info.from ?? info.loop[0] : 0);
       loop.stems[stem] = { src, gain };
     }
     this.loops.set(track, loop);
