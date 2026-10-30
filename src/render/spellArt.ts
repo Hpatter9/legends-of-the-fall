@@ -8,17 +8,23 @@ import { loadImage } from './loadImage';
 import { SPELL_SESSIONS } from './spellLooks';
 
 const STRIPS = new Map<string, Texture[]>();
+/** Each loaded atlas's picture, by session (ULT-EPIC: the moment's band draws the kit's speed lines from it on a canvas). */
+const IMAGES = new Map<string, HTMLImageElement>();
 let loading: Promise<void> | null = null;
 
 /** A painted part's frames (empty before its atlas has loaded, or when none has it). */
 export const spellFrames = (key: string): Texture[] => STRIPS.get(key) ?? [];
+/** A session's atlas picture once it has loaded (none before, or when the session has no atlas: nothing is ever asked for). */
+export const spellImage = (session: string): HTMLImageElement | undefined => IMAGES.get(session);
 
 /** Load every session's atlas once and cut its parts. A failed atlas is left out (its parts keep their placeholders). */
 export function loadSpellArt(): Promise<void> {
   loading ??= Promise.all(
     Object.entries(SPELL_SESSIONS).map(async ([session, m]) => {
       try {
-        const base = Texture.from(await loadImage(`fx/spells/${session}.webp`));
+        const img = await loadImage(`fx/spells/${session}.webp`);
+        IMAGES.set(session, img);
+        const base = Texture.from(img);
         base.source.style.scaleMode = 'linear';
         for (const [key, [col, row, n]] of Object.entries(m.parts)) {
           const frames: Texture[] = [];

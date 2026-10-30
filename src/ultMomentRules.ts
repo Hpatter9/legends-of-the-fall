@@ -13,6 +13,8 @@
 
 import type { BattleEvent, Unit } from './sim/battle';
 import type { Skill } from './sim/abilities';
+import { liftedDim, ULT_EPIC, type UltTargets } from './ultEpicRules';
+import type { Element } from './render/fxRules';
 
 /** Whether an ultimate gets the full moment (the hold and the dim): the setting on, and Auto off. With Auto the banner is short. */
 export const fullScene = (setting: boolean, auto: boolean): boolean => setting && !auto;
@@ -22,8 +24,9 @@ export type UltShape = 'instant' | 'delayed' | 'lingering';
 export const ULT_MOMENT = {
   /** The opening: the slash, the name, the dim (the battle held). */
   OPEN_MS: 1150,
-  /** An instant ultimate's effects playing out while the battle stays held. */
-  IMPACT_MS: 850,
+  /** An instant ultimate's effects playing out while the battle stays held (ULT-EPIC: with the hit-stop's freeze before it, about the same
+   *  length as before). */
+  IMPACT_MS: 700,
   /** The dim fading as the battle runs again. */
   FADE_MS: 450,
   /** A delayed ultimate's salvo: the longest it is waited for under the dim, and the beat after it lands. */
@@ -85,6 +88,10 @@ export interface UltMoment {
   shape: UltShape;
   /** A delayed one's wait. */
   ms: number;
+  /** ULT-EPIC: its element, what its cast touched (lit, and burst on as it lands), and what its salvo struck when it landed. */
+  el?: Element;
+  targets?: UltTargets;
+  landing?: UltTargets;
 }
 
 export type UltPhase = 'idle' | 'open' | 'impact' | 'settle' | 'fade';
@@ -99,6 +106,13 @@ export class UltQueue {
   left = 0;
   /** How many moments have begun (the page draws a new slash when it changes). */
   seq = 0;
+  /** ULT-EPIC: how many blows have landed (the page plays the burst, the flash and the shake when it changes), the freeze on the blow
+   *  left (real ms), and the ms since the moment's blow landed (null: not yet; the dim eases off from then). */
+  strikes = 0;
+  stopLeft = 0;
+  since: number | null = null;
+  /** The screen kept still (reduced motion, or shake off): no freeze. */
+  calm = false;
 
   /** An ultimate fired: it plays at once, or after those before it. */
   push(m: UltMoment): void {
@@ -111,6 +125,22 @@ export class UltQueue {
     this.current = m;
     this.phase = 'open';
     this.left = ULT_MOMENT.OPEN_MS;
+    this.since = null;
+    this.stopLeft = 0;
+  }
+
+  /** ULT-EPIC: the blow lands (an instant or lingering ultimate as its opening ends; a delayed one when its salvo arrives, `land`): the
+   *  freeze begins and the dim starts to lift. Once a moment. */
+  private strike(): void {
+    if (this.since !== null) return;
+    this.strikes++;
+    this.since = 0;
+    this.stopLeft = this.calm ? 0 : ULT_EPIC.HIT_STOP_MS;
+  }
+
+  /** A delayed ultimate's salvo has landed (the page saw its blows): its impact now. */
+  land(): void {
+    if (this.current && this.phase === 'settle') this.strike();
   }
 
   /** Move on by `dt` real milliseconds; returns the phase now. */
@@ -118,6 +148,14 @@ export class UltQueue {
     let t = dt;
     // (a long frame may cross a phase's end: the rest of it carries on into the next, but never past an opening, which always shows)
     while (this.current && t > 0) {
+      // (the freeze on the blow spends real time first: nothing else moves, the phase's own time included)
+      if (this.stopLeft > 0) {
+        const s = Math.min(t, this.stopLeft);
+        this.stopLeft -= s;
+        t -= s;
+        continue;
+      }
+      if (this.since !== null) this.since += Math.min(t, this.left);
       if (t < this.left) {
         this.left -= t;
         break;
@@ -132,11 +170,17 @@ export class UltQueue {
   private next(): void {
     const m = this.current!;
     if (this.phase === 'open') {
+      // (the blow lands as the opening ends, unless it is a salvo still in the air)
+      if (m.shape !== 'delayed') this.strike();
       if (m.shape === 'instant') return this.to('impact', ULT_MOMENT.IMPACT_MS);
       if (m.shape === 'delayed') return this.to('settle', m.ms);
       return this.to('fade', ULT_MOMENT.FADE_MS);
     }
-    if (this.phase === 'impact' || this.phase === 'settle') return this.to('fade', ULT_MOMENT.FADE_MS);
+    if (this.phase === 'impact' || this.phase === 'settle') {
+      // (a salvo the page never saw land still gets its impact, as the wait ends)
+      if (m.shape === 'delayed' && this.since === null) this.strike();
+      return this.to('fade', ULT_MOMENT.FADE_MS);
+    }
     // (the fade is over: the next queued moment, or none)
     const after = this.queue.shift();
     if (after) this.begin(after);
@@ -155,6 +199,7 @@ export class UltQueue {
   /** A tap: the moment playing goes straight to its fade (its effects then run as they would). */
   skip(): void {
     if (this.current && this.phase !== 'fade') this.to('fade', ULT_MOMENT.FADE_MS);
+    this.stopLeft = 0;
   }
 
   /** Everything dropped (the fight ended, the screen was left). */
@@ -163,23 +208,27 @@ export class UltQueue {
     this.current = null;
     this.phase = 'idle';
     this.left = 0;
+    this.stopLeft = 0;
+    this.since = null;
   }
 
-  /** Whether the battle is held now (the opening, and an instant one's effects playing). */
+  /** Whether the battle is held now (the opening, an instant one's effects playing, and the freeze on any blow). */
   get holdsBattle(): boolean {
-    return this.phase === 'open' || this.phase === 'impact';
+    return this.phase === 'open' || this.phase === 'impact' || this.stopLeft > 0;
   }
 
-  /** Whether the effects may move now (frozen through the opening, so the cast plays once the name has shown). */
+  /** Whether the effects may move now (frozen through the opening, so the cast plays once the name has shown, and through the freeze). */
   get runsEffects(): boolean {
-    return this.phase !== 'open';
+    return this.phase !== 'open' && this.stopLeft <= 0;
   }
 
-  /** The dim's strength, 0 to 1: full through the opening and the effects, easing out through the fade. */
+  /** The dim's strength, 0 to 1: full through the opening, eased down to a light veil as the blow lands (ULT-EPIC), then out through the
+   *  fade. */
   get dim(): number {
     if (this.phase === 'idle') return 0;
-    if (this.phase === 'fade') return Math.max(0, this.left / ULT_MOMENT.FADE_MS);
-    return 1;
+    const lifted = liftedDim(this.since);
+    if (this.phase === 'fade') return lifted * Math.max(0, this.left / ULT_MOMENT.FADE_MS);
+    return lifted;
   }
 
   /** Moments still waiting after the one playing. */

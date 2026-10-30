@@ -46,6 +46,7 @@ import { MOVE_LOOKS, PAINT, WALL_LOOKS, auraLook, type Look } from './toolkitLoo
 import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, DIRGE_TINT, HANG_MULT, MOVE_PAINT, RIPOSTE, SONG_REACH, SONG_SHEET, SPIKES_SHEET, TRAVEL_MS, type StandState } from './movePaints';
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
+import { boostedScale, burstPart, epicEvent, KIT, ultScale, ULT_EPIC } from '../ultEpicRules';
 import { spellAnchorY, spellPart, spellScale } from './spellLooks';
 import { loadPaintedArt, paintedStrip, paintSprite } from './cinematicArt';
 import { coverAlpha, overFighter } from './overFighter';
@@ -165,6 +166,12 @@ export class Fx {
   private dimLeft = 0;
   private dimMs = 1;
   private dimPeak = 0;
+  /** ULT-EPIC: the casters whose ultimates are playing their full moment now (the page sets it each tick, `ultMoment.ts`): their events'
+   *  effects are drawn at the ultimate's scale (`boost`, `ultScale`). And the moment's own layer (the gathering on the hero, the huge
+   *  bursts), stepped by the moment itself so it runs while the fight's effects are held, and freezes on the blow. */
+  epic: ReadonlySet<number> = new Set();
+  private boost = 1;
+  readonly moment = new Particles();
   /** Ms of a slow-motion beat left (a boss falls); `timeScale` slows the fight while it lasts. */
   private slowLeft = 0;
   /** Ms of hit-stop left (a crit or a killing blow freezes the fight for a moment). */
@@ -188,7 +195,7 @@ export class Fx {
     this.dimLayer.rect(-3000, -3000, 6000, 6000).fill(0x07040f);
     this.dimLayer.zIndex = 1e7 - 1;
     this.dimLayer.visible = false;
-    this.root.addChild(this.particles.root);
+    this.root.addChild(this.particles.root, this.moment.root);
     // (FX-CLEAR: the puffs, rings and signature steps laid over a fighter are thinned too)
     this.particles.cover = (x, y, half) => coverAlpha(1, this.overBody(x, y, half));
     if (typeof matchMedia === 'function') matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
@@ -208,6 +215,9 @@ export class Fx {
     this.dimLayer.visible = false;
     this.gusts.clear();
     this.particles.clear();
+    this.moment.clear();
+    this.epic = new Set();
+    this.setEpic(false);
   }
 
   /** How fast the fight runs right now: 1, or a slow-motion beat's share of it. */
@@ -257,12 +267,17 @@ export class Fx {
     const view = new Container();
     this.root.addChild(view);
     let t = 0;
+    // (an ultimate's effect played later keeps the ultimate's scale, ULT-EPIC)
+    const epic = this.boost !== 1;
     this.items.push({
       view,
       step: (dt) => {
         t += dt;
         if (t < ms) return true;
+        const was = this.boost !== 1;
+        this.setEpic(epic);
         fn();
+        this.setEpic(was);
         return false;
       },
     });
@@ -299,6 +314,7 @@ export class Fx {
     for (const e of events) if (e.kind === 'skill') this.tickCasts.set(e.by, e.name);
     this.movePaint(b, events);
     for (const e of events) {
+      this.setEpic(epicEvent(e, this.epic));
       if (e.kind === 'shot') this.shot(e.by, e.to, e.shot, e.ms);
       else if (e.kind === 'skill') this.skillName(e.by, e.name, e.ms);
       else if (e.kind === 'swing') this.slash(b, e.by, e.to);
@@ -483,7 +499,72 @@ export class Fx {
         }
       }
     }
+    this.setEpic(false);
     this.scan(b);
+  }
+
+  /** ULT-EPIC: the effects made from now on are an ultimate's (drawn at its scale) or not. */
+  private setEpic(on: boolean): void {
+    this.boost = ultScale('once', on);
+    this.particles.boost = this.boost;
+  }
+
+  /** ULT-EPIC: move the moment's own layer on (the moment calls it each frame it runs; it stands still through the freeze on the blow). */
+  stepMoment(dt: number): void {
+    this.moment.calm = this.calm();
+    this.moment.step(dt);
+  }
+
+  /** A painted part on the moment's layer, `tiles` across, its foot (`foot`) or its middle at (x, y). False when no atlas has it. */
+  private paintMoment(key: string, x: number, y: number, tiles: number, o: { frameMs?: number; foot?: boolean; alpha?: number } = {}): boolean {
+    const frames = spellFrames(key);
+    const p = spellPart(key);
+    if (!frames.length || !p) return false;
+    const scale = spellScale(key, tiles / p.size);
+    const drawn = p.cell * scale;
+    this.moment.spawn({ frames, x, y: o.foot ? y + (0.5 - p.foot) * drawn : y, scale, frameMs: o.frameMs ?? 70, prio: true, alpha: o.alpha ?? 1, half: drawn * 0.42 });
+    return true;
+  }
+
+  /** The opening of an ultimate's moment (ULT-EPIC): power gathers on the hero while the slash and the name are up (the painted kit's
+   *  gathering when it is there, else the element's wind-up from the pack), so the board under the band is alive. */
+  ultGather(unit: number, el: Element, ms: number): void {
+    const by = this.sprites.get(unit);
+    if (!by) return;
+    const budget = particleBudget(settings().saver);
+    this.moment.density = budget.density;
+    this.moment.cap = budget.cap;
+    this.paintMoment(KIT.gather, by.x, by.y, 2.5, { frameMs: ms / 8, foot: true, alpha: 0.9 });
+    windUp(this.moment, el, by.x, by.y, ms, by.tall, true);
+  }
+
+  /** The blow lands (ULT-EPIC): a huge burst of the element on each spot (the kit's painted burst when there, else the strongest painted
+   *  burst of the element the game has, or the pack's, drawn big), a shock ring along the ground, and a hard shake once the freeze lets go
+   *  (none with the screen kept still). Spots are fighters (by id) or tiles. */
+  ultImpact(b: Battle, el: Element, spots: readonly ({ unit: number } | { u: number; v: number })[]): void {
+    const tint = ULT_TINT[el];
+    const has = (key: string) => spellFrames(key).length > 0;
+    const part = burstPart(el, has);
+    for (const s of spots) {
+      let x: number;
+      let y: number;
+      let lift: number;
+      if ('unit' in s) {
+        const sp = this.sprites.get(s.unit);
+        if (!sp) continue;
+        [x, y, lift] = [sp.x, sp.y, sp.tall * 0.45];
+      } else {
+        [x, y] = this.tilePos(b, s.u, s.v);
+        lift = 18;
+      }
+      // (the painted burst, about four tiles across, standing on the ground when it is painted that way)
+      if (part) this.paintMoment(part, x, part.startsWith('ult-burst') ? y - lift : y - (spellAnchorY(part) > 0.8 ? 0 : lift), part.startsWith('ult-burst') ? 4 : 3.2, { foot: spellAnchorY(part) > 0.8, frameMs: 65 });
+      else impactBurst(this.moment, el, x, y - lift, 3.2, true);
+      // (the pack's nova and its ring on the ground under it, in the element's colour)
+      play(this.moment, packKey(el, 'nova'), x, y - lift, { scale: 3.4, frameMs: 70, alpha: 0.75, tint });
+      play(this.moment, packKey(el, 'wave'), x, y, { scale: 5, frameMs: 80, add: false, alpha: 0.7, tint });
+    }
+    this.trauma = Math.max(this.trauma, ULT_EPIC.SHAKE);
   }
 
   /** A blow is swung: a slash of the attacker's weapon across the one it aims at. */
@@ -761,6 +842,7 @@ export class Fx {
   }
 
   private anim(s: Strip, x: number, y: number, scale: number, frameMs: number): Sprite {
+    scale = boostedScale(scale, this.boost, s.frames[0].frame.width);
     const sp = new Sprite(s.frames[0]);
     sp.anchor.set(0.5);
     sp.scale.set(scale);
@@ -855,9 +937,11 @@ export class Fx {
     if (ultimate) {
       this.trauma = Math.max(this.trauma, 0.5);
       this.flash(0.3, 100);
-      this.dim(0.45, ms + 900);
+      // (the full moment (ULT-EPIC) has its own dim, lifted over the whole effect, and its own camera: these are the short version's)
+      const epic = this.boost !== 1;
+      if (!epic) this.dim(0.45, ms + 900);
       // (the camera leans in on the caster for the cast, and the moment of the nova lands in a beat of slow motion and a freeze frame)
-      this.push(by.x, by.y - by.tall * 0.5, 1.2, ms + 600);
+      if (!epic) this.push(by.x, by.y - by.tall * 0.5, 1.2, ms + 600);
       // (the wind-up ends in a nova and a ring of the element, with a second flash and a hard shake)
       const [x, y] = [by.x, by.y];
       this.later(ms, () => {
@@ -1109,8 +1193,8 @@ export class Fx {
     const frames = spellFrames(key);
     const p = spellPart(key);
     if (!frames.length || !p) return false;
-    const scale = spellScale(key);
-    const seg = p.cell * scale;
+    const scale = spellScale(key) * ultScale('beam', this.boost !== 1);
+    const seg = p.cell * spellScale(key);
     const view = new Container();
     this.root.addChild(view);
     const parts: Sprite[] = [];
@@ -1477,6 +1561,7 @@ export class Fx {
   private healerPaint(events: BattleEvent[]): void {
     for (const e of events) {
       if (e.kind !== 'skill') continue;
+      this.setEpic(epicEvent(e, this.epic));
       const look = HEALER_PAINT[e.name];
       if (!look) continue;
       const by = this.sprites.get(e.by);
@@ -1501,6 +1586,7 @@ export class Fx {
    *  it lands after a leap, and loops held over a fighter while the state they show lasts. Nothing here changes the fight. */
   private movePaint(b: Battle, events: BattleEvent[]): void {
     for (const e of events) {
+      this.setEpic(epicEvent(e, this.epic));
       // (a blow the Samurai answers while his parry stance is up: the parry spark on the one he cuts)
       if (e.kind === 'hit' && e.src === 'blow') {
         const by = b.units.find((u) => u.id === e.by);

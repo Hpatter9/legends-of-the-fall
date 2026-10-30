@@ -1010,6 +1010,15 @@ class Game {
     if (this.phaseBoss && (!b.pause || b.phase !== 'fight')) this.endPhase();
     if (b.phase === 'deploy') this.deployEase(dt);
     if (b.phase === 'fight' && !this.intro && !this.destinationReveal) this.phaseBoss ? this.pushOnPhase() : (this.follow(), this.leanIn(dt));
+    // (ULT-EPIC: the camera leans in on the hero through an ultimate's opening, and the follow takes it back to the view it held as it fires;
+    // a camera the player has moved is left alone)
+    const uf = b.phase === 'fight' && !this.manualCam ? this.ultm.focus : null;
+    const us = uf ? this.sprites.get(uf.unit) : undefined;
+    if (uf && us) {
+      this.tx = us.x;
+      this.ty = us.y - us.tall * 0.5;
+      this.tzoom = (this.held?.zoom ?? this.tzoom) * uf.zoom;
+    }
     if (!this.drag?.pan) {
       const f = b.phase === 'fight' && !this.intro;
       this.cx = f ? easeTo(this.cx, this.tx, dt, EASE_MOVE_MS) : this.cx + (this.tx - this.cx) * Math.min(1, dt / 220);
@@ -1413,6 +1422,14 @@ class Game {
     this.boardView.cull(this.fx.view = { x0: (0 - w.x) / k + 4, x1: (viewW() - w.x) / k - 4, y0: (this.area.y - w.y) / k + 4, y1: (this.area.y + this.area.h - w.y) / k });
   }
 
+  /** A world point on the page, in client px (the canvas's own place and the world's scale and position). */
+  private toClient(wx: number, wy: number): { x: number; y: number } {
+    const r = this.app.canvas.getBoundingClientRect();
+    const k = r.width / this.app.screen.width;
+    const w = this.world;
+    return { x: r.left + (w.x + wx * w.scale.x) * k, y: r.top + (w.y + wy * w.scale.y) * k };
+  }
+
   /** The tile under a point on the screen (the nearest column's top or side). */
   private tileAtScreen(sx: number, sy: number): [number, number] | null {
     const b = this.b.board;
@@ -1511,14 +1528,17 @@ class Game {
       ultArt: (u) => heroArtUrl(u.def, awakenedOf(this.meta, u.def)),
     });
     this.ultm = new UltMoments({
+      // (ULT-EPIC: through the world's own scale, so the light stays on the fighters while the camera leans in)
       anchor: (id) => {
-        const box = this.spriteBox(id);
-        if (!box) return null;
-        const r = this.app.canvas.getBoundingClientRect();
-        const k = r.width / this.app.screen.width;
-        return { x: r.left + (box.x + box.w / 2) * k, y: r.top + (box.y + box.h * 0.55) * k };
+        const s = this.sprites.get(id);
+        return s && s.root.visible ? this.toClient(s.x, s.y - s.tall * 0.45) : null;
+      },
+      tile: (u, v) => {
+        const t = tileAt(this.b.board, u, v);
+        return t ? this.toClient(...at(u, v, t.h)) : null;
       },
       art: (u) => heroArtUrl(u.def, awakenedOf(this.meta, u.def)),
+      fx: this.fx,
     });
     // (the Auto switch stands at the right end of the spell orbs' row)
     $('hudSpells').append(this.hud.autoEl);

@@ -4,6 +4,7 @@
 
 import { Container, Sprite, type Texture } from 'pixi.js';
 import { paintSprite } from './cinematicArt';
+import { boostedScale } from '../ultEpicRules';
 
 export interface Burst {
   frames: Texture[];
@@ -67,6 +68,9 @@ export class Particles {
   /** FX-CLEAR: what a bit's alpha is multiplied by, from where it starts and its half-size (`Fx` thins those over a fighter,
    *  `overFighter.ts`); none: 1. */
   cover?: (x: number, y: number, half: number) => number;
+  /** ULT-EPIC: what the bits made now are scaled by (an ultimate's moment draws its effects about twice the size: `Fx.setEpic`); their
+   *  drift and growth with them, so a burst spreads as far as it is big; capped, `boostedScale`). 1 the rest of the time. */
+  boost = 1;
 
   /** Whether to make one of a thing that happens with chance `p` (this also scales it by the density). */
   rate(p: number): boolean {
@@ -76,6 +80,11 @@ export class Particles {
   /** Make one, unless the cap is full (then nothing: a crowded moment just shows fewer). */
   spawn(b: Burst): void {
     if (!b.frames.length) return;
+    if (this.boost !== 1) {
+      const scale = boostedScale(b.scale ?? 1, this.boost, b.frames[0].frame.width);
+      const k = scale / (b.scale ?? 1);
+      b = { ...b, scale, ...(b.vx ? { vx: b.vx * k } : {}), ...(b.vy ? { vy: b.vy * k } : {}), ...(b.grow ? { grow: b.grow * k } : {}), ...(b.gravity ? { gravity: b.gravity * k } : {}), ...(b.half ? { half: b.half * k } : {}) };
+    }
     if (this.live.length >= (b.prio ? this.cap * 1.3 : this.cap)) return;
     const sp = this.pool.pop() ?? new Sprite();
     sp.anchor.set(0.5);

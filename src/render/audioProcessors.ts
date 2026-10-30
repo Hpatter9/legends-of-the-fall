@@ -641,6 +641,23 @@ export const SOUNDS: Record<Cue, (s: Voices, t: number) => void> = {
     s.hiss(t + 0.3, 1.0, 7000, 'highpass', 0.18);
     s.ring(t + 0.3, 2637, 1.0, 0.08);
   },
+  // (ULT-EPIC: the band's slash, a bright blade-swish sweeping up with a shimmer; the blow landing, a deep boom under a crack and a long
+  // ringing tail, heavier than any blow of the fight)
+  ultSlash: (s, t) => {
+    s.hiss(t, 0.32, 900, 'bandpass', 0.42, 7000, 3);
+    s.hiss(t + 0.04, 0.4, 5000, 'highpass', 0.16);
+    s.snap(t + 0.02, 0.22, 3200);
+    s.ring(t + 0.12, 1568, 0.55, 0.06);
+    s.ring(t + 0.16, 2349, 0.45, 0.04);
+  },
+  ultImpact: (s, t) => {
+    s.thump(t, 58, 1.3, 0.85, 16);
+    s.thump(t + 0.02, 110, 0.5, 0.45, 40);
+    s.snap(t, 0.5, 1800);
+    s.hiss(t, 0.9, 420, 'lowpass', 0.45, 90);
+    s.scatter(t + 0.05, 0.6, 9, 0.1, 2400);
+    s.clang(t + 0.04, 880, 1.2, 0.08);
+  },
   riseSummon: (s, t) => {
     [220, 277, 330, 440].forEach((f, i) => s.pad(t + i * 0.12, f, 2.2, 0.07, 'triangle', 1600, f * 1.5));
     s.hiss(t, 2.2, 550, 'bandpass', 0.08, 3800, 4);

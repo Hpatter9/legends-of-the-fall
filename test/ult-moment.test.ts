@@ -7,6 +7,7 @@ import { addUnit, startBattle, stepBattle, type Battle, type BattleEvent, type U
 import { CHARGE_MAX, ULT_LEVEL, keyOf, ultimateOf } from '../src/sim/abilities';
 import { ALL_HEROES } from '../src/sim/units';
 import { fullScene, ULT_MOMENT, UltQueue, ultShape, type UltShape } from '../src/ultMomentRules';
+import { ULT_EPIC } from '../src/ultEpicRules';
 
 function arena(): Battle {
   const b = startBattle(5);
@@ -80,17 +81,21 @@ test('the queue: the opening holds the battle with the effects frozen; an instan
   assert.equal(q.dim, 1);
   q.step(ULT_MOMENT.OPEN_MS);
   assert.equal(q.phase, 'impact');
+  // (ULT-EPIC: the blow lands as the opening ends, with a freeze on it (the effects held too), then its effects play on the held board)
+  assert.ok(q.holdsBattle && !q.runsEffects);
+  q.step(ULT_EPIC.HIT_STOP_MS);
   assert.ok(q.holdsBattle && q.runsEffects);
   q.step(ULT_MOMENT.IMPACT_MS);
   assert.equal(q.phase, 'fade');
   assert.ok(!q.holdsBattle);
+  // (the dim was eased down to a veil as the blow landed (ULT-EPIC), and fades out from there)
   q.step(ULT_MOMENT.FADE_MS / 2);
-  assert.ok(Math.abs(q.dim - 0.5) < 1e-9);
+  assert.ok(Math.abs(q.dim - ULT_EPIC.LIFT * 0.5) < 1e-9, String(q.dim));
   q.step(ULT_MOMENT.FADE_MS);
   assert.equal(q.phase, 'idle');
-  // (lingering: straight from the opening to the fade, the battle running)
+  // (lingering: straight from the opening to the fade, the battle running once the freeze on its blow is over)
   q.push({ unit: 2, kind: 'druid', name: 'Grove', shape: 'lingering', ms: 0 });
-  q.step(ULT_MOMENT.OPEN_MS + 1);
+  q.step(ULT_MOMENT.OPEN_MS + ULT_EPIC.HIT_STOP_MS + 1);
   assert.equal(q.phase, 'fade');
   assert.ok(!q.holdsBattle);
   // (delayed: the battle runs under the dim until the salvo lands)
@@ -125,7 +130,8 @@ test('several ultimates queue, each its own opening; a long frame never skips an
 });
 
 test('the whole moment stays within a couple of seconds', () => {
-  const instant = ULT_MOMENT.OPEN_MS + ULT_MOMENT.IMPACT_MS + ULT_MOMENT.FADE_MS;
+  // (the freeze on the blow included: ULT-EPIC kept the whole about as long as it was)
+  const instant = ULT_MOMENT.OPEN_MS + ULT_EPIC.HIT_STOP_MS + ULT_MOMENT.IMPACT_MS + ULT_MOMENT.FADE_MS;
   assert.ok(instant >= 1500 && instant <= 2600, String(instant));
   assert.ok(ULT_MOMENT.OPEN_MS + ULT_MOMENT.MAX_DELAY_MS + ULT_MOMENT.FADE_MS <= 3200);
 });
