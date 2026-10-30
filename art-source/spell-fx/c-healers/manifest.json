@@ -1,0 +1,185 @@
+{
+  "revivify": {
+    "description": "(holy): 1) `cast` (8, 1.6): a golden ankh of light appearing over the ground; 2) `impact` (8, 1.6): a pillar of golden light rising from the bottom edge through the ankh. *Light.*",
+    "rows": [
+      {
+        "part": "cast",
+        "kind": "once",
+        "frames": 8,
+        "min": 6,
+        "max": 8
+      },
+      {
+        "part": "impact",
+        "kind": "once",
+        "frames": 8,
+        "min": 6,
+        "max": 8
+      }
+    ]
+  },
+  "resurrection": {
+    "description": "(holy, white): 1) `cast` (8, 1.8): two great wings of white light opening; 2) `impact` (8, 1.8): the wings folding round a figure-sized space and lifting, feathers of light scattering. *Light.*",
+    "rows": [
+      {
+        "part": "cast",
+        "kind": "once",
+        "frames": 8,
+        "min": 6,
+        "max": 8
+      },
+      {
+        "part": "impact",
+        "kind": "once",
+        "frames": 8,
+        "min": 6,
+        "max": 8
+      }
+    ]
+  },
+  "elixir": {
+    "description": "(life with gold): 1) `cast` (6, 1): a glowing glass vial tipping; 2) `impact` (8, 1.4): a spiral of green-gold liquid light pouring down and blooming from the bottom edge.",
+    "rows": [
+      {
+        "part": "cast",
+        "kind": "once",
+        "frames": 6,
+        "min": 6,
+        "max": 8
+      },
+      {
+        "part": "impact",
+        "kind": "once",
+        "frames": 8,
+        "min": 6,
+        "max": 8
+      }
+    ]
+  },
+  "reincarnate": {
+    "description": "(nature): 1) `cast` (6, 1.6): a ring of leaves and roots rising from the bottom edge; 2) `impact` (8, 1.4): a sapling of light growing and bursting into blossom petals.",
+    "rows": [
+      {
+        "part": "cast",
+        "kind": "once",
+        "frames": 6,
+        "min": 6,
+        "max": 8
+      },
+      {
+        "part": "impact",
+        "kind": "once",
+        "frames": 8,
+        "min": 6,
+        "max": 8
+      }
+    ]
+  },
+  "mass-resurrection": {
+    "description": "(holy): 1) `ground` (6, 8): a great golden sunburst of runes on the ground; 2) `impact` (8, 1.6): a column of light with rising feathers (one for each hero raised). *Light.*",
+    "rows": [
+      {
+        "part": "ground",
+        "kind": "loop",
+        "frames": 6,
+        "min": 6,
+        "max": 6
+      },
+      {
+        "part": "impact",
+        "kind": "once",
+        "frames": 8,
+        "min": 6,
+        "max": 8
+      }
+    ]
+  },
+  "guiding-bolt": {
+    "description": "(holy): 1) `travel` (4, 1): a bolt of radiant golden light with a comet tail, pointing right; 2) `impact` (6, 1.2): a burst of radiance with rays. *Light.*",
+    "rows": [
+      {
+        "part": "travel",
+        "kind": "loop",
+        "frames": 4,
+        "min": 4,
+        "max": 6
+      },
+      {
+        "part": "impact",
+        "kind": "once",
+        "frames": 6,
+        "min": 6,
+        "max": 8
+      }
+    ]
+  },
+  "prayer": {
+    "description": "(life with holy): 1) `ground` (6, 6): a ripple of soft light spreading outward; 2) `motes` (6, 0.4): a small rising mote of healing light, a tiny cross or star.",
+    "rows": [
+      {
+        "part": "ground",
+        "kind": "loop",
+        "frames": 6,
+        "min": 6,
+        "max": 6
+      },
+      {
+        "part": "motes",
+        "kind": "loop",
+        "frames": 6,
+        "min": 6,
+        "max": 6
+      }
+    ]
+  },
+  "cure-wounds": {
+    "description": "(life): 1) `impact` (8, 1.4): a warm green-gold glow wrapping a figure-sized space, rising sparkles.",
+    "rows": [
+      {
+        "part": "impact",
+        "kind": "once",
+        "frames": 8,
+        "min": 6,
+        "max": 8
+      }
+    ]
+  },
+  "death-ward": {
+    "description": "(holy, pale blue): 1) `stand` (6, 1.3): a pale protective shell of light shaped like a bubble with a small ankh rune at its front (it stays on the warded friend); 2) `impact` (8, 1.4): the shell flashing and cracking as it saves the friend.",
+    "rows": [
+      {
+        "part": "stand",
+        "kind": "loop",
+        "frames": 6,
+        "min": 6,
+        "max": 6
+      },
+      {
+        "part": "impact",
+        "kind": "once",
+        "frames": 8,
+        "min": 6,
+        "max": 8
+      }
+    ]
+  },
+  "healing-draught": {
+    "description": "(life): 1) `travel` (4, 0.6): a small stoppered potion flask spinning, pointing right; 2) `impact` (6, 1.2): the flask bursting into a splash of green healing light.",
+    "rows": [
+      {
+        "part": "travel",
+        "kind": "loop",
+        "frames": 4,
+        "min": 4,
+        "max": 6
+      },
+      {
+        "part": "impact",
+        "kind": "once",
+        "frames": 6,
+        "min": 6,
+        "max": 8
+      }
+    ]
+  }
+}
