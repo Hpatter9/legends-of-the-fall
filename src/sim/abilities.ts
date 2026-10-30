@@ -20,6 +20,7 @@ import { addRes, castHero, CHARGE_TO_POOL, heroKitOf, poolOf, poolOnDealt, poolO
 import { kitStrike, kitTick } from './kits/effects';
 import { raiseAura } from './toolkit/auras';
 import { divineSmite, seismicSlam } from './kits/tanks';
+import { BOMBARD_THROWS } from './kits/ranged';
 import { skillRiders } from './ailmentSources';
 import { AILMENT_SWITCH, blowRiders, charmFor, chillFor, cleanse, freezeFor, harmed, healThrough, isSilenced, setDot, stunFor, tickAilments } from './ailments';
 
@@ -1137,7 +1138,8 @@ const SHELL_MS = 900;
 function shellBarrage(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const aim = crowd(b, me, (f) => apart(me, f) <= reachOf(me, 7));
   if (!aim) return false;
-  b.pending.push({ at: b.t + SHELL_MS, kind: 'rain', by: me.id, to: aim.id, dmg: atkOf(me) * 2.1, heavy: true, u: aim.u, v: aim.v });
+  // (RPG-SPELLS batch 5, Bombard: the shell throws the foe at its heart 2 tiles and shoves the rest of the 3x3 a tile out)
+  b.pending.push({ at: b.t + SHELL_MS, kind: 'rain', by: me.id, to: aim.id, dmg: atkOf(me) * 2.1, heavy: true, u: aim.u, v: aim.v, throws: BOMBARD_THROWS });
   out.push({ kind: 'area', by: me.id, id: 'meteor', u: aim.u, v: aim.v, ms: SHELL_MS });
   followUp(b, me, 'rain', aim, atkOf(me) * 2.1, 'meteor', SHELL_MS, out);
   return true;
@@ -1347,7 +1349,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Bloodrage', text: 'Attack grows by up to 90% as his health falls', rage: 0.9 },
   },
   ranger: {
-    skill: { name: 'Snare Trap', text: 'Lays two traps on the tiles foes will step on; the first to spring one is hurt and held for 2s', need: CHARGE_MAX, dealt: 6, taken: 4, perSec: 2, castMs: 500, anim: 'attack', cast: snareTrap },
+    skill: { name: 'Snare', key: 'Snare Trap', text: 'Lays two traps on the tiles foes will step on; the first to spring one is hurt and held for 2s', need: CHARGE_MAX, dealt: 6, taken: 4, perSec: 2, castMs: 500, anim: 'attack', cast: snareTrap },
     passive: { name: 'Long Shot', text: 'Arrows deal 35% more to foes 4 or more tiles away', far: 0.35 },
   },
   warlock: {
@@ -1359,7 +1361,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Sleight of Hand', text: 'Slips 25% of blows', dodge: 0.25 },
   },
   gunslinger: {
-    skill: { name: 'Dead Eye', text: 'One slug through every foe in a line, for more than double', need: CHARGE_MAX, dealt: 14, taken: 4, perSec: 1.5, castMs: 500, anim: 'attack', cast: deadEye },
+    skill: { name: 'Piercing Shot', key: 'Dead Eye', text: 'One slug through every foe in a line, for more than double', need: CHARGE_MAX, dealt: 14, taken: 4, perSec: 1.5, castMs: 500, anim: 'attack', cast: deadEye },
     passive: { name: 'Piercing Rounds', text: 'Shots ignore 4 defence and also hit the foe behind the target for half', pierce: 4, through: 0.5 },
   },
 
@@ -1369,7 +1371,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Undying Flesh', text: 'Heals 2% of his health each second', regen: 0.02 },
   },
   rifleBot: {
-    skill: { name: 'Burst Fire', text: 'Three rapid shots at the weakest foe in reach', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 500, anim: 'attack2', cast: burstFire },
+    skill: { name: 'Rapid Shot', key: 'Burst Fire', text: 'Three rapid shots at the weakest foe in reach', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 500, anim: 'attack2', cast: burstFire },
     passive: { name: 'Targeting Array', text: 'Shots deal 30% more to foes 4 or more tiles away', far: 0.3 },
   },
   mercenary: {
@@ -1389,7 +1391,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Catchy Tune', text: 'Every 3.5s the ally with the least skill charge near him gains 16', tune: { every: 3500, charge: 16 } },
   },
   beastmaster: {
-    skill: { name: 'Call of the Wild', text: 'A wolf answers his call and fights for him (two at most stand at once)', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 700, anim: 'attack2', cast: callWolves },
+    skill: { name: 'Summon Beast', key: 'Call of the Wild', text: 'A wolf answers his call and fights for him (two at most stand at once)', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 700, anim: 'attack2', cast: callWolves },
     passive: { name: 'Whip Crack', text: 'His blows slow the foe for 1.5s', slow: 1500 },
   },
   kraken: {
@@ -1413,11 +1415,11 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Static Discharge', text: '25% of blows arc to a second foe nearby', arc: 0.25 },
   },
   dreadPirate: {
-    skill: { name: 'Broadside', text: 'A ghost ship\'s broadside falls on a 3x3 of tiles', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 2, castMs: 700, anim: 'attack2', cast: broadside },
+    skill: { name: 'Cannonade', key: 'Broadside', text: 'A ghost ship\'s broadside falls on a 3x3 of tiles', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 2, castMs: 700, anim: 'attack2', cast: broadside },
     passive: { name: 'Deathless', text: 'Once a fight, when he would fall he rises at 35% health', undying: 0.35 },
   },
   siegeBot: {
-    skill: { name: 'Shell Barrage', text: 'A heavy shell bursts on the thickest crowd within 7 tiles', need: CHARGE_MAX, dealt: 9, taken: 4, perSec: 2, castMs: 800, anim: 'attack2', cast: shellBarrage },
+    skill: { name: 'Bombard', key: 'Shell Barrage', text: 'A heavy shell bursts on the thickest crowd within 7 tiles: the foe at its heart is thrown 2 tiles and the rest shoved a tile out', need: CHARGE_MAX, dealt: 9, taken: 4, perSec: 2, castMs: 800, anim: 'attack2', cast: shellBarrage },
     passive: { name: 'Reinforced Chassis', text: 'Blows from the front lose a fifth, and it cannot be knocked back', block: 0.2, steady: true },
   },
   priestess: {

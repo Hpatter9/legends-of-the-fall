@@ -1,5 +1,6 @@
 // The callers' new skills (COMBAT-002): the Samurai Commander's standard and the Beastmaster's pack.
 
+import { wolfLeap } from './ranged';
 import { addUnit, type Battle, type BattleEvent, type Unit } from '../battle';
 import { apart, BANNER_MULT, callSummon, foesOf, slowFor, tal } from '../abilities';
 import { alliesOf, blinkTo, foesNear, freeNear, mark, ms, strike } from './common';
@@ -36,7 +37,8 @@ export function sicEm(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   for (const w of wolves) {
     if (!f.alive) break;
     const to = apart(w, f) > 1 ? freeNear(b, f, 1).sort((x, y) => apart(w, x) - apart(w, y) || x.v - y.v || x.u - y.u)[0] : undefined;
-    if (to) blinkTo(b, w, to, out);
+    // (RPG-SPELLS batch 5, Pack Tactics: within 4 tiles the wolf leaps to it, farther it blinks as before)
+    if (to && !wolfLeap(b, w, to, out)) blinkTo(b, w, to, out);
     // (a war cry for the pack: their attack up a quarter while it lasts, as a banner raises it)
     if (w.banner === undefined) w.power = (w.power ?? 1) * BANNER_MULT;
     w.banner = { until: b.t + ms(me, 4000) };

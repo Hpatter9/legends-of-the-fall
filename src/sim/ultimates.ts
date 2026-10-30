@@ -49,6 +49,7 @@ import { fallenFor, raiseFallen } from './kits/revive';
 import { startPool } from './heroKits';
 import { chokeLine, raiseAura, raiseWall } from './toolkit';
 import { chargeNearest, fissureSpires, knightsAura, thunderclap } from './kits/tanks';
+import { ORBITAL_THROWS, jets, reaperDrag, type Throws } from './kits/ranged';
 import { berserkerLeap, burningLine, cavalryCharge, hellChains, lastBlowLaunch, lightningStorm } from './kits/melee';
 
 /** A duration in ms, as the caster's `dur` talent lengthens it, and the ultimate's strength: a stronger ultimate holds, guards and hastens a little longer (by the square root of its strength). */
@@ -92,6 +93,8 @@ interface Sky {
   repeat?: boolean;
   /** A second blow on each spot this many ms after, for this share of the first. */
   echo?: { gap: number; share: number };
+  /** What the first salvo throws when it lands (RPG-SPELLS batch 5: the Orbital Strike). */
+  throws?: Throws;
   /** Each salvo sets off the powder barrels where it lands. */
   barrels?: boolean;
 }
@@ -105,7 +108,7 @@ function sky(b: Battle, me: Unit, out: BattleEvent[], o: Sky): boolean {
     aimed.push(aim);
     const ms = o.ms + i * o.gap;
     const id = o.kind === 'meteor' ? 'meteor' : 'volley';
-    b.pending.push({ at: b.t + ms, kind: o.kind, by: me.id, to: aim.id, dmg: atkOf(me) * o.mult, heavy: o.kind === 'meteor', u: aim.u, v: aim.v, ...(o.barrels ? { barrels: true } : {}) });
+    b.pending.push({ at: b.t + ms, kind: o.kind, by: me.id, to: aim.id, dmg: atkOf(me) * o.mult, heavy: o.kind === 'meteor', u: aim.u, v: aim.v, ...(o.barrels ? { barrels: true } : {}), ...(o.throws && i === 0 ? { throws: o.throws } : {}) });
     out.push({ kind: 'area', by: me.id, id, u: aim.u, v: aim.v, ms });
     if (o.echo) {
       b.pending.push({ at: b.t + ms + o.echo.gap, kind: o.kind, by: me.id, to: aim.id, dmg: atkOf(me) * o.mult * o.echo.share, heavy: o.kind === 'meteor', u: aim.u, v: aim.v });
@@ -467,7 +470,7 @@ function spiritGuardians(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 }
 
 /** Siege Bot: a great shell on the thickest crowd, and a second on the same spot a moment after. */
-const orbital = (b: Battle, me: Unit, out: BattleEvent[]) => sky(b, me, out, { n: 1, reach: 8, mult: 6.5, ms: 1000, kind: 'meteor', gap: 0, echo: { gap: 600, share: 0.5 } });
+const orbital = (b: Battle, me: Unit, out: BattleEvent[]) => sky(b, me, out, { n: 1, reach: 8, mult: 6.5, ms: 1000, kind: 'meteor', gap: 0, echo: { gap: 600, share: 0.5 }, throws: ORBITAL_THROWS });
 
 /** Time Witch: every foe within eight tiles is stopped where it stands; her friends race on. */
 function timeStop(b: Battle, me: Unit, out: BattleEvent[]): boolean {
@@ -584,7 +587,12 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
     barbarian: ult('Berserker Leap', 'He leaps up to 4 tiles onto the thickest crowd: the 3x3 round him is struck and shoved a tile out; he drinks a third of what it deals and runs fast for 5s', 700, 'attack2', (b, me, out) => berserkerLeap(b, me, out, 3.0, dur(me, 5000), (n) => mendUnit(me, n, out)), 'Bloodlust'),
     werewolf: ult('Full Moon', 'His frenzy fills to the brim and he is both his forms at once for 7s, and a quarter of his health comes back', 700, 'attack2', fullMoon),
     lancer: ult('Cavalry Charge', 'He rides up to 7 tiles in a line through every foe on it, each struck and thrown a tile aside, and the riders near him gallop faster for 4s', 700, 'attack2', cavalry, 'Charge of the Knights'),
-    reaper: ult('Harvest of Souls', 'Every foe within 5 tiles is cut; those under a third of their health are reaped for far more, each kill feeds him and rises as a wraith for 5s', 800, 'attack2', harvest),
+    reaper: ult('Harvest of Souls', 'The scythe\'s sweep drags every foe within 5 tiles a tile towards him, then cuts them all; those under a third of their health are reaped for far more, each kill feeds him and rises as a wraith for 5s', 800, 'attack2', (b, me, out) => {
+      // (RPG-SPELLS batch 5: the sweep drags them in first)
+      if (!foesOf(b, me).some((f) => apart(me, f) <= reachOf(me, 5))) return false;
+      reaperDrag(b, me, reachOf(me, 5), out);
+      return harvest(b, me, out);
+    }),
     dragoon: ult('Inferno Breath', 'Fire down the longest line of foes, up to 8 tiles, burning each for 5s; the line stays alight for 4s', 800, 'attack2', infernoBreath),
     arcBlade: ult('Lightning Storm', 'He becomes lightning: a teleport slash through up to six foes within 6 tiles, each shocked and stunned for 1.4s, then back where he started', 700, 'attack2', (b, me, out) =>
       lightningStorm(b, me, out, 1.9, dur(me, 1400)), 'Thunder Cascade'),
@@ -594,17 +602,20 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
     warlock: ult('Soul Harvest', 'Every foe within 7 tiles is cursed and burns for 6s; he drinks from each', 800, 'attack2', (b, me, out) =>
       smite(b, me, out, { reach: 7, mult: 1.0, curse: { ms: 6000, dot: 0.45 }, drink: { each: 0.06, cap: 0.36 } })),
     // ---- the shooters ----
-    archer: ult('Arrow Storm', 'Five volleys fall on separate crowds across the field', 700, 'attack2', (b, me, out) =>
-      sky(b, me, out, { n: 5, reach: 9, mult: 1.6, ms: 600, kind: 'rain', gap: 140, repeat: true })),
+    archer: ult('Hail of Arrows', 'Five volleys fall on separate crowds across the field', 700, 'attack2', (b, me, out) =>
+      sky(b, me, out, { n: 5, reach: 9, mult: 1.6, ms: 600, kind: 'rain', gap: 140, repeat: true }), 'Arrow Storm'),
     wizard: ult('Armageddon', 'Three meteors fall on separate crowds, each leaving the ground burning', 900, 'attack', (b, me, out) =>
       sky(b, me, out, { n: 3, reach: 8, mult: 2.6, ms: 1000, kind: 'meteor', gap: 220, repeat: true })),
     lightningMage: ult('Thunderstorm', 'Bolts strike the six toughest foes within 8 tiles, each stunned for 0.8s', 800, 'attack', (b, me, out) =>
       smite(b, me, out, { reach: 8, mult: 2.4, top: 6, order: (x, y) => y.hp - x.hp || x.id - y.id, stun: 800, arcs: true, sight: false })),
-    ranger: ult("Hunter's Net", 'A net of vines hurts every foe in sight within 8 tiles and holds it for 2.2s; each takes a third more from every blow for 6s', 800, 'attack2', (b, me, out) =>
-      smite(b, me, out, { reach: 8, sight: true, mult: 1.0, stun: 2200, brittle: 6000 })),
+    ranger: ult('Entangle', 'A net of vines hurts every foe in sight within 8 tiles and holds it for 2.2s; each takes a third more from every blow for 6s', 800, 'attack2', (b, me, out) =>
+      smite(b, me, out, { reach: 8, sight: true, mult: 1.0, stun: 2200, brittle: 6000 }), "Hunter's Net"),
     gunslinger: ult('High Noon', 'Six shots at the hardest-hitting foes in reach', 700, 'attack2', (b, me, out) =>
       shots(b, me, out, { n: 6, mult: 2.6, order: strongest, shot: 'bullet' })),
-    rifleBot: ult('Overclock', 'Hits half as hard again and shoots faster for 7s, and fires four shots at the weakest foe', 700, 'attack2', (b, me, out) => {
+    rifleBot: ult('Overclock', 'It jets to the highest ground in reach, then hits half as hard again and shoots faster for 7s, and fires four shots at the weakest foe', 700, 'attack2', (b, me, out) => {
+      // (RPG-SPELLS batch 5: it jets to the heights, or clear of a foe beside it, first)
+      if (!foesOf(b, me).length) return false;
+      jets(b, me, out);
       if (!shots(b, me, out, { n: 4, mult: 0.9, order: (x, y) => x.hp - y.hp || x.id - y.id, shot: 'bullet', one: true })) return false;
       if (me.form === undefined) me.power = (me.power ?? 1) * FORM_MULT;
       me.form = { until: b.t + dur(me, 7000) };
@@ -612,7 +623,7 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
       out.push({ kind: 'haste', to: me.id, ms: dur(me, 7000) });
       return true;
     }),
-    siegeBot: ult('Orbital Strike', 'A great shell on the thickest crowd, and a second on the same spot a moment after', 900, 'attack', orbital),
+    siegeBot: ult('Orbital Strike', 'A great shell on the thickest crowd, throwing every foe in the 3x3 2 tiles outward, and a second on the same spot a moment after', 900, 'attack', orbital),
     dreadPirate: ult('Ghost Fleet', 'Three broadsides from the ghost fleet fall on separate crowds and set off the powder barrels there', 800, 'attack2', (b, me, out) =>
       sky(b, me, out, { n: 3, reach: 8, mult: 2.4, ms: 800, kind: 'rain', gap: 200, repeat: true, barrels: true })),
     timeWitch: ult('Time Stop', 'Every foe within 8 tiles is stopped where it stands for 2.6s, while her friends are hastened for 5s', 900, 'attack2', timeStop),
@@ -637,7 +648,7 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
       bless(b, me, out, { haste: 6000, hot: { amount: 1.0, ms: 6000 }, charge: 30, song: 6000 });
       return true;
     }),
-    beastmaster: ult('Hunt of the Pack', 'Four wolves answer his call at once', 800, 'attack2', (b, me) => summon(b, me, 'wolf', 4)),
+    beastmaster: ult('Conjure Animals', 'Four wolves answer his call at once', 800, 'attack2', (b, me) => summon(b, me, 'wolf', 4), 'Hunt of the Pack'),
     druid: ult('Wall of Thorns', 'A hedge of thorns rises across the foes\' way for 8s, two treants rise at her side, and every ally is healed', 900, 'attack2', (b, me, out) => {
       if (!summon(b, me, 'treant', 2)) return false;
       bless(b, me, out, { heal: 4 });
