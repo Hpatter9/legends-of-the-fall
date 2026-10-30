@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.264.0',
+    date: '2026-10-30',
+    title: '130 new quests',
+    notes: ['100 one-off quests and 30 that come back, from Gwen, the board, passing travellers, your heroes, the ruler, Duchess, spoils and the rift.', 'Quests can now be dropped from the log. Many have short follow-ups, and Gwen remembers what you did.'],
+  },
+  {
     version: '0.263.0',
     date: '2026-10-30',
     title: 'The tavern and the first quests',
