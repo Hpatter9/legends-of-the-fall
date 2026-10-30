@@ -199,7 +199,11 @@ These owner-approved ascension effects are reused for combat tier-ups by ART-ASC
   the white sleeveless shirt, a brown cloth belt and the grey ponytail; CC-BY-SA 3.0 / GPL 3.0, the LPC artists listed in that pack's
   `AUTHORS.txt`). Her stand is the walk-left row's first frame; her talk the spellcast-left frames. Placeholders until the owner's
   painted giver portraits land.
-- **The passersby's portraits** (`pedlar-face.png`, `pilgrim-face.png`): the **Tiny RPG Town** pack's `npc.png` (16 px faces, scaled 4x).
+- **The passersby's portraits** (`pedlar-face.png`, `pilgrim-face.png`; batch 1b's `messenger-face.png`, `hunter-face.png`): the **Tiny
+  RPG Town** pack's `npc.png` (16 px faces, scaled 4x).
+- **Duchess's card portrait** (`duchess-face.png`, batch 1b): the first frame of the game's own goat sheet (`src/art/duchess/goat.png`,
+  credited with Duchess), squared and scaled. The spoils' and the rift's cards show two of the gear icons already in the game
+  (`src/art/items/star_chart.png`, `rift_shard.png`); the heroes and the ruler show their own painted portraits.
 - **The quest board** (`board.png`): Craftpix's **Free Medieval Field Work 2D Tileset for Platformer** ("Quest Board", craftpix.net free
   licence), trimmed and scaled to 64 px across with hard alpha.
 
