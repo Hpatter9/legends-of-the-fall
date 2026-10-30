@@ -1822,6 +1822,8 @@ class Game {
       // (the fallen get up off the ground where they lay, their death played backwards: no burst of light, no fresh arrival, FIGHT-FIXES)
       const fallen = this.b.units.filter((u) => u.side === 'hero' && !u.alive && !UNITS[u.def].summon);
       reviveParty(this.b);
+      // (DARK-WAVE: no dim from the fall is left on over the wave starting again)
+      this.fx.undim();
       this.acc = 0;
       this.endWait = 0;
       for (const u of fallen) if (u.alive) this.sprites.get(u.id)?.getUp();

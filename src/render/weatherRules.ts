@@ -8,8 +8,13 @@ import type { Weather } from '../sim/weather';
 /** The most particles any weather shows at once, and the share a battery saver keeps. */
 export const MAX_PARTICLES = 80;
 export const SAVER_SHARE = 0.5;
-/** A tint is never heavier than this (0 to 1), and takes this long to come in (ms). */
-export const MAX_TINT = 0.4;
+/** A tint is never heavier than this (0 to 1), and takes this long to come in (ms). DARK-WAVE: it was 0.4, and night's 0.36 of
+ *  deep blue over the whole screen took about a third of the light off the board, so a night wave (one in eight or so) looked
+ *  as if the screen had gone dark for no reason. The board keeps at least `1 - MAX_TINT` of its light now; the mood of a dark
+ *  weather is carried by the edges instead (`vignette`). */
+export const MAX_TINT = 0.15;
+/** The darkened edges are never heavier than this at the screen's corners (the board in the middle is left clear). */
+export const MAX_VIGNETTE = 0.5;
 export const FADE_IN_MS = 700;
 
 export type Flow = 'fall' | 'rise' | 'drift';
@@ -35,9 +40,11 @@ export interface WeatherLook {
   fogAlpha: number;
   /** Night's glows at the lit props, and their colour. */
   glow: number;
+  /** The screen's edges darkened in the tint's colour, this heavily at the corners (0 for none); the middle stays clear. */
+  vignette: number;
 }
 
-const NONE: WeatherLook = { tint: 0, alpha: 0, count: 0, colours: [], size: [2, 2], speed: [0, 0], flow: 'fall', wind: 0, sway: 0, streak: 0, fog: 0, fogColour: 0xffffff, fogAlpha: 0, glow: 0 };
+const NONE: WeatherLook = { tint: 0, alpha: 0, count: 0, colours: [], size: [2, 2], speed: [0, 0], flow: 'fall', wind: 0, sway: 0, streak: 0, fog: 0, fogColour: 0xffffff, fogAlpha: 0, glow: 0, vignette: 0 };
 
 /** The colours of falling leaves by land: autumn leaves, the forest's greens, the shrine's cherry petals. */
 const LEAVES: Partial<Record<Area, number[]>> = {
@@ -88,7 +95,7 @@ export function ambientOf(area: Area): WeatherLook {
 export function lookOf(w: Weather, area: Area): WeatherLook {
   switch (w) {
     case 'rain':
-      return { ...NONE, tint: 0x203048, alpha: 0.2, count: 64, colours: [0xcfe2ff], size: [1, 2], speed: [560, 760], flow: 'fall', wind: -110, sway: 0, streak: 8 };
+      return { ...NONE, tint: 0x203048, alpha: 0.1, vignette: 0.25, count: 64, colours: [0xcfe2ff], size: [1, 2], speed: [560, 760], flow: 'fall', wind: -110, sway: 0, streak: 8 };
     case 'snow':
       return { ...NONE, tint: 0xe6f0ff, alpha: 0.06, count: 56, colours: [0xffffff, 0xeaf2ff], size: [2, 3], speed: [36, 76], flow: 'fall', wind: 10, sway: 18 };
     case 'fog':
@@ -96,11 +103,11 @@ export function lookOf(w: Weather, area: Area): WeatherLook {
     case 'leaves':
       return { ...NONE, tint: 0xffa040, alpha: 0.04, count: 26, colours: LEAVES[area] ?? AUTUMN, size: [3, 4], speed: [28, 60], flow: 'fall', wind: 26, sway: 22 };
     case 'embers':
-      return { ...NONE, tint: 0x300800, alpha: 0.1, count: 40, colours: [0xff8a2a, 0xffc040, 0xff5a1a], size: [2, 2], speed: [26, 76], flow: 'rise', wind: 6, sway: 14 };
+      return { ...NONE, tint: 0x300800, alpha: 0.08, count: 40, colours: [0xff8a2a, 0xffc040, 0xff5a1a], size: [2, 2], speed: [26, 76], flow: 'rise', wind: 6, sway: 14 };
     case 'ash':
-      return { ...NONE, tint: 0x202020, alpha: 0.12, count: 36, colours: [0x8a8a8a, 0xb0b0b0, 0x606060], size: [2, 3], speed: [22, 48], flow: 'fall', wind: 16, sway: 12 };
+      return { ...NONE, tint: 0x202020, alpha: 0.08, vignette: 0.2, count: 36, colours: [0x8a8a8a, 0xb0b0b0, 0x606060], size: [2, 3], speed: [22, 48], flow: 'fall', wind: 16, sway: 12 };
     case 'night':
-      return { ...NONE, tint: 0x0a1038, alpha: 0.36, count: 14, colours: [GLOW[area] === 0x7dffb4 ? 0x9dffc8 : 0xffe88a], size: [2, 2], speed: [4, 12], flow: 'drift', wind: 0, sway: 10, glow: GLOW[area] ?? 0 };
+      return { ...NONE, tint: 0x0a1038, alpha: 0.14, vignette: 0.5, count: 14, colours: [GLOW[area] === 0x7dffb4 ? 0x9dffc8 : 0xffe88a], size: [2, 2], speed: [4, 12], flow: 'drift', wind: 0, sway: 10, glow: GLOW[area] ?? 0 };
     default:
       return NONE;
   }
@@ -112,3 +119,8 @@ export const countFor = (look: WeatherLook, saver: boolean, calm: boolean): numb
 export const fogFor = (look: WeatherLook, saver: boolean): number => (saver ? Math.ceil(look.fog / 2) : look.fog);
 /** The tint's alpha `t` ms into a fight: it comes in over `FADE_IN_MS`, never past `MAX_TINT`. */
 export const tintAt = (look: WeatherLook, t: number): number => Math.min(MAX_TINT, look.alpha) * Math.min(1, Math.max(0, t / FADE_IN_MS));
+/** The darkened edges' weight `t` ms into a fight: in with the tint, never past `MAX_VIGNETTE`. */
+export const vignetteAt = (look: WeatherLook, t: number): number => Math.min(MAX_VIGNETTE, look.vignette) * Math.min(1, Math.max(0, t / FADE_IN_MS));
+/** The share of the light the board's middle keeps under a weather once it has come in (1 is all of it): only the flat tint
+ *  falls there, as the vignette is clear in the middle. */
+export const boardLight = (look: WeatherLook): number => 1 - tintAt(look, Infinity);
