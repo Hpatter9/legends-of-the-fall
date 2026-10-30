@@ -100,7 +100,7 @@ export class Events {
     const fx = o.effect;
     const hire = fx.t === 'hire' ? fx.kind : fx.t === 'road' ? fx.act.hire : undefined;
     const icon = optionIcon(o);
-    if (hire && UNITS[hire]) b.append(portrait(formOf(UNITS[hire], 1), 32, 1));
+    if (hire && UNITS[hire]) b.append(portrait(battleSheet(hire, this.equipmentStep(hire), 1), 32, 1));
     else if (icon) b.append(iconImg(icon, o.label));
     const words = el('span');
     words.append(el('b', '', o.done ? `${o.label} · ${fx.t === 'reroll' ? 'done' : 'sold'}` : o.label), el('small', '', o.text));

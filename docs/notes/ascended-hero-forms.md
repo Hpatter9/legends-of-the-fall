@@ -17,7 +17,7 @@ The owner also asked to distinguish the soldier/Knight from the Paladin, then su
 - Unit sprites, hero bar, bench and drag ghosts, Last Stand, camp/tavern/hall, party tableau, awakening cutscene/preview, run gear picker and recaps use the equipment look. Home scenes have no combat aura. Reduced motion and battery-saver handling remain in the existing aura renderer.
 - Newly awakened sheets decode for saved awakened heroes and on demand before the first awakening preview; the whole additional roster is not decoded at startup. Their PNG files stay outside the script and are explicitly copied and cached by the service worker for offline use.
 - Awakened menu portraits are extracted from actual production idle poses. The full-art viewer retains the painted illustration and offers an awakened-form toggle, so the new gear and the paintings can both be inspected.
-- Current main through 0.230.0 (`58d38bc8`) is integrated, retaining four-tier combat, manual/Auto pair merges, short wave cards, tier-skill fixes and the foreground summon reveal. `claude/heritage-looks` (`73db30af`) is integrated on this feature branch. No release version was bumped.
+- Current main through 0.243.0 (`17e6537b`) is integrated, retaining four-tier combat, army-earned Auto controls, the placement zoom, new wave/recap rules, tier-skill fixes, foreground summon reveal, expanded events, Rift Sanctuary and the spell toolkit. `claude/heritage-looks` (`73db30af`) is integrated on this feature branch. No release version was bumped.
 
 ## Art packaging and review
 
@@ -27,11 +27,13 @@ The fifteen heritage paintings are imported as scene/cutout pairs under ignored 
 
 ## Validation
 
-- Typecheck and web build passed after integrating main 0.230.0; the release version is inherited, not bumped by this worker.
-- 105 affected tests passed: awakening/forms, painted auras, transformations/facings, original art rules, heritage looks/names, four-tier merging, party/scenes, battle flow, tier skills, recap and identical ailment logs.
+- Typecheck and web build passed after integrating main 0.243.0; the release version is inherited, not bumped by this worker.
+- 178 affected tests passed: awakening/forms, painted auras, transformations/facings, original art rules, heritage looks/names, four-tier merging, party/scenes, battle flow, tier skills, recap, identical ailment logs, Calamity/rift/dungeon and event callers.
 - All 2,744 animation cells across 98 sheets passed hard-alpha, dimensions, nonempty-frame and safety-margin checks, with no remaining automated review flags. Total decoded upgraded art is 166.92 MiB if every form is loaded; runtime loads the owned awakened forms and supporting transformations only.
 - The final integrated-build three-size browser pass verified 45 hero dossiers at 393x852, representative dossiers at 360x780 and 412x915, 1,760 facing/walk checks, 26 class/step combinations, both awakening steps, tier promotion, four supporting transformations, base/awakened auras, live combat, Last Stand, reduced motion and offline reload. The fresh-save check confirmed no upgraded sheets are requested on startup, exactly two Knight sheets load for the first awakening, and the purchase survives reload. No page or console errors occurred. See [results](../samples/ascended-heroes/browser/checks.json), [awakening](../samples/ascended-heroes/browser/awakening-393.png), [combat](../samples/ascended-heroes/browser/combat-393.png), and [offline gallery](../samples/ascended-heroes/browser/offline-393.png).
 
 ## Handoff
 
 All fifteen illustrated scene/cutout pairs are imported, including Kian's final illustrated revision. No known implementation blockers remain. Review the compact equipment forms and the three gallery contacts for aesthetic acceptance. Tooling: `node tools/ascended/checks.mjs`; outputs are in `docs/samples/ascended-heroes/browser/`. No merge to main or deployment requested.
+
+The final main integration preserves the new dungeon map renderer, long hero titles, event market and recap presentation; its leader, event hire portraits and recap fighters resolve the permanent equipment form.
