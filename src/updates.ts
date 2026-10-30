@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.260.0',
+    date: '2026-10-30',
+    title: 'Ultimates hit harder',
+    notes: ['Ultimates land big: twice the size, a burst of their element, a freeze on the hit, a shake and new sound.', 'The banner moves now, with speed lines and the name stamping in. The camera leans in on the hero and the struck stay lit.'],
+  },
+  {
     version: '0.259.0',
     date: '2026-10-30',
     title: 'Bolder spell effects',
