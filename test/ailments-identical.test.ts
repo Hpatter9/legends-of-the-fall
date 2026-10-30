@@ -9,6 +9,9 @@
 // tanks and supports the owner approved reworking (Shield Rush, Divine Smite, Seismic Slam, Tunnel Strike, Bane...). Only those moved.)
 // (RPG-SPELLS batch 4, docs/notes/spells-b4.md, re-recorded field30, bosses, armyFoes, spells, lands and stand: each has one of the melee heroes at
 // level 10 or more, whose kits the owner approved reworking (Cavalry Charge, Lightning Storm, Berserker Leap, Dragon Dive...). Only those moved.)
+// (RPG-SPELLS batch 5, docs/notes/spells-b5.md, re-recorded field1, field30, bosses, armyFoes and spells: each has one of the ranged heroes or
+// summoners the owner approved reworking (Bombard's and the Orbital Strike's throws, the Powder Keg, the leaping wolves, the Reaper's drag...).
+// Only those moved.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { scenarioHashes } from '../tools/status-fx/logs';

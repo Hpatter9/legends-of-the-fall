@@ -523,7 +523,7 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   beastmaster: { rate: 0.7, power: 0.59 },
   kraken: { rate: 1.37, power: 0.94 },
   lancer: { rate: 2.3, power: 3.07 }, // (RPG-SPELLS batch 4: Cavalry Charge through a line; 1.61 for one charge at one foe)
-  reaper: { rate: 1.79, power: 3.07 },
+  reaper: { rate: 1.79, power: 2.6 }, // (RPG-SPELLS batch 5: power 2.6, was 3.07; the drag made the sweep +4.8 at level 30)
   timeWitch: { rate: 1.09, power: 0.62 },
   arcBlade: { rate: 0.59, power: 1.8 }, // (RPG-SPELLS batch 4: Lightning Storm, a teleport slash with its stuns; 2.42 for Thunder Cascade)
   dreadPirate: { rate: 1.06, power: 1.24 },
