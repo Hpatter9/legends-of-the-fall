@@ -100,7 +100,8 @@ test('Ravage bites the weakest foe for double and heals half of the damage it de
   assert.equal(w.hp - 50, Math.round(dealt * 0.5));
 });
 
-test('Gore Charge: the minotaur charges up a free line, hits, knocks back and stuns the foe', () => {
+// (RPG-SPELLS batch 7: the hero's gore launches the foe 2 tiles, where it knocked it back one; the maze minotaurs keep the knock back)
+test('Gore Charge: the minotaur charges up a free line, hits, launches and stuns the foe', () => {
   const b = arena();
   const m = spawn(b, 'minotaur', 1, 4, CHARGE_MAX);
   const s = spawn(b, 'skeleton', 4, 4);
@@ -110,7 +111,7 @@ test('Gore Charge: the minotaur charges up a free line, hits, knocks back and st
   assert.equal(m.u, 3, 'lands on the last free tile before the foe');
   assert.ok(out.some((e) => e.kind === 'dash' && e.by === m.id));
   assert.ok(s.hp < hp);
-  assert.equal(s.u, 5, 'knocked back a tile');
+  assert.equal(s.u, 6, 'launched 2 tiles');
   assert.ok(s.busyUntil >= b.t + 1400, 'stunned');
 });
 

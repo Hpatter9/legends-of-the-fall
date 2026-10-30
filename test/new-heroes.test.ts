@@ -167,11 +167,12 @@ test('Karasu Tengu flies up cliffs and dives on shooters', () => {
   b.board.tiles[5 * b.board.w + 3].h = 6;
   const k = spawn(b, 'karasu', 3, 7, CHARGE_MAX);
   spawn(b, 'skeleton', 3, 4);
-  const shooter = spawn(b, 'boneArcher', 0, 0);
+  // (RPG-SPELLS batch 7: the hero's Swoop reaches 6 tiles, and drops behind the shooter)
+  const shooter = spawn(b, 'boneArcher', 0, 4);
   const out = run(b, 100);
   assert.ok(out.some((e) => e.kind === 'blink' && e.by === k.id));
   assert.ok(shooter.hp < shooter.maxHp);
-  assert.ok(Math.abs(k.u - 0) + Math.abs(k.v - 0) === 1);
+  assert.ok(Math.abs(k.u - 0) + Math.abs(k.v - 4) === 1);
   // flying: a tall step costs no extra time
   const b2 = arena();
   b2.board.tiles[6 * b2.board.w + 3].h = 6;
