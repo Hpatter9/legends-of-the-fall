@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.237.0',
+    date: '2026-10-30',
+    title: 'Night no longer darkens the battle',
+    notes: ['Night, rain and ash used to dim the whole board; now the board stays bright and the mood moves to the screen\'s edges.', 'A dim from an ultimate no longer lingers after a heart restarts the wave.'],
+  },
+  {
     version: '0.236.0',
     date: '2026-10-29',
     title: 'Settings in submenus, and this page',
