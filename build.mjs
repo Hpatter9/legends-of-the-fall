@@ -129,6 +129,7 @@ const writeIndexHtml = () => {
             readFileSync('src/stone.css', 'utf8') +
             readFileSync('src/levels.css', 'utf8') +
             readFileSync('src/battleUi.css', 'utf8') +
+            readFileSync('src/hudMock.css', 'utf8') +
             readFileSync('src/stand.css', 'utf8') +
             readFileSync('src/tomes.css', 'utf8') +
             readFileSync('src/ores.css', 'utf8'),

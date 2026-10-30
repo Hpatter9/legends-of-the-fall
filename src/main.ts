@@ -74,6 +74,7 @@ import { grantSpells } from './sim/spellSources';
 import { clockSeed, todayKey } from './modes';
 import { tips, type Box } from './tips';
 import { HeroBar } from './heroBar';
+import { HudMock, hudVariant } from './hudMock';
 import { ultFull } from './sim/heroKits';
 import { startAwake } from './render/awake';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, type SpellId } from './sim/spells';
@@ -810,6 +811,9 @@ class Game {
     this.b.autoUlt = this.ultAutoOn();
     this.heroBar.setAuto(this.ultAutoOn());
     this.heroBar.build(this.b);
+    // (BATTLE-HUD mock-ups, only with ?hud=a|b|c)
+    this.hudMock?.setAuto(this.ultAutoOn());
+    this.hudMock?.build(this.b);
     this.evolved = new Set();
     this.endIntro();
     newQuipScene();
@@ -902,7 +906,7 @@ class Game {
       return;
     }
     if (this.auto) this.autoTick(dt);
-    if (b.phase === 'fight' && (this.sceneHold > 0 || (this.revive && !this.revive.started))) {
+    if (b.phase === 'fight' && (this.sceneHold > 0 || (this.revive && !this.revive.started) || this.hudMock?.holding)) {
       // (a cinematic is up: the fight is held where it is)
     } else if (b.phase === 'fight') {
       // (a boss's fall slows the fight for a beat: `timeScale`)
@@ -912,6 +916,7 @@ class Game {
         this.acc -= TICK_MS;
         const events = stepBattle(b);
         for (const e of events) if (e.kind === 'ultLapse') this.heroBar.lapse(e.by);
+        this.hudMock?.onEvents(b, events);
         tally(this.stats, events, b.units);
         this.fx.show(b, events);
         for (const e of events) if (e.kind === 'boom') this.boardView.removeBarrel(e.u, e.v);
@@ -948,8 +953,9 @@ class Game {
         if (events.some((e) => e.kind === 'hit' || e.kind === 'heal')) this.refreshBench();
         if (b.phase !== 'fight') this.refresh();
       }
-      if (b.units.length !== this.sprites.size) this.heroBar.build(b);
+      if (b.units.length !== this.sprites.size) this.heroBar.build(b), this.hudMock?.build(b);
       this.heroBar.refresh(b);
+      this.hudMock?.refresh(b);
       this.fx.step(Math.min(dt, 250) * this.speed);
       $('clock').textContent = clock(b.t);
       this.refreshSpells();
@@ -1457,6 +1463,8 @@ class Game {
 
   /** The fight's hero bar (`heroBar.ts`): a portrait each, tapped to fire an ultimate, and the Auto switch. */
   private heroBar!: HeroBar;
+  /** The BATTLE-HUD mock-up bar (`hudMock.ts`), only with `?hud=a|b|c` in the address; unset otherwise, and the game is as it was. */
+  private hudMock?: HudMock;
   /** Whether the heroes' ultimates fire on their own: the player's Auto switch, and always under auto-replay. */
   private ultAutoOn(): boolean {
     return !!this.auto || !!this.meta.ultAuto;
@@ -1471,6 +1479,28 @@ class Game {
         this.b.autoUlt = this.ultAutoOn();
       },
     });
+    const hud = hudVariant();
+    if (hud) {
+      const root = document.createElement('div');
+      root.id = 'hudMock';
+      $('heroBar').after(root);
+      this.hudMock = new HudMock(root, hud, {
+        equipmentStep: (kind) => awakenedOf(this.meta, kind),
+        onAuto: (on) => {
+          this.meta.ultAuto = on;
+          saveMeta(this.meta);
+          this.b.autoUlt = this.ultAutoOn();
+          this.heroBar.setAuto(on);
+        },
+        anchor: (id) => {
+          const box = this.spriteBox(id);
+          if (!box) return null;
+          const r = this.app.canvas.getBoundingClientRect();
+          const k = r.width / this.app.screen.width;
+          return { x: r.left + (box.x + box.w / 2) * k, y: r.top + (box.y + box.h / 2) * k };
+        },
+      });
+    }
     const canvas = this.app.canvas;
     canvas.addEventListener('pointerdown', (e) => {
       // (two fingers on the board pinch it: any drag the first began is let go where it was, FIGHT-FIXES)

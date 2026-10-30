@@ -1,0 +1,224 @@
+/* BATTLE-HUD mock-ups (docs/notes/battle-hud.md, `hudMock.ts`): only with ?hud=a|b|c in the address (body[data-hud]); without it none of this
+   matches anything. Every hero has a card: name, health and pool with numbers, two skill chips (cost, a cooldown sweep, greyed while it cannot
+   be paid for or is locked) and the ultimate's pearly glow filling behind it. Text is 12px and never bold; nothing blinks (glows ease in and
+   out, the pearl's colours drift across it, never its brightness), and with reduced motion everything holds still. */
+#hudMock { display: none; }
+body[data-phase='fight'] #hudMock:not(:empty) { display: grid; }
+body[data-phase='fight'] #panel:has(#hudMock:not(:empty)) #heroBar { display: none; }
+#hudSpells { display: none; }
+body[data-hud][data-phase='fight'] #hudSpells { display: flex; }
+
+/* ---- the card, every layout ---- */
+.hm { position: relative; overflow: hidden; min-width: 0; box-sizing: border-box; padding: 2px; color: var(--text, #e6edf4); font: 400 12px/12px var(--body);
+  border: 4px solid; border-image: url(ui/cardb.png) 2 fill / 4px stretch; background: var(--s3); image-rendering: pixelated; touch-action: manipulation; cursor: pointer; text-shadow: var(--outline); }
+.hm > :not(.hmPearl):not(.hmSheen) { position: relative; z-index: 1; }
+/* (the ultimate's meter: a pearly sheen rising from the bottom as it fills, its colours drifting; brighter the fuller it is) */
+.hmPearl { position: absolute; z-index: 0; left: 0; right: 0; bottom: 0; height: calc(var(--ult, 0) * 100%); pointer-events: none;
+  background: linear-gradient(115deg, #ff9fe6, #8fe3ff, #c6a8ff, #ffe48f, #8fffd0, #ff9fe6, #8fe3ff); background-size: 300% 300%; mix-blend-mode: screen;
+  opacity: calc(0.3 + var(--ult, 0) * 0.45); box-shadow: 0 -1px 0 rgb(255 255 255 / 0.9), 0 -4px 10px rgb(240 220 255 / 0.85); animation: hmPearl 6s linear infinite; }
+.hm.locked .hmPearl { display: none; }
+.hmSheen { display: none; position: absolute; z-index: 0; inset: -20% -60%; pointer-events: none; background: linear-gradient(105deg, transparent 40%, rgb(255 255 255 / 0.55) 50%, transparent 60%); }
+.hm.ready .hmPearl { opacity: 0.95; animation: hmPearl 2.4s linear infinite; }
+.hm.ready .hmSheen { display: block; animation: hmSheen 1.8s ease-in-out infinite; }
+.hm.ready { border-image-source: url(ui/cardb-chosen.png); box-shadow: 0 0 0 1px rgb(255 255 255 / 0.6), 0 0 10px rgb(255 190 250 / 0.85), 0 0 18px rgb(140 225 255 / 0.65); }
+.hm.queued .hmPearl { opacity: 0.55; }
+.hm.fallen { filter: grayscale(1) brightness(0.6); }
+.hm.fallen .hmPearl { display: none; }
+.hmPic { position: relative; display: block; flex: none; width: 36px; height: 36px; }
+.hmPortrait { display: block; width: 100%; height: 100%; image-rendering: pixelated; background: rgb(var(--black-rgb) / 0.35); box-shadow: 0 0 0 1px #a28a58; }
+.hmPlate { position: absolute; left: 50%; bottom: -2px; transform: translateX(-50%); padding: 1px 3px; color: var(--black, #000); background: var(--gold, #f5c542);
+  border: 1px solid var(--black, #000); text-shadow: none; white-space: nowrap; pointer-events: none; }
+.hmPlate[hidden] { display: none; }
+.hmName { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: -1px; }
+.hmClass { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-dim); font-family: 'Pixelify Sans', var(--body); }
+/* (the bars: the number sits in the bar) */
+.hmBar { position: relative; display: block; height: 12px; background: var(--s1); border: 1px solid rgb(var(--black-rgb) / 0.9); box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.7); overflow: hidden; }
+.hmBar i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; }
+.hmBar b { position: relative; display: block; font: 400 12px/12px 'Pixelify Sans', var(--body); text-align: center; white-space: nowrap; overflow: hidden; }
+.hmBar.hp i { background: linear-gradient(#8ef07a, #3fa836); }
+.hmBar.mana i { background: linear-gradient(var(--b5, #9fd4ff), var(--b2, #2a6ad1)); }
+.hmBar.stamina i { background: linear-gradient(#ffe27a, #d79a1e); }
+/* (a skill chip: an element-coloured edge, its pack icon, the name and the cost; the cooldown sweeps off it, a thin line under it fills
+   towards the cost; greyed while it cannot be paid, dim and grey while locked) */
+.hmChip { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 3px; overflow: hidden; min-width: 0; padding: 2px 3px 3px 4px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--el, #fff) 22%, transparent), rgb(var(--black-rgb) / 0.4) 60%); border: 1px solid rgb(255 255 255 / 0.2); border-left: 3px solid var(--el, #fff); }
+.hmIcon { display: block; flex: none; image-rendering: pixelated; }
+.hmSk { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.hmSk b { font: 400 12px/12px 'Pixelify Sans', var(--body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hmSk em { font: 400 12px/12px 'Pixelify Sans', var(--body); font-style: normal; color: var(--b5); white-space: nowrap; overflow: hidden; }
+.hmCd { position: absolute; top: 0; right: 0; bottom: 0; width: calc(var(--cd, 0) * 100%); background: rgb(var(--black-rgb) / 0.62); border-left: 1px solid rgb(255 255 255 / 0.5); pointer-events: none; transition: width 0.1s linear; }
+.hmPay { position: absolute; left: 0; bottom: 0; height: 2px; width: calc(var(--pay, 0) * 100%); background: var(--el, #fff); opacity: 0.9; pointer-events: none; }
+.hmChip.short { filter: grayscale(0.85) brightness(0.8); }
+.hmChip.short em { color: #ff9a8a; }
+.hmChip.shut { filter: grayscale(1); opacity: 0.5; }
+.hmChip.shut .hmPay, .hmChip.shut .hmCd { display: none; }
+.hmChip.fired { filter: none; animation: hmFired 1s ease-out 1; }
+/* (the cast: the card lights in the skill's element and its name rises over it, then both ease away) */
+.hmCast { position: absolute !important; z-index: 3 !important; left: 0; right: 0; top: 30%; text-align: center; opacity: 0; pointer-events: none; color: #fff;
+  font: 400 12px/14px var(--body); padding: 2px 0; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--cast, #fff) 70%, #000) 20%, color-mix(in srgb, var(--cast, #fff) 70%, #000) 80%, transparent); }
+.hm.casting { animation: hmCastGlow 1.05s ease-out 1; }
+.hm.casting .hmCast { animation: hmCastName 1.05s ease-out 1; }
+.hm.nudge { animation: hmNudge 0.35s ease-out 1; }
+.hmAuto { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 0; padding: 2px; border: 2px solid var(--s8); border-image: none; background: var(--s3);
+  color: rgb(255 255 255 / 0.75); font: 400 12px/12px var(--body); text-shadow: none; cursor: pointer; }
+.hmAuto .sw { position: relative; display: block; width: 26px; height: 14px; border-radius: 7px; background: var(--s1); border: 1px solid rgb(255 255 255 / 0.3); }
+.hmAuto .sw b { position: absolute; left: 1px; top: 1px; width: 12px; height: 12px; border-radius: 50%; background: #9aa0a8; transition: left 0.15s; }
+.hmAuto.on { color: var(--black, #000); background: var(--gold, #f5c542); border-color: var(--gold-hi, #ffe08a); }
+.hmAuto.on .sw b { left: 13px; background: #fff3b0; }
+@keyframes hmPearl { from { background-position: 0% 50%; } to { background-position: 300% 50%; } }
+@keyframes hmSheen { 0% { transform: translateX(-45%); } 100% { transform: translateX(45%); } }
+@keyframes hmFired { 0% { box-shadow: inset 0 0 0 2px #fff, 0 0 12px var(--el); background-color: color-mix(in srgb, var(--el) 70%, transparent); } 100% { box-shadow: none; background-color: transparent; } }
+@keyframes hmCastGlow { 0% { box-shadow: 0 0 0 2px var(--cast), 0 0 22px var(--cast), inset 0 0 26px var(--cast); } 100% { box-shadow: 0 0 0 0 transparent, 0 0 0 transparent, inset 0 0 0 transparent; } }
+@keyframes hmCastName { 0% { opacity: 0; transform: translateY(6px); } 15% { opacity: 1; transform: translateY(0); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-8px); } }
+@keyframes hmNudge { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+
+/* ---- the trail and the banner (over the board) ---- */
+#hudFx { position: fixed; inset: 0; z-index: 12; pointer-events: none; }
+.hmTrail { position: absolute; left: 0; top: 0; overflow: visible; }
+.hmTrail path { fill: none; stroke-linecap: round; stroke-dasharray: 1200; stroke-dashoffset: 1200; animation: hmDraw 0.85s ease-out 1 forwards; }
+.hmTrail .glow { stroke-width: 9; opacity: 0.55; filter: blur(3px); }
+.hmTrail .core { stroke: #fff; stroke-width: 2.5; }
+.hmTrail .ring { fill: none; stroke-width: 3; opacity: 0; animation: hmRing 0.85s ease-out 1; }
+@keyframes hmDraw { 0% { stroke-dashoffset: 1200; opacity: 1; } 45% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+@keyframes hmRing { 0%, 35% { opacity: 0; transform: scale(0.4); } 55% { opacity: 1; } 100% { opacity: 0; transform: scale(1.6); } }
+.hmTrail .ring { transform-box: fill-box; transform-origin: center; }
+.hudCutIn { position: absolute; display: flex; align-items: center; gap: 6px; box-sizing: border-box; padding: 3px 8px 3px 4px; color: #fff; text-shadow: var(--outline);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--cast) 70%, #2a0f20), color-mix(in srgb, var(--cast) 45%, #10060c) 75%, transparent);
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--cast) 70%, transparent));
+  border-top: 2px solid color-mix(in srgb, var(--cast) 60%, #fff); border-bottom: 2px solid color-mix(in srgb, var(--cast) 60%, #000);
+  clip-path: polygon(0 0, 100% 0, 94% 100%, 0 100%); animation: hudCutIn 1.4s ease-out 1 forwards; }
+.hudCutIn canvas { width: 40px; height: 40px; image-rendering: pixelated; flex: none; }
+.hudCutIn span { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.hudCutIn small { font: 400 12px/12px 'Pixelify Sans', var(--body); opacity: 0.9; }
+.hudCutIn b { font: 400 16px/16px var(--body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hudCutIn.ult b { font-size: 18px; line-height: 18px; color: #fff4c0; }
+@keyframes hudCutIn { 0% { opacity: 0; transform: translateX(-24px); } 14% { opacity: 1; transform: translateX(0); } 75% { opacity: 1; transform: translateX(4px); } 100% { opacity: 0; transform: translateX(14px); } }
+
+/* ---- the skill's sheet (the fight is held while it is open) ---- */
+#hudInfo { position: fixed; inset: 0; z-index: 30; display: flex; align-items: flex-end; justify-content: center; padding: 0 10px calc(var(--hud-panel, 200px) + 6px); background: rgb(var(--black-rgb) / 0.35); }
+#hudInfo[hidden] { display: none; }
+.hiCard { width: min(360px, 100%); box-sizing: border-box; padding: 8px 10px 10px; color: var(--text); font: 400 12px/16px 'Pixelify Sans', var(--body);
+  border: 6px solid; border-image: url(ui/panel.png) 6 fill / 12px stretch; background: var(--s3); box-shadow: 0 0 18px color-mix(in srgb, var(--el) 50%, transparent); image-rendering: pixelated; }
+.hiHead { display: flex; align-items: center; gap: 8px; }
+.hiHead > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.hiHead b { font: 400 14px/14px var(--body); color: var(--el); text-shadow: var(--outline); }
+.hiHead small { font: 400 12px/12px 'Pixelify Sans', var(--body); color: var(--text-dim); text-transform: capitalize; }
+.hiClose { min-height: 32px; width: 32px; padding: 0; font-size: 16px; }
+.hiCard p { margin: 6px 0; }
+.hiCard dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; margin: 0 0 6px; }
+.hiCard dt { color: var(--gold, #f5c542); }
+.hiCard dd { margin: 0; }
+.hiTiers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.hiTiers li { padding: 3px 5px; background: rgb(var(--black-rgb) / 0.4); border-left: 3px solid var(--s8); opacity: 0.6; }
+.hiTiers li.on { opacity: 1; border-left-color: var(--el); }
+.hiTiers li.now { background: color-mix(in srgb, var(--el) 18%, rgb(0 0 0 / 0.5)); }
+.hiTiers b { display: block; font-weight: 400; color: var(--text); }
+.hiTiers span { color: var(--text-dim); }
+.hiHeld { margin-top: 6px; text-align: center; color: var(--text-faint); }
+
+/* ---- A: five tall cards in a row, the skills under each; the king's spells on a rail on the right ---- */
+.hud-a { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; }
+.hud-a .hm { display: flex; flex-direction: column; align-items: stretch; gap: 2px; }
+.hud-a .hmName { text-align: center; }
+.hud-a .hmPic { align-self: center; }
+.hud-a .hmChips { display: flex; flex-direction: column; gap: 2px; }
+.hud-a .hmChip { grid-template-columns: minmax(0, 1fr); padding: 1px 2px 3px 3px; }
+.hud-a .hmChip .hmIcon { display: none; }
+.hud-a .hmSk { display: block; }
+.hud-a .hmSk b { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: normal; overflow: hidden; word-break: break-word; min-height: 24px; }
+.hud-a .hmSk em { position: absolute; right: 0; bottom: 1px; padding: 0 2px; background: rgb(var(--black-rgb) / 0.85); }
+.hud-a .hmChip.shut .hmSk em { position: static; background: none; }
+/* (the name sits over the foot of the portrait) */
+.hud-a .hm { padding-top: 1px; }
+.hud-a .hmName { order: 1; margin-top: -11px; }
+.hud-a .hmBar.hp { order: 2; }
+.hud-a .hmBar.res { order: 3; }
+.hud-a .hmChips { order: 4; }
+.hud-a .hmPlate { bottom: auto; top: 6px; }
+.hud-a .hmBar b { letter-spacing: -0.5px; }
+body[data-hud='a'] #hudSpells { position: fixed; z-index: 8; right: 3px; bottom: calc(var(--hud-panel, 200px) + 4px); flex-direction: column; align-items: stretch; gap: 4px; width: 54px; }
+body[data-hud='a'] #hudSpells .hmAuto { min-height: 36px; }
+body[data-hud='a'] #spells { display: flex; flex-direction: column; gap: 4px; }
+body[data-hud='a'] #mana { flex-direction: column-reverse; gap: 2px; padding: 3px; background: rgb(var(--black-rgb) / 0.6); border: 1px solid var(--gold-lo, #8a6a2a); }
+body[data-hud='a'] #mana i { flex: none; width: 100%; height: 8px; }
+body[data-hud='a'] #mana b { text-align: center; }
+body[data-hud='a'] #spellCards { display: flex; flex-direction: column; gap: 4px; }
+body[data-hud='a'][data-phase='fight'] #spellCards .spell { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 2px 0; min-height: 0; }
+body[data-hud='a'][data-phase='fight'] #spellCards .spell .spIcon { zoom: 0.5; margin: 0; }
+body[data-hud='a'][data-phase='fight'] #spellCards .spell b { display: none; }
+body[data-hud='a'] #spellHint, body[data-hud='c'] #spellHint, body[data-hud='b'] #spellHint { position: fixed; left: 8px; right: 66px; bottom: calc(var(--hud-panel, 200px) + 6px); font-size: 12px; text-shadow: var(--outline); pointer-events: none; }
+
+/* ---- B: five compact rows (portrait, name and bars, two skill chips; the glow fills along the row); the spells fan out of a crown ---- */
+.hud-b { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+.hud-b .hm { display: grid; grid-template-columns: 34px minmax(0, 0.9fr) minmax(0, 2.1fr); grid-template-rows: 12px 12px 12px; column-gap: 4px; row-gap: 0; align-items: center; padding: 0 2px; border-width: 2px; }
+.hud-b .hmPic { grid-row: 1 / span 3; width: 34px; height: 34px; }
+.hud-b .hmName { grid-column: 2; }
+.hud-b .hmBar { grid-column: 2; height: 12px; box-sizing: border-box; }
+.hud-b .hmBar b { line-height: 10px; }
+.hud-b .hmChip { padding-top: 1px; padding-bottom: 2px; }
+.hud-b .hmSk { gap: 1px; }
+.hud-b .hmChips { grid-column: 3; grid-row: 1 / span 3; display: grid; grid-template-columns: 1fr 1fr; gap: 3px; align-self: stretch; }
+.hud-b .hmPearl, .hcStrip .hmPearl { top: 0; bottom: 0; height: auto; width: calc(var(--ult, 0) * 100%); box-shadow: 1px 0 0 rgb(255 255 255 / 0.9), 4px 0 10px rgb(240 220 255 / 0.85); }
+.hud-b .hmCast { top: 50%; transform: translateY(-50%); }
+body[data-hud='b'] #hudSpells { position: fixed; z-index: 8; right: 6px; bottom: calc(var(--hud-panel, 200px) + 6px); flex-direction: column; align-items: center; gap: 4px; }
+body[data-hud='b'] #hudSpells .hmAuto { width: 52px; min-height: 34px; }
+.hsCrown { position: relative; width: 56px; height: 56px; min-height: 0; padding: 0; border: 0; border-image: none; border-radius: 50%; display: grid; place-items: center;
+  background: conic-gradient(var(--b4, #7cc0ff) calc(var(--mana, 0) * 360deg), rgb(var(--black-rgb) / 0.6) 0); box-shadow: 0 0 0 2px var(--gold-lo, #8a6a2a), 0 3px 8px rgb(0 0 0 / 0.6); }
+.hsCrown::before { content: ''; position: absolute; inset: 5px; border-radius: 50%; background: radial-gradient(var(--s6), var(--s2)); box-shadow: inset 0 0 0 2px var(--gold, #f5c542); }
+.hsCrown img { position: relative; width: 32px; height: 32px; image-rendering: pixelated; }
+.hsMana { position: absolute; right: -4px; bottom: -4px; min-width: 18px; padding: 1px 2px; font: 400 12px/12px var(--body); color: #fff; background: var(--b2, #3a78d6); border: 1px solid #000; text-shadow: none; }
+body[data-hud='b'] #spells { position: absolute; right: 0; bottom: 0; width: 0; height: 0; display: block !important; }
+body[data-hud='b'] #mana { display: none; }
+body[data-hud='b'] #spellCards { position: absolute; right: 0; bottom: 0; display: block; }
+body[data-hud='b'][data-phase='fight'] #spellCards .spell { position: absolute; right: 8px; bottom: 8px; width: 104px; opacity: 0; transform: translate(0, 0) scale(0.4); transform-origin: 100% 100%; pointer-events: none;
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out; background-color: var(--s3); }
+body[data-hud='b'] #hudSpells.open #spellCards .spell { opacity: 1; pointer-events: auto; }
+body[data-hud='b'] #hudSpells.open #spellCards .spell:nth-child(1) { transform: translate(-58px, -2px); }
+body[data-hud='b'] #hudSpells.open #spellCards .spell:nth-child(2) { transform: translate(-46px, -40px); }
+body[data-hud='b'] #hudSpells.open #spellCards .spell:nth-child(3) { transform: translate(-22px, -78px); }
+body[data-hud='b'] #hudSpells.open #spellCards .spell:nth-child(4) { transform: translate(6px, -116px); }
+
+/* ---- C: the chosen hero's full card over a mini row of five; the spells as orbs under the top bar ---- */
+.hud-c { grid-template-columns: minmax(0, 1fr); gap: 3px; }
+.hcStrip { display: grid; grid-template-columns: minmax(0, 1fr) 40px; gap: 3px; }
+.hcStrip .hm[hidden] { display: none; }
+.hcStrip .hm { display: grid; grid-template-columns: 40px minmax(0, 1fr); grid-template-rows: auto auto auto auto; column-gap: 5px; row-gap: 2px; align-items: center; padding: 2px 3px; cursor: default; }
+.hcStrip .hmPic { grid-row: 1 / span 4; width: 40px; height: 40px; align-self: start; }
+.hcStrip .hmName, .hcStrip .hmClass, .hcStrip .hmBar { grid-column: 2; }
+.hcStrip .hmName { display: flex; }
+.hcStrip .hmClass { display: none; }
+.hcStrip .hmChips { grid-column: 1 / span 2; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
+.hcStrip .hmChip[data-hud-skill='ult'] { background: linear-gradient(115deg, rgb(255 216 244 / 0.25), rgb(200 241 255 / 0.25), rgb(226 210 255 / 0.25)); border-left-color: #f0d8ff; }
+.hcStrip .hmChip[data-hud-skill='ult'] .hmPay { background: linear-gradient(90deg, #ffd8f4, #c8f1ff, #e2d2ff, #fff3c8); height: 3px; }
+/* (the cooldown is a dial over the icon) */
+.hud-c .hmCd { top: 50%; left: 4px; right: auto; bottom: auto; width: 20px; height: 20px; margin-top: -10px; border: 0; border-radius: 50%; transition: none;
+  background: conic-gradient(rgb(var(--black-rgb) / 0.72) calc(var(--cd, 0) * 360deg), transparent 0); }
+.hcRow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; }
+.hmMini { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 2px 3px; }
+.hmMini .hmPic { width: 30px; height: 30px; }
+.hmMini .hmBar { width: 100%; height: 4px; }
+.hmMini.chosen { border-image-source: url(ui/cardb-chosen.png); }
+.hmMini.chosen::after { content: ''; position: absolute; z-index: 2; left: 50%; top: -1px; margin-left: -5px; border: 5px solid transparent; border-top-color: var(--gold, #f5c542); }
+body[data-hud='c'] #hudSpells { position: fixed; z-index: 8; left: 8px; top: calc(var(--hud-top, 84px) + 2px); flex-direction: row; align-items: center; gap: 4px; }
+body[data-hud='c'] #spells { display: flex; flex-direction: row; align-items: center; gap: 4px; }
+body[data-hud='c'] #mana { width: 64px; flex-direction: column; gap: 2px; padding: 3px; background: rgb(var(--black-rgb) / 0.6); border: 1px solid var(--gold-lo, #8a6a2a); }
+body[data-hud='c'] #mana i { flex: none; width: 100%; height: 8px; }
+body[data-hud='c'] #spellCards { display: flex; gap: 4px; }
+body[data-hud='c'][data-phase='fight'] #spellCards .spell { width: 40px; height: 40px; padding: 0; border-radius: 50%; border: 2px solid var(--gold, #f5c542); border-image: none; display: grid; place-items: center; background: radial-gradient(var(--s6), var(--s1)); }
+body[data-hud='c'][data-phase='fight'] #spellCards .spell .spIcon { zoom: 0.45; margin: 0; grid-row: auto; }
+body[data-hud='c'][data-phase='fight'] #spellCards .spell b { display: none; }
+body[data-hud='c'][data-phase='fight'] #spellCards .spell em { display: none; }
+body[data-hud='c'][data-phase='fight'] #spellCards .spell::after { content: attr(data-cost); position: absolute; right: -3px; bottom: -3px; min-width: 14px; padding: 1px 2px; font: 400 12px/12px var(--body);
+  color: #fff; background: var(--b2, #3a78d6); border: 1px solid #000; text-align: center; }
+body[data-hud='c'][data-phase='fight'] #spellCards .spell { overflow: visible; }
+body[data-hud='c'][data-phase='fight'] #spellCards .spell .cool { border-radius: 50%; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hmPearl, .hm.ready .hmPearl { animation: none; }
+  .hm.ready .hmSheen { animation: none; display: none; }
+  .hm.casting, .hm.casting .hmCast, .hmChip.fired, .hm.nudge, .hudCutIn { animation: none; }
+  .hm.casting { box-shadow: 0 0 0 2px var(--cast), inset 0 0 18px var(--cast); }
+  .hm.casting .hmCast { opacity: 1; }
+  .hmCd, .hmAuto .sw b { transition: none; }
+  body[data-hud='b'][data-phase='fight'] #spellCards .spell { transition: none; }
+}

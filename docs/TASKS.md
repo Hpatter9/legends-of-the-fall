@@ -16,6 +16,12 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 **ART-ASCEND / Upgraded hero forms and combat tier auras** — Owner: current Codex chat. Branch: `art/ascended-hero-forms`, worktree: `/workspace/legends-of-the-fall`. Goal: permanent upgraded hero artwork at Awakening (called ascension in the conversation), with existing class auras repurposed for combat grades on either form. Status: owner approved legendary upgraded gear and glowing mage eyes; requested compact silhouettes rather than broad bodies/capes. Owner authorised implementation. Implemented and validated; ready for owner review. All 49 hero/transformation forms, 98 sheets and 30 heritage gallery assets are imported; Knight and Paladin are distinct. Main 0.243.0 is integrated. Typecheck/build, 178 affected tests, all 2,744 animation cells, three phone sizes, first/second awakening, tier auras, transformations, Last Stand, reduced motion, fresh-save lazy loading/persistence and offline reload passed with no browser errors. No merge to main or deployment. Allowed scope: concept art and proposal notes initially; after visual approval, hero form assets, render mappings, combat aura selection, associated tests, offline packaging and credits. Preserve simulation values, hero identities, save keys and unrelated artwork. Completion: approved three-hero sample, then all 45 forms with required facings/actions, tier effects, typecheck/build and relevant portrait/offline checks. Combat mapping: grade 1 none, grade 2 existing light aura, grades 3–4 existing strong aura (tier 4 retains its other flourishes); independent of permanent awakening. Handoff: [proposal](notes/ascended-hero-forms.md). Draft PR: [#208](https://github.com/Hpatter9/legends-of-the-fall/pull/208).
 
+### BATTLE-HUD — A richer fight bar (mock-ups)
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/battle-hud`, `/home/user/battle-hud`.
+- **Goal:** the owner's ask: per-hero cards (name, hp and mp with numbers, skills by name with cost and cooldown, a pearlescent ultimate glow), skill sheets on tap, a better cast moment, the king's spells moved. Mock-ups first.
+- **Status:** three layouts behind `?hud=a|b|c` (default game unchanged), awaiting the owner's pick. [Note](notes/battle-hud.md); screenshots `samples/battle-hud-*.png`.
+
 ### DARK-WAVE — Some waves, the screen darkens
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/dark-wave`, `/home/user/dark-wave`.
