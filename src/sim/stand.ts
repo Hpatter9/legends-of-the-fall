@@ -14,7 +14,7 @@ import { ULT_FILL } from './heroKits';
 import { grantOres, standOres, type OreDrop } from './awakenMats';
 import { startBattle, addUnit, stepBattle, TICK_MS, creditOf, FOG_RANGE, type Battle, type BattleEvent, type Boost, type Unit } from './battle';
 import { weatherOf } from './weather';
-import { actOfHall, CHOICE_MS, caveInOf, exitOf, FLEE_MS, hallOfWave, HOLD_HARDER, holdGold, isHall, RETREAT_MS, retreatAfter, ROOM_BREAK_MS, type Exit } from './standActs';
+import { actOfHall, CHOICE_MS, caveInOf, exitOf, FLEE_MS, hallOfWave, HOLD_HARDER, holdGold, isHall, RETREAT_MS, retreatAfter, ROOM_BREAK_MS, ROOM_NAMES, type Exit } from './standActs';
 import { tileAt, standable, type Area, type At } from './board';
 import { canPost, edgeTiles, KING_AT, ringPlan, standArea, standBoard, type Edge, type Role } from './standField';
 import { hallOf, hallPlan, type HallKind } from './standHalls';
@@ -148,6 +148,8 @@ export interface StandRun {
   heroes: StandHero[];
   nextId: number;
   relics: string[];
+  /** The relics holding the line has paid this run (STAND-HOLD-RELIC; already in `relics` too). Absent until one is won. */
+  heldRelics?: string[];
   offer: string[];
   /** The king's health as a share of the whole. */
   king: number;
@@ -172,6 +174,8 @@ export interface StandSummary {
   kills: number;
   heroes: number;
   relics: number;
+  /** How many of them holding the line paid (absent when none). */
+  heldRelics?: number;
   newBest: boolean;
   /** Rift ores a new record paid (`awakenMats.ts`: a couple for each tenth wave passed for the first time); missing when none. */
   ores?: OreDrop[];
@@ -203,11 +207,11 @@ export type StandNote =
   /** An act's last wave: its last foes break off and run for the breaches (STAND-RETREAT). */
   | { kind: 'breakOff' }
   /** An act's last wave is cleared: hold one more, harder wave for `gold`, or fall back to `to`. */
-  | { kind: 'choice'; n: number; to: HallKind; gold: number }
+  | { kind: 'choice'; n: number; to: HallKind; gold: number; relic: boolean }
   /** The bonus wave begins. */
   | { kind: 'hold'; n: number; boss: boolean }
-  /** The bonus wave is cleared: its purse. */
-  | { kind: 'held'; gold: number }
+  /** The bonus wave is cleared: its purse, and the relic it pays (absent when every relic was owned: the gold is doubled instead). */
+  | { kind: 'held'; gold: number; relic?: string }
   /** The room is given up: a breach (`cave`) caves in, and the king and the heroes walk out by the door. */
   | { kind: 'retreat'; from: HallKind; to: HallKind; exit: Exit; cave: Edge | null }
   /** The next room is laid out, the heroes at their posts. */
@@ -337,6 +341,8 @@ export function holdSpec(seed: number, armies: readonly string[], n: number, hal
 
 /** The room a run is in now (an old save's is the seed's). */
 export const hallNow = (run: StandRun): HallKind => run.hall ?? hallOf(run.seed);
+/** The camp's line for a saved run, its wave and the room it is in: "Wave 7 · Library", "Wave 18 · Throne Room" (STAND-HOLD-RELIC). */
+export const standContinueLine = (run: StandRun): string => `Wave ${run.wave} · ${ROOM_NAMES[hallNow(run)].short}`;
 
 /* ------------------------------------------------------------------ building a run */
 
@@ -646,7 +652,8 @@ function clearWave(s: Stand): void {
     run.retreat = { to: hallOfWave(n + 1) };
     s.phase = 'choice';
     s.choiceLeft = CHOICE_MS;
-    s.notes.push({ kind: 'choice', n, to: run.retreat.to, gold: holdGold(n) });
+    const purse = holdPurse(run, n);
+    s.notes.push({ kind: 'choice', n, to: run.retreat.to, gold: purse.gold, relic: purse.relic });
   }
 }
 
@@ -668,20 +675,46 @@ export function fallBack(s: Stand): boolean {
   return true;
 }
 
-/** The bonus wave is cleared: its purse, the wave's XP and breath, and the guard falls back. */
+/**
+ * The relic holding the line after wave `n` pays (STAND-HOLD-RELIC): one the run does not own, drawn from its own side stream (so the offers and
+ * every other draw are as they were). Null when every relic is owned.
+ */
+export function holdRelic(run: Pick<StandRun, 'seed' | 'relics'>, n: number): string | null {
+  const rest = ALL_RELIC_IDS.filter((id) => !run.relics.includes(id));
+  if (!rest.length) return null;
+  return rest[new Rng(mixSeed(run.seed, 0x401e, n)).int(0, rest.length - 1)];
+}
+
+/** What holding the line after wave `n` pays: `holdGold(n)` and a relic, or, when every relic is owned, twice the gold and no relic. */
+export function holdPurse(run: Pick<StandRun, 'seed' | 'relics'>, n: number): { gold: number; relic: boolean } {
+  const relic = holdRelic(run, n) !== null;
+  return { gold: relic ? holdGold(n) : 2 * holdGold(n), relic };
+}
+
+/** What holding pays, as the choice card says it: "+64 gold and a relic" (or "+128 gold" when every relic is owned). */
+export const purseLine = (p: { gold: number; relic: boolean }): string => `+${p.gold} gold${p.relic ? ' and a relic' : ''}`;
+
+/** The bonus wave is cleared: its purse and relic, the wave's XP and breath, and the guard falls back. */
 function clearHold(s: Stand): void {
   const run = s.run;
   const n = run.wave - 1;
-  const gold = holdGold(n);
+  const relic = holdRelic(run, n);
+  const gold = holdPurse(run, n).gold;
   run.gold += gold;
   run.earned += gold;
+  if (relic) {
+    takeRelic(s, relic);
+    run.heldRelics = [...(run.heldRelics ?? []), relic];
+    // (the break's offer drawn at the wave's clear may hold it: it is owned now, so it is no longer for sale)
+    run.offer = run.offer.filter((id) => id !== relic);
+  }
   for (const h of run.heroes) if (standing(h)) giveXp(s, h, waveXp(n));
   for (const u of s.b.units) {
     if (u.side !== 'hero' || u.tag === undefined || !u.alive) continue;
     u.hp = Math.min(u.maxHp, u.hp + Math.round(u.maxHp * CLEAR_HEAL * (u.healMult ?? 1)));
   }
   s.holding = false;
-  s.notes.push({ kind: 'held', gold });
+  s.notes.push({ kind: 'held', gold, ...(relic ? { relic } : {}) });
   startRetreat(s);
 }
 
@@ -969,8 +1002,14 @@ export function buyRelic(s: Stand, i: number): string | null {
   const id = s.run.offer[i];
   if (!id || s.phase === 'over' || s.run.gold < offerCost(s)) return null;
   s.run.gold -= offerCost(s);
-  s.run.relics.push(id);
   s.run.offer.splice(i, 1);
+  takeRelic(s, id);
+  return id;
+}
+
+/** A relic joins the run (bought, or paid for holding the line): it works at once for the whole team. */
+function takeRelic(s: Stand, id: string): void {
+  s.run.relics.push(id);
   const rl = relicEffects(s.run.relics);
   const b = s.b;
   const { atk, hp, mana, first, revive, gold: _g, set, ...team } = rl;
@@ -989,7 +1028,6 @@ export function buyRelic(s: Stand, i: number): string | null {
   s.baseMana = manaRate(s.setup.castle) * (mana ?? 1);
   syncTraits(s);
   syncMana(s);
-  return id;
 }
 
 export const relicLine = (id: string): string => `${RELICS[id].name}: ${RELICS[id].text}`;
@@ -1053,7 +1091,7 @@ export function settleStand(m: Meta, run: StandRun, armies: readonly string[] = 
   // (the room the king fell in, and the furthest act of the retreat a run has reached: STAND-RETREAT)
   const room = hallNow(run);
   if (run.act !== undefined) m.standAct = Math.max(m.standAct ?? 0, run.act);
-  run.summary = { best: run.best, cleared, crowns, ...c, gear, kills: run.kills, heroes: run.heroes.length, relics: run.relics.length, newBest, ...(ores.length ? { ores } : {}), room, ...(run.act !== undefined ? { act: run.act } : {}), ...(run.retreat?.hold ? { held: true } : {}) };
+  run.summary = { best: run.best, cleared, crowns, ...c, gear, kills: run.kills, heroes: run.heroes.length, relics: run.relics.length, ...(run.heldRelics?.length ? { heldRelics: run.heldRelics.length } : {}), newBest, ...(ores.length ? { ores } : {}), room, ...(run.act !== undefined ? { act: run.act } : {}), ...(run.retreat?.hold ? { held: true } : {}) };
   return run.summary;
 }
 
@@ -1069,7 +1107,8 @@ export function loadStand(store: Pick<Storage, 'getItem'> = localStorage): Stand
     if (!ok) return null;
     const act = Number.isInteger(r.act) && r.act! >= 0 && r.act! <= 3 ? r.act : undefined;
     const retreat = r.retreat && isHall(r.retreat.to) ? { to: r.retreat.to } : undefined;
-    return { ...r, offer: Array.isArray(r.offer) ? r.offer : [], armies: Array.isArray(r.armies) ? r.armies : [], hall: isHall(r.hall) ? r.hall : undefined, act, retreat };
+    const heldRelics = Array.isArray(r.heldRelics) ? r.heldRelics.filter((id) => typeof id === 'string') : undefined;
+    return { ...r, offer: Array.isArray(r.offer) ? r.offer : [], armies: Array.isArray(r.armies) ? r.armies : [], hall: isHall(r.hall) ? r.hall : undefined, act, retreat, heldRelics };
   } catch {
     return null;
   }

@@ -186,6 +186,16 @@ body[data-stand] #version { top: auto; bottom: 2px; }
 #stand .stBanner.retreat .stPlate { border-color: #8fa0b8; background: linear-gradient(90deg, transparent, #12161ef2 18%, #222a38f2 50%, #12161ef2 82%, transparent); max-width: 100%; box-sizing: border-box; padding: 6px 24px 8px; }
 #stand .stBanner.retreat .stPlate b { color: #e8eefc; text-shadow: 0 0 10px #8fb0ff, 0 2px 0 #000; }
 #stand .stBanner.retreat .stCrest { filter: grayscale(0.6) drop-shadow(0 3px 2px #000c); }
+/* the relic holding the line paid (STAND-HOLD-RELIC): a plate under the banner, in the banner's colours; it rises in, stays, and fades */
+#stand .stGain { position: absolute; left: 50%; top: calc(30% + 190px); transform: translateX(-50%); width: min(320px, calc(100% - 32px)); box-sizing: border-box; display: flex; align-items: center; gap: 10px; padding: 8px 12px; pointer-events: none; background: linear-gradient(100deg, #131e1af2, #2c3027f4 50%, #131e1af2); border: 2px solid #c9a75e; box-shadow: 0 0 0 2px #0c0a08, 0 6px 18px #000a; text-shadow: 0 2px 0 #000; animation: stGain 4.2s ease-out both; }
+#stand .stGain[hidden] { display: none; }
+#stand .stGain .icon, #stand .stGain .stGainBlank { flex: none; width: 44px; height: 44px; image-rendering: pixelated; filter: drop-shadow(0 0 6px #f2c96a99); }
+#stand .stGainWords { display: flex; flex-direction: column; min-width: 0; }
+#stand .stGainWords small { font-size: 12px; color: #e8d9b0; letter-spacing: .2em; }
+#stand .stGainWords b { font: 400 20px/1.2 var(--display); color: #f4db9f; }
+#stand .stGainWords span { font-size: 12px; color: var(--s15); }
+@keyframes stGain { 0% { transform: translate(-50%, 12px); opacity: 0; } 10% { transform: translate(-50%, 0); opacity: 1; } 82% { opacity: 1; } 100% { transform: translate(-50%, 0); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { #stand .stGain { animation: none; } }
 .stFell { color: #f4db9f; }
 .stThrone { color: #ffe08a; text-shadow: 0 0 8px #f2c96a; }
 #stand .stChoiceCard { position: relative; padding-top: 30px; background: radial-gradient(ellipse at 50% 0, #66734540, transparent 60%), linear-gradient(100deg, #131e1afa, #2c3027fc 50%, #131e1afa), url(ui/page.png); border: 3px double #c9a75e; box-shadow: 0 0 0 2px #0c0a08, 0 10px 30px #000c, inset 0 0 30px #0009; }

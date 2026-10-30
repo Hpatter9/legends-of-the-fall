@@ -11,11 +11,11 @@ import { TICK_MS, type BattleEvent, type Unit } from './sim/battle';
 import { ARMIES, armyUnlocked } from './sim/armies';
 import { castSpell, canAfford, cooldownLeft, MANA_MAX, SPELLS, type SpellId } from './sim/spells';
 import {
-  autoPlace, swapPosts, standing, buyLevel, buyRelic, dropStand, foesAlive, goNow, healCost, healKing, levelBlock, levelCost, loadStand, newStandRun, offerCost, pickEight, postHero, relicLine,
+  autoPlace, swapPosts, standing, buyLevel, buyRelic, dropStand, foesAlive, goNow, healCost, healKing, levelBlock, levelCost, loadStand, newStandRun, offerCost, pickEight, postHero, relicLine, holdPurse, purseLine,
   saveStand, settleStand, setupFromMeta, snapshot, startFirstWave, startStand, stepStand, waveSpec, weakestHero, type Stand, type StandNote, type StandSummary,
   canSave, fallBack, finishRetreat, hallNow, holdTheLine,
 } from './sim/stand';
-import { ACT_NUMERALS, holdGold, RETREAT_MS, reachRoom, ROOM_NAMES } from './sim/standActs';
+import { ACT_NUMERALS, RETREAT_MS, reachRoom, ROOM_NAMES } from './sim/standActs';
 import { lostLine, roomLine } from './standRetreatLines';
 import { standRoomTrack } from './render/standMusic';
 import { canPost, EDGES, FIELD, KING_AT, ringOf, type Edge } from './sim/standField';
@@ -30,6 +30,7 @@ import { battleSheet, lookSheet } from './render/awakenLook';
 import { UNITS } from './sim/units';
 import { levelOfKind } from './sim/levels';
 import { RELICS } from './sim/relics';
+import { iconImg, relicIcon } from './render/items';
 import { BoardView } from './render/boardView';
 import { Fx } from './render/fx';
 import { UnitSprite } from './render/unitView';
@@ -79,6 +80,8 @@ const SCALE_MAX = 2;
 const GRUMBLE_AFTER_MS = 5200;
 /** How long a wave's banner stays (ms). */
 const BANNER_MS = 1800;
+/** How long the relic won by holding the line stays on show (ms; STAND-HOLD-RELIC). */
+const GAIN_MS = 4200;
 
 /** The compass of the edges on the screen: `north` is where `v` is 0, which the board draws up and to the right. */
 const EDGE_DIR: Record<Edge, [number, number]> = { north: [1, -0.5], east: [1, 0.5], south: [-1, 0.5], west: [-1, -0.5] };
@@ -317,9 +320,12 @@ export class StandView {
     const title = el('div', 'stTitle');
     title.hidden = true;
     title.addEventListener('click', () => this.endTitle());
-    root.append(this.input, vignette, top, orbs, centre, count, arrows, finds, info, banner, bottom, end, ask, pick, sheet, skip, title, choice);
+    // (the relic holding the line pays, announced under the banner: STAND-HOLD-RELIC)
+    const gain = el('div', 'stGain');
+    gain.hidden = true;
+    root.append(this.input, vignette, top, orbs, centre, count, arrows, finds, info, banner, gain, bottom, end, ask, pick, sheet, skip, title, choice);
     document.body.append(root);
-    this.parts = { tray, roster, finds, vignette, leave, speed, pause, centre, sheet, wave, king, gold, count, go, arrows, info, banner, bottom, spells, orbs, heroes, mana, cards, offer, bar, start, end, ask, pick, choice, skip, title };
+    this.parts = { tray, roster, finds, vignette, leave, speed, pause, centre, sheet, wave, king, gold, count, go, arrows, info, banner, bottom, spells, orbs, heroes, mana, cards, offer, bar, start, end, ask, pick, choice, skip, title, gain };
     this.wireInput();
   }
 
@@ -440,6 +446,7 @@ export class StandView {
     this.parts.ask.hidden = true;
     this.endTitle();
     this.parts.choice.hidden = true;
+    this.parts.gain.hidden = true;
     this.parts.skip.hidden = true;
     this.clearSprites();
     this.fx.clear();
@@ -1232,7 +1239,8 @@ export class StandView {
         this.refreshBar(true);
       } else if (n.kind === 'held') {
         play('coin');
-        this.showPlate(`+${n.gold} GOLD`, 'THE LINE HELD', '');
+        this.showPlate(`+${n.gold} GOLD${n.relic ? ' AND A RELIC' : ''}`, 'THE LINE HELD', '');
+        if (n.relic) this.showGain(n.relic);
         this.refreshBar(true);
       } else if (n.kind === 'retreat') {
         this.beginRetreat(n.from, n.to, n.cave, n.exit.front);
@@ -1342,7 +1350,7 @@ export class StandView {
       this.takeNotes([]);
     });
     const hold = el('button', 'stChoiceHold');
-    hold.append(el('b', '', 'Hold one more wave'), el('small', '', `A harder wave from every breach. Hold it for +${holdGold(n)} gold, then fall back. If your ruler falls, the run ends.`));
+    hold.append(el('b', '', 'Hold one more wave'), el('small', '', `A harder wave from every breach. Hold it for ${purseLine(holdPurse(s.run, n))}, then fall back. If your ruler falls, the run ends.`));
     hold.addEventListener('click', () => {
       if (!this.s || !holdTheLine(this.s)) return;
       play('tap');
@@ -1353,6 +1361,24 @@ export class StandView {
     card.append(back, hold);
     box.append(card);
     box.hidden = false;
+  }
+
+  /** The relic holding the line paid: its picture, name and what it does, under the banner for a few seconds (a tap on nothing; it fades). */
+  private gainTimer = 0;
+  private showGain(id: string): void {
+    const r = RELICS[id];
+    if (!r) return;
+    const box = this.parts.gain;
+    const words = el('div', 'stGainWords');
+    words.append(el('small', '', 'A RELIC FOR HOLDING'), el('b', '', r.name), el('span', '', r.text));
+    const pic = relicIcon(id) ? iconImg(relicIcon(id), r.name) : el('i', 'stGainBlank');
+    box.replaceChildren(pic, words);
+    box.hidden = false;
+    box.style.animation = 'none';
+    void box.offsetWidth;
+    box.style.animation = '';
+    window.clearTimeout(this.gainTimer);
+    this.gainTimer = window.setTimeout(() => (box.hidden = true), GAIN_MS);
   }
 
   /** The room is given up: a breach caves in, the door opens, the banner says where to, and the king and the heroes walk out (a tap skips). */
@@ -1712,6 +1738,8 @@ export class StandView {
     // (a record past a tenth wave pays a couple of rift ores: AWAKEN-MATS)
     if (sum.ores?.length) row('Rift ores', sum.ores.map((d) => `${d.n} ${ORES[d.trait]?.name ?? d.trait}`).join(', '));
     row('Heroes held', String(sum.heroes));
+    // (the relics the run gathered, those holding the line paid among them: STAND-HOLD-RELIC)
+    if (sum.relics) row('Relics', `${sum.relics}${sum.heldRelics ? ` (${sum.heldRelics} for holding the line)` : ''}`);
     card.append(rows);
     const btns = el('div', 'stRow');
     const again = el('button', 'primary', 'Stand again');

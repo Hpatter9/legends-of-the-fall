@@ -57,7 +57,7 @@ import { queueReveal } from './summonTarot';
 import { Events } from './events';
 import { TowerView } from './towerView';
 import { StandView } from './standView';
-import { loadStand, migrateOldClimb } from './sim/stand';
+import { loadStand, migrateOldClimb, standContinueLine } from './sim/stand';
 import { showTwistBanner } from './twistView';
 import { abandonTower, finishTower, mapProgress, migrateTower, settleTower } from './sim/tower';
 import { hpShare } from './sim/health';
@@ -351,7 +351,7 @@ class Game {
       slotInfo: (kind) => {
         if (kind === 'tower') {
           const st = loadStand();
-          return st ? `Wave ${st.wave} · continue` : null;
+          return st ? `${standContinueLine(st)} · continue` : null;
         }
         const r = loadSlot(kind);
         if (!r) return null;

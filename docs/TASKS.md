@@ -69,6 +69,14 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Authorisation:** the owner approved the design: a fixed retreat (courtyard, library, chapel, throne room, five waves an act), a hold-the-line choice at each act's end, the retreat beat with auto-arranged posts, the room reached as a record, one music hook.
 - **Scope:** `src/sim/standActs.ts` (new), `stand.ts`, `standAi.ts` (the last foes break off), `standHalls.ts` (the throne room's name), one optional field each in `battle.ts` (`StandMode.flee`) and `meta.ts` (`standAct`); `standView.ts`, `render/standHall.ts` (door, cave-in, the king's walk, enthroned in the throne room), `standRetreatLines.ts`, `render/standMusic.ts` (new), `stand.css`, one line in `home.ts`; the door art; `tools/stand-balance.ts` (`--hold`), `tools/stand/retreat-shots.mjs`; tests.
 - **Status:** ready for review. Medians unchanged when falling back; holding reported separately. Typecheck, full `npm test`, `npm run web`, browser checks at 393×852, 360×780 and 412×915 with no page errors. [Note](notes/stand-retreat.md); screenshots `samples/stand-retreat-*.png`. No merge or version bump.
+
+### STAND-HOLD-RELIC — Holding the line pays a relic; the camp names the room
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/stand-hold-relic`, `/home/user/lotf-stand-hold`.
+- **Authorisation:** the owner's two decisions: a held wave pays gold and a relic; the Last Stand's continue line names the wave and room.
+- **Scope:** `src/sim/stand.ts` (`holdRelic`, `holdPurse`, `purseLine`, `takeRelic` shared with `buyRelic`, `heldRelics`, `standContinueLine`), `standView.ts` (choice card wording, the relic plate, the end card's Relics row), `stand.css`, one line in `main.ts` (`slotInfo`); `tools/stand/hold-relic-shots.mjs`; `test/stand-retreat.test.ts`.
+- **Status:** ready for review. Holding still costs mid parties about as much as before (within noise; see the note). Typecheck, full `npm test`, `npm run web`, browser checks at 393×852, 360×780 and 412×915 with no page errors. [Note](notes/stand-hold-relic.md); screenshots `samples/stand-hold-relic-*.png`. No merge or version bump.
+
 ### SPELL-ART — The painted spell effects brought into the game (sessions A and C)
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/spell-art`, `/home/user/spell-art`.

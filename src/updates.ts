@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.255.0',
+    date: '2026-10-30',
+    title: 'Holding the line pays a relic',
+    notes: ['Holding one more wave in the Last Stand now pays its gold and a free relic the run doesn\'t own yet.', 'The Last Stand\'s plate at the camp names the room the run is in, e.g. Wave 6 · Library.'],
+  },
+  {
     version: '0.254.0',
     date: '2026-10-30',
     title: 'Monsters join the spell rework',
