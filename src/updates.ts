@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.262.0',
+    date: '2026-10-30',
+    title: 'More spell effects repainted',
+    notes: ['A proper powder keg, a curling Tidal Wave, a darker Reign of Terror, and a distinct burst for twelve more moves.', 'The ultimate banner\'s speed lines run as one even band.'],
+  },
+  {
     version: '0.261.0',
     date: '2026-10-30',
     title: 'Skill names out of the way',
