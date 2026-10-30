@@ -1,8 +1,8 @@
 # Skill books, Hester's stall, and gear that wears out (design)
 
 > **A design for the owner to approve.** No game code has changed. The numbers are a first tuning and get measured once it is
-> built. The open questions are at the end, each with a recommended answer. (Updated for the owner's later rule that gear found in battle is kept:
-> [Gear found in battle comes home](#gear-found-in-battle-comes-home).) The painting briefs are the skill-books-and-shop set
+> built. The open questions are at the end, each with a recommended answer. **The owner has answered them: see [The owner's decisions](#the-owners-decisions)**, folded into the
+> sections below; runs now drop real gear ([Real gear in runs](#real-gear-in-runs)). The painting briefs are the skill-books-and-shop set
 > already sent (book covers, study and mastery icons, Hester, the caravan master, the Gloaming Dealer, the stall, shelves, tags,
 > seals, the coin purse) and [gear-art-prompt.md](gear-art-prompt.md) (the equipment icons, grade frames, wear, repair and selling
 > pieces).
@@ -20,7 +20,8 @@ The owner's asks, in short:
    repaired. Only being damaged while getting used."
 4. **Selling gear**: "This means gear should be sellable too for crowns."
 5. **New equipment looks**, painted by Antigravity: [gear-art-prompt.md](gear-art-prompt.md).
-6. **Gear found in battle is kept**: "Now gear gained in battle should carry over and be kept."
+6. **Gear found in battle is kept**: "Now gear gained in battle should carry over and be kept", and runs drop and use **real
+   pieces** (the owner's decision).
 
 Contents:
 
@@ -29,14 +30,14 @@ Contents:
 - [Skill books: the system](#skill-books-the-system)
 - [The books](#the-books) (the kinds, who reads what, the catalogue, the lost techniques)
 - [Gear wear and repair: the system](#gear-wear-and-repair-the-system)
-- [Gear found in battle comes home](#gear-found-in-battle-comes-home)
+- [Real gear in runs](#real-gear-in-runs)
 - [Selling](#selling)
 - [Screens at 393x852](#screens-at-393x852)
 - [Balance numbers](#balance-numbers)
 - [Saves and determinism](#saves-and-determinism)
 - [What each part touches](#what-each-part-touches)
 - [Build plan](#build-plan)
-- [Open questions](#open-questions)
+- [Open questions](#open-questions) and [the owner's decisions](#the-owners-decisions)
 
 ---
 
@@ -103,12 +104,13 @@ clears them. An Epic Frostbrand asks first: a small card with the coin purse, **
 Sell / Keep. If the player regrets it, it is on the **Sold today** shelf at the bottom until midnight, to buy back at exactly what
 Hester paid.
 
-### 6. Gear found in a run comes home
+### 6. Real gear found in a run
 
-Mid-run, a boss drops a blade. Its card reads **Frostbrand** (the painted icon), **+16% attack**, and under it, "Comes home as Frostbrand
-(Rare)". Kenji wears it for the rest of the run. When the run ends, the result card has a row, **Brought home**: the Frostbrand, a
-Leather Jerkin and a Lucky Charm, each in its grade frame, and a small button, **Sell the Commons · 5**. Back at camp the Frostbrand
-is in the stash at full durability, ready to wear for good.
+Mid-run, a boss drops a blade: a real **Frostbrand** (Rare, Lv 13), full durability, with a small ember mark: "Fresh from the field:
+x2 this run". Kenji's Runed Blade is nearly worn through, so the player puts the Frostbrand on him from the pack; the Runed Blade goes
+to the stash. For the rest of the run the Frostbrand hits twice as hard as it will at home. When the run ends, the result card has a
+**Found** row: the Frostbrand (still on Kenji), a Leather Jerkin, two Lucky Charms and an Iron Ring, each in its grade frame, and
+**Sell the Commons · 15**. The rest are in the stash, kept for good.
 
 ---
 
@@ -264,7 +266,7 @@ works on a mana hero and a stamina hero alike. The list lives in one table (`REA
 - Every **learned** skill has a rank of 1 to 3 (bronze, silver, gold stars: `study/mastery-1..3`), from its casts by that hero
   (counted at settle from the fight's `skill` events): **rank 2 at 30 casts, rank 3 at 100**.
 - Rank 2: **+8% strength, 10% cheaper**. Rank 3: **+15% strength, 20% cheaper**.
-- A hero's own two skills keep the growth they have (levels, tiers, talents); see [open question 1](#open-questions).
+- A hero's own two skills keep the growth they have (levels, tiers, talents); the owner's decision: **mastery is for learned skills only**.
 
 ### In a fight
 
@@ -394,20 +396,20 @@ numbers can be retuned without touching saves.
 | **Worn** | 25% or less | everything | the bar amber, the `badge-worn` on the icon and on the hero's portrait, the `wear-worn` overlay |
 | **Broken** | 0 | **nothing**: no main stats, no ability, no set count | the bar empty red, `badge-broken`, the `wear-broken` overlay over a greyed icon |
 
-Nothing is ever destroyed by wear (see [open question 6](#open-questions) for a gradual loss, recommended against). A broken piece
+Nothing is ever destroyed by wear (the owner's decision: worn gear keeps full strength until it breaks). A broken piece
 can still be repaired, sold (cheaply), combined, or swapped off.
 
 **Breaking in a run.** The run's boost is read each time a hero is placed, so a piece that breaks counts from the next wave. The
-between-waves line says so ("Kenji's Runed Blade broke"). No repair in the middle of a run in the first batches ([open question
-5](#open-questions)).
+between-waves line says so ("Kenji's Runed Blade broke"). No repairs in the middle of a run for now (the owner's decision); a found
+piece can take over from a broken one ([Real gear in runs](#real-gear-in-runs)).
 
 ### Repair
 
 - **Where**: the stall's **Repair** tab (everything worn or broken, those worn by heroes in the saved party first, then the rest
   worn by heroes, then spares), and a **Repair** button in a hero's equipment picker for that piece. Same price both ways.
 - **Cost**: by points missing, `REPAIR[rarity] x (1 + 0.04 x (level - 1)) x points` (Common 0.2, Rare 0.25, Epic 0.35, Legendary 0.45,
-  Mythic 0.55 a point), rounded up, at least 1; less with the castle's **Armoury** (4% a level, [open question
-  4](#open-questions)). A repair always mends to full.
+  Mythic 0.55 a point), rounded up, at least 1; less with the castle's **Armoury**: 4% off a level, up to 28% at level 7 (the owner's
+  decision; its +5% attack stays, and its line reads "+5% attack for every hero; repairs 4% cheaper"). A repair always mends to full.
 - **Repair all**: everything worn by any hero, one price, one tap (no confirm under 500 crowns; a confirm above).
 - **Before a run**: the party screen shows an amber strip when a party hero wears a worn or broken piece: "2 pieces worn, 1 broken ·
   Repair all · 120" (a tap repairs the party's pieces). Start is never blocked.
@@ -423,80 +425,149 @@ Every piece in an old save has no `wear`, so it is **full**. Nothing changes for
 
 ---
 
-## Gear found in battle comes home
+## Real gear in runs
 
-The owner's rule: "Now gear gained in battle should carry over and be kept." Today a run hands out its own simple gear (`gear.ts`: a
-weapon, an armour and a charm in three tiers, from boss stages, events, mystery rooms and the passing cart), which is lost when the
-run ends.
+The owner's rules: "Now gear gained in battle should carry over and be kept", and then, choosing it over keeping the run's own simple
+gear: **runs drop and use real pieces**. Today a run hands out its own simple gear (`gear.ts`: a weapon, an armour and a charm in
+three tiers, +8% a tier, lost at the run's end). With this change that simple gear goes: everything a run finds is a real piece of
+equipment (a base of `equipBases.ts`, a grade, an item level, durability), worn for real, and kept.
 
-### The recommendation: keep the run's gear as it plays, and bring it home as real pieces
+### What drops
 
-- **In the run nothing changes**: the pieces drop, upgrade (events, mystery rooms), move between heroes and are worn exactly as now
-  (`equipBestRun`, the tiers' +8% a tier), so every run, event and balance table plays out the same.
-- **Each in-run piece is already a real piece in waiting.** Its lasting **base** is fixed the moment it drops, from its id:
-  `carryBase(run.seed, gear)` draws one of the slot's 20 bases from `mixSeed(run.seed, CARRY_SALT, gear.id)` (weapon to weapon,
-  armour to armour, charm to trinket). An upgrade keeps the id, so it keeps the base. **The run shows it by that base's name and
-  icon** ("Frostbrand", the painted icon) with its in-run numbers ("+16% attack"), so what the player sees in the run is what goes
-  home. (So the in-run gear needs no icons of its own: section F of the art prompt is dropped.)
-- **When the run ends** (won, lost, or given up; any mode that hands out in-run gear: armies, the daily, the tower, the Calamity, quest
-  battles), the pieces it **ended with** (worn by its heroes or in its pack) come home. A piece sold or lost in a merge during the run
-  does not.
-- **How many**: the **best 3** (by tier, then the latest found) for a run played by hand, the **best 1** for an auto-replay run. The
-  rest stay with the run, as now. (Why a cap: a long run can end with 8 or 9 pieces, and ten auto runs a day would pour 80 pieces
-  into the stash.)
-- **Grade** from the in-run tier and the army's tier:
+Every place that hands out simple gear today hands out a real piece instead, rolled by one function, `fieldPiece(rng, run, at, step)`:
 
-  | In-run tier | Grade at home | On Elite and above |
-  | --- | --- | --- |
-  | 1 (Iron Blade, Leather Coat, Jade Charm) | Common | Rare |
-  | 2 | Rare | Epic |
-  | 3 | Rare; Epic one time in six (the same stream) | Epic; Legendary one time in six |
+- **Base**: one of the slot's 20, drawn from the source's own stream (the same streams as today, so each source still draws at the
+  same moment). The slot is drawn as today (`SLOTS`, with `charm` becoming `trinket`).
+- **Grade**, from the source's **step** (today's tier: `1 + floor((gearStage - 1) / 8)`, plus the source's bonus):
 
-  Never Mythic: Mythic stays a chest's and a combine's prize.
-- **Item level** as the stall's: `1 + 3 x` the furthest army cleared, at most 20.
-- **Full durability**: a piece brought home has no wear.
-- **Automatic**: they go straight to the stash, no choice to make at the run's end (the run's end is already busy, and auto-replay
-  has nobody to ask). The run-end card shows them, and offers to sell the Commons there and then.
+  | Step | Grade | On Hard | On Elite and above |
+  | --- | --- | --- | --- |
+  | 1 | Common | Common; Rare one time in four | Rare |
+  | 2 | Common; Rare one time in three | Rare | Rare; Epic one time in four |
+  | 3 (a boss's, a cursed path's) | Rare | Rare; Epic one time in four | Epic |
+  | 4 (a boss on step 3) | Rare; Epic one time in four | Epic | Epic; Legendary one time in six |
 
-The other way (the owner may prefer it, [open question 7](#open-questions)): **replace the in-run gear with real pieces** that drop in
-the run and are worn at once, lasting stats and all. It is simpler to explain, but every event, mystery room and cart that hands out
-or upgrades in-run gear would have to be redone, every run's balance would move (a lasting Legendary is worth more than an in-run
-tier 3), and a run could be won or lost on what the stash already holds. Recommended against.
+  Never Mythic: Mythic stays the chests' and combining's prize.
+- **Item level**: `1 + 3 x` the army's place in the list (the run's army, else the furthest cleared), plus 1 for every 4 waves of
+  the run reached, at most 20.
+- **Durability**: full.
 
-### The stash and what happens when it is full
+### Where it drops: every source of run gear today, and what it becomes
 
-- The stash (every spare piece: `spareEquipment`) holds **150 pieces** (`STASH_MAX`); the equipment panel and the stall's Sell tab
-  show "112 / 150".
-- Pieces that come home to a full stash wait **on the cart** (the camp's cart, beside the chests): up to **20** more, with a red
-  "full" tag on the cart and the stall's Sell tab ("Your stash is full: 6 pieces wait on the cart"). Selling or combining makes room,
-  and the cart's pieces move in at once, best first.
-- Past that, the lowest-graded of the new pieces are **sold for their price** and the run-end card says so ("Stash full: 3 Commons
-  sold for 15 crowns"), so nothing found is ever lost for nothing.
-- Pieces a hero is wearing never count against the stash; old saves above 150 keep everything (nothing new comes home until there is room).
+| File | Today | Becomes |
+| --- | --- | --- |
+| `run.ts` (a won boss wave, `0x6ea2` stream) | a sure piece, one tier up | a real piece at step + 1 |
+| `run.ts` (a cursed path's prize, `run.buff.gear`) | a piece one tier up | a real piece at step + 1 |
+| `events.ts` merchant | one piece for gold (28 x tier + 2 x stage) | one real piece for run gold, priced by grade (Common 40, Rare 90, Epic 200, + 2 x stage) |
+| `events.ts` mystery chest | a relic, gear or gold | a relic, a real piece or gold |
+| `events.ts` cursed path | a piece one tier up | a real piece at step + 1 |
+| `market.ts` passing cart | two pieces in two slots at the run's tier, for gold | two real pieces, priced as the merchant's |
+| `midEvents.ts` (a fresh piece, line 316) | a new piece at the cart's tier | a real piece |
+| `midEvents.ts` (an upgrade, lines 324 and 491) | a piece one tier up, or +attack on it | **+3 item levels** on a found piece of this run (at most 20); the "+attack" branch gives +2 |
+| `midEvents.ts` (an heir's charm, line 402) | a charm a tier up | a real trinket at step + 1 |
+| `mystery.ts` (fresh pieces, lines 146, 180, 198, 305; a tier-1 weapon, 237) | pieces at the stage's tier (+1) | real pieces at the same steps |
+| `mystery.ts` (upgrades, lines 152 and 424) | a piece one tier up | +3 item levels on a found piece; one mystery room ("the forge") may instead raise one grade, at most to Epic |
+| `mystery.ts` (a hero leaving hands back its gear, line 345) and `merge.ts` (a merged hero's gear back to the pack, line 38) | gear moves to the pack | nothing to do: real gear is worn by the hero kind, not by one copy, so merges and partings leave it where it is |
+| `tower.ts` (the spire's and the Calamity's shop, chests, and fights in a run whose heroes start bare: lines 602, 664, 909) | pieces at the floor's tier | real pieces at the same steps |
+| `stand.ts`, `tower.ts` `settleTower` (lasting equipment paid at the end) | already real | unchanged |
+| `autoplay.ts`, `runGear.ts` (`equipBestRun`), `run.ts` (`equip`, `unequip`, `gearBoost`) | dress the squad from the pack | dress it with real pieces ([below](#equipping-and-upgrading-in-a-run)) |
+
+An upgrade only ever applies to a piece **found in this run** (marked `found: runId`), never to the player's own kit, so a run cannot
+be used to level the best pieces at home.
+
+### Equipping and upgrading in a run
+
+- **An army run, the daily, a quest battle** (the heroes bring their lasting kit): a found piece goes to the run's **pack**. Put on a
+  hero (by hand from the pack, or by Equip best), it **replaces that kind's lasting piece for real**: the old piece goes to the
+  stash (or the cart), exactly as equipping at camp. Equip best in a run (`equipBestRun` becomes `bestFor` for the fielded kinds, from
+  the pack only) changes a slot only when the whole kit scores better, counting sets, and never takes a locked piece off. Undo at
+  camp like any equipping.
+- **The spire and the Calamity** (runs whose heroes start bare: `run.local`): the lasting kit does not count, as now. Found pieces
+  are worn **for the run** by the run's heroes (`Owned.gear` becomes a slot map of real piece ids), and every one goes to the stash at
+  the end.
+- **Fresh from the field.** Today's simple gear is far stronger than lasting gear (a tier 3 kit is +33% hp and attack on one hero;
+  a whole Rare kit at home is worth about +12% on the whole party). So that a run's finds still matter in the run, a piece found in
+  this run gives its main stats **times `FIELD_BOOST`** for the rest of the run, shown on its card as "Fresh from the field: x2 this
+  run" with the `badge-field` mark; at home it is a plain piece. First values: **x2 in an army run, x3 in a run whose heroes start
+  bare**, tuned by the balance tools ([below](#balance-for-real-gear-in-runs)). Abilities (Epic and up) are not boosted.
+- **Wear in the run** is the usual wear: 1 a wave for each piece a placed hero wears, +1 on armour for a fall, half under
+  auto-replay. A found piece is full, so it can take over from one that broke mid-run (the between-waves line suggests it: "Kenji's
+  Runed Blade broke. A Frostbrand waits in the pack.").
 
 ### The run's end
 
-The result card (and the auto-replay recap) gains a **Brought home** row: up to three icons in their grade frames, "Frostbrand (Rare,
-Lv 13)", a tap for the piece's card (stats, the base's ability at Epic and up, its set); and, when any are Common, **Sell the Commons ·
-10**. In auto-replay the recap lists each run's piece. Mid-run, a piece's card says "Comes home as Frostbrand (Rare)" when the run's
-best three would include it.
+- **Everything found is kept** (won, lost, given up): what the heroes wear stays worn (army runs) or goes to the stash (bare runs),
+  and the pack goes to the stash. A full stash sends the overflow to the cart, and past the cart the lowest are sold for their price,
+  as [below](#the-stash-and-what-happens-when-it-is-full).
+- **The result card** gains a **Found** row: the pieces in their grade frames (a "+4" chip when there are more), each tappable, and
+  **Sell the Commons · 25**. The auto-replay recap lists them by run.
 
-### The economy with more gear coming in
+### Auto-replay
 
-- **How much comes in**: a hand-played army run ends with about 3 to 6 pieces, so 3 come home; a late day of ten auto runs and a few
-  by hand brings about **20 pieces a day**, mostly Rare (a few Epic, Legendary only on Elite and up).
-- **What selling them adds**: about 12 to 30 crowns each, so about **300 to 400 crowns a day** late (about 5% of a late day's
-  7,000), and 30 to 60 a day early. The loop rules are untouched: found gear is free, so selling it is income, not a loop; the stall's
-  prices, repairs and buy-back are unchanged.
-- **What it does to the other sources**: the chests' gear stays as it is (they are the way to Legendary and Mythic). The stall's gear
-  shelf is still worth it: it is the only way to pick a base and a grade. Combining gets busier (three Rares of a base make an Epic),
-  which is the intended road to the better grades.
-- **Upkeep is unchanged**: only worn pieces wear, and a party wears 15 whatever is in the stash.
+Auto-replay dresses the fielded heroes from the pack as the bot does today (Equip best, the rules above, so a set is never broken
+for a worse score), takes the merchant's and the cart's pieces as it takes their gear now (`autoplay.ts`), and keeps everything.
+To keep ten auto runs a day from flooding the stash, **each drop in an auto-replay run happens half the time** (a roll on its own
+stream, `mixSeed(run.seed, AUTO_FIND_SALT, stage)`; bosses always drop).
 
-### Old saves
+### The modes
 
-Nothing is back-paid for runs already over. A run saved mid-way (`legends.run`) brings its pieces home when it ends, its bases drawn
-from their ids as for any run. `Meta.cart?: Equipment[]` (the overflow) is optional.
+| Mode | Lasting kit counts | Finds | Worn by |
+| --- | --- | --- | --- |
+| Armies (and auto-replay) | yes | bosses, events, the cart, mystery rooms | the kinds, for real |
+| The daily | yes | as an army run (bosses, events) | the kinds, for real |
+| Quest battles | yes | the battle's boss only | the kinds, for real |
+| The spire, the Calamity | no (as now) | the floors' fights, elites, chests, shops | the run's heroes for the run; all to the stash at the end |
+| The Last Stand | yes | none in the run (as now); lasting gear at the end as now | |
+
+### The stash and what happens when it is full
+
+- The stash (every spare piece: `spareEquipment`) holds **150 pieces** (`STASH_MAX`); the equipment panel, the run's pack and the
+  stall's Sell tab show "112 / 150".
+- Pieces that come home to a full stash wait **on the cart** (the camp's cart, beside the chests): up to **20** more, with a red
+  "full" tag on the cart and the stall's Sell tab ("Your stash is full: 6 pieces wait on the cart"). Selling or combining makes room,
+  and the cart's pieces move in at once, best first.
+- Past that, the lowest-graded of the new pieces are **sold for their price** and the result card says so ("Stash full: 3 Commons
+  sold for 15 crowns"), so nothing found is ever lost for nothing.
+- Pieces a hero is wearing never count against the stash; an old save above 150 keeps everything (new finds go to the cart).
+
+### Old saves with a run going
+
+A run saved before the change (no `run.real`) **finishes on the old rules**: its simple gear plays as it did. When it ends, its simple
+gear comes home once as real pieces (each piece's base drawn from its id, `mixSeed(run.seed, CARRY_SALT, gear.id)`; tier 1 Common,
+2 Rare, 3 Rare), so nothing found in it is lost. Every run started after the change is a real-gear run. `gear.ts` stays only for
+those old runs, and can go a few releases later.
+
+### Balance for real gear in runs
+
+Every run's strength moves (the simple gear's hp and attack are gone; finds now also change the lasting kit), so it is measured and
+re-tuned as one batch, before it ships:
+
+1. **Before**: `npm run balance -- --no-tables --climb --saves 60` (mean tries per army, the realistic climb), the daily's, the
+   spire's and the Calamity's own sweeps, and `npm run gear-balance`, all on main.
+2. **The tools learn real finds**: the bot's runs (`autoplay.ts`, `tools/autoplay.ts`) drop and wear real pieces and keep them across
+   the climb's saves, so the climb's later armies see the kits its earlier runs found.
+3. **Tune, in this order**: `FIELD_BOOST` (army runs, bare runs) until each army's mean tries are within **0.3** of main and the
+   spire's and the Calamity's floors reached within 10%; then the grade table and the auto half-rate until the modelled month's
+   stash fills at about the pace of today's chests plus finds (no Legendary kit from finds alone before the sixth army).
+4. **Guard rails**: a test that a run's finds never raise a piece not found in it; a test that every source draws at the same moment
+   on its stream as before (so the rest of each run, its events, relics and foes, plays out the same); the climb's numbers recorded in
+   the batch's note.
+
+### The economy with real finds
+
+- **How much comes in**: a hand-played army run finds about 4 to 8 pieces; a late day (three runs by hand, ten auto runs at half)
+  about **40 pieces**, mostly Common and Rare (Epic on Hard and above, Legendary only on Elite and up).
+- **What selling them adds**: about 5 to 30 crowns each, so **600 to 900 crowns a day** late (about a tenth of a late day's 7,000)
+  and 60 to 120 early. Against the repair upkeep (about 1,300 a day late, 120 early), **the field about half pays for its own
+  upkeep**: selling finds is a real income, but never more than mending what the party wears.
+- **No loop**: found pieces are free, so selling them is income. A run's merchant and cart sell pieces for **run gold**, which now
+  becomes a few crowns if those pieces are sold (at most 3 buys a cart visit, 5 to 30 crowns a piece): small next to what a wave
+  pays, and bounded by the stock. The stall's prices, repairs and buy-back are unchanged, so every inequality in the [no-loop
+  table](#no-crowns-loop) holds; the test checks them as before.
+- **Combining** gets busier (three Rares of one base make an Epic). That is the intended road up the grades, and the grade table is
+  the knob if finds make Legendary kits come too soon (step 3 of the balance plan).
+- **Other sources**: the chests' gear and the stall's gear shelf are unchanged (the chests are the road to Legendary and Mythic; the
+  stall is the only place to pick a base).
 
 ---
 
@@ -697,6 +768,9 @@ day. A common book is about one army's first clear early on, and a small part of
 - `Meta.stall?: { day: number; sold: Record<string, number>; spent: number; seenDay?: number; soldToday?: { item: Equipment; price:
   number }[]; gloaming?: number; guardians?: number }`.
 - `Meta.shop` (the chest shop's) is kept as it is. `Meta.cart?: Equipment[]` (pieces brought home to a full stash).
+- On a run: `run.real?: true` (a real-gear run), `run.pack?: Equipment[]` (found pieces not worn), `Equipment.found?: number` (the run
+  that found it, cleared at the run's end), `Owned.gear` as slot -> piece id in a bare run. An old run without `real` keeps its simple
+  gear and finishes on the old rules.
 - Read functions drop nonsense (an unknown book, a loadout naming a skill the kind does not know, a skill in both slots, wear above
   the maximum), as `readEquipment` does. **Old saves** load with nothing read, nothing studied, full gear and standing 1; nothing
   is back-paid. The save version is not bumped.
@@ -707,8 +781,10 @@ day. A common book is about one army's first clear early on, and a small part of
 - The stall's stock: `mixSeed(m.seed, STALL_SALT, day)`; the caravan: `mixSeed(m.seed, CARAVAN_SALT, week)`; the Dealer:
   `mixSeed(m.seed, GLOAMING_SALT, guardians)`; Hester's line: `mixSeed(m.seed, STALL_SALT, day, tab)`. The day comes in from the
   page (`todayKey()`), never read by the sim.
-- Gear brought home: its base from `mixSeed(run.seed, CARRY_SALT, gear.id)` (fixed at the drop, shown in the run), its grade's
-  one-in-six from the same stream; the run's own draws are untouched.
+- Real gear in runs: each source rolls its piece from the stream it draws its simple gear from today, at the same moment, and the
+  base, grade and level from a side stream of that (`mixSeed(run.seed, FIELD_SALT, stage, source)`), so the rest of every run (its
+  events, relics, foes) draws as before. Auto-replay's half rate: `mixSeed(run.seed, AUTO_FIND_SALT, stage)`. An old run's simple
+  gear comes home by `mixSeed(run.seed, CARRY_SALT, gear.id)`.
 - Rare books in chests: drawn last from their own stream (`mixSeed(chestSeed, BOOK_SALT)`), so every chest's crowns, stones, gear and
   tomes roll exactly as before.
 - Wear, study and mastery are counted by pure functions from the settled fight (its placed heroes, falls and `skill` events); the
@@ -725,7 +801,7 @@ day. A common book is about one army's first clear early on, and a small part of
 | The stall's rules | `src/sim/stall.ts` (stock, standing, buy, traders, lines), `test/stall.test.ts` | `meta.ts` (`stall`), `chestShop.ts` (unchanged rules; the stall calls them) |
 | The stall's page | `src/stallView.ts`, `src/stall.css`, the stall art | `camp.ts` / `render/campSpots.ts` (the place), `home.ts` (the plate), `shopView.ts` (Recruit's button opens the stall's Chests tab), `build.mjs` (`FILES` if the paintings load by URL) |
 | Wear and repair | `src/sim/wear.ts` (`wearAfterWave`, `repairCost`, `repair`, `repairAll`, states), `test/wear.test.ts` | `equipment.ts` (`Equipment.wear`, `equipStats` skips broken, `combineItems` fresh, `bestFor`), the settle functions (`settleRun` in `modes.ts`, `settleStand`, the Calamity's, `settleDaily`, auto-replay), `castle.ts` (the Armoury's line) |
-| Gear brought home | `src/sim/carryHome.ts` (`carryBase`, `carryGrade`, `bringHome`, the stash and the cart), `test/carry-home.test.ts` | the run's end in `modes.ts` (`settleRun`) and auto-replay; the in-run gear's card and the pack (the base's name and icon, display only); the result card and recap (Brought home); `camp.ts` (the cart's full tag) |
+| Real gear in runs | `src/sim/fieldGear.ts` (`fieldPiece`, the grade table, `FIELD_BOOST`, upgrades of found pieces, `bringHome`, the stash and the cart), `test/field-gear.test.ts` | every source in the table above (`run.ts`, `events.ts`, `market.ts`, `midEvents.ts`, `mystery.ts`, `tower.ts`), `merge.ts` (no hand-back), `runGear.ts` / `autoplay.ts` (dressing with real pieces), `battle.ts` / `run.ts` (`boostOf` with the field boost; `gearBoost` for old runs only), the run's pack and gear cards in `main.ts`, the result card and recap (Found), `camp.ts` (the cart's full tag), `tools/autoplay.ts` and the balance tools |
 | Selling | in `src/sim/stall.ts` (`sellPrice`, `sell`, `sellAll`, `buyBack`), `test/sell.test.ts` (the loop inequalities) | `equipment.ts` (`salvageItem` becomes `sellItem`, the same crowns at full), `equipView.ts` (Sell, Repair, the bar, badges) |
 | Skill books | `src/sim/books.ts` (read, study, learn, loadout, mastery), `src/sim/bookData.ts` (the catalogue, `READS`), `test/books.test.ts`, `test/book-balance.test.ts` | `run.ts` (`boostOf`: `Boost.kit`), `battle.ts` (`addUnit` uses `Boost.kit`), `heroKits.ts` (a slot from a book), `castle.ts` (the Library's line, `studyCut`, `students`), `armyStars.ts` (a rare book, its own stream), `tools/balance` (`--books`) |
 | Books on the page | `src/skillBookView.ts` | `heroSheet` (the Skill book panel), `recapView.ts` (study lines, the learned card), `party.ts` (the worn strip) |
@@ -746,9 +822,10 @@ Each batch ships on its own and keeps every existing fight the same.
 3. **Wear and repair.** `wear`, the states, the settle hooks (half under auto, the fall's knock), the Repair tab and the picker's
    button, badges and bars, the party strip, the between-waves line, combining fresh, old saves full. *Tests: wear by mode, broken
    gives nothing, unworn fights hash as main, repair costs, `gear-balance --wear`.*
-4. **Gear brought home.** `carryBase` shown in the run, the best 3 (1 under auto) home at the run's end, grades and levels, the
-   stash cap and the cart, the Brought home row. *Tests: bases fixed by id, upgrades keep the base, the caps, the overflow sold,
-   every run's own draws unchanged.*
+4. **Real gear in runs.** `fieldPiece` in every source, the pack of real pieces, equipping for real (army runs) and for the run
+   (bare runs), upgrades of found pieces, the field boost, the stash cap and the cart, the Found row, old runs finishing on the old
+   rules; then the balance pass ([the plan](#balance-for-real-gear-in-runs)) before it ships. *Tests: every source draws as before,
+   only found pieces upgrade, merges leave gear alone, the overflow sold, old runs, the climb within 0.3 tries of main.*
 5. **The gear and tomes shelves.** Daily stock, copies, standing gates. *Tests: same stock on a reload, gates.*
 6. **Skill books in the simulation.** The catalogue (Common to Rare), `READS`, study (fights, the library), the loadout and
    `Boost.kit`, mastery; `--books` in the balance tool and the catalogue tuned into the band. *Tests: study, slots, the revive rule,
@@ -763,6 +840,8 @@ Each batch ships on its own and keeps every existing fight the same.
 ---
 
 ## Open questions
+
+(Answered: see [the owner's decisions](#the-owners-decisions) below.)
 
 1. **Mastery on a hero's own skills.** Should a hero's own two skills also earn mastery stars? *Recommended: no, learned skills only*;
    the own skills already grow with tiers and talents, and giving all 90 a free +15% would shift every army's balance.
@@ -780,3 +859,16 @@ Each batch ships on its own and keeps every existing fight the same.
 7. **Gear found in a run.** *Recommended: keep the run's own gear as it plays, and bring the run's best 3 home (1 from an auto run) as
    real pieces of the base each showed in the run* (Common to Rare, Epic and up on Elite and above). The other way, real pieces
    dropping and worn in the run itself, would mean redoing every event that hands out run gear and rebalancing every run.
+
+## The owner's decisions
+
+1. **Mastery**: only learned skills earn mastery stars.
+2. **One kind of book each**: no Grimoires for the healers and supports; the universal books are for everyone.
+3. **Auto-replay** wears gear at half (half a point a wave).
+4. **The Armoury** makes repairs 4% cheaper a level (up to 28%), keeping its +5% attack.
+5. **No repairs mid-run** for now.
+6. **Worn gear keeps full strength** until it breaks, with the warning from 25%.
+7. **Real gear in runs** (against the recommendation): runs drop and use real pieces instead of the run's simple gear. The redesign
+   is [Real gear in runs](#real-gear-in-runs): every source of run gear becomes a real piece, worn for real in the runs that bring the
+   lasting kit (for the run in the spire and the Calamity), upgraded only if found in the run, boosted while fresh from the field,
+   all kept at the end, with a balance pass before it ships.

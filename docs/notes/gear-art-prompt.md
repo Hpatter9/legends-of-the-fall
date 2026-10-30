@@ -1,4 +1,4 @@
-# Equipment: new painted icons (140 images)
+# Equipment: new painted icons (141 images)
 
 For Antigravity, working in the repo hpatter9/legends-of-the-fall.
 
@@ -14,7 +14,7 @@ times. Instead:
   is that same object transformed into a legendary relic;
 - the grade is shown by the game laying a **grade frame** and a **grade glow** (section D) round the standard painting;
 - worn and broken pieces are shown by the game laying a **wear overlay** (section E) over the painting;
-- the simple gear found during a run shows the icon of the piece it will become when it comes home, so it needs no icons of its own.
+- runs now drop these same real pieces (the run's old simple gear is gone), so they need no icons of their own.
 
 So the standard paintings must be neutral about grade: a good, well-made object, never plain junk and never glowing.
 
@@ -211,7 +211,7 @@ transparent well before the frame. They must look good **still** (the game may p
 
 (Common has no glow.)
 
-## E. Wear, repair and selling (`wear`, 11 images)
+## E. Wear, repair, selling and finds (`wear`, 12 images)
 
 Gear loses durability as it is used in fights. Below a quarter it is **worn**; at nothing it is **broken** (it gives nothing until
 it is repaired). Repairs and selling happen at the shop stall. (The shop's shelves, price tag, sold-out stamp, standing seals and
@@ -227,6 +227,8 @@ across the **whole** square):
 **Badges** (128 x 128, transparent; sit on an icon's corner or a hero's portrait):
 - **badge-worn**: a small round amber shield-badge with a cracked-shield symbol.
 - **badge-broken**: a small round red badge with a snapped-sword symbol.
+- **badge-field**: a small round badge with a glowing ember and a laurel sprig, warm orange: a piece found in the current run, "fresh
+  from the field" (it fights harder until the run ends).
 
 **Repair pieces:**
 - **repair** (256 x 256, transparent): a smith's hammer resting on a small anvil, a few sparks. The repair button's icon.
@@ -248,7 +250,7 @@ across the **whole** square):
 
 ## Checklist
 
-- 140 PNGs: `weapons` 40, `armour` 40, `trinkets` 40, `grade` 9, `wear` 11.
+- 141 PNGs: `weapons` 40, `armour` 40, `trinkets` 40, `grade` 9, `wear` 12.
 - Every item icon 256 x 256, transparent, centred in a 6% margin, no frame, no text; standard and Mythic of a key in the same pose.
 - Frames and glows 256 x 256 with clear centres; overlays painted edge to edge.
 - One commit per section (A to E) on `art/gear-icons`, a PR titled "Painted equipment icons", nothing outside `art-source/gear/`.
