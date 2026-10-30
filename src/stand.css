@@ -184,3 +184,31 @@ body[data-stand] #version { top: auto; bottom: 2px; }
 .stSheetSkill.ult.full { color: #fff3c0; text-shadow: 0 0 8px #f2c96a; }
 @media (prefers-reduced-motion: reduce) { .stVignette { animation: none; } }
 .stBar[hidden] { display: none; }
+/* the retreat (STAND-RETREAT): the banner as a room is given up, the choice at an act's end, the walk's skip layer and the new room's title card */
+#stand .stBanner.retreat .stPlate { border-color: #8fa0b8; background: linear-gradient(90deg, transparent, #12161ef2 18%, #222a38f2 50%, #12161ef2 82%, transparent); max-width: 100%; box-sizing: border-box; padding: 6px 24px 8px; }
+#stand .stBanner.retreat .stPlate b { color: #e8eefc; text-shadow: 0 0 10px #8fb0ff, 0 2px 0 #000; }
+#stand .stBanner.retreat .stCrest { filter: grayscale(0.6) drop-shadow(0 3px 2px #000c); }
+.stFell { color: #f4db9f; }
+.stThrone { color: #ffe08a; text-shadow: 0 0 8px #f2c96a; }
+#stand .stChoiceCard { position: relative; padding-top: 30px; background: radial-gradient(ellipse at 50% 0, #66734540, transparent 60%), linear-gradient(100deg, #131e1afa, #2c3027fc 50%, #131e1afa), url(ui/page.png); border: 3px double #c9a75e; box-shadow: 0 0 0 2px #0c0a08, 0 10px 30px #000c, inset 0 0 30px #0009; }
+#stand .stChoiceCard .stCrest { position: absolute; left: calc(50% - 80px); top: -28px; width: 160px; height: 54px; background: url(ui/battle-crest.png) center / contain no-repeat; filter: drop-shadow(0 2px 3px #000b); }
+#stand .stChoiceCard h2 { color: #f4db9f; text-shadow: 0 0 10px #f2c96a88, 0 2px 0 #000; }
+#stand .stChoiceCard button { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 10px; }
+#stand .stChoiceCard button b { font: 400 24px/1.2 var(--display); }
+#stand .stChoiceCard button small { font-size: 12px; color: var(--dim); }
+#stand .stChoiceHold b { color: #ffb8a0; }
+.stSkip { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; padding-bottom: calc(env(safe-area-inset-bottom) + 24px); pointer-events: auto; background: rgb(5 4 9 / 0); transition: background-color 0.6s ease; }
+.stSkip[hidden] { display: none; }
+.stSkip.dusk { background: rgb(5 4 9 / 0.92); }
+.stSkip span { padding: 4px 12px; color: #e8d9b0; background: #0c0a08cc; border: 1px solid #a58b56; }
+.stTitle { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; background: radial-gradient(ellipse at 50% 45%, #1d1a26f2, #050409fa 70%); pointer-events: auto; animation: stTitleIn 0.6s ease-out both; }
+.stTitle[hidden] { display: none; }
+.stTitleCard { width: min(340px, 100%); display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.stTitleCard > small:first-child { color: #c9a75e; letter-spacing: 0.4em; }
+.stTitleCard b { font: 400 24px/1.2 var(--display); color: #f4db9f; letter-spacing: 0.12em; text-shadow: 0 0 12px #f2c96a, 0 2px 0 #000; padding: 4px 24px; border-top: 2px solid #c9a75e; border-bottom: 2px solid #c9a75e; }
+.stTitleLine { margin: 8px 0 0; color: #e8e2d0; font-style: italic; }
+.stTitleCard em { font-style: normal; color: var(--dim); }
+.stTitleGoat { margin: 4px 0 0; color: #d0c0a0; }
+.stTitleTap { margin-top: 10px; color: var(--dim); }
+@keyframes stTitleIn { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .stSkip { transition: none; } }

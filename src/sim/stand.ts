@@ -12,10 +12,12 @@
 
 import { ULT_FILL } from './heroKits';
 import { grantOres, standOres, type OreDrop } from './awakenMats';
-import { startBattle, addUnit, stepBattle, TICK_MS, creditOf, type Battle, type BattleEvent, type Boost, type Unit } from './battle';
+import { startBattle, addUnit, stepBattle, TICK_MS, creditOf, FOG_RANGE, type Battle, type BattleEvent, type Boost, type Unit } from './battle';
+import { weatherOf } from './weather';
+import { actOfHall, CHOICE_MS, caveInOf, exitOf, FLEE_MS, hallOfWave, HOLD_HARDER, holdGold, isHall, RETREAT_MS, retreatAfter, ROOM_BREAK_MS, type Exit } from './standActs';
 import { tileAt, standable, type Area, type At } from './board';
 import { canPost, edgeTiles, KING_AT, ringPlan, standArea, standBoard, type Edge, type Role } from './standField';
-import { HALL_KINDS, hallOf, hallPlan, type HallKind } from './standHalls';
+import { hallOf, hallPlan, type HallKind } from './standHalls';
 import { isTank, KING_DEF, leashOf } from './standAi';
 import { newHelpBook, planHelp, type HelpBook } from './standHelp';
 import { CLASS_OF } from './starter';
@@ -132,6 +134,12 @@ export interface StandRun {
   area: Area;
   /** The room of the castle the run is fought in (`standHalls.ts`); absent in a run saved before the rooms, which takes the seed's. */
   hall?: HallKind;
+  /** The act of the retreat the room is (0, the courtyard, to 3, the throne room: `standActs.ts`); absent in a run saved before the retreat
+   *  (its room was drawn from the seed) until its first fall back. */
+  act?: number;
+  /** An act is over and the guard is to fall back to `to`: the choice to hold one more wave is open (`hold` unset), or the bonus wave is being
+   *  fought (`hold` set). Absent the rest of the time. */
+  retreat?: { to: HallKind; hold?: boolean };
   /** The armies open when it began, whose foes join the waves later on. */
   armies: string[];
   /** The wave about to come (or being fought). */
@@ -167,6 +175,11 @@ export interface StandSummary {
   newBest: boolean;
   /** Rift ores a new record paid (`awakenMats.ts`: a couple for each tenth wave passed for the first time); missing when none. */
   ores?: OreDrop[];
+  /** The room the king fell in, and its act under the retreat (absent for a run from before the retreat that never fell back); and whether he
+   *  fell holding the line (the bonus wave). */
+  room?: HallKind;
+  act?: number;
+  held?: boolean;
 }
 
 /** A foe still to come: when (ms into the wave), what, where. */
@@ -187,9 +200,22 @@ export type StandNote =
   | { kind: 'fallen'; unit: number; hero: number }
   /** The last foes of the wave are being hunted down (the heroes have left their posts). */
   | { kind: 'hunt' }
+  /** An act's last wave: its last foes break off and run for the breaches (STAND-RETREAT). */
+  | { kind: 'breakOff' }
+  /** An act's last wave is cleared: hold one more, harder wave for `gold`, or fall back to `to`. */
+  | { kind: 'choice'; n: number; to: HallKind; gold: number }
+  /** The bonus wave begins. */
+  | { kind: 'hold'; n: number; boss: boolean }
+  /** The bonus wave is cleared: its purse. */
+  | { kind: 'held'; gold: number }
+  /** The room is given up: a breach (`cave`) caves in, and the king and the heroes walk out by the door. */
+  | { kind: 'retreat'; from: HallKind; to: HallKind; exit: Exit; cave: Edge | null }
+  /** The next room is laid out, the heroes at their posts. */
+  | { kind: 'room'; hall: HallKind; act: number }
   | { kind: 'over'; best: number };
 
-export type StandPhase = 'deploy' | 'wave' | 'break' | 'over';
+/** `choice`: an act is over, waiting for hold-or-fall-back; `retreat`: the walk to the door (STAND-RETREAT). */
+export type StandPhase = 'deploy' | 'wave' | 'break' | 'choice' | 'retreat' | 'over';
 
 /** What a run needs to know about the player's save: each kind's boost, the castle, the heroes it may hire. */
 export interface StandSetup {
@@ -221,6 +247,11 @@ export interface Stand {
   kingGrace: number;
   /** The idle heroes' helping (`standHelp.ts`): who has had nothing to do since when; not saved. Absent on a stand made by hand is a fresh one. */
   help?: HelpBook;
+  /** The retreat (STAND-RETREAT): the choice's time left, the walk's time left, the bonus wave under way, when the last foes' running is over. */
+  choiceLeft?: number;
+  retreatLeft?: number;
+  holding?: boolean;
+  fleeUntil?: number;
 }
 
 /* ------------------------------------------------------------------ waves */
@@ -272,6 +303,12 @@ export function waveSpec(seed: number, armies: readonly string[], n: number, hal
   const over = Math.sqrt(raw / count);
   const k = strength(n) * over;
   const boss = isBossWave(n);
+  const foes = pickFoes(rng, armies, n, count, boss);
+  return { n, boss, foes, edges: waveEdges(seed, n, hall), hp: k, atk: k, raw };
+}
+
+/** The foes of wave `n` (`count` of them; a boss band first on a boss wave), drawn from `rng`. */
+function pickFoes(rng: Rng, armies: readonly string[], n: number, count: number, boss: boolean): string[] {
   const p = pools(armies, n);
   const foes: string[] = [];
   if (boss) foes.push(...FOE_BANDS[BOSS_BANDS[(n / BOSS_EVERY - 1) % BOSS_BANDS.length]]);
@@ -282,8 +319,24 @@ export function waveSpec(seed: number, armies: readonly string[], n: number, hal
     const from = n >= 10 && p.army.length && roll < 0.2 ? p.army : n >= 13 && roll < 0.5 ? p.second : p.main;
     foes.push(from === p.main ? from[i++ % from.length] : from[rng.int(0, from.length - 1)]);
   }
-  return { n, boss, foes: foes.slice(0, Math.max(count, boss ? 5 : 0)), edges: waveEdges(seed, n, hall), hp: k, atk: k, raw };
+  return foes.slice(0, Math.max(count, boss ? 5 : 0));
 }
+
+/**
+ * The bonus wave of holding the line after wave `n` (STAND-RETREAT): the next wave's foes and size, `HOLD_HARDER` stronger, coming in by every
+ * breach of the room at once; no boss. Its own side stream of the seed, so the waves after it are drawn as they would have been.
+ */
+export function holdSpec(seed: number, armies: readonly string[], n: number, hall: HallKind): WaveSpec {
+  const rng = new Rng(mixSeed(seed, 0x401d, n));
+  const raw = rawCount(n + 1);
+  const count = Math.min(FIELD_CAP, raw);
+  const k = strength(n + 1) * Math.sqrt(raw / count) * HOLD_HARDER;
+  const foes = pickFoes(rng, armies, n + 1, count, false);
+  return { n, boss: false, foes, edges: hallPlan(seed, hall).breaches.map((b) => b.edge), hp: k, atk: k, raw };
+}
+
+/** The room a run is in now (an old save's is the seed's). */
+export const hallNow = (run: StandRun): HallKind => run.hall ?? hallOf(run.seed);
 
 /* ------------------------------------------------------------------ building a run */
 
@@ -300,8 +353,10 @@ export function setupFromMeta(m: Meta): StandSetup {
 
 /** A new run for a party (the hero kinds of a save's party). */
 export function newStandRun(seed: number, party: readonly string[], armies: readonly string[] = [], prevBest = 0, prevHall?: string | null): StandRun {
-  const hall = hallOf(seed, prevHall);
-  const run: StandRun = { v: 1, seed, area: standArea(seed, hall), hall, armies: [...armies], wave: 1, gold: START_GOLD, heroes: [], nextId: 1, relics: [], offer: [], king: 1, kills: 0, earned: 0, prevBest, over: false, best: 1 };
+  // (STAND-RETREAT: every run begins in the courtyard and falls back room by room; `prevHall`, the room of the run before, no longer matters)
+  void prevHall;
+  const hall = hallOfWave(1);
+  const run: StandRun = { v: 1, seed, area: standArea(seed, hall), hall, act: 0, armies: [...armies], wave: 1, gold: START_GOLD, heroes: [], nextId: 1, relics: [], offer: [], king: 1, kills: 0, earned: 0, prevBest, over: false, best: 1 };
   for (const kind of party) run.heroes.push({ id: run.nextId++, kind, lv: 0, xp: 0, post: null });
   return run;
 }
@@ -354,6 +409,12 @@ export function startStand(run: StandRun, setup: StandSetup): Stand {
   syncTraits(s);
   syncMana(s);
   if (!run.offer.length) run.offer = drawOffer(run, run.wave);
+  // (a run saved with an act's choice still open asks it again; one left in the bonus wave is back at the choice, as it was saved)
+  if (run.retreat) {
+    run.retreat.hold = undefined;
+    s.phase = 'choice';
+    s.choiceLeft = CHOICE_MS;
+  }
   return s;
 }
 
@@ -488,14 +549,16 @@ function giveXp(s: Stand, h: StandHero, xp: number): void {
 const killXpOf = (foe: Unit): number => killXp({ def: foe.def, maxHp: UNITS[foe.def].hp });
 
 /** Begin the next wave: its foes are queued, to come in by its edges over the first seconds. */
-function beginWave(s: Stand): void {
+function beginWave(s: Stand, hold?: WaveSpec): void {
   const run = s.run;
-  const spec = waveSpec(run.seed, run.armies, run.wave, run.hall);
+  const spec = hold ?? waveSpec(run.seed, run.armies, run.wave, run.hall);
   const b = s.b;
-  run.best = Math.max(run.best, run.wave);
+  if (!hold) run.best = Math.max(run.best, run.wave);
   s.phase = 'wave';
+  s.holding = !!hold;
   if (b.stand) {
     b.stand.hunt = false;
+    b.stand.flee = false;
     // (a new wave: the helpers go home and the helping starts afresh)
     b.stand.help = {};
   }
@@ -511,7 +574,7 @@ function beginWave(s: Stand): void {
     edge: spec.edges[i % spec.edges.length],
     boost: isBoss(def) ? { hp: spec.hp * bossShare(run.wave), atk: spec.atk * bossShare(run.wave), size: 1.5 } : { hp: spec.hp, atk: spec.atk },
   }));
-  s.notes.push({ kind: 'wave', n: run.wave, boss: spec.boss });
+  s.notes.push(hold ? { kind: 'hold', n: spec.n, boss: spec.boss } : { kind: 'wave', n: run.wave, boss: spec.boss });
 }
 
 /** The tile a foe comes in on: a free one on its edge (by a side stream of the run), or one row in. */
@@ -578,6 +641,159 @@ function clearWave(s: Stand): void {
   s.phase = 'break';
   s.breakLeft = BREAK_MS;
   s.notes.push({ kind: 'clear', n, gold });
+  // (an act's last wave: the guard is to fall back to the next room; first, the choice to hold this one a wave more: STAND-RETREAT)
+  if (retreatAfter(n, hallNow(run))) {
+    run.retreat = { to: hallOfWave(n + 1) };
+    s.phase = 'choice';
+    s.choiceLeft = CHOICE_MS;
+    s.notes.push({ kind: 'choice', n, to: run.retreat.to, gold: holdGold(n) });
+  }
+}
+
+/* ------------------------------------------------------------------ the retreat (STAND-RETREAT, `standActs.ts`) */
+
+/** Hold the line: one more, harder wave in this room for a purse (`holdSpec`, `holdGold`), then the guard falls back. Only at an act's choice. */
+export function holdTheLine(s: Stand): boolean {
+  const run = s.run;
+  if (s.phase !== 'choice' || !run.retreat) return false;
+  run.retreat.hold = true;
+  beginWave(s, holdSpec(run.seed, run.armies, run.wave - 1, hallNow(run)));
+  return true;
+}
+
+/** Fall back now: the room is given up, the walk to the door begins. Only at an act's choice. */
+export function fallBack(s: Stand): boolean {
+  if (s.phase !== 'choice' || !s.run.retreat) return false;
+  startRetreat(s);
+  return true;
+}
+
+/** The bonus wave is cleared: its purse, the wave's XP and breath, and the guard falls back. */
+function clearHold(s: Stand): void {
+  const run = s.run;
+  const n = run.wave - 1;
+  const gold = holdGold(n);
+  run.gold += gold;
+  run.earned += gold;
+  for (const h of run.heroes) if (standing(h)) giveXp(s, h, waveXp(n));
+  for (const u of s.b.units) {
+    if (u.side !== 'hero' || u.tag === undefined || !u.alive) continue;
+    u.hp = Math.min(u.maxHp, u.hp + Math.round(u.maxHp * CLEAR_HEAL * (u.healMult ?? 1)));
+  }
+  s.holding = false;
+  s.notes.push({ kind: 'held', gold });
+  startRetreat(s);
+}
+
+/** The nearest free floor tiles to `at`, one for each of `count` (for the heroes gathering at the door). */
+function tilesNear(s: Stand, at: At, count: number): At[] {
+  const out: At[] = [];
+  for (let r = 0; r <= 8 && out.length < count; r++)
+    for (let dv = -r; dv <= r && out.length < count; dv++)
+      for (let du = -r; du <= r && out.length < count; du++) {
+        if (Math.max(Math.abs(du), Math.abs(dv)) !== r) continue;
+        const p = { u: at.u + du, v: at.v + dv };
+        if (standable(tileAt(s.b.board, p.u, p.v))) out.push(p);
+      }
+  return out;
+}
+
+/** The room is given up: the heroes still standing are sent to the door (their posts there for the walk), a breach caves in on the page. */
+function startRetreat(s: Stand): void {
+  const run = s.run;
+  const b = s.b;
+  const from = hallNow(run);
+  const to = run.retreat?.to ?? hallOfWave(run.wave);
+  run.retreat = { to };
+  s.phase = 'retreat';
+  s.retreatLeft = RETREAT_MS;
+  s.holding = false;
+  if (b.stand) {
+    b.stand.hunt = false;
+    b.stand.flee = false;
+    b.stand.help = {};
+  }
+  const exit = exitOf(run.seed, from);
+  const walkers = heroUnits(s).filter((u) => u.post).sort((x, y) => x.id - y.id);
+  const spots = tilesNear(s, exit.front, walkers.length);
+  walkers.forEach((u, i) => {
+    if (spots[i]) u.post = { ...u.post!, u: spots[i].u, v: spots[i].v };
+  });
+  s.notes.push({ kind: 'retreat', from, to, exit, cave: caveInOf(run.seed, from) });
+}
+
+/** The walk is over (or skipped with a tap): the next room is laid out, the heroes still standing at the ring plan's posts in it (the owner's
+ *  call: they are set out for the player, who may still move them in the break before the next wave). The fallen stay in the room they fell in. */
+export function finishRetreat(s: Stand): boolean {
+  if (s.phase !== 'retreat') return false;
+  const run = s.run;
+  const b = s.b;
+  const to = run.retreat?.to ?? hallOfWave(run.wave);
+  const board = standBoard(run.seed, undefined, to);
+  b.board = board;
+  b.fog = weatherOf(board) === 'fog' ? FOG_RANGE : undefined;
+  if (b.stand) {
+    b.stand.fields = {};
+    b.stand.hunt = false;
+    b.stand.flee = false;
+    b.stand.help = {};
+  }
+  // (only the king and the heroes standing go on: the foes' dead, the fallen and anything called up stay behind; what they left about goes too)
+  b.units = b.units.filter((u) => u.id === s.king.id || (u.side === 'hero' && u.alive && u.tag !== undefined && u.owner === undefined));
+  const kept = new Set(b.units.map((u) => u.id));
+  b.pending = [];
+  b.zones = [];
+  if (b.traps) b.traps = [];
+  if (b.cabbages) b.cabbages = [];
+  if (b.terrain) b.terrain = [];
+  if (b.walls) b.walls = [];
+  if (b.auras) b.auras = [];
+  if (b.kits?.raise) b.kits.raise = [];
+  for (const u of b.units) {
+    u.step = undefined;
+    u.cast = undefined;
+    u.swing = undefined;
+    u.taunt = undefined;
+    if (u.ail) u.ail = u.ail.filter((a) => kept.has(a.by));
+    if (u.hot && !kept.has(u.hot.by)) u.hot = undefined;
+    u.busyUntil = b.t;
+  }
+  run.hall = to;
+  run.area = board.area;
+  run.act = actOfHall(to);
+  run.retreat = undefined;
+  const heroes = run.heroes.filter(standing);
+  const plan = ringPlan(board, heroes.map((h) => h.kind), roleOfKind);
+  heroes.forEach((h, i) => {
+    const unit = unitOfHero(s, h.id);
+    const at = plan[i];
+    if (!at || !unit) return;
+    h.post = [at.u, at.v];
+    unit.u = at.u;
+    unit.v = at.v;
+    unit.post = { ...(unit.post ?? { leash: leashOf(UNITS[h.kind]), tank: isTank(UNITS[h.kind]) }), u: at.u, v: at.v };
+  });
+  syncTraits(s);
+  syncMana(s);
+  s.phase = 'break';
+  s.breakLeft = ROOM_BREAK_MS;
+  s.retreatLeft = 0;
+  s.notes.push({ kind: 'room', hall: to, act: run.act });
+  return true;
+}
+
+/** The last foes of an act's wave have broken off: one that reaches the edge of the field is gone (or any still in the room when its time is up). */
+function fleeOut(s: Stand): void {
+  const b = s.b;
+  const late = b.t >= (s.fleeUntil ?? 0);
+  for (const u of b.units) {
+    if (!u.alive || u.side !== 'foe') continue;
+    if (!late && u.u !== 0 && u.v !== 0 && u.u !== FIELD_LAST && u.v !== FIELD_LAST) continue;
+    // (gone, not felled: no gold, no XP; dropped with the dead, long faded)
+    u.alive = false;
+    u.hp = 0;
+    u.diedAt = b.t - CORPSE_MS;
+  }
 }
 
 /** The events of a tick that matter to the run: gold and XP for kills, the king's wounds. */
@@ -611,6 +827,12 @@ function settleEvents(s: Stand, events: BattleEvent[]): void {
 /** One tick of the run (`TICK_MS`): the foes due come in, the battle steps, the kills are paid, a wave clears or the break runs down. Returns the battle's events for the page. */
 export function stepStand(s: Stand): BattleEvent[] {
   if (s.phase === 'deploy' || s.phase === 'over') return [];
+  // (an act's choice waits for an answer; left to itself, the guard falls back)
+  if (s.phase === 'choice') {
+    s.choiceLeft = (s.choiceLeft ?? CHOICE_MS) - TICK_MS;
+    if (s.choiceLeft <= 0) fallBack(s);
+    return [];
+  }
   const b = s.b;
   const run = s.run;
   if (s.phase === 'wave') {
@@ -641,17 +863,35 @@ export function stepStand(s: Stand): BattleEvent[] {
   // (the last foes of a wave are hunted down; the heroes go back when it clears)
   if (s.phase === 'wave' && b.stand) {
     const left = s.queue.length ? Infinity : foesAlive(s);
-    const hunt = left > 0 && left <= HUNT_AT;
-    if (hunt && !b.stand.hunt) s.notes.push({ kind: 'hunt' });
-    b.stand.hunt = hunt;
-    // (with every foe of the wave in, the heroes with nothing near their posts go to help where the fighting is: `standHelp.ts`)
-    planHelp(b, (s.help ??= newHelpBook()), !s.queue.length);
+    // (an act's last wave, or the bonus wave: its last foes break off and run instead of being hunted, unless a boss is among them: STAND-RETREAT)
+    const lastOfAct = s.holding || retreatAfter(run.wave, hallNow(run));
+    if (lastOfAct && !b.stand.flee && left > 0 && left <= HUNT_AT && !b.units.some((u) => u.alive && u.side === 'foe' && isBoss(u.def))) {
+      b.stand.flee = true;
+      s.fleeUntil = b.t + FLEE_MS;
+      s.notes.push({ kind: 'breakOff' });
+    }
+    if (b.stand.flee) {
+      b.stand.hunt = false;
+      b.stand.help = {};
+      fleeOut(s);
+    } else {
+      const hunt = left > 0 && left <= HUNT_AT;
+      if (hunt && !b.stand.hunt) s.notes.push({ kind: 'hunt' });
+      b.stand.hunt = hunt;
+      // (with every foe of the wave in, the heroes with nothing near their posts go to help where the fighting is: `standHelp.ts`)
+      planHelp(b, (s.help ??= newHelpBook()), !s.queue.length);
+    }
   }
   // (the fallen are dropped from the list a moment after they fall)
   if (b.t % 1000 === 0) dropCorpses(s);
   if (b.phase === 'lost' || !s.king.alive) return endRun(s, events);
-  if (s.phase === 'wave' && !s.queue.length && !b.units.some((u) => u.alive && u.side === 'foe')) clearWave(s);
-  else if (s.phase === 'break') {
+  if (s.phase === 'wave' && !s.queue.length && !b.units.some((u) => u.alive && u.side === 'foe')) {
+    if (s.holding) clearHold(s);
+    else clearWave(s);
+  } else if (s.phase === 'retreat') {
+    s.retreatLeft = (s.retreatLeft ?? RETREAT_MS) - TICK_MS;
+    if (s.retreatLeft <= 0) finishRetreat(s);
+  } else if (s.phase === 'break') {
     s.breakLeft -= TICK_MS;
     if (s.breakLeft <= 0) beginWave(s);
   }
@@ -810,7 +1050,10 @@ export function settleStand(m: Meta, run: StandRun, armies: readonly string[] = 
   const ores = standOres(run.seed, m.stand ?? 0, run.best);
   grantOres(m, ores);
   m.stand = Math.max(m.stand ?? 0, run.best);
-  run.summary = { best: run.best, cleared, crowns, ...c, gear, kills: run.kills, heroes: run.heroes.length, relics: run.relics.length, newBest, ...(ores.length ? { ores } : {}) };
+  // (the room the king fell in, and the furthest act of the retreat a run has reached: STAND-RETREAT)
+  const room = hallNow(run);
+  if (run.act !== undefined) m.standAct = Math.max(m.standAct ?? 0, run.act);
+  run.summary = { best: run.best, cleared, crowns, ...c, gear, kills: run.kills, heroes: run.heroes.length, relics: run.relics.length, newBest, ...(ores.length ? { ores } : {}), room, ...(run.act !== undefined ? { act: run.act } : {}), ...(run.retreat?.hold ? { held: true } : {}) };
   return run.summary;
 }
 
@@ -823,14 +1066,17 @@ export function loadStand(store: Pick<Storage, 'getItem'> = localStorage): Stand
   try {
     const r = JSON.parse(store.getItem(STAND_KEY) ?? 'null') as StandRun | null;
     const ok = r && r.v === 1 && !r.over && Number.isFinite(r.seed) && r.wave >= 1 && Array.isArray(r.heroes) && r.heroes.length > 0 && Array.isArray(r.relics);
-    return ok ? { ...r, offer: Array.isArray(r.offer) ? r.offer : [], armies: Array.isArray(r.armies) ? r.armies : [], hall: (HALL_KINDS as readonly string[]).includes(r.hall as string) ? r.hall : undefined } : null;
+    if (!ok) return null;
+    const act = Number.isInteger(r.act) && r.act! >= 0 && r.act! <= 3 ? r.act : undefined;
+    const retreat = r.retreat && isHall(r.retreat.to) ? { to: r.retreat.to } : undefined;
+    return { ...r, offer: Array.isArray(r.offer) ? r.offer : [], armies: Array.isArray(r.armies) ? r.armies : [], hall: isHall(r.hall) ? r.hall : undefined, act, retreat };
   } catch {
     return null;
   }
 }
 
 /** The start of a break is the place a run is saved: its battle is built again from the record, the wave still to come. */
-export const canSave = (s: Stand): boolean => s.phase === 'break' || s.phase === 'deploy';
+export const canSave = (s: Stand): boolean => s.phase === 'break' || s.phase === 'deploy' || s.phase === 'choice';
 
 /**
  * The old spire climb is gone. A climb still saved (in the Tower's slot, or in the ordinary one by a very old save) is dropped, and what it had

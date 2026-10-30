@@ -46,9 +46,10 @@ const MID = 12;
 /** A breach's width in tiles. */
 export const BREACH_WIDTH = 5;
 
-export const HALL_NAMES: Record<HallKind, string> = { hall: 'The great hall', chapel: 'The chapel', library: 'The library', courtyard: 'The courtyard' };
+export const HALL_NAMES: Record<HallKind, string> = { hall: 'The throne room', chapel: 'The chapel', library: 'The library', courtyard: 'The courtyard' };
 
-/** Which room a run is fought in: drawn from its seed, never `avoid` (the room of the run before). */
+/** Which room a run was fought in under the old rule (drawn from its seed, never `avoid`, the room of the run before): a run saved before the
+ *  retreat (STAND-RETREAT, `standActs.ts`) without a room of its own takes this one, until its next act's end. New runs start in the courtyard. */
 export function hallOf(seed: number, avoid?: string | null): HallKind {
   const rng = new Rng(mixSeed(seed, 0x4a11));
   const pool = HALL_KINDS.filter((k) => k !== avoid);

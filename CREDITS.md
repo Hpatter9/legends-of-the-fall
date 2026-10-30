@@ -343,6 +343,8 @@ No new art: the five-hero combos' gathering and strike, a tier skill's ring and 
   (use in the game; the raw files are not redistributed): https://craftpix.net/file-licenses/.
 - The rubble at the breaches (`rubble1.png`, `rubble2.png`): `Ruin_shadow1_3.png` and `Ruin_shadow1_4.png` of the Craftpix **Free Undead
   Tileset Top-Down Pixel Art**, the same licence.
+- The door the guard falls back by (`door.png`, STAND-RETREAT): the arched wooden door's five frames, closed to open (the fourth row of
+  `doors_lever_chest_animation.png`), from the Craftpix **Free 2D Top-Down Pixel Dungeon Asset Pack**, the same licence.
 - The red carpet and the dais (`rug.png`) and the library's bookcases (`shelf1.png`, `shelf2.png`): cells of `Objects/Decor0.png` of the
   **DawnLike** tileset by DragonDePlatino, on DawnBringer's palette, CC-BY 4.0, four times up.
 - The smoke at the breaches (`smoke.png`) and the dust burst's ring (`dust.png`, ten frames): `directional_smoke_burst_001` (large white,

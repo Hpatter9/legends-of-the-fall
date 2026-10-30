@@ -232,14 +232,16 @@ test('the pause sheet lists each hero\'s level, health, pool, attack, defence, k
 
 /* ------------------------------------------------------------------ the castle's rooms (phase B) */
 
-test('a run is fought in one of four rooms of the castle, from its seed, never the room of the run before', () => {
+// (STAND-RETREAT changed this rule, the owner's ask: a new run always begins in the courtyard and falls back room by room, so it no longer avoids
+// the room of the run before; `hallOf` is kept for runs saved under the old rule, which keep their room to the end of their act)
+test('a run saved under the old rule was in one of four rooms from its seed, never the room of the run before; a new run begins in the courtyard', () => {
   const seen = new Set<string>();
   for (let seed = 1; seed <= 60; seed++) {
     const k = hallOf(seed);
     assert.equal(hallOf(seed), k, 'the same for a seed');
     seen.add(k);
     for (const prev of HALL_KINDS) assert.notEqual(hallOf(seed, prev), prev);
-    assert.notEqual(newStandRun(seed, EIGHT, armies, 0, k).hall, k, 'a new run is never in the room of the run before');
+    assert.equal(newStandRun(seed, EIGHT, armies, 0, k).hall, 'courtyard', 'a new run begins in the courtyard, whatever the room of the run before');
   }
   assert.deepEqual([...seen].sort(), [...HALL_KINDS].sort(), 'all four rooms come up');
 });
