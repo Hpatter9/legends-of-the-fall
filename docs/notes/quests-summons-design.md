@@ -1037,3 +1037,25 @@ frame); and the four passersby walking (6 frames each) in the camp's isometric s
   against another being, which takes 25%.
 - **The six Eidolons' designs are being workshopped** (five ideas each were offered); the art for their figures, effects and boss
   sheets waits on that choice. Part 1 of the art (the horn, the calling's effects, the givers, the board) is asked for now.
+
+## Making the Eidolons feel epic (the owner's ask)
+
+The owner: "Make sure these feel epic with the effects we are putting together." The cinematic above is the base; on top of it, and
+built on everything the ultimate now has (ULT-EPIC: hit-stop, shake, element flash, lit areas, speed lines, stings), each call adds:
+
+- **The horn is blown first.** The War Horn swings up beside the orbs and is blown (the `horn-blast` painting, a deep horn call on
+  the sound bus, the music ducking), and the summoning circle starts from its note.
+- **A living figure, not a still picture.** The figure is painted in layers (body, wings or limbs, glow) so the page can move them:
+  breathing, wings unfolding, eyes lighting, embers, snow or motes drifting off it; a slow push of the camera while it rises.
+- **Each Eidolon has its own choreography**, not one shared sweep: three to four beats per attack (for example the Winter Stag rears,
+  stamps, a wave of ice rolls across and every foe freezes, then the ice bursts), each beat with its own painted sheet, its own
+  hit-stop and its own sound.
+- **The whole board reacts:** an element wash over the land (frost creeping, embers raining, light breaking through cloud), the
+  struck foes thrown or frozen in their poses during the hit-stop, scorch, frost or cracks left on the tiles for the rest of the wave.
+- **Its own music sting:** a few bars of the game's main theme in the Eidolon's colour (brass and drums for fire, bells for ice,
+  choir for light...), rendered with the music tools like the army arrangements.
+- **The heroes answer:** a cheer or a line from the party after the strike (heroSays), and the ruler's line the first time.
+- **The first call is always shown in full**; a second sweep of letterbox bars, the name and title in the largest type in the game.
+
+Art part 2 (the figures, the attack beats, the battle sheets) is written to deliver these layers and beats once the six designs are
+chosen.
