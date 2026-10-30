@@ -445,6 +445,7 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 ## Status effects (painted)
 
 - The 11 sheets in `art-source/status-fx/`: original artwork generated for this game with OpenAI image generation.
+- Healer and revive spell effects (`art-source/spell-fx/c-healers/`): ten original painted sheets made with OpenAI image generation for this game; unchanged generations are retained in `art-source/spell-fx/originals/c-healers/`. Runtime import is pending.
 
 ## Awakened hero equipment (`src/art/awakened/`)
 
