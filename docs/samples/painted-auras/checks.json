@@ -1,0 +1,3371 @@
+[
+  {
+    "tag": "393x852",
+    "audit": {
+      "cell": 96,
+      "pixel": false,
+      "samples": [
+        {
+          "key": "guardian.1.ground",
+          "frames": 6,
+          "visibleMin": 929,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "guardian.1.back",
+          "frames": 6,
+          "visibleMin": 2707,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "guardian.2.ground",
+          "frames": 6,
+          "visibleMin": 1729,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "guardian.2.back",
+          "frames": 6,
+          "visibleMin": 4041,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "guardian.2.rise",
+          "frames": 6,
+          "visibleMin": 1842,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "guardian.2.motes",
+          "frames": 6,
+          "visibleMin": 670,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.1.ground",
+          "frames": 6,
+          "visibleMin": 2486,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.1.back",
+          "frames": 6,
+          "visibleMin": 4400,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.2.ground",
+          "frames": 6,
+          "visibleMin": 3864,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.2.ground2",
+          "frames": 6,
+          "visibleMin": 3654,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.2.back",
+          "frames": 6,
+          "visibleMin": 5008,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.2.rise",
+          "frames": 6,
+          "visibleMin": 3863,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.1.ground",
+          "frames": 6,
+          "visibleMin": 1192,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.1.motes",
+          "frames": 6,
+          "visibleMin": 793,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.2.ground",
+          "frames": 6,
+          "visibleMin": 1948,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.2.rise",
+          "frames": 6,
+          "visibleMin": 2730,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.2.orbit",
+          "frames": 6,
+          "visibleMin": 1899,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.2.motes",
+          "frames": 6,
+          "visibleMin": 2124,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.1.ground",
+          "frames": 6,
+          "visibleMin": 1215,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.1.trail",
+          "frames": 6,
+          "visibleMin": 695,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.2.ground",
+          "frames": 6,
+          "visibleMin": 2397,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.2.back",
+          "frames": 6,
+          "visibleMin": 2152,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.2.rise",
+          "frames": 6,
+          "visibleMin": 1889,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.2.trail",
+          "frames": 6,
+          "visibleMin": 2049,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.2.motes",
+          "frames": 6,
+          "visibleMin": 603,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.1.ground",
+          "frames": 6,
+          "visibleMin": 1356,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.1.motes",
+          "frames": 6,
+          "visibleMin": 1024,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.2.ground",
+          "frames": 6,
+          "visibleMin": 2013,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.2.rise",
+          "frames": 6,
+          "visibleMin": 2597,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.2.motes",
+          "frames": 6,
+          "visibleMin": 2233,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.2.motes2",
+          "frames": 6,
+          "visibleMin": 683,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.1.ground",
+          "frames": 6,
+          "visibleMin": 3799,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.1.orbit",
+          "frames": 6,
+          "visibleMin": 2469,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.2.ground",
+          "frames": 6,
+          "visibleMin": 4524,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.2.back",
+          "frames": 6,
+          "visibleMin": 3988,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.2.rise",
+          "frames": 6,
+          "visibleMin": 2911,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.2.orbit",
+          "frames": 6,
+          "visibleMin": 2301,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.1.ground",
+          "frames": 6,
+          "visibleMin": 2798,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.1.motes",
+          "frames": 6,
+          "visibleMin": 2339,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.2.ground",
+          "frames": 6,
+          "visibleMin": 5397,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.2.back",
+          "frames": 6,
+          "visibleMin": 5486,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.2.halo",
+          "frames": 6,
+          "visibleMin": 2259,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.2.orbit",
+          "frames": 6,
+          "visibleMin": 3493,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.2.motes",
+          "frames": 6,
+          "visibleMin": 2864,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.1.halo",
+          "frames": 6,
+          "visibleMin": 3004,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.1.motes",
+          "frames": 6,
+          "visibleMin": 1286,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.2.back",
+          "frames": 6,
+          "visibleMin": 3844,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.2.halo",
+          "frames": 6,
+          "visibleMin": 3542,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.2.rise",
+          "frames": 6,
+          "visibleMin": 3475,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.2.motes",
+          "frames": 6,
+          "visibleMin": 1831,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.1.ground",
+          "frames": 6,
+          "visibleMin": 1354,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.1.motes",
+          "frames": 6,
+          "visibleMin": 2052,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.2.ground",
+          "frames": 6,
+          "visibleMin": 3137,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.2.rise",
+          "frames": 6,
+          "visibleMin": 2719,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.2.motes",
+          "frames": 6,
+          "visibleMin": 3400,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.2.motes2",
+          "frames": 6,
+          "visibleMin": 1467,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.1.ground",
+          "frames": 6,
+          "visibleMin": 2243,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.1.motes",
+          "frames": 6,
+          "visibleMin": 2063,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.2.ground",
+          "frames": 6,
+          "visibleMin": 3137,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.2.rise",
+          "frames": 6,
+          "visibleMin": 3034,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.2.motes",
+          "frames": 6,
+          "visibleMin": 3714,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.2.motes2",
+          "frames": 6,
+          "visibleMin": 800,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.1.ground",
+          "frames": 6,
+          "visibleMin": 1593,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.1.motes",
+          "frames": 6,
+          "visibleMin": 1226,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.2.ground",
+          "frames": 6,
+          "visibleMin": 2584,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.2.back",
+          "frames": 6,
+          "visibleMin": 2401,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.2.motes",
+          "frames": 6,
+          "visibleMin": 2528,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.2.motes2",
+          "frames": 6,
+          "visibleMin": 1322,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.1.ground",
+          "frames": 6,
+          "visibleMin": 2475,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.1.motes",
+          "frames": 6,
+          "visibleMin": 968,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.2.ground",
+          "frames": 6,
+          "visibleMin": 3573,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.2.back",
+          "frames": 6,
+          "visibleMin": 3480,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.2.rise",
+          "frames": 6,
+          "visibleMin": 3034,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.2.motes",
+          "frames": 6,
+          "visibleMin": 1855,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.1.rise",
+          "frames": 6,
+          "visibleMin": 2641,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.1.trail",
+          "frames": 6,
+          "visibleMin": 1743,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.2.ground",
+          "frames": 6,
+          "visibleMin": 2446,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.2.rise",
+          "frames": 6,
+          "visibleMin": 3771,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.2.trail",
+          "frames": 6,
+          "visibleMin": 3040,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.2.motes",
+          "frames": 6,
+          "visibleMin": 1462,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        }
+      ]
+    },
+    "battle": [
+      {
+        "kind": "knight",
+        "step": 1,
+        "bits": 2,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      },
+      {
+        "kind": "knight",
+        "step": 2,
+        "bits": 6,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      },
+      {
+        "kind": "juggernaut",
+        "step": 1,
+        "bits": 2,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      },
+      {
+        "kind": "juggernaut",
+        "step": 2,
+        "bits": 4,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      },
+      {
+        "kind": "samurai",
+        "step": 1,
+        "bits": 3,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      },
+      {
+        "kind": "samurai",
+        "step": 2,
+        "bits": 6,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      },
+      {
+        "kind": "ranger",
+        "step": 1,
+        "bits": 3,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      },
+      {
+        "kind": "ranger",
+        "step": 2,
+        "bits": 8,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      },
+      {
+        "kind": "rifleBot",
+        "step": 1,
+        "bits": 3,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      },
+      {
+        "kind": "rifleBot",
+        "step": 2,
+        "bits": 7,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      },
+      {
+        "kind": "wizard",
+        "step": 1,
+        "bits": 3,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      },
+      {
+        "kind": "wizard",
+        "step": 2,
+        "bits": 6,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      },
+      {
+        "kind": "timeWitch",
+        "step": 1,
+        "bits": 3,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      },
+      {
+        "kind": "timeWitch",
+        "step": 2,
+        "bits": 8,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      },
+      {
+        "kind": "priestess",
+        "step": 1,
+        "bits": 3,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      },
+      {
+        "kind": "priestess",
+        "step": 2,
+        "bits": 7,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      },
+      {
+        "kind": "werewolf",
+        "step": 1,
+        "bits": 3,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      },
+      {
+        "kind": "werewolf",
+        "step": 2,
+        "bits": 7,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      },
+      {
+        "kind": "reaper",
+        "step": 1,
+        "bits": 3,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      },
+      {
+        "kind": "reaper",
+        "step": 2,
+        "bits": 8,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      },
+      {
+        "kind": "kitsune",
+        "step": 1,
+        "bits": 3,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      },
+      {
+        "kind": "kitsune",
+        "step": 2,
+        "bits": 8,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      },
+      {
+        "kind": "druid",
+        "step": 1,
+        "bits": 3,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      },
+      {
+        "kind": "druid",
+        "step": 2,
+        "bits": 7,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      },
+      {
+        "kind": "lancer",
+        "step": 1,
+        "bits": 3,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      },
+      {
+        "kind": "lancer",
+        "step": 2,
+        "bits": 7,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.43000000000006,
+          "y": 408.06125
+        }
+      }
+    ],
+    "offline": true,
+    "errors": []
+  },
+  {
+    "tag": "360x780",
+    "audit": {
+      "cell": 96,
+      "pixel": false,
+      "samples": [
+        {
+          "key": "guardian.1.ground",
+          "frames": 6,
+          "visibleMin": 929,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "guardian.1.back",
+          "frames": 6,
+          "visibleMin": 2707,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "guardian.2.ground",
+          "frames": 6,
+          "visibleMin": 1729,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "guardian.2.back",
+          "frames": 6,
+          "visibleMin": 4041,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "guardian.2.rise",
+          "frames": 6,
+          "visibleMin": 1842,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "guardian.2.motes",
+          "frames": 6,
+          "visibleMin": 670,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.1.ground",
+          "frames": 6,
+          "visibleMin": 2486,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.1.back",
+          "frames": 6,
+          "visibleMin": 4400,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.2.ground",
+          "frames": 6,
+          "visibleMin": 3864,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.2.ground2",
+          "frames": 6,
+          "visibleMin": 3654,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.2.back",
+          "frames": 6,
+          "visibleMin": 5008,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.2.rise",
+          "frames": 6,
+          "visibleMin": 3863,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.1.ground",
+          "frames": 6,
+          "visibleMin": 1192,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.1.motes",
+          "frames": 6,
+          "visibleMin": 793,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.2.ground",
+          "frames": 6,
+          "visibleMin": 1948,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.2.rise",
+          "frames": 6,
+          "visibleMin": 2730,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.2.orbit",
+          "frames": 6,
+          "visibleMin": 1899,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.2.motes",
+          "frames": 6,
+          "visibleMin": 2124,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.1.ground",
+          "frames": 6,
+          "visibleMin": 1215,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.1.trail",
+          "frames": 6,
+          "visibleMin": 695,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.2.ground",
+          "frames": 6,
+          "visibleMin": 2397,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.2.back",
+          "frames": 6,
+          "visibleMin": 2152,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.2.rise",
+          "frames": 6,
+          "visibleMin": 1889,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.2.trail",
+          "frames": 6,
+          "visibleMin": 2049,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.2.motes",
+          "frames": 6,
+          "visibleMin": 603,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.1.ground",
+          "frames": 6,
+          "visibleMin": 1356,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.1.motes",
+          "frames": 6,
+          "visibleMin": 1024,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.2.ground",
+          "frames": 6,
+          "visibleMin": 2013,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.2.rise",
+          "frames": 6,
+          "visibleMin": 2597,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.2.motes",
+          "frames": 6,
+          "visibleMin": 2233,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.2.motes2",
+          "frames": 6,
+          "visibleMin": 683,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.1.ground",
+          "frames": 6,
+          "visibleMin": 3799,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.1.orbit",
+          "frames": 6,
+          "visibleMin": 2469,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.2.ground",
+          "frames": 6,
+          "visibleMin": 4524,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.2.back",
+          "frames": 6,
+          "visibleMin": 3988,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.2.rise",
+          "frames": 6,
+          "visibleMin": 2911,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.2.orbit",
+          "frames": 6,
+          "visibleMin": 2301,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.1.ground",
+          "frames": 6,
+          "visibleMin": 2798,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.1.motes",
+          "frames": 6,
+          "visibleMin": 2339,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.2.ground",
+          "frames": 6,
+          "visibleMin": 5397,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.2.back",
+          "frames": 6,
+          "visibleMin": 5486,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.2.halo",
+          "frames": 6,
+          "visibleMin": 2259,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.2.orbit",
+          "frames": 6,
+          "visibleMin": 3493,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.2.motes",
+          "frames": 6,
+          "visibleMin": 2864,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.1.halo",
+          "frames": 6,
+          "visibleMin": 3004,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.1.motes",
+          "frames": 6,
+          "visibleMin": 1286,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.2.back",
+          "frames": 6,
+          "visibleMin": 3844,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.2.halo",
+          "frames": 6,
+          "visibleMin": 3542,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.2.rise",
+          "frames": 6,
+          "visibleMin": 3475,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.2.motes",
+          "frames": 6,
+          "visibleMin": 1831,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.1.ground",
+          "frames": 6,
+          "visibleMin": 1354,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.1.motes",
+          "frames": 6,
+          "visibleMin": 2052,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.2.ground",
+          "frames": 6,
+          "visibleMin": 3137,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.2.rise",
+          "frames": 6,
+          "visibleMin": 2719,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.2.motes",
+          "frames": 6,
+          "visibleMin": 3400,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.2.motes2",
+          "frames": 6,
+          "visibleMin": 1467,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.1.ground",
+          "frames": 6,
+          "visibleMin": 2243,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.1.motes",
+          "frames": 6,
+          "visibleMin": 2063,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.2.ground",
+          "frames": 6,
+          "visibleMin": 3137,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.2.rise",
+          "frames": 6,
+          "visibleMin": 3034,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.2.motes",
+          "frames": 6,
+          "visibleMin": 3714,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.2.motes2",
+          "frames": 6,
+          "visibleMin": 800,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.1.ground",
+          "frames": 6,
+          "visibleMin": 1593,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.1.motes",
+          "frames": 6,
+          "visibleMin": 1226,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.2.ground",
+          "frames": 6,
+          "visibleMin": 2584,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.2.back",
+          "frames": 6,
+          "visibleMin": 2401,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.2.motes",
+          "frames": 6,
+          "visibleMin": 2528,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.2.motes2",
+          "frames": 6,
+          "visibleMin": 1322,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.1.ground",
+          "frames": 6,
+          "visibleMin": 2475,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.1.motes",
+          "frames": 6,
+          "visibleMin": 968,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.2.ground",
+          "frames": 6,
+          "visibleMin": 3573,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.2.back",
+          "frames": 6,
+          "visibleMin": 3480,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.2.rise",
+          "frames": 6,
+          "visibleMin": 3034,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.2.motes",
+          "frames": 6,
+          "visibleMin": 1855,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.1.rise",
+          "frames": 6,
+          "visibleMin": 2641,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.1.trail",
+          "frames": 6,
+          "visibleMin": 1743,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.2.ground",
+          "frames": 6,
+          "visibleMin": 2446,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.2.rise",
+          "frames": 6,
+          "visibleMin": 3771,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.2.trail",
+          "frames": 6,
+          "visibleMin": 3040,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.2.motes",
+          "frames": 6,
+          "visibleMin": 1462,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        }
+      ]
+    },
+    "battle": [
+      {
+        "kind": "wizard",
+        "step": 1,
+        "bits": 3,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 180,
+          "y": 370.525
+        }
+      },
+      {
+        "kind": "wizard",
+        "step": 2,
+        "bits": 6,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 180,
+          "y": 370.525
+        }
+      },
+      {
+        "kind": "werewolf",
+        "step": 1,
+        "bits": 3,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 180,
+          "y": 370.525
+        }
+      },
+      {
+        "kind": "werewolf",
+        "step": 2,
+        "bits": 7,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 180,
+          "y": 370.525
+        }
+      }
+    ],
+    "offline": false,
+    "errors": []
+  },
+  {
+    "tag": "412x915",
+    "audit": {
+      "cell": 96,
+      "pixel": false,
+      "samples": [
+        {
+          "key": "guardian.1.ground",
+          "frames": 6,
+          "visibleMin": 929,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "guardian.1.back",
+          "frames": 6,
+          "visibleMin": 2707,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "guardian.2.ground",
+          "frames": 6,
+          "visibleMin": 1729,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "guardian.2.back",
+          "frames": 6,
+          "visibleMin": 4041,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "guardian.2.rise",
+          "frames": 6,
+          "visibleMin": 1842,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "guardian.2.motes",
+          "frames": 6,
+          "visibleMin": 670,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.1.ground",
+          "frames": 6,
+          "visibleMin": 2486,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.1.back",
+          "frames": 6,
+          "visibleMin": 4400,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.2.ground",
+          "frames": 6,
+          "visibleMin": 3864,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.2.ground2",
+          "frames": 6,
+          "visibleMin": 3654,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.2.back",
+          "frames": 6,
+          "visibleMin": 5008,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.2.rise",
+          "frames": 6,
+          "visibleMin": 3863,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.1.ground",
+          "frames": 6,
+          "visibleMin": 1192,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.1.motes",
+          "frames": 6,
+          "visibleMin": 793,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.2.ground",
+          "frames": 6,
+          "visibleMin": 1948,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.2.rise",
+          "frames": 6,
+          "visibleMin": 2730,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.2.orbit",
+          "frames": 6,
+          "visibleMin": 1899,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.2.motes",
+          "frames": 6,
+          "visibleMin": 2124,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.1.ground",
+          "frames": 6,
+          "visibleMin": 1215,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.1.trail",
+          "frames": 6,
+          "visibleMin": 695,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.2.ground",
+          "frames": 6,
+          "visibleMin": 2397,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.2.back",
+          "frames": 6,
+          "visibleMin": 2152,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.2.rise",
+          "frames": 6,
+          "visibleMin": 1889,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.2.trail",
+          "frames": 6,
+          "visibleMin": 2049,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.2.motes",
+          "frames": 6,
+          "visibleMin": 603,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.1.ground",
+          "frames": 6,
+          "visibleMin": 1356,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.1.motes",
+          "frames": 6,
+          "visibleMin": 1024,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.2.ground",
+          "frames": 6,
+          "visibleMin": 2013,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.2.rise",
+          "frames": 6,
+          "visibleMin": 2597,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.2.motes",
+          "frames": 6,
+          "visibleMin": 2233,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.2.motes2",
+          "frames": 6,
+          "visibleMin": 683,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.1.ground",
+          "frames": 6,
+          "visibleMin": 3799,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.1.orbit",
+          "frames": 6,
+          "visibleMin": 2469,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.2.ground",
+          "frames": 6,
+          "visibleMin": 4524,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.2.back",
+          "frames": 6,
+          "visibleMin": 3988,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.2.rise",
+          "frames": 6,
+          "visibleMin": 2911,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.2.orbit",
+          "frames": 6,
+          "visibleMin": 2301,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.1.ground",
+          "frames": 6,
+          "visibleMin": 2798,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.1.motes",
+          "frames": 6,
+          "visibleMin": 2339,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.2.ground",
+          "frames": 6,
+          "visibleMin": 5397,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.2.back",
+          "frames": 6,
+          "visibleMin": 5486,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.2.halo",
+          "frames": 6,
+          "visibleMin": 2259,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.2.orbit",
+          "frames": 6,
+          "visibleMin": 3493,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.2.motes",
+          "frames": 6,
+          "visibleMin": 2864,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.1.halo",
+          "frames": 6,
+          "visibleMin": 3004,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.1.motes",
+          "frames": 6,
+          "visibleMin": 1286,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.2.back",
+          "frames": 6,
+          "visibleMin": 3844,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.2.halo",
+          "frames": 6,
+          "visibleMin": 3542,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.2.rise",
+          "frames": 6,
+          "visibleMin": 3475,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.2.motes",
+          "frames": 6,
+          "visibleMin": 1831,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.1.ground",
+          "frames": 6,
+          "visibleMin": 1354,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.1.motes",
+          "frames": 6,
+          "visibleMin": 2052,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.2.ground",
+          "frames": 6,
+          "visibleMin": 3137,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.2.rise",
+          "frames": 6,
+          "visibleMin": 2719,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.2.motes",
+          "frames": 6,
+          "visibleMin": 3400,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.2.motes2",
+          "frames": 6,
+          "visibleMin": 1467,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.1.ground",
+          "frames": 6,
+          "visibleMin": 2243,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.1.motes",
+          "frames": 6,
+          "visibleMin": 2063,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.2.ground",
+          "frames": 6,
+          "visibleMin": 3137,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.2.rise",
+          "frames": 6,
+          "visibleMin": 3034,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.2.motes",
+          "frames": 6,
+          "visibleMin": 3714,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.2.motes2",
+          "frames": 6,
+          "visibleMin": 800,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.1.ground",
+          "frames": 6,
+          "visibleMin": 1593,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.1.motes",
+          "frames": 6,
+          "visibleMin": 1226,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.2.ground",
+          "frames": 6,
+          "visibleMin": 2584,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.2.back",
+          "frames": 6,
+          "visibleMin": 2401,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.2.motes",
+          "frames": 6,
+          "visibleMin": 2528,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.2.motes2",
+          "frames": 6,
+          "visibleMin": 1322,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.1.ground",
+          "frames": 6,
+          "visibleMin": 2475,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.1.motes",
+          "frames": 6,
+          "visibleMin": 968,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.2.ground",
+          "frames": 6,
+          "visibleMin": 3573,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.2.back",
+          "frames": 6,
+          "visibleMin": 3480,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.2.rise",
+          "frames": 6,
+          "visibleMin": 3034,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.2.motes",
+          "frames": 6,
+          "visibleMin": 1855,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.1.rise",
+          "frames": 6,
+          "visibleMin": 2641,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.1.trail",
+          "frames": 6,
+          "visibleMin": 1743,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.2.ground",
+          "frames": 6,
+          "visibleMin": 2446,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.2.rise",
+          "frames": 6,
+          "visibleMin": 3771,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.2.trail",
+          "frames": 6,
+          "visibleMin": 3040,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.2.motes",
+          "frames": 6,
+          "visibleMin": 1462,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        }
+      ]
+    },
+    "battle": [
+      {
+        "kind": "wizard",
+        "step": 1,
+        "bits": 3,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 205.80000000000004,
+          "y": 441.73
+        }
+      },
+      {
+        "kind": "wizard",
+        "step": 2,
+        "bits": 6,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 205.80000000000004,
+          "y": 441.73
+        }
+      },
+      {
+        "kind": "werewolf",
+        "step": 1,
+        "bits": 3,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 205.80000000000004,
+          "y": 441.73
+        }
+      },
+      {
+        "kind": "werewolf",
+        "step": 2,
+        "bits": 7,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 205.80000000000004,
+          "y": 441.73
+        }
+      }
+    ],
+    "offline": false,
+    "errors": []
+  },
+  {
+    "tag": "393x852-reduced",
+    "audit": {
+      "cell": 96,
+      "pixel": false,
+      "samples": [
+        {
+          "key": "guardian.1.ground",
+          "frames": 6,
+          "visibleMin": 929,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "guardian.1.back",
+          "frames": 6,
+          "visibleMin": 2707,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "guardian.2.ground",
+          "frames": 6,
+          "visibleMin": 1729,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "guardian.2.back",
+          "frames": 6,
+          "visibleMin": 4041,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "guardian.2.rise",
+          "frames": 6,
+          "visibleMin": 1842,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "guardian.2.motes",
+          "frames": 6,
+          "visibleMin": 670,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.1.ground",
+          "frames": 6,
+          "visibleMin": 2486,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.1.back",
+          "frames": 6,
+          "visibleMin": 4400,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.2.ground",
+          "frames": 6,
+          "visibleMin": 3864,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.2.ground2",
+          "frames": 6,
+          "visibleMin": 3654,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.2.back",
+          "frames": 6,
+          "visibleMin": 5008,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.2.rise",
+          "frames": 6,
+          "visibleMin": 3863,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.1.ground",
+          "frames": 6,
+          "visibleMin": 1192,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.1.motes",
+          "frames": 6,
+          "visibleMin": 793,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.2.ground",
+          "frames": 6,
+          "visibleMin": 1948,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.2.rise",
+          "frames": 6,
+          "visibleMin": 2730,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.2.orbit",
+          "frames": 6,
+          "visibleMin": 1899,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.2.motes",
+          "frames": 6,
+          "visibleMin": 2124,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.1.ground",
+          "frames": 6,
+          "visibleMin": 1215,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.1.trail",
+          "frames": 6,
+          "visibleMin": 695,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.2.ground",
+          "frames": 6,
+          "visibleMin": 2397,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.2.back",
+          "frames": 6,
+          "visibleMin": 2152,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.2.rise",
+          "frames": 6,
+          "visibleMin": 1889,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.2.trail",
+          "frames": 6,
+          "visibleMin": 2049,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.2.motes",
+          "frames": 6,
+          "visibleMin": 603,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.1.ground",
+          "frames": 6,
+          "visibleMin": 1356,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.1.motes",
+          "frames": 6,
+          "visibleMin": 1024,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.2.ground",
+          "frames": 6,
+          "visibleMin": 2013,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.2.rise",
+          "frames": 6,
+          "visibleMin": 2597,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.2.motes",
+          "frames": 6,
+          "visibleMin": 2233,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.2.motes2",
+          "frames": 6,
+          "visibleMin": 683,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.1.ground",
+          "frames": 6,
+          "visibleMin": 3799,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.1.orbit",
+          "frames": 6,
+          "visibleMin": 2469,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.2.ground",
+          "frames": 6,
+          "visibleMin": 4524,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.2.back",
+          "frames": 6,
+          "visibleMin": 3988,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.2.rise",
+          "frames": 6,
+          "visibleMin": 2911,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.2.orbit",
+          "frames": 6,
+          "visibleMin": 2301,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.1.ground",
+          "frames": 6,
+          "visibleMin": 2798,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.1.motes",
+          "frames": 6,
+          "visibleMin": 2339,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.2.ground",
+          "frames": 6,
+          "visibleMin": 5397,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.2.back",
+          "frames": 6,
+          "visibleMin": 5486,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.2.halo",
+          "frames": 6,
+          "visibleMin": 2259,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.2.orbit",
+          "frames": 6,
+          "visibleMin": 3493,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.2.motes",
+          "frames": 6,
+          "visibleMin": 2864,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.1.halo",
+          "frames": 6,
+          "visibleMin": 3004,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.1.motes",
+          "frames": 6,
+          "visibleMin": 1286,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.2.back",
+          "frames": 6,
+          "visibleMin": 3844,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.2.halo",
+          "frames": 6,
+          "visibleMin": 3542,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.2.rise",
+          "frames": 6,
+          "visibleMin": 3475,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.2.motes",
+          "frames": 6,
+          "visibleMin": 1831,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.1.ground",
+          "frames": 6,
+          "visibleMin": 1354,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.1.motes",
+          "frames": 6,
+          "visibleMin": 2052,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.2.ground",
+          "frames": 6,
+          "visibleMin": 3137,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.2.rise",
+          "frames": 6,
+          "visibleMin": 2719,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.2.motes",
+          "frames": 6,
+          "visibleMin": 3400,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.2.motes2",
+          "frames": 6,
+          "visibleMin": 1467,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.1.ground",
+          "frames": 6,
+          "visibleMin": 2243,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.1.motes",
+          "frames": 6,
+          "visibleMin": 2063,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.2.ground",
+          "frames": 6,
+          "visibleMin": 3137,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.2.rise",
+          "frames": 6,
+          "visibleMin": 3034,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.2.motes",
+          "frames": 6,
+          "visibleMin": 3714,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.2.motes2",
+          "frames": 6,
+          "visibleMin": 800,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.1.ground",
+          "frames": 6,
+          "visibleMin": 1593,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.1.motes",
+          "frames": 6,
+          "visibleMin": 1226,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.2.ground",
+          "frames": 6,
+          "visibleMin": 2584,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.2.back",
+          "frames": 6,
+          "visibleMin": 2401,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.2.motes",
+          "frames": 6,
+          "visibleMin": 2528,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.2.motes2",
+          "frames": 6,
+          "visibleMin": 1322,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.1.ground",
+          "frames": 6,
+          "visibleMin": 2475,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.1.motes",
+          "frames": 6,
+          "visibleMin": 968,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.2.ground",
+          "frames": 6,
+          "visibleMin": 3573,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.2.back",
+          "frames": 6,
+          "visibleMin": 3480,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.2.rise",
+          "frames": 6,
+          "visibleMin": 3034,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.2.motes",
+          "frames": 6,
+          "visibleMin": 1855,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.1.rise",
+          "frames": 6,
+          "visibleMin": 2641,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.1.trail",
+          "frames": 6,
+          "visibleMin": 1743,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.2.ground",
+          "frames": 6,
+          "visibleMin": 2446,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.2.rise",
+          "frames": 6,
+          "visibleMin": 3771,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.2.trail",
+          "frames": 6,
+          "visibleMin": 3040,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.2.motes",
+          "frames": 6,
+          "visibleMin": 1462,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        }
+      ]
+    },
+    "battle": [
+      {
+        "kind": "wizard",
+        "step": 1,
+        "bits": 3,
+        "linear": true,
+        "calmStable": true,
+        "unchanged": true,
+        "feet": {
+          "x": 196.47000000000003,
+          "y": 408.77625
+        }
+      },
+      {
+        "kind": "wizard",
+        "step": 2,
+        "bits": 6,
+        "linear": true,
+        "calmStable": true,
+        "unchanged": true,
+        "feet": {
+          "x": 196.47000000000003,
+          "y": 408.77625
+        }
+      },
+      {
+        "kind": "werewolf",
+        "step": 1,
+        "bits": 3,
+        "linear": true,
+        "calmStable": true,
+        "unchanged": true,
+        "feet": {
+          "x": 196.47000000000003,
+          "y": 408.77625
+        }
+      },
+      {
+        "kind": "werewolf",
+        "step": 2,
+        "bits": 7,
+        "linear": true,
+        "calmStable": true,
+        "unchanged": true,
+        "feet": {
+          "x": 196.47000000000003,
+          "y": 408.77625
+        }
+      }
+    ],
+    "offline": false,
+    "errors": []
+  },
+  {
+    "tag": "393x852-saver",
+    "audit": {
+      "cell": 96,
+      "pixel": false,
+      "samples": [
+        {
+          "key": "guardian.1.ground",
+          "frames": 6,
+          "visibleMin": 929,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "guardian.1.back",
+          "frames": 6,
+          "visibleMin": 2707,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "guardian.2.ground",
+          "frames": 6,
+          "visibleMin": 1729,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "guardian.2.back",
+          "frames": 6,
+          "visibleMin": 4041,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "guardian.2.rise",
+          "frames": 6,
+          "visibleMin": 1842,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "guardian.2.motes",
+          "frames": 6,
+          "visibleMin": 670,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.1.ground",
+          "frames": 6,
+          "visibleMin": 2486,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.1.back",
+          "frames": 6,
+          "visibleMin": 4400,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.2.ground",
+          "frames": 6,
+          "visibleMin": 3864,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.2.ground2",
+          "frames": 6,
+          "visibleMin": 3654,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.2.back",
+          "frames": 6,
+          "visibleMin": 5008,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "bulwark.2.rise",
+          "frames": 6,
+          "visibleMin": 3863,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.1.ground",
+          "frames": 6,
+          "visibleMin": 1192,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.1.motes",
+          "frames": 6,
+          "visibleMin": 793,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.2.ground",
+          "frames": 6,
+          "visibleMin": 1948,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.2.rise",
+          "frames": 6,
+          "visibleMin": 2730,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.2.orbit",
+          "frames": 6,
+          "visibleMin": 1899,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "blade.2.motes",
+          "frames": 6,
+          "visibleMin": 2124,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.1.ground",
+          "frames": 6,
+          "visibleMin": 1215,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.1.trail",
+          "frames": 6,
+          "visibleMin": 695,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.2.ground",
+          "frames": 6,
+          "visibleMin": 2397,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.2.back",
+          "frames": 6,
+          "visibleMin": 2152,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.2.rise",
+          "frames": 6,
+          "visibleMin": 1889,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.2.trail",
+          "frames": 6,
+          "visibleMin": 2049,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "marksman.2.motes",
+          "frames": 6,
+          "visibleMin": 603,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.1.ground",
+          "frames": 6,
+          "visibleMin": 1356,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.1.motes",
+          "frames": 6,
+          "visibleMin": 1024,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.2.ground",
+          "frames": 6,
+          "visibleMin": 2013,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.2.rise",
+          "frames": 6,
+          "visibleMin": 2597,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.2.motes",
+          "frames": 6,
+          "visibleMin": 2233,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "gunner.2.motes2",
+          "frames": 6,
+          "visibleMin": 683,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.1.ground",
+          "frames": 6,
+          "visibleMin": 3799,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.1.orbit",
+          "frames": 6,
+          "visibleMin": 2469,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.2.ground",
+          "frames": 6,
+          "visibleMin": 4524,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.2.back",
+          "frames": 6,
+          "visibleMin": 3988,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.2.rise",
+          "frames": 6,
+          "visibleMin": 2911,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "caster.2.orbit",
+          "frames": 6,
+          "visibleMin": 2301,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.1.ground",
+          "frames": 6,
+          "visibleMin": 2798,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.1.motes",
+          "frames": 6,
+          "visibleMin": 2339,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.2.ground",
+          "frames": 6,
+          "visibleMin": 5397,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.2.back",
+          "frames": 6,
+          "visibleMin": 5486,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.2.halo",
+          "frames": 6,
+          "visibleMin": 2259,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.2.orbit",
+          "frames": 6,
+          "visibleMin": 3493,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "arcanist.2.motes",
+          "frames": 6,
+          "visibleMin": 2864,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.1.halo",
+          "frames": 6,
+          "visibleMin": 3004,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.1.motes",
+          "frames": 6,
+          "visibleMin": 1286,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.2.back",
+          "frames": 6,
+          "visibleMin": 3844,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.2.halo",
+          "frames": 6,
+          "visibleMin": 3542,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.2.rise",
+          "frames": 6,
+          "visibleMin": 3475,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "support.2.motes",
+          "frames": 6,
+          "visibleMin": 1831,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.1.ground",
+          "frames": 6,
+          "visibleMin": 1354,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.1.motes",
+          "frames": 6,
+          "visibleMin": 2052,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.2.ground",
+          "frames": 6,
+          "visibleMin": 3137,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.2.rise",
+          "frames": 6,
+          "visibleMin": 2719,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.2.motes",
+          "frames": 6,
+          "visibleMin": 3400,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "beast.2.motes2",
+          "frames": 6,
+          "visibleMin": 1467,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.1.ground",
+          "frames": 6,
+          "visibleMin": 2243,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.1.motes",
+          "frames": 6,
+          "visibleMin": 2063,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.2.ground",
+          "frames": 6,
+          "visibleMin": 3137,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.2.rise",
+          "frames": 6,
+          "visibleMin": 3034,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.2.motes",
+          "frames": 6,
+          "visibleMin": 3714,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "assassin.2.motes2",
+          "frames": 6,
+          "visibleMin": 800,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.1.ground",
+          "frames": 6,
+          "visibleMin": 1593,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.1.motes",
+          "frames": 6,
+          "visibleMin": 1226,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.2.ground",
+          "frames": 6,
+          "visibleMin": 2584,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.2.back",
+          "frames": 6,
+          "visibleMin": 2401,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.2.motes",
+          "frames": 6,
+          "visibleMin": 2528,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "trickster.2.motes2",
+          "frames": 6,
+          "visibleMin": 1322,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.1.ground",
+          "frames": 6,
+          "visibleMin": 2475,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.1.motes",
+          "frames": 6,
+          "visibleMin": 968,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.2.ground",
+          "frames": 6,
+          "visibleMin": 3573,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.2.back",
+          "frames": 6,
+          "visibleMin": 3480,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.2.rise",
+          "frames": 6,
+          "visibleMin": 3034,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "warden.2.motes",
+          "frames": 6,
+          "visibleMin": 1855,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.1.rise",
+          "frames": 6,
+          "visibleMin": 2641,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.1.trail",
+          "frames": 6,
+          "visibleMin": 1743,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.2.ground",
+          "frames": 6,
+          "visibleMin": 2446,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.2.rise",
+          "frames": 6,
+          "visibleMin": 3771,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.2.trail",
+          "frames": 6,
+          "visibleMin": 3040,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        },
+        {
+          "key": "vanguard.2.motes",
+          "frames": 6,
+          "visibleMin": 1462,
+          "edgeMax": 0,
+          "uniqueFrames": 6
+        }
+      ]
+    },
+    "battle": [
+      {
+        "kind": "wizard",
+        "step": 1,
+        "bits": 3,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.54999999999995,
+          "y": 408.06250000000006
+        }
+      },
+      {
+        "kind": "wizard",
+        "step": 2,
+        "bits": 5,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.54999999999995,
+          "y": 408.06250000000006
+        }
+      },
+      {
+        "kind": "werewolf",
+        "step": 1,
+        "bits": 3,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.54999999999995,
+          "y": 408.06250000000006
+        }
+      },
+      {
+        "kind": "werewolf",
+        "step": 2,
+        "bits": 5,
+        "linear": true,
+        "calmStable": false,
+        "unchanged": true,
+        "feet": {
+          "x": 196.54999999999995,
+          "y": 408.06250000000006
+        }
+      }
+    ],
+    "offline": false,
+    "errors": []
+  }
+]

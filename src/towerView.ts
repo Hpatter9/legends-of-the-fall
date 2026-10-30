@@ -21,6 +21,7 @@ import { heroLevel } from './sim/climb';
 import { CAL_MAPS } from './sim/calamity';
 import { ASC_MAX } from './sim/ascension';
 import { UNITS } from './sim/units';
+import { heroName } from './sim/heroNames';
 import { gearIcon, iconImg, relicIcon } from './render/items';
 import { lookSheet } from './render/awakenLook';
 import { portrait } from './render/sheets';
@@ -283,7 +284,7 @@ export class TowerView {
       bar.append(fill);
       if (run.local && !compact) cell.append(face, el('small', 'rtLv', `Lv ${heroLevel(h)}`), bar, el('small', '', `${Math.round(share * 100)}%`));
       else cell.append(face, bar, el('small', '', run.local ? `L${heroLevel(h)}` : `${Math.round(share * 100)}%`));
-      cell.title = `${UNITS[h.kind].name}${run.local ? `, level ${heroLevel(h)}` : ''}: ${Math.round(share * 100)}% hp`;
+      cell.title = `${heroName(h.kind)}${run.local ? `, level ${heroLevel(h)}` : ''}: ${Math.round(share * 100)}% hp`;
       bars.append(cell);
     }
     if (!run.squad.length) bars.append(el('span', 'hint', 'No heroes in the squad: pick them in the next fight.'));
@@ -897,7 +898,7 @@ export class TowerView {
       seen.add(h.kind);
       const b = el('button', 'rtTrainHero');
       const face = portrait(lookSheet(h.kind, heroRank(this.hooks.meta(), h.kind), h.grade), 40, h.grade);
-      b.append(face, el('small', '', UNITS[h.kind].name), el('em', '', `Lv ${run.local ? heroLevel(h) : levelOf(xpOf(this.hooks.meta(), h.kind))}`));
+      b.append(face, el('small', '', heroName(h.kind)), el('em', '', `Lv ${run.local ? heroLevel(h) : levelOf(xpOf(this.hooks.meta(), h.kind))}`));
       b.addEventListener('click', () => {
         const got = train(run, h.id);
         if (!got) return;

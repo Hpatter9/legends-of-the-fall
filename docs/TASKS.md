@@ -16,6 +16,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 **ART-ASCEND / Upgraded hero forms and combat tier auras** — Owner: current Codex chat. Branch: `art/ascended-hero-forms`, worktree: `/workspace/legends-of-the-fall`. Goal: permanent upgraded hero artwork at Awakening (called ascension in the conversation), with existing class auras repurposed for combat grades on either form. Status: owner approved legendary upgraded gear and glowing mage eyes; requested compact silhouettes rather than broad bodies/capes. Owner authorised implementation. All 49 hero/transformation sheets generated and runtime integration in place; main 0.226.0 and the heritage base-sprite/name branch integrated. Owner added the fifteen-hero heritage art brief and distinct Knight/Paladin requirement; updated awakened sheets and 30 gallery assets in progress, followed by final browser validation. Allowed scope: concept art and proposal notes initially; after visual approval, hero form assets, render mappings, combat aura selection, associated tests, offline packaging and credits. Preserve simulation values, hero identities, save keys and unrelated artwork. Completion: approved three-hero sample, then all 45 forms with required facings/actions, tier effects, typecheck/build and relevant portrait/offline checks. Combat mapping: grade 1 none, grade 2 existing light aura, grades 3–4 existing strong aura (tier 4 retains its other flourishes); independent of permanent awakening. Handoff: [proposal](notes/ascended-hero-forms.md).
 
+**SUMMON-ARRIVAL / Hero arrival showcase** — Owner: Codex. Branch: `design/hero-arrival-showcase`, worktree: `/workspace/legends-of-the-fall`. Scope: first-time reveal presentation, foreground sprite attack then idle, existing artwork, affected visual checks and notes. Owner approved the visual concept and requested the sprite in front performing a small attack then idling. Completion: stronger charge/impact/payoff, one attack then idle, skip/queue/save/reduced-motion/offline preserved, typecheck/build, affected tests and all three portrait sizes. Status: implemented and validated; ready for owner review. Typecheck/build, four affected test files, all three portrait sizes, reduced motion, varied heroes, a real stone summon and offline reload passed with no page errors. [Handoff](notes/summon-arrival.md), [implemented preview](samples/summon-arrival/revealed-393.png). PR: [#193](https://github.com/Hpatter9/legends-of-the-fall/pull/193). Latest main integrated; no merge to main or deployment.
 
 **STAND-005 / Room artwork replacement** — Owner: current art chat. Branch: `art/stand-room-depth`, worktree: `/workspace/legends-of-the-fall`. Scope: Last Stand renderer, new generated production artwork, selected-ruler integration, ruler self-defence in `standAi.ts`/`units.ts`, affected tests, art credits, visual tooling and notes. Owner rejected the coarse reused assets and explicitly requested new artwork matching the ornate concept, retaining the central king and combat layout. Completion: new room assets visibly integrated in four rooms, selected castle king reused, stable depth sorting, reduced motion, typecheck/build, affected tests and three portrait sizes. Status: artwork and standing ruler defence complete. The selected ruler stands before a separate rear throne and strikes adjacent foes without chasing. Typecheck/build, eight affected test files, the finishing-blow check, three portrait sizes, reduced motion, the current nine ruler choices and event-driven melee pass. No page errors. PR: [#178](https://github.com/Hpatter9/legends-of-the-fall/pull/178), ready for review; main 0.213.0 integrated, retaining its default King and picker. No release or deployment. Handoff: [room artwork](notes/stand-room-depth.md).
 
@@ -69,6 +70,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Completion criteria:** every spell its own cast and effect sound, timed to its look, on the effects bus, panned, muted with the rest, offline, with the synthesised cues as the fallback; typecheck, affected and full tests, web build; every spell cast once in Chromium.
 - **Validation and handoff:** [notes](notes/spell-sfx.md).
 
+### TIER-PROMISES — The tier skills do what their words say
+
+- **Goal:** the owner's answer to RANK4-SKILLS' questions 2 and 3, "Make them work": every tier 2, 3 and 4 skill does what its description promises.
+- **Status:** done on the branch; waiting for the owner.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/tier-promises`, `/home/user/tier-promises` (from main 0.221.0); PR none.
+- **Allowed files or systems:** `src/sim/tierSkills.ts` (cast modifiers on the improved skill, `ON_CAST`; a few entries' modifiers and words), `src/sim/abilities.ts` (`followUp` makes one follow-up for each `extra`; a volley's and a judgement's `reach` widens its patch, `landArea`'s `r`), `src/sim/battle.ts` (`Pending.r`, the `area` event's `r`), `src/render/fx.ts` (a wider patch drawn), tests (`tier-skills`, the `ailments-identical` fixture's `army` and `daily`), `docs/notes/tier-promises.md`. Not `GRADE_MULT`, the merging or the economy (`claude/merge-two`).
+- **Completion criteria:** every tier skill's words true in the fight; grade 2 to 4 steps and parity measured before and after at levels 1 and 30; typecheck, full tests, web build.
+- **Validation and handoff:** [notes](notes/tier-promises.md).
+
 ### RANK4-SKILLS — A fourth tier skill for every hero
 
 - **Goal:** the owner's ask, with heroes going to four ranks (two of a kind merge; `claude/merge-two`): "A new rank-4 skill each": every hero a fourth version of its skill with its own name, as tiers 2 and 3 have.
@@ -78,6 +89,15 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Allowed files or systems:** `src/sim/tierSkills.ts` (the tier 4 entries, `TOP_TIER`, the `cleanse` rider), `src/codexView.ts` and `src/menuHeroes.ts` (a "Tier 4" line), `tools/balance.ts` (`--tier-cap`), new `tools/rank4/`, `tools/fxlab/audit.ts` (a Tier 4 column), `test/tier-skills.test.ts`, `docs/notes/rank4-skills.md`, `docs/samples/rank4-skills-*.png`. Not `run.ts`'s merging, `MAX_GRADE`, `GRADE_MULT` or the merge UI.
 - **Completion criteria:** 45 named tier 4 skills a step past tier 3; grade 4 and up casts them whatever `MAX_GRADE` is; grade 3 fights unchanged; parity of the tier 4 skills measured; typecheck, full tests, web build; the hero card at three sizes.
 - **Validation and handoff:** [notes](notes/rank4-skills.md).
+### AURA-ART — Generated painted ascension effects
+
+- **Owner:** Codex. **Branch / worktree:** `art/painted-ascension-auras`, `/workspace/legends-of-the-fall`.
+- **Goal:** replace outdated pixel aura assets with generated painted effects for all 13 classes and both ascension levels.
+- **Scope:** aura source artwork, shipped atlas/import tooling as needed, credits, visual evidence and handoff. Preserve class identities, placement, gameplay, saves, reduced motion and offline support.
+- **Status:** implemented and validated; ready for review. Owner approved the generated painted proposal. No merge or deployment requested.
+- **Completion:** approved visual direction, all 80 aura parts replaced, typecheck/build and aura tests pass, affected screens reviewed at three portrait sizes.
+- **Validation:** typecheck, web build and all four affected test files passed. All 480 frames audited; all 13 classes at both steps checked in Pixi. Camp/roster/dossier and representative battle fixtures passed at all three portrait sizes, reduced motion and battery saver, with zero page errors. Offline reload passed at 393×852.
+- **Handoff:** [painted ascension auras](notes/painted-ascension-auras.md), [all-class comparison](samples/painted-auras/all-classes.jpg).
 
 ### STARTER-KING — Two fixed starter packs of simple heroes; the classic king is the default ruler
 
