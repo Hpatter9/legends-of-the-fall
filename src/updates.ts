@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.251.0',
+    date: '2026-10-30',
+    title: 'Melee heroes on the move',
+    notes: ['The Kunoichi blinks away in smoke, the Barbarian leaps into crowds, and the Lancer\'s Cavalry Charge rides through every foe in a line.', 'The Arc Blade\'s Lightning Storm slashes through six foes, and the Dragoon\'s Dragon Dive throws foes outward.'],
+  },
+  {
     version: '0.250.0',
     date: '2026-10-30',
     title: 'Tanks and supports learn new moves',
