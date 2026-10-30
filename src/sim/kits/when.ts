@@ -45,5 +45,6 @@ export const SKILL2_WHEN: Readonly<Record<string, (b: Battle, me: Unit) => boole
   Condemn: (b, me) => foesOf(b, me).some((f) => apart(f, me) <= 7 && !on(f.kx?.condemned?.until, b)),
   'Change the Tune': (b, me) => foesWithin(b, me, 5),
   Benediction: (b, me) => allies(b, me).some((a) => harmed(a) || a.hp < a.maxHp * 0.85),
-  Sanctuary: (b, me) => allies(b, me).some((a) => a.hp < a.maxHp * 0.75),
+  // (Healing Mist, keyed Sanctuary: a hurt friend within its reach)
+  Sanctuary: (b, me) => allies(b, me).some((a) => a.hp < a.maxHp * 0.75 && apart(a, me) <= 2),
 };

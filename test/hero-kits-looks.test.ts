@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { HERO_KITS } from '../src/sim/heroKits';
-import { KITS } from '../src/sim/abilities';
+import { KITS, keyOf } from '../src/sim/abilities';
 import { ALL_HEROES } from '../src/sim/units';
 import { SIGNATURES } from '../src/render/signatures';
 import { KIT_LOOKS, kitSignature } from '../src/render/kitLooks';
@@ -12,7 +12,7 @@ import { skillElement } from '../src/render/fxRules';
 test('every hero kit skill has a signature to play: its own, or a borrowed one recoloured', () => {
   for (const h of ALL_HEROES) {
     for (const slot of [HERO_KITS()[h].s1, HERO_KITS()[h].s2]) {
-      const name = slot.skill.name;
+      const name = keyOf(slot.skill);
       const own = !!SIGNATURES[name];
       assert.ok(own || KIT_LOOKS[name], `${h}: ${name} has no look`);
       assert.ok(kitSignature(name), `${h}: ${name} plays nothing`);

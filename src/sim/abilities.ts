@@ -18,6 +18,7 @@ import { traitsOf } from './traits';
 import { triggerDuoComboOnUlt } from './duoCombos';
 import { addRes, castHero, CHARGE_TO_POOL, heroKitOf, poolOf, poolOnDealt, poolOnTaken, resMax, tickPool, ultOnDamage } from './heroKits';
 import { kitStrike, kitTick } from './kits/effects';
+import { raiseAura } from './toolkit/auras';
 import { skillRiders } from './ailmentSources';
 import { AILMENT_SWITCH, blowRiders, charmFor, chillFor, cleanse, freezeFor, harmed, healThrough, isSilenced, setDot, stunFor, tickAilments } from './ailments';
 
@@ -401,18 +402,6 @@ function chainLightning(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   return true;
 }
 
-/** Wanderer: a wave of light heals every ally who is hurt and shields them for a moment. */
-const SANCTUARY_MS = 2000;
-function sanctuary(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const hurtAllies = b.units.filter((a) => a.alive && a.side === me.side && a.hp < a.maxHp * 0.75);
-  if (!hurtAllies.length) return false;
-  for (const a of b.units)
-    if (a.alive && a.side === me.side) {
-      mendUnit(a, atkOf(me) * 3, out, me);
-      a.guardUntil = b.t + durOf(me, SANCTUARY_MS);
-    }
-  return true;
-}
 
 /** Kitsune: the strongest foe near her is charmed, and fights its own side for a while. */
 const CHARM_MS = 3500;
@@ -777,6 +766,22 @@ function holyChallenge(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!near.length) return false;
   for (const f of near) f.taunt = { to: me.id, until: b.t + durOf(me, CHALLENGE_MS) };
   for (const a of b.units) if (a.alive && a.side === me.side && apart(me, a) <= 2) mendUnit(a, atkOf(me) * 2.5, out, me);
+  return true;
+}
+
+/** Wanderer, Healing Mist (RPG-SPELLS batch 2; it was Sanctuary): a healing mist hangs round him for 5s (an aura, `toolkit/auras.ts`). The
+ *  friends within 2 of him are guarded (half damage) for 2s at once, and heal each second while they stand in it. Only when some friend is hurt. */
+const MIST_MS = 5000;
+const MIST_REACH = 2;
+const MIST_GUARD_MS = 2000;
+/** What the mist heals a second, as a share of his attack when he cast it (five seconds of it are about what Sanctuary healed at once). */
+const MIST_HEAL = 0.7;
+function healingMist(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const reach = reachOf(me, MIST_REACH);
+  const team = b.units.filter((a) => a.alive && a.side === me.side && apart(a, me) <= reach);
+  if (!team.some((a) => a.hp < a.maxHp * 0.75)) return false;
+  for (const a of team) a.guardUntil = Math.max(a.guardUntil ?? 0, b.t + durOf(me, MIST_GUARD_MS));
+  raiseAura(b, me, { what: 'Healing Mist', reach, ms: durOf(me, MIST_MS), every: 1000, ally: { flat: atkOf(me) * MIST_HEAL } }, out);
   return true;
 }
 
@@ -1318,7 +1323,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Static', text: '25% of blows arc to a second foe nearby', arc: 0.25 },
   },
   wanderer: {
-    skill: { name: 'Sanctuary', text: 'Heals every ally and shields them for 2s (when some are hurt)', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 700, anim: 'attack', cast: sanctuary },
+    skill: { name: 'Healing Mist', key: 'Sanctuary', text: 'A healing mist hangs round him for 5s: friends within 2 are guarded for 2s at once and heal each second (when some are hurt)', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 700, anim: 'attack', cast: healingMist },
     passive: { name: 'Mending Light', text: 'Every 2.5s heals the most hurt ally', mend: { every: 2500, share: 1.2 } },
   },
   kitsune: {
@@ -1341,11 +1346,11 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Blessed Bulwark', text: 'Blows from the front lose a fifth, and he heals for 60% of what he blocks', block: 0.2, blockHeal: 0.6 },
   },
   cleric: {
-    skill: { name: 'Benediction', text: 'Cleanses every ally and heals them each second for 5s (when some are hurt)', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 700, anim: 'attack2', cast: benediction },
+    skill: { name: 'Prayer of Healing', key: 'Benediction', text: 'Cleanses every ally and heals them each second for 5s (when some are hurt)', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 700, anim: 'attack2', cast: benediction },
     passive: { name: 'Grace', text: 'Allies within 2 tiles heal 1.5% of their health each second', aura: 0.015 },
   },
   druid: {
-    skill: { name: 'Call Treant', text: 'A treant rises beside her and fights for her (one at a time)', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 800, anim: 'attack2', cast: callTreant },
+    skill: { name: 'Conjure Treant', key: 'Call Treant', text: 'A treant rises beside her and fights for her (one at a time)', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 800, anim: 'attack2', cast: callTreant },
     passive: { name: 'Thorn Skin', text: 'A third of the damage of a melee blow she takes is sent back', thorns: 0.33 },
   },
   barbarian: {
@@ -1427,7 +1432,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Reinforced Chassis', text: 'Blows from the front lose a fifth, and it cannot be knocked back', block: 0.2, steady: true },
   },
   priestess: {
-    skill: { name: 'Holy Light', text: 'A great light heals the worst hurt ally and cleanses it; allies near it are healed too', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 700, anim: 'attack2', cast: holyLight },
+    skill: { name: 'Cure Wounds', key: 'Holy Light', text: 'A great light heals the worst hurt ally and cleanses it; allies near it are healed too', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 700, anim: 'attack2', cast: holyLight },
     passive: { name: 'Halo', text: 'Allies within 2 tiles (and she) take 8% less from every blow', halo: 0.08 },
   },
   dragoon: {

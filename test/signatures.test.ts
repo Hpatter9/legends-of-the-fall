@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { KITS } from '../src/sim/abilities';
+import { KITS, keyOf } from '../src/sim/abilities';
 import { abilitySource } from '../src/render/abilityLooks';
 import { VFX_LOOKS } from '../src/render/cinematicRules';
 import { UNITS } from '../src/sim/units';
@@ -15,13 +15,13 @@ const atlas = JSON.parse(readFileSync('src/art/fx/pack/atlas.json', 'utf8')) as 
 const heroSkills = () =>
   Object.entries(KITS)
     .filter(([id]) => UNITS[id]?.side === 'hero' && !UNITS[id]?.summon)
-    .flatMap(([id, k]) => [{ id, name: k.skill.name, kind: 'skill' }, ...(k.ultimate ? [{ id, name: k.ultimate.name, kind: 'ultimate' }] : [])]);
+    .flatMap(([id, k]) => [{ id, name: keyOf(k.skill), kind: 'skill' }, ...(k.ultimate ? [{ id, name: keyOf(k.ultimate), kind: 'ultimate' }] : [])]);
 
 const all = (sig: (typeof SIGNATURES)[string]): Step[] => [...sig.wind, ...sig.cast, ...sig.hit];
 
 test('every hero skill and ultimate, and every foe skill, has a look of its own', () => {
   for (const kit of Object.values(KITS)) {
-    for (const name of [kit.skill.name, ...(kit.ultimate ? [kit.ultimate.name] : [])]) {
+    for (const name of [keyOf(kit.skill), ...(kit.ultimate ? [keyOf(kit.ultimate)] : [])]) {
       const sig = SIGNATURES[name];
       assert.ok(sig, `no signature for ${name}`);
       assert.ok(sig.cast.length >= 1, `${name} casts nothing`);
@@ -90,8 +90,8 @@ test('no foe look is a copy of a hero\'s', () => {
 test('a hero\'s skill and its ultimate look different, and the ultimate is the bigger', () => {
   for (const [id, k] of Object.entries(KITS)) {
     if (!k.ultimate || UNITS[id]?.side !== 'hero') continue;
-    const [s, u] = [SIGNATURES[k.skill.name], SIGNATURES[k.ultimate.name]];
-    if (k.skill.name === k.ultimate.name) continue;
+    const [s, u] = [SIGNATURES[keyOf(k.skill)], SIGNATURES[keyOf(k.ultimate)]];
+    if (keyOf(k.skill) === keyOf(k.ultimate)) continue;
     assert.notEqual(s.cast[0].k, u.cast[0].k, `${id}: skill and ultimate lead the same`);
     assert.ok(u.cast.length >= s.cast.length, `${id}: the ultimate has fewer layers than its skill`);
   }
@@ -101,10 +101,10 @@ test('a tier ring is the lead of its hero\'s skill', () => {
   for (const id of Object.keys(TIER_SKILLS)) {
     const k = KITS[id];
     if (!k) continue;
-    const ring = tierRing(k.skill.name, 192, true);
+    const ring = tierRing(keyOf(k.skill), 192, true);
     assert.equal(ring.length, 2);
-    assert.equal(ring[0].k, SIGNATURES[k.skill.name].cast[0].k);
-    assert.equal(tierRing(k.skill.name, 192, false).length, 1);
+    assert.equal(ring[0].k, SIGNATURES[keyOf(k.skill)].cast[0].k);
+    assert.equal(tierRing(keyOf(k.skill), 192, false).length, 1);
   }
 });
 

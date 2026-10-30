@@ -16,8 +16,13 @@ const heroSkills = (kind: string): Skill[] => {
   return [hk.s1.skill, hk.s2.skill, KITS[kind].ultimate!];
 };
 
-test('a skill with no key of its own is keyed by its name', () => {
-  for (const kind of ALL_HEROES) for (const s of heroSkills(kind)) assert.equal(keyOf(s), s.name, `${kind}: ${s.name}`);
+test('a skill with no key of its own is keyed by its name; a renamed skill keeps its old key (RPG-SPELLS batch 2: the healers)', () => {
+  for (const kind of ALL_HEROES) for (const s of heroSkills(kind)) assert.equal(keyOf(s), s.key ?? s.name, `${kind}: ${s.name}`);
+  const keyed = (kind: string) => heroSkills(kind).map((s) => `${s.name}=${keyOf(s)}`);
+  assert.deepEqual(keyed('cleric'), ['Guiding Bolt=Smite', 'Prayer of Healing=Benediction', 'Spirit Guardians=Divine Intervention']);
+  assert.deepEqual(keyed('priestess'), ['Cure Wounds=Holy Light', 'Death Ward=Guardian Angel', 'Mass Resurrection=Resurrection']);
+  assert.deepEqual(keyed('wanderer'), ['Healing Draught=Flask Toss', 'Healing Mist=Sanctuary', 'Panacea=Dawn Light']);
+  assert.deepEqual(keyed('druid'), ['Conjure Treant=Call Treant', 'Wild Shape=Treeform', 'Wall of Thorns=Heart of the Grove']);
 });
 
 test("every hero's two skills and ultimate find a look and an element by their key", () => {

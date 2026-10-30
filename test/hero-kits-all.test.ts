@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
 import { addUnit, fight, hurt, place, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
-import { CHARGE_MAX, ULT_LEVEL, ultimateOf } from '../src/sim/abilities';
+import { CHARGE_MAX, ULT_LEVEL, ultimateOf, keyOf } from '../src/sim/abilities';
 import { HERO_KITS, heroKitOf, SKILL2_LEVEL } from '../src/sim/heroKits';
 import { gradeBoost } from '../src/sim/run';
 import { mixSeed, Rng } from '../src/sim/rng';
@@ -14,7 +14,7 @@ import { deploySpots } from '../tools/heroSweep';
 test('every hero has a pool, two skills and an ultimate, with costs inside the bands', () => {
   for (const h of ALL_HEROES) {
     const k = HERO_KITS()[h];
-    assert.ok(k.s1.skill.name && k.s2.skill.name && k.s1.skill !== k.s2.skill, h);
+    assert.ok(keyOf(k.s1.skill) && keyOf(k.s2.skill) && k.s1.skill !== k.s2.skill, h);
     assert.ok(k.role, h);
     const [lo1, hi1, lo2, hi2] = k.pool === 'mana' ? [40, 50, 55, 75] : [25, 35, 40, 50];
     assert.ok(k.s1.cost >= lo1 && k.s1.cost <= hi1, `${h} skill 1 costs ${k.s1.cost}`);
@@ -23,7 +23,7 @@ test('every hero has a pool, two skills and an ultimate, with costs inside the b
     assert.ok(k.s1.tune > 0 && k.s2.tune > 0);
   }
   // (every skill name is its own: the page and the effects find a skill by it)
-  const names = ALL_HEROES.flatMap((h) => [HERO_KITS()[h].s1.skill.name, HERO_KITS()[h].s2.skill.name]);
+  const names = ALL_HEROES.flatMap((h) => [keyOf(HERO_KITS()[h].s1.skill), keyOf(HERO_KITS()[h].s2.skill)]);
   assert.equal(new Set(names).size, names.length);
 });
 
@@ -103,9 +103,9 @@ test('every hero fights with its whole kit open, and the fights are deterministi
   let both = 0;
   for (const h of ALL_HEROES) {
     const k = HERO_KITS()[h];
-    if (first.includes(k.s1.skill.name) && first.includes(k.s2.skill.name)) both++;
+    if (first.includes(keyOf(k.s1.skill)) && first.includes(keyOf(k.s2.skill))) both++;
   }
-  const missing = ALL_HEROES.filter((h) => !(first.includes(HERO_KITS()[h].s1.skill.name) && first.includes(HERO_KITS()[h].s2.skill.name)));
+  const missing = ALL_HEROES.filter((h) => !(first.includes(keyOf(HERO_KITS()[h].s1.skill)) && first.includes(keyOf(HERO_KITS()[h].s2.skill))));
   assert.ok(both >= 35, `${both} of 45 heroes cast both skills; not: ${missing.join(' ')} | ${first}`);
 });
 
@@ -114,13 +114,13 @@ test('skill 2 is never cast below its level', () => {
   const spots = deploySpots(b, new Rng(mixSeed(4, 0xba1a)));
   ALL_HEROES.slice(0, 5).forEach((id, i) => place(b, id, spots[i][0], spots[i][1], undefined, gradeBoost(1, 0, SKILL2_LEVEL - 1)));
   fight(b);
-  const second = new Set(ALL_HEROES.slice(0, 5).map((h) => HERO_KITS()[h].s2.skill.name));
+  const second = new Set(ALL_HEROES.slice(0, 5).map((h) => keyOf(HERO_KITS()[h].s2.skill)));
   while (b.phase === 'fight') for (const e of stepBattle(b)) assert.ok(!(e.kind === 'skill' && second.has(e.name) && heroKitOf(b.units.find((u) => u.id === e.by)!)), e.kind === 'skill' ? e.name : '');
 });
 
 test('every readiness look names a real skill 2', async () => {
   const { SKILL2_WHEN } = await import('../src/sim/kits/when');
-  const second = new Set(ALL_HEROES.map((h) => HERO_KITS()[h].s2.skill.name));
+  const second = new Set(ALL_HEROES.map((h) => keyOf(HERO_KITS()[h].s2.skill)));
   for (const name of Object.keys(SKILL2_WHEN)) assert.ok(second.has(name), name);
 });
 

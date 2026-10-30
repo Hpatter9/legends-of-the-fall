@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { cleanAtlasCell } from '../src/render/atlasCell';
-import { KITS } from '../src/sim/abilities';
+import { KITS, keyOf } from '../src/sim/abilities';
 import { SPELL_IDS } from '../src/sim/spells';
 import { SIGNATURES } from '../src/render/signatures';
 import { SPELL_SIGNATURES } from '../src/render/spellSignatures';
@@ -13,7 +13,7 @@ import type { Family } from '../src/render/fxRules';
 const atlas = JSON.parse(readFileSync('src/art/fx/pack/atlas.json', 'utf8')) as Record<string, number[]>;
 
 test('every actual hero, ultimate, enemy skill and king spell has individual authored artwork', () => {
-  const names = new Set(Object.values(KITS).flatMap(k => [k.skill.name, ...(k.ultimate ? [k.ultimate.name] : [])]));
+  const names = new Set(Object.values(KITS).flatMap(k => [keyOf(k.skill), ...(k.ultimate ? [keyOf(k.ultimate)] : [])]));
   assert.equal(names.size, 108);
   const expected = [...names].map(n => `skill:${n}`).concat(SPELL_IDS.map(id => `spell:${id}`));
   assert.equal(expected.length, 129);

@@ -3,7 +3,7 @@ import { bareBoard } from './bare';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addUnit, startBattle, stepBattle, place, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
-import { CHARGE_MAX, KITS, tryCast, ULT_LEVEL, ultimateOf, ultimateReady } from '../src/sim/abilities';
+import { CHARGE_MAX, KITS, tryCast, ULT_LEVEL, ultimateOf, ultimateReady, keyOf } from '../src/sim/abilities';
 import { localBoost } from '../src/sim/climb';
 import { RUN_MAX_LEVEL, xpFor } from '../src/sim/levels';
 import { enterPhase } from '../src/sim/bossPhases';
@@ -36,7 +36,7 @@ test('every hero has an ultimate, and it charges slower than the skill', () => {
   assert.equal(ALL_HEROES.length, 45);
   for (const k of ALL_HEROES) assert.ok(KITS[k].ultimate, `${k} has an ultimate`);
   // (no two heroes share one)
-  const names = ALL_HEROES.map((k) => KITS[k].ultimate!.name);
+  const names = ALL_HEROES.map((k) => keyOf(KITS[k].ultimate!));
   assert.equal(new Set(names).size, names.length);
   const b = arena();
   const u = addUnit(b, 'knight', 3, 8, gradeBoost(1, 0, ULT_LEVEL));
@@ -96,7 +96,7 @@ test('a locked ultimate neither charges nor casts, and the unlocked one does bot
   assert.equal(tryCast(b, low, out), false, 'a locked ultimate does not go off');
   assert.equal(low.charge2, CHARGE_MAX);
   assert.ok(tryCast(b, up, out));
-  assert.ok(out.some((e) => e.kind === 'skill' && e.name === KITS.knight.ultimate!.name));
+  assert.ok(out.some((e) => e.kind === 'skill' && e.name === keyOf(KITS.knight.ultimate!)));
 });
 
 test('the level a hero fights at reaches the fight: its kind\'s lasting level, and a run\'s own level up to 30', () => {
@@ -127,7 +127,7 @@ const fires = (kind: string): string[] => {
 };
 
 test('every ultimate fires in a fight', () => {
-  for (const k of OTHERS) assert.ok(fires(k).includes(KITS[k].ultimate!.name), `${k}: ${KITS[k].ultimate!.name}`);
+  for (const k of OTHERS) assert.ok(fires(k).includes(keyOf(KITS[k].ultimate!)), `${k}: ${keyOf(KITS[k].ultimate!)}`);
 });
 
 test('a fight with the new ultimates is deterministic', () => {
@@ -142,7 +142,7 @@ test('a fight with the new ultimates is deterministic', () => {
   };
   const a = go();
   assert.equal(a, go());
-  assert.ok(OTHERS.slice(0, 5).some((k) => a.includes(KITS[k].ultimate!.name)));
+  assert.ok(OTHERS.slice(0, 5).some((k) => a.includes(keyOf(KITS[k].ultimate!))));
 });
 
 test('Nine-Tailed Dream charms the three strongest foes', () => {
@@ -224,7 +224,7 @@ test('a fight with ultimates is deterministic and its ultimates go off', () => {
 
 test('every ultimate has a cast effect', async () => {
   const { SKILL_FX } = await import('../src/render/skillFx');
-  for (const k of ALL_HEROES) assert.ok(SKILL_FX[KITS[k].ultimate!.name]?.cast, k);
+  for (const k of ALL_HEROES) assert.ok(SKILL_FX[keyOf(KITS[k].ultimate!)]?.cast, k);
 });
 
 test('a foe never takes a hero\'s ultimate: a boss whose second phase borrows a hero\'s skill has no ultimate to borrow', () => {
@@ -238,7 +238,7 @@ test('a foe never takes a hero\'s ultimate: a boss whose second phase borrows a 
     assert.equal(ultimateOf(boss), undefined, `${id} has no ultimate`);
     boss.charge2 = CHARGE_MAX;
     assert.equal(ultimateReady(boss), false);
-    assert.ok(!run(b, 3000).some((e) => e.kind === 'skill' && e.by === boss.id && e.name === KITS[borrowed].ultimate!.name), `${id} does not cast the hero's ultimate`);
+    assert.ok(!run(b, 3000).some((e) => e.kind === 'skill' && e.by === boss.id && e.name === keyOf(KITS[borrowed].ultimate!)), `${id} does not cast the hero's ultimate`);
   }
 });
 
@@ -247,10 +247,10 @@ test('a foe never takes a hero\'s ultimate: a boss whose second phase borrows a 
 test('foes that borrow the first eight\'s kits by name keep their ultimates', () => {
   for (const [id, hero] of [['gorgonQueen', 'gorgon'], ['eliteSethra', 'gorgon'], ['eliteKuro', 'karasu'], ['nineTails', 'kitsune']] as const) {
     assert.equal(KITS[id].ultimate?.unlock, undefined, `${id}'s ultimate is not gated`);
-    assert.equal(KITS[id].ultimate?.name, KITS[hero].ultimate!.name, id);
+    assert.equal((KITS[id].ultimate ? keyOf(KITS[id].ultimate) : undefined), keyOf(KITS[hero].ultimate!), id);
     const b = arena();
     const foe = addUnit(b, id, 3, 3);
-    assert.equal(ultimateOf(foe)?.name, KITS[hero].ultimate!.name, `${id} fights with it at level 1`);
+    assert.equal(ultimateOf(foe)?.name, keyOf(KITS[hero].ultimate!), `${id} fights with it at level 1`);
     foe.charge2 = CHARGE_MAX;
     assert.equal(ultimateReady(foe), true, id);
   }
@@ -259,7 +259,7 @@ test('foes that borrow the first eight\'s kits by name keep their ultimates', ()
   const queen = addUnit(b, 'gorgonQueen', 3, 3);
   addUnit(b, 'knight', 3, 8);
   queen.charge2 = CHARGE_MAX;
-  assert.ok(run(b, 3000).some((e) => e.kind === 'skill' && e.by === queen.id && e.name === KITS.gorgon.ultimate!.name));
+  assert.ok(run(b, 3000).some((e) => e.kind === 'skill' && e.by === queen.id && e.name === keyOf(KITS.gorgon.ultimate!)));
 });
 
 test('a run\'s own heroes can level past 20, up to 30, and unlock their ultimates at 30', () => {

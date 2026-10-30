@@ -12,9 +12,10 @@ import { bloodFury, bloodPrice, boundSoul, grounding, jump, markForCoin, pilfer,
 import { fanTheHammer, pinningShot, powderKeg, siegeMode, spikeField, suppressingFire } from './shooters';
 import { changeTune, charge, condemn, flaskNeeded, flaskToss, fontOfWisdom, foxGuise, guardianAngel, overload, piedPiper, rewind, smite, soulSiphon, stoneGarden, tradePlaces, treeform, wildfire } from './casters';
 import { plantStandard, sicEm } from './callers';
+import { REVIVE_FACES } from './revive';
 
 /** A new skill (its charge numbers are unused: a hero's skills cost its pool). */
-const sk = (name: string, text: string, castMs: number, anim: Skill['anim'], cast: Skill['cast']): Skill => ({ name, text, need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs, anim, cast });
+const sk = (name: string, text: string, castMs: number, anim: Skill['anim'], cast: Skill['cast'], key?: string): Skill => ({ name, ...(key ? { key } : {}), text, need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs, anim, cast });
 
 /** The global strengths of a stamina skill 1 and a mana skill 1 (stamina skills come round more often, so each carries less), for a hero the
  *  table below does not name. */
@@ -150,9 +151,9 @@ export function HERO_TABLE(): Record<string, HeroKit> {
     ninjaMonk: S('ninjaMonk', 25, sk('Stillness Palm', 'Spends his Flow (a stack a blow on the same foe, up to five) in one palm, and the foe loses skill charge', 500, 'attack2', stillnessPalm), 40, 'A combo striker: builds his flow on one foe, then spends it'),
     wanderer: {
       pool: 'mana',
-      s1: { skill: sk('Flask Toss', 'A healing draught (a quarter of its health) for a badly hurt friend; else a firebrew on the thickest 3x3', 500, 'attack', flaskToss), cost: 40, tune: TUNE1.wanderer ?? MANA_TUNE, heals: true, emergency: flaskNeeded, gap: 7000 },
-      s2: { skill: old('wanderer'), cost: 60, tune: TUNE2.wanderer ?? 1, heals: true, emergency: hurtUnder(0.35) },
-      role: 'An alchemist: draughts for friends, firebrew for foes',
+      s1: { skill: sk('Healing Draught', 'A healing draught (a quarter of its health) for a badly hurt friend; with none, Alchemist\'s Fire on the thickest 3x3', 500, 'attack', flaskToss, 'Flask Toss'), cost: 40, tune: TUNE1.wanderer ?? MANA_TUNE, heals: true, emergency: flaskNeeded, gap: 7000 },
+      s2: { skill: old('wanderer'), cost: 60, tune: TUNE2.wanderer ?? 1, heals: true, emergency: hurtUnder(0.35), revive: REVIVE_FACES.wanderer },
+      role: 'An alchemist: draughts for friends, firebrew for foes, an elixir for the fallen',
     },
     lightningMage: M('lightningMage', 45, sk('Overload', 'Every Charged foe discharges: hurt, stunned for 0.8s, and the bolt arcs to a foe beside it', 700, 'attack', overload), 55, 'A storm marker: lightning that marks, then sets the marks off', { onHit: charge }),
     kitsune: M('kitsune', 45, sk('Fox Guise', 'For 5s she takes the shape of the strongest foe in sight: its looks, reach and attack; foes pick her last', 600, 'attack', foxGuise), 60, 'A shapeshifter: charms a foe, or wears its shape', {}, { gap: 12000 }),
@@ -166,11 +167,11 @@ export function HERO_TABLE(): Record<string, HeroKit> {
     paladin: M('paladin', 40, sk("Martyr's Vow", 'For 5s half of what his friends within 3 would take is his instead', 600, 'defend', martyrsVow), 60, 'A martyr: takes his friends\' wounds on himself'),
     cleric: {
       pool: 'mana',
-      s1: { skill: sk('Smite', 'A holy blow on a foe in reach; her friends within 2 of it are healed by what it dealt', 500, 'attack', smite), cost: 40, tune: TUNE1.cleric ?? MANA_TUNE },
-      s2: { skill: old('cleric'), cost: 60, tune: TUNE2.cleric ?? 1, heals: true, emergency: hurtUnder(0.35) },
-      role: 'A battle priest: her smites heal',
+      s1: { skill: sk('Guiding Bolt', 'A bolt of holy light at a foe in reach; her friends within 2 of it are healed by what it dealt', 500, 'attack', smite, 'Smite'), cost: 40, tune: TUNE1.cleric ?? MANA_TUNE },
+      s2: { skill: old('cleric'), cost: 60, tune: TUNE2.cleric ?? 1, heals: true, emergency: hurtUnder(0.35), revive: REVIVE_FACES.cleric },
+      role: 'A battle priest: her bolts heal, her prayers raise the fallen',
     },
-    druid: M('druid', 50, sk('Treeform', 'For 6s she becomes a treant: a third more health, more defence, foes beside her must strike her; she heals 15% after', 700, 'attack2', treeform), 60, 'A shapeshifter: calls a treant, or becomes one', {}, { gap: 12000 }),
+    druid: M('druid', 50, sk('Wild Shape', 'For 6s she becomes a treant: a third more health, more defence, foes beside her must strike her; she heals 15% after', 700, 'attack2', treeform, 'Treeform'), 55, 'A shapeshifter: calls a treant, or becomes one; she can raise the fallen', {}, { gap: 12000, revive: REVIVE_FACES.druid }),
     barbarian: S('barbarian', 30, sk('Blood Fury', 'Paid in blood: for 4s his blows come 30% faster and drink an eighth, and he cannot fall below 1 health', 400, 'attack2', bloodFury), 25, 'A berserker: stronger the more he bleeds', {}, { hpCost: 0.1, gap: 14000 }),
     ranger: S('ranger', 30, sk('Spike Field', 'Caltrops on the 3x3 round the nearest foe for 6s: whoever stands in it is slowed and bleeds', 500, 'attack', spikeField), 45, 'A trapper: snares and fields of caltrops', { gap: 9000 }),
     warlock: M('warlock', 45, sk('Soul Siphon', 'Channels 2s on the weakest foe in reach, draining it; what he drains heals his most hurt friend', 2000, 'attack2', soulSiphon), 60, 'A leech: drinks his foes and feeds his friends'),
@@ -190,7 +191,7 @@ export function HERO_TABLE(): Record<string, HeroKit> {
     arcBlade: S('arcBlade', 30, sk('Grounding', 'Lets go what he stored (30% of the damage he takes) as a nova round him, and heals a tenth', 450, 'attack2', grounding), 40, 'A capacitor: stores the blows he takes and lets them go'),
     dreadPirate: S('dreadPirate', 35, sk('Powder Keg', 'Rolls a keg to the thickest crowd; it bursts on a 3x3 and sets off every powder barrel and keg within 2', 600, 'attack2', powderKeg), 45, 'A bomber: kegs that set off the field\'s powder barrels'),
     siegeBot: S('siegeBot', 35, sk('Siege Mode', 'Anchors for 8s: cannot walk, reaches two further, shells splash and come faster', 500, 'attack2', siegeMode), 40, 'A stance turret: anchors into siege mode'),
-    priestess: M('priestess', 45, sk('Guardian Angel', 'The friend most at risk is watched for 4s: the first blow that would fell it leaves it at 1 health and heals it 30%', 600, 'attack2', guardianAngel), 60, 'A resurrector: mends the worst hurt and watches the dying', { heals: true, emergency: hurtUnder(0.35) }, { heals: true, gap: 12000 }),
+    priestess: M('priestess', 45, sk('Death Ward', 'The friend most at risk is warded for 4s: the first blow that would fell it leaves it at 1 health and heals it 30%', 600, 'attack2', guardianAngel, 'Guardian Angel'), 55, 'A resurrector: mends the worst hurt, wards the dying and raises the fallen', { heals: true, emergency: hurtUnder(0.35) }, { heals: true, gap: 12000, revive: REVIVE_FACES.priestess }),
     dragoon: S('dragoon', 35, sk('Jump', 'She leaps out of the fight and lands on the thickest crowd: double on her mark, and the 3x3 struck and held', 400, 'attack2', jump), 45, 'A dragoon: breathes fire and jumps'),
     juggernaut: S('juggernaut', 30, sk('Raise Rampart', 'The three tiles in front of him rise into a wall for 10s that foes must walk round; the foes beside it are struck and held', 700, 'attack2', raiseRampart), 45, 'A terrain shaper: quakes, and walls out of the ground'),
     sage: M('sage', 50, sk('Font of Wisdom', 'Every friend within 4 gains 25 mana or 15 stamina', 600, 'attack2', fontOfWisdom), 55, 'A mana battery: stars, and his friends\' pools filled', {}, { gap: 8000 }),

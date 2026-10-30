@@ -300,6 +300,8 @@ export type BattleEvent =
   | { kind: 'burrow'; by: number; phase: 'down' | 'up'; u: number; v: number; ms: number; path: At[] }
   | { kind: 'swap'; a: number; b: number }
   | { kind: 'aura'; by: number; at: At | null; reach: number; what: string; ms: number }
+  /** A healer raised a fallen hero (RPG-SPELLS batch 2): the page plays its getting up. */
+  | { kind: 'revive'; by: number; to: number; hp: number }
   /** A fighter a skill called up fades away (a wraith, a standard). */
   | { kind: 'fade'; to: number }
   /** A kit marks a fighter (a bounty, a condemnation, a charge, a pin, a stance) for `ms`. */
@@ -378,6 +380,10 @@ export interface Battle {
   kits?: { standards?: boolean; songs?: boolean; vows?: boolean; rewind?: boolean; raise?: { by: number; foe: number }[] };
   /** Timed terrain the kits laid (a flood, a rampart, a statue), put back when it runs out. */
   terrain?: TerrainFx[];
+  /** The healers' revives this wave (RPG-SPELLS batch 2, `kits/revive.ts`): the heroes raised so far (each at most once a wave, by a revive
+   *  or Mass Resurrection), and how many skill revives have been cast (at most two). */
+  risen?: number[];
+  revives?: number;
   /** The movement toolkit's walls and auras (`toolkit/walls.ts`, `toolkit/auras.ts`; RPG-SPELLS): none until a skill raises one. */
   walls?: Wall[];
   auras?: Aura[];

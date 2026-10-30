@@ -1,18 +1,18 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { KITS } from '../src/sim/abilities';
+import { KITS, keyOf } from '../src/sim/abilities';
 import { SKILL_FX, SPELL_FX } from '../src/render/skillFx';
 
 test('every hero and foe skill has an effect of its own', () => {
   for (const kit of Object.values(KITS)) {
-    const fx = SKILL_FX[kit.skill.name];
-    assert.ok(fx, `no effect for ${kit.skill.name}`);
-    assert.ok(fx.cast || fx.hit, `${kit.skill.name} shows nothing`);
+    const fx = SKILL_FX[keyOf(kit.skill)];
+    assert.ok(fx, `no effect for ${keyOf(kit.skill)}`);
+    assert.ok(fx.cast || fx.hit, `${keyOf(kit.skill)} shows nothing`);
   }
 });
 
 test('no effect names a skill that is not in the kits', () => {
-  const names = new Set(Object.values(KITS).flatMap((k) => [k.skill.name, ...(k.ultimate ? [k.ultimate.name] : [])]));
+  const names = new Set(Object.values(KITS).flatMap((k) => [keyOf(k.skill), ...(k.ultimate ? [keyOf(k.ultimate)] : [])]));
   for (const name of Object.keys(SKILL_FX)) assert.ok(names.has(name), `${name} is not a skill`);
 });
 

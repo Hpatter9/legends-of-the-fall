@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.249.0',
+    date: '2026-10-30',
+    title: 'Healers can raise the fallen',
+    notes: ['From level 10, the Cleric, High Priestess, Wanderer and Druid can revive a fallen ally mid-fight (Revivify, Resurrection, Elixir of Life, Reincarnate).', 'New healer spells: Spirit Guardians, Mass Resurrection with a Wall of Light, Healing Mist and a Wall of Thorns.'],
+  },
+  {
     version: '0.248.0',
     date: '2026-10-30',
     title: 'Painted spell effects, first wave',

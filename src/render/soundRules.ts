@@ -302,6 +302,8 @@ export function cuesFor(b: Battle, e: BattleEvent): Cued[] {
       return [{ cue: 'shieldHum', gain: 0.7 }];
     case 'wallBreak':
       return [{ cue: 'frostShatter' }];
+    case 'revive':
+      return [{ cue: 'heal' }, { cue: 'holyChime', delay: 120 }];
     case 'area':
       // (the meteor whistles down and lands with a boom `ms` later; a volley rains)
       return e.id === 'meteor'
