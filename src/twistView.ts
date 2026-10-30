@@ -58,6 +58,9 @@ function pic(id: string, cls: string): HTMLImageElement {
   return img;
 }
 
+/** A twist's icon as a url ('' for an unknown id): the road's event cards show it on an option that brings one (MID-EVENTS). */
+export const twistIcon = (id: string | undefined): string => (id ? ICONS[id] ?? '' : '');
+
 /** A map node's corner badge, or null when the twist is unknown (an id from a newer save). */
 export function twistBadge(id: string | undefined): HTMLElement | null {
   const tw = id ? TWISTS[id] : undefined;

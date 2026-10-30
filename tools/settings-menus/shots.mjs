@@ -11,6 +11,7 @@ const SIZES = process.argv[2] ? [process.argv[2].split('x').map(Number)] : [[393
 for (const [w, h] of SIZES) {
   const { ctx, page, errors } = await boot(browser, w, h, PORT);
   await page.locator('#hmGear').click();
+  await page.locator('.setMenu[data-page="ruler"]').click(); // (the ruler sits in its own submenu since the options were condensed)
   await page.locator('.rulerOpen').waitFor();
   assert.equal(await page.locator('.rulerChoice').count(), 0, 'the eight are not laid out in the page');
   await page.screenshot({ path: `docs/samples/settings-menus-closed-${w}x${h}.png` });

@@ -1,6 +1,7 @@
 // Menu illustrations are separate from the battle animation sheets.
-import { ALL_HEROES } from './sim/units';
+import { ALL_HEROES, UNITS } from './sim/units';
 import { heroTitle } from './sim/heroNames';
+import { titleLine } from './heroTitleView';
 
 export function heroArtwork(kind: string, full = false): HTMLImageElement {
   if (!ALL_HEROES.includes(kind)) throw new Error(`Unknown hero artwork: ${kind}`);
@@ -24,7 +25,7 @@ export function openHeroArtwork(kind: string, trigger: HTMLElement): () => void 
   close.textContent = '× Close';
   close.setAttribute('aria-label', 'Close full artwork');
   const title = document.createElement('h2');
-  title.textContent = heroTitle(kind);
+  title.append(titleLine(kind, 'span', '', true), Object.assign(document.createElement('small'), { textContent: UNITS[kind]?.name ?? '' }));
   dialog.append(close, heroArtwork(kind, true), title);
   const dismiss = () => dialog.close();
   close.addEventListener('click', dismiss);
