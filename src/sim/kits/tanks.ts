@@ -10,14 +10,20 @@ import { apart, castPower, foesOf, mendUnit, net } from '../abilities';
 import { resistOf, weakFor } from '../ailments';
 import { kx } from './effects';
 import { foesNear, mark, ms, nearestFoe, strike, stun, toughest } from './common';
-import { burrow, charge, chokeLine, moveMany, pull, raiseAura, raiseWall, type ChargeOpts } from '../toolkit';
+import { burrow, charge, chargePlans, chargeScore, chokeLine, moveMany, pull, raiseAura, raiseWall, type ChargeOpts } from '../toolkit';
 
 const alliesNear = (b: Battle, me: Unit, reach: number) => b.units.filter((a) => a.alive && a.side === me.side && !a.under && apart(me, a) <= reach);
 
 /** Knight, Shield Rush: charges up to 3 tiles in a line at a foe, bashes it (x1.2, stunned 1s) and drives it 2 tiles back. */
 export const RUSH: ChargeOpts = { tiles: 3, route: 'line', mult: 1.2, stun: 1000, shove: 2 };
 export function shieldRush(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  return charge(b, me, { ...RUSH, tiles: RUSH.tiles + Math.round(me.eq?.tal?.reach ?? 0), stun: ms(me, RUSH.stun!) }, out);
+  const o: ChargeOpts = { ...RUSH, tiles: RUSH.tiles + Math.round(me.eq?.tal?.reach ?? 0), stun: ms(me, RUSH.stun!) };
+  // (a hero guarding a post in the Last Stand charges only as far as its leash lets it)
+  const post = me.post;
+  const plans = chargePlans(b, me, o).filter((p) => !post || Math.abs(p.end.u - post.u) + Math.abs(p.end.v - post.v) <= post.leash);
+  if (!plans.length) return false;
+  const best = plans.map((p) => ({ p, s: chargeScore(b, me, p, o) })).sort((x, y) => y.s - x.s || x.p.steps - y.p.steps || x.p.hits[0].id - y.p.hits[0].id)[0].p;
+  return charge(b, me, o, out, best);
 }
 
 /** Paladin, Divine Smite (it was Holy Challenge): a radiant blow on the foe before him (x1.2, half as much again on the undead and fiends), then,

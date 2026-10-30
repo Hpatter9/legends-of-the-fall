@@ -7,6 +7,10 @@
 // Batch 2 (the healers, docs/notes/spells-b2.md) re-recorded field30, bosses, armyFoes, spells, lands, army, stand, heroes10 and heroes30: each has the
 // Cleric, High Priestess, Wanderer or Druid at level 10 or more (the Last Stand's party of eight has the Cleric at level 30). The `...Others` scenarios, whose teams never hold them, were recorded on main's
 // code before the batch and did not move.
+// Batch 3 (the tanks and supports, docs/notes/spells-b3.md) re-recorded field1, field30, bosses, armyFoes, spells, lands, army, stand, heroes1,
+// heroes10 and heroes30: each has the Knight, Paladin, Peasant, Juggernaut, Samurai Commander, Wolf Bard or Tyrant (field1 and heroes1 at level 1,
+// where the Paladin's Divine Smite and the Juggernaut's Seismic Slam are skill 1). The `...Others` scenarios now leave those seven out of every team
+// (recorded on main's code before the batch) and did not move; daily, tower and calamity did not move either.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';
