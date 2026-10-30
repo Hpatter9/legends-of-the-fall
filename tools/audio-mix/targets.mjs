@@ -13,7 +13,9 @@
 import { readFileSync } from 'node:fs';
 
 export const MUSIC_TARGET = {
-  battle: -30.5, battle2: -30.5, battle3: -30.5, boss: -30, calbattle: -30,
+  battle: -30.5, boss: -30, calbattle: -30,
+  // (the armies' own battle tracks: the main theme in each army's dress)
+  orcs: -30.5, undead: -30.5, beasts: -30.5, wildwood: -30.5, labyrinth: -30.5, ogres: -30.5, infernal: -30.5, yokai: -30.5, golems: -30.5,
   camp: -28, tavern: -28, deploy: -28, tower: -28, calmap: -28, triumph: -28,
   opening: -27, gorvak: -27, herald2: -27, herald3: -27, herald4: -27, herald5: -27, herald6: -27, comic: -27, solemn: -27, spire: -27,
   // (the stings, by integrated loudness: the fanfare a touch over the fight, the fall's sting a little under it)

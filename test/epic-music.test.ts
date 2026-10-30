@@ -5,10 +5,10 @@ import { EPIC_MANIFEST } from '../src/render/epicManifest';
 import { EPIC_INFO, type Baked } from '../src/render/musicBake';
 import { SCORES, SCENE_TRACKS } from '../src/render/musicScore';
 import { OPEN_HZ } from '../src/render/audioRules';
-import { BATTLE_BAR, BATTLE_LOOP_START, LOOP_START, STING_IDS, SYNTH_OF, TRACK_OF_PLACE, epicOf, placeOf, type MusicId } from '../src/render/epicMusic';
+import { ARMY_TRACKS, LOOP_START, STING_IDS, SYNTH_OF, TRACK_OF_PLACE, epicOf, loopWindow, placeOf, type MusicId } from '../src/render/epicMusic';
 import { FakeContext, installFakeAudio } from './audioFake';
 
-const LOOPS = ['camp', 'deploy', 'battle', 'battle2', 'battle3', 'boss', 'tower', 'calmap', 'calbattle', 'tavern', ...SCENE_TRACKS] as const;
+const LOOPS = ['camp', 'deploy', 'battle', 'boss', 'tower', 'calmap', 'calbattle', 'tavern', ...ARMY_TRACKS, ...SCENE_TRACKS] as const;
 
 test('every track has a file, the files are on disk, loops run a sensible length and the whole is small enough to download', () => {
   for (const id of LOOPS) {
@@ -22,7 +22,8 @@ test('every track has a file, the files are on disk, loops run a sensible length
   const files = readdirSync('src/audio').filter((f) => f.endsWith('.opus')).sort();
   assert.deepEqual(files, Object.values(EPIC_MANIFEST).map((e) => e.file).sort());
   const total = Object.values(EPIC_MANIFEST).reduce((n, e) => n + e.bytes, 0);
-  assert.ok(total < 6.1 * 1024 * 1024, `${(total / 1048576).toFixed(2)} MB of audio`);
+  // (the armies each have their own battle track now: about 7.7 MB, docs/notes/music-theme.md)
+  assert.ok(total < 8 * 1024 * 1024, `${(total / 1048576).toFixed(2)} MB of audio`);
   // (the build copies every file in the folder and lists each in the service worker's FILES)
   const build = readFileSync('build.mjs', 'utf8');
   assert.match(build, /AUDIO_FILES\.map/);
@@ -34,7 +35,7 @@ test('every track the player can be asked for has a file or a synth fallback, an
     assert.ok(SYNTH_OF[id] in SCORES, `${id} falls back to a score`);
   }
   assert.equal(epicOf('town'), EPIC_MANIFEST.camp);
-  assert.equal(epicOf('battle2'), EPIC_MANIFEST.battle2);
+  assert.equal(epicOf('orcs'), EPIC_MANIFEST.orcs);
 });
 
 test('the place chooses the track (a battle\'s own is chosen in battleMusic.ts: test/battle-music.test.ts)', () => {
@@ -63,7 +64,7 @@ test('an epic track loops its window, and takes no colour from the tower act', a
     const music = new MusicPlayer(ctx as unknown as AudioContext, async () => epicBaked(ctx));
     const cutoff = () => (music.params.cutoff.audioParam as unknown as { target?: number }).target;
     const before = FakeContext.made.length;
-    music.setTrack('battle2');
+    music.setTrack('yokai');
     await new Promise((r) => setTimeout(r, 10));
     const sources = FakeContext.made.slice(before).filter((n) => n.loop);
     assert.equal(sources.length, 1, 'the file is one stem');
@@ -110,7 +111,7 @@ test('a sting holds the music back, lets it return, and a new fight cuts it shor
     // a fight begins during a second sting: it stops, and the music is let back at once
     music.sting('defeat');
     await new Promise((r) => setTimeout(r, 10));
-    music.setTrack('battle2');
+    music.setTrack('yokai');
     await new Promise((r) => setTimeout(r, 10));
     const n = loops().length;
     music.stopSting();
@@ -122,32 +123,40 @@ test('a sting holds the music back, lets it return, and a new fight cuts it shor
   }
 });
 
-test('the battle track skips its ambient intro to start at the combat downbeat', async () => {
+test('a battle track built on the theme plays its intro once, then loops from the intro\'s end', async () => {
   const undo = installFakeAudio();
   const { MusicPlayer } = await import('../src/render/audioProcessors');
   try {
     const ctx = new FakeContext();
     const buf = ctx.createBuffer(2, 100) as unknown as AudioBuffer;
     const b: Baked = { pad: buf, bass: null, lead: null, drums: null };
-    EPIC_INFO.set(b, { loop: [BATTLE_LOOP_START, LOOP_START + 66.9772] });
+    const w = loopWindow(EPIC_MANIFEST.orcs);
+    EPIC_INFO.set(b, w);
     const music = new MusicPlayer(ctx as unknown as AudioContext, async () => b);
     const before = FakeContext.made.length;
-    music.setTrack('battle');
+    music.setTrack('orcs');
     await new Promise((r) => setTimeout(r, 10));
     const sources = FakeContext.made.slice(before).filter((n) => n.loop);
     assert.equal(sources.length, 1);
     const src = sources[0] as unknown as { loopStart: number; loopEnd: number; started: boolean; startOffset: number };
     assert.ok(src.started);
-    assert.equal(src.startOffset, BATTLE_LOOP_START);
-    assert.equal(src.loopStart, BATTLE_LOOP_START);
+    assert.equal(src.startOffset, LOOP_START, 'from the intro\'s first downbeat');
+    assert.equal(src.loopStart, LOOP_START + EPIC_MANIFEST.orcs.start, 'the loop from the intro\'s end');
+    assert.equal(src.loopEnd, LOOP_START + EPIC_MANIFEST.orcs.seconds);
     music.destroy();
   } finally {
     undo();
   }
 });
-test('the battle loop, cut short of its intro, is still a whole number of bars, so it joins on the beat', () => {
-  assert.equal(BATTLE_BAR * 48, EPIC_MANIFEST.battle.seconds);
-  const bars = (LOOP_START + EPIC_MANIFEST.battle.seconds - BATTLE_LOOP_START) / BATTLE_BAR;
-  assert.ok(Math.abs(bars - Math.round(bars)) < 1e-6, `${bars} bars`);
-  assert.equal(Math.round(bars), 44);
+test('every battle track on the theme has a four-bar intro, its loop a whole number of bars (40), so it joins on the beat', () => {
+  for (const id of ['battle', 'boss', 'calbattle', ...ARMY_TRACKS] as const) {
+    const e = EPIC_MANIFEST[id];
+    const bar = e.start / 4;
+    assert.ok(e.start > 4 && e.start < 8, `${id}'s intro is ${e.start} s`);
+    assert.ok(Math.abs(e.seconds / bar - 44) < 1e-3, `${id} is 44 bars`);
+    const w = loopWindow(e);
+    assert.ok(w.loop[1] - w.loop[0] >= 50 && w.loop[1] - w.loop[0] <= 90, `${id} loops ${(w.loop[1] - w.loop[0]).toFixed(1)} s`);
+  }
+  // (a track with no intro loops the whole of itself, from the start)
+  assert.deepEqual(loopWindow(EPIC_MANIFEST.deploy), { from: LOOP_START, loop: [LOOP_START, LOOP_START + EPIC_MANIFEST.deploy.seconds] });
 });

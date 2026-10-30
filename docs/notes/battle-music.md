@@ -1,5 +1,7 @@
 # Battle music: one track a battle, victory music at the end
 
+**Changed by [music-theme.md](music-theme.md):** the tracks are now the main theme in each army's dress; an army run takes its army's own track at every tier, and the daily, the Last Stand, spire floors and field fights the general `battle` (the seed and the depth no longer pick; `battle2` and `battle3` are gone). The rest below still holds.
+
 The owner's ask: "The battle music should stay on and consistent through battle. Then at the end we need victory music if we win."
 
 ## What was wrong

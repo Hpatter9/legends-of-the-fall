@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.247.0',
+    date: '2026-10-30',
+    title: 'A main theme, and a battle song for every army',
+    notes: ['New battle music built on one catchy main theme, in the style of classic JRPG battle songs.', 'Every army fights to its own arrangement: orc war drums, undead organ, yokai taiko and more.', 'The victory fanfare, the results and the camp now play the theme too.'],
+  },
+  {
     version: '0.246.0',
     date: '2026-10-30',
     title: 'The Last Stand falls back to the throne',

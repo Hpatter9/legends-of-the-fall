@@ -42,7 +42,7 @@ const HEAD = '| | integrated LUFS | momentary max | peak dBFS | % over limiter |
 const out = { gains: await run('gains') };
 
 if (want('music')) {
-  const TRACKS = ['camp', 'tavern', 'deploy', 'tower', 'calmap', 'battle', 'battle2', 'battle3', 'boss', 'calbattle', 'triumph', 'opening', 'gorvak', 'herald2', 'herald3', 'herald4', 'herald5', 'herald6', 'comic', 'solemn', 'spire'];
+  const TRACKS = ['camp', 'tavern', 'deploy', 'tower', 'calmap', 'battle', 'orcs', 'undead', 'beasts', 'wildwood', 'labyrinth', 'ogres', 'infernal', 'yokai', 'golems', 'boss', 'calbattle', 'triumph', 'opening', 'gorvak', 'herald2', 'herald3', 'herald4', 'herald5', 'herald6', 'comic', 'solemn', 'spire'];
   out.music = {};
   console.log('\n## Music (at its playing level)\n' + HEAD);
   for (const id of TRACKS) {
@@ -88,8 +88,8 @@ if (want('fights')) {
   out.fights = {};
   const FIGHTS = [
     [7, 'skeletons', ['knight', 'samurai', 'kunoichi', 'archer', 'wizard'], 'battle'],
-    [11, 'orcs', ['paladin', 'cleric', 'ranger', 'barbarian', 'lightningMage'], 'battle2'],
-    [3, 'ogres', ['knight', 'samurai', 'ninjaMonk', 'archer', 'warlock'], 'battle3'],
+    [11, 'orcs', ['paladin', 'cleric', 'ranger', 'barbarian', 'lightningMage'], 'orcs'],
+    [3, 'ogres', ['knight', 'samurai', 'ninjaMonk', 'archer', 'warlock'], 'ogres'],
     [5, 'demonLord', ['knight', 'samurai', 'kunoichi', 'archer', 'wizard'], 'boss'],
   ];
   for (const [seed, band, heroes, track] of FIGHTS) {

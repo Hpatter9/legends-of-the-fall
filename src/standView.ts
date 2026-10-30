@@ -1250,7 +1250,7 @@ export class StandView {
     });
   }
 
-  /** The battle music: one track for the whole run (`standTrack`, by its seed), started with its first wave and kept, boss waves
+  /** The battle music: one track for the whole run (`standTrack`: the general battle track), started with its first wave and kept, boss waves
    *  and breaks included, until the king falls or the run is left (`battleMusic.ts`). */
   private hold = false;
   private track = '';
