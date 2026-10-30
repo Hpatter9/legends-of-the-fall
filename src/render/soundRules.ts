@@ -27,6 +27,8 @@ export type Cue =
   | 'dash' | 'blink' | 'trap'
   // big moments (`kingCast` and `kingSpell` hold the mix's voices for a king's spell's own rendered sounds: `spellSfx.ts`)
   | 'ultimate' | 'bossSkill' | 'kingCast' | 'kingSpell'
+  // an ultimate's moment (ULT-EPIC, `ultMoment.ts`): the band slashing across, and the blow landing
+  | 'ultSlash' | 'ultImpact'
   // the summoning hall's build-up and stinger, and a ribbon slamming in
   | 'riseSummon' | 'stingSummon' | 'slam'
   // deaths
@@ -133,6 +135,8 @@ export const CUES: Record<Cue, CueSpec> = {
 
   ultimate: c(600, 1400, 6, 3, 1.34),
   bossSkill: c(500, 900, 4, 3, 1.43),
+  ultSlash: c(0, 700, 3, 3, 2.49),
+  ultImpact: c(0, 1400, 5, 3, 1),
   kingCast: c(0, 600, 2, 3),
   kingSpell: c(0, 1200, 3, 3),
 

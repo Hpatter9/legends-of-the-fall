@@ -40,7 +40,7 @@ export const CUE_TARGET = {
   poisonHiss: -28, rustle: -31, windGust: -31, earthRumble: -24, meteorFall: -27, arrowRain: -29, boom: -22,
   heal: -28, shieldHum: -29, horn: -27, pipes: -29, dash: -33, blink: -29, trap: -27,
   // big moments
-  ultimate: -16, bossSkill: -20,
+  ultimate: -16, bossSkill: -20, ultSlash: -22, ultImpact: -18,
   // deaths
   deathBones: -23, deathBurn: -23, deathThud: -23, deathStone: -23, deathBlood: -23, deathLight: -24,
 };

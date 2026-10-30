@@ -510,5 +510,46 @@
    ["cast", "once", 6, 8, 1.6],
    ["impact", "once", 6, 8, 1.2]
   ]
+ },
+ "u-ultimate": {
+  "ult-speedlines": [
+   ["beam", "loop", 4, 6, 4.0]
+  ],
+  "ult-edge": [
+   ["beam", "loop", 4, 6, 4.0]
+  ],
+  "ult-gather": [
+   ["cast", "once", 6, 8, 2.5]
+  ],
+  "ult-burst-fire": [
+   ["impact", "once", 6, 8, 4.0]
+  ],
+  "ult-burst-ice": [
+   ["impact", "once", 6, 8, 4.0]
+  ],
+  "ult-burst-lightning": [
+   ["impact", "once", 6, 8, 4.0]
+  ],
+  "ult-burst-light": [
+   ["impact", "once", 6, 8, 4.0]
+  ],
+  "ult-burst-dark": [
+   ["impact", "once", 6, 8, 4.0]
+  ],
+  "ult-burst-forest": [
+   ["impact", "once", 6, 8, 4.0]
+  ],
+  "ult-burst-poison": [
+   ["impact", "once", 6, 8, 4.0]
+  ],
+  "ult-burst-earth": [
+   ["impact", "once", 6, 8, 4.0]
+  ],
+  "ult-burst-wind": [
+   ["impact", "once", 6, 8, 4.0]
+  ],
+  "ult-burst-blood": [
+   ["impact", "once", 6, 8, 4.0]
+  ]
  }
 }

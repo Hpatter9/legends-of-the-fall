@@ -264,7 +264,17 @@ export class StandView {
         const k = this.world.scale.x;
         return { x: this.world.x + sp.x * k, y: this.world.y + (sp.y - sp.tall / 2) * k };
       },
+      // (ULT-EPIC: the light over an area the ultimate works on, and the moment's bursts drawn in this view's effects)
+      tile: (u, v) => {
+        const b = this.state?.b;
+        const t = b ? tileAt(b.board, u, v) : undefined;
+        if (!t) return null;
+        const [wx, wy] = at(u, v, t.h);
+        const k = this.world.scale.x;
+        return { x: this.world.x + wx * k, y: this.world.y + wy * k };
+      },
       art: (u) => heroArtUrl(u.def, u.awaken ?? 0),
+      fx: this.fx,
     });
     // (the king's spells as orbs under the top bar, with the Auto switch at the row's end: BATTLE-HUD)
     const orbs = el('div', 'stOrbs');

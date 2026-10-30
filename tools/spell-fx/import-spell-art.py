@@ -5,7 +5,7 @@ Usage (from anywhere; paths are the repo's):
     python3 tools/spell-fx/import-spell-art.py [<folder>] [cell=96] [--check] [--contact <png>]
 
 <folder> (default art-source/spell-fx) holds one folder a session (a-toolkit, b-auras, c-healers, d-casters, e-moves, f-martial,
-g-spells), each with one PNG a key (`<key>.png`). The manifest tools/spell-fx/spell-parts.json lists every key the brief asks
+g-spells, and u-ultimate: the ultimate's moment's kit, ULT-EPIC, docs/notes/ult-epic.md), each with one PNG a key (`<key>.png`). The manifest tools/spell-fx/spell-parts.json lists every key the brief asks
 for, its session, and its rows in order as [part, kind, fewest frames, most frames, size in tiles].
 
 For every sheet that is there, it checks the brief's format and names the sheet and row of each fault:
