@@ -192,6 +192,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Completion criteria:** a locked hero's tile shows no "Lv 30", no ring and no dimming, with the portrait filling the ring's place (no gap); an unlocked one unchanged; ordinary fights, the daily, the Calamity and the Last Stand; typecheck, tests, web build; 393x852, 360x780, 412x915.
 - **Validation and handoff:** [notes](notes/herobar-lock.md).
 
+### OPTIONS-MENU — Settings in submenus; Updates and notes
+
+- **Goal:** the owner's asks: "Let's add an updates and notes section in the options. This will show what was changed in the last updates so I can look back at what's new and what version they came out. Keep it summarised." and "We should probably condense the options menu into more menus."
+- **Status:** done; ready for review.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/options-menu`, `/home/user/options-menu` (from main 0.233.0); PR none.
+- **Allowed files or systems:** `src/settings.ts` (the submenus, the updates page, the gears' dot), new `src/updates.ts`, new `src/settingsMenu.css` (and its line in `build.mjs`), one line in `src/main.ts`, new `test/updates.test.ts`, the ruler sheet's step in `tools/rulers/check.mjs`, `tools/settings-menus/shots.mjs`, `tools/stand/depth-shots.mjs`; `CLAUDE.md` (one line), `docs/notes/options-menu.md`, `docs/samples/options-menu-*.png`.
+- **Completion criteria:** eight submenus with a back button; every setting saved under the same keys; the releases newest first from 0.189.0 with the older ranges folded; a test that the newest entry is package.json's version; a "New" dot until the page is seen; typecheck, full tests, web build; 393x852, 360x780, 412x915.
+- **Validation and handoff:** [notes](notes/options-menu.md).
+
 ### SETTINGS-MENUS — The ruler picker and stones in the developer row
 
 - **Goal:** the owner's asks: "The rulers in the settings menu should be a menu that opens up after clicking on it." and "I also want the developer menu to have stones as an option too."
@@ -414,6 +424,7 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 | ID | Task | Result | Reference |
 | --- | --- | --- | --- |
+| BENCH-TITLES | Pull a hero back to the bench more easily; every hero a longer title | Done on the branch, awaiting review: the whole bottom panel (and a little above it) is the drop area for a placed hero, outlined while it is dragged and lit with "Return to bench" over it; a quick flick down counts; drag-merge still wins over a matching card. Every hero (45) has a unique epithet (`HERO_NAMES[k].title`), "Name, Title" (`heroTitle`) in the dossier, the reveals, the codex, the artwork viewer and the recap's MVP; the short name stays in the small boxes; the old "Name · Class" label is `heroClassLabel`. Typecheck, affected tests, full suite 1493/1493, build, three phone sizes | [Note](notes/bench-titles.md), branch `claude/bench-titles` |
 | AUDIO-BATTLE | Battle music stays on and steady through a battle; victory music when it is won | Done, awaiting review: one track a battle (`trackOfRun`, kept wave to wave, boss waves included; no drop to the deploy track between waves, no sting between waves); the tension low-pass, swell, pace and rumble removed; a won battle ends on the victory fanfare leading into the triumph loop at a lower bed under the results until they are left; defeat sting as before. Typecheck, 37 affected tests, full suite 1415/1415, build, an army's last two waves played at x2 in Chromium at 393x852 | [Note](notes/battle-music.md), branch `claude/battle-music` |
 | ULT-CHARGE | Ultimates used once or twice a battle | Released as 0.213.0 (owner: keep ultimates at full strength, answer with tougher foes): the meter starts each fight 60 full and fills about 2.5x as fast, ultimates at full strength (none weaker than main), parity by meter speed at stage 78 (spread 5.7); the extra power answered by tougher foes only where ultimates are open: the five late armies' Normal `start` and `tierLift`, Legendary x2.8 and Mythic x2.6 (`Tier.answer`, XP taken back out), the Last Stand's late climb, the Calamity's last map, the daily for levelled saves. Army pace, first-army stars, Stand, Calamity and daily back near main; full suite 1377/1377, build, three phone sizes | [Note](notes/ult-charge.md), branch `claude/ult-charge` |
 | AUDIO-150 | Recorded combat sounds and a quieter, cleaner battle mix | Released as 0.186.0; the sounds' source (given as CC0) still needs naming in CREDITS.md | PR #150 |
