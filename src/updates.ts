@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.250.0',
+    date: '2026-10-30',
+    title: 'Tanks and supports learn new moves',
+    notes: ['The Knight charges with Shield Rush, the Paladin strikes with Divine Smite and shields allies with an Aura of Protection.', 'The Juggernaut burrows and erupts with Tunnel Strike, the Peasant raises a Spear Wall, and the Tyrant drags foes in with Bane.'],
+  },
+  {
     version: '0.249.0',
     date: '2026-10-30',
     title: 'Healers can raise the fallen',
