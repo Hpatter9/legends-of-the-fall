@@ -451,13 +451,14 @@ const LIGHT_MS = 5000;
 const THORN_WALL = 4;
 const THORN_MS = 8000;
 
-/** The Cleric's Spirit Guardians (RPG-SPELLS batch 2): an aura round her for 8s (reach 2): foes in it are hurt (a share of her attack, times
+/** The Cleric's Spirit Guardians (RPG-SPELLS batch 2): an aura round her for 10s (reach 3): foes in it are hurt (a share of her attack, times
  *  the ultimate's strength) and slowed each second; friends in it heal a share of their health each second; the friends in it as it rises are
- *  cleansed. Cast when a foe is within 3 of her or a friend is hurt. */
-const GUARDIAN_MS = 8000;
-const GUARDIAN_REACH = 2;
+ *  cleansed. Cast when a foe is within 3 of her or a friend is hurt. (The design's 8s, reach 2 and 2% a second were tuned up so the Last Stand,
+ *  where Divine Intervention's team-wide heal carried a long run, stays within a wave of where it was.) */
+const GUARDIAN_MS = 10000;
+const GUARDIAN_REACH = 3;
 const GUARDIAN_DMG = 0.35;
-const GUARDIAN_HEAL = 0.02;
+const GUARDIAN_HEAL = 0.08;
 const GUARDIAN_SLOW = 1200;
 function spiritGuardians(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!foesOf(b, me).some((f) => apart(me, f) <= 3) && !wounded(b, me)) return false;
@@ -505,7 +506,7 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   gorgon: { rate: 1.29, power: 2.2 },
   samuraiCommander: { rate: 1.1, power: 1.6 },
   paladin: { rate: 1.31, power: 0.83 },
-  cleric: { rate: 1.1, power: 2.2 }, // (RPG-SPELLS batch 2: Spirit Guardians, an aura round her, in place of Divine Intervention's team-wide heal: 0.58 and 1.12 before)
+  cleric: { rate: 1.0, power: 1.0 }, // (RPG-SPELLS batch 2: Spirit Guardians, an aura round her, in place of Divine Intervention's team-wide heal: 0.58 and 1.12 before)
   druid: { rate: 1.19, power: 0.4 },
   barbarian: { rate: 0.9, power: 2.14 },
   ranger: { rate: 0.84, power: 1.11 },
@@ -609,7 +610,7 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
     timeWitch: ult('Time Stop', 'Every foe within 8 tiles is stopped where it stands for 2.6s, while her friends are hastened for 5s', 900, 'attack2', timeStop),
     // ---- the healers and callers ----
     // (RPG-SPELLS batch 2: Divine Intervention became Spirit Guardians, an aura round her)
-    cleric: ult('Spirit Guardians', 'Spirits circle her for 8s: foes within 2 are hurt each second and slowed; friends within 2 heal each second, and are cleansed as the spirits come', 900, 'attack2', spiritGuardians, 'Divine Intervention'),
+    cleric: ult('Spirit Guardians', 'Spirits circle her for 10s: foes within 3 are hurt each second and slowed; friends within 3 heal each second, and are cleansed as the spirits come', 900, 'attack2', spiritGuardians, 'Divine Intervention'),
     wanderer: ult('Panacea', 'A cure for every ill: every ally is healed, shielded for 3s and hastened for 4s', 800, 'attack2', (b, me, out) => {
       if (!wounded(b, me)) return false;
       bless(b, me, out, { heal: 9, guard: 3000, haste: 4000 });
