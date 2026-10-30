@@ -5,7 +5,7 @@
 
 import type { Battle, BattleEvent, Unit } from '../sim/battle';
 import { defOf } from '../sim/battle';
-import { kitOf } from '../sim/abilities';
+import { keyOfKit, kitOf, ultKeyOf } from '../sim/abilities';
 import type { Shot } from '../sim/units';
 import { BIG_FOE_HP } from './skillFx';
 import { SPELL_ELEMENT, deathKind, impactElement, isBackstab, missileOf, skillElement, type Element } from './fxRules';
@@ -250,7 +250,7 @@ export function cuesFor(b: Battle, e: BattleEvent): Cued[] {
         else if (e.ail === 'poison') out.push({ cue: 'poisonHiss', gain: 0.25 });
         else if (e.ail === 'shock') out.push({ cue: 'crackle', gain: 0.35 });
       } else if (e.src === 'skill') {
-        const name = kitOf(by)?.skill.name ?? '';
+        const name = keyOfKit(by);
         out.push({ cue: elementCue(skillElement(name)), gain: 0.7 });
       } else if (to.guardUntil !== undefined && to.guardUntil > b.t) {
         out.push({ cue: 'block' });
@@ -274,7 +274,7 @@ export function cuesFor(b: Battle, e: BattleEvent): Cued[] {
     case 'skill': {
       const by = unit(e.by);
       const kit = by ? kitOf(by) : undefined;
-      if (kit?.ultimate?.name === e.name) return [{ cue: 'ultimate' }];
+      if (kit?.ultimate && by && ultKeyOf(by) === e.name) return [{ cue: 'ultimate' }];
       const el = skillElement(e.name);
       const out: Cued[] = [{ cue: elementCue(el), gain: 0.8 }];
       if (by && by.side === 'foe' && by.maxHp >= BIG_FOE_HP) out.push({ cue: 'bossSkill', delay: 60 });
@@ -285,6 +285,23 @@ export function cuesFor(b: Battle, e: BattleEvent): Cued[] {
       return [{ cue: 'dash' }];
     case 'blink':
       return [{ cue: 'blink' }];
+    // (the movement toolkit, RPG-SPELLS batch 1: the shared cues until the rendered `mv-` sounds of the design's section 6.4)
+    case 'shove':
+      return [{ cue: 'windGust', gain: 0.7 }];
+    case 'launch':
+      return [{ cue: 'windGust' }, { cue: 'earthRumble', delay: e.ms, gain: 0.8 }];
+    case 'slam':
+      return [{ cue: 'hitHeavy', gain: 0.9 }];
+    case 'fall':
+      return [{ cue: 'deathThud', gain: 0.6 }];
+    case 'burrow':
+      return [{ cue: 'earthRumble', gain: e.phase === 'up' ? 1.1 : 0.7 }];
+    case 'swap':
+      return [{ cue: 'blink' }, { cue: 'blink', delay: 80, gain: 0.8 }];
+    case 'aura':
+      return [{ cue: 'shieldHum', gain: 0.7 }];
+    case 'wallBreak':
+      return [{ cue: 'frostShatter' }];
     case 'area':
       // (the meteor whistles down and lands with a boom `ms` later; a volley rains)
       return e.id === 'meteor'

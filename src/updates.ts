@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.243.0',
+    date: '2026-10-30',
+    title: 'Groundwork for the new spells',
+    notes: ['Behind the scenes: charges, teleports, pulls, knockbacks, burrowing, walls and auras are built for the heroes\' new spells.', 'Fights play exactly as before.'],
+  },
+  {
     version: '0.242.0',
     date: '2026-10-30',
     title: 'Every find on the wave card; earned heroes ride in',

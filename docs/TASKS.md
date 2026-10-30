@@ -20,6 +20,12 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Cause:** the fight's weather is rolled per board, so about one wave in eight is night: a flat deep-blue tint at 0.36 over the whole screen took about 30% of the light off the board (rain, about one in eight too, took 15%). No dim was left on or stacking.
 - **Fix:** flat tints capped at 0.15 (night 0.14, rain 0.1, ash and embers 0.08); night's mood moves to darkened edges (a vignette clear over the board). A dim from a fall is lifted when a heart burns and the wave starts again.
 - **Status:** ready for review. Typecheck, full `npm test`, `npm run web`, browser checks at 393×852, 360×780 and 412×915 with no page errors. [Note](notes/dark-wave.md); [before](samples/dark-wave-before-393x852.png); [after](samples/dark-wave-after-393x852.png). No merge or version bump.
+### RPG-SPELLS B0/B1 — Fixed skill keys and the movement toolkit
+
+- **Owner:** Claude. **Branch/worktree:** `claude/spells-b01`, `/home/user/spells-b01`.
+- **Authorisation:** owner approved design v2 (`docs/notes/rpg-spells-design.md`) and said build; batches 0 and 1 first.
+- **Scope:** skill keys (`keyOf`, `skillShown`, foes' own copies); the toolkit in `src/sim/toolkit/` (move rule, charge, teleport, pull, shove/launch, burrow, six walls, auras, swap, AI choices, boss rules) with placeholder looks. No hero uses it yet.
+- **Status:** ready for review. Every fight hashes as on main (`test/spells-identity.test.ts`); full `npm test` passes; staged screenshots in `docs/samples/spells-b01-*`. [Notes](notes/spells-b01.md). Next: batch 2, healers and the revive.
 
 ### CAL-SANCTUARY — Portal expeditions and destination arenas
 

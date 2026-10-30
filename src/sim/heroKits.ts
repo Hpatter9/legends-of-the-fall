@@ -10,7 +10,7 @@
 // Randomness: none here. The skills that roll (the Buccaneer's dice) use the battle's skill stream (`roll`), as every skill does.
 
 import type { Battle, BattleEvent, Unit } from './battle';
-import { CHARGE_MAX, kitOf, powered, began, tal, ultimateOf, ultTune, type Skill } from './abilities';
+import { CHARGE_MAX, keyOf, kitOf, powered, began, tal, ultimateOf, ultTune, type Skill } from './abilities';
 import { UNITS } from './units';
 import { HERO_TABLE } from './kits/table';
 import { SKILL2_WHEN } from './kits/when';
@@ -248,7 +248,7 @@ function holding(b: Battle, me: Unit, hk: HeroKit): boolean {
   if (!skill2Open(me)) return false;
   const s = me.ks;
   if (s?.idle2 !== undefined && b.t - s.idle2 < RES.IDLE_MS) return false;
-  const when = SKILL2_WHEN[hk.s2.skill.name];
+  const when = SKILL2_WHEN[keyOf(hk.s2.skill)];
   if (when && !when(b, me)) return false;
   const need = costOf(me, hk.s2) - resOf(me, hk.pool);
   if (need <= 0) return false;
@@ -310,3 +310,12 @@ export const ultFull = (u: Unit): boolean => {
   const ult = ultimateOf(u);
   return !!ult && (u.charge2 ?? 0) >= ult.need;
 };
+
+/** The words a fighter's skill shows, from the key its `skill` event carries: the name of the skill of that key in the fighter's own kit
+ *  (its two hero skills, its kit's skill and ultimate), so a foe that kept a skill's old name shows that one; the key when none matches. */
+export function skillShown(u: Unit, key: string): string {
+  const hk = heroKitOf(u);
+  const kit = kitOf(u);
+  for (const s of [hk?.s1.skill, hk?.s2.skill, kit?.skill, ultimateOf(u), kit?.ultimate]) if (s && keyOf(s) === key) return s.name;
+  return key;
+}

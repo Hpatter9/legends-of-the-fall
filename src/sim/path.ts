@@ -10,8 +10,9 @@ export interface Walk {
   from: number[];
 }
 
-/** The cheapest walks from `start` for a fighter who jumps `jump`, never through a tile in `blocked`. */
-export function walkFrom(b: Board, start: At, jump: number, blocked: ReadonlySet<number>): Walk {
+/** The cheapest walks from `start` for a fighter who jumps `jump`, never through a tile in `blocked` (nor a raised wall, unless it lets
+ *  `side` through). */
+export function walkFrom(b: Board, start: At, jump: number, blocked: ReadonlySet<number>, side?: 'hero' | 'foe'): Walk {
   const n = b.w * b.d;
   const cost = new Array<number>(n).fill(Infinity);
   const from = new Array<number>(n).fill(-1);
@@ -31,7 +32,7 @@ export function walkFrom(b: Board, start: At, jump: number, blocked: ReadonlySet
       if (!t) continue;
       const j = (v + dv) * b.w + u + du;
       if (blocked.has(j)) continue;
-      const step = canStep(b.tiles[i], t, jump);
+      const step = canStep(b.tiles[i], t, jump, side);
       if (step === null) continue;
       const c = cost[i] + step;
       if (c >= cost[j]) continue;
