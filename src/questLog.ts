@@ -1,11 +1,13 @@
 // The quest log (QUESTS batch 1): a sheet over the home screen (the hero sheet's `#hmSheet`, so it opens and closes the same way)
 // with its tabs as a row of pills. Active: the quests taken, each with its goal, a bar, a Track pin and, once done, Hand in.
-// Board: everything on offer from every giver, with Take. Done: the quests handed in, newest first, with their giver's last word.
+// Board: everything on offer from every giver, with Take. Done: the quests handed in, newest first, with their giver's last word,
+// a keepsake if one came with it, and how many times a repeatable has been done. Batch 1b: a quest taken can be dropped (Drop, then
+// a confirm on the row: its progress is lost).
 // The Eidolons tab (the six great summons' chains) comes with a later batch: its place is kept in `LOG_TABS`.
 
-import { faceOf, rewardText } from './questCard';
-import { GIVERS, questById } from './sim/questData';
-import { ACTIVE_MAX, cannotTake, handIn, isDone, progressOf, takeQuest, trackedQuest, trackQuest } from './sim/quests';
+import { giverKeyOf, giverName, giverWords, offerFrom, questFace, rewardText } from './questCard';
+import { questById } from './sim/questData';
+import { ACTIVE_MAX, cannotTake, dropQuest, handIn, isDone, progressOf, takeQuest, timesDone, trackedQuest, trackQuest } from './sim/quests';
 import type { Meta } from './sim/meta';
 import { play } from './render/sound';
 import { todayKey } from './modes';
@@ -54,7 +56,10 @@ export function drawQuestLog(box: HTMLElement, m: Meta, tab: LogTab, hooks: LogH
     b.setAttribute('aria-selected', String(t.id === tab));
     if (t.id === 'active') b.textContent = `Active ${count.active}/${ACTIVE_MAX}`;
     if (t.id === 'board' && count.board) b.append(el('i', 'qlDot', String(count.board)));
-    b.addEventListener('click', () => redraw(t.id));
+    b.addEventListener('click', () => {
+      dropping = null;
+      redraw(t.id);
+    });
     tabs.append(b);
   }
   const list = el('div', 'qlList');
@@ -66,8 +71,12 @@ export function drawQuestLog(box: HTMLElement, m: Meta, tab: LogTab, hooks: LogH
 
 const empty = (list: HTMLElement, line: string) => list.append(el('p', 'qlEmpty', line));
 
+/** The quest whose Drop was tapped, waiting for its confirm (one at a time; any other tap on the log forgets it). */
+let dropping: string | null = null;
+
 function drawActive(list: HTMLElement, m: Meta, redraw: () => void, hooks: LogHooks): void {
   const act = m.quests?.active ?? [];
+  if (dropping && !act.some((a) => a.id === dropping)) dropping = null;
   if (!act.length) return empty(list, 'No quests taken. Gwen keeps the board in the tavern: see the Board tab.');
   const pinned = trackedQuest(m)?.id;
   for (const a of [...act].reverse()) {
@@ -81,10 +90,28 @@ function drawActive(list: HTMLElement, m: Meta, redraw: () => void, hooks: LogHo
     bar.append(fill);
     body.append(el('b', '', q.title), el('small', '', q.text), bar, el('small', 'qlCount', `${p.now}/${p.need} · ${rewardText(q.reward)}`));
     const side = el('div', 'qlSide');
-    if (isDone(a)) {
+    if (dropping === a.id) {
+      // (the confirm: the row says what dropping costs, with Drop it and Keep)
+      row.classList.add('dropping');
+      body.append(el('small', 'qlWarn', q.repeat ? `Drop it? Its progress is lost, and it comes back in ${q.repeat} day${q.repeat === 1 ? '' : 's'}.` : 'Drop it? Its progress is lost; it may be offered again another day.'));
+      const yes = el('button', 'danger', 'Drop it');
+      yes.addEventListener('click', () => {
+        dropping = null;
+        if (!dropQuest(m, a.id, todayKey())) return;
+        play('tap');
+        hooks.changed();
+        redraw();
+      });
+      const no = el('button', '', 'Keep');
+      no.addEventListener('click', () => {
+        dropping = null;
+        redraw();
+      });
+      side.append(yes, no);
+    } else if (isDone(a)) {
       const give = el('button', 'primary', 'Hand in');
       give.addEventListener('click', () => {
-        if (!handIn(m, a.id)) return;
+        if (!handIn(m, a.id, todayKey())) return;
         play('coinClaim');
         hooks.changed();
         redraw();
@@ -98,9 +125,15 @@ function drawActive(list: HTMLElement, m: Meta, redraw: () => void, hooks: LogHo
         hooks.changed();
         redraw();
       });
-      side.append(pin);
+      const drop = el('button', 'qlDrop', 'Drop');
+      drop.setAttribute('aria-label', `Drop ${q.title}`);
+      drop.addEventListener('click', () => {
+        dropping = a.id;
+        redraw();
+      });
+      side.append(pin, drop);
     }
-    row.append(faceOf(q.giver), body, side);
+    row.append(questFace(q), body, side);
     list.append(row);
   }
 }
@@ -110,10 +143,10 @@ function drawBoard(list: HTMLElement, m: Meta, redraw: () => void, hooks: LogHoo
   if (!offers.length) return empty(list, 'Nothing on offer today. Gwen pins a new quest each day; passersby come and go.');
   for (const o of offers) {
     const q = questById(o.id)!;
-    const g = GIVERS[q.giver];
-    const row = el('div', 'qlRow');
+    const row = el('div', `qlRow${q.repeat ? ' rep' : ''}`);
     const body = el('div', 'qlBody');
-    body.append(el('b', '', q.title), el('small', 'qlGiver', g.slot === 'passerby' ? `${g.name}, passing today` : g.name), el('small', '', q.text), el('small', 'qlCount', rewardText(q.reward)));
+    const n = timesDone(m, q.id);
+    body.append(el('b', '', q.title), el('small', 'qlGiver', offerFrom(q) + (q.repeat ? ` · repeatable${n ? `, done ${n}×` : ''}` : '')), el('small', '', q.text), el('small', 'qlCount', rewardText(q.reward)));
     const side = el('div', 'qlSide');
     const take = el('button', 'primary', 'Take');
     const why = cannotTake(m, q.id);
@@ -126,7 +159,7 @@ function drawBoard(list: HTMLElement, m: Meta, redraw: () => void, hooks: LogHoo
       redraw();
     });
     side.append(take);
-    row.append(faceOf(q.giver), body, side);
+    row.append(questFace(q), body, side);
     list.append(row);
   }
   if ((m.quests?.active.length ?? 0) >= ACTIVE_MAX) list.append(el('p', 'qlEmpty', `Your log is full: ${ACTIVE_MAX} quests at a time. Hand one in to take another.`));
@@ -139,8 +172,13 @@ function drawDone(list: HTMLElement, m: Meta): void {
     const q = questById(id)!;
     const row = el('div', 'qlRow done');
     const body = el('div', 'qlBody');
-    body.append(el('b', '', q.title), el('small', 'qlGiver', GIVERS[q.giver].name), el('small', 'qlWord', `“${q.done[0]}”`));
-    row.append(faceOf(q.giver), body);
+    const title = el('b', '', q.title);
+    const n = timesDone(m, id);
+    // (a repeatable's count: "×3")
+    if (q.repeat) title.append(el('i', 'qlTimes', `×${n}`));
+    body.append(title, el('small', 'qlGiver', giverName(giverKeyOf(q)).name), el('small', 'qlWord', `“${giverWords(q, q.done[0])}”`));
+    if (q.reward.keepsake) body.append(el('small', 'qlKeep', `Keepsake: ${q.reward.keepsake}`));
+    row.append(questFace(q), body);
     list.append(row);
   }
 }

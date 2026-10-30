@@ -21,6 +21,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Scope:** new `src/render/tavernLife.ts`, `src/tavernLifeDraw.ts`, `src/art/tavern/life/`, `tools/tavern-life/`, `test/tavern-life.test.ts`, `docs/notes/tavern-art-prompt.md`; spots reassigned in `src/render/tavernSpots.ts`; hooks in `src/tavern.ts`; `CREDITS.md`.
 - **Status:** ready for review. [Note](notes/tavern-life.md); [art prompt](notes/tavern-art-prompt.md) (52 images); screenshots `samples/tavern-life-*.png`.
 
+### QUESTS-1B — Quests batch 1b: repeats, drops, 100 unique and 30 repeatable quests
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/quests-content`, `/home/user/lotf-quests2` (from `claude/quests-1`, with main 0.263.0 merged).
+- **Goal:** the owner's decisions: quests repeat (a cooldown), a quest taken can be dropped, and 100 unique and 30 repeatable quests, varied in goal, story and reward, across every giver (Gwen, the board's notices, the four passersby, the heroes as patrons, the ruler's Royal charges, spoils, the rift's voice, Duchess), each with a path to the player.
+- **Scope:** `src/sim/quests.ts`, `src/sim/questData.ts`, new `src/sim/questData/*.ts`, `src/questLog.ts`, `src/questCard.ts`, `src/questArt.ts`, `src/quests.css`, `src/art/quests/` (three faces), `tools/quests/`, `test/quests.test.ts`, new `test/quests-content.test.ts`; small hooks in `src/sim/modes.ts` (`settleRun`'s tallies and the after-fight offers), `src/sim/stand.ts` (`holds`), `src/standView.ts`, `src/main.ts` (the ultimates tally, a toast), `src/home.ts`, `src/tavern.ts` (the patrons' and Duchess's "!"); `test/summon-stones.test.ts` (quests may pay shards: the owner's ask).
+- **Status:** ready for review. [Note](notes/quests.md) (batch 1b); screenshots `samples/quests-2-*.png`.
+
 ### QUESTS-1 — Quests batch 1: the tavern and the first quests
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/quests-1`, `/home/user/lotf-quests1` (from main 0.262.0, with `claude/quests-design` merged).

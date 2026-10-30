@@ -105,6 +105,8 @@ export interface TavernQuests {
   onGwen(): void;
   onBoard(): void;
   onQuests(): void;
+  /** A giver in the tavern tapped (QUESTS-1b: a hero with a quest of their own, `hero:<kind>`, or Duchess with one). */
+  onGiver?(key: string): void;
 }
 
 interface Rig {
@@ -622,6 +624,8 @@ export class Tavern {
     const dy = foot - f - lift - bob;
     g.drawImage(this.goatArt!, goatFrame(goat) * f, 0, f, f, x - f / 2, dy, f, f);
     drawDuchessCosmetic(g, settings().duchessHat, x - f / 2, dy, 0.5, goat.face, 0);
+    const mark = this.quests && this.meta ? giverMark(this.meta, 'duchess') : null;
+    if (mark) this.bubbleAt(mark === 'ready' ? 'ready' : 'quest', x, dy - 14);
   }
 
   /** The room names and edge arrows under the picture: which room the view is on, and which ways there is more to see. */
@@ -672,7 +676,7 @@ export class Tavern {
       // (TAVERN LIFE: a sitter's seat: a stool or bench in front hiding where the legs join, a chair behind; a painted sheet has its own)
       else if (actor && sits(kind, spot) && !hasPainted(kind)) list.push({ depth: spot.depth + (seatInFront(spot) ? 0.25 : -0.5), paint: () => this.seat(a, spot) });
       if (actor) list.push({ depth: spot.depth, paint: () => this.hero(actor) });
-      if (actor && LIFE[kind]) list.push({ depth: spot.depth + 0.3, paint: () => actor.body && drawLifeFront(this.lifeCtx(), actor.body, SPOTS) });
+      if (actor && LIFE[kind]) list.push({ depth: spot.depth + 0.3, paint: () => this.lifeFront(actor) });
     }
     if (this.goat && this.goatArt && Tavern.GOAT.min - 30 < right && Tavern.GOAT.max + 30 > left) list.push({ depth: Tavern.GOAT.y, paint: () => this.duchess() });
     // (QUESTS: the board leans on the wall, and Gwen stands behind the bar, drawn before it so the bar hides her legs)
@@ -816,6 +820,25 @@ export class Tavern {
     }
     if (a.step) drawAura(g, a.aura, fx, fy, tall, this.now, 'front', face, this.reduced);
     if (a.emote) this.bubble(a, fx, fy - Math.round(rig.figure * k) - 15);
+    // (TAVERN LIFE: a hero with an activity wears its mark after its props, `lifeFront`, so nothing it gives off covers it)
+    else if (!life) this.patronMark(a, fx, fy - Math.round(rig.figure * k) - 15);
+  }
+
+  /** (QUESTS-1b) a patron with a quest of their own wears the gold "!", or the tick while theirs waits to be handed in. */
+  private patronMark(a: Actor, cx: number, top: number): boolean {
+    const mark = this.quests && this.meta ? giverMark(this.meta, `hero:${a.kind}`) : null;
+    if (mark) this.bubbleAt(mark === 'ready' ? 'ready' : 'quest', cx, top);
+    return !!mark;
+  }
+
+  /** (TAVERN LIFE) the props in front of a hero at their activity, then their quest mark over their head (over a sitter's lower head
+   *  too); a hero with a mark gives off nothing over their head (no notes, z's or speech), so the mark stays clear. */
+  private lifeFront(a: Actor): void {
+    const b = a.body;
+    if (!b) return;
+    const marked = !!(this.quests && this.meta && giverMark(this.meta, `hero:${a.kind}`));
+    drawLifeFront(this.lifeCtx(), { ...b, marked }, SPOTS);
+    if (marked) this.patronMark(a, b.fx, b.fy + b.drop - Math.round(b.tall) - 15);
   }
 
   /** The speech bubbles drawn once each (a bubble is a couple of hundred pixel rectangles, too many to redraw every frame). */
@@ -864,6 +887,11 @@ export class Tavern {
     const ry = this.camY + (e.clientY - box.top) / this.scale;
     // (Duchess first: a tap on her few pixels is hers, and she hops)
     if (this.goat && this.goatArt && Math.abs(rx - this.goat.x) < 12 && ry > Tavern.GOAT.y - 20 && ry < Tavern.GOAT.y + 6) {
+      // (QUESTS-1b: while she has a quest for you, a tap is her card, not her hat)
+      if (this.quests?.onGiver && this.meta && giverMark(this.meta, 'duchess')) {
+        this.quests.onGiver('duchess');
+        return;
+      }
       if (tapGoat(this.goat, this.now)) {
         try {
           const raw = localStorage.getItem('legends.meta');
@@ -910,7 +938,9 @@ export class Tavern {
       const d = Math.hypot((rx - cx) / half, (ry - (spot.y - tall / 2)) / (tall / 2));
       if (!best || d < best.d - 0.15 || (Math.abs(d - best.d) <= 0.15 && spot.depth > best.depth)) best = { kind, d, depth: spot.depth };
     }
-    if (best) this.onPick(best.kind);
+    // (QUESTS-1b: a hero with a quest for you opens their card; a tap on them again, once it is taken, is their sheet as ever)
+    if (best && this.quests?.onGiver && this.meta && giverMark(this.meta, `hero:${best.kind}`)) this.quests.onGiver(`hero:${best.kind}`);
+    else if (best) this.onPick(best.kind);
   }
 
   private cycleDuchessHat(x: number, y: number): void {

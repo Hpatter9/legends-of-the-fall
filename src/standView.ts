@@ -1726,7 +1726,7 @@ export class StandView {
     const first = !s.run.summary;
     this.summary = settleStand(m, s.run, s.run.armies);
     // (the waves the run cleared count for the quests taken, once: QUESTS)
-    if (first && this.summary) this.host.questsDone?.(noteQuests(m, standFight(this.summary.cleared)));
+    if (first && this.summary) this.host.questsDone?.(noteQuests(m, standFight(this.summary.cleared, { best: this.summary.best, act: this.summary.act, held: this.summary.holds })));
     saveMeta(m);
     dropStand();
     const end = this.parts.end;

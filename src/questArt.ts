@@ -7,11 +7,30 @@ import type { GiverId } from './sim/questData';
 import gwenFace from './art/quests/gwen-face.png';
 import pedlarFace from './art/quests/pedlar-face.png';
 import pilgrimFace from './art/quests/pilgrim-face.png';
+import messengerFace from './art/quests/messenger-face.png';
+import hunterFace from './art/quests/hunter-face.png';
+import duchessFace from './art/quests/duchess-face.png';
+import spoilsFace from './art/items/star_chart.png';
+import riftFace from './art/items/rift_shard.png';
 import gwenSheet from './art/quests/gwen.png';
 import boardUrl from './art/quests/board.png';
 
-/** A giver's portrait for their card and the log's rows (square; drawn at 64 px or less). */
-export const FACES: Record<GiverId, string> = { gwen: gwenFace, pedlar: pedlarFace, pilgrim: pilgrimFace };
+/** A giver's portrait for their card and the log's rows (square; drawn at 64 px or less). A patron's is the hero's own and the ruler's
+ *  the chosen ruler's (put in by `questCard.ts`); theirs here are fallbacks. Spoils and the rift show a thing, not a face: a found map
+ *  and a rift shard, from the gear icons. */
+export const FACES: Record<GiverId, string> = {
+  gwen: gwenFace,
+  notice: boardUrl,
+  pedlar: pedlarFace,
+  pilgrim: pilgrimFace,
+  messenger: messengerFace,
+  hunter: hunterFace,
+  patron: gwenFace,
+  ruler: messengerFace,
+  spoils: spoilsFace,
+  rift: riftFace,
+  duchess: duchessFace,
+};
 
 /** Gwen behind the bar: 64 px cells, facing left; row 0 her stand (1 frame), row 1 talking (5 frames). */
 export const GWEN = { url: gwenSheet, cell: 64, stand: 1, talk: 5 } as const;

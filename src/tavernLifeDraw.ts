@@ -114,6 +114,8 @@ export interface Body {
   tall: number;
   face: 1 | -1;
   drop: number;
+  /** A quest mark is over their head (QUESTS-1b): nothing is given off up there. */
+  marked?: boolean;
 }
 
 /** The hero's seat's top above the floor (room pixels): where a sitting hero's hips go. */
@@ -378,13 +380,14 @@ export function drawLifeFront(c: LifeCtx, b: Body, spots: Record<string, Spot>):
     case 'sing':
     case 'music': {
       if (!painted && life.holds) pack(c, life.holds, hand.x, hand.y + 1, 0, 1, flip);
+      if (b.marked) break;
       const head = { x: b.fx + b.face * 4, y: top - 2 };
       if (c.reduced) pack(c, 'note-gold', head.x + b.face * 6, head.y - 4, 0);
       else rising(c, 'note-gold', head.x + b.face * 4, head.y, 900, 2200, 18, 3, seed, 'note-pink');
       break;
     }
     case 'cheer':
-      if (u >= 0.15 && u < 0.85) pack(c, 'bang', b.fx, top - 9, Math.floor(u * 6));
+      if (!b.marked && u >= 0.15 && u < 0.85) pack(c, 'bang', b.fx, top - 9, Math.floor(u * 6));
       break;
     case 'cards': {
       if (!painted) {
@@ -401,10 +404,10 @@ export function drawLifeFront(c: LifeCtx, b: Body, spots: Record<string, Spot>):
     }
     case 'story':
       // (the teller's speech: one, two, three dots, over and over; still under reduced motion)
-      talk(c, b.fx + b.face * 6, top - 6, c.reduced ? 3 : 1 + (Math.floor((c.now + seed * 3000) / 420) % 3));
+      if (!b.marked) talk(c, b.fx + b.face * 6, top - 6, c.reduced ? 3 : 1 + (Math.floor((c.now + seed * 3000) / 420) % 3));
       break;
     case 'listen':
-      if (u >= 0.1 && u < 0.9) pack(c, 'bang', b.fx, top - 9, Math.floor(u * 6));
+      if (!b.marked && u >= 0.1 && u < 0.9) pack(c, 'bang', b.fx, top - 9, Math.floor(u * 6));
       break;
     case 'read':
       if (!painted) {
@@ -417,6 +420,7 @@ export function drawLifeFront(c: LifeCtx, b: Body, spots: Record<string, Spot>):
       }
       break;
     case 'doze':
+      if (b.marked) break;
       if (c.reduced) pack(c, 'zzz', b.fx + b.face * 6, top - 6, 0);
       else rising(c, 'zzz', b.fx + b.face * 6, top - 2, 2200, 2600, 12, 2, seed);
       break;

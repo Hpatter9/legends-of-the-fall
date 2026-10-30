@@ -65,6 +65,15 @@ board; Harrow now faces them); Kazan faces the little hearth. Fifteen to a room 
   at 30 frames a second there). Nothing blinks: the rising things fade out over their last third.
 - Tapping a hero still opens their sheet (the tap uses the spot, as before).
 
+## The patrons' quest marks (QUESTS-1b, merged from main 0.264.0)
+
+A hero with a quest of their own still wears the gold "!" (or the tick) over their head, and a tap on them still opens their card,
+wherever their activity puts them. The mark is now drawn after the hero's props (`lifeFront` in `tavern.ts`), over a sitter's lower
+head, and a marked hero gives off nothing over their head (no notes, z's, speech box or "!" of their own), so it stays clear. Checked
+by `tools/tavern-life/patrons.mjs` with offers from Kwame (bar stool), Eirik (the arm-wrestle), Selam (a chair), Harrow (under the
+dartboard), Itzel (dancing by the stage), Edmund (the card table), Hideo (telling his story) and Hobb (dozing): every mark shows, and
+tapping Harrow and Itzel opens their cards (`docs/samples/tavern-life-patrons-*.png`).
+
 ## The art prompt
 
 `docs/notes/tavern-art-prompt.md`: 52 images for Antigravity (branch `art/tavern-life`, PR "Tavern life art", `art-source/tavern-life/`):
