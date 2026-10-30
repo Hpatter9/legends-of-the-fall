@@ -37,11 +37,14 @@ export interface Settings {
   quips: boolean;
   /** Whether cinematics play by themselves (the opening, a boss's arrival, a hero earned, the summoning). Off, they never start, but the codex's Scenes list can still play a seen one. */
   cinematics: boolean;
+  /** Whether a hero's ultimate plays its full moment (ULT-CUTIN, docs/notes/battle-hud.md): the fight pauses, a slash of the hero's art crosses
+   *  the screen with the ultimate's name and the board dims round the caster. Off, the short one: a quick banner while the fight runs on. */
+  ultFull: boolean;
   /** Duchess's equipped unlockable cosmetic accessory. */
   duchessHat: DuchessCosmeticId;
 }
 
-export const DEFAULTS: Settings = { ruler: DEFAULT_RULER, music: 100, effects: 100, speed: 1, shake: true, numbers: true, saver: false, awake: true, quips: true, cinematics: true, duchessHat: 'none' };
+export const DEFAULTS: Settings = { ruler: DEFAULT_RULER, music: 100, effects: 100, speed: 1, shake: true, numbers: true, saver: false, awake: true, quips: true, cinematics: true, ultFull: true, duchessHat: 'none' };
 
 /** The settings from what was saved (`raw`, the stored text or null): anything missing or wrong falls back to the default. */
 export function parseSettings(raw: string | null): Settings {
@@ -67,6 +70,7 @@ export function parseSettings(raw: string | null): Settings {
     awake: flag(saved.awake, DEFAULTS.awake),
     quips: flag(saved.quips, DEFAULTS.quips),
     cinematics: flag(saved.cinematics, DEFAULTS.cinematics),
+    ultFull: flag(saved.ultFull, DEFAULTS.ultFull),
     duchessHat: validHat(saved.duchessHat),
   };
 }
@@ -115,7 +119,7 @@ type Page = 'sound' | 'display' | 'gameplay' | 'ruler' | 'data' | 'dev' | 'updat
 const PAGES: readonly { id: Page; title: string; hint: string }[] = [
   { id: 'sound', title: 'Sound', hint: 'Music and effects volumes' },
   { id: 'display', title: 'Display and motion', hint: 'Screen shake, damage numbers, battery saver, keep awake' },
-  { id: 'gameplay', title: 'Gameplay', hint: 'Fight speed, hero quips, cinematics, tips' },
+  { id: 'gameplay', title: 'Gameplay', hint: 'Fight speed, hero quips, cinematics, ultimate scenes, tips' },
   { id: 'ruler', title: 'Ruler and Duchess', hint: 'Who rules your keep, and Duchess’s costume' },
   { id: 'data', title: 'Save and data', hint: 'Start over' },
   { id: 'dev', title: 'Developer', hint: 'Crowns, shards and stones for testing' },
@@ -184,6 +188,7 @@ function pageRows(id: Page, s: Settings): HTMLElement[] {
         speedRow(s.speed),
         toggleRow('Hero quips', 'Heroes (and now and then Duchess) say the odd word in a small speech bubble', 'quips', s.quips),
         toggleRow('Cinematics', 'Short scenes at big moments. Off, none play by themselves; the Scenes list in the codex still plays them', 'cinematics', s.cinematics),
+        toggleRow('Full ultimate scenes', 'On, the fight pauses as an ultimate fires: the hero slashes across the screen, its name shows and the board dims round the caster. Off, a quick banner while the fight runs on', 'ultFull', s.ultFull),
         resetTipsRow(),
       ];
     case 'ruler':
@@ -437,7 +442,7 @@ function speedRow(value: 1 | 2): HTMLElement {
   return r;
 }
 
-function toggleRow(title: string, hint: string, key: 'shake' | 'numbers' | 'saver' | 'awake' | 'quips' | 'cinematics', value: boolean): HTMLElement {
+function toggleRow(title: string, hint: string, key: 'shake' | 'numbers' | 'saver' | 'awake' | 'quips' | 'cinematics' | 'ultFull', value: boolean): HTMLElement {
   const [r] = row(title, hint);
   const b = document.createElement('button');
   b.className = value ? 'toggle on' : 'toggle';

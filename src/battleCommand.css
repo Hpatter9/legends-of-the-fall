@@ -75,25 +75,3 @@ body[data-phase='deploy'] #bench .card.placed { border-color: #e1c582; }
 @media (prefers-reduced-motion: reduce) {
   #panel .card, #panel .spell { animation: none; }
 }
-/* Keep the newer manual ultimate controls intact when integrating the battle kits. */
-#heroBar { order: -2; }
-#heroBar .hb, #heroBar .hbAuto {
-  border: 1px solid #a28a58; border-radius: 4px;
-  background: radial-gradient(ellipse at top, #83945b33, transparent 75%), linear-gradient(#2b372a, #111d17);
-  box-shadow: inset 0 0 0 2px #0c1712, 0 2px 5px #0007;
-}
-#heroBar .hbRing .trk { stroke: #0a1710; }
-#heroBar .hbRing .arc { stroke: #b99ae5; }
-#heroBar .hb.ready { border-color: #f6db91; box-shadow: inset 0 0 0 1px #dbc17b, 0 0 12px #edc56c66; }
-#heroBar .hb.ready .arc { stroke: #ffe499; }
-#heroBar .hb.queued { border-color: #d9b2ff; }
-#heroBar .hb.queued .arc { stroke: #f0dcff; }
-#heroBar .hbAuto.on { background: linear-gradient(#9d8e4e, #655930); color: #fff3d0; }
-#heroBar .hbName { color: #eee1bd; }
-body[data-phase='fight'] #spellCards .spell {
-  min-height: 52px; padding: 6px 4px; border: 1px solid #b69a64;
-  border-radius: 5px; column-gap: 4px;
-}
-body[data-phase='fight'] #spellCards .spell .spIcon { zoom: .5; margin: 0; }
-body[data-phase='fight'] #spellCards .spell b { font: 400 12px/1.1 var(--body); }
-body[data-phase='fight'] #spellCards .spell em { font: 400 12px/1.2 var(--body); }

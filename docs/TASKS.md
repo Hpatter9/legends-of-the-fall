@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### BATTLE-HUD — The fight's hero rows and spell orbs; ULT-CUTIN — an ultimate's moment
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/battle-hud-final`, `/home/user/lotf-hud` (from main 0.254.0).
+- **Goal:** the owner's pick of the mock-ups (B's hero rows, C's spell orbs) made the fight screen everywhere, replacing the hero bar; then the owner's ask that an ultimate feel special: the fight pauses for a slash cut-in of the hero's art and the ultimate's name with the board dimmed round the caster, resuming at once for a lingering one, with a Settings toggle for a short version (no pause).
+- **Scope:** new `src/fightHud.ts`/`.css`, `src/fightHudRules.ts`, `src/ultMoment.ts`, `src/ultMomentRules.ts`; hooks in `src/main.ts`, `src/standView.ts`; `src/index.html` (the spells' home), `src/settings.ts` (`ultFull`); the old hero bar and its CSS removed; tests `test/fight-hud.test.ts`, `test/ult-moment.test.ts`; `tools/battle-hud/shots.mjs`.
+- **Status:** ready for review. [Note](notes/battle-hud.md); screenshots `samples/battle-hud-final-*.png`, `samples/ult-cutin-*.png`.
+
 ### RPG-SPELLS B7 — The monster heroes
 
 - **Owner:** Claude. **Branch/worktree:** `claude/spells-b7`, `/home/user/spells-b7`.

@@ -1,0 +1,241 @@
+/* The fight's hero rows and the king's spell orbs (BATTLE-HUD, docs/notes/battle-hud.md, `fightHud.ts`). One row a hero: portrait, name, health
+   and pool with numbers, two wide skill chips, and the ultimate's pearlescent glow filling along the row (full: a sheen crosses it, TAP on the
+   portrait). A party over five takes two columns of compact rows. The king's spells are round orbs under the top bar, the mana and the Auto
+   switch beside them. Text is 12px and never bold; nothing blinks (glows ease in and out, the pearl's colours drift by position, never by
+   brightness), and with reduced motion everything holds still. Loaded after battleCommand.css. */
+
+/* ---- where it shows: the rows take the hero bar's place in the panel; the orbs sit under the top bar ---- */
+#fightHud { display: none; order: -2; }
+body[data-phase='fight'] #fightHud:not(:empty) { display: grid; }
+body[data-phase='fight'] #fightHud:not(:empty) ~ #benchWrap { display: none; }
+body[data-phase='fight'] #panel { padding-top: 6px; padding-bottom: calc(env(safe-area-inset-bottom) + 5px); gap: 4px; }
+
+.fightHud { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+/* (two columns filling downwards: the party reads down the first, then the second) */
+.fightHud.pairs { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(var(--fh-rows, 4), auto); grid-auto-flow: column; column-gap: 3px; }
+
+/* ---- a row ---- */
+.fhRow { position: relative; overflow: hidden; min-width: 0; box-sizing: border-box; display: grid; grid-template-columns: 34px minmax(0, 0.92fr) minmax(0, 2.08fr);
+  grid-template-rows: 12px 12px 12px; column-gap: 4px; row-gap: 0; align-items: center; height: 38px; padding: 0 2px 0 0;
+  color: #f0e6d2; font: 400 12px/12px var(--body); text-shadow: var(--outline); touch-action: manipulation; cursor: pointer; -webkit-touch-callout: none; user-select: none;
+  border: 1px solid #a28a58; border-radius: 3px; background: radial-gradient(ellipse at top, #83945b33, transparent 75%), linear-gradient(#2b372a, #111d17);
+  box-shadow: inset 0 0 0 1px #0c1712, inset 0 -2px 0 var(--hc, transparent); }
+.fhRow > :not(.fhPearl):not(.fhSheen) { position: relative; z-index: 1; }
+.fhRow.g4 .fhPic { filter: drop-shadow(0 0 3px rgb(var(--p4-rgb) / 0.95)); }
+.fhPic { grid-row: 1 / span 3; position: relative; display: block; width: 34px; height: 34px; margin-top: 1px; }
+.fhPortrait { display: block; width: 100%; height: 100%; image-rendering: pixelated; background: rgb(var(--black-rgb) / 0.35); box-shadow: inset 0 0 0 1px #a28a5866; }
+.fhPlate { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); padding: 0 2px; color: var(--black, #000); background: var(--gold, #f5c542);
+  border: 1px solid var(--black, #000); font: 400 12px/11px var(--body); text-shadow: none; white-space: nowrap; pointer-events: none; }
+.fhPlate[hidden] { display: none; }
+.fhName { grid-column: 2; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #eee1bd; }
+/* (the bars: the number sits in the bar) */
+.fhBar { grid-column: 2; position: relative; display: block; height: 12px; box-sizing: border-box; background: #0a1710; border: 1px solid rgb(var(--black-rgb) / 0.9);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.7); overflow: hidden; }
+.fhBar i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; }
+.fhBar b { position: relative; display: block; font: 400 12px/10px 'Pixelify Sans', var(--body); text-align: center; white-space: nowrap; overflow: hidden; }
+.fhBar.hp i { background: linear-gradient(#8ef07a, #3fa836); }
+.fhBar.mana i { background: linear-gradient(var(--b5, #9fd4ff), var(--b2, #2a6ad1)); }
+.fhBar.stamina i { background: linear-gradient(#ffe27a, #d79a1e); }
+
+/* (a skill chip: an element-coloured edge, its pack icon, the name and the cost; the cooldown sweeps off it, a thin line under it fills towards
+   the cost; greyed while it cannot be paid, dim and grey while locked) */
+.fhChips { grid-column: 3; grid-row: 1 / span 3; display: grid; grid-template-columns: 1fr 1fr; gap: 3px; align-self: stretch; padding: 2px 0; }
+.fhChip { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 3px; overflow: hidden; min-width: 0; padding: 0 3px 1px 3px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--el, #fff) 24%, rgb(8 14 11 / 0.82)), rgb(8 14 11 / 0.78) 60%); border: 1px solid rgb(255 255 255 / 0.2); border-left: 3px solid var(--el, #fff); }
+.fhIcon { display: block; flex: none; background-repeat: no-repeat; image-rendering: pixelated; }
+.fhSk { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.fhSk b { font: 400 12px/12px 'Pixelify Sans', var(--body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fhSk em { font: 400 12px/12px 'Pixelify Sans', var(--body); font-style: normal; color: var(--b5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fhCd { position: absolute; top: 0; right: 0; bottom: 0; width: calc(var(--cd, 0) * 100%); background: rgb(var(--black-rgb) / 0.62); border-left: 1px solid rgb(255 255 255 / 0.5); pointer-events: none; transition: width 0.1s linear; }
+.fhPay { position: absolute; left: 0; bottom: 0; height: 2px; width: calc(var(--pay, 0) * 100%); background: var(--el, #fff); opacity: 0.9; pointer-events: none; }
+.fhChip.short { filter: grayscale(0.85) brightness(0.8); }
+.fhChip.short em { color: #ff9a8a; }
+.fhChip.shut { filter: grayscale(1); opacity: 0.5; }
+.fhChip.shut .fhPay, .fhChip.shut .fhCd { display: none; }
+.fhChip.revive { border-color: #fff3c0; }
+.fhChip.revive b { color: #fff3c0; }
+.fhChip.fired { filter: none; animation: fhFired 1s ease-out 1; }
+
+/* (the ultimate's meter: a pearly sheen filling along the row, its colours drifting; brighter the fuller it is) */
+.fhPearl { position: absolute; z-index: 0; left: 0; top: 0; bottom: 0; width: calc(var(--ult, 0) * 100%); pointer-events: none;
+  background: linear-gradient(115deg, #ff9fe6, #8fe3ff, #c6a8ff, #ffe48f, #8fffd0, #ff9fe6, #8fe3ff); background-size: 300% 300%; mix-blend-mode: screen;
+  opacity: calc(0.25 + var(--ult, 0) * 0.4); box-shadow: 1px 0 0 rgb(255 255 255 / 0.9), 4px 0 10px rgb(240 220 255 / 0.85); animation: fhPearl 6s linear infinite; }
+.fhRow.locked .fhPearl { display: none; }
+.fhSheen { display: none; position: absolute; z-index: 0; inset: -20% -60%; pointer-events: none; background: linear-gradient(105deg, transparent 40%, rgb(255 255 255 / 0.5) 50%, transparent 60%); }
+.fhRow.ready .fhPearl { opacity: 0.8; animation-duration: 2.4s; }
+.fhRow.ready .fhSheen { display: block; animation: fhSheen 1.8s ease-in-out infinite; }
+.fhRow.ready { border-color: #f6db91; box-shadow: 0 0 0 1px rgb(255 255 255 / 0.55), 0 0 10px rgb(255 190 250 / 0.8), 0 0 16px rgb(140 225 255 / 0.6); }
+.fhRow.queued { border-color: #d9b2ff; }
+.fhRow.queued .fhPearl { opacity: 0.5; }
+.fhRow.fallen { filter: grayscale(1) brightness(0.6); }
+.fhRow.fallen .fhPearl { display: none; }
+
+/* (the cast: the row lights in the skill's element and its name rises over it, then both ease away) */
+.fhCast { position: absolute !important; z-index: 3 !important; left: 0; right: 0; top: 50%; transform: translateY(-50%); text-align: center; opacity: 0; pointer-events: none; color: #fff;
+  font: 400 12px/14px var(--body); padding: 2px 0; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--cast, #fff) 70%, #000) 20%, color-mix(in srgb, var(--cast, #fff) 70%, #000) 80%, transparent); }
+.fhRow.casting { animation: fhCastGlow 1.05s ease-out 1; }
+.fhRow.casting .fhCast { animation: fhCastName 1.05s ease-out 1; }
+.fhRow.nudge { animation: fhNudge 0.35s ease-out 1; }
+
+/* ---- compact rows (a party over five): portrait, name and bars, the two skills as small chips (icon and cost) stacked at the right ---- */
+.pairs .fhRow { grid-template-columns: 30px minmax(0, 1fr) 40px; column-gap: 3px; }
+.pairs .fhChip.shut .fhIcon { display: none; }
+.pairs .fhChip.shut { grid-template-columns: minmax(0, 1fr); }
+.pairs .fhPic { width: 30px; height: 36px; margin-top: 0; }
+.pairs .fhPortrait { height: 30px; margin-top: 3px; }
+.pairs .fhChips { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 2px; }
+.pairs .fhChip { padding: 0 2px 1px 2px; border-left-width: 2px; column-gap: 2px; }
+.pairs .fhSk b { display: none; }
+.pairs .fhSk em { text-align: right; }
+.pairs .fhBar b { letter-spacing: -0.5px; }
+
+/* ---- the Auto switch, beside the orbs ---- */
+.fhAuto { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; flex: none; width: 46px; height: 40px; min-height: 0; padding: 2px;
+  border: 1px solid #a28a58; border-radius: 4px; background: radial-gradient(ellipse at top, #83945b33, transparent 75%), linear-gradient(#2b372a, #111d17);
+  box-shadow: inset 0 0 0 2px #0c1712, 0 2px 5px #0007; color: rgb(255 255 255 / 0.8); font: 400 12px/12px var(--body); cursor: pointer; }
+.fhAuto .sw { position: relative; display: block; width: 26px; height: 14px; border-radius: 7px; background: var(--s1); border: 1px solid rgb(255 255 255 / 0.3); }
+.fhAuto .sw b { position: absolute; left: 1px; top: 1px; width: 12px; height: 12px; border-radius: 50%; background: #9aa0a8; transition: left 0.15s; }
+.fhAuto.on { color: #fff3d0; background: linear-gradient(#9d8e4e, #655930); border-color: #f6db91; }
+.fhAuto.on .sw b { left: 13px; background: #fff3b0; }
+
+/* ---- the king's spells as orbs under the top bar (the main fight screen) ---- */
+#hudSpells { position: fixed; z-index: 3; left: 8px; right: 8px; top: 96px; display: none; align-items: flex-start; gap: 4px; pointer-events: none; }
+body[data-phase='fight'] #hudSpells { display: flex; }
+#hudSpells > * { pointer-events: auto; }
+#hudSpells .fhAuto { margin-left: auto; }
+#hudSpells #spells { position: relative; flex-direction: row; align-items: center; gap: 4px; }
+#hudSpells #mana { width: 62px; height: 40px; box-sizing: border-box; min-height: 0; flex-direction: column; align-items: stretch; justify-content: center; gap: 2px; padding: 3px 4px;
+  background: rgb(var(--black-rgb) / 0.62); border: 1px solid #a28a58; border-radius: 4px; }
+#hudSpells #mana::before { font: 400 12px/12px var(--body); letter-spacing: 0.05em; text-align: center; }
+#hudSpells #mana i { flex: none; width: 100%; height: 6px; border-width: 1px; }
+#hudSpells #mana b { min-width: 0; text-align: center; font: 400 12px/12px 'Pixelify Sans', var(--body); }
+#hudSpells #spellCards { display: flex; gap: 4px; }
+body[data-phase='fight'] #hudSpells #spellCards .spell { position: relative; width: 40px; height: 40px; min-height: 0; padding: 0; border-radius: 50%; overflow: visible;
+  border: 2px solid var(--gold, #f5c542); display: grid; place-items: center; background: radial-gradient(var(--s6), var(--s1)); box-shadow: 0 2px 5px #0009; }
+body[data-phase='fight'] #hudSpells #spellCards .spell .spIcon { zoom: 0.5; margin: 0; filter: drop-shadow(0 0 4px var(--spell-light)); }
+body[data-phase='fight'] #hudSpells #spellCards .spell b, body[data-phase='fight'] #hudSpells #spellCards .spell em { display: none; }
+body[data-phase='fight'] #hudSpells #spellCards .spell .cool { border-radius: 50%; top: auto; }
+body[data-phase='fight'] #hudSpells #spellCards .spell::after { content: attr(data-cost); position: absolute; right: -4px; bottom: -4px; min-width: 14px; padding: 0 2px; font: 400 12px/13px var(--body);
+  color: #fff; background: var(--b2, #3a78d6); border: 1px solid #000; text-align: center; text-shadow: none; }
+body[data-phase='fight'] #hudSpells #spellCards .spell.armed { border-color: #fff0bd; box-shadow: 0 0 0 2px #bf9d53, 0 0 12px #eac56b; }
+/* (the hint while a spell is armed: under the orbs, over the board) */
+#hudSpells #spellHint { position: absolute; left: 0; top: calc(100% + 6px); width: min(330px, calc(100vw - 16px)); max-height: 48px; padding: 3px 6px; box-sizing: border-box;
+  font-size: 12px; text-align: left; background: rgb(var(--black-rgb) / 0.7); border: 1px solid #a28a58; border-radius: 3px; pointer-events: none; }
+#hudSpells #spellHint:empty { display: none; }
+
+/* ---- the Last Stand: its rows in the bottom bar, its spells as orbs under its top bar ---- */
+#stand .stHeroes.fightHud { display: grid; }
+#stand .stHeroes.fightHud[hidden] { display: none; }
+#stand .stOrbs { position: absolute; left: 8px; right: 64px; top: calc(env(safe-area-inset-top) + 72px); display: flex; align-items: flex-start; gap: 4px; pointer-events: none; }
+#stand .stOrbs[hidden] { display: none; }
+#stand .stOrbs > * { pointer-events: auto; }
+#stand .stOrbs .stSpells { gap: 4px; }
+#stand .stOrbs .stMana { flex: none; width: 62px; height: 40px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 3px 4px;
+  background: rgb(var(--black-rgb) / 0.62); border: 1px solid #a28a58; border-radius: 4px; text-align: center; }
+#stand .stOrbs .stMana i { height: 6px; border-width: 1px; }
+#stand .stOrbs .stCards { flex: none; gap: 4px; }
+#stand .stOrbs .stSpell { flex: none; width: 40px; height: 40px; min-height: 0; padding: 0; border-radius: 50%; overflow: visible; border: 2px solid var(--gold, #f5c542);
+  display: grid; place-items: center; background: radial-gradient(var(--s6), var(--s1)); box-shadow: 0 2px 5px #0009; }
+#stand .stOrbs .stSpell .spIcon { zoom: 0.5; margin: 0; }
+#stand .stOrbs .stSpell span { display: none; }
+#stand .stOrbs .stSpell em { top: auto; right: -4px; bottom: -4px; min-width: 14px; padding: 0 2px; font: 400 12px/13px var(--body); color: #fff; background: var(--b2, #3a78d6); border: 1px solid #000; text-align: center; }
+#stand .stOrbs .stSpell .cool { border-radius: 50%; top: auto; }
+#stand .stOrbs .stSpell.armed { border-color: #fff0bd; box-shadow: 0 0 0 2px #bf9d53, 0 0 12px #eac56b; }
+#stand .stOrbs .fhAuto { margin-left: auto; }
+/* (the countdown and the notes under the top bar move below the orbs) */
+#stand .stCount, #stand .stInfo { top: calc(env(safe-area-inset-top) + 120px); }
+
+/* ---- the cut-in banner by the caster (over the board) ---- */
+.fhFx { position: fixed; inset: 0; z-index: 12; pointer-events: none; }
+.fhCutIn { position: absolute; display: flex; align-items: center; gap: 6px; box-sizing: border-box; padding: 3px 8px 3px 4px; color: #fff; text-shadow: var(--outline);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--cast) 70%, #2a0f20), color-mix(in srgb, var(--cast) 45%, #10060c) 75%, transparent);
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--cast) 70%, transparent));
+  border-top: 2px solid color-mix(in srgb, var(--cast) 60%, #fff); border-bottom: 2px solid color-mix(in srgb, var(--cast) 60%, #000);
+  clip-path: polygon(0 0, 100% 0, 94% 100%, 0 100%); animation: fhCutIn 1.4s ease-out 1 forwards; }
+.fhCutIn canvas { width: 36px; height: 36px; image-rendering: pixelated; flex: none; }
+.fhCutIn span { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.fhCutIn small { font: 400 12px/12px 'Pixelify Sans', var(--body); opacity: 0.9; }
+.fhCutIn b { font: 400 16px/16px var(--body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fhCutIn.ult b { font-size: 18px; line-height: 18px; color: #fff4c0; }
+
+/* ---- the skill's sheet (the fight is held while it is open) ---- */
+.fhSheet { position: fixed; inset: 0; z-index: 30; display: flex; align-items: flex-end; justify-content: center; padding: 0 10px calc(var(--fs-dock, 8px) + 6px); background: rgb(var(--black-rgb) / 0.35); }
+.fhSheet[hidden] { display: none; }
+.fsCard { width: min(372px, 100%); max-height: calc(100% - var(--fs-dock, 8px) - 100px); overflow-y: auto; box-sizing: border-box; padding: 8px 10px 10px; color: var(--text, #f0e6d2);
+  font: 400 12px/16px 'Pixelify Sans', var(--body); border: 6px solid; border-image: url(ui/panel.png) 6 fill / 12px stretch; background: var(--s3);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--el) 50%, transparent); image-rendering: pixelated; touch-action: pan-y; }
+.fsHead { display: flex; align-items: center; gap: 8px; }
+.fsHead > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.fsHead b { font: 400 14px/14px var(--body); color: var(--el); text-shadow: var(--outline); }
+.fsHead small { font: 400 12px/12px 'Pixelify Sans', var(--body); color: var(--text-dim, #b8ad94); }
+.fsClose { min-height: 32px; width: 32px; padding: 0; font-size: 16px; }
+.fsTabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; margin-top: 6px; }
+.fsTabs button { min-height: 28px; padding: 2px 4px; font: 400 12px/12px var(--body); }
+.fsTabs button.on { border-color: var(--el); color: #fff; box-shadow: inset 0 -2px 0 var(--el); }
+.fsCard p { margin: 6px 0; }
+.fsCard dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; margin: 0 0 6px; }
+.fsCard dt { color: var(--gold, #f5c542); }
+.fsCard dd { margin: 0; }
+.fsTiers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.fsTiers li { padding: 3px 5px; background: rgb(var(--black-rgb) / 0.4); border-left: 3px solid var(--s8); opacity: 0.6; }
+.fsTiers li.on { opacity: 1; border-left-color: var(--el); }
+.fsTiers li.now { background: color-mix(in srgb, var(--el) 18%, rgb(0 0 0 / 0.5)); }
+.fsTiers b { display: block; font-weight: 400; color: var(--text, #f0e6d2); }
+.fsTiers span { color: var(--text-dim, #b8ad94); }
+.fsHeld { position: sticky; bottom: -10px; margin: 6px -10px -10px; padding: 4px 10px 6px; text-align: center; color: var(--text-faint, #b5aa90); background: var(--s3); border-top: 1px solid rgb(255 255 255 / 0.12); }
+
+@keyframes fhPearl { from { background-position: 0% 50%; } to { background-position: 300% 50%; } }
+@keyframes fhSheen { 0% { transform: translateX(-45%); } 100% { transform: translateX(45%); } }
+@keyframes fhFired { 0% { box-shadow: inset 0 0 0 2px #fff, 0 0 12px var(--el); background-color: color-mix(in srgb, var(--el) 70%, transparent); } 100% { box-shadow: none; background-color: transparent; } }
+@keyframes fhCastGlow { 0% { box-shadow: 0 0 0 2px var(--cast), 0 0 22px var(--cast), inset 0 0 26px var(--cast); } 100% { box-shadow: 0 0 0 0 transparent, 0 0 0 transparent, inset 0 0 0 transparent; } }
+@keyframes fhCastName { 0% { opacity: 0; transform: translateY(-30%); } 15% { opacity: 1; transform: translateY(-50%); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-80%); } }
+@keyframes fhNudge { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+@keyframes fhCutIn { 0% { opacity: 0; transform: translateX(-24px); } 14% { opacity: 1; transform: translateX(0); } 75% { opacity: 1; transform: translateX(4px); } 100% { opacity: 0; transform: translateX(14px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .fhPearl, .fhRow.ready .fhPearl { animation: none; }
+  .fhRow.ready .fhSheen { animation: none; display: none; }
+  .fhRow.casting, .fhRow.casting .fhCast, .fhChip.fired, .fhRow.nudge, .fhCutIn { animation: none; }
+  .fhRow.casting { box-shadow: 0 0 0 2px var(--cast), inset 0 0 18px var(--cast); }
+  .fhRow.casting .fhCast { opacity: 1; }
+  .fhCd, .fhAuto .sw b { transition: none; }
+}
+
+/* ---- the ultimate's moment (ULT-CUTIN, `ultMoment.ts`): the fight held, a slash of the hero's art across the screen with the ultimate's name, the
+   board dimmed round the caster. One-shot animations only (none loops); reduced motion holds the slash still and fades it. ---- */
+.umLayer { position: fixed; inset: 0; z-index: 26; pointer-events: none; overflow: hidden; }
+.umLayer[hidden] { display: none; }
+.umLayer.live { pointer-events: auto; cursor: pointer; }
+.umDim { position: absolute; inset: 0; opacity: 0;
+  background: radial-gradient(circle at var(--x, 50%) var(--y, 45%), rgb(4 6 12 / 0) 0, rgb(4 6 12 / 0) 84px, rgb(4 6 12 / 0.5) 136px, rgb(4 6 12 / 0.8) 200px); }
+.umSlash { position: absolute; left: 0; right: 0; top: 24%; height: 190px; pointer-events: none; }
+.umBand { position: absolute; left: -12%; width: 124%; top: 0; height: 170px; overflow: hidden; transform: rotate(-9deg);
+  background: linear-gradient(90deg, rgb(10 6 16 / 0.94), color-mix(in srgb, var(--el) 45%, #120818) 55%, rgb(10 6 16 / 0.92));
+  border-top: 3px solid color-mix(in srgb, var(--el) 55%, #fff); border-bottom: 3px solid color-mix(in srgb, var(--el) 70%, #000);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--el) 60%, transparent);
+  animation: umIn 0.3s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+.umArt { position: absolute; left: 10%; top: -24px; width: 46%; height: 230px; object-fit: cover; object-position: 50% 14%;
+  -webkit-mask-image: linear-gradient(90deg, #000 70%, transparent); mask-image: linear-gradient(90deg, #000 70%, transparent);
+  transform: rotate(9deg); animation: umArt 1s ease-out both; }
+.umWords { position: absolute; right: 13%; top: 50%; max-width: 50%; transform: translateY(-50%) rotate(9deg); display: flex; flex-direction: column; align-items: flex-end; gap: 4px; text-align: right; }
+.umWords small { font: 400 14px/14px var(--body); color: #f2e6c8; text-shadow: var(--outline); }
+.umWords b { font: 400 clamp(24px, 8vw, 36px)/1.05 var(--display, var(--body)); color: #fff4c0; letter-spacing: 1px;
+  text-shadow: 0 2px 0 #000, 2px 0 0 #000, -2px 0 0 #000, 0 -2px 0 #000, 0 0 14px var(--el); animation: umName 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) 0.18s both; }
+.umStreak { position: absolute; left: -20%; width: 140%; top: 84px; height: 4px; transform: rotate(-9deg); pointer-events: none;
+  background: linear-gradient(90deg, transparent, #fff 45%, var(--el) 60%, transparent); animation: umStreak 0.32s ease-out both; }
+.umSlash.out .umBand { animation: umOut 0.32s ease-in both; }
+.umSlash.out .umStreak { display: none; }
+@keyframes umIn { 0% { clip-path: inset(0 100% 0 0); } 100% { clip-path: inset(0 0 0 0); } }
+@keyframes umOut { 0% { clip-path: inset(0 0 0 0); transform: rotate(-9deg) translateX(0); } 100% { clip-path: inset(0 0 0 100%); transform: rotate(-9deg) translateX(40px); } }
+@keyframes umArt { 0% { transform: rotate(9deg) translateX(-36px); } 100% { transform: rotate(9deg) translateX(0); } }
+@keyframes umName { 0% { opacity: 0; transform: scale(1.6); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes umStreak { 0% { opacity: 0; transform: rotate(-9deg) translateX(-60%); } 30% { opacity: 1; } 100% { opacity: 0; transform: rotate(-9deg) translateX(60%); } }
+/* (the short version: the hero rows' banner shows the hero's face) */
+.fhCutIn img.face { width: 40px; height: 40px; object-fit: cover; object-position: 50% 12%; flex: none; border: 1px solid color-mix(in srgb, var(--cast) 60%, #fff); }
+@media (prefers-reduced-motion: reduce) {
+  .umBand, .umSlash.out .umBand, .umArt, .umWords b { animation: umFade 0.3s ease-out both; }
+  .umSlash.out .umBand { animation: umFadeOut 0.3s ease-in both; }
+  .umStreak { display: none; }
+}
+@keyframes umFade { 0% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes umFadeOut { 0% { opacity: 1; } 100% { opacity: 0; } }

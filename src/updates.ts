@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.256.0',
+    date: '2026-10-30',
+    title: 'A new battle screen and ultimate scenes',
+    notes: ['Each hero has a row: health, SP or MP, both skills with cost and cooldown, and a pearl glow as the ultimate fills. Tap a skill to read it.', 'The fight pauses while you read a skill. The king\'s spells are now orbs under the top bar.', 'An ultimate stops the fight: the hero\'s portrait slashes across, its name pops up, the board darkens round the hero.', 'Settings, Gameplay: turn off Full ultimate scenes for a short banner with no pause.'],
+  },
+  {
     version: '0.255.0',
     date: '2026-10-30',
     title: 'Holding the line pays a relic',
