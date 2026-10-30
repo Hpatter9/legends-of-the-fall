@@ -1,6 +1,6 @@
 # ART-ASCEND — Upgraded forms and combat tier auras
 
-Branch: `art/ascended-hero-forms`. Implemented and validated; ready for owner review. Not merged to main or deployed.
+Branch: `art/ascended-hero-forms`. Draft PR: [#208](https://github.com/Hpatter9/legends-of-the-fall/pull/208). Implemented and validated; ready for owner review. Not merged to main or deployed.
 
 ## Owner-approved direction
 
