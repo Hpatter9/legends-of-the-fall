@@ -98,10 +98,8 @@ Pirate +11.8), so it is how their kits grow with a grade's stats, not their tier
 ## For the owner
 
 - The targets in tries (14.5, 11, 7) were 8-save means; on 48 saves 0.218.0 itself is 8.5, 10.4 and 4.4, and the branch matches those.
-- Every pace figure (here and in `army-pace.md` and `merge-two.md`) is a player whose run ends at the first lost wave. The page burns a heart
-  instead (two a run), so a real player clears the late armies in about half the tries, and with hearts the Yokai and the Golem Forge come
-  at about the same level as the first army's last star, not after it. If the order should hold for a player who uses hearts, the late armies
-  want to be tougher again (a measure with `HEARTS=1`); say if so.
+- Every pace figure before "Tuned again for a player who burns hearts" is a player whose run ends at the first lost wave. The owner then chose to tune
+  for a player who burns hearts: that section supersedes the late armies' strengths here.
 
 **Kept as they are** (the same tools and seeds on main and the branch):
 
@@ -112,6 +110,72 @@ Pirate +11.8), so it is how their kits grow with a grade's stats, not their tier
 | Last Stand medians at levels 1 / 10 / 20 / 40 / 60 / 80 (`npm run stand-balance`) | 3 / 9 / 11 / 15 / 20 / 22 | the same, every row |
 | Hero parity at grade 1, levels 1 and 30 (`test/hero-balance.test.ts`) | passes | passes (the late armies and tier 4 are not in it) |
 | The starting five against the second army at level 22 (`test/armies.test.ts`) | passes | passes (the first armies are untouched) |
+
+## Tuned again for a player who burns hearts (the owner's call)
+
+The figures above are a player whose run ends at the first lost wave. The page burns a heart instead (two a run) and fights the wave again,
+and with hearts the Yokai and the Golem Forge fell at about the level the first army's 11th star comes, not after it. The owner chose "Yes,
+tune with hearts": the late armies tougher again, measured with `HEARTS=1`, so the order holds for that player: the Infernal Host just before
+the first army's 11 stars, the Yokai and the Golem Forge a few levels after, the 11 stars still about 55 to 65.
+
+- **`src/sim/armies.ts`**: the Infernal Host's `start` 10.2 to **12.5**, the Yokai's 12.8 to **14.2**, the Golem Forge's 13.7 to **14.6**
+  (bisected with `HEARTS=1 SAVES=24 node tools/army-pace/run.mjs tune infernal:55 yokai:65 golems:65`, for about 5, 10 and 10 tries; the
+  curve is steep, a tenth of a point moves a cell by two or three tries). The Golem Forge at 14.8 read a little harder, but then the strong
+  party of `test/army-pace.test.ts` (level 80, every castle level) no longer cleared it in three tries, so it stays at 14.6. The bosses
+  are as they were.
+- Their `tierLift` raised just enough that each tier's last wave stays at least 3% over the one below in hp and attack (the Normal rise had
+  put Hard's attack under Normal's): the Infernal Host [1, 2.97, 2.38, 0.76, 0.87] to **[1, 3.27, 2.51, 0.76, 0.87]**, the Yokai
+  [1, 3.57, 2.81, 0.81, 0.68] to **[1, 3.99, 3.06, 0.88, 0.72]**, the Golems [1, 3.49, 2.69, 0.78, 0.73] to **[1, 3.8, 2.92, 0.84, 0.73]**.
+  XP is unchanged (`xpStart` stays; a tier's lift is taken back out of its XP).
+- Mythic's `answer` (2.76) and the first army are untouched: with hearts its 11 stars come at 55 to 60 already (below).
+- `test/ailments-identical.test.ts` already puts the recorded `start`s back by value (10, 12.5, 12.7), so it needed nothing new.
+
+Army cells (`cell`, 24 saves, mean tries to clear Normal, a save that never clears in 25 counts 26; the same seeds on both trees):
+
+| Cell | before, `HEARTS=1` | after, `HEARTS=1` | before, no hearts | after, no hearts |
+| --- | --- | --- | --- | --- |
+| Infernal Host, level 45 | - | 16.3 (63%) | - | - |
+| Infernal Host, level 50 | 1.8 (100%) | 5.4 (100%) | - | - |
+| Infernal Host, level 55 | 1.5 (100%) | 4.8 (100%) | 4.7 (100%) | 21.3 (38%) |
+| Infernal Host, level 60 | 1.1 (100%) | 1.4 (100%) | 1.5 (100%) | 4.4 (100%) |
+| Yokai, level 60 | 4.8 (100%) | 12.8 (83%) | - | - |
+| Yokai, level 65 | 4.2 (100%) | 11.9 (83%) | 11.2 (92%) | 19.9 (38%) |
+| Yokai, level 70 | 2.6 (100%) | 5.3 (96%) | 5.4 (100%) | 11.5 (83%) |
+| Yokai, level 75 | - | 3.2 (100%) | - | - |
+| Golem Forge, level 60 | 4.0 (100%) | 8.0 (100%) | - | - |
+| Golem Forge, level 65 | 3.8 (100%) | 7.6 (100%) | 10.8 (83%) | 16.0 (67%) |
+| Golem Forge, level 70 | 2.9 (100%) | 5.3 (96%) | 6.0 (100%) | 12.0 (92%) |
+| Golem Forge, level 75 | - | 3.0 (100%) | - | - |
+
+The army gate (`gate 55,60,65,70`, 24 saves, from the Infernal Host with the armies before it beaten, XP carried; tries at each army of the
+saves that reached it, and the saves that beat it):
+
+| Level | before, `HEARTS=1` | after, `HEARTS=1` | before, no hearts | after, no hearts |
+| --- | --- | --- | --- | --- |
+| 55 | Inf 2.0 24/24; Yokai 20.1 10/24; Golems 18.8 2/24 | Inf 5.9 24/24; Yokai 24.6 2/24; Golems never reached | Inf 4.2 24/24; Yokai 24.5 2/24; Golems 25 0/24 | Inf 17.6 15/24; Yokai 25 0/24 |
+| 60 | Inf 1.2; Yokai 4.2 22/24; Golems 4.8 19/24 | Inf 1.7; Yokai 7.6 19/24; Golems 7.7 9/24 | Inf 1.3; Yokai 14.4 20/24; Golems 14.6 15/24 | Inf 3.3; Yokai 20.0 10/24; Golems 21.9 2/24 |
+| 65 | Inf 1.1; Yokai 4.1 23/24; Golems 6.3 19/24 | Inf 1.5; Yokai 8.8 18/24; Golems 8.0 6/24 | Inf 1.3; Yokai 11.2 22/24; Golems 15.7 17/24 | Inf 3.0; Yokai 22.5 7/24; Golems 18.9 4/24 |
+| 70 | Inf 1.1; Yokai 2.6 23/24; Golems 3.1 23/24 | Inf 1.3; Yokai 3.9 21/24; Golems 3.6 17/24 | Inf 1.1; Yokai 4.1 24/24; Golems 7.6 24/24 | Inf 1.8; Yokai 12.0 20/24; Golems 10.1 18/24 |
+
+The first army's 11 stars with hearts (`HEARTS=1 SAVES=24 node tools/army-pace/run.mjs stars 50,55,60,65`, the 0.234.0 rule: the clear,
+no heart used, the time target; a try that burns a heart cannot earn the second star, so a save earns it on a try that burned none, the mix
+the tool plays). The first army is untouched, so before and after are the same:
+
+| Level | Normal / Hard / Elite / Legendary / Mythic tries | all 11 stars |
+| --- | --- | --- |
+| 50 | 1.0 / 1.0 / 1.0 / 2.0 / 14.5 | 16/24 |
+| 55 | 1.0 / 1.0 / 1.0 / 2.1 / 15.5 | 19/24 |
+| 60 | 1.0 / 1.0 / 1.0 / 1.9 / 4.3 | 24/24 |
+| 65 | 1.0 / 1.0 / 1.0 / 1.6 / 4.2 | 24/24 |
+
+So, for a player who uses hearts: the Infernal Host falls at about 55 in five or six tries, as the first army's stars are being finished
+(55 to 60); the Yokai is beaten by most saves at 60 to 65 in eight to thirteen tries, and the Golem Forge after it, by most saves about 70.
+The hearts-on gate after the change sits about where the no-hearts gate stood before it, the order the owner signed off. A player who never
+uses a heart now finds the three late armies much harder (the Infernal Host 21 tries at 55, the Yokai and the Golems most of 25 at 65).
+
+Kept: the daily, the Last Stand and hero parity read neither an army's `start` nor its `tierLift` (the Last Stand takes only the armies'
+rosters), so they are as main has them; the start (`GRADE_BOOST`, the starting five against the second army at level 22) and the first four
+armies are untouched (`test/armies.test.ts`, `test/army-pace.test.ts`).
 
 ## Tests
 

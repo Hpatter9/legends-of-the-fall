@@ -210,7 +210,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Goal:** the owner's "harder late game": the late armies (Infernal Host, Yokai, Golem Forge, the first army's Mythic) take about the tries they took on 0.218.0, before MERGE-TWO, through the armies' own strength; the order kept (Infernal just before the first army's 11 stars, Yokai and Golems after); the grade-4 Tyrant (level 1) and Juggernaut (level 30) brought in; the start, the daily, the Last Stand and grade-1 parity kept.
 - **Branch / worktree / PR:** `claude/late-retune`, `/home/user/late-retune`; PR none.
 - **Allowed files or systems:** `src/sim/armies.ts` (the three late armies' `start`, Yokai bosses, `tierLift`), `src/sim/tiers.ts` (Mythic `answer`), `src/sim/tierSkills.ts` (the Tyrant's and Juggernaut's tier 4 only), `tools/army-pace/`, `tools/merge-two/`, `tools/balance.ts` (a comment), `docs/notes/late-retune.md`.
-- **Status:** done on the branch; before/after tables in the note. Typecheck, full tests, web build.
+- **Status:** done on the branch; before/after tables in the note. Then tuned again with hearts (the owner's "Yes, tune with hearts"): the Infernal Host `start` 12.5, the Yokai 14.2, the Golem Forge 14.6, their `tierLift` raised to keep each tier over the one below, measured with `HEARTS=1`. Typecheck, full tests, web build.
 - **Validation and handoff:** [notes](notes/late-retune.md).
 
 ### ARMY-PACE — Getting to the harder armies is harder
