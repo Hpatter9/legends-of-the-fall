@@ -2217,8 +2217,8 @@
   "facesRight": true
  },
  "hero_soldier": {
-  "w": 184,
-  "h": 113,
+  "w": 152,
+  "h": 116,
   "perRow": 4,
   "rows": [
    "idle",
@@ -2811,8 +2811,8 @@
   "rear": "hero_res_treant_back"
  },
  "hero_soldier_back": {
-  "w": 184,
-  "h": 113,
+  "w": 152,
+  "h": 116,
   "perRow": 4,
   "rows": [
    "idle",
