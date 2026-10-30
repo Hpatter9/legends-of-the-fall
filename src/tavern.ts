@@ -35,6 +35,9 @@ import longtableUrl from './art/tavern/longtable.png';
 import barrelsUrl from './art/tavern/barrels.png';
 import cratesUrl from './art/tavern/crates.png';
 import stageUrl from './art/tavern/stage.png';
+import { BOARD, GWEN } from './questArt';
+import { giverMark } from './questCard';
+import { questsWaiting } from './sim/quests';
 
 const ART: Record<string, string> = {
   wall: wallUrl,
@@ -52,6 +55,9 @@ const ART: Record<string, string> = {
   barrels: barrelsUrl,
   crates: cratesUrl,
   stage: stageUrl,
+  // (QUESTS: Gwen Tallow behind the bar, and the quest board on the wall: pack placeholders, `questArt.ts`)
+  gwen: GWEN.url,
+  board: BOARD,
 };
 let art: Record<string, HTMLImageElement> | null = null;
 async function loadArt(): Promise<Record<string, HTMLImageElement>> {
@@ -83,6 +89,20 @@ export const EMOTES: Record<string, { rows: string[]; ink: Record<string, string
   bang: { rows: ['..###..', '..###..', '..###..', '...#...', '.......', '..###..', '..###..'], ink: { '#': '#d02a2a' } },
 };
 export const EMOTE_NAMES = ['mug', 'mug', 'note', 'note', 'zz', 'bang'];
+// (QUESTS: the gold "!" of a quest on offer and the gold tick of one to hand in, over Gwen and the board; never drawn at random)
+EMOTES.quest = { rows: ['..###..', '..###..', '..###..', '..###..', '.......', '..###..', '..###..'], ink: { '#': '#c08a10' } };
+EMOTES.ready = { rows: ['.......', '......#', '.....##', '#...##.', '##.##..', '.###...', '..#....'], ink: { '#': '#c08a10' } };
+
+/** Where Gwen stands behind the bar (her feet hidden by it) and where the quest board leans on the wall, left of the bar. */
+export const GWEN_SPOT = { x: 273, foot: 194, depth: 200 };
+export const BOARD_SPOT = { x: 204, foot: 142 };
+
+/** What the tavern's quest pieces open (QUESTS batch 1). */
+export interface TavernQuests {
+  onGwen(): void;
+  onBoard(): void;
+  onQuests(): void;
+}
 
 interface Rig {
   img: HTMLImageElement;
@@ -158,13 +178,19 @@ export class Tavern {
   private watch: ResizeObserver;
   private meta: Meta | null = null;
   private trophyModal = new TrophyWallModal();
+  /** The Quests button (it wears a gold dot while something waits), and when Gwen last began to talk (a tap on her). */
+  private questBtn = el('button', 'tvQuests', 'Quests');
+  private gwenTalk = -1e9;
 
   constructor(
     private onPick: (kind: string) => void,
     onRoster: () => void,
+    private quests?: TavernQuests,
   ) {
-    const roster = el('button', 'tvRoster', 'Roster');
+    const roster = el('button', 'tvRoster', 'All heroes');
     roster.addEventListener('click', onRoster);
+    this.questBtn.append(el('i', 'qDot'));
+    this.questBtn.addEventListener('click', () => this.quests?.onQuests());
     const trophies = el('button', 'tvTrophies', '🏆 Trophies');
     trophies.title = 'Defeated Boss Trophy Wall';
     trophies.addEventListener('click', () => {
@@ -177,7 +203,11 @@ export class Tavern {
       this.roomBtns.push(b);
       this.nav.append(b);
     });
-    this.root.append(this.canvas, this.count, trophies, roster, this.edgeL, this.edgeR, this.nav, this.trophyModal.root);
+    // (the three buttons top right, in a column so they fit beside the count on the narrowest phone)
+    const btns = el('div', 'tvBtns');
+    btns.append(this.questBtn, trophies, roster);
+    if (!this.quests) this.questBtn.hidden = true;
+    this.root.append(this.canvas, this.count, btns, this.edgeL, this.edgeR, this.nav, this.trophyModal.root);
     this.ctx.imageSmoothingEnabled = false;
     onSettings((s) => (this.saver = s.saver));
     window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
@@ -249,6 +279,7 @@ export class Tavern {
   /** Show these heroes (the meta's unlocked ones, at their ranks). Keeps the ones already there as they are. */
   update(meta: Meta): void {
     this.meta = meta;
+    this.questBtn.classList.toggle('new', questsWaiting(meta));
     const have = ALL_HEROES.filter((k) => meta.unlocked.includes(k));
     this.count.replaceChildren(`${have.length} of ${ALL_HEROES.length} heroes`, el('small', '', `${meta.equipment?.length ?? 0} equipment`), el('small', '', 'tap a hero · swipe to look'));
     for (const k of [...this.actors.keys()]) if (!have.includes(k)) this.actors.delete(k);
@@ -632,6 +663,9 @@ export class Tavern {
       if (actor) list.push({ depth: spot.depth, paint: () => this.hero(actor) });
     }
     if (this.goat && this.goatArt && Tavern.GOAT.min - 30 < right && Tavern.GOAT.max + 30 > left) list.push({ depth: Tavern.GOAT.y, paint: () => this.duchess() });
+    // (QUESTS: the board leans on the wall, and Gwen stands behind the bar, drawn before it so the bar hides her legs)
+    if (this.quests && BOARD_SPOT.x - 40 < right && BOARD_SPOT.x + 40 > left) list.push({ depth: BOARD_SPOT.foot, paint: () => this.board(a) });
+    if (this.quests && GWEN_SPOT.x - 40 < right && GWEN_SPOT.x + 40 > left) list.push({ depth: GWEN_SPOT.depth, paint: () => this.gwen(a) });
     list.sort((p, q) => p.depth - q.depth);
     for (const e of list) e.paint();
     // (the fire and the lamps burn steadily: no flicker)
@@ -646,6 +680,35 @@ export class Tavern {
     g.globalCompositeOperation = 'source-over';
     g.globalAlpha = 1;
     g.setTransform(1, 0, 0, 1, 0, 0);
+  }
+
+  /** The quest board, with a gold "!" over it while anything is on offer. */
+  private board(a: Record<string, HTMLImageElement>): void {
+    const im = a.board;
+    const x = Math.round(BOARD_SPOT.x - im.width / 2);
+    const y = BOARD_SPOT.foot - im.height;
+    this.ctx.drawImage(im, x, y);
+    if (this.meta?.quests?.offers.length) this.bubbleAt('quest', BOARD_SPOT.x, y - 16);
+  }
+
+  /** Gwen behind the bar: her stand, breathing a pixel, or her talking frames for a moment after a tap; a gold "!" or tick over her. */
+  private gwen(a: Record<string, HTMLImageElement>): void {
+    const g = this.ctx;
+    const c = GWEN.cell;
+    const talking = this.now - this.gwenTalk < 1600 && !this.reduced;
+    const row = talking ? 1 : 0;
+    const i = talking ? Math.floor((this.now - this.gwenTalk) / 160) % GWEN.talk : 0;
+    const lift = !talking && !this.reduced && Math.sin(this.now / 640) > 0.4 ? 1 : 0;
+    const top = GWEN_SPOT.foot - c - lift;
+    g.drawImage(a.gwen, i * c, row * c, c, c, Math.round(GWEN_SPOT.x - c / 2), top, c, c);
+    const mark = this.meta ? giverMark(this.meta, 'gwen') : null;
+    if (mark) this.bubbleAt(mark === 'ready' ? 'ready' : 'quest', GWEN_SPOT.x, top + 1);
+  }
+
+  /** A bubble (by its emote's name) with its tail at `cx`, its top at `top`; it hops a pixel now and then, unless motion is reduced. */
+  private bubbleAt(name: string, cx: number, top: number): void {
+    const y = top + (this.reduced ? 0 : Math.floor(this.now / 380) % 2);
+    this.ctx.drawImage(this.bubbleArt(name), Math.round(cx) - 6, y, 13, 15);
   }
 
   private seat(a: Record<string, HTMLImageElement>, spot: Spot): void {
@@ -770,6 +833,16 @@ export class Tavern {
         }
         this.cycleDuchessHat(e.clientX, box.top + (Tavern.GOAT.y - 24 - this.camY) * this.scale);
       }
+      return;
+    }
+    // (QUESTS: Gwen behind the bar, then the board on the wall)
+    if (this.quests && Math.abs(rx - GWEN_SPOT.x) < 16 && ry > GWEN_SPOT.foot - 58 && ry < GWEN_SPOT.foot - 12) {
+      this.gwenTalk = this.now;
+      this.quests.onGwen();
+      return;
+    }
+    if (this.quests && Math.abs(rx - BOARD_SPOT.x) < 34 && ry > BOARD_SPOT.foot - 70 && ry < BOARD_SPOT.foot + 4) {
+      this.quests.onBoard();
       return;
     }
     // (decorative trophy wall plaque in the hearth hall)

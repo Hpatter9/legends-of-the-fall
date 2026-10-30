@@ -32,6 +32,7 @@ import { grantContent } from './contentHeroes';
 import { grantSpells } from './spellSources';
 import { readShop } from './chestShop';
 import { readCards, readScenes } from './sceneRules';
+import { readQuests, type QuestState } from './quests';
 
 export { DUPLICATE_SHARDS, LUCKY_ODDS, LUCKY_RANK_SHARDS };
 /** Shards each rank needs in all: rank 1 at 1, rank 2 at 3, rank 3 at 6, rank 4 at 10. */
@@ -156,6 +157,8 @@ export interface Meta {
   bossCards?: string[];
   /** The deploy bar's earned helpers whose unlocking has been told (`featureUnlocks.ts`): once a save. Saves from before have none. */
   featuresTold?: string[];
+  /** The quests: the offers on the board, the ones taken and their counts, the ones handed in (`quests.ts`). Saves from before have none: nothing begun. */
+  quests?: QuestState;
 }
 
 /** An earned, unopened chest: where it came from, and the seed its contents are rolled from (fixed when it was earned). */
@@ -491,6 +494,9 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       // (saves from before the earned deploy helpers have told none: `featureUnlocks.ts`)
       if (Array.isArray(m.featuresTold)) m.featuresTold = m.featuresTold.filter((x) => typeof x === 'string');
       else delete m.featuresTold;
+      // (saves from before the quests have none: nothing begun, and the day's offers are drawn when the page next looks)
+      m.quests = readQuests(m.quests);
+      if (!m.quests) delete m.quests;
       // (a content hero whose milestone a save from before has already reached joins now)
       if (!needsStarter(m)) grantContent(m);
       // (spells are no longer bought: those bought before are kept, and any whose tower level or milestone a save has already reached are learnt now)

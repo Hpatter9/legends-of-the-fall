@@ -48,6 +48,7 @@ import { spellIconHtml } from './spellIcons';
 import { clockSeed } from './modes';
 import { settings } from './settings';
 import { rulerOf, rulerWords } from './rulerRules';
+import { noteQuests, standFight } from './sim/quests';
 
 /** What the page lends the Last Stand: the canvas, the save, the way home. */
 export interface StandHost {
@@ -58,6 +59,8 @@ export interface StandHost {
   onHome(): void;
   /** Play a cinematic due at a moment (the run waits while it plays). */
   moment(m: { kind: 'spire'; floor: number }): Promise<void>;
+  /** Quests the run's end completed (QUESTS: the page toasts them). */
+  questsDone?(ids: string[]): void;
 }
 
 /** How long the title card of a new room stays (ms) unless it is tapped away (STAND-RETREAT). */
@@ -1720,7 +1723,10 @@ export class StandView {
   private finish(): void {
     const s = this.s!;
     const m = this.host.meta();
+    const first = !s.run.summary;
     this.summary = settleStand(m, s.run, s.run.armies);
+    // (the waves the run cleared count for the quests taken, once: QUESTS)
+    if (first && this.summary) this.host.questsDone?.(noteQuests(m, standFight(this.summary.cleared)));
     saveMeta(m);
     dropStand();
     const end = this.parts.end;

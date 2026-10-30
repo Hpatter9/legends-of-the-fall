@@ -69,6 +69,8 @@ import { showDailyStart } from './dailyView';
 import { showThemeBanner } from './themeView';
 import { chestPicture } from './chestStash';
 import { toastAchievements, toastJoined, toastLines, toastSpells, toastStones } from './achievementsView';
+import { readyQuests } from './sim/quests';
+import { questById } from './sim/questData';
 import { grantContent } from './sim/contentHeroes';
 import { grantSpells } from './sim/spellSources';
 import { clockSeed, todayKey } from './modes';
@@ -121,6 +123,9 @@ import { hideQuip, showQuip, type Anchor } from './quipView';
 import type { LuckyBleatEffect } from './render/duchessRules';
 import { bleatCabbage, bleatStartle } from './sim/duchessBleat';
 import heartUrl from './art/rogue/heart.png';
+
+/** A toast for each quest a fight has just completed: back to the tavern to hand it in (QUESTS). */
+const toastQuests = (ids: readonly string[]): void => toastLines(ids.map((id) => `Quest done: ${questById(id)?.title ?? id} · return to the tavern`));
 
 TextureSource.defaultOptions.scaleMode = 'nearest';
 
@@ -387,6 +392,7 @@ class Game {
       hideBoard: (hidden) => this.hideBoard(hidden),
       onHome: () => this.home.open(),
       moment: (m) => this.playDue(m),
+      questsDone: (ids) => toastQuests(ids),
     });
     // (the map opening or closing changes the music)
     new MutationObserver(() => this.syncScene()).observe($('towerMap'), { attributes: true, attributeFilter: ['hidden'] });
@@ -2621,7 +2627,10 @@ class Game {
       if (run.tower) run.tower.crowns += this.crownGain;
       if (run.tower && run.over) settleTower(this.meta, run);
       if (won && !army && !daily && run.mode?.kind !== 'calamity') recordStars(this.meta, stage, rating.stars);
+      // (QUESTS: the quests this fight completes are told after the achievements' toasts)
+      const readyBefore = readyQuests(this.meta);
       const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b });
+      const questsDone = readyQuests(this.meta).filter((id) => !readyBefore.includes(id));
       this.runStars = settleArmyRun(this.meta, run);
       // (an army's boss waves now and then drop rift ores of its kinds, and a tier's first clear always: `awakenMats.ts`)
       this.oreGain = army ? settleArmyOres(this.meta, army.id, army.waves[stage - 1]?.boss, tierOfRun(run), won, !!this.runStars?.firstClear, run.seed, stage) : null;
@@ -2690,6 +2699,7 @@ class Game {
       saveMeta(this.meta);
       saveRun(run);
       toastAchievements(earned);
+      if (questsDone.length) setTimeout(() => toastQuests(questsDone), earned.length * 2800);
     }
     document.body.dataset.phase = b.phase;
     document.body.dataset.roster = run.roster.length ? 'some' : 'none';
