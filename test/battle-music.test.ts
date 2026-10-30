@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ARMIES } from '../src/sim/armies';
 import { armyRun, newRun, waveArmyOf, type Run } from '../src/sim/run';
-import { GENERAL_TRACK, VICTORY_BED, VICTORY_LOOP, armyTrack, atPlace, endOfFight, musicOf, standTrack, trackOfRun, type MusicState } from '../src/render/battleMusic';
+import { GENERAL_TRACK, VICTORY_BED, VICTORY_LOOP, armyTrack, atPlace, endAt, endOfFight, musicOf, standTrack, trackOfRun, type MusicState } from '../src/render/battleMusic';
 import { ARMY_TRACKS, TRACK_OF_PLACE } from '../src/render/epicMusic';
 import { EPIC_MANIFEST } from '../src/render/epicManifest';
 import { FakeContext, installFakeAudio } from './audioFake';
@@ -101,8 +101,52 @@ test('the battle track plays through the breaks between waves, a victory holds t
   // (leaving for the camp or a map ends both a battle left half-way and a victory's music)
   assert.deepEqual(atPlace(s, 'camp'), { place: 'camp', battle: null, fighting: false, victory: false });
   assert.equal(want(atPlace(won, 'tower')).track, 'tower');
-  // (but a fight still being fought keeps its battle, wherever the page says the player is)
-  assert.equal(want(atPlace({ ...s, fighting: true }, 'camp')).track, 'orcs');
+  // (a fight still being fought behind the home screen keeps its battle for the way back, but the camp plays the camp's music:
+  // changed for the owner's "Music sounds like it runs from the fights into the main screen after"; it used to play the battle)
+  const behind = atPlace({ ...s, fighting: true }, 'camp');
+  assert.equal(want(behind).track, 'camp');
+  assert.equal(behind.battle, 'orcs');
+  assert.deepEqual(want(atPlace(behind, 'deploy')), { track: 'orcs', level: 1 });
+});
+
+test('off the board (the camp, any tab, a map) there is never battle or victory music, whatever happened before', () => {
+  const want = (s: MusicState) => musicOf(s, (p) => TRACK_OF_PLACE[p]);
+  const places = ['camp', 'tower', 'calmap'] as const;
+  for (const battle of [null, 'orcs', 'boss', 'battle', 'calbattle'] as const)
+    for (const fighting of [false, true])
+      for (const victory of [false, true])
+        for (const place of places) {
+          const s: MusicState = { place: 'deploy', battle, fighting, victory };
+          // (asked straight, and after the move there)
+          assert.equal(want({ ...s, place }).track, TRACK_OF_PLACE[place], `${battle} ${fighting} ${victory} at ${place}`);
+          assert.equal(want(atPlace(s, place)).track, TRACK_OF_PLACE[place]);
+          assert.equal(want(atPlace(s, place)).level, 1);
+          // (and a fight that ends while the player is there, won or lost, rings nothing and leaves the place's music)
+          for (const end of ['victory', 'defeat'] as const) {
+            const after = endAt(atPlace(s, place), end);
+            assert.equal(after.sting, null);
+            assert.equal(after.state.victory, false);
+            assert.equal(want(after.state).track, TRACK_OF_PLACE[place]);
+            // (back on the board after it: the deployment's music, not the old battle's)
+            assert.equal(want(atPlace(after.state, 'deploy')).track, 'deploy');
+          }
+        }
+});
+
+test('a fight ending on the board rings its sting: a victory holds the triumph bed, a defeat lets the battle go, a wave carries on', () => {
+  const want = (s: MusicState) => musicOf(s, (p) => TRACK_OF_PLACE[p]);
+  const s: MusicState = { place: 'deploy', battle: 'orcs', fighting: true, victory: false };
+  const won = endAt(s, 'victory');
+  assert.equal(won.sting, 'victory');
+  assert.deepEqual(want(won.state), { track: VICTORY_LOOP, level: VICTORY_BED });
+  // (the results left for the camp: the camp's music)
+  assert.equal(want(atPlace(won.state, 'camp')).track, 'camp');
+  const lost = endAt(s, 'defeat');
+  assert.equal(lost.sting, 'defeat');
+  assert.equal(want(lost.state).track, 'deploy');
+  const on = endAt(s, 'none');
+  assert.equal(on.sting, null);
+  assert.deepEqual(on.state, s);
 });
 
 /** A baked track as an epic file would give it. */
@@ -143,6 +187,33 @@ test('the victory fanfare holds the music from the moment it is asked for, then 
     music.setTrack('triumph', 1);
     assert.equal(loops().length, 2);
     assert.equal(fade!.gain.target, trim);
+    music.destroy();
+  } finally {
+    undo();
+  }
+});
+
+test('two track changes in a row leave only the last one playing: the triumph does not carry on under the camp', async () => {
+  const undo = installFakeAudio();
+  const { MusicPlayer } = await import('../src/render/audioProcessors');
+  try {
+    const ctx = new FakeContext();
+    const music = new MusicPlayer(ctx as unknown as AudioContext, async () => epicBaked(ctx), async () => ({ duration: 1 }) as unknown as AudioBuffer);
+    music.setTrack('triumph', VICTORY_BED);
+    await new Promise((r) => setTimeout(r, 10));
+    assert.deepEqual(music.sounding, ['triumph']);
+    // (the results left: `endVictory` asks for the deploy's music, and the home screen's camp follows before it has baked)
+    music.setTrack('deploy');
+    music.setTrack('camp');
+    await new Promise((r) => setTimeout(r, 10));
+    assert.deepEqual(music.sounding, ['camp']);
+    // (and the same with a battle track left for a map and then the camp)
+    music.setTrack('orcs');
+    await new Promise((r) => setTimeout(r, 10));
+    music.setTrack('tower');
+    music.setTrack('camp');
+    await new Promise((r) => setTimeout(r, 10));
+    assert.deepEqual(music.sounding, ['camp']);
     music.destroy();
   } finally {
     undo();

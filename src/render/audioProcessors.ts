@@ -1089,7 +1089,9 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam }> {
       (baked) => {
         // (the wanted track may have changed while it baked)
         if (this.current !== track || !this.enabled || this.holding) return;
-        if (prev && prev !== track) this.release(prev);
+        // (every other loop goes, not only `prev`: two changes asked for before the first track baked (the victory's results
+        // left for the deploy, then the camp at once) would otherwise leave the first loop playing under the new one)
+        for (const t of [...this.loops.keys()]) if (t !== track) this.release(t);
         // (a scene's track is kept only while it plays: the many short scores would otherwise pile up in memory)
         for (const t of SCENE_TRACKS) if (t !== track && t !== prev) this.baked.delete(t);
         this.trimBaked();

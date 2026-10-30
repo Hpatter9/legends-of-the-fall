@@ -76,6 +76,8 @@ import { grantSpells } from './sim/spellSources';
 import { clockSeed, todayKey } from './modes';
 import { tips, type Box } from './tips';
 import { FightHud } from './fightHud';
+import { HoldPress, UnitInfoCard } from './unitInfo';
+import { infoOf, previewUnit } from './unitInfoRules';
 import { heroArtUrl, UltMoments } from './ultMoment';
 import { BossMoments } from './bossMoment';
 import { heldCut } from './bossBigRules';
@@ -107,7 +109,7 @@ import { deployBox, deployView, type Top } from './render/deployCam';
 import { pinchZoom, wheelZoom, zoomAbout, zoomLimits } from './render/fightCam';
 import { titleOf } from './render/bossTitles';
 import { at, depth, FOOT, HH, landmarkBounds, rawAt, setFrame, TH, TW } from './render/iso';
-import { bindDuck, bindMute, endVictory, endWave, play, playEvents, setAct, setScene, setup, startFight } from './render/sound';
+import { bindDuck, bindMute, endFight, endVictory, endWave, play, playEvents, setAct, setScene, setup, startFight } from './render/sound';
 import type { MapKind } from './render/epicMusic';
 import { endOfFight, trackOfRun } from './render/battleMusic';
 import { sceneOf } from './render/audioRules';
@@ -238,6 +240,9 @@ class Game {
   private placed = new Map<string, [number, number]>();
   private chosen: string | null = null;
   private drag: Drag | null = null;
+  /** UNIT-INFO (docs/notes/unit-info.md): a press-and-hold on a unit in a deploy opens its info card; a move first lets it go as a drag. */
+  private hold!: HoldPress;
+  private info!: UnitInfoCard;
   private hover: [number, number] | null = null;
   /** The fight speed: kept from wave to wave and fight to fight, and the last choice is remembered in the settings. */
   private speed: 1 | 2 | 3 = settings().speed;
@@ -470,6 +475,9 @@ class Game {
 
   /** A fresh fight for the run's stage, with the squad back where it stood (or on the first free tiles). */
   private newBattle(): void {
+    // (a fight left running behind the home screen and never finished (a new run begun from the camp) is over: its battle music
+    // goes with it, so the new board has the deployment's music, not the old battle's)
+    if (this.b?.phase === 'fight') endFight();
     // (a walk to the new section still going is over: the heroes are placed where it was taking them)
     this.chain.finish();
     this.walking.clear();
@@ -1474,6 +1482,39 @@ class Game {
     return best;
   }
 
+  /** UNIT-INFO: any unit standing under a point on the screen (the nearest in front), for the hold's card. */
+  private unitAtScreen(sx: number, sy: number): Unit | undefined {
+    const wx = (sx - colLeft() - this.world.x) / this.world.scale.x;
+    const wy = (sy - this.world.y) / this.world.scale.y;
+    const live = this.b.units.filter((x) => x.alive).sort((a, c) => c.u + c.v - (a.u + a.v));
+    for (const u of live) {
+      const s = this.sprites.get(u.id);
+      if (s && Math.abs(wx - s.x) < 16 * Math.max(1, u.size ?? 1) && wy < s.y + 6 && wy > s.y - s.tall) return u;
+    }
+    return undefined;
+  }
+
+  /** UNIT-INFO: the hold has fired on unit `u`: the drag it began is let go where it was, and its card opens (a pure read of the unit). */
+  private openInfo(u: Unit): void {
+    if (this.drag) {
+      this.drag = null;
+      this.endDrag();
+    }
+    const h = u.side === 'hero' && u.tag !== undefined ? heroOf(this.run, u.tag) : undefined;
+    const grade = u.grade ?? 1;
+    const pic = h ? portrait(lookSheet(h.kind, heroRank(this.meta, h.kind), h.grade), 48, h.grade) : portrait(u.look ?? UNITS[u.def].sheet, 48, u.side === 'hero' ? grade : 1);
+    this.info.open(infoOf(this.b, u, { meta: this.run.local ? undefined : this.meta, gear: h?.gear, autoUlt: this.ultAutoOn() }), pic);
+    play('tap');
+  }
+
+  /** UNIT-INFO: the card of a bench hero: the one on the board if it stands there, else as it would be placed. */
+  private openBenchInfo(id: number): void {
+    const on = this.b.units.find((x) => x.side === 'hero' && x.tag === id);
+    const h = heroOf(this.run, id);
+    if (on || !h) return on ? this.openInfo(on) : undefined;
+    this.openInfo(previewUnit(this.b, h.kind, this.boostFor(h), id));
+  }
+
   /** The placed hero under a point on the screen. */
   private heroAtScreen(sx: number, sy: number): string | null {
     const wx = (sx - colLeft() - this.world.x) / this.world.scale.x;
@@ -1530,6 +1571,9 @@ class Game {
   }
 
   private wire(): void {
+    // (UNIT-INFO: the hold's ring and the info card, which covers the bottom panel: the deploy's bench and buttons wait under it)
+    this.hold = new HoldPress();
+    this.info = new UnitInfoCard();
     this.hud = new FightHud($('fightHud'), {
       equipmentStep: (kind) => awakenedOf(this.meta, kind),
       onAuto: (on) => {
@@ -1568,14 +1612,17 @@ class Game {
       const id = this.b.phase === 'deploy' ? this.heroAtScreen(e.clientX, e.clientY) : null;
       this.drag = { id: id ?? '', x: e.clientX, y: e.clientY, moved: false, fromBoard: true, pan: id ? undefined : { cx: this.cx, cy: this.cy } };
       this.aim(e);
+      // (UNIT-INFO: a finger resting on any unit in a deploy opens its card)
+      const held = this.b.phase === 'deploy' && !this.spell ? this.unitAtScreen(e.clientX, e.clientY) : undefined;
+      if (held) this.hold.start(e.clientX, e.clientY, () => this.openInfo(held));
     });
-    window.addEventListener('pointermove', (e) => (this.touches.has(e.pointerId) && this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY }), this.pinch ? this.pinchMove() : this.dragMove(e)));
+    window.addEventListener('pointermove', (e) => (this.touches.has(e.pointerId) && this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY }), this.hold.move(e.clientX, e.clientY), this.pinch ? this.pinchMove() : this.dragMove(e)));
     const lift = (e: PointerEvent) => {
       this.touches.delete(e.pointerId);
       if (this.touches.size < 2) this.pinch = null;
     };
-    window.addEventListener('pointerup', (e) => (lift(e), this.dragEnd(e)));
-    window.addEventListener('pointercancel', (e) => (lift(e), this.endDrag()));
+    window.addEventListener('pointerup', (e) => (lift(e), this.hold.cancel(), this.dragEnd(e)));
+    window.addEventListener('pointercancel', (e) => (lift(e), this.hold.cancel(), this.endDrag()));
     // (a mouse wheel zooms about the pointer, at any time in a fight or a deploy)
     canvas.addEventListener(
       'wheel',
@@ -2130,6 +2177,7 @@ class Game {
 
   /** Two fingers are down on the board: a pinch begins (a hero being dragged stays where it was). */
   private startPinch(): void {
+    this.hold.cancel();
     if (this.drag) {
       this.drag = null;
       this.endDrag();
@@ -2462,6 +2510,8 @@ class Game {
         if (this.b.phase !== 'deploy') return;
         e.preventDefault();
         this.drag = { id, x: e.clientX, y: e.clientY, moved: false, fromBoard: false };
+        // (UNIT-INFO: a finger resting on the card opens the hero's info card)
+        this.hold.start(e.clientX, e.clientY, () => this.openBenchInfo(h.id));
       });
       bench.append(card);
     }
