@@ -60,6 +60,9 @@ A measure of every row (the painting's cover, frame to frame) found no other loo
 
 ## What looks bad (honest)
 
+*The 26 sheets listed here were repainted (PR #230) and imported: see [spell-art-repaint.md](spell-art-repaint.md) for how they
+read now and the shorter list still to repaint. The list below is how they read before.*
+
 At play size, D and E read well; most of F and G read weakly: they were painted small in their cells, sparse (dots in a ring) and
 faint, so in a fight they are small sparks over the old looks. The worst, to repaint:
 

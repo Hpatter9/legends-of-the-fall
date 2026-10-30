@@ -226,10 +226,9 @@ export const MOVE_PAINT: Readonly<Record<string, MovePaint>> = {
 };
 
 /** How opaque an aura's painted ground is drawn (it lies over the fighters in it, so it is kept see-through): `AURA_ALPHA` unless named
- *  here. The Aura of Protection was painted as a tall dome rather than a ring on the ground, so it is drawn thinner still until it is
- *  repainted (docs/notes/spell-art-bde.md). */
+ *  here. (The Aura of Protection was drawn at 0.42 while it was painted as a dome; its repaint lies flat, docs/notes/spell-art-repaint.md.) */
 export const AURA_ALPHA = 0.7;
-export const AURA_ALPHA_OF: Readonly<Record<string, number>> = { 'aura-protection': 0.42, 'storm-cloud': 1 };
+export const AURA_ALPHA_OF: Readonly<Record<string, number>> = { 'storm-cloud': 1 };
 /** How big a hanging aura (the storm cloud) is drawn, times its brief size: the cloud is painted faint, so it is shown a little larger. */
 export const HANG_MULT = 1.5;
 
