@@ -14,6 +14,12 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### DARK-WAVE — Some waves, the screen darkens
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/dark-wave`, `/home/user/dark-wave`.
+- **Cause:** the fight's weather is rolled per board, so about one wave in eight is night: a flat deep-blue tint at 0.36 over the whole screen took about 30% of the light off the board (rain, about one in eight too, took 15%). No dim was left on or stacking.
+- **Fix:** flat tints capped at 0.15 (night 0.14, rain 0.1, ash and embers 0.08); night's mood moves to darkened edges (a vignette clear over the board). A dim from a fall is lifted when a heart burns and the wave starts again.
+- **Status:** ready for review. Typecheck, full `npm test`, `npm run web`, browser checks at 393×852, 360×780 and 412×915 with no page errors. [Note](notes/dark-wave.md); [before](samples/dark-wave-before-393x852.png); [after](samples/dark-wave-after-393x852.png). No merge or version bump.
 ### RPG-SPELLS B0/B1 — Fixed skill keys and the movement toolkit
 
 - **Owner:** Claude. **Branch/worktree:** `claude/spells-b01`, `/home/user/spells-b01`.
@@ -95,6 +101,25 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Allowed files or systems:** new `src/render/overFighter.ts`; small hooks in `src/render/fx.ts` (`anim`, `overBody`, the particles' `cover`), `src/render/particles.ts` (`cover`), `src/render/statusStyles.ts` (`OVER_BODY`, `partAlpha`, two front parts' size), `src/render/ailmentLayer.ts`; `src/heroBar.ts`, `src/battleUi.css` (`.hbPips b.shut`); `test/fx-clear.test.ts`; new `tools/fx-clear/shots.mjs`; `docs/notes/fx-clear.md`, `docs/notes/hero-kits.md`, `docs/samples/fx-clear-*.png`.
 - **Completion criteria:** effects over a fighter thinned by named constants (`OVER_FIGHTER_ALPHA` 0.6, `OVER_FIGHTER_STATUS_ALPHA` 0.7) and still visible, ground and back layers unchanged, no blinking, reduced motion kept; pip 2 reads "2" and is greyed while locked; typecheck, affected and full tests, web build; 393x852, 360x780, 412x915.
 - **Validation and handoff:** [notes](notes/fx-clear.md).
+
+### MID-EVENTS — A market on the passing cart; twelve more events between waves
+
+- **Goal:** the owner's ask: "More mid battle events or more in depth ones. Like the passing cart only has two items? ... Let's add some more for a unique experience."
+- **Status:** done on the branch; not merged.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/mid-events`, `/home/user/mid-events` (from main 0.232.0); PR none.
+- **Allowed files or systems:** `src/sim/midEvents.ts`, `src/sim/market.ts` (new), `src/sim/events.ts` (road draw, market, new effects), `src/sim/run.ts` (optional `Buff.twist`, `Run.road`, `gearStage`, the twist in `startStage`), `src/sim/autoplay.ts` (no-leave cards), `src/events.ts` (icons, buys), small hooks in `src/main.ts` (`afterEvent`, `placeSquad`, the banner) and `src/twistView.ts` (`twistIcon`); `test/midEvents.test.ts`, the `daily` hash of `test/fixtures/ailment-logs.json`; `tools/mid-events/`; `docs/notes/mid-events.md`.
+- **Completion criteria:** the cart sells 5-6 wares with limited buys and a rummage; 12 road events and 2 follow-ups with real choices, weighted by army and land, no repeats; deterministic side streams; old saves load; daily and army pace unchanged; typecheck, full tests, web build; three portrait sizes.
+- **Validation and handoff:** [notes](notes/mid-events.md).
+### RECAP-REVEAL — Every item on the wave card; no spoils in the end recap; earned heroes walk in
+
+- **Goal:** the owner's asks: "The wave recap should show all items gained, spoils don't really matter if they leave" and "When a hero is obtained through a task, they shouldn't act like they came from the summoner. They can have a similar reveal, but not from the summoner."
+- **Status:** done on the branch; not merged.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/recap-reveal`, `/home/user/recap-reveal` (from main 0.233.0, merged up to 0.235.0); PR none.
+- **Allowed files or systems:** new `src/sim/waveGains.ts`, `src/sim/heroArrival.ts`, `src/earnedArrival.ts`, `test/recap-reveal.test.ts`, `tools/recap-reveal/shots.mjs`; `src/sim/waveCard.ts` (optional `gains`), `src/waveCardView.ts` (the chips), `src/recapView.ts` and `src/towerView.ts` (spoils lists removed), `src/sim/runRecap.ts` (comment), `src/render/revealSprite.ts` (optional walk), `src/summonTarot.ts` (`queueReveal` picks the arrival), small hooks in `src/main.ts` (snapshot before the settlement, gains on the card), `src/battleReports.css`; `docs/notes/recap-reveal.md`.
+- **Completion criteria:** the short card lists every item a wave gained, grouped, with icons, without covering most of the board; the end recap and the spire's summary drop the run-only spoils; the ten milestone heroes arrive at the keep's overlook with their deed named and no summoner, keeping the queue, skip guard, seen flag and reduced motion; typecheck, affected and full tests, web build; three portrait sizes in Chromium.
+- **Validation and handoff:** [notes](notes/recap-reveal.md).
 
 ### WAVE-RECAP-2 — The short card for the spire and the Calamity; their detail in their summaries
 
@@ -192,6 +217,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Completion criteria:** a locked hero's tile shows no "Lv 30", no ring and no dimming, with the portrait filling the ring's place (no gap); an unlocked one unchanged; ordinary fights, the daily, the Calamity and the Last Stand; typecheck, tests, web build; 393x852, 360x780, 412x915.
 - **Validation and handoff:** [notes](notes/herobar-lock.md).
 
+### OPTIONS-MENU — Settings in submenus; Updates and notes
+
+- **Goal:** the owner's asks: "Let's add an updates and notes section in the options. This will show what was changed in the last updates so I can look back at what's new and what version they came out. Keep it summarised." and "We should probably condense the options menu into more menus."
+- **Status:** done; ready for review.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/options-menu`, `/home/user/options-menu` (from main 0.233.0); PR none.
+- **Allowed files or systems:** `src/settings.ts` (the submenus, the updates page, the gears' dot), new `src/updates.ts`, new `src/settingsMenu.css` (and its line in `build.mjs`), one line in `src/main.ts`, new `test/updates.test.ts`, the ruler sheet's step in `tools/rulers/check.mjs`, `tools/settings-menus/shots.mjs`, `tools/stand/depth-shots.mjs`; `CLAUDE.md` (one line), `docs/notes/options-menu.md`, `docs/samples/options-menu-*.png`.
+- **Completion criteria:** eight submenus with a back button; every setting saved under the same keys; the releases newest first from 0.189.0 with the older ranges folded; a test that the newest entry is package.json's version; a "New" dot until the page is seen; typecheck, full tests, web build; 393x852, 360x780, 412x915.
+- **Validation and handoff:** [notes](notes/options-menu.md).
+
 ### SETTINGS-MENUS — The ruler picker and stones in the developer row
 
 - **Goal:** the owner's asks: "The rulers in the settings menu should be a menu that opens up after clicking on it." and "I also want the developer menu to have stones as an option too."
@@ -201,6 +236,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Allowed files or systems:** new `src/settingsPicker.ts`; `src/settings.ts` (ruler, Duchess costume and developer rows), the ruler/picker styles in `src/keepKingdom.css`, `src/sim/devGrant.ts`, `test/dev-grant.test.ts`, `tools/rulers/check.mjs` (opens the sheet), new `tools/settings-menus/shots.mjs`; `docs/notes/settings-menus.md`, `docs/samples/settings-menus-*.png`.
 - **Completion criteria:** one compact Ruler row opening a sheet of the eight that saves to the same setting and always closes (pick, ✕, backdrop, Escape, Settings' Close; `[hidden]` respected); the Duchess costume the same way; +100 and +1000 stones in the developer row, six buttons fitting at 360; tests extended; typecheck, full tests, web build; 393x852, 360x780, 412x915.
 - **Validation and handoff:** [notes](notes/settings-menus.md).
+
+### DEPLOY-ZOOM — Each wave's deploy zooms in on the placement rows; Auto merge and Auto place are earned
+
+- **Goal:** the owner's asks: "At the beginning of every wave, zoom in on the hero placement box for easy placement." and "Actually, let's have the auto merge unlock after defeating the second army, and auto place unlock after defeating the 4th army."
+- **Status:** done on the branch; ready for review. Not merged.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/deploy-zoom`, `/home/user/deploy-zoom` (from main 0.233.0); PR none.
+- **Allowed files or systems:** new `src/render/deployCam.ts`, `src/sim/featureUnlocks.ts`, `tools/deploy-zoom/`; small hooks in `src/main.ts` (deploy camera, the two buttons' gates, the notice), `src/sim/meta.ts` (`featuresTold`), `src/achievementsView.ts` (`toastLines`), `src/pixel.css` (`#auto[hidden]`), `src/tips.ts`; tests `test/deployCam.test.ts`, `test/featureUnlocks.test.ts`.
+- **Completion criteria:** the deploy eases in on the placement rows at every wave (a cut with reduced motion), the camera stays free, Fight! eases back to the fight framing; Auto merge after army 2 and Auto place after army 4, told once; typecheck, full tests, web build; shots at 393x852, 360x780 and 412x915 with no page errors.
+- **Validation and handoff:** [notes](notes/deploy-zoom.md).
 
 ### MERGE-TWO — Two to merge, merged by the player, an Auto merge button, four ranks
 
@@ -244,6 +289,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Completion criteria:** road and arenas per the owner's answers; hazards deterministic on their own side stream, both sides, each rule tested; rings and set pieces from pack art at the tiles' angle, credited; water flows and pours off open edges; ambient life respecting reduced motion and battery saver; every walkable tile reachable and every survivor able to walk on to the next section; armies within noise of main at their recommended levels; typecheck, affected tests and the full suite, web build; 393x852, 360x780 and 412x915 checks.
 - **Validation:** see the handoff's "Checks run for phase B".
 - **Handoff:** [notes](notes/army-road.md), [phase B sheet](samples/army-road-after-sheet.png), [phase A mock-ups](samples/army-road-mock-sheet.png).
+
+### ARMY-DROPS — Rare hero shards and XP tomes from army waves
+
+- **Goal:** the owner's ask: "I want shards and tomes to be able to drop from armies too. It's just much much rarer."
+- **Status:** implemented; ready for review. No merge, deployment or version bump.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/army-drops`, `/home/user/army-drops`; PR none.
+- **Allowed files or systems:** new `src/sim/armyDrops.ts`, `test/army-drops.test.ts`, `tools/army-drops/shots.mjs`; small hooks in `src/main.ts` (the wave's settle, the card, the recap, the auto summary), `src/sim/waveCard.ts` (`drops`, the `drop` note), `src/waveCardView.ts`, `src/sim/autoReplay.ts` (`totals.drops`), `src/battleReports.css`; `tools/unlockPace.ts` (`--nodrops`, `--droprate`); `test/summon-stones.test.ts` (the giveShards callers, a rule the owner's ask changed); `docs/notes/army-drops.md`, `docs/samples/army-drops-*.png`.
+- **Completion criteria:** a side stream per run seed and wave (no fight draws, no rerolls by retrying), armies only, banked on the win, shown on the card and the recap's spoils and the auto summary; rates tested; the pace re-run; typecheck, full tests, web build, three portrait sizes.
+- **Handoff:** [notes](notes/army-drops.md).
 
 ### AWAKEN-MATS — Awakening materials from the armies and the Calamity
 
@@ -416,6 +471,7 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 | --- | --- | --- | --- |
 | BENCH-TITLES | Pull a hero back to the bench more easily; every hero a longer title | Done on the branch, awaiting review: the whole bottom panel (and a little above it) is the drop area for a placed hero, outlined while it is dragged and lit with "Return to bench" over it; a quick flick down counts; drag-merge still wins over a matching card. Every hero (45) has a unique epithet (`HERO_NAMES[k].title`), "Name, Title" (`heroTitle`) in the dossier, the reveals, the codex, the artwork viewer and the recap's MVP; the short name stays in the small boxes; the old "Name · Class" label is `heroClassLabel`. Typecheck, affected tests, full suite 1493/1493, build, three phone sizes | [Note](notes/bench-titles.md), branch `claude/bench-titles` |
 | AUDIO-BATTLE | Battle music stays on and steady through a battle; victory music when it is won | Done, awaiting review: one track a battle (`trackOfRun`, kept wave to wave, boss waves included; no drop to the deploy track between waves, no sting between waves); the tension low-pass, swell, pace and rumble removed; a won battle ends on the victory fanfare leading into the triumph loop at a lower bed under the results until they are left; defeat sting as before. Typecheck, 37 affected tests, full suite 1415/1415, build, an army's last two waves played at x2 in Chromium at 393x852 | [Note](notes/battle-music.md), branch `claude/battle-music` |
+| AUDIO-MIX | Music and effects matched in volume (the owner's ask) | Done on the branch, not merged: the page's own output measured in Chromium (LUFS, BS.1770) and levelled: every music file trimmed to its place (menus -28, battle -30.5, scenes -27; the files spread over 10 LU before), battle music 7 LU under the fight's sounds (0 to 4 LU before), every cue and king's spell normalised in its family, the effects bus 0.35 to 0.49; the limiter reached in no measured fight. Typecheck, affected and full tests, build | [Note](notes/audio-mix.md), branch `claude/audio-mix` |
 | ULT-CHARGE | Ultimates used once or twice a battle | Released as 0.213.0 (owner: keep ultimates at full strength, answer with tougher foes): the meter starts each fight 60 full and fills about 2.5x as fast, ultimates at full strength (none weaker than main), parity by meter speed at stage 78 (spread 5.7); the extra power answered by tougher foes only where ultimates are open: the five late armies' Normal `start` and `tierLift`, Legendary x2.8 and Mythic x2.6 (`Tier.answer`, XP taken back out), the Last Stand's late climb, the Calamity's last map, the daily for levelled saves. Army pace, first-army stars, Stand, Calamity and daily back near main; full suite 1377/1377, build, three phone sizes | [Note](notes/ult-charge.md), branch `claude/ult-charge` |
 | AUDIO-150 | Recorded combat sounds and a quieter, cleaner battle mix | Released as 0.186.0; the sounds' source (given as CC0) still needs naming in CREDITS.md | PR #150 |
 | AUDIO-147 | Battle music opens on the combat downbeat; the camp's theme plays across all home tabs | Released as 0.184.0; the loop start was moved to 5.68 s (bar 4) so the loop stays whole bars and joins on the beat | PR #147 |

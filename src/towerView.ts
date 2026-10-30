@@ -962,7 +962,7 @@ export class TowerView {
       if (pendingAltar(run)) this.altarCard();
     }, !!expeditionOf(run));
     // (WAVE-RECAP-2: the map's share of the company's work, its XP and its fights; its finds are the recap's own groups)
-    putDetail(card, done.detail, { strip: 'Fight by fight', prefix: '#', noSpoils: true });
+    putDetail(card, done.detail, { strip: 'Fight by fight', prefix: '#' });
   }
 
   /** The relics an elite paid: choose one (the offer is kept in the run, so leaving and coming back finds it). */
@@ -1237,8 +1237,7 @@ export class TowerView {
     const line = chestLine(s);
     card.append(el('p', 'rtLead', line ? `${line} added to your stash.` : cal ? `Clear every ${unit} for a chest.` : 'No chests yet: climb further to earn them.'));
     if (cal && s.cleared && (s.ascension ?? 0) < ASC_MAX) card.append(el('p', 'rtBest', `Ascension ${Math.max(s.ascension ?? 0, 0) + 1} is open.`));
-    // (the finds: the run's own list when it kept one, which the detail below shows with the rest)
-    if (!run.recap?.found?.length) for (const g of s.gear) card.append(el('p', 'rtGear', `Equipment found: ${g}`));
+    // (RECAP-REVEAL: no list of the gear found: it leaves with the run, and each fight's card named it)
     const go = el('button', 'primary', 'Back to camp');
     go.addEventListener('click', () => {
       this.close();
@@ -1252,7 +1251,7 @@ export class TowerView {
   }
 }
 
-/** Lay a recap's detail (`recapDetail`: the fights one by one, the company's work with its MVP, the XP and levels, the spoils) into a
+/** Lay a recap's detail (`recapDetail`: the fights one by one, the company's work with its MVP, the XP and levels) into a
  *  summary card, above its closing button. Nothing when there is no recap (a save from before) or nothing in it. */
 function putDetail(card: HTMLElement, recap: RunRecap | undefined, opts: Parameters<typeof recapDetail>[1]): void {
   if (!recap) return;

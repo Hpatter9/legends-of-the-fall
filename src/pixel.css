@@ -422,6 +422,7 @@ body .sbSlot { min-height: 44px; }
 
 /* auto-deploy and auto-replay: the Auto button in the deploy bar, the banner over the fight, the summary card */
 #auto { display: inline-flex; align-items: center; gap: 4px; }
+#auto[hidden] { display: none; }
 #auto svg { flex: none; color: var(--gold-hi); }
 #autoBar { position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 74px); z-index: 3; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; max-width: calc(100 * var(--vw) - 20px); padding: 3px 4px 3px 10px; background: var(--panel-bg); border: 2px solid var(--gold-lo); box-shadow: 0 0 0 2px var(--deep), 0 3px 8px rgb(var(--black-rgb) / 0.55); white-space: nowrap; }
 #autoBar[hidden] { display: none; }

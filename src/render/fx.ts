@@ -224,6 +224,13 @@ export class Fx {
     this.dimLeft = ms;
   }
 
+  /** DARK-WAVE: lift any dim at once (a wave starting again after a heart burns: the fight's clock, which fades a dim out, is
+   *  held through the burn, so an ultimate's dim from the fall would otherwise stay on over it). */
+  undim(): void {
+    this.dimLeft = 0;
+    this.dimLayer.visible = false;
+  }
+
   /** Run `fn` after `ms` of the fight's own time. */
   private later(ms: number, fn: () => void): void {
     const view = new Container();

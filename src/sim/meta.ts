@@ -152,6 +152,8 @@ export interface Meta {
   ultAuto?: boolean;
   /** The bosses whose card (the slam-down ribbon as the fight begins) has been shown, by boss or `elite:<id>` (`sceneRules.ts` `cardKey`): once a save. Saves from before have none. */
   bossCards?: string[];
+  /** The deploy bar's earned helpers whose unlocking has been told (`featureUnlocks.ts`): once a save. Saves from before have none. */
+  featuresTold?: string[];
 }
 
 /** An earned, unopened chest: where it came from, and the seed its contents are rolled from (fixed when it was earned). */
@@ -483,6 +485,9 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       if (typeof m.duchessTreat === 'number' && Number.isFinite(m.duchessTreat)) m.duchessTreat = m.duchessTreat | 0;
       else delete m.duchessTreat;
       if (!m.bossCards.length) delete m.bossCards;
+      // (saves from before the earned deploy helpers have told none: `featureUnlocks.ts`)
+      if (Array.isArray(m.featuresTold)) m.featuresTold = m.featuresTold.filter((x) => typeof x === 'string');
+      else delete m.featuresTold;
       // (a content hero whose milestone a save from before has already reached joins now)
       if (!needsStarter(m)) grantContent(m);
       // (spells are no longer bought: those bought before are kept, and any whose tower level or milestone a save has already reached are learnt now)
