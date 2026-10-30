@@ -4,6 +4,7 @@
 // older screens (gacha, modes, achievements, settings, castle upgrades); it only reads and changes the Meta through the
 // sim's own functions.
 
+import { ACT_HALLS, ROOM_NAMES } from './sim/standActs';
 import { BUILDING_IDS, BUILDINGS, buildMs, canBuildChapel, CHAPEL_COST, CHAPEL_MS, chapelBuilt, clockText, maxLevel, nextCost, settleWorks, startBuild, startChapel, worksLeft, type BuildingId, type BuildSite } from './sim/castle';
 import { CastleScene, lookPicture } from './castle';
 import { BLURB, effectText } from './render/castleSpots';
@@ -402,7 +403,9 @@ export class Home {
     // (the Last Stand, on the Tower's old place: shut, dimmed and chained, until the stars open it; a run begun stays open whatever the unlock says)
     const climbing = this.hooks.slotInfo?.('tower');
     const towerUp = towerOpen(m) || !!climbing;
-    const towerLine2 = climbing ?? (towerOpen(m) ? (m.stand ? `best wave ${m.stand}` : 'not tried yet') : opensAt(MODE_NEED.tower));
+    // (with the furthest room of the retreat reached: the throne room is the Last Stand's badge, STAND-RETREAT)
+    const room = m.standAct !== undefined ? ` · ${m.standAct >= 3 ? '♛ ' : ''}${ROOM_NAMES[ACT_HALLS[m.standAct]].short}` : '';
+    const towerLine2 = climbing ?? (towerOpen(m) ? (m.stand ? `best wave ${m.stand}${room}` : 'not tried yet') : opensAt(MODE_NEED.tower));
     const tower = place('hmTower', towerUp ? '' : 'locked', 'Last Stand', towerLine2, `Last Stand: ${towerLine2}${towerUp ? '' : `, ${progressLine(m, MODE_NEED.tower)}`}`, () => this.go(this.hooks.onTower));
     tower.disabled = !towerUp;
     // The distant Calamity citadel carries the saved map or the unlock requirement.

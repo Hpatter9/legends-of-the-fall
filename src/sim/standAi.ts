@@ -70,6 +70,62 @@ export function flowField(board: Board, king: At, jump: number): number[] {
 
 const fieldFor = (b: Battle, jump: number): number[] => (b.stand!.fields[jump] ??= flowField(b.board, b.stand!.at, jump));
 
+/** The cost to reach the edge of the field (a breach) from every tile, for a fighter that jumps `jump`: Dijkstra outwards from every standable
+ *  edge tile at once (the foes that break off at an act's end run down it: STAND-RETREAT). */
+export function exitField(board: Board, jump: number): number[] {
+  const cost = new Array<number>(board.w * board.d).fill(Infinity);
+  const open: number[] = [];
+  for (let v = 0; v < board.d; v++)
+    for (let u = 0; u < board.w; u++) {
+      if (u !== 0 && v !== 0 && u !== board.w - 1 && v !== board.d - 1) continue;
+      const t = tileAt(board, u, v);
+      if (!t || t.wall || t.rock || t.h >= 8) continue;
+      cost[v * board.w + u] = 0;
+      open.push(v * board.w + u);
+    }
+  while (open.length) {
+    let k = 0;
+    for (let i = 1; i < open.length; i++) if (cost[open[i]] < cost[open[k]] || (cost[open[i]] === cost[open[k]] && open[i] < open[k])) k = i;
+    const i = open.splice(k, 1)[0];
+    const u = i % board.w;
+    const v = Math.floor(i / board.w);
+    for (const [du, dv] of DIRS) {
+      const t = tileAt(board, u + du, v + dv);
+      if (!t) continue;
+      const j = (v + dv) * board.w + u + du;
+      const step = canStep(t, board.tiles[i], jump);
+      if (step === null || cost[i] + step >= cost[j]) continue;
+      if (cost[j] === Infinity) open.push(j);
+      cost[j] = cost[i] + step;
+    }
+  }
+  return cost;
+}
+
+/** A foe that has broken off: a step down the way out, round whoever is in the way; it strikes nobody. */
+function fleeDecide(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const def = strikeDef(b, me);
+  // (kept beside the king's fields, under keys of their own)
+  const field = (b.stand!.fields[-1 - def.jump] ??= exitField(b.board, def.jump));
+  const from = tileOf(b, me);
+  let best = -1;
+  let bestCost = field[me.v * b.board.w + me.u];
+  for (const [du, dv] of DIRS) {
+    const t = tileAt(b.board, me.u + du, me.v + dv);
+    if (!t) continue;
+    const j = (me.v + dv) * b.board.w + me.u + du;
+    if (field[j] >= bestCost || canStep(from, t, def.jump) === null || standingOn(b, me.u + du, me.v + dv)) continue;
+    bestCost = field[j];
+    best = j;
+  }
+  if (best >= 0) {
+    stepTo(b, me, best, out);
+    return true;
+  }
+  me.busyUntil = b.t + WAIT_MS;
+  return true;
+}
+
 /** The unit standing on a tile, if any (alive). */
 const standingOn = (b: Battle, u: number, v: number): Unit | undefined => {
   for (const x of b.units) if (x.alive && x.u === u && x.v === v) return x;
@@ -131,6 +187,8 @@ export function standDecide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): 
   }
   me.step = undefined;
   me.cast = undefined;
+  // (an act's last foes break off and run for the breaches: STAND-RETREAT)
+  if (me.side === 'foe' && b.stand!.flee) return fleeDecide(b, me, out);
   const hunting = me.side === 'hero' && !!b.stand!.hunt;
   // (an idle hero sent to help where the fighting is, `standHelp.ts`: off its leash like the hunt, but after the foe it was sent to)
   const aid = me.side === 'hero' && !hunting ? b.stand!.help?.[me.id] : undefined;
