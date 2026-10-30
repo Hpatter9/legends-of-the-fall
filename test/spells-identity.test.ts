@@ -11,6 +11,9 @@
 // heroes10 and heroes30: each has the Knight, Paladin, Peasant, Juggernaut, Samurai Commander, Wolf Bard or Tyrant (field1 and heroes1 at level 1,
 // where the Paladin's Divine Smite and the Juggernaut's Seismic Slam are skill 1). The `...Others` scenarios now leave those seven out of every team
 // (recorded on main's code before the batch) and did not move; daily, tower and calamity did not move either.
+// Batch 4 (the melee heroes, docs/notes/spells-b4.md) re-recorded field30, bosses, armyFoes, spells, lands, stand, heroes10 and heroes30: each has
+// one of the ten at level 10 or more (their skill 1s did not change, so the level-1 scenarios did not move). The `...Others` scenarios now leave
+// the ten out of every team (recorded on main's code before the batch) and did not move; nor did field1, army, daily, tower, calamity or heroes1.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';

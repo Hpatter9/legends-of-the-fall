@@ -1288,7 +1288,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Keen Edge', text: '15% of blows crit for x1.6 and make the foe bleed', crit: { chance: 0.15, mult: 1.6, bleed: { kind: 'bleed', dmg: 4, every: 500, ms: 3000 } } },
   },
   kunoichi: {
-    skill: { name: 'Shadow Step', text: 'Slips behind the weakest foe and backstabs it', need: CHARGE_MAX, dealt: 6, taken: 4, perSec: 2, castMs: 450, anim: 'attack2', cast: shadowStep },
+    skill: { name: 'Sneak Attack', key: 'Shadow Step', text: 'Slips behind the weakest foe and backstabs it', need: CHARGE_MAX, dealt: 6, taken: 4, perSec: 2, castMs: 450, anim: 'attack2', cast: shadowStep },
     passive: { name: 'Evasion', text: 'Slips 20% of blows', dodge: 0.2 },
   },
   archer: {
@@ -1300,7 +1300,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Cinders', text: 'Its blows set the foe alight', ignite: { kind: 'burn', dmg: 3, every: 500, ms: 2000 } },
   },
   ninjaMonk: {
-    skill: { name: 'Thousand Fists', text: 'Three quick strikes on one foe, who is stunned for 1.5s', need: CHARGE_MAX, dealt: 8, taken: 3, perSec: 2, castMs: 700, anim: 'attack2', cast: flurry },
+    skill: { name: 'Flurry of Blows', key: 'Thousand Fists', text: 'Three quick strikes on one foe, who is stunned for 1.5s', need: CHARGE_MAX, dealt: 8, taken: 3, perSec: 2, castMs: 700, anim: 'attack2', cast: flurry },
     passive: { name: 'Iron Fists', text: 'Blows ignore 3 of the foe\'s defence', pierce: 3 },
   },
   peasant: {
@@ -1373,7 +1373,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Targeting Array', text: 'Shots deal 30% more to foes 4 or more tiles away', far: 0.3 },
   },
   mercenary: {
-    skill: { name: 'Bounty Hunt', text: 'Slips beside the strongest foe and cuts it for nearly double', need: CHARGE_MAX, dealt: 6, taken: 4, perSec: 2, castMs: 450, anim: 'attack2', cast: bountyHunt },
+    skill: { name: 'Ambush', key: 'Bounty Hunt', text: 'Slips beside the strongest foe and cuts it for nearly double', need: CHARGE_MAX, dealt: 6, taken: 4, perSec: 2, castMs: 450, anim: 'attack2', cast: bountyHunt },
     passive: { name: 'Hired Blade', text: '20% of blows crit for x1.7 and make the foe bleed', crit: { chance: 0.2, mult: 1.7, bleed: { kind: 'bleed', dmg: 4, every: 500, ms: 3000 } } },
   },
   mummy: {
@@ -1397,7 +1397,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Barnacled Hide', text: 'Blows from the front lose a fifth', block: 0.2 },
   },
   lancer: {
-    skill: { name: 'Lance Charge', text: 'Charges up to 5 tiles at a foe for more than double, then rides faster for 3s', need: CHARGE_MAX, dealt: 6, taken: 4, perSec: 2, castMs: 500, anim: 'attack', cast: lanceCharge },
+    skill: { name: 'Charge', key: 'Lance Charge', text: 'Charges up to 5 tiles at a foe for more than double, then rides faster for 3s', need: CHARGE_MAX, dealt: 6, taken: 4, perSec: 2, castMs: 500, anim: 'attack', cast: lanceCharge },
     passive: { name: 'Couched Lance', text: 'Blows deal 40% more to shooters', prey: 1.4 },
   },
   reaper: {
@@ -1409,7 +1409,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Stutter', text: 'Slips 20% of blows', dodge: 0.2 },
   },
   arcBlade: {
-    skill: { name: 'Voltage Blink', text: 'Blinks beside the thickest knot of foes and discharges: the 3x3 is hurt and held for 1s', need: CHARGE_MAX, dealt: 8, taken: 4, perSec: 2, castMs: 450, anim: 'attack2', cast: voltageBlink },
+    skill: { name: 'Thunder Step', key: 'Voltage Blink', text: 'Blinks beside the thickest knot of foes and discharges: the 3x3 is hurt and held for 1s', need: CHARGE_MAX, dealt: 8, taken: 4, perSec: 2, castMs: 450, anim: 'attack2', cast: voltageBlink },
     passive: { name: 'Static Discharge', text: '25% of blows arc to a second foe nearby', arc: 0.25 },
   },
   dreadPirate: {
@@ -1438,7 +1438,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Arcane Insight', text: 'His blows ignore 4 defence', pierce: 4 },
   },
   demonSwordsman: {
-    skill: { name: 'Hellblade Sweep', text: 'Cuts every foe within 2 tiles, and he drinks a third of what it deals', need: CHARGE_MAX, dealt: 7, taken: 5, perSec: 2, castMs: 550, anim: 'attack2', cast: hellbladeSweep },
+    skill: { name: 'Cleave', key: 'Hellblade Sweep', text: 'Cuts every foe within 2 tiles, and he drinks a third of what it deals', need: CHARGE_MAX, dealt: 7, taken: 5, perSec: 2, castMs: 550, anim: 'attack2', cast: hellbladeSweep },
     ultimate: { name: 'Demon Form', text: 'For 7s he hits half as hard again, and a fifth of his health comes back', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 800, anim: 'attack2', cast: demonForm },
     passive: { name: 'Soul Pact', text: 'Heals for 8% of the damage his blows deal, and hits up to 25% harder as his health falls', leech: 0.08, rage: 0.25 },
   },

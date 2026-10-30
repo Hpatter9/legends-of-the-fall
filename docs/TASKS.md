@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### RPG-SPELLS B4 — The melee heroes
+
+- **Owner:** Claude. **Branch/worktree:** `claude/spells-b4`, `/home/user/spells-b4`.
+- **Authorisation:** owner approved design v2; batch 4 as briefed.
+- **Scope:** Samurai, Kunoichi, Ninja Monk, Barbarian, Mercenary, Lancer, Arc Blade, Demon Swordsman, Buccaneer and Queen Dragoon kits on the toolkit (blinks, leaps, launches, the Cavalry Charge, the Lightning Storm, the chains, the burning line), renames and tiers.
+- **Status:** ready for review. Parity: none beyond 6 at levels 1, 10 and 30 (none beyond 4 at 30); the Last Stand and the Calamity as main. Full `npm test` passes; screenshots `docs/samples/spells-b4-*`. [Notes](notes/spells-b4.md). Next: batch 5, ranged and summoners.
+
 ### RPG-SPELLS B3 — The tanks and supports
 
 - **Owner:** Claude. **Branch/worktree:** `claude/spells-b3`, `/home/user/spells-b3`.

@@ -49,6 +49,7 @@ import { fallenFor, raiseFallen } from './kits/revive';
 import { startPool } from './heroKits';
 import { chokeLine, raiseAura, raiseWall } from './toolkit';
 import { chargeNearest, fissureSpires, knightsAura, thunderclap } from './kits/tanks';
+import { berserkerLeap, burningLine, cavalryCharge, hellChains, lastBlowLaunch, lightningStorm } from './kits/melee';
 
 /** A duration in ms, as the caster's `dur` talent lengthens it, and the ultimate's strength: a stronger ultimate holds, guards and hastens a little longer (by the square root of its strength). */
 const dur = (me: Unit, ms: number): number => durOf(me, Math.round(ms * Math.sqrt(castPower())));
@@ -286,7 +287,7 @@ function shots(b: Battle, me: Unit, out: BattleEvent[], o: Shots): boolean {
 // ---- the odd ones ----
 
 /** Mass strikes from a close fight: `n` quick blows on each of the foes in reach, and each is held a moment. */
-function fists(b: Battle, me: Unit, out: BattleEvent[], foesN: number, blows: number, mult: number, holdMs: number): boolean {
+function fists(b: Battle, me: Unit, out: BattleEvent[], foesN: number, blows: number, mult: number, holdMs: number, throwLast = false): boolean {
   const def = strikeDef(b, me);
   const foes = foesOf(b, me)
     .filter((f) => canStrike(b.board, def, me, f))
@@ -297,22 +298,11 @@ function fists(b: Battle, me: Unit, out: BattleEvent[], foesN: number, blows: nu
     me.facing = wayTo(me, f);
     for (let i = 0; i < blows && f.alive; i++) hurt(b, me, f, net(atkOf(me) * mult, f), i === blows - 1, false, out, 'skill');
     if (f.alive) stun(b, f, dur(me, holdMs));
+    if (throwLast) lastBlowLaunch(b, me, f, out);
   }
   return true;
 }
 
-/** Barbarian: a whirling slaughter of the 3x3 round him; he drinks a quarter of it and runs hot. */
-function bloodlust(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const wide = 1 + tal(me, 'reach');
-  const near = foesOf(b, me).filter((f) => Math.abs(me.u - f.u) <= wide && Math.abs(me.v - f.v) <= wide);
-  if (!near.length) return false;
-  const before = me.dealt ?? 0;
-  for (const f of near) hurt(b, me, f, net(atkOf(me) * 3.0, f), true, false, out, 'skill');
-  mendUnit(me, ((me.dealt ?? 0) - before) * 0.3, out);
-  me.hasteUntil = Math.max(me.hasteUntil ?? 0, b.t + dur(me, 5000));
-  out.push({ kind: 'haste', to: me.id, ms: dur(me, 5000) });
-  return true;
-}
 
 /** Werewolf: the moon rises; his frenzy is full to the brim for a while, and a quarter of his health comes back. */
 function fullMoon(b: Battle, me: Unit, out: BattleEvent[]): boolean {
@@ -328,8 +318,12 @@ function fullMoon(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 }
 
 /** Lancer: a charge down a long line at the weakest foe in it, and the whole line of riders gallops after. */
-function knightsCharge(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  if (!chargeAt(b, me, out, { tiles: 7, mult: 3.6, stun: false, knock: true, haste: 4000 })) return false;
+/** Lancer, Cavalry Charge (RPG-SPELLS batch 4; it was Charge of the Knights, one charge at one foe): a ride through the line, each foe struck
+ *  and thrown aside, and the riders near him gallop faster. */
+function cavalry(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  if (!cavalryCharge(b, me, out, 2.4)) return false;
+  me.hasteUntil = Math.max(me.hasteUntil ?? 0, b.t + dur(me, 4000));
+  out.push({ kind: 'haste', to: me.id, ms: dur(me, 4000) });
   bless(b, me, out, { reach: 4, haste: 4000 });
   return true;
 }
@@ -379,6 +373,9 @@ function infernoBreath(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     hurt(b, me, f, net(atkOf(me) * 2.8, f), true, false, out, 'skill');
     if (f.alive) setDot(b, f, { kind: 'burn', dmg: Math.max(1, Math.round(atkOf(me) * 0.15)), every: 500, ms, by: me.id, next: b.t + 500, until: b.t + ms });
   }
+  // (RPG-SPELLS batch 4: the line she breathed down stays alight for 4s, a fire wall)
+  const far = best.reduce((a, f) => (apart(me, f) > apart(me, a) ? f : a), best[0]);
+  burningLine(b, me, far, dur(me, 4000), out);
   return true;
 }
 
@@ -522,17 +519,17 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   wolfBard: { rate: 0.93, power: 0.49 },
   beastmaster: { rate: 0.7, power: 0.59 },
   kraken: { rate: 1.37, power: 0.94 },
-  lancer: { rate: 1.61, power: 3.07 },
+  lancer: { rate: 2.3, power: 3.07 }, // (RPG-SPELLS batch 4: Cavalry Charge through a line; 1.61 for one charge at one foe)
   reaper: { rate: 1.79, power: 3.07 },
   timeWitch: { rate: 1.09, power: 0.62 },
-  arcBlade: { rate: 0.59, power: 2.42 },
+  arcBlade: { rate: 0.59, power: 1.8 }, // (RPG-SPELLS batch 4: Lightning Storm, a teleport slash with its stuns; 2.42 for Thunder Cascade)
   dreadPirate: { rate: 1.06, power: 1.24 },
   siegeBot: { rate: 0.5, power: 2.06 },
   priestess: { rate: 0.38, power: 0.43 },
   dragoon: { rate: 1.1, power: 3.07 },
   juggernaut: { rate: 1.55, power: 1.5 },
   sage: { rate: 1.7, power: 1.51 },
-  demonSwordsman: { rate: 2.06, power: 3.07 },
+  demonSwordsman: { rate: 1.8, power: 3.07 }, // (RPG-SPELLS batch 4: Metamorphosis drags three foes in first; 2.06 before)
   tyrant: { rate: 0.88, power: 1.82 },
 };
 
@@ -579,17 +576,18 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
     shambler: ult('Plague Tide', 'A wave of rot leaves every foe within 5 tiles cursed for 7s; he drinks from them', 800, 'attack2', (b, me, out) =>
       smite(b, me, out, { reach: 5, mult: 0.7, curse: { ms: 7000, dot: 0.6 }, drink: { each: 0.05, cap: 0.3 } })),
     // ---- the blades ----
-    samurai: ult('Heaven-Splitting Cut', 'Dashes up to 7 tiles in a line, cutting every foe on it with a huge blow', 500, 'attack2', (b, me, out) => iaido(b, me, out, 7, 3.0)),
-    kunoichi: ult('Shadow Dance', 'Slips behind the four weakest foes in turn and backstabs each', 600, 'attack2', (b, me, out) => blinks(b, me, out, 4, 1.4, (x, y) => x.hp - y.hp || x.id - y.id)),
-    mercenary: ult('Contract Killer', 'Slips beside the three hardest-hitting foes in turn and cuts each hard', 600, 'attack2', (b, me, out) => blinks(b, me, out, 3, 2.1, strongest)),
-    ninjaMonk: ult('Hundred Fists', 'Five blows on each of the three nearest foes, and each is stunned for 1.2s', 700, 'attack2', (b, me, out) => fists(b, me, out, 3, 5, 0.65, 1200)),
-    barbarian: ult('Bloodlust', 'A whirl of blows round him; he drinks a third of what they deal and runs fast for 5s', 700, 'attack2', bloodlust),
+    // (RPG-SPELLS batch 4: the melee heroes' ultimates, renamed, with what the toolkit adds; the Demon Swordsman's is below, with the first eight)
+    samurai: ult('Issen', '"The one cut": dashes up to 7 tiles in a line, cutting every foe on it with a huge blow', 500, 'attack2', (b, me, out) => iaido(b, me, out, 7, 3.0), 'Heaven-Splitting Cut'),
+    kunoichi: ult('Assassinate', 'A teleport slash: she slips behind the four weakest foes in turn and backstabs each', 600, 'attack2', (b, me, out) => blinks(b, me, out, 4, 1.4, (x, y) => x.hp - y.hp || x.id - y.id), 'Shadow Dance'),
+    mercenary: ult('Killing Spree', 'Slips beside the three hardest-hitting foes in turn and cuts each hard', 600, 'attack2', (b, me, out) => blinks(b, me, out, 3, 2.1, strongest), 'Contract Killer'),
+    ninjaMonk: ult('Hundred-Hand Strike', 'Five blows on each of the three nearest foes, each stunned for 1.2s; the last blow throws each 2 tiles', 700, 'attack2', (b, me, out) => fists(b, me, out, 3, 5, 0.65, 1200, true), 'Hundred Fists'),
+    barbarian: ult('Berserker Leap', 'He leaps up to 4 tiles onto the thickest crowd: the 3x3 round him is struck and shoved a tile out; he drinks a third of what it deals and runs fast for 5s', 700, 'attack2', (b, me, out) => berserkerLeap(b, me, out, 3.0, dur(me, 5000), (n) => mendUnit(me, n, out)), 'Bloodlust'),
     werewolf: ult('Full Moon', 'His frenzy fills to the brim and he is both his forms at once for 7s, and a quarter of his health comes back', 700, 'attack2', fullMoon),
-    lancer: ult('Charge of the Knights', 'A long charge for a huge blow, and the riders near him gallop faster for 4s', 700, 'attack2', knightsCharge),
+    lancer: ult('Cavalry Charge', 'He rides up to 7 tiles in a line through every foe on it, each struck and thrown a tile aside, and the riders near him gallop faster for 4s', 700, 'attack2', cavalry, 'Charge of the Knights'),
     reaper: ult('Harvest of Souls', 'Every foe within 5 tiles is cut; those under a third of their health are reaped for far more, each kill feeds him and rises as a wraith for 5s', 800, 'attack2', harvest),
-    dragoon: ult('Inferno Breath', 'Fire down the longest line of foes, up to 8 tiles, burning each for 5s', 800, 'attack2', infernoBreath),
-    arcBlade: ult('Thunder Cascade', 'Lightning leaps to every foe within 6 tiles, hurting and stunning each for 1.4s', 700, 'attack2', (b, me, out) =>
-      smite(b, me, out, { reach: 6, mult: 1.9, stun: 1400, arcs: true })),
+    dragoon: ult('Inferno Breath', 'Fire down the longest line of foes, up to 8 tiles, burning each for 5s; the line stays alight for 4s', 800, 'attack2', infernoBreath),
+    arcBlade: ult('Lightning Storm', 'He becomes lightning: a teleport slash through up to six foes within 6 tiles, each shocked and stunned for 1.4s, then back where he started', 700, 'attack2', (b, me, out) =>
+      lightningStorm(b, me, out, 1.9, dur(me, 1400)), 'Thunder Cascade'),
     buccaneer: ult('Keelhaul', 'Hooks the three nearest shooters (or foes) in beside him; each cut is a roll of the die (x1 to x3), and each is held 1.5s', 700, 'attack2', keelhaul),
     // ---- the guile ----
     illusionist: ult('Hall of Mirrors', 'Four decoys appear round her and every foe within 6 tiles turns on them for 4.5s', 800, 'attack2', hallOfMirrors),
@@ -650,6 +648,19 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
   };
   // the first eight heroes' ultimates are copied and gated at `ULT_LEVEL` like the rest (a foe's own copy of one, such as the Gorgon Queen's, stays as it was) and all forty-five take their balance
   for (const kind of FIRST_EIGHT) all[kind] = { ...first(kind)!, unlock: ULT_LEVEL };
+  // (RPG-SPELLS batch 4: the Demon Swordsman's Demon Form is Metamorphosis, and chains of hellfire drag the three nearest foes within 4 to him first;
+  // the hero's copy only)
+  const form = all.demonSwordsman;
+  all.demonSwordsman = {
+    ...form,
+    name: 'Metamorphosis',
+    key: 'Demon Form',
+    text: 'Chains of hellfire drag the three nearest foes within 4 tiles to him; for 7s he hits half as hard again, and a fifth of his health comes back',
+    cast: (b, me, out) => {
+      hellChains(b, me, out);
+      return form.cast(b, me, out);
+    },
+  };
   // (RPG-SPELLS batch 3: the Samurai Commander's Rally Cry is the Rallying Cry, and his melee allies charge; the hero's copy only, so a foe that
   // borrows the old one keeps it)
   const rally = all.samuraiCommander;

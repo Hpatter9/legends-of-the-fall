@@ -122,6 +122,20 @@ export function bestCharge(b: Battle, me: Unit, o: ChargeOpts): ChargePlan | und
   return best?.p;
 }
 
+/** A leap to a tile (it must be one the leaper can land on): an arc through the air, with the `launch` event the page draws it by (RPG-SPELLS
+ *  batch 4: the Ninja Monk's Step of the Wind, the Barbarian's leap). */
+export function leapTo(b: Battle, me: Unit, end: At, out: BattleEvent[]): boolean {
+  if (!canLand(b, me, end)) return false;
+  const from = { u: me.u, v: me.v };
+  const steps = apart(me, end);
+  const ms = launchMs(steps);
+  me.step = { u: from.u, v: from.v, h: tileOf(b, me).h, at: b.t, ms, arc: 1.2 + 0.3 * steps };
+  me.u = end.u;
+  me.v = end.v;
+  out.push({ kind: 'launch', to: me.id, from, land: { ...end }, ms, peak: me.step.arc! });
+  return true;
+}
+
 /** Make a charge: move, strike every foe it hits, and the riders on the target. False when there is none to make. */
 export function charge(b: Battle, me: Unit, o: ChargeOpts, out: BattleEvent[], plan = bestCharge(b, me, o)): boolean {
   if (!plan) return false;

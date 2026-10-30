@@ -9,6 +9,7 @@ import { addRes } from '../heroKits';
 import { kx, raiseWraith, setLook } from './effects';
 import { alliesOf, blinkTo, foesNear, freeNear, mark, ms, strike, strongest, stun } from './common';
 import { chillFor, setDot } from '../ailments';
+import { diveLaunch, smokeBlink, stepOfTheWind, THUNDER_STORE, thunderShove } from './melee';
 
 /** Kunoichi, Smoke Bomb: she cannot be targeted for 2s, the foes in the 3x3 round her miss half their blows for 3s, and her next blow crits. */
 export function smokeBomb(b: Battle, me: Unit, out: BattleEvent[]): boolean {
@@ -20,6 +21,8 @@ export function smokeBomb(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     mark(out, me, f, 'smoke', ms(me, 3000));
   }
   kx(me).critNext = true;
+  // (RPG-SPELLS batch 4: then she blinks clear, to the safest free tile within 3)
+  smokeBlink(b, me, out);
   return true;
 }
 /** Smoke when she is in trouble: under a quarter of her health with a foe beside her. */
@@ -28,8 +31,13 @@ export const smokeNeeded = (b: Battle, me: Unit) => me.hp < me.maxHp * 0.25 && f
 /** Ninja Monk, Stillness Palm: spends his Flow (one stack a blow on the same foe, up to five) in one palm: more for each stack, and the foe loses 30 of its skill charge. */
 export function stillnessPalm(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const def = strikeDef(b, me);
-  const inReach = foesOf(b, me).filter((x) => canStrike(b.board, def, me, x));
-  if (!inReach.length) return false;
+  let inReach = foesOf(b, me).filter((x) => canStrike(b.board, def, me, x));
+  // (RPG-SPELLS batch 4, Step of the Wind: with nobody in reach, he leaps beside the foe with the fullest skill meter within 4)
+  if (!inReach.length) {
+    const to = stepOfTheWind(b, me, out);
+    if (!to) return false;
+    inReach = [to];
+  }
   const flow = me.kx?.flow;
   const f = inReach.find((x) => x.id === flow?.to) ?? inReach.sort((x, y) => x.hp - y.hp || x.id - y.id)[0];
   const n = flow && flow.to === f.id ? flow.n : 0;
@@ -158,7 +166,7 @@ export function boundSoul(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 export function grounding(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const stored = me.kx?.stored ?? 0;
   const near = foesNear(b, me, 2);
-  if (!near.length || stored < atkOf(me) * 1.2) return false;
+  if (!near.length || stored < atkOf(me) * THUNDER_STORE) return false;
   out.push({ kind: 'burst', by: me.id, reach: 2, tone: 'tier' });
   for (const f of near) {
     out.push({ kind: 'arc', from: me.id, to: f.id });
@@ -166,6 +174,8 @@ export function grounding(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   }
   kx(me).stored = 0;
   mendUnit(me, me.maxHp * 0.1, out);
+  // (RPG-SPELLS batch 4, Thunderwave: the foes within 2 are shoved 2 tiles back)
+  thunderShove(b, me, out);
   return true;
 }
 
@@ -190,8 +200,10 @@ export function settleJump(b: Battle, p: Pending, out: BattleEvent[]): void {
   for (const f of foesOf(b, me)) {
     if (!near3x3(f, { u: p.u!, v: p.v! })) continue;
     hurt(b, me, f, net(p.dmg * (f.id === p.to ? 2 : 1), f), f.id === p.to, false, out, 'skill');
-    if (f.alive) stun(b, f, 500);
+    if (f.alive) stun(b, f, 600);
   }
+  // (RPG-SPELLS batch 4, Dragon Dive: the 3x3 round her landing is thrown a tile outward)
+  diveLaunch(b, me, p, out);
 }
 
 /** Demon Swordsman, Blood Price (paid in blood too): his next three blows deal 60% more and drink 30% of what they deal. */

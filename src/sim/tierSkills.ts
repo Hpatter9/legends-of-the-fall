@@ -96,9 +96,9 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
     t('Uprising', 'The phalanx holds much longer, a tile wider; his allies are mended well, hastened and warded', { dur: 0.25, reach: 1 }, [mend(3, 0.6), haste(3, 700), ward(2, 0.015)]),
   ],
   ninjaMonk: [
-    t('Fourth Fist', 'Thousand Fists lands a fourth strike', { extra: 1 }),
-    t('Fifth Fist', 'Two more strikes, a longer stun, and a burst of force round him', { extra: 2, dur: 0.12 }, [nova(1.5, 0.18)]),
-    t('Hundred Fists', 'Five more strikes, each far harder, a long stun, and a great burst of force round him that holds the foes near', { extra: 5, dur: 0.23, pow: 0.35 }, [nova(2, 0.5, 250)]),
+    t('Swift Flurry', 'The flurry lands a fourth strike', { extra: 1 }),
+    t('Flurry of the Tiger', 'Two more strikes, a longer stun, and a burst of force round him', { extra: 2, dur: 0.12 }, [nova(1.5, 0.18)]),
+    t('Endless Flurry', 'Five more strikes, each far harder, a long stun, and a great burst of force round him that holds the foes near', { extra: 5, dur: 0.23, pow: 0.35 }, [nova(2, 0.5, 250)]),
   ],
   wanderer: [
     t('Brighter Mist', 'The mist heals more, and shields him', { pow: 0.105, castShield: 0.028 }),
@@ -201,8 +201,8 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
     t('Bullet Storm', 'Three more rounds, each hitting harder, and 30 charge comes back', { extra: 3, refund: 30, pow: 0.08 }),
   ],
   mercenary: [
-    t('Bigger Bounty', 'Every cut hits harder', { pow: 0.087 }),
-    t('Gold Rush', 'Cuts much harder, and a second cut follows a moment later', { pow: 0.175 }, [echo(800, 0.45)]),
+    t('Deadly Ambush', 'Every cut hits harder', { pow: 0.087 }),
+    t('Ambush from the Shadows', 'Cuts much harder, and a second cut follows a moment later', { pow: 0.175 }, [echo(800, 0.45)]),
     t('King\'s Ransom', 'Cuts far harder, and two more cuts follow, one after the other', { pow: 0.55 }, [echo(800, 0.8), echo(1500, 0.65)]),
   ],
   mummy: [
@@ -246,9 +246,9 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
     t('Eternity', 'The surge lasts far longer, two tiles further; her friends\' skill meters jump by 30, and they are hastened', { dur: 0.4, reach: 2 }, [charge(4, 30), haste(4, 700)]),
   ],
   arcBlade: [
-    t('Live Wire', 'The discharge holds longer and hits harder', { dur: 0.175, pow: 0.07 }),
-    t('Storm Blink', 'The discharge hits much harder and holds well, and he blinks and discharges again a moment later', { pow: 0.14, dur: 0.28 }, [echo(800, 0.45)]),
-    t('Tempest Blade', 'The discharge hits much harder and holds long; he blinks and discharges again, and lightning crackles round him', { pow: 0.15, dur: 0.29 }, [echo(800, 0.45), nova(1.5, 0.12)]),
+    t('Thunder Stride', 'The discharge holds longer and hits harder', { dur: 0.175, pow: 0.07 }),
+    t('Storm Step', 'The discharge hits much harder and holds well, and he blinks and discharges again a moment later', { pow: 0.14, dur: 0.28 }, [echo(800, 0.45)]),
+    t('Tempest Step', 'The discharge hits much harder and holds long; he blinks and discharges again, and lightning crackles round him', { pow: 0.15, dur: 0.29 }, [echo(800, 0.45), nova(1.5, 0.12)]),
   ],
   dreadPirate: [
     t('Double Broadside', 'A second, smaller broadside follows the first', { extra: 1 }),
@@ -282,9 +282,9 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
     t('Heavens Unbound', 'Three more stars fall, each a little harder, and every ally\'s skill meter jumps by 25', { extra: 3, pow: 0.05 }, [charge(99, 25)]),
   ],
   demonSwordsman: [
-    t('Wider Sweep', 'The sweep reaches a tile further and heals him a little', { reach: 1, castHeal: 0.021 }),
-    t('Demon Sweep', 'The sweep cuts much harder, heals him, and sweeps again a moment later', { reach: 1, pow: 0.14, castHeal: 0.042 }, [echo(800, 0.45)]),
-    t('Hellblade', 'The sweep reaches two tiles further, cuts far harder, heals him well, and sweeps again with most of its strength', { reach: 2, pow: 0.3, castHeal: 0.055 }, [mend(0, 0.5), echo(800, 0.7)]),
+    t('Great Cleave', 'The cleave reaches a tile further and heals him a little', { reach: 1, castHeal: 0.021 }),
+    t('Infernal Cleave', 'The cleave cuts much harder, heals him, and sweeps again a moment later', { reach: 1, pow: 0.14, castHeal: 0.042 }, [echo(800, 0.45)]),
+    t('Hellblade', 'The cleave reaches two tiles further, cuts far harder, heals him well, and sweeps again with most of its strength', { reach: 2, pow: 0.3, castHeal: 0.055 }, [mend(0, 0.5), echo(800, 0.7)]),
   ],
   tyrant: [
     t('Twin Verdicts', 'A second, smaller judgement follows the first, a tile wider', { extra: 1, reach: 1 }),
