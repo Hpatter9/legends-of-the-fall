@@ -7,6 +7,8 @@
 // Wanderer or Druid at level 10 or more, whose kits the owner approved reworking (the revive, Spirit Guardians, Healing Mist...). Only those moved.)
 // (RPG-SPELLS batch 3, docs/notes/spells-b3.md, re-recorded field1, field30, bosses, armyFoes, spells, lands, army and stand: each has one of the
 // tanks and supports the owner approved reworking (Shield Rush, Divine Smite, Seismic Slam, Tunnel Strike, Bane...). Only those moved.)
+// (RPG-SPELLS batch 4, docs/notes/spells-b4.md, re-recorded field30, bosses, armyFoes, spells, lands and stand: each has one of the melee heroes at
+// level 10 or more, whose kits the owner approved reworking (Cavalry Charge, Lightning Storm, Berserker Leap, Dragon Dive...). Only those moved.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { scenarioHashes } from '../tools/status-fx/logs';
