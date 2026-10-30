@@ -20,11 +20,13 @@ export interface WaveMoments {
   /** Everything the wave brought in, grouped (RECAP-REVEAL, `waveGains.ts`): the card lists them as chips, and a `found` line they
    *  already cover is dropped. Missing (an older caller): every `found` line is kept. */
   gains?: readonly WaveGain[];
+  /** The army wave's rare drop, in words ("3 shards of Kwame · Knight", "a medium XP tome"; `armyDrops.ts`; missing is none). */
+  drops?: readonly string[];
 }
 
 /** One line on the card, with its kind (the line's mark and colour). */
 export interface WaveNote {
-  kind: 'level' | 'ult' | 'found' | 'fell' | 'heart';
+  kind: 'level' | 'ult' | 'drop' | 'found' | 'fell' | 'heart';
   text: string;
 }
 
@@ -51,6 +53,8 @@ export function waveNotes(m: WaveMoments): WaveNote[] {
   if (best.size) out.push({ kind: 'level', text: `Level up: ${[...best].map(([k, lv]) => `${nameOf(k)} Lv ${lv}`).join(', ')}` });
   const ult = [...new Set(m.ups.filter((u) => u.from < ULT_LEVEL && u.to >= ULT_LEVEL).map((u) => u.kind))];
   if (ult.length) out.push({ kind: 'ult', text: `Ultimate unlocked: ${names(ult)}` });
+  // (a rare drop comes first of the finds: it is the one worth the cheer)
+  for (const d of m.drops ?? []) out.push({ kind: 'drop', text: `Found: ${d}` });
   for (const f of m.gains ? otherFinds(m.found, m.gains) : m.found) out.push({ kind: 'found', text: `Found ${f}` });
   if (m.fell.length) out.push({ kind: 'fell', text: `Fell: ${names(m.fell)}` });
   if (m.hearts > 0) out.push({ kind: 'heart', text: `${m.hearts > 1 ? `${m.hearts} hearts` : 'A heart'} burned · ${m.heartsLeft} left` });
