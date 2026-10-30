@@ -21,6 +21,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Scope:** new `src/fightHud.ts`/`.css`, `src/fightHudRules.ts`, `src/ultMoment.ts`, `src/ultMomentRules.ts`; hooks in `src/main.ts`, `src/standView.ts`; `src/index.html` (the spells' home), `src/settings.ts` (`ultFull`); the old hero bar and its CSS removed; tests `test/fight-hud.test.ts`, `test/ult-moment.test.ts`; `tools/battle-hud/shots.mjs`.
 - **Status:** ready for review. [Note](notes/battle-hud.md); screenshots `samples/battle-hud-final-*.png`, `samples/ult-cutin-*.png`.
 
+### ULT-EPIC — An ultimate's payoff
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/ult-epic`, `/home/user/lotf-ult-epic` (from main 0.258.0, with `art/ult-kit` merged).
+- **Goal:** the owner-approved plan after the director's capture of ULT-CUTIN: the ultimate's own effects about twice the size, a huge burst of its element and a 0.15 s hit-stop and shake on the blow, the dim lifted over the whole effect and eased off as it lands, a moving banner (speed lines, drift, a stamped name), slash and impact stings, a short camera lean; the owner's painted kit (13 sheets, session `u-ultimate`) imported and used, with fallbacks.
+- **Scope:** new `src/ultEpicRules.ts`, `test/ult-epic.test.ts`, `tools/ult-epic/`; `src/ultMoment.ts`, `src/ultMomentRules.ts`, `src/fightHud.css`; small hooks in `src/render/fx.ts`, `particles.ts`, `spellArt.ts`, `src/main.ts`, `src/standView.ts`; two cues in `soundRules.ts`/`audioProcessors.ts`; `tools/spell-fx/spell-parts.json`, `spell-fixes.json`, the `u-ultimate` atlas and its `index.json` entry only.
+- **Status:** ready for review. [Note](notes/ult-epic.md); before/after `samples/ult-epic-before-393.png`, `samples/ult-epic-after-393.png`. One sheet worth repainting: `ult-speedlines` (its middle glow is a blob that beads when tiled).
+
 ### RPG-SPELLS B7 — The monster heroes
 
 - **Owner:** Claude. **Branch/worktree:** `claude/spells-b7`, `/home/user/spells-b7`.
