@@ -1,4 +1,4 @@
-# Equipment: new painted icons (149 images)
+# Equipment: new painted icons (140 images)
 
 For Antigravity, working in the repo hpatter9/legends-of-the-fall.
 
@@ -13,7 +13,8 @@ times. Instead:
 - each kind gets **one Mythic painting**: a Mythic piece has its own name (the Iron Sword becomes "Kingsbane"), and its painting
   is that same object transformed into a legendary relic;
 - the grade is shown by the game laying a **grade frame** and a **grade glow** (section D) round the standard painting;
-- worn and broken pieces are shown by the game laying a **wear overlay** (section E) over the painting.
+- worn and broken pieces are shown by the game laying a **wear overlay** (section E) over the painting;
+- the simple gear found during a run shows the icon of the piece it will become when it comes home, so it needs no icons of its own.
 
 So the standard paintings must be neutral about grade: a good, well-made object, never plain junk and never glowing.
 
@@ -23,7 +24,7 @@ So the standard paintings must be neutral about grade: a good, well-made object,
 
 1. **Paint each image below** and save it at `art-source/gear/<folder>/<key>.png` (each section names its folder). Keys are exact
    (they are the game's own ids): `weapons/ironSword.png`, `weapons/ironSword-mythic.png`, and so on.
-2. **Make one commit per section** (A to F) on a new branch **`art/gear-icons`**, branched from `main`. Change only files in
+2. **Make one commit per section** (A to E) on a new branch **`art/gear-icons`**, branched from `main`. Change only files in
    `art-source/gear/`.
 3. **Open a pull request** into `main`, titled **"Painted equipment icons"**. Don't merge it, and don't change any game code,
    `CREDITS.md` or `package.json`. The director brings the art into the game and merges.
@@ -37,7 +38,7 @@ and each object must still read clearly shrunk to **40 px** (the game shows them
 numbers anywhere (runes and engravings are suggested, never readable). No frames or backgrounds painted on the item icons (the game
 adds the frames).
 
-**Every item icon (sections A, B, C, F):** 256 x 256 px, transparent background, one object, centred.
+**Every item icon (sections A, B and C):** 256 x 256 px, transparent background, one object, centred.
 
 - **Weapons:** laid diagonally, hilt or grip at the bottom left, tip or head at the top right (bows and crossbows upright, slightly
   turned; a grimoire as a book turned a little to show its spine; knuckles as a pair, overlapping).
@@ -243,20 +244,11 @@ across the **whole** square):
 - **buy-back** (256 x 256, transparent): a small sand-timer with a coin and a curved return arrow drawn as a ribbon (no letters).
   The "sold today, buy back" shelf's sign.
 
-## F. The in-run gear (`run-gear`, 9 images)
-
-Separate from equipment, a run hands out simple gear: a weapon, armour and charm in three tiers, for that run only. 256 x 256,
-transparent, standard look (no glow), each tier a clear step up:
-
-- **weapon-1** a plain iron blade; **weapon-2** a good steel blade; **weapon-3** a dark-steel blade with a red edge.
-- **armour-1** a leather coat; **armour-2** a mail coat; **armour-3** a silver breastplate.
-- **charm-1** a jade charm on a cord; **charm-2** a gold sun charm; **charm-3** a prism crystal charm.
-
 ---
 
 ## Checklist
 
-- 149 PNGs: `weapons` 40, `armour` 40, `trinkets` 40, `grade` 9, `wear` 11, `run-gear` 9.
+- 140 PNGs: `weapons` 40, `armour` 40, `trinkets` 40, `grade` 9, `wear` 11.
 - Every item icon 256 x 256, transparent, centred in a 6% margin, no frame, no text; standard and Mythic of a key in the same pose.
 - Frames and glows 256 x 256 with clear centres; overlays painted edge to edge.
-- One commit per section on `art/gear-icons`, a PR titled "Painted equipment icons", nothing outside `art-source/gear/`.
+- One commit per section (A to E) on `art/gear-icons`, a PR titled "Painted equipment icons", nothing outside `art-source/gear/`.
