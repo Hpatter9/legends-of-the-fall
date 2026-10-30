@@ -1,11 +1,9 @@
 # The quests' placeholder art, cut from the asset packs (run by hand: python3 -I tools/quests/cut.py <chronos-assets>).
 #   gwen.png        Gwen Tallow behind the bar: LPC layers composed (body, shoes, underdress, white shirt, cloth belt, grey
 #                   ponytail), facing left; row 0 the stand (1 frame), row 1 a talking gesture (the spellcast-left frames 1-5).
-#   gwen-face.png   her card's portrait: the facing-down stand, head and shoulders, 2x nearest.
-#   pedlar-face.png, pilgrim-face.png  the passersby's card portraits: Tiny RPG Town's npc sheet (16 px, facing down), the bearded
-#                   man and the brown-haired youth, 4x nearest.
 #   board.png       the quest board: Craftpix's medieval field-work set "Quest Board", trimmed and scaled to 64 px across.
-# The owner's painted givers and board papers will replace these under the same keys (`src/questArt.ts`).
+# (The givers' faces and the board's papers are the owner's paintings now: `tools/quests/import-art.py`. Gwen's figure and the
+# board itself are still these.)
 import os, sys
 from PIL import Image
 
@@ -24,11 +22,6 @@ sheet.paste(cell(9, 0), (0, 0))
 for i, c in enumerate(range(1, 6)):
     sheet.paste(cell(1, c), (i * 64, 64))
 sheet.save(os.path.join(out, 'gwen.png'))
-face = cell(10, 0).crop((16, 8, 48, 40)).resize((64, 64), Image.NEAREST)
-face.save(os.path.join(out, 'gwen-face.png'))
-npc = Image.open(os.path.join(root, 'tiny-rpg-town-files', 'tiny-rpg-town-files', 'Assets', 'Environments', 'Town', 'spritesheets', 'npc.png')).convert('RGBA')
-for name, row in (('pedlar', 0), ('pilgrim', 3)):
-    npc.crop((0, row * 16, 16, row * 16 + 16)).resize((64, 64), Image.NEAREST).save(os.path.join(out, f'{name}-face.png'))
 board = Image.open(os.path.join(root, 'assets', 'craftpix-net-867123-free-medieval-field-work-2d-tileset-for-platformer', 'PNG', 'Environment',
                                 'Cartoon_Medieval_Field_Work_Level_Set_Environment - Quest Board.png')).convert('RGBA')
 board = board.crop(board.getbbox())
@@ -41,4 +34,4 @@ for y in range(board.height):
         r, g, b, a = px[x, y]
         px[x, y] = (r, g, b, 255 if a >= 128 else 0)
 board.save(os.path.join(out, 'board.png'))
-print('gwen', sheet.size, 'face', face.size, 'board', board.size)
+print('gwen', sheet.size, 'board', board.size)

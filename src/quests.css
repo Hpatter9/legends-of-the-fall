@@ -14,7 +14,7 @@
 
 /* a giver's face */
 .qFace { flex: none; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: var(--s2); border: 2px solid var(--gold-lo); border-radius: 8px; overflow: hidden; }
-.qFace img { width: 100%; height: 100%; image-rendering: pixelated; }
+.qFace img { width: 100%; height: 100%; object-fit: cover; } /* (painted portraits: drawn smooth) */
 .qFace.big { width: 64px; height: 64px; }
 
 /* a giver's card, rising from the bottom over the lower part of the screen */

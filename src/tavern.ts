@@ -35,7 +35,7 @@ import longtableUrl from './art/tavern/longtable.png';
 import barrelsUrl from './art/tavern/barrels.png';
 import cratesUrl from './art/tavern/crates.png';
 import stageUrl from './art/tavern/stage.png';
-import { BOARD, GWEN } from './questArt';
+import { BOARD, BOARD_PINS, GWEN, PAPERS } from './questArt';
 import { giverMark } from './questCard';
 import { questsWaiting } from './sim/quests';
 
@@ -58,6 +58,7 @@ const ART: Record<string, string> = {
   // (QUESTS: Gwen Tallow behind the bar, and the quest board on the wall: pack placeholders, `questArt.ts`)
   gwen: GWEN.url,
   board: BOARD,
+  paper: PAPERS.plain,
 };
 let art: Record<string, HTMLImageElement> | null = null;
 async function loadArt(): Promise<Record<string, HTMLImageElement>> {
@@ -688,6 +689,18 @@ export class Tavern {
     const x = Math.round(BOARD_SPOT.x - im.width / 2);
     const y = BOARD_SPOT.foot - im.height;
     this.ctx.drawImage(im, x, y);
+    // (a painted notice pinned over one of the board's own papers for each offer; drawn smooth, as it is painted, not pixel art)
+    const offers = Math.min(this.meta?.quests?.offers.length ?? 0, BOARD_PINS.length);
+    if (offers) {
+      const p = a.paper;
+      this.ctx.imageSmoothingEnabled = true;
+      this.ctx.imageSmoothingQuality = 'high';
+      for (const pin of BOARD_PINS.slice(0, offers)) {
+        const h = Math.round((pin.w * p.height) / p.width);
+        this.ctx.drawImage(p, x + pin.x - pin.w / 2, y + pin.y - h / 2, pin.w, h);
+      }
+      this.ctx.imageSmoothingEnabled = false;
+    }
     if (this.meta?.quests?.offers.length) this.bubbleAt('quest', BOARD_SPOT.x, y - 16);
   }
 

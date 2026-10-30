@@ -191,16 +191,21 @@ These owner-approved ascension effects are reused for combat tier-ups by ART-ASC
   the bench and the bard's stage trimmed to their pixels). The bar room's wall is the old `wall.png` without its top 48 rows. Nothing is
   scaled; `tools/tavern/hall.py` does the cuts, `docs/notes/tavern-hall.md` lists the prompts.
 
-## The quests' placeholders (`src/art/quests/`, cut by `tools/quests/cut.py`; QUESTS batch 1)
+## The quests' art (`src/art/quests/`; QUESTS batch 1, the painted pieces from the Eidolon art, part 1)
 
-- **Gwen Tallow** behind the tavern's bar (`gwen.png`) and her card's portrait (`gwen-face.png`): composed from the
+- **The givers' portraits** (`gwen-face.webp`, `pedlar-face.webp`, `pilgrim-face.webp`, `messenger-face.webp`, `hunter-face.webp`) and
+  **the board's papers** (`notice.webp`, `notice-sealed.webp`): original art made for this game with AI image generation (the owner's
+  art assistant, October 2026, from `art-source/eidolons/givers/` and `board/`), cropped and scaled by `tools/quests/import-art.py`.
+  No third-party artwork.
+- **Gwen Tallow** behind the tavern's bar (`gwen.png`, a placeholder, cut by `tools/quests/cut.py`): composed from the
   **Universal LPC Spritesheet** layers (`Universal-LPC-spritesheet-master` in the packs: the female body, brown shoes, the underdress,
   the white sleeveless shirt, a brown cloth belt and the grey ponytail; CC-BY-SA 3.0 / GPL 3.0, the LPC artists listed in that pack's
-  `AUTHORS.txt`). Her stand is the walk-left row's first frame; her talk the spellcast-left frames. Placeholders until the owner's
-  painted giver portraits land.
-- **The passersby's portraits** (`pedlar-face.png`, `pilgrim-face.png`): the **Tiny RPG Town** pack's `npc.png` (16 px faces, scaled 4x).
-- **The quest board** (`board.png`): Craftpix's **Free Medieval Field Work 2D Tileset for Platformer** ("Quest Board", craftpix.net free
-  licence), trimmed and scaled to 64 px across with hard alpha.
+  `AUTHORS.txt`). Her stand is the walk-left row's first frame; her talk the spellcast-left frames.
+- **The quest board** (`board.png`, cut by `tools/quests/cut.py`): Craftpix's **Free Medieval Field Work 2D Tileset for Platformer**
+  ("Quest Board", craftpix.net free licence), trimmed and scaled to 64 px across with hard alpha.
+- **The Eidolon art** in `art-source/eidolons/` (the horn, the calling's effects, the six Eidolons' figures, cards, attack sheets and
+  boss sheets): original art made for this game with AI image generation (the owner's art assistant, October 2026); not yet in the
+  game.
 
 ## Art generated with PixelLab
 

@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### EIDOLON-ART-1 — The Eidolon art brought in: the quest pieces wired, the rest reviewed
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/eidolon-art-1`, `/home/user/lotf-eid-art` (from main 0.263.0, with `art/eidolons-1` and `art/eidolons-2` merged).
+- **Goal:** merge the owner's two Eidolon art deliveries into `art-source/eidolons/`; wire the five giver portraits and the board papers into the quests through `src/questArt.ts`; review all the Eidolon art and list what to repaint.
+- **Scope:** `art-source/eidolons/`, `src/questArt.ts`, `src/art/quests/`, `tools/quests/import-art.py`, `tools/quests/cut.py`, a small hook in `src/tavern.ts` (papers on the board) and `src/quests.css` (faces drawn smooth); `CREDITS.md`; the note and samples.
+- **Status:** ready for review. [Note](notes/eidolon-art.md) (the repaint list); screenshots `samples/eidolon-art-1-*.png`, contact sheets `samples/eidolon-art-review-*.png`.
+
 ### QUESTS-1 — Quests batch 1: the tavern and the first quests
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/quests-1`, `/home/user/lotf-quests1` (from main 0.262.0, with `claude/quests-design` merged).

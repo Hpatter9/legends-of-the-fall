@@ -56,12 +56,11 @@ Batch 1 of the owner-approved design in [quests-summons-design.md](quests-summon
 | Fresh Bread for the Front | a pedlar | any | clear a daily | 3 stones |
 | The Pilgrim's Road | a pilgrim | the Wildwood cleared | 3 waves of the Wildwood with a healer (the Cleric, the Wanderer, the Druid or the High Priestess) | 200 crowns, 2 Hearthsalt, 2 Mossjade |
 
-## Art (placeholders, keys in `src/questArt.ts`)
+## Art (keys in `src/questArt.ts`)
 
-`FACES` (the givers' portraits), `GWEN` (her sheet) and `BOARD`. Gwen is composed from LPC layers, the passersby are the Tiny RPG Town
-pack's faces, the board is Craftpix's field-work Quest Board; `tools/quests/cut.py` cuts them (CREDITS.md). When the owner's painted
-givers (`art-source/eidolons/givers/*.png`) and board papers (`board/*.png`) land, they replace these keys; the board's papers can then
-be pinned one per offer.
+`FACES` (the givers' portraits), `PAPERS` (the notices pinned on the board, one per offer), `GWEN` (her sheet) and `BOARD`. The faces
+and the papers are the owner's painted art since [eidolon-art.md](eidolon-art.md); Gwen is still composed from LPC layers and the board
+is Craftpix's field-work Quest Board, cut by `tools/quests/cut.py` (CREDITS.md).
 
 ## Checked
 
