@@ -924,10 +924,13 @@ export class Fx {
     const ultimate = ultKeyOf(by.unit) === name;
     const boss = by.unit.side === 'foe' && isBoss(by.unit.def);
     const el = skillElement(name);
-    // (three skill names at most: the oldest fades out early when a fourth comes)
-    this.skillStack = this.skillStack.filter((l) => !l.txt.destroyed);
-    while (this.skillStack.length >= 3) this.skillStack.shift()!.cut();
-    this.skillStack.push(this.label(skillShown(by.unit, name), by.x, by.y - by.tall - 20, ultimate ? 0xfff2a0 : boss ? 0xff9a8a : 0xffe27a, ultimate || boss ? 15 : 13, 1200));
+    // (three skill names at most: the oldest fades out early when a fourth comes). A hero's skill is named by the hero rows' banner at
+    // the screen's edge instead, so only a foe's name rises over it (the owner: the names hid too much of the fight).
+    if (by.unit.side !== 'hero') {
+      this.skillStack = this.skillStack.filter((l) => !l.txt.destroyed);
+      while (this.skillStack.length >= 3) this.skillStack.shift()!.cut();
+      this.skillStack.push(this.label(skillShown(by.unit, name), by.x, by.y - by.tall - 20, ultimate ? 0xfff2a0 : boss ? 0xff9a8a : 0xffe27a, ultimate || boss ? 15 : 13, 1200));
+    }
     this.casting.set(byId, name);
     const signature = kitSignature(name);
     if (signature) playSteps(signature.wind, this.sceneOf(by, ms, ultimate ? 1.45 : 1.15));

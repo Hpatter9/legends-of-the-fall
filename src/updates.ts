@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.261.0',
+    date: '2026-10-30',
+    title: 'Skill names out of the way',
+    notes: ['Skill names now show as slim banners at the left edge above the hero rows, so they no longer cover the fight.'],
+  },
+  {
     version: '0.260.0',
     date: '2026-10-30',
     title: 'Ultimates hit harder',

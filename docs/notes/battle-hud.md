@@ -92,3 +92,13 @@ The owner: with Auto on, ultimates take the short banner, not the full moment. `
 only with "Full ultimate scenes" on and Auto off; Auto is the fight's Auto switch (`meta.ultAuto`) or an auto-replay (`main.ts`
 `ultAutoOn`), and the Last Stand's Auto switch in `standView.ts`. Both fight loops and the hero rows' banner ask it each tick, so flipping
 Auto mid-fight changes the next ultimate. The setting's line says so. Test: `test/ult-moment.test.ts`.
+
+## Cast banners at the edge (SKILL-BANNER-EDGE)
+
+The owner: "When the skills are used and the names come up, they block too much of the fight visually." They chose a smaller banner at
+the edge. A hero's skill (and the short ultimate banner, with Auto or the full scenes off) now shows as a slim ribbon, 26 px tall, at the
+screen's left edge just above the hero rows (`FightHud.banner`, `.fhCutStack` / `.fhCutIn` in `fightHud.css`): a 22 px portrait (the
+painted face for an ultimate), the hero's name and the skill's name. Ribbons stack upwards, three at most (the oldest goes when a fourth
+comes), each sliding in and fading out over 1.4 s as before. The skill's name no longer rises over a hero on the board (`fx.ts`
+`skillName`); a foe's or a boss's still does, since they have no ribbon. The hero's row still lights with the name, as before. The
+`anchor` option the old banner used is gone from `FightHudOpts` and its two callers.
