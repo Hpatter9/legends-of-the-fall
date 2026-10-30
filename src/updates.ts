@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.239.0',
+    date: '2026-10-30',
+    title: 'Music and sound effects in balance',
+    notes: ['Every music track now plays at a matched loudness, and battle music sits under the fighting instead of over it.', 'The king\'s spells are all equally loud, quiet skill sounds are audible, and taps are a small click.'],
+  },
+  {
     version: '0.238.0',
     date: '2026-10-30',
     title: 'A real market and new roadside events',

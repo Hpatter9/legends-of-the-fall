@@ -46,6 +46,12 @@ export const CAST_GAIN = 0.85;
 export const EFFECT_GAIN = 1.15;
 export const STAR_GAIN = 1;
 export const HOP_GAIN = 0.85;
+/** Each spell's trim, on its cast and its effect alike (`audioMix.ts` says how the mix was set): the files were rendered one by one
+ *  and differ by about seven LU, so each is brought to the same loudness, just above a fight's loudest moments. */
+export const SPELL_TRIM: Record<SpellId, number> = {
+  heal: 0.81, meteor: 1.16, haste: 0.89, shield: 0.81, smite: 0.97, chain: 1.25, poison: 1.21, frost: 0.62, rally: 0.77, quake: 1.17, resurrect: 0.98, cleanse: 0.85,
+  blink: 1.36, hex: 0.96, lance: 0.82, renewal: 0.83, deepfreeze: 1.29, warcry: 0.88, bulwark: 1.46, wolves: 0.88, starfall: 0.8,
+};
 
 /** Every file a spell can play (the loader fetches these). */
 export const SPELL_FILES = Object.keys(SPELL_SFX_FILES) as SpellSfxId[];
@@ -63,6 +69,12 @@ const kingFalls = (events: BattleEvent[]) => events.filter((x): x is Extract<Bat
 /** The sounds a king's spell makes: its cast, its effect, and for the falls and the leaps, one each. `events` is the
  *  tick's whole list (the spell's falls and arcs come with it). */
 export function spellParts(b: Battle, e: SpellEvent, events: BattleEvent[]): SpellPart[] {
+  // (each at the spell's trim, so every spell sits at the same loudness)
+  const trim = SPELL_TRIM[e.id];
+  return partsOf(b, e, events).map((p) => ({ ...p, gain: p.gain * trim }));
+}
+
+function partsOf(b: Battle, e: SpellEvent, events: BattleEvent[]): SpellPart[] {
   const all = SPELLS[e.id].target === 'all';
   const pan = all ? 0 : panOfTile(e.u, e.v);
   // (the old cues stand in for the cast and the effect together; a meteor's stand in for its fall)
