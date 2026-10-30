@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.263.0',
+    date: '2026-10-30',
+    title: 'The tavern and the first quests',
+    notes: ['The Heroes tab opens the tavern again. Gwen Tallow, the keeper, has quests for you, and so do passing travellers.', 'Take up to three quests from Gwen or the quest board, track one on the Battle tab, and hand them in for crowns, stones and chests.'],
+  },
+  {
     version: '0.262.0',
     date: '2026-10-30',
     title: 'More spell effects repainted',
