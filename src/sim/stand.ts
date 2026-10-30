@@ -150,6 +150,8 @@ export interface StandRun {
   relics: string[];
   /** The relics holding the line has paid this run (STAND-HOLD-RELIC; already in `relics` too). Absent until one is won. */
   heldRelics?: string[];
+  /** How many times the line has been held (the bonus wave won) this run (QUESTS-1b); none in a run from before. */
+  holds?: number;
   offer: string[];
   /** The king's health as a share of the whole. */
   king: number;
@@ -176,6 +178,8 @@ export interface StandSummary {
   relics: number;
   /** How many of them holding the line paid (absent when none). */
   heldRelics?: number;
+  /** How many times the line was held (absent when none). */
+  holds?: number;
   newBest: boolean;
   /** Rift ores a new record paid (`awakenMats.ts`: a couple for each tenth wave passed for the first time); missing when none. */
   ores?: OreDrop[];
@@ -700,6 +704,8 @@ function clearHold(s: Stand): void {
   const n = run.wave - 1;
   const relic = holdRelic(run, n);
   const gold = holdPurse(run, n).gold;
+  // (QUESTS-1b: every hold of the line won is counted, relic or none, for the quests that ask for one)
+  run.holds = (run.holds ?? 0) + 1;
   run.gold += gold;
   run.earned += gold;
   if (relic) {
@@ -1091,7 +1097,7 @@ export function settleStand(m: Meta, run: StandRun, armies: readonly string[] = 
   // (the room the king fell in, and the furthest act of the retreat a run has reached: STAND-RETREAT)
   const room = hallNow(run);
   if (run.act !== undefined) m.standAct = Math.max(m.standAct ?? 0, run.act);
-  run.summary = { best: run.best, cleared, crowns, ...c, gear, kills: run.kills, heroes: run.heroes.length, relics: run.relics.length, ...(run.heldRelics?.length ? { heldRelics: run.heldRelics.length } : {}), newBest, ...(ores.length ? { ores } : {}), room, ...(run.act !== undefined ? { act: run.act } : {}), ...(run.retreat?.hold ? { held: true } : {}) };
+  run.summary = { best: run.best, cleared, crowns, ...c, gear, kills: run.kills, heroes: run.heroes.length, relics: run.relics.length, ...(run.heldRelics?.length ? { heldRelics: run.heldRelics.length } : {}), ...(run.holds ? { holds: run.holds } : {}), newBest, ...(ores.length ? { ores } : {}), room, ...(run.act !== undefined ? { act: run.act } : {}), ...(run.retreat?.hold ? { held: true } : {}) };
   return run.summary;
 }
 

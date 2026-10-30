@@ -24,6 +24,7 @@ import {
   takeQuest,
   trackedQuest,
   trackQuest,
+  slotOf,
   type QuestFight,
 } from '../src/sim/quests';
 import { QUESTS, questById, type QuestDef } from '../src/sim/questData';
@@ -56,11 +57,13 @@ test('the quests: unique ids, each with a giver, words, a goal of at least one a
 });
 
 test('a fresh save is offered a quest by Gwen and one by a passerby on its first day', () => {
+  // (batch 1b: the other givers' slots draw too, a quest each at most on the first day: the notices and the starter heroes' own)
   const m = startedMeta(7);
   assert.ok(refreshOffers(m, DAY));
-  const givers = m.quests!.offers.map((o) => o.giver);
-  assert.equal(givers.filter((g) => g === 'gwen').length, 1);
-  assert.equal(givers.filter((g) => g !== 'gwen').length, 1);
+  const slots = m.quests!.offers.map((o) => slotOf(questById(o.id)!));
+  assert.equal(slots.filter((g) => g === 'gwen').length, 1);
+  assert.equal(slots.filter((g) => g === 'passerby').length, 1);
+  for (const slot of new Set(slots)) assert.equal(slots.filter((g) => g === slot).length, 1, slot);
   // (only what the save may do: nothing that needs an army cleared)
   for (const o of m.quests!.offers) assert.equal(questById(o.id)!.needs.kind, 'any', o.id);
 });
@@ -101,8 +104,9 @@ test('the board holds up to three of Gwen\'s, one new a day, each kept three day
   refreshOffers(m, 20261101); // (across a month's end)
   const gwen = () => m.quests!.offers.filter((o) => o.giver === 'gwen');
   assert.equal(gwen().length, 3);
-  assert.equal(m.quests!.offers.filter((o) => o.giver !== 'gwen').length, 1);
-  assert.equal(m.quests!.offers.find((o) => o.giver !== 'gwen')!.day, 20261101);
+  const passing = () => m.quests!.offers.filter((o) => slotOf(questById(o.id)!) === 'passerby');
+  assert.equal(passing().length, 1);
+  assert.equal(passing()[0].day, 20261101);
   // (the first of Gwen's is three days old on the fourth day: it comes down, and one new one goes up)
   const first = gwen()[0];
   assert.equal(first.day, 20261030);
@@ -243,7 +247,9 @@ test('the save: quests survive a save and load; an old save loads with nothing b
   clear(back, 'orcs', 'undead', 'beasts', 'wildwood');
   const crowns = back.crowns;
   refreshOffers(back, DAY);
-  assert.equal(back.quests!.offers.length, 2);
+  // (one from Gwen and one passing, as before; batch 1b's other givers may add theirs)
+  assert.equal(back.quests!.offers.filter((o) => slotOf(questById(o.id)!) === 'gwen').length, 1);
+  assert.equal(back.quests!.offers.filter((o) => slotOf(questById(o.id)!) === 'passerby').length, 1);
   assert.equal(back.crowns, crowns);
   // (junk: unknown ids, progress past the need, too many taken, repeats)
   const s = readQuests({ active: [{ id: 'nope', progress: 1 }, { id: 'freshBread', progress: 99, took: DAY }, { id: 'freshBread', progress: 0 }, { id: 'quietHands', progress: -3 }, { id: 'boneCollector', progress: 2 }, { id: 'roundForTheHouse', progress: 1 }], offers: [{ id: 'freshBread', day: DAY }, { id: 'pilgrimsRoad', day: 'x' }], done: ['nope', 'cartersWheels'], tracked: 'nope', chains: { a: 1 } })!;
