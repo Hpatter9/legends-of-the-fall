@@ -50,9 +50,13 @@ raised. Things that stop a death (feathers, talents, Deathless, Death Ward) and 
 
 ## The page
 
-- **A revive:** the risen hero gets up where it lay (`UnitSprite.getUp`, as with a heart), in a column of light with a burst at its
-  feet, a thread of light from its healer, and the words "Revived!". The sound is the heal and a holy chime. These are pack strips
-  until the painted revives arrive ([rpg-spells-art-prompt.md](rpg-spells-art-prompt.md), session C).
+- **A revive:** the risen hero gets up where it lay (`UnitSprite.getUp`, as with a heart), with its healer's **painted** revive at its
+  feet (session C, merged with SPELL-ART 0.248.0): the Cleric's ankh and pillar, the Priestess's wings, the Wanderer's elixir, the
+  Druid's leaves. A thread of light runs from the healer, and the words say "Revived!". The sound is the heal and a holy chime.
+- **The healers' other painted spells** (`healerPaint` in `fx.ts`, by skill key) play over the looks their skills already had:
+  - at each fighter the cast touched: Guiding Bolt's burst, Cure Wounds, Death Ward, the Healing Draught's splash;
+  - at the caster: Prayer of Healing's ripple, and Mass Resurrection's sunburst.
+- **Death Ward's mark** now reads "Warded" (it read "Watched").
 - **The hero bar:** skill 2's pip shows an ankh (☥, gold) while the revive is ready and a friend lies fallen.
 - **Spirit Guardians and Healing Mist** draw as the toolkit's aura rings (gold for the guardians, green for the mist). The Wall of
   Light and the hedge of thorns draw as the toolkit's walls.

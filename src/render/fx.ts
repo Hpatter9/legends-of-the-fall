@@ -93,12 +93,24 @@ export async function loadFx(): Promise<void> {
   kitArt = { walls: await Promise.all(TERRAIN_URLS.walls.map(tex)), barrel: await tex(TERRAIN_URLS.barrel) };
 }
 
+/** The healers' painted spells by skill key (`healerPaint`): where each plays and its part. */
+const HEALER_PAINT: Record<string, { on: 'caster' | 'targets'; part: string }> = {
+  Smite: { on: 'targets', part: 'guiding-bolt.impact' },
+  Benediction: { on: 'caster', part: 'prayer.ground' },
+  'Holy Light': { on: 'targets', part: 'cure-wounds.impact' },
+  'Guardian Angel': { on: 'targets', part: 'death-ward.impact' },
+  'Flask Toss': { on: 'targets', part: 'healing-draught.impact' },
+  Resurrection: { on: 'caster', part: 'mass-resurrection.ground' },
+};
+/** Each healer's painted revive (the brief's session C sheets), by the healer's kind; the High Priestess's for anyone else. */
+const REVIVE_SHEET: Record<string, string> = { cleric: 'revivify', priestess: 'resurrection', wanderer: 'elixir', druid: 'reincarnate' };
+
 /** The props the hero kits' terrain is drawn with (`loadFx`). */
 let kitArt: { walls: Texture[]; barrel: Texture } | null = null;
 /** The words a kit's mark shows over the fighter it is on. */
 const MARK_WORDS: Record<string, string> = {
   parry: 'Parry', smoke: 'Smoke', pinned: 'Pinned', charged: 'Charged', vow: "Martyr's Vow", hunter: 'Hunter', brute: 'Brute', dance: 'Dancing',
-  stone: 'Stone', puppet: 'Puppet', siege: 'Anchored', angel: 'Watched', rewind: 'Rewound', prey: 'Prey', suppressed: 'Pinned down',
+  stone: 'Stone', puppet: 'Puppet', siege: 'Anchored', angel: 'Warded', rewind: 'Rewound', prey: 'Prey', suppressed: 'Pinned down',
   dirge: 'Dirge', anthem: 'Anthem', bounty: 'Bounty', condemned: 'Condemned',
 };
 
@@ -276,6 +288,7 @@ export class Fx {
     this.enter(b);
     let royalSky: 'meteor' | 'starfall' | undefined;
     const slashes = slashesOf(events);
+    this.healerPaint(events);
     for (const e of events) {
       if (e.kind === 'shot') this.shot(e.by, e.to, e.shot, e.ms);
       else if (e.kind === 'skill') this.skillName(e.by, e.name, e.ms);
@@ -1423,18 +1436,47 @@ export class Fx {
     }, 1.3, live);
   }
 
-  /** A healer raised a fallen hero (RPG-SPELLS batch 2): it gets up where it lay (the heart revive's `getUp`), in a column of light with a
-   *  burst at its feet, and a thread of light runs to it from its healer. Pack strips until the painted revives arrive. */
+  /** The healers' painted spells (RPG-SPELLS batch 2, session C), over the looks their skills already play: by the skill's key, a part
+   *  played at the caster, or at each fighter the cast healed, struck or marked in the same tick. */
+  private healerPaint(events: BattleEvent[]): void {
+    for (const e of events) {
+      if (e.kind !== 'skill') continue;
+      const look = HEALER_PAINT[e.name];
+      if (!look) continue;
+      const by = this.sprites.get(e.by);
+      if (!by) continue;
+      if (look.on === 'caster') {
+        this.paintOnce(look.part, by.x, by.y, { delay: e.ms * 0.6 });
+        continue;
+      }
+      const to = new Set<number>();
+      for (const x of events) {
+        if ((x.kind === 'heal' && x.by === e.by && x.amount > 0) || (x.kind === 'hit' && x.by === e.by) || (x.kind === 'mark' && x.by === e.by)) to.add(x.to);
+      }
+      for (const id of to) {
+        const s = this.sprites.get(id);
+        if (s) this.paintOnce(look.part, s.x, s.y - (spellAnchorY(look.part) > 0.8 ? 0 : s.tall * 0.45), { delay: e.ms * 0.6 });
+      }
+    }
+  }
+
+  /** A healer raised a fallen hero (RPG-SPELLS batch 2): it gets up where it lay (the heart revive's `getUp`), with its healer's painted
+   *  revive (the Cleric's ankh, the Priestess's wings, the Wanderer's elixir, the Druid's leaves: session C) at its feet, or a column of
+   *  light from the pack where none is painted, and a thread of light runs to it from its healer. */
   private revive(e: Extract<BattleEvent, { kind: 'revive' }>): void {
     const to = this.sprites.get(e.to);
     if (!to) return;
     to.getUp();
     const x = to.x;
     const y = to.y;
-    this.lookOnce({ once: 'light-pillar', tint: 0xfff0b0 }, x, y - to.tall * 0.6, 2.2);
-    this.lookOnce({ once: 'light-nova' }, x, y - 4, 1.8);
-    this.label('Revived!', x, y - to.tall - 14, 0xfff2a0, 14, 1400, true);
     const by = this.sprites.get(e.by);
+    const sheet = REVIVE_SHEET[by?.unit.def ?? ''] ?? 'resurrection';
+    const painted = this.paintOnce(`${sheet}.cast`, x, y) && (this.paintOnce(`${sheet}.impact`, x, y, { delay: 280 }) || true);
+    if (!painted) {
+      this.lookOnce({ once: 'light-pillar', tint: 0xfff0b0 }, x, y - to.tall * 0.6, 2.2);
+      this.lookOnce({ once: 'light-nova' }, x, y - 4, 1.8);
+    }
+    this.label('Revived!', x, y - to.tall - 14, 0xfff2a0, 14, 1400, true);
     if (by && by !== to) this.thread(by.x, by.y - by.tall * 0.5, x, y - to.tall * 0.5, 'light-sparkle');
     this.trauma = Math.min(1, this.trauma + 0.15);
   }
