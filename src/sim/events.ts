@@ -17,8 +17,10 @@
 // and eleven more with real risks (`mystery.ts`; `MYSTERY_KINDS`): a black altar, a gambling imp, a prisoner, a fountain, a
 // forge, a trainer, a blood-and-iron shrine, a mimic chest, a black book, a knight's cairn and bandits.
 //
-// Pure rules: no Pixi, no DOM. It changes a Run only through `chooseOption` and `leaveEvent`; it imports no values from
-// run.ts (which calls `drawEvent`), only the types.
+// In an army run or the daily the gaps also bring the road's cards and the passing cart's market (MID-EVENTS: `midEvents.ts`, `market.ts`).
+//
+// Pure rules: no Pixi, no DOM. It changes a Run only through `chooseOption` and `leaveEvent`; the values it takes from run.ts (which calls
+// `drawEvent`) are used only inside its functions, never as the modules load.
 
 import { mixSeed, Rng } from './rng';
 import { dropGear, gearText, type Gear } from './gear';
@@ -26,7 +28,9 @@ import { RELIC_IDS, RELICS } from './relics';
 import { healParty, hurtParty } from './health';
 import { UNITS } from './units';
 import { applyMystery, drawMystery, type MysteryAct } from './mystery';
-import type { Run } from './run';
+import { applyRoad, drawRoad, faceOf, noteRoad, pickRoadKind, roadRun, type RoadAct, type RoadKind } from './midEvents';
+import { isWare, MARKET_BUYS, marketOptions, stockMarket } from './market';
+import { recruit, benchFull, type Run } from './run';
 
 export type EventKind =
   | 'shrine'
@@ -51,7 +55,9 @@ export type EventKind =
   | 'bard'
   | 'goblinForge'
   | 'cursedMirror'
-  | 'voidWell';
+  | 'voidWell'
+  // (the road's, in army and daily runs: `midEvents.ts`)
+  | RoadKind;
 export const EVENT_KINDS: readonly EventKind[] = ['shrine', 'merchant', 'chest', 'cursed', 'training'];
 /** The tower and calamity mystery floors with narrative dilemmas and real choices (`mystery.ts`). */
 export const MYSTERY_KINDS: readonly EventKind[] = [
@@ -95,7 +101,7 @@ function kindOf(run: Run, stage: number, kinds: readonly EventKind[], rng: Rng):
 /** What taking an option does. */
 export type Effect =
   | { t: 'leave' }
-  | { t: 'buff'; hp?: number; atk?: number }
+  | { t: 'buff'; hp?: number; atk?: number; speed?: number }
   | { t: 'relic'; id: string }
   | { t: 'gear'; gear: Gear }
   | { t: 'gold'; n: number }
@@ -104,7 +110,11 @@ export type Effect =
   | { t: 'heal'; frac: number }
   | { t: 'gamble'; win: boolean; n: number }
   | { t: 'altar'; frac: number; id: string }
-  | { t: 'mystery'; act: MysteryAct };
+  | { t: 'mystery'; act: MysteryAct }
+  // (the passing cart's sellsword and rummage, and the road's events: MID-EVENTS)
+  | { t: 'hire'; kind: string }
+  | { t: 'reroll' }
+  | { t: 'road'; act: RoadAct };
 
 export interface EventOption {
   label: string;
@@ -122,6 +132,8 @@ export interface EventCard {
   title: string;
   text: string;
   options: EventOption[];
+  /** A market's buys left this visit (`MARKET_BUYS`); a card from an older save has none, and no limit. */
+  buys?: number;
 }
 
 export const SHRINE_HP = 0.3;
@@ -145,8 +157,31 @@ const gearOption = (g: Gear, cost: number): EventOption => ({ label: g.name, tex
 /** The event card of a stage, made from the run's seed (it draws gear ids from the run); `kinds` is what it may be. */
 export function drawEvent(run: Run, stage: number, kinds: readonly EventKind[] = EVENT_KINDS): EventCard {
   const rng = new Rng(mixSeed(run.seed, 0xe7e47, stage));
+  // (an army's or the daily's gaps draw from the road's kinds too, on their own stream, and never the same kind twice: MID-EVENTS)
+  if (roadRun(run) && kinds === EVENT_KINDS) {
+    // (the old draw first, from the card's stream as ever, so a shrine or a chest falls where it always did)
+    const card = drawRoadCard(run, stage, pickRoadKind(run, stage, pick(rng, EVENT_KINDS)), rng);
+    noteRoad(run, card);
+    return card;
+  }
   const kind = kindOf(run, stage, kinds, rng);
   if (MYSTERY_KINDS.includes(kind)) return drawMystery(run, stage, kind, rng);
+  return drawPlain(run, stage, kind, rng);
+}
+
+/** A road run's card: the passing cart is a market, a road kind is `midEvents.ts`'s, the other old kinds are drawn as ever. */
+function drawRoadCard(run: Run, stage: number, kind: EventKind, rng: Rng): EventCard {
+  if (kind === 'merchant')
+    return {
+      kind, stage, title: 'A passing cart', text: 'A cart creaks out of the mist, hung with lanterns, pots and somebody\'s armour. The pedlar swears everything is a bargain. He swears it to the goat, too.',
+      options: marketOptions(run, stage), buys: MARKET_BUYS,
+    };
+  if (!(EVENT_KINDS as readonly string[]).includes(kind)) return drawRoad(run, stage, kind as RoadKind, rng);
+  return faceOf(run, drawPlain(run, stage, kind, rng));
+}
+
+/** The card of one of the older kinds. */
+function drawPlain(run: Run, stage: number, kind: EventKind, rng: Rng): EventCard {
   const relics = unownedRelics(run);
   switch (kind) {
     case 'shrine':
@@ -234,12 +269,14 @@ export function chooseOption(run: Run, i: number): string | null {
   const ev = run.event;
   const o = ev?.options[i];
   if (!ev || !o || o.done || run.gold < o.cost) return null;
+  // (a market's buys run out; the rummage and the way on do not count)
+  if (ev.buys !== undefined && isWare(o) && ev.buys <= 0) return null;
   const fx = o.effect;
   let line = 'You move on.';
   run.gold -= o.cost;
   switch (fx.t) {
     case 'buff':
-      run.buff = { ...run.buff, hp: fx.hp ?? run.buff?.hp, atk: fx.atk ?? run.buff?.atk };
+      run.buff = { ...run.buff, hp: fx.hp ?? run.buff?.hp, atk: fx.atk ?? run.buff?.atk, ...(fx.speed ? { speed: fx.speed } : {}) };
       line = `${o.label}: ${o.text}.`;
       break;
     case 'relic':
@@ -289,11 +326,34 @@ export function chooseOption(run: Run, i: number): string | null {
     case 'mystery':
       line = applyMystery(run, fx.act);
       break;
+    case 'hire':
+      if (benchFull(run)) {
+        run.gold += o.cost;
+        return 'The bench is full: merge or recycle a hero first, and the sellsword will wait.';
+      }
+      recruit(run, fx.kind, o.cost);
+      line = `The ${UNITS[fx.kind]?.name ?? 'sellsword'} climbs down off the cart and joins the bench.`;
+      break;
+    case 'reroll': {
+      // (the unsold wares go back under the cloth and others come out; what was bought stays sold)
+      const fresh = stockMarket(run, ev.stage, 1);
+      let k = 0;
+      ev.options = ev.options.map((x) => (isWare(x) && !x.done && k < fresh.length ? fresh[k++] : x));
+      for (; k < fresh.length; k++) ev.options.splice(ev.options.length - 2, 0, fresh[k]);
+      line = 'The pedlar grumbles, and drags out another crate.';
+      break;
+    }
+    case 'road':
+      line = applyRoad(run, fx.act, o.cost);
+      break;
     case 'leave':
       break;
   }
   // (a merchant's stall stays open until the player leaves)
-  if (ev.kind === 'merchant' && fx.t !== 'leave') o.done = true;
+  if (ev.kind === 'merchant' && fx.t !== 'leave') {
+    o.done = true;
+    if (ev.buys !== undefined && isWare(o)) ev.buys--;
+  }
   else run.event = undefined;
   return line;
 }

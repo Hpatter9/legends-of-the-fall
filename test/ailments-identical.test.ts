@@ -15,6 +15,8 @@ import { KITS } from '../src/sim/abilities';
 
 // (MERGE-TWO, the owner's change to merging, re-recorded the three scenarios that hire and merge: `army`, `daily` and `tower` (two of a kind merge,
 // by the greedy player's Auto merge, and the spire's foes grow faster); every other scenario's hash is the one recorded on main)
+// (MID-EVENTS, the owner's ask for more events between waves, re-recorded `daily`: its gaps can bring the road's cards, whose hazards the greedy
+// player must answer (a card with no way off); `army` and every other scenario keep their hashes)
 // (the balance pass that followed, step two, moved a few foe strengths and the Shambler's Plague Tide to answer the ailments: they are put back to
 // main's for this proof)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {

@@ -29,6 +29,7 @@ MusicPlayer ─ music ─┐           │
 ```
 
 - Levels: sfx and ui = 0.5 × the Effects setting; music and ambience = 0.22 × the Music setting; mute is the master.
+  (Since the mix was measured, the levels live in `audioMix.ts`, with a trim for every music file: see `audio-mix.md`.)
 - The page's own taps and chimes (`tap summon merge coin star levelUp`) go to **ui**; the summoning show's to **show**
   (inside sfx, so `hushSummon` can hush it); every other cue to **sfx**.
 - **Limiter:** audiorective's `Limiter` is an AudioWorklet and passes no sound until it has loaded, so a native
