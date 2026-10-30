@@ -30,7 +30,7 @@ export const TUNE1: Readonly<Record<string, number>> = {
   samurai: 0.63,
   kunoichi: 0.37,
   archer: 0.69,
-  wizard: 0.53, // (RPG-SPELLS batch 6: 0.41 before; Fireball carries more now that Wildfire's eruptions are gone)
+  wizard: 0.47, // (RPG-SPELLS batch 6: 0.41 before; Fireball carries a little more, as the Wall of Fire bites less in the open than Wildfire did)
   peasant: 0.49,
   ninjaMonk: 0.5,
   wanderer: 1.5,
@@ -83,7 +83,7 @@ export const TUNE2: Readonly<Record<string, number>> = {
   samurai: 2.16,
   kunoichi: 0.61,
   archer: 0.69,
-  wizard: 10, // (RPG-SPELLS batch 6: the Wall of Fire's burn; 2.26 was Wildfire's eruption)
+  wizard: 6, // (RPG-SPELLS batch 6: the Wall of Fire's burn; 2.26 was Wildfire's eruption)
   peasant: 0.52,
   ninjaMonk: 1.0,
   wanderer: 0.31,
