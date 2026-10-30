@@ -102,6 +102,8 @@ export interface TavernQuests {
   onGwen(): void;
   onBoard(): void;
   onQuests(): void;
+  /** A giver in the tavern tapped (QUESTS-1b: a hero with a quest of their own, `hero:<kind>`, or Duchess with one). */
+  onGiver?(key: string): void;
 }
 
 interface Rig {
@@ -613,6 +615,8 @@ export class Tavern {
     const dy = foot - f - lift - bob;
     g.drawImage(this.goatArt!, goatFrame(goat) * f, 0, f, f, x - f / 2, dy, f, f);
     drawDuchessCosmetic(g, settings().duchessHat, x - f / 2, dy, 0.5, goat.face, 0);
+    const mark = this.quests && this.meta ? giverMark(this.meta, 'duchess') : null;
+    if (mark) this.bubbleAt(mark === 'ready' ? 'ready' : 'quest', x, dy - 14);
   }
 
   /** The room names and edge arrows under the picture: which room the view is on, and which ways there is more to see. */
@@ -772,6 +776,11 @@ export class Tavern {
     } else g.drawImage(rig.img, i * rig.w, r * rig.h, rig.w, rig.h, fx - dw / 2, dy, dw, dh);
     if (a.step) drawAura(g, a.aura, fx, fy, tall, this.now, 'front', a.face, this.reduced);
     if (a.emote) this.bubble(a, fx, fy - Math.round(rig.figure * k) - 15);
+    // (QUESTS-1b: a patron with a quest of their own wears the gold "!", or the tick while theirs waits to be handed in)
+    else {
+      const mark = this.quests && this.meta ? giverMark(this.meta, `hero:${a.kind}`) : null;
+      if (mark) this.bubbleAt(mark === 'ready' ? 'ready' : 'quest', fx, fy - Math.round(rig.figure * k) - 15);
+    }
   }
 
   /** The speech bubbles drawn once each (a bubble is a couple of hundred pixel rectangles, too many to redraw every frame). */
@@ -820,6 +829,11 @@ export class Tavern {
     const ry = this.camY + (e.clientY - box.top) / this.scale;
     // (Duchess first: a tap on her few pixels is hers, and she hops)
     if (this.goat && this.goatArt && Math.abs(rx - this.goat.x) < 12 && ry > Tavern.GOAT.y - 20 && ry < Tavern.GOAT.y + 6) {
+      // (QUESTS-1b: while she has a quest for you, a tap is her card, not her hat)
+      if (this.quests?.onGiver && this.meta && giverMark(this.meta, 'duchess')) {
+        this.quests.onGiver('duchess');
+        return;
+      }
       if (tapGoat(this.goat, this.now)) {
         try {
           const raw = localStorage.getItem('legends.meta');
@@ -866,7 +880,9 @@ export class Tavern {
       const d = Math.hypot((rx - cx) / half, (ry - (spot.y - tall / 2)) / (tall / 2));
       if (!best || d < best.d - 0.15 || (Math.abs(d - best.d) <= 0.15 && spot.depth > best.depth)) best = { kind, d, depth: spot.depth };
     }
-    if (best) this.onPick(best.kind);
+    // (QUESTS-1b: a hero with a quest for you opens their card; a tap on them again, once it is taken, is their sheet as ever)
+    if (best && this.quests?.onGiver && this.meta && giverMark(this.meta, `hero:${best.kind}`)) this.quests.onGiver(`hero:${best.kind}`);
+    else if (best) this.onPick(best.kind);
   }
 
   private cycleDuchessHat(x: number, y: number): void {

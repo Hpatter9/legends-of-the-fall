@@ -130,7 +130,9 @@ test('shards come from stones and the armies\' rare drop: no other source calls 
   const callers = files.filter((f) => /\bgiveShards\(/.test(readFileSync(f, 'utf8')) && !f.endsWith('src/sim/unlock.ts'));
   // (the developer grant in Settings is the owner's testing tool, not a source in play: `devGrant.ts`)
   // (ARMY-DROPS, the owner's later ask: an army wave's rare drop also gives shards, `armyDrops.ts`; its rates are tested in `army-drops.test.ts`)
-  assert.deepEqual(callers.sort(), ['src/sim/armyDrops.ts', 'src/sim/devGrant.ts', 'src/sim/meta.ts'], 'only pullOnce (the stone draw) and the armies\' rare drop give shards in play');
+  // (QUESTS-1b, the owner's ask for quest rewards: a few quests pay a fitting hero's shards at their hand-in, `quests.ts` `payReward`; which
+  // quests, and how many, is tested in `quests-content.test.ts`)
+  assert.deepEqual(callers.sort(), ['src/sim/armyDrops.ts', 'src/sim/devGrant.ts', 'src/sim/meta.ts', 'src/sim/quests.ts'], 'only pullOnce (the stone draw), the armies\' rare drop and a few quests\' rewards give shards in play');
 });
 
 test('crowns buy no pull; chests give stones (every chest source), and a stone is the only way to a shard', () => {

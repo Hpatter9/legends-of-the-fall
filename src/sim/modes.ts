@@ -25,7 +25,7 @@ import { mapFor, newTower } from './tower';
 import { noteFoes } from './codex';
 import { noteCombos } from './combos';
 import { dailyTheme, themeGoalText, themePool } from './dailyThemes';
-import { noteQuests, questFightOf } from './quests';
+import { noteQuests, offerAfterFight, questFightOf, type FightExtra } from './quests';
 
 /** The stage the endless tower opens at (reached in any run), or once the first army has been beaten. */
 export const TOWER_UNLOCK = 10;
@@ -204,7 +204,7 @@ export const floorsCleared = (run: Run): number => run.stage - 1;
  * score once it is over. Then check the achievements. `battle` is the finished fight (absent for a check on the run).
  * Returns the achievements earned now (their crowns are paid).
  */
-export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: number; stars: number; battle?: Battle }): Achievement[] {
+export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: number; stars: number; battle?: Battle } & FightExtra): Achievement[] {
   // (an army's waves are not stages of the endless climb: they keep their own record, `settleWave`; nor are a daily's, `settleDaily`)
   const fixed = waveArmyOf(run);
   if (!fixed && run.mode?.kind !== 'calamity') m.bestStage = Math.max(m.bestStage, run.best);
@@ -216,8 +216,11 @@ export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: numbe
   // (and a combo that went off is seen, for the codex)
   if (fight.battle) noteCombos(m, fight.battle);
   const ctx = { battle: fight.battle, won: fight.won, stage: fight.stage, stars: fight.stars, run, meta: m };
-  // (the quests taken count the fight too, from the same facts: `quests.ts`; the page sees a quest done by `readyQuests`)
-  noteQuests(m, questFightOf(ctx));
+  // (the quests taken count the fight too, from the same facts and the page's tallies: `quests.ts`; the page sees a quest done by
+  // `readyQuests`; a boss won may turn up spoils, or the rift's voice, on the quest board)
+  const qf = questFightOf(ctx, { stats: fight.stats, ults: fight.ults });
+  noteQuests(m, qf);
+  if (fight.battle) offerAfterFight(m, qf, run.seed, fight.stage);
   return checkAchievements(ctx);
 }
 
