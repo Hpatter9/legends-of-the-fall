@@ -49,9 +49,10 @@ export function divineSmite(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   return true;
 }
 
-/** Paladin, Aura of Protection (it was Martyr's Vow): for 8s the allies within 2 of him take 15% less, heal 1% of their health a second, and each
- *  shrugs off the next ailment. Cast when a foe is within 4 and a friend is near him. */
-export const PROTECTION = { MS: 8000, REACH: 2, GUARD: 0.15, HEAL: 0.01 } as const;
+/** Paladin, Aura of Protection (it was Martyr's Vow): for 8s the allies within 3 of him take 30% less, heal 1% of their health a second, and each
+ *  shrugs off the next ailment. Cast when a foe is within 4 and a friend is near him. (The design's 15% within 2 left the Last Stand, which Martyr's
+ *  Vow had carried, more than a wave short; 30% within 3 brings it back within a wave.) */
+export const PROTECTION = { MS: 8000, REACH: 3, GUARD: 0.3, HEAL: 0.01 } as const;
 export function auraOfProtection(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!foesNear(b, me, 4).length || alliesNear(b, me, PROTECTION.REACH).length < 2) return false;
   raiseAura(b, me, { what: 'Aura of Protection', reach: PROTECTION.REACH + Math.round(me.eq?.tal?.reach ?? 0), ms: ms(me, PROTECTION.MS), every: 1000, ally: { guard: PROTECTION.GUARD, heal: PROTECTION.HEAL, ward: true } }, out);

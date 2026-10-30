@@ -81,7 +81,7 @@ test('Divine Smite strikes the foe before him, half as hard again on the undead 
   assert.equal(near.taunt?.to, me.id);
 });
 
-test('Aura of Protection: the allies within 2 of the Paladin take 15% less and heal each second; none when he is alone', () => {
+test('Aura of Protection: the allies within 3 of the Paladin take 30% less and heal each second; none when he is alone', () => {
   const b = arena();
   const me = spawn(b, 'paladin', 3, 9);
   spawn(b, 'orcGrunt', 3, 6);
@@ -92,7 +92,7 @@ test('Aura of Protection: the allies within 2 of the Paladin take 15% less and h
   const hp = friend.hp;
   run(b, 1000);
   assert.ok(friend.hp > hp);
-  assert.equal(friend.auraGuard?.share, 0.15);
+  assert.equal(friend.auraGuard?.share, 0.3);
   assert.ok((friend.wardUntil ?? 0) > b.t, 'warded against the next ailment');
 });
 

@@ -28,7 +28,7 @@ export const SKILL2_WHEN: Readonly<Record<string, (b: Battle, me: Unit) => boole
   'Pied Piper': (b, me) => foesWithin(b, me, 4),
   'Stone Garden': (b, me) => foesWithin(b, me, 5),
   'Plant the Standard': (b, me) => !b.units.some((x) => x.alive && x.def === 'standard' && x.owner === me.id) && foesWithin(b, me, 6),
-  'Aura of Protection': (b, me) => foesWithin(b, me, 4) && allies(b, me).filter((a) => apart(a, me) <= 2).length >= 2,
+  'Aura of Protection': (b, me) => foesWithin(b, me, 4) && allies(b, me).filter((a) => apart(a, me) <= 3).length >= 2,
   Treeform: (b, me) => !me.kx?.tree && foesWithin(b, me, 2),
   'Blood Fury': (b, me) => foesWithin(b, me, 2) && !on(me.kx?.fury, b) && me.hp > me.maxHp * 0.2,
   'Blood Price': (b, me) => foesWithin(b, me, 2) && !(me.kx?.blood ?? 0) && me.hp > me.maxHp * 0.3,

@@ -165,7 +165,7 @@ export function HERO_TABLE(): Record<string, HeroKit> {
     satyr: M('satyr', 40, sk('Pied Piper', 'The foes within 4 dance toward one spot ahead of him for 2s, bunched and not striking', 600, 'attack', piedPiper), 60, 'A lure: pipes that hasten friends and gather foes', { gap: 9000 }),
     gorgon: M('gorgon', 45, sk('Stone Garden', 'Every stunned or slowed foe within 5 turns to stone for 2s; one that dies as stone stays as a statue', 700, 'attack', stoneGarden), 60, 'A petrifier: stone foes that stay as statues'),
     samuraiCommander: S('samuraiCommander', 30, sk('Plant the Standard', 'Plants a standard for 10s: friends within 2 of it take a tenth less and hit a tenth harder while it stands', 600, 'attack2', plantStandard), 45, 'A banner-bearer: plants a standard that must be knocked down', { gap: 11000 }),
-    paladin: M('paladin', 40, sk('Aura of Protection', 'For 8s the allies within 2 of him take 15% less, heal 1% of their health a second, and each shrugs off the next ailment', 600, 'defend', auraOfProtection), 60, 'A holy shield: smites the wicked and guards his friends', {}, { gap: 12000 }),
+    paladin: M('paladin', 40, sk('Aura of Protection', 'For 8s the allies within 3 of him take 30% less, heal 1% of their health a second, and each shrugs off the next ailment', 600, 'defend', auraOfProtection), 60, 'A holy shield: smites the wicked and guards his friends', {}, { gap: 9000 }),
     cleric: {
       pool: 'mana',
       s1: { skill: sk('Guiding Bolt', 'A bolt of holy light at a foe in reach; her friends within 2 of it are healed by what it dealt', 500, 'attack', smite, 'Smite'), cost: 40, tune: TUNE1.cleric ?? MANA_TUNE },
