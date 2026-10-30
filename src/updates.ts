@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.259.0',
+    date: '2026-10-30',
+    title: 'Bolder spell effects',
+    notes: ['26 spell effects repainted to read better in a fight: the Aura of Protection, rot, daggers, storm cloud, bard\'s notes, and many moves.'],
+  },
+  {
     version: '0.258.0',
     date: '2026-10-30',
     title: 'Every spell painted',
