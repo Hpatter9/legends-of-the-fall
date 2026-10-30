@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.267.0',
+    date: '2026-10-30',
+    title: 'Hold a unit to see its card',
+    notes: ['Between waves, press and hold any hero, bench card or foe to see its stats, traits, gear and every skill; bosses show their second form.'],
+  },
+  {
     version: '0.266.0',
     date: '2026-10-30',
     title: 'Battle music stays in battle',
