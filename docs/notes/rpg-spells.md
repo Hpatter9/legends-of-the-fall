@@ -1,7 +1,7 @@
 # RPG spells: the wrap-up
 
 Design v2 ([rpg-spells-design.md](rpg-spells-design.md)) gave every one of the 45 heroes RPG-style spells and battlefield moves. It was built in
-seven batches. The paintings and sounds (batch 8) and a full rebalance (batch 9) are still to come.
+seven batches. The paintings are all in (batch 8's art); the sounds (batch 8) and a full rebalance (batch 9) are still to come.
 
 | Batch | What | Release | Notes |
 | --- | --- | --- | --- |
@@ -95,19 +95,20 @@ fights at level 1 (stage 5), level 10 (stage 24) and level 30 (stage 78). The ba
 
 Batch 9, the full rebalance, is where the roster's spread at level 10 and the global knobs get their look.
 
-## What still waits on art
+## The art
 
-The moves draw the painted sheets that have landed. Until a sheet lands, its move plays its old FX-003 cell, a pack strip or a placeholder
-ring (design section 6.2; the brief is [rpg-spells-art-prompt.md](rpg-spells-art-prompt.md)).
+Every session of the brief is painted and in the game (SPELL-ART, [spell-art.md](spell-art.md); sessions B, D, E, F and G,
+[spell-art-bde.md](spell-art-bde.md)). Each move draws its painted parts over the look it had (its FX-003 cell, pack strip or
+signature); a part that failed to load keeps the old look alone. The brief is [rpg-spells-art-prompt.md](rpg-spells-art-prompt.md).
 
-| Session | Sheets | Status | What waits on it |
+| Session | Sheets | Status | Drawn for |
 | --- | --- | --- | --- |
-| A. The toolkit | 15 | **in** (`src/art/fx/spells/`, `a-toolkit`) | none: dash, blink, teleport slash, pull, shove, launch, slam, burrow, swap and the six walls are painted |
-| B. Auras and fields | 10 | waiting | Aura of Protection, Spirit Guardians, the Shambler's rot, the Lightning Mage's storm cloud, the Great Sage's mana font, Healing Mist, Cloud of Daggers, Slow, Spike Growth, the bard's notes: placeholder rings for now |
-| C. Healers and revives | 10 | **in** (`c-healers`) | none |
-| D. Casters' spells | 12 | waiting | Fireball, Meteor Swarm, Magic Missile, Eldritch Blast, Drain Life, Circle of Death, Thunderwave, Time Stop, Polymorph, Hunter's Mark, Bane, Mockery |
-| E. Martial and monster moves | 15 | waiting | Issen, Sneak Attack, Flurry of Blows, Quivering Palm, Berserker Leap, Rage, Cleave, Riposte, Grappling Hook, Dragon Dive, Seismic Slam, Pounce, the tentacles, Tidal Wave, the keg blast |
-| F. More martial and ranged moves | 30 | waiting | the tanks', blades' and shooters' other moves |
-| G. More spells and monster moves | 39 | waiting | the casters', healers', callers' and monsters' other moves |
+| A. The toolkit | 15 | **in** (`src/art/fx/spells/`, `a-toolkit`) | dash, blink, teleport slash, pull, shove, launch, slam, burrow, swap and the six walls |
+| B. Auras and fields | 10 | **in** (`b-auras`) | Aura of Protection (and Indomitable), Spirit Guardians, the Shambler's rot, the Lightning Mage's storm cloud (hung over her, bolts falling), the Great Sage's font, Healing Mist, Cloud of Daggers, the Time Witch's Slow, Spike Growth, the Wolf Bard's song (gold Anthem, violet Dirge) |
+| C. Healers and revives | 10 | **in** (`c-healers`) | the four revives, Smite, Benediction, Holy Light, Guardian Angel, Flask Toss, Resurrection |
+| D. Casters' spells | 12 | **in** (`d-casters`) | Fireball, Meteor Swarm, Magic Missile, Eldritch Blast, Drain Life, Circle of Death, Thunderwave, Time Stop, Mass Polymorph, Hunter's Mark, Bane, Vicious Mockery |
+| E. Martial and monster moves | 15 | **in** (`e-moves`) | Issen, Sneak Attack, Flurry of Blows, Quivering Palm, Berserker Leap, Rage, Cleave, Riposte, Grappling Hook, Dragon Dive, Seismic Slam, Pounce, Grasping Tentacles, Tidal Wave, Powder Keg |
+| F. More martial and ranged moves | 30 | **in** (`f-martial`) | every sheet: Aimed Shot, Blood Pact, Bombard, Call to Arms, Cannonade (and the Ghost Fleet), Cavalry Charge, Divine Smite, Dragon and Inferno Breath, Entangle, Fan the Hammer, Fissure, Gore Charge and Bull Rush, High Noon, Holy Nova, Iaido, Lightning Storm, Loaded Dice, Metamorphosis, Orbital Strike, Overclock, Phalanx, Piercing Shot, Rapid Shot, Siege Mode, Smoke Bomb, Snare, Suppressing Fire, Thunder Step, Volley and Hail of Arrows, Whirlwind |
+| G. More spells and monster moves | 39 | **in** (`g-spells`) | every sheet, one move each (Alter Self to Wild Shape; the table is `MOVE_PAINT` in `src/render/movePaints.ts`) |
 
 The sounds of design section 6.4 wait with the paintings (batch 8). The moves play their keyed sounds from before.

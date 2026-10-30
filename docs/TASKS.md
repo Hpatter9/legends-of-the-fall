@@ -68,14 +68,20 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Owner:** Claude worker. **Branch/worktree:** `claude/stand-retreat`, `/home/user/stand-retreat`.
 - **Authorisation:** the owner approved the design: a fixed retreat (courtyard, library, chapel, throne room, five waves an act), a hold-the-line choice at each act's end, the retreat beat with auto-arranged posts, the room reached as a record, one music hook.
 - **Scope:** `src/sim/standActs.ts` (new), `stand.ts`, `standAi.ts` (the last foes break off), `standHalls.ts` (the throne room's name), one optional field each in `battle.ts` (`StandMode.flee`) and `meta.ts` (`standAct`); `standView.ts`, `render/standHall.ts` (door, cave-in, the king's walk, enthroned in the throne room), `standRetreatLines.ts`, `render/standMusic.ts` (new), `stand.css`, one line in `home.ts`; the door art; `tools/stand-balance.ts` (`--hold`), `tools/stand/retreat-shots.mjs`; tests.
-- **Status:** ready for review. Medians unchanged when falling back; holding reported separately. Typecheck, full `npm test`, `npm run web`, browser checks at 393×852, 360×780 and 412×915 with no page errors. [Note](notes/stand-retreat.md); screenshots `samples/stand-retreat-*.png`. No merge or version bump.
+- **Status:** ready for review. Medians unchanged when falling back; holding reported separately. Typecheck, full `npm test` (1680, 0 failures), `npm run web`, browser checks at 393×852, 360×780 and 412×915 with no page errors. [Note](notes/stand-retreat.md); screenshots `samples/stand-retreat-*.png`. No merge or version bump.
 
 ### STAND-HOLD-RELIC — Holding the line pays a relic; the camp names the room
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/stand-hold-relic`, `/home/user/lotf-stand-hold`.
 - **Authorisation:** the owner's two decisions: a held wave pays gold and a relic; the Last Stand's continue line names the wave and room.
 - **Scope:** `src/sim/stand.ts` (`holdRelic`, `holdPurse`, `purseLine`, `takeRelic` shared with `buyRelic`, `heldRelics`, `standContinueLine`), `standView.ts` (choice card wording, the relic plate, the end card's Relics row), `stand.css`, one line in `main.ts` (`slotInfo`); `tools/stand/hold-relic-shots.mjs`; `test/stand-retreat.test.ts`.
-- **Status:** ready for review. Holding still costs mid parties about as much as before (within noise; see the note). Typecheck, full `npm test`, `npm run web`, browser checks at 393×852, 360×780 and 412×915 with no page errors. [Note](notes/stand-hold-relic.md); screenshots `samples/stand-hold-relic-*.png`. No merge or version bump.
+- **Status:** ready for review. Holding still costs mid parties about as much as before (within noise; see the note). Typecheck, full `npm test` (1680, 0 failures), `npm run web`, browser checks at 393×852, 360×780 and 412×915 with no page errors. [Note](notes/stand-hold-relic.md); screenshots `samples/stand-hold-relic-*.png`. No merge or version bump.
+
+### SPELL-ART-BDE — The painted spell effects, sessions B, D, E, F and G
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/spell-art-bde`, `/home/user/lotf-art-bde`.
+- **Scope:** merges `art/spell-fx` (#222, B), `art/spell-fx-d` (#223), `art/spell-fx-e` (#225), `art/spell-fx-f` (#226), `art/spell-fx-g` (#227); the atlases and `index.json`; import fixes (`tools/spell-fx/spell-fixes.json`, the importer's `frames`/`fade`); `src/render/movePaints.ts` (new); painted auras, moves, throws, stands and the snare in `fx.ts`; `auraLook` fixes; `spellLooks.ts` footed parts; `test/spell-fx.test.ts`; `tools/spell-fx/shots.mjs` (new); one credit line for all sessions in `CREDITS.md`; the art table in `notes/rpg-spells.md`. No sim changes.
+- **Status:** ready for review. All 131 sheets pass and are drawn; seven atlases 2.80 MB of the 5 MB cap at 96 px. Typecheck, full `npm test` (1680, 0 failures), `npm run web`, real-fight contact sheets at 393x852 with no page errors. [Note](notes/spell-art-bde.md) (with the list to repaint); screenshots `samples/spell-art-bde-*.png`. No merge or version bump.
 
 ### SPELL-ART — The painted spell effects brought into the game (sessions A and C)
 
@@ -104,7 +110,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Owner:** Claude worker. **Branch/worktree:** `claude/dark-wave`, `/home/user/dark-wave`.
 - **Cause:** the fight's weather is rolled per board, so about one wave in eight is night: a flat deep-blue tint at 0.36 over the whole screen took about 30% of the light off the board (rain, about one in eight too, took 15%). No dim was left on or stacking.
 - **Fix:** flat tints capped at 0.15 (night 0.14, rain 0.1, ash and embers 0.08); night's mood moves to darkened edges (a vignette clear over the board). A dim from a fall is lifted when a heart burns and the wave starts again.
-- **Status:** ready for review. Typecheck, full `npm test`, `npm run web`, browser checks at 393×852, 360×780 and 412×915 with no page errors. [Note](notes/dark-wave.md); [before](samples/dark-wave-before-393x852.png); [after](samples/dark-wave-after-393x852.png). No merge or version bump.
+- **Status:** ready for review. Typecheck, full `npm test` (1680, 0 failures), `npm run web`, browser checks at 393×852, 360×780 and 412×915 with no page errors. [Note](notes/dark-wave.md); [before](samples/dark-wave-before-393x852.png); [after](samples/dark-wave-after-393x852.png). No merge or version bump.
 ### RPG-SPELLS B0/B1 — Fixed skill keys and the movement toolkit
 
 - **Owner:** Claude. **Branch/worktree:** `claude/spells-b01`, `/home/user/spells-b01`.

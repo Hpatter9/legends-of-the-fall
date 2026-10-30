@@ -43,7 +43,7 @@ import { particleBudget, slashOf } from './vfxRules';
 import { placeLabel } from './labelRules';
 import { HAZARD_LOOKS } from './hazardLooks';
 import { MOVE_LOOKS, PAINT, WALL_LOOKS, auraLook, type Look } from './toolkitLooks';
-import { AREA_PAINT, AURA_ALPHA, AURA_ALPHA_OF, DIRGE_TINT, HANG_MULT, MOVE_PAINT, RIPOSTE, SONG_REACH, SONG_SHEET, SPIKES_SHEET, TRAVEL_MS, type StandState } from './movePaints';
+import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, DIRGE_TINT, HANG_MULT, MOVE_PAINT, RIPOSTE, SONG_REACH, SONG_SHEET, SPIKES_SHEET, TRAVEL_MS, type StandState } from './movePaints';
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
 import { spellAnchorY, spellPart, spellScale } from './spellLooks';
@@ -1526,12 +1526,13 @@ export class Fx {
       const delay = e.ms * 0.6;
       const struck: number[] = [];
       for (const x of events) {
-        const id = (x.kind === 'hit' && x.by === e.by && x.src === 'skill') || (x.kind === 'mark' && x.by === e.by) ? x.to : x.kind === 'arc' && x.from === e.by ? x.to : undefined;
+        const id = (x.kind === 'hit' && x.by === e.by && x.src === 'skill') || (x.kind === 'mark' && x.by === e.by) || (x.kind === 'heal' && x.by === e.by && x.amount > 0) ? x.to : x.kind === 'arc' && x.from === e.by ? x.to : undefined;
         if (id !== undefined && id !== e.by && !struck.includes(id)) struck.push(id);
       }
       const body = (key: string, s: UnitSprite): [number, number] => [s.x, s.y - (spellAnchorY(key) > 0.8 ? 0 : s.tall * 0.45)];
       if (m.cast) this.paintOnce(m.cast, ...body(m.cast, by));
       if (m.self) this.paintOnce(m.self, by.x, by.y, { delay: delay * 0.5 });
+      if (m.flare) this.paintOnce(m.flare, ...body(m.flare, by), { delay: e.ms });
       if (m.trail) {
         const run = events.find((x): x is Extract<BattleEvent, { kind: 'dash' | 'blink' }> => (x.kind === 'dash' || x.kind === 'blink') && x.by === e.by);
         if (run) {
@@ -1558,6 +1559,24 @@ export class Fx {
         }
       }
       const targets = struck.map((id) => this.sprites.get(id)).filter((s): s is UnitSprite => !!s);
+      if (m.ground) {
+        // (a ground loop at its brief size for a moment: round the caster, or under those it struck, four at most)
+        const gr = m.ground;
+        const until = b.t + gr.ms;
+        const on = gr.at === 'self' ? [by] : gr.at === 'first' ? targets.slice(0, 1) : targets.slice(0, 4);
+        for (const s of on) this.paintLoop(gr.part, () => [s.x, s.y], () => b.t < until, { depthOf: () => -1, alpha: AURA_ALPHA });
+      }
+      if (m.streak) for (const to of targets) this.paintAlong(m.streak, by.x, by.y - by.tall * 0.45, to.x, to.y - to.tall * 0.45, { delay: 40 });
+      if (m.chain && m.beam) {
+        // (the bolt forks along each arc of the cast: from the caster, then from each it struck on to the next)
+        const linked = new Set([e.by, ...struck]);
+        for (const x of events) {
+          if (x.kind !== 'arc' || !linked.has(x.from)) continue;
+          const a = this.sprites.get(x.from);
+          const z = this.sprites.get(x.to);
+          if (a && z) this.paintBeam(m.beam, () => [a.x, a.y - a.tall * 0.45], () => [z.x, z.y - z.tall * 0.45], Math.max(450, e.ms * 0.8));
+        }
+      }
       // (a wave rolls once, out to the farthest it strikes, and breaks on each as it goes)
       const reach = (s: UnitSprite) => Math.hypot(s.x - by.x, s.y - by.y);
       const farthest = m.roll ? [...targets].sort((p, q) => reach(q) - reach(p))[0] : undefined;
@@ -1568,7 +1587,7 @@ export class Fx {
           if (m.impact) this.paintOnce(m.impact, ...body(m.impact, to), { delay: wait });
           if (m.then) this.paintOnce(m.then, ...body(m.then, to), { delay: wait + 280 });
         };
-        if (m.beam) {
+        if (m.beam && !m.chain) {
           // (a hook flies first and the rope holds after it; a blast or a drain holds from the start)
           const ms = Math.max(500, e.ms);
           this.later(m.travel ? TRAVEL_MS : 0, () => this.paintBeam(m.beam!, () => [by.x, by.y - lift(by)], () => [to.x, to.y - lift(to)], ms));
@@ -1597,6 +1616,7 @@ export class Fx {
       if (state === 'stun') return (u.stunUntil ?? 0) > b.t;
       if (state === 'bounty') return (u.kx?.bounty?.until ?? 0) > b.t;
       if (state === 'condemned') return (u.kx?.condemned?.until ?? 0) > b.t;
+      if (state === 'siege') return (u.kx?.siege ?? 0) > b.t;
       return (u.kx?.fury ?? 0) > b.t;
     };
     if (!live()) return;
@@ -1607,7 +1627,7 @@ export class Fx {
 
   /** A painted bolt (painted pointing right) flying from (x0, y0) to (x1, y1) over `ms`, turned along its way (flipped going left, so it
    *  stays the right way up), then `land`. */
-  private paintFly(key: string, x0: number, y0: number, x1: number, y1: number, ms: number, land: () => void): boolean {
+  private paintFly(key: string, x0: number, y0: number, x1: number, y1: number, ms: number, land: () => void, heading = 0): boolean {
     const frames = spellFrames(key);
     if (!frames.length) {
       land();
@@ -1617,7 +1637,7 @@ export class Fx {
     sp.anchor.set(0.5);
     const scale = spellScale(key);
     const left = x1 < x0;
-    sp.rotation = Math.atan2(y1 - y0, x1 - x0);
+    sp.rotation = Math.atan2(y1 - y0, x1 - x0) - (left ? -heading : heading);
     sp.scale.set(scale, left ? -scale : scale);
     sp.alpha = 0;
     this.root.addChild(sp);
@@ -1642,20 +1662,30 @@ export class Fx {
 
   /** A painted throw of the `area` kind (`AREA_PAINT`): the ball flies from the sky (slanting down from the upper right, as the old meteor
    *  fell) or from its caster for the throw's own `ms`, and its burst plays where it lands, with the old landing's thud. */
-  private paintArea(b: Battle, e: Extract<BattleEvent, { kind: 'area' }>, p: (typeof AREA_PAINT)[string]): boolean {
+  private paintArea(b: Battle, e: Extract<BattleEvent, { kind: 'area' }>, p: AreaPaint): boolean {
     const [cx, cy] = this.tilePos(b, e.u, e.v);
     const by = this.sprites.get(e.by);
-    const [x0, y0] = p.from === 'caster' && by ? [by.x, by.y - by.tall * 0.45] : [cx + 150, cy - 360];
-    // (a thrown ball comes down on the foes' middles; a keg rolls along the ground)
-    const ground = p.travel.startsWith('keg');
-    const ty = ground ? cy - 6 : cy - 14;
-    return this.paintFly(p.travel, x0, ground && by ? by.y - 6 : y0, cx, ty, Math.max(200, e.ms), () => {
+    const land = () => {
       this.paintOnce(p.impact, cx, cy - 10);
       if (!this.calm()) this.stopLeft = Math.max(this.stopLeft, 34);
       this.microThud(cx, cy, 1.2, 0, 1);
       if (p.scorch) this.scorch(cx, cy);
-    });
+    };
+    if (!p.travel) {
+      // (no ball: its mark plays on the spot as it is aimed, then the burst as it lands)
+      if (!p.mark || !this.paintOnce(p.mark, cx, cy - 10)) return false;
+      this.later(Math.max(200, e.ms), land);
+      return true;
+    }
+    // (the volley's arrows come down from the upper left, the way they are painted pointing; the rest slant in from the upper right)
+    const sky: [number, number] = p.heading ? [cx - 150, cy - 360] : [cx + 150, cy - 360];
+    const [x0, y0] = p.from === 'caster' && by ? [by.x, by.y - by.tall * 0.45] : sky;
+    // (a thrown ball comes down on the foes' middles; a keg rolls along the ground)
+    const ground = p.travel.startsWith('keg');
+    const ty = ground ? cy - 6 : cy - 14;
+    return this.paintFly(p.travel, x0, ground && by ? by.y - 6 : y0, cx, ty, Math.max(200, e.ms), land, p.heading);
   }
+
 
   /** A healer raised a fallen hero (RPG-SPELLS batch 2): it gets up where it lay (the heart revive's `getUp`), with its healer's painted
    *  revive (the Cleric's ankh, the Priestess's wings, the Wanderer's elixir, the Druid's leaves: session C) at its feet, or a column of
@@ -1804,7 +1834,7 @@ export class Fx {
     const skyArt = e.by === 0 ? `spell:${royalSky ?? 'meteor'}` : `skill:${this.tickCasts.get(e.by) ?? this.casting.get(e.by) ?? 'Meteor'}`;
     // (RPG-SPELLS sessions D and E: a painted ball and burst for the moves that have them, `AREA_PAINT`)
     const paint = e.by === 0 ? undefined : AREA_PAINT[this.tickCasts.get(e.by) ?? this.casting.get(e.by) ?? ''];
-    if (paint && spellFrames(paint.travel).length && this.paintArea(b, e, paint)) {
+    if (paint && spellFrames(paint.travel ?? paint.mark ?? '').length && this.paintArea(b, e, paint)) {
       this.root.removeChild(view);
       view.destroy({ children: true });
       return;
@@ -2137,6 +2167,14 @@ export class Fx {
 
   /** A snare on a tile: a dark ring that waits there (and goes out when it is sprung or runs down). */
   private trap(b: Battle, u: number, v: number, ms: number): void {
+    // (painted, session F: the hidden ring of teeth and rope while it waits, and the snap when it is sprung)
+    if (spellFrames(SNARE.ground).length) {
+      const [x, y] = this.tilePos(b, u, v);
+      const born = b.t;
+      const live = () => b.t - born < ms && (b.t - born < 200 || !!b.traps?.some((tr) => tr.u === u && tr.v === v));
+      this.paintLoop(SNARE.ground, () => [x, y], live, { depthOf: () => -1, alpha: 0.9, onGone: () => b.t - born < ms - 150 && this.paintOnce(SNARE.impact, x, y - 8) });
+      return;
+    }
     const view = new Sprite(paintedStrip('earth', 'rune', 'snare')[0]);
     view.anchor.set(0.5);
     view.scale.set(TW * 0.6 / 32);

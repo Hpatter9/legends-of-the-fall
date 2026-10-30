@@ -141,11 +141,11 @@ test('a painted part is drawn at its brief size, by its foot when it grows from 
   assert.ok(!footed('slam.impact') && !footed('pull.beam') && !footed('death-ward.stand'));
   assert.equal(spellAnchorY('slam.impact'), 0.5);
   assert.ok(spellAnchorY('wall-fire.stand') > 0.8);
-  // (fireball.travel was the example until session D was painted; session F is not yet)
-  assert.equal(spellPart('aimed-shot.travel'), undefined, 'an unpainted part is not there (its placeholder stays)');
+  // (every session of the brief is painted now, so the example is a part no sheet has)
+  assert.equal(spellPart('fireball.cast'), undefined, 'an unpainted part is not there (its placeholder stays)');
 });
 
-test('sessions B, D and E: every part the moves ask for is in the manifest and painted, of the right kind', () => {
+test('sessions B, D, E, F and G: every part the moves ask for is in the manifest and painted, of the right kind', () => {
   for (const key of movePaintParts()) {
     assert.ok(inManifest(key), `${key} is in the manifest`);
     assert.ok(spellPart(key), `${key} is painted`);
@@ -155,7 +155,11 @@ test('sessions B, D and E: every part the moves ask for is in the manifest and p
     if (m.beam) assert.ok(m.beam.endsWith('.beam'), `${name}: its beam is a beam`);
     if (m.trail) assert.ok(m.trail.endsWith('.trail'), `${name}: its trail is a trail`);
   }
-  for (const a of Object.values(AREA_PAINT)) assert.ok(a.travel.endsWith('.travel') && spellPart(a.travel)!.loop, `${a.travel} flies in a loop`);
+  for (const a of Object.values(AREA_PAINT)) {
+    if (a.travel) assert.ok(a.travel.endsWith('.travel') && spellPart(a.travel)!.loop, `${a.travel} flies in a loop`);
+    else assert.ok(a.mark && !spellPart(a.mark)!.loop, `${a.impact}: a ball or a mark`);
+  }
+  for (const [name, m] of Object.entries(MOVE_PAINT)) if (m.ground) assert.ok(spellPart(m.ground.part)!.loop, `${name}: its ground loops`);
   // (every aura the sim raises has a painted sheet; "Protection" is not the rot, and the circle of death is session D's)
   for (const what of ['Aura of Protection', 'Indomitable', 'Spirit Guardians', 'Healing Mist', 'storm cloud', 'circle of death', 'font of magic', 'contagion rot', 'cloud of daggers']) {
     const sheet = auraLook(what).paint;
@@ -165,17 +169,20 @@ test('sessions B, D and E: every part the moves ask for is in the manifest and p
   assert.equal(auraLook('contagion rot').paint, 'aura-rot');
   assert.equal(auraLook('circle of death').paint, 'circle-of-death');
   assert.ok(auraLook('storm cloud').hang);
-  for (const s of ['b-auras', 'd-casters', 'e-moves']) assert.ok(SPELL_SESSIONS[s], `${s} is packed`);
+  for (const s of ['b-auras', 'd-casters', 'e-moves', 'f-martial', 'g-spells']) assert.ok(SPELL_SESSIONS[s], `${s} is packed`);
 });
 
 test('the import fixes name real parts, keep within the brief, and no loop is packed from an empty frame', () => {
-  const fixes = JSON.parse(readFileSync('tools/spell-fx/spell-fixes.json', 'utf8')) as Record<string, { frames?: number[] }>;
+  const fixes = JSON.parse(readFileSync('tools/spell-fx/spell-fixes.json', 'utf8')) as Record<string, { frames?: number[]; fade?: number }>;
   for (const [key, fix] of Object.entries(fixes)) {
     if (key === '_') continue;
     const dot = key.lastIndexOf('.');
     const row = rowsOf(key.slice(0, dot))?.find((r) => r[0] === key.slice(dot + 1));
     assert.ok(row, `${key} is in the manifest`);
-    assert.ok(fix.frames && fix.frames.length >= row![2] && fix.frames.length <= row![3], `${key}: ${fix.frames?.length} frames in range`);
-    assert.equal(spellPart(key)?.frames, fix.frames!.length, `${key} is packed as fixed`);
+    assert.ok(fix.frames || fix.fade, `${key}: a fix`);
+    if (fix.fade) assert.equal(row![1], 'once', `${key}: only a once row fades out`);
+    const n = spellPart(key)?.frames ?? 0;
+    assert.ok(n >= row![2] && n <= row![3], `${key}: ${n} frames in range`);
+    if (fix.frames) assert.equal(n, fix.frames.length + (fix.fade ?? 0), `${key} is packed as fixed`);
   }
 });

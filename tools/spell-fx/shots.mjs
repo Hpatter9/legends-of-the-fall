@@ -1,4 +1,4 @@
-// RPG-SPELLS painted effects, sessions B, D and E (docs/notes/spell-art-bde.md): screenshots of the painted moves in real fights. Each
+// RPG-SPELLS painted effects, sessions B, D, E, F and G (docs/notes/spell-art-bde.md): screenshots of the painted moves in real fights. Each
 // shot starts an army fight with a party round the hero, keeps that hero's pool (or its ultimate's meter) full until it casts the move
 // asked for, then holds the fight still a moment later, the camera on the caster and the foes it struck. The auras are raised on a hero
 // through the toolkit (`window.__toolkit.raiseAura`), so the page draws them as it draws any aura. After `npm run web`:
@@ -27,30 +27,51 @@ const xpAt = (level) => Math.round(30 * (level - 1) * level * (level > 20 ? 4 : 
 let errors = 0;
 const FILL = ['knight', 'juggernaut', 'cleric', 'archer', 'paladin'];
 
-/** The moves: `key` the skill's fixed key, `ult` when it is the hero's ultimate, `hold` ms after the cast to freeze it. */
+/** The moves: `key` the skill's fixed key, `ult` when it is the hero's ultimate, `s1` when it is skill 1 (skill 2 goes first when both
+ *  can), `hold` ms after the cast to freeze it. */
 const MOVES = [
+  // (session D)
   { shot: 'fireball', def: 'wizard', key: 'Meteor', hold: 520 },
   { shot: 'meteor-swarm', def: 'wizard', key: 'Armageddon', ult: true, hold: 900 },
   { shot: 'magic-missile', def: 'sage', key: 'Starfall', hold: 450 },
-  { shot: 'eldritch-blast', def: 'warlock', key: 'Hex', hold: 450 },
+  { shot: 'eldritch-blast', def: 'warlock', key: 'Hex', s1: true, hold: 450 },
   { shot: 'drain-life', def: 'warlock', key: 'Soul Siphon', hold: 900 },
   { shot: 'circle-of-death', def: 'warlock', key: 'Soul Harvest', ult: true, hold: 1200 },
   { shot: 'time-stop', def: 'timeWitch', key: 'Time Stop', ult: true, hold: 1300 },
-  { shot: 'slow-field', def: 'timeWitch', key: 'Temporal Surge', hold: 900 },
+  { shot: 'slow-field', def: 'timeWitch', key: 'Temporal Surge', s1: true, hold: 900 },
   { shot: 'bane', def: 'tyrant', key: 'Condemn', hold: 900 },
   { shot: 'hunters-mark', def: 'mercenary', key: 'Mark for Coin', hold: 900 },
+  // (session E)
   { shot: 'issen', def: 'samurai', key: 'Heaven-Splitting Cut', ult: true, hold: 260 },
   { shot: 'rage', def: 'barbarian', key: 'Blood Fury', hold: 900 },
-  { shot: 'cleave', def: 'demonSwordsman', key: 'Hellblade Sweep', ult: true, hold: 520 },
+  { shot: 'cleave', def: 'demonSwordsman', key: 'Hellblade Sweep', hold: 520 },
   { shot: 'seismic-slam', def: 'juggernaut', key: 'Earthquake', hold: 380 },
   { shot: 'dragon-dive', def: 'dragoon', key: 'Jump', hold: 560 },
-  { shot: 'grappling-hook', def: 'buccaneer', key: 'Grappling Hook', ult: true, hold: 420 },
-  { shot: 'powder-keg', def: 'dreadPirate', key: 'Powder Keg', hold: 1400 },
+  { shot: 'grappling-hook', def: 'buccaneer', key: 'Grappling Hook', hold: 420 },
+  { shot: 'powder-keg', def: 'dreadPirate', key: 'Powder Keg', hold: 900 },
   { shot: 'tidal-wave', def: 'kraken', key: 'Flood', hold: 420 },
-  { shot: 'tentacles', def: 'kraken', key: 'Undertow', ult: true, hold: 520 },
+  { shot: 'tentacles', def: 'kraken', key: 'Undertow', hold: 520 },
   { shot: 'pounce', def: 'werewolf', key: 'Ravage', hold: 300 },
-  { shot: 'flurry', def: 'ninjaMonk', key: 'Thousand Fists', ult: true, hold: 300 },
+  { shot: 'flurry', def: 'ninjaMonk', key: 'Thousand Fists', s1: true, hold: 300 },
   { shot: 'thunderwave', def: 'arcBlade', key: 'Grounding', hold: 300 },
+  // (session F)
+  { shot: 'aimed-shot', def: 'archer', key: 'Pinning Shot', hold: 220 },
+  { shot: 'volley', def: 'archer', key: 'Volley', s1: true, hold: 700 },
+  { shot: 'bombard', def: 'siegeBot', key: 'Shell Barrage', s1: true, hold: 500 },
+  { shot: 'dragon-breath', def: 'dragoon', key: 'Dragon Breath', hold: 400 },
+  { shot: 'divine-smite', def: 'paladin', key: 'Holy Challenge', s1: true, hold: 380 },
+  { shot: 'entangle', def: 'ranger', key: "Hunter's Net", ult: true, hold: 700 },
+  { shot: 'snare', def: 'ranger', key: 'Snare Trap', hold: 700 },
+  { shot: 'whirlwind', def: 'barbarian', key: 'Whirlwind', hold: 400 },
+  // (session G)
+  { shot: 'chain-lightning', def: 'lightningMage', key: 'Chain Lightning', s1: true, hold: 350 },
+  { shot: 'judgement', def: 'tyrant', key: 'Judgement', hold: 500 },
+  { shot: 'plague-tide', def: 'shambler', key: 'Plague Tide', ult: true, hold: 700 },
+  { shot: 'tempest', def: 'yamabushi', key: 'Tempest', ult: true, hold: 700 },
+  { shot: 'gaze', def: 'gorgon', key: 'Petrifying Gaze', s1: true, hold: 400 },
+  { shot: 'war-banner', def: 'samuraiCommander', key: 'War Banner', hold: 700 },
+  { shot: 'panacea', def: 'wanderer', key: 'Dawn Light', ult: true, hold: 600 },
+  { shot: 'swoop', def: 'karasu', key: 'Dive', s1: true, hold: 220 },
 ];
 /** The auras, raised through the toolkit on the paladin (`what` is the sim's name for each). */
 const AURAS = [
@@ -140,7 +161,12 @@ for (const [w, h] of SIZES) {
         if ((k.charge2 ?? 0) < 100) { k.charge2 = 100; k.ultOrder = g.b.t; }
       } else {
         k.charge = 100;
-        if (k.ks) { delete k.ks.at1; delete k.ks.at2; delete k.ks.idle2; }
+        // (a hero casts skill 2 first when it can: for a skill 1, skill 2 is kept waiting on its gap)
+        k.ks ??= {};
+        delete k.ks.at1;
+        delete k.ks.idle2;
+        if (m.s1) k.ks.at2 = g.b.t;
+        else delete k.ks.at2;
       }
       return false;
     }, m, { timeout: 60000, polling: 'raf' }).then(() => true).catch(() => false);
@@ -155,7 +181,7 @@ for (const [w, h] of SIZES) {
     const path = `docs/samples/spell-art-bde-${m.shot}-${size}.png`;
     await page.screenshot({ path });
     console.log(size, m.shot, got ? 'cast' : 'NOT CAST', note);
-    if (got) keep(`moves-${size}`, path);
+    if (got) keep(`${MOVES.indexOf(m) < 10 ? 'd' : MOVES.indexOf(m) < 22 ? 'e' : MOVES.indexOf(m) < 30 ? 'f' : 'g'}-${size}`, path);
     await ctx.close();
   }
   for (const [shot, what, reach] of AURAS) {
@@ -183,7 +209,7 @@ for (const [w, h] of SIZES) {
   }
 }
 // (each group side by side, half size, four to a row)
-for (const [group, paths] of Object.entries(made)) {
+for (const [group, paths] of process.env.NOJOIN ? [] : Object.entries(made)) {
   const script = `import sys\nfrom PIL import Image\nps=sys.argv[2:]\nims=[Image.open(p).convert('RGB') for p in ps]\nw,h=ims[0].size\nw2,h2=w//2,h//2\ncols=min(4,len(ims))\nrows=(len(ims)+cols-1)//cols\nout=Image.new('RGB',(cols*w2,rows*h2),(16,16,20))\nfor i,im in enumerate(ims): out.paste(im.resize((w2,h2)),((i%cols)*w2,(i//cols)*h2))\nout.save(sys.argv[1])\n`;
   writeFileSync('out/join.py', script);
   execFileSync('python3', ['out/join.py', `docs/samples/spell-art-bde-${group}.png`, ...paths]);
