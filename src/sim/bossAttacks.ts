@@ -33,7 +33,7 @@ export type SigElement = 'fire' | 'ice' | 'lightning' | 'light' | 'dark' | 'fore
 export type SigShape =
   | { kind: 'slam'; r: number; on: 'self' | 'crowd'; reach?: number }
   | { kind: 'ring'; r0: number; r: number }
-  | { kind: 'line'; len: number; w: number; shove?: number }
+  | { kind: 'line'; len: number; w: number }
   | { kind: 'cross'; len: number; w: number }
   | { kind: 'rain'; n: number }
   | { kind: 'pull'; reach: number; drag: number; r: number };
@@ -74,10 +74,13 @@ export const SIG = {
   /** Every signature's damage is multiplied by this (the one knob for all of them). */
   POWER: 0.85,
   /** But never less than this share of the struck hero's health (a boss's great blow is always a great one, whatever the levels). */
-  FLOOR: 0.28,
+  FLOOR: 0.2,
+  /** The Calamity's guardians strike at this share of both (its runs are a lone starter and the recruits it gathers, weaker than an army's
+   *  party; the re-tune). */
+  CALAMITY: 0.5,
   /** A boss with signatures has this share of the health it had before them, so its army stays winnable (the re-tune: its great blows
    *  are the danger now, and a fight with it a little shorter). */
-  HP: 0.8,
+  HP: 0.9,
   /** The shares of its health at which it lets one go at once (each once). */
   TURNS: [0.6, 0.3] as readonly number[],
   /** A signature waits until a hero is this close (tiles). */
@@ -95,7 +98,7 @@ export const SIG = {
 
 const slam = (r: number, on: 'self' | 'crowd' = 'crowd', reach = 4): SigShape => ({ kind: 'slam', r, on, reach });
 const ring = (r0: number, r: number): SigShape => ({ kind: 'ring', r0, r });
-const line = (len: number, w: number, push?: number): SigShape => ({ kind: 'line', len, w, ...(push ? { shove: push } : {}) });
+const line = (len: number, w: number): SigShape => ({ kind: 'line', len, w });
 const cross = (len: number, w = 1): SigShape => ({ kind: 'cross', len, w });
 const rain = (n: number): SigShape => ({ kind: 'rain', n });
 const pull = (reach: number, drag: number, r: number): SigShape => ({ kind: 'pull', reach, drag, r });
@@ -108,20 +111,20 @@ export const SIGNATURES: Record<string, readonly Signature[]> = {
   orcWarlord: [sig('skullsplitter', 'Skullsplitter', 'Red Tusk Cataclysm', 'earth', slam(1), 2.4, 'stun'), sig('waaaghQuake', 'WAAAGH Quake', 'Quake of the Horde', 'earth', ring(1, 2), 1.9, 'shove')],
   // the Undead Legion
   boneCaptain: [sig('graveVolley', 'Grave Volley', 'Volley of the Fallen', 'dark', rain(3), 1.2)],
-  lichKing: [sig('frozenCrown', 'Frozen Crown', 'Crown of Endless Winter', 'ice', cross(5), 2.1, 'freeze'), sig('soulHarvest', 'Soul Harvest', 'Harvest of Souls', 'dark', pull(4, 2, 2), 1.9, 'curse')],
+  lichKing: [sig('frozenCrown', 'Frozen Crown', 'Crown of Endless Winter', 'ice', cross(5), 1.7, 'freeze'), sig('soulHarvest', 'Soul Harvest', 'Harvest of Souls', 'dark', pull(4, 2, 2), 1.6, 'curse')],
   // the Beast Packs
   alphaWolf: [sig('moonlitRend', 'Moonlit Rend', 'Blood Moon Rend', 'blood', line(4, 3), 2.2, 'bleed')],
-  boarKing: [sig('stampede', 'Thundering Stampede', 'Stampede of the Herd', 'earth', line(6, 3, 2), 2.2, 'shove'), sig('tuskQuake', 'Tusk Quake', 'The Herd Shakes the Earth', 'earth', slam(2, 'self'), 1.9, 'stun')],
+  boarKing: [sig('stampede', 'Thundering Stampede', 'Stampede of the Herd', 'earth', line(6, 3), 2.2, 'shove'), sig('tuskQuake', 'Tusk Quake', 'The Herd Shakes the Earth', 'earth', slam(2, 'self'), 1.9, 'stun')],
   // the Wildwood
   forestBoss1: [sig('brambleRing', 'Bramble Eruption', 'The Briar Remembers', 'forest', ring(2, 3), 2.0, 'stun'), sig('thornSlam', 'Thorn Slam', 'Warden’s Wrath', 'forest', slam(1), 2.2, 'bleed')],
-  forestBoss2: [sig('raidersAmbush', 'Raider’s Ambush', 'Ambush of the Deep Wood', 'forest', rain(3), 1.55, 'bleed'), sig('raidersCharge', 'Raider’s Charge', 'The Wood Runs Red', 'blood', line(5, 1, 1), 2.4, 'shove')],
+  forestBoss2: [sig('raidersAmbush', 'Raider’s Ambush', 'Ambush of the Deep Wood', 'forest', rain(3), 1.55, 'bleed'), sig('raidersCharge', 'Raider’s Charge', 'The Wood Runs Red', 'blood', line(5, 1), 2.4, 'shove')],
   forestBoss3: [sig('groveSpear', 'Spear of the Old Grove', 'The Grove’s Last Spear', 'forest', line(7, 1), 2.4, 'bleed'), sig('groveTempest', 'Grove Tempest', 'Tempest of the Old Grove', 'wind', cross(4), 2.0, 'shove')],
   // the Labyrinth
   gorgonQueen: [sig('gazeOfAges', 'Gaze of Ages', 'The Queen’s Stone Gaze', 'poison', line(6, 3), 1.9, 'stun')],
-  minotaurChampion: [sig('labyrinthCharge', 'Labyrinth Charge', 'The Maze Closes', 'earth', line(6, 3, 2), 2.3, 'shove'), sig('labyrinthQuake', 'Labyrinth Quake', 'The Walls Come Down', 'earth', ring(1, 3), 1.8, 'stun')],
+  minotaurChampion: [sig('labyrinthCharge', 'Labyrinth Charge', 'The Maze Closes', 'earth', line(6, 3), 2.3, 'shove'), sig('labyrinthQuake', 'Labyrinth Quake', 'The Walls Come Down', 'earth', ring(1, 3), 1.8, 'stun')],
   // the Ogre Clans
-  shamanKing: [sig('spiritStorm', 'Spirit Storm', 'Storm of the Dead', 'dark', rain(3), 1.55, 'chill')],
-  hornedOgre: [sig('mountainSlam', 'Mountain Slam', 'The Mountain Falls', 'earth', slam(2), 2.1, 'stun'), sig('hornSweep', 'Horn Sweep', 'Horns of the Crag', 'earth', ring(1, 2), 1.9, 'shove')],
+  shamanKing: [sig('spiritStorm', 'Spirit Storm', 'Storm of the Dead', 'dark', rain(3), 1.3)],
+  hornedOgre: [sig('mountainSlam', 'Mountain Slam', 'The Mountain Falls', 'earth', slam(2), 1.7, 'stun'), sig('hornSweep', 'Horn Sweep', 'Horns of the Crag', 'earth', ring(1, 2), 1.5, 'shove')],
   // the Infernal Host
   devilLeader: [sig('hellfireRain', 'Hellfire Rain', 'Rain of the Ninth Circle', 'fire', rain(3), 1.45, 'burn')],
   demonLord: [sig('infernalPact', 'Infernal Pact', 'Pact of the Abyss', 'dark', pull(4, 2, 2), 1.9, 'burn'), sig('impStorm', 'Brimstone Storm', 'Brimstone Without End', 'fire', rain(3), 1.55, 'burn')],
@@ -135,9 +138,9 @@ export const SIGNATURES: Record<string, readonly Signature[]> = {
   calBoss1: [sig('ashSlam', 'Ash Slam', 'Ash of the First Herald', 'fire', slam(1), 2.3, 'burn'), sig('cinderRing', 'Cinder Ring', 'Ring of Living Cinders', 'fire', ring(2, 3), 1.9, 'burn')],
   calBoss2: [sig('briarRing', 'Briar Ring', 'The Bramble Remembers', 'forest', ring(2, 3), 2.0, 'stun'), sig('thornLances', 'Thorn Lances', 'Lances of the Old Moss', 'forest', cross(5), 2.0, 'bleed')],
   calBoss3: [sig('courtOfFlames', 'Court of Flames', 'The Court Burns', 'fire', rain(3), 1.55, 'burn'), sig('abyssalPull', 'Abyssal Pull', 'The Hordes Close In', 'dark', pull(4, 2, 2), 1.9, 'curse')],
-  calBoss4: [sig('avalanche', 'Avalanche', 'The Mountain Walks', 'earth', line(7, 3, 2), 2.2, 'shove'), sig('mountainsFall', 'Mountain’s Fall', 'The Wall Comes Down', 'earth', slam(2), 2.1, 'stun')],
+  calBoss4: [sig('avalanche', 'Avalanche', 'The Mountain Walks', 'earth', line(7, 3), 2.2, 'shove'), sig('mountainsFall', 'Mountain’s Fall', 'The Wall Comes Down', 'earth', slam(2), 2.1, 'stun')],
   calBoss5: [sig('lastFlame', 'Rain of the Last Flame', 'The Last Flame Falls', 'fire', rain(3), 1.45, 'poison'), sig('hellbringerCross', 'Hellbringer’s Cross', 'Cross of the Hellbringer', 'fire', cross(5, 1), 2.0, 'burn')],
-  calBoss6: [sig('calamityCharge', 'Calamity Charge', 'No Horizon Beyond', 'fire', line(8, 3, 2), 2.3, 'shove'), sig('endOfRoads', 'The End of All Roads', 'The End of Everything', 'dark', pull(5, 2, 2), 2.0, 'curse')],
+  calBoss6: [sig('calamityCharge', 'Calamity Charge', 'No Horizon Beyond', 'fire', line(8, 3), 2.3, 'shove'), sig('endOfRoads', 'The End of All Roads', 'The End of Everything', 'dark', pull(5, 2, 2), 2.0, 'curse')],
 };
 
 /** A signature a boss has begun: the tiles it will strike, and when. */
@@ -264,7 +267,8 @@ export function trySignature(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   // (a pull drags the heroes near it in first, so the blast round it is marked where they now stand)
   if (s.shape.kind === 'pull') {
     const reach = s.shape.reach + (rage ? SIG.RAGE_REACH : 0);
-    moveMany(b, me, heroes.filter((h) => apart(me, h) <= reach && apart(me, h) > 1), s.shape.drag, 'drag', out);
+    // (a Last Stand hero holds its post: it is not dragged off it)
+    moveMany(b, me, heroes.filter((h) => apart(me, h) <= reach && apart(me, h) > 1 && !(b.stand && h.post)), s.shape.drag, 'drag', out);
   }
   const tiles = sigTiles(b, me, s, rage);
   if (!tiles.length) return false;
@@ -307,13 +311,14 @@ export function tickSignatures(b: Battle, out: BattleEvent[]): void {
 function land(b: Battle, me: Unit, s: Signature, w: BossWarning, out: BattleEvent[]): void {
   out.push({ kind: 'bossSig', phase: 'land', by: me.id, n: w.n, key: s.key, name: w.rage ? s.rage : s.name, el: s.el, tiles: w.tiles, ms: 0, rage: w.rage });
   const on = new Set(w.tiles);
-  const power = atkOf(me) * s.power * SIG.POWER * (w.rage ? SIG.RAGE_POWER : 1);
+  const k = (w.rage ? SIG.RAGE_POWER : 1) * (me.def.startsWith('calBoss') ? SIG.CALAMITY : 1);
+  const power = atkOf(me) * s.power * SIG.POWER * k;
   const struck = targetsOf(b, me)
     .filter((x) => on.has(idx(b, x)) && !hidden(b, x) && !airborne(b, x))
     .sort((x, y) => apart(me, y) - apart(me, x) || x.id - y.id);
   for (const x of struck) {
     if (!x.alive) continue;
-    const dmg = Math.max(1, Math.round(Math.max(power - defenceOf(x), x.maxHp * SIG.FLOOR * (w.rage ? SIG.RAGE_POWER : 1))));
+    const dmg = Math.max(1, Math.round(Math.max(power - defenceOf(x), x.maxHp * SIG.FLOOR * k)));
     if (!hurt(b, me, x, dmg, true, false, out, 'skill') || !x.alive) continue;
     rider(b, me, x, s.rider, out);
   }
@@ -328,7 +333,8 @@ function rider(b: Battle, me: Unit, x: Unit, r: SigRider | undefined, out: Battl
   else if (r === 'stun') stunFor(b, x, SIG.STUN_MS, false, 'stun', me);
   else if (r === 'freeze') stunFor(b, x, SIG.FREEZE_MS, false, 'freeze', me);
   else if (r === 'chill') chillFor(b, x, SIG.CHILL_MS, false, false, me);
-  else if (r === 'shove') shove(b, me, x, 1, out);
+  // (a Last Stand hero at its post is not thrown off it: the Stand's guard holds its ground)
+  else if (r === 'shove' && !(b.stand && x.post)) shove(b, me, x, 1, out);
 }
 
 /** The tiles marked by the foes of `me` that are about to land (none: null). */
@@ -359,6 +365,8 @@ export function dodgeStep(b: Battle, me: Unit, danger: ReadonlySet<number>): num
     if (c === 0 || c > SIG.DODGE_COST || danger.has(i) || blocked.has(i)) continue;
     const t = b.board.tiles[i];
     if (t.ground === 'lava' || t.ground === 'coals') continue;
+    // (a Last Stand hero keeps within its leash of its post)
+    if (me.post && apart({ u: i % b.board.w, v: Math.floor(i / b.board.w) }, me.post) > me.post.leash) continue;
     if (goal < 0 || c < walk.cost[goal]) goal = i;
   }
   return goal >= 0 ? firstStep(walk, goal) ?? -1 : -1;
