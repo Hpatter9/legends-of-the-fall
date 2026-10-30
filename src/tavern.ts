@@ -2,9 +2,9 @@
 // doorways) with every unlocked hero idling at a spot of their own (tavernSpots.ts); a locked hero's spot stays an empty seat,
 // so the rooms fill as you recruit. The rooms are baked once into one big picture (walls, floors, rugs, doorways) and each frame
 // only blits the part on the screen, then draws the furniture and the heroes near it. The view pans sideways by a drag, with
-// a little momentum, or by a tap on a room's name. Heroes wander through random idles: turn round, sip, hum, nod off, stroll a
-// few steps and back, now and then a flourish. It only draws (Math.random is fine here: nothing that is played depends on it)
-// and runs only while the tab is showing.
+// a little momentum, or by a tap on a room's name. Each hero does one fixed thing at their spot (drinks, plays darts, sings, dozes...:
+// `render/tavernLife.ts`, drawn by `tavernLifeDraw.ts`), the same every time. It only draws (Math.random, for Duchess, is fine here:
+// nothing that is played depends on it) and runs only while the tab is showing.
 
 import { tok } from './render/tok';
 import { ALL_HEROES, UNITS } from './sim/units';
@@ -38,6 +38,9 @@ import stageUrl from './art/tavern/stage.png';
 import { BOARD, GWEN } from './questArt';
 import { giverMark } from './questCard';
 import { questsWaiting } from './sim/quests';
+// (TAVERN LIFE: what each hero does at their spot, `render/tavernLife.ts`, drawn by `tavernLifeDraw.ts`)
+import { LIFE } from './render/tavernLife';
+import { drawGwenPainted, drawGwenWipe, drawLifeFront, drawPainted, hasPainted, hipsAt, HIP, lifePose, loadLife, seatInFront, sitDrop, sits, type Body, type LifeCtx } from './tavernLifeDraw';
 
 const ART: Record<string, string> = {
   wall: wallUrl,
@@ -63,7 +66,7 @@ let art: Record<string, HTMLImageElement> | null = null;
 async function loadArt(): Promise<Record<string, HTMLImageElement>> {
   if (art) return art;
   const got: Record<string, HTMLImageElement> = {};
-  await Promise.all(Object.entries(ART).map(async ([k, url]) => (got[k] = await loadImage(url))));
+  await Promise.all([...Object.entries(ART).map(async ([k, url]) => (got[k] = await loadImage(url))), loadLife()]);
   return (art = got);
 }
 
@@ -112,6 +115,8 @@ interface Rig {
   counts: Record<string, number>;
   figure: number;
   facesRight: boolean;
+  /** Frames to a row of the sheet (a longer clip runs on into the next row). */
+  perRow?: number;
 }
 
 type Mood = 'idle' | 'out' | 'pause' | 'back' | 'flourish';
@@ -135,6 +140,8 @@ interface Actor {
   /** Its awakened step, and the parts of its class's aura (none below the first step). */
   step: number;
   aura: readonly AuraPart[];
+  /** (TAVERN LIFE) where and how it was drawn this frame, for its props drawn after it (and after the seat in front of it). */
+  body?: Body;
 }
 
 
@@ -495,6 +502,8 @@ export class Tavern {
   // ---- behaviour ----
 
   private think(a: Actor, now: number): void {
+    // (TAVERN LIFE: a hero with a fixed activity does that, not random idles; `tavernLife.ts`)
+    if (LIFE[a.kind]) return;
     const home = a.spot.x;
     if (a.mood === 'idle' && now >= a.at) {
       const roll = Math.random();
@@ -660,12 +669,20 @@ export class Tavern {
       const actor = this.actors.get(kind);
       // (an empty seat: no one is recruited yet, or they have wandered off)
       if (spot.seat !== 'none' && (!actor || Math.abs(actor.x - spot.x) > 3)) list.push({ depth: spot.depth - 0.5, paint: () => this.seat(a, spot) });
+      // (TAVERN LIFE: a sitter's seat: a stool or bench in front hiding where the legs join, a chair behind; a painted sheet has its own)
+      else if (actor && sits(kind, spot) && !hasPainted(kind)) list.push({ depth: spot.depth + (seatInFront(spot) ? 0.25 : -0.5), paint: () => this.seat(a, spot) });
       if (actor) list.push({ depth: spot.depth, paint: () => this.hero(actor) });
+      if (actor && LIFE[kind]) list.push({ depth: spot.depth + 0.3, paint: () => actor.body && drawLifeFront(this.lifeCtx(), actor.body, SPOTS) });
     }
     if (this.goat && this.goatArt && Tavern.GOAT.min - 30 < right && Tavern.GOAT.max + 30 > left) list.push({ depth: Tavern.GOAT.y, paint: () => this.duchess() });
     // (QUESTS: the board leans on the wall, and Gwen stands behind the bar, drawn before it so the bar hides her legs)
     if (this.quests && BOARD_SPOT.x - 40 < right && BOARD_SPOT.x + 40 > left) list.push({ depth: BOARD_SPOT.foot, paint: () => this.board(a) });
-    if (this.quests && GWEN_SPOT.x - 40 < right && GWEN_SPOT.x + 40 > left) list.push({ depth: GWEN_SPOT.depth, paint: () => this.gwen(a) });
+    if (this.quests && GWEN_SPOT.x - 40 < right && GWEN_SPOT.x + 40 > left) {
+      list.push({ depth: GWEN_SPOT.depth, paint: () => this.gwen(a) });
+      // (TAVERN LIFE: now and then she wipes a mug, held up over the bar's top, so drawn after the bar)
+      const bar = PROPS.find((p) => p.sprite === 'bar')!;
+      list.push({ depth: bar.y + 0.5, paint: () => drawGwenWipe(this.lifeCtx(), GWEN_SPOT.x, bar.y - a.bar.height + 2, this.now - this.gwenTalk < 1600) });
+    }
     list.sort((p, q) => p.depth - q.depth);
     for (const e of list) e.paint();
     // (the fire and the lamps burn steadily: no flicker)
@@ -699,8 +716,10 @@ export class Tavern {
     const row = talking ? 1 : 0;
     const i = talking ? Math.floor((this.now - this.gwenTalk) / 160) % GWEN.talk : 0;
     const lift = !talking && !this.reduced && Math.sin(this.now / 640) > 0.4 ? 1 : 0;
-    const top = GWEN_SPOT.foot - c - lift;
-    g.drawImage(a.gwen, i * c, row * c, c, c, Math.round(GWEN_SPOT.x - c / 2), top, c, c);
+    let top = GWEN_SPOT.foot - c - lift;
+    // (TAVERN LIFE: her painted figure where it has landed, `tavernLifeDraw.ts`; the pack placeholder otherwise)
+    if (drawGwenPainted(this.lifeCtx(), GWEN_SPOT.x, GWEN_SPOT.foot, talking, this.now - this.gwenTalk)) top = GWEN_SPOT.foot - 64;
+    else g.drawImage(a.gwen, i * c, row * c, c, c, Math.round(GWEN_SPOT.x - c / 2), top, c, c);
     const mark = this.meta ? giverMark(this.meta, 'gwen') : null;
     if (mark) this.bubbleAt(mark === 'ready' ? 'ready' : 'quest', GWEN_SPOT.x, top + 1);
   }
@@ -741,36 +760,61 @@ export class Tavern {
     return { row, i: a.mood === 'flourish' ? Math.min(i, n - 1) : i, lift };
   }
 
+  /** (TAVERN LIFE) what the life drawer needs from the frame. */
+  private lifeCtx(): LifeCtx {
+    return { g: this.ctx, now: this.now, s: this.scale, reduced: this.reduced, saver: this.saver };
+  }
+
   private hero(a: Actor): void {
     const g = this.ctx;
     const s = this.scale;
     const { rig, k } = a;
-    const { row, i, lift } = this.pose(a);
-    const r = rig.rows.indexOf(rig.rows.includes(row) ? row : 'idle');
-    const fx = Math.round(a.x);
+    // (TAVERN LIFE: the hero's activity sets its pose, a shift and its facing, and sits it down into its seat)
+    const life = LIFE[a.kind];
+    const lp = life ? lifePose(a.kind, a.spot, rig.counts, this.now, this.reduced, SPOTS) : null;
+    const { row, i, lift } = lp ?? this.pose(a);
+    const face = lp ? lp.face : a.face;
+    // (a long clip runs on into the next row of the sheet: the walk's eight frames take two rows of four)
+    const r0 = rig.rows.indexOf(rig.rows.includes(row) ? row : 'idle');
+    const per = rig.perRow || 99;
+    const r = r0 + Math.floor(i / per);
+    const col = i % per;
+    const fx = Math.round(a.x + (lp ? lp.dx : 0));
     const fy = a.spot.y;
+    const drop = life ? sitDrop(a.kind, a.spot, rig.figure * k) : 0;
+    a.body = { kind: a.kind, fx, fy, tall: rig.figure * k, face, drop };
     // (a shadow under the feet)
     g.fillStyle = 'rgba(8, 3, 1, 0.38)';
     const sw = Math.round(rig.figure * k * 0.34);
     g.fillRect(fx - sw, fy, sw * 2, 2);
     g.fillRect(fx - sw + 2, fy - 1, (sw - 2) * 2, 1);
     const dw = rig.w * k;
-    const dh = rig.h * k;
-    const dy = fy - lift - dh;
-    const flip = (a.face === 1) !== rig.facesRight;
+    // (a sitter: the top half down to the hips sits on the seat, the legs below are squeezed between the seat and the floor)
+    const hips = life ? hipsAt(a.kind, a.spot) : 0;
+    const legs = hips ? rig.figure * HIP : 0;
+    const sh = rig.h - legs;
+    const dh = sh * k;
+    const dy = fy + drop - lift - rig.h * k;
+    const flip = (face === 1) !== rig.facesRight;
+    const legsAt = (x0: number) => hips && g.drawImage(rig.img, col * rig.w, r * rig.h + sh, rig.w, legs, x0, fy - hips - lift, dw, hips + lift);
     // (an awakened hero stands in its class's aura: the glow and the parts behind it, then the parts in front)
     const tall = rig.figure * k;
     if (a.step) {
       drawAuraGlow(g, a.kind, a.step, fx, fy, tall);
-      drawAura(g, a.aura, fx, fy, tall, this.now, 'back', a.face, this.reduced);
+      drawAura(g, a.aura, fx, fy, tall, this.now, 'back', face, this.reduced);
     }
-    if (flip) {
+    if (life && hasPainted(a.kind)) drawPainted(this.lifeCtx(), a.body);
+    else if (flip) {
       // (a mirrored transform set and put back by hand: save and restore are slow on a phone's canvas)
       g.transform(-1, 0, 0, 1, fx, 0);
-      g.drawImage(rig.img, i * rig.w, r * rig.h, rig.w, rig.h, -dw / 2, dy, dw, dh);
+      g.drawImage(rig.img, col * rig.w, r * rig.h, rig.w, sh, -dw / 2, dy, dw, dh);
+      legsAt(-dw / 2);
       this.reset(s);
-    } else g.drawImage(rig.img, i * rig.w, r * rig.h, rig.w, rig.h, fx - dw / 2, dy, dw, dh);
-    if (a.step) drawAura(g, a.aura, fx, fy, tall, this.now, 'front', a.face, this.reduced);
+    } else {
+      g.drawImage(rig.img, col * rig.w, r * rig.h, rig.w, sh, fx - dw / 2, dy, dw, dh);
+      legsAt(fx - dw / 2);
+    }
+    if (a.step) drawAura(g, a.aura, fx, fy, tall, this.now, 'front', face, this.reduced);
     if (a.emote) this.bubble(a, fx, fy - Math.round(rig.figure * k) - 15);
   }
 
