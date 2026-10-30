@@ -92,6 +92,22 @@ Falling back at once leaves the medians where they were (within a wave, the mean
 party loses its king in the second hold half the time, mid parties lose a wave on average to the heroes it costs, and only a strong party
 (level 100) comes out a wave ahead. The purse is gold only (about two waves' clearing gold), so the economy's prices and pace are unchanged.
 
+**With a relic as well (STAND-HOLD-RELIC, `docs/notes/stand-hold-relic.md`).** A held wave now also pays one relic the run lacks. Measured
+again on main 0.254.0 (`--hold`, the same command), mean wave (median) before and after the relic, against falling back at once:
+
+| Level | Fall back at once | Holding, gold only | Holding, gold and a relic | Fell holding (before / after) |
+| --- | --- | --- | --- | --- |
+| 1 | 3.6 (4) | 3.6 (4) | 3.6 (4) | 0 / 0 |
+| 10 | 8.9 (9) | 8.1 (9) | 8.3 (9) | 2 / 2 |
+| 20 | 10.6 (11) | 10.5 (11) | 10.7 (11) | 15 / 16 |
+| 30 | 14.9 (15) | 14.3 (14) | 14.1 (14) | 3 / 4 |
+| 60 | 18.9 (20) | 17.7 (16) | 17.8 (17) | 9 / 0 |
+| 100 | 22.8 (23) | 24.6 (24) | 24.0 (22) | 1 / 0 |
+
+The relic moves the means by 0.6 or less, inside the noise of 30 runs: one relic (about +5 to 10% on one stat for the team) does not make up
+for the heroes a mid party loses in the harder wave. For a mid party (levels 20 to 60) holding is still not worth it on the waves it reaches;
+it is the strong party's bet. Fewer level-60 kings fell holding (9 to 0) but those runs fell a wave or two later instead.
+
 ## Checks
 
 - `test/stand-retreat.test.ts`: the schedule; a strong party falls back room by room in order, each room laid out with the ring plan's

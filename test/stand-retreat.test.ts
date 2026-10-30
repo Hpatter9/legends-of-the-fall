@@ -10,7 +10,7 @@ import {
   ACT_HALLS, actOfHall, actOfWave, CHOICE_MS, exitOf, hallOfWave, HOLD_HARDER, holdGold, reachRoom, RETREAT_MS, retreatAfter, ROOM_BREAK_MS,
 } from '../src/sim/standActs';
 import {
-  canSave, clearGold, fallBack, finishRetreat, holdSpec, holdTheLine, loadStand, newStandRun, roleOfKind, saveStand, settleStand, snapshot, standing, startFirstWave,
+  buyRelic, canSave, clearGold, fallBack, finishRetreat, holdPurse, holdRelic, holdSpec, holdTheLine, purseLine, standContinueLine, loadStand, newStandRun, roleOfKind, saveStand, settleStand, snapshot, standing, startFirstWave,
   startStand, stepStand, strength, waveSpec, type Stand, type StandNote, type StandRun, type StandSetup,
 } from '../src/sim/stand';
 import { gradeBoost } from '../src/sim/run';
@@ -18,6 +18,7 @@ import { newCastle } from '../src/sim/castle';
 import { ARMIES } from '../src/sim/armies';
 import { newMeta } from '../src/sim/meta';
 import { TICK_MS } from '../src/sim/battle';
+import { ALL_RELIC_IDS, RELICS } from '../src/sim/relics';
 
 const setupAt = (level: number): StandSetup => ({ boost: () => gradeBoost(1, 0, level), castle: newCastle() });
 const armies = ARMIES.map((a) => a.id);
@@ -281,4 +282,139 @@ test('every room\'s door is in a back wall, in front of a floor tile, clear of t
       assert.ok(tileAt(b, ex.at.u, ex.at.v)!.wall, `${kind} ${seed}: the door is in the wall`);
       assert.ok(standable(tileAt(b, ex.front.u, ex.front.v)), `${kind} ${seed}: floor before the door`);
     }
+});
+
+/* ------------------------------------------------------------------ holding pays a relic (STAND-HOLD-RELIC, docs/notes/stand-hold-relic.md) */
+
+/** A run at wave 5 held to its choice, then held: the notes of the bonus wave, to the fall back or the king's fall. */
+function holdFrom(seed: number, level: number, prep?: (run: StandRun) => void): { s: Stand; notes: StandNote[]; before: { gold: number; relics: string[]; hp: number } } {
+  const run = runAt(seed, 5);
+  prep?.(run);
+  const s = startStand(run, setupAt(level));
+  startFirstWave(s);
+  stepUntil(s, (x) => x.phase === 'choice');
+  const hero = s.b.units.find((u) => u.side === 'hero' && u.tag !== undefined && u.alive)!;
+  const before = { gold: s.run.gold, relics: [...s.run.relics], hp: hero.maxHp };
+  assert.ok(holdTheLine(s));
+  return { s, notes: stepUntil(s, (x) => x.phase === 'retreat'), before };
+}
+
+test('holding the line pays a relic the run lacks, from its own side stream, working at once, as a bought one does', () => {
+  // (the draw: never one owned, the same for a seed and wave, and other seeds or waves draw others)
+  const run = runAt(12, 5);
+  const got = holdRelic(run, 5)!;
+  assert.ok(ALL_RELIC_IDS.includes(got));
+  assert.equal(holdRelic(run, 5), got);
+  assert.ok(!holdRelic({ seed: 12, relics: [got] }, 5) || holdRelic({ seed: 12, relics: [got] }, 5) !== got);
+  const many = new Set([1, 2, 3, 4, 5, 6, 7, 8].map((seed) => holdRelic({ seed, relics: [] }, 5)));
+  assert.ok(many.size > 2, 'seeds draw different relics');
+  assert.deepEqual(holdPurse(run, 5), { gold: holdGold(5), relic: true });
+  assert.equal(purseLine(holdPurse(run, 5)), `+${holdGold(5)} gold and a relic`);
+  // (the hold, won: the purse and the relic, owned, counted, and announced)
+  const { s, notes, before } = holdFrom(12, 100);
+  const held = notes.find((n) => n.kind === 'held');
+  assert.ok(held && held.kind === 'held');
+  const relic = held.relic!;
+  assert.equal(relic, holdRelic({ seed: 12, relics: before.relics }, 5), 'the side stream decides it');
+  assert.ok(!before.relics.includes(relic));
+  assert.deepEqual(s.run.relics, [...before.relics, relic]);
+  assert.deepEqual(s.run.heldRelics, [relic]);
+  assert.ok(!s.run.offer.includes(relic), 'not offered for sale once owned');
+  assert.ok(s.run.gold >= before.gold + holdGold(5), 'the gold too');
+  // (it works at once, as a bought one: compare with the same relic bought)
+  const t = startStand(runAt(12, 5), setupAt(100));
+  t.run.offer = [relic];
+  t.run.gold = 9999;
+  const tHero = t.b.units.find((u) => u.side === 'hero' && u.tag !== undefined)!;
+  const hpWas = tHero.maxHp;
+  const powWas = tHero.power ?? 1;
+  assert.equal(buyRelic(t, 0), relic);
+  const fx = RELICS[relic].effects;
+  if (fx.hp) assert.equal(tHero.maxHp, Math.round(hpWas * fx.hp));
+  if (fx.atk) assert.ok(Math.abs((tHero.power ?? 1) - powWas * fx.atk) < 1e-9);
+  assert.deepEqual(t.b.relics?.revive, s.b.relics?.revive);
+  // (the run's end counts it)
+  const gold = s.run.gold;
+  const sum = settleStand(newMeta(1), { ...structuredClone(s.run), over: true })!;
+  assert.equal(sum.heldRelics, 1);
+  assert.equal(sum.relics, before.relics.length + 1);
+  // (the same run twice: the same relic, the same purse)
+  const again = holdFrom(12, 100);
+  assert.deepEqual([again.s.run.relics, again.s.run.gold], [s.run.relics, gold]);
+});
+
+test('no relic for a hold lost, nor for falling back; every relic owned pays twice the gold instead', () => {
+  // (lost: the king falls in the bonus wave, nothing is paid)
+  const run = runAt(3, 5, 'courtyard', 0);
+  const s = startStand(run, setupAt(100));
+  startFirstWave(s);
+  stepUntil(s, (x) => x.phase === 'choice');
+  const relics = [...s.run.relics];
+  holdTheLine(s);
+  stepStand(s);
+  s.king.hp = 0;
+  s.king.alive = false;
+  const notes = stepUntil(s, (x) => x.phase === 'over');
+  stepStand(s);
+  assert.equal(s.phase, 'over');
+  assert.ok(!notes.some((n) => n.kind === 'held'));
+  assert.deepEqual(s.run.relics, relics);
+  assert.equal(s.run.heldRelics, undefined);
+  assert.equal(settleStand(newMeta(1), s.run)!.heldRelics, undefined);
+  // (falling back pays nothing)
+  const f = startStand(runAt(3, 5), setupAt(100));
+  startFirstWave(f);
+  stepUntil(f, (x) => x.phase === 'choice');
+  const had = [...f.run.relics];
+  assert.ok(fallBack(f));
+  stepUntil(f, (x) => x.phase === 'retreat');
+  finishRetreat(f);
+  assert.deepEqual(f.run.relics, had);
+  assert.equal(f.run.heldRelics, undefined);
+  // (every relic owned: no relic, twice the gold, and the choice says so)
+  const all = { seed: 4, relics: [...ALL_RELIC_IDS] };
+  assert.equal(holdRelic(all, 5), null);
+  assert.deepEqual(holdPurse(all, 5), { gold: 2 * holdGold(5), relic: false });
+  assert.equal(purseLine(holdPurse(all, 5)), `+${2 * holdGold(5)} gold`);
+  const full = holdFrom(4, 100, (r) => (r.relics = [...ALL_RELIC_IDS]));
+  const held = full.notes.find((n) => n.kind === 'held');
+  assert.ok(held && held.kind === 'held' && held.gold === 2 * holdGold(5) && held.relic === undefined);
+  assert.equal(full.s.run.relics.length, ALL_RELIC_IDS.length);
+  assert.equal(full.s.run.heldRelics, undefined);
+  assert.ok(full.s.run.gold >= full.before.gold + 2 * holdGold(5));
+});
+
+test('the choice note names the purse; saves from before the relic (no heldRelics) load and hold as ever', () => {
+  const s = startStand(runAt(12, 5), setupAt(100));
+  startFirstWave(s);
+  const notes = stepUntil(s, (x) => x.phase === 'choice');
+  const c = notes.find((n) => n.kind === 'choice');
+  assert.ok(c && c.kind === 'choice' && c.gold === holdGold(5) && c.relic === true);
+  // (an old save at the choice: no heldRelics field; loads, holds, and is paid its relic; junk in the field is dropped)
+  const old = JSON.parse(JSON.stringify(snapshot(s))) as StandRun;
+  delete old.heldRelics;
+  const store = new Map<string, string>();
+  const io = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v) };
+  saveStand(old, io);
+  const back = loadStand(io)!;
+  assert.equal(back.heldRelics, undefined);
+  const t = startStand(back, setupAt(100));
+  assert.equal(t.phase, 'choice');
+  assert.ok(holdTheLine(t));
+  const tn = stepUntil(t, (x) => x.phase === 'retreat');
+  assert.ok(tn.some((n) => n.kind === 'held' && n.relic));
+  saveStand({ ...old, heldRelics: [3, 'whetstone'] as unknown as string[] }, io);
+  assert.deepEqual(loadStand(io)!.heldRelics, ['whetstone']);
+});
+
+test('the camp\'s line for a Last Stand run names its wave and its room', () => {
+  const at = (wave: number, hall?: HallKind) => standContinueLine(runAt(5, wave, hall ?? hallOfWave(wave), 0));
+  assert.equal(at(1), 'Wave 1 · Courtyard');
+  assert.equal(at(7), 'Wave 7 · Library');
+  assert.equal(at(13), 'Wave 13 · Chapel');
+  assert.equal(at(22), 'Wave 22 · Throne Room');
+  // (an old run with no room keeps the seed's)
+  const old = runAt(5, 4);
+  delete old.hall;
+  assert.match(standContinueLine(old), /^Wave 4 · (Courtyard|Library|Chapel|Throne Room)$/);
 });
