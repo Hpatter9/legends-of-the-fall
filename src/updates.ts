@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.240.0',
+    date: '2026-10-30',
+    title: 'Rare shards and tomes from armies',
+    notes: ['Very rarely, a won army wave drops hero shards or an XP tome. Bosses and harder tiers are a little more generous.', 'A find shows as a gold line on the wave card and in the recap.'],
+  },
+  {
     version: '0.239.0',
     date: '2026-10-30',
     title: 'Music and sound effects in balance',
