@@ -32,10 +32,10 @@ function tap(b: Battle, events: BattleEvent[]): void {
   if (b.phase !== 'fight') feed(endState(b));
 }
 
-/** The heroes the batch under way reworks (batch 5: the ranged heroes and the summoners; 4 was the melee heroes, 3 the tanks and supports, 2 the
- *  healers). The `...Others` scenarios leave them out of every team, so they prove that nothing outside the batch's heroes changed: their hashes
+/** The heroes the batch under way reworks (batch 6: the casters; 5 was the ranged heroes and the summoners, 4 the melee heroes, 3 the tanks and
+ *  supports, 2 the healers). The `...Others` scenarios leave them out of every team, so they prove that nothing outside the batch's heroes changed: their hashes
  *  are the ones recorded before the batch. */
-export const REWORKED: readonly string[] = ['archer', 'ranger', 'gunslinger', 'rifleBot', 'siegeBot', 'dreadPirate', 'beastmaster', 'reaper'];
+export const REWORKED: readonly string[] = ['wizard', 'lightningMage', 'warlock', 'sage', 'timeWitch', 'illusionist'];
 const others = (team: string[], rng: Rng): string[] => {
   const pool = ALL_HEROES.filter((k) => !REWORKED.includes(k) && !team.includes(k));
   return team.map((k) => (REWORKED.includes(k) ? pool.splice(rng.int(0, pool.length - 1), 1)[0] : k));
