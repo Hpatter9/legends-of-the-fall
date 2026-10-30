@@ -2,7 +2,8 @@
 // Artwork and controls only; recruiting and saving remain in the gacha.
 
 import { ALL_HEROES, UNITS } from './sim/units';
-import { heroTitle } from './sim/heroNames';
+import { heroClassLabel } from './sim/heroNames';
+import { titleLine } from './heroTitleView';
 import { stoneCost, stonesOf, type Meta, type Pull } from './sim/meta';
 import { luckyLine, pityLine } from './gacha';
 import { closest, haveOf, needOf } from './sim/unlock';
@@ -374,9 +375,9 @@ export class SummoningHall {
     fill.style.width = `${near ? Math.min(100, haveShards / need * 100) : 100}%`;
     progress.append(fill);
     const label = el('div', 'hlProgressLabel');
-    label.append(el('span', '', near ? `Nearest: ${heroTitle(near)}` : 'All summon heroes recruited'), el('span', '', near ? `${haveShards} / ${need}` : 'Complete'));
+    label.append(el('span', '', near ? `Nearest: ${heroClassLabel(near)}` : 'All summon heroes recruited'), el('span', '', near ? `${haveShards} / ${need}` : 'Complete'));
     progress.setAttribute('role', 'progressbar');
-    progress.setAttribute('aria-label', near ? `${heroTitle(near)} recruitment` : 'Recruitment complete');
+    progress.setAttribute('aria-label', near ? `${heroClassLabel(near)} recruitment` : 'Recruitment complete');
     progress.setAttribute('aria-valuemin', '0');
     progress.setAttribute('aria-valuemax', `${near ? need : 1}`);
     progress.setAttribute('aria-valuenow', `${near ? haveShards : 1}`);
@@ -663,7 +664,7 @@ export class SummoningHall {
       this.slam(banner);
     }
     const box = el('div', 'hlCard');
-    box.append(el('b', '', heroTitle(p.kind)), el('em', '', def.role));
+    box.append(titleLine(p.kind, 'b', '', true), el('em', '', `${def.name} · ${def.role}`));
     if (!card.fresh) box.append(el('small', '', `+${p.shards} shard${p.shards === 1 ? '' : 's'}`));
     this.over.append(box);
     this.slam(box);
