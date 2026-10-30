@@ -1,10 +1,11 @@
 // Shard rewards use tarot cards. New allies get a chamber charge, an arrival impact and a full-art reveal,
 // with the real battle sprite performing one attack in front before settling into idle.
-// The existing seen-hero queue covers stone pulls, earned heroes and interrupted reveals.
+// The existing seen-hero queue covers stone pulls, earned heroes (who walk in instead: `earnedArrival.ts`) and interrupted reveals.
 // Atlas effects are from the credited Pixel Effects pack; reduced motion uses a calm fade.
 
 import { ALL_HEROES, UNITS } from './sim/units';
-import { heroName, heroTitle } from './sim/heroNames';
+import { heroClassLabel, heroName, heroTitle } from './sim/heroNames';
+import { titleLine } from './heroTitleView';
 import { RANK_SHARDS, rankOf, saveMeta, type Meta, type Pull } from './sim/meta';
 import { heroSeen, markHeroSeen, unseenHeroes } from './sim/heroesSeen';
 import { traitsOf, TRAITS } from './sim/traits';
@@ -18,6 +19,8 @@ import { SKIP_GUARD_MS } from './render/summonRules';
 import arcanaUrl from './art/tarot/arcana.png';
 import sanctumUrl from './art/hall/sanctum.png';
 import { summoner } from './summoner';
+import { earnedArrival } from './earnedArrival';
+import { arrivalOf } from './sim/heroArrival';
 import swordIcon from './art/talent/sword.png';
 import shieldIcon from './art/talent/shield.png';
 import flameIcon from './art/talent/blast.png';
@@ -111,7 +114,8 @@ export function heroCard(kind: string, px: number): HTMLElement {
 /** What a pull's card says under it: the name, what it gave, and its bar (green to join, gold to the next rank). */
 export function pullInfo(m: Meta, p: Pull): HTMLElement {
   const info = el('div', 'tarotInfo');
-  info.append(el('b', 'tarotName', heroName(p.kind)));
+  // (a new hero's card carries its title under its name, BENCH-TITLES; a shard card keeps the name alone)
+  info.append(p.isNew ? titleLine(p.kind, 'b', 'tarotName', true) : el('b', 'tarotName', heroName(p.kind)));
   const n = p.unlock ?? p.shards;
   const gain = p.isNew ? (p.lucky ? 'Lucky! Joined at once' : 'Joined your company') : p.crowns ? `+${p.crowns} crowns` : `${p.lucky ? 'Lucky! ' : ''}+${n} shard${n === 1 ? '' : 's'}`;
   info.append(el('em', 'tarotGain', gain));
@@ -123,7 +127,7 @@ export function pullInfo(m: Meta, p: Pull): HTMLElement {
   if (p.unlock && p.need) {
     part = p.have! / p.need;
     label = `${p.have}/${p.need} to join`;
-    bar.setAttribute('aria-label', `${heroTitle(p.kind)} recruitment`);
+    bar.setAttribute('aria-label', `${heroClassLabel(p.kind)} recruitment`);
   } else {
     // (a hero owned: its shards towards the next rank, as they stand now)
     const rank = rankOf(m, p.kind);
@@ -179,8 +183,8 @@ export function firstReveal(meta: Meta, kind: string, opts: { lucky?: boolean; h
   const plate = el('div', 'trPlate');
   plate.append(
     el('small', 'trKicker', opts.lucky ? 'A lucky summon' : 'A new ally answers'),
-    el('h3', '', heroTitle(kind)),
-    el('span', 'trTitle', `${a.numeral} · ${a.title}`),
+    titleLine(kind, 'h3', '', true),
+    el('span', 'trTitle', `${def.name} · ${a.numeral} · ${a.title}`),
     el('p', 'trRole', def.role),
     el('span', 'trJoin', 'Joins your company'),
   );
@@ -249,7 +253,8 @@ export function queueReveal(meta: Meta, kind: string, opts: { lucky?: boolean; f
   line = line.then(async () => {
     playing++;
     try {
-      if (opts.force || !heroSeen(meta, kind)) await firstReveal(meta, kind, { lucky: opts.lucky });
+      // (RECAP-REVEAL: a hero earned by a deed walks in to the keep instead; one out of a pull is the summoner's)
+      if (opts.force || !heroSeen(meta, kind)) await (arrivalOf(kind, opts.force) === 'earned' ? earnedArrival(meta, kind) : firstReveal(meta, kind, { lucky: opts.lucky }));
     } finally {
       playing--;
       waiting.delete(kind);

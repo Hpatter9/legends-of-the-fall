@@ -49,6 +49,6 @@ export interface EpicEntry {
 export const EPIC_MANIFEST = {
 ${rows.join('\n')}
 } satisfies Record<string, EpicEntry>;
-`,
+`.replace(/\n/g, '\r\n'), // (the repository keeps this file with Windows line ends)
 );
 console.log(`${ids.length} files, ${(total / 1048576).toFixed(2)} MB`);

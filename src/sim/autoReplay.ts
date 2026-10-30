@@ -49,6 +49,8 @@ export interface AutoTotals {
   gear: number;
   /** Rift ores the boss waves dropped (`awakenMats.ts`; missing is none). */
   ores?: number;
+  /** Rare drops the waves found, shards and tomes (`armyDrops.ts`; missing is none). */
+  drops?: number;
 }
 
 export type AutoEnd = 'done' | 'loss' | 'stopped' | 'tickets';
@@ -76,9 +78,10 @@ export function startAuto(m: Meta, armyId: string, tier: number, count: number, 
 }
 
 /** What a settled fight adds to the totals and what the replay does next: another `wave`, a new `run`, or `end` (see `ended`). */
-export function afterFight(a: AutoReplay, f: { won: boolean; cleared: boolean; wave: number; crowns: number; xp: number; chests?: number; gear?: number; ores?: number }): 'wave' | 'run' | 'end' {
+export function afterFight(a: AutoReplay, f: { won: boolean; cleared: boolean; wave: number; crowns: number; xp: number; chests?: number; gear?: number; ores?: number; drops?: number }): 'wave' | 'run' | 'end' {
   a.totals.crowns += f.crowns;
   if (f.ores) a.totals.ores = (a.totals.ores ?? 0) + f.ores;
+  if (f.drops) a.totals.drops = (a.totals.drops ?? 0) + f.drops;
   a.totals.xp += f.xp;
   if (!f.won) {
     a.ended = 'loss';

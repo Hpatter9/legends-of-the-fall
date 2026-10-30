@@ -33,19 +33,27 @@ export function pickSquad(run: Run, meta: Meta, keep: readonly number[] = []): O
 
 /** The best way to spend an event: the free relic, then gear, then a blessing, then coin. A cursed path and anything dear is left alone. */
 export function eventPick(options: readonly EventOption[], gold: number): number {
-  const rank = { relic: 4, gear: 3, buff: 2, gold: 1 } as const;
   let best = -1;
   options.forEach((o, i) => {
-    const r = rank[o.effect.t as keyof typeof rank] ?? 0;
-    if (!o.done && o.cost === 0 && o.cost <= gold && r > 0 && (best < 0 || r > (rank[options[best].effect.t as keyof typeof rank] ?? 0))) best = i;
+    const r = pickRank(o);
+    if (!o.done && o.cost === 0 && o.cost <= gold && r > 0 && (best < 0 || r > pickRank(options[best]))) best = i;
   });
   return best;
+}
+
+/** How much the greedy player wants a free option: a relic, then gear, then a blessing, then coin. A road event's option (MID-EVENTS) is left
+ *  alone, as a cursed path is: the road's cards stand in for the old kinds the greedy player took nothing from, so its pace is as it was. */
+function pickRank(o: EventOption): number {
+  const rank = { relic: 4, gear: 3, buff: 2, gold: 1 } as const;
+  return rank[o.effect.t as keyof typeof rank] ?? 0;
 }
 
 /** Settles the event waiting between two fights: the best free pick, then on. */
 export function autoEvent(run: Run): void {
   while (run.event) {
-    const i = eventPick(run.event.options, run.gold);
+    let i = eventPick(run.event.options, run.gold);
+    // (a card with no way to walk off, a road event's hazard or debt, MID-EVENTS: the page offers no Leave, so neither may the greedy player; it takes the first free choice)
+    if (i < 0 && !run.event.options.some((o) => o.effect.t === 'leave')) i = run.event.options.findIndex((o) => o.cost === 0 && !o.done);
     if (i < 0 || chooseOption(run, i) === null) leaveEvent(run);
   }
 }

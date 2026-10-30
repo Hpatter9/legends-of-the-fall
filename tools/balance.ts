@@ -367,7 +367,8 @@ function armies(): void {
 
 // ---- 6. The realistic climb -------------------------------------------------------------------------------------------
 // (`--climb`, with `--saves 60` or so.) A player who plays as the page lets them: a fresh save fights the armies in order, trying
-// each until it falls. Between tries it spends the crowns it has: `CASTLE_SHARE` on the castle (barracks, armoury, library,
+// each until it falls (so, as the army gate has it, an army is tried only once the one before is beaten: `docs/notes/army-gate.md`;
+// a save that cannot beat one stops there). Between tries it spends the crowns it has: `CASTLE_SHARE` on the castle (barracks, armoury, library,
 // treasury and stable, the lowest building first) and the rest on single recruits; it fields the five best heroes it owns (higher
 // ranks and levels first), dresses them with the gear its runs find, and the XP and levels carry over.
 const CASTLE_SHARE = 0.5;

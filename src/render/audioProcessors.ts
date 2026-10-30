@@ -11,6 +11,7 @@ import { EPIC_INFO, bakeTrack, type Baked } from './musicBake';
 import { SCENE_TRACKS, STEMS, stemLevels, type Stem } from './musicScore';
 import { DUCK_GAIN, DUCK_HZ, OPEN_HZ, colourOf, musicColour } from './audioRules';
 import { SYNTH_OF, epicOf, loadEpic, loadSting, type MusicId, type StingId } from './epicMusic';
+import { trackGain } from './audioMix';
 
 /** The longest a crossfade takes to settle (seconds). */
 export const FADE_S = 1.2;
@@ -811,6 +812,8 @@ interface DroneNow {
  *  behind one fade for the whole track. */
 interface Loop {
   fade: GainNode;
+  /** The file's trim (`TRACK_GAIN` in `audioMix.ts`), so the tracks play at matched loudness; 1 for a synthesised track. */
+  trim: number;
   stems: Partial<Record<Stem, { src: AudioBufferSourceNode; gain: GainNode }>>;
 }
 
@@ -973,12 +976,13 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam }> {
     if (this.loops.has(track)) return;
     const ac = this.ac;
     const t = ac.currentTime + 0.05;
+    const info = EPIC_INFO.get(baked);
+    const trim = info ? trackGain(track) : 1;
     const fade = new GainNode(ac, { gain: 0 });
     fade.gain.setValueAtTime(0, t);
-    fade.gain.setTargetAtTime(this.level, t, FADE_S / 3);
+    fade.gain.setTargetAtTime(this.level * trim, t, FADE_S / 3);
     fade.connect(this.lowpass);
-    const loop: Loop = { fade, stems: {} };
-    const info = EPIC_INFO.get(baked);
+    const loop: Loop = { fade, trim, stems: {} };
     const rules = info ? 'town' : SYNTH_OF[track];
     const levels = stemLevels(rules, FULL_BAND);
     const rate = musicColour(info ? null : this.act).rate;
@@ -1032,7 +1036,7 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam }> {
         if (loop) {
           const t = this.ac.currentTime;
           loop.fade.gain.cancelScheduledValues(t);
-          loop.fade.gain.setTargetAtTime(level, t, FADE_S / 3);
+          loop.fade.gain.setTargetAtTime(level * loop.trim, t, FADE_S / 3);
         }
       }
       return;
@@ -1080,7 +1084,7 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam }> {
         if (asked !== this.stingAsks || !this.holding || !this.enabled) return;
         const ac = this.ac;
         const src = new AudioBufferSourceNode(ac, { buffer: buf });
-        const g = new GainNode(ac, { gain: 1 });
+        const g = new GainNode(ac, { gain: trackGain(id) });
         src.connect(g).connect(this.out);
         src.start(ac.currentTime + 0.03);
         const now = { src, gain: g, id };

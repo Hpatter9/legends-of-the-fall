@@ -8,6 +8,7 @@ import { EPIC_MANIFEST } from '../src/render/epicManifest';
 import { FakeContext, installFakeAudio } from './audioFake';
 import { EPIC_INFO, type Baked } from '../src/render/musicBake';
 import { LOOP_START } from '../src/render/epicMusic';
+import { trackGain } from '../src/render/audioMix';
 
 /** A run of a mode at a stage, for the rules (a tower's floor is only what the rules read of it). */
 function towerAt(stage: number, kind: 'fight' | 'elite' | 'boss', calamity = false): Run {
@@ -134,12 +135,14 @@ test('the victory fanfare holds the music from the moment it is asked for, then 
     const triumph = loops()[1];
     assert.ok(triumph, 'then the triumph loop');
     assert.deepEqual(music.sounding, ['triumph']);
-    const fade = FakeContext.made.find((n) => n.gain?.target === VICTORY_BED);
+    // (the bed level, on the triumph file's own trim: `TRACK_GAIN` in audioMix.ts)
+    const trim = trackGain('triumph');
+    const fade = FakeContext.made.find((n) => n.gain?.target === VICTORY_BED * trim);
     assert.ok(fade, 'at the bed level');
     // (a victory cinematic asks for the same track at full level: it glides up and plays on, no restart)
     music.setTrack('triumph', 1);
     assert.equal(loops().length, 2);
-    assert.equal(fade!.gain.target, 1);
+    assert.equal(fade!.gain.target, trim);
     music.destroy();
   } finally {
     undo();

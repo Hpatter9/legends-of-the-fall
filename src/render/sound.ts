@@ -14,7 +14,7 @@
 import { createEngine } from '@audiorective/core';
 import type { Battle, BattleEvent } from '../sim/battle';
 import { onSettings, settings } from '../settings';
-import { BusMixer, CueSynth, MusicPlayer, type BusName } from './audioProcessors';
+import { BusMixer, CueSynth, MusicPlayer } from './audioProcessors';
 import { AmbientBeds } from './audioBeds';
 import { DuckCounter, panOfEvent, type PlannedCue, type Scene } from './audioRules';
 import { TRACK_OF_PLACE, placeOf, type MapKind, type MusicId, type StingId } from './epicMusic';
@@ -24,21 +24,11 @@ import { SCENE_TRACKS, type Track } from './musicScore';
 import { Mixer, cuesFor, type Cue } from './soundRules';
 import { SpellBank } from './spellBank';
 import { coveredBySpells, spellParts } from './spellSfx';
+import { MUSIC_LEVEL, SFX_LEVEL, UI_LEVEL, busOf } from './audioMix';
 
-const MUSIC_LEVEL = 0.22;
-const SFX_LEVEL = 0.35;
 const SAVE_KEY = 'legends.sound';
 
 export type Sfx = Cue;
-
-/** The cues that are the page's own taps and chimes: they go to the ui bus. */
-const UI_CUES = new Set<Cue>([
-  'tap', 'summon', 'merge', 'coin', 'star', 'levelUp', 'coinRecycle', 'coinClaim', 'sparkle', 'autoStart', 'autoStop', 'autoDone', 'setChime2', 'setChime3',
-]);
-/** The summoning show's sounds go to their own bus, so a tap that skips the show can hush them. */
-const SHOW_CUES = new Set<Cue>(['riseSummon', 'stingSummon', 'slam']);
-
-const busOf = (name: Cue): BusName => (SHOW_CUES.has(name) ? 'show' : UI_CUES.has(name) ? 'ui' : 'sfx');
 
 interface Parts {
   mixer: BusMixer;
@@ -150,7 +140,7 @@ function applyLevels(): void {
   if (!engine) return;
   const m = engine.mixer;
   m.setLevel('sfx', SFX_LEVEL * effectsLevel());
-  m.setLevel('ui', SFX_LEVEL * effectsLevel());
+  m.setLevel('ui', UI_LEVEL * effectsLevel());
   m.setLevel('music', MUSIC_LEVEL * musicLevel());
   m.setLevel('ambience', MUSIC_LEVEL * musicLevel());
   // (Music at Off: no track is baked or playing at all, the effects carry on)

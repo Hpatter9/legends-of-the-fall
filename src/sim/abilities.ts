@@ -10,6 +10,7 @@ import { addUnit, atkOf, blowMult, canStrike, defenceOf, defOf, hurt, strikeDef,
 import { eliteKits } from './eliteFoes';
 import { calBossKits } from './calamityBosses';
 import { Rng } from './rng';
+import { ALL_HEROES } from './units';
 import { fxBlow, fxStruck, fxTick, hidden } from './equipFx';
 import { heroUltimates } from './ultimates';
 import { runRiders } from './tierSkills';
@@ -130,7 +131,12 @@ export interface Passive {
 }
 
 export interface Skill {
+  /** What the player reads. */
   name: string;
+  /** The skill's fixed key (RPG-SPELLS batch 0, docs/notes/spells-b01.md): what every table looks the skill up by (its painting, element,
+   *  sound, release, ailment rider, skill-2 check) and what its `skill` event carries, so a skill can be renamed without breaking any of
+   *  them. Unset is its name, which is every skill's key today (`keyOf`). */
+  key?: string;
   text: string;
   /** The charge it needs, and the charge a blow dealt, a blow taken and each second of time give. */
   need: number;
@@ -147,6 +153,9 @@ export interface Skill {
   /** Fire it if there is something to fire at; false leaves the charge full for a moment later. */
   cast(b: Battle, me: Unit, out: BattleEvent[]): boolean;
 }
+
+/** A skill's fixed key: what tables look it up by and its `skill` event carries (its name, unless it was given a key of its own). */
+export const keyOf = (s: Skill): string => s.key ?? s.name;
 
 export interface Kit {
   skill: Skill;
@@ -1560,7 +1569,35 @@ Object.assign(KITS, eliteKits(KITS), calBossKits(KITS));
 // (a foe that shares one of the first eight's kits, such as the elites Sethra and Kuro, keeps the ultimate as it was: only the hero's copy waits for its level)
 for (const [name, k] of Object.entries(KITS)) if (k.ultimate && GATED.has(k.ultimate) && OWN_ULTIMATES.get(name) !== GATED.get(k.ultimate)) KITS[name] = { ...k, ultimate: GATED.get(k.ultimate) };
 
+// (RPG-SPELLS batch 0: a foe that borrows a hero's skill or ultimate gets its own copy of it, the same in every way, so reworking or
+// renaming a hero's skill never changes a foe's; the copy keeps the hero's key, so its look and sound are found as before)
+{
+  const heroOwned = new Set<Skill>();
+  for (const kind of ALL_HEROES) {
+    const k = KITS[kind];
+    heroOwned.add(k.skill);
+    if (k.ultimate) heroOwned.add(k.ultimate);
+  }
+  const copies = new Map<Skill, Skill>();
+  const own = (s: Skill): Skill => {
+    if (!heroOwned.has(s)) return s;
+    let c = copies.get(s);
+    if (!c) copies.set(s, (c = { ...s }));
+    return c;
+  };
+  const heroes = new Set(ALL_HEROES);
+  for (const [id, k] of Object.entries(KITS)) {
+    if (heroes.has(id)) continue;
+    const skill = own(k.skill);
+    const ultimate = k.ultimate && own(k.ultimate);
+    if (skill !== k.skill || ultimate !== k.ultimate) KITS[id] = { ...k, skill, ...(k.ultimate ? { ultimate } : {}) };
+  }
+}
+
 export const kitOf = (u: Unit): Kit | undefined => u.kit ?? KITS[u.def];
+/** The key of a fighter's kit skill, and of its kit's ultimate (the page looks a cast's look and sound up by these). */
+export const keyOfKit = (u: Unit): string => { const k = kitOf(u); return k ? keyOf(k.skill) : ''; };
+export const ultKeyOf = (u: Unit): string | undefined => { const k = kitOf(u)?.ultimate; return k ? keyOf(k) : undefined; };
 
 /** A free hero whose charge is full lets its skill go, if there is something to use it on. */
 export function tryCast(b: Battle, me: Unit, out: BattleEvent[]): boolean {
@@ -1596,7 +1633,7 @@ export function powered(b: Battle, me: Unit, s: Skill, more: number, out: Battle
     me.power = (me.power ?? 1) / k;
   }
   // (what the skill leaves on the foes it struck: a burn, a shock, a bleed... `ailmentSources.ts`, STATUS-FX)
-  if (ok) skillRiders(b, me, s.name, out, from);
+  if (ok) skillRiders(b, me, keyOf(s), out, from);
   return ok;
 }
 /** How strong the skill being cast is, as a multiple (1 unless a talent or an ultimate's `power` lifts it): an ultimate's engines scale what is not an attack (how long a stun or guard lasts, how much is shielded) by it. */
@@ -1620,7 +1657,7 @@ export function began(b: Battle, me: Unit, s: Skill, out: BattleEvent[], slot: '
   me.cast = { at: b.t, ms: s.castMs, anim: s.anim };
   me.swing = undefined;
   me.busyUntil = b.t + s.castMs;
-  out.push({ kind: 'skill', by: me.id, name: s.name, ms: s.castMs });
+  out.push({ kind: 'skill', by: me.id, name: keyOf(s), ms: s.castMs });
   if (slot === 'ult') triggerDuoComboOnUlt(b, me, out);
   // (a hero merged up adds its tier skill's riders to the ordinary skill; the ultimate is the same at every grade)
   if (me.grade && s === kitOf(me)?.skill)
@@ -1633,7 +1670,7 @@ export function echoSkill(b: Battle, me: Unit, share: number, out: BattleEvent[]
   const s = kitOf(me)?.skill;
   if (!s || !me.alive) return;
   const at = out.length;
-  out.push({ kind: 'skill', by: me.id, name: s.name, ms: s.castMs });
+  out.push({ kind: 'skill', by: me.id, name: keyOf(s), ms: s.castMs });
   if (!powered(b, me, s, share - 1, out)) out.splice(at, 1);
 }
 
