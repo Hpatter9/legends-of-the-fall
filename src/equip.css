@@ -16,7 +16,7 @@
 span.eqIcon.painted { position: relative; border: 0; background: radial-gradient(circle at 50% 42%, #2a2f38 0%, #14171c 75%); box-shadow: none; border-radius: 9%; image-rendering: auto; overflow: hidden; }
 .eqIcon.painted > i { position: absolute; background-repeat: no-repeat; pointer-events: none; }
 .eqIcon.painted .eqFrame { inset: 0; }
-.eqIcon.painted .eqGlow { inset: 4%; }
+.eqIcon.painted .eqGlow { inset: 4%; opacity: 0.78; }
 .eqIcon.painted .eqArt { inset: 9%; }
 .eqIcon.painted.r5 .eqArt { inset: 7%; }
 span.eqIcon.painted.empty { border: 0; } .eqIcon.painted.empty .eqArt { opacity: 0.22; filter: grayscale(1); } .eqIcon.painted.empty .eqFrame { opacity: 0.55; }

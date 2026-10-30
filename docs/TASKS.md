@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### GEAR-ICONS — The painted equipment icons in the game
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/gear-icons-painted`, `/home/user/lotf-gear-icons` (from main 0.263.0, main 0.264.0 merged).
+- **Goal:** the owner's painted equipment icons (PR #242's `art-source/gear/`, with the five frames and five wear pieces from PR #241) shown wherever equipment is drawn today, in place of the 16px DawnLike tiles: the grade's frame and glow round the standard painting for Common to Legendary, the Mythic painting for Mythic.
+- **Allowed files or systems:** `art-source/gear/`, new `src/art/gear/`, new `src/gearIcons.ts`, `itemIcon` in `src/equipView.ts`, `src/equip.css`, one rule in `src/battleReports.css`, the atlas copy in `build.mjs`, new `tools/gear/`, `CREDITS.md`, `docs/notes/gear-icons.md`, `docs/samples/gear-icons-*.png`. No sim, save or version change.
+- **Status:** done, ready for review. Handoff: [note](notes/gear-icons.md).
+
 ### QUESTS-1B — Quests batch 1b: repeats, drops, 100 unique and 30 repeatable quests
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/quests-content`, `/home/user/lotf-quests2` (from `claude/quests-1`, with main 0.263.0 merged).

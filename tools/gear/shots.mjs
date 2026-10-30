@@ -37,6 +37,10 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   await page.evaluate(() => window.__game.home.openSheet('knight'));
   await page.waitForTimeout(600);
   await page.getByRole('tab', { name: 'Equipment', exact: true }).click();
+  await page.waitForTimeout(500);
+  // (the sheet's first-visit tip would cover the slots' names)
+  await page.getByRole('button', { name: 'Got it', exact: true }).first().click({ timeout: 4000 }).catch(() => {});
+  await page.waitForTimeout(300);
   await page.locator('.eqPanel').scrollIntoViewIfNeeded();
   await page.waitForTimeout(800);
   await page.screenshot({ path: `docs/samples/gear-icons-sheet-${tag}.png` });
