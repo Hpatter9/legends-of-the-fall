@@ -96,6 +96,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Completion criteria:** effects over a fighter thinned by named constants (`OVER_FIGHTER_ALPHA` 0.6, `OVER_FIGHTER_STATUS_ALPHA` 0.7) and still visible, ground and back layers unchanged, no blinking, reduced motion kept; pip 2 reads "2" and is greyed while locked; typecheck, affected and full tests, web build; 393x852, 360x780, 412x915.
 - **Validation and handoff:** [notes](notes/fx-clear.md).
 
+### MID-EVENTS — A market on the passing cart; twelve more events between waves
+
+- **Goal:** the owner's ask: "More mid battle events or more in depth ones. Like the passing cart only has two items? ... Let's add some more for a unique experience."
+- **Status:** done on the branch; not merged.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/mid-events`, `/home/user/mid-events` (from main 0.232.0); PR none.
+- **Allowed files or systems:** `src/sim/midEvents.ts`, `src/sim/market.ts` (new), `src/sim/events.ts` (road draw, market, new effects), `src/sim/run.ts` (optional `Buff.twist`, `Run.road`, `gearStage`, the twist in `startStage`), `src/sim/autoplay.ts` (no-leave cards), `src/events.ts` (icons, buys), small hooks in `src/main.ts` (`afterEvent`, `placeSquad`, the banner) and `src/twistView.ts` (`twistIcon`); `test/midEvents.test.ts`, the `daily` hash of `test/fixtures/ailment-logs.json`; `tools/mid-events/`; `docs/notes/mid-events.md`.
+- **Completion criteria:** the cart sells 5-6 wares with limited buys and a rummage; 12 road events and 2 follow-ups with real choices, weighted by army and land, no repeats; deterministic side streams; old saves load; daily and army pace unchanged; typecheck, full tests, web build; three portrait sizes.
+- **Validation and handoff:** [notes](notes/mid-events.md).
+
 ### WAVE-RECAP-2 — The short card for the spire and the Calamity; their detail in their summaries
 
 - **Goal:** the owner's answer: "Yeah, give them the same treatment" (the short, see-through card between spire floors and Calamity fights, the detail moved to their end summaries).

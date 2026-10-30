@@ -458,15 +458,7 @@ class Game {
     this.heartsBurned = 0;
     this.passing = null;
     $('result').classList.remove('passing', 'leaving');
-    for (const id of [...this.run.squad]) {
-      const h = heroOf(this.run, id);
-      if (!h) continue;
-      // (a spot from the last fight may be a boulder or a foe's now: a floor's twist can change the deploy rows)
-      const was = this.placed.get(String(id));
-      const at = was && canPlace(this.b, h.kind, was[0], was[1], id) ? was : this.freeTile();
-      if (at && place(this.b, h.kind, at[0], at[1], id, this.boostFor(h))) this.placed.set(String(id), at);
-      else setSquad(this.run, id, false);
-    }
+    this.placeSquad();
     this.acc = 0;
     this.chosen = null;
     this.spell = null;
@@ -482,7 +474,7 @@ class Game {
     setBackdrop(this.b.board.area, this.b.board.riftWorld);
     this.weather.resize(this.app.screen.width, this.app.screen.height);
     this.weather.set(weatherOf(this.b.board), this.b.board.area, this.boardView.litSpots(), this.b.board.tiles.some((t) => t.scene));
-    showTwistBanner(this.run.tower?.cur?.fight?.twist);
+    showTwistBanner(this.run.tower?.cur?.fight?.twist ?? this.run.buff?.twist);
     this.showTheme();
     this.syncSprites(true);
     // (a new wave's deploy: the camera frames the board afresh, whatever the player did with it last wave)
@@ -494,6 +486,34 @@ class Game {
     const due = this.setupMoments().filter((m) => this.scenesOn() && dueScene(this.meta, m));
     if (due.length) void Promise.all(due.map((m) => this.queueScene(m))).then(() => this.startIntro());
     else this.startIntro();
+  }
+
+  /** The squad onto the deploy rows, each where it stood last when it still can. */
+  private placeSquad(): void {
+    for (const id of [...this.run.squad]) {
+      const h = heroOf(this.run, id);
+      if (!h) continue;
+      // (a spot from the last fight may be a boulder or a foe's now: a floor's twist can change the deploy rows)
+      const was = this.placed.get(String(id));
+      const at = was && canPlace(this.b, h.kind, was[0], was[1], id) ? was : this.freeTile();
+      if (at && place(this.b, h.kind, at[0], at[1], id, this.boostFor(h))) this.placed.set(String(id), at);
+      else setSquad(this.run, id, false);
+    }
+  }
+
+  /** An event's card has closed over a deploy (MID-EVENTS): when its choice changed the next fight (a boon, a curse on the foes, a twist), the fight
+   *  is made again with it and the squad put back, so the choice counts in this fight (the deploy was made before the card opened). The camera,
+   *  the intro and the cinematics are left alone. */
+  private afterEvent(buffWas: string): void {
+    if (JSON.stringify(this.run.buff ?? null) === buffWas || this.b.phase !== 'deploy') return;
+    this.b = startStage(this.run, this.duchessWish());
+    this.placeSquad();
+    const section = chainOf(this.run)?.[this.run.stage - 1];
+    this.boardView.build(this.b.board, { boss: !!waveArmyOf(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
+    this.syncChain();
+    showTwistBanner(this.run.tower?.cur?.fight?.twist ?? this.run.buff?.twist);
+    this.syncSprites(true);
+    this.layout();
   }
 
   /** Whether this page's fights may bring Duchess: rolled on the seed, or always (never) on the test page's `?duchess=1` (`?duchess=0`). */
@@ -1683,7 +1703,10 @@ class Game {
     this.syncPool();
     this.placed.clear();
     this.newBattle();
-    if (this.run.event) this.events.openEvent(this.run, () => saveRun(this.run));
+    if (this.run.event) {
+      const buffWas = JSON.stringify(this.run.buff ?? null);
+      this.events.openEvent(this.run, () => (saveRun(this.run), this.afterEvent(buffWas), this.refresh()));
+    }
   }
 
   /** The draw pool is the party, except a daily challenge, which keeps its starting five. */
@@ -1778,7 +1801,10 @@ class Game {
     saveRun(this.run);
     this.newBattle();
     // (an event waits between two fights: its card opens over the new stage's board)
-    if (this.run.event) this.events.openEvent(this.run, () => (saveRun(this.run), this.refresh()));
+    if (this.run.event) {
+      const buffWas = JSON.stringify(this.run.buff ?? null);
+      this.events.openEvent(this.run, () => (saveRun(this.run), this.afterEvent(buffWas), this.refresh()));
+    }
   }
 
   /** When the heart has burnt and the fight resumes, and when the whole moment ends (real ms; shorter with reduced motion). */
