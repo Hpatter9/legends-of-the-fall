@@ -84,6 +84,12 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Scope:** `src/sim/stand.ts` (`holdRelic`, `holdPurse`, `purseLine`, `takeRelic` shared with `buyRelic`, `heldRelics`, `standContinueLine`), `standView.ts` (choice card wording, the relic plate, the end card's Relics row), `stand.css`, one line in `main.ts` (`slotInfo`); `tools/stand/hold-relic-shots.mjs`; `test/stand-retreat.test.ts`.
 - **Status:** ready for review. Holding still costs mid parties about as much as before (within noise; see the note). Typecheck, full `npm test` (1680, 0 failures), `npm run web`, browser checks at 393×852, 360×780 and 412×915 with no page errors. [Note](notes/stand-hold-relic.md); screenshots `samples/stand-hold-relic-*.png`. No merge or version bump.
 
+### SPELL-ART-REPAINT — The owner's 26 repainted spell sheets imported
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/spell-art-repaint`, `/home/user/lotf-repaint`.
+- **Scope:** merges `art/spell-fx-repaint` (#230); the B, E, F and G atlases and `index.json`; `tools/spell-fx/spell-fixes.json` (two fixes dropped, the keg's changed); the Aura of Protection's alpha back to normal (`AURA_ALPHA_OF` in `movePaints.ts`); `tools/spell-fx/shots.mjs` (the repainted moves, `PICK`, `PREFIX`). No sim changes.
+- **Status:** ready for review. All 131 sheets pass; seven atlases 3.05 MB of the 5 MB cap at 96 px. Typecheck, `npm test -- spell-fx`, full `npm test` (1680, 0 failures), `npm run web`, before/after fight shots at 393x852 with no page errors. [Note](notes/spell-art-repaint.md) (with what still needs repainting); screenshots `samples/spell-repaint-*.png`. No merge or version bump.
+
 ### SPELL-ART-BDE — The painted spell effects, sessions B, D, E, F and G
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/spell-art-bde`, `/home/user/lotf-art-bde`.
